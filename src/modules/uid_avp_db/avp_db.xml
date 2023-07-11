@@ -158,7 +158,7 @@
         Allowed in request, reply, and failure processing.
       </para>
       <para>
-        The <function>unlock_extra_attrs()</function> function releaes the
+        The <function>unlock_extra_attrs()</function> function releases the
         lock on the key given by the argument <symbol>key</symbol>
         of the extra attribute group given by the argument
         <symbol>group</symbol> previously imposed by a call to the function
@@ -342,7 +342,7 @@
     <para>
       Extra attribute groups are defined through the module parameter
       <serdoc:modparam module="avp_db">attr_group</serdoc:modparam>. Each
-      occurence of the parameter defines a group. The value of the parameter
+      occurrence of the parameter defines a group. The value of the parameter
       contains key/value pairs. Key and value are separated by an equals
       sign, several pairs are separated by a comma.
     </para>
@@ -539,7 +539,7 @@
               <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
             </serdoc:fieldinfo>
             <para>
-              The <varname>value</varname> field contans the value of the
+              The <varname>value</varname> field contains the value of the
               attribute.
             </para>
           </listitem>
@@ -644,7 +644,7 @@
               <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
             </serdoc:fieldinfo>
             <para>
-              The <varname>value</varname> field contans the value of the
+              The <varname>value</varname> field contains the value of the
               attribute.
             </para>
           </listitem>
@@ -724,7 +724,7 @@
               <serdoc:fieldsql>VARCHAR(255)</serdoc:fieldsql>
             </serdoc:fieldinfo>
             <para>
-              The <varname>value</varname> field contans the value of the
+              The <varname>value</varname> field contains the value of the
               attribute.
             </para>
           </listitem>

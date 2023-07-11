@@ -1056,7 +1056,7 @@ static void uac_on_load_callback(
 	 * method call at this point in time anymore. Therefore we just install a
 	 * callback for both FROM and TO replace cases. This might be a bit
 	 * inefficient in cases where only one of the functions is used. But as
-	 * this applies only e.g. to a proxy restart with runnning dialogs, it
+	 * this applies only e.g. to a proxy restart with running dialogs, it
 	 * does not matter. The replace_callback function will just not find
 	 * an entry in the dialog variables table and log an error.
 	 */

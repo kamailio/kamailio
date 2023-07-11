@@ -446,8 +446,8 @@ static int add_lrkproxy_socks(struct lrkp_set *lrkp_list, char *lrkproxy)
 	return 0;
 }
 
-/*	0-succes
- *  -1 - erorr
+/*	0-success
+ *  -1 - error
  * */
 static int lrkproxy_add_lrkproxy_set(char *lrk_proxies)
 {
@@ -812,8 +812,8 @@ static int lrkp_test(struct lrkp_node *node)
 
 	char *resp = buf + v[0].iov_len + v[1].iov_len + 1;
 	if(memcmp(resp, "PONG", 4) == 0)
-		//                LM_DBG("Recieve PONG response from lrk proxy server %s, Enable it right now.\n", node->ln_url.s);
-		LM_INFO("Recieve PONG response from lrk proxy server %s, Enable it "
+		// LM_DBG("Receive PONG response from lrk proxy server %s, Enable it right now.\n", node->ln_url.s);
+		LM_INFO("Receive PONG response from lrk proxy server %s, Enable it "
 				"right now.\n",
 				node->ln_url.s);
 
@@ -1028,10 +1028,10 @@ static int lrkp_set_conntrack_rule(struct lrkproxy_hash_entry *e)
 	//    char *resp = buf + v[0].iov_len + v[1].iov_len + v[2].iov_len;
 	char *resp = buf + v_len;
 	if(memcmp(resp, "OK", 2) == 0) {
-		LM_INFO("Recieve OK response from lrk proxy server %s, Rule set "
+		LM_INFO("Receive OK response from lrk proxy server %s, Rule set "
 				"successfully.\n",
 				e->node->ln_url.s);
-		LM_DBG("Recieve OK response from lrk proxy server %s, Rule set "
+		LM_DBG("Receive OK response from lrk proxy server %s, Rule set "
 			   "successfully.\n",
 				e->node->ln_url.s);
 	}
@@ -1150,9 +1150,9 @@ static int lrkp_remove_conntrack_rule(struct lrkproxy_hash_entry *e)
 	//    char *resp = buf + v[0].iov_len + v[1].iov_len + v[2].iov_len;
 	char *resp = buf + v_len;
 	if(memcmp(resp, "OK", 2) == 0) {
-		LM_INFO("Recieve OK response from lrk proxy server, Rule remove "
+		LM_INFO("Receive OK response from lrk proxy server, Rule remove "
 				"successfully.\n");
-		LM_DBG("Recieve OK response from lrk proxy server, Rule remove "
+		LM_DBG("Receive OK response from lrk proxy server, Rule remove "
 			   "successfully.\n");
 	}
 	return 1;
@@ -1574,7 +1574,7 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e,
 		if((int)(start_sdp_m - off) == 0) {
 			memset(sdp_new_m, 0, 128);
 			char *avp_flags = off;
-			//            int occure = 0;
+			//            int occur = 0;
 			for(; *avp_flags && !isspace(*avp_flags); avp_flags++)
 				;
 			for(avp_flags++; *avp_flags && !isspace(*avp_flags); avp_flags++)
@@ -1809,7 +1809,7 @@ static int lrkproxy_force(
 		// fill the entry
 		if(call_id.s && call_id.len > 0) {
 			if(shm_str_dup(&entry->callid, &call_id) < 0) {
-				LM_ERR("lrkproxy hash table fail to instert call_id, "
+				LM_ERR("lrkproxy hash table failed to insert call_id, "
 					   "calllen=%d callid=%.*s\n",
 						call_id.len, call_id.len, call_id.s);
 				lrkproxy_hash_table_free_entry(entry);

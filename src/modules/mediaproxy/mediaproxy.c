@@ -123,7 +123,7 @@ typedef struct MediaproxySocket
 {
 	char *name;				// name
 	int sock;				// socket
-	int timeout;			// how many miliseconds to wait for an answer
+	int timeout;			// how many milliseconds to wait for an answer
 	time_t last_failure;	// time of the last failure
 	char data[BUFFER_SIZE]; // buffer for the answer data
 } MediaproxySocket;
@@ -199,7 +199,7 @@ static str ice_candidate = str_init("none");
 static MediaproxySocket mediaproxy_socket = {
 		"/run/mediaproxy/dispatcher.sock", // name
 		-1,								   // sock
-		500, // timeout in 500 miliseconds if there is no answer
+		500, // timeout in 500 milliseconds if there is no answer
 		0,	 // time of the last failure
 		""	 // data
 };
@@ -754,7 +754,7 @@ err:
 }
 
 
-// Get the SDP message from SIP message and check it's Content-Type
+// Get the SDP message from SIP message and check its Content-Type
 // Return values:
 //    1 - success
 //   -1 - error in getting body or invalid content type

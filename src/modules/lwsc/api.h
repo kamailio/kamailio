@@ -39,7 +39,7 @@ typedef int (*lwsc_api_request_f)(
 typedef struct lwsc_api
 {
 	int loaded;
-	lwsc_api_request_f request; /* send and receice data */
+	lwsc_api_request_f request; /* send and receive data */
 } lwsc_api_t;
 
 typedef int (*bind_lwsc_f)(lwsc_api_t *api);

@@ -25,6 +25,7 @@ Build-Depends:
  libldap2-dev,
  liblua5.1-0-dev,
  libmemcached-dev,
+ libmicrohttpd-dev,
  libmnl-dev,
  libmono-2.0-dev [amd64 armel armhf i386 mipsel kfreebsd-amd64 kfreebsd-i386 ppc64 ppc64el s390x],
  libmysqlclient-dev,
@@ -750,6 +751,22 @@ Description: Erlang modules for the Kamailio SIP server
  This Kamailio module provides interaction with the Erlang node from the Kamailio
  SIP routing scripts. The module allows sending, receiving Erlang messages
  and RPC calls between each other.
+
+Package: kamailio-microhttpd-modules
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Microhttpd module for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides an embedded HTTP server using libmicrohttpd.
 
 Package: kamailio-extra-modules
 Architecture: any

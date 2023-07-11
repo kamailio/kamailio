@@ -246,8 +246,8 @@ if (is_method("REGISTER")) {
    Example 1.5. ts_append_by_contact usage
 ...
 if (is_method("REGISTER")) {
-        $var(formated_ct) = $(x_hdr(Contact){nameaddr.uri});
-        ts_append_by_contact("location", "$tu", "$var(formated_ct)");
+        $var(formatted_ct) = $(x_hdr(Contact){nameaddr.uri});
+        ts_append_by_contact("location", "$tu", "$var(formatted_ct)");
 }
 ...
 

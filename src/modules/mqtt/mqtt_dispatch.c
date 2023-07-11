@@ -509,7 +509,7 @@ int pv_get_mqtt(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		qos = message->qos;
 	}
 
-	// populate value depeding on the param name
+	// populate value depending on the param name
 	// see pv_parse_mqtt_name()
 	switch(param->pvn.u.isname.name.n) {
 		case 0:

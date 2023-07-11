@@ -380,7 +380,7 @@ static int w_ts_append_to2(
 	}
 
 	if(fixup_get_svalue(msg, (gparam_t *)ruri, &suri) != 0) {
-		LM_ERR("failed to conert r-uri parameter\n");
+		LM_ERR("failed to convert r-uri parameter\n");
 		return -1;
 	}
 	if(ts_check_uri(&suri) < 0)
@@ -690,7 +690,7 @@ static int w_ts_store1(struct sip_msg *msg, char *_ruri, char *p2)
 	str suri;
 
 	if(fixup_get_svalue(msg, (gparam_t *)_ruri, &suri) != 0) {
-		LM_ERR("failed to conert r-uri parameter\n");
+		LM_ERR("failed to convert r-uri parameter\n");
 		return -1;
 	}
 	return ts_store(msg, &suri);

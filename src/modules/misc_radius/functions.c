@@ -406,7 +406,7 @@ int radius_load_callee_avps(struct sip_msg *_m, char *_callee, char *_s2)
 
 /*
  * Check from Radius if a user belongs to a group. User-Name is given in
- * first string argment that may contain pseudo variables.  SIP-Group is
+ * first string argument that may contain pseudo variables.  SIP-Group is
  * given in second string variable that may not contain pseudo variables.
  * Service-Type is Group-Check.
  */

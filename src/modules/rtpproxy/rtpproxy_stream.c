@@ -55,7 +55,7 @@ int fixup_var_str_int(void **param, int param_no)
 		*param = (void *)model;
 	} else if(param_no == 2) {
 		/* According to
-		 * http://www.kamailio.org/docs/modules/1.5.x/nathelper.html#rtpproxy_stream2xxx
+		 * https://www.kamailio.org/docs/modules/1.5.x/nathelper.html#rtpproxy_stream2xxx
 		 * this could be -1 */
 		s.s = (char *)(*param);
 		s.len = strlen(s.s);

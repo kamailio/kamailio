@@ -152,6 +152,11 @@ void async_aar_callback(
 				cdp_result);
 		counter_inc(ims_qos_cnts_h.successful_media_aars);
 
+		if(!aaa->sessionId) {
+			LM_ERR("NULL AAA sessionId from PCRF!\n");
+			goto error;
+		}
+
 		LM_DBG("Auth session ID [%.*s]", aaa->sessionId->data.len,
 				aaa->sessionId->data.s);
 
@@ -309,6 +314,12 @@ void async_aar_reg_callback(
 			create_return_code(result);
 			goto done;
 		}
+
+		if(!aaa->sessionId) {
+			LM_ERR("NULL AAA sessionId from PCRF!\n");
+			goto error;
+		}
+
 		//need to set Rx auth data to say this session has been successfully opened
 		//This is used elsewhere to prevent acting on termination events when the session has not been opened
 		//getting auth session

@@ -14,6 +14,10 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
+Joel Centelles Martin
+
+   <joel_centellesmartin@baxter.com>
+
    Copyright © 2018 sipwise.com
      __________________________________________________________________
 
@@ -33,6 +37,9 @@ Alex Balashov
               4.1. schema_path (string)
               4.2. keys (string)
               4.3. verbosity (int)
+              4.4. opt_tls (int)
+              4.5. db_pass (string)
+              4.6. ac_path (string)
 
         5. Usage
         6. Module Specific Considerations
@@ -44,8 +51,11 @@ Alex Balashov
    1.1. Setting schema_path module parameter
    1.2. Setting keys module parameter
    1.3. Setting verbosity module parameter
-   1.4. Usage
-   1.5. Usage
+   1.4. Enabling TLS connection
+   1.5. Setting a password
+   1.6. Setting CA path
+   1.7. Usage
+   1.8. Usage
 
 Chapter 1. Admin Guide
 
@@ -63,6 +73,9 @@ Chapter 1. Admin Guide
         4.1. schema_path (string)
         4.2. keys (string)
         4.3. verbosity (int)
+        4.4. opt_tls (int)
+        4.5. db_pass (string)
+        4.6. ac_path (string)
 
    5. Usage
    6. Module Specific Considerations
@@ -188,6 +201,9 @@ allid,time_hires&cid:callid
    4.1. schema_path (string)
    4.2. keys (string)
    4.3. verbosity (int)
+   4.4. opt_tls (int)
+   4.5. db_pass (string)
+   4.6. ac_path (string)
 
 4.1. schema_path (string)
 
@@ -226,6 +242,40 @@ m:username,domain&timer:partition,keepalive")
 modparam("db_redis", "verbosity", 0)
 ...
 
+4.4. opt_tls (int)
+
+   Controls TLS usage while connecting to a remote DB. If set to 1, TLS is
+   used to connect to the DB.
+
+   Default value: 0.
+
+   Example 1.4. Enabling TLS connection
+...
+modparam("db_redis", "opt_tls", 1)
+...
+
+4.5. db_pass (string)
+
+   Sets the password to connect to the DB.
+
+   Default value: "" (empty).
+
+   Example 1.5. Setting a password
+...
+modparam("db_redis", "db_pass", "r3d1sPass")
+...
+
+4.6. ac_path (string)
+
+   Sets the path where Certificates Authorities certs are stored.
+
+   Default value: "" (empty).
+
+   Example 1.6. Setting CA path
+...
+modparam("db_redis", "ca_path", "/etc/ssl/certs")
+...
+
 5. Usage
 
    Load the module and set the "db_url" modparam for specific modules to:
@@ -236,7 +286,11 @@ modparam("db_redis", "verbosity", 0)
    separated list of cluster hosts: 'redis://host1:port1,host2:port2/'.
    The database portion is not supported in cluster mode.
 
-   Example 1.4. Usage
+   If accessed DB requires TLS connections, you need to enable TLS support
+   setting the "opt_tls" parameter to 1. In case the DB requires a
+   password, that should be set using the "db_pass" parameter.
+
+   Example 1.7. Usage
 ...
 loadmodule "db_redis.so"
 ...
@@ -269,7 +323,7 @@ modparam("dialog", "db_url", DBURL_DLG)
 
    Samples adding records for address table using 'redis-cli':
 
-   Example 1.5. Usage
+   Example 1.8. Usage
 ...
 SELECT 8
 HMSET address:entry::1 id 1 grp 1 ip_addr "127.0.0.1" mask 32 port 0

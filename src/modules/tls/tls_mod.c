@@ -87,6 +87,9 @@ int ksr_rand_engine_param(modparam_t type, void *val);
 
 MODULE_VERSION
 
+#if OPENSSL_VERSION_NUMBER >= 0x030000000L
+#define OPENSSL_NO_ENGINE
+#endif
 
 extern str sr_tls_event_callback;
 str sr_tls_xavp_cfg = {0, 0};
@@ -452,7 +455,8 @@ static int mod_child(int rank)
 					< 0)
 				return -1;
 		}
-#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L
 		if(ksr_tls_init_mode & TLS_MODE_FORK_PREPARE) {
 			OPENSSL_fork_prepare();
 		}
@@ -460,7 +464,8 @@ static int mod_child(int rank)
 		return 0;
 	}
 
-#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L
 	if(ksr_tls_init_mode & TLS_MODE_FORK_PREPARE) {
 		if(rank == PROC_POSTCHILDINIT) {
 			/*
@@ -505,7 +510,8 @@ static void mod_destroy(void)
 
 int ksr_rand_engine_param(modparam_t type, void *val)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L
 	str *reng;
 
 	if(val == NULL) {
@@ -673,7 +679,8 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 
 	register_tls_hooks(&tls_h);
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L
 	LM_DBG("setting cryptorand random engine\n");
 	RAND_set_rand_method(RAND_ksr_cryptorand_method());
 #endif

@@ -304,7 +304,7 @@ MORECORE                  default: sbrk
 MORECORE_CONTIGUOUS       default: 1 (true)
   If true, take advantage of fact that consecutive calls to MORECORE
   with positive arguments always return contiguous increasing
-  addresses.  This is true of unix sbrk. It does not hurt too much to
+  addresses.  This is true for unix sbrk. It does not hurt too much to
   set it true anyway, since malloc copes with non-contiguities.
   Setting it false when definitely non-contiguous saves time
   and possibly wasted space it would take to discover this though.

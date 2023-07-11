@@ -186,7 +186,7 @@ if (!maxfwd_process("10") &amp;&amp; $retcode==-1) {
 		of the new inserted header (if locally added). The parameter can be
 		a variable.
 		</para>
-		<para>Retuning codes:</para>
+		<para>Return codes:</para>
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>1 (true)</emphasis> - header was found or set and

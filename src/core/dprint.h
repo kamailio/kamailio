@@ -110,6 +110,22 @@
 	(log_level_info[(level) - (L_ALERT)].syslog_level)
 
 /**
+ *
+ */
+typedef struct ksr_loglevels {
+	int ll_alert;
+	int ll_bug;
+	int ll_crit;
+	int ll_err;
+	int ll_warn;
+	int ll_notice;
+	int ll_info;
+	int ll_dbg;
+} ksr_loglevels_t;
+
+#define KSR_LOGLEVELS_DEFAULTS {L_ALERT, L_BUG, L_CRIT2, L_ERR, L_WARN, \
+	L_NOTICE, L_INFO, L_DBG}
+/**
  * data fileds used for structured logging
  */
 typedef struct ksr_logdata
@@ -406,6 +422,21 @@ void log_prefix_init(void);
 /* obsolete, do not use */
 #define DEBUG(...) DBG(__VA_ARGS__)
 
+/* use local log level mapping (not implemented for sun) */
+#define LLM_ALERT(...) LOG(L_ALERT, __VA_ARGS__)
+#define LLM_BUG(...) LOG(L_BUG, __VA_ARGS__)
+#define LLM_ERR(...) LOG(L_ERR, __VA_ARGS__)
+#define LLM_WARN(...) LOG(L_WARN, __VA_ARGS__)
+#define LLM_NOTICE(...) LOG(L_NOTICE, __VA_ARGS__)
+#define LLM_INFO(...) LOG(L_INFO, __VA_ARGS__)
+#define LLM_CRIT(...) LOG(L_CRIT2, __VA_ARGS__)
+
+#ifdef NO_DEBUG
+#define LLM_DBG(...)
+#else
+#define LLM_DBG(...) LOG(L_DBG, __VA_ARGS__)
+#endif
+
 #else /* ! __SUNPRO_C */
 #define NPRL(fmt, args...) LOG(L_NPRL, fmt, ##args)
 #define ALERT(fmt, args...) LOG(L_ALERT, fmt, ##args)
@@ -424,6 +455,29 @@ void log_prefix_init(void);
 
 /* obsolete, do not use */
 #define DEBUG(fmt, args...) DBG(fmt, ##args)
+
+#ifdef MOD_NAMEID
+
+#define KSR_LLMODVAR_COMBINEZ(X,Y) X##Y
+#define KSR_LLMODVAR_COMBINE(X,Y) KSR_LLMODVAR_COMBINEZ(X,Y)
+#define KSR_LLMODVAR KSR_LLMODVAR_COMBINE(_ksr_loglevels_,MOD_NAMEID)
+
+/* use local log level mapping */
+#define LLM_ALERT(fmt, args...) LOG(KSR_LLMODVAR.alert, fmt, ##args)
+#define LLM_BUG(fmt, args...) LOG(KSR_LLMODVAR.buf, fmt, ##args)
+#define LLM_ERR(fmt, args...) LOG(KSR_LLMODVAR.bug, fmt, ##args)
+#define LLM_WARN(fmt, args...) LOG(KSR_LLMODVAR.warn, fmt, ##args)
+#define LLM_NOTICE(fmt, args...) LOG(KSR_LLMODVAR.notice, fmt, ##args)
+#define LLM_INFO(fmt, args...) LOG(KSR_LLMODVAR.ll_info, fmt, ##args)
+#define LLM_CRIT(fmt, args...) LOG(KSR_LLMODVAR.crit, fmt, ##args)
+
+#ifdef NO_DEBUG
+#define LLM_DBG(fmt, args...)
+#else
+#define LLM_DBG(fmt, args...) LOG(KSR_LLMODVAR.ll_dbg, fmt, ##args)
+#endif
+
+#endif /* MOD_NAMEID */
 
 #endif /* __SUNPRO_C */
 

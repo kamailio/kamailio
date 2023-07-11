@@ -386,16 +386,22 @@ static int mod_init(void)
 	return 0;
 }
 
+/* clang-format off */
 static sr_kemi_t kazoo_kemi_exports[] = {
-		{str_init("kazoo"), str_init("kazoo_publish"), SR_KEMIP_INT,
-				ki_kz_amqp_publish,
-				{SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("kazoo"), str_init("kazoo_subscribe"), SR_KEMIP_INT,
-				ki_kz_amqp_subscribe,
-				{SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}};
+	{ str_init("kazoo"), str_init("kazoo_publish"),
+		SR_KEMIP_INT, ki_kz_amqp_publish,
+			{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kazoo"), str_init("kazoo_subscribe"),
+		SR_KEMIP_INT, ki_kz_amqp_subscribe,
+			{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0} }
+};
+/* clang-format on */
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {

@@ -726,7 +726,7 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 
 	LM_DBG("completed with status %d\n", ps->code);
 
-	hdr = get_autenticate_hdr(ps->rpl, ps->code);
+	hdr = get_authenticate_hdr(ps->rpl, ps->code);
 	if(hdr == 0) {
 		LM_ERR("failed to extract authenticate hdr\n");
 		goto error;

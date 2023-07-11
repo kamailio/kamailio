@@ -151,7 +151,6 @@ int diameter_peer_init_real()
 	if(!cdp_sessions_init(config->sessions_hash_size))
 		goto error;
 
-
 	/* add callback for messages - used to implement the API */
 	cb_add(api_callback, 0);
 
@@ -162,16 +161,20 @@ error:
 		shm_free(shutdownx);
 	if(config)
 		free_dp_config(config);
-	i = pid_list->head;
-	while(i) {
-		j = i->next;
-		shm_free(i);
-		i = j;
+	if(pid_list) {
+		i = pid_list->head;
+		while(i) {
+			j = i->next;
+			shm_free(i);
+			i = j;
+		}
+		shm_free(pid_list);
 	}
-	shm_free(pid_list);
-	lock_get(pid_list_lock);
-	lock_destroy(pid_list_lock);
-	lock_dealloc((void *)pid_list_lock);
+	if(pid_list_lock) {
+		lock_get(pid_list_lock);
+		lock_destroy(pid_list_lock);
+		lock_dealloc((void *)pid_list_lock);
+	}
 	return 0;
 }
 

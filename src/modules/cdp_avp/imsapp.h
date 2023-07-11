@@ -59,7 +59,7 @@
 #define CDP_AVP_MODULE imsapp
 
 #if !defined(CDP_AVP_DECLARATION) && !defined(CDP_AVP_EXPORT) \
-		&& !defined(CDP_AVP_INIT) && !defined(CDP_AVP_REFERENCE)
+	&& !defined(CDP_AVP_INIT) && !defined(CDP_AVP_REFERENCE)
 #ifndef _CDP_AVP_IMSAPP_H_1
 #define _CDP_AVP_IMSAPP_H_1
 
@@ -146,581 +146,578 @@
  *  
  *  vendor_id_group - an int value
  *  
- *  avp_name_N	- the name of the Nth parameter. 
- *  	Previously, a cdp_avp_get(<avp_name_N>,<vendor_id_N>,<avp_type_N>,<data_type_N>) must be defined!
- *  
- *  data_type_N	- the respective data type for avp_type_N (same as <data_type_N) 
- *  
- *  The functions generated will return the number of found AVPs inside on success or 0 on error or not found
- *  The prototype of the function will be:
- *  
- *  	int cdp_avp_get_<avp_name_group>_Group(AAA_AVP_LIST list,<data_type_1> *avp_name_1,<data_type_2> *avp_name_2[,<data_type_3> *avp_name_3],AAA_AVP **avp_ptr)
- *  
- *  Note - generally, all data of type str will need to be defined with ..._ptr
- *  Note - Groups must be defined with:
- *  	 cdp_avp_add_ptr(...) and data_type AAA_AVP_LIST*
- *  	 cdp_avp_get(...) and data_type AAA_AVP_LIST 	
- */
+*  avp_name_N	- the name of the Nth parameter. 
+	   *  	Previously, a cdp_avp_get(<avp_name_N>,<vendor_id_N>,<avp_type_N>,<data_type_N>) must be defined!
+	*  
+	   *  data_type_N	- the respective data type for avp_type_N (same as <data_type_N) 
+		  *  
+			 *  The functions generated will return the number of found AVPs inside on success or 0 on error or not found
+				*  The prototype of the function will be:
+	*  
+	   *  	int cdp_avp_get_<avp_name_group>_Group(AAA_AVP_LIST list,<data_type_1> *avp_name_1,<data_type_2> *avp_name_2[,<data_type_3> *avp_name_3],AAA_AVP **avp_ptr)
+		  *  
+			 *  Note - generally, all data of type str will need to be defined with ..._ptr
+				*  Note - Groups must be defined with:
+				   *  	 cdp_avp_add_ptr(...) and data_type AAA_AVP_LIST*
+				   *  	 cdp_avp_get(...) and data_type AAA_AVP_LIST 	
+				   */
 #undef CDP_AVP_NAME
 #define CDP_AVP_NAME(avp_name) AVP_IMS_##avp_name
 
+/* clang-format off */
 cdp_avp_ptr(Visited_Network_Identifier, IMS_vendor_id_3GPP,
 		AAA_AVP_FLAG_MANDATORY, OctetString, str)
 
-		cdp_avp_ptr(Public_Identity, IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY,
-				UTF8String, str)
+cdp_avp_ptr(Public_Identity, IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY,
+		UTF8String, str)
 
-				cdp_avp_ptr(Server_Name, IMS_vendor_id_3GPP,
-						AAA_AVP_FLAG_MANDATORY, UTF8String, str)
+cdp_avp_ptr(Server_Name, IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY, UTF8String, str)
 
-						cdp_avp_add_ptr(Server_Capabilities, IMS_vendor_id_3GPP,
-								AAA_AVP_FLAG_MANDATORY, Grouped,
-								AAA_AVP_LIST *) cdp_avp_get(Server_Capabilities,
-								IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY,
-								Grouped, AAA_AVP_LIST)
+cdp_avp_add_ptr(Server_Capabilities, IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY, Grouped,
+		AAA_AVP_LIST *) cdp_avp_get(Server_Capabilities,
+			IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY,
+			Grouped, AAA_AVP_LIST)
 
-								cdp_avp(Mandatory_Capability,
-										IMS_vendor_id_3GPP,
-										AAA_AVP_FLAG_MANDATORY, Unsigned32,
-										uint32_t)
+cdp_avp(Mandatory_Capability,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY, Unsigned32,
+		uint32_t)
 
-										cdp_avp(Optional_Capability,
-												IMS_vendor_id_3GPP,
-												AAA_AVP_FLAG_MANDATORY,
-												Unsigned32, uint32_t)
+cdp_avp(Optional_Capability,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32, uint32_t)
 
-												cdp_avp_ptr(User_Data_Cx,
-														IMS_vendor_id_3GPP,
-														AAA_AVP_FLAG_MANDATORY,
-														OctetString, str)
+cdp_avp_ptr(User_Data_Cx,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString, str)
 
-														cdp_avp(SIP_Number_Auth_Items,
-																IMS_vendor_id_3GPP,
-																AAA_AVP_FLAG_MANDATORY,
-																Unsigned32,
-																uint32_t)
+cdp_avp(SIP_Number_Auth_Items,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																cdp_avp_ptr(
-																		SIP_Authentication_Scheme,
-																		IMS_vendor_id_3GPP,
-																		AAA_AVP_FLAG_MANDATORY,
-																		UTF8String,
-																		str)
+cdp_avp_ptr(
+		SIP_Authentication_Scheme,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		UTF8String,
+		str)
 
-																		cdp_avp_ptr(
-																				SIP_Authenticate,
-																				IMS_vendor_id_3GPP,
-																				AAA_AVP_FLAG_MANDATORY,
-																				OctetString,
-																				str)
+cdp_avp_ptr(
+		SIP_Authenticate,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																				cdp_avp_ptr(
-																						SIP_Authorization,
-																						IMS_vendor_id_3GPP,
-																						AAA_AVP_FLAG_MANDATORY,
-																						OctetString,
-																						str)
+cdp_avp_ptr(
+		SIP_Authorization,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																						cdp_avp_ptr(
-																								SIP_Authentication_Context,
-																								IMS_vendor_id_3GPP,
-																								AAA_AVP_FLAG_MANDATORY,
-																								OctetString,
-																								str)
+cdp_avp_ptr(
+		SIP_Authentication_Context,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																								cdp_avp_add_ptr(
-																										SIP_Auth_Data_Item,
-																										IMS_vendor_id_3GPP,
-																										AAA_AVP_FLAG_MANDATORY,
-																										Grouped,
-																										AAA_AVP_LIST
-																												*)
-																										cdp_avp_get(
-																												SIP_Auth_Data_Item,
-																												IMS_vendor_id_3GPP,
-																												AAA_AVP_FLAG_MANDATORY,
-																												Grouped,
-																												AAA_AVP_LIST)
+cdp_avp_add_ptr(
+		SIP_Auth_Data_Item,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		SIP_Auth_Data_Item,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST)
 
-																												cdp_avp(SIP_Item_Number,
-																														IMS_vendor_id_3GPP,
-																														AAA_AVP_FLAG_MANDATORY,
-																														Unsigned32,
-																														uint32_t)
+cdp_avp(SIP_Item_Number,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																														cdp_avp(Server_Assignment_Type,
-																																IMS_vendor_id_3GPP,
-																																AAA_AVP_FLAG_MANDATORY,
-																																Enumerated,
-																																int32_t)
+cdp_avp(Server_Assignment_Type,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																cdp_avp_add_ptr(Deregistration_Reason, IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY, Grouped, AAA_AVP_LIST *)
-																																		cdp_avp_get(
-																																				Deregistration_Reason,
-																																				IMS_vendor_id_3GPP,
-																																				AAA_AVP_FLAG_MANDATORY,
-																																				Grouped,
-																																				AAA_AVP_LIST)
+cdp_avp_add_ptr(Deregistration_Reason, IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY, Grouped, AAA_AVP_LIST *)
+cdp_avp_get(
+		Deregistration_Reason,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST)
 
-																																				cdp_avp(Reason_Code,
-																																						IMS_vendor_id_3GPP,
-																																						AAA_AVP_FLAG_MANDATORY,
-																																						Enumerated,
-																																						int32_t)
+cdp_avp(Reason_Code,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																						cdp_avp_ptr(
-																																								Reason_Info,
-																																								IMS_vendor_id_3GPP,
-																																								AAA_AVP_FLAG_MANDATORY,
-																																								UTF8String,
-																																								str)
+cdp_avp_ptr(
+		Reason_Info,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		UTF8String,
+		str)
 
-																																								cdp_avp_add_ptr(
-																																										Charging_Information,
-																																										IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY,
-																																										Grouped,
-																																										AAA_AVP_LIST
-																																												*)
-																																										cdp_avp_get(
-																																												Charging_Information,
-																																												IMS_vendor_id_3GPP,
-																																												AAA_AVP_FLAG_MANDATORY,
-																																												Grouped,
-																																												AAA_AVP_LIST)
+cdp_avp_add_ptr(
+		Charging_Information,
+		IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		Charging_Information,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST)
 
-																																												cdp_avp_ptr(
-																																														Primary_Event_Charging_Function_Name,
-																																														IMS_vendor_id_3GPP,
-																																														AAA_AVP_FLAG_MANDATORY,
-																																														DiameterURI,
-																																														str)
+cdp_avp_ptr(
+		Primary_Event_Charging_Function_Name,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		DiameterURI,
+		str)
 
-																																														cdp_avp_ptr(
-																																																Secondary_Event_Charging_Function_Name,
-																																																IMS_vendor_id_3GPP,
-																																																AAA_AVP_FLAG_MANDATORY,
-																																																DiameterURI,
-																																																str)
+cdp_avp_ptr(
+		Secondary_Event_Charging_Function_Name,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		DiameterURI,
+		str)
 
-																																																cdp_avp_ptr(
-																																																		Primary_Charging_Collection_Function_Name,
-																																																		IMS_vendor_id_3GPP,
-																																																		AAA_AVP_FLAG_MANDATORY,
-																																																		DiameterURI,
-																																																		str)
+cdp_avp_ptr(
+		Primary_Charging_Collection_Function_Name,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		DiameterURI,
+		str)
 
-																																																		cdp_avp_ptr(
-																																																				Secondary_Charging_Collection_Function_Name, IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY, DiameterURI, str)
+cdp_avp_ptr(
+		Secondary_Charging_Collection_Function_Name, IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY, DiameterURI, str)
 
-																																																				cdp_avp(User_Authorization_Type,
-																																																						IMS_vendor_id_3GPP,
-																																																						AAA_AVP_FLAG_MANDATORY,
-																																																						Enumerated,
-																																																						int32_t)
+cdp_avp(User_Authorization_Type,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																																						cdp_avp(User_Data_Already_Available,
-																																																								IMS_vendor_id_3GPP,
-																																																								AAA_AVP_FLAG_MANDATORY,
-																																																								Enumerated,
-																																																								int32_t)
+cdp_avp(User_Data_Already_Available,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																																								cdp_avp_ptr(
-																																																										Confidentiality_Key,
-																																																										IMS_vendor_id_3GPP,
-																																																										AAA_AVP_FLAG_MANDATORY,
-																																																										OctetString,
-																																																										str)
+cdp_avp_ptr(
+		Confidentiality_Key,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																										cdp_avp_ptr(
-																																																												Integrity_Key,
-																																																												IMS_vendor_id_3GPP,
-																																																												AAA_AVP_FLAG_MANDATORY,
-																																																												OctetString,
-																																																												str)
+cdp_avp_ptr(
+		Integrity_Key,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																												cdp_avp_add_ptr(
-																																																														Supported_Features,
-																																																														IMS_vendor_id_3GPP,
-																																																														0,
-																																																														Grouped,
-																																																														AAA_AVP_LIST
-																																																																*)
-																																																														cdp_avp_add3(
-																																																																Supported_Features, IMS_vendor_id_3GPP, 0, Vendor_Id, uint32_t,
-																																																																Feature_List_ID,
-																																																																uint32_t,
-																																																																Feature_List,
-																																																																uint32_t) cdp_avp_get(Supported_Features, IMS_vendor_id_3GPP, 0, Grouped, AAA_AVP_LIST)
-																																																																cdp_avp_get3(
-																																																																		Supported_Features,
-																																																																		IMS_vendor_id_3GPP,
-																																																																		0,
-																																																																		Vendor_Id, uint32_t, Feature_List_ID, uint32_t, Feature_List, uint32_t)
+cdp_avp_add_ptr(
+		Supported_Features,
+		IMS_vendor_id_3GPP,
+		0,
+		Grouped,
+		AAA_AVP_LIST
+		*)
+cdp_avp_add3(
+		Supported_Features, IMS_vendor_id_3GPP, 0, Vendor_Id, uint32_t,
+		Feature_List_ID,
+		uint32_t,
+		Feature_List,
+		uint32_t)
 
-																																																																		cdp_avp(Feature_List_ID,
-																																																																				IMS_vendor_id_3GPP,
-																																																																				0,
-																																																																				Unsigned32,
-																																																																				uint32_t)
+cdp_avp_get(Supported_Features, IMS_vendor_id_3GPP, 0, Grouped, AAA_AVP_LIST)
 
-																																																																				cdp_avp(Feature_List,
-																																																																						IMS_vendor_id_3GPP,
-																																																																						0,
-																																																																						Unsigned32,
-																																																																						uint32_t)
+cdp_avp_get3(
+		Supported_Features,
+		IMS_vendor_id_3GPP,
+		0,
+		Vendor_Id, uint32_t, Feature_List_ID, uint32_t, Feature_List, uint32_t)
 
-																																																																						cdp_avp_add_ptr(
-																																																																								Supported_Applications,
-																																																																								IMS_vendor_id_3GPP,
-																																																																								0,
-																																																																								Grouped,
-																																																																								AAA_AVP_LIST
-																																																																										*)
-																																																																								cdp_avp_get(
-																																																																										Supported_Applications,
-																																																																										IMS_vendor_id_3GPP,
-																																																																										0,
-																																																																										Grouped,
-																																																																										AAA_AVP_LIST)
+cdp_avp(Feature_List_ID,
+		IMS_vendor_id_3GPP,
+		0,
+		Unsigned32,
+		uint32_t)
 
-																																																																										cdp_avp_add_ptr(
-																																																																												Associated_Identities,
-																																																																												IMS_vendor_id_3GPP, 0, Grouped,
-																																																																												AAA_AVP_LIST
-																																																																														*)
-																																																																												cdp_avp_get(
-																																																																														Associated_Identities,
-																																																																														IMS_vendor_id_3GPP,
-																																																																														0,
-																																																																														Grouped,
-																																																																														AAA_AVP_LIST)
+cdp_avp(Feature_List,
+		IMS_vendor_id_3GPP,
+		0,
+		Unsigned32,
+		uint32_t)
 
-																																																																														cdp_avp(Originating_Request,
-																																																																																IMS_vendor_id_3GPP,
-																																																																																AAA_AVP_FLAG_MANDATORY,
-																																																																																Enumerated,
-																																																																																int32_t)
+cdp_avp_add_ptr(
+		Supported_Applications,
+		IMS_vendor_id_3GPP,
+		0,
+		Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		Supported_Applications,
+		IMS_vendor_id_3GPP,
+		0,
+		Grouped,
+		AAA_AVP_LIST)
 
-																																																																																cdp_avp_ptr(Wildcarded_PSI, IMS_vendor_id_3GPP, 0,
-																																																																																		UTF8String,
-																																																																																		str)
+cdp_avp_add_ptr(
+		Associated_Identities,
+		IMS_vendor_id_3GPP, 0, Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		Associated_Identities,
+		IMS_vendor_id_3GPP,
+		0,
+		Grouped,
+		AAA_AVP_LIST)
 
-																																																																																		cdp_avp_add_ptr(SIP_Digest_Authenticate, IMS_vendor_id_3GPP, 0, Grouped,
-																																																																																				AAA_AVP_LIST
-																																																																																						*)
-																																																																																				cdp_avp_get(
-																																																																																						SIP_Digest_Authenticate,
-																																																																																						IMS_vendor_id_3GPP,
-																																																																																						0,
-																																																																																						Grouped,
-																																																																																						AAA_AVP_LIST)
+cdp_avp(Originating_Request,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																																																																						cdp_avp_ptr(
-																																																																																								Wildcarded_IMPU,
-																																																																																								IMS_vendor_id_3GPP,
-																																																																																								0,
-																																																																																								UTF8String,
-																																																																																								str)
+cdp_avp_ptr(Wildcarded_PSI, IMS_vendor_id_3GPP, 0,
+		UTF8String,
+		str)
 
-																																																																																								cdp_avp(UAR_Flags,
-																																																																																										IMS_vendor_id_3GPP,
-																																																																																										0,
-																																																																																										Unsigned32,
-																																																																																										uint32_t)
+cdp_avp_add_ptr(SIP_Digest_Authenticate, IMS_vendor_id_3GPP, 0, Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		SIP_Digest_Authenticate,
+		IMS_vendor_id_3GPP,
+		0,
+		Grouped,
+		AAA_AVP_LIST)
 
-																																																																																										cdp_avp(Loose_Route_Indication,
-																																																																																												IMS_vendor_id_3GPP,
-																																																																																												0,
-																																																																																												Enumerated,
-																																																																																												int32_t)
+cdp_avp_ptr(
+		Wildcarded_IMPU,
+		IMS_vendor_id_3GPP,
+		0,
+		UTF8String,
+		str)
 
-																																																																																												cdp_avp_add_ptr(
-																																																																																														SCSCF_Restoration_Info,
-																																																																																														IMS_vendor_id_3GPP,
-																																																																																														0,
-																																																																																														Grouped,
-																																																																																														AAA_AVP_LIST
-																																																																																																*)
-																																																																																														cdp_avp_get(
-																																																																																																SCSCF_Restoration_Info, IMS_vendor_id_3GPP, 0,
-																																																																																																Grouped,
-																																																																																																AAA_AVP_LIST)
+cdp_avp(UAR_Flags,
+		IMS_vendor_id_3GPP,
+		0,
+		Unsigned32,
+		uint32_t)
 
-																																																																																																cdp_avp_ptr(Path, IMS_vendor_id_3GPP, 0, OctetString,
-																																																																																																		str)
+cdp_avp(Loose_Route_Indication,
+		IMS_vendor_id_3GPP,
+		0,
+		Enumerated,
+		int32_t)
 
-																																																																																																		cdp_avp_ptr(
-																																																																																																				Contact,
-																																																																																																				IMS_vendor_id_3GPP, 0, OctetString,
-																																																																																																				str)
+cdp_avp_add_ptr(
+		SCSCF_Restoration_Info,
+		IMS_vendor_id_3GPP,
+		0,
+		Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		SCSCF_Restoration_Info, IMS_vendor_id_3GPP, 0,
+		Grouped,
+		AAA_AVP_LIST)
 
-																																																																																																				cdp_avp_add_ptr(
-																																																																																																						Subscription_Info, IMS_vendor_id_3GPP, 0, Grouped, AAA_AVP_LIST *)
-																																																																																																						cdp_avp_get(Subscription_Info,
-																																																																																																								IMS_vendor_id_3GPP,
-																																																																																																								0, Grouped,
-																																																																																																								AAA_AVP_LIST)
+cdp_avp_ptr(Path, IMS_vendor_id_3GPP, 0, OctetString,
+		str)
 
-																																																																																																								cdp_avp_ptr(
-																																																																																																										From_SIP_Header,
-																																																																																																										IMS_vendor_id_3GPP, 0, OctetString,
-																																																																																																										str)
+cdp_avp_ptr(
+		Contact,
+		IMS_vendor_id_3GPP, 0, OctetString,
+		str)
 
-																																																																																																										cdp_avp_ptr(
-																																																																																																												To_SIP_Header,
-																																																																																																												IMS_vendor_id_3GPP,
-																																																																																																												0,
-																																																																																																												OctetString,
-																																																																																																												str)
+cdp_avp_add_ptr(
+		Subscription_Info, IMS_vendor_id_3GPP, 0, Grouped, AAA_AVP_LIST *)
+cdp_avp_get(Subscription_Info,
+		IMS_vendor_id_3GPP,
+		0, Grouped,
+		AAA_AVP_LIST)
 
-																																																																																																												cdp_avp_ptr(
-																																																																																																														Record_Route,
-																																																																																																														IMS_vendor_id_3GPP,
-																																																																																																														0,
-																																																																																																														OctetString,
-																																																																																																														str)
+cdp_avp_ptr(
+		From_SIP_Header,
+		IMS_vendor_id_3GPP, 0, OctetString,
+		str)
 
-																																																																																																														cdp_avp_add_ptr(
-																																																																																																																Associated_Registered_Identities,
-																																																																																																																IMS_vendor_id_3GPP,
-																																																																																																																0,
-																																																																																																																Grouped,
-																																																																																																																AAA_AVP_LIST
-																																																																																																																		*)
-																																																																																																																cdp_avp_get(
-																																																																																																																		Associated_Registered_Identities,
-																																																																																																																		IMS_vendor_id_3GPP, 0,
-																																																																																																																		Grouped,
-																																																																																																																		AAA_AVP_LIST)
+cdp_avp_ptr(
+		To_SIP_Header,
+		IMS_vendor_id_3GPP,
+		0,
+		OctetString,
+		str)
 
-																																																																																																																		cdp_avp(Multiple_Registration_Indication,
-																																																																																																																				IMS_vendor_id_3GPP,
-																																																																																																																				0,
-																																																																																																																				Enumerated,
-																																																																																																																				int32_t)
+cdp_avp_ptr(
+		Record_Route,
+		IMS_vendor_id_3GPP,
+		0,
+		OctetString,
+		str)
 
-																																																																																																																				cdp_avp_add_ptr(
-																																																																																																																						Restoration_Info,
-																																																																																																																						IMS_vendor_id_3GPP,
-																																																																																																																						0,
-																																																																																																																						Grouped,
-																																																																																																																						AAA_AVP_LIST
-																																																																																																																								*)
-																																																																																																																						cdp_avp_get(Restoration_Info, IMS_vendor_id_3GPP, 0, Grouped, AAA_AVP_LIST)
+cdp_avp_add_ptr(
+		Associated_Registered_Identities,
+		IMS_vendor_id_3GPP,
+		0,
+		Grouped,
+		AAA_AVP_LIST
+		*)
 
-																																																																																																																								cdp_avp_ptr(Access_Network_Information,
-																																																																																																																										IMS_vendor_id_3GPP, 0, UTF8String,
-																																																																																																																										str)
+cdp_avp_get(
+		Associated_Registered_Identities,
+		IMS_vendor_id_3GPP, 0,
+		Grouped,
+		AAA_AVP_LIST)
+
+cdp_avp(Multiple_Registration_Indication,
+		IMS_vendor_id_3GPP,
+		0,
+		Enumerated,
+		int32_t)
+
+cdp_avp_add_ptr(
+		Restoration_Info,
+		IMS_vendor_id_3GPP,
+		0,
+		Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(Restoration_Info, IMS_vendor_id_3GPP, 0, Grouped, AAA_AVP_LIST)
+
+cdp_avp_ptr(Access_Network_Information,
+		IMS_vendor_id_3GPP, 0, UTF8String,
+		str)
 
 
 /*
  * ETSI something, that probably does not exist anymore
- * 
+ *
  */
 #undef CDP_AVP_NAME
 #define CDP_AVP_NAME(avp_name) AVP_##avp_name
 
-																																																																																																																										cdp_avp_ptr(
-																																																																																																																												ETSI_Line_Identifier,
-																																																																																																																												IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY,
-																																																																																																																												OctetString,
-																																																																																																																												str)
+cdp_avp_ptr(
+		ETSI_Line_Identifier,
+		IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																												cdp_avp_add_ptr(
-																																																																																																																														ETSI_SIP_Authenticate,
-																																																																																																																														IMS_vendor_id_ETSI,
-																																																																																																																														AAA_AVP_FLAG_MANDATORY,
-																																																																																																																														Grouped,
-																																																																																																																														AAA_AVP_LIST
-																																																																																																																																*)
-																																																																																																																														cdp_avp_get(
-																																																																																																																																ETSI_SIP_Authenticate,
-																																																																																																																																IMS_vendor_id_ETSI,
-																																																																																																																																AAA_AVP_FLAG_MANDATORY, Grouped, AAA_AVP_LIST)
+cdp_avp_add_ptr(
+		ETSI_SIP_Authenticate,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		ETSI_SIP_Authenticate,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY, Grouped, AAA_AVP_LIST)
 
-																																																																																																																																cdp_avp_add_ptr(
-																																																																																																																																		ETSI_SIP_Authorization, IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY, Grouped,
-																																																																																																																																		AAA_AVP_LIST
-																																																																																																																																				*)
-																																																																																																																																		cdp_avp_get(
-																																																																																																																																				ETSI_SIP_Authorization,
-																																																																																																																																				IMS_vendor_id_ETSI,
-																																																																																																																																				AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																				Grouped,
-																																																																																																																																				AAA_AVP_LIST)
+cdp_avp_add_ptr(
+		ETSI_SIP_Authorization, IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY, Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		ETSI_SIP_Authorization,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST)
 
-																																																																																																																																				cdp_avp_add_ptr(
-																																																																																																																																						ETSI_SIP_Authentication_Info, IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY, Grouped,
-																																																																																																																																						AAA_AVP_LIST
-																																																																																																																																								*)
-																																																																																																																																						cdp_avp_get(
-																																																																																																																																								ETSI_SIP_Authentication_Info,
-																																																																																																																																								IMS_vendor_id_ETSI,
-																																																																																																																																								AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																								Grouped,
-																																																																																																																																								AAA_AVP_LIST)
+cdp_avp_add_ptr(
+		ETSI_SIP_Authentication_Info, IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY,
+		Grouped, AAA_AVP_LIST*)
 
-																																																																																																																																								cdp_avp_ptr(
-																																																																																																																																										ETSI_Digest_Realm, IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY, OctetString, str)
+cdp_avp_get(
+		ETSI_SIP_Authentication_Info,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST)
 
-																																																																																																																																										cdp_avp_ptr(
-																																																																																																																																												ETSI_Digest_Nonce,
-																																																																																																																																												IMS_vendor_id_ETSI,
-																																																																																																																																												AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																												OctetString,
-																																																																																																																																												str)
+cdp_avp_ptr(
+		ETSI_Digest_Realm, IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY, OctetString, str)
 
-																																																																																																																																												cdp_avp_ptr(
-																																																																																																																																														ETSI_Digest_Domain,
-																																																																																																																																														IMS_vendor_id_ETSI,
-																																																																																																																																														AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																														OctetString,
-																																																																																																																																														str)
+cdp_avp_ptr(
+		ETSI_Digest_Nonce,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																														cdp_avp_ptr(
-																																																																																																																																																ETSI_Digest_Opaque,
-																																																																																																																																																IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY, OctetString,
-																																																																																																																																																str)
+cdp_avp_ptr(
+		ETSI_Digest_Domain,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																cdp_avp_ptr(
-																																																																																																																																																		ETSI_Digest_Stale,
-																																																																																																																																																		IMS_vendor_id_ETSI,
-																																																																																																																																																		AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																		OctetString,
-																																																																																																																																																		str)
+cdp_avp_ptr(
+		ETSI_Digest_Opaque,
+		IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY, OctetString,
+		str)
 
-																																																																																																																																																		cdp_avp_ptr(
-																																																																																																																																																				ETSI_Digest_Algorithm,
-																																																																																																																																																				IMS_vendor_id_ETSI,
-																																																																																																																																																				AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																				OctetString,
-																																																																																																																																																				str)
+cdp_avp_ptr(
+		ETSI_Digest_Stale,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																				cdp_avp_ptr(
-																																																																																																																																																						ETSI_Digest_QoP,
-																																																																																																																																																						IMS_vendor_id_ETSI,
-																																																																																																																																																						AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																						OctetString,
-																																																																																																																																																						str)
+cdp_avp_ptr(
+		ETSI_Digest_Algorithm,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																						cdp_avp_ptr(
-																																																																																																																																																								ETSI_Digest_HA1,
-																																																																																																																																																								IMS_vendor_id_ETSI,
-																																																																																																																																																								AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																								OctetString,
-																																																																																																																																																								str)
+cdp_avp_ptr(
+		ETSI_Digest_QoP,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																								cdp_avp_ptr(
-																																																																																																																																																										ETSI_Digest_Auth_Param,
-																																																																																																																																																										IMS_vendor_id_ETSI,
-																																																																																																																																																										AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																										OctetString,
-																																																																																																																																																										str)
+cdp_avp_ptr(
+		ETSI_Digest_HA1,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																										cdp_avp_ptr(
-																																																																																																																																																												ETSI_Digest_Username,
-																																																																																																																																																												IMS_vendor_id_ETSI,
-																																																																																																																																																												AAA_AVP_FLAG_MANDATORY, OctetString,
-																																																																																																																																																												str)
+cdp_avp_ptr(
+		ETSI_Digest_Auth_Param,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																												cdp_avp_ptr(
-																																																																																																																																																														ETSI_Digest_URI,
-																																																																																																																																																														IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY, OctetString, str)
+cdp_avp_ptr(
+		ETSI_Digest_Username,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY, OctetString,
+		str)
 
-																																																																																																																																																														cdp_avp_ptr(ETSI_Digest_Response, IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																OctetString,
-																																																																																																																																																																str)
+cdp_avp_ptr(
+		ETSI_Digest_URI,
+		IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY, OctetString, str)
 
-																																																																																																																																																																cdp_avp_ptr(
-																																																																																																																																																																		ETSI_Digest_CNonce,
-																																																																																																																																																																		IMS_vendor_id_ETSI,
-																																																																																																																																																																		AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																		OctetString,
-																																																																																																																																																																		str)
+cdp_avp_ptr(ETSI_Digest_Response, IMS_vendor_id_ETSI, AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																																		cdp_avp_ptr(
-																																																																																																																																																																				ETSI_Digest_Nonce_Count,
-																																																																																																																																																																				IMS_vendor_id_ETSI,
-																																																																																																																																																																				AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																				OctetString,
-																																																																																																																																																																				str)
+cdp_avp_ptr(
+		ETSI_Digest_CNonce,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																																				cdp_avp_ptr(
-																																																																																																																																																																						ETSI_Digest_Method,
-																																																																																																																																																																						IMS_vendor_id_ETSI,
-																																																																																																																																																																						AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																						OctetString,
-																																																																																																																																																																						str)
+cdp_avp_ptr(
+		ETSI_Digest_Nonce_Count,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																																						cdp_avp_ptr(
-																																																																																																																																																																								ETSI_Digest_Entity_Body_Hash,
-																																																																																																																																																																								IMS_vendor_id_ETSI,
-																																																																																																																																																																								AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																								OctetString,
-																																																																																																																																																																								str)
+cdp_avp_ptr(
+		ETSI_Digest_Method,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																																								cdp_avp_ptr(
-																																																																																																																																																																										ETSI_Digest_Nextnonce,
-																																																																																																																																																																										IMS_vendor_id_ETSI,
-																																																																																																																																																																										AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																										OctetString,
-																																																																																																																																																																										str)
+cdp_avp_ptr(
+		ETSI_Digest_Entity_Body_Hash,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																																										cdp_avp_ptr(
-																																																																																																																																																																												ETSI_Digest_Response_Auth,
-																																																																																																																																																																												IMS_vendor_id_ETSI,
-																																																																																																																																																																												AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																												OctetString,
-																																																																																																																																																																												str)
+cdp_avp_ptr(
+		ETSI_Digest_Nextnonce,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
+
+cdp_avp_ptr(
+		ETSI_Digest_Response_Auth,
+		IMS_vendor_id_ETSI,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
 
 /*
  * CableLabs 29.229
- * 
+ *
  */
 #undef CDP_AVP_NAME
 #define CDP_AVP_NAME(avp_name) AVP_##avp_name
 
-																																																																																																																																																																												cdp_avp_add_ptr(
-																																																																																																																																																																														CableLabs_SIP_Digest_Authenticate, IMS_vendor_id_CableLabs, AAA_AVP_FLAG_MANDATORY, Grouped,
-																																																																																																																																																																														AAA_AVP_LIST
-																																																																																																																																																																																*)
-																																																																																																																																																																														cdp_avp_get(
-																																																																																																																																																																																CableLabs_SIP_Digest_Authenticate, IMS_vendor_id_CableLabs, AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																																Grouped,
-																																																																																																																																																																																AAA_AVP_LIST)
+cdp_avp_add_ptr(
+		CableLabs_SIP_Digest_Authenticate, IMS_vendor_id_CableLabs, AAA_AVP_FLAG_MANDATORY, Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		CableLabs_SIP_Digest_Authenticate, IMS_vendor_id_CableLabs, AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST)
 
-																																																																																																																																																																																cdp_avp_ptr(
-																																																																																																																																																																																		CableLabs_Digest_Realm, IMS_vendor_id_CableLabs, AAA_AVP_FLAG_MANDATORY, OctetString,
-																																																																																																																																																																																		str)
+cdp_avp_ptr(
+		CableLabs_Digest_Realm, IMS_vendor_id_CableLabs, AAA_AVP_FLAG_MANDATORY, OctetString,
+		str)
 
-																																																																																																																																																																																		cdp_avp_ptr(
-																																																																																																																																																																																				CableLabs_Digest_Domain,
-																																																																																																																																																																																				IMS_vendor_id_CableLabs,
-																																																																																																																																																																																				AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																																				OctetString,
-																																																																																																																																																																																				str)
+cdp_avp_ptr(
+		CableLabs_Digest_Domain,
+		IMS_vendor_id_CableLabs,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																																																				cdp_avp_ptr(
-																																																																																																																																																																																						CableLabs_Digest_Algorithm,
-																																																																																																																																																																																						IMS_vendor_id_CableLabs,
-																																																																																																																																																																																						AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																																						OctetString,
-																																																																																																																																																																																						str)
+cdp_avp_ptr(
+		CableLabs_Digest_Algorithm,
+		IMS_vendor_id_CableLabs,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																																																						cdp_avp_ptr(
-																																																																																																																																																																																								CableLabs_Digest_QoP,
-																																																																																																																																																																																								IMS_vendor_id_CableLabs,
-																																																																																																																																																																																								AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																																								OctetString,
-																																																																																																																																																																																								str)
+cdp_avp_ptr(
+		CableLabs_Digest_QoP,
+		IMS_vendor_id_CableLabs,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																																																								cdp_avp_ptr(
-																																																																																																																																																																																										CableLabs_Digest_HA1, IMS_vendor_id_CableLabs, AAA_AVP_FLAG_MANDATORY, OctetString, str)
+cdp_avp_ptr(
+		CableLabs_Digest_HA1, IMS_vendor_id_CableLabs, AAA_AVP_FLAG_MANDATORY, OctetString, str)
 
-																																																																																																																																																																																										cdp_avp_ptr(
-																																																																																																																																																																																												CableLabs_Digest_Auth_Param,
-																																																																																																																																																																																												IMS_vendor_id_CableLabs, AAA_AVP_FLAG_MANDATORY, OctetString, str)
+cdp_avp_ptr(
+		CableLabs_Digest_Auth_Param,
+		IMS_vendor_id_CableLabs, AAA_AVP_FLAG_MANDATORY, OctetString, str)
 
 /*
  * TS 29.329
@@ -729,68 +726,70 @@ cdp_avp_ptr(Visited_Network_Identifier, IMS_vendor_id_3GPP,
 #undef CDP_AVP_NAME
 #define CDP_AVP_NAME(avp_name) AVP_IMS_##avp_name
 
-																																																																																																																																																																																												cdp_avp_add_ptr(
-																																																																																																																																																																																														User_Identity, IMS_vendor_id_3GPP,
-																																																																																																																																																																																														AAA_AVP_FLAG_MANDATORY, Grouped, AAA_AVP_LIST *) cdp_avp_get(User_Identity,
-																																																																																																																																																																																														IMS_vendor_id_3GPP,
-																																																																																																																																																																																														AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																																														Grouped, AAA_AVP_LIST)
+cdp_avp_add_ptr(
+		User_Identity, IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY, Grouped, AAA_AVP_LIST *)
 
-																																																																																																																																																																																														cdp_avp_ptr(
-																																																																																																																																																																																																MSISDN,
-																																																																																																																																																																																																IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY, OctetString, str)
+cdp_avp_get(User_Identity,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped, AAA_AVP_LIST)
 
-																																																																																																																																																																																																cdp_avp_ptr(
-																																																																																																																																																																																																		User_Data_Sh, IMS_vendor_id_3GPP,
-																																																																																																																																																																																																		AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																																																		OctetString, str)
+cdp_avp_ptr(
+		MSISDN,
+		IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY, OctetString, str)
 
-																																																																																																																																																																																																		cdp_avp(Data_Reference, IMS_vendor_id_3GPP,
-																																																																																																																																																																																																				AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																																																				Enumerated,
-																																																																																																																																																																																																				int32_t)
+cdp_avp_ptr(
+		User_Data_Sh, IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString, str)
 
-																																																																																																																																																																																																				cdp_avp_ptr(
-																																																																																																																																																																																																						Service_Indication,
-																																																																																																																																																																																																						IMS_vendor_id_3GPP,
-																																																																																																																																																																																																						AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																																																						OctetString,
-																																																																																																																																																																																																						str)
+cdp_avp(Data_Reference, IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																																																																																																																																																																																						cdp_avp(Subs_Req_Type,
-																																																																																																																																																																																																								IMS_vendor_id_3GPP,
-																																																																																																																																																																																																								AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																																																								Enumerated,
-																																																																																																																																																																																																								int32_t)
+cdp_avp_ptr(
+		Service_Indication,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																																																																																																								cdp_avp(Requested_Domain,
-																																																																																																																																																																																																										IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY, Enumerated,
-																																																																																																																																																																																																										int32_t)
+cdp_avp(Subs_Req_Type,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																																																																																																																																																																																										cdp_avp(Current_Location,
-																																																																																																																																																																																																												IMS_vendor_id_3GPP,
-																																																																																																																																																																																																												AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																																																												Enumerated,
-																																																																																																																																																																																																												int32_t)
+cdp_avp(Requested_Domain,
+		IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY, Enumerated,
+		int32_t)
 
-																																																																																																																																																																																																												cdp_avp(Identity_Set,
-																																																																																																																																																																																																														IMS_vendor_id_3GPP,
-																																																																																																																																																																																																														AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																																																														Enumerated,
-																																																																																																																																																																																																														int32_t)
+cdp_avp(Current_Location,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																																																																																																																																																																																														cdp_avp(Expiry_Time,
-																																																																																																																																																																																																																IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY, Time,
-																																																																																																																																																																																																																time_t)
+cdp_avp(Identity_Set,
+		IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																																																																																																																																																																																																cdp_avp(Send_Data_Indication, IMS_vendor_id_3GPP, 0,
-																																																																																																																																																																																																																		Enumerated,
-																																																																																																																																																																																																																		int32_t)
+cdp_avp(Expiry_Time,
+		IMS_vendor_id_3GPP, AAA_AVP_FLAG_MANDATORY, Time,
+		time_t)
 
-																																																																																																																																																																																																																		cdp_avp_ptr(DSAI_Tag, IMS_vendor_id_3GPP,
-																																																																																																																																																																																																																				AAA_AVP_FLAG_MANDATORY,
-																																																																																																																																																																																																																				OctetString,
-																																																																																																																																																																																																																				str)
+cdp_avp(Send_Data_Indication, IMS_vendor_id_3GPP, 0,
+		Enumerated,
+		int32_t)
+
+cdp_avp_ptr(DSAI_Tag, IMS_vendor_id_3GPP,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
 
 #undef CDP_AVP_NAME
@@ -804,49 +803,49 @@ cdp_avp_ptr(Visited_Network_Identifier, IMS_vendor_id_3GPP,
 #if defined(CDP_AVP_DEFINITION)
 
 /*
-	 * Put here your supplementary definitions. Typically:
-	 * 
-	 * int <function1>(param1)
-	 * {
-	 *   code1
-	 * }
-	 * 
-	 * 
-	 */
+ * Put here your supplementary definitions. Typically:
+ *
+ * int <function1>(param1)
+ * {
+ *   code1
+ * }
+ *
+ */
 
 
 #elif defined(CDP_AVP_EXPORT)
 
 /*
-	 * Put here your supplimentary exports in the format: 
-	 * 	<function_type1> <nice_function_name1>; 
-	 *  <function_type2> <nice_function_name1>;
-	 *  ...
-	 *  
-	 */
+ * Put here your supplimentary exports in the format: 
+ * 	<function_type1> <nice_function_name1>; 
+ *  <function_type2> <nice_function_name1>;
+ *  ...
+ *  
+ */
 
 
 #elif defined(CDP_AVP_INIT)
 
 /*
-	 * Put here your supplementary inits in the format: 
-	 * 	<function1>,
-	 *  <function2>,
-	 *  ...
-	 * 
-	 * Make sure you keep the same order as in export!
-	 * 
+ * Put here your supplementary inits in the format: 
+ * 	<function1>,
+ *  <function2>,
+ *  ...
+ * 
+ * Make sure you keep the same order as in export!
+ * 
 	 */
 
 
 #elif defined(CDP_AVP_REFERENCE)
+
 /*
-	 * Put here what you want to get in the reference. Typically:
-	 * <function1>
-	 * <function2>
-	 * ... 
-	 * 
-	 */
+ * Put here what you want to get in the reference. Typically:
+ * <function1>
+ * <function2>
+ * ... 
+ * 
+ */
 
 
 #elif defined(CDP_AVP_EMPTY_MACROS)
@@ -856,17 +855,17 @@ cdp_avp_ptr(Visited_Network_Identifier, IMS_vendor_id_3GPP,
 #else
 
 /*
-	 * Put here your definitions according to the declarations, exports, init, etc above. Typically:
-	 * 
-	 * int <function1(params1);>
-	 * typedef int <*function_type1>(params1);
-	 * 
-	 * int <function2(param2);>
-	 * typedef int <*function_type2>(params2);
-	 * 
-	 * ...
-	 *  
-	 */
+ * Put here your definitions according to the declarations, exports, init, etc above. Typically:
+ * 
+ * int <function1(params1);>
+ * typedef int <*function_type1>(params1);
+ * 
+ * int <function2(param2);>
+ * typedef int <*function_type2>(params2);
+ * 
+ * ...
+ *  
+ */
 
 
 #ifndef _CDP_AVP_IMSAPP_H_2
@@ -881,3 +880,4 @@ cdp_avp_ptr(Visited_Network_Identifier, IMS_vendor_id_3GPP,
 #define CDP_AVP_UNDEF_MACROS
 #include "macros.h"
 #undef CDP_AVP_UNDEF_MACROS
+/* clang-format on */

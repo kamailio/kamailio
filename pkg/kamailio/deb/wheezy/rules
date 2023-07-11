@@ -81,6 +81,7 @@ PACKAGE_GROUPS += outbound
 PACKAGE_GROUPS += websocket
 PACKAGE_GROUPS += autheph
 PACKAGE_GROUPS += erlang
+PACKAGE_GROUPS += microhttpd
 
 # Module groups to be packaged onto kamailio-extra-modules.
 EXTRA_GROUPS += ev

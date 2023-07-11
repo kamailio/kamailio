@@ -23,7 +23,7 @@ mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp \
 			carrierroute pdb qos sca seas sms sst timer tmrec uac_redirect \
 			xhttp xhttp_rpc xprint jsonrpcs nosip dmq_usrloc statsd rtjson \
 			log_custom keepalive ss7ops app_sqlang acc_diameter evrexec \
-			sipjson lrkproxy math xhttp_prom
+			sipjson lrkproxy math posops xhttp_prom
 
 # - common modules depending on database
 mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \
@@ -214,7 +214,7 @@ mod_list_erlang=erlang
 # - modules depending on systemd library
 mod_list_systemd=log_systemd systemdops
 
-# - modules depending on libnsq (+libev libevbuffsock liblcurl libjson-c) library
+# - modules depending on libnsq (+libev libevbuffsock libcurl libjson-c) library
 mod_list_nsq=nsq
 
 # - modules depending on librabbitmq library
@@ -234,6 +234,9 @@ mod_list_nats=nats
 
 # - modules depending on ruxc library
 mod_list_ruxc=ruxc
+
+# - modules depending on microhttpd library
+mod_list_microhttpd=microhttpd
 
 # - modules depending on secsipid library
 mod_list_secsipid=secsipid secsipid_proc
@@ -284,6 +287,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_stirshaken) \
 			   $(mod_list_tlsa) \
 			   $(mod_list_tls_wolfssl) \
+			   $(mod_list_microhttpd) \
 			   $(mod_list_rtp_media_server)
 
 
@@ -528,6 +532,9 @@ module_group_knats=$(mod_list_nats)
 
 # K ruxc modules
 module_group_kruxc=$(mod_list_ruxc)
+
+# K microhttpd module
+module_group_kmicrohttpd=$(mod_list_microhttpd)
 
 # K secsipid modules
 module_group_ksecsipid=$(mod_list_secsipid)

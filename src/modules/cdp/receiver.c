@@ -124,8 +124,8 @@ static int make_send_pipe(serviced_peer_t *sp)
 {
 	local_id++;
 	sp->send_pipe_name.s = shm_malloc(sizeof(PIPE_PREFIX) + 64);
-	sprintf(sp->send_pipe_name.s, "%s%d_%d_%d", PIPE_PREFIX, getpid(), local_id,
-			(unsigned int)time(0));
+	sprintf(sp->send_pipe_name.s, "%s%d_%d_%u", PIPE_PREFIX, getpid(), local_id,
+			(unsigned int)(unsigned long long)time(0));
 	sp->send_pipe_name.len = strlen(sp->send_pipe_name.s);
 
 	if(mkfifo(sp->send_pipe_name.s, 0666) < 0) {
@@ -161,8 +161,10 @@ static void close_send_pipe(serviced_peer_t *sp)
 {
 	int tmp;
 	if(sp->send_pipe_name.s) {
-		close(sp->send_pipe_fd);
-		close(sp->send_pipe_fd_out);
+		if(sp->send_pipe_fd >= 0)
+			close(sp->send_pipe_fd);
+		if(sp->send_pipe_fd_out >= 0)
+			close(sp->send_pipe_fd_out);
 		tmp = remove(sp->send_pipe_name.s);
 		if(tmp == -1) {
 			LM_ERR("could not remove send pipe\n");
@@ -949,7 +951,9 @@ int peer_connect(peer *p)
 		{ // Connect with timeout
 			int x;
 			x = fcntl(sock, F_GETFL, 0);
-			fcntl(sock, F_SETFL, x | O_NONBLOCK);
+			if(fcntl(sock, F_SETFL, x | O_NONBLOCK) < 0) {
+				LM_WARN("failed to set O_NONBLOCK on socket %d\n", sock);
+			}
 			int res = connect(sock, ainfo->ai_addr, ainfo->ai_addrlen);
 			if(res < 0) {
 				if(errno == EINPROGRESS) {

@@ -12,7 +12,7 @@ jobs:
   check-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: wolletd/clang-format-checker@v1.10
         with:
           target-ref: master
@@ -28,12 +28,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - distribution: bullseye
+          - distribution: bookworm
             compilier: gcc
-          - distribution: bullseye
+          - distribution: bookworm
             compilier: clang
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ammaraskar/gcc-problem-matcher@0.2.0
       - name: build
         run: |

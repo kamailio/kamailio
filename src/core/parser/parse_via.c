@@ -1090,7 +1090,7 @@ find_value:
 						state = F_COMP_VALUE;
 						break;
 /* '=' in any other COMP value state is an error,
-					 * and it will be catched by the default branch */
+					 * and it will be caught by the default branch */
 #endif
 					case P_STRING:
 						break;

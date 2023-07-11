@@ -1,5 +1,11 @@
 name: CIFuzz
-on: [pull_request]
+on:
+  pull_request:
+    branches: [ "master" ]
+  schedule:
+    - cron: "30 0 * * *"
+permissions:
+  contents: read
 jobs:
   Fuzzing:
     runs-on: ubuntu-latest
@@ -19,7 +25,7 @@ jobs:
         dry-run: false
         language: c
     - name: Upload Crash
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v3
       if: failure() && steps.build.outcome == 'success'
       with:
         name: artifacts

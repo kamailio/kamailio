@@ -314,7 +314,7 @@ Chapter 1. Admin Guide
    Name of Record-Route header parameter that will be used to store an
    encoded version of the original FROM URI.
 
-   This parameter is optional, it's default value being “vsf”.
+   The default value is “vsf”.
 
    Example 1.1. Set rr_from_store_param parameter
 ...
@@ -326,7 +326,7 @@ modparam("uac","rr_from_store_param","my_param")
    Name of Record-Route header parameter that will be used to store
    (encoded) the original TO URI.
 
-   This parameter is optional, it's default value being “vst”.
+   The default value is “vst”.
 
    Example 1.2. Set rr_to_store_param parameter
 ...
@@ -346,7 +346,7 @@ modparam("uac","rr_to_store_param","my_param")
        updated based on stored original URI. For this option you have to
        set “modparam("rr", "append_fromtag", 1)”.
 
-   This parameter is optional, it's default value being “auto”.
+   The default value is “auto”.
 
    Example 1.3. Set restore_mode parameter
 ...
@@ -543,7 +543,7 @@ modparam("uac", "reg_hash_size", 10)
 
    DB table name to fetch user profiles for registration.
 
-   This parameter is optional, it's default value being “uacreg”.
+   The default value is “uacreg”.
 
    Example 1.17. Set reg_db_table parameter
 ...
@@ -580,7 +580,7 @@ modparam("uac", "reg_keep_callid", 1)
 3.20. reg_active (int)
 
    If set to 0, no remote regisrations are done. In other words, it can
-   control at once if the module should do remote registratios or not. It
+   control at once if the module should do remote registrations or not. It
    can be changed at runtime via rpc command 'uac.reg_active 0|1'.
 
    The default value is 1 (active).
@@ -1129,7 +1129,7 @@ event_route[uac:reply] {
 8.2.  uac.reg_info
 
    Return the details of a remote registration record based on a filter.
-   The command has two parameter: attribute and value. The attribute can
+   The command has two parameters: attribute and value. The attribute can
    be: l_uuid, l_username, r_username or auth_username. The value is what
    should be matched against the value of the attribute in the remote
    registration record.
@@ -1138,7 +1138,7 @@ event_route[uac:reply] {
      * 1 (2^0) - registration profile is disabled
      * 2 (2^1) - registration in progress
      * 4 (2^2) - registration succeeded
-     * 8 (2^3) - registration in progres with authentication
+     * 8 (2^3) - registration in progress with authentication
      * 16 (2^4) - registration initialized (after loading from database,
        the registration process was initialized)
 
@@ -1151,7 +1151,7 @@ event_route[uac:reply] {
 8.3.  uac.reg_enable
 
    Enable a remote registration record based on a filter. The command has
-   two parameter: attribute and value. The attribute can be: l_uuid,
+   two parameters: attribute and value. The attribute can be: l_uuid,
    l_username, r_username or auth_username. The value is what should be
    matched against the value of the attribute in the remote registration
    record.
@@ -1165,7 +1165,7 @@ event_route[uac:reply] {
 8.4.  uac.reg_disable
 
    Disable a remote registration record based on a filter. The command has
-   two parameter: attribute and value. The attribute can be: l_uuid,
+   two parameters: attribute and value. The attribute can be: l_uuid,
    l_username, r_username or auth_username. The value is what should be
    matched against the value of the attribute in the remote registration
    record.
@@ -1179,7 +1179,7 @@ event_route[uac:reply] {
 8.5.  uac.reg_unregister
 
    Send REGISTER with expires 0 for matching record, disabling it. The
-   command has two parameter: attribute and value. The attribute can be:
+   command has two parameters: attribute and value. The attribute can be:
    l_uuid, l_username, r_username or auth_username. The value is what
    should be matched against the value of the attribute in the remote
    registration record.
@@ -1270,36 +1270,39 @@ event_route[uac:reply] {
    The module can register contact addresses to remote REGISTRAR servers.
    You have to add records to uacreg table. The table stores following
    attributes:
-     * l_uuid - local unique user id, e.g.,: 12345678
+     * l_uuid - local unique user id, e.g.: 12345678
 
-     * l_username - local user name, e.g.,: test
+     * l_username - local user name, e.g.: test
 
-     * l_domain - local domain, e.g.,: mysipserver.com
+     * l_domain - local domain, e.g.: mysipserver.com
 
-     * r_username - remote username, e.g.,: test123
+     * r_username - remote username, e.g.: test123
 
-     * r_domain - remote domain, e.g.,: sipprovider.com
+     * r_domain - remote domain, e.g.: sipprovider.com. Used to contstruct
+       RURI, From: and To: domains.
 
-     * realm - remote realm, e.g.,: sipprovider.com
+     * realm - remote realm, e.g.: sipprovider.com. Must match realm=
+       parameter in incoming WWW-Authenticate headers.
 
-     * auth_username - authentication username, e.g.,: test123
+     * auth_username - authentication username, e.g.: test123
 
-     * auth_password - authentication password in clear text, e.g.,:
-       xxxxxx
+     * auth_password - authentication password in clear text, e.g.: xxxxxx
 
      * auth_ha1 - hashed (HA1) authentication password, it has priority
        over auth_password.
 
-     * auth_proxy - SIP address of authentication proxy, e.g.,:
-       sip:sipprovider.com
+     * auth_proxy - SIP address of authentication proxy, e.g.:
+       sip:sipprovider.com or sips:sipprovider.com. It is used to find the
+       IP address of the proxy and determine whether UDP or TLS shall be
+       used. It has no impact on the content of generated messages.
 
-     * expires - expiration time for registration, in seconds, e.g.,: 360
+     * expires - expiration time for registration, in seconds, e.g.: 360
 
      * flags - the state of the registration, see Section 8.2, “
        uac.reg_info ”
 
      * reg_delay - delay initial registration with at least reg_delay
-       seconds, e.g.,: 3
+       seconds, e.g.: 3
 
      * contact_addr - contact address to be used for this record instead
        of reg_contact_addr module parameter, e.g.:, 192.168.0.125:5060. It

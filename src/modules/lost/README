@@ -130,9 +130,9 @@ Chapter 1. Admin Guide
    applicable. The findServiceResponse is parsed and represented as
    display name and SIP URI typically used as next hop in a Route header.
 
-   The http_client module use the CURL library setting up connections. The
-   CURL library by default use the system configured DNS resolver, not the
-   Kamailio resolver.
+   The http_client module uses the CURL library setting up connections.
+   The CURL library by default use the system configured DNS resolver, not
+   the Kamailio resolver.
 
    The module is limited to using HTTP and HTTPS protocols.
 
@@ -340,7 +340,7 @@ Chapter 1. Admin Guide
        include "locationURI" in the location_type parameter.
      * error - any error code returned in the HELD response
 
-   The return value is 200 on success, 400 if an internal error occured,
+   The return value is 200 on success, 400 if an internal error occurred,
    or 500 if an error code is returned in the HELD locationRequest
    response.
 
@@ -366,7 +366,7 @@ r(pidf)\n");
 4.2.  lost_held_dereference(url, rtime, rtype, pidf-lo, error)
 
    Sends a HELD POST locationRequest to a given URL. Attributes are
-   responseTime and resposeType. The locationType property "exact" is set
+   responseTime and responseType. The locationType property "exact" is set
    to "false".
      * url - a URL received via Geolocation header to dereference location
      * rtime - the response time as defined in Section 3.2, “response_time
@@ -377,7 +377,7 @@ r(pidf)\n");
      * error - any error code returned in the HELD response
 
    The return value is 200..203 on success, 400 if an internal error
-   occured, or 500 if an error code is returned in the HELD response.
+   occurred, or 500 if an error code is returned in the HELD response.
    Success codes in detail are as follows:
      * 200 - received 200 OK, but neither location-info nor locationURI
        element found
@@ -415,7 +415,7 @@ atch", "civic geodetic", "$var(pidf)", "$var(err)");
      * name - the display name returned in the LOST findServiceResponse
      * error - any error code returned in the LOST findServiceResponse
 
-   The return value is 200 on success, 400 if an internal error occured,
+   The return value is 200 on success, 400 if an internal error occurred,
    or 500 if an error code is returned in the LOST findServiceResponse.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,

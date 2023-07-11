@@ -34,11 +34,11 @@ struct lrkproxy_hash_entry
 	str src_ipv4;  //media ip address of initiator call in INVITE SIP message.
 	str dst_ipv4;  //media ip address of selected node in 200Ok SIP message.
 	str snat_ipv4; //change media ip address to selected node.
-	str dnat_ipv4; //change media ip address to orgin destination party.
+	str dnat_ipv4; //change media ip address to origin destination party.
 	str src_port;  //media port of initiator call in INVITE SIP message
 	str dst_port;  //media port of selected node in 200Ok SIP message.
 	str snat_port; //change media port to selected node.
-	str dnat_port; //change media port to orgin destination party.
+	str dnat_port; //change media port to origin destination party.
 
 	str callid;				// call callid
 	str viabranch;			// call viabranch

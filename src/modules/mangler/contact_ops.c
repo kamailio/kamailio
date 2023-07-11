@@ -316,7 +316,7 @@ int encode2format(struct sip_msg *msg, str *uri, struct uri_format *format)
 	format->first = start - string + scheme_len + 1 /* ':' */;
 	format->second = end - string;
 	/* --------------------------testing ------------------------------- */
-	/* sip:gva@pass@10.0.0.1;;transport=udp>;expires=2 INCORECT BEHAVIOR OF parse_uri,myfunction works good */
+	/* sip:gva@pass@10.0.0.1;;transport=udp>;expires=2 INCORRECT BEHAVIOR OF parse_uri,myfunction works good */
 	foo = parse_uri(start, end - start, &sipUri);
 	if(foo != 0) {
 		LOG(L_ERR,

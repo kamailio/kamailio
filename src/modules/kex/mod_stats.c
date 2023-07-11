@@ -85,14 +85,14 @@ static int rpc_mod_is_printed_one(mem_counter *stats, mem_counter *current)
 {
 	mem_counter *iter;
 
-	if(stats == NULL || current == NULL) {
+	if(stats == NULL || current == NULL || current->mname == NULL) {
 		LM_ERR("invalid parameter\n");
 		return 1;
 	}
 	iter = stats;
 
 	while(iter && iter != current) {
-		if(strcmp(iter->mname, current->mname) == 0) {
+		if(iter->mname != NULL && strcmp(iter->mname, current->mname) == 0) {
 			return 1;
 		}
 		iter = iter->next;

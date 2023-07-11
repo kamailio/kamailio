@@ -146,6 +146,45 @@ modparam("cfgt", "callid_prefix", "TEST-ID%")
 </programlisting>
 		</example>
 	</section>
+	<section id="cfg.p.skip_unknown">
+		<title><varname>skip_unknown</varname> (int)</title>
+		<para>
+			If enabled, value different from 0, cfgt will not generate the report
+			of any message that doesn't match the callid_prefix.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>, false.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>skip_unknown</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("cfgt", "skip_unknown", "1")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="cfg.p.route_log">
+		<title><varname>route_log</varname> (int)</title>
+		<para>
+			If enabled, value different from 0, cfgt will log (WARN) the execution time of routes.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>, false.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>route_log</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("cfgt", "route_log", "1")
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 	<section>

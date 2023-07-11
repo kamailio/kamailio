@@ -83,6 +83,7 @@ unsigned short pubruri_callee_avp_type;
 int_str pubruri_callee_avp_name;
 sruid_t _puadi_sruid;
 
+static char *DLG_VAR_SEP = ",";
 static str caller_dlg_var = {0, 0};						 /* pubruri_caller */
 static str callee_dlg_var = {0, 0};						 /* pubruri_callee */
 static str caller_entity_when_publish_disabled = {0, 0}; /* pubruri_caller */
@@ -595,7 +596,6 @@ struct str_list *get_str_list(unsigned short avp_flags, int_str avp_name)
 {
 
 	int_str avp_value;
-	unsigned int len;
 	struct str_list *list_first = 0;
 	struct str_list *list_current = 0;
 	struct search_state st;
@@ -605,33 +605,123 @@ struct str_list *get_str_list(unsigned short avp_flags, int_str avp_name)
 	}
 
 	do {
-
 		LM_DBG("AVP found '%.*s'\n", avp_value.s.len, avp_value.s.s);
-
-		len = sizeof(struct str_list) + avp_value.s.len;
-
 		if(list_current) {
-			list_current->next = (struct str_list *)shm_malloc(len);
+			list_current->next =
+					(struct str_list *)shm_malloc(sizeof(struct str_list));
 			list_current = list_current->next;
 		} else {
-			list_current = list_first = (struct str_list *)shm_malloc(len);
+			list_current = list_first =
+					(struct str_list *)shm_malloc(sizeof(struct str_list));
 		}
 
-		if(list_current == 0) {
+		if(!list_current) {
 			SHM_MEM_ERROR;
-			return 0;
+			free_str_list_all(list_first);
+			return NULL;
 		}
-
-		memset(list_current, 0, len);
-
-		list_current->s.s = (char *)list_current + sizeof(struct str_list);
+		memset(list_current, 0, sizeof(struct str_list));
+		list_current->s.s = shm_str2char_dup(&avp_value.s);
+		if(!list_current->s.s) {
+			free_str_list_all(list_first);
+			return NULL;
+		}
 		list_current->s.len = avp_value.s.len;
-		memcpy(list_current->s.s, avp_value.s.s, avp_value.s.len);
-
-
 	} while(search_next_avp(&st, &avp_value));
 
 	return list_first;
+}
+
+/**
+ * @brief set dlg_var value from str_list as comma separated values
+ *
+ * @param dlg dialog
+ * @param key dlg_var keyname
+ * @param lst list of str values
+ * @return int
+ */
+static int set_dlg_var(struct dlg_cell *dlg, str *key, struct str_list *lst)
+{
+	str buf = STR_NULL;
+	struct str_list *it = lst;
+	int num = -1;
+	int res;
+
+	if(!lst)
+		return -1;
+
+	while(it) {
+		buf.len += it->s.len + ++num;
+		it = it->next;
+	}
+	buf.s = (char *)pkg_malloc(sizeof(char) * buf.len);
+
+	it = lst;
+	num = 0;
+	while(it) {
+		memcpy(buf.s + num, it->s.s, it->s.len);
+		if(it->next) {
+			num += it->s.len;
+			buf.s[num++] = *DLG_VAR_SEP;
+		}
+		it = it->next;
+	}
+	res = dlg_api.set_dlg_var(dlg, key, &buf);
+	pkg_free(buf.s);
+
+	return res;
+}
+
+static int get_dlg_var(struct dlg_cell *dlg, str *key, struct str_list **lst)
+{
+	str dval = STR_NULL;
+	str val = STR_NULL;
+	struct str_list *it, *prev;
+	char *sep, *ini, *end;
+
+	if(dlg_api.get_dlg_varval(dlg, &caller_dlg_var, &dval) != 0
+			|| dval.s == NULL)
+		return 0;
+
+	if(*lst) {
+		free_str_list_all(*lst);
+	}
+	*lst = prev = NULL;
+	ini = dval.s;
+	end = dval.s + dval.len - 1;
+	sep = stre_search_strz(ini, end, DLG_VAR_SEP);
+	if(!sep)
+		sep = end;
+	do {
+		val.s = ini;
+		val.len = sep - ini + 1;
+		ini = sep + 1;
+		it = (struct str_list *)shm_malloc(sizeof(struct str_list));
+		if(!it) {
+			SHM_MEM_ERROR;
+			return -1;
+		}
+		memset(it, 0, sizeof(struct str_list));
+		it->s.s = shm_str2char_dup(&val);
+		if(!it->s.s) {
+			free_str_list_all(*lst);
+			return -1;
+		}
+		it->s.len = val.len;
+		LM_DBG("Found uri '%.*s' in dlg_var:'%.*s'\n", val.len, val.s, key->len,
+				key->s);
+		if(!*lst) {
+			*lst = prev = it;
+		} else {
+			prev->next = it;
+		}
+		if(ini < end)
+			sep = stre_search_strz(ini, end, DLG_VAR_SEP);
+		else
+			sep = NULL;
+	} while(sep);
+
+	return 0;
 }
 
 struct dlginfo_cell *get_dialog_data(struct dlg_cell *dlg, int type,
@@ -639,7 +729,6 @@ struct dlginfo_cell *get_dialog_data(struct dlg_cell *dlg, int type,
 {
 	struct dlginfo_cell *dlginfo;
 	int len;
-	str dval = {0};
 
 	// generate new random uuid
 	if(sruid_next_safe(&_puadi_sruid) < 0) {
@@ -700,59 +789,35 @@ struct dlginfo_cell *get_dialog_data(struct dlg_cell *dlg, int type,
 			dlginfo->pubruris_callee = get_str_list(
 					pubruri_callee_avp_type, pubruri_callee_avp_name);
 
-			if(dlginfo->pubruris_callee != NULL && callee_dlg_var.len > 0)
-				dlg_api.set_dlg_var(
-						dlg, &callee_dlg_var, &dlginfo->pubruris_callee->s);
-
-			if(dlginfo->pubruris_caller != NULL && caller_dlg_var.len > 0)
-				dlg_api.set_dlg_var(
-						dlg, &caller_dlg_var, &dlginfo->pubruris_caller->s);
-
+			if(dlginfo->pubruris_callee != NULL && callee_dlg_var.len > 0) {
+				if(set_dlg_var(dlg, &callee_dlg_var, dlginfo->pubruris_callee)
+						< 0) {
+					free_str_list_all(dlginfo->pubruris_callee);
+					dlginfo->pubruris_callee = NULL;
+				}
+			}
+			if(dlginfo->pubruris_caller != NULL && caller_dlg_var.len > 0) {
+				if(set_dlg_var(dlg, &caller_dlg_var, dlginfo->pubruris_caller)
+						< 0) {
+					free_str_list_all(dlginfo->pubruris_caller);
+					dlginfo->pubruris_caller = NULL;
+				}
+			}
 		} else {
-			if(caller_dlg_var.len > 0
-					&& (dlg_api.get_dlg_varval(dlg, &caller_dlg_var, &dval)
-							== 0)
-					&& dval.s != NULL) {
-				dlginfo->pubruris_caller = (struct str_list *)shm_malloc(
-						sizeof(struct str_list) + dval.len + 1);
-				if(dlginfo->pubruris_caller == 0) {
-					SHM_MEM_ERROR;
+			if(caller_dlg_var.len > 0) {
+				if(get_dlg_var(dlg, &caller_dlg_var, &dlginfo->pubruris_caller)
+						< 0) {
 					free_dlginfo_cell(dlginfo);
 					return NULL;
 				}
-				memset(dlginfo->pubruris_caller, 0, sizeof(struct str_list));
-				dlginfo->pubruris_caller->s.s =
-						(char *)dlginfo->pubruris_caller
-						+ sizeof(sizeof(struct str_list));
-				memcpy(dlginfo->pubruris_caller->s.s, dval.s, dval.len);
-				dlginfo->pubruris_caller->s.s[dval.len] = '\0';
-				dlginfo->pubruris_caller->s.len = dval.len;
-				LM_DBG("Found pubruris_caller in dialog '%.*s'\n",
-						dlginfo->pubruris_caller->s.len,
-						dlginfo->pubruris_caller->s.s);
 			}
 
-			if(callee_dlg_var.len > 0
-					&& (dlg_api.get_dlg_varval(dlg, &callee_dlg_var, &dval)
-							== 0)
-					&& dval.s != NULL) {
-				dlginfo->pubruris_callee = (struct str_list *)shm_malloc(
-						sizeof(struct str_list) + dval.len + 1);
-				if(dlginfo->pubruris_callee == 0) {
-					SHM_MEM_ERROR;
+			if(callee_dlg_var.len > 0) {
+				if(get_dlg_var(dlg, &callee_dlg_var, &dlginfo->pubruris_callee)
+						< 0) {
 					free_dlginfo_cell(dlginfo);
 					return NULL;
 				}
-				memset(dlginfo->pubruris_callee, 0, sizeof(struct str_list));
-				dlginfo->pubruris_callee->s.s =
-						(char *)dlginfo->pubruris_callee
-						+ sizeof(sizeof(struct str_list));
-				memcpy(dlginfo->pubruris_callee->s.s, dval.s, dval.len);
-				dlginfo->pubruris_callee->s.s[dval.len] = '\0';
-				dlginfo->pubruris_callee->s.len = dval.len;
-				LM_DBG("Found pubruris_callee in dialog '%.*s'\n",
-						dlginfo->pubruris_callee->s.len,
-						dlginfo->pubruris_callee->s.s);
 			}
 		}
 
@@ -771,7 +836,11 @@ struct dlginfo_cell *get_dialog_data(struct dlg_cell *dlg, int type,
 			return NULL;
 		}
 		memset(dlginfo->pubruris_caller, 0, sizeof(struct str_list));
-		dlginfo->pubruris_caller->s = dlginfo->from_uri;
+		dlginfo->pubruris_caller->s.s = shm_str2char_dup(&dlginfo->from_uri);
+		if(!dlginfo->pubruris_caller->s.s) {
+			free_dlginfo_cell(dlginfo);
+			return NULL;
+		}
 
 		dlginfo->pubruris_callee =
 				(struct str_list *)shm_malloc(sizeof(struct str_list));
@@ -783,9 +852,11 @@ struct dlginfo_cell *get_dialog_data(struct dlg_cell *dlg, int type,
 		memset(dlginfo->pubruris_callee, 0, sizeof(struct str_list));
 
 		if(include_req_uri) {
-			dlginfo->pubruris_callee->s = dlginfo->req_uri;
+			dlginfo->pubruris_callee->s.s = shm_str2char_dup(&dlginfo->req_uri);
+			dlginfo->pubruris_callee->s.len = dlginfo->req_uri.len;
 		} else {
-			dlginfo->pubruris_callee->s = dlginfo->to_uri;
+			dlginfo->pubruris_callee->s.s = shm_str2char_dup(&dlginfo->to_uri);
+			dlginfo->pubruris_callee->s.len = dlginfo->to_uri.len;
 		}
 	}
 
@@ -1106,8 +1177,9 @@ void free_str_list_all(struct str_list *del_current)
 	while(del_current) {
 
 		del_next = del_current->next;
+		if(del_current->s.s)
+			shm_free(del_current->s.s);
 		shm_free(del_current);
-
 		del_current = del_next;
 	}
 }

@@ -416,7 +416,8 @@ int merge_carrier_recursor(struct dt_node_t *node, int keep_carriers_num, carrie
 			sum++;
 			if (lastcarrier==0) node->carrier=0; /* first carrier we encountered. we can remove it since we are not interested in it. */
 			else {
-				node->carrier=OTHER_CARRIERID; /* we already have a carrier we are interested in. this is an exception, set it to a special carrier id. */
+				/* We already have a carrier we are interested in. This is an exception, set it to a special carrier id. */
+				node->carrier = OTHER_CARRIERID;
 			}
 		}
 	}

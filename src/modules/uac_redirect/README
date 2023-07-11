@@ -93,7 +93,7 @@ Chapter 1. Admin Guide
 
    UAC REDIRECT - User Agent Client redirection - module enhances Kamailio
    with the functionality of being able to handle (interpret, filter, log
-   and follow) redirect responses ( 3xx replies class).
+   and follow) redirect responses (3xx replies class).
 
    UAC REDIRECT module offers stateful processing, gathering the contacts
    from all 3xx branches of a call.
@@ -173,11 +173,11 @@ modparam("uac_redirect","default_filter","deny")
    contacts matching the deny_filter will be rejected; the rest of them
    will be accepted for redirection.
 
-   The parameter may be defined only one - multiple definition will
+   The parameter may be defined only once - multiple definition will
    overwrite the previous definitions. If more regular expression need to
    be defined, use the set_deny_filter() scripting function.
 
-   This parameter is optional, it's default value being NULL.
+   The default value is NULL.
 
    Example 1.2. Set deny_filter module parameter
 ...
@@ -191,11 +191,11 @@ modparam("uac_redirect","deny_filter",".*@siphub\.net")
    contacts matching the accept_filter will be accepted; the rest of them
    will be rejected for redirection.
 
-   The parameter may be defined only one - multiple definition will
+   The parameter may be defined only once - multiple definition will
    overwrite the previous definitions. If more regular expression need to
    be defined, use the set_accept_filter() scripting function.
 
-   This parameter is optional, it's default value being NULL.
+   The default value is NULL.
 
    Example 1.3. Set accept_filter module parameter
 ...
@@ -240,7 +240,7 @@ modparam("uac_redirect","acc_db_table","acc_redirect")
    This parameter defines the branch-flags to be set for new, added
    branch.
 
-   This parameter is optional, it's default value being 0.
+   The default value is 0.
 
    Example 1.6. Set bflags module parameter
 ...
@@ -378,7 +378,7 @@ get_redirects("*");
    The function has same functionality as get_redirects(max) function, but
    it will produce accounting records.
 
-   The accounting records will be mark by the reason phrase.
+   The accounting records will be marked by the reason phrase.
 
    If this function appears in the script, at startup, the module will
    import the accounting function. Otherwise not.

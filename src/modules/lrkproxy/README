@@ -198,7 +198,7 @@ Chapter 1. Admin Guide
 ock", "udp:192.168.122.108:8080")
 
                                                 # multiple lrkproxies for LB in
-diffenrent machine
+different machine
                                                 modparam("lrkproxy", "lrkproxy_s
 ock", "udp:192.168.122.108:8080")
                                                 modparam("lrkproxy", "lrkproxy_s
@@ -274,7 +274,7 @@ etr", 2)
    the insert/remove/lookup path.
 
    NOTE: When configuring this parameter, one should consider maximum call
-   time VS share memory for unfinished calls.
+   time VS shared memory for unfinished calls.
 
    Default value is “3600”.
 
@@ -299,8 +299,8 @@ _size", 256)
 4.3.8. custom_sdp_ip_avp (string)
 
    This option useful for solving STUN and help UDP packets make it across
-   NAT devices safe and sound. In this way, it should be set by clients's
-   ip public manually.
+   NAT devices safe and sound. In this way, it should be set by clients'
+   IP public manually.
 
    Default value is “NULL”.
 

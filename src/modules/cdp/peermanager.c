@@ -286,9 +286,10 @@ int peer_timer(time_t now, void *ptr)
 		lock_get(p->lock);
 		n = p->next;
 
-		if(p->disabled && (p->state != Closed || p->state != Closing)) {
-			LM_DBG("Peer [%.*s] has been disabled - shutting down\n",
-					p->fqdn.len, p->fqdn.s);
+		if(p->disabled && p->state != Closed && p->state != Closing) {
+			LM_DBG("Peer [%.*s] has been disabled [state: %d] - shutting "
+				   "down\n",
+					p->fqdn.len, p->fqdn.s, p->state);
 			if(p->state == I_Open)
 				sm_process(p, Stop, 0, 1, p->I_sock);
 			if(p->state == R_Open)

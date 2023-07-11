@@ -54,126 +54,131 @@ int cdp_avp_child_init(int rank);
 void cdp_avp_destroy();
 cdp_avp_bind_t *cdp_avp_get_bind();
 
+/* clang-format off */
 static cmd_export_t cdp_avp_cmds[] = {
-		{"cdp_avp_get_bind", (cmd_function)cdp_avp_get_bind, NO_SCRIPT, 0, 0,
-				0},
+	{"cdp_avp_get_bind", (cmd_function)cdp_avp_get_bind, NO_SCRIPT, 0, 0, 0},
 
-		{0, 0, 0, 0, 0, 0}};
+	{0, 0, 0, 0, 0, 0}
+};
 
 /**
  * Exported SER module interface
  */
-struct module_exports exports = {"cdp_avp", DEFAULT_DLFLAGS, /* dlopen flags */
-		cdp_avp_cmds,		/**< Exported functions */
-		0,					/**< Exported parameters */
-		0,					/* RPC method exports */
-		0,					/* pseudo-variables exports */
-		0, cdp_avp_init,	/**< Module initialization function */
-		cdp_avp_child_init, /**< per-child init function */
-		cdp_avp_destroy};
+struct module_exports exports = {
+	"cdp_avp",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cdp_avp_cmds,		/**< Exported functions */
+	0,					/**< Exported parameters */
+	0,					/* RPC method exports */
+	0,					/* pseudo-variables exports */
+	0,
+	cdp_avp_init,	/**< Module initialization function */
+	cdp_avp_child_init, /**< per-child init function */
+	cdp_avp_destroy
+};
 
 
 /** Sample binding */
-cdp_avp_bind_t cdp_avp_bind = {0, /* cdp 		*/
+cdp_avp_bind_t cdp_avp_bind = {
+	0, /* cdp 		*/
 
-		{
-				/* basic 	*/
-				cdp_avp_new,
+	{
+		/* basic 	*/
+		cdp_avp_new,
 
-				cdp_avp_add_new_to_list,
-				cdp_avp_add_new_to_msg,
-				cdp_avp_add_to_list,
-				cdp_avp_add_to_msg,
+		cdp_avp_add_new_to_list,
+		cdp_avp_add_new_to_msg,
+		cdp_avp_add_to_list,
+		cdp_avp_add_to_msg,
 
-				cdp_avp_get_next_from_list,
-				cdp_avp_get_next_from_msg,
-				cdp_avp_get_from_list,
-				cdp_avp_get_from_msg,
-		},
+		cdp_avp_get_next_from_list,
+		cdp_avp_get_next_from_msg,
+		cdp_avp_get_from_list,
+		cdp_avp_get_from_msg,
+	},
 
-		{
-				/* base_data	*/
-				cdp_avp_new_OctetString,
-				cdp_avp_new_Integer32,
-				cdp_avp_new_Integer64,
-				cdp_avp_new_Unsigned32,
-				cdp_avp_new_Unsigned64,
-				cdp_avp_new_Float32,
-				cdp_avp_new_Float64,
-				cdp_avp_new_Grouped,
+	{
+		/* base_data	*/
+		cdp_avp_new_OctetString,
+		cdp_avp_new_Integer32,
+		cdp_avp_new_Integer64,
+		cdp_avp_new_Unsigned32,
+		cdp_avp_new_Unsigned64,
+		cdp_avp_new_Float32,
+		cdp_avp_new_Float64,
+		cdp_avp_new_Grouped,
 
-				cdp_avp_new_Address,
-				cdp_avp_new_Time,
-				cdp_avp_new_UTF8String,
-				cdp_avp_new_DiameterIdentity,
-				cdp_avp_new_DiameterURI,
-				cdp_avp_new_Enumerated,
-				cdp_avp_new_IPFilterRule,
-				cdp_avp_new_QoSFilterRule,
+		cdp_avp_new_Address,
+		cdp_avp_new_Time,
+		cdp_avp_new_UTF8String,
+		cdp_avp_new_DiameterIdentity,
+		cdp_avp_new_DiameterURI,
+		cdp_avp_new_Enumerated,
+		cdp_avp_new_IPFilterRule,
+		cdp_avp_new_QoSFilterRule,
 
+		cdp_avp_get_OctetString,
+		cdp_avp_get_Integer32,
+		cdp_avp_get_Integer64,
+		cdp_avp_get_Unsigned32,
+		cdp_avp_get_Unsigned64,
+		cdp_avp_get_Float32,
+		cdp_avp_get_Float64,
+		cdp_avp_get_Grouped,
+		cdp_avp_free_Grouped,
 
-				cdp_avp_get_OctetString,
-				cdp_avp_get_Integer32,
-				cdp_avp_get_Integer64,
-				cdp_avp_get_Unsigned32,
-				cdp_avp_get_Unsigned64,
-				cdp_avp_get_Float32,
-				cdp_avp_get_Float64,
-				cdp_avp_get_Grouped,
-				cdp_avp_free_Grouped,
+		cdp_avp_get_Address,
+		cdp_avp_get_Time,
+		cdp_avp_get_UTF8String,
+		cdp_avp_get_DiameterIdentity,
+		cdp_avp_get_DiameterURI,
+		cdp_avp_get_Enumerated,
+		cdp_avp_get_IPFilterRule,
+		cdp_avp_get_QoSFilterRule,
+	},
 
-				cdp_avp_get_Address,
-				cdp_avp_get_Time,
-				cdp_avp_get_UTF8String,
-				cdp_avp_get_DiameterIdentity,
-				cdp_avp_get_DiameterURI,
-				cdp_avp_get_Enumerated,
-				cdp_avp_get_IPFilterRule,
-				cdp_avp_get_QoSFilterRule,
-		},
-
-		{
-				/*	base 	*/
-
+	{
+		/*	base 	*/
 #define CDP_AVP_INIT
 #include "base.h"
 #undef CDP_AVP_INIT
-		},
+	},
 
-		{
-				/*	ccapp 	*/
+	{
+		/*	ccapp 	*/
 #define CDP_AVP_INIT
 #include "ccapp.h"
 #undef CDP_AVP_INIT
-		},
+	},
 
-		{
-				/*  nasapp  */
+	{
+		/*  nasapp  */
 #define CDP_AVP_INIT
 #include "nasapp.h"
 #undef CDP_AVP_INIT
-		},
+	},
 
-		{
-				/*  imsapp  */
+	{
+		/*  imsapp  */
 #define CDP_AVP_INIT
 #include "imsapp.h"
 #undef CDP_AVP_INIT
-		},
+	},
 
-		{
-				/*  epcapp  */
+	{
+		/*  epcapp  */
 #define CDP_AVP_INIT
 #include "epcapp.h"
 #undef CDP_AVP_INIT
-		}};
-
+	}
+};
+/* clang-format on */
 
 /**
  * Module initialization function - called once at startup.
  * \note Other modules might not be loaded at this moment.
  * If this returns failure, wharf will exit
- * 
+ *
  * @param config - abstract configuration string
  * @return 1 on success or 0 on failure
  */

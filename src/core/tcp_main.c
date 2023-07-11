@@ -4464,7 +4464,7 @@ inline static int handle_tcpconn_ev(
 	if ((tcpconn->refcnt!=0)){
 		/* FIXME: might be valid for sigio_rt iff fd flags are not cleared
 		 *        (there is a short window in which it could generate a sig
-		 *         that would be catched by tcp_main) */
+		 *         that would be caught by tcp_main) */
 		LM_CRIT("handle_tcpconn_ev: io event on referenced"
 					" tcpconn (%p), refcnt=%d, fd=%d\n",
 					tcpconn, tcpconn->refcnt, tcpconn->s);

@@ -53,6 +53,7 @@
 #include "../../core/data_lump.h"
 #include "../../core/data_lump_rpl.h"
 #include "../../core/error.h"
+#include "../../core/fmsg.h"
 #include "../../core/forward.h"
 #include "../../core/mem/mem.h"
 #include "../../core/parser/parse_from.h"
@@ -79,6 +80,7 @@
 #include "../../core/kemi.h"
 #include "../../core/char_msg_val.h"
 #include "../../core/utils/srjson.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/crypto/api.h"
 #include "../../modules/lwsc/api.h"
@@ -109,8 +111,9 @@ MODULE_VERSION
 
 #define DEFAULT_RTPP_SET_ID 0
 
-enum
-{
+#define RTPENGINE_DTMF_EVENT_BUFFER 32768
+
+enum {
 	RPC_FOUND_ALL = 2,
 	RPC_FOUND_ONE = 1,
 	RPC_FOUND_NONE = 0,
@@ -244,8 +247,8 @@ static char *send_rtpp_command(struct rtpp_node *, bencode_item_t *, int *);
 static int get_extra_id(struct sip_msg *msg, str *id_str);
 
 static int rtpengine_set_store(modparam_t type, void *val);
-static int rtpengine_add_rtpengine_set(char *rtp_proxies, unsigned int weight,
-		int disabled, unsigned int ticks);
+static int rtpengine_set_dtmf_events_sock(modparam_t type, void *val);
+static int rtpengine_add_rtpengine_set(char * rtp_proxies, unsigned int weight, int disabled, unsigned int ticks);
 
 static int mod_init(void);
 static int child_init(int);
@@ -258,6 +261,9 @@ static int bind_force_send_ip(int sock_idx);
 static int add_rtpp_node_info(
 		void *ptrs, struct rtpp_node *crt_rtpp, struct rtpp_set *rtpp_list);
 static int rtpp_test_ping(struct rtpp_node *node);
+
+static void rtpengine_dtmf_events_loop(void);
+static int rtpengine_raise_dtmf_event(char *buffer, int len);
 
 /* Pseudo-Variables */
 static int pv_get_rtpestat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
@@ -311,6 +317,18 @@ static pv_spec_t *read_sdp_pvar = NULL;
 static str media_duration_pvar_str = {NULL, 0};
 static pv_spec_t *media_duration_pvar = NULL;
 
+static str dtmf_event_callid_pvar_str = {NULL, 0};
+static pv_spec_t *dtmf_event_callid_pvar = NULL;
+
+static str dtmf_event_source_tag_pvar_str = {NULL, 0};
+static pv_spec_t *dtmf_event_source_tag_pvar = NULL;
+
+static str dtmf_event_timestamp_pvar_str = {NULL, 0};
+static pv_spec_t *dtmf_event_timestamp_pvar = NULL;
+
+static str dtmf_event_pvar_str = {NULL, 0};
+static pv_spec_t *dtmf_event_pvar = NULL;
+
 #define RTPENGINE_SESS_LIMIT_MSG "Parallel session limit reached"
 #define RTPENGINE_SESS_LIMIT_MSG_LEN (sizeof(RTPENGINE_SESS_LIMIT_MSG) - 1)
 
@@ -326,8 +344,11 @@ lwsc_api_t _rtpe_lwscb = {0};
 
 static enum hash_algo_t hash_algo = RTP_HASH_CALLID;
 
-typedef struct rtpp_set_link
-{
+static str rtpengine_dtmf_event_sock;
+static int rtpengine_dtmf_event_fd;
+int dtmf_event_rt = -1; /* default disabled */
+
+typedef struct rtpp_set_link {
 	struct rtpp_set *rset;
 	pv_spec_t *rpv;
 } rtpp_set_link_t;
@@ -426,68 +447,58 @@ static pv_export_t mod_pvs[] = {
 		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-		{"rtpengine_sock", PARAM_STRING | USE_FUNC_PARAM,
-				(void *)rtpengine_set_store},
-		{"rtpengine_disable_tout", INT_PARAM,
-				&default_rtpengine_cfg.rtpengine_disable_tout},
-		{"aggressive_redetection", INT_PARAM,
-				&default_rtpengine_cfg.aggressive_redetection},
-		{"rtpengine_retr", INT_PARAM, &default_rtpengine_cfg.rtpengine_retr},
-		{"queried_nodes_limit", INT_PARAM,
-				&default_rtpengine_cfg.queried_nodes_limit},
-		{"rtpengine_tout_ms", INT_PARAM,
-				&default_rtpengine_cfg.rtpengine_tout_ms},
-		{"rtpengine_allow_op", INT_PARAM, &rtpengine_allow_op},
-		{"control_cmd_tos", INT_PARAM, &control_cmd_tos},
-		{"db_url", PARAM_STR, &rtpp_db_url},
-		{"table_name", PARAM_STR, &rtpp_table_name},
-		{"setid_col", PARAM_STR, &rtpp_setid_col},
-		{"url_col", PARAM_STR, &rtpp_url_col},
-		{"weight_col", PARAM_STR, &rtpp_weight_col},
-		{"disabled_col", PARAM_STR, &rtpp_disabled_col},
-		{"extra_id_pv", PARAM_STR, &extra_id_pv_param},
-		{"setid_avp", PARAM_STRING, &setid_avp_param},
-		{"force_send_interface", PARAM_STRING, &force_send_ip_str},
-		{"rtp_inst_pvar", PARAM_STR, &rtp_inst_pv_param},
-		{"write_sdp_pv", PARAM_STR, &write_sdp_pvar_str},
-		{"read_sdp_pv", PARAM_STR, &read_sdp_pvar_str},
-		{"hash_table_tout", INT_PARAM, &hash_table_tout},
-		{"hash_table_size", INT_PARAM, &hash_table_size},
-		{"setid_default", INT_PARAM, &setid_default},
-		{"media_duration", PARAM_STR, &media_duration_pvar_str},
-		{"hash_algo", INT_PARAM, &hash_algo},
+	{"rtpengine_sock",        PARAM_STRING|USE_FUNC_PARAM,
+	                         (void*)rtpengine_set_store          },
+	{"rtpengine_disable_tout",INT_PARAM, &default_rtpengine_cfg.rtpengine_disable_tout },
+	{"aggressive_redetection",INT_PARAM, &default_rtpengine_cfg.aggressive_redetection },
+	{"rtpengine_retr",        INT_PARAM, &default_rtpengine_cfg.rtpengine_retr         },
+	{"queried_nodes_limit",   INT_PARAM, &default_rtpengine_cfg.queried_nodes_limit    },
+	{"rtpengine_tout_ms",     INT_PARAM, &default_rtpengine_cfg.rtpengine_tout_ms      },
+	{"rtpengine_allow_op",    INT_PARAM, &rtpengine_allow_op     },
+	{"control_cmd_tos",       INT_PARAM, &control_cmd_tos        },
+	{"db_url",                PARAM_STR, &rtpp_db_url            },
+	{"table_name",            PARAM_STR, &rtpp_table_name        },
+	{"setid_col",             PARAM_STR, &rtpp_setid_col         },
+	{"url_col",               PARAM_STR, &rtpp_url_col           },
+	{"weight_col",            PARAM_STR, &rtpp_weight_col        },
+	{"disabled_col",          PARAM_STR, &rtpp_disabled_col      },
+	{"extra_id_pv",           PARAM_STR, &extra_id_pv_param      },
+	{"setid_avp",             PARAM_STRING, &setid_avp_param     },
+	{"force_send_interface",  PARAM_STRING, &force_send_ip_str   },
+	{"rtp_inst_pvar",         PARAM_STR, &rtp_inst_pv_param      },
+	{"write_sdp_pv",          PARAM_STR, &write_sdp_pvar_str     },
+	{"read_sdp_pv",           PARAM_STR, &read_sdp_pvar_str      },
+	{"hash_table_tout",       INT_PARAM, &hash_table_tout        },
+	{"hash_table_size",       INT_PARAM, &hash_table_size        },
+	{"setid_default",         INT_PARAM, &setid_default          },
+	{"media_duration",        PARAM_STR, &media_duration_pvar_str},
+	{"hash_algo",             INT_PARAM, &hash_algo},
+	{"dtmf_events_sock",      STR_PARAM|USE_FUNC_PARAM, (void *)rtpengine_set_dtmf_events_sock},
+	{"dtmf_event_callid",     PARAM_STR, &dtmf_event_callid_pvar_str   },
+	{"dtmf_event_source_tag", PARAM_STR, &dtmf_event_source_tag_pvar_str   },
+	{"dtmf_event_timestamp",  PARAM_STR, &dtmf_event_timestamp_pvar_str   },
+	{"dtmf_event",    	  	  PARAM_STR, &dtmf_event_pvar_str   },
 
-		/* MOS stats output */
-		/* global averages */
-		{"mos_min_pv", PARAM_STR, &global_mos_stats.min.mos_param},
-		{"mos_min_at_pv", PARAM_STR, &global_mos_stats.min.at_param},
-		{"mos_min_packetloss_pv", PARAM_STR,
-				&global_mos_stats.min.packetloss_param},
-		{"mos_min_jitter_pv", PARAM_STR, &global_mos_stats.min.jitter_param},
-		{"mos_min_roundtrip_pv", PARAM_STR,
-				&global_mos_stats.min.roundtrip_param},
-		{"mos_min_roundtrip_leg_pv", PARAM_STR,
-				&global_mos_stats.min.roundtrip_leg_param},
-		{"mos_max_pv", PARAM_STR, &global_mos_stats.max.mos_param},
-		{"mos_max_at_pv", PARAM_STR, &global_mos_stats.max.at_param},
-		{"mos_max_packetloss_pv", PARAM_STR,
-				&global_mos_stats.max.packetloss_param},
-		{"mos_max_jitter_pv", PARAM_STR, &global_mos_stats.max.jitter_param},
-		{"mos_max_roundtrip_pv", PARAM_STR,
-				&global_mos_stats.max.roundtrip_param},
-		{"mos_max_roundtrip_leg_pv", PARAM_STR,
-				&global_mos_stats.max.roundtrip_leg_param},
-		{"mos_average_pv", PARAM_STR, &global_mos_stats.average.mos_param},
-		{"mos_average_packetloss_pv", PARAM_STR,
-				&global_mos_stats.average.packetloss_param},
-		{"mos_average_jitter_pv", PARAM_STR,
-				&global_mos_stats.average.jitter_param},
-		{"mos_average_roundtrip_pv", PARAM_STR,
-				&global_mos_stats.average.roundtrip_param},
-		{"mos_average_roundtrip_leg_pv", PARAM_STR,
-				&global_mos_stats.average.roundtrip_leg_param},
-		{"mos_average_samples_pv", PARAM_STR,
-				&global_mos_stats.average.samples_param},
+	/* MOS stats output */
+	/* global averages */
+	{"mos_min_pv",                PARAM_STR, &global_mos_stats.min.mos_param             },
+	{"mos_min_at_pv",             PARAM_STR, &global_mos_stats.min.at_param              },
+	{"mos_min_packetloss_pv",     PARAM_STR, &global_mos_stats.min.packetloss_param      },
+	{"mos_min_jitter_pv",         PARAM_STR, &global_mos_stats.min.jitter_param          },
+	{"mos_min_roundtrip_pv",      PARAM_STR, &global_mos_stats.min.roundtrip_param       },
+	{"mos_min_roundtrip_leg_pv",  PARAM_STR, &global_mos_stats.min.roundtrip_leg_param   },
+	{"mos_max_pv",                PARAM_STR, &global_mos_stats.max.mos_param             },
+	{"mos_max_at_pv",             PARAM_STR, &global_mos_stats.max.at_param              },
+	{"mos_max_packetloss_pv",     PARAM_STR, &global_mos_stats.max.packetloss_param      },
+	{"mos_max_jitter_pv",         PARAM_STR, &global_mos_stats.max.jitter_param          },
+	{"mos_max_roundtrip_pv",      PARAM_STR, &global_mos_stats.max.roundtrip_param       },
+	{"mos_max_roundtrip_leg_pv",  PARAM_STR, &global_mos_stats.max.roundtrip_leg_param   },
+	{"mos_average_pv",            PARAM_STR, &global_mos_stats.average.mos_param         },
+	{"mos_average_packetloss_pv", PARAM_STR, &global_mos_stats.average.packetloss_param  },
+	{"mos_average_jitter_pv",     PARAM_STR, &global_mos_stats.average.jitter_param      },
+	{"mos_average_roundtrip_pv",  PARAM_STR, &global_mos_stats.average.roundtrip_param   },
+	{"mos_average_roundtrip_leg_pv", PARAM_STR, &global_mos_stats.average.roundtrip_leg_param },
+	{"mos_average_samples_pv",    PARAM_STR, &global_mos_stats.average.samples_param     },
 
 		/* designated side A */
 		{"mos_A_label_pv", PARAM_STR, &side_A_mos_stats.label_param},
@@ -1240,8 +1251,217 @@ error:
 	return -1;
 }
 
+static int rtpengine_set_dtmf_events_sock(modparam_t type, void *val)
+{
+	char *p;
+	p = (char *)val;
 
-static int fixup_set_id(void **param, int param_no)
+	if(p == 0 || *p == '\0') {
+		return 0;
+	}
+
+	rtpengine_dtmf_event_sock.s = p;
+	rtpengine_dtmf_event_sock.len = strlen(rtpengine_dtmf_event_sock.s);
+
+	return 0;
+}
+
+static void rtpengine_dtmf_events_loop(void)
+{
+	int ret;
+	char *p;
+	str s_port;
+	unsigned int port;
+	unsigned int socket_len;
+	union sockaddr_union udp_addr;
+	char buffer[RTPENGINE_DTMF_EVENT_BUFFER];
+
+	p = q_memchr(rtpengine_dtmf_event_sock.s, ':', rtpengine_dtmf_event_sock.len);
+
+	if(!p) {
+		LM_ERR("failed to initialize dtmf event listener because no port was specified %.*s!\n", rtpengine_dtmf_event_sock.len, rtpengine_dtmf_event_sock.s);
+		return;
+	}
+
+	s_port.s = p + 1;
+	s_port.len = rtpengine_dtmf_event_sock.s + rtpengine_dtmf_event_sock.len - s_port.s;
+
+	if(s_port.len <= 0 || str2int(&s_port, &port) < 0 || port > 65535) {
+		LM_ERR("failed to initialize dtmf event listener because port is invalid %.*s\n", rtpengine_dtmf_event_sock.len, rtpengine_dtmf_event_sock.s);
+		return;
+	}
+	rtpengine_dtmf_event_sock.len -= s_port.len + 1;
+	trim(&rtpengine_dtmf_event_sock);
+	rtpengine_dtmf_event_sock.s[rtpengine_dtmf_event_sock.len] = '\0';
+
+	memset(&udp_addr, 0, sizeof(union sockaddr_union));
+
+	if(rtpengine_dtmf_event_sock.s[0] == '[') {
+		udp_addr.sin6.sin6_family = AF_INET6;
+		udp_addr.sin6.sin6_port = htons(port);
+		socket_len = sizeof(struct sockaddr_in6);
+		ret = inet_pton(AF_INET6, rtpengine_dtmf_event_sock.s, &udp_addr.sin6.sin6_addr);
+	} else {
+		udp_addr.sin.sin_family = AF_INET;
+		udp_addr.sin.sin_port = htons(port);
+		socket_len = sizeof(struct sockaddr_in);
+		ret = inet_pton(AF_INET, rtpengine_dtmf_event_sock.s, &udp_addr.sin.sin_addr);
+	}
+
+	if(ret != 1) {
+		LM_ERR("failed to initialize dtmf event listener because address could not be created for %s\n", rtpengine_dtmf_event_sock.s);
+		return;
+	}
+
+	rtpengine_dtmf_event_fd = socket(udp_addr.s.sa_family, SOCK_DGRAM, 0);
+
+	if(rtpengine_dtmf_event_fd < 0) {
+		LM_ERR("can't create socket\n");
+		return;
+	}
+
+	if(bind(rtpengine_dtmf_event_fd, &udp_addr.s, socket_len) < 0) {
+		LM_ERR("could not bind dtmf events socket %s:%u (%s:%d)\n", rtpengine_dtmf_event_sock.s, port, strerror(errno), errno);
+		goto end;
+	}
+	LM_INFO("dtmf event listener started on %s:%u\n", rtpengine_dtmf_event_sock.s, port);
+
+	for(;;) {
+		do
+			ret = read(rtpengine_dtmf_event_fd, buffer, RTPENGINE_DTMF_EVENT_BUFFER);
+		while(ret == -1 && errno == EINTR);
+
+		if(ret < 0) {
+			LM_ERR("problem reading on socket %s:%u (%s:%d)\n",rtpengine_dtmf_event_sock.s, port, strerror(errno), errno);
+			goto end;
+		}
+
+		if(dtmf_event_rt == -1) {
+			LM_NOTICE("nothing to do - nobody is listening!\n");
+			goto end;
+		}
+
+		p = shm_malloc(ret + 1);
+		if(!p) {
+			LM_ERR("could not allocate %d for buffer %.*s\n", ret, ret, buffer);
+			goto end;
+		}
+		memcpy(p, buffer, ret);
+		p[ret] = '\0';
+
+		if(rtpengine_raise_dtmf_event(p, ret) < 0) {
+			LM_ERR("Failed to raise dtmf event\n");
+		}
+		shm_free(p);
+	}
+
+end:
+	close(rtpengine_dtmf_event_fd);
+}
+
+static int rtpengine_raise_dtmf_event(char *buffer, int len) {
+	srjson_doc_t jdoc;
+	srjson_t *it = NULL;
+	struct sip_msg *fmsg = NULL;
+	struct run_act_ctx ctx;
+	int rtb;
+
+	LM_DBG("executing event_route[rtpengine:dtmf-event] (%d)\n", dtmf_event_rt);
+	LM_DBG("dispatching buffer: %s\n", buffer);
+
+	srjson_InitDoc(&jdoc, NULL);
+
+	jdoc.buf.s = buffer;
+	jdoc.buf.len = len;
+
+	jdoc.root = srjson_Parse(&jdoc, jdoc.buf.s);
+	if(jdoc.root == NULL) {
+		LM_ERR("invalid json doc [[%s]]\n", jdoc.buf.s);
+		goto error;
+	}
+
+	if(faked_msg_init() < 0) {
+		LM_ERR("Failed to initialize fake msg\n");
+		goto error;
+	}
+
+	/* iterate over keys */
+	for(it = jdoc.root->child; it; it = it->next) {
+		LM_DBG("found field: %s\n", it->string);
+		if(strcmp(it->string, "callid") == 0) {
+			pv_value_t pv_val;
+			pv_val.rs.s = it->valuestring;
+			pv_val.rs.len = strlen(it->valuestring);
+			pv_val.flags = PV_VAL_STR;
+
+			if(dtmf_event_callid_pvar->setf(0, &dtmf_event_callid_pvar->pvp, (int)EQ_T, &pv_val) < 0) {
+				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_callid_pvar_str.len, dtmf_event_callid_pvar_str.s);
+				goto error;
+			}
+		} else if(strcmp(it->string, "source_tag") == 0) {
+			pv_value_t pv_val;
+			pv_val.rs.s = it->valuestring;
+			pv_val.rs.len = strlen(it->valuestring);
+			pv_val.flags = PV_VAL_STR;
+
+			if(dtmf_event_source_tag_pvar->setf(0, &dtmf_event_source_tag_pvar->pvp, (int)EQ_T, &pv_val) < 0) {
+				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_source_tag_pvar_str.len, dtmf_event_source_tag_pvar_str.s);
+				goto error;
+			}
+		} else if(strcmp(it->string, "timestamp") == 0) {
+			pv_value_t pv_val;
+			int_str val = {0};
+			char intbuf[32];
+			snprintf(intbuf, sizeof(intbuf), "%lld", SRJSON_GET_LLONG(it));
+			memset(&val, 0, sizeof(val));
+
+			pv_val.rs.s = intbuf;
+			pv_val.rs.len = strlen(intbuf);
+			pv_val.flags = PV_VAL_STR;
+
+			if(dtmf_event_timestamp_pvar->setf(0, &dtmf_event_timestamp_pvar->pvp, (int)EQ_T, &pv_val) < 0) {
+				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_timestamp_pvar_str.len, dtmf_event_timestamp_pvar_str.s);
+				goto error;
+			}
+		} else if(strcmp(it->string, "event") == 0) {
+			pv_value_t pv_val;
+			int_str val = {0};
+			char intbuf[32];
+			snprintf(intbuf, sizeof(intbuf), "%lld", SRJSON_GET_LLONG(it));
+			memset(&val, 0, sizeof(val));
+
+			pv_val.rs.s = intbuf;
+			pv_val.rs.len = strlen(intbuf);
+			pv_val.flags = PV_VAL_STR;
+
+			if(dtmf_event_pvar->setf(0, &dtmf_event_pvar->pvp, (int)EQ_T, &pv_val) < 0) {
+				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_pvar_str.len, dtmf_event_pvar_str.s);
+				goto error;
+			}
+		}
+	}
+
+	fmsg = faked_msg_next();
+	rtb = get_route_type();
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	run_top_route(event_rt.rlist[dtmf_event_rt], fmsg, &ctx);
+	set_route_type(rtb);
+	if(ctx.run_flags & DROP_R_F) {
+		LM_ERR("exit due to 'drop' in event route\n");
+		goto error;
+	}
+
+	srjson_DestroyDoc(&jdoc);
+
+	return 0;
+
+error:
+	srjson_DestroyDoc(&jdoc);
+	return -1;
+}
+
+static int fixup_set_id(void ** param, int param_no)
 {
 	int int_val;
 	unsigned int set_id;
@@ -1812,7 +2032,7 @@ static int mod_init(void)
 		}
 	}
 
-	if(rtpp_strings)
+	if (rtpp_strings)
 		pkg_free(rtpp_strings);
 
 	if(load_tm_api(&tmb) < 0) {
@@ -1856,6 +2076,46 @@ static int mod_init(void)
 			LM_ERR("Crypto module required in order to have SHA1 hashing!\n");
 			return -1;
 		}
+	}
+
+	dtmf_event_rt = route_lookup(&event_rt, "rtpengine:dtmf-event");
+	if(dtmf_event_rt >= 0 && event_rt.rlist[dtmf_event_rt] == 0) {
+		dtmf_event_rt = -1; /* disable */
+	} else {
+		if(dtmf_event_callid_pvar_str.len > 0) {
+			dtmf_event_callid_pvar = pv_cache_get(&dtmf_event_callid_pvar_str);
+			if(dtmf_event_callid_pvar == NULL || (dtmf_event_callid_pvar->type != PVT_AVP && dtmf_event_callid_pvar->type != PVT_SCRIPTVAR)) {
+				LM_ERR("dtmf_event_callid_pv: not a valid AVP or VAR definition <%.*s>\n", dtmf_event_callid_pvar_str.len, dtmf_event_callid_pvar_str.s);
+				return -1;
+			}
+		}
+
+		if(dtmf_event_source_tag_pvar_str.len > 0) {
+			dtmf_event_source_tag_pvar = pv_cache_get(&dtmf_event_source_tag_pvar_str);
+			if(dtmf_event_source_tag_pvar == NULL || (dtmf_event_source_tag_pvar->type != PVT_AVP && dtmf_event_source_tag_pvar->type != PVT_SCRIPTVAR)) {
+				LM_ERR("dtmf_event_source_tag_pv: not a valid AVP or VAR definition <%.*s>\n", dtmf_event_source_tag_pvar_str.len, dtmf_event_source_tag_pvar_str.s);
+				return -1;
+			}
+		}
+
+		if(dtmf_event_timestamp_pvar_str.len > 0) {
+			dtmf_event_timestamp_pvar = pv_cache_get(&dtmf_event_timestamp_pvar_str);
+			if(dtmf_event_timestamp_pvar == NULL || (dtmf_event_timestamp_pvar->type != PVT_AVP && dtmf_event_timestamp_pvar->type != PVT_SCRIPTVAR)) {
+				LM_ERR("dtmf_event_timestamp_pv: not a valid AVP or VAR definition <%.*s>\n", dtmf_event_timestamp_pvar_str.len, dtmf_event_timestamp_pvar_str.s);
+				return -1;
+			}
+		}
+
+		if(dtmf_event_pvar_str.len > 0) {
+			dtmf_event_pvar = pv_cache_get(&dtmf_event_pvar_str);
+			if(dtmf_event_pvar == NULL || (dtmf_event_pvar->type != PVT_AVP && dtmf_event_pvar->type != PVT_SCRIPTVAR)) {
+				LM_ERR("event_pv: not a valid AVP or VAR definition <%.*s>\n", dtmf_event_pvar_str.len, dtmf_event_pvar_str.s);
+				return -1;
+			}
+		}
+
+		register_procs(1);
+		cfg_register_child(1);
 	}
 
 	return 0;
@@ -2125,9 +2385,33 @@ static int child_init(int rank)
 	if(!rtpp_set_list)
 		return 0;
 
-	/* do not init sockets for PROC_INIT and main process when fork=yes */
-	if(rank == PROC_INIT || (rank == PROC_MAIN && dont_fork == 0)) {
+	/* do not init sockets for PROC_INIT */
+	if(rank == PROC_INIT) {
 		return 0;
+	}
+
+	if(rank == PROC_MAIN) {
+		if(rtpengine_dtmf_event_sock.len > 0) {
+			LM_DBG("Register RTPENGINE DTMF WORKER %d\n", mypid);
+			/* fork worker process */
+			mypid = fork_process(PROC_RPC, "RTPENGINE DTMF WORKER", 1);
+			if(mypid < 0) {
+				LM_ERR("failed to fork RTPENGINE DTMF WORKER process %d\n",
+						mypid);
+				return -1;
+			} else if(mypid == 0) {
+				if(cfg_child_init())
+					return -1;
+				/* this will loop forever */
+				rtpengine_dtmf_events_loop();
+			}
+
+			return 0;
+		}
+
+		/* do not init sockets for main process when fork=yes */
+		if(dont_fork == 0)
+			return 0;
 	}
 
 	mypid = getpid();
@@ -2147,9 +2431,10 @@ static int child_init(int rank)
 		/* probe rtpengines only in first worker */
 		if(build_rtpp_socks(0, 1))
 			return -1;
-	} else {
-		if(build_rtpp_socks(0, 0))
-			return -1;
+		else {
+			if(build_rtpp_socks(0, 0))
+				return -1;
+		}
 	}
 
 	return 0;

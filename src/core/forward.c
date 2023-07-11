@@ -72,7 +72,7 @@
 
 
 /* return a socket_info_pointer to the sending socket; as opposed to
- * get_send_socket, which returns process's default socket, get_out_socket
+ * get_send_socket, which returns process' default socket, get_out_socket
  * attempts to determine the outbound interface which will be used;
  * it uses a temporary connected socket to determine it; it will
  * be very likely noticeably slower, but it can deal better with

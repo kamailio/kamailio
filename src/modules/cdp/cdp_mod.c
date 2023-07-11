@@ -78,9 +78,12 @@ static int w_cdp_has_app2(sip_msg_t *msg, char *vendor, char *appid);
 static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param);
 
 
-#define EXP_FUNC(NAME) {#NAME, (cmd_function)NAME, NO_SCRIPT, 0, 0},
+/* clang-format off */
+#define EXP_FUNC(NAME) {#NAME, (cmd_function)NAME, NO_SCRIPT, 0, 0}
+/* clang-format on */
+
 /**
- * Exported functions. This is the API available for use from other SER modules.
+ * Exported functions. This is the API available for use from other modules.
  * If you require more, please add them here.
  * <p>
  * - load_cdp() - find and load the CDiameterPeer function bindings
@@ -113,54 +116,57 @@ static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param);
  * - AAAAddRequestHandler() - add a #AAARequestHandler_f callback to request being received
  * - AAAAddResponseHandler() - add a #AAAResponseHandler_f callback to responses being received
  */
+
+/* clang-format off */
 static cmd_export_t cdp_cmds[] = {
-		{"cdp_check_peer", (cmd_function)w_cdp_check_peer, 1, fixup_spve_null,
-				0, ANY_ROUTE},
-		{"cdp_has_app", (cmd_function)w_cdp_has_app, 1, fixup_igp_null, 0,
-				ANY_ROUTE},
-		{"cdp_has_app", (cmd_function)w_cdp_has_app2, 2, fixup_igp_igp, 0,
-				ANY_ROUTE},
-		{"load_cdp", (cmd_function)load_cdp, NO_SCRIPT, 0, 0},
+	{"cdp_check_peer", (cmd_function)w_cdp_check_peer, 1, fixup_spve_null,
+		0, ANY_ROUTE},
+	{"cdp_has_app", (cmd_function)w_cdp_has_app, 1, fixup_igp_null, 0,
+		ANY_ROUTE},
+	{"cdp_has_app", (cmd_function)w_cdp_has_app2, 2, fixup_igp_igp, 0,
+		ANY_ROUTE},
+	{"load_cdp", (cmd_function)load_cdp, NO_SCRIPT, 0, 0},
 
-		EXP_FUNC(AAACreateRequest) EXP_FUNC(AAACreateResponse) EXP_FUNC(
-				AAAFreeMessage)
+	EXP_FUNC(AAACreateRequest),
+	EXP_FUNC(AAACreateResponse),
+	EXP_FUNC(AAAFreeMessage),
+	EXP_FUNC(AAACreateAVP),
+	EXP_FUNC(AAAAddAVPToMessage),
+	EXP_FUNC(AAAAddAVPToList),
+	EXP_FUNC(AAAFindMatchingAVP),
+	EXP_FUNC(AAAFindMatchingAVPList),
+	EXP_FUNC(AAAGetNextAVP),
+	EXP_FUNC(AAAFreeAVP),
+	EXP_FUNC(AAAFreeAVPList),
+	EXP_FUNC(AAAGroupAVPS),
+	EXP_FUNC(AAAUngroupAVPS),
+	EXP_FUNC(AAASendMessage),
+	EXP_FUNC(AAASendMessageToPeer),
+	EXP_FUNC(AAASendRecvMessage),
+	EXP_FUNC(AAASendRecvMessageToPeer),
+	EXP_FUNC(AAAAddRequestHandler),
+	EXP_FUNC(AAAAddResponseHandler),
+	EXP_FUNC(AAACreateTransaction),
+	EXP_FUNC(AAADropTransaction),
+	EXP_FUNC(AAACreateSession),
+	EXP_FUNC(AAAMakeSession),
+	EXP_FUNC(AAAGetSession),
+	EXP_FUNC(AAADropSession),
+	EXP_FUNC(AAASessionsLock),
+	EXP_FUNC(AAASessionsUnlock),
+	EXP_FUNC(AAACreateClientAuthSession),
+	EXP_FUNC(AAACreateServerAuthSession),
+	EXP_FUNC(AAAGetAuthSession),
+	EXP_FUNC(AAADropAuthSession),
+	EXP_FUNC(AAATerminateAuthSession),
+	EXP_FUNC(AAACreateCCAccSession),
+	EXP_FUNC(AAAStartChargingCCAccSession),
+	EXP_FUNC(AAAGetCCAccSession),
+	EXP_FUNC(AAADropCCAccSession),
+	EXP_FUNC(AAATerminateCCAccSession),
 
-
-				EXP_FUNC(AAACreateAVP) EXP_FUNC(AAAAddAVPToMessage) EXP_FUNC(
-						AAAAddAVPToList) EXP_FUNC(AAAFindMatchingAVP) EXP_FUNC(AAAFindMatchingAVPList)
-						EXP_FUNC(AAAGetNextAVP) EXP_FUNC(AAAFreeAVP) EXP_FUNC(
-								AAAFreeAVPList) EXP_FUNC(AAAGroupAVPS) EXP_FUNC(AAAUngroupAVPS)
-
-								EXP_FUNC(AAASendMessage) EXP_FUNC(AAASendMessageToPeer) EXP_FUNC(
-										AAASendRecvMessage) EXP_FUNC(AAASendRecvMessageToPeer)
-
-
-										EXP_FUNC(AAAAddRequestHandler) EXP_FUNC(
-												AAAAddResponseHandler)
-
-
-												EXP_FUNC(AAACreateTransaction) EXP_FUNC(
-														AAADropTransaction)
-
-
-														EXP_FUNC(AAACreateSession) EXP_FUNC(
-																AAAMakeSession) EXP_FUNC(AAAGetSession)
-																EXP_FUNC(AAADropSession) EXP_FUNC(
-																		AAASessionsLock) EXP_FUNC(AAASessionsUnlock)
-
-																		EXP_FUNC(AAACreateClientAuthSession) EXP_FUNC(
-																				AAACreateServerAuthSession)
-																				EXP_FUNC(AAAGetAuthSession) EXP_FUNC(
-																						AAADropAuthSession) EXP_FUNC(AAATerminateAuthSession)
-
-																						EXP_FUNC(AAACreateCCAccSession) EXP_FUNC(
-																								AAAStartChargingCCAccSession)
-																								EXP_FUNC(AAAGetCCAccSession) EXP_FUNC(
-																										AAADropCCAccSession) EXP_FUNC(AAATerminateCCAccSession)
-
-																										{0, 0, 0,
-																												0,
-																												0}};
+	{0, 0, 0, 0, 0}
+};
 
 
 /**
@@ -168,27 +174,36 @@ static cmd_export_t cdp_cmds[] = {
  * - config_file - Configuration filename. See configdtd.h for the structure and ConfigExample.xml.
  */
 static param_export_t cdp_params[] = {
-		{"config_file", PARAM_STRING,
-				&config_file}, /**< configuration filename */
-		{"latency_threshold", PARAM_INT,
-				&latency_threshold}, /**<threshold above which we will log*/
-		{"workerq_latency_threshold", PARAM_INT,
-				&workerq_latency_threshold}, /**<time threshold putting job into queue*/
-		{"workerq_length_threshold_percentage", PARAM_INT,
-				&workerq_length_threshold_percentage}, /**<queue length threshold - percentage of max queue length*/
-		{"debug_heavy", PARAM_INT, &debug_heavy}, {0, 0, 0}};
+	{"config_file", PARAM_STRING,
+			&config_file}, /**< configuration filename */
+	{"latency_threshold", PARAM_INT,
+			&latency_threshold}, /**<threshold above which we will log*/
+	{"workerq_latency_threshold", PARAM_INT,
+			&workerq_latency_threshold}, /**<time threshold putting job into queue*/
+	{"workerq_length_threshold_percentage", PARAM_INT,
+			&workerq_length_threshold_percentage}, /**<queue length threshold - percentage of max queue length*/
+	{"debug_heavy", PARAM_INT, &debug_heavy},
+
+	{0, 0, 0}
+};
 
 /**
  * Exported module interface
  */
-struct module_exports exports = {"cdp", DEFAULT_DLFLAGS,
-		cdp_cmds,		/**< Exported functions */
-		cdp_params,		/**< Exported parameters */
-		0,				/**< RPC cmds */
-		0,				/**< pseudovariables */
-		0, cdp_init,	/**< Module initialization function */
-		cdp_child_init, /**< per-child init function */
-		cdp_exit};
+struct module_exports exports = {
+	"cdp",
+	DEFAULT_DLFLAGS,
+	cdp_cmds,		/**< Exported functions */
+	cdp_params,		/**< Exported parameters */
+	0,				/**< RPC cmds */
+	0,				/**< pseudovariables */
+	0,
+	cdp_init,		/**< Module initialization function */
+	cdp_child_init, /**< per-child init function */
+	cdp_exit
+};
+/* clang-format on */
+
 
 /**
  * Module init function.

@@ -529,7 +529,7 @@ void lost_delete_response_issues(p_lost_issue_t *list)
 
 /*
  * lost_delete_response_issue(mapping)
- * removes respone data object from private memory
+ * removes response data object from private memory
  */
 void lost_delete_response_data(p_lost_data_t *m)
 {
@@ -1072,7 +1072,7 @@ p_lost_fsr_t lost_parse_findServiceResponse(str ret)
  * 1: location reference found
  * 2: location value found
  * 3: location value and reference found
- * multiple occurences are ignored
+ * multiple occurrences are ignored
  */
 int lost_check_HeldResponse(xmlNodePtr node)
 {

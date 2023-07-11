@@ -69,7 +69,7 @@ int get_redirect(struct sip_msg *msg, int maxt, int maxb, str *reason,
 	LM_DBG("resume branch=%d\n", first_branch);
 
 	cts_added = 0;			   /* no contact added */
-	backup_uri = msg->new_uri; /* shmcontact2dset will ater this value */
+	backup_uri = msg->new_uri; /* shmcontact2dset will alter this value */
 
 	/* look if there are any 3xx branches starting from resume_branch */
 	for(i = first_branch; i < t->nr_of_outgoings; i++) {
