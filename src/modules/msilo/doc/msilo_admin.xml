@@ -300,6 +300,36 @@ modparam("msilo", "sc_stored_hdrs", "extra_headers")
 </programlisting>
 		</example>
 	</section>
+	<section id="msilo.p.sc_callid">
+		<title><varname>sc_callid</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing callid.
+		</para>
+		<para>Default value is <quote>callid</quote>.</para>
+		<example>
+		<title>Set the <quote>sc_callid</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msilo", "sc_callid", "call_id")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="msilo.p.sc_status">
+		<title><varname>sc_callid</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing status.
+		</para>
+		<para>Default value is <quote>status</quote>.</para>
+		<example>
+		<title>Set the <quote>sc_status</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msilo", "sc_status", "st")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="msilo.p.from_address">
 		<title><varname>from_address</varname> (string)</title>
 		<para>
