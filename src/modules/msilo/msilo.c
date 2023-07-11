@@ -97,6 +97,8 @@ MODULE_VERSION
 
 #define S_TABLE_VERSION 8
 
+#define MS_USEMODE_CALLID 1
+
 /** database connection */
 static db1_con_t *db_con = NULL;
 static db_func_t msilo_dbf;
@@ -133,6 +135,7 @@ int ms_use_contact = 1;
 int ms_add_date = 1;
 int ms_add_contact = 0;
 int ms_max_messages = 0;
+int ms_use_mode = 0;
 
 static str ms_snd_time_avp_param = {NULL, 0};
 int_str ms_snd_time_avp_name;
@@ -223,6 +226,7 @@ static param_export_t params[] = {
 	{"max_messages", INT_PARAM, &ms_max_messages},
 	{"add_contact", INT_PARAM, &ms_add_contact},
 	{"skip_notification_flag", PARAM_INT, &ms_skip_notification_flag},
+	{"use_mode", PARAM_INT, &ms_use_mode},
 	{0, 0, 0}
 };
 
@@ -787,6 +791,19 @@ static int m_store_addrs(sip_msg_t *msg, str *owner, str *srcaddr, str *dstaddr)
 
 	nr_keys++;
 
+	if(ms_use_mode & MS_USEMODE_CALLID) {
+		if(parse_headers(msg, HDR_CALLID_F, 0) < 0) {
+			LM_ERR("failed to parse call-id header\n");
+			goto error;
+		}
+		db_keys[nr_keys] = &sc_callid;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val.s = msg->callid->body.s;
+		db_vals[nr_keys].val.str_val.len = msg->callid->body.len;
+		nr_keys++;
+	}
+
 	if(msilo_dbf.insert(db_con, db_keys, db_vals, nr_keys) < 0) {
 		LM_ERR("failed to store message\n");
 		goto error;
@@ -863,7 +880,7 @@ static int m_store_addrs(sip_msg_t *msg, str *owner, str *srcaddr, str *dstaddr)
 		}
 	}
 
-	memset(&uac_r, '\0', sizeof(uac_r));
+	memset(&uac_r, 0, sizeof(uac_r));
 	uac_r.method = &msg_type;
 	uac_r.headers = &str_hdr;
 	uac_r.body = &notify_body;
@@ -945,14 +962,14 @@ static int m_dump(sip_msg_t *msg, str *owner_s)
 	db_key_t ob_key;
 	db_op_t db_ops[3];
 	db_val_t db_vals[3];
-	db_key_t db_cols[7];
+	db_key_t db_cols[8];
 	db1_res_t *db_res = NULL;
-	int i, db_no_cols = 7, db_no_keys = 3, mid, n;
+	int i, db_no_cols = 8, db_no_keys = 3, mid, n;
 	static char hdr_buf[1024];
 	static char body_buf[1024];
 	struct sip_uri puri;
 	uac_req_t uac_r;
-	str str_vals[5], hdr_str, body_str, extra_hdrs_str, tmp_extra_hdrs;
+	str str_vals[6], hdr_str, body_str, extra_hdrs_str, tmp_extra_hdrs;
 	time_t rtime;
 
 	/* init */
@@ -972,6 +989,7 @@ static int m_dump(sip_msg_t *msg, str *owner_s)
 	db_cols[4] = &sc_ctype;
 	db_cols[5] = &sc_inc_time;
 	db_cols[6] = &sc_stored_hdrs;
+	db_cols[7] = &sc_callid;
 
 	LM_DBG("------------ start ------------\n");
 	hdr_str.s = hdr_buf;
@@ -1068,12 +1086,13 @@ static int m_dump(sip_msg_t *msg, str *owner_s)
 			continue;
 		}
 
-		memset(str_vals, 0, 5 * sizeof(str));
+		memset(str_vals, 0, 6 * sizeof(str));
 		SET_STR_VAL(str_vals[0], db_res, i, 1); /* from */
 		SET_STR_VAL(str_vals[1], db_res, i, 2); /* to */
 		SET_STR_VAL(str_vals[2], db_res, i, 3); /* body */
 		SET_STR_VAL(str_vals[3], db_res, i, 4); /* ctype */
 		SET_STR_VAL(str_vals[4], db_res, i, 6); /* stored hdrs */
+		SET_STR_VAL(str_vals[5], db_res, i, 7); /* callid */
 		rtime = (time_t)RES_ROWS(db_res)[i].values[5 /*inc time*/].val.int_val;
 
 		if(ms_extra_hdrs != NULL) {
@@ -1138,13 +1157,18 @@ static int m_dump(sip_msg_t *msg, str *owner_s)
 		else
 			LM_DBG("sending composed body\n");
 
-		memset(&uac_r, '\0', sizeof(uac_r));
+		memset(&uac_r, 0, sizeof(uac_r));
 		uac_r.method = &msg_type;
 		uac_r.headers = &hdr_str;
 		uac_r.body = (n < 0) ? &str_vals[2] : &body_str;
 		uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
 		uac_r.cb = m_tm_callback;
 		uac_r.cbp = (void *)(long)mid;
+		if(ms_use_mode & MS_USEMODE_CALLID) {
+			if(str_vals[5].s != NULL && str_vals[5].len > 0) {
+				uac_r.callid = &str_vals[5];
+			}
+		}
 
 		tmb.t_request(&uac_r,								   /* UAC Req */
 				&str_vals[1],								   /* Request-URI */
@@ -1431,7 +1455,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		msg_list_set_flag(ml, mid, MS_MSG_TSND);
 
 
-		memset(&uac_r, '\0', sizeof(uac_r));
+		memset(&uac_r, 0, sizeof(uac_r));
 		uac_r.method = &msg_type;
 		uac_r.headers = &hdr_str;
 		uac_r.body = (n < 0) ? &str_vals[2] : &body_str;
