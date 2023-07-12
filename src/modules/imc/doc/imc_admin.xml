@@ -312,6 +312,29 @@ if(is_method("MESSAGE)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title id="imc.p.imc_room_active">
+		<function moreinfo="none">imc_room_active(room)</function>
+		</title>
+		<para>
+		Return 1 (true) if the room is active, -1 (false) if the room is not
+		found. The parameter is the SIP URI to identify the room, it can contain
+		variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title>Usage of <varname>imc_room_active()</varname> function</title>
+		<programlisting format="linespecific">
+...
+    if(imc_room_active("sip:chat-sip@$fd")) {
+        ...
+    }
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
