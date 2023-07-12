@@ -100,45 +100,53 @@ struct tm_binds tmb;
 /** TM callback function */
 void inv_callback(struct cell *t, int type, struct tmcb_params *ps);
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"imc_manager", (cmd_function)w_imc_manager, 0, 0, 0, REQUEST_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"imc_manager", (cmd_function)w_imc_manager, 0, 0, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
-
-static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
-		{"db_mode", INT_PARAM, &db_mode},
-		{"hash_size", INT_PARAM, &imc_hash_size},
-		{"imc_cmd_start_char", PARAM_STR, &imc_cmd_start_str},
-		{"rooms_table", PARAM_STR, &rooms_table},
-		{"members_table", PARAM_STR, &members_table},
-		{"outbound_proxy", PARAM_STR, &outbound_proxy},
-		{"extra_hdrs", PARAM_STR, &extra_hdrs},
-		{"create_on_join", INT_PARAM, &imc_create_on_join},
-		{"check_on_create", INT_PARAM, &imc_check_on_create}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"db_url", PARAM_STR, &db_url},
+	{"db_mode", INT_PARAM, &db_mode},
+	{"hash_size", INT_PARAM, &imc_hash_size},
+	{"imc_cmd_start_char", PARAM_STR, &imc_cmd_start_str},
+	{"rooms_table", PARAM_STR, &rooms_table},
+	{"members_table", PARAM_STR, &members_table},
+	{"outbound_proxy", PARAM_STR, &outbound_proxy},
+	{"extra_hdrs", PARAM_STR, &extra_hdrs},
+	{"create_on_join", INT_PARAM, &imc_create_on_join},
+	{"check_on_create", INT_PARAM, &imc_check_on_create},
+	{0, 0, 0}
+};
 
 #ifdef STATISTICS
 #include "../../core/counters.h"
 
 stat_var *imc_active_rooms;
 
-stat_export_t imc_stats[] = {{"active_rooms", 0, &imc_active_rooms}, {0, 0, 0}};
+stat_export_t imc_stats[] = {
+	{"active_rooms", 0, &imc_active_rooms},
+	{0, 0, 0}
+};
 
 #endif
 
 
 /** module exports */
 struct module_exports exports = {
-		"imc",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported commands */
-		params,			 /* exported parameters */
-		0,				 /* exported rpc functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* child init function */
-		destroy			 /* module destroy function */
+	"imc",			 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported commands */
+	params,			 /* exported parameters */
+	0,				 /* exported rpc functions */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	child_init,		 /* child init function */
+	destroy			 /* module destroy function */
 };
+/* clang-format on */
 
 static int mod_init(void)
 {
@@ -601,10 +609,13 @@ static const char *imc_rpc_list_rooms_doc[2] = {"List imc rooms.", 0};
 static const char *imc_rpc_list_members_doc[2] = {
 		"List members in an imc room.", 0};
 
-rpc_export_t imc_rpc[] = {{"imc.list_rooms", imc_rpc_list_rooms,
-								  imc_rpc_list_rooms_doc, RET_ARRAY},
-		{"imc.list_members", imc_rpc_list_members, imc_rpc_list_members_doc, 0},
-		{0, 0, 0, 0}};
+/* clang-format off */
+rpc_export_t imc_rpc[] = {
+	{"imc.list_rooms", imc_rpc_list_rooms, imc_rpc_list_rooms_doc, RET_ARRAY},
+	{"imc.list_members", imc_rpc_list_members, imc_rpc_list_members_doc, 0},
+	{0, 0, 0, 0}
+};
+/* clang-format on */
 
 static int imc_rpc_init(void)
 {
