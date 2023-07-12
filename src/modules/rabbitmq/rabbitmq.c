@@ -581,7 +581,7 @@ static int rabbitmq_connect(amqp_connection_state_t *conn)
 		return RABBITMQ_ERR_CONNECT;
 	}
 
-	amqp_sock = (amqp_info.ssl) ? amqp_ssl_socket_new(*conn) 
+	amqp_sock = (amqp_info.ssl) ? amqp_ssl_socket_new(*conn)
 								: amqp_tcp_socket_new(*conn);
 	if(!amqp_sock) {
 		LM_ERR("FAIL: create TCP amqp_sock");
@@ -606,7 +606,7 @@ static int rabbitmq_connect(amqp_connection_state_t *conn)
 	ret = amqp_socket_open(amqp_sock, amqp_info.host, amqp_info.port);
 	if(ret != AMQP_STATUS_OK) {
 		LM_ERR("FAIL: open %s sock, amqp_status=%d", 
-				(amqp_info.ssl) ?"SSL" :"TCP", ret);
+				(amqp_info.ssl) ? "SSL" : "TCP", ret);
 		// amqp_destroy_connection(*conn);
 		return RABBITMQ_ERR_SOCK;
 	}
