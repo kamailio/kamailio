@@ -45,6 +45,7 @@ Joey Golan
         4. Functions
 
               4.1. imc_manager()
+              4.2. imc_room_active(room)
 
         5. RPC Commands
 
@@ -71,7 +72,8 @@ Joey Golan
    1.9. Set create_on_join parameter
    1.10. Set check_on_create parameter
    1.11. Usage of imc_manager() function
-   1.12. List of commands
+   1.12. Usage of imc_room_active() function
+   1.13. List of commands
 
 Chapter 1. Admin Guide
 
@@ -99,6 +101,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. imc_manager()
+        4.2. imc_room_active(room)
 
    5. RPC Commands
 
@@ -285,6 +288,7 @@ modparam("imc", "check_on_create", 1)
 4. Functions
 
    4.1. imc_manager()
+   4.2. imc_room_active(room)
 
 4.1.  imc_manager()
 
@@ -308,6 +312,21 @@ if(is_method("MESSAGE)
         sl_send_reply("500", "command error");
     exit;
 }
+...
+
+4.2.  imc_room_active(room)
+
+   Return 1 (true) if the room is active, -1 (false) if the room is not
+   found. The parameter is the SIP URI to identify the room, it can
+   contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. Usage of imc_room_active() function
+...
+    if(imc_room_active("sip:chat-sip@$fd")) {
+        ...
+    }
 ...
 
 5. RPC Commands
@@ -358,7 +377,7 @@ kamcmd imc_list_members _room_
 
    Next picture presents the list of commands and their parameters.
 
-   Example 1.12. List of commands
+   Example 1.13. List of commands
 ...
 
 1.create
