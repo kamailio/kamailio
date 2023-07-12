@@ -43,6 +43,7 @@
 #include "../../core/hashes.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 
 #include "../../modules/tm/tm_load.h"
@@ -89,6 +90,7 @@ static int mod_init(void);
 static int child_init(int);
 
 static int w_imc_manager(struct sip_msg *, char *, char *);
+static int w_imc_room_active(sip_msg_t *, char *, char *);
 
 static int imc_rpc_init(void);
 
@@ -103,6 +105,8 @@ void inv_callback(struct cell *t, int type, struct tmcb_params *ps);
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"imc_manager", (cmd_function)w_imc_manager, 0, 0, 0, REQUEST_ROUTE},
+	{"imc_room_active", (cmd_function)w_imc_room_active, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -430,9 +434,49 @@ error:
 	return ret;
 }
 
+/**
+ *
+ */
 static int w_imc_manager(struct sip_msg *msg, char *str1, char *str2)
 {
 	return ki_imc_manager(msg);
+}
+
+/**
+ *
+ */
+static int ki_imc_room_active(sip_msg_t *msg, str *room)
+{
+	sip_uri_t puri;
+	imc_room_t *rm;
+
+	if(parse_uri(room->s, room->len, &puri) != 0) {
+		LM_ERR("failed to parse room uri [%.*s]\n", room->len, room->s);
+		return -1;
+	}
+
+	rm = imc_get_room(&puri.user, &puri.host);
+
+	if(rm != NULL) {
+		imc_release_room(rm);
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int w_imc_room_active(sip_msg_t *msg, char *proom, char *str2)
+{
+	str room = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)proom, &room) != 0) {
+		LM_ERR("invalid room parameter");
+		return -1;
+	}
+
+	return ki_imc_room_active(msg, &room);
 }
 
 /**
@@ -634,6 +678,11 @@ static sr_kemi_t sr_kemi_imc_exports[] = {
 	{ str_init("imc"), str_init("imc_manager"),
 		SR_KEMIP_INT, ki_imc_manager,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("imc"), str_init("imc_room_active"),
+		SR_KEMIP_INT, ki_imc_room_active,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
