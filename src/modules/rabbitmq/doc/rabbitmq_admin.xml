@@ -76,7 +76,7 @@
 		<section id="rabbitmq.p.url">
 			<title><varname>url</varname> (string)</title>
 			<para>
-				The amqp connection url.
+				The amqp or amqps connection url.
 			</para>
 
 			<para>
@@ -90,6 +90,7 @@
 				<programlisting format="linespecific">
 ...
 modparam("rabbitmq", "url", "amqp://kamailio:kamailio@localhost:5672/%2Fkamailio")
+modparam("rabbitmq", "url", "amqps://user:password@otherhost:5671/%2F")
 ...
 				</programlisting>
 			</example>
