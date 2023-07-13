@@ -335,6 +335,29 @@ if(is_method("MESSAGE)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title id="imc.p.imc_room_member">
+		<function moreinfo="none">imc_room_member(room, user)</function>
+		</title>
+		<para>
+		Return 1 (true) if the user is member of the room, -1 (false) if the
+		user is not member of the room. The parameters are the SIP URIs to
+		identify the room and the user, they can contain variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title>Usage of <varname>imc_room_member()</varname> function</title>
+		<programlisting format="linespecific">
+...
+    if(imc_room_member("sip:chat-sip@$fd", "sip:$rU@$rd")) {
+        ...
+    }
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
