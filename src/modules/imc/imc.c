@@ -91,6 +91,7 @@ static int child_init(int);
 
 static int w_imc_manager(struct sip_msg *, char *, char *);
 static int w_imc_room_active(sip_msg_t *, char *, char *);
+static int w_imc_room_member(sip_msg_t *, char *, char *);
 
 static int imc_rpc_init(void);
 
@@ -107,6 +108,8 @@ static cmd_export_t cmds[] = {
 	{"imc_manager", (cmd_function)w_imc_manager, 0, 0, 0, REQUEST_ROUTE},
 	{"imc_room_active", (cmd_function)w_imc_room_active, 1,
 		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"imc_room_member", (cmd_function)w_imc_room_member, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -471,12 +474,63 @@ static int w_imc_room_active(sip_msg_t *msg, char *proom, char *str2)
 {
 	str room = STR_NULL;
 
-	if(fixup_get_svalue(msg, (gparam_t*)proom, &room) != 0) {
+	if(fixup_get_svalue(msg, (gparam_t *)proom, &room) != 0) {
 		LM_ERR("invalid room parameter");
 		return -1;
 	}
 
 	return ki_imc_room_active(msg, &room);
+}
+
+/**
+ *
+ */
+static int ki_imc_room_member(sip_msg_t *msg, str *room, str *member)
+{
+	sip_uri_t puri;
+	imc_room_t *rm;
+	imc_member_t *mb;
+
+	if(parse_uri(room->s, room->len, &puri) != 0) {
+		LM_ERR("failed to parse room uri [%.*s]\n", room->len, room->s);
+		return -1;
+	}
+
+	rm = imc_get_room(&puri.user, &puri.host);
+
+	if(rm == NULL) {
+		return -1;
+	}
+
+	if(parse_uri(member->s, member->len, &puri) != 0) {
+		imc_release_room(rm);
+		LM_ERR("failed to parse member uri [%.*s]\n", member->len, member->s);
+		return -1;
+	}
+	mb = imc_get_member(rm, &puri.user, &puri.host);
+	imc_release_room(rm);
+
+	return (mb != NULL) ? 1 : -1;
+}
+
+/**
+ *
+ */
+static int w_imc_room_member(sip_msg_t *msg, char *proom, char *pmember)
+{
+	str room = STR_NULL;
+	str member = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)proom, &room) != 0) {
+		LM_ERR("invalid room parameter");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pmember, &member) != 0) {
+		LM_ERR("invalid member parameter");
+		return -1;
+	}
+
+	return ki_imc_room_member(msg, &room, &member);
 }
 
 /**
