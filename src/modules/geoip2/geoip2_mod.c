@@ -54,32 +54,41 @@ static int geoip2_resid_param(modparam_t type, void *val);
 static int w_distance(struct sip_msg *msg, char *str1, char *str2, char *str3);
 static int distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon);
 
+/* clang-format off */
 static pv_export_t mod_pvs[] = {
-		{{"gip2", sizeof("gip2") - 1}, PVT_OTHER, pv_get_geoip2, 0,
-				pv_parse_geoip2_name, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"gip2", sizeof("gip2") - 1}, PVT_OTHER, pv_get_geoip2, 0,
+			pv_parse_geoip2_name, 0, 0, 0},
 
-static cmd_export_t cmds[] = {{"geoip2_match", (cmd_function)w_geoip2_match, 2,
-									  fixup_spve_spve, 0, ANY_ROUTE},
-		{"distance", (cmd_function)w_distance, 3, fixup_spve_all,
-				fixup_free_spve_all, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{"path", PARAM_STRING, &geoip2_path},
-		{"resid", PARAM_STR | PARAM_USE_FUNC, &geoip2_resid_param}, {0, 0, 0}};
+static cmd_export_t cmds[] = {
+	{"geoip2_match", (cmd_function)w_geoip2_match, 2,
+			fixup_spve_spve, 0, ANY_ROUTE},
+	{"distance", (cmd_function)w_distance, 3,
+			fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
+
+static param_export_t params[] = {
+	{"path", PARAM_STRING, &geoip2_path},
+	{"resid", PARAM_STR | PARAM_USE_FUNC, &geoip2_resid_param},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"geoip2",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		0,				 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	"geoip2",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* RPC method exports */
+	mod_pvs,		 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	0,				 /* per-child init function */
+	mod_destroy		 /* module destroy function */
 };
+/* clang-format on */
 
 /**
  * init module function
