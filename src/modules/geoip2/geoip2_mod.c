@@ -48,11 +48,9 @@ static void mod_destroy(void);
 static int geoip2_rpc_init(void);
 
 static int w_geoip2_match(struct sip_msg *msg, char *str1, char *str2);
-static int geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass);
 static int geoip2_resid_param(modparam_t type, void *val);
 
 static int w_geoip2_distance(struct sip_msg *msg, char *str1, char *str2, char *str3);
-static int ki_geoip2_distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon);
 
 /* clang-format off */
 static pv_export_t mod_pvs[] = {
@@ -137,7 +135,7 @@ static int geoip2_resid_param(modparam_t type, void *val)
 	return 0;
 }
 
-static int geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass)
+static int ki_geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass)
 {
 	geoip2_pv_reset(pvclass);
 
@@ -163,10 +161,10 @@ static int w_geoip2_match(sip_msg_t *msg, char *target, char *pvname)
 		return -1;
 	}
 
-	return geoip2_match(msg, &tomatch, &pvclass);
+	return ki_geoip2_match(msg, &tomatch, &pvclass);
 }
 
-static int ki_geoip2_distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon)
+static int geoip2_distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon)
 {
 	char ip_addr[MAX_GEO_STR_SIZE] = {0};
 	double lat1, lon1, lat2, lon2, orig_lat2, orig_lon2;
@@ -255,16 +253,39 @@ static int ki_geoip2_distance(sip_msg_t *msg, str *_ip_addr, double lat, double 
 	return dist;
 }
 
-static int w_geoip2_distance(struct sip_msg *msg, char *ip_addr_param, char *lat_param,
+static int ki_geoip2_distance(sip_msg_t *msg, str *_ipaddr, str *_lat, str *_lon)
+{
+	double lat = 0;
+	double lon = 0;
+	char buf[MAX_GEO_STR_SIZE] = {0};
+
+	strncpy(buf, _lat->s, _lat->len);
+	lat = atof(buf);
+	if(!lat && errno == ERANGE) {
+		LM_ERR("cannot convert string to double: %.*s\n", _lat->len,
+				_lat->s);
+		return -1;
+	}
+
+	memset(buf, 0, MAX_GEO_STR_SIZE);
+	strncpy(buf, _lon->s, _lon->len);
+	lon = atof(buf);
+	if(!lon && errno == ERANGE) {
+		LM_ERR("cannot convert string to double: %.*s\n", _lon->len,
+				_lon->s);
+		return -1;
+	}
+
+	return geoip2_distance(msg, _ipaddr, lat, lon);
+
+}
+
+static int w_geoip2_distance(sip_msg_t *msg, char *ip_addr_param, char *lat_param,
 		char *lon_param)
 {
 	str ip_addr_str = STR_NULL;
 	str lat_str = STR_NULL;
 	str lon_str = STR_NULL;
-	double lat = 0;
-	double lon = 0;
-	char buf[MAX_GEO_STR_SIZE] = {0};
-
 	if(fixup_get_svalue(msg, (gparam_t *)ip_addr_param, &ip_addr_str) < 0) {
 		LM_ERR("cannot get the IP address\n");
 		return -1;
@@ -278,24 +299,7 @@ static int w_geoip2_distance(struct sip_msg *msg, char *ip_addr_param, char *lat
 		return -1;
 	}
 
-	strncpy(buf, lat_str.s, lat_str.len);
-	lat = atof(buf);
-	if(!lat && errno == ERANGE) {
-		LM_ERR("cannot convert string to double: %.*s\n", lat_str.len,
-				lat_str.s);
-		return -1;
-	}
-
-	memset(buf, 0, MAX_GEO_STR_SIZE);
-	strncpy(buf, lon_str.s, lon_str.len);
-	lon = atof(buf);
-	if(!lon && errno == ERANGE) {
-		LM_ERR("cannot convert string to double: %.*s\n", lon_str.len,
-				lon_str.s);
-		return -1;
-	}
-
-	return ki_geoip2_distance(msg, &ip_addr_str, lat, lon);
+	return ki_geoip2_distance(msg, &ip_addr_str, &lat_str, &lon_str);
 }
 
 static void geoip2_rpc_reload(rpc_t *rpc, void *ctx)
@@ -333,8 +337,13 @@ static int geoip2_rpc_init(void)
 /* clang-format off */
 static sr_kemi_t sr_kemi_geoip2_exports[] = {
     { str_init("geoip2"), str_init("match"),
-        SR_KEMIP_INT, geoip2_match,
+        SR_KEMIP_INT, ki_geoip2_match,
         { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("geoip2"), str_init("distance"),
+        SR_KEMIP_INT, ki_geoip2_distance,
+        { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
 
