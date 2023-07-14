@@ -51,8 +51,8 @@ static int w_geoip2_match(struct sip_msg *msg, char *str1, char *str2);
 static int geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass);
 static int geoip2_resid_param(modparam_t type, void *val);
 
-static int w_distance(struct sip_msg *msg, char *str1, char *str2, char *str3);
-static int distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon);
+static int w_geoip2_distance(struct sip_msg *msg, char *str1, char *str2, char *str3);
+static int ki_geoip2_distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon);
 
 /* clang-format off */
 static pv_export_t mod_pvs[] = {
@@ -65,7 +65,7 @@ static pv_export_t mod_pvs[] = {
 static cmd_export_t cmds[] = {
 	{"geoip2_match", (cmd_function)w_geoip2_match, 2,
 			fixup_spve_spve, 0, ANY_ROUTE},
-	{"distance", (cmd_function)w_distance, 3,
+	{"geoip2_distance", (cmd_function)w_geoip2_distance, 3,
 			fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -166,7 +166,7 @@ static int w_geoip2_match(sip_msg_t *msg, char *target, char *pvname)
 	return geoip2_match(msg, &tomatch, &pvclass);
 }
 
-static int distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon)
+static int ki_geoip2_distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon)
 {
 	char ip_addr[MAX_GEO_STR_SIZE] = {0};
 	double lat1, lon1, lat2, lon2, orig_lat2, orig_lon2;
@@ -255,7 +255,7 @@ static int distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon)
 	return dist;
 }
 
-static int w_distance(struct sip_msg *msg, char *ip_addr_param, char *lat_param,
+static int w_geoip2_distance(struct sip_msg *msg, char *ip_addr_param, char *lat_param,
 		char *lon_param)
 {
 	str ip_addr_str = STR_NULL;
@@ -295,7 +295,7 @@ static int w_distance(struct sip_msg *msg, char *ip_addr_param, char *lat_param,
 		return -1;
 	}
 
-	return distance(msg, &ip_addr_str, lat, lon);
+	return ki_geoip2_distance(msg, &ip_addr_str, lat, lon);
 }
 
 static void geoip2_rpc_reload(rpc_t *rpc, void *ctx)
@@ -306,12 +306,17 @@ static void geoip2_rpc_reload(rpc_t *rpc, void *ctx)
 	}
 }
 
+/* clang-format off */
 static const char *geoip2_rpc_reload_doc[2] = {
-		"Reload GeoIP2 database file.", 0};
+	"Reload GeoIP2 database file.",
+	0
+};
 
 rpc_export_t ubl_rpc[] = {
-		{"geoip2.reload", geoip2_rpc_reload, geoip2_rpc_reload_doc, 0},
-		{0, 0, 0, 0}};
+	{"geoip2.reload", geoip2_rpc_reload, geoip2_rpc_reload_doc, 0},
+	{0, 0, 0, 0}
+};
+/* clang-format on */
 
 static int geoip2_rpc_init(void)
 {
