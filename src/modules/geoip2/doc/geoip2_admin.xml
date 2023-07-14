@@ -151,7 +151,7 @@ if(geoip2_match("$si", "src"))
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">distance(ip_addr, latitude, longitude)</function>
+		<function moreinfo="none">geoip2_distance(ip_addr, latitude, longitude)</function>
 		</title>
 		<para>
 			The function calculates the distance in miles between the geocoordinates of
@@ -159,13 +159,13 @@ if(geoip2_match("$si", "src"))
 			and the geocoordinates <emphasis>latitude</emphasis> and <emphasis>longitude</emphasis>
 		</para>
 		<example>
-		<title><function>distance</function> usage</title>
+		<title><function>geoip2_distance</function> usage</title>
 		<programlisting format="linespecific">
 ...
 	$var(client_ip) = "109.184.18.64";
 	$var(lat_pos) = "53.200660";
 	$var(lon_pos) = "45.004640";
-	$var(dist) = distance($var(client_ip), $var(lat_pos), $var(lon_pos));
+	$var(dist) = geoip2_distance($var(client_ip), $var(lat_pos), $var(lon_pos));
 
 	xlog("distance is $var(dist)\n");
 ...
