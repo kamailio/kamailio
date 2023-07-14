@@ -54,26 +54,6 @@ static int geoip2_resid_param(modparam_t type, void *val);
 static int w_distance(struct sip_msg *msg, char *str1, char *str2, char *str3);
 static int distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon);
 
-static int fixup_distance_param(void **param, int param_no)
-{
-	if(param_no >= 1 && param_no <= 3) {
-		return fixup_spve_null(param, 1);
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-static int fixup_free_distance_param(void **param, int param_no)
-{
-	if(param_no >= 1 && param_no <= 3) {
-		return fixup_free_spve_null(param, 1);
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
 static pv_export_t mod_pvs[] = {
 		{{"gip2", sizeof("gip2") - 1}, PVT_OTHER, pv_get_geoip2, 0,
 				pv_parse_geoip2_name, 0, 0, 0},
@@ -81,8 +61,8 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[] = {{"geoip2_match", (cmd_function)w_geoip2_match, 2,
 									  fixup_spve_spve, 0, ANY_ROUTE},
-		{"distance", (cmd_function)w_distance, 3, fixup_distance_param,
-				fixup_free_distance_param, ANY_ROUTE},
+		{"distance", (cmd_function)w_distance, 3, fixup_spve_all,
+				fixup_free_spve_all, ANY_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {{"path", PARAM_STRING, &geoip2_path},
