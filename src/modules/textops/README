@@ -876,8 +876,8 @@ append_urihf("CC-Diversion: ", "\r\n");
 
 Note
 
-   The function is also able to distinguish the compact names. For exmaple
-   “From” will match with “f”
+   The function is also able to distinguish the compact names. For example
+   “From” will match with “f”.
 
    Meaning of the parameters is as follows:
      * hf_name - Header field name (long or compact form). It can be only

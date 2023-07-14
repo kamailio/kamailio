@@ -765,7 +765,7 @@ record_route_advertised_address("1.2.3.4:5090");
 
 1.3.  add_rr_param(msg, param)
 
-   Adds a parameter to the requests's Record-Route URI (param must be in
+   Adds a parameter to the requests' Record-Route URI (param must be in
    “;name=value” format).
 
    The function returns 0 on success. Otherwise, -1 is returned.

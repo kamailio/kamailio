@@ -174,11 +174,12 @@ Chapter 2. Developer Guide
    Register a new callback to the qos.
 
    Meaning of the parameters is as follows:
-     * struct qos_ctx_st* qos - qos to register callback to. If maybe NULL
-       only for QOSCB_CREATED callback type, which is not a per qos type.
-     * int type - types of callbacks; more types may be register for the
-       same callback function; only QOSCB_CREATED must be register alone.
-       Possible types:
+     * struct qos_ctx_st* qos - qos to register callback to. It may be
+       NULL only for QOSCB_CREATED callback type, which is not a per qos
+       type.
+     * int type - types of callbacks; more types may be registered for the
+       same callback function; only QOSCB_CREATED must be registered
+       alone. Possible types:
           + QOSCB_CREATED - called when a new qos context is created -
             it's a global type (not associated to any qos).
           + QOSCB_ADD_SDP - called when a new SDP was added to the qos

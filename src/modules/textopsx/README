@@ -320,7 +320,7 @@ if(fnmatch("$rU", "123*"))
    Meaning of the parameters is as follows:
      * hf - Header field to be appended. Format: HFNAME [ [IDX] ]. If
        index is not specified new header is inserted at the end of
-       message. The index 1 correxponds to the first header.
+       message. The index 1 corresponds to the first header.
      * hvalue - Value to be added, config var formatting supported.
 
    Example 1.8. append_hf_value usage
@@ -341,7 +341,7 @@ ot exists add new header
    Meaning of the parameters is as follows:
      * hf - Header field to be appended. Format: HFNAME [ [IDX] ]. If
        index is not specified new header is inserted at the top of
-       message. The index 1 correxponds to the first header.
+       message. The index 1 corresponds to the first header.
      * hvalue - Value to be added, config var formatting supported.
 
    Example 1.9. insert_hf_value usage
@@ -359,7 +359,7 @@ insert_hf_value("foo[1]", "gogo") # try add to the first header
    Meaning of the parameters is as follows:
      * hf_par - Header field/param to be removed. Format: HFNAME [ [IDX] ]
        [. PARAM ] If asterisk is specified as index then all values are
-       affected. The index 1 correxponds to the first header.
+       affected. The index 1 corresponds to the first header.
 
    Example 1.10. remove_hf_value usage
 ...
@@ -379,7 +379,7 @@ remove_hf_value("foo[*].bar") # for each foo delete bar parameters
    Meaning of the parameters is as follows:
      * hf_par - Header/param to be removed. Format: HFNAME [ [IDX] ] [.
        PARAM ] If asterisk is specified as index then all values are
-       affected. The index 1 correxponds to the first header.
+       affected. The index 1 corresponds to the first header.
 
    Example 1.11. remove_hf_value2 usage
 ...
@@ -398,7 +398,7 @@ remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
    Meaning of the parameters is as follows:
      * hf_para - Header field value / param to be appended. Format: HFNAME
        [ [IDX] ] [. PARAM] If asterisk is specified as index then all
-       values are affected. The index 1 correxponds to the first header.
+       values are affected. The index 1 corresponds to the first header.
      * hvalue - Value to be assigned, config var formatting supported. If
        value is empty then no equal sign appears in param.
 
@@ -422,7 +422,7 @@ assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
    Meaning of the parameters is as follows:
      * hf_para - Header field value / param to be appended. Format: HFNAME
        [ [IDX] ] [. PARAM] If asterisk is specified as index then all
-       values are affected. The index 1 correxponds to the first header.
+       values are affected. The index 1 corresponds to the first header.
      * hvalue - Value to be assigned, config var formatting supported. If
        value is empty then no equal sign appears in param.
 
