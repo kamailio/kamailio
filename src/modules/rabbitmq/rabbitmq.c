@@ -566,7 +566,7 @@ static int rabbitmq_connect(amqp_connection_state_t *conn)
 	if(amqp_info.ssl && !amqp_ssl_init_called) {
 		amqp_set_initialize_ssl_library(1);
 		amqp_ssl_init_called = 1;
-		LM_DBG("AMQP SSL library inilialized\n");
+		LM_DBG("AMQP SSL library initialized\n");
 	}
 
 	// establish a new connection to RabbitMQ server
@@ -605,7 +605,7 @@ static int rabbitmq_connect(amqp_connection_state_t *conn)
 
 	ret = amqp_socket_open(amqp_sock, amqp_info.host, amqp_info.port);
 	if(ret != AMQP_STATUS_OK) {
-		LM_ERR("FAIL: open %s sock, amqp_status=%d", 
+		LM_ERR("FAIL: open %s sock, amqp_status=%d",
 				(amqp_info.ssl) ? "SSL" : "TCP", ret);
 		// amqp_destroy_connection(*conn);
 		return RABBITMQ_ERR_SOCK;
