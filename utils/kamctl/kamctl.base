@@ -512,6 +512,8 @@ cat <<EOF
  dispatcher add <setid> <destination> [flags] [priority] [attrs] [description]
             .......................... add gateway
  dispatcher rm <id> .................. delete gateway
+ dispatcher rmip <ip> <setid>.................. delete gateway <ip> in <setid>
+ dispatcher rmset <setid> .................. delete all gateways in <setid>
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_dispatcher"

@@ -1756,6 +1756,40 @@ dispatcher() {
 			fi
 
 			;;
+	  rmip)
+			require_dbengine
+			shift
+			if [ $# -ne 2 ] ; then
+				merr "missing gateway ip address and/or setid to be removed"
+				exit 1
+			fi
+
+			QUERY="delete from $DISPATCHER_TABLE where $DISPATCHER_SETID_COLUMN='$2' and $DISPATCHER_DESTINATION_COLUMN like 'sip:$1:%';"
+			$DBCMD "$QUERY"
+
+			if [ $? -ne 0 ] ; then
+				merr "dispatcher - SQL Error"
+				exit 1
+			fi
+
+	    ;;
+	  rmset)
+			require_dbengine
+			shift
+			if [ $# -ne 2 ] ; then
+				merr "missing gateway setid to be removed"
+				exit 1
+			fi
+
+			QUERY="delete from $DISPATCHER_TABLE where $DISPATCHER_SETID_COLUMN='$1'' and $DISPATCHER_DESTINATION_COLUMN like 'sip:$1:%'';"
+			$DBCMD "$QUERY"
+
+			if [ $? -ne 0 ] ; then
+				merr "dispatcher - SQL Error"
+				exit 1
+			fi
+
+	    ;;
 		reload)
 			require_ctlengine
 			ctl_cmd_run dispatcher.reload
