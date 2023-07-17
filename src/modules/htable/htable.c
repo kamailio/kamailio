@@ -93,106 +93,112 @@ static int w_ht_setxi(
 
 int ht_param(modparam_t type, void *val);
 
+/* clang-format off */
 static pv_export_t mod_pvs[] = {
-		{{"sht", sizeof("sht") - 1}, PVT_OTHER, pv_get_ht_cell, pv_set_ht_cell,
-				pv_parse_ht_name, 0, 0, 0},
-		{{"shtex", sizeof("shtex") - 1}, PVT_OTHER, pv_get_ht_cell_expire,
-				pv_set_ht_cell_expire, pv_parse_ht_name, 0, 0, 0},
-		{{"shtcn", sizeof("shtcn") - 1}, PVT_OTHER, pv_get_ht_cn, 0,
-				pv_parse_ht_name, 0, 0, 0},
-		{{"shtcv", sizeof("shtcv") - 1}, PVT_OTHER, pv_get_ht_cv, 0,
-				pv_parse_ht_name, 0, 0, 0},
-		{{"shtinc", sizeof("shtinc") - 1}, PVT_OTHER, pv_get_ht_inc, 0,
-				pv_parse_ht_name, 0, 0, 0},
-		{{"shtdec", sizeof("shtdec") - 1}, PVT_OTHER, pv_get_ht_dec, 0,
-				pv_parse_ht_name, 0, 0, 0},
-		{{"shtrecord", sizeof("shtrecord") - 1}, PVT_OTHER,
-				pv_get_ht_expired_cell, 0, pv_parse_ht_expired_cell, 0, 0, 0},
-		{{"shtitkey", sizeof("shtitkey") - 1}, PVT_OTHER, pv_get_iterator_key,
-				0, pv_parse_iterator_name, 0, 0, 0},
-		{{"shtitval", sizeof("shtitval") - 1}, PVT_OTHER, pv_get_iterator_val,
-				0, pv_parse_iterator_name, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"sht", sizeof("sht") - 1}, PVT_OTHER, pv_get_ht_cell, pv_set_ht_cell,
+			pv_parse_ht_name, 0, 0, 0},
+	{{"shtex", sizeof("shtex") - 1}, PVT_OTHER, pv_get_ht_cell_expire,
+			pv_set_ht_cell_expire, pv_parse_ht_name, 0, 0, 0},
+	{{"shtcn", sizeof("shtcn") - 1}, PVT_OTHER, pv_get_ht_cn, 0,
+			pv_parse_ht_name, 0, 0, 0},
+	{{"shtcv", sizeof("shtcv") - 1}, PVT_OTHER, pv_get_ht_cv, 0,
+			pv_parse_ht_name, 0, 0, 0},
+	{{"shtinc", sizeof("shtinc") - 1}, PVT_OTHER, pv_get_ht_inc, 0,
+			pv_parse_ht_name, 0, 0, 0},
+	{{"shtdec", sizeof("shtdec") - 1}, PVT_OTHER, pv_get_ht_dec, 0,
+			pv_parse_ht_name, 0, 0, 0},
+	{{"shtrecord", sizeof("shtrecord") - 1}, PVT_OTHER,
+			pv_get_ht_expired_cell, 0, pv_parse_ht_expired_cell, 0, 0, 0},
+	{{"shtitkey", sizeof("shtitkey") - 1}, PVT_OTHER, pv_get_iterator_key,
+			0, pv_parse_iterator_name, 0, 0, 0},
+	{{"shtitval", sizeof("shtitval") - 1}, PVT_OTHER, pv_get_iterator_val,
+			0, pv_parse_iterator_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 
 static cmd_export_t cmds[] = {
-		{"sht_print", (cmd_function)ht_print, 0, 0, 0, ANY_ROUTE},
-		{"sht_rm", (cmd_function)w_ht_rm, 2, fixup_spve_spve, 0, ANY_ROUTE},
-		{"sht_rm_name_re", (cmd_function)ht_rm_name_re, 1, fixup_ht_key, 0,
-				ANY_ROUTE},
-		{"sht_rm_value_re", (cmd_function)ht_rm_value_re, 1, fixup_ht_key, 0,
-				ANY_ROUTE},
-		{"sht_rm_name", (cmd_function)w_ht_rm_name, 3, fixup_spve_all, 0,
-				ANY_ROUTE},
-		{"sht_rm_value", (cmd_function)w_ht_rm_value, 3, fixup_spve_all, 0,
-				ANY_ROUTE},
-		{"sht_match_name", (cmd_function)w_ht_match_name, 3, fixup_spve_all, 0,
-				ANY_ROUTE},
-		{"sht_has_name", (cmd_function)w_ht_match_name, 3, fixup_spve_all, 0,
-				ANY_ROUTE},
-		{"sht_match_str_value", (cmd_function)w_ht_match_str_value, 3,
-				fixup_spve_all, 0, ANY_ROUTE},
-		{"sht_has_str_value", (cmd_function)w_ht_match_str_value, 3,
-				fixup_spve_all, 0, ANY_ROUTE},
-		{"sht_lock", (cmd_function)w_ht_slot_lock, 1, fixup_ht_key, 0,
-				ANY_ROUTE},
-		{"sht_unlock", (cmd_function)w_ht_slot_unlock, 1, fixup_ht_key, 0,
-				ANY_ROUTE},
-		{"sht_reset", (cmd_function)ht_reset, 1, fixup_spve_null, 0, ANY_ROUTE},
-		{"sht_iterator_start", (cmd_function)w_ht_iterator_start, 2,
-				fixup_spve_spve, 0, ANY_ROUTE},
-		{"sht_iterator_next", (cmd_function)w_ht_iterator_next, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"sht_iterator_end", (cmd_function)w_ht_iterator_end, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"sht_iterator_rm", (cmd_function)w_ht_iterator_rm, 1, fixup_spve_null,
-				0, ANY_ROUTE},
-		{"sht_iterator_sets", (cmd_function)w_ht_iterator_sets, 2,
-				fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
-		{"sht_iterator_seti", (cmd_function)w_ht_iterator_seti, 2,
-				fixup_spve_igp, fixup_free_spve_igp, ANY_ROUTE},
-		{"sht_iterator_setex", (cmd_function)w_ht_iterator_setex, 2,
-				fixup_spve_igp, fixup_free_spve_igp, ANY_ROUTE},
-		{"sht_setxs", (cmd_function)w_ht_setxs, 4, fixup_sssi, fixup_free_sssi,
-				ANY_ROUTE},
-		{"sht_setxi", (cmd_function)w_ht_setxi, 4, fixup_ssii, fixup_free_ssii,
-				ANY_ROUTE},
+	{"sht_print", (cmd_function)ht_print, 0, 0, 0, ANY_ROUTE},
+	{"sht_rm", (cmd_function)w_ht_rm, 2, fixup_spve_spve, 0, ANY_ROUTE},
+	{"sht_rm_name_re", (cmd_function)ht_rm_name_re, 1, fixup_ht_key, 0,
+			ANY_ROUTE},
+	{"sht_rm_value_re", (cmd_function)ht_rm_value_re, 1, fixup_ht_key, 0,
+			ANY_ROUTE},
+	{"sht_rm_name", (cmd_function)w_ht_rm_name, 3, fixup_spve_all, 0,
+			ANY_ROUTE},
+	{"sht_rm_value", (cmd_function)w_ht_rm_value, 3, fixup_spve_all, 0,
+			ANY_ROUTE},
+	{"sht_match_name", (cmd_function)w_ht_match_name, 3, fixup_spve_all, 0,
+			ANY_ROUTE},
+	{"sht_has_name", (cmd_function)w_ht_match_name, 3, fixup_spve_all, 0,
+			ANY_ROUTE},
+	{"sht_match_str_value", (cmd_function)w_ht_match_str_value, 3,
+			fixup_spve_all, 0, ANY_ROUTE},
+	{"sht_has_str_value", (cmd_function)w_ht_match_str_value, 3,
+			fixup_spve_all, 0, ANY_ROUTE},
+	{"sht_lock", (cmd_function)w_ht_slot_lock, 1, fixup_ht_key, 0,
+			ANY_ROUTE},
+	{"sht_unlock", (cmd_function)w_ht_slot_unlock, 1, fixup_ht_key, 0,
+			ANY_ROUTE},
+	{"sht_reset", (cmd_function)ht_reset, 1, fixup_spve_null, 0, ANY_ROUTE},
+	{"sht_iterator_start", (cmd_function)w_ht_iterator_start, 2,
+			fixup_spve_spve, 0, ANY_ROUTE},
+	{"sht_iterator_next", (cmd_function)w_ht_iterator_next, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"sht_iterator_end", (cmd_function)w_ht_iterator_end, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"sht_iterator_rm", (cmd_function)w_ht_iterator_rm, 1, fixup_spve_null,
+			0, ANY_ROUTE},
+	{"sht_iterator_sets", (cmd_function)w_ht_iterator_sets, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"sht_iterator_seti", (cmd_function)w_ht_iterator_seti, 2,
+			fixup_spve_igp, fixup_free_spve_igp, ANY_ROUTE},
+	{"sht_iterator_setex", (cmd_function)w_ht_iterator_setex, 2,
+			fixup_spve_igp, fixup_free_spve_igp, ANY_ROUTE},
+	{"sht_setxs", (cmd_function)w_ht_setxs, 4, fixup_sssi, fixup_free_sssi,
+			ANY_ROUTE},
+	{"sht_setxi", (cmd_function)w_ht_setxi, 4, fixup_ssii, fixup_free_ssii,
+			ANY_ROUTE},
 
-		{"bind_htable", (cmd_function)bind_htable, 0, 0, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"bind_htable", (cmd_function)bind_htable, 0, 0, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"htable", PARAM_STRING | USE_FUNC_PARAM, (void *)ht_param},
-		{"db_url", PARAM_STR, &ht_db_url},
-		{"key_name_column", PARAM_STR, &ht_db_name_column},
-		{"key_type_column", PARAM_STR, &ht_db_ktype_column},
-		{"value_type_column", PARAM_STR, &ht_db_vtype_column},
-		{"key_value_column", PARAM_STR, &ht_db_value_column},
-		{"expires_column", PARAM_STR, &ht_db_expires_column},
-		{"array_size_suffix", PARAM_STR, &ht_array_size_suffix},
-		{"fetch_rows", INT_PARAM, &ht_fetch_rows},
-		{"timer_interval", INT_PARAM, &ht_timer_interval},
-		{"db_expires", INT_PARAM, &ht_db_expires_flag},
-		{"enable_dmq", INT_PARAM, &ht_enable_dmq},
-		{"dmq_init_sync", INT_PARAM, &ht_dmq_init_sync},
-		{"timer_procs", PARAM_INT, &ht_timer_procs},
-		{"event_callback", PARAM_STR, &ht_event_callback},
-		{"event_callback_mode", PARAM_INT, &ht_event_callback_mode}, {0, 0, 0}};
+	{"htable", PARAM_STRING | USE_FUNC_PARAM, (void *)ht_param},
+	{"db_url", PARAM_STR, &ht_db_url},
+	{"key_name_column", PARAM_STR, &ht_db_name_column},
+	{"key_type_column", PARAM_STR, &ht_db_ktype_column},
+	{"value_type_column", PARAM_STR, &ht_db_vtype_column},
+	{"key_value_column", PARAM_STR, &ht_db_value_column},
+	{"expires_column", PARAM_STR, &ht_db_expires_column},
+	{"array_size_suffix", PARAM_STR, &ht_array_size_suffix},
+	{"fetch_rows", INT_PARAM, &ht_fetch_rows},
+	{"timer_interval", INT_PARAM, &ht_timer_interval},
+	{"db_expires", INT_PARAM, &ht_db_expires_flag},
+	{"enable_dmq", INT_PARAM, &ht_enable_dmq},
+	{"dmq_init_sync", INT_PARAM, &ht_dmq_init_sync},
+	{"timer_procs", PARAM_INT, &ht_timer_procs},
+	{"event_callback", PARAM_STR, &ht_event_callback},
+	{"event_callback_mode", PARAM_INT, &ht_event_callback_mode},
+	{0, 0, 0}
+};
 
 
 /** module exports */
 struct module_exports exports = {
-		"htable",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per-child init function */
-		destroy			 /* module destroy function */
+	"htable",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* RPC method exports */
+	mod_pvs,		 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* per-child init function */
+	destroy			 /* module destroy function */
 };
+/* clang-format on */
 
 /**
  * init module function
@@ -1453,29 +1459,60 @@ static int ki_ht_dec(sip_msg_t *msg, str *htname, str *itname)
 
 #define RPC_DATE_BUF_LEN 21
 
-static const char *htable_dump_doc[2] = {"Dump the contents of hash table.", 0};
+/* clang-format off */
+static const char *htable_dump_doc[2] = {
+	"Dump the contents of hash table.",
+	0
+};
 static const char *htable_delete_doc[2] = {
-		"Delete one key from a hash table.", 0};
-static const char *htable_get_doc[2] = {"Get one key from a hash table.", 0};
+	"Delete one key from a hash table.",
+	0
+};
+static const char *htable_get_doc[2] = {
+	"Get one key from a hash table.",
+	0
+};
 static const char *htable_sets_doc[2] = {
-		"Set one key in a hash table to a string value.", 0};
+	"Set one key in a hash table to a string value.",
+	0
+};
 static const char *htable_seti_doc[2] = {
-		"Set one key in a hash table to an integer value.", 0};
+	"Set one key in a hash table to an integer value.",
+	0
+};
 static const char *htable_setex_doc[2] = {
-		"Set expire in a hash table for the item referenced by key.", 0};
+	"Set expire in a hash table for the item referenced by key.",
+	0
+};
 static const char *htable_setxs_doc[2] = {
-		"Set one key in a hash table to a string value and its expire value.",
-		0};
+	"Set one key in a hash table to a string value and its expire value.",
+	0
+};
 static const char *htable_setxi_doc[2] = {
-		"Set one key in a hash table to an integer value and its expire value.",
-		0};
-static const char *htable_list_doc[2] = {"List all htables.", 0};
-static const char *htable_stats_doc[2] = {"Statistics about htables.", 0};
-static const char *htable_flush_doc[2] = {"Flush hash table.", 0};
+	"Set one key in a hash table to an integer value and its expire value.",
+	0
+};
+static const char *htable_list_doc[2] = {
+	"List all htables.",
+	0
+};
+static const char *htable_stats_doc[2] = {
+	"Statistics about htables.",
+	0
+};
+static const char *htable_flush_doc[2] = {
+	"Flush hash table.",
+	0
+};
 static const char *htable_reload_doc[2] = {
-		"Reload hash table from database.", 0};
-static const char *htable_store_doc[2] = {"Store hash table to database.", 0};
-
+	"Reload hash table from database.",
+	0
+};
+static const char *htable_store_doc[2] = {
+	"Store hash table to database.",
+	0
+};
+/* clang-format on */
 
 static void htable_rpc_delete(rpc_t *rpc, void *c)
 {
@@ -2061,20 +2098,24 @@ static void htable_rpc_store(rpc_t *rpc, void *c)
 	return;
 }
 
+/* clang-format off */
 rpc_export_t htable_rpc[] = {
-		{"htable.dump", htable_rpc_dump, htable_dump_doc, RET_ARRAY},
-		{"htable.delete", htable_rpc_delete, htable_delete_doc, 0},
-		{"htable.get", htable_rpc_get, htable_get_doc, 0},
-		{"htable.sets", htable_rpc_sets, htable_sets_doc, 0},
-		{"htable.seti", htable_rpc_seti, htable_seti_doc, 0},
-		{"htable.setex", htable_rpc_setex, htable_setex_doc, 0},
-		{"htable.setxs", htable_rpc_setxs, htable_setxs_doc, 0},
-		{"htable.setxi", htable_rpc_setxi, htable_setxi_doc, 0},
-		{"htable.listTables", htable_rpc_list, htable_list_doc, RET_ARRAY},
-		{"htable.reload", htable_rpc_reload, htable_reload_doc, 0},
-		{"htable.store", htable_rpc_store, htable_store_doc, 0},
-		{"htable.stats", htable_rpc_stats, htable_stats_doc, RET_ARRAY},
-		{"htable.flush", htable_rpc_flush, htable_flush_doc, 0}, {0, 0, 0, 0}};
+	{"htable.dump", htable_rpc_dump, htable_dump_doc, RET_ARRAY},
+	{"htable.delete", htable_rpc_delete, htable_delete_doc, 0},
+	{"htable.get", htable_rpc_get, htable_get_doc, 0},
+	{"htable.sets", htable_rpc_sets, htable_sets_doc, 0},
+	{"htable.seti", htable_rpc_seti, htable_seti_doc, 0},
+	{"htable.setex", htable_rpc_setex, htable_setex_doc, 0},
+	{"htable.setxs", htable_rpc_setxs, htable_setxs_doc, 0},
+	{"htable.setxi", htable_rpc_setxi, htable_setxi_doc, 0},
+	{"htable.listTables", htable_rpc_list, htable_list_doc, RET_ARRAY},
+	{"htable.reload", htable_rpc_reload, htable_reload_doc, 0},
+	{"htable.store", htable_rpc_store, htable_store_doc, 0},
+	{"htable.stats", htable_rpc_stats, htable_stats_doc, RET_ARRAY},
+	{"htable.flush", htable_rpc_flush, htable_flush_doc, 0},
+	{0, 0, 0, 0}
+};
+/* clang-format on */
 
 static int htable_init_rpc(void)
 {
