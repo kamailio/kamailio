@@ -370,8 +370,11 @@ void destroy_dlg(struct dlg_cell *dlg)
 	if (dlg_db_mode)
 		remove_dialog_from_db(dlg);
 
-	if (dlg->cbs.first)
+	if(dlg->cbs.first) {
 		destroy_dlg_callbacks_list(dlg->cbs.first);
+		dlg->cbs.first = NULL;
+		dlg->cbs.types = 0;
+	}
 
 	if (dlg->profile_links)
 		destroy_linkers(dlg->profile_links);
