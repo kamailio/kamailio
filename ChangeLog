@@ -1,3 +1,283 @@
+===================== 2023-07-19 Version 5.5.7 Released =====================
+
+===================== Changes Since Version 5.5.6 ===========================
+
+
+commit c8b995c036fe5d15e43138435d3bc68a83747a55
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 19 09:57:21 2023 +0200
+
+    Makefile.defs: version set to 5.5.7
+
+commit 1339a180f6d386dfcba655a09d327ba528987acd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 19 09:56:40 2023 +0200
+
+    pkg: version set to 5.5.7 for rpm and alpine specs
+
+commit b9fd39ea259b32fd950080045e0edd0969a9a29d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jul 19 09:09:41 2023 +0200
+
+    pkg/kamailio/deb: version set 5.5.7
+
+commit aa022e9d35f0ce9040d396288f69995d2a7399ac
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Jul 17 11:47:06 2023 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit edfbecd0ed515dab637a03a793c6c2d565dfdaee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 31 09:01:13 2023 +0200
+
+    sst: fix condition on sst_min_se for sst_check_min()
+    
+    (cherry picked from commit a059af04ac47fd31238ca4f22ad868529e035c43)
+    (cherry picked from commit febfc9722f83d992a3c1643fa373468b73cb3fa0)
+    (cherry picked from commit 5fc4cca395e057714376b681bbad4935a9570d0d)
+
+commit 063bceefc411e2841b7507d9f366a45d62cfbe00
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 23 09:41:13 2023 +0200
+
+    ipops: create container items if not found for srv and naptr functions
+    
+    - GH #3419
+    
+    (cherry picked from commit 7971d825361bee29d65fcea69f2978d7af31eeaa)
+    (cherry picked from commit 408643ec916bc00f9f9447952e553d129f8ec896)
+    (cherry picked from commit 771fcd42e315376c9d3c16bb63983a72e508be18)
+
+commit a5c798a2292323e235df5423cdc27eea46bddbbf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 16 17:28:02 2023 +0200
+
+    htable: set dbload filed on empty db result
+    
+    (cherry picked from commit ba9d663c5d382edef3c98b31aa4341b21c307a34)
+    (cherry picked from commit 27ab4b757805083c231ceb109a46f5501b1baa7c)
+    (cherry picked from commit 249f476403f987917ed7d5c7f6d7ea70e1f43e63)
+
+commit 2555e1b1a02af8d96504c43953ab395097c86adb
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Sat Apr 8 01:48:11 2023 -0400
+
+    tm: enhance documentation for on_sl_reply param
+    
+    (cherry picked from commit a4970749b2be40cd598d4ce5cf2eaa6b38fc2307)
+    (cherry picked from commit 2f86215a704ff10a58cb3f5e57497918c381a048)
+
+commit 23470fccf6e54d7f853e6df4ab519feb30272721
+Author: Victor Seva <vseva@sipwise.com>
+Date:   Fri Mar 24 10:26:15 2023 +0100
+
+    app_lua: fix crash on exausted memory scenario
+    
+    (cherry picked from commit ef94da7bac8e2aaf5a452d7b7dc3e2b544153ff6)
+    (cherry picked from commit b524321a4871c349e6ebb464ea018e138bc6d5ed)
+
+commit b1953700ae03bde4c4b4d0c549d09c2f66e8ec09
+Author: Dennis <dennis_y@mail.ru>
+Date:   Fri Mar 10 17:46:21 2023 +0300
+
+    auth_ephemeral: fix authentication with secrets added at runtime (#3390)
+    
+    * auth_ephemeral: fix authentication with secrets added at runtime
+    
+    - proper way to work with shm pointer to secret list
+    
+    * fix: free secret_struct shm
+    
+    Free shm secret_struct in case the allocation error of secret_list pointer.
+    
+    (cherry picked from commit 6fa5a8fa8ddfe09bdab2fb445bee94e51d86b7fc)
+    (cherry picked from commit ca13a3382b9067a0dc14fc7ec995ec2d95c8c6cb)
+
+commit 2a5c590ae8e3fb435670d0bd97deda35d22a33ad
+Author: Pantelis Kolatsis <pk@gilawa.com>
+Date:   Mon Mar 6 10:44:19 2023 +0000
+
+    sqlops: do not allow empty name component in URL
+    
+    (cherry picked from commit b15db86e93120824dcfc879099432f3ec1c3b0c7)
+    (cherry picked from commit 9daacc36e3ed858eca97e9b7ac7eaa90e10c0803)
+
+commit f39f320b6be93eb20936805b4e0396ce48da7985
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jun 23 09:06:43 2023 +0200
+
+    utils/kamcmd: fix memory leak
+    
+    fixes #3478
+    
+    (cherry picked from commit badc81cb427ba5aaf03ca26e4c2654d58ee08588)
+    (cherry picked from commit 402bab6f63b515a13a72ac2dad6e40075ded1479)
+
+commit 0125f8818c99d673c22ce8d9448d453124097e87
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Thu May 18 10:52:52 2023 +0000
+
+    dispatcher: fix force send socket functionality, was not working in some TCP scenarios
+    
+    (cherry picked from commit 6183319381573e42b882d05ae1748539f7547d8c)
+    (cherry picked from commit da7944e2f4c7e6f344d125da325c388e1836662f)
+    (cherry picked from commit d13a0b21d3a2d9c5f453957490c06d924af7e043)
+
+commit deae678810d138d0cb4086c1472e5a4736d209f6
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon May 15 13:22:09 2023 +0000
+
+    topos: fix early-dialog b-side UPDATE requests routing (GH #3437)
+    
+    (cherry picked from commit 091dc9a76bcec5c8a4bc73e863ed10b1b9d76c92)
+    (cherry picked from commit 1b55a80b71bf9a7edfe29eb40627b472565ace69)
+    (cherry picked from commit 0a4d8819b1dccf4404be557278dbd5350eacd156)
+
+commit ce08c374e46532591ce54e29f3629554e9e3b011
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Tue May 9 15:05:39 2023 +0200
+
+    rtpengine: fix unaligned memory access
+    
+    Make sure the pointers we return from our continuous memory buffer is
+    always 64-bit aligned as it's used not only for strings, but also for
+    structs/objects, and such unaligned memory access is undefined on some
+    archs and flagged as such by ASAN.
+    
+    From https://github.com/sipwise/rtpengine/commit/ade8100d3b10308f1ff63f8cb06fdf292618edca
+    
+    fixes #3444
+    
+    (cherry-picked from commit 43ac6b27d7ca7bc522f362c25ebb3c22ab918280)
+
+commit 3cdc934292a866bb4980cfb5e1cffa6138282940
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 13 12:41:12 2023 +0100
+
+    app_python3: use Py_SET_TYPE() from python 3.9
+    
+    (cherry picked from commit fc75b4c3f8f9bdba320f74ddf942686c09316b56)
+    (cherry picked from commit 07fc4d54e1c00a155dc17c25998ab2cbf75d0862)
+
+commit c79393c96f5934c4a405a78d10a645b2b11a6bdb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 13 12:33:20 2023 +0100
+
+    app_python3: proper check of PY_VERSION_HEX for python 3.11
+    
+    (cherry picked from commit 8546fb87e3277b675bd47eba9435f739cf3bb69d)
+    (cherry picked from commit 82caa486216930ff634e4b9eeee8184eabaf504c)
+
+commit 5f54afdc829c1325795db7a0a45afb12e9b72103
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 21 20:15:29 2022 +0200
+
+    app_python3: use new Python 3.10+ API functions for tracking execution
+    
+    - GH #3187
+    
+    (cherry picked from commit b8bf86eb11a17c853450e5c7f81d2446cf719fbc)
+    (cherry picked from commit 92f15de3d026405c749ce10fb4b11200c9b365b1)
+
+commit 31a507e1fba11b0cb94260bf6a7cfdcb640d2bb4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu May 4 20:12:32 2023 +0200
+
+    lcr: fix crash be calling load_gw* via KEMI
+    
+    move the check of lcr_id to the helper
+    
+    fixes #3435
+    
+    (cherry picked from commit c88e506fe6a1ba0f588c5866a63ffb18fa25478a)
+
+commit ad12445a0994e6b82a4a872ecbbe46e1a4982a6c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Apr 6 15:51:17 2023 +0200
+
+    github: use bullseye tag for check build [skip ci]
+
+commit 4f24f446914393b56e990600e03484e1f410382c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Apr 6 14:03:57 2023 +0200
+
+    github: use Github Packages registry [skip ci]
+    
+    (cherry picked from commit 8bba1aa866b736f1fd98dace67fe4a4b1eeca5c7)
+    (cherry picked from commit 8189ae69e563c1cffed0c4e12d57d258d2a541f6)
+
+commit f1d8ff5b22b8a367fbf0c7062d9bc5aa7ae2a671
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jan 27 08:30:30 2023 +0100
+
+    pkg/kamailio/deb: remove warning build-depends-on-obsolete-package [skip ci]
+    
+    > W: kamailio source: build-depends-on-obsolete-package Build-Depends: libncurses5-dev => libncurses-dev
+    
+    (cherry picked from commit 387a8ca53f179437ae173b0bd5cb8d2d4922b60d)
+    (cherry picked from commit dafb657950f97e7431770be6d0e9f2f04634fc21)
+
+commit 210b8de98a76f2b57d4f894dadb2ad03ef2e0b8f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jan 27 08:23:45 2023 +0100
+
+    pkg/kamailio/deb: remove lsb-base dependency [skip ci]
+    
+    * on newer version, there's no need to add it
+    
+    > E: kamailio: depends-on-obsolete-package Depends: lsb-base
+    
+    (cherry picked from commit 03755f93f98608d85591ba8aa184733e3871b92c)
+    (cherry picked from commit a45f4ca901f76dae023e390d11e71873cb7e73ff)
+
+commit 32cce91f3e6514e9f99f26d2c0dabc56281b034c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Dec 4 16:52:26 2021 +0100
+
+    pkg/kamailio/deb: fix sid build
+    
+    * no python2 and dh-systemd package available
+    
+    (cherry picked from commit 986b9bea258864bf40606afe9761dc17dead6476)
+
+commit bbb40895bc74810b37df2760bee309025fca27af
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 30 12:48:44 2023 +0200
+
+    ndb_redis: fix index on parsing sentinel address
+    
+    (cherry picked from commit 5c8eed0ce78d029f28a1819262516940b7dd749e)
+    (cherry picked from commit d4ff1550a7c7f9647236f03559dc2fc3106a2b8d)
+
+commit 31e116ccf0ad444cef81d47f123a73038453667a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 28 08:12:00 2023 +0200
+
+    ndb_redis: break on finding a server via sentinel
+    
+    (cherry picked from commit cc9501663d6dd0fa91aef23ce00a7cdf86319201)
+    (cherry picked from commit 21fc0e010ef97d86093d7673b5038b2e65f839cb)
+
+commit 667eed709ac31589d6ed0c3bd1003babdc1152a1
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Fri Mar 24 14:20:13 2023 +0000
+
+    carrierroute: remove redundant capabilities check, related to commit cf147ab7888c4e2
+    
+    (cherry picked from commit f44e93a4171668d1c1182b186bea8c41db0a9300)
+    (cherry picked from commit 7fcfc9ef6d624d7c817c83b5bb8008638d387e78)
+
+commit 3fed16c6eccbde99f4161af59318c94f6fa24a22
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Thu Mar 23 18:21:26 2023 +0000
+
+    carrierroute: check during startup for required DB capabilities (GH #3405)
+    
+    (cherry picked from commit cf147ab7888c4e2b26db9dd44e494001bb71a61c)
+    (cherry picked from commit ce9c0e6715010c4403463b6d664b6e4a5632c04a)
+
+
 ===================== 2023-03-02 Version 5.5.6 Released =====================
 
 ===================== Changes Since Version 5.5.5 ===========================
