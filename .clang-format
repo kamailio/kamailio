@@ -1,4 +1,7 @@
 ---
+Language: Json
+BasedOnStyle: llvm
+---
 Language:        Cpp
 # BasedOnStyle:  LLVM
 AccessModifierOffset: -4
@@ -87,4 +90,3 @@ Standard:        Cpp11
 TabWidth:        4
 UseTab:          Always
 ...
-
