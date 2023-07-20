@@ -169,14 +169,33 @@ static inline int crypto_format_rfc4122_uuid(char *sbuf, size_t sbuf_len,
  */
 void crypto_generate_callid(str* callid)
 {
+#if OPENSSL_VERSION_NUMBER > 0x030000000L
+	EVP_MD_CTX *crypto_ctx = NULL;
+#else
 	static SHA_CTX crypto_ctx = {0};
+#endif
 	static unsigned char crypto_buf[SHA_DIGEST_LENGTH] = {0};
 	static char crypto_sbuf[UUID_LEN] = {0};
 	crypto_inc_counter(crypto_callid_counter, CTR_LEN);
+
+#if OPENSSL_VERSION_NUMBER > 0x030000000L
+	if((crypto_ctx = EVP_MD_CTX_new()) == NULL) {
+		LM_ERR("can't get new context\n");
+		callid->s = NULL;
+		callid->len = 0;
+		return;
+	}
+	EVP_DigestInit_ex(crypto_ctx, EVP_sha1(), NULL);
+	EVP_DigestUpdate(crypto_ctx, crypto_callid_seed, SEED_LEN);
+	EVP_DigestUpdate(crypto_ctx, crypto_callid_counter, CTR_LEN);
+	EVP_DigestFinal_ex(crypto_ctx, crypto_buf, NULL);
+	EVP_MD_CTX_free(crypto_ctx);
+#else
 	SHA1_Init(&crypto_ctx);
 	SHA1_Update(&crypto_ctx, crypto_callid_seed, SEED_LEN);
 	SHA1_Update(&crypto_ctx, crypto_callid_counter, CTR_LEN);
 	SHA1_Final(crypto_buf, &crypto_ctx);
+#endif
 	crypto_format_rfc4122_uuid(crypto_sbuf, sizeof(crypto_sbuf),
 			crypto_buf, sizeof(crypto_buf));
 	callid->s = crypto_sbuf;
