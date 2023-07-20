@@ -180,14 +180,15 @@ struct minmax_mos_label_stats
 };
 struct minmax_stats_vals
 {
-	long long mos;
-	long long at;
-	long long packetloss;
-	long long jitter;
-	long long roundtrip;
-	long long roundtrip_leg;
-	long long samples;
-	long long avg_samples; /* our own running count to average the averages */
+	long long int mos;
+	long long int at;
+	long long int packetloss;
+	long long int jitter;
+	long long int roundtrip;
+	long long int roundtrip_leg;
+	long long int samples;
+	long long int
+			avg_samples; /* our own running count to average the averages */
 };
 
 #define RTPE_LIST_VERSION_DELAY 10
@@ -3879,12 +3880,13 @@ static void avp_print_decimal(pv_elem_t *pv, int num, struct sip_msg *msg)
 	len = snprintf(buf, sizeof(buf), "%i.%i", num / 10, abs(num % 10));
 	avp_print_s(pv, buf, len, msg);
 }
-static void avp_print_int(pv_elem_t *pv, int num, struct sip_msg *msg)
+static void avp_print_llint(
+		pv_elem_t *pv, long long int num, struct sip_msg *msg)
 {
 	int len;
-	char buf[8];
+	char buf[20];
 
-	len = snprintf(buf, sizeof(buf), "%i", num);
+	len = snprintf(buf, sizeof(buf), "%lld", num);
 	avp_print_s(pv, buf, len, msg);
 }
 static void avp_print_time(pv_elem_t *pv, int num, struct sip_msg *msg)
@@ -3904,12 +3906,13 @@ static void avp_print_mos(struct minmax_mos_stats *s,
 
 	avp_print_decimal(s->mos_pv, vals->mos / vals->avg_samples, msg);
 	avp_print_time(s->at_pv, vals->at - created, msg);
-	avp_print_int(s->packetloss_pv, vals->packetloss / vals->avg_samples, msg);
-	avp_print_int(s->jitter_pv, vals->jitter / vals->avg_samples, msg);
-	avp_print_int(s->roundtrip_pv, vals->roundtrip / vals->avg_samples, msg);
-	avp_print_int(
+	avp_print_llint(
+			s->packetloss_pv, vals->packetloss / vals->avg_samples, msg);
+	avp_print_llint(s->jitter_pv, vals->jitter / vals->avg_samples, msg);
+	avp_print_llint(s->roundtrip_pv, vals->roundtrip / vals->avg_samples, msg);
+	avp_print_llint(
 			s->roundtrip_leg_pv, vals->roundtrip_leg / vals->avg_samples, msg);
-	avp_print_int(s->samples_pv, vals->samples / vals->avg_samples, msg);
+	avp_print_llint(s->samples_pv, vals->samples / vals->avg_samples, msg);
 }
 
 static int decode_mos_vals_dict(
