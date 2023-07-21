@@ -2364,12 +2364,10 @@ fi
 
 %files      tls
 %defattr(-,root,root)
-%dir %{_libdir}/kamailio/openssl_mutex_shared
 %doc %{_docdir}/kamailio/modules/README.auth_identity
 %doc %{_docdir}/kamailio/modules/README.tls
 %{_libdir}/kamailio/modules/auth_identity.so
 %{_libdir}/kamailio/modules/tls.so
-%{_libdir}/kamailio/openssl_mutex_shared/openssl_mutex_shared.so
 
 
 %files      tcpops
