@@ -39,7 +39,7 @@
 		</xsl:variable>
 		<xsl:text>&#x9;&lt;!-- </xsl:text>
 		<xsl:value-of select="$table.name"/>
-		<xsl:text> provisionning --&gt;&#xa;</xsl:text>
+		<xsl:text> provisioning --&gt;&#xa;</xsl:text>
 		<xsl:text>&#x9;&lt;mod&gt;&lt;mod_name&gt;</xsl:text>
 		<xsl:value-of select="$table.name"/>
 		<xsl:text>&lt;/mod_name&gt;&#xa;</xsl:text>
