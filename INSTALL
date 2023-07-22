@@ -155,7 +155,7 @@ OS Notes:
 
   Solaris 10
   ----------
-  As above; you can use Solaris's yacc instead of bison. You might also
+  As above; you can use Solaris' yacc instead of bison. You might also
   need gtar and ginstall. If you don't have ginstall you can use Solaris
   install, just make sure it's in the PATH (it's usually in /usr/sbin) and
   add INSTALL=install either to the environment or to the make command line

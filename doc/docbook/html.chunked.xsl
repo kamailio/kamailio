@@ -5,7 +5,7 @@
     <!-- Generate chunked output when building all the documentation  -->
     <xsl:import href="http://docbook.sourceforge.net/release/xsl/current/xhtml/chunk.xsl"/>
 
-    <!-- Commmon XHTML customization -->
+    <!-- Common XHTML customization -->
     <xsl:import href="html.common.xsl"/>
 
 <!-- Chunking -->

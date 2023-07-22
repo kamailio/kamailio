@@ -138,7 +138,7 @@
 	<xsl:if test="autoincrement">
 	    <xsl:text> AUTO_INCREMENT</xsl:text>
 	</xsl:if>
-	<!-- PRIMARY KEY column defintion -->
+	<!-- PRIMARY KEY column definition -->
 	<xsl:if test="primary">
 	    <xsl:text> PRIMARY KEY</xsl:text>
 	</xsl:if>

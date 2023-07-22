@@ -21,7 +21,7 @@ x [mem] investigate: keep an used/unused flag per fragment, on free
       check if neighboring frags were not used and if so defragment
 - [timer] multiple timers? at least ticks should no be affected by the amount
    of work done in the timer handlers
-- [tcp] ser intiated tcp connections use INADDR_ANY (they should be bound first
+- [tcp] ser initiated tcp connections use INADDR_ANY (they should be bound first
   to some ip/port ?function of the dest?)
 - [tcp] need to confirm fd receipt after send_fd, before closing it (this might
  happen in tcp_send new conn.) (see FreeBSD send BUGS for more info)
@@ -65,7 +65,7 @@ x extend listen and alias to include port numbers and protocol:
        tcp foo.bar:5063, udp foo.bar:5062, foo2.bar
 x added set_advertised_{address,port} -- was: add force_via, force_srcip a.s.o
 (the advertised addresses should be overwritable from the script).
-x ? add force_outbound_socket(ip)? (choose an apropriate socket from the
+x ? add force_outbound_socket(ip)? (choose an appropriate socket from the
  listen list for sending the msg; works on udp only)
 
 release:
@@ -102,7 +102,7 @@ not so critical:
 x replace  remaining mallocs/frees at least in msg_translator.c
 - add $(INCLUDES) to the Makefiles
 x make ser suncc ready
-- fix parse_cseq!!! (it doesnt parse 1234\n INVITE a.s.o)
+- fix parse_cseq!!! (it doesn't parse 1234\n INVITE a.s.o)
 x fix 0 parameter module f. call
 x better Via parsing (handle ' ' in uri, eg: foo.bar : 1234 ; received=) and
  ipv6 addresses ([fec0:aa::01]).
@@ -148,7 +148,7 @@ x command line switch for checking the config file syntax
 - config file version (a la sendmail)
 0 loop detection
 - cfg. file reload
-- flags for using names or ip adresses in Via ?
+- flags for using names or ip addresses in Via ?
 - escape char injection/printing fix (verify all log/printed messages
  for terminal escapes and remove them)
 
@@ -202,7 +202,7 @@ tm optimizations:
 - inline/macro/drop for: get_tm_table, set_kr, lock_hash, unlock_hash,
   set_t, get_t
 - replace snprintfs int build_uac_request, *_dlg
-- fix the huge param no. in this functions (use structs if neccessary):
+- fix the huge param no. in this functions (use structs if necessary):
   build_uac_request, build_uac_request_dlg, t_uac, t_uac_dlg
 - uri2proxy - t_uac_dlg => extra malloc/free (no üroxy needed here)
   
