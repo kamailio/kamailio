@@ -1240,6 +1240,49 @@ error:
 	return 0;
 }
 
+inline static int find_listening_sock_info(
+		int s, union sockaddr_union **from, int type)
+{
+	struct ip_addr ip;
+	struct socket_info *si = NULL;
+	su2ip_addr(&ip, *from);
+
+	si = find_si(&ip, 0, type);
+
+	if(unlikely(si == 0)) {
+		si = find_sock_info_by_address_family(type, ip.af);
+		if(si) {
+			int optval = 1;
+			su2ip_addr(&ip, &si->su);
+			*from = &si->su;
+			if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *)&optval,
+					   sizeof(optval))
+					== -1) {
+				LM_ERR("setsockopt SO_REUSEADDR %s\n", strerror(errno));
+				/* continue, not critical */
+			}
+			optval = 1;
+			if(setsockopt(s, SOL_SOCKET, SO_REUSEPORT, (void *)&optval,
+					   sizeof(optval))
+					== -1) {
+				LM_ERR("setsockopt SO_REUSEPORT %s\n", strerror(errno));
+				/* continue, not critical */
+			}
+			if(unlikely(bind(s, &si->su.s, sockaddru_len(si->su)) != 0)) {
+				LM_WARN("binding to source address %s failed: %s [%d]\n",
+						su2a(&si->su, sizeof(si->su)), strerror(errno), errno);
+				return -1;
+			}
+		}
+	} else {
+		if(unlikely(bind(s, &(*from)->s, sockaddru_len(**from)) != 0)) {
+			LM_WARN("binding to source address %s failed: %s [%d]\n",
+						su2a(&si->su, sizeof(si->su)), strerror(errno), errno);
+			return -1;
+		}
+	}
+	return 0;
+}
 
 /* do the actual connect, set sock. options a.s.o
  * returns socket on success, -1 on error
@@ -1269,9 +1312,21 @@ inline static int tcp_do_connect(union sockaddr_union *server,
 		goto error;
 	}
 
-	if(unlikely(from && bind(s, &from->s, sockaddru_len(*from)) != 0)) {
-		LM_WARN("binding to source address %s failed: %s [%d]\n",
-				su2a(from, sizeof(*from)), strerror(errno), errno);
+	if(unlikely(from != 0)) {
+		if(unlikely(bind(s, &from->s, sockaddru_len(*from)) != 0)) {
+			LM_WARN("binding to source address %s failed: %s [%d]\n",
+					su2a(from, sizeof(*from)), strerror(errno), errno);
+		}
+	} else {
+		my_name_len = sizeof(my_name);
+		if(unlikely(getsockname(s, &my_name.s, &my_name_len) != 0)) {
+			LM_ERR("getsockname failed: %s(%d)\n", strerror(errno), errno);
+		} else {
+			from = &my_name; /* update from with the real "from" address */
+			if(find_listening_sock_info(s, &from, type) < 0) {
+				from = NULL;
+			}
+		}
 	}
 	*state = S_CONN_OK;
 #ifdef TCP_ASYNC
