@@ -2592,3 +2592,35 @@ struct socket_info *lookup_local_socket(str *phostp)
 	return grep_sock_info(
 			&r.host, (unsigned short)r.port, (unsigned short)r.proto);
 }
+
+struct socket_info *find_sock_info_by_address_family(
+		int proto, int address_family)
+{
+	struct addr_info *ai = NULL;
+	int found = 0;
+	struct socket_info *si = NULL;
+	struct socket_info **si_list = get_sock_info_list(proto);
+
+	for(si = si_list ? *si_list : NULL; si; si = si->next) {
+		if(si->flags & (SI_IS_LO | SI_IS_MCAST)) {
+			continue;
+		}
+
+		if(si->address.af == address_family) {
+			break;
+		}
+
+		for(ai = si->addr_info_lst; ai; ai = ai->next) {
+			if(ai->address.af == address_family) {
+				found = 1;
+				break;
+			}
+		}
+
+		if(found) {
+			break;
+		}
+	}
+
+	return si;
+}

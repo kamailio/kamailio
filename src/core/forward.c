@@ -168,6 +168,9 @@ retry:
 	}
 	su2ip_addr(&ip, &from);
 	si = find_si(&ip, 0, proto);
+	if(si == 0) {
+		si = find_sock_info_by_address_family(proto, ip.af);
+	}
 	if(si == 0)
 		goto error;
 	LM_DBG("socket determined: %p\n", si);

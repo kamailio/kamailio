@@ -171,4 +171,7 @@ unsigned int ipv6_get_netif_scope(char *ipval);
 int ksr_sockets_no_get(void);
 void ksr_sockets_index(void);
 
+struct socket_info *find_sock_info_by_address_family(
+		int proto, int address_family);
+
 #endif

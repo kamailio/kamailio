@@ -1312,9 +1312,21 @@ inline static int tcp_do_connect(union sockaddr_union *server,
 		goto error;
 	}
 
-	if(unlikely(from && bind(s, &from->s, sockaddru_len(*from)) != 0)) {
-		LM_WARN("binding to source address %s failed: %s [%d]\n",
-				su2a(from, sizeof(*from)), strerror(errno), errno);
+	if(unlikely(from != 0)) {
+		if(unlikely(bind(s, &from->s, sockaddru_len(*from)) != 0)) {
+			LM_WARN("binding to source address %s failed: %s [%d]\n",
+					su2a(from, sizeof(*from)), strerror(errno), errno);
+		}
+	} else {
+		my_name_len = sizeof(my_name);
+		if(unlikely(getsockname(s, &my_name.s, &my_name_len) != 0)) {
+			LM_ERR("getsockname failed: %s(%d)\n", strerror(errno), errno);
+		} else {
+			from = &my_name; /* update from with the real "from" address */
+			if(find_listening_sock_info(s, &from, type) < 0) {
+				from = NULL;
+			}
+		}
 	}
 	*state = S_CONN_OK;
 #ifdef TCP_ASYNC
