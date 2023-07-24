@@ -502,9 +502,7 @@ static int check_validity(struct sip_msg *msg, char *srt1, char *str2)
 	str sidentity;
 	char sencedsha[HASH_STR_SIZE];
 	int iencedshalen;
-#ifndef NEW_RSA_PROC
 	char ssha[HASH_STR_SIZE];
-#endif
 	int ishalen;
 	unsigned char sstrcrypted[SHA_DIGEST_LENGTH];
 	int iRet = 1;
@@ -545,7 +543,6 @@ static int check_validity(struct sip_msg *msg, char *srt1, char *str2)
 		SHA1((unsigned char *)getstr_dynstr(&glb_sdgst).s,
 				getstr_dynstr(&glb_sdgst).len, sstrcrypted);
 
-#ifdef NEW_RSA_PROC
 		/* decrypt with public key retrieved from the downloaded certificate
 		   and compare it with the calculated digest hash */
 		if(rsa_sha1_dec(sencedsha, iencedshalen, (char *)sstrcrypted,
@@ -554,32 +551,6 @@ static int check_validity(struct sip_msg *msg, char *srt1, char *str2)
 			break;
 		} else
 			LOG(AUTH_DBG_LEVEL, "AUTH_IDENTITY VERIFIER: Identity OK\n");
-#else
-		/* decrypt with public key retrieved from the downloaded certificate */
-		if(rsa_sha1_dec(sencedsha, iencedshalen, ssha, sizeof(ssha), &ishalen,
-				   glb_pcertx509)) {
-			iRet = -3;
-			break;
-		}
-
-		/* check size */
-		if(ishalen != sizeof(sstrcrypted)) {
-			LOG(L_ERR,
-					"AUTH_IDENTITY:check_validity: Unexpected decrypted hash "
-					"length (%d != %d)\n",
-					ishalen, SHA_DIGEST_LENGTH);
-			iRet = -4;
-			break;
-		}
-		/* compare */
-		if(memcmp(sstrcrypted, ssha, ishalen)) {
-			LOG(L_INFO, "AUTH_IDENTITY VERIFIER: comparing hashes failed -> "
-						"Invalid Identity Header\n");
-			iRet = -6;
-			break;
-		} else
-			LOG(AUTH_DBG_LEVEL, "AUTH_IDENTITY VERIFIER: Identity OK\n");
-#endif
 	} while(0);
 
 	glb_pcertx509 = NULL;

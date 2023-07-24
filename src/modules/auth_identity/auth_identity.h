@@ -40,8 +40,6 @@
 #include "../../core/parser/parse_identityinfo.h"
 #include "../../core/parser/parse_date.h"
 
-#define NEW_RSA_PROC
-
 #define AUTH_DBG_LEVEL L_DBG
 
 #define AUTH_URL_LENGTH 512
