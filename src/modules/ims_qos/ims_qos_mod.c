@@ -205,8 +205,8 @@ static int pv_t_copy_msg(struct sip_msg *src, struct sip_msg *dst)
 }
 
 
-static cmd_export_t cmds[] = {{"Rx_AAR", (cmd_function)w_rx_aar, 4, fixup_aar,
-									  0, REQUEST_ROUTE | ONREPLY_ROUTE},
+static cmd_export_t cmds[] = {
+		{"Rx_AAR", (cmd_function)w_rx_aar, 4, fixup_aar, 0, ONREPLY_ROUTE},
 		{"Rx_AAR_Register", (cmd_function)w_rx_aar_register, 2,
 				fixup_aar_register, 0, REQUEST_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
@@ -801,7 +801,7 @@ static int w_rx_aar(
 	}
 
 	if(t->uas.status >= 200) {
-		LM_DBG("transaction sent out a final response already - %d\n",
+		LM_WARN("transaction sent out a final response already - %d\n",
 				t->uas.status);
 		return result;
 	}
@@ -864,13 +864,13 @@ static int w_rx_aar(
 							|| memcmp(t->method.s, "UPDATE", 6) == 0))) {
 		if(cscf_get_content_length(msg) == 0
 				|| cscf_get_content_length(orig_sip_request_msg) == 0) {
-			LM_DBG("No SDP offer answer -> therefore we can not do Rx AAR");
+			LM_WARN("No SDP offer answer -> therefore we can not do Rx AAR");
 			//goto aarna; //AAR na if we don't have offer/answer pair
 			return result;
 		}
 	} else {
-		LM_DBG("Message is not response to INVITE, PRACK or UPDATE -> "
-			   "therefore we do not Rx AAR");
+		LM_WARN("Message is not response to INVITE, PRACK or UPDATE -> "
+				"therefore we do not Rx AAR");
 		return result;
 	}
 
@@ -1162,7 +1162,7 @@ static int w_rx_aar(
 		int ret = create_new_callsessiondata(&callid, &ftag, &ttag, &identifier,
 				identifier_type, &ip, ip_version, &rx_authdata_p);
 		if(!ret) {
-			LM_DBG("Unable to create new media session data parcel\n");
+			LM_ERR("Unable to create new media session data parcel\n");
 			goto error;
 		}
 
