@@ -1698,7 +1698,8 @@ static int rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 	if(ip == NULL) {
 		cp.s = ip_addr2a(&msg->rcv.dst_ip);
 		cp.len = strlen(cp.s);
-		memcpy(newip, cp.s, cp.len);
+		/* Copy, including teminating \0 */
+		memcpy(newip, cp.s, cp.len + 1);
 	}
 
 	if(msg->msg_flags & FL_SDP_BODY)
