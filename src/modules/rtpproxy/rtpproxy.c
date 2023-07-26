@@ -1834,7 +1834,8 @@ static int rtpproxy_answer1_helper_f(struct sip_msg *msg, char *flags)
 
 	cp.s = ip_addr2a(&msg->rcv.dst_ip);
 	cp.len = strlen(cp.s);
-	memcpy(newip, cp.s, cp.len);
+	/* Copy, including teminating \0 */
+	memcpy(newip, cp.s, cp.len + 1);
 
 	return force_rtp_proxy(msg, flags, newip, 0, 0);
 }
