@@ -2252,7 +2252,8 @@ static int sip_capture(
 
 	ip.s = ip_addr2a(&msg->rcv.src_ip);
 	ip.len = strlen(ip.s);
-	memcpy(buf_ip, ip.s, ip.len);
+	/* Copy, including teminating \0 */
+	memcpy(buf_ip, ip.s, ip.len + 1);
 	sco.source_ip.s = buf_ip;
 	sco.source_ip.len = ip.len;
 	sco.source_port = msg->rcv.src_port;
@@ -2839,7 +2840,8 @@ static int report_capture(sip_msg_t *msg, str *_table, str *_corr, str *_data)
 	/* IP source and destination */
 	ip.s = ip_addr2a(&msg->rcv.src_ip);
 	ip.len = strlen(ip.s);
-	memcpy(buf_ip, ip.s, ip.len);
+	/* Copy, including teminating \0 */
+	memcpy(buf_ip, ip.s, ip.len + 1);
 	sco.source_ip.s = buf_ip;
 	sco.source_ip.len = ip.len;
 	sco.source_port = msg->rcv.src_port;
