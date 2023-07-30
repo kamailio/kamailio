@@ -11,7 +11,25 @@
 #include "../../core/sr_module.h"
 #include "lib_statsd.h"
 
+bool isNumber(char *str);
+
 static StatsConnection statsd_connection = {"127.0.0.1", "8125", -1};
+
+enum actions
+{
+	GAUGE = 0,
+	COUNTER,
+	SET,
+	HISTOGRAM,
+	TIMMING
+};
+
+static const char *const actions_val[] = {[GAUGE] = "g",
+		[COUNTER] = "c",
+		[SET] = "s",
+		[HISTOGRAM] = "h",
+		[TIMMING] = "ms"};
+
 
 bool statsd_connect(void)
 {
@@ -69,55 +87,66 @@ bool send_command(char *command)
 	return true;
 }
 
-bool statsd_set(char *key, char *value)
+bool statsd_send_command(
+		char *key, char *value, enum actions action, char *labels)
 {
-	char *end = 0;
-	char command[254];
-	int val;
-	val = strtol(value, &end, 0);
-	if(*end) {
+	size_t labels_len = 0;
+	if(labels != NULL) {
+		labels_len = strlen(labels);
+	}
+	const char *action_str = actions_val[action];
+	size_t command_len =
+			strlen(key) + strlen(value) + labels_len + strlen(action_str) + 6;
+	char command[command_len];
+
+	if(labels_len == 0) {
+		snprintf(command, command_len, "%s:%s|%s\n", key, value, action_str);
+	} else {
+		snprintf(command, sizeof command, "%s:%s|%s|#%s\n", key, value,
+				action_str, labels);
+	}
+	return send_command(command);
+}
+
+
+bool statsd_set(char *key, char *value, char *labels)
+{
+	if(!isNumber(value)) {
+		LM_ERR("statsd_set could not  use the provide value(%s)\n", value);
+		return false;
+	}
+	return statsd_send_command(key, value, SET, labels);
+}
+
+
+bool statsd_gauge(char *key, char *value, char *labels)
+{
+	return statsd_send_command(key, value, GAUGE, labels);
+}
+
+bool statsd_histogram(char *key, char *value, char *labels)
+{
+	return statsd_send_command(key, value, HISTOGRAM, labels);
+}
+
+bool statsd_count(char *key, char *value, char *labels)
+{
+	if(!isNumber(value)) {
 		LM_ERR("statsd_count could not  use the provide value(%s)\n", value);
 		return false;
 	}
-	snprintf(command, sizeof command, "%s:%i|s\n", key, val);
-	return send_command(command);
+	return statsd_send_command(key, value, COUNTER, labels);
 }
 
-
-bool statsd_gauge(char *key, char *value)
+bool statsd_timing(char *key, int value, char *labels)
 {
-	char command[254];
-	snprintf(command, sizeof command, "%s:%s|g\n", key, value);
-	return send_command(command);
-}
-
-bool statsd_histogram(char *key, char *value)
-{
-	char command[254];
-	snprintf(command, sizeof command, "%s:%s|h\n", key, value);
-	return send_command(command);
-}
-
-bool statsd_count(char *key, char *value)
-{
-	char *end = 0;
-	char command[254];
-	int val;
-
-	val = strtol(value, &end, 0);
-	if(*end) {
-		LM_ERR("statsd_count could not  use the provide value(%s)\n", value);
-		return false;
+	int value_len = 1;
+	if(value > 0) {
+		value_len = (int)((ceil(log10(value)) + 1) * sizeof(char));
 	}
-	snprintf(command, sizeof command, "%s:%i|c\n", key, val);
-	return send_command(command);
-}
-
-bool statsd_timing(char *key, int value)
-{
-	char command[254];
-	snprintf(command, sizeof command, "%s:%i|ms\n", key, value);
-	return send_command(command);
+	char val[value_len];
+	sprintf(val, "%i", value);
+	return statsd_send_command(key, val, TIMMING, labels);
 }
 
 bool statsd_init(char *ip, char *port)
@@ -136,4 +165,11 @@ bool statsd_destroy(void)
 {
 	statsd_connection.sock = 0;
 	return true;
+}
+
+bool isNumber(char *s)
+{
+	char *e = NULL;
+	(void)strtol(s, &e, 0);
+	return e != NULL && *e == (char)0;
 }
