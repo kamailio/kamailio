@@ -68,6 +68,13 @@
 #endif /* __OS_ */
 #endif /* NO_TCP_LINGER2 */
 
+/* tcp user_timeout */
+#ifndef NO_TCP_USER_TIMEOUT
+#ifdef __OS_linux
+#define HAVE_TCP_USER_TIMEOUT
+#endif /* __OS_ */
+#endif /* NO_TCP_LINGER2 */
+
 /* keepalive */
 #ifndef NO_TCP_KEEPALIVE
 #define HAVE_SO_KEEPALIVE
