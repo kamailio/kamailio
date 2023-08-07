@@ -131,7 +131,6 @@ static int *ds_next_idx = NULL;
 static void ds_run_route(
 		struct sip_msg *msg, str *uri, char *route, ds_rctx_t *rctx);
 
-void shuffle_uint100array(unsigned int *arr);
 int ds_reinit_rweight_on_state_change(
 		int old_state, int new_state, ds_set_t *dset);
 
@@ -597,24 +596,6 @@ err:
 	return -1;
 }
 
-
-/* for internal usage; arr must be arr[100] */
-void shuffle_uint100array(unsigned int *arr)
-{
-	int k;
-	int j;
-	unsigned int t;
-	if(arr == NULL)
-		return;
-	for(j = 0; j < 100; j++) {
-		k = j + (kam_rand() % (100 - j));
-		t = arr[j];
-		arr[j] = arr[k];
-		arr[k] = t;
-	}
-}
-
-
 /**
  * Initialize the relative weight distribution for a destination set
  * - fill the array of 0..99 elements where to keep the index of the
@@ -623,77 +604,130 @@ void shuffle_uint100array(unsigned int *arr)
  */
 int dp_init_relative_weights(ds_set_t *dset)
 {
-	int j;
-	int k;
-	int t;
-	int *ds_dests_flags = NULL;
-	int *ds_dests_rweights = NULL;
-	int current_slice;
-	int rw_sum;
-	unsigned int last_insert;
+	unsigned int i, j, k;
+	unsigned int counts[dset->nr];
+	unsigned int counts_total = 0;
+	int rw_sum = 0;
+	unsigned int rw_slices[dset->nr];
+	unsigned int rw_slices_total = 0;
+	unsigned int probability, last_valid_dst;
 
+	/* argument validation */
 	if(dset == NULL || dset->dlist == NULL || dset->nr < 2)
 		return -1;
 
-	/* local copy to avoid synchronization problems */
-	ds_dests_flags = pkg_malloc(sizeof(int) * dset->nr);
+	/*
+	 * heap allocations
+	 * local copies are needed to avoid synchronization problems
+	 */
+	int *ds_dests_flags = pkg_malloc(sizeof(int) * dset->nr);
 	if(ds_dests_flags == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	ds_dests_rweights = pkg_malloc(sizeof(int) * dset->nr);
+	int *ds_dests_rweights = pkg_malloc(sizeof(int) * dset->nr);
 	if(ds_dests_rweights == NULL) {
 		PKG_MEM_ERROR;
 		pkg_free(ds_dests_flags);
 		return -1;
 	}
 
+	/* zero out arrays */
+	memset(counts, 0, sizeof(unsigned int) * dset->nr);
+	memset(rw_slices, 0, sizeof(unsigned int) * dset->nr);
 
 	/* needed to sync the rwlist access */
 	lock_get(&dset->lock);
-	rw_sum = 0;
-	/* find the sum of relative weights */
-	for(j = 0; j < dset->nr; j++) {
-		ds_dests_flags[j] = dset->dlist[j].flags;
-		ds_dests_rweights[j] = dset->dlist[j].attrs.rweight;
-		if(ds_skip_dst(ds_dests_flags[j]))
+
+	/* find the sum of the weights given and the last valid destination */
+	for(i = 0; i < dset->nr; i++) {
+		ds_dests_flags[i] = dset->dlist[i].flags;
+		ds_dests_rweights[i] = dset->dlist[i].attrs.rweight;
+
+		/* rweight is zero, destination ignored */
+		if(ds_dests_rweights[i] == 0) {
+			LM_INFO("destination %d in group %d ignored (rweight=0)\n", i, dset->id);
 			continue;
-		rw_sum += ds_dests_rweights[j];
-	}
-
-	if(rw_sum == 0)
-		goto ret;
-
-	/* fill the array based on the relative weight of each destination */
-	t = 0;
-	for(j = 0; j < dset->nr; j++) {
-		if(ds_skip_dst(ds_dests_flags[j]))
-			continue;
-
-		current_slice = ds_dests_rweights[j] * 100 / rw_sum; /* truncate here */
-		LM_DBG("rw_sum[%d][%d][%d]\n", j, rw_sum, current_slice);
-		for(k = 0; k < current_slice; k++) {
-			dset->rwlist[t] = (unsigned int)j;
-			t++;
 		}
+
+		/* disabled or inactive destination */
+		if(ds_skip_dst(ds_dests_flags[i])) {
+			LM_INFO("destination %d in group %d ignored (disabled or inactive)\n", i, dset->id);
+			ds_dests_rweights[i] = 0;
+			continue;
+		}
+
+		rw_sum += ds_dests_rweights[i];
+		last_valid_dst = i;
 	}
 
-	/* if the array was not completely filled (i.e., the sum of rweights is
-	 * less than 100 due to truncated), then use last address to fill the rest */
-	last_insert = t > 0 ? dset->rwlist[t - 1] : (unsigned int)(dset->nr - 1);
-	if(t < 100) {
-		LM_INFO("extra rweight %d for last active destination in group %d\n",
-				(100 - t), dset->id);
+	/* calculate the slices */
+	if(rw_sum == 0) {
+		goto ret;
 	}
-	for(j = t; j < 100; j++)
-		dset->rwlist[j] = last_insert;
 
-	/* shuffle the content of the array in order to mix the selection
-	 * of the addresses (e.g., if first address has weight=20, avoid
-	 * sending first 20 calls to it, but ensure that within a 100 calls,
-	 * 20 go to first address */
-	shuffle_uint100array(dset->rwlist);
-	goto ret;
+	/* calculdate the slices */
+	for(i = 0; i < dset->nr; i++) {
+		/* slice truncated by integer division */
+		rw_slices[i] = ds_dests_rweights[i] * 100 / rw_sum;
+		rw_slices_total += rw_slices[i];
+	}
+	if(rw_slices_total < 100) {
+		LM_INFO("extra rweight percentage %d for last destination in group %d\n",
+				(100 - rw_slices_total), dset->id);
+		rw_slices[last_valid_dst] = rw_slices[last_valid_dst] + (100 - rw_slices_total);
+	}
+
+	/*
+	 * load the rweights in order of probablity based on weight
+	 * each "call to distribute" having its probability recalculated
+	 * this will make distribution under n=100 calls adhere to the slice values
+	 * note that first 2 iterations are unwrapped (avoid n/0 & wasted cpu cycles)
+	 */
+	dset->rwlist[0] = 0;
+	counts[0] = 1;
+	counts_total = 1;
+	i = 1;
+	j = 1;
+	while(i < 100) {
+		/* skip if the slice is zero */
+		if(rw_slices[j] == 0) {
+			j = (j + 1) % dset->nr;
+			continue;
+		}
+		/* calculate the current percentage of "calls" to this destination */
+		probability = (counts[j] * 100) / i;
+		/* if no other destination can take the "next call" then route it to this destination */
+		if(probability == rw_slices[j]) {
+			for (k = 0; k < dset->nr; k++) {
+				j = (j + 1) % dset->nr;
+				if (rw_slices[j] == 0) {
+					continue;
+				}
+				probability = (counts[j] * 100) / i;
+				if (probability < rw_slices[j]) {
+					break;
+				}
+			}
+
+			dset->rwlist[i] = j;
+			counts[j] += 1;
+			counts_total += 1;
+			i += 1;
+			j = (j + 1) % dset->nr;
+			continue;
+		}
+		/* skip this destination if proability exceeds weight */
+		if(probability > rw_slices[j]) {
+			j = (j + 1) % dset->nr;
+			continue;
+		}
+		/* still processing this destination, don't move to the next weight just yet */
+		dset->rwlist[i] = j;
+		counts[j] += 1;
+		counts_total += 1;
+		i += 1;
+	}
 
 ret:
 	lock_release(&dset->lock);
@@ -711,45 +745,108 @@ ret:
  */
 int dp_init_weights(ds_set_t *dset)
 {
-	int j;
-	int k;
-	int t;
+	unsigned int i, j, k;
+	unsigned int weights[dset->nr];
+	unsigned int weights_total = 0;
+	unsigned int counts[dset->nr];
+	unsigned int counts_total = 0;
+	unsigned int last_valid_dst, probability;
 
-	if(dset == NULL || dset->dlist == NULL)
+	if(dset == NULL || dset->dlist == NULL) {
 		return -1;
+	}
 
 	/* is weight set for dst list? (first address must have weight!=0) */
-	if(dset->dlist[0].attrs.weight == 0)
+	if(dset->dlist[0].attrs.weight == 0) {
 		return 0;
+	}
 
-	/* first fill the array based on the weight of each destination
-	 * - the weight is the percentage (e.g., if weight=20, the afferent
-	 *   address gets its index 20 times in the array)
-	 * - if the sum of weights is more than 100, the addresses over the
-	 *   limit are ignored */
-	t = 0;
-	for(j = 0; j < dset->nr; j++) {
-		for(k = 0; k < dset->dlist[j].attrs.weight; k++) {
-			if(t >= 100)
-				goto randomize;
-			dset->wlist[t] = (unsigned int)j;
-			t++;
+	/* if there is only 1 record then optimize out any sorting */
+	if(dset->nr == 1) {
+		memset(dset->wlist, 0, sizeof(unsigned int) * 100);
+		return 0;
+	}
+
+	/* zero out arrays */
+	memset(weights, 0, sizeof(unsigned int) * dset->nr);
+	memset(counts, 0, sizeof(unsigned int) * dset->nr);
+
+	/* find the sum of the weights given and the last valid destination */
+	for(i = 0; i < dset->nr; i++) {
+		/* weight is zero, destination ignored */
+		if(dset->dlist[i].attrs.weight == 0) {
+			LM_INFO("destination %d in group %d ignored (weight=0)\n", i, dset->id);
+			weights[i] = 0;
+			continue;
 		}
+
+		/* weights total would exceed 100, destination ignored */
+		if(weights_total + dset->dlist[i].attrs.weight > 100) {
+			LM_INFO("destination %d in group %d ignored (exceeds total weight>100)\n", i, dset->id);
+			weights[i] = 0;
+			continue;
+		}
+
+		weights_total += dset->dlist[i].attrs.weight;
+		weights[i] = dset->dlist[i].attrs.weight;
+		last_valid_dst = i;
 	}
-	/* if the array was not completely filled (i.e., the sum of weights is
-	 * less than 100), then use last address to fill the rest */
-	if(t < 100) {
-		LM_INFO("extra weight %d for last destination in group %d\n", (100 - t),
-				dset->id);
+	if(weights_total < 100) {
+		LM_INFO("extra weight %d for last destination in group %d\n",
+				(100 - weights_total), dset->id);
+		weights[last_valid_dst] = weights[last_valid_dst] + (100 - weights_total);
 	}
-	for(; t < 100; t++)
-		dset->wlist[t] = (unsigned int)(dset->nr - 1);
-randomize:
-	/* shuffle the content of the array in order to mix the selection
-	 * of the addresses (e.g., if first address has weight=20, avoid
-	 * sending first 20 calls to it, but ensure that within a 100 calls,
-	 * 20 go to first address */
-	shuffle_uint100array(dset->wlist);
+
+	/*
+	 * load the weights in order of probablity based on weight
+	 * each "call to distribute" having its probability recalculated
+	 * this will make distribution under n=100 calls adhere to the weighted values
+	 * note that first 2 iterations are unwrapped (avoid n/0 & wasted cpu cycles)
+	 */
+	dset->wlist[0] = 0;
+	counts[0] = 1;
+	counts_total = 1;
+ 	i = 1;
+	j = 1;
+	while(i < 100) {
+		/* skip if the weight is zero */
+		if(weights[j] == 0) {
+			j = (j + 1) % dset->nr;
+			continue;
+		}
+		/* calculate the current percentage of "calls" to this destination */
+		probability = (counts[j] * 100) / i;
+		/* if no other destination can take the "next call" then route it to this destination */
+		if(probability == weights[j]) {
+			for (k = 0; k < dset->nr; k++) {
+				j = (j + 1) % dset->nr;
+				if (weights[j] == 0) {
+					continue;
+				}
+				probability = (counts[j] * 100) / i;
+				if (probability < weights[j]) {
+					break;
+				}
+			}
+
+			dset->wlist[i] = j;
+			counts[j] += 1;
+			counts_total += 1;
+			i += 1;
+			j = (j + 1) % dset->nr;
+			continue;
+		}
+		/* skip this destination if proability exceeds weight */
+		if(probability > weights[j]) {
+			j = (j + 1) % dset->nr;
+			continue;
+		}
+		/* still processing this destination, don't move to the next weight just yet */
+		dset->wlist[i] = j;
+		counts[j] += 1;
+		counts_total += 1;
+		i += 1;
+	}
 
 	return 0;
 }
