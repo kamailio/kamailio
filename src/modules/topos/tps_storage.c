@@ -1146,7 +1146,8 @@ int tps_db_load_branch(
 
 	if((get_cseq(msg)->method_id == METHOD_SUBSCRIBE)
 			|| ((get_cseq(msg)->method_id == METHOD_NOTIFY)
-					&& (msg->event && msg->event->len > 0))) {
+					&& (msg->event && msg->event->len > 0
+							&& strncmp(msg->event->body.s, "talk", 4) != 0))) {
 		bInviteDlg = 0;
 	}
 
