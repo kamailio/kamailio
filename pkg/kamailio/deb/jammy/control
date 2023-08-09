@@ -32,6 +32,7 @@ Build-Depends:
  libmosquitto-dev,
  libnats-dev,
  libncurses5-dev,
+ libpcre2-dev,
  libpcre3-dev,
  libperl-dev,
  libphonenumber-dev (>= 7),
