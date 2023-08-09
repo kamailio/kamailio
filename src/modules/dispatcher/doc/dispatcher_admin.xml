@@ -756,6 +756,38 @@ modparam("dispatcher", "ds_ping_latency_stats", 1)
 </programlisting>
 		</example>
 	</section>
+
+
+	<section id="dispatcher.p.ds_retain_latency_stats">
+		<title><varname>ds_retain_latency_stats</varname> (int)</title>
+		<para>
+		Retain latency stats for existing destinations when reloading from file or database.
+		</para>
+
+		<itemizedlist>
+		<listitem>
+			<para>If set to 0, stats for all destinations will be reset on reload.</para>
+		</listitem>
+		<listitem>
+			<para>If set to 1, stats for existing destinations will persist across reloads.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_retain_latency_stats</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_retain_latency_stats", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dispatcher.p.ds_latency_estimator_alpha">
 		<title><varname>ds_latency_estimator_alpha</varname> (int)</title>
 		<para>
