@@ -198,13 +198,13 @@ static int mod_init(void)
 
 		/* Pointer to pcres */
 		if((pcres_addr = shm_malloc(sizeof(pcre **))) == 0) {
-			LM_ERR("no memory for pcres_addr\n");
+			SHM_MEM_ERROR;
 			goto err;
 		}
 
 		/* Integer containing the number of pcres */
 		if((num_pcres = shm_malloc(sizeof(int))) == 0) {
-			LM_ERR("no memory for num_pcres\n");
+			SHM_MEM_ERROR;
 			goto err;
 		}
 
@@ -425,14 +425,14 @@ static int load_pcres(int action)
 		shm_free(pcres);
 	}
 	if((pcres = shm_malloc(sizeof(pcre *) * num_pcres_tmp)) == 0) {
-		LM_ERR("no more memory for pcres\n");
+		SHM_MEM_ERROR;
 		goto err;
 	}
 	memset(pcres, 0, sizeof(pcre *) * num_pcres_tmp);
 	for(i = 0; i < num_pcres_tmp; i++) {
 		pcre_rc = pcre_fullinfo(pcres_tmp[i], NULL, PCRE_INFO_SIZE, &pcre_size);
 		if((pcres[i] = shm_malloc(pcre_size)) == 0) {
-			LM_ERR("no more memory for pcres[%i]\n", i);
+			SHM_MEM_ERROR;
 			goto err;
 		}
 		memcpy(pcres[i], pcres_tmp[i], pcre_size);
