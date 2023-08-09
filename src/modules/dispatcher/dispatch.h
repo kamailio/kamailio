@@ -218,6 +218,7 @@ typedef struct _ds_latency_stats {
 } ds_latency_stats_t;
 
 void latency_stats_init(ds_latency_stats_t *latency_stats, int latency, int count);
+ds_latency_stats_t *latency_stats_find(int group, str *address);
 
 typedef struct _ds_dest {
 	str uri;          /*!< address/uri */
