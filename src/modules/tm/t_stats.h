@@ -67,19 +67,19 @@ extern union t_stats *tm_stats;
 #ifdef TM_MORE_STATS
 inline void static t_stats_created(void)
 {
-	/* keep it in process's piece of shmem */
+	/* keep it in process' piece of shmem */
 	tm_stats[process_no].s.t_created++;
 }
 
 inline void static t_stats_freed(void)
 {
-	/* keep it in process's piece of shmem */
+	/* keep it in process' piece of shmem */
 	tm_stats[process_no].s.t_freed++;
 }
 
 inline void static t_stats_delayed_free(void)
 {
-	/* keep it in process's piece of shmem */
+	/* keep it in process' piece of shmem */
 	tm_stats[process_no].s.delayed_free++;
 }
 #else /* TM_MORE_STATS  */
@@ -98,7 +98,7 @@ inline void static t_stats_delayed_free(void)
 
 inline void static t_stats_new(int local)
 {
-	/* keep it in process's piece of shmem */
+	/* keep it in process' piece of shmem */
 	tm_stats[process_no].s.transactions++;
 	if(local)
 		tm_stats[process_no].s.client_transactions++;
@@ -106,7 +106,7 @@ inline void static t_stats_new(int local)
 
 inline void static t_stats_wait(void)
 {
-	/* keep it in process's piece of shmem */
+	/* keep it in process' piece of shmem */
 	tm_stats[process_no].s.waiting++;
 }
 

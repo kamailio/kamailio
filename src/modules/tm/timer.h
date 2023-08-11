@@ -218,7 +218,7 @@ inline static int _set_fr_retr(struct retr_buf *rb, unsigned retr_ms)
 #endif
 	if(ret == 0)
 		rb->t_active = 1;
-	membar_write_atomic_op(); /* make sure t_active will be commited to mem.
+	membar_write_atomic_op(); /* make sure t_active will be committed to mem.
 								 before the transaction would be deref. by the
 								 current process */
 	return ret;

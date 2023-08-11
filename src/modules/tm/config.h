@@ -39,7 +39,7 @@
 #include "../../core/cfg/cfg.h"
 #include "../../core/str.h"
 
-/* maximum length of localy generated acknowledgment */
+/* maximum length of locally generated acknowledgment */
 #define MAX_ACK_LEN 1024
 
 /* FINAL_RESPONSE_TIMER ... tells how long should the transaction engine

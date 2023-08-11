@@ -16,7 +16,8 @@
 	    Relay a message statefully either to the destination indicated in the
 		current URI (if called without any parameters) or to the specified 
 		host and port. In the later case (host and port specified) the protocol
-		used is the same protocol on which the message was received.
+		used is the same protocol on which the message was received. It creates
+		a transaction.
 	</para>
 	<para>
 		<function>t_relay()</function> is the stateful version for 
@@ -298,13 +299,12 @@ branch_route[1] {
 	    <function>t_newtran()</function>
 	</title>
 	<para>
-	    Creates a new transaction, returns a negative value on error. This
-	    is the only way a script can add a new transaction in an atomic
-	    way. Typically, it is used to deploy a UAS.
+	    Creates a new transaction, returns a negative value on error. Typically,
+	    it is used to deploy a UAS.
 	</para>
 	<para>
 		Note: once the t_newtran() is executed, the new message flag operations
-		(i.e., setflag() and resetflag()) are not syncronized to the transaction,
+		(i.e., setflag() and resetflag()) are not synchronized to the transaction,
 		being stored only in the private memory SIP message structure. Use the
 		tmx module function t_flush_flags() to synchronize the modified message
 		flags to the already created transaction.
@@ -546,6 +546,8 @@ t_forward_nonack("1.2.3.4", "5060");
 			(in milliseconds) for INVITEs. See also 
 			<varname>fr_inv_timer</varname>.
 		</para>
+	    </listitem>
+	    <listitem>
 		<para><emphasis>fr_timeout</emphasis> - new final response timeout
 		 	(in milliseconds) for non-INVITE transaction, or INVITEs which 
 			haven't received yet a provisional response. See also
@@ -635,6 +637,8 @@ route {
 			lifetime (in milliseconds). See also 
 			<varname>max_inv_lifetime</varname>.
 		</para>
+	    </listitem>
+	    <listitem>
 		<para><emphasis>noninv_lifetime</emphasis> - maximum non-INVITE 
 			transaction lifetime (in milliseconds).
 			See also <varname>max_noninv_lifetime</varname>.
@@ -703,7 +707,7 @@ route {
 		Sets the retr_t1_interval and retr_t2_interval for the current
 		transaction or for transactions created during the same script 
 		invocation, after calling this function.
-		If one of the parameters is 0, it's value won't be changed.
+		If one of the parameters is 0, its value won't be changed.
 		If the transaction is already created (e.g called after
 		 <function>t_relay()</function> or in an onreply_route) all the
 		 existing branches will have their retransmissions intervals updated 
@@ -728,6 +732,8 @@ route {
 			interval (in milliseconds). See also
 			<varname>retr_t1_timeout</varname>.
 		</para>
+	    </listitem>
+	    <listitem>
 		<para><emphasis>retr_t2_interval</emphasis> - new T2 (or maximum) 
 			retransmission interval (in milliseconds). See also
 			<varname>retr_t2_timeout</varname>.
@@ -966,7 +972,7 @@ failure_route[0]{
 	    <function>t_is_expired()</function>
 	</title>
 	<para>
-		Returns true if the current transaction has already been expired,
+		Returns true if the current transaction has already expired,
 		i.e. the max_inv_lifetime/max_noninv_lifetime interval has already
 		elapsed.
 	</para>
@@ -1179,7 +1185,7 @@ failure_route[1] {
 		<para>
 		  If the current destination set contains more than one branch,
 		  the function sorts them according to the algorithm selected
-		  with the 'mode' paramenter and then stores the branches in
+		  with the 'mode' parameter and then stores the branches in
 		  reverse order into the XAVP.
 		</para>
 		<para>
@@ -1913,7 +1919,7 @@ t_clean();
 	    <function>t_exists()</function>
 	</title>
 	<para>
-		Return true of the transaction for current message exists, without
+		Return true if a transaction for the current message exists, without
 		setting the global references.
 	</para>
 	<example>

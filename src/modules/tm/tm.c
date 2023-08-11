@@ -948,7 +948,7 @@ static int ki_t_get_status_code(sip_msg_t *msg)
 			/* use the status of the winning reply */
 			ret = t_pick_branch(-1, 0, t, &scode);
 			if(ret == -1) {
-				/* t_pick_branch() retuns error also when there are only
+				/* t_pick_branch() returns error also when there are only
 				 * blind UACs. Let us give it another chance including the
 				 * blind branches. */
 				LM_DBG("t_pick_branch returned error,"
@@ -1103,7 +1103,7 @@ static int t_check_status(struct sip_msg *msg, char *p1, char *foo)
 			/* use the status of the winning reply */
 			ret = t_pick_branch(-1, 0, t, &lowest_status);
 			if(ret == -1) {
-				/* t_pick_branch() retuns error also when there are only
+				/* t_pick_branch() returns error also when there are only
 				 * blind UACs. Let us give it another chance including the
 				 * blind branches. */
 				LM_DBG("t_pick_branch returned error,"
@@ -1208,7 +1208,7 @@ static int ki_t_check_status(sip_msg_t *msg, str *sexp)
 			/* use the status of the winning reply */
 			ret = t_pick_branch(-1, 0, t, &lowest_status);
 			if(ret == -1) {
-				/* t_pick_branch() retuns error also when there are only
+				/* t_pick_branch() returns error also when there are only
 				 * blind UACs. Let us give it another chance including the
 				 * blind branches. */
 				LM_DBG("t_pick_branch returned error,"
@@ -3127,7 +3127,7 @@ static int w_t_exists(struct sip_msg *msg, char *p1, char *p2)
 }
 
 #ifdef USE_DNS_FAILOVER
-/* parse reply codes for failover given in module paraleter */
+/* parse reply codes for failover given in module parameter */
 static int t_failover_parse_reply_codes()
 {
 	param_t *params_list = NULL;

@@ -184,14 +184,14 @@ int register_tmcb(struct sip_msg *p_msg, struct cell *t, int types,
 	if((types != TMCB_MAX) && (types & TMCB_REQUEST_IN)) {
 		if(types != TMCB_REQUEST_IN) {
 			LM_CRIT("BUG: callback type TMCB_REQUEST_IN"
-					" can't be register along with types\n");
+					" can't be registered along with types\n");
 			return E_BUG;
 		}
 		cb_list = req_in_tmcb_hl;
 	} else if((types != TMCB_MAX) && (types & TMCB_LOCAL_REQUEST_IN)) {
 		if(types != TMCB_LOCAL_REQUEST_IN) {
 			LM_CRIT("BUG: callback type"
-					" TMCB_LOCAL_REQUEST_IN can't be register along with"
+					" TMCB_LOCAL_REQUEST_IN can't be registered along with"
 					" other types\n");
 			return E_BUG;
 		}

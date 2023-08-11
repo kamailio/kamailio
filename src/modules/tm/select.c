@@ -42,8 +42,8 @@ inline static int select_tm_get_cell(
 {
 
 	/* make sure we know the associated transaction ... */
-	if(t_check(msg, branch) == -1) /* it's not necessary whan calling
-										* from script because already done */
+	if(t_check(msg, branch) == -1) /* it's not necessary when calling
+					* from script because already done */
 		return -1;
 
 	/*... if there is none, tell the core router to fwd statelessly */

@@ -829,8 +829,8 @@ struct retr_buf *local_ack_rb(sip_msg_t *rpl_2xx, struct cell *trans,
 	}
 	/* 'buffer' now points into a contiguous chunk of memory with enough
 	 * room to hold both the retr. buffer and the string raw buffer: it
-	 * points to the begining of the string buffer; we iterate back to get
-	 * the begining of the space for the retr. buffer. */
+	 * points to the beginning of the string buffer; we iterate back to get
+	 * the beginning of the space for the retr. buffer. */
 	lack = &((struct retr_buf *)buffer)[-1];
 	lack->buffer = buffer;
 	lack->buffer_len = buf_len;

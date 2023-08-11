@@ -48,7 +48,7 @@ char *build_uac_cancel(str *headers, str *body, struct cell *cancelledT,
 /*
  * The function creates an ACK to 200 OK. Route set will be created
  * and parsed and the dst parameter will contain the destination to which the
- * request should be send. The function is used by tm when it generates
+ * request should be sent. The function is used by tm when it generates
  * local ACK to 200 OK (on behalf of applications using uac
  */
 char *build_dlg_ack(struct sip_msg *rpl, struct cell *Trans,

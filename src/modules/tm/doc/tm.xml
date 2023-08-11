@@ -248,7 +248,7 @@ request_route {
 	  </para>
 	  <para>
 		Function <function>t_next_contacts()</function> takes the AVP created
-		by the previous function and extract the branches with highest q
+		by the previous function and extracts the branches with highest q
 		values from it. In our example it is branch D. That branch is then put
 		back into the destination set and when the script finally
 		reaches <function>t_relay()</function>, the destination set only
@@ -301,7 +301,7 @@ failure_route["serial"]
 		we have more new branches to try and we need to setup the
 		failure_route again and call <function>t_relay()</function>. In our
 		example the request will now be forwarded to branches B and C in
-		paralell, because they were both added to the destination set
+		parallel, because they were both added to the destination set
 		by <function>t_next_contacts()</function> at the same time.
 	  </para>
 	  <para>

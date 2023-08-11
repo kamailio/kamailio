@@ -40,7 +40,7 @@
 #include "t_stats.h"
 
 /* if defined t_relay* error reply generation will be delayed till script
- * end (this allows the script writter to send its own error reply) */
+ * end (this allows the script writer to send its own error reply) */
 #define TM_DELAYED_REPLY
 
 #ifdef USE_DNS_FAILOVER
