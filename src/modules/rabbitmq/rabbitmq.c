@@ -120,7 +120,7 @@ static int rbmq_fixup_free_params(void **param, int param_no)
 /* module commands */
 static cmd_export_t cmds[] = {
 		{"rabbitmq_publish", (cmd_function)rabbitmq_publish, 4, fixup_spve_all,
-				fixup_free_spve_all, REQUEST_ROUTE},
+				fixup_free_spve_all, ANY_ROUTE},
 		{"rabbitmq_publish_consume", (cmd_function)rabbitmq_publish_consume, 5,
 				rbmq_fixup_params, rbmq_fixup_free_params, REQUEST_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
@@ -597,10 +597,10 @@ static int rabbitmq_connect(amqp_connection_state_t *conn)
 	}
 
 #if AMQP_VERSION_MAJOR == 0 && AMQP_VERSION_MINOR < 8
-	amqp_ssl_socket_set_verify(amqp_sock, 1);
+	amqp_ssl_socket_set_verify(amqp_sock, (rmq_amqps_ca_file) ? 1 : 0);
 #else
-	amqp_ssl_socket_set_verify_peer(amqp_sock, 1);
-	amqp_ssl_socket_set_verify_hostname(amqp_sock, 1);
+	amqp_ssl_socket_set_verify_peer(amqp_sock, (rmq_amqps_ca_file) ? 1 : 0);
+	amqp_ssl_socket_set_verify_hostname(amqp_sock, (rmq_amqps_ca_file) ? 1 : 0);
 #endif
 
 	ret = amqp_socket_open(amqp_sock, amqp_info.host, amqp_info.port);
