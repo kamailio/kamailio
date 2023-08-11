@@ -48,8 +48,12 @@
 			<itemizedlist>
 			<listitem>
             <para>
-				<emphasis>libcurl</emphasis>
-				<emphasis>libev</emphasis>
+				<emphasis>libcurl</emphasis> - https://curl.se/libcurl/
+			</para>
+			</listitem>
+			<listitem>
+            <para>
+				<emphasis>libevent</emphasis> - https://libevent.org/
 			</para>
 			</listitem>
 			</itemizedlist>
