@@ -71,7 +71,7 @@ extern str contact_flows_avp;
 */
 
 
-/* send a buffer -- 'PR' means private, i.e., it is assumed noone
+/* send a buffer -- 'PR' means private, i.e., it is assumed no one
    else can affect the buffer during sending time
 */
 #ifdef EXTRA_DEBUG

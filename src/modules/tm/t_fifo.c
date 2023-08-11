@@ -280,7 +280,7 @@ int parse_tw_append(modparam_t type, void *val)
 				goto parse_error;
 			foo.len = s - foo.s;
 		}
-		/* foo containes the elemet type */
+		/* foo contains the element type */
 		if(foo.len == ELEM_TYPE_AVP_LEN
 				&& !strncasecmp(foo.s, ELEM_TYPE_AVP, foo.len)) {
 			ha->type = ELEM_IS_AVP;
@@ -339,7 +339,7 @@ int parse_tw_append(modparam_t type, void *val)
 				}
 			}
 		} else if(ha->type == ELEM_IS_HDR) {
-			/* element is HDR -  try to get it's coded type if defined */
+			/* element is HDR -  try to get its coded type if defined */
 			bar = foo.s[foo.len];
 			foo.s[foo.len] = ':';
 			/* parse header name */

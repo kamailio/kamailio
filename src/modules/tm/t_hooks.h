@@ -229,11 +229,11 @@ struct cell;
  *  Note: if the send fails or via cannot be resolved, this callback is
  *  _not_ called.
  *
- *  TMCB_LOCAL_COMPLETED -- final reply for localy initiated
+ *  TMCB_LOCAL_COMPLETED -- final reply for locally initiated
  *  transaction arrived. Message may be FAKED_REPLY. Can be called multiple
  *  times, no lock is held.
  *
- *  TMCB_LOCAL_RESPONSE_OUT -- provisional reply for localy initiated
+ *  TMCB_LOCAL_RESPONSE_OUT -- provisional reply for locally initiated
  *  transaction. The message may be a FAKED_REPLY and the callback might be
  *  called multiple time quasi-simultaneously. No lock is held.
  *  Note: depends on tm.pass_provisional_replies.
@@ -307,7 +307,7 @@ struct cell;
  * TMCB_RESPONSE_READY -- a reply is ready to be sent out. Callback is
  *  is executed just before writing the reply content to network.
  *
- * TMCB_DONT_ACK (requires AS support) -- for localy generated INVITEs, TM
+ * TMCB_DONT_ACK (requires AS support) -- for locally generated INVITEs, TM
  * automatically generates an ACK for the received 2xx replies. But, if this
  * flag is passed to TM when creating the initial UAC request, this won't
  * happen anymore: the ACK generation must be triggered from outside, using
