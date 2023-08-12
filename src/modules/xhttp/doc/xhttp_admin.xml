@@ -22,7 +22,7 @@
 		Via header.
 	</para>
 	<para>
-		The <module>xmlrpc</module> module uses the same concept.
+		The xmlrpc module uses the same concept.
 		The xHTTP module offers a generic way of handling the <acronym>HTTP</acronym>
 		protocol, by calling <emphasis>event_route[xhttp:request]</emphasis>
 		in your config. You can check the HTTP URL via the config variable
@@ -228,7 +228,10 @@ event_route[xhttp:request] {
         <function moreinfo="none">xhttp:request</function>
         </title>
         <para>
-			The event route is executed when a new HTTP request is received.
+			The event route is executed when a new HTTP request is received. Most
+			of the variables related to a SIP request can be used inside this event
+			route to get HTTP request attributes (e.g., $si - source IP, $hdr(X)
+			- body of header X, $rm - request method, $rb - request body, ...).
         </para>
         <programlisting  format="linespecific">
 ...
