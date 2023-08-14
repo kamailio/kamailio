@@ -167,7 +167,7 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The Following modules must be loaded before this module:
-     * Dialog
+     * IMS Dialog
      * Usrloc PCSCF
      * TM - Transaction Manager
      * CDP - C Diameter Peer
@@ -559,7 +559,9 @@ route[REG_AAR_REPLY]
        default. This is as per RFC 4006: END_USER_E164 0, END_USER_IMSI 1,
        END_USER_SIP_URI 2, END_USER_NAI 3, END_USER_PRIVATE 4
 
-   This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
+   This function can be used only from ONREPLY_ROUTE, only for replies to
+   INVITE, UPDATE, PRACK. The reply and request must have SDP, for this
+   function to work properly.
 
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
