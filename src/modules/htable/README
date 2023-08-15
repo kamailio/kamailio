@@ -93,6 +93,7 @@ Ovidiu Sas
               6.11. htable.flush htable
               6.12. htable.listTables
               6.13. htable.stats
+              6.14. htable.dmqsync
 
         7. Event routes
 
@@ -212,6 +213,7 @@ Chapter 1. Admin Guide
         6.11. htable.flush htable
         6.12. htable.listTables
         6.13. htable.stats
+        6.14. htable.dmqsync
 
    7. Event routes
 
@@ -1123,6 +1125,7 @@ if(sht_match_str_value("ha", "eq", "alice")) {
    6.11. htable.flush htable
    6.12. htable.listTables
    6.13. htable.stats
+   6.14. htable.dmqsync
 
 6.1.  htable.get htable key
 
@@ -1366,6 +1369,17 @@ kamcmd htable.listTables
    Example:
 ...
 kamcmd htable.stats
+...
+
+6.14.  htable.dmqsync
+
+   Perform a MdQ sync action.
+
+   Name: htable.dmqsync
+
+   Example:
+...
+kamcmd htable.dmqsync
 ...
 
 7. Event routes
