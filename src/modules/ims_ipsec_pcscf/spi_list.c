@@ -51,7 +51,7 @@ void destroy_list(spi_list_t *lst)
 }
 
 int spi_add(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid,
-		uint16_t sport, uint16_t cport)
+		uint16_t cport, uint16_t sport)
 {
 	if(!list) {
 		return 1;
