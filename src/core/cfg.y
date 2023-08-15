@@ -886,7 +886,7 @@ assign_stm:
 			_ksr_xavp_via_params.len=strlen($3);
 		}
 	| XAVPVIAPARAMS EQUAL error { yyerror("string value expected"); }
-	| XAVPVIAFIELDS EQUAL STRING { _ksr_xavp_via_params.s=$3;
+	| XAVPVIAFIELDS EQUAL STRING { _ksr_xavp_via_fields.s=$3;
 			_ksr_xavp_via_fields.len=strlen($3);
 		}
 	| XAVPVIAFIELDS EQUAL error { yyerror("string value expected"); }
