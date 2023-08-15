@@ -49,7 +49,8 @@ int ht_dmq_replicate_action(ht_dmq_action_t action, str *htname, str *cname,
 		int type, int_str *val, int mode);
 int ht_dmq_replay_action(ht_dmq_action_t action, str *htname, str *cname,
 		int type, int_str *val, int mode);
-int ht_dmq_request_sync();
+int ht_dmq_request_sync(str *htname);
+int ht_dmq_request_sync_all();
 int ht_dmq_resp_callback_f(
 		struct sip_msg *msg, int code, dmq_node_t *node, void *param);
 

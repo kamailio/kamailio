@@ -2105,8 +2105,14 @@ static void htable_rpc_store(rpc_t *rpc, void *c)
 /*! \brief RPC htable.dmqsync command to sync a hash table via dmq */
 static void htable_rpc_dmqsync(rpc_t *rpc, void *c)
 {
+	int n = 0;
+	str htname = str_init("");
 
-	if(ht_dmq_request_sync() < 0) {
+	n = rpc->scan(c, "*S", &htname);
+	if(n != 1) {
+		htname.len = 0;
+	}
+	if(ht_dmq_request_sync(&htname) < 0) {
 		rpc->fault(c, 500, "HTable DMQ Sync Failed");
 		return;
 	}
