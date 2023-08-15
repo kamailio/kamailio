@@ -1512,6 +1512,10 @@ static const char *htable_store_doc[2] = {
 	"Store hash table to database.",
 	0
 };
+static const char *htable_dmqsync_doc[2] = {
+	"Perform DMQ sync action.",
+	0
+};
 /* clang-format on */
 
 static void htable_rpc_delete(rpc_t *rpc, void *c)
@@ -2098,6 +2102,17 @@ static void htable_rpc_store(rpc_t *rpc, void *c)
 	return;
 }
 
+/*! \brief RPC htable.dmqsync command to sync a hash table via dmq */
+static void htable_rpc_dmqsync(rpc_t *rpc, void *c)
+{
+
+	if(ht_dmq_request_sync() < 0) {
+		rpc->fault(c, 500, "HTable DMQ Sync Failed");
+		return;
+	}
+	rpc->rpl_printf(c, "Ok");
+}
+
 /* clang-format off */
 rpc_export_t htable_rpc[] = {
 	{"htable.dump", htable_rpc_dump, htable_dump_doc, RET_ARRAY},
@@ -2113,6 +2128,7 @@ rpc_export_t htable_rpc[] = {
 	{"htable.store", htable_rpc_store, htable_store_doc, 0},
 	{"htable.stats", htable_rpc_stats, htable_stats_doc, RET_ARRAY},
 	{"htable.flush", htable_rpc_flush, htable_flush_doc, 0},
+	{"htable.dmqsync", htable_rpc_dmqsync, htable_dmqsync_doc, 0},
 	{0, 0, 0, 0}
 };
 /* clang-format on */
