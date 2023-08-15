@@ -93,7 +93,7 @@ Ovidiu Sas
               6.11. htable.flush htable
               6.12. htable.listTables
               6.13. htable.stats
-              6.14. htable.dmqsync
+              6.14. htable.dmqsync [htable]
 
         7. Event routes
 
@@ -213,7 +213,7 @@ Chapter 1. Admin Guide
         6.11. htable.flush htable
         6.12. htable.listTables
         6.13. htable.stats
-        6.14. htable.dmqsync
+        6.14. htable.dmqsync [htable]
 
    7. Event routes
 
@@ -1125,7 +1125,7 @@ if(sht_match_str_value("ha", "eq", "alice")) {
    6.11. htable.flush htable
    6.12. htable.listTables
    6.13. htable.stats
-   6.14. htable.dmqsync
+   6.14. htable.dmqsync [htable]
 
 6.1.  htable.get htable key
 
@@ -1371,11 +1371,16 @@ kamcmd htable.listTables
 kamcmd htable.stats
 ...
 
-6.14.  htable.dmqsync
+6.14.  htable.dmqsync [htable]
 
    Perform a DMQ sync action.
 
    Name: htable.dmqsync
+
+   Parameters:
+     * htable: name of the hash table to perform dmq sync for. If not
+       provided, sync is performed for all hash tables that have dmq sync
+       enabled.
 
    Example:
 ...
