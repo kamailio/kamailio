@@ -1780,6 +1780,25 @@ kamcmd htable.stats
 ...
 </programlisting>
 	</section>
+	<section id="htable.rpc.dmqsync">
+          <title>
+                <function moreinfo="none">htable.dmqsync</function>
+          </title>
+          <para>
+            Perform a MdQ sync action.
+          </para>
+          <para>
+            Name: <emphasis>htable.dmqsync</emphasis>
+          </para>
+          <para>
+          Example:
+          </para>
+<programlisting  format="linespecific">
+...
+kamcmd htable.dmqsync
+...
+</programlisting>
+	</section>
 
 	</section><!-- RPC commands -->
 
