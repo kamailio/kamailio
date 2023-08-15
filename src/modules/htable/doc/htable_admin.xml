@@ -1785,7 +1785,7 @@ kamcmd htable.stats
                 <function moreinfo="none">htable.dmqsync</function>
           </title>
           <para>
-            Perform a MdQ sync action.
+            Perform a DMQ sync action.
           </para>
           <para>
             Name: <emphasis>htable.dmqsync</emphasis>
