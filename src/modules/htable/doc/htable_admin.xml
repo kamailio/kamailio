@@ -1782,7 +1782,7 @@ kamcmd htable.stats
 	</section>
 	<section id="htable.rpc.dmqsync">
           <title>
-                <function moreinfo="none">htable.dmqsync</function>
+                <function moreinfo="none">htable.dmqsync [htable]</function>
           </title>
           <para>
             Perform a DMQ sync action.
@@ -1790,6 +1790,12 @@ kamcmd htable.stats
           <para>
             Name: <emphasis>htable.dmqsync</emphasis>
           </para>
+          <para>Parameters:</para>
+          <itemizedlist>
+			  <listitem><para>htable: name of the hash table to perform dmq sync for.
+				If not provided, sync is performed for all hash tables that have
+				dmq sync enabled.</para></listitem>
+          </itemizedlist>
           <para>
           Example:
           </para>
