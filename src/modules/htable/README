@@ -1373,7 +1373,7 @@ kamcmd htable.stats
 
 6.14.  htable.dmqsync
 
-   Perform a MdQ sync action.
+   Perform a DMQ sync action.
 
    Name: htable.dmqsync
 
