@@ -94,6 +94,7 @@ Ovidiu Sas
               6.12. htable.listTables
               6.13. htable.stats
               6.14. htable.dmqsync [htable]
+              6.15. htable.dmqresync htable
 
         7. Event routes
 
@@ -214,6 +215,7 @@ Chapter 1. Admin Guide
         6.12. htable.listTables
         6.13. htable.stats
         6.14. htable.dmqsync [htable]
+        6.15. htable.dmqresync htable
 
    7. Event routes
 
@@ -1126,6 +1128,7 @@ if(sht_match_str_value("ha", "eq", "alice")) {
    6.12. htable.listTables
    6.13. htable.stats
    6.14. htable.dmqsync [htable]
+   6.15. htable.dmqresync htable
 
 6.1.  htable.get htable key
 
@@ -1385,6 +1388,21 @@ kamcmd htable.stats
    Example:
 ...
 kamcmd htable.dmqsync
+kamcmd htable.dmqsync ipban
+...
+
+6.15.  htable.dmqresync htable
+
+   Perform a resync action (flush and dmq sync).
+
+   Name: htable.dmqresync
+
+   Parameters:
+     * htable: name of the hash table to perform resync for.
+
+   Example:
+...
+kamcmd htable.dmqresync ipban
 ...
 
 7. Event routes
