@@ -1802,10 +1802,34 @@ kamcmd htable.stats
 <programlisting  format="linespecific">
 ...
 kamcmd htable.dmqsync
+kamcmd htable.dmqsync ipban
 ...
 </programlisting>
 	</section>
-
+	<section id="htable.rpc.dmqresync">
+          <title>
+                <function moreinfo="none">htable.dmqresync htable</function>
+          </title>
+          <para>
+            Perform a resync action (flush and dmq sync).
+          </para>
+          <para>
+            Name: <emphasis>htable.dmqresync</emphasis>
+          </para>
+          <para>Parameters:</para>
+          <itemizedlist>
+			  <listitem><para>htable: name of the hash table to perform resync for.
+				</para></listitem>
+          </itemizedlist>
+          <para>
+          Example:
+          </para>
+<programlisting  format="linespecific">
+...
+kamcmd htable.dmqresync ipban
+...
+</programlisting>
+	</section>
 	</section><!-- RPC commands -->
 
 	<section>
