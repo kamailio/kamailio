@@ -1516,6 +1516,10 @@ static const char *htable_dmqsync_doc[2] = {
 	"Perform DMQ sync action.",
 	0
 };
+static const char *htable_dmqresync_doc[2] = {
+	"Perform DMQ resync action (flush and sync).",
+	0
+};
 /* clang-format on */
 
 static void htable_rpc_delete(rpc_t *rpc, void *c)
@@ -2119,6 +2123,32 @@ static void htable_rpc_dmqsync(rpc_t *rpc, void *c)
 	rpc->rpl_printf(c, "Ok");
 }
 
+/*! \brief RPC htable.dmgresync command to empty a hash table and sync via dmq */
+static void htable_rpc_dmqresync(rpc_t *rpc, void *c)
+{
+	str htname;
+	ht_t *ht;
+
+	if(rpc->scan(c, "S", &htname) < 1) {
+		rpc->fault(c, 500, "No htable name given");
+		return;
+	}
+	ht = ht_get_table(&htname);
+	if(ht == NULL) {
+		rpc->fault(c, 500, "No such htable");
+		return;
+	}
+	if(ht_reset_content(ht) < 0) {
+		rpc->fault(c, 500, "Htable flush failed.");
+		return;
+	}
+	if(ht_dmq_request_sync(&htname) < 0) {
+		rpc->fault(c, 500, "HTable DMQ Sync Failed");
+		return;
+	}
+	rpc->rpl_printf(c, "Ok");
+}
+
 /* clang-format off */
 rpc_export_t htable_rpc[] = {
 	{"htable.dump", htable_rpc_dump, htable_dump_doc, RET_ARRAY},
@@ -2135,6 +2165,7 @@ rpc_export_t htable_rpc[] = {
 	{"htable.stats", htable_rpc_stats, htable_stats_doc, RET_ARRAY},
 	{"htable.flush", htable_rpc_flush, htable_flush_doc, 0},
 	{"htable.dmqsync", htable_rpc_dmqsync, htable_dmqsync_doc, 0},
+	{"htable.dmqresync", htable_rpc_dmqresync, htable_dmqresync_doc, 0},
 	{0, 0, 0, 0}
 };
 /* clang-format on */
