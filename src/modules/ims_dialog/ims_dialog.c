@@ -21,6 +21,7 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../core/rpc_lookup.h"
 #include "../../modules/rr/api.h"
+#include "../../core/kemi.h"
 
 #include "dlg_hash.h"
 #include "dlg_timer.h"
@@ -1044,9 +1045,107 @@ static void rpc_end_all_active_dlg (rpc_t *rpc, void *c)
 }
 
 static rpc_export_t rpc_methods[] = {
-	{"dlg2.list", rpc_print_dlgs, rpc_print_dlgs_doc, 0},
-        {"dlg2.end_dlg", rpc_end_dlg_entry_id, rpc_end_dlg_entry_id_doc, 0},
-        {"dlg2.end_all_active_dlg", rpc_end_all_active_dlg, rpc_end_all_active_dlg_doc, 0},
-    {0, 0, 0, 0}
-};
+		{"dlg2.list", rpc_print_dlgs, rpc_print_dlgs_doc, 0},
+		{"dlg2.end_dlg", rpc_end_dlg_entry_id, rpc_end_dlg_entry_id_doc, 0},
+		{"dlg2.end_all_active_dlg", rpc_end_all_active_dlg,
+				rpc_end_all_active_dlg_doc, 0},
+		{0, 0, 0, 0}};
 
+
+static int ki_is_known_dlg(sip_msg_t *msg)
+{
+	return is_known_dlg(msg);
+}
+
+static int ki_set_dlg_profile(sip_msg_t *msg, str *sprofile, str *svalue)
+{
+	struct dlg_profile_table *profile = NULL;
+	pv_elem_t *pvvalue = NULL;
+
+	if(sprofile == NULL || sprofile->s == NULL || sprofile->len <= 0) {
+		LM_ERR("invalid profile identifier\n");
+		return -1;
+	}
+
+	profile = search_dlg_profile(sprofile);
+	if(profile == NULL) {
+		LM_CRIT("profile <%.*s> not defined\n", sprofile->len, sprofile->s);
+		return -1;
+	}
+
+	if(pv_parse_format(svalue, &pvvalue) || pvvalue == NULL) {
+		LM_ERR("wrong format [%.*s] for value param!\n", svalue->len,
+				svalue->s);
+		return -1;
+	}
+
+	return w_set_dlg_profile(msg, (char *)profile, (char *)pvvalue);
+}
+
+static int ki_get_profile_size(
+		sip_msg_t *msg, str *sprofile, str *svalue, str *spv)
+
+{
+	struct dlg_profile_table *profile = NULL;
+	pv_elem_t *pvvalue = NULL;
+	pv_spec_t *pvs = NULL;
+
+	if(sprofile == NULL || sprofile->s == NULL || sprofile->len <= 0) {
+		LM_ERR("invalid profile identifier\n");
+		return -1;
+	}
+	if(spv == NULL || spv->s == NULL || spv->len <= 0) {
+		LM_ERR("invalid destination var name\n");
+		return -1;
+	}
+	profile = search_dlg_profile(sprofile);
+	if(profile == NULL) {
+		LM_CRIT("profile <%.*s> not defined\n", sprofile->len, sprofile->s);
+		return -1;
+	}
+	if(pv_parse_format(svalue, &pvvalue) || pvvalue == NULL) {
+		LM_ERR("wrong format [%.*s] for value param!\n", svalue->len,
+				svalue->s);
+		return -1;
+	}
+	pvs = pv_cache_get(spv);
+	if(pvs == NULL) {
+		LM_ERR("cannot get pv spec for [%.*s]\n", spv->len, spv->s);
+		return -1;
+	}
+	if(pvs->type != PVT_AVP && pvs->type != PVT_SCRIPTVAR) {
+		LM_ERR("return must be an AVP or SCRIPT VAR!\n");
+		return -1;
+	}
+
+	return w_get_profile_size3(
+			msg, (char *)profile, (char *)pvvalue, (char *)pvs);
+}
+
+/* clang-format off */
+static sr_kemi_t sr_kemi_ims_dialog_exports[] = {
+	{ str_init("ims_dialog"), str_init("is_known_dlg"),
+		SR_KEMIP_INT, ki_is_known_dlg,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ims_dialog"), str_init("set_dlg_profile"),
+		SR_KEMIP_INT, ki_set_dlg_profile,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ims_dialog"), str_init("get_profile_size"),
+		SR_KEMIP_INT, ki_get_profile_size,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_ims_dialog_exports);
+	return 0;
+}
