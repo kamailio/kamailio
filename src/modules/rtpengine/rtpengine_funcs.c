@@ -66,7 +66,7 @@
  *  2: multipart
  *  3: trickle ice sdp fragment
  */
-int check_content_type(struct sip_msg *msg)
+static int check_content_type(struct sip_msg *msg)
 {
 	static unsigned int appl[16] = {0x6c707061 /*appl*/, 0x6c707041 /*Appl*/,
 			0x6c705061 /*aPpl*/, 0x6c705041 /*APpl*/, 0x6c507061 /*apPl*/,
@@ -156,7 +156,7 @@ other:
 /*
  * Get message body and check Content-Type header field
  */
-int extract_body(struct sip_msg *msg, str *body)
+int extract_body(struct sip_msg *msg, str *body, str *cl_field)
 {
 	char c;
 	int ret;
@@ -234,7 +234,11 @@ int extract_body(struct sip_msg *msg, str *body)
 				break;
 			if(hf.type == HDR_ERROR_T)
 				return -1;
-			if(hf.type == HDR_CONTENTTYPE_T) {
+			if(hf.type == HDR_CONTENTLENGTH_T) {
+				if (cl_field)
+					*cl_field = hf.body;
+			}
+			else if(hf.type == HDR_CONTENTTYPE_T) {
 				if(decode_mime_type(hf.body.s, hf.body.s + hf.body.len, &mime)
 						== NULL)
 					return -1;
