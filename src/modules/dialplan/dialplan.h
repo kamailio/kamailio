@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -30,7 +30,8 @@
 #ifndef _DP_DIALPLAN_H
 #define _DP_DIALPLAN_H
 
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 #include "../../core/pvar.h"
 #include "../../core/parser/msg_parser.h"
 
@@ -43,6 +44,9 @@
 #define DP_TFLAGS_PV_MATCH (1 << 0)
 #define DP_TFLAGS_PV_SUBST (1 << 1)
 
+extern pcre2_general_context *dpl_gctx;
+extern pcre2_compile_context *dpl_ctx;
+
 typedef struct dpl_node
 {
 	int dpid;					  /* dialplan id */
@@ -52,8 +56,8 @@ typedef struct dpl_node
 	str match_exp;				  /* match-first string */
 	str subst_exp;				  /* match string with subtitution groupping */
 	str repl_exp;				  /* replacement expression string */
-	pcre *match_comp;			  /* compiled matching expression */
-	pcre *subst_comp;			  /* compiled substitution expression */
+	pcre2_code *match_comp;		  /* compiled matching expression */
+	pcre2_code *subst_comp;		  /* compiled substitution expression */
 	struct subst_expr *repl_comp; /* compiled replacement */
 	str attrs;					  /* attributes string */
 	unsigned int tflags;		  /* flags for type of values for matching */
@@ -103,8 +107,8 @@ struct subst_expr *repl_exp_parse(str subst);
 void repl_expr_free(struct subst_expr *se);
 int dp_translate_helper(
 		sip_msg_t *msg, str *user_name, str *repl_user, dpl_id_p idp, str *);
-int rule_translate(
-		sip_msg_t *msg, str *instr, dpl_node_t *rule, pcre *subst_comp, str *);
+int rule_translate(sip_msg_t *msg, str *instr, dpl_node_t *rule,
+		pcre2_code *subst_comp, str *);
 
-pcre *reg_ex_comp(const char *pattern, int *cap_cnt, int mtype);
+pcre2_code *reg_ex_comp(const char *pattern, int *cap_cnt, int mtype);
 #endif
