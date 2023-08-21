@@ -1864,11 +1864,12 @@ modparam("tm", "failover_reply_codes", "code=403;code=488;class=5")
 
 4.1.  t_relay([host, port])
 
-   Relay a message statefully either to the destination indicated in the
-   current URI (if called without any parameters) or to the specified host
-   and port. In the later case (host and port specified) the protocol used
-   is the same protocol on which the message was received. It creates a
-   transaction.
+   Relay a SIP request statefully either to the destination indicated in
+   the current URI (if called without any parameters) or to the specified
+   host and port. In the later case (host and port specified) the protocol
+   used is the same protocol on which the message was received. It creates
+   the SIP transaction, if none was created before (e.g., with
+   t_newtran()).
 
    t_relay() is the stateful version for forward() while t_relay(host,
    port) is similar to forward(host, port).
