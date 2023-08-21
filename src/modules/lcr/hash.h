@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -34,10 +34,10 @@
 
 int rule_hash_table_insert(struct rule_info **hash_table, unsigned int lcr_id,
 		unsigned int rule_id, unsigned short prefix_len, char *prefix,
-		unsigned short from_uri_len, char *from_uri, pcre *from_uri_re,
+		unsigned short from_uri_len, char *from_uri, pcre2_code *from_uri_re,
 		unsigned short mt_tvalue_len, char *mt_tvalue,
-		unsigned short request_uri_len, char *request_uri, pcre *request_uri_re,
-		unsigned short stopper);
+		unsigned short request_uri_len, char *request_uri,
+		pcre2_code *request_uri_re, unsigned short stopper);
 
 int rule_hash_table_insert_target(struct rule_info **hash_table,
 		struct gw_info *gws, unsigned int rule_id, unsigned int gw_id,

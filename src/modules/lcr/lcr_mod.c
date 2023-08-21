@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -43,7 +43,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 #include "../../core/locking.h"
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
@@ -203,6 +204,9 @@ static unsigned int priority_ordering_param = 0;
 
 /* mtree tree name */
 str mtree_param = {"lcr", 3};
+
+static pcre2_general_context *lcr_gctx = NULL;
+static pcre2_compile_context *lcr_ctx = NULL;
 
 /*
  * Other module types and variables
@@ -364,7 +368,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"lcr", 
+	"lcr",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,      	 /* Exported functions */
 	params,    	 /* Exported parameters */
@@ -422,6 +426,16 @@ static void lcr_db_close(void)
 	}
 }
 
+static void *pcre2_malloc(size_t size, void *ext)
+{
+	return shm_malloc(size);
+}
+
+static void pcre2_free(void *ptr, void *ext)
+{
+	shm_free(ptr);
+	ptr = NULL;
+}
 
 /*
  * Module initialization function that is called before the main process forks
@@ -703,7 +717,15 @@ static int mod_init(void)
 	lcr_db_close();
 
 	/* rule shared memory */
-
+	if((lcr_gctx = pcre2_general_context_create(pcre2_malloc, pcre2_free, NULL))
+			== NULL) {
+		LM_ERR("pcre2 general context creation failed\n");
+		goto err;
+	}
+	if((lcr_ctx = pcre2_compile_context_create(lcr_gctx)) == NULL) {
+		LM_ERR("pcre2 compile context creation failed\n");
+		goto err;
+	}
 	/* rule hash table pointer table */
 	/* pointer at index 0 points to temp rule hash table */
 	rule_pt = (struct rule_info ***)shm_malloc(
@@ -779,6 +801,12 @@ dberror:
 	lcr_db_close();
 
 err:
+	if(lcr_ctx) {
+		pcre2_compile_context_free(lcr_ctx);
+	}
+	if(lcr_gctx) {
+		pcre2_general_context_free(lcr_gctx);
+	}
 	free_shared_memory();
 	return -1;
 }
@@ -794,7 +822,12 @@ static int child_init(int rank)
 static void destroy(void)
 {
 	lcr_db_close();
-
+	if(lcr_ctx) {
+		pcre2_compile_context_free(lcr_ctx);
+	}
+	if(lcr_gctx) {
+		pcre2_general_context_free(lcr_gctx);
+	}
 	free_shared_memory();
 }
 
@@ -875,33 +908,32 @@ static int comp_matched(const void *m1, const void *m2)
 
 
 /* Compile pattern into shared memory and return pointer to it. */
-static pcre *reg_ex_comp(const char *pattern)
+static pcre2_code *reg_ex_comp(const char *pattern)
 {
-	pcre *re, *result;
-	const char *error;
-	int rc, err_offset;
-	size_t size;
+	pcre2_code *result;
+	int pcre_error_num = 0;
+	char pcre_error[128];
+	size_t pcre_erroffset;
 
-	re = pcre_compile(pattern, 0, &error, &err_offset, NULL);
-	if(re == NULL) {
-		LM_ERR("pcre compilation of '%s' failed at offset %d: %s\n", pattern,
-				err_offset, error);
-		return (pcre *)0;
-	}
-	rc = pcre_fullinfo(re, NULL, PCRE_INFO_SIZE, &size);
-	if(rc != 0) {
-		LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
-				pattern, rc);
-		return (pcre *)0;
-	}
-	result = (pcre *)shm_malloc(size);
+	result = pcre2_compile((PCRE2_SPTR)pattern, PCRE2_ZERO_TERMINATED, 0,
+			&pcre_error_num, &pcre_erroffset, lcr_ctx);
 	if(result == NULL) {
-		pcre_free(re);
-		SHM_MEM_ERROR_FMT("for compiled PCRE pattern\n");
-		return (pcre *)0;
+		switch(pcre2_get_error_message(
+				pcre_error_num, (PCRE2_UCHAR *)pcre_error, 128)) {
+			case PCRE2_ERROR_NOMEMORY:
+				snprintf(pcre_error, 128,
+						"unknown error[%d]: pcre2 error buffer too small",
+						pcre_error_num);
+				break;
+			case PCRE2_ERROR_BADDATA:
+				snprintf(pcre_error, 128, "unknown pcre2 error[%d]",
+						pcre_error_num);
+				break;
+		}
+		LM_ERR("pcre compilation of '%s' failed at offset %zu: %s\n", pattern,
+				pcre_erroffset, pcre_error);
+		return NULL;
 	}
-	memcpy(result, re, size);
-	pcre_free(re);
 	return result;
 }
 
@@ -950,7 +982,7 @@ static struct gw_info *find_gateway_by_ip_and_port(
 	return NULL;
 }
 
-/* 
+/*
  * Insert gw info into index i or gws table
  */
 static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int gw_id,
@@ -1024,7 +1056,7 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int gw_id,
 
 
 /*
- * Insert prefix_len into list pointed by last rule hash table entry 
+ * Insert prefix_len into list pointed by last rule hash table entry
  * if not there already. Keep list in decending prefix_len order.
  */
 static int prefix_len_insert(
@@ -1414,7 +1446,7 @@ int reload_tables()
 	db_key_t gw_cols[13];
 	db_key_t rule_cols[7];
 	db_key_t target_cols[4];
-	pcre *from_uri_re, *request_uri_re;
+	pcre2_code *from_uri_re, *request_uri_re;
 	struct gw_info *gws, *gw_pt_tmp;
 	struct rule_info **rules, **rule_pt_tmp;
 
@@ -2129,11 +2161,12 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 		unsigned int *gw_indexes)
 {
-	int i, j;
+	int i, j, rc;
 	unsigned int gw_index, now, dex;
 	struct rule_info **rules, *rule, *pl;
 	struct gw_info *gws;
 	struct target *t;
+	pcre2_match_data *pcre_md = NULL;
 	struct matched_gw_info matched_gws[MAX_NO_OF_GWS + 1];
 	struct sip_uri furi;
 	struct usr_avp *avp;
@@ -2178,12 +2211,18 @@ int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 					|| strncmp(rule->prefix, ruri_user->s, pl->prefix_len))
 				goto next;
 
-			if((rule->from_uri_len != 0)
-					&& (pcre_exec(rule->from_uri_re, NULL, from_uri->s,
-								from_uri->len, 0, 0, NULL, 0)
-							< 0))
-				goto next;
-
+			if(rule->from_uri_len != 0) {
+				pcre_md = pcre2_match_data_create_from_pattern(
+						rule->from_uri_re, NULL);
+				rc = pcre2_match(rule->from_uri_re, (PCRE2_SPTR)from_uri->s,
+						(PCRE2_SIZE)from_uri->len, 0, 0, pcre_md, NULL);
+				if(pcre_md) {
+					pcre2_match_data_free(pcre_md);
+					pcre_md = NULL;
+				}
+				if(rc < 0)
+					goto next;
+			}
 			if((from_uri->len > 0) && (rule->mt_tvalue_len > 0)) {
 				if(mtree_api.mt_match(&msg, &mtree_param, &(furi.user), 2)
 						== -1) {
@@ -2216,9 +2255,16 @@ int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 						   "param has not been given.\n");
 					return -1;
 				}
-				if(pcre_exec(rule->request_uri_re, NULL, request_uri->s,
-						   request_uri->len, 0, 0, NULL, 0)
-						< 0)
+				pcre_md = pcre2_match_data_create_from_pattern(
+						rule->request_uri_re, NULL);
+				rc = pcre2_match(rule->request_uri_re,
+						(PCRE2_SPTR)request_uri->s,
+						(PCRE2_SIZE)request_uri->len, 0, 0, pcre_md, NULL);
+				if(pcre_md) {
+					pcre2_match_data_free(pcre_md);
+					pcre_md = NULL;
+				}
+				if(rc < 0)
 					goto next;
 			}
 
@@ -2282,9 +2328,10 @@ static int ki_load_gws_furi(
 		sip_msg_t *_m, int lcr_id, str *ruri_user, str *from_uri)
 {
 	str *request_uri;
-	int i, j;
+	int i, j, rc;
 	unsigned int gw_index, now, dex;
 	int_str val;
+	pcre2_match_data *pcre_md = NULL;
 	struct matched_gw_info matched_gws[MAX_NO_OF_GWS + 1];
 	struct rule_info **rules, *rule, *pl;
 	struct gw_info *gws;
@@ -2343,14 +2390,22 @@ static int ki_load_gws_furi(
 				goto next;
 
 			/* Match from uri */
-			if((rule->from_uri_len != 0)
-					&& (pcre_exec(rule->from_uri_re, NULL, from_uri->s,
-								from_uri->len, 0, 0, NULL, 0)
-							< 0)) {
-				LM_DBG("from uri <%.*s> did not match to from regex <%.*s>\n",
-						from_uri->len, from_uri->s, rule->from_uri_len,
-						rule->from_uri);
-				goto next;
+			if(rule->from_uri_len != 0) {
+				pcre_md = pcre2_match_data_create_from_pattern(
+						rule->from_uri_re, NULL);
+				rc = pcre2_match(rule->from_uri_re, (PCRE2_SPTR)from_uri->s,
+						(PCRE2_SIZE)from_uri->len, 0, 0, pcre_md, NULL);
+				if(pcre_md) {
+					pcre2_match_data_free(pcre_md);
+					pcre_md = NULL;
+				}
+				if(rc < 0) {
+					LM_DBG("from uri <%.*s> did not match to from regex "
+						   "<%.*s>\n",
+							from_uri->len, from_uri->s, rule->from_uri_len,
+							rule->from_uri);
+					goto next;
+				}
 			}
 
 			/* Match from uri user */
@@ -2379,15 +2434,23 @@ static int ki_load_gws_furi(
 			}
 
 			/* Match request uri */
-			if((rule->request_uri_len != 0)
-					&& (pcre_exec(rule->request_uri_re, NULL, request_uri->s,
-								request_uri->len, 0, 0, NULL, 0)
-							< 0)) {
-				LM_DBG("request uri <%.*s> did not match to request regex "
-					   "<%.*s>\n",
-						request_uri->len, request_uri->s, rule->request_uri_len,
-						rule->request_uri);
-				goto next;
+			if(rule->request_uri_len != 0) {
+				pcre_md = pcre2_match_data_create_from_pattern(
+						rule->request_uri_re, NULL);
+				rc = pcre2_match(rule->request_uri_re,
+						(PCRE2_SPTR)request_uri->s,
+						(PCRE2_SIZE)request_uri->len, 0, 0, pcre_md, NULL);
+				if(pcre_md) {
+					pcre2_match_data_free(pcre_md);
+					pcre_md = NULL;
+				}
+				if(rc < 0) {
+					LM_DBG("request uri <%.*s> did not match to request regex "
+						   "<%.*s>\n",
+							request_uri->len, request_uri->s,
+							rule->request_uri_len, rule->request_uri);
+					goto next;
+				}
 			}
 
 			/* Load gws associated with this rule */
@@ -3015,7 +3078,7 @@ static int ki_next_gw(sip_msg_t *_m)
 }
 
 /**
- * 
+ *
  */
 static int next_gw(struct sip_msg *_m, char *_s1, char *_s2)
 {
