@@ -613,8 +613,8 @@ request_route {
    configured before with seturi() and append_branch().
 
    Function t_next_contacts() takes the AVP created by the previous
-   function and extract the branches with highest q values from it. In our
-   example it is branch D. That branch is then put back into the
+   function and extracts the branches with highest q values from it. In
+   our example it is branch D. That branch is then put back into the
    destination set and when the script finally reaches t_relay(), the
    destination set only contains branch D and the request will be
    forwarded there.
@@ -660,7 +660,7 @@ failure_route["serial"]
    If t_next_contact() returns a positive value then we have more new
    branches to try and we need to setup the failure_route again and call
    t_relay(). In our example the request will now be forwarded to branches
-   B and C in paralell, because they were both added to the destination
+   B and C in parallel, because they were both added to the destination
    set by t_next_contacts() at the same time.
 
    When branches B and C finish, the failure_route block is executed
@@ -815,7 +815,7 @@ modparam("tm", "max_inv_lifetime", 150000)
    The main difference between this timer and fr_timer is that the
    fr_timer is per branch, while max_noninv_lifetime is per the whole
    transaction. An example when a transaction can live substantially more
-   then its fr_timer and where max_noninv_lifetime will help is when DNS
+   than its fr_timer and where max_noninv_lifetime will help is when DNS
    failover is used (each failed DNS SRV destination can introduce a new
    branch).
 
@@ -961,7 +961,7 @@ modparam("tm", "unix_tx_timeout", 250)
 
 3.13. aggregate_challenges (integer)
 
-   If set (default) and the final response is a 401 or a 407 and more than
+   If set (default), the final response is a 401 or a 407 and more than
    one branch received a 401 or 407, then all the WWW-Authenticate and
    Proxy-Authenticate headers from all the 401 and 407 replies will be
    aggregated in a new final response. If only one branch received the
@@ -1253,7 +1253,7 @@ modparam("tm", "contact_flows_avp", "tm_contact_flows")
 
 3.27. fr_timer_avp (string)
 
-   The value of fr_timer timer can be overriden on per-transaction basis.
+   The value of fr_timer timer can be overridden on per-transaction basis.
    The administrator can provide a value to be used for a particular
    transaction in an AVP. This parameter contains the name of the AVP that
    will be checked. If the AVP exists then its value will be used for the
@@ -1286,7 +1286,7 @@ modparam("tm", "fr_timer_avp", "i:708")
 
 3.28. fr_inv_timer_avp (string)
 
-   The value of fr_inv_timer timer can be overriden on per-transaction
+   The value of fr_inv_timer timer can be overridden on per-transaction
    basis. The administrator can provide a value to be used for a
    particular transaction in an AVP. This parameter contains the name of
    the AVP that will be checked. If the AVP exists, is non-empty and
@@ -1497,7 +1497,7 @@ modparam("tm", "disable_6xx_block", 1)
 
 Note
 
-   Mode 1 and 2 does not follow RFC 3261, but are useful to deal with some
+   Modes 1 and 2 do not follow RFC 3261, but are useful to deal with some
    simple UAs behind a NAT (no different routing for the ACK and the
    contact contains an address behind the NAT).
 
@@ -1558,8 +1558,8 @@ modparam("tm", "failure_reply_mode", 0)
    can be adjusted.
      * 0 - disabled (default)
      * < 0 - priority is increased by given amount.
-     * > 0 - priority is decreased by given amount. Do not make it higer
-       than 10000 or faked replies will even loose from 1xx clsss replies.
+     * > 0 - priority is decreased by given amount. Do not make it higher
+       than 10000 or faked replies will even loose from 1xx class replies.
 
    The default value is 0.
 
@@ -1757,10 +1757,10 @@ modparam("tm", "exec_time_check", 0)
 
 3.52. reply_relay_mode (int)
 
-   If set to 1, a received 200 OK response that was suspeneded is no
-   longer forwarded in the transactional context if another final response
-   was forward while 200 OK was suspended. Forwarding the 200 OK, even it
-   was received first, results in overwritting the transaction response
+   If set to 1, a received 200 OK response that was suspended is no longer
+   forwarded in the transactional context if another final response was
+   forwarded while 200 OK was suspended. Forwarding the 200 OK, even it
+   was received first, results in overwriting the transaction response
    buffer that can impact matching of incoming ACKs.
 
    Set it to 0 in order to disable this behaviour and attempt to forward
@@ -1777,7 +1777,8 @@ modparam("tm", "reply_relay_mode", 0)
 3.53. enable_uac_fr (int)
 
    Enable failure route trigger, for uac. This will copy the tm uac into
-   uas. Thus, failure route can be triggered even for uac messages.
+   uas. Thus, failure route can be triggered even for uac messages. The
+   default is 0 (disabled).
 
    Example 1.54. enable_uac_fr example
 ...
@@ -1866,7 +1867,8 @@ modparam("tm", "failover_reply_codes", "code=403;code=488;class=5")
    Relay a message statefully either to the destination indicated in the
    current URI (if called without any parameters) or to the specified host
    and port. In the later case (host and port specified) the protocol used
-   is the same protocol on which the message was received.
+   is the same protocol on which the message was received. It creates a
+   transaction.
 
    t_relay() is the stateful version for forward() while t_relay(host,
    port) is similar to forward(host, port).
@@ -2053,12 +2055,11 @@ branch_route[1] {
 
 4.10.  t_newtran()
 
-   Creates a new transaction, returns a negative value on error. This is
-   the only way a script can add a new transaction in an atomic way.
+   Creates a new transaction, returns a negative value on error.
    Typically, it is used to deploy a UAS.
 
    Note: once the t_newtran() is executed, the new message flag operations
-   (i.e., setflag() and resetflag()) are not syncronized to the
+   (i.e., setflag() and resetflag()) are not synchronized to the
    transaction, being stored only in the private memory SIP message
    structure. Use the tmx module function t_flush_flags() to synchronize
    the modified message flags to the already created transaction.
@@ -2194,7 +2195,7 @@ t_forward_nonack("1.2.3.4", "5060");
    Meaning of the parameters is as follows:
      * fr_inv_timeout - new final response timeout (in milliseconds) for
        INVITEs. See also fr_inv_timer.
-       fr_timeout - new final response timeout (in milliseconds) for
+     * fr_timeout - new final response timeout (in milliseconds) for
        non-INVITE transaction, or INVITEs which haven't received yet a
        provisional response. See also fr_timer.
 
@@ -2248,7 +2249,7 @@ route {
    Meaning of the parameters is as follows:
      * inv_lifetime - maximum INVITE transaction lifetime (in
        milliseconds). See also max_inv_lifetime.
-       noninv_lifetime - maximum non-INVITE transaction lifetime (in
+     * noninv_lifetime - maximum non-INVITE transaction lifetime (in
        milliseconds). See also max_noninv_lifetime.
 
    See also: max_inv_lifetime, max_noninv_lifetime, t_reset_max_lifetime.
@@ -2288,7 +2289,7 @@ route {
    Sets the retr_t1_interval and retr_t2_interval for the current
    transaction or for transactions created during the same script
    invocation, after calling this function. If one of the parameters is 0,
-   it's value won't be changed. If the transaction is already created (e.g
+   its value won't be changed. If the transaction is already created (e.g
    called after t_relay() or in an onreply_route) all the existing
    branches will have their retransmissions intervals updated on-the-fly:
    if the retransmission interval for the branch has not yet reached T2
@@ -2305,7 +2306,7 @@ route {
    Meaning of the parameters is as follows:
      * retr_t1_interval - new T1 retransmission interval (in
        milliseconds). See also retr_t1_timeout.
-       retr_t2_interval - new T2 (or maximum) retransmission interval (in
+     * retr_t2_interval - new T2 (or maximum) retransmission interval (in
        milliseconds). See also retr_t2_timeout.
 
    See also: retr_timer1, retr_timer2, t_reset_retr().
@@ -2456,8 +2457,8 @@ failure_route[0]{
 
 4.34.  t_is_expired()
 
-   Returns true if the current transaction has already been expired, i.e.
-   the max_inv_lifetime/max_noninv_lifetime interval has already elapsed.
+   Returns true if the current transaction has already expired, i.e. the
+   max_inv_lifetime/max_noninv_lifetime interval has already elapsed.
 
    Example 1.82. t_is_expired usage
 ...
@@ -2610,7 +2611,7 @@ failure_route[1] {
 
    If the current destination set contains more than one branch, the
    function sorts them according to the algorithm selected with the 'mode'
-   paramenter and then stores the branches in reverse order into the XAVP.
+   parameter and then stores the branches in reverse order into the XAVP.
 
    The q parameter of a branch contains a value from range 0-1.0 and it
    expresses relative preference of the branch among all branches in the
@@ -3044,7 +3045,7 @@ t_clean();
 
 4.56.  t_exists()
 
-   Return true of the transaction for current message exists, without
+   Return true if a transaction for the current message exists, without
    setting the global references.
 
    Example 1.104. t_exists usage
@@ -3169,7 +3170,7 @@ reply_route {
 
 6.1.  event_route[tm:branch-failure:id]
 
-   Named branch failure routes can be defined to run when when a failure
+   Named branch failure routes can be defined to run when a failure
    response is received. This allows handling failures on individual
    branches, for example, retrying an alternative outbound flow.
 
