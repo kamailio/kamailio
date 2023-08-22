@@ -260,14 +260,13 @@ static void *ser_malloc(size_t size, const char *file, int line)
 #endif
 		s = backtrace2str(bt_buf, sizeof(bt_buf));
 		/* ugly hack: keep the bt inside the alloc'ed fragment */
-		p = _shm_malloc(size + s, file, "via ser_malloc", line);
+		p = shm_mallocxp(size + s, file, "ser_malloc", line, "tls");
 		if(p == 0) {
-			LM_CRIT("tls - ser_malloc(%d)[%s:%d]==null, bt: %s\n", size, file,
+			LM_CRIT("tls - ser_malloc(%lu)[%s:%d]==null, bt: %s\n", size, file,
 					line, bt_buf);
 		} else {
 			memcpy(p + size, bt_buf, s);
-			((struct qm_frag *)((char *)p - sizeof(struct qm_frag)))->func =
-					p + size;
+			shm_setfunc(p, p + size);
 		}
 #ifdef RAND_NULL_MALLOC
 	} else {
@@ -304,14 +303,13 @@ static void *ser_realloc(void *ptr, size_t size, const char *file, int line)
 			|| (random() % RAND_NULL_MALLOC)) {
 #endif
 		s = backtrace2str(bt_buf, sizeof(bt_buf));
-		p = _shm_realloc(ptr, size + s, file, "via ser_realloc", line);
+		p = shm_reallocxp(ptr, size + s, file, "ser_realloc", line, "tls");
 		if(p == 0) {
-			LM_CRIT("tls - ser_realloc(%p, %d)[%s:%d]==null, bt: %s\n", ptr,
+			LM_CRIT("tls - ser_realloc(%p, %lu)[%s:%d]==null, bt: %s\n", ptr,
 					size, file, line, bt_buf);
 		} else {
 			memcpy(p + size, bt_buf, s);
-			((struct qm_frag *)((char *)p - sizeof(struct qm_frag)))->func =
-					p + size;
+			shm_setfunc(p, p + size);
 		}
 #ifdef RAND_NULL_MALLOC
 	} else {
@@ -328,6 +326,18 @@ static void *ser_realloc(void *ptr, size_t size, const char *file, int line)
 
 	return p;
 }
+
+static void ser_free(void *ptr, const char *fname, int fline)
+{
+	if(ksr_tls_init_mode & TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_lock(&ksr_tls_lock_shm);
+	if(ptr) {
+		shm_free(ptr);
+	}
+	if(ksr_tls_init_mode & TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_unlock(&ksr_tls_lock_shm);
+}
+
 #endif /* LIBRESSL_VERSION_NUMBER */
 
 #else /*TLS_MALLOC_DBG */
@@ -710,7 +720,11 @@ int tls_pre_init(void)
 	rf = NULL;
 	ff = NULL;
 #ifdef TLS_MALLOC_DBG
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 	if(!CRYPTO_set_mem_ex_functions(ser_malloc, ser_realloc, ser_free)) {
+#else
+	if(!CRYPTO_set_mem_functions(ser_malloc, ser_realloc, ser_free)) {
+#endif
 #else
 	if(!CRYPTO_set_mem_functions(ser_malloc, ser_realloc, ser_free)) {
 #endif
