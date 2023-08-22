@@ -435,7 +435,7 @@ int gsm_to_ascii(char *buffer, int buffer_length, str sms, const int fill_bits)
 			unsigned char cmask =
 					((1 << carry_on_bits) - 1)
 					<< (8 - carry_on_bits); //mask for the leftmost carry_on_bits.
-					//E.g. carry_on_bits=3 -> X X X _ _ _ _ _
+			//E.g. carry_on_bits=3 -> X X X _ _ _ _ _
 			symbol =
 					((buffer[i] << carry_on_bits)
 							| //shift left to make space for the carried bits
@@ -505,60 +505,140 @@ int gsm_to_ascii(char *buffer, int buffer_length, str sms, const int fill_bits)
 }
 
 // Decode UCS2 message by splitting the buffer into utf8 characters
-int ucs2_to_utf8(int ucs2, char *utf8)
+int ucs2_to_utf8(char *ucs2, int ucs2_len, char *utf8)
 {
-	if(ucs2 < 0x80) {
-		utf8[0] = ucs2;
-		utf8[1] = 0;
-		return 1;
+	size_t utf8_index = 0;
+	uint16_t high_surrogate, low_surrogate;
+	uint32_t codepoint;
+	uint16_t ucs2_char;
+
+	for(size_t ucs2_index = 0; ucs2_index < ucs2_len; ucs2_index += 2) {
+		ucs2_char = (unsigned char)ucs2[ucs2_index];
+		ucs2_char = (ucs2_char << 8) | (unsigned char)ucs2[ucs2_index + 1];
+		if(ucs2_char <= 0x7F) {
+			// Single-byte UTF-8 character
+			utf8[utf8_index++] = ucs2_char;
+		} else if(ucs2_char <= 0x7FF) {
+			// Two-byte UTF-8 character
+			utf8[utf8_index++] = 0xC0 | (ucs2_char >> 6);
+			utf8[utf8_index++] = 0x80 | (ucs2_char & 0x3F);
+		} else if(ucs2_char >= 0xD800 && ucs2_char <= 0xDBFF
+				  && ucs2_index < ucs2_len - 2) {
+			// High surrogate of a surrogate pair
+			high_surrogate = ucs2_char;
+			low_surrogate = (unsigned char)ucs2[ucs2_index + 2];
+			low_surrogate =
+					(low_surrogate << 8) | (unsigned char)ucs2[ucs2_index + 3];
+
+			if(low_surrogate >= 0xDC00 && low_surrogate <= 0xDFFF) {
+				// Valid low surrogate
+				codepoint = 0x10000 + ((high_surrogate & 0x3FF) << 10)
+							+ (low_surrogate & 0x3FF);
+
+				// Four-byte UTF-8 character
+				utf8[utf8_index++] = 0xF0 | (codepoint >> 18);
+				utf8[utf8_index++] = 0x80 | ((codepoint >> 12) & 0x3F);
+				utf8[utf8_index++] = 0x80 | ((codepoint >> 6) & 0x3F);
+				utf8[utf8_index++] = 0x80 | (codepoint & 0x3F);
+
+				ucs2_index += 2; // Skip the low surrogate
+			}
+		} else if(ucs2_char >= 0xDC00 && ucs2_char <= 0xDFFF && ucs2_index > 0
+				  && ucs2_index < ucs2_len - 1) {
+			// Low surrogate of a surrogate pair
+			low_surrogate = ucs2_char;
+			high_surrogate = (unsigned char)ucs2[ucs2_index - 2];
+			high_surrogate =
+					(high_surrogate << 8) | (unsigned char)ucs2[ucs2_index - 1];
+
+			if(high_surrogate >= 0xD800 && high_surrogate <= 0xDBFF) {
+				// Valid high surrogate
+				codepoint = 0x10000 + ((high_surrogate & 0x3FF) << 10)
+							+ (low_surrogate & 0x3FF);
+
+				// Four-byte UTF-8 character
+				utf8[utf8_index++] = 0xF0 | (codepoint >> 18);
+				utf8[utf8_index++] = 0x80 | ((codepoint >> 12) & 0x3F);
+				utf8[utf8_index++] = 0x80 | ((codepoint >> 6) & 0x3F);
+				utf8[utf8_index++] = 0x80 | (codepoint & 0x3F);
+
+				ucs2_index += 2; // Skip the high surrogate
+			}
+		} else {
+			// Three-byte UTF-8 character for BMP characters
+			utf8[utf8_index++] = 0xE0 | (ucs2_char >> 12);
+			utf8[utf8_index++] = 0x80 | ((ucs2_char >> 6) & 0x3F);
+			utf8[utf8_index++] = 0x80 | (ucs2_char & 0x3F);
+		}
 	}
-	if(ucs2 >= 0x80 && ucs2 < 0x800) {
-		utf8[0] = (ucs2 >> 6) | 0xC0;
-		utf8[1] = (ucs2 & 0x3F) | 0x80;
-		return 2;
-	}
-	if(ucs2 >= 0x800 && ucs2 < 0xFFFF) {
-		if(ucs2 >= 0xD800 && ucs2 <= 0xDFFF)
-			return -1;
-		utf8[0] = ((ucs2 >> 12)) | 0xE0;
-		utf8[1] = ((ucs2 >> 6) & 0x3F) | 0x80;
-		utf8[2] = ((ucs2)&0x3F) | 0x80;
-		return 3;
-	}
-	if(ucs2 >= 0x10000 && ucs2 < 0x10FFFF) {
-		utf8[0] = 0xF0 | (ucs2 >> 18);
-		utf8[1] = 0x80 | ((ucs2 >> 12) & 0x3F);
-		utf8[2] = 0x80 | ((ucs2 >> 6) & 0x3F);
-		utf8[3] = 0x80 | ((ucs2 & 0x3F));
-		return 4;
-	}
-	return -1;
+	return utf8_index;
 }
 
 // Decode UTF8 to UCS2
-int utf8_to_ucs2(const unsigned char *input, const unsigned char **end_ptr)
+int utf8_to_ucs2(char *utf8, int utf8_len, char *ucs2, int buffer_len)
 {
-	*end_ptr = input;
-	if(input[0] == 0)
+	// Allocate for worst case scenario
+	unsigned char *tmp_buff = (unsigned char *)pkg_malloc(utf8_len * 4);
+	size_t ucs2_index = 0, utf8_index = 0;
+	uint16_t codepoint, high_surrogate, low_surrogate;
+	unsigned char utf8_char;
+
+	if(tmp_buff == NULL) {
+		LM_ERR("Error allocating memory to encode sms text\n");
 		return -1;
-	if(input[0] < 0x80) {
-		*end_ptr = input + 1;
-		return input[0];
 	}
-	if((input[0] & 0xE0) == 0xE0) {
-		if(input[1] == 0 || input[2] == 0)
+	memset(tmp_buff, 0, utf8_len * 4);
+
+	while(utf8_index < utf8_len) {
+		utf8_char = (unsigned char)utf8[utf8_index++];
+
+		if((utf8_char & 0x80) == 0) {
+			// Single-byte UTF-8 character
+			tmp_buff[ucs2_index++] = 0x00;
+			tmp_buff[ucs2_index++] = utf8_char;
+		} else if((utf8_char & 0xE0) == 0xC0) {
+			// Two-byte UTF-8 character
+			codepoint = ((utf8_char & 0x1F) << 6)
+						| ((unsigned char)utf8[utf8_index++] & 0x3F);
+			tmp_buff[ucs2_index++] = (uint8_t)(codepoint >> 8);
+			tmp_buff[ucs2_index++] = (uint8_t)(codepoint & 0xFF);
+		} else if((utf8_char & 0xF0) == 0xE0) {
+			// Three-byte UTF-8 character
+			codepoint = ((utf8_char & 0x0F) << 12)
+						| (((unsigned char)utf8[utf8_index++] & 0x3F) << 6)
+						| ((unsigned char)utf8[utf8_index++] & 0x3F);
+			tmp_buff[ucs2_index++] = (uint8_t)(codepoint >> 8);
+			tmp_buff[ucs2_index++] = (uint8_t)(codepoint & 0xFF);
+		} else if((utf8_char & 0xF8) == 0xF0) {
+			// Four-byte UTF-8 character
+			codepoint = ((utf8_char & 0x07) << 18)
+						| (((unsigned char)utf8[utf8_index++] & 0x3F) << 12)
+						| (((unsigned char)utf8[utf8_index++] & 0x3F) << 6)
+						| ((unsigned char)utf8[utf8_index++] & 0x3F);
+			// Convert to UCS-2 surrogate pair
+			codepoint -= 0x10000;
+			high_surrogate = 0xD800 | (codepoint >> 10);
+			low_surrogate = 0xDC00 | (codepoint & 0x3FF);
+			tmp_buff[ucs2_index++] = (uint8_t)(high_surrogate >> 8);
+			tmp_buff[ucs2_index++] = (uint8_t)(high_surrogate & 0xFF);
+			tmp_buff[ucs2_index++] = (uint8_t)(low_surrogate >> 8);
+			tmp_buff[ucs2_index++] = (uint8_t)(low_surrogate & 0xFF);
+		} else {
+			// Unsupported UTF-8 format
+			LM_ERR("Unsupported UTF-8 format\n");
+			pkg_free(tmp_buff);
 			return -1;
-		*end_ptr = input + 3;
-		return (input[0] & 0x0F) << 12 | (input[1] & 0x3F) << 6
-			   | (input[2] & 0x3F);
+		}
 	}
-	if((input[0] & 0xC0) == 0xC0) {
-		if(input[1] == 0)
-			return -1;
-		*end_ptr = input + 2;
-		return (input[0] & 0x1F) << 6 | (input[1] & 0x3F);
+	// Check for space in SMS buffer
+	if(ucs2_index > buffer_len) {
+		LM_ERR("Encoded SMS size exceed allocated buffer size\n");
+		pkg_free(tmp_buff);
+		return -1;
 	}
-	return -1;
+	memcpy(ucs2, tmp_buff, ucs2_index);
+	pkg_free(tmp_buff);
+	return ucs2_index;
 }
 
 // Encode a digit based phone number for SMS based format.
@@ -723,15 +803,14 @@ int decode_3gpp_sms(struct sip_msg *msg)
 		}
 
 		// Get structure for RP-DATA:
-		if(!rp_data) {
-			rp_data = (sms_rp_data_t *)pkg_malloc(sizeof(struct _sms_rp_data));
-			if(!rp_data) {
-				LM_ERR("Error allocating %lu bytes!\n",
-						(unsigned long)sizeof(struct _sms_rp_data));
-				return -1;
-			}
-		} else {
+		if(rp_data) {
 			freeRP_DATA(rp_data);
+		}
+		rp_data = (sms_rp_data_t *)pkg_malloc(sizeof(struct _sms_rp_data));
+		if(!rp_data) {
+			LM_ERR("Error allocating %lu bytes!\n",
+					(unsigned long)sizeof(struct _sms_rp_data));
+			return -1;
 		}
 
 		// Initialize structure:
@@ -953,6 +1032,21 @@ int decode_3gpp_sms(struct sip_msg *msg)
 							}
 						}
 
+						// Check for malicious length
+						if(len <= 0) {
+							LM_ERR("Length of TP-User-Data payload is less "
+								   "than or equal to zero!\n");
+							return -1;
+						}
+
+						// Check for maximum TP-User-Data payload length since SMS concatenation is not supported
+						if((rp_data->pdu.coding == 0x00 && len > 160)
+								|| (rp_data->pdu.coding != 0x00 && len > 70)) {
+							LM_ERR("Length of TP-User-Data payload exceeds "
+								   "maximum length!\n");
+							return -1;
+						}
+
 						blen = 2 + len * 4;
 						rp_data->pdu.payload.sm.s = pkg_malloc(blen);
 						if(rp_data->pdu.payload.sm.s == NULL) {
@@ -969,16 +1063,9 @@ int decode_3gpp_sms(struct sip_msg *msg)
 											rp_data->pdu.payload.sm, fill_bits);
 						} else {
 							// Length is worst-case 2 * len (UCS2 is 2 Bytes, UTF8 is worst-case 4 Bytes)
-							rp_data->pdu.payload.sm.len = 0;
-							while(len > 0) {
-								j = ((unsigned char)body.s[p] << 8)
-									+ (unsigned char)body.s[p + 1];
-								p += 2;
-								rp_data->pdu.payload.sm.len += ucs2_to_utf8(j,
-										&rp_data->pdu.payload.sm.s
-												 [rp_data->pdu.payload.sm.len]);
-								len -= 2;
-							}
+							j = ucs2_to_utf8(&body.s[p], len,
+									&rp_data->pdu.payload.sm.s[0]);
+							rp_data->pdu.payload.sm.len = j < 0 ? 0 : j;
 						}
 					}
 				}
@@ -1186,26 +1273,16 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		sms_body.s[smstext_len_pos] = actual_text_size + udh_len;
 	} else {
 		// Coding: ucs2
-		int i, ucs2, ucs2len = 0;
-		const unsigned char *p_input =
-				(unsigned char *)rp_send_data->pdu.payload.sm.s;
-		const unsigned char *p_end = p_input;
-
-		for(i = 0; i < rp_send_data->pdu.payload.sm.len;) {
-			ucs2 = utf8_to_ucs2(p_input, &p_end);
-			if(ucs2 < 0) {
-				break;
-			}
-
-			sms_body.s[sms_body.len++] = (ucs2 >> 8) & 0xFF;
-			sms_body.s[sms_body.len++] = ucs2 & 0xFF;
-
-			ucs2len += 2;
-
-			i += (p_end - p_input);
-			p_input = p_end;
+		int ucs2len = utf8_to_ucs2(&rp_send_data->pdu.payload.sm.s[0],
+				rp_send_data->pdu.payload.sm.len, &sms_body.s[sms_body.len],
+				buffer_size - sms_body.len);
+		if(ucs2len < 0) {
+			// Failed in coding UCS2.
+			LM_ERR("Error encoding SMS in UCS-2 format!\n");
+			return -1;
 		}
 
+		sms_body.len += ucs2len;
 		// Update the sms text len
 		sms_body.s[smstext_len_pos] = (unsigned char)ucs2len + udh_len;
 	}
