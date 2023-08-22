@@ -563,6 +563,10 @@ static int rabbitmq_connect(amqp_connection_state_t *conn)
 
 	// establish a new connection to RabbitMQ server
 	*conn = amqp_new_connection();
+	if(!*conn) {
+		LM_ERR("FAIL: create AMQP connection\n");
+		return RABBITMQ_ERR_CREATE;
+	}
 	log_ret = log_on_amqp_error(
 			amqp_get_rpc_reply(*conn), "amqp_new_connection()");
 	if(log_ret != AMQP_RESPONSE_NORMAL && log_ret != AMQP_RESPONSE_NONE) {
