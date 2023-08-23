@@ -329,7 +329,7 @@ static inline struct socket_info *new_sock_info(char *name,
 	}
 	if(usename != NULL) {
 		si->useinfo.name.len = strlen(usename);
-		si->useinfo.name.s = (char *)pkg_malloc(si->useinfo.name.len);
+		si->useinfo.name.s = (char *)pkg_malloc(si->useinfo.name.len + 1);
 		if(si->useinfo.name.s == 0)
 			goto error;
 		strncpy(si->useinfo.name.s, usename, si->useinfo.name.len + 1);
