@@ -741,7 +741,7 @@ static int m_store_addrs(sip_msg_t *msg, str *owner, str *srcaddr, str *dstaddr)
 	}
 
 	/* current time */
-	val = (int)time(NULL);
+	val = (int)(unsigned long long)time(NULL);
 
 	/* add expiration time */
 	db_keys[nr_keys] = &sc_exp_time;
