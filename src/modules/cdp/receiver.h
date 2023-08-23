@@ -44,6 +44,7 @@
 #ifndef __RECEIVER_H
 #define __RECEIVER_H
 
+#include <openssl/ssl.h>
 #include "peer.h"
 #include "diameter.h"
 
@@ -65,7 +66,9 @@ typedef struct _serviced_peer_t
 {
 	peer *p; /**< the attached peer */
 
-	int tcp_socket; /**< socket used for the Diameter communication */
+	int tcp_socket;	  /**< socket used for the Diameter communication */
+	SSL *tls_conn;	  /**< will be set if this is a tls connection */
+	SSL_CTX *tls_ctx; /**< will be set if this is a tls connection */
 
 	str send_pipe_name; /**< name of the pipe to signal messages to be sent out */
 	int send_pipe_fd; /**< reader from the pipe to signal messages to be sent out */

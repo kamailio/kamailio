@@ -55,6 +55,7 @@
 #include "../../core/cfg/cfg_struct.h"
 #include "cdp_stats.h"
 #include "cdp_functions.h"
+#include "cdp_tls.h"
 #include "../../core/mod_fix.h"
 
 MODULE_VERSION
@@ -69,6 +70,12 @@ unsigned int workerq_latency_threshold =
 unsigned int workerq_length_threshold_percentage =
 		0; /**< default threshold for worker queue length, percentage of max queue length - by default disabled */
 unsigned int debug_heavy = 0;
+unsigned int enable_tls = 0;
+int method = 0;
+str tls_method = str_init("TLSv1.1");
+str private_key = STR_NULL;
+str certificate = STR_NULL;
+str ca_list = STR_NULL;
 
 extern dp_config *config; /**< DiameterPeer configuration structure */
 
@@ -183,8 +190,12 @@ static param_export_t cdp_params[] = {
 	{"workerq_length_threshold_percentage", PARAM_INT,
 			&workerq_length_threshold_percentage}, /**<queue length threshold - percentage of max queue length*/
 	{"debug_heavy", PARAM_INT, &debug_heavy},
-
-	{0, 0, 0}
+	{"enable_tls",					PARAM_INT,	&enable_tls}, 				/**< is TLS required or not */
+	{"tls_method",					PARAM_STR,	&tls_method}, 				/**< TLS version */
+	{"private_key",				PARAM_STR,	&private_key}, 				/**< full path to private key (if needed) */
+	{"certificate",				PARAM_STR,	&certificate}, 				/**< full path to certificate (if needed) */
+	{"ca_list", PARAM_STR, &ca_list}, /**<  CA list filename */
+	{ 0, 0, 0 }
 };
 
 /**
@@ -227,6 +238,16 @@ static int cdp_init(void)
 		LM_ERR("error initializing the diameter peer\n");
 		return 1;
 	}
+
+	if(enable_tls) {
+		init_ssl_methods();
+		method = tls_parse_method(&tls_method);
+		if(method < 0) {
+			LM_ERR("Invalid tls_method parameter value\n");
+			return -1;
+		}
+	}
+
 	register_procs(2 + config->workers + 2 * config->peers_cnt);
 	cfg_register_child(2 + config->workers + 2 * config->peers_cnt);
 	return 0;
