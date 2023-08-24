@@ -807,7 +807,8 @@ void qm_setfunc(void *qmp, void *p, char *func)
 	}
 	f = (struct qm_frag *)((char *)p - sizeof(struct qm_frag));
 
-	f->func = func;
+	if(f)
+		f->func = func;
 #endif
 }
 
