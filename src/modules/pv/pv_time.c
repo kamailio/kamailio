@@ -151,30 +151,30 @@ int get_time(
 	switch(param->pvn.u.isname.name.n) {
 		case 1:
 			return pv_get_uintval(
-					msg, param, res, (unsigned int)_cfgutils_ts->tm_min);
+					msg, param, res, (unsigned long)_cfgutils_ts->tm_min);
 		case 2:
 			return pv_get_uintval(
-					msg, param, res, (unsigned int)_cfgutils_ts->tm_hour);
+					msg, param, res, (unsigned long)_cfgutils_ts->tm_hour);
 		case 3:
 			return pv_get_uintval(
-					msg, param, res, (unsigned int)_cfgutils_ts->tm_mday);
+					msg, param, res, (unsigned long)_cfgutils_ts->tm_mday);
 		case 4:
 			return pv_get_uintval(
-					msg, param, res, (unsigned int)(_cfgutils_ts->tm_mon + 1));
+					msg, param, res, (unsigned long)(_cfgutils_ts->tm_mon + 1));
 		case 5:
 			return pv_get_uintval(msg, param, res,
-					(unsigned int)(_cfgutils_ts->tm_year + 1900));
+					(unsigned long)(_cfgutils_ts->tm_year + 1900));
 		case 6:
 			return pv_get_uintval(
-					msg, param, res, (unsigned int)(_cfgutils_ts->tm_wday + 1));
+					msg, param, res, (unsigned long)(_cfgutils_ts->tm_wday + 1));
 		case 7:
 			return pv_get_uintval(
-					msg, param, res, (unsigned int)(_cfgutils_ts->tm_yday + 1));
+					msg, param, res, (unsigned long)(_cfgutils_ts->tm_yday + 1));
 		case 8:
 			return pv_get_sintval(msg, param, res, _cfgutils_ts->tm_isdst);
 		default:
 			return pv_get_uintval(
-					msg, param, res, (unsigned int)_cfgutils_ts->tm_sec);
+					msg, param, res, (unsigned long)_cfgutils_ts->tm_sec);
 	}
 }
 
@@ -239,7 +239,7 @@ int pv_get_timenows(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	time_t t;
 	t = time(NULL);
-	return pv_get_uintval(msg, param, res, (unsigned int)t);
+	return pv_get_uintval(msg, param, res, (unsigned long)t);
 }
 
 
@@ -257,7 +257,7 @@ int pv_get_timenowf(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	}
 	s.s = t_buf;
 	s.len = strlen(s.s) - 1;
-	return pv_get_strintval(msg, param, res, &s, (int)t);
+	return pv_get_strintval(msg, param, res, &s, (long)t);
 }
 
 int pv_get_times(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
@@ -266,7 +266,7 @@ int pv_get_times(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		return -1;
 
 	msg_set_time(msg);
-	return pv_get_uintval(msg, param, res, (unsigned int)msg->tval.tv_sec);
+	return pv_get_uintval(msg, param, res, (unsigned long)msg->tval.tv_sec);
 }
 
 
@@ -286,14 +286,14 @@ int pv_get_timef(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	}
 	s.s = t_buf;
 	s.len = strlen(s.s) - 1;
-	return pv_get_strintval(msg, param, res, &s, (int)msg->tval.tv_sec);
+	return pv_get_strintval(msg, param, res, &s, (long)msg->tval.tv_sec);
 }
 
 int pv_get_timeb(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	if(msg == NULL)
 		return -1;
-	return pv_get_uintval(msg, param, res, (unsigned int)up_since);
+	return pv_get_uintval(msg, param, res, (unsigned long)up_since);
 }
 
 static struct timeval _timeval_ts = {0};
@@ -314,24 +314,24 @@ int pv_get_timeval(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		case 1:
 			msg_set_time(msg);
 			return pv_get_uintval(
-					msg, param, res, (unsigned int)msg->tval.tv_usec);
+					msg, param, res, (unsigned long)msg->tval.tv_usec);
 		case 2:
 			if(gettimeofday(&_timeval_ts, NULL) != 0) {
 				LM_ERR("unable to get time val attributes\n");
 				return pv_get_null(msg, param, res);
 			}
 			return pv_get_uintval(
-					msg, param, res, (unsigned int)_timeval_ts.tv_sec);
+					msg, param, res, (unsigned long)_timeval_ts.tv_sec);
 		case 3:
 			return pv_get_uintval(
-					msg, param, res, (unsigned int)_timeval_ts.tv_usec);
+					msg, param, res, (unsigned long)_timeval_ts.tv_usec);
 		case 4:
 			if(gettimeofday(&tv, NULL) != 0) {
 				LM_ERR("unable to get time val attributes\n");
 				return pv_get_null(msg, param, res);
 			}
-			s.len = snprintf(_timeval_ts_buf, 64, "%u.%06u",
-					(unsigned int)tv.tv_sec, (unsigned int)tv.tv_usec);
+			s.len = snprintf(_timeval_ts_buf, 64, "%lu.%06lu",
+					(unsigned long)tv.tv_sec, (unsigned long)tv.tv_usec);
 			if(s.len < 0)
 				return pv_get_null(msg, param, res);
 			s.s = _timeval_ts_buf;
@@ -346,8 +346,8 @@ int pv_get_timeval(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 				LM_ERR("failed to format current time\n");
 				return pv_get_null(msg, param, res);
 			}
-			s.len = snprintf(_timeval_ts_buf, 64, "%s.%06u", lbuf,
-					(unsigned int)tv.tv_usec);
+			s.len = snprintf(_timeval_ts_buf, 64, "%s.%06lu", lbuf,
+					(unsigned long)tv.tv_usec);
 			if(s.len < 0)
 				return pv_get_null(msg, param, res);
 			s.s = _timeval_ts_buf;
@@ -368,7 +368,7 @@ int pv_get_timeval(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		default:
 			msg_set_time(msg);
 			return pv_get_uintval(
-					msg, param, res, (unsigned int)msg->tval.tv_sec);
+					msg, param, res, (unsigned long)msg->tval.tv_sec);
 	}
 }
 
