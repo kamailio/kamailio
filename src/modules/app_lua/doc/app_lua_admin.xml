@@ -117,7 +117,7 @@
 	    <para>
 			Set the path to the Lua script to be loaded at startup. Then you
 			can use lua_run(function, params) to execute a function from the
-			script at runtime.
+			script at runtime.  The script can be in Lua-source or bytecode.
 	    </para>
 	    <para>
 		<emphasis>
