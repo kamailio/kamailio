@@ -605,16 +605,18 @@ int utf8_to_ucs2(char *utf8, int utf8_len, char *ucs2, int buffer_len)
 		} else if((utf8_char & 0xF0) == 0xE0) {
 			// Three-byte UTF-8 character
 			codepoint = ((utf8_char & 0x0F) << 12)
-						| (((unsigned char)utf8[utf8_index++] & 0x3F) << 6)
-						| ((unsigned char)utf8[utf8_index++] & 0x3F);
+						| (((unsigned char)utf8[utf8_index + 1] & 0x3F) << 6)
+						| ((unsigned char)utf8[utf8_index + 2] & 0x3F);
+			utf8_index += 2;
 			tmp_buff[ucs2_index++] = (uint8_t)(codepoint >> 8);
 			tmp_buff[ucs2_index++] = (uint8_t)(codepoint & 0xFF);
 		} else if((utf8_char & 0xF8) == 0xF0) {
 			// Four-byte UTF-8 character
 			codepoint = ((utf8_char & 0x07) << 18)
-						| (((unsigned char)utf8[utf8_index++] & 0x3F) << 12)
-						| (((unsigned char)utf8[utf8_index++] & 0x3F) << 6)
-						| ((unsigned char)utf8[utf8_index++] & 0x3F);
+						| (((unsigned char)utf8[utf8_index + 1] & 0x3F) << 12)
+						| (((unsigned char)utf8[utf8_index + 2] & 0x3F) << 6)
+						| ((unsigned char)utf8[utf8_index + 3] & 0x3F);
+			utf8_index += 3;
 			// Convert to UCS-2 surrogate pair
 			codepoint -= 0x10000;
 			high_surrogate = 0xD800 | (codepoint >> 10);
