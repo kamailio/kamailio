@@ -41,7 +41,7 @@ typedef struct _sql_col
 typedef struct _sql_val
 {
 	int flags;
-	int_str value;
+	numstr_ut value;
 } sql_val_t;
 
 typedef struct _sql_result
