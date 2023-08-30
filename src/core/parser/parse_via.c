@@ -2817,3 +2817,40 @@ int parse_via_header(struct sip_msg *msg, int n, struct via_body **q)
 	} else
 		return -1;
 }
+
+
+/*
+ * Parse/link Via overload-control parameters
+ */
+int parse_via_oc(struct sip_msg *msg, struct via_body *vbp, via_oc_t *ocp)
+{
+	via_param_t *vp;
+
+	if(vbp == NULL || ocp == NULL) {
+		return -1;
+	}
+	memset(ocp, 0, sizeof(via_oc_t));
+
+	for(vp = vbp->param_lst; vp != NULL; vp = vp->next) {
+		if(vp->name.len == 2 && strncasecmp(vp->name.s, "oc", 2) == 0) {
+			ocp->oc = 1;
+		} else if(vp->name.len == 7
+				  && strncasecmp(vp->name.s, "oc-algo", 7) == 0) {
+			if(vp->value.len > 0) {
+				ocp->algo.len = vp->value.len;
+				ocp->algo.s = vp->value.s;
+			}
+		} else if(vp->name.len == 11
+				  && strncasecmp(vp->name.s, "oc-validity", 11) == 0) {
+			if(vp->value.len > 0) {
+				str2ulong(&vp->value, &ocp->validity);
+			}
+		} else if(vp->name.len == 6
+				  && strncasecmp(vp->name.s, "oc-seq", 6) == 0) {
+			if(vp->value.len > 0) {
+				str2int(&vp->value, &ocp->seq);
+			}
+		}
+	}
+	return 0;
+}

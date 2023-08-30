@@ -66,6 +66,15 @@ typedef struct via_param
 } via_param_t;
 
 
+/* RFC7339 - overload control */
+typedef struct via_oc
+{
+	int oc;
+	str algo;
+	unsigned long validity;
+	unsigned int seq;
+} via_oc_t;
+
 /* Format: name/version/transport host:port;params comment */
 /* WARNING: keep in sync with tm/sip_msg.c via_body_cloner */
 typedef struct via_body
@@ -123,5 +132,9 @@ void free_via_list(struct via_body *vb);
  */
 int parse_via_header(struct sip_msg *msg, int n, struct via_body **q);
 
+/*
+ * Parse/link Via overload-control parameters
+ */
+int parse_via_oc(struct sip_msg *msg, struct via_body *vbp, via_oc_t *ocp);
 
 #endif /* PARSE_VIA_H */
