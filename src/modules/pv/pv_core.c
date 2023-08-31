@@ -4507,6 +4507,8 @@ int pv_parse_via_name(pv_spec_p sp, str *in)
 		case 6:
 			if(strncmp(in->s, "branch", 6) == 0)
 				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "params", 6) == 0)
+				sp->pvp.pvn.u.isname.name.n = 8;
 			else
 				goto error;
 			break;
@@ -4578,6 +4580,11 @@ int pv_get_via_attr(
 		case 7: /* i */
 			if(vb->i != NULL && vb->i->value.len > 0) {
 				return pv_get_strval(msg, param, res, &vb->i->value);
+			}
+			break;
+		case 8: /* params */
+			if(vb->params.s != NULL && vb->params.len > 0) {
+				return pv_get_strval(msg, param, res, &vb->params);
 			}
 			break;
 
