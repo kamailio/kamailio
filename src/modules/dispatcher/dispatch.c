@@ -1598,6 +1598,25 @@ int ds_list_exist(int set)
 	return 1; /* True */
 }
 
+/*
+ * Return a destination set
+ */
+ds_set_t *ds_list_lookup(int set)
+{
+	ds_set_t *si = NULL;
+	LM_DBG("looking for destination set [%d]\n", set);
+
+	/* get the index of the set */
+	si = ds_avl_find(_ds_list, set);
+
+	if(si == NULL) {
+		LM_DBG("destination set [%d] not found\n", set);
+		return NULL;
+	}
+	LM_DBG("destination set [%d] found\n", set);
+	return si;
+}
+
 /**
  *
  */
