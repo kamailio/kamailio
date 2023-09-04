@@ -19,6 +19,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_without nats
+%bcond_without jwt
 %bcond_without perl
 %bcond_without phonenum
 %bcond_without python2
@@ -54,6 +55,7 @@
 %bcond_without memcached
 %bcond_with mongodb
 %bcond_with nats
+%bcond_with jwt
 %bcond_without perl
 %bcond_with phonenum
 %bcond_without python2
@@ -90,6 +92,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_with nats
+%bcond_with jwt
 %bcond_without perl
 %bcond_without phonenum
 %bcond_without python2
@@ -136,6 +139,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_without nats
+%bcond_without jwt
 %bcond_without perl
 %bcond_without phonenum
 %bcond_without python2
@@ -182,6 +186,7 @@
 %bcond_without memcached
 %bcond_without mongodb
 %bcond_without nats
+%bcond_without jwt
 %bcond_without perl
 %bcond_without phonenum
 %bcond_with python2
@@ -211,6 +216,7 @@
 %bcond_without memcached
 %bcond_with mongodb
 %bcond_with nats
+%bcond_with jwt
 %bcond_without perl
 %bcond_with phonenum
 %bcond_without python2
@@ -275,6 +281,7 @@ Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
 Conflicts:  kamailio-kazoo < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lost < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-nats < %ver
+Conflicts:  kamailio-jwt < %ver
 Conflicts:  kamailio-rabbitmq < %ver
 Conflicts:  kamailio-memcached < %ver, kamailio-mongodb < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
@@ -756,6 +763,18 @@ BuildRequires:    libnats-devel
 
 %description    nats
 The module provides an NATS consumer for Kamailio. NATS is a real time distributed messaging platform, more details about it can be found at nats.io.
+%endif
+
+
+%if %{with jwt}
+%package    jwt
+Summary:    JWT functions for Kamailio
+Group:      %{PKGGROUP}
+Requires:   libjwt, kamailio = %ver
+BuildRequires:    libjwt-dev
+
+%description    jwt
+The module provides JWT (JSON Web Token) functions to be used in Kamailio configuration file.
 %endif
 
 
@@ -1291,6 +1310,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with nats}
     knats \
 %endif
+%if %{with jwt}
+    kjwt \
+%endif
 %if %{with perl}
     kperl \
 %endif
@@ -1398,6 +1420,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kmysql koutbound \
 %if %{with nats}
     knats \
+%endif
+%if %{with jwt}
+    kjwt \
 %endif
 %if %{with perl}
     kperl \
@@ -2108,6 +2133,14 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.nats
 %{_libdir}/kamailio/modules/nats.so
+%endif
+
+
+%if %{with jwt}
+%files      jwt
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.jwt
+%{_libdir}/kamailio/modules/jwt.so
 %endif
 
 

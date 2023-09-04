@@ -81,6 +81,7 @@ PACKAGE_GROUPS += mqtt
 PACKAGE_GROUPS += secsipid
 PACKAGE_GROUPS += lwsc
 PACKAGE_GROUPS += nats
+PACKAGE_GROUPS += jwt
 PACKAGE_GROUPS += microhttpd
 
 # Module groups to be packaged onto kamailio-extra-modules.
