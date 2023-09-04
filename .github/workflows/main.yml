@@ -30,7 +30,7 @@ jobs:
           - distribution: sid
             compilier: clang
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ammaraskar/gcc-problem-matcher@0.2.0
       - name: build
         run: |
