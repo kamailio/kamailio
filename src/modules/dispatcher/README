@@ -121,6 +121,7 @@ Federico Cabiddu
               4.13. ds_load_update()
               4.14. ds_load_unset()
               4.15. ds_reload()
+              4.16. ds_dsg_fetch(setid)
 
         5. RPC Commands
 
@@ -208,8 +209,10 @@ Federico Cabiddu
    1.55. ds_is_from_list usage
    1.56. ds_is_active usage
    1.57. ds_load_unset usage
-   1.58. dispatcher list file
-   1.59. Kamailio config script - sample dispatcher usage
+   1.58. ds_reload usage
+   1.59. ds_dsg_fetch() usage
+   1.60. dispatcher list file
+   1.61. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -285,6 +288,7 @@ Chapter 1. Admin Guide
         4.13. ds_load_update()
         4.14. ds_load_unset()
         4.15. ds_reload()
+        4.16. ds_dsg_fetch(setid)
 
    5. RPC Commands
 
@@ -1110,6 +1114,7 @@ modparam("dispatcher", "ds_interval_mode", 7200)
    4.13. ds_load_update()
    4.14. ds_load_unset()
    4.15. ds_reload()
+   4.16. ds_dsg_fetch(setid)
 
 4.1.  ds_select_dst(set, alg[, limit])
 
@@ -1597,6 +1602,26 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
+   Example 1.58. ds_reload usage
+...
+    ds_reload();
+...
+
+4.16.  ds_dsg_fetch(setid)
+
+   Sets the destination group id to setid for fetching $dsg(key)
+   attributes.
+
+   Parameters: setid - integer or variable holding the set id value
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.59. ds_dsg_fetch() usage
+...
+    ds_dsg_fetch("1");
+    xinfo("set id: 1 - all: $dsg(count); active: $dsg(active)\n");
+...
+
 5. RPC Commands
 
    5.1. dispatcher.set_state
@@ -1875,7 +1900,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.58. dispatcher list file
+   Example 1.60. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -1900,7 +1925,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.59. Kamailio config script - sample dispatcher usage
+   Example 1.61. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
