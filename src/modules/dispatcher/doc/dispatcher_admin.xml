@@ -1970,6 +1970,14 @@ onreply_route {
 		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
+		<example>
+		<title><function>ds_reload</function> usage</title>
+		<programlisting format="linespecific">
+...
+    ds_reload();
+...
+</programlisting>
+		</example>
 	</section>
 	</section>
 
