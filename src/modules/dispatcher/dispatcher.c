@@ -1395,6 +1395,7 @@ static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	int count = 0;
 	int active = 0;
 	int inactive = 0;
+	int j = 0;
 
 	if(param == NULL) {
 		return -1;
@@ -1404,6 +1405,17 @@ static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	if(dsg == NULL) {
 		return pv_get_null(msg, param, res);
 	}
+
+	lock_get(&dsg->lock);
+	count = dsg->nr;
+	for(j = 0; j < dsg->nr; j++) {
+		if(ds_skip_dst(dsg->dlist[j].flags)) {
+			inactive++;
+		} else {
+			active++;
+		}
+	}
+	lock_release(&dsg->lock);
 
 	switch(param->pvn.u.isname.name.n) {
 		case 0: /* count */
