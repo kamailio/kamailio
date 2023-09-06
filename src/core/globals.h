@@ -218,6 +218,7 @@ extern int ksr_all_errors;
 extern int ksr_route_locks_size;
 extern str _ksr_xavp_via_params;
 extern str _ksr_xavp_via_fields;
+extern str _ksr_xavp_via_reply_params;
 extern int ksr_sip_parser_mode;
 extern int ksr_cfg_print_mode;
 extern int ksr_return_mode;

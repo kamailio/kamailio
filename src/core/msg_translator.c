@@ -114,6 +114,7 @@ extern int version_len;
 
 str _ksr_xavp_via_params = STR_NULL;
 str _ksr_xavp_via_fields = STR_NULL;
+str _ksr_xavp_via_reply_params = STR_NULL;
 int ksr_local_rport = 0;
 
 /** per process fixup function for global_req_flags.
@@ -2415,6 +2416,7 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 	char *totags;
 	int httpreq;
 	char *pvia;
+	str xparams = STR_NULL;
 
 	body = 0;
 	buf = 0;
@@ -2454,6 +2456,17 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 		}
 		if(msg->via1->rport)
 			len -= msg->via1->rport->size + 1; /* include ';' */
+	}
+
+	/* test and add xavpvia  params */
+	if(msg && (msg->msg_flags & FL_ADD_XAVP_VIA_REPLY_PARAMS)
+			&& _ksr_xavp_via_reply_params.len > 0) {
+		xparams.s = pv_get_buffer();
+		xparams.len = xavp_serialize_fields(
+				&_ksr_xavp_via_reply_params, xparams.s, pv_get_buffer_size());
+		if(xparams.len > 0) {
+			len += xparams.len;  /* ending ';' included */
+		}
 	}
 
 	/* first line */
@@ -2587,6 +2600,10 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 					/* normal whole via copy */
 					append_str_trans(p, hdr->name.s,
 							(hdr->body.s + hdr->body.len) - hdr->name.s, msg);
+				}
+				if(xparams.len > 0) {
+					append_str(p, ";", 1);
+					append_str(p, xparams.s, xparams.len - 1);
 				}
 				append_str(p, CRLF, CRLF_LEN);
 				/* if is HTTP, replace Via with Sia
