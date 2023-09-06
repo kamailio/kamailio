@@ -4488,6 +4488,12 @@ int pv_parse_via_name(pv_spec_p sp, str *in)
 			else
 				goto error;
 			break;
+		case 2:
+			if(strncmp(in->s, "oc", 2) == 0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else
+				goto error;
+			break;
 		case 4:
 			if(strncmp(in->s, "host", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 0;
@@ -4501,6 +4507,8 @@ int pv_parse_via_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if(strncmp(in->s, "rport", 5) == 0)
 				sp->pvp.pvn.u.isname.name.n = 5;
+			else if(strncmp(in->s, "ocseq", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 12;
 			else
 				goto error;
 			break;
@@ -4509,6 +4517,8 @@ int pv_parse_via_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else if(strncmp(in->s, "params", 6) == 0)
 				sp->pvp.pvn.u.isname.name.n = 8;
+			else if(strncmp(in->s, "ocalgo", 6) == 0)
+				sp->pvp.pvn.u.isname.name.n = 10;
 			else
 				goto error;
 			break;
@@ -4524,7 +4534,12 @@ int pv_parse_via_name(pv_spec_p sp, str *in)
 			else
 				goto error;
 			break;
-
+		case 10:
+			if(strncmp(in->s, "ocvalidity", 10) == 0)
+				sp->pvp.pvn.u.isname.name.n = 11;
+			else
+				goto error;
+			break;
 		default:
 			goto error;
 	}
@@ -4544,6 +4559,8 @@ error:
 int pv_get_via_attr(
 		sip_msg_t *msg, via_body_t *vb, pv_param_t *param, pv_value_t *res)
 {
+	via_oc_t ocv;
+
 	if(vb == NULL) {
 		LM_DBG("null via header\n");
 		return pv_get_null(msg, param, res);
@@ -4587,6 +4604,34 @@ int pv_get_via_attr(
 				return pv_get_strval(msg, param, res, &vb->params);
 			}
 			break;
+		case 9: /* oc */
+			if(parse_via_oc(msg, vb, &ocv) < 0) {
+				return pv_get_null(msg, param, res);
+			}
+			if(ocv.oc == 1) {
+				return pv_get_sintval(msg, param, res, 1);
+			} else {
+				return pv_get_sintval(msg, param, res, 2);
+			}
+			break;
+		case 10: /* oc-algo */
+			if(parse_via_oc(msg, vb, &ocv) < 0) {
+				return pv_get_null(msg, param, res);
+			}
+			if(ocv.algo.s != NULL && ocv.algo.len > 0) {
+				return pv_get_strval(msg, param, res, &ocv.algo);
+			}
+			return pv_get_null(msg, param, res);
+		case 11: /* oc-validity */
+			if(parse_via_oc(msg, vb, &ocv) < 0) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_uintval(msg, param, res, ocv.validity);
+		case 12: /* oc-seq */
+			if(parse_via_oc(msg, vb, &ocv) < 0) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_uintval(msg, param, res, (unsigned long)ocv.seq);
 
 		default:
 			return pv_get_null(msg, param, res);
