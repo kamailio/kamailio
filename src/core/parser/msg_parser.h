@@ -118,6 +118,8 @@ typedef enum request_method
 #define FL_ROUTE_ADDR (1 << 25) /*!< request has Route address for next hop */
 #define FL_USE_OTCPID \
 	(1 << 26) /*!< request to be routed using outbound tcp con id */
+#define FL_ADD_XAVP_VIA_REPLY_PARAMS \
+	(1 << 27) /*!< add xavp fields to first (previous sip node) via params */
 
 /* WARNING: Value (1 << 28) is reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */
