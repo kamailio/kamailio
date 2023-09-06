@@ -1424,6 +1424,10 @@ static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_sintval(msg, param, res, active);
 		case 2: /* inactive */
 			return pv_get_sintval(msg, param, res, inactive);
+		case 3: /* pactive */
+			return pv_get_sintval(msg, param, res, (int)((active*100)/count));
+		case 4: /* pinactive */
+			return pv_get_sintval(msg, param, res, (int)((inactive*100)/count));
 		default:
 			return pv_get_null(msg, param, res);
 	}
@@ -1450,9 +1454,21 @@ static int pv_parse_dsg(pv_spec_p sp, str *in)
 			else
 				goto error;
 			break;
+		case 7:
+			if(strncmp(in->s, "pactive", 7) == 0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else
+				goto error;
+			break;
 		case 8:
 			if(strncmp(in->s, "inactive", 8) == 0)
 				sp->pvp.pvn.u.isname.name.n = 2;
+			else
+				goto error;
+			break;
+		case 9:
+			if(strncmp(in->s, "pinactive", 9) == 0)
+				sp->pvp.pvn.u.isname.name.n = 4;
 			else
 				goto error;
 			break;
