@@ -304,6 +304,7 @@ LOGENGINETYPE	log_engine_type
 LOGENGINEDATA	log_engine_data
 XAVPVIAPARAMS	xavp_via_params
 XAVPVIAFIELDS	xavp_via_fields
+XAVPVIAREPLYPARAMS	xavp_via_reply_params
 LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
 VIRTUAL		virtual
@@ -753,6 +754,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOGENGINEDATA}	{ yylval.strval=yytext; return LOGENGINEDATA; }
 <INITIAL>{XAVPVIAPARAMS}	{ yylval.strval=yytext; return XAVPVIAPARAMS; }
 <INITIAL>{XAVPVIAFIELDS}	{ yylval.strval=yytext; return XAVPVIAFIELDS; }
+<INITIAL>{XAVPVIAREPLYPARAMS}	{ yylval.strval=yytext; return XAVPVIAREPLYPARAMS; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
 <INITIAL>{VIRTUAL}	{ count(); yylval.strval=yytext; return VIRTUAL; }
