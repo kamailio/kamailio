@@ -2677,6 +2677,17 @@ endofpacket:
 			goto error;
 		}
 	}
+	if(vb->params.s != NULL && vb->params.len == 0 && vb->last_param != NULL) {
+		if(vb->last_param->name.len > 0) {
+			if(vb->last_param->value.len > 0) {
+				vb->params.len = vb->last_param->value.s + vb->last_param->value.len
+					- vb->params.s;
+			} else {
+				vb->params.len = vb->last_param->name.s + vb->last_param->name.len
+					- vb->params.s;
+			}
+		}
+	}
 	return tmp;
 nextvia:
 	DBG("parsing via: next via\n");
@@ -2691,6 +2702,18 @@ nextvia:
 			goto error;
 		}
 	}
+	if(vb->params.s != NULL && vb->params.len == 0 && vb->last_param != NULL) {
+		if(vb->last_param->name.len > 0) {
+			if(vb->last_param->value.len > 0) {
+				vb->params.len = vb->last_param->value.s + vb->last_param->value.len
+					- vb->params.s;
+			} else {
+				vb->params.len = vb->last_param->name.s + vb->last_param->name.len
+					- vb->params.s;
+			}
+		}
+	}
+
 	vb->next = pkg_malloc(sizeof(struct via_body));
 	if(vb->next == 0) {
 		PKG_MEM_ERROR;
