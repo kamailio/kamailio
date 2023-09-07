@@ -854,6 +854,41 @@ request_route {
 </programlisting>
 		</example>
 		</section>
+		<section id="corex.f.via_reply_add_xavp_params">
+		<title><function moreinfo="none">via_reply_add_xavp_params(flags)</function></title>
+		<para>
+			Control if fields of the xavp with the name specified by
+			xavp_via_reply_params global parameter are added or not to the top Via
+			of replies.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flags</emphasis>: 1 - add xavp parameters; 0 - do not
+				add xavp parameters.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>via_reply_add_xavp_params</function> usage</title>
+		<programlisting format="linespecific">
+...
+xavp_via_reply_params="xviarpl"
+...
+request_route {
+    ...
+	$xavp(xviarpl=&gt;srvid) = "1";
+	$xavp(xviarpl[0]=&gt;myval) = "xyz";
+    via_reply_add_xavp_params("1");
+    ...
+}
+...
+</programlisting>
+		</example>
 	<section id="corex.f.is_faked_msg">
 		<title>
 			<function moreinfo="none">is_faked_msg()</function>
