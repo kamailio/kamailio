@@ -4490,7 +4490,7 @@ int pv_parse_via_name(pv_spec_p sp, str *in)
 			break;
 		case 2:
 			if(strncmp(in->s, "oc", 2) == 0)
-				sp->pvp.pvn.u.isname.name.n = 0;
+				sp->pvp.pvn.u.isname.name.n = 9;
 			else
 				goto error;
 			break;
