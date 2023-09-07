@@ -2348,6 +2348,7 @@ char *generate_res_buf_from_sip_res(
 		xparams.len = xavp_serialize_fields_style(&_ksr_xavp_via_reply_params,
 				1, xparams.s, pv_get_buffer_size());
 		if(xparams.len > 0) {
+			LM_DBG("adding via reply xavp params\n");
 			anchor = anchor_lump(msg,
 					msg->via2->params.s + msg->via2->params.len - msg->buf, 0,
 					0);
