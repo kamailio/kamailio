@@ -889,6 +889,7 @@ request_route {
 ...
 </programlisting>
 		</example>
+		</section>
 	<section id="corex.f.is_faked_msg">
 		<title>
 			<function moreinfo="none">is_faked_msg()</function>
