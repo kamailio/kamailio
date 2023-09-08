@@ -63,7 +63,7 @@
 /* number of via's encountered */
 int via_cnt;
 /* global request flags */
-unsigned int global_req_flags = 0;
+msg_flags_t global_req_flags = 0;
 
 int ksr_sip_parser_mode = KSR_SIP_PARSER_MODE_STRICT;
 

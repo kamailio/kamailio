@@ -234,6 +234,8 @@ enum _uri_flags
 }; /* bit fields */
 typedef enum _uri_flags uri_flags;
 
+typedef unsigned long long msg_flags_t;
+
 /*! \brief The SIP uri object */
 struct sip_uri
 {
@@ -423,7 +425,7 @@ typedef struct sip_msg
 
 	unsigned int hash_index;		/*!< index to TM hash table; stored in core
 								to avoid unnecessary calculations */
-	unsigned int msg_flags;			/*!< internal flags used by core */
+	msg_flags_t msg_flags;			/*!< internal flags used by core */
 	flag_t flags;					/*!< config flags */
 	flag_t xflags[KSR_XFLAGS_SIZE]; /*!< config extended flags */
 	str set_global_address;
@@ -459,7 +461,7 @@ extern int via_cnt;
  * a flag value is checked, e.g.:
  * if ((msg->msg_flags|global_req_flags) & FL_XXX) ...
  */
-extern unsigned int global_req_flags;
+extern msg_flags_t global_req_flags;
 
 
 int parse_msg(
