@@ -248,7 +248,7 @@ int replace_uri(struct sip_msg *msg, str *display, str *uri,
 	char *p;
 	str param;
 	str buf;
-	unsigned int uac_flag;
+	msg_flags_t uac_flag;
 	int i;
 	int_str avp_value;
 	struct dlg_cell *dlg = 0;
@@ -558,7 +558,7 @@ int restore_uri(
 	char *p;
 	int i;
 	int_str avp_value;
-	int flag;
+	msg_flags_t flag;
 	int bsize;
 
 	/* we should process only sequential request, but since we are looking
