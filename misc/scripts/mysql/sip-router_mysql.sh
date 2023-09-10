@@ -52,7 +52,7 @@ DESCRIPTION
   section COMMANDS for brief overview of supported actions.
 
   The SQL definition of tables and initial data within SER database is stored
-  in a separate files which can be usualy found under /usr/local/share/ser
+  in a separate files which can be usually found under /usr/local/share/ser
   (depending on installation). You can use those files to create SER database
   manually if you cannot or do not want to use this shell wrapper.
 
@@ -97,7 +97,7 @@ COMMANDS
     that the tables are empty.
 
   update-data
-    Update initial data in the database. This command deletes vendor-controled
+    Update initial data in the database. This command deletes vendor-controlled
     rows from the database and replaces them with new data.
 
 
