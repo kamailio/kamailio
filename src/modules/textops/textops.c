@@ -169,6 +169,8 @@ static int fixup_search_hf(void **param, int param_no);
 static int fixup_subst_hf(void **param, int param_no);
 static int fixup_regex_substring(void **param, int param_no);
 
+static int w_via_param_rm(sip_msg_t *msg, char *pname, char *pidx);
+
 static int mod_init(void);
 
 static tr_export_t mod_trans[] = {{{"re", sizeof("re") - 1}, /* regexp class */
@@ -287,6 +289,8 @@ static cmd_export_t cmds[] = {
 				ANY_ROUTE},
 		{"append_time_to_request", (cmd_function)append_time_request_f, 0, 0, 0,
 				ANY_ROUTE},
+		{"via_param_rm", (cmd_function)w_via_param_rm, 2, fixup_spve_igp,
+				fixup_free_spve_igp, ANY_ROUTE},
 
 		{"set_body_multipart", (cmd_function)set_multibody_0, 0, 0, 0,
 				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
@@ -4868,6 +4872,118 @@ static int fixup_subst_hf(void **param, int param_no)
 	if(param_no == 2)
 		return fixup_substre(param, 1);
 	return 0;
+}
+
+/**
+ *
+ */
+static int ki_via_param_rm(sip_msg_t *msg, str *name, int idx)
+{
+	via_body_t *vb;
+	hdr_field_t *hf = NULL;
+	int n = 0;
+	int ret = 0;
+	via_param_t *vp;
+	sr_lump_t *l;
+	char *p;
+
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
+		LM_DBG("failed to parse sip headers\n");
+		return -1;
+	}
+	if(msg->h_via1 == NULL) {
+		LM_WARN("no Via header\n");
+		return -1;
+	}
+
+	if(idx < 0) {
+		n = 1;
+		/* count Via header bodies */
+		for(hf = msg->h_via1; hf != NULL; hf = hf->next) {
+			if(hf->type == HDR_VIA_T) {
+				for(vb = (via_body_t *)hf->parsed; vb != NULL; vb = vb->next) {
+					n++;
+				}
+			}
+		}
+
+		idx = -idx;
+		if(idx > n) {
+			LM_DBG("index out of range\n");
+			return -1;
+		}
+		idx = n - idx;
+	}
+	n = 0;
+	for(hf = msg->h_via1; hf != NULL; hf = hf->next) {
+		if(hf->type == HDR_VIA_T) {
+			for(vb = (via_body_t *)hf->parsed; vb != NULL; vb = vb->next) {
+				if(n == idx) {
+					for(vp = vb->param_lst; vp != NULL; vp = vp->next) {
+						if(vp->name.len == name->len
+								&& strncasecmp(vp->name.s, name->s, name->len)
+										   == 0) {
+							p = vp->name.s - 1;
+							while(p >= vb->host.s + vb->host.len && *p != ';') {
+								p--;
+							}
+							if(*p != ';') {
+								LM_ERR("missing start of via  parameters\n");
+								return -1;
+							}
+							if(vp->value.len > 0) {
+								if(vp->flags & VIA_PARAM_F_QUOTED) {
+									l = del_lump(msg, p - msg->buf,
+											vp->value.s + vp->value.len - p + 1,
+											0);
+								} else {
+									l = del_lump(msg, p - msg->buf,
+											vp->value.s + vp->value.len - p, 0);
+								}
+							} else {
+								l = del_lump(msg, p - msg->buf,
+										vp->name.s + vp->name.len - p, 0);
+							}
+							if(l == 0) {
+								LM_ERR("no memory for delete operation\n");
+								return -1;
+							}
+							if(ret < 0) {
+								ret = 1;
+							} else {
+								ret++;
+							}
+						}
+					}
+					if(ret > 0) {
+						return ret;
+					}
+				}
+				n++;
+			}
+		}
+	}
+	return ret;
+}
+
+/**
+ *
+ */
+static int w_via_param_rm(sip_msg_t *msg, char *pname, char *pidx)
+{
+	str name = STR_NULL;
+	int idx = 0;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pname, &name) != 0) {
+		LM_ERR("cannot get name parameter\n");
+		return -2;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t *)pidx, &idx) != 0) {
+		LM_ERR("cannot get name parameter\n");
+		return -2;
+	}
+
+	return ki_via_param_rm(msg, &name, idx);
 }
 
 /**
