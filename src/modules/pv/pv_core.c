@@ -4519,12 +4519,16 @@ int pv_parse_via_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 8;
 			else if(strncmp(in->s, "ocalgo", 6) == 0)
 				sp->pvp.pvn.u.isname.name.n = 10;
+			else if(strncmp(in->s, "oc-seq", 6) == 0)
+				sp->pvp.pvn.u.isname.name.n = 12;
 			else
 				goto error;
 			break;
 		case 7:
 			if(strncmp(in->s, "protoid", 7) == 0)
 				sp->pvp.pvn.u.isname.name.n = 3;
+			else if(strncmp(in->s, "oc-algo", 7) == 0)
+				sp->pvp.pvn.u.isname.name.n = 10;
 			else
 				goto error;
 			break;
@@ -4536,6 +4540,12 @@ int pv_parse_via_name(pv_spec_p sp, str *in)
 			break;
 		case 10:
 			if(strncmp(in->s, "ocvalidity", 10) == 0)
+				sp->pvp.pvn.u.isname.name.n = 11;
+			else
+				goto error;
+			break;
+		case 11:
+			if(strncmp(in->s, "oc-validity", 11) == 0)
 				sp->pvp.pvn.u.isname.name.n = 11;
 			else
 				goto error;
