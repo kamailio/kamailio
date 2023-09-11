@@ -1162,10 +1162,18 @@ find_value:
 			case ',':
 				switch(state) {
 					case P_VALUE:
+						if(param->flags & VIA_PARAM_F_QUOTED) {
+							/* inside a quoted value */
+							break;
+						}
 						param->value.len = tmp - param->value.s;
 						state = F_VIA;
 						goto endofvalue;
 					case P_STRING:
+						if(param->flags & VIA_PARAM_F_QUOTED) {
+							/* inside a quoted value */
+							break;
+						}
 					case F_LF:
 					case F_CR:
 					case F_CRLF:
@@ -1217,6 +1225,7 @@ find_value:
 					case F_VALUE:
 						state = P_STRING;
 						param->value.s = tmp + 1;
+						param->flags |= VIA_PARAM_F_QUOTED;
 						break;
 					case P_STRING:
 						state = L_PARAM;

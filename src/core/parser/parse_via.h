@@ -53,9 +53,12 @@ enum
 };
 
 
+#define VIA_PARAM_F_QUOTED (1)
+
 typedef struct via_param
 {
 	int type;				/* Type of the parameter */
+	unsigned int flags;		/* Flags for the parameter */
 	str name;				/* Name of the parameter */
 	str value;				/* Value of the parameter */
 	char *start;			/* Pointer to param start, just after ';',
