@@ -104,6 +104,7 @@ Ovidiu Sas
               4.59. get_body_part_raw(content_type, opv)
               4.60. remove_body_part(content_type)
               4.61. regex_substring(itext, regexp, mindex, mcount, dpv)
+              4.62. via_param_rm(name, idx)
 
    2. Developer Guide
 
@@ -175,6 +176,7 @@ Ovidiu Sas
    1.60. get_body_part_raw usage
    1.61. remove_body_part usage
    1.62. _regex_substring usage
+   1.63. via_param_rm usage
 
 Chapter 1. Admin Guide
 
@@ -252,6 +254,7 @@ Chapter 1. Admin Guide
         4.59. get_body_part_raw(content_type, opv)
         4.60. remove_body_part(content_type)
         4.61. regex_substring(itext, regexp, mindex, mcount, dpv)
+        4.62. via_param_rm(name, idx)
 
 1. Overview
 
@@ -355,6 +358,7 @@ From: medabeda
    4.59. get_body_part_raw(content_type, opv)
    4.60. remove_body_part(content_type)
    4.61. regex_substring(itext, regexp, mindex, mcount, dpv)
+   4.62. via_param_rm(name, idx)
 
 4.1.  search(re)
 
@@ -1620,6 +1624,25 @@ msg_apply_changes();
         abc
         ----
         ...
+
+4.62.  via_param_rm(name, idx)
+
+   Remove parameter matching by name from Via body at the specified index.
+   The index starts from 0 (first Via body). Negative index counts from
+   the end of the list for Via header bodies (-1 is the last Via body).
+
+   Meaning of the parameters is as follows:
+     * name - name of the parameter
+     * idx - index of the Via body.
+
+   The parameters can also be variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.63. via_param_rm usage
+...
+via_param_rm("p1", "0");
+...
 
 Chapter 2. Developer Guide
 
