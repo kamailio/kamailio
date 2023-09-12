@@ -32,6 +32,7 @@
 #include "ip_addr.h"
 
 #define MAX_RECV_BUFFER_SIZE 256 * 1024
+#define MAX_SEND_BUFFER_SIZE 256 * 1024
 #define BUFFER_INCREMENT 2048
 
 

@@ -363,6 +363,7 @@ PORT	port
 STAT	statistics
 STATS_NAMESEP	stats_name_separator
 MAXBUFFER maxbuffer
+MAXSNDBUFFER maxsndbuffer
 SQL_BUFFER_SIZE sql_buffer_size
 CHILDREN children
 SOCKET socket
@@ -846,6 +847,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{STAT}	{ count(); yylval.strval=yytext; return STAT; }
 <INITIAL>{STATS_NAMESEP}	{ count(); yylval.strval=yytext; return STATS_NAMESEP; }
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
+<INITIAL>{MAXSNDBUFFER}	{ count(); yylval.strval=yytext; return MAXSNDBUFFER; }
 <INITIAL>{SQL_BUFFER_SIZE}	{ count(); yylval.strval=yytext; return SQL_BUFFER_SIZE; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{SOCKET}	{ count(); yylval.strval=yytext; return SOCKET; }

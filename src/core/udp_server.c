@@ -237,6 +237,107 @@ int probe_max_receive_buffer(int udp_sock)
 	/* EoJKU */
 }
 
+int probe_max_send_buffer(int udp_sock)
+{
+	int optval;
+	int ioptval;
+	unsigned int ioptvallen;
+	int foptval;
+	unsigned int foptvallen;
+	int voptval;
+	unsigned int voptvallen;
+	int phase = 0;
+
+	/* jku: try to increase buffer size as much as we can */
+	ioptvallen = sizeof(ioptval);
+	if(getsockopt(
+			   udp_sock, SOL_SOCKET, SO_SNDBUF, (void *)&ioptval, &ioptvallen)
+			== -1) {
+		LM_ERR("fd: %d getsockopt: %s\n", udp_sock, strerror(errno));
+		return -1;
+	}
+	if(ioptval == 0) {
+		LM_DBG("SO_SNDBUF initially set to 0 for fd %d; resetting to %d\n",
+				udp_sock, BUFFER_INCREMENT);
+		ioptval = BUFFER_INCREMENT;
+	} else
+		LM_INFO("SO_SNDBUF is initially %d for fd %d\n", ioptval, udp_sock);
+	for(optval = ioptval;;) {
+		/* increase size; double in initial phase, add linearly later */
+		if(phase == 0)
+			optval <<= 1;
+		else
+			optval += BUFFER_INCREMENT;
+		if(optval > maxsndbuffer) {
+			if(phase == 1)
+				break;
+			else {
+				phase = 1;
+				optval >>= 1;
+				continue;
+			}
+		}
+		if(ksr_verbose_startup)
+			LM_DBG("trying SO_SNDBUF: %d on fd: %d\n", optval, udp_sock);
+		if(setsockopt(udp_sock, SOL_SOCKET, SO_SNDBUF, (void *)&optval,
+				   sizeof(optval))
+				== -1) {
+			/* Solaris returns -1 if asked size too big; Linux ignores */
+			LM_DBG("SOL_SOCKET failed for val %d on fd %d, phase %d: %s\n",
+					optval, udp_sock, phase, strerror(errno));
+			/* if setting buffer size failed and still in the aggressive
+			   phase, try less aggressively; otherwise give up
+			*/
+			if(phase == 0) {
+				phase = 1;
+				optval >>= 1;
+				continue;
+			} else
+				break;
+		}
+		/* verify if change has taken effect */
+		/* Linux note -- otherwise I would never know that; funny thing: Linux
+		   doubles size for which we asked in setsockopt
+		*/
+		voptvallen = sizeof(voptval);
+		if(getsockopt(udp_sock, SOL_SOCKET, SO_SNDBUF, (void *)&voptval,
+				   &voptvallen)
+				== -1) {
+			LM_ERR("fd: %d getsockopt: %s\n", udp_sock, strerror(errno));
+			return -1;
+		} else {
+			if(ksr_verbose_startup)
+				LM_DBG("setting SO_SNDBUF on fd %d; val=%d, verify=%d\n",
+						udp_sock, optval, voptval);
+			if(voptval < optval) {
+				LM_DBG("setting SO_SNDBUF on fd %d has no effect\n", udp_sock);
+				/* if setting buffer size failed and still in the aggressive
+				phase, try less aggressively; otherwise give up
+				*/
+				if(phase == 0) {
+					phase = 1;
+					optval >>= 1;
+					continue;
+				} else
+					break;
+			}
+		}
+
+	} /* for ... */
+	foptvallen = sizeof(foptval);
+	if(getsockopt(
+			   udp_sock, SOL_SOCKET, SO_SNDBUF, (void *)&foptval, &foptvallen)
+			== -1) {
+		LM_ERR("fd: %d getsockopt: %s\n", udp_sock, strerror(errno));
+		return -1;
+	}
+	LM_INFO("SO_SNDBUF is finally %d on fd %d\n", foptval, udp_sock);
+
+	return 0;
+
+	/* EoJKU */
+}
+
 
 #ifdef USE_MCAST
 
@@ -488,6 +589,9 @@ int udp_init(struct socket_info *sock_info)
 #endif /* USE_MCAST */
 
 	if(probe_max_receive_buffer(sock_info->socket) == -1)
+		goto error;
+
+	if(probe_max_send_buffer(sock_info->socket) == -1)
 		goto error;
 
 	if(bind(sock_info->socket, &addr->s, sockaddru_len(*addr)) == -1) {
