@@ -30,7 +30,6 @@ Build-Depends:
  libmysqlclient-dev,
  libncurses5-dev,
  libpcre2-dev,
- libpcre3-dev,
  libperl-dev,
  libpq-dev,
  libradiusclient-ng-dev,
