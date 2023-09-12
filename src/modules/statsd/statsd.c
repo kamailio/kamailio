@@ -337,7 +337,7 @@ static sr_kemi_t sr_kemi_statsd_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("statsd"), str_init("statsd_gauge"),
+	{ str_init("statsd"), str_init("statsd_labels_gauge"),
 		SR_KEMIP_INT, ki_statsd_gauge_with_labels,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
@@ -347,7 +347,7 @@ static sr_kemi_t sr_kemi_statsd_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("statsd"), str_init("statsd_histogram"),
+	{ str_init("statsd"), str_init("statsd_labels_histogram"),
 		SR_KEMIP_INT, ki_statsd_histogram_with_labels,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
@@ -362,7 +362,7 @@ static sr_kemi_t sr_kemi_statsd_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("statsd"), str_init("statsd_stop"),
+	{ str_init("statsd"), str_init("statsd_labels_stop"),
 		SR_KEMIP_INT, ki_statsd_stop_with_labels,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
@@ -372,7 +372,7 @@ static sr_kemi_t sr_kemi_statsd_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("statsd"), str_init("statsd_incr"),
+	{ str_init("statsd"), str_init("statsd_labels_incr"),
 		SR_KEMIP_INT, ki_statsd_incr_with_labels,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
@@ -382,7 +382,7 @@ static sr_kemi_t sr_kemi_statsd_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("statsd"), str_init("statsd_decr"),
+	{ str_init("statsd"), str_init("statsd_labels_decr"),
 		SR_KEMIP_INT, ki_statsd_decr_with_labels,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
@@ -392,7 +392,7 @@ static sr_kemi_t sr_kemi_statsd_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("statsd"), str_init("statsd_set"),
+	{ str_init("statsd"), str_init("statsd_labels_set"),
 		SR_KEMIP_INT, ki_statsd_set_with_labels,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
