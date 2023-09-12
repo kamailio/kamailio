@@ -57,6 +57,7 @@ int pdt_fetch_rows = 1000;
 
 /** structures containing prefix-domain pairs */
 pdt_tree_t **_ptree = NULL;
+int _pdt_mode = 0;
 
 /** database connection */
 static db1_con_t *db_con = NULL;
@@ -118,6 +119,7 @@ static param_export_t params[] = {
 	{"char_list", PARAM_STR, &pdt_char_list},
 	{"fetch_rows", INT_PARAM, &pdt_fetch_rows},
 	{"check_domain", INT_PARAM, &pdt_check_domain},
+	{"mode", PARAM_INT, &_pdt_mode},
 	{0, 0, 0}
 };
 

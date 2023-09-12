@@ -35,6 +35,7 @@
 //extern str pdt_char_list = {"1234567890*",11};
 extern str pdt_char_list;
 
+extern int _pdt_mode;
 /**
  *
  */
@@ -117,9 +118,15 @@ int add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 
 	if(itn0[strpos(pdt_char_list.s, sp->s[l]) % PDT_NODE_SIZE].domain.s
 			!= NULL) {
-		LM_ERR("prefix already allocated [%.*s/[%.*s]\n", sp->len, sp->s,
-				sd->len, sd->s);
-		return -1;
+		if(_pdt_mode & 1) {
+			LM_DBG("prefix already allocated [%.*s/[%.*s] - ignoring\n",
+					sp->len, sp->s, sd->len, sd->s);
+			return -1;
+		} else {
+			LM_ERR("prefix already allocated [%.*s/[%.*s]\n", sp->len, sp->s,
+					sd->len, sd->s);
+			return -1;
+		}
 	}
 
 	itn0[strpos(pdt_char_list.s, sp->s[l]) % PDT_NODE_SIZE].domain.s =
