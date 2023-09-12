@@ -171,6 +171,8 @@ Options:\n\
                   -A 'FLT_ACC=1', -A 'DEFVAL=\"str-val\"')\n\
     -b nr        Maximum OS UDP receive buffer size which will not be exceeded by\n\
                   auto-probing-and-increase procedure even if OS allows\n\
+    -B nr        Maximum OS UDP send buffer size which will not be exceeded by\n\
+                  auto-probing-and-increase procedure even if OS allows\n\
     -c           Check configuration file for syntax errors\n\
     --cfg-print  Print configuration file evaluating includes and ifdefs\n\
     -d           Debugging level control (multiple -d to increase the level from 0)\n\
@@ -259,9 +261,9 @@ void print_ct_constants(void)
 /*
 	printf("SHM_MEM_SIZE %dMB, ", SHM_MEM_SIZE);
 */
-	printf("MAX_RECV_BUFFER_SIZE %d,"
+	printf("MAX_RECV_BUFFER_SIZE %d, MAX_SEND_BUFFER_SIZE %d,"
 			" MAX_URI_SIZE %d, BUF_SIZE %d, DEFAULT PKG_SIZE %uMB\n",
-		MAX_RECV_BUFFER_SIZE, MAX_URI_SIZE,
+		MAX_RECV_BUFFER_SIZE, MAX_SEND_BUFFER_SIZE, MAX_URI_SIZE,
 		BUF_SIZE, PKG_MEM_SIZE);
 #ifdef USE_TCP
 	printf("poll method support: %s.\n", poll_support);
@@ -277,6 +279,7 @@ void print_internals(void)
 	printf("  Default paths to modules: %s\n", MODS_DIR);
 	printf("  Compile flags: %s\n", ver_flags );
 	printf("  MAX_RECV_BUFFER_SIZE=%d\n", MAX_RECV_BUFFER_SIZE);
+	printf("  MAX_SEND_BUFFER_SIZE=%d\n", MAX_SEND_BUFFER_SIZE);
 	printf("  MAX_URI_SIZE=%d\n", MAX_URI_SIZE);
 	printf("  BUF_SIZE=%d\n", BUF_SIZE);
 	printf("  DEFAULT PKG_SIZE=%uMB\n", PKG_MEM_SIZE);
@@ -304,7 +307,11 @@ char* mods_dir = MODS_DIR;  /* search path for dyn. loadable modules */
 int   mods_dir_cmd = 0; /* mods dir path set in command lin e*/
 
 char* cfg_file = 0;
-unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
+unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum receive buffer size we do
+												  not want to exceed during the
+												  auto-probing procedure; may
+												  be re-configured */
+unsigned int maxsndbuffer = MAX_SEND_BUFFER_SIZE; /* maximum send buffer size we do
 												  not want to exceed during the
 												  auto-probing procedure; may
 												  be re-configured */
@@ -2055,7 +2062,7 @@ int main(int argc, char** argv)
 	log_init();
 
 	/* command line options */
-	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:";
+	options=  ":f:cm:M:dVIhEeb:B:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:";
 	/* Handle special command line arguments, that must be treated before
 	 * initializing the various subsystem or before parsing other arguments:
 	 *  - get the startup debug and log_stderr values
@@ -2299,6 +2306,7 @@ int main(int argc, char** argv)
 					}
 					break;
 			case 'b':
+			case 'B':
 			case 'l':
 			case 'n':
 			case 'K':
@@ -2563,6 +2571,18 @@ try_again:
 					maxbuffer=strtol(optarg, &tmp, 10);
 					if (tmp &&(*tmp)){
 						fprintf(stderr, "bad max buffer size number: -b %s\n",
+											optarg);
+						goto error;
+					}
+					break;
+			case 'B':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -B parameter\n");
+						goto error;
+					}
+					maxsndbuffer=strtol(optarg, &tmp, 10);
+					if (tmp &&(*tmp)){
+						fprintf(stderr, "bad max buffer size number: -B %s\n",
 											optarg);
 						goto error;
 					}
