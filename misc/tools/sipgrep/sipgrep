@@ -81,7 +81,7 @@ $debugfilecolors=$options{c};
 unlink $filedebug if(defined $filedebug);
 
 #open PIPE
-open(PIPE,"$ngrep $ngrep_flags |") or die "Can't run '$ngrep' programm: $!\n";
+open(PIPE,"$ngrep $ngrep_flags |") or die "Can't run '$ngrep' programme: $!\n";
 
 select(PIPE); $| = 1;	# make unbuffered
 select(STDOUT); $| = 1;	# make unbuffered

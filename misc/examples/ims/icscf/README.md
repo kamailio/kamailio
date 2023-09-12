@@ -2,7 +2,7 @@
 
 Project Website:
 
-  * http://www.kamailio.org
+  * https://www.kamailio.org
 
 ## Database Structure
 
