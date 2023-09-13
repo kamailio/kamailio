@@ -1121,6 +1121,7 @@ int xavp_serialize_fields_style(str *rname, int mode, char *obuf, int olen)
 	int rlen;
 	char *pr = "";
 	char *sf = "";
+	char *qs = "";
 
 	ravp = xavp_get(rname, NULL);
 	if(ravp == NULL || ravp->val.type != SR_XTYPE_XAVP) {
@@ -1128,12 +1129,15 @@ int xavp_serialize_fields_style(str *rname, int mode, char *obuf, int olen)
 		return 0;
 	}
 
-	if(mode & 1) {
+	if(mode & XAVP_PRINT_SCPR) {
 		pr = ";";
 		sf = "";
 	} else {
 		pr = "";
 		sf = ";";
+	}
+	if(mode & XAVP_PRINT_QVAL) {
+		qs = "\"";
 	}
 
 	rlen = 0;
@@ -1158,9 +1162,9 @@ int xavp_serialize_fields_style(str *rname, int mode, char *obuf, int olen)
 					ostr.len = snprintf(ostr.s, olen - rlen, "%s%.*s%s",
 							pr, avp->name.len, avp->name.s, sf);
 				} else {
-					ostr.len = snprintf(ostr.s, olen - rlen, "%s%.*s=%.*s%s",
-							pr, avp->name.len, avp->name.s, avp->val.v.s.len,
-							avp->val.v.s.s, sf);
+					ostr.len = snprintf(ostr.s, olen - rlen, "%s%.*s=%s%.*s%s%s",
+							pr, avp->name.len, avp->name.s, qs, avp->val.v.s.len,
+							avp->val.v.s.s, qs, sf);
 				}
 				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
 					LM_ERR("failed to serialize int value (%d/%d\n", ostr.len,
