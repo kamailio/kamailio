@@ -475,6 +475,8 @@ static int w_xavp_copy_dst(sip_msg_t *msg, char *src_name, char *src_idx,
 		char *dst_name, char *dst_idx);
 static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
 static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname);
+static int w_xavp_params_implode_qval(
+		sip_msg_t *msg, char *pxname, char *pvname);
 static int w_xavu_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
 static int w_xavu_params_implode(sip_msg_t *msg, char *pxname, char *pvname);
 static int w_xavp_slist_explode(
@@ -537,6 +539,8 @@ static cmd_export_t cmds[] = {
 				fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 		{"xavp_params_implode", (cmd_function)w_xavp_params_implode, 2,
 				fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
+		{"xavp_params_implode_qval", (cmd_function)w_xavp_params_implode_qval,
+				2, fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
 		{"xavu_params_explode", (cmd_function)w_xavu_params_explode, 2,
 				fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 		{"xavu_params_implode", (cmd_function)w_xavu_params_implode, 2,
@@ -1119,7 +1123,8 @@ static int ki_xavu_params_explode(sip_msg_t *msg, str *sparams, str *sxname)
 /**
  *
  */
-static int ki_xavp_params_implode(sip_msg_t *msg, str *sxname, str *svname)
+static int ki_xavp_params_implode_mode(
+		sip_msg_t *msg, str *sxname, int mode, str *svname)
 {
 	pv_spec_t *vspec = NULL;
 	pv_value_t val;
@@ -1144,7 +1149,8 @@ static int ki_xavp_params_implode(sip_msg_t *msg, str *sxname, str *svname)
 	}
 
 	val.rs.s = pv_get_buffer();
-	val.rs.len = xavp_serialize_fields(sxname, val.rs.s, pv_get_buffer_size());
+	val.rs.len = xavp_serialize_fields_style(
+			sxname, mode, val.rs.s, pv_get_buffer_size());
 	if(val.rs.len <= 0) {
 		return -1;
 	}
@@ -1161,6 +1167,14 @@ static int ki_xavp_params_implode(sip_msg_t *msg, str *sxname, str *svname)
 /**
  *
  */
+static int ki_xavp_params_implode(sip_msg_t *msg, str *sxname, str *svname)
+{
+	return ki_xavp_params_implode_mode(msg, sxname, 0, svname);
+}
+
+/**
+ *
+ */
 static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname)
 {
 	str sxname;
@@ -1171,6 +1185,30 @@ static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname)
 	}
 
 	return ki_xavp_params_implode(msg, &sxname, (str *)pvname);
+}
+
+/**
+ *
+ */
+static int ki_xavp_params_implode_qval(sip_msg_t *msg, str *sxname, str *svname)
+{
+	return ki_xavp_params_implode_mode(msg, sxname, XAVP_PRINT_QVAL, svname);
+}
+
+/**
+ *
+ */
+static int w_xavp_params_implode_qval(
+		sip_msg_t *msg, char *pxname, char *pvname)
+{
+	str sxname;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pxname, &sxname) != 0) {
+		LM_ERR("cannot get the xavp name\n");
+		return -1;
+	}
+
+	return ki_xavp_params_implode_qval(msg, &sxname, (str *)pvname);
 }
 
 /**
@@ -2861,6 +2899,11 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	},
 	{ str_init("pvx"), str_init("xavp_params_implode"),
 		SR_KEMIP_INT, ki_xavp_params_implode,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_params_implode_qval"),
+		SR_KEMIP_INT, ki_xavp_params_implode_qval,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
