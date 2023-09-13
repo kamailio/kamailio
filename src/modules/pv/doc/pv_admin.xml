@@ -425,6 +425,41 @@ xavp_params_implode("x", "$var(out)");
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.xavp_params_implode_qval">
+			<title>
+				<function moreinfo="none">xavp_params_implode_qval(xname, pvname)</function>
+			</title>
+			<para>
+				Serialize the subfields in an XAVP to a parameters string format,
+				enclosing string values in double quotes.
+			</para>
+			<para>
+				Number values are serialized as unsigned integer string format.
+			</para>
+			<para>
+				The first parameter has to be the name of XAVP (only the string
+				name, not the in $xavp(name)). The second parameter
+				is the name of output variable (in full name, like $var(output)).
+			</para>
+			<para>
+				The value is stored as string type.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_params_implode_qval</function> usage</title>
+				<programlisting format="linespecific">
+...
+$xavp(x=&gt;e) = "f";
+$xavp(x[0]=&gt;c) = 5;
+$xavp(x[0]=&gt;a) = "b";
+xavp_params_implode("x", "$var(out)");
+# results in: $var(out) is: a="b";c=5;e="f";
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="pv.f.xavu_params_explode">
 			<title>
 				<function moreinfo="none">xavu_params_explode(sparams, xname)</function>
