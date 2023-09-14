@@ -905,6 +905,17 @@ static int sca_subscription_update_unsafe(sca_mod *scam,
 		}
 
 		SCA_STR_COPY(&update_sub->rr, &saved_sub->rr);
+	} else if(!SCA_STR_EMPTY(&update_sub->rr)
+			  && !STR_EQ(update_sub->rr, saved_sub->rr)) {
+		if(!SCA_STR_EMPTY(&saved_sub->rr)) {
+			shm_free(saved_sub->rr.s);
+			saved_sub->rr.len = 0;
+		}
+		if((saved_sub->rr.s = (char *)shm_malloc(update_sub->rr.len)) == NULL) {
+			SHM_MEM_ERROR;
+			goto done;
+		}
+		SCA_STR_COPY(&saved_sub->rr, &update_sub->rr);
 	}
 
 	rc = 1;
