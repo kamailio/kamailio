@@ -906,6 +906,10 @@ static int sca_subscription_update_unsafe(sca_mod *scam,
 
 		SCA_STR_COPY(&update_sub->rr, &saved_sub->rr);
 	}
+	else{
+     
+         SCA_STR_COPY(&saved_sub->rr, &update_sub->rr);
+     }
 
 	rc = 1;
 
