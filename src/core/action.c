@@ -1413,7 +1413,7 @@ int do_action(struct run_act_ctx *h, struct action *a, struct sip_msg *msg)
 			ret = 1; /* continue processing */
 			break;
 		case UDP_MTU_TRY_PROTO_T:
-			msg->msg_flags |= (unsigned int)a->val[0].u.number & FL_MTU_FB_MASK;
+			msg->msg_flags |= (msg_flags_t)a->val[0].u.number & FL_MTU_FB_MASK;
 			ret = 1; /* continue processing */
 			break;
 		case SET_ADV_ADDR_T:

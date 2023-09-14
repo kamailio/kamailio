@@ -5,6 +5,8 @@
  *
  * Copyright (C)  2014 Olle E. Johansson, Edvina AB
  *
+ * Copyright (C)  2023 Victor Seva
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -78,6 +80,9 @@ static int ki_dp_translate_vars(
 
 int dp_replace_fixup(void **param, int param_no);
 int dp_replace_fixup_free(void **param, int param_no);
+
+pcre2_general_context *dpl_gctx = NULL;
+pcre2_compile_context *dpl_ctx = NULL;
 
 str dp_attr_pvar_s = STR_NULL;
 pv_spec_t *dp_attr_pvar = NULL;

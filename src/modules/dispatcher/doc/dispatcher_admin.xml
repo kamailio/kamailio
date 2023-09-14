@@ -756,6 +756,38 @@ modparam("dispatcher", "ds_ping_latency_stats", 1)
 </programlisting>
 		</example>
 	</section>
+
+
+	<section id="dispatcher.p.ds_retain_latency_stats">
+		<title><varname>ds_retain_latency_stats</varname> (int)</title>
+		<para>
+		Retain latency stats for existing destinations when reloading from file or database.
+		</para>
+
+		<itemizedlist>
+		<listitem>
+			<para>If set to 0, stats for all destinations will be reset on reload.</para>
+		</listitem>
+		<listitem>
+			<para>If set to 1, stats for existing destinations will persist across reloads.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_retain_latency_stats</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_retain_latency_stats", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dispatcher.p.ds_latency_estimator_alpha">
 		<title><varname>ds_latency_estimator_alpha</varname> (int)</title>
 		<para>
@@ -1938,6 +1970,36 @@ onreply_route {
 		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
+		<example>
+		<title><function>ds_reload</function> usage</title>
+		<programlisting format="linespecific">
+...
+    ds_reload();
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dispatcher.f.ds_dsg_fetch">
+		<title>
+		<function moreinfo="none">ds_dsg_fetch(setid)</function>
+		</title>
+		<para>
+		Sets the destination group id to setid for fetching $dsg(key) attributes.
+		</para>
+		<para>Parameters: <emphasis>setid</emphasis> - integer or variable
+		holding the set id value</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_dsg_fetch()</function> usage</title>
+		<programlisting format="linespecific">
+...
+    ds_dsg_fetch("1");
+    xinfo("set id: 1 - all: $dsg(count); active: $dsg(active)\n");
+...
+</programlisting>
+		</example>
 	</section>
 	</section>
 

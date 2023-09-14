@@ -333,7 +333,7 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 				rpl_snd_flags_bak = i_req->rpl_send_flags;
 				force_send_socket_bak = i_req->force_send_socket;
 				/* set the new values */
-				i_req->fwd_send_flags = snd_flags /* intial value  */;
+				i_req->fwd_send_flags = snd_flags /* initial value  */;
 				set_force_socket(i_req, fsocket);
 				keng = sr_kemi_eng_get();
 				if(unlikely(keng != NULL)) {
@@ -1107,7 +1107,7 @@ int e2e_cancel_branch(struct sip_msg *cancel_msg, struct cell *t_cancel,
 	t_cancel->uac[branch].request.dst = t_invite->uac[branch].request.dst;
 	/* print */
 	if(cfg_get(tm, tm_cfg, reparse_invite)) {
-		/* buffer is built localy from the INVITE which was sent out */
+		/* buffer is built locally from the INVITE which was sent out */
 		/* lumps can be set outside of the lock, make sure that we read
 		 * the up-to-date values */
 		membar_depends();
@@ -1383,7 +1383,7 @@ void e2e_cancel(struct sip_msg *cancel_msg, struct cell *t_cancel,
 			if(t_invite->uac[i].last_received >= 100) {
 				/* Provisional reply received on this branch, send CANCEL */
 				/* we do need to stop the retr. timers if the request is not
-				 * an invite and since the stop_rb_retr() cost is lower then
+				 * an invite and since the stop_rb_retr() cost is lower than
 				 * the invite check we do it always --andrei */
 				stop_rb_retr(&t_invite->uac[i].request);
 				if(SEND_BUFFER(&t_cancel->uac[i].request) == -1) {
@@ -1761,7 +1761,7 @@ int t_forward_nonack(
 		return lowest_ret;
 	}
 
-	/* mark the fist branch in this fwd step */
+	/* mark the first branch in this fwd step */
 	t->uac[first_branch].flags |= TM_UAC_FLAG_FB;
 
 	ser_error = 0; /* clear branch adding errors */
@@ -1871,7 +1871,7 @@ int t_forward_cancel(struct sip_msg *p_msg, struct proxy_l *proxy, int proto,
 		UNREF(t_invite);
 		ret = 1;
 		goto end;
-	} else /* no coresponding INVITE transaction */
+	} else /* no corresponding INVITE transaction */
 		if(cfg_get(tm, tm_cfg, unmatched_cancel) == UM_CANCEL_DROP) {
 			LM_DBG("non matching cancel dropped\n");
 			ret = 1; /* do nothing -> drop */
@@ -1918,8 +1918,8 @@ end:
  * return value:
  *    0: the CANCEL was successfully relayed
  *       (or error occurred but reply cannot be sent) => DROP
- *    1: no corresponding INVITE transaction exisis
- *   <0: corresponding INVITE transaction exisis but error occurred
+ *    1: no corresponding INVITE transaction exists
+ *   <0: corresponding INVITE transaction exists but error occurred
  */
 int t_relay_cancel(struct sip_msg *p_msg)
 {
@@ -1950,7 +1950,7 @@ int t_relay_cancel(struct sip_msg *p_msg)
 		goto end;
 
 	} else {
-		/* no corresponding INVITE trasaction found */
+		/* no corresponding INVITE transaction found */
 		ret = 1;
 	}
 end:

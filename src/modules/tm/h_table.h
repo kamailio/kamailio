@@ -101,7 +101,7 @@ void unlock_hash(int i);
  * REQ_EXIST means that this request is a retransmission which does not
  *     affect transactional state
  * REQ_ERR_DELAYED mean that tm wants to send  reply(ser_error) but it
- *     delayed it to end-of-script to allow it to be overriden.
+ *     delayed it to end-of-script to allow it to be overridden.
  *     If this is set and all of the above flag are not => send reply
  *     on end of script. If any of the above flags is set, do not
  *     send (especially REQ_RPLD and REQ_RLSD).

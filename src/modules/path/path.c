@@ -183,7 +183,7 @@ static int prepend_path(
 		prefix_len = snprintf(
 				prefix, prefix_len, PATH_PREFIX "%.*s@", user->len, user->s);
 	else
-		prefix_len = sprintf(prefix, PATH_PREFIX);
+		prefix_len = snprintf(prefix, prefix_len, PATH_PREFIX);
 
 	if(parse_headers(_m, HDR_PATH_F, 0) < 0) {
 		LM_ERR("failed to parse message for Path header\n");
@@ -208,7 +208,7 @@ static int prepend_path(
 			l, (path_sockname_mode) ? SUBST_SND_ALL_EX : SUBST_SND_ALL, 0);
 	if(!l)
 		goto out2;
-	l = insert_new_lump_before(l, suffix, cp.s - suffix, 0);
+	l = insert_new_lump_before(l, suffix, cp.len, 0);
 	if(!l)
 		goto out2;
 
@@ -223,10 +223,10 @@ static int prepend_path(
 				l, (path_sockname_mode) ? SUBST_RCV_ALL_EX : SUBST_RCV_ALL, 0);
 		if(!l)
 			goto out1;
-		dp = path_strzdup(suffix, cp.s - suffix);
+		dp = path_strzdup(suffix, cp.len);
 		if(dp == NULL)
 			goto out1;
-		l = insert_new_lump_before(l, dp, cp.s - suffix, 0);
+		l = insert_new_lump_before(l, dp, cp.len, 0);
 		if(!l)
 			goto out1;
 	}

@@ -60,6 +60,8 @@ typedef void (*sr_mem_destroy_f)(void);
 typedef void (*sr_mem_mod_get_stats_f)(void *mbp, void **p);
 typedef void (*sr_mem_mod_free_stats_f)(void *mbp);
 
+typedef void (*sr_setfunc_f)(void *mbp, void *p, char *func);
+
 /*private memory api*/
 typedef struct sr_pkg_api
 {
@@ -142,6 +144,8 @@ typedef struct sr_shm_api
 	sr_shm_glock_f xglock;
 	/*memory managing global unlock*/
 	sr_shm_gunlock_f xgunlock;
+	/*memory chunk set func pointer*/
+	sr_setfunc_f xsetfunc;
 } sr_shm_api_t;
 
 #endif

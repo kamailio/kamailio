@@ -304,6 +304,7 @@ LOGENGINETYPE	log_engine_type
 LOGENGINEDATA	log_engine_data
 XAVPVIAPARAMS	xavp_via_params
 XAVPVIAFIELDS	xavp_via_fields
+XAVPVIAREPLYPARAMS	xavp_via_reply_params
 LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
 VIRTUAL		virtual
@@ -362,6 +363,7 @@ PORT	port
 STAT	statistics
 STATS_NAMESEP	stats_name_separator
 MAXBUFFER maxbuffer
+MAXSNDBUFFER maxsndbuffer
 SQL_BUFFER_SIZE sql_buffer_size
 CHILDREN children
 SOCKET socket
@@ -753,6 +755,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOGENGINEDATA}	{ yylval.strval=yytext; return LOGENGINEDATA; }
 <INITIAL>{XAVPVIAPARAMS}	{ yylval.strval=yytext; return XAVPVIAPARAMS; }
 <INITIAL>{XAVPVIAFIELDS}	{ yylval.strval=yytext; return XAVPVIAFIELDS; }
+<INITIAL>{XAVPVIAREPLYPARAMS}	{ yylval.strval=yytext; return XAVPVIAREPLYPARAMS; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
 <INITIAL>{VIRTUAL}	{ count(); yylval.strval=yytext; return VIRTUAL; }
@@ -844,6 +847,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{STAT}	{ count(); yylval.strval=yytext; return STAT; }
 <INITIAL>{STATS_NAMESEP}	{ count(); yylval.strval=yytext; return STATS_NAMESEP; }
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
+<INITIAL>{MAXSNDBUFFER}	{ count(); yylval.strval=yytext; return MAXSNDBUFFER; }
 <INITIAL>{SQL_BUFFER_SIZE}	{ count(); yylval.strval=yytext; return SQL_BUFFER_SIZE; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{SOCKET}	{ count(); yylval.strval=yytext; return SOCKET; }

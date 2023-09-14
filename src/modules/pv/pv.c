@@ -47,420 +47,411 @@
 
 MODULE_VERSION
 
-static tr_export_t mod_trans[] = {{{"s", sizeof("s") - 1}, /* string class */
-										  tr_parse_string},
-		{{"nameaddr", sizeof("nameaddr") - 1}, /* nameaddr class */
-				tr_parse_nameaddr},
-		{{"uri", sizeof("uri") - 1}, /* uri class */
-				tr_parse_uri},
-		{{"param", sizeof("param") - 1}, /* param class */
-				tr_parse_paramlist},
-		{{"tobody", sizeof("tobody") - 1}, /* param class */
-				tr_parse_tobody},
-		{{"line", sizeof("line") - 1}, /* line class */
-				tr_parse_line},
-		{{"urialias", sizeof("urialias") - 1}, /* uri alias class */
-				tr_parse_urialias},
-		{{"val", sizeof("val") - 1}, /* val class */
-				tr_parse_val},
-
-		{{0, 0}, 0}};
-
-static pv_export_t mod_pvs[] = {
-		{{"_s", (sizeof("_s") - 1)}, PVT_OTHER, pv_get__s, 0, pv_parse__s_name,
-				0, 0, 0},
-		{{"af", (sizeof("af") - 1)}, PVT_OTHER, pv_get_af, 0, pv_parse_af_name,
-				0, 0, 0},
-		{{"branch", sizeof("branch") - 1}, /* branch attributes */
-				PVT_CONTEXT, pv_get_branchx, pv_set_branchx,
-				pv_parse_branchx_name, pv_parse_index, 0, 0},
-		{{"sbranch", sizeof("sbranch") - 1}, /* static branch attributes */
-				PVT_CONTEXT, pv_get_sbranch, pv_set_sbranch,
-				pv_parse_branchx_name, 0, 0, 0},
-		{{"mi", (sizeof("mi") - 1)}, /* message id */
-				PVT_OTHER, pv_get_msgid, 0, 0, 0, 0, 0},
-		{{"stat", sizeof("stat") - 1}, /* statistics */
-				PVT_OTHER, pv_get_stat, 0, pv_parse_stat_name, 0, 0, 0},
-		{{"sel", sizeof("sel") - 1}, /* select */
-				PVT_OTHER, pv_get_select, 0, pv_parse_select_name, 0, 0, 0},
-		{{"snd", (sizeof("snd") - 1)}, PVT_OTHER, pv_get_sndto, 0,
-				pv_parse_snd_name, 0, 0, 0},
-		{{"sndto", (sizeof("sndto") - 1)}, PVT_OTHER, pv_get_sndto, 0,
-				pv_parse_snd_name, 0, 0, 0},
-		{{"sndfrom", (sizeof("sndfrom") - 1)}, PVT_OTHER, pv_get_sndfrom, 0,
-				pv_parse_snd_name, 0, 0, 0},
-		{{"rcv", (sizeof("rcv") - 1)}, PVT_OTHER, pv_get_rcv, pv_set_rcv,
-				pv_parse_rcv_name, 0, 0, 0},
-		{{"xavp", sizeof("xavp") - 1}, /* xavp */
-				PVT_XAVP, pv_get_xavp, pv_set_xavp, pv_parse_xavp_name, 0, 0,
-				0},
-		{{"xavu", sizeof("xavu") - 1}, /* xavu */
-				PVT_XAVU, pv_get_xavu, pv_set_xavu, pv_parse_xavu_name, 0, 0,
-				0},
-		{{"xavi", sizeof("xavi") - 1}, /* xavi */
-				PVT_XAVI, pv_get_xavi, pv_set_xavi, pv_parse_xavi_name, 0, 0,
-				0},
-		{{"avp", (sizeof("avp") - 1)}, PVT_AVP, pv_get_avp, pv_set_avp,
-				pv_parse_avp_name, pv_parse_index, 0, 0},
-		{{"hdr", (sizeof("hdr") - 1)}, PVT_HDR, pv_get_hdr, 0,
-				pv_parse_hdr_name, pv_parse_index, 0, 0},
-		{{"hdrc", (sizeof("hdrc") - 1)}, PVT_HDRC, pv_get_hdrc, 0,
-				pv_parse_hdr_name, 0, 0, 0},
-		{{"hfl", (sizeof("hfl") - 1)}, PVT_HDR, pv_get_hfl, 0,
-				pv_parse_hfl_name, pv_parse_index, 0, 0},
-		{{"hflc", (sizeof("hflc") - 1)}, PVT_HDRC, pv_get_hflc, 0,
-				pv_parse_hfl_name, 0, 0, 0},
-		{{"var", (sizeof("var") - 1)}, PVT_SCRIPTVAR, pv_get_scriptvar,
-				pv_set_scriptvar, pv_parse_scriptvar_name, 0, 0, 0},
-		{{"vz", (sizeof("vz") - 1)}, PVT_SCRIPTVAR, pv_get_scriptvar,
-				pv_set_scriptvar, pv_parse_scriptvar_name, 0, 0, 0},
-		{{"vn", (sizeof("vn") - 1)}, PVT_SCRIPTVAR, pv_get_scriptvar,
-				pv_set_scriptvar, pv_parse_scriptvarnull_name, 0, 0, 0},
-		{{"ai", (sizeof("ai") - 1)}, /* */
-				PVT_OTHER, pv_get_pai, 0, 0, pv_parse_index, 0, 0},
-		{{"adu", (sizeof("adu") - 1)}, /* auth digest uri */
-				PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 3},
-		{{"ar", (sizeof("ar") - 1)}, /* auth realm */
-				PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 2},
-		{{"au", (sizeof("au") - 1)}, /* */
-				PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 1},
-		{{"ad", (sizeof("ad") - 1)}, /* */
-				PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 4},
-		{{"aU", (sizeof("aU") - 1)}, /* */
-				PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 5},
-		{{"aa", (sizeof("aa") - 1)}, /* auth algorithm */
-				PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 6},
-		{{"adn", (sizeof("adn") - 1)}, /* auth nonce */
-				PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 7},
-		{{"adc", (sizeof("adc") - 1)}, /* auth cnonce */
-				PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 8},
-		{{"adr", (sizeof("adr") - 1)}, /* auth response */
-				PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 9},
-		{{"ado", (sizeof("ado") - 1)}, /* auth opaque */
-				PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 10},
-		{{"Au", (sizeof("Au") - 1)}, /* */
-				PVT_OTHER, pv_get_acc_username, 0, 0, 0, pv_init_iname, 1},
-		{{"AU", (sizeof("AU") - 1)}, /* */
-				PVT_OTHER, pv_get_acc_user, 0, 0, 0, pv_init_iname, 1},
-		{{"bf", (sizeof("bf") - 1)}, /* */
-				PVT_CONTEXT, pv_get_bflags, pv_set_bflags, 0, 0, 0, 0},
-		{{"bF", (sizeof("bF") - 1)}, /* */
-				PVT_CONTEXT, pv_get_hexbflags, pv_set_bflags, 0, 0, 0, 0},
-		{{"Bf", (sizeof("Bf") - 1)}, /* */
-				PVT_CONTEXT, pv_get_bflag, pv_set_bflag, pv_parse_flag_param, 0,
-				0, 0},
-		{{"br", (sizeof("br") - 1)}, /* */
-				PVT_BRANCH, pv_get_branch, pv_set_branch, 0, 0, 0, 0},
-		{{"bR", (sizeof("bR") - 1)}, /* */
-				PVT_CONTEXT, pv_get_branches, 0, 0, 0, 0, 0},
-		{{"bs", (sizeof("bs") - 1)}, /* */
-				PVT_OTHER, pv_get_body_size, 0, 0, 0, 0, 0},
-		{{"ci", (sizeof("ci") - 1)}, /* */
-				PVT_OTHER, pv_get_callid, 0, 0, 0, 0, 0},
-		{{"cl", (sizeof("cl") - 1)}, /* */
-				PVT_OTHER, pv_get_content_length, 0, 0, 0, 0, 0},
-		{{"cnt", sizeof("cnt") - 1}, PVT_OTHER, pv_get_cnt, 0,
-				pv_parse_cnt_name, 0, 0, 0},
-		{{"conid", (sizeof("conid") - 1)}, /* */
-				PVT_OTHER, pv_get_tcpconn_id, 0, 0, 0, 0, 0},
-		{{"cs", (sizeof("cs") - 1)}, /* */
-				PVT_OTHER, pv_get_cseq, 0, 0, 0, 0, 0},
-		{{"csb", (sizeof("csb") - 1)}, /* */
-				PVT_OTHER, pv_get_cseq_body, 0, 0, 0, 0, 0},
-		{{"ct", (sizeof("ct") - 1)}, /* */
-				PVT_OTHER, pv_get_contact, 0, 0, 0, 0, 0},
-		{{"cT", (sizeof("cT") - 1)}, /* */
-				PVT_OTHER, pv_get_content_type, 0, 0, 0, 0, 0},
-		{{"dd", (sizeof("dd") - 1)}, /* */
-				PVT_OTHER, pv_get_dsturi_attr, 0, 0, 0, pv_init_iname, 1},
-		{{"di", (sizeof("di") - 1)}, /* */
-				PVT_OTHER, pv_get_diversion, 0, 0, 0, pv_init_iname, 1},
-		{{"dir", (sizeof("dir") - 1)}, /* */
-				PVT_OTHER, pv_get_diversion, 0, 0, 0, pv_init_iname, 2},
-		{{"dip", (sizeof("dis") - 1)}, /* */
-				PVT_OTHER, pv_get_diversion, 0, 0, 0, pv_init_iname, 3},
-		{{"dic", (sizeof("dic") - 1)}, /* */
-				PVT_OTHER, pv_get_diversion, 0, 0, 0, pv_init_iname, 4},
-		{{"dp", (sizeof("dp") - 1)}, /* */
-				PVT_OTHER, pv_get_dsturi_attr, 0, 0, 0, pv_init_iname, 2},
-		{{"dP", (sizeof("dP") - 1)}, /* */
-				PVT_OTHER, pv_get_dsturi_attr, 0, 0, 0, pv_init_iname, 3},
-		{{"ds", (sizeof("ds") - 1)}, /* */
-				PVT_CONTEXT, pv_get_dset, 0, 0, 0, 0, 0},
-		{{"du", (sizeof("du") - 1)}, /* */
-				PVT_DSTURI, pv_get_dsturi, pv_set_dsturi, 0, 0, 0, 0},
-		{{"duri", (sizeof("duri") - 1)}, /* */
-				PVT_DSTURI, pv_get_dsturi, pv_set_dsturi, 0, 0, 0, 0},
-		{{"err.class", (sizeof("err.class") - 1)}, /* */
-				PVT_OTHER, pv_get_errinfo_attr, 0, 0, 0, 0, 0},
-		{{"err.level", (sizeof("err.level") - 1)}, /* */
-				PVT_OTHER, pv_get_errinfo_attr, 0, 0, 0, pv_init_iname, 1},
-		{{"err.info", (sizeof("err.info") - 1)}, /* */
-				PVT_OTHER, pv_get_errinfo_attr, 0, 0, 0, pv_init_iname, 2},
-		{{"err.rcode", (sizeof("err.rcode") - 1)}, /* */
-				PVT_OTHER, pv_get_errinfo_attr, 0, 0, 0, pv_init_iname, 3},
-		{{"err.rreason", (sizeof("err.rreason") - 1)}, /* */
-				PVT_OTHER, pv_get_errinfo_attr, 0, 0, 0, pv_init_iname, 4},
-		{{"fd", (sizeof("fd") - 1)}, /* */
-				PVT_OTHER, pv_get_from_attr, pv_set_from_domain, 0, 0,
-				pv_init_iname, 3},
-		{{"from.domain", (sizeof("from.domain") - 1)}, /* */
-				PVT_OTHER, pv_get_from_attr, pv_set_from_domain, 0, 0,
-				pv_init_iname, 3},
-		{{"fn", (sizeof("fn") - 1)}, /* */
-				PVT_OTHER, pv_get_from_attr, pv_set_from_display, 0, 0,
-				pv_init_iname, 5},
-		{{"fs", (sizeof("fs") - 1)}, /* */
-				PVT_OTHER, pv_get_force_sock, pv_set_force_sock, 0, 0, 0, 0},
-		{{"fsn", (sizeof("fsn") - 1)}, /* */
-				PVT_OTHER, pv_get_force_sock_name, pv_set_force_sock_name, 0, 0,
-				0, 0},
-		{{"fsp", (sizeof("fsp") - 1)}, /* */
-				PVT_OTHER, pv_get_force_sock_port, 0, 0, 0, 0, 0},
-		{{"ft", (sizeof("ft") - 1)}, /* */
-				PVT_OTHER, pv_get_from_attr, 0, 0, 0, pv_init_iname, 4},
-		{{"fu", (sizeof("fu") - 1)}, /* */
-				PVT_FROM, pv_get_from_attr, pv_set_from_uri, 0, 0,
-				pv_init_iname, 1},
-		{{"from", (sizeof("from") - 1)}, /* */
-				PVT_FROM, pv_get_from_attr, pv_set_from_uri, 0, 0,
-				pv_init_iname, 1},
-		{{"fU", (sizeof("fU") - 1)}, /* */
-				PVT_OTHER, pv_get_from_attr, pv_set_from_username, 0, 0,
-				pv_init_iname, 2},
-		{{"from.user", (sizeof("from.user") - 1)}, /* */
-				PVT_OTHER, pv_get_from_attr, pv_set_from_username, 0, 0,
-				pv_init_iname, 2},
-		{{"fUl", (sizeof("fUl") - 1)}, /* */
-				PVT_OTHER, pv_get_from_attr, 0, 0, 0, pv_init_iname, 6},
-		{{"mb", (sizeof("mb") - 1)}, /* */
-				PVT_OTHER, pv_get_msg_buf, 0, 0, 0, 0, 0},
-		{{"mbu", (sizeof("mbu") - 1)}, /* */
-				PVT_OTHER, pv_get_msg_buf_updated, 0, 0, 0, 0, 0},
-		{{"mf", (sizeof("mf") - 1)}, /* */
-				PVT_OTHER, pv_get_flags, pv_set_mflags, 0, 0, 0, 0},
-		{{"mF", (sizeof("mF") - 1)}, /* */
-				PVT_OTHER, pv_get_hexflags, pv_set_mflags, 0, 0, 0, 0},
-		{{"Mf", (sizeof("mf") - 1)}, /* */
-				PVT_OTHER, pv_get_flag, pv_set_mflag, pv_parse_flag_param, 0, 0,
-				0},
-		{{"ml", (sizeof("ml") - 1)}, /* */
-				PVT_OTHER, pv_get_msg_len, 0, 0, 0, 0, 0},
-		{{"mt", (sizeof("mt") - 1)}, /* */
-				PVT_OTHER, pv_get_msgtype, 0, 0, 0, 0, 0},
-		{{"mts", (sizeof("mts") - 1)}, /* */
-				PVT_OTHER, pv_get_msgtypes, 0, 0, 0, 0, 0},
-		{{"od", (sizeof("od") - 1)}, /* */
-				PVT_OTHER, pv_get_ouri_attr, 0, 0, 0, pv_init_iname, 2},
-		{{"op", (sizeof("op") - 1)}, /* */
-				PVT_OTHER, pv_get_ouri_attr, 0, 0, 0, pv_init_iname, 3},
-		{{"oP", (sizeof("oP") - 1)}, /* */
-				PVT_OTHER, pv_get_ouri_attr, 0, 0, 0, pv_init_iname, 4},
-		{{"ou", (sizeof("ou") - 1)}, /* */
-				PVT_OURI, pv_get_ouri, 0, 0, 0, 0, 0},
-		{{"ouri", (sizeof("ouri") - 1)}, /* */
-				PVT_OURI, pv_get_ouri, 0, 0, 0, 0, 0},
-		{{"oU", (sizeof("oU") - 1)}, /* */
-				PVT_OTHER, pv_get_ouri_attr, 0, 0, 0, pv_init_iname, 1},
-		{{"oUl", (sizeof("oUl") - 1)}, /* */
-				PVT_OTHER, pv_get_ouri_attr, 0, 0, 0, pv_init_iname, 6},
-		{{"pd", (sizeof("pd") - 1)}, /* */
-				PVT_OTHER, pv_get_ppi_attr, 0, 0, pv_parse_index, pv_init_iname,
-				3},
-		{{"pn", (sizeof("pn") - 1)}, /* */
-				PVT_OTHER, pv_get_ppi_attr, 0, 0, pv_parse_index, pv_init_iname,
-				4},
-		{{"pp", (sizeof("pp") - 1)}, /* */
-				PVT_OTHER, pv_get_pid, 0, 0, 0, 0, 0},
-		{{"pr", (sizeof("pr") - 1)}, /* */
-				PVT_OTHER, pv_get_proto, 0, 0, 0, 0, 0},
-		{{"prid", (sizeof("prid") - 1)}, /* */
-				PVT_OTHER, pv_get_protoid, 0, 0, 0, 0, 0},
-		{{"proto", (sizeof("proto") - 1)}, /* */
-				PVT_OTHER, pv_get_proto, 0, 0, 0, 0, 0},
-		{{"pu", (sizeof("pu") - 1)}, /* */
-				PVT_OTHER, pv_get_ppi_attr, 0, 0, pv_parse_index, pv_init_iname,
-				1},
-		{{"pU", (sizeof("pU") - 1)}, /* */
-				PVT_OTHER, pv_get_ppi_attr, 0, 0, pv_parse_index, pv_init_iname,
-				2},
-		{{"rb", (sizeof("rb") - 1)}, /* */
-				PVT_MSG_BODY, pv_get_msg_body, 0, 0, 0, 0, 0},
-		{{"rd", (sizeof("rd") - 1)}, /* */
-				PVT_RURI_DOMAIN, pv_get_ruri_attr, pv_set_ruri_host, 0, 0,
-				pv_init_iname, 2},
-		{{"ruri.domain", (sizeof("ruri.domain") - 1)}, /* */
-				PVT_RURI_DOMAIN, pv_get_ruri_attr, pv_set_ruri_host, 0, 0,
-				pv_init_iname, 2},
-		{{"re", (sizeof("re") - 1)}, /* */
-				PVT_OTHER, pv_get_rpid, 0, 0, 0, 0, 0},
-		{{"rm", (sizeof("rm") - 1)}, /* */
-				PVT_OTHER, pv_get_method, 0, 0, 0, 0, 0},
-		{{"rmid", (sizeof("rmid") - 1)}, /* */
-				PVT_OTHER, pv_get_methodid, 0, 0, 0, 0, 0},
-		{{"rp", (sizeof("rp") - 1)}, /* */
-				PVT_OTHER, pv_get_ruri_attr, pv_set_ruri_port, 0, 0,
-				pv_init_iname, 3},
-		{{"rP", (sizeof("rP") - 1)}, /* */
-				PVT_OTHER, pv_get_ruri_attr, 0, 0, 0, pv_init_iname, 4},
-		{{"rr", (sizeof("rr") - 1)}, /* */
-				PVT_OTHER, pv_get_reason, 0, 0, 0, 0, 0},
-		{{"rs", (sizeof("rs") - 1)}, /* */
-				PVT_OTHER, pv_get_status, 0, 0, 0, 0, 0},
-		{{"rsi", (sizeof("rsi") - 1)}, /* */
-				PVT_OTHER, pv_get_statusi, 0, 0, 0, 0, 0},
-		{{"rt", (sizeof("rt") - 1)}, /* */
-				PVT_OTHER, pv_get_refer_to, 0, 0, 0, 0, 0},
-		{{"ru", (sizeof("ru") - 1)}, /* */
-				PVT_RURI, pv_get_ruri, pv_set_ruri, 0, 0, 0, 0},
-		{{"ruri", (sizeof("ruri") - 1)}, /* */
-				PVT_RURI, pv_get_ruri, pv_set_ruri, 0, 0, 0, 0},
-		{{"rU", (sizeof("rU") - 1)}, /* */
-				PVT_RURI_USERNAME, pv_get_ruri_attr, pv_set_ruri_user, 0, 0,
-				pv_init_iname, 1},
-		{{"ruri.user", (sizeof("ruri.user") - 1)}, /* */
-				PVT_RURI_USERNAME, pv_get_ruri_attr, pv_set_ruri_user, 0, 0,
-				pv_init_iname, 1},
-		{{"rUl", (sizeof("rUl") - 1)}, /* */
-				PVT_RURI_USERNAME, pv_get_ruri_attr, 0, 0, 0, pv_init_iname, 6},
-		{{"rv", (sizeof("rv") - 1)}, /* */
-				PVT_OTHER, pv_get_version, 0, 0, 0, 0, 0},
-		{{"rz", (sizeof("rz") - 1)}, /* */
-				PVT_OTHER, pv_get_ruri_attr, 0, 0, 0, pv_init_iname, 5},
-		{{"Ras", (sizeof("Ras") - 1)}, /* */
-				PVT_OTHER, pv_get_rcvaddr_socket, 0, 0, 0, 0, 0},
-		{{"Ri", (sizeof("Ri") - 1)}, /* */
-				PVT_OTHER, pv_get_rcvip, 0, 0, 0, 0, 0},
-		{{"Rp", (sizeof("Rp") - 1)}, /* */
-				PVT_OTHER, pv_get_rcvport, 0, 0, 0, 0, 0},
-		{{"Ru", (sizeof("Ru") - 1)}, /* */
-				PVT_OTHER, pv_get_rcvaddr_uri, 0, 0, 0, 0, 0},
-		{{"Rut", (sizeof("Rut") - 1)}, /* */
-				PVT_OTHER, pv_get_rcvaddr_uri_full, 0, 0, 0, 0, 0},
-		{{"Rn", (sizeof("Rn") - 1)}, /* */
-				PVT_OTHER, pv_get_rcvsname, 0, 0, 0, 0, 0},
-		{{"RAi", (sizeof("RAi") - 1)}, /* */
-				PVT_OTHER, pv_get_rcv_advertised_ip, 0, 0, 0, 0, 0},
-		{{"RAp", (sizeof("RAp") - 1)}, /* */
-				PVT_OTHER, pv_get_rcv_advertised_port, 0, 0, 0, 0, 0},
-		{{"RAu", (sizeof("RAu") - 1)}, /* */
-				PVT_OTHER, pv_get_rcvadv_uri, 0, 0, 0, 0, 0},
-		{{"RAut", (sizeof("RAut") - 1)}, /* */
-				PVT_OTHER, pv_get_rcvadv_uri_full, 0, 0, 0, 0, 0},
-		{{"sas", (sizeof("sas") - 1)}, /* */
-				PVT_OTHER, pv_get_srcaddr_socket, 0, 0, 0, 0, 0},
-		{{"sf", (sizeof("sf") - 1)}, /* */
-				PVT_OTHER, pv_get_sflags, pv_set_sflags, 0, 0, 0, 0},
-		{{"sF", (sizeof("sF") - 1)}, /* */
-				PVT_OTHER, pv_get_hexsflags, pv_set_sflags, 0, 0, 0, 0},
-		{{"Sf", (sizeof("sf") - 1)}, /* */
-				PVT_OTHER, pv_get_sflag, pv_set_sflag, pv_parse_flag_param, 0,
-				0, 0},
-		{{"src_ip", (sizeof("src_ip") - 1)}, /* */
-				PVT_OTHER, pv_get_srcip, 0, 0, 0, 0, 0},
-		{{"si", (sizeof("si") - 1)}, /* */
-				PVT_OTHER, pv_get_srcip, 0, 0, 0, 0, 0},
-		{{"siz", (sizeof("siz") - 1)}, /* */
-				PVT_OTHER, pv_get_srcipz, 0, 0, 0, 0, 0},
-		{{"sid", (sizeof("sid") - 1)}, /* server id */
-				PVT_OTHER, pv_get_server_id, 0, 0, 0, 0, 0},
-		{{"sp", (sizeof("sp") - 1)}, /* */
-				PVT_OTHER, pv_get_srcport, 0, 0, 0, 0, 0},
-		{{"su", (sizeof("su") - 1)}, /* */
-				PVT_OTHER, pv_get_srcaddr_uri, 0, 0, 0, 0, 0},
-		{{"sut", (sizeof("sut") - 1)}, /* */
-				PVT_OTHER, pv_get_srcaddr_uri_full, 0, 0, 0, 0, 0},
-		{{"td", (sizeof("td") - 1)}, /* */
-				PVT_OTHER, pv_get_to_attr, pv_set_to_domain, 0, 0,
-				pv_init_iname, 3},
-		{{"to.domain", (sizeof("to.domain") - 1)}, /* */
-				PVT_OTHER, pv_get_to_attr, pv_set_to_domain, 0, 0,
-				pv_init_iname, 3},
-		{{"tn", (sizeof("tn") - 1)}, /* */
-				PVT_OTHER, pv_get_to_attr, pv_set_to_display, 0, 0,
-				pv_init_iname, 5},
-		{{"tt", (sizeof("tt") - 1)}, /* */
-				PVT_OTHER, pv_get_to_attr, 0, 0, 0, pv_init_iname, 4},
-		{{"tu", (sizeof("tu") - 1)}, /* */
-				PVT_TO, pv_get_to_attr, pv_set_to_uri, 0, 0, pv_init_iname, 1},
-		{{"to", (sizeof("to") - 1)}, /* */
-				PVT_TO, pv_get_to_attr, pv_set_to_uri, 0, 0, pv_init_iname, 1},
-		{{"tU", (sizeof("tU") - 1)}, /* */
-				PVT_OTHER, pv_get_to_attr, pv_set_to_username, 0, 0,
-				pv_init_iname, 2},
-		{{"to.user", (sizeof("to.user") - 1)}, /* */
-				PVT_OTHER, pv_get_to_attr, pv_set_to_username, 0, 0,
-				pv_init_iname, 2},
-		{{"tUl", (sizeof("tUl") - 1)}, /* */
-				PVT_OTHER, pv_get_to_attr, pv_set_to_username, 0, 0,
-				pv_init_iname, 6},
-		{{"true", (sizeof("true") - 1)}, /* */
-				PVT_OTHER, pv_get_true, 0, 0, 0, 0, 0},
-		{{"Tb", (sizeof("Tb") - 1)}, /* */
-				PVT_OTHER, pv_get_timeb, 0, 0, 0, 0, 0},
-		{{"Tf", (sizeof("Tf") - 1)}, /* */
-				PVT_CONTEXT, pv_get_timef, 0, 0, 0, 0, 0},
-		{{"TF", (sizeof("TF") - 1)}, /* */
-				PVT_OTHER, pv_get_timenowf, 0, 0, 0, 0, 0},
-		{{"Ts", (sizeof("Ts") - 1)}, /* */
-				PVT_CONTEXT, pv_get_times, 0, 0, 0, 0, 0},
-		{{"TS", (sizeof("TS") - 1)}, /* */
-				PVT_OTHER, pv_get_timenows, 0, 0, 0, 0, 0},
-		{{"ua", (sizeof("ua") - 1)}, /* */
-				PVT_OTHER, pv_get_useragent, 0, 0, 0, 0, 0},
-		{{"ruid", (sizeof("ruid") - 1)}, /* */
-				PVT_OTHER, pv_get_ruid, 0, 0, 0, 0, 0},
-		{{"location_ua", (sizeof("location_ua") - 1)}, /* */
-				PVT_OTHER, pv_get_location_ua, 0, 0, 0, 0, 0},
-
-		{{"shv", (sizeof("shv") - 1)}, PVT_OTHER, pv_get_shvar, pv_set_shvar,
-				pv_parse_shvar_name, 0, 0, 0},
-		{{"shvinc", (sizeof("shvinc") - 1)}, PVT_OTHER, pv_get_shvinc, 0,
-				pv_parse_shvar_name, 0, 0, 0},
-		{{"time", (sizeof("time") - 1)}, PVT_CONTEXT, pv_get_local_time, 0,
-				pv_parse_time_name, 0, 0, 0},
-		{{"timef", (sizeof("timef") - 1)}, PVT_CONTEXT, pv_get_local_strftime,
-				0, pv_parse_strftime_name, 0, 0, 0},
-		{{"utime", (sizeof("utime") - 1)}, PVT_CONTEXT, pv_get_utc_time, 0,
-				pv_parse_time_name, 0, 0, 0},
-		{{"utimef", (sizeof("utimef") - 1)}, PVT_CONTEXT, pv_get_utc_strftime,
-				0, pv_parse_strftime_name, 0, 0, 0},
-		{{"TV", (sizeof("TV") - 1)}, PVT_OTHER, pv_get_timeval, 0,
-				pv_parse_timeval_name, 0, 0, 0},
-		{{"nh", (sizeof("nh") - 1)}, PVT_OTHER, pv_get_nh, 0, pv_parse_nh_name,
-				0, 0, 0},
-		{{"version", (sizeof("version") - 1)}, PVT_OTHER, pv_get_sr_version, 0,
-				pv_parse_sr_version_name, 0, 0, 0},
-		{{"K", (sizeof("K") - 1)}, PVT_OTHER, pv_get_K, 0, pv_parse_K_name, 0,
-				0, 0},
-		{{"expires", (sizeof("expires") - 1)}, PVT_OTHER, pv_get_expires, 0,
-				pv_parse_expires_name, 0, 0, 0},
-		{{"msg", (sizeof("msg") - 1)}, PVT_OTHER, pv_get_msg_attrs, 0,
-				pv_parse_msg_attrs_name, 0, 0, 0},
-		{{"ksr", (sizeof("ksr") - 1)}, PVT_OTHER, pv_get_ksr_attrs, 0,
-				pv_parse_ksr_attrs_name, 0, 0, 0},
-		{{"rpl", (sizeof("rpl") - 1)}, PVT_OTHER, pv_get_rpl_attrs, 0,
-				pv_parse_rpl_attrs_name, 0, 0, 0},
-		{{"ccp", (sizeof("ccp") - 1)}, PVT_OTHER, pv_get_ccp_attrs,
-				pv_set_ccp_attrs, pv_parse_ccp_attrs_name, 0, 0, 0},
-		{{"via0", (sizeof("via0") - 1)}, PVT_OTHER, pv_get_via0, 0,
-				pv_parse_via_name, 0, 0, 0},
-		{{"via1", (sizeof("via1") - 1)}, PVT_OTHER, pv_get_via1, 0,
-				pv_parse_via_name, 0, 0, 0},
-		{{"viaZ", (sizeof("viaZ") - 1)}, PVT_OTHER, pv_get_viaZ, 0,
-				pv_parse_via_name, 0, 0, 0},
-		{{"msgbuf", (sizeof("msgbuf") - 1)}, PVT_OTHER, pv_get_msgbuf,
-				pv_set_msgbuf, pv_parse_msgbuf_name, 0, 0, 0},
-
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
-
 static int add_avp_aliases(modparam_t type, void *val);
 
+/* clang-format off */
+static tr_export_t mod_trans[] = {
+	{{"s", sizeof("s") - 1}, tr_parse_string}, /* string class */
+	{{"nameaddr", sizeof("nameaddr") - 1}, tr_parse_nameaddr}, /* nameaddr class */
+	{{"uri", sizeof("uri") - 1}, tr_parse_uri}, /* uri class */
+	{{"param", sizeof("param") - 1}, tr_parse_paramlist}, /* param class */
+	{{"tobody", sizeof("tobody") - 1}, tr_parse_tobody}, /* param class */
+	{{"line", sizeof("line") - 1}, tr_parse_line}, /* line class */
+	{{"urialias", sizeof("urialias") - 1}, tr_parse_urialias}, /* uri alias class */
+	{{"val", sizeof("val") - 1}, tr_parse_val}, /* val class */
+
+	{{0, 0}, 0}
+};
+
+static pv_export_t mod_pvs[] = {
+	{{"_s", (sizeof("_s") - 1)}, PVT_OTHER, pv_get__s, 0, pv_parse__s_name,
+			0, 0, 0},
+	{{"af", (sizeof("af") - 1)}, PVT_OTHER, pv_get_af, 0, pv_parse_af_name,
+			0, 0, 0},
+	{{"branch", sizeof("branch") - 1}, /* branch attributes */
+			PVT_CONTEXT, pv_get_branchx, pv_set_branchx,
+			pv_parse_branchx_name, pv_parse_index, 0, 0},
+	{{"sbranch", sizeof("sbranch") - 1}, /* static branch attributes */
+			PVT_CONTEXT, pv_get_sbranch, pv_set_sbranch,
+			pv_parse_branchx_name, 0, 0, 0},
+	{{"mi", (sizeof("mi") - 1)}, /* message id */
+			PVT_OTHER, pv_get_msgid, 0, 0, 0, 0, 0},
+	{{"stat", sizeof("stat") - 1}, /* statistics */
+			PVT_OTHER, pv_get_stat, 0, pv_parse_stat_name, 0, 0, 0},
+	{{"sel", sizeof("sel") - 1}, /* select */
+			PVT_OTHER, pv_get_select, 0, pv_parse_select_name, 0, 0, 0},
+	{{"snd", (sizeof("snd") - 1)}, PVT_OTHER, pv_get_sndto, 0,
+			pv_parse_snd_name, 0, 0, 0},
+	{{"sndto", (sizeof("sndto") - 1)}, PVT_OTHER, pv_get_sndto, 0,
+			pv_parse_snd_name, 0, 0, 0},
+	{{"sndfrom", (sizeof("sndfrom") - 1)}, PVT_OTHER, pv_get_sndfrom, 0,
+			pv_parse_snd_name, 0, 0, 0},
+	{{"rcv", (sizeof("rcv") - 1)}, PVT_OTHER, pv_get_rcv, pv_set_rcv,
+			pv_parse_rcv_name, 0, 0, 0},
+	{{"xavp", sizeof("xavp") - 1}, /* xavp */
+			PVT_XAVP, pv_get_xavp, pv_set_xavp, pv_parse_xavp_name, 0, 0, 0},
+	{{"xavu", sizeof("xavu") - 1}, /* xavu */
+			PVT_XAVU, pv_get_xavu, pv_set_xavu, pv_parse_xavu_name, 0, 0, 0},
+	{{"xavi", sizeof("xavi") - 1}, /* xavi */
+			PVT_XAVI, pv_get_xavi, pv_set_xavi, pv_parse_xavi_name, 0, 0, 0},
+	{{"avp", (sizeof("avp") - 1)}, PVT_AVP, pv_get_avp, pv_set_avp,
+			pv_parse_avp_name, pv_parse_index, 0, 0},
+	{{"hdr", (sizeof("hdr") - 1)}, PVT_HDR, pv_get_hdr, 0,
+			pv_parse_hdr_name, pv_parse_index, 0, 0},
+	{{"hdrc", (sizeof("hdrc") - 1)}, PVT_HDRC, pv_get_hdrc, 0,
+			pv_parse_hdr_name, 0, 0, 0},
+	{{"hfl", (sizeof("hfl") - 1)}, PVT_HDR, pv_get_hfl, 0,
+			pv_parse_hfl_name, pv_parse_index, 0, 0},
+	{{"hflc", (sizeof("hflc") - 1)}, PVT_HDRC, pv_get_hflc, 0,
+			pv_parse_hfl_name, 0, 0, 0},
+	{{"var", (sizeof("var") - 1)}, PVT_SCRIPTVAR, pv_get_scriptvar,
+			pv_set_scriptvar, pv_parse_scriptvar_name, 0, 0, 0},
+	{{"vz", (sizeof("vz") - 1)}, PVT_SCRIPTVAR, pv_get_scriptvar,
+			pv_set_scriptvar, pv_parse_scriptvar_name, 0, 0, 0},
+	{{"vn", (sizeof("vn") - 1)}, PVT_SCRIPTVAR, pv_get_scriptvar,
+			pv_set_scriptvar, pv_parse_scriptvarnull_name, 0, 0, 0},
+	{{"ai", (sizeof("ai") - 1)}, /* */
+			PVT_OTHER, pv_get_pai, 0, 0, pv_parse_index, 0, 0},
+	{{"adu", (sizeof("adu") - 1)}, /* auth digest uri */
+			PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 3},
+	{{"ar", (sizeof("ar") - 1)}, /* auth realm */
+			PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 2},
+	{{"au", (sizeof("au") - 1)}, /* */
+			PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 1},
+	{{"ad", (sizeof("ad") - 1)}, /* */
+			PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 4},
+	{{"aU", (sizeof("aU") - 1)}, /* */
+			PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 5},
+	{{"aa", (sizeof("aa") - 1)}, /* auth algorithm */
+			PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 6},
+	{{"adn", (sizeof("adn") - 1)}, /* auth nonce */
+			PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 7},
+	{{"adc", (sizeof("adc") - 1)}, /* auth cnonce */
+			PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 8},
+	{{"adr", (sizeof("adr") - 1)}, /* auth response */
+			PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 9},
+	{{"ado", (sizeof("ado") - 1)}, /* auth opaque */
+			PVT_OTHER, pv_get_authattr, 0, 0, 0, pv_init_iname, 10},
+	{{"Au", (sizeof("Au") - 1)}, /* */
+			PVT_OTHER, pv_get_acc_username, 0, 0, 0, pv_init_iname, 1},
+	{{"AU", (sizeof("AU") - 1)}, /* */
+			PVT_OTHER, pv_get_acc_user, 0, 0, 0, pv_init_iname, 1},
+	{{"bf", (sizeof("bf") - 1)}, /* */
+			PVT_CONTEXT, pv_get_bflags, pv_set_bflags, 0, 0, 0, 0},
+	{{"bF", (sizeof("bF") - 1)}, /* */
+			PVT_CONTEXT, pv_get_hexbflags, pv_set_bflags, 0, 0, 0, 0},
+	{{"Bf", (sizeof("Bf") - 1)}, /* */
+			PVT_CONTEXT, pv_get_bflag, pv_set_bflag, pv_parse_flag_param, 0,
+			0, 0},
+	{{"br", (sizeof("br") - 1)}, /* */
+			PVT_BRANCH, pv_get_branch, pv_set_branch, 0, 0, 0, 0},
+	{{"bR", (sizeof("bR") - 1)}, /* */
+			PVT_CONTEXT, pv_get_branches, 0, 0, 0, 0, 0},
+	{{"bs", (sizeof("bs") - 1)}, /* */
+			PVT_OTHER, pv_get_body_size, 0, 0, 0, 0, 0},
+	{{"ci", (sizeof("ci") - 1)}, /* */
+			PVT_OTHER, pv_get_callid, 0, 0, 0, 0, 0},
+	{{"cl", (sizeof("cl") - 1)}, /* */
+			PVT_OTHER, pv_get_content_length, 0, 0, 0, 0, 0},
+	{{"cnt", sizeof("cnt") - 1}, PVT_OTHER, pv_get_cnt, 0,
+			pv_parse_cnt_name, 0, 0, 0},
+	{{"conid", (sizeof("conid") - 1)}, /* */
+			PVT_OTHER, pv_get_tcpconn_id, 0, 0, 0, 0, 0},
+	{{"cs", (sizeof("cs") - 1)}, /* */
+			PVT_OTHER, pv_get_cseq, 0, 0, 0, 0, 0},
+	{{"csb", (sizeof("csb") - 1)}, /* */
+			PVT_OTHER, pv_get_cseq_body, 0, 0, 0, 0, 0},
+	{{"ct", (sizeof("ct") - 1)}, /* */
+			PVT_OTHER, pv_get_contact, 0, 0, 0, 0, 0},
+	{{"cT", (sizeof("cT") - 1)}, /* */
+			PVT_OTHER, pv_get_content_type, 0, 0, 0, 0, 0},
+	{{"dd", (sizeof("dd") - 1)}, /* */
+			PVT_OTHER, pv_get_dsturi_attr, 0, 0, 0, pv_init_iname, 1},
+	{{"di", (sizeof("di") - 1)}, /* */
+			PVT_OTHER, pv_get_diversion, 0, 0, 0, pv_init_iname, 1},
+	{{"dir", (sizeof("dir") - 1)}, /* */
+			PVT_OTHER, pv_get_diversion, 0, 0, 0, pv_init_iname, 2},
+	{{"dip", (sizeof("dis") - 1)}, /* */
+			PVT_OTHER, pv_get_diversion, 0, 0, 0, pv_init_iname, 3},
+	{{"dic", (sizeof("dic") - 1)}, /* */
+			PVT_OTHER, pv_get_diversion, 0, 0, 0, pv_init_iname, 4},
+	{{"dp", (sizeof("dp") - 1)}, /* */
+			PVT_OTHER, pv_get_dsturi_attr, 0, 0, 0, pv_init_iname, 2},
+	{{"dP", (sizeof("dP") - 1)}, /* */
+			PVT_OTHER, pv_get_dsturi_attr, 0, 0, 0, pv_init_iname, 3},
+	{{"ds", (sizeof("ds") - 1)}, /* */
+			PVT_CONTEXT, pv_get_dset, 0, 0, 0, 0, 0},
+	{{"du", (sizeof("du") - 1)}, /* */
+			PVT_DSTURI, pv_get_dsturi, pv_set_dsturi, 0, 0, 0, 0},
+	{{"duri", (sizeof("duri") - 1)}, /* */
+			PVT_DSTURI, pv_get_dsturi, pv_set_dsturi, 0, 0, 0, 0},
+	{{"err.class", (sizeof("err.class") - 1)}, /* */
+			PVT_OTHER, pv_get_errinfo_attr, 0, 0, 0, 0, 0},
+	{{"err.level", (sizeof("err.level") - 1)}, /* */
+			PVT_OTHER, pv_get_errinfo_attr, 0, 0, 0, pv_init_iname, 1},
+	{{"err.info", (sizeof("err.info") - 1)}, /* */
+			PVT_OTHER, pv_get_errinfo_attr, 0, 0, 0, pv_init_iname, 2},
+	{{"err.rcode", (sizeof("err.rcode") - 1)}, /* */
+			PVT_OTHER, pv_get_errinfo_attr, 0, 0, 0, pv_init_iname, 3},
+	{{"err.rreason", (sizeof("err.rreason") - 1)}, /* */
+			PVT_OTHER, pv_get_errinfo_attr, 0, 0, 0, pv_init_iname, 4},
+	{{"fd", (sizeof("fd") - 1)}, /* */
+			PVT_OTHER, pv_get_from_attr, pv_set_from_domain, 0, 0,
+			pv_init_iname, 3},
+	{{"from.domain", (sizeof("from.domain") - 1)}, /* */
+			PVT_OTHER, pv_get_from_attr, pv_set_from_domain, 0, 0,
+			pv_init_iname, 3},
+	{{"fn", (sizeof("fn") - 1)}, /* */
+			PVT_OTHER, pv_get_from_attr, pv_set_from_display, 0, 0,
+			pv_init_iname, 5},
+	{{"fs", (sizeof("fs") - 1)}, /* */
+			PVT_OTHER, pv_get_force_sock, pv_set_force_sock, 0, 0, 0, 0},
+	{{"fsn", (sizeof("fsn") - 1)}, /* */
+			PVT_OTHER, pv_get_force_sock_name, pv_set_force_sock_name, 0, 0,
+			0, 0},
+	{{"fsp", (sizeof("fsp") - 1)}, /* */
+			PVT_OTHER, pv_get_force_sock_port, 0, 0, 0, 0, 0},
+	{{"ft", (sizeof("ft") - 1)}, /* */
+			PVT_OTHER, pv_get_from_attr, 0, 0, 0, pv_init_iname, 4},
+	{{"fu", (sizeof("fu") - 1)}, /* */
+			PVT_FROM, pv_get_from_attr, pv_set_from_uri, 0, 0,
+			pv_init_iname, 1},
+	{{"from", (sizeof("from") - 1)}, /* */
+			PVT_FROM, pv_get_from_attr, pv_set_from_uri, 0, 0,
+			pv_init_iname, 1},
+	{{"fU", (sizeof("fU") - 1)}, /* */
+			PVT_OTHER, pv_get_from_attr, pv_set_from_username, 0, 0,
+			pv_init_iname, 2},
+	{{"from.user", (sizeof("from.user") - 1)}, /* */
+			PVT_OTHER, pv_get_from_attr, pv_set_from_username, 0, 0,
+			pv_init_iname, 2},
+	{{"fUl", (sizeof("fUl") - 1)}, /* */
+			PVT_OTHER, pv_get_from_attr, 0, 0, 0, pv_init_iname, 6},
+	{{"mb", (sizeof("mb") - 1)}, /* */
+			PVT_OTHER, pv_get_msg_buf, 0, 0, 0, 0, 0},
+	{{"mbu", (sizeof("mbu") - 1)}, /* */
+			PVT_OTHER, pv_get_msg_buf_updated, 0, 0, 0, 0, 0},
+	{{"mf", (sizeof("mf") - 1)}, /* */
+			PVT_OTHER, pv_get_flags, pv_set_mflags, 0, 0, 0, 0},
+	{{"mF", (sizeof("mF") - 1)}, /* */
+			PVT_OTHER, pv_get_hexflags, pv_set_mflags, 0, 0, 0, 0},
+	{{"Mf", (sizeof("mf") - 1)}, /* */
+			PVT_OTHER, pv_get_flag, pv_set_mflag, pv_parse_flag_param, 0, 0, 0},
+	{{"ml", (sizeof("ml") - 1)}, /* */
+			PVT_OTHER, pv_get_msg_len, 0, 0, 0, 0, 0},
+	{{"mt", (sizeof("mt") - 1)}, /* */
+			PVT_OTHER, pv_get_msgtype, 0, 0, 0, 0, 0},
+	{{"mts", (sizeof("mts") - 1)}, /* */
+			PVT_OTHER, pv_get_msgtypes, 0, 0, 0, 0, 0},
+	{{"od", (sizeof("od") - 1)}, /* */
+			PVT_OTHER, pv_get_ouri_attr, 0, 0, 0, pv_init_iname, 2},
+	{{"op", (sizeof("op") - 1)}, /* */
+			PVT_OTHER, pv_get_ouri_attr, 0, 0, 0, pv_init_iname, 3},
+	{{"oP", (sizeof("oP") - 1)}, /* */
+			PVT_OTHER, pv_get_ouri_attr, 0, 0, 0, pv_init_iname, 4},
+	{{"ou", (sizeof("ou") - 1)}, /* */
+			PVT_OURI, pv_get_ouri, 0, 0, 0, 0, 0},
+	{{"ouri", (sizeof("ouri") - 1)}, /* */
+			PVT_OURI, pv_get_ouri, 0, 0, 0, 0, 0},
+	{{"oU", (sizeof("oU") - 1)}, /* */
+			PVT_OTHER, pv_get_ouri_attr, 0, 0, 0, pv_init_iname, 1},
+	{{"oUl", (sizeof("oUl") - 1)}, /* */
+			PVT_OTHER, pv_get_ouri_attr, 0, 0, 0, pv_init_iname, 6},
+	{{"pd", (sizeof("pd") - 1)}, /* */
+			PVT_OTHER, pv_get_ppi_attr, 0, 0, pv_parse_index, pv_init_iname, 3},
+	{{"pn", (sizeof("pn") - 1)}, /* */
+			PVT_OTHER, pv_get_ppi_attr, 0, 0, pv_parse_index, pv_init_iname, 4},
+	{{"pp", (sizeof("pp") - 1)}, /* */
+			PVT_OTHER, pv_get_pid, 0, 0, 0, 0, 0},
+	{{"pr", (sizeof("pr") - 1)}, /* */
+			PVT_OTHER, pv_get_proto, 0, 0, 0, 0, 0},
+	{{"prid", (sizeof("prid") - 1)}, /* */
+			PVT_OTHER, pv_get_protoid, 0, 0, 0, 0, 0},
+	{{"proto", (sizeof("proto") - 1)}, /* */
+			PVT_OTHER, pv_get_proto, 0, 0, 0, 0, 0},
+	{{"pu", (sizeof("pu") - 1)}, /* */
+			PVT_OTHER, pv_get_ppi_attr, 0, 0, pv_parse_index, pv_init_iname, 1},
+	{{"pU", (sizeof("pU") - 1)}, /* */
+			PVT_OTHER, pv_get_ppi_attr, 0, 0, pv_parse_index, pv_init_iname, 2},
+	{{"rb", (sizeof("rb") - 1)}, /* */
+			PVT_MSG_BODY, pv_get_msg_body, 0, 0, 0, 0, 0},
+	{{"rd", (sizeof("rd") - 1)}, /* */
+			PVT_RURI_DOMAIN, pv_get_ruri_attr, pv_set_ruri_host, 0, 0,
+			pv_init_iname, 2},
+	{{"ruri.domain", (sizeof("ruri.domain") - 1)}, /* */
+			PVT_RURI_DOMAIN, pv_get_ruri_attr, pv_set_ruri_host, 0, 0,
+			pv_init_iname, 2},
+	{{"re", (sizeof("re") - 1)}, /* */
+			PVT_OTHER, pv_get_rpid, 0, 0, 0, 0, 0},
+	{{"rm", (sizeof("rm") - 1)}, /* */
+			PVT_OTHER, pv_get_method, 0, 0, 0, 0, 0},
+	{{"rmid", (sizeof("rmid") - 1)}, /* */
+			PVT_OTHER, pv_get_methodid, 0, 0, 0, 0, 0},
+	{{"rp", (sizeof("rp") - 1)}, /* */
+			PVT_OTHER, pv_get_ruri_attr, pv_set_ruri_port, 0, 0,
+			pv_init_iname, 3},
+	{{"rP", (sizeof("rP") - 1)}, /* */
+			PVT_OTHER, pv_get_ruri_attr, 0, 0, 0, pv_init_iname, 4},
+	{{"rr", (sizeof("rr") - 1)}, /* */
+			PVT_OTHER, pv_get_reason, 0, 0, 0, 0, 0},
+	{{"rs", (sizeof("rs") - 1)}, /* */
+			PVT_OTHER, pv_get_status, 0, 0, 0, 0, 0},
+	{{"rsi", (sizeof("rsi") - 1)}, /* */
+			PVT_OTHER, pv_get_statusi, 0, 0, 0, 0, 0},
+	{{"rt", (sizeof("rt") - 1)}, /* */
+			PVT_OTHER, pv_get_refer_to, 0, 0, 0, 0, 0},
+	{{"ru", (sizeof("ru") - 1)}, /* */
+			PVT_RURI, pv_get_ruri, pv_set_ruri, 0, 0, 0, 0},
+	{{"ruri", (sizeof("ruri") - 1)}, /* */
+			PVT_RURI, pv_get_ruri, pv_set_ruri, 0, 0, 0, 0},
+	{{"rU", (sizeof("rU") - 1)}, /* */
+			PVT_RURI_USERNAME, pv_get_ruri_attr, pv_set_ruri_user, 0, 0,
+			pv_init_iname, 1},
+	{{"ruri.user", (sizeof("ruri.user") - 1)}, /* */
+			PVT_RURI_USERNAME, pv_get_ruri_attr, pv_set_ruri_user, 0, 0,
+			pv_init_iname, 1},
+	{{"rUl", (sizeof("rUl") - 1)}, /* */
+			PVT_RURI_USERNAME, pv_get_ruri_attr, 0, 0, 0, pv_init_iname, 6},
+	{{"rv", (sizeof("rv") - 1)}, /* */
+			PVT_OTHER, pv_get_version, 0, 0, 0, 0, 0},
+	{{"rz", (sizeof("rz") - 1)}, /* */
+			PVT_OTHER, pv_get_ruri_attr, 0, 0, 0, pv_init_iname, 5},
+	{{"Ras", (sizeof("Ras") - 1)}, /* */
+			PVT_OTHER, pv_get_rcvaddr_socket, 0, 0, 0, 0, 0},
+	{{"Ri", (sizeof("Ri") - 1)}, /* */
+			PVT_OTHER, pv_get_rcvip, 0, 0, 0, 0, 0},
+	{{"Rp", (sizeof("Rp") - 1)}, /* */
+			PVT_OTHER, pv_get_rcvport, 0, 0, 0, 0, 0},
+	{{"Ru", (sizeof("Ru") - 1)}, /* */
+			PVT_OTHER, pv_get_rcvaddr_uri, 0, 0, 0, 0, 0},
+	{{"Rut", (sizeof("Rut") - 1)}, /* */
+			PVT_OTHER, pv_get_rcvaddr_uri_full, 0, 0, 0, 0, 0},
+	{{"Rn", (sizeof("Rn") - 1)}, /* */
+			PVT_OTHER, pv_get_rcvsname, 0, 0, 0, 0, 0},
+	{{"RAi", (sizeof("RAi") - 1)}, /* */
+			PVT_OTHER, pv_get_rcv_advertised_ip, 0, 0, 0, 0, 0},
+	{{"RAp", (sizeof("RAp") - 1)}, /* */
+			PVT_OTHER, pv_get_rcv_advertised_port, 0, 0, 0, 0, 0},
+	{{"RAu", (sizeof("RAu") - 1)}, /* */
+			PVT_OTHER, pv_get_rcvadv_uri, 0, 0, 0, 0, 0},
+	{{"RAut", (sizeof("RAut") - 1)}, /* */
+			PVT_OTHER, pv_get_rcvadv_uri_full, 0, 0, 0, 0, 0},
+	{{"sas", (sizeof("sas") - 1)}, /* */
+			PVT_OTHER, pv_get_srcaddr_socket, 0, 0, 0, 0, 0},
+	{{"sf", (sizeof("sf") - 1)}, /* */
+			PVT_OTHER, pv_get_sflags, pv_set_sflags, 0, 0, 0, 0},
+	{{"sF", (sizeof("sF") - 1)}, /* */
+			PVT_OTHER, pv_get_hexsflags, pv_set_sflags, 0, 0, 0, 0},
+	{{"Sf", (sizeof("sf") - 1)}, /* */
+			PVT_OTHER, pv_get_sflag, pv_set_sflag, pv_parse_flag_param, 0,
+			0, 0},
+	{{"src_ip", (sizeof("src_ip") - 1)}, /* */
+			PVT_OTHER, pv_get_srcip, 0, 0, 0, 0, 0},
+	{{"si", (sizeof("si") - 1)}, /* */
+			PVT_OTHER, pv_get_srcip, 0, 0, 0, 0, 0},
+	{{"siz", (sizeof("siz") - 1)}, /* */
+			PVT_OTHER, pv_get_srcipz, 0, 0, 0, 0, 0},
+	{{"sid", (sizeof("sid") - 1)}, /* server id */
+			PVT_OTHER, pv_get_server_id, 0, 0, 0, 0, 0},
+	{{"sp", (sizeof("sp") - 1)}, /* */
+			PVT_OTHER, pv_get_srcport, 0, 0, 0, 0, 0},
+	{{"su", (sizeof("su") - 1)}, /* */
+			PVT_OTHER, pv_get_srcaddr_uri, 0, 0, 0, 0, 0},
+	{{"sut", (sizeof("sut") - 1)}, /* */
+			PVT_OTHER, pv_get_srcaddr_uri_full, 0, 0, 0, 0, 0},
+	{{"td", (sizeof("td") - 1)}, /* */
+			PVT_OTHER, pv_get_to_attr, pv_set_to_domain, 0, 0,
+			pv_init_iname, 3},
+	{{"to.domain", (sizeof("to.domain") - 1)}, /* */
+			PVT_OTHER, pv_get_to_attr, pv_set_to_domain, 0, 0,
+			pv_init_iname, 3},
+	{{"tn", (sizeof("tn") - 1)}, /* */
+			PVT_OTHER, pv_get_to_attr, pv_set_to_display, 0, 0,
+			pv_init_iname, 5},
+	{{"tt", (sizeof("tt") - 1)}, /* */
+			PVT_OTHER, pv_get_to_attr, 0, 0, 0, pv_init_iname, 4},
+	{{"tu", (sizeof("tu") - 1)}, /* */
+			PVT_TO, pv_get_to_attr, pv_set_to_uri, 0, 0, pv_init_iname, 1},
+	{{"to", (sizeof("to") - 1)}, /* */
+			PVT_TO, pv_get_to_attr, pv_set_to_uri, 0, 0, pv_init_iname, 1},
+	{{"tU", (sizeof("tU") - 1)}, /* */
+			PVT_OTHER, pv_get_to_attr, pv_set_to_username, 0, 0,
+			pv_init_iname, 2},
+	{{"to.user", (sizeof("to.user") - 1)}, /* */
+			PVT_OTHER, pv_get_to_attr, pv_set_to_username, 0, 0,
+			pv_init_iname, 2},
+	{{"tUl", (sizeof("tUl") - 1)}, /* */
+			PVT_OTHER, pv_get_to_attr, pv_set_to_username, 0, 0,
+			pv_init_iname, 6},
+	{{"true", (sizeof("true") - 1)}, /* */
+			PVT_OTHER, pv_get_true, 0, 0, 0, 0, 0},
+	{{"Tb", (sizeof("Tb") - 1)}, /* */
+			PVT_OTHER, pv_get_timeb, 0, 0, 0, 0, 0},
+	{{"Tf", (sizeof("Tf") - 1)}, /* */
+			PVT_CONTEXT, pv_get_timef, 0, 0, 0, 0, 0},
+	{{"TF", (sizeof("TF") - 1)}, /* */
+			PVT_OTHER, pv_get_timenowf, 0, 0, 0, 0, 0},
+	{{"Ts", (sizeof("Ts") - 1)}, /* */
+			PVT_CONTEXT, pv_get_times, 0, 0, 0, 0, 0},
+	{{"TS", (sizeof("TS") - 1)}, /* */
+			PVT_OTHER, pv_get_timenows, 0, 0, 0, 0, 0},
+	{{"ua", (sizeof("ua") - 1)}, /* */
+			PVT_OTHER, pv_get_useragent, 0, 0, 0, 0, 0},
+	{{"ruid", (sizeof("ruid") - 1)}, /* */
+			PVT_OTHER, pv_get_ruid, 0, 0, 0, 0, 0},
+	{{"location_ua", (sizeof("location_ua") - 1)}, /* */
+			PVT_OTHER, pv_get_location_ua, 0, 0, 0, 0, 0},
+
+	{{"shv", (sizeof("shv") - 1)}, PVT_OTHER, pv_get_shvar, pv_set_shvar,
+			pv_parse_shvar_name, 0, 0, 0},
+	{{"shvinc", (sizeof("shvinc") - 1)}, PVT_OTHER, pv_get_shvinc, 0,
+			pv_parse_shvar_name, 0, 0, 0},
+	{{"time", (sizeof("time") - 1)}, PVT_CONTEXT, pv_get_local_time, 0,
+			pv_parse_time_name, 0, 0, 0},
+	{{"timef", (sizeof("timef") - 1)}, PVT_CONTEXT, pv_get_local_strftime,
+			0, pv_parse_strftime_name, 0, 0, 0},
+	{{"utime", (sizeof("utime") - 1)}, PVT_CONTEXT, pv_get_utc_time, 0,
+			pv_parse_time_name, 0, 0, 0},
+	{{"utimef", (sizeof("utimef") - 1)}, PVT_CONTEXT, pv_get_utc_strftime,
+			0, pv_parse_strftime_name, 0, 0, 0},
+	{{"TV", (sizeof("TV") - 1)}, PVT_OTHER, pv_get_timeval, 0,
+			pv_parse_timeval_name, 0, 0, 0},
+	{{"nh", (sizeof("nh") - 1)}, PVT_OTHER, pv_get_nh, 0, pv_parse_nh_name,
+			0, 0, 0},
+	{{"version", (sizeof("version") - 1)}, PVT_OTHER, pv_get_sr_version, 0,
+			pv_parse_sr_version_name, 0, 0, 0},
+	{{"K", (sizeof("K") - 1)}, PVT_OTHER, pv_get_K, 0, pv_parse_K_name, 0,
+			0, 0},
+	{{"expires", (sizeof("expires") - 1)}, PVT_OTHER, pv_get_expires, 0,
+			pv_parse_expires_name, 0, 0, 0},
+	{{"msg", (sizeof("msg") - 1)}, PVT_OTHER, pv_get_msg_attrs, 0,
+			pv_parse_msg_attrs_name, 0, 0, 0},
+	{{"ksr", (sizeof("ksr") - 1)}, PVT_OTHER, pv_get_ksr_attrs, 0,
+			pv_parse_ksr_attrs_name, 0, 0, 0},
+	{{"rpl", (sizeof("rpl") - 1)}, PVT_OTHER, pv_get_rpl_attrs, 0,
+			pv_parse_rpl_attrs_name, 0, 0, 0},
+	{{"ccp", (sizeof("ccp") - 1)}, PVT_OTHER, pv_get_ccp_attrs,
+			pv_set_ccp_attrs, pv_parse_ccp_attrs_name, 0, 0, 0},
+	{{"via0", (sizeof("via0") - 1)}, PVT_OTHER, pv_get_via0, 0,
+			pv_parse_via_name, 0, 0, 0},
+	{{"via1", (sizeof("via1") - 1)}, PVT_OTHER, pv_get_via1, 0,
+			pv_parse_via_name, 0, 0, 0},
+	{{"viaZ", (sizeof("viaZ") - 1)}, PVT_OTHER, pv_get_viaZ, 0,
+			pv_parse_via_name, 0, 0, 0},
+	{{"msgbuf", (sizeof("msgbuf") - 1)}, PVT_OTHER, pv_get_msgbuf,
+			pv_set_msgbuf, pv_parse_msgbuf_name, 0, 0, 0},
+
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
+
 static param_export_t params[] = {
-		{"shvset", PARAM_STRING | USE_FUNC_PARAM, (void *)param_set_shvar},
-		{"varset", PARAM_STRING | USE_FUNC_PARAM, (void *)param_set_var},
-		{"avp_aliases", PARAM_STRING | USE_FUNC_PARAM, (void *)add_avp_aliases},
-		{0, 0, 0}};
+	{"shvset", PARAM_STRING | USE_FUNC_PARAM, (void *)param_set_shvar},
+	{"varset", PARAM_STRING | USE_FUNC_PARAM, (void *)param_set_var},
+	{"avp_aliases", PARAM_STRING | USE_FUNC_PARAM, (void *)add_avp_aliases},
+
+	{0, 0, 0}
+};
+/* clang-format on */
 
 static int mod_init(void);
 static void mod_destroy(void);
@@ -475,6 +466,8 @@ static int w_xavp_copy_dst(sip_msg_t *msg, char *src_name, char *src_idx,
 		char *dst_name, char *dst_idx);
 static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
 static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname);
+static int w_xavp_params_implode_qval(
+		sip_msg_t *msg, char *pxname, char *pvname);
 static int w_xavu_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
 static int w_xavu_params_implode(sip_msg_t *msg, char *pxname, char *pvname);
 static int w_xavp_slist_explode(
@@ -511,80 +504,87 @@ static int fixup_free_xavp_child_seti(void **param, int param_no);
 static int pv_init_rpc(void);
 int pv_register_api(pv_api_t *);
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"pv_isset", (cmd_function)pv_isset, 1, fixup_pvar_null, 0, ANY_ROUTE},
-		{"pv_unset", (cmd_function)pv_unset, 1, fixup_pvar_null, 0, ANY_ROUTE},
-		{"pv_xavp_print", (cmd_function)pv_xavp_print, 0, 0, 0, ANY_ROUTE},
-		{"pv_xavu_print", (cmd_function)pv_xavu_print, 0, 0, 0, ANY_ROUTE},
-		{"pv_xavi_print", (cmd_function)pv_xavi_print, 0, 0, 0, ANY_ROUTE},
-		{"pv_var_to_xavp", (cmd_function)w_var_to_xavp, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"pv_xavp_to_var", (cmd_function)w_xavp_to_var, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"is_int", (cmd_function)is_int, 1, fixup_pvar_null,
-				fixup_free_pvar_null, ANY_ROUTE},
-		{"typeof", (cmd_function)pv_typeof, 2, fixup_pvar_none,
-				fixup_free_pvar_none, ANY_ROUTE},
-		{"not_empty", (cmd_function)pv_not_empty, 1, fixup_pvar_null,
-				fixup_free_pvar_null, ANY_ROUTE},
-		{"xavp_copy", (cmd_function)w_xavp_copy, 3, pv_xavp_copy_fixup, 0,
-				ANY_ROUTE},
-		{"xavp_copy", (cmd_function)w_xavp_copy_dst, 4, pv_xavp_copy_fixup, 0,
-				ANY_ROUTE},
-		{"xavp_slist_explode", (cmd_function)w_xavp_slist_explode, 4,
-				fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
-		{"xavp_params_explode", (cmd_function)w_xavp_params_explode, 2,
-				fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
-		{"xavp_params_implode", (cmd_function)w_xavp_params_implode, 2,
-				fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
-		{"xavu_params_explode", (cmd_function)w_xavu_params_explode, 2,
-				fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
-		{"xavu_params_implode", (cmd_function)w_xavu_params_implode, 2,
-				fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
-		{"xavp_child_seti", (cmd_function)w_xavp_child_seti, 3,
-				fixup_xavp_child_seti, fixup_free_xavp_child_seti, ANY_ROUTE},
-		{"xavp_child_sets", (cmd_function)w_xavp_child_sets, 3, fixup_spve_all,
-				fixup_free_spve_all, ANY_ROUTE},
-		{"xavp_rm", (cmd_function)w_xavp_rm, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"xavp_child_rm", (cmd_function)w_xavp_child_rm, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"xavi_child_seti", (cmd_function)w_xavi_child_seti, 3,
-				fixup_xavp_child_seti, fixup_free_xavp_child_seti, ANY_ROUTE},
-		{"xavi_child_sets", (cmd_function)w_xavi_child_sets, 3, fixup_spve_all,
-				fixup_free_spve_all, ANY_ROUTE},
-		{"xavi_rm", (cmd_function)w_xavi_rm, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"xavi_child_rm", (cmd_function)w_xavi_child_rm, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"xavp_lshift", (cmd_function)w_xavp_lshift, 2, fixup_spve_igp,
-				fixup_free_spve_igp, ANY_ROUTE},
-		{"xavp_push_dst", (cmd_function)w_xavp_push_dst, 1, fixup_spve_null,
-				fixup_free_spve_null,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"sbranch_set_ruri", (cmd_function)w_sbranch_set_ruri, 0, 0, 0,
-				ANY_ROUTE},
-		{"sbranch_append", (cmd_function)w_sbranch_append, 0, 0, 0, ANY_ROUTE},
-		{"sbranch_reset", (cmd_function)w_sbranch_reset, 0, 0, 0, ANY_ROUTE},
-		{"pv_evalx", (cmd_function)w_pv_evalx, 2, pv_evalx_fixup, 0, ANY_ROUTE},
-		/* API exports */
-		{"pv_register_api", (cmd_function)pv_register_api, NO_SCRIPT, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
+	{"pv_isset", (cmd_function)pv_isset, 1, fixup_pvar_null, 0, ANY_ROUTE},
+	{"pv_unset", (cmd_function)pv_unset, 1, fixup_pvar_null, 0, ANY_ROUTE},
+	{"pv_xavp_print", (cmd_function)pv_xavp_print, 0, 0, 0, ANY_ROUTE},
+	{"pv_xavu_print", (cmd_function)pv_xavu_print, 0, 0, 0, ANY_ROUTE},
+	{"pv_xavi_print", (cmd_function)pv_xavi_print, 0, 0, 0, ANY_ROUTE},
+	{"pv_var_to_xavp", (cmd_function)w_var_to_xavp, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"pv_xavp_to_var", (cmd_function)w_xavp_to_var, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"is_int", (cmd_function)is_int, 1, fixup_pvar_null,
+			fixup_free_pvar_null, ANY_ROUTE},
+	{"typeof", (cmd_function)pv_typeof, 2, fixup_pvar_none,
+			fixup_free_pvar_none, ANY_ROUTE},
+	{"not_empty", (cmd_function)pv_not_empty, 1, fixup_pvar_null,
+			fixup_free_pvar_null, ANY_ROUTE},
+	{"xavp_copy", (cmd_function)w_xavp_copy, 3, pv_xavp_copy_fixup, 0,
+			ANY_ROUTE},
+	{"xavp_copy", (cmd_function)w_xavp_copy_dst, 4, pv_xavp_copy_fixup, 0,
+			ANY_ROUTE},
+	{"xavp_slist_explode", (cmd_function)w_xavp_slist_explode, 4,
+			fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"xavp_params_explode", (cmd_function)w_xavp_params_explode, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"xavp_params_implode", (cmd_function)w_xavp_params_implode, 2,
+			fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
+	{"xavp_params_implode_qval", (cmd_function)w_xavp_params_implode_qval,
+			2, fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
+	{"xavu_params_explode", (cmd_function)w_xavu_params_explode, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"xavu_params_implode", (cmd_function)w_xavu_params_implode, 2,
+			fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
+	{"xavp_child_seti", (cmd_function)w_xavp_child_seti, 3,
+			fixup_xavp_child_seti, fixup_free_xavp_child_seti, ANY_ROUTE},
+	{"xavp_child_sets", (cmd_function)w_xavp_child_sets, 3, fixup_spve_all,
+			fixup_free_spve_all, ANY_ROUTE},
+	{"xavp_rm", (cmd_function)w_xavp_rm, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"xavp_child_rm", (cmd_function)w_xavp_child_rm, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"xavi_child_seti", (cmd_function)w_xavi_child_seti, 3,
+			fixup_xavp_child_seti, fixup_free_xavp_child_seti, ANY_ROUTE},
+	{"xavi_child_sets", (cmd_function)w_xavi_child_sets, 3, fixup_spve_all,
+			fixup_free_spve_all, ANY_ROUTE},
+	{"xavi_rm", (cmd_function)w_xavi_rm, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"xavi_child_rm", (cmd_function)w_xavi_child_rm, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"xavp_lshift", (cmd_function)w_xavp_lshift, 2, fixup_spve_igp,
+			fixup_free_spve_igp, ANY_ROUTE},
+	{"xavp_push_dst", (cmd_function)w_xavp_push_dst, 1, fixup_spve_null,
+			fixup_free_spve_null,
+			REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"sbranch_set_ruri", (cmd_function)w_sbranch_set_ruri, 0, 0, 0,
+			ANY_ROUTE},
+	{"sbranch_append", (cmd_function)w_sbranch_append, 0, 0, 0, ANY_ROUTE},
+	{"sbranch_reset", (cmd_function)w_sbranch_reset, 0, 0, 0, ANY_ROUTE},
+	{"pv_evalx", (cmd_function)w_pv_evalx, 2, pv_evalx_fixup, 0, ANY_ROUTE},
+
+	/* API exports */
+	{"pv_register_api", (cmd_function)pv_register_api, NO_SCRIPT, 0, 0},
+
+	{0, 0, 0, 0, 0, 0}
+};
 
 
 /** module exports */
 struct module_exports exports = {
-		"pv",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* pv exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	"pv",			 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	params,			 /* param exports */
+	0,				 /* RPC method exports */
+	mod_pvs,		 /* pv exports */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	0,				 /* per-child init function */
+	mod_destroy		 /* module destroy function */
 };
+/* clang-format on */
 
 static int mod_init(void)
 {
@@ -1119,7 +1119,8 @@ static int ki_xavu_params_explode(sip_msg_t *msg, str *sparams, str *sxname)
 /**
  *
  */
-static int ki_xavp_params_implode(sip_msg_t *msg, str *sxname, str *svname)
+static int ki_xavp_params_implode_mode(
+		sip_msg_t *msg, str *sxname, int mode, str *svname)
 {
 	pv_spec_t *vspec = NULL;
 	pv_value_t val;
@@ -1144,7 +1145,8 @@ static int ki_xavp_params_implode(sip_msg_t *msg, str *sxname, str *svname)
 	}
 
 	val.rs.s = pv_get_buffer();
-	val.rs.len = xavp_serialize_fields(sxname, val.rs.s, pv_get_buffer_size());
+	val.rs.len = xavp_serialize_fields_style(
+			sxname, mode, val.rs.s, pv_get_buffer_size());
 	if(val.rs.len <= 0) {
 		return -1;
 	}
@@ -1161,6 +1163,14 @@ static int ki_xavp_params_implode(sip_msg_t *msg, str *sxname, str *svname)
 /**
  *
  */
+static int ki_xavp_params_implode(sip_msg_t *msg, str *sxname, str *svname)
+{
+	return ki_xavp_params_implode_mode(msg, sxname, 0, svname);
+}
+
+/**
+ *
+ */
 static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname)
 {
 	str sxname;
@@ -1171,6 +1181,30 @@ static int w_xavp_params_implode(sip_msg_t *msg, char *pxname, char *pvname)
 	}
 
 	return ki_xavp_params_implode(msg, &sxname, (str *)pvname);
+}
+
+/**
+ *
+ */
+static int ki_xavp_params_implode_qval(sip_msg_t *msg, str *sxname, str *svname)
+{
+	return ki_xavp_params_implode_mode(msg, sxname, XAVP_PRINT_QVAL, svname);
+}
+
+/**
+ *
+ */
+static int w_xavp_params_implode_qval(
+		sip_msg_t *msg, char *pxname, char *pvname)
+{
+	str sxname;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pxname, &sxname) != 0) {
+		LM_ERR("cannot get the xavp name\n");
+		return -1;
+	}
+
+	return ki_xavp_params_implode_qval(msg, &sxname, (str *)pvname);
 }
 
 /**
@@ -2864,6 +2898,11 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("pvx"), str_init("xavp_params_implode_qval"),
+		SR_KEMIP_INT, ki_xavp_params_implode_qval,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("pvx"), str_init("xavu_params_explode"),
 		SR_KEMIP_INT, ki_xavu_params_explode,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
@@ -3193,8 +3232,14 @@ static const char *rpc_shv_set_doc[2] = {
 static const char *rpc_shv_get_doc[2] = {
 		"Get the value of a shared variable. If no argument, dumps all", 0};
 
-rpc_export_t pv_rpc[] = {{"pv.shvSet", rpc_shv_set, rpc_shv_set_doc, 0},
-		{"pv.shvGet", rpc_shv_get, rpc_shv_get_doc, 0}, {0, 0, 0, 0}};
+/* clang-format off */
+rpc_export_t pv_rpc[] = {
+	{"pv.shvSet", rpc_shv_set, rpc_shv_set_doc, 0},
+	{"pv.shvGet", rpc_shv_get, rpc_shv_get_doc, 0},
+
+	{0, 0, 0, 0}
+};
+/* clang-format on */
 
 static int pv_init_rpc(void)
 {

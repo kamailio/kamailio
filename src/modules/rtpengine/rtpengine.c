@@ -2836,7 +2836,7 @@ error:
 
 static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf,
 		struct sip_msg *msg, enum rtpe_operation op, const char *flags_str,
-		str *body_out)
+		str *body_out, str *cl_field)
 {
 	struct ng_flags_parse ng_flags;
 	bencode_item_t *item, *resp;
@@ -2902,7 +2902,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf,
 				body = pv_val.rs;
 			}
 
-		} else if((cont_type = extract_body(msg, &body)) == -1) {
+		} else if((cont_type = extract_body(msg, &body, cl_field)) == -1) {
 			LM_ERR("can't extract body from the message\n");
 			goto error;
 		}
@@ -3239,7 +3239,7 @@ static int rtpp_function_call_simple(
 	bencode_buffer_t bencbuf;
 	bencode_item_t *ret;
 
-	ret = rtpp_function_call(&bencbuf, msg, op, flags_str, NULL);
+	ret = rtpp_function_call(&bencbuf, msg, op, flags_str, NULL, NULL);
 	if(!ret)
 		return -1;
 
@@ -3262,11 +3262,11 @@ static int rtpengine_simple_wrap(
 
 static bencode_item_t *rtpp_function_call_ok(bencode_buffer_t *bencbuf,
 		struct sip_msg *msg, enum rtpe_operation op, const char *flags_str,
-		str *body)
+		str *body, str *cl_field)
 {
 	bencode_item_t *ret;
 
-	ret = rtpp_function_call(bencbuf, msg, op, flags_str, body);
+	ret = rtpp_function_call(bencbuf, msg, op, flags_str, body, cl_field);
 	if(!ret)
 		return NULL;
 
@@ -4092,7 +4092,7 @@ static int rtpengine_delete(struct sip_msg *msg, const char *flags)
 {
 	bencode_buffer_t bencbuf;
 	bencode_item_t *ret =
-			rtpp_function_call_ok(&bencbuf, msg, OP_DELETE, flags, NULL);
+			rtpp_function_call_ok(&bencbuf, msg, OP_DELETE, flags, NULL, NULL);
 	if(!ret)
 		return -1;
 	parse_call_stats(ret, msg);
@@ -4104,7 +4104,7 @@ static int rtpengine_query(struct sip_msg *msg, const char *flags)
 {
 	bencode_buffer_t bencbuf;
 	bencode_item_t *ret =
-			rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, flags, NULL);
+			rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, flags, NULL, NULL);
 	if(!ret)
 		return -1;
 	parse_call_stats(ret, msg);
@@ -4385,9 +4385,11 @@ static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags,
 	str body, newbody;
 	struct lump *anchor;
 	pv_value_t pv_val;
-	str cur_body = {0, 0};
+	str cur_body = STR_NULL;
+	str cl_field = STR_NULL;
+	str cl_repl = STR_NULL;
 
-	dict = rtpp_function_call_ok(&bencbuf, msg, op, flags, &body);
+	dict = rtpp_function_call_ok(&bencbuf, msg, op, flags, &body, &cl_field);
 	if(!dict)
 		return -1;
 
@@ -4417,6 +4419,21 @@ static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags,
 			pkg_free(newbody.s);
 
 		} else {
+			if (cl_field.len) {
+				anchor = del_lump(msg, cl_field.s - msg->buf, cl_field.len, 0);
+				cl_repl.s = pkg_malloc(10);
+				if (!cl_repl.s) {
+					LM_ERR("pkg_malloc for Content-Length failed\n");
+					goto error_free;
+				}
+				cl_repl.len = snprintf(cl_repl.s, 10, "%i", (int) newbody.len);
+				if (!insert_new_lump_after(anchor, cl_repl.s, cl_repl.len, 0)) {
+					LM_ERR("insert_new_lump_after failed\n");
+					goto error_free;
+				}
+				cl_repl.s = NULL;
+			}
+
 			if(read_sdp_pvar_str.len > 0) {
 				/* get the body from the message as body ptr may have changed
 				 * when using read_sdp_pv */
@@ -4444,6 +4461,8 @@ static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags,
 
 error_free:
 	pkg_free(newbody.s);
+	if (cl_repl.s)
+		pkg_free(cl_repl.s);
 error:
 	bencode_buffer_free(&bencbuf);
 	return -1;
@@ -4507,7 +4526,7 @@ static int rtpengine_play_media(
 	pv_value_t val;
 	int retval = 1;
 
-	ret = rtpp_function_call_ok(&bencbuf, msg, OP_PLAY_MEDIA, d, NULL);
+	ret = rtpp_function_call_ok(&bencbuf, msg, OP_PLAY_MEDIA, d, NULL, NULL);
 	if(!ret)
 		return -1;
 	if(media_duration_pvar) {
@@ -4571,7 +4590,7 @@ static int rtpengine_rtpstat_wrap(
 	param = parms[0];
 	res = parms[1];
 
-	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL);
+	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL, NULL);
 	if(!dict)
 		return -1;
 
@@ -4740,7 +4759,7 @@ static int rtpengine_query_v_wrap(
 	fmt = parms[0];
 	dst = parms[1];
 
-	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL);
+	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL, NULL);
 	if(!dict) {
 		return -1;
 	}

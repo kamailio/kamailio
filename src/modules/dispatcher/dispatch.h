@@ -160,7 +160,6 @@ int ds_log_sets(void);
 int ds_list_exist(int set);
 int ds_is_active_uri(sip_msg_t *msg, int group, str *uri);
 
-
 int ds_load_unset(struct sip_msg *msg);
 int ds_load_update(struct sip_msg *msg);
 
@@ -218,6 +217,7 @@ typedef struct _ds_latency_stats {
 } ds_latency_stats_t;
 
 void latency_stats_init(ds_latency_stats_t *latency_stats, int latency, int count);
+ds_latency_stats_t *latency_stats_find(int group, str *address);
 
 typedef struct _ds_dest {
 	str uri;          /*!< address/uri */
@@ -276,6 +276,8 @@ struct ds_filter_dest_cb_arg {
 
 ds_set_t *ds_get_list(void);
 int ds_get_list_nr(void);
+
+ds_set_t *ds_list_lookup(int set);
 
 int ds_ping_active_init(void);
 int ds_ping_active_get(void);

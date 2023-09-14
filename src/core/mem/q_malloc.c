@@ -788,6 +788,30 @@ void *qm_reallocxf(void *qmp, void *p, size_t size)
 }
 
 
+void qm_setfunc(void *qmp, void *p, char *func)
+{
+#ifndef DBG_QM_MALLOC
+	LM_ERR("used with invalid compile options\n");
+	return;
+#else
+	struct qm_block *qm;
+	struct qm_frag *f;
+
+	qm = (struct qm_block *)qmp;
+
+	if((p) && (p > (void *)qm->last_frag_end || p < (void *)qm->first_frag)) {
+		LM_CRIT("BUG: bad pointer %p (out of memory block!) - "
+				"aborting\n",
+				p);
+		abort();
+	}
+	f = (struct qm_frag *)((char *)p - sizeof(struct qm_frag));
+
+	if(f)
+		f->func = func;
+#endif
+}
+
 void qm_check(struct qm_block *qm)
 {
 	struct qm_frag *f;
@@ -1507,6 +1531,7 @@ int qm_malloc_init_shm_manager(void)
 	ma.xfmodstats = qm_shm_mod_free_stats;
 	ma.xglock = qm_shm_glock;
 	ma.xgunlock = qm_shm_gunlock;
+	ma.xsetfunc = qm_setfunc;
 
 	if(shm_init_api(&ma) < 0) {
 		LM_ERR("cannot initialize the core shm api\n");

@@ -2303,5 +2303,40 @@ msg_apply_changes();
 		</example>
 	</section>
 
+	<section id="textops.f.via_param_rm">
+		<title>
+		<function moreinfo="none">via_param_rm(name, idx)</function>
+		</title>
+		<para>
+		Remove parameter matching by name from Via body at the specified index.
+		The index starts from 0 (first Via body). Negative index counts from the
+		end of the list for Via header bodies (-1 is the last Via body).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>name</emphasis> - name of the parameter
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>idx</emphasis> - index of the Via body.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>The parameters can also be variables.</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>via_param_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+via_param_rm("p1", "0");
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 </chapter>

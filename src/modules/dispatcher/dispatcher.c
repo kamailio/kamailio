@@ -101,6 +101,7 @@ str ds_ping_method = str_init("OPTIONS");
 str ds_ping_from   = str_init("sip:dispatcher@localhost");
 static int ds_ping_interval = 0;
 int ds_ping_latency_stats = 0;
+int ds_retain_latency_stats = 0;
 int ds_latency_estimator_alpha_i = 900;
 float ds_latency_estimator_alpha = 0.9f;
 int ds_probing_mode = DS_PROBE_NONE;
@@ -183,6 +184,7 @@ static int w_ds_reload(struct sip_msg* msg, char*, char*);
 
 static int w_ds_is_active(sip_msg_t *msg, char *pset, char *p2);
 static int w_ds_is_active_uri(sip_msg_t *msg, char *pset, char *puri);
+static int w_ds_dsg_fetch(sip_msg_t *msg, char *pset, char *p2);
 
 static int fixup_ds_is_from_list(void** param, int param_no);
 static int fixup_ds_list_exist(void** param,int param_no);
@@ -193,10 +195,15 @@ static int ds_warn_fixup(void** param, int param_no);
 
 static int pv_get_dsv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_dsv(pv_spec_p sp, str *in);
+static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+static int pv_parse_dsg(pv_spec_p sp, str *in);
+static void ds_dsg_fetch(int dg);
 
 static pv_export_t mod_pvs[] = {
 	{ {"dsv", (sizeof("dsv")-1)}, PVT_OTHER, pv_get_dsv, 0,
 		pv_parse_dsv, 0, 0, 0 },
+	{ {"dsg", (sizeof("dsg")-1)}, PVT_OTHER, pv_get_dsg, 0,
+		pv_parse_dsg, 0, 0, 0 },
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -254,6 +261,8 @@ static cmd_export_t cmds[]={
 		0, 0, 0},
 	{"ds_reload", (cmd_function)w_ds_reload, 0,
 		0, 0, ANY_ROUTE},
+	{"ds_dsg_fetch",  (cmd_function)w_ds_dsg_fetch, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -283,6 +292,7 @@ static param_export_t params[]={
 	{"ds_ping_from",       PARAM_STR, &ds_ping_from},
 	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
 	{"ds_ping_latency_stats", INT_PARAM, &ds_ping_latency_stats},
+	{"ds_retain_latency_stats", INT_PARAM, &ds_retain_latency_stats},
 	{"ds_latency_estimator_alpha", INT_PARAM, &ds_latency_estimator_alpha_i},
 	{"ds_ping_reply_codes", PARAM_STR, &ds_ping_reply_codes_str},
 	{"ds_probing_mode",    INT_PARAM, &ds_probing_mode},
@@ -1331,6 +1341,134 @@ static int pv_parse_dsv(pv_spec_p sp, str *in)
 		case 6:
 			if(strncmp(in->s, "reason", 6) == 0)
 				sp->pvp.pvn.u.isname.name.n = 1;
+			else
+				goto error;
+			break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+static int _pv_dsg_fetch = 1;
+
+/**
+ *
+ */
+static void ds_dsg_fetch(int dg)
+{
+	_pv_dsg_fetch = dg;
+}
+
+/**
+ *
+ */
+static int w_ds_dsg_fetch(sip_msg_t *msg, char *pset, char *p2)
+{
+	int set;
+
+	if(fixup_get_ivalue(msg, (gparam_p)pset, &set) != 0) {
+		LM_ERR("cannot get set id param value\n");
+		return -1;
+	}
+	ds_dsg_fetch(set);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	ds_set_t *dsg;
+	int count = 0;
+	int active = 0;
+	int inactive = 0;
+	int j = 0;
+
+	if(param == NULL) {
+		return -1;
+	}
+	dsg = ds_list_lookup(_pv_dsg_fetch);
+
+	if(dsg == NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	lock_get(&dsg->lock);
+	count = dsg->nr;
+	for(j = 0; j < dsg->nr; j++) {
+		if(ds_skip_dst(dsg->dlist[j].flags)) {
+			inactive++;
+		} else {
+			active++;
+		}
+	}
+	lock_release(&dsg->lock);
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* count */
+			return pv_get_sintval(msg, param, res, count);
+		case 1: /* active */
+			return pv_get_sintval(msg, param, res, active);
+		case 2: /* inactive */
+			return pv_get_sintval(msg, param, res, inactive);
+		case 3: /* pactive */
+			return pv_get_sintval(msg, param, res, (int)((active*100)/count));
+		case 4: /* pinactive */
+			return pv_get_sintval(msg, param, res, (int)((inactive*100)/count));
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
+/**
+ *
+ */
+static int pv_parse_dsg(pv_spec_p sp, str *in)
+{
+	if(sp == NULL || in == NULL || in->len <= 0)
+		return -1;
+
+	switch(in->len) {
+		case 5:
+			if(strncmp(in->s, "count", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else
+				goto error;
+			break;
+		case 6:
+			if(strncmp(in->s, "active", 6) == 0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else
+				goto error;
+			break;
+		case 7:
+			if(strncmp(in->s, "pactive", 7) == 0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else
+				goto error;
+			break;
+		case 8:
+			if(strncmp(in->s, "inactive", 8) == 0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else
+				goto error;
+			break;
+		case 9:
+			if(strncmp(in->s, "pinactive", 9) == 0)
+				sp->pvp.pvn.u.isname.name.n = 4;
 			else
 				goto error;
 			break;

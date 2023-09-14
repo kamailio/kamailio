@@ -57,6 +57,7 @@ int pdt_fetch_rows = 1000;
 
 /** structures containing prefix-domain pairs */
 pdt_tree_t **_ptree = NULL;
+int _pdt_mode = 0;
 
 /** database connection */
 static db1_con_t *db_con = NULL;
@@ -95,40 +96,47 @@ static int fixup_translate(void **param, int param_no);
 static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
 static int pdt_init_rpc(void);
 
-static cmd_export_t cmds[] = {{"prefix2domain", (cmd_function)w_prefix2domain,
-									  0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"prefix2domain", (cmd_function)w_prefix2domain_1, 1, fixup_igp_null, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"prefix2domain", (cmd_function)w_prefix2domain_2, 2, fixup_igp_igp, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"pd_translate", (cmd_function)w_pd_translate, 2, fixup_translate, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"prefix2domain", (cmd_function)w_prefix2domain,
+		0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"prefix2domain", (cmd_function)w_prefix2domain_1, 1, fixup_igp_null, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"prefix2domain", (cmd_function)w_prefix2domain_2, 2, fixup_igp_igp, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"pd_translate", (cmd_function)w_pd_translate, 2, fixup_translate, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
-		{"db_table", PARAM_STR, &db_table},
-		{"sdomain_column", PARAM_STR, &sdomain_column},
-		{"prefix_column", PARAM_STR, &prefix_column},
-		{"domain_column", PARAM_STR, &domain_column},
-		{"prefix", PARAM_STR, &pdt_prefix},
-		{"char_list", PARAM_STR, &pdt_char_list},
-		{"fetch_rows", INT_PARAM, &pdt_fetch_rows},
-		{"check_domain", INT_PARAM, &pdt_check_domain}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"db_url", PARAM_STR, &db_url},
+	{"db_table", PARAM_STR, &db_table},
+	{"sdomain_column", PARAM_STR, &sdomain_column},
+	{"prefix_column", PARAM_STR, &prefix_column},
+	{"domain_column", PARAM_STR, &domain_column},
+	{"prefix", PARAM_STR, &pdt_prefix},
+	{"char_list", PARAM_STR, &pdt_char_list},
+	{"fetch_rows", INT_PARAM, &pdt_fetch_rows},
+	{"check_domain", INT_PARAM, &pdt_check_domain},
+	{"mode", PARAM_INT, &_pdt_mode},
+	{0, 0, 0}
+};
 
 
 struct module_exports exports = {
-		"pdt",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per child init function */
-		mod_destroy		 /* destroy function */
+	"pdt",			 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd exports */
+	params,			 /* param exports */
+	0,				 /* RPC method exports */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* per child init function */
+	mod_destroy		 /* destroy function */
 };
-
+/* clang-format on */
 
 /**
  * init module function
@@ -846,9 +854,13 @@ error:
 }
 
 
+/* clang-format off */
 rpc_export_t pdt_rpc_cmds[] = {
-		{"pdt.reload", pdt_rpc_reload, pdt_rpc_reload_doc, 0},
-		{"pdt.list", pdt_rpc_list, pdt_rpc_list_doc, 0}, {0, 0, 0, 0}};
+	{"pdt.reload", pdt_rpc_reload, pdt_rpc_reload_doc, 0},
+	{"pdt.list", pdt_rpc_list, pdt_rpc_list_doc, 0},
+	{0, 0, 0, 0}
+};
+/* clang-format on */
 
 
 /**

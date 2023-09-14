@@ -156,7 +156,7 @@ static inline int do_auth(struct sip_msg *_m, struct hdr_field *_h, str *_realm,
 
 int autheph_verify_timestamp(str *_username)
 {
-	int pos = 0, cur_time = (int)time(NULL);
+	int pos = 0, cur_time = (int)(unsigned long long)time(NULL);
 	unsigned int expires;
 	str time_str = {0, 0};
 

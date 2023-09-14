@@ -357,17 +357,17 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 				case DB1_INT:
 					res->vals[i][j].flags = PV_VAL_INT;
 					res->vals[i][j].value.n =
-							(int)RES_ROWS(db_res)[i].values[j].val.int_val;
+							(long)RES_ROWS(db_res)[i].values[j].val.int_val;
 					break;
 				case DB1_DATETIME:
 					res->vals[i][j].flags = PV_VAL_INT;
 					res->vals[i][j].value.n =
-							(int)RES_ROWS(db_res)[i].values[j].val.time_val;
+							(long)RES_ROWS(db_res)[i].values[j].val.time_val;
 					break;
 				case DB1_BITMAP:
 					res->vals[i][j].flags = PV_VAL_INT;
 					res->vals[i][j].value.n =
-							(int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
+							(long)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
 					break;
 				case DB1_BIGINT:
 					res->vals[i][j].flags = PV_VAL_STR;

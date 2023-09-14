@@ -144,7 +144,7 @@ modparam("tm", "max_inv_lifetime", 150000)
 		<varname>fr_timer</varname> is that the 
 		<varname>fr_timer</varname> is per branch, while 
 		<varname>max_noninv_lifetime</varname> is per the whole transaction.
-		An example when a transaction can live substantially more then its
+		An example when a transaction can live substantially more than its
 		<varname>fr_timer</varname> and where
 		<varname>max_noninv_lifetime</varname> will help is when DNS failover
 		is used (each failed DNS SRV destination can introduce a new branch).
@@ -372,7 +372,7 @@ modparam("tm", "unix_tx_timeout", 250)
         <section id="tm.p.aggregate_challenges">
 	<title><varname>aggregate_challenges</varname> (integer)</title>
 	<para>
-		If set (default) and the final response is a 401 or a 407 and more than
+		If set (default), the final response is a 401 or a 407 and more than
 		one branch received a 401 or 407, then all the WWW-Authenticate and 
 		Proxy-Authenticate headers from all the 401 and 407 replies will 
 		be aggregated in a new final response. If only one branch received the
@@ -801,7 +801,7 @@ modparam("tm", "contact_flows_avp", "tm_contact_flows")
 	<section id="tm.p.fr_timer_avp" >
 		<title><varname>fr_timer_avp</varname> (string)</title>
 		<para>
-			The value of fr_timer timer can be overriden on per-transaction
+			The value of fr_timer timer can be overridden on per-transaction
 			basis. The administrator can provide a value to be used for a
 			particular transaction in an AVP. This parameter contains the name
 			of the AVP that will be checked. If the AVP exists then its value
@@ -846,7 +846,7 @@ modparam("tm", "fr_timer_avp", "i:708")
 	<section id="tm.p.fr_inv_timer_avp">
 		<title><varname>fr_inv_timer_avp</varname> (string)</title>
 		<para>
-			The value of fr_inv_timer timer can be overriden on
+			The value of fr_inv_timer timer can be overridden on
 			per-transaction basis. The administrator can provide a value to be
 			used for a particular transaction in an AVP. This parameter
 			contains the name of the AVP that will be checked. If the AVP
@@ -1177,7 +1177,7 @@ modparam("tm", "disable_6xx_block", 1)
 		</para></listitem>
 	</itemizedlist>
 	<note><para>
-	Mode 1 and 2 does not follow RFC 3261, but are useful to deal with some simple UAs
+	Modes 1 and 2 do not follow RFC 3261, but are useful to deal with some simple UAs
 	behind a NAT (no different routing for the ACK and the contact 
 	contains an address behind the NAT).
 	</para></note>
@@ -1274,8 +1274,8 @@ modparam("tm", "failure_reply_mode", 0)
 		</para></listitem>
 		<listitem><para>
 		<emphasis>&gt; 0</emphasis> - priority is decreased by given amount.
-		Do not make it higer than 10000 or faked replies will even loose
-		from 1xx clsss replies.
+		Do not make it higher than 10000 or faked replies will even loose
+		from 1xx class replies.
 		</para></listitem>
 	</itemizedlist>
 	<para>
@@ -1595,10 +1595,10 @@ modparam("tm", "exec_time_check", 0)
 	<section id="tm.p.reply_relay_mode">
 		<title><varname>reply_relay_mode</varname> (int)</title>
 		<para>
-			If set to 1, a received 200 OK response that was suspeneded is no
+			If set to 1, a received 200 OK response that was suspended is no
 			longer forwarded in the transactional context if another final
-			response was forward while 200 OK was suspended. Forwarding the 200 OK,
-			even it was received first, results in overwritting the transaction
+			response was forwarded while 200 OK was suspended. Forwarding the 200 OK,
+			even it was received first, results in overwriting the transaction
 			response buffer that can impact matching of incoming ACKs.
 		</para>
 		<para>
@@ -1626,6 +1626,7 @@ modparam("tm", "reply_relay_mode", 0)
 		<para>
 			Enable failure route trigger, for uac. This will copy the tm uac into uas.
 			Thus, failure route can be triggered even for uac messages.
+			The default is 0 (disabled).
 		</para>
 		<example>
 			<title>enable_uac_fr example</title>

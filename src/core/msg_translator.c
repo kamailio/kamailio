@@ -114,6 +114,7 @@ extern int version_len;
 
 str _ksr_xavp_via_params = STR_NULL;
 str _ksr_xavp_via_fields = STR_NULL;
+str _ksr_xavp_via_reply_params = STR_NULL;
 int ksr_local_rport = 0;
 
 /** per process fixup function for global_req_flags.
@@ -2319,6 +2320,8 @@ char *generate_res_buf_from_sip_res(
 	unsigned offset, s_offset, via_offset;
 	char *buf;
 	unsigned int len;
+	str xparams;
+	sr_lump_t *anchor;
 
 	buf = msg->buf;
 	len = msg->len;
@@ -2335,6 +2338,26 @@ char *generate_res_buf_from_sip_res(
 		} else {
 			via_len = msg->h_via1->len;
 			via_offset = msg->h_via1->name.s - buf;
+		}
+	}
+
+	/* test and add xavp via reply params */
+	if(msg && msg->via2 && (msg->msg_flags & FL_ADD_XAVP_VIA_REPLY_PARAMS)
+			&& _ksr_xavp_via_reply_params.len > 0) {
+		xparams.s = pv_get_buffer();
+		xparams.len = xavp_serialize_fields_style(&_ksr_xavp_via_reply_params,
+				1, xparams.s, pv_get_buffer_size());
+		if(xparams.len > 0) {
+			LM_DBG("adding via reply xavp params\n");
+			anchor = anchor_lump(msg,
+					msg->via2->params.s + msg->via2->params.len - msg->buf, 0,
+					0);
+			if(anchor != NULL) {
+				if(insert_new_lump_after(anchor, xparams.s, xparams.len, 0)
+						== 0) {
+					LM_ERR("unable to add via reply xavp params\n");
+				}
+			}
 		}
 	}
 
@@ -2415,6 +2438,7 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 	char *totags;
 	int httpreq;
 	char *pvia;
+	str xparams = STR_NULL;
 
 	body = 0;
 	buf = 0;
@@ -2454,6 +2478,17 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 		}
 		if(msg->via1->rport)
 			len -= msg->via1->rport->size + 1; /* include ';' */
+	}
+
+	/* test and add xavp via reply params */
+	if(msg && (msg->msg_flags & FL_ADD_XAVP_VIA_REPLY_PARAMS)
+			&& _ksr_xavp_via_reply_params.len > 0) {
+		xparams.s = pv_get_buffer();
+		xparams.len = xavp_serialize_fields_style(&_ksr_xavp_via_reply_params,
+				1, xparams.s, pv_get_buffer_size());
+		if(xparams.len > 0) {
+			len += xparams.len; /* starting ';' included */
+		}
 	}
 
 	/* first line */
@@ -2587,6 +2622,9 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 					/* normal whole via copy */
 					append_str_trans(p, hdr->name.s,
 							(hdr->body.s + hdr->body.len) - hdr->name.s, msg);
+				}
+				if(xparams.len > 0) {
+					append_str(p, xparams.s, xparams.len);
 				}
 				append_str(p, CRLF, CRLF_LEN);
 				/* if is HTTP, replace Via with Sia

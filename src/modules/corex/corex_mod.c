@@ -70,6 +70,7 @@ static int w_set_source_address(sip_msg_t *msg, char *paddr, char *p2);
 static int w_via_add_srvid(sip_msg_t *msg, char *pflags, char *p2);
 static int w_via_add_xavp_params(sip_msg_t *msg, char *pflags, char *p2);
 static int w_via_use_xavp_fields(sip_msg_t *msg, char *pflags, char *p2);
+static int w_via_reply_add_xavp_params(sip_msg_t *msg, char *pflags, char *p2);
 static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2);
 static int w_is_socket_name(sip_msg_t *msg, char *psockname, char *p2);
 
@@ -155,6 +156,8 @@ static cmd_export_t cmds[] = {{"forward_reply", (cmd_function)w_forward_reply,
 		{"via_add_xavp_params", (cmd_function)w_via_add_xavp_params, 1,
 				fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 		{"via_use_xavp_fields", (cmd_function)w_via_use_xavp_fields, 1,
+				fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+		{"via_reply_add_xavp_params", (cmd_function)w_via_reply_add_xavp_params, 1,
 				fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 		{"is_faked_msg", (cmd_function)w_is_faked_msg, 0, 0, 0, ANY_ROUTE},
 		{"is_socket_name", (cmd_function)w_is_socket_name, 1, fixup_spve_null,
@@ -1114,6 +1117,33 @@ static int w_via_use_xavp_fields(sip_msg_t *msg, char *pflags, char *s2)
 	return ki_via_use_xavp_fields(msg, fval);
 }
 
+/**
+ *
+ */
+static int ki_via_reply_add_xavp_params(sip_msg_t *msg, int fval)
+{
+	if(msg == NULL)
+		return -1;
+	if(fval) {
+		msg->msg_flags |= FL_ADD_XAVP_VIA_REPLY_PARAMS;
+	} else {
+		msg->msg_flags &= ~(FL_ADD_XAVP_VIA_REPLY_PARAMS);
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_via_reply_add_xavp_params(sip_msg_t *msg, char *pflags, char *s2)
+{
+	int fval = 0;
+	if(fixup_get_ivalue(msg, (gparam_t *)pflags, &fval) != 0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_via_reply_add_xavp_params(msg, fval);
+}
 
 /**
  *
@@ -1314,6 +1344,11 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 	},
 	{ str_init("corex"), str_init("via_use_xavp_fields"),
 		SR_KEMIP_INT, ki_via_use_xavp_fields,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("via_reply_add_xavp_params"),
+		SR_KEMIP_INT, ki_via_reply_add_xavp_params,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

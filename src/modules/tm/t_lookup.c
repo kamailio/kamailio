@@ -114,7 +114,7 @@ static struct cell *T = NULL;
  * for the transaction currently processed.
  * It has a valid value only if T is valid (tm_global_ctx_id.{msgid, pid}==msg->{id, pid}
  * -- see above, and T!=0 and T!=T_UNDEFINED).
- * For a request it's value is T_BR_UNDEFINED (it can have valid values only
+ * For a request its value is T_BR_UNDEFINED (it can have valid values only
  * for replies).
  */
 static int T_branch = 0;
@@ -400,14 +400,14 @@ static int matching_3261(struct sip_msg *p_msg, struct cell **trans,
 		 * purpose of accounting. We think it is a bad place here, among
 		 * other things because it is not reliable. If a transaction loops
 		 * via server the ACK can't be matched to proper INVITE transaction
-		 * (it is a separate transactino with its own branch ID) and it
+		 * (it is a separate transaction with its own branch ID) and it
 		 * matches all transaction instances in the loop dialog-wise.
 		 * Eventually, regardless to which transaction in the loop the
 		 * ACK belongs, only the first one will match.
 		 */
 
 		/* dialog matching needs to be applied for ACK/200s but only if
-		 * this is a local transaction or its a proxied transaction interested
+		 * this is a local transaction or it is a proxied transaction interested
 		 *  in e2e ACKs (has E2EACK* callbacks installed) */
 		if(unlikely(is_ack && p_cell->uas.status < 300)) {
 			if(unlikely(has_tran_tmcbs(
@@ -584,7 +584,7 @@ int t_request_search(struct sip_msg *p_msg, struct cell **r_cell)
 			if(!t_msg)
 				continue; /* skip UAC transactions */
 			/* for non-ACKs we want same method matching, we
-			 * make an exception for pre-exisiting CANCELs because we
+			 * make an exception for pre-existing CANCELs because we
 			 * want to set *cancel */
 			if((t_msg->REQ_METHOD != p_msg->REQ_METHOD)
 					&& (t_msg->REQ_METHOD != METHOD_CANCEL))
@@ -831,7 +831,7 @@ int t_lookup_request(struct sip_msg *p_msg, int leave_new_locked, int *cancel)
 			if(!t_msg)
 				continue; /* skip UAC transactions */
 			/* for non-ACKs we want same method matching, we
-			 * make an exception for pre-exisiting CANCELs because we
+			 * make an exception for pre-existing CANCELs because we
 			 * want to set *cancel */
 			if((t_msg->REQ_METHOD != p_msg->REQ_METHOD)
 					&& (t_msg->REQ_METHOD != METHOD_CANCEL))

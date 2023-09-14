@@ -67,7 +67,7 @@ int compare_TopItem_hits(const void* left, const void *right)
 	TopItem *ri = (TopItem *)right;
 	return li->leaf_hits[0] + li->leaf_hits[1] - ri->leaf_hits[0] - ri->leaf_hits[1];
 }
-/** Compare function to qsort array in reverse order (biger first) */ 
+/** Compare function to qsort array in reverse order (bigger first) */
 int compare_TopItem_hits_reverse(const void* left, const void *right)
 {
 	return compare_TopItem_hits(right, left);
@@ -202,7 +202,8 @@ int process_options(int argc, char *argv[], int *options, int *mask_length)
 		}
 	}
 	if ( counter > 1 ) {
-		fprintf(stderr, "ERROR: Node type selectors are exlusive, only one of them can be used\n");
+		fprintf(stderr, "ERROR: Node type selectors are exclusive, only one of "
+						"them can be used\n");
 		print_help();
 		exit(1);
 	}
@@ -247,7 +248,7 @@ error:
  * @param rv contains newly allocated string or NULL if fails
  * @return 1 if succeed and 0 otherwise
  */
-/* FIXME terminates the programm if it fails  */
+/* FIXME terminates the programme if it fails  */
 int get_string_from_struct_by_name(xmlrpc_value *structP, const char *element_name, char **rv)
 {
 	xmlrpc_env env;
@@ -320,7 +321,7 @@ void key_value_pair_cleanup(key_value_pair *kvp)
  * @param rv pointer to key_value_pair
  * @return 1 if succeed and 0 otherwise
  */
-/* FIXME terminates the programm if it fails  */
+/* FIXME terminates the programme if it fails  */
 int get_struct_item_by_idx(xmlrpc_value *structP, int index, key_value_pair *rv)
 {
 	xmlrpc_env env;
@@ -537,12 +538,12 @@ int main( int argc, char *argv[] )
 //	printf("Struct size: %d\n", struct_size);
 
 	if ( ! get_int_from_struct_by_name(resultP, MAX_HITS, &max_hits) ) {
-		fprintf(stderr, "ERROR: %s not foung in result\n", MAX_HITS);
+		fprintf(stderr, "ERROR: %s not found in result\n", MAX_HITS);
 		exit (1);
 	}
 	printf("max_hits = %d\n", max_hits);
 	if ( ! get_int_from_struct_by_name(resultP, NUMBER_OF_ROWS, &rows) ) {
-		fprintf(stderr, "ERROR: %s not foung in result\n", NUMBER_OF_ROWS);
+		fprintf(stderr, "ERROR: %s not found in result\n", NUMBER_OF_ROWS);
 		exit (1);
 	}
 	printf("rows = %d\n", rows);

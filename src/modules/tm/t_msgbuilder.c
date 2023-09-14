@@ -401,7 +401,7 @@ char *build_local_reparse(tm_cell_t *Trans, unsigned int branch,
 					/* copy hf */
 					append_str(d, s1, s - s1);
 					first_via = 0;
-				} /* else skip this line, we need olny the first via */
+				} /* else skip this line, we need only the first via */
 				break;
 
 			case HDR_TO_T:
@@ -1059,7 +1059,7 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 				} else {
 					/* trash last entry and replace with new remote target */
 					free_rte_list(t);
-					/* compact the rr_t struct along with rte. this way, free'ing
+					/* compact the rr_t struct along with rte. This way, free'ing
 				 * it can be done along with rte chunk, independent of Route
 				 * header parser's allocator (using pkg/shm) */
 					chklen = sizeof(struct rte) + sizeof(rr_t);
@@ -1117,7 +1117,7 @@ error:
 /*
  * The function creates an ACK to 200 OK. Route set will be created
  * and parsed and the dst parameter will contain the destination to which
- * the request should be send. The function is used by tm when it
+ * the request should be sent. The function is used by tm when it
  * generates local ACK to 200 OK (on behalf of applications using uac)
  */
 char *build_dlg_ack(struct sip_msg *rpl, struct cell *Trans,
@@ -1860,7 +1860,7 @@ void t_uas_request_clean_parsed(tm_cell_t *t)
 		if(hdr->parsed && hdr_allocs_parse(hdr)
 				&& (hdr->parsed < mstart || hdr->parsed >= mend)) {
 			/* header parsed filed doesn't point inside fake memory
-			 * chunck -> it was added by failure funcs.-> free it as pkg */
+			 * chunk -> it was added by failure funcs.-> free it as pkg */
 			LM_DBG("removing hdr->parsed %d\n", hdr->type);
 			clean_hdr_field(hdr);
 			hdr->parsed = 0;

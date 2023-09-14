@@ -204,7 +204,7 @@ modparam("rabbitmq", "direct_reply_to", 1)
 				</itemizedlist>
 
 			<para>
-				This function can be used from REQUEST_ROUTE.
+				This function can be used from any route.
 			</para>
 
 			<example>

@@ -69,6 +69,7 @@
 #include "rx_aar.h"
 #include "ims_qos_mod.h"
 #include "../../core/parser/sdp/sdp.h"
+#include "../../core/kemi.h"
 
 #include "../../lib/ims/useful_defs.h"
 #include "ims_qos_stats.h"
@@ -164,10 +165,14 @@ int rs_default_bandwidth = 0;
 int rr_default_bandwidth = 0;
 
 /* commands wrappers and fixups */
-static int w_rx_aar(
-		struct sip_msg *msg, char *route, char *dir, char *id, int id_type);
+static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *id,
+		int id_type, int cfg_type);
 static int w_rx_aar_register(
-		struct sip_msg *msg, char *route, char *str1, char *bar);
+		struct sip_msg *msg, char *route, char *str1, int cfg_type);
+
+static int cfg_rx_aar(
+		struct sip_msg *msg, char *route, char *dir, char *id, int id_type);
+static int cfg_rx_aar_register(struct sip_msg *msg, char *route, char *str1);
 
 struct _pv_req_data
 {
@@ -205,9 +210,9 @@ static int pv_t_copy_msg(struct sip_msg *src, struct sip_msg *dst)
 }
 
 
-static cmd_export_t cmds[] = {{"Rx_AAR", (cmd_function)w_rx_aar, 4, fixup_aar,
-									  0, REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"Rx_AAR_Register", (cmd_function)w_rx_aar_register, 2,
+static cmd_export_t cmds[] = {
+		{"Rx_AAR", (cmd_function)cfg_rx_aar, 4, fixup_aar, 0, ONREPLY_ROUTE},
+		{"Rx_AAR_Register", (cmd_function)cfg_rx_aar_register, 2,
 				fixup_aar_register, 0, REQUEST_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 
@@ -728,8 +733,14 @@ uint16_t check_ip_version(str ip)
 /* Wrapper to send AAR from config file - this only allows for AAR for calls - not register, which uses r_rx_aar_register
  * return: 1 - success, <=0 failure. 2 - message not an AAR generating message (ie proceed without PCC if you wish)
  */
-static int w_rx_aar(
+static int cfg_rx_aar(
 		struct sip_msg *msg, char *route, char *dir, char *c_id, int id_type)
+{
+	return w_rx_aar(msg, route, dir, c_id, id_type, 0);
+}
+
+static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
+		int id_type, int cfg_type)
 {
 
 	int ret = CSCF_RETURN_ERROR;
@@ -758,14 +769,26 @@ static int w_rx_aar(
 	saved_transaction_t *saved_t_data =
 			0; //data specific to each contact's AAR async call
 	char *direction = dir;
-	if(fixup_get_svalue(msg, (gparam_t *)route, &route_name) != 0) {
-		LM_ERR("no async route block for assign_server_unreg\n");
-		return result;
-	}
 
-	if(get_str_fparam(&s_id, msg, (fparam_t *)c_id) < 0) {
-		LM_ERR("failed to get s__id\n");
-		return result;
+	// standard config
+	if(cfg_type == 0) {
+		if(fixup_get_svalue(msg, (gparam_t *)route, &route_name) != 0) {
+			LM_ERR("no async route block for assign_server_unreg\n");
+			return result;
+		}
+
+		if(get_str_fparam(&s_id, msg, (fparam_t *)c_id) < 0) {
+			LM_ERR("failed to get s__id\n");
+			return result;
+		}
+
+		// kemi config
+	} else {
+		route_name.s = route;
+		route_name.len = strlen(route);
+
+		s_id.s = c_id;
+		s_id.len = strlen(c_id);
 	}
 
 	LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
@@ -801,7 +824,7 @@ static int w_rx_aar(
 	}
 
 	if(t->uas.status >= 200) {
-		LM_DBG("transaction sent out a final response already - %d\n",
+		LM_WARN("transaction sent out a final response already - %d\n",
 				t->uas.status);
 		return result;
 	}
@@ -864,13 +887,13 @@ static int w_rx_aar(
 							|| memcmp(t->method.s, "UPDATE", 6) == 0))) {
 		if(cscf_get_content_length(msg) == 0
 				|| cscf_get_content_length(orig_sip_request_msg) == 0) {
-			LM_DBG("No SDP offer answer -> therefore we can not do Rx AAR");
+			LM_WARN("No SDP offer answer -> therefore we can not do Rx AAR");
 			//goto aarna; //AAR na if we don't have offer/answer pair
 			return result;
 		}
 	} else {
-		LM_DBG("Message is not response to INVITE, PRACK or UPDATE -> "
-			   "therefore we do not Rx AAR");
+		LM_WARN("Message is not response to INVITE, PRACK or UPDATE -> "
+				"therefore we do not Rx AAR");
 		return result;
 	}
 
@@ -1162,7 +1185,7 @@ static int w_rx_aar(
 		int ret = create_new_callsessiondata(&callid, &ftag, &ttag, &identifier,
 				identifier_type, &ip, ip_version, &rx_authdata_p);
 		if(!ret) {
-			LM_DBG("Unable to create new media session data parcel\n");
+			LM_ERR("Unable to create new media session data parcel\n");
 			goto error;
 		}
 
@@ -1250,8 +1273,13 @@ ignore:
 }
 
 /* Wrapper to send AAR from config file - only used for registration */
+static int cfg_rx_aar_register(struct sip_msg *msg, char *route, char *str1)
+{
+	return w_rx_aar_register(msg, route, str1, 0);
+}
+
 static int w_rx_aar_register(
-		struct sip_msg *msg, char *route, char *str1, char *bar)
+		struct sip_msg *msg, char *route, char *str1, int cfg_type)
 {
 
 	int ret = CSCF_RETURN_ERROR;
@@ -1280,10 +1308,25 @@ static int w_rx_aar_register(
 	struct via_body *vb;
 	unsigned short via_port;
 	unsigned short via_proto;
+	udomain_t *d = NULL;
 
-	if(fixup_get_svalue(msg, (gparam_t *)route, &route_name) != 0) {
-		LM_ERR("no async route block for assign_server_unreg\n");
-		return -1;
+	// standard config
+	if(cfg_type == 0) {
+		if(fixup_get_svalue(msg, (gparam_t *)route, &route_name) != 0) {
+			LM_ERR("no async route block for assign_server_unreg\n");
+			return -1;
+		}
+
+		// kemi config
+	} else {
+		route_name.s = route;
+		route_name.len = strlen(route);
+
+		if(ul.register_udomain((char *)str1, &d) < 0) {
+			LM_ERR("Error doing kemi fixup");
+			return -1;
+		}
+		str1 = (char *)d;
 	}
 
 	LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
@@ -1743,4 +1786,74 @@ int create_return_code(int result)
 				avp_name.s.s);
 
 	return rc;
+}
+
+
+static int ki_rx_aar(
+		sip_msg_t *msg, str *route, str *dir, str *c_id, int id_type)
+{
+	if(!msg || !route || !dir || !c_id)
+		return -1;
+
+	if(route->s == NULL || route->len <= 0) {
+		LM_ERR("invalid or empty route\n");
+		return -1;
+	}
+
+	if(dir->s == NULL || dir->len <= 0) {
+		LM_ERR("invalid or empty direction\n");
+		return -1;
+	}
+
+	// make sure vars can be used as char*
+	route->s[route->len] = '\0';
+	dir->s[dir->len] = '\0';
+	c_id->s[c_id->len] = '\0';
+
+	return w_rx_aar(msg, route->s, dir->s, c_id->s, id_type, 1);
+}
+
+static int ki_rx_aar_register(sip_msg_t *msg, str *route, str *domain)
+{
+	if(!msg || !route || !domain)
+		return -1;
+
+	if(route->s == NULL || route->len <= 0) {
+		LM_ERR("invalid or empty route\n");
+		return -1;
+	}
+
+	if(domain->s == NULL || domain->len <= 0) {
+		LM_ERR("invalid or empty domain\n");
+		return -1;
+	}
+
+	// make sure vars can be used as char*
+	route->s[route->len] = '\0';
+	domain->s[domain->len] = '\0';
+
+	return w_rx_aar_register(msg, route->s, domain->s, 1);
+}
+
+/* clang-format off */
+static sr_kemi_t sr_kemi_ims_qos_exports[] = {
+	{ str_init("ims_qos"), str_init("Rx_AAR"),
+		SR_KEMIP_INT, ki_rx_aar,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ims_qos"), str_init("Rx_AAR_Register"),
+		SR_KEMIP_INT, ki_rx_aar_register,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_ims_qos_exports);
+	return 0;
 }

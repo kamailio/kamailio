@@ -91,6 +91,10 @@ EXTRA_GROUPS += jansson
 EXTRA_GROUPS += uuid
 EXTRA_GROUPS += http_async
 
+.PHONY: skip-modules
+skip-modules:
+	@echo "$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)"
+
 D = $(CURDIR)/debian/$(DEB_SOURCE)
 
 # Name of libdir in the path for libraries (e.g., the multiarch triplet).

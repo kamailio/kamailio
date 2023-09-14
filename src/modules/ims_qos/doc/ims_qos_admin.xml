@@ -29,7 +29,7 @@
 
       <itemizedlist>
         <listitem>
-          <para>Dialog</para>
+          <para>IMS Dialog</para>
         </listitem>
 
         <listitem>
@@ -625,8 +625,8 @@ route[REG_AAR_REPLY]
 	</listitem>
 	</itemizedlist>
 
-      <para>This function can be used from REQUEST_ROUTE or
-      ONREPLY_ROUTE.</para>
+	<para>This function can be used only from ONREPLY_ROUTE, only for replies to INVITE, UPDATE, PRACK.
+	The reply and request must have SDP, for this function to work properly.</para>
 
       <para>p.s. this is executed asynchronously. See example on how to
       retrieve return value</para>

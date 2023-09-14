@@ -1162,10 +1162,18 @@ find_value:
 			case ',':
 				switch(state) {
 					case P_VALUE:
+						if(param->flags & VIA_PARAM_F_QUOTED) {
+							/* inside a quoted value */
+							break;
+						}
 						param->value.len = tmp - param->value.s;
 						state = F_VIA;
 						goto endofvalue;
 					case P_STRING:
+						if(param->flags & VIA_PARAM_F_QUOTED) {
+							/* inside a quoted value */
+							break;
+						}
 					case F_LF:
 					case F_CR:
 					case F_CRLF:
@@ -1217,6 +1225,7 @@ find_value:
 					case F_VALUE:
 						state = P_STRING;
 						param->value.s = tmp + 1;
+						param->flags |= VIA_PARAM_F_QUOTED;
 						break;
 					case P_STRING:
 						state = L_PARAM;
@@ -2692,6 +2701,17 @@ endofpacket:
 			goto error;
 		}
 	}
+	if(vb->params.s != NULL && vb->params.len == 0 && vb->last_param != NULL) {
+		if(vb->last_param->name.len > 0) {
+			if(vb->last_param->value.len > 0) {
+				vb->params.len = vb->last_param->value.s + vb->last_param->value.len
+					- vb->params.s;
+			} else {
+				vb->params.len = vb->last_param->name.s + vb->last_param->name.len
+					- vb->params.s;
+			}
+		}
+	}
 	return tmp;
 nextvia:
 	DBG("parsing via: next via\n");
@@ -2706,6 +2726,18 @@ nextvia:
 			goto error;
 		}
 	}
+	if(vb->params.s != NULL && vb->params.len == 0 && vb->last_param != NULL) {
+		if(vb->last_param->name.len > 0) {
+			if(vb->last_param->value.len > 0) {
+				vb->params.len = vb->last_param->value.s + vb->last_param->value.len
+					- vb->params.s;
+			} else {
+				vb->params.len = vb->last_param->name.s + vb->last_param->name.len
+					- vb->params.s;
+			}
+		}
+	}
+
 	vb->next = pkg_malloc(sizeof(struct via_body));
 	if(vb->next == 0) {
 		PKG_MEM_ERROR;
@@ -2816,4 +2848,41 @@ int parse_via_header(struct sip_msg *msg, int n, struct via_body **q)
 		return 0;
 	} else
 		return -1;
+}
+
+
+/*
+ * Parse/link Via overload-control parameters
+ */
+int parse_via_oc(struct sip_msg *msg, struct via_body *vbp, via_oc_t *ocp)
+{
+	via_param_t *vp;
+
+	if(vbp == NULL || ocp == NULL) {
+		return -1;
+	}
+	memset(ocp, 0, sizeof(via_oc_t));
+
+	for(vp = vbp->param_lst; vp != NULL; vp = vp->next) {
+		if(vp->name.len == 2 && strncasecmp(vp->name.s, "oc", 2) == 0) {
+			ocp->oc = 1;
+		} else if(vp->name.len == 7
+				  && strncasecmp(vp->name.s, "oc-algo", 7) == 0) {
+			if(vp->value.len > 0) {
+				ocp->algo.len = vp->value.len;
+				ocp->algo.s = vp->value.s;
+			}
+		} else if(vp->name.len == 11
+				  && strncasecmp(vp->name.s, "oc-validity", 11) == 0) {
+			if(vp->value.len > 0) {
+				str2ulong(&vp->value, &ocp->validity);
+			}
+		} else if(vp->name.len == 6
+				  && strncasecmp(vp->name.s, "oc-seq", 6) == 0) {
+			if(vp->value.len > 0) {
+				str2int(&vp->value, &ocp->seq);
+			}
+		}
+	}
+	return 0;
 }

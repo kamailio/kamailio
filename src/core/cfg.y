@@ -328,6 +328,7 @@ extern char *default_routename;
 %token LOGENGINEDATA
 %token XAVPVIAPARAMS
 %token XAVPVIAFIELDS
+%token XAVPVIAREPLYPARAMS
 %token LISTEN
 %token ADVERTISE
 %token VIRTUAL
@@ -418,6 +419,7 @@ extern char *default_routename;
 %token MODPARAMX
 %token CFGENGINE
 %token MAXBUFFER
+%token MAXSNDBUFFER
 %token SQL_BUFFER_SIZE
 %token USER
 %token GROUP
@@ -886,10 +888,14 @@ assign_stm:
 			_ksr_xavp_via_params.len=strlen($3);
 		}
 	| XAVPVIAPARAMS EQUAL error { yyerror("string value expected"); }
-	| XAVPVIAFIELDS EQUAL STRING { _ksr_xavp_via_params.s=$3;
+	| XAVPVIAFIELDS EQUAL STRING { _ksr_xavp_via_fields.s=$3;
 			_ksr_xavp_via_fields.len=strlen($3);
 		}
 	| XAVPVIAFIELDS EQUAL error { yyerror("string value expected"); }
+	| XAVPVIAREPLYPARAMS EQUAL STRING { _ksr_xavp_via_reply_params.s=$3;
+			_ksr_xavp_via_reply_params.len=strlen($3);
+		}
+	| XAVPVIAREPLYPARAMS EQUAL error { yyerror("string value expected"); }
 	| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }
 	| DNS EQUAL error { yyerror("boolean value expected"); }
 	| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
@@ -993,11 +999,13 @@ assign_stm:
 	| IP_FREE_BIND EQUAL intno { _sr_ip_free_bind=$3; }
 	| IP_FREE_BIND EQUAL error { yyerror("int value expected"); }
 	| PORT EQUAL NUMBER   { port_no=$3; }
+	| PORT EQUAL error    { yyerror("number expected"); }
 	| MAXBUFFER EQUAL NUMBER { maxbuffer=$3; }
 	| MAXBUFFER EQUAL error { yyerror("number expected"); }
-    | SQL_BUFFER_SIZE EQUAL NUMBER { sql_buffer_size=$3; }
+	| MAXSNDBUFFER EQUAL NUMBER { maxsndbuffer=$3; }
+	| MAXSNDBUFFER EQUAL error { yyerror("number expected"); }
+	| SQL_BUFFER_SIZE EQUAL NUMBER { sql_buffer_size=$3; }
 	| SQL_BUFFER_SIZE EQUAL error { yyerror("number expected"); }
-	| PORT EQUAL error    { yyerror("number expected"); }
 	| CHILDREN EQUAL NUMBER { children_no=$3; }
 	| CHILDREN EQUAL error { yyerror("number expected"); }
 	| STATS_NAMESEP EQUAL STRING { ksr_stats_namesep=$3; }

@@ -118,6 +118,8 @@ typedef enum request_method
 #define FL_ROUTE_ADDR (1 << 25) /*!< request has Route address for next hop */
 #define FL_USE_OTCPID \
 	(1 << 26) /*!< request to be routed using outbound tcp con id */
+#define FL_ADD_XAVP_VIA_REPLY_PARAMS \
+	(1 << 27) /*!< add xavp fields to first (previous sip node) via params */
 
 /* WARNING: Value (1 << 28) is reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */
@@ -231,6 +233,8 @@ enum _uri_flags
 	URI_SIP_USER_PHONE = 2
 }; /* bit fields */
 typedef enum _uri_flags uri_flags;
+
+typedef unsigned long long msg_flags_t;
 
 /*! \brief The SIP uri object */
 struct sip_uri
@@ -421,7 +425,7 @@ typedef struct sip_msg
 
 	unsigned int hash_index;		/*!< index to TM hash table; stored in core
 								to avoid unnecessary calculations */
-	unsigned int msg_flags;			/*!< internal flags used by core */
+	msg_flags_t msg_flags;			/*!< internal flags used by core */
 	flag_t flags;					/*!< config flags */
 	flag_t xflags[KSR_XFLAGS_SIZE]; /*!< config extended flags */
 	str set_global_address;
@@ -457,7 +461,7 @@ extern int via_cnt;
  * a flag value is checked, e.g.:
  * if ((msg->msg_flags|global_req_flags) & FL_XXX) ...
  */
-extern unsigned int global_req_flags;
+extern msg_flags_t global_req_flags;
 
 
 int parse_msg(

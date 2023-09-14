@@ -72,7 +72,7 @@ int t_suspend(
 		return 1;
 	}
 	if(t->uas.status >= 200) {
-		LM_DBG("trasaction sent out a final response already - %d\n",
+		LM_DBG("transaction sent out a final response already - %d\n",
 				t->uas.status);
 		return -3;
 	}

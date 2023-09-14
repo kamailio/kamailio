@@ -196,10 +196,30 @@ void dp_disconnect_db(void)
 	}
 }
 
+static void *pcre2_malloc(size_t size, void *ext)
+{
+	return shm_malloc(size);
+}
+
+static void pcre2_free(void *ptr, void *ext)
+{
+	shm_free(ptr);
+	ptr = NULL;
+}
 
 int init_data(void)
 {
 	int *p;
+
+	if((dpl_gctx = pcre2_general_context_create(pcre2_malloc, pcre2_free, NULL))
+			== NULL) {
+		LM_ERR("pcre2 general context creation failed\n");
+		return -1;
+	}
+	if((dpl_ctx = pcre2_compile_context_create(dpl_gctx)) == NULL) {
+		LM_ERR("pcre2 compile context creation failed\n");
+		return -1;
+	}
 
 	dp_rules_hash = (dpl_id_p *)shm_malloc(2 * sizeof(dpl_id_p));
 	if(!dp_rules_hash) {
@@ -227,6 +247,14 @@ int init_data(void)
 
 void destroy_data(void)
 {
+	if(dpl_ctx) {
+		pcre2_compile_context_free(dpl_ctx);
+	}
+
+	if(dpl_gctx) {
+		pcre2_general_context_free(dpl_gctx);
+	}
+
 	if(dp_rules_hash) {
 		destroy_hash(0);
 		destroy_hash(1);
@@ -373,55 +401,50 @@ int dpl_str_to_shm(str src, str *dest, int mterm)
 
 
 /* Compile pcre pattern
- * if mtype==0 - return pointer to shm copy of result
- * if mtype==1 - return pcre pointer that has to be pcre_free() */
-pcre *reg_ex_comp(const char *pattern, int *cap_cnt, int mtype)
+ * if mtype==0 - return pointer using shm
+ * if mtype==1 - return pcre2_code pointer that has to be pcre2_code_free() */
+pcre2_code *reg_ex_comp(const char *pattern, int *cap_cnt, int mtype)
 {
-	pcre *re, *result;
-	const char *error;
-	int rc, err_offset;
-	size_t size;
+	pcre2_code *re;
+	int pcre_error_num = 0;
+	char pcre_error[128];
+	size_t pcre_erroffset;
+	int rc;
 
-	re = pcre_compile(pattern, 0, &error, &err_offset, NULL);
+	re = pcre2_compile((PCRE2_SPTR)pattern, PCRE2_ZERO_TERMINATED, 0,
+			&pcre_error_num, &pcre_erroffset, mtype == 0 ? dpl_ctx : NULL);
 	if(re == NULL) {
-		LM_ERR("PCRE compilation of '%s' failed at offset %d: %s\n", pattern,
-				err_offset, error);
-		return (pcre *)0;
-	}
-	rc = pcre_fullinfo(re, NULL, PCRE_INFO_SIZE, &size);
-	if(rc != 0) {
-		pcre_free(re);
-		LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
-				pattern, rc);
-		return (pcre *)0;
-	}
-	rc = pcre_fullinfo(re, NULL, PCRE_INFO_CAPTURECOUNT, cap_cnt);
-	if(rc != 0) {
-		pcre_free(re);
-		LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
-				pattern, rc);
-		return (pcre *)0;
-	}
-	if(mtype == 0) {
-		result = (pcre *)shm_malloc(size);
-		if(result == NULL) {
-			pcre_free(re);
-			LM_ERR("not enough shared memory for compiled PCRE pattern\n");
-			return (pcre *)0;
+		switch(pcre2_get_error_message(
+				pcre_error_num, (PCRE2_UCHAR *)pcre_error, 128)) {
+			case PCRE2_ERROR_NOMEMORY:
+				snprintf(pcre_error, 128,
+						"unknown error[%d]: pcre2 error buffer too small",
+						pcre_error_num);
+				break;
+			case PCRE2_ERROR_BADDATA:
+				snprintf(pcre_error, 128, "unknown pcre2 error[%d]",
+						pcre_error_num);
+				break;
 		}
-		memcpy(result, re, size);
-		pcre_free(re);
-		return result;
-	} else {
-		return re;
+		LM_ERR("PCRE compilation of '%s' failed at offset %zu: %s\n", pattern,
+				pcre_erroffset, pcre_error);
+		return NULL;
 	}
+	rc = pcre2_pattern_info(re, PCRE2_INFO_CAPTURECOUNT, cap_cnt);
+	if(rc != 0) {
+		pcre2_code_free(re);
+		LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
+				pattern, rc);
+		return NULL;
+	}
+	return re;
 }
 
 
 /*compile the expressions, and if ok, build the rule */
 dpl_node_t *build_rule(db_val_t *values)
 {
-	pcre *match_comp, *subst_comp;
+	pcre2_code *match_comp, *subst_comp;
 	struct subst_expr *repl_comp;
 	dpl_node_t *new_rule;
 	str match_exp, subst_exp, repl_exp, attrs;
@@ -544,9 +567,9 @@ dpl_node_t *build_rule(db_val_t *values)
 
 err:
 	if(match_comp)
-		shm_free(match_comp);
+		pcre2_code_free(match_comp);
 	if(subst_comp)
-		shm_free(subst_comp);
+		pcre2_code_free(subst_comp);
 	if(repl_comp)
 		repl_expr_free(repl_comp);
 	if(new_rule)
@@ -692,10 +715,10 @@ void destroy_rule(dpl_node_t *rule)
 	LM_DBG("destroying rule with priority %i\n", rule->pr);
 
 	if(rule->match_comp)
-		shm_free(rule->match_comp);
+		pcre2_code_free(rule->match_comp);
 
 	if(rule->subst_comp)
-		shm_free(rule->subst_comp);
+		pcre2_code_free(rule->subst_comp);
 
 	/*destroy repl_exp*/
 	if(rule->repl_comp)
