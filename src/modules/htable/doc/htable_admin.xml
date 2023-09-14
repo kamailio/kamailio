@@ -413,6 +413,43 @@ $ kamcmd htable.dump htable
 			order for this to apply (see below). Default is 0 (no replication).
 		</para>
 		</listitem>
+		<listitem>
+			<para>
+				<emphasis>coldelim</emphasis> - the character delimeter to use when packing the htable.
+				When set, this parameter changes the column delimeter between columns in a multiple
+				column hash table. This can be useful when loading JSON data types into a hash table
+				as they conflict with the default <quote>,</quote> delimeter, allowing these values
+				to be parsed in the routing config. See the example below on parsing a JSON array from
+				an htable with <quote>;</quote> as the column delimeter.
+			</para>
+			<programlisting format="linespecific">
+...
+modparam("htable", "htable", "customer=&gt;size=8;dbtable=customer;cols='dids,description';coldelim=';'")
+...
+$avp(customer) = $sht(customer=>1);
+$var(customer_dids) = $(avp(customer){s.select,0,;});
+$var(customer_desc) = $(avp(customer){s.select,1,;});
+...
+</programlisting>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>colnull</emphasis> - the character to use when packing a NULL value into
+				the htable from the database. This parameter can be set to the empty string or a
+				single character. This can be used to simplify checking a single column in a row
+				for emptiness, in the routing config. The example below shows how one would do that.
+			</para>
+			<programlisting format="linespecific">
+...
+modparam("htable", "htable", "customer=&gt;size=8;dbtable=customer;cols='name,description';colnull=''")
+...
+$avp(customer) = $sht(customer=>1);
+$var(customer_name) = $(avp(customer){s.select,0,;});
+if (!strempty($var(customer_name))) {
+...
+}
+</programlisting>
+		</listitem>
 		</itemizedlist>
 		<para>
 		<emphasis>

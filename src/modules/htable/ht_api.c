@@ -255,7 +255,7 @@ ht_t *ht_get_table(str *name)
 
 int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 		int dbmode, int itype, int_str *ival, int updateexpire,
-		int dmqreplicate)
+		int dmqreplicate, char coldelim, char colnull)
 {
 	unsigned int htid;
 	ht_t *ht;
@@ -342,8 +342,8 @@ int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 		}
 		ht->ncols = c + 1;
 		ht->pack[0] = 'l';
-		ht->pack[1] = ',';
-		ht->pack[2] = '*';
+		ht->pack[1] = coldelim;
+		ht->pack[2] = colnull;
 	}
 
 	ht->next = _ht_root;
@@ -958,6 +958,8 @@ int ht_table_spec(char *spec)
 	unsigned int dbmode = 0;
 	unsigned int updateexpire = 1;
 	unsigned int dmqreplicate = 0;
+	char coldelim = ',';
+	char colnull = '*';
 	str in;
 	str tok;
 	param_t *pit = NULL;
@@ -1024,13 +1026,34 @@ int ht_table_spec(char *spec)
 
 			LM_DBG("htable [%.*s] - dmqreplicate [%u]\n", name.len, name.s,
 					dmqreplicate);
+		} else if(pit->name.len == 8
+				  && strncmp(pit->name.s, "coldelim", 8) == 0) {
+			if(tok.len > 1)
+				goto error;
+
+			coldelim = tok.s[0];
+			LM_DBG("htable [%.*s] - coldelim [%c]\n", name.len, name.s,
+				   coldelim);
+		} else if(pit->name.len == 7
+				  && strncmp(pit->name.s, "colnull", 7) == 0) {
+			if(tok.len > 1)
+				goto error;
+
+			if(tok.len == 0) {
+				colnull = '\0';
+			} else {
+				colnull = tok.s[0];
+			}
+
+			LM_DBG("htable [%.*s] - colnull [%c]\n", name.len, name.s,
+			   		colnull);
 		} else {
 			goto error;
 		}
 	}
 
 	return ht_add_table(&name, autoexpire, &dbtable, &dbcols, size, dbmode,
-			itype, &ival, updateexpire, dmqreplicate);
+			itype, &ival, updateexpire, dmqreplicate, coldelim, colnull);
 
 error:
 	LM_ERR("invalid htable parameter [%.*s]\n", in.len, in.s);
