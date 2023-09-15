@@ -73,6 +73,7 @@ typedef struct via_param
 typedef struct via_oc
 {
 	int oc;
+	str ocval;
 	str algo;
 	unsigned long validity;
 	unsigned int seq;

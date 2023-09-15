@@ -2865,7 +2865,13 @@ int parse_via_oc(struct sip_msg *msg, struct via_body *vbp, via_oc_t *ocp)
 
 	for(vp = vbp->param_lst; vp != NULL; vp = vp->next) {
 		if(vp->name.len == 2 && strncasecmp(vp->name.s, "oc", 2) == 0) {
-			ocp->oc = 1;
+			if(vp->value.len > 0) {
+				ocp->oc = 2;
+				ocp->ocval.len = vp->value.len;
+				ocp->ocval.s = vp->value.s;
+			} else {
+				ocp->oc = 1;
+			}
 		} else if(vp->name.len == 7
 				  && strncasecmp(vp->name.s, "oc-algo", 7) == 0) {
 			if(vp->value.len > 0) {
