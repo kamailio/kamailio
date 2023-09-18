@@ -40,7 +40,7 @@ jobs:
     - name: Docker meta
       if: ${{ steps.should_run.outputs.should_run != 'false' }}
       id: meta
-      uses: docker/metadata-action@v4
+      uses: docker/metadata-action@v5
       with:
         # list of Docker images to use as base name for tags
         images: |
@@ -58,7 +58,7 @@ jobs:
     - name: Docker meta "-alpine"
       if: ${{ steps.should_run.outputs.should_run != 'false' }}
       id: meta-alpine
-      uses: docker/metadata-action@v4
+      uses: docker/metadata-action@v5
       with:
         # list of Docker images to use as base name for tags
         images: |
@@ -76,7 +76,7 @@ jobs:
     - name: Docker meta "-debug"
       if: ${{ steps.should_run.outputs.should_run != 'false' }}
       id: meta-debug
-      uses: docker/metadata-action@v4
+      uses: docker/metadata-action@v5
       with:
         # list of Docker images to use as base name for tags
         images: |
