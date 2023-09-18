@@ -4509,6 +4509,8 @@ int pv_parse_via_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 5;
 			else if(strncmp(in->s, "ocseq", 5) == 0)
 				sp->pvp.pvn.u.isname.name.n = 12;
+			else if(strncmp(in->s, "ocval", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 14;
 			else
 				goto error;
 			break;
@@ -4521,6 +4523,8 @@ int pv_parse_via_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 10;
 			else if(strncmp(in->s, "oc-seq", 6) == 0)
 				sp->pvp.pvn.u.isname.name.n = 12;
+			else if(strncmp(in->s, "oc-val", 6) == 0)
+				sp->pvp.pvn.u.isname.name.n = 14;
 			else
 				goto error;
 			break;
@@ -4642,6 +4646,13 @@ int pv_get_via_attr(
 				return pv_get_null(msg, param, res);
 			}
 			return pv_get_uintval(msg, param, res, (unsigned long)ocv.seq);
+		case 14: /* oc-val */
+			if(parse_via_oc(msg, vb, &ocv) < 0) {
+				return pv_get_null(msg, param, res);
+			}
+			if(ocv.ocval.s != NULL && ocv.ocval.len > 0) {
+				return pv_get_strval(msg, param, res, &ocv.ocval);
+			}
 
 		default:
 			return pv_get_null(msg, param, res);
