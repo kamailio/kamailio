@@ -127,7 +127,7 @@ jobs:
     - name: Create custom builder for "-debug" build
       if: ${{ steps.should_run.outputs.should_run != 'false' }}
       id: local-repo
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
       with:
         driver-opts: |
           network=kamailio-build
