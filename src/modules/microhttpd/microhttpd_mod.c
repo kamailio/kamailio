@@ -183,6 +183,9 @@ typedef struct ksr_mhttpd_ctx
 	str url;
 	str httpversion;
 	str data;
+	const union MHD_ConnectionInfo *cinfo;
+	char srcipbuf[IP_ADDR_MAX_STR_SIZE];
+	str srcip;
 } ksr_mhttpd_ctx_t;
 
 static ksr_mhttpd_ctx_t _ksr_mhttpd_ctx = {0};
@@ -207,6 +210,13 @@ int pv_parse_mhttpd_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			} else if(strncasecmp(in->s, "size", 4) == 0) {
 				sp->pvp.pvn.u.isname.name.n = 2;
+			} else {
+				goto error;
+			}
+			break;
+		case 5:
+			if(strncasecmp(in->s, "srcip", 5) == 0) {
+				sp->pvp.pvn.u.isname.name.n = 5;
 			} else {
 				goto error;
 			}
@@ -243,6 +253,7 @@ error:
  */
 int pv_get_mhttpd(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
+	struct sockaddr *srcaddr = NULL;
 	if(param == NULL) {
 		return -1;
 	}
@@ -260,6 +271,39 @@ int pv_get_mhttpd(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_strval(msg, param, res, &_ksr_mhttpd_ctx.method);
 		case 4: /* version */
 			return pv_get_strval(msg, param, res, &_ksr_mhttpd_ctx.httpversion);
+		case 5: /* srcip */
+			if(_ksr_mhttpd_ctx.srcip.len > 0) {
+				return pv_get_strval(msg, param, res, &_ksr_mhttpd_ctx.srcip);
+			}
+			srcaddr =
+					(_ksr_mhttpd_ctx.cinfo ? _ksr_mhttpd_ctx.cinfo->client_addr
+										   : NULL);
+			if(srcaddr == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			switch(srcaddr->sa_family) {
+				case AF_INET:
+					if(!inet_ntop(AF_INET,
+							   &(((struct sockaddr_in *)srcaddr)->sin_addr),
+							   _ksr_mhttpd_ctx.srcipbuf,
+							   IP_ADDR_MAX_STR_SIZE)) {
+						return pv_get_null(msg, param, res);
+					}
+					break;
+				case AF_INET6:
+					if(!inet_ntop(AF_INET6,
+							   &(((struct sockaddr_in6 *)srcaddr)->sin6_addr),
+							   _ksr_mhttpd_ctx.srcipbuf,
+							   IP_ADDR_MAX_STR_SIZE)) {
+						return pv_get_null(msg, param, res);
+					}
+					break;
+				default:
+					return pv_get_null(msg, param, res);
+			}
+			_ksr_mhttpd_ctx.srcip.s = _ksr_mhttpd_ctx.srcipbuf;
+			_ksr_mhttpd_ctx.srcip.len = strlen(_ksr_mhttpd_ctx.srcipbuf);
+			return pv_get_strval(msg, param, res, &_ksr_mhttpd_ctx.srcip);
 		default:
 			return pv_get_null(msg, param, res);
 	}
@@ -405,6 +449,10 @@ static enum MHD_Result ksr_microhttpd_request(void *cls,
 		_ksr_mhttpd_ctx.data.s = NULL;
 		_ksr_mhttpd_ctx.data.len = 0;
 	}
+	_ksr_mhttpd_ctx.cinfo = MHD_get_connection_info(
+			connection, MHD_CONNECTION_INFO_CLIENT_ADDRESS);
+	_ksr_mhttpd_ctx.srcip.s = NULL;
+	_ksr_mhttpd_ctx.srcip.len = 0;
 
 	LM_DBG("executing event_route[%s] (%d)\n", evname.s, microhttpd_route_no);
 	if(faked_msg_init() < 0) {
