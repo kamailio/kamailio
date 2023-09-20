@@ -110,7 +110,8 @@ int sr_kemi_config_engine_lua(
 			ret = app_lua_run_ex(msg, rname->s,
 					(rparam && rparam->s) ? rparam->s : NULL, NULL, NULL, 0);
 		} else {
-			ret = app_lua_run_ex(msg, "ksr_request_route", NULL, NULL, NULL, 1);
+			ret = app_lua_run_ex(
+					msg, kemi_reply_route_callback.s, NULL, NULL, NULL, 1);
 		}
 	} else if(rtype == CORE_ONREPLY_ROUTE) {
 		if(kemi_reply_route_callback.len > 0) {
