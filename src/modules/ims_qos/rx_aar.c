@@ -76,6 +76,7 @@ extern usrloc_api_t ul;
 extern struct ims_qos_counters_h ims_qos_cnts_h;
 
 extern int authorize_video_flow;
+extern int suspend_transaction;
 
 extern str af_signaling_ip;
 extern str af_signaling_ip6;
@@ -113,19 +114,21 @@ void async_aar_callback(
 
 	LM_DBG("received AAA answer");
 
-	if(tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
-		LM_ERR("t_continue: transaction not found\n");
-		goto error;
-	} else {
-		LM_DBG("t_continue: transaction found\n");
+	if(suspend_transaction) {
+		if(tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
+			LM_ERR("t_continue: transaction not found\n");
+			goto error;
+		} else {
+			LM_DBG("t_continue: transaction found\n");
+		}
+		//we have T, lets restore our state (esp. for AVPs)
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 	}
-	//we have T, lets restore our state (esp. for AVPs)
-	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
-	set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
-	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
-	set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
-	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
-	set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 
 	if(is_timeout != 0) {
 		LM_ERR("Error timeout when sending AAR message via CDP\n");
@@ -228,7 +231,9 @@ done:
 	if(aaa)
 		cdpb.AAAFreeMessage(&aaa);
 
-	tmb.t_continue(data->tindex, data->tlabel, data->act);
+	if(suspend_transaction) {
+		tmb.t_continue(data->tindex, data->tlabel, data->act);
+	}
 	free_saved_transaction_global_data(data);
 }
 
@@ -272,17 +277,19 @@ void async_aar_reg_callback(
 		   "failures flag is [%d]\n",
 			data->answers_not_received, data->failed);
 
-	if(tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
-		LM_ERR("t_continue: transaction not found\n");
-		goto error;
+	if(suspend_transaction) {
+		if(tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
+			LM_ERR("t_continue: transaction not found\n");
+			goto error;
+		}
+		//we have T, lets restore our state (esp. for AVPs)
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 	}
-	//we have T, lets restore our state (esp. for AVPs)
-	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
-	set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
-	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
-	set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
-	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
-	set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 
 	if(is_timeout != 0) {
 		LM_ERR("Error timeout when sending AAR message via CDP\n");
@@ -423,7 +430,9 @@ done:
 		cdpb.AAAFreeMessage(&aaa);
 
 	if(finalReply) {
-		tmb.t_continue(data->tindex, data->tlabel, data->act);
+		if(suspend_transaction) {
+			tmb.t_continue(data->tindex, data->tlabel, data->act);
+		}
 		free_saved_transaction_global_data(data);
 	}
 	free_saved_transaction_data(local_data);

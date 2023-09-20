@@ -142,6 +142,8 @@ int terminate_dialog_on_rx_failure =
 		1; //this specifies whether a dialog is torn down when a media rx session fails - in some cases you might not want the dialog torn down
 int delete_contact_on_rx_failure =
 		1; //If this is set we delete the contact if the associated signalling bearer is removed
+int suspend_transaction =
+		1; //If this is set we suspend the transaction and continue later
 
 
 str early_qosrelease_reason = {"QoS released", 12};
@@ -249,7 +251,8 @@ static param_export_t params[] = {{"rx_dest_realm", PARAM_STR, &rx_dest_realm},
 				&delete_contact_on_rx_failure},
 		{"regex_sdp_ip_prefix_to_maintain_in_fd", PARAM_STR,
 				&regex_sdp_ip_prefix_to_maintain_in_fd},
-		{"include_rtcp_fd", INT_PARAM, &include_rtcp_fd}, {0, 0, 0}};
+		{"include_rtcp_fd", INT_PARAM, &include_rtcp_fd},
+		{"suspend_transaction", INT_PARAM, &suspend_transaction}, {0, 0, 0}};
 
 
 /** module exports */
@@ -1234,12 +1237,17 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 	}
 	saved_t_data->dlg = dlg;
 
-	LM_DBG("Suspending SIP TM transaction\n");
-	if(tmb.t_suspend(msg, &saved_t_data->tindex, &saved_t_data->tlabel) != 0) {
-		LM_ERR("failed to suspend the TM processing\n");
-		if(auth_session)
-			cdpb.AAASessionsUnlock(auth_session->hash);
-		goto error;
+	if(suspend_transaction) {
+		LM_DBG("Suspending SIP TM transaction\n");
+		if(tmb.t_suspend(msg, &saved_t_data->tindex, &saved_t_data->tlabel)
+				!= 0) {
+			LM_ERR("failed to suspend the TM processing\n");
+			if(auth_session)
+				cdpb.AAASessionsUnlock(auth_session->hash);
+			goto error;
+		}
+	} else {
+		LM_DBG("Don't suspend SIP TM transaction\n");
 	}
 
 	LM_DBG("Sending Rx AAR");
@@ -1248,7 +1256,9 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 
 	if(!ret) {
 		LM_ERR("Failed to send AAR\n");
-		tmb.t_cancel_suspend(saved_t_data->tindex, saved_t_data->tlabel);
+		if(suspend_transaction) {
+			tmb.t_cancel_suspend(saved_t_data->tindex, saved_t_data->tlabel);
+		}
 		goto error;
 
 
@@ -1431,11 +1441,16 @@ static int w_rx_aar_register(
 		return CSCF_RETURN_ERROR;
 	}
 
-	LM_DBG("Suspending SIP TM transaction\n");
-	if(tmb.t_suspend(msg, &saved_t_data->tindex, &saved_t_data->tlabel) != 0) {
-		LM_ERR("failed to suspend the TM processing\n");
-		free_saved_transaction_global_data(saved_t_data);
-		return CSCF_RETURN_ERROR;
+	if(suspend_transaction) {
+		LM_DBG("Suspending SIP TM transaction\n");
+		if(tmb.t_suspend(msg, &saved_t_data->tindex, &saved_t_data->tlabel)
+				!= 0) {
+			LM_ERR("failed to suspend the TM processing\n");
+			free_saved_transaction_global_data(saved_t_data);
+			return CSCF_RETURN_ERROR;
+		}
+	} else {
+		LM_DBG("Don't suspend SIP TM transaction\n");
 	}
 
 	LM_DBG("Successfully suspended transaction\n");
@@ -1662,7 +1677,9 @@ static int w_rx_aar_register(
 		return CSCF_RETURN_BREAK; //on success we break - because rest of cfg file will be executed by async process
 	} else {
 		create_return_code(CSCF_RETURN_TRUE);
-		tmb.t_cancel_suspend(saved_t_data->tindex, saved_t_data->tlabel);
+		if(suspend_transaction) {
+			tmb.t_cancel_suspend(saved_t_data->tindex, saved_t_data->tlabel);
+		}
 		if(saved_t_data) {
 			free_saved_transaction_global_data(
 					saved_t_data); //no aar sent so we must free the global data
@@ -1673,7 +1690,9 @@ static int w_rx_aar_register(
 error:
 	LM_ERR("Error trying to send AAR\n");
 	if(!aar_sent) {
-		tmb.t_cancel_suspend(saved_t_data->tindex, saved_t_data->tlabel);
+		if(suspend_transaction) {
+			tmb.t_cancel_suspend(saved_t_data->tindex, saved_t_data->tlabel);
+		}
 		if(saved_t_data) {
 
 			free_saved_transaction_global_data(
