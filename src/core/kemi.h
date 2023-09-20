@@ -41,6 +41,7 @@
 
 #define SR_KEMI_PARAMS_MAX 6
 
+extern str kemi_request_route_callback;
 extern str kemi_onsend_route_callback;
 extern str kemi_reply_route_callback;
 extern str kemi_event_route_callback;

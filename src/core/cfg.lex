@@ -486,6 +486,7 @@ WAIT_WORKER1_TIME     "wait_worker1_time"
 WAIT_WORKER1_USLEEP   "wait_worker1_usleep"
 
 KEMI     "kemi"
+REQUEST_ROUTE_CALLBACK	"request_route_callback"
 ONSEND_ROUTE_CALLBACK	"onsend_route_callback"
 REPLY_ROUTE_CALLBACK	"reply_route_callback"
 EVENT_ROUTE_CALLBACK	"event_route_callback"
@@ -1032,6 +1033,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{WAIT_WORKER1_USLEEP}  { count(); yylval.strval=yytext; return WAIT_WORKER1_USLEEP; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{KEMI}  { count(); yylval.strval=yytext; return KEMI;}
+<INITIAL>{REQUEST_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return REQUEST_ROUTE_CALLBACK;}
 <INITIAL>{REPLY_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return REPLY_ROUTE_CALLBACK;}
 <INITIAL>{ONSEND_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return ONSEND_ROUTE_CALLBACK;}
 <INITIAL>{EVENT_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return EVENT_ROUTE_CALLBACK;}

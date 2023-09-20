@@ -518,6 +518,7 @@ extern char *default_routename;
 %token CFG_DESCRIPTION
 %token SERVER_ID
 %token KEMI
+%token REQUEST_ROUTE_CALLBACK
 %token ONSEND_ROUTE_CALLBACK
 %token REPLY_ROUTE_CALLBACK
 %token EVENT_ROUTE_CALLBACK
@@ -1912,6 +1913,14 @@ assign_stm:
 	| SERVER_ID EQUAL error  { yyerror("number expected"); }
     | RETURN_MODE EQUAL NUMBER { ksr_return_mode=$3; }
 	| RETURN_MODE EQUAL error  { yyerror("number expected"); }
+	| KEMI DOT REQUEST_ROUTE_CALLBACK EQUAL STRING {
+			kemi_request_route_callback.s = $5;
+			kemi_request_route_callback.len = strlen($5);
+			if(kemi_request_route_callback.len==0) {
+				yyerror("empty name for request route callback function");
+			}
+		}
+	| KEMI DOT REQUEST_ROUTE_CALLBACK EQUAL error { yyerror("string expected"); }
 	| KEMI DOT ONSEND_ROUTE_CALLBACK EQUAL STRING {
 			kemi_onsend_route_callback.s = $5;
 			kemi_onsend_route_callback.len = strlen($5);

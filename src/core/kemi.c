@@ -47,6 +47,7 @@
 #define SR_KEMI_HNAME_SIZE 128
 
 /* names for kemi callback functions */
+str kemi_request_route_callback = str_init("ksr_request_route");
 str kemi_onsend_route_callback = str_init("ksr_onsend_route");
 str kemi_reply_route_callback = str_init("ksr_reply_route");
 str kemi_event_route_callback = str_init("");
