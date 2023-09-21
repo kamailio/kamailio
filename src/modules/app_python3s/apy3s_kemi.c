@@ -76,6 +76,9 @@ int apy3s_exec_func(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		return -1;
 	}
 
+	/* clear error state */
+	PyErr_Clear();
+
 	if(lock_try(_sr_python_reload_lock) == 0) {
 		if(_sr_python_reload_version
 				&& *_sr_python_reload_version != _sr_python_local_version) {
@@ -98,11 +101,13 @@ int apy3s_exec_func(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 
 	if(pFunc == NULL || !PyCallable_Check(pFunc)) {
 		if(emode == 1) {
-			LM_ERR("%s not found or is not callable\n", fname);
+			LM_ERR("%s not found or is not callable (%p)\n", fname, pFunc);
 		} else {
-			LM_DBG("%s not found or is not callable\n", fname);
+			LM_DBG("%s not found or is not callable (%p)\n", fname, pFunc);
 		}
-		Py_XDECREF(pFunc);
+		if(pFunc) {
+			Py_XDECREF(pFunc);
+		}
 		_sr_apy_env.msg = bmsg;
 		if(emode == 1) {
 			goto error;
@@ -157,6 +162,8 @@ error:
 	if(locked) {
 		lock_release(_sr_python_reload_lock);
 	}
+	/* clear error state */
+	PyErr_Clear();
 	return rval;
 }
 
