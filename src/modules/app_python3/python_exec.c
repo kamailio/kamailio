@@ -71,6 +71,9 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	PyGILState_STATE gstate;
 	int locked = 0;
 
+	/* clear error state */
+	PyErr_Clear();
+
 	if(lock_try(_sr_python_reload_lock) == 0) {
 		if(_sr_python_reload_version
 				&& *_sr_python_reload_version != _sr_python_local_version) {
@@ -92,11 +95,13 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	pFunc = PyObject_GetAttrString(_sr_apy_handler_obj, fname);
 	if(pFunc == NULL || !PyCallable_Check(pFunc)) {
 		if(emode == 1) {
-			LM_ERR("%s not found or is not callable\n", fname);
+			LM_ERR("%s not found or is not callable (%p)\n", fname, pFunc);
 		} else {
-			LM_DBG("%s not found or is not callable\n", fname);
+			LM_DBG("%s not found or is not callable (%p)\n", fname, pFunc);
 		}
-		Py_XDECREF(pFunc);
+		if(pFunc) {
+			Py_XDECREF(pFunc);
+		}
 		_sr_apy_env.msg = bmsg;
 		if(emode == 1) {
 			goto err;
@@ -161,6 +166,8 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	Py_DECREF(pResult);
 	_sr_apy_env.msg = bmsg;
 err:
+	/* clear error state */
+	PyErr_Clear();
 	PY_GIL_RELEASE;
 	LOCK_RELEASE;
 	return rval;
