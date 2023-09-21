@@ -182,7 +182,7 @@ int sr_kemi_config_engine_python(
 			ret = apy3s_exec_func(
 					msg, rname->s, (rparam && rparam->s) ? rparam->s : NULL, 0);
 		} else {
-			ret = apy3s_exec_func(msg, "ksr_request_route", NULL, 1);
+			ret = apy3s_exec_func(msg, kemi_request_route_callback.s, NULL, 1);
 		}
 	} else if(rtype == CORE_ONREPLY_ROUTE) {
 		if(kemi_reply_route_callback.len > 0) {
