@@ -43,7 +43,7 @@ Julien Chavanton
               3.10. acc_log_level (integer)
               3.11. cdr_enable (int)
               3.12. cdr_extra (str)
-              3.13. cdr_json_pre_encoded_prefix (string)
+              3.13. cdr_pre_encoded_prefix (string)
               3.14. cdr_expired_dlg_enable (str)
               3.15. cdr_output_mqueue (integer)
               3.16. cdr_output_syslog (integer)
@@ -64,7 +64,7 @@ Julien Chavanton
    1.10. acc_log_level example
    1.11. cdr_enable example
    1.12. cdr_extra example
-   1.13. cdr_json_pre_encoded_prefix example
+   1.13. cdr_pre_encoded_prefix example
    1.14. cdr_expired_dlg_enable example
    1.15. cdr_output_mqueue usage example
    1.16. cdr_log_facility example
@@ -94,7 +94,7 @@ Chapter 1. Admin Guide
         3.10. acc_log_level (integer)
         3.11. cdr_enable (int)
         3.12. cdr_extra (str)
-        3.13. cdr_json_pre_encoded_prefix (string)
+        3.13. cdr_pre_encoded_prefix (string)
         3.14. cdr_expired_dlg_enable (str)
         3.15. cdr_output_mqueue (integer)
         3.16. cdr_output_syslog (integer)
@@ -144,7 +144,7 @@ Chapter 1. Admin Guide
    3.10. acc_log_level (integer)
    3.11. cdr_enable (int)
    3.12. cdr_extra (str)
-   3.13. cdr_json_pre_encoded_prefix (string)
+   3.13. cdr_pre_encoded_prefix (string)
    3.14. cdr_expired_dlg_enable (str)
    3.15. cdr_output_mqueue (integer)
    3.16. cdr_output_syslog (integer)
@@ -350,17 +350,17 @@ modparam("acc_json", "cdr_enable", 1)
 modparam("acc_json", "cdr_extra", "ci=$dlg_var(call_id);ft=$dlg_var(from_tag)")
 ...
 
-3.13. cdr_json_pre_encoded_prefix (string)
+3.13. cdr_pre_encoded_prefix (string)
 
    Prefix to identify values that will be considered to be already json
    encoded.
 
    Default value is NULL.
 
-   Example 1.13. cdr_json_pre_encoded_prefix example
+   Example 1.13. cdr_pre_encoded_prefix example
 ...
 modparam("acc_json", "cdr_extra", "json_data=$avp(json_data);")
-modparam("acc_json", "cdr_json_pre_encoded_prefix", "json_")
+modparam("acc_json", "cdr_pre_encoded_prefix", "json_")
 ...
 $avp(json_data) = '{"b":2, "c":3}';
 ...
