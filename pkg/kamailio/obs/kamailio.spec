@@ -31,41 +31,6 @@
 %bcond_without xmlrpc
 %endif
 
-%if 0%{?rhel} == 6
-%if 0%{?centos_ver}
-%define dist_name centos
-%define dist_version %{?centos}
-%endif
-%if 0%{?centos_ver} == 0
-%define dist_name rhel
-%define dist_version %{?rhel}
-%endif
-%bcond_with cnxcc
-%bcond_without dnssec
-%bcond_without evapi
-%bcond_with geoip
-%bcond_without http_async_client
-%bcond_without ims
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_with lwsc
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_with mongodb
-%bcond_with nats
-%bcond_without perl
-%bcond_with phonenum
-%bcond_without python2
-%bcond_with python3
-%bcond_with rabbitmq
-%bcond_with redis
-%bcond_with ruby
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
 %if 0%{?rhel} == 7
 %if 0%{?centos_ver}
 %define dist_name centos
@@ -221,11 +186,6 @@
 %bcond_without sctp
 %bcond_without websocket
 %bcond_without xmlrpc
-%endif
-
-# Defining missing macros on RHEL/CentOS 6
-%if 0%{?rhel} == 6
-%define _rundir %{_localstatedir}/run
 %endif
 
 # build with openssl 1.1.1 on RHEL 7 based dists
