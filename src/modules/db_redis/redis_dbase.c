@@ -2389,6 +2389,8 @@ error:
     LM_ERR("failed to perform the update\n");
     if (reply)
         db_redis_free_reply(&reply);
+    if(db_keys)
+    	pkg_free(db_keys);
     db_redis_key_free(&query_v);
     db_redis_key_free(&all_type_keys);
     db_redis_key_free(&type_keys);
