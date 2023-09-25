@@ -366,8 +366,8 @@ modparam("acc_json", "cdr_extra", "ci=$dlg_var(call_id);ft=$dlg_var(from_tag)")
 		</example>
 	</section>
 
-	<section id="acc.p.cdr_json_pre_encoded_prefix">
-		<title><varname>cdr_json_pre_encoded_prefix</varname> (string)</title>
+	<section id="acc.p.cdr_pre_encoded_prefix">
+		<title><varname>cdr_pre_encoded_prefix</varname> (string)</title>
 		<para>
 		Prefix to identify values that will be considered to be already json encoded.
 		</para>
@@ -375,11 +375,11 @@ modparam("acc_json", "cdr_extra", "ci=$dlg_var(call_id);ft=$dlg_var(from_tag)")
 		Default value is NULL.
 		</para>
 		<example>
-		<title>cdr_json_pre_encoded_prefix example</title>
+		<title>cdr_pre_encoded_prefix example</title>
 		<programlisting format="linespecific">
 ...
 modparam("acc_json", "cdr_extra", "json_data=$avp(json_data);")
-modparam("acc_json", "cdr_json_pre_encoded_prefix", "json_")
+modparam("acc_json", "cdr_pre_encoded_prefix", "json_")
 ...
 $avp(json_data) = '{"b":2, "c":3}';
 ...
