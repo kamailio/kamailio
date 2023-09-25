@@ -19,7 +19,13 @@ Ovidiu Sas
 
    <osas@voipembedded.com>
 
+Tyler Moore
+
+   <tmoore@dopensource.com>
+
    Copyright © 2008-2011 http://www.asipto.com
+
+   Copyright © 2023 Tyler Moore (devopsec), dOpenSource
      __________________________________________________________________
 
    Table of Contents
@@ -514,6 +520,35 @@ $ kamcmd htable.dump htable
        nodes (htable peers). Please note, module parameter “enable_dmq”
        must also be set in order for this to apply (see below). Default is
        0 (no replication).
+     * coldelim - the character delimeter to use when packing the htable.
+       When set, this parameter changes the column delimeter between
+       columns in a multiple column hash table. This can be useful when
+       loading JSON data types into a hash table as they conflict with the
+       default “,” delimeter, allowing these values to be parsed in the
+       routing config. See the example below on parsing a JSON array from
+       an htable with “;” as the column delimeter.
+...
+modparam("htable", "htable", "customer=>size=8;dbtable=customer;cols='dids,descr
+iption';coldelim=';'")
+...
+$avp(customer) = $sht(customer=>1);
+$var(customer_dids) = $(avp(customer){s.select,0,;});
+$var(customer_desc) = $(avp(customer){s.select,1,;});
+...
+     * colnull - the character to use when packing a NULL value into the
+       htable from the database. This parameter can be set to the empty
+       string or a single character. This can be used to simplify checking
+       a single column in a row for emptiness, in the routing config. The
+       example below shows how one would do that.
+...
+modparam("htable", "htable", "customer=>size=8;dbtable=customer;cols='name,descr
+iption';colnull=''")
+...
+$avp(customer) = $sht(customer=>1);
+$var(customer_name) = $(avp(customer){s.select,0,;});
+if (!strempty($var(customer_name))) {
+...
+}
 
    Default value is NULL.
 
