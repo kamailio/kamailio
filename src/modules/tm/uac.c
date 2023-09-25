@@ -326,7 +326,7 @@ static inline int t_run_local_req(char **buf, int *buf_len, uac_req_t *uac_r,
 					& (FL_ADD_LOCAL_RPORT | FL_ADD_SRVID
 							| FL_ADD_XAVP_VIA_PARAMS
 							| FL_USE_XAVP_VIA_FIELDS))) {
-		LM_DBG("local Via update - new socket: [%.*s] - msg-flags: %u",
+		LM_DBG("local Via update - new socket: [%.*s] - msg-flags: %llu",
 				(lreq.force_send_socket)
 						? lreq.force_send_socket->address_str.len
 						: 4,
