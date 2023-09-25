@@ -458,8 +458,8 @@ This module provides various cryptography tools for use in Kamailio configuratio
 %package    dialplan
 Summary:    String translations based on rules for Kamailio
 Group:      %{PKGGROUP}
-Requires:   pcre, kamailio = %ver
-BuildRequires:  pcre-devel
+Requires:   pcre2, kamailio = %ver
+BuildRequires:  pcre2-devel
 
 %description    dialplan
 String translations based on rules for Kamailio.
@@ -647,8 +647,8 @@ Kazoo module for Kamailio.
 %package    lcr
 Summary:    Least cost routing for Kamailio
 Group:      %{PKGGROUP}
-Requires:   pcre, kamailio = %ver
-BuildRequires:  pcre-devel
+Requires:   pcre2, kamailio = %ver
+BuildRequires:  pcre2-devel
 
 %description    lcr
 Least cost routing for Kamailio.
@@ -903,8 +903,8 @@ Redis configuration file support for Kamailio.
 %package    regex
 Summary:    PCRE mtaching operations for Kamailio
 Group:      %{PKGGROUP}
-Requires:   pcre, kamailio = %ver
-BuildRequires:  pcre-devel
+Requires:   pcre2, kamailio = %ver
+BuildRequires:  pcre2-devel
 
 %description    regex
 PCRE mtaching operations for Kamailio.
