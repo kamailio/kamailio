@@ -622,11 +622,11 @@ int pvh_set_header(
 						xavi->name.len, xavi->name.s, hname->len, hname->s);
 			}
 			if(pvh_set_xavi(msg, &xavi_name, hname, NULL, SR_XTYPE_NULL, 0, 0)
-					== NULL)
+					< 0)
 				goto err;
 		} else {
 			if(pvh_set_xavi(msg, &xavi_name, hname, NULL, SR_XTYPE_NULL, idx, 0)
-					== NULL)
+					< 0)
 				goto err;
 		}
 	} else if(val->flags & (PV_VAL_STR | PV_TYPE_INT | PV_VAL_INT)) {
@@ -645,7 +645,7 @@ int pvh_set_header(
 		}
 		if(idx == 0 && idxf == PV_IDX_NONE) {
 			if(pvh_set_xavi(msg, &xavi_name, hname, &fval, SR_XTYPE_STR, 0, 1)
-					== NULL)
+					< 0)
 				goto err;
 		} else if(idxf == PV_IDX_ALL) {
 			if(hname_cnt > 1) {
@@ -655,11 +655,11 @@ int pvh_set_header(
 			}
 			if(pvh_set_xavi(msg, &xavi_name, hname, &fval, SR_XTYPE_STR, 0,
 					   hname_cnt ? 0 : 1)
-					== NULL)
+					< 0)
 				goto err;
 		} else {
 			if(pvh_set_xavi(msg, &xavi_name, hname, &fval, SR_XTYPE_STR, idx, 0)
-					== NULL)
+					< 0)
 				goto err;
 		}
 		if(pv_format)
@@ -697,7 +697,7 @@ xavp_c_data_t *pvh_set_parsed(
 	if(pvh_merge_uri(msg, SET_URI_T, cur, val, c_data) < 0)
 		goto err;
 	if(pvh_set_xavi(msg, &xavi_parsed_xname, hname, c_data, SR_XTYPE_DATA, 0, 0)
-			== NULL)
+			< 0)
 		goto err;
 	LM_DBG("c_data from pvh_merge_uri hname:%.*s\n", hname->len, hname->s);
 
@@ -860,12 +860,12 @@ int pvh_set_uri(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 	/*	LM_DBG("xavi:%.*s hname:%.*s value:%.*s\n", xavi_name.len, xavi_name.s,
 			hname.len, hname.s, c_data->value.len, c_data->value.s); */
 	if(pvh_set_xavi(msg, &xavi_name, &hname, &c_data->value, SR_XTYPE_STR, 0, 0)
-			== NULL)
+			< 0)
 		goto err;
 
 	if(pvh_set_xavi(
 			   msg, &xavi_parsed_xname, &hname, c_data, SR_XTYPE_DATA, 0, 0)
-			== NULL)
+			< 0)
 		goto err;
 
 	if(pv_format)
@@ -1130,7 +1130,7 @@ int pvh_set_reply_sr(
 		case 2: // reason
 			if(pvh_set_xavi(msg, &xavi_name, &_hdr_reply_reason, &fval,
 					   SR_XTYPE_STR, 0, 0)
-					== NULL) {
+					< 0) {
 				LM_ERR("set reply: cannot set reply reason\n");
 				goto err;
 			}
