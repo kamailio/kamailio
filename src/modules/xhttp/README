@@ -83,8 +83,8 @@ Chapter 1. Admin Guide
    SIP parser can easily handle HTTP requests just by adding a fake Via
    header.
 
-   The <module>xmlrpc</module> module uses the same concept. The xHTTP
-   module offers a generic way of handling the HTTP protocol, by calling
+   The xmlrpc module uses the same concept. The xHTTP module offers a
+   generic way of handling the HTTP protocol, by calling
    event_route[xhttp:request] in your config. You can check the HTTP URL
    via the config variable $hu. Note that use of $ru will raise errors
    since the structure of an HTTP URL is not compatible with that of a SIP
@@ -222,7 +222,10 @@ event_route[xhttp:request] {
 
 6.1.  xhttp:request
 
-   The event route is executed when a new HTTP request is received.
+   The event route is executed when a new HTTP request is received. Most
+   of the variables related to a SIP request can be used inside this event
+   route to get HTTP request attributes (e.g., $si - source IP, $hdr(X) -
+   body of header X, $rm - request method, $rb - request body, ...).
 ...
 tcp_accept_no_cl=yes
 ...
