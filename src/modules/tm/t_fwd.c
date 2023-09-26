@@ -470,9 +470,11 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 
 	/* check if send_sock is ok */
 	if(t->uac[branch].request.dst.send_sock == 0) {
-		LM_ERR("can't fwd to af %d, proto %d "
+		LM_ERR("can't fwd to af %d (%s), proto %d (%s)"
 			   " (no corresponding listening socket)\n",
-				dst->to.s.sa_family, dst->proto);
+				dst->to.s.sa_family,
+				get_af_name((unsigned int)dst->to.s.sa_family), dst->proto,
+				get_proto_name((unsigned int)dst->proto));
 		ret = E_NO_SOCKET;
 		goto error01;
 	}
@@ -878,10 +880,13 @@ static int add_uac_from_buf(struct cell *t, struct sip_msg *request, str *uri,
 
 	/* check if send_sock is ok */
 	if(t->uac[branch].request.dst.send_sock == 0) {
-		LM_ERR("can't fwd to af %d, proto %d"
+		LM_ERR("can't fwd to af %d (%s), proto %d (%s)"
 			   " (no corresponding listening socket)\n",
 				t->uac[branch].request.dst.to.s.sa_family,
-				t->uac[branch].request.dst.proto);
+				get_af_name((unsigned int)t->uac[branch]
+									.request.dst.to.s.sa_family),
+				t->uac[branch].request.dst.proto,
+				get_proto_name((unsigned int)t->uac[branch].request.dst.proto));
 		ret = ser_error = E_NO_SOCKET;
 		goto error;
 	}
