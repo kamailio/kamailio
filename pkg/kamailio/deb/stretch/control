@@ -570,23 +570,6 @@ Description: LDAP modules for the Kamailio SIP server
  queries from the Kamailio routing scripts and storage of SIP account data in an LDAP
  directory.
 
-Package: kamailio-ims-modules
-Architecture: any
-Multi-Arch: same
-Pre-Depends:
- ${misc:Pre-Depends},
-Depends:
- kamailio (= ${binary:Version}),
- ${misc:Depends},
- ${shlibs:Depends},
-Description: IMS module for the Kamailio SIP server
- Kamailio is a very fast and flexible SIP (RFC3261)
- server. Written entirely in C, Kamailio can handle thousands calls
- per second even on low-budget hardware.
- .
- This package contains various Diameter interfaces and modules for Kamailio
- to run as an IMS core.
-
 Package: kamailio-utils-modules
 Architecture: any
 Multi-Arch: same

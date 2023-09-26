@@ -42,6 +42,12 @@ sed -i -e '/^ libmicrohttpd-dev,/d' \
 sed -i -e '/^PACKAGE_GROUPS += microhttpd/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += microhttpd' ${DIST}/rules
 
+# libssl >= v1.1.1
+sed -i -e '/^Package: kamailio-ims-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^PACKAGE_GROUPS += ims/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += ims' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
