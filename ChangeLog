@@ -1,3 +1,278 @@
+===================== 2023-09-27 Version 5.7.2 Released =====================
+
+===================== Changes Since Version 5.7.1 ===========================
+
+
+commit 0a91d8a6f25c83094e0ff7cc0f16ecfe3488b378
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 27 09:00:32 2023 +0200
+
+    Makefile.defs: version set to 5.7.2
+
+commit 5b31a87cb90c4f81bc48b4f0f1fbd52825967de3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 27 08:45:03 2023 +0200
+
+    pkg: deb specs updated for v5.7.2
+
+commit 549e7903ef40086d933c756b43e35a1d22a38401
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 27 08:43:49 2023 +0200
+
+    pkg: version set to 5.7.2 for rpms and alpine specs
+
+commit 5d07b647680543752512ae89b8ec23fa9a2cbd8a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 27 08:01:48 2023 +0200
+
+    kamctl: updated the version to reflect kamailio series
+
+commit 2f0b2189f52927cdcb17c63087d31e637c4b716f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 27 08:01:04 2023 +0200
+
+    etc/kamailio.cfg: updated the version in comments
+
+commit f764cef139d55adb5d38ffc6a1a65fd14bda5f4c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 26 08:06:42 2023 +0200
+
+    rabbitmq: backport of RABBITMQ_ERR_CREATE needed for handling allocation error
+
+commit e202f597e1725c204eb33fa7b6266d9ce934be09
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Sep 25 20:02:22 2023 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 1f27bdfc5cc25b9d2f06204169131d9843cc252a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 25 19:51:26 2023 +0200
+
+    Revert "pv_headers: compare result of pvh_set_xavi() with NULL for error cases"
+    
+    This reverts commit 3bb59945d59ae438897a8f797dc2f06489728459.
+
+commit 9be895a16c91bcf4eb299ce0ffb14624755baa48
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Fri Aug 25 20:54:52 2023 +0200
+
+    [app_lua] clarify the file scripts can be in source or bytecode
+    
+    (cherry picked from commit a8747aa02ff3fbffd7a63bdc1e5c06188472edfa)
+
+commit 59d0ebe41017c2270b62f6171285bae02673da3a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 7 14:16:49 2023 +0200
+
+    core: parser - set via->params.len when body is finished
+    
+    (cherry picked from commit 82b0f273e1cf65051b6c50301c5073dce56c1149)
+
+commit 35f0efadeceaecc8e3315f4682d9ac4eba36e363
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 23 13:03:02 2023 +0200
+
+    msilo: cast to fix storage size warning
+    
+    (cherry picked from commit c11fcbbe9ed19bc54b800100d15d9ae269735f0c)
+
+commit 34885ab83c0c259376ffda04b41253eb9271780f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 23 10:55:35 2023 +0200
+
+    pv_headers: compare result of pvh_set_xavi() with NULL for error cases
+    
+    - the function returns a pointer
+    
+    (cherry picked from commit 5633026f90e46f7d6da8c1a658d425e8926f6949)
+
+commit fac1995c8730a83c24036c9d01d52b674291860b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 25 19:30:25 2023 +0200
+
+    db_redis: free db_keys in case of failure
+    
+    - backport of 027c2b30b39a7596c8630c06995ddc49bb42d789
+
+commit 3a217af6b9229989b3c7a788a01609e9513024c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 22 17:09:37 2023 +0200
+
+    rabbitmq: proper check for allocated pointer
+    
+    (cherry picked from commit 4d58141ab84cf248e8c44a96181642ad0f187e80)
+
+commit 34a2d87479d1bcc37d74f3d8fcb4186aea90fc84
+Author: Rick Barenthin <rick@ng-voice.com>
+Date:   Tue Aug 15 22:30:58 2023 +0200
+
+    core: cfg.y typo in parsing XAVPVIAFIELDS
+    
+    In the XAVPVIAFIELDS block there is the string written to the wrong variable.
+    
+    The string is stored in _ksr_xavp_via_params.s but the lenght is stored in _ksr_xavp_via_fields.len. This breaks XAVPVIAPARAMS and XAVPVIAFIELDS.
+    
+    (cherry picked from commit 722a79a9ba8ca2608e699ec14684ce004ae10d60)
+
+commit 516894e37e53bf17d29a4c95add29df7f70bcb8f
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Tue Aug 15 14:16:07 2023 +0000
+
+    ims_ipsec_pcscf: typo in spi_add function definition, GH #3513
+    
+    - fix typo in spi_add function definition
+    - patch from jbipre2, GH #3513
+    
+    (cherry picked from commit a053bcc391f0680ecd5f458d2512e57f69499d39)
+
+commit 774b464af7c561e49253066e8ce3b4ee55463d9a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Aug 12 13:30:39 2023 +0200
+
+    xhttp: note about available variables during http request processing
+    
+    (cherry picked from commit 170067e633ef32ea7b17adad46fdfe2c85fadda0)
+
+commit 5b1592900920143c9ce5c188e2835c1afd27d489
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 11 20:16:37 2023 +0200
+
+    http_async_client: docs - dependency on libevent
+    
+    - list style for dependencies and links to projects
+    
+    (cherry picked from commit f16d2658bbefb7a9f43076cbaa958fb3a27f6a0c)
+
+commit 90bd4424e17bc07a9073fd50bbd6d8b608ad4da9
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Sat Jul 22 14:15:09 2023 +0200
+
+    etc/ typos
+    
+    (cherry picked from commit 6e9335ff2245596b74bc1c749d1e7805bf186f02)
+
+commit 9276342ea90acffc3d631c6175c1f70c5c4fbacc
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Wed Jun 21 21:29:41 2023 +0200
+
+    mohqueue: typo
+    
+    (cherry picked from commit 0dcaaed5148cba775cebfd88d8e4a593f8c4297d)
+
+commit 3e197c7c41c97badece29cbc6477119180b8dcad
+Author: MVONDO Eric OBS/OINIS <bycl2332@orange.com>
+Date:   Tue Jun 20 10:22:48 2023 +0100
+
+    siptrace: fix pseudo var direction attribute length
+    
+    (cherry picked from commit 508886c3054a8470fe4469e78e63aa37ae93922d)
+
+commit 1b42a7036714a0e50bc61bd9e0619f9a2d36bcf8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 7 17:41:15 2023 +0200
+
+    registrar: increase max size for user and domain building aor
+    
+    - renamed max aor lenght define to match the user and domain style
+    
+    (cherry picked from commit b1356efd61e56eaa3426d8e2e813ea6730b4f2c9)
+
+commit ba7b3155611fd983f7d3d244e7b525a483998d3f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 6 21:26:28 2023 +0200
+
+    kex: safety checks when iterating stats list
+    
+    - GH #3186
+    
+    (cherry picked from commit 883f6b77211a76b35a9df570a8ddbbc344b05472)
+
+commit b59009089ad2b7cc33af27b637a81396b240660d
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Jul 5 07:04:46 2023 +0000
+
+    tm: remove obselete comment, add clarification for reply_wait mode 2
+    
+    (cherry picked from commit 2dbaa727a38e29da0f887fa5d0d8d20392839f9b)
+
+commit 80b26beb7d4f9cd4b3858e9e2dae4588feec8e28
+Author: Norbert KoppÃ¡ny Legyes <norbert.legyes@protonmail.com>
+Date:   Tue Jul 4 17:27:17 2023 +0200
+
+    xlog: fix docs example for modparam methods_filter
+    
+    (cherry picked from commit b5a37683e364f596b6c5b4ebbba1fff951d7be84)
+
+commit e681aa8236b502de31ad6600932517a259b6b62e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 30 08:49:19 2023 +0200
+
+    jansson: print unknown type in log message
+    
+    (cherry picked from commit b8cae4fbcd026ffb81e8242500212582d9672ad5)
+
+commit 704cc393dd310c9db6db34214597e3134b40367f
+Author: Stefan-Cristian Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Fri Aug 18 10:59:57 2023 +0300
+
+    ims_dialog: kemi export some functions
+    
+    (cherry-picked from commit 3994410)
+
+commit c51bc6c05428e8d66ddd6addcc1c0b4bbf4705f1
+Author: Stefan-Cristian Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Wed Aug 16 11:01:08 2023 +0300
+
+    ims_qos: kemi export
+    
+    (cherry picked from commit eb23e6b)
+
+commit 1cf389829bebad2013a6cf3b4ab919fa6b78a7c2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jul 20 14:04:30 2023 +0200
+
+    crypto: SHA1_Init deprecated at openssl 3.0
+    
+    From https://www.openssl.org/docs/man3.0/man7/migration_guide.html
+    
+    > Use of low-level digest functions such as SHA1_Init(3) have been informally
+    > discouraged from use for a long time. Applications should instead use the
+    > high level EVP APIs EVP_DigestInit_ex(3), EVP_DigestUpdate(3) and
+    > EVP_DigestFinal_ex(3), or the quick one-shot EVP_Q_digest(3).
+    
+    related to #3502
+    
+    (cherry picked from commit e55a6ed0f24c9b81d8d3ad27ba25d4d88c474483)
+
+commit 20be29ab3638d803341ec376b02edd7c14a9174a
+Author: Stefan Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Wed Jul 19 13:48:09 2023 +0300
+
+    dialog: set cbs list to NULL after destroying
+    
+    (cherry picked from commit 6881faadec45dd16dd896b13db44862e7df70422)
+
+commit 44130062640ccbbc7e796cc748d432fe3382c328
+Author: Stefan Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Wed Jul 5 13:56:21 2023 +0300
+
+    ims_qos: check and log for NULL sessionId
+    
+    (cherry picked from commit 1b291315b43da1148cee5f3821ddbe49b0c86b7f)
+
+commit 7630473f57c7c0ad600067cea7a89693d9926a81
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 3 08:26:07 2023 +0200
+
+    http_client: use LIBCURL_VERSION_NUM instead of CURL_AT_LEAST_VERSION
+    
+    - older distros have compilers that don't cope with the later
+    
+    (cherry picked from commit 7cd32bf9631a81c7c4382d45f498bdc9c7f9b34c)
+
+
+
 ===================== 2023-06-28 Version 5.7.1 Released =====================
 
 ===================== Changes Since Version 5.7.0 ===========================
