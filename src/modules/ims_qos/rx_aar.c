@@ -76,7 +76,7 @@ extern usrloc_api_t ul;
 extern struct ims_qos_counters_h ims_qos_cnts_h;
 
 extern int authorize_video_flow;
-extern int suspend_transaction;
+extern int _ims_qos_suspend_transaction;
 
 extern str af_signaling_ip;
 extern str af_signaling_ip6;
@@ -114,7 +114,7 @@ void async_aar_callback(
 
 	LM_DBG("received AAA answer");
 
-	if(suspend_transaction) {
+	if(_ims_qos_suspend_transaction) {
 		if(tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
 			LM_ERR("t_continue: transaction not found\n");
 			goto error;
@@ -231,7 +231,7 @@ done:
 	if(aaa)
 		cdpb.AAAFreeMessage(&aaa);
 
-	if(suspend_transaction) {
+	if(_ims_qos_suspend_transaction) {
 		tmb.t_continue(data->tindex, data->tlabel, data->act);
 	}
 	free_saved_transaction_global_data(data);
@@ -277,7 +277,7 @@ void async_aar_reg_callback(
 		   "failures flag is [%d]\n",
 			data->answers_not_received, data->failed);
 
-	if(suspend_transaction) {
+	if(_ims_qos_suspend_transaction) {
 		if(tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
 			LM_ERR("t_continue: transaction not found\n");
 			goto error;
@@ -430,7 +430,7 @@ done:
 		cdpb.AAAFreeMessage(&aaa);
 
 	if(finalReply) {
-		if(suspend_transaction) {
+		if(_ims_qos_suspend_transaction) {
 			tmb.t_continue(data->tindex, data->tlabel, data->act);
 		}
 		free_saved_transaction_global_data(data);
