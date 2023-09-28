@@ -164,9 +164,13 @@ inline static void dns_destroy_entry_shm_unsafe(struct dns_hash_entry *e)
 /* dec. the internal refcnt and if 0 deletes the entry */
 void dns_hash_put(struct dns_hash_entry *e)
 {
-	if(e && atomic_dec_and_test(&e->refcnt)) {
-		/* atomic_sub_long(dns_cache_total_used, e->total_size); */
-		dns_destroy_entry(e);
+	if(e != NULL) {
+		if(atomic_dec_and_test(&e->refcnt)) {
+			/* atomic_sub_long(dns_cache_total_used, e->total_size); */
+			dns_destroy_entry(e);
+		} else if(e->next == NULL && e->prev == NULL) {
+			LM_WARN("unlinked item %p\n", e);
+		}
 	}
 }
 
@@ -175,9 +179,13 @@ void dns_hash_put(struct dns_hash_entry *e)
  *  optimization) */
 void dns_hash_put_shm_unsafe(struct dns_hash_entry *e)
 {
-	if(e && atomic_dec_and_test(&e->refcnt)) {
-		/* atomic_sub_long(dns_cache_total_used, e->total_size); */
-		dns_destroy_entry_shm_unsafe(e);
+	if(e != NULL) {
+		if(atomic_dec_and_test(&e->refcnt)) {
+			/* atomic_sub_long(dns_cache_total_used, e->total_size); */
+			dns_destroy_entry_shm_unsafe(e);
+		} else if(e->next == NULL && e->prev == NULL) {
+			LM_WARN("unlinked item %p\n", e);
+		}
 	}
 }
 
