@@ -21,6 +21,7 @@
 #define _sr_mem_api_
 
 #include <string.h>
+#include <stdio.h>
 
 #include "src_loc.h"
 #include "meminfo.h"
@@ -50,6 +51,7 @@ typedef void (*sr_shm_glock_f)(void *mbp);
 typedef void (*sr_shm_gunlock_f)(void *mbp);
 
 typedef void (*sr_mem_status_f)(void *mbp);
+typedef void (*sr_mem_status_filter_f)(void *qmp, str *fmatch, FILE *fp);
 typedef void (*sr_mem_info_f)(void *mbp, struct mem_info *info);
 typedef void (*sr_mem_report_f)(void *mbp, mem_report_t *mrep);
 typedef unsigned long (*sr_mem_available_f)(void *mbp);
@@ -83,6 +85,8 @@ typedef struct sr_pkg_api
 	sr_free_f xfree;
 	/*memory status*/
 	sr_mem_status_f xstatus;
+	/*memory status with filter*/
+	sr_mem_status_filter_f xstatus_filter;
 	/*memory info - internal metrics*/
 	sr_mem_info_f xinfo;
 	/*memory report - internal report*/
@@ -126,6 +130,8 @@ typedef struct sr_shm_api
 	sr_free_f xfree_unsafe;
 	/*memory status*/
 	sr_mem_status_f xstatus;
+	/*memory status with filter*/
+	sr_mem_status_filter_f xstatus_filter;
 	/*memory info - internal metrics*/
 	sr_mem_info_f xinfo;
 	/*memory report - internal report*/

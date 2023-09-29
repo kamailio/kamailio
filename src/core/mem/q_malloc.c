@@ -970,6 +970,96 @@ void qm_status(void *qmp)
 }
 
 
+void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
+{
+	struct qm_block *qm;
+	struct qm_frag *f;
+	int i, j;
+	int h;
+	int unused;
+
+	qm = (struct qm_block *)qmp;
+
+	fprintf(fp, "block address: %p\n", qm);
+	if(!qm)
+		return;
+
+	fprintf(fp, "heap size= %lu\n", qm->size);
+	fprintf(fp, "used= %lu, used+overhead=%lu, free=%lu\n", qm->used,
+			qm->real_used, qm->size - qm->real_used);
+	fprintf(fp, "max used (+overhead)= %lu\n", qm->max_real_used);
+
+	fprintf(fp, "--- allocated fragments:\n");
+	for(f = qm->first_frag, i = 0; (char *)f < (char *)qm->last_frag_end;
+			f = FRAG_NEXT(f), i++) {
+		if(!f->u.is_free) {
+#ifdef DBG_QM_MALLOC
+			if((fmatch == NULL) || (fmatch->len == 0)
+					|| ((strlen(f->file) >= fmatch->len)
+							&& (strncmp(f->file, fmatch->s, fmatch->len)
+									== 0))) {
+				fprintf(fp, "   %3d. %c  address=%p frag=%p size=%lu used=%d\n",
+						i, (f->u.is_free) ? 'A' : 'N',
+						(char *)f + sizeof(struct qm_frag), f, f->size,
+						FRAG_WAS_USED(f));
+				fprintf(fp, "          %s from %s: %s(%ld)\n",
+						(f->u.is_free) ? "freed" : "alloc'd", f->file, f->func,
+						f->line);
+				fprintf(fp, "         start check=%lx, end check= %lx, %lx\n",
+						f->check, FRAG_END(f)->check1, FRAG_END(f)->check2);
+				if(f->check != ST_CHECK_PATTERN) {
+					fprintf(fp, "         * beginning overwritten(%lx)!\n",
+							f->check);
+				}
+				if((FRAG_END(f)->check1 != END_CHECK_PATTERN1)
+						|| (FRAG_END(f)->check2 != END_CHECK_PATTERN2)) {
+					fprintf(fp, "         * end overwritten(%lx, %lx)!\n",
+							FRAG_END(f)->check1, FRAG_END(f)->check2);
+				}
+			}
+#else
+			fprintf(fp, "   %3d. %c  address=%p frag=%p size=%lu used=%d\n", i,
+					(f->u.is_free) ? 'A' : 'N',
+					(char *)f + sizeof(struct qm_frag), f, f->size,
+					FRAG_WAS_USED(f));
+#endif
+		}
+	}
+	fprintf(fp, "\n\n--- dumping free list stats:\n");
+	for(h = 0, i = 0; h < QM_HASH_SIZE; h++) {
+		unused = 0;
+		for(f = qm->free_hash[h].head.u.nxt_free, j = 0;
+				f != &(qm->free_hash[h].head); f = f->u.nxt_free, i++, j++) {
+			if(!FRAG_WAS_USED(f)) {
+				unused++;
+#ifdef DBG_QM_MALLOC
+				fprintf(fp,
+						"unused fragm.: hash = %3d, fragment %p,"
+						" address %p size %lu, created from %s: %s(%lu)\n",
+						h, f, (char *)f + sizeof(struct qm_frag), f->size,
+						f->file, f->func, f->line);
+#endif
+			}
+		}
+
+		if(j)
+			fprintf(fp,
+					"hash= %3d. fragments no.: %5d, unused: %5d\n"
+					"\t\t bucket size: %9lu - %9ld (first %9lu)\n",
+					h, j, unused, UN_HASH(h),
+					((h <= QM_MALLOC_OPTIMIZE / ROUNDTO) ? 1 : 2) * UN_HASH(h),
+					qm->free_hash[h].head.u.nxt_free->size);
+		if(j != qm->free_hash[h].no) {
+			LOG(L_CRIT,
+					"--- different free frag. count: %d!=%lu"
+					" for hash %3d\n",
+					j, qm->free_hash[h].no, h);
+		}
+	}
+	fprintf(fp, "\n-----------------------------\n");
+}
+
+
 /* fills a malloc info structure with info about the block
  * if a parameter is not supported, it will be filled with 0 */
 void qm_info(void *qmp, struct mem_info *info)
@@ -1257,6 +1347,7 @@ int qm_malloc_init_pkg_manager(void)
 	ma.xrealloc = qm_realloc;
 	ma.xreallocxf = qm_reallocxf;
 	ma.xstatus = qm_status;
+	ma.xstatus_filter = qm_status_filter;
 	ma.xinfo = qm_info;
 	ma.xreport = qm_report;
 	ma.xavailable = qm_available;
@@ -1444,6 +1535,12 @@ void qm_shm_status(void *qmp)
 	qm_status(qmp);
 	qm_shm_unlock();
 }
+void qm_shm_status_filter(void *qmp, str *fmatch, FILE *fp)
+{
+	qm_shm_lock();
+	qm_status_filter(qmp, fmatch, fp);
+	qm_shm_unlock();
+}
 void qm_shm_info(void *qmp, struct mem_info *info)
 {
 	qm_shm_lock();
@@ -1522,6 +1619,7 @@ int qm_malloc_init_shm_manager(void)
 	ma.xreallocxf = qm_shm_reallocxf;
 	ma.xresize = qm_shm_resize;
 	ma.xstatus = qm_shm_status;
+	ma.xstatus_filter = qm_shm_status_filter;
 	ma.xinfo = qm_shm_info;
 	ma.xreport = qm_shm_report;
 	ma.xavailable = qm_shm_available;
