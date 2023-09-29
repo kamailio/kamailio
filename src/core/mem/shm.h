@@ -53,9 +53,8 @@ extern sr_shm_api_t _shm_root;
 #define shm_mallocxz(s)                                                      \
 	_shm_root.xmallocxz(_shm_root.mem_block, (s), _SRC_LOC_, _SRC_FUNCTION_, \
 			_SRC_LINE_, _SRC_MODULE_)
-#define shm_mallocxp(s, loc, fname, nline, mname)                                                      \
-	_shm_root.xmalloc(_shm_root.mem_block, (s), loc, fname, \
-			nline, mname)
+#define shm_mallocxp(s, loc, fname, nline, mname) \
+	_shm_root.xmalloc(_shm_root.mem_block, (s), loc, fname, nline, mname)
 #define shm_malloc_unsafe(s)                                      \
 	_shm_root.xmalloc_unsafe(_shm_root.mem_block, (s), _SRC_LOC_, \
 			_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
@@ -65,9 +64,8 @@ extern sr_shm_api_t _shm_root;
 #define shm_reallocxf(p, s)                                        \
 	_shm_root.xreallocxf(_shm_root.mem_block, (p), (s), _SRC_LOC_, \
 			_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
-#define shm_reallocxp(p, s, loc, fname, nline, mname)                                        \
-	_shm_root.xrealloc(_shm_root.mem_block, (p), (s), loc, \
-			fname, nline, mname)
+#define shm_reallocxp(p, s, loc, fname, nline, mname) \
+	_shm_root.xrealloc(_shm_root.mem_block, (p), (s), loc, fname, nline, mname)
 #define shm_resize(p, s)                                        \
 	_shm_root.xresize(_shm_root.mem_block, (p), (s), _SRC_LOC_, \
 			_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
@@ -89,6 +87,8 @@ extern sr_shm_api_t _shm_root;
 #endif
 
 #define shm_status() _shm_root.xstatus(_shm_root.mem_block)
+#define shm_status_filter(fmatch, fp) \
+	_shm_root.xstatus_filter(_shm_root.mem_block, fmatch, fp)
 #define shm_info(mi) _shm_root.xinfo(_shm_root.mem_block, mi)
 #define shm_report(mr) _shm_root.xreport(_shm_root.mem_block, mr)
 #define shm_available() _shm_root.xavailable(_shm_root.mem_block)

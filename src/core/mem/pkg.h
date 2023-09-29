@@ -65,6 +65,8 @@ void pkg_print_manager(void);
 #endif
 
 #define pkg_status() _pkg_root.xstatus(_pkg_root.mem_block)
+#define pkg_status_filter(fmatch, fp) \
+	_pkg_root.xstatus_filter(_pkg_root.mem_block, fmatch, fp)
 #define pkg_info(mi) _pkg_root.xinfo(_pkg_root.mem_block, mi)
 #define pkg_report(mr) _pkg_root.xreport(_pkg_root.mem_block, mr)
 #define pkg_available() _pkg_root.xavailable(_pkg_root.mem_block)
