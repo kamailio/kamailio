@@ -251,16 +251,19 @@ static void corex_rpc_debug(rpc_t *rpc, void *ctx)
 	}
 }
 
-rpc_export_t corex_rpc_cmds[] = {{"corex.list_sockets", corex_rpc_list_sockets,
-										 corex_rpc_list_sockets_doc, RET_ARRAY},
-		{"corex.list_aliases", corex_rpc_list_aliases,
-				corex_rpc_list_aliases_doc, RET_ARRAY},
-		{"corex.shm_status", corex_rpc_shm_status, corex_rpc_shm_status_doc, 0},
-		{"corex.shm_summary", corex_rpc_shm_summary, corex_rpc_shm_summary_doc,
-				0},
-		{"corex.pkg_summary", corex_rpc_pkg_summary, corex_rpc_pkg_summary_doc,
-				0},
-		{"corex.debug", corex_rpc_debug, corex_rpc_debug_doc, 0}, {0, 0, 0, 0}};
+/*clang-format off*/
+rpc_export_t corex_rpc_cmds[] = {
+	{"corex.list_sockets", corex_rpc_list_sockets,
+			corex_rpc_list_sockets_doc, RET_ARRAY},
+	{"corex.list_aliases", corex_rpc_list_aliases,
+			corex_rpc_list_aliases_doc, RET_ARRAY},
+	{"corex.shm_status", corex_rpc_shm_status, corex_rpc_shm_status_doc, 0},
+	{"corex.shm_summary", corex_rpc_shm_summary, corex_rpc_shm_summary_doc, 0},
+	{"corex.pkg_summary", corex_rpc_pkg_summary, corex_rpc_pkg_summary_doc, 0},
+	{"corex.debug", corex_rpc_debug, corex_rpc_debug_doc, 0},
+	{0, 0, 0, 0}
+};
+/*clang-format on*/
 
 /**
  * register RPC commands

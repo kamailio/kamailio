@@ -93,103 +93,110 @@ static int corex_dns_cache_param_add(str *pval);
 
 static int corex_sip_reply_out(sr_event_param_t *evp);
 
+/*clang-format off*/
 static pv_export_t mod_pvs[] = {
-		{{"cfg", (sizeof("cfg") - 1)}, PVT_OTHER, pv_get_cfg, 0,
-				pv_parse_cfg_name, 0, 0, 0},
-		{{"lsock", (sizeof("lsock") - 1)}, PVT_OTHER, pv_get_lsock, 0,
-				pv_parse_lsock_name, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"cfg", (sizeof("cfg") - 1)}, PVT_OTHER, pv_get_cfg, 0,
+		pv_parse_cfg_name, 0, 0, 0},
+	{{"lsock", (sizeof("lsock") - 1)}, PVT_OTHER, pv_get_lsock, 0,
+		pv_parse_lsock_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 /* Exported functions */
 static tr_export_t mod_trans[] = {
-		{{"sock", sizeof("sock") - 1}, tr_sock_parse}, {{0, 0}, 0}};
-
-static cmd_export_t cmds[] = {{"forward_reply", (cmd_function)w_forward_reply,
-									  0, 0, 0, CORE_ONREPLY_ROUTE},
-		{"append_branch", (cmd_function)w_append_branch, 0, 0, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"append_branch", (cmd_function)w_append_branch, 1, fixup_spve_null,
-				fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"append_branch", (cmd_function)w_append_branch, 2, fixup_spve_spve,
-				fixup_free_spve_spve, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"send_udp", (cmd_function)w_send_udp, 0, 0, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"send_udp", (cmd_function)w_send_udp, 1, fixup_spve_null,
-				fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"send_tcp", (cmd_function)w_send_tcp, 0, 0, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"send_tcp", (cmd_function)w_send_tcp, 1, fixup_spve_null,
-				fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"send_data", (cmd_function)w_send_data, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"sendx", (cmd_function)w_sendx, 3, fixup_spve_all, fixup_free_spve_all,
-				ANY_ROUTE},
-		{"is_incoming", (cmd_function)nio_check_incoming, 0, 0, 0, ANY_ROUTE},
-		{"msg_iflag_set", (cmd_function)w_msg_iflag_set, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"msg_iflag_reset", (cmd_function)w_msg_iflag_reset, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"msg_iflag_is_set", (cmd_function)w_msg_iflag_is_set, 1,
-				fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
-		{"file_read", (cmd_function)w_file_read, 2, fixup_file_op, 0,
-				ANY_ROUTE},
-		{"file_write", (cmd_function)w_file_write, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"setxflag", (cmd_function)w_setxflag, 1, fixup_igp_null,
-				fixup_free_igp_null, ANY_ROUTE},
-		{"resetxflag", (cmd_function)w_resetxflag, 1, fixup_igp_null,
-				fixup_free_igp_null, ANY_ROUTE},
-		{"isxflagset", (cmd_function)w_isxflagset, 1, fixup_igp_null,
-				fixup_free_igp_null, ANY_ROUTE},
-		{"set_send_socket", (cmd_function)w_set_send_socket, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"set_send_socket_name", (cmd_function)w_set_send_socket_name, 1,
-				fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
-		{"set_recv_socket", (cmd_function)w_set_recv_socket, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"set_recv_socket_name", (cmd_function)w_set_recv_socket_name, 1,
-				fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
-		{"set_source_address", (cmd_function)w_set_source_address, 1,
-				fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
-		{"via_add_srvid", (cmd_function)w_via_add_srvid, 1, fixup_igp_null,
-				fixup_free_igp_null, ANY_ROUTE},
-		{"via_add_xavp_params", (cmd_function)w_via_add_xavp_params, 1,
-				fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
-		{"via_use_xavp_fields", (cmd_function)w_via_use_xavp_fields, 1,
-				fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
-		{"via_reply_add_xavp_params", (cmd_function)w_via_reply_add_xavp_params, 1,
-				fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
-		{"is_faked_msg", (cmd_function)w_is_faked_msg, 0, 0, 0, ANY_ROUTE},
-		{"is_socket_name", (cmd_function)w_is_socket_name, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-
-		{0, 0, 0, 0, 0, 0}};
-
-static param_export_t params[] = {
-		{"alias_subdomains", STR_PARAM | USE_FUNC_PARAM,
-				(void *)corex_alias_subdomains_param},
-		{"dns_cache", PARAM_STR | USE_FUNC_PARAM,
-				(void *)corex_dns_cache_param},
-		{"nio_intercept", INT_PARAM, &nio_intercept},
-		{"nio_min_msg_len", INT_PARAM, &nio_min_msg_len},
-		{"nio_msg_avp", PARAM_STR, &nio_msg_avp_param},
-		{"evcb_reply_out", PARAM_STR, &corex_evcb_reply_out},
-
-		{0, 0, 0}};
-
-struct module_exports exports = {
-		"corex",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	{{"sock", sizeof("sock") - 1}, tr_sock_parse},
+	{{0, 0}, 0}
 };
 
+static cmd_export_t cmds[] = {
+	{"forward_reply", (cmd_function)w_forward_reply, 0,
+		0, 0, CORE_ONREPLY_ROUTE},
+	{"append_branch", (cmd_function)w_append_branch, 0,
+		0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"append_branch", (cmd_function)w_append_branch, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"append_branch", (cmd_function)w_append_branch, 2,
+		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"send_udp", (cmd_function)w_send_udp, 0,
+		0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"send_udp", (cmd_function)w_send_udp, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"send_tcp", (cmd_function)w_send_tcp, 0,
+		0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"send_tcp", (cmd_function)w_send_tcp, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"send_data", (cmd_function)w_send_data, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"sendx", (cmd_function)w_sendx, 3,
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"is_incoming", (cmd_function)nio_check_incoming, 0, 0, 0, ANY_ROUTE},
+	{"msg_iflag_set", (cmd_function)w_msg_iflag_set, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"msg_iflag_reset", (cmd_function)w_msg_iflag_reset, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"msg_iflag_is_set", (cmd_function)w_msg_iflag_is_set, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"file_read", (cmd_function)w_file_read, 2,
+		fixup_file_op, 0, ANY_ROUTE},
+	{"file_write", (cmd_function)w_file_write, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"setxflag", (cmd_function)w_setxflag, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"resetxflag", (cmd_function)w_resetxflag, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"isxflagset", (cmd_function)w_isxflagset, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"set_send_socket", (cmd_function)w_set_send_socket, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"set_send_socket_name", (cmd_function)w_set_send_socket_name, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"set_recv_socket", (cmd_function)w_set_recv_socket, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"set_recv_socket_name", (cmd_function)w_set_recv_socket_name, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"set_source_address", (cmd_function)w_set_source_address, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"via_add_srvid", (cmd_function)w_via_add_srvid, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"via_add_xavp_params", (cmd_function)w_via_add_xavp_params, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"via_use_xavp_fields", (cmd_function)w_via_use_xavp_fields, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"via_reply_add_xavp_params", (cmd_function)w_via_reply_add_xavp_params, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"is_faked_msg", (cmd_function)w_is_faked_msg, 0, 0, 0, ANY_ROUTE},
+	{"is_socket_name", (cmd_function)w_is_socket_name, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+
+	{0, 0, 0, 0, 0, 0}
+};
+
+static param_export_t params[] = {
+	{"alias_subdomains", STR_PARAM | USE_FUNC_PARAM,
+				(void *)corex_alias_subdomains_param},
+	{"dns_cache", PARAM_STR | USE_FUNC_PARAM,
+				(void *)corex_dns_cache_param},
+	{"nio_intercept", INT_PARAM, &nio_intercept},
+	{"nio_min_msg_len", INT_PARAM, &nio_min_msg_len},
+	{"nio_msg_avp", PARAM_STR, &nio_msg_avp_param},
+	{"evcb_reply_out", PARAM_STR, &corex_evcb_reply_out},
+
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"corex",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	params,			 /* param exports */
+	0,				 /* RPC method exports */
+	mod_pvs,		 /* pseudo-variables exports */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	child_init,		 /* per-child init function */
+	mod_destroy		 /* module destroy function */
+};
+/*clang-format on*/
 
 /**
  * init module function

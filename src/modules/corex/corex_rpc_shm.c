@@ -115,11 +115,14 @@ static void corex_rpc_shm_report(rpc_t *rpc, void *ctx)
 			mrep.min_used_frag_line);
 }
 
+/*clang-format off*/
 rpc_export_t corex_rpc_shm_cmds[] = {
-		{"shm.info", corex_rpc_shm_info, corex_rpc_shm_info_doc, 0},
-		{"shm.report", corex_rpc_shm_report, corex_rpc_shm_report_doc, 0},
-		{"shm.stats", corex_rpc_shm_stats, corex_rpc_shm_stats_doc, 0},
-		{0, 0, 0, 0}};
+	{"shm.info", corex_rpc_shm_info, corex_rpc_shm_info_doc, 0},
+	{"shm.report", corex_rpc_shm_report, corex_rpc_shm_report_doc, 0},
+	{"shm.stats", corex_rpc_shm_stats, corex_rpc_shm_stats_doc, 0},
+	{0, 0, 0, 0}
+};
+/*clang-format on*/
 
 /**
  * register RPC shm commands
