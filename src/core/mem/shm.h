@@ -87,8 +87,14 @@ extern sr_shm_api_t _shm_root;
 #endif
 
 #define shm_status() _shm_root.xstatus(_shm_root.mem_block)
-#define shm_status_filter(fmatch, fp) \
-	_shm_root.xstatus_filter(_shm_root.mem_block, fmatch, fp)
+#define shm_status_filter(fmatch, fp)                                  \
+	do {                                                               \
+		if(_shm_root.xstatus_filter) {                                 \
+			_shm_root.xstatus_filter(_shm_root.mem_block, fmatch, fp); \
+		} else {                                                       \
+			LM_ERR("shm status with filter not implemented\n");        \
+		}                                                              \
+		while(0)
 #define shm_info(mi) _shm_root.xinfo(_shm_root.mem_block, mi)
 #define shm_report(mr) _shm_root.xreport(_shm_root.mem_block, mr)
 #define shm_available() _shm_root.xavailable(_shm_root.mem_block)
