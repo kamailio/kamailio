@@ -844,9 +844,9 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 				transport_fin(VS_P_FIN, PROTO_SCTP);
 				/* ws */
 				value_switch(VW_W, 's', 'S', VW_S_FIN);
- 				transport_switch_or_fin(
-  				 				VW_S_FIN, 's', 'S', VW_SS_FIN, PROTO_WS);
- 				transport_fin(VW_SS_FIN, PROTO_WSS);
+				transport_switch_or_fin(
+						VW_S_FIN, 's', 'S', VW_SS_FIN, PROTO_WS);
+				transport_fin(VW_SS_FIN, PROTO_WSS);
 
 				/* ttl */
 				param_switch(PTTL_T2, 'l', 'L', PTTL_L);
