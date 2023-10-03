@@ -67,12 +67,12 @@ inline static enum sip_protos get_proto(
 #endif
 #ifdef USE_TLS
 				case PROTO_TLS:
+				case PROTO_WSS:
 #endif
 #ifdef USE_SCTP
 				case PROTO_SCTP:
 #endif
 					return proto;
-				case PROTO_WSS: /* should never see ;transport=wss */
 				default:
 					LM_ERR("unsupported transport: %d\n", proto);
 					return PROTO_NONE;
