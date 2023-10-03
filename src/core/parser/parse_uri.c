@@ -171,7 +171,9 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 		VS_P_FIN,
 		/* ws */
 		VW_W,
-		VW_S_FIN
+		VW_S_FIN,
+        /* wss */
+        VW_SS_FIN
 	};
 	register enum states state;
 	char *s;
@@ -394,6 +396,32 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 				state = URI_VAL_P;                                            \
 		}                                                                     \
 		break
+
+#define transport_switch_or_fin(c_state, c1, c2, new_state_c, proto_no) \
+	case c_state:                                                       \
+		switch(*p){                                                     \
+			case c1:                                                    \
+			case c2:                                                    \
+				state=(new_state_c);                                    \
+				break;                                                  \
+			case '@':                                                   \
+				still_at_user;                                          \
+				break;                                                  \
+			semicolon_case;                                             \
+				param_set(b, v);                                        \
+				uri->proto=(proto_no);                                  \
+				break;                                                  \
+			question_case;                                              \
+				param_set(b, v);                                        \
+				uri->proto=(proto_no);                                  \
+				break;                                                  \
+			colon_case;                                                 \
+			default:                                                    \
+				state=URI_VAL_P;                                        \
+				break;                                                  \
+		}                                                               \
+		break
+
 
 #define transport_fin(c_state, proto_no) \
 	case c_state:                        \
@@ -816,7 +844,8 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 				transport_fin(VS_P_FIN, PROTO_SCTP);
 				/* ws */
 				value_switch(VW_W, 's', 'S', VW_S_FIN);
-				transport_fin(VW_S_FIN, PROTO_WS);
+                transport_switch_or_fin(VW_S_FIN, 's', 'S', VW_SS_FIN, PROTO_WS);
+                transport_fin(VW_SS_FIN, PROTO_WSS);
 
 				/* ttl */
 				param_switch(PTTL_T2, 'l', 'L', PTTL_L);
@@ -1241,6 +1270,12 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 			uri->params.len = p - s;
 			param_set(b, v);
 			uri->proto = PROTO_WS;
+			break;
+		case VW_SS_FIN:
+			uri->params.s=s;
+			uri->params.len=p-s;
+			param_set(b, v);
+			uri->proto=PROTO_WSS;
 			break;
 #ifdef USE_COMP
 		case VCOMP_SIGC_P_FIN:
