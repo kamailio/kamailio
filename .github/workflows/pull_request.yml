@@ -6,11 +6,11 @@ name: checks_pr
       - master
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-permissions:
-  contents: read # to fetch code (actions/checkout)
 jobs:
   check-format:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # to fetch code (actions/checkout)
     steps:
       - uses: actions/checkout@v4
       - uses: wolletd/clang-format-checker@v1.10
@@ -18,6 +18,8 @@ jobs:
           target-ref: master
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # to fetch code (actions/checkout)
     container:
       image: ghcr.io/kamailio/pkg-kamailio-docker:master-${{ matrix.distribution }}
       volumes:

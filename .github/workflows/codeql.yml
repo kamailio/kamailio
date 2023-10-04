@@ -5,8 +5,6 @@ on:
     branches: [ "master" ]
   schedule:
     - cron: "30 0 * * *"
-permissions:
-  contents: read
 jobs:
   analyze:
     name: Analyze

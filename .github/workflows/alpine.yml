@@ -10,13 +10,13 @@ on:
 env:
   IMAGE_NAME: kamailio-ci
   SOURCE_BRANCH: ${{ github.ref_name }}
-permissions:
-  contents: read
-  packages: write 
+
 jobs:
   x86_64:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
+      packages: write 
     steps:
     - uses: actions/checkout@v4
 
