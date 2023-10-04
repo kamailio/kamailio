@@ -23,14 +23,14 @@ $(WOLFSSL_PREFIX)/include/wolfssl/options.h $(WOLFSSL_PREFIX)/lib/libwolfssl.a:
 		./autogen.sh; \
 	fi; \
 	if [ ! -f "Makefile" ]; then \
-		env -u DEFS -u CFLAGS -u LDFLAGS -u LIBS EXTRA_CFLAGS="-g -fPIC" ./configure \
+		env -u DEFS -u CFLAGS -u LDFLAGS -u LIBS EXTRA_CFLAGS="-g -O2 -fPIC" ./configure \
 		--enable-all --enable-pkcs11 --enable-static --enable-writedup \
 		--disable-aligndata --disable-shared --disable-examples \
 		--disable-jni --disable-crl-monitor \
 		--prefix=$(CURDIR)/$(WOLFSSL_PREFIX) \
 		--exec-prefix=$(CURDIR)/$(WOLFSSL_PREFIX); \
 	fi;
-	@$(MAKE) -C $(WOLFSSL_SRC) install
+	@$(MAKE) -C $(WOLFSSL_SRC) prefix=$(CURDIR)/$(WOLFSSL_PREFIX) exec-prefix=$(CURDIR)/$(WOLFSSL_PREFIX) install
 
 $(NAME): $(WOLFSSL_PREFIX)/lib/libwolfssl.a
 
