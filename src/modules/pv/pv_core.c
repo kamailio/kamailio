@@ -4622,11 +4622,7 @@ int pv_get_via_attr(
 			if(parse_via_oc(msg, vb, &ocv) < 0) {
 				return pv_get_null(msg, param, res);
 			}
-			if(ocv.oc == 1) {
-				return pv_get_sintval(msg, param, res, 1);
-			} else {
-				return pv_get_sintval(msg, param, res, 2);
-			}
+			return pv_get_sintval(msg, param, res, ocv.oc);
 			break;
 		case 10: /* oc-algo */
 			if(parse_via_oc(msg, vb, &ocv) < 0) {
