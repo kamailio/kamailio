@@ -10,6 +10,7 @@ on:
 env:
   IMAGE_NAME: kamailio-ci
   SOURCE_BRANCH: ${{ github.ref_name }}
+  DOCKER_REPO: ghcr.io/kamailio/kamailio-ci
 
 jobs:
   x86_64:
