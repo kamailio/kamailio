@@ -360,7 +360,7 @@ function ksr_route_natmanage()
 		else
 			KSR.rtpengine.rtpengine_manage("replace-origin replace-session-connection");
 		end
-	elseif KSR.kx.ifdef('WITH_RTPPROXY') then
+	else
 		if KSR.nathelper.nat_uac_test(8)>0 then
 			KSR.rtpproxy.rtpproxy_manage("co");
 		else
