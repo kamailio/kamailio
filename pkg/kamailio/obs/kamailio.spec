@@ -1037,6 +1037,14 @@ BuildRequires:  openssl-devel
 TLS transport for Kamailio.
 
 
+%package    tls_wolfssl
+Summary:    TLS transport for Kamailio based on wolfSSL
+Group:      %{PKGGROUP}
+
+%description    tls_wolfssl
+TLS transport for Kamailio based on wolfSSL
+
+
 %package    tcpops
 Summary:    On demand and per socket control to the TCP options
 Group:      %{PKGGROUP}
@@ -1281,7 +1289,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if "%{?_unitdir}" != ""
     ksystemd \
 %endif
-    ktls kunixodbc kutils \
+    ktls ktls_wolfssl kunixodbc kutils \
 %if %{with websocket}
     kwebsocket \
 %endif
@@ -1389,7 +1397,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if "%{?_unitdir}" != ""
     ksystemd \
 %endif
-    ktls kunixodbc kutils \
+    ktls ktls_wolfssl kunixodbc kutils \
 %if %{with websocket}
     kwebsocket \
 %endif
@@ -2328,6 +2336,12 @@ fi
 %doc %{_docdir}/kamailio/modules/README.tls
 %{_libdir}/kamailio/modules/auth_identity.so
 %{_libdir}/kamailio/modules/tls.so
+
+
+%files      tls_wolfssl
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.tls_wolfssl
+%{_libdir}/kamailio/modules/tls_wolfssl.so
 
 
 %files      tcpops
