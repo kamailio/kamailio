@@ -360,7 +360,7 @@ Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
 
 %description    cfgt
-The unit test config file execution tracing module for Kamailio. 
+The unit test config file execution tracing module for Kamailio.
 
 
 %if %{with cnxcc}
@@ -412,7 +412,7 @@ BuildRequires:  libopenssl-devel
 %endif
 
 %description    crypto
-This module provides various cryptography tools for use in Kamailio configuration file.  It relies on OpenSSL libraries for cryptographic operations (libssl, libcrypto). 
+This module provides various cryptography tools for use in Kamailio configuration file.  It relies on OpenSSL libraries for cryptographic operations (libssl, libcrypto).
 
 
 %package    dialplan
@@ -520,7 +520,7 @@ BuildRequires:  libxml2-devel, libcurl-devel, zlib-devel
 %endif
 
 %description    http_client
-This module implements protocol functions that use the libcurl to communicate with HTTP servers. 
+This module implements protocol functions that use the libcurl to communicate with HTTP servers.
 
 
 %if %{with ims}
@@ -738,7 +738,7 @@ Protocol (SIP)" support for Kamailio.
 %if %{with perl}
 %package    perl
 Summary:    Perl extensions and database driver for Kamailio
-Group:      %{PKGGROUP} 
+Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
 %if 0%{?suse_version}
 Requires:   perl
@@ -956,7 +956,7 @@ BuildRequires:  libcurl-devel
 %endif
 
 %description    slack
-This module provides integration with Slack over webhooks. 
+This module provides integration with Slack over webhooks.
 
 
 %package    smsops
@@ -965,7 +965,7 @@ Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
 
 %description    smsops
-This module collects the Transformations for 3GPP-SMS. 
+This module collects the Transformations for 3GPP-SMS.
 
 
 %package    snmpstats
@@ -990,7 +990,7 @@ Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
 
 %description    statsc
-This module provides a statistics collector engine. 
+This module provides a statistics collector engine.
 
 
 %package    statsd
@@ -1035,6 +1035,16 @@ BuildRequires:  openssl-devel
 
 %description    tls
 TLS transport for Kamailio.
+
+
+%package    tls_wolfssl
+Summary:    TLS transport for Kamailio based on wolfSSL
+Group:      %{PKGGROUP}
+Requires: wolfssl>=5.6.4
+BuildRequires: pkgconfig(wolfssl)
+
+%description    tls_wolfssl
+TLS transport for Kamailio based on wolfSSL
 
 
 %package    tcpops
@@ -1198,6 +1208,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if 0%{?rhel} >= 8
     PYTHON3=python3.9 \
 %endif
+    WOLFSSL_INTERNAL=no \
     group_include="kstandard kautheph kberkeley kcarrierroute \
 %if %{with cnxcc}
     kcnxcc \
@@ -1281,7 +1292,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if "%{?_unitdir}" != ""
     ksystemd \
 %endif
-    ktls kunixodbc kutils \
+    ktls ktls_wolfssl kunixodbc kutils \
 %if %{with websocket}
     kwebsocket \
 %endif
@@ -1306,6 +1317,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if 0%{?rhel} >= 8
     PYTHON3=python3.9 \
 %endif
+    WOLFSSL_INTERNAL=no \
     group_include="kstandard kautheph kberkeley kcarrierroute \
 %if %{with cnxcc}
     kcnxcc \
@@ -1389,7 +1401,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if "%{?_unitdir}" != ""
     ksystemd \
 %endif
-    ktls kunixodbc kutils \
+    ktls ktls_wolfssl kunixodbc kutils \
 %if %{with websocket}
     kwebsocket \
 %endif
@@ -2330,6 +2342,12 @@ fi
 %{_libdir}/kamailio/modules/tls.so
 
 
+%files      tls_wolfssl
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.tls_wolfssl
+%{_libdir}/kamailio/modules/tls_wolfssl.so
+
+
 %files      tcpops
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.tcpops
@@ -2423,7 +2441,7 @@ fi
   - fix http_client package
 * Fri Nov 04 2016 Marcel Weinberg <marcel@ng-voice.com>
   - Updated to Kamailio version 5.0 and CentOS / RHEL 7.2
-  - added new modules available with Kamailio 5.x 
+  - added new modules available with Kamailio 5.x
     - cfgt
     - crypto
     - http_client
@@ -2432,10 +2450,10 @@ fi
     - statsc
     - topos
   - removed dialog_ng references and added ims_dialog to replace dialog_ng
-  - removed java module which requires libgcj 
+  - removed java module which requires libgcj
     - libgcj is no longer supported by RHEL / CentOS (Version >= 7)
     - it's recommended to replace libgcj as dependency
-  - added the ims_registrar_pcscf module 
+  - added the ims_registrar_pcscf module
 * Tue Dec 3 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
   - Updated version to 4.2.0
 * Mon Oct 7 2013 Peter Dunkley <peter.dunkley@crocodilertc.net>
@@ -2500,4 +2518,3 @@ fi
 * Mon Jun 18 2012 Peter Dunkley <peter.dunkley@crocodilertc.net>
   - Consolidating changelog for 3.3.0 into a single entry...
   - See revision control for details this far back
-
