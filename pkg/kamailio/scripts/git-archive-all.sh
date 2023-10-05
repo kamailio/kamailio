@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # packaging script to include submodules
 # modified from: https://gist.github.com/arteymix/03702e3eb05c2c161a86b49d4626d21f
-# Usage: pkg/scripts/git-archive-all.sh kamailio-5.8.0 ../output/kamailio-5.8.0_src
 
 usage() {
-    echo Usage:  pkg/scripts/git-archive-all.sh kamailio-5.8.0 ../output/kamailio-5.8.0_src
+    echo Usage:  pkg/kamailio/scripts/git-archive-all.sh kamailio-5.8.0 ../output/kamailio-5.8.0_src
 }
 
 if [ -z $1 ]; then
