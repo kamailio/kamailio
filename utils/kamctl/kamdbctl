@@ -35,13 +35,13 @@ if [ -n "$KAMCTLFULLPATH" ] ; then
 fi
 
 # check for rc file at standard locations
-if [ -f /etc/kamailio/kamctlrc ]; then
+if [ -f /etc/kamailio/kamctlrc -a -r /etc/kamailio/kamctlrc ]; then
 	. /etc/kamailio/kamctlrc
 fi
-if [ -f /usr/local/etc/kamailio/kamctlrc ]; then
+if [ -f /usr/local/etc/kamailio/kamctlrc -a -r /usr/local/etc/kamailio/kamctlrc ]; then
 	. /usr/local/etc/kamailio/kamctlrc
 fi
-if [ -f ~/.kamctlrc ]; then
+if [ -f ~/.kamctlrc -a -r ~/.kamctlrc ]; then
 	. ~/.kamctlrc
 fi
 
