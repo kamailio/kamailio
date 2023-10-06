@@ -6,13 +6,13 @@ usage() {
     echo Usage:  pkg/kamailio/scripts/git-archive-all.sh kamailio-5.8.0 ../output/kamailio-5.8.0_src
 }
 
-if [ -z $1 ]; then
+if [ -z "$1" ]; then
     echo "You must specify a prefix name."
     usage
     exit 1
 fi
 
-if [ -z $2 ]; then
+if [ -z "$2" ]; then
     echo "You must specify a super-archive name."
     usage
     exit 1

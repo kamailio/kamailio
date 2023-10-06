@@ -8,8 +8,8 @@ usage() {
 # creates a src.rpm for mock
 VER=$1
 REL=$2
-[[ -n $VER ]] || { echo "Version not specified"; usage; exit 1; }
-[[ -n $REL ]] || { echo "Release not specified"; usage; exit 2; }
+[[ -n "$VER" ]] || { echo "Version not specified"; usage; exit 1; }
+[[ -n "$REL" ]] || { echo "Release not specified"; usage; exit 2; }
 
 git submodule update --init
 
