@@ -116,12 +116,40 @@ static void corex_rpc_shm_report(rpc_t *rpc, void *ctx)
 }
 
 /*clang-format off*/
+static const char *corex_rpc_shm_rprint_doc[2] = {
+		"Print shm status report to file matching the filter", 0};
+/*clang-format on*/
+
+/*
+ * RPC command to print the shm status report
+ */
+static void corex_rpc_shm_rprint(rpc_t *rpc, void *ctx)
+{
+	char *fname = NULL;
+	str fmatch = STR_NULL;
+	FILE *fp = NULL;
+
+	if(rpc->scan(ctx, "ss", &fname, &fmatch) < 2) {
+		rpc->fault(ctx, 400, "Filename and filter not provided");
+		return;
+	}
+	fp = fopen(fname, "w");
+	if(fp == NULL) {
+		LM_ERR("cannot open file: %s\n", fname);
+		rpc->fault(ctx, 500, "Cannot open file");
+		return;
+	}
+	shm_status_filter(&fmatch, fp);
+	fclose(fp);
+}
+
+/*clang-format off*/
 rpc_export_t corex_rpc_shm_cmds[] = {
-	{"shm.info", corex_rpc_shm_info, corex_rpc_shm_info_doc, 0},
-	{"shm.report", corex_rpc_shm_report, corex_rpc_shm_report_doc, 0},
-	{"shm.stats", corex_rpc_shm_stats, corex_rpc_shm_stats_doc, 0},
-	{0, 0, 0, 0}
-};
+		{"shm.info", corex_rpc_shm_info, corex_rpc_shm_info_doc, 0},
+		{"shm.report", corex_rpc_shm_report, corex_rpc_shm_report_doc, 0},
+		{"shm.stats", corex_rpc_shm_stats, corex_rpc_shm_stats_doc, 0},
+		{"shm.rprint", corex_rpc_shm_rprint, corex_rpc_shm_rprint_doc, 0},
+		{0, 0, 0, 0}};
 /*clang-format on*/
 
 /**
