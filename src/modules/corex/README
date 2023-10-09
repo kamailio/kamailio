@@ -76,6 +76,7 @@ Muhammad Shahzad Shafi
               5.7. corex.shm.info
               5.8. corex.shm.report
               5.9. corex.shm.stats
+              5.10. corex.shm.rprint
 
         6. Event Routes
 
@@ -180,6 +181,7 @@ Chapter 1. Admin Guide
         5.7. corex.shm.info
         5.8. corex.shm.report
         5.9. corex.shm.stats
+        5.10. corex.shm.rprint
 
    6. Event Routes
 
@@ -800,6 +802,7 @@ route[reply] {
    5.7. corex.shm.info
    5.8. corex.shm.report
    5.9. corex.shm.stats
+   5.10. corex.shm.rprint
 
 5.1.  corex.debug
 
@@ -872,6 +875,18 @@ route[reply] {
 
    Example:
                 kamcli rpc shm.stats
+
+5.10.  corex.shm.rprint
+
+   Shared memory usage status report printed to file upon filter match
+   with the file of allocation.
+
+   It takes two parameters: the path to file where to write the report;
+   the string to match the allocation file (the match is done as value
+   included in the path fo the allocation file).
+
+   Example:
+                        kamcli rpc shm.rprint /tmp/kamailioshm.txt dns_cache.c
 
 6. Event Routes
 
