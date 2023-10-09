@@ -1106,6 +1106,26 @@ route[reply] {
 		&kamcli; rpc shm.stats
 		</programlisting>
     </section>
+	<section id="corex.rpc.shm.rprint">
+		<title>
+		<function moreinfo="none">corex.shm.rprint</function>
+		</title>
+		<para>
+			Shared memory usage status report printed to file upon filter match
+			with the file of allocation.
+		</para>
+		<para>
+			It takes two parameters: the path to file where to write the report;
+			the string to match the allocation file (the match is done as value
+			included in the path fo the allocation file).
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+			&kamcli; rpc shm.rprint /tmp/kamailioshm.txt dns_cache.c
+		</programlisting>
+    </section>
     </section>
 
     <section>
