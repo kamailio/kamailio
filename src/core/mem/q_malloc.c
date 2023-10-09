@@ -970,6 +970,26 @@ void qm_status(void *qmp)
 }
 
 
+static void *qm_strnstr(const void *b1, int l1, const void *b2, int l2)
+{
+	char *sp = (char *)b1;
+	char *pp = (char *)b2;
+	char *eos = sp + l1 - l2;
+
+	if(!(b1 && b2 && l1 && l2))
+		return NULL;
+
+	while(sp <= eos) {
+		if(*sp == *pp)
+			if(memcmp(sp, pp, l2) == 0)
+				return sp;
+
+		sp++;
+	}
+
+	return NULL;
+}
+
 void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
 {
 	struct qm_block *qm;
@@ -996,8 +1016,9 @@ void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
 #ifdef DBG_QM_MALLOC
 			if((fmatch == NULL) || (fmatch->len == 0)
 					|| ((strlen(f->file) >= fmatch->len)
-							&& (strncmp(f->file, fmatch->s, fmatch->len)
-									== 0))) {
+							&& (qm_strnstr(f->file, strlen(f->file), fmatch->s,
+										fmatch->len)
+									!= NULL))) {
 				fprintf(fp, "   %3d. %c  address=%p frag=%p size=%lu used=%d\n",
 						i, (f->u.is_free) ? 'A' : 'N',
 						(char *)f + sizeof(struct qm_frag), f, f->size,
@@ -1033,11 +1054,17 @@ void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
 			if(!FRAG_WAS_USED(f)) {
 				unused++;
 #ifdef DBG_QM_MALLOC
-				fprintf(fp,
-						"unused fragm.: hash = %3d, fragment %p,"
-						" address %p size %lu, created from %s: %s(%lu)\n",
-						h, f, (char *)f + sizeof(struct qm_frag), f->size,
-						f->file, f->func, f->line);
+				if((fmatch == NULL) || (fmatch->len == 0)
+						|| ((strlen(f->file) >= fmatch->len)
+								&& (qm_strnstr(f->file, strlen(f->file),
+											fmatch->s, fmatch->len)
+										!= NULL))) {
+					fprintf(fp,
+							"unused fragm.: hash = %3d, fragment %p,"
+							" address %p size %lu, created from %s: %s(%lu)\n",
+							h, f, (char *)f + sizeof(struct qm_frag), f->size,
+							f->file, f->func, f->line);
+				}
 #endif
 			}
 		}

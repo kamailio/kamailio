@@ -94,7 +94,7 @@ extern sr_shm_api_t _shm_root;
 		} else {                                                       \
 			LM_ERR("shm status with filter not implemented\n");        \
 		}                                                              \
-		while(0)
+	} while(0)
 #define shm_info(mi) _shm_root.xinfo(_shm_root.mem_block, mi)
 #define shm_report(mr) _shm_root.xreport(_shm_root.mem_block, mr)
 #define shm_available() _shm_root.xavailable(_shm_root.mem_block)
