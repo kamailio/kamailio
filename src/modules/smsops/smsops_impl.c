@@ -511,8 +511,9 @@ int ucs2_to_utf8(char *ucs2, int ucs2_len, char *utf8)
 	uint16_t high_surrogate, low_surrogate;
 	uint32_t codepoint;
 	uint16_t ucs2_char;
+	size_t ucs2_index;
 
-	for(size_t ucs2_index = 0; ucs2_index < ucs2_len; ucs2_index += 2) {
+	for(ucs2_index = 0; ucs2_index < ucs2_len; ucs2_index += 2) {
 		ucs2_char = (unsigned char)ucs2[ucs2_index];
 		ucs2_char = (ucs2_char << 8) | (unsigned char)ucs2[ucs2_index + 1];
 		if(ucs2_char <= 0x7F) {
