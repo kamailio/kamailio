@@ -105,7 +105,14 @@ extern sr_shm_api_t _shm_root;
 #define shm_global_lock() _shm_root.xglock(_shm_root.mem_block)
 #define shm_global_unlock() _shm_root.xgunlock(_shm_root.mem_block)
 
-#define shm_setfunc(p, f) _shm_root.xsetfunc(_shm_root.mem_block, (p), (f))
+#define shm_setfunc(p, f)                                      \
+	do {                                                       \
+		if(_shm_root.xsetfunc) {                               \
+			_shm_root.xsetfunc(_shm_root.mem_block, (p), (f)); \
+		} else {                                               \
+			LM_ERR("xsetfunc not implemented\n");              \
+		}                                                      \
+	} while(0)
 
 void *shm_core_get_pool(void);
 int shm_init_api(sr_shm_api_t *ap);
