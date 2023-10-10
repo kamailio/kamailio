@@ -1,6 +1,6 @@
 /**
  *
- * Copyright (C) 2003-2008 Sippy Software, Inc., http://www.sippysoft.com
+ * Copyright (C) 2003-2023 Sippy Software, Inc., http://www.sippysoft.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -187,6 +187,8 @@ static struct tm_binds tmb;
 unsigned int *natping_state = 0;
 
 static str timeout_socket_str = {0, 0};
+static str timeout_tag_pv_str = {0, 0};
+static pv_elem_t *timeout_tag_pv = NULL;
 static pv_elem_t *extra_id_pv = NULL;
 
 static cmd_export_t cmds[] = {
@@ -243,6 +245,7 @@ static param_export_t params[] = {
 		{"rtpproxy_retr", INT_PARAM, &rtpproxy_retr},
 		{"rtpproxy_tout", INT_PARAM, &rtpproxy_tout},
 		{"timeout_socket", PARAM_STR, &timeout_socket_str},
+		{"timeout_tag_pv", PARAM_STR, &timeout_tag_pv_str},
 		{"ice_candidate_priority_avp", PARAM_STRING,
 				&ice_candidate_priority_avp_param},
 		{"extra_id_pv", PARAM_STR, &extra_id_pv_param},
@@ -734,6 +737,20 @@ static int mod_init(void)
 		}
 	} else {
 		extra_id_pv = NULL;
+	}
+	if(timeout_socket_str.s != NULL && timeout_tag_pv_str.s == NULL) {
+		LM_ERR("The timeout_tag_pv has to be set along with timeout_socket\n");
+		return -1;
+	}
+	if(timeout_tag_pv_str.s != NULL) {
+		if(timeout_tag_pv_str.len == 0) {
+			LM_ERR("Empty timeout_tag_pv is not allowed\n");
+			return -1;
+		}
+		if(pv_parse_format(&timeout_tag_pv_str, &timeout_tag_pv) < 0) {
+			LM_ERR("malformed PV string: %s\n", timeout_tag_pv_str.s);
+			return -1;
+		}
 	}
 
 	if(rtpp_strings)
@@ -1488,6 +1505,21 @@ static int get_extra_id(struct sip_msg *msg, str *id_str)
 }
 
 
+static int get_timeout_tag(struct sip_msg *msg, str *ntag_str)
+{
+	if(msg == NULL || timeout_tag_pv == NULL || ntag_str == NULL) {
+		LM_ERR("bad parameters\n");
+		return 0;
+	}
+	if(pv_printf_s(msg, timeout_tag_pv, ntag_str) < 0) {
+		LM_ERR("cannot print the notify tag\n");
+		return 0;
+	}
+
+	return 1;
+}
+
+
 static int unforce_rtp_proxy1_f(struct sip_msg *msg, char *str1, char *str2)
 {
 	str flags;
@@ -1969,6 +2001,8 @@ static int force_rtp_proxy(
 			{NULL, 0}, /* medianum */
 			{" ", 1},  /* separator */
 			{NULL, 0}, /* Timeout-Socket */
+			{" ", 1},  /* separator */
+			{NULL, 0}, /* Timeout-Tag */
 	};
 	int iovec_param_count;
 	int autobridge_ipv4v6;
@@ -2410,14 +2444,21 @@ static int force_rtp_proxy(
 				}
 				if(to_tag.len > 0) {
 					iovec_param_count = 20;
-					if(opts.s.s[0] == 'U' && timeout_socket_str.len > 0) {
-						iovec_param_count = 22;
-						STR2IOVEC(timeout_socket_str, v[21]);
-					}
 				} else {
 					iovec_param_count = 16;
 				}
-
+				if(opts.s.s[0] == 'U' && timeout_socket_str.len > 0) {
+					str ntag = {0, 0};
+					if(get_timeout_tag(msg, &ntag) == 0 || ntag.s == NULL
+							|| ntag.len == 0) {
+						LM_ERR("can't get timeout notification tag\n");
+						FORCE_RTP_PROXY_RET(-1);
+					}
+					STR2IOVEC(timeout_socket_str, v[iovec_param_count + 1]);
+					iovec_param_count += 2;
+					STR2IOVEC(ntag, v[iovec_param_count + 1]);
+					iovec_param_count += 2;
+				}
 				cp = send_rtpp_command(node, v, iovec_param_count);
 			} while(cp == NULL);
 			LM_DBG("proxy reply: %s\n", cp);
