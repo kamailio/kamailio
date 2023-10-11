@@ -239,7 +239,7 @@ static int cdp_init(void)
 		return 1;
 	}
 
-	#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	if(enable_tls) {
 		init_ssl_methods();
 		method = tls_parse_method(&tls_method);
@@ -248,12 +248,12 @@ static int cdp_init(void)
 			return -1;
 		}
 	}
-	#else
+#else
 	if(enable_tls) {
 		LM_ERR("TLS requires openssl 1.1.0 or newer\n");
 		return -1;
 	}
-	#endif
+#endif
 
 	register_procs(2 + config->workers + 2 * config->peers_cnt);
 	cfg_register_child(2 + config->workers + 2 * config->peers_cnt);
