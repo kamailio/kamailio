@@ -813,10 +813,12 @@ int receive_loop(peer *original_peer)
 								p->R_sock = fd;
 							}
 
+							#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 							if(enable_tls) {
 								to_ssl(&sp2->tls_ctx, &sp2->tls_conn,
 										sp->tcp_socket, method);
 							}
+							#endif
 						} else {
 							sp2 = add_serviced_peer(NULL);
 							if(!sp2) {
@@ -824,10 +826,12 @@ int receive_loop(peer *original_peer)
 								continue;
 							}
 							sp2->tcp_socket = fd;
+							#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 							if(enable_tls) {
 								to_ssl(&sp2->tls_ctx, &sp2->tls_conn,
 										sp->tcp_socket, method);
 							}
+							#endif
 						}
 					}
 				}
@@ -879,7 +883,9 @@ int receive_loop(peer *original_peer)
 										sp->p ? sp->p->fqdn.s : "",
 										sp->tcp_socket, strerror(errno));
 								AAAFreeMessage(&msg);
+								#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 								cleanup_ssl(sp->tls_ctx, sp->tls_conn);
+								#endif
 								close(sp->tcp_socket);
 								goto drop_peer;
 							}
@@ -892,7 +898,9 @@ int receive_loop(peer *original_peer)
 										sp->p ? sp->p->fqdn.s : "",
 										sp->tcp_socket, cnt, msg->buf.len);
 								AAAFreeMessage(&msg);
+								#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 								cleanup_ssl(sp->tls_ctx, sp->tls_conn);
+								#endif
 								close(sp->tcp_socket);
 								goto drop_peer;
 							}

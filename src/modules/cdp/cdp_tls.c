@@ -1,3 +1,4 @@
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 #include "cdp_tls.h"
 
 cfg_option_t methods[] = {{"TLSv1", .val = TLS_USE_TLSv1},
@@ -255,3 +256,4 @@ int to_ssl(SSL_CTX **tls_ctx_p, SSL **tls_conn_p, int tcp_sock, int method)
 	}
 	return 0;
 }
+#endif
