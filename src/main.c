@@ -2050,6 +2050,7 @@ int main(int argc, char **argv)
 	int tmp_len;
 	int port;
 	int proto;
+	int aproto;
 	char *ahost = NULL;
 	int aport = 0;
 	char *options;
@@ -2699,7 +2700,7 @@ int main(int argc, char **argv)
 					*p = '\0';
 					p++;
 					tmp_len = 0;
-					if(parse_phostport(p, &ahost, &tmp_len, &aport, &proto)
+					if(parse_phostport(p, &ahost, &tmp_len, &aport, &aproto)
 							< 0) {
 						fprintf(stderr,
 								"listen value with invalid advertise: %s\n",
@@ -2722,7 +2723,7 @@ int main(int argc, char **argv)
 				}
 				/* add a new addr. to our address list */
 				if(add_listen_advertise_iface(n_lst->name, n_lst->next, port,
-						   proto, ahost, aport, n_lst->flags)
+						   proto, aproto, ahost, aport, n_lst->flags)
 						!= 0) {
 					fprintf(stderr, "failed to add new listen address: %s\n",
 							optarg);
@@ -3240,7 +3241,7 @@ error:
 int SYMBOL_EXPORT pthread_mutex_init(
 		pthread_mutex_t *__mutex, const pthread_mutexattr_t *__mutexattr)
 {
-	static int (*real_pthread_mutex_init)(pthread_mutex_t *__mutex,
+	static int (*real_pthread_mutex_init)(pthread_mutex_t * __mutex,
 			const pthread_mutexattr_t *__mutexattr) = 0;
 	pthread_mutexattr_t attr;
 	int ret;

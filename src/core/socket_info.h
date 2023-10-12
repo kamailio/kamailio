@@ -84,11 +84,12 @@ int add_listen_iface_name(char *name, struct name_lst *addr_l,
 		unsigned short port, unsigned short proto, char *sockname,
 		enum si_flags flags);
 int add_listen_advertise_iface(char *name, struct name_lst *nlst,
-		unsigned short port, unsigned short proto, char *useaddr,
-		unsigned short useport, enum si_flags flags);
+		unsigned short port, unsigned short proto, unsigned short useproto,
+		char *useaddr, unsigned short useport, enum si_flags flags);
 int add_listen_advertise_iface_name(char *name, struct name_lst *nlst,
-		unsigned short port, unsigned short proto, char *useaddr,
-		unsigned short useport, char *sockname, enum si_flags flags);
+		unsigned short port, unsigned short proto, unsigned short useproto,
+		char *useaddr, unsigned short useport, char *sockname,
+		enum si_flags flags);
 int fix_all_socket_lists(void);
 void print_all_socket_lists(void);
 void print_aliases(void);

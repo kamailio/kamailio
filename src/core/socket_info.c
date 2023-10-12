@@ -289,8 +289,8 @@ error:
  * allocates a si and a si->name in new pkg memory */
 static inline struct socket_info *new_sock_info(char *name,
 		struct name_lst *addr_l, unsigned short port, unsigned short proto,
-		char *usename, unsigned short useport, char *sockname,
-		enum si_flags flags)
+		unsigned short useproto, char *usename, unsigned short useport,
+		char *sockname, enum si_flags flags)
 {
 	struct socket_info *si;
 	struct name_lst *n;
@@ -340,6 +340,7 @@ static inline struct socket_info *new_sock_info(char *name,
 			si->useinfo.address_str.len = si->useinfo.name.len;
 			p = si->useinfo.name.s;
 		}
+		si->useinfo.proto = (useproto != PROTO_NONE) ? useproto : proto;
 		si->useinfo.address_str.s =
 				(char *)pkg_malloc(si->useinfo.address_str.len + 1);
 		if(si->useinfo.address_str.s == NULL)
@@ -1066,14 +1067,14 @@ found:
 /* append a new sock_info structure to the corresponding list
  * return  new sock info on success, 0 on error */
 static struct socket_info *new_sock2list(char *name, struct name_lst *addr_l,
-		unsigned short port, unsigned short proto, char *usename,
-		unsigned short useport, char *sockname, enum si_flags flags,
-		struct socket_info **list)
+		unsigned short port, unsigned short proto, unsigned short useproto,
+		char *usename, unsigned short useport, char *sockname,
+		enum si_flags flags, struct socket_info **list)
 {
 	struct socket_info *si;
 	/* allocates si and si->name in new pkg memory */
-	si = new_sock_info(
-			name, addr_l, port, proto, usename, useport, sockname, flags);
+	si = new_sock_info(name, addr_l, port, proto, useproto, usename, useport,
+			sockname, flags);
 	if(si == 0) {
 		LM_ERR("new_sock_info failed\n");
 		goto error;
@@ -1107,13 +1108,13 @@ error:
  * return  new sock info on success, 0 on error */
 static struct socket_info *new_sock2list_after(char *name,
 		struct name_lst *addr_l, unsigned short port, unsigned short proto,
-		char *usename, unsigned short useport, char *sockname,
-		enum si_flags flags, struct socket_info *after)
+		unsigned short useproto, char *usename, unsigned short useport,
+		char *sockname, enum si_flags flags, struct socket_info *after)
 {
 	struct socket_info *si;
 
-	si = new_sock_info(
-			name, addr_l, port, proto, usename, useport, sockname, flags);
+	si = new_sock_info(name, addr_l, port, proto, useproto, usename, useport,
+			sockname, flags);
 	if(si == 0) {
 		LM_ERR("new_sock_info failed\n");
 		goto error;
@@ -1128,8 +1129,9 @@ error:
 /* adds a sock_info structure to the corresponding proto list
  * return last new socket info structur on success, NULL on error */
 socket_info_t *add_listen_socket_info(char *name, struct name_lst *addr_l,
-		unsigned short port, unsigned short proto, char *usename,
-		unsigned short useport, char *sockname, enum si_flags flags)
+		unsigned short port, unsigned short proto, unsigned short useproto,
+		char *usename, unsigned short useport, char *sockname,
+		enum si_flags flags)
 {
 	socket_info_t *newsi = NULL;
 	socket_info_t **list = NULL;
@@ -1160,8 +1162,8 @@ socket_info_t *add_listen_socket_info(char *name, struct name_lst *addr_l,
 			c_port = port;
 		}
 		if(c_proto != PROTO_SCTP) {
-			newsi = new_sock2list(name, 0, c_port, c_proto, usename, useport,
-					sockname, flags & ~SI_IS_MHOMED, list);
+			newsi = new_sock2list(name, 0, c_port, c_proto, useproto, usename,
+					useport, sockname, flags & ~SI_IS_MHOMED, list);
 			if(newsi == 0) {
 				LM_ERR("new_sock2list failed\n");
 				goto error;
@@ -1169,16 +1171,17 @@ socket_info_t *add_listen_socket_info(char *name, struct name_lst *addr_l,
 			/* add the other addresses in the list as separate sockets
 			 * since only SCTP can bind to multiple addresses */
 			for(a_l = addr_l; a_l; a_l = a_l->next) {
-				if(new_sock2list(a_l->name, 0, c_port, c_proto, usename,
-						   useport, sockname, flags & ~SI_IS_MHOMED, list)
+				if(new_sock2list(a_l->name, 0, c_port, c_proto, useproto,
+						   usename, useport, sockname, flags & ~SI_IS_MHOMED,
+						   list)
 						== 0) {
 					LM_ERR("new_sock2list failed\n");
 					goto error;
 				}
 			}
 		} else {
-			newsi = new_sock2list(name, addr_l, c_port, c_proto, usename,
-					useport, sockname, flags, list);
+			newsi = new_sock2list(name, addr_l, c_port, c_proto, useproto,
+					usename, useport, sockname, flags, list);
 			if(newsi == 0) {
 				LM_ERR("new_sock2list failed\n");
 				goto error;
@@ -1194,11 +1197,12 @@ error:
 /* adds a sock_info structure to the corresponding proto list
  * return  0 on success, -1 on error */
 int add_listen_advertise_iface_name(char *name, struct name_lst *addr_l,
-		unsigned short port, unsigned short proto, char *usename,
-		unsigned short useport, char *sockname, enum si_flags flags)
+		unsigned short port, unsigned short proto, unsigned short useproto,
+		char *usename, unsigned short useport, char *sockname,
+		enum si_flags flags)
 {
-	if(add_listen_socket_info(
-			   name, addr_l, port, proto, usename, useport, sockname, flags)
+	if(add_listen_socket_info(name, addr_l, port, proto, useproto, usename,
+			   useport, sockname, flags)
 			== NULL) {
 		return -1;
 	}
@@ -1208,11 +1212,11 @@ int add_listen_advertise_iface_name(char *name, struct name_lst *addr_l,
 /* adds a sock_info structure to the corresponding proto list
  * return  0 on success, -1 on error */
 int add_listen_advertise_iface(char *name, struct name_lst *addr_l,
-		unsigned short port, unsigned short proto, char *usename,
-		unsigned short useport, enum si_flags flags)
+		unsigned short port, unsigned short proto, unsigned short useproto,
+		char *usename, unsigned short useport, enum si_flags flags)
 {
 	return add_listen_advertise_iface_name(
-			name, addr_l, port, proto, usename, useport, NULL, flags);
+			name, addr_l, port, proto, useproto, usename, useport, NULL, flags);
 }
 
 /* adds a sock_info structure to the corresponding proto list
@@ -1221,7 +1225,7 @@ int add_listen_iface(char *name, struct name_lst *addr_l, unsigned short port,
 		unsigned short proto, enum si_flags flags)
 {
 	return add_listen_advertise_iface_name(
-			name, addr_l, port, proto, 0, 0, 0, flags);
+			name, addr_l, port, proto, 0, 0, 0, 0, flags);
 }
 
 /* adds a sock_info structure to the corresponding proto list
@@ -1231,7 +1235,7 @@ int add_listen_iface_name(char *name, struct name_lst *addr_l,
 		enum si_flags flags)
 {
 	return add_listen_advertise_iface_name(
-			name, addr_l, port, proto, 0, 0, sockname, flags);
+			name, addr_l, port, proto, 0, 0, 0, sockname, flags);
 }
 
 int add_listen_socket(socket_attrs_t *sa)
@@ -1247,8 +1251,8 @@ int add_listen_socket(socket_attrs_t *sa)
 	addr_l.name = sa->bindaddr.s;
 
 	newsi = add_listen_socket_info(sa->bindaddr.s, &addr_l, sa->bindport,
-			sa->bindproto, sa->useaddr.s, sa->useport, sa->sockname.s,
-			sa->sflags);
+			sa->bindproto, sa->useproto, sa->useaddr.s, sa->useport,
+			sa->sockname.s, sa->sflags);
 
 	return (newsi != NULL) ? 0 : -1;
 }
@@ -1808,14 +1812,14 @@ error:
  * return 0 on success, -1 on error
  */
 static int addr_info_to_si_lst(struct addr_info *ai_lst, unsigned short port,
-		char proto, char *usename, unsigned short useport, char *sockname,
-		enum si_flags flags, struct socket_info **list)
+		char proto, char useproto, char *usename, unsigned short useport,
+		char *sockname, enum si_flags flags, struct socket_info **list)
 {
 	struct addr_info *ail;
 
 	for(ail = ai_lst; ail; ail = ail->next) {
-		if(new_sock2list(ail->name.s, 0, port, proto, usename, useport,
-				   sockname, ail->flags | flags, list)
+		if(new_sock2list(ail->name.s, 0, port, proto, useproto, usename,
+				   useport, sockname, ail->flags | flags, list)
 				== 0)
 			return -1;
 	}
@@ -1828,15 +1832,16 @@ static int addr_info_to_si_lst(struct addr_info *ai_lst, unsigned short port,
  * return 0 on success, -1 on error
  */
 static int addr_info_to_si_lst_after(struct addr_info *ai_lst,
-		unsigned short port, char proto, char *usename, unsigned short useport,
-		char *sockname, enum si_flags flags, struct socket_info *el)
+		unsigned short port, char proto, char useproto, char *usename,
+		unsigned short useport, char *sockname, enum si_flags flags,
+		struct socket_info *el)
 {
 	struct addr_info *ail;
 	struct socket_info *new_si;
 
 	for(ail = ai_lst; ail; ail = ail->next) {
-		if((new_si = new_sock2list_after(ail->name.s, 0, port, proto, usename,
-					useport, sockname, ail->flags | flags, el))
+		if((new_si = new_sock2list_after(ail->name.s, 0, port, proto, useproto,
+					usename, useport, sockname, ail->flags | flags, el))
 				== 0)
 			return -1;
 		el = new_si;
@@ -1877,8 +1882,9 @@ static int fix_socket_list(struct socket_info **list, int *type_flags)
 				!= -1) {
 			if(si->flags & SI_IS_MHOMED) {
 				if((new_si = new_sock2list_after(ai_lst->name.s, 0, si->port_no,
-							si->proto, si->useinfo.name.s, si->useinfo.port_no,
-							si->sockname.s, ai_lst->flags | si->flags, si))
+							si->proto, si->useinfo.proto, si->useinfo.name.s,
+							si->useinfo.port_no, si->sockname.s,
+							ai_lst->flags | si->flags, si))
 						== 0)
 					break;
 				ail = ai_lst;
@@ -1902,8 +1908,8 @@ static int fix_socket_list(struct socket_info **list, int *type_flags)
 			} else {
 				/* add all addr. as separate  interfaces */
 				if(addr_info_to_si_lst_after(ai_lst, si->port_no, si->proto,
-						   si->useinfo.name.s, si->useinfo.port_no,
-						   si->sockname.s, si->flags, si)
+						   si->useinfo.proto, si->useinfo.name.s,
+						   si->useinfo.port_no, si->sockname.s, si->flags, si)
 						!= 0)
 					goto error;
 				/* ai_lst not needed anymore */
@@ -2235,7 +2241,7 @@ int fix_all_socket_lists()
 #endif /* __OS_linux */
 						   )
 				&& (addr_info_to_si_lst(
-							ai_lst, 0, PROTO_UDP, 0, 0, 0, 0, &udp_listen)
+							ai_lst, 0, PROTO_UDP, 0, 0, 0, 0, 0, &udp_listen)
 						== 0)) {
 			free_addr_info_lst(&ai_lst);
 			ai_lst = 0;
@@ -2256,7 +2262,7 @@ int fix_all_socket_lists()
 #endif /* __OS_linux */
 								   )
 						|| (addr_info_to_si_lst(ai_lst, 0, PROTO_TCP, 0, 0, 0,
-									0, &tcp_listen)
+									0, 0, &tcp_listen)
 								!= 0))
 					goto error;
 				free_addr_info_lst(&ai_lst);
@@ -2278,7 +2284,7 @@ int fix_all_socket_lists()
 #endif /* __OS_linux */
 									   )
 							|| (addr_info_to_si_lst(ai_lst, 0, PROTO_TLS, 0, 0,
-										0, 0, &tls_listen)
+										0, 0, 0, &tls_listen)
 									!= 0))
 						goto error;
 				}
@@ -2303,7 +2309,7 @@ int fix_all_socket_lists()
 #endif /* __OS_linux */
 								   )
 						|| (addr_info_to_si_lst(ai_lst, 0, PROTO_SCTP, 0, 0, 0,
-									0, &sctp_listen)
+									0, 0, &sctp_listen)
 								!= 0))
 					goto error;
 				free_addr_info_lst(&ai_lst);

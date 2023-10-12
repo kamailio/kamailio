@@ -121,10 +121,11 @@ typedef struct addr_info
 typedef struct advertise_info
 {
 	str name;				/* name - eg.: foo.bar or 10.0.0.1 */
+	int proto;				/* protocol id */
 	unsigned short port_no; /* port number */
 	short port_pad;			/* padding field */
 	str port_no_str;		/* port number converted to string -- optimization*/
-	str address_str;		/*ip address converted to string -- optimization*/
+	str address_str;		/* ip address converted to string -- optimization*/
 	struct ip_addr address; /* ip address */
 	str sock_str;			/* Socket proto, ip, and port as string */
 } advertise_info_t;
@@ -161,6 +162,7 @@ typedef struct socket_attrs
 	int bindproto;
 	str bindaddr;
 	int bindport;
+	int useproto;
 	str useaddr;
 	int useport;
 	str sockname;

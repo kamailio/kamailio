@@ -843,6 +843,12 @@ socket_lattr:
 			tmp_sa.useaddr.len = strlen(tmp_sa.useaddr.s);
 			tmp_sa.useport = $5;
 		}
+	| ADVERTISE EQUAL proto COLON listen_id COLON NUMBER {
+			tmp_sa.useproto = $3;
+			tmp_sa.useaddr.s = $5;
+			tmp_sa.useaddr.len = strlen(tmp_sa.useaddr.s);
+			tmp_sa.useport = $7;
+		}
 	| WORKERS EQUAL NUMBER { tmp_sa.workers=$3; }
 	| WORKERS EQUAL error { yyerror("number expected"); }
 	| VIRTUAL EQUAL NUMBER { if($3!=0) { tmp_sa.sflags |= SI_IS_VIRTUAL; } }
@@ -1636,7 +1642,7 @@ assign_stm:
 			if (add_listen_advertise_iface(	lst_tmp->addr_lst->name,
 									lst_tmp->addr_lst->next,
 									lst_tmp->port, lst_tmp->proto,
-									$5, $7,
+									PROTO_NONE, $5, $7,
 									lst_tmp->flags)!=0) {
 				LM_CRIT("cfg. parser: failed to add listen address\n");
 				break;
@@ -1650,7 +1656,7 @@ assign_stm:
                         if (add_listen_advertise_iface( lst_tmp->addr_lst->name,
                                                                         lst_tmp->addr_lst->next,
                                                                         lst_tmp->port, lst_tmp->proto,
-                                                                        $5, $7,
+                                                                        PROTO_NONE, $5, $7,
                                                                         lst_tmp->flags)!=0) {
                                 LM_CRIT("cfg. parser: failed to add listen address\n");
                                 break;
@@ -1663,7 +1669,7 @@ assign_stm:
 			if (add_listen_advertise_iface_name(lst_tmp->addr_lst->name,
 									lst_tmp->addr_lst->next,
 									lst_tmp->port, lst_tmp->proto,
-									$5, $7, $9,
+									PROTO_NONE, $5, $7, $9,
 									lst_tmp->flags)!=0) {
 				LM_CRIT("cfg. parser: failed to add listen address\n");
 				break;
@@ -1677,7 +1683,7 @@ assign_stm:
                         if (add_listen_advertise_iface_name(lst_tmp->addr_lst->name,
                                                                         lst_tmp->addr_lst->next,
                                                                         lst_tmp->port, lst_tmp->proto,
-                                                                        $5, $7, $9,
+                                                                        PROTO_NONE, $5, $7, $9,
                                                                         lst_tmp->flags)!=0) {
                                 LM_CRIT("cfg. parser: failed to add listen address\n");
                                 break;
@@ -1690,7 +1696,7 @@ assign_stm:
 			if (add_listen_advertise_iface(	lst_tmp->addr_lst->name,
 									lst_tmp->addr_lst->next,
 									lst_tmp->port, lst_tmp->proto,
-									$5, 0,
+									PROTO_NONE, $5, 0,
 									lst_tmp->flags)!=0) {
 				LM_CRIT("cfg. parser: failed to add listen address\n");
 				break;
@@ -1704,7 +1710,7 @@ assign_stm:
                         if (add_listen_advertise_iface( lst_tmp->addr_lst->name,
                                                                         lst_tmp->addr_lst->next,
                                                                         lst_tmp->port, lst_tmp->proto,
-                                                                        $5, 0,
+                                                                        PROTO_NONE, $5, 0,
                                                                         lst_tmp->flags)!=0) {
                                 LM_CRIT("cfg. parser: failed to add listen address\n");
                                 break;
@@ -1717,7 +1723,7 @@ assign_stm:
 			if (add_listen_advertise_iface_name(lst_tmp->addr_lst->name,
 									lst_tmp->addr_lst->next,
 									lst_tmp->port, lst_tmp->proto,
-									$5, 0, $7,
+									PROTO_NONE, $5, 0, $7,
 									lst_tmp->flags)!=0) {
 				LM_CRIT("cfg. parser: failed to add listen address\n");
 				break;
@@ -1731,7 +1737,7 @@ assign_stm:
                         if (add_listen_advertise_iface_name(lst_tmp->addr_lst->name,
                                                                         lst_tmp->addr_lst->next,
                                                                         lst_tmp->port, lst_tmp->proto,
-                                                                        $5, 0, $7,
+                                                                        PROTO_NONE, $5, 0, $7,
                                                                         lst_tmp->flags)!=0) {
                                 LM_CRIT("cfg. parser: failed to add listen address\n");
                                 break;
