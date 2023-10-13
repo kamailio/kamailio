@@ -448,7 +448,6 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 			bytes = tcp_read(c, read_flags);
 		if(bytes <= 0)
 			return bytes;
-		LM_DBG("===== read %d bytes\n", bytes);
 		gettimeofday(&tvnow, NULL);
 		tvdiff = 1000000 * (tvnow.tv_sec - r->tvrstart.tv_sec)
 				 + (tvnow.tv_usec - r->tvrstart.tv_usec);
@@ -1661,12 +1660,10 @@ again:
 		req->content_len = 0;
 		req->bytes_to_go = 0;
 		req->pos = req->buf + size;
-		LM_DBG("=== reset message read start time\n");
 		req->tvrstart.tv_sec = 0;
 		req->tvrstart.tv_usec = 0;
 
 		if(unlikely(size)) {
-			LM_DBG("=== set message read start time\n");
 			gettimeofday(&req->tvrstart, NULL);
 			memmove(req->buf, req->parsed, size);
 			req->parsed = req->buf; /* fix req->parsed after using it */

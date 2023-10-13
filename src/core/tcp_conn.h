@@ -47,6 +47,8 @@
 
 #define KSR_TCP_MSGREAD_TIMEOUT 20 /* timeout (secs) to read SIP message */
 
+#define KSR_TCP_ACCEPT_IPLIMIT 1024 /* limit accepted tcp connections from IP */
+
 /* tcp connection flags */
 #define F_CONN_READ_W 2		  /* watched for READ ev. in main */
 #define F_CONN_WRITE_W 4	  /* watched for WRITE (main) */
@@ -281,6 +283,7 @@ typedef struct tcp_connection
 	unsigned int flags;			/* connection related flags */
 	snd_flags_t send_flags;		/* special send flags */
 	enum tcp_conn_states state; /* connection state */
+	enum tcp_conn_states initstate; /* initial connection state */
 	void *extra_data; /* extra data associated to the connection, 0 for tcp*/
 	struct timer_ln timer;
 	time_t timestamp; /* connection creation timestamp */
