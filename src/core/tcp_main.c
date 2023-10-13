@@ -1240,6 +1240,49 @@ error:
 	return 0;
 }
 
+inline static int find_listening_sock_info(
+		int s, union sockaddr_union **from, int type)
+{
+	struct ip_addr ip;
+	struct socket_info *si = NULL;
+	su2ip_addr(&ip, *from);
+
+	si = find_si(&ip, 0, type);
+
+	if(unlikely(si == 0)) {
+		si = find_sock_info_by_address_family(type, ip.af);
+		if(si) {
+			int optval = 1;
+			su2ip_addr(&ip, &si->su);
+			*from = &si->su;
+			if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *)&optval,
+					   sizeof(optval))
+					== -1) {
+				LM_ERR("setsockopt SO_REUSEADDR %s\n", strerror(errno));
+				/* continue, not critical */
+			}
+			optval = 1;
+			if(setsockopt(s, SOL_SOCKET, SO_REUSEPORT, (void *)&optval,
+					   sizeof(optval))
+					== -1) {
+				LM_ERR("setsockopt SO_REUSEPORT %s\n", strerror(errno));
+				/* continue, not critical */
+			}
+			if(unlikely(bind(s, &si->su.s, sockaddru_len(si->su)) != 0)) {
+				LM_WARN("binding to source address %s failed: %s [%d]\n",
+						su2a(&si->su, sizeof(si->su)), strerror(errno), errno);
+				return -1;
+			}
+		}
+	} else {
+		if(unlikely(bind(s, &(*from)->s, sockaddru_len(**from)) != 0)) {
+			LM_WARN("binding to source address %s failed: %s [%d]\n",
+					su2a(&si->su, sizeof(si->su)), strerror(errno), errno);
+			return -1;
+		}
+	}
+	return 0;
+}
 
 /* do the actual connect, set sock. options a.s.o
  * returns socket on success, -1 on error
@@ -5374,6 +5417,70 @@ done:
 	return ret;
 error:
 	return -1;
+}
+
+void tcp_timer_check_connections(unsigned int ticks, void *param)
+{
+	struct tcp_connection *con;
+#define TCPIDLIST_SIZE 1024
+	int tcpidlist[TCPIDLIST_SIZE];
+	int n;
+	int rc;
+	int i;
+	struct timeval tvnow;
+	long long tvdiff;
+	long mcmd[2];
+
+	if(tcp_disable) {
+		return;
+	}
+
+	do {
+		n = 0;
+		gettimeofday(&tvnow, NULL);
+		TCPCONN_LOCK;
+		for(i = 0; i < TCP_ID_HASH_SIZE && n < TCPIDLIST_SIZE; i++) {
+			for(con = tcpconn_id_hash[i]; con && n < TCPIDLIST_SIZE;
+					con = con->id_next) {
+				if(con->state == S_CONN_OK) {
+					if(con->req.tvrstart.tv_sec > 0) {
+						tvdiff = 1000000
+										 * (tvnow.tv_sec
+												 - con->req.tvrstart.tv_sec)
+								 + (tvnow.tv_usec - con->req.tvrstart.tv_usec);
+						if(tvdiff >= KSR_TCP_MSGREAD_TIMEOUT * 1000000) {
+							LM_DBG("n: %d - connection id: %d - message "
+								   "reading timeout: %lld\n",
+									n, con->id, tvdiff);
+							tcpidlist[n] = con->id;
+							n++;
+						}
+					}
+				}
+			}
+		}
+		TCPCONN_UNLOCK;
+		if(n > 0) {
+			for(i = 0; i < n; i++) {
+				if((con = tcpconn_get(tcpidlist[i], 0, 0, 0, 0))) {
+					LM_CRIT("message reading timeout on connection id: %d - "
+							"closing\n",
+							tcpidlist[i]);
+					mcmd[0] = (long)con;
+					mcmd[1] = CONN_EOF;
+
+					con->send_flags.f |= SND_F_CON_CLOSE;
+					con->flags |= F_CONN_FORCE_EOF;
+
+					rc = send_all(unix_tcp_sock, mcmd, sizeof(mcmd));
+					if(unlikely(rc <= 0)) {
+						LM_ERR("failed to send close request: %s (%d)\n",
+								strerror(errno), errno);
+					}
+				}
+			}
+		}
+	} while(n == TCPIDLIST_SIZE);
 }
 
 #endif /* USE_TCP */

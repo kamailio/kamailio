@@ -1708,6 +1708,16 @@ int main_loop(void)
 			goto error;
 		}
 		cfg_main_reset_local();
+
+#ifdef USE_TCP
+		if(!tcp_disable) {
+			if(sr_wtimer_add(tcp_timer_check_connections, NULL, 10) < 0) {
+				LM_CRIT("cannot add timer for tcp connection checks\n");
+				goto error;
+			}
+		}
+#endif
+
 		if(counters_prefork_init(get_max_procs()) == -1)
 			goto error;
 
