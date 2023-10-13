@@ -13,7 +13,7 @@ jobs:
   x86_64:
     runs-on: ubuntu-latest
     permissions:
-      packages: admin
+      packages: write
     steps:
     - name: Delete untagged images
       uses: camargo/delete-untagged-action@v1
