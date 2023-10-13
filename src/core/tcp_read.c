@@ -1580,7 +1580,9 @@ again:
 		}
 		/* if we are here everything is nice and ok*/
 		resp = CONN_RELEASE;
-		req->dxstate |= KSR_TCP_REQSTATE_DATARECV;
+		if(req->state != H_PING_CRLF) {
+			req->dxstate |= KSR_TCP_REQSTATE_DATARECV;
+		}
 #ifdef EXTRA_DEBUG
 		LM_DBG("receiving msg(%p, %d)\n", req->start,
 				(int)(req->parsed - req->start));
