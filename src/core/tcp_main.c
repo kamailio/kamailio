@@ -5454,6 +5454,7 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 	struct timeval tvnow;
 	long long tvdiff;
 	long mcmd[2];
+	int cidset = 0;
 
 	if(tcp_disable) {
 		return;
@@ -5466,6 +5467,7 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 		for(i = 0; i < TCP_ID_HASH_SIZE && n < TCPIDLIST_SIZE; i++) {
 			for(con = tcpconn_id_hash[i]; con && n < TCPIDLIST_SIZE;
 					con = con->id_next) {
+				cidset = 0;
 				if(con->state == S_CONN_OK) {
 					if(con->req.tvrstart.tv_sec > 0) {
 						tvdiff = 1000000
@@ -5478,7 +5480,22 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 									n, con->id, tvdiff);
 							tcpidlist[n] = con->id;
 							n++;
+							cidset = 1;
 						}
+					}
+				}
+				if((cidset == 0)
+						&& !(con->req.dxstate & KSR_TCP_REQSTATE_DATARECV)) {
+					if(tvnow.tv_sec - con->timestamp
+							>= KSR_TCP_MSGREAD_TIMEOUT) {
+						LM_DBG("n: %d - connection id: %d (state: %d) - "
+							   "message "
+							   "receiving timeout: %ld\n",
+								n, con->id, con->state,
+								(long)(tvnow.tv_sec - con->timestamp));
+						tcpidlist[n] = con->id;
+						n++;
+						cidset = 1;
 					}
 				}
 			}
@@ -5487,9 +5504,10 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 		if(n > 0) {
 			for(i = 0; i < n; i++) {
 				if((con = tcpconn_get(tcpidlist[i], 0, 0, 0, 0))) {
-					LM_CRIT("message reading timeout on connection id: %d - "
+					LM_CRIT("message processing timeout on connection id: %d "
+							"(state: %d) - "
 							"closing\n",
-							tcpidlist[i]);
+							tcpidlist[i], con->state);
 					mcmd[0] = (long)con;
 					mcmd[1] = CONN_EOF;
 

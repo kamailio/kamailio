@@ -195,6 +195,8 @@ typedef enum tcp_req_flags
 #define TCP_REQ_BCHUNKED(tr) ((tr)->flags & F_TCP_REQ_BCHUNKED)
 #endif
 
+#define KSR_TCP_REQSTATE_DATARECV (1 << 0)
+
 typedef struct tcp_req
 {
 	struct tcp_req *next;
@@ -214,6 +216,7 @@ typedef struct tcp_req
 	int bytes_to_go; /* how many bytes we have still to read from the body*/
 	enum tcp_req_errors error;
 	enum tcp_req_states state;
+	unsigned int dxstate;
 	struct timeval tvrstart;
 } tcp_req_t;
 
