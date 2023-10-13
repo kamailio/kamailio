@@ -175,10 +175,3 @@ jobs:
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-
-    - name: Delete untagged images
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
-      uses: camargo/delete-untagged-action@v1
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        package-name: ${{ env.IMAGE_NAME }}
