@@ -643,6 +643,13 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 
 	} while(nr_rows > 0);
 
+	if(dlg_db_mode == DB_MODE_SHUTDOWN) {
+		if(dialog_dbf.delete(dialog_db_handle, 0, 0, 0, 0) < 0) {
+			LM_ERR("failed to clear dialog in table\n");
+			goto error;
+		}
+	}
+
 	if(dlg != NULL) {
 		d_entry = &(d_table->entries[dlg->h_entry]);
 		dlg = d_entry->first;
@@ -655,7 +662,7 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 
 	if(dlg_db_mode == DB_MODE_SHUTDOWN) {
 		if(dialog_dbf.delete(dialog_db_handle, 0, 0, 0, 0) < 0) {
-			LM_ERR("failed to clear dialog table\n");
+			LM_ERR("failed to clear dialog out table\n");
 			goto error;
 		}
 	}

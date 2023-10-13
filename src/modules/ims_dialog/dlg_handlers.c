@@ -93,12 +93,10 @@ void destroy_dlg_handlers(void)
  * \param id dialog hash id
  * \return 0 on success, -1 on failure
  */
-static inline int add_dlg_rr_param(
-		struct sip_msg *req, unsigned int entry, unsigned int id)
+static inline int add_dlg_rr_param(struct sip_msg *req, str did)
 {
 	static char buf[RR_DLG_PARAM_SIZE];
 	str s;
-	int n;
 	char *p;
 
 	s.s = p = buf;
@@ -108,22 +106,56 @@ static inline int add_dlg_rr_param(
 	p += rr_param.len;
 	*(p++) = '=';
 
-	n = RR_DLG_PARAM_SIZE - (p - buf);
-	if(int2reverse_hex(&p, &n, entry) == -1)
-		return -1;
-
-	*(p++) = DLG_SEPARATOR;
-
-	n = RR_DLG_PARAM_SIZE - (p - buf);
-	if(int2reverse_hex(&p, &n, id) == -1)
-		return -1;
-
+	memcpy(p, did.s, did.len);
+	p += did.len;
 	s.len = p - buf;
+
+	if(s.len > RR_DLG_PARAM_SIZE) {
+		return -1;
+	}
 
 	if(d_rrb.add_rr_param(req, &s) < 0) {
 		LM_ERR("failed to add rr param\n");
 		return -1;
 	}
+
+	return 0;
+}
+
+/*!
+ * \brief Generate dialog id for dialog
+ * \param dlg dialog
+ * \return 0 on success, -1 on failure
+ */
+static inline int generate_did(struct dlg_cell *dlg)
+{
+	static char buf[RR_DLG_PARAM_SIZE];
+	str s;
+	int n;
+	char *p;
+
+	s.s = p = buf;
+
+	n = RR_DLG_PARAM_SIZE - (p - buf);
+	if(int2reverse_hex(&p, &n, dlg->h_entry) == -1)
+		return -1;
+
+	*(p++) = DLG_SEPARATOR;
+
+	n = RR_DLG_PARAM_SIZE - (p - buf);
+	if(int2reverse_hex(&p, &n, dlg->h_id) == -1)
+		return -1;
+
+	s.len = p - buf;
+
+	dlg->did.s = (char *)shm_malloc(s.len);
+	if(!dlg->did.s) {
+		LM_ERR("no more shm_mem\n");
+		return -1;
+	}
+	memset(dlg->did.s, 0, s.len);
+	memcpy(dlg->did.s, s.s, s.len);
+	dlg->did.len = s.len;
 
 	return 0;
 }
@@ -1668,7 +1700,7 @@ int dlg_new_dialog(
 
 				//Add did to rr header for all spiralled requested INVITEs
 				if(req->first_line.u.request.method_value == METHOD_INVITE) {
-					if(add_dlg_rr_param(req, dlg->h_entry, dlg->h_id) < 0) {
+					if(add_dlg_rr_param(req, dlg->did) < 0) {
 						LM_ERR("failed to add RR param\n");
 					}
 				}
@@ -1735,6 +1767,8 @@ int dlg_new_dialog(
 	//    if (dlg_send_bye != 0 || _dlg_ctx.to_bye != 0)
 	//        dlg->iflags |= DLG_IFLAG_TIMEOUTBYE;
 
+	generate_did(dlg);
+
 	if(run_initial_cbs)
 		run_create_callbacks(dlg, req);
 
@@ -1742,7 +1776,7 @@ int dlg_new_dialog(
 
 	/* first INVITE seen (dialog created, unconfirmed) */
 	if(seq_match_mode != SEQ_MATCH_NO_ID
-			&& add_dlg_rr_param(req, dlg->h_entry, dlg->h_id) < 0) {
+			&& add_dlg_rr_param(req, dlg->did) < 0) {
 		LM_ERR("failed to add RR param\n");
 		goto error;
 	}
