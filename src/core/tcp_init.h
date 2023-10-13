@@ -62,6 +62,8 @@ void tcp_main_loop(void);
 void tcp_receive_loop(int unix_sock);
 int tcp_fix_child_sockets(int *fd);
 
+void tcp_timer_check_connections(unsigned int ticks, void *param);
+
 /* sets source address used when opening new sockets and no source is specified
  *  (by default the address is choosen by the kernel)
  * Should be used only on init.

@@ -22,6 +22,8 @@
 #ifndef _tcp_conn_h
 #define _tcp_conn_h
 
+#include <sys/time.h>
+
 #include "tcp_init.h"
 #include "tcp_options.h"
 
@@ -42,6 +44,8 @@
 
 #define TCPCONN_MATCH_DEFAULT 0
 #define TCPCONN_MATCH_STRICT 1
+
+#define KSR_TCP_MSGREAD_TIMEOUT 20 /* timeout (secs) to read SIP message */
 
 /* tcp connection flags */
 #define F_CONN_READ_W 2		  /* watched for READ ev. in main */
@@ -210,6 +214,7 @@ typedef struct tcp_req
 	int bytes_to_go; /* how many bytes we have still to read from the body*/
 	enum tcp_req_errors error;
 	enum tcp_req_states state;
+	struct timeval tvrstart;
 } tcp_req_t;
 
 struct tcp_connection;

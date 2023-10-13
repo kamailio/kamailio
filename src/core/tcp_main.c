@@ -1277,7 +1277,7 @@ inline static int find_listening_sock_info(
 	} else {
 		if(unlikely(bind(s, &(*from)->s, sockaddru_len(**from)) != 0)) {
 			LM_WARN("binding to source address %s failed: %s [%d]\n",
-						su2a(&si->su, sizeof(si->su)), strerror(errno), errno);
+					su2a(&si->su, sizeof(si->su)), strerror(errno), errno);
 			return -1;
 		}
 	}
@@ -5441,6 +5441,70 @@ done:
 	return ret;
 error:
 	return -1;
+}
+
+void tcp_timer_check_connections(unsigned int ticks, void *param)
+{
+	struct tcp_connection *con;
+#define TCPIDLIST_SIZE 1024
+	int tcpidlist[TCPIDLIST_SIZE];
+	int n;
+	int rc;
+	int i;
+	struct timeval tvnow;
+	long long tvdiff;
+	long mcmd[2];
+
+	if(tcp_disable) {
+		return;
+	}
+
+	do {
+		n = 0;
+		gettimeofday(&tvnow, NULL);
+		TCPCONN_LOCK;
+		for(i = 0; i < TCP_ID_HASH_SIZE && n < TCPIDLIST_SIZE; i++) {
+			for(con = tcpconn_id_hash[i]; con && n < TCPIDLIST_SIZE;
+					con = con->id_next) {
+				if(con->state == S_CONN_OK) {
+					if(con->req.tvrstart.tv_sec > 0) {
+						tvdiff = 1000000
+										 * (tvnow.tv_sec
+												 - con->req.tvrstart.tv_sec)
+								 + (tvnow.tv_usec - con->req.tvrstart.tv_usec);
+						if(tvdiff >= KSR_TCP_MSGREAD_TIMEOUT * 1000000) {
+							LM_DBG("n: %d - connection id: %d - message "
+								   "reading timeout: %lld\n",
+									n, con->id, tvdiff);
+							tcpidlist[n] = con->id;
+							n++;
+						}
+					}
+				}
+			}
+		}
+		TCPCONN_UNLOCK;
+		if(n > 0) {
+			for(i = 0; i < n; i++) {
+				if((con = tcpconn_get(tcpidlist[i], 0, 0, 0, 0))) {
+					LM_CRIT("message reading timeout on connection id: %d - "
+							"closing\n",
+							tcpidlist[i]);
+					mcmd[0] = (long)con;
+					mcmd[1] = CONN_EOF;
+
+					con->send_flags.f |= SND_F_CON_CLOSE;
+					con->flags |= F_CONN_FORCE_EOF;
+
+					rc = send_all(unix_tcp_sock, mcmd, sizeof(mcmd));
+					if(unlikely(rc <= 0)) {
+						LM_ERR("failed to send close request: %s (%d)\n",
+								strerror(errno), errno);
+					}
+				}
+			}
+		}
+	} while(n == TCPIDLIST_SIZE);
 }
 
 #endif /* USE_TCP */
