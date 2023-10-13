@@ -513,8 +513,9 @@ struct dlg_cell_out *build_new_dlg_out(
 	int len;
 	char *p;
 
-	//len = sizeof (struct dlg_cell_out) +dlg->did.len + to_tag->len + to_uri->len;
-	len = sizeof(struct dlg_cell_out) + to_tag->len + to_uri->len + branch->len;
+	//branch might be unset, according to code in dlg_onreply()
+	len = sizeof(struct dlg_cell_out) + to_tag->len + to_uri->len
+		  + (branch ? branch->len : 0);
 
 	dlg_out = (struct dlg_cell_out *)shm_malloc(len);
 	if(dlg_out == 0) {

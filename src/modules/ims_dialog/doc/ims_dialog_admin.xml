@@ -351,8 +351,22 @@ modparam("ims_dialog", "detect_spirals", 1)
                 <varname>db_url</varname> (string)
             </title>
             <para>
-		Db storage not yet supported by ims_dialog - this to be done in future.
+            In order to store information about dialogs in a database,
+            a database URL must be specified.
             </para>
+            <para>
+            <emphasis>
+                Default value is <quote>&defaultdb;</quote>.
+            </emphasis>
+            </para>
+            <example>
+            <title>Set <varname>db_url</varname> parameter</title>
+            <programlisting format="linespecific">
+    ...
+    modparam("ims_dialog", "db_url", "&exampledb;")
+    ...
+    </programlisting>
+            </example>
         </section>
 
         <section>
@@ -360,8 +374,40 @@ modparam("ims_dialog", "detect_spirals", 1)
                 <varname>db_mode</varname> (integer)
             </title>
             <para>
-		Db storage not yet supported by ims_dialog - this to be done in future.
+            This is the database mode to be used for dialog persistent storage.
             </para>
+            <itemizedlist>
+                <listitem><para>
+                    <emphasis>0 - NO_DB</emphasis> - the memory content is not
+                    flushed into DB;
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>1 - REALTIME</emphasis> - any dialog information
+                    changes will be reflected into the database immediately.
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>2 - DELAYED</emphasis> - the dialog information
+                    changes will be flushed into DB periodically, based on a
+                    timer routine.
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>3 - SHUTDOWN</emphasis> - the dialog information
+                    will be flushed into DB only at shutdown - no runtime updates.
+                </para></listitem>
+            </itemizedlist>
+            <para>
+            <emphasis>
+                Default value is <quote>0</quote>.
+            </emphasis>
+            </para>
+            <example>
+            <title>Set <varname>db_mode</varname> parameter</title>
+            <programlisting format="linespecific">
+    ...
+    modparam("ims_dialog", "db_mode", 1)
+    ...
+    </programlisting>
+            </example>
         </section>
 
         <section>
@@ -369,8 +415,24 @@ modparam("ims_dialog", "detect_spirals", 1)
                 <varname>db_update_period</varname> (integer)
             </title>
             <para>
-		Db storage not yet supported by ims_dialog - this to be done in future.
+            The interval (seconds) at which to update dialogs' information,
+            if the server is configured to store the dialog information at a given interval.
+            A too short interval will generate intensive database operations,
+            while an excessively long one will miss dialogs with a short lifetime.
             </para>
+            <para>
+            <emphasis>
+                Default value is <quote>60</quote> seconds.
+            </emphasis>
+            </para>
+            <example>
+            <title>Set <varname>db_update_period</varname> parameter</title>
+            <programlisting format="linespecific">
+    ...
+    modparam("ims_dialog", "db_update_period", 120)
+    ...
+    </programlisting>
+            </example>
         </section>
 
         <section>
@@ -378,17 +440,26 @@ modparam("ims_dialog", "detect_spirals", 1)
                 <varname>db_fetch_rows</varname> (integer)
             </title>
             <para>
-		Db storage not yet supported by ims_dialog - this to be done in future.
+                The number of the rows to be fetched at once from database
+                when loading the dialog records at startup from the database.
+                This value can be used to tune the load time at startup.
+                For 1MB of private memory (default), it should be below 400.
+                The database driver must support the fetch_result() capability.
+                A value of 0 means the database fetch is not limited.
             </para>
-        </section>
-
-        <section>
-            <title>
-                <varname>table_name</varname> (string)
-            </title>
             <para>
-		Db storage not yet supported by ims_dialog - this to be done in future.
+            <emphasis>
+                Default value is <quote>200</quote>.
+            </emphasis>
             </para>
+            <example>
+            <title>Set <varname>db_fetch_rows</varname> parameter</title>
+            <programlisting format="linespecific">
+    ...
+    modparam("ims_dialog", "db_fetch_rows", 500)
+    ...
+    </programlisting>
+            </example>
         </section>
 
         <section>
