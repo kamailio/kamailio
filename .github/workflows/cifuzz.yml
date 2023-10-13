@@ -4,6 +4,8 @@ on:
     branches: [ "master" ]
   schedule:
     - cron: "30 0 * * *"
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 jobs:
   Fuzzing:
     runs-on: ubuntu-latest
