@@ -1162,6 +1162,30 @@ done:
 	return (bytes >= 0) ? retval : -1;
 }
 
+int tcp_connection_limit_srcip(union sockaddr_union *srcaddr, int limit)
+{
+	struct tcp_connection *con;
+	ip_addr_t src_ip;
+	int n;
+	int i;
+
+	n = 0;
+	su2ip_addr(&src_ip, srcaddr);
+	TCPCONN_LOCK;
+	for(i = 0; i < TCP_ID_HASH_SIZE && n < limit; i++) {
+		for(con = tcpconn_id_hash[i]; con && n < limit; con = con->id_next) {
+			if(con->initstate == S_CONN_ACCEPT) {
+				if(ip_addr_cmp(&src_ip, &con->rcv.src_ip)) {
+					n++;
+				}
+			}
+		}
+	}
+	TCPCONN_UNLOCK;
+
+	return (n >= limit) ? 1 : 0;
+}
+
 struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 		union sockaddr_union *local_addr, struct socket_info *ba, int type,
 		int state)
@@ -1217,6 +1241,7 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 	c->rcv.proto_reserved1 = 0; /* this will be filled before receive_message*/
 	c->rcv.proto_reserved2 = 0;
 	c->state = state;
+	c->initstate = state;
 	c->extra_data = 0;
 	c->timestamp = time(NULL);
 #ifdef USE_TLS
@@ -4423,6 +4448,12 @@ static inline int handle_new_connect(struct socket_info *si)
 	}
 	if(unlikely(init_sock_opt_accept(new_sock) < 0)) {
 		LM_ERR("init_sock_opt failed\n");
+		tcp_safe_close(new_sock);
+		return 1; /* success, because the accept was successful */
+	}
+	if(unlikely(tcp_connection_limit_srcip(&su, KSR_TCP_ACCEPT_IPLIMIT))) {
+		LM_CRIT("hit the limit of connections per source IP (%s) - rejecting\n",
+				su2a(&su, sizeof(su)));
 		tcp_safe_close(new_sock);
 		return 1; /* success, because the accept was successful */
 	}
