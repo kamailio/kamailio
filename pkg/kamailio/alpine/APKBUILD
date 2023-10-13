@@ -27,7 +27,7 @@ depends="gawk"
 options="!check"
 makedepends="bison db-dev flex freeradius-client-dev expat-dev
 	lksctp-tools-dev perl-dev postgresql-dev python3-dev
-	pcre-dev mariadb-dev libxml2-dev curl-dev unixodbc-dev
+	pcre2-dev mariadb-dev libxml2-dev curl-dev unixodbc-dev
 	confuse-dev ncurses-dev sqlite-dev lua-dev openldap-dev openssl-dev
 	net-snmp-dev libuuid libev-dev jansson-dev json-c-dev libevent-dev
 	linux-headers libmemcached-dev rabbitmq-c-dev hiredis-dev
@@ -79,7 +79,7 @@ _mod_list_dbuid="db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags \
 # - modules for devel purposes
 _mod_list_devel="misctest print print_lib"
 
-# - modules depending on pcre3 library
+# - modules depending on pcre2 library
 _mod_list_pcre="dialplan lcr regex"
 
 # - modules depending on radius client library
