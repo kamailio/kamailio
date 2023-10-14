@@ -419,6 +419,7 @@ extern char *default_routename;
 %token CFGENGINE
 %token MAXBUFFER
 %token SQL_BUFFER_SIZE
+%token MSG_RECV_MAX_SIZE
 %token USER
 %token GROUP
 %token CHROOT
@@ -993,11 +994,13 @@ assign_stm:
 	| IP_FREE_BIND EQUAL intno { _sr_ip_free_bind=$3; }
 	| IP_FREE_BIND EQUAL error { yyerror("int value expected"); }
 	| PORT EQUAL NUMBER   { port_no=$3; }
+	| PORT EQUAL error    { yyerror("number expected"); }
 	| MAXBUFFER EQUAL NUMBER { maxbuffer=$3; }
 	| MAXBUFFER EQUAL error { yyerror("number expected"); }
     | SQL_BUFFER_SIZE EQUAL NUMBER { sql_buffer_size=$3; }
 	| SQL_BUFFER_SIZE EQUAL error { yyerror("number expected"); }
-	| PORT EQUAL error    { yyerror("number expected"); }
+	| MSG_RECV_MAX_SIZE EQUAL NUMBER { ksr_msg_recv_max_size=$3; }
+	| MSG_RECV_MAX_SIZE EQUAL error { yyerror("number expected"); }
 	| CHILDREN EQUAL NUMBER { children_no=$3; }
 	| CHILDREN EQUAL error { yyerror("number expected"); }
 	| STATS_NAMESEP EQUAL STRING { ksr_stats_namesep=$3; }

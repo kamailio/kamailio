@@ -236,6 +236,8 @@ extern int ksr_local_rport;
 
 extern int ksr_rpc_exec_delta;
 
+extern int ksr_msg_recv_max_size;
+
 #ifdef USE_DNS_CACHE
 extern int
 		dns_cache_init; /* if 0, the DNS cache is not initialized at startup */

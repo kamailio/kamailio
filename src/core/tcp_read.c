@@ -1486,7 +1486,6 @@ int tcp_read_req(struct tcp_connection *con, int *bytes_read,
 	resp = CONN_RELEASE;
 	req = &con->req;
 	if(req->tvrstart.tv_sec == 0) {
-		LM_DBG("=== set message read start time\n");
 		gettimeofday(&req->tvrstart, NULL);
 	}
 
@@ -1511,6 +1510,14 @@ again:
 #ifdef READ_WS
 		}
 #endif
+
+		if(ksr_msg_recv_max_size <= (int)(req->parsed - req->start)) {
+			LOG(cfg_get(core, core_cfg, corelog),
+					"read message too large: %d - c: %p r: %p (%d)\n",
+					(int)(req->parsed - req->start), con, req, bytes);
+			resp = CONN_ERROR;
+			goto end_req;
+		}
 
 		if(unlikely(bytes < 0)) {
 			LOG(cfg_get(core, core_cfg, corelog),
