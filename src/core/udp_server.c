@@ -664,6 +664,11 @@ int udp_rcv_loop()
 			else
 				goto error;
 		}
+		if(ksr_msg_recv_max_size <= len) {
+			LOG(cfg_get(core, core_cfg, corelog),
+					"read message too large: %d\n", len);
+			continue;
+		}
 		if(fromaddrlen != (unsigned int)sockaddru_len(bind_address->su)) {
 			LM_ERR("ignoring data - unexpected from addr len: %u != %u\n",
 					fromaddrlen, (unsigned int)sockaddru_len(bind_address->su));

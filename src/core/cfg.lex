@@ -365,6 +365,7 @@ STATS_NAMESEP	stats_name_separator
 MAXBUFFER maxbuffer
 MAXSNDBUFFER maxsndbuffer
 SQL_BUFFER_SIZE sql_buffer_size
+MSG_RECV_MAX_SIZE msg_recv_max_size
 CHILDREN children
 SOCKET socket
 BIND bind
@@ -850,6 +851,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
 <INITIAL>{MAXSNDBUFFER}	{ count(); yylval.strval=yytext; return MAXSNDBUFFER; }
 <INITIAL>{SQL_BUFFER_SIZE}	{ count(); yylval.strval=yytext; return SQL_BUFFER_SIZE; }
+<INITIAL>{MSG_RECV_MAX_SIZE}	{ count(); yylval.strval=yytext; return MSG_RECV_MAX_SIZE; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{SOCKET}	{ count(); yylval.strval=yytext; return SOCKET; }
 <INITIAL>{BIND}	{ count(); yylval.strval=yytext; return BIND; }

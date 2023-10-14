@@ -421,6 +421,7 @@ extern char *default_routename;
 %token MAXBUFFER
 %token MAXSNDBUFFER
 %token SQL_BUFFER_SIZE
+%token MSG_RECV_MAX_SIZE
 %token USER
 %token GROUP
 %token CHROOT
@@ -1013,6 +1014,8 @@ assign_stm:
 	| MAXSNDBUFFER EQUAL error { yyerror("number expected"); }
 	| SQL_BUFFER_SIZE EQUAL NUMBER { sql_buffer_size=$3; }
 	| SQL_BUFFER_SIZE EQUAL error { yyerror("number expected"); }
+	| MSG_RECV_MAX_SIZE EQUAL NUMBER { ksr_msg_recv_max_size=$3; }
+	| MSG_RECV_MAX_SIZE EQUAL error { yyerror("number expected"); }
 	| CHILDREN EQUAL NUMBER { children_no=$3; }
 	| CHILDREN EQUAL error { yyerror("number expected"); }
 	| STATS_NAMESEP EQUAL STRING { ksr_stats_namesep=$3; }
