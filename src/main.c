@@ -521,6 +521,7 @@ char *pid_file = 0; /* filename as asked by use */
 char *pgid_file = 0;
 
 int ksr_msg_recv_max_size = 32767; /* 2^15 - 1 */
+int ksr_tcp_msg_read_timeout = KSR_TCP_MSGREAD_TIMEOUT;
 
 /* memory manager */
 #define SR_MEMMNG_DEFAULT "qm"

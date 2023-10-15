@@ -237,6 +237,7 @@ extern int ksr_local_rport;
 extern int ksr_rpc_exec_delta;
 
 extern int ksr_msg_recv_max_size;
+extern int ksr_tcp_msg_read_timeout;
 
 #ifdef USE_DNS_CACHE
 extern int
