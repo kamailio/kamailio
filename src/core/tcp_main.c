@@ -4552,7 +4552,7 @@ inline static int handle_tcpconn_ev(
 	int empty_q;
 	int bytes;
 #endif /* TCP_ASYNC */
-	/*  is refcnt!=0 really necessary?
+	   /*  is refcnt!=0 really necessary?
 	 *  No, in fact it's a bug: I can have the following situation: a send only
 	 *   tcp connection used by n processes simultaneously => refcnt = n. In
 	 *   the same time I can have a read event and this situation is perfectly
@@ -5505,7 +5505,7 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 										 * (tvnow.tv_sec
 												 - con->req.tvrstart.tv_sec)
 								 + (tvnow.tv_usec - con->req.tvrstart.tv_usec);
-						if(tvdiff >= KSR_TCP_MSGREAD_TIMEOUT * 1000000) {
+						if(tvdiff >= ksr_tcp_msg_read_timeout * 1000000) {
 							LM_DBG("n: %d - connection id: %d - message "
 								   "reading timeout: %lld\n",
 									n, con->id, tvdiff);
@@ -5518,7 +5518,7 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 				if((cidset == 0)
 						&& !(con->req.dxstate & KSR_TCP_REQSTATE_DATARECV)) {
 					if(tvnow.tv_sec - con->timestamp
-							>= KSR_TCP_MSGREAD_TIMEOUT) {
+							>= ksr_tcp_msg_read_timeout) {
 						LM_DBG("n: %d - connection id: %d (state: %d) - "
 							   "message "
 							   "receiving timeout: %ld\n",

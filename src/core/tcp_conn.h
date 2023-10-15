@@ -45,10 +45,6 @@
 #define TCPCONN_MATCH_DEFAULT 0
 #define TCPCONN_MATCH_STRICT 1
 
-#define KSR_TCP_MSGREAD_TIMEOUT 20 /* timeout (secs) to read SIP message */
-
-#define KSR_TCP_ACCEPT_IPLIMIT 1024 /* limit accepted tcp connections from IP */
-
 /* tcp connection flags */
 #define F_CONN_READ_W 2		  /* watched for READ ev. in main */
 #define F_CONN_WRITE_W 4	  /* watched for WRITE (main) */
