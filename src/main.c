@@ -522,6 +522,7 @@ char *pgid_file = 0;
 
 int ksr_msg_recv_max_size = 32767; /* 2^15 - 1 */
 int ksr_tcp_msg_read_timeout = KSR_TCP_MSGREAD_TIMEOUT;
+int ksr_tcp_check_timer = 10; /* seconds to check tcp connections */
 
 /* memory manager */
 #define SR_MEMMNG_DEFAULT "qm"
@@ -1712,8 +1713,10 @@ int main_loop(void)
 		cfg_main_reset_local();
 
 #ifdef USE_TCP
-		if(!tcp_disable) {
-			if(sr_wtimer_add(tcp_timer_check_connections, NULL, 10) < 0) {
+		if(!tcp_disable && ksr_tcp_check_timer > 0) {
+			if(sr_wtimer_add(
+					   tcp_timer_check_connections, NULL, ksr_tcp_check_timer)
+					< 0) {
 				LM_CRIT("cannot add timer for tcp connection checks\n");
 				goto error;
 			}
