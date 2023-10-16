@@ -5518,7 +5518,7 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 				if((cidset == 0)
 						&& !(con->req.dxstate & KSR_TCP_REQSTATE_DATARECV)) {
 					if(tvnow.tv_sec - con->timestamp
-							>= ksr_tcp_msg_read_timeout) {
+							>= ksr_tcp_msg_data_timeout) {
 						LM_DBG("n: %d - connection id: %d (state: %d) - "
 							   "message "
 							   "receiving timeout: %ld\n",

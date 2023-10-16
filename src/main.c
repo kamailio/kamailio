@@ -531,7 +531,8 @@ char *pid_file = 0; /* filename as asked by use */
 char *pgid_file = 0;
 
 int ksr_msg_recv_max_size = 32767; /* 2^15 - 1 */
-int ksr_tcp_msg_read_timeout = KSR_TCP_MSGREAD_TIMEOUT;
+int ksr_tcp_msg_read_timeout = 20; /* timeout (secs) to read SIP message */
+int ksr_tcp_msg_data_timeout = 20; /* timeout (secs) to receive first msg data */
 int ksr_tcp_check_timer = 10; /* seconds to check tcp connections */
 
 /* memory manager */
