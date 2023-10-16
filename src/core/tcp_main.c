@@ -4451,7 +4451,7 @@ static inline int handle_new_connect(struct socket_info *si)
 		tcp_safe_close(new_sock);
 		return 1; /* success, because the accept was successful */
 	}
-	if(unlikely(tcp_connection_limit_srcip(&su, KSR_TCP_ACCEPT_IPLIMIT))) {
+	if(unlikely(tcp_connection_limit_srcip(&su, ksr_tcp_accept_iplimit))) {
 		LM_CRIT("hit the limit of connections per source IP (%s) - rejecting\n",
 				su2a(&su, sizeof(su)));
 		tcp_safe_close(new_sock);
@@ -4552,7 +4552,7 @@ inline static int handle_tcpconn_ev(
 	int empty_q;
 	int bytes;
 #endif /* TCP_ASYNC */
-	   /*  is refcnt!=0 really necessary?
+	/*  is refcnt!=0 really necessary?
 	 *  No, in fact it's a bug: I can have the following situation: a send only
 	 *   tcp connection used by n processes simultaneously => refcnt = n. In
 	 *   the same time I can have a read event and this situation is perfectly
