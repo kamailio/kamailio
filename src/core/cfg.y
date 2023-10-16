@@ -421,6 +421,7 @@ extern char *default_routename;
 %token SQL_BUFFER_SIZE
 %token MSG_RECV_MAX_SIZE
 %token TCP_MSG_READ_TIMEOUT
+%token TCP_MSG_DATA_TIMEOUT
 %token TCP_CHECK_TIMER
 %token USER
 %token GROUP
@@ -1005,6 +1006,8 @@ assign_stm:
 	| MSG_RECV_MAX_SIZE EQUAL error { yyerror("number expected"); }
 	| TCP_MSG_READ_TIMEOUT EQUAL NUMBER { ksr_tcp_msg_read_timeout=$3; }
 	| TCP_MSG_READ_TIMEOUT EQUAL error { yyerror("number expected"); }
+	| TCP_MSG_DATA_TIMEOUT EQUAL NUMBER { ksr_tcp_msg_data_timeout=$3; }
+	| TCP_MSG_DATA_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| TCP_CHECK_TIMER EQUAL NUMBER { ksr_tcp_check_timer=$3; }
 	| TCP_CHECK_TIMER EQUAL error { yyerror("number expected"); }
 	| CHILDREN EQUAL NUMBER { children_no=$3; }
