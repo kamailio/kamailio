@@ -629,7 +629,7 @@ static int w_jwt_verify_key(
 		return -1;
 	}
 
-	return ki_jwt_verify(msg, &skey, &salg, &sclaims, &sjwtval);
+	return ki_jwt_verify_key(msg, &skey, &salg, &sclaims, &sjwtval);
 }
 
 /**
