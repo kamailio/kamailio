@@ -40,8 +40,6 @@
 
 #define DEFAULT_TCP_WBUF_SIZE 2100 /*  after debugging switch to 4-16k */
 
-#define KSR_TCP_ACCEPT_IPLIMIT 1024 /* limit accepted tcp connections from IP */
-
 struct tcp_child
 {
 	pid_t pid;
