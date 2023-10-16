@@ -521,7 +521,7 @@ modparam("ims_qos", "rr_default_bandwidth", 2000)
     <section>
       <title><varname>suspend_transaction</varname> integer</title>
 
-      <para>If eneabled, suspends the tm transaction while doing the AAR.</para>
+      <para>If enabled, suspends the tm transaction while doing the AAR.</para>
 
       <para><emphasis> Default value is 1 (enabled)</emphasis></para>
 
@@ -531,7 +531,7 @@ modparam("ims_qos", "rr_default_bandwidth", 2000)
 
         <programlisting format="linespecific">
 ...
-modparam("ims_qos", "suspend_transaction", 2000)
+modparam("ims_qos", "suspend_transaction", 0)
 ...
         </programlisting>
       </example>
