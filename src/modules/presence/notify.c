@@ -3197,3 +3197,36 @@ void pres_timer_send_notify(unsigned int ticks, void *param)
 		return;
 	}
 }
+
+void ps_active_watchers_db_timer_clean(unsigned int ticks, void *param)
+{
+	db_key_t db_keys[2];
+	db_val_t db_vals[2];
+	db_op_t db_ops[2];
+
+	if(pa_db == NULL) {
+		return;
+	}
+
+	LM_DBG("cleaning expired active_watchers\n");
+
+	db_keys[0] = &str_expires_col;
+	db_ops[0] = OP_LT;
+	db_vals[0].type = DB1_INT;
+	db_vals[0].nul = 0;
+	db_vals[0].val.int_val = (int)time(NULL);
+
+	db_keys[1] = &str_expires_col;
+	db_ops[1] = OP_GT;
+	db_vals[1].type = DB1_INT;
+	db_vals[1].nul = 0;
+	db_vals[1].val.int_val = 0;
+
+	if(pa_dbf.use_table(pa_db, &active_watchers_table) < 0) {
+		LM_ERR("unsuccessful use table sql operation\n");
+		return;
+	}
+
+	if(pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 2) < 0)
+		LM_ERR("cleaning expired active_watchers\n");
+}
