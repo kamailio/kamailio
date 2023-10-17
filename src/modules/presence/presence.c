@@ -453,12 +453,16 @@ static int mod_init(void)
 		if(pres_timer_mode == 0) {
 			register_timer(ps_presentity_db_timer_clean, 0, pres_clean_period);
 			register_timer(ps_watchers_db_timer_clean, 0, pres_clean_period);
+			register_timer(
+					ps_active_watchers_db_timer_clean, 0, pres_clean_period);
 			if(publ_cache_mode == PS_PCACHE_RECORD) {
 				register_timer(ps_ptable_timer_clean, 0, pres_clean_period);
 			}
 		} else {
 			sr_wtimer_add(ps_presentity_db_timer_clean, 0, pres_clean_period);
 			sr_wtimer_add(ps_watchers_db_timer_clean, 0, pres_clean_period);
+			sr_wtimer_add(
+					ps_active_watchers_db_timer_clean, 0, pres_clean_period);
 			if(publ_cache_mode == PS_PCACHE_RECORD) {
 				sr_wtimer_add(ps_ptable_timer_clean, 0, pres_clean_period);
 			}
@@ -1842,6 +1846,7 @@ void rpc_presence_cleanup(rpc_t *rpc, void *c)
 
 	(void)ps_watchers_db_timer_clean(0, 0);
 	(void)ps_presentity_db_timer_clean(0, 0);
+	(void)ps_active_watchers_db_timer_clean(0, 0);
 	(void)ps_ptable_timer_clean(0, 0);
 	(void)timer_db_update(0, 0);
 

@@ -129,4 +129,5 @@ char *get_status_str(int flag);
 str *get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag, str *contact);
 void free_notify_body(str *body, pres_ev_t *ev);
 void pres_timer_send_notify(unsigned int ticks, void *param);
+void ps_active_watchers_db_timer_clean(unsigned int ticks, void *param);
 #endif
