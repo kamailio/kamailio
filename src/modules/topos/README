@@ -233,7 +233,7 @@ modparam("topos", "db_url", "dbdriver://username:password@dbhost/dbname")
    Call-id in the SIP message payload or header, so it is safe to not
    encode Call-id in such cases. Well-known extensions such as call
    transfer or conference join will be added to work with encoded Call-id.
-   Topoh module should be loaded with use_mode paramerter set to 1
+   Topoh module should be loaded with use_mode parameter set to 1
 
    Default value is 0 (do not mask).
 
