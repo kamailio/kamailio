@@ -141,7 +141,7 @@ modparam("topos", "db_url", "&exampledb;")
 			not encode Call-id in such cases. Well-known extensions such as
 			call transfer or conference join will be added to work with encoded
 			Call-id.
-			Topoh module should be loaded with use_mode paramerter set to 1
+			Topoh module should be loaded with use_mode parameter set to 1
 		</para>
 		
 		<para>
