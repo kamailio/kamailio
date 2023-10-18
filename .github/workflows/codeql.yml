@@ -1,8 +1,6 @@
 name: "CodeQL"
 
 on:
-  pull_request:
-    branches: [ "master" ]
   schedule:
     - cron: "30 0 * * *"
   # Allows you to run this workflow manually from the Actions tab
