@@ -99,6 +99,7 @@ static int ssl_flush(void *tcp_c, void *error, const void *buf, unsigned size)
 	if(unlikely(tls_c->state == S_TLS_CONNECTING)) {
 		n = tls_connect(tcp_c, &ssl_error);
 		if(unlikely(n >= 1)) {
+			tls_openssl_clear_errors();
 			n = SSL_write(ssl, buf, size);
 			if(unlikely(n <= 0))
 				ssl_error = SSL_get_error(ssl, n);
@@ -106,11 +107,13 @@ static int ssl_flush(void *tcp_c, void *error, const void *buf, unsigned size)
 	} else if(unlikely(tls_c->state == S_TLS_ACCEPTING)) {
 		n = tls_accept(tcp_c, &ssl_error);
 		if(unlikely(n >= 1)) {
+			tls_openssl_clear_errors();
 			n = SSL_write(ssl, buf, size);
 			if(unlikely(n <= 0))
 				ssl_error = SSL_get_error(ssl, n);
 		}
 	} else {
+		tls_openssl_clear_errors();
 		n = SSL_write(ssl, buf, size);
 		if(unlikely(n <= 0))
 			ssl_error = SSL_get_error(ssl, n);
