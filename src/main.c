@@ -1729,16 +1729,19 @@ int main_loop(void)
 		if(!tcp_disable) {
 			if(ksr_tcp_check_timer == -1) {
 				if(ksr_tcp_msg_data_timeout > 0 && ksr_tcp_msg_read_timeout > 0)
-					ksr_tcp_check_timer =
-						MIN(ksr_tcp_msg_data_timeout, ksr_tcp_msg_read_timeout) / 2;
+					ksr_tcp_check_timer = MIN(ksr_tcp_msg_data_timeout,
+												  ksr_tcp_msg_read_timeout)
+										  / 2;
 				else
-					ksr_tcp_check_timer = ksr_tcp_msg_data_timeout > 0 ?
-						ksr_tcp_msg_data_timeout / 2 : ksr_tcp_msg_read_timeout / 2;
+					ksr_tcp_check_timer =
+							ksr_tcp_msg_data_timeout > 0
+									? ksr_tcp_msg_data_timeout / 2
+									: ksr_tcp_msg_read_timeout / 2;
 			}
 			if(ksr_tcp_check_timer > 0) {
-				if(sr_wtimer_add(
-					   tcp_timer_check_connections, NULL, ksr_tcp_check_timer)
-				   < 0) {
+				if(sr_wtimer_add(tcp_timer_check_connections, NULL,
+						   ksr_tcp_check_timer)
+						< 0) {
 					LM_CRIT("cannot add timer for tcp connection checks\n");
 					goto error;
 				}
