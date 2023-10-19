@@ -200,6 +200,27 @@ modparam("http_client", "connection_timeout", 2)
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.p.connection_timeout_ms">
+			<title><varname>connection_timeout_ms</varname> (int)</title>
+			<para>
+			Defines in milliseconds how long &kamailio; waits for response
+			from servers. If defined, supersedes parameter connection_timeout.
+			</para>
+			<para>
+			<emphasis>
+				Default value is zero, i.e.,
+				the timeout in milliseconds is disabled.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>connection_timeout_ms</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "connection_timeout_ms", 100)
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="http_client.p.client_cert">
 			<title><varname>client_cert</varname> (string)</title>
 			<para>
@@ -534,8 +555,13 @@ modparam("http_client", "query_maxdatasize", 2048)
 				Overrides the default cipher_suite modparam.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>timeout</emphasis> Timeout used for this connection. Overrides the
+				<emphasis>timeout</emphasis> Timeout in seconds used for this connection. Overrides the
 				default connection_timeout for the module.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>timeout_ms</emphasis> Timeout in milliseconds used for this connection.
+				Overrides the default connection_timeout_ms for the module. If defined, supersedes
+				the timeout in seconds used for this connection.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>tlsversion</emphasis> TLS version used for this connection. Overrides the
@@ -611,6 +637,7 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
 				</itemizedlist>
 				</listitem>
 				<listitem><para>timeout</para></listitem>
+				<listitem><para>timeout_ms</para></listitem>
 				<listitem><para>maxdatasize</para></listitem>
 				<listitem><para>http_follow_redirect</para></listitem>
 				<listitem><para>httpproxy</para></listitem>

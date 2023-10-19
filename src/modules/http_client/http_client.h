@@ -2,9 +2,9 @@
  * header file of http_client.c
  *
  * Copyright (C) 2008 Juha Heinanen
- * 
+ *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -17,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -40,6 +40,7 @@
 #include "../../lib/srdb1/db.h"
 
 extern unsigned int default_connection_timeout;
+extern unsigned int default_connection_timeout_ms;
 extern char *
 		default_tls_cacert; /*!< File name: Default CA cert to use for curl TLS connection */
 extern str
@@ -117,6 +118,7 @@ typedef struct _curl_con
 	unsigned int keep_connections; /*!< TRUE to keep curl connections open */
 	unsigned int port;			   /*!< The port to connect to */
 	int timeout;				   /*!< Timeout for this connection */
+	int timeout_ms;				   /*!< Timeout (ms) for this connection */
 	unsigned int maxdatasize;	   /*!< Maximum data download on GET or POST */
 	curl_res_stream_t *stream;	   /*!< Curl stream */
 	char *http_proxy;			   /*!< HTTP proxy for this connection */
@@ -139,7 +141,7 @@ typedef struct _curl_con_pkg
 	double connecttime; /*!< Seconds used for connecting last request inc TLS setup  - see
 					     https://curl.haxx.se/libcurl/c/CURLINFO_APPCONNECT_TIME.html */
 
-	/* Potential candidates:	Last TLS fingerprint used 
+	/* Potential candidates:	Last TLS fingerprint used
 
 	*/
 	struct _curl_con_pkg *next; /*!< next connection */

@@ -6,9 +6,9 @@
  * Based on functions from siputil
  * 	Copyright (C) 2008 Juha Heinanen
  * 	Copyright (C) 2013 Carsten Bock, ng-voice GmbH
- * 
+ *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -21,8 +21,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -66,6 +66,7 @@ typedef struct
 	unsigned int verify_peer;
 	unsigned int verify_host;
 	unsigned int timeout;
+	unsigned int timeout_ms;
 	unsigned int http_follow_redirect;
 	unsigned int oneline;
 	unsigned int maxdatasize;
@@ -262,7 +263,16 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 			curl, CURLOPT_SSL_VERIFYHOST, (long)params->verify_host ? 2 : 0);
 
 	res |= curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long)1);
-	res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)params->timeout);
+
+	/* If we have timeout_ms, use it. Otherwise, use timeout (in seconds).
+	 * Note: If both CURLOPT_TIMEOUT and CURLOPT_TIMEOUT_MS are set, the value set last is used.
+	 */
+	if (params->timeout_ms > 0) {
+		res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, (long)params->timeout_ms);
+	} else {
+		res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)params->timeout);
+	}
+
 	res |= curl_easy_setopt(
 			curl, CURLOPT_FOLLOWLOCATION, (long)params->http_follow_redirect);
 	if(params->http_follow_redirect) {
@@ -600,6 +610,7 @@ int curl_con_query_url_f(struct sip_msg *_m, const str *connection,
 	query_params.verify_peer = conn->verify_peer;
 	query_params.verify_host = conn->verify_host;
 	query_params.timeout = conn->timeout;
+	query_params.timeout_ms = conn->timeout_ms;
 	query_params.http_follow_redirect = conn->http_follow_redirect;
 	query_params.keep_connections = conn->keep_connections;
 	query_params.oneline = 0;
@@ -680,6 +691,7 @@ int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
 	query_params.verify_peer = default_tls_verify_peer;
 	query_params.verify_host = default_tls_verify_host;
 	query_params.timeout = default_connection_timeout;
+	query_params.timeout_ms = default_connection_timeout_ms;
 	query_params.http_follow_redirect = default_http_follow_redirect;
 	query_params.oneline = default_query_result;
 	query_params.maxdatasize = default_query_maxdatasize;
