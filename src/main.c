@@ -525,7 +525,7 @@ int ksr_tcp_msg_read_timeout = 20; /* timeout (secs) to read SIP message */
 int ksr_tcp_msg_data_timeout =
 		20; /* timeout (secs) to receive first msg data */
 int ksr_tcp_accept_iplimit = 1024; /* limit of accepted connections per IP */
-int ksr_tcp_check_timer = 10;	   /* seconds to check tcp connections */
+int ksr_tcp_check_timer = -1;	   /* seconds to check tcp connections */
 
 /* memory manager */
 #define SR_MEMMNG_DEFAULT "qm"
@@ -1716,12 +1716,25 @@ int main_loop(void)
 		cfg_main_reset_local();
 
 #ifdef USE_TCP
-		if(!tcp_disable && ksr_tcp_check_timer > 0) {
-			if(sr_wtimer_add(
-					   tcp_timer_check_connections, NULL, ksr_tcp_check_timer)
-					< 0) {
-				LM_CRIT("cannot add timer for tcp connection checks\n");
-				goto error;
+		if(!tcp_disable) {
+			if(ksr_tcp_check_timer == -1) {
+				if(ksr_tcp_msg_data_timeout > 0 && ksr_tcp_msg_read_timeout > 0)
+					ksr_tcp_check_timer = MIN(ksr_tcp_msg_data_timeout,
+												  ksr_tcp_msg_read_timeout)
+										  / 2;
+				else
+					ksr_tcp_check_timer =
+							ksr_tcp_msg_data_timeout > 0
+									? ksr_tcp_msg_data_timeout / 2
+									: ksr_tcp_msg_read_timeout / 2;
+			}
+			if(ksr_tcp_check_timer > 0) {
+				if(sr_wtimer_add(tcp_timer_check_connections, NULL,
+						   ksr_tcp_check_timer)
+						< 0) {
+					LM_CRIT("cannot add timer for tcp connection checks\n");
+					goto error;
+				}
 			}
 		}
 #endif
