@@ -2424,8 +2424,9 @@ void print_all_socket_lists()
 					printf(" name %s", si->sockname.s);
 				}
 				if(si->useinfo.name.s) {
-					printf(" advertise %s:%d", si->useinfo.name.s,
-							si->useinfo.port_no);
+					printf(" advertise %s:%s:%d",
+							get_valid_proto_name(si->useinfo.proto),
+							si->useinfo.name.s, si->useinfo.port_no);
 				}
 				printf("\n");
 			}
