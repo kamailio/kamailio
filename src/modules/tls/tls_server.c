@@ -281,6 +281,7 @@ static int tls_complete_init(struct tcp_connection *c)
 		goto error;
 	}
 	memset(data, '\0', sizeof(struct tls_extra_data));
+	tls_openssl_clear_errors();
 	data->ssl = SSL_new(dom->ctx[process_no]);
 	data->rwbio = tls_BIO_new_mbuf(0, 0);
 	data->cfg = cfg;
@@ -466,6 +467,7 @@ int tls_accept(struct tcp_connection *c, int *error)
 	if(pkey)
 		SSL_use_PrivateKey(ssl, pkey);
 #endif
+	tls_openssl_clear_errors();
 	ret = SSL_accept(ssl);
 	if(unlikely(ret == 1)) {
 		DBG("TLS accept successful\n");
@@ -536,6 +538,7 @@ int tls_connect(struct tcp_connection *c, int *error)
 		SSL_use_PrivateKey(ssl, pkey);
 	}
 #endif
+	tls_openssl_clear_errors();
 	ret = SSL_connect(ssl);
 	if(unlikely(ret == 1)) {
 		DBG("TLS connect successful\n");
@@ -599,6 +602,7 @@ static int tls_shutdown(struct tcp_connection *c)
 		goto err;
 	}
 
+	tls_openssl_clear_errors();
 	ret = SSL_shutdown(ssl);
 	if(ret == 1) {
 		DBG("TLS shutdown successful\n");
@@ -694,6 +698,7 @@ void tls_h_tcpconn_clean_f(struct tcp_connection *c)
 		BUG("Bad connection structure\n");
 		abort();
 	}
+	tls_openssl_clear_errors();
 	if(c->extra_data) {
 		extra = (struct tls_extra_data *)c->extra_data;
 		SSL_free(extra->ssl);
@@ -843,6 +848,7 @@ redo_wr:
 		n = tls_connect(c, &ssl_error);
 		TLS_WR_TRACE("(%p) tls_connect() => %d (err=%d)\n", c, n, ssl_error);
 		if(unlikely(n >= 1)) {
+			tls_openssl_clear_errors();
 			n = SSL_write(ssl, buf + offs, len - offs);
 			if(unlikely(n <= 0))
 				ssl_error = SSL_get_error(ssl, n);
@@ -856,6 +862,7 @@ redo_wr:
 		n = tls_accept(c, &ssl_error);
 		TLS_WR_TRACE("(%p) tls_accept() => %d (err=%d)\n", c, n, ssl_error);
 		if(unlikely(n >= 1)) {
+			tls_openssl_clear_errors();
 			n = SSL_write(ssl, buf + offs, len - offs);
 			if(unlikely(n <= 0))
 				ssl_error = SSL_get_error(ssl, n);
@@ -866,6 +873,7 @@ redo_wr:
 			err_src = "TLS accept:";
 		}
 	} else {
+		tls_openssl_clear_errors();
 		n = SSL_write(ssl, buf + offs, len - offs);
 		if(unlikely(n <= 0))
 			ssl_error = SSL_get_error(ssl, n);
@@ -1150,6 +1158,7 @@ continue_ssl_read:
 			TLS_RD_TRACE("(%p, %p) tls_connect() => %d (err=%d)\n", c, flags, n,
 					ssl_error);
 			if(unlikely(n >= 1)) {
+				tls_openssl_clear_errors();
 				n = SSL_read(ssl, r->pos, bytes_free);
 			} else {
 				/* tls_connect failed/needs more IO */
@@ -1165,6 +1174,7 @@ continue_ssl_read:
 			TLS_RD_TRACE("(%p, %p) tls_accept() => %d (err=%d)\n", c, flags, n,
 					ssl_error);
 			if(unlikely(n >= 1)) {
+				tls_openssl_clear_errors();
 				n = SSL_read(ssl, r->pos, bytes_free);
 			} else {
 				/* tls_accept failed/needs more IO */
@@ -1178,6 +1188,7 @@ continue_ssl_read:
 		} else {
 			/* if bytes in then decrypt read buffer into tcpconn req.
 				 * buffer */
+			tls_openssl_clear_errors();
 			n = SSL_read(ssl, r->pos, bytes_free);
 		}
 		/** handle SSL_read() return.

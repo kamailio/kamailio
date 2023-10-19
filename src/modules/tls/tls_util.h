@@ -82,4 +82,6 @@ int shm_asciiz_dup(char **dest, char *val);
  */
 void collect_garbage(void);
 
+void tls_openssl_clear_errors(void);
+
 #endif /* _TLS_UTIL_H */
