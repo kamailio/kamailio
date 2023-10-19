@@ -103,11 +103,12 @@ void collect_garbage(void)
  * This is useful to call before any SSL_* IO calls to make sure
  * we don't have any leftover errors from previous calls (OpenSSL docs).
  */
-void tls_openssl_clear_errors(void) {
-    int i;
-    char err[160];
-    while ((i = ERR_get_error())) {
-        ERR_error_string(i, err);
-        INFO("clearing leftover error before SSL_* calls: %s", err);
-    }
+void tls_openssl_clear_errors(void)
+{
+	int i;
+	char err[160];
+	while((i = ERR_get_error())) {
+		ERR_error_string(i, err);
+		INFO("clearing leftover error before SSL_* calls: %s", err);
+	}
 }
