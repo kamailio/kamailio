@@ -51,6 +51,7 @@ int pkg_init_api(sr_pkg_api_t *ap)
 	_pkg_root.xrealloc = ap->xrealloc;
 	_pkg_root.xreallocxf = ap->xreallocxf;
 	_pkg_root.xstatus = ap->xstatus;
+	_shm_root.xstatus_filter = ap->xstatus_filter;
 	_pkg_root.xinfo = ap->xinfo;
 	_pkg_root.xreport = ap->xreport;
 	_pkg_root.xavailable = ap->xavailable;
