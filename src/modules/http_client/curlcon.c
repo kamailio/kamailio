@@ -5,9 +5,9 @@
  * Copyright (C) 2008 Elena-Ramona Modroiu (asipto.com)
  *
  * This file is part of kamailio, a free SIP server.
- * 
+ *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -69,6 +69,7 @@ typedef struct raw_http_client_conn
 	int verify_host;
 	int tlsversion;
 	int timeout;
+	int timeout_ms;
 	int maxdatasize;
 	int http_follow_redirect;
 	int authmethod;
@@ -107,12 +108,13 @@ static cfg_option_t http_client_options[] = {
 				.flags = CFG_STR_PKGMEM},								/* 9 */
 		{"tlsversion", .f = cfg_parse_enum_opt, .param = tls_versions}, /* 10 */
 		{"timeout", .f = cfg_parse_int_opt},							/* 11 */
-		{"maxdatasize", .f = cfg_parse_int_opt},						/* 12 */
-		{"httpredirect", .f = cfg_parse_bool_opt},						/* 13 */
-		{"httpproxy", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM}, /* 14 */
-		{"httpproxyport", .f = cfg_parse_int_opt},						/* 15 */
-		{"authmethod", .f = cfg_parse_int_opt},							/* 16 */
-		{"keepconnections", .f = cfg_parse_int_opt},					/* 17 */
+		{"timeout_ms", .f = cfg_parse_int_opt},							/* 12 */
+		{"maxdatasize", .f = cfg_parse_int_opt},						/* 13 */
+		{"httpredirect", .f = cfg_parse_bool_opt},						/* 14 */
+		{"httpproxy", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM}, /* 15 */
+		{"httpproxyport", .f = cfg_parse_int_opt},						/* 16 */
+		{"authmethod", .f = cfg_parse_int_opt},							/* 17 */
+		{"keepconnections", .f = cfg_parse_int_opt},					/* 18 */
 		{0}};
 
 /*! Count the number of connections
@@ -197,6 +199,7 @@ curl_con_pkg_t *curl_get_pkg_connection(curl_con_t *con)
  *	Parameters
  *		httpredirect
  *		timeout
+ *		timeout_ms
  *		useragent
  *		failover
  *		maxdatasize
@@ -222,7 +225,12 @@ int curl_parse_param(char *val)
 
 	unsigned int http_proxy_port = default_http_proxy_port;
 	unsigned int maxdatasize = default_maxdatasize;
-	unsigned int timeout = default_connection_timeout;
+	unsigned int timeout = 0;
+	unsigned int timeout_ms = 0;
+	/* timeout and timeout_ms are initialized to 0.
+	 * The default timeout configuration is applied only if neither "timeout" nor "timeout_ms" is set for that specific connection.
+	 * This is checked later on.
+	 */
 	unsigned int http_follow_redirect = default_http_follow_redirect;
 	unsigned int verify_peer = default_tls_verify_peer;
 	unsigned int verify_host = default_tls_verify_host;
@@ -407,10 +415,19 @@ int curl_parse_param(char *val)
 					LM_WARN("curl connection [%.*s]: timeout bad value. Using "
 							"default\n",
 							name.len, name.s);
-					timeout = default_connection_timeout;
+					timeout = 0;
 				}
 				LM_DBG("curl [%.*s] - timeout [%d]\n", pit->name.len,
 						pit->name.s, timeout);
+			} else if(pit->name.len == 10
+					  && strncmp(pit->name.s, "timeout_ms", 10) == 0) {
+				if(str2int(&tok, &timeout_ms) != 0) {
+					LM_WARN("curl connection [%.*s]: timeout_ms bad value. Using default\n",
+							name.len, name.s);
+					timeout_ms = 0;
+				}
+				LM_DBG("curl [%.*s] - timeout_ms [%d]\n", pit->name.len,
+						pit->name.s, timeout_ms);
 			} else if(pit->name.len == 9
 					  && strncmp(pit->name.s, "useragent", 9) == 0) {
 				useragent = tok;
@@ -424,7 +441,7 @@ int curl_parse_param(char *val)
 			} else if(pit->name.len == 11
 					  && strncmp(pit->name.s, "maxdatasize", 11) == 0) {
 				if(str2int(&tok, &maxdatasize) != 0) {
-					/* Bad timeout */
+					/* Bad value */
 					LM_WARN("curl connection [%.*s]: maxdatasize bad value. "
 							"Using default\n",
 							name.len, name.s);
@@ -524,7 +541,26 @@ int curl_parse_param(char *val)
 	cc->tlsversion = tlsversion;
 	cc->verify_peer = verify_peer;
 	cc->verify_host = verify_host;
-	cc->timeout = timeout;
+
+	/* Store timeout in milliseconds for internal use.
+	 * If parameter timeout_ms is defined, use it.
+	 * Otherwise, use timeout (seconds) * 1000.
+	 * The default timeout configuration is applied only if neither "timeout" nor "timeout_ms" is set for that specific connection.
+	 */
+	if (timeout > 0 || timeout_ms > 0) {
+		if (timeout_ms == 0) {
+			cc->timeout = 1000 * timeout;
+		} else {
+			cc->timeout = timeout_ms;
+		}
+	} else {
+		if (default_connection_timeout_ms == 0) {
+			cc->timeout = 1000 * default_connection_timeout;
+		} else {
+			cc->timeout = default_connection_timeout_ms;
+		}
+	}
+
 	cc->maxdatasize = maxdatasize;
 	if(http_proxy_port > 0) {
 		cc->http_proxy_port = http_proxy_port;
@@ -621,7 +657,14 @@ int curl_parse_conn(void *param, cfg_parser_t *parser, unsigned int flags)
 	raw_cc->verify_peer = default_tls_verify_peer;
 	raw_cc->verify_host = default_tls_verify_host;
 	raw_cc->maxdatasize = default_maxdatasize;
-	raw_cc->timeout = default_connection_timeout;
+
+	raw_cc->timeout = 0;
+	raw_cc->timeout_ms = 0;
+	/* timeout and timeout_ms are initialized to 0.
+	 * The default timeout configuration is applied only if neither "timeout" nor "timeout_ms" is set for that specific connection.
+	 * This is checked later on (in fixup function).
+	 */
+
 	raw_cc->http_follow_redirect = default_http_follow_redirect;
 	raw_cc->tlsversion = default_tls_version;
 	raw_cc->authmethod = default_authmethod;
@@ -643,12 +686,13 @@ int curl_parse_conn(void *param, cfg_parser_t *parser, unsigned int flags)
 	http_client_options[9].param = &raw_cc->ciphersuites;
 	/* tlsversion is set using enum types */
 	http_client_options[11].param = &raw_cc->timeout;
-	http_client_options[12].param = &raw_cc->maxdatasize;
-	http_client_options[13].param = &raw_cc->http_follow_redirect;
-	http_client_options[14].param = &raw_cc->http_proxy;
-	http_client_options[15].param = &raw_cc->http_proxy_port;
-	http_client_options[16].param = &raw_cc->authmethod;
-	http_client_options[17].param = &raw_cc->keep_connections;
+	http_client_options[12].param = &raw_cc->timeout_ms;
+	http_client_options[13].param = &raw_cc->maxdatasize;
+	http_client_options[14].param = &raw_cc->http_follow_redirect;
+	http_client_options[15].param = &raw_cc->http_proxy;
+	http_client_options[16].param = &raw_cc->http_proxy_port;
+	http_client_options[17].param = &raw_cc->authmethod;
+	http_client_options[18].param = &raw_cc->keep_connections;
 
 	cfg_set_options(parser, http_client_options);
 
@@ -721,7 +765,26 @@ int fixup_raw_http_client_conn_list(void)
 
 		cc->verify_peer = raw_cc->verify_peer;
 		cc->verify_host = raw_cc->verify_host;
-		cc->timeout = raw_cc->timeout;
+
+		/* Store timeout in milliseconds for internal use.
+		 * If parameter timeout_ms is defined, use it.
+		 * Otherwise, use timeout (seconds) * 1000.
+		 * The default timeout configuration is applied only if neither "timeout" nor "timeout_ms" is set for that specific connection.
+		 */
+		if (raw_cc->timeout > 0 || raw_cc->timeout_ms > 0) {
+			if (raw_cc->timeout_ms == 0) {
+				cc->timeout = 1000 * raw_cc->timeout;
+			} else {
+				cc->timeout = raw_cc->timeout_ms;
+			}
+		} else {
+			if (default_connection_timeout_ms == 0) {
+				cc->timeout = 1000 * default_connection_timeout;
+			} else {
+				cc->timeout = default_connection_timeout_ms;
+			}
+		}
+
 		cc->maxdatasize = raw_cc->maxdatasize;
 		cc->http_follow_redirect = raw_cc->http_follow_redirect;
 		cc->keep_connections = raw_cc->keep_connections;

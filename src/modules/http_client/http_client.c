@@ -12,7 +12,7 @@
  * This file is part of Kamailio, a free SIP server.
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -77,6 +77,7 @@ MODULE_VERSION
 
 /* Module parameter variables */
 unsigned int default_connection_timeout = 4;
+unsigned int default_connection_timeout_ms = 0;
 char *default_tls_cacert =
 		NULL; /*!< File name: Default CA cert to use for curl TLS connection */
 str default_tls_clientcert =
@@ -195,6 +196,7 @@ static cmd_export_t cmds[] = {
 /* Exported parameters */
 static param_export_t params[] = {
 	{"connection_timeout", PARAM_INT, &default_connection_timeout},
+	{"connection_timeout_ms", PARAM_INT, &default_connection_timeout_ms},
 	{"cacert", PARAM_STRING,  &default_tls_cacert },
 	{"client_cert", PARAM_STR, &default_tls_clientcert },
 	{"client_key", PARAM_STR, &default_tls_clientkey },
@@ -477,8 +479,8 @@ static int fixup_curl_connect(void **param, int param_no)
 }
 
 /*
- * Fix curl_connect params when posting (5 parameters): 
- *	connection (string/pvar), url (string with pvars), content-type, 
+ * Fix curl_connect params when posting (5 parameters):
+ *	connection (string/pvar), url (string with pvars), content-type,
  *      data (string/pvar, pvar)
  */
 static int fixup_curl_connect_post(void **param, int param_no)
@@ -509,8 +511,8 @@ static int fixup_curl_connect_post(void **param, int param_no)
 }
 
 /*
- * Fix curl_connect params when posting (5 parameters): 
- *	connection (string/pvar), url (string with pvars), content-type, 
+ * Fix curl_connect params when posting (5 parameters):
+ *	connection (string/pvar), url (string with pvars), content-type,
  *      data (string(with no pvar parsing), pvar)
  */
 static int fixup_curl_connect_post_raw(void **param, int param_no)

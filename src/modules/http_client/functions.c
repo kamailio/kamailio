@@ -6,9 +6,9 @@
  * Based on functions from siputil
  * 	Copyright (C) 2008 Juha Heinanen
  * 	Copyright (C) 2013 Carsten Bock, ng-voice GmbH
- * 
+ *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -21,8 +21,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -262,7 +262,10 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 			curl, CURLOPT_SSL_VERIFYHOST, (long)params->verify_host ? 2 : 0);
 
 	res |= curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long)1);
-	res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)params->timeout);
+
+	/* timeout is stored as ms internally */
+	res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, (long)params->timeout);
+
 	res |= curl_easy_setopt(
 			curl, CURLOPT_FOLLOWLOCATION, (long)params->http_follow_redirect);
 	if(params->http_follow_redirect) {
@@ -679,7 +682,16 @@ int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
 	query_params.tlsversion = default_tls_version;
 	query_params.verify_peer = default_tls_verify_peer;
 	query_params.verify_host = default_tls_verify_host;
-	query_params.timeout = default_connection_timeout;
+
+	/* If parameter timeout_ms is defined, use it.
+	 * Otherwise, use timeout (seconds) * 1000.
+	 */
+	if (default_connection_timeout_ms == 0) {
+		query_params.timeout = 1000 * default_connection_timeout;
+	} else {
+		query_params.timeout = default_connection_timeout_ms;
+	}
+
 	query_params.http_follow_redirect = default_http_follow_redirect;
 	query_params.oneline = default_query_result;
 	query_params.maxdatasize = default_query_maxdatasize;
