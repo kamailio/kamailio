@@ -456,7 +456,11 @@ int socketinfo2str(char *s, int *len, struct socket_info *si, int mode)
 	str proto;
 	int l;
 
-	proto.s = get_valid_proto_name(si->proto);
+	if(si->useinfo.proto != PROTO_NONE) {
+		proto.s = get_valid_proto_name(si->useinfo.proto);
+	} else {
+		proto.s = get_valid_proto_name(si->proto);
+	}
 	proto.len = strlen(proto.s);
 
 	if(mode == 1)
