@@ -28,6 +28,7 @@
 #include "tls_ct_wrq.h"
 #include "tls_cfg.h"
 #include "tls_server.h"
+#include "tls_util.h"
 #include "../../core/atomic_ops.h"
 #include "../../core/mem/shm_mem.h"
 #include <openssl/err.h>
