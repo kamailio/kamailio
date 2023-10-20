@@ -61,15 +61,15 @@ static void corex_rpc_list_sockets(rpc_t *rpc, void *ctx)
 				return;
 			}
 
-			if(rpc->struct_add(th, "sss{", "AF", get_af_name(proto), "PROTO",
-					   get_valid_proto_name(proto), "NAME", si->name.s,
-					   "ADDRLIST", &ih)
+			if(rpc->struct_add(th, "sss{", "af", get_af_name(proto), "proto",
+					   get_valid_proto_name(proto), "name", si->name.s,
+					   "addrlist", &ih)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error address list structure");
 				return;
 			}
 
-			if(rpc->struct_add(ih, "s", "ADDR", si->address_str.s) < 0) {
+			if(rpc->struct_add(ih, "s", "addr", si->address_str.s) < 0) {
 				rpc->fault(ctx, 500, "Internal error address structure");
 				return;
 			}
@@ -77,7 +77,7 @@ static void corex_rpc_list_sockets(rpc_t *rpc, void *ctx)
 			if(si->addr_info_lst) {
 
 				for(ai = si->addr_info_lst; ai; ai = ai->next) {
-					if(rpc->struct_add(ih, "s", "ADDR", ai->address_str.s)
+					if(rpc->struct_add(ih, "s", "addr", ai->address_str.s)
 							< 0) {
 						rpc->fault(ctx, 500,
 								"Internal error extra address structure");
@@ -86,11 +86,11 @@ static void corex_rpc_list_sockets(rpc_t *rpc, void *ctx)
 				}
 			}
 
-			if(rpc->struct_add(th, "ssssss", "PORT", si->port_no_str.s, "MCAST",
-					   si->flags & SI_IS_MCAST ? "yes" : "no", "MHOMED",
-					   si->flags & SI_IS_MHOMED ? "yes" : "no", "VIRTUAL",
-					   si->flags & SI_IS_VIRTUAL ? "yes" : "no", "SOCKNAME",
-					   si->sockname.s ? si->sockname.s : "-", "ADVERTISE",
+			if(rpc->struct_add(th, "ssssss", "port", si->port_no_str.s, "mcast",
+					   si->flags & SI_IS_MCAST ? "yes" : "no", "mhomed",
+					   si->flags & SI_IS_MHOMED ? "yes" : "no", "virtual",
+					   si->flags & SI_IS_VIRTUAL ? "yes" : "no", "sockname",
+					   si->sockname.s ? si->sockname.s : "-", "advertise",
 					   si->useinfo.name.s ? si->useinfo.name.s : "-")
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error attrs structure");
