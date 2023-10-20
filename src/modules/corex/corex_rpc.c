@@ -121,8 +121,8 @@ static void corex_rpc_list_aliases(rpc_t *rpc, void *ctx)
 			rpc->fault(ctx, 500, "Internal error alias structure");
 			return;
 		}
-		if(rpc->struct_add(th, "sSd", "PROTO", get_valid_proto_name(a->proto),
-				   "ADDR", &a->alias, "PORT", a->port)
+		if(rpc->struct_add(th, "sSd", "proto", get_valid_proto_name(a->proto),
+				   "addr", &a->alias, "port", a->port)
 				< 0) {
 			rpc->fault(ctx, 500, "Internal error alias attributes");
 			return;
