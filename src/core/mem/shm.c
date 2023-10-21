@@ -252,6 +252,7 @@ int shm_init_api(sr_shm_api_t *ap)
 	_shm_root.xfmodstats = ap->xfmodstats;
 	_shm_root.xglock = ap->xglock;
 	_shm_root.xgunlock = ap->xgunlock;
+	_shm_root.xsetfunc = ap->xsetfunc;
 	return 0;
 }
 
