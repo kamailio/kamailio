@@ -508,12 +508,6 @@ int th_mask_callid_str(str *icallid, str *ocallid)
 {
 	str out;
 
-	if(th_param_mask_callid == 0)
-		return 0;
-
-	if(th_param_mask_callid == 0)
-		return 0;
-
 	if(icallid->s == NULL) {
 		LM_ERR("invalid call-id value\n");
 		return -1;
@@ -534,9 +528,6 @@ int th_mask_callid_str(str *icallid, str *ocallid)
 int th_unmask_callid_str(str *icallid, str *ocallid)
 {
 	str out;
-
-	if(th_param_mask_callid == 0)
-		return 0;
 
 	if(icallid->s == NULL) {
 		LM_ERR("invalid Call-Id value\n");
