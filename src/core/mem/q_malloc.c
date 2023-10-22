@@ -1023,9 +1023,9 @@ void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
 						i, (f->u.is_free) ? 'A' : 'N',
 						(char *)f + sizeof(struct qm_frag), f, f->size,
 						FRAG_WAS_USED(f));
-				fprintf(fp, "          %s from %s: %s(%ld)\n",
-						(f->u.is_free) ? "freed" : "alloc'd", f->file, f->func,
-						f->line);
+				fprintf(fp, "          %s from %s:%ld / %s()\n",
+						(f->u.is_free) ? "freed" : "alloc'd", f->file, f->line,
+						f->func);
 				fprintf(fp, "         start check=%lx, end check= %lx, %lx\n",
 						f->check, FRAG_END(f)->check1, FRAG_END(f)->check2);
 				if(f->check != ST_CHECK_PATTERN) {
@@ -1061,9 +1061,9 @@ void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
 										!= NULL))) {
 					fprintf(fp,
 							"unused fragm.: hash = %3d, fragment %p,"
-							" address %p size %lu, created from %s: %s(%lu)\n",
+							" address %p size %lu, created from %s:%lu / %s()\n",
 							h, f, (char *)f + sizeof(struct qm_frag), f->size,
-							f->file, f->func, f->line);
+							f->file, f->line, f->func);
 				}
 #endif
 			}
