@@ -285,7 +285,7 @@ sr_xavp_t *pvh_xavi_get_child(struct sip_msg *msg, str *xname, str *name)
 
 	pvh_get_branch_xname(msg, xname, &br_xname);
 	xavi = xavi_get_child(&br_xname, name);
-	if(xavi == NULL) {
+	if(xavi == NULL && msg->first_line.type == SIP_REQUEST) {
 		if(cmp_str(xname, &br_xname) != 0) {
 			xavi = xavi_get_child(xname, name);
 			if(xavi) {
