@@ -1,5 +1,6 @@
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
 #include "cdp_tls.h"
+#include "utils.h"
 
 cfg_option_t methods[] = {{"TLSv1", .val = TLS_USE_TLSv1},
 		{"TLSv1.0", .val = TLS_USE_TLSv1},
@@ -184,6 +185,7 @@ SSL *init_ssl_conn(int client_fd, SSL_CTX *ctx)
 		goto cleanup;
 	}
 	/* Perform the TLS handshake */
+	cdp_openssl_clear_errors();
 	ssl_ret = SSL_connect(ssl);
 	if(ssl_ret != 1) {
 		error = SSL_get_error(ssl, ssl_ret);

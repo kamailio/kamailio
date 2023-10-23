@@ -72,4 +72,6 @@
 		}                                        \
 	}
 
+void cdp_openssl_clear_errors(void);
+
 #endif /*UTILS_H_*/
