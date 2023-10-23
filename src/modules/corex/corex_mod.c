@@ -93,7 +93,7 @@ static int corex_dns_cache_param_add(str *pval);
 
 static int corex_sip_reply_out(sr_event_param_t *evp);
 
-/*clang-format off*/
+/* clang-format off */
 static pv_export_t mod_pvs[] = {
 	{{"cfg", (sizeof("cfg") - 1)}, PVT_OTHER, pv_get_cfg, 0,
 		pv_parse_cfg_name, 0, 0, 0},
@@ -196,7 +196,7 @@ struct module_exports exports = {
 	child_init,		 /* per-child init function */
 	mod_destroy		 /* module destroy function */
 };
-/*clang-format on*/
+/* clang-format on */
 
 /**
  * init module function
