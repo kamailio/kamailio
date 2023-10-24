@@ -548,11 +548,13 @@ static inline int lumps_len(
 	int new_len;
 	struct lump *t;
 	struct lump *r;
-	str *send_address_str;
-	str *send_port_str;
+	str *send_address_str = NULL;
+	str *send_port_str = NULL;
+	int send_proto_id = PROTO_NONE;
 	str *recv_address_str = NULL;
 	str *recv_port_str = NULL;
 	int recv_port_no = 0;
+	int recv_proto_id = PROTO_NONE;
 	struct socket_info *send_sock;
 
 
@@ -657,7 +659,7 @@ static inline int lumps_len(
 					new_len += 1 + recv_port_str->len;                       \
 				}                                                            \
 				/*add;transport=xxx*/                                        \
-				switch(msg->rcv.bind_address->proto) {                       \
+				switch(recv_proto_id) {                                      \
 					case PROTO_NONE:                                         \
 					case PROTO_UDP:                                          \
 						break; /* udp is the default */                      \
@@ -672,6 +674,10 @@ static inline int lumps_len(
 								new_len += TRANSPORT_PARAM_LEN + 3;          \
 								break;                                       \
 						}                                                    \
+						break;                                               \
+					case PROTO_WS:                                           \
+					case PROTO_WSS:                                          \
+						new_len += TRANSPORT_PARAM_LEN + 2;                  \
 						break;                                               \
 					case PROTO_SCTP:                                         \
 						new_len += TRANSPORT_PARAM_LEN + 4;                  \
@@ -753,7 +759,7 @@ static inline int lumps_len(
 					new_len += 1 + send_port_str->len;                       \
 				}                                                            \
 				/*add;transport=xxx*/                                        \
-				switch(send_sock->proto) {                                   \
+				switch(send_proto_id) {                                      \
 					case PROTO_NONE:                                         \
 					case PROTO_UDP:                                          \
 						break; /* udp is the default */                      \
@@ -768,6 +774,10 @@ static inline int lumps_len(
 								new_len += TRANSPORT_PARAM_LEN + 3;          \
 								break;                                       \
 						}                                                    \
+						break;                                               \
+					case PROTO_WS:                                           \
+					case PROTO_WSS:                                          \
+						new_len += TRANSPORT_PARAM_LEN + 2;                  \
 						break;                                               \
 					case PROTO_SCTP:                                         \
 						new_len += TRANSPORT_PARAM_LEN + 4;                  \
@@ -811,6 +821,12 @@ static inline int lumps_len(
 		send_port_str = &(msg->set_global_port);
 	else
 		send_port_str = &(send_sock->port_no_str);
+	if(send_sock) {
+		if(send_sock->useinfo.proto != PROTO_NONE)
+			send_proto_id = send_sock->useinfo.proto;
+		else
+			send_proto_id = send_sock->proto;
+	}
 	/* init recv_address_str, recv_port_str & recv_port_no */
 	if(msg->rcv.bind_address) {
 		if(msg->rcv.bind_address->useinfo.name.len > 0)
@@ -823,6 +839,11 @@ static inline int lumps_len(
 		} else {
 			recv_port_str = &(msg->rcv.bind_address->port_no_str);
 			recv_port_no = msg->rcv.bind_address->port_no;
+		}
+		if(msg->rcv.bind_address->useinfo.proto != PROTO_NONE) {
+			recv_proto_id = msg->rcv.bind_address->useinfo.proto;
+		} else {
+			recv_proto_id = msg->rcv.bind_address->proto;
 		}
 	}
 
@@ -925,11 +946,13 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 	int size;
 	int offset;
 	int s_offset;
-	str *send_address_str;
-	str *send_port_str;
+	str *send_address_str = NULL;
+	str *send_port_str = NULL;
+	int send_proto_id = PROTO_NONE;
 	str *recv_address_str = NULL;
 	str *recv_port_str = NULL;
 	int recv_port_no = 0;
+	int recv_proto_id = PROTO_NONE;
 	struct socket_info *send_sock;
 
 #ifdef USE_COMP
@@ -1040,7 +1063,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 							recv_port_str->len);                             \
 					offset += recv_port_str->len;                            \
 				}                                                            \
-				switch(msg->rcv.bind_address->proto) {                       \
+				switch(recv_proto_id) {                                      \
 					case PROTO_NONE:                                         \
 					case PROTO_UDP:                                          \
 						break; /* nothing to do, udp is default*/            \
@@ -1068,6 +1091,11 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 							memcpy(new_buf + offset, "tls", 3);              \
 							offset += 3;                                     \
 						}                                                    \
+						break;                                               \
+					case PROTO_WS:                                           \
+					case PROTO_WSS:                                          \
+						memcpy(new_buf + offset, "ws", 2);                   \
+						offset += 2;                                         \
 						break;                                               \
 					case PROTO_SCTP:                                         \
 						memcpy(new_buf + offset, TRANSPORT_PARAM,            \
@@ -1158,7 +1186,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 							send_port_str->len);                             \
 					offset += send_port_str->len;                            \
 				}                                                            \
-				switch(send_sock->proto) {                                   \
+				switch(send_proto_id) {                                      \
 					case PROTO_NONE:                                         \
 					case PROTO_UDP:                                          \
 						break; /* nothing to do, udp is default*/            \
@@ -1186,6 +1214,11 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 							memcpy(new_buf + offset, "tls", 3);              \
 							offset += 3;                                     \
 						}                                                    \
+						break;                                               \
+					case PROTO_WS:                                           \
+					case PROTO_WSS:                                          \
+						memcpy(new_buf + offset, "ws", 2);                   \
+						offset += 2;                                         \
 						break;                                               \
 					case PROTO_SCTP:                                         \
 						memcpy(new_buf + offset, TRANSPORT_PARAM,            \
@@ -1322,6 +1355,12 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 		send_port_str = &(msg->set_global_port);
 	else
 		send_port_str = &(send_sock->port_no_str);
+	if(send_sock) {
+		if(send_sock->useinfo.proto != PROTO_NONE)
+			send_proto_id = send_sock->useinfo.proto;
+		else
+			send_proto_id = send_sock->proto;
+	}
 	/* init recv_address_str, recv_port_str & recv_port_no */
 	if(msg->rcv.bind_address) {
 		if(msg->rcv.bind_address->useinfo.name.len > 0)
@@ -1334,6 +1373,11 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 		} else {
 			recv_port_str = &(msg->rcv.bind_address->port_no_str);
 			recv_port_no = msg->rcv.bind_address->port_no;
+		}
+		if(msg->rcv.bind_address->useinfo.proto != PROTO_NONE) {
+			recv_proto_id = msg->rcv.bind_address->useinfo.proto;
+		} else {
+			recv_proto_id = msg->rcv.bind_address->proto;
 		}
 	}
 
@@ -2879,7 +2923,7 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 			proto = get_valid_proto_id(&rxavp->val.v.s);
 		}
 	}
-	if(proto==PROTO_NONE) {
+	if(proto == PROTO_NONE) {
 		if(send_sock->useinfo.proto != PROTO_NONE) {
 			proto = send_sock->useinfo.proto;
 		} else {
