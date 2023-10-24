@@ -355,6 +355,7 @@ int load_ims_dlg(ims_dlg_api_t *dlgb)
 	dlgb->lookup_terminate_dlg = w_api_lookup_terminate_dlg;
 	dlgb->get_dlg_expires = api_get_dlg_expires;
 	dlgb->get_dlg = dlg_get_msg_dialog;
+	dlgb->get_dlg_hash = dlg_get_hash_dialog;
 	dlgb->release_dlg = dlg_release;
 
 	return 1;

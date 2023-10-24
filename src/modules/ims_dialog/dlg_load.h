@@ -42,6 +42,10 @@ typedef int (*ims_lookup_terminate_dlg_f)(
 /* get the current dialog based on message function prototype */
 typedef struct dlg_cell *(*ims_get_dlg_f)(struct sip_msg *msg);
 
+/* get dialog based on hash entry and id */
+typedef struct dlg_cell *(*ims_get_dlg_hash_f)(
+		unsigned int h_entry, unsigned int h_id);
+
 /* get_dlg_lifetime function prototype */
 typedef time_t (*ims_get_dlg_expires_f)(str *callid, str *ftag, str *ttag);
 
@@ -57,6 +61,7 @@ typedef struct ims_dlg_binds
 	ims_get_dlg_variable_f get_dlg_var;
 	ims_get_dlg_expires_f get_dlg_expires;
 	ims_get_dlg_f get_dlg;
+	ims_get_dlg_hash_f get_dlg_hash;
 	ims_release_dlg_f release_dlg;
 } ims_dlg_api_t;
 
