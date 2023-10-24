@@ -67,6 +67,7 @@ static inline int tls_err_ret(char *s, SSL_CTX *ctx)
 	} while(0)
 
 int tls_parse_method(str *method);
+void cdp_openssl_clear_errors(void);
 void init_ssl_methods(void);
 SSL_CTX *init_ssl_ctx(int method);
 SSL *init_ssl_conn(int client_fd, SSL_CTX *ctx);

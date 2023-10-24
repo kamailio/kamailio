@@ -71,7 +71,6 @@
 #include "diameter_peer.h"
 
 #include "../../core/cfg/cfg_struct.h"
-#include "utils.h"
 
 extern dp_config *config; /**< Configuration for this diameter peer 	*/
 extern int method;
