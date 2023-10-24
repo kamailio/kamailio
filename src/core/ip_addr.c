@@ -705,6 +705,44 @@ char *get_proto_name(unsigned int proto)
 	}
 }
 
+/** get protocol id from string value.
+ * @param protoval - protocol value
+ * @return  int value of the protocol.
+ */
+int get_valid_proto_id(str *protoval)
+{
+	if(protoval == NULL || protoval->s == NULL || protoval->len <= 0) {
+		return PROTO_NONE;
+	}
+	switch(protoval->len) {
+		case 2:
+			if(strncasecmp(protoval->s, "ws", 2) == 0) {
+				return PROTO_WS;
+			}
+			break;
+		case 3:
+			if(strncasecmp(protoval->s, "udp", 3) == 0) {
+				return PROTO_UDP;
+			}
+			if(strncasecmp(protoval->s, "tcp", 3) == 0) {
+				return PROTO_TCP;
+			}
+			if(strncasecmp(protoval->s, "tls", 3) == 0) {
+				return PROTO_TLS;
+			}
+			if(strncasecmp(protoval->s, "wss", 3) == 0) {
+				return PROTO_WSS;
+			}
+			break;
+		case 4:
+			if(strncasecmp(protoval->s, "sctp", 4) == 0) {
+				return PROTO_SCTP;
+			}
+			break;
+	}
+	return PROTO_NONE;
+}
+
 /** get address family name (asciiz).
  * @param af - address family id
  * @return  string with the adderess family name or "unknown".

@@ -338,6 +338,7 @@ char *get_proto_name(unsigned int proto);
 
 int get_valid_proto_string(
 		unsigned int iproto, int utype, int vtype, str *sproto);
+int get_valid_proto_id(str *protoval);
 
 char *get_af_name(unsigned int af);
 
