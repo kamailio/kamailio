@@ -106,9 +106,9 @@ void collect_garbage(void)
 void tls_openssl_clear_errors(void)
 {
 	int i;
-	char err[160];
+	char err[256];
 	while((i = ERR_get_error())) {
 		ERR_error_string(i, err);
-		INFO("clearing leftover error before SSL_* calls: %s", err);
+		INFO("clearing leftover error before SSL_* calls: %s\n", err);
 	}
 }
