@@ -5,9 +5,9 @@
  * Copyright (C) 2008 Elena-Ramona Modroiu (asipto.com)
  *
  * This file is part of kamailio, a free SIP server.
- * 
+ *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -424,7 +424,7 @@ int curl_parse_param(char *val)
 			} else if(pit->name.len == 11
 					  && strncmp(pit->name.s, "maxdatasize", 11) == 0) {
 				if(str2int(&tok, &maxdatasize) != 0) {
-					/* Bad timeout */
+					/* Bad value */
 					LM_WARN("curl connection [%.*s]: maxdatasize bad value. "
 							"Using default\n",
 							name.len, name.s);
@@ -853,4 +853,30 @@ curl_con_t *curl_init_con(str *name)
 
 	LM_DBG("CURL: Added connection [%.*s]\n", name->len, name->s);
 	return cc;
+}
+
+/*! Fixup CURL connections - if timeout is not configured, Use as default global connection_timeout.
+ */
+void curl_conn_list_fixup(void)
+{
+	curl_con_t *cc;
+	cc = _curl_con_root;
+	while (cc) {
+		if (!(timeout_mode == 1 || timeout_mode == 2)) {
+			/* Timeout is disabled globally. Set timeout to 0 for all connections to reflect this. */
+			if (cc->timeout > 0) {
+				LM_WARN("curl connection [%.*s]: configured timeout is ignored "
+				"because timeouts are disabled (timeout_mode)\n",
+					cc->name.len, cc->name.s);
+				cc->timeout = 0;
+			}
+		}
+		else if (cc->timeout == 0) {
+			/* Timeout is not configured for that connection.
+			 * Use as default global connection_timeout (which can be seconds or milliseconds).
+			 */
+			cc->timeout = default_connection_timeout;
+		}
+		cc = cc->next;
+	}
 }

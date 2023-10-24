@@ -12,7 +12,7 @@
  * This file is part of Kamailio, a free SIP server.
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -76,7 +76,8 @@ MODULE_VERSION
 #define CURL_USER_AGENT_LEN (sizeof(CURL_USER_AGENT) - 1)
 
 /* Module parameter variables */
-unsigned int default_connection_timeout = 4;
+unsigned int default_connection_timeout = 0; /*!< 0 = not user configured - the default (4 seconds) will be used */
+unsigned int timeout_mode = 1; /*!< 0 = timeout disabled, 1 (default) = timeout in seconds, 2 = timeout in ms */
 char *default_tls_cacert =
 		NULL; /*!< File name: Default CA cert to use for curl TLS connection */
 str default_tls_clientcert =
@@ -195,6 +196,7 @@ static cmd_export_t cmds[] = {
 /* Exported parameters */
 static param_export_t params[] = {
 	{"connection_timeout", PARAM_INT, &default_connection_timeout},
+	{"timeout_mode", PARAM_INT, &timeout_mode},
 	{"cacert", PARAM_STRING,  &default_tls_cacert },
 	{"client_cert", PARAM_STR, &default_tls_clientcert },
 	{"client_key", PARAM_STR, &default_tls_clientkey },
@@ -310,10 +312,27 @@ static int mod_init(void)
 		}
 	}
 
-	if(default_connection_timeout == 0) {
-		LM_ERR("CURL connection timeout set to zero. Using default 4 secs\n");
-		default_connection_timeout = 4;
+	/* timeout_mode parameter:
+	 * - 0 : timeout is disabled.
+	 * - 1 (default) : timeout value is in seconds.
+	 * - 2 : timeout value is in milliseconds.
+	 */
+	if (!(timeout_mode == 1 || timeout_mode == 2)) {
+		if (default_connection_timeout > 0) {
+			LM_WARN("configured connection_timeout is ignored "
+				"because timeouts are disabled (timeout_mode)\n");
+		}
+	} else if (default_connection_timeout == 0) {
+		LM_INFO("curl connection timeout set to zero. Using default 4 secs\n");
+		if (timeout_mode == 1) { /* timeout is in seconds (default) */
+			default_connection_timeout = 4;
+		} else if (timeout_mode == 2) { /* timeout is in milliseconds */
+			default_connection_timeout = 4000;
+		}
 	}
+	/* Fixup named connections for which no specific timeout is configured. */
+	curl_conn_list_fixup();
+
 	if(default_http_proxy_port == 0) {
 		LM_INFO("HTTP proxy port set to 0. Disabling HTTP proxy\n");
 	}
@@ -477,8 +496,8 @@ static int fixup_curl_connect(void **param, int param_no)
 }
 
 /*
- * Fix curl_connect params when posting (5 parameters): 
- *	connection (string/pvar), url (string with pvars), content-type, 
+ * Fix curl_connect params when posting (5 parameters):
+ *	connection (string/pvar), url (string with pvars), content-type,
  *      data (string/pvar, pvar)
  */
 static int fixup_curl_connect_post(void **param, int param_no)
@@ -509,8 +528,8 @@ static int fixup_curl_connect_post(void **param, int param_no)
 }
 
 /*
- * Fix curl_connect params when posting (5 parameters): 
- *	connection (string/pvar), url (string with pvars), content-type, 
+ * Fix curl_connect params when posting (5 parameters):
+ *	connection (string/pvar), url (string with pvars), content-type,
  *      data (string(with no pvar parsing), pvar)
  */
 static int fixup_curl_connect_post_raw(void **param, int param_no)
