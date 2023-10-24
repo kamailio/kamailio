@@ -6,9 +6,9 @@
  * Based on functions from siputil
  * 	Copyright (C) 2008 Juha Heinanen
  * 	Copyright (C) 2013 Carsten Bock, ng-voice GmbH
- * 
+ *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -21,8 +21,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -262,7 +262,18 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 			curl, CURLOPT_SSL_VERIFYHOST, (long)params->verify_host ? 2 : 0);
 
 	res |= curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long)1);
-	res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)params->timeout);
+
+	/* timeout_mode parameter:
+	 * - 0 : timeout is disabled.
+	 * - 1 (default) : timeout value is in seconds.
+	 * - 2 : timeout value is in milliseconds.
+	 */
+	if (timeout_mode == 1) { /* timeout is in seconds (default) */
+		res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)params->timeout);
+	} else if (timeout_mode == 2) { /* timeout is in milliseconds */
+		res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, (long)params->timeout);
+	}
+
 	res |= curl_easy_setopt(
 			curl, CURLOPT_FOLLOWLOCATION, (long)params->http_follow_redirect);
 	if(params->http_follow_redirect) {

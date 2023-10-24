@@ -182,13 +182,12 @@ modparam("http_client", "maxdatasize", 2000)
 		<section id="http_client.p.connection_timeout">
 			<title><varname>connection_timeout</varname> (int)</title>
 			<para>
-			Defines in seconds how long &kamailio; waits for response
-			from servers.
+			Defines how long &kamailio; waits for response from servers.
+			Value is expressed in seconds or milliseconds, depending on parameter timeout_mode.
 			</para>
 			<para>
 			<emphasis>
-				Default value is zero, i.e.,
-				the timeout function is disabled.
+				Default value is 4 seconds.
 			</emphasis>
 			</para>
 			<example>
@@ -198,6 +197,34 @@ modparam("http_client", "maxdatasize", 2000)
 modparam("http_client", "connection_timeout", 2)
 ...
 				</programlisting>
+			</example>
+		</section>
+		<section id="http_client.p.timeout_mode">
+			<title><varname>timeout_mode</varname> (int)</title>
+			<para>
+			Defines if timeouts are enabled, and in which unit timeout values are expressed.
+			</para>
+			<para>
+			Valid values are:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para>0 - Timeouts are disabled.</para>
+			</listitem>
+			<listitem>
+				<para>1 - Timeout values are in seconds (default).</para>
+			</listitem>
+			<listitem>
+				<para>2 - Timeout values are in milliseconds.</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title>Set <varname>timeout_mode</varname> parameter</title>
+					<programlisting format="linespecific">
+...
+modparam("http_client", "timeout_mode", 1)
+...
+					</programlisting>
 			</example>
 		</section>
 		<section id="http_client.p.client_cert">
