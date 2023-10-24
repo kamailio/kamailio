@@ -2825,6 +2825,7 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 	char *comp_name;
 #endif /* USE_COMP */
 	int port;
+	int proto;
 	struct ip_addr ip;
 	union sockaddr_union *from = NULL;
 	union sockaddr_union local_addr;
@@ -2868,7 +2869,23 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 		else
 			port_str = &(send_sock->port_no_str);
 	}
-
+	proto = PROTO_NONE;
+	if(msg && (msg->msg_flags & FL_USE_XAVP_VIA_FIELDS)
+			&& _ksr_xavp_via_fields.len > 0) {
+		xname.s = "proto";
+		xname.len = 5;
+		rxavp = xavp_get_child_with_sval(&_ksr_xavp_via_fields, &xname);
+		if(rxavp != NULL) {
+			proto = get_valid_proto_id(&rxavp->val.v.s);
+		}
+	}
+	if(proto==PROTO_NONE) {
+		if(send_sock->useinfo.proto != PROTO_NONE) {
+			proto = send_sock->useinfo.proto;
+		} else {
+			proto = send_info->proto;
+		}
+	}
 	comp_len = comp_name_len = 0;
 #ifdef USE_COMP
 	comp_name = 0;
@@ -2891,7 +2908,7 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 	}
 #endif /* USE_COMP */
 
-	via_prefix_len = MY_VIA_LEN + (send_info->proto == PROTO_SCTP);
+	via_prefix_len = MY_VIA_LEN + (proto == PROTO_SCTP);
 	max_len = via_prefix_len + address_str->len /* space in MY_VIA */
 			  + 2 /* just in case it is a v6 address ... [ ] */
 			  + 1 /*':'*/ + port_str->len
@@ -2910,15 +2927,15 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 	via_len = via_prefix_len + address_str->len; /*space included in MY_VIA*/
 
 	memcpy(line_buf, MY_VIA, MY_VIA_LEN);
-	if(send_info->proto == PROTO_UDP) {
+	if(proto == PROTO_UDP) {
 		/* do nothing */
-	} else if(send_info->proto == PROTO_TCP) {
+	} else if(proto == PROTO_TCP) {
 		memcpy(line_buf + MY_VIA_LEN - 4, "TCP ", 4);
-	} else if(send_info->proto == PROTO_TLS) {
+	} else if(proto == PROTO_TLS) {
 		memcpy(line_buf + MY_VIA_LEN - 4, "TLS ", 4);
-	} else if(send_info->proto == PROTO_SCTP) {
+	} else if(proto == PROTO_SCTP) {
 		memcpy(line_buf + MY_VIA_LEN - 4, "SCTP ", 5);
-	} else if(send_info->proto == PROTO_WS) {
+	} else if(proto == PROTO_WS) {
 		if(unlikely(send_info->send_flags.f & SND_F_FORCE_SOCKET
 					&& send_info->send_sock)) {
 			local_addr = send_info->send_sock->su;
@@ -2957,10 +2974,10 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 			return 0;
 		}
 		tcpconn_put(con);
-	} else if(send_info->proto == PROTO_WSS) {
+	} else if(proto == PROTO_WSS) {
 		memcpy(line_buf + MY_VIA_LEN - 4, "WSS ", 4);
 	} else {
-		LM_CRIT("unknown proto %d\n", send_info->proto);
+		LM_CRIT("unknown proto %d\n", proto);
 		pkg_free(line_buf);
 		return 0;
 	}
