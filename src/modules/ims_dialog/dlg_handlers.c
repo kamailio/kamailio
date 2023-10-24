@@ -2101,3 +2101,22 @@ struct dlg_cell *dlg_get_msg_dialog(sip_msg_t *msg)
 	}
 	return dlg;
 }
+
+/*!
+ * \brief Get dialog based on hash entry and id
+ * \param h_entry number of the hash table entry
+ * \param h_id id of the hash table entry
+ * \return dialog structure on success, NULL on failure
+ */
+
+struct dlg_cell *dlg_get_hash_dialog(unsigned int h_entry, unsigned int h_id)
+{
+	struct dlg_cell *dlg = NULL;
+
+	dlg = lookup_dlg(h_entry, h_id);
+	if(dlg == NULL) {
+		LM_ERR("Unable to find dlg\n");
+		return NULL;
+	}
+	return dlg;
+}
