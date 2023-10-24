@@ -537,6 +537,7 @@ static inline int do_read(serviced_peer_t *sp, char *dst, int n)
 	char *err_str;
 
 	if(sp->tls_conn) {
+		cdp_openssl_clear_errors();
 		cnt = SSL_read(sp->tls_conn, dst, n);
 		if(unlikely(cnt < 0)) {
 			ssl_err = SSL_get_error(sp->tls_conn, cnt);
@@ -687,6 +688,7 @@ static int do_write(serviced_peer_t *sp, const void *buf, int num)
 	char *err_str;
 
 	if(sp->tls_conn) {
+		cdp_openssl_clear_errors();
 		cnt = SSL_write(sp->tls_conn, buf, num);
 		if(unlikely(cnt <= 0)) {
 			ssl_err = SSL_get_error(sp->tls_conn, cnt);
