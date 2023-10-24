@@ -556,7 +556,7 @@ static sr_kemi_t sr_kemi_app_ruby_exports[] = {
 /* clang-format on */
 
 
-static const char *app_ruby_rpc_reload_doc[2] = {"Reload javascript file", 0};
+static const char *app_ruby_rpc_reload_doc[2] = {"Reload ruby file", 0};
 
 
 static void app_ruby_rpc_reload(rpc_t *rpc, void *ctx)
