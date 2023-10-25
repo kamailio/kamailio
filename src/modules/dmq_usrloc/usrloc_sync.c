@@ -373,10 +373,6 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t *node)
 			sock = grep_sock_info(&host, (unsigned short)port, proto);
 			if(sock == 0) {
 				LM_DBG("non-local socket <%s>...ignoring\n", it->valuestring);
-			} else {
-				sock = grep_sock_info(&host, (unsigned short)port, proto);
-				sock->sock_str.s = it->valuestring;
-				sock->sock_str.len = strlen(sock->sock_str.s);
 			}
 		} else if(_dmq_usrloc_replicate_socket_info
 						  == DMQ_USRLOC_REPLICATE_SOCKNAME
