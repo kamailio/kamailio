@@ -850,14 +850,18 @@ static const char *ul_rpc_db_expired_contacts_doc[2] = {
 		"Tell number of expired contacts in database table (db_mode=3 only)",
 		0};
 
-rpc_export_t ul_rpc[] = {{"ul.dump", ul_rpc_dump, ul_rpc_dump_doc, 0},
-		{"ul.lookup", ul_rpc_lookup, ul_rpc_lookup_doc, 0},
-		{"ul.rm", ul_rpc_rm_aor, ul_rpc_rm_aor_doc, 0},
-		{"ul.rm_contact", ul_rpc_rm_contact, ul_rpc_rm_contact_doc, 0},
-		{"ul.flush", ul_rpc_flush, ul_rpc_flush_doc, 0},
-		{"ul.add", ul_rpc_add, ul_rpc_add_doc, 0},
-		{"ul.db_users", ul_rpc_db_users, ul_rpc_db_users_doc, 0},
-		{"ul.db_contacts", ul_rpc_db_contacts, ul_rpc_db_contacts_doc, 0},
-		{"ul.db_expired_contacts", ul_rpc_db_expired_contacts,
-				ul_rpc_db_expired_contacts_doc, 0},
-		{0, 0, 0, 0}};
+/* clang-format off */
+rpc_export_t ul_rpc[] = {
+	{"ul.dump", ul_rpc_dump, ul_rpc_dump_doc, 0},
+	{"ul.lookup", ul_rpc_lookup, ul_rpc_lookup_doc, 0},
+	{"ul.rm", ul_rpc_rm_aor, ul_rpc_rm_aor_doc, 0},
+	{"ul.rm_contact", ul_rpc_rm_contact, ul_rpc_rm_contact_doc, 0},
+	{"ul.flush", ul_rpc_flush, ul_rpc_flush_doc, 0},
+	{"ul.add", ul_rpc_add, ul_rpc_add_doc, 0},
+	{"ul.db_users", ul_rpc_db_users, ul_rpc_db_users_doc, 0},
+	{"ul.db_contacts", ul_rpc_db_contacts, ul_rpc_db_contacts_doc, 0},
+	{"ul.db_expired_contacts", ul_rpc_db_expired_contacts,
+			ul_rpc_db_expired_contacts_doc, 0},
+	{0, 0, 0, 0}
+};
+/* clang-format on */

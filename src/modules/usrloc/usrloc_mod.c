@@ -233,93 +233,99 @@ unsigned int ul_db_srvid = 0;
 /*! \brief
  * Exported functions
  */
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"ul_bind_usrloc", (cmd_function)bind_usrloc, 1, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
+	{"ul_bind_usrloc", (cmd_function)bind_usrloc, 1, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 
 /*! \brief
  * Exported parameters
  */
-static param_export_t params[] = {{"ruid_column", PARAM_STR, &ul_ruid_col},
-		{"user_column", PARAM_STR, &ul_user_col},
-		{"domain_column", PARAM_STR, &ul_domain_col},
-		{"contact_column", PARAM_STR, &ul_contact_col},
-		{"expires_column", PARAM_STR, &ul_expires_col},
-		{"q_column", PARAM_STR, &ul_q_col},
-		{"callid_column", PARAM_STR, &ul_callid_col},
-		{"cseq_column", PARAM_STR, &ul_cseq_col},
-		{"flags_column", PARAM_STR, &ul_flags_col},
-		{"cflags_column", PARAM_STR, &ul_cflags_col},
-		{"db_url", PARAM_STR, &ul_db_url},
-		{"timer_interval", INT_PARAM, &ul_timer_interval},
-		{"db_mode", INT_PARAM, &ul_db_mode},
-		{"db_load", INT_PARAM, &ul_db_load},
-		{"db_insert_update", INT_PARAM, &ul_db_insert_update},
-		{"use_domain", INT_PARAM, &ul_use_domain},
-		{"desc_time_order", INT_PARAM, &ul_desc_time_order},
-		{"user_agent_column", PARAM_STR, &ul_user_agent_col},
-		{"received_column", PARAM_STR, &ul_received_col},
-		{"path_column", PARAM_STR, &ul_path_col},
-		{"socket_column", PARAM_STR, &ul_sock_col},
-		{"methods_column", PARAM_STR, &ul_methods_col},
-		{"instance_column", PARAM_STR, &ul_instance_col},
-		{"reg_id_column", PARAM_STR, &ul_reg_id_col},
-		{"server_id_column", PARAM_STR, &ul_srv_id_col},
-		{"connection_id_column", PARAM_STR, &ul_con_id_col},
-		{"keepalive_column", PARAM_STR, &ul_keepalive_col},
-		{"partition_column", PARAM_STR, &ul_partition_col},
-		{"matching_mode", INT_PARAM, &ul_matching_mode},
-		{"cseq_delay", INT_PARAM, &ul_cseq_delay},
-		{"fetch_rows", INT_PARAM, &ul_fetch_rows},
-		{"hash_size", INT_PARAM, &ul_hash_size},
-		{"nat_bflag", INT_PARAM, &ul_nat_bflag},
-		{"handle_lost_tcp", INT_PARAM, &ul_handle_lost_tcp},
-		{"close_expired_tcp", INT_PARAM, &ul_close_expired_tcp},
-		{"skip_remote_socket", INT_PARAM, &ul_skip_remote_socket},
-		{"preload", PARAM_STRING | USE_FUNC_PARAM, (void *)ul_preload_param},
-		{"db_update_as_insert", INT_PARAM, &ul_db_update_as_insert},
-		{"timer_procs", INT_PARAM, &ul_timer_procs},
-		{"db_check_update", INT_PARAM, &ul_db_check_update},
-		{"xavp_contact", PARAM_STR, &ul_xavp_contact_name},
-		{"db_ops_ruid", INT_PARAM, &ul_db_ops_ruid},
-		{"expires_type", PARAM_INT, &ul_expires_type},
-		{"db_raw_fetch_type", PARAM_INT, &ul_db_raw_fetch_type},
-		{"db_insert_null", PARAM_INT, &ul_db_insert_null},
-		{"server_id_filter", PARAM_INT, &ul_db_srvid},
-		{"db_timer_clean", PARAM_INT, &ul_db_timer_clean},
-		{"rm_expired_delay", PARAM_INT, &ul_rm_expired_delay},
-		{"version_table", PARAM_INT, &ul_version_table},
-		{"ka_mode", PARAM_INT, &ul_ka_mode},
-		{"ka_from", PARAM_STR, &ul_ka_from},
-		{"ka_domain", PARAM_STR, &ul_ka_domain},
-		{"ka_method", PARAM_STR, &ul_ka_method},
-		{"ka_filter", PARAM_INT, &ul_ka_filter},
-		{"ka_timeout", PARAM_INT, &ul_keepalive_timeout},
-		{"ka_loglevel", PARAM_INT, &ul_ka_loglevel},
-		{"ka_logmsg", PARAM_STR, &ul_ka_logmsg},
-		{"load_rank", PARAM_INT, &ul_load_rank},
-		{"db_clean_tcp", PARAM_INT, &ul_db_clean_tcp}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"ruid_column", PARAM_STR, &ul_ruid_col},
+	{"user_column", PARAM_STR, &ul_user_col},
+	{"domain_column", PARAM_STR, &ul_domain_col},
+	{"contact_column", PARAM_STR, &ul_contact_col},
+	{"expires_column", PARAM_STR, &ul_expires_col},
+	{"q_column", PARAM_STR, &ul_q_col},
+	{"callid_column", PARAM_STR, &ul_callid_col},
+	{"cseq_column", PARAM_STR, &ul_cseq_col},
+	{"flags_column", PARAM_STR, &ul_flags_col},
+	{"cflags_column", PARAM_STR, &ul_cflags_col},
+	{"db_url", PARAM_STR, &ul_db_url},
+	{"timer_interval", INT_PARAM, &ul_timer_interval},
+	{"db_mode", INT_PARAM, &ul_db_mode},
+	{"db_load", INT_PARAM, &ul_db_load},
+	{"db_insert_update", INT_PARAM, &ul_db_insert_update},
+	{"use_domain", INT_PARAM, &ul_use_domain},
+	{"desc_time_order", INT_PARAM, &ul_desc_time_order},
+	{"user_agent_column", PARAM_STR, &ul_user_agent_col},
+	{"received_column", PARAM_STR, &ul_received_col},
+	{"path_column", PARAM_STR, &ul_path_col},
+	{"socket_column", PARAM_STR, &ul_sock_col},
+	{"methods_column", PARAM_STR, &ul_methods_col},
+	{"instance_column", PARAM_STR, &ul_instance_col},
+	{"reg_id_column", PARAM_STR, &ul_reg_id_col},
+	{"server_id_column", PARAM_STR, &ul_srv_id_col},
+	{"connection_id_column", PARAM_STR, &ul_con_id_col},
+	{"keepalive_column", PARAM_STR, &ul_keepalive_col},
+	{"partition_column", PARAM_STR, &ul_partition_col},
+	{"matching_mode", INT_PARAM, &ul_matching_mode},
+	{"cseq_delay", INT_PARAM, &ul_cseq_delay},
+	{"fetch_rows", INT_PARAM, &ul_fetch_rows},
+	{"hash_size", INT_PARAM, &ul_hash_size},
+	{"nat_bflag", INT_PARAM, &ul_nat_bflag},
+	{"handle_lost_tcp", INT_PARAM, &ul_handle_lost_tcp},
+	{"close_expired_tcp", INT_PARAM, &ul_close_expired_tcp},
+	{"skip_remote_socket", INT_PARAM, &ul_skip_remote_socket},
+	{"preload", PARAM_STRING | USE_FUNC_PARAM, (void *)ul_preload_param},
+	{"db_update_as_insert", INT_PARAM, &ul_db_update_as_insert},
+	{"timer_procs", INT_PARAM, &ul_timer_procs},
+	{"db_check_update", INT_PARAM, &ul_db_check_update},
+	{"xavp_contact", PARAM_STR, &ul_xavp_contact_name},
+	{"db_ops_ruid", INT_PARAM, &ul_db_ops_ruid},
+	{"expires_type", PARAM_INT, &ul_expires_type},
+	{"db_raw_fetch_type", PARAM_INT, &ul_db_raw_fetch_type},
+	{"db_insert_null", PARAM_INT, &ul_db_insert_null},
+	{"server_id_filter", PARAM_INT, &ul_db_srvid},
+	{"db_timer_clean", PARAM_INT, &ul_db_timer_clean},
+	{"rm_expired_delay", PARAM_INT, &ul_rm_expired_delay},
+	{"version_table", PARAM_INT, &ul_version_table},
+	{"ka_mode", PARAM_INT, &ul_ka_mode},
+	{"ka_from", PARAM_STR, &ul_ka_from},
+	{"ka_domain", PARAM_STR, &ul_ka_domain},
+	{"ka_method", PARAM_STR, &ul_ka_method},
+	{"ka_filter", PARAM_INT, &ul_ka_filter},
+	{"ka_timeout", PARAM_INT, &ul_keepalive_timeout},
+	{"ka_loglevel", PARAM_INT, &ul_ka_loglevel},
+	{"ka_logmsg", PARAM_STR, &ul_ka_logmsg},
+	{"load_rank", PARAM_INT, &ul_load_rank},
+	{"db_clean_tcp", PARAM_INT, &ul_db_clean_tcp},
+	{0, 0, 0}
+};
 
 
 stat_export_t mod_stats[] = {
-		{"registered_users", STAT_IS_FUNC, (stat_var **)get_number_of_users},
-		{0, 0, 0}};
+	{"registered_users", STAT_IS_FUNC, (stat_var **)get_number_of_users},
+	{0, 0, 0}
+};
 
 
 struct module_exports exports = {
-		"usrloc",			   /*!< module name */
-		DEFAULT_DLFLAGS,	   /*!< dlopen flags */
-		cmds,				   /*!< exported functions */
-		params,				   /*!< exported parameters */
-		0,					   /*!< exported rpc functions */
-		0,					   /*!< exported pseudo-variables */
-		ul_sip_reply_received, /*!< response handling function */
-		mod_init,			   /*!< module init function */
-		child_init,			   /*!< child init function */
-		destroy				   /*!< destroy function */
+	"usrloc",			   /*!< module name */
+	DEFAULT_DLFLAGS,	   /*!< dlopen flags */
+	cmds,				   /*!< exported functions */
+	params,				   /*!< exported parameters */
+	0,					   /*!< exported rpc functions */
+	0,					   /*!< exported pseudo-variables */
+	ul_sip_reply_received, /*!< response handling function */
+	mod_init,			   /*!< module init function */
+	child_init,			   /*!< child init function */
+	destroy				   /*!< destroy function */
 };
-
+/* clang-format on */
 
 /*! \brief
  * Module initialization function
