@@ -533,6 +533,7 @@ done:
 
 static inline int do_read(serviced_peer_t *sp, char *dst, int n)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	int cnt, ssl_err;
 	char *err_str;
 
@@ -547,6 +548,11 @@ static inline int do_read(serviced_peer_t *sp, char *dst, int n)
 	} else {
 		cnt = recv(sp->tcp_socket, dst, n, 0);
 	}
+#else
+	int cnt;
+
+	cnt = recv(sp->tcp_socket, dst, n, 0);
+#endif
 	return cnt;
 }
 
@@ -684,6 +690,7 @@ error_and_reset:
 
 static int do_write(serviced_peer_t *sp, const void *buf, int num)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	int cnt, ssl_err;
 	char *err_str;
 
@@ -698,6 +705,11 @@ static int do_write(serviced_peer_t *sp, const void *buf, int num)
 	} else {
 		cnt = write(sp->tcp_socket, buf, num);
 	}
+#else
+	int cnt;
+
+	cnt = write(sp->tcp_socket, buf, num);
+#endif
 	return cnt;
 }
 
