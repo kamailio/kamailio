@@ -35,5 +35,6 @@
 
 int ul_ka_urecord(urecord_t *ur);
 int ul_ka_reply_received(sip_msg_t *msg);
+int ul_ka_parse_reply_codes(char *vcodes);
 
 #endif

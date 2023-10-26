@@ -318,6 +318,47 @@ unsigned long ul_ka_fromhex(str *shex, int *err)
 /**
  *
  */
+#define UL_KA_REPLY_CODES_SIZE 32
+static int _ul_ka_reply_codes[UL_KA_REPLY_CODES_SIZE] = {0};
+
+/**
+ *
+ */
+int ul_ka_parse_reply_codes(char *vcodes)
+{
+	int nb = 0;
+	char *p;
+	char *e;
+
+	_ul_ka_reply_codes[0] = 0;
+	if(vcodes == NULL || strlen(vcodes) == 0) {
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+	p = vcodes;
+	while(nb < UL_KA_REPLY_CODES_SIZE && *p) {
+		_ul_ka_reply_codes[nb] = strtol(p, &e, 10);
+		if(_ul_ka_reply_codes[nb] > 0) {
+			nb++;
+		} else {
+			_ul_ka_reply_codes[nb] = 0;
+		}
+		while(*e == ',' || *e == ' ') {
+			e++;
+		}
+		p = e;
+	}
+	if(nb == UL_KA_REPLY_CODES_SIZE) {
+		LM_ERR("exceeded maximum number of reply code rules\n");
+		return -1;
+	}
+	_ul_ka_reply_codes[nb] = 0;
+	return 0;
+}
+
+/**
+ *
+ */
 int ul_ka_reply_received(sip_msg_t *msg)
 {
 	to_body_t *fb;
@@ -329,6 +370,7 @@ int ul_ka_reply_received(sip_msg_t *msg)
 	struct timeval tvm;
 	struct timeval tvn;
 	unsigned int tvdiff;
+	int i;
 
 	if(msg->cseq == NULL) {
 		if((parse_headers(msg, HDR_CSEQ_F, 0) == -1) || (msg->cseq == NULL)) {
@@ -342,6 +384,19 @@ int ul_ka_reply_received(sip_msg_t *msg)
 	}
 	if(strncmp(get_cseq(msg)->method.s, ul_ka_method.s, ul_ka_method.len)
 			!= 0) {
+		return 1;
+	}
+
+	for(i = 0; _ul_ka_reply_codes[i] != 0; i++) {
+		if(_ul_ka_reply_codes[i] == msg->first_line.u.reply.statuscode
+				|| _ul_ka_reply_codes[i]
+						   == (msg->first_line.u.reply.statuscode / 100)) {
+			break;
+		}
+	}
+
+	if(i > 0 && _ul_ka_reply_codes[i] == 0) {
+		/* no match of status code */
 		return 1;
 	}
 
