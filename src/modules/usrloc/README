@@ -97,8 +97,9 @@ Carsten Bock
               3.55. ka_timeout (int)
               3.56. ka_loglevel (int)
               3.57. ka_logmsg (str)
-              3.58. load_rank (int)
-              3.59. db_clean_tcp (int)
+              3.58. ka_reply_codes (str)
+              3.59. load_rank (int)
+              3.60. db_clean_tcp (int)
 
         4. RPC Commands
 
@@ -203,8 +204,9 @@ Carsten Bock
    1.55. Set ka_timeout parameter
    1.56. ka_loglevel parameter usage
    1.57. ka_logmsg parameter usage
-   1.58. load_rank parameter usage
-   1.59. db_clean_tcp parameter usage
+   1.58. ka_reply_codes parameter usage
+   1.59. load_rank parameter usage
+   1.60. db_clean_tcp parameter usage
 
 Chapter 1. Admin Guide
 
@@ -278,8 +280,9 @@ Chapter 1. Admin Guide
         3.55. ka_timeout (int)
         3.56. ka_loglevel (int)
         3.57. ka_logmsg (str)
-        3.58. load_rank (int)
-        3.59. db_clean_tcp (int)
+        3.58. ka_reply_codes (str)
+        3.59. load_rank (int)
+        3.60. db_clean_tcp (int)
 
    4. RPC Commands
 
@@ -416,8 +419,9 @@ Chapter 1. Admin Guide
    3.55. ka_timeout (int)
    3.56. ka_loglevel (int)
    3.57. ka_logmsg (str)
-   3.58. load_rank (int)
-   3.59. db_clean_tcp (int)
+   3.58. ka_reply_codes (str)
+   3.59. load_rank (int)
+   3.60. db_clean_tcp (int)
 
 3.1. nat_bflag (int)
 
@@ -1228,19 +1232,35 @@ modparam("usrloc", "ka_loglevel", 1)
 modparam("usrloc", "ka_logmsg", " to-uri: [$tu] remote-addr: [$sas]")
 ...
 
-3.58. load_rank (int)
+3.58. ka_reply_codes (str)
+
+   Comma separated list of reply code values or reply code classes to be
+   considered valid for keepalive processing. If the reply code does not
+   match any of them, then the reply is ignored, not considered a valid
+   response to keepalive request. It could be useful to skip replies from
+   intermediary proxies that could not forward the request.
+
+   Default value is “0” (checking of reply code is not done, are responses
+   are considered valid).
+
+   Example 1.58. ka_reply_codes parameter usage
+...
+modparam("usrloc", "ka_reply_codes", "2,405,486")
+...
+
+3.59. load_rank (int)
 
    Allows to set the rank of the child SIP worker to load the location
    records.
 
    Default value is “1” (PROC_SIPINIT).
 
-   Example 1.58. load_rank parameter usage
+   Example 1.59. load_rank parameter usage
 ...
 modparam("usrloc", "load_rank", 1)
 ...
 
-3.59. db_clean_tcp (int)
+3.60. db_clean_tcp (int)
 
    If set to 1, when Kamailio starts it removes the contacts with
    transport TCP, TLS or WSS, no longer loading them. Useful when end
@@ -1251,7 +1271,7 @@ modparam("usrloc", "load_rank", 1)
 
    Default value is “0” (do not clean tcp contacts).
 
-   Example 1.59. db_clean_tcp parameter usage
+   Example 1.60. db_clean_tcp parameter usage
 ...
 modparam("usrloc", "db_clean_tcp", 1)
 ...
