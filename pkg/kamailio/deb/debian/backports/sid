@@ -32,7 +32,7 @@ sed -i -e '/dh-systemd/d' ${DIST}/control
 sed -i -e '/^ python,/d' -e '/python-dev/d' \
   -e '/^Package: kamailio-python-modules/,/^$/d' \
   ${DIST}/control
-sed -i -e 's/ python [ ,$]*//' ${DIST}/rules
+sed -i -e 's/ python [ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXCLUDED_MODULES=/s/$/ python/' ${DIST}/rules
 
 # no lsb-base
