@@ -1504,6 +1504,29 @@ modparam("usrloc", "ka_logmsg", " to-uri: [$tu] remote-addr: [$sas]")
 		</example>
 	</section>
 
+	<section id="usrloc.p.ka_reply_codes">
+		<title><varname>ka_reply_codes</varname> (str)</title>
+		<para>
+			Comma separated list of reply code values or reply code classes to be
+			considered valid for keepalive processing. If the reply code does not
+			match any of them, then the reply is ignored, not considered a valid
+			response to keepalive request. It could be useful to skip replies
+			from intermediary proxies that could not forward the request.
+		</para>
+		<para>
+			Default value is <quote>0</quote> (checking of reply code is not done,
+			are responses are considered valid).
+		</para>
+		<example>
+		<title><varname>ka_reply_codes</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_reply_codes", "2,405,486")
+...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="usrloc.p.load_rank">
 		<title><varname>load_rank</varname> (int)</title>
 		<para>
