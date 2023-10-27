@@ -88,6 +88,13 @@
 
 	<section>
 		<title>Parameters</title>
+		<para>
+		The parameters are loaded in order. That can lead to unexpected behavior:
+		If httpcon is set at first, the default values for all other paramters are used,
+		and not the values that might be set after httpcon.
+		For example, if setting verify_peer=0 or verify_host=0 after httpcon,
+		the certificates are checked and self-signed cirtificates are rejected nevertheless.
+		</para>
 		<section id="http_client.p.httpredirect">
 			<title><varname>httpredirect</varname> (int)</title>
 			<para>
