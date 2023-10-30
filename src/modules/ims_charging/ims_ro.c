@@ -1666,8 +1666,8 @@ static void resume_on_initial_ccr(
 
 	link_ro_session(ssd->ro_session, 0);
 
+	ssd->ro_session->flags |= RO_SESSION_FLAG_NEW;
 	if(ro_db_mode == DB_MODE_REALTIME) {
-		ssd->ro_session->flags |= RO_SESSION_FLAG_NEW;
 		if(update_ro_dbinfo(ssd->ro_session) != 0) {
 			LM_ERR("Failed to update ro_session in database... continuing\n");
 		};

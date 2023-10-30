@@ -116,8 +116,8 @@ void dlg_answered(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 		ref_ro_session(session, 1, 0); // lock already acquired
 	}
 
+	session->flags |= RO_SESSION_FLAG_CHANGED;
 	if(ro_db_mode == DB_MODE_REALTIME) {
-		session->flags |= RO_SESSION_FLAG_CHANGED;
 		if(update_ro_dbinfo_unsafe(session) != 0) {
 			LM_ERR("Failed to update ro_session in database... continuing\n");
 		};
@@ -243,8 +243,8 @@ void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode,
 		ro_session->ccr_sent = 1;
 		//                                counter_add(ims_charging_cnts_h.active_ro_sessions, -1);
 
-		if(ro_db_mode == DB_MODE_REALTIME) {
-			ro_session->flags |= RO_SESSION_FLAG_DELETED;
+		ro_session->flags |= RO_SESSION_FLAG_DELETED;
+		if(ro_db_mode) {
 			if(update_ro_dbinfo_unsafe(ro_session) != 0) {
 				LM_ERR("Unable to update Ro session in DB...continuing\n");
 			}
