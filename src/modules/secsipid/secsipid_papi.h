@@ -29,6 +29,9 @@ typedef struct secsipid_papi
 	int (*SecSIPIDSignJSONHP)(char *headerJSON, char *payloadJSON,
 			char *prvkeyPath, char **outPtr);
 
+	int (*SecSIPIDSignJSONHPPrvKey)(char *headerJSON, char *payloadJSON,
+			char *prvkeyData, char **outPtr);
+
 	int (*SecSIPIDGetIdentity)(char *origTN, char *destTN, char *attestVal,
 			char *origID, char *x5uVal, char *prvkeyPath, char **outPtr);
 
