@@ -333,8 +333,8 @@ static int mod_child_init(int rank)
 {
 	ro_db_mode = ro_db_mode_param;
 
-	if(((ro_db_mode == DB_MODE_REALTIME) && (rank > 0 || rank == PROC_TIMER))
-			|| (ro_db_mode == DB_MODE_SHUTDOWN && (rank == PROC_MAIN))) {
+	if((ro_db_mode == DB_MODE_REALTIME && (rank > 0 || rank == PROC_TIMER))
+			|| (ro_db_mode == DB_MODE_SHUTDOWN && rank == PROC_MAIN)) {
 		if(ro_connect_db(&db_url)) {
 			LM_ERR("failed to connect to database (rank=%d)\n", rank);
 			return -1;
@@ -343,10 +343,10 @@ static int mod_child_init(int rank)
 
 	/* in DB_MODE_SHUTDOWN only PROC_MAIN will do a DB dump at the end, so
      * for the rest of the processes will be the same as DB_MODE_NONE */
-	if(ro_db_mode == DB_MODE_SHUTDOWN && rank != PROC_MAIN)
+	if((ro_db_mode == DB_MODE_SHUTDOWN) && rank != PROC_MAIN)
 		ro_db_mode = DB_MODE_NONE;
-	/* in DB_MODE_REALTIME and DB_MODE_DELAYED the PROC_MAIN have no DB handle */
-	if((ro_db_mode == DB_MODE_REALTIME) && rank == PROC_MAIN)
+	/* in DB_MODE_REALTIME the PROC_MAIN have no DB handle */
+	if(ro_db_mode == DB_MODE_REALTIME && rank == PROC_MAIN)
 		ro_db_mode = DB_MODE_NONE;
 
 	return 0;
@@ -354,6 +354,11 @@ static int mod_child_init(int rank)
 
 static void mod_destroy(void)
 {
+	/* Stop timer first so no more interim updates are being sent before update to db */
+	destroy_ro_timer();
+	if(ro_db_mode == DB_MODE_SHUTDOWN) {
+		ro_update_db(0, 0);
+	}
 }
 
 int create_response_avp_string(char *name, str *val)

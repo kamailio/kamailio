@@ -356,8 +356,8 @@ void resume_ro_session_ontimeout(
 			ref_ro_session(i_req->ro_session, 1, 0);
 		}
 
+		i_req->ro_session->flags |= RO_SESSION_FLAG_CHANGED;
 		if(ro_db_mode == DB_MODE_REALTIME) {
-			i_req->ro_session->flags |= RO_SESSION_FLAG_CHANGED;
 			if(update_ro_dbinfo_unsafe(i_req->ro_session) != 0) {
 				LM_ERR("Failed to update Ro session in DB... continuing\n");
 			}

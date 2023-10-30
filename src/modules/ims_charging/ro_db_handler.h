@@ -12,9 +12,9 @@
 #include "../../lib/srdb1/db.h"
 #include "ro_session_hash.h"
 
-#define RO_TABLE_VERSION 1
+#define RO_TABLE_VERSION 2
 #define RO_SESSION_TABLE_NAME "ro_session"
-#define RO_SESSION_TABLE_COL_NUM 18
+#define RO_SESSION_TABLE_COL_NUM 24
 
 #define ID_COL "id"
 #define HASH_ENTRY_COL "hash_entry"
@@ -34,6 +34,12 @@
 #define SERVICE_IDENTIFIER_COL "service_identifier"
 #define INCOMING_TRUNK_ID_COL "incoming_trunk_id"
 #define OUTGOING_TRUNK_ID_COL "outgoing_trunk_id"
+#define AUTH_APP_ID_COL "auth_app_id"
+#define AUTH_SESSION_TYPE_COL "auth_session_type"
+#define PANI_COL "pani"
+#define MAC_COL "mac"
+#define APP_PROVIDED_PARTY_COL "app_provided_party"
+#define IS_FINAL_ALLOCATION_COL "is_final_allocation"
 
 int init_ro_db(const str *db_url, int dlg_hash_size, int db_update_period,
 		int fetch_num_rows);
@@ -41,5 +47,6 @@ int load_ro_info_from_db(int hash_size, int fetch_num_rows);
 int ro_connect_db(const str *db_url);
 int update_ro_dbinfo_unsafe(struct ro_session *ro_session);
 int update_ro_dbinfo(struct ro_session *ro_session);
+void ro_update_db(unsigned int ticks, void *param);
 
 #endif /* RO_DB_HANDLER_H */

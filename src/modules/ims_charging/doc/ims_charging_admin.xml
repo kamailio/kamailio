@@ -269,7 +269,7 @@ modparam("ims_charging", "hash_size", 1024)
       <para>Should a database be used to store dialog information.</para>
 
       <para>Available database modes: 0 for no database, 1 for real-time mode and
-      2 for shutdown mode. Mode 2 seems to be not fully implemented.</para>
+      2 for shutdown mode.</para>
 
       <para><emphasis>Default value is 0 - no database is used.</emphasis></para>
 
@@ -359,25 +359,6 @@ modparam("ims_charging", "timer_buffer", 10)
         <programlisting format="linespecific">
 ...
 modparam("ims_charging", "ro_forced_peer", "ocs.ims.smilecoms.com")
-...
-        </programlisting>
-      </example>
-    </section>
-
-    <section>
-      <title><varname>ro_auth_expiry</varname>(integer)</title>
-
-      <para>This is the expiry length in seconds of the initiated Diameter
-      sessions.</para>
-
-      <para><emphasis>Default value is 7200.</emphasis></para>
-
-      <example>
-        <title><varname>ro_auth_expiry</varname>parameter usage</title>
-
-        <programlisting format="linespecific">
-...
-modparam("ims_charging", "ro_auth_expiry", 14400)
 ...
         </programlisting>
       </example>
