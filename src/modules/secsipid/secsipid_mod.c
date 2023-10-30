@@ -66,6 +66,8 @@ static int w_secsipid_build_identity_prvkey(sip_msg_t *msg, char *porigtn,
 		char *pkeydata);
 static int w_secsipid_sign(
 		sip_msg_t *msg, char *phdrs, char *ppayload, char *pkeypath);
+static int w_secsipid_sign_prvkey(
+		sip_msg_t *msg, char *phdrs, char *ppayload, char *pkeydata);
 static int w_secsipid_get_url(sip_msg_t *msg, char *purl, char *pout);
 
 static int secsipid_libopt_param(modparam_t type, void *val);
@@ -101,6 +103,8 @@ static cmd_export_t cmds[]={
 	{"secsipid_build_identity_prvkey", (cmd_function)w_secsipid_build_identity_prvkey, 6,
 		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"secsipid_sign", (cmd_function)w_secsipid_sign, 3,
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"secsipid_sign_prvkey", (cmd_function)w_secsipid_sign_prvkey, 3,
 		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"secsipid_get_url", (cmd_function)w_secsipid_get_url, 2,
 		fixup_spve_pvar, fixup_free_spve_pvar, ANY_ROUTE},
@@ -743,6 +747,77 @@ static int w_secsipid_sign(
 /**
  *
  */
+static int ki_secsipid_sign_prvkey(
+		sip_msg_t *msg, str *sheaders, str *spayload, str *keydata)
+{
+	str ibody = STR_NULL;
+
+	if(secsipid_libopt_list_used == 0) {
+		str_list_t *sit;
+		for(sit = secsipid_libopt_list; sit != NULL; sit = sit->next) {
+			_secsipid_papi.SecSIPIDOptSetV(sit->s.s);
+		}
+		secsipid_libopt_list_used = 1;
+	}
+
+	ibody.len = _secsipid_papi.SecSIPIDSignJSONHPPrvKey(
+			sheaders->s, spayload->s, keydata->s, &ibody.s);
+
+	_secsipid_data.ret = ibody.len;
+
+	if(ibody.len <= 0) {
+		LM_ERR("failed to get identity value (%d)\n", ibody.len);
+		goto error;
+	}
+
+	LM_DBG("identity value: %.*s\n", ibody.len, ibody.s);
+
+	if(_secsipid_data.value.s) {
+		free(_secsipid_data.value.s);
+	}
+	_secsipid_data.value = ibody;
+
+	return 1;
+
+error:
+	if(ibody.s) {
+		free(ibody.s);
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int w_secsipid_sign_prvkey(
+		sip_msg_t *msg, char *phdrs, char *ppayload, char *pkeydata)
+{
+	str shdrs = STR_NULL;
+	str spayload = STR_NULL;
+	str keydata = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)phdrs, &shdrs) < 0) {
+		LM_ERR("failed to get JSON headers parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t *)ppayload, &spayload) < 0) {
+		LM_ERR("failed to get JSON payload parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t *)pkeydata, &keydata) < 0) {
+		LM_ERR("failed to get keydata parameter\n");
+		return -1;
+	}
+
+	return ki_secsipid_sign_prvkey(msg, &shdrs, &spayload, &keydata);
+}
+
+
+/**
+ *
+ */
 static str _secsipid_get_url_val = STR_NULL;
 
 /**
@@ -960,6 +1035,16 @@ static sr_kemi_t sr_kemi_secsipid_exports[] = {
 		SR_KEMIP_INT, ki_secsipid_build_identity_prvkey,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
+	},
+	{ str_init("secsipid"), str_init("secsipid_sign"),
+		SR_KEMIP_INT, ki_secsipid_sign,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("secsipid"), str_init("secsipid_sign_prvkey"),
+		SR_KEMIP_INT, ki_secsipid_sign_prvkey,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("secsipid"), str_init("secsipid_get_val"),
 		SR_KEMIP_XVAL, ki_secsipid_get_val,
