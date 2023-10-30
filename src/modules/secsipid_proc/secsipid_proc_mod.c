@@ -38,6 +38,7 @@ MODULE_VERSION
 int secsipid_proc_bind(secsipid_papi_t *papi)
 {
 	papi->SecSIPIDSignJSONHP = SecSIPIDSignJSONHP;
+	papi->SecSIPIDSignJSONHPPrvKey = SecSIPIDSignJSONHPPrvKey;
 	papi->SecSIPIDGetIdentity = SecSIPIDGetIdentity;
 	papi->SecSIPIDGetIdentityPrvKey = SecSIPIDGetIdentityPrvKey;
 	papi->SecSIPIDCheck = SecSIPIDCheck;

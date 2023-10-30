@@ -9,8 +9,9 @@
  * SECSIPID_VERSION = 0xAABBCC00
  * - corresponds to version AA.BB.CC
  * - last two hexdigits are left for patch extensions
- * - example: 0x1010000 corresponds to version 1.1.0
+ * - example: 0x1020000 corresponds to version 1.2.0
+ * - now set to v1.3.0
  */
-#define SECSIPID_VERSION 0x1010000
+#define SECSIPID_VERSION 0x1030000
 
 #endif
