@@ -108,12 +108,10 @@ int err2reason_phrase(int int_error, /* current internal error */
 			break;
 
 		case E_OUT_OF_MEM:
-			/* don't disclose lack of mem in release mode */
-#ifdef EXTRA_DEBUG
-			error_txt = "Excuse me I ran out of memory";
+			error_txt = "Internal processing error";
 			*sip_error = 500;
 			break;
-#endif
+
 		case E_OK:
 			error_txt = "No error";
 			*sip_error = 500;
