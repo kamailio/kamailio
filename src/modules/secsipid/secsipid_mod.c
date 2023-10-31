@@ -750,6 +750,7 @@ static int w_secsipid_sign(
 static int ki_secsipid_sign_prvkey(
 		sip_msg_t *msg, str *sheaders, str *spayload, str *keydata)
 {
+#if SECSIPID_VERSION >= 0x1030000
 	str ibody = STR_NULL;
 
 	if(secsipid_libopt_list_used == 0) {
@@ -776,7 +777,6 @@ static int ki_secsipid_sign_prvkey(
 		free(_secsipid_data.value.s);
 	}
 	_secsipid_data.value = ibody;
-
 	return 1;
 
 error:
@@ -784,6 +784,10 @@ error:
 		free(ibody.s);
 	}
 	return -1;
+#else
+	LM_ERR("secsipid < 1.3.0, SecSIPIDSignJSONHPPrvKey not supported\n");
+	return -1;
+#endif
 }
 
 /**
