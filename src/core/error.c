@@ -108,6 +108,11 @@ int err2reason_phrase(int int_error, /* current internal error */
 			break;
 
 		case E_OUT_OF_MEM:
+			error_txt = "Message processing error";
+			*sip_error = 500;
+			break;
+
+		case E_UNEXPECTED_STATE:
 			error_txt = "Internal processing error";
 			*sip_error = 500;
 			break;
@@ -116,6 +121,7 @@ int err2reason_phrase(int int_error, /* current internal error */
 			error_txt = "No error";
 			*sip_error = 500;
 			break;
+
 		default:
 			error_txt = "I'm terribly sorry, server error occurred";
 			*sip_error = 500;

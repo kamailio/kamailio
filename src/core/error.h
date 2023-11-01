@@ -49,7 +49,7 @@
 #define E_Q_TOO_BIG -17		/* q too big (> 1) */
 #define E_Q_DEC_MISSING -18 /* Decimal part missing */
 #define E_DROP -19			/* Dropped in script */
-
+#define E_UNEXPECTED_STATE -20	/* Unexpected processing state */
 
 #define E_SEND -477
 /* unresolvable next-hop address */
