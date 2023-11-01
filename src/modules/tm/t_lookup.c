@@ -1903,7 +1903,7 @@ int t_newtran(struct sip_msg *p_msg)
 	}
 	if((p_msg->parsed_flag & HDR_EOH_F) != HDR_EOH_F) {
 		LM_ERR("EoH not parsed\n");
-		return E_OUT_OF_MEM;
+		return E_UNEXPECTED_STATE;
 	}
 	/* t_lookup_requests attempts to find the transaction;
 	 * it also calls check_transaction_quadruple -> it is
