@@ -629,7 +629,7 @@ extern char *default_routename;
 %type <sockid>  id_lst
 %type <sockid>  phostport
 %type <sockid>  listen_phostport
-%type <intval> proto eqproto port
+%type <intval> proto eqproto xproto port
 %type <intval> equalop strop cmpop rve_cmpop rve_equalop
 %type <intval> uri_type
 %type <attr> attr_id
@@ -753,6 +753,15 @@ eqproto:
 	| WSS	{ $$=PROTO_WSS; }
 	| STAR	{ $$=0; }
 	;
+xproto:
+	UDP	{ $$=PROTO_UDP; }
+	| TCP	{ $$=PROTO_TCP; }
+	| TLS	{ $$=PROTO_TLS; }
+	| SCTP	{ $$=PROTO_SCTP; }
+	| WS	{ $$=PROTO_WS; }
+	| WSS	{ $$=PROTO_WSS; }
+	;
+
 port:
 	NUMBER	{ $$=$1; }
 	| STAR	{ $$=0; }
@@ -1665,7 +1674,7 @@ assign_stm:
 		}
 		free_socket_id_lst($3);
 	}
-	| LISTEN EQUAL id_lst ADVERTISE proto COLON listen_id COLON NUMBER {
+	| LISTEN EQUAL id_lst ADVERTISE xproto COLON listen_id COLON NUMBER {
 		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next) {
 			if (add_listen_advertise_iface(	lst_tmp->addr_lst->name,
 									lst_tmp->addr_lst->next,
@@ -1705,7 +1714,7 @@ assign_stm:
 		}
 		free_socket_id_lst($3);
 	}
-	| LISTEN EQUAL id_lst ADVERTISE proto COLON listen_id COLON NUMBER STRNAME STRING {
+	| LISTEN EQUAL id_lst ADVERTISE xproto COLON listen_id COLON NUMBER STRNAME STRING {
 		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next) {
 			if (add_listen_advertise_iface_name(lst_tmp->addr_lst->name,
 									lst_tmp->addr_lst->next,
@@ -1732,7 +1741,7 @@ assign_stm:
                 }
                 free_socket_id_lst($3);
         }
-        | LISTEN EQUAL id_lst ADVERTISE proto COLON listen_id COLON NUMBER STRNAME STRING VIRTUAL {
+        | LISTEN EQUAL id_lst ADVERTISE xproto COLON listen_id COLON NUMBER STRNAME STRING VIRTUAL {
                 for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next) {
 			lst_tmp->flags |= SI_IS_VIRTUAL;
                         if (add_listen_advertise_iface_name(lst_tmp->addr_lst->name,
