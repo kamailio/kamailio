@@ -121,7 +121,7 @@ int add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 		if(_pdt_mode & 1) {
 			LM_DBG("prefix already allocated [%.*s/[%.*s] - ignoring\n",
 					sp->len, sp->s, sd->len, sd->s);
-			return -1;
+			return 0;
 		} else {
 			LM_ERR("prefix already allocated [%.*s/[%.*s]\n", sp->len, sp->s,
 					sd->len, sd->s);
