@@ -1094,6 +1094,9 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 						break;                                               \
 					case PROTO_WS:                                           \
 					case PROTO_WSS:                                          \
+						memcpy(new_buf + offset, TRANSPORT_PARAM,            \
+								TRANSPORT_PARAM_LEN);                        \
+						offset += TRANSPORT_PARAM_LEN;                       \
 						memcpy(new_buf + offset, "ws", 2);                   \
 						offset += 2;                                         \
 						break;                                               \
@@ -1217,6 +1220,9 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 						break;                                               \
 					case PROTO_WS:                                           \
 					case PROTO_WSS:                                          \
+						memcpy(new_buf + offset, TRANSPORT_PARAM,            \
+								TRANSPORT_PARAM_LEN);                        \
+						offset += TRANSPORT_PARAM_LEN;                       \
 						memcpy(new_buf + offset, "ws", 2);                   \
 						offset += 2;                                         \
 						break;                                               \
