@@ -369,6 +369,27 @@ t_reply("404", "Not found");
 	</example>
     </section>
 
+    <section id="tm.f.t_reply_error">
+	<title>
+	    <function>t_reply_error()</function>
+	</title>
+	<para>
+		Sends a stateful reply based in internal error code, similar to
+		sl_send_error() from sl module.
+	</para>
+	<para>
+		This function can be used from REQUEST_ROUTE.
+	</para>
+	<example>
+	    <title><function>t_reply_error</function> usage</title>
+	    <programlisting>
+...
+t_reply_error();
+...
+	    </programlisting>
+	</example>
+    </section>
+
     <section id="tm.f.t_send_reply">
 	<title>
 	    <function>t_send_reply(code, reason)</function>
