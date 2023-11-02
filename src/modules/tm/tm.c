@@ -112,6 +112,7 @@ static int t_failover_parse_reply_codes();
 static int w_t_check(struct sip_msg *msg, char *str, char *str2);
 static int w_t_lookup_cancel(struct sip_msg *msg, char *str, char *str2);
 static int w_t_reply(struct sip_msg *msg, char *str, char *str2);
+static int w_t_reply_error(struct sip_msg *msg, char *str, char *str2);
 static int w_t_send_reply(struct sip_msg *msg, char *p1, char *p2);
 static int w_t_release(struct sip_msg *msg, char *str, char *str2);
 static int w_t_retransmit_reply(struct sip_msg *p_msg, char *foo, char *bar);
@@ -255,6 +256,7 @@ static cmd_export_t cmds[] = {
 				REQUEST_ROUTE},
 		{"t_reply", w_t_reply, 2, fixup_t_reply, 0,
 				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"t_reply_error", w_t_reply_error, 0, 0, 0, REQUEST_ROUTE},
 		{"t_send_reply", w_t_send_reply, 2, fixup_t_reply, 0,
 				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 		{"t_retransmit_reply", w_t_retransmit_reply, 0, 0, 0, REQUEST_ROUTE},
@@ -1589,6 +1591,37 @@ int w_t_reply_wrp(struct sip_msg *msg, unsigned int code, char *txt)
 	reason.len = strlen(reason.s);
 
 	return ki_t_reply(msg, code, &reason);
+}
+
+/**
+ * kemi function to send reply based on internal error code
+ */
+static int ki_t_reply_error(sip_msg_t *msg)
+{
+	char err_buffer[128];
+	str reason;
+	int sip_err;
+	int ret;
+
+	ret = err2reason_phrase(
+			prev_ser_error, &sip_err, err_buffer, sizeof(err_buffer), "TM");
+	if(ret > 0) {
+		reason.s = err_buffer;
+		reason.len = strlen(reason.s);
+		return ki_t_reply(msg, sip_err, &reason);
+	} else {
+		LM_ERR("failed to get internal error reason phrase\n");
+		return -1;
+	}
+}
+
+
+/**
+ * config function to send reply based on internal error code
+ */
+static int w_t_reply_error(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ki_t_reply_error(msg);
 }
 
 /**
@@ -3274,6 +3307,11 @@ static sr_kemi_t tm_kemi_exports[] = {
 	{ str_init("tm"), str_init("t_reply"),
 		SR_KEMIP_INT, ki_t_reply,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_reply_error"),
+		SR_KEMIP_INT, ki_t_reply_error,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tm"), str_init("t_send_reply"),
