@@ -143,6 +143,7 @@ int load_tm(struct tm_binds *tmb)
 	tmb->set_fr = t_set_fr;
 	tmb->t_release_transaction = t_release_transaction;
 	tmb->t_uas_request_clean_parsed = t_uas_request_clean_parsed;
+	tmb->t_reply_error = ki_t_reply_error;
 	return 1;
 }
 

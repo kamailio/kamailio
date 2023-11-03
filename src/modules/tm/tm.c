@@ -1596,7 +1596,7 @@ int w_t_reply_wrp(struct sip_msg *msg, unsigned int code, char *txt)
 /**
  * kemi function to send reply based on internal error code
  */
-static int ki_t_reply_error(sip_msg_t *msg)
+int ki_t_reply_error(sip_msg_t *msg)
 {
 	char err_buffer[128];
 	str reason;

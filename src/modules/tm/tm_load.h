@@ -43,6 +43,9 @@
 /* export not usable from scripts */
 #define NO_SCRIPT -1
 
+typedef void (*t_on_route_f)(unsigned int);
+typedef int (*t_no_param_f)(struct sip_msg *);
+
 struct tm_binds
 {
 	register_tmcb_f register_tmcb;
@@ -127,6 +130,7 @@ struct tm_binds
 	tset_fr_f set_fr;
 	trelease_t t_release_transaction;
 	t_uas_request_clean_parsed_f t_uas_request_clean_parsed;
+	t_no_param_f t_reply_error;
 };
 
 typedef struct tm_binds tm_api_t;
@@ -164,9 +168,6 @@ static inline int tm_load_api(tm_api_t *tmb)
 /**
  * eXtra API - not common used in other modules
  */
-
-typedef void (*t_on_route_f)(unsigned int);
-typedef int (*t_no_param_f)(struct sip_msg *);
 
 int t_check_trans(struct sip_msg *msg);
 int t_is_canceled(struct sip_msg *msg);
