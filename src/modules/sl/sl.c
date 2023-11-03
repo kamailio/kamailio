@@ -73,6 +73,7 @@ static int w_sl_send_reply(struct sip_msg *msg, char *str1, char *str2);
 static int w_send_reply(struct sip_msg *msg, char *str1, char *str2);
 static int w_send_reply_mode(
 		struct sip_msg *msg, char *str1, char *str2, char *str3);
+static int w_send_reply_error(sip_msg_t *msg, char *str1, char *str2);
 static int w_sl_reply_error(struct sip_msg *msg, char *str1, char *str2);
 static int w_sl_forward_reply0(sip_msg_t *msg, char *str1, char *str2);
 static int w_sl_forward_reply1(sip_msg_t *msg, char *str1, char *str2);
@@ -101,6 +102,8 @@ static cmd_export_t cmds[] = {
 				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 		{"send_reply_mode", (cmd_function)w_send_reply_mode, 3,
 				fixup_sl_reply_mode, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"send_reply_error", w_send_reply_error, 0, 0, 0,
 				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 		{"sl_reply_error", w_sl_reply_error, 0, 0, 0, REQUEST_ROUTE},
 		{"sl_forward_reply", w_sl_forward_reply0, 0, 0, 0, ONREPLY_ROUTE},
@@ -324,6 +327,29 @@ static int w_send_reply(struct sip_msg *msg, char *p1, char *p2)
 	}
 
 	return send_reply(msg, code, &reason);
+}
+
+/**
+ *
+ */
+static int ki_send_reply_error(sip_msg_t *msg)
+{
+	int ret;
+	if(sl_bind_tm != 0 && tmb.t_reply_error != NULL) {
+		ret = tmb.t_reply_error(msg);
+		if(ret > 0) {
+			return ret;
+		}
+	}
+	return sl_reply_error(msg);
+}
+
+/**
+ *
+ */
+static int w_send_reply_error(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ki_send_reply_error(msg);
 }
 
 /**
@@ -669,6 +695,11 @@ static sr_kemi_t sl_kemi_exports[] = {
 	},
 	{ str_init("sl"), str_init("sl_reply_error"),
 		SR_KEMIP_INT, sl_reply_error,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sl"), str_init("send_reply_error"),
+		SR_KEMIP_INT, ki_send_reply_error,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
