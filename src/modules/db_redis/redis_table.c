@@ -433,8 +433,7 @@ static struct str_hash_entry *db_redis_create_table(str *table)
 		pkg_free(e);
 		return NULL;
 	}
-	t->entry_keys = NULL;
-	t->types = NULL;
+	memset(t, 0, sizeof(redis_table_t));
 
 	if(str_hash_alloc(&t->columns, REDIS_HT_SIZE) != 0) {
 		LM_ERR("Failed to allocate memory for table schema hashtable\n");
