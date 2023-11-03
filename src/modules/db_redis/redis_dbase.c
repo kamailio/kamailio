@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "../../core/ut.h"
+
 #include "db_redis_mod.h"
 #include "redis_connection.h"
 #include "redis_dbase.h"
@@ -360,7 +362,7 @@ static int db_redis_find_query_key(redis_key_t *key, const str *table_name,
 						goto err;
 					}
 					snprintf(key_name->s, len, "%.*s%.*s:%.*s::%.*s",
-							table->version_code.len, table->version_code.s,
+							table->version_code.len, ZSW(table->version_code.s),
 							table_name->len, table_name->s, type_name->len,
 							type_name->s, val.len, val.s);
 					key_name->len = len - 1; // subtract the term 0 char
@@ -456,7 +458,7 @@ static int db_redis_find_query_key(redis_key_t *key, const str *table_name,
 			goto err;
 		}
 		snprintf(key_name->s, len, "%.*s%.*s:%.*s", table->version_code.len,
-				table->version_code.s, table_name->len, table_name->s,
+				ZSW(table->version_code.s), table_name->len, table_name->s,
 				type_name->len, type_name->s);
 		key_name->len = len - 1;
 	}
@@ -621,7 +623,7 @@ static int db_redis_build_type_keys(km_redis_con_t *con, const str *table_name,
 					goto err;
 				}
 				sprintf(keyname.s, "%.*s%.*s::index::%.*s",
-						table->version_code.len, table->version_code.s,
+						table->version_code.len, ZSW(table->version_code.s),
 						table_name->len, table_name->s, type->type.len,
 						type->type.s);
 				if(db_redis_key_add_str(set_keys, &keyname) != 0) {
@@ -787,7 +789,7 @@ static int db_redis_build_query_keys(km_redis_con_t *con, const str *table_name,
 						goto err;
 					}
 					sprintf(ts_scan_table->s, "%.*s%.*s::index::%.*s",
-							table->version_code.len, table->version_code.s,
+							table->version_code.len, ZSW(table->version_code.s),
 							table_name->len, table_name->s, type->type.len,
 							type->type.s);
 				}
@@ -1094,7 +1096,7 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
 			return -1;
 		}
 		int len = sprintf(match, "%.*s%.*s:entry::*", table->version_code.len,
-				table->version_code.s, table_name->len, table_name->s);
+				ZSW(table->version_code.s), table_name->len, table_name->s);
 		str match_pattern = {match, len};
 		ret = db_redis_scan_query_keys_pattern(con, &match_pattern,
 				ts_scan_table, _n, query_keys, query_keys_count, manual_keys,
