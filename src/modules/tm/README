@@ -2101,6 +2101,9 @@ if (t_newtran()) {
      * code - Reply code number.
      * reason_phrase - Reason string.
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE.
+
    Example 1.63. t_reply usage
 ...
 t_reply("404", "Not found");
@@ -2111,7 +2114,8 @@ t_reply("404", "Not found");
    Sends a stateful reply based in internal error code, similar to
    sl_send_error() from sl module.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE.
 
    Example 1.64. t_reply_error usage
 ...
