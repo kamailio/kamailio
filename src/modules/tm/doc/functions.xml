@@ -359,6 +359,9 @@ if (t_newtran()) {
 		</para>
 	    </listitem>
 	</itemizedlist>
+	<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE.
+	</para>
 	<example>
 	    <title><function>t_reply</function> usage</title>
 	    <programlisting>
@@ -378,7 +381,7 @@ t_reply("404", "Not found");
 		sl_send_error() from sl module.
 	</para>
 	<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE.
 	</para>
 	<example>
 	    <title><function>t_reply_error</function> usage</title>
