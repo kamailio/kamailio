@@ -1130,9 +1130,7 @@ int tps_db_load_branch(
 	db_val_t db_vals[5];
 	db_key_t db_cols[TPS_NR_KEYS];
 	db1_res_t *db_res = NULL;
-	str sinv = str_init("INVITE");
-	str ssub = str_init("SUBSCRIBE");
-	int bInviteDlg = 1;
+	str sMethodDlg = str_init("INVITE");
 	int nr_keys;
 	int nr_cols;
 	int n;
@@ -1144,10 +1142,13 @@ int tps_db_load_branch(
 	nr_keys = 0;
 	nr_cols = 0;
 
-	if((get_cseq(msg)->method_id == METHOD_SUBSCRIBE)
-			|| ((get_cseq(msg)->method_id == METHOD_NOTIFY)
-					&& (msg->event && msg->event->len > 0))) {
-		bInviteDlg = 0;
+	if(get_cseq(msg)->method_id == METHOD_SUBSCRIBE) {
+		sMethodDlg.s = "SUBSCRIBE";
+		sMethodDlg.len = 9;
+	} else if(get_cseq(msg)->method_id == METHOD_NOTIFY) {
+		/* NOTIFY can be also sent during call setup - ignore dialog method */
+		sMethodDlg.s = "";
+		sMethodDlg.len = 0;
 	}
 
 	if(mode == 0) {
@@ -1178,12 +1179,14 @@ int tps_db_load_branch(
 		}
 		nr_keys++;
 
-		db_keys[nr_keys] = &tt_col_s_method;
-		db_ops[nr_keys] = OP_EQ;
-		db_vals[nr_keys].type = DB1_STR;
-		db_vals[nr_keys].nul = 0;
-		db_vals[nr_keys].val.str_val = bInviteDlg ? sinv : ssub;
-		nr_keys++;
+		if(sMethodDlg.len > 0) {
+			db_keys[nr_keys] = &tt_col_s_method;
+			db_ops[nr_keys] = OP_EQ;
+			db_vals[nr_keys].type = DB1_STR;
+			db_vals[nr_keys].nul = 0;
+			db_vals[nr_keys].val.str_val = sMethodDlg;
+			nr_keys++;
+		}
 
 		if(md->a_uuid.len > 0) {
 			if(md->a_uuid.s[0] == 'a') {
