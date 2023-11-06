@@ -645,6 +645,7 @@ int t_cancel_suspend(unsigned int hash_index, unsigned int label)
 		/* The transaction does not need to be locked because this
 		* function is either executed from the original route block
 		* or from failure route which already locks */
+		t->flags &= ~T_ASYNC_SUSPENDED;
 
 		reset_kr(); /* the blind UAC of t_suspend has set kr */
 
