@@ -167,7 +167,7 @@ Options:\n\
     --atexit=val Control atexit callbacks execution from external libraries\n\
                   which may access destroyed shm memory causing crash on shutdown.\n\
                   Can be y[es] or 1 to enable atexit callbacks, n[o] or 0 to disable,\n\
-                  default is yes.\n\
+                  default is no.\n\
     -A define    Add config pre-processor define (e.g., -A WITH_AUTH,\n\
                   -A 'FLT_ACC=1', -A 'DEFVAL=\"str-val\"')\n\
     -b nr        Maximum OS UDP receive buffer size which will not be exceeded by\n\
@@ -546,7 +546,7 @@ char *sr_memmng_shm = NULL;
 static int *_sr_instance_started = NULL;
 
 int ksr_cfg_print_mode = 0;
-int ksr_atexit_mode = 1;
+int ksr_atexit_mode = 0;
 
 int ksr_wait_worker1_mode = 0;
 int ksr_wait_worker1_time = 4000000;
