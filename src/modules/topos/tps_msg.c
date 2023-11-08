@@ -1112,9 +1112,14 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 		if(tps_get_xuuid(msg, &xuuid) < 0) {
 			LM_DBG("no x-uuid header - local message only - Call-ID mask if "
 				   "downstream \n");
-			/* ACK and CANCEL go downstream so Call-ID mask required */
 			if(get_cseq(msg)->method_id == METHOD_ACK
 					|| get_cseq(msg)->method_id == METHOD_CANCEL) {
+				/* cover stateless forwarding */
+				tps_remove_headers(msg, HDR_RECORDROUTE_T);
+				tps_remove_headers(msg, HDR_CONTACT_T);
+				tps_remove_headers(msg, HDR_VIA_T);
+				tps_reinsert_via(msg, &mtsd, &mtsd.x_via1);
+				/* ACK and CANCEL go downstream so Call-ID mask required */
 				tps_mask_callid(msg);
 			}
 			return 0;
