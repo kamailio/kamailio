@@ -24,6 +24,7 @@
       "settings": {},
       "extensions": [
         "ms-vscode.cpptools-extension-pack",
+        "GitHub.vscode-github-actions",
         "xaver.clang-format"
       ]
     }
