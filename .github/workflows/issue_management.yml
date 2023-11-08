@@ -19,4 +19,5 @@ jobs:
           days-before-close: 14
           exempt-issue-labels: bug
           remove-stale-when-updated: true
+          operations-per-run: 1000
           ascending: true
