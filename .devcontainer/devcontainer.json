@@ -4,6 +4,7 @@
    */
   "name": "Debian",
   "build": {
+    "cacheFrom": "ghcr.io/kamailio/kamailio-master-devcontainer",
     "context": "../pkg/kamailio/deb",
     "dockerfile": "Dockerfile"
   },
