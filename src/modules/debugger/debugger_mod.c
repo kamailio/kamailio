@@ -81,55 +81,60 @@ static int _dbg_sip_msg_cline;
 static char *_dbg_cfgtrace_facility_str = 0;
 static int _dbg_log_assign = 0;
 
-static cmd_export_t cmds[] = {{"dbg_breakpoint", (cmd_function)w_dbg_breakpoint,
-									  1, fixup_dbg_breakpoint, 0, ANY_ROUTE},
-		{"dbg_pv_dump", (cmd_function)w_dbg_dump, 0, fixup_dbg_pv_dump, 0,
-				ANY_ROUTE},
-		{"dbg_pv_dump", (cmd_function)w_dbg_dump, 1, fixup_dbg_pv_dump, 0,
-				ANY_ROUTE},
-		{"dbg_pv_dump", (cmd_function)w_dbg_dump, 2, fixup_dbg_pv_dump, 0,
-				ANY_ROUTE},
-		{"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 0, fixup_dbg_sip_msg, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 1, fixup_dbg_sip_msg, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 2, fixup_dbg_sip_msg, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cmd_export_t cmds[]={
+	{"dbg_breakpoint", (cmd_function)w_dbg_breakpoint, 1,
+		fixup_dbg_breakpoint, 0, ANY_ROUTE},
+	{"dbg_pv_dump", (cmd_function)w_dbg_dump, 0,
+		fixup_dbg_pv_dump, 0, ANY_ROUTE},
+	{"dbg_pv_dump", (cmd_function)w_dbg_dump, 1,
+		fixup_dbg_pv_dump, 0, ANY_ROUTE},
+	{"dbg_pv_dump", (cmd_function)w_dbg_dump, 2,
+		fixup_dbg_pv_dump, 0, ANY_ROUTE},
+	{"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 0,
+		fixup_dbg_sip_msg, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 1,
+		fixup_dbg_sip_msg, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 2,
+		fixup_dbg_sip_msg, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{"cfgtrace", INT_PARAM, &_dbg_cfgtrace},
-		{"cfgtrace_format", INT_PARAM, &_dbg_cfgtrace_format},
-		{"breakpoint", INT_PARAM, &_dbg_breakpoint},
-		{"log_level", INT_PARAM, &_dbg_cfgtrace_level},
-		{"log_facility", PARAM_STRING, &_dbg_cfgtrace_facility_str},
-		{"log_prefix", PARAM_STRING, &_dbg_cfgtrace_prefix},
-		{"log_level_name", PARAM_STRING, &_dbg_cfgtrace_lname},
-		{"log_assign", INT_PARAM, &_dbg_log_assign},
-		{"step_usleep", INT_PARAM, &_dbg_step_usleep},
-		{"step_loops", INT_PARAM, &_dbg_step_loops},
-		{"mod_hash_size", INT_PARAM, &default_dbg_cfg.mod_hash_size},
-		{"mod_level_mode", INT_PARAM, &default_dbg_cfg.mod_level_mode},
-		{"mod_level", PARAM_STRING | USE_FUNC_PARAM,
-				(void *)dbg_mod_level_param},
-		{"mod_facility_mode", INT_PARAM, &default_dbg_cfg.mod_facility_mode},
-		{"mod_facility", PARAM_STRING | USE_FUNC_PARAM,
-				(void *)dbg_mod_facility_param},
-		{"reset_msgid", INT_PARAM, &_dbg_reset_msgid},
-		{"cfgpkgcheck", INT_PARAM, &_dbg_cfgpkgcheck},
-		{"cfgtest", INT_PARAM, &_dbg_cfgtest}, {0, 0, 0}};
+static param_export_t params[]={
+	{"cfgtrace",          INT_PARAM, &_dbg_cfgtrace},
+	{"cfgtrace_format",   INT_PARAM, &_dbg_cfgtrace_format},
+	{"breakpoint",        INT_PARAM, &_dbg_breakpoint},
+	{"log_level",         INT_PARAM, &_dbg_cfgtrace_level},
+	{"log_facility",      PARAM_STRING, &_dbg_cfgtrace_facility_str},
+	{"log_prefix",        PARAM_STRING, &_dbg_cfgtrace_prefix},
+	{"log_level_name",    PARAM_STRING, &_dbg_cfgtrace_lname},
+	{"log_assign",        INT_PARAM, &_dbg_log_assign},
+	{"step_usleep",       INT_PARAM, &_dbg_step_usleep},
+	{"step_loops",        INT_PARAM, &_dbg_step_loops},
+	{"mod_hash_size",     INT_PARAM, &default_dbg_cfg.mod_hash_size},
+	{"mod_level_mode",    INT_PARAM, &default_dbg_cfg.mod_level_mode},
+	{"mod_level",         PARAM_STRING|USE_FUNC_PARAM, (void*)dbg_mod_level_param},
+	{"mod_facility_mode", INT_PARAM, &default_dbg_cfg.mod_facility_mode},
+	{"mod_facility",      PARAM_STRING|USE_FUNC_PARAM, (void*)dbg_mod_facility_param},
+	{"reset_msgid",       INT_PARAM, &_dbg_reset_msgid},
+	{"cfgpkgcheck",       INT_PARAM, &_dbg_cfgpkgcheck},
+	{"cfgtest",           INT_PARAM, &_dbg_cfgtest},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"debugger",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	"debugger",      /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
+/* clang-format on */
 
 
 /**
