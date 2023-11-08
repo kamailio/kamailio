@@ -25,6 +25,7 @@
       "extensions": [
         "ms-vscode.cpptools-extension-pack",
         "GitHub.vscode-github-actions",
+        "eamodio.gitlens",
         "xaver.clang-format"
       ]
     }
