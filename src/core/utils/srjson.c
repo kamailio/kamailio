@@ -205,20 +205,20 @@ static char *print_number(srjson_doc_t *doc, srjson_t *item)
 	int i = (int)d;
 	if(fabs(((double)i) - d) <= DBL_EPSILON && d <= INT_MAX && d >= INT_MIN) {
 		str = (char *)doc->malloc_fn(21); /* 2^64+1 can be
-							 * represented in 21
-							 * chars. */
+							 * represented in 20+1
+							 * chars (including 0-termination). */
 		if(str)
-			sprintf(str, "%d", i);
+			snprintf(str, 21, "%d", i);
 	} else {
 		str = (char *)doc->malloc_fn(64); /* This is a nice
 							 * tradeoff. */
 		if(str) {
 			if(fabs(floor(d) - d) <= DBL_EPSILON)
-				sprintf(str, "%.0f", d);
+				snprintf(str, 21, "%.0f", d);
 			else if(fabs(d) < 1.0e-6 || fabs(d) > 1.0e9)
-				sprintf(str, "%e", d);
+				snprintf(str, 21, "%e", d);
 			else
-				sprintf(str, "%f", d);
+				snprintf(str, 21, "%f", d);
 		}
 	}
 	return str;
@@ -384,7 +384,7 @@ static char *print_string_ptr(srjson_doc_t *doc, const char *str)
 					*ptr2++ = 't';
 					break;
 				default:
-					sprintf(ptr2, "u%04x", token);
+					snprintf(ptr2, 6, "u%04x", token);
 					ptr2 += 5;
 					break; /* escape and print */
 			}
