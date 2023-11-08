@@ -91,47 +91,53 @@ int dp_append_branch = 1;
 int dp_reload_delta = 5;
 
 static time_t *dp_rpc_reload_time = NULL;
-
-static param_export_t mod_params[] = {{"db_url", PARAM_STR, &dp_db_url},
-		{"table_name", PARAM_STR, &dp_table_name},
-		{"dpid_col", PARAM_STR, &dpid_column},
-		{"pr_col", PARAM_STR, &pr_column},
-		{"match_op_col", PARAM_STR, &match_op_column},
-		{"match_exp_col", PARAM_STR, &match_exp_column},
-		{"match_len_col", PARAM_STR, &match_len_column},
-		{"subst_exp_col", PARAM_STR, &subst_exp_column},
-		{"repl_exp_col", PARAM_STR, &repl_exp_column},
-		{"attrs_col", PARAM_STR, &attrs_column},
-		{"attrs_pvar", PARAM_STR, &dp_attr_pvar_s},
-		{"fetch_rows", PARAM_INT, &dp_fetch_rows},
-		{"match_dynamic", PARAM_INT, &dp_match_dynamic},
-		{"append_branch", PARAM_INT, &dp_append_branch},
-		{"reload_delta", PARAM_INT, &dp_reload_delta}, {0, 0, 0}};
-
-static cmd_export_t cmds[] = {{"dp_translate", (cmd_function)dp_translate_f, 2,
-									  dp_trans_fixup, 0, ANY_ROUTE},
-		{"dp_translate", (cmd_function)dp_translate_f, 1, dp_trans_fixup, 0,
-				ANY_ROUTE},
-		{"dp_reload", (cmd_function)dp_reload_f, 0, 0, 0, ANY_ROUTE},
-		{"dp_match", (cmd_function)w_dp_match, 2, fixup_igp_spve,
-				fixup_free_igp_spve, ANY_ROUTE},
-		{"dp_replace", (cmd_function)w_dp_replace, 3, dp_replace_fixup,
-				dp_replace_fixup_free, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-struct module_exports exports = {
-		"dialplan",		 /* module's name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		mod_params,		 /* param exports */
-		0,				 /* exported RPC functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* reply processing function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+/* clang-format off */
+static param_export_t mod_params[]={
+	{ "db_url",			PARAM_STR,	&dp_db_url },
+	{ "table_name",		PARAM_STR,	&dp_table_name },
+	{ "dpid_col",		PARAM_STR,	&dpid_column },
+	{ "pr_col",			PARAM_STR,	&pr_column },
+	{ "match_op_col",	PARAM_STR,	&match_op_column },
+	{ "match_exp_col",	PARAM_STR,	&match_exp_column },
+	{ "match_len_col",	PARAM_STR,	&match_len_column },
+	{ "subst_exp_col",	PARAM_STR,	&subst_exp_column },
+	{ "repl_exp_col",	PARAM_STR,	&repl_exp_column },
+	{ "attrs_col",		PARAM_STR,	&attrs_column },
+	{ "attrs_pvar",	    PARAM_STR,	&dp_attr_pvar_s },
+	{ "fetch_rows",		PARAM_INT,	&dp_fetch_rows },
+	{ "match_dynamic",	PARAM_INT,	&dp_match_dynamic },
+	{ "append_branch",	PARAM_INT,	&dp_append_branch },
+	{ "reload_delta",	PARAM_INT,	&dp_reload_delta },
+	{0,0,0}
 };
 
+static cmd_export_t cmds[]={
+	{"dp_translate",(cmd_function)dp_translate_f,	2,	dp_trans_fixup,  0,
+		ANY_ROUTE},
+	{"dp_translate",(cmd_function)dp_translate_f,	1,	dp_trans_fixup,  0,
+		ANY_ROUTE},
+	{"dp_reload",(cmd_function)dp_reload_f,	0, 0,  0,
+		ANY_ROUTE},
+	{"dp_match",(cmd_function)w_dp_match,	2,	fixup_igp_spve,
+		fixup_free_igp_spve, ANY_ROUTE},
+	{"dp_replace",(cmd_function)w_dp_replace,	3,	dp_replace_fixup,
+		dp_replace_fixup_free, ANY_ROUTE},
+	{0,0,0,0,0,0}
+};
+
+struct module_exports exports= {
+	"dialplan",      /* module's name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	mod_params,      /* param exports */
+	0,               /* exported RPC functions */
+	0,               /* exported pseudo-variables */
+	0,               /* reply processing function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
+};
+/* clang-format on */
 
 static int mod_init(void)
 {
