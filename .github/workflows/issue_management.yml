@@ -2,6 +2,8 @@ name: 'Close stale issues and PRs'
 on:
   schedule:
     - cron: '30 2 * * *'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 permissions:
   issues: write
   pull-requests: write
@@ -17,3 +19,4 @@ jobs:
           days-before-close: 14
           exempt-issue-labels: bug
           remove-stale-when-updated: true
+          ascending: true
