@@ -98,7 +98,8 @@ peer *get_first_connected_route(
 					cdp_session
 							->hash); /*V1.1 - As we were...no call seems to pass cdp_session unlocked */
 			if(p && !p->disabled && (p->state == I_Open || p->state == R_Open)
-					&& peer_handles_application(p, app_id, vendor_id)) {
+					&& (peer_handles_application(p, app_id, vendor_id)
+							|| peer_handles_application(p, RELAY_APP_ID, 0))) {
 				p->last_selected = time(NULL);
 				LM_DBG("Found a sticky peer [%.*s] for this session - "
 					   "re-using\n",
@@ -121,7 +122,8 @@ peer *get_first_connected_route(
 					(p->state == I_Open || p->state == R_Open) ? "opened"
 															   : "closed");
 		if(p && !p->disabled && (p->state == I_Open || p->state == R_Open)
-				&& peer_handles_application(p, app_id, vendor_id)) {
+				&& (peer_handles_application(p, app_id, vendor_id)
+						|| peer_handles_application(p, RELAY_APP_ID, 0))) {
 			LM_DBG("The peer %.*s matches - will forward there\n", i->fqdn.len,
 					i->fqdn.s);
 			if(peer_count != 0) { //check the metric
