@@ -196,10 +196,20 @@ struct qm_block *qm_malloc_init(char *address, unsigned long size, int type)
 	unsigned long init_overhead;
 	int h;
 
-	/* make address and size multiple of 8*/
+	if((sizeof(struct qm_frag) % ROUNDTO != 0)
+			|| (sizeof(struct qm_frag_end) % ROUNDTO != 0)) {
+		LM_ERR("memory align constraints failure (%lu %% %lu = %lu ::: %lu %% "
+			   "%lu = %lu)\n",
+				sizeof(struct qm_frag), ROUNDTO,
+				sizeof(struct qm_frag) % ROUNDTO, sizeof(struct qm_frag_end),
+				ROUNDTO, sizeof(struct qm_frag_end) % ROUNDTO);
+		return 0;
+	}
+
+	/* make address and size multiple of ROUNDTO */
 	start = (char *)ROUNDUP((unsigned long)address);
-	LM_DBG("QM_OPTIMIZE=%lu, /ROUNDTO=%lu\n", QM_MALLOC_OPTIMIZE,
-			QM_MALLOC_OPTIMIZE / ROUNDTO);
+	LM_DBG("QM_OPTIMIZE=%lu, QM_OPTIMIZE/ROUNDTO=%lu, ROUNDTO=%lu\n",
+			QM_MALLOC_OPTIMIZE, QM_MALLOC_OPTIMIZE / ROUNDTO, ROUNDTO);
 	LM_DBG("QM_HASH_SIZE=%lu, qm_block size=%lu\n", QM_HASH_SIZE,
 			(unsigned long)sizeof(struct qm_block));
 	LM_DBG("qm_malloc_init(%p, %lu), start=%p\n", address, (unsigned long)size,
@@ -1061,7 +1071,8 @@ void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
 										!= NULL))) {
 					fprintf(fp,
 							"unused fragm.: hash = %3d, fragment %p,"
-							" address %p size %lu, created from %s:%lu / %s()\n",
+							" address %p size %lu, created from %s:%lu / "
+							"%s()\n",
 							h, f, (char *)f + sizeof(struct qm_frag), f->size,
 							f->file, f->line, f->func);
 				}

@@ -33,33 +33,22 @@
 #define DBG_QM_MALLOC
 #endif
 
-/* defs*/
-#ifdef DBG_QM_MALLOC
-#if defined(__CPU_sparc64) || defined(__CPU_sparc)
-/* tricky, on sun in 32 bits mode long long must be 64 bits aligned
- * but long can be 32 bits aligned => malloc should return long long
- * aligned memory */
-#define ROUNDTO sizeof(long long)
-#else
-#define ROUNDTO \
-	sizeof(void *) /* minimum possible ROUNDTO
-										* ->heavy debugging*/
-#endif
-#else /* DBG_QM_MALLOC */
-#define ROUNDTO \
-	16UL /* size we round to, must be = 2^n  and also
-							* sizeof(qm_frag)+sizeof(qm_frag_end)
-							* must be multiple of ROUNDTO!
-							*/
-#endif
+/**
+ * ROUNDTO: size to round to, must be = 2^n
+ * - on sun in 32 bits mode long long must be 64 bits aligned but long
+ * can be 32 bits aligned => malloc should return multiple of long long
+ * aligned memory
+ * - malloc() on gnu/linux: multiple of 8 or 16 on 64-bit systems
+ * - for simplicity settle for 16 always
+ * - sizeof(qm_frag) and sizeof(qm_frag_end) must be multiple of ROUNDTO!
+ */
+#define ROUNDTO 16UL
+
 #define MIN_FRAG_SIZE ROUNDTO
 
-
 #define QM_MALLOC_OPTIMIZE_FACTOR 14UL /*used below */
+/* size to optimize for, (most allocs <= this size), must be 2^k */
 #define QM_MALLOC_OPTIMIZE ((unsigned long)(1UL << QM_MALLOC_OPTIMIZE_FACTOR))
-/* size to optimize for,
-									(most allocs <= this size),
-									must be 2^k */
 
 #define QM_HASH_SIZE                              \
 	((unsigned long)(QM_MALLOC_OPTIMIZE / ROUNDTO \
@@ -70,6 +59,7 @@
  *                            ROUNDTO from bucket to bucket
  * +1 .... end -  size = 2^k, big buckets */
 
+/* start of QM fragment - its size has to be multiple of ROUNDTO */
 struct qm_frag
 {
 	unsigned long size;
@@ -84,9 +74,11 @@ struct qm_frag
 	const char *mname;
 	unsigned long line;
 	unsigned long check;
+	unsigned long reserved1;
 #endif
 };
 
+/* end of QM fragment - its size has to be multiple of ROUNDTO */
 struct qm_frag_end
 {
 #ifdef DBG_QM_MALLOC
@@ -105,6 +97,7 @@ struct qm_frag_lnk
 	struct qm_frag head;
 	struct qm_frag_end tail;
 	unsigned long no;
+	unsigned long reserved1;
 };
 
 
@@ -115,7 +108,7 @@ struct qm_frag_lnk
 
 struct qm_block
 {
-	int type;				 /* type of memory */
+	long type;				 /* type of memory */
 	unsigned long size;		 /* total size */
 	unsigned long used;		 /* alloc'ed size*/
 	unsigned long real_used; /* used+malloc overhead*/
