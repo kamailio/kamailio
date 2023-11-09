@@ -326,8 +326,7 @@ static int register_module(module_exports_t *e, char *path, void *handle)
 		LM_ERR("too long module name: %s\n", mod->exports.name);
 		goto error;
 	}
-	strcpy(defmod, "MOD_");
-	strcat(defmod, mod->exports.name);
+	snprintf(defmod, 64, "MOD_%s", mod->exports.name);
 	pp_define_set_type(KSR_PPDEF_DEFINE);
 	if(pp_define(strlen(defmod), defmod) < 0) {
 		LM_ERR("unable to set cfg define for module: %s\n", mod->exports.name);
@@ -402,6 +401,7 @@ int ksr_locate_module(char *mod_path, char **new_path)
 {
 	struct stat stat_buf;
 	str modname;
+	str modfile;
 	char *mdir;
 	char *nxt_mdir;
 	char *path;
@@ -412,11 +412,14 @@ int ksr_locate_module(char *mod_path, char **new_path)
 	*new_path = NULL;
 	path = mod_path;
 	path_type = 0;
-	modname.s = path;
-	modname.len = strlen(mod_path);
-	if(modname.len > 3 && strcmp(modname.s + modname.len - 3, ".so") == 0) {
+	modfile.s = path;
+	modfile.len = strlen(mod_path);
+	modname.s = modfile.s;
+	if(modfile.len > 3 && strcmp(modfile.s + modfile.len - 3, ".so") == 0) {
 		path_type = 1;
-		modname.len -= 3;
+		modname.len = modfile.len - 3;
+	} else {
+		modname.len = modfile.len;
 	}
 	if(!strchr(path, '/'))
 		path_type |= 2;
@@ -445,9 +448,12 @@ int ksr_locate_module(char *mod_path, char **new_path)
 					len++;
 				}
 				path[len] = 0;
-				strcat(path, modname.s);
-				if(!(path_type & 1))
+				if(path_type & 1) {
+					strncat(path, modfile.s, modfile.len);
+				} else {
+					strncat(path, modname.s, modname.len);
 					strcat(path, ".so");
+				}
 
 				if(stat(path, &stat_buf) == -1) {
 					LM_DBG("module file not found <%s>\n", path);
@@ -470,9 +476,12 @@ int ksr_locate_module(char *mod_path, char **new_path)
 					path[len] = 0;
 					strncat(path, modname.s, modname.len);
 					strcat(path, "/");
-					strcat(path, modname.s);
-					if(!(path_type & 1))
+					if(path_type & 1) {
+						strncat(path, modfile.s, modfile.len);
+					} else {
+						strncat(path, modname.s, modname.len);
 						strcat(path, ".so");
+					}
 
 					if(stat(path, &stat_buf) == -1) {
 						LM_DBG("module file not found <%s>\n", path);
