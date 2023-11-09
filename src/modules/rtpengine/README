@@ -463,8 +463,8 @@ Chapter 1. Admin Guide
    would specify the weight 2 for this server, for example.
 
    The selection of the set is done from script prior using
-   rtpengine_delete(), rtpengine_offer() or rtpengine_answer() functions -
-   see the set_rtpengine_set() function.
+   rtpengine_delete(), rtpengine_offer(), rtpengine_answer() or
+   rtpengine_manage() functions - see the set_rtpengine_set() function.
 
    Another way to select the set is to define setid_avp module parameter
    and assign setid to the defined avp before calling rtpengine_offer() or
@@ -2150,7 +2150,6 @@ modparam("rtpengine", "dtmf_events_sock", "127.0.0.1:2223")
    sends it back to the module to be placed back into the SIP message.
    This is useful if you have a set of RTP proxies that the caller must
    use, and another distinct set of RTP proxies that the callee must use.
-   This is supported by all rtpengine commands except rtpengine_manage().
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
