@@ -60,30 +60,27 @@ static str msg_room_exists_priv = STR_STATIC_INIT(
 		PREFIX "A private room with the same name already exists");
 static str msg_room_exists_member =
 		STR_STATIC_INIT(PREFIX "Room already exists and you are a member");
-static str msg_user_joined = STR_STATIC_INIT(PREFIX "%.*s has joined the room");
 static str msg_already_joined =
 		STR_STATIC_INIT(PREFIX "You are in the room already");
-static str msg_user_left = STR_STATIC_INIT(PREFIX "%.*s has left the room");
-static str msg_join_attempt_bcast =
-		STR_STATIC_INIT(PREFIX "%.*s attempted to join the room");
 static str msg_join_attempt_ucast =
 		STR_STATIC_INIT(PREFIX "Private rooms are by invitation only. Room "
 							   "owners have been notified.");
-static str msg_invite =
-		STR_STATIC_INIT(PREFIX "%.*s invites you to join the room (send "
-							   "'%.*saccept' or '%.*sreject')");
 static str msg_add_reject = STR_STATIC_INIT(
 		PREFIX "You don't have the permmission to add members to this room");
-static str msg_user_modified = STR_STATIC_INIT(PREFIX "%.*s is now %.*s");
 static str msg_modify_reject = STR_STATIC_INIT(
 		PREFIX "You don't have the permmission to modify members in this room");
-#if 0
-static str msg_rejected           = STR_STATIC_INIT(PREFIX "%.*s has rejected invitation");
-#endif
 static str msg_user_removed =
 		STR_STATIC_INIT(PREFIX "You have been removed from the room");
-static str msg_invalid_command = STR_STATIC_INIT(
-		PREFIX "Invalid command '%.*s' (send '%.*shelp' for help)");
+
+#define MSG_USER_JOINED_FMT PREFIX "%.*s has joined the room"
+#define MSG_USER_LEFT_FMT PREFIX "%.*s has left the room"
+#define MSG_JOIN_ATTEMPT_BCAST_FMT PREFIX "%.*s attempted to join the room"
+#define MSG_INVITE_FMT                                \
+	PREFIX "%.*s invites you to join the room (send " \
+		   "'%.*saccept' or '%.*sreject')"
+#define MSG_USER_MODIFIED_FMT PREFIX "%.*s is now %.*s"
+#define MSG_INVALID_COMMAND_FMT \
+	PREFIX "Invalid command '%.*s' (send '%.*shelp' for help)"
 
 int imc_send_message(str *src, str *dst, str *headers, str *body);
 int imc_room_broadcast(imc_room_p room, str *ctype, str *body);
@@ -512,7 +509,7 @@ int imc_handle_create(struct sip_msg *msg, imc_cmd_t *cmd, struct imc_uri *src,
 	}
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s,
+	body.len = snprintf(body.s, sizeof(imc_body_buf), MSG_USER_JOINED_FMT,
 			STR_FMT(format_uri(member->uri)));
 
 	if(body.len < 0) {
@@ -633,14 +630,14 @@ int imc_handle_join(struct sip_msg *msg, imc_cmd_t *cmd, struct imc_uri *src,
 			}
 		}
 
-		body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s,
+		body.len = snprintf(body.s, sizeof(imc_body_buf), MSG_USER_JOINED_FMT,
 				STR_FMT(format_uri(src->uri)));
 	} else {
 		LM_DBG("Attept to join private room [%.*s] by [%.*s]\n",
 				STR_FMT(&rm->uri), STR_FMT(&src->uri));
 
 		body.len = snprintf(body.s, sizeof(imc_body_buf),
-				msg_join_attempt_bcast.s, STR_FMT(format_uri(src->uri)));
+				MSG_JOIN_ATTEMPT_BCAST_FMT, STR_FMT(format_uri(src->uri)));
 		imc_send_message(&rm->uri, &src->uri, build_headers(msg),
 				&msg_join_attempt_ucast);
 	}
@@ -743,7 +740,7 @@ int imc_handle_invite(struct sip_msg *msg, imc_cmd_t *cmd, struct imc_uri *src,
 	}
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_invite.s,
+	body.len = snprintf(body.s, sizeof(imc_body_buf), MSG_INVITE_FMT,
 			STR_FMT(format_uri(src->uri)), STR_FMT(&imc_cmd_start_str),
 			STR_FMT(&imc_cmd_start_str));
 
@@ -865,7 +862,7 @@ int imc_handle_add(struct sip_msg *msg, imc_cmd_t *cmd, struct imc_uri *src,
 	}
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s,
+	body.len = snprintf(body.s, sizeof(imc_body_buf), MSG_USER_JOINED_FMT,
 			STR_FMT(format_uri(member->uri)));
 
 	if(body.len < 0) {
@@ -931,7 +928,7 @@ int imc_handle_accept(struct sip_msg *msg, imc_cmd_t *cmd, struct imc_uri *src,
 	}
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s,
+	body.len = snprintf(body.s, sizeof(imc_body_buf), MSG_USER_JOINED_FMT,
 			STR_FMT(format_uri(member->uri)));
 
 	if(body.len < 0) {
@@ -1026,7 +1023,7 @@ int imc_handle_remove(struct sip_msg *msg, imc_cmd_t *cmd, struct imc_uri *src,
 	}
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_left.s,
+	body.len = snprintf(body.s, sizeof(imc_body_buf), MSG_USER_LEFT_FMT,
 			STR_FMT(format_uri(member->uri)));
 
 	if(body.len < 0) {
@@ -1300,7 +1297,7 @@ int imc_handle_leave(struct sip_msg *msg, imc_cmd_t *cmd, struct imc_uri *src,
 	}
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_left.s,
+	body.len = snprintf(body.s, sizeof(imc_body_buf), MSG_USER_LEFT_FMT,
 			STR_FMT(format_uri(member->uri)));
 
 	if(body.len < 0) {
@@ -1425,7 +1422,7 @@ int imc_handle_unknown(struct sip_msg *msg, imc_cmd_t *cmd, struct imc_uri *src,
 	uac_req_t uac_r;
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_invalid_command.s,
+	body.len = snprintf(body.s, sizeof(imc_body_buf), MSG_INVALID_COMMAND_FMT,
 			STR_FMT(&cmd->name), STR_FMT(&imc_cmd_start_str));
 
 	if(body.len < 0 || body.len >= sizeof(imc_body_buf)) {
@@ -1606,7 +1603,7 @@ int imc_handle_modify(struct sip_msg *msg, imc_cmd_t *cmd, struct imc_uri *src,
 	}
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_modified.s,
+	body.len = snprintf(body.s, sizeof(imc_body_buf), MSG_USER_MODIFIED_FMT,
 			STR_FMT(&member->uri), STR_FMT(&cmd->param[1]));
 
 	if(body.len < 0) {
