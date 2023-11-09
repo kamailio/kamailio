@@ -52,8 +52,8 @@
 	</para>
 	<para>
 		The selection of the set is done from script prior using
-		rtpengine_delete(), rtpengine_offer() or rtpengine_answer()
-		functions - see the set_rtpengine_set() function.
+		rtpengine_delete(), rtpengine_offer(), rtpengine_answer() or
+		rtpengine_manage() functions - see the set_rtpengine_set() function.
 	</para>
 	<para>
 	        Another way to select the set is to define setid_avp
@@ -2328,10 +2328,10 @@ modparam("rtpengine", "wsapi", "lwsc")
 	<section id="rtpengine.p.dtmf_events_sock" xreflabel="dtmf_events_sock">
 		<title><varname>dtmf_events_sock</varname> (string)</title>
 		<para>
-		Definition of IPv4/IPv6 UDP socket used to receive dtmf events from RTPEngine.		
+		Definition of IPv4/IPv6 UDP socket used to receive dtmf events from RTPEngine.
 		</para>
 		<para>
-		DTMF events coming from RTPEngine will trigger rtpengine:dtmf-event route. 
+		DTMF events coming from RTPEngine will trigger rtpengine:dtmf-event route.
 		</para>
 		<para>
 			<emphasis>
@@ -2374,8 +2374,7 @@ modparam("rtpengine", "dtmf_events_sock", "127.0.0.1:2223")
 		another time and sends it back to the module to be placed back into the
 		&sip; message. This is useful if you have a set of &rtp; proxies that
 		the caller must use, and another distinct set of &rtp; proxies that the
-		callee must use. This is supported by all rtpengine commands except
-		rtpengine_manage().
+		callee must use.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -2519,7 +2518,7 @@ rtpengine_offer();
 				of ignoring endpoint addresses in the &sdp; body.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>received-from=IP</emphasis> - Configure the SIP-source-address IP 
+				<emphasis>received-from=IP</emphasis> - Configure the SIP-source-address IP
 				explicitly, which will be useful when two kamailio is cascaded where first kamailio
 				is handling NAT and second kamailio RTPEngine.
 				</para></listitem>
