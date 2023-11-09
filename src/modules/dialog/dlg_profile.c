@@ -603,7 +603,9 @@ int set_dlg_profile(
 	}
 	sruid_next_safe(&_dlg_profile_sruid);
 	if(_dlg_profile_sruid.uid.len < SRUID_SIZE) {
-		strcpy(linker->hash_linker.puid, _dlg_profile_sruid.uid.s);
+		memcpy(linker->hash_linker.puid, _dlg_profile_sruid.uid.s,
+				_dlg_profile_sruid.uid.len);
+		linker->hash_linker.puid[_dlg_profile_sruid.uid.len] = '\0';
 		linker->hash_linker.puid_len = _dlg_profile_sruid.uid.len;
 	} else {
 		LM_ERR("sruid size is too large\n");
@@ -951,7 +953,7 @@ int dlg_set_timeout_by_profile(
 		unsigned int h_id;
 		unsigned int h_entry;
 		struct dlg_map_list *next;
-	} * map_head, *map_scan, *map_scan_next;
+	} *map_head, *map_scan, *map_scan_next;
 
 	map_head = NULL;
 
