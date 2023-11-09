@@ -87,6 +87,8 @@
 #define to_32x_len(_len_) ((_len_) + (((_len_)&3) ? 4 - ((_len_)&3) : 0))
 
 
+#define RELAY_APP_ID 0xffffffff
+
 /* AAA TYPES */
 
 #define AAA_NO_VENDOR_ID 0
