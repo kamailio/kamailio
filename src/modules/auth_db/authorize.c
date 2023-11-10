@@ -42,7 +42,8 @@
 #include "authorize.h"
 
 
-int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int flags)
+int fetch_credentials(
+		sip_msg_t *msg, str *user, str *domain, str *table, int flags)
 {
 	pv_elem_t *cred;
 	db_key_t keys[2];
@@ -52,13 +53,13 @@ int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int fl
 
 	int n, nc;
 
-	if(flags&AUTH_DB_SUBS_SKIP_CREDENTIALS) {
+	if(flags & AUTH_DB_SUBS_SKIP_CREDENTIALS) {
 		nc = 1;
 	} else {
 		nc = credentials_n;
 	}
-	col = pkg_malloc(sizeof(*col) * (nc+1));
-	if (col == NULL) {
+	col = pkg_malloc(sizeof(*col) * (nc + 1));
+	if(col == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
@@ -66,10 +67,10 @@ int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int fl
 	keys[0] = &user_column;
 	keys[1] = &domain_column;
 
-	if(flags&AUTH_DB_SUBS_SKIP_CREDENTIALS) {
+	if(flags & AUTH_DB_SUBS_SKIP_CREDENTIALS) {
 		col[0] = &user_column;
 	} else {
-		for (n = 0, cred=credentials; cred ; n++, cred=cred->next) {
+		for(n = 0, cred = credentials; cred; n++, cred = cred->next) {
 			col[n] = &cred->text;
 		}
 	}
@@ -80,19 +81,19 @@ int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int fl
 	n = 1;
 	VAL_STR(vals) = *user;
 
-	if (domain && domain->len) {
+	if(domain && domain->len) {
 		VAL_STR(vals + 1) = *domain;
 		n = 2;
 	}
 
-	if (auth_dbf.use_table(auth_db_handle, table) < 0) {
+	if(auth_dbf.use_table(auth_db_handle, table) < 0) {
 		LM_ERR("failed to use_table\n");
 		pkg_free(col);
 		return -1;
 	}
 
-	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, &res) < 0
-			|| res==NULL) {
+	if(auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, &res) < 0
+			|| res == NULL) {
 		LM_ERR("failed to query database\n");
 		pkg_free(col);
 		if(res)
@@ -100,20 +101,19 @@ int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int fl
 		return -1;
 	}
 	pkg_free(col);
-	if (RES_ROW_N(res) == 0) {
+	if(RES_ROW_N(res) == 0) {
 		auth_dbf.free_result(auth_db_handle, res);
-		LM_DBG("no result for user \'%.*s%s%.*s\' in [%.*s]\n",
-				user->len, user->s, (n==2)?"@":"",
-				(n==2)?domain->len:0, (n==2)?domain->s:"",
-				table->len, table->s);
+		LM_DBG("no result for user \'%.*s%s%.*s\' in [%.*s]\n", user->len,
+				user->s, (n == 2) ? "@" : "", (n == 2) ? domain->len : 0,
+				(n == 2) ? domain->s : "", table->len, table->s);
 		return -2;
 	}
-	if(flags&AUTH_DB_SUBS_SKIP_CREDENTIALS) {
+	if(flags & AUTH_DB_SUBS_SKIP_CREDENTIALS) {
 		/* there is a result and flag to skip loading credentials is set */
 		goto done;
 	}
-	for (cred=credentials, n=0; cred; cred=cred->next, n++) {
-		if (db_val2pv_spec(msg, &RES_ROWS(res)[0].values[n], cred->spec) != 0) {
+	for(cred = credentials, n = 0; cred; cred = cred->next, n++) {
+		if(db_val2pv_spec(msg, &RES_ROWS(res)[0].values[n], cred->spec) != 0) {
 			auth_dbf.free_result(auth_db_handle, res);
 			LM_ERR("Failed to convert value for column %.*s\n",
 					RES_NAMES(res)[n]->len, RES_NAMES(res)[n]->s);
@@ -127,8 +127,8 @@ done:
 	return 0;
 }
 
-static inline int get_ha1(struct username* _username, str* _domain,
-		const str* _table, char* _ha1, db1_res_t** res)
+static inline int get_ha1(struct username *_username, str *_domain,
+		const str *_table, char *_ha1, db1_res_t **res)
 {
 	pv_elem_t *cred;
 	db_key_t keys[2];
@@ -139,7 +139,7 @@ static inline int get_ha1(struct username* _username, str* _domain,
 	int n, nc;
 
 	col = pkg_malloc(sizeof(*col) * (credentials_n + 1));
-	if (col == NULL) {
+	if(col == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
@@ -147,10 +147,10 @@ static inline int get_ha1(struct username* _username, str* _domain,
 	keys[0] = &user_column;
 	keys[1] = &domain_column;
 	/* should we calculate the HA1, and is it calculated with domain? */
-	col[0] = (_username->domain.len && !calc_ha1) ?
-		(&pass_column_2) : (&pass_column);
+	col[0] = (_username->domain.len && !calc_ha1) ? (&pass_column_2)
+												  : (&pass_column);
 
-	for (n = 0, cred=credentials; cred ; n++, cred=cred->next) {
+	for(n = 0, cred = credentials; cred; n++, cred = cred->next) {
 		col[1 + n] = &cred->text;
 	}
 
@@ -160,7 +160,7 @@ static inline int get_ha1(struct username* _username, str* _domain,
 	VAL_STR(vals).s = _username->user.s;
 	VAL_STR(vals).len = _username->user.len;
 
-	if (_username->domain.len) {
+	if(_username->domain.len) {
 		VAL_STR(vals + 1) = _username->domain;
 	} else {
 		VAL_STR(vals + 1) = *_domain;
@@ -168,34 +168,34 @@ static inline int get_ha1(struct username* _username, str* _domain,
 
 	n = (use_domain ? 2 : 1);
 	nc = 1 + credentials_n;
-	if (auth_dbf.use_table(auth_db_handle, _table) < 0) {
+	if(auth_dbf.use_table(auth_db_handle, _table) < 0) {
 		LM_ERR("failed to use_table\n");
 		pkg_free(col);
 		return -1;
 	}
 
-	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, res) < 0) {
+	if(auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, res) < 0) {
 		LM_ERR("failed to query database\n");
 		pkg_free(col);
 		return -1;
 	}
 	pkg_free(col);
 
-	if (RES_ROW_N(*res) == 0) {
-		LM_DBG("no result for user \'%.*s@%.*s\'\n",
-				_username->user.len, ZSW(_username->user.s),
-			(use_domain ? (_domain->len) : 0), ZSW(_domain->s));
+	if(RES_ROW_N(*res) == 0) {
+		LM_DBG("no result for user \'%.*s@%.*s\'\n", _username->user.len,
+				ZSW(_username->user.s), (use_domain ? (_domain->len) : 0),
+				ZSW(_domain->s));
 		return 1;
 	}
 
-	result.s = (char*)ROW_VALUES(RES_ROWS(*res))[0].val.string_val;
+	result.s = (char *)ROW_VALUES(RES_ROWS(*res))[0].val.string_val;
 	result.len = strlen(result.s);
 
-	if (calc_ha1) {
+	if(calc_ha1) {
 		/* Only plaintext passwords are stored in database,
 		 * we have to calculate HA1 */
-		auth_api.calc_HA1(HA_MD5, &_username->whole, _domain, &result,
-				0, 0, _ha1);
+		auth_api.calc_HA1(
+				HA_MD5, &_username->whole, _domain, &result, 0, 0, _ha1);
 		LM_DBG("HA1 string calculated: %s\n", _ha1);
 	} else {
 		memcpy(_ha1, result.s, result.len);
@@ -209,13 +209,14 @@ static inline int get_ha1(struct username* _username, str* _domain,
 /*
  * Generate AVPs from the database result
  */
-static int generate_avps(struct sip_msg* msg, db1_res_t* db_res)
+static int generate_avps(struct sip_msg *msg, db1_res_t *db_res)
 {
 	pv_elem_t *cred;
 	int i;
 
-	for (cred=credentials, i=1; cred; cred=cred->next, i++) {
-		if (db_val2pv_spec(msg, &RES_ROWS(db_res)[0].values[i], cred->spec) != 0) {
+	for(cred = credentials, i = 1; cred; cred = cred->next, i++) {
+		if(db_val2pv_spec(msg, &RES_ROWS(db_res)[0].values[i], cred->spec)
+				!= 0) {
 			LM_ERR("Failed to convert value for column %.*s\n",
 					RES_NAMES(db_res)[i]->len, RES_NAMES(db_res)[i]->s);
 			return -1;
@@ -228,15 +229,15 @@ static int generate_avps(struct sip_msg* msg, db1_res_t* db_res)
 /*
  * Authorize digest credentials and set the pointer to used hdr
  */
-static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
-				str *table, hdr_types_t hftype, str *method, hdr_field_t **ahdr)
+static int digest_authenticate_hdr(sip_msg_t *msg, str *realm, str *table,
+		hdr_types_t hftype, str *method, hdr_field_t **ahdr)
 {
 	char ha1[256];
 	auth_cfg_result_t ret;
 	auth_result_t rauth;
-	struct hdr_field* h;
-	auth_body_t* cred;
-	db1_res_t* result = NULL;
+	struct hdr_field *h;
+	auth_body_t *cred;
+	db1_res_t *result = NULL;
 
 	cred = 0;
 	ret = AUTH_ERROR;
@@ -279,34 +280,35 @@ static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
 			goto end;
 	}
 
-	cred = (auth_body_t*)h->parsed;
-	if(ahdr!=NULL) *ahdr = h;
+	cred = (auth_body_t *)h->parsed;
+	if(ahdr != NULL)
+		*ahdr = h;
 
 	rauth = get_ha1(&cred->digest.username, realm, table, ha1, &result);
-	if (rauth < 0) {
+	if(rauth < 0) {
 		/* Error while accessing the database */
 		ret = AUTH_ERROR;
 		goto end;
 	}
-	if (rauth > 0) {
+	if(rauth > 0) {
 		/* Username not found in the database */
 		ret = AUTH_USER_UNKNOWN;
 		goto end;
 	}
 
 	/* Even when user failed to authenticate */
-	if (force_generate_avps) {
+	if(force_generate_avps) {
 		generate_avps(msg, result);
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
 	rauth = auth_api.check_response(&(cred->digest), method, ha1);
-	if(rauth==AUTHENTICATED) {
+	if(rauth == AUTHENTICATED) {
 		ret = AUTH_OK;
 		switch(auth_api.post_auth(msg, h, ha1)) {
 			case AUTHENTICATED:
 				/* Only when user succeeded to authenticate */
-				if (!force_generate_avps) {
+				if(!force_generate_avps) {
 					generate_avps(msg, result);
 				}
 				break;
@@ -315,7 +317,7 @@ static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
 				break;
 		}
 	} else {
-		if(rauth==NOT_AUTHENTICATED)
+		if(rauth == NOT_AUTHENTICATED)
 			ret = AUTH_INVALID_PASSWORD;
 		else
 			ret = AUTH_ERROR;
@@ -330,8 +332,8 @@ end:
 /*
  * Authorize digest credentials
  */
-static int digest_authenticate(sip_msg_t* msg, str *realm,
-				str *table, hdr_types_t hftype, str *method)
+static int digest_authenticate(
+		sip_msg_t *msg, str *realm, str *table, hdr_types_t hftype, str *method)
 {
 	return digest_authenticate_hdr(msg, realm, table, hftype, method, NULL);
 }
@@ -340,119 +342,117 @@ static int digest_authenticate(sip_msg_t* msg, str *realm,
 /*
  * Authenticate using Proxy-Authorize header field
  */
-int proxy_authenticate(struct sip_msg* _m, char* _realm, char* _table)
+int proxy_authenticate(struct sip_msg *_m, char *_realm, char *_table)
 {
 	str srealm;
 	str stable;
 
-	if(_table==NULL) {
+	if(_table == NULL) {
 		LM_ERR("invalid table parameter\n");
 		return AUTH_ERROR;
 	}
 
-	stable.s   = _table;
+	stable.s = _table;
 	stable.len = strlen(stable.s);
 
-	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0) {
+	if(get_str_fparam(&srealm, _m, (fparam_t *)_realm) < 0) {
 		LM_ERR("failed to get realm value\n");
 		return AUTH_ERROR;
 	}
 
-	if (srealm.len==0)
-	{
+	if(srealm.len == 0) {
 		LM_ERR("invalid realm parameter - empty value\n");
 		return AUTH_ERROR;
 	}
 	LM_DBG("realm value [%.*s]\n", srealm.len, srealm.s);
 
 	return digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T,
-					&_m->first_line.u.request.method);
+			&_m->first_line.u.request.method);
 }
 
 
 /*
  * Authenticate using WWW-Authorize header field
  */
-int www_authenticate(struct sip_msg* _m, char* _realm, char* _table)
+int www_authenticate(struct sip_msg *_m, char *_realm, char *_table)
 {
 	str srealm;
 	str stable;
 
-	if(_table==NULL) {
+	if(_table == NULL) {
 		LM_ERR("invalid table parameter\n");
 		return AUTH_ERROR;
 	}
 
-	stable.s   = _table;
+	stable.s = _table;
 	stable.len = strlen(stable.s);
 
-	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0) {
+	if(get_str_fparam(&srealm, _m, (fparam_t *)_realm) < 0) {
 		LM_ERR("failed to get realm value\n");
 		return AUTH_ERROR;
 	}
 
-	if (srealm.len==0)
-	{
+	if(srealm.len == 0) {
 		LM_ERR("invalid realm parameter - empty value\n");
 		return AUTH_ERROR;
 	}
 	LM_DBG("realm value [%.*s]\n", srealm.len, srealm.s);
 
 	return digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T,
-					&_m->first_line.u.request.method);
+			&_m->first_line.u.request.method);
 }
 
-int ki_www_authenticate(struct sip_msg* _m, str *realm, str *table)
+int ki_www_authenticate(struct sip_msg *_m, str *realm, str *table)
 {
 	LM_DBG("realm value [%.*s]\n", realm->len, realm->s);
 
 	return digest_authenticate(_m, realm, table, HDR_AUTHORIZATION_T,
-					&_m->first_line.u.request.method);
+			&_m->first_line.u.request.method);
 }
 
-int www_authenticate2(struct sip_msg* _m, char* _realm, char* _table, char *_method)
+int www_authenticate2(
+		struct sip_msg *_m, char *_realm, char *_table, char *_method)
 {
 	str srealm;
 	str stable;
 	str smethod;
 
-	if(_table==NULL) {
+	if(_table == NULL) {
 		LM_ERR("invalid table parameter\n");
 		return AUTH_ERROR;
 	}
 
-	stable.s   = _table;
+	stable.s = _table;
 	stable.len = strlen(stable.s);
 
-	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0) {
+	if(get_str_fparam(&srealm, _m, (fparam_t *)_realm) < 0) {
 		LM_ERR("failed to get realm value\n");
 		return AUTH_ERROR;
 	}
 
-	if (srealm.len==0)
-	{
+	if(srealm.len == 0) {
 		LM_ERR("invalid realm parameter - empty value\n");
 		return AUTH_ERROR;
 	}
 	LM_DBG("realm value [%.*s]\n", srealm.len, srealm.s);
 
-	if (get_str_fparam(&smethod, _m, (fparam_t*)_method) < 0) {
+	if(get_str_fparam(&smethod, _m, (fparam_t *)_method) < 0) {
 		LM_ERR("failed to get method value\n");
 		return AUTH_ERROR;
 	}
 
-	if (smethod.len==0)
-	{
+	if(smethod.len == 0) {
 		LM_ERR("invalid method parameter - empty value\n");
 		return AUTH_ERROR;
 	}
 	LM_DBG("method value [%.*s]\n", smethod.len, smethod.s);
 
-	return digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T,
-					&smethod);
+	return digest_authenticate(
+			_m, &srealm, &stable, HDR_AUTHORIZATION_T, &smethod);
 }
 
-int ki_www_authenticate_method(sip_msg_t *msg, str *realm, str *table, str *method)
+int ki_www_authenticate_method(
+		sip_msg_t *msg, str *realm, str *table, str *method)
 {
 	return digest_authenticate(msg, realm, table, HDR_AUTHORIZATION_T, method);
 }
@@ -469,79 +469,92 @@ int auth_check(sip_msg_t *_m, str *srealm, str *stable, int iflags)
 	sip_uri_t *furi = NULL;
 	str suser;
 
-	if ((_m->REQ_METHOD == METHOD_ACK) || (_m->REQ_METHOD == METHOD_CANCEL)) {
+	if((_m->REQ_METHOD == METHOD_ACK) || (_m->REQ_METHOD == METHOD_CANCEL)) {
 		return AUTH_OK;
 	}
 
-	if (srealm->len<=0) {
+	if(srealm->len <= 0) {
 		LM_ERR("invalid realm parameter - empty value\n");
 		return AUTH_ERROR;
 	}
 
-	if (stable->len==0) {
+	if(stable->len == 0) {
 		LM_ERR("invalid table parameter - empty value\n");
 		return AUTH_ERROR;
 	}
 
 	LM_DBG("realm [%.*s] table [%.*s] flags [%d]\n", srealm->len, srealm->s,
-			stable->len,  stable->s, iflags);
+			stable->len, stable->s, iflags);
 
 	hdr = NULL;
-	if(_m->REQ_METHOD==METHOD_REGISTER)
+	if(_m->REQ_METHOD == METHOD_REGISTER)
 		ret = digest_authenticate_hdr(_m, srealm, stable, HDR_AUTHORIZATION_T,
-						&_m->first_line.u.request.method, &hdr);
+				&_m->first_line.u.request.method, &hdr);
 	else
 		ret = digest_authenticate_hdr(_m, srealm, stable, HDR_PROXYAUTH_T,
-						&_m->first_line.u.request.method, &hdr);
+				&_m->first_line.u.request.method, &hdr);
 
-	if(ret==AUTH_OK && hdr!=NULL && (iflags&AUTH_CHECK_ID_F)) {
-		suser = ((auth_body_t*)(hdr->parsed))->digest.username.user;
+	if(ret == AUTH_OK && hdr != NULL && (iflags & AUTH_CHECK_ID_F)) {
+		suser = ((auth_body_t *)(hdr->parsed))->digest.username.user;
 
-		if((furi=parse_from_uri(_m))==NULL)
+		if((furi = parse_from_uri(_m)) == NULL)
 			return AUTH_ERROR;
 
-		if(_m->REQ_METHOD==METHOD_REGISTER || _m->REQ_METHOD==METHOD_PUBLISH) {
-			if((turi=parse_to_uri(_m))==NULL)
+		if(_m->REQ_METHOD == METHOD_REGISTER
+				|| _m->REQ_METHOD == METHOD_PUBLISH) {
+			if((turi = parse_to_uri(_m)) == NULL)
 				return AUTH_ERROR;
 			uri = turi;
 		} else {
 			uri = furi;
 		}
-		if(!((iflags&AUTH_CHECK_SKIPFWD_F)
-				&& (_m->REQ_METHOD==METHOD_INVITE || _m->REQ_METHOD==METHOD_BYE
-					|| _m->REQ_METHOD==METHOD_PRACK || _m->REQ_METHOD==METHOD_UPDATE
-					|| _m->REQ_METHOD==METHOD_MESSAGE))) {
-			if(suser.len!=uri->user.len
-						|| strncmp(suser.s, uri->user.s, suser.len)!=0) {
-				LM_DBG("authentication username mismatch with from/to username\n");
+		if(!((iflags & AUTH_CHECK_SKIPFWD_F)
+				   && (_m->REQ_METHOD == METHOD_INVITE
+						   || _m->REQ_METHOD == METHOD_BYE
+						   || _m->REQ_METHOD == METHOD_PRACK
+						   || _m->REQ_METHOD == METHOD_UPDATE
+						   || _m->REQ_METHOD == METHOD_MESSAGE))) {
+			if(suser.len != uri->user.len
+					|| strncmp(suser.s, uri->user.s, suser.len) != 0) {
+				LM_DBG("authentication username mismatch with from/to "
+					   "username\n");
 				return AUTH_USER_MISMATCH;
 			}
 		}
 
-		if(_m->REQ_METHOD==METHOD_REGISTER || _m->REQ_METHOD==METHOD_PUBLISH) {
+		if(_m->REQ_METHOD == METHOD_REGISTER
+				|| _m->REQ_METHOD == METHOD_PUBLISH) {
 			/* check from==to */
-			if(furi->user.len!=turi->user.len
-					|| strncmp(furi->user.s, turi->user.s, furi->user.len)!=0) {
+			if(furi->user.len != turi->user.len
+					|| strncmp(furi->user.s, turi->user.s, furi->user.len)
+							   != 0) {
 				LM_DBG("from username mismatch with to username\n");
 				return AUTH_USER_MISMATCH;
 			}
-			if(use_domain!=0 && (furi->host.len!=turi->host.len
-					|| strncmp(furi->host.s, turi->host.s, furi->host.len)!=0)) {
+			if(use_domain != 0
+					&& (furi->host.len != turi->host.len
+							|| strncmp(furi->host.s, turi->host.s,
+									   furi->host.len)
+									   != 0)) {
 				LM_DBG("from domain mismatch with to domain\n");
 				return AUTH_USER_MISMATCH;
 			}
 			/* check r-uri==from for publish */
-			if(_m->REQ_METHOD==METHOD_PUBLISH) {
-				if(parse_sip_msg_uri(_m)<0)
+			if(_m->REQ_METHOD == METHOD_PUBLISH) {
+				if(parse_sip_msg_uri(_m) < 0)
 					return AUTH_ERROR;
 				uri = &_m->parsed_uri;
-				if(furi->user.len!=uri->user.len
-						|| strncmp(furi->user.s, uri->user.s, furi->user.len)!=0) {
+				if(furi->user.len != uri->user.len
+						|| strncmp(furi->user.s, uri->user.s, furi->user.len)
+								   != 0) {
 					LM_DBG("from username mismatch with r-uri username\n");
 					return AUTH_USER_MISMATCH;
 				}
-				if(use_domain!=0 && (furi->host.len!=uri->host.len
-						|| strncmp(furi->host.s, uri->host.s, furi->host.len)!=0)) {
+				if(use_domain != 0
+						&& (furi->host.len != uri->host.len
+								|| strncmp(furi->host.s, uri->host.s,
+										   furi->host.len)
+										   != 0)) {
 					LM_DBG("from domain mismatch with r-uri domain\n");
 					return AUTH_USER_MISMATCH;
 				}
@@ -556,38 +569,37 @@ int auth_check(sip_msg_t *_m, str *srealm, str *stable, int iflags)
 /*
  * Authenticate using WWW/Proxy-Authorize header field
  */
-int w_auth_check(sip_msg_t *_m, char* _realm, char* _table, char *_flags)
+int w_auth_check(sip_msg_t *_m, char *_realm, char *_table, char *_flags)
 {
 	str srealm;
 	str stable;
 	int iflags;
 
-	if(_m==NULL) {
+	if(_m == NULL) {
 		LM_ERR("invalid msg parameter\n");
 		return AUTH_ERROR;
 	}
 
-	if ((_m->REQ_METHOD == METHOD_ACK) || (_m->REQ_METHOD == METHOD_CANCEL)) {
+	if((_m->REQ_METHOD == METHOD_ACK) || (_m->REQ_METHOD == METHOD_CANCEL)) {
 		return AUTH_OK;
 	}
 
-	if(_realm==NULL || _table==NULL || _flags==NULL) {
+	if(_realm == NULL || _table == NULL || _flags == NULL) {
 		LM_ERR("invalid parameters\n");
 		return AUTH_ERROR;
 	}
 
-	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0) {
+	if(get_str_fparam(&srealm, _m, (fparam_t *)_realm) < 0) {
 		LM_ERR("failed to get realm value\n");
 		return AUTH_ERROR;
 	}
 
-	if (get_str_fparam(&stable, _m, (fparam_t*)_table) < 0) {
+	if(get_str_fparam(&stable, _m, (fparam_t *)_table) < 0) {
 		LM_ERR("failed to get realm value\n");
 		return AUTH_ERROR;
 	}
 
-	if(fixup_get_ivalue(_m, (gparam_p)_flags, &iflags)!=0)
-	{
+	if(fixup_get_ivalue(_m, (gparam_p)_flags, &iflags) != 0) {
 		LM_ERR("invalid flags parameter\n");
 		return -1;
 	}
@@ -600,7 +612,7 @@ int w_auth_check(sip_msg_t *_m, char* _realm, char* _table, char *_flags)
  */
 int bind_auth_db(auth_db_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
