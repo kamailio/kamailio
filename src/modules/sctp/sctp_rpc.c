@@ -60,13 +60,15 @@ static void core_sctp_options(rpc_t *rpc, void *c)
 				si = sctp_listen;
 			} else {
 				if(parse_phostport(param, &host, &hlen, &port, &proto) != 0) {
-					rpc->fault(c, 500, "bad param (use address, address:port,"
-									   " default or first)");
+					rpc->fault(c, 500,
+							"bad param (use address, address:port,"
+							" default or first)");
 					return;
 				}
 				if(proto && proto != PROTO_SCTP) {
-					rpc->fault(c, 500, "bad protocol in param (only SCTP"
-									   " allowed)");
+					rpc->fault(c, 500,
+							"bad protocol in param (only SCTP"
+							" allowed)");
 					return;
 				}
 				hs.s = host;

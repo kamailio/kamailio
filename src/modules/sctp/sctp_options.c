@@ -88,8 +88,9 @@ static cfg_def_t sctp_cfg_def[] = {
 		{"socket_sndbuf", CFG_VAR_INT | CFG_READONLY, 512, 102400, 0, 0,
 				"socket send buffer size (read-only)"},
 		{"autoclose", CFG_VAR_INT | CFG_CB_ONLY_ONCE, 1, 1 << 30, fix_autoclose,
-				set_autoclose, "seconds before closing and idle connection "
-							   "(must be non-zero)"},
+				set_autoclose,
+				"seconds before closing and idle connection "
+				"(must be non-zero)"},
 		{"send_ttl", CFG_VAR_INT | CFG_ATOMIC, 0, 1 << 30, 0, 0,
 				"milliseconds before aborting a send"},
 		{"send_retries", CFG_VAR_INT | CFG_ATOMIC, 0, MAX_SCTP_SEND_RETRIES, 0,
@@ -127,15 +128,18 @@ static cfg_def_t sctp_cfg_def[] = {
 				fix_pathmaxrxt, set_pathmaxrxt,
 				"maximum retransmission attempts per path"},
 		{"sack_delay", CFG_VAR_INT | CFG_CB_ONLY_ONCE, 0, 1 << 30,
-				fix_sack_delay, set_sack_delay, "time since the last received "
-												"packet before sending a SACK, "
-												"in msecs"},
+				fix_sack_delay, set_sack_delay,
+				"time since the last received "
+				"packet before sending a SACK, "
+				"in msecs"},
 		{"sack_freq", CFG_VAR_INT | CFG_CB_ONLY_ONCE, 0, 1 << 10, fix_sack_freq,
-				set_sack_freq, "number of received packets that trigger the "
-							   "sending of a SACK"},
+				set_sack_freq,
+				"number of received packets that trigger the "
+				"sending of a SACK"},
 		{"max_burst", CFG_VAR_INT | CFG_CB_ONLY_ONCE, 0, 1 << 10, fix_max_burst,
-				set_max_burst, "maximum burst of packets that can be emitted "
-							   "by an association"},
+				set_max_burst,
+				"maximum burst of packets that can be emitted "
+				"by an association"},
 		{0, 0, 0, 0, 0, 0, 0}};
 
 
@@ -152,12 +156,12 @@ void init_sctp_options()
 	sctp_default_cfg.so_sndbuf=0; /* do nothing, use the kernel default */
 #endif
 	sctp_default_cfg.autoclose = DEFAULT_SCTP_AUTOCLOSE; /* in seconds */
-	sctp_default_cfg.send_ttl = DEFAULT_SCTP_SEND_TTL;   /* in milliseconds */
+	sctp_default_cfg.send_ttl = DEFAULT_SCTP_SEND_TTL;	 /* in milliseconds */
 	sctp_default_cfg.send_retries = DEFAULT_SCTP_SEND_RETRIES;
 	sctp_default_cfg.max_assocs = -1; /* as much as possible by default */
 #ifdef SCTP_CONN_REUSE
 	sctp_default_cfg.assoc_tracking = 1; /* on by default */
-	sctp_default_cfg.assoc_reuse = 1;	/* on by default */
+	sctp_default_cfg.assoc_reuse = 1;	 /* on by default */
 #else
 	sctp_default_cfg.assoc_tracking = 0;
 	sctp_default_cfg.assoc_reuse = 0;
