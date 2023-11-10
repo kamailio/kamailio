@@ -46,10 +46,15 @@
  * can be 32 bits aligned => malloc should return multiple of long long
  * aligned memory
  * - malloc() on gnu/linux: multiple of 8 or 16 on 64-bit systems
- * - for simplicity settle for 16 always
+ * - for simplicity settle for 16 by default
  * - sizeof(fm_frag) must be multiple of ROUNDTO!
  */
+#ifndef KSR_MEMORY_ALIGN
 #define ROUNDTO 16UL
+#else
+#define ROUNDTO KSR_MEMORY_ALIGN
+#endif
+
 
 #define MIN_FRAG_SIZE ROUNDTO
 
