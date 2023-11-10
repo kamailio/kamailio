@@ -31,7 +31,8 @@
 
 #include "../../core/cfg/cfg.h"
 
-struct cfg_group_stun {
+struct cfg_group_stun
+{
 	int stun_active;
 };
 
