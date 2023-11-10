@@ -39,16 +39,16 @@
 #define PRINT_VALUE_BUF_LEN 256
 
 
-
 /**
  * @brief Representation of the xhttp_prom reply being constructed.
  *
  * This data structure describes the xhttp_prom reply that is being constructed
  * and will be sent to the client.
  */
-struct xhttp_prom_reply {
+struct xhttp_prom_reply
+{
 	int code;	/**< Reply code which indicates the type of the reply */
-	str reason;	/**< Reason phrase text which provides human-readable
+	str reason; /**< Reason phrase text which provides human-readable
 			 * description that augments the reply code */
 	str body;	/**< The xhttp_prom http body built so far */
 	str buf;	/**< The memory buffer allocated for the reply, this is
@@ -65,9 +65,11 @@ struct xhttp_prom_reply {
  *
  * There is always one context per xhttp_prom request.
  */
-typedef struct prom_ctx {
-	sip_msg_t* msg;			/**< The SIP/HTTP received message. */
-	struct xhttp_prom_reply reply;	/**< xhttp_prom reply to be sent to the client */
+typedef struct prom_ctx
+{
+	sip_msg_t *msg; /**< The SIP/HTTP received message. */
+	struct xhttp_prom_reply
+			reply; /**< xhttp_prom reply to be sent to the client */
 	int reply_sent;
 } prom_ctx_t;
 
@@ -82,4 +84,3 @@ extern str xhttp_prom_beginning;
 extern int timeout_minutes;
 
 #endif /* _XHTTP_PROM_H */
-
