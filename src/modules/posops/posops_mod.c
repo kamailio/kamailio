@@ -38,22 +38,23 @@ static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
 
-static int w_posops_pos_append(sip_msg_t* msg, char* p1idx, char* p2val);
-static int w_posops_pos_insert(sip_msg_t* msg, char* p1idx, char* p2val);
-static int w_posops_pos_rm(sip_msg_t* msg, char* p1idx, char* p2len);
-static int w_posops_pos_set_char(sip_msg_t* msg, char* p1idx, char* p2val);
-static int w_posops_pos_headers_start(sip_msg_t* msg, char* p1, char* p2);
-static int w_posops_pos_headers_end(sip_msg_t* msg, char* p1, char* p2);
-static int w_posops_pos_body_start(sip_msg_t* msg, char* p1, char* p2);
-static int w_posops_pos_body_end(sip_msg_t* msg, char* p1, char* p2);
-static int w_posops_pos_find_str(sip_msg_t* msg, char* p1idx, char* p2val);
-static int w_posops_pos_findi_str(sip_msg_t* msg, char* p1idx, char* p2val);
-static int w_posops_pos_rfind_str(sip_msg_t* msg, char* p1idx, char* p2val);
-static int w_posops_pos_rfindi_str(sip_msg_t* msg, char* p1idx, char* p2val);
-static int w_posops_pos_search(sip_msg_t* msg, char* p1idx, char* p2re);
-static int w_posops_pos_rsearch(sip_msg_t* msg, char* p1idx, char* p2re);
+static int w_posops_pos_append(sip_msg_t *msg, char *p1idx, char *p2val);
+static int w_posops_pos_insert(sip_msg_t *msg, char *p1idx, char *p2val);
+static int w_posops_pos_rm(sip_msg_t *msg, char *p1idx, char *p2len);
+static int w_posops_pos_set_char(sip_msg_t *msg, char *p1idx, char *p2val);
+static int w_posops_pos_headers_start(sip_msg_t *msg, char *p1, char *p2);
+static int w_posops_pos_headers_end(sip_msg_t *msg, char *p1, char *p2);
+static int w_posops_pos_body_start(sip_msg_t *msg, char *p1, char *p2);
+static int w_posops_pos_body_end(sip_msg_t *msg, char *p1, char *p2);
+static int w_posops_pos_find_str(sip_msg_t *msg, char *p1idx, char *p2val);
+static int w_posops_pos_findi_str(sip_msg_t *msg, char *p1idx, char *p2val);
+static int w_posops_pos_rfind_str(sip_msg_t *msg, char *p1idx, char *p2val);
+static int w_posops_pos_rfindi_str(sip_msg_t *msg, char *p1idx, char *p2val);
+static int w_posops_pos_search(sip_msg_t *msg, char *p1idx, char *p2re);
+static int w_posops_pos_rsearch(sip_msg_t *msg, char *p1idx, char *p2re);
 
-typedef struct posops_data {
+typedef struct posops_data
+{
 	int ret;
 	int idx;
 	int len;
@@ -61,15 +62,15 @@ typedef struct posops_data {
 
 static int posops_idx0 = -255;
 
-static int pv_posops_get_pos(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+static int pv_posops_get_pos(
+		sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_posops_parse_pos_name(pv_spec_t *sp, str *in);
 
 static pv_export_t mod_pvs[] = {
-	{ {"pos", (sizeof("pos")-1)}, PVT_OTHER, pv_posops_get_pos, 0,
-		pv_posops_parse_pos_name, 0, 0, 0 },
+		{{"pos", (sizeof("pos") - 1)}, PVT_OTHER, pv_posops_get_pos, 0,
+				pv_posops_parse_pos_name, 0, 0, 0},
 
-	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
-};
+		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
 /**
  *
@@ -173,17 +174,17 @@ static int ki_posops_pos_append(sip_msg_t *msg, int idx, str *val)
 	sr_lump_t *anchor = NULL;
 
 	posops_data_init();
-	if(val==NULL || val->s==NULL || val->len<=0) {
+	if(val == NULL || val->s == NULL || val->len <= 0) {
 		LM_ERR("invalid val parameter\n");
 		return -1;
 	}
 
-	if(idx<0) {
+	if(idx < 0) {
 		offset = msg->len + idx;
 	} else {
 		offset = idx;
 	}
-	if(offset>msg->len) {
+	if(offset > msg->len) {
 		LM_ERR("offset invalid: %d (msg-len: %d)\n", offset, msg->len);
 		return -1;
 	}
@@ -193,7 +194,7 @@ static int ki_posops_pos_append(sip_msg_t *msg, int idx, str *val)
 		LM_ERR("failed to create the anchor\n");
 		return -1;
 	}
-	if (insert_new_lump_after(anchor, val->s, val->len, 0) == 0) {
+	if(insert_new_lump_after(anchor, val->s, val->len, 0) == 0) {
 		LM_ERR("unable to add lump\n");
 		return -1;
 	}
@@ -204,18 +205,18 @@ static int ki_posops_pos_append(sip_msg_t *msg, int idx, str *val)
 /**
  *
  */
-static int w_posops_pos_append(sip_msg_t* msg, char* p1idx, char* p2val)
+static int w_posops_pos_append(sip_msg_t *msg, char *p1idx, char *p2val)
 {
 	int idx = 0;
 	str val = STR_NULL;
 
 	posops_data_init();
-	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)p1idx, &idx) != 0) {
 		LM_ERR("unable to get idx parameter\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)p2val, &val)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t *)p2val, &val) != 0) {
 		LM_ERR("unable to get val parameter\n");
 		return -1;
 	}
@@ -232,17 +233,17 @@ static int ki_posops_pos_insert(sip_msg_t *msg, int idx, str *val)
 	sr_lump_t *anchor = NULL;
 
 	posops_data_init();
-	if(val==NULL || val->s==NULL || val->len<=0) {
+	if(val == NULL || val->s == NULL || val->len <= 0) {
 		LM_ERR("invalid val parameter\n");
 		return -1;
 	}
 
-	if(idx<0) {
+	if(idx < 0) {
 		offset = msg->len + idx;
 	} else {
 		offset = idx;
 	}
-	if(offset>msg->len) {
+	if(offset > msg->len) {
 		LM_ERR("offset invalid: %d (msg-len: %d)\n", offset, msg->len);
 		return -1;
 	}
@@ -252,7 +253,7 @@ static int ki_posops_pos_insert(sip_msg_t *msg, int idx, str *val)
 		LM_ERR("failed to create the anchor\n");
 		return -1;
 	}
-	if (insert_new_lump_before(anchor, val->s, val->len, 0) == 0) {
+	if(insert_new_lump_before(anchor, val->s, val->len, 0) == 0) {
 		LM_ERR("unable to add lump\n");
 		return -1;
 	}
@@ -263,18 +264,18 @@ static int ki_posops_pos_insert(sip_msg_t *msg, int idx, str *val)
 /**
  *
  */
-static int w_posops_pos_insert(sip_msg_t* msg, char* p1idx, char* p2val)
+static int w_posops_pos_insert(sip_msg_t *msg, char *p1idx, char *p2val)
 {
 	int idx = 0;
 	str val = STR_NULL;
 
 	posops_data_init();
-	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)p1idx, &idx) != 0) {
 		LM_ERR("unable to get idx parameter\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)p2val, &val)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t *)p2val, &val) != 0) {
 		LM_ERR("unable to get val parameter\n");
 		return -1;
 	}
@@ -292,22 +293,22 @@ static int ki_posops_pos_rm(sip_msg_t *msg, int idx, int len)
 	sr_lump_t *anchor = NULL;
 
 	posops_data_init();
-	if(len<=0) {
+	if(len <= 0) {
 		LM_ERR("length invalid: %d (msg-len: %d)\n", len, msg->len);
 		return -1;
 	}
-	if(idx<0) {
+	if(idx < 0) {
 		offset = msg->len + idx;
 	} else {
 		offset = idx;
 	}
-	if(offset>msg->len) {
+	if(offset > msg->len) {
 		LM_ERR("offset invalid: %d (msg-len: %d)\n", offset, msg->len);
 		return -1;
 	}
-	if(offset==msg->len) {
-		LM_WARN("offset at the end of message: %d (msg-len: %d)\n",
-				offset, msg->len);
+	if(offset == msg->len) {
+		LM_WARN("offset at the end of message: %d (msg-len: %d)\n", offset,
+				msg->len);
 		return 1;
 	}
 	if(offset + len > msg->len) {
@@ -315,10 +316,10 @@ static int ki_posops_pos_rm(sip_msg_t *msg, int idx, int len)
 				offset, len, msg->len);
 		return -1;
 	}
-	anchor=del_lump(msg, offset, len, 0);
-	if (anchor==0) {
-		LM_ERR("cannot remove - offset: %d - len: %d - msg-len: %d\n",
-				offset, len, msg->len);
+	anchor = del_lump(msg, offset, len, 0);
+	if(anchor == 0) {
+		LM_ERR("cannot remove - offset: %d - len: %d - msg-len: %d\n", offset,
+				len, msg->len);
 		return -1;
 	}
 	return 1;
@@ -327,17 +328,17 @@ static int ki_posops_pos_rm(sip_msg_t *msg, int idx, int len)
 /**
  *
  */
-static int w_posops_pos_rm(sip_msg_t* msg, char* p1idx, char* p2len)
+static int w_posops_pos_rm(sip_msg_t *msg, char *p1idx, char *p2len)
 {
 	int idx = 0;
 	int len = 0;
 
 	posops_data_init();
-	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)p1idx, &idx) != 0) {
 		LM_ERR("unable to get idx parameter\n");
 		return -1;
 	}
-	if(fixup_get_ivalue(msg, (gparam_t*)p2len, &len)!=0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)p2len, &len) != 0) {
 		LM_ERR("unable to get len parameter\n");
 		return -1;
 	}
@@ -353,17 +354,17 @@ static int ki_posops_pos_set_char(sip_msg_t *msg, int idx, str *val)
 	int offset;
 
 	posops_data_init();
-	if(val==NULL || val->s==NULL || val->len<=0) {
+	if(val == NULL || val->s == NULL || val->len <= 0) {
 		LM_ERR("invalid val parameter\n");
 		return -1;
 	}
 
-	if(idx<0) {
+	if(idx < 0) {
 		offset = msg->len + idx;
 	} else {
 		offset = idx;
 	}
-	if(offset>msg->len) {
+	if(offset > msg->len) {
 		LM_ERR("offset invalid: %d (msg-len: %d)\n", offset, msg->len);
 		return -1;
 	}
@@ -376,18 +377,18 @@ static int ki_posops_pos_set_char(sip_msg_t *msg, int idx, str *val)
 /**
  *
  */
-static int w_posops_pos_set_char(sip_msg_t* msg, char* p1idx, char* p2val)
+static int w_posops_pos_set_char(sip_msg_t *msg, char *p1idx, char *p2val)
 {
 	int idx = 0;
 	str val = STR_NULL;
 
 	posops_data_init();
-	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)p1idx, &idx) != 0) {
 		LM_ERR("unable to get idx parameter\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)p2val, &val)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t *)p2val, &val) != 0) {
 		LM_ERR("unable to get val parameter\n");
 		return -1;
 	}
@@ -398,16 +399,16 @@ static int w_posops_pos_set_char(sip_msg_t* msg, char* p1idx, char* p2val)
 /**
  *
  */
-static int ki_posops_pos_headers_start(sip_msg_t* msg)
+static int ki_posops_pos_headers_start(sip_msg_t *msg)
 {
 	posops_data_init();
-	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse headers\n");
 		return -1;
 	}
 
 	_posops_data.idx = msg->first_line.len;
-	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
+	_posops_data.ret = (_posops_data.idx == 0) ? posops_idx0 : _posops_data.idx;
 
 	return _posops_data.ret;
 }
@@ -415,7 +416,7 @@ static int ki_posops_pos_headers_start(sip_msg_t* msg)
 /**
  *
  */
-static int w_posops_pos_headers_start(sip_msg_t* msg, char* p1, char* p2)
+static int w_posops_pos_headers_start(sip_msg_t *msg, char *p1, char *p2)
 {
 	return ki_posops_pos_headers_start(msg);
 }
@@ -423,16 +424,16 @@ static int w_posops_pos_headers_start(sip_msg_t* msg, char* p1, char* p2)
 /**
  *
  */
-static int ki_posops_pos_headers_end(sip_msg_t* msg)
+static int ki_posops_pos_headers_end(sip_msg_t *msg)
 {
 	posops_data_init();
-	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse headers\n");
 		return -1;
 	}
 
 	_posops_data.idx = msg->unparsed - msg->buf;
-	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
+	_posops_data.ret = (_posops_data.idx == 0) ? posops_idx0 : _posops_data.idx;
 
 	return _posops_data.ret;
 }
@@ -440,7 +441,7 @@ static int ki_posops_pos_headers_end(sip_msg_t* msg)
 /**
  *
  */
-static int w_posops_pos_headers_end(sip_msg_t* msg, char* p1, char* p2)
+static int w_posops_pos_headers_end(sip_msg_t *msg, char *p1, char *p2)
 {
 	return ki_posops_pos_headers_end(msg);
 }
@@ -448,12 +449,12 @@ static int w_posops_pos_headers_end(sip_msg_t* msg, char* p1, char* p2)
 /**
  *
  */
-static int ki_posops_pos_body_start(sip_msg_t* msg)
+static int ki_posops_pos_body_start(sip_msg_t *msg)
 {
 	char *body = 0;
 
 	posops_data_init();
-	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse headers\n");
 		return -1;
 	}
@@ -465,7 +466,7 @@ static int ki_posops_pos_body_start(sip_msg_t* msg)
 	}
 	_posops_data.idx = body - msg->buf;
 
-	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
+	_posops_data.ret = (_posops_data.idx == 0) ? posops_idx0 : _posops_data.idx;
 
 	return _posops_data.ret;
 }
@@ -473,7 +474,7 @@ static int ki_posops_pos_body_start(sip_msg_t* msg)
 /**
  *
  */
-static int w_posops_pos_body_start(sip_msg_t* msg, char* p1, char* p2)
+static int w_posops_pos_body_start(sip_msg_t *msg, char *p1, char *p2)
 {
 	return ki_posops_pos_body_start(msg);
 }
@@ -481,10 +482,10 @@ static int w_posops_pos_body_start(sip_msg_t* msg, char* p1, char* p2)
 /**
  *
  */
-static int ki_posops_pos_body_end(sip_msg_t* msg)
+static int ki_posops_pos_body_end(sip_msg_t *msg)
 {
 	posops_data_init();
-	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse headers\n");
 		return -1;
 	}
@@ -495,7 +496,7 @@ static int ki_posops_pos_body_end(sip_msg_t* msg)
 	}
 
 	_posops_data.idx = msg->len;
-	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
+	_posops_data.ret = (_posops_data.idx == 0) ? posops_idx0 : _posops_data.idx;
 
 	return _posops_data.ret;
 }
@@ -503,9 +504,9 @@ static int ki_posops_pos_body_end(sip_msg_t* msg)
 /**
  *
  */
-static int w_posops_pos_body_end(sip_msg_t* msg, char* p1, char* p2)
+static int w_posops_pos_body_end(sip_msg_t *msg, char *p1, char *p2)
 {
-	return  ki_posops_pos_body_end(msg);
+	return ki_posops_pos_body_end(msg);
 }
 
 /**
@@ -517,24 +518,24 @@ static int ki_posops_pos_find_str(sip_msg_t *msg, int idx, str *val)
 	str text;
 
 	posops_data_init();
-	if(val==NULL || val->s==NULL || val->len<=0) {
+	if(val == NULL || val->s == NULL || val->len <= 0) {
 		return -1;
 	}
-	if(idx<0) {
+	if(idx < 0) {
 		idx += msg->len;
 	}
-	if(idx<0 || idx > msg->len - val->len) {
+	if(idx < 0 || idx > msg->len - val->len) {
 		return -1;
 	}
 	text.s = msg->buf + idx;
 	text.len = msg->len - idx;
 	p = str_search(&text, val);
-	if(p==NULL) {
+	if(p == NULL) {
 		return -1;
 	}
 
 	_posops_data.idx = (int)(p - msg->buf);
-	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
+	_posops_data.ret = (_posops_data.idx == 0) ? posops_idx0 : _posops_data.idx;
 
 	return _posops_data.ret;
 }
@@ -542,18 +543,18 @@ static int ki_posops_pos_find_str(sip_msg_t *msg, int idx, str *val)
 /**
  *
  */
-static int w_posops_pos_find_str(sip_msg_t* msg, char* p1idx, char* p2val)
+static int w_posops_pos_find_str(sip_msg_t *msg, char *p1idx, char *p2val)
 {
 	int idx = 0;
 	str val = STR_NULL;
 
 	posops_data_init();
-	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)p1idx, &idx) != 0) {
 		LM_ERR("unable to get idx parameter\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)p2val, &val)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t *)p2val, &val) != 0) {
 		LM_ERR("unable to get val parameter\n");
 		return -1;
 	}
@@ -570,25 +571,25 @@ static int ki_posops_pos_findi_str(sip_msg_t *msg, int idx, str *val)
 	str text;
 
 	posops_data_init();
-	if(val==NULL || val->s==NULL || val->len<=0) {
+	if(val == NULL || val->s == NULL || val->len <= 0) {
 		return -1;
 	}
-	if(idx<0) {
+	if(idx < 0) {
 		idx += msg->len;
 	}
-	if(idx<0 || idx > msg->len - val->len) {
+	if(idx < 0 || idx > msg->len - val->len) {
 		return -1;
 	}
 
 	text.s = msg->buf + idx;
 	text.len = msg->len - idx;
 	p = str_casesearch(&text, val);
-	if(p==NULL) {
+	if(p == NULL) {
 		return -1;
 	}
 
 	_posops_data.idx = (int)(p - msg->buf);
-	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
+	_posops_data.ret = (_posops_data.idx == 0) ? posops_idx0 : _posops_data.idx;
 
 	return _posops_data.ret;
 }
@@ -596,25 +597,24 @@ static int ki_posops_pos_findi_str(sip_msg_t *msg, int idx, str *val)
 /**
  *
  */
-static int w_posops_pos_findi_str(sip_msg_t* msg, char* p1idx, char* p2val)
+static int w_posops_pos_findi_str(sip_msg_t *msg, char *p1idx, char *p2val)
 {
 	int idx = 0;
 	str val = STR_NULL;
 
 	posops_data_init();
-	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)p1idx, &idx) != 0) {
 		LM_ERR("unable to get idx parameter\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)p2val, &val)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t *)p2val, &val) != 0) {
 		LM_ERR("unable to get val parameter\n");
 		return -1;
 	}
 
 	return ki_posops_pos_findi_str(msg, idx, &val);
 }
-
 
 
 /**
@@ -626,24 +626,24 @@ static int ki_posops_pos_rfind_str(sip_msg_t *msg, int idx, str *val)
 	str text;
 
 	posops_data_init();
-	if(val==NULL || val->s==NULL || val->len<=0) {
+	if(val == NULL || val->s == NULL || val->len <= 0) {
 		return -1;
 	}
-	if(idx<0) {
+	if(idx < 0) {
 		idx += msg->len;
 	}
-	if(idx<0 || idx > msg->len - val->len) {
+	if(idx < 0 || idx > msg->len - val->len) {
 		return -1;
 	}
 	text.s = msg->buf + idx;
 	text.len = msg->len - idx;
 	p = str_rsearch(&text, val);
-	if(p==NULL) {
+	if(p == NULL) {
 		return -1;
 	}
 
 	_posops_data.idx = (int)(p - msg->buf);
-	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
+	_posops_data.ret = (_posops_data.idx == 0) ? posops_idx0 : _posops_data.idx;
 
 	return _posops_data.ret;
 }
@@ -651,18 +651,18 @@ static int ki_posops_pos_rfind_str(sip_msg_t *msg, int idx, str *val)
 /**
  *
  */
-static int w_posops_pos_rfind_str(sip_msg_t* msg, char* p1idx, char* p2val)
+static int w_posops_pos_rfind_str(sip_msg_t *msg, char *p1idx, char *p2val)
 {
 	int idx = 0;
 	str val = STR_NULL;
 
 	posops_data_init();
-	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)p1idx, &idx) != 0) {
 		LM_ERR("unable to get idx parameter\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)p2val, &val)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t *)p2val, &val) != 0) {
 		LM_ERR("unable to get val parameter\n");
 		return -1;
 	}
@@ -679,25 +679,25 @@ static int ki_posops_pos_rfindi_str(sip_msg_t *msg, int idx, str *val)
 	str text;
 
 	posops_data_init();
-	if(val==NULL || val->s==NULL || val->len<=0) {
+	if(val == NULL || val->s == NULL || val->len <= 0) {
 		return -1;
 	}
-	if(idx<0) {
+	if(idx < 0) {
 		idx += msg->len;
 	}
-	if(idx<0 || idx > msg->len - val->len) {
+	if(idx < 0 || idx > msg->len - val->len) {
 		return -1;
 	}
 
 	text.s = msg->buf + idx;
 	text.len = msg->len - idx;
 	p = str_rcasesearch(&text, val);
-	if(p==NULL) {
+	if(p == NULL) {
 		return -1;
 	}
 
 	_posops_data.idx = (int)(p - msg->buf);
-	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
+	_posops_data.ret = (_posops_data.idx == 0) ? posops_idx0 : _posops_data.idx;
 
 	return _posops_data.ret;
 }
@@ -705,18 +705,18 @@ static int ki_posops_pos_rfindi_str(sip_msg_t *msg, int idx, str *val)
 /**
  *
  */
-static int w_posops_pos_rfindi_str(sip_msg_t* msg, char* p1idx, char* p2val)
+static int w_posops_pos_rfindi_str(sip_msg_t *msg, char *p1idx, char *p2val)
 {
 	int idx = 0;
 	str val = STR_NULL;
 
 	posops_data_init();
-	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)p1idx, &idx) != 0) {
 		LM_ERR("unable to get idx parameter\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)p2val, &val)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t *)p2val, &val) != 0) {
 		LM_ERR("unable to get val parameter\n");
 		return -1;
 	}
@@ -731,23 +731,23 @@ static int ki_posops_pos_search_helper(sip_msg_t *msg, int idx, regex_t *re)
 {
 	regmatch_t pmatch;
 
-	if(idx<0) {
+	if(idx < 0) {
 		idx += msg->len;
 	}
-	if(idx<0 || idx >= msg->len) {
+	if(idx < 0 || idx >= msg->len) {
 		return -1;
 	}
 
-	if (regexec(re, msg->buf + idx, 1, &pmatch, 0)!=0) {
+	if(regexec(re, msg->buf + idx, 1, &pmatch, 0) != 0) {
 		return -1;
 	}
-	if (pmatch.rm_so==-1) {
+	if(pmatch.rm_so == -1) {
 		return -1;
 	}
 
 	_posops_data.idx = idx + pmatch.rm_so;
-	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
-	_posops_data.len = pmatch.rm_eo-pmatch.rm_so;
+	_posops_data.ret = (_posops_data.idx == 0) ? posops_idx0 : _posops_data.idx;
+	_posops_data.len = pmatch.rm_eo - pmatch.rm_so;
 
 	return _posops_data.ret;
 }
@@ -755,14 +755,14 @@ static int ki_posops_pos_search_helper(sip_msg_t *msg, int idx, regex_t *re)
 /**
  *
  */
-static int ki_posops_pos_search(sip_msg_t* msg, int idx, str* sre)
+static int ki_posops_pos_search(sip_msg_t *msg, int idx, str *sre)
 {
 	regex_t mre;
 	int ret;
 
 	posops_data_init();
 	memset(&mre, 0, sizeof(regex_t));
-	if (regcomp(&mre, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+	if(regcomp(&mre, sre->s, REG_EXTENDED | REG_ICASE | REG_NEWLINE) != 0) {
 		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
 		return -1;
 	}
@@ -777,17 +777,17 @@ static int ki_posops_pos_search(sip_msg_t* msg, int idx, str* sre)
 /**
  *
  */
-static int w_posops_pos_search(sip_msg_t* msg, char* p1idx, char* p2re)
+static int w_posops_pos_search(sip_msg_t *msg, char *p1idx, char *p2re)
 {
 	int idx = 0;
 	regex_t *re = NULL;
 
 	posops_data_init();
-	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)p1idx, &idx) != 0) {
 		LM_ERR("unable to get idx parameter\n");
 		return -1;
 	}
-	re = (regex_t*)p2re;
+	re = (regex_t *)p2re;
 
 	return ki_posops_pos_search_helper(msg, idx, re);
 }
@@ -801,26 +801,26 @@ static int ki_posops_pos_rsearch_helper(sip_msg_t *msg, int idx, regex_t *re)
 	int i;
 	int ret = -1;
 
-	if(idx<0) {
+	if(idx < 0) {
 		idx += msg->len;
 	}
-	if(idx<0 || idx >= msg->len) {
+	if(idx < 0 || idx >= msg->len) {
 		return -1;
 	}
 
-	for(i=msg->len-1; i>=idx; i--) {
+	for(i = msg->len - 1; i >= idx; i--) {
 		ret = regexec(re, msg->buf + i, 1, &pmatch, 0);
-		if(ret==0) {
+		if(ret == 0) {
 			break;
 		}
 	}
-	if (ret!=0) {
+	if(ret != 0) {
 		return -1;
 	}
 
 	_posops_data.idx = i + pmatch.rm_so;
-	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
-	_posops_data.len = pmatch.rm_eo-pmatch.rm_so;
+	_posops_data.ret = (_posops_data.idx == 0) ? posops_idx0 : _posops_data.idx;
+	_posops_data.len = pmatch.rm_eo - pmatch.rm_so;
 
 	return _posops_data.ret;
 }
@@ -828,14 +828,14 @@ static int ki_posops_pos_rsearch_helper(sip_msg_t *msg, int idx, regex_t *re)
 /**
  *
  */
-static int ki_posops_pos_rsearch(sip_msg_t* msg, int idx, str* sre)
+static int ki_posops_pos_rsearch(sip_msg_t *msg, int idx, str *sre)
 {
 	regex_t mre;
 	int ret;
 
 	posops_data_init();
 	memset(&mre, 0, sizeof(regex_t));
-	if (regcomp(&mre, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+	if(regcomp(&mre, sre->s, REG_EXTENDED | REG_ICASE | REG_NEWLINE) != 0) {
 		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
 		return -1;
 	}
@@ -850,17 +850,17 @@ static int ki_posops_pos_rsearch(sip_msg_t* msg, int idx, str* sre)
 /**
  *
  */
-static int w_posops_pos_rsearch(sip_msg_t* msg, char* p1idx, char* p2re)
+static int w_posops_pos_rsearch(sip_msg_t *msg, char *p1idx, char *p2re)
 {
 	int idx = 0;
 	regex_t *re = NULL;
 
 	posops_data_init();
-	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)p1idx, &idx) != 0) {
 		LM_ERR("unable to get idx parameter\n");
 		return -1;
 	}
-	re = (regex_t*)p2re;
+	re = (regex_t *)p2re;
 
 	return ki_posops_pos_rsearch_helper(msg, idx, re);
 }
@@ -888,14 +888,15 @@ static int pv_posops_parse_pos_name(pv_spec_t *sp, str *in)
 {
 	switch(in->len) {
 		case 3:
-			if(strncmp(in->s, "idx", 3)==0)
+			if(strncmp(in->s, "idx", 3) == 0)
 				sp->pvp.pvn.u.isname.name.n = 0;
-			else if(strncmp(in->s, "ret", 3)==0)
+			else if(strncmp(in->s, "ret", 3) == 0)
 				sp->pvp.pvn.u.isname.name.n = 1;
-			else if(strncmp(in->s, "len", 3)==0)
+			else if(strncmp(in->s, "len", 3) == 0)
 				sp->pvp.pvn.u.isname.name.n = 2;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 
 		default:
 			goto error;
