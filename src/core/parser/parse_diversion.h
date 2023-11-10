@@ -24,25 +24,25 @@
  * \ingroup parser
  */
 
- 
+
 #ifndef PARSE_DIVERSION_H
 #define PARSE_DIVERSION_H
- 
+
 #include "msg_parser.h"
- 
+
 
 /*! \brief casting macro for accessing Diversion body */
-#define get_diversion(p_msg)  ((struct to_body*)(p_msg)->diversion->parsed)
- 
- 
+#define get_diversion(p_msg) ((struct to_body *)(p_msg)->diversion->parsed)
+
+
 /*! \brief
  * Diversion header field parser
  */
 int parse_diversion_header(struct sip_msg *msg);
- 
+
 /*! \brief
  * Get the value of a given diversion parameter
  */
-str *get_diversion_param(struct sip_msg *msg, str* name);
+str *get_diversion_param(struct sip_msg *msg, str *name);
 
 #endif /* PARSE_DIVERSION_H */

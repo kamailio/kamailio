@@ -23,7 +23,7 @@
  * @ingroup core
  * @author andrei
  */
- 
+
 #ifndef __core_stats_h
 #define __core_stats_h
 
@@ -50,11 +50,11 @@
  * The request might be dropped explicitly (e.g. pre script callback)
  * or there might be an error while trying to forward it (e.g. send).
  */
-#define STATS_REQ_FWD_DROP() sr_event_exec(SREV_CORE_STATS, (void*)3)
+#define STATS_REQ_FWD_DROP() sr_event_exec(SREV_CORE_STATS, (void *)3)
 
 
 /** called each time forwarding a request succeeds (send).*/
-#define STATS_REQ_FWD_OK() sr_event_exec(SREV_CORE_STATS, (void*)1)
+#define STATS_REQ_FWD_OK() sr_event_exec(SREV_CORE_STATS, (void *)1)
 
 
 /** called each time forwarding a reply fails.
@@ -62,32 +62,31 @@
  * pre script callbacks (module denying forwarding) or explicit script
  * drop (drop or module function returning 0).
  */
-#define STATS_RPL_FWD_DROP() sr_event_exec(SREV_CORE_STATS, (void*)4)
+#define STATS_RPL_FWD_DROP() sr_event_exec(SREV_CORE_STATS, (void *)4)
 
 
 /* called each time forwarding a reply succeeds. */
-#define STATS_RPL_FWD_OK() sr_event_exec(SREV_CORE_STATS, (void*)2)
+#define STATS_RPL_FWD_OK() sr_event_exec(SREV_CORE_STATS, (void *)2)
 
 
 /** called each time a received request is too bad to process.
   * For now it's called in case the message does not have any via.
   */
-#define STATS_BAD_MSG() sr_event_exec(SREV_CORE_STATS, (void*)5)
+#define STATS_BAD_MSG() sr_event_exec(SREV_CORE_STATS, (void *)5)
 
 
 /** called each time a received reply is too bad to process.
   * For now it's called in case the message does not have any via.
   */
-#define STATS_BAD_RPL() sr_event_exec(SREV_CORE_STATS, (void*)6)
+#define STATS_BAD_RPL() sr_event_exec(SREV_CORE_STATS, (void *)6)
 
 
 /** called each time uri parsing fails. */
-#define STATS_BAD_URI() sr_event_exec(SREV_CORE_STATS, (void*)7)
+#define STATS_BAD_URI() sr_event_exec(SREV_CORE_STATS, (void *)7)
 
 
 /** called each time parsing some header fails. */
-#define STATS_BAD_MSG_HDR() sr_event_exec(SREV_CORE_STATS, (void*)8)
-
+#define STATS_BAD_MSG_HDR() sr_event_exec(SREV_CORE_STATS, (void *)8)
 
 
 #endif /* USE_CORE_STATS */

@@ -24,23 +24,24 @@
  * \ingroup parser
  */
 
- 
+
 #ifndef PARSE_ALLOW_H
 #define PARSE_ALLOW_H
- 
+
 #include "hf.h"
 #include "msg_parser.h"
 
- 
+
 /*! \brief
  * casting macro for accessing Allow body 
  */
-#define get_allow_methods(p_msg)							\
-	(((struct allow_body*)(p_msg)->allow->parsed)->allow_all)
+#define get_allow_methods(p_msg) \
+	(((struct allow_body *)(p_msg)->allow->parsed)->allow_all)
 
 
-struct allow_body {
-	unsigned int allow;     /*!< allow mask for the current hdr */
+struct allow_body
+{
+	unsigned int allow;		/*!< allow mask for the current hdr */
 	unsigned int allow_all; /*!< allow mask for the all allow hdr - it's
 							 * set only for the first hdr in sibling
 							 * list*/
@@ -59,7 +60,7 @@ int parse_allow(struct sip_msg *msg);
  * \param _hf message header field
  * \return 0 on success, -1 on failure.
  */
-int parse_allow_header(struct hdr_field* _hf);
+int parse_allow_header(struct hdr_field *_hf);
 
 
 /*! \brief
@@ -67,8 +68,7 @@ int parse_allow_header(struct hdr_field* _hf);
  */
 void free_allow_body(struct allow_body **ab);
 
-void free_allow_header(struct hdr_field* hf);
-
+void free_allow_header(struct hdr_field *hf);
 
 
 #endif /* PARSE_ALLOW_H */

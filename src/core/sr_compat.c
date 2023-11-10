@@ -47,5 +47,5 @@
 #define SR_DEFAULT_COMPAT SR_COMPAT_MAX
 #endif
 
-int sr_compat=SR_DEFAULT_COMPAT;
-int sr_cfg_compat=SR_DEFAULT_COMPAT;
+int sr_compat = SR_DEFAULT_COMPAT;
+int sr_cfg_compat = SR_DEFAULT_COMPAT;

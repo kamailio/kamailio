@@ -31,7 +31,8 @@
 #ifndef __dns_wrappers_h
 #define __dns_wrappers_h
 
-struct hostent* dns_resolvehost(char* name);
-struct hostent* dns_sip_resolvehost(str* name, unsigned short* port, char* proto);
+struct hostent *dns_resolvehost(char *name);
+struct hostent *dns_sip_resolvehost(
+		str *name, unsigned short *port, char *proto);
 
 #endif

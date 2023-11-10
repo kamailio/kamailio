@@ -47,20 +47,23 @@
 #include "str.h"
 
 
-#define AVP_UID          "uid"           /* Unique user identifier */
-#define AVP_DID          "did"           /* Unique domain identifier */
-#define AVP_REALM        "digest_realm"  /* Digest realm */
-#define AVP_FR_TIMER     "fr_timer"      /* Value of final response timer */
-#define AVP_FR_INV_TIMER "fr_inv_timer"  /* Value of final response invite timer */
-#define AVP_RPID         "rpid"          /* Remote-Party-ID */
-#define AVP_GFLAGS       "gflags"        /* global flags */
+#define AVP_UID "uid"			 /* Unique user identifier */
+#define AVP_DID "did"			 /* Unique domain identifier */
+#define AVP_REALM "digest_realm" /* Digest realm */
+#define AVP_FR_TIMER "fr_timer"	 /* Value of final response timer */
+#define AVP_FR_INV_TIMER \
+	"fr_inv_timer"			/* Value of final response invite timer */
+#define AVP_RPID "rpid"		/* Remote-Party-ID */
+#define AVP_GFLAGS "gflags" /* global flags */
 
-struct str_num_data {
+struct str_num_data
+{
 	str name;
 	long val;
 };
 
-struct str_str_data {
+struct str_str_data
+{
 	str name;
 	str val;
 };
@@ -69,28 +72,31 @@ struct str_str_data {
  * union type holding a number (long) or string
  * - value for avp
  */
-typedef union {
-	long  n;
-	str  s;
-	regex_t* re;
+typedef union
+{
+	long n;
+	str s;
+	regex_t *re;
 } numstr_ut;
 
 /* define for backward compatibility */
 typedef numstr_ut int_str;
 
-#define avp_id_t	unsigned short
-#define avp_flags_t	unsigned int
-#define avp_name_t	numstr_ut
-#define avp_value_t	numstr_ut
-#define avp_index_t	unsigned short
+#define avp_id_t unsigned short
+#define avp_flags_t unsigned int
+#define avp_name_t numstr_ut
+#define avp_value_t numstr_ut
+#define avp_index_t unsigned short
 
-union usr_avp_data{
+union usr_avp_data
+{
 	void *p; /* forces alignment */
 	long l;
-	char data[sizeof(void*)]; /* used to access other types, var length */
+	char data[sizeof(void *)]; /* used to access other types, var length */
 };
 
-typedef struct usr_avp {
+typedef struct usr_avp
+{
 	avp_id_t id;
 	/* Flags that are kept for the AVP lifetime */
 	avp_flags_t flags;
@@ -98,10 +104,11 @@ typedef struct usr_avp {
 	union usr_avp_data d; /* var length */
 } avp_t;
 
-typedef avp_t* avp_list_t;
+typedef avp_t *avp_list_t;
 
 /* AVP identification */
-typedef struct avp_ident {
+typedef struct avp_ident
+{
 	avp_flags_t flags;
 	avp_name_t name;
 	avp_index_t index;
@@ -110,71 +117,79 @@ typedef struct avp_ident {
 /*
  * AVP search state
  */
-typedef struct search_state {
-	avp_flags_t flags;  /* Type of search and additional flags */
+typedef struct search_state
+{
+	avp_flags_t flags; /* Type of search and additional flags */
 	avp_id_t id;
 	avp_name_t name;
-	avp_t* avp;            /* Current AVP */
-//	regex_t* search_re;    /* Compiled regular expression */
+	avp_t *avp; /* Current AVP */
+	//	regex_t* search_re;    /* Compiled regular expression */
 } avp_search_state_t;
 
 /* avp aliases structs*/
-typedef struct avp_spec {
+typedef struct avp_spec
+{
 	avp_flags_t type;
 	avp_name_t name;
 	avp_index_t index;
 } avp_spec_t;
 
 /* AVP types */
-#define AVP_NAME_STR     (1<<0)
-#define AVP_VAL_STR      (1<<1)
-#define AVP_NAME_RE      (1<<2)
+#define AVP_NAME_STR (1 << 0)
+#define AVP_VAL_STR (1 << 1)
+#define AVP_NAME_RE (1 << 2)
 
 /* AVP classes */
-#define AVP_CLASS_URI    (1<<4)
-#define AVP_CLASS_USER   (1<<5)
-#define AVP_CLASS_DOMAIN (1<<6)
-#define AVP_CLASS_GLOBAL (1<<7)
+#define AVP_CLASS_URI (1 << 4)
+#define AVP_CLASS_USER (1 << 5)
+#define AVP_CLASS_DOMAIN (1 << 6)
+#define AVP_CLASS_GLOBAL (1 << 7)
 
 /* AVP track (either from or to) */
-#define AVP_TRACK_FROM   (1<<8)
-#define AVP_TRACK_TO     (1<<9)
-#define AVP_TRACK_ALL    (AVP_TRACK_FROM|AVP_TRACK_TO)
+#define AVP_TRACK_FROM (1 << 8)
+#define AVP_TRACK_TO (1 << 9)
+#define AVP_TRACK_ALL (AVP_TRACK_FROM | AVP_TRACK_TO)
 
-#define AVP_CLASS_ALL (AVP_CLASS_URI|AVP_CLASS_USER|AVP_CLASS_DOMAIN|AVP_CLASS_GLOBAL)
+#define AVP_CLASS_ALL \
+	(AVP_CLASS_URI | AVP_CLASS_USER | AVP_CLASS_DOMAIN | AVP_CLASS_GLOBAL)
 
 /* AVP name index */
-#define AVP_INDEX_FORWARD	(1<<10)
-#define AVP_INDEX_BACKWARD	(1<<11)
-#define AVP_INDEX_ALL		(AVP_INDEX_FORWARD | AVP_INDEX_BACKWARD)
+#define AVP_INDEX_FORWARD (1 << 10)
+#define AVP_INDEX_BACKWARD (1 << 11)
+#define AVP_INDEX_ALL (AVP_INDEX_FORWARD | AVP_INDEX_BACKWARD)
 
 /* AVP DB flag used by avpops module - defined in avpops
  * - kept here for reference */
 // #define AVP_IS_IN_DB    (1<<12)
 
-#define AVP_CUSTOM_FLAGS	13
+#define AVP_CUSTOM_FLAGS 13
 
-#define GALIAS_CHAR_MARKER  '$'
+#define GALIAS_CHAR_MARKER '$'
 
-#define AVP_NAME_VALUE_MASK     0x0007
-#define AVP_CORE_MASK           0x00ff
-#define AVP_SCRIPT_MASK         0xff00
-#define avp_core_flags(f)       ((f)&0x00ff)
-#define avp_script_flags(f)     (((f)<<8)&0xff00)
-#define avp_get_script_flags(f) (((f)&0xff00)>>8)
+#define AVP_NAME_VALUE_MASK 0x0007
+#define AVP_CORE_MASK 0x00ff
+#define AVP_SCRIPT_MASK 0xff00
+#define avp_core_flags(f) ((f)&0x00ff)
+#define avp_script_flags(f) (((f) << 8) & 0xff00)
+#define avp_get_script_flags(f) (((f)&0xff00) >> 8)
 
-#define is_avp_str_name(a)      ((a)->flags&AVP_NAME_STR)
-#define is_avp_str_val(a)       ((a)->flags&AVP_VAL_STR)
+#define is_avp_str_name(a) ((a)->flags & AVP_NAME_STR)
+#define is_avp_str_val(a) ((a)->flags & AVP_VAL_STR)
 
 
-#define AVP_IS_ASSIGNABLE(ident) ( ((ident).flags & AVP_NAME_RE) == 0 && (((ident).flags & AVP_NAME) == 0 || (((ident)->flags & AVP_NAME) && (ident).name.s.len)) )
+#define AVP_IS_ASSIGNABLE(ident)                \
+	(((ident).flags & AVP_NAME_RE) == 0         \
+			&& (((ident).flags & AVP_NAME) == 0 \
+					|| (((ident)->flags & AVP_NAME) && (ident).name.s.len)))
 /* Initialize memory structures */
 int init_avps(void);
 
 /* add avp to the list of avps */
 int add_avp(avp_flags_t flags, avp_name_t name, avp_value_t val);
-int add_avp_before(avp_t *avp, avp_flags_t flags, avp_name_t name, avp_value_t val);
-int add_avp_list(avp_list_t* list, avp_flags_t flags, avp_name_t name, avp_value_t val);
+int add_avp_before(
+		avp_t *avp, avp_flags_t flags, avp_name_t name, avp_value_t val);
+int add_avp_list(
+		avp_list_t *list, avp_flags_t flags, avp_name_t name, avp_value_t val);
 
 /* Delete avps with given type and name */
 void delete_avp(avp_flags_t flags, avp_name_t name);
@@ -182,13 +197,14 @@ void delete_avp(avp_flags_t flags, avp_name_t name);
 int destroy_avps(avp_flags_t flags, avp_name_t name, int all);
 
 /* search functions */
-avp_t *search_first_avp( avp_flags_t flags, avp_name_t name,
-			 avp_value_t *val, struct search_state* state);
-avp_t *search_avp_by_index( avp_flags_t flags, avp_name_t name,
-                            avp_value_t *val, avp_index_t index);
+avp_t *search_first_avp(avp_flags_t flags, avp_name_t name, avp_value_t *val,
+		struct search_state *state);
+avp_t *search_avp_by_index(avp_flags_t flags, avp_name_t name, avp_value_t *val,
+		avp_index_t index);
 
-avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* state);
-avp_t *search_next_avp(struct search_state* state, avp_value_t *val);
+avp_t *search_avp(
+		avp_ident_t ident, avp_value_t *val, struct search_state *state);
+avp_t *search_next_avp(struct search_state *state, avp_value_t *val);
 
 /* Reset one avp list */
 int reset_avp_list(int flags);
@@ -197,33 +213,34 @@ int reset_avp_list(int flags);
 void reset_avps(void);
 
 void destroy_avp(avp_t *avp);
-void destroy_avp_list(avp_list_t *list );
-void destroy_avp_list_unsafe(avp_list_t *list );
+void destroy_avp_list(avp_list_t *list);
+void destroy_avp_list_unsafe(avp_list_t *list);
 
 /* get func */
-void get_avp_val(avp_t *avp, avp_value_t *val );
-str* get_avp_name(avp_t *avp);
+void get_avp_val(avp_t *avp, avp_value_t *val);
+str *get_avp_name(avp_t *avp);
 
 avp_list_t get_avp_list(avp_flags_t flags);
-avp_list_t* set_avp_list(avp_flags_t flags, avp_list_t* list);
+avp_list_t *set_avp_list(avp_flags_t flags, avp_list_t *list);
 
 
 /* global alias functions (manipulation and parsing)*/
 int add_avp_galias_str(char *alias_definition);
 int lookup_avp_galias(str *alias, int *type, numstr_ut *avp_name);
 int add_avp_galias(str *alias, int type, numstr_ut avp_name);
-int parse_avp_ident( str *name, avp_ident_t* attr);
-int parse_avp_name( str *name, int *type, numstr_ut *avp_name, int *index);
-int parse_avp_spec( str *name, int *type, numstr_ut *avp_name, int *index);
-int km_parse_avp_spec( str *name, int *type, numstr_ut *avp_name);
-void free_avp_name( avp_flags_t *type, numstr_ut *avp_name);
+int parse_avp_ident(str *name, avp_ident_t *attr);
+int parse_avp_name(str *name, int *type, numstr_ut *avp_name, int *index);
+int parse_avp_spec(str *name, int *type, numstr_ut *avp_name, int *index);
+int km_parse_avp_spec(str *name, int *type, numstr_ut *avp_name);
+void free_avp_name(avp_flags_t *type, numstr_ut *avp_name);
 /* Free an ident obtained with parse_avp_ident() */
-void free_avp_ident(avp_ident_t* attr);
+void free_avp_ident(avp_ident_t *attr);
 
 /* AVP flags functions */
-#define MAX_AVPFLAG  ((unsigned int)( sizeof(avp_flags_t) * CHAR_BIT - 1 - AVP_CUSTOM_FLAGS))
+#define MAX_AVPFLAG \
+	((unsigned int)(sizeof(avp_flags_t) * CHAR_BIT - 1 - AVP_CUSTOM_FLAGS))
 
-avp_flags_t register_avpflag(char* name);
-avp_flags_t get_avpflag_no(char* name);
+avp_flags_t register_avpflag(char *name);
+avp_flags_t get_avpflag_no(char *name);
 
 #endif

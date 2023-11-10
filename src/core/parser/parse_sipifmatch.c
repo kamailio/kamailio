@@ -32,7 +32,7 @@
 #include "../mem/mem.h"
 #include "../trim.h"
 
-static inline char* skip_token(char* _b, int _l)
+static inline char *skip_token(char *_b, int _l)
 {
 	int i = 0;
 
@@ -53,14 +53,14 @@ static inline char* skip_token(char* _b, int _l)
 
 int etag_parser(char *_s, int _l, str *_e)
 {
-	char* end;
+	char *end;
 
 	_e->s = _s;
 	_e->len = _l;
 
 	trim_leading(_e);
 
-	if (_e->len == 0) {
+	if(_e->len == 0) {
 		LM_ERR("Empty body\n");
 		return -1;
 	}
@@ -72,38 +72,38 @@ int etag_parser(char *_s, int _l, str *_e)
 }
 
 
-int parse_sipifmatch(struct hdr_field* _h)
+int parse_sipifmatch(struct hdr_field *_h)
 {
 	str *e;
 
 	LM_DBG("parse sip-if-match called\n");
 
-	if (_h->parsed != 0) {
+	if(_h->parsed != 0) {
 		return 0;
 	}
 
-	e = (str*)pkg_malloc(sizeof(str));
-	if (e == 0) {
+	e = (str *)pkg_malloc(sizeof(str));
+	if(e == 0) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 
 	memset(e, 0, sizeof(str));
 
-	if (etag_parser(_h->body.s, _h->body.len, e) < 0) {
+	if(etag_parser(_h->body.s, _h->body.len, e) < 0) {
 		LM_ERR("Error in etag parser\n");
 		pkg_free(e);
 		return -2;
 	}
 
-	_h->parsed = (void*)e;
+	_h->parsed = (void *)e;
 	return 0;
 }
 
 
-void free_sipifmatch(str** _e)
+void free_sipifmatch(str **_e)
 {
-	if (*_e)
+	if(*_e)
 		pkg_free(*_e);
 	*_e = 0;
 }

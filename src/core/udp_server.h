@@ -31,12 +31,12 @@
 #include <sys/socket.h>
 #include "ip_addr.h"
 
-#define MAX_RECV_BUFFER_SIZE	256*1024
-#define BUFFER_INCREMENT	2048
+#define MAX_RECV_BUFFER_SIZE 256 * 1024
+#define BUFFER_INCREMENT 2048
 
 
-int udp_init(struct socket_info* si);
-int udp_send(struct dest_info* dst, char *buf, unsigned len);
+int udp_init(struct socket_info *si);
+int udp_send(struct dest_info *dst, char *buf, unsigned len);
 int udp_rcv_loop(void);
 
 

@@ -42,7 +42,8 @@
 #include "mem/mem.h"
 #include "usr_avp.h"
 
-enum idx {
+enum idx
+{
 	IDX_FROM_URI = 0,
 	IDX_TO_URI,
 	IDX_FROM_USER,
@@ -53,20 +54,21 @@ enum idx {
 };
 
 
-struct avp_galias {
+struct avp_galias
+{
 	str alias;
-	struct avp_spec  avp;
+	struct avp_spec avp;
 	struct avp_galias *next;
 };
 
 static struct avp_galias *galiases = 0;
 
-static avp_list_t def_list[IDX_MAX];    /* Default AVP lists */
-static avp_list_t* crt_list[IDX_MAX];  /* Pointer to current AVP lists */
+static avp_list_t def_list[IDX_MAX];  /* Default AVP lists */
+static avp_list_t *crt_list[IDX_MAX]; /* Pointer to current AVP lists */
 
 /* Global AVP related variables go to shm mem */
-static avp_list_t* def_glist;
-static avp_list_t** crt_glist;
+static avp_list_t *def_glist;
+static avp_list_t **crt_glist;
 
 /* AVP flags */
 int registered_avpflags_no = 0;
@@ -78,17 +80,17 @@ static char *registered_avpflags[MAX_AVPFLAG];
 int init_avps(void)
 {
 	int i;
-	     /* Empty default lists */
+	/* Empty default lists */
 	memset(def_list, 0, sizeof(avp_list_t) * IDX_MAX);
 
-	     /* Point current pointers to default lists */
+	/* Point current pointers to default lists */
 	for(i = 0; i < IDX_MAX; i++) {
 		crt_list[i] = &def_list[i];
 	}
 
-	def_glist = (avp_list_t*)shm_malloc(sizeof(avp_list_t));
-	crt_glist = (avp_list_t**)shm_malloc(sizeof(avp_list_t*));
-	if (!def_glist || !crt_glist) {
+	def_glist = (avp_list_t *)shm_malloc(sizeof(avp_list_t));
+	crt_glist = (avp_list_t **)shm_malloc(sizeof(avp_list_t *));
+	if(!def_glist || !crt_glist) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
@@ -101,46 +103,46 @@ int init_avps(void)
 /*
  * Select active AVP list based on the value of flags
  */
-static avp_list_t* select_list(avp_flags_t flags)
+static avp_list_t *select_list(avp_flags_t flags)
 {
-	if (flags & AVP_CLASS_URI) {
-		if (flags & AVP_TRACK_TO) {
+	if(flags & AVP_CLASS_URI) {
+		if(flags & AVP_TRACK_TO) {
 			return crt_list[IDX_TO_URI];
 		} else {
 			return crt_list[IDX_FROM_URI];
 		}
-	} else if (flags & AVP_CLASS_USER) {
-		if (flags & AVP_TRACK_TO) {
+	} else if(flags & AVP_CLASS_USER) {
+		if(flags & AVP_TRACK_TO) {
 			return crt_list[IDX_TO_USER];
 		} else {
 			return crt_list[IDX_FROM_USER];
 		}
-	} else if (flags & AVP_CLASS_DOMAIN) {
-		if (flags & AVP_TRACK_TO) {
+	} else if(flags & AVP_CLASS_DOMAIN) {
+		if(flags & AVP_TRACK_TO) {
 			return crt_list[IDX_TO_DOMAIN];
 		} else {
 			return crt_list[IDX_FROM_DOMAIN];
 		}
-	} else if (flags & AVP_CLASS_GLOBAL) {
+	} else if(flags & AVP_CLASS_GLOBAL) {
 		return *crt_glist;
 	}
 
 	return NULL;
 }
 
-inline static avp_id_t compute_ID( str *name )
+inline static avp_id_t compute_ID(str *name)
 {
 	char *p;
 	avp_id_t id;
 
-	id=0;
-	for( p=name->s+name->len-1 ; p>=name->s ; p-- )
+	id = 0;
+	for(p = name->s + name->len - 1; p >= name->s; p--)
 		id ^= *p;
 	return id;
 }
 
 
-avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
+avp_t *create_avp(avp_flags_t flags, avp_name_t name, avp_value_t val)
 {
 	avp_t *avp;
 	str *s;
@@ -150,72 +152,71 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 
 	/* compute the required mem size */
 	len = sizeof(struct usr_avp);
-	if (flags&AVP_NAME_STR) {
-		if ( name.s.s==0 || name.s.len==0) {
+	if(flags & AVP_NAME_STR) {
+		if(name.s.s == 0 || name.s.len == 0) {
 			LM_ERR("NULL or EMPTY NAME AVP!");
 			goto error;
 		}
-		if (flags&AVP_VAL_STR) {
-			len += sizeof(struct str_str_data)-sizeof(union usr_avp_data)
-				+ name.s.len + 1 /* Terminating zero for regex search */
-				+ val.s.len + 1; /* Value is zero terminated */
+		if(flags & AVP_VAL_STR) {
+			len += sizeof(struct str_str_data) - sizeof(union usr_avp_data)
+				   + name.s.len + 1 /* Terminating zero for regex search */
+				   + val.s.len + 1; /* Value is zero terminated */
 		} else {
-			len += sizeof(struct str_num_data)-sizeof(union usr_avp_data)
-				+ name.s.len + 1; /* Terminating zero for regex search */
+			len += sizeof(struct str_num_data) - sizeof(union usr_avp_data)
+				   + name.s.len + 1; /* Terminating zero for regex search */
 		}
 	} else {
-		if(name.n==0) {
+		if(name.n == 0) {
 			LM_ERR("0 ID AVP!");
 			goto error;
 		}
-		if (flags&AVP_VAL_STR) {
-			len += sizeof(str)-sizeof(union usr_avp_data) + val.s.len + 1;
+		if(flags & AVP_VAL_STR) {
+			len += sizeof(str) - sizeof(union usr_avp_data) + val.s.len + 1;
 		}
 	}
 
-	avp = (struct usr_avp*)shm_malloc( len );
-	if (avp==0) {
+	avp = (struct usr_avp *)shm_malloc(len);
+	if(avp == 0) {
 		SHM_MEM_ERROR;
 		return 0;
 	}
 
 	avp->flags = flags;
-	avp->id = (flags&AVP_NAME_STR)? compute_ID(&name.s) : name.n ;
+	avp->id = (flags & AVP_NAME_STR) ? compute_ID(&name.s) : name.n;
 	avp->next = NULL;
 
-	switch ( flags&(AVP_NAME_STR|AVP_VAL_STR) )
-	{
+	switch(flags & (AVP_NAME_STR | AVP_VAL_STR)) {
 		case 0:
 			/* avp type ID, int value */
 			avp->d.l = val.n;
 			break;
 		case AVP_NAME_STR:
 			/* avp type str, int value */
-			sid = (struct str_num_data*)&avp->d.data[0];
+			sid = (struct str_num_data *)&avp->d.data[0];
 			sid->val = val.n;
-			sid->name.len =name.s.len;
-			sid->name.s = (char*)sid + sizeof(struct str_num_data);
-			memcpy( sid->name.s , name.s.s, name.s.len);
+			sid->name.len = name.s.len;
+			sid->name.s = (char *)sid + sizeof(struct str_num_data);
+			memcpy(sid->name.s, name.s.s, name.s.len);
 			sid->name.s[name.s.len] = '\0'; /* Zero terminator */
 			break;
 		case AVP_VAL_STR:
 			/* avp type ID, str value */
-			s = (str*)&avp->d.data[0];
+			s = (str *)&avp->d.data[0];
 			s->len = val.s.len;
-			s->s = (char*)s + sizeof(str);
-			memcpy( s->s, val.s.s , s->len);
+			s->s = (char *)s + sizeof(str);
+			memcpy(s->s, val.s.s, s->len);
 			s->s[s->len] = 0;
 			break;
-		case AVP_NAME_STR|AVP_VAL_STR:
+		case AVP_NAME_STR | AVP_VAL_STR:
 			/* avp type str, str value */
-			ssd = (struct str_str_data*)&avp->d.data[0];
+			ssd = (struct str_str_data *)&avp->d.data[0];
 			ssd->name.len = name.s.len;
-			ssd->name.s = (char*)ssd + sizeof(struct str_str_data);
-			memcpy( ssd->name.s , name.s.s, name.s.len);
-			ssd->name.s[name.s.len]='\0'; /* Zero terminator */
+			ssd->name.s = (char *)ssd + sizeof(struct str_str_data);
+			memcpy(ssd->name.s, name.s.s, name.s.len);
+			ssd->name.s[name.s.len] = '\0'; /* Zero terminator */
 			ssd->val.len = val.s.len;
 			ssd->val.s = ssd->name.s + ssd->name.len + 1;
-			memcpy( ssd->val.s , val.s.s, val.s.len);
+			memcpy(ssd->val.s, val.s.s, val.s.len);
 			ssd->val.s[ssd->val.len] = 0;
 			break;
 	}
@@ -224,13 +225,14 @@ error:
 	return 0;
 }
 
-int add_avp_list(avp_list_t* list, avp_flags_t flags, avp_name_t name, avp_value_t val)
+int add_avp_list(
+		avp_list_t *list, avp_flags_t flags, avp_name_t name, avp_value_t val)
 {
 	avp_t *avp;
 
 	assert(list != 0);
 
-	if ((avp = create_avp(flags, name, val))) {
+	if((avp = create_avp(flags, name, val))) {
 		avp->next = *list;
 		*list = avp;
 		return 0;
@@ -243,58 +245,68 @@ int add_avp_list(avp_list_t* list, avp_flags_t flags, avp_name_t name, avp_value
 int add_avp(avp_flags_t flags, avp_name_t name, avp_value_t val)
 {
 	avp_flags_t avp_class;
-	avp_list_t* list;
+	avp_list_t *list;
 
-	     /* Add avp to uri class if no class has been
+	/* Add avp to uri class if no class has been
 	      * specified by the caller
 	      */
-	if ((flags & AVP_CLASS_ALL) == 0) flags |= AVP_CLASS_URI;
-	if ((flags & AVP_TRACK_ALL) == 0) flags |= AVP_TRACK_FROM;
-	if (!(list = select_list(flags)))
+	if((flags & AVP_CLASS_ALL) == 0)
+		flags |= AVP_CLASS_URI;
+	if((flags & AVP_TRACK_ALL) == 0)
+		flags |= AVP_TRACK_FROM;
+	if(!(list = select_list(flags)))
 		return -1;
 
-	if (flags & AVP_CLASS_URI) avp_class = AVP_CLASS_URI;
-	else if (flags & AVP_CLASS_USER) avp_class = AVP_CLASS_USER;
-	else if (flags & AVP_CLASS_DOMAIN) avp_class = AVP_CLASS_DOMAIN;
-	else avp_class = AVP_CLASS_GLOBAL;
+	if(flags & AVP_CLASS_URI)
+		avp_class = AVP_CLASS_URI;
+	else if(flags & AVP_CLASS_USER)
+		avp_class = AVP_CLASS_USER;
+	else if(flags & AVP_CLASS_DOMAIN)
+		avp_class = AVP_CLASS_DOMAIN;
+	else
+		avp_class = AVP_CLASS_GLOBAL;
 
-	     /* Make that only the selected class is set
+	/* Make that only the selected class is set
 	      * if the caller set more classes in flags
 	      */
-	return add_avp_list(list, flags & (~(AVP_CLASS_ALL) | avp_class), name, val);
+	return add_avp_list(
+			list, flags & (~(AVP_CLASS_ALL) | avp_class), name, val);
 }
 
-int add_avp_before(avp_t *avp, avp_flags_t flags, avp_name_t name, avp_value_t val)
+int add_avp_before(
+		avp_t *avp, avp_flags_t flags, avp_name_t name, avp_value_t val)
 {
 	avp_t *new_avp;
 
-	if (!avp) {
+	if(!avp) {
 		return add_avp(flags, name, val);
 	}
 
-	if ((flags & AVP_CLASS_ALL) == 0) flags |= (avp->flags & AVP_CLASS_ALL);
-	if ((flags & AVP_TRACK_ALL) == 0) flags |= (avp->flags & AVP_TRACK_ALL);
+	if((flags & AVP_CLASS_ALL) == 0)
+		flags |= (avp->flags & AVP_CLASS_ALL);
+	if((flags & AVP_TRACK_ALL) == 0)
+		flags |= (avp->flags & AVP_TRACK_ALL);
 
-	if ((avp->flags & (AVP_CLASS_ALL|AVP_TRACK_ALL)) != (flags & (AVP_CLASS_ALL|AVP_TRACK_ALL))) {
+	if((avp->flags & (AVP_CLASS_ALL | AVP_TRACK_ALL))
+			!= (flags & (AVP_CLASS_ALL | AVP_TRACK_ALL))) {
 		LM_ERR("Source and target AVPs have different CLASS/TRACK\n");
 		return -1;
 	}
-	if ((new_avp=create_avp(flags, name, val))) {
-		new_avp->next=avp->next;
-		avp->next=new_avp;
+	if((new_avp = create_avp(flags, name, val))) {
+		new_avp->next = avp->next;
+		avp->next = new_avp;
 		return 0;
 	}
 	return -1;
 }
 
 /* get value functions */
-inline str* get_avp_name(avp_t *avp)
+inline str *get_avp_name(avp_t *avp)
 {
 	struct str_num_data *sid;
 	struct str_str_data *ssd;
 
-	switch ( avp->flags&(AVP_NAME_STR|AVP_VAL_STR) )
-	{
+	switch(avp->flags & (AVP_NAME_STR | AVP_VAL_STR)) {
 		case 0:
 			/* avp type ID, int value */
 		case AVP_VAL_STR:
@@ -302,15 +314,16 @@ inline str* get_avp_name(avp_t *avp)
 			return 0;
 		case AVP_NAME_STR:
 			/* avp type str, int value */
-			sid = (struct str_num_data*)&avp->d.data[0];
+			sid = (struct str_num_data *)&avp->d.data[0];
 			return &sid->name;
-		case AVP_NAME_STR|AVP_VAL_STR:
+		case AVP_NAME_STR | AVP_VAL_STR:
 			/* avp type str, str value */
-			ssd = (struct str_str_data*)&avp->d.data[0];
+			ssd = (struct str_str_data *)&avp->d.data[0];
 			return &ssd->name;
 	}
 
-	LM_ERR("unknown avp type (name&val) %d\n", avp->flags&(AVP_NAME_STR|AVP_VAL_STR));
+	LM_ERR("unknown avp type (name&val) %d\n",
+			avp->flags & (AVP_NAME_STR | AVP_VAL_STR));
 	return 0;
 }
 
@@ -321,27 +334,27 @@ inline void get_avp_val(avp_t *avp, avp_value_t *val)
 	struct str_num_data *sid;
 	struct str_str_data *ssd;
 
-	if (avp==0 || val==0)
+	if(avp == 0 || val == 0)
 		return;
 
-	switch ( avp->flags&(AVP_NAME_STR|AVP_VAL_STR) ) {
+	switch(avp->flags & (AVP_NAME_STR | AVP_VAL_STR)) {
 		case 0:
 			/* avp type ID, int value */
 			val->n = avp->d.l;
 			break;
 		case AVP_NAME_STR:
 			/* avp type str, int value */
-			sid = (struct str_num_data*)&avp->d.data[0];
+			sid = (struct str_num_data *)&avp->d.data[0];
 			val->n = sid->val;
 			break;
 		case AVP_VAL_STR:
 			/* avp type ID, str value */
-			s = (str*)&avp->d.data[0];
+			s = (str *)&avp->d.data[0];
 			val->s = *s;
 			break;
-		case AVP_NAME_STR|AVP_VAL_STR:
+		case AVP_NAME_STR | AVP_VAL_STR:
 			/* avp type str, str value */
-			ssd = (struct str_str_data*)&avp->d.data[0];
+			ssd = (struct str_str_data *)&avp->d.data[0];
 			val->s = ssd->val;
 			break;
 	}
@@ -361,9 +374,9 @@ avp_list_t get_avp_list(avp_flags_t flags)
 /*
  * Compare given id with id in avp, return true if they match
  */
-static inline int match_by_id(avp_t* avp, avp_id_t id)
+static inline int match_by_id(avp_t *avp, avp_id_t id)
 {
-	if (avp->id == id && (avp->flags&AVP_NAME_STR)==0) {
+	if(avp->id == id && (avp->flags & AVP_NAME_STR) == 0) {
 		return 1;
 	}
 	return 0;
@@ -373,12 +386,12 @@ static inline int match_by_id(avp_t* avp, avp_id_t id)
 /*
  * Compare given name with name in avp, return true if they are same
  */
-static inline int match_by_name(avp_t* avp, avp_id_t id, str* name)
+static inline int match_by_name(avp_t *avp, avp_id_t id, str *name)
 {
-	str* avp_name;
-	if (id==avp->id && avp->flags&AVP_NAME_STR &&
-	    (avp_name=get_avp_name(avp))!=0 && avp_name->len==name->len
-	    && !strncasecmp( avp_name->s, name->s, name->len) ) {
+	str *avp_name;
+	if(id == avp->id && avp->flags & AVP_NAME_STR
+			&& (avp_name = get_avp_name(avp)) != 0 && avp_name->len == name->len
+			&& !strncasecmp(avp_name->s, name->s, name->len)) {
 		return 1;
 	}
 	return 0;
@@ -389,70 +402,73 @@ static inline int match_by_name(avp_t* avp, avp_id_t id, str* name)
  * Compare name with name in AVP using regular expressions, return
  * true if they match
  */
-static inline int match_by_re(avp_t* avp, regex_t* re)
+static inline int match_by_re(avp_t *avp, regex_t *re)
 {
 	regmatch_t pmatch;
-	str * avp_name;
-	     /* AVP identifiable by name ? */
-	if (!(avp->flags&AVP_NAME_STR)) return 0;
-	if ((avp_name=get_avp_name(avp))==0) /* valid AVP name ? */
+	str *avp_name;
+	/* AVP identifiable by name ? */
+	if(!(avp->flags & AVP_NAME_STR))
 		return 0;
-	if (!avp_name->s) /* AVP name validation */
+	if((avp_name = get_avp_name(avp)) == 0) /* valid AVP name ? */
 		return 0;
-	if (regexec(re, avp_name->s, 1, &pmatch,0)==0) { /* re match ? */
+	if(!avp_name->s) /* AVP name validation */
+		return 0;
+	if(regexec(re, avp_name->s, 1, &pmatch, 0) == 0) { /* re match ? */
 		return 1;
 	}
 	return 0;
 }
 
 
-avp_t *search_first_avp(avp_flags_t flags, avp_name_t name, avp_value_t *val, struct search_state* s)
+avp_t *search_first_avp(avp_flags_t flags, avp_name_t name, avp_value_t *val,
+		struct search_state *s)
 {
 	avp_ident_t id;
 	id.flags = flags;
 	id.name = name;
 	id.index = 0;
-	return search_avp (id, val, s);
+	return search_avp(id, val, s);
 }
 
-avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* state)
+avp_t *search_avp(
+		avp_ident_t ident, avp_value_t *val, struct search_state *state)
 {
-	avp_t* ret;
+	avp_t *ret;
 	static struct search_state st;
-	avp_list_t* list;
+	avp_list_t *list;
 
-	if (ident.name.s.s==0 && ident.name.s.len == 0) {
+	if(ident.name.s.s == 0 && ident.name.s.len == 0) {
 		LM_ERR("0 ID or NULL NAME AVP!");
 		return 0;
 	}
 
-	switch (ident.flags & AVP_INDEX_ALL) {
+	switch(ident.flags & AVP_INDEX_ALL) {
 		case AVP_INDEX_BACKWARD:
 		case AVP_INDEX_FORWARD:
 			WARN("AVP specified with index, but not used for search\n");
 			break;
 	}
 
-	if (!state) {
+	if(!state) {
 		memset(&st, 0, sizeof(struct search_state));
 		state = &st;
 	}
 
-	if ((ident.flags & AVP_CLASS_ALL) == 0) {
-		     /* The caller did not specify any class to search in, so enable
+	if((ident.flags & AVP_CLASS_ALL) == 0) {
+		/* The caller did not specify any class to search in, so enable
 		      * all of them by default
 		      */
 		ident.flags |= AVP_CLASS_ALL;
 
-		if ((ident.flags & AVP_TRACK_ALL) == 0) {
-		    /* The caller did not specify even the track to search in, so search
+		if((ident.flags & AVP_TRACK_ALL) == 0) {
+			/* The caller did not specify even the track to search in, so search
 		     * in the track_from
 		     */
 			ident.flags |= AVP_TRACK_FROM;
 		}
 	}
 
-	if (!(list = select_list(ident.flags)))
+	if(!(list = select_list(ident.flags)))
 		return NULL;
 
 	state->flags = ident.flags;
@@ -474,18 +490,18 @@ avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* sta
 	return ret;
 }
 
-avp_t *search_next_avp(struct search_state* s, avp_value_t *val )
+avp_t *search_next_avp(struct search_state *s, avp_value_t *val)
 {
 	int matched;
-	avp_t* avp;
+	avp_t *avp;
 	avp_list_t *list;
 
-	if (s == 0) {
+	if(s == 0) {
 		LM_ERR("Invalid parameter value\n");
 		return 0;
 	}
 
-	switch (s->flags & AVP_INDEX_ALL) {
+	switch(s->flags & AVP_INDEX_ALL) {
 		case AVP_INDEX_BACKWARD:
 		case AVP_INDEX_FORWARD:
 			WARN("AVP specified with index, but not used for search\n");
@@ -493,69 +509,71 @@ avp_t *search_next_avp(struct search_state* s, avp_value_t *val )
 	}
 
 	while(1) {
-		for( ; s->avp; s->avp = s->avp->next) {
-			if (s->flags & AVP_NAME_RE) {
+		for(; s->avp; s->avp = s->avp->next) {
+			if(s->flags & AVP_NAME_RE) {
 				matched = match_by_re(s->avp, s->name.re);
-			} else if (s->flags & AVP_NAME_STR) {
+			} else if(s->flags & AVP_NAME_STR) {
 				matched = match_by_name(s->avp, s->id, &s->name.s);
 			} else {
 				matched = match_by_id(s->avp, s->name.n);
 			}
-			if (matched) {
+			if(matched) {
 				avp = s->avp;
 				s->avp = s->avp->next;
-				if (val) get_avp_val(avp, val);
+				if(val)
+					get_avp_val(avp, val);
 				return avp;
 			}
 		}
 
-		if (s->flags & AVP_CLASS_URI) {
+		if(s->flags & AVP_CLASS_URI) {
 			s->flags &= ~AVP_CLASS_URI;
 			list = select_list(s->flags);
-		} else if (s->flags & AVP_CLASS_USER) {
+		} else if(s->flags & AVP_CLASS_USER) {
 			s->flags &= ~AVP_CLASS_USER;
 			list = select_list(s->flags);
-		} else if (s->flags & AVP_CLASS_DOMAIN) {
+		} else if(s->flags & AVP_CLASS_DOMAIN) {
 			s->flags &= ~AVP_CLASS_DOMAIN;
 			list = select_list(s->flags);
 		} else {
 			s->flags &= ~AVP_CLASS_GLOBAL;
 			return 0;
 		}
-		if (!list) return 0;
+		if(!list)
+			return 0;
 		s->avp = *list;
 	}
 
 	return 0;
 }
 
-int search_reverse( avp_t *cur, struct search_state* st,
-                     avp_index_t index, avp_list_t *ret)
+int search_reverse(
+		avp_t *cur, struct search_state *st, avp_index_t index, avp_list_t *ret)
 {
 	avp_index_t lvl;
 
-	if (!cur)
+	if(!cur)
 		return 0;
-	lvl = search_reverse(search_next_avp(st, NULL), st, index, ret)+1;
-	if (index==lvl)
-		*ret=cur;
+	lvl = search_reverse(search_next_avp(st, NULL), st, index, ret) + 1;
+	if(index == lvl)
+		*ret = cur;
 	return lvl;
 }
 
-avp_t *search_avp_by_index( avp_flags_t flags, avp_name_t name,
-                            avp_value_t *val, avp_index_t index)
+avp_t *search_avp_by_index(
+		avp_flags_t flags, avp_name_t name, avp_value_t *val, avp_index_t index)
 {
 	avp_t *ret, *cur;
 	struct search_state st;
 
-	if (flags & AVP_NAME_RE) {
+	if(flags & AVP_NAME_RE) {
 		BUG("search_by_index not supported for AVP_NAME_RE\n");
 		return 0;
 	}
-	switch (flags & AVP_INDEX_ALL) {
+	switch(flags & AVP_INDEX_ALL) {
 		case 0:
 			ret = search_first_avp(flags, name, val, &st);
-			if (!ret || search_next_avp(&st, NULL))
+			if(!ret || search_next_avp(&st, NULL))
 				return 0;
 			else
 				return ret;
@@ -566,12 +584,14 @@ avp_t *search_avp_by_index( avp_flags_t flags, avp_name_t name,
 			ret = NULL;
 			cur = search_first_avp(flags & ~AVP_INDEX_ALL, name, NULL, &st);
 			search_reverse(cur, &st, index, &ret);
-			if (ret && val)
+			if(ret && val)
 				get_avp_val(ret, val);
 			return ret;
 		case AVP_INDEX_BACKWARD:
 			ret = search_first_avp(flags & ~AVP_INDEX_ALL, name, val, &st);
-			for (index--; (ret && index); ret=search_next_avp(&st, val), index--);
+			for(index--; (ret && index);
+					ret = search_next_avp(&st, val), index--)
+				;
 			return ret;
 	}
 
@@ -586,12 +606,12 @@ void destroy_avp(avp_t *avp_del)
 	int i;
 	avp_t *avp, *avp_prev;
 
-	for (i = 0; i < IDX_MAX; i++) {
-		for( avp_prev=0,avp=*crt_list[i] ; avp ;
-		     avp_prev=avp,avp=avp->next ) {
-			if (avp==avp_del) {
-				if (avp_prev) {
-					avp_prev->next=avp->next;
+	for(i = 0; i < IDX_MAX; i++) {
+		for(avp_prev = 0, avp = *crt_list[i]; avp;
+				avp_prev = avp, avp = avp->next) {
+			if(avp == avp_del) {
+				if(avp_prev) {
+					avp_prev->next = avp->next;
 				} else {
 					*crt_list[i] = avp->next;
 				}
@@ -601,11 +621,10 @@ void destroy_avp(avp_t *avp_del)
 		}
 	}
 
-	for( avp_prev=0,avp=**crt_glist ; avp ;
-	     avp_prev=avp,avp=avp->next ) {
-		if (avp==avp_del) {
-			if (avp_prev) {
-				avp_prev->next=avp->next;
+	for(avp_prev = 0, avp = **crt_glist; avp; avp_prev = avp, avp = avp->next) {
+		if(avp == avp_del) {
+			if(avp_prev) {
+				avp_prev->next = avp->next;
 			} else {
 				**crt_glist = avp->next;
 			}
@@ -616,51 +635,58 @@ void destroy_avp(avp_t *avp_del)
 }
 
 
-void destroy_avp_list_unsafe(avp_list_t* list)
+void destroy_avp_list_unsafe(avp_list_t *list)
 {
 	avp_t *avp, *foo;
 
 	avp = *list;
-	while( avp ) {
+	while(avp) {
 		foo = avp;
 		avp = avp->next;
-		shm_free_unsafe( foo );
+		shm_free_unsafe(foo);
 	}
 	*list = 0;
 }
 
 
-inline void destroy_avp_list(avp_list_t* list)
+inline void destroy_avp_list(avp_list_t *list)
 {
 	avp_t *avp, *foo;
 
 	LM_DBG("destroying list %p\n", *list);
 	avp = *list;
-	while( avp ) {
+	while(avp) {
 		foo = avp;
 		avp = avp->next;
-		shm_free( foo );
+		shm_free(foo);
 	}
 	*list = 0;
 }
 
 int reset_avp_list(int flags)
 {
-    int i;
-    if (flags & AVP_CLASS_URI) {
-	if (flags & AVP_TRACK_FROM) i = IDX_FROM_URI;
-	else i = IDX_TO_URI;
-    } else if (flags & AVP_CLASS_USER) {
-	if (flags & AVP_TRACK_FROM) i = IDX_FROM_USER;
-	else i = IDX_TO_USER;
-    } else if (flags & AVP_CLASS_DOMAIN) {
-	if (flags & AVP_TRACK_FROM) i = IDX_FROM_DOMAIN;
-	else i = IDX_TO_DOMAIN;
-    } else return -1;
+	int i;
+	if(flags & AVP_CLASS_URI) {
+		if(flags & AVP_TRACK_FROM)
+			i = IDX_FROM_URI;
+		else
+			i = IDX_TO_URI;
+	} else if(flags & AVP_CLASS_USER) {
+		if(flags & AVP_TRACK_FROM)
+			i = IDX_FROM_USER;
+		else
+			i = IDX_TO_USER;
+	} else if(flags & AVP_CLASS_DOMAIN) {
+		if(flags & AVP_TRACK_FROM)
+			i = IDX_FROM_DOMAIN;
+		else
+			i = IDX_TO_DOMAIN;
+	} else
+		return -1;
 
-    crt_list[i] = &def_list[i];
-    destroy_avp_list(crt_list[i]);
-    return 0;
+	crt_list[i] = &def_list[i];
+	destroy_avp_list(crt_list[i]);
+	return 0;
 }
 
 void reset_avps(void)
@@ -673,28 +699,28 @@ void reset_avps(void)
 }
 
 
-avp_list_t* set_avp_list( avp_flags_t flags, avp_list_t* list )
+avp_list_t *set_avp_list(avp_flags_t flags, avp_list_t *list)
 {
-	avp_list_t* prev;
+	avp_list_t *prev;
 
-	if (flags & AVP_CLASS_URI) {
-		if (flags & AVP_TRACK_FROM) {
+	if(flags & AVP_CLASS_URI) {
+		if(flags & AVP_TRACK_FROM) {
 			prev = crt_list[IDX_FROM_URI];
 			crt_list[IDX_FROM_URI] = list;
 		} else {
 			prev = crt_list[IDX_TO_URI];
 			crt_list[IDX_TO_URI] = list;
 		}
-	} else if (flags & AVP_CLASS_USER) {
-		if (flags & AVP_TRACK_FROM) {
+	} else if(flags & AVP_CLASS_USER) {
+		if(flags & AVP_TRACK_FROM) {
 			prev = crt_list[IDX_FROM_USER];
 			crt_list[IDX_FROM_USER] = list;
 		} else {
 			prev = crt_list[IDX_TO_USER];
 			crt_list[IDX_TO_USER] = list;
 		}
-	} else if (flags & AVP_CLASS_DOMAIN) {
-		if (flags & AVP_TRACK_FROM) {
+	} else if(flags & AVP_CLASS_DOMAIN) {
+		if(flags & AVP_TRACK_FROM) {
 			prev = crt_list[IDX_FROM_DOMAIN];
 			crt_list[IDX_FROM_DOMAIN] = list;
 		} else {
@@ -703,7 +729,7 @@ avp_list_t* set_avp_list( avp_flags_t flags, avp_list_t* list )
 		}
 	} else {
 		prev = *crt_glist;
-	        *crt_glist = list;
+		*crt_glist = list;
 	}
 
 	return prev;
@@ -718,20 +744,21 @@ static inline int check_avp_galias(str *alias, int type, numstr_ut avp_name)
 
 	type &= AVP_NAME_STR;
 
-	for( ga=galiases ; ga ; ga=ga->next ) {
+	for(ga = galiases; ga; ga = ga->next) {
 		/* check for duplicated alias names */
-		if ( alias->len==ga->alias.len &&
-		(strncasecmp( alias->s, ga->alias.s, alias->len)==0) )
+		if(alias->len == ga->alias.len
+				&& (strncasecmp(alias->s, ga->alias.s, alias->len) == 0))
 			return -1;
 		/*check for duplicated avp names */
-		if (type==ga->avp.type) {
-			if (type&AVP_NAME_STR){
-				if (avp_name.s.len==ga->avp.name.s.len &&
-				    (strncasecmp(avp_name.s.s, ga->avp.name.s.s,
-						 avp_name.s.len)==0) )
+		if(type == ga->avp.type) {
+			if(type & AVP_NAME_STR) {
+				if(avp_name.s.len == ga->avp.name.s.len
+						&& (strncasecmp(avp_name.s.s, ga->avp.name.s.s,
+									avp_name.s.len)
+								== 0))
 					return -1;
 			} else {
-				if (avp_name.n==ga->avp.name.n)
+				if(avp_name.n == ga->avp.name.n)
 					return -1;
 			}
 		}
@@ -744,49 +771,48 @@ int add_avp_galias(str *alias, int type, numstr_ut avp_name)
 {
 	struct avp_galias *ga;
 
-	if ((type&AVP_NAME_STR && (!avp_name.s.s ||
-				   !avp_name.s.len)) ||!alias || !alias->s ||
-		!alias->len ){
+	if((type & AVP_NAME_STR && (!avp_name.s.s || !avp_name.s.len)) || !alias
+			|| !alias->s || !alias->len) {
 		LM_ERR("null params received\n");
 		goto error;
 	}
 
-	if (check_avp_galias(alias,type,avp_name)!=0) {
+	if(check_avp_galias(alias, type, avp_name) != 0) {
 		LM_ERR("duplicate alias/avp entry\n");
 		goto error;
 	}
 
-	ga = (struct avp_galias*)pkg_malloc( sizeof(struct avp_galias) );
-	if (ga==0) {
+	ga = (struct avp_galias *)pkg_malloc(sizeof(struct avp_galias));
+	if(ga == 0) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
 
-	ga->alias.s = (char*)pkg_malloc( alias->len+1 );
-	if (ga->alias.s==0) {
+	ga->alias.s = (char *)pkg_malloc(alias->len + 1);
+	if(ga->alias.s == 0) {
 		PKG_MEM_ERROR;
 		goto error1;
 	}
-	memcpy( ga->alias.s, alias->s, alias->len);
+	memcpy(ga->alias.s, alias->s, alias->len);
 	ga->alias.len = alias->len;
 
-	ga->avp.type = type&AVP_NAME_STR;
+	ga->avp.type = type & AVP_NAME_STR;
 
-	if (type&AVP_NAME_STR) {
-		ga->avp.name.s.s = (char*)pkg_malloc( avp_name.s.len+1 );
-		if (ga->avp.name.s.s==0) {
+	if(type & AVP_NAME_STR) {
+		ga->avp.name.s.s = (char *)pkg_malloc(avp_name.s.len + 1);
+		if(ga->avp.name.s.s == 0) {
 			PKG_MEM_ERROR;
 			goto error2;
 		}
 		ga->avp.name.s.len = avp_name.s.len;
-		memcpy( ga->avp.name.s.s, avp_name.s.s, avp_name.s.len);
+		memcpy(ga->avp.name.s.s, avp_name.s.s, avp_name.s.len);
 		ga->avp.name.s.s[avp_name.s.len] = 0;
-		LM_DBG("registering <%s> for avp name <%s>\n",
-			ga->alias.s, ga->avp.name.s.s);
+		LM_DBG("registering <%s> for avp name <%s>\n", ga->alias.s,
+				ga->avp.name.s.s);
 	} else {
 		ga->avp.name.n = avp_name.n;
-		LM_DBG("registering <%s> for avp id <%ld>\n",
-			ga->alias.s, ga->avp.name.n);
+		LM_DBG("registering <%s> for avp id <%ld>\n", ga->alias.s,
+				ga->avp.name.n);
 	}
 
 	ga->next = galiases;
@@ -806,9 +832,9 @@ int lookup_avp_galias(str *alias, int *type, numstr_ut *avp_name)
 {
 	struct avp_galias *ga;
 
-	for( ga=galiases ; ga ; ga=ga->next )
-		if (alias->len==ga->alias.len &&
-		(strncasecmp( alias->s, ga->alias.s, alias->len)==0) ) {
+	for(ga = galiases; ga; ga = ga->next)
+		if(alias->len == ga->alias.len
+				&& (strncasecmp(alias->s, ga->alias.s, alias->len) == 0)) {
 			*type = ga->avp.type;
 			*avp_name = ga->avp.name;
 			return 0;
@@ -819,22 +845,25 @@ int lookup_avp_galias(str *alias, int *type, numstr_ut *avp_name)
 
 
 /* parsing functions */
-#define ERR_IF_CONTAINS(name,chr) \
-	if (memchr(name->s,chr,name->len)) { \
+#define ERR_IF_CONTAINS(name, chr)                                      \
+	if(memchr(name->s, chr, name->len)) {                               \
 		LM_ERR("Unexpected control character '%c' in AVP name\n", chr); \
-		goto error; \
+		goto error;                                                     \
 	}
 
-int parse_avp_name( str *name, int *type, numstr_ut *avp_name, int *index)
+int parse_avp_name(str *name, int *type, numstr_ut *avp_name, int *index)
 {
 	int ret;
 	avp_ident_t attr;
 
-	ret=parse_avp_ident(name, &attr);
-	if (!ret) {
-		if (type) *type = attr.flags;
-		if (avp_name) *avp_name = attr.name;
-		if (index) *index = attr.index;
+	ret = parse_avp_ident(name, &attr);
+	if(!ret) {
+		if(type)
+			*type = attr.flags;
+		if(avp_name)
+			*avp_name = attr.name;
+		if(index)
+			*index = attr.index;
 	}
 	return ret;
 }
@@ -872,37 +901,39 @@ int parse_avp_name( str *name, int *type, numstr_ut *avp_name, int *index)
  * @param *attr - the result will be stored here
  * @return 0 on success, -1 on error
  */
-int parse_avp_ident( str *name, avp_ident_t* attr)
+int parse_avp_ident(str *name, avp_ident_t *attr)
 {
 	unsigned int id;
 	char c;
 	char *p;
 	str s;
 
-	if (name==0 || name->s==0 || name->len==0) {
+	if(name == 0 || name->s == 0 || name->len == 0) {
 		LM_ERR("NULL name or name->s or name->len\n");
 		goto error;
 	}
 
 	attr->index = 0;
 	LM_DBG("Parsing '%.*s'\n", name->len, name->s);
-	if (name->len>=2 && name->s[1]==':') { /* old fashion i: or s: */
-	        /* WARN("i: and s: avp name syntax is deprecated!\n"); */
+	if(name->len >= 2 && name->s[1] == ':') { /* old fashion i: or s: */
+		/* WARN("i: and s: avp name syntax is deprecated!\n"); */
 		c = name->s[0];
 		name->s += 2;
 		name->len -= 2;
-		if (name->len==0)
+		if(name->len == 0)
 			goto error;
-		switch (c) {
-			case 's': case 'S':
+		switch(c) {
+			case 's':
+			case 'S':
 				attr->flags = AVP_NAME_STR;
 				attr->name.s = *name;
 				break;
-			case 'i': case 'I':
+			case 'i':
+			case 'I':
 				attr->flags = 0;
-				if (str2int( name, &id)!=0) {
-					LM_ERR("invalid ID <%.*s> - not a number\n",
-						name->len, name->s);
+				if(str2int(name, &id) != 0) {
+					LM_ERR("invalid ID <%.*s> - not a number\n", name->len,
+							name->s);
 					goto error;
 				}
 				attr->name.n = (int)id;
@@ -911,24 +942,24 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 				LM_ERR("unsupported type [%c]\n", c);
 				goto error;
 		}
-	} else if ((p=memchr(name->s, '.', name->len))) {
-		if (p-name->s==1) {
-			id=name->s[0];
-			name->s +=2;
-			name->len -=2;
-		} else if (p-name->s==2) {
-			id=name->s[0]<<8 | name->s[1];
-			name->s +=3;
-			name->len -=3;
+	} else if((p = memchr(name->s, '.', name->len))) {
+		if(p - name->s == 1) {
+			id = name->s[0];
+			name->s += 2;
+			name->len -= 2;
+		} else if(p - name->s == 2) {
+			id = name->s[0] << 8 | name->s[1];
+			name->s += 3;
+			name->len -= 3;
 		} else {
 			LM_ERR("AVP unknown class prefix '%.*s'\n", name->len, name->s);
 			goto error;
 		}
-		if (name->len==0) {
+		if(name->len == 0) {
 			LM_ERR("AVP name not specified after the prefix separator\n");
 			goto error;
 		}
-		switch (id) {
+		switch(id) {
 			case 'f':
 				attr->flags = AVP_TRACK_FROM;
 				break;
@@ -940,7 +971,7 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 				break;
 			case 0x7472: /* 'tr' */
 				attr->flags = AVP_TRACK_TO | AVP_CLASS_URI;
-				break;				
+				break;
 			case 0x6675: /* 'fu' */
 				attr->flags = AVP_TRACK_FROM | AVP_CLASS_USER;
 				break;
@@ -957,57 +988,60 @@ int parse_avp_ident( str *name, avp_ident_t* attr)
 				attr->flags = AVP_TRACK_ALL | AVP_CLASS_GLOBAL;
 				break;
 			default:
-				if (id < 1<<8)
+				if(id < 1 << 8)
 					LM_ERR("AVP unknown class prefix '%c'\n", id);
 				else
-					LM_ERR("AVP unknown class prefix '%c%c'\n", id>>8,id);
+					LM_ERR("AVP unknown class prefix '%c%c'\n", id >> 8, id);
 				goto error;
 		}
-		if (name->s[name->len-1]==']') {
-			p=memchr(name->s, '[', name->len);
-			if (!p) {
+		if(name->s[name->len - 1] == ']') {
+			p = memchr(name->s, '[', name->len);
+			if(!p) {
 				LM_ERR("missing '[' for AVP index\n");
 				goto error;
 			}
-			s.s=p+1;
-			s.len=name->len-(p-name->s)-2; /* [ and ] */
-			if (s.len == 0) {
+			s.s = p + 1;
+			s.len = name->len - (p - name->s) - 2; /* [ and ] */
+			if(s.len == 0) {
 				attr->flags |= AVP_INDEX_ALL;
 			} else {
-				if (s.s[0]=='-') {
+				if(s.s[0] == '-') {
 					attr->flags |= AVP_INDEX_BACKWARD;
-					s.s++;s.len--;
+					s.s++;
+					s.len--;
 				} else {
 					attr->flags |= AVP_INDEX_FORWARD;
 				}
-				if ((str2int(&s, &id) != 0)||(id==0)) {
+				if((str2int(&s, &id) != 0) || (id == 0)) {
 					LM_ERR("Invalid AVP index '%.*s'\n", s.len, s.s);
 					goto error;
 				}
 				attr->index = id;
 			}
-			name->len=p-name->s;
+			name->len = p - name->s;
 		}
-		ERR_IF_CONTAINS(name,'.');
-		ERR_IF_CONTAINS(name,'[');
-		ERR_IF_CONTAINS(name,']');
-		if ((name->len > 2) && (name->s[0]=='/') && (name->s[name->len-1]=='/')) {
-			attr->name.re=pkg_malloc(sizeof(regex_t));
-			if (!attr->name.re) {
+		ERR_IF_CONTAINS(name, '.');
+		ERR_IF_CONTAINS(name, '[');
+		ERR_IF_CONTAINS(name, ']');
+		if((name->len > 2) && (name->s[0] == '/')
+				&& (name->s[name->len - 1] == '/')) {
+			attr->name.re = pkg_malloc(sizeof(regex_t));
+			if(!attr->name.re) {
 				PKG_MEM_ERROR;
 				goto error;
 			}
-			name->s[name->len-1]=0;
-			if (regcomp(attr->name.re, name->s+1, REG_EXTENDED|REG_NOSUB|REG_ICASE)) {
+			name->s[name->len - 1] = 0;
+			if(regcomp(attr->name.re, name->s + 1,
+					   REG_EXTENDED | REG_NOSUB | REG_ICASE)) {
 				pkg_free(attr->name.re);
-				attr->name.re=0;
-				name->s[name->len-1] = '/';
+				attr->name.re = 0;
+				name->s[name->len - 1] = '/';
 				goto error;
 			}
-			name->s[name->len-1] = '/';
+			name->s[name->len - 1] = '/';
 			attr->flags |= AVP_NAME_RE;
 		} else {
-			ERR_IF_CONTAINS(name,'/');
+			ERR_IF_CONTAINS(name, '/');
 			attr->flags |= AVP_NAME_STR;
 			attr->name.s = *name;
 		}
@@ -1022,10 +1056,10 @@ error:
 	return -1;
 }
 
-void free_avp_ident(avp_ident_t* attr)
+void free_avp_ident(avp_ident_t *attr)
 {
-	if (attr->flags & AVP_NAME_RE) {
-		if (! attr->name.re) {
+	if(attr->flags & AVP_NAME_RE) {
+		if(!attr->name.re) {
 			BUG("attr ident @%p has the regexp flag set, but no regexp.\n",
 					attr);
 #ifdef EXTRA_DEBUG
@@ -1038,51 +1072,51 @@ void free_avp_ident(avp_ident_t* attr)
 	}
 }
 
-int km_parse_avp_spec( str *name, int *type, numstr_ut *avp_name)
+int km_parse_avp_spec(str *name, int *type, numstr_ut *avp_name)
 {
 	char *p;
 	int index = 0;
 
-	if (name==0 || name->s==0 || name->len==0)
+	if(name == 0 || name->s == 0 || name->len == 0)
 		return -1;
 
-	p = (char*)memchr((void*)name->s, ':', name->len);
-	if (p==NULL) {
+	p = (char *)memchr((void *)name->s, ':', name->len);
+	if(p == NULL) {
 		/* might be kamailio avp alias or ser avp name style */
-		if(lookup_avp_galias( name, type, avp_name)==0)
+		if(lookup_avp_galias(name, type, avp_name) == 0)
 			return 0; /* found */
 	}
-	return parse_avp_name( name, type, avp_name, &index);
+	return parse_avp_name(name, type, avp_name, &index);
 }
 
 
-int parse_avp_spec( str *name, int *type, numstr_ut *avp_name, int *index)
+int parse_avp_spec(str *name, int *type, numstr_ut *avp_name, int *index)
 {
 	str alias;
 
-	if (name==0 || name->s==0 || name->len==0)
+	if(name == 0 || name->s == 0 || name->len == 0)
 		return -1;
 
-	if (name->s[0]==GALIAS_CHAR_MARKER) {
+	if(name->s[0] == GALIAS_CHAR_MARKER) {
 		/* it's an avp alias */
-		if (name->len==1) {
+		if(name->len == 1) {
 			LM_ERR("empty alias\n");
 			return -1;
 		}
-		alias.s = name->s+1;
-		alias.len = name->len-1;
-		return lookup_avp_galias( &alias, type, avp_name);
+		alias.s = name->s + 1;
+		alias.len = name->len - 1;
+		return lookup_avp_galias(&alias, type, avp_name);
 	} else {
-		return parse_avp_name( name, type, avp_name, index);
+		return parse_avp_name(name, type, avp_name, index);
 	}
 }
 
 void free_avp_name(avp_flags_t *type, numstr_ut *avp_name)
 {
-	if ((*type & AVP_NAME_RE) && (avp_name->re)){
+	if((*type & AVP_NAME_RE) && (avp_name->re)) {
 		regfree(avp_name->re);
 		pkg_free(avp_name->re);
-		avp_name->re=0;
+		avp_name->re = 0;
 	}
 }
 
@@ -1090,55 +1124,56 @@ int add_avp_galias_str(char *alias_definition)
 {
 	numstr_ut avp_name;
 	char *s;
-	str  name;
-	str  alias;
-	int  type;
-	int  index;
+	str name;
+	str alias;
+	int type;
+	int index;
 
 	s = alias_definition;
 	while(*s && isspace((int)*s))
 		s++;
 
-	while (*s) {
+	while(*s) {
 		/* parse alias name */
 		alias.s = s;
-		while(*s && *s!=';' && !isspace((int)*s) && *s!='=')
+		while(*s && *s != ';' && !isspace((int)*s) && *s != '=')
 			s++;
-		if (alias.s==s || *s==0 || *s==';')
+		if(alias.s == s || *s == 0 || *s == ';')
 			goto parse_error;
-		alias.len = s-alias.s;
+		alias.len = s - alias.s;
 		while(*s && isspace((int)*s))
 			s++;
 		/* equal sign */
-		if (*s!='=')
+		if(*s != '=')
 			goto parse_error;
 		s++;
 		while(*s && isspace((int)*s))
 			s++;
 		/* avp name */
 		name.s = s;
-		while(*s && *s!=';' && !isspace((int)*s))
+		while(*s && *s != ';' && !isspace((int)*s))
 			s++;
-		if (name.s==s)
+		if(name.s == s)
 			goto parse_error;
-		name.len = s-name.s;
+		name.len = s - name.s;
 		while(*s && isspace((int)*s))
 			s++;
 		/* check end */
-		if (*s!=0 && *s!=';')
+		if(*s != 0 && *s != ';')
 			goto parse_error;
-		if (*s==';') {
-			for( s++ ; *s && isspace((int)*s) ; s++ );
-			if (*s==0)
+		if(*s == ';') {
+			for(s++; *s && isspace((int)*s); s++)
+				;
+			if(*s == 0)
 				goto parse_error;
 		}
 
-		if (parse_avp_name( &name, &type, &avp_name, &index)!=0) {
+		if(parse_avp_name(&name, &type, &avp_name, &index) != 0) {
 			LM_ERR("<%.*s> not a valid AVP name\n", name.len, name.s);
 			goto error;
 		}
 
-		if (add_avp_galias( &alias, type, avp_name)!=0) {
+		if(add_avp_galias(&alias, type, avp_name) != 0) {
 			LM_ERR("add global alias failed\n");
 			goto error;
 		}
@@ -1146,8 +1181,8 @@ int add_avp_galias_str(char *alias_definition)
 
 	return 0;
 parse_error:
-	LM_ERR("parse error in <%s> around pos %ld\n",
-		alias_definition, (long)(s-alias_definition));
+	LM_ERR("parse error in <%s> around pos %ld\n", alias_definition,
+			(long)(s - alias_definition));
 error:
 	return -1;
 }
@@ -1156,15 +1191,16 @@ error:
 int destroy_avps(avp_flags_t flags, avp_name_t name, int all)
 {
 	struct search_state st;
-	avp_t* avp;
+	avp_t *avp;
 	int n;
-	
+
 	n = 0;
 	avp = search_first_avp(flags, name, 0, &st);
-	while (avp) {
+	while(avp) {
 		destroy_avp(avp);
 		n++;
-		if (!all) break;
+		if(!all)
+			break;
 		avp = search_next_avp(&st, 0);
 	}
 	return n;
@@ -1174,7 +1210,7 @@ int destroy_avps(avp_flags_t flags, avp_name_t name, int all)
 void delete_avp(avp_flags_t flags, avp_name_t name)
 {
 	struct search_state st;
-	avp_t* avp;
+	avp_t *avp;
 
 	avp = search_first_avp(flags, name, 0, &st);
 	while(avp) {
@@ -1186,26 +1222,29 @@ void delete_avp(avp_flags_t flags, avp_name_t name)
 /* AVP flags functions */
 
 /* name2id conversion is intended to use during fixup (cfg parsing and modinit) only therefore no hash is used */
-avp_flags_t register_avpflag(char* name) {
+avp_flags_t register_avpflag(char *name)
+{
 	avp_flags_t ret;
 	ret = get_avpflag_no(name);
-	if (ret == 0) {
-		if (registered_avpflags_no >= MAX_AVPFLAG) {
-			LM_ERR("cannot register new avp flag ('%s'), max.number of flags (%d) reached\n",
+	if(ret == 0) {
+		if(registered_avpflags_no >= MAX_AVPFLAG) {
+			LM_ERR("cannot register new avp flag ('%s'), max.number of flags "
+				   "(%d) reached\n",
 					name, MAX_AVPFLAG);
 			return -1;
 		}
-		ret = 1<<(AVP_CUSTOM_FLAGS+registered_avpflags_no);
+		ret = 1 << (AVP_CUSTOM_FLAGS + registered_avpflags_no);
 		registered_avpflags[registered_avpflags_no++] = name;
 	}
 	return ret;
 }
 
-avp_flags_t get_avpflag_no(char* name) {
+avp_flags_t get_avpflag_no(char *name)
+{
 	int i;
-	for (i=0; i<registered_avpflags_no; i++) {
-		if (strcasecmp(name, registered_avpflags[i])==0)
-			return 1<<(AVP_CUSTOM_FLAGS+i);
+	for(i = 0; i < registered_avpflags_no; i++) {
+		if(strcasecmp(name, registered_avpflags[i]) == 0)
+			return 1 << (AVP_CUSTOM_FLAGS + i);
 	}
 	return 0;
 }

@@ -25,12 +25,13 @@
 #include "../dprint.h"
 
 /* seed the generator, will also use system randomness */
-void cryptorand_seed(const unsigned int seed) {
+void cryptorand_seed(const unsigned int seed)
+{
 	u_int8_t bytes[4];
-	
+
 	bytes[0] = (seed >> 24) & 0xFF;
 	bytes[1] = (seed >> 16) & 0xFF;
-	bytes[2] = (seed >> 8)  & 0xFF;
+	bytes[2] = (seed >> 8) & 0xFF;
 	bytes[3] = seed & 0xFF;
 
 	LM_DBG("seeding cryptorand generator with %u\n", seed);
@@ -38,16 +39,16 @@ void cryptorand_seed(const unsigned int seed) {
 }
 
 /* generate a 32 bit random number */
-unsigned int cryptorand(void) {
+unsigned int cryptorand(void)
+{
 	u_int8_t bytes[4];
 	u_int32_t result = 0;
-	
+
 	sr_get_pseudo_random_bytes(bytes, 4);
 	result |= (u_int32_t)bytes[0] << 24;
 	result |= (u_int32_t)bytes[1] << 16;
 	result |= (u_int32_t)bytes[2] << 8;
 	result |= (u_int32_t)bytes[3];
-	
+
 	return result;
 }
-

@@ -53,44 +53,47 @@
 #define MAX_BUFFERS 2
 #define BUFFER_GRANULARITY 256
 
-typedef struct stat_buffer_ {
+typedef struct stat_buffer_
+{
 	char *b;
 	int size;
 	int offset;
 } stat_buffer_t;
 
 static stat_buffer_t buffer[MAX_BUFFERS];
-static int active_buffer=-1;
+static int active_buffer = -1;
 
-#define ALLOC_SIZE(req_size) (((req_size/BUFFER_GRANULARITY)+1)*BUFFER_GRANULARITY)
+#define ALLOC_SIZE(req_size) \
+	(((req_size / BUFFER_GRANULARITY) + 1) * BUFFER_GRANULARITY)
 
-static int allocate_buffer(int req_size) {
+static int allocate_buffer(int req_size)
+{
 	void *b;
-	int size=ALLOC_SIZE(req_size);
-	
-	if (buffer[active_buffer].b == NULL) {
-		if ((buffer[active_buffer].b=pkg_malloc(size))==NULL) {
+	int size = ALLOC_SIZE(req_size);
+
+	if(buffer[active_buffer].b == NULL) {
+		if((buffer[active_buffer].b = pkg_malloc(size)) == NULL) {
 			PKG_MEM_ERROR;
 			return 0;
 		}
-		buffer[active_buffer].size=size;
-		buffer[active_buffer].offset=0;
-		return 1;
-	}
-	
-	active_buffer = (active_buffer?active_buffer:MAX_BUFFERS)-1;
-	if (buffer[active_buffer].size >= req_size) {
+		buffer[active_buffer].size = size;
 		buffer[active_buffer].offset = 0;
 		return 1;
 	}
-	
-	if ((b=pkg_realloc(buffer[active_buffer].b,size))) {
-		buffer[active_buffer].b=b;
-		buffer[active_buffer].size=size;
-		buffer[active_buffer].offset=0;
+
+	active_buffer = (active_buffer ? active_buffer : MAX_BUFFERS) - 1;
+	if(buffer[active_buffer].size >= req_size) {
+		buffer[active_buffer].offset = 0;
 		return 1;
 	}
-	
+
+	if((b = pkg_realloc(buffer[active_buffer].b, size))) {
+		buffer[active_buffer].b = b;
+		buffer[active_buffer].size = size;
+		buffer[active_buffer].offset = 0;
+		return 1;
+	}
+
 	return 0;
 }
 
@@ -101,22 +104,23 @@ static int allocate_buffer(int req_size) {
  *           pointer to the space on success
  */
 
-char* get_static_buffer(int req_size) {
+char *get_static_buffer(int req_size)
+{
 	char *p = NULL;
 
 #ifdef EXTRA_DEBUG
-	if ((active_buffer < 0) || (active_buffer > MAX_BUFFERS-1)) {
+	if((active_buffer < 0) || (active_buffer > MAX_BUFFERS - 1)) {
 		LM_CRIT("buffers have not been initialized yet. "
-			"Call reset_static_buffer() before executing "
-			"a route block.\n");
+				"Call reset_static_buffer() before executing "
+				"a route block.\n");
 		abort();
 	}
 #endif
-	if ((buffer[active_buffer].size >= buffer[active_buffer].offset + req_size)
+	if((buffer[active_buffer].size >= buffer[active_buffer].offset + req_size)
 			|| (allocate_buffer(req_size))) {
 		/* enough space in current buffer or allocation successful */
-		p = buffer[active_buffer].b+buffer[active_buffer].offset;
-		buffer[active_buffer].offset += req_size;	
+		p = buffer[active_buffer].b + buffer[active_buffer].offset;
+		buffer[active_buffer].offset += req_size;
 		return p;
 	}
 	return NULL;
@@ -127,62 +131,65 @@ char* get_static_buffer(int req_size) {
  * Reset offset to unused space
  */
 
-int reset_static_buffer(void) {
+int reset_static_buffer(void)
+{
 	int i;
 
-	if (active_buffer == -1) {
+	if(active_buffer == -1) {
 		memset(buffer, 0, sizeof(buffer));
 	} else {
-		for (i=0; i<MAX_BUFFERS; i++)
-			buffer[i].offset=0;
+		for(i = 0; i < MAX_BUFFERS; i++)
+			buffer[i].offset = 0;
 	}
-	active_buffer=0;
+	active_buffer = 0;
 	return 0;
 }
 
-int str_to_static_buffer(str* res, str* s)
+int str_to_static_buffer(str *res, str *s)
 {
 	res->s = get_static_buffer(s->len);
-	if (!res->s) return -1;
+	if(!res->s)
+		return -1;
 	memcpy(res->s, s->s, s->len);
 	res->len = s->len;
 	return 0;
 }
 
-int int_to_static_buffer(str* res, int val)
+int int_to_static_buffer(str *res, int val)
 {
 	char *c;
 	c = int2str(abs(val), &res->len);
-	res->s = get_static_buffer(res->len+((val<0)?1:0));
-	if (!res->s) return -1;
-	if (val < 0) {
-		res->s[0] = '-';	
-		memcpy(res->s+1, c, res->len);
+	res->s = get_static_buffer(res->len + ((val < 0) ? 1 : 0));
+	if(!res->s)
+		return -1;
+	if(val < 0) {
+		res->s[0] = '-';
+		memcpy(res->s + 1, c, res->len);
 		res->len++;
-	}
-	else {
+	} else {
 		memcpy(res->s, c, res->len);
 	}
 	return 0;
 }
 
-int uint_to_static_buffer(str* res, unsigned int val)
+int uint_to_static_buffer(str *res, unsigned int val)
 {
 	char *c;
 	c = int2str(val, &res->len);
 	res->s = get_static_buffer(res->len);
-	if (!res->s) return -1;
+	if(!res->s)
+		return -1;
 	memcpy(res->s, c, res->len);
 	return 0;
 }
 
-int uint_to_static_buffer_ex(str* res, unsigned int val, int base, int pad)
+int uint_to_static_buffer_ex(str *res, unsigned int val, int base, int pad)
 {
 	char *c;
-	c = int2str_base_0pad(val, &res->len, base, pad); 
+	c = int2str_base_0pad(val, &res->len, base, pad);
 	res->s = get_static_buffer(res->len);
-	if (!res->s) return -1;
+	if(!res->s)
+		return -1;
 	memcpy(res->s, c, res->len);
 	return 0;
 }
-

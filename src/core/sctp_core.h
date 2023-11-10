@@ -34,14 +34,14 @@ typedef int (*sctp_srapi_init_f)(void);
 void sctp_core_destroy(void);
 typedef void (*sctp_srapi_destroy_f)(void);
 
-int sctp_core_init_sock(struct socket_info* sock_info);
-typedef int (*sctp_srapi_init_sock_f)(struct socket_info* sock_info);
+int sctp_core_init_sock(struct socket_info *sock_info);
+typedef int (*sctp_srapi_init_sock_f)(struct socket_info *sock_info);
 
 void sctp_core_init_options(void);
 typedef void (*sctp_srapi_init_options_f)(void);
 
-int sctp_core_check_compiled_sockopts(char* buf, int size);
-typedef int (*sctp_srapi_check_compiled_sockopts_f)(char* buf, int size);
+int sctp_core_check_compiled_sockopts(char *buf, int size);
+typedef int (*sctp_srapi_check_compiled_sockopts_f)(char *buf, int size);
 
 int sctp_core_check_support(void);
 typedef int (*sctp_srapi_check_support_f)(void);
@@ -49,11 +49,12 @@ typedef int (*sctp_srapi_check_support_f)(void);
 int sctp_core_rcv_loop(void);
 typedef int (*sctp_srapi_rcv_loop_f)(void);
 
-int sctp_core_msg_send(struct dest_info* dst, char* buf, unsigned len);
-typedef int (*sctp_srapi_msg_send_f)(struct dest_info* dst, char* buf,
-		unsigned len);
+int sctp_core_msg_send(struct dest_info *dst, char *buf, unsigned len);
+typedef int (*sctp_srapi_msg_send_f)(
+		struct dest_info *dst, char *buf, unsigned len);
 
-typedef struct sctp_srapi {
+typedef struct sctp_srapi
+{
 	sctp_srapi_init_f init;
 	sctp_srapi_destroy_f destroy;
 	sctp_srapi_init_sock_f init_sock;

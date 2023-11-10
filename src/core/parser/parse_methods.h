@@ -37,9 +37,9 @@
  * Parse comma separated list of methods pointed by _body and assign their
  * enum bits to _methods.  Returns 1 on success and 0 on failure.
  */
-int parse_methods(const str* const _body, unsigned int* const _methods);
+int parse_methods(const str *const _body, unsigned int *const _methods);
 
-int parse_method_name(const str* const s, enum request_method* const method);
+int parse_method_name(const str *const s, enum request_method *const method);
 
 
 #endif /* PARSE_METHODS_H */

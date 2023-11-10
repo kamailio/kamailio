@@ -41,11 +41,12 @@
  * @param total length of total characters in list
  * @return extended list
  */
-struct str_list *append_str_list(char *s, int len, struct str_list **last, int *total)
+struct str_list *append_str_list(
+		char *s, int len, struct str_list **last, int *total)
 {
 	struct str_list *nv;
 	nv = pkg_malloc(sizeof(struct str_list));
-	if (!nv) {
+	if(!nv) {
 		PKG_MEM_ERROR;
 		return 0;
 	}
@@ -72,12 +73,12 @@ struct str_list *append_str_list(char *s, int len, struct str_list **last, int *
 str_list_t *str_list_block_add(str_list_t **head, char *s, int len)
 {
 	str_list_t *nv;
-	nv = pkg_mallocxz(sizeof(str_list_t) + (len+1)*sizeof(char));
-	if (!nv) {
+	nv = pkg_mallocxz(sizeof(str_list_t) + (len + 1) * sizeof(char));
+	if(!nv) {
 		PKG_MEM_ERROR;
 		return 0;
 	}
-	nv->s.s = (char*)nv + sizeof(str_list_t);
+	nv->s.s = (char *)nv + sizeof(str_list_t);
 	memcpy(nv->s.s, s, len);
 	nv->s.len = len;
 	nv->next = *head;

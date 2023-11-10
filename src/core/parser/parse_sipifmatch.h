@@ -30,21 +30,22 @@
 #include "../str.h"
 #include "hf.h"
 
-typedef struct etag {
-	str text;       /* Original string representation */
+typedef struct etag
+{
+	str text; /* Original string representation */
 } etag_t;
 
 
 /*! \brief
  * Parse Sipifmatch HF body
  */
-int parse_sipifmatch(struct hdr_field* _h);
+int parse_sipifmatch(struct hdr_field *_h);
 
 
 /*! \brief
  * Release memory
  */
-void free_sipifmatch(str** _e);
+void free_sipifmatch(str **_e);
 
 
 #endif /* PARSE_SIPIFMATCH_H */

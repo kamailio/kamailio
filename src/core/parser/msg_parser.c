@@ -58,7 +58,7 @@
 #endif
 
 
-#define parse_hname(_b,_e,_h) parse_hname2((_b),(_e),(_h))
+#define parse_hname(_b, _e, _h) parse_hname2((_b), (_e), (_h))
 
 /* number of via's encountered */
 int via_cnt;
@@ -69,14 +69,15 @@ int ksr_sip_parser_mode = KSR_SIP_PARSER_MODE_STRICT;
 
 /* returns pointer to next header line, and fill hdr_f ;
  * if at end of header returns pointer to the last crlf  (always buf)*/
-char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hdr)
+char *get_hdr_field(
+		char *const buf, char *const end, struct hdr_field *const hdr)
 {
 
 	char *tmp = 0;
 	char *match;
 	struct via_body *vb;
-	struct cseq_body* cseq_b;
-	struct to_body* to_b;
+	struct cseq_body *cseq_b;
+	struct to_body *to_b;
 	int integer, err;
 	unsigned uval;
 
@@ -85,22 +86,22 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 		goto error;
 	}
 
-	if ((*buf)=='\n' || (*buf)=='\r'){
+	if((*buf) == '\n' || (*buf) == '\r') {
 		/* double crlf or lflf or crcr */
 		DBG("found end of header\n");
-		hdr->type=HDR_EOH_T;
+		hdr->type = HDR_EOH_T;
 		return buf;
 	}
 
-	tmp=parse_hname(buf, end, hdr);
-	if (hdr->type==HDR_ERROR_T){
+	tmp = parse_hname(buf, end, hdr);
+	if(hdr->type == HDR_ERROR_T) {
 		ERR("bad header\n");
 		goto error;
 	}
 
 	/* eliminate leading whitespace */
-	tmp=eat_lws_end(tmp, end);
-	if (tmp>=end) {
+	tmp = eat_lws_end(tmp, end);
+	if(tmp >= end) {
 		ERR("HF empty\n");
 		goto error;
 	}
@@ -109,65 +110,65 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 	 * after leaving the hdr->type switch, tmp should be set to the
 	 * next header field
 	 */
-	switch(hdr->type){
+	switch(hdr->type) {
 		case HDR_VIA_T:
 			/* keep number of vias parsed -- we want to report it in
 			   replies for diagnostic purposes */
 			via_cnt++;
-			vb=pkg_malloc(sizeof(struct via_body));
-			if (vb==0){
+			vb = pkg_malloc(sizeof(struct via_body));
+			if(vb == 0) {
 				PKG_MEM_ERROR;
 				goto error;
 			}
-			memset(vb,0,sizeof(struct via_body));
-			hdr->body.s=tmp;
-			tmp=parse_via(tmp, end, vb);
-			if (vb->error==PARSE_ERROR){
+			memset(vb, 0, sizeof(struct via_body));
+			hdr->body.s = tmp;
+			tmp = parse_via(tmp, end, vb);
+			if(vb->error == PARSE_ERROR) {
 				ERR("bad via\n");
 				free_via_list(vb);
 				goto error;
 			}
-			hdr->parsed=vb;
-			vb->hdr.s=hdr->name.s;
-			vb->hdr.len=hdr->name.len;
-			hdr->body.len=tmp-hdr->body.s;
+			hdr->parsed = vb;
+			vb->hdr.s = hdr->name.s;
+			vb->hdr.len = hdr->name.len;
+			hdr->body.len = tmp - hdr->body.s;
 			break;
 		case HDR_CSEQ_T:
-			cseq_b=pkg_malloc(sizeof(struct cseq_body));
-			if (cseq_b==0){
+			cseq_b = pkg_malloc(sizeof(struct cseq_body));
+			if(cseq_b == 0) {
 				PKG_MEM_ERROR;
 				goto error;
 			}
 			memset(cseq_b, 0, sizeof(struct cseq_body));
-			hdr->body.s=tmp;
-			tmp=parse_cseq(tmp, end, cseq_b);
-			if (cseq_b->error==PARSE_ERROR){
+			hdr->body.s = tmp;
+			tmp = parse_cseq(tmp, end, cseq_b);
+			if(cseq_b->error == PARSE_ERROR) {
 				ERR("bad cseq\n");
 				free_cseq(cseq_b);
 				goto error;
 			}
-			hdr->parsed=cseq_b;
-			hdr->body.len=tmp-hdr->body.s;
+			hdr->parsed = cseq_b;
+			hdr->body.len = tmp - hdr->body.s;
 			DBG("cseq <%.*s>: <%.*s> <%.*s>\n", hdr->name.len, ZSW(hdr->name.s),
-					cseq_b->number.len, ZSW(cseq_b->number.s), cseq_b->method.len,
-					cseq_b->method.s);
+					cseq_b->number.len, ZSW(cseq_b->number.s),
+					cseq_b->method.len, cseq_b->method.s);
 			break;
 		case HDR_TO_T:
-			to_b=pkg_malloc(sizeof(struct to_body));
-			if (to_b==0){
+			to_b = pkg_malloc(sizeof(struct to_body));
+			if(to_b == 0) {
 				PKG_MEM_ERROR;
 				goto error;
 			}
 			memset(to_b, 0, sizeof(struct to_body));
-			hdr->body.s=tmp;
-			tmp=parse_to(tmp, end,to_b);
-			if (to_b->error==PARSE_ERROR){
+			hdr->body.s = tmp;
+			tmp = parse_to(tmp, end, to_b);
+			if(to_b->error == PARSE_ERROR) {
 				ERR("bad to header\n");
 				free_to(to_b);
 				goto error;
 			}
-			hdr->parsed=to_b;
-			hdr->body.len=tmp-hdr->body.s;
+			hdr->parsed = to_b;
+			hdr->body.len = tmp - hdr->body.s;
 			DBG("<%.*s> [%d]; uri=[%.*s]\n", hdr->name.len, ZSW(hdr->name.s),
 					hdr->body.len, to_b->uri.len, ZSW(to_b->uri.s));
 			DBG("to body (%d)[%.*s], to tag (%d)[%.*s]\n", to_b->body.len,
@@ -175,25 +176,25 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 					to_b->tag_value.len, ZSW(to_b->tag_value.s));
 			break;
 		case HDR_CONTENTLENGTH_T:
-			hdr->body.s=tmp;
-			tmp=parse_content_length(tmp,end, &integer);
-			if (tmp==0){
+			hdr->body.s = tmp;
+			tmp = parse_content_length(tmp, end, &integer);
+			if(tmp == 0) {
 				ERR("bad content_length header\n");
 				goto error;
 			}
-			hdr->parsed=(void*)(long)integer;
-			hdr->body.len=tmp-hdr->body.s;
+			hdr->parsed = (void *)(long)integer;
+			hdr->body.len = tmp - hdr->body.s;
 			DBG("content_length=%d\n", (int)(long)hdr->parsed);
 			break;
 		case HDR_RETRY_AFTER_T:
-			hdr->body.s=tmp;
-			tmp=parse_retry_after(tmp,end, &uval, &err);
-			if (err){
+			hdr->body.s = tmp;
+			tmp = parse_retry_after(tmp, end, &uval, &err);
+			if(err) {
 				ERR("bad retry_after header\n");
 				goto error;
 			}
-			hdr->parsed=(void*)(unsigned long)uval;
-			hdr->body.len=tmp-hdr->body.s;
+			hdr->parsed = (void *)(unsigned long)uval;
+			hdr->body.len = tmp - hdr->body.s;
 			DBG("retry_after=%d\n", (unsigned)(long)hdr->parsed);
 			break;
 		case HDR_IDENTITY_T:
@@ -247,43 +248,42 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 		case HDR_CALLINFO_T:
 		case HDR_OTHER_T:
 			/* just skip over it */
-			hdr->body.s=tmp;
+			hdr->body.s = tmp;
 			/* find end of header */
 			/* find lf */
-			do{
-				match=q_memchr(tmp, '\n', end-tmp);
-				if (match){
+			do {
+				match = q_memchr(tmp, '\n', end - tmp);
+				if(match) {
 					match++;
 				} else {
 					ERR("no eol - bad body for <%.*s> (hdr type: %d) [%.*s]\n",
-							 hdr->name.len, hdr->name.s,
-							hdr->type, ((end-tmp)>128)?128:(int)(end-tmp), tmp);
+							hdr->name.len, hdr->name.s, hdr->type,
+							((end - tmp) > 128) ? 128 : (int)(end - tmp), tmp);
 					/* abort(); */
-					tmp=end;
+					tmp = end;
 					goto error;
 				}
-				tmp=match;
-			}while( match<end &&( (*match==' ')||(*match=='\t') ) );
-			tmp=match;
-			hdr->body.len=match-hdr->body.s;
+				tmp = match;
+			} while(match < end && ((*match == ' ') || (*match == '\t')));
+			tmp = match;
+			hdr->body.len = match - hdr->body.s;
 			break;
 		default:
 			BUG("unknown header type %d [%.*s]\n", hdr->type,
-					 ((end-buf)>128)?128:(int)(end-buf), buf);
+					((end - buf) > 128) ? 128 : (int)(end - buf), buf);
 			goto error;
 	}
 	/* jku: if \r covered by current length, shrink it */
-	trim_r( hdr->body );
-	hdr->len=tmp-hdr->name.s;
+	trim_r(hdr->body);
+	hdr->len = tmp - hdr->name.s;
 	return tmp;
 error:
 	DBG("error exit\n");
 	STATS_BAD_MSG_HDR();
-	hdr->type=HDR_ERROR_T;
-	hdr->len=tmp-hdr->name.s;
+	hdr->type = HDR_ERROR_T;
+	hdr->len = tmp - hdr->name.s;
 	return tmp;
 }
-
 
 
 /* parse the headers and adds them to msg->headers and msg->to, from etc.
@@ -301,46 +301,47 @@ error:
    give you the first occurrence of a header you are interested in,
    look at check_transaction_quadruple
 */
-int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int next)
+int parse_headers(
+		struct sip_msg *const msg, const hdr_flags_t flags, const int next)
 {
-	struct hdr_field* hf;
-	char* tmp;
-	char* rest;
-	char* end;
+	struct hdr_field *hf;
+	char *tmp;
+	char *rest;
+	char *end;
 	hdr_flags_t orig_flag;
 
-	end=msg->buf+msg->len;
-	tmp=msg->unparsed;
+	end = msg->buf + msg->len;
+	tmp = msg->unparsed;
 
-	if (unlikely(next)) {
+	if(unlikely(next)) {
 		orig_flag = msg->parsed_flag;
 		msg->parsed_flag &= ~flags;
 	} else {
-		orig_flag=0;
+		orig_flag = 0;
 	}
 
 #ifdef EXTRA_DEBUG
 	DBG("flags=%llx\n", (unsigned long long)flags);
 #endif
-	while(tmp<end && (flags & msg->parsed_flag) != flags) {
-		prefetch_loc_r(tmp+64, 1);
-		hf=pkg_malloc(sizeof(struct hdr_field));
-		if (unlikely(hf==0)){
+	while(tmp < end && (flags & msg->parsed_flag) != flags) {
+		prefetch_loc_r(tmp + 64, 1);
+		hf = pkg_malloc(sizeof(struct hdr_field));
+		if(unlikely(hf == 0)) {
 			PKG_MEM_ERROR;
-			ser_error=E_OUT_OF_MEM;
+			ser_error = E_OUT_OF_MEM;
 			goto error;
 		}
-		memset(hf,0, sizeof(struct hdr_field));
-		hf->type=HDR_ERROR_T;
-		rest=get_hdr_field(tmp, end, hf);
-		switch (hf->type){
+		memset(hf, 0, sizeof(struct hdr_field));
+		hf->type = HDR_ERROR_T;
+		rest = get_hdr_field(tmp, end, hf);
+		switch(hf->type) {
 			case HDR_ERROR_T:
 				ERR("bad header field [%.*s]\n",
-						(end-tmp>100)?100:(int)(end-tmp), tmp);
-				goto  error;
+						(end - tmp > 100) ? 100 : (int)(end - tmp), tmp);
+				goto error;
 			case HDR_EOH_T:
-				msg->eoh=tmp; /* or rest?*/
-				msg->parsed_flag|=HDR_EOH_F;
+				msg->eoh = tmp; /* or rest?*/
+				msg->parsed_flag |= HDR_EOH_F;
 				pkg_free(hf);
 				goto skip;
 			case HDR_ACCEPTCONTACT_T:
@@ -353,277 +354,320 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 			case HDR_PROXY_AUTHENTICATE_T:
 			case HDR_RETRY_AFTER_T:
 			case HDR_OTHER_T: /* mark the type as found/parsed*/
-				msg->parsed_flag|=HDR_T2F(hf->type);
+				msg->parsed_flag |= HDR_T2F(hf->type);
 				break;
 			case HDR_CALLID_T:
-				if (msg->callid==0) {
-					msg->callid=hf;
+				if(msg->callid == 0) {
+					msg->callid = hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
 								"duplicate Call-ID header field [%.*s]\n",
-								(end-tmp>100)?100:(int)(end-tmp), tmp);
-						goto  error;
+								(end - tmp > 100) ? 100 : (int)(end - tmp),
+								tmp);
+						goto error;
 					}
 				}
-				msg->parsed_flag|=HDR_CALLID_F;
+				msg->parsed_flag |= HDR_CALLID_F;
 				break;
 			case HDR_SIPIFMATCH_T:
-				if (msg->sipifmatch==0) msg->sipifmatch=hf;
-				msg->parsed_flag|=HDR_SIPIFMATCH_F;
+				if(msg->sipifmatch == 0)
+					msg->sipifmatch = hf;
+				msg->parsed_flag |= HDR_SIPIFMATCH_F;
 				break;
 			case HDR_TO_T:
-				if (msg->to==0) {
-					msg->to=hf;
+				if(msg->to == 0) {
+					msg->to = hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
 								"duplicate To header field [%.*s]\n",
-								(end-tmp>100)?100:(int)(end-tmp), tmp);
-						goto  error;
+								(end - tmp > 100) ? 100 : (int)(end - tmp),
+								tmp);
+						goto error;
 					}
 				}
-				msg->parsed_flag|=HDR_TO_F;
+				msg->parsed_flag |= HDR_TO_F;
 				break;
 			case HDR_CSEQ_T:
-				if (msg->cseq==0) {
-					msg->cseq=hf;
+				if(msg->cseq == 0) {
+					msg->cseq = hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
 								"duplicate CSeq header field [%.*s]\n",
-								(end-tmp>100)?100:(int)(end-tmp), tmp);
-						goto  error;
+								(end - tmp > 100) ? 100 : (int)(end - tmp),
+								tmp);
+						goto error;
 					}
 				}
-				msg->parsed_flag|=HDR_CSEQ_F;
+				msg->parsed_flag |= HDR_CSEQ_F;
 				break;
 			case HDR_FROM_T:
-				if (msg->from==0) {
-					msg->from=hf;
+				if(msg->from == 0) {
+					msg->from = hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
 								"duplicate From header field [%.*s]\n",
-								(end-tmp>100)?100:(int)(end-tmp), tmp);
-						goto  error;
+								(end - tmp > 100) ? 100 : (int)(end - tmp),
+								tmp);
+						goto error;
 					}
 				}
-				msg->parsed_flag|=HDR_FROM_F;
+				msg->parsed_flag |= HDR_FROM_F;
 				break;
 			case HDR_CONTACT_T:
-				if (msg->contact==0) msg->contact=hf;
-				msg->parsed_flag|=HDR_CONTACT_F;
+				if(msg->contact == 0)
+					msg->contact = hf;
+				msg->parsed_flag |= HDR_CONTACT_F;
 				break;
 			case HDR_MAXFORWARDS_T:
-				if(msg->maxforwards==0) {
-					msg->maxforwards=hf;
+				if(msg->maxforwards == 0) {
+					msg->maxforwards = hf;
 				} else {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
 								"duplicate Max-Forwards header field [%.*s]\n",
-								(end-tmp>100)?100:(int)(end-tmp), tmp);
-						goto  error;
+								(end - tmp > 100) ? 100 : (int)(end - tmp),
+								tmp);
+						goto error;
 					}
 				}
-				msg->parsed_flag|=HDR_MAXFORWARDS_F;
+				msg->parsed_flag |= HDR_MAXFORWARDS_F;
 				break;
 			case HDR_ROUTE_T:
-				if (msg->route==0) msg->route=hf;
-				msg->parsed_flag|=HDR_ROUTE_F;
+				if(msg->route == 0)
+					msg->route = hf;
+				msg->parsed_flag |= HDR_ROUTE_F;
 				break;
 			case HDR_RECORDROUTE_T:
-				if (msg->record_route==0) msg->record_route = hf;
-				msg->parsed_flag|=HDR_RECORDROUTE_F;
+				if(msg->record_route == 0)
+					msg->record_route = hf;
+				msg->parsed_flag |= HDR_RECORDROUTE_F;
 				break;
 			case HDR_CONTENTTYPE_T:
-				if (msg->content_type==0) msg->content_type = hf;
-				msg->parsed_flag|=HDR_CONTENTTYPE_F;
+				if(msg->content_type == 0)
+					msg->content_type = hf;
+				msg->parsed_flag |= HDR_CONTENTTYPE_F;
 				break;
 			case HDR_CONTENTLENGTH_T:
-				if (msg->content_length==0) {
+				if(msg->content_length == 0) {
 					msg->content_length = hf;
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
-								"duplicate Content-Length header field [%.*s]\n",
-								(end-tmp>100)?100:(int)(end-tmp), tmp);
-						goto  error;
+								"duplicate Content-Length header field "
+								"[%.*s]\n",
+								(end - tmp > 100) ? 100 : (int)(end - tmp),
+								tmp);
+						goto error;
 					}
 				}
-				msg->parsed_flag|=HDR_CONTENTLENGTH_F;
+				msg->parsed_flag |= HDR_CONTENTLENGTH_F;
 				break;
 			case HDR_AUTHORIZATION_T:
-				if (msg->authorization==0) msg->authorization = hf;
-				msg->parsed_flag|=HDR_AUTHORIZATION_F;
+				if(msg->authorization == 0)
+					msg->authorization = hf;
+				msg->parsed_flag |= HDR_AUTHORIZATION_F;
 				break;
 			case HDR_EXPIRES_T:
-				if (msg->expires==0) msg->expires = hf;
-				msg->parsed_flag|=HDR_EXPIRES_F;
+				if(msg->expires == 0)
+					msg->expires = hf;
+				msg->parsed_flag |= HDR_EXPIRES_F;
 				break;
 			case HDR_MIN_EXPIRES_T:
-				if (msg->min_expires==0) msg->min_expires = hf;
-				msg->parsed_flag|=HDR_MIN_EXPIRES_F;
+				if(msg->min_expires == 0)
+					msg->min_expires = hf;
+				msg->parsed_flag |= HDR_MIN_EXPIRES_F;
 				break;
 			case HDR_PROXYAUTH_T:
-				if (msg->proxy_auth==0) msg->proxy_auth = hf;
-				msg->parsed_flag|=HDR_PROXYAUTH_F;
+				if(msg->proxy_auth == 0)
+					msg->proxy_auth = hf;
+				msg->parsed_flag |= HDR_PROXYAUTH_F;
 				break;
 			case HDR_PROXYREQUIRE_T:
-				if (msg->proxy_require==0) msg->proxy_require = hf;
-				msg->parsed_flag|=HDR_PROXYREQUIRE_F;
+				if(msg->proxy_require == 0)
+					msg->proxy_require = hf;
+				msg->parsed_flag |= HDR_PROXYREQUIRE_F;
 				break;
 			case HDR_SUPPORTED_T:
-				if (msg->supported==0) msg->supported=hf;
-				msg->parsed_flag|=HDR_SUPPORTED_F;
+				if(msg->supported == 0)
+					msg->supported = hf;
+				msg->parsed_flag |= HDR_SUPPORTED_F;
 				break;
 			case HDR_REQUIRE_T:
-				if (msg->require==0) msg->require=hf;
-				msg->parsed_flag|=HDR_REQUIRE_F;
+				if(msg->require == 0)
+					msg->require = hf;
+				msg->parsed_flag |= HDR_REQUIRE_F;
 				break;
 			case HDR_UNSUPPORTED_T:
-				if (msg->unsupported==0) msg->unsupported=hf;
-				msg->parsed_flag|=HDR_UNSUPPORTED_F;
+				if(msg->unsupported == 0)
+					msg->unsupported = hf;
+				msg->parsed_flag |= HDR_UNSUPPORTED_F;
 				break;
 			case HDR_ALLOW_T:
-				if (msg->allow==0) msg->allow = hf;
-				msg->parsed_flag|=HDR_ALLOW_F;
+				if(msg->allow == 0)
+					msg->allow = hf;
+				msg->parsed_flag |= HDR_ALLOW_F;
 				break;
 			case HDR_EVENT_T:
-				if (msg->event==0) msg->event = hf;
-				msg->parsed_flag|=HDR_EVENT_F;
+				if(msg->event == 0)
+					msg->event = hf;
+				msg->parsed_flag |= HDR_EVENT_F;
 				break;
 			case HDR_ACCEPT_T:
-				if (msg->accept==0) msg->accept = hf;
-				msg->parsed_flag|=HDR_ACCEPT_F;
+				if(msg->accept == 0)
+					msg->accept = hf;
+				msg->parsed_flag |= HDR_ACCEPT_F;
 				break;
 			case HDR_ACCEPTLANGUAGE_T:
-				if (msg->accept_language==0) msg->accept_language = hf;
-				msg->parsed_flag|=HDR_ACCEPTLANGUAGE_F;
+				if(msg->accept_language == 0)
+					msg->accept_language = hf;
+				msg->parsed_flag |= HDR_ACCEPTLANGUAGE_F;
 				break;
 			case HDR_ORGANIZATION_T:
-				if (msg->organization==0) msg->organization = hf;
-				msg->parsed_flag|=HDR_ORGANIZATION_F;
+				if(msg->organization == 0)
+					msg->organization = hf;
+				msg->parsed_flag |= HDR_ORGANIZATION_F;
 				break;
 			case HDR_PRIORITY_T:
-				if (msg->priority==0) msg->priority = hf;
-				msg->parsed_flag|=HDR_PRIORITY_F;
+				if(msg->priority == 0)
+					msg->priority = hf;
+				msg->parsed_flag |= HDR_PRIORITY_F;
 				break;
 			case HDR_SUBJECT_T:
-				if (msg->subject==0) msg->subject = hf;
-				msg->parsed_flag|=HDR_SUBJECT_F;
+				if(msg->subject == 0)
+					msg->subject = hf;
+				msg->parsed_flag |= HDR_SUBJECT_F;
 				break;
 			case HDR_USERAGENT_T:
-				if (msg->user_agent==0) msg->user_agent = hf;
-				msg->parsed_flag|=HDR_USERAGENT_F;
+				if(msg->user_agent == 0)
+					msg->user_agent = hf;
+				msg->parsed_flag |= HDR_USERAGENT_F;
 				break;
 			case HDR_SERVER_T:
-				if (msg->server==0) msg->server = hf;
-				msg->parsed_flag|=HDR_SERVER_F;
+				if(msg->server == 0)
+					msg->server = hf;
+				msg->parsed_flag |= HDR_SERVER_F;
 				break;
 			case HDR_CONTENTDISPOSITION_T:
-				if (msg->content_disposition==0) msg->content_disposition = hf;
-				msg->parsed_flag|=HDR_CONTENTDISPOSITION_F;
+				if(msg->content_disposition == 0)
+					msg->content_disposition = hf;
+				msg->parsed_flag |= HDR_CONTENTDISPOSITION_F;
 				break;
 			case HDR_DIVERSION_T:
-				if (msg->diversion==0) msg->diversion = hf;
-				msg->parsed_flag|=HDR_DIVERSION_F;
+				if(msg->diversion == 0)
+					msg->diversion = hf;
+				msg->parsed_flag |= HDR_DIVERSION_F;
 				break;
 			case HDR_RPID_T:
-				if (msg->rpid==0) msg->rpid = hf;
-				msg->parsed_flag|=HDR_RPID_F;
+				if(msg->rpid == 0)
+					msg->rpid = hf;
+				msg->parsed_flag |= HDR_RPID_F;
 				break;
 			case HDR_REFER_TO_T:
-				if (msg->refer_to==0) msg->refer_to = hf;
-				msg->parsed_flag|=HDR_REFER_TO_F;
+				if(msg->refer_to == 0)
+					msg->refer_to = hf;
+				msg->parsed_flag |= HDR_REFER_TO_F;
 				break;
 			case HDR_SESSIONEXPIRES_T:
-				if (msg->session_expires==0) msg->session_expires = hf;
-				msg->parsed_flag|=HDR_SESSIONEXPIRES_F;
+				if(msg->session_expires == 0)
+					msg->session_expires = hf;
+				msg->parsed_flag |= HDR_SESSIONEXPIRES_F;
 				break;
 			case HDR_MIN_SE_T:
-				if (msg->min_se==0) msg->min_se = hf;
-				msg->parsed_flag|=HDR_MIN_SE_F;
+				if(msg->min_se == 0)
+					msg->min_se = hf;
+				msg->parsed_flag |= HDR_MIN_SE_F;
 				break;
 			case HDR_SUBSCRIPTION_STATE_T:
-				if (msg->subscription_state==0) msg->subscription_state = hf;
-				msg->parsed_flag|=HDR_SUBSCRIPTION_STATE_F;
+				if(msg->subscription_state == 0)
+					msg->subscription_state = hf;
+				msg->parsed_flag |= HDR_SUBSCRIPTION_STATE_F;
 				break;
 			case HDR_VIA_T:
-				msg->parsed_flag|=HDR_VIA_F;
+				msg->parsed_flag |= HDR_VIA_F;
 				DBG("Via found, flags=%llx\n", (unsigned long long)flags);
-				if (msg->via1==0) {
+				if(msg->via1 == 0) {
 					DBG("this is the first via\n");
-					msg->h_via1=hf;
-					msg->via1=hf->parsed;
-					if (msg->via1->next){
-						msg->via2=msg->via1->next;
-						msg->parsed_flag|=HDR_VIA2_F;
+					msg->h_via1 = hf;
+					msg->via1 = hf->parsed;
+					if(msg->via1->next) {
+						msg->via2 = msg->via1->next;
+						msg->parsed_flag |= HDR_VIA2_F;
 					}
-				}else if (msg->via2==0){
-					msg->h_via2=hf;
-					msg->via2=hf->parsed;
-					msg->parsed_flag|=HDR_VIA2_F;
+				} else if(msg->via2 == 0) {
+					msg->h_via2 = hf;
+					msg->via2 = hf->parsed;
+					msg->parsed_flag |= HDR_VIA2_F;
 					DBG("this is the second via\n");
 				}
 				break;
 			case HDR_DATE_T:
-				if (msg->date==0) msg->date=hf;
-				msg->parsed_flag|=HDR_DATE_F;
+				if(msg->date == 0)
+					msg->date = hf;
+				msg->parsed_flag |= HDR_DATE_F;
 				break;
 			case HDR_IDENTITY_T:
-				if (msg->identity==0) msg->identity=hf;
-				msg->parsed_flag|=HDR_IDENTITY_F;
+				if(msg->identity == 0)
+					msg->identity = hf;
+				msg->parsed_flag |= HDR_IDENTITY_F;
 				break;
 			case HDR_IDENTITY_INFO_T:
-				if (msg->identity_info==0) msg->identity_info=hf;
-				msg->parsed_flag|=HDR_IDENTITY_INFO_F;
+				if(msg->identity_info == 0)
+					msg->identity_info = hf;
+				msg->parsed_flag |= HDR_IDENTITY_INFO_F;
 				break;
-		    case HDR_PATH_T:
-				if (msg->path==0) msg->path=hf;
-				msg->parsed_flag|=HDR_PATH_F;
+			case HDR_PATH_T:
+				if(msg->path == 0)
+					msg->path = hf;
+				msg->parsed_flag |= HDR_PATH_F;
 				break;
-		    case HDR_PRIVACY_T:
-				if (msg->privacy==0) msg->privacy=hf;
-				msg->parsed_flag|=HDR_PRIVACY_F;
+			case HDR_PRIVACY_T:
+				if(msg->privacy == 0)
+					msg->privacy = hf;
+				msg->parsed_flag |= HDR_PRIVACY_F;
 				break;
-		    case HDR_PAI_T:
-				if (msg->pai==0) msg->pai=hf;
-				msg->parsed_flag|=HDR_PAI_F;
+			case HDR_PAI_T:
+				if(msg->pai == 0)
+					msg->pai = hf;
+				msg->parsed_flag |= HDR_PAI_F;
 				break;
-		    case HDR_PPI_T:
-				if (msg->ppi==0) msg->ppi=hf;
-				msg->parsed_flag|=HDR_PPI_F;
+			case HDR_PPI_T:
+				if(msg->ppi == 0)
+					msg->ppi = hf;
+				msg->parsed_flag |= HDR_PPI_F;
 				break;
-		    case HDR_REASON_T:
-				msg->parsed_flag|=HDR_REASON_F;
+			case HDR_REASON_T:
+				msg->parsed_flag |= HDR_REASON_F;
 				break;
 			case HDR_CALLINFO_T:
-				msg->parsed_flag|=HDR_CALLINFO_F;
+				msg->parsed_flag |= HDR_CALLINFO_F;
 				break;
 			default:
 				BUG("unknown header type %d\n", hf->type);
 				goto error;
 		}
 		/* add the header to the list*/
-		if (msg->last_header==0){
-			msg->headers=hf;
-			msg->last_header=hf;
-		}else{
-			msg->last_header->next=hf;
-			msg->last_header=hf;
+		if(msg->last_header == 0) {
+			msg->headers = hf;
+			msg->last_header = hf;
+		} else {
+			msg->last_header->next = hf;
+			msg->last_header = hf;
 		}
 #ifdef EXTRA_DEBUG
 		DBG("header field type %d, name=<%.*s>, body=<%.*s>\n", hf->type,
 				hf->name.len, ZSW(hf->name.s), hf->body.len, ZSW(hf->body.s));
 #endif
-		tmp=rest;
+		tmp = rest;
 	}
 
 skip:
-	msg->unparsed=tmp;
+	msg->unparsed = tmp;
 	if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
-		if(msg->headers==NULL) {
+		if(msg->headers == NULL) {
 			/* nothing parsed - invalid input sip message */
 			goto error1;
 		}
@@ -633,43 +677,42 @@ skip:
 	return 0;
 
 error:
-	if (hf) {
+	if(hf) {
 		clean_hdr_field(hf);
 		pkg_free(hf);
 	}
 
 error1:
-	ser_error=E_BAD_REQ;
+	ser_error = E_BAD_REQ;
 	/* restore original flags */
 	msg->parsed_flag |= orig_flag;
 	return -1;
 }
 
 
-
-
-
 /* returns 0 if ok, -1 for errors */
-int parse_msg(char* const buf, const unsigned int len, struct sip_msg* const msg)
+int parse_msg(
+		char *const buf, const unsigned int len, struct sip_msg *const msg)
 {
 
 	char *tmp;
-	char* rest;
+	char *rest;
 	struct msg_start *fl;
 	int offset;
 	hdr_flags_t flags;
 
 	/* eat crlf & whitespaces from the beginning */
-	for (tmp=buf; (tmp-buf < len)
-			&& (*tmp=='\n' || *tmp=='\r' || *tmp=='\0'
-				|| *tmp=='\t' || *tmp==' ');
-			tmp++);
-	offset=tmp-buf;
-	fl=&(msg->first_line);
-	rest=parse_first_line(tmp, len-offset, fl);
-	offset+=rest-tmp;
-	tmp=rest;
-	switch(fl->type){
+	for(tmp = buf; (tmp - buf < len)
+				   && (*tmp == '\n' || *tmp == '\r' || *tmp == '\0'
+						   || *tmp == '\t' || *tmp == ' ');
+			tmp++)
+		;
+	offset = tmp - buf;
+	fl = &(msg->first_line);
+	rest = parse_first_line(tmp, len - offset, fl);
+	offset += rest - tmp;
+	tmp = rest;
+	switch(fl->type) {
 		case SIP_INVALID:
 			DBG("invalid message\n");
 			goto error;
@@ -682,7 +725,7 @@ int parse_msg(char* const buf, const unsigned int len, struct sip_msg* const msg
 					ZSW(fl->u.request.uri.s));
 			DBG(" version: <%.*s>\n", fl->u.request.version.len,
 					ZSW(fl->u.request.version.s));
-			flags=HDR_VIA_F;
+			flags = HDR_VIA_F;
 			break;
 		case SIP_REPLY:
 			DBG("SIP Reply  (status):\n");
@@ -694,45 +737,44 @@ int parse_msg(char* const buf, const unsigned int len, struct sip_msg* const msg
 					ZSW(fl->u.reply.reason.s));
 			/* flags=HDR_VIA | HDR_VIA2; */
 			/* we don't try to parse VIA2 for local messages; -Jiri */
-			flags=HDR_VIA_F;
+			flags = HDR_VIA_F;
 			break;
 		default:
 			DBG("unknown type %d\n", fl->type);
 			goto error;
 	}
-	msg->unparsed=tmp;
+	msg->unparsed = tmp;
 	/*find first Via: */
-	if (parse_headers(msg, flags, 0)==-1) goto error;
+	if(parse_headers(msg, flags, 0) == -1)
+		goto error;
 
 #ifdef EXTRA_DEBUG
 	/* dump parsed data */
-	if (msg->via1){
-		DBG("first via: <%.*s/%.*s/%.*s> <%.*s:%.*s(%d)>",
-				msg->via1->name.len, ZSW(msg->via1->name.s),
-				msg->via1->version.len, ZSW(msg->via1->version.s),
-				msg->via1->transport.len, ZSW(msg->via1->transport.s),
-				msg->via1->host.len, ZSW(msg->via1->host.s),
-				msg->via1->port_str.len, ZSW(msg->via1->port_str.s),
-				msg->via1->port);
-		if (msg->via1->params.s)
+	if(msg->via1) {
+		DBG("first via: <%.*s/%.*s/%.*s> <%.*s:%.*s(%d)>", msg->via1->name.len,
+				ZSW(msg->via1->name.s), msg->via1->version.len,
+				ZSW(msg->via1->version.s), msg->via1->transport.len,
+				ZSW(msg->via1->transport.s), msg->via1->host.len,
+				ZSW(msg->via1->host.s), msg->via1->port_str.len,
+				ZSW(msg->via1->port_str.s), msg->via1->port);
+		if(msg->via1->params.s)
 			DBG(";<%.*s>", msg->via1->params.len, ZSW(msg->via1->params.s));
-		if (msg->via1->comment.s)
+		if(msg->via1->comment.s)
 			DBG(" <%.*s>", msg->via1->comment.len, ZSW(msg->via1->comment.s));
-		DBG ("\n");
+		DBG("\n");
 	}
-	if (msg->via2){
-		DBG("second via: <%.*s/%.*s/%.*s> <%.*s:%.*s(%d)>",
-				msg->via2->name.len, ZSW(msg->via2->name.s),
-				msg->via2->version.len, ZSW(msg->via2->version.s),
-				msg->via2->transport.len, ZSW(msg->via2->transport.s),
-				msg->via2->host.len, ZSW(msg->via2->host.s),
-				msg->via2->port_str.len, ZSW(msg->via2->port_str.s),
-				msg->via2->port);
-		if (msg->via2->params.s)
+	if(msg->via2) {
+		DBG("second via: <%.*s/%.*s/%.*s> <%.*s:%.*s(%d)>", msg->via2->name.len,
+				ZSW(msg->via2->name.s), msg->via2->version.len,
+				ZSW(msg->via2->version.s), msg->via2->transport.len,
+				ZSW(msg->via2->transport.s), msg->via2->host.len,
+				ZSW(msg->via2->host.s), msg->via2->port_str.len,
+				ZSW(msg->via2->port_str.s), msg->via2->port);
+		if(msg->via2->params.s)
 			DBG(";<%.*s>", msg->via2->params.len, ZSW(msg->via2->params.s));
-		if (msg->via2->comment.s)
+		if(msg->via2->comment.s)
 			DBG(" <%.*s>", msg->via2->comment.len, ZSW(msg->via2->comment.s));
-		DBG ("\n");
+		DBG("\n");
 	}
 #endif
 
@@ -745,19 +787,18 @@ int parse_msg(char* const buf, const unsigned int len, struct sip_msg* const msg
 
 error:
 	/* more debugging, msg->orig is/should be null terminated*/
-	LOG(cfg_get(core, core_cfg, sip_parser_log), "ERROR: parse_msg: message=<%.*s>\n",
-			(int)msg->len, ZSW(ksr_buf_oneline(msg->buf, (int)msg->len)));
+	LOG(cfg_get(core, core_cfg, sip_parser_log),
+			"ERROR: parse_msg: message=<%.*s>\n", (int)msg->len,
+			ZSW(ksr_buf_oneline(msg->buf, (int)msg->len)));
 	return -1;
 }
 
 
-
-void free_reply_lump( struct lump_rpl *lump)
+void free_reply_lump(struct lump_rpl *lump)
 {
 	struct lump_rpl *foo, *bar;
-	for(foo=lump;foo;)
-	{
-		bar=foo->next;
+	for(foo = lump; foo;) {
+		bar = foo->next;
 		free_lump_rpl(foo);
 		foo = bar;
 	}
@@ -765,7 +806,7 @@ void free_reply_lump( struct lump_rpl *lump)
 
 
 /*only the content*/
-void free_sip_msg(struct sip_msg* const msg)
+void free_sip_msg(struct sip_msg *const msg)
 {
 	reset_new_uri(msg);
 	reset_dst_uri(msg);
@@ -773,11 +814,16 @@ void free_sip_msg(struct sip_msg* const msg)
 	reset_instance(msg);
 	reset_ruid(msg);
 	reset_ua(msg);
-	if (msg->headers)     free_hdr_field_lst(msg->headers);
-	if (msg->body && msg->body->free) msg->body->free(&msg->body);
-	if (msg->add_rm)      free_lump_list(msg->add_rm);
-	if (msg->body_lumps)  free_lump_list(msg->body_lumps);
-	if (msg->reply_lump)   free_reply_lump(msg->reply_lump);
+	if(msg->headers)
+		free_hdr_field_lst(msg->headers);
+	if(msg->body && msg->body->free)
+		msg->body->free(&msg->body);
+	if(msg->add_rm)
+		free_lump_list(msg->add_rm);
+	if(msg->body_lumps)
+		free_lump_list(msg->body_lumps);
+	if(msg->reply_lump)
+		free_reply_lump(msg->reply_lump);
 	msg_ldata_reset(msg);
 	/* no free of msg->buf -- a pointer to a static buffer */
 }
@@ -785,7 +831,7 @@ void free_sip_msg(struct sip_msg* const msg)
 /**
  * reset new uri value
  */
-void reset_new_uri(struct sip_msg* const msg)
+void reset_new_uri(struct sip_msg *const msg)
 {
 	if(msg->new_uri.s != 0) {
 		pkg_free(msg->new_uri.s);
@@ -799,29 +845,30 @@ void reset_new_uri(struct sip_msg* const msg)
 /*
  * Make a private copy of the string and assign it to dst_uri
  */
-int set_dst_uri(struct sip_msg* const msg, const str* const uri)
+int set_dst_uri(struct sip_msg *const msg, const str *const uri)
 {
-	char* ptr;
+	char *ptr;
 
-	if (unlikely(!msg || !uri)) {
+	if(unlikely(!msg || !uri)) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
-	if (unlikely(uri->len == 0)) {
+	if(unlikely(uri->len == 0)) {
 		reset_dst_uri(msg);
-	}else if (msg->dst_uri.s && (msg->dst_uri.len >= uri->len)) {
+	} else if(msg->dst_uri.s && (msg->dst_uri.len >= uri->len)) {
 		memcpy(msg->dst_uri.s, uri->s, uri->len);
 		msg->dst_uri.len = uri->len;
 	} else {
-		ptr = (char*)pkg_malloc(uri->len + 1);
-		if (!ptr) {
+		ptr = (char *)pkg_malloc(uri->len + 1);
+		if(!ptr) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
 
 		memcpy(ptr, uri->s, uri->len);
-		if (msg->dst_uri.s) pkg_free(msg->dst_uri.s);
+		if(msg->dst_uri.s)
+			pkg_free(msg->dst_uri.s);
 		msg->dst_uri.s = ptr;
 		msg->dst_uri.len = uri->len;
 		msg->dst_uri.s[msg->dst_uri.len] = '\0';
@@ -830,7 +877,7 @@ int set_dst_uri(struct sip_msg* const msg, const str* const uri)
 }
 
 
-void reset_dst_uri(struct sip_msg* const msg)
+void reset_dst_uri(struct sip_msg *const msg)
 {
 	if(msg->dst_uri.s != 0) {
 		pkg_free(msg->dst_uri.s);
@@ -839,29 +886,30 @@ void reset_dst_uri(struct sip_msg* const msg)
 	msg->dst_uri.len = 0;
 }
 
-int set_path_vector(struct sip_msg* msg, str* path)
+int set_path_vector(struct sip_msg *msg, str *path)
 {
-	char* ptr;
+	char *ptr;
 
-	if (unlikely(!msg || !path)) {
+	if(unlikely(!msg || !path)) {
 		ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (unlikely(path->len == 0)) {
+	if(unlikely(path->len == 0)) {
 		reset_path_vector(msg);
-	} else if (msg->path_vec.s && (msg->path_vec.len >= path->len)) {
+	} else if(msg->path_vec.s && (msg->path_vec.len >= path->len)) {
 		memcpy(msg->path_vec.s, path->s, path->len);
 		msg->path_vec.len = path->len;
 	} else {
-		ptr = (char*)pkg_malloc(path->len);
-		if (!ptr) {
+		ptr = (char *)pkg_malloc(path->len);
+		if(!ptr) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
 
 		memcpy(ptr, path->s, path->len);
-		if (msg->path_vec.s) pkg_free(msg->path_vec.s);
+		if(msg->path_vec.s)
+			pkg_free(msg->path_vec.s);
 		msg->path_vec.s = ptr;
 		msg->path_vec.len = path->len;
 	}
@@ -869,10 +917,10 @@ int set_path_vector(struct sip_msg* msg, str* path)
 }
 
 
-void reset_path_vector(struct sip_msg* const msg)
+void reset_path_vector(struct sip_msg *const msg)
 {
-	if (!shm_address_in(msg->path_vec.s)) {
-		if (msg->path_vec.s)
+	if(!shm_address_in(msg->path_vec.s)) {
+		if(msg->path_vec.s)
 			pkg_free(msg->path_vec.s);
 		msg->path_vec.s = 0;
 		msg->path_vec.len = 0;
@@ -882,28 +930,29 @@ void reset_path_vector(struct sip_msg* const msg)
 }
 
 
-int set_instance(struct sip_msg* msg, str* instance)
+int set_instance(struct sip_msg *msg, str *instance)
 {
-	char* ptr;
+	char *ptr;
 
-	if (unlikely(!msg || !instance)) {
+	if(unlikely(!msg || !instance)) {
 		ERR("invalid instance parameter value\n");
 		return -1;
 	}
 
-	if (unlikely(instance->len == 0)) {
+	if(unlikely(instance->len == 0)) {
 		reset_instance(msg);
-	} else if (msg->instance.s && (msg->instance.len >= instance->len)) {
+	} else if(msg->instance.s && (msg->instance.len >= instance->len)) {
 		memcpy(msg->instance.s, instance->s, instance->len);
 		msg->instance.len = instance->len;
 	} else {
-		ptr = (char*)pkg_malloc(instance->len);
-		if (!ptr) {
+		ptr = (char *)pkg_malloc(instance->len);
+		if(!ptr) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(ptr, instance->s, instance->len);
-		if (msg->instance.s) pkg_free(msg->instance.s);
+		if(msg->instance.s)
+			pkg_free(msg->instance.s);
 		msg->instance.s = ptr;
 		msg->instance.len = instance->len;
 	}
@@ -911,7 +960,7 @@ int set_instance(struct sip_msg* msg, str* instance)
 }
 
 
-void reset_instance(struct sip_msg* const msg)
+void reset_instance(struct sip_msg *const msg)
 {
 	if(msg->instance.s != 0) {
 		pkg_free(msg->instance.s);
@@ -921,28 +970,29 @@ void reset_instance(struct sip_msg* const msg)
 }
 
 
-int set_ruid(struct sip_msg* msg, str* ruid)
+int set_ruid(struct sip_msg *msg, str *ruid)
 {
-	char* ptr;
+	char *ptr;
 
-	if (unlikely(!msg || !ruid)) {
+	if(unlikely(!msg || !ruid)) {
 		ERR("invalid ruid parameter value\n");
 		return -1;
 	}
 
-	if (unlikely(ruid->len == 0)) {
+	if(unlikely(ruid->len == 0)) {
 		reset_ruid(msg);
-	} else if (msg->ruid.s && (msg->ruid.len >= ruid->len)) {
+	} else if(msg->ruid.s && (msg->ruid.len >= ruid->len)) {
 		memcpy(msg->ruid.s, ruid->s, ruid->len);
 		msg->ruid.len = ruid->len;
 	} else {
-		ptr = (char*)pkg_malloc(ruid->len);
-		if (!ptr) {
+		ptr = (char *)pkg_malloc(ruid->len);
+		if(!ptr) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(ptr, ruid->s, ruid->len);
-		if (msg->ruid.s) pkg_free(msg->ruid.s);
+		if(msg->ruid.s)
+			pkg_free(msg->ruid.s);
 		msg->ruid.s = ptr;
 		msg->ruid.len = ruid->len;
 	}
@@ -950,7 +1000,7 @@ int set_ruid(struct sip_msg* msg, str* ruid)
 }
 
 
-void reset_ruid(struct sip_msg* const msg)
+void reset_ruid(struct sip_msg *const msg)
 {
 	if(msg->ruid.s != 0) {
 		pkg_free(msg->ruid.s);
@@ -960,28 +1010,30 @@ void reset_ruid(struct sip_msg* const msg)
 }
 
 
-int set_ua(struct sip_msg* msg, str* location_ua)
+int set_ua(struct sip_msg *msg, str *location_ua)
 {
-	char* ptr;
+	char *ptr;
 
-	if (unlikely(!msg || !location_ua)) {
+	if(unlikely(!msg || !location_ua)) {
 		ERR("invalid location_ua parameter value\n");
 		return -1;
 	}
 
-	if (unlikely(location_ua->len == 0)) {
+	if(unlikely(location_ua->len == 0)) {
 		reset_ua(msg);
-	} else if (msg->location_ua.s && (msg->location_ua.len >= location_ua->len)) {
+	} else if(msg->location_ua.s
+			  && (msg->location_ua.len >= location_ua->len)) {
 		memcpy(msg->location_ua.s, location_ua->s, location_ua->len);
 		msg->location_ua.len = location_ua->len;
 	} else {
-		ptr = (char*)pkg_malloc(location_ua->len);
-		if (!ptr) {
+		ptr = (char *)pkg_malloc(location_ua->len);
+		if(!ptr) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(ptr, location_ua->s, location_ua->len);
-		if (msg->location_ua.s) pkg_free(msg->location_ua.s);
+		if(msg->location_ua.s)
+			pkg_free(msg->location_ua.s);
 		msg->location_ua.s = ptr;
 		msg->location_ua.len = location_ua->len;
 	}
@@ -989,7 +1041,7 @@ int set_ua(struct sip_msg* msg, str* location_ua)
 }
 
 
-void reset_ua(struct sip_msg* const msg)
+void reset_ua(struct sip_msg *const msg)
 {
 	if(msg->location_ua.s != 0) {
 		pkg_free(msg->location_ua.s);
@@ -1003,58 +1055,61 @@ void reset_ua(struct sip_msg* const msg)
  */
 void msg_ldata_reset(sip_msg_t *msg)
 {
-	if(msg==NULL)
+	if(msg == NULL)
 		return;
 	memset(&msg->ldv, 0, sizeof(msg_ldata_t));
 }
 
 
-hdr_field_t* get_hdr(const sip_msg_t* const msg, const enum _hdr_types_t ht)
+hdr_field_t *get_hdr(const sip_msg_t *const msg, const enum _hdr_types_t ht)
 {
 	hdr_field_t *hdr;
 
-	if (ht == HDR_ERROR_T || ht == HDR_EOH_T) {
+	if(ht == HDR_ERROR_T || ht == HDR_EOH_T) {
 		return NULL;
 	}
-	if (msg->parsed_flag & HDR_T2F(ht)) {
+	if(msg->parsed_flag & HDR_T2F(ht)) {
 		for(hdr = msg->headers; hdr; hdr = hdr->next) {
-			if(hdr->type == ht) return hdr;
+			if(hdr->type == ht)
+				return hdr;
 		}
 	}
 	return NULL;
 }
 
 
-hdr_field_t* next_sibling_hdr(const hdr_field_t* const hf)
+hdr_field_t *next_sibling_hdr(const hdr_field_t *const hf)
 {
 	hdr_field_t *hdr;
 
 	for(hdr = hf->next; hdr; hdr = hdr->next) {
-		if(hdr->type == hf->type) return hdr;
+		if(hdr->type == hf->type)
+			return hdr;
 	}
 	return NULL;
 }
 
-hdr_field_t* get_hdr_by_name(const sip_msg_t* const msg, const char* const name, const int name_len)
+hdr_field_t *get_hdr_by_name(
+		const sip_msg_t *const msg, const char *const name, const int name_len)
 {
 	hdr_field_t *hdr;
 
 	for(hdr = msg->headers; hdr; hdr = hdr->next) {
-		if(hdr->name.len == name_len && *hdr->name.s==*name
-				&& strncasecmp(hdr->name.s, name, name_len)==0)
+		if(hdr->name.len == name_len && *hdr->name.s == *name
+				&& strncasecmp(hdr->name.s, name, name_len) == 0)
 			return hdr;
 	}
 	return NULL;
 }
 
 /** not used yet */
-hdr_field_t* next_sibling_hdr_by_name(const hdr_field_t* const hf)
+hdr_field_t *next_sibling_hdr_by_name(const hdr_field_t *const hf)
 {
 	hdr_field_t *hdr;
 
 	for(hdr = hf->next; hdr; hdr = hdr->next) {
-		if(hdr->name.len == hf->name.len && *hdr->name.s==*hf->name.s
-				&& strncasecmp(hdr->name.s, hf->name.s, hf->name.len)==0)
+		if(hdr->name.len == hf->name.len && *hdr->name.s == *hf->name.s
+				&& strncasecmp(hdr->name.s, hf->name.s, hf->name.len) == 0)
 			return hdr;
 	}
 	return NULL;
@@ -1064,9 +1119,9 @@ hdr_field_t* next_sibling_hdr_by_name(const hdr_field_t* const hf)
  * set msg context id
  * - return: -1 on error; 0 - on set
  */
-int msg_ctx_id_set(const sip_msg_t* const msg, msg_ctx_id_t* const mid)
+int msg_ctx_id_set(const sip_msg_t *const msg, msg_ctx_id_t *const mid)
 {
-	if(msg==NULL || mid==NULL)
+	if(msg == NULL || mid == NULL)
 		return -1;
 	mid->msgid = msg->id;
 	mid->pid = msg->pid;
@@ -1077,11 +1132,11 @@ int msg_ctx_id_set(const sip_msg_t* const msg, msg_ctx_id_t* const mid)
  * check msg context id
  * - return: -1 on error; 0 - on no match; 1 - on match
  */
-int msg_ctx_id_match(const sip_msg_t* const msg, const msg_ctx_id_t* const mid)
+int msg_ctx_id_match(const sip_msg_t *const msg, const msg_ctx_id_t *const mid)
 {
-	if(msg==NULL || mid==NULL)
+	if(msg == NULL || mid == NULL)
 		return -1;
-	if(msg->id != mid->msgid || msg->pid!=mid->pid)
+	if(msg->id != mid->msgid || msg->pid != mid->pid)
 		return 0;
 	return 1;
 }
@@ -1089,11 +1144,11 @@ int msg_ctx_id_match(const sip_msg_t* const msg, const msg_ctx_id_t* const mid)
 /**
  * set msg time value
  */
-int msg_set_time(sip_msg_t* const msg)
+int msg_set_time(sip_msg_t *const msg)
 {
-	if(unlikely(msg==NULL))
+	if(unlikely(msg == NULL))
 		return -2;
-	if(msg->tval.tv_sec!=0)
+	if(msg->tval.tv_sec != 0)
 		return 0;
 	return gettimeofday(&msg->tval, NULL);
 }
@@ -1107,11 +1162,11 @@ char *ksr_buf_oneline(char *inbuf, int inlen)
 	int outlen;
 	int i = 0;
 
-	if (cfg_get(core, core_cfg, sip_parser_log_oneline) == 0) {
+	if(cfg_get(core, core_cfg, sip_parser_log_oneline) == 0) {
 		return inbuf;
 	}
 
-	if (inbuf == NULL) {
+	if(inbuf == NULL) {
 		outbuf[0] = '\0';
 		return outbuf;
 	}
@@ -1120,13 +1175,10 @@ char *ksr_buf_oneline(char *inbuf, int inlen)
 	memcpy(outbuf, inbuf, outlen);
 	outbuf[outlen] = '\0';
 
-	for (i = 0; i < outlen;  i++) {
-		if (outbuf[i] == '\r')
-		{
+	for(i = 0; i < outlen; i++) {
+		if(outbuf[i] == '\r') {
 			outbuf[i] = '.';
-		}
-		else if (outbuf[i] == '\n')
-		{
+		} else if(outbuf[i] == '\n') {
 			outbuf[i] = ' ';
 		}
 	}
@@ -1141,31 +1193,32 @@ char *ksr_buf_oneline(char *inbuf, int inlen)
 int get_src_uri(sip_msg_t *m, int tmode, str *uri)
 {
 	static char buf[MAX_URI_SIZE];
-	char* p;
+	char *p;
 	str ip, port;
 	int len;
 	str proto;
 
-	if (!uri || !m) {
+	if(!uri || !m) {
 		ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if(tmode==0) {
+	if(tmode == 0) {
 		switch(m->rcv.proto) {
 			case PROTO_NONE:
 			case PROTO_UDP:
-				proto.s = 0; /* Do not add transport parameter, UDP is default */
+				proto.s =
+						0; /* Do not add transport parameter, UDP is default */
 				proto.len = 0;
-			break;
+				break;
 			default:
-				if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto)<0) {
+				if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto) < 0) {
 					ERR("unknown transport protocol\n");
 					return -1;
 				}
 		}
 	} else {
-		if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto)<0) {
+		if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto) < 0) {
 			ERR("unknown transport protocol\n");
 			return -1;
 		}
@@ -1176,13 +1229,13 @@ int get_src_uri(sip_msg_t *m, int tmode, str *uri)
 
 	port.s = int2str(m->rcv.src_port, &port.len);
 
-	len = 4 + ip.len + 2*(m->rcv.src_ip.af==AF_INET6)+ 1 + port.len;
-	if (proto.s) {
+	len = 4 + ip.len + 2 * (m->rcv.src_ip.af == AF_INET6) + 1 + port.len;
+	if(proto.s) {
 		len += TRANSPORT_PARAM_LEN;
 		len += proto.len;
 	}
 
-	if (len > MAX_URI_SIZE) {
+	if(len > MAX_URI_SIZE) {
 		ERR("buffer too small\n");
 		return -1;
 	}
@@ -1191,11 +1244,11 @@ int get_src_uri(sip_msg_t *m, int tmode, str *uri)
 	memcpy(p, "sip:", 4);
 	p += 4;
 
-	if (m->rcv.src_ip.af==AF_INET6)
+	if(m->rcv.src_ip.af == AF_INET6)
 		*p++ = '[';
 	memcpy(p, ip.s, ip.len);
 	p += ip.len;
-	if (m->rcv.src_ip.af==AF_INET6)
+	if(m->rcv.src_ip.af == AF_INET6)
 		*p++ = ']';
 
 	*p++ = ':';
@@ -1203,7 +1256,7 @@ int get_src_uri(sip_msg_t *m, int tmode, str *uri)
 	memcpy(p, port.s, port.len);
 	p += port.len;
 
-	if (proto.s) {
+	if(proto.s) {
 		memcpy(p, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
 		p += TRANSPORT_PARAM_LEN;
 
@@ -1223,17 +1276,17 @@ int get_src_uri(sip_msg_t *m, int tmode, str *uri)
 int get_src_address_socket(sip_msg_t *m, str *ssock)
 {
 	static char buf[MAX_URI_SIZE];
-	char* p;
+	char *p;
 	str ip, port;
 	int len;
 	str proto;
 
-	if (!ssock || !m) {
+	if(!ssock || !m) {
 		ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto)<0) {
+	if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto) < 0) {
 		ERR("unknown transport protocol\n");
 		return -1;
 	}
@@ -1243,9 +1296,10 @@ int get_src_address_socket(sip_msg_t *m, str *ssock)
 
 	port.s = int2str(m->rcv.src_port, &port.len);
 
-	len = proto.len + 1 + ip.len + 2*(m->rcv.src_ip.af==AF_INET6)+ 1 + port.len;
+	len = proto.len + 1 + ip.len + 2 * (m->rcv.src_ip.af == AF_INET6) + 1
+		  + port.len;
 
-	if (len+1 >= MAX_URI_SIZE) {
+	if(len + 1 >= MAX_URI_SIZE) {
 		ERR("buffer too small\n");
 		return -1;
 	}
@@ -1257,11 +1311,11 @@ int get_src_address_socket(sip_msg_t *m, str *ssock)
 
 	*p++ = ':';
 
-	if (m->rcv.src_ip.af==AF_INET6)
+	if(m->rcv.src_ip.af == AF_INET6)
 		*p++ = '[';
 	memcpy(p, ip.s, ip.len);
 	p += ip.len;
-	if (m->rcv.src_ip.af==AF_INET6)
+	if(m->rcv.src_ip.af == AF_INET6)
 		*p++ = ']';
 
 	*p++ = ':';
@@ -1284,37 +1338,38 @@ int get_src_address_socket(sip_msg_t *m, str *ssock)
 int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype)
 {
 	static char buf[MAX_URI_SIZE];
-	char* p;
+	char *p;
 	str ip, port;
 	int len;
 	str proto;
 
-	if (!uri || !m || !m->rcv.bind_address) {
+	if(!uri || !m || !m->rcv.bind_address) {
 		ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if(tmode==0) {
+	if(tmode == 0) {
 		switch(m->rcv.proto) {
 			case PROTO_NONE:
 			case PROTO_UDP:
-				proto.s = 0; /* Do not add transport parameter, UDP is default */
+				proto.s =
+						0; /* Do not add transport parameter, UDP is default */
 				proto.len = 0;
-			break;
+				break;
 			default:
-				if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto)<0) {
+				if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto) < 0) {
 					ERR("unknown transport protocol\n");
 					return -1;
 				}
 		}
 	} else {
-		if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto)<0) {
+		if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto) < 0) {
 			ERR("unknown transport protocol\n");
 			return -1;
 		}
 	}
 
-	if(atype==0 || m->rcv.bind_address->useinfo.address_str.len<=0) {
+	if(atype == 0 || m->rcv.bind_address->useinfo.address_str.len <= 0) {
 		ip.s = m->rcv.bind_address->address_str.s;
 		ip.len = m->rcv.bind_address->address_str.len;
 	} else {
@@ -1322,7 +1377,7 @@ int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype)
 		ip.len = m->rcv.bind_address->useinfo.address_str.len;
 	}
 
-	if(atype==0|| m->rcv.bind_address->useinfo.port_no_str.len <= 0) {
+	if(atype == 0 || m->rcv.bind_address->useinfo.port_no_str.len <= 0) {
 		port.s = m->rcv.bind_address->port_no_str.s;
 		port.len = m->rcv.bind_address->port_no_str.len;
 	} else {
@@ -1330,13 +1385,13 @@ int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype)
 		port.len = m->rcv.bind_address->useinfo.port_no_str.len;
 	}
 
-	len = 4 + ip.len + 2*(m->rcv.src_ip.af==AF_INET6)+ 1 + port.len;
-	if (proto.s) {
+	len = 4 + ip.len + 2 * (m->rcv.src_ip.af == AF_INET6) + 1 + port.len;
+	if(proto.s) {
 		len += TRANSPORT_PARAM_LEN;
 		len += proto.len;
 	}
 
-	if (len > MAX_URI_SIZE) {
+	if(len > MAX_URI_SIZE) {
 		ERR("buffer too small\n");
 		return -1;
 	}
@@ -1345,11 +1400,11 @@ int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype)
 	memcpy(p, "sip:", 4);
 	p += 4;
 
-	if (m->rcv.src_ip.af==AF_INET6)
+	if(m->rcv.src_ip.af == AF_INET6)
 		*p++ = '[';
 	memcpy(p, ip.s, ip.len);
 	p += ip.len;
-	if (m->rcv.src_ip.af==AF_INET6)
+	if(m->rcv.src_ip.af == AF_INET6)
 		*p++ = ']';
 
 	*p++ = ':';
@@ -1357,7 +1412,7 @@ int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype)
 	memcpy(p, port.s, port.len);
 	p += port.len;
 
-	if (proto.s) {
+	if(proto.s) {
 		memcpy(p, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
 		p += TRANSPORT_PARAM_LEN;
 
@@ -1374,33 +1429,33 @@ int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype)
 
 /*! \brief returns a pointer to the beginning of the msg's body
  */
-char* get_body(sip_msg_t* const msg)
+char *get_body(sip_msg_t *const msg)
 {
 	int offset;
 	unsigned int len;
 
-	if ( parse_headers(msg, HDR_EOH_F, 0)==-1 ) {
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse to end of headers\n");
 		return 0;
 	}
 
-	if (msg->unparsed) {
-		len=(unsigned int)(msg->unparsed-msg->buf);
+	if(msg->unparsed) {
+		len = (unsigned int)(msg->unparsed - msg->buf);
 	} else {
 		LM_ERR("unparsed hook for end of headers is not set\n");
 		return 0;
 	}
 
-	if ((len+2<=msg->len) && (strncmp(CRLF,msg->unparsed,CRLF_LEN)==0) ) {
+	if((len + 2 <= msg->len) && (strncmp(CRLF, msg->unparsed, CRLF_LEN) == 0)) {
 		offset = CRLF_LEN;
-	} else if ( (len+1<=msg->len) &&
-				(*(msg->unparsed)=='\n' || *(msg->unparsed)=='\r' ) ) {
+	} else if((len + 1 <= msg->len)
+			  && (*(msg->unparsed) == '\n' || *(msg->unparsed) == '\r')) {
 		offset = 1;
 	} else {
 		LM_ERR("failed to locate end of headers (%p %p - %d %d [%.*s])\n",
 				msg->buf, msg->unparsed, msg->len, len,
-				(len<msg->len)?(msg->len-len):0,
-				(len<msg->len)?msg->unparsed:"");
+				(len < msg->len) ? (msg->len - len) : 0,
+				(len < msg->len) ? msg->unparsed : "");
 		return 0;
 	}
 
@@ -1410,13 +1465,14 @@ char* get_body(sip_msg_t* const msg)
 /*! \brief make sure all HFs needed for transaction identification have been
  * parsed; return 0 if those HFs can't be found
 */
-int check_transaction_quadruple(sip_msg_t* const msg)
+int check_transaction_quadruple(sip_msg_t *const msg)
 {
-	if ( parse_headers(msg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F,0)!=-1
-		&& msg->from && msg->to && msg->callid && msg->cseq ) {
+	if(parse_headers(msg, HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F, 0)
+					!= -1
+			&& msg->from && msg->to && msg->callid && msg->cseq) {
 		return 1;
 	} else {
-		ser_error=E_BAD_TUPEL;
+		ser_error = E_BAD_TUPEL;
 		return 0;
 	}
 }

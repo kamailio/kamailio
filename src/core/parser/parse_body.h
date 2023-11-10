@@ -34,20 +34,16 @@
  * and sets the length.
  * The result can be the whole msg body, or a part of a multipart body.
  */
-char *get_body_part(	struct sip_msg *msg,
-			unsigned short type, unsigned short subtype,
-			int *len);
+char *get_body_part(struct sip_msg *msg, unsigned short type,
+		unsigned short subtype, int *len);
 
 /*! \brief Returns the pointer within the msg body to the given part matching
  * type/subtype, content id or content length. It sets the length.
  * The result can be the whole msg body, or a part of a multipart body.
  */
-char *get_body_part_by_filter(struct sip_msg *msg,
-		     unsigned short content_type,
-		     unsigned short content_subtype,
-		     char *content_id,
-		     char *content_length,
-		     int *len);
+char *get_body_part_by_filter(struct sip_msg *msg, unsigned short content_type,
+		unsigned short content_subtype, char *content_id, char *content_length,
+		int *len);
 
 #endif /* PARSE_BODY_H */
 

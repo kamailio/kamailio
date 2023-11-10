@@ -44,26 +44,26 @@
 #define MSG_REQUEST 1
 
 /* Message is reply */
-#define SIP_REPLY   2
-#define MSG_REPLY   2
+#define SIP_REPLY 2
+#define MSG_REPLY 2
 
 /* flags for first line
  * - stored on a short field (16 flags) */
-#define FLINE_FLAG_PROTO_SIP	(1<<0) /* sip 2.0 protocol */
-#define FLINE_FLAG_PROTO_HTTP	(1<<1) /* any http protocol */
-#define FLINE_FLAG_PROTO_HTTP2	(1<<2) /* additional for http 2 */
+#define FLINE_FLAG_PROTO_SIP (1 << 0)	/* sip 2.0 protocol */
+#define FLINE_FLAG_PROTO_HTTP (1 << 1)	/* any http protocol */
+#define FLINE_FLAG_PROTO_HTTP2 (1 << 2) /* additional for http 2 */
 
 #define SIP_VERSION "SIP/2.0"
 #define SIP_VERSION_LEN 7
 
 #define HTTP_VERSION "HTTP/1."
-#define HTTP_VERSION_LEN (sizeof(HTTP_VERSION)-1)
+#define HTTP_VERSION_LEN (sizeof(HTTP_VERSION) - 1)
 
 #define HTTP2_VERSION "HTTP/2"
-#define HTTP2_VERSION_LEN (sizeof(HTTP2_VERSION)-1)
+#define HTTP2_VERSION_LEN (sizeof(HTTP2_VERSION) - 1)
 
 #define CANCEL "CANCEL"
-#define ACK    "ACK"
+#define ACK "ACK"
 #define INVITE "INVITE"
 
 #define INVITE_LEN 6
@@ -86,28 +86,32 @@
 #define PUT_LEN 3
 #define DELETE_LEN 6
 
-typedef struct msg_start {
-	short type;					/*!< Type of the message - request/response */
-	short flags;				/*!< First line flags */
-	int len; 					/*!< length including delimiter */
-	union {
-		struct {
-			str method;			/*!< Method string */
-			str uri;			/*!< Request URI */
-			str version;		/*!< SIP version */
-			int method_value;	/*!< Method id value */
+typedef struct msg_start
+{
+	short type;	 /*!< Type of the message - request/response */
+	short flags; /*!< First line flags */
+	int len;	 /*!< length including delimiter */
+	union
+	{
+		struct
+		{
+			str method;		  /*!< Method string */
+			str uri;		  /*!< Request URI */
+			str version;	  /*!< SIP version */
+			int method_value; /*!< Method id value */
 		} request;
-		struct {
-			str version;		/*!< SIP version */
-			str status;			/*!< Reply status */
-			str reason;			/*!< Reply reason phrase */
-			unsigned int statuscode;	/*!< Reply status code */
+		struct
+		{
+			str version;			 /*!< SIP version */
+			str status;				 /*!< Reply status */
+			str reason;				 /*!< Reply reason phrase */
+			unsigned int statuscode; /*!< Reply status code */
 		} reply;
-	}u;
+	} u;
 } msg_start_t;
 
-char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl);
+char *parse_first_line(char *buffer, unsigned int len, struct msg_start *fl);
 
-char* parse_fline(char* buffer, char* end, struct msg_start* fl);
+char *parse_fline(char *buffer, char *end, struct msg_start *fl);
 
 #endif /* PARSE_FLINE_H */

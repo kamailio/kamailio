@@ -32,18 +32,19 @@
 #include "parse_addr_spec.h"
 
 /* casting macro for accessing To body */
-#define get_to(p_msg)      ((struct to_body*)(p_msg)->to->parsed)
+#define get_to(p_msg) ((struct to_body *)(p_msg)->to->parsed)
 
 #define GET_TO_PURI(p_msg) \
-	(&((struct to_body*)(p_msg)->to->parsed)->parsed_uri)
+	(&((struct to_body *)(p_msg)->to->parsed)->parsed_uri)
 
 /*! \brief
  * To header field parser
  */
-char* parse_to(char* const buffer, const char* const end, struct to_body* const to_b);
+char *parse_to(
+		char *const buffer, const char *const end, struct to_body *const to_b);
 
-int parse_to_header(struct sip_msg* const msg);
+int parse_to_header(struct sip_msg *const msg);
 
-sip_uri_t *parse_to_uri(struct sip_msg* const msg);
+sip_uri_t *parse_to_uri(struct sip_msg *const msg);
 
 #endif

@@ -34,10 +34,11 @@
 
 
 #define get_content_disposition(_msg_) \
-	((struct disposition*)((_msg_)->content_disposition->parsed))
+	((struct disposition *)((_msg_)->content_disposition->parsed))
 
 
-struct disposition_param {
+struct disposition_param
+{
 	str name;
 	str body;
 	int is_quoted;
@@ -45,7 +46,8 @@ struct disposition_param {
 };
 
 
-struct disposition {
+struct disposition
+{
 	str type;
 	struct disposition_param *params;
 };
@@ -58,20 +60,19 @@ struct disposition {
  *            0 : success
  *            1 : hdr not found
  */
-int parse_content_disposition( struct sip_msg *msg );
+int parse_content_disposition(struct sip_msg *msg);
 
 
 /*! \brief parse a string that supposed to be a disposition and fills up the structure
  * Returns: -1 : error
  *           o : success */
-int parse_disposition( str *s, struct disposition *disp);
+int parse_disposition(str *s, struct disposition *disp);
 
 
 /*! \brief Frees the entire disposition structure (params + itself) */
-void free_disposition( struct disposition **disp);
+void free_disposition(struct disposition **disp);
 
 /*! \brief Prints recursive a disposition structure */
-void print_disposition( struct disposition *disp);
+void print_disposition(struct disposition *disp);
 
 #endif
-

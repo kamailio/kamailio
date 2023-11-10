@@ -47,23 +47,22 @@
   * \param src string input array
   * \param size elements in the input array
   */
-void MD5StringArray (char *dst, str src[], int size)
+void MD5StringArray(char *dst, str src[], int size)
 {
 	MD5_CTX context;
 	unsigned char digest[16];
- 	int i;
+	int i;
 	int len;
 	char *s;
 
-	MD5Init (&context);
-	for (i=0; i<size; i++) {
-		trim_len( len, s, src[i] );
-		if (len > 0)
-  			MD5Update (&context, s, len);
-  }
-  U_MD5Final (digest, &context);
+	MD5Init(&context);
+	for(i = 0; i < size; i++) {
+		trim_len(len, s, src[i]);
+		if(len > 0)
+			MD5Update(&context, s, len);
+	}
+	U_MD5Final(digest, &context);
 
-  string2hex(digest, 16, dst );
-  LM_DBG("MD5 calculated: %.*s\n", MD5_LEN, dst );
-
+	string2hex(digest, 16, dst);
+	LM_DBG("MD5 calculated: %.*s\n", MD5_LEN, dst);
 }

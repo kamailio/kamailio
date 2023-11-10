@@ -31,9 +31,8 @@
 
 
 /* Parse Retry-After header field */
-char* parse_retry_after(char* const buf, const char* const end, unsigned* const after, int* const err);
-
-
+char *parse_retry_after(char *const buf, const char *const end,
+		unsigned *const after, int *const err);
 
 
 #endif

@@ -28,29 +28,30 @@
 
 #include "../comp_defs.h"
 #include "parse_retry_after.h"
-#include "parser_f.h"  /* eat_space_end and so on */
+#include "parser_f.h" /* eat_space_end and so on */
 #include "parse_def.h"
 #include "../dprint.h"
 #include "../mem/mem.h"
 
 /*! \brief Parse the Retry-after header field */
-char* parse_retry_after(char* const buf, const char* const end,
-		unsigned* const after, int* const err)
+char *parse_retry_after(char *const buf, const char *const end,
+		unsigned *const after, int *const err)
 {
 	char *t;
 	int i;
 	unsigned val;
 
-	val=0;
-	t=buf;
+	val = 0;
+	t = buf;
 
-	t=eat_lws_end(t, end);
-	if (t>=end) goto error;
-	for (i=0; t<end; i++,t++){
-		if ((*t >= '0') && (*t <= '9')){
-			val=val*10+(*t-'0');
-		}else{
-			switch(*t){
+	t = eat_lws_end(t, end);
+	if(t >= end)
+		goto error;
+	for(i = 0; t < end; i++, t++) {
+		if((*t >= '0') && (*t <= '9')) {
+			val = val * 10 + (*t - '0');
+		} else {
+			switch(*t) {
 				/* for now we don't care about retry-after params or comment*/
 				case ' ':
 				case '\t':
@@ -67,18 +68,18 @@ char* parse_retry_after(char* const buf, const char* const end,
 	}
 	goto error_nocrlf; /* end reached without encountering cr or lf */
 found:
-	if (i>10 || i==0) /* too many  or too few digits */
+	if(i > 10 || i == 0) /* too many  or too few digits */
 		goto error;
-	*after=val;
+	*after = val;
 	/* find the end of header */
-	for (; t<end; t++){
-		if (*t=='\n'){
-			if (((t+1)<end) && (*(t+1)==' ' || *(t+1)=='\t')){
+	for(; t < end; t++) {
+		if(*t == '\n') {
+			if(((t + 1) < end) && (*(t + 1) == ' ' || *(t + 1) == '\t')) {
 				t++;
 				continue; /* line folding ... */
 			}
-			*err=0;
-			return t+1;
+			*err = 0;
+			return t + 1;
 		}
 	}
 error_nocrlf:
@@ -86,6 +87,6 @@ error_nocrlf:
 	goto error;
 error:
 	LM_ERR("bad Retry-After header \n");
-	*err=1;
+	*err = 1;
 	return t;
 }

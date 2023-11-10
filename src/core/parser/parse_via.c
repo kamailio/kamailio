@@ -238,7 +238,7 @@ static /*inline*/ char *parse_via_param(char *const p, const char *const end,
 				break;                                                        \
 			default:                                                          \
 				LM_ERR("invalid "                                             \
-						"char <%c> in state %d\n",                            \
+					   "char <%c> in state %d\n",                             \
 						*tmp, state);                                         \
 				goto error;                                                   \
 		}
@@ -502,7 +502,7 @@ static /*inline*/ char *parse_via_param(char *const p, const char *const end,
 					case FIN_COMP:
 #endif
 						LM_ERR("new via found"
-								"(',') when '=' expected (state %d=)\n",
+							   "(',') when '=' expected (state %d=)\n",
 								state);
 						goto error; /* or we could ignore this bad param*/
 					case F_CR:
@@ -940,7 +940,7 @@ static /*inline*/ char *parse_via_param(char *const p, const char *const end,
 
 find_value:
 	tmp++;
-	for(; tmp<end && *tmp; tmp++) {
+	for(; tmp < end && *tmp; tmp++) {
 		switch(*tmp) {
 			case ' ':
 			case '\t':
@@ -2064,7 +2064,7 @@ main_via:
 	tmp++;
 	c_nest = 0;
 	/*state should always be F_HOST here*/;
-	for(; tmp<end && *tmp; tmp++) {
+	for(; tmp < end && *tmp; tmp++) {
 		switch(*tmp) {
 			case ' ':
 			case '\t':
@@ -2073,7 +2073,8 @@ main_via:
 						break;
 					case P_HOST:
 						/*mark end of host*/
-						if(vb->host.s) vb->host.len = tmp - vb->host.s;
+						if(vb->host.s)
+							vb->host.len = tmp - vb->host.s;
 						state = L_PORT;
 						break;
 					case L_PORT: /*eat the spaces*/
@@ -2081,7 +2082,8 @@ main_via:
 						break;
 					case P_PORT:
 						/*end of port */
-						if(vb->port_str.s) vb->port_str.len = tmp - vb->port_str.s;
+						if(vb->port_str.s)
+							vb->port_str.len = tmp - vb->port_str.s;
 						state = L_PARAM;
 						break;
 					case L_PARAM: /* eat the space */
@@ -2131,13 +2133,15 @@ main_via:
 						break;
 					case P_HOST:
 						/*mark end of host*/
-						if(vb->host.s) vb->host.len = tmp - vb->host.s;
+						if(vb->host.s)
+							vb->host.len = tmp - vb->host.s;
 						saved_state = L_PORT;
 						state = F_LF;
 						break;
 					case P_PORT:
 						/*end of port */
-						if(vb->port_str.s) vb->port_str.len = tmp - vb->port_str.s;
+						if(vb->port_str.s)
+							vb->port_str.len = tmp - vb->port_str.s;
 						saved_state = L_PARAM;
 						state = F_LF;
 						break;
@@ -2176,13 +2180,15 @@ main_via:
 						break;
 					case P_HOST:
 						/*mark end of host*/
-						if(vb->host.s) vb->host.len = tmp - vb->host.s;
+						if(vb->host.s)
+							vb->host.len = tmp - vb->host.s;
 						saved_state = L_PORT;
 						state = F_CR;
 						break;
 					case P_PORT:
 						/*end of port */
-						if(vb->port_str.s) vb->port_str.len = tmp - vb->port_str.s;
+						if(vb->port_str.s)
+							vb->port_str.len = tmp - vb->port_str.s;
 						saved_state = L_PARAM;
 						state = F_CR;
 						break;
@@ -2212,7 +2218,8 @@ main_via:
 						break;
 					case P_HOST:
 						/*mark  end of host*/
-						if(vb->host.s) vb->host.len = tmp - vb->host.s;
+						if(vb->host.s)
+							vb->host.len = tmp - vb->host.s;
 						state = F_PORT;
 						break;
 					case L_PORT:
@@ -2257,13 +2264,15 @@ main_via:
 						LM_ERR("bad ipv6 reference\n");
 						goto error;
 					case P_HOST:
-						if(vb->host.s) vb->host.len = tmp - vb->host.s;
+						if(vb->host.s)
+							vb->host.len = tmp - vb->host.s;
 						state = F_PARAM;
 						param_start = tmp + 1;
 						break;
 					case P_PORT:
 						/*mark the end*/
-						if(vb->port_str.s) vb->port_str.len = tmp - vb->port_str.s;
+						if(vb->port_str.s)
+							vb->port_str.len = tmp - vb->port_str.s;
 					case L_PORT:
 					case L_PARAM:
 						state = F_PARAM;
@@ -2313,12 +2322,14 @@ main_via:
 						goto error;
 					case P_HOST:
 						/*mark the end*/
-						if(vb->host.s) vb->host.len = tmp - vb->host.s;
+						if(vb->host.s)
+							vb->host.len = tmp - vb->host.s;
 						state = F_VIA;
 						break;
 					case P_PORT:
 						/*mark the end*/
-						if(vb->port_str.s) vb->port_str.len = tmp - vb->port_str.s;
+						if(vb->port_str.s)
+							vb->port_str.len = tmp - vb->port_str.s;
 						state = F_VIA;
 						break;
 					case L_PORT:
@@ -2363,13 +2374,15 @@ main_via:
 						goto error;
 					case P_HOST:
 						/*mark the end*/
-						if(vb->host.s) vb->host.len = tmp - vb->host.s;
+						if(vb->host.s)
+							vb->host.len = tmp - vb->host.s;
 						state = F_COMMENT;
 						c_nest++;
 						break;
 					case P_PORT:
 						/*mark the end*/
-						if(vb->port_str.s) vb->port_str.len = tmp - vb->port_str.s;
+						if(vb->port_str.s)
+							vb->port_str.len = tmp - vb->port_str.s;
 						state = F_COMMENT;
 						c_nest++;
 						break;
@@ -2469,7 +2482,9 @@ main_via:
 				switch(state) {
 					case P_IP6HOST:
 						/*mark the end*/
-						if(vb->host.s) vb->host.len = (tmp - vb->host.s) + 1; /* include "]" */
+						if(vb->host.s)
+							vb->host.len =
+									(tmp - vb->host.s) + 1; /* include "]" */
 						state = L_PORT;
 						break;
 					case F_CRLF:
@@ -2527,11 +2542,11 @@ main_via:
 								break;
 							case F_VIA:
 								vb->params.len = param->start + param->size
-													- vb->params.s;
+												 - vb->params.s;
 								break;
 							case END_OF_HEADER:
 								vb->params.len = param->start + param->size
-													- vb->params.s;
+												 - vb->params.s;
 								break;
 							case PARAM_ERROR:
 								pkg_free(param);
@@ -2539,7 +2554,7 @@ main_via:
 							default:
 								pkg_free(param);
 								LM_ERR("parsing via after parse_via_param:"
-										" invalid char <%c> on state %d\n",
+									   " invalid char <%c> on state %d\n",
 										*tmp, state);
 								goto error;
 						}
@@ -2624,7 +2639,7 @@ main_via:
 						goto endofheader;
 					default:
 						LM_ERR("BUG: parsing via - invalid char <%c>"
-								" in state %d\n",
+							   " in state %d\n",
 								*tmp, state);
 						goto error;
 				}
@@ -2680,11 +2695,11 @@ endofpacket:
 	if(vb->params.s != NULL && vb->params.len == 0 && vb->last_param != NULL) {
 		if(vb->last_param->name.len > 0) {
 			if(vb->last_param->value.len > 0) {
-				vb->params.len = vb->last_param->value.s + vb->last_param->value.len
-					- vb->params.s;
+				vb->params.len = vb->last_param->value.s
+								 + vb->last_param->value.len - vb->params.s;
 			} else {
-				vb->params.len = vb->last_param->name.s + vb->last_param->name.len
-					- vb->params.s;
+				vb->params.len = vb->last_param->name.s
+								 + vb->last_param->name.len - vb->params.s;
 			}
 		}
 	}
@@ -2705,11 +2720,11 @@ nextvia:
 	if(vb->params.s != NULL && vb->params.len == 0 && vb->last_param != NULL) {
 		if(vb->last_param->name.len > 0) {
 			if(vb->last_param->value.len > 0) {
-				vb->params.len = vb->last_param->value.s + vb->last_param->value.len
-					- vb->params.s;
+				vb->params.len = vb->last_param->value.s
+								 + vb->last_param->value.len - vb->params.s;
 			} else {
-				vb->params.len = vb->last_param->name.s + vb->last_param->name.len
-					- vb->params.s;
+				vb->params.len = vb->last_param->name.s
+								 + vb->last_param->name.len - vb->params.s;
 			}
 		}
 	}
@@ -2726,7 +2741,8 @@ nextvia:
 
 error:
 	if(end > buffer) {
-		LM_ERR("parsing via on: <%.*s>\n", (int)(end - buffer), ZSW(ksr_buf_oneline(buffer, (int)(end - buffer))));
+		LM_ERR("parsing via on: <%.*s>\n", (int)(end - buffer),
+				ZSW(ksr_buf_oneline(buffer, (int)(end - buffer))));
 	}
 	if((tmp > buffer) && (tmp < end)) {
 		LM_ERR("parse error, parsed so far:<%.*s>\n", (int)(tmp - buffer),
@@ -2773,8 +2789,9 @@ int parse_via_header(struct sip_msg *msg, int n, struct via_body **q)
 	switch(n) {
 		case 1:
 		case 2:
-			if(!msg->h_via1 && (parse_headers(msg, HDR_VIA_F, 0) == -1
-									|| !msg->h_via1)) {
+			if(!msg->h_via1
+					&& (parse_headers(msg, HDR_VIA_F, 0) == -1
+							|| !msg->h_via1)) {
 				DBG("bad msg or missing VIA1 header \n");
 				return -1;
 			}
@@ -2785,8 +2802,9 @@ int parse_via_header(struct sip_msg *msg, int n, struct via_body **q)
 			if(pp)
 				break;
 
-			if(!msg->h_via2 && (parse_headers(msg, HDR_VIA2_F, 0) == -1
-									|| !msg->h_via2)) {
+			if(!msg->h_via2
+					&& (parse_headers(msg, HDR_VIA2_F, 0) == -1
+							|| !msg->h_via2)) {
 				DBG("bad msg or missing VIA2 header \n");
 				return -1;
 			}

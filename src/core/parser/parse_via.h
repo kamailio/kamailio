@@ -35,35 +35,43 @@ struct sip_msg;
  * WARNING: keep in sync with parse_via.c FIN_HIDDEN...
  * and with tm/sip_msg.c via_body_cloner
  */
-enum {
-	PARAM_HIDDEN=230, PARAM_TTL, PARAM_BRANCH,
-	PARAM_MADDR, PARAM_RECEIVED, PARAM_RPORT, PARAM_I, PARAM_ALIAS,
+enum
+{
+	PARAM_HIDDEN = 230,
+	PARAM_TTL,
+	PARAM_BRANCH,
+	PARAM_MADDR,
+	PARAM_RECEIVED,
+	PARAM_RPORT,
+	PARAM_I,
+	PARAM_ALIAS,
 #ifdef USE_COMP
 	PARAM_COMP,
 #endif
-	GEN_PARAM=253,
+	GEN_PARAM = 253,
 	PARAM_ERROR
 };
 
 
-
-typedef struct via_param {
-	int type;               /* Type of the parameter */
-	str name;               /* Name of the parameter */
-	str value;              /* Value of the parameter */
-	char* start;            /* Pointer to param start, just after ';',
+typedef struct via_param
+{
+	int type;				/* Type of the parameter */
+	str name;				/* Name of the parameter */
+	str value;				/* Value of the parameter */
+	char *start;			/* Pointer to param start, just after ';',
 							 * (it can be diff. from name.s!) */
-	int size;               /* total size, including preceding and trailing
+	int size;				/* total size, including preceding and trailing
 							 * white space */
-	struct via_param* next; /* Next parameter in the list */
+	struct via_param *next; /* Next parameter in the list */
 } via_param_t;
 
 
 /* Format: name/version/transport host:port;params comment */
 /* WARNING: keep in sync with tm/sip_msg.c via_body_cloner */
-typedef struct via_body {
+typedef struct via_body
+{
 	int error;
-	str hdr;   /* Contains "Via" or "v" */
+	str hdr; /* Contains "Via" or "v" */
 	str name;
 	str version;
 	str transport;
@@ -77,22 +85,22 @@ typedef struct via_body {
 	str port_str;
 	str params;
 	str comment;
-	char *bstart;                 /* body content, not including hdr */
-	int bsize;                    /* body size, not including hdr */
-	struct via_param* param_lst;  /* list of parameters*/
-	struct via_param* last_param; /*last via parameter, internal use*/
+	char *bstart;				  /* body content, not including hdr */
+	int bsize;					  /* body size, not including hdr */
+	struct via_param *param_lst;  /* list of parameters*/
+	struct via_param *last_param; /*last via parameter, internal use*/
 
 	/* shortcuts to "important" params*/
-	struct via_param* branch;
+	struct via_param *branch;
 	str tid; /* transaction id, part of branch */
-	struct via_param* received;
-	struct via_param* rport;
-	struct via_param* i;
-	struct via_param* alias; /* alias see draft-ietf-sip-connect-reuse-00 */
+	struct via_param *received;
+	struct via_param *rport;
+	struct via_param *i;
+	struct via_param *alias; /* alias see draft-ietf-sip-connect-reuse-00 */
 #ifdef USE_COMP
-	struct via_param* comp; /* see rfc3486 */
+	struct via_param *comp; /* see rfc3486 */
 #endif
-	struct via_body* next; /* pointer to next via body string
+	struct via_body *next; /* pointer to next via body string
 							if compact via or null */
 } via_body_t;
 
@@ -100,7 +108,8 @@ typedef struct via_body {
 /*
  * Main Via header field parser
  */
-char* parse_via(char* buffer, const char* const end, struct via_body* const vbody);
+char *parse_via(
+		char *buffer, const char *const end, struct via_body *const vbody);
 
 
 /*
@@ -112,7 +121,7 @@ void free_via_list(struct via_body *vb);
 /*
  * Get one Via header
  */
-int parse_via_header( struct sip_msg *msg, int n, struct via_body** q);
+int parse_via_header(struct sip_msg *msg, int n, struct via_body **q);
 
 
 #endif /* PARSE_VIA_H */
