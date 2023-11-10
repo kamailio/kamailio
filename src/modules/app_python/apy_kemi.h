@@ -27,8 +27,8 @@
 
 int sr_apy_init_ksr(void);
 void sr_apy_destroy_ksr(void);
-int sr_kemi_config_engine_python(sip_msg_t *msg, int rtype, str *rname,
-		str *rparam);
+int sr_kemi_config_engine_python(
+		sip_msg_t *msg, int rtype, str *rname, str *rparam);
 
 PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx);
 

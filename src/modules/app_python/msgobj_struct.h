@@ -20,15 +20,15 @@
 */
 
 #ifndef _MSGOBJ_STRUCT_H
-#define  _MSGOBJ_STRUCT_H
+#define _MSGOBJ_STRUCT_H
 
 #include "../../core/parser/msg_parser.h"
 
 #include <Python.h>
 
-typedef struct {
-	PyObject_HEAD
-	struct sip_msg *msg;
+typedef struct
+{
+	PyObject_HEAD struct sip_msg *msg;
 } msgobject;
 
 PyObject *msg_call_function(msgobject *, PyObject *);
