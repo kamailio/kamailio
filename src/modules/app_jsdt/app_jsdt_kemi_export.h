@@ -29,9 +29,10 @@
 #include "../../core/kemi.h"
 #include "duktape.h"
 
-#define SR_KEMI_JSDT_EXPORT_SIZE	1536
+#define SR_KEMI_JSDT_EXPORT_SIZE 1536
 
-typedef struct sr_kemi_jsdt_export {
+typedef struct sr_kemi_jsdt_export
+{
 	duk_c_function pfunc;
 	sr_kemi_t *ket;
 } sr_kemi_jsdt_export_t;
