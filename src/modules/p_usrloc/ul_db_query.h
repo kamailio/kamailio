@@ -25,7 +25,8 @@
 #include "../../lib/srdb1/db.h"
 #include "ul_db_handle.h"
 
-int db_query(ul_db_handle_t * handle, db1_con_t *** _r_h, db_func_t ** _r_f, str * table, db_key_t* _k, db_op_t * _op, db_val_t * _v,
-                db_key_t * _c, int _n, int _nc, db_key_t _o, db1_res_t ** _r, int rw);
+int db_query(ul_db_handle_t *handle, db1_con_t ***_r_h, db_func_t **_r_f,
+		str *table, db_key_t *_k, db_op_t *_op, db_val_t *_v, db_key_t *_c,
+		int _n, int _nc, db_key_t _o, db1_res_t **_r, int rw);
 
 #endif

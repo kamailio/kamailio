@@ -22,8 +22,9 @@
 #include "ul_db_upd.h"
 #include "ul_db_form_query.h"
 
-int db_update(ul_db_handle_t * handle, str * table,
-              db_key_t* _k, db_op_t* _o, db_val_t* _v, db_key_t* _uk,
-              db_val_t* _uv, int _n, int _un) {
-	return db_submit_query(UL_DB_UPD, handle, table, _k, _o, _v, _uk, _uv, _n, _un);
+int db_update(ul_db_handle_t *handle, str *table, db_key_t *_k, db_op_t *_o,
+		db_val_t *_v, db_key_t *_uk, db_val_t *_uv, int _n, int _un)
+{
+	return db_submit_query(
+			UL_DB_UPD, handle, table, _k, _o, _v, _uk, _uv, _n, _un);
 }
