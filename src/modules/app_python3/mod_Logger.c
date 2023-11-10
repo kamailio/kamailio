@@ -51,7 +51,7 @@ static PyObject *logger_LM_GEN1(PyObject *self, PyObject *args)
 	int log_level;
 	char *msg;
 
-	if (!PyArg_ParseTuple(args, "is:LM_GEN1", &log_level, &msg))
+	if(!PyArg_ParseTuple(args, "is:LM_GEN1", &log_level, &msg))
 		return NULL;
 
 	LM_GEN1(log_level, "%s", msg);
@@ -191,32 +191,30 @@ static PyObject *logger_LM_DBG(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-PyMethodDef LoggerMethods[] = {
-	{"LM_GEN1",		(PyCFunction)logger_LM_GEN1,		METH_VARARGS, "Print GEN1 message."},
-	{"LM_GEN2",		(PyCFunction)logger_LM_GEN2,		METH_VARARGS, "Print GEN2 message."},
-	{"LM_ALERT",	(PyCFunction)logger_LM_ALERT,		METH_VARARGS, "Print alert message."},
-	{"LM_CRIT",		(PyCFunction)logger_LM_CRIT,		METH_VARARGS, "Print critical message."},
-	{"LM_ERR",		(PyCFunction)logger_LM_ERR,		METH_VARARGS, "Print error message."},
-	{"LM_WARN",		(PyCFunction)logger_LM_WARN,		METH_VARARGS, "Print warning message."},
-	{"LM_NOTICE",	(PyCFunction)logger_LM_NOTICE,		METH_VARARGS, "Print notice message."},
-	{"LM_INFO",		(PyCFunction)logger_LM_INFO,		METH_VARARGS, "Print info message."},
-	{"LM_DBG",		(PyCFunction)logger_LM_DBG,		METH_VARARGS, "Print debug message."},
-	{NULL, 		NULL, 			0, 		NULL}
-};
+PyMethodDef LoggerMethods[] = {{"LM_GEN1", (PyCFunction)logger_LM_GEN1,
+									   METH_VARARGS, "Print GEN1 message."},
+		{"LM_GEN2", (PyCFunction)logger_LM_GEN2, METH_VARARGS,
+				"Print GEN2 message."},
+		{"LM_ALERT", (PyCFunction)logger_LM_ALERT, METH_VARARGS,
+				"Print alert message."},
+		{"LM_CRIT", (PyCFunction)logger_LM_CRIT, METH_VARARGS,
+				"Print critical message."},
+		{"LM_ERR", (PyCFunction)logger_LM_ERR, METH_VARARGS,
+				"Print error message."},
+		{"LM_WARN", (PyCFunction)logger_LM_WARN, METH_VARARGS,
+				"Print warning message."},
+		{"LM_NOTICE", (PyCFunction)logger_LM_NOTICE, METH_VARARGS,
+				"Print notice message."},
+		{"LM_INFO", (PyCFunction)logger_LM_INFO, METH_VARARGS,
+				"Print info message."},
+		{"LM_DBG", (PyCFunction)logger_LM_DBG, METH_VARARGS,
+				"Print debug message."},
+		{NULL, NULL, 0, NULL}};
 
-static struct PyModuleDef Router_Logger_moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "Router.Logger",
-        NULL,
-        -1,
-        LoggerMethods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
+static struct PyModuleDef Router_Logger_moduledef = {PyModuleDef_HEAD_INIT,
+		"Router.Logger", NULL, -1, LoggerMethods, NULL, NULL, NULL, NULL};
 
-PyObject* get_logger_module(void)
+PyObject *get_logger_module(void)
 {
 	_sr_apy_logger_module = PyModule_Create(&Router_Logger_moduledef);
 
@@ -224,24 +222,24 @@ PyObject* get_logger_module(void)
 	 * Log levels
 	 * Reference: dprint.h
 	 */
-	PyModule_AddObject(_sr_apy_logger_module, "L_ALERT",
-			PyLong_FromLong((long)L_ALERT));
-	PyModule_AddObject(_sr_apy_logger_module, "L_BUG",
-			PyLong_FromLong((long)L_BUG));
+	PyModule_AddObject(
+			_sr_apy_logger_module, "L_ALERT", PyLong_FromLong((long)L_ALERT));
+	PyModule_AddObject(
+			_sr_apy_logger_module, "L_BUG", PyLong_FromLong((long)L_BUG));
 	PyModule_AddObject(_sr_apy_logger_module, "L_CRIT2",
 			PyLong_FromLong((long)L_CRIT2)); /* like L_CRIT, but adds prefix */
 	PyModule_AddObject(_sr_apy_logger_module, "L_CRIT",
-			PyLong_FromLong((long)L_CRIT));  /* no prefix added */
-	PyModule_AddObject(_sr_apy_logger_module, "L_ERR",
-			PyLong_FromLong((long)L_ERR));
-	PyModule_AddObject(_sr_apy_logger_module, "L_WARN",
-			PyLong_FromLong((long)L_WARN));
-	PyModule_AddObject(_sr_apy_logger_module, "L_NOTICE",
-			PyLong_FromLong((long)L_NOTICE));
-	PyModule_AddObject(_sr_apy_logger_module, "L_INFO",
-			PyLong_FromLong((long)L_INFO));
-	PyModule_AddObject(_sr_apy_logger_module, "L_DBG",
-			PyLong_FromLong((long)L_DBG));
+			PyLong_FromLong((long)L_CRIT)); /* no prefix added */
+	PyModule_AddObject(
+			_sr_apy_logger_module, "L_ERR", PyLong_FromLong((long)L_ERR));
+	PyModule_AddObject(
+			_sr_apy_logger_module, "L_WARN", PyLong_FromLong((long)L_WARN));
+	PyModule_AddObject(
+			_sr_apy_logger_module, "L_NOTICE", PyLong_FromLong((long)L_NOTICE));
+	PyModule_AddObject(
+			_sr_apy_logger_module, "L_INFO", PyLong_FromLong((long)L_INFO));
+	PyModule_AddObject(
+			_sr_apy_logger_module, "L_DBG", PyLong_FromLong((long)L_DBG));
 
 	/*
 	 * Facility
@@ -256,7 +254,6 @@ PyObject* get_logger_module(void)
 	LM_ERR("Module 'Router.Logger' has been initialized\n");
 #endif
 	return _sr_apy_logger_module;
-
 }
 
 void destroy_mod_Logger(void)
@@ -266,6 +263,4 @@ void destroy_mod_Logger(void)
 #ifdef WITH_EXTRA_DEBUG
 	LM_ERR("Module 'Router.Logger' has been destroyed\n");
 #endif
-
 }
-

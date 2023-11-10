@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef	__API__MOD_RANKS_H__
-#define	__API__MOD_RANKS_H__
+#ifndef __API__MOD_RANKS_H__
+#define __API__MOD_RANKS_H__
 
 #include <Python.h>
 #include <libgen.h>
