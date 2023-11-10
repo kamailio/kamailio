@@ -70,38 +70,41 @@ MODULE_VERSION
 /** SL API structure */
 sl_api_t slb;
 
-enum {
+enum
+{
 	LOAD_SOURCE_CPU,
 	LOAD_SOURCE_EXTERNAL
 };
 
 str_map_t source_names[] = {
-	{str_init("cpu"),	LOAD_SOURCE_CPU},
-	{str_init("external"),	LOAD_SOURCE_EXTERNAL},
-	{{0, 0},		0},
+		{str_init("cpu"), LOAD_SOURCE_CPU},
+		{str_init("external"), LOAD_SOURCE_EXTERNAL},
+		{{0, 0}, 0},
 };
 
 static int pl_drop_code = 503;
 static str pl_drop_reason = str_init("Server Unavailable");
 static int pl_hash_size = 6;
 
-typedef struct pl_queue {
+typedef struct pl_queue
+{
 	int *pipe;
 	int pipe_mp;
 	str *method;
 	str method_mp;
 } pl_queue_t;
 
-static struct timer_ln* pl_timer = NULL;
+static struct timer_ln *pl_timer = NULL;
 
 /* === these change after startup */
 
-static double *load_value = NULL;     /* actual load, used by PIPE_ALGO_FEEDBACK */
-static double *pid_kp = NULL, *pid_ki = NULL, *pid_kd = NULL; /* PID tuning params */
+static double *load_value = NULL; /* actual load, used by PIPE_ALGO_FEEDBACK */
+static double *pid_kp = NULL, *pid_ki = NULL,
+			  *pid_kd = NULL;	 /* PID tuning params */
 double *_pl_pid_setpoint = NULL; /* PID tuning params */
-static int *drop_rate = NULL;    /* updated by PIPE_ALGO_FEEDBACK */
+static int *drop_rate = NULL;	 /* updated by PIPE_ALGO_FEEDBACK */
 
-static int *network_load_value = NULL;      /* network load */
+static int *network_load_value = NULL; /* network load */
 
 /* where to get the load for feedback. values: cpu, external */
 static int load_source_mp = LOAD_SOURCE_CPU;
@@ -110,7 +113,7 @@ static int *load_source = NULL;
 /* these only change in the mod_init() process -- no locking needed */
 static int pl_timer_interval = PL_TIMER_INTERVAL_DEFAULT;
 static int pl_timer_mode = 0;
-int _pl_cfg_setpoint = 0;        /* desired load, used when reading modparams */
+int _pl_cfg_setpoint = 0; /* desired load, used when reading modparams */
 int pl_clean_unused = 0;
 
 /* === */
@@ -119,63 +122,60 @@ static int pl_load_fetch = 1;
 
 /** module functions */
 static int mod_init(void);
-static ticks_t pl_timer_handle(ticks_t, struct timer_ln*, void*);
+static ticks_t pl_timer_handle(ticks_t, struct timer_ln *, void *);
 static void pl_timer_exec(unsigned int ticks, void *param);
-static int w_pl_check(struct sip_msg*, char *, char *);
-static int w_pl_check3(struct sip_msg*, char *, char *, char *);
+static int w_pl_check(struct sip_msg *, char *, char *);
+static int w_pl_check3(struct sip_msg *, char *, char *, char *);
 static int w_pl_active(sip_msg_t *, char *, char *);
-static int w_pl_drop_default(struct sip_msg*, char *, char *);
-static int w_pl_drop_forced(struct sip_msg*, char *, char *);
-static int w_pl_drop(struct sip_msg*, char *, char *);
+static int w_pl_drop_default(struct sip_msg *, char *, char *);
+static int w_pl_drop_forced(struct sip_msg *, char *, char *);
+static int w_pl_drop(struct sip_msg *, char *, char *);
 static void destroy(void);
-static int fixup_pl_check3(void** param, int param_no);
+static int fixup_pl_check3(void **param, int param_no);
 
-static cmd_export_t cmds[]={
-	{"pl_check",      (cmd_function)w_pl_check,        1, fixup_spve_null,
-		0,    ANY_ROUTE},
-	{"pl_check",      (cmd_function)w_pl_check3,       3, fixup_pl_check3,
-		0,    ANY_ROUTE},
-	{"pl_active",     (cmd_function)w_pl_active,       1, fixup_spve_null,
-		0,    ANY_ROUTE},
-	{"pl_drop",       (cmd_function)w_pl_drop_default, 0, 0,
-		0,    REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
-	{"pl_drop",       (cmd_function)w_pl_drop_forced,  1, fixup_uint_null,
-		0,    REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
-	{"pl_drop",       (cmd_function)w_pl_drop,         2, fixup_uint_uint,
-		0,    REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONSEND_ROUTE},
-	{0,0,0,0,0,0}
-};
-static param_export_t params[]={
-	{"timer_interval",       INT_PARAM,          &pl_timer_interval},
-	{"timer_mode",           INT_PARAM,          &pl_timer_mode},
-	{"reply_code",           INT_PARAM,          &pl_drop_code},
-	{"reply_reason",         PARAM_STR,          &pl_drop_reason},
-	{"db_url",               PARAM_STR,          &pl_db_url},
-	{"plp_table_name",       PARAM_STR,          &rlp_table_name},
-	{"plp_pipeid_column",    PARAM_STR,          &rlp_pipeid_col},
-	{"plp_limit_column",     PARAM_STR,          &rlp_limit_col},
-	{"plp_algorithm_column", PARAM_STR,          &rlp_algorithm_col},
-	{"hash_size",            INT_PARAM,          &pl_hash_size},
-	{"load_fetch",           INT_PARAM,          &pl_load_fetch},
-	{"clean_unused",         INT_PARAM,          &pl_clean_unused},
+static cmd_export_t cmds[] = {{"pl_check", (cmd_function)w_pl_check, 1,
+									  fixup_spve_null, 0, ANY_ROUTE},
+		{"pl_check", (cmd_function)w_pl_check3, 3, fixup_pl_check3, 0,
+				ANY_ROUTE},
+		{"pl_active", (cmd_function)w_pl_active, 1, fixup_spve_null, 0,
+				ANY_ROUTE},
+		{"pl_drop", (cmd_function)w_pl_drop_default, 0, 0, 0,
+				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
+		{"pl_drop", (cmd_function)w_pl_drop_forced, 1, fixup_uint_null, 0,
+				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
+		{"pl_drop", (cmd_function)w_pl_drop, 2, fixup_uint_uint, 0,
+				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
+static param_export_t params[] = {
+		{"timer_interval", INT_PARAM, &pl_timer_interval},
+		{"timer_mode", INT_PARAM, &pl_timer_mode},
+		{"reply_code", INT_PARAM, &pl_drop_code},
+		{"reply_reason", PARAM_STR, &pl_drop_reason},
+		{"db_url", PARAM_STR, &pl_db_url},
+		{"plp_table_name", PARAM_STR, &rlp_table_name},
+		{"plp_pipeid_column", PARAM_STR, &rlp_pipeid_col},
+		{"plp_limit_column", PARAM_STR, &rlp_limit_col},
+		{"plp_algorithm_column", PARAM_STR, &rlp_algorithm_col},
+		{"hash_size", INT_PARAM, &pl_hash_size},
+		{"load_fetch", INT_PARAM, &pl_load_fetch},
+		{"clean_unused", INT_PARAM, &pl_clean_unused},
 
-	{0,0,0}
-};
+		{0, 0, 0}};
 
 static rpc_export_t rpc_methods[];
 
 /** module exports */
-struct module_exports exports= {
-	"pipelimit",     /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* cmd exports */
-	params,          /* param exports */
-	0,               /* RPC method exports */
-	0,               /* exported pseudo-variables */
-	0,               /* response handling function */
-	mod_init,        /* module initialization function */
-	0,               /* per-child init function */
-	destroy          /* module exit function */
+struct module_exports exports = {
+		"pipelimit",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* cmd exports */
+		params,			 /* param exports */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		0,				 /* per-child init function */
+		destroy			 /* module exit function */
 };
 
 #ifdef __OS_darwin
@@ -185,93 +185,94 @@ struct module_exports exports= {
 #include <unistd.h>
 #endif
 
-int get_num_cpus() {
+int get_num_cpus()
+{
 	int count = 0;
 
 #ifdef __OS_darwin
-    int nm[2];
-    size_t len;
+	int nm[2];
+	size_t len;
 
-    len = sizeof(count);
+	len = sizeof(count);
 
-    nm[0] = CTL_HW; nm[1] = HW_AVAILCPU;
-    sysctl(nm, 2, &count, &len, NULL, 0);
+	nm[0] = CTL_HW;
+	nm[1] = HW_AVAILCPU;
+	sysctl(nm, 2, &count, &len, NULL, 0);
 
-    if(count < 1) {
-        nm[1] = HW_NCPU;
-        sysctl(nm, 2, &count, &len, NULL, 0);
-    }
+	if(count < 1) {
+		nm[1] = HW_NCPU;
+		sysctl(nm, 2, &count, &len, NULL, 0);
+	}
 #else
-    count = sysconf(_SC_NPROCESSORS_ONLN);
+	count = sysconf(_SC_NPROCESSORS_ONLN);
 #endif
-    if(count < 1) return 1;
-    return count;
+	if(count < 1)
+		return 1;
+	return count;
 }
 
 /* not using /proc/loadavg because it only works when our_timer_interval == theirs */
-static int get_cpuload(double * load)
+static int get_cpuload(double *load)
 {
-	static 
-	long long o_user, o_nice, o_sys, o_idle, o_iow, o_irq, o_sirq, o_stl;
+	static long long o_user, o_nice, o_sys, o_idle, o_iow, o_irq, o_sirq, o_stl;
 	long long n_user, n_nice, n_sys, n_idle, n_iow, n_irq, n_sirq, n_stl;
 	static int first_time = 1;
-	FILE * f = fopen("/proc/stat", "r");
+	FILE *f = fopen("/proc/stat", "r");
 	double vload;
 	int ncpu;
 	static int errormsg = 0;
 
-	if (! f) {
+	if(!f) {
 		/* Only write this error message five times. Otherwise you will annoy
 		   BSD-ish system administrators. */
-		if (errormsg < 5) {
+		if(errormsg < 5) {
 			LM_ERR("could not open /proc/stat\n");
 			errormsg++;
 		}
 		return -1;
 	}
-	if (fscanf(f, "cpu  %lld%lld%lld%lld%lld%lld%lld%lld",
-			&n_user, &n_nice, &n_sys, &n_idle, &n_iow, &n_irq, &n_sirq, &n_stl) < 0) {
-		  LM_ERR("could not parse load information\n");
-		  fclose(f);
-		  return -1;
+	if(fscanf(f, "cpu  %lld%lld%lld%lld%lld%lld%lld%lld", &n_user, &n_nice,
+			   &n_sys, &n_idle, &n_iow, &n_irq, &n_sirq, &n_stl)
+			< 0) {
+		LM_ERR("could not parse load information\n");
+		fclose(f);
+		return -1;
 	}
 	fclose(f);
 
-	if (first_time) {
+	if(first_time) {
 		first_time = 0;
 		*load = 0;
-	} else {		
-		long long d_total =	(n_user - o_user)	+ 
-					(n_nice	- o_nice)	+ 
-					(n_sys	- o_sys)	+ 
-					(n_idle	- o_idle)	+ 
-					(n_iow	- o_iow)	+ 
-					(n_irq	- o_irq)	+ 
-					(n_sirq	- o_sirq)	+ 
-					(n_stl	- o_stl);
-		long long d_idle =	(n_idle - o_idle);
+	} else {
+		long long d_total = (n_user - o_user) + (n_nice - o_nice)
+							+ (n_sys - o_sys) + (n_idle - o_idle)
+							+ (n_iow - o_iow) + (n_irq - o_irq)
+							+ (n_sirq - o_sirq) + (n_stl - o_stl);
+		long long d_idle = (n_idle - o_idle);
 
 		vload = ((double)d_idle) / (double)d_total;
 
 		/* divide by numbers of cpu */
 		ncpu = get_num_cpus();
-		vload = vload/ncpu;
+		vload = vload / ncpu;
 		vload = 1.0 - vload;
-		if(vload<0.0) vload = 0.0;
-		else if (vload>1.0) vload = 1.0;
+		if(vload < 0.0)
+			vload = 0.0;
+		else if(vload > 1.0)
+			vload = 1.0;
 
 		*load = vload;
 	}
 
-	o_user	= n_user; 
-	o_nice	= n_nice; 
-	o_sys	= n_sys; 
-	o_idle	= n_idle; 
-	o_iow	= n_iow; 
-	o_irq	= n_irq; 
-	o_sirq	= n_sirq; 
-	o_stl	= n_stl;
-	
+	o_user = n_user;
+	o_nice = n_nice;
+	o_sys = n_sys;
+	o_idle = n_idle;
+	o_iow = n_iow;
+	o_irq = n_irq;
+	o_sirq = n_sirq;
+	o_stl = n_stl;
+
 	return 0;
 }
 
@@ -300,15 +301,13 @@ static void do_update_load(void)
 	 * NB: - "err < 0" means "desired_cpuload < actual_cpuload"
 	 *     - int_err is integral(err) over time
 	 */
-	if (int_err < 0 || err < 0)
+	if(int_err < 0 || err < 0)
 		int_err += err;
 
-	output =	(*pid_kp) * err + 
-				(*pid_ki) * int_err + 
-				(*pid_kd) * dif_err;
+	output = (*pid_kp) * err + (*pid_ki) * int_err + (*pid_kd) * dif_err;
 	last_err = err;
 
-	*drop_rate = (output > 0) ? output  : 0;
+	*drop_rate = (output > 0) ? output : 0;
 
 	load = 0.5 + 100.0 * *load_value; /* round instead of floor */
 
@@ -323,7 +322,7 @@ static void do_update_load(void)
 
 static void update_cpu_load(void)
 {
-	if (get_cpuload(load_value))
+	if(get_cpuload(load_value))
 		return;
 
 	do_update_load();
@@ -332,30 +331,26 @@ static void update_cpu_load(void)
 /* initialize ratelimit module */
 static int mod_init(void)
 {
-	if(rpc_register_array(rpc_methods)!=0)
-	{
+	if(rpc_register_array(rpc_methods) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
-	if(pl_hash_size<=0)
-	{
+	if(pl_hash_size <= 0) {
 		LM_ERR("invalid hash size parameter: %d\n", pl_hash_size);
 		return -1;
 	}
-	if(pl_init_htable(1<<pl_hash_size)<0)
-	{
+	if(pl_init_htable(1 << pl_hash_size) < 0) {
 		LM_ERR("could not allocate pipes htable\n");
 		return -1;
 	}
-	if(pl_init_db()<0)
-	{
+	if(pl_init_db() < 0) {
 		LM_ERR("could not load pipes description\n");
 		return -1;
 	}
 
 	if(pl_timer_mode == 0) {
 		/* register timer to reset counters */
-		if ((pl_timer = timer_alloc()) == NULL) {
+		if((pl_timer = timer_alloc()) == NULL) {
 			LM_ERR("could not allocate timer\n");
 			return -1;
 		}
@@ -370,49 +365,49 @@ static int mod_init(void)
 	}
 
 	/* bind the SL API */
-	if (sl_load_api(&slb)!=0) {
+	if(sl_load_api(&slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
 	network_load_value = shm_malloc(sizeof(int));
-	if (network_load_value==NULL) {
+	if(network_load_value == NULL) {
 		LM_ERR("oom for network_load_value\n");
 		return -1;
 	}
 
 	load_value = shm_malloc(sizeof(double));
-	if (load_value==NULL) {
+	if(load_value == NULL) {
 		LM_ERR("oom for load_value\n");
 		return -1;
 	}
 	load_source = shm_malloc(sizeof(int));
-	if (load_source==NULL) {
+	if(load_source == NULL) {
 		LM_ERR("oom for load_source\n");
 		return -1;
 	}
 	pid_kp = shm_malloc(sizeof(double));
-	if (pid_kp==NULL) {
+	if(pid_kp == NULL) {
 		LM_ERR("oom for pid_kp\n");
 		return -1;
 	}
 	pid_ki = shm_malloc(sizeof(double));
-	if (pid_ki==NULL) {
+	if(pid_ki == NULL) {
 		LM_ERR("oom for pid_ki\n");
 		return -1;
 	}
 	pid_kd = shm_malloc(sizeof(double));
-	if (pid_kd==NULL) {
+	if(pid_kd == NULL) {
 		LM_ERR("oom for pid_kd\n");
 		return -1;
 	}
 	_pl_pid_setpoint = shm_malloc(sizeof(double));
-	if (_pl_pid_setpoint==NULL) {
+	if(_pl_pid_setpoint == NULL) {
 		LM_ERR("oom for pid_setpoint\n");
 		return -1;
 	}
 	drop_rate = shm_malloc(sizeof(int));
-	if (drop_rate==NULL) {
+	if(drop_rate == NULL) {
 		LM_ERR("oom for drop_rate\n");
 		return -1;
 	}
@@ -424,7 +419,7 @@ static int mod_init(void)
 	*pid_ki = -25.0;
 	*pid_kd = 0.0;
 	*_pl_pid_setpoint = 0.01 * (double)_pl_cfg_setpoint;
-	*drop_rate      = 0;
+	*drop_rate = 0;
 
 	return 0;
 }
@@ -434,75 +429,74 @@ static void destroy(void)
 {
 	pl_destroy_htable();
 
-	if (network_load_value) {
+	if(network_load_value) {
 		shm_free(network_load_value);
 		network_load_value = NULL;
 	}
-	if (load_value) {
+	if(load_value) {
 		shm_free(load_value);
 		load_value = NULL;
 	}
-	if (load_source) {
+	if(load_source) {
 		shm_free(load_source);
 		load_source = NULL;
 	}
-	if (pid_kp) {
+	if(pid_kp) {
 		shm_free(pid_kp);
-		pid_kp= NULL;
+		pid_kp = NULL;
 	}
-	if (pid_ki) {
+	if(pid_ki) {
 		shm_free(pid_ki);
 		pid_ki = NULL;
 	}
-	if (pid_kd) {
+	if(pid_kd) {
 		shm_free(pid_kd);
 		pid_kd = NULL;
 	}
-	if (_pl_pid_setpoint) {
+	if(_pl_pid_setpoint) {
 		shm_free(_pl_pid_setpoint);
 		_pl_pid_setpoint = NULL;
 	}
-	if (drop_rate) {
+	if(drop_rate) {
 		shm_free(drop_rate);
 		drop_rate = NULL;
 	}
 
-	if (pl_timer) {
+	if(pl_timer) {
 		timer_free(pl_timer);
 		pl_timer = NULL;
 	}
-
 }
 
 
-static int pl_drop(struct sip_msg * msg, unsigned int low, unsigned int high)
+static int pl_drop(struct sip_msg *msg, unsigned int low, unsigned int high)
 {
 	str hdr;
 	int ret;
 
 	LM_DBG("(%d, %d)\n", low, high);
 
-	if (slb.freply != 0) {
-		if (low != 0 && high != 0) {
+	if(slb.freply != 0) {
+		if(low != 0 && high != 0) {
 			hdr.s = (char *)pkg_malloc(64);
-			if (hdr.s == 0) {
+			if(hdr.s == 0) {
 				LM_ERR("Can't allocate memory for Retry-After header\n");
 				return 0;
 			}
 			hdr.len = 0;
-			if (! hdr.s) {
+			if(!hdr.s) {
 				LM_ERR("no memory for hdr\n");
 				return 0;
 			}
 
-			if (high == low) {
+			if(high == low) {
 				hdr.len = snprintf(hdr.s, 63, "Retry-After: %d\r\n", low);
 			} else {
-				hdr.len = snprintf(hdr.s, 63, "Retry-After: %d\r\n", 
-					low + kam_rand() % (high - low + 1));
+				hdr.len = snprintf(hdr.s, 63, "Retry-After: %d\r\n",
+						low + kam_rand() % (high - low + 1));
 			}
 
-			if (add_lump_rpl(msg, hdr.s, hdr.len, LUMP_RPL_HDR)==0) {
+			if(add_lump_rpl(msg, hdr.s, hdr.len, LUMP_RPL_HDR) == 0) {
 				LM_ERR("Can't add header\n");
 				pkg_free(hdr.s);
 				return 0;
@@ -521,25 +515,25 @@ static int pl_drop(struct sip_msg * msg, unsigned int low, unsigned int high)
 	return ret;
 }
 
-static int w_pl_drop(struct sip_msg* msg, char *p1, char *p2) 
+static int w_pl_drop(struct sip_msg *msg, char *p1, char *p2)
 {
 	unsigned int low, high;
 
 	low = (unsigned int)(unsigned long)p1;
 	high = (unsigned int)(unsigned long)p2;
 
-	if (high < low) {
+	if(high < low) {
 		return pl_drop(msg, low, low);
 	} else {
 		return pl_drop(msg, low, high);
 	}
 }
 
-static int w_pl_drop_forced(struct sip_msg* msg, char *p1, char *p2)
+static int w_pl_drop_forced(struct sip_msg *msg, char *p1, char *p2)
 {
 	unsigned int i;
 
-	if (p1) {
+	if(p1) {
 		i = (unsigned int)(unsigned long)p1;
 		LM_DBG("send retry in %d s\n", i);
 	} else {
@@ -549,7 +543,7 @@ static int w_pl_drop_forced(struct sip_msg* msg, char *p1, char *p2)
 	return pl_drop(msg, i, i);
 }
 
-static int w_pl_drop_default(struct sip_msg* msg, char *p1, char *p2)
+static int w_pl_drop_default(struct sip_msg *msg, char *p1, char *p2)
 {
 	return pl_drop(msg, 0, 0);
 }
@@ -557,12 +551,12 @@ static int w_pl_drop_default(struct sip_msg* msg, char *p1, char *p2)
 /* this is here to avoid using rand() ... which doesn't _always_ return
  * exactly what we want (see NOTES section in 'man 3 rand')
  */
-int hash[100] = {18, 50, 51, 39, 49, 68, 8, 78, 61, 75, 53, 32, 45, 77, 31, 
-	12, 26, 10, 37, 99, 29, 0, 52, 82, 91, 22, 7, 42, 87, 43, 73, 86, 70, 
-	69, 13, 60, 24, 25, 6, 93, 96, 97, 84, 47, 79, 64, 90, 81, 4, 15, 63, 
-	44, 57, 40, 21, 28, 46, 94, 35, 58, 11, 30, 3, 20, 41, 74, 34, 88, 62, 
-	54, 33, 92, 76, 85, 5, 72, 9, 83, 56, 17, 95, 55, 80, 98, 66, 14, 16, 
-	38, 71, 23, 2, 67, 36, 65, 27, 1, 19, 59, 89, 48};
+int hash[100] = {18, 50, 51, 39, 49, 68, 8, 78, 61, 75, 53, 32, 45, 77, 31, 12,
+		26, 10, 37, 99, 29, 0, 52, 82, 91, 22, 7, 42, 87, 43, 73, 86, 70, 69,
+		13, 60, 24, 25, 6, 93, 96, 97, 84, 47, 79, 64, 90, 81, 4, 15, 63, 44,
+		57, 40, 21, 28, 46, 94, 35, 58, 11, 30, 3, 20, 41, 74, 34, 88, 62, 54,
+		33, 92, 76, 85, 5, 72, 9, 83, 56, 17, 95, 55, 80, 98, 66, 14, 16, 38,
+		71, 23, 2, 67, 36, 65, 27, 1, 19, 59, 89, 48};
 
 
 /**
@@ -576,20 +570,20 @@ static int pipe_push_direct(pl_pipe_t *pipe)
 
 	pipe->counter++;
 
-	switch (pipe->algo) {
+	switch(pipe->algo) {
 		case PIPE_ALGO_NOP:
-			LM_ERR("no algorithm defined for pipe %.*s\n",
-					pipe->name.len, pipe->name.s);
+			LM_ERR("no algorithm defined for pipe %.*s\n", pipe->name.len,
+					pipe->name.s);
 			ret = 2;
 			break;
 		case PIPE_ALGO_TAILDROP:
 			ret = (pipe->counter <= pipe->limit) ? 1 : -1;
 			break;
 		case PIPE_ALGO_RED:
-			if (pipe->load == 0)
+			if(pipe->load == 0)
 				ret = 1;
 			else
-				ret = (! (pipe->counter % pipe->load)) ? 1 : -1;
+				ret = (!(pipe->counter % pipe->load)) ? 1 : -1;
 			break;
 		case PIPE_ALGO_FEEDBACK:
 			ret = (hash[pipe->counter % 100] < *drop_rate) ? -1 : 1;
@@ -602,24 +596,22 @@ static int pipe_push_direct(pl_pipe_t *pipe)
 			ret = 1;
 	}
 	LM_DBG("pipe=%.*s algo=%d limit=%d pkg_load=%d counter=%d "
-		"load=%2.1lf network_load=%d => %s\n",
-		pipe->name.len, pipe->name.s,
-		pipe->algo, pipe->limit,
-		pipe->load, pipe->counter,
-		*load_value, *network_load_value, (ret == 1) ? "ACCEPT" : "DROP");
+		   "load=%2.1lf network_load=%d => %s\n",
+			pipe->name.len, pipe->name.s, pipe->algo, pipe->limit, pipe->load,
+			pipe->counter, *load_value, *network_load_value,
+			(ret == 1) ? "ACCEPT" : "DROP");
 
 	pl_pipe_release(&pipe->name);
 
-	return ret;     
+	return ret;
 }
 
-static int pipe_push(struct sip_msg * msg, str *pipeid)
+static int pipe_push(struct sip_msg *msg, str *pipeid)
 {
 	pl_pipe_t *pipe = NULL;
 
 	pipe = pl_pipe_get(pipeid, 1);
-	if(pipe==NULL)
-	{
+	if(pipe == NULL) {
 		LM_ERR("pipe not found [%.*s]\n", pipeid->len, pipeid->s);
 		return -2;
 	}
@@ -632,7 +624,7 @@ static int pipe_push(struct sip_msg * msg, str *pipeid)
  * \param       forced_pipe     is >= 0 if a specific pipe should be used, < 0 otherwise
  * \return	-1 if drop needed, 1 if allowed
  */
-static int pl_check(struct sip_msg * msg, str *pipeid)
+static int pl_check(struct sip_msg *msg, str *pipeid)
 {
 	int ret;
 
@@ -644,13 +636,11 @@ static int pl_check(struct sip_msg * msg, str *pipeid)
 /**
  * limit checking with exiting pipes
  */
-static int w_pl_check(struct sip_msg* msg, char *p1, char *p2)
+static int w_pl_check(struct sip_msg *msg, char *p1, char *p2)
 {
 	str pipeid = {0, 0};
 
-	if(fixup_get_svalue(msg, (gparam_p)p1, &pipeid)!=0
-			|| pipeid.s == 0)
-	{
+	if(fixup_get_svalue(msg, (gparam_p)p1, &pipeid) != 0 || pipeid.s == 0) {
 		LM_ERR("invalid pipeid parameter");
 		return -1;
 	}
@@ -662,27 +652,26 @@ static int w_pl_check(struct sip_msg* msg, char *p1, char *p2)
 /**
  * limit checking with creation of pipe if it doesn't exist
  */
-static int pl_check_limit(sip_msg_t* msg, str *pipeid, str *alg, int limit)
+static int pl_check_limit(sip_msg_t *msg, str *pipeid, str *alg, int limit)
 {
 	pl_pipe_t *pipe = NULL;
 
 	pipe = pl_pipe_get(pipeid, 1);
-	if(pipe==NULL) {
-		LM_DBG("pipe not found [%.*s] - trying to add it\n",
-				pipeid->len, pipeid->s);
-		if(pl_pipe_add(pipeid, alg, limit)<0) {
-			LM_ERR("failed to add pipe [%.*s]\n",
-				pipeid->len, pipeid->s);
+	if(pipe == NULL) {
+		LM_DBG("pipe not found [%.*s] - trying to add it\n", pipeid->len,
+				pipeid->s);
+		if(pl_pipe_add(pipeid, alg, limit) < 0) {
+			LM_ERR("failed to add pipe [%.*s]\n", pipeid->len, pipeid->s);
 			return -2;
 		}
 		pipe = pl_pipe_get(pipeid, 0);
-		if(pipe==NULL) {
-			LM_ERR("failed to retrieve pipe [%.*s]\n",
-				pipeid->len, pipeid->s);
+		if(pipe == NULL) {
+			LM_ERR("failed to retrieve pipe [%.*s]\n", pipeid->len, pipeid->s);
 			return -2;
 		}
 	} else {
-		if(limit>0) pipe->limit = limit;
+		if(limit > 0)
+			pipe->limit = limit;
 		pl_pipe_release(&pipe->name);
 	}
 
@@ -692,32 +681,28 @@ static int pl_check_limit(sip_msg_t* msg, str *pipeid, str *alg, int limit)
 /**
  * limit checking with creation of pipe if it doesn't exist
  */
-static int w_pl_check3(struct sip_msg* msg, char *p1pipe, char *p2alg,
-		char *p3limit)
+static int w_pl_check3(
+		struct sip_msg *msg, char *p1pipe, char *p2alg, char *p3limit)
 {
 	int limit;
 	str pipeid = {0, 0};
 	str alg = {0, 0};
 
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(fixup_get_ivalue(msg, (gparam_t*)p3limit, &limit)!=0 || limit<0)
-	{
+	if(fixup_get_ivalue(msg, (gparam_t *)p3limit, &limit) != 0 || limit < 0) {
 		LM_ERR("invalid limit value: %d\n", limit);
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)p1pipe, &pipeid)!=0
-			|| pipeid.s == 0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)p1pipe, &pipeid) != 0
+			|| pipeid.s == 0) {
 		LM_ERR("invalid pipeid parameter");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)p2alg, &alg)!=0
-			|| alg.s == 0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)p2alg, &alg) != 0 || alg.s == 0) {
 		LM_ERR("invalid algorithm parameter");
 		return -1;
 	}
@@ -725,11 +710,14 @@ static int w_pl_check3(struct sip_msg* msg, char *p1pipe, char *p2alg,
 	return pl_check_limit(msg, &pipeid, &alg, limit);
 }
 
-static int fixup_pl_check3(void** param, int param_no)
+static int fixup_pl_check3(void **param, int param_no)
 {
-	if(param_no==1) return fixup_spve_null(param, 1);
-	if(param_no==2) return fixup_spve_null(param, 1);
-	if(param_no==3) return fixup_igp_null(param, 1);
+	if(param_no == 1)
+		return fixup_spve_null(param, 1);
+	if(param_no == 2)
+		return fixup_spve_null(param, 1);
+	if(param_no == 3)
+		return fixup_igp_null(param, 1);
 	return 0;
 }
 
@@ -738,7 +726,7 @@ static int pl_active(sip_msg_t *msg, str *pipeid)
 	pl_pipe_t *pipe = NULL;
 
 	pipe = pl_pipe_get(pipeid, 0);
-	if(pipe==NULL) {
+	if(pipe == NULL) {
 		LM_ERR("pipe does not exist [%.*s]\n", pipeid->len, pipeid->s);
 		return -1;
 	}
@@ -749,13 +737,11 @@ static int pl_active(sip_msg_t *msg, str *pipeid)
 /**
  * checking if pipe is active
  */
-static int w_pl_active(sip_msg_t* msg, char *p1, char *p2)
+static int w_pl_active(sip_msg_t *msg, char *p1, char *p2)
 {
 	str pipeid = {0, 0};
 
-	if(fixup_get_svalue(msg, (gparam_p)p1, &pipeid)!=0
-			|| pipeid.s == 0)
-	{
+	if(fixup_get_svalue(msg, (gparam_p)p1, &pipeid) != 0 || pipeid.s == 0) {
 		LM_ERR("invalid pipeid parameter");
 		return -1;
 	}
@@ -765,8 +751,8 @@ static int w_pl_active(sip_msg_t* msg, char *p1, char *p2)
 
 static void pl_timer_refresh(void)
 {
-	if(pl_load_fetch!=0) {
-		switch (*load_source) {
+	if(pl_load_fetch != 0) {
+		switch(*load_source) {
 			case LOAD_SOURCE_CPU:
 				update_cpu_load();
 				break;
@@ -779,7 +765,7 @@ static void pl_timer_refresh(void)
 }
 
 /* timer housekeeping, invoked each timer interval to reset counters */
-static ticks_t pl_timer_handle(ticks_t ticks, struct timer_ln* tl, void* data)
+static ticks_t pl_timer_handle(ticks_t ticks, struct timer_ln *tl, void *data)
 {
 	pl_timer_refresh();
 	return (ticks_t)(-1); /* periodical */
@@ -793,45 +779,38 @@ static void pl_timer_exec(unsigned int ticks, void *param)
 
 /* rpc function documentation */
 const char *rpc_pl_stats_doc[2] = {
-	"Print pipelimit statistics (string output): \
-<id> <load> <counter>", 0
-};
+		"Print pipelimit statistics (string output): \
+<id> <load> <counter>",
+		0};
 
-const char *rpc_pl_get_pipes_doc[2] = {
-	"Print pipes info (string output): \
-<id> <algorithm> <limit> <counter>", 0
-};
+const char *rpc_pl_get_pipes_doc[2] = {"Print pipes info (string output): \
+<id> <algorithm> <limit> <counter>",
+		0};
 
-const char *rpc_pl_list_doc[2] = {
-	"List details for one or all pipes", 0
-};
+const char *rpc_pl_list_doc[2] = {"List details for one or all pipes", 0};
 
 const char *rpc_pl_set_pipe_doc[2] = {
-	"Sets a pipe params: <pipe_id> <pipe_algorithm> <pipe_limit>", 0
-};
+		"Sets a pipe params: <pipe_id> <pipe_algorithm> <pipe_limit>", 0};
 
 const char *rpc_pl_get_pid_doc[2] = {
-	"Print PID Controller parameters for the FEEDBACK algorithm: \
-<ki> <kp> <kd>", 0
-};
+		"Print PID Controller parameters for the FEEDBACK algorithm: \
+<ki> <kp> <kd>",
+		0};
 
 const char *rpc_pl_set_pid_doc[2] = {
-	"Sets the PID Controller parameters for the FEEDBACK algorithm: \
-<ki> <kp> <kd>", 0
-};
+		"Sets the PID Controller parameters for the FEEDBACK algorithm: \
+<ki> <kp> <kd>",
+		0};
 
 const char *rpc_pl_push_load_doc[2] = {
-	"Force the value of the load parameter for FEEDBACK algorithm: \
-<load>", 0
-};
+		"Force the value of the load parameter for FEEDBACK algorithm: \
+<load>",
+		0};
 
-const char *rpc_pl_rm_pipe_doc[2] = {
-	"Remove a pipe: <pipe_id>", 0
-};
+const char *rpc_pl_rm_pipe_doc[2] = {"Remove a pipe: <pipe_id>", 0};
 
 const char *rpc_pl_reset_pipe_doc[2] = {
-	"Reset the value of a pipe: <pipe_id>", 0
-};
+		"Reset the value of a pipe: <pipe_id>", 0};
 
 /* rpc function implementations */
 void rpc_pl_stats(rpc_t *rpc, void *c);
@@ -841,16 +820,19 @@ void rpc_pl_set_pipe(rpc_t *rpc, void *c);
 void rpc_pl_rm_pipe(rpc_t *rpc, void *c);
 void rpc_pl_reset_pipe(rpc_t *rpc, void *c);
 
-void rpc_pl_get_pid(rpc_t *rpc, void *c) {
+void rpc_pl_get_pid(rpc_t *rpc, void *c)
+{
 	rpl_pipe_lock(0);
 	rpc->rpl_printf(c, "ki[%f] kp[%f] kd[%f] ", *pid_ki, *pid_kp, *pid_kd);
 	rpl_pipe_release(0);
 }
 
-void rpc_pl_set_pid(rpc_t *rpc, void *c) {
+void rpc_pl_set_pid(rpc_t *rpc, void *c)
+{
 	double ki, kp, kd;
 
-	if (rpc->scan(c, "fff", &ki, &kp, &kd) < 3) return;
+	if(rpc->scan(c, "fff", &ki, &kp, &kd) < 3)
+		return;
 
 	rpl_pipe_lock(0);
 	*pid_ki = ki;
@@ -859,12 +841,14 @@ void rpc_pl_set_pid(rpc_t *rpc, void *c) {
 	rpl_pipe_release(0);
 }
 
-void rpc_pl_push_load(rpc_t *rpc, void *c) {
+void rpc_pl_push_load(rpc_t *rpc, void *c)
+{
 	double value;
 
-	if (rpc->scan(c, "f", &value) < 1) return;
+	if(rpc->scan(c, "f", &value) < 1)
+		return;
 
-	if (value < 0.0 || value > 1.0) {
+	if(value < 0.0 || value > 1.0) {
 		LM_ERR("value out of range: %0.3f in not in [0.0,1.0]\n", value);
 		rpc->fault(c, 400, "Value out of range");
 		return;
@@ -877,29 +861,28 @@ void rpc_pl_push_load(rpc_t *rpc, void *c) {
 }
 
 static rpc_export_t rpc_methods[] = {
-	{"pl.stats",      rpc_pl_stats,     rpc_pl_stats_doc,     RET_ARRAY},
-	{"pl.list",       rpc_pl_list,      rpc_pl_list_doc,      RET_ARRAY},
-	{"pl.get_pipes",  rpc_pl_get_pipes, rpc_pl_get_pipes_doc, RET_ARRAY},
-	{"pl.set_pipe",   rpc_pl_set_pipe,  rpc_pl_set_pipe_doc,  0},
-	{"pl.reset_pipe", rpc_pl_reset_pipe, rpc_pl_reset_pipe_doc, 0},
-	{"pl.rm_pipe",    rpc_pl_rm_pipe,   rpc_pl_rm_pipe_doc,   0},
-	{"pl.get_pid",    rpc_pl_get_pid,   rpc_pl_get_pid_doc,   0},
-	{"pl.set_pid",    rpc_pl_set_pid,   rpc_pl_set_pid_doc,   0},
-	{"pl.push_load",  rpc_pl_push_load, rpc_pl_push_load_doc, 0},
-	{0, 0, 0, 0}
-};
+		{"pl.stats", rpc_pl_stats, rpc_pl_stats_doc, RET_ARRAY},
+		{"pl.list", rpc_pl_list, rpc_pl_list_doc, RET_ARRAY},
+		{"pl.get_pipes", rpc_pl_get_pipes, rpc_pl_get_pipes_doc, RET_ARRAY},
+		{"pl.set_pipe", rpc_pl_set_pipe, rpc_pl_set_pipe_doc, 0},
+		{"pl.reset_pipe", rpc_pl_reset_pipe, rpc_pl_reset_pipe_doc, 0},
+		{"pl.rm_pipe", rpc_pl_rm_pipe, rpc_pl_rm_pipe_doc, 0},
+		{"pl.get_pid", rpc_pl_get_pid, rpc_pl_get_pid_doc, 0},
+		{"pl.set_pid", rpc_pl_set_pid, rpc_pl_set_pid_doc, 0},
+		{"pl.push_load", rpc_pl_push_load, rpc_pl_push_load_doc, 0},
+		{0, 0, 0, 0}};
 
-static int ki_pl_drop(sip_msg_t* msg)
+static int ki_pl_drop(sip_msg_t *msg)
 {
 	return pl_drop(msg, 0, 0);
 }
 
-static int ki_pl_drop_retry(sip_msg_t* msg, int rafter)
+static int ki_pl_drop_retry(sip_msg_t *msg, int rafter)
 {
 	return pl_drop(msg, rafter, rafter);
 }
 
-static int ki_pl_drop_range(sip_msg_t* msg, int rmin, int rmax)
+static int ki_pl_drop_range(sip_msg_t *msg, int rmin, int rmax)
 {
 	return pl_drop(msg, rmin, rmax);
 }
