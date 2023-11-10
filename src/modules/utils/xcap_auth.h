@@ -39,8 +39,8 @@
  * Checks from presence server xcap table if watcher is authorized
  * to subscribe event 'presence' of presentity.
  */
-int w_xcap_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2);
+int w_xcap_auth_status(struct sip_msg *_msg, char *_sp1, char *_sp2);
 
-int ki_xcap_auth_status(sip_msg_t* _msg, str* watcher_uri, str* presentity_uri);
+int ki_xcap_auth_status(sip_msg_t *_msg, str *watcher_uri, str *presentity_uri);
 
 #endif /* XCAP_AUTH_FUNCTIONS_H */
