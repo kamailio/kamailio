@@ -37,15 +37,15 @@
 #define PRINT_VALUE_BUF_LEN 256
 
 
-
 /** Representation of the xhttp_pi reply being constructed.
  *
  * This data structure describes the xhttp_pi reply that is being constructed
  * and will be sent to the client.
  */
-struct xhttp_pi_reply {
+struct xhttp_pi_reply
+{
 	int code;	/**< Reply code which indicates the type of the reply */
-	str reason;	/**< Reason phrase text which provides human-readable
+	str reason; /**< Reason phrase text which provides human-readable
 			 * description that augments the reply code */
 	str body;	/**< The xhttp_pi http body built so far */
 	str buf;	/**< The memory buffer allocated for the reply, this is
@@ -61,16 +61,16 @@ struct xhttp_pi_reply {
  *
  * There is always one context per xhttp_pi request.
  */
-typedef struct pi_ctx {
-	sip_msg_t* msg;			/**< The SIP/HTTP received message. */
-	struct xhttp_pi_reply reply;	/**< xhttp_pi reply to be sent to the client */
+typedef struct pi_ctx
+{
+	sip_msg_t *msg;				 /**< The SIP/HTTP received message. */
+	struct xhttp_pi_reply reply; /**< xhttp_pi reply to be sent to the client */
 	int reply_sent;
-	int mod;			/**< Module being processed */
-	int cmd;			/**< PI command being processed */
-	int arg_received;		/**< PI argument flag */
-	str arg;			/**< PI command argument */
+	int mod;		  /**< Module being processed */
+	int cmd;		  /**< PI command being processed */
+	int arg_received; /**< PI argument flag */
+	str arg;		  /**< PI command argument */
 } pi_ctx_t;
 
 
 #endif
-
