@@ -22,7 +22,7 @@
  */
 
 #include "../../core/data_lump.h"
-#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/parser/msg_parser.h" /* struct sip_msg */
 
 #ifndef _SIPT_SDP_MANGLE_
 #define _SIPT_SDP_MANGLE_
@@ -35,7 +35,9 @@ struct sdp_mangler
 };
 
 
-int replace_body_segment(struct sdp_mangler * mangler, int offset, int len, unsigned char * new_data, int new_len);
-int add_body_segment(struct sdp_mangler * mangler, int offset, unsigned char * new_data, int new_len);
+int replace_body_segment(struct sdp_mangler *mangler, int offset, int len,
+		unsigned char *new_data, int new_len);
+int add_body_segment(struct sdp_mangler *mangler, int offset,
+		unsigned char *new_data, int new_len);
 
 #endif
