@@ -47,7 +47,7 @@ int init_rpid_avp(char *rpid_avp_param);
  * \param rpid_avp_p AVP name
  * \param rpid_avp_type_p AVP type
  */
-void get_rpid_avp( int_str *rpid_avp_p, int *rpid_avp_type_p );
+void get_rpid_avp(int_str *rpid_avp_p, int *rpid_avp_type_p);
 
 
 /*!
@@ -57,7 +57,7 @@ void get_rpid_avp( int_str *rpid_avp_p, int *rpid_avp_type_p );
  * \param _s2 unused
  * \return 1 on success, -1 on failure
  */
-int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2);
+int append_rpid_hf(struct sip_msg *_m, char *_s1, char *_s2);
 
 
 /*!
@@ -67,7 +67,7 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2);
  * \param _suffix suffix
  * \return 1 on success, -1 on failure
  */
-int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix);
+int append_rpid_hf_p(struct sip_msg *_m, char *_prefix, char *_suffix);
 
 
 /*!
@@ -77,7 +77,7 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix);
  * \param _s2 unused
  * \return 1 if the URI contains an E164 user part, -1 if not
  */
-int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2);
+int is_rpid_user_e164(struct sip_msg *_m, char *_s1, char *_s2);
 
 
 #endif
