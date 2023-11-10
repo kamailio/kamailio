@@ -33,8 +33,10 @@
 #include "../../core/ut.h"
 #include "../../core/mem/mem.h"
 
-#define H350_SIPURI_LOOKUP_LDAP_FILTER "(&(objectClass=SIPIdentity)(SIPIdentitySIPURI=%s))"
-#define H350_AUTH_FILTER_PATTERN "(&(objectClass=SIPIdentity)(SIPIdentityUserName=%s))"
+#define H350_SIPURI_LOOKUP_LDAP_FILTER \
+	"(&(objectClass=SIPIdentity)(SIPIdentitySIPURI=%s))"
+#define H350_AUTH_FILTER_PATTERN \
+	"(&(objectClass=SIPIdentity)(SIPIdentityUserName=%s))"
 
 static str h350_call_pref_name = str_init("callPreferenceURI");
 static str h350_sip_pwd_name = str_init("SIPIdentityPassword");
@@ -46,7 +48,7 @@ static str h350_service_level_name = str_init("SIPIdentityServiceLevel");
 #define AVP_NAME_STR_BUF_LEN 1024
 #define DIGEST_USERNAME_BUF_SIZE 2048
 
-static regex_t* call_pref_preg;
+static regex_t *call_pref_preg;
 
 int h350_sipuri_lookup(struct sip_msg *_msg, pv_elem_t *_sip_uri)
 {
