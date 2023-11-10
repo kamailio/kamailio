@@ -41,15 +41,15 @@
 
 /* solaris doesn't have SUN_LEN */
 #ifndef SUN_LEN
-#define SUN_LEN(sa)	 ( strlen((sa)->sun_path) + \
-					 (size_t)(((struct sockaddr_un*)0)->sun_path) )
+#define SUN_LEN(sa) \
+	(strlen((sa)->sun_path) + (size_t)(((struct sockaddr_un *)0)->sun_path))
 #endif
 
 
 #define BUF_SIZE 65536
 #define DEFAULT_TIMEOUT 5
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 	int sock, len;
 	socklen_t from_len;
@@ -58,13 +58,13 @@ int main(int argc, char** argv)
 	static char buffer[BUF_SIZE];
 	char *chroot_dir;
 
-	if (argc != 2) {
+	if(argc != 2) {
 		printf("Usage: %s <path_to_socket>\n", argv[0]);
 		return 1;
 	}
 
 	sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
-	if (sock == -1) {
+	if(sock == -1) {
 		fprintf(stderr, "Error while opening socket: %s\n", strerror(errno));
 		return -1;
 	}
@@ -73,25 +73,25 @@ int main(int argc, char** argv)
 	from.sun_family = PF_LOCAL;
 
 	chroot_dir = getenv("CHROOT_DIR");
-	if (chroot_dir == NULL)
+	if(chroot_dir == NULL)
 		chroot_dir = "";
 	snprintf(name, 256, "%s/tmp/Kamailio.%d.XXXXXX", chroot_dir, getpid());
 	umask(0);
 	/* set mode to 0666 for when Kamailio is running as non-root user
 	 * and kamctl is running as root */
 
-	if (mkstemp(name) == -1) {
-		fprintf(stderr, "Error in mkstemp with name=%s: %s\n",
-				name, strerror(errno));
+	if(mkstemp(name) == -1) {
+		fprintf(stderr, "Error in mkstemp with name=%s: %s\n", name,
+				strerror(errno));
 		return -2;
 	}
-	if (unlink(name) == -1) {
+	if(unlink(name) == -1) {
 		fprintf(stderr, "Error in unlink of %s: %s\n", name, strerror(errno));
 		return -2;
 	}
 	strncpy(from.sun_path, name, strlen(name));
 
-	if (bind(sock, (struct sockaddr*)&from, SUN_LEN(&from)) == -1) {
+	if(bind(sock, (struct sockaddr *)&from, SUN_LEN(&from)) == -1) {
 		fprintf(stderr, "Error in bind: %s\n", strerror(errno));
 		goto err;
 	}
@@ -102,16 +102,16 @@ int main(int argc, char** argv)
 
 	len = fread(buffer, 1, BUF_SIZE, stdin);
 
-	if (len) {
-		if (sendto(sock, buffer, len, 0, (struct sockaddr*)&to,
-					SUN_LEN(&to)) == -1) {
+	if(len) {
+		if(sendto(sock, buffer, len, 0, (struct sockaddr *)&to, SUN_LEN(&to))
+				== -1) {
 			fprintf(stderr, "Error in sendto: %s\n", strerror(errno));
-		        goto err;
+			goto err;
 		}
 		from_len = sizeof(from);
-		len = recvfrom(sock, buffer, BUF_SIZE, 0,
-				(struct sockaddr*)&from, &from_len);
-		if (len == -1) {
+		len = recvfrom(
+				sock, buffer, BUF_SIZE, 0, (struct sockaddr *)&from, &from_len);
+		if(len == -1) {
 			fprintf(stderr, "Error in recvfrom: %s\n", strerror(errno));
 			goto err;
 		}
@@ -123,13 +123,13 @@ int main(int argc, char** argv)
 	}
 
 	close(sock);
-	if (unlink(name) == -1)
+	if(unlink(name) == -1)
 		fprintf(stderr, "Error in unlink of %s: %s\n", name, strerror(errno));
 	return 0;
 
- err:
+err:
 	close(sock);
-	if (unlink(name) == -1)
+	if(unlink(name) == -1)
 		fprintf(stderr, "Error in unlink of %s: %s\n", name, strerror(errno));
 	return -1;
 }

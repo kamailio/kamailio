@@ -27,14 +27,12 @@
 #include <string.h>
 
 
-
-
 struct dt_node_t *dt_init()
 {
 	struct dt_node_t *root;
 
 	root = malloc(sizeof(struct dt_node_t));
-	if (root == NULL) {
+	if(root == NULL) {
 		LERR("dt_init() cannot allocate memory for dt_node_t.\n");
 		return NULL;
 	}
@@ -45,34 +43,30 @@ struct dt_node_t *dt_init()
 }
 
 
-
-
 void dt_delete(struct dt_node_t *root, struct dt_node_t *node)
 {
 	int i;
-	if (node==NULL) return;
+	if(node == NULL)
+		return;
 
-	for (i=0; i<10; i++) {
+	for(i = 0; i < 10; i++) {
 		dt_delete(root, node->child[i]);
 		node->child[i] = NULL;
 	}
 
-	if (node != root) free(node);
+	if(node != root)
+		free(node);
 }
-
-
 
 
 void dt_destroy(struct dt_node_t **root)
 {
-	if ((root != NULL) && (*root != NULL)) {
+	if((root != NULL) && (*root != NULL)) {
 		dt_delete(*root, *root);
 		free(*root);
 		*root = NULL;
 	}
 }
-
-
 
 
 void dt_clear(struct dt_node_t *root)
@@ -82,26 +76,25 @@ void dt_clear(struct dt_node_t *root)
 }
 
 
-
-
-int dt_insert(struct dt_node_t *root, const char *number, int numberlen, carrier_t carrier)
+int dt_insert(struct dt_node_t *root, const char *number, int numberlen,
+		carrier_t carrier)
 {
 	struct dt_node_t *node = root;
-	int i=0;
+	int i = 0;
 	unsigned int digit;
 
-	while (i<numberlen) {
+	while(i < numberlen) {
 		digit = number[i] - '0';
-		if (digit>9) {
+		if(digit > 9) {
 			LERR("dt_insert() cannot insert non-numerical number\n");
 			return -1;
 		}
-		if (node->child[digit] == NULL) {
+		if(node->child[digit] == NULL) {
 			node->child[digit] = malloc(sizeof(struct dt_node_t));
 #ifdef DT_MEM_ASSERT
 			assert(node->child[digit] != NULL);
 #else
-			if (node->child[digit] == NULL) {
+			if(node->child[digit] == NULL) {
 				LERR("dt_insert() cannot allocate memory\n");
 				return -1;
 			}
@@ -119,40 +112,38 @@ int dt_insert(struct dt_node_t *root, const char *number, int numberlen, carrier
 }
 
 
-
-
 int dt_size(struct dt_node_t *root)
 {
 	int i;
 	int sum = 0;
 
-	if (root == NULL) return 0;
+	if(root == NULL)
+		return 0;
 
-	for (i=0; i<10; i++) {
+	for(i = 0; i < 10; i++) {
 		sum += dt_size(root->child[i]);
 	}
-	return sum+1;
+	return sum + 1;
 }
 
 
-
-
-int dt_loaded_nodes(struct dt_node_t *root) {
+int dt_loaded_nodes(struct dt_node_t *root)
+{
 	int i;
 	int sum = 0;
 
-	if (root == NULL) return 0;
+	if(root == NULL)
+		return 0;
 
-	for (i=0; i<10; i++) {
+	for(i = 0; i < 10; i++) {
 		sum += dt_loaded_nodes(root->child[i]);
 	}
 
-	if (root->carrier > 0) sum++;
+	if(root->carrier > 0)
+		sum++;
 
 	return sum;
 }
-
-
 
 
 int dt_leaves(struct dt_node_t *root)
@@ -161,38 +152,39 @@ int dt_leaves(struct dt_node_t *root)
 	int sum = 0;
 	int leaf = 1;
 
-	for (i=0; i<10; i++) {
-		if (root->child[i]) {
+	for(i = 0; i < 10; i++) {
+		if(root->child[i]) {
 			sum += dt_leaves(root->child[i]);
 			leaf = 0;
 		}
 	}
 
-	return sum+leaf;
+	return sum + leaf;
 }
 
 
-
-
-int dt_longest_match(struct dt_node_t *root, const char *number, int numberlen, carrier_t *carrier)
+int dt_longest_match(struct dt_node_t *root, const char *number, int numberlen,
+		carrier_t *carrier)
 {
 	struct dt_node_t *node = root;
 	int nmatch = -1;
-	int i=0;
+	int i = 0;
 	unsigned int digit;
 
-	if (node->carrier > 0) {
-		nmatch=0;
+	if(node->carrier > 0) {
+		nmatch = 0;
 		*carrier = node->carrier;
 	}
-	while (i<numberlen) {
+	while(i < numberlen) {
 		digit = number[i] - '0';
-		if (digit>9) return nmatch;
-		if (node->child[digit] == NULL) return nmatch;
+		if(digit > 9)
+			return nmatch;
+		if(node->child[digit] == NULL)
+			return nmatch;
 		node = node->child[digit];
 		i++;
-		if (node->carrier > 0) {
-			nmatch=i;
+		if(node->carrier > 0) {
+			nmatch = i;
 			*carrier = node->carrier;
 		}
 	}
@@ -201,43 +193,42 @@ int dt_longest_match(struct dt_node_t *root, const char *number, int numberlen, 
 }
 
 
-
-
-int dt_contains(struct dt_node_t *root, const char *number, int numberlen, carrier_t *carrier)
+int dt_contains(struct dt_node_t *root, const char *number, int numberlen,
+		carrier_t *carrier)
 {
-  return (dt_longest_match(root, number, numberlen, carrier) == numberlen);
+	return (dt_longest_match(root, number, numberlen, carrier) == numberlen);
 }
-
-
 
 
 /*
  Returns the carrier if all children have the same carrier,
  0 otherwise.
  */
-carrier_t dt_allcce(struct dt_node_t *root) {
+carrier_t dt_allcce(struct dt_node_t *root)
+{
 	int i;
 	carrier_t ret = 0;
 
 	/* determine single child carrier */
-	for (i=0; i<10; i++) {
-		if (root->child[i] == NULL)
+	for(i = 0; i < 10; i++) {
+		if(root->child[i] == NULL)
 			return 0;
-		else if (root->child[i]->carrier > 0) {
-			ret=root->child[i]->carrier;
+		else if(root->child[i]->carrier > 0) {
+			ret = root->child[i]->carrier;
 			break;
 		}
 	}
-	if (ret==0) return 0;
+	if(ret == 0)
+		return 0;
 
 	/* check if all children share the same carrier */
-	for (i=0; i<10; i++) {
-		if ((root->child[i] == NULL) || (root->child[i]->carrier != ret)) return 0;
+	for(i = 0; i < 10; i++) {
+		if((root->child[i] == NULL) || (root->child[i]->carrier != ret))
+			return 0;
 	}
 
 	return ret;
 }
-
 
 
 /*
@@ -258,29 +249,34 @@ int dt_optimize_leaf(struct dt_node_t *root, carrier_t lastcarrier)
 	carrier_t allcce;
 	int i;
 
-	if (node == NULL) return 0;
+	if(node == NULL)
+		return 0;
 
-	if (node->carrier == lastcarrier) {
-		node->carrier = 0;	    /* this is a node sharing carrier id */
+	if(node->carrier == lastcarrier) {
+		node->carrier = 0; /* this is a node sharing carrier id */
 	}
 
-	if (node->carrier>0) currentcarrier=node->carrier;  /* new common carrier id starts at this node */
-	else currentcarrier=lastcarrier;		    /* carry over common carrier id */
+	if(node->carrier > 0)
+		currentcarrier =
+				node->carrier; /* new common carrier id starts at this node */
+	else
+		currentcarrier = lastcarrier; /* carry over common carrier id */
 
 	/* 
 	 Nodes with children sharing the same carrier may be generalized into a common node (prefix). 
 	 Note that the code in the following if-statement is the reason why dt_optimize() calls this function
 	 multiple times.
 	 */
-	if ((allcce=dt_allcce(node))) {
+	if((allcce = dt_allcce(node))) {
 		/*
 		 generalization requires having an intermediary parent node or a common carrier id between
 		 all children and the current node 
 		 */
-		if ((node->carrier == 0) || (node->carrier < 0 && allcce == currentcarrier)) {
-			currentcarrier=allcce;
-			node->carrier=currentcarrier;
-			for(i=0; i<10; i++) {
+		if((node->carrier == 0)
+				|| (node->carrier < 0 && allcce == currentcarrier)) {
+			currentcarrier = allcce;
+			node->carrier = currentcarrier;
+			for(i = 0; i < 10; i++) {
 				/* 
 				 Negative carrier ids mark children eligible for generalization into a parent
 				 node. Carrier id 0 cannot be used because it could ambiguously refer to an
@@ -297,23 +293,25 @@ int dt_optimize_leaf(struct dt_node_t *root, carrier_t lastcarrier)
 	}
 
 	/* preliminarily assume leaf nodes without carrier to be eligible for removal */
-	if (node->carrier <= 0) deleteret=1;
-	else deleteret=0;
+	if(node->carrier <= 0)
+		deleteret = 1;
+	else
+		deleteret = 0;
 
 	/* optimize children */
-	for (i=0; i<10; i++) {
-		delete=dt_optimize_leaf(node->child[i], currentcarrier);
-		if (delete) {
+	for(i = 0; i < 10; i++) {
+		delete = dt_optimize_leaf(node->child[i], currentcarrier);
+		if(delete) {
 			dt_delete(node, node->child[i]);
 			node->child[i] = NULL;
 		}
 		/* this is no leaf node ==> revert removal assumption */
-		if (node->child[i]) deleteret = 0;
+		if(node->child[i])
+			deleteret = 0;
 	}
 
 	return deleteret;
 }
-
 
 
 /*
@@ -323,36 +321,37 @@ int dt_optimize_leaf(struct dt_node_t *root, carrier_t lastcarrier)
  */
 void dt_clear_negatives(struct dt_node_t *root)
 {
-    struct dt_node_t *node = root;
-    int i;
+	struct dt_node_t *node = root;
+	int i;
 
-    if (node == NULL) return;
+	if(node == NULL)
+		return;
 
-    for (i=0; i<10; i++) {
-	    dt_clear_negatives(node->child[i]);
-    }
+	for(i = 0; i < 10; i++) {
+		dt_clear_negatives(node->child[i]);
+	}
 
-    if (node->carrier < 0) node->carrier = 0;
+	if(node->carrier < 0)
+		node->carrier = 0;
 }
-
 
 
 void dt_optimize(struct dt_node_t *root)
 {
 	int size;
 	int oldsize = 0;
-	
-	size=dt_size(root);
+
+	size = dt_size(root);
 
 	/*
 	 optimization gradually trims leaf nodes in each invocation
 	 of dt_optimize_leaf() ==> keep calling this function until
 	 the size of the tree stabilizes
 	 */
-	while (size!=oldsize) {
+	while(size != oldsize) {
 		dt_optimize_leaf(root, 0);
-		oldsize=size;
-		size=dt_size(root);
+		oldsize = size;
+		size = dt_size(root);
 	}
 
 	/* turn negative carrier ids into zero's  */

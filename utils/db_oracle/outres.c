@@ -1,7 +1,7 @@
 #include "orasel.h"
 
 //-----------------------------------------------------------------------------
-static void out_delim(const unsigned* pl, unsigned nc)
+static void out_delim(const unsigned *pl, unsigned nc)
 {
 	unsigned i;
 
@@ -9,17 +9,19 @@ static void out_delim(const unsigned* pl, unsigned nc)
 		unsigned j = pl[i] + 2;
 
 		putchar('+');
-		do putchar('-'); while(--j);
+		do
+			putchar('-');
+		while(--j);
 	}
 	printf("+\n");
 }
 
 //-----------------------------------------------------------------------------
-void out_res(const res_t* _r)
+void out_res(const res_t *_r)
 {
-	unsigned* pl = NULL;
-	unsigned  nc = _r->col_n, nr = _r->row_n, i, j;
-	Str**     ps = _r->names;
+	unsigned *pl = NULL;
+	unsigned nc = _r->col_n, nr = _r->row_n, i, j;
+	Str **ps = _r->names;
 
 	if(!outmode.raw) {
 		pl = safe_malloc(nc * sizeof(unsigned));
@@ -27,8 +29,9 @@ void out_res(const res_t* _r)
 			pl[i] = ps[i]->len;
 		for(j = 0; j < nr; j++) {
 			ps = _r->rows[j];
-			for(i = 0; i < nc; i++) 
-				if(pl[i] < ps[i]->len) pl[i] = ps[i]->len;
+			for(i = 0; i < nc; i++)
+				if(pl[i] < ps[i]->len)
+					pl[i] = ps[i]->len;
 		}
 
 		out_delim(pl, nc);
@@ -39,11 +42,13 @@ void out_res(const res_t* _r)
 			if(!outmode.raw) {
 				printf("| %-*.*s ", pl[i], ps[i]->len, ps[i]->s);
 			} else {
-				if(i) putchar('\t');
+				if(i)
+					putchar('\t');
 				printf("%.*s", ps[i]->len, ps[i]->s);
 			}
 		}
-		if(outmode.raw) putchar('\n');
+		if(outmode.raw)
+			putchar('\n');
 		else {
 			printf("|\n");
 			out_delim(pl, nc);
@@ -53,18 +58,20 @@ void out_res(const res_t* _r)
 		ps = _r->rows[j];
 		if(!outmode.raw) {
 			for(i = 0; i < nc; i++)
-				printf(_r->types[i] ? "| %-*.*s " : "| %*.*s ",
-					pl[i], ps[i]->len, ps[i]->s);
+				printf(_r->types[i] ? "| %-*.*s " : "| %*.*s ", pl[i],
+						ps[i]->len, ps[i]->s);
 			printf("|\n");
 		} else {
 			for(i = 0; i < nc; i++) {
-				if(i) putchar('\t');
+				if(i)
+					putchar('\t');
 				printf("%.*s", ps[i]->len, ps[i]->s);
 			}
 			putchar('\n');
 		}
 	}
-	if(!outmode.raw) out_delim(pl, nc);
+	if(!outmode.raw)
+		out_delim(pl, nc);
 }
 
 //-----------------------------------------------------------------------------

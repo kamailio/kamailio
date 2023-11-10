@@ -25,7 +25,7 @@
  * --------
  * 2007-09-19  genesis (wiquan)
  */
- 
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -51,7 +51,7 @@
 #define METADATA_COLUMNS "METADATA_COLUMNS"
 
 /*operations*/
-enum 
+enum
 {
 	INSERT,
 	UPDATE,
@@ -62,7 +62,7 @@ enum
 
 typedef struct _lnode
 {
-	char* p;
+	char *p;
 	struct _lnode *prev;
 	struct _lnode *next;
 } lnode_t, *lnode_p;
@@ -70,21 +70,21 @@ typedef struct _lnode
 
 typedef struct _column
 {
-	char* name;
-	char* type;
+	char *name;
+	char *type;
 	int kflag;
 } column_t, *column_p;
 
 
 typedef struct _table
 {
-	char* name;
-	column_p colp [MAX_NUM_COLS];
+	char *name;
+	column_p colp[MAX_NUM_COLS];
 	int ncols;
 	int nkeys;
 	int ro;
 	int logflags;
-	DB* db;
+	DB *db;
 } table_t, *table_p;
 
 
@@ -97,24 +97,24 @@ typedef struct _tbl_cache
 
 
 int usage(void);
-DB* get_db(table_p tp);
-int get_op(char* op, int len);
-int delete(table_p tp, char* v, int len);
-int insert(table_p tp, char* v, int len);
-int _insert(DB* db, char* k, char* v, int klen, int vlen);
-int update(table_p tp, char* v, int len);
-int create(char* tn);
-int _version(DB* db);
+DB *get_db(table_p tp);
+int get_op(char *op, int len);
+int delete(table_p tp, char *v, int len);
+int insert(table_p tp, char *v, int len);
+int _insert(DB *db, char *k, char *v, int klen, int vlen);
+int update(table_p tp, char *v, int len);
+int create(char *tn);
+int _version(DB *db);
 int create_all(void);
-int recover(char* tn);
+int recover(char *tn);
 int recover_all(int lastn);
-lnode_p file_list(char* d, char* tn);
-int compare (const void *a, const void *b);
-int extract_key(table_p tp, char* key, char* data);
-int load_schema(char* dir);
+lnode_p file_list(char *d, char *tn);
+int compare(const void *a, const void *b);
+int extract_key(table_p tp, char *key, char *data);
+int load_schema(char *dir);
 tbl_cache_p get_table(char *s);
 table_p create_table(char *_s);
-int load_metadata_columns(table_p _tp, char* line);
-int load_metadata_key(table_p _tp, char* line);
+int load_metadata_columns(table_p _tp, char *line);
+int load_metadata_key(table_p _tp, char *line);
 int import_schema(table_p tp);
 void cleanup(void);
