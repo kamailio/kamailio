@@ -49,16 +49,17 @@
 #include "../../core/parser/parse_refer_to.h"
 
 #include "xp_lib.h"
-#include <arpa/inet.h>  // inet_ntop
+#include <arpa/inet.h> // inet_ntop
 
 #include "../../core/select.h"
 
-static str str_null  = STR_STATIC_INIT("<null>");
+static str str_null = STR_STATIC_INIT("<null>");
 static str str_empty = STR_STATIC_INIT("");
-static str str_per   = STR_STATIC_INIT("%");
+static str str_per = STR_STATIC_INIT("%");
 static str str_hostname, str_domainname, str_fullname, str_ipaddr;
 
-enum xl_host_t {
+enum xl_host_t
+{
 	XL_HOST_NULL,
 	XL_HOST_NAME,
 	XL_HOST_DOMAIN,
@@ -76,17 +77,17 @@ int cld_pid = 0;
 #define UNIQUE_ID_LEN 16
 static char UNIQUE_ID[UNIQUE_ID_LEN];
 
-#define LOCAL_BUF_SIZE	511
-static char local_buf[LOCAL_BUF_SIZE+1];
+#define LOCAL_BUF_SIZE 511
+static char local_buf[LOCAL_BUF_SIZE + 1];
 
-str* xl_get_nulstr()
+str *xl_get_nulstr()
 {
 	return &str_null;
 }
 
 static int xl_get_null(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
 	res->s = str_null.s;
@@ -96,7 +97,7 @@ static int xl_get_null(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 
 static int xl_get_empty(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
 	res->s = str_empty.s;
@@ -104,9 +105,10 @@ static int xl_get_empty(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	return 0;
 }
 
-static int xl_get_percent(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+static int xl_get_percent(
+		struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
 	res->s = str_per.s;
@@ -119,12 +121,12 @@ static int xl_get_pid(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	int l = 0;
 	char *ch = NULL;
 
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
 	if(cld_pid == 0)
 		cld_pid = (int)getpid();
-	ch = int2str_base_0pad(cld_pid, &l, hi, hi==10?0:8);
+	ch = int2str_base_0pad(cld_pid, &l, hi, hi == 10 ? 0 : 8);
 
 	res->s = ch;
 	res->len = l;
@@ -137,15 +139,15 @@ static int xl_get_times(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	int l = 0;
 	char *ch = NULL;
 
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(msg_id != msg->id || msg_tm==0)
-	{
+	if(msg_id != msg->id || msg_tm == 0) {
 		msg_tm = time(NULL);
 		msg_id = msg->id;
 	}
-	ch = int2str_base_0pad((unsigned int)(uint64_t)msg_tm, &l, hi, hi==10?0:8);
+	ch = int2str_base_0pad(
+			(unsigned int)(uint64_t)msg_tm, &l, hi, hi == 10 ? 0 : 8);
 
 	res->s = ch;
 	res->len = l;
@@ -156,10 +158,9 @@ static int xl_get_timef(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
 	char ch[26] = {0};
 
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
-	if(msg_id != msg->id || msg_tm==0)
-	{
+	if(msg_id != msg->id || msg_tm == 0) {
 		msg_tm = time(NULL);
 		msg_id = msg->id;
 	}
@@ -167,7 +168,7 @@ static int xl_get_timef(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	ctime_r(&msg_tm, ch);
 
 	res->s = ch;
-	res->len = strlen(ch)-1;
+	res->len = strlen(ch) - 1;
 
 	return 0;
 }
@@ -177,10 +178,10 @@ static int xl_get_msgid(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	int l = 0;
 	char *ch = NULL;
 
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	ch = int2str_base_0pad(msg->id, &l, hi, hi==10?0:8);
+	ch = int2str_base_0pad(msg->id, &l, hi, hi == 10 ? 0 : 8);
 	res->s = ch;
 	res->len = l;
 
@@ -189,15 +190,13 @@ static int xl_get_msgid(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 
 static int xl_get_method(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(msg->first_line.type == SIP_REQUEST)
-	{
+	if(msg->first_line.type == SIP_REQUEST) {
 		res->s = msg->first_line.u.request.method.s;
 		res->len = msg->first_line.u.request.method.len;
-	}
-	else
+	} else
 		return xl_get_null(msg, res, hp, hi, hf);
 
 	return 0;
@@ -205,15 +204,13 @@ static int xl_get_method(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 
 static int xl_get_status(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(msg->first_line.type == SIP_REPLY)
-	{
+	if(msg->first_line.type == SIP_REPLY) {
 		res->s = msg->first_line.u.reply.status.s;
 		res->len = msg->first_line.u.reply.status.len;
-	}
-	else
+	} else
 		return xl_get_null(msg, res, hp, hi, hf);
 
 	return 0;
@@ -221,15 +218,13 @@ static int xl_get_status(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 
 static int xl_get_reason(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(msg->first_line.type == SIP_REPLY)
-	{
+	if(msg->first_line.type == SIP_REPLY) {
 		res->s = msg->first_line.u.reply.reason.s;
 		res->len = msg->first_line.u.reply.reason.len;
-	}
-	else
+	} else
 		return xl_get_null(msg, res, hp, hi, hf);
 
 	return 0;
@@ -237,43 +232,41 @@ static int xl_get_reason(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 
 static int xl_get_ruri(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(msg->first_line.type == SIP_REPLY)	/* REPLY doesn't have a ruri */
+	if(msg->first_line.type == SIP_REPLY) /* REPLY doesn't have a ruri */
 		return xl_get_null(msg, res, hp, hi, hf);
 
-	if(msg->parsed_uri_ok==0 /* R-URI not parsed*/ && parse_sip_msg_uri(msg)<0)
-	{
+	if(msg->parsed_uri_ok == 0 /* R-URI not parsed*/
+			&& parse_sip_msg_uri(msg) < 0) {
 		LOG(L_ERR, "XLOG: xl_get_ruri: ERROR while parsing the R-URI\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
 
-	if (msg->new_uri.s!=NULL)
-	{
-		res->s   = msg->new_uri.s;
+	if(msg->new_uri.s != NULL) {
+		res->s = msg->new_uri.s;
 		res->len = msg->new_uri.len;
 	} else {
-		res->s   = msg->first_line.u.request.uri.s;
+		res->s = msg->first_line.u.request.uri.s;
 		res->len = msg->first_line.u.request.uri.len;
 	}
 
 	return 0;
 }
 
-static int xl_get_contact(struct sip_msg* msg, str* res, str *hp, int hi, int hf)
+static int xl_get_contact(
+		struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(msg->contact==NULL && parse_headers(msg, HDR_CONTACT_F, 0)==-1)
-	{
+	if(msg->contact == NULL && parse_headers(msg, HDR_CONTACT_F, 0) == -1) {
 		DBG("XLOG: xl_get_contact: no contact header\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
 
-	if(!msg->contact || !msg->contact->body.s || msg->contact->body.len<=0)
-    {
+	if(!msg->contact || !msg->contact->body.s || msg->contact->body.len <= 0) {
 		DBG("XLOG: xl_get_contact: no contact header!\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
@@ -282,8 +275,8 @@ static int xl_get_contact(struct sip_msg* msg, str* res, str *hp, int hi, int hf
 	res->len = msg->contact->body.len;
 
 
-//	res->s = ((struct to_body*)msg->contact->parsed)->uri.s;
-//	res->len = ((struct to_body*)msg->contact->parsed)->uri.len;
+	//	res->s = ((struct to_body*)msg->contact->parsed)->uri.s;
+	//	res->len = ((struct to_body*)msg->contact->parsed)->uri.len;
 
 	return 0;
 }
@@ -291,16 +284,15 @@ static int xl_get_contact(struct sip_msg* msg, str* res, str *hp, int hi, int hf
 
 static int xl_get_from(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(parse_from_header(msg)==-1)
-	{
+	if(parse_from_header(msg) == -1) {
 		LOG(L_ERR, "XLOG: xl_get_from: ERROR cannot parse FROM header\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
 
-	if(msg->from==NULL || get_from(msg)==NULL)
+	if(msg->from == NULL || get_from(msg) == NULL)
 		return xl_get_null(msg, res, hp, hi, hf);
 
 	res->s = get_from(msg)->uri.s;
@@ -309,20 +301,20 @@ static int xl_get_from(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	return 0;
 }
 
-static int xl_get_from_tag(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+static int xl_get_from_tag(
+		struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(parse_from_header(msg)==-1)
-	{
+	if(parse_from_header(msg) == -1) {
 		LOG(L_ERR, "XLOG: xl_get_from: ERROR cannot parse FROM header\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
 
 
-	if(msg->from==NULL || get_from(msg)==NULL
-			|| get_from(msg)->tag_value.s==NULL)
+	if(msg->from == NULL || get_from(msg) == NULL
+			|| get_from(msg)->tag_value.s == NULL)
 		return xl_get_null(msg, res, hp, hi, hf);
 
 	res->s = get_from(msg)->tag_value.s;
@@ -334,15 +326,14 @@ static int xl_get_from_tag(struct sip_msg *msg, str *res, str *hp, int hi, int h
 
 static int xl_get_to(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(msg->to==NULL && parse_headers(msg, HDR_TO_F, 0)==-1)
-	{
+	if(msg->to == NULL && parse_headers(msg, HDR_TO_F, 0) == -1) {
 		LOG(L_ERR, "XLOG: xl_get_to: ERROR cannot parse TO header\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
-	if(msg->to==NULL || get_to(msg)==NULL)
+	if(msg->to == NULL || get_to(msg) == NULL)
 		return xl_get_null(msg, res, hp, hi, hf);
 
 	res->s = get_to(msg)->uri.s;
@@ -351,19 +342,18 @@ static int xl_get_to(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	return 0;
 }
 
-static int xl_get_to_tag(struct sip_msg* msg, str* res, str *hp, int hi, int hf)
+static int xl_get_to_tag(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(msg->to==NULL && ((parse_headers(msg, HDR_TO_F, 0)==-1) ||
-				(msg->to==NULL)) )
-	{
+	if(msg->to == NULL
+			&& ((parse_headers(msg, HDR_TO_F, 0) == -1) || (msg->to == NULL))) {
 		LOG(L_ERR, "XLOG: xl_get_to: ERROR cannot parse TO header\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
 
-	if (get_to(msg)->tag_value.len <= 0)
+	if(get_to(msg)->tag_value.len <= 0)
 		return xl_get_null(msg, res, hp, hi, hf);
 
 	res->s = get_to(msg)->tag_value.s;
@@ -374,12 +364,12 @@ static int xl_get_to_tag(struct sip_msg* msg, str* res, str *hp, int hi, int hf)
 
 static int xl_get_cseq(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
-				(msg->cseq==NULL)) )
-	{
+	if(msg->cseq == NULL
+			&& ((parse_headers(msg, HDR_CSEQ_F, 0) == -1)
+					|| (msg->cseq == NULL))) {
 		LOG(L_ERR, "XLOG: xl_get_cseq: ERROR cannot parse CSEQ header\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
@@ -390,9 +380,10 @@ static int xl_get_cseq(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	return 0;
 }
 
-static int xl_get_msg_buf(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+static int xl_get_msg_buf(
+		struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
 	res->s = msg->buf;
@@ -401,12 +392,13 @@ static int xl_get_msg_buf(struct sip_msg *msg, str *res, str *hp, int hi, int hf
 	return 0;
 }
 
-static int xl_get_msg_len(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+static int xl_get_msg_len(
+		struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
 	int l = 0;
 	char *ch = NULL;
 
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
 	ch = int2str(msg->len, &l);
@@ -421,7 +413,7 @@ static int xl_get_flags(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	int l = 0;
 	char *ch = NULL;
 
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
 	ch = int2str(msg->flags, &l);
@@ -433,12 +425,12 @@ static int xl_get_flags(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 
 static int xl_get_callid(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID_F, 0)==-1) ||
-				(msg->callid==NULL)) )
-	{
+	if(msg->callid == NULL
+			&& ((parse_headers(msg, HDR_CALLID_F, 0) == -1)
+					|| (msg->callid == NULL))) {
 		LOG(L_ERR, "XLOG: xl_get_callid: ERROR cannot parse Call-Id header\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
@@ -452,7 +444,7 @@ static int xl_get_callid(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 
 static int xl_get_srcip(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
 	res->s = ip_addr2a(&msg->rcv.src_ip);
@@ -461,12 +453,13 @@ static int xl_get_srcip(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	return 0;
 }
 
-static int xl_get_srcport(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+static int xl_get_srcport(
+		struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
 	int l = 0;
 	char *ch = NULL;
 
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
 	ch = int2str(msg->rcv.src_port, &l);
@@ -478,41 +471,43 @@ static int xl_get_srcport(struct sip_msg *msg, str *res, str *hp, int hi, int hf
 
 static int xl_get_rcvip(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(msg->rcv.bind_address==NULL
-			|| msg->rcv.bind_address->address_str.s==NULL)
+	if(msg->rcv.bind_address == NULL
+			|| msg->rcv.bind_address->address_str.s == NULL)
 		return xl_get_null(msg, res, hp, hi, hf);
 
-	res->s   = msg->rcv.bind_address->address_str.s;
+	res->s = msg->rcv.bind_address->address_str.s;
 	res->len = msg->rcv.bind_address->address_str.len;
 
 	return 0;
 }
 
-static int xl_get_rcvport(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+static int xl_get_rcvport(
+		struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(msg->rcv.bind_address==NULL
-			|| msg->rcv.bind_address->port_no_str.s==NULL)
+	if(msg->rcv.bind_address == NULL
+			|| msg->rcv.bind_address->port_no_str.s == NULL)
 		return xl_get_null(msg, res, hp, hi, hf);
 
-	res->s   = msg->rcv.bind_address->port_no_str.s;
+	res->s = msg->rcv.bind_address->port_no_str.s;
 	res->len = msg->rcv.bind_address->port_no_str.len;
 
 	return 0;
 }
 
-static int xl_get_useragent(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+static int xl_get_useragent(
+		struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
-	if(msg->user_agent==NULL && ((parse_headers(msg, HDR_USERAGENT_F, 0)==-1)
-			 || (msg->user_agent==NULL)))
-	{
+	if(msg->user_agent == NULL
+			&& ((parse_headers(msg, HDR_USERAGENT_F, 0) == -1)
+					|| (msg->user_agent == NULL))) {
 		DBG("XLOG: xl_get_useragent: User-Agent header not found\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
@@ -524,18 +519,19 @@ static int xl_get_useragent(struct sip_msg *msg, str *res, str *hp, int hi, int 
 	return 0;
 }
 
-static int xl_get_refer_to(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+static int xl_get_refer_to(
+		struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(parse_refer_to_header(msg)==-1)
-	{
-		LOG(L_ERR, "XLOG: xl_get_refer_to: ERROR cannot parse Refer-To header\n");
+	if(parse_refer_to_header(msg) == -1) {
+		LOG(L_ERR,
+				"XLOG: xl_get_refer_to: ERROR cannot parse Refer-To header\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
 
-	if(msg->refer_to==NULL || get_refer_to(msg)==NULL)
+	if(msg->refer_to == NULL || get_refer_to(msg) == NULL)
 		return xl_get_null(msg, res, hp, hi, hf);
 
 	res->s = get_refer_to(msg)->uri.s;
@@ -546,37 +542,38 @@ static int xl_get_refer_to(struct sip_msg *msg, str *res, str *hp, int hi, int h
 
 static int xl_get_dset(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-    if(msg==NULL || res==NULL)
-	return -1;
+	if(msg == NULL || res == NULL)
+		return -1;
 
-    res->s = print_dset(msg, &res->len, 0);
+	res->s = print_dset(msg, &res->len, 0);
 
-    if ((res->s) == NULL) return xl_get_null(msg, res, hp, hi, hf);
+	if((res->s) == NULL)
+		return xl_get_null(msg, res, hp, hi, hf);
 
-    res->len -= CRLF_LEN;
+	res->len -= CRLF_LEN;
 
-    return 0;
+	return 0;
 }
 
 #define COL_BUF 10
 
-#define append_sstring(p, end, str) \
-        do{\
-                if ((p)+(sizeof(str)-1)<=(end)){\
-                        memcpy((p), str, sizeof(str)-1); \
-                        (p)+=sizeof(str)-1; \
-                }else{ \
-                        /* overflow */ \
-                        LOG(L_ERR, "XLOG: append_sstring overflow\n"); \
-                        goto error;\
-                } \
-        } while(0)
+#define append_sstring(p, end, str)                        \
+	do {                                                   \
+		if((p) + (sizeof(str) - 1) <= (end)) {             \
+			memcpy((p), str, sizeof(str) - 1);             \
+			(p) += sizeof(str) - 1;                        \
+		} else {                                           \
+			/* overflow */                                 \
+			LOG(L_ERR, "XLOG: append_sstring overflow\n"); \
+			goto error;                                    \
+		}                                                  \
+	} while(0)
 
 static int xl_get_color(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
 	static char color[COL_BUF];
-	char* p;
-	char* end;
+	char *p;
+	char *end;
 
 	p = color;
 	end = p + COL_BUF;
@@ -584,10 +581,8 @@ static int xl_get_color(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	/* escape sequence */
 	append_sstring(p, end, "\033[");
 
-	if(hp->s[0]!='_')
-	{
-		if (islower((unsigned char)hp->s[0]))
-		{
+	if(hp->s[0] != '_') {
+		if(islower((unsigned char)hp->s[0])) {
 			/* normal font */
 			append_sstring(p, end, "0;");
 		} else {
@@ -598,70 +593,68 @@ static int xl_get_color(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	}
 
 	/* foreground */
-	switch(hp->s[0])
-	{
+	switch(hp->s[0]) {
 		case 'x':
 			append_sstring(p, end, "39;");
-		break;
+			break;
 		case 's':
 			append_sstring(p, end, "30;");
-		break;
+			break;
 		case 'r':
 			append_sstring(p, end, "31;");
-		break;
+			break;
 		case 'g':
 			append_sstring(p, end, "32;");
-		break;
+			break;
 		case 'y':
 			append_sstring(p, end, "33;");
-		break;
+			break;
 		case 'b':
 			append_sstring(p, end, "34;");
-		break;
+			break;
 		case 'p':
 			append_sstring(p, end, "35;");
-		break;
+			break;
 		case 'c':
 			append_sstring(p, end, "36;");
-		break;
+			break;
 		case 'w':
 			append_sstring(p, end, "37;");
-		break;
+			break;
 		default:
 			LOG(L_ERR, "XLOG: exit foreground\n");
 			return xl_get_empty(msg, res, hp, hi, hf);
 	}
 
 	/* background */
-	switch(hp->s[1])
-	{
+	switch(hp->s[1]) {
 		case 'x':
 			append_sstring(p, end, "49");
-		break;
+			break;
 		case 's':
 			append_sstring(p, end, "40");
-		break;
+			break;
 		case 'r':
 			append_sstring(p, end, "41");
-		break;
+			break;
 		case 'g':
 			append_sstring(p, end, "42");
-		break;
+			break;
 		case 'y':
 			append_sstring(p, end, "43");
-		break;
+			break;
 		case 'b':
 			append_sstring(p, end, "44");
-		break;
+			break;
 		case 'p':
 			append_sstring(p, end, "45");
-		break;
+			break;
 		case 'c':
 			append_sstring(p, end, "46");
-		break;
+			break;
 		case 'w':
 			append_sstring(p, end, "47");
-		break;
+			break;
 		default:
 			LOG(L_ERR, "XLOG: exit background\n");
 			return xl_get_empty(msg, res, hp, hi, hf);
@@ -671,7 +664,7 @@ static int xl_get_color(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	append_sstring(p, end, "m");
 
 	res->s = color;
-	res->len = p-color;
+	res->len = p - color;
 	return 0;
 
 error:
@@ -683,7 +676,7 @@ static int xl_get_branch(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	str branch;
 	qvalue_t q;
 
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
 	if(msg->first_line.type == SIP_REPLY)
@@ -692,7 +685,7 @@ static int xl_get_branch(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 
 	init_branch_iterator();
 	branch.s = next_branch(&branch.len, &q, 0, 0, 0, 0, 0, 0, 0);
-	if (!branch.s) {
+	if(!branch.s) {
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
 
@@ -705,7 +698,8 @@ static int xl_get_branch(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 #define Q_PARAM ">;q="
 #define Q_PARAM_LEN (sizeof(Q_PARAM) - 1)
 
-static int xl_get_branches(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+static int xl_get_branches(
+		struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
 	str uri;
 	qvalue_t q;
@@ -713,7 +707,7 @@ static int xl_get_branches(struct sip_msg *msg, str *res, str *hp, int hi, int h
 	unsigned int qlen;
 	char *p, *qbuf;
 
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
 	if(msg->first_line.type == SIP_REPLY)
@@ -722,23 +716,20 @@ static int xl_get_branches(struct sip_msg *msg, str *res, str *hp, int hi, int h
 	cnt = len = 0;
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0, 0)))
-	{
+	while((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0, 0))) {
 		cnt++;
 		len += uri.len;
-		if (q != Q_UNSPECIFIED)
-		{
+		if(q != Q_UNSPECIFIED) {
 			len += 1 + Q_PARAM_LEN + len_q(q);
 		}
 	}
 
-	if (cnt == 0)
+	if(cnt == 0)
 		return xl_get_empty(msg, res, hp, hi, hf);
 
 	len += (cnt - 1) * XLOG_FIELD_DELIM_LEN;
 
-	if (len + 1 > LOCAL_BUF_SIZE)
-	{
+	if(len + 1 > LOCAL_BUF_SIZE) {
 		LOG(L_ERR, "ERROR:xl_get_branches: local buffer length exceeded\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
@@ -747,23 +738,19 @@ static int xl_get_branches(struct sip_msg *msg, str *res, str *hp, int hi, int h
 	p = local_buf;
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0, 0)))
-	{
-		if (i)
-		{
+	while((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0, 0, 0))) {
+		if(i) {
 			memcpy(p, XLOG_FIELD_DELIM, XLOG_FIELD_DELIM_LEN);
 			p += XLOG_FIELD_DELIM_LEN;
 		}
 
-		if (q != Q_UNSPECIFIED)
-		{
+		if(q != Q_UNSPECIFIED) {
 			*p++ = '<';
 		}
 
 		memcpy(p, uri.s, uri.len);
 		p += uri.len;
-		if (q != Q_UNSPECIFIED)
-		{
+		if(q != Q_UNSPECIFIED) {
 			memcpy(p, Q_PARAM, Q_PARAM_LEN);
 			p += Q_PARAM_LEN;
 
@@ -780,66 +767,61 @@ static int xl_get_branches(struct sip_msg *msg, str *res, str *hp, int hi, int h
 	return 0;
 }
 
-static int xl_get_nexthop(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+static int xl_get_nexthop(
+		struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	*res=*GET_NEXT_HOP(msg);
+	*res = *GET_NEXT_HOP(msg);
 	return 0;
 }
 
-#define XLOG_PRINT_ALL	-2
-#define XLOG_PRINT_LAST	-1
+#define XLOG_PRINT_ALL -2
+#define XLOG_PRINT_LAST -1
 
 static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
 	struct hdr_field *hdrf, *hdrf0;
 	char *p;
 
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
-	if(hp==NULL || hp->len==0)
+	if(hp == NULL || hp->len == 0)
 		return xl_get_null(msg, res, hp, hi, hf);
 
 	hdrf0 = NULL;
 	p = local_buf;
 
 	/* we need to be sure we have parsed all headers */
-	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("failed to parse headers\n");
 		return xl_get_null(msg, res, hp, hi, hf);
 	}
-	for (hdrf=msg->headers; hdrf; hdrf=hdrf->next)
-	{
-		if(hp->s==NULL)
-		{
-			if (hp->len!=hdrf->type)
+	for(hdrf = msg->headers; hdrf; hdrf = hdrf->next) {
+		if(hp->s == NULL) {
+			if(hp->len != hdrf->type)
 				continue;
 		} else {
-			if (hdrf->name.len!=hp->len)
+			if(hdrf->name.len != hp->len)
 				continue;
-			if (strncasecmp(hdrf->name.s, hp->s, hdrf->name.len)!=0)
+			if(strncasecmp(hdrf->name.s, hp->s, hdrf->name.len) != 0)
 				continue;
 		}
 
 		hdrf0 = hdrf;
-		if(hi==XLOG_PRINT_ALL)
-		{
-			if(p!=local_buf)
-			{
-				if(p-local_buf+XLOG_FIELD_DELIM_LEN+1>LOCAL_BUF_SIZE)
-				{
-					LOG(L_ERR,
-						"ERROR:xl_get_header: local buffer length exceeded\n");
+		if(hi == XLOG_PRINT_ALL) {
+			if(p != local_buf) {
+				if(p - local_buf + XLOG_FIELD_DELIM_LEN + 1 > LOCAL_BUF_SIZE) {
+					LOG(L_ERR, "ERROR:xl_get_header: local buffer length "
+							   "exceeded\n");
 					return xl_get_null(msg, res, hp, hi, hf);
 				}
 				memcpy(p, XLOG_FIELD_DELIM, XLOG_FIELD_DELIM_LEN);
 				p += XLOG_FIELD_DELIM_LEN;
 			}
 
-			if(p-local_buf+hdrf0->body.len+1>LOCAL_BUF_SIZE)
-			{
+			if(p - local_buf + hdrf0->body.len + 1 > LOCAL_BUF_SIZE) {
 				LOG(L_ERR,
-					"ERROR:xl_get_header: local buffer length exceeded!\n");
+						"ERROR:xl_get_header: local buffer length exceeded!\n");
 				return xl_get_null(msg, res, hp, hi, hf);
 			}
 			memcpy(p, hdrf0->body.s, hdrf0->body.len);
@@ -847,22 +829,21 @@ static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 			continue;
 		}
 
-		if(hi==0)
+		if(hi == 0)
 			goto done;
-		if(hi>0)
+		if(hi > 0)
 			hi--;
 	}
 
 done:
-	if(hi==XLOG_PRINT_ALL)
-	{
+	if(hi == XLOG_PRINT_ALL) {
 		*p = 0;
 		res->s = local_buf;
 		res->len = p - local_buf;
 		return 0;
 	}
 
-	if(hdrf0==NULL || hi>0)
+	if(hdrf0 == NULL || hi > 0)
 		return xl_get_null(msg, res, hp, hi, hf);
 	res->s = hdrf0->body.s;
 	res->len = hdrf0->body.len;
@@ -870,18 +851,18 @@ done:
 	return 0;
 }
 
-static int inc_hex(char* c)
+static int inc_hex(char *c)
 {
-	switch (*c) {
-	case '9':
-		*c='a';
-		return 0;
-	case 'f':
-		*c='0';
-		return 1;
-	default:
-		(*c)++;
-		return 0;
+	switch(*c) {
+		case '9':
+			*c = 'a';
+			return 0;
+		case 'f':
+			*c = '0';
+			return 1;
+		default:
+			(*c)++;
+			return 0;
 	}
 }
 
@@ -889,7 +870,8 @@ static int xl_get_unique(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
 	int i;
 
-	for (i=UNIQUE_ID_LEN-1; i && inc_hex(&UNIQUE_ID[i--]););
+	for(i = UNIQUE_ID_LEN - 1; i && inc_hex(&UNIQUE_ID[i--]);)
+		;
 	res->s = &UNIQUE_ID[0];
 	res->len = UNIQUE_ID_LEN;
 	return 0;
@@ -897,44 +879,44 @@ static int xl_get_unique(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 
 static int xl_get_host(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	switch (hi) {
-	case XL_HOST_NAME:
-		*res = str_hostname;
-		return 0;
-	case XL_HOST_DOMAIN:
-		*res = str_domainname;
-		return 0;
-	case XL_HOST_FULL:
-		*res = str_fullname;
-		return 0;
-	case XL_HOST_IPADDR:
-		*res = str_ipaddr;
-		return 0;
-	default:
-		return xl_get_null(msg, res, hp, hi, hf);
+	switch(hi) {
+		case XL_HOST_NAME:
+			*res = str_hostname;
+			return 0;
+		case XL_HOST_DOMAIN:
+			*res = str_domainname;
+			return 0;
+		case XL_HOST_FULL:
+			*res = str_fullname;
+			return 0;
+		case XL_HOST_IPADDR:
+			*res = str_ipaddr;
+			return 0;
+		default:
+			return xl_get_null(msg, res, hp, hi, hf);
 	}
 }
 
 static int xl_get_select(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
 	int i;
-	if ((i=run_select(res, (select_t*)hp->s, msg))==1)
+	if((i = run_select(res, (select_t *)hp->s, msg)) == 1)
 		return xl_get_null(msg, res, hp, hi, hf);
-	
+
 	return i;
 }
 
 static void xl_free_select(str *hp)
 {
-	if (hp && hp->s)
-		free_select((select_t*)hp->s);
+	if(hp && hp->s)
+		free_select((select_t *)hp->s);
 }
 
 /* shared memory version of xl_free_select() */
 static void xl_shm_free_select(str *hp)
 {
-	if (hp && hp->s)
-		shm_free_select((select_t*)hp->s);
+	if(hp && hp->s)
+		shm_free_select((select_t *)hp->s);
 }
 
 static int xl_get_avp(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
@@ -943,31 +925,32 @@ static int xl_get_avp(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	struct usr_avp *avp, *lavp;
 	struct search_state st;
 
-	if(msg==NULL || res==NULL || hp==NULL)
-	return -1;
+	if(msg == NULL || res == NULL || hp == NULL)
+		return -1;
 
-	name.s=*hp;
-if (0){
-	lavp=NULL;
-	for(avp=search_first_avp(AVP_NAME_STR, name, NULL, &st); avp; avp=search_next_avp(&st, NULL)) {
-		lavp=avp;
-		if (hi>0)
-			hi--;
-		else if (hi==0)
-			break;
-	}
+	name.s = *hp;
+	if(0) {
+		lavp = NULL;
+		for(avp = search_first_avp(AVP_NAME_STR, name, NULL, &st); avp;
+				avp = search_next_avp(&st, NULL)) {
+			lavp = avp;
+			if(hi > 0)
+				hi--;
+			else if(hi == 0)
+				break;
+		}
 
-	if (lavp && (hi<=0)) {
-		get_avp_val(lavp, &val);
-		*res=val.s;
-		return 0;
+		if(lavp && (hi <= 0)) {
+			get_avp_val(lavp, &val);
+			*res = val.s;
+			return 0;
+		}
 	}
-}
-	if ((avp=search_avp_by_index(hf, name, &val, hi))) {
-		if (avp->flags & AVP_VAL_STR) {
-			*res=val.s;
+	if((avp = search_avp_by_index(hf, name, &val, hi))) {
+		if(avp->flags & AVP_VAL_STR) {
+			*res = val.s;
 		} else {
-			res->s=int2str(val.n, &res->len);
+			res->s = int2str(val.n, &res->len);
 		}
 		return 0;
 	}
@@ -976,11 +959,12 @@ if (0){
 }
 
 /* print special characters, like \r, \n, \t,... */
-static int xl_get_special(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+static int xl_get_special(
+		struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
-	static char	c;
+	static char c;
 
-	if(msg==NULL || res==NULL)
+	if(msg == NULL || res == NULL)
 		return -1;
 
 	c = (char)hi;
@@ -990,8 +974,8 @@ static int xl_get_special(struct sip_msg *msg, str *res, str *hp, int hi, int hf
 }
 
 /* copy the string within this range */
-static int	range_from = -1;
-static int	range_to = -1;
+static int range_from = -1;
+static int range_to = -1;
 
 /* get the range of the string that follows */
 static int xl_get_range(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
@@ -1007,13 +991,12 @@ static int xl_get_range(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 static int _xl_elog_free_all(xl_elog_p log, int shm)
 {
 	xl_elog_p t;
-	while(log)
-	{
+	while(log) {
 		t = log;
 		log = log->next;
-		if (t->free_f)
+		if(t->free_f)
 			(*t->free_f)(&(t->hparam));
-		if (shm)
+		if(shm)
 			shm_free(t);
 		else
 			pkg_free(t);
@@ -1032,19 +1015,20 @@ static int _xl_elog_free_all(xl_elog_p log, int shm)
  *   0: success
  *  -1: error
  */
-static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_cb)
+static int _xl_parse_format(
+		char *s, xl_elog_p *el, int shm, xl_parse_cb parse_cb)
 {
 	char *p, c;
 	int n = 0;
 	xl_elog_p e, e0;
-	struct hdr_field  hdr;
+	struct hdr_field hdr;
 	str name;
 	int avp_flags, avp_index;
 	int_str avp_name;
 	select_t *sel;
 	int *range;
-	
-	if(s==NULL || el==NULL)
+
+	if(s == NULL || el == NULL)
 		return -1;
 
 	DBG("XLOG: xl_parse_format: parsing [%s]\n", s);
@@ -1054,21 +1038,16 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 	e = e0 = NULL;
 	range = NULL;
 
-	while(*p)
-	{
+	while(*p) {
 		e0 = e;
-		if (shm)
+		if(shm)
 			e = shm_malloc(sizeof(xl_elog_t));
 		else
 			e = pkg_malloc(sizeof(xl_elog_t));
-		if(!e)
-		{
-			if(shm)
-			{
+		if(!e) {
+			if(shm) {
 				SHM_MEM_ERROR;
-			}
-			else
-			{
+			} else {
 				PKG_MEM_ERROR;
 			}
 			goto error;
@@ -1081,17 +1060,16 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 			e0->next = e;
 
 		e->text.s = p;
-		while(*p && *p!='%' && *p!='\\' && !range)
+		while(*p && *p != '%' && *p != '\\' && !range)
 			p++;
 
 		e->text.len = p - e->text.s;
 		if(*p == '\0')
 			break;
 
-		if ((*p == '\\') && !range) {
+		if((*p == '\\') && !range) {
 			p++;
-			switch(*p)
-			{
+			switch(*p) {
 				case '\\':
 					e->itf = xl_get_special;
 					e->hindex = '\\';
@@ -1119,7 +1097,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 				case '8':
 				case '9':
 					/* Regular expression back reference found */
-					if (!parse_cb) {
+					if(!parse_cb) {
 						/* There is no callback function, hence the
 						 * result will be written as it is. */
 						e->itf = xl_get_special;
@@ -1128,12 +1106,12 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 					}
 					name.s = p;
 					/* eat all the numeric characters */
-					while ((*(p+1) >= '0') && (*(p+1) <= '9'))
+					while((*(p + 1) >= '0') && (*(p + 1) <= '9'))
 						p++;
 					name.len = p - name.s + 1;
-					if (parse_cb(&name, shm, e)) {
+					if(parse_cb(&name, shm, e)) {
 						ERR("xprint: xl_parse_format: failed to parse '%.*s'\n",
-							name.len, name.s);
+								name.len, name.s);
 						goto error;
 					}
 					break;
@@ -1146,58 +1124,64 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 			goto cont;
 		}
 
-		if (range)
+		if(range)
 			range = NULL;
 		else
 			p++;
-		switch(*p)
-		{
+		switch(*p) {
 			case 'b':
 				p++;
-				switch(*p)
-				{
+				switch(*p) {
 					case 'r':
 						e->itf = xl_get_branch;
-					break;
+						break;
 					case 'R':
 						e->itf = xl_get_branches;
-					break;
+						break;
 					default:
 						e->itf = xl_get_null;
 				}
-			break;
+				break;
 			case 'c':
 				p++;
-				switch(*p)
-				{
+				switch(*p) {
 					case 'i':
 						e->itf = xl_get_callid;
-					break;
+						break;
 					case 's':
 						e->itf = xl_get_cseq;
-					break;
+						break;
 					case 't':
 						e->itf = xl_get_contact;
-					break;
+						break;
 					default:
 						e->itf = xl_get_null;
 				}
-			break;
+				break;
 			case 'C':
 				p++;
 				e->hparam.s = p;
 
 				/* foreground */
-				switch(*p)
-                {
+				switch(*p) {
 					case 'x':
-					case 's': case 'r': case 'g':
-					case 'y': case 'b': case 'p':
-					case 'c': case 'w': case 'S':
-					case 'R': case 'G': case 'Y':
-					case 'B': case 'P': case 'C':
+					case 's':
+					case 'r':
+					case 'g':
+					case 'y':
+					case 'b':
+					case 'p':
+					case 'c':
+					case 'w':
+					case 'S':
+					case 'R':
+					case 'G':
+					case 'Y':
+					case 'B':
+					case 'P':
+					case 'C':
 					case 'W':
-					break;
+						break;
 					default:
 						e->itf = xl_get_empty;
 						goto error;
@@ -1205,13 +1189,17 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 				p++;
 
 				/* background */
-				switch(*p)
-				{
+				switch(*p) {
 					case 'x':
-					case 's': case 'r': case 'g':
-					case 'y': case 'b': case 'p':
-					case 'c': case 'w':
-					break;
+					case 's':
+					case 'r':
+					case 'g':
+					case 'y':
+					case 'b':
+					case 'p':
+					case 'c':
+					case 'w':
+						break;
 					default:
 						e->itf = xl_get_empty;
 						goto error;
@@ -1220,49 +1208,46 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 				/* end */
 				e->hparam.len = 2;
 				e->itf = xl_get_color;
-			break;
+				break;
 			case 'd':
 				p++;
-				switch(*p)
-				{
+				switch(*p) {
 					case 's':
 						e->itf = xl_get_dset;
-					break;
+						break;
 					default:
 						e->itf = xl_get_null;
 				}
-			break;
+				break;
 			case 'f':
 				p++;
-				switch(*p)
-				{
+				switch(*p) {
 					case 'u':
 						e->itf = xl_get_from;
-					break;
+						break;
 					case 't':
 						e->itf = xl_get_from_tag;
-					break;
+						break;
 					default:
 						e->itf = xl_get_null;
 				}
-			break;
+				break;
 			case 'H':
 				p++;
 				e->itf = xl_get_host;
-				switch(*p)
-				{
+				switch(*p) {
 					case 'n':
 						e->hindex = XL_HOST_NAME;
-					break;
+						break;
 					case 'd':
 						e->hindex = XL_HOST_DOMAIN;
-					break;
+						break;
 					case 'f':
 						e->hindex = XL_HOST_FULL;
-					break;
+						break;
 					case 'i':
 						e->hindex = XL_HOST_IPADDR;
-					break;
+						break;
 					default:
 						e->hindex = XL_HOST_NULL;
 						break;
@@ -1270,215 +1255,206 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 				break;
 			case 'm':
 				p++;
-				switch(*p)
-				{
+				switch(*p) {
 					case 'b':
 						e->itf = xl_get_msg_buf;
-					break;
+						break;
 					case 'f':
 						e->itf = xl_get_flags;
-					break;
+						break;
 					case 'i':
 						e->itf = xl_get_msgid;
 						e->hindex = 10;
-					break;
+						break;
 					case 'l':
 						e->itf = xl_get_msg_len;
-					break;
+						break;
 					case 'x':
 						e->itf = xl_get_msgid;
 						e->hindex = 16;
-					break;
+						break;
 					default:
 						e->itf = xl_get_null;
 				}
 				break;
 			case 'n':
 				p++;
-				switch(*p)
-				{
+				switch(*p) {
 					case 'h':
 						e->itf = xl_get_nexthop;
-					break;
+						break;
 					default:
 						e->itf = xl_get_null;
 				}
 				break;
 			case 'p':
 				p++;
-				switch(*p)
-				{
+				switch(*p) {
 					case 'p':
 						e->itf = xl_get_pid;
 						e->hindex = 10;
-					break;
+						break;
 					case 'x':
 						e->itf = xl_get_pid;
 						e->hindex = 16;
-					break;
+						break;
 					default:
 						e->itf = xl_get_null;
 				}
-			break;
+				break;
 			case 'r':
 				p++;
-				switch(*p)
-				{
+				switch(*p) {
 					case 'm':
 						e->itf = xl_get_method;
-					break;
+						break;
 					case 'u':
 						e->itf = xl_get_ruri;
-					break;
+						break;
 					case 's':
 						e->itf = xl_get_status;
-					break;
+						break;
 					case 'r':
 						e->itf = xl_get_reason;
-					break;
+						break;
 					case 't':
 						e->itf = xl_get_refer_to;
-					break;
+						break;
 					default:
 						e->itf = xl_get_null;
 				}
-			break;
+				break;
 			case 'R':
 				p++;
-				switch(*p)
-				{
+				switch(*p) {
 					case 'i':
 						e->itf = xl_get_rcvip;
-					break;
+						break;
 					case 'p':
 						e->itf = xl_get_rcvport;
-					break;
-					default:
-					e->itf = xl_get_null;
-				}
-			break;
-			case 's':
-				p++;
-				switch(*p)
-				{
-					case 'i':
-						e->itf = xl_get_srcip;
-					break;
-					case 'p':
-						e->itf = xl_get_srcport;
-					break;
-					default:
-					e->itf = xl_get_null;
-				}
-			break;
-			case 't':
-				p++;
-				switch(*p)
-				{
-					case 'u':
-						e->itf = xl_get_to;
-					break;
-					case 't':
-						e->itf = xl_get_to_tag;
-					break;
+						break;
 					default:
 						e->itf = xl_get_null;
 				}
-			break;
+				break;
+			case 's':
+				p++;
+				switch(*p) {
+					case 'i':
+						e->itf = xl_get_srcip;
+						break;
+					case 'p':
+						e->itf = xl_get_srcport;
+						break;
+					default:
+						e->itf = xl_get_null;
+				}
+				break;
+			case 't':
+				p++;
+				switch(*p) {
+					case 'u':
+						e->itf = xl_get_to;
+						break;
+					case 't':
+						e->itf = xl_get_to_tag;
+						break;
+					default:
+						e->itf = xl_get_null;
+				}
+				break;
 			case 'T':
 				p++;
-				switch(*p)
-				{
+				switch(*p) {
 					case 's':
 						e->itf = xl_get_times;
 						e->hindex = 10;
-					break;
+						break;
 					case 'f':
 						e->itf = xl_get_timef;
-					break;
+						break;
 					case 'x':
 						e->itf = xl_get_times;
 						e->hindex = 16;
-					break;
+						break;
 					default:
 						e->itf = xl_get_null;
 				}
-			break;
+				break;
 			case 'u':
 				p++;
-				switch(*p)
-				{
+				switch(*p) {
 					case 'a':
 						e->itf = xl_get_useragent;
-					break;
+						break;
 					case 'q':
 						e->itf = xl_get_unique;
-					break;
+						break;
 					default:
 						e->itf = xl_get_null;
 				}
-			break;
+				break;
 			case '{':
 				p++;
 				/* we expect a letter */
-				if((*p < 'A' || *p > 'Z') && (*p < 'a' || *p > 'z'))
-				{
-					LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
-						" [%s] pos [%d]\n", s, (int)(p-s));
+				if((*p < 'A' || *p > 'Z') && (*p < 'a' || *p > 'z')) {
+					LOG(L_ERR,
+							"xprint: xl_parse_format: error parsing format"
+							" [%s] pos [%d]\n",
+							s, (int)(p - s));
 					goto error;
 				}
 				e->hparam.s = p;
-				while(*p && *p!='}' && *p!='[')
+				while(*p && *p != '}' && *p != '[')
 					p++;
-				if(*p == '\0')
-				{
-					LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
-						" [%s] expecting '}' after position [%d]\n", s,
-						(int)(e->hparam.s-s));
+				if(*p == '\0') {
+					LOG(L_ERR,
+							"xprint: xl_parse_format: error parsing format"
+							" [%s] expecting '}' after position [%d]\n",
+							s, (int)(e->hparam.s - s));
 					goto error;
 				}
 
 				e->hparam.len = p - e->hparam.s;
 				/* check if we have index */
-				if(*p == '[')
-				{
+				if(*p == '[') {
 					p++;
-					if(*p=='-')
-					{
+					if(*p == '-') {
 						p++;
-						if(*p!='1')
-						{
-							LOG(L_ERR, "xprint: xl_parse_format: error"
-								" parsing format [%s] -- only -1 is accepted"
-								" as a negative index\n", s);
-								goto error;
+						if(*p != '1') {
+							LOG(L_ERR,
+									"xprint: xl_parse_format: error"
+									" parsing format [%s] -- only -1 is "
+									"accepted"
+									" as a negative index\n",
+									s);
+							goto error;
 						}
 						e->hindex = XLOG_PRINT_LAST;
 						p++;
-					} else if (*p=='*') {
+					} else if(*p == '*') {
 						e->hindex = XLOG_PRINT_ALL;
 						p++;
 					} else {
-						while(*p>='0' && *p<='9')
-						{
+						while(*p >= '0' && *p <= '9') {
 							e->hindex = e->hindex * 10 + *p - '0';
 							p++;
 						}
 					}
-					if(*p != ']')
-					{
-						LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
-							" [%s] expecting ']' after position [%d]\n", s,
-							(int)(e->hparam.s - s + e->hparam.len));
+					if(*p != ']') {
+						LOG(L_ERR,
+								"xprint: xl_parse_format: error parsing format"
+								" [%s] expecting ']' after position [%d]\n",
+								s, (int)(e->hparam.s - s + e->hparam.len));
 						goto error;
 					}
 					p++;
 				}
-				if(*p != '}')
-				{
-					LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
-						" [%s] expecting '}' after position [%d]!\n", s,
-						(int)(e->hparam.s-s));
+				if(*p != '}') {
+					LOG(L_ERR,
+							"xprint: xl_parse_format: error parsing format"
+							" [%s] expecting '}' after position [%d]!\n",
+							s, (int)(e->hparam.s - s));
 					goto error;
 				}
 
@@ -1493,85 +1469,83 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 				 * -- parse_hname2 expects name buffer length >= 4
 				 */
 				parse_hname2(e->hparam.s,
-						e->hparam.s + ((e->hparam.len<4)?4:e->hparam.len),
+						e->hparam.s + ((e->hparam.len < 4) ? 4 : e->hparam.len),
 						&hdr);
-				if(hdr.type==HDR_ERROR_T)
-				{
-					LOG(L_ERR,"xprint: xl_parse_format: header parsing error\n");
+				if(hdr.type == HDR_ERROR_T) {
+					LOG(L_ERR,
+							"xprint: xl_parse_format: header parsing error\n");
 					goto error;
 				}
 				e->hparam.len--;
 				e->hparam.s[e->hparam.len] = c;
-				if (hdr.type!=HDR_OTHER_T)
-				{
-					LOG(L_INFO,"INFO:xprint: xl_parse_format: using "
-						"hdr type (%d) instead of <%.*s>\n",
-						hdr.type, e->hparam.len, e->hparam.s);
+				if(hdr.type != HDR_OTHER_T) {
+					LOG(L_INFO,
+							"INFO:xprint: xl_parse_format: using "
+							"hdr type (%d) instead of <%.*s>\n",
+							hdr.type, e->hparam.len, e->hparam.s);
 					e->hparam.len = hdr.type;
 					e->hparam.s = NULL;
 				}
 				e->itf = xl_get_header;
-			break;
+				break;
 			case '<':
 				p++;
 				/* we expect a letter */
-				if((*p < 'A' || *p > 'Z') && (*p < 'a' || *p > 'z'))
-				{
-					LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
-						" [%s] pos [%d]\n", s, (int)(p-s));
+				if((*p < 'A' || *p > 'Z') && (*p < 'a' || *p > 'z')) {
+					LOG(L_ERR,
+							"xprint: xl_parse_format: error parsing format"
+							" [%s] pos [%d]\n",
+							s, (int)(p - s));
 					goto error;
 				}
 				e->hparam.s = p;
-				while(*p && *p!='>' && *p!='[')
+				while(*p && *p != '>' && *p != '[')
 					p++;
-				if(*p == '\0')
-				{
-					LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
-						" [%s] expecting '>' after position [%d]\n", s,
-						(int)(e->hparam.s-s));
+				if(*p == '\0') {
+					LOG(L_ERR,
+							"xprint: xl_parse_format: error parsing format"
+							" [%s] expecting '>' after position [%d]\n",
+							s, (int)(e->hparam.s - s));
 					goto error;
 				}
 
 				e->hparam.len = p - e->hparam.s;
 				/* check if we have index */
-				if(*p == '[')
-				{
+				if(*p == '[') {
 					p++;
-					if(*p=='-')
-					{
+					if(*p == '-') {
 						p++;
-						if(*p!='1')
-						{
-							LOG(L_ERR, "xprint: xl_parse_format: error"
-								" parsing format [%s] -- only -1 is accepted"
-								" as a negative index\n", s);
-								goto error;
+						if(*p != '1') {
+							LOG(L_ERR,
+									"xprint: xl_parse_format: error"
+									" parsing format [%s] -- only -1 is "
+									"accepted"
+									" as a negative index\n",
+									s);
+							goto error;
 						}
 						e->hindex = -1;
 						p++;
-					}
-					else
-					{
-						while(*p>='0' && *p<='9')
-						{
+					} else {
+						while(*p >= '0' && *p <= '9') {
 							e->hindex = e->hindex * 10 + *p - '0';
 							p++;
 						}
 					}
-					if(*p != ']')
-					{
-						LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
-							" [%s] expecting ']' after position [%d]\n", s,
-							(int)(e->hparam.s - s + e->hparam.len));
+					if(*p != ']') {
+						LOG(L_ERR,
+								"xprint: xl_parse_format: error parsing format"
+								" [%s] expecting ']' after position [%d]\n",
+								s, (int)(e->hparam.s - s + e->hparam.len));
 						goto error;
 					}
 					p++;
 				}
-				if(*p != '>')
-				{
-					LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
-						" [%s] expecting '>' after position [%d]!\n", s,
-						(int)(e->hparam.s-s));
+				if(*p != '>') {
+					LOG(L_ERR,
+							"xprint: xl_parse_format: error parsing format"
+							" [%s] expecting '>' after position [%d]!\n",
+							s, (int)(e->hparam.s - s));
 					goto error;
 				}
 
@@ -1579,79 +1553,89 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 						e->hparam.len, e->hparam.s, e->hindex);
 
 				e->itf = xl_get_avp;
-			break;
+				break;
 			case '$':
 				p++;
-				name.s=p;
-				while ( (*p>='a' && *p<='z') || (*p>='A' && *p<='Z') || (*p>='0' && *p<='9') || (*p=='_') || (*p=='+') || (*p=='-') || (*p=='[') || (*p==']') || (*p=='.') ) p++;
-				name.len=p-name.s;
+				name.s = p;
+				while((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z')
+						|| (*p >= '0' && *p <= '9') || (*p == '_')
+						|| (*p == '+') || (*p == '-') || (*p == '[')
+						|| (*p == ']') || (*p == '.'))
+					p++;
+				name.len = p - name.s;
 				p--;
-				if (parse_avp_name(&name, &avp_flags, &avp_name, &avp_index) < 0) {
+				if(parse_avp_name(&name, &avp_flags, &avp_name, &avp_index)
+						< 0) {
 					ERR("error while parsing AVP name\n");
 					goto error;
 				}
 				e->itf = xl_get_avp;
-				e->hflags=avp_flags;
-				e->hparam.s=name.s;
-				e->hparam.len=name.len;
-				e->hindex=avp_index;
-				DBG("flags %x  name %.*s  index %d\n", avp_flags, avp_name.s.len, avp_name.s.s, avp_index);
+				e->hflags = avp_flags;
+				e->hparam.s = name.s;
+				e->hparam.len = name.len;
+				e->hindex = avp_index;
+				DBG("flags %x  name %.*s  index %d\n", avp_flags,
+						avp_name.s.len, avp_name.s.s, avp_index);
 				break;
 			case '@':
-					/* fill select structure and call resolve_select */
+				/* fill select structure and call resolve_select */
 				DBG("xprint: xl_parse_format: @\n");
-				if (shm)
-					n=shm_parse_select(&p, &sel);
+				if(shm)
+					n = shm_parse_select(&p, &sel);
 				else
-					n=parse_select(&p, &sel);
-				if (n<0) {
-					ERR("xprint: xl_parse_format: parse_select returned error\n");
+					n = parse_select(&p, &sel);
+				if(n < 0) {
+					ERR("xprint: xl_parse_format: parse_select returned "
+						"error\n");
 					goto error;
 				}
 				e->itf = xl_get_select;
-				e->hparam.s = (char*)sel;
+				e->hparam.s = (char *)sel;
 				e->free_f = (shm) ? xl_shm_free_select : xl_free_select;
 				p--;
 				break;
 			case '%':
 				e->itf = xl_get_percent;
 				break;
-			case ' ':	/* enables spaceless terminating of avp, e.g. "blah%$avp% text goes on" */
+			case ' ': /* enables spaceless terminating of avp, e.g. "blah%$avp% text goes on" */
 			case '|':
 				e->itf = xl_get_empty;
 				break;
 			case '[':
 				range = &e->hindex;
 				e->itf = xl_get_range;
-				while (1) {
+				while(1) {
 					p++;
-					if (((*p) >= '0') && ((*p) <= '9')) {
+					if(((*p) >= '0') && ((*p) <= '9')) {
 						(*range) *= 10;
 						(*range) += (*p) - '0';
 
-					} else if ((*p) == '-') {
-						if (range == &e->hindex) {
+					} else if((*p) == '-') {
+						if(range == &e->hindex) {
 							range = &e->hflags;
 						} else {
-							ERR("xprint: xl_parse_format: syntax error in the range specification\n");
+							ERR("xprint: xl_parse_format: syntax error in the "
+								"range specification\n");
 							goto error;
 						}
 
-					} else if ((*p) == ']') {
-						if (range == &e->hindex) {
+					} else if((*p) == ']') {
+						if(range == &e->hindex) {
 							/* no range, only a single number */
 							e->hflags = e->hindex;
-						} else if (e->hflags == 0) {
+						} else if(e->hflags == 0) {
 							/* only the left side is defined */
 							e->hflags = -1;
-						} else if (e->hindex > e->hflags) {
-							ERR("xprint: xl_parse_format: syntax error in the range specification\n");
+						} else if(e->hindex > e->hflags) {
+							ERR("xprint: xl_parse_format: syntax error in the "
+								"range specification\n");
 							goto error;
 						}
 						break;
 
 					} else {
-						ERR("xprint: xl_parse_format: syntax error in the range specification\n");
+						ERR("xprint: xl_parse_format: syntax error in the "
+							"range specification\n");
 						goto error;
 					}
 				}
@@ -1660,7 +1644,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 				e->itf = xl_get_null;
 		}
 
-cont:
+	cont:
 		if(*p == '\0')
 			break;
 		p++;
@@ -1707,14 +1691,14 @@ int xl_shm_parse_format2(char *s, xl_elog_p *el, xl_parse_cb cb)
 	return _xl_parse_format(s, el, 1 /* shm mem */, cb);
 }
 
-int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
+int xl_print_log(struct sip_msg *msg, xl_elog_p log, char *buf, int *len)
 {
 	int n, h;
 	str tok = STR_NULL;
 	xl_elog_p it;
 	char *cur;
 
-	if(msg==NULL || log==NULL || buf==NULL || len==NULL)
+	if(msg == NULL || log == NULL || buf == NULL || len == NULL)
 		return -1;
 
 	if(*len <= 0)
@@ -1725,36 +1709,32 @@ int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
 
 	h = 0;
 	n = 0;
-	for (it=log; it; it=it->next)
-	{
+	for(it = log; it; it = it->next) {
 		/* put the text */
-		if(it->text.s && it->text.len>0)
-		{
-			if(n+it->text.len < *len)
-			{
+		if(it->text.s && it->text.len > 0) {
+			if(n + it->text.len < *len) {
 				memcpy(cur, it->text.s, it->text.len);
 				n += it->text.len;
 				cur += it->text.len;
-			}
-			else
+			} else
 				goto overflow;
 		}
 		/* put the value of the specifier */
 		if(it->itf
 				/* && ((*it->itf != xl_get_color) || (log_stderr!=0)) */
-				&& !((*it->itf)(msg, &tok, &(it->hparam), it->hindex, it->hflags)))
-		{
-			if (*it->itf == xl_get_range)
+				&& !((*it->itf)(
+						msg, &tok, &(it->hparam), it->hindex, it->hflags))) {
+			if(*it->itf == xl_get_range)
 				continue;
 
 			/* cut the string to the required size */
-			if (range_to >= 0) {
-				if (range_to + 1 < tok.len)
+			if(range_to >= 0) {
+				if(range_to + 1 < tok.len)
 					tok.len = range_to + 1;
 				range_to = -1;
 			}
-			if (range_from > 0) {
-				if (range_from + 1 > tok.len) {
+			if(range_from > 0) {
+				if(range_from + 1 > tok.len) {
 					range_from = -1;
 					/* nothing to copy */
 					continue;
@@ -1764,45 +1744,42 @@ int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
 				range_from = -1;
 			}
 
-			if (tok.len == 0)
+			if(tok.len == 0)
 				continue;
 
-			if(n+tok.len < *len)
-			{
+			if(n + tok.len < *len) {
 				memcpy(cur, tok.s, tok.len);
 				n += tok.len;
 				cur += tok.len;
 
 				/* check for color entries to reset later */
-				if (*it->itf == xl_get_color) {
+				if(*it->itf == xl_get_color) {
 					h = 1;
 				}
-			}
-			else
+			} else
 				goto overflow;
 		}
 	}
 
 	/* reset to default after entry */
-	if (h == 1)
-	{
-		h = sizeof("\033[0m")-1;
-		if (n+h < *len)
-		{
+	if(h == 1) {
+		h = sizeof("\033[0m") - 1;
+		if(n + h < *len) {
 			memcpy(cur, "\033[0m", h);
 			n += h;
 			cur += h;
-			} else {
-				goto overflow;
-			}
+		} else {
+			goto overflow;
+		}
 	}
 
 	goto done;
 
 overflow:
-	LOG(L_ERR,
-		"XLOG:xl_print_log: buffer overflow -- increase the buffer size...\n");
-	LOG(L_ERR, "Pos: %d, Add: %d, Len: %d, Buf:%.*s\n", n, tok.len, *len, n, buf);
+	LOG(L_ERR, "XLOG:xl_print_log: buffer overflow -- increase the buffer "
+			   "size...\n");
+	LOG(L_ERR, "Pos: %d, Add: %d, Len: %d, Buf:%.*s\n", n, tok.len, *len, n,
+			buf);
 	return -1;
 
 done:
@@ -1852,13 +1829,12 @@ int xl_mod_init()
 	struct hostent *he;
 	int i;
 
-	s=(char*)pkg_malloc(HOSTNAME_MAX);
-	if (!s)
-	{
+	s = (char *)pkg_malloc(HOSTNAME_MAX);
+	if(!s) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	if (gethostname(s, HOSTNAME_MAX)<0) {
+	if(gethostname(s, HOSTNAME_MAX) < 0) {
 		str_fullname.len = 0;
 		str_fullname.s = NULL;
 		str_hostname.len = 0;
@@ -1867,63 +1843,74 @@ int xl_mod_init()
 		str_domainname.s = NULL;
 	} else {
 		str_fullname.len = strlen(s);
-		s = pkg_reallocxf(s, str_fullname.len+1); /* this will leave the ending \0 */
-		if (!s) { /* should never happen because decreasing size */
+		s = pkg_reallocxf(
+				s, str_fullname.len + 1); /* this will leave the ending \0 */
+		if(!s) { /* should never happen because decreasing size */
 			return -1;
 		}
 		str_fullname.s = s;
 
-		d=strchr(s, '.');
-		if (d) {
-			str_hostname.len=d-s;
-			str_hostname.s=s;
-			str_domainname.len=str_fullname.len-str_hostname.len-1;
-			str_domainname.s=d+1;
+		d = strchr(s, '.');
+		if(d) {
+			str_hostname.len = d - s;
+			str_hostname.s = s;
+			str_domainname.len = str_fullname.len - str_hostname.len - 1;
+			str_domainname.s = d + 1;
 		} else {
-			str_hostname=str_fullname;
-			str_domainname.len=0;
-			str_domainname.s=NULL;
+			str_hostname = str_fullname;
+			str_domainname.len = 0;
+			str_domainname.s = NULL;
 		}
-		s=(char*)pkg_malloc(HOSTNAME_MAX);
-		if (!s) {
+		s = (char *)pkg_malloc(HOSTNAME_MAX);
+		if(!s) {
 			PKG_MEM_ERROR;
 			pkg_free(str_fullname.s);
 			return -1;
 		}
 	}
 
-	str_ipaddr.len=0;
-	str_ipaddr.s=NULL;
-	if (str_fullname.len) {
-		he=resolvehost(str_fullname.s);
-		if (he) {
-			if ((strlen(he->h_name)!=str_fullname.len) || strncmp(he->h_name, str_fullname.s, str_fullname.len)) {
-				LOG(L_WARN, "WARNING: xl_mod_init: DIFFERENT hostname '%.*s' and gethostbyname '%s'\n", str_fullname.len, ZSW(str_hostname.s), he->h_name);
+	str_ipaddr.len = 0;
+	str_ipaddr.s = NULL;
+	if(str_fullname.len) {
+		he = resolvehost(str_fullname.s);
+		if(he) {
+			if((strlen(he->h_name) != str_fullname.len)
+					|| strncmp(he->h_name, str_fullname.s, str_fullname.len)) {
+				LOG(L_WARN,
+						"WARNING: xl_mod_init: DIFFERENT hostname '%.*s' and "
+						"gethostbyname '%s'\n",
+						str_fullname.len, ZSW(str_hostname.s), he->h_name);
 			}
 
-			if (he->h_addr_list) {
-				for (i=0; he->h_addr_list[i]; i++) {
-					if (inet_ntop(he->h_addrtype, he->h_addr_list[i], s, HOSTNAME_MAX)) {
-						if (str_ipaddr.len==0) {
-							str_ipaddr.len=strlen(s);
-							str_ipaddr.s=(char*)pkg_malloc(str_ipaddr.len+1);
-							if (str_ipaddr.s) {
+			if(he->h_addr_list) {
+				for(i = 0; he->h_addr_list[i]; i++) {
+					if(inet_ntop(he->h_addrtype, he->h_addr_list[i], s,
+							   HOSTNAME_MAX)) {
+						if(str_ipaddr.len == 0) {
+							str_ipaddr.len = strlen(s);
+							str_ipaddr.s =
+									(char *)pkg_malloc(str_ipaddr.len + 1);
+							if(str_ipaddr.s) {
 								memcpy(str_ipaddr.s, s, str_ipaddr.len);
 								str_ipaddr.s[str_ipaddr.len] = '\0';
 							} else {
 								pkg_free(s);
-								str_ipaddr.len=0;
+								str_ipaddr.len = 0;
 								PKG_MEM_ERROR_FMT("for str_ipaddr\n");
 							}
-						} else if (strncmp(str_ipaddr.s, s, str_ipaddr.len)!=0) {
-							LOG(L_WARN, "WARNING: xl_mod_init: more IP %s not used\n", s);
+						} else if(strncmp(str_ipaddr.s, s, str_ipaddr.len)
+								  != 0) {
+							LOG(L_WARN,
+									"WARNING: xl_mod_init: more IP %s not "
+									"used\n",
+									s);
 						}
 					}
 				}
 			} else {
-				LOG(L_WARN, "WARNING: xl_mod_init: can't resolve hostname's address\n");
+				LOG(L_WARN, "WARNING: xl_mod_init: can't resolve hostname's "
+							"address\n");
 			}
-
 		}
 	}
 	pkg_free(s);
@@ -1940,17 +1927,18 @@ int xl_child_init(int rank)
 {
 	int i, x, rb, cb;
 
-	for (i=KAM_RAND_MAX, rb=0; i; rb++, i>>=1);
+	for(i = KAM_RAND_MAX, rb = 0; i; rb++, i >>= 1)
+		;
 
-	cb=x=0; /* x asiignment to make gcc happy */
-	for (i=0; i<UNIQUE_ID_LEN; i++) {
-		if (!cb) {
-			cb=rb;
-			x=kam_rand();
+	cb = x = 0; /* x asiignment to make gcc happy */
+	for(i = 0; i < UNIQUE_ID_LEN; i++) {
+		if(!cb) {
+			cb = rb;
+			x = kam_rand();
 		}
-		UNIQUE_ID[i]=fourbits2char[x&0x0F];
-		x>>=rb;
-		cb-=rb;
+		UNIQUE_ID[i] = fourbits2char[x & 0x0F];
+		x >>= rb;
+		cb -= rb;
 	}
 
 	return 0;
