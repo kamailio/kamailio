@@ -176,6 +176,8 @@ int cc_acc_client_stateful_sm_process(
 					//nothing we can do here, we have sent callback, client needs to send CCR Update
 					LM_DBG("Reservation close to expiring\n");
 					break;
+				case ACC_CC_EV_SESSION_MODIFIED:
+					break;
 				default:
 					LM_ERR("Received unknown event [%d] in state [%d]\n", event,
 							x->state);

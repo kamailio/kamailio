@@ -1350,11 +1350,9 @@ void Rcv_Process(peer *p, AAAMessage *msg)
 		switch(session->type) {
 			case ACCT_CC_CLIENT:
 				if(is_req(msg)) {
-					LM_WARN("unhandled receive request on Credit Control Acct "
-							"session\n");
-					AAASessionsUnlock(
-							session->hash); //must be called because we don't call state machine here
-					session = 0; //we don't call SM here so we must not set to 0
+					cc_acc_client_stateful_sm_process(
+							session, ACC_CC_EV_SESSION_MODIFIED, msg);
+					session = 0;
 				} else {
 					cc_acc_client_stateful_sm_process(
 							session, ACC_CC_EV_RECV_ANS, msg);

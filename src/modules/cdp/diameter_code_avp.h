@@ -266,6 +266,8 @@ typedef enum
 	AVP_Service_Selection = 493, //RFC5778
 	AVP_Call_Id = 494,
 
+	AVP_Time_Quota_Threshold = 868, // 3GPP TS 32.299
+
 } AAA_AVPCodeNr;
 
 enum
