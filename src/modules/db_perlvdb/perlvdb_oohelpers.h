@@ -25,15 +25,11 @@
  */
 
 #ifndef _PERLVDB_OOHELPERS_H
-#define _PERLVDB_OOHELPERS_H 
+#define _PERLVDB_OOHELPERS_H
 
 #include "db_perlvdb.h"
 
-SV *perlvdb_perlmethod(SV *ref,
-		       const char* method,
-		       SV *param1,
-		       SV *param2,
-		       SV *param3,
-		       SV *param4);
+SV *perlvdb_perlmethod(SV *ref, const char *method, SV *param1, SV *param2,
+		SV *param3, SV *param4);
 
 #endif /* _PERLVDB_OOHELPERS_H */
