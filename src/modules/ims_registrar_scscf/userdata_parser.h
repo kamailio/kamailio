@@ -41,7 +41,7 @@
  */
 
 #ifndef USERDATA_PARSER_H
-#define	USERDATA_PARSER_H
+#define USERDATA_PARSER_H
 
 #include "../../modules/ims_usrloc_scscf/usrloc.h"
 #include <libxml/xmlschemas.h>
@@ -62,5 +62,4 @@ int parser_init(char *dtd_filename, char *xsd_filename);
 ims_subscription *parse_user_data(str xml);
 void print_user_data(ims_subscription *s);
 
-#endif	/* USERDATA_PARSER */
-
+#endif /* USERDATA_PARSER */

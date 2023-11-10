@@ -45,99 +45,116 @@ extern char *domain;
 	return 0;
 }*/
 
-AAAMessage* cxdx_process_rtr(AAAMessage *rtr) {
-    LM_DBG("Processing RTR");
-    
-    AAAMessage *rta_msg;
-    AAA_AVP* avp;
-    str public_id;
-    impurecord_t* r;
-    int res = 0;
-    udomain_t* udomain;
+AAAMessage *cxdx_process_rtr(AAAMessage *rtr)
+{
+	LM_DBG("Processing RTR");
+
+	AAAMessage *rta_msg;
+	AAA_AVP *avp;
+	str public_id;
+	impurecord_t *r;
+	int res = 0;
+	udomain_t *udomain;
 	impu_contact_t *impucontact;
-    
-    rta_msg = cdpb.AAACreateResponse(rtr);//session ID?
-    if (!rta_msg) return 0;
 
-    avp = cxdx_get_next_public_identity(rtr,0,AVP_IMS_Public_Identity,IMS_vendor_id_3GPP,__FUNCTION__);	
-    if(avp==0){
-	    LM_WARN("RTR received with only IMPI (username AVP) - currently S-CSCF does not support this kind of RTR\n");
-	    return 0;
-	    //TODO add support for receiving RTR with IMPI
-	    //get all impus related to this impu
-	    //get all contacts related to each impu
-	    //set the contact expire for each contact to now
-    }else{
-	    public_id=avp->data;
-	    LM_DBG("RTR received with IMPU [%.*s] in public identity AVP - this is supported\n", public_id.len, public_id.s);
-
-	    //TODO this should be a configurable module param
-	    if (ul.register_udomain(domain, &udomain) < 0) {
-		LM_ERR("Unable to register usrloc domain....aborting\n");
+	rta_msg = cdpb.AAACreateResponse(rtr); //session ID?
+	if(!rta_msg)
 		return 0;
-	    }
-	    
-	    ul.lock_udomain(udomain, &public_id);
-            res = ul.get_impurecord(udomain, &public_id, &r);
-            if (res != 0) {
-                LM_WARN("Strange, '%.*s' Not found in usrloc\n", public_id.len, public_id.s);
-                ul.unlock_udomain(udomain, &public_id);
-                //no point in continuing
-                return 0;
-            }
-	    
-		impucontact = r->linked_contacts.head;
-		while (impucontact) {
-			LM_DBG("Deleting contact with AOR [%.*s]\n", impucontact->contact->aor.len, impucontact->contact->aor.s);
-			ul.lock_contact_slot_i(impucontact->contact->sl);
-			if (r->shead) {
-				//send NOTIFY to all subscribers of this IMPU.
-				notify_subscribers(r, impucontact->contact, 0, 0, IMS_REGISTRAR_CONTACT_DEREGISTERED);
-			}
-			impucontact->contact->state = CONTACT_DELETED;
-			ul.unlock_contact_slot_i(impucontact->contact->sl);
-			
-			impucontact = impucontact->next;
+
+	avp = cxdx_get_next_public_identity(
+			rtr, 0, AVP_IMS_Public_Identity, IMS_vendor_id_3GPP, __FUNCTION__);
+	if(avp == 0) {
+		LM_WARN("RTR received with only IMPI (username AVP) - currently S-CSCF "
+				"does not support this kind of RTR\n");
+		return 0;
+		//TODO add support for receiving RTR with IMPI
+		//get all impus related to this impu
+		//get all contacts related to each impu
+		//set the contact expire for each contact to now
+	} else {
+		public_id = avp->data;
+		LM_DBG("RTR received with IMPU [%.*s] in public identity AVP - this is "
+			   "supported\n",
+				public_id.len, public_id.s);
+
+		//TODO this should be a configurable module param
+		if(ul.register_udomain(domain, &udomain) < 0) {
+			LM_ERR("Unable to register usrloc domain....aborting\n");
+			return 0;
 		}
-	    
-	    ul.unlock_udomain(udomain, &public_id);
-	    
-	    while(cdpb.AAAGetNextAVP(avp) && (avp=cxdx_get_next_public_identity(rtr,cdpb.AAAGetNextAVP(avp),AVP_IMS_Public_Identity,IMS_vendor_id_3GPP,__FUNCTION__))!=0){
-		    public_id=avp->data;
-		    LM_DBG("RTR also has public id [%.*s]\n", public_id.len, public_id.s);
-		    ul.lock_udomain(udomain, &public_id);
-		    res = ul.get_impurecord(udomain, &public_id, &r);
-		    if (res != 0) {
-			LM_WARN("Strange, '%.*s' Not found in usrloc\n", public_id.len, public_id.s);
+
+		ul.lock_udomain(udomain, &public_id);
+		res = ul.get_impurecord(udomain, &public_id, &r);
+		if(res != 0) {
+			LM_WARN("Strange, '%.*s' Not found in usrloc\n", public_id.len,
+					public_id.s);
 			ul.unlock_udomain(udomain, &public_id);
 			//no point in continuing
 			return 0;
-		    }
+		}
 
-		    impucontact = r->linked_contacts.head;
-			while (impucontact) {
-				LM_DBG("Deleting contact with AOR [%.*s]\n", impucontact->contact->aor.len, impucontact->contact->aor.s);
+		impucontact = r->linked_contacts.head;
+		while(impucontact) {
+			LM_DBG("Deleting contact with AOR [%.*s]\n",
+					impucontact->contact->aor.len, impucontact->contact->aor.s);
+			ul.lock_contact_slot_i(impucontact->contact->sl);
+			if(r->shead) {
+				//send NOTIFY to all subscribers of this IMPU.
+				notify_subscribers(r, impucontact->contact, 0, 0,
+						IMS_REGISTRAR_CONTACT_DEREGISTERED);
+			}
+			impucontact->contact->state = CONTACT_DELETED;
+			ul.unlock_contact_slot_i(impucontact->contact->sl);
+
+			impucontact = impucontact->next;
+		}
+
+		ul.unlock_udomain(udomain, &public_id);
+
+		while(cdpb.AAAGetNextAVP(avp)
+				&& (avp = cxdx_get_next_public_identity(rtr,
+							cdpb.AAAGetNextAVP(avp), AVP_IMS_Public_Identity,
+							IMS_vendor_id_3GPP, __FUNCTION__))
+						   != 0) {
+			public_id = avp->data;
+			LM_DBG("RTR also has public id [%.*s]\n", public_id.len,
+					public_id.s);
+			ul.lock_udomain(udomain, &public_id);
+			res = ul.get_impurecord(udomain, &public_id, &r);
+			if(res != 0) {
+				LM_WARN("Strange, '%.*s' Not found in usrloc\n", public_id.len,
+						public_id.s);
+				ul.unlock_udomain(udomain, &public_id);
+				//no point in continuing
+				return 0;
+			}
+
+			impucontact = r->linked_contacts.head;
+			while(impucontact) {
+				LM_DBG("Deleting contact with AOR [%.*s]\n",
+						impucontact->contact->aor.len,
+						impucontact->contact->aor.s);
 				ul.lock_contact_slot_i(impucontact->contact->sl);
-				if (r->shead) {
+				if(r->shead) {
 					//send NOTIFY to all subscribers of this IMPU.
-					notify_subscribers(r, impucontact->contact, 0, 0, IMS_REGISTRAR_CONTACT_DEREGISTERED);
+					notify_subscribers(r, impucontact->contact, 0, 0,
+							IMS_REGISTRAR_CONTACT_DEREGISTERED);
 				}
 				impucontact->contact->state = CONTACT_DELETED;
 				ul.unlock_contact_slot_i(impucontact->contact->sl);
 				impucontact = impucontact->next;
-		    }
+			}
 
-		    ul.unlock_udomain(udomain, &public_id);
-		}		
-    }
-    cxdx_add_vendor_specific_appid(rta_msg,IMS_vendor_id_3GPP,IMS_Cx,0 /*IMS_Cx*/);
-    
-    cxdx_add_auth_session_state(rta_msg,1);		
+			ul.unlock_udomain(udomain, &public_id);
+		}
+	}
+	cxdx_add_vendor_specific_appid(
+			rta_msg, IMS_vendor_id_3GPP, IMS_Cx, 0 /*IMS_Cx*/);
 
-    /* send an RTA back to the HSS */
-    cxdx_add_result_code(rta_msg,DIAMETER_SUCCESS);
-    
-    return rta_msg;
-    
-    
+	cxdx_add_auth_session_state(rta_msg, 1);
+
+	/* send an RTA back to the HSS */
+	cxdx_add_result_code(rta_msg, DIAMETER_SUCCESS);
+
+	return rta_msg;
 }

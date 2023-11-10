@@ -58,26 +58,26 @@
 
 /* if DB support is used, this values must not exceed the
  * storage capacity of the DB columns! See db/schema/entities.xml */
-#define CONTACT_MAX_SIZE       255
-#define RECEIVED_MAX_SIZE      255
-#define USERNAME_MAX_SIZE      64
-#define DOMAIN_MAX_SIZE        128
-#define CALLID_MAX_SIZE        255
+#define CONTACT_MAX_SIZE 255
+#define RECEIVED_MAX_SIZE 255
+#define USERNAME_MAX_SIZE 64
+#define DOMAIN_MAX_SIZE 128
+#define CALLID_MAX_SIZE 255
 
-#define PATH_MODE_STRICT	2
-#define PATH_MODE_LAZY		1
-#define PATH_MODE_OFF		0
+#define PATH_MODE_STRICT 2
+#define PATH_MODE_LAZY 1
+#define PATH_MODE_OFF 0
 
-#define REG_SAVE_MEM_FL     (1<<0)
-#define REG_SAVE_NORPL_FL   (1<<1)
-#define REG_SAVE_REPL_FL    (1<<2)
-#define REG_SAVE_ALL_FL     ((1<<3)-1)
+#define REG_SAVE_MEM_FL (1 << 0)
+#define REG_SAVE_NORPL_FL (1 << 1)
+#define REG_SAVE_REPL_FL (1 << 2)
+#define REG_SAVE_ALL_FL ((1 << 3) - 1)
 
 #define MOD_NAME "ims_registrar_scscf"
 /** Return and break the execution of routng script */
-#define CSCF_RETURN_BREAK	0
+#define CSCF_RETURN_BREAK 0
 /** Return true in the routing script */
-#define CSCF_RETURN_TRUE	1
+#define CSCF_RETURN_TRUE 1
 /** Return false in the routing script */
 #define CSCF_RETURN_FALSE -1
 /** Return error in the routing script */
@@ -105,7 +105,7 @@ extern int path_use_params;
 extern str sock_hdr_name;
 extern int sock_flag;
 
-extern usrloc_api_t ul;/*!< Structure containing pointers to usrloc functions*/
+extern usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
 
 extern sl_api_t slb;
 

@@ -44,7 +44,7 @@
  */
 
 #ifndef SERVER_ASSIGNMENT_H
-#define	SERVER_ASSIGNMENT_H
+#define SERVER_ASSIGNMENT_H
 
 #include "ims_registrar_scscf_mod.h"
 #include "../cdp/diameter.h"
@@ -54,10 +54,9 @@
 extern struct cxdx_binds cxdxb;
 
 
-int scscf_assign_server(struct sip_msg *msg,
-		str public_identity, str private_identity, int assignment_type,
-		int data_available, saved_transaction_t* transaction_data);
+int scscf_assign_server(struct sip_msg *msg, str public_identity,
+		str private_identity, int assignment_type, int data_available,
+		saved_transaction_t *transaction_data);
 
 
-#endif	/* SERVER_ASSIGNMENT_H */
-
+#endif /* SERVER_ASSIGNMENT_H */

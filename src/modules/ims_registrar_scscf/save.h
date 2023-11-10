@@ -41,7 +41,7 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
- */ 
+ */
 
 
 #ifndef SAVE_H
@@ -56,14 +56,15 @@
 /*! \brief
  * Process REGISTER request and save its contacts
  */
-int assign_server_unreg(struct sip_msg* _m, char* str1, str* direction, char* route);
+int assign_server_unreg(
+		struct sip_msg *_m, char *str1, str *direction, char *route);
 
-int save(struct sip_msg* msg, char* str1, char* route, int _cflags);
+int save(struct sip_msg *msg, char *str1, char *route, int _cflags);
 
-int unregister(struct sip_msg* _m, char* _d, char* _uri);
+int unregister(struct sip_msg *_m, char *_d, char *_uri);
 
-int update_contacts(struct sip_msg* msg, udomain_t* _d,
-        str* public_identity, int assignment_type, ims_subscription** s,
-        str* ccf1, str* ccf2, str* ecf1, str* ecf2, contact_for_header_t** contact_header);
+int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
+		int assignment_type, ims_subscription **s, str *ccf1, str *ccf2,
+		str *ecf1, str *ecf2, contact_for_header_t **contact_header);
 
 #endif /* SAVE_H */
