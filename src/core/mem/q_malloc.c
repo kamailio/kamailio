@@ -198,20 +198,28 @@ struct qm_block *qm_malloc_init(char *address, unsigned long size, int type)
 
 	if((sizeof(struct qm_frag) % ROUNDTO != 0)
 			|| (sizeof(struct qm_frag_end) % ROUNDTO != 0)) {
-		LM_ERR("memory align constraints failure (%lu %% %lu = %lu ::: %lu %% "
+		LM_ERR("memory fragment align constraints failure (%lu %% %lu = %lu "
+			   "::: %lu %% "
 			   "%lu = %lu)\n",
 				sizeof(struct qm_frag), ROUNDTO,
 				sizeof(struct qm_frag) % ROUNDTO, sizeof(struct qm_frag_end),
 				ROUNDTO, sizeof(struct qm_frag_end) % ROUNDTO);
 		return 0;
 	}
-
+	if(sizeof(struct qm_block) % ROUNDTO != 0) {
+		LM_ERR("memory block align constraints failure (%lu %% %lu = %lu)\n",
+				sizeof(struct qm_block), ROUNDTO,
+				sizeof(struct qm_block) % ROUNDTO);
+		return 0;
+	}
 	/* make address and size multiple of ROUNDTO */
 	start = (char *)ROUNDUP((unsigned long)address);
 	LM_DBG("QM_OPTIMIZE=%lu, QM_OPTIMIZE/ROUNDTO=%lu, ROUNDTO=%lu\n",
 			QM_MALLOC_OPTIMIZE, QM_MALLOC_OPTIMIZE / ROUNDTO, ROUNDTO);
-	LM_DBG("QM_HASH_SIZE=%lu, qm_block size=%lu\n", QM_HASH_SIZE,
-			(unsigned long)sizeof(struct qm_block));
+	LM_DBG("QM_HASH_SIZE=%lu, qm_block_size=%lu, qm_block_size %% "
+		   "ROUNDTO=%lu\n",
+			QM_HASH_SIZE, (unsigned long)sizeof(struct qm_block),
+			(unsigned long)sizeof(struct qm_block) % ROUNDTO);
 	LM_DBG("qm_malloc_init(%p, %lu), start=%p\n", address, (unsigned long)size,
 			start);
 	if(size < start - address)
