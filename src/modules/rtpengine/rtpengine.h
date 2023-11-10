@@ -27,69 +27,74 @@
 #include "../../core/str.h"
 #include "../../core/locking.h"
 
-#define RTPENGINE_MIN_RECHECK_TICKS		0
-#define RTPENGINE_MAX_RECHECK_TICKS		((unsigned int)-1)
+#define RTPENGINE_MIN_RECHECK_TICKS 0
+#define RTPENGINE_MAX_RECHECK_TICKS ((unsigned int)-1)
 
-enum rtpe_operation {
-        OP_OFFER = 1,
-        OP_ANSWER,
-        OP_DELETE,
-        OP_START_RECORDING,
-        OP_STOP_RECORDING,
-        OP_QUERY,
-        OP_PING,
-        OP_BLOCK_DTMF,
-        OP_UNBLOCK_DTMF,
-        OP_BLOCK_MEDIA,
-        OP_UNBLOCK_MEDIA,
-        OP_SILENCE_MEDIA,
-        OP_UNSILENCE_MEDIA,
-        OP_START_FORWARDING,
-        OP_STOP_FORWARDING,
-        OP_PLAY_MEDIA,
-        OP_STOP_MEDIA,
-        OP_PLAY_DTMF,
+enum rtpe_operation
+{
+	OP_OFFER = 1,
+	OP_ANSWER,
+	OP_DELETE,
+	OP_START_RECORDING,
+	OP_STOP_RECORDING,
+	OP_QUERY,
+	OP_PING,
+	OP_BLOCK_DTMF,
+	OP_UNBLOCK_DTMF,
+	OP_BLOCK_MEDIA,
+	OP_UNBLOCK_MEDIA,
+	OP_SILENCE_MEDIA,
+	OP_UNSILENCE_MEDIA,
+	OP_START_FORWARDING,
+	OP_STOP_FORWARDING,
+	OP_PLAY_MEDIA,
+	OP_STOP_MEDIA,
+	OP_PLAY_DTMF,
 
-        OP_ANY,
+	OP_ANY,
 };
 
-struct rtpp_node {
-	unsigned int		idx;			/* overall index */
-	str			rn_url;			/* unparsed, deletable */
-	enum {
+struct rtpp_node
+{
+	unsigned int idx; /* overall index */
+	str rn_url;		  /* unparsed, deletable */
+	enum
+	{
 		RNU_UNKNOWN = -1,
 		RNU_LOCAL = 0,
 		RNU_UDP = 1,
 		RNU_UDP6 = 6,
 		RNU_WS = 2,
 		RNU_WSS = 3,
-	}			rn_umode;
-	char			*rn_address;		/* substring of rn_url */
-	int			rn_disabled;		/* found unaccessible? */
-	unsigned int		rn_weight;		/* for load balancing */
-	unsigned int		rn_displayed;		/* for delete at db reload */
-	unsigned int		rn_recheck_ticks;
-	struct rtpp_node	*rn_next;
+	} rn_umode;
+	char *rn_address;		   /* substring of rn_url */
+	int rn_disabled;		   /* found unaccessible? */
+	unsigned int rn_weight;	   /* for load balancing */
+	unsigned int rn_displayed; /* for delete at db reload */
+	unsigned int rn_recheck_ticks;
+	struct rtpp_node *rn_next;
 };
 
 
-struct rtpp_set {
-	unsigned int 		id_set;
-	unsigned int		weight_sum;
-	unsigned int		rtpp_node_count;
-	int 			set_disabled;
-	unsigned int		set_recheck_ticks;
-	struct rtpp_node	*rn_first;
-	struct rtpp_node	*rn_last;
-	struct rtpp_set	 	*rset_next;
-	gen_lock_t		*rset_lock;
+struct rtpp_set
+{
+	unsigned int id_set;
+	unsigned int weight_sum;
+	unsigned int rtpp_node_count;
+	int set_disabled;
+	unsigned int set_recheck_ticks;
+	struct rtpp_node *rn_first;
+	struct rtpp_node *rn_last;
+	struct rtpp_set *rset_next;
+	gen_lock_t *rset_lock;
 };
 
 
-struct rtpp_set_head {
-	struct rtpp_set		*rset_first;
-	struct rtpp_set		*rset_last;
-	gen_lock_t		*rset_head_lock;
+struct rtpp_set_head
+{
+	struct rtpp_set *rset_first;
+	struct rtpp_set *rset_last;
+	gen_lock_t *rset_head_lock;
 };
 
 
@@ -112,6 +117,11 @@ extern str rtpp_url_col;
 extern str rtpp_weight_col;
 extern str rtpp_disabled_col;
 
-enum hash_algo_t { RTP_HASH_CALLID, RTP_HASH_SHA1_CALLID, RTP_HASH_CRC32_CALLID };
+enum hash_algo_t
+{
+	RTP_HASH_CALLID,
+	RTP_HASH_SHA1_CALLID,
+	RTP_HASH_CRC32_CALLID
+};
 
 #endif
