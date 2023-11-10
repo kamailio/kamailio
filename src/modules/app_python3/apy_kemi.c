@@ -71,19 +71,19 @@ int sr_kemi_config_engine_python(
 		}
 	} else if(rtype == BRANCH_ROUTE) {
 		if(rname != NULL && rname->s != NULL) {
-			ret = apy_exec(msg, rname->s, NULL, 0);
+			ret = apy_exec(msg, rname->s, NULL, 1);
 		}
 	} else if(rtype == FAILURE_ROUTE) {
 		if(rname != NULL && rname->s != NULL) {
-			ret = apy_exec(msg, rname->s, NULL, 0);
+			ret = apy_exec(msg, rname->s, NULL, 1);
 		}
 	} else if(rtype == BRANCH_FAILURE_ROUTE) {
 		if(rname != NULL && rname->s != NULL) {
-			ret = apy_exec(msg, rname->s, NULL, 0);
+			ret = apy_exec(msg, rname->s, NULL, 1);
 		}
 	} else if(rtype == TM_ONREPLY_ROUTE) {
 		if(rname != NULL && rname->s != NULL) {
-			ret = apy_exec(msg, rname->s, NULL, 0);
+			ret = apy_exec(msg, rname->s, NULL, 1);
 		}
 	} else if(rtype == ONSEND_ROUTE) {
 		if(kemi_onsend_route_callback.len > 0) {
