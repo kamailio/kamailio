@@ -46,36 +46,46 @@
 #define S_CSCF_SIP_MESSAGES_H_
 
 
-#define MSG_200_SAR_OK					"OK - SAR successful and registrar saved"
+#define MSG_200_SAR_OK "OK - SAR successful and registrar saved"
 
-#define MSG_400_BAD_REQUEST				"Bad Request"
-#define MSG_400_BAD_Contact 			"Bad Request - Error parsing Contact header" 
+#define MSG_400_BAD_REQUEST "Bad Request"
+#define MSG_400_BAD_Contact "Bad Request - Error parsing Contact header"
 
-#define MSG_401_CHALLENGE				"Unauthorized - Challenging the UE"
-#define MSG_407_CHALLENGE				"Unauthorized - Challenging the UE"
+#define MSG_401_CHALLENGE "Unauthorized - Challenging the UE"
+#define MSG_407_CHALLENGE "Unauthorized - Challenging the UE"
 
-#define MSG_403_NO_PRIVATE				"Forbidden - Private identity not found (Authorization: username)"
-#define MSG_403_NO_PUBLIC				"Forbidden - Public identity not found (To:)"
-#define MSG_403_NO_NONCE				"Forbidden - Nonce not found (Authorization: nonce)"
-#define MSG_403_UNKOWN_RC				"Forbidden - HSS responded with unknown Result Code"
-#define MSG_403_UNKOWN_EXPERIMENTAL_RC	"Forbidden - HSS responded with unknown Experimental Result Code"
-#define MSG_403_USER_UNKNOWN			"Forbidden - HSS User Unknown"
-#define MSG_403_IDENTITIES_DONT_MATCH	"Forbidden - HSS Identities don't match"
-#define MSG_403_AUTH_SCHEME_UNSOPPORTED "Forbidden - HSS Authentication Scheme Unsupported"
-#define MSG_403_UNABLE_TO_COMPLY		"Forbidden - HSS Unable to comply"
-#define MSG_403_NO_AUTH_DATA			"Forbidden - HSS returned no authentication vectors"
+#define MSG_403_NO_PRIVATE \
+	"Forbidden - Private identity not found (Authorization: username)"
+#define MSG_403_NO_PUBLIC "Forbidden - Public identity not found (To:)"
+#define MSG_403_NO_NONCE "Forbidden - Nonce not found (Authorization: nonce)"
+#define MSG_403_UNKOWN_RC "Forbidden - HSS responded with unknown Result Code"
+#define MSG_403_UNKOWN_EXPERIMENTAL_RC \
+	"Forbidden - HSS responded with unknown Experimental Result Code"
+#define MSG_403_USER_UNKNOWN "Forbidden - HSS User Unknown"
+#define MSG_403_IDENTITIES_DONT_MATCH "Forbidden - HSS Identities don't match"
+#define MSG_403_AUTH_SCHEME_UNSOPPORTED \
+	"Forbidden - HSS Authentication Scheme Unsupported"
+#define MSG_403_UNABLE_TO_COMPLY "Forbidden - HSS Unable to comply"
+#define MSG_403_NO_AUTH_DATA \
+	"Forbidden - HSS returned no authentication vectors"
 
-#define MSG_423_INTERVAL_TOO_BRIEF 		"Interval too brief"
+#define MSG_423_INTERVAL_TOO_BRIEF "Interval too brief"
 
-#define MSG_480_HSS_ERROR 				"Temporarily unavailable - error retrieving av"
-#define MSG_480_DIAMETER_ERROR			"Temporarily Unavailable - Diameter Cx interface failed"
-#define MSG_480_DIAMETER_TIMEOUT		"Temporarily unavailable - TimeOut in MAR/A HSS"
-#define MSG_480_DIAMETER_TIMEOUT_SAR	"Temporarily unavailable - TimeOut in SAR/A HSS"
-#define MSG_480_DIAMETER_MISSING_AVP	"Temporarily unavailable - Missing AVP in UAA from HSS"
+#define MSG_480_HSS_ERROR "Temporarily unavailable - error retrieving av"
+#define MSG_480_DIAMETER_ERROR \
+	"Temporarily Unavailable - Diameter Cx interface failed"
+#define MSG_480_DIAMETER_TIMEOUT \
+	"Temporarily unavailable - TimeOut in MAR/A HSS"
+#define MSG_480_DIAMETER_TIMEOUT_SAR \
+	"Temporarily unavailable - TimeOut in SAR/A HSS"
+#define MSG_480_DIAMETER_MISSING_AVP \
+	"Temporarily unavailable - Missing AVP in UAA from HSS"
 
-#define MSG_500_PACK_AV					"Server Internal Error - while packing auth vectors"
-#define MSG_500_SAR_FAILED				"Server Internal Error - Server Assignment failed"
-#define MSG_500_UPDATE_CONTACTS_FAILED	"Server Internal Error - Update Contacts failed"
-#define MSG_514_HSS_AUTH_FAILURE		"HSS unauthenticated - did not provide the right H(A1) in MAA"
+#define MSG_500_PACK_AV "Server Internal Error - while packing auth vectors"
+#define MSG_500_SAR_FAILED "Server Internal Error - Server Assignment failed"
+#define MSG_500_UPDATE_CONTACTS_FAILED \
+	"Server Internal Error - Update Contacts failed"
+#define MSG_514_HSS_AUTH_FAILURE \
+	"HSS unauthenticated - did not provide the right H(A1) in MAA"
 
 #endif //S_CSCF_SIP_MESSAGES_H_
