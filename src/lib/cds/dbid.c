@@ -10,8 +10,7 @@ void generate_dbid_ptr(dbid_t dst, void *data_ptr)
 {
 	/* TODO: add cluster distinctive member */
 	/* FIXME: replace sprintf by something more effective */
-	snprintf(dst, MAX_DBID_LEN, "%px%xx%x", 
-			data_ptr, (int)time(NULL), rand());
+	snprintf(dst, MAX_DBID_LEN, "%px%xx%x", data_ptr, (int)time(NULL), rand());
 }
 
 #ifdef SER
@@ -21,16 +20,15 @@ void generate_dbid(dbid_t dst)
 {
 	static int cntr = 0;
 	static pid_t my_pid = -1;
-	
-	if (my_pid < 0) {
+
+	if(my_pid < 0) {
 		my_pid = getpid();
 	}
 
 	/* TODO: add cluster distinctive member */
 	/* FIXME: replace sprintf by something more effective */
-	snprintf(dst, MAX_DBID_LEN, "%xy%xy%xy%x", 
-			my_pid, cntr++, (int)time(NULL), rand());
+	snprintf(dst, MAX_DBID_LEN, "%xy%xy%xy%x", my_pid, cntr++, (int)time(NULL),
+			rand());
 }
 
 #endif
-

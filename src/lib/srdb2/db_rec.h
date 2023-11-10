@@ -20,7 +20,7 @@
  */
 
 #ifndef _DB_REC_H
-#define _DB_REC_H  1
+#define _DB_REC_H 1
 
 /** \ingroup DB_API 
  * @{ 
@@ -31,17 +31,19 @@
 #include "db_fld.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif /* __cplusplus */
 
-typedef struct db_rec {
-	db_gen_t gen; /* Generic part of the structure */
-	struct db_res* res; /* Result this record belongs to */
-	db_fld_t* fld; /* Array of all fields in the record */
-} db_rec_t;
+	typedef struct db_rec
+	{
+		db_gen_t gen;		/* Generic part of the structure */
+		struct db_res *res; /* Result this record belongs to */
+		db_fld_t *fld;		/* Array of all fields in the record */
+	} db_rec_t;
 
-struct db_rec* db_rec(struct db_res* res, db_fld_t* fld);
-void db_rec_free(struct db_rec* rec);
+	struct db_rec *db_rec(struct db_res *res, db_fld_t *fld);
+	void db_rec_free(struct db_rec *rec);
 
 #ifdef __cplusplus
 }

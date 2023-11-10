@@ -20,7 +20,7 @@
  */
 
 #ifndef _DB_CTX_H
-#define _DB_CTX_H  1
+#define _DB_CTX_H 1
 
 /** \ingroup DB_API 
  * @{ 
@@ -34,66 +34,69 @@
 #include "../../core/list.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif /* __cplusplus */
 
-struct db_ctx;
+	struct db_ctx;
 
 
-/* This structure is stored in a linked list inside db_ctx
+	/* This structure is stored in a linked list inside db_ctx
  * and is used to lookup driver-specific data based on module
  * name. A driver can have multiple connections in a context but
  * it should have only one structure attached to db_ctx structure
  * (which will be shared by all the connections of that driver in
  * db_ctx. 
  */
-struct db_ctx_data {
-	str module;
-	db_drv_t* data;
-	SLIST_ENTRY(db_ctx_data) next;
-};
+	struct db_ctx_data
+	{
+		str module;
+		db_drv_t *data;
+		SLIST_ENTRY(db_ctx_data) next;
+	};
 
 
-typedef struct db_ctx {
-	db_gen_t gen;    /* Generic data common for all DB API structures */
-	str id;          /* Text id of the context */
-	int con_n;       /* Number of connections in the context */
-	SLIST_HEAD(, db_ctx_data) data;
-	struct db_con* con[DB_PAYLOAD_MAX];
-} db_ctx_t;
+	typedef struct db_ctx
+	{
+		db_gen_t gen; /* Generic data common for all DB API structures */
+		str id;		  /* Text id of the context */
+		int con_n;	  /* Number of connections in the context */
+		SLIST_HEAD(, db_ctx_data) data;
+		struct db_con *con[DB_PAYLOAD_MAX];
+	} db_ctx_t;
 
-	
-/*
+
+	/*
  * Create a new database context
  */
-struct db_ctx* db_ctx(const char* id);
+	struct db_ctx *db_ctx(const char *id);
 
 
-/* Remove the database context structure
+	/* Remove the database context structure
  * from the linked list and free all memory
  * used by the structure
  */
-void db_ctx_free(struct db_ctx* ctx);
+	void db_ctx_free(struct db_ctx *ctx);
 
 
-/*
+	/*
  * Add a new database to database context
  */
-int db_add_db(struct db_ctx* ctx, const char* uri);
+	int db_add_db(struct db_ctx *ctx, const char *uri);
 
 
-/*
+	/*
  * Attempt to connect all connections in the
  * context
  */
-int db_connect(struct db_ctx* ctx);
+	int db_connect(struct db_ctx *ctx);
 
 
-/*
+	/*
  * Disconnect all database connections in the
  * context
  */
-void db_disconnect(struct db_ctx* ctx);
+	void db_disconnect(struct db_ctx *ctx);
 
 
 #ifdef __cplusplus

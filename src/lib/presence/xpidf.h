@@ -29,6 +29,7 @@
 #include <cds/sstr.h>
 #include <presence/pres_doc.h>
 
-int create_xpidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_type);
+int create_xpidf_document(
+		presentity_info_t *p, str_t *dst, str_t *dst_content_type);
 
 #endif

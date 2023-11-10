@@ -37,7 +37,7 @@
  * db drivers can override the function pointer in db_con
  * structures
  */
-static int db_con_connect(db_con_t* con)
+static int db_con_connect(db_con_t *con)
 {
 	return 0;
 }
@@ -48,7 +48,7 @@ static int db_con_connect(db_con_t* con)
  * db drivers can override the function pointer in db_con
  * structures
  */
-static void db_con_disconnect(db_con_t* con)
+static void db_con_disconnect(db_con_t *con)
 {
 }
 
@@ -59,33 +59,34 @@ static void db_con_disconnect(db_con_t* con)
  * in the driver that is associated with the structure based
  * on the scheme of uri parameter
  */
-db_con_t* db_con(db_ctx_t* ctx, db_uri_t* uri)
+db_con_t *db_con(db_ctx_t *ctx, db_uri_t *uri)
 {
-    db_con_t* newp;
+	db_con_t *newp;
 
-    newp = (db_con_t*)pkg_malloc(sizeof(db_con_t));
-    if (newp == NULL) {
+	newp = (db_con_t *)pkg_malloc(sizeof(db_con_t));
+	if(newp == NULL) {
 		ERR("db_con: No memory left\n");
 		goto error;
-    }
+	}
 
-    memset(newp, '\0', sizeof(db_con_t));
-	if (db_gen_init(&newp->gen) < 0) goto error;
+	memset(newp, '\0', sizeof(db_con_t));
+	if(db_gen_init(&newp->gen) < 0)
+		goto error;
 
-    newp->uri = uri;
+	newp->uri = uri;
 	newp->ctx = ctx;
 	newp->connect = db_con_connect;
 	newp->disconnect = db_con_disconnect;
 
 	/* Call db_ctx function if the driver has it */
-	if (db_drv_call(&uri->scheme, "db_con", newp, ctx->con_n) < 0) {
+	if(db_drv_call(&uri->scheme, "db_con", newp, ctx->con_n) < 0) {
 		goto error;
 	}
 
 	return newp;
 
- error:
-	if (newp) {
+error:
+	if(newp) {
 		db_gen_free(&newp->gen);
 		pkg_free(newp);
 	}
@@ -96,12 +97,14 @@ db_con_t* db_con(db_ctx_t* ctx, db_uri_t* uri)
 /*
  * Release all memory used by the structure
  */
-void db_con_free(db_con_t* con)
+void db_con_free(db_con_t *con)
 {
-    if (con == NULL) return;
+	if(con == NULL)
+		return;
 	db_gen_free(&con->gen);
-	if (con->uri) db_uri_free(con->uri);
-    pkg_free(con);
+	if(con->uri)
+		db_uri_free(con->uri);
+	pkg_free(con);
 }
 
 /** @} */

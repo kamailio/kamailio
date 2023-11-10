@@ -44,7 +44,7 @@
  * \param _v target value
  * \return zero on success, negative on conversion errors
  */
-int db_str2int(const char* _s, int* _v);
+int db_str2int(const char *_s, int *_v);
 
 
 /**
@@ -54,7 +54,7 @@ int db_str2int(const char* _s, int* _v);
  * \param _v target value
  * \return zero on success, negative on conversion errors
  */
-int db_str2uint(const char* _s, unsigned int* _v);
+int db_str2uint(const char *_s, unsigned int *_v);
 
 
 /**
@@ -64,7 +64,7 @@ int db_str2uint(const char* _s, unsigned int* _v);
  * \param _v target value
  * \return zero on success, negative on conversion errors
  */
-int db_str2longlong(const char* _s, long long* _v);
+int db_str2longlong(const char *_s, long long *_v);
 
 
 /**
@@ -74,7 +74,7 @@ int db_str2longlong(const char* _s, long long* _v);
  * \param _v target value
  * \return zero on success, negative on conversion errors
  */
-int db_str2ulonglong(const char* _s, unsigned long long* _v);
+int db_str2ulonglong(const char *_s, unsigned long long *_v);
 
 
 /**
@@ -84,7 +84,7 @@ int db_str2ulonglong(const char* _s, unsigned long long* _v);
  * \param _v target value
  * \return zero on success, negative on conversion errors
  */
-int db_str2double(const char* _s, double* _v);
+int db_str2double(const char *_s, double *_v);
 
 
 /**
@@ -95,7 +95,7 @@ int db_str2double(const char* _s, double* _v);
  * \param _l available length and target length
  * \return zero on success, negative on conversion errors
  */
-int db_int2str(int _v, char* _s, int* _l);
+int db_int2str(int _v, char *_s, int *_l);
 
 
 /**
@@ -106,7 +106,7 @@ int db_int2str(int _v, char* _s, int* _l);
  * \param _l available length and target length
  * \return zero on success, negative on conversion errors
  */
-int db_uint2str(unsigned int _v, char* _s, int* _l);
+int db_uint2str(unsigned int _v, char *_s, int *_l);
 
 
 /**
@@ -117,7 +117,7 @@ int db_uint2str(unsigned int _v, char* _s, int* _l);
  * \param _l available length and target length
  * \return zero on success, negative on conversion errors
  */
-int db_longlong2str(long long _v, char* _s, int* _l);
+int db_longlong2str(long long _v, char *_s, int *_l);
 
 
 /**
@@ -128,7 +128,7 @@ int db_longlong2str(long long _v, char* _s, int* _l);
  * \param _l available length and target length
  * \return zero on success, negative on conversion errors
  */
-int db_ulonglong2str(unsigned long long _v, char* _s, int* _l);
+int db_ulonglong2str(unsigned long long _v, char *_s, int *_l);
 
 
 /**
@@ -139,7 +139,7 @@ int db_ulonglong2str(unsigned long long _v, char* _s, int* _l);
  * \param _l available length and target length
  * \return zero on success, negative on conversion errors
  */
-int db_double2str(double _v, char* _s, int* _l);
+int db_double2str(double _v, char *_s, int *_l);
 
 
 /**
@@ -153,9 +153,9 @@ int db_double2str(double _v, char* _s, int* _l);
  * should be done in the val2str function, as some databases
  * like db_berkeley don't need or like this at all.
  */
-int db_time2str(time_t _v, char* _s, int* _l);
+int db_time2str(time_t _v, char *_s, int *_l);
 
-int db_time2str_ex(time_t _v, char* _s, int* _l, int _qmode);
+int db_time2str_ex(time_t _v, char *_s, int *_l, int _qmode);
 
 /**
  * Converts a char into a time_t value.
@@ -164,7 +164,7 @@ int db_time2str_ex(time_t _v, char* _s, int* _l, int _qmode);
  * \param _v target value
  * \return zero on success, negative on conversion errors
  */
-int db_str2time(const char* _s, time_t* _v);
+int db_str2time(const char *_s, time_t *_v);
 
 
 /**
@@ -177,7 +177,8 @@ int db_str2time(const char* _s, time_t* _v);
  * \param _tq char to quote special tokens or empty string
  * \return the length of the printed result on success, negative on errors
  */
-int db_print_columns(char* _b, const int _l, const db_key_t* _c, const int _n, const char *_tq);
+int db_print_columns(char *_b, const int _l, const db_key_t *_c, const int _n,
+		const char *_tq);
 
 
 /**
@@ -191,8 +192,9 @@ int db_print_columns(char* _b, const int _l, const db_key_t* _c, const int _n, c
  * \param  (*val2str) function pointer to a db specific conversion function
  * \return the length of the printed result on success, negative on errors
  */
-int db_print_values(const db1_con_t* _c, char* _b, const int _l, const db_val_t* _v,
-	const int _n, int (*val2str)(const db1_con_t*, const db_val_t*, char*, int*));
+int db_print_values(const db1_con_t *_c, char *_b, const int _l,
+		const db_val_t *_v, const int _n,
+		int (*val2str)(const db1_con_t *, const db_val_t *, char *, int *));
 
 
 /**
@@ -208,9 +210,9 @@ int db_print_values(const db1_con_t* _c, char* _b, const int _l, const db_val_t*
  * \param  (*val2str) function pointer to a db specific conversion function
  * \return the length of the printed result on success, negative on errors
  */
-int db_print_where(const db1_con_t* _c, char* _b, const int _l, const db_key_t* _k,
-	const db_op_t* _o, const db_val_t* _v, const int _n, int (*val2str)
-	(const 	db1_con_t*, const db_val_t*, char*, int*));
+int db_print_where(const db1_con_t *_c, char *_b, const int _l,
+		const db_key_t *_k, const db_op_t *_o, const db_val_t *_v, const int _n,
+		int (*val2str)(const db1_con_t *, const db_val_t *, char *, int *));
 
 
 /**
@@ -225,9 +227,9 @@ int db_print_where(const db1_con_t* _c, char* _b, const int _l, const db_key_t* 
  * \param  (*val2str) function pointer to a db specific conversion function
  * \return the length of the printed result on success, negative on errors
  */
-int db_print_set(const db1_con_t* _c, char* _b, const int _l,
-	const db_key_t* _k, const db_val_t* _v, const int _n, int (*val2str)
-	(const db1_con_t*, const db_val_t*, char*, int*));
+int db_print_set(const db1_con_t *_c, char *_b, const int _l,
+		const db_key_t *_k, const db_val_t *_v, const int _n,
+		int (*val2str)(const db1_con_t *, const db_val_t *, char *, int *));
 
 
 /**
@@ -238,6 +240,6 @@ int db_print_set(const db1_con_t* _c, char* _b, const int _l,
  * \param pvs pv_spec where to put the database value
  * \return 0 on success, -1 on failure
  */
-int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs);
+int db_val2pv_spec(struct sip_msg *msg, db_val_t *dbval, pv_spec_t *pvs);
 
 #endif
