@@ -52,33 +52,28 @@ int use_partial_states = 0;
 unsigned int pres_conf_default_expires = 3600;
 
 /* module exported commands */
-static cmd_export_t cmds[] =
-{
-    {0,	0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 
 /* module exported parameters */
 static param_export_t params[] = {
-	{ "use_partial_states", INT_PARAM, &use_partial_states },
-	{ "default_expires", INT_PARAM, &pres_conf_default_expires },
-	{0, 0, 0}
-};
+		{"use_partial_states", INT_PARAM, &use_partial_states},
+		{"default_expires", INT_PARAM, &pres_conf_default_expires}, {0, 0, 0}};
 
 /* presence api bind structure */
 presence_api_t pres;
 
 /* module exports */
-struct module_exports exports= {
-    "presence_conference",	/* module name */
-	DEFAULT_DLFLAGS,		/* dlopen flags */
-	cmds,					/* exported functions */
-	params,					/* exported parameters */
-	0,						/* RPC method exports */
-	0,						/* exported pseudo-variables */
-	0,						/* response handling function */
-	mod_init,				/* module initialization function */
-	0,						/* per-child init function */
-	0						/* module destroy function */
+struct module_exports exports = {
+		"presence_conference", /* module name */
+		DEFAULT_DLFLAGS,	   /* dlopen flags */
+		cmds,				   /* exported functions */
+		params,				   /* exported parameters */
+		0,					   /* RPC method exports */
+		0,					   /* exported pseudo-variables */
+		0,					   /* response handling function */
+		mod_init,			   /* module initialization function */
+		0,					   /* per-child init function */
+		0					   /* module destroy function */
 };
 
 /*
@@ -88,18 +83,18 @@ static int mod_init(void)
 {
 	bind_presence_t bind_presence;
 
-	bind_presence= (bind_presence_t)find_export("bind_presence", 1,0);
-	if (!bind_presence) {
+	bind_presence = (bind_presence_t)find_export("bind_presence", 1, 0);
+	if(!bind_presence) {
 		LM_ERR("cannot find bind_presence\n");
 		return -1;
 	}
-	if (bind_presence(&pres) < 0) {
+	if(bind_presence(&pres) < 0) {
 		LM_ERR("cannot bind to presence module\n");
 		return -1;
 	}
 
 	pres_add_event = pres.add_event;
-	if (pres_add_event == NULL) {
+	if(pres_add_event == NULL) {
 		LM_ERR("could not import add_event function\n");
 		return -1;
 	}
@@ -108,5 +103,5 @@ static int mod_init(void)
 		return -1;
 	}
 
-    return 0;
+	return 0;
 }
