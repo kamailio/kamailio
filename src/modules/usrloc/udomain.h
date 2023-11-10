@@ -37,21 +37,22 @@
 #include "hslot.h"
 #include "usrloc.h"
 
-struct hslot;   /*!< Hash table slot */
+struct hslot;	/*!< Hash table slot */
 struct urecord; /*!< Usrloc record */
 
 
 /*! \brief
  * The structure represents a usrloc domain
  */
-struct udomain {
-	str* name;                 /*!< Domain name (NULL terminated) */
-	int size;                  /*!< Hash table size */
-	struct hslot* table;       /*!< Hash table - array of collision slots */
+struct udomain
+{
+	str *name;			 /*!< Domain name (NULL terminated) */
+	int size;			 /*!< Hash table size */
+	struct hslot *table; /*!< Hash table - array of collision slots */
 	/* statistics */
-	stat_var *users;           /*!< no of registered users */
-	stat_var *contacts;        /*!< no of registered contacts */
-	stat_var *expires;         /*!< no of expires */
+	stat_var *users;	/*!< no of registered users */
+	stat_var *contacts; /*!< no of registered contacts */
+	stat_var *expires;	/*!< no of expires */
 };
 
 
@@ -63,20 +64,20 @@ struct udomain {
  * \param _d new created domain
  * \return 0 on success, -1 on failure
  */
-int new_udomain(str* _n, int _s, udomain_t** _d);
+int new_udomain(str *_n, int _s, udomain_t **_d);
 
 
 /*!
  * \brief Free all memory allocated for the domain
  * \param _d freed domain
  */
-void free_udomain(udomain_t* _d);
+void free_udomain(udomain_t *_d);
 
 
 /*!
  * \brief Print udomain, debugging helper function
  */
-void print_udomain(FILE* _f, udomain_t* _d);
+void print_udomain(FILE *_f, udomain_t *_d);
 
 
 /*!
@@ -88,7 +89,7 @@ void print_udomain(FILE* _f, udomain_t* _d);
  * \param _d loaded domain
  * \return 0 on success, -1 on failure
  */
-int preload_udomain(db1_con_t* _c, udomain_t* _d);
+int preload_udomain(db1_con_t *_c, udomain_t *_d);
 
 
 /*!
@@ -96,7 +97,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d);
  * \param con database connection
  * \param d domain
  */
-int testdb_udomain(db1_con_t* con, udomain_t* d);
+int testdb_udomain(db1_con_t *con, udomain_t *d);
 
 
 /*!
@@ -104,7 +105,7 @@ int testdb_udomain(db1_con_t* con, udomain_t* d);
  * \param _d cleaned domain
  * \return 0 on success, -1 on failure
  */
-int db_timer_udomain(udomain_t* _d);
+int db_timer_udomain(udomain_t *_d);
 
 
 /*!
@@ -113,7 +114,7 @@ int db_timer_udomain(udomain_t* _d);
  * \param istart index of hash table slot to start processing
  * \param istep step through hash table slots to process
  */
-void mem_timer_udomain(udomain_t* _d, int istart, int istep);
+void mem_timer_udomain(udomain_t *_d, int istart, int istep);
 
 
 /*!
@@ -123,7 +124,7 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep);
  * \param _r new created record
  * \return 0 on success, -1 on failure
  */
-int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
+int mem_insert_urecord(udomain_t *_d, str *_aor, struct urecord **_r);
 
 
 /*!
@@ -131,13 +132,13 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
  * \param _d domain the record belongs to
  * \param _r deleted record
  */
-void mem_delete_urecord(udomain_t* _d, struct urecord* _r);
+void mem_delete_urecord(udomain_t *_d, struct urecord *_r);
 
 
 /*! \brief
  * Timer handler for given domain
  */
-void lock_udomain(udomain_t* _d, str *_aor);
+void lock_udomain(udomain_t *_d, str *_aor);
 
 
 /*!
@@ -145,7 +146,7 @@ void lock_udomain(udomain_t* _d, str *_aor);
  * \param _d domain
  * \param _aor address of record, uses as hash source for the lock slot
  */
-void unlock_udomain(udomain_t* _d, str *_aor);
+void unlock_udomain(udomain_t *_d, str *_aor);
 
 
 /*!
@@ -153,14 +154,14 @@ void unlock_udomain(udomain_t* _d, str *_aor);
  * \param _d domain
  * \param i slot number
  */
-void lock_ulslot(udomain_t* _d, int i);
+void lock_ulslot(udomain_t *_d, int i);
 
 /*!
  * \brief Release lock for a slot
  * \param _d domain
  * \param i slot number
  */
-void unlock_ulslot(udomain_t* _d, int i);
+void unlock_ulslot(udomain_t *_d, int i);
 
 /* ===== module interface ======= */
 
@@ -172,7 +173,7 @@ void unlock_ulslot(udomain_t* _d, int i);
  * \param _r new created record
  * \return return 0 on success, -1 on failure
  */
-int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
+int insert_urecord(udomain_t *_d, str *_aor, struct urecord **_r);
 
 
 /*!
@@ -182,7 +183,7 @@ int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
  * \param _r new created record
  * \return 0 if a record was found, 1 if nothing could be found
  */
-int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
+int get_urecord(udomain_t *_d, str *_aor, struct urecord **_r);
 
 /*!
  * \brief Obtain a urecord pointer if the urecord exists in domain (lock slot)
@@ -193,8 +194,8 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
  * \param _c store pointer to contact structure
  * \return 0 if a record was found, 1 if nothing could be found
  */
-int get_urecord_by_ruid(udomain_t* _d, unsigned int _aorhash,
-		str *_ruid, struct urecord** _r, struct ucontact** _c);
+int get_urecord_by_ruid(udomain_t *_d, unsigned int _aorhash, str *_ruid,
+		struct urecord **_r, struct ucontact **_c);
 
 /*!
  * \brief Delete a urecord from domain
@@ -203,7 +204,7 @@ int get_urecord_by_ruid(udomain_t* _d, unsigned int _aorhash,
  * \param _r deleted record
  * \return 0 on success, -1 if the record could not be deleted
  */
-int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r);
+int delete_urecord(udomain_t *_d, str *_aor, struct urecord *_r);
 
 
 /* ===== per-contact attributes ======= */
