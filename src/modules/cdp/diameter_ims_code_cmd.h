@@ -47,48 +47,48 @@
 
 /*	Command Codes allocated for IMS	*/
 /*		The Gq Interface 			*/
-#define IMS_AAR		265		/**< Bearer-Authorization		Request	*/
-#define IMS_AAA		265		/**< Bearer-Authorization		Answer	*/
-#define IMS_RAR		258		/**< Re-Auth					Request */
-#define IMS_RAA		258		/**< Re-Auth					Answer	*/
-#define IMS_STR		275		/**< Session Termination 		Request */
-#define IMS_STA		275		/**< Session Termination 		Answer	*/
-#define IMS_ASR		274		/**< Abort-Session-Request		Request */
-#define IMS_ASA		274		/**< Abort-Session-Request		Answer	*/
+#define IMS_AAR 265 /**< Bearer-Authorization		Request	*/
+#define IMS_AAA 265 /**< Bearer-Authorization		Answer	*/
+#define IMS_RAR 258 /**< Re-Auth					Request */
+#define IMS_RAA 258 /**< Re-Auth					Answer	*/
+#define IMS_STR 275 /**< Session Termination 		Request */
+#define IMS_STA 275 /**< Session Termination 		Answer	*/
+#define IMS_ASR 274 /**< Abort-Session-Request		Request */
+#define IMS_ASA 274 /**< Abort-Session-Request		Answer	*/
 /* The Gx Interface */
-#define IMS_CCR		272
-#define IMS_CCA		272
+#define IMS_CCR 272
+#define IMS_CCA 272
 /*		The Cx/Dx Interface 			*/
-#define IMS_UAR		300		/**< User-Authorization			Request	*/
-#define IMS_UAA		300		/**< User-Authorization			Answer	*/
-#define IMS_SAR		301		/**< Server-Assignment			Request */
-#define IMS_SAA		301		/**< Server-Assignment			Answer	*/
-#define IMS_LIR		302		/**< Location-Info				Request */
-#define IMS_LIA		302		/**< Location-Info				Answer	*/
-#define IMS_MAR		303		/**< Multimedia-Auth			Request */
-#define IMS_MAA		303		/**< Multimedia-Auth			Answer	*/
-#define IMS_RTR		304		/**< Registration-Termination	Request */
-#define IMS_RTA		304		/**< Registration-Termination	Answer	*/
-#define IMS_PPR		305		/**< Push-Profile				Request */
-#define IMS_PPA		305		/**< Push-Profile				Answer	*/
+#define IMS_UAR 300 /**< User-Authorization			Request	*/
+#define IMS_UAA 300 /**< User-Authorization			Answer	*/
+#define IMS_SAR 301 /**< Server-Assignment			Request */
+#define IMS_SAA 301 /**< Server-Assignment			Answer	*/
+#define IMS_LIR 302 /**< Location-Info				Request */
+#define IMS_LIA 302 /**< Location-Info				Answer	*/
+#define IMS_MAR 303 /**< Multimedia-Auth			Request */
+#define IMS_MAA 303 /**< Multimedia-Auth			Answer	*/
+#define IMS_RTR 304 /**< Registration-Termination	Request */
+#define IMS_RTA 304 /**< Registration-Termination	Answer	*/
+#define IMS_PPR 305 /**< Push-Profile				Request */
+#define IMS_PPA 305 /**< Push-Profile				Answer	*/
 /**		The Sh/Ph Interface 			*/
-#define IMS_UDR		306		/**< User-Data					Request */
-#define IMS_UDA		306		/**< User-Data					Answer	*/
-#define IMS_PUR		307		/**< Profile-Update				Request */
-#define IMS_PUA		307		/**< Profile-Update				Answer	*/
-#define IMS_SNR		308		/**< Subscriber-Notifications	Request */
-#define IMS_SNA		308		/**< Subscriber-Notifications	Answer	*/
-#define IMS_PNR		309		/**< Push-Notification			Request */
-#define IMS_PNA		309		/**< Push-Notification			Answer	*/
+#define IMS_UDR 306 /**< User-Data					Request */
+#define IMS_UDA 306 /**< User-Data					Answer	*/
+#define IMS_PUR 307 /**< Profile-Update				Request */
+#define IMS_PUA 307 /**< Profile-Update				Answer	*/
+#define IMS_SNR 308 /**< Subscriber-Notifications	Request */
+#define IMS_SNA 308 /**< Subscriber-Notifications	Answer	*/
+#define IMS_PNR 309 /**< Push-Notification			Request */
+#define IMS_PNA 309 /**< Push-Notification			Answer	*/
 /**	Allocated Command Codes, not used yet	*/
-#define IMS_10R		310
-#define IMS_10A		310
-#define IMS_11R		311
-#define IMS_11A		311
-#define IMS_12R		312
-#define IMS_12A		312
-#define IMS_13R		313
-#define IMS_13A		313
+#define IMS_10R 310
+#define IMS_10A 310
+#define IMS_11R 311
+#define IMS_11A 311
+#define IMS_12R 312
+#define IMS_12A 312
+#define IMS_13R 313
+#define IMS_13A 313
 
 
 #endif /* __DIAMETER_IMS_CODE_CMD_H */

@@ -58,32 +58,32 @@ typedef sem_t gen_sem_t;
  * @param value - 0 if it should be pre-locked, 1 if not, or how many locks until block
  * @return
  */
-#define sem_new(sem_ptr,value)\
-	do {\
-		sem_ptr=shm_malloc(sizeof(gen_sem_t));\
-		if (!sem_ptr){\
-			LM_ERR("Error allocating %lx bytes of shm!\n",sizeof(gen_sem_t));\
-			goto out_of_memory;\
-		}	\
-		if (sem_init(sem_ptr, 1, value)<0) {\
-			LM_ERR("Error > %s\n",strerror(errno));\
-			goto out_of_memory;\
-		}\
+#define sem_new(sem_ptr, value)                                                \
+	do {                                                                       \
+		sem_ptr = shm_malloc(sizeof(gen_sem_t));                               \
+		if(!sem_ptr) {                                                         \
+			LM_ERR("Error allocating %lx bytes of shm!\n", sizeof(gen_sem_t)); \
+			goto out_of_memory;                                                \
+		}                                                                      \
+		if(sem_init(sem_ptr, 1, value) < 0) {                                  \
+			LM_ERR("Error > %s\n", strerror(errno));                           \
+			goto out_of_memory;                                                \
+		}                                                                      \
 	} while(0)
 
-#define sem_free(sem)\
-	do {\
-		if (sem) {\
-			sem_destroy(sem);\
-			shm_free(sem);\
-			sem=0;\
-		}\
+#define sem_free(sem)         \
+	do {                      \
+		if(sem) {             \
+			sem_destroy(sem); \
+			shm_free(sem);    \
+			sem = 0;          \
+		}                     \
 	} while(0)
 
 
 #define sem_get(sem) sem_wait(sem)
 #define sem_tryget(sem) sem_trywait(sem)
-#define sem_timedget(sem,abs_timeout) sem_trywait(sem,abs_timeout)
+#define sem_timedget(sem, abs_timeout) sem_trywait(sem, abs_timeout)
 
 #define sem_release(sem) sem_post(sem)
 
