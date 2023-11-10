@@ -46,23 +46,21 @@ int _ksr_app_lua_log_mode = 0;
 
 app_lua_api_t _app_lua_api = {0};
 
-static param_export_t params[]={
-	{"register", PARAM_STRING|USE_FUNC_PARAM, (void*)app_lua_register_param},
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"register", PARAM_STRING | USE_FUNC_PARAM,
+										  (void *)app_lua_register_param},
+		{0, 0, 0}};
 
 
 struct module_exports exports = {
-	"app_lua_sr",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	0,			/*·exported·functions·*/
-	params,		/*·exported·params·*/
-	0,			/*·exported·RPC·methods·*/
-	0,			/* exported pseudo-variables */
-	0,			/*·response·function·*/
-	mod_init,	/* initialization module */
-	0,			/* per child init function */
-	0			/* destroy function */
+		"app_lua_sr", DEFAULT_DLFLAGS, /* dlopen flags */
+		0,							   /*·exported·functions·*/
+		params,						   /*·exported·params·*/
+		0,							   /*·exported·RPC·methods·*/
+		0,							   /* exported pseudo-variables */
+		0,							   /*·response·function·*/
+		mod_init,					   /* initialization module */
+		0,							   /* per child init function */
+		0							   /* destroy function */
 };
 
 /**
@@ -70,10 +68,10 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	if(app_lua_load_api(&_app_lua_api)<0) {
+	if(app_lua_load_api(&_app_lua_api) < 0) {
 		return -1;
 	}
-	if(lua_sr_exp_init_mod()<0) {
+	if(lua_sr_exp_init_mod() < 0) {
 		return -1;
 	}
 
@@ -83,11 +81,11 @@ static int mod_init(void)
 
 static int app_lua_register_param(modparam_t type, void *val)
 {
-	if(val==NULL) {
+	if(val == NULL) {
 		return -1;
 	}
 
-	if(lua_sr_exp_register_mod((char*)val)==0)
+	if(lua_sr_exp_register_mod((char *)val) == 0)
 		return 0;
 	return -1;
 }
