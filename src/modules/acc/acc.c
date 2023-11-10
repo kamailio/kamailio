@@ -55,7 +55,7 @@ extern char *acc_time_format;
 extern int acc_extra_nullable;
 
 static db_func_t acc_dbf;
-static db1_con_t* db_handle=0;
+static db1_con_t *db_handle = 0;
 extern struct acc_extra *db_extra;
 
 /* arrays used to collect the values before being
@@ -65,18 +65,17 @@ static str *val_arr = NULL;
 static int *int_arr = NULL;
 static char *type_arr = NULL;
 
-#define ACC_TIME_FORMAT_SIZE	128
+#define ACC_TIME_FORMAT_SIZE 128
 static char acc_time_format_buf[ACC_TIME_FORMAT_SIZE];
 
 /********************************************
  *        acc CORE function
  ********************************************/
-#define get_ft_body( _ft_hdr) \
-	((struct to_body*)_ft_hdr->parsed)
+#define get_ft_body(_ft_hdr) ((struct to_body *)_ft_hdr->parsed)
 
-#define SET_EMPTY_VAL(_i) \
-	do { \
-		c_vals[_i].s = 0; \
+#define SET_EMPTY_VAL(_i)   \
+	do {                    \
+		c_vals[_i].s = 0;   \
 		c_vals[_i].len = 0; \
 	} while(0)
 
@@ -99,16 +98,16 @@ int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals)
 	t_vals[0] = TYPE_STR;
 
 	/* from/to URI and TAG */
-	if (req->msg_flags&FL_REQ_UPSTREAM) {
-		LM_DBG("the flag UPSTREAM is set -> swap F/T\n"); \
-			from = acc_env.to;
+	if(req->msg_flags & FL_REQ_UPSTREAM) {
+		LM_DBG("the flag UPSTREAM is set -> swap F/T\n");
+		from = acc_env.to;
 		to = req->from;
 	} else {
 		from = req->from;
 		to = acc_env.to;
 	}
 
-	if (from && (ft_body=get_ft_body(from)) && ft_body->tag_value.len) {
+	if(from && (ft_body = get_ft_body(from)) && ft_body->tag_value.len) {
 		c_vals[1] = ft_body->tag_value;
 		t_vals[1] = TYPE_STR;
 	} else {
@@ -116,7 +115,7 @@ int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals)
 		t_vals[1] = TYPE_NULL;
 	}
 
-	if (to && (ft_body=get_ft_body(to)) && ft_body->tag_value.len) {
+	if(to && (ft_body = get_ft_body(to)) && ft_body->tag_value.len) {
 		c_vals[2] = ft_body->tag_value;
 		t_vals[2] = TYPE_STR;
 	} else {
@@ -125,14 +124,15 @@ int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals)
 	}
 
 	LM_DBG("default - totag[%.*s]\n", c_vals[2].len, c_vals[2].s);
-	if (c_vals[2].len == 0 && acc_env.to_tag.s && acc_env.to_tag.len > 0) {
-		LM_DBG("extra [%p] totag[%.*s]\n", acc_env.to_tag.s, acc_env.to_tag.len, acc_env.to_tag.s);
+	if(c_vals[2].len == 0 && acc_env.to_tag.s && acc_env.to_tag.len > 0) {
+		LM_DBG("extra [%p] totag[%.*s]\n", acc_env.to_tag.s, acc_env.to_tag.len,
+				acc_env.to_tag.s);
 		c_vals[2].len = acc_env.to_tag.len;
 		c_vals[2].s = acc_env.to_tag.s;
 	}
 
 	/* Callid */
-	if (req->callid && req->callid->body.len) {
+	if(req->callid && req->callid->body.len) {
 		c_vals[3] = req->callid->body;
 		t_vals[3] = TYPE_STR;
 	} else {
@@ -156,17 +156,16 @@ int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals)
 }
 
 
-
 /********************************************
  *        LOG  ACCOUNTING
  ********************************************/
 static str *log_attrs = NULL;
 
-#define SET_LOG_ATTR(_n,_atr)  \
-	do { \
-		log_attrs[_n].s=A_##_atr; \
-		log_attrs[_n].len=A_##_atr##_LEN; \
-		n++; \
+#define SET_LOG_ATTR(_n, _atr)              \
+	do {                                    \
+		log_attrs[_n].s = A_##_atr;         \
+		log_attrs[_n].len = A_##_atr##_LEN; \
+		n++;                                \
 	} while(0)
 
 void acc_log_init(void)
@@ -177,27 +176,27 @@ void acc_log_init(void)
 	n = 0;
 
 	/* fixed core attributes */
-	SET_LOG_ATTR(n,METHOD);
-	SET_LOG_ATTR(n,FROMTAG);
-	SET_LOG_ATTR(n,TOTAG);
-	SET_LOG_ATTR(n,CALLID);
-	SET_LOG_ATTR(n,CODE);
-	SET_LOG_ATTR(n,STATUS);
+	SET_LOG_ATTR(n, METHOD);
+	SET_LOG_ATTR(n, FROMTAG);
+	SET_LOG_ATTR(n, TOTAG);
+	SET_LOG_ATTR(n, CALLID);
+	SET_LOG_ATTR(n, CODE);
+	SET_LOG_ATTR(n, STATUS);
 
 	/* init the extra db keys */
-	for(extra=log_extra; extra ; extra=extra->next)
+	for(extra = log_extra; extra; extra = extra->next)
 		log_attrs[n++] = extra->name;
 
 	/* multi leg call columns */
-	for( extra=leg_info ; extra ; extra=extra->next)
+	for(extra = leg_info; extra; extra = extra->next)
 		log_attrs[n++] = extra->name;
 }
 
 
-int acc_log_request( struct sip_msg *rq)
+int acc_log_request(struct sip_msg *rq)
 {
 	static char log_msg[MAX_SYSLOG_SIZE];
-	static char *log_msg_end=log_msg+MAX_SYSLOG_SIZE-2;
+	static char *log_msg_end = log_msg + MAX_SYSLOG_SIZE - 2;
 	char *p;
 	int n;
 	int m;
@@ -207,14 +206,14 @@ int acc_log_request( struct sip_msg *rq)
 	double dtime;
 
 	/* get default values */
-	m = core2strar( rq, val_arr, int_arr, type_arr);
+	m = core2strar(rq, val_arr, int_arr, type_arr);
 
 	/* get extra values */
-	o = extra2strar( log_extra, rq, val_arr+m, int_arr+m, type_arr+m);
+	o = extra2strar(log_extra, rq, val_arr + m, int_arr + m, type_arr + m);
 	m += o;
 
-	for ( i=0,p=log_msg ; i<m ; i++ ) {
-		if (p+1+log_attrs[i].len+1+val_arr[i].len >= log_msg_end) {
+	for(i = 0, p = log_msg; i < m; i++) {
+		if(p + 1 + log_attrs[i].len + 1 + val_arr[i].len >= log_msg_end) {
 			LM_WARN("acc message too long, truncating..\n");
 			p = log_msg_end;
 			break;
@@ -223,18 +222,19 @@ int acc_log_request( struct sip_msg *rq)
 		memcpy(p, log_attrs[i].s, log_attrs[i].len);
 		p += log_attrs[i].len;
 		*(p++) = A_EQ_CHR;
-		if (val_arr[i].s != NULL) {
+		if(val_arr[i].s != NULL) {
 			memcpy(p, val_arr[i].s, val_arr[i].len);
 			p += val_arr[i].len;
 		}
 	}
 
 	/* get per leg attributes */
-	if ( leg_info ) {
-		n = legs2strar(leg_info,rq,val_arr+m,int_arr+m,type_arr+m, 1);
+	if(leg_info) {
+		n = legs2strar(leg_info, rq, val_arr + m, int_arr + m, type_arr + m, 1);
 		do {
-			for (i=m; i<m+n; i++) {
-				if (p+1+log_attrs[i].len+1+val_arr[i].len >= log_msg_end) {
+			for(i = m; i < m + n; i++) {
+				if(p + 1 + log_attrs[i].len + 1 + val_arr[i].len
+						>= log_msg_end) {
 					LM_WARN("acc message too long, truncating..\n");
 					p = log_msg_end;
 					break;
@@ -243,53 +243,52 @@ int acc_log_request( struct sip_msg *rq)
 				memcpy(p, log_attrs[i].s, log_attrs[i].len);
 				p += log_attrs[i].len;
 				*(p++) = A_EQ_CHR;
-				if (val_arr[i].s != NULL) {
+				if(val_arr[i].s != NULL) {
 					memcpy(p, val_arr[i].s, val_arr[i].len);
 					p += val_arr[i].len;
 				}
 			}
-		} while (p!=log_msg_end && (n=legs2strar(leg_info,rq,val_arr+m,
-						int_arr+m,type_arr+m,
-						0))!=0);
+		} while(p != log_msg_end
+				&& (n = legs2strar(leg_info, rq, val_arr + m, int_arr + m,
+							type_arr + m, 0))
+						   != 0);
 	}
 
 	/* terminating line */
 	*(p++) = '\n';
 	*(p++) = 0;
 
-	if(acc_time_mode==1) {
+	if(acc_time_mode == 1) {
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%u%s",
-				acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
-				acc_time_exten.s, (unsigned int)acc_env.tv.tv_usec,
-				log_msg);
-	} else if(acc_time_mode==2) {
+				acc_env.text.len, acc_env.text.s, (unsigned long)acc_env.ts,
+				acc_time_exten.s, (unsigned int)acc_env.tv.tv_usec, log_msg);
+	} else if(acc_time_mode == 2) {
 		dtime = (double)acc_env.tv.tv_usec;
 		dtime = (dtime / 1000000) + (double)acc_env.tv.tv_sec;
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%.3f%s",
-				acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
+				acc_env.text.len, acc_env.text.s, (unsigned long)acc_env.ts,
 				acc_time_attr.s, dtime, log_msg);
-	} else if(acc_time_mode==3 || acc_time_mode==4) {
-		if(acc_time_mode==3) {
+	} else if(acc_time_mode == 3 || acc_time_mode == 4) {
+		if(acc_time_mode == 3) {
 			localtime_r(&acc_env.ts, &t);
 		} else {
 			gmtime_r(&acc_env.ts, &t);
 		}
-		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE,
-					acc_time_format, &t)<=0) {
+		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE, acc_time_format,
+				   &t)
+				<= 0) {
 			acc_time_format_buf[0] = '\0';
 		}
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%s%s",
-				acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
-				acc_time_attr.s,
-				acc_time_format_buf,
-				log_msg);
+				acc_env.text.len, acc_env.text.s, (unsigned long)acc_env.ts,
+				acc_time_attr.s, acc_time_format_buf, log_msg);
 	} else {
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu%s",
-				acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
+				acc_env.text.len, acc_env.text.s, (unsigned long)acc_env.ts,
 				log_msg);
 	}
 	/* free memory allocated by extra2strar */
-	free_strar_mem( &(type_arr[m-o]), &(val_arr[m-o]), o, m);
+	free_strar_mem(&(type_arr[m - o]), &(val_arr[m - o]), o, m);
 
 	return 1;
 }
@@ -301,7 +300,7 @@ int acc_log_request( struct sip_msg *rq)
 
 int acc_is_db_ready(void)
 {
-	if(db_handle!=0)
+	if(db_handle != 0)
 		return 1;
 
 	return 0;
@@ -313,11 +312,12 @@ static db_key_t *db_keys = NULL;
 static db_val_t *db_vals = NULL;
 
 
-int acc_get_db_handlers(void **vf, void **vh) {
-	if(db_handle==0)
+int acc_get_db_handlers(void **vf, void **vh)
+{
+	if(db_handle == 0)
 		return -1;
-	*vf = (void*)&acc_dbf;
-	*vh = (void*)db_handle;
+	*vf = (void *)&acc_dbf;
+	*vh = (void *)db_handle;
 	return 0;
 }
 
@@ -338,51 +338,51 @@ static void acc_db_init_keys(void)
 	db_keys[n++] = &acc_sipcode_col;
 	db_keys[n++] = &acc_sipreason_col;
 	db_keys[n++] = &acc_time_col;
-	time_idx = n-1;
-	if(acc_time_mode==1 || acc_time_mode==2
-			|| acc_time_mode==3 || acc_time_mode==4) {
+	time_idx = n - 1;
+	if(acc_time_mode == 1 || acc_time_mode == 2 || acc_time_mode == 3
+			|| acc_time_mode == 4) {
 		db_keys[n++] = &acc_time_attr;
-		if(acc_time_mode==1) {
+		if(acc_time_mode == 1) {
 			db_keys[n++] = &acc_time_exten;
 		}
 	}
 
 	/* init the extra db keys */
-	for(extra=db_extra; extra ; extra=extra->next)
+	for(extra = db_extra; extra; extra = extra->next)
 		db_keys[n++] = &extra->name;
 
 	/* multi leg call columns */
-	for( extra=leg_info ; extra ; extra=extra->next)
+	for(extra = leg_info; extra; extra = extra->next)
 		db_keys[n++] = &extra->name;
 
 	/* init the values */
-	for(i=0; i<n; i++) {
-		VAL_TYPE(db_vals+i)=DB1_STR;
-		VAL_NULL(db_vals+i)=0;
+	for(i = 0; i < n; i++) {
+		VAL_TYPE(db_vals + i) = DB1_STR;
+		VAL_NULL(db_vals + i) = 0;
 	}
-	VAL_TYPE(db_vals+time_idx)=DB1_DATETIME;
-	if(acc_time_mode==1) {
-		VAL_TYPE(db_vals+time_idx+1)=DB1_INT;
-		VAL_TYPE(db_vals+time_idx+2)=DB1_INT;
-	} else if(acc_time_mode==2) {
-		VAL_TYPE(db_vals+time_idx+1)=DB1_DOUBLE;
-	} else if(acc_time_mode==3 || acc_time_mode==4) {
-		VAL_TYPE(db_vals+time_idx+1)=DB1_STRING;
+	VAL_TYPE(db_vals + time_idx) = DB1_DATETIME;
+	if(acc_time_mode == 1) {
+		VAL_TYPE(db_vals + time_idx + 1) = DB1_INT;
+		VAL_TYPE(db_vals + time_idx + 2) = DB1_INT;
+	} else if(acc_time_mode == 2) {
+		VAL_TYPE(db_vals + time_idx + 1) = DB1_DOUBLE;
+	} else if(acc_time_mode == 3 || acc_time_mode == 4) {
+		VAL_TYPE(db_vals + time_idx + 1) = DB1_STRING;
 	}
 }
 
 
 /* binds to the corresponding database module
  * returns 0 on success, -1 on error */
-int acc_db_init(const str* db_url)
+int acc_db_init(const str *db_url)
 {
-	if (db_bind_mod(db_url, &acc_dbf)<0){
+	if(db_bind_mod(db_url, &acc_dbf) < 0) {
 		LM_ERR("bind_db failed\n");
 		return -1;
 	}
 
 	/* Check database capabilities */
-	if (!DB_CAPABILITY(acc_dbf, DB_CAP_INSERT)) {
+	if(!DB_CAPABILITY(acc_dbf, DB_CAP_INSERT)) {
 		LM_ERR("database module does not implement insert function\n");
 		return -1;
 	}
@@ -397,8 +397,8 @@ int acc_db_init(const str* db_url)
  * returns 0 on success, -1 on error */
 int acc_db_init_child(const str *db_url)
 {
-	db_handle=acc_dbf.init(db_url);
-	if (db_handle==0){
+	db_handle = acc_dbf.init(db_url);
+	if(db_handle == 0) {
 		LM_ERR("unable to connect to the database\n");
 		return -1;
 	}
@@ -409,12 +409,12 @@ int acc_db_init_child(const str *db_url)
 /* close a db connection */
 void acc_db_close(void)
 {
-	if (db_handle && acc_dbf.close)
+	if(db_handle && acc_dbf.close)
 		acc_dbf.close(db_handle);
 }
 
 
-int acc_db_request( struct sip_msg *rq)
+int acc_db_request(struct sip_msg *rq)
 {
 	int m;
 	int n;
@@ -424,117 +424,121 @@ int acc_db_request( struct sip_msg *rq)
 	double dtime;
 
 	/* formatted database columns */
-	m = core2strar( rq, val_arr, int_arr, type_arr );
+	m = core2strar(rq, val_arr, int_arr, type_arr);
 
-	for(i=0; i<m; i++)
-		VAL_STR(db_vals+i) = val_arr[i];
+	for(i = 0; i < m; i++)
+		VAL_STR(db_vals + i) = val_arr[i];
 	/* time value */
-	VAL_TIME(db_vals+m) = acc_env.ts;
+	VAL_TIME(db_vals + m) = acc_env.ts;
 	m++;
 	/* extra time value */
-	if(acc_time_mode==1) {
-		VAL_INT(db_vals+m) = (int)acc_env.tv.tv_sec;
+	if(acc_time_mode == 1) {
+		VAL_INT(db_vals + m) = (int)acc_env.tv.tv_sec;
 		m++;
-		VAL_INT(db_vals+m) = (int)acc_env.tv.tv_usec;
+		VAL_INT(db_vals + m) = (int)acc_env.tv.tv_usec;
 		m++;
-	} else if(acc_time_mode==2) {
+	} else if(acc_time_mode == 2) {
 		dtime = (double)acc_env.tv.tv_usec;
 		dtime = (dtime / 1000000) + (double)acc_env.tv.tv_sec;
-		VAL_DOUBLE(db_vals+m) = dtime;
+		VAL_DOUBLE(db_vals + m) = dtime;
 		m++;
-	} else if(acc_time_mode==3 || acc_time_mode==4) {
-		if(acc_time_mode==3) {
+	} else if(acc_time_mode == 3 || acc_time_mode == 4) {
+		if(acc_time_mode == 3) {
 			localtime_r(&acc_env.ts, &t);
 		} else {
 			gmtime_r(&acc_env.ts, &t);
 		}
-		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE,
-					acc_time_format, &t)<=0) {
+		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE, acc_time_format,
+				   &t)
+				<= 0) {
 			acc_time_format_buf[0] = '\0';
 		}
-		VAL_STRING(db_vals+m) = acc_time_format_buf;
+		VAL_STRING(db_vals + m) = acc_time_format_buf;
 		m++;
 	}
 	i = m;
 
 	/* extra columns */
-	o = extra2strar( db_extra, rq, val_arr+m, int_arr+m, type_arr+m);
+	o = extra2strar(db_extra, rq, val_arr + m, int_arr + m, type_arr + m);
 	m += o;
 
-	for( ; i<m; i++) {
-		if (acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
+	for(; i < m; i++) {
+		if(acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
 			LM_DBG("attr[%d] is NULL\n", i);
 			VAL_NULL(db_vals + i) = 1;
 		} else {
 			LM_DBG("attr[%d] is STR len=%d\n", i, val_arr[i].len);
-			VAL_NULL(db_vals+i) = 0;
-			VAL_TYPE(db_vals+i)=DB1_STR;
-			VAL_STR(db_vals+i) = val_arr[i];
+			VAL_NULL(db_vals + i) = 0;
+			VAL_TYPE(db_vals + i) = DB1_STR;
+			VAL_STR(db_vals + i) = val_arr[i];
 		}
 	}
 
-	if (acc_dbf.use_table(db_handle, &acc_env.text/*table*/) < 0) {
+	if(acc_dbf.use_table(db_handle, &acc_env.text /*table*/) < 0) {
 		LM_ERR("error in use_table\n");
 		goto error;
 	}
 
 	/* multi-leg columns */
-	if ( !leg_info ) {
-		if(acc_db_insert_mode==1 && acc_dbf.insert_delayed!=NULL) {
-			if (acc_dbf.insert_delayed(db_handle, db_keys, db_vals, m) < 0) {
+	if(!leg_info) {
+		if(acc_db_insert_mode == 1 && acc_dbf.insert_delayed != NULL) {
+			if(acc_dbf.insert_delayed(db_handle, db_keys, db_vals, m) < 0) {
 				LM_ERR("failed to insert delayed into database\n");
 				goto error;
 			}
-		} else if(acc_db_insert_mode==2 && acc_dbf.insert_async!=NULL
-				&& async_task_workers_active()) {
-			if (acc_dbf.insert_async(db_handle, db_keys, db_vals, m) < 0) {
+		} else if(acc_db_insert_mode == 2 && acc_dbf.insert_async != NULL
+				  && async_task_workers_active()) {
+			if(acc_dbf.insert_async(db_handle, db_keys, db_vals, m) < 0) {
 				LM_ERR("failed to insert async into database\n");
 				goto error;
 			}
 		} else {
-			if (acc_dbf.insert(db_handle, db_keys, db_vals, m) < 0) {
+			if(acc_dbf.insert(db_handle, db_keys, db_vals, m) < 0) {
 				LM_ERR("failed to insert into database\n");
 				goto error;
 			}
 		}
 	} else {
-		n = legs2strar(leg_info,rq,val_arr+m,int_arr+m,type_arr+m,1);
+		n = legs2strar(leg_info, rq, val_arr + m, int_arr + m, type_arr + m, 1);
 		do {
-			for (i=m; i<m+n; i++) {
-			if (acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
+			for(i = m; i < m + n; i++) {
+				if(acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
 					VAL_NULL(db_vals + i) = 1;
 				} else {
-					VAL_NULL(db_vals+i) = 0;
-					VAL_TYPE(db_vals+i)=DB1_STR;
-					VAL_STR(db_vals+i)=val_arr[i];
+					VAL_NULL(db_vals + i) = 0;
+					VAL_TYPE(db_vals + i) = DB1_STR;
+					VAL_STR(db_vals + i) = val_arr[i];
 				}
 			}
-			if(acc_db_insert_mode==1 && acc_dbf.insert_delayed!=NULL) {
-				if(acc_dbf.insert_delayed(db_handle,db_keys,db_vals,m+n)<0) {
+			if(acc_db_insert_mode == 1 && acc_dbf.insert_delayed != NULL) {
+				if(acc_dbf.insert_delayed(db_handle, db_keys, db_vals, m + n)
+						< 0) {
 					LM_ERR("failed to insert delayed into database\n");
 					goto error;
 				}
-			} else if(acc_db_insert_mode==2 && acc_dbf.insert_async!=NULL) {
-				if(acc_dbf.insert_async(db_handle,db_keys,db_vals,m+n)<0) {
+			} else if(acc_db_insert_mode == 2 && acc_dbf.insert_async != NULL) {
+				if(acc_dbf.insert_async(db_handle, db_keys, db_vals, m + n)
+						< 0) {
 					LM_ERR("failed to insert async into database\n");
 					goto error;
 				}
 			} else {
-				if (acc_dbf.insert(db_handle, db_keys, db_vals, m+n) < 0) {
+				if(acc_dbf.insert(db_handle, db_keys, db_vals, m + n) < 0) {
 					LM_ERR("failed to insert into database\n");
 					goto error;
 				}
 			}
-		}while ( (n=legs2strar(leg_info,rq,val_arr+m,int_arr+m,
-						type_arr+m,0))!=0 );
+		} while((n = legs2strar(leg_info, rq, val_arr + m, int_arr + m,
+						 type_arr + m, 0))
+				!= 0);
 	}
 
 	/* free memory allocated by extra2strar */
-	free_strar_mem( &(type_arr[m-o]), &(val_arr[m-o]), o, m);
+	free_strar_mem(&(type_arr[m - o]), &(val_arr[m - o]), o, m);
 	return 1;
 error:
 	/* free memory allocated by extra2strar */
-	free_strar_mem( &(type_arr[m-o]), &(val_arr[m-o]), o, m);
+	free_strar_mem(&(type_arr[m - o]), &(val_arr[m - o]), o, m);
 	return -1;
 }
 
@@ -547,7 +551,7 @@ int is_eng_acc_on(sip_msg_t *msg)
 
 	e = acc_api_get_engines();
 
-	if(e==NULL) {
+	if(e == NULL) {
 		return 0;
 	}
 	while(e) {
@@ -570,7 +574,7 @@ int is_eng_mc_on(sip_msg_t *msg)
 
 	e = acc_api_get_engines();
 
-	if(e==NULL) {
+	if(e == NULL) {
 		return 0;
 	}
 	while(e) {
@@ -594,26 +598,28 @@ int acc_run_engines(struct sip_msg *msg, int type, int *reset)
 
 	e = acc_api_get_engines();
 
-	if(e==NULL)
+	if(e == NULL)
 		return 0;
 
 	memset(&inf, 0, sizeof(acc_info_t));
-	inf.env  = &acc_env;
+	inf.env = &acc_env;
 	inf.varr = val_arr;
 	inf.iarr = int_arr;
 	inf.tarr = type_arr;
 	inf.leg_info = leg_info;
 	while(e) {
 		if(e->flags & 1) {
-			if((type==0) && isflagset(msg, e->acc_flag) == 1) {
+			if((type == 0) && isflagset(msg, e->acc_flag) == 1) {
 				LM_DBG("acc event for engine: %s\n", e->name);
 				e->acc_req(msg, &inf);
-				if(reset) *reset |= 1 << e->acc_flag;
+				if(reset)
+					*reset |= 1 << e->acc_flag;
 			}
-			if((type==1) && isflagset(msg, e->missed_flag) == 1) {
+			if((type == 1) && isflagset(msg, e->missed_flag) == 1) {
 				LM_DBG("missed event for engine: %s\n", e->name);
 				e->acc_req(msg, &inf);
-				if(reset) *reset |= 1 << e->missed_flag;
+				if(reset)
+					*reset |= 1 << e->missed_flag;
 			}
 		}
 		e = e->next;
@@ -632,37 +638,52 @@ void acc_api_set_arrays(acc_info_t *inf)
 	inf->leg_info = leg_info;
 }
 
-int acc_arrays_alloc(void) {
-	if ((val_arr = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(str))) == NULL) {
+int acc_arrays_alloc(void)
+{
+	if((val_arr = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3)
+							   * sizeof(str)))
+			== NULL) {
 		PKG_MEM_ERROR_FMT("failed to alloc val_arr\n");
 		return -1;
 	}
 
-	if ((int_arr = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(int))) == NULL) {
+	if((int_arr = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3)
+							   * sizeof(int)))
+			== NULL) {
 		PKG_MEM_ERROR_FMT("failed to alloc int_arr\n");
 		acc_arrays_free();
 		return -1;
 	}
 
-	if ((type_arr = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(char))) == NULL) {
+	if((type_arr = pkg_mallocxz(
+				(ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3)
+				* sizeof(char)))
+			== NULL) {
 		PKG_MEM_ERROR_FMT("failed to alloc type_arr\n");
 		acc_arrays_free();
 		return -1;
 	}
 
-	if ((log_attrs = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(str))) == NULL) {
+	if((log_attrs = pkg_mallocxz(
+				(ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3)
+				* sizeof(str)))
+			== NULL) {
 		PKG_MEM_ERROR_FMT("failed to alloc log_attrs\n");
 		acc_arrays_free();
 		return -1;
 	}
 
-	if ((db_keys = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(db_key_t))) == NULL) {
+	if((db_keys = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3)
+							   * sizeof(db_key_t)))
+			== NULL) {
 		PKG_MEM_ERROR_FMT("failed to alloc db_keys\n");
 		acc_arrays_free();
 		return -1;
 	}
 
-	if ((db_vals = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(db_val_t))) == NULL) {
+	if((db_vals = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3)
+							   * sizeof(db_val_t)))
+			== NULL) {
 		PKG_MEM_ERROR_FMT("failed to alloc db_vals\n");
 		acc_arrays_free();
 		return -1;
@@ -671,28 +692,29 @@ int acc_arrays_alloc(void) {
 	return 1;
 }
 
-void acc_arrays_free(void) {
-	if (val_arr) {
+void acc_arrays_free(void)
+{
+	if(val_arr) {
 		pkg_free(val_arr);
 	}
 
-	if (int_arr) {
+	if(int_arr) {
 		pkg_free(int_arr);
 	}
 
-	if (type_arr) {
+	if(type_arr) {
 		pkg_free(type_arr);
 	}
 
-	if (log_attrs) {
+	if(log_attrs) {
 		pkg_free(log_attrs);
 	}
 
-	if (db_keys) {
+	if(db_keys) {
 		pkg_free(db_keys);
 	}
 
-	if (db_vals) {
+	if(db_vals) {
 		pkg_free(db_vals);
 	}
 }

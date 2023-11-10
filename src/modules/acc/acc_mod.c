@@ -69,30 +69,34 @@ static int child_init(int rank);
 
 /* what would you like to report on */
 
-int early_media = 0;		/*!< should early media replies (183) be logged ? default==no */
-int report_cancels = 0;		/*!< would you like us to report CANCELs from upstream too? */
-int report_ack = 0;		/*!< report e2e ACKs too */
-int detect_direction = 0;	/*!< detect and correct direction in the sequential requests */
-int failed_transaction_flag = -1; /*!< should failed replies (>=3xx) be logged ? default==no */
-static char *failed_filter_str = 0;  /* by default, do not filter logging of
+int early_media =
+		0; /*!< should early media replies (183) be logged ? default==no */
+int report_cancels =
+		0; /*!< would you like us to report CANCELs from upstream too? */
+int report_ack = 0; /*!< report e2e ACKs too */
+int detect_direction =
+		0; /*!< detect and correct direction in the sequential requests */
+int failed_transaction_flag =
+		-1; /*!< should failed replies (>=3xx) be logged ? default==no */
+static char *failed_filter_str = 0; /* by default, do not filter logging of
 										failed transactions */
 unsigned short failed_filter[MAX_FAILED_FILTER_COUNT + 1];
-static char* leg_info_str = 0;	/*!< multi call-leg support */
+static char *leg_info_str = 0; /*!< multi call-leg support */
 struct acc_extra *leg_info = 0;
 int acc_prepare_always = 0; /* prepare the request always for later acc */
-int acc_prepare_flag = -1; /*!< should the request be prepared for later acc */
+int acc_prepare_flag = -1;	/*!< should the request be prepared for later acc */
 char *acc_time_format = "%Y-%m-%d %H:%M:%S";
 int reason_from_hf = 0; /*!< assign reason from reason hf if present */
-int acc_extra_nullable  = 0;
+int acc_extra_nullable = 0;
 
 /* ----- time mode variables ------- */
 /*! \name AccTimeModeVariables  Time Mode Variables */
 /*@{*/
 
-int acc_time_mode  = 0;
-str acc_time_attr  = str_init("time_attr");
-str acc_time_exten  = str_init("time_exten");
-int _acc_clone_msg  = 1;
+int acc_time_mode = 0;
+str acc_time_attr = str_init("time_attr");
+str acc_time_exten = str_init("time_exten");
+int _acc_clone_msg = 1;
 int _acc_cdr_on_failed = 1;
 
 int acc_extra_size = MAX_ACC_EXTRA;
@@ -106,11 +110,12 @@ int cdr_extra_size = MAX_CDR_EXTRA;
 
 int log_flag = -1;
 int log_missed_flag = -1;
-int log_level = L_NOTICE;	/*!< Syslog: noisiness level logging facilities are used */
-int log_facility = LOG_DAEMON;	/*!< Syslog: log facility that is used */
-static char * log_facility_str = 0; /*!< Syslog: log facility that is used */
-static char *log_extra_str = 0; /*!< Syslog: log extra variables */
-struct acc_extra *log_extra = 0; /*!< Log extra attributes */
+int log_level =
+		L_NOTICE; /*!< Syslog: noisiness level logging facilities are used */
+int log_facility = LOG_DAEMON;	   /*!< Syslog: log facility that is used */
+static char *log_facility_str = 0; /*!< Syslog: log facility that is used */
+static char *log_extra_str = 0;	   /*!< Syslog: log extra variables */
+struct acc_extra *log_extra = 0;   /*!< Log extra attributes */
 
 /*@}*/
 
@@ -118,13 +123,13 @@ struct acc_extra *log_extra = 0; /*!< Log extra attributes */
 /*! \name AccCdrVariables  CDR Variables */
 /*@{*/
 
-int cdr_enable  = 0;
-int cdr_extra_nullable  = 0;
-int cdr_log_enable  = 1;
+int cdr_enable = 0;
+int cdr_extra_nullable = 0;
+int cdr_log_enable = 1;
 int cdr_start_on_confirmed = 0;
 int cdr_expired_dlg_enable = 0;
-static char* cdr_facility_str = 0;
-static char* cdr_log_extra_str = 0;
+static char *cdr_facility_str = 0;
+static char *cdr_log_extra_str = 0;
 str cdr_skip = {NULL, 0};
 
 str cdr_start_str = str_init("start_time");
@@ -141,39 +146,39 @@ str acc_cdrs_table = str_init("");
 
 int db_flag = -1;
 int db_missed_flag = -1;
-static char *db_extra_str = 0;		/*!< db extra variables */
+static char *db_extra_str = 0; /*!< db extra variables */
 struct acc_extra *db_extra = 0;
 static str db_url = {NULL, 0};		/*!< Database url */
-str db_table_acc = str_init("acc");	/*!< name of database tables */
+str db_table_acc = str_init("acc"); /*!< name of database tables */
 void *db_table_acc_data = NULL;
 str db_table_mc = str_init("missed_calls");
 void *db_table_mc_data = NULL;
 /* names of columns in tables acc/missed calls*/
-str acc_method_col     = str_init("method");
-str acc_fromtag_col    = str_init("from_tag");
-str acc_totag_col      = str_init("to_tag");
-str acc_callid_col     = str_init("callid");
-str acc_sipcode_col    = str_init("sip_code");
-str acc_sipreason_col  = str_init("sip_reason");
-str acc_time_col       = str_init("time");
+str acc_method_col = str_init("method");
+str acc_fromtag_col = str_init("from_tag");
+str acc_totag_col = str_init("to_tag");
+str acc_callid_col = str_init("callid");
+str acc_sipcode_col = str_init("sip_code");
+str acc_sipreason_col = str_init("sip_reason");
+str acc_time_col = str_init("time");
 int acc_db_insert_mode = 0;
 
 /*@}*/
 
-static int bind_acc(acc_api_t* api);
+static int bind_acc(acc_api_t *api);
 static int acc_register_engine(acc_engine_t *eng);
 static int acc_init_engines(void);
-static acc_engine_t *_acc_engines=NULL;
+static acc_engine_t *_acc_engines = NULL;
 static int _acc_module_initialized = 0;
 
 static int cdr_register_engine(cdr_engine_t *eng);
 static int cdr_init_engines(void);
-static cdr_engine_t *_cdr_engines=NULL;
+static cdr_engine_t *_cdr_engines = NULL;
 static int cdr_module_initialized = 0;
 
 /* ------------- fixup function --------------- */
-static int acc_fixup(void** param, int param_no);
-static int free_acc_fixup(void** param, int param_no);
+static int acc_fixup(void **param, int param_no);
+static int free_acc_fixup(void **param, int param_no);
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
@@ -268,47 +273,44 @@ struct module_exports exports= {
 
 /************************** FIXUP functions ****************************/
 
-static int acc_fixup(void** param, int param_no)
+static int acc_fixup(void **param, int param_no)
 {
 	struct acc_param *accp;
 	char *p;
 
-	p = (char*)*param;
-	if (p==0 || p[0]==0) {
+	p = (char *)*param;
+	if(p == 0 || p[0] == 0) {
 		LM_ERR("first parameter is empty\n");
 		return E_SCRIPT;
 	}
 
-	if (param_no == 1) {
-		accp = (struct acc_param*)pkg_malloc(sizeof(struct acc_param));
-		if (!accp) {
+	if(param_no == 1) {
+		accp = (struct acc_param *)pkg_malloc(sizeof(struct acc_param));
+		if(!accp) {
 			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
-		memset( accp, 0, sizeof(struct acc_param));
+		memset(accp, 0, sizeof(struct acc_param));
 		accp->reason.s = p;
 		accp->reason.len = strlen(p);
-		if (strchr(p,PV_MARKER)!=NULL) { /* is a variable $xxxxx */
-			if (pv_parse_format(&accp->reason, &accp->elem)<0)
-			{
+		if(strchr(p, PV_MARKER) != NULL) { /* is a variable $xxxxx */
+			if(pv_parse_format(&accp->reason, &accp->elem) < 0) {
 				LM_ERR("bad param 1 - parse format error [%.*s]\n",
 						accp->reason.len, accp->reason.s);
 				pkg_free(accp);
 				return E_UNSPEC;
 			}
-		}
-		else {
-			if(acc_parse_code(p,accp)<0)
-			{
+		} else {
+			if(acc_parse_code(p, accp) < 0) {
 				LM_ERR("bad param 1 - parse code error\n");
 				pkg_free(accp);
 				return E_UNSPEC;
 			}
 		}
-		*param = (void*)accp;
-	} else if (param_no == 2) {
+		*param = (void *)accp;
+	} else if(param_no == 2) {
 		/* only for db acc - the table name */
-		if (db_url.s==0) {
+		if(db_url.s == 0) {
 			pkg_free(p);
 			*param = 0;
 		} else {
@@ -318,16 +320,14 @@ static int acc_fixup(void** param, int param_no)
 	return 0;
 }
 
-static int free_acc_fixup(void** param, int param_no)
+static int free_acc_fixup(void **param, int param_no)
 {
-	if(*param)
-	{
+	if(*param) {
 		pkg_free(*param);
 		*param = 0;
 	}
 	return 0;
 }
-
 
 
 /************************** INTERFACE functions ****************************/
@@ -340,20 +340,21 @@ static int parse_failed_filter(char *s, unsigned short *failed_filter)
 
 	n = 0;
 
-	while (1) {
-		if (n >= MAX_FAILED_FILTER_COUNT) {
+	while(1) {
+		if(n >= MAX_FAILED_FILTER_COUNT) {
 			LM_ERR("too many elements in failed_filter\n");
 			return 0;
 		}
 		at = s;
-		while ((*at >= '0') && (*at <= '9')) at++;
-		if (at - s != 3) {
+		while((*at >= '0') && (*at <= '9'))
+			at++;
+		if(at - s != 3) {
 			LM_ERR("response code in failed_filter must have 3 digits\n");
 			return 0;
 		}
-		failed_filter[n] = (*s - '0') * 100 + (*(s + 1) - '0') * 10 +
-			(*(s + 2) - '0');
-		if (failed_filter[n] < 300) {
+		failed_filter[n] =
+				(*s - '0') * 100 + (*(s + 1) - '0') * 10 + (*(s + 2) - '0');
+		if(failed_filter[n] < 300) {
 			LM_ERR("invalid response code %u in failed_filter\n",
 					failed_filter[n]);
 			return 0;
@@ -362,9 +363,9 @@ static int parse_failed_filter(char *s, unsigned short *failed_filter)
 		n++;
 		failed_filter[n] = 0;
 		s = at;
-		if (*s == 0)
+		if(*s == 0)
 			return 1;
-		if (*s != ',') {
+		if(*s != ',') {
 			LM_ERR("response code is not followed by comma or end of string\n");
 			return 0;
 		}
@@ -372,55 +373,52 @@ static int parse_failed_filter(char *s, unsigned short *failed_filter)
 	}
 }
 
-static int mod_init( void )
+static int mod_init(void)
 {
 	/* arrays alloc */
-	if (acc_arrays_alloc() < 0) {
+	if(acc_arrays_alloc() < 0) {
 		return -1;
 	}
 
-	if (acc_extra_arrays_alloc() < 0) {
+	if(acc_extra_arrays_alloc() < 0) {
 		return -1;
 	}
 
-	if (cdr_arrays_alloc() < 0) {
+	if(cdr_arrays_alloc() < 0) {
 		return -1;
 	}
 
-	if (db_url.s) {
-		if(db_url.len<=0) {
+	if(db_url.s) {
+		if(db_url.len <= 0) {
 			db_url.s = NULL;
 			db_url.len = 0;
 		}
 	}
-	if(db_table_acc.len!=3 || strncmp(db_table_acc.s, "acc", 3)!=0)
-	{
+	if(db_table_acc.len != 3 || strncmp(db_table_acc.s, "acc", 3) != 0) {
 		db_table_acc_data = db_table_acc.s;
-		if(fixup_var_pve_str_12(&db_table_acc_data, 1)<0)
-		{
-			LM_ERR("unable to parse acc table name [%.*s]\n",
-					db_table_acc.len, db_table_acc.s);
+		if(fixup_var_pve_str_12(&db_table_acc_data, 1) < 0) {
+			LM_ERR("unable to parse acc table name [%.*s]\n", db_table_acc.len,
+					db_table_acc.s);
 			return -1;
 		} else {
 			LM_DBG("acc db table initialized to: %s\n", db_table_acc.s);
 		}
 	}
-	if(db_table_mc.len!=12 || strncmp(db_table_mc.s, "missed_calls", 12)!=0)
-	{
+	if(db_table_mc.len != 12
+			|| strncmp(db_table_mc.s, "missed_calls", 12) != 0) {
 		db_table_mc_data = db_table_mc.s;
-		if(fixup_var_pve_str_12(&db_table_mc_data, 1)<0)
-		{
-			LM_ERR("unable to parse mc table name [%.*s]\n",
-					db_table_mc.len, db_table_mc.s);
+		if(fixup_var_pve_str_12(&db_table_mc_data, 1) < 0) {
+			LM_ERR("unable to parse mc table name [%.*s]\n", db_table_mc.len,
+					db_table_mc.s);
 			return -1;
 		} else {
 			LM_DBG("missed calls db table initialized to: %s\n", db_table_mc.s);
 		}
 	}
 
-	if (log_facility_str) {
+	if(log_facility_str) {
 		int tmp = str2facility(log_facility_str);
-		if (tmp != -1)
+		if(tmp != -1)
 			log_facility = tmp;
 		else {
 			LM_ERR("invalid log facility configured");
@@ -431,13 +429,13 @@ static int mod_init( void )
 	/* ----------- GENERIC INIT SECTION  ----------- */
 
 	/* failed transaction handling */
-	if ((failed_transaction_flag != -1) &&
-			!flag_in_range(failed_transaction_flag)) {
+	if((failed_transaction_flag != -1)
+			&& !flag_in_range(failed_transaction_flag)) {
 		LM_ERR("failed_transaction_flag set to invalid value\n");
 		return -1;
 	}
-	if (failed_filter_str) {
-		if (parse_failed_filter(failed_filter_str, failed_filter) == 0) {
+	if(failed_filter_str) {
+		if(parse_failed_filter(failed_filter_str, failed_filter) == 0) {
 			LM_ERR("failed to parse failed_filter param\n");
 			return -1;
 		}
@@ -446,33 +444,33 @@ static int mod_init( void )
 	}
 
 	/* load the TM API */
-	if (load_tm_api(&tmb)!=0) {
+	if(load_tm_api(&tmb) != 0) {
 		LM_ERR("can't load TM API\n");
 		return -1;
 	}
 
 	/* if detect_direction is enabled, load rr also */
-	if (detect_direction) {
-		if (load_rr_api(&rrb)!=0) {
+	if(detect_direction) {
+		if(load_rr_api(&rrb) != 0) {
 			LM_ERR("can't load RR API\n");
 			return -1;
 		}
 		/* we need the append_fromtag on in RR */
-		if (!rrb.append_fromtag) {
+		if(!rrb.append_fromtag) {
 			LM_ERR("'append_fromtag' RR param is not enabled!"
-					" - required by 'detect_direction'\n");
+				   " - required by 'detect_direction'\n");
 			return -1;
 		}
 	}
 
 	/* listen for all incoming requests  */
-	if ( tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, acc_onreq, 0, 0 ) <=0 ) {
+	if(tmb.register_tmcb(0, 0, TMCB_REQUEST_IN, acc_onreq, 0, 0) <= 0) {
 		LM_ERR("cannot register TMCB_REQUEST_IN callback\n");
 		return -1;
 	}
 
 	/* configure multi-leg accounting */
-	if (leg_info_str && (leg_info=parse_acc_leg(leg_info_str))==0 ) {
+	if(leg_info_str && (leg_info = parse_acc_leg(leg_info_str)) == 0) {
 		LM_ERR("failed to parse multileg_info param\n");
 		return -1;
 	}
@@ -480,17 +478,17 @@ static int mod_init( void )
 	/* ----------- SYSLOG INIT SECTION ----------- */
 
 	/* parse the extra string, if any */
-	if (log_extra_str && (log_extra=parse_acc_extra(log_extra_str))==0 ) {
+	if(log_extra_str && (log_extra = parse_acc_extra(log_extra_str)) == 0) {
 		LM_ERR("failed to parse log_extra param\n");
 		return -1;
 	}
 
-	if ((log_flag != -1) && !flag_in_range(log_flag)) {
+	if((log_flag != -1) && !flag_in_range(log_flag)) {
 		LM_ERR("log_flag set to invalid value\n");
 		return -1;
 	}
 
-	if ((log_missed_flag != -1) && !flag_in_range(log_missed_flag)) {
+	if((log_missed_flag != -1) && !flag_in_range(log_missed_flag)) {
 		LM_ERR("log_missed_flag set to invalid value\n");
 		return -1;
 	}
@@ -499,53 +497,44 @@ static int mod_init( void )
 
 	/* ----------- INIT CDR GENERATION ----------- */
 
-	if( cdr_enable < 0 || cdr_enable > 1)
-	{
+	if(cdr_enable < 0 || cdr_enable > 1) {
 		LM_ERR("cdr_enable is out of range\n");
 		return -1;
 	}
 
-	if( cdr_extra_nullable < 0 || cdr_extra_nullable > 1)
-	{
+	if(cdr_extra_nullable < 0 || cdr_extra_nullable > 1) {
 		LM_ERR("cdr_extra_nullable is out of range\n");
 		return -1;
 	}
 
-	if( cdr_expired_dlg_enable < 0 || cdr_expired_dlg_enable > 1)
-	{
+	if(cdr_expired_dlg_enable < 0 || cdr_expired_dlg_enable > 1) {
 		LM_ERR("cdr_expired_dlg_enable is out of range\n");
 		return -1;
 	}
 
-	if( cdr_enable)
-	{
-		if( !cdr_start_str.s || !cdr_end_str.s || !cdr_duration_str.s)
-		{
-			LM_ERR( "necessary cdr_parameters are not set\n");
+	if(cdr_enable) {
+		if(!cdr_start_str.s || !cdr_end_str.s || !cdr_duration_str.s) {
+			LM_ERR("necessary cdr_parameters are not set\n");
 			return -1;
 		}
 
-		if( !cdr_start_str.len || !cdr_end_str.len || !cdr_duration_str.len)
-		{
-			LM_ERR( "necessary cdr_parameters are empty\n");
+		if(!cdr_start_str.len || !cdr_end_str.len || !cdr_duration_str.len) {
+			LM_ERR("necessary cdr_parameters are empty\n");
 			return -1;
 		}
 
 
-		if( set_cdr_extra( cdr_log_extra_str) != 0)
-		{
-			LM_ERR( "failed to set cdr extra '%s'\n", cdr_log_extra_str);
+		if(set_cdr_extra(cdr_log_extra_str) != 0) {
+			LM_ERR("failed to set cdr extra '%s'\n", cdr_log_extra_str);
 			return -1;
 		}
 
-		if( cdr_facility_str && set_cdr_facility( cdr_facility_str) != 0)
-		{
-			LM_ERR( "failed to set cdr facility '%s'\n", cdr_facility_str);
+		if(cdr_facility_str && set_cdr_facility(cdr_facility_str) != 0) {
+			LM_ERR("failed to set cdr facility '%s'\n", cdr_facility_str);
 			return -1;
 		}
 
-		if( init_cdr_generation() != 0)
-		{
+		if(init_cdr_generation() != 0) {
 			LM_ERR("failed to init cdr generation\n");
 			return -1;
 		}
@@ -553,24 +542,24 @@ static int mod_init( void )
 
 	/* ------------ SQL INIT SECTION ----------- */
 
-	if (db_url.s && db_url.len > 0) {
+	if(db_url.s && db_url.len > 0) {
 		/* parse the extra string, if any */
-		if (db_extra_str && (db_extra=parse_acc_extra(db_extra_str))==0 ) {
+		if(db_extra_str && (db_extra = parse_acc_extra(db_extra_str)) == 0) {
 			LM_ERR("failed to parse db_extra param\n");
 			return -1;
 		}
-		if (acc_db_init(&db_url)<0){
+		if(acc_db_init(&db_url) < 0) {
 			LM_ERR("failed...did you load a database module?\n");
 			return -1;
 		}
 		/* fix the flags */
 
-		if ((db_flag != -1) && !flag_in_range(db_flag)) {
+		if((db_flag != -1) && !flag_in_range(db_flag)) {
 			LM_ERR("db_flag set to invalid value\n");
 			return -1;
 		}
 
-		if ((db_missed_flag != -1) && !flag_in_range(db_missed_flag)) {
+		if((db_missed_flag != -1) && !flag_in_range(db_missed_flag)) {
 			LM_ERR("db_missed_flag set to invalid value\n");
 			return -1;
 		}
@@ -582,13 +571,13 @@ static int mod_init( void )
 	}
 
 	_acc_module_initialized = 1;
-	if(acc_init_engines()<0) {
+	if(acc_init_engines() < 0) {
 		LM_ERR("failed to init extra engines\n");
 		return -1;
 	}
 
 	cdr_module_initialized = 1;
-	if(cdr_init_engines()<0) {
+	if(cdr_init_engines() < 0) {
 		LM_ERR("failed to init extra engines\n");
 		return -1;
 	}
@@ -599,10 +588,10 @@ static int mod_init( void )
 
 static int child_init(int rank)
 {
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if(db_url.s && acc_db_init_child(&db_url)<0) {
+	if(db_url.s && acc_db_init_child(&db_url) < 0) {
 		LM_ERR("could not open database connection");
 		return -1;
 	}
@@ -613,11 +602,11 @@ static int child_init(int rank)
 
 static void destroy(void)
 {
-	if (log_extra)
-		destroy_extras( log_extra);
+	if(log_extra)
+		destroy_extras(log_extra);
 	acc_db_close();
-	if (db_extra)
-		destroy_extras( db_extra);
+	if(db_extra)
+		destroy_extras(db_extra);
 
 	/* arrays free */
 	acc_arrays_free();
@@ -629,7 +618,7 @@ static void destroy(void)
 /**
  * @brief return leg_info structure
  */
-acc_extra_t* get_leg_info(void)
+acc_extra_t *get_leg_info(void)
 {
 	return leg_info;
 }
@@ -637,9 +626,9 @@ acc_extra_t* get_leg_info(void)
 /**
  * @brief bind functions to ACC API structure
  */
-static int bind_acc(acc_api_t* api)
+static int bind_acc(acc_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
@@ -647,28 +636,27 @@ static int bind_acc(acc_api_t* api)
 	memset(api, 0, sizeof(acc_api_t));
 
 	api->acc_log_request = ki_acc_log_request;
-	api->acc_db_request  = ki_acc_db_request;
-	api->acc_request     = ki_acc_request;
+	api->acc_db_request = ki_acc_db_request;
+	api->acc_request = ki_acc_request;
 
 	api->register_engine = acc_register_engine;
-	api->get_leg_info    = get_leg_info;
-	api->get_core_attrs  = core2strar;
+	api->get_leg_info = get_leg_info;
+	api->get_core_attrs = core2strar;
 	api->get_extra_attrs = extra2strar;
-	api->get_leg_attrs   = legs2strar;
-	api->parse_extra     = parse_acc_extra;
-	api->exec            = acc_api_exec;
+	api->get_leg_attrs = legs2strar;
+	api->parse_extra = parse_acc_extra;
+	api->exec = acc_api_exec;
 
-	if (cdr_enable) {
+	if(cdr_enable) {
 		api->register_cdr_engine = cdr_register_engine;
-		api->get_core_cdr_attrs  = cdr_core2strar;
+		api->get_core_cdr_attrs = cdr_core2strar;
 		api->get_extra_dlg_attrs = extra2strar_dlg_only;
-		api->exec_cdr            = cdr_api_exec;
-	}
-	else {
+		api->exec_cdr = cdr_api_exec;
+	} else {
 		api->register_cdr_engine = NULL;
-		api->get_core_cdr_attrs  = NULL;
+		api->get_core_cdr_attrs = NULL;
 		api->get_extra_dlg_attrs = NULL;
-		api->exec_cdr            = NULL;
+		api->exec_cdr = NULL;
 	}
 	return 0;
 }
@@ -680,7 +668,7 @@ static int acc_init_engine(acc_engine_t *e)
 {
 	acc_init_info_t ai;
 
-	if(_acc_module_initialized==0)
+	if(_acc_module_initialized == 0)
 		return 0;
 
 	if(e->flags & 1)
@@ -688,8 +676,7 @@ static int acc_init_engine(acc_engine_t *e)
 
 	memset(&ai, 0, sizeof(acc_init_info_t));
 	ai.leg_info = leg_info;
-	if(e->acc_init(&ai)<0)
-	{
+	if(e->acc_init(&ai) < 0) {
 		LM_ERR("failed to initialize extra acc engine\n");
 		return -1;
 	}
@@ -705,7 +692,7 @@ static int acc_init_engines(void)
 	acc_engine_t *e;
 	e = _acc_engines;
 	while(e) {
-		if(acc_init_engine(e)<0)
+		if(acc_init_engine(e) < 0)
 			return -1;
 		e = e->next;
 	}
@@ -720,18 +707,16 @@ static int acc_register_engine(acc_engine_t *eng)
 {
 	acc_engine_t *e;
 
-	if(eng==NULL)
+	if(eng == NULL)
 		return -1;
-	e = (acc_engine_t*)pkg_malloc(sizeof(acc_engine_t));
-	if(e ==NULL)
-	{
+	e = (acc_engine_t *)pkg_malloc(sizeof(acc_engine_t));
+	if(e == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(e, eng, sizeof(acc_engine_t));
 
-	if(acc_init_engine(e)<0)
-	{
+	if(acc_init_engine(e) < 0) {
 		pkg_free(e);
 		return -1;
 	}
@@ -747,11 +732,10 @@ static int acc_register_engine(acc_engine_t *eng)
  */
 static int cdr_init_engine(cdr_engine_t *e)
 {
-	if(cdr_module_initialized==0)
+	if(cdr_module_initialized == 0)
 		return 0;
 
-	if(e->cdr_init()<0)
-	{
+	if(e->cdr_init() < 0) {
 		LM_ERR("failed to initialize extra cdr engine\n");
 		return -1;
 	}
@@ -766,7 +750,7 @@ static int cdr_init_engines(void)
 	cdr_engine_t *e;
 	e = _cdr_engines;
 	while(e) {
-		if(cdr_init_engine(e)<0)
+		if(cdr_init_engine(e) < 0)
 			return -1;
 		e = e->next;
 	}
@@ -781,18 +765,16 @@ static int cdr_register_engine(cdr_engine_t *eng)
 {
 	cdr_engine_t *e;
 
-	if(eng==NULL)
+	if(eng == NULL)
 		return -1;
-	e = (cdr_engine_t*)pkg_malloc(sizeof(cdr_engine_t));
-	if(e ==NULL)
-	{
+	e = (cdr_engine_t *)pkg_malloc(sizeof(cdr_engine_t));
+	if(e == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(e, eng, sizeof(cdr_engine_t));
 
-	if(cdr_init_engine(e)<0)
-	{
+	if(cdr_init_engine(e) < 0) {
 		pkg_free(e);
 		return -1;
 	}
