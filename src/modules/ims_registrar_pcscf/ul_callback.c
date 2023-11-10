@@ -79,39 +79,42 @@ extern str pcscf_uri;
 extern int publish_reginfo;
 
 /* methods for building reg publish */
-str* build_reginfo_partial(ppublic_t *impu, struct pcontact* c, int type) {
+str *build_reginfo_partial(ppublic_t *impu, struct pcontact *c, int type)
+{
 	xmlDocPtr doc = NULL;
 	xmlNodePtr root_node = NULL;
 	xmlNodePtr registration_node = NULL;
 	xmlNodePtr contact_node = NULL;
 	xmlNodePtr uri_node = NULL;
-	str * body = NULL;
+	str *body = NULL;
 	char buf[512];
 
 	/* create the XML-Body */
 	doc = xmlNewDoc(BAD_CAST "1.0");
-	if (doc == 0) {
+	if(doc == 0) {
 		LM_ERR("Unable to create XML-Doc\n");
 		goto error;
 	}
 
 	root_node = xmlNewNode(NULL, BAD_CAST "reginfo");
-	if (root_node == 0) {
+	if(root_node == 0) {
 		LM_ERR("Unable to create reginfo-XML-Element\n");
 		goto error;
 	}
 	/* This is our Root-Element: */
 	xmlDocSetRootElement(doc, root_node);
 
-	xmlNewProp(root_node, BAD_CAST "xmlns", BAD_CAST "urn:ietf:params:xml:ns:reginfo");
+	xmlNewProp(root_node, BAD_CAST "xmlns",
+			BAD_CAST "urn:ietf:params:xml:ns:reginfo");
 
 	/* we set the version to 0 but it should be set to the correct value in the pua module */
 	xmlNewProp(root_node, BAD_CAST "version", BAD_CAST "0");
-	xmlNewProp(root_node, BAD_CAST "state", BAD_CAST "partial" );
+	xmlNewProp(root_node, BAD_CAST "state", BAD_CAST "partial");
 
 	/* Registration Node */
-	registration_node = xmlNewChild(root_node, NULL, BAD_CAST "registration", NULL);
-	if (registration_node == NULL) {
+	registration_node =
+			xmlNewChild(root_node, NULL, BAD_CAST "registration", NULL);
+	if(registration_node == NULL) {
 		LM_ERR("while adding child\n");
 		goto error;
 	}
@@ -119,17 +122,19 @@ str* build_reginfo_partial(ppublic_t *impu, struct pcontact* c, int type) {
 	/* Add the properties to this Node for AOR and ID: */
 	//registration aor nodes
 	memset(buf, 0, sizeof(buf));
-	snprintf(buf, sizeof(buf), "%.*s", impu->public_identity.len, impu->public_identity.s);
+	snprintf(buf, sizeof(buf), "%.*s", impu->public_identity.len,
+			impu->public_identity.s);
 	xmlNewProp(registration_node, BAD_CAST "aor", BAD_CAST buf);
-	
+
 	//registration id
 	memset(buf, 0, sizeof(buf));
 	snprintf(buf, sizeof(buf), "%p", impu);
 	xmlNewProp(registration_node, BAD_CAST "id", BAD_CAST buf);
 
 	//now the updated contact
-	contact_node =xmlNewChild(registration_node, NULL, BAD_CAST "contact", NULL);
-	if (contact_node == NULL) {
+	contact_node =
+			xmlNewChild(registration_node, NULL, BAD_CAST "contact", NULL);
+	if(contact_node == NULL) {
 		LM_ERR("while adding child\n");
 		goto error;
 	}
@@ -148,22 +153,22 @@ str* build_reginfo_partial(ppublic_t *impu, struct pcontact* c, int type) {
 	memset(buf, 0, sizeof(buf));
 	snprintf(buf, sizeof(buf), "%.*s", c->aor.len, c->aor.s);
 	uri_node = xmlNewChild(contact_node, NULL, BAD_CAST "uri", BAD_CAST buf);
-	if (uri_node == NULL) {
+	if(uri_node == NULL) {
 		LM_ERR("while adding child\n");
 		goto error;
 	}
 
 	/* create the body */
-	body = (str*) pkg_malloc(sizeof(str));
-	if (body == NULL) {
+	body = (str *)pkg_malloc(sizeof(str));
+	if(body == NULL) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(body, 0, sizeof(str));
 
 	/* Write the XML into the body */
-	xmlDocDumpFormatMemory(doc, (unsigned char**) (void*) &body->s, &body->len,
-			1);
+	xmlDocDumpFormatMemory(
+			doc, (unsigned char **)(void *)&body->s, &body->len, 1);
 
 	/*free the document */
 	xmlFreeDoc(doc);
@@ -172,18 +177,17 @@ str* build_reginfo_partial(ppublic_t *impu, struct pcontact* c, int type) {
 	return body;
 
 error:
-	if (body) {
-		if (body->s)
+	if(body) {
+		if(body->s)
 			xmlFree(body->s);
 		pkg_free(body);
 	}
-	if (doc)
+	if(doc)
 		xmlFreeDoc(doc);
 	return NULL;
-
 }
 
-#define P_ASSERTED_IDENTITY_HDR_PREFIX	"P-Asserted-Identity: <"
+#define P_ASSERTED_IDENTITY_HDR_PREFIX "P-Asserted-Identity: <"
 int send_partial_publish(ppublic_t *impu, struct pcontact *c, int type)
 {
 	//publ_info_t publ;
@@ -194,77 +198,85 @@ int send_partial_publish(ppublic_t *impu, struct pcontact *c, int type)
 	str publ_id;
 	reginfo_event_t *new_event;
 	str *body = NULL;
-	
+
 	content_type.s = "application/reginfo+xml";
 	content_type.len = 23;
-	
-	int len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX) + pcscf_uri.len + 1 + CRLF_LEN;
-	p_asserted_identity_header.s = (char *)pkg_malloc( len );
-	if ( p_asserted_identity_header.s == NULL ) {
-	    PKG_MEM_ERROR_FMT("%d bytes failed", len );
-	    goto error;
+
+	int len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX) + pcscf_uri.len + 1
+			  + CRLF_LEN;
+	p_asserted_identity_header.s = (char *)pkg_malloc(len);
+	if(p_asserted_identity_header.s == NULL) {
+		PKG_MEM_ERROR_FMT("%d bytes failed", len);
+		goto error;
 	}
-	
-	memcpy(p_asserted_identity_header.s, P_ASSERTED_IDENTITY_HDR_PREFIX, strlen(P_ASSERTED_IDENTITY_HDR_PREFIX));
+
+	memcpy(p_asserted_identity_header.s, P_ASSERTED_IDENTITY_HDR_PREFIX,
+			strlen(P_ASSERTED_IDENTITY_HDR_PREFIX));
 	p_asserted_identity_header.len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX);
-	memcpy(p_asserted_identity_header.s + p_asserted_identity_header.len, pcscf_uri.s, pcscf_uri.len);
+	memcpy(p_asserted_identity_header.s + p_asserted_identity_header.len,
+			pcscf_uri.s, pcscf_uri.len);
 	p_asserted_identity_header.len += pcscf_uri.len;
 	*(p_asserted_identity_header.s + p_asserted_identity_header.len) = '>';
-	p_asserted_identity_header.len ++;
-	memcpy( p_asserted_identity_header.s + p_asserted_identity_header.len, CRLF, CRLF_LEN );
+	p_asserted_identity_header.len++;
+	memcpy(p_asserted_identity_header.s + p_asserted_identity_header.len, CRLF,
+			CRLF_LEN);
 	p_asserted_identity_header.len += CRLF_LEN;
-	
-	LM_DBG("p_asserted_identity_header: [%.*s]", p_asserted_identity_header.len, p_asserted_identity_header.s);
-	
+
+	LM_DBG("p_asserted_identity_header: [%.*s]", p_asserted_identity_header.len,
+			p_asserted_identity_header.s);
+
 	LM_DBG("Sending publish\n");
 	body = build_reginfo_partial(impu, c, type);
 
-	if (body == NULL || body->s == NULL) {
+	if(body == NULL || body->s == NULL) {
 		LM_ERR("Error on creating XML-Body for publish\n");
 		goto error;
 	}
 	LM_DBG("XML-Body:\n%.*s\n", body->len, body->s);
-	
-	id_buf_len = snprintf(id_buf, sizeof(id_buf), "IMSPCSCF_PUBLISH.%.*s", c->aor.len, c->aor.s);
+
+	id_buf_len = snprintf(id_buf, sizeof(id_buf), "IMSPCSCF_PUBLISH.%.*s",
+			c->aor.len, c->aor.s);
 	publ_id.s = id_buf;
 	publ_id.len = id_buf_len;
 
-	new_event = new_reginfo_event(REG_EVENT_PUBLISH, body, &publ_id, &content_type, 0, 0,
-	0, 0, 3600, UPDATE_TYPE, REGINFO_PUBLISH, REGINFO_EVENT, &p_asserted_identity_header, &impu->public_identity);
-	
-	if (!new_event) {
-            LM_ERR("Unable to create event for cdp callback\n");
-            goto error;
-        }
-        //push the new event onto the stack (FIFO)
-        push_reginfo_event(new_event);
-	
-	if (p_asserted_identity_header.s) {
+	new_event = new_reginfo_event(REG_EVENT_PUBLISH, body, &publ_id,
+			&content_type, 0, 0, 0, 0, 3600, UPDATE_TYPE, REGINFO_PUBLISH,
+			REGINFO_EVENT, &p_asserted_identity_header, &impu->public_identity);
+
+	if(!new_event) {
+		LM_ERR("Unable to create event for cdp callback\n");
+		goto error;
+	}
+	//push the new event onto the stack (FIFO)
+	push_reginfo_event(new_event);
+
+	if(p_asserted_identity_header.s) {
 		pkg_free(p_asserted_identity_header.s);
 	}
-	
-	if (body) {
-		if (body->s)
+
+	if(body) {
+		if(body->s)
 			xmlFree(body->s);
 		pkg_free(body);
 	}
-	
+
 	return 1;
 
 error:
-	
-	if (p_asserted_identity_header.s) {
+
+	if(p_asserted_identity_header.s) {
 		pkg_free(p_asserted_identity_header.s);
 	}
-	if (body) {
-		if (body->s)
+	if(body) {
+		if(body->s)
 			xmlFree(body->s);
 		pkg_free(body);
 	}
 	return -1;
 }
 
-void callback_pcscf_contact_cb(struct pcontact *c, int type, void *param) {
+void callback_pcscf_contact_cb(struct pcontact *c, int type, void *param)
+{
 	ppublic_t *ptr;
 
 	LM_DBG("----------------------!\n");
@@ -273,24 +285,27 @@ void callback_pcscf_contact_cb(struct pcontact *c, int type, void *param) {
 	LM_DBG("Callback type [%d]\n", type);
 	LM_DBG("Reg state [%d]\n", c->reg_state);
 
-	if ((type&PCSCF_CONTACT_UPDATE)) {
+	if((type & PCSCF_CONTACT_UPDATE)) {
 		//send publish for each associated IMPU
 		ptr = c->head;
-			while (ptr) {
-				if (c->reg_state == PCONTACT_DEREG_PENDING_PUBLISH && publish_reginfo) {
-					LM_DBG("delete/update on contact <%.*s> associated with IMPU <%.*s> (sending publish)\n",
-											c->aor.len, c->aor.s,
-											ptr->public_identity.len, ptr->public_identity.s);
-					if (ptr->public_identity.len > 4 && strncasecmp(ptr->public_identity.s,"tel:",4)==0) {
-					    LM_DBG("This is a tel URI - it is not routable so we don't publish for it");
-					}else{
-					    send_partial_publish(ptr, c, type);
-					}
+		while(ptr) {
+			if(c->reg_state == PCONTACT_DEREG_PENDING_PUBLISH
+					&& publish_reginfo) {
+				LM_DBG("delete/update on contact <%.*s> associated with IMPU "
+					   "<%.*s> (sending publish)\n",
+						c->aor.len, c->aor.s, ptr->public_identity.len,
+						ptr->public_identity.s);
+				if(ptr->public_identity.len > 4
+						&& strncasecmp(ptr->public_identity.s, "tel:", 4)
+								   == 0) {
+					LM_DBG("This is a tel URI - it is not routable so we don't "
+						   "publish for it");
+				} else {
+					send_partial_publish(ptr, c, type);
 				}
-
-				ptr = ptr->next;
 			}
 
+			ptr = ptr->next;
+		}
 	}
 }
-

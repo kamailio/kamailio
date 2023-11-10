@@ -53,10 +53,10 @@
 /*! \brief
  * Process REGISTER request and save its contacts
  */
-int save(struct sip_msg* _m, udomain_t* _d, int _cflags);
-int save_pending(struct sip_msg* _m, udomain_t* _d);
-int unregister(struct sip_msg* _m, char* _d, char* _uri);
-struct sip_msg* get_request_from_reply(struct sip_msg* reply);
+int save(struct sip_msg *_m, udomain_t *_d, int _cflags);
+int save_pending(struct sip_msg *_m, udomain_t *_d);
+int unregister(struct sip_msg *_m, char *_d, char *_uri);
+struct sip_msg *get_request_from_reply(struct sip_msg *reply);
 
 
 #endif /* SAVE_H */
