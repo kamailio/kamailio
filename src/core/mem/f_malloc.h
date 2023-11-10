@@ -40,24 +40,21 @@
  */
 #define F_MALLOC_HASH_BITMAP
 
-#ifdef DBG_F_MALLOC
-#if defined(__CPU_sparc64) || defined(__CPU_sparc)
-/* tricky, on sun in 32 bits mode long long must be 64 bits aligned
- * but long can be 32 bits aligned => malloc should return long long
- * aligned memory */
-#define ROUNDTO sizeof(long long)
-#else
-#define ROUNDTO \
-	sizeof(void *) /* size we round to, must be = 2^n, and
-							* sizeof(fm_frag) must be multiple of ROUNDTO !*/
-#endif
-#else /* DBG_F_MALLOC */
-#define ROUNDTO 8UL
-#endif
+/**
+ * ROUNDTO: size to round to, must be = 2^n
+ * - on sun in 32 bits mode long long must be 64 bits aligned but long
+ * can be 32 bits aligned => malloc should return multiple of long long
+ * aligned memory
+ * - malloc() on gnu/linux: multiple of 8 or 16 on 64-bit systems
+ * - for simplicity settle for 16 always
+ * - sizeof(fm_frag) must be multiple of ROUNDTO!
+ */
+#define ROUNDTO 16UL
+
 #define MIN_FRAG_SIZE ROUNDTO
 
 
-#define F_MALLOC_OPTIMIZE_FACTOR 14UL /* used below */
+#define F_MALLOC_OPTIMIZE_FACTOR 15UL /* used below */
 /** Size to optimize for, (most allocs <= this size), must be 2^k */
 #define F_MALLOC_OPTIMIZE (1UL << F_MALLOC_OPTIMIZE_FACTOR)
 
@@ -81,18 +78,18 @@ typedef unsigned long fm_hash_bitmap_t;
  */
 struct fm_frag
 {
-	unsigned long size;		   /* size of fragment */
+	unsigned long size;	   /* size of fragment */
+	unsigned long is_free; /* used to detect if fragment is free (when not 0) */
 	struct fm_frag *next_free; /* next free frag in slot */
-	struct fm_frag
-			*prev_free;	  /* prev free frag in slot - for faster join/defrag */
-	unsigned int is_free; /* used to detect if fragment is free (when not 0) */
+	struct fm_frag *prev_free; /* prev free frag in slot - faster join/defrag */
 #ifdef DBG_F_MALLOC
 	const char *file;
 	const char *func;
 	const char *mname;
 	unsigned long line;
 #endif
-	unsigned int check;
+	unsigned long reserved1;
+	unsigned long check;
 };
 
 struct fm_frag_lnk
@@ -107,12 +104,13 @@ struct fm_frag_lnk
  */
 struct fm_block
 {
-	int type;
+	long type;
 	unsigned long size;		 /** total size */
 	unsigned long used;		 /** allocated size*/
 	unsigned long real_used; /** used + malloc overhead */
 	unsigned long max_real_used;
 	unsigned long ffrags;
+	unsigned long reserved1;
 
 	struct fm_frag *first_frag;
 	struct fm_frag *last_frag;

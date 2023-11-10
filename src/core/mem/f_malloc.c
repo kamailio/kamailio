@@ -43,19 +43,18 @@
 
 /* useful macros */
 
-#define FRAG_NEXT(f) \
-	((struct fm_frag *)((char *)(f) + sizeof(struct fm_frag) + (f)->size))
-
-#define FRAG_OVERHEAD (sizeof(struct fm_frag))
-#define INIT_OVERHEAD \
-	(ROUNDUP(sizeof(struct fm_block)) + 2 * sizeof(struct fm_frag))
-
-
 /** ROUNDTO= 2^k so the following works */
 #define ROUNDTO_MASK (~((unsigned long)ROUNDTO - 1))
 #define ROUNDUP(s) (((s) + (ROUNDTO - 1)) & ROUNDTO_MASK)
 #define ROUNDDOWN(s) ((s)&ROUNDTO_MASK)
 
+#define FRAG_NEXT(f) \
+	((struct fm_frag *)((char *)(f) + sizeof(struct fm_frag) + (f)->size))
+
+#define FRAG_OVERHEAD (sizeof(struct fm_frag))
+
+#define INIT_OVERHEAD \
+	(ROUNDUP(sizeof(struct fm_block)) + 2 * sizeof(struct fm_frag))
 
 /** finds the hash value for s, s=ROUNDTO multiple */
 #define GET_HASH(s)                                                   \
@@ -321,12 +320,28 @@ struct fm_block *fm_malloc_init(char *address, unsigned long size, int type)
 	struct fm_block *qm;
 	unsigned long init_overhead;
 
-	/* make address and size multiple of 8*/
+	if(sizeof(struct fm_frag) % ROUNDTO != 0) {
+		LM_ERR("memory fragment align constraints failure (%lu %% %lu = %lu)\n",
+				sizeof(struct fm_frag), ROUNDTO,
+				sizeof(struct fm_frag) % ROUNDTO);
+		return 0;
+	}
+	if(sizeof(struct fm_block) % ROUNDTO != 0) {
+		LM_ERR("memory block align constraints failure (%lu %% %lu = %lu)\n",
+				sizeof(struct fm_block), ROUNDTO,
+				sizeof(struct fm_block) % ROUNDTO);
+		return 0;
+	}
+
+	/* make address and size multiple of ROUNDTO */
 	start = (char *)ROUNDUP((unsigned long)address);
-	LM_DBG("F_OPTIMIZE=%lu, /ROUNDTO=%lu\n", F_MALLOC_OPTIMIZE,
-			F_MALLOC_OPTIMIZE / ROUNDTO);
-	LM_DBG("F_HASH_SIZE=%lu, fm_block size=%lu\n", F_HASH_SIZE,
-			(unsigned long)sizeof(struct fm_block));
+	LM_DBG("F_OPTIMIZE=%lu, F_OPTIMIZE/ROUNDTO=%lu, ROUNDTO=%lu\n",
+			F_MALLOC_OPTIMIZE, F_MALLOC_OPTIMIZE / ROUNDTO, ROUNDTO);
+	LM_DBG("F_HASH_SIZE=%lu, FM_HASH_BMP_SIZE=%lu, fm_block_size=%lu, "
+		   "fm_block_size %% ROUNDTO=%lu\n",
+			F_HASH_SIZE, FM_HASH_BMP_SIZE,
+			(unsigned long)sizeof(struct fm_block),
+			(unsigned long)sizeof(struct fm_block) % ROUNDTO);
 	LM_DBG("fm_malloc_init(%p, %lu), start=%p\n", address, (unsigned long)size,
 			start);
 
