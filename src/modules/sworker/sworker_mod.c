@@ -88,16 +88,16 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	if(_sworker_xdata.s!=NULL && _sworker_xdata.len>0) {
+	if(_sworker_xdata.s != NULL && _sworker_xdata.len > 0) {
 		_sworker_xdata_spec = pv_cache_get(&_sworker_xdata);
-		if(_sworker_xdata_spec==NULL) {
-			LM_ERR("cannot get pv spec for [%.*s]\n",
-					_sworker_xdata.len, _sworker_xdata.s);
+		if(_sworker_xdata_spec == NULL) {
+			LM_ERR("cannot get pv spec for [%.*s]\n", _sworker_xdata.len,
+					_sworker_xdata.s);
 			return -1;
 		}
-		if(_sworker_xdata_spec->setf==NULL) {
-			LM_ERR("read only output variable [%.*s]\n",
-					_sworker_xdata.len, _sworker_xdata.s);
+		if(_sworker_xdata_spec->setf == NULL) {
+			LM_ERR("read only output variable [%.*s]\n", _sworker_xdata.len,
+					_sworker_xdata.s);
 			return -1;
 		}
 	}
@@ -125,7 +125,7 @@ static void mod_destroy(void)
 void sworker_exec_task(void *param)
 {
 	sworker_task_param_t *stp;
-	static char buf[BUF_SIZE+1];
+	static char buf[BUF_SIZE + 1];
 	receive_info_t rcvi;
 	int len;
 	pv_value_t val;
@@ -143,17 +143,17 @@ void sworker_exec_task(void *param)
 	memcpy(&rcvi, &stp->rcv, sizeof(receive_info_t));
 	rcvi.rflags |= RECV_F_INTERNAL;
 
-	if(_sworker_xdata_spec!=NULL) {
-		if(stp->xdata.len>0) {
+	if(_sworker_xdata_spec != NULL) {
+		if(stp->xdata.len > 0) {
 			memset(&val, 0, sizeof(pv_value_t));
 			val.flags |= PV_VAL_STR;
 			val.rs = stp->xdata;
-			if(pv_set_spec_value(NULL, _sworker_xdata_spec, 0, &val)!=0) {
+			if(pv_set_spec_value(NULL, _sworker_xdata_spec, 0, &val) != 0) {
 				LM_ERR("failed to set the xdata variable\n");
 				return;
 			}
 		} else {
-			if(pv_set_spec_value(NULL, _sworker_xdata_spec, 0, NULL)!=0) {
+			if(pv_set_spec_value(NULL, _sworker_xdata_spec, 0, NULL) != 0) {
 				LM_ERR("failed to reset the xdata variable\n");
 				return;
 			}
@@ -177,13 +177,13 @@ int sworker_send_task(sip_msg_t *msg, str *gname)
 
 	memset(&val, 0, sizeof(pv_value_t));
 	dsize = sizeof(async_task_t) + sizeof(sworker_task_param_t)
-		+ (msg->len+1)*sizeof(char);
-	if(_sworker_xdata_spec!=NULL) {
-		if(pv_get_spec_value(msg, _sworker_xdata_spec, &val)!=0) {
+			+ (msg->len + 1) * sizeof(char);
+	if(_sworker_xdata_spec != NULL) {
+		if(pv_get_spec_value(msg, _sworker_xdata_spec, &val) != 0) {
 			LM_ERR("failed to get xdata value\n");
 			return -1;
 		}
-		if((val.flags & PV_VAL_STR) && (val.rs.len>0)) {
+		if((val.flags & PV_VAL_STR) && (val.rs.len > 0)) {
 			dsize += val.rs.len + 1;
 		} else {
 			LM_DBG("xdata does not have a string value - skipping\n");
@@ -199,12 +199,13 @@ int sworker_send_task(sip_msg_t *msg, str *gname)
 	at->exec = sworker_exec_task;
 	at->param = (char *)at + sizeof(async_task_t);
 	stp = (sworker_task_param_t *)at->param;
-	stp->buf = (char*)stp+sizeof(sworker_task_param_t);
+	stp->buf = (char *)stp + sizeof(sworker_task_param_t);
 	memcpy(stp->buf, msg->buf, msg->len);
 	stp->len = msg->len;
 	memcpy(&stp->rcv, &msg->rcv, sizeof(receive_info_t));
-	if(val.rs.len>0) {
-		stp->xdata.s = (char*)stp+sizeof(sworker_task_param_t)+msg->len+1;
+	if(val.rs.len > 0) {
+		stp->xdata.s =
+				(char *)stp + sizeof(sworker_task_param_t) + msg->len + 1;
 		memcpy(stp->xdata.s, val.rs.s, val.rs.len);
 		stp->xdata.len = val.rs.len;
 		pv_value_destroy(&val);
@@ -218,7 +219,7 @@ int sworker_send_task(sip_msg_t *msg, str *gname)
  */
 int ki_sworker_task(sip_msg_t *msg, str *gname)
 {
-	if(msg==NULL || faked_msg_match(msg)) {
+	if(msg == NULL || faked_msg_match(msg)) {
 		LM_ERR("invalid usage for null or faked message\n");
 		return -1;
 	}
@@ -257,7 +258,7 @@ static int w_sworker_task(sip_msg_t *msg, char *pgname, char *p2)
  */
 static int ki_sworker_active(sip_msg_t *msg)
 {
-	if(_sworker_active==0) {
+	if(_sworker_active == 0) {
 		return -1;
 	}
 	return 1;
@@ -268,7 +269,7 @@ static int ki_sworker_active(sip_msg_t *msg)
  */
 static int w_sworker_active(sip_msg_t *msg, char *p1, char *p2)
 {
-	if(_sworker_active==0) {
+	if(_sworker_active == 0) {
 		return -1;
 	}
 	return 1;
