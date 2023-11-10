@@ -46,13 +46,13 @@ extern str
 		default_tls_clientcert; /*!< File name: Default client certificate to use for curl TLS connection */
 extern str
 		default_tls_clientkey; /*!< File name: Key in PEM format that belongs to client cert */
-extern str default_cipher_suite_list;	/*!< List of allowed cipher suites */
+extern str default_cipher_suite_list;	 /*!< List of allowed cipher suites */
 extern unsigned int default_tls_version; /*!< 0 = Use libcurl default */
 extern unsigned int
 		default_tls_verify_peer; /*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
 extern unsigned int
 		default_tls_verify_host; /*!< 0 = Do not verify TLS server CN/SAN. 2 = Verify TLS server CN/SAN (default) */
-extern str default_http_proxy;   /*!< Default HTTP proxy to use */
+extern str default_http_proxy;	 /*!< Default HTTP proxy to use */
 extern unsigned int
 		default_http_proxy_port; /*!< Default HTTP proxy port to use */
 extern unsigned int
@@ -65,11 +65,12 @@ extern unsigned int
 extern unsigned int
 		default_keep_connections; /*!< Keep http connections open for reuse */
 extern unsigned int default_query_result; /*!< Default query result mode */
-extern unsigned int default_query_maxdatasize; /*!< Default query result maximum download size */
+extern unsigned int
+		default_query_maxdatasize; /*!< Default query result maximum download size */
 
 extern counter_handle_t connections; /* Number of connection definitions */
 extern counter_handle_t connok;		 /* Successful Connection attempts */
-extern counter_handle_t connfail;	/* Failed Connection attempts */
+extern counter_handle_t connfail;	 /* Failed Connection attempts */
 
 extern char *default_netinterface;
 
@@ -86,7 +87,7 @@ enum connection_status
 {
 	AVAILABLE = 0, /*!< Available */
 	NOTREACHABLE,  /*!< Failure */
-	DISABLED,	  /*!< Disabled by action (RPC etc) */
+	DISABLED,	   /*!< Disabled by action (RPC etc) */
 	/* DELETED */  /*!< Should be deleted by pkg process, not listed */
 };
 
@@ -106,7 +107,7 @@ typedef struct _curl_con
 	str failover;		/*!< Another connection to use if this one fails */
 	char *useragent;	/*!< Useragent to use for this connection */
 	char *cacert;		/*!< File name of CA cert to use */
-	char *clientcert;   /*!< File name of CA client cert */
+	char *clientcert;	/*!< File name of CA client cert */
 	char *clientkey;	/*!< File name of CA client key */
 	char *ciphersuites; /*!< List of allowed cipher suites */
 	unsigned int tlsversion;  /*!< SSL/TLS version to use */
@@ -116,8 +117,8 @@ typedef struct _curl_con
 	unsigned int keep_connections; /*!< TRUE to keep curl connections open */
 	unsigned int port;			   /*!< The port to connect to */
 	int timeout;				   /*!< Timeout for this connection */
-	unsigned int maxdatasize;	  /*!< Maximum data download on GET or POST */
-	curl_res_stream_t *stream;	 /*!< Curl stream */
+	unsigned int maxdatasize;	   /*!< Maximum data download on GET or POST */
+	curl_res_stream_t *stream;	   /*!< Curl stream */
 	char *http_proxy;			   /*!< HTTP proxy for this connection */
 	unsigned int http_proxy_port;  /*!< HTTP proxy port for this connection */
 	struct _curl_con *next;		   /*!< next connection */
@@ -127,7 +128,7 @@ typedef struct _curl_con
 /*! Per-process copy of connection object -stored in pkg memory */
 typedef struct _curl_con_pkg
 {
-	str name; /*!< Connection name */
+	str name;			/*!< Connection name */
 	unsigned int conid; /*!< Connection hash ID */
 	char redirecturl
 			[512]; /*!< Last redirect URL - to use for $curlredirect(curlcon) pv */
@@ -135,7 +136,7 @@ typedef struct _curl_con_pkg
 	char result_content_type[512]; /*!< Response content-type */
 	CURL *curl;					   /*!< Curl connection handle */
 	double querytime;			   /*!< Seconds used for last request */
-	double connecttime;			   /*!< Seconds used for connecting last request inc TLS setup  - see
+	double connecttime; /*!< Seconds used for connecting last request inc TLS setup  - see
 					     https://curl.haxx.se/libcurl/c/CURLINFO_APPCONNECT_TIME.html */
 
 	/* Potential candidates:	Last TLS fingerprint used 
