@@ -26,7 +26,7 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/timer_ticks.h"
 
-#define SL_RPL_WAIT_TIME  S_TO_TICKS(2)   /* in sec */
+#define SL_RPL_WAIT_TIME S_TO_TICKS(2) /* in sec */
 
 #define SL_TOTAG_SEPARATOR '.'
 

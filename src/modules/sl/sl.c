@@ -69,114 +69,103 @@ static struct tm_binds tmb;
 str _sl_event_callback_fl_ack = STR_NULL;
 str _sl_event_callback_lres_sent = STR_NULL;
 
-static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2);
-static int w_send_reply(struct sip_msg* msg, char* str1, char* str2);
-static int w_send_reply_mode(struct sip_msg* msg, char* str1, char* str2,
-		char *str3);
-static int w_sl_reply_error(struct sip_msg* msg, char* str1, char* str2);
-static int w_sl_forward_reply0(sip_msg_t* msg, char* str1, char* str2);
-static int w_sl_forward_reply1(sip_msg_t* msg, char* str1, char* str2);
-static int w_sl_forward_reply2(sip_msg_t* msg, char* str1, char* str2);
-static int bind_sl(sl_api_t* api);
+static int w_sl_send_reply(struct sip_msg *msg, char *str1, char *str2);
+static int w_send_reply(struct sip_msg *msg, char *str1, char *str2);
+static int w_send_reply_mode(
+		struct sip_msg *msg, char *str1, char *str2, char *str3);
+static int w_sl_reply_error(struct sip_msg *msg, char *str1, char *str2);
+static int w_sl_forward_reply0(sip_msg_t *msg, char *str1, char *str2);
+static int w_sl_forward_reply1(sip_msg_t *msg, char *str1, char *str2);
+static int w_sl_forward_reply2(sip_msg_t *msg, char *str1, char *str2);
+static int bind_sl(sl_api_t *api);
 static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy();
-static int fixup_sl_reply(void** param, int param_no);
-static int fixup_sl_reply_mode(void** param, int param_no);
+static int fixup_sl_reply(void **param, int param_no);
+static int fixup_sl_reply_mode(void **param, int param_no);
 
 static int pv_get_ltt(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_ltt_name(pv_spec_p sp, str *in);
 
 
 static pv_export_t mod_pvs[] = {
-	{ {"ltt", (sizeof("ltt")-1)}, PVT_OTHER, pv_get_ltt, 0,
-		pv_parse_ltt_name, 0, 0, 0 },
+		{{"ltt", (sizeof("ltt") - 1)}, PVT_OTHER, pv_get_ltt, 0,
+				pv_parse_ltt_name, 0, 0, 0},
 
-	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
-};
+		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
-static cmd_export_t cmds[]={
-	{"sl_send_reply",  w_sl_send_reply,             2, fixup_sl_reply, 0,
-		REQUEST_ROUTE},
-	{"sl_reply",       w_sl_send_reply,             2, fixup_sl_reply, 0,
-		REQUEST_ROUTE},
-	{"send_reply",     w_send_reply,                2, fixup_sl_reply, 0,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
-	{"send_reply_mode", (cmd_function)w_send_reply_mode, 3, fixup_sl_reply_mode, 0,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
-	{"sl_reply_error", w_sl_reply_error,            0, 0, 0,
-		REQUEST_ROUTE},
-	{"sl_forward_reply",  w_sl_forward_reply0,      0, 0, 0,
-		ONREPLY_ROUTE},
-	{"sl_forward_reply",  w_sl_forward_reply1,      1, fixup_spve_all, 0,
-		ONREPLY_ROUTE},
-	{"sl_forward_reply",  w_sl_forward_reply2,      2, fixup_spve_all, 0,
-		ONREPLY_ROUTE},
-	{"bind_sl",        (cmd_function)bind_sl,       0, 0, 0,           0},
-	{0,0,0,0,0,0}
-};
+static cmd_export_t cmds[] = {
+		{"sl_send_reply", w_sl_send_reply, 2, fixup_sl_reply, 0, REQUEST_ROUTE},
+		{"sl_reply", w_sl_send_reply, 2, fixup_sl_reply, 0, REQUEST_ROUTE},
+		{"send_reply", w_send_reply, 2, fixup_sl_reply, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"send_reply_mode", (cmd_function)w_send_reply_mode, 3,
+				fixup_sl_reply_mode, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"sl_reply_error", w_sl_reply_error, 0, 0, 0, REQUEST_ROUTE},
+		{"sl_forward_reply", w_sl_forward_reply0, 0, 0, 0, ONREPLY_ROUTE},
+		{"sl_forward_reply", w_sl_forward_reply1, 1, fixup_spve_all, 0,
+				ONREPLY_ROUTE},
+		{"sl_forward_reply", w_sl_forward_reply2, 2, fixup_spve_all, 0,
+				ONREPLY_ROUTE},
+		{"bind_sl", (cmd_function)bind_sl, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
 
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {
-	{"default_code",   PARAM_INT, &default_code},
-	{"default_reason", PARAM_STR, &default_reason},
-	{"bind_tm",        PARAM_INT, &sl_bind_tm},
-	{"rich_redirect",  PARAM_INT, &sl_rich_redirect},
-	{"event_callback_fl_ack",    PARAM_STR, &_sl_event_callback_fl_ack},
-	{"event_callback_lres_sent", PARAM_STR, &_sl_event_callback_lres_sent},
+static param_export_t params[] = {{"default_code", PARAM_INT, &default_code},
+		{"default_reason", PARAM_STR, &default_reason},
+		{"bind_tm", PARAM_INT, &sl_bind_tm},
+		{"rich_redirect", PARAM_INT, &sl_rich_redirect},
+		{"event_callback_fl_ack", PARAM_STR, &_sl_event_callback_fl_ack},
+		{"event_callback_lres_sent", PARAM_STR, &_sl_event_callback_lres_sent},
 
-	{0, 0, 0}
-};
+		{0, 0, 0}};
 
 
 #ifdef STATIC_SL
 struct module_exports sl_exports = {
 #else
-struct module_exports exports= {
+struct module_exports exports = {
 #endif
-	"sl",				/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* cmd (cfg function) exports */
-	params,			    /* param exports */
-	sl_rpc,			    /* RPC method exports */
-	mod_pvs,			/* pv exports */
-	0,					/* response handling function */
-	mod_init,			/* module init function */
-	child_init,			/* per-child init function */
-	mod_destroy			/* module destroy function */
+		"sl",			 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* cmd (cfg function) exports */
+		params,			 /* param exports */
+		sl_rpc,			 /* RPC method exports */
+		mod_pvs,		 /* pv exports */
+		0,				 /* response handling function */
+		mod_init,		 /* module init function */
+		child_init,		 /* per-child init function */
+		mod_destroy		 /* module destroy function */
 };
 
 
 static int mod_init(void)
 {
-	if (init_sl_stats() < 0) {
+	if(init_sl_stats() < 0) {
 		ERR("init_sl_stats failed\n");
 		return -1;
 	}
-	if (sl_register_kstats()<0) {
+	if(sl_register_kstats() < 0) {
 		ERR("init k stats failed\n");
 		return -1;
 	}
 
 	/* if SL loaded, filter ACKs on beginning */
-	if (register_script_cb( sl_filter_ACK, PRE_SCRIPT_CB|REQUEST_CB, 0 )<0) {
+	if(register_script_cb(sl_filter_ACK, PRE_SCRIPT_CB | REQUEST_CB, 0) < 0) {
 		ERR("Failed to install SCRIPT callback\n");
 		return -1;
 	}
-	if(sl_startup()<0)
-	{
+	if(sl_startup() < 0) {
 		ERR("Failed to do startup tasks\n");
 		return -1;
 	}
 
 	memset(&tmb, 0, sizeof(struct tm_binds));
-	if(sl_bind_tm!=0)
-	{
-		if(load_tm_api(&tmb)==-1)
-		{
+	if(sl_bind_tm != 0) {
+		if(load_tm_api(&tmb) == -1) {
 			LM_INFO("could not bind tm module - only stateless mode"
 					" available during modules initialization\n");
 		}
@@ -189,19 +178,18 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	if (rank == PROC_INIT) {
-		if (init_sl_stats_child() < 0) {
+	if(rank == PROC_INIT) {
+		if(init_sl_stats_child() < 0) {
 			ERR("init_sl_stats_child failed\n");
 			return -1;
 		}
-		if(sl_bind_tm!=0 && tmb.register_tmcb==0) {
-			if(load_tm_api(&tmb)==-1) {
+		if(sl_bind_tm != 0 && tmb.register_tmcb == 0) {
+			if(load_tm_api(&tmb) == -1) {
 				LM_INFO("could not bind tm module - only stateless mode"
-					" available during runtime\n");
-				sl_bind_tm=0;
+						" available during runtime\n");
+				sl_bind_tm = 0;
 			}
 		}
-
 	}
 	return 0;
 }
@@ -221,28 +209,30 @@ static void mod_destroy()
  * config variables
  *
  */
-static int w_sl_send_reply(struct sip_msg* msg, char* p1, char* p2)
+static int w_sl_send_reply(struct sip_msg *msg, char *p1, char *p2)
 {
 	int code, ret;
 	str reason;
-	char* r;
+	char *r;
 
-	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+	if(get_int_fparam(&code, msg, (fparam_t *)p1) < 0) {
 		code = default_code;
 	}
 
-	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+	if(get_str_fparam(&reason, msg, (fparam_t *)p2) < 0) {
 		reason = default_reason;
 	}
 
-	if(reason.s[reason.len-1]=='\0') {
+	if(reason.s[reason.len - 1] == '\0') {
 		r = reason.s;
 	} else {
 		r = as_asciiz(&reason);
-		if (r == NULL) r = default_reason.s;
+		if(r == NULL)
+			r = default_reason.s;
 	}
 	ret = sl_send_reply(msg, code, r);
-	if ((r!=reason.s) && (r!=default_reason.s)) pkg_free(r);
+	if((r != reason.s) && (r != default_reason.s))
+		pkg_free(r);
 
 	return ret;
 }
@@ -251,9 +241,9 @@ static int w_sl_send_reply(struct sip_msg* msg, char* p1, char* p2)
 /**
  * @brief Small wrapper around sl_reply_error
  */
-static int w_sl_reply_error( struct sip_msg* msg, char* str, char* str2)
+static int w_sl_reply_error(struct sip_msg *msg, char *str, char *str2)
 {
-	return sl_reply_error( msg );
+	return sl_reply_error(msg);
 }
 
 /**
@@ -278,24 +268,20 @@ int send_reply(struct sip_msg *msg, int code, str *reason)
 		return -2;
 	}
 
-	if(reason->s[reason->len-1]=='\0') {
+	if(reason->s[reason->len - 1] == '\0') {
 		r = reason->s;
 	} else {
 		r = as_asciiz(reason);
-		if (r == NULL)
-		{
+		if(r == NULL) {
 			LM_ERR("no pkg for reason phrase\n");
 			return -1;
 		}
 	}
 
-	if(sl_bind_tm!=0 && tmb.t_gett!=0)
-	{
+	if(sl_bind_tm != 0 && tmb.t_gett != 0) {
 		t = tmb.t_gett();
-		if(t!= NULL && t!=T_UNDEFINED)
-		{
-			if(tmb.t_reply(msg, code, r)< 0)
-			{
+		if(t != NULL && t != T_UNDEFINED) {
+			if(tmb.t_reply(msg, code, r) < 0) {
 				LM_ERR("failed to reply stateful (tm)\n");
 				goto error;
 			}
@@ -304,34 +290,36 @@ int send_reply(struct sip_msg *msg, int code, str *reason)
 		}
 	}
 
-	if(msg->first_line.type==SIP_REPLY)
+	if(msg->first_line.type == SIP_REPLY)
 		goto error;
 
 	LM_DBG("reply in stateless mode (sl)\n");
 	ret = sl_send_reply(msg, code, r);
 
 done:
-	if(r!=reason->s) pkg_free(r);
+	if(r != reason->s)
+		pkg_free(r);
 	return ret;
 
 error:
-	if(r!=reason->s) pkg_free(r);
+	if(r != reason->s)
+		pkg_free(r);
 	return -1;
 }
 
 /**
  * @brief Small wrapper around send_reply
  */
-static int w_send_reply(struct sip_msg* msg, char* p1, char* p2)
+static int w_send_reply(struct sip_msg *msg, char *p1, char *p2)
 {
 	int code;
 	str reason;
 
-	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+	if(get_int_fparam(&code, msg, (fparam_t *)p1) < 0) {
 		code = default_code;
 	}
 
-	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+	if(get_str_fparam(&reason, msg, (fparam_t *)p2) < 0) {
 		reason = default_reason;
 	}
 
@@ -353,9 +341,9 @@ static int w_send_reply(struct sip_msg* msg, char* p1, char* p2)
 int ki_send_reply_mode(struct sip_msg *msg, int code, str *reason, int mode)
 {
 	if(mode & SET_RPL_NO_CONNECT_T) {
-		msg->rpl_send_flags.f|= SND_F_FORCE_CON_REUSE;
+		msg->rpl_send_flags.f |= SND_F_FORCE_CON_REUSE;
 	} else if(mode & SET_RPL_CLOSE_T) {
-		msg->rpl_send_flags.f|= SND_F_CON_CLOSE;
+		msg->rpl_send_flags.f |= SND_F_CON_CLOSE;
 	}
 
 	return send_reply(msg, code, reason);
@@ -364,21 +352,21 @@ int ki_send_reply_mode(struct sip_msg *msg, int code, str *reason, int mode)
 /**
  * @brief Small wrapper around send_reply
  */
-static int w_send_reply_mode(struct sip_msg* msg, char* p1, char* p2, char *p3)
+static int w_send_reply_mode(struct sip_msg *msg, char *p1, char *p2, char *p3)
 {
 	int code;
 	str reason;
 	int mode = 0;
 
-	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+	if(get_int_fparam(&code, msg, (fparam_t *)p1) < 0) {
 		code = default_code;
 	}
 
-	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+	if(get_str_fparam(&reason, msg, (fparam_t *)p2) < 0) {
 		reason = default_reason;
 	}
 
-	if (get_int_fparam(&mode, msg, (fparam_t*)p3) < 0) {
+	if(get_int_fparam(&mode, msg, (fparam_t *)p3) < 0) {
 		mode = 0;
 	}
 
@@ -390,16 +378,13 @@ static int w_send_reply_mode(struct sip_msg* msg, char* p1, char* p2, char *p3)
  */
 int get_reply_totag(struct sip_msg *msg, str *totag)
 {
-	struct cell * t;
-	if(msg==NULL || totag==NULL)
+	struct cell *t;
+	if(msg == NULL || totag == NULL)
 		return -1;
-	if(sl_bind_tm!=0 && tmb.t_gett!=0)
-	{
+	if(sl_bind_tm != 0 && tmb.t_gett != 0) {
 		t = tmb.t_gett();
-		if(t!= NULL && t!=T_UNDEFINED)
-		{
-			if(tmb.t_get_reply_totag(msg, totag)< 0)
-			{
+		if(t != NULL && t != T_UNDEFINED) {
+			if(tmb.t_get_reply_totag(msg, totag) < 0) {
 				LM_ERR("failed to get totag (tm)\n");
 				return -1;
 			}
@@ -416,11 +401,11 @@ int get_reply_totag(struct sip_msg *msg, str *totag)
 /**
  * @brief fixup for SL reply config file functions
  */
-static int fixup_sl_reply(void** param, int param_no)
+static int fixup_sl_reply(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		return fixup_var_int_12(param, 1);
-	} else if (param_no == 2) {
+	} else if(param_no == 2) {
 		return fixup_var_pve_str_12(param, 2);
 	}
 	return 0;
@@ -429,13 +414,13 @@ static int fixup_sl_reply(void** param, int param_no)
 /**
  * @brief fixup for SL reply mode config file functions
  */
-static int fixup_sl_reply_mode(void** param, int param_no)
+static int fixup_sl_reply_mode(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		return fixup_var_int_12(param, 1);
-	} else if (param_no == 2) {
+	} else if(param_no == 2) {
 		return fixup_var_pve_str_12(param, 2);
-	} else if (param_no == 3) {
+	} else if(param_no == 3) {
 		return fixup_var_int_12(param, 1);
 	}
 	return 0;
@@ -444,30 +429,30 @@ static int fixup_sl_reply_mode(void** param, int param_no)
 /**
  * @brief forward SIP reply statelessly with different code and reason text
  */
-static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
+static int w_sl_forward_reply(sip_msg_t *msg, str *code, str *reason)
 {
 	char oldscode[3];
 	int oldncode;
 	int ret;
-	struct lump	*ldel = NULL;
-	struct lump	*ladd = NULL;
+	struct lump *ldel = NULL;
+	struct lump *ladd = NULL;
 	char *rbuf;
 
-	if(msg->first_line.type!=SIP_REPLY) {
+	if(msg->first_line.type != SIP_REPLY) {
 		LM_ERR("invalid SIP message type\n");
 		return -1;
 	}
-	if(code!=NULL && code->len>0) {
-		if(code->len!=3) {
+	if(code != NULL && code->len > 0) {
+		if(code->len != 3) {
 			LM_ERR("invalid reply code value %.*s\n", code->len, code->s);
 			return -1;
 		}
-		if(msg->first_line.u.reply.status.s[0]!=code->s[0]) {
+		if(msg->first_line.u.reply.status.s[0] != code->s[0]) {
 			LM_ERR("reply code class cannot be changed\n");
 			return -1;
 		}
-		if(code->s[1]<'0' || code->s[1]>'9'
-				|| code->s[2]<'0' || code->s[2]>'9') {
+		if(code->s[1] < '0' || code->s[1] > '9' || code->s[2] < '0'
+				|| code->s[2] > '9') {
 			LM_ERR("invalid reply code value %.*s!\n", code->len, code->s);
 			return -1;
 		}
@@ -477,36 +462,33 @@ static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
 	oldscode[1] = msg->first_line.u.reply.status.s[1];
 	oldscode[2] = msg->first_line.u.reply.status.s[2];
 	oldncode = msg->first_line.u.reply.statuscode;
-	if(code!=NULL && code->len>0) {
+	if(code != NULL && code->len > 0) {
 		/* update status code directly in msg buffer */
-		msg->first_line.u.reply.statuscode = (code->s[0]-'0')*100
-			+ (code->s[1]-'0')*10 + code->s[2]-'0';
+		msg->first_line.u.reply.statuscode = (code->s[0] - '0') * 100
+											 + (code->s[1] - '0') * 10
+											 + code->s[2] - '0';
 		msg->first_line.u.reply.status.s[0] = code->s[0];
 		msg->first_line.u.reply.status.s[1] = code->s[1];
 		msg->first_line.u.reply.status.s[2] = code->s[2];
-
 	}
-	if(reason!=NULL && reason->len>0) {
-		ldel = del_lump(msg,
-					msg->first_line.u.reply.reason.s - msg->buf,
-					msg->first_line.u.reply.reason.len,
-					0);
-		if (ldel==NULL) {
+	if(reason != NULL && reason->len > 0) {
+		ldel = del_lump(msg, msg->first_line.u.reply.reason.s - msg->buf,
+				msg->first_line.u.reply.reason.len, 0);
+		if(ldel == NULL) {
 			LM_ERR("failed to add del lump\n");
 			ret = -1;
 			goto restore;
 		}
 		rbuf = (char *)pkg_malloc(reason->len);
-		if (rbuf==NULL) {
+		if(rbuf == NULL) {
 			PKG_MEM_ERROR;
 			ret = -1;
 			goto restore;
 		}
 		memcpy(rbuf, reason->s, reason->len);
 		ladd = insert_new_lump_after(ldel, rbuf, reason->len, 0);
-		if (ladd==0) {
-			LM_ERR("failed to add reason lump: %.*s\n",
-				reason->len, reason->s);
+		if(ladd == 0) {
+			LM_ERR("failed to add reason lump: %.*s\n", reason->len, reason->s);
 			pkg_free(rbuf);
 			ret = -1;
 			goto restore;
@@ -514,26 +496,26 @@ static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
 	}
 	ret = forward_reply_nocb(msg);
 restore:
-	if(reason!=NULL && reason->len>0) {
-		if(ldel!=NULL) {
+	if(reason != NULL && reason->len > 0) {
+		if(ldel != NULL) {
 			remove_lump(msg, ldel);
 			/* ladd is liked in the 'after' list inside ldel,
 			 * destroyed together, no need for its own remove operation */
 		}
 	}
-	if(code!=NULL && code->len>0) {
+	if(code != NULL && code->len > 0) {
 		msg->first_line.u.reply.statuscode = oldncode;
 		msg->first_line.u.reply.status.s[0] = oldscode[0];
 		msg->first_line.u.reply.status.s[1] = oldscode[1];
 		msg->first_line.u.reply.status.s[2] = oldscode[2];
 	}
-	return (ret==0)?1:ret;
+	return (ret == 0) ? 1 : ret;
 }
 
 /**
  * @brief forward SIP reply statelessly
  */
-static int w_sl_forward_reply0(sip_msg_t* msg, char* str1, char* str2)
+static int w_sl_forward_reply0(sip_msg_t *msg, char *str1, char *str2)
 {
 	return w_sl_forward_reply(msg, NULL, NULL);
 }
@@ -541,10 +523,10 @@ static int w_sl_forward_reply0(sip_msg_t* msg, char* str1, char* str2)
 /**
  * @brief forward SIP reply statelessly with a new code
  */
-static int w_sl_forward_reply1(sip_msg_t* msg, char* str1, char* str2)
+static int w_sl_forward_reply1(sip_msg_t *msg, char *str1, char *str2)
 {
 	str code;
-	if(fixup_get_svalue(msg, (gparam_t*)str1, &code)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)str1, &code) < 0) {
 		LM_ERR("cannot get the reply code parameter value\n");
 		return -1;
 	}
@@ -554,15 +536,15 @@ static int w_sl_forward_reply1(sip_msg_t* msg, char* str1, char* str2)
 /**
  * @brief forward SIP reply statelessly with new code and reason text
  */
-static int w_sl_forward_reply2(sip_msg_t* msg, char* str1, char* str2)
+static int w_sl_forward_reply2(sip_msg_t *msg, char *str1, char *str2)
 {
 	str code;
 	str reason;
-	if(fixup_get_svalue(msg, (gparam_t*)str1, &code)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)str1, &code) < 0) {
 		LM_ERR("cannot get the reply code parameter value\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)str2, &reason)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)str2, &reason) < 0) {
 		LM_ERR("cannot get the reply reason parameter value\n");
 		return -1;
 	}
@@ -577,33 +559,33 @@ static int pv_get_ltt(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	str ttag = STR_NULL;
 	tm_cell_t *t = NULL;
 
-	if(msg==NULL)
+	if(msg == NULL)
 		return pv_get_null(msg, param, res);
 
-	if(param==NULL)
+	if(param == NULL)
 		return pv_get_null(msg, param, res);
 
 	switch(param->pvn.u.isname.name.n) {
 		case 0: /* mixed */
-			if(get_reply_totag(msg, &ttag)<0) {
+			if(get_reply_totag(msg, &ttag) < 0) {
 				return pv_get_null(msg, param, res);
 			}
 			return pv_get_strval(msg, param, res, &ttag);
 		case 1: /* stateless */
-			if(sl_get_reply_totag(msg, &ttag)<0) {
+			if(sl_get_reply_totag(msg, &ttag) < 0) {
 				return pv_get_null(msg, param, res);
 			}
 			return pv_get_strval(msg, param, res, &ttag);
 		case 2: /* transaction stateful */
-			if(sl_bind_tm==0 || tmb.t_gett==0) {
+			if(sl_bind_tm == 0 || tmb.t_gett == 0) {
 				return pv_get_null(msg, param, res);
 			}
 
 			t = tmb.t_gett();
-			if(t== NULL || t==T_UNDEFINED) {
+			if(t == NULL || t == T_UNDEFINED) {
 				return pv_get_null(msg, param, res);
 			}
-			if(tmb.t_get_reply_totag(msg, &ttag)<0) {
+			if(tmb.t_get_reply_totag(msg, &ttag) < 0) {
 				return pv_get_null(msg, param, res);
 			}
 			return pv_get_strval(msg, param, res, &ttag);
@@ -617,21 +599,21 @@ static int pv_get_ltt(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
  */
 static int pv_parse_ltt_name(pv_spec_p sp, str *in)
 {
-	if(sp==NULL || in==NULL || in->len<=0)
+	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
 
 	switch(in->len) {
 		case 1:
-			if(strncmp(in->s, "x", 1)==0) {
+			if(strncmp(in->s, "x", 1) == 0) {
 				sp->pvp.pvn.u.isname.name.n = 0;
-			} else if(strncmp(in->s, "s", 1)==0) {
+			} else if(strncmp(in->s, "s", 1) == 0) {
 				sp->pvp.pvn.u.isname.name.n = 1;
-			} else if(strncmp(in->s, "t", 1)==0) {
+			} else if(strncmp(in->s, "t", 1) == 0) {
 				sp->pvp.pvn.u.isname.name.n = 2;
 			} else {
 				goto error;
 			}
-		break;
+			break;
 		default:
 			goto error;
 	}
@@ -649,9 +631,9 @@ error:
 /**
  * @brief bind functions to SL API structure
  */
-static int bind_sl(sl_api_t* api)
+static int bind_sl(sl_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
