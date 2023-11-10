@@ -86,22 +86,23 @@ static const int prefix_length_ipv6 = 128;
  * @param func - the name of the calling function, for debugging purposes
  * @returns 1 on success or 0 on failure
  */
-inline int rx_add_avp(AAAMessage *m, char *d, int len, int avp_code,
-		int flags, int vendorid, int data_do, const char *func)
+inline int rx_add_avp(AAAMessage *m, char *d, int len, int avp_code, int flags,
+		int vendorid, int data_do, const char *func)
 {
-		AAA_AVP *avp;
-		if (vendorid != 0) flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
-		avp = cdpb.AAACreateAVP(avp_code, flags, vendorid, d, len, data_do);
-		if (!avp) {
-				LM_ERR("Rx: :%s: Failed creating avp\n", func);
-				return 0;
-		}
-		if (cdpb.AAAAddAVPToMessage(m, avp, m->avpList.tail) != AAA_ERR_SUCCESS) {
-				LM_ERR(":%s: Failed adding avp to message\n", func);
-				cdpb.AAAFreeAVP(&avp);
-				return 0;
-		}
-		return CSCF_RETURN_TRUE;
+	AAA_AVP *avp;
+	if(vendorid != 0)
+		flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
+	avp = cdpb.AAACreateAVP(avp_code, flags, vendorid, d, len, data_do);
+	if(!avp) {
+		LM_ERR("Rx: :%s: Failed creating avp\n", func);
+		return 0;
+	}
+	if(cdpb.AAAAddAVPToMessage(m, avp, m->avpList.tail) != AAA_ERR_SUCCESS) {
+		LM_ERR(":%s: Failed adding avp to message\n", func);
+		cdpb.AAAFreeAVP(&avp);
+		return 0;
+	}
+	return CSCF_RETURN_TRUE;
 }
 
 /**
@@ -116,29 +117,30 @@ inline int rx_add_avp(AAAMessage *m, char *d, int len, int avp_code,
  * @param func - the name of the calling function, for debugging purposes
  * @returns 1 on success or 0 on failure
  */
-static inline int rx_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_code,
-		int flags, int vendorid, int data_do, const char *func)
+static inline int rx_add_avp_list(AAA_AVP_LIST *list, char *d, int len,
+		int avp_code, int flags, int vendorid, int data_do, const char *func)
 {
-		AAA_AVP *avp;
-		if (vendorid != 0) flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
-		avp = cdpb.AAACreateAVP(avp_code, flags, vendorid, d, len, data_do);
-		if (!avp) {
-				LM_ERR(":%s: Failed creating avp\n", func);
-				return 0;
-		}
-		if (list->tail) {
-				avp->prev = list->tail;
-				avp->next = 0;
-				list->tail->next = avp;
-				list->tail = avp;
-		} else {
-				list->head = avp;
-				list->tail = avp;
-				avp->next = 0;
-				avp->prev = 0;
-		}
+	AAA_AVP *avp;
+	if(vendorid != 0)
+		flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
+	avp = cdpb.AAACreateAVP(avp_code, flags, vendorid, d, len, data_do);
+	if(!avp) {
+		LM_ERR(":%s: Failed creating avp\n", func);
+		return 0;
+	}
+	if(list->tail) {
+		avp->prev = list->tail;
+		avp->next = 0;
+		list->tail->next = avp;
+		list->tail = avp;
+	} else {
+		list->head = avp;
+		list->tail = avp;
+		avp->next = 0;
+		avp->prev = 0;
+	}
 
-		return CSCF_RETURN_TRUE;
+	return CSCF_RETURN_TRUE;
 }
 
 /**
@@ -149,18 +151,18 @@ static inline int rx_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_
  * @param func - the name of the calling function, for debugging purposes
  * @returns the str with the payload on success or an empty string on failure
  */
-static inline str rx_get_avp(AAAMessage *msg, int avp_code, int vendor_id,
-		const char *func)
+static inline str rx_get_avp(
+		AAAMessage *msg, int avp_code, int vendor_id, const char *func)
 {
-		AAA_AVP *avp;
-		str r = {0, 0};
+	AAA_AVP *avp;
+	str r = {0, 0};
 
-		avp = cdpb.AAAFindMatchingAVP(msg, 0, AVP_Result_Code, 0, 0);
-		if (avp == 0) {
-				//LOG(L_INFO,"INFO:"M_NAME":%s: Failed finding avp\n",func);
-				return r;
-		} else
-				return avp->data;
+	avp = cdpb.AAAFindMatchingAVP(msg, 0, AVP_Result_Code, 0, 0);
+	if(avp == 0) {
+		//LOG(L_INFO,"INFO:"M_NAME":%s: Failed finding avp\n",func);
+		return r;
+	} else
+		return avp->data;
 }
 
 /*creates an AVP for the framed-ip info: 
@@ -173,58 +175,62 @@ static inline str rx_get_avp(AAAMessage *msg, int avp_code, int vendor_id,
  */
 
 static unsigned int ip_buflen = 0;
-static char* ip_buf = 0;
+static char *ip_buf = 0;
 
-int rx_add_framed_ip_avp(AAA_AVP_LIST * list, str ip, uint16_t version)
+int rx_add_framed_ip_avp(AAA_AVP_LIST *list, str ip, uint16_t version)
 {
-		ip_address_prefix ip_adr;
-		int ret = 0;
+	ip_address_prefix ip_adr;
+	int ret = 0;
 
-		if (ip.len <= 0) return 0;
-		if (version == AF_INET) {
-				if (ip.len > INET_ADDRSTRLEN)
-						goto error;
-		} else {
-				if (ip.len > INET6_ADDRSTRLEN)
-						goto error;
+	if(ip.len <= 0)
+		return 0;
+	if(version == AF_INET) {
+		if(ip.len > INET_ADDRSTRLEN)
+			goto error;
+	} else {
+		if(ip.len > INET6_ADDRSTRLEN)
+			goto error;
+	}
+	int len = ip.len + 1;
+	if(!ip_buf || ip_buflen < len) {
+		if(ip_buf)
+			pkg_free(ip_buf);
+		ip_buf = (char *)pkg_malloc(len);
+		if(!ip_buf) {
+			LM_ERR("rx_add_framed_ip_avp: out of memory \
+					    when allocating %i bytes in pkg\n",
+					len);
+			goto error;
 		}
-		int len = ip.len + 1;
-		if (!ip_buf || ip_buflen < len) {
-				if (ip_buf)
-						pkg_free(ip_buf);
-				ip_buf = (char*) pkg_malloc(len);
-				if (!ip_buf) {
-						LM_ERR("rx_add_framed_ip_avp: out of memory \
-					    when allocating %i bytes in pkg\n", len);
-						goto error;
-				}
-				ip_buflen = len;
-		}
-		if (ip.s[0] == '[' && ip.s[ip.len - 1] == ']') {
-				memcpy(ip_buf, ip.s + 1, ip.len - 2);
-				ip_buf[ip.len - 2] = '\0';
-		} else {
-				memcpy(ip_buf, ip.s, ip.len);
-				ip_buf[ip.len] = '\0';
-		}
+		ip_buflen = len;
+	}
+	if(ip.s[0] == '[' && ip.s[ip.len - 1] == ']') {
+		memcpy(ip_buf, ip.s + 1, ip.len - 2);
+		ip_buf[ip.len - 2] = '\0';
+	} else {
+		memcpy(ip_buf, ip.s, ip.len);
+		ip_buf[ip.len] = '\0';
+	}
 
-		ip_adr.addr.ai_family = version;
+	ip_adr.addr.ai_family = version;
 
-		if (version == AF_INET) {
+	if(version == AF_INET) {
 
-				if (inet_pton(AF_INET, ip_buf, &(ip_adr.addr.ip.v4.s_addr)) != 1) goto error;
-				ret = cdp_avp->nasapp.add_Framed_IP_Address(list, ip_adr.addr);
-		} else {
+		if(inet_pton(AF_INET, ip_buf, &(ip_adr.addr.ip.v4.s_addr)) != 1)
+			goto error;
+		ret = cdp_avp->nasapp.add_Framed_IP_Address(list, ip_adr.addr);
+	} else {
 
-				if (inet_pton(AF_INET6, ip_buf, &(ip_adr.addr.ip.v6.s6_addr)) != 1) goto error;
-				ip_adr.prefix = prefix_length_ipv6;
-				ret = cdp_avp->nasapp.add_Framed_IPv6_Prefix(list, ip_adr);
-		}
+		if(inet_pton(AF_INET6, ip_buf, &(ip_adr.addr.ip.v6.s6_addr)) != 1)
+			goto error;
+		ip_adr.prefix = prefix_length_ipv6;
+		ret = cdp_avp->nasapp.add_Framed_IPv6_Prefix(list, ip_adr);
+	}
 
-		//TODO: should free ip_buf in module shutdown....
+	//TODO: should free ip_buf in module shutdown....
 
 error:
-		return ret;
+	return ret;
 }
 
 /**
@@ -235,57 +241,38 @@ error:
  * @param acct_id - the accounting application id
  * @returns 1 on success or 0 on error
  */
-inline static int rx_add_vendor_specific_appid_avp(AAAMessage *msg, unsigned int vendor_id,
-		unsigned int auth_id, unsigned int acct_id)
+inline static int rx_add_vendor_specific_appid_avp(AAAMessage *msg,
+		unsigned int vendor_id, unsigned int auth_id, unsigned int acct_id)
 {
-		AAA_AVP_LIST list;
-		str group;
-		char x[4];
+	AAA_AVP_LIST list;
+	str group;
+	char x[4];
 
-		list.head = 0;
-		list.tail = 0;
+	list.head = 0;
+	list.tail = 0;
 
-		set_4bytes(x, vendor_id);
-		rx_add_avp_list(&list,
-				x, 4,
-				AVP_Vendor_Id,
-				AAA_AVP_FLAG_MANDATORY,
-				0,
-				AVP_DUPLICATE_DATA,
-				__FUNCTION__);
+	set_4bytes(x, vendor_id);
+	rx_add_avp_list(&list, x, 4, AVP_Vendor_Id, AAA_AVP_FLAG_MANDATORY, 0,
+			AVP_DUPLICATE_DATA, __FUNCTION__);
 
-		if (auth_id) {
-				set_4bytes(x, auth_id);
-				rx_add_avp_list(&list,
-						x, 4,
-						AVP_Auth_Application_Id,
-						AAA_AVP_FLAG_MANDATORY,
-						0,
-						AVP_DUPLICATE_DATA,
-						__FUNCTION__);
-		}
-		if (acct_id) {
-				set_4bytes(x, acct_id);
-				rx_add_avp_list(&list,
-						x, 4,
-						AVP_Acct_Application_Id,
-						AAA_AVP_FLAG_MANDATORY,
-						0,
-						AVP_DUPLICATE_DATA,
-						__FUNCTION__);
-		}
+	if(auth_id) {
+		set_4bytes(x, auth_id);
+		rx_add_avp_list(&list, x, 4, AVP_Auth_Application_Id,
+				AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+	}
+	if(acct_id) {
+		set_4bytes(x, acct_id);
+		rx_add_avp_list(&list, x, 4, AVP_Acct_Application_Id,
+				AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+	}
 
-		group = cdpb.AAAGroupAVPS(list);
+	group = cdpb.AAAGroupAVPS(list);
 
-		cdpb.AAAFreeAVPList(&list);
+	cdpb.AAAFreeAVPList(&list);
 
-		return
-		rx_add_avp(msg, group.s, group.len,
-				AVP_Vendor_Specific_Application_Id,
-				AAA_AVP_FLAG_MANDATORY,
-				0,
-				AVP_FREE_DATA,
-				__FUNCTION__);
+	return rx_add_avp(msg, group.s, group.len,
+			AVP_Vendor_Specific_Application_Id, AAA_AVP_FLAG_MANDATORY, 0,
+			AVP_FREE_DATA, __FUNCTION__);
 }
 
 /**
@@ -296,13 +283,8 @@ inline static int rx_add_vendor_specific_appid_avp(AAAMessage *msg, unsigned int
  */
 inline int rx_add_destination_realm_avp(AAAMessage *msg, str data)
 {
-		return
-		rx_add_avp(msg, data.s, data.len,
-				AVP_Destination_Realm,
-				AAA_AVP_FLAG_MANDATORY,
-				0,
-				AVP_DUPLICATE_DATA,
-				__FUNCTION__);
+	return rx_add_avp(msg, data.s, data.len, AVP_Destination_Realm,
+			AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
 
 /**
@@ -313,16 +295,11 @@ inline int rx_add_destination_realm_avp(AAAMessage *msg, str data)
  */
 inline int rx_add_auth_application_id_avp(AAAMessage *msg, unsigned int data)
 {
-		char x[4];
-		set_4bytes(x, data);
+	char x[4];
+	set_4bytes(x, data);
 
-		return
-		rx_add_avp(msg, x, 4,
-				AVP_Auth_Application_Id,
-				AAA_AVP_FLAG_MANDATORY,
-				0,
-				AVP_DUPLICATE_DATA,
-				__FUNCTION__);
+	return rx_add_avp(msg, x, 4, AVP_Auth_Application_Id,
+			AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
 
 /*
@@ -334,255 +311,256 @@ inline int rx_add_auth_application_id_avp(AAAMessage *msg, unsigned int data)
  * 
  */
 
-int rx_add_subscription_id_avp(AAAMessage *msg, str identifier, int identifier_type)
+int rx_add_subscription_id_avp(
+		AAAMessage *msg, str identifier, int identifier_type)
 {
 
-		AAA_AVP_LIST list;
-		AAA_AVP *type, *data;
-		str subscription_id_avp;
-		char x[4];
-		list.head = 0;
-		list.tail = 0;
+	AAA_AVP_LIST list;
+	AAA_AVP *type, *data;
+	str subscription_id_avp;
+	char x[4];
+	list.head = 0;
+	list.tail = 0;
 
-		set_4bytes(x, identifier_type);
+	set_4bytes(x, identifier_type);
 
-		type = cdpb.AAACreateAVP(AVP_IMS_Subscription_Id_Type,
-				AAA_AVP_FLAG_MANDATORY,
-				0, x, 4,
-				AVP_DUPLICATE_DATA);
+	type = cdpb.AAACreateAVP(AVP_IMS_Subscription_Id_Type,
+			AAA_AVP_FLAG_MANDATORY, 0, x, 4, AVP_DUPLICATE_DATA);
 
-		data = cdpb.AAACreateAVP(AVP_IMS_Subscription_Id_Data,
-				AAA_AVP_FLAG_MANDATORY,
-				0, identifier.s, identifier.len,
-				AVP_DUPLICATE_DATA);
+	data = cdpb.AAACreateAVP(AVP_IMS_Subscription_Id_Data,
+			AAA_AVP_FLAG_MANDATORY, 0, identifier.s, identifier.len,
+			AVP_DUPLICATE_DATA);
 
-		cdpb.AAAAddAVPToList(&list, type);
-		cdpb.AAAAddAVPToList(&list, data);
+	cdpb.AAAAddAVPToList(&list, type);
+	cdpb.AAAAddAVPToList(&list, data);
 
-		subscription_id_avp = cdpb.AAAGroupAVPS(list);
+	subscription_id_avp = cdpb.AAAGroupAVPS(list);
 
-		cdpb.AAAFreeAVPList(&list);
+	cdpb.AAAFreeAVPList(&list);
 
-		return rx_add_avp(msg, subscription_id_avp.s, subscription_id_avp.len, AVP_IMS_Subscription_Id,
-				AAA_AVP_FLAG_MANDATORY, 0,
-				AVP_FREE_DATA,
-				__FUNCTION__);
+	return rx_add_avp(msg, subscription_id_avp.s, subscription_id_avp.len,
+			AVP_IMS_Subscription_Id, AAA_AVP_FLAG_MANDATORY, 0, AVP_FREE_DATA,
+			__FUNCTION__);
 }
 
-inline static unsigned int sdp_b_value(str * payload, char * subtype)
+inline static unsigned int sdp_b_value(str *payload, char *subtype)
 {
-		char * line;
-		unsigned int i;
-		str s;
-		line = find_sdp_line(payload->s, payload->s + payload->len, 'b');
-		while (line != NULL) {
-				// b=AS:
-				if ((line[2] == subtype[0]) && (line[3] == subtype[1])) {
-						LM_DBG("SDP-Line: %.*s\n", 5, line);
-						line += 5;
-						i = 0;
-						while ((line[i] != '\r') && (line[i] != '\n') && ((line + i) <= (payload->s + payload->len))) {
-								i++;
-						}
-						s.s = line;
-						s.len = i;
-						LM_DBG("value: %.*s\n", s.len, s.s);
-						if (str2int(&s, &i) == 0) return i;
-						else return 0;
-				}
-				line = find_next_sdp_line(line, payload->s + payload->len, 'b', NULL);
-		}
-		return 0;
-}
-
-inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, str *media_description, str *ipA, str *portA, str *ipB, str *portB, str *transport,
-		str *req_raw_payload, str *rpl_raw_payload, enum dialog_direction dlg_direction, int flow_usage_type)
-{
-		str data;
-		AAA_AVP_LIST list;
-		AAA_AVP *media_component_number, *media_type;
-		AAA_AVP *codec_data1, *codec_data2;
-		AAA_AVP * media_sub_component[PCC_Media_Sub_Components];
-		AAA_AVP *flow_status;
-		AAA_AVP *dl_bw, *ul_bw, *rs_bw, *rr_bw;
-
-		int media_sub_component_number = 0;
-		unsigned int bandwidth = 0;
-
-		int type;
-		char x[4];
-
-		list.head = 0;
-		list.tail = 0;
-
-		/*media-component-number*/
-		set_4bytes(x, number);
-		media_component_number = cdpb.AAACreateAVP(AVP_IMS_Media_Component_Number,
-				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP, x, 4,
-				AVP_DUPLICATE_DATA);
-
-		if (media_component_number != NULL) {
-				cdpb.AAAAddAVPToList(&list, media_component_number);
-		} else {
-				LM_ERR("Unable to create media_component_number AVP");
+	char *line;
+	unsigned int i;
+	str s;
+	line = find_sdp_line(payload->s, payload->s + payload->len, 'b');
+	while(line != NULL) {
+		// b=AS:
+		if((line[2] == subtype[0]) && (line[3] == subtype[1])) {
+			LM_DBG("SDP-Line: %.*s\n", 5, line);
+			line += 5;
+			i = 0;
+			while((line[i] != '\r') && (line[i] != '\n')
+					&& ((line + i) <= (payload->s + payload->len))) {
+				i++;
+			}
+			s.s = line;
+			s.len = i;
+			LM_DBG("value: %.*s\n", s.len, s.s);
+			if(str2int(&s, &i) == 0)
+				return i;
+			else
 				return 0;
 		}
+		line = find_next_sdp_line(line, payload->s + payload->len, 'b', NULL);
+	}
+	return 0;
+}
 
-		/*media-sub-component*/
-		if (dlg_direction != DLG_MOBILE_ORIGINATING && dlg_direction != DLG_MOBILE_REGISTER) {
-				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport, ipA, portA, ipB, portB, flow_usage_type);
-				if (media_sub_component[media_sub_component_number])
-					cdpb.AAAAddAVPToList(&list, media_sub_component[media_sub_component_number]);
-		} else {
-				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport, ipB, portB, ipA, portA, flow_usage_type);
-				if (media_sub_component[media_sub_component_number])
-					cdpb.AAAAddAVPToList(&list, media_sub_component[media_sub_component_number]);
-		}
+inline int rx_add_media_component_description_avp(AAAMessage *msg, int number,
+		str *media_description, str *ipA, str *portA, str *ipB, str *portB,
+		str *transport, str *req_raw_payload, str *rpl_raw_payload,
+		enum dialog_direction dlg_direction, int flow_usage_type)
+{
+	str data;
+	AAA_AVP_LIST list;
+	AAA_AVP *media_component_number, *media_type;
+	AAA_AVP *codec_data1, *codec_data2;
+	AAA_AVP *media_sub_component[PCC_Media_Sub_Components];
+	AAA_AVP *flow_status;
+	AAA_AVP *dl_bw, *ul_bw, *rs_bw, *rr_bw;
+
+	int media_sub_component_number = 0;
+	unsigned int bandwidth = 0;
+
+	int type;
+	char x[4];
+
+	list.head = 0;
+	list.tail = 0;
+
+	/*media-component-number*/
+	set_4bytes(x, number);
+	media_component_number = cdpb.AAACreateAVP(AVP_IMS_Media_Component_Number,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
+
+	if(media_component_number != NULL) {
+		cdpb.AAAAddAVPToList(&list, media_component_number);
+	} else {
+		LM_ERR("Unable to create media_component_number AVP");
+		return 0;
+	}
+
+	/*media-sub-component*/
+	if(dlg_direction != DLG_MOBILE_ORIGINATING
+			&& dlg_direction != DLG_MOBILE_REGISTER) {
+		media_sub_component[media_sub_component_number] =
+				rx_create_media_subcomponent_avp(number, transport, ipA, portA,
+						ipB, portB, flow_usage_type);
+		if(media_sub_component[media_sub_component_number])
+			cdpb.AAAAddAVPToList(
+					&list, media_sub_component[media_sub_component_number]);
+	} else {
+		media_sub_component[media_sub_component_number] =
+				rx_create_media_subcomponent_avp(number, transport, ipB, portB,
+						ipA, portA, flow_usage_type);
+		if(media_sub_component[media_sub_component_number])
+			cdpb.AAAAddAVPToList(
+					&list, media_sub_component[media_sub_component_number]);
+	}
 
 
-		/*media type*/
-		if (strncmp(media_description->s, "audio", 5) == 0) {
-				type = AVP_IMS_Media_Type_Audio;
-		} else if (strncmp(media_description->s, "video", 5) == 0) {
-				type = AVP_IMS_Media_Type_Video;
-		} else if (strncmp(media_description->s, "data", 4) == 0) {
-				type = AVP_IMS_Media_Type_Data;
-		} else if (strncmp(media_description->s, "application", 11) == 0) {
-				type = AVP_IMS_Media_Type_Application;
-		} else if (strncmp(media_description->s, "control", 7) == 0) {
-				type = AVP_IMS_Media_Type_Control;
-		} else if (strncmp(media_description->s, "text", 4) == 0) {
-				type = AVP_IMS_Media_Type_Text;
-		} else if (strncmp(media_description->s, "message", 7) == 0) {
-				type = AVP_IMS_Media_Type_Message;
-		} else {
-				type = AVP_IMS_Media_Type_Other;
-		}
+	/*media type*/
+	if(strncmp(media_description->s, "audio", 5) == 0) {
+		type = AVP_IMS_Media_Type_Audio;
+	} else if(strncmp(media_description->s, "video", 5) == 0) {
+		type = AVP_IMS_Media_Type_Video;
+	} else if(strncmp(media_description->s, "data", 4) == 0) {
+		type = AVP_IMS_Media_Type_Data;
+	} else if(strncmp(media_description->s, "application", 11) == 0) {
+		type = AVP_IMS_Media_Type_Application;
+	} else if(strncmp(media_description->s, "control", 7) == 0) {
+		type = AVP_IMS_Media_Type_Control;
+	} else if(strncmp(media_description->s, "text", 4) == 0) {
+		type = AVP_IMS_Media_Type_Text;
+	} else if(strncmp(media_description->s, "message", 7) == 0) {
+		type = AVP_IMS_Media_Type_Message;
+	} else {
+		type = AVP_IMS_Media_Type_Other;
+	}
 
 
-		set_4bytes(x, type);
-		media_type = cdpb.AAACreateAVP(AVP_IMS_Media_Type,
+	set_4bytes(x, type);
+	media_type = cdpb.AAACreateAVP(AVP_IMS_Media_Type,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
+	cdpb.AAAAddAVPToList(&list, media_type);
+
+	/*RR and RS*/
+	if((type == AVP_IMS_Media_Type_Audio)
+			|| (type == AVP_IMS_Media_Type_Video)) {
+		// Get bandwidth from SDP:
+		bandwidth = sdp_b_value(req_raw_payload, "AS");
+		LM_DBG("Request: got bandwidth %i from b=AS-Line\n", bandwidth);
+		// Set default values:
+		if((type == AVP_IMS_Media_Type_Audio) && (bandwidth <= 0))
+			bandwidth = audio_default_bandwidth;
+		if((type == AVP_IMS_Media_Type_Video) && (bandwidth <= 0))
+			bandwidth = video_default_bandwidth;
+
+		// According to 3GPP TS 29.213, Rel. 9+, this value is * 1000:
+		bandwidth *= 1000;
+
+		// Add AVP
+		set_4bytes(x, bandwidth);
+		ul_bw = cdpb.AAACreateAVP(AVP_EPC_Max_Requested_Bandwidth_UL,
 				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP, x, 4,
-				AVP_DUPLICATE_DATA);
-		cdpb.AAAAddAVPToList(&list, media_type);
+				IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
+		cdpb.AAAAddAVPToList(&list, ul_bw);
 
-		/*RR and RS*/
-		if ((type == AVP_IMS_Media_Type_Audio) || (type == AVP_IMS_Media_Type_Video)) {
-				// Get bandwidth from SDP:
-				bandwidth = sdp_b_value(req_raw_payload, "AS");
-				LM_DBG("Request: got bandwidth %i from b=AS-Line\n", bandwidth);
-				// Set default values:
-				if ((type == AVP_IMS_Media_Type_Audio) && (bandwidth <= 0))
-						bandwidth = audio_default_bandwidth;
-				if ((type == AVP_IMS_Media_Type_Video) && (bandwidth <= 0))
-						bandwidth = video_default_bandwidth;
+		// Get bandwidth from SDP:
+		bandwidth = sdp_b_value(rpl_raw_payload, "AS");
+		LM_DBG("Answer: got bandwidth %i from b=AS-Line\n", bandwidth);
+		// Set default values:
+		if((type == AVP_IMS_Media_Type_Audio) && (bandwidth <= 0))
+			bandwidth = audio_default_bandwidth;
+		if((type == AVP_IMS_Media_Type_Video) && (bandwidth <= 0))
+			bandwidth = video_default_bandwidth;
 
-				// According to 3GPP TS 29.213, Rel. 9+, this value is * 1000:
-				bandwidth *= 1000;
+		// According to 3GPP TS 29.213, Rel. 9+, this value is * 1000:
+		bandwidth *= 1000;
 
-				// Add AVP
-				set_4bytes(x, bandwidth);
-				ul_bw = cdpb.AAACreateAVP(AVP_EPC_Max_Requested_Bandwidth_UL,
-						AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-						IMS_vendor_id_3GPP, x, 4,
-						AVP_DUPLICATE_DATA);
-				cdpb.AAAAddAVPToList(&list, ul_bw);
+		// Add AVP
+		set_4bytes(x, bandwidth);
+		dl_bw = cdpb.AAACreateAVP(AVP_EPC_Max_Requested_Bandwidth_DL,
+				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+				IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
+		cdpb.AAAAddAVPToList(&list, dl_bw);
 
-				// Get bandwidth from SDP:
-				bandwidth = sdp_b_value(rpl_raw_payload, "AS");
-				LM_DBG("Answer: got bandwidth %i from b=AS-Line\n", bandwidth);
-				// Set default values:
-				if ((type == AVP_IMS_Media_Type_Audio) && (bandwidth <= 0))
-						bandwidth = audio_default_bandwidth;
-				if ((type == AVP_IMS_Media_Type_Video) && (bandwidth <= 0))
-						bandwidth = video_default_bandwidth;
+		// Get A=RS-bandwidth from SDP-Reply:
+		bandwidth = sdp_b_value(rpl_raw_payload, "RS");
 
-				// According to 3GPP TS 29.213, Rel. 9+, this value is * 1000:
-				bandwidth *= 1000;
-
-				// Add AVP
-				set_4bytes(x, bandwidth);
-				dl_bw = cdpb.AAACreateAVP(AVP_EPC_Max_Requested_Bandwidth_DL,
-						AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-						IMS_vendor_id_3GPP, x, 4,
-						AVP_DUPLICATE_DATA);
-				cdpb.AAAAddAVPToList(&list, dl_bw);
-
-				// Get A=RS-bandwidth from SDP-Reply:
-				bandwidth = sdp_b_value(rpl_raw_payload, "RS");
-
-				if (bandwidth == 0) {
-					bandwidth = rs_default_bandwidth;
-				}
-
-				LM_DBG("Answer: Got bandwidth %i from b=RS-Line\n", bandwidth);
-				if (bandwidth > 0) {
-						// Add AVP
-						set_4bytes(x, bandwidth);
-						rs_bw = cdpb.AAACreateAVP(AVP_EPC_RS_Bandwidth,
-								AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-								IMS_vendor_id_3GPP, x, 4,
-								AVP_DUPLICATE_DATA);
-						cdpb.AAAAddAVPToList(&list, rs_bw);
-				}
-				// Get A=RS-bandwidth from SDP-Reply:
-				bandwidth = sdp_b_value(rpl_raw_payload, "RR");
-
-				if (bandwidth == 0) {
-					bandwidth = rr_default_bandwidth;
-				}
-
-				LM_DBG("Answer: Got bandwidth %i from b=RR-Line\n", bandwidth);
-				if (bandwidth > 0) {
-						// Add AVP
-						set_4bytes(x, bandwidth);
-						rr_bw = cdpb.AAACreateAVP(AVP_EPC_RR_Bandwidth,
-								AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-								IMS_vendor_id_3GPP, x, 4,
-								AVP_DUPLICATE_DATA);
-						cdpb.AAAAddAVPToList(&list, rr_bw);
-				}
+		if(bandwidth == 0) {
+			bandwidth = rs_default_bandwidth;
 		}
 
-		/*codec-data*/
+		LM_DBG("Answer: Got bandwidth %i from b=RS-Line\n", bandwidth);
+		if(bandwidth > 0) {
+			// Add AVP
+			set_4bytes(x, bandwidth);
+			rs_bw = cdpb.AAACreateAVP(AVP_EPC_RS_Bandwidth,
+					AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+					IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
+			cdpb.AAAAddAVPToList(&list, rs_bw);
+		}
+		// Get A=RS-bandwidth from SDP-Reply:
+		bandwidth = sdp_b_value(rpl_raw_payload, "RR");
 
-		if (dlg_direction == DLG_MOBILE_ORIGINATING) {
-				//0 means uplink offer
-				codec_data1 = rx_create_codec_data_avp(req_raw_payload, number, 0);
-				cdpb.AAAAddAVPToList(&list, codec_data1);
-				//3 means downlink answer
-				codec_data2 = rx_create_codec_data_avp(rpl_raw_payload, number, 3);
-				cdpb.AAAAddAVPToList(&list, codec_data2);
-		} else {
-				//2 means downlink offer
-				codec_data1 = rx_create_codec_data_avp(req_raw_payload, number, 2);
-				cdpb.AAAAddAVPToList(&list, codec_data1);
-				//1 means uplink answer
-				codec_data2 = rx_create_codec_data_avp(rpl_raw_payload, number, 1);
-				cdpb.AAAAddAVPToList(&list, codec_data2);
-
+		if(bandwidth == 0) {
+			bandwidth = rr_default_bandwidth;
 		}
 
+		LM_DBG("Answer: Got bandwidth %i from b=RR-Line\n", bandwidth);
+		if(bandwidth > 0) {
+			// Add AVP
+			set_4bytes(x, bandwidth);
+			rr_bw = cdpb.AAACreateAVP(AVP_EPC_RR_Bandwidth,
+					AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+					IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
+			cdpb.AAAAddAVPToList(&list, rr_bw);
+		}
+	}
 
-		set_4bytes(x, AVP_IMS_Flow_Status_Enabled);
-		flow_status = cdpb.AAACreateAVP(AVP_IMS_Flow_Status,
-				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP, x, 4,
-				AVP_DUPLICATE_DATA);
-		cdpb.AAAAddAVPToList(&list, flow_status);
+	/*codec-data*/
 
-		/*now group them in one big AVP and free them*/
-		data = cdpb.AAAGroupAVPS(list);
-		cdpb.AAAFreeAVPList(&list);
+	if(dlg_direction == DLG_MOBILE_ORIGINATING) {
+		//0 means uplink offer
+		codec_data1 = rx_create_codec_data_avp(req_raw_payload, number, 0);
+		cdpb.AAAAddAVPToList(&list, codec_data1);
+		//3 means downlink answer
+		codec_data2 = rx_create_codec_data_avp(rpl_raw_payload, number, 3);
+		cdpb.AAAAddAVPToList(&list, codec_data2);
+	} else {
+		//2 means downlink offer
+		codec_data1 = rx_create_codec_data_avp(req_raw_payload, number, 2);
+		cdpb.AAAAddAVPToList(&list, codec_data1);
+		//1 means uplink answer
+		codec_data2 = rx_create_codec_data_avp(rpl_raw_payload, number, 1);
+		cdpb.AAAAddAVPToList(&list, codec_data2);
+	}
 
 
-		return rx_add_avp(msg, data.s, data.len, AVP_IMS_Media_Component_Description,
-				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP,
-				AVP_FREE_DATA,
-				__FUNCTION__);
+	set_4bytes(x, AVP_IMS_Flow_Status_Enabled);
+	flow_status = cdpb.AAACreateAVP(AVP_IMS_Flow_Status,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
+	cdpb.AAAAddAVPToList(&list, flow_status);
+
+	/*now group them in one big AVP and free them*/
+	data = cdpb.AAAGroupAVPS(list);
+	cdpb.AAAFreeAVPList(&list);
+
+
+	return rx_add_avp(msg, data.s, data.len,
+			AVP_IMS_Media_Component_Description,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, AVP_FREE_DATA, __FUNCTION__);
 }
 
 
@@ -591,40 +569,38 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, s
 
 inline int rx_add_media_component_description_avp_register(AAAMessage *msg)
 {
-		str data;
-		AAA_AVP_LIST list;
-		AAA_AVP *media_component_number;
+	str data;
+	AAA_AVP_LIST list;
+	AAA_AVP *media_component_number;
 
-		char x[4];
+	char x[4];
 
-		list.head = 0;
-		list.tail = 0;
+	list.head = 0;
+	list.tail = 0;
 
-		/*media-component-number*/
-		set_4bytes(x, 0);
-		media_component_number = cdpb.AAACreateAVP(AVP_IMS_Media_Component_Number,
-				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP, x, 4,
-				AVP_DUPLICATE_DATA);
+	/*media-component-number*/
+	set_4bytes(x, 0);
+	media_component_number = cdpb.AAACreateAVP(AVP_IMS_Media_Component_Number,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
 
-		if (media_component_number != NULL) {
-				cdpb.AAAAddAVPToList(&list, media_component_number);
-		} else {
-				LM_ERR("Unable to create media_component_number AVP");
-				return 0;
-		}
+	if(media_component_number != NULL) {
+		cdpb.AAAAddAVPToList(&list, media_component_number);
+	} else {
+		LM_ERR("Unable to create media_component_number AVP");
+		return 0;
+	}
 
-		/*media-sub-component*/
-		cdpb.AAAAddAVPToList(&list, rx_create_media_subcomponent_avp_register());
+	/*media-sub-component*/
+	cdpb.AAAAddAVPToList(&list, rx_create_media_subcomponent_avp_register());
 
-		/*now group them in one big AVP and free them*/
-		data = cdpb.AAAGroupAVPS(list);
-		cdpb.AAAFreeAVPList(&list);
-		return rx_add_avp(msg, data.s, data.len, AVP_IMS_Media_Component_Description,
-				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP,
-				AVP_FREE_DATA,
-				__FUNCTION__);
+	/*now group them in one big AVP and free them*/
+	data = cdpb.AAAGroupAVPS(list);
+	cdpb.AAAFreeAVPList(&list);
+	return rx_add_avp(msg, data.s, data.len,
+			AVP_IMS_Media_Component_Description,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, AVP_FREE_DATA, __FUNCTION__);
 }
 
 
@@ -652,14 +628,14 @@ static str permit_in = {"permit in ", 10};
 static str from_s = {" from ", 6};
 static str to_s = {" to ", 4};
 //removed final %s - this is options which Rx 29.214 says will not be used for flow-description AVP
-static char * permit_out_with_ports = "permit out %s from %.*s %u to %.*s %u";
-static char * permit_out_without_ports = "permit out %s from %.*s to %.*s";
-static char * permit_out_with_any_as_dst = "permit out %s from %.*s %u to any";
+static char *permit_out_with_ports = "permit out %s from %.*s %u to %.*s %u";
+static char *permit_out_without_ports = "permit out %s from %.*s to %.*s";
+static char *permit_out_with_any_as_dst = "permit out %s from %.*s %u to any";
 //static char * permit_out_with_any_as_src = "permit out %s from any to %.*s %u";
 //static char * permit_out_with_ports = "permit out %s from %.*s %u to %.*s %u %s";
-static char * permit_in_with_ports = "permit in %s from %.*s %u to %.*s %u";
-static char * permit_in_without_ports = "permit in %s from %.*s to %.*s";
-static char * permit_in_with_any_as_src = "permit in %s from any to %.*s %u";
+static char *permit_in_with_ports = "permit in %s from %.*s %u to %.*s %u";
+static char *permit_in_without_ports = "permit in %s from %.*s to %.*s";
+static char *permit_in_with_any_as_src = "permit in %s from any to %.*s %u";
 //static char * permit_in_with_any_as_dst = "permit in %s from %.*s %u to any";
 //static char * permit_in_with_ports = "permit in %s from %.*s %u to %.*s %u %s";
 
@@ -671,468 +647,526 @@ static str flowdata_buf = {0, 0};
 /*! \brief Match pattern against string and store result in pmatch */
 int reg_match(char *pattern, char *string, regmatch_t *pmatch)
 {
-		regex_t preg;
+	regex_t preg;
 
-		if (regcomp(&preg, pattern, REG_EXTENDED | REG_NEWLINE)) {
-				return -1;
-		}
-		if (preg.re_nsub > MAX_MATCH) {
-				regfree(&preg);
-				return -2;
-		}
-		if (regexec(&preg, string, MAX_MATCH, pmatch, 0)) {
-				regfree(&preg);
-				return -3;
-		}
+	if(regcomp(&preg, pattern, REG_EXTENDED | REG_NEWLINE)) {
+		return -1;
+	}
+	if(preg.re_nsub > MAX_MATCH) {
 		regfree(&preg);
-		return 0;
+		return -2;
+	}
+	if(regexec(&preg, string, MAX_MATCH, pmatch, 0)) {
+		regfree(&preg);
+		return -3;
+	}
+	regfree(&preg);
+	return 0;
 }
 
-AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
-		str *ipA, str *portA,
-		str *ipB, str *portB, int flow_usage_type)
+AAA_AVP *rx_create_media_subcomponent_avp(int number, str *proto, str *ipA,
+		str *portA, str *ipB, str *portB, int flow_usage_type)
 {
-		str data;
-		
-		int len, len2;
-		int int_port_rctp_a,int_port_rctp_b;
-		str port_rtcp_a = STR_NULL, port_rtcp_b = STR_NULL;
-		AAA_AVP *flow_description1 = 0, *flow_description2 = 0, *flow_description3 = 0, *flow_description4 = 0, *flow_number = 0;
-		AAA_AVP *flow_description5 = 0, *flow_description6 = 0, *flow_description7 = 0, *flow_description8 = 0;
-		AAA_AVP *flow_usage = 0;
+	str data;
 
-		AAA_AVP_LIST list;
-		list.tail = 0;
-		list.head = 0;
-		char x[4];
-		char *proto_nr = 0;
-		if (proto->len == 2 && strncasecmp(proto->s,"IP", proto->len) == 0) {
-			proto_nr = "ip";
-		} else if (proto->len == 3 && strncasecmp(proto->s,"UDP", proto->len) == 0) {
-			proto_nr = "17";
-		} else if (proto->len == 3 && strncasecmp(proto->s,"TCP", proto->len) == 0) {
-			proto_nr = "6";
-		} else if (proto->len == 7 && strncasecmp(proto->s,"RTP/AVP", proto->len) == 0) {
-			proto_nr = "17";	/* for now we just use UDP for all RTP */
-		} else if (proto->len == 8 && strncasecmp(proto->s,"RTP/SAVP", proto->len) == 0) {
-			proto_nr = "17";	/* for now we just use UDP for all RTP */
-		} else if (proto->len == 8 && strncasecmp(proto->s,"RTP/AVPF", proto->len) == 0) {
-			proto_nr = "17";	/* for now we just use UDP for all RTP */
+	int len, len2;
+	int int_port_rctp_a, int_port_rctp_b;
+	str port_rtcp_a = STR_NULL, port_rtcp_b = STR_NULL;
+	AAA_AVP *flow_description1 = 0, *flow_description2 = 0,
+			*flow_description3 = 0, *flow_description4 = 0, *flow_number = 0;
+	AAA_AVP *flow_description5 = 0, *flow_description6 = 0,
+			*flow_description7 = 0, *flow_description8 = 0;
+	AAA_AVP *flow_usage = 0;
+
+	AAA_AVP_LIST list;
+	list.tail = 0;
+	list.head = 0;
+	char x[4];
+	char *proto_nr = 0;
+	if(proto->len == 2 && strncasecmp(proto->s, "IP", proto->len) == 0) {
+		proto_nr = "ip";
+	} else if(proto->len == 3
+			  && strncasecmp(proto->s, "UDP", proto->len) == 0) {
+		proto_nr = "17";
+	} else if(proto->len == 3
+			  && strncasecmp(proto->s, "TCP", proto->len) == 0) {
+		proto_nr = "6";
+	} else if(proto->len == 7
+			  && strncasecmp(proto->s, "RTP/AVP", proto->len) == 0) {
+		proto_nr = "17"; /* for now we just use UDP for all RTP */
+	} else if(proto->len == 8
+			  && strncasecmp(proto->s, "RTP/SAVP", proto->len) == 0) {
+		proto_nr = "17"; /* for now we just use UDP for all RTP */
+	} else if(proto->len == 8
+			  && strncasecmp(proto->s, "RTP/AVPF", proto->len) == 0) {
+		proto_nr = "17"; /* for now we just use UDP for all RTP */
+	} else {
+		LOG(L_ERR, "Not yet implemented for protocol %.*s\n", proto->len,
+				proto->s);
+		return 0;
+	}
+	int proto_len = strlen(proto_nr);
+
+	int intportA = atoi(portA->s);
+	int intportB = atoi(portB->s);
+
+	set_4bytes(x, number);
+	flow_number = cdpb.AAACreateAVP(AVP_IMS_Flow_Number,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
+	cdpb.AAAAddAVPToList(&list, flow_number);
+
+	/*IMS Flow descriptions*/
+	/*first flow is the receive flow*/
+
+	if(omit_flow_ports) {
+		len = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4
+					  + proto_len + 1 /*nul terminator*/)
+			  * sizeof(char);
+	} else {
+		len = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4
+					  + proto_len + portA->len + portB->len
+					  + 1 /*nul terminator*/)
+			  * sizeof(char);
+	}
+
+	if(!flowdata_buf.s || flowdata_buflen < len) {
+		if(flowdata_buf.s)
+			pkg_free(flowdata_buf.s);
+		flowdata_buf.s = (char *)pkg_malloc(len);
+		if(!flowdata_buf.s) {
+			LM_ERR("PCC_create_media_component: out of memory \
+                                                        when allocating %i bytes in pkg\n",
+					len);
+			return NULL;
+		}
+		flowdata_buflen = len;
+	}
+
+	if(omit_flow_ports) {
+		flowdata_buf.len =
+				snprintf(flowdata_buf.s, len, permit_out_without_ports,
+						proto_nr, ipA->len, ipA->s, ipB->len, ipB->s);
+	} else {
+		flowdata_buf.len =
+				snprintf(flowdata_buf.s, len, permit_out_with_ports, proto_nr,
+						ipA->len, ipA->s, intportA, ipB->len, ipB->s, intportB);
+	}
+
+	flowdata_buf.len = strlen(flowdata_buf.s);
+	flow_description1 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
+			AVP_DUPLICATE_DATA);
+	cdpb.AAAAddAVPToList(&list, flow_description1);
+
+	/*second flow*/
+	if(omit_flow_ports) {
+		len2 = (permit_in.len + from_s.len + to_s.len + ipB->len + ipA->len + 4
+					   + proto_len + 1 /*nul terminator*/)
+			   * sizeof(char);
+	} else {
+		len2 = (permit_in.len + from_s.len + to_s.len + ipB->len + ipA->len + 4
+					   + proto_len + portA->len + portB->len
+					   + 1 /*nul terminator*/)
+			   * sizeof(char);
+	}
+
+	if(!flowdata_buf.s || len < len2) {
+		len = len2;
+		if(flowdata_buf.s)
+			pkg_free(flowdata_buf.s);
+		flowdata_buf.s = (char *)pkg_malloc(len);
+		if(!flowdata_buf.s) {
+			LM_ERR("PCC_create_media_component: out of memory \
+                                                                when allocating %i bytes in pkg\n",
+					len);
+			return NULL;
+		}
+		flowdata_buflen = len;
+	}
+
+	if(omit_flow_ports) {
+		flowdata_buf.len =
+				snprintf(flowdata_buf.s, len, permit_in_without_ports, proto_nr,
+						ipB->len, ipB->s, ipA->len, ipA->s);
+	} else {
+		flowdata_buf.len =
+				snprintf(flowdata_buf.s, len, permit_in_with_ports, proto_nr,
+						ipB->len, ipB->s, intportB, ipA->len, ipA->s, intportA);
+	}
+
+	flowdata_buf.len = strlen(flowdata_buf.s);
+	flow_description2 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
+			AVP_DUPLICATE_DATA);
+	cdpb.AAAAddAVPToList(&list, flow_description2);
+
+	if(include_rtcp_fd) {
+		LM_DBG("Need to add RTCP FD description - RTCP ports are by default "
+			   "next odd port number up from RTP ports\n");
+		int_port_rctp_a = intportA + 1;
+		if(int_port_rctp_a % 2 == 0) {
+			int_port_rctp_a++;
+		}
+		int_port_rctp_b = intportB + 1;
+		if(int_port_rctp_b % 2 == 0) {
+			int_port_rctp_b++;
+		}
+		char c_port_rtcp_a[10];
+		port_rtcp_a.len = snprintf(c_port_rtcp_a, 10, "%d", int_port_rctp_a);
+		port_rtcp_a.s = c_port_rtcp_a;
+		char c_port_rtcp_b[10];
+		port_rtcp_b.len = snprintf(c_port_rtcp_b, 10, "%d", int_port_rctp_b);
+		port_rtcp_b.s = c_port_rtcp_b;
+		LM_DBG("RTCP A Port [%.*s] RCTP B Port [%.*s]\n", port_rtcp_a.len,
+				port_rtcp_a.s, port_rtcp_b.len, port_rtcp_b.s);
+
+		/*3rd (optional RTCP) flow*/
+		len2 = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4
+					   + proto_len + port_rtcp_a.len + port_rtcp_b.len
+					   + 1 /*nul terminator*/)
+			   * sizeof(char);
+
+		if(!flowdata_buf.s || len < len2) {
+			len = len2;
+			if(flowdata_buf.s)
+				pkg_free(flowdata_buf.s);
+			flowdata_buf.s = (char *)pkg_malloc(len);
+			if(!flowdata_buf.s) {
+				LM_ERR("PCC_create_media_component: out of memory \
+																when allocating %i bytes in pkg\n",
+						len);
+				return NULL;
+			}
+			flowdata_buflen = len;
+		}
+
+		flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_ports,
+				proto_nr, ipA->len, ipA->s, int_port_rctp_a, ipB->len, ipB->s,
+				int_port_rctp_b);
+
+		flowdata_buf.len = strlen(flowdata_buf.s);
+		flow_description3 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+				IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
+				AVP_DUPLICATE_DATA);
+		cdpb.AAAAddAVPToList(&list, flow_description3);
+
+		/*4th (optional RTCP) flow*/
+		len2 = (permit_in.len + from_s.len + to_s.len + ipB->len + ipA->len + 4
+					   + proto_len + port_rtcp_a.len + port_rtcp_b.len
+					   + 1 /*nul terminator*/)
+			   * sizeof(char);
+		if(!flowdata_buf.s || len < len2) {
+			len = len2;
+			if(flowdata_buf.s)
+				pkg_free(flowdata_buf.s);
+			flowdata_buf.s = (char *)pkg_malloc(len);
+			if(!flowdata_buf.s) {
+				LM_ERR("PCC_create_media_component: out of memory \
+																		when allocating %i bytes in pkg\n",
+						len);
+				return NULL;
+			}
+			flowdata_buflen = len;
+		}
+
+		flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_in_with_ports,
+				proto_nr, ipB->len, ipB->s, int_port_rctp_b, ipA->len, ipA->s,
+				int_port_rctp_a);
+
+		flowdata_buf.len = strlen(flowdata_buf.s);
+		flow_description4 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+				IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
+				AVP_DUPLICATE_DATA);
+		cdpb.AAAAddAVPToList(&list, flow_description4);
+	}
+
+	int useAnyForIpA = 0;
+	int useAnyForIpB = 0;
+
+	if(regex_sdp_ip_prefix_to_maintain_in_fd.len > 0
+			&& regex_sdp_ip_prefix_to_maintain_in_fd.s) {
+		LM_DBG("regex_sdp_ip_prefix_to_maintain_in_fd is set to: [%.*s] "
+			   "therefore we check if we need to replace non matching IPs with "
+			   "any\n",
+				regex_sdp_ip_prefix_to_maintain_in_fd.len,
+				regex_sdp_ip_prefix_to_maintain_in_fd.s);
+		regmatch_t pmatch[MAX_MATCH];
+		if(reg_match(regex_sdp_ip_prefix_to_maintain_in_fd.s, ipA->s,
+				   &(pmatch[0]))) {
+			LM_DBG("ipA [%.*s] does not match so will use any instead of ipA",
+					ipA->len, ipA->s);
+			useAnyForIpA = 1;
 		} else {
-			LOG(L_ERR, "Not yet implemented for protocol %.*s\n", proto->len, proto->s);
-			return 0;
+			LM_DBG("ipA [%.*s] matches regex so will not use any", ipA->len,
+					ipA->s);
+			useAnyForIpA = 0;
 		}
-		int proto_len = strlen(proto_nr);
+		if(reg_match(regex_sdp_ip_prefix_to_maintain_in_fd.s, ipB->s,
+				   &(pmatch[0]))) {
+			LM_DBG("ipB [%.*s] does not match so will use any instead of ipB",
+					ipB->len, ipB->s);
+			useAnyForIpB = 1;
+		} else {
+			LM_DBG("ipB [%.*s] matches regex so will not use any", ipB->len,
+					ipB->s);
+			useAnyForIpB = 0;
+		}
+	}
 
-		int intportA = atoi(portA->s);
-		int intportB = atoi(portB->s);
-		
-		set_4bytes(x, number);
-		flow_number = cdpb.AAACreateAVP(AVP_IMS_Flow_Number,
-				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP, x, 4,
-				AVP_DUPLICATE_DATA);
-		cdpb.AAAAddAVPToList(&list, flow_number);
-				
-		/*IMS Flow descriptions*/
-		/*first flow is the receive flow*/
-
-		if (omit_flow_ports) {
-			len = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
-						proto_len + 1/*nul terminator*/) * sizeof(char);
-		}else{
-			len = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
-						proto_len + portA->len + portB->len + 1/*nul terminator*/) * sizeof(char);
+	if(useAnyForIpA) {
+		/*5th (optional replace IP A with ANY) flow*/
+		len2 = (permit_out.len + from_s.len + to_s.len
+					   + 3 /*for 'any'*/ + ipB->len + 4 + proto_len + portB->len
+					   + 1 /*nul terminator*/)
+			   * sizeof(char);
+		if(!flowdata_buf.s || len < len2) {
+			len = len2;
+			if(flowdata_buf.s)
+				pkg_free(flowdata_buf.s);
+			flowdata_buf.s = (char *)pkg_malloc(len);
+			if(!flowdata_buf.s) {
+				LM_ERR("PCC_create_media_component: out of memory \
+																when allocating %i bytes in pkg\n",
+						len);
+				return NULL;
+			}
+			flowdata_buflen = len;
 		}
-		
-		if (!flowdata_buf.s || flowdata_buflen < len) {
-				if (flowdata_buf.s)
-						pkg_free(flowdata_buf.s);
-				flowdata_buf.s = (char*) pkg_malloc(len);
-				if (!flowdata_buf.s) {
-						LM_ERR("PCC_create_media_component: out of memory \
-                                                        when allocating %i bytes in pkg\n", len);
-						return NULL;
-				}
-				flowdata_buflen = len;
-		}
-
-		if (omit_flow_ports) {
-			flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_without_ports, proto_nr,
-							ipA->len, ipA->s,
-							ipB->len, ipB->s);
-		}else{
-			flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_ports, proto_nr,
-							ipA->len, ipA->s, intportA,
-							ipB->len, ipB->s, intportB);
-		}
-		
+		flowdata_buf.len =
+				snprintf(flowdata_buf.s, len, permit_out_with_any_as_dst,
+						proto_nr, ipB->len, ipB->s, intportB);
 		flowdata_buf.len = strlen(flowdata_buf.s);
-		flow_description1 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+		flow_description5 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
 				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
 				IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
 				AVP_DUPLICATE_DATA);
-		cdpb.AAAAddAVPToList(&list, flow_description1);
-		
-		/*second flow*/
-		if (omit_flow_ports) {
-			len2 = (permit_in.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
-						proto_len + 1/*nul terminator*/) * sizeof(char);
-		}else{
-			len2 = (permit_in.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
-						proto_len + portA->len + portB->len + 1/*nul terminator*/) * sizeof(char);
-		}
+		cdpb.AAAAddAVPToList(&list, flow_description5);
 
-		if (!flowdata_buf.s || len < len2) {
+		if(include_rtcp_fd) {
+			/*7th (optional RTCP replace IP A with ANY) flow*/
+			len2 = (permit_out.len + from_s.len + to_s.len
+						   + 3 /*for 'any'*/ + ipB->len + 4 + proto_len
+						   + port_rtcp_b.len + 1 /*nul terminator*/)
+				   * sizeof(char);
+			if(!flowdata_buf.s || len < len2) {
 				len = len2;
-				if (flowdata_buf.s)
-						pkg_free(flowdata_buf.s);
-				flowdata_buf.s = (char*) pkg_malloc(len);
-				if (!flowdata_buf.s) {
-						LM_ERR("PCC_create_media_component: out of memory \
-                                                                when allocating %i bytes in pkg\n", len);
-						return NULL;
+				if(flowdata_buf.s)
+					pkg_free(flowdata_buf.s);
+				flowdata_buf.s = (char *)pkg_malloc(len);
+				if(!flowdata_buf.s) {
+					LM_ERR("PCC_create_media_component: out of memory \
+																		when allocating %i bytes in pkg\n",
+							len);
+					return NULL;
 				}
 				flowdata_buflen = len;
+			}
+			flowdata_buf.len =
+					snprintf(flowdata_buf.s, len, permit_out_with_any_as_dst,
+							proto_nr, ipB->len, ipB->s, int_port_rctp_b);
+			flowdata_buf.len = strlen(flowdata_buf.s);
+			flow_description7 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+					AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+					IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
+					AVP_DUPLICATE_DATA);
+			cdpb.AAAAddAVPToList(&list, flow_description7);
 		}
 
-		if (omit_flow_ports) {
-			flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_in_without_ports, proto_nr,
-							ipB->len, ipB->s,
-							ipA->len, ipA->s);
-		}else{
-			flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_in_with_ports, proto_nr,
-							ipB->len, ipB->s, intportB,
-							ipA->len, ipA->s, intportA);
+
+		/*6th (optional replace IP A with ANY) flow*/
+		len2 = (permit_in.len + from_s.len + to_s.len
+					   + 3 /*for 'any'*/ + ipB->len + 4 + proto_len + portB->len
+					   + 1 /*nul terminator*/)
+			   * sizeof(char);
+		if(!flowdata_buf.s || len < len2) {
+			len = len2;
+			if(flowdata_buf.s)
+				pkg_free(flowdata_buf.s);
+			flowdata_buf.s = (char *)pkg_malloc(len);
+			if(!flowdata_buf.s) {
+				LM_ERR("PCC_create_media_component: out of memory \
+																when allocating %i bytes in pkg\n",
+						len);
+				return NULL;
+			}
+			flowdata_buflen = len;
 		}
-		
+		flowdata_buf.len =
+				snprintf(flowdata_buf.s, len, permit_in_with_any_as_src,
+						proto_nr, ipB->len, ipB->s, intportB);
 		flowdata_buf.len = strlen(flowdata_buf.s);
-		flow_description2 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+		flow_description6 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
 				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
 				IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
 				AVP_DUPLICATE_DATA);
-		cdpb.AAAAddAVPToList(&list, flow_description2);
-		
-		if (include_rtcp_fd) {
-				LM_DBG("Need to add RTCP FD description - RTCP ports are by default next odd port number up from RTP ports\n");
-				int_port_rctp_a = intportA + 1;
-				if (int_port_rctp_a % 2 == 0) {
-						int_port_rctp_a ++;
-				}
-				int_port_rctp_b = intportB + 1;
-				if (int_port_rctp_b % 2 == 0) {
-						int_port_rctp_b ++;
-				}
-				char c_port_rtcp_a[10];
-				port_rtcp_a.len = snprintf(c_port_rtcp_a, 10, "%d", int_port_rctp_a);
-				port_rtcp_a.s = c_port_rtcp_a;
-				char c_port_rtcp_b[10];
-				port_rtcp_b.len = snprintf(c_port_rtcp_b, 10, "%d", int_port_rctp_b);
-				port_rtcp_b.s = c_port_rtcp_b;
-				LM_DBG("RTCP A Port [%.*s] RCTP B Port [%.*s]\n", port_rtcp_a.len, port_rtcp_a.s, port_rtcp_b.len, port_rtcp_b.s);
-				
-				/*3rd (optional RTCP) flow*/
-				len2 = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
-						proto_len + port_rtcp_a.len + port_rtcp_b.len + 1/*nul terminator*/) * sizeof(char);
-		
-				if (!flowdata_buf.s || len < len2) {
-						len = len2;
-						if (flowdata_buf.s)
-								pkg_free(flowdata_buf.s);
-						flowdata_buf.s = (char*) pkg_malloc(len);
-						if (!flowdata_buf.s) {
-								LM_ERR("PCC_create_media_component: out of memory \
-																when allocating %i bytes in pkg\n", len);
-								return NULL;
-						}
-						flowdata_buflen = len;
-				}
+		cdpb.AAAAddAVPToList(&list, flow_description6);
 
-				flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_ports, proto_nr,
-								ipA->len, ipA->s, int_port_rctp_a,
-								ipB->len, ipB->s, int_port_rctp_b);
-
-				flowdata_buf.len = strlen(flowdata_buf.s);
-				flow_description3 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
-						AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-						IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
-						AVP_DUPLICATE_DATA);
-				cdpb.AAAAddAVPToList(&list, flow_description3);
-				
-				/*4th (optional RTCP) flow*/
-				len2 = (permit_in.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
-						proto_len + port_rtcp_a.len + port_rtcp_b.len + 1/*nul terminator*/) * sizeof(char);		
-				if (!flowdata_buf.s || len < len2) {
-						len = len2;
-						if (flowdata_buf.s)
-								pkg_free(flowdata_buf.s);
-						flowdata_buf.s = (char*) pkg_malloc(len);
-						if (!flowdata_buf.s) {
-								LM_ERR("PCC_create_media_component: out of memory \
-																		when allocating %i bytes in pkg\n", len);
-								return NULL;
-						}
-						flowdata_buflen = len;
+		if(include_rtcp_fd) {
+			/*8th (optional RTCP replace IP A with ANY) flow*/
+			len2 = (permit_in.len + from_s.len + to_s.len
+						   + 3 /*for 'any'*/ + ipB->len + 4 + proto_len
+						   + port_rtcp_b.len + 1 /*nul terminator*/)
+				   * sizeof(char);
+			if(!flowdata_buf.s || len < len2) {
+				len = len2;
+				if(flowdata_buf.s)
+					pkg_free(flowdata_buf.s);
+				flowdata_buf.s = (char *)pkg_malloc(len);
+				if(!flowdata_buf.s) {
+					LM_ERR("PCC_create_media_component: out of memory \
+																		when allocating %i bytes in pkg\n",
+							len);
+					return NULL;
 				}
-
-				flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_in_with_ports, proto_nr,
-								ipB->len, ipB->s, int_port_rctp_b,
-								ipA->len, ipA->s, int_port_rctp_a);
-
-				flowdata_buf.len = strlen(flowdata_buf.s);
-				flow_description4 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
-						AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-						IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
-						AVP_DUPLICATE_DATA);
-				cdpb.AAAAddAVPToList(&list, flow_description4);
-				
+				flowdata_buflen = len;
+			}
+			flowdata_buf.len =
+					snprintf(flowdata_buf.s, len, permit_in_with_any_as_src,
+							proto_nr, ipB->len, ipB->s, int_port_rctp_b);
+			flowdata_buf.len = strlen(flowdata_buf.s);
+			flow_description8 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+					AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+					IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
+					AVP_DUPLICATE_DATA);
+			cdpb.AAAAddAVPToList(&list, flow_description8);
 		}
-		
-		int useAnyForIpA = 0;
-		int useAnyForIpB = 0;
 
-		if (regex_sdp_ip_prefix_to_maintain_in_fd.len > 0 && regex_sdp_ip_prefix_to_maintain_in_fd.s) {
-				LM_DBG("regex_sdp_ip_prefix_to_maintain_in_fd is set to: [%.*s] therefore we check if we need to replace non matching IPs with any\n",
-						regex_sdp_ip_prefix_to_maintain_in_fd.len, regex_sdp_ip_prefix_to_maintain_in_fd.s);
-				regmatch_t pmatch[MAX_MATCH];
-				if (reg_match(regex_sdp_ip_prefix_to_maintain_in_fd.s, ipA->s, &(pmatch[0]))) {
-						LM_DBG("ipA [%.*s] does not match so will use any instead of ipA", ipA->len, ipA->s);
-						useAnyForIpA = 1;
-				} else {
-						LM_DBG("ipA [%.*s] matches regex so will not use any", ipA->len, ipA->s);
-						useAnyForIpA = 0;
-				}
-				if (reg_match(regex_sdp_ip_prefix_to_maintain_in_fd.s, ipB->s, &(pmatch[0]))) {
-						LM_DBG("ipB [%.*s] does not match so will use any instead of ipB", ipB->len, ipB->s);
-						useAnyForIpB = 1;
-				} else {
-						LM_DBG("ipB [%.*s] matches regex so will not use any", ipB->len, ipB->s);
-						useAnyForIpB = 0;
-				}
 
+	} else if(useAnyForIpB) {
+		/*5th (optional replace IP B with ANY) flow*/
+		len2 = (permit_out.len + from_s.len + to_s.len
+					   + 3 /*for 'any'*/ + ipA->len + 4 + proto_len + portA->len
+					   + 1 /*nul terminator*/)
+			   * sizeof(char);
+		if(!flowdata_buf.s || len < len2) {
+			len = len2;
+			if(flowdata_buf.s)
+				pkg_free(flowdata_buf.s);
+			flowdata_buf.s = (char *)pkg_malloc(len);
+			if(!flowdata_buf.s) {
+				LM_ERR("PCC_create_media_component: out of memory \
+																when allocating %i bytes in pkg\n",
+						len);
+				return NULL;
+			}
+			flowdata_buflen = len;
 		}
-		
-		if (useAnyForIpA) {
-				/*5th (optional replace IP A with ANY) flow*/
-				len2 = (permit_out.len + from_s.len + to_s.len + 3 /*for 'any'*/ + ipB->len + 4 +
-						proto_len + portB->len + 1/*nul terminator*/) * sizeof(char);
-				if (!flowdata_buf.s || len < len2) {
-						len = len2;
-						if (flowdata_buf.s)
-								pkg_free(flowdata_buf.s);
-						flowdata_buf.s = (char*) pkg_malloc(len);
-						if (!flowdata_buf.s) {
-								LM_ERR("PCC_create_media_component: out of memory \
-																when allocating %i bytes in pkg\n", len);
-								return NULL;
-						}
-						flowdata_buflen = len;
-				}
-				flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_any_as_dst, proto_nr,
-						ipB->len, ipB->s, intportB);
-				flowdata_buf.len = strlen(flowdata_buf.s);
-				flow_description5 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
-						AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-						IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
-						AVP_DUPLICATE_DATA);
-				cdpb.AAAAddAVPToList(&list, flow_description5);
-				
-				if (include_rtcp_fd) {
-						/*7th (optional RTCP replace IP A with ANY) flow*/
-						len2 = (permit_out.len + from_s.len + to_s.len + 3 /*for 'any'*/ + ipB->len + 4 +
-								proto_len + port_rtcp_b.len + 1/*nul terminator*/) * sizeof(char);
-						if (!flowdata_buf.s || len < len2) {
-								len = len2;
-								if (flowdata_buf.s)
-										pkg_free(flowdata_buf.s);
-								flowdata_buf.s = (char*) pkg_malloc(len);
-								if (!flowdata_buf.s) {
-										LM_ERR("PCC_create_media_component: out of memory \
-																		when allocating %i bytes in pkg\n", len);
-										return NULL;
-								}
-								flowdata_buflen = len;
-						}
-						flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_any_as_dst, proto_nr,
-								ipB->len, ipB->s, int_port_rctp_b);
-						flowdata_buf.len = strlen(flowdata_buf.s);
-						flow_description7 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
-								AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-								IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
-								AVP_DUPLICATE_DATA);
-						cdpb.AAAAddAVPToList(&list, flow_description7);
-				}
-				
-				
-				/*6th (optional replace IP A with ANY) flow*/
-				len2 = (permit_in.len + from_s.len + to_s.len + 3 /*for 'any'*/ + ipB->len + 4 +
-						proto_len + portB->len + 1/*nul terminator*/) * sizeof(char);
-				if (!flowdata_buf.s || len < len2) {
-						len = len2;
-						if (flowdata_buf.s)
-								pkg_free(flowdata_buf.s);
-						flowdata_buf.s = (char*) pkg_malloc(len);
-						if (!flowdata_buf.s) {
-								LM_ERR("PCC_create_media_component: out of memory \
-																when allocating %i bytes in pkg\n", len);
-								return NULL;
-						}
-						flowdata_buflen = len;
-				}
-				flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_in_with_any_as_src, proto_nr,
-						ipB->len, ipB->s, intportB);
-				flowdata_buf.len = strlen(flowdata_buf.s);
-				flow_description6 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
-						AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-						IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
-						AVP_DUPLICATE_DATA);
-				cdpb.AAAAddAVPToList(&list, flow_description6);
-				
-				if (include_rtcp_fd) {
-						/*8th (optional RTCP replace IP A with ANY) flow*/
-						len2 = (permit_in.len + from_s.len + to_s.len + 3 /*for 'any'*/ + ipB->len + 4 +
-								proto_len + port_rtcp_b.len + 1/*nul terminator*/) * sizeof(char);
-						if (!flowdata_buf.s || len < len2) {
-								len = len2;
-								if (flowdata_buf.s)
-										pkg_free(flowdata_buf.s);
-								flowdata_buf.s = (char*) pkg_malloc(len);
-								if (!flowdata_buf.s) {
-										LM_ERR("PCC_create_media_component: out of memory \
-																		when allocating %i bytes in pkg\n", len);
-										return NULL;
-								}
-								flowdata_buflen = len;
-						}
-						flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_in_with_any_as_src, proto_nr,
-								ipB->len, ipB->s, int_port_rctp_b);
-						flowdata_buf.len = strlen(flowdata_buf.s);
-						flow_description8 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
-								AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-								IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
-								AVP_DUPLICATE_DATA);
-						cdpb.AAAAddAVPToList(&list, flow_description8);
-				}
-				
-				
-				
-		} else if (useAnyForIpB) {
-				/*5th (optional replace IP B with ANY) flow*/
-				len2 = (permit_out.len + from_s.len + to_s.len + 3 /*for 'any'*/ + ipA->len + 4 +
-						proto_len + portA->len + 1/*nul terminator*/) * sizeof(char);
-				if (!flowdata_buf.s || len < len2) {
-						len = len2;
-						if (flowdata_buf.s)
-								pkg_free(flowdata_buf.s);
-						flowdata_buf.s = (char*) pkg_malloc(len);
-						if (!flowdata_buf.s) {
-								LM_ERR("PCC_create_media_component: out of memory \
-																when allocating %i bytes in pkg\n", len);
-								return NULL;
-						}
-						flowdata_buflen = len;
-				}
-				flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_any_as_dst, proto_nr,
-						ipA->len, ipA->s, intportA);
-				flow_description5 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
-						AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-						IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
-						AVP_DUPLICATE_DATA);
-				cdpb.AAAAddAVPToList(&list, flow_description5);
-				
-				if (include_rtcp_fd) {
-						/*7th (optional RTCP replace IP B with ANY) flow*/
-						len2 = (permit_out.len + from_s.len + to_s.len + 3 /*for 'any'*/ + ipA->len + 4 +
-								proto_len + port_rtcp_a.len + 1/*nul terminator*/) * sizeof(char);
-						if (!flowdata_buf.s || len < len2) {
-								len = len2;
-								if (flowdata_buf.s)
-										pkg_free(flowdata_buf.s);
-								flowdata_buf.s = (char*) pkg_malloc(len);
-								if (!flowdata_buf.s) {
-										LM_ERR("PCC_create_media_component: out of memory \
-																		when allocating %i bytes in pkg\n", len);
-										return NULL;
-								}
-								flowdata_buflen = len;
-						}
-						flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_any_as_dst, proto_nr,
-								ipA->len, ipA->s, int_port_rctp_a);
-						flow_description7 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
-								AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-								IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
-								AVP_DUPLICATE_DATA);
-						cdpb.AAAAddAVPToList(&list, flow_description7);
-				}
-				
-				/*6th (optional replace IP B with ANY) flow*/
-				len2 = (permit_in.len + from_s.len + to_s.len + 3 /*for 'any'*/ + ipA->len + 4 +
-						proto_len + portA->len + 1/*nul terminator*/) * sizeof(char);
-				if (!flowdata_buf.s || len < len2) {
-						len = len2;
-						if (flowdata_buf.s)
-								pkg_free(flowdata_buf.s);
-						flowdata_buf.s = (char*) pkg_malloc(len);
-						if (!flowdata_buf.s) {
-								LM_ERR("PCC_create_media_component: out of memory \
-																when allocating %i bytes in pkg\n", len);
-								return NULL;
-						}
-						flowdata_buflen = len;
-				}
-				flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_in_with_any_as_src, proto_nr,
-						ipA->len, ipA->s, intportA);
-				flow_description6 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
-						AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-						IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
-						AVP_DUPLICATE_DATA);
-				cdpb.AAAAddAVPToList(&list, flow_description6);
-				
-				if (include_rtcp_fd) {
-						/*8th (optional RTCP replace IP B with ANY) flow*/
-						len2 = (permit_in.len + from_s.len + to_s.len + 3 /*for 'any'*/ + ipA->len + 4 +
-								proto_len + port_rtcp_a.len + 1/*nul terminator*/) * sizeof(char);
-						if (!flowdata_buf.s || len < len2) {
-								len = len2;
-								if (flowdata_buf.s)
-										pkg_free(flowdata_buf.s);
-								flowdata_buf.s = (char*) pkg_malloc(len);
-								if (!flowdata_buf.s) {
-										LM_ERR("PCC_create_media_component: out of memory \
-																		when allocating %i bytes in pkg\n", len);
-										return NULL;
-								}
-								flowdata_buflen = len;
-						}
-						flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_in_with_any_as_src, proto_nr,
-								ipA->len, ipA->s, int_port_rctp_a);
-						flow_description8 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
-								AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-								IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
-								AVP_DUPLICATE_DATA);
-						cdpb.AAAAddAVPToList(&list, flow_description8);
-				}
-				
-		}
-		
-		set_4bytes(x, flow_usage_type);
-		flow_usage = cdpb.AAACreateAVP(AVP_IMS_Flow_Usage,
+		flowdata_buf.len =
+				snprintf(flowdata_buf.s, len, permit_out_with_any_as_dst,
+						proto_nr, ipA->len, ipA->s, intportA);
+		flow_description5 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
 				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP, x, 4,
+				IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
 				AVP_DUPLICATE_DATA);
-		cdpb.AAAAddAVPToList(&list, flow_usage);
+		cdpb.AAAAddAVPToList(&list, flow_description5);
 
-		/*group all AVPS into one big.. and then free the small ones*/
+		if(include_rtcp_fd) {
+			/*7th (optional RTCP replace IP B with ANY) flow*/
+			len2 = (permit_out.len + from_s.len + to_s.len
+						   + 3 /*for 'any'*/ + ipA->len + 4 + proto_len
+						   + port_rtcp_a.len + 1 /*nul terminator*/)
+				   * sizeof(char);
+			if(!flowdata_buf.s || len < len2) {
+				len = len2;
+				if(flowdata_buf.s)
+					pkg_free(flowdata_buf.s);
+				flowdata_buf.s = (char *)pkg_malloc(len);
+				if(!flowdata_buf.s) {
+					LM_ERR("PCC_create_media_component: out of memory \
+																		when allocating %i bytes in pkg\n",
+							len);
+					return NULL;
+				}
+				flowdata_buflen = len;
+			}
+			flowdata_buf.len =
+					snprintf(flowdata_buf.s, len, permit_out_with_any_as_dst,
+							proto_nr, ipA->len, ipA->s, int_port_rctp_a);
+			flow_description7 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+					AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+					IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
+					AVP_DUPLICATE_DATA);
+			cdpb.AAAAddAVPToList(&list, flow_description7);
+		}
 
-		data = cdpb.AAAGroupAVPS(list);
-		cdpb.AAAFreeAVPList(&list);
-
-		//TODO: should free the buffer for the flows in module shutdown....
-
-		return(cdpb.AAACreateAVP(AVP_IMS_Media_Sub_Component,
+		/*6th (optional replace IP B with ANY) flow*/
+		len2 = (permit_in.len + from_s.len + to_s.len
+					   + 3 /*for 'any'*/ + ipA->len + 4 + proto_len + portA->len
+					   + 1 /*nul terminator*/)
+			   * sizeof(char);
+		if(!flowdata_buf.s || len < len2) {
+			len = len2;
+			if(flowdata_buf.s)
+				pkg_free(flowdata_buf.s);
+			flowdata_buf.s = (char *)pkg_malloc(len);
+			if(!flowdata_buf.s) {
+				LM_ERR("PCC_create_media_component: out of memory \
+																when allocating %i bytes in pkg\n",
+						len);
+				return NULL;
+			}
+			flowdata_buflen = len;
+		}
+		flowdata_buf.len =
+				snprintf(flowdata_buf.s, len, permit_in_with_any_as_src,
+						proto_nr, ipA->len, ipA->s, intportA);
+		flow_description6 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
 				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP, data.s, data.len,
-				AVP_FREE_DATA));
+				IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
+				AVP_DUPLICATE_DATA);
+		cdpb.AAAAddAVPToList(&list, flow_description6);
+
+		if(include_rtcp_fd) {
+			/*8th (optional RTCP replace IP B with ANY) flow*/
+			len2 = (permit_in.len + from_s.len + to_s.len
+						   + 3 /*for 'any'*/ + ipA->len + 4 + proto_len
+						   + port_rtcp_a.len + 1 /*nul terminator*/)
+				   * sizeof(char);
+			if(!flowdata_buf.s || len < len2) {
+				len = len2;
+				if(flowdata_buf.s)
+					pkg_free(flowdata_buf.s);
+				flowdata_buf.s = (char *)pkg_malloc(len);
+				if(!flowdata_buf.s) {
+					LM_ERR("PCC_create_media_component: out of memory \
+																		when allocating %i bytes in pkg\n",
+							len);
+					return NULL;
+				}
+				flowdata_buflen = len;
+			}
+			flowdata_buf.len =
+					snprintf(flowdata_buf.s, len, permit_in_with_any_as_src,
+							proto_nr, ipA->len, ipA->s, int_port_rctp_a);
+			flow_description8 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+					AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+					IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
+					AVP_DUPLICATE_DATA);
+			cdpb.AAAAddAVPToList(&list, flow_description8);
+		}
+	}
+
+	set_4bytes(x, flow_usage_type);
+	flow_usage = cdpb.AAACreateAVP(AVP_IMS_Flow_Usage,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
+	cdpb.AAAAddAVPToList(&list, flow_usage);
+
+	/*group all AVPS into one big.. and then free the small ones*/
+
+	data = cdpb.AAAGroupAVPS(list);
+	cdpb.AAAFreeAVPList(&list);
+
+	//TODO: should free the buffer for the flows in module shutdown....
+
+	return (cdpb.AAACreateAVP(AVP_IMS_Media_Sub_Component,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, data.s, data.len, AVP_FREE_DATA));
 }
 
 //just for registration to signalling status much cut down MSC AVP
@@ -1141,43 +1175,40 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 AAA_AVP *rx_create_media_subcomponent_avp_register()
 {
 
-		char x[4];
+	char x[4];
 
-		AAA_AVP *flow_usage = 0;
-		AAA_AVP *flow_number = 0;
+	AAA_AVP *flow_usage = 0;
+	AAA_AVP *flow_number = 0;
 
-		str data;
-		AAA_AVP_LIST list;
-		list.tail = 0;
-		list.head = 0;
+	str data;
+	AAA_AVP_LIST list;
+	list.tail = 0;
+	list.head = 0;
 
-		//always set to zero for subscription to signalling status
-		set_4bytes(x, 0);
+	//always set to zero for subscription to signalling status
+	set_4bytes(x, 0);
 
-		flow_number = cdpb.AAACreateAVP(AVP_IMS_Flow_Number,
-				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP, x, 4,
-				AVP_DUPLICATE_DATA);
-		cdpb.AAAAddAVPToList(&list, flow_number);
+	flow_number = cdpb.AAACreateAVP(AVP_IMS_Flow_Number,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
+	cdpb.AAAAddAVPToList(&list, flow_number);
 
-		set_4bytes(x, AVP_EPC_Flow_Usage_AF_Signaling);
+	set_4bytes(x, AVP_EPC_Flow_Usage_AF_Signaling);
 
-		flow_usage = cdpb.AAACreateAVP(AVP_IMS_Flow_Usage,
-				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP, x, 4,
-				AVP_DUPLICATE_DATA);
-		cdpb.AAAAddAVPToList(&list, flow_usage);
+	flow_usage = cdpb.AAACreateAVP(AVP_IMS_Flow_Usage,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
+	cdpb.AAAAddAVPToList(&list, flow_usage);
 
-		/*group all AVPS into one big.. and then free the small ones*/
+	/*group all AVPS into one big.. and then free the small ones*/
 
-		data = cdpb.AAAGroupAVPS(list);
+	data = cdpb.AAAGroupAVPS(list);
 
-		cdpb.AAAFreeAVPList(&list);
+	cdpb.AAAFreeAVPList(&list);
 
-		return(cdpb.AAACreateAVP(AVP_IMS_Media_Sub_Component,
-				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP, data.s, data.len,
-				AVP_FREE_DATA));
+	return (cdpb.AAACreateAVP(AVP_IMS_Media_Sub_Component,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, data.s, data.len, AVP_FREE_DATA));
 }
 
 /*
@@ -1190,60 +1221,68 @@ AAA_AVP *rx_create_media_subcomponent_avp_register()
  * (this AVP should be freed!)
  */
 
-AAA_AVP* rx_create_codec_data_avp(str *raw_sdp_stream, int number, int direction)
+AAA_AVP *rx_create_codec_data_avp(
+		str *raw_sdp_stream, int number, int direction)
 {
-		str data;
-		int l = 0;
-		AAA_AVP* result;
-		data.len = 0;
+	str data;
+	int l = 0;
+	AAA_AVP *result;
+	data.len = 0;
 
-		switch (direction) {
-		case 0: data.len = 13;
-				break;
-		case 1: data.len = 14;
-				break;
-		case 2: data.len = 15;
-				break;
-		case 3: data.len = 16;
-				break;
+	switch(direction) {
+		case 0:
+			data.len = 13;
+			break;
+		case 1:
+			data.len = 14;
+			break;
+		case 2:
+			data.len = 15;
+			break;
+		case 3:
+			data.len = 16;
+			break;
 		default:
-				break;
-		}
-		data.len += raw_sdp_stream->len + 1; // 0 Terminated.
-		LM_DBG("data.len is calculated %i, sdp-stream has a len of %i\n", data.len, raw_sdp_stream->len);
-		data.s = (char*) pkg_malloc(data.len);
-		memset(data.s, 0, data.len);
+			break;
+	}
+	data.len += raw_sdp_stream->len + 1; // 0 Terminated.
+	LM_DBG("data.len is calculated %i, sdp-stream has a len of %i\n", data.len,
+			raw_sdp_stream->len);
+	data.s = (char *)pkg_malloc(data.len);
+	memset(data.s, 0, data.len);
 
-		switch (direction) {
-		case 0: memcpy(data.s, "uplink\noffer\n", 13);
-				l = 13;
-				break;
-		case 1: memcpy(data.s, "uplink\nanswer\n", 14);
-				l = 14;
-				break;
-		case 2: memcpy(data.s, "downlink\noffer\n", 15);
-				l = 15;
-				break;
-		case 3: memcpy(data.s, "downlink\nanswer\n", 16);
-				l = 16;
-				break;
+	switch(direction) {
+		case 0:
+			memcpy(data.s, "uplink\noffer\n", 13);
+			l = 13;
+			break;
+		case 1:
+			memcpy(data.s, "uplink\nanswer\n", 14);
+			l = 14;
+			break;
+		case 2:
+			memcpy(data.s, "downlink\noffer\n", 15);
+			l = 15;
+			break;
+		case 3:
+			memcpy(data.s, "downlink\nanswer\n", 16);
+			l = 16;
+			break;
 		default:
-				break;
+			break;
+	}
+	// LM_DBG("data.s = \"%.*s\"\n", l, data.s);
+	memcpy(data.s + l, raw_sdp_stream->s, raw_sdp_stream->len);
+	LM_DBG("data.s = \"%.*s\"\n", data.len, data.s);
 
-		}
-		// LM_DBG("data.s = \"%.*s\"\n", l, data.s);
-		memcpy(data.s + l, raw_sdp_stream->s, raw_sdp_stream->len);
-		LM_DBG("data.s = \"%.*s\"\n", data.len, data.s);
+	result = cdpb.AAACreateAVP(AVP_IMS_Codec_Data,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, data.s, data.len, AVP_DUPLICATE_DATA);
 
-		result = cdpb.AAACreateAVP(AVP_IMS_Codec_Data,
-				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP, data.s, data.len,
-				AVP_DUPLICATE_DATA);
+	// Free the buffer:
+	pkg_free(data.s);
 
-		// Free the buffer:
-		pkg_free(data.s);
-
-		return result;
+	return result;
 }
 
 /**
@@ -1253,9 +1292,11 @@ AAA_AVP* rx_create_codec_data_avp(str *raw_sdp_stream, int number, int direction
  * @param auth_app_id - the value of the authentication application AVP
  * @returns 1 on success or 0 on error
  */
-int rx_add_vendor_specific_application_id_group(AAAMessage * msg, uint32_t vendor_id, uint32_t auth_app_id)
+int rx_add_vendor_specific_application_id_group(
+		AAAMessage *msg, uint32_t vendor_id, uint32_t auth_app_id)
 {
-		return cdp_avp->base.add_Vendor_Specific_Application_Id_Group(&(msg->avpList), vendor_id, auth_app_id, 0);
+	return cdp_avp->base.add_Vendor_Specific_Application_Id_Group(
+			&(msg->avpList), vendor_id, auth_app_id, 0);
 }
 
 /**
@@ -1265,14 +1306,15 @@ int rx_add_vendor_specific_application_id_group(AAAMessage * msg, uint32_t vendo
  */
 unsigned int rx_get_abort_cause(AAAMessage *msg)
 {
-		AAA_AVP *avp = 0;
-		unsigned int code = 0;
-		//getting abort cause
-		avp = cdpb.AAAFindMatchingAVP(msg, msg->avpList.head, AVP_IMS_Abort_Cause, IMS_vendor_id_3GPP, AAA_FORWARD_SEARCH);
-		if (avp) {
-				code = get_4bytes(avp->data.s);
-		}
-		return code;
+	AAA_AVP *avp = 0;
+	unsigned int code = 0;
+	//getting abort cause
+	avp = cdpb.AAAFindMatchingAVP(msg, msg->avpList.head, AVP_IMS_Abort_Cause,
+			IMS_vendor_id_3GPP, AAA_FORWARD_SEARCH);
+	if(avp) {
+		code = get_4bytes(avp->data.s);
+	}
+	return code;
 }
 
 /**
@@ -1284,37 +1326,35 @@ unsigned int rx_get_abort_cause(AAAMessage *msg)
 inline int rx_get_result_code(AAAMessage *msg, unsigned int *data)
 {
 
-		AAA_AVP *avp;
-		AAA_AVP_LIST list;
-		list.head = 0;
-		list.tail = 0;
-		*data = 0;
-		int ret = 0;
+	AAA_AVP *avp;
+	AAA_AVP_LIST list;
+	list.head = 0;
+	list.tail = 0;
+	*data = 0;
+	int ret = 0;
 
-		for (avp = msg->avpList.tail; avp; avp = avp->prev) {
-				//LOG(L_INFO,"pcc_get_result_code: looping with avp code %i\n",avp->code);
-				if (avp->code == AVP_Result_Code) {
-						*data = get_4bytes(avp->data.s);
-						ret = 1;
+	for(avp = msg->avpList.tail; avp; avp = avp->prev) {
+		//LOG(L_INFO,"pcc_get_result_code: looping with avp code %i\n",avp->code);
+		if(avp->code == AVP_Result_Code) {
+			*data = get_4bytes(avp->data.s);
+			ret = 1;
 
-				} else if (avp->code == AVP_Experimental_Result) {
-						list = cdpb.AAAUngroupAVPS(avp->data);
-						for (avp = list.head; avp; avp = avp->next) {
-								//LOG(L_CRIT,"in the loop with avp code %i\n",avp->code);
-								if (avp->code == AVP_IMS_Experimental_Result_Code) {
-										*data = get_4bytes(avp->data.s);
-										cdpb.AAAFreeAVPList(&list);
-										ret = 1;
-										break;
-								}
-						}
-						cdpb.AAAFreeAVPList(&list);
-						break; // this has to be here because i have changed the avp!!!
-
+		} else if(avp->code == AVP_Experimental_Result) {
+			list = cdpb.AAAUngroupAVPS(avp->data);
+			for(avp = list.head; avp; avp = avp->next) {
+				//LOG(L_CRIT,"in the loop with avp code %i\n",avp->code);
+				if(avp->code == AVP_IMS_Experimental_Result_Code) {
+					*data = get_4bytes(avp->data.s);
+					cdpb.AAAFreeAVPList(&list);
+					ret = 1;
+					break;
 				}
-
+			}
+			cdpb.AAAFreeAVPList(&list);
+			break; // this has to be here because i have changed the avp!!!
 		}
-		return ret;
+	}
+	return ret;
 }
 
 /**
@@ -1325,16 +1365,10 @@ inline int rx_get_result_code(AAAMessage *msg, unsigned int *data)
  */
 inline int rx_add_specific_action_avp(AAAMessage *msg, unsigned int data)
 {
-		char x[4];
-		set_4bytes(x, data);
+	char x[4];
+	set_4bytes(x, data);
 
-		return
-		rx_add_avp(msg, x, 4,
-				AVP_IMS_Specific_Action,
-				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
-				IMS_vendor_id_3GPP,
-				AVP_DUPLICATE_DATA,
-				__FUNCTION__);
+	return rx_add_avp(msg, x, 4, AVP_IMS_Specific_Action,
+			AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+			IMS_vendor_id_3GPP, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
-
-

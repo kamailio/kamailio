@@ -53,67 +53,104 @@
 #include "ims_qos_stats.h"
 
 struct ims_qos_counters_h ims_qos_cnts_h;
-enum sctp_info_req { IMS_QOS_REGISTRATION_AAR_AVG_RSP, IMS_QOS_MEDIA_AAR_AVG_RSP };
-
-static counter_val_t ims_qos_internal_stats(counter_handle_t h, void* what);
-
-counter_def_t ims_qos_cnt_defs[] = {
-    {&ims_qos_cnts_h.active_registration_rx_sessions,	    "active_registration_rx_sessions",		0, 0, 0,	    "number of currently active registration Rx sessions"},
-    {&ims_qos_cnts_h.registration_aar_avg_response_time,    "registration_aar_avg_response_time",	0, ims_qos_internal_stats, (void*) (long) IMS_QOS_REGISTRATION_AAR_AVG_RSP,	"avg response time for registration AARs"},
-    {&ims_qos_cnts_h.registration_aar_timeouts,		    "registration_aar_timeouts",		0, 0, 0,	    "total number of registration AAR timeouts"},
-    {&ims_qos_cnts_h.failed_registration_aars,		    "failed_registration_aars",			0, 0, 0,	    "total number of failed registration AARs"},
-    {&ims_qos_cnts_h.registration_aars,			    "registration_aars",			0, 0, 0,	    "total number of registration AARs"},
-    {&ims_qos_cnts_h.asrs,				    "asrs",					0, 0, 0,	    "total number of registration ASRs"},
-    {&ims_qos_cnts_h.successful_registration_aars,	    "successful_registration_aars",		0, 0, 0,	    "total number of successful registration AARs"},
-    {&ims_qos_cnts_h.registration_aar_response_time,	    "registration_aar_response_time",		0, 0, 0,	    "total number of seconds waiting for registration AAR responses"},
-    {&ims_qos_cnts_h.registration_aar_replies_received,	    "registration_aar_replies_received",	0, 0, 0,            "total number of registration AAR replies received"},
-
-    {&ims_qos_cnts_h.active_media_rx_sessions,		    "active_media_rx_sessions",		0, 0, 0,		    "number of currently active media Rx sessions"},
-	{&ims_qos_cnts_h.media_rx_sessions,		    "media_rx_sessions",		0, 0, 0,		    "Total number of media Rx sessions"},
-    {&ims_qos_cnts_h.media_aar_avg_response_time,	    "media_aar_avg_response_time",	0, ims_qos_internal_stats, (void*) (long) IMS_QOS_MEDIA_AAR_AVG_RSP,	"avg response time for media AARs"},
-    {&ims_qos_cnts_h.media_aar_timeouts,		    "media_aar_timeouts",		0, 0, 0,		    "total number of media AAR timeouts"},
-    {&ims_qos_cnts_h.failed_media_aars,			    "failed_media_aars",		0, 0, 0,		    "total number of failed media AARs"},
-    {&ims_qos_cnts_h.media_aars,			    "media_aars",			0, 0, 0,		    "total number of media AARs"},
-    {&ims_qos_cnts_h.successful_media_aars,		    "successful_media_aars",		0, 0, 0,		    "total number of successful media AARs"},
-    {&ims_qos_cnts_h.media_aar_response_time,		    "media_aar_response_time",		0, 0, 0,		    "total number of seconds waiting for media AAR responses"},
-    {&ims_qos_cnts_h.media_aar_replies_received,	    "media_aar_replies_received",	0, 0, 0,                    "total number of media AAR replies received"},
-    {0, 0, 0, 0, 0, 0}
+enum sctp_info_req
+{
+	IMS_QOS_REGISTRATION_AAR_AVG_RSP,
+	IMS_QOS_MEDIA_AAR_AVG_RSP
 };
 
+static counter_val_t ims_qos_internal_stats(counter_handle_t h, void *what);
 
-int ims_qos_init_counters() {
-    if (counter_register_array("ims_qos", ims_qos_cnt_defs) < 0)
-	goto error;
-    return 0;
+counter_def_t ims_qos_cnt_defs[] = {
+		{&ims_qos_cnts_h.active_registration_rx_sessions,
+				"active_registration_rx_sessions", 0, 0, 0,
+				"number of currently active registration Rx sessions"},
+		{&ims_qos_cnts_h.registration_aar_avg_response_time,
+				"registration_aar_avg_response_time", 0, ims_qos_internal_stats,
+				(void *)(long)IMS_QOS_REGISTRATION_AAR_AVG_RSP,
+				"avg response time for registration AARs"},
+		{&ims_qos_cnts_h.registration_aar_timeouts, "registration_aar_timeouts",
+				0, 0, 0, "total number of registration AAR timeouts"},
+		{&ims_qos_cnts_h.failed_registration_aars, "failed_registration_aars",
+				0, 0, 0, "total number of failed registration AARs"},
+		{&ims_qos_cnts_h.registration_aars, "registration_aars", 0, 0, 0,
+				"total number of registration AARs"},
+		{&ims_qos_cnts_h.asrs, "asrs", 0, 0, 0,
+				"total number of registration ASRs"},
+		{&ims_qos_cnts_h.successful_registration_aars,
+				"successful_registration_aars", 0, 0, 0,
+				"total number of successful registration AARs"},
+		{&ims_qos_cnts_h.registration_aar_response_time,
+				"registration_aar_response_time", 0, 0, 0,
+				"total number of seconds waiting for registration AAR "
+				"responses"},
+		{&ims_qos_cnts_h.registration_aar_replies_received,
+				"registration_aar_replies_received", 0, 0, 0,
+				"total number of registration AAR replies received"},
+
+		{&ims_qos_cnts_h.active_media_rx_sessions, "active_media_rx_sessions",
+				0, 0, 0, "number of currently active media Rx sessions"},
+		{&ims_qos_cnts_h.media_rx_sessions, "media_rx_sessions", 0, 0, 0,
+				"Total number of media Rx sessions"},
+		{&ims_qos_cnts_h.media_aar_avg_response_time,
+				"media_aar_avg_response_time", 0, ims_qos_internal_stats,
+				(void *)(long)IMS_QOS_MEDIA_AAR_AVG_RSP,
+				"avg response time for media AARs"},
+		{&ims_qos_cnts_h.media_aar_timeouts, "media_aar_timeouts", 0, 0, 0,
+				"total number of media AAR timeouts"},
+		{&ims_qos_cnts_h.failed_media_aars, "failed_media_aars", 0, 0, 0,
+				"total number of failed media AARs"},
+		{&ims_qos_cnts_h.media_aars, "media_aars", 0, 0, 0,
+				"total number of media AARs"},
+		{&ims_qos_cnts_h.successful_media_aars, "successful_media_aars", 0, 0,
+				0, "total number of successful media AARs"},
+		{&ims_qos_cnts_h.media_aar_response_time, "media_aar_response_time", 0,
+				0, 0,
+				"total number of seconds waiting for media AAR responses"},
+		{&ims_qos_cnts_h.media_aar_replies_received,
+				"media_aar_replies_received", 0, 0, 0,
+				"total number of media AAR replies received"},
+		{0, 0, 0, 0, 0, 0}};
+
+
+int ims_qos_init_counters()
+{
+	if(counter_register_array("ims_qos", ims_qos_cnt_defs) < 0)
+		goto error;
+	return 0;
 error:
-    return -1;
+	return -1;
 }
 
-void ims_qos_destroy_counters() {
-    
+void ims_qos_destroy_counters()
+{
 }
 
 /** helper function for some stats (which are kept internally).
  */
-static counter_val_t ims_qos_internal_stats(counter_handle_t h, void* what) {
-    enum sctp_info_req w;
+static counter_val_t ims_qos_internal_stats(counter_handle_t h, void *what)
+{
+	enum sctp_info_req w;
 
-    w = (int) (long) what;
-    switch (w) {
-	case IMS_QOS_REGISTRATION_AAR_AVG_RSP:
-	    if (counter_get_val(ims_qos_cnts_h.registration_aars) == 0) 
-		return 0;
-	    else
-		return counter_get_val(ims_qos_cnts_h.registration_aar_response_time)/counter_get_val(ims_qos_cnts_h.registration_aars);
-	    break;
-	case IMS_QOS_MEDIA_AAR_AVG_RSP:
-	    if (counter_get_val(ims_qos_cnts_h.media_aars) == 0) 
-		return 0;
-	    else
-		return counter_get_val(ims_qos_cnts_h.media_aar_response_time)/counter_get_val(ims_qos_cnts_h.media_aars);
-	    break;
-	default:
-	    return 0;
-    };
-    return 0;
+	w = (int)(long)what;
+	switch(w) {
+		case IMS_QOS_REGISTRATION_AAR_AVG_RSP:
+			if(counter_get_val(ims_qos_cnts_h.registration_aars) == 0)
+				return 0;
+			else
+				return counter_get_val(
+							   ims_qos_cnts_h.registration_aar_response_time)
+					   / counter_get_val(ims_qos_cnts_h.registration_aars);
+			break;
+		case IMS_QOS_MEDIA_AAR_AVG_RSP:
+			if(counter_get_val(ims_qos_cnts_h.media_aars) == 0)
+				return 0;
+			else
+				return counter_get_val(ims_qos_cnts_h.media_aar_response_time)
+					   / counter_get_val(ims_qos_cnts_h.media_aars);
+			break;
+		default:
+			return 0;
+	};
+	return 0;
 }

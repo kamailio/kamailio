@@ -51,7 +51,6 @@
 #ifndef RX_ASR_H
 #define RX_ASR_H
 
-AAAMessage* rx_process_asr(AAAMessage *request);
+AAAMessage *rx_process_asr(AAAMessage *request);
 
 #endif
-

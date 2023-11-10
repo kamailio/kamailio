@@ -51,9 +51,9 @@
 
 #include "../../core/counters.h"
 
-extern stat_var* stat_aar_timeouts;
-extern stat_var* aar_replies_received;
-extern stat_var* aar_replies_response_time;
+extern stat_var *stat_aar_timeouts;
+extern stat_var *aar_replies_received;
+extern stat_var *aar_replies_response_time;
 
 int register_stats();
 unsigned long get_avg_aar_response_time();
