@@ -28,15 +28,15 @@
 
 
 #include <string.h>
-#include "../../core/dprint.h"               /* Logging */
-#include "../../lib/srdb1/db.h"                /* Generic database API */
+#include "../../core/dprint.h"	/* Logging */
+#include "../../lib/srdb1/db.h" /* Generic database API */
 #include "../../core/ut.h"
 #include "../../core/parser/digest/digest.h" /* get_authorized_cred */
-#include "../../core/parser/hf.h"            /* Header Field types */
-#include "../../core/parser/parse_from.h"    /* From parser */
+#include "../../core/parser/hf.h"			 /* Header Field types */
+#include "../../core/parser/parse_from.h"	 /* From parser */
 #include "../../core/parser/parse_uri.h"
 #include "group.h"
-#include "group_mod.h"                   /* Module parameters */
+#include "group_mod.h" /* Module parameters */
 
 /*!
  * \brief Extract the username and domain from the SIP message
@@ -49,20 +49,20 @@
  * \param domain stored domain
  * \return 0 on success, -1 on failure
  */
-int get_username_domain(struct sip_msg *msg, group_check_p gcp,
-											str *username, str *domain)
+int get_username_domain(
+		struct sip_msg *msg, group_check_p gcp, str *username, str *domain)
 {
 	struct sip_uri puri;
 	struct sip_uri *turi;
-	struct hdr_field* h = 0;
-	struct auth_body* c = 0;
+	struct hdr_field *h = 0;
+	struct auth_body *c = 0;
 	pv_value_t value;
 
 	turi = NULL;
 
 	switch(gcp->id) {
 		case 1: /* Request-URI */
-			if(parse_sip_msg_uri(msg)<0) {
+			if(parse_sip_msg_uri(msg) < 0) {
 				LM_ERR("failed to get Request-URI\n");
 				return -1;
 			}
@@ -70,46 +70,46 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 			break;
 
 		case 2: /* To */
-			if((turi=parse_to_uri(msg))==NULL) {
+			if((turi = parse_to_uri(msg)) == NULL) {
 				LM_ERR("failed to get To URI\n");
 				return -1;
 			}
 			break;
 
 		case 3: /* From */
-			if((turi=parse_from_uri(msg))==NULL) {
+			if((turi = parse_from_uri(msg)) == NULL) {
 				LM_ERR("failed to get From URI\n");
 				return -1;
 			}
 			break;
 
 		case 4: /* Credentials */
-			get_authorized_cred( msg->authorization, &h);
-			if (!h) {
-				get_authorized_cred( msg->proxy_auth, &h);
-				if (!h) {
+			get_authorized_cred(msg->authorization, &h);
+			if(!h) {
+				get_authorized_cred(msg->proxy_auth, &h);
+				if(!h) {
 					LM_ERR("no authorized credentials found "
-							"(error in script)\n");
+						   "(error in script)\n");
 					return -1;
 				}
 			}
 			if(!h->parsed) {
 				LM_ERR("no parsed authorized credentials found "
-						"(error in script)\n");
+					   "(error in script)\n");
 				return -1;
 			}
-			c = (auth_body_t*)(h->parsed);
+			c = (auth_body_t *)(h->parsed);
 			break;
 
 		case 5: /* AVP spec */
-			if(pv_get_spec_value( msg, &gcp->sp, &value)!=0
-				|| value.flags&PV_VAL_NULL || value.rs.len<=0)
-			{
+			if(pv_get_spec_value(msg, &gcp->sp, &value) != 0
+					|| value.flags & PV_VAL_NULL || value.rs.len <= 0) {
 				LM_ERR("no AVP found (error in scripts)\n");
 				return -1;
 			}
-			if (parse_uri(value.rs.s, value.rs.len, &puri) < 0) {
-				LM_ERR("failed to parse URI <%.*s>\n",value.rs.len, value.rs.s);
+			if(parse_uri(value.rs.s, value.rs.len, &puri) < 0) {
+				LM_ERR("failed to parse URI <%.*s>\n", value.rs.len,
+						value.rs.s);
 				return -1;
 			}
 			turi = &puri;
@@ -120,7 +120,7 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 		}
 	}
 
-	if (gcp->id != 4) {
+	if(gcp->id != 4) {
 		*username = turi->user;
 		*domain = turi->host;
 	} else {
@@ -131,7 +131,6 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 }
 
 
-
 /*!
  * \brief Check if username in specified header field is in a table
  * \param _msg SIP message
@@ -139,19 +138,19 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
  * \param _grp checked table
  * \return 1 on success, negative on failure 
  */
-int is_user_in_helper(sip_msg_t* _msg, str *user, str *domain, str *grp)
+int is_user_in_helper(sip_msg_t *_msg, str *user, str *domain, str *grp)
 {
 	db_key_t keys[3];
 	db_val_t vals[3];
 	db_key_t col[1];
-	db1_res_t* res = NULL;
+	db1_res_t *res = NULL;
 
-	if (user==NULL || user->s==NULL || user->len==0 ) {
+	if(user == NULL || user->s == NULL || user->len == 0) {
 		LM_DBG("no username part\n");
 		return -1;
 	}
 
-	if (grp==NULL || grp->s==NULL || grp->len==0 ) {
+	if(grp == NULL || grp->s == NULL || grp->len == 0) {
 		LM_DBG("no group\n");
 		return -1;
 	}
@@ -159,7 +158,7 @@ int is_user_in_helper(sip_msg_t* _msg, str *user, str *domain, str *grp)
 	keys[0] = &user_column;
 	keys[1] = &group_column;
 	keys[2] = &domain_column;
-	col[0]  = &group_column;
+	col[0] = &group_column;
 
 	VAL_STR(vals) = *user;
 
@@ -170,12 +169,11 @@ int is_user_in_helper(sip_msg_t* _msg, str *user, str *domain, str *grp)
 			LM_ERR("no domain\n");
 			return -1;
 		}
-		LM_DBG("checking if '%.*s@%.*s' is in '%.*s'\n",
-				user->len, user->s, domain->len, domain->s,
-				grp->len, grp->s);
+		LM_DBG("checking if '%.*s@%.*s' is in '%.*s'\n", user->len, user->s,
+				domain->len, domain->s, grp->len, grp->s);
 	} else {
-		LM_DBG("checking if '%.*s' is in '%.*s'\n",
-				user->len, user->s, grp->len, grp->s);
+		LM_DBG("checking if '%.*s' is in '%.*s'\n", user->len, user->s,
+				grp->len, grp->s);
 	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB1_STR;
@@ -183,18 +181,19 @@ int is_user_in_helper(sip_msg_t* _msg, str *user, str *domain, str *grp)
 
 	VAL_STR(vals + 1) = *grp;
 
-	if (group_dbf.use_table(group_dbh, &table) < 0) {
+	if(group_dbf.use_table(group_dbh, &table) < 0) {
 		LM_ERR("failed to use_table\n");
 		return -5;
 	}
 
-	if (group_dbf.query(group_dbh, keys, 0, vals, col, (use_domain) ? (3): (2),
-				1, 0, &res) < 0) {
+	if(group_dbf.query(group_dbh, keys, 0, vals, col, (use_domain) ? (3) : (2),
+			   1, 0, &res)
+			< 0) {
 		LM_ERR("failed to query database\n");
 		return -5;
 	}
 
-	if (RES_ROW_N(res) == 0) {
+	if(RES_ROW_N(res) == 0) {
 		LM_DBG("user is not in group '%.*s'\n", grp->len, grp->s);
 		group_dbf.free_result(group_dbh, res);
 		return -6;
@@ -212,17 +211,17 @@ int is_user_in_helper(sip_msg_t* _msg, str *user, str *domain, str *grp)
  * \param _grp checked table
  * \return 1 on success, negative on failure 
  */
-int is_user_in(sip_msg_t* _msg, char* _hf, char* _grp)
+int is_user_in(sip_msg_t *_msg, char *_hf, char *_grp)
 {
 	str user = STR_NULL;
 	str domain = STR_NULL;
 
-	if ( get_username_domain( _msg, (group_check_p)_hf, &user, &domain)!=0) {
+	if(get_username_domain(_msg, (group_check_p)_hf, &user, &domain) != 0) {
 		LM_ERR("failed to get username@domain\n");
 		return -1;
 	}
 
-	return is_user_in_helper(_msg, &user, &domain, (str*)_grp);
+	return is_user_in_helper(_msg, &user, &domain, (str *)_grp);
 }
 
 /**
@@ -232,7 +231,7 @@ int ki_is_user_in(sip_msg_t *msg, str *uri, str *grp)
 {
 	sip_uri_t puri;
 
-	if (uri==NULL || uri->s==NULL || uri->len==0 ) {
+	if(uri == NULL || uri->s == NULL || uri->len == 0) {
 		LM_DBG("no uri parameter\n");
 		return -1;
 	}
@@ -250,14 +249,14 @@ int ki_is_user_in(sip_msg_t *msg, str *uri, str *grp)
  * \param db_url database URL
  * \return 0 on success, -1 on failure
  */
-int group_db_init(const str* db_url)
+int group_db_init(const str *db_url)
 {
-	if (group_dbf.init==0){
+	if(group_dbf.init == 0) {
 		LM_CRIT("null dbf \n");
 		goto error;
 	}
-	group_dbh=group_dbf.init(db_url);
-	if (group_dbh==0){
+	group_dbh = group_dbf.init(db_url);
+	if(group_dbh == 0) {
 		LM_ERR("unable to connect to the database\n");
 		goto error;
 	}
@@ -272,14 +271,14 @@ error:
  * \param db_url database URL
  * \return 0 on success, -1 on failure
  */
-int group_db_bind(const str* db_url)
+int group_db_bind(const str *db_url)
 {
-	if (db_bind_mod(db_url, &group_dbf)<0){
+	if(db_bind_mod(db_url, &group_dbf) < 0) {
 		LM_ERR("unable to bind to the database module\n");
 		return -1;
 	}
 
-	if (!DB_CAPABILITY(group_dbf, DB_CAP_QUERY)) {
+	if(!DB_CAPABILITY(group_dbf, DB_CAP_QUERY)) {
 		LM_ERR("database module does not implement 'query' function\n");
 		return -1;
 	}
@@ -293,8 +292,8 @@ int group_db_bind(const str* db_url)
  */
 void group_db_close(void)
 {
-	if (group_dbh && group_dbf.close){
+	if(group_dbh && group_dbf.close) {
 		group_dbf.close(group_dbh);
-		group_dbh=0;
+		group_dbh = 0;
 	}
 }

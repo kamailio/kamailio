@@ -33,17 +33,17 @@
 #include "../../lib/srdb1/db.h"
 #include "../../core/str.h"
 #include "../../core/parser/digest/digest.h" /* auth_body_t */
-#include "../../core/parser/msg_parser.h"    /* struct sip_msg */
+#include "../../core/parser/msg_parser.h"	 /* struct sip_msg */
 
 
 /*
  * Module parameters variables
  */
-extern str table;           /*!< 'group' table name */
-extern str user_column;     /*!< 'user' column name in group table */
-extern str domain_column;   /*!< 'domain' column name in group table */
-extern str group_column;    /*!< "group' column name in group table */
-extern int use_domain;      /*!< Use domain in is_user_in */
+extern str table;		  /*!< 'group' table name */
+extern str user_column;	  /*!< 'user' column name in group table */
+extern str domain_column; /*!< 'domain' column name in group table */
+extern str group_column;  /*!< "group' column name in group table */
+extern int use_domain;	  /*!< Use domain in is_user_in */
 
 extern str re_table;
 extern str re_exp_column;
@@ -52,7 +52,7 @@ extern int multiple_gid;
 
 /* DB functions and handlers */
 extern db_func_t group_dbf;
-extern db1_con_t* group_dbh;
+extern db1_con_t *group_dbh;
 
 
 #endif
