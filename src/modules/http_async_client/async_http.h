@@ -38,7 +38,7 @@
 #define ERROR_AVP_NAME "http_error"
 #define ERROR_AVP_NAME_LENGTH 10
 #define MAX_ID_LEN 32
-#define MAX_CBNAME_LEN	64
+#define MAX_CBNAME_LEN 64
 
 #include <curl/curl.h>
 #include <event2/event.h>
@@ -50,9 +50,9 @@
 extern int num_workers;
 
 extern int http_timeout; /* query timeout in ms */
-extern int tcp_keepalive; 
-extern int tcp_ka_idle; 
-extern int tcp_ka_interval; 
+extern int tcp_keepalive;
+extern int tcp_ka_idle;
+extern int tcp_ka_interval;
 
 extern struct sip_msg *ah_reply;
 extern str ah_error;
@@ -60,13 +60,14 @@ extern http_m_time_t ah_time;
 
 extern int tls_verify_host;
 extern int tls_verify_peer;
-extern char* tls_client_cert;
-extern char* tls_client_key;
-extern char* tls_ca_path;
+extern char *tls_client_cert;
+extern char *tls_client_key;
+extern char *tls_ca_path;
 
 extern unsigned int default_authmethod;
 
-typedef struct async_http_worker {
+typedef struct async_http_worker
+{
 	int notication_socket[2];
 	struct event_base *evbase;
 	struct event *socket_event;
@@ -75,34 +76,42 @@ typedef struct async_http_worker {
 
 extern async_http_worker_t *workers;
 
-typedef enum {
+typedef enum
+{
 	AH_METH_DEFAULT = 0,
-	AH_METH_GET, AH_METH_POST, AH_METH_PUT, AH_METH_DELETE
+	AH_METH_GET,
+	AH_METH_POST,
+	AH_METH_PUT,
+	AH_METH_DELETE
 } async_http_method_t;
 
-struct header_list {
-	char ** t;
+struct header_list
+{
+	char **t;
 	int len;
 };
 
-struct query_params {
-	async_http_method_t method:3;
-	unsigned int tls_verify_peer:1;
-	unsigned int tls_verify_host:1;
-	unsigned int suspend_transaction:1; /* (create and) suspend the current transaction */
-	unsigned int call_route:1;          /* call script route on reply */
-	unsigned int follow_redirect:1; /* follow any Location header in a 3xx response */
+struct query_params
+{
+	async_http_method_t method : 3;
+	unsigned int tls_verify_peer : 1;
+	unsigned int tls_verify_host : 1;
+	unsigned int
+			suspend_transaction : 1; /* (create and) suspend the current transaction */
+	unsigned int call_route : 1; /* call script route on reply */
+	unsigned int
+			follow_redirect : 1; /* follow any Location header in a 3xx response */
 
 	unsigned int timeout;
 	struct header_list headers;
-	char* tls_client_cert;
-	char* tls_client_key;
-	char* tls_ca_path;
+	char *tls_client_cert;
+	char *tls_client_key;
+	char *tls_ca_path;
 	str body;
 
 	unsigned int authmethod;
-	char* username;
-	char* password;
+	char *username;
+	char *password;
 	unsigned int tcp_keepalive;
 	unsigned int tcp_ka_idle;
 	unsigned int tcp_ka_interval;
@@ -110,9 +119,10 @@ struct query_params {
 
 extern struct query_params ah_params;
 
-typedef struct async_query {
+typedef struct async_query
+{
 	str query;
-	char id[MAX_ID_LEN+1];
+	char id[MAX_ID_LEN + 1];
 	unsigned int tindex;
 	unsigned int tlabel;
 	struct query_params query_params;
@@ -121,30 +131,30 @@ typedef struct async_query {
 } async_query_t;
 
 int async_http_init_sockets(async_http_worker_t *worker);
-int async_http_init_worker(int prank, async_http_worker_t* worker);
-void async_http_run_worker(async_http_worker_t* worker);
+int async_http_init_worker(int prank, async_http_worker_t *worker);
+void async_http_run_worker(async_http_worker_t *worker);
 
 int async_send_query(sip_msg_t *msg, str *query, str *cbname);
 int async_push_query(async_query_t *aq);
 
 void notification_socket_cb(int fd, short event, void *arg);
-int init_socket(async_http_worker_t* worker);
+int init_socket(async_http_worker_t *worker);
 void async_http_cb(struct http_m_reply *reply, void *param);
-void init_query_params(struct query_params*);
-void set_query_params(struct query_params*);
+void init_query_params(struct query_params *);
+void set_query_params(struct query_params *);
 
-int header_list_add(struct header_list *hl, str* hdr);
+int header_list_add(struct header_list *hl, str *hdr);
 int query_params_set_method(struct query_params *qp, str *meth);
 
 static inline void free_async_query(async_query_t *aq)
 {
-	if (!aq)
+	if(!aq)
 		return;
 	LM_DBG("freeing query %p\n", aq);
-	if (aq->query.s && aq->query.len) {
+	if(aq->query.s && aq->query.len) {
 		shm_free(aq->query.s);
-		aq->query.s=0;
-		aq->query.len=0;
+		aq->query.s = 0;
+		aq->query.len = 0;
 	}
 
 	if(aq->query_params.headers.t) {
@@ -153,33 +163,33 @@ static inline void free_async_query(async_query_t *aq)
 		shm_free(aq->query_params.headers.t);
 	}
 
-	if (aq->query_params.tls_client_cert) {
+	if(aq->query_params.tls_client_cert) {
 		shm_free(aq->query_params.tls_client_cert);
 		aq->query_params.tls_client_cert = NULL;
 	}
 
-	if (aq->query_params.tls_client_key) {
+	if(aq->query_params.tls_client_key) {
 		shm_free(aq->query_params.tls_client_key);
 		aq->query_params.tls_client_key = NULL;
 	}
 
-	if (aq->query_params.tls_ca_path) {
+	if(aq->query_params.tls_ca_path) {
 		shm_free(aq->query_params.tls_ca_path);
 		aq->query_params.tls_ca_path = NULL;
 	}
 
-	if (aq->query_params.body.s && aq->query_params.body.len > 0) {
+	if(aq->query_params.body.s && aq->query_params.body.len > 0) {
 		shm_free(aq->query_params.body.s);
 		aq->query_params.body.s = NULL;
 		aq->query_params.body.len = 0;
 	}
 
-	if (aq->query_params.username) {
+	if(aq->query_params.username) {
 		shm_free(aq->query_params.username);
 		aq->query_params.username = NULL;
 	}
 
-	if (aq->query_params.password) {
+	if(aq->query_params.password) {
 		shm_free(aq->query_params.password);
 		aq->query_params.password = NULL;
 	}
