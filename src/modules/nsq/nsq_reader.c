@@ -33,9 +33,11 @@ extern json_api_t json_api;
 extern str nsq_event_key;
 extern str nsq_event_sub_key;
 
-int nsq_pv_get_event_payload(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+int nsq_pv_get_event_payload(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	return eventData == NULL ? pv_get_null(msg, param, res) : pv_get_strzval(msg, param, res, eventData);
+	return eventData == NULL ? pv_get_null(msg, param, res)
+							 : pv_get_strzval(msg, param, res, eventData);
 }
 
 int nsq_consumer_fire_event(char *routename)
@@ -46,12 +48,12 @@ int nsq_consumer_fire_event(char *routename)
 
 	LM_DBG("searching event_route[%s]\n", routename);
 	rt = route_get(&event_rt, routename);
-	if (rt < 0 || event_rt.rlist[rt] == NULL) {
+	if(rt < 0 || event_rt.rlist[rt] == NULL) {
 		LM_DBG("route %s does not exist\n", routename);
 		return -2;
 	}
 	LM_DBG("executing event_route[%s] (%d)\n", routename, rt);
-	if (faked_msg_init()<0) {
+	if(faked_msg_init() < 0) {
 		return -2;
 	}
 	fmsg = faked_msg_next();
@@ -76,40 +78,57 @@ int nsq_consumer_event(char *payload, char *channel, char *topic)
 	eventData = payload;
 
 	json_obj = json_api.json_parse(payload);
-	if (json_obj == NULL) {
+	if(json_obj == NULL) {
 		return ret;
 	}
 
-	k = pkg_malloc(nsq_event_key.len+1);
+	k = pkg_malloc(nsq_event_key.len + 1);
 	memcpy(k, nsq_event_key.s, nsq_event_key.len);
 	k[nsq_event_key.len] = '\0';
 	json_api.extract_field(json_obj, k, &ev_category);
 	pkg_free(k);
 
-	k = pkg_malloc(nsq_event_sub_key.len+1);
+	k = pkg_malloc(nsq_event_sub_key.len + 1);
 	memcpy(k, nsq_event_sub_key.s, nsq_event_sub_key.len);
 	k[nsq_event_sub_key.len] = '\0';
 	json_api.extract_field(json_obj, k, &ev_name);
 	pkg_free(k);
 
-	snprintf(buffer, 512, "nsq:consumer-event-%.*s-%.*s",ev_category.len, ev_category.s, ev_name.len, ev_name.s);
-	for (p=buffer ; *p; ++p) *p = tolower(*p);
-	for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
-	if (nsq_consumer_fire_event(buffer) != 0) {
-		snprintf(buffer, 512, "nsq:consumer-event-%.*s", ev_category.len, ev_category.s);
-		for (p=buffer ; *p; ++p) *p = tolower(*p);
-		for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
-		if (nsq_consumer_fire_event(buffer) != 0) {
-			snprintf(buffer, 512, "nsq:consumer-event-%.*s-%.*s", nsq_event_key.len, nsq_event_key.s, nsq_event_sub_key.len, nsq_event_sub_key.s);
-			for (p=buffer ; *p; ++p) *p = tolower(*p);
-			for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
-			if (nsq_consumer_fire_event(buffer) != 0) {
-				snprintf(buffer, 512, "nsq:consumer-event-%.*s", nsq_event_key.len, nsq_event_key.s);
-				for (p=buffer ; *p; ++p) *p = tolower(*p);
-				for (p=buffer ; *p; ++p) if(*p == '_') *p = '-';
-				if (nsq_consumer_fire_event(buffer) != 0) {
+	snprintf(buffer, 512, "nsq:consumer-event-%.*s-%.*s", ev_category.len,
+			ev_category.s, ev_name.len, ev_name.s);
+	for(p = buffer; *p; ++p)
+		*p = tolower(*p);
+	for(p = buffer; *p; ++p)
+		if(*p == '_')
+			*p = '-';
+	if(nsq_consumer_fire_event(buffer) != 0) {
+		snprintf(buffer, 512, "nsq:consumer-event-%.*s", ev_category.len,
+				ev_category.s);
+		for(p = buffer; *p; ++p)
+			*p = tolower(*p);
+		for(p = buffer; *p; ++p)
+			if(*p == '_')
+				*p = '-';
+		if(nsq_consumer_fire_event(buffer) != 0) {
+			snprintf(buffer, 512, "nsq:consumer-event-%.*s-%.*s",
+					nsq_event_key.len, nsq_event_key.s, nsq_event_sub_key.len,
+					nsq_event_sub_key.s);
+			for(p = buffer; *p; ++p)
+				*p = tolower(*p);
+			for(p = buffer; *p; ++p)
+				if(*p == '_')
+					*p = '-';
+			if(nsq_consumer_fire_event(buffer) != 0) {
+				snprintf(buffer, 512, "nsq:consumer-event-%.*s",
+						nsq_event_key.len, nsq_event_key.s);
+				for(p = buffer; *p; ++p)
+					*p = tolower(*p);
+				for(p = buffer; *p; ++p)
+					if(*p == '_')
+						*p = '-';
+				if(nsq_consumer_fire_event(buffer) != 0) {
 					snprintf(buffer, 512, "nsq:consumer-event");
-					if (nsq_consumer_fire_event(buffer) != 0) {
+					if(nsq_consumer_fire_event(buffer) != 0) {
 						LM_ERR("nsq:consumer-event not found");
 					}
 				}
@@ -117,7 +136,7 @@ int nsq_consumer_event(char *payload, char *channel, char *topic)
 		}
 	}
 
-	if (json_obj) {
+	if(json_obj) {
 		json_object_put(json_obj);
 	}
 
@@ -126,12 +145,13 @@ int nsq_consumer_event(char *payload, char *channel, char *topic)
 	return ret;
 }
 
-void nsq_message_handler(struct NSQReader *rdr, struct NSQDConnection *conn, struct NSQMessage *msg, void *ctx)
+void nsq_message_handler(struct NSQReader *rdr, struct NSQDConnection *conn,
+		struct NSQMessage *msg, void *ctx)
 {
 	int ret = 0;
 
-	char *payload = (char*)shm_malloc(msg->body_length + 1);
-	if (!payload) {
+	char *payload = (char *)shm_malloc(msg->body_length + 1);
+	if(!payload) {
 		LM_ERR("error allocating shared memory for payload");
 	}
 	strncpy(payload, msg->body, msg->body_length);
@@ -141,7 +161,7 @@ void nsq_message_handler(struct NSQReader *rdr, struct NSQDConnection *conn, str
 
 	buffer_reset(conn->command_buf);
 
-	if (ret < 0) {
+	if(ret < 0) {
 		nsq_requeue(conn->command_buf, msg->id, 100);
 	} else {
 		nsq_finish(conn->command_buf, msg->id);
