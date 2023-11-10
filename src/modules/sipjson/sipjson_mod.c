@@ -37,43 +37,40 @@
 MODULE_VERSION
 
 
-static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode);
+static int sj_serialize_data(sip_msg_t *msg, srjson_doc_t *jdoc, str *smode);
 
-static int  w_sj_serialize(sip_msg_t* msg, char* mode, char* vout);
+static int w_sj_serialize(sip_msg_t *msg, char *mode, char *vout);
 
-static cmd_export_t cmds[]={
-	{"sj_serialize", (cmd_function)w_sj_serialize,   2, fixup_spve_pvar,
-		fixup_free_spve_pvar, ANY_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {
+		{"sj_serialize", (cmd_function)w_sj_serialize, 2, fixup_spve_pvar,
+				fixup_free_spve_pvar, ANY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[]={
-	{0, 0, 0}
-};
+static param_export_t params[] = {{0, 0, 0}};
 
 
 struct module_exports exports = {
-	"sipjson",      /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,           /* exported functions */
-	params,         /* exported parameters */
-	0,              /* exported rpc functions */
-	0,              /* exported pseudo-variables */
-	0,              /* module init function */
-	0,              /* response function */
-	0,              /* per child init function */
-	0               /* destroy function */
+		"sipjson",		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* exported rpc functions */
+		0,				 /* exported pseudo-variables */
+		0,				 /* module init function */
+		0,				 /* response function */
+		0,				 /* per child init function */
+		0				 /* destroy function */
 };
 
 /**
  *
  */
-static int ki_sj_serialize_helper(sip_msg_t* msg, str* smode, pv_spec_t *pvs)
+static int ki_sj_serialize_helper(sip_msg_t *msg, str *smode, pv_spec_t *pvs)
 {
 	srjson_doc_t jdoc;
 	pv_value_t val;
 
-	if(pvs->setf==NULL) {
+	if(pvs->setf == NULL) {
 		LM_ERR("read only output variable\n");
 		return -1;
 	}
@@ -81,7 +78,7 @@ static int ki_sj_serialize_helper(sip_msg_t* msg, str* smode, pv_spec_t *pvs)
 	LM_DBG("sip to json serialization...\n");
 	srjson_InitDoc(&jdoc, NULL);
 
-	if(sj_serialize_data(msg, &jdoc, smode)<0) {
+	if(sj_serialize_data(msg, &jdoc, smode) < 0) {
 		LM_ERR("json serialization failure\n");
 		goto error;
 	}
@@ -89,12 +86,12 @@ static int ki_sj_serialize_helper(sip_msg_t* msg, str* smode, pv_spec_t *pvs)
 	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
 
 	memset(&val, 0, sizeof(pv_value_t));
-	if(jdoc.buf.s!=NULL) {
+	if(jdoc.buf.s != NULL) {
 		jdoc.buf.len = strlen(jdoc.buf.s);
 		val.flags = PV_VAL_STR;
 		val.rs = jdoc.buf;
 
-		if(pvs->setf(msg, &pvs->pvp, (int)EQ_T, &val)<0) {
+		if(pvs->setf(msg, &pvs->pvp, (int)EQ_T, &val) < 0) {
 			LM_ERR("setting string to output PV failed\n");
 			goto error;
 		}
@@ -102,7 +99,7 @@ static int ki_sj_serialize_helper(sip_msg_t* msg, str* smode, pv_spec_t *pvs)
 		jdoc.buf.s = NULL;
 	} else {
 		val.flags = PV_VAL_NULL;
-		if(pvs->setf(msg, &pvs->pvp, (int)EQ_T, &val)<0) {
+		if(pvs->setf(msg, &pvs->pvp, (int)EQ_T, &val) < 0) {
 			LM_ERR("setting null to output PV failed\n");
 			goto error;
 		}
@@ -113,7 +110,7 @@ static int ki_sj_serialize_helper(sip_msg_t* msg, str* smode, pv_spec_t *pvs)
 	return 1;
 
 error:
-	if(jdoc.buf.s!=NULL) {
+	if(jdoc.buf.s != NULL) {
 		jdoc.free_fn(jdoc.buf.s);
 		jdoc.buf.s = NULL;
 	}
@@ -125,12 +122,12 @@ error:
 /**
  * 
  */
-static int ki_sj_serialize(sip_msg_t* msg, str* smode, str* pvn)
+static int ki_sj_serialize(sip_msg_t *msg, str *smode, str *pvn)
 {
 	pv_spec_t *pvs = NULL;
 
 	pvs = pv_cache_get(pvn);
-	if(pvs==NULL) {
+	if(pvs == NULL) {
 		LM_ERR("cannot get pv spec for [%.*s]\n", pvn->len, pvn->s);
 		return -1;
 	}
@@ -141,17 +138,17 @@ static int ki_sj_serialize(sip_msg_t* msg, str* smode, str* pvn)
 /**
  * 
  */
-static int w_sj_serialize(sip_msg_t* msg, char* mode, char* vout)
+static int w_sj_serialize(sip_msg_t *msg, char *mode, char *vout)
 {
 	str smode;
 	pv_spec_t *dpv;
 
-	if(fixup_get_svalue(msg, (gparam_t*)mode, &smode)!=0 || smode.len<=0) {
+	if(fixup_get_svalue(msg, (gparam_t *)mode, &smode) != 0 || smode.len <= 0) {
 		LM_ERR("no serialization mode parameter\n");
 		return -1;
 	}
 
-	dpv = (pv_spec_t*)vout;
+	dpv = (pv_spec_t *)vout;
 
 	return ki_sj_serialize_helper(msg, &smode, dpv);
 }
@@ -164,8 +161,8 @@ static int sj_add_xuri_attr(sip_uri_t *puri, int atype, char *aname, int alen,
 {
 	str s;
 
-	if(atype==1) /* username */ {
-		if(puri->user.s==NULL || puri->user.len<=0) {
+	if(atype == 1) /* username */ {
+		if(puri->user.s == NULL || puri->user.len <= 0) {
 			s.s = "";
 			s.len = 0;
 		} else {
@@ -173,8 +170,8 @@ static int sj_add_xuri_attr(sip_uri_t *puri, int atype, char *aname, int alen,
 		}
 		srjson_AddStrStrToObject(jdoc, jr, aname, alen, s.s, s.len);
 		return 0;
-	} else if(atype==2) /* domain */ {
-		if(puri->host.s==NULL || puri->host.len<=0) {
+	} else if(atype == 2) /* domain */ {
+		if(puri->host.s == NULL || puri->host.len <= 0) {
 			s.s = "";
 			s.len = 0;
 		} else {
@@ -182,11 +179,11 @@ static int sj_add_xuri_attr(sip_uri_t *puri, int atype, char *aname, int alen,
 		}
 		srjson_AddStrStrToObject(jdoc, jr, aname, alen, s.s, s.len);
 		return 0;
-	} else if(atype==3) /* port */ {
+	} else if(atype == 3) /* port */ {
 		srjson_AddNumberToObject(jdoc, jr, aname, puri->port_no);
 		return 0;
-	} else if(atype==4) /* protocol */ {
-		if(puri->transport_val.s==NULL){
+	} else if(atype == 4) /* protocol */ {
+		if(puri->transport_val.s == NULL) {
 			s.s = "";
 			s.len = 0;
 		} else {
@@ -207,7 +204,7 @@ static int sj_add_xuri_attr(sip_uri_t *puri, int atype, char *aname, int alen,
 /**
  * 
  */
-static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
+static int sj_serialize_data(sip_msg_t *msg, srjson_doc_t *jdoc, str *smode)
 {
 	int i;
 	str s;
@@ -215,7 +212,7 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 	sip_uri_t *puri = NULL;
 
 	jr = srjson_CreateObject(jdoc);
-	if(jr==NULL) {
+	if(jr == NULL) {
 		LM_ERR("cannot create json root obj\n");
 		goto error;
 	}
@@ -228,8 +225,9 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 
 	if(msg->first_line.type == SIP_REPLY) {
 		srjson_AddNumberToObject(jdoc, jr, "mt", 1);
-		if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
-					(msg->cseq==NULL))) {
+		if(msg->cseq == NULL
+				&& ((parse_headers(msg, HDR_CSEQ_F, 0) == -1)
+						|| (msg->cseq == NULL))) {
 			LM_ERR("no CSEQ header\n");
 			s.s = "";
 			s.len = 0;
@@ -242,7 +240,7 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 	}
 	srjson_AddStrStrToObject(jdoc, jr, "rm", 2, s.s, s.len);
 
-	if(get_valid_proto_string(msg->rcv.proto, 0, 0, &s)<0) {
+	if(get_valid_proto_string(msg->rcv.proto, 0, 0, &s) < 0) {
 		s.s = "none";
 		s.len = 4;
 	}
@@ -253,11 +251,12 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 	srjson_AddStrStrToObject(jdoc, jr, "si", 2, s.s, s.len);
 	srjson_AddNumberToObject(jdoc, jr, "sp", msg->rcv.src_port);
 
-	if(msg->rcv.bind_address!=NULL) {
+	if(msg->rcv.bind_address != NULL) {
 		srjson_AddStrStrToObject(jdoc, jr, "Ri", 2,
 				msg->rcv.bind_address->address_str.s,
 				msg->rcv.bind_address->address_str.len);
-		srjson_AddNumberToObject(jdoc, jr, "Rp", msg->rcv.bind_address->port_no);
+		srjson_AddNumberToObject(
+				jdoc, jr, "Rp", msg->rcv.bind_address->port_no);
 	}
 
 	if(msg->first_line.type == SIP_REPLY) {
@@ -265,12 +264,12 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 		s.s = "";
 		s.len = 0;
 	} else {
-		if(msg->parsed_uri_ok==0 && parse_sip_msg_uri(msg)<0) {
+		if(msg->parsed_uri_ok == 0 && parse_sip_msg_uri(msg) < 0) {
 			LM_ERR("failed to parse the R-URI\n");
 			s.s = "";
 			s.len = 0;
 		} else {
-			if (msg->new_uri.s!=NULL) {
+			if(msg->new_uri.s != NULL) {
 				s = msg->new_uri;
 			} else {
 				s = msg->first_line.u.request.uri;
@@ -283,11 +282,13 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 		srjson_AddStrStrToObject(jdoc, jr, "rU", 2, "", 0);
 		srjson_AddStrStrToObject(jdoc, jr, "rd", 2, "", 0);
 		srjson_AddNumberToObject(jdoc, jr, "rp", 0);
-		srjson_AddNumberToObject(jdoc, jr, "rs", msg->first_line.u.reply.statuscode);
+		srjson_AddNumberToObject(
+				jdoc, jr, "rs", msg->first_line.u.reply.statuscode);
 		srjson_AddStrStrToObject(jdoc, jr, "rr", 2,
-				msg->first_line.u.reply.reason.s, msg->first_line.u.reply.reason.len);
+				msg->first_line.u.reply.reason.s,
+				msg->first_line.u.reply.reason.len);
 	} else {
-		if(msg->parsed_uri_ok==0 && parse_sip_msg_uri(msg)<0) {
+		if(msg->parsed_uri_ok == 0 && parse_sip_msg_uri(msg) < 0) {
 			srjson_AddStrStrToObject(jdoc, jr, "rU", 2, "", 0);
 			srjson_AddStrStrToObject(jdoc, jr, "rd", 2, "", 0);
 			srjson_AddNumberToObject(jdoc, jr, "rp", 0);
@@ -302,7 +303,7 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 	}
 
 	puri = parse_from_uri(msg);
-	if(puri==NULL) {
+	if(puri == NULL) {
 		srjson_AddStrStrToObject(jdoc, jr, "fU", 2, "", 0);
 		srjson_AddStrStrToObject(jdoc, jr, "fd", 2, "", 0);
 	} else {
@@ -310,8 +311,9 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 		sj_add_xuri_attr(puri, 2, "fd", 2, jdoc, jr);
 	}
 
-	if(msg->user_agent==NULL && ((parse_headers(msg, HDR_USERAGENT_F, 0)==-1)
-			|| (msg->user_agent==NULL))) {
+	if(msg->user_agent == NULL
+			&& ((parse_headers(msg, HDR_USERAGENT_F, 0) == -1)
+					|| (msg->user_agent == NULL))) {
 		s.s = "";
 		s.len = 0;
 	} else {
@@ -319,8 +321,9 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 	}
 	srjson_AddStrStrToObject(jdoc, jr, "ua", 2, s.s, s.len);
 
-	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID_F, 0)==-1) ||
-				(msg->callid==NULL)) ) {
+	if(msg->callid == NULL
+			&& ((parse_headers(msg, HDR_CALLID_F, 0) == -1)
+					|| (msg->callid == NULL))) {
 		LM_ERR("cannot parse Call-Id header\n");
 		s.s = "";
 		s.len = 0;
@@ -329,11 +332,11 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 	}
 	srjson_AddStrStrToObject(jdoc, jr, "ci", 2, s.s, s.len);
 
-	for(i=0; i<smode->len; i++) {
-		switch (smode->s[i]) {
+	for(i = 0; i < smode->len; i++) {
+		switch(smode->s[i]) {
 			case '0':
 				/* default attributes added already */
-			break;
+				break;
 			case 'B':
 				s.s = get_body(msg);
 				if(s.s == NULL) {
@@ -342,27 +345,28 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 					s.len = msg->buf + msg->len - s.s;
 					srjson_AddStrStrToObject(jdoc, jr, "rb", 2, s.s, s.len);
 				}
-			break;
+				break;
 			case 'c':
-				if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1)
-						|| (msg->cseq==NULL)) ) {
+				if(msg->cseq == NULL
+						&& ((parse_headers(msg, HDR_CSEQ_F, 0) == -1)
+								|| (msg->cseq == NULL))) {
 					s.s = "";
 					s.len = 0;
 				} else {
 					s = get_cseq(msg)->number;
 				}
 				srjson_AddStrStrToObject(jdoc, jr, "cs", 2, s.s, s.len);
-			break;
+				break;
 			case 't':
 				puri = parse_to_uri(msg);
-				if(puri==NULL) {
+				if(puri == NULL) {
 					srjson_AddStrStrToObject(jdoc, jr, "tU", 2, "", 0);
 					srjson_AddStrStrToObject(jdoc, jr, "td", 2, "", 0);
 				} else {
 					sj_add_xuri_attr(puri, 1, "tU", 2, jdoc, jr);
 					sj_add_xuri_attr(puri, 2, "td", 2, jdoc, jr);
 				}
-			break;
+				break;
 		}
 	}
 	return 1;
