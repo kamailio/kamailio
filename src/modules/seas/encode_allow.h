@@ -21,6 +21,7 @@
 
 #ifndef __ENCODE_ALLOW_H__
 #define __ENCODE_ALLOW_H__
-int encode_allow(char *hdrstart,int hdrlen,unsigned int *bodi,char *where);
-int print_encoded_allow(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix);
+int encode_allow(char *hdrstart, int hdrlen, unsigned int *bodi, char *where);
+int print_encoded_allow(FILE *fd, char *hdr, int hdrlen, unsigned char *payload,
+		int paylen, char *prefix);
 #endif
