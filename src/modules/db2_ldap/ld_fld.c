@@ -30,11 +30,11 @@
  * Data field conversion and type checking functions.
  */
 
-#define _XOPEN_SOURCE 4     /* bsd */
-#define _XOPEN_SOURCE_EXTENDED 1    /* solaris */
-#define _SVID_SOURCE 1 /* timegm */
+#define _XOPEN_SOURCE 4			 /* bsd */
+#define _XOPEN_SOURCE_EXTENDED 1 /* solaris */
+#define _SVID_SOURCE 1			 /* timegm */
 
-#define _BSD_SOURCE /* snprintf */
+#define _BSD_SOURCE		  /* snprintf */
 #define _DEFAULT_SOURCE 1 /* _BSD_SOURCE is deprecated */
 
 #include "ld_fld.h"
@@ -49,40 +49,42 @@
 #include <strings.h>
 #include <stdint.h>
 #include <string.h>
-#include <time.h>   /* strptime, XOPEN issue must be >= 4 */
+#include <time.h> /* strptime, XOPEN issue must be >= 4 */
 
 
 /**
  * Reallocatable string buffer.
  */
-struct sbuf {
-	char *s;			/**< allocated memory itself */
-	int   len;			/**< used memory */
-	int   size;			/**< total size of allocated memory */
-	int   increment;	/**< increment when realloc is necessary */
+struct sbuf
+{
+	char *s;	   /**< allocated memory itself */
+	int len;	   /**< used memory */
+	int size;	   /**< total size of allocated memory */
+	int increment; /**< increment when realloc is necessary */
 };
 
 
-#define TEST_RESIZE \
-	if (rsize > sb->size) { \
-		asize = rsize - sb->size; \
-		new_size = sb->size + (asize / sb->increment  + \
-							   (asize % sb->increment > 0)) * sb->increment; \
-		newp = pkg_malloc(new_size); \
-		if (!newp) { \
-			ERR("ldap: No memory left\n"); \
-			return -1; \
-		} \
-		if (sb->s) { \
-			memcpy(newp, sb->s, sb->len); \
-			pkg_free(sb->s); \
-		} \
-		sb->s = newp; \
-		sb->size = new_size; \
+#define TEST_RESIZE                                                        \
+	if(rsize > sb->size) {                                                 \
+		asize = rsize - sb->size;                                          \
+		new_size = sb->size                                                \
+				   + (asize / sb->increment + (asize % sb->increment > 0)) \
+							 * sb->increment;                              \
+		newp = pkg_malloc(new_size);                                       \
+		if(!newp) {                                                        \
+			ERR("ldap: No memory left\n");                                 \
+			return -1;                                                     \
+		}                                                                  \
+		if(sb->s) {                                                        \
+			memcpy(newp, sb->s, sb->len);                                  \
+			pkg_free(sb->s);                                               \
+		}                                                                  \
+		sb->s = newp;                                                      \
+		sb->size = new_size;                                               \
 	}
 
 
-static inline int sb_add(struct sbuf *sb, char* str, int len)
+static inline int sb_add(struct sbuf *sb, char *str, int len)
 {
 	int new_size = 0, asize;
 	int rsize = sb->len + len;
@@ -96,7 +98,7 @@ static inline int sb_add(struct sbuf *sb, char* str, int len)
 }
 
 
-static inline int sb_add_esc(struct sbuf *sb, char* str, int len)
+static inline int sb_add_esc(struct sbuf *sb, char *str, int len)
 {
 	int new_size = 0, asize, i;
 	int rsize = sb->len + len * 3;
@@ -107,35 +109,45 @@ static inline int sb_add_esc(struct sbuf *sb, char* str, int len)
 	w = sb->s + sb->len;
 	for(i = 0; i < len; i++) {
 		switch(str[i]) {
-		case '*':
-			*w++ = '\\'; *w++ = '2'; *w++ = 'A';
-			sb->len += 3;
-			break;
+			case '*':
+				*w++ = '\\';
+				*w++ = '2';
+				*w++ = 'A';
+				sb->len += 3;
+				break;
 
-		case '(':
-			*w++ = '\\'; *w++ = '2'; *w++ = '8';
-			sb->len += 3;
-			break;
+			case '(':
+				*w++ = '\\';
+				*w++ = '2';
+				*w++ = '8';
+				sb->len += 3;
+				break;
 
-		case ')':
-			*w++ = '\\'; *w++ = '2'; *w++ = '9';
-			sb->len += 3;
-			break;
+			case ')':
+				*w++ = '\\';
+				*w++ = '2';
+				*w++ = '9';
+				sb->len += 3;
+				break;
 
-		case '\\':
-			*w++ = '\\'; *w++ = '5'; *w++ = 'C';
- 			sb->len += 3;
-			break;
+			case '\\':
+				*w++ = '\\';
+				*w++ = '5';
+				*w++ = 'C';
+				sb->len += 3;
+				break;
 
-		case '\0':
-			*w++ = '\\'; *w++ = '0'; *w++ = '0';
-			sb->len += 3;
-			break;
+			case '\0':
+				*w++ = '\\';
+				*w++ = '0';
+				*w++ = '0';
+				sb->len += 3;
+				break;
 
-		default:
-			*w++ = str[i];
-			sb->len++;
-			break;
+			default:
+				*w++ = str[i];
+				sb->len++;
+				break;
 		}
 	}
 
@@ -148,73 +160,80 @@ static inline int sb_add_esc(struct sbuf *sb, char* str, int len)
  * @param fld Generic db_fld_t* structure being freed.
  * @param payload The ldap extension structure to be freed
  */
-static void ld_fld_free(db_fld_t* fld, struct ld_fld* payload)
+static void ld_fld_free(db_fld_t *fld, struct ld_fld *payload)
 {
 	db_drv_free(&payload->gen);
-	if (payload->values) ldap_value_free_len(payload->values);	
+	if(payload->values)
+		ldap_value_free_len(payload->values);
 	payload->values = NULL;
-	if (payload->filter) pkg_free(payload->filter);
+	if(payload->filter)
+		pkg_free(payload->filter);
 	payload->filter = NULL;
 	pkg_free(payload);
 }
 
 
-int ld_fld(db_fld_t* fld, char* table)
+int ld_fld(db_fld_t *fld, char *table)
 {
-	struct ld_fld* res;
+	struct ld_fld *res;
 
-	res = (struct ld_fld*)pkg_malloc(sizeof(struct ld_fld));
-	if (res == NULL) {
+	res = (struct ld_fld *)pkg_malloc(sizeof(struct ld_fld));
+	if(res == NULL) {
 		ERR("ldap: No memory left\n");
 		return -1;
 	}
 	memset(res, '\0', sizeof(struct ld_fld));
-	if (db_drv_init(&res->gen, ld_fld_free) < 0) goto error;
+	if(db_drv_init(&res->gen, ld_fld_free) < 0)
+		goto error;
 
 	DB_SET_PAYLOAD(fld, res);
 	return 0;
 
- error:
-	if (res) pkg_free(res);
+error:
+	if(res)
+		pkg_free(res);
 	return -1;
 }
 
 
-int ld_resolve_fld(db_fld_t* fld, struct ld_cfg* cfg)
+int ld_resolve_fld(db_fld_t *fld, struct ld_cfg *cfg)
 {
 	int i;
-	struct ld_fld* lfld;
+	struct ld_fld *lfld;
 
-	if (fld == NULL || cfg == NULL) return 0;
+	if(fld == NULL || cfg == NULL)
+		return 0;
 
 	for(i = 0; !DB_FLD_EMPTY(fld) && !DB_FLD_LAST(fld[i]); i++) {
 		lfld = DB_GET_PAYLOAD(fld + i);
 		lfld->attr.s = ld_find_attr_name(&lfld->syntax, cfg, fld[i].name);
-		if (lfld->attr.s == NULL) lfld->attr.s = fld[i].name;
-		if (lfld->attr.s) lfld->attr.len = strlen(lfld->attr.s);
+		if(lfld->attr.s == NULL)
+			lfld->attr.s = fld[i].name;
+		if(lfld->attr.s)
+			lfld->attr.len = strlen(lfld->attr.s);
 	}
 	return 0;
 }
 
 
-static inline int ldap_int2db_int(int* dst, str* src)
+static inline int ldap_int2db_int(int *dst, str *src)
 {
-	if (str2sint(src, dst) != 0) {
-		ERR("ldap: Error while converting value '%.*s' to integer\n",
-			src->len, ZSW(src->s));
+	if(str2sint(src, dst) != 0) {
+		ERR("ldap: Error while converting value '%.*s' to integer\n", src->len,
+				ZSW(src->s));
 		return -1;
 	}
 	return 0;
 }
 
 
-static inline int ldap_bit2db_int(int* dst, str* src)
+static inline int ldap_bit2db_int(int *dst, str *src)
 {
 	int i, v;
 
-	if (src->len > 32) {
+	if(src->len > 32) {
 		WARN("ldap: bitString '%.*s'B is longer than 32 bits, truncating\n",
-			 src->len, ZSW(src->s));
+				src->len, ZSW(src->s));
 	}
 	v = 0;
 	for(i = 0; i < src->len; i++) {
@@ -226,42 +245,43 @@ static inline int ldap_bit2db_int(int* dst, str* src)
 }
 
 
-static inline int ldap_gentime2db_datetime(time_t* dst, str* src)
+static inline int ldap_gentime2db_datetime(time_t *dst, str *src)
 {
 	struct tm time;
 
-	if (src->len < 12) return -1;
+	if(src->len < 12)
+		return -1;
 
 	/* It is necessary to zero tm structure first */
 	memset(&time, '\0', sizeof(struct tm));
 	/* YYYYMMDDHHMMSS[.sss][ 'Z' | ( {'+'|'-'} ZZZZ) ] */
-	strptime(src->s, "%Y%m%d%H%M%S", &time);  /* Note: frac of seconds are lost in time_t representation */
-	
-	if (src->s[src->len-1] == 'Z' || src->s[src->len-5] == '-' || src->s[src->len-5] == '+') {
-		/* GMT or specified TZ, no daylight saving time */
-		#ifdef HAVE_TIMEGM
-		*dst = timegm(&time);
-		#else
-		*dst = _timegm(&time);
-		#endif /* HAVE_TIMEGM */
+	strptime(src->s, "%Y%m%d%H%M%S",
+			&time); /* Note: frac of seconds are lost in time_t representation */
 
-		if (src->s[src->len-1] != 'Z') {
+	if(src->s[src->len - 1] == 'Z' || src->s[src->len - 5] == '-'
+			|| src->s[src->len - 5] == '+') {
+/* GMT or specified TZ, no daylight saving time */
+#ifdef HAVE_TIMEGM
+		*dst = timegm(&time);
+#else
+		*dst = _timegm(&time);
+#endif /* HAVE_TIMEGM */
+
+		if(src->s[src->len - 1] != 'Z') {
 			/* timezone is specified */
 			memset(&time, '\0', sizeof(struct tm));
 			strptime(src->s + src->len - 4, "%H%M", &time);
-			switch (src->s[src->len-5]) {
+			switch(src->s[src->len - 5]) {
 				case '-':
-					*dst -= time.tm_hour*3600+time.tm_min*60;
+					*dst -= time.tm_hour * 3600 + time.tm_min * 60;
 					break;
 				case '+':
-					*dst += time.tm_hour*3600+time.tm_min*60;
+					*dst += time.tm_hour * 3600 + time.tm_min * 60;
 					break;
-				default:
-					;
+				default:;
 			}
 		}
-	}
-	else {
+	} else {
 		/* it's local time */
 
 		/* Daylight saving information got lost in the database
@@ -272,25 +292,26 @@ static inline int ldap_gentime2db_datetime(time_t* dst, str* src)
 		time.tm_isdst = -1;
 		*dst = mktime(&time);
 	}
-	
+
 	return 0;
 }
 
 
-static inline int ldap_str2db_double(double* dst, char* src)
+static inline int ldap_str2db_double(double *dst, char *src)
 {
 	*dst = atof(src);
 	return 0;
 }
 
 
-static inline int ldap_str2db_float(float* dst, char* src)
+static inline int ldap_str2db_float(float *dst, char *src)
 {
 	*dst = (float)atof(src);
 	return 0;
 }
 
-static inline int ldap_fld2db_fld(db_fld_t* fld, str v) {
+static inline int ldap_fld2db_fld(db_fld_t *fld, str v)
+{
 
 	switch(fld->type) {
 		case DB_CSTR:
@@ -305,57 +326,57 @@ static inline int ldap_fld2db_fld(db_fld_t* fld, str v) {
 
 		case DB_INT:
 		case DB_BITMAP:
-			if (v.s[0] == '\'' && v.s[v.len - 1] == 'B' &&
-				v.s[v.len - 2] == '\'') {
+			if(v.s[0] == '\'' && v.s[v.len - 1] == 'B'
+					&& v.s[v.len - 2] == '\'') {
 				v.s++;
 				v.len -= 3;
-				if (ldap_bit2db_int(&fld->v.int4, &v) != 0) {
+				if(ldap_bit2db_int(&fld->v.int4, &v) != 0) {
 					ERR("ldap: Error while converting bit string '%.*s'\n",
-						v.len, ZSW(v.s));
+							v.len, ZSW(v.s));
 					return -1;
 				}
 				break;
 			}
 
-			if (v.len == 4 && !strncasecmp("TRUE", v.s, v.len)) {
+			if(v.len == 4 && !strncasecmp("TRUE", v.s, v.len)) {
 				fld->v.int4 = 1;
 				break;
 			}
 
-			if (v.len == 5 && !strncasecmp("FALSE", v.s, v.len)) {
+			if(v.len == 5 && !strncasecmp("FALSE", v.s, v.len)) {
 				fld->v.int4 = 0;
 				break;
 			}
 
-			if (ldap_int2db_int(&fld->v.int4, &v) != 0) {
-				ERR("ldap: Error while converting %.*s to integer\n",
-					v.len, ZSW(v.s));
+			if(ldap_int2db_int(&fld->v.int4, &v) != 0) {
+				ERR("ldap: Error while converting %.*s to integer\n", v.len,
+						ZSW(v.s));
 				return -1;
 			}
 			break;
 
 		case DB_DATETIME:
-			if (ldap_gentime2db_datetime(&fld->v.time, &v) != 0) {
+			if(ldap_gentime2db_datetime(&fld->v.time, &v) != 0) {
 				ERR("ldap: Error while converting LDAP time value '%.*s'\n",
-					v.len, ZSW(v.s));
+						v.len, ZSW(v.s));
 				return -1;
 			}
 			break;
 
 		case DB_FLOAT:
 			/* We know that the ldap library zero-terminated v.s */
-			if (ldap_str2db_float(&fld->v.flt, v.s) != 0) {
-				ERR("ldap: Error while converting '%.*s' to float\n",
-					v.len, ZSW(v.s));
+			if(ldap_str2db_float(&fld->v.flt, v.s) != 0) {
+				ERR("ldap: Error while converting '%.*s' to float\n", v.len,
+						ZSW(v.s));
 				return -1;
 			}
 			break;
 
 		case DB_DOUBLE:
 			/* We know that the ldap library zero-terminated v.s */
-			if (ldap_str2db_double(&fld->v.dbl, v.s) != 0) {
-				ERR("ldap: Error while converting '%.*s' to double\n",
-					v.len, ZSW(v.s));
+			if(ldap_str2db_double(&fld->v.dbl, v.s) != 0) {
+				ERR("ldap: Error while converting '%.*s' to double\n", v.len,
+						ZSW(v.s));
 				return -1;
 			}
 			break;
@@ -367,29 +388,31 @@ static inline int ldap_fld2db_fld(db_fld_t* fld, str v) {
 	return 0;
 }
 
-int ld_ldap2fldinit(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg)
+int ld_ldap2fldinit(db_fld_t *fld, LDAP *ldap, LDAPMessage *msg)
 {
 	return ld_ldap2fldex(fld, ldap, msg, 1);
 }
 
-int ld_ldap2fld(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg)
+int ld_ldap2fld(db_fld_t *fld, LDAP *ldap, LDAPMessage *msg)
 {
 	return ld_ldap2fldex(fld, ldap, msg, 0);
 }
 
-int ld_incindex(db_fld_t* fld) {
+int ld_incindex(db_fld_t *fld)
+{
 	int i;
-	struct ld_fld* lfld;
+	struct ld_fld *lfld;
 
 
-	if (fld == NULL) return 0;
+	if(fld == NULL)
+		return 0;
 
 	i = 0;
-	while (!DB_FLD_EMPTY(fld) && !DB_FLD_LAST(fld[i])) {
+	while(!DB_FLD_EMPTY(fld) && !DB_FLD_LAST(fld[i])) {
 		lfld = DB_GET_PAYLOAD(fld + i);
 		lfld->index++;
 		/* the index limit has been reached */
-		if (lfld->index >= lfld->valuesnum) {
+		if(lfld->index >= lfld->valuesnum) {
 			lfld->index = 0;
 		} else {
 			return 0;
@@ -401,26 +424,27 @@ int ld_incindex(db_fld_t* fld) {
 	return 1;
 }
 
-#define CMP_NUM(fld_v,match_v,fld) \
-	if (fld_v.fld == match_v.fld) \
-		op = 0x02; \
-	else if (fld_v.fld < match_v.fld) \
-		op = 0x01; \
-	else if (fld_v.fld > match_v.fld) \
+#define CMP_NUM(fld_v, match_v, fld) \
+	if(fld_v.fld == match_v.fld)     \
+		op = 0x02;                   \
+	else if(fld_v.fld < match_v.fld) \
+		op = 0x01;                   \
+	else if(fld_v.fld > match_v.fld) \
 		op = 0x04;
-		
-int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init)
+
+int ld_ldap2fldex(db_fld_t *fld, LDAP *ldap, LDAPMessage *msg, int init)
 {
 	int i;
-	struct ld_fld* lfld;
+	struct ld_fld *lfld;
 	str v;
 
-	if (fld == NULL || msg == NULL) return 0;
+	if(fld == NULL || msg == NULL)
+		return 0;
 	for(i = 0; !DB_FLD_EMPTY(fld) && !DB_FLD_LAST(fld[i]); i++) {
 		lfld = DB_GET_PAYLOAD(fld + i);
-		if (init) {
-			if (fld[i].type == DB_NONE) {
-				switch (lfld->syntax) {
+		if(init) {
+			if(fld[i].type == DB_NONE) {
+				switch(lfld->syntax) {
 					case LD_SYNTAX_STRING:
 						fld[i].type = DB_STR;
 						break;
@@ -432,7 +456,7 @@ int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init)
 					case LD_SYNTAX_FLOAT:
 						fld[i].type = DB_FLOAT;
 						break;
-						
+
 					case LD_SYNTAX_GENTIME:
 						fld[i].type = DB_DATETIME;
 						break;
@@ -440,23 +464,24 @@ int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init)
 						fld[i].type = DB_BITMAP;
 						break;
 				}
-
 			}
-			
+
 			/* free the values of the previous object */
-			if (lfld->values) ldap_value_free_len(lfld->values);
+			if(lfld->values)
+				ldap_value_free_len(lfld->values);
 			lfld->values = ldap_get_values_len(ldap, msg, lfld->attr.s);
 			lfld->index = 0;
-			
-			if (lfld->values == NULL || lfld->values[0] == NULL) {
+
+			if(lfld->values == NULL || lfld->values[0] == NULL) {
 				fld[i].flags |= DB_NULL;
 				/* index == 0 means no value available */
 				lfld->valuesnum = 0;
-				if (lfld->client_side_filtering && lfld->filter) {
+				if(lfld->client_side_filtering && lfld->filter) {
 					int j;
 					/* if all the filter conditions require NULL value then we can accept the record */
-					for (j=0; lfld->filter[j]; j++) {
-						if (lfld->filter[j]->flags & DB_NULL && lfld->filter[j]->op == DB_EQ) {
+					for(j = 0; lfld->filter[j]; j++) {
+						if(lfld->filter[j]->flags & DB_NULL
+								&& lfld->filter[j]->op == DB_EQ) {
 							continue;
 						}
 						return 1; /* get next record */
@@ -466,9 +491,10 @@ int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init)
 				/* init the number of values */
 				fld[i].flags &= ~DB_NULL;
 				lfld->valuesnum = ldap_count_values_len(lfld->values);
-			
-				if ((lfld->valuesnum > 1 || lfld->client_side_filtering) && lfld->filter) {
-					
+
+				if((lfld->valuesnum > 1 || lfld->client_side_filtering)
+						&& lfld->filter) {
+
 					/* in case of multivalue we must check if value fits in filter criteria.
 					   LDAP returns record (having each multivalue) if one particular
 					   multivalue fits in filter provided to LDAP search. We need
@@ -481,25 +507,23 @@ int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init)
 					   The same algorithm is applied for client side filtering
 					   
 					 */
-					 
+
 					do {
 						int passed, j;
-						for (j=0, passed = 1; lfld->filter[j] && passed; j++) {
-							int op;  /* b0..less, b1..equal, b2..greater, zero..non equal */ 
+						for(j = 0, passed = 1; lfld->filter[j] && passed; j++) {
+							int op; /* b0..less, b1..equal, b2..greater, zero..non equal */
 							op = 0x00;
-							if (lfld->filter[j]->flags & DB_NULL) {
+							if(lfld->filter[j]->flags & DB_NULL) {
 								/* always non equal because field is not NULL */
-							}
-							else {
-								
+							} else {
+
 								v.s = lfld->values[lfld->index]->bv_val;
 								v.len = lfld->values[lfld->index]->bv_len;
-							
-								if (ldap_fld2db_fld(fld + i, v) < 0) {
+
+								if(ldap_fld2db_fld(fld + i, v) < 0) {
 									passed = 0;
 									break; /* for loop */
-								}
-								else {
+								} else {
 									db_fld_val_t v;
 									int t;
 									static char buf[30];
@@ -509,22 +533,25 @@ int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init)
 									   db_cmd(). We implement some basic conversions.
 									 */
 									v = lfld->filter[j]->v;
-									if (t == DB_CSTR) {
+									if(t == DB_CSTR) {
 										v.lstr.s = v.cstr;
 										v.lstr.len = strlen(v.lstr.s);
 										t = DB_STR;
-									} 
-									switch (fld[i].type) {
+									}
+									switch(fld[i].type) {
 										case DB_CSTR:
 											fld[i].v.lstr.s = fld[i].v.cstr;
-											fld[i].v.lstr.len = strlen(fld[i].v.lstr.s);
-											fld[i].type = DB_STR; 
+											fld[i].v.lstr.len =
+													strlen(fld[i].v.lstr.s);
+											fld[i].type = DB_STR;
 											/* no break */
 										case DB_STR:
-											
-											switch (t) {
+
+											switch(t) {
 												case DB_INT:
-													v.lstr.len = snprintf(buf, sizeof(buf)-1, "%d", v.int4);
+													v.lstr.len = snprintf(buf,
+															sizeof(buf) - 1,
+															"%d", v.int4);
 													v.lstr.s = buf;
 													break;
 												/* numeric conversion for double/float not supported because of non unique string representation */
@@ -533,26 +560,31 @@ int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init)
 											}
 											break;
 										case DB_INT:
-											switch (t) {
+											switch(t) {
 												case DB_DOUBLE:
-													if ((double)(int)v.dbl != (double)v.dbl) 
+													if((double)(int)v.dbl
+															!= (double)v.dbl)
 														goto skip_conv;
 													v.int4 = v.dbl;
 													break;
 												case DB_FLOAT:
-													if ((float)(int)v.flt != (float)v.flt) 
+													if((float)(int)v.flt
+															!= (float)v.flt)
 														goto skip_conv;
 													v.int4 = v.flt;
 													break;
-												case DB_STR: 
-													if (v.lstr.len > 0) {
+												case DB_STR:
+													if(v.lstr.len > 0) {
 														char c, *p;
 														int n;
 														c = v.lstr.s[v.lstr.len];
-														v.lstr.s[v.lstr.len] = '\0';
-														n = strtol(v.lstr.s, &p, 10);
-														v.lstr.s[v.lstr.len] = c;
-														if ((*p) != '\0') {
+														v.lstr.s[v.lstr.len] =
+																'\0';
+														n = strtol(v.lstr.s, &p,
+																10);
+														v.lstr.s[v.lstr.len] =
+																c;
+														if((*p) != '\0') {
 															goto skip_conv;
 														}
 														v.int4 = n;
@@ -563,50 +595,56 @@ int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init)
 											}
 											break;
 										case DB_FLOAT:
-											switch (t) {
+											switch(t) {
 												case DB_DOUBLE:
 													v.flt = v.dbl;
 													break;
 												case DB_INT:
 													v.flt = v.int4;
 													break;
-												#ifdef  __USE_ISOC99
-												case DB_STR: 
-													if (v.lstr.len > 0) {
+#ifdef __USE_ISOC99
+												case DB_STR:
+													if(v.lstr.len > 0) {
 														char c, *p;
 														float n;
 														c = v.lstr.s[v.lstr.len];
-														v.lstr.s[v.lstr.len] = '\0';
-														n = strtof(v.lstr.s, &p);
-														v.lstr.s[v.lstr.len] = c;
-														if ((*p) != '\0') {
+														v.lstr.s[v.lstr.len] =
+																'\0';
+														n = strtof(
+																v.lstr.s, &p);
+														v.lstr.s[v.lstr.len] =
+																c;
+														if((*p) != '\0') {
 															goto skip_conv;
 														}
 														v.flt = n;
 													}
 													break;
-												#endif
+#endif
 												default:
 													goto skip_conv;
 											}
 											break;
 										case DB_DOUBLE:
-											switch (t) {
+											switch(t) {
 												case DB_FLOAT:
 													v.dbl = v.flt;
 													break;
 												case DB_INT:
 													v.dbl = v.int4;
 													break;
-												case DB_STR: 
-													if (v.lstr.len > 0) {
+												case DB_STR:
+													if(v.lstr.len > 0) {
 														char c, *p;
 														double n;
 														c = v.lstr.s[v.lstr.len];
-														v.lstr.s[v.lstr.len] = '\0';
-														n = strtod(v.lstr.s, &p);
-														v.lstr.s[v.lstr.len] = c;
-														if ((*p) != '\0') {
+														v.lstr.s[v.lstr.len] =
+																'\0';
+														n = strtod(
+																v.lstr.s, &p);
+														v.lstr.s[v.lstr.len] =
+																c;
+														if((*p) != '\0') {
 															goto skip_conv;
 														}
 														v.dbl = n;
@@ -621,65 +659,79 @@ int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init)
 										case DB_DATETIME:
 										default:
 											goto skip_conv;
-										}
+									}
 									t = fld[i].type;
 								skip_conv:
-									if (t == fld[i].type) {
-									
-										switch (fld[i].type) {
+									if(t == fld[i].type) {
+
+										switch(fld[i].type) {
 											case DB_CSTR: /* impossible, already converted to DB_STR */
 											case DB_STR:
-												if (fld[i].v.lstr.len == v.lstr.len) {
-													op = strncmp(fld[i].v.lstr.s, v.lstr.s, v.lstr.len);
-													if (op < 0) 
+												if(fld[i].v.lstr.len
+														== v.lstr.len) {
+													op = strncmp(
+															fld[i].v.lstr.s,
+															v.lstr.s,
+															v.lstr.len);
+													if(op < 0)
 														op = 0x01;
-													else if (op > 0)
+													else if(op > 0)
 														op = 0x04;
 													else
 														op = 0x02;
-												}
-												else if (fld[i].v.lstr.len < v.lstr.len) {
-													op = strncmp(fld[i].v.lstr.s, v.lstr.s, fld[i].v.lstr.len);
-													if (op < 0) 
+												} else if(fld[i].v.lstr.len
+														  < v.lstr.len) {
+													op = strncmp(
+															fld[i].v.lstr.s,
+															v.lstr.s,
+															fld[i].v.lstr.len);
+													if(op < 0)
 														op = 0x01;
-													else 
+													else
 														op = 0x04;
-												}
-												else /* if (fld[i].v.lstr.len > v.lstr.len) */ {
-													op = strncmp(fld[i].v.lstr.s, v.lstr.s, v.lstr.len);
-													if (op > 0) 
+												} else /* if (fld[i].v.lstr.len > v.lstr.len) */
+												{
+													op = strncmp(
+															fld[i].v.lstr.s,
+															v.lstr.s,
+															v.lstr.len);
+													if(op > 0)
 														op = 0x04;
-													else 
+													else
 														op = 0x01;
 												}
 												break;
 											case DB_BLOB:
-												if (fld[i].v.blob.len == v.blob.len && memcmp(fld[i].v.blob.s, v.blob.s, v.blob.len) == 0)
+												if(fld[i].v.blob.len
+																== v.blob.len
+														&& memcmp(fld[i].v.blob
+																		   .s,
+																   v.blob.s,
+																   v.blob.len)
+																   == 0)
 													op = 0x02;
-												break;											
+												break;
 											case DB_INT:
 												CMP_NUM(fld[i].v, v, int4);
-												break; 
+												break;
 											case DB_BITMAP:
 												CMP_NUM(fld[i].v, v, bitmap);
-												break; 
+												break;
 											case DB_DATETIME:
 												CMP_NUM(fld[i].v, v, time);
-												break; 
+												break;
 											case DB_FLOAT:
 												CMP_NUM(fld[i].v, v, flt);
-												break; 
+												break;
 											case DB_DOUBLE:
 												CMP_NUM(fld[i].v, v, dbl);
-												break; 
-											default:
-												;
+												break;
+											default:;
 										}
 									}
-									 
 								}
 							}
-							switch (lfld->filter[j]->op) {
+							switch(lfld->filter[j]->op) {
 								case DB_EQ:
 									passed = op == 0x02;
 									break;
@@ -698,64 +750,65 @@ int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init)
 								case DB_GEQ:
 									passed = op == 0x04 || op == 0x02;
 									break;
-								default:
-									;
+								default:;
 							}
 						}
-						
-						if (passed) {
-							lfld->index++;	
-						}
-						else {
+
+						if(passed) {
+							lfld->index++;
+						} else {
 							char *save_bvval;
 							int save_bvlen;
 							int i;
 							/* shift following values, push useless value at the end and decrease num of values */
-							
+
 							save_bvval = lfld->values[lfld->index]->bv_val;
 							save_bvlen = lfld->values[lfld->index]->bv_len;
-							for (i=lfld->index+1; i < lfld->valuesnum; i++) {
-								 lfld->values[i-1]->bv_val = lfld->values[i]->bv_val;
-								 lfld->values[i-1]->bv_len = lfld->values[i]->bv_len;
+							for(i = lfld->index + 1; i < lfld->valuesnum; i++) {
+								lfld->values[i - 1]->bv_val =
+										lfld->values[i]->bv_val;
+								lfld->values[i - 1]->bv_len =
+										lfld->values[i]->bv_len;
 							}
-							lfld->values[lfld->valuesnum-1]->bv_val = save_bvval;
-							lfld->values[lfld->valuesnum-1]->bv_len = save_bvlen;
+							lfld->values[lfld->valuesnum - 1]->bv_val =
+									save_bvval;
+							lfld->values[lfld->valuesnum - 1]->bv_len =
+									save_bvlen;
 							lfld->valuesnum--;
 						}
-				
-					} while (lfld->index < lfld->valuesnum);
-						
-					if (lfld->valuesnum == 0) {
-						return 1;  /* get next record */
+
+					} while(lfld->index < lfld->valuesnum);
+
+					if(lfld->valuesnum == 0) {
+						return 1; /* get next record */
 					}
 				}
-			}	
+			}
 			/* pointer to the current value */
 			lfld->index = 0;
 		}
 
 		/* this is an empty value */
-		if (!lfld->valuesnum)
+		if(!lfld->valuesnum)
 			continue;
 
 		v.s = lfld->values[lfld->index]->bv_val;
 		v.len = lfld->values[lfld->index]->bv_len;
 
-		if (ldap_fld2db_fld(fld + i, v) < 0) 
+		if(ldap_fld2db_fld(fld + i, v) < 0)
 			return -1;
-		
 	}
 	return 0;
 }
 
 
-static inline int db_int2ldap_str(struct sbuf* buf, db_fld_t* fld)
+static inline int db_int2ldap_str(struct sbuf *buf, db_fld_t *fld)
 {
 	int len;
 	char tmp[INT2STR_MAX_LEN + 1];
 
 	len = snprintf(tmp, INT2STR_MAX_LEN + 1, "%-d", fld->v.int4);
-	if (len < 0 || len >= INT2STR_MAX_LEN + 1) {
+	if(len < 0 || len >= INT2STR_MAX_LEN + 1) {
 		BUG("ldap: Error while converting integer to string\n");
 		return -1;
 	}
@@ -763,41 +816,41 @@ static inline int db_int2ldap_str(struct sbuf* buf, db_fld_t* fld)
 }
 
 
-static inline int db_datetime2ldap_gentime(struct sbuf* buf, db_fld_t* fld)
+static inline int db_datetime2ldap_gentime(struct sbuf *buf, db_fld_t *fld)
 {
 	char tmp[16];
-	struct tm* t;
+	struct tm *t;
 
 	t = gmtime(&fld->v.time);
-	if (strftime(tmp, sizeof(tmp), "%Y%m%d%H%M%SZ", t) != sizeof(tmp)-1) {
+	if(strftime(tmp, sizeof(tmp), "%Y%m%d%H%M%SZ", t) != sizeof(tmp) - 1) {
 		ERR("ldap: Error while converting time_t value to LDAP format\n");
 		return -1;
 	}
-	return sb_add(buf, tmp, sizeof(tmp)-1);
+	return sb_add(buf, tmp, sizeof(tmp) - 1);
 }
 
 
-static inline int db_int2ldap_bool(struct sbuf* buf, db_fld_t* fld)
+static inline int db_int2ldap_bool(struct sbuf *buf, db_fld_t *fld)
 {
-	if (fld->v.int4) 
-	    return sb_add(buf, "TRUE", 4);
-	else 
-	    return sb_add(buf, "FALSE", 5);
+	if(fld->v.int4)
+		return sb_add(buf, "TRUE", 4);
+	else
+		return sb_add(buf, "FALSE", 5);
 }
 
 
-static inline int db_uint2ldap_int(struct sbuf* buf, db_fld_t* fld)
+static inline int db_uint2ldap_int(struct sbuf *buf, db_fld_t *fld)
 {
-	char* num;
+	char *num;
 	int len, v;
-	
+
 	v = fld->v.int4;
 	num = int2str(v, &len);
 	return sb_add(buf, num, len);
 }
 
 
-static inline int db_bit2ldap_bitstr(struct sbuf* buf, db_fld_t* fld)
+static inline int db_bit2ldap_bitstr(struct sbuf *buf, db_fld_t *fld)
 {
 	int rv, i;
 
@@ -806,7 +859,7 @@ static inline int db_bit2ldap_bitstr(struct sbuf* buf, db_fld_t* fld)
 
 	i = 1 << (sizeof(fld->v.int4) * 8 - 1);
 	while(i) {
-		rv |= sb_add(buf, (fld->v.int4 & i)?"1":"0", 1);
+		rv |= sb_add(buf, (fld->v.int4 & i) ? "1" : "0", 1);
 		i = i >> 1;
 	}
 	rv |= sb_add(buf, "'B", 2);
@@ -814,13 +867,13 @@ static inline int db_bit2ldap_bitstr(struct sbuf* buf, db_fld_t* fld)
 }
 
 
-static inline int db_float2ldap_str(struct sbuf* buf, db_fld_t* fld)
+static inline int db_float2ldap_str(struct sbuf *buf, db_fld_t *fld)
 {
 	char tmp[16];
 	int len;
 
 	len = snprintf(tmp, 16, "%-10.2f", fld->v.flt);
-	if (len < 0 || len >= 16) {
+	if(len < 0 || len >= 16) {
 		BUG("ldap: Error while converting float to string\n");
 		return -1;
 	}
@@ -841,164 +894,171 @@ static inline int db_float2ldap_str(struct sbuf* buf, db_fld_t* fld)
 	return sb_add(buf, tmp, len);
 }*/
 
-static inline int ld_db2ldap(struct sbuf* buf, db_fld_t* fld) {
-	struct ld_fld* lfld;
-	
+static inline int ld_db2ldap(struct sbuf *buf, db_fld_t *fld)
+{
+	struct ld_fld *lfld;
+
 	lfld = DB_GET_PAYLOAD(fld);
 
 	switch(fld->type) {
 		case DB_CSTR:
-			if (sb_add_esc(buf, fld->v.cstr,
-				 fld->v.cstr ? strlen(fld->v.cstr) : 0) != 0) goto error;
+			if(sb_add_esc(
+					   buf, fld->v.cstr, fld->v.cstr ? strlen(fld->v.cstr) : 0)
+					!= 0)
+				goto error;
 			break;
 
 		case DB_STR:
-			if (sb_add_esc(buf, fld->v.lstr.s, fld->v.lstr.len) != 0) goto error;
+			if(sb_add_esc(buf, fld->v.lstr.s, fld->v.lstr.len) != 0)
+				goto error;
 			break;
 
 		case DB_INT:
 			switch(lfld->syntax) {
-			case LD_SYNTAX_STRING:
-			case LD_SYNTAX_INT:
-			case LD_SYNTAX_FLOAT:
-				if (db_int2ldap_str(buf, fld))
-					goto error;
-				break;
+				case LD_SYNTAX_STRING:
+				case LD_SYNTAX_INT:
+				case LD_SYNTAX_FLOAT:
+					if(db_int2ldap_str(buf, fld))
+						goto error;
+					break;
 
-			case LD_SYNTAX_GENTIME:
-				if (db_datetime2ldap_gentime(buf, fld))
-					goto error;
-				break;
+				case LD_SYNTAX_GENTIME:
+					if(db_datetime2ldap_gentime(buf, fld))
+						goto error;
+					break;
 
-			case LD_SYNTAX_BIT:
-				if (db_bit2ldap_bitstr(buf, fld))
-					goto error;
-				break;
+				case LD_SYNTAX_BIT:
+					if(db_bit2ldap_bitstr(buf, fld))
+						goto error;
+					break;
 
-			case LD_SYNTAX_BOOL:
-				if (db_int2ldap_bool(buf, fld))
-					goto error;
-				break;
+				case LD_SYNTAX_BOOL:
+					if(db_int2ldap_bool(buf, fld))
+						goto error;
+					break;
 
-			default:
-				ERR("ldap: Cannot convert integer field %s "
-					"to LDAP attribute %.*s\n",
-					fld->name, lfld->attr.len, ZSW(lfld->attr.s));
-				goto error;
+				default:
+					ERR("ldap: Cannot convert integer field %s "
+						"to LDAP attribute %.*s\n",
+							fld->name, lfld->attr.len, ZSW(lfld->attr.s));
+					goto error;
 			}
 			break;
 
 		case DB_BITMAP:
 			switch(lfld->syntax) {
-			case LD_SYNTAX_INT:
-				if (db_uint2ldap_int(buf, fld))
-					goto error;
-				break;
+				case LD_SYNTAX_INT:
+					if(db_uint2ldap_int(buf, fld))
+						goto error;
+					break;
 
-			case LD_SYNTAX_BIT:
-			case LD_SYNTAX_STRING:
-				if (db_bit2ldap_bitstr(buf, fld))
-					goto error;
-				break;
+				case LD_SYNTAX_BIT:
+				case LD_SYNTAX_STRING:
+					if(db_bit2ldap_bitstr(buf, fld))
+						goto error;
+					break;
 
-			default:
-				ERR("ldap: Cannot convert bitmap field %s "
-					"to LDAP attribute %.*s\n",
-					fld->name, lfld->attr.len, ZSW(lfld->attr.s));
-				goto error;
+				default:
+					ERR("ldap: Cannot convert bitmap field %s "
+						"to LDAP attribute %.*s\n",
+							fld->name, lfld->attr.len, ZSW(lfld->attr.s));
+					goto error;
 			}
 			break;
 
 		case DB_DATETIME:
 			switch(lfld->syntax) {
-			case LD_SYNTAX_STRING:
-			case LD_SYNTAX_GENTIME:
-				if (db_datetime2ldap_gentime(buf, fld))
-					goto error;
-				break;
+				case LD_SYNTAX_STRING:
+				case LD_SYNTAX_GENTIME:
+					if(db_datetime2ldap_gentime(buf, fld))
+						goto error;
+					break;
 
-			case LD_SYNTAX_INT:
-				if (db_uint2ldap_int(buf, fld))
-					goto error;
-				break;
+				case LD_SYNTAX_INT:
+					if(db_uint2ldap_int(buf, fld))
+						goto error;
+					break;
 
-			default:
-				ERR("ldap: Cannot convert datetime field %s "
-					"to LDAP attribute %.*s\n",
-					fld->name, lfld->attr.len, ZSW(lfld->attr.s));
-				goto error;
+				default:
+					ERR("ldap: Cannot convert datetime field %s "
+						"to LDAP attribute %.*s\n",
+							fld->name, lfld->attr.len, ZSW(lfld->attr.s));
+					goto error;
 			}
 			break;
 
 		case DB_FLOAT:
 			switch(lfld->syntax) {
-			case LD_SYNTAX_STRING:
-			case LD_SYNTAX_FLOAT:
-				if (db_float2ldap_str(buf, fld))
-					goto error;
-				break;
+				case LD_SYNTAX_STRING:
+				case LD_SYNTAX_FLOAT:
+					if(db_float2ldap_str(buf, fld))
+						goto error;
+					break;
 
-			default:
-				ERR("ldap: Cannot convert float field %s "
-					"to LDAP attribute %.*s\n",
-					fld->name, lfld->attr.len, ZSW(lfld->attr.s));
-				goto error;
+				default:
+					ERR("ldap: Cannot convert float field %s "
+						"to LDAP attribute %.*s\n",
+							fld->name, lfld->attr.len, ZSW(lfld->attr.s));
+					goto error;
 			}
 
 		case DB_DOUBLE:
 			switch(lfld->syntax) {
-			case LD_SYNTAX_STRING:
-			case LD_SYNTAX_FLOAT:
-				if (db_float2ldap_str(buf, fld))
-					goto error;
-				break;
+				case LD_SYNTAX_STRING:
+				case LD_SYNTAX_FLOAT:
+					if(db_float2ldap_str(buf, fld))
+						goto error;
+					break;
 
-			default:
-				ERR("ldap: Cannot convert double field %s "
-					"to LDAP attribute %.*s\n",
-					fld->name, lfld->attr.len, ZSW(lfld->attr.s));
-				goto error;
-				break;
+				default:
+					ERR("ldap: Cannot convert double field %s "
+						"to LDAP attribute %.*s\n",
+							fld->name, lfld->attr.len, ZSW(lfld->attr.s));
+					goto error;
+					break;
 			}
 			break;
 
 		case DB_BLOB:
 			switch(lfld->syntax) {
-			case LD_SYNTAX_STRING:
-			case LD_SYNTAX_BIN:
-				if (sb_add_esc(buf, fld->v.lstr.s, fld->v.lstr.len) < 0)
-					goto error;
-				break;
+				case LD_SYNTAX_STRING:
+				case LD_SYNTAX_BIN:
+					if(sb_add_esc(buf, fld->v.lstr.s, fld->v.lstr.len) < 0)
+						goto error;
+					break;
 
-			default:
-				ERR("ldap: Cannot convert binary field %s "
-					"to LDAP attribute %.*s\n",
-					fld->name, lfld->attr.len, ZSW(lfld->attr.s));
-				goto error;
+				default:
+					ERR("ldap: Cannot convert binary field %s "
+						"to LDAP attribute %.*s\n",
+							fld->name, lfld->attr.len, ZSW(lfld->attr.s));
+					goto error;
 			}
 			break;
 
 		default:
 			BUG("ldap: Unsupported field type encountered: %d\n", fld->type);
 			goto error;
-		}
+	}
 	return 0;
 error:
 	return -1;
 }
 
 /* skip fields belonging to a field which is requested for filtering at client side */
-inline static void skip_client_side_filtering_fields(db_cmd_t* cmd, db_fld_t **fld) {
-	struct ld_fld* lfld;
+inline static void skip_client_side_filtering_fields(
+		db_cmd_t *cmd, db_fld_t **fld)
+{
+	struct ld_fld *lfld;
 	db_fld_t *f;
 try_next:
-	if (DB_FLD_EMPTY(*fld) || DB_FLD_LAST(**fld)) return; 
-	for (f=cmd->result; !DB_FLD_EMPTY(f) && !DB_FLD_LAST(*f); f++) {
+	if(DB_FLD_EMPTY(*fld) || DB_FLD_LAST(**fld))
+		return;
+	for(f = cmd->result; !DB_FLD_EMPTY(f) && !DB_FLD_LAST(*f); f++) {
 		lfld = DB_GET_PAYLOAD(f);
-		if (lfld->client_side_filtering && lfld->filter) {
+		if(lfld->client_side_filtering && lfld->filter) {
 			int j;
-			for (j = 0; lfld->filter[j]; j++) {
-				if (lfld->filter[j] == *fld) {
+			for(j = 0; lfld->filter[j]; j++) {
+				if(lfld->filter[j] == *fld) {
 					(*fld)++;
 					goto try_next;
 				}
@@ -1006,42 +1066,41 @@ try_next:
 		}
 	}
 }
-		
-int ld_prepare_ldap_filter(char** filter, db_cmd_t* cmd, str* add)
+
+int ld_prepare_ldap_filter(char **filter, db_cmd_t *cmd, str *add)
 {
-	db_fld_t* fld;
-	struct ld_fld* lfld;
+	db_fld_t *fld;
+	struct ld_fld *lfld;
 	int rv = 0;
-	struct sbuf buf = {
-		.s = NULL, .len = 0,
-		.size = 0, .increment = 128
-	};
+	struct sbuf buf = {.s = NULL, .len = 0, .size = 0, .increment = 128};
 
 	fld = cmd->match;
 	skip_client_side_filtering_fields(cmd, &fld);
-	
+
 	/* Return NULL if there are no fields and no preconfigured search
 	 * string supplied in the configuration file
 	 */
-	if ((DB_FLD_EMPTY(fld) || DB_FLD_LAST(*fld)) && ((add->s == NULL) || !add->len)) {
+	if((DB_FLD_EMPTY(fld) || DB_FLD_LAST(*fld))
+			&& ((add->s == NULL) || !add->len)) {
 		*filter = NULL;
 		return 0;
 	}
 
 	rv = sb_add(&buf, "(&", 2);
-	if (add->s && add->len) {
+	if(add->s && add->len) {
 		/* Add the filter component specified in the config file */
 		rv |= sb_add(&buf, add->s, add->len);
 	}
 
-	for(; !DB_FLD_EMPTY(fld) && !DB_FLD_LAST(*fld); fld++, skip_client_side_filtering_fields(cmd, &fld)) {
+	for(; !DB_FLD_EMPTY(fld) && !DB_FLD_LAST(*fld);
+			fld++, skip_client_side_filtering_fields(cmd, &fld)) {
 		int op;
 		lfld = DB_GET_PAYLOAD(fld);
 
 		op = fld->op;
-		
-		if (fld->flags & DB_NULL) {
-			switch (op) {
+
+		if(fld->flags & DB_NULL) {
+			switch(op) {
 				case DB_EQ:
 					/* fld==NULL -> (!(x=*)) */
 					op = DB_NE;
@@ -1051,39 +1110,38 @@ int ld_prepare_ldap_filter(char** filter, db_cmd_t* cmd, str* add)
 					op = DB_EQ;
 					break;
 				default:
-					ERR("ldap: Cannot compare null value field %s\n", fld->name);				
+					ERR("ldap: Cannot compare null value field %s\n",
+							fld->name);
 					goto error;
-			}	
+			}
 		}
-		
+
 		/* we need construct operators as:
 		    not:  (!(fld=val))
 		    </>:  (!(fld=val))(fld</>val)
 		*/
-		switch (op) {
+		switch(op) {
 			case DB_LT:
 			case DB_GT:
 			case DB_NE:
 				rv |= sb_add(&buf, "(!(", 3);
 				rv |= sb_add(&buf, lfld->attr.s, lfld->attr.len);
 				rv |= sb_add(&buf, "=", 1);
-				if (fld->flags & DB_NULL) {
+				if(fld->flags & DB_NULL) {
 					rv |= sb_add(&buf, "*", 1);
-				}
-				else {
-					if (ld_db2ldap(&buf, fld) < 0) {
+				} else {
+					if(ld_db2ldap(&buf, fld) < 0) {
 						goto error;
 					}
 				}
 				rv |= sb_add(&buf, "))", 2);
 				break;
-			default:
-			    ;
+			default:;
 		}
-		if (op != DB_NE) {
+		if(op != DB_NE) {
 			rv |= sb_add(&buf, "(", 1);
 			rv |= sb_add(&buf, lfld->attr.s, lfld->attr.len);
-			switch (op) {
+			switch(op) {
 				case DB_LEQ:
 				case DB_LT:
 					rv |= sb_add(&buf, "<=", 2);
@@ -1095,30 +1153,30 @@ int ld_prepare_ldap_filter(char** filter, db_cmd_t* cmd, str* add)
 				case DB_EQ:
 					rv |= sb_add(&buf, "=", 1);
 					break;
-				default:
-				;
+				default:;
 			}
-			if (fld->flags & DB_NULL) {
+			if(fld->flags & DB_NULL) {
 				rv |= sb_add(&buf, "*", 1);
-			}
-			else {
-				if (ld_db2ldap(&buf, fld) < 0) {
+			} else {
+				if(ld_db2ldap(&buf, fld) < 0) {
 					goto error;
 				}
 			}
 			rv |= sb_add(&buf, ")", 1);
-		}		
+		}
 	}
 
 	rv |= sb_add(&buf, ")", 1);
 	rv |= sb_add(&buf, "", 1);
-	if (rv) goto error;
+	if(rv)
+		goto error;
 
 	*filter = buf.s;
 	return 0;
 
 error:
-	if (buf.s) pkg_free(buf.s);
+	if(buf.s)
+		pkg_free(buf.s);
 	return -1;
 }
 

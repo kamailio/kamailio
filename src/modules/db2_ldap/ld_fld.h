@@ -44,7 +44,8 @@ struct ld_cfg;
 
 #include <ldap.h>
 
-enum ld_syntax {
+enum ld_syntax
+{
 	LD_SYNTAX_STRING = 0,
 	LD_SYNTAX_GENTIME,
 	LD_SYNTAX_INT,
@@ -54,15 +55,17 @@ enum ld_syntax {
 	LD_SYNTAX_FLOAT
 };
 
-struct ld_fld {
+struct ld_fld
+{
 	db_drv_t gen;
-	str attr;               /**< Name of corresponding LDAP attribute */
-	enum ld_syntax syntax;  /**< LDAP attribute syntax */
-	struct berval** values; /**< Values retrieved from the LDAP result */    	
+	str attr;				/**< Name of corresponding LDAP attribute */
+	enum ld_syntax syntax;	/**< LDAP attribute syntax */
+	struct berval **values; /**< Values retrieved from the LDAP result */
 	unsigned int valuesnum;
 	unsigned int index;
-	db_fld_t** filter;	/**< filter applied on the field pointing to db_cmd_t.match[] */
-	int client_side_filtering;  /**< do not pass filter to LDAP server but filter result set */
+	db_fld_t **
+			filter; /**< filter applied on the field pointing to db_cmd_t.match[] */
+	int client_side_filtering; /**< do not pass filter to LDAP server but filter result set */
 };
 
 
@@ -74,20 +77,20 @@ struct ld_fld {
  * @retval 0 on success.
  * @retval A negative number on error.
  */
-int ld_fld(db_fld_t* fld, char* table);
+int ld_fld(db_fld_t *fld, char *table);
 
 
-int ld_resolve_fld(db_fld_t* fld, struct ld_cfg* cfg);
+int ld_resolve_fld(db_fld_t *fld, struct ld_cfg *cfg);
 
-int ld_prepare_ldap_filter(char** filter, db_cmd_t* cmd, str* add);
+int ld_prepare_ldap_filter(char **filter, db_cmd_t *cmd, str *add);
 
-int ld_incindex(db_fld_t* fld);
+int ld_incindex(db_fld_t *fld);
 
-int ld_ldap2fldinit(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg);
+int ld_ldap2fldinit(db_fld_t *fld, LDAP *ldap, LDAPMessage *msg);
 
-int ld_ldap2fld(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg);
+int ld_ldap2fld(db_fld_t *fld, LDAP *ldap, LDAPMessage *msg);
 
-int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init);
+int ld_ldap2fldex(db_fld_t *fld, LDAP *ldap, LDAPMessage *msg, int init);
 
 /** @} */
 
