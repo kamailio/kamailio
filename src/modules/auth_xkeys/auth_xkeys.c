@@ -41,7 +41,8 @@
 
 #include "auth_xkeys.h"
 
-typedef struct _auth_xkey {
+typedef struct _auth_xkey
+{
 	str kid;
 	str kname;
 	str kvalue;
@@ -57,14 +58,14 @@ static auth_xkey_t **_auth_xkeys_list = NULL;
  */
 int auth_xkeys_list_init(void)
 {
-	if(_auth_xkeys_list!=NULL)
+	if(_auth_xkeys_list != NULL)
 		return 0;
-	_auth_xkeys_list = shm_malloc(sizeof(auth_xkey_t*));
-	if(_auth_xkeys_list==NULL) {
+	_auth_xkeys_list = shm_malloc(sizeof(auth_xkey_t *));
+	if(_auth_xkeys_list == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
-	memset(_auth_xkeys_list, 0, sizeof(auth_xkey_t*));
+	memset(_auth_xkeys_list, 0, sizeof(auth_xkey_t *));
 	return 0;
 }
 
@@ -81,18 +82,18 @@ int authx_xkey_insert(auth_xkey_t *nkey)
 
 	if(auth_xkeys_list_init())
 		return -1;
-	if(nkey==NULL)
+	if(nkey == NULL)
 		return -1;
 
 	ksize = sizeof(auth_xkey_t) + nkey->kid.len + nkey->kname.len
-		+ nkey->kvalue.len + 3;
-	ukey = (auth_xkey_t*)shm_malloc(ksize);
-	if(ukey==NULL) {
+			+ nkey->kvalue.len + 3;
+	ukey = (auth_xkey_t *)shm_malloc(ksize);
+	if(ukey == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(ukey, 0, ksize);
-	p = (char*)ukey + sizeof(auth_xkey_t);
+	p = (char *)ukey + sizeof(auth_xkey_t);
 
 	ukey->kid.len = nkey->kid.len;
 	ukey->kid.s = p;
@@ -114,26 +115,26 @@ int authx_xkey_insert(auth_xkey_t *nkey)
 
 	ukey->kexpires = nkey->kexpires;
 
-	if(*_auth_xkeys_list==NULL) {
+	if(*_auth_xkeys_list == NULL) {
 		*_auth_xkeys_list = ukey;
 		return 0;
 	}
 
 	itp = NULL;
 	for(itc = *_auth_xkeys_list; itc; itc = itc->next_id) {
-		if(itc->kid.len==ukey->kid.len
-				&& strncasecmp(itc->kid.s, ukey->kid.s, ukey->kid.len)==0)
+		if(itc->kid.len == ukey->kid.len
+				&& strncasecmp(itc->kid.s, ukey->kid.s, ukey->kid.len) == 0)
 			break;
 		itp = itc;
 	}
-	if(itc==NULL) {
+	if(itc == NULL) {
 		/* new id */
 		ukey->next_id = *_auth_xkeys_list;
 		*_auth_xkeys_list = ukey;
 		return 0;
 	}
 
-	if(itp!=NULL) {
+	if(itp != NULL) {
 		itp->next_id = ukey;
 	} else {
 		*_auth_xkeys_list = ukey;
@@ -149,43 +150,41 @@ int authx_xkey_insert(auth_xkey_t *nkey)
  */
 int authx_xkey_add_params(str *sparam)
 {
-	param_t* params_list = NULL;
+	param_t *params_list = NULL;
 	param_hooks_t phooks;
-	param_t *pit=NULL;
+	param_t *pit = NULL;
 	auth_xkey_t tmp;
 	unsigned int uv = 0;
 
-	if (parse_params(sparam, CLASS_ANY, &phooks, &params_list)<0)
+	if(parse_params(sparam, CLASS_ANY, &phooks, &params_list) < 0)
 		return -1;
 
 	memset(&tmp, 0, sizeof(auth_xkey_t));
 
-	for (pit = params_list; pit; pit=pit->next)
-	{
-		if (pit->name.len==2
-				&& strncasecmp(pit->name.s, "id", 2)==0) {
+	for(pit = params_list; pit; pit = pit->next) {
+		if(pit->name.len == 2 && strncasecmp(pit->name.s, "id", 2) == 0) {
 			tmp.kid = pit->body;
-		} else if(pit->name.len==4
-				&& strncasecmp(pit->name.s, "name", 4)==0) {
+		} else if(pit->name.len == 4
+				  && strncasecmp(pit->name.s, "name", 4) == 0) {
 			tmp.kname = pit->body;
-		} else if(pit->name.len==5
-				&& strncasecmp(pit->name.s, "value", 5)==0) {
+		} else if(pit->name.len == 5
+				  && strncasecmp(pit->name.s, "value", 5) == 0) {
 			tmp.kvalue = pit->body;
-		}  else if(pit->name.len==7
-				&& strncasecmp(pit->name.s, "expires", 7)==0) {
+		} else if(pit->name.len == 7
+				  && strncasecmp(pit->name.s, "expires", 7) == 0) {
 			str2int(&pit->body, &uv);
 			tmp.kexpires = time(NULL) + uv;
 		}
 	}
-	if(tmp.kid.len<=0 || tmp.kname.len<=0 || tmp.kvalue.len<=0) {
-		LM_ERR("invalid parameters (%d/%d/%d)\n", tmp.kid.len,
-				tmp.kname.len, tmp.kvalue.len);
+	if(tmp.kid.len <= 0 || tmp.kname.len <= 0 || tmp.kvalue.len <= 0) {
+		LM_ERR("invalid parameters (%d/%d/%d)\n", tmp.kid.len, tmp.kname.len,
+				tmp.kvalue.len);
 		return -1;
 	}
 
-	if(authx_xkey_insert(&tmp)<0) {
-		LM_ERR("unable to insert the key [%.*s:%.*s]\n",
-				tmp.kid.len, tmp.kid.s, tmp.kname.len, tmp.kname.s);
+	if(authx_xkey_insert(&tmp) < 0) {
+		LM_ERR("unable to insert the key [%.*s:%.*s]\n", tmp.kid.len, tmp.kid.s,
+				tmp.kname.len, tmp.kname.s);
 		return -1;
 	}
 
@@ -195,30 +194,29 @@ int authx_xkey_add_params(str *sparam)
 /**
  *
  */
-int auth_xkeys_add(sip_msg_t* msg, str *hdr, str *key,
-		str *alg, str *data)
+int auth_xkeys_add(sip_msg_t *msg, str *hdr, str *key, str *alg, str *data)
 {
 	str xdata;
 	auth_xkey_t *itc;
 	char xout[SHA512_DIGEST_STRING_LENGTH];
-	struct lump* anchor;
+	struct lump *anchor;
 	char *p;
 
-	if(_auth_xkeys_list==NULL || *_auth_xkeys_list==NULL) {
+	if(_auth_xkeys_list == NULL || *_auth_xkeys_list == NULL) {
 		LM_ERR("no stored keys\n");
 		return -1;
 	}
-	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("error parsing headers\n");
 		return -1;
 	}
 
 	for(itc = *_auth_xkeys_list; itc; itc = itc->next_id) {
-		if(itc->kid.len==key->len
-				&& strncasecmp(itc->kid.s, key->s, key->len)==0)
+		if(itc->kid.len == key->len
+				&& strncasecmp(itc->kid.s, key->s, key->len) == 0)
 			break;
 	}
-	if(itc==NULL) {
+	if(itc == NULL) {
 		LM_DBG("no key chain id [%.*s]\n", key->len, key->s);
 		return -1;
 	}
@@ -233,14 +231,14 @@ int auth_xkeys_add(sip_msg_t* msg, str *hdr, str *key,
 	strncpy(xdata.s, itc->kvalue.s, itc->kvalue.len);
 	xdata.s[itc->kvalue.len] = ':';
 	strncpy(xdata.s + itc->kvalue.len + 1, data->s, data->len);
-	if(alg->len==6 && strncasecmp(alg->s, "sha256", 6)==0) {
-		compute_sha256(xout, (u_int8_t*)xdata.s, xdata.len);
+	if(alg->len == 6 && strncasecmp(alg->s, "sha256", 6) == 0) {
+		compute_sha256(xout, (u_int8_t *)xdata.s, xdata.len);
 		xdata.len = SHA256_DIGEST_STRING_LENGTH - 1;
-	} else if(alg->len==6 && strncasecmp(alg->s, "sha384", 6)==0) {
-		compute_sha384(xout, (u_int8_t*)xdata.s, xdata.len);
+	} else if(alg->len == 6 && strncasecmp(alg->s, "sha384", 6) == 0) {
+		compute_sha384(xout, (u_int8_t *)xdata.s, xdata.len);
 		xdata.len = SHA384_DIGEST_STRING_LENGTH - 1;
-	} else if(alg->len==6 && strncasecmp(alg->s, "sha512", 6)==0) {
-		compute_sha512(xout, (u_int8_t*)xdata.s, xdata.len);
+	} else if(alg->len == 6 && strncasecmp(alg->s, "sha512", 6) == 0) {
+		compute_sha512(xout, (u_int8_t *)xdata.s, xdata.len);
 		xdata.len = SHA512_DIGEST_STRING_LENGTH - 1;
 	} else {
 		LM_ERR("unknown algorithm [%.*s]\n", alg->len, alg->s);
@@ -254,12 +252,12 @@ int auth_xkeys_add(sip_msg_t* msg, str *hdr, str *key,
 
 	strncpy(xdata.s, hdr->s, hdr->len);
 	xdata.s[hdr->len] = ':';
-	xdata.s[hdr->len+1] = ' ';
+	xdata.s[hdr->len + 1] = ' ';
 	strncpy(xdata.s + hdr->len + 2, xout, xdata.len);
 	xdata.len += hdr->len + 2;
 	xdata.s[xdata.len] = '\r';
-	xdata.s[xdata.len+1] = '\n';
-	xdata.s[xdata.len+2] = '\0';
+	xdata.s[xdata.len + 1] = '\n';
+	xdata.s[xdata.len + 2] = '\0';
 	xdata.len += 2;
 
 	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
@@ -267,14 +265,14 @@ int auth_xkeys_add(sip_msg_t* msg, str *hdr, str *key,
 		LM_ERR("can't get anchor\n");
 		return -1;
 	}
-	p = (char*)pkg_malloc(xdata.len+1);
-	if(p==NULL) {
+	p = (char *)pkg_malloc(xdata.len + 1);
+	if(p == NULL) {
 		PKG_MEM_ERROR;
 		return -2;
 	}
 	memcpy(p, xdata.s, xdata.len);
 	p[xdata.len] = '\0';
-	if (insert_new_lump_before(anchor, p, xdata.len, 0) == 0) {
+	if(insert_new_lump_before(anchor, p, xdata.len, 0) == 0) {
 		LM_ERR("cannot insert the new header [%.*s]\n", hdr->len, hdr->s);
 		pkg_free(p);
 		return -1;
@@ -285,8 +283,7 @@ int auth_xkeys_add(sip_msg_t* msg, str *hdr, str *key,
 /**
  *
  */
-int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
-		str *alg, str *data)
+int auth_xkeys_check(sip_msg_t *msg, str *hdr, str *key, str *alg, str *data)
 {
 	hdr_field_t *hf;
 	str xdata;
@@ -294,43 +291,43 @@ int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 	char xout[SHA512_DIGEST_STRING_LENGTH];
 	str hbody;
 
-	if(_auth_xkeys_list==NULL || *_auth_xkeys_list==NULL) {
+	if(_auth_xkeys_list == NULL || *_auth_xkeys_list == NULL) {
 		LM_ERR("no stored keys\n");
 		return -1;
 	}
-	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("error parsing headers\n");
 		return -1;
 	}
 
-	for (hf=msg->headers; hf; hf=hf->next) {
-		if (cmp_hdrname_str(&hf->name, hdr)==0)
+	for(hf = msg->headers; hf; hf = hf->next) {
+		if(cmp_hdrname_str(&hf->name, hdr) == 0)
 			break;
 	}
-	if(hf==NULL) {
+	if(hf == NULL) {
 		LM_DBG("no header with name [%.*s]\n", hdr->len, hdr->s);
 		return -1;
 	}
-	if(hf->body.len<=0) {
+	if(hf->body.len <= 0) {
 		LM_DBG("empty header with name [%.*s]\n", hdr->len, hdr->s);
 		return -1;
 	}
 	hbody = hf->body;
 	trim(&hbody);
-	if(hbody.len!=SHA256_DIGEST_STRING_LENGTH-1
-			&& hbody.len!=SHA384_DIGEST_STRING_LENGTH-1
-			&& hbody.len!=SHA512_DIGEST_STRING_LENGTH-1) {
-		LM_DBG("not matching digest size for [%.*s]\n",
-				hf->body.len, hf->body.s);
+	if(hbody.len != SHA256_DIGEST_STRING_LENGTH - 1
+			&& hbody.len != SHA384_DIGEST_STRING_LENGTH - 1
+			&& hbody.len != SHA512_DIGEST_STRING_LENGTH - 1) {
+		LM_DBG("not matching digest size for [%.*s]\n", hf->body.len,
+				hf->body.s);
 		return -1;
 	}
 
 	for(itc = *_auth_xkeys_list; itc; itc = itc->next_id) {
-		if(itc->kid.len==key->len
-				&& strncasecmp(itc->kid.s, key->s, key->len)==0)
+		if(itc->kid.len == key->len
+				&& strncasecmp(itc->kid.s, key->s, key->len) == 0)
 			break;
 	}
-	if(itc==NULL) {
+	if(itc == NULL) {
 		LM_DBG("no key chain id [%.*s]\n", key->len, key->s);
 		return -1;
 	}
@@ -344,40 +341,40 @@ int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 		strncpy(xdata.s, itc->kvalue.s, itc->kvalue.len);
 		xdata.s[itc->kvalue.len] = ':';
 		strncpy(xdata.s + itc->kvalue.len + 1, data->s, data->len);
-		if(alg->len==6 && strncasecmp(alg->s, "sha256", 6)==0) {
-			if(hbody.len!=SHA256_DIGEST_STRING_LENGTH-1) {
+		if(alg->len == 6 && strncasecmp(alg->s, "sha256", 6) == 0) {
+			if(hbody.len != SHA256_DIGEST_STRING_LENGTH - 1) {
 				LM_DBG("not matching sha256 digest size for [%.*s]\n",
 						hf->body.len, hf->body.s);
 				return -1;
 			}
-			compute_sha256(xout, (u_int8_t*)xdata.s, xdata.len);
-			if(strncasecmp(xout, hbody.s, hbody.len)==0) {
-				LM_DBG("digest sha256 matched for key [%.*s:%.*s]\n",
-						key->len, key->s, itc->kname.len, itc->kname.s);
+			compute_sha256(xout, (u_int8_t *)xdata.s, xdata.len);
+			if(strncasecmp(xout, hbody.s, hbody.len) == 0) {
+				LM_DBG("digest sha256 matched for key [%.*s:%.*s]\n", key->len,
+						key->s, itc->kname.len, itc->kname.s);
 				return 0;
 			}
-		} else if(alg->len==6 && strncasecmp(alg->s, "sha384", 6)==0) {
-			if(hbody.len!=SHA384_DIGEST_STRING_LENGTH-1) {
+		} else if(alg->len == 6 && strncasecmp(alg->s, "sha384", 6) == 0) {
+			if(hbody.len != SHA384_DIGEST_STRING_LENGTH - 1) {
 				LM_DBG("not matching sha384 digest size for [%.*s]\n",
 						hf->body.len, hf->body.s);
 				return -1;
 			}
-			compute_sha384(xout, (u_int8_t*)xdata.s, xdata.len);
-			if(strncasecmp(xout, hbody.s, hbody.len)==0) {
-				LM_DBG("digest sha384 matched for key [%.*s:%.*s]\n",
-						key->len, key->s, itc->kname.len, itc->kname.s);
+			compute_sha384(xout, (u_int8_t *)xdata.s, xdata.len);
+			if(strncasecmp(xout, hbody.s, hbody.len) == 0) {
+				LM_DBG("digest sha384 matched for key [%.*s:%.*s]\n", key->len,
+						key->s, itc->kname.len, itc->kname.s);
 				return 0;
 			}
-		} else if(alg->len==6 && strncasecmp(alg->s, "sha512", 6)==0) {
-			if(hbody.len!=SHA512_DIGEST_STRING_LENGTH-1) {
+		} else if(alg->len == 6 && strncasecmp(alg->s, "sha512", 6) == 0) {
+			if(hbody.len != SHA512_DIGEST_STRING_LENGTH - 1) {
 				LM_DBG("not matching sha512 digest size for [%.*s]\n",
 						hf->body.len, hf->body.s);
 				return -1;
 			}
-			compute_sha512(xout, (u_int8_t*)xdata.s, xdata.len);
-			if(strncasecmp(xout, hbody.s, hbody.len)==0) {
-				LM_DBG("digest sha512 matched for key [%.*s:%.*s]\n",
-						key->len, key->s, itc->kname.len, itc->kname.s);
+			compute_sha512(xout, (u_int8_t *)xdata.s, xdata.len);
+			if(strncasecmp(xout, hbody.s, hbody.len) == 0) {
+				LM_DBG("digest sha512 matched for key [%.*s:%.*s]\n", key->len,
+						key->s, itc->kname.len, itc->kname.s);
 				return 0;
 			}
 		} else {
@@ -391,50 +388,42 @@ int auth_xkeys_check(sip_msg_t* msg, str *hdr, str *key,
 }
 
 
-static const char* auth_xkeys_rpc_list_doc[2] = {
-	"List existing keys",
-	0
-};
+static const char *auth_xkeys_rpc_list_doc[2] = {"List existing keys", 0};
 
 /*
  * RPC command to list the keys
  */
-static void auth_xkeys_rpc_list(rpc_t* rpc, void* ctx)
+static void auth_xkeys_rpc_list(rpc_t *rpc, void *ctx)
 {
-	void* th;
-	void* ih;
-	void* vh;
+	void *th;
+	void *ih;
+	void *vh;
 	auth_xkey_t *itc;
 	auth_xkey_t *itd;
 
-	if(_auth_xkeys_list==NULL || *_auth_xkeys_list==NULL) {
+	if(_auth_xkeys_list == NULL || *_auth_xkeys_list == NULL) {
 		rpc->fault(ctx, 500, "No keys");
 		return;
 	}
 	/* add entry node */
-	if (rpc->add(ctx, "{", &th) < 0) {
+	if(rpc->add(ctx, "{", &th) < 0) {
 		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
 	for(itc = *_auth_xkeys_list; itc; itc = itc->next_id) {
-		if(rpc->struct_add(th, "S[",
-					"KID", &itc->kid,
-					"KEYS",  &ih)<0) {
+		if(rpc->struct_add(th, "S[", "KID", &itc->kid, "KEYS", &ih) < 0) {
 			rpc->fault(ctx, 500, "Internal error keys array");
 			return;
 		}
 
-		for(itd=itc; itd; itd = itd->next) {
-			if(rpc->struct_add(ih, "{",
-						"KEY", &vh)<0) {
+		for(itd = itc; itd; itd = itd->next) {
+			if(rpc->struct_add(ih, "{", "KEY", &vh) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating keys data");
 				return;
 			}
-			if(rpc->struct_add(vh, "SDd",
-						"NAME",  &itd->kname,
-						"VALUE", &itd->kvalue,
-						"EXPIRES", itd->kexpires)<0)
-			{
+			if(rpc->struct_add(vh, "SDd", "NAME", &itd->kname, "VALUE",
+					   &itd->kvalue, "EXPIRES", itd->kexpires)
+					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return;
 			}
@@ -443,38 +432,35 @@ static void auth_xkeys_rpc_list(rpc_t* rpc, void* ctx)
 	return;
 }
 
-static const char* auth_xkeys_rpc_set_doc[2] = {
-	"Set expires of existing key or add a new key",
-	0
-};
+static const char *auth_xkeys_rpc_set_doc[2] = {
+		"Set expires of existing key or add a new key", 0};
 
 /*
  * RPC command to set the expires of a key or add a new key
  */
-static void auth_xkeys_rpc_set(rpc_t* rpc, void* ctx)
+static void auth_xkeys_rpc_set(rpc_t *rpc, void *ctx)
 {
 	auth_xkey_t tmp;
 	auth_xkey_t *itc;
 
 	memset(&tmp, 0, sizeof(auth_xkey_t));
 
-	if(rpc->scan(ctx, ".SSSd", &tmp.kid, &tmp.kname,
-				&tmp.kvalue, &tmp.kexpires)<4)
-	{
+	if(rpc->scan(ctx, ".SSSd", &tmp.kid, &tmp.kname, &tmp.kvalue, &tmp.kexpires)
+			< 4) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
 	}
 	for(itc = *_auth_xkeys_list; itc; itc = itc->next_id) {
-		if(itc->kid.len==tmp.kid.len
-				&& strncasecmp(itc->kid.s, tmp.kid.s, tmp.kid.len)==0)
+		if(itc->kid.len == tmp.kid.len
+				&& strncasecmp(itc->kid.s, tmp.kid.s, tmp.kid.len) == 0)
 			break;
 	}
-	if(itc==NULL) {
+	if(itc == NULL) {
 		LM_DBG("no key chain id [%.*s]\n", tmp.kid.len, tmp.kid.s);
 		/* add one */
-		if(authx_xkey_insert(&tmp)<0) {
-			LM_ERR("unable to insert the key [%.*s:%.*s]\n",
-				tmp.kid.len, tmp.kid.s, tmp.kname.len, tmp.kname.s);
+		if(authx_xkey_insert(&tmp) < 0) {
+			LM_ERR("unable to insert the key [%.*s:%.*s]\n", tmp.kid.len,
+					tmp.kid.s, tmp.kname.len, tmp.kname.s);
 			rpc->fault(ctx, 500, "Insert failure");
 			return;
 		}
@@ -485,20 +471,16 @@ static void auth_xkeys_rpc_set(rpc_t* rpc, void* ctx)
 }
 
 rpc_export_t auth_xkeys_rpc_cmds[] = {
-	{"auth_xkeys_.list",   auth_xkeys_rpc_list,
-		auth_xkeys_rpc_list_doc,   0},
-	{"auth_xkeys_.set",   auth_xkeys_rpc_set,
-		auth_xkeys_rpc_set_doc,   0},
-	{0, 0, 0, 0}
-};
+		{"auth_xkeys_.list", auth_xkeys_rpc_list, auth_xkeys_rpc_list_doc, 0},
+		{"auth_xkeys_.set", auth_xkeys_rpc_set, auth_xkeys_rpc_set_doc, 0},
+		{0, 0, 0, 0}};
 
 /**
  *
  */
 int auth_xkeys_init_rpc(void)
 {
-	if (rpc_register_array(auth_xkeys_rpc_cmds)!=0)
-	{
+	if(rpc_register_array(auth_xkeys_rpc_cmds) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
