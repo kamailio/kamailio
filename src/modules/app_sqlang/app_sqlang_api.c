@@ -80,7 +80,7 @@ sr_sqlang_env_t *sqlang_sr_env_get(void)
  */
 int sqlang_sr_initialized(void)
 {
-	if(_sr_J_env.J==NULL)
+	if(_sr_J_env.J == NULL)
 		return 0;
 
 	return 1;
@@ -97,7 +97,7 @@ static str _sr_kemi_sqlang_exit_string = str_init(SQLANG_SR_EXIT_THROW_STR);
 /**
  *
  */
-str* sr_kemi_sqlang_exit_string_get(void)
+str *sr_kemi_sqlang_exit_string_get(void)
 {
 	return &_sr_kemi_sqlang_exit_string;
 }
@@ -125,7 +125,7 @@ int app_sqlang_return_error(HSQUIRRELVM J)
  */
 int app_sqlang_return_boolean(HSQUIRRELVM J, int b)
 {
-	if(b==SRSQLANG_FALSE)
+	if(b == SRSQLANG_FALSE)
 		sq_pushbool(J, SRSQLANG_FALSE);
 	else
 		sq_pushbool(J, SRSQLANG_TRUE);
@@ -155,33 +155,33 @@ int app_sqlang_return_true(HSQUIRRELVM J)
  */
 int sr_kemi_sqlang_return_int(HSQUIRRELVM J, sr_kemi_t *ket, int rc)
 {
-	if(ket->rtype==SR_KEMIP_INT) {
+	if(ket->rtype == SR_KEMIP_INT) {
 		sq_pushinteger(J, rc);
 		return 1;
 	}
-	if(ket->rtype==SR_KEMIP_BOOL && rc!=SR_KEMI_FALSE) {
+	if(ket->rtype == SR_KEMIP_BOOL && rc != SR_KEMI_FALSE) {
 		return app_sqlang_return_true(J);
 	}
 	return app_sqlang_return_false(J);
 }
 
-static char* sqlang_to_string(HSQUIRRELVM J, int idx)
+static char *sqlang_to_string(HSQUIRRELVM J, int idx)
 {
-    const SQChar *s = NULL;
-	if(idx>=0) {
-		sq_getstring(J, idx+2, &s);
+	const SQChar *s = NULL;
+	if(idx >= 0) {
+		sq_getstring(J, idx + 2, &s);
 	} else {
 		sq_getstring(J, idx, &s);
 	}
-	return (char*)s;
+	return (char *)s;
 }
 
 static int sqlang_to_int(HSQUIRRELVM J, int idx)
 {
-    SQInteger i = 0;
+	SQInteger i = 0;
 
-	if(idx>=0) {
-		sq_getinteger(J, idx+2, &i);
+	if(idx >= 0) {
+		sq_getinteger(J, idx + 2, &i);
 	} else {
 		sq_getinteger(J, idx, &i);
 	}
@@ -190,10 +190,10 @@ static int sqlang_to_int(HSQUIRRELVM J, int idx)
 
 static long sqlang_to_long(HSQUIRRELVM J, int idx)
 {
-    SQFloat i = 0;
+	SQFloat i = 0;
 
-	if(idx>=0) {
-		sq_getfloat(J, idx+2, &i);
+	if(idx >= 0) {
+		sq_getfloat(J, idx + 2, &i);
 	} else {
 		sq_getfloat(J, idx, &i);
 	}
@@ -207,20 +207,20 @@ static int sqlang_gettop(HSQUIRRELVM J)
 
 static void sqlang_pushstring(HSQUIRRELVM J, char *s)
 {
-	if(s==NULL) {
+	if(s == NULL) {
 		sq_pushnull(J);
 		return;
 	}
-	sq_pushstring(J, (const SQChar*)s, (SQInteger)strlen(s));
+	sq_pushstring(J, (const SQChar *)s, (SQInteger)strlen(s));
 }
 
 static void sqlang_pushlstring(HSQUIRRELVM J, char *s, int l)
 {
-	if(s==NULL) {
+	if(s == NULL) {
 		sq_pushnull(J);
 		return;
 	}
-	sq_pushstring(J, (const SQChar*)s, (SQInteger)l);
+	sq_pushstring(J, (const SQChar *)s, (SQInteger)l);
 }
 
 #if 0
@@ -238,24 +238,24 @@ static int sqlang_isnumber(HSQUIRRELVM J, int idx)
 
 static int sqlang_isstring(HSQUIRRELVM J, int idx)
 {
-	if(idx>=0) {
+	if(idx >= 0) {
 		idx += 2;
 	}
 
-	if(sq_gettype(J, idx)==OT_STRING)
+	if(sq_gettype(J, idx) == OT_STRING)
 		return 1;
 	return 0;
 }
 
 static int sqlang_isfunction(HSQUIRRELVM J, int idx)
 {
-	if(idx>=0) {
+	if(idx >= 0) {
 		idx += 2;
 	}
 
 	switch(sq_gettype(J, idx)) {
 		case OT_CLOSURE:
-        case OT_NATIVECLOSURE:
+		case OT_NATIVECLOSURE:
 			return 1;
 		default:
 			return 0;
@@ -279,7 +279,7 @@ static char* sqlang_safe_tostring(HSQUIRRELVM J, int idx)
 
 static int sqlang_gettype(HSQUIRRELVM J, int idx)
 {
-	if(idx>=0) {
+	if(idx >= 0) {
 		idx += 2;
 	}
 
@@ -289,9 +289,9 @@ static int sqlang_gettype(HSQUIRRELVM J, int idx)
 /**
  *
  */
-static SQInteger sqlang_sr_exit (HSQUIRRELVM J)
+static SQInteger sqlang_sr_exit(HSQUIRRELVM J)
 {
-	if(_sr_J_env.JJ==J) {
+	if(_sr_J_env.JJ == J) {
 		_sr_J_env.JJ_exit = 1;
 	} else {
 		_sr_J_env.J_exit = 1;
@@ -302,9 +302,9 @@ static SQInteger sqlang_sr_exit (HSQUIRRELVM J)
 /**
  *
  */
-static SQInteger sqlang_sr_drop (HSQUIRRELVM J)
+static SQInteger sqlang_sr_drop(HSQUIRRELVM J)
 {
-	if(_sr_J_env.JJ==J) {
+	if(_sr_J_env.JJ == J) {
 		_sr_J_env.JJ_exit = 1;
 	} else {
 		_sr_J_env.J_exit = 1;
@@ -317,7 +317,7 @@ static SQInteger sqlang_sr_drop (HSQUIRRELVM J)
 /**
  *
  */
-static SQInteger sqlang_sr_modf (HSQUIRRELVM J)
+static SQInteger sqlang_sr_modf(HSQUIRRELVM J)
 {
 	int ret;
 	char *sqlangv[MAX_ACTIONS];
@@ -327,41 +327,41 @@ static SQInteger sqlang_sr_modf (HSQUIRRELVM J)
 	int mod_type;
 	struct run_act_ctx ra_ctx;
 	struct action *act;
-	ksr_cmd_export_t* expf;
+	ksr_cmd_export_t *expf;
 	sr_sqlang_env_t *env_J;
 
 	ret = 1;
 	act = NULL;
 	argc = 0;
-	memset(sqlangv, 0, MAX_ACTIONS*sizeof(char*));
-	memset(argv, 0, MAX_ACTIONS*sizeof(char*));
+	memset(sqlangv, 0, MAX_ACTIONS * sizeof(char *));
+	memset(argv, 0, MAX_ACTIONS * sizeof(char *));
 	env_J = sqlang_sr_env_get();
-	if(env_J->msg==NULL)
+	if(env_J->msg == NULL)
 		goto error;
 
 	argc = sqlang_gettop(J);
-	if(argc==0) {
+	if(argc == 0) {
 		LM_ERR("name of module function not provided\n");
 		goto error;
 	}
-	if(argc>=MAX_ACTIONS) {
+	if(argc >= MAX_ACTIONS) {
 		LM_ERR("too many parameters\n");
 		goto error;
 	}
 	/* first is function name, then parameters */
-	for(i=0; i<argc; i++) {
-		if (!sqlang_isstring(J, i)) {
+	for(i = 0; i < argc; i++) {
+		if(!sqlang_isstring(J, i)) {
 			LM_ERR("invalid parameter type (%d)\n", i);
 			goto error;
 		}
-		sqlangv[i] = (char*)sqlang_to_string(J, i);
+		sqlangv[i] = (char *)sqlang_to_string(J, i);
 	}
 	LM_ERR("request to execute cfg function '%s'\n", sqlangv[0]);
 	/* pkg copy only parameters */
-	for(i=1; i<MAX_ACTIONS; i++) {
-		if(sqlangv[i]!=NULL) {
-			argv[i] = (char*)pkg_malloc(strlen(sqlangv[i])+1);
-			if(argv[i]==NULL) {
+	for(i = 1; i < MAX_ACTIONS; i++) {
+		if(sqlangv[i] != NULL) {
+			argv[i] = (char *)pkg_malloc(strlen(sqlangv[i]) + 1);
+			if(argv[i] == NULL) {
 				PKG_MEM_ERROR;
 				goto error;
 			}
@@ -369,13 +369,13 @@ static SQInteger sqlang_sr_modf (HSQUIRRELVM J)
 		}
 	}
 
-	expf = find_export_record(sqlangv[0], argc-1, 0);
-	if (expf==NULL) {
+	expf = find_export_record(sqlangv[0], argc - 1, 0);
+	if(expf == NULL) {
 		LM_ERR("function '%s' is not available\n", sqlangv[0]);
 		goto error;
 	}
 	/* check fixups */
-	if (expf->fixup!=NULL && expf->free_fixup==NULL) {
+	if(expf->fixup != NULL && expf->free_fixup == NULL) {
 		LM_ERR("function '%s' has fixup - cannot be used\n", sqlangv[0]);
 		goto error;
 	}
@@ -410,37 +410,37 @@ static SQInteger sqlang_sr_modf (HSQUIRRELVM J)
 			goto error;
 	}
 
-	act = mk_action(mod_type,  argc+1   /* number of (type, value) pairs */,
-					MODEXP_ST, expf,    /* function */
-					NUMBER_ST, argc-1,  /* parameter number */
-					STRING_ST, argv[1], /* param. 1 */
-					STRING_ST, argv[2], /* param. 2 */
-					STRING_ST, argv[3], /* param. 3 */
-					STRING_ST, argv[4], /* param. 4 */
-					STRING_ST, argv[5], /* param. 5 */
-					STRING_ST, argv[6]  /* param. 6 */
-			);
+	act = mk_action(mod_type, argc + 1 /* number of (type, value) pairs */,
+			MODEXP_ST, expf,	 /* function */
+			NUMBER_ST, argc - 1, /* parameter number */
+			STRING_ST, argv[1],	 /* param. 1 */
+			STRING_ST, argv[2],	 /* param. 2 */
+			STRING_ST, argv[3],	 /* param. 3 */
+			STRING_ST, argv[4],	 /* param. 4 */
+			STRING_ST, argv[5],	 /* param. 5 */
+			STRING_ST, argv[6]	 /* param. 6 */
+	);
 
-	if (act==NULL) {
+	if(act == NULL) {
 		LM_ERR("action structure could not be created for '%s'\n", sqlangv[0]);
 		goto error;
 	}
 
 	/* handle fixups */
-	if (expf->fixup) {
-		if(argc==1) {
+	if(expf->fixup) {
+		if(argc == 1) {
 			/* no parameters */
-			if(expf->fixup(0, 0)<0) {
+			if(expf->fixup(0, 0) < 0) {
 				LM_ERR("Error in fixup (0) for '%s'\n", sqlangv[0]);
 				goto error;
 			}
 		} else {
-			for(i=1; i<argc; i++) {
-				if(expf->fixup(&(act->val[i+1].u.data), i)<0) {
+			for(i = 1; i < argc; i++) {
+				if(expf->fixup(&(act->val[i + 1].u.data), i) < 0) {
 					LM_ERR("Error in fixup (%d) for '%s'\n", i, sqlangv[0]);
 					goto error;
 				}
-				act->val[i+1].type = MODFIXUP_ST;
+				act->val[i + 1].type = MODFIXUP_ST;
 			}
 		}
 	}
@@ -448,26 +448,29 @@ static SQInteger sqlang_sr_modf (HSQUIRRELVM J)
 	ret = do_action(&ra_ctx, act, env_J->msg);
 
 	/* free fixups */
-	if (expf->fixup) {
-		for(i=1; i<argc; i++) {
-			if ((act->val[i+1].type == MODFIXUP_ST) && (act->val[i+1].u.data)) {
-				expf->free_fixup(&(act->val[i+1].u.data), i);
+	if(expf->fixup) {
+		for(i = 1; i < argc; i++) {
+			if((act->val[i + 1].type == MODFIXUP_ST)
+					&& (act->val[i + 1].u.data)) {
+				expf->free_fixup(&(act->val[i + 1].u.data), i);
 			}
 		}
 	}
 	pkg_free(act);
-	for(i=0; i<MAX_ACTIONS; i++) {
-		if(argv[i]!=NULL) pkg_free(argv[i]);
+	for(i = 0; i < MAX_ACTIONS; i++) {
+		if(argv[i] != NULL)
+			pkg_free(argv[i]);
 		argv[i] = 0;
 	}
 	sq_pushinteger(J, ret);
 	return 1;
 
 error:
-	if(act!=NULL)
+	if(act != NULL)
 		pkg_free(act);
-	for(i=0; i<MAX_ACTIONS; i++) {
-		if(argv[i]!=NULL) pkg_free(argv[i]);
+	for(i = 0; i < MAX_ACTIONS; i++) {
+		if(argv[i] != NULL)
+			pkg_free(argv[i]);
 		argv[i] = 0;
 	}
 	sq_pushinteger(J, -1);
@@ -476,11 +479,9 @@ error:
 
 
 const SQRegFunction _sr_kemi_x_J_Map[] = {
-	{ "exit", sqlang_sr_exit, 1 /* 0 args */, NULL },
-	{ "drop", sqlang_sr_drop, 1 /* 0 args */, NULL },
-	{ "modf", sqlang_sr_modf, 0 /* var args */, NULL },
-	{ NULL, NULL, 0 }
-};
+		{"exit", sqlang_sr_exit, 1 /* 0 args */, NULL},
+		{"drop", sqlang_sr_drop, 1 /* 0 args */, NULL},
+		{"modf", sqlang_sr_modf, 0 /* var args */, NULL}, {NULL, NULL, 0}};
 
 /**
  *
@@ -490,7 +491,7 @@ void sqlang_errorfunc(HSQUIRRELVM J, const SQChar *fmt, ...)
 	char ebuf[4096];
 	va_list ap;
 
-	if(_sr_J_env.JJ==J) {
+	if(_sr_J_env.JJ == J) {
 		if(_sr_J_env.JJ_exit == 1) {
 			LM_DBG("exception on ksr exit (JJ)\n");
 			return;
@@ -530,8 +531,8 @@ void sqlang_printfunc(HSQUIRRELVM SQ_UNUSED_ARG(J), const SQChar *fmt, ...)
 void sqlang_debughook(HSQUIRRELVM J, SQInteger type, const SQChar *sourcename,
 		SQInteger line, const SQChar *funcname)
 {
-	LM_ERR("SQLang: %s:%d - %s(...) [type %d]\n", (char*)sourcename, (int)line,
-			(char*)funcname, (int)type);
+	LM_ERR("SQLang: %s:%d - %s(...) [type %d]\n", (char *)sourcename, (int)line,
+			(char *)funcname, (int)type);
 }
 
 /**
@@ -543,13 +544,13 @@ static int sqlang_load_file(HSQUIRRELVM J, const char *filename)
 		/* prints syntax errors if any */
 		LM_ERR("failed to load file: %s\n", filename);
 		return -1;
-    }
-    LM_DBG("loaded file: %s\n", filename);
+	}
+	LM_DBG("loaded file: %s\n", filename);
 	return 0;
 #if 0
 	FILE *f;
 	size_t len;
-#define SQLANG_SCRIPT_MAX_SIZE 128*1024
+#define SQLANG_SCRIPT_MAX_SIZE 128 * 1024
 	char buf[SQLANG_SCRIPT_MAX_SIZE];
 
 	f = fopen(filename, "rb");
@@ -581,9 +582,10 @@ static int sqlang_load_file(HSQUIRRELVM J, const char *filename)
 int sqlang_sr_init_mod(void)
 {
 	if(_sr_sqlang_reload_version == NULL) {
-		_sr_sqlang_reload_version = (int*)shm_malloc(sizeof(int));
+		_sr_sqlang_reload_version = (int *)shm_malloc(sizeof(int));
 		if(_sr_sqlang_reload_version == NULL) {
-			SHM_MEM_ERROR_FMT("reload version\n");;
+			SHM_MEM_ERROR_FMT("reload version\n");
+			;
 			return -1;
 		}
 		*_sr_sqlang_reload_version = 0;
@@ -598,7 +600,7 @@ int sqlang_sr_init_mod(void)
  */
 int sqlang_kemi_load_script(void)
 {
-	if(sqlang_load_file(_sr_J_env.JJ, _sr_sqlang_load_file.s)<0) {
+	if(sqlang_load_file(_sr_J_env.JJ, _sr_sqlang_load_file.s) < 0) {
 		LM_ERR("failed to load sqlang script file: %.*s\n",
 				_sr_sqlang_load_file.len, _sr_sqlang_load_file.s);
 		return -1;
@@ -612,32 +614,33 @@ int sqlang_sr_init_child(void)
 {
 	memset(&_sr_J_env, 0, sizeof(sr_sqlang_env_t));
 	_sr_J_env.J = sq_open(1024);
-	if(_sr_J_env.J==NULL) {
+	if(_sr_J_env.J == NULL) {
 		LM_ERR("cannot create SQlang context (exec)\n");
 		return -1;
 	}
-    sq_pushroottable(_sr_J_env.J);
+	sq_pushroottable(_sr_J_env.J);
 	/*sets the print functions*/
 	sq_setprintfunc(_sr_J_env.J, sqlang_printfunc, sqlang_errorfunc);
 	//sq_setnativedebughook(_sr_J_env.J, sqlang_debughook);
 	sq_enabledebuginfo(_sr_J_env.J, 1);
 
-    sqstd_register_bloblib(_sr_J_env.J);
-    sqstd_register_iolib(_sr_J_env.J);
-    sqstd_register_systemlib(_sr_J_env.J);
-    sqstd_register_mathlib(_sr_J_env.J);
-    sqstd_register_stringlib(_sr_J_env.J);
+	sqstd_register_bloblib(_sr_J_env.J);
+	sqstd_register_iolib(_sr_J_env.J);
+	sqstd_register_systemlib(_sr_J_env.J);
+	sqstd_register_mathlib(_sr_J_env.J);
+	sqstd_register_stringlib(_sr_J_env.J);
 	sqstd_seterrorhandlers(_sr_J_env.J);
 
 	sqlang_sr_kemi_register_libs(_sr_J_env.J);
-	if(_sr_sqlang_load_file.s != NULL && _sr_sqlang_load_file.len>0) {
+	if(_sr_sqlang_load_file.s != NULL && _sr_sqlang_load_file.len > 0) {
 		_sr_J_env.JJ = sq_open(1024);
-		if(_sr_J_env.JJ==NULL) {
+		if(_sr_J_env.JJ == NULL) {
 			LM_ERR("cannot create load SQLang context (load)\n");
 			return -1;
 		}
 		sq_pushroottable(_sr_J_env.JJ);
-		LM_DBG("*** sqlang top index now is: %d\n", (int)sqlang_gettop(_sr_J_env.JJ));
+		LM_DBG("*** sqlang top index now is: %d\n",
+				(int)sqlang_gettop(_sr_J_env.JJ));
 		/*sets the print functions*/
 		sq_setprintfunc(_sr_J_env.JJ, sqlang_printfunc, sqlang_errorfunc);
 		//sq_setnativedebughook(_sr_J_env.JJ, sqlang_debughook);
@@ -651,9 +654,9 @@ int sqlang_sr_init_child(void)
 		sqstd_seterrorhandlers(_sr_J_env.JJ);
 
 		sqlang_sr_kemi_register_libs(_sr_J_env.JJ);
-		LM_DBG("loading sqlang script file: %.*s\n",
-				_sr_sqlang_load_file.len, _sr_sqlang_load_file.s);
-		if(sqlang_kemi_load_script()<0) {
+		LM_DBG("loading sqlang script file: %.*s\n", _sr_sqlang_load_file.len,
+				_sr_sqlang_load_file.s);
+		if(sqlang_kemi_load_script() < 0) {
 			return -1;
 		}
 	}
@@ -666,11 +669,11 @@ int sqlang_sr_init_child(void)
  */
 void sqlang_sr_destroy(void)
 {
-	if(_sr_J_env.J!=NULL) {
+	if(_sr_J_env.J != NULL) {
 		sq_close(_sr_J_env.J);
 		_sr_J_env.J = NULL;
 	}
-	if(_sr_J_env.JJ!=NULL) {
+	if(_sr_J_env.JJ != NULL) {
 		sq_close(_sr_J_env.JJ);
 		_sr_J_env.JJ = NULL;
 	}
@@ -683,7 +686,7 @@ void sqlang_sr_destroy(void)
 int sqlang_kemi_reload_script(void)
 {
 	int v;
-	if(_sr_sqlang_load_file.s == NULL && _sr_sqlang_load_file.len<=0) {
+	if(_sr_sqlang_load_file.s == NULL && _sr_sqlang_load_file.len <= 0) {
 		LM_WARN("script file path not provided\n");
 		return -1;
 	}
@@ -691,7 +694,7 @@ int sqlang_kemi_reload_script(void)
 		LM_WARN("reload not enabled\n");
 		return -1;
 	}
-	if(_sr_J_env.JJ==NULL) {
+	if(_sr_J_env.JJ == NULL) {
 		LM_ERR("load JS context not created\n");
 		return -1;
 	}
@@ -702,8 +705,8 @@ int sqlang_kemi_reload_script(void)
 		return 0;
 	}
 	LM_DBG("reloading sqlang script file: %.*s (%d => %d)\n",
-				_sr_sqlang_load_file.len, _sr_sqlang_load_file.s,
-				_sr_sqlang_local_version, v);
+			_sr_sqlang_load_file.len, _sr_sqlang_load_file.s,
+			_sr_sqlang_local_version, v);
 	sqlang_kemi_load_script();
 	_sr_sqlang_local_version = v;
 	return 0;
@@ -713,8 +716,8 @@ int sqlang_kemi_reload_script(void)
 /**
  *
  */
-int app_sqlang_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
-		char *p3, int emode)
+int app_sqlang_run_ex(
+		sip_msg_t *msg, char *func, char *p1, char *p2, char *p3, int emode)
 {
 	int n;
 	int ret;
@@ -722,7 +725,7 @@ int app_sqlang_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 	sip_msg_t *bmsg;
 	SQInteger rv;
 
-	if(_sr_J_env.JJ==NULL) {
+	if(_sr_J_env.JJ == NULL) {
 		LM_ERR("sqlang loading state not initialized (call: %s)\n", func);
 		return -1;
 	}
@@ -736,30 +739,26 @@ int app_sqlang_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 	sq_pushstring(_sr_J_env.JJ, _SC(func), -1);
 	if(!SQ_SUCCEEDED(sq_get(_sr_J_env.JJ, -2))) {
 		/* failed to gets the func field from the global table */
-		sq_settop(_sr_J_env.JJ, (top<=0)?1:top); /* restores the original stack size */
+		sq_settop(_sr_J_env.JJ,
+				(top <= 0) ? 1 : top); /* restores the original stack size */
 		LM_ERR("sqlang failed to find symbol (call: %s)\n", func);
 		return -1;
 	}
 
-	if(!sqlang_isfunction(_sr_J_env.JJ, -1))
-	{
+	if(!sqlang_isfunction(_sr_J_env.JJ, -1)) {
 		LM_ERR("no such function [%s] in sqlang scripts\n", func);
-		LM_ERR("top stack type [%d]\n",
-			sqlang_gettype(_sr_J_env.JJ, -1));
+		LM_ERR("top stack type [%d]\n", sqlang_gettype(_sr_J_env.JJ, -1));
 	}
 	/* push the 'this' (in this case is the global table) */
 	sq_pushroottable(_sr_J_env.JJ);
 	n = 1;
-	if(p1!=NULL)
-	{
+	if(p1 != NULL) {
 		sqlang_pushstring(_sr_J_env.JJ, p1);
 		n++;
-		if(p2!=NULL)
-		{
+		if(p2 != NULL) {
 			sqlang_pushstring(_sr_J_env.JJ, p2);
 			n++;
-			if(p3!=NULL)
-			{
+			if(p3 != NULL) {
 				sqlang_pushstring(_sr_J_env.JJ, p3);
 				n++;
 			}
@@ -774,7 +773,7 @@ int app_sqlang_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 	if(SQ_SUCCEEDED(rv)) {
 		ret = 1;
 	} else {
-		if(_sr_J_env.JJ_exit==0) {
+		if(_sr_J_env.JJ_exit == 0) {
 			LM_ERR("failed to execute the func: %s (%d)\n", func, (int)rv);
 			sqstd_printcallstack(_sr_J_env.JJ);
 			ret = -1;
@@ -785,7 +784,8 @@ int app_sqlang_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 	}
 	_sr_J_env.msg = bmsg;
 	_sr_J_env.JJ_exit = 0;
-	sq_settop(_sr_J_env.JJ, (top<=0)?1:top); /* restores the original stack size */
+	sq_settop(_sr_J_env.JJ,
+			(top <= 0) ? 1 : top); /* restores the original stack size */
 
 	return ret;
 }
@@ -793,8 +793,7 @@ int app_sqlang_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 /**
  *
  */
-int app_sqlang_run(sip_msg_t *msg, char *func, char *p1, char *p2,
-		char *p3)
+int app_sqlang_run(sip_msg_t *msg, char *func, char *p1, char *p2, char *p3)
 {
 	return app_sqlang_run_ex(msg, func, p1, p2, p3, 1);
 }
@@ -892,7 +891,8 @@ int app_sqlang_dofile(sip_msg_t *msg, char *script)
 /**
  *
  */
-int sr_kemi_sqlang_return_xval(HSQUIRRELVM J, sr_kemi_t *ket, sr_kemi_xval_t *rx)
+int sr_kemi_sqlang_return_xval(
+		HSQUIRRELVM J, sr_kemi_t *ket, sr_kemi_xval_t *rx)
 {
 	switch(rx->vtype) {
 		case SR_KEMIP_NONE:
@@ -907,7 +907,7 @@ int sr_kemi_sqlang_return_xval(HSQUIRRELVM J, sr_kemi_t *ket, sr_kemi_xval_t *rx
 			sqlang_pushlstring(J, rx->v.s.s, rx->v.s.len);
 			return 1;
 		case SR_KEMIP_BOOL:
-			if(rx->v.n!=SR_KEMI_FALSE) {
+			if(rx->v.n != SR_KEMI_FALSE) {
 				sq_pushbool(J, SRSQLANG_TRUE);
 			} else {
 				sq_pushbool(J, SRSQLANG_FALSE);
@@ -953,7 +953,7 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 
 	env_J = sqlang_sr_env_get();
 
-	if(env_J==NULL || env_J->msg==NULL || ket==NULL) {
+	if(env_J == NULL || env_J->msg == NULL || ket == NULL) {
 		LM_ERR("invalid JS environment attributes or parameters\n");
 		return app_sqlang_return_false(J);
 	}
@@ -962,8 +962,8 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 	mname = &ket->mname;
 
 	argc = sqlang_gettop(J);
-	if(argc==0 && ket->ptypes[0]==SR_KEMIP_NONE) {
-		if(ket->rtype==SR_KEMIP_XVAL) {
+	if(argc == 0 && ket->ptypes[0] == SR_KEMIP_NONE) {
+		if(ket->rtype == SR_KEMIP_XVAL) {
 			xret = ((sr_kemi_xfm_f)(ket->func))(env_J->msg);
 			return sr_kemi_sqlang_return_xval(J, ket, xret);
 		} else {
@@ -971,38 +971,38 @@ int sr_kemi_sqlang_exec_func_ex(HSQUIRRELVM J, sr_kemi_t *ket)
 			return sr_kemi_sqlang_return_int(J, ket, ret);
 		}
 	}
-	if(argc==0 && ket->ptypes[0]!=SR_KEMIP_NONE) {
-		LM_ERR("invalid number of parameters for: %.*s.%.*s\n",
-				mname->len, mname->s, fname->len, fname->s);
+	if(argc == 0 && ket->ptypes[0] != SR_KEMIP_NONE) {
+		LM_ERR("invalid number of parameters for: %.*s.%.*s\n", mname->len,
+				mname->s, fname->len, fname->s);
 		return app_sqlang_return_false(J);
 	}
 
-	if(argc>SR_KEMI_PARAMS_MAX) {
-		LM_ERR("too many parameters for: %.*s.%.*s\n",
-				mname->len, mname->s, fname->len, fname->s);
+	if(argc > SR_KEMI_PARAMS_MAX) {
+		LM_ERR("too many parameters for: %.*s.%.*s\n", mname->len, mname->s,
+				fname->len, fname->s);
 		return app_sqlang_return_false(J);
 	}
 
-	memset(vps, 0, SR_KEMI_PARAMS_MAX*sizeof(sr_kemi_xval_t));
-	for(i=0; i<SR_KEMI_PARAMS_MAX; i++) {
-		if(ket->ptypes[i]==SR_KEMIP_NONE) {
+	memset(vps, 0, SR_KEMI_PARAMS_MAX * sizeof(sr_kemi_xval_t));
+	for(i = 0; i < SR_KEMI_PARAMS_MAX; i++) {
+		if(ket->ptypes[i] == SR_KEMIP_NONE) {
 			break;
-		} else if(ket->ptypes[i]==SR_KEMIP_STR) {
+		} else if(ket->ptypes[i] == SR_KEMIP_STR) {
 			vps[i].vtype = SR_KEMIP_STR;
-			vps[i].v.s.s = (char*)sqlang_to_string(J, i);
+			vps[i].v.s.s = (char *)sqlang_to_string(J, i);
 			vps[i].v.s.len = strlen(vps[i].v.s.s);
-			LM_DBG("param[%d] for: %.*s is str: %.*s\n", i,
-				fname->len, fname->s, vps[i].v.s.len, vps[i].v.s.s);
-		} else if(ket->ptypes[i]==SR_KEMIP_INT) {
+			LM_DBG("param[%d] for: %.*s is str: %.*s\n", i, fname->len,
+					fname->s, vps[i].v.s.len, vps[i].v.s.s);
+		} else if(ket->ptypes[i] == SR_KEMIP_INT) {
 			vps[i].vtype = SR_KEMIP_INT;
 			vps[i].v.n = sqlang_to_int(J, i);
-			LM_DBG("param[%d] for: %.*s is int: %d\n", i,
-				fname->len, fname->s, vps[i].v.n);
-		} else if(ket->ptypes[i]==SR_KEMIP_LONG) {
+			LM_DBG("param[%d] for: %.*s is int: %d\n", i, fname->len, fname->s,
+					vps[i].v.n);
+		} else if(ket->ptypes[i] == SR_KEMIP_LONG) {
 			vps[i].vtype = SR_KEMIP_LONG;
 			vps[i].v.l = sqlang_to_long(J, i);
-			LM_DBG("param[%d] for: %.*s is long int: %ld\n", i,
-				fname->len, fname->s, vps[i].v.l);
+			LM_DBG("param[%d] for: %.*s is long int: %ld\n", i, fname->len,
+					fname->s, vps[i].v.l);
 		} else {
 			LM_ERR("unknown parameter type %d (%d)\n", ket->ptypes[i], i);
 			return app_sqlang_return_false(J);
@@ -1025,25 +1025,24 @@ int sr_kemi_sqlang_exec_func(HSQUIRRELVM J, int eidx)
 
 	ket = sr_kemi_sqlang_export_get(eidx);
 
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action) > 0)
 			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
 		gettimeofday(&tvb, &tz);
 	}
 
 	ret = sr_kemi_sqlang_exec_func_ex(J, ket);
 
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action) > 0)
 			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
 		gettimeofday(&tve, &tz);
 		tdiff = (tve.tv_sec - tvb.tv_sec) * 1000000
-				   + (tve.tv_usec - tvb.tv_usec);
+				+ (tve.tv_usec - tvb.tv_usec);
 		if(tdiff >= cfg_get(core, core_cfg, latency_limit_action)) {
 			LOG(cfg_get(core, core_cfg, latency_log),
-						"alert - action KSR.%s%s%s(...)"
-						" took too long [%u us]\n",
-						(ket->mname.len>0)?ket->mname.s:"",
-						(ket->mname.len>0)?".":"", ket->fname.s,
-						tdiff);
+					"alert - action KSR.%s%s%s(...)"
+					" took too long [%u us]\n",
+					(ket->mname.len > 0) ? ket->mname.s : "",
+					(ket->mname.len > 0) ? "." : "", ket->fname.s, tdiff);
 		}
 	}
 
@@ -1054,8 +1053,9 @@ int sr_kemi_sqlang_exec_func(HSQUIRRELVM J, int eidx)
  *
  */
 SQRegFunction *_sr_J_KSRMethods = NULL;
-#define SR_SQLANG_KSR_MODULES_SIZE	256
-#define SR_SQLANG_KSR_METHODS_SIZE	(SR_KEMI_SQLANG_EXPORT_SIZE + SR_SQLANG_KSR_MODULES_SIZE)
+#define SR_SQLANG_KSR_MODULES_SIZE 256
+#define SR_SQLANG_KSR_METHODS_SIZE \
+	(SR_KEMI_SQLANG_EXPORT_SIZE + SR_SQLANG_KSR_MODULES_SIZE)
 
 
 /**
@@ -1063,10 +1063,10 @@ SQRegFunction *_sr_J_KSRMethods = NULL;
  */
 SQInteger sqlang_register_global_func(HSQUIRRELVM J, SQFUNCTION f, char *fname)
 {
-    sq_pushstring(J, fname, -1);
-    sq_newclosure(J, f, 0); /* create a new function */
-    sq_newslot(J, -3, SQFalse);
-    return 0;
+	sq_pushstring(J, fname, -1);
+	sq_newclosure(J, f, 0); /* create a new function */
+	sq_newslot(J, -3, SQFalse);
+	return 0;
 }
 
 /**
@@ -1083,32 +1083,34 @@ SQInteger sqlang_open_KSR(HSQUIRRELVM J)
 	char mname[128];
 	char malias[256];
 
-	_sr_J_KSRMethods = malloc(SR_SQLANG_KSR_METHODS_SIZE * sizeof(SQRegFunction));
-	if(_sr_J_KSRMethods==NULL) {
-		SYS_MEM_ERROR ;
+	_sr_J_KSRMethods =
+			malloc(SR_SQLANG_KSR_METHODS_SIZE * sizeof(SQRegFunction));
+	if(_sr_J_KSRMethods == NULL) {
+		SYS_MEM_ERROR;
 		return 0;
 	}
-	memset(_sr_J_KSRMethods, 0, SR_SQLANG_KSR_METHODS_SIZE * sizeof(SQRegFunction));
+	memset(_sr_J_KSRMethods, 0,
+			SR_SQLANG_KSR_METHODS_SIZE * sizeof(SQRegFunction));
 
 	emods_size = sr_kemi_modules_size_get();
 	emods = sr_kemi_modules_get();
 
 	n = 0;
 	_sr_crt_J_KSRMethods = _sr_J_KSRMethods;
-	if(emods_size==0 || emods[0].kexp==NULL) {
+	if(emods_size == 0 || emods[0].kexp == NULL) {
 		LM_ERR("no kemi exports registered\n");
 		return 0;
 	}
 
-	sq_pushroottable(J); /* stack[1] */
-	sq_pushstring(J, "KSR", -1);  /* stack[2] */
-	sq_newtable(J);  /* stack[3] */
+	sq_pushroottable(J);		 /* stack[1] */
+	sq_pushstring(J, "KSR", -1); /* stack[2] */
+	sq_newtable(J);				 /* stack[3] */
 
-	for(i=0; emods[0].kexp[i].func!=NULL; i++) {
+	for(i = 0; emods[0].kexp[i].func != NULL; i++) {
 		LM_DBG("exporting KSR.%s(...)\n", emods[0].kexp[i].fname.s);
 		_sr_crt_J_KSRMethods[i].name = emods[0].kexp[i].fname.s;
 		_sr_crt_J_KSRMethods[i].f =
-			sr_kemi_sqlang_export_associate(&emods[0].kexp[i]);
+				sr_kemi_sqlang_export_associate(&emods[0].kexp[i]);
 		if(_sr_crt_J_KSRMethods[i].f == NULL) {
 			LM_ERR("failed to associate kemi function with sqlang export\n");
 			free(_sr_J_KSRMethods);
@@ -1122,39 +1124,41 @@ SQInteger sqlang_open_KSR(HSQUIRRELVM J)
 	}
 
 	/* special modules */
-	sq_pushstring(J, "x", -1);  /* stack[4] */
-	sq_newtable(J);  /* stack[5] */
-	i=0;
-	while(_sr_kemi_x_J_Map[i].name!=0) {
+	sq_pushstring(J, "x", -1); /* stack[4] */
+	sq_newtable(J);			   /* stack[5] */
+	i = 0;
+	while(_sr_kemi_x_J_Map[i].name != 0) {
 		snprintf(malias, 254, "%s", _sr_kemi_x_J_Map[i].name);
 		sqlang_register_global_func(J, _sr_kemi_x_J_Map[i].f, malias);
 		i++;
 	}
-    sq_newslot(J, -3, SQFalse);
+	sq_newslot(J, -3, SQFalse);
 
 	/* registered kemi modules */
-	if(emods_size>1) {
-		for(k=1; k<emods_size; k++) {
+	if(emods_size > 1) {
+		for(k = 1; k < emods_size; k++) {
 			n++;
 			_sr_crt_J_KSRMethods = _sr_J_KSRMethods + n;
 			snprintf(mname, 128, "%s", emods[k].kexp[0].mname.s);
-			sq_pushstring(J, mname, -1);  /* stack[4] */
-			sq_newtable(J);  /* stack[5] */
-			for(i=0; emods[k].kexp[i].func!=NULL; i++) {
+			sq_pushstring(J, mname, -1); /* stack[4] */
+			sq_newtable(J);				 /* stack[5] */
+			for(i = 0; emods[k].kexp[i].func != NULL; i++) {
 				LM_DBG("exporting %s.%s(...)\n", mname,
 						emods[k].kexp[i].fname.s);
 				_sr_crt_J_KSRMethods[i].name = emods[k].kexp[i].fname.s;
 				_sr_crt_J_KSRMethods[i].f =
-					sr_kemi_sqlang_export_associate(&emods[k].kexp[i]);
+						sr_kemi_sqlang_export_associate(&emods[k].kexp[i]);
 				if(_sr_crt_J_KSRMethods[i].f == NULL) {
-					LM_ERR("failed to associate kemi function with func export\n");
+					LM_ERR("failed to associate kemi function with func "
+						   "export\n");
 					free(_sr_J_KSRMethods);
 					_sr_J_KSRMethods = NULL;
 					goto error;
 				}
 				_sr_crt_J_KSRMethods[i].nparamscheck = 0;
 				snprintf(malias, 256, "%s", _sr_crt_J_KSRMethods[i].name);
-				sqlang_register_global_func(J, _sr_crt_J_KSRMethods[i].f, malias);
+				sqlang_register_global_func(
+						J, _sr_crt_J_KSRMethods[i].f, malias);
 				n++;
 			}
 			sq_newslot(J, -3, SQFalse);
@@ -1163,12 +1167,12 @@ SQInteger sqlang_open_KSR(HSQUIRRELVM J)
 					emods[k].kexp[0].mname.s);
 		}
 	}
-    sq_newslot(J, -3, SQFalse);
-    sq_pop(J ,1); /* pops the root table */
+	sq_newslot(J, -3, SQFalse);
+	sq_pop(J, 1); /* pops the root table */
 	LM_DBG("module 'KSR' has been initialized\n");
 	return 1;
 error:
-    sq_pop(J ,1); /* pops the root table */
+	sq_pop(J, 1); /* pops the root table */
 	return 0;
 }
 
@@ -1184,18 +1188,15 @@ void sqlang_sr_kemi_register_libs(HSQUIRRELVM J)
 	LM_INFO("initialized KSR module with return code: %d\n", ret);
 }
 
-static const char* app_sqlang_rpc_reload_doc[2] = {
-	"Reload sqlang file",
-	0
-};
+static const char *app_sqlang_rpc_reload_doc[2] = {"Reload sqlang file", 0};
 
 
-static void app_sqlang_rpc_reload(rpc_t* rpc, void* ctx)
+static void app_sqlang_rpc_reload(rpc_t *rpc, void *ctx)
 {
 	int v;
 	void *vh;
 
-	if(_sr_sqlang_load_file.s == NULL && _sr_sqlang_load_file.len<=0) {
+	if(_sr_sqlang_load_file.s == NULL && _sr_sqlang_load_file.len <= 0) {
 		LM_WARN("script file path not provided\n");
 		rpc->fault(ctx, 500, "No script file");
 		return;
@@ -1208,63 +1209,58 @@ static void app_sqlang_rpc_reload(rpc_t* rpc, void* ctx)
 
 	v = *_sr_sqlang_reload_version;
 	LM_INFO("marking for reload sqlang script file: %.*s (%d => %d)\n",
-				_sr_sqlang_load_file.len, _sr_sqlang_load_file.s,
-				_sr_sqlang_local_version, v);
+			_sr_sqlang_load_file.len, _sr_sqlang_load_file.s,
+			_sr_sqlang_local_version, v);
 	*_sr_sqlang_reload_version += 1;
 
-	if (rpc->add(ctx, "{", &vh) < 0) {
+	if(rpc->add(ctx, "{", &vh) < 0) {
 		rpc->fault(ctx, 500, "Server error");
 		return;
 	}
-	rpc->struct_add(vh, "dd",
-			"old", v,
-			"new", *_sr_sqlang_reload_version);
+	rpc->struct_add(vh, "dd", "old", v, "new", *_sr_sqlang_reload_version);
 }
 
-static const char* app_sqlang_rpc_api_list_doc[2] = {
-	"List kemi exports to sqlang",
-	0
-};
+static const char *app_sqlang_rpc_api_list_doc[2] = {
+		"List kemi exports to sqlang", 0};
 
-static void app_sqlang_rpc_api_list(rpc_t* rpc, void* ctx)
+static void app_sqlang_rpc_api_list(rpc_t *rpc, void *ctx)
 {
 	int i;
 	int n;
 	sr_kemi_t *ket;
-	void* th;
-	void* sh;
-	void* ih;
+	void *th;
+	void *sh;
+	void *ih;
 
-	if (rpc->add(ctx, "{", &th) < 0) {
+	if(rpc->add(ctx, "{", &th) < 0) {
 		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
 	n = 0;
-	for(i=0; i<SR_KEMI_SQLANG_EXPORT_SIZE; i++) {
+	for(i = 0; i < SR_KEMI_SQLANG_EXPORT_SIZE; i++) {
 		ket = sr_kemi_sqlang_export_get(i);
-		if(ket==NULL) continue;
+		if(ket == NULL)
+			continue;
 		n++;
 	}
 
-	if(rpc->struct_add(th, "d[",
-				"msize", n,
-				"methods",  &ih)<0)
-	{
+	if(rpc->struct_add(th, "d[", "msize", n, "methods", &ih) < 0) {
 		rpc->fault(ctx, 500, "Internal error array structure");
 		return;
 	}
-	for(i=0; i<SR_KEMI_SQLANG_EXPORT_SIZE; i++) {
+	for(i = 0; i < SR_KEMI_SQLANG_EXPORT_SIZE; i++) {
 		ket = sr_kemi_sqlang_export_get(i);
-		if(ket==NULL) continue;
-		if(rpc->struct_add(ih, "{", "func", &sh)<0) {
+		if(ket == NULL)
+			continue;
+		if(rpc->struct_add(ih, "{", "func", &sh) < 0) {
 			rpc->fault(ctx, 500, "Internal error internal structure");
 			return;
 		}
-		if(rpc->struct_add(sh, "SSSS",
-				"ret", sr_kemi_param_map_get_name(ket->rtype),
-				"module", &ket->mname,
-				"name", &ket->fname,
-				"params", sr_kemi_param_map_get_params(ket->ptypes))<0) {
+		if(rpc->struct_add(sh, "SSSS", "ret",
+				   sr_kemi_param_map_get_name(ket->rtype), "module",
+				   &ket->mname, "name", &ket->fname, "params",
+				   sr_kemi_param_map_get_params(ket->ptypes))
+				< 0) {
 			LM_ERR("failed to add the structure with attributes (%d)\n", i);
 			rpc->fault(ctx, 500, "Internal error creating dest struct");
 			return;
@@ -1273,20 +1269,18 @@ static void app_sqlang_rpc_api_list(rpc_t* rpc, void* ctx)
 }
 
 rpc_export_t app_sqlang_rpc_cmds[] = {
-	{"app_sqlang.reload", app_sqlang_rpc_reload,
-		app_sqlang_rpc_reload_doc, 0},
-	{"app_sqlang.api_list", app_sqlang_rpc_api_list,
-		app_sqlang_rpc_api_list_doc, 0},
-	{0, 0, 0, 0}
-};
+		{"app_sqlang.reload", app_sqlang_rpc_reload, app_sqlang_rpc_reload_doc,
+				0},
+		{"app_sqlang.api_list", app_sqlang_rpc_api_list,
+				app_sqlang_rpc_api_list_doc, 0},
+		{0, 0, 0, 0}};
 
 /**
  * register RPC commands
  */
 int app_sqlang_init_rpc(void)
 {
-	if (rpc_register_array(app_sqlang_rpc_cmds)!=0)
-	{
+	if(rpc_register_array(app_sqlang_rpc_cmds) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
