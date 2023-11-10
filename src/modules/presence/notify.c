@@ -186,7 +186,7 @@ int build_str_hdr(subs_t *subs, int is_body, str *hdr)
 			+ (subs->reason.len > expires.len ? subs->reason.len : expires.len)
 			+ CRLF_LEN
 			+ (is_body ? (14 /*Content-Type: */ + subs->event->content_type.len
-								 + CRLF_LEN)
+						  + CRLF_LEN)
 					   : 0)
 			+ 1;
 
@@ -294,7 +294,8 @@ int get_wi_subs_db(subs_t *subs, watcher_t *watchers)
 	query_ops[n_query_cols] = OP_GT;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val = (int)time(NULL) + pres_expires_offset;
+	query_vals[n_query_cols].val.int_val =
+			(int)time(NULL) + pres_expires_offset;
 	n_query_cols++;
 
 	result_cols[status_col = n_result_cols++] = &str_status_col;
@@ -579,8 +580,8 @@ error:
 	return NULL;
 }
 
-str *ps_db_get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag,
-		str *contact)
+str *ps_db_get_p_notify_body(
+		str pres_uri, pres_ev_t *event, str *etag, str *contact)
 {
 	db_key_t query_cols[4];
 	db_val_t query_vals[4];
@@ -863,8 +864,8 @@ error:
 	return NULL;
 }
 
-str *ps_cache_get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag,
-		str *contact)
+str *ps_cache_get_p_notify_body(
+		str pres_uri, pres_ev_t *event, str *etag, str *contact)
 {
 	sip_uri_t uri;
 	ps_presentity_t ptm;
@@ -942,7 +943,7 @@ str *ps_cache_get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag,
 			ERR_MEM(PKG_MEM_STR);
 		}
 		memset(notify_body, 0, sizeof(str));
-		notify_body->s = (char *)pkg_malloc((pti->body.len+1) * sizeof(char));
+		notify_body->s = (char *)pkg_malloc((pti->body.len + 1) * sizeof(char));
 		if(notify_body->s == NULL) {
 			pkg_free(notify_body);
 			ERR_MEM(PKG_MEM_STR);
@@ -969,8 +970,7 @@ str *ps_cache_get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag,
 	memset(body_array, 0, (n + 2) * sizeof(str *));
 
 	if(etag != NULL) {
-		LM_DBG("searched etag = %.*s len= %d\n", etag->len, etag->s,
-				etag->len);
+		LM_DBG("searched etag = %.*s len= %d\n", etag->len, etag->s, etag->len);
 		LM_DBG("etag not NULL\n");
 		pti = ptlist;
 		i = 0;
@@ -987,7 +987,7 @@ str *ps_cache_get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag,
 				goto error;
 			}
 
-			size = sizeof(str) + (pti->body.len +1) * sizeof(char);
+			size = sizeof(str) + (pti->body.len + 1) * sizeof(char);
 			body = (str *)pkg_malloc(size);
 			if(body == NULL) {
 				ERR_MEM(PKG_MEM_STR);
@@ -1011,7 +1011,7 @@ str *ps_cache_get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag,
 				goto error;
 			}
 
-			size = sizeof(str) + (pti->body.len+1) * sizeof(char);
+			size = sizeof(str) + (pti->body.len + 1) * sizeof(char);
 			body = (str *)pkg_malloc(size);
 			if(body == NULL) {
 				ERR_MEM(PKG_MEM_STR);
@@ -1030,8 +1030,8 @@ str *ps_cache_get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag,
 
 	ps_presentity_list_free(ptlist, 1);
 
-	notify_body = event->agg_nbody(
-			&uri.user, &uri.host, body_array, n, build_off_n);
+	notify_body =
+			event->agg_nbody(&uri.user, &uri.host, body_array, n, build_off_n);
 
 done:
 	if(body_array != NULL) {
@@ -1340,7 +1340,8 @@ int get_subs_db(
 
 		s.event = event;
 		s.local_cseq = row_vals[cseq_col].val.int_val + 1;
-		if(row_vals[expires_col].val.int_val < (int)time(NULL) + pres_expires_offset)
+		if(row_vals[expires_col].val.int_val
+				< (int)time(NULL) + pres_expires_offset)
 			s.expires = 0;
 		else
 			s.expires = row_vals[expires_col].val.int_val - (int)time(NULL);
@@ -1407,8 +1408,8 @@ subs_t *get_subs_dialog(str *pres_uri, pres_ev_t *event, str *sender)
 					   && s->event == event && s->pres_uri.len == pres_uri->len
 					   && presence_sip_uri_match(&s->pres_uri, pres_uri) == 0))
 					|| (sender && sender->len == s->contact.len
-							   && presence_sip_uri_match(sender, &s->contact)
-										  == 0))
+							&& presence_sip_uri_match(sender, &s->contact)
+									   == 0))
 				continue;
 
 			s_new = mem_copy_subs(s, PKG_MEM_TYPE);
@@ -1700,8 +1701,9 @@ jump_over_body:
 	}
 
 	/* build extra headers */
-	if(build_str_hdr(subs, (notify_body && notify_body->len>0) ? 1 : 0,
-				&str_hdr) < 0) {
+	if(build_str_hdr(
+			   subs, (notify_body && notify_body->len > 0) ? 1 : 0, &str_hdr)
+			< 0) {
 		LM_ERR("while building headers\n");
 		goto error;
 	}
@@ -1717,7 +1719,7 @@ jump_over_body:
 	LM_DBG("expires %d status %d\n", subs->expires, subs->status);
 	cb_param = mem_copy_subs(subs, SHM_MEM_TYPE);
 
-	if(_pres_subs_mode==1) {
+	if(_pres_subs_mode == 1) {
 		backup_subs = _pres_subs_last_sub;
 		_pres_subs_last_sub = subs;
 	}
@@ -1725,7 +1727,7 @@ jump_over_body:
 	set_uac_req(&uac_r, &met, &str_hdr, notify_body, td, TMCB_LOCAL_COMPLETED,
 			p_tm_callback, (void *)cb_param);
 	result = tmb.t_request_within(&uac_r);
-	if(_pres_subs_mode==1) {
+	if(_pres_subs_mode == 1) {
 		_pres_subs_last_sub = backup_subs;
 	}
 	if(result < 0) {
@@ -1796,8 +1798,9 @@ int notify(subs_t *subs, subs_t *watcher_subs, str *n_body, int force_null_body,
 		}
 		/* if DB_ONLY mode or WRITE_THROUGH update in database */
 		if(subs->recv_event != PRES_SUBSCRIBE_RECV
-				&& ((pres_subs_dbmode == DB_ONLY && pres_notifier_processes == 0)
-						   || pres_subs_dbmode == WRITE_THROUGH)) {
+				&& ((pres_subs_dbmode == DB_ONLY
+							&& pres_notifier_processes == 0)
+						|| pres_subs_dbmode == WRITE_THROUGH)) {
 			LM_DBG("updating subscription to database\n");
 			if(update_subs_db(subs, LOCAL_TYPE) < 0) {
 				LM_ERR("updating subscription in database\n");
@@ -1919,9 +1922,10 @@ void run_notify_reply_event(struct cell *t, struct tmcb_params *ps)
 		_pres_subs_notify_reply_msg = ps->rpl;
 	}
 
-	if(_pres_subs_mode==1) {
+	if(_pres_subs_mode == 1) {
 		backup_subs = _pres_subs_last_sub;
-		_pres_subs_last_sub = mem_copy_subs((subs_t *)(*ps->param), PKG_MEM_TYPE);
+		_pres_subs_last_sub =
+				mem_copy_subs((subs_t *)(*ps->param), PKG_MEM_TYPE);
 	}
 
 	backup_route_type = get_route_type();
@@ -1931,7 +1935,7 @@ void run_notify_reply_event(struct cell *t, struct tmcb_params *ps)
 
 	_pres_subs_notify_reply_msg = NULL;
 	_pres_subs_notify_reply_code = 0;
-	if(_pres_subs_mode==1) {
+	if(_pres_subs_mode == 1) {
 		pkg_free(_pres_subs_last_sub);
 		_pres_subs_last_sub = backup_subs;
 	}
@@ -1974,7 +1978,7 @@ void p_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 
 	if(ps->code == 404 || ps->code == 481
 			|| (ps->code == 408 && pres_timeout_rm_subs
-					   && subs->status != TERMINATED_STATUS)
+					&& subs->status != TERMINATED_STATUS)
 			|| pres_get_delete_sub()) {
 		delete_subs(&subs->pres_uri, &subs->event->name, &subs->to_tag,
 				&subs->from_tag, &subs->callid);
@@ -2500,7 +2504,7 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 		update_vals[n_update_cols].val.int_val =
 				core_case_hash(&callid, &from_tag, 0)
 				% (pres_waitn_time * pres_notifier_poll_rate
-						  * pres_notifier_processes);
+						* pres_notifier_processes);
 		n_update_cols++;
 
 		if(full) {
@@ -2562,7 +2566,7 @@ int set_updated(subs_t *sub)
 	update_vals[0].nul = 0;
 	update_vals[0].val.int_val = core_case_hash(&sub->callid, &sub->from_tag, 0)
 								 % (pres_waitn_time * pres_notifier_poll_rate
-										   * pres_notifier_processes);
+										 * pres_notifier_processes);
 
 	if(pa_dbf.use_table(pa_db, &active_watchers_table) < 0) {
 		LM_ERR("use table failed\n");
@@ -2913,8 +2917,7 @@ int process_dialogs(int round, int presence_winfo)
 		goto error;
 	}
 
-	if(dialog_list->n <= 0)
-	{
+	if(dialog_list->n <= 0) {
 		no_active_watchers = 1;
 		goto done;
 	}
