@@ -32,7 +32,8 @@
 typedef int (*regapi_save_f)(sip_msg_t *msg, str *table, int flags);
 int regapi_save(sip_msg_t *msg, str *table, int flags);
 
-typedef int (*regapi_save_uri_f)(sip_msg_t *msg, str *table, int flags, str *uri);
+typedef int (*regapi_save_uri_f)(
+		sip_msg_t *msg, str *table, int flags, str *uri);
 int regapi_save_uri(sip_msg_t *msg, str *table, int flags, str *uri);
 
 typedef int (*regapi_lookup_f)(sip_msg_t *msg, str *table);
@@ -49,18 +50,19 @@ int regapi_set_q_override(sip_msg_t *msg, str *new_q);
 /**
  * @brief REGISTRAR API structure
  */
-typedef struct registrar_api {
-	regapi_save_f       save;
-	regapi_save_uri_f   save_uri;
-	regapi_lookup_f     lookup;
+typedef struct registrar_api
+{
+	regapi_save_f save;
+	regapi_save_uri_f save_uri;
+	regapi_lookup_f lookup;
 	regapi_lookup_uri_f lookup_uri;
 	regapi_lookup_uri_f lookup_to_dset;
-	regapi_lookup_f     registered;
+	regapi_lookup_f registered;
 	regapi_set_q_override_f set_q_override;
 } registrar_api_t;
 
-typedef int (*bind_registrar_f)(registrar_api_t* api);
-int bind_registrar(registrar_api_t* api);
+typedef int (*bind_registrar_f)(registrar_api_t *api);
+int bind_registrar(registrar_api_t *api);
 
 /**
  * @brief Load the REGISTRAR API
@@ -74,8 +76,7 @@ static inline int registrar_load_api(registrar_api_t *api)
 		LM_ERR("cannot find bind_registrar\n");
 		return -1;
 	}
-	if (bindregistrar(api) < 0)
-	{
+	if(bindregistrar(api) < 0) {
 		LM_ERR("cannot bind registrar api\n");
 		return -1;
 	}
