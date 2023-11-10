@@ -36,46 +36,49 @@ extern int db_mysql_opt_ssl_mode;
 /*
  * Close the connection and release memory
  */
-static void my_con_free(db_con_t* con, struct my_con* payload)
+static void my_con_free(db_con_t *con, struct my_con *payload)
 {
-	if (!payload) return;
+	if(!payload)
+		return;
 
 	/* Delete the structure only if there are no more references
 	 * to it in the connection pool
 	 */
-	if (db_pool_remove((db_pool_entry_t*)payload) == 0) return;
+	if(db_pool_remove((db_pool_entry_t *)payload) == 0)
+		return;
 
 	db_pool_entry_free(&payload->gen);
-	if (payload->con) pkg_free(payload->con);
+	if(payload->con)
+		pkg_free(payload->con);
 	pkg_free(payload);
 }
 
 
-int my_con_connect(db_con_t* con)
+int my_con_connect(db_con_t *con)
 {
-	struct my_con* mcon;
-	struct my_uri* muri;
+	struct my_con *mcon;
+	struct my_uri *muri;
 
 	mcon = DB_GET_PAYLOAD(con);
 	muri = DB_GET_PAYLOAD(con->uri);
 
 	/* Do not reconnect already connected connections */
-	if (mcon->flags & MY_CONNECTED) return 0;
+	if(mcon->flags & MY_CONNECTED)
+		return 0;
 
-	DBG("Connecting to %.*s:%.*s\n",
-		con->uri->scheme.len, ZSW(con->uri->scheme.s),
-		con->uri->body.len, ZSW(con->uri->body.s));
+	DBG("Connecting to %.*s:%.*s\n", con->uri->scheme.len,
+			ZSW(con->uri->scheme.s), con->uri->body.len, ZSW(con->uri->body.s));
 
-	if (my_connect_to) {
-		if (mysql_options(mcon->con, MYSQL_OPT_CONNECT_TIMEOUT,
-					(const void*)&my_connect_to))
+	if(my_connect_to) {
+		if(mysql_options(mcon->con, MYSQL_OPT_CONNECT_TIMEOUT,
+				   (const void *)&my_connect_to))
 			WARN("failed to set MYSQL_OPT_CONNECT_TIMEOUT\n");
 	}
 #if MYSQL_VERSION_ID > 50710 && !defined(MARIADB_BASE_VERSION)
-	if(db_mysql_opt_ssl_mode!=0) {
+	if(db_mysql_opt_ssl_mode != 0) {
 		unsigned int optuint = 0;
-		if(db_mysql_opt_ssl_mode==1) {
-			if(db_mysql_opt_ssl_mode!=SSL_MODE_DISABLED) {
+		if(db_mysql_opt_ssl_mode == 1) {
+			if(db_mysql_opt_ssl_mode != SSL_MODE_DISABLED) {
 				LM_WARN("ssl mode disabled is not 1 (value %u) - enforcing\n",
 						SSL_MODE_DISABLED);
 			}
@@ -83,34 +86,34 @@ int my_con_connect(db_con_t* con)
 		} else {
 			optuint = (unsigned int)db_mysql_opt_ssl_mode;
 		}
-		mysql_options(mcon->con, MYSQL_OPT_SSL_MODE, (const void*)&optuint);
+		mysql_options(mcon->con, MYSQL_OPT_SSL_MODE, (const void *)&optuint);
 	}
 #else
-	if(db_mysql_opt_ssl_mode!=0) {
-		LM_WARN("ssl mode not supported by mysql version (value %u) - ignoring\n",
-						(unsigned int)db_mysql_opt_ssl_mode);
+	if(db_mysql_opt_ssl_mode != 0) {
+		LM_WARN("ssl mode not supported by mysql version (value %u) - "
+				"ignoring\n",
+				(unsigned int)db_mysql_opt_ssl_mode);
 	}
 #endif
 
 #if MYSQL_VERSION_ID >= 40101
-	if ((my_client_ver >= 50025) ||
-		((my_client_ver >= 40122) &&
-			(my_client_ver < 50000))) {
-		if (my_send_to) {
-			if (mysql_options(mcon->con, MYSQL_OPT_WRITE_TIMEOUT ,
-						(const void*)&my_send_to))
+	if((my_client_ver >= 50025)
+			|| ((my_client_ver >= 40122) && (my_client_ver < 50000))) {
+		if(my_send_to) {
+			if(mysql_options(mcon->con, MYSQL_OPT_WRITE_TIMEOUT,
+					   (const void *)&my_send_to))
 				WARN("failed to set MYSQL_OPT_WRITE_TIMEOUT\n");
 		}
-		if (my_recv_to){
-			if (mysql_options(mcon->con, MYSQL_OPT_READ_TIMEOUT ,
-						(const void*)&my_recv_to))
+		if(my_recv_to) {
+			if(mysql_options(mcon->con, MYSQL_OPT_READ_TIMEOUT,
+					   (const void *)&my_recv_to))
 				WARN("failed to set MYSQL_OPT_READ_TIMEOUT\n");
 		}
 	}
 #endif
 
-	if (!mysql_real_connect(mcon->con, muri->host, muri->username,
-						muri->password, muri->database, muri->port, 0, 0)) {
+	if(!mysql_real_connect(mcon->con, muri->host, muri->username,
+			   muri->password, muri->database, muri->port, 0, 0)) {
 		ERR("could not connect: %s\n", mysql_error(mcon->con));
 		return -1;
 	}
@@ -124,17 +127,17 @@ int my_con_connect(db_con_t* con)
 }
 
 
-void my_con_disconnect(db_con_t* con)
+void my_con_disconnect(db_con_t *con)
 {
-	struct my_con* mcon;
+	struct my_con *mcon;
 
 	mcon = DB_GET_PAYLOAD(con);
 
-	if ((mcon->flags & MY_CONNECTED) == 0) return;
+	if((mcon->flags & MY_CONNECTED) == 0)
+		return;
 
-	DBG("Disconnecting from %.*s:%.*s\n",
-		con->uri->scheme.len, ZSW(con->uri->scheme.s),
-		con->uri->body.len, ZSW(con->uri->body.s));
+	DBG("Disconnecting from %.*s:%.*s\n", con->uri->scheme.len,
+			ZSW(con->uri->scheme.s), con->uri->body.len, ZSW(con->uri->body.s));
 
 	mysql_close(mcon->con);
 	mcon->flags &= ~MY_CONNECTED;
@@ -150,42 +153,42 @@ void my_con_disconnect(db_con_t* con)
 }
 
 
-int my_con(db_con_t* con)
+int my_con(db_con_t *con)
 {
-	struct my_con* ptr;
+	struct my_con *ptr;
 
 	/* First try to lookup the connection in the connection pool and
 	 * re-use it if a match is found
 	 */
-	ptr = (struct my_con*)db_pool_get(con->uri);
-	if (ptr) {
+	ptr = (struct my_con *)db_pool_get(con->uri);
+	if(ptr) {
 		DBG("Connection to %.*s:%.*s found in connection pool\n",
-			con->uri->scheme.len, ZSW(con->uri->scheme.s),
-			con->uri->body.len, ZSW(con->uri->body.s));
+				con->uri->scheme.len, ZSW(con->uri->scheme.s),
+				con->uri->body.len, ZSW(con->uri->body.s));
 		goto found;
 	}
 
-	ptr = (struct my_con*)pkg_malloc(sizeof(struct my_con));
-	if (!ptr) {
+	ptr = (struct my_con *)pkg_malloc(sizeof(struct my_con));
+	if(!ptr) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(ptr, '\0', sizeof(struct my_con));
-	if (db_pool_entry_init(&ptr->gen, my_con_free, con->uri) < 0) goto error;
+	if(db_pool_entry_init(&ptr->gen, my_con_free, con->uri) < 0)
+		goto error;
 
-	ptr->con = (MYSQL*)pkg_malloc(sizeof(MYSQL));
-	if (!ptr->con) {
+	ptr->con = (MYSQL *)pkg_malloc(sizeof(MYSQL));
+	if(!ptr->con) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
 	mysql_init(ptr->con);
 
-	DBG("Creating new connection to: %.*s:%.*s\n",
-		con->uri->scheme.len, ZSW(con->uri->scheme.s),
-		con->uri->body.len, ZSW(con->uri->body.s));
+	DBG("Creating new connection to: %.*s:%.*s\n", con->uri->scheme.len,
+			ZSW(con->uri->scheme.s), con->uri->body.len, ZSW(con->uri->body.s));
 
 	/* Put the newly created mysql connection into the pool */
-	db_pool_put((struct db_pool_entry*)ptr);
+	db_pool_put((struct db_pool_entry *)ptr);
 	DBG("Connection stored in connection pool\n");
 
 found:
@@ -198,9 +201,10 @@ found:
 	return 0;
 
 error:
-	if (ptr) {
+	if(ptr) {
 		db_pool_entry_free(&ptr->gen);
-		if (ptr->con) pkg_free(ptr->con);
+		if(ptr->con)
+			pkg_free(ptr->con);
 		pkg_free(ptr);
 	}
 	return 0;
