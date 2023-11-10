@@ -477,7 +477,9 @@ static int mod_init(void)
 	}
 
 	if(force_socket_str.s && force_socket_str.len > 0) {
-		if(parse_phostport(force_socket_str.s, &host.s, &host.len, &port, &proto) == 0) {
+		if(parse_phostport(
+				   force_socket_str.s, &host.s, &host.len, &port, &proto)
+				== 0) {
 			force_socket = grep_sock_info(&host, port, proto);
 			if(force_socket == 0) {
 				LM_ERR("non-local force_socket <%s>\n", force_socket_str.s);
@@ -497,7 +499,7 @@ static int mod_init(void)
 	if(nortpproxy_str.s && nortpproxy_str.len > 0) {
 		while(nortpproxy_str.len > 0
 				&& (nortpproxy_str.s[nortpproxy_str.len - 1] == '\r'
-						   || nortpproxy_str.s[nortpproxy_str.len - 1] == '\n'))
+						|| nortpproxy_str.s[nortpproxy_str.len - 1] == '\n'))
 			nortpproxy_str.len--;
 	}
 
@@ -682,9 +684,10 @@ static int fix_nated_contact(struct sip_msg *msg)
 				uri.maddr.len, uri.maddr.s);
 		params1.s = hostport.s + hostport.len;
 		params1.len = uri.maddr.s - params1.s;
-		while(params1.len > 0 && (params1.s[params1.len - 1] == ' '
-										 || params1.s[params1.len - 1] == '\t'
-										 || params1.s[params1.len - 1] == ';'))
+		while(params1.len > 0
+				&& (params1.s[params1.len - 1] == ' '
+						|| params1.s[params1.len - 1] == '\t'
+						|| params1.s[params1.len - 1] == ';'))
 			params1.len--;
 		params2.s = uri.maddr.s + uri.maddr.len;
 		params2.len = c->uri.s + c->uri.len - params2.s;
@@ -856,13 +859,13 @@ static int add_contact_alias_0(struct sip_msg *msg)
 			&& ((ip = str2ip6(&(uri.host))) == NULL)) {
 		LM_DBG("contact uri host is not an ip address\n");
 	} else {
-		if (ip_addr_cmp(ip, &(msg->rcv.src_ip)) &&
-                    ((msg->rcv.src_port == uri.port_no) ||
-                     ((uri.port.len == 0) && (msg->rcv.src_port == 5060))) &&
-                    (uri.proto == msg->rcv.proto)) {
-                        LM_DBG("no need to add alias param\n");
-                        return 2;
-                }
+		if(ip_addr_cmp(ip, &(msg->rcv.src_ip))
+				&& ((msg->rcv.src_port == uri.port_no)
+						|| ((uri.port.len == 0) && (msg->rcv.src_port == 5060)))
+				&& (uri.proto == msg->rcv.proto)) {
+			LM_DBG("no need to add alias param\n");
+			return 2;
+		}
 	}
 
 	/* Check if function has been called already */
@@ -907,7 +910,8 @@ static int add_contact_alias_0(struct sip_msg *msg)
 	append_str(at, _ksr_contact_salias.s, _ksr_contact_salias.len);
 	if(msg->rcv.src_ip.af == AF_INET6)
 		append_chr(at, '[');
-	ip_len = ip_addr2sbuf(&(msg->rcv.src_ip), at, param_len - _ksr_contact_salias.len);
+	ip_len = ip_addr2sbuf(
+			&(msg->rcv.src_ip), at, param_len - _ksr_contact_salias.len);
 	if(ip_len <= 0) {
 		LM_ERR("failed to copy source ip\n");
 		goto err;
@@ -1054,7 +1058,8 @@ static int add_contact_alias_3(
 	}
 
 	/* Create  ;alias param */
-	param_len = _ksr_contact_salias.len + IP6_MAX_STR_SIZE + 1 /* ~ */ + 5 /* port */
+	param_len = _ksr_contact_salias.len + IP6_MAX_STR_SIZE
+				+ 1 /* ~ */ + 5 /* port */
 				+ 1 /* ~ */ + 1 /* proto */ + 1 /* closing > */;
 	param = (char *)pkg_malloc(param_len);
 	if(!param) {
@@ -1151,7 +1156,7 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 	while(rest_len > _ksr_contact_alias.len + 4) {
 		if(strncmp(rest, _ksr_contact_alias.s, _ksr_contact_alias.len) == 0) {
 			start = rest;
-			if(mode==0) {
+			if(mode == 0) {
 				/* use first alias parameter */
 				break;
 			}
@@ -1265,10 +1270,11 @@ static int handle_ruri_alias_f(struct sip_msg *msg, char *str1, char *str2)
  * Checks if r-uri has alias param and if so, removes the first or the last one
  * and sets $du based on its value.
  */
-static int handle_ruri_alias_mode_f(struct sip_msg *msg, char *pmode, char *str2)
+static int handle_ruri_alias_mode_f(
+		struct sip_msg *msg, char *pmode, char *str2)
 {
 	int mode = 0;
-	if(fixup_get_ivalue(msg, (gparam_t*)pmode, &mode)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)pmode, &mode) < 0) {
 		LM_ERR("failed to get the value for mode parameter\n");
 		return -1;
 	}
@@ -1368,7 +1374,7 @@ static inline int is1918addr_n(uint32_t netaddr)
 			return 1;
 		}
 	}
-	if(nh_nat_addr_mode==1) {
+	if(nh_nat_addr_mode == 1) {
 		for(i = 0; nh_nets_extra[i].cnetaddr != NULL; i++) {
 			if((hl & nh_nets_extra[i].mask) == nh_nets_extra[i].netaddr) {
 				return 1;
@@ -1449,8 +1455,9 @@ static int contact_rport(struct sip_msg *msg)
 * returns unmatched ip address count
 * on parse error, returns -1
 */
-static int test_sdp_cline(struct sip_msg *msg){
-	sdp_session_cell_t* session;
+static int test_sdp_cline(struct sip_msg *msg)
+{
+	sdp_session_cell_t *session;
 	struct ip_addr cline_addr;
 	int sdp_session_num = 0;
 	int result = 0;
@@ -1460,7 +1467,7 @@ static int test_sdp_cline(struct sip_msg *msg){
 		return -1;
 	}
 
-	for(;;){
+	for(;;) {
 		session = get_sdp_session(msg, sdp_session_num);
 		if(!session)
 			break;
@@ -1468,22 +1475,22 @@ static int test_sdp_cline(struct sip_msg *msg){
 		if(!(session->ip_addr.len > 0 && session->ip_addr.s))
 			break;
 
-		if(session->pf==AF_INET){
-			if(str2ipbuf(&session->ip_addr,&cline_addr)<0){
+		if(session->pf == AF_INET) {
+			if(str2ipbuf(&session->ip_addr, &cline_addr) < 0) {
 				LM_ERR("Couldn't get sdp c line IP address\n");
 				return -1;
 			}
-		}else if(session->pf==AF_INET6){
-			if(str2ip6buf(&session->ip_addr, &cline_addr)<0){
+		} else if(session->pf == AF_INET6) {
+			if(str2ip6buf(&session->ip_addr, &cline_addr) < 0) {
 				LM_ERR("Couldn't get sdp c line IP address\n");
 				return -1;
 			}
-		}else{
+		} else {
 			LM_ERR("Couldn't get sdp address type\n");
 			return -1;
 		}
 
-		if(ip_addr_cmp(&msg->rcv.src_ip,&cline_addr)){
+		if(ip_addr_cmp(&msg->rcv.src_ip, &cline_addr)) {
 			result++;
 		}
 		sdp_session_num++;
@@ -1558,29 +1565,29 @@ static int nh_test_destination(sip_msg_t *msg)
 	ip_addr_t *rhostip = NULL;
 	ip_addr_t *dhostip = NULL;
 
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
 	if(msg->first_line.type == SIP_REPLY) {
-		if(parse_headers(msg, HDR_VIA2_F, 0)==-1) {
+		if(parse_headers(msg, HDR_VIA2_F, 0) == -1) {
 			LM_DBG("no 2nd via parsed\n");
 			return 0;
 		}
-		if((msg->via2==0) || (msg->via2->error!=PARSE_OK)) {
+		if((msg->via2 == 0) || (msg->via2->error != PARSE_OK)) {
 			return -1;
 		}
-		if(msg->via2->proto==PROTO_WSS || msg->via2->proto==PROTO_WS) {
+		if(msg->via2->proto == PROTO_WSS || msg->via2->proto == PROTO_WS) {
 			/* going to ws/wss */
 			return 1;
 		}
 		if(msg->via2->rport && msg->via2->rport->value.s
-				 && msg->via2->rport->value.len>0) {
-			if(str2sint(&msg->via2->rport->value, &dport)<0) {
+				&& msg->via2->rport->value.len > 0) {
+			if(str2sint(&msg->via2->rport->value, &dport) < 0) {
 				LM_ERR("invalid rport value\n");
 				return -1;
 			}
 		}
-		if(dport!=0) {
+		if(dport != 0) {
 			rport = GET_SIP_PORT(msg->via2->port, msg->via2->proto);
 			if(dport != rport) {
 				/* ports are different */
@@ -1594,31 +1601,31 @@ static int nh_test_destination(sip_msg_t *msg)
 		dhost = msg->via2->received->value;
 		rhost = msg->via2->host;
 	} else {
-		if(msg->dst_uri.s==NULL || msg->dst_uri.len<=0) {
+		if(msg->dst_uri.s == NULL || msg->dst_uri.len <= 0) {
 			/* no destination uri - target is r-uri */
-			if(msg->parsed_uri_ok==0 /* R-URI not parsed*/
-					&& parse_sip_msg_uri(msg)<0) {
+			if(msg->parsed_uri_ok == 0 /* R-URI not parsed*/
+					&& parse_sip_msg_uri(msg) < 0) {
 				LM_ERR("failed to parse the R-URI\n");
 				return -1;
 			}
-			if(msg->parsed_uri.proto==PROTO_WSS
-					|| msg->parsed_uri.proto==PROTO_WS) {
+			if(msg->parsed_uri.proto == PROTO_WSS
+					|| msg->parsed_uri.proto == PROTO_WS) {
 				/* going to ws/wss */
 				return 1;
 			}
 			return 0;
 		}
-		if(parse_uri(msg->dst_uri.s, msg->dst_uri.len, &pduri)!=0) {
-			LM_ERR("failed to parse dst uri [%.*s]\n",
-					msg->dst_uri.len, msg->dst_uri.s);
+		if(parse_uri(msg->dst_uri.s, msg->dst_uri.len, &pduri) != 0) {
+			LM_ERR("failed to parse dst uri [%.*s]\n", msg->dst_uri.len,
+					msg->dst_uri.s);
 			return -1;
 		}
-		if(pduri.proto==PROTO_WSS || pduri.proto==PROTO_WS) {
+		if(pduri.proto == PROTO_WSS || pduri.proto == PROTO_WS) {
 			/* going to ws/wss */
 			return 1;
 		}
-		if(msg->parsed_uri_ok==0 /* R-URI not parsed*/
-				&& parse_sip_msg_uri(msg)<0) {
+		if(msg->parsed_uri_ok == 0 /* R-URI not parsed*/
+				&& parse_sip_msg_uri(msg) < 0) {
 			LM_ERR("failed to parse the R-URI\n");
 			return -1;
 		}
@@ -1631,27 +1638,27 @@ static int nh_test_destination(sip_msg_t *msg)
 		dhost = pduri.host;
 		rhost = msg->parsed_uri.host;
 	}
-	if(dhost.s==NULL || dhost.len<=0) {
+	if(dhost.s == NULL || dhost.len <= 0) {
 		return 0;
 	}
 	dhostip = str2ipx(&dhost);
 	rhostip = str2ipx(&rhost);
-	if(dhostip==NULL && rhostip==NULL) {
+	if(dhostip == NULL && rhostip == NULL) {
 		/* both are hostnames - do str comparison */
-		if(rhost.s==NULL || rhost.len<=0) {
+		if(rhost.s == NULL || rhost.len <= 0) {
 			return 0;
 		}
 		if(rhost.len != dhost.len) {
 			/* different in length */
 			return 1;
 		}
-		if(memcmp(rhost.s, dhost.s, dhost.len)!=0) {
+		if(memcmp(rhost.s, dhost.s, dhost.len) != 0) {
 			/* different in content */
 			return 1;
 		}
 		return 0;
 	}
-	if(dhostip==NULL || rhostip==NULL) {
+	if(dhostip == NULL || rhostip == NULL) {
 		/* different in content */
 		return 1;
 	}
@@ -1670,7 +1677,7 @@ static int nat_uac_test(struct sip_msg *msg, int tests)
 	/* test if the source port is different from the port in Via */
 	if((tests & NAT_UAC_TEST_RPORT)
 			&& (msg->rcv.src_port
-					   != (msg->via1->port ? msg->via1->port : SIP_PORT))) {
+					!= (msg->via1->port ? msg->via1->port : SIP_PORT))) {
 		return 1;
 	}
 	/*
@@ -1736,7 +1743,7 @@ static int nat_uac_test(struct sip_msg *msg, int tests)
 static int nat_uac_test_f(struct sip_msg *msg, char *str1, char *str2)
 {
 	int tflags = 0;
-	if(fixup_get_ivalue(msg, (gparam_t*)str1, &tflags)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)str1, &tflags) < 0) {
 		LM_ERR("failed to get the value for flags parameter\n");
 		return -1;
 	}
@@ -1781,8 +1788,8 @@ static int is_rfc1918_f(struct sip_msg *msg, char *str1, char *str2)
 
 
 /* replace ip addresses in SDP and return number of replacements */
-static inline int replace_sdp_ip(
-		struct sip_msg *msg, str *org_body, char *line, str *ip, int linelen, int can_omit)
+static inline int replace_sdp_ip(struct sip_msg *msg, str *org_body, char *line,
+		str *ip, int linelen, int can_omit)
 {
 	str body1, oldip, newip;
 	str body = *org_body;
@@ -1909,14 +1916,16 @@ static int ki_fix_nated_sdp_ip(sip_msg_t *msg, int level, str *ip)
 	if(level & (FIX_MEDIP | FIX_ORGIP)) {
 
 		/* Iterate all a=rtcp and replace ips in them. rfc3605 */
-		ret = replace_sdp_ip(msg, &body, "a=rtcp", (ip && ip->len>0) ? ip : 0, 6, 1);
+		ret = replace_sdp_ip(
+				msg, &body, "a=rtcp", (ip && ip->len > 0) ? ip : 0, 6, 1);
 		if(ret == -1)
 			return -1;
 		count += ret;
 
 		if(level & FIX_MEDIP) {
 			/* Iterate all c= and replace ips in them. */
-			ret = replace_sdp_ip(msg, &body, "c=", (ip && ip->len>0) ? ip : 0, 2, 0);
+			ret = replace_sdp_ip(
+					msg, &body, "c=", (ip && ip->len > 0) ? ip : 0, 2, 0);
 			if(ret == -1)
 				return -1;
 			count += ret;
@@ -1924,12 +1933,12 @@ static int ki_fix_nated_sdp_ip(sip_msg_t *msg, int level, str *ip)
 
 		if(level & FIX_ORGIP) {
 			/* Iterate all o= and replace ips in them. */
-			ret = replace_sdp_ip(msg, &body, "o=",  (ip && ip->len>0) ? ip : 0, 2, 0);
+			ret = replace_sdp_ip(
+					msg, &body, "o=", (ip && ip->len > 0) ? ip : 0, 2, 0);
 			if(ret == -1)
 				return -1;
 			count += ret;
 		}
-
 	}
 
 	return count > 0 ? 1 : 2;
@@ -1943,7 +1952,7 @@ static int ki_fix_nated_sdp(sip_msg_t *msg, int level)
 static int fix_nated_sdp_f(struct sip_msg *msg, char *str1, char *str2)
 {
 	int level;
-	str ip = {0,0};
+	str ip = {0, 0};
 
 	if(fixup_get_ivalue(msg, (gparam_t *)str1, &level) != 0) {
 		LM_ERR("failed to get value for first parameter\n");
@@ -1957,8 +1966,8 @@ static int fix_nated_sdp_f(struct sip_msg *msg, char *str1, char *str2)
 	return ki_fix_nated_sdp_ip(msg, level, &ip);
 }
 
-static int nh_extract_mediaip(str *body, str *mediaip, int *pf, char *line,
-		int linelen)
+static int nh_extract_mediaip(
+		str *body, str *mediaip, int *pf, char *line, int linelen)
 {
 	char *cp, *cp1;
 	int len, nextisip;
@@ -2372,10 +2381,12 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 		dst.send_sock = send_sock;
 
 		send_sip_ping = ((flags & sipping_flag) != 0)
-							|| (ping_nated_only == 0 && sipping_flag != 0);
+						|| (ping_nated_only == 0 && sipping_flag != 0);
 
-		if ( send_sip_ping && (opt.s = build_sipping(&c, send_sock, &path,
-						&ruid, aorhash, &opt.len)) != 0) {
+		if(send_sip_ping
+				&& (opt.s = build_sipping(
+							&c, send_sock, &path, &ruid, aorhash, &opt.len))
+						   != 0) {
 			if(udp_send(&dst, opt.s, opt.len) < 0) {
 				LM_ERR("sip udp_send failed\n");
 			}
@@ -2427,7 +2438,8 @@ static int ki_add_rcv_param(sip_msg_t *msg, int upos)
 
 	if(upos) {
 		if(msg->rcv.proto != PROTO_UDP) {
-			LM_ERR("adding received parameter to Contact URI works only for UDP\n");
+			LM_ERR("adding received parameter to Contact URI works only for "
+				   "UDP\n");
 			return -1;
 		}
 	}
@@ -2469,7 +2481,8 @@ static int ki_add_rcv_param(sip_msg_t *msg, int upos)
 		}
 
 		if(insert_new_lump_after(anchor, param,
-					RECEIVED_LEN + 1 + uri.len + 1 - ((upos)?2:0), 0) == 0) {
+				   RECEIVED_LEN + 1 + uri.len + 1 - ((upos) ? 2 : 0), 0)
+				== 0) {
 			LM_ERR("insert_new_lump_after failed\n");
 			pkg_free(param);
 			return -1;
@@ -2492,7 +2505,7 @@ static int add_rcv_param_f(struct sip_msg *msg, char *str1, char *str2)
 	int hdr_param = 0;
 
 	if(str1) {
-		if(fixup_get_ivalue(msg, (gparam_t*)str1, &hdr_param)<0) {
+		if(fixup_get_ivalue(msg, (gparam_t *)str1, &hdr_param) < 0) {
 			LM_ERR("failed to get flags parameter\n");
 			return -1;
 		}
@@ -2544,8 +2557,9 @@ static int nh_sip_reply_received(sip_msg_t *msg)
 
 	if(nh_keepalive_timeout <= 0)
 		return 1;
-	if(msg->cseq == NULL && ((parse_headers(msg, HDR_CSEQ_F, 0) == -1)
-									|| (msg->cseq == NULL))) {
+	if(msg->cseq == NULL
+			&& ((parse_headers(msg, HDR_CSEQ_F, 0) == -1)
+					|| (msg->cseq == NULL))) {
 		LM_ERR("no CSEQ header\n");
 		goto done;
 	}
@@ -2702,15 +2716,15 @@ static int sel_rewrite_contact(str *res, select_t *s, struct sip_msg *msg)
 */
 static int w_set_alias_to_pv(struct sip_msg *msg, char *uri_avp, char *hollow)
 {
-	str dest_avp={0,0};
+	str dest_avp = {0, 0};
 
 	if(!uri_avp)
 		return -1;
 
-	dest_avp.s=uri_avp;
-	dest_avp.len=strlen(dest_avp.s);
+	dest_avp.s = uri_avp;
+	dest_avp.len = strlen(dest_avp.s);
 
-	return ki_set_alias_to_pv(msg,&dest_avp);
+	return ki_set_alias_to_pv(msg, &dest_avp);
 }
 
 /*!
@@ -2725,9 +2739,9 @@ static int w_set_alias_to_pv(struct sip_msg *msg, char *uri_avp, char *hollow)
 static int ki_set_alias_to_pv(struct sip_msg *msg, str *pvname)
 {
 	str contact;
-	str alias_uri={0,0};
+	str alias_uri = {0, 0};
 
-	if(parse_headers(msg,HDR_CONTACT_F,0) < 0 ) {
+	if(parse_headers(msg, HDR_CONTACT_F, 0) < 0) {
 		LM_ERR("Couldn't find Contact Header\n");
 		return -1;
 	}
@@ -2735,9 +2749,10 @@ static int ki_set_alias_to_pv(struct sip_msg *msg, str *pvname)
 	if(!msg->contact)
 		return -1;
 
-	if(parse_contact(msg->contact)<0 || !msg->contact->parsed ||
-	((contact_body_t *)msg->contact->parsed)->contacts==NULL ||
-	((contact_body_t *)msg->contact->parsed)->contacts->next!=NULL){
+	if(parse_contact(msg->contact) < 0 || !msg->contact->parsed
+			|| ((contact_body_t *)msg->contact->parsed)->contacts == NULL
+			|| ((contact_body_t *)msg->contact->parsed)->contacts->next
+					   != NULL) {
 		LM_ERR("Couldn't parse Contact Header\n");
 		return -1;
 	}
@@ -2745,10 +2760,10 @@ static int ki_set_alias_to_pv(struct sip_msg *msg, str *pvname)
 	contact.s = ((contact_body_t *)msg->contact->parsed)->contacts->name.s;
 	contact.len = ((contact_body_t *)msg->contact->parsed)->contacts->len;
 
-	if(nh_alias_to_uri(&contact, &alias_uri)<0)
+	if(nh_alias_to_uri(&contact, &alias_uri) < 0)
 		return -1;
 
-	if(nh_write_to_pv(msg, &alias_uri, pvname)<0)
+	if(nh_write_to_pv(msg, &alias_uri, pvname) < 0)
 		goto error;
 
 	if(alias_uri.s)
@@ -2756,9 +2771,9 @@ static int ki_set_alias_to_pv(struct sip_msg *msg, str *pvname)
 
 	return 1;
 
-	error :
-		if(alias_uri.s)
-			pkg_free(alias_uri.s);
+error:
+	if(alias_uri.s)
+		pkg_free(alias_uri.s);
 
 	return -1;
 }
@@ -2780,21 +2795,21 @@ static int nh_write_to_pv(struct sip_msg *msg, str *data, str *pvname)
 		return -1;
 	}
 
-	if(pvresult->setf==NULL) {
+	if(pvresult->setf == NULL) {
 		LM_ERR("Destination pseudo-variable is not writable: [%.*s] \n",
 				pvname->len, pvname->s);
 		return -1;
 	}
 	memset(&valx, 0, sizeof(pv_value_t));
 
-	if(!data->s){
+	if(!data->s) {
 		LM_ERR("There isn't any data to write to the destination\n");
 		return -1;
 	}
 
-	valx.flags      =       PV_VAL_STR;
-	valx.rs.s       =       data->s;
-	valx.rs.len     =       data->len;
+	valx.flags = PV_VAL_STR;
+	valx.rs.s = data->s;
+	valx.rs.len = data->len;
 
 	LM_DBG("result: [%.*s]\n", valx.rs.len, valx.rs.s);
 	pvresult->setf(msg, &pvresult->pvp, (int)EQ_T, &valx);
@@ -2811,29 +2826,33 @@ static int nh_write_to_pv(struct sip_msg *msg, str *data, str *pvname)
 */
 static int nh_alias_to_uri(str *contact_header, str *alias_uri)
 {
-	int i=0; // index
-	str host={0,0};
-	str port={0,0};
-	str proto={0,0};
-	char *memchr_pointer=NULL;
+	int i = 0; // index
+	str host = {0, 0};
+	str port = {0, 0};
+	str proto = {0, 0};
+	char *memchr_pointer = NULL;
 
 	if(!contact_header)
 		return -1;
 
 	LM_DBG("Contact header [%.*s]\n", contact_header->len, contact_header->s);
 
-	for(i=0; i<contact_header->len-_ksr_contact_salias.len-5/* a~b~c */; i++) {
+	for(i = 0;
+			i < contact_header->len - _ksr_contact_salias.len - 5 /* a~b~c */;
+			i++) {
 		if(strncmp(&contact_header->s[i], _ksr_contact_salias.s,
-					_ksr_contact_salias.len) == 0) {
-			i=i+_ksr_contact_salias.len;
+				   _ksr_contact_salias.len)
+				== 0) {
+			i = i + _ksr_contact_salias.len;
 			host.s = &contact_header->s[i];
-			memchr_pointer = memchr(host.s, 126 /* ~ */, contact_header->len-i);
+			memchr_pointer =
+					memchr(host.s, 126 /* ~ */, contact_header->len - i);
 			if(memchr_pointer == NULL) {
 				LM_ERR("No alias parameter found for host\n");
 				return -1;
 			} else {
 				host.len = memchr_pointer - &contact_header->s[i];
-				i=i+host.len;
+				i = i + host.len;
 			}
 			break;
 		}
@@ -2844,47 +2863,47 @@ static int nh_alias_to_uri(str *contact_header, str *alias_uri)
 		return -1;
 	}
 	if(memchr_pointer[1]) {
-		port.s=&memchr_pointer[1];
+		port.s = &memchr_pointer[1];
 	} else {
 		LM_ERR("Alias port is not set\n");
 		return -1;
 	}
 
-	memchr_pointer = memchr(port.s, 126 /* ~ */, contact_header->len-i);
+	memchr_pointer = memchr(port.s, 126 /* ~ */, contact_header->len - i);
 	if(memchr_pointer == NULL) {
 		LM_ERR("Alias sign couldn't be found for proto\n");
 		return -1;
 	} else {
 		port.len = memchr_pointer - port.s;
-		i=i+port.len;
+		i = i + port.len;
 	}
 	//last char is proto 0,1,2,3,4..7
-	proto.s= &port.s[port.len+1];
+	proto.s = &port.s[port.len + 1];
 	proto_type_to_str((unsigned short)atoi(proto.s), &proto);
 
-	LM_DBG("Host [%.*s][port: %.*s][proto: %.*s]\n",
-			host.len,host.s,port.len,port.s,proto.len,proto.s);
+	LM_DBG("Host [%.*s][port: %.*s][proto: %.*s]\n", host.len, host.s, port.len,
+			port.s, proto.len, proto.s);
 
 	//sip:host:port;transport=udp
-	alias_uri->s =(char*)pkg_malloc(port.len+host.len+proto.len+16);
+	alias_uri->s = (char *)pkg_malloc(port.len + host.len + proto.len + 16);
 	if(!alias_uri->s) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 
-	memset(alias_uri->s,0,16+port.len+host.len);
+	memset(alias_uri->s, 0, 16 + port.len + host.len);
 
-	memcpy(alias_uri->s,"sip:",4);
-	memcpy(&alias_uri->s[4],host.s,host.len);
+	memcpy(alias_uri->s, "sip:", 4);
+	memcpy(&alias_uri->s[4], host.s, host.len);
 
-	memcpy(&alias_uri->s[4+host.len],":",1);
-	memcpy(&alias_uri->s[4+host.len+1],port.s,port.len);
-	memcpy(&alias_uri->s[4+host.len+1+port.len],";transport=",11);
-	memcpy(&alias_uri->s[4+host.len+1+port.len+11],proto.s,proto.len);
+	memcpy(&alias_uri->s[4 + host.len], ":", 1);
+	memcpy(&alias_uri->s[4 + host.len + 1], port.s, port.len);
+	memcpy(&alias_uri->s[4 + host.len + 1 + port.len], ";transport=", 11);
+	memcpy(&alias_uri->s[4 + host.len + 1 + port.len + 11], proto.s, proto.len);
 
-	alias_uri->len=port.len+host.len+16+proto.len;
-	LM_DBG("Alias uri [%.*s][len: %d]\n",
-			alias_uri->len,alias_uri->s,alias_uri->len);
+	alias_uri->len = port.len + host.len + 16 + proto.len;
+	LM_DBG("Alias uri [%.*s][len: %d]\n", alias_uri->len, alias_uri->s,
+			alias_uri->len);
 
 	return 1;
 }
