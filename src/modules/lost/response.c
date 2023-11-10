@@ -364,17 +364,17 @@ int lost_append_response_list(p_lost_list_t *head, str val)
 	p_lost_list_t current = *head;
 
 	new = lost_new_response_list();
-	if (new != NULL) {
+	if(new != NULL) {
 		new->value = lost_copy_string(val, &len);
 		new->next = NULL;
 
 		LM_DBG("### new list data [%.*s]\n", val.len, val.s);
 
-		if (current == NULL) {
+		if(current == NULL) {
 			*head = new;
 			return len;
 		}
-		while (current->next != NULL) {
+		while(current->next != NULL) {
 			current = current->next;
 		}
 		current->next = new;
@@ -407,7 +407,7 @@ int lost_search_response_list(p_lost_list_t *list, char **val, const char *str)
 				*val = cur->value;
 
 				LM_DBG("###\t[%s] found\n", cur->value);
-				
+
 				return 1;
 			}
 		}
@@ -662,11 +662,11 @@ p_lost_issue_t lost_get_response_issues(xmlNodePtr node)
 				/* source property not found, clean up and return */
 				lost_delete_response_type(&issue); /* clean up */
 				break;
-			}			
+			}
 
 			LM_DBG("###\t[%s]\n", issue->type);
 
-			/* type and source property found ... parse text and copy */ 
+			/* type and source property found ... parse text and copy */
 			if(issue->info != NULL) {
 				issue->info->text = lost_get_property(cur, PROP_MSG, &len);
 				issue->info->lang = lost_get_property(cur, PROP_LANG, &len);
