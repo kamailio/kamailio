@@ -27,10 +27,10 @@ bouquets and brickbats to farhan@hotfoon.com
 #include <sys/utsname.h>
 
 #include <regex.h>
-regex_t* regexp;
+regex_t *regexp;
 
-#define RESIZE		1024
-#define BUFSIZE		1600
+#define RESIZE 1024
+#define BUFSIZE 1600
 #define VIA_BEGIN_STR "Via: SIP/2.0/UDP "
 #define VIA_BEGIN_STR_LEN 17
 
@@ -49,27 +49,26 @@ contact: farhan@hotfoon.com
 
 long getaddress(char *host)
 {
-	int i, dotcount=0;
+	int i, dotcount = 0;
 	char *p = host;
-	struct hostent* pent;
+	struct hostent *pent;
 	long l, *lp;
 
 	/*try understanding if this is a valid ip address
 	we are skipping the values of the octets specified here.
 	for instance, this code will allow 952.0.320.567 through*/
-	while (*p)
-	{
-		for (i = 0; i < 3; i++, p++)
-			if (!isdigit(*p))
+	while(*p) {
+		for(i = 0; i < 3; i++, p++)
+			if(!isdigit(*p))
 				break;
-		if (*p != '.')
+		if(*p != '.')
 			break;
 		p++;
 		dotcount++;
 	}
 
 	/* three dots with up to three digits in before, between and after ? */
-	if (dotcount == 3 && i > 0 && i <= 3)
+	if(dotcount == 3 && i > 0 && i <= 3)
 		return inet_addr(host);
 
 	/* try the system's own resolution mechanism for dns lookup:
@@ -85,12 +84,12 @@ long getaddress(char *host)
 	 the decision to expire the DNS records as it deems fit.
 	*/
 	pent = gethostbyname(host);
-	if (!pent) {
+	if(!pent) {
 		perror("no gethostbyname");
 		exit(2);
 	}
 
-	lp = (long *) (pent->h_addr);
+	lp = (long *)(pent->h_addr);
 	l = *lp;
 	return l;
 }
@@ -102,7 +101,7 @@ add_via(char *mes)
 	char *via_line, *via, *backup;
 
 	/* get our address, only the first one */
-	if (uname (&myname) <0){
+	if(uname(&myname) < 0) {
 		printf("cannot determine hostname\n");
 		exit(2);
 	}
@@ -118,20 +117,20 @@ add_via(char *mes)
 	printf("our Via-Line: %s\n", via_line);
 #endif
 
-	if (strlen(mes)+strlen(via_line)>= BUFSIZE){
+	if(strlen(mes) + strlen(via_line) >= BUFSIZE) {
 		printf("can't add our Via Header Line because file is too big\n");
 		exit(2);
 	}
-	if ((via=strstr(mes,"Via:"))==NULL){
+	if((via = strstr(mes, "Via:")) == NULL) {
 		/* We doesn't find a Via so we insert our via
 		   direct after the first line. */
-		via=strchr(mes,'\n');
+		via = strchr(mes, '\n');
 		via++;
 	}
-	backup=malloc(strlen(via));
+	backup = malloc(strlen(via));
 	strncpy(backup, via, strlen(via));
 	strncpy(via, via_line, strlen(via_line));
-	strncpy(via+strlen(via_line), backup, strlen(backup));
+	strncpy(via + strlen(via_line), backup, strlen(backup));
 #ifdef DEBUG
 	printf("New message:\n%s", mes);
 #endif
@@ -153,110 +152,109 @@ at 5 seconds (5000 milliseconds).
 we are detecting the final response without a '1' as the first
 letter.
 */
-void shoot(char *buff, long address, int lport, int rport )
+void shoot(char *buff, long address, int lport, int rport)
 {
-	struct sockaddr_in	addr;
+	struct sockaddr_in addr;
 	/* jku - b  server structures */
-	struct sockaddr_in	sockname;
+	struct sockaddr_in sockname;
 	int ssock;
 	/*
 	char compiledre[ RESIZE ];
 	*/
 	/* jku - e */
 	int retryAfter = 500;
-	int	nretries = 10;
+	int nretries = 10;
 	int sock, i, len, ret;
-	struct timeval	tv;
-	fd_set	fd;
-	char	reply[1600];
+	struct timeval tv;
+	fd_set fd;
+	char reply[1600];
 
 	/* create a socket */
 	sock = (int)socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (sock==-1) {
+	if(sock == -1) {
 		perror("no client socket");
 		exit(2);
 	}
 
 	/* jku - b */
 	ssock = (int)socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (ssock==-1) {
+	if(ssock == -1) {
 		perror("no server socket");
 		exit(2);
 	}
 
-	sockname.sin_family=AF_INET;
-	sockname.sin_addr.s_addr = htonl( INADDR_ANY );
+	sockname.sin_family = AF_INET;
+	sockname.sin_addr.s_addr = htonl(INADDR_ANY);
 	sockname.sin_port = htons((short)lport);
-	if (bind( ssock, (struct sockaddr *) &sockname, sizeof(sockname) )==-1) {
+	if(bind(ssock, (struct sockaddr *)&sockname, sizeof(sockname)) == -1) {
 		perror("no bind");
 		exit(2);
 	}
 
 	/* should capture: SIP/2.0 100 Trying */
 	/* compile("^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", compiledre, &compiledre[RESIZE], '\0'); */
-	regexp=(regex_t*)malloc(sizeof(regex_t));
-	regcomp(regexp, "^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
-	
+	regexp = (regex_t *)malloc(sizeof(regex_t));
+	regcomp(regexp, "^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ",
+			REG_EXTENDED | REG_NOSUB | REG_ICASE);
+
 
 	/* jku - e */
 
 	addr.sin_addr.s_addr = address;
 	addr.sin_port = htons((short)rport);
 	addr.sin_family = AF_INET;
-	
+
 	/* we connect as per the RFC 2543 recommendations
 	modified from sendto/recvfrom */
 
 	ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
-	if (ret==-1) {
+	if(ret == -1) {
 		perror("no connect");
 		exit(2);
 	}
 	/* jku - e */
 
 	add_via(buff);
-	
-	for (i = 0; i < nretries; i++)
-	{
+
+	for(i = 0; i < nretries; i++) {
 		puts("/* request */");
 		puts(buff);
 		putchar('\n');
 
 		ret = send(sock, buff, strlen(buff), 0);
-		if (ret==-1) {
+		if(ret == -1) {
 			perror("send failure");
-			exit( 1 );
+			exit(1);
 		}
-		
 
-		tv.tv_sec = retryAfter/1000;
+
+		tv.tv_sec = retryAfter / 1000;
 		tv.tv_usec = (retryAfter % 1000) * 1000;
 
 		FD_ZERO(&fd);
-		FD_SET(ssock, &fd); 
+		FD_SET(ssock, &fd);
 
 		/* TO-DO: there does appear to be a problem with this select returning a zero
 		even when there is data pending in the recv queue. 
 		please help, someone! */
 
 		ret = select(6, &fd, NULL, NULL, &tv);
-		if (ret == 0)
-		{
+		if(ret == 0) {
 			puts("\n/* timeout */\n");
 			retryAfter = retryAfter * 2;
-			if (retryAfter > 5000)
+			if(retryAfter > 5000)
 				retryAfter = 5000;
 			/* we should have retrieved the error code and displayed
 			we are not doing that because there is a great variation
 			in the process of retrieving error codes between
 			micro$oft and *nix world*/
 			continue;
-		} else if ( ret == -1 ) {
+		} else if(ret == -1) {
 			perror("select error");
 			exit(2);
 		} /* no timeout, no error ... something has happened :-) */
-                 else if (FD_ISSET(ssock, &fd)) {
-			puts ("\nmessage received\n");
+		else if(FD_ISSET(ssock, &fd)) {
+			puts("\nmessage received\n");
 		} else {
 			puts("\nselect returned successfully, nothing received\n");
 			continue;
@@ -265,26 +263,25 @@ void shoot(char *buff, long address, int lport, int rport )
 		/* we are retrieving only the extend of a decent MSS = 1500 bytes */
 		len = sizeof(addr);
 		ret = recv(ssock, reply, 1500, 0);
-		if(ret > 0)
-		{
+		if(ret > 0) {
 			reply[ret] = 0;
 			puts("/* reply */");
 			puts(reply);
 			putchar('\n');
 			/* if (step( reply, compiledre )) { */
-			if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
-				puts(" provisional received; still waiting for a final response\n ");
+			if(regexec((regex_t *)regexp, reply, 0, 0, 0) == 0) {
+				puts(" provisional received; still waiting for a final "
+					 "response\n ");
 				continue;
 			} else {
 				puts(" final received; congratulations!\n ");
 				exit(0);
 			}
-		
-		} 
-		else	{
+
+		} else {
 			perror("recv error");
 			exit(2);
-			}
+		}
 	}
 	/* after all the retries, nothing has come back :-( */
 	puts("/* I give up retransmission....");
@@ -293,73 +290,69 @@ void shoot(char *buff, long address, int lport, int rport )
 
 int main(int argc, char *argv[])
 {
-	long	address;
-	FILE	*pf;
-	char	buff[BUFSIZE];
-	int		length;
-	int		lport=0;
-	int		rport=5060;
-	char	*delim, *delim2;
+	long address;
+	FILE *pf;
+	char buff[BUFSIZE];
+	int length;
+	int lport = 0;
+	int rport = 5060;
+	char *delim, *delim2;
 
-	if (! (argc >= 3 && argc <= 5))
-	{
+	if(!(argc >= 3 && argc <= 5)) {
 		puts("usage: shoot file host rport [lport]");
 		puts("usage: shoot file sip:[user@]hostname[:rport]");
 		exit(2);
 	}
 
 	/* support for sip:uri added by noh */
-	if (argc==3){
-		if ((delim=strchr(argv[2],':'))!=NULL){
+	if(argc == 3) {
+		if((delim = strchr(argv[2], ':')) != NULL) {
 			delim++;
-			if (!strncmp(argv[2],"sip",3)){
-				if ((delim2=strchr(delim,'@'))!=NULL){
+			if(!strncmp(argv[2], "sip", 3)) {
+				if((delim2 = strchr(delim, '@')) != NULL) {
 					/* we don't need the username */
 					delim2++;
-					delim=delim2;
+					delim = delim2;
 				}
-				if ((delim2=strchr(delim,':'))!=NULL){
+				if((delim2 = strchr(delim, ':')) != NULL) {
 					*delim2 = '\0';
 					delim2++;
 					rport = atoi(delim2);
-					if (!rport) {
+					if(!rport) {
 						puts("error: non-numerical remote port number");
 						exit(2);
 					}
 				}
 				address = getaddress(delim);
-				if (!address){
+				if(!address) {
 					puts("error:unable to determine the remote host address.");
 					exit(2);
 				}
-			}
-			else{
+			} else {
 				puts("sip:uri doesn't not begin with sip");
 				exit(2);
 			}
-		}
-		else{
+		} else {
 			puts("sip:uri doesn't contain a : ?!");
 			exit(2);
 		}
-	}
-	else{
+	} else {
 		address = getaddress(argv[2]);
-		if (!address){
+		if(!address) {
 			puts("error:unable to determine the remote host address.");
 			exit(2);
 		}
 
 		/* take the port as 5060 even if it is incorrectly specified */
-		if (argc >= 4){
+		if(argc >= 4) {
 			rport = atoi(argv[3]);
-			if (!rport) {
+			if(!rport) {
 				puts("error: non-numerical remote port number");
 				exit(2);
 			}
-			if (argc==5) {
-				lport=atoi(argv[4]);
-				if (!lport) {
+			if(argc == 5) {
+				lport = atoi(argv[4]);
+				if(!lport) {
 					puts("error: non-numerical local port number");
 					exit(2);
 				}
@@ -369,28 +362,27 @@ int main(int argc, char *argv[])
 
 	/* file is opened in binary mode so that the cr-lf is preserved */
 	pf = fopen(argv[1], "rb");
-	if (!pf)
-	{
+	if(!pf) {
 		puts("unable to open the file.\n");
 		return 1;
 	}
-	length  = fread(buff, 1, sizeof(buff), pf);
-	if (length >= sizeof(buff))
-	{
-		printf("error:the file is too big. try files of less than %i bytes.\n", BUFSIZE);
+	length = fread(buff, 1, sizeof(buff), pf);
+	if(length >= sizeof(buff)) {
+		printf("error:the file is too big. try files of less than %i bytes.\n",
+				BUFSIZE);
 		puts("      or recompile the program with bigger BUFSIZE defined.");
 		return 1;
 	}
 	fclose(pf);
 	buff[length] = 0;
 
-	shoot(buff, address, lport, rport );
+	shoot(buff, address, lport, rport);
 
 	/* visual studio closes the debug console as soon as the 
 	program terminates. this is to hold the window from collapsing
 	Uncomment it if needed.
 	getchar();*/
-	
+
 
 	return 0;
 }
@@ -406,4 +398,3 @@ TO-DO:
 2. understand redirect response and retransmit to the redirected server.
 
 */
-
