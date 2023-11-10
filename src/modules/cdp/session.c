@@ -491,7 +491,7 @@ int cdp_sessions_timer(time_t now, void *ptr)
 								15; //15 seconds - TODO: add as config parameter
 						//we should check for reservation expiring if the state is open
 						if(x->u.cc_acc.state == ACC_CC_ST_OPEN) {
-							if(last_res_timestamp) {
+							if(last_res_timestamp && res_valid_for) {
 								//we have obv already started reservations
 								if((last_res_timestamp + res_valid_for)
 										< (time(0) + last_reservation
