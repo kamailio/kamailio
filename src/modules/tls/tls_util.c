@@ -41,25 +41,25 @@
  * Return value: -1 on error
  *                0 on success
  */
-int shm_asciiz_dup(char** dest, char* val)
+int shm_asciiz_dup(char **dest, char *val)
 {
-	char* ret;
+	char *ret;
 	int len;
 
-	if (!val) {
+	if(!val) {
 		*dest = NULL;
 		return 0;
 	}
 
 	len = strlen(val);
 	ret = shm_malloc(len + 1);
-	if (!ret) {
+	if(!ret) {
 		ERR("No memory left\n");
 		return -1;
 	}
 	memcpy(ret, val, len + 1);
 	*dest = ret;
-        return 0;
+	return 0;
 }
 
 
@@ -70,12 +70,12 @@ void collect_garbage(void)
 {
 	tls_domains_cfg_t *prev, *cur, *next;
 
-	     /* Make sure we do not run two garbage collectors
+	/* Make sure we do not run two garbage collectors
 	      * at the same time
 	      */
 	lock_get(tls_domains_cfg_lock);
 
-	     /* Skip the current configuration, garbage starts
+	/* Skip the current configuration, garbage starts
 	      * with the 2nd element on the list
 	      */
 	prev = *tls_domains_cfg;
@@ -83,7 +83,7 @@ void collect_garbage(void)
 
 	while(cur) {
 		next = cur->next;
-		if (atomic_get(&cur->ref_count) == 0) {
+		if(atomic_get(&cur->ref_count) == 0) {
 			/* Not referenced by any existing connection */
 			prev->next = cur->next;
 			tls_free_cfg(cur);
@@ -96,4 +96,3 @@ void collect_garbage(void)
 
 	lock_release(tls_domains_cfg_lock);
 }
-
