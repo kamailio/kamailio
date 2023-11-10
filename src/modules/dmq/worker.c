@@ -93,8 +93,8 @@ void worker_loop(int id)
 					}
 				}
 				/* send the reply */
-				if(peer_response.resp_code>0 && peer_response.reason.s!=NULL
-						&& peer_response.reason.len>0) {
+				if(peer_response.resp_code > 0 && peer_response.reason.s != NULL
+						&& peer_response.reason.len > 0) {
 					if(slb.freply(current_job->msg, peer_response.resp_code,
 							   &peer_response.reason)
 							< 0) {
@@ -107,7 +107,7 @@ void worker_loop(int id)
 				}
 				worker->jobs_processed++;
 
-nextjob:
+			nextjob:
 				/* if body given, free the lumps and free the body */
 				if(peer_response.body.s) {
 					del_nonshm_lump_rpl(&current_job->msg->reply_lump);
@@ -205,7 +205,7 @@ int init_worker(dmq_worker_t *worker)
 		lock_get(&worker->lock);
 	}
 	worker->queue = alloc_job_queue();
-	if(worker->queue==NULL) {
+	if(worker->queue == NULL) {
 		LM_ERR("queue could not be initialized\n");
 		return -1;
 	}

@@ -121,9 +121,11 @@ int w_dmq_handle_message(struct sip_msg *msg, char *str1, char *str2)
 {
 	int i = 0;
 	if(str1) {
-		if(get_int_fparam(&i, msg, (fparam_t*)str1)<0) return -1;
+		if(get_int_fparam(&i, msg, (fparam_t *)str1) < 0)
+			return -1;
 	}
-	if(i>1) i = 1;
+	if(i > 1)
+		i = 1;
 	return ki_dmq_handle_message_rc(msg, i);
 }
 
@@ -186,10 +188,9 @@ int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval)
 		}
 	}
 	/* send the reply */
-	if(peer_response.resp_code>0 && peer_response.reason.s!=NULL
-			&& peer_response.reason.len>0) {
-		if(slb.freply(msg, peer_response.resp_code,
-				   &peer_response.reason)
+	if(peer_response.resp_code > 0 && peer_response.reason.s != NULL
+			&& peer_response.reason.len > 0) {
+		if(slb.freply(msg, peer_response.resp_code, &peer_response.reason)
 				< 0) {
 			LM_ERR("error sending reply\n");
 		} else {
@@ -214,9 +215,11 @@ int w_dmq_process_message(struct sip_msg *msg, char *str1, char *str2)
 {
 	int i = 0;
 	if(str1) {
-		if(get_int_fparam(&i, msg, (fparam_t*)str1)<0) return -1;
+		if(get_int_fparam(&i, msg, (fparam_t *)str1) < 0)
+			return -1;
 	}
-	if(i>1) i = 1;
+	if(i > 1)
+		i = 1;
 	return ki_dmq_process_message_rc(msg, i);
 }
 
