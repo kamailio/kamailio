@@ -32,7 +32,7 @@
 #include "th_mask.h"
 
 #define TH_EB64I \
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-"
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-"
 
 char _th_EB64[65];
 int _th_DB64[256];
@@ -55,13 +55,13 @@ void th_shuffle(char *in, int size)
 	MD5Update(&ctx, _th_key.s, _th_key.len);
 	U_MD5Final(md5, &ctx);
 
-	md5i = (unsigned int*)md5;
+	md5i = (unsigned int *)md5;
 
 	crc = (unsigned int)crcitt_string(_th_key.s, _th_key.len);
-	for (last = size; last > 1; last--)
-	{
-		r = (md5i[(crc+last+_th_key.len)%4]
-				+ _th_key.s[(crc+last+_th_key.len)%_th_key.len]) % last;
+	for(last = size; last > 1; last--) {
+		r = (md5i[(crc + last + _th_key.len) % 4]
+					+ _th_key.s[(crc + last + _th_key.len) % _th_key.len])
+			% last;
 		tmp = in[r];
 		in[r] = in[last - 1];
 		in[last - 1] = tmp;
@@ -76,57 +76,58 @@ void th_mask_init(void)
 	th_shuffle(_th_EB64, 64);
 	LM_DBG("original table: %s\n", TH_EB64I);
 	LM_DBG("updated table: %s\n", _th_EB64);
-	for(i=0; i<256; i++)
+	for(i = 0; i < 256; i++)
 		_th_DB64[i] = -1;
-	for(i=0; i<64; i++)
+	for(i = 0; i < 64; i++)
 		_th_DB64[(int)_th_EB64[i]] = i;
 
 	return;
 }
 
-char* th_mask_encode(char *in, int ilen, str *prefix, int *olen)
+char *th_mask_encode(char *in, int ilen, str *prefix, int *olen)
 {
 	char *out;
-	int  left;
-	int  idx;
-	int  i;
-	int  r;
+	int left;
+	int idx;
+	int i;
+	int r;
 	char *p;
-	int  block;
+	int block;
 
-	*olen = (((ilen+2)/3)<<2) + ((prefix!=NULL&&prefix->len>0)?prefix->len:0);
-	out = (char*)pkg_malloc((*olen+1)*sizeof(char));
-	if(out==NULL) {
+	*olen = (((ilen + 2) / 3) << 2)
+			+ ((prefix != NULL && prefix->len > 0) ? prefix->len : 0);
+	out = (char *)pkg_malloc((*olen + 1) * sizeof(char));
+	if(out == NULL) {
 		PKG_MEM_ERROR;
 		*olen = 0;
 		return NULL;
 	}
 
 	/* set 0 at the end of the value */
-	memset(out, 0, (*olen+1)*sizeof(char));
-	if(prefix!=NULL&&prefix->len>0) {
+	memset(out, 0, (*olen + 1) * sizeof(char));
+	if(prefix != NULL && prefix->len > 0) {
 		memcpy(out, prefix->s, prefix->len);
 	}
 
-	p = out + (int)((prefix!=NULL&&prefix->len>0)?prefix->len:0);
-	for(idx=0; idx<ilen; idx+=3) {
-		left = ilen - idx - 1 ;
-		left = (left>1)?2:left;
+	p = out + (int)((prefix != NULL && prefix->len > 0) ? prefix->len : 0);
+	for(idx = 0; idx < ilen; idx += 3) {
+		left = ilen - idx - 1;
+		left = (left > 1) ? 2 : left;
 
 		block = 0;
-		for(i=0, r=16; i<=left; i++, r-=8)
-			block += ((unsigned char)in[idx+i]) << r;
+		for(i = 0, r = 16; i <= left; i++, r -= 8)
+			block += ((unsigned char)in[idx + i]) << r;
 
 		*(p++) = _th_EB64[(block >> 18) & 0x3f];
 		*(p++) = _th_EB64[(block >> 12) & 0x3f];
-		*(p++) = (left>0)?_th_EB64[(block >> 6) & 0x3f]:_th_PD64[0];
-		*(p++) = (left>1)?_th_EB64[block & 0x3f]:_th_PD64[0];
+		*(p++) = (left > 0) ? _th_EB64[(block >> 6) & 0x3f] : _th_PD64[0];
+		*(p++) = (left > 1) ? _th_EB64[block & 0x3f] : _th_PD64[0];
 	}
 
 	return out;
 }
 
-char* th_mask_decode(char *in, int ilen, str *prefix, int extra, int *olen)
+char *th_mask_decode(char *in, int ilen, str *prefix, int extra, int *olen)
 {
 	char *out;
 	int n;
@@ -137,47 +138,48 @@ char* th_mask_decode(char *in, int ilen, str *prefix, int extra, int *olen)
 	int end;
 	char c;
 
-	for(n=0,i=ilen-1; in[i]==_th_PD64[0]; i--)
+	for(n = 0, i = ilen - 1; in[i] == _th_PD64[0]; i--)
 		n++;
 
-	*olen = (((ilen-((prefix!=NULL&&prefix->len>0)?prefix->len:0)) * 6) >> 3)
-				- n;
+	*olen = (((ilen - ((prefix != NULL && prefix->len > 0) ? prefix->len : 0))
+					 * 6)
+					>> 3)
+			- n;
 
-	if (*olen<=0) {
+	if(*olen <= 0) {
 		LM_ERR("invalid olen parameter calculated, can't continue %d\n", *olen);
 		return NULL;
 	}
 
-	out = (char*)pkg_malloc((*olen+1+extra)*sizeof(char));
+	out = (char *)pkg_malloc((*olen + 1 + extra) * sizeof(char));
 
-	if(out==NULL) {
+	if(out == NULL) {
 		PKG_MEM_ERROR;
 		*olen = 0;
 		return NULL;
 	}
 	/* set 0 at the end of the value */
-	memset(out, 0, (*olen+1+extra)*sizeof(char));
+	memset(out, 0, (*olen + 1 + extra) * sizeof(char));
 
 	end = ilen - n;
-	i = (prefix!=NULL&&prefix->len>0)?prefix->len:0;
-	for(idx=0; i<end; idx+=3) {
+	i = (prefix != NULL && prefix->len > 0) ? prefix->len : 0;
+	for(idx = 0; i < end; idx += 3) {
 		block = 0;
-		for(j=0; j<4 && i<end ; j++) {
+		for(j = 0; j < 4 && i < end; j++) {
 			c = _th_DB64[(int)in[i++]];
-			if(c<0) {
+			if(c < 0) {
 				LM_ERR("invalid input string\"%.*s\"\n", ilen, in);
 				pkg_free(out);
 				*olen = 0;
 				return NULL;
 			}
-			block += c << (18 - 6*j);
+			block += c << (18 - 6 * j);
 		}
 
-		for(j=0, n=16; j<3 && idx+j< *olen; j++, n-=8) {
-			out[idx+j] = (char)((block >> n) & 0xff);
+		for(j = 0, n = 16; j < 3 && idx + j < *olen; j++, n -= 8) {
+			out[idx + j] = (char)((block >> n) & 0xff);
 		}
 	}
 
 	return out;
 }
-
