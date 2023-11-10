@@ -31,24 +31,25 @@
 #include "../../core/sr_module.h"
 
 typedef int (*encode_flow_token_t)(str *, struct receive_info *);
-typedef int (*decode_flow_token_t)(struct sip_msg *, struct receive_info **, str);
+typedef int (*decode_flow_token_t)(
+		struct sip_msg *, struct receive_info **, str);
 typedef int (*use_outbound_t)(struct sip_msg *);
 
-typedef struct ob_binds {
+typedef struct ob_binds
+{
 	encode_flow_token_t encode_flow_token;
 	decode_flow_token_t decode_flow_token;
 	use_outbound_t use_outbound;
 } ob_api_t;
 
-typedef int (*bind_ob_f)(ob_api_t*);
+typedef int (*bind_ob_f)(ob_api_t *);
 
-int bind_ob(struct ob_binds*);
+int bind_ob(struct ob_binds *);
 
 inline static int ob_load_api(ob_api_t *pxb)
 {
 	bind_ob_f bind_ob_exports;
-	if (!(bind_ob_exports = (bind_ob_f)find_export("bind_ob", 1, 0)))
-	{
+	if(!(bind_ob_exports = (bind_ob_f)find_export("bind_ob", 1, 0))) {
 		LM_INFO("unable to import bind_ob - maybe module is not loaded\n");
 		return -1;
 	}
