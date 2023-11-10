@@ -31,7 +31,7 @@
 
 /* lock_ops.h defines union semun, perl does not need to redefine it */
 #ifdef USE_SYSV_SEM
-# define HAS_UNION_SEMUN
+#define HAS_UNION_SEMUN
 #endif
 
 #include <EXTERN.h>
@@ -44,7 +44,7 @@ extern PerlInterpreter *my_perl;
 
 extern sl_api_t slb;
 
-#define PERLCLASS_MESSAGE	"Kamailio::Message"
-#define PERLCLASS_URI		"Kamailio::URI"
+#define PERLCLASS_MESSAGE "Kamailio::Message"
+#define PERLCLASS_URI "Kamailio::URI"
 
 #endif /* PERL_MOD_H */
