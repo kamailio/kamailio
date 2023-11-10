@@ -39,7 +39,7 @@
 /*
  * Convert a row from result into db API representation
  */
-int db_unixodbc_convert_row(const db1_con_t* _h, const db1_res_t* _res, db_row_t* _r,
-		const unsigned long* lengths);
+int db_unixodbc_convert_row(const db1_con_t *_h, const db1_res_t *_res,
+		db_row_t *_r, const unsigned long *lengths);
 
 #endif /* ROW_H */
