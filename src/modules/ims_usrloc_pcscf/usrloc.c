@@ -42,7 +42,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
- 
+
 #include "usrloc.h"
 #include "dlist.h"
 #include "pcontact.h"
@@ -57,14 +57,15 @@ struct ul_callback *cbp_registrar = 0;
 struct ul_callback *cbp_qos = 0;
 
 
-int bind_usrloc(usrloc_api_t* api) {
-	if (!api) {
+int bind_usrloc(usrloc_api_t *api)
+{
+	if(!api) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	if (ims_ulp_init_flag == 0) {
+	if(ims_ulp_init_flag == 0) {
 		LM_ERR("configuration error - trying to bind to usrloc module"
-				" before being initialized\n");
+			   " before being initialized\n");
 		return -1;
 	}
 
@@ -74,7 +75,7 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->unlock_udomain = unlock_udomain;
 	api->insert_pcontact = insert_pcontact;
 	api->delete_pcontact = delete_pcontact;
-        api->unreg_pending_contacts_cb = unreg_pending_contacts_cb;
+	api->unreg_pending_contacts_cb = unreg_pending_contacts_cb;
 	api->get_pcontact = get_pcontact;
 	api->assert_identity = assert_identity;
 	api->update_pcontact = update_pcontact;
@@ -87,74 +88,80 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->is_ulcb_registered = is_ulcb_registered;
 	api->register_ulcb_method = register_ulcb_method;
 
-        api->db_mode    = db_mode;
+	api->db_mode = db_mode;
 
 	return 0;
 }
 
-#define ALIAS        "alias="
+#define ALIAS "alias="
 #define ALIAS_LEN (sizeof(ALIAS) - 1)
 
-int get_alias_host_from_contact(str *contact_uri_params, str *alias_host) {
-    char *rest, *sep;
-    unsigned int rest_len;
-    
-    rest = contact_uri_params->s;
-    rest_len = contact_uri_params->len;
-    if (rest_len == 0) {
-        LM_DBG("no params\n");
-        return -1;
-    }
+int get_alias_host_from_contact(str *contact_uri_params, str *alias_host)
+{
+	char *rest, *sep;
+	unsigned int rest_len;
 
-    /*Get full alias parameter*/
-    while (rest_len >= ALIAS_LEN) {
-        if (strncmp(rest, ALIAS, ALIAS_LEN) == 0) break;
-        sep = memchr(rest, 59 /* ; */, rest_len);
-        if (sep == NULL) {
-            LM_DBG("no alias param\n");
-            return -1;
-        } else {
-            rest_len = rest_len - (sep - rest + 1);
-            rest = sep + 1;
-        }
-    }
+	rest = contact_uri_params->s;
+	rest_len = contact_uri_params->len;
+	if(rest_len == 0) {
+		LM_DBG("no params\n");
+		return -1;
+	}
 
-    if (rest_len < ALIAS_LEN) {
-        LM_DBG("no alias param\n");
-        return -1;
-    }
+	/*Get full alias parameter*/
+	while(rest_len >= ALIAS_LEN) {
+		if(strncmp(rest, ALIAS, ALIAS_LEN) == 0)
+			break;
+		sep = memchr(rest, 59 /* ; */, rest_len);
+		if(sep == NULL) {
+			LM_DBG("no alias param\n");
+			return -1;
+		} else {
+			rest_len = rest_len - (sep - rest + 1);
+			rest = sep + 1;
+		}
+	}
 
-    alias_host->s = rest + ALIAS_LEN;
-    alias_host->len = rest_len - ALIAS_LEN;
+	if(rest_len < ALIAS_LEN) {
+		LM_DBG("no alias param\n");
+		return -1;
+	}
 
-    /*Get host from alias*/
-    rest = memchr(alias_host->s, 126 /* ~ */, alias_host->len);
-    if (rest == NULL) {
-        LM_ERR("no '~' in alias param value\n");
-        return -1;
-    }
-    alias_host->len = rest - alias_host->s;
-    LM_DBG("Alias host to return [%.*s]\n", alias_host->len, alias_host->s);
-    return 0;
+	alias_host->s = rest + ALIAS_LEN;
+	alias_host->len = rest_len - ALIAS_LEN;
+
+	/*Get host from alias*/
+	rest = memchr(alias_host->s, 126 /* ~ */, alias_host->len);
+	if(rest == NULL) {
+		LM_ERR("no '~' in alias param value\n");
+		return -1;
+	}
+	alias_host->len = rest - alias_host->s;
+	LM_DBG("Alias host to return [%.*s]\n", alias_host->len, alias_host->s);
+	return 0;
 }
 
 
 /* return the slot id for inserting contacts in the hash */
-unsigned int get_hash_slot(udomain_t* _d, str* via_host, unsigned short via_port, unsigned short via_proto) {
-    unsigned int sl;
+unsigned int get_hash_slot(udomain_t *_d, str *via_host,
+		unsigned short via_port, unsigned short via_proto)
+{
+	unsigned int sl;
 
-    sl = get_aor_hash(_d, via_host, via_port, via_proto);
-    sl = sl & (_d->size - 1) ;
-    LM_DBG("Returning hash slot: [%d]\n", sl);
+	sl = get_aor_hash(_d, via_host, via_port, via_proto);
+	sl = sl & (_d->size - 1);
+	LM_DBG("Returning hash slot: [%d]\n", sl);
 
-    return sl;
+	return sl;
 }
 
-unsigned int get_aor_hash(udomain_t* _d, str* via_host, unsigned short via_port, unsigned short via_proto) {
-    unsigned int aorhash;
-        
-    aorhash = core_hash(via_host, 0, 0);
-    LM_DBG("Returning hash: [%u]\n", aorhash);
+unsigned int get_aor_hash(udomain_t *_d, str *via_host, unsigned short via_port,
+		unsigned short via_proto)
+{
+	unsigned int aorhash;
 
-    return aorhash;
+	aorhash = core_hash(via_host, 0, 0);
+	LM_DBG("Returning hash: [%u]\n", aorhash);
+
+	return aorhash;
 }
