@@ -38,53 +38,61 @@ extern struct ts_table *t_table;
  */
 int ts_set_tm_callbacks(struct cell *t, sip_msg_t *req, ts_transaction_t *ts)
 {
-	ts_transaction_t* ts_clone;
+	ts_transaction_t *ts_clone;
 
-	if(t==NULL)
+	if(t == NULL)
 		return -1;
 
-	if ( (ts_clone=clone_ts_transaction(ts)) == NULL ) {
+	if((ts_clone = clone_ts_transaction(ts)) == NULL) {
 		LM_ERR("failed to clone transaction\n");
 		return -1;
 	}
 
-	if ( _tmb.register_tmcb( req, t,TMCB_DESTROY,
-			ts_onreply, (void*)ts_clone, free_ts_transaction)<0 ) {
-		LM_ERR("failed to register TMCB for transaction %d:%d\n", t->hash_index, t->label);
+	if(_tmb.register_tmcb(req, t, TMCB_DESTROY, ts_onreply, (void *)ts_clone,
+			   free_ts_transaction)
+			< 0) {
+		LM_ERR("failed to register TMCB for transaction %d:%d\n", t->hash_index,
+				t->label);
 		return -1;
 	}
-	LM_DBG("registered TMCB for transaction %d:%d\n", ts_clone->tindex, ts_clone->tlabel);
+	LM_DBG("registered TMCB for transaction %d:%d\n", ts_clone->tindex,
+			ts_clone->tlabel);
 
 	return 0;
 }
 
-void ts_onreply(struct cell* t, int type, struct tmcb_params *param)
+void ts_onreply(struct cell *t, int type, struct tmcb_params *param)
 {
-	ts_urecord_t* _r;
-	ts_entry_t* _e;
+	ts_urecord_t *_r;
+	ts_entry_t *_e;
 	ts_transaction_t *cb_ptr, *ptr;
 
-	if(t_table==0) return;
-	if((type & (TMCB_DESTROY)) && destroy_modules_phase()) return;
+	if(t_table == 0)
+		return;
+	if((type & (TMCB_DESTROY)) && destroy_modules_phase())
+		return;
 
-	cb_ptr = (ts_transaction_t*)(*param->param);
-	if (cb_ptr == NULL) {
+	cb_ptr = (ts_transaction_t *)(*param->param);
+	if(cb_ptr == NULL) {
 		LM_DBG("NULL param for type %d\n", type);
 		return;
 	}
 
-	if (type &(TMCB_DESTROY)) {
-		LM_DBG("TMCB_DESTROY called for transaction %u:%u\n", cb_ptr->tindex, cb_ptr->tlabel);
+	if(type & (TMCB_DESTROY)) {
+		LM_DBG("TMCB_DESTROY called for transaction %u:%u\n", cb_ptr->tindex,
+				cb_ptr->tlabel);
 		_r = cb_ptr->urecord;
 		_e = _r->entry;
 		lock_entry(_e);
 		ptr = _r->transactions;
 		while(ptr) {
-			if ((ptr->tindex == cb_ptr->tindex) && (ptr->tlabel == cb_ptr->tlabel)) {
+			if((ptr->tindex == cb_ptr->tindex)
+					&& (ptr->tlabel == cb_ptr->tlabel)) {
 				remove_ts_transaction(ptr);
 
-				if (_r->transactions == NULL) {
-					LM_DBG("last transaction for %.*s, removing urecord\n", _r->ruri.len, _r->ruri.s);
+				if(_r->transactions == NULL) {
+					LM_DBG("last transaction for %.*s, removing urecord\n",
+							_r->ruri.len, _r->ruri.s);
 					remove_ts_urecord(_r);
 				}
 				unlock_entry(_e);
@@ -92,7 +100,7 @@ void ts_onreply(struct cell* t, int type, struct tmcb_params *param)
 			}
 			ptr = ptr->next;
 		}
-		LM_DBG("transaction %u:%u not found\n",cb_ptr->tindex, cb_ptr->tlabel);
+		LM_DBG("transaction %u:%u not found\n", cb_ptr->tindex, cb_ptr->tlabel);
 		unlock_entry(_e);
 	} else {
 		LM_DBG("called with unknown type %d\n", type);
