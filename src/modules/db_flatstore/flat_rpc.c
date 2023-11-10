@@ -40,22 +40,20 @@
  * request, it will be carried out next time SER attempts to write new data
  * into the file.
  */
-static void rotate(rpc_t* rpc, void* c)
+static void rotate(rpc_t *rpc, void *c)
 {
 	*km_flat_rotate = time(0);
 	*flat_rotate = time(0);
 }
 
 
-static const char* flat_rotate_doc[2] = {
-	"Close and reopen flatrotate files during log rotation.",
-	0
-};
+static const char *flat_rotate_doc[2] = {
+		"Close and reopen flatrotate files during log rotation.", 0};
 
 
 rpc_export_t flat_rpc[] = {
-	{"flatstore.rotate", rotate, flat_rotate_doc, 0},
-	{0, 0, 0, 0},
+		{"flatstore.rotate", rotate, flat_rotate_doc, 0},
+		{0, 0, 0, 0},
 };
 
 /** @} */

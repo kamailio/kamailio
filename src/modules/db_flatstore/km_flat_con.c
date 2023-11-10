@@ -32,29 +32,29 @@
 #define FILE_SUFFIX_LEN (sizeof(FILE_SUFFIX) - 1)
 
 /* returns a pkg_malloc'ed file name */
-static char* get_name(struct flat_id* id)
+static char *get_name(struct flat_id *id)
 {
-	char* buf;
+	char *buf;
 	int buf_len;
-	char* num, *ptr;
+	char *num, *ptr;
 	int num_len;
 	int total_len;
 
-	buf_len=pathmax();
-	if (!id) {
+	buf_len = pathmax();
+	if(!id) {
 		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
-	total_len=id->dir.len+1 /* / */+id->table.len+1 /* _ */+
-				FILE_SUFFIX_LEN+1 /* \0 */; /* without pid*/
-	if (buf_len<total_len){
-		LM_ERR("the path is too long (%d and PATHMAX is %d)\n",
-					total_len, buf_len);
+	total_len = id->dir.len + 1 /* / */ + id->table.len
+				+ 1 /* _ */ + FILE_SUFFIX_LEN + 1 /* \0 */; /* without pid*/
+	if(buf_len < total_len) {
+		LM_ERR("the path is too long (%d and PATHMAX is %d)\n", total_len,
+				buf_len);
 		return 0;
 	}
-	
-	buf=pkg_malloc(buf_len);
-	if (buf==0){
+
+	buf = pkg_malloc(buf_len);
+	if(buf == 0) {
 		PKG_MEM_ERROR;
 		return 0;
 	}
@@ -69,11 +69,12 @@ static char* get_name(struct flat_id* id)
 	ptr += id->table.len;
 
 	*ptr++ = '_';
-	
+
 	num = int2str(km_flat_pid, &num_len);
-	if (buf_len<(total_len+num_len)){
+	if(buf_len < (total_len + num_len)) {
 		LM_ERR("the path is too long (%d and PATHMAX is"
-				" %d)\n", total_len+num_len, buf_len);
+			   " %d)\n",
+				total_len + num_len, buf_len);
 		pkg_free(buf);
 		return 0;
 	}
@@ -88,30 +89,30 @@ static char* get_name(struct flat_id* id)
 }
 
 
-struct flat_con* flat_new_connection(struct flat_id* id)
+struct flat_con *flat_new_connection(struct flat_id *id)
 {
-	char* fn;
+	char *fn;
 
-	struct flat_con* res;
+	struct flat_con *res;
 
-	if (!id) {
+	if(!id) {
 		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
-	res = (struct flat_con*)pkg_malloc(sizeof(struct flat_con));
-	if (!res) {
+	res = (struct flat_con *)pkg_malloc(sizeof(struct flat_con));
+	if(!res) {
 		PKG_MEM_ERROR;
 		return 0;
 	}
 
 	memset(res, 0, sizeof(struct flat_con));
 	res->ref = 1;
-	
+
 	res->id = id;
 
 	fn = get_name(id);
-	if (fn==0){
+	if(fn == 0) {
 		LM_ERR("get_name() failed\n");
 		pkg_free(res);
 		return 0;
@@ -119,12 +120,12 @@ struct flat_con* flat_new_connection(struct flat_id* id)
 
 	res->file = fopen(fn, "a");
 	pkg_free(fn); /* we don't need fn anymore */
-	if (!res->file) {
+	if(!res->file) {
 		LM_ERR(" %s\n", strerror(errno));
 		pkg_free(res);
 		return 0;
 	}
-	
+
 	return res;
 }
 
@@ -132,11 +133,13 @@ struct flat_con* flat_new_connection(struct flat_id* id)
 /*
  * Close the connection and release memory
  */
-void flat_free_connection(struct flat_con* con)
+void flat_free_connection(struct flat_con *con)
 {
-	if (!con) return;
-	if (con->id) free_flat_id(con->id);
-	if (con->file) {
+	if(!con)
+		return;
+	if(con->id)
+		free_flat_id(con->id);
+	if(con->file) {
 		fclose(con->file);
 	}
 	pkg_free(con);
@@ -146,21 +149,21 @@ void flat_free_connection(struct flat_con* con)
 /*
  * Reopen a connection
  */
-int flat_reopen_connection(struct flat_con* con)
+int flat_reopen_connection(struct flat_con *con)
 {
-	char* fn;
+	char *fn;
 
-	if (!con) {
+	if(!con) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (con->file) {
+	if(con->file) {
 		fclose(con->file);
 		con->file = 0;
 
 		fn = get_name(con->id);
-		if (fn == 0) {
+		if(fn == 0) {
 			LM_ERR("failed to get_name\n");
 			return -1;
 		}
@@ -168,7 +171,7 @@ int flat_reopen_connection(struct flat_con* con)
 		con->file = fopen(fn, "a");
 		pkg_free(fn);
 
-		if (!con->file) {
+		if(!con->file) {
 			LM_ERR("invalid parameter value\n");
 			return -1;
 		}

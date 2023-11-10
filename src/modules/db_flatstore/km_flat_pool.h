@@ -29,7 +29,7 @@
  * Get a connection from the pool, reuse existing
  * if possible, otherwise create a new one
  */
-struct flat_con* flat_get_connection(char* dir, char* table);
+struct flat_con *flat_get_connection(char *dir, char *table);
 
 
 /*
@@ -37,7 +37,7 @@ struct flat_con* flat_get_connection(char* dir, char* table);
  * in the pool if ref count != 0, otherwise it
  * will be deleted completely
  */
-void flat_release_connection(struct flat_con* con);
+void flat_release_connection(struct flat_con *con);
 
 
 /*

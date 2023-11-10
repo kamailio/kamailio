@@ -26,8 +26,9 @@
 #include "../../core/str.h"
 
 
-struct flat_id {
-	str dir;   /* Database directory */ 
+struct flat_id
+{
+	str dir;   /* Database directory */
 	str table; /* Name of table */
 };
 
@@ -35,19 +36,19 @@ struct flat_id {
 /*
  * Create a new connection identifier
  */
-struct flat_id* new_flat_id(char* dir, char* table);
+struct flat_id *new_flat_id(char *dir, char *table);
 
 
 /*
  * Compare two connection identifiers
  */
-unsigned char cmp_flat_id(struct flat_id* id1, struct flat_id* id2);
+unsigned char cmp_flat_id(struct flat_id *id1, struct flat_id *id2);
 
 
 /*
  * Free a connection identifier
  */
-void free_flat_id(struct flat_id* id);
+void free_flat_id(struct flat_id *id);
 
 
 #endif /* _KM_FLAT_ID_H */

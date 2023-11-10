@@ -35,14 +35,14 @@
 #include "../../core/str.h"
 #include <time.h>
 
-extern str     flat_pid;
-extern int     flat_flush;
-extern str     flat_record_delimiter;
-extern str     flat_delimiter;
-extern str     flat_escape;
-extern str     flat_suffix;
-extern time_t* flat_rotate;
-extern time_t  flat_local_timestamp;
+extern str flat_pid;
+extern int flat_flush;
+extern str flat_record_delimiter;
+extern str flat_delimiter;
+extern str flat_escape;
+extern str flat_suffix;
+extern time_t *flat_rotate;
+extern time_t flat_local_timestamp;
 
 /** @} */
 
