@@ -30,29 +30,31 @@
 #include "../../core/kemi.h"
 #include "../../core/usr_avp.h"
 
-#define VAR_VAL_INT		(0)		/* value is INT (other flags not set) */
-#define VAR_VAL_STR		(1<<0)  /* value is STR */
-#define VAR_VAL_NULL	(1<<1)	/* value is NULL */
+#define VAR_VAL_INT (0)		  /* value is INT (other flags not set) */
+#define VAR_VAL_STR (1 << 0)  /* value is STR */
+#define VAR_VAL_NULL (1 << 1) /* value is NULL */
 
-#define VAR_TYPE_ZERO	(0)		/* default value is 0 (type NULL not set) */
-#define VAR_TYPE_NULL	(1<<15) /* default value is NULL */
+#define VAR_TYPE_ZERO (0)		/* default value is 0 (type NULL not set) */
+#define VAR_TYPE_NULL (1 << 15) /* default value is NULL */
 
-typedef struct script_val {
+typedef struct script_val
+{
 	int flags;
 	int_str value;
 } script_val_t, *script_val_p;
 
-typedef struct script_var {
+typedef struct script_var
+{
 	str name;
 	script_val_t v;
 	struct script_var *next;
 } script_var_t, *script_var_p;
 
-script_var_t* add_var(str *name, int vtype);
-script_var_t* set_var_value(script_var_t *var, int_str *value, int flags);
-script_var_t* get_var_by_name(str *name);
-script_var_t* get_varnull_by_name(str *name);
-script_var_t* get_var_all(void);
+script_var_t *add_var(str *name, int vtype);
+script_var_t *set_var_value(script_var_t *var, int_str *value, int flags);
+script_var_t *get_var_by_name(str *name);
+script_var_t *get_varnull_by_name(str *name);
+script_var_t *get_var_all(void);
 
 void reset_vars(void);
 void destroy_vars(void);
@@ -60,7 +62,6 @@ void destroy_vars_list(script_var_t *svl);
 
 int ki_var_seti(sip_msg_t *msg, str *vname, int ival);
 int ki_var_sets(sip_msg_t *msg, str *vname, str *sval);
-sr_kemi_xval_t* ki_var_get(sip_msg_t *msg, str *vname);
+sr_kemi_xval_t *ki_var_get(sip_msg_t *msg, str *vname);
 
 #endif
-
