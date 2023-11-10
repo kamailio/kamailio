@@ -23,11 +23,20 @@
 
 #include "../../core/pvar.h"
 
-enum _tr_sql_type { TR_SQL_NONE=0, TR_SQL };
-enum _tr_sql_subtype {
-	TR_SQL_ST_NONE=0, TR_SQL_VAL, TR_SQL_VAL_INT, TR_SQL_VAL_STR };
+enum _tr_sql_type
+{
+	TR_SQL_NONE = 0,
+	TR_SQL
+};
+enum _tr_sql_subtype
+{
+	TR_SQL_ST_NONE = 0,
+	TR_SQL_VAL,
+	TR_SQL_VAL_INT,
+	TR_SQL_VAL_STR
+};
 
-char* tr_parse_sql(str *in, trans_t *tr);
+char *tr_parse_sql(str *in, trans_t *tr);
 
 int sqlops_tr_buffer_init(void);
 void sqlops_tr_buffer_destroy(void);

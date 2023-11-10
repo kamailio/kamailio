@@ -42,7 +42,7 @@ sql_result_t *_sql_result_root = NULL;
 
 static char _sql_empty_buf[1];
 
-sql_con_t* sql_get_connection(str *name)
+sql_con_t *sql_get_connection(str *name)
 {
 	sql_con_t *sc;
 	unsigned int conid;
@@ -50,10 +50,9 @@ sql_con_t* sql_get_connection(str *name)
 	conid = core_case_hash(name, 0, 0);
 
 	sc = _sql_con_root;
-	while(sc)
-	{
-		if(conid==sc->conid && sc->name.len==name->len
-				&& strncmp(sc->name.s, name->s, name->len)==0)
+	while(sc) {
+		if(conid == sc->conid && sc->name.len == name->len
+				&& strncmp(sc->name.s, name->s, name->len) == 0)
 			return sc;
 		sc = sc->next;
 	}
@@ -70,19 +69,16 @@ int sql_init_con(str *name, str *url)
 	conid = core_case_hash(name, 0, 0);
 
 	sc = _sql_con_root;
-	while(sc)
-	{
-		if(conid==sc->conid && sc->name.len==name->len
-				&& strncmp(sc->name.s, name->s, name->len)==0)
-		{
+	while(sc) {
+		if(conid == sc->conid && sc->name.len == name->len
+				&& strncmp(sc->name.s, name->s, name->len) == 0) {
 			LM_ERR("duplicate connection name\n");
 			return -1;
 		}
 		sc = sc->next;
 	}
-	sc = (sql_con_t*)pkg_malloc(sizeof(sql_con_t));
-	if(sc==NULL)
-	{
+	sc = (sql_con_t *)pkg_malloc(sizeof(sql_con_t));
+	if(sc == NULL) {
 		LM_ERR("no pkg memory\n");
 		return -1;
 	}
@@ -100,11 +96,11 @@ int pv_parse_con_name(pv_spec_p sp, str *in)
 {
 	sql_con_t *con;
 
-	if(sp==NULL || in==NULL || in->len<=0)
+	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
 
 	con = sql_get_connection(in);
-	if (con==NULL) {
+	if(con == NULL) {
 		LM_ERR("invalid connection [%.*s]\n", in->len, in->s);
 		return -1;
 	}
@@ -115,24 +111,22 @@ int pv_parse_con_name(pv_spec_p sp, str *in)
 	return 0;
 }
 
-int pv_get_sqlrows(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res)
+int pv_get_sqlrows(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	sql_con_t *con;
-	str* sc;
+	str *sc;
 
 	sc = &param->pvn.u.isname.name.s;
 	con = sql_get_connection(sc);
-	if(con==NULL)
-	{
+	if(con == NULL) {
 		LM_ERR("invalid connection [%.*s]\n", sc->len, sc->s);
 		return -1;
 	}
 
-	if (!DB_CAPABILITY(con->dbf, DB_CAP_AFFECTED_ROWS))
-	{
-		LM_ERR("con: %p database module does not have DB_CAP_AFFECTED_ROWS [%.*s]\n",
-		       con, sc->len, sc->s);
+	if(!DB_CAPABILITY(con->dbf, DB_CAP_AFFECTED_ROWS)) {
+		LM_ERR("con: %p database module does not have DB_CAP_AFFECTED_ROWS "
+			   "[%.*s]\n",
+				con, sc->len, sc->s);
 		return -1;
 	}
 
@@ -144,29 +138,26 @@ int sql_connect(int mode)
 	sql_con_t *sc;
 	sc = _sql_con_root;
 	LM_DBG("trying to connect to database with mode %d\n", mode);
-	while(sc)
-	{
-		if (db_bind_mod(&sc->db_url, &sc->dbf))
-		{
-			LM_DBG("database module not found for [%.*s]\n",
-					sc->name.len, sc->name.s);
+	while(sc) {
+		if(db_bind_mod(&sc->db_url, &sc->dbf)) {
+			LM_DBG("database module not found for [%.*s]\n", sc->name.len,
+					sc->name.s);
 			return -1;
 		}
-		if (!DB_CAPABILITY(sc->dbf, DB_CAP_RAW_QUERY))
-		{
+		if(!DB_CAPABILITY(sc->dbf, DB_CAP_RAW_QUERY)) {
 			LM_ERR("database module does not have DB_CAP_ALL [%.*s]\n",
 					sc->name.len, sc->name.s);
 			return -1;
 		}
 		sc->dbh = sc->dbf.init(&sc->db_url);
-		if (sc->dbh==NULL)
-		{
+		if(sc->dbh == NULL) {
 			if(!mode) {
 				LM_ERR("failed to connect to the database [%.*s]\n",
 						sc->name.len, sc->name.s);
 				return -1;
 			} else {
-				LM_INFO("failed to connect to the database [%.*s] - trying next\n",
+				LM_INFO("failed to connect to the database [%.*s] - trying "
+						"next\n",
 						sc->name.len, sc->name.s);
 			}
 		}
@@ -177,18 +168,18 @@ int sql_connect(int mode)
 
 int sql_reconnect(sql_con_t *sc)
 {
-	if(sc==NULL) {
+	if(sc == NULL) {
 		LM_ERR("connection structure not initialized\n");
 		return -1;
 	}
-	if (sc->dbh!=NULL) {
+	if(sc->dbh != NULL) {
 		/* already connected */
 		return 0;
 	}
 	sc->dbh = sc->dbf.init(&sc->db_url);
-	if (sc->dbh==NULL) {
-		LM_ERR("failed to connect to the database [%.*s]\n",
-					sc->name.len, sc->name.s);
+	if(sc->dbh == NULL) {
+		LM_ERR("failed to connect to the database [%.*s]\n", sc->name.len,
+				sc->name.s);
 		return -1;
 	}
 	return 0;
@@ -198,16 +189,15 @@ void sql_disconnect(void)
 {
 	sql_con_t *sc;
 	sc = _sql_con_root;
-	while(sc)
-	{
-		if (sc->dbh!=NULL)
+	while(sc) {
+		if(sc->dbh != NULL)
 			sc->dbf.close(sc->dbh);
-		sc->dbh= NULL;
+		sc->dbh = NULL;
 		sc = sc->next;
 	}
 }
 
-sql_result_t* sql_get_result(str *name)
+sql_result_t *sql_get_result(str *name)
 {
 	sql_result_t *sr;
 	unsigned int resid;
@@ -217,27 +207,24 @@ sql_result_t* sql_get_result(str *name)
 
 	sr = _sql_result_root;
 	i = 0;
-	while(sr)
-	{
-		if(sr->resid==resid && sr->name.len==name->len
-				&& strncmp(sr->name.s, name->s, name->len)==0)
+	while(sr) {
+		if(sr->resid == resid && sr->name.len == name->len
+				&& strncmp(sr->name.s, name->s, name->len) == 0)
 			return sr;
 		i++;
 		sr = sr->next;
 	}
-	if(i>sqlops_results_maxsize)
-	{
+	if(i > sqlops_results_maxsize) {
 		LM_ERR("too many result containers defined\n");
 		return NULL;
 	}
-	sr = (sql_result_t*)pkg_malloc(sizeof(sql_result_t) + name->len);
-	if(sr==NULL)
-	{
+	sr = (sql_result_t *)pkg_malloc(sizeof(sql_result_t) + name->len);
+	if(sr == NULL) {
 		LM_ERR("no pkg memory\n");
 		return NULL;
 	}
 	memset(sr, 0, sizeof(sql_result_t));
-	memcpy(sr+1, name->s, name->len);
+	memcpy(sr + 1, name->s, name->len);
 	sr->name.s = (char *)(sr + 1);
 	sr->name.len = name->len;
 	sr->resid = resid;
@@ -249,24 +236,19 @@ sql_result_t* sql_get_result(str *name)
 void sql_reset_result(sql_result_t *res)
 {
 	int i, j;
-	if(res->cols)
-	{
-		for(i=0; i<res->ncols; i++)
-			if(res->cols[i].name.s!=NULL)
+	if(res->cols) {
+		for(i = 0; i < res->ncols; i++)
+			if(res->cols[i].name.s != NULL)
 				pkg_free(res->cols[i].name.s);
 		pkg_free(res->cols);
 		res->cols = NULL;
 	}
-	if(res->vals)
-	{
-		for(i=0; i<res->nrows; i++)
-		{
-			if(res->vals[i])
-			{
-				for(j=0; j<res->ncols; j++)
-				{
-					if(res->vals[i][j].flags&PV_VAL_STR
-							&& res->vals[i][j].value.s.len>0)
+	if(res->vals) {
+		for(i = 0; i < res->nrows; i++) {
+			if(res->vals[i]) {
+				for(j = 0; j < res->ncols; j++) {
+					if(res->vals[i][j].flags & PV_VAL_STR
+							&& res->vals[i][j].value.s.len > 0)
 						pkg_free(res->vals[i][j].value.s.s);
 				}
 				pkg_free(res->vals[i]);
@@ -281,32 +263,30 @@ void sql_reset_result(sql_result_t *res)
 
 int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 {
-	db1_res_t* db_res = NULL;
+	db1_res_t *db_res = NULL;
 	int i, j;
 	str sv;
 
-	if(res) sql_reset_result(res);
+	if(res)
+		sql_reset_result(res);
 
-	if(query==NULL)
-	{
+	if(query == NULL) {
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
-	if(con->dbf.raw_query(con->dbh, query, &db_res)!=0)
-	{
+	if(con->dbf.raw_query(con->dbh, query, &db_res) != 0) {
 		LM_ERR("cannot do the query [%.*s]\n",
-				(query->len>64)?64:query->len, query->s);
+				(query->len > 64) ? 64 : query->len, query->s);
 		return -1;
 	}
 
-	if(db_res==NULL || RES_ROW_N(db_res)<=0 || RES_COL_N(db_res)<=0)
-	{
+	if(db_res == NULL || RES_ROW_N(db_res) <= 0 || RES_COL_N(db_res) <= 0) {
 		LM_DBG("no result after query\n");
-		if (db_res) con->dbf.free_result(con->dbh, db_res);
+		if(db_res)
+			con->dbf.free_result(con->dbh, db_res);
 		return 2;
 	}
-	if(!res)
-	{
+	if(!res) {
 		LM_DBG("no sqlresult parameter, ignoring result from query\n");
 		con->dbf.free_result(con->dbh, db_res);
 		return 3;
@@ -316,121 +296,104 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 	res->nrows = RES_ROW_N(db_res);
 	LM_DBG("rows [%d] cols [%d]\n", res->nrows, res->ncols);
 
-	res->cols = (sql_col_t*)pkg_malloc(res->ncols*sizeof(sql_col_t));
-	if(res->cols==NULL)
-	{
+	res->cols = (sql_col_t *)pkg_malloc(res->ncols * sizeof(sql_col_t));
+	if(res->cols == NULL) {
 		res->ncols = 0;
 		res->nrows = 0;
 		LM_ERR("no more memory\n");
 		return -1;
 	}
-	memset(res->cols, 0, res->ncols*sizeof(sql_col_t));
-	for(i=0; i<res->ncols; i++)
-	{
+	memset(res->cols, 0, res->ncols * sizeof(sql_col_t));
+	for(i = 0; i < res->ncols; i++) {
 		res->cols[i].name.len = (RES_NAMES(db_res)[i])->len;
-		res->cols[i].name.s = (char*)pkg_malloc((res->cols[i].name.len+1)
-				*sizeof(char));
-		if(res->cols[i].name.s==NULL)
-		{
+		res->cols[i].name.s =
+				(char *)pkg_malloc((res->cols[i].name.len + 1) * sizeof(char));
+		if(res->cols[i].name.s == NULL) {
 			LM_ERR("no more memory\n");
 			goto error;
 		}
 		memcpy(res->cols[i].name.s, RES_NAMES(db_res)[i]->s,
 				res->cols[i].name.len);
-		res->cols[i].name.s[res->cols[i].name.len]='\0';
+		res->cols[i].name.s[res->cols[i].name.len] = '\0';
 		res->cols[i].colid = core_case_hash(&res->cols[i].name, 0, 0);
 	}
 
-	res->vals = (sql_val_t**)pkg_malloc(res->nrows*sizeof(sql_val_t*));
-	if(res->vals==NULL)
-	{
+	res->vals = (sql_val_t **)pkg_malloc(res->nrows * sizeof(sql_val_t *));
+	if(res->vals == NULL) {
 		LM_ERR("no more memory\n");
 		goto error;
 	}
-	memset(res->vals, 0, res->nrows*sizeof(sql_val_t*));
-	for(i=0; i<res->nrows; i++)
-	{
-		res->vals[i] = (sql_val_t*)pkg_malloc(res->ncols*sizeof(sql_val_t));
-		if(res->vals[i]==NULL)
-		{
+	memset(res->vals, 0, res->nrows * sizeof(sql_val_t *));
+	for(i = 0; i < res->nrows; i++) {
+		res->vals[i] = (sql_val_t *)pkg_malloc(res->ncols * sizeof(sql_val_t));
+		if(res->vals[i] == NULL) {
 			LM_ERR("no more memory\n");
 			goto error;
 		}
-		memset(res->vals[i], 0, res->ncols*sizeof(sql_val_t));
-		for(j=0; j<res->ncols; j++)
-		{
-			if(RES_ROWS(db_res)[i].values[j].nul)
-			{
+		memset(res->vals[i], 0, res->ncols * sizeof(sql_val_t));
+		for(j = 0; j < res->ncols; j++) {
+			if(RES_ROWS(db_res)[i].values[j].nul) {
 				res->vals[i][j].flags = PV_VAL_NULL;
 				continue;
 			}
 			sv.s = NULL;
 			sv.len = 0;
-			switch(RES_ROWS(db_res)[i].values[j].type)
-			{
+			switch(RES_ROWS(db_res)[i].values[j].type) {
 				case DB1_STRING:
 					res->vals[i][j].flags = PV_VAL_STR;
-					sv.s=
-						(char*)RES_ROWS(db_res)[i].values[j].val.string_val;
-					sv.len=strlen(sv.s);
-				break;
+					sv.s = (char *)RES_ROWS(db_res)[i].values[j].val.string_val;
+					sv.len = strlen(sv.s);
+					break;
 				case DB1_STR:
 					res->vals[i][j].flags = PV_VAL_STR;
-					sv.len=
-						RES_ROWS(db_res)[i].values[j].val.str_val.len;
-					sv.s=
-						(char*)RES_ROWS(db_res)[i].values[j].val.str_val.s;
-				break;
+					sv.len = RES_ROWS(db_res)[i].values[j].val.str_val.len;
+					sv.s = (char *)RES_ROWS(db_res)[i].values[j].val.str_val.s;
+					break;
 				case DB1_BLOB:
 					res->vals[i][j].flags = PV_VAL_STR;
-					sv.len=
-						RES_ROWS(db_res)[i].values[j].val.blob_val.len;
-					sv.s=
-						(char*)RES_ROWS(db_res)[i].values[j].val.blob_val.s;
-				break;
+					sv.len = RES_ROWS(db_res)[i].values[j].val.blob_val.len;
+					sv.s = (char *)RES_ROWS(db_res)[i].values[j].val.blob_val.s;
+					break;
 				case DB1_INT:
 					res->vals[i][j].flags = PV_VAL_INT;
-					res->vals[i][j].value.n
-						= (int)RES_ROWS(db_res)[i].values[j].val.int_val;
-				break;
+					res->vals[i][j].value.n =
+							(int)RES_ROWS(db_res)[i].values[j].val.int_val;
+					break;
 				case DB1_DATETIME:
 					res->vals[i][j].flags = PV_VAL_INT;
-					res->vals[i][j].value.n
-						= (int)RES_ROWS(db_res)[i].values[j].val.time_val;
-				break;
+					res->vals[i][j].value.n =
+							(int)RES_ROWS(db_res)[i].values[j].val.time_val;
+					break;
 				case DB1_BITMAP:
 					res->vals[i][j].flags = PV_VAL_INT;
-					res->vals[i][j].value.n
-						= (int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
-				break;
+					res->vals[i][j].value.n =
+							(int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
+					break;
 				case DB1_BIGINT:
 					res->vals[i][j].flags = PV_VAL_STR;
-					res->vals[i][j].value.s.len = 21*sizeof(char);
-					res->vals[i][j].value.s.s
-						= (char*)pkg_malloc(res->vals[i][j].value.s.len);
-					if(res->vals[i][j].value.s.s==NULL)
-					{
+					res->vals[i][j].value.s.len = 21 * sizeof(char);
+					res->vals[i][j].value.s.s =
+							(char *)pkg_malloc(res->vals[i][j].value.s.len);
+					if(res->vals[i][j].value.s.s == NULL) {
 						LM_ERR("no more memory\n");
 						goto error;
 					}
 					db_longlong2str(RES_ROWS(db_res)[i].values[j].val.ll_val,
-							res->vals[i][j].value.s.s, &res->vals[i][j].value.s.len);
-				break;
+							res->vals[i][j].value.s.s,
+							&res->vals[i][j].value.s.len);
+					break;
 				default:
 					res->vals[i][j].flags = PV_VAL_NULL;
 			}
-			if(res->vals[i][j].flags == PV_VAL_STR && sv.s)
-			{
-				if(sv.len<=0)
-				{
+			if(res->vals[i][j].flags == PV_VAL_STR && sv.s) {
+				if(sv.len <= 0) {
 					res->vals[i][j].value.s.s = _sql_empty_buf;
 					res->vals[i][j].value.s.len = 0;
 					continue;
 				}
-				res->vals[i][j].value.s.s
-					= (char*)pkg_malloc((sv.len+1)*sizeof(char));
-				if(res->vals[i][j].value.s.s==NULL)
-				{
+				res->vals[i][j].value.s.s =
+						(char *)pkg_malloc((sv.len + 1) * sizeof(char));
+				if(res->vals[i][j].value.s.s == NULL) {
 					LM_ERR("no more memory\n");
 					goto error;
 				}
@@ -452,108 +415,102 @@ error:
 
 int sql_do_query_async(sql_con_t *con, str *query)
 {
-	if(query==NULL)
-	{
+	if(query == NULL) {
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
-	if(con->dbf.raw_query_async==NULL) {
+	if(con->dbf.raw_query_async == NULL) {
 		LM_ERR("the db driver module doesn't support async query\n");
 		return -1;
 	}
-	if(con->dbf.raw_query_async(con->dbh, query)!=0)
-	{
+	if(con->dbf.raw_query_async(con->dbh, query) != 0) {
 		LM_ERR("cannot do the query\n");
 		return -1;
 	}
 	return 1;
 }
 
-int sql_exec_xquery(struct sip_msg *msg, sql_con_t *con, str *query,
-		str *xavp)
+int sql_exec_xquery(struct sip_msg *msg, sql_con_t *con, str *query, str *xavp)
 {
-	db1_res_t* db_res = NULL;
+	db1_res_t *db_res = NULL;
 	sr_xavp_t *row = NULL;
 	sr_xval_t val;
 	int i, j;
 
-	if(msg==NULL || query==NULL || xavp==NULL)
-	{
+	if(msg == NULL || query == NULL || xavp == NULL) {
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
 
-	if(con->dbf.raw_query(con->dbh, query, &db_res)!=0)
-	{
+	if(con->dbf.raw_query(con->dbh, query, &db_res) != 0) {
 		LM_ERR("cannot do the query\n");
 		return -1;
 	}
 
-	if(db_res==NULL || RES_ROW_N(db_res)<=0 || RES_COL_N(db_res)<=0)
-	{
+	if(db_res == NULL || RES_ROW_N(db_res) <= 0 || RES_COL_N(db_res) <= 0) {
 		LM_DBG("no result after query\n");
 		con->dbf.free_result(con->dbh, db_res);
 		return 2;
 	}
 
-	for(i=RES_ROW_N(db_res)-1; i>=0; i--)
-	{
+	for(i = RES_ROW_N(db_res) - 1; i >= 0; i--) {
 		row = NULL;
-		for(j=RES_COL_N(db_res)-1; j>=0; j--)
-		{
-			if(RES_ROWS(db_res)[i].values[j].nul)
-			{
+		for(j = RES_COL_N(db_res) - 1; j >= 0; j--) {
+			if(RES_ROWS(db_res)[i].values[j].nul) {
 				val.type = SR_XTYPE_NULL;
-			} else
-			{
-				switch(RES_ROWS(db_res)[i].values[j].type)
-				{
+			} else {
+				switch(RES_ROWS(db_res)[i].values[j].type) {
 					case DB1_STRING:
 						val.type = SR_XTYPE_STR;
-						val.v.s.s=
-							(char*)RES_ROWS(db_res)[i].values[j].val.string_val;
-						val.v.s.len=strlen(val.v.s.s);
-					break;
+						val.v.s.s = (char *)RES_ROWS(db_res)[i]
+											.values[j]
+											.val.string_val;
+						val.v.s.len = strlen(val.v.s.s);
+						break;
 					case DB1_STR:
 						val.type = SR_XTYPE_STR;
-						val.v.s.len=
-							RES_ROWS(db_res)[i].values[j].val.str_val.len;
-						val.v.s.s=
-							(char*)RES_ROWS(db_res)[i].values[j].val.str_val.s;
-					break;
+						val.v.s.len =
+								RES_ROWS(db_res)[i].values[j].val.str_val.len;
+						val.v.s.s = (char *)RES_ROWS(db_res)[i]
+											.values[j]
+											.val.str_val.s;
+						break;
 					case DB1_BLOB:
 						val.type = SR_XTYPE_STR;
-						val.v.s.len=
-							RES_ROWS(db_res)[i].values[j].val.blob_val.len;
-						val.v.s.s=
-							(char*)RES_ROWS(db_res)[i].values[j].val.blob_val.s;
-					break;
+						val.v.s.len =
+								RES_ROWS(db_res)[i].values[j].val.blob_val.len;
+						val.v.s.s = (char *)RES_ROWS(db_res)[i]
+											.values[j]
+											.val.blob_val.s;
+						break;
 					case DB1_INT:
 						val.type = SR_XTYPE_LONG;
-						val.v.l
-							= (long)RES_ROWS(db_res)[i].values[j].val.int_val;
-					break;
+						val.v.l =
+								(long)RES_ROWS(db_res)[i].values[j].val.int_val;
+						break;
 					case DB1_DATETIME:
 						val.type = SR_XTYPE_LONG;
-						val.v.l
-							= (long)RES_ROWS(db_res)[i].values[j].val.time_val;
-					break;
+						val.v.l = (long)RES_ROWS(db_res)[i]
+										  .values[j]
+										  .val.time_val;
+						break;
 					case DB1_BITMAP:
 						val.type = SR_XTYPE_LONG;
-						val.v.l
-							= (long)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
-					break;
+						val.v.l = (long)RES_ROWS(db_res)[i]
+										  .values[j]
+										  .val.bitmap_val;
+						break;
 					case DB1_BIGINT:
 						val.type = SR_XTYPE_LLONG;
-						val.v.ll
-							= RES_ROWS(db_res)[i].values[j].val.ll_val;
-					break;
+						val.v.ll = RES_ROWS(db_res)[i].values[j].val.ll_val;
+						break;
 					default:
 						val.type = SR_XTYPE_NULL;
 				}
 			}
 			/* Add column to current row, under the column's name */
-			LM_DBG("Adding column: %.*s\n", RES_NAMES(db_res)[j]->len, RES_NAMES(db_res)[j]->s);
+			LM_DBG("Adding column: %.*s\n", RES_NAMES(db_res)[j]->len,
+					RES_NAMES(db_res)[j]->s);
 			xavp_add_value(RES_NAMES(db_res)[j], &val, &row);
 		}
 		/* Add row to result xavp */
@@ -568,23 +525,20 @@ int sql_exec_xquery(struct sip_msg *msg, sql_con_t *con, str *query,
 }
 
 
-int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
-		pv_elem_t *res)
+int sql_do_xquery(
+		struct sip_msg *msg, sql_con_t *con, pv_elem_t *query, pv_elem_t *res)
 {
 	str sv, xavp;
-	if(msg==NULL || query==NULL || res==NULL)
-	{
+	if(msg == NULL || query == NULL || res == NULL) {
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
-	if(pv_printf_s(msg, query, &sv)!=0)
-	{
+	if(pv_printf_s(msg, query, &sv) != 0) {
 		LM_ERR("cannot print the sql query\n");
 		return -1;
 	}
 
-	if(pv_printf_s(msg, res, &xavp)!=0)
-	{
+	if(pv_printf_s(msg, res, &xavp) != 0) {
 		LM_ERR("cannot print the result parameter\n");
 		return -1;
 	}
@@ -595,47 +549,42 @@ int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 int sql_do_pvquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 		pvname_list_t *res)
 {
-	db1_res_t* db_res = NULL;
-	pvname_list_t* pv;
+	db1_res_t *db_res = NULL;
+	pvname_list_t *pv;
 	str sv;
 	int i, j;
 
-	if(msg==NULL || query==NULL || res==NULL)
-	{
+	if(msg == NULL || query == NULL || res == NULL) {
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
-	if(pv_printf_s(msg, query, &sv)!=0)
-	{
+	if(pv_printf_s(msg, query, &sv) != 0) {
 		LM_ERR("cannot print the sql query\n");
 		return -1;
 	}
 
-	if(con->dbf.raw_query(con->dbh, &sv, &db_res)!=0)
-	{
+	if(con->dbf.raw_query(con->dbh, &sv, &db_res) != 0) {
 		LM_ERR("cannot do the query\n");
 		return -1;
 	}
 
-	if(db_res==NULL || RES_ROW_N(db_res)<=0 || RES_COL_N(db_res)<=0)
-	{
+	if(db_res == NULL || RES_ROW_N(db_res) <= 0 || RES_COL_N(db_res) <= 0) {
 		LM_DBG("no result after query\n");
 		con->dbf.free_result(con->dbh, db_res);
 		return 2;
 	}
 
-	for(i=RES_ROW_N(db_res)-1; i>=0; i--)
-	{
+	for(i = RES_ROW_N(db_res) - 1; i >= 0; i--) {
 		pv = res;
-		for(j=0; j<RES_COL_N(db_res); j++)
-		{
-			if (pv == NULL) {
-				LM_ERR("Missing pv spec for column %d\n", j+1);
+		for(j = 0; j < RES_COL_N(db_res); j++) {
+			if(pv == NULL) {
+				LM_ERR("Missing pv spec for column %d\n", j + 1);
 				goto error;
 			}
-			if (db_val2pv_spec(msg, &RES_ROWS(db_res)[i].values[j], &pv->sname) != 0) {
+			if(db_val2pv_spec(msg, &RES_ROWS(db_res)[i].values[j], &pv->sname)
+					!= 0) {
 				LM_ERR("Failed to convert value for column %.*s (row %d)\n",
-				       RES_NAMES(db_res)[j]->len, RES_NAMES(db_res)[j]->s, i);
+						RES_NAMES(db_res)[j]->len, RES_NAMES(db_res)[j]->s, i);
 				goto error;
 			}
 			pv = pv->next;
@@ -663,35 +612,36 @@ int sql_parse_param(char *val)
 	in.len = strlen(in.s);
 	p = in.s;
 
-	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+	while(p < in.s + in.len
+			&& (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
 		p++;
-	if(p>in.s+in.len || *p=='\0')
+	if(p > in.s + in.len || *p == '\0')
 		goto error;
 	name.s = p;
-	while(p < in.s + in.len)
-	{
-		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
+	while(p < in.s + in.len) {
+		if(*p == '=' || *p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')
 			break;
 		p++;
 	}
-	if(p>in.s+in.len || *p=='\0')
+	if(p > in.s + in.len || *p == '\0')
 		goto error;
 	name.len = p - name.s;
-	if(name.len==0) {
+	if(name.len == 0) {
 		goto error;
 	}
-	if(*p!='=')
-	{
-		while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+	if(*p != '=') {
+		while(p < in.s + in.len
+				&& (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
 			p++;
-		if(p>in.s+in.len || *p=='\0' || *p!='=')
+		if(p > in.s + in.len || *p == '\0' || *p != '=')
 			goto error;
 	}
 	p++;
-	if(*p!='>')
+	if(*p != '>')
 		goto error;
 	p++;
-	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+	while(p < in.s + in.len
+			&& (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
 		p++;
 	tok.s = p;
 	tok.len = in.len + (int)(in.s - p);
@@ -701,7 +651,7 @@ int sql_parse_param(char *val)
 	return sql_init_con(&name, &tok);
 error:
 	LM_ERR("invalid sqlops parameter [%.*s] at [%d]\n", in.len, in.s,
-			(int)(p-in.s));
+			(int)(p - in.s));
 	return -1;
 }
 
@@ -709,12 +659,11 @@ void sql_destroy(void)
 {
 	sql_result_t *r;
 	sql_result_t *r0;
-	
+
 	sql_disconnect();
 
-	r=_sql_result_root;
-	while(r)
-	{
+	r = _sql_result_root;
+	while(r) {
 		r0 = r->next;
 		sql_reset_result(r);
 		pkg_free(r);
@@ -731,29 +680,25 @@ int sqlops_do_query(str *scon, str *squery, str *sres)
 	sql_con_t *con = NULL;
 	sql_result_t *res = NULL;
 
-	if (scon == NULL || scon->s == NULL)
-	{
+	if(scon == NULL || scon->s == NULL) {
 		LM_ERR("invalid connection name\n");
 		goto error;
 	}
 
 	con = sql_get_connection(scon);
-	if(con==NULL)
-	{
+	if(con == NULL) {
 		LM_ERR("invalid connection [%.*s]\n", scon->len, scon->s);
 		goto error;
 	}
 	/* Result parameter is optional */
-	if (sres && sres->s)
-	{
+	if(sres && sres->s) {
 		res = sql_get_result(sres);
-		if(res==NULL)
-		{
+		if(res == NULL) {
 			LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 			goto error;
 		}
 	}
-	if(sql_do_query(con, squery, res)<0)
+	if(sql_do_query(con, squery, res) < 0)
 		goto error;
 
 	return 0;
@@ -768,25 +713,21 @@ int sqlops_get_value(str *sres, int i, int j, sql_val_t **val)
 {
 	sql_result_t *res = NULL;
 
-	if (sres == NULL || sres->s == NULL)
-	{
+	if(sres == NULL || sres->s == NULL) {
 		LM_ERR("invalid result name\n");
 		goto error;
 	}
 
 	res = sql_get_result(sres);
-	if(res==NULL)
-	{
+	if(res == NULL) {
 		LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 		goto error;
 	}
-	if(i>=res->nrows)
-	{
+	if(i >= res->nrows) {
 		LM_ERR("row index out of bounds [%d/%d]\n", i, res->nrows);
 		goto error;
 	}
-	if(j>=res->ncols)
-	{
+	if(j >= res->ncols) {
 		LM_ERR("column index out of bounds [%d/%d]\n", j, res->ncols);
 		goto error;
 	}
@@ -804,29 +745,25 @@ int sqlops_is_null(str *sres, int i, int j)
 {
 	sql_result_t *res = NULL;
 
-	if (sres == NULL || sres->s == NULL)
-	{
+	if(sres == NULL || sres->s == NULL) {
 		LM_ERR("invalid result name\n");
 		goto error;
 	}
 
 	res = sql_get_result(sres);
-	if(res==NULL)
-	{
+	if(res == NULL) {
 		LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 		goto error;
 	}
-	if(i>=res->nrows)
-	{
+	if(i >= res->nrows) {
 		LM_ERR("row index out of bounds [%d/%d]\n", i, res->nrows);
 		goto error;
 	}
-	if(j>=res->ncols)
-	{
+	if(j >= res->ncols) {
 		LM_ERR("column index out of bounds [%d/%d]\n", j, res->ncols);
 		goto error;
 	}
-	if(res->vals[i][j].flags&PV_VAL_NULL)
+	if(res->vals[i][j].flags & PV_VAL_NULL)
 		return 1;
 	return 0;
 error:
@@ -840,20 +777,17 @@ int sqlops_get_column(str *sres, int i, str *col)
 {
 	sql_result_t *res = NULL;
 
-	if (sres == NULL || sres->s == NULL)
-	{
+	if(sres == NULL || sres->s == NULL) {
 		LM_ERR("invalid result name\n");
 		goto error;
 	}
 
 	res = sql_get_result(sres);
-	if(res==NULL)
-	{
+	if(res == NULL) {
 		LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 		goto error;
 	}
-	if(i>=res->ncols)
-	{
+	if(i >= res->ncols) {
 		LM_ERR("column index out of bounds [%d/%d]\n", i, res->ncols);
 		goto error;
 	}
@@ -870,15 +804,13 @@ int sqlops_num_columns(str *sres)
 {
 	sql_result_t *res = NULL;
 
-	if (sres == NULL || sres->s == NULL)
-	{
+	if(sres == NULL || sres->s == NULL) {
 		LM_ERR("invalid result name\n");
 		goto error;
 	}
 
 	res = sql_get_result(sres);
-	if(res==NULL)
-	{
+	if(res == NULL) {
 		LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 		goto error;
 	}
@@ -894,15 +826,13 @@ int sqlops_num_rows(str *sres)
 {
 	sql_result_t *res = NULL;
 
-	if (sres == NULL || sres->s == NULL)
-	{
+	if(sres == NULL || sres->s == NULL) {
 		LM_ERR("invalid result name\n");
 		goto error;
 	}
 
 	res = sql_get_result(sres);
-	if(res==NULL)
-	{
+	if(res == NULL) {
 		LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 		goto error;
 	}
@@ -918,15 +848,13 @@ void sqlops_reset_result(str *sres)
 {
 	sql_result_t *res = NULL;
 
-	if (sres == NULL || sres->s == NULL)
-	{
+	if(sres == NULL || sres->s == NULL) {
 		LM_ERR("invalid result name\n");
 		return;
 	}
 
 	res = sql_get_result(sres);
-	if(res==NULL)
-	{
+	if(res == NULL) {
 		LM_ERR("invalid result container [%.*s]\n", sres->len, sres->s);
 		return;
 	}
@@ -942,23 +870,20 @@ int sqlops_do_xquery(sip_msg_t *msg, str *scon, str *squery, str *xavp)
 {
 	sql_con_t *con = NULL;
 
-	if (scon == NULL || scon->s == NULL)
-	{
+	if(scon == NULL || scon->s == NULL) {
 		LM_ERR("invalid connection name\n");
 		goto error;
 	}
 
 	con = sql_get_connection(scon);
-	if(con==NULL)
-	{
+	if(con == NULL) {
 		LM_ERR("invalid connection [%.*s]\n", scon->len, scon->s);
 		goto error;
 	}
-	if(sql_exec_xquery(msg, con, squery, xavp)<0)
+	if(sql_exec_xquery(msg, con, squery, xavp) < 0)
 		goto error;
 
 	return 1;
 error:
 	return -1;
 }
-
