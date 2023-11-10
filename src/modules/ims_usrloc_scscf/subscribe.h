@@ -48,25 +48,29 @@
 
 #include "usrloc.h"
 
-reg_subscriber* new_subscriber(subscriber_data_t* subscriber_data);
+reg_subscriber *new_subscriber(subscriber_data_t *subscriber_data);
 
 //API declarations
-int get_subscriber(impurecord_t* urec, str *watcher_uri,
-		str *watcher_contact, int event, reg_subscriber** r_subscriber);
+int get_subscriber(impurecord_t *urec, str *watcher_uri, str *watcher_contact,
+		int event, reg_subscriber **r_subscriber);
 
-int add_subscriber(impurecord_t* urec, subscriber_data_t* subscriber_data, reg_subscriber** _reg_subscriber, int db_load);
+int add_subscriber(impurecord_t *urec, subscriber_data_t *subscriber_data,
+		reg_subscriber **_reg_subscriber, int db_load);
 
 
-int update_subscriber(impurecord_t* urec, reg_subscriber** _reg_subscriber, int *expires, int *local_cseq, int *version);
+int update_subscriber(impurecord_t *urec, reg_subscriber **_reg_subscriber,
+		int *expires, int *local_cseq, int *version);
 
-void delete_subscriber(impurecord_t* urec, reg_subscriber *s);
+void delete_subscriber(impurecord_t *urec, reg_subscriber *s);
 
-void external_delete_subscriber(reg_subscriber *s, udomain_t* _t, int lock_domain);
+void external_delete_subscriber(
+		reg_subscriber *s, udomain_t *_t, int lock_domain);
 
 void free_subscriber(reg_subscriber *s);
 
 int valid_subscriber(reg_subscriber *s, time_t act_time);
 
-str get_presentity_from_subscriber_dialog(str *callid, str *to_tag, str *from_tag);
+str get_presentity_from_subscriber_dialog(
+		str *callid, str *to_tag, str *from_tag);
 
 #endif /* SUBSCRIBE_USRLOC_H */
