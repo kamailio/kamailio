@@ -28,57 +28,60 @@
 #include "init_socks.h"
 
 
+enum payload_proto
+{
+	P_BINRPC,
+	P_FIFO
+};
 
-enum payload_proto	{ P_BINRPC , P_FIFO };
-
-struct id_list{
-	char* name;
+struct id_list
+{
+	char *name;
 	enum socket_protos proto;
 	enum payload_proto data_proto;
 	int port;
-	char* buf; /* name points somewhere here */
-	struct id_list* next;
+	char *buf; /* name points somewhere here */
+	struct id_list *next;
 };
 
-union sockaddr_u{
+union sockaddr_u
+{
 	union sockaddr_union sa_in;
 	struct sockaddr_un sa_un;
 };
 
 
-
 /* list of control sockets */
-struct ctrl_socket{
+struct ctrl_socket
+{
 	int fd;
 	int write_fd; /* used only by fifo */
 	enum socket_protos transport;
 	enum payload_proto p_proto;
-	char* name;
+	char *name;
 	int port;
-	struct ctrl_socket* next;
+	struct ctrl_socket *next;
 	union sockaddr_u u;
 	void *data; /* extra data, socket dependent */
 };
 
 
+struct id_list *parse_listen_id(char *, int, enum socket_protos);
 
-struct id_list* parse_listen_id(char*, int, enum socket_protos);
-
-int init_ctrl_sockets(struct ctrl_socket** c_lst, struct id_list* lst,
-						int def_port, int perm, int uid, int gid);
-void free_id_list(struct id_list*);
-void free_ctrl_socket_list(struct ctrl_socket* l);
+int init_ctrl_sockets(struct ctrl_socket **c_lst, struct id_list *lst,
+		int def_port, int perm, int uid, int gid);
+void free_id_list(struct id_list *);
+void free_ctrl_socket_list(struct ctrl_socket *l);
 
 
-inline static char* payload_proto_name(enum payload_proto p)
+inline static char *payload_proto_name(enum payload_proto p)
 {
-	switch(p){
+	switch(p) {
 		case P_BINRPC:
 			return "binrpc";
 		case P_FIFO:
 			return "fifo";
-		default:
-			;
+		default:;
 	}
 	return "<unknown>";
 }
