@@ -26,7 +26,7 @@
 #define SDP_MANGLER_H
 
 
-#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/parser/msg_parser.h" /* struct sip_msg */
 #include "common.h"
 #include <regex.h>
 
@@ -39,29 +39,28 @@ from the last group
 */
 
 #ifdef STRICT_CHECK
-	#define PORT_REGEX "(m=[a-z]+ [0-9]{1,5} )"
-	#define IP_REGEX "(c=IN IP4 [0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}( |\n|\r))"
+#define PORT_REGEX "(m=[a-z]+ [0-9]{1,5} )"
+#define IP_REGEX \
+	"(c=IN IP4 [0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}( |\n|\r))"
 #endif
 
 
 #ifndef STRICT_CHECK
-	#define PORT_REGEX "m=[a-z]+ [0-9]{1,5}"
-	#define IP_REGEX "(c=IN IP4 [0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3})"
+#define PORT_REGEX "m=[a-z]+ [0-9]{1,5}"
+#define IP_REGEX "(c=IN IP4 [0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3})"
 #endif
 
 
 #define MIN_ORIGINAL_PORT 1
 #define MAX_ORIGINAL_PORT 65535
-#define MIN_MANGLED_PORT  1
-#define MAX_MANGLED_PORT  65535
+#define MIN_MANGLED_PORT 1
+#define MAX_MANGLED_PORT 65535
 #define MIN_OFFSET_VALUE -65535
-#define MAX_OFFSET_VALUE  65535
-
+#define MAX_OFFSET_VALUE 65535
 
 
 extern regex_t *portExpression;
 extern regex_t *ipExpression;
-
 
 
 /* replaces all appearances of a port in lines like m=audio port with
@@ -71,7 +70,7 @@ extern regex_t *ipExpression;
 	@param unused unused parameter
 	@return negative in case of error or number of replacements - 1
 */
-int sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused);
+int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused);
 
 /* may replace all appearances of an ip in lines like c=IN IP4 ip with
 	a new value for ip if the found ip matches the filter
@@ -82,9 +81,9 @@ int sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused);
 	@return negative in case of error or number of replacements - 1
 */
 
-int sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip);
+int sdp_mangle_ip(struct sip_msg *msg, char *oldip, char *newip);
 
-int compile_expresions(char *port,char *ip);
+int compile_expresions(char *port, char *ip);
 int free_compiled_expresions();
 
 #endif
