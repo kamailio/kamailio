@@ -25,6 +25,6 @@
 #ifndef __PUA_JSON_PUBLISH_H_
 #define __PUA_JSON_PUBLISH_H_
 
-int pua_json_publish(struct sip_msg* msg, char *json);
+int pua_json_publish(struct sip_msg *msg, char *json);
 
 #endif
