@@ -42,45 +42,38 @@ MODULE_VERSION
 #define KSR_UUID_BSIZE 40
 #endif
 
-static int  mod_init(void);
-static int  child_init(int);
+static int mod_init(void);
+static int child_init(int);
 static void mod_destroy(void);
 
 static uuid_t _k_uuid_val;
-static char   _k_uuid_str[KSR_UUID_BSIZE];
+static char _k_uuid_str[KSR_UUID_BSIZE];
 
-int pv_get_uuid(sip_msg_t *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_uuid(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 int pv_parse_uuid_name(pv_spec_p sp, str *in);
 
 static pv_export_t mod_pvs[] = {
-	{ {"uuid", (sizeof("uuid")-1)}, PVT_OTHER, pv_get_uuid,
-		0, pv_parse_uuid_name, 0, 0, 0},
+		{{"uuid", (sizeof("uuid") - 1)}, PVT_OTHER, pv_get_uuid, 0,
+				pv_parse_uuid_name, 0, 0, 0},
 
-	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
-};
+		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
-static cmd_export_t cmds[]={
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[]={
-	{0, 0, 0}
-};
+static param_export_t params[] = {{0, 0, 0}};
 
 struct module_exports exports = {
-	"uuid",          /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* exported functions */
-	params,          /* exported parameters */
-	0,               /* exported rpc functions */
-	mod_pvs,         /* exported pseudo-variables */
-	0,               /* response handling function */
-	mod_init,        /* module init function */
-	child_init,      /* per child init function */
-	mod_destroy      /* destroy function */
+		"uuid",			 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* exported rpc functions */
+		mod_pvs,		 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module init function */
+		child_init,		 /* per child init function */
+		mod_destroy		 /* destroy function */
 };
-
 
 
 /**
@@ -104,7 +97,7 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	if (rank!=PROC_MAIN)
+	if(rank != PROC_MAIN)
 		return 0;
 
 	return 0;
@@ -123,10 +116,9 @@ static void mod_destroy(void)
  */
 int pv_parse_uuid_name(pv_spec_p sp, str *in)
 {
-	if(sp==NULL || in==NULL || in->len<=0)
+	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
-	switch(in->s[0])
-	{
+	switch(in->s[0]) {
 		case 'g':
 		case 'G':
 			sp->pvp.pvn.u.isname.name.n = 0;
@@ -155,29 +147,27 @@ int pv_parse_uuid_name(pv_spec_p sp, str *in)
 /**
  * return the value of $uuid(name)
  */
-int pv_get_uuid(sip_msg_t *msg, pv_param_t *param,
-		pv_value_t *res)
+int pv_get_uuid(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
-	if(param==NULL)
+	if(param == NULL)
 		return -1;
-	switch(param->pvn.u.isname.name.n)
-	{
+	switch(param->pvn.u.isname.name.n) {
 		case 1:
 			uuid_generate_random(_k_uuid_val);
-		break;
+			break;
 		case 2:
 			uuid_generate_time(_k_uuid_val);
-		break;
+			break;
 		case 3:
 #ifndef __OS_darwin
-			if(uuid_generate_time_safe(_k_uuid_val)!=0) {
+			if(uuid_generate_time_safe(_k_uuid_val) != 0) {
 				LM_ERR("uuid not generated in a safe mode\n");
 				return pv_get_null(msg, param, res);
 			}
 #else
 			uuid_generate_time(_k_uuid_val);
 #endif
-		break;
+			break;
 		default:
 			uuid_generate(_k_uuid_val);
 	}
@@ -191,7 +181,7 @@ int pv_get_uuid(sip_msg_t *msg, pv_param_t *param,
  */
 static int ksr_uuid_generate(char *out, int *len)
 {
-	if(out==NULL || len==NULL || *len<KSR_UUID_BSIZE) {
+	if(out == NULL || len == NULL || *len < KSR_UUID_BSIZE) {
 		return -1;
 	}
 	uuid_generate(_k_uuid_val);
@@ -205,11 +195,11 @@ static int ksr_uuid_generate(char *out, int *len)
  */
 static int ksr_uuid_generate_time(char *out, int *len)
 {
-	if(out==NULL || len==NULL || *len<KSR_UUID_BSIZE) {
+	if(out == NULL || len == NULL || *len < KSR_UUID_BSIZE) {
 		return -1;
 	}
 #ifndef __OS_darwin
-	if(uuid_generate_time_safe(_k_uuid_val)!=0) {
+	if(uuid_generate_time_safe(_k_uuid_val) != 0) {
 		LM_ERR("uuid not generated in a safe mode\n");
 		return -1;
 	}
@@ -227,7 +217,7 @@ static int ksr_uuid_generate_time(char *out, int *len)
  */
 static int ksr_uuid_generate_random(char *out, int *len)
 {
-	if(out==NULL || len==NULL || *len<KSR_UUID_BSIZE) {
+	if(out == NULL || len == NULL || *len < KSR_UUID_BSIZE) {
 		return -1;
 	}
 	uuid_generate_random(_k_uuid_val);
@@ -245,7 +235,7 @@ static sr_kemi_xval_t _ksr_kemi_uuid_xval = {0};
 /**
  *
  */
-static sr_kemi_xval_t* ki_ksr_uuid_get(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_ksr_uuid_get(sip_msg_t *msg)
 {
 	int len = KSR_UUID_BSIZE;
 
@@ -264,7 +254,7 @@ static sr_kemi_xval_t* ki_ksr_uuid_get(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_ksr_uuid_rget(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_ksr_uuid_rget(sip_msg_t *msg)
 {
 	int len = KSR_UUID_BSIZE;
 
@@ -283,7 +273,7 @@ static sr_kemi_xval_t* ki_ksr_uuid_rget(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_ksr_uuid_tget(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_ksr_uuid_tget(sip_msg_t *msg)
 {
 	int len = KSR_UUID_BSIZE;
 
