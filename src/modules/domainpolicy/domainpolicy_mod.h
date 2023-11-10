@@ -46,19 +46,19 @@
 /*
  * Module parameters variables
  */
-extern str domainpolicy_table;		/*!< Domainpolicy table name */
-extern str domainpolicy_col_rule;   	/*!< Rule column name */
-extern str domainpolicy_col_type;   	/*!< Type column name */
-extern str domainpolicy_col_att;   	/*!< Attribute column name */
-extern str domainpolicy_col_val;   	/*!< Value column name */
+extern str domainpolicy_table;	  /*!< Domainpolicy table name */
+extern str domainpolicy_col_rule; /*!< Rule column name */
+extern str domainpolicy_col_type; /*!< Type column name */
+extern str domainpolicy_col_att;  /*!< Attribute column name */
+extern str domainpolicy_col_val;  /*!< Value column name */
 
 
 /*
  * Other module variables
  */
-extern int_str port_override_name, transport_override_name, 
-		domain_prefix_name, domain_suffix_name, domain_replacement_name,
-		send_socket_name, target_name;
+extern int_str port_override_name, transport_override_name, domain_prefix_name,
+		domain_suffix_name, domain_replacement_name, send_socket_name,
+		target_name;
 
 extern unsigned short port_override_avp_name_str;
 extern unsigned short transport_override_avp_name_str;
