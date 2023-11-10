@@ -19,7 +19,6 @@
  */
 
 
-
 #ifndef _T_LOOKUP_H
 #define _T_LOOKUP_H
 
@@ -27,49 +26,47 @@
 #include "config.h"
 #include "t_funcs.h"
 
-#define T_UNDEFINED  ( (struct cell*) -1 )
-#define T_NULL_CELL       ( (struct cell*) 0 )
+#define T_UNDEFINED ((struct cell *)-1)
+#define T_NULL_CELL ((struct cell *)0)
 
 #define T_BR_UNDEFINED (-1)
 
-extern msg_ctx_id_t  tm_global_ctx_id;
+extern msg_ctx_id_t tm_global_ctx_id;
 
 
 void init_t(void);
-int init_rb( struct retr_buf *rb, struct sip_msg *msg );
+int init_rb(struct retr_buf *rb, struct sip_msg *msg);
 
-typedef struct cell* (*tlookup_original_f)( struct sip_msg* p_msg );
-struct cell* t_lookupOriginalT( struct sip_msg* p_msg );
+typedef struct cell *(*tlookup_original_f)(struct sip_msg *p_msg);
+struct cell *t_lookupOriginalT(struct sip_msg *p_msg);
 
-int t_reply_matching( struct sip_msg* , int* );
+int t_reply_matching(struct sip_msg *, int *);
 
-typedef int (*tlookup_request_f)(struct sip_msg*, int, int*);
+typedef int (*tlookup_request_f)(struct sip_msg *, int, int *);
 
-int t_lookup_request( struct sip_msg* p_msg, int leave_new_locked,
-						int* canceled);
-int t_newtran( struct sip_msg* p_msg );
+int t_lookup_request(
+		struct sip_msg *p_msg, int leave_new_locked, int *canceled);
+int t_newtran(struct sip_msg *p_msg);
 
-int _add_branch_label( struct cell *trans,
-    char *str, int *len, int branch );
-int add_branch_label( struct cell *trans, 
-	struct sip_msg *p_msg, int branch );
+int _add_branch_label(struct cell *trans, char *str, int *len, int branch);
+int add_branch_label(struct cell *trans, struct sip_msg *p_msg, int branch);
 
 /* releases T-context */
-int t_unref( struct sip_msg *p_msg);
-typedef int (*tunref_f)( struct sip_msg *p_msg);
+int t_unref(struct sip_msg *p_msg);
+typedef int (*tunref_f)(struct sip_msg *p_msg);
 
-typedef int (*tcheck_f)(struct sip_msg*, int*);
+typedef int (*tcheck_f)(struct sip_msg *, int *);
 
 /* old t_check version (no e2eack support) */
-int t_check(struct sip_msg* , int *branch );
+int t_check(struct sip_msg *, int *branch);
 /* new version, e2eack and different return convention */
-int t_check_msg(struct sip_msg* , int *branch );
+int t_check_msg(struct sip_msg *, int *branch);
 
-typedef struct cell * (*tgett_f)(void);
+typedef struct cell *(*tgett_f)(void);
 struct cell *get_t(void);
 
-typedef struct cell* (*tfind_f)(struct sip_msg*, int*, int*);
-struct cell* t_find(struct sip_msg *msg, int *branch, int *vref);
+typedef struct cell *(*tfind_f)(struct sip_msg *, int *, int *);
+struct cell *t_find(struct sip_msg *msg, int *branch, int *vref);
 
 typedef void (*tunset_f)(void);
 void t_unset(void);
@@ -83,46 +80,48 @@ typedef void (*tsett_f)(struct cell *t, int branch);
 void set_t(struct cell *t, int branch);
 
 
-#define T_GET_TI       "t_get_trans_ident"
+#define T_GET_TI "t_get_trans_ident"
 #define T_LOOKUP_IDENT "t_lookup_ident"
-#define T_IS_LOCAL     "t_is_local"
+#define T_IS_LOCAL "t_is_local"
 
-typedef int (*tislocal_f)(struct sip_msg*);
-typedef int (*tnewtran_f)(struct sip_msg*);
-typedef int (*tget_ti_f)(struct sip_msg*, unsigned int*, unsigned int*);
-typedef int (*tlookup_ident_f)(struct cell**, unsigned int, unsigned int);
-typedef int (*trelease_f)(struct sip_msg*);
+typedef int (*tislocal_f)(struct sip_msg *);
+typedef int (*tnewtran_f)(struct sip_msg *);
+typedef int (*tget_ti_f)(struct sip_msg *, unsigned int *, unsigned int *);
+typedef int (*tlookup_ident_f)(struct cell **, unsigned int, unsigned int);
+typedef int (*trelease_f)(struct sip_msg *);
 typedef int (*tlookup_callid_f)(struct cell **, str, str);
-typedef int (*tset_fr_f)(struct sip_msg*, unsigned int, unsigned int);
+typedef int (*tset_fr_f)(struct sip_msg *, unsigned int, unsigned int);
 
-int t_is_local(struct sip_msg*);
-int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned int* label);
-int t_lookup_ident(struct cell** trans, unsigned int hash_index, unsigned int label);
-int t_lookup_ident_filter(struct cell ** trans, unsigned int hash_index,
+int t_is_local(struct sip_msg *);
+int t_get_trans_ident(
+		struct sip_msg *p_msg, unsigned int *hash_index, unsigned int *label);
+int t_lookup_ident(
+		struct cell **trans, unsigned int hash_index, unsigned int label);
+int t_lookup_ident_filter(struct cell **trans, unsigned int hash_index,
 		unsigned int label, int filter);
-tm_cell_t *t_find_ident_filter(unsigned int hash_index, unsigned int label,
-		int filter);
+tm_cell_t *t_find_ident_filter(
+		unsigned int hash_index, unsigned int label, int filter);
 /* lookup a transaction by callid and cseq */
-int t_lookup_callid(struct cell** trans, str callid, str cseq);
+int t_lookup_callid(struct cell **trans, str callid, str cseq);
 
-int t_request_search( struct sip_msg* p_msg, struct cell **r_cell);
+int t_request_search(struct sip_msg *p_msg, struct cell **r_cell);
 int t_reply_search(struct sip_msg *p_msg, struct cell **r_cell, int *r_branch);
 
-int t_set_fr(struct sip_msg* msg, unsigned int fr_inv_to, unsigned int fr_to );
+int t_set_fr(struct sip_msg *msg, unsigned int fr_inv_to, unsigned int fr_to);
 int t_reset_fr(void);
-int t_set_retr(struct sip_msg* msg, unsigned int t1_to, unsigned int t2_to);
+int t_set_retr(struct sip_msg *msg, unsigned int t1_to, unsigned int t2_to);
 int t_reset_retr(void);
-int t_set_max_lifetime(struct sip_msg* msg, unsigned int eol_inv,
-											unsigned int eol_noninv);
+int t_set_max_lifetime(
+		struct sip_msg *msg, unsigned int eol_inv, unsigned int eol_noninv);
 int t_reset_max_lifetime(void);
 
 /**
  * Returns the hash coordinates of the transaction current CANCEL is targeting.
  */
-int t_get_canceled_ident(struct sip_msg *msg, unsigned int *hash_index, 
-		unsigned int *label);
-typedef int (*t_get_canceled_ident_f)(struct sip_msg *msg, 
-		unsigned int *hash_index, unsigned int *label);
+int t_get_canceled_ident(
+		struct sip_msg *msg, unsigned int *hash_index, unsigned int *label);
+typedef int (*t_get_canceled_ident_f)(
+		struct sip_msg *msg, unsigned int *hash_index, unsigned int *label);
 
 /**
  * required by TMX (K/O extensions)
@@ -130,13 +129,14 @@ typedef int (*t_get_canceled_ident_f)(struct sip_msg *msg,
 #define WITH_TM_CTX
 #ifdef WITH_TM_CTX
 
-typedef struct _tm_ctx {
+typedef struct _tm_ctx
+{
 	int branch_index;
 } tm_ctx_t;
 
-typedef tm_ctx_t* (*tm_ctx_get_f)(void);
+typedef tm_ctx_t *(*tm_ctx_get_f)(void);
 
-tm_ctx_t* tm_ctx_get(void);
+tm_ctx_t *tm_ctx_get(void);
 void tm_ctx_init(void);
 void tm_ctx_set_branch_index(int v);
 
