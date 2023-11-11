@@ -25,26 +25,27 @@
 
 #include "qos_cb.h"
 
-struct qos_binds {
-	register_qoscb_f  register_qoscb;
+struct qos_binds
+{
+	register_qoscb_f register_qoscb;
 };
 
 
-typedef int(*load_qos_f)( struct qos_binds *qosb );
-int load_qos( struct qos_binds *qosb);
+typedef int (*load_qos_f)(struct qos_binds *qosb);
+int load_qos(struct qos_binds *qosb);
 
 
-static inline int load_qos_api( struct qos_binds *qosb )
+static inline int load_qos_api(struct qos_binds *qosb)
 {
 	load_qos_f load_qos;
 
 	/* import the QOS auto-loading function */
-	if ( !(load_qos=(load_qos_f)find_export("load_qos", 0, 0))) {
+	if(!(load_qos = (load_qos_f)find_export("load_qos", 0, 0))) {
 		LM_ERR("can't import load_qos\n");
 		return -1;
 	}
 	/* let the auto-loading function load all QOS stuff */
-	if (load_qos( qosb )==-1)
+	if(load_qos(qosb) == -1)
 		return -1;
 
 	return 0;
