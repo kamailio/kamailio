@@ -36,6 +36,6 @@ int ts_set_tm_callbacks(struct cell *t, sip_msg_t *req, ts_transaction_t *ts);
 /*
  *
  */
-void ts_onreply(struct cell* t, int type, struct tmcb_params *param);
+void ts_onreply(struct cell *t, int type, struct tmcb_params *param);
 
 #endif
