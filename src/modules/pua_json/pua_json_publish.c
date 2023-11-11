@@ -64,30 +64,31 @@ str str_presence_status_online = str_init("open");
 
 str str_null_string = str_init("NULL");
 
-int pua_json_update_presentity(str *event, str *realm, str *user, str *etag, str *sender, str *body, int expires, int new_t, int replace) {
+int pua_json_update_presentity(str *event, str *realm, str *user, str *etag,
+		str *sender, str *body, int expires, int new_t, int replace)
+{
 	int ret;
-	if(!event->len)
-	{
+	if(!event->len) {
 		LM_ERR("presence event must be set\n");
 		return -1;
 	}
-	if (!realm->len) {	
+	if(!realm->len) {
 		LM_ERR("presence realm must be set\n");
 		return -1;
 	}
-	if (!user->len) {
+	if(!user->len) {
 		LM_ERR("presence user must be set\n");
 		return -1;
 	}
-	if (!etag->len) {
+	if(!etag->len) {
 		LM_ERR("presence etag must be set\n");
 		return -1;
 	}
-	if (!sender->len) {
+	if(!sender->len) {
 		LM_ERR("presence sender must be set\n");
 		return -1;
 	}
-	if (!body->len) {
+	if(!body->len) {
 		LM_ERR("presence body must be set\n");
 		return -1;
 	}
@@ -96,7 +97,8 @@ int pua_json_update_presentity(str *event, str *realm, str *user, str *etag, str
 	return ret;
 }
 
-int pua_json_publish_presence_to_presentity(struct json_object *json_obj) {
+int pua_json_publish_presence_to_presentity(struct json_object *json_obj)
+{
 	int ret = 1;
 	int len;
 	str from = {0, 0};
@@ -112,7 +114,7 @@ int pua_json_publish_presence_to_presentity(struct json_object *json_obj) {
 	int expires = 0;
 
 	char *body = (char *)pkg_malloc(PRESENCE_BODY_BUFFER_SIZE);
-	if (body == NULL) {
+	if(body == NULL) {
 		LM_ERR("Error allocating buffer for publish\n");
 		ret = -1;
 		goto error;
@@ -125,25 +127,26 @@ int pua_json_publish_presence_to_presentity(struct json_object *json_obj) {
 	json_api.extract_field(json_obj, BLF_JSON_CALLID, &callid);
 	json_api.extract_field(json_obj, BLF_JSON_STATE, &state);
 
-	struct json_object *ExpiresObj =  json_api.get_object(json_obj, BLF_JSON_EXPIRES);
-	if (ExpiresObj != NULL) {
+	struct json_object *ExpiresObj =
+			json_api.get_object(json_obj, BLF_JSON_EXPIRES);
+	if(ExpiresObj != NULL) {
 		expires = json_object_get_int(ExpiresObj);
 	}
 
-	if (!from_user.len || !to_user.len || !state.len) {
+	if(!from_user.len || !to_user.len || !state.len) {
 		LM_ERR("missing one of From / To / State\n");
 		goto error;
 	}
 
-	if (!strcmp(state.s, "early")) {
+	if(!strcmp(state.s, "early")) {
 		note = str_presence_note_busy;
 		activity = str_presence_act_busy;
 
-	} else if (!strcmp(state.s, "confirmed")) {
+	} else if(!strcmp(state.s, "confirmed")) {
 		note = str_presence_note_otp;
 		activity = str_presence_act_otp;
 
-	} else if (!strcmp(state.s, "offline")) {
+	} else if(!strcmp(state.s, "offline")) {
 		note = str_presence_note_offline;
 		status = str_presence_status_offline;
 
@@ -157,9 +160,10 @@ int pua_json_publish_presence_to_presentity(struct json_object *json_obj) {
 	presence_body.s = body;
 	presence_body.len = len;
 
-	pua_json_update_presentity(&event, &from_realm, &from_user, &callid, &from, &presence_body, expires, 1, 1);
+	pua_json_update_presentity(&event, &from_realm, &from_user, &callid, &from,
+			&presence_body, expires, 1, 1);
 
- error:
+error:
 
 	if(body)
 		pkg_free(body);
@@ -167,7 +171,8 @@ int pua_json_publish_presence_to_presentity(struct json_object *json_obj) {
 	return ret;
 }
 
-int pua_json_publish_mwi_to_presentity(struct json_object *json_obj) {
+int pua_json_publish_mwi_to_presentity(struct json_object *json_obj)
+{
 	int ret = 1;
 	int len;
 	str event = str_init("message-summary");
@@ -175,7 +180,9 @@ int pua_json_publish_mwi_to_presentity(struct json_object *json_obj) {
 	str from_user = {0, 0};
 	str from_realm = {0, 0};
 	str callid = {0, 0};
-	str mwi_waiting = {0, 0}, mwi_voice_message = {0, 0}, mwi_new = {0, 0}, mwi_saved = {0, 0}, mwi_urgent = {0, 0}, mwi_urgent_saved = {0, 0}, mwi_account = {0, 0}, mwi_body = {0, 0};
+	str mwi_waiting = {0, 0}, mwi_voice_message = {0, 0}, mwi_new = {0, 0},
+		mwi_saved = {0, 0}, mwi_urgent = {0, 0}, mwi_urgent_saved = {0, 0},
+		mwi_account = {0, 0}, mwi_body = {0, 0};
 	int expires = 0;
 
 	char *body = (char *)pkg_malloc(MWI_BODY_BUFFER_SIZE);
@@ -201,16 +208,16 @@ int pua_json_publish_mwi_to_presentity(struct json_object *json_obj) {
 
 	struct json_object *ExpiresObj =
 			json_api.get_object(json_obj, BLF_JSON_EXPIRES);
-	if (ExpiresObj != NULL) {
+	if(ExpiresObj != NULL) {
 		expires = json_object_get_int(ExpiresObj);
 	}
 
-	if (mwi_new.len > 0) {
+	if(mwi_new.len > 0) {
 		len = snprintf(body, MWI_BODY_BUFFER_SIZE, MWI_BODY, mwi_waiting.len,
 				mwi_waiting.s, mwi_account.len, mwi_account.s, mwi_new.len,
 				mwi_new.s, mwi_saved.len, mwi_saved.s, mwi_urgent.len,
 				mwi_urgent.s, mwi_urgent_saved.len, mwi_urgent_saved.s);
-	} else if (mwi_voice_message.len > 0) {
+	} else if(mwi_voice_message.len > 0) {
 		len = snprintf(body, MWI_BODY_BUFFER_SIZE, MWI_BODY_VOICE_MESSAGE,
 				mwi_waiting.len, mwi_waiting.s, mwi_account.len, mwi_account.s,
 				mwi_voice_message.len, mwi_voice_message.s);
@@ -222,9 +229,10 @@ int pua_json_publish_mwi_to_presentity(struct json_object *json_obj) {
 	mwi_body.s = body;
 	mwi_body.len = len;
 
-	pua_json_update_presentity(&event, &from_realm, &from_user, &callid, &from, &mwi_body, expires, 1, 1);
+	pua_json_update_presentity(&event, &from_realm, &from_user, &callid, &from,
+			&mwi_body, expires, 1, 1);
 
- error:
+error:
 
 	if(body)
 		pkg_free(body);
@@ -233,7 +241,8 @@ int pua_json_publish_mwi_to_presentity(struct json_object *json_obj) {
 }
 
 
-int pua_json_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
+int pua_json_publish_dialoginfo_to_presentity(struct json_object *json_obj)
+{
 	int ret = 1;
 	int len;
 	str from = {0, 0}, to = {0, 0}, pres = {0, 0};
@@ -276,41 +285,41 @@ int pua_json_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
 
 	struct json_object *ExpiresObj =
 			json_api.get_object(json_obj, BLF_JSON_EXPIRES);
-	if (ExpiresObj != NULL) {
+	if(ExpiresObj != NULL) {
 		expires = json_object_get_int(ExpiresObj);
 	}
 
-	if (!from.len || !to.len || !state.len) {
+	if(!from.len || !to.len || !state.len) {
 		LM_ERR("missing one of From / To / State\n");
 		goto error;
 	}
 
-	if (!pres.len || !pres_user.len || !pres_realm.len) {
+	if(!pres.len || !pres_user.len || !pres_realm.len) {
 		pres = from;
 		pres_user = from_user;
 		pres_realm = from_realm;
 	}
 
-	if (!from_uri.len)
+	if(!from_uri.len)
 		from_uri = from;
 
-	if (!to_uri.len)
+	if(!to_uri.len)
 		to_uri = to;
 
-	if (fromtag.len > 0) {
+	if(fromtag.len > 0) {
 		fromtag.len = snprintf(from_tag_buffer, TO_TAG_BUFFER_SIZE, LOCAL_TAG,
 				fromtag.len, fromtag.s);
 		fromtag.s = from_tag_buffer;
 	}
 
-	if (totag.len > 0) {
+	if(totag.len > 0) {
 		totag.len = snprintf(to_tag_buffer, FROM_TAG_BUFFER_SIZE, REMOTE_TAG,
 				totag.len, totag.s);
 		totag.s = to_tag_buffer;
 	}
 
-	if (callid.len) {
-		if (pua_include_entity) {
+	if(callid.len) {
+		if(pua_include_entity) {
 			len = snprintf(body, DIALOGINFO_BODY_BUFFER_SIZE, DIALOGINFO_BODY,
 					pres.len, pres.s, callid.len, callid.s, callid.len,
 					callid.s, fromtag.len, fromtag.s, totag.len, totag.s,
@@ -337,9 +346,10 @@ int pua_json_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
 	dialoginfo_body.s = body;
 	dialoginfo_body.len = len;
 
-	pua_json_update_presentity(&event, &pres_realm, &pres_user, &callid, &sender, &dialoginfo_body, expires, 1, 1);
+	pua_json_update_presentity(&event, &pres_realm, &pres_user, &callid,
+			&sender, &dialoginfo_body, expires, 1, 1);
 
- error:
+error:
 
 	if(body)
 		pkg_free(body);
@@ -348,38 +358,43 @@ int pua_json_publish_dialoginfo_to_presentity(struct json_object *json_obj) {
 }
 
 
-int pua_json_publish(struct sip_msg* msg, char *json) {
+int pua_json_publish(struct sip_msg *msg, char *json)
+{
 	str event_name = {0, 0}, event_package = {0, 0};
 	struct json_object *json_obj = NULL;
 	int ret = 1;
 
 	/* extract info from json and construct xml */
 	json_obj = json_api.json_parse(json);
-	if (json_obj == NULL) {
+	if(json_obj == NULL) {
 		ret = -1;
 		goto error;
 	}
 
 	json_api.extract_field(json_obj, BLF_JSON_EVENT_NAME, &event_name);
-	if (event_name.len == 6 && strncmp(event_name.s, "update", 6) == 0) {
+	if(event_name.len == 6 && strncmp(event_name.s, "update", 6) == 0) {
 		json_api.extract_field(json_obj, BLF_JSON_EVENT_PKG, &event_package);
-		if (event_package.len == str_event_dialog.len
-				&& strncmp(event_package.s, str_event_dialog.s, event_package.len) == 0) {
-			ret = pua_json_publish_dialoginfo_to_presentity(
-					json_obj);
-		} else if (event_package.len == str_event_message_summary.len
-				&& strncmp(event_package.s, str_event_message_summary.s, event_package.len) == 0) {
+		if(event_package.len == str_event_dialog.len
+				&& strncmp(event_package.s, str_event_dialog.s,
+						   event_package.len)
+						   == 0) {
+			ret = pua_json_publish_dialoginfo_to_presentity(json_obj);
+		} else if(event_package.len == str_event_message_summary.len
+				  && strncmp(event_package.s, str_event_message_summary.s,
+							 event_package.len)
+							 == 0) {
 			ret = pua_json_publish_mwi_to_presentity(json_obj);
-		} else if (event_package.len == str_event_presence.len
-				&& strncmp(event_package.s, str_event_presence.s, event_package.len) == 0) {
-			ret = pua_json_publish_presence_to_presentity(
-					json_obj);
+		} else if(event_package.len == str_event_presence.len
+				  && strncmp(event_package.s, str_event_presence.s,
+							 event_package.len)
+							 == 0) {
+			ret = pua_json_publish_presence_to_presentity(json_obj);
 		}
 	}
 
 error:
 
-	if (json_obj)
+	if(json_obj)
 		json_object_put(json_obj);
 
 	return ret;

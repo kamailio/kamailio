@@ -80,7 +80,7 @@ static int mod_init(void)
 /**
  *
  */
-static int ki_pua_json_publish(sip_msg_t* msg, str* pjson)
+static int ki_pua_json_publish(sip_msg_t *msg, str *pjson)
 {
 	return pua_json_publish(msg, pjson->s);
 }
@@ -92,7 +92,7 @@ static int w_pua_json_publish(sip_msg_t *msg, char *p1pjson, char *p2)
 {
 	str pjson = STR_NULL;
 
-	if(fixup_get_svalue(msg, (gparam_t*)p1pjson, &pjson)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)p1pjson, &pjson) < 0) {
 		LM_ERR("failed to get p1 value\n");
 		return -1;
 	}
