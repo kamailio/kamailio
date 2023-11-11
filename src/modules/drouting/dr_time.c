@@ -83,14 +83,14 @@ int dr_ac_tm_fill(dr_ac_tm_p _atp, struct tm *_tm)
 {
 	if(!_atp || !_tm)
 		return -1;
-	_atp->t.tm_sec = _tm->tm_sec;	 /* seconds */
-	_atp->t.tm_min = _tm->tm_min;	 /* minutes */
-	_atp->t.tm_hour = _tm->tm_hour;   /* hours */
-	_atp->t.tm_mday = _tm->tm_mday;   /* day of the month */
-	_atp->t.tm_mon = _tm->tm_mon;	 /* month */
-	_atp->t.tm_year = _tm->tm_year;   /* year */
-	_atp->t.tm_wday = _tm->tm_wday;   /* day of the week */
-	_atp->t.tm_yday = _tm->tm_yday;   /* day in the year */
+	_atp->t.tm_sec = _tm->tm_sec;	  /* seconds */
+	_atp->t.tm_min = _tm->tm_min;	  /* minutes */
+	_atp->t.tm_hour = _tm->tm_hour;	  /* hours */
+	_atp->t.tm_mday = _tm->tm_mday;	  /* day of the month */
+	_atp->t.tm_mon = _tm->tm_mon;	  /* month */
+	_atp->t.tm_year = _tm->tm_year;	  /* year */
+	_atp->t.tm_wday = _tm->tm_wday;	  /* day of the week */
+	_atp->t.tm_yday = _tm->tm_yday;	  /* day in the year */
 	_atp->t.tm_isdst = _tm->tm_isdst; /* daylight saving time */
 
 	_atp->mweek = dr_ac_get_mweek(_tm);
@@ -186,7 +186,7 @@ dr_ac_maxval_p dr_ac_get_maxval(dr_ac_tm_p _atp, int mode)
 
 	if(!_atp)
 		return NULL;
-	if(mode==1) {
+	if(mode == 1) {
 		_amp = (dr_ac_maxval_p)shm_malloc(sizeof(dr_ac_maxval_t));
 		if(!_amp)
 			return NULL;
@@ -249,8 +249,8 @@ dr_ac_maxval_p dr_ac_get_maxval(dr_ac_tm_p _atp, int mode)
 				  + 1;
 #endif
 
-	if(mode==1) {
-		if(_atp->mv!=NULL) {
+	if(mode == 1) {
+		if(_atp->mv != NULL) {
 			shm_free(_atp->mv);
 		}
 

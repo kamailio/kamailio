@@ -87,7 +87,7 @@ static struct dr_gwl_tmp *dr_gw_lists = NULL;
 #define check_val(_val, _type, _not_null, _is_empty_str) \
 	do {                                                 \
 		if((_val)->type != _type) {                      \
-			LM_ERR("bad column type\n");                  \
+			LM_ERR("bad column type\n");                 \
 			goto error;                                  \
 		}                                                \
 		if(_not_null && (_val)->nul) {                   \

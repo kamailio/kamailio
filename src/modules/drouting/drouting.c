@@ -52,7 +52,7 @@
 
 /*** DB relatede stuff ***/
 /* parameters  */
-static str db_url           = str_init(DEFAULT_RODB_URL);
+static str db_url = str_init(DEFAULT_RODB_URL);
 static str drg_table = str_init("dr_groups");
 static str drd_table = str_init("dr_gateways");
 static str drr_table = str_init("dr_rules");
@@ -642,7 +642,8 @@ static int ki_do_routing_furi(sip_msg_t *msg)
 	grp_id = get_group_id(&uri);
 	if(grp_id < 0) {
 		LM_ERR("failed to get group id\n");
-		return -1;;
+		return -1;
+		;
 	}
 
 	return do_routing(msg, grp_id);
@@ -656,7 +657,7 @@ static int do_routing_0(struct sip_msg *msg, char *str1, char *str2)
 static int do_routing_1(struct sip_msg *msg, char *str1, char *str2)
 {
 	int grp_id;
-	if(fixup_get_ivalue(msg, (gparam_t*)str1, &grp_id)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)str1, &grp_id) < 0) {
 		LM_ERR("failed to get group id parameter\n");
 		return -1;
 	}
@@ -988,7 +989,6 @@ error1:
 }
 
 
-
 static int strip_username(struct sip_msg *msg, int strip)
 {
 	struct action act;
@@ -1052,7 +1052,7 @@ static int is_from_gw_1(struct sip_msg *msg, char *str1, char *str2)
 {
 	int type;
 
-	if(fixup_get_ivalue(msg, (gparam_t*)str1, &type)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)str1, &type) < 0) {
 		LM_ERR("failed to get parameter value\n");
 		return -1;
 	}
@@ -1086,11 +1086,11 @@ static int is_from_gw_2(struct sip_msg *msg, char *str1, char *str2)
 	int type;
 	int flags;
 
-	if(fixup_get_ivalue(msg, (gparam_t*)str1, &type)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)str1, &type) < 0) {
 		LM_ERR("failed to get type parameter value\n");
 		return -1;
 	}
-	if(fixup_get_ivalue(msg, (gparam_t*)str2, &flags)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)str2, &flags) < 0) {
 		LM_ERR("failed to get flags parameter value\n");
 		return -1;
 	}
@@ -1130,7 +1130,7 @@ static int ki_goes_to_gw_type(struct sip_msg *msg, int type)
 static int goes_to_gw_1(struct sip_msg *msg, char *_type, char *_f2)
 {
 	int type;
-	if(fixup_get_ivalue(msg, (gparam_t*)_type, &type)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)_type, &type) < 0) {
 		LM_ERR("failed to get parameter value\n");
 		return -1;
 	}
