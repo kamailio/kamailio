@@ -64,10 +64,10 @@ int nsq_consumer_workers = DBN_DEFAULT_NO_WORKERS;
 
 static int mod_init(void);
 static int mod_child_init(int);
-static int nsq_add_topic_channel(modparam_t type, void* val);
+static int nsq_add_topic_channel(modparam_t type, void *val);
 static void free_tc_list(nsq_topic_channel_t *tc_list);
 static void mod_destroy(void);
 
-int nsq_pv_get_event_payload(struct sip_msg*, pv_param_t*, pv_value_t*);
+int nsq_pv_get_event_payload(struct sip_msg *, pv_param_t *, pv_value_t *);
 
 #endif
