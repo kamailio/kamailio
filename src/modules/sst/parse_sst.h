@@ -37,7 +37,8 @@
 /*!
  * Indicate the "refresher=" value of the Session-Expires header.
  */
-enum sst_refresher {
+enum sst_refresher
+{
 	sst_refresher_unspecified,
 	sst_refresher_uac,
 	sst_refresher_uas,
@@ -48,37 +49,37 @@ enum sst_refresher {
  * We will treat the 'void* parsed' field of struct hdr_field as
  * a pointer to a struct session_expires.
  */
-struct session_expires {
-	hf_parsed_free_f hfree;       /* function to free the content */
-	unsigned            interval; /* in seconds */
-	enum sst_refresher  refresher;
+struct session_expires
+{
+	hf_parsed_free_f hfree; /* function to free the content */
+	unsigned interval;		/* in seconds */
+	enum sst_refresher refresher;
 };
 
 
-enum parse_sst_result {
+enum parse_sst_result
+{
 	parse_sst_success,
-	parse_sst_header_not_found,	/* no header */
+	parse_sst_header_not_found, /* no header */
 	parse_sst_no_value,			/* no interval specified */
 #if NOT_IMPLEMENTED_YET
-	parse_sst_duplicate,		/* multiple s-e / x / min-se headers found */
+	parse_sst_duplicate, /* multiple s-e / x / min-se headers found */
 #endif
 	parse_sst_out_of_mem,
-	parse_sst_parse_error,		/* something puked */
+	parse_sst_parse_error, /* something puked */
 };
 
 
 /*!
  * Allocate a zeroed-out struct session_expires.
  */
-struct session_expires *
-malloc_session_expires( void );
+struct session_expires *malloc_session_expires(void);
 
 
 /*!
  * Deallocates memory previously allocated via malloc_session_expires().
  */
-void
-free_session_expires( struct session_expires * );
+void free_session_expires(struct session_expires *);
 
 
 /*!
@@ -103,8 +104,8 @@ free_session_expires( struct session_expires * );
  *         *((struct session_expires *)msg->session_expires->parsed)
  * \return parse_sst_result
  */
-enum parse_sst_result
-parse_session_expires( struct sip_msg *msg, struct session_expires *se );
+enum parse_sst_result parse_session_expires(
+		struct sip_msg *msg, struct session_expires *se);
 
 
 /*!
@@ -118,8 +119,7 @@ parse_session_expires( struct sip_msg *msg, struct session_expires *se );
  *         result is also available in (unsigned)msg->min_se->parsed
  * \return parse_sst_result
  */
-enum parse_sst_result
-parse_min_se( struct sip_msg *msg, unsigned *min_se );
+enum parse_sst_result parse_min_se(struct sip_msg *msg, unsigned *min_se);
 
 
 #endif /* ! PARSE_SST_H */
