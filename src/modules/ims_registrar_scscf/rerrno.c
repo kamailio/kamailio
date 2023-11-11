@@ -26,10 +26,9 @@
  * \file
  * \brief SIP registrar module - registrar errno
  * \ingroup registrar   
- */  
+ */
 
 
 #include "rerrno.h"
 
 rerr_t rerrno;
-

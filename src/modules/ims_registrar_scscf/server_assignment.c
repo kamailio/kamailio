@@ -69,24 +69,26 @@ extern str scscf_name_str;
  * @param str2 - not used
  * @returns true if ok, false if not, break on error
  */
-int scscf_assign_server(struct sip_msg *msg,
-		str public_identity, str private_identity, int assignment_type,
-		int data_available, saved_transaction_t* transaction_data) {
+int scscf_assign_server(struct sip_msg *msg, str public_identity,
+		str private_identity, int assignment_type, int data_available,
+		saved_transaction_t *transaction_data)
+{
 
 
-        int result = -1;        
+	int result = -1;
 
-	if (assignment_type != AVP_IMS_SAR_REGISTRATION
+	if(assignment_type != AVP_IMS_SAR_REGISTRATION
 			&& assignment_type != AVP_IMS_SAR_RE_REGISTRATION
 			&& assignment_type != AVP_IMS_SAR_USER_DEREGISTRATION
-			&& assignment_type != AVP_IMS_SAR_USER_DEREGISTRATION_STORE_SERVER_NAME
+			&& assignment_type
+					   != AVP_IMS_SAR_USER_DEREGISTRATION_STORE_SERVER_NAME
 			&& assignment_type != AVP_IMS_SAR_UNREGISTERED_USER) {
 		LM_DBG("Invalid SAR assignment type\n");
-                return result;
+		return result;
 	}
 
-        result = cxdx_send_sar(msg, public_identity, private_identity,
+	result = cxdx_send_sar(msg, public_identity, private_identity,
 			scscf_name_str, assignment_type, data_available, transaction_data);
-        
-        return result;
+
+	return result;
 }
