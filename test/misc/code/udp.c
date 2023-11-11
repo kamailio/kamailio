@@ -83,8 +83,8 @@ bouquets and brickbats to farhan@hotfoon.com
 /* this is the main function with the loops and modes */
 void shoot()
 {
-	struct sockaddr_in	addr, sockname;
-	struct timeval	tv, sendtime, recvtime, firstsendt;
+	struct sockaddr_in addr, sockname;
+	struct timeval tv, sendtime, recvtime, firstsendt;
 	struct timezone tz;
 	struct pollfd sockerr;
 	int ssock, redirected, retryAfter;
@@ -92,38 +92,38 @@ void shoot()
 	int dontsend, cseqcmp, cseqtmp;
 	int rem_rand, rem_namebeg;
 	char *contact, *crlf, *foo, *bar;
-	fd_set	fd;
+	fd_set fd;
 	socklen_t slen;
 	regex_t redexp, proexp, okexp, tmhexp, errexp;
 	int bsd_compat, opt_size;
 
-	int nretries=3;
-	char *buff="MiniTest";
+	int nretries = 3;
+	char *buff = "MiniTest";
 
 
 	/* create a sending socket */
 	sock = (int)socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (sock==-1) {
+	if(sock == -1) {
 		perror("no client socket");
 		exit(2);
 	}
 
 
 #ifndef _NO_LISTENER
-    /* create a listening socket */
-    ssock = (int)socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (ssock==-1) {
-        perror("no server socket");
-        exit(2);
-    }
+	/* create a listening socket */
+	ssock = (int)socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if(ssock == -1) {
+		perror("no server socket");
+		exit(2);
+	}
 
-    sockname.sin_family=AF_INET;
-    sockname.sin_addr.s_addr = htonl( INADDR_ANY );
-    sockname.sin_port = htons((short)47437);
-    if (bind( ssock, (struct sockaddr *) &sockname, sizeof(sockname) )==-1) {
-        perror("no bind");
-        exit(2);
-    }
+	sockname.sin_family = AF_INET;
+	sockname.sin_addr.s_addr = htonl(INADDR_ANY);
+	sockname.sin_port = htons((short)47437);
+	if(bind(ssock, (struct sockaddr *)&sockname, sizeof(sockname)) == -1) {
+		perror("no bind");
+		exit(2);
+	}
 #endif
 
 
@@ -135,17 +135,18 @@ void shoot()
 
 	/* if we dont connect, even on Linux, nothing will happen */
 
-#ifdef CONNECTED	
+#ifdef CONNECTED
 	/* we connect as per the RFC 2543 recommendations
 	   modified from sendto/recvfrom */
 	ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
-	if (ret==-1) {
+	if(ret == -1) {
 		perror("no connect");
 		exit(2);
 	}
 #endif
 
-	if (getsockopt( sock, SOL_SOCKET, SO_BSDCOMPAT, &bsd_compat, &opt_size )==-1) {
+	if(getsockopt(sock, SOL_SOCKET, SO_BSDCOMPAT, &bsd_compat, &opt_size)
+			== -1) {
 		perror("ERROR");
 		exit(1);
 	}
@@ -153,8 +154,7 @@ void shoot()
 
 	/* here we go for the number of nretries which heavily depends on the 
 	   mode */
-	for (i = 0; i <= nretries; i++)
-	{
+	for(i = 0; i <= nretries; i++) {
 		/* lets fire the request to the server and store when we did */
 
 		/* if we send too fast, ICMP will arrive back when we are already
@@ -163,13 +163,14 @@ void shoot()
 #ifdef CONNECTED
 		ret = send(sock, buff, strlen(buff), 0);
 #else
-		ret=sendto(sock, buff, strlen(buff), 0, (struct sockaddr *)&addr, sizeof(addr));
+		ret = sendto(sock, buff, strlen(buff), 0, (struct sockaddr *)&addr,
+				sizeof(addr));
 #endif
 		/* wait 1/10 sec to be safe we receive ICMP */
 		usleep(100000);
-		if (ret==-1) {
+		if(ret == -1) {
 			perror("send failure");
-			exit( 1 );
+			exit(1);
 		}
 	}
 
@@ -180,4 +181,3 @@ int main(int argc, char *argv[])
 {
 	shoot();
 }
-

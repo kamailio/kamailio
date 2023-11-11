@@ -81,14 +81,14 @@
  */
 
 /* test only */
-#if defined __BYTE_ORDER && defined __LITTLE_ENDIAN 
-#if	__BYTE_ORDER == __LITTLE_ENDIAN
+#if defined __BYTE_ORDER && defined __LITTLE_ENDIAN
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 #warning little endian (via __BYTE_ORDER)
 #define __BYTE_ORDER_FOUND
 #endif
 #endif
 #if defined __BYTE_ORDER && defined __BIG_ENDIAN
-#if	__BYTE_ORDER == __BIG_ENDIAN
+#if __BYTE_ORDER == __BIG_ENDIAN
 #warning big endian (via __BYTE_ORDER)
 #define __BYTE_ORDER_FOUND
 #endif
@@ -103,7 +103,7 @@
 #define _BYTE_ORDER_FOUND
 #endif
 #endif
-#if defined _BYTE_ORDER && defined _BIG_ENDIAN 
+#if defined _BYTE_ORDER && defined _BIG_ENDIAN
 #if _BYTE_ORDER == _BIG_ENDIAN
 #warning big endian (via _BYTE_ORDER)
 #define _BYTE_ORDER_FOUND
@@ -113,13 +113,13 @@
 #error _BYTE_ORDER defined, but w/ a strange value
 #endif
 
-#if defined BYTE_ORDER && defined LITTLE_ENDIAN 
+#if defined BYTE_ORDER && defined LITTLE_ENDIAN
 #if BYTE_ORDER == LITTLE_ENDIAN
 #warning little endian (via BYTE_ORDER)
 #define BYTE_ORDER_FOUND
 #endif
 #endif
-#if defined BYTE_ORDER && defined BIG_ENDIAN 
+#if defined BYTE_ORDER && defined BIG_ENDIAN
 #if BYTE_ORDER == BIG_ENDIAN
 #warning big endian (via BYTE_ORDER)
 #define BYTE_ORDER_FOUND
@@ -143,26 +143,26 @@
 #endif
 
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 	int ret;
-	
-	ret=0;
-	if (endianness_sanity_check()!=0){
+
+	ret = 0;
+	if(endianness_sanity_check() != 0) {
 		printf("ERROR: sanity checks failed\n");
-		ret=-1;
+		ret = -1;
 	}
-	if (is_little_endian()){
+	if(is_little_endian()) {
 #ifdef __IS_LITTLE_ENDIAN
 		printf("OK: little endian confirmed\n");
-#else 
+#else
 		printf("ERROR: macro claims BIG ENDIAN, but it's little\n");
 		return -1;
 #endif
-	}else{
+	} else {
 #ifdef __IS_BIG_ENDIAN
 		printf("OK: big endian confirmed\n");
-#else 
+#else
 		printf("ERROR: macro claims LITTLE ENDIAN, but it's big\n");
 		return -1;
 #endif
