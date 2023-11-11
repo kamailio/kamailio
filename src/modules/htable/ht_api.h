@@ -29,32 +29,32 @@
 #include "../../core/pvar.h"
 #include "../../core/atomic_ops.h"
 
-#define ht_compute_hash(_s)        core_case_hash(_s,0,0)
-#define ht_get_entry(_h,_size)    (_h)&((_size)-1)
+#define ht_compute_hash(_s) core_case_hash(_s, 0, 0)
+#define ht_get_entry(_h, _size) (_h) & ((_size)-1)
 
 typedef struct _ht_cell
 {
-    unsigned int cellid;
-    unsigned int msize;
+	unsigned int cellid;
+	unsigned int msize;
 	int flags;
 	str name;
 	int_str value;
-	time_t  expire;
-    struct _ht_cell *prev;
-    struct _ht_cell *next;
+	time_t expire;
+	struct _ht_cell *prev;
+	struct _ht_cell *next;
 } ht_cell_t;
 
 typedef struct _ht_entry
 {
-	unsigned int esize;  /* number of items in the slot */
-	ht_cell_t *first;    /* first item in the slot */
-	gen_lock_t lock;     /* mutex to access items in the slot */
+	unsigned int esize;	 /* number of items in the slot */
+	ht_cell_t *first;	 /* first item in the slot */
+	gen_lock_t lock;	 /* mutex to access items in the slot */
 	atomic_t locker_pid; /* pid of the process that holds the lock */
-	int rec_lock_level;  /* recursive lock count */
+	int rec_lock_level;	 /* recursive lock count */
 } ht_entry_t;
 
 #define HT_MAX_COLS 8
-#define HT_EVEX_NAME_SIZE	64
+#define HT_EVEX_NAME_SIZE 64
 
 typedef struct _ht
 {
@@ -79,7 +79,8 @@ typedef struct _ht
 	struct _ht *next;
 } ht_t;
 
-typedef struct _ht_pv {
+typedef struct _ht_pv
+{
 	str htname;
 	ht_t *ht;
 	pv_elem_t *pve;
@@ -93,16 +94,16 @@ int ht_destroy(void);
 int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode);
 int ht_del_cell(ht_t *ht, str *name);
 int ht_del_cell_confirm(ht_t *ht, str *name);
-ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old);
+ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old);
 int ht_cell_exists(ht_t *ht, str *name);
 
 int ht_dbg(void);
-ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old);
+ht_cell_t *ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old);
 int ht_cell_pkg_free(ht_cell_t *cell);
 int ht_cell_free(ht_cell_t *cell);
 
 int ht_table_spec(char *spec);
-ht_t* ht_get_table(str *name);
+ht_t *ht_get_table(str *name);
 int ht_db_load_tables(void);
 int ht_db_sync_tables(void);
 
@@ -112,18 +113,18 @@ void ht_handle_expired_record(ht_t *ht, ht_cell_t *cell);
 int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val);
 int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val);
 
-int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
-		int exv);
+int ht_set_cell_ex(
+		ht_t *ht, str *name, int type, int_str *val, int mode, int exv);
 
 int ht_rm_cell_re(str *sre, ht_t *ht, int mode);
 int ht_count_cells_re(str *sre, ht_t *ht, int mode);
 ht_t *ht_get_root(void);
 int ht_reset_content(ht_t *ht);
 
-#define HT_RM_OP_EQ	1
-#define HT_RM_OP_NE	2
-#define HT_RM_OP_SW	3
-#define HT_RM_OP_RE	4
+#define HT_RM_OP_EQ 1
+#define HT_RM_OP_NE 2
+#define HT_RM_OP_SW 3
+#define HT_RM_OP_RE 4
 int ht_rm_cell_op(str *sre, ht_t *ht, int mode, int op);
 int ht_match_cell_op_str(str *sre, ht_t *ht, int mode, int op);
 
@@ -135,7 +136,7 @@ int ht_iterator_rm(str *iname);
 int ht_iterator_sets(str *iname, str *sval);
 int ht_iterator_seti(str *iname, int ival);
 int ht_iterator_setex(str *iname, int exval);
-ht_cell_t* ht_iterator_get_current(str *iname);
+ht_cell_t *ht_iterator_get_current(str *iname);
 
 void ht_slot_lock(ht_t *ht, int idx);
 void ht_slot_unlock(ht_t *ht, int idx);
