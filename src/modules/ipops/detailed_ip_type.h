@@ -31,16 +31,18 @@
 #include <stdint.h>
 #include "../../core/str.h"
 
-typedef struct ip4_node {
-    uint32_t value;
-    char *ip_type;
-    uint32_t sub_mask;
+typedef struct ip4_node
+{
+	uint32_t value;
+	char *ip_type;
+	uint32_t sub_mask;
 } ip4_node;
 
-typedef struct ip6_node {
-    uint32_t value[4];
-    char *ip_type;
-    uint32_t sub_mask[4];
+typedef struct ip6_node
+{
+	uint32_t value[4];
+	char *ip_type;
+	uint32_t sub_mask[4];
 } ip6_node;
 
 void ipv6ranges_hton();
