@@ -247,7 +247,7 @@ static int w_ldap_search(struct sip_msg *msg, char *ldap_url, char *param)
 {
 	str ldap_url_val = STR_NULL;
 
-	if(fixup_get_svalue(msg, (gparam_t*)ldap_url, &ldap_url_val)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)ldap_url, &ldap_url_val) < 0) {
 		LM_ERR("failed to get ldap url parameter\n");
 		return -1;
 	}
@@ -483,8 +483,8 @@ static int ki_ldap_result_str(sip_msg_t *msg, str *attrname, str *avpname)
 	int_str dst_avp_name;
 
 	dst_avp_name.s = *avpname;
-	return ldap_result_toavp(msg, attrname, NULL, &dst_avp_name,
-			AVP_NAME_STR, 0 /*str result*/);
+	return ldap_result_toavp(
+			msg, attrname, NULL, &dst_avp_name, AVP_NAME_STR, 0 /*str result*/);
 }
 
 /**

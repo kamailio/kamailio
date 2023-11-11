@@ -59,7 +59,7 @@ int ldap_search_impl(struct sip_msg *_msg, str *ldap_url)
 	/*
 	* do variable substitution for _ldap_url (pv_printf_s)
 	*/
-	if(ldap_url == NULL || ldap_url->s==NULL || ldap_url->len<=0) {
+	if(ldap_url == NULL || ldap_url->s == NULL || ldap_url->len <= 0) {
 		LM_ERR("empty ldap_url\n");
 		return -2;
 	}
@@ -126,7 +126,8 @@ int ldap_result_toavp(sip_msg_t *_msg, str *attrname, struct subst_expr *_se,
 		} else {
 			/* save ldap value as string */
 			dst_avp_val.s = avp_val_str;
-			rc = add_avp(dst_avp_type | AVP_VAL_STR, *dst_avp_name, dst_avp_val);
+			rc = add_avp(
+					dst_avp_type | AVP_VAL_STR, *dst_avp_name, dst_avp_val);
 		}
 
 		if(subst_result != NULL) {
@@ -178,8 +179,8 @@ int ldap_write_result(struct sip_msg *_msg, struct ldap_result_params *_lrp,
 		dst_avp_name.s.s = str_buf;
 	}
 
-	return ldap_result_toavp(_msg, &_lrp->ldap_attr_name, _se,
-			&dst_avp_name, dst_avp_type, _lrp->dst_avp_val_type);
+	return ldap_result_toavp(_msg, &_lrp->ldap_attr_name, _se, &dst_avp_name,
+			dst_avp_type, _lrp->dst_avp_val_type);
 }
 
 int ldap_result_next(void)
