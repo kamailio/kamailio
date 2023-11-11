@@ -22,8 +22,8 @@
 #define _binrpc_run_h
 
 
-int process_rpc_req(unsigned char* buf, int size, int* bytes_needed,
-					void* sh, void** saved_state);
+int process_rpc_req(unsigned char *buf, int size, int *bytes_needed, void *sh,
+		void **saved_state);
 
 void binrpc_callbacks_init(void);
 

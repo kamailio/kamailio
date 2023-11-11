@@ -22,17 +22,21 @@
 #define _io_listener_h
 #include "ctrl_socks.h"
 
-#define MAX_IO_READ_CONNECTIONS		128 /* FIXME: make it a config var */
+#define MAX_IO_READ_CONNECTIONS 128 /* FIXME: make it a config var */
 
-enum sock_con_type { S_CONNECTED, S_DISCONNECTED
+enum sock_con_type
+{
+	S_CONNECTED,
+	S_DISCONNECTED
 #ifdef USE_FIFO
-						, S_FIFO
+	,
+	S_FIFO
 #endif
 };
 
 
-
-struct send_handle{
+struct send_handle
+{
 	int fd;
 	int type;
 	union sockaddr_u from;
@@ -40,10 +44,9 @@ struct send_handle{
 };
 
 
+int sock_send_v(void *h, struct iovec *v, size_t count);
 
-int sock_send_v(void *h, struct iovec* v, size_t count);
-
-void io_listen_loop(int fd_no, struct ctrl_socket* cs_lst);
+void io_listen_loop(int fd_no, struct ctrl_socket *cs_lst);
 
 
 #endif
