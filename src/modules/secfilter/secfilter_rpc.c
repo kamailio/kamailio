@@ -33,8 +33,9 @@
 static int get_type(str ctype)
 {
 	int type;
-	
-	if (ctype.len > 64) ctype.len = 64;
+
+	if(ctype.len > 64)
+		ctype.len = 64;
 
 	if(!strncmp(ctype.s, "ua", ctype.len)) {
 		type = 0;
@@ -50,7 +51,7 @@ static int get_type(str ctype)
 		LM_ERR("Invalid type\n");
 		return -1;
 	}
-	
+
 	return type;
 }
 
@@ -79,8 +80,8 @@ void secf_rpc_add_dst(rpc_t *rpc, void *ctx)
 	memcpy(data.s, text, data.len);
 	lock_get(&secf_data->lock);
 	if(secf_append_rule(2, 0, &data) == 0) {
-		rpc->rpl_printf(ctx,
-				"Values (%s) inserted into blacklist destinations", data);
+		rpc->rpl_printf(
+				ctx, "Values (%s) inserted into blacklist destinations", data);
 	} else {
 		rpc->fault(ctx, 500, "Error insert values in the blacklist");
 	}
@@ -182,7 +183,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 
 	if(rpc->scan(ctx, "s", &param) < 1)
 		showall = 1;
-		
+
 	param.len = strlen(param.s);
 
 	if(!strncmp(param.s, "dst", param.len)) {

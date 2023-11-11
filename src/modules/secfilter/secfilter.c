@@ -447,8 +447,8 @@ static int check_user(struct sip_msg *msg, int type)
 	if(res != 0) {
 		return res;
 	}
-	
-	if (user.s == NULL || domain.s == NULL) {
+
+	if(user.s == NULL || domain.s == NULL) {
 		return -1;
 	}
 
@@ -461,7 +461,7 @@ static int check_user(struct sip_msg *msg, int type)
 	while(list) {
 		if(name.len > list->s.len)
 			name.len = list->s.len;
-		if (name.s != NULL) {
+		if(name.s != NULL) {
 			res = cmpi_str(&list->s, &name);
 			if(res == 0) {
 				lock_get(secf_lock);
@@ -508,7 +508,7 @@ static int check_user(struct sip_msg *msg, int type)
 	while(list) {
 		if(name.len > list->s.len)
 			name.len = list->s.len;
-		if (name.s != NULL) {
+		if(name.s != NULL) {
 			res = cmpi_str(&list->s, &name);
 			if(res == 0) {
 				lock_get(secf_lock);
@@ -740,7 +740,7 @@ int secf_init_data(void)
 
 	secf_stats = shm_malloc(total_data * sizeof(int));
 	memset(secf_stats, 0, total_data * sizeof(int));
-	
+
 	if(secf_dst_exact_match != 0)
 		secf_dst_exact_match = 1;
 
@@ -764,11 +764,11 @@ static int mod_init(void)
 		return -1;
 	}
 	secf_lock = lock_alloc();
-	if (!secf_lock) {
+	if(!secf_lock) {
 		LM_CRIT("cannot allocate memory for lock.\n");
 		return -1;
 	}
-	if (lock_init(secf_lock) == 0) {
+	if(lock_init(secf_lock) == 0) {
 		LM_CRIT("cannot initialize lock.\n");
 		return -1;
 	}
@@ -809,7 +809,7 @@ static void mod_destroy(void)
 	shm_free(secf_data);
 	secf_data = NULL;
 
-	if (secf_lock) {
+	if(secf_lock) {
 		lock_destroy(secf_lock);
 		lock_dealloc((void *)secf_lock);
 		secf_lock = NULL;
