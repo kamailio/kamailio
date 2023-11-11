@@ -44,48 +44,34 @@
 
 PyObject *_sr_apy_main_module = NULL;
 
-PyMethodDef RouterMethods[] = {
-	{NULL, NULL, 0, NULL}
-};
+PyMethodDef RouterMethods[] = {{NULL, NULL, 0, NULL}};
 
-static struct PyModuleDef Router_Core_moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "Router",
-        NULL,
-        -1,
-        RouterMethods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
+static struct PyModuleDef Router_Core_moduledef = {PyModuleDef_HEAD_INIT,
+		"Router", NULL, -1, RouterMethods, NULL, NULL, NULL, NULL};
 
-extern PyObject* get_core_module();
-extern PyObject* get_logger_module();
-extern PyObject* get_ranks_module();
-static PyObject* init_Router(void)
+extern PyObject *get_core_module();
+extern PyObject *get_logger_module();
+extern PyObject *get_ranks_module();
+static PyObject *init_Router(void)
 {
 	_sr_apy_main_module = PyModule_Create(&Router_Core_moduledef);
-    PyModule_AddObject(_sr_apy_main_module, "Core", get_core_module());
-    PyModule_AddObject(_sr_apy_main_module, "Logger", get_logger_module());
-    PyModule_AddObject(_sr_apy_main_module, "Ranks", get_ranks_module());
+	PyModule_AddObject(_sr_apy_main_module, "Core", get_core_module());
+	PyModule_AddObject(_sr_apy_main_module, "Logger", get_logger_module());
+	PyModule_AddObject(_sr_apy_main_module, "Ranks", get_ranks_module());
 
 	Py_INCREF(_sr_apy_main_module);
 
-    return _sr_apy_main_module;
-
+	return _sr_apy_main_module;
 }
 
-extern
-void init_mod_Router(void)
+extern void init_mod_Router(void)
 {
 
-    PyImport_AppendInittab("Router", &init_Router);
+	PyImport_AppendInittab("Router", &init_Router);
 
 #ifdef WITH_EXTRA_DEBUG
 	LM_ERR("Module 'Router' has been initialized\n");
 #endif
-
 }
 
 void destroy_mod_Router(void)
@@ -95,6 +81,4 @@ void destroy_mod_Router(void)
 #ifdef WITH_EXTRA_DEBUG
 	LM_ERR("Module 'Router' has been destroyed\n");
 #endif
-
 }
-
