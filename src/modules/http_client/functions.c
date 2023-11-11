@@ -260,7 +260,7 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 	}
 
 	res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
-	res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)(&stream));
+	res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)(&stream));
 
 	if(params->useragent)
 		res |= curl_easy_setopt(curl, CURLOPT_USERAGENT, params->useragent);
@@ -640,7 +640,7 @@ int curl_con_query_url(struct sip_msg *_m, const str *connection,
  * Similar to http_client_request but supports setting a content type attribute.
  */
 int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
-		char* _ctype, char *_hdrs, char *_met)
+		char *_ctype, char *_hdrs, char *_met)
 {
 	int res;
 	curl_query_t query_params;
@@ -696,8 +696,8 @@ int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
  * to pvar.
  * This is the same http_query as used to be in the utils module.
  */
-int http_client_request(
-		sip_msg_t *_m, char *_url, str *_dst, char *_body, char *_hdrs, char *_met)
+int http_client_request(sip_msg_t *_m, char *_url, str *_dst, char *_body,
+		char *_hdrs, char *_met)
 {
 	return http_client_request_c(_m, _url, _dst, _body, NULL, _hdrs, _met);
 }
@@ -718,8 +718,8 @@ int http_client_query(
  * to pvar.
  * This is the same http_query as used to be in the utils module.
  */
-int http_client_query_c(
-		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_ctype, char *_hdrs)
+int http_client_query_c(struct sip_msg *_m, char *_url, str *_dst, char *_post,
+		char *_ctype, char *_hdrs)
 {
 	return http_client_request_c(_m, _url, _dst, _post, _ctype, _hdrs, 0);
 }
