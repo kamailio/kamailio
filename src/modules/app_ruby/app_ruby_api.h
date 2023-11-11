@@ -27,13 +27,15 @@
 
 #include "../../core/parser/msg_parser.h"
 
-typedef VALUE (*app_ruby_function)(int argc, VALUE* argv, VALUE self);
+typedef VALUE (*app_ruby_function)(int argc, VALUE *argv, VALUE self);
 
-typedef struct _ksr_ruby_context {
+typedef struct _ksr_ruby_context
+{
 	int ctxid;
 } ksr_ruby_context_t;
 
-typedef struct _ksr_ruby_export {
+typedef struct _ksr_ruby_export
+{
 	char *mname;
 	char *fname;
 	app_ruby_function func;
@@ -45,13 +47,12 @@ void ruby_sr_destroy(void);
 
 int ruby_sr_initialized(void);
 
-VALUE sr_kemi_ruby_exec_func(ksr_ruby_context_t *R, int eidx, int argc,
-		VALUE* argv, VALUE self);
+VALUE sr_kemi_ruby_exec_func(
+		ksr_ruby_context_t *R, int eidx, int argc, VALUE *argv, VALUE self);
 
-int app_ruby_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
-		char *p3, int emode);
-int app_ruby_run(sip_msg_t *msg, char *func, char *p1, char *p2,
-		char *p3);
+int app_ruby_run_ex(
+		sip_msg_t *msg, char *func, char *p1, char *p2, char *p3, int emode);
+int app_ruby_run(sip_msg_t *msg, char *func, char *p1, char *p2, char *p3);
 int app_ruby_runstring(sip_msg_t *msg, char *script);
 int app_ruby_dostring(sip_msg_t *msg, char *script);
 int app_ruby_dofile(sip_msg_t *msg, char *script);
