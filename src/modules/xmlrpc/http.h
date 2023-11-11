@@ -28,10 +28,14 @@
 #include <stdlib.h>
 #define mxr_malloc malloc
 #define mxr_realloc realloc
-#define mxr_reallocxf(p, s) \
-	(  { void *____v123; ____v123=realloc((p), (s)); \
-		if(!____v123 && (p)) free(p); \
-		____v123; } )
+#define mxr_reallocxf(p, s)           \
+	({                                \
+		void *____v123;               \
+		____v123 = realloc((p), (s)); \
+		if(!____v123 && (p))          \
+			free(p);                  \
+		____v123;                     \
+	})
 #define mxr_free free
 #else
 #include "../../core/mem/mem.h"
@@ -44,7 +48,7 @@
 /*
  * Create a faked Via header field in HTTP requests
  */
-int create_via(sip_msg_t* msg, char* s1, char* s2);
+int create_via(sip_msg_t *msg, char *s1, char *s2);
 
 
 #endif
