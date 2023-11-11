@@ -61,8 +61,8 @@ int dp_add_pid(pid_t pid);
 void dp_del_pid(pid_t pid);
 
 
-timer_cb_list_t *timers=0;	/**< list of timers */
-gen_lock_t *timers_lock=0;	/**< lock for the list of timers */
+timer_cb_list_t *timers = 0; /**< list of timers */
+gen_lock_t *timers_lock = 0; /**< lock for the list of timers */
 
 /** how many seconds to sleep on each timer iteration */
 #define TIMER_RESOLUTION 1
@@ -78,12 +78,13 @@ void timer_loop()
 {
 	time_t now;
 	timer_cb_t *i;
-	callback_f cb=0;
-	void *ptr=0;
-	int interval=0;
+	callback_f cb = 0;
+	void *ptr = 0;
+	int interval = 0;
 
-	while(1){
-		if (shutdownx && *shutdownx) break;
+	while(1) {
+		if(shutdownx && *shutdownx)
+			break;
 		now = time(0);
 		cfg_update();
 
@@ -91,24 +92,29 @@ void timer_loop()
 			cb = 0;
 			lock_get(timers_lock);
 			i = timers->head;
-			while(i && i->expires>now) i = i->next;
-			if (i){
+			while(i && i->expires > now)
+				i = i->next;
+			if(i) {
 				cb = i->cb;
 				ptr = *(i->ptr);
-				if (i->one_time){
-					if (i->prev) i->prev->next = i->next;
-					else timers->head = i->next;
-					if (i->next) i->next->prev = i->prev;
-					else timers->tail = i->next;
+				if(i->one_time) {
+					if(i->prev)
+						i->prev->next = i->next;
+					else
+						timers->head = i->next;
+					if(i->next)
+						i->next->prev = i->prev;
+					else
+						timers->tail = i->next;
 					shm_free(i);
-					i=0;
+					i = 0;
 				}
 			}
 			lock_release(timers_lock);
 
-			if (cb) {
-				interval = cb(now,ptr);
-				if (i){
+			if(cb) {
+				interval = cb(now, ptr);
+				if(i) {
 					lock_get(timers_lock);
 					i->expires = now + interval;
 					lock_release(timers_lock);
@@ -129,21 +135,21 @@ void timer_loop()
  * @param ptr - generic pointer to pass to the callback on expiration
  * @returns 1 on success or 0 on failure
  */
-int add_timer(int expires_in,int one_time,callback_f cb,void *ptr)
+int add_timer(int expires_in, int one_time, callback_f cb, void *ptr)
 {
 	timer_cb_t *n;
-	if (expires_in==0){
+	if(expires_in == 0) {
 		LM_ERR("add_timer(): Minimum expiration time is 1 second!\n");
 		return 0;
 	}
 	n = shm_malloc(sizeof(timer_cb_t));
-	if (!n){
-		LOG_NO_MEM("shm",sizeof(timer_cb_t));
+	if(!n) {
+		LOG_NO_MEM("shm", sizeof(timer_cb_t));
 		return 0;
 	}
-	n->ptr = shm_malloc(sizeof(void*));
-	if (!n){
-		LOG_NO_MEM("shm",sizeof(void*));
+	n->ptr = shm_malloc(sizeof(void *));
+	if(!n) {
+		LOG_NO_MEM("shm", sizeof(void *));
 		shm_free(n);
 		return 0;
 	}
@@ -156,8 +162,10 @@ int add_timer(int expires_in,int one_time,callback_f cb,void *ptr)
 	lock_get(timers_lock);
 	n->prev = timers->tail;
 	n->next = 0;
-	if (!timers->head) timers->head = n;
-	if (timers->tail) timers->tail->next = n;
+	if(!timers->head)
+		timers->head = n;
+	if(timers->tail)
+		timers->tail->next = n;
 	timers->tail = n;
 	lock_release(timers_lock);
 	return 1;
@@ -169,8 +177,8 @@ int add_timer(int expires_in,int one_time,callback_f cb,void *ptr)
 void timer_cdp_init()
 {
 	timers = shm_malloc(sizeof(timer_cb_list_t));
-	timers->head=0;
-	timers->tail=0;
+	timers->head = 0;
+	timers->tail = 0;
 	timers_lock = lock_alloc();
 	timers_lock = lock_init(timers_lock);
 }
@@ -180,18 +188,19 @@ void timer_cdp_init()
  */
 void timer_cdp_destroy()
 {
-	timer_cb_t *n,*i;
+	timer_cb_t *n, *i;
 	/*	lock_get(timers_lock);*/
 	i = timers->head;
-	while(i){
+	while(i) {
 		n = i->next;
-		if (i->ptr) shm_free(i->ptr);
+		if(i->ptr)
+			shm_free(i->ptr);
 		shm_free(i);
 		i = n;
 	}
 	shm_free(timers);
 	lock_destroy(timers_lock);
-	lock_dealloc((void*)timers_lock);
+	lock_dealloc((void *)timers_lock);
 }
 
 /**
@@ -207,7 +216,7 @@ void timer_process(int returns)
 	timer_loop();
 
 	LM_INFO("... Timer process finished\n");
-	if (!returns) {
+	if(!returns) {
 #ifdef CDP_FOR_SER
 #else
 #ifdef PKG_MALLOC
@@ -225,5 +234,3 @@ void timer_process(int returns)
 		exit(0);
 	}
 }
-
-

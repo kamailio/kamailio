@@ -48,18 +48,21 @@
 #include "session.h"
 #include "config.h"
 
-void update_auth_session_timers(cdp_auth_session_t *x,AAAMessage *msg);
+void update_auth_session_timers(cdp_auth_session_t *x, AAAMessage *msg);
 
-int auth_client_statefull_sm_process(cdp_session_t* auth, int event, AAAMessage* msg);
-void auth_server_statefull_sm_process(cdp_session_t* auth, int event, AAAMessage* msg);
+int auth_client_statefull_sm_process(
+		cdp_session_t *auth, int event, AAAMessage *msg);
+void auth_server_statefull_sm_process(
+		cdp_session_t *auth, int event, AAAMessage *msg);
 
-void auth_client_stateless_sm_process(cdp_session_t* s, int event, AAAMessage *msg);
-void auth_server_stateless_sm_process(cdp_session_t* auth, int event, AAAMessage* msg);
+void auth_client_stateless_sm_process(
+		cdp_session_t *s, int event, AAAMessage *msg);
+void auth_server_stateless_sm_process(
+		cdp_session_t *auth, int event, AAAMessage *msg);
 
-void Send_ASA(cdp_session_t* s, AAAMessage* msg);
+void Send_ASA(cdp_session_t *s, AAAMessage *msg);
 
-void Send_STR(cdp_session_t* s, AAAMessage* msg);
-void Send_ASR(cdp_session_t* s, AAAMessage* msg);
+void Send_STR(cdp_session_t *s, AAAMessage *msg);
+void Send_ASR(cdp_session_t *s, AAAMessage *msg);
 
 #endif
-

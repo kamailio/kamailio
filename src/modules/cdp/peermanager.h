@@ -51,8 +51,9 @@
 #include "config.h"
 
 /** list of peers */
-typedef struct {
-	peer *head;	/**< first peer in the list */
+typedef struct
+{
+	peer *head; /**< first peer in the list */
 	peer *tail; /**< last peer in the list */
 } peer_list_t;
 
@@ -70,11 +71,11 @@ void remove_peer(peer *p);
 
 peer *get_peer_from_sock(int sock);
 
-peer *get_peer_from_fqdn(str fqdn,str realm);
+peer *get_peer_from_fqdn(str fqdn, str realm);
 
 peer *get_peer_by_fqdn(str *fqdn);
 
-int peer_timer(time_t now,void *ptr);
+int peer_timer(time_t now, void *ptr);
 
 AAAMsgIdentifier next_hopbyhop();
 AAAMsgIdentifier next_endtoend();

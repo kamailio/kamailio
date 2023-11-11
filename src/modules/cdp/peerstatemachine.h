@@ -48,26 +48,27 @@
 #include "peer.h"
 #include "diameter.h"
 
-int sm_process(peer *p,peer_event_t event,AAAMessage *msg,int peer_locked,int sock);
+int sm_process(peer *p, peer_event_t event, AAAMessage *msg, int peer_locked,
+		int sock);
 
 peer_event_t I_Snd_Conn_Req(peer *p);
-void Cleanup(peer *p,int sock);
+void Cleanup(peer *p, int sock);
 void Error(peer *p, int sock);
 void I_Snd_CER(peer *p);
-int Process_CEA(peer *p,AAAMessage *cea);
+int Process_CEA(peer *p, AAAMessage *cea);
 void I_Disc(peer *p);
 void R_Disc(peer *p);
-int Process_DWR(peer *p,AAAMessage *dwr);
-void Process_DWA(peer *p,AAAMessage *dwa);
+int Process_DWR(peer *p, AAAMessage *dwr);
+void Process_DWA(peer *p, AAAMessage *dwa);
 void Snd_DWR(peer *p);
-void Snd_DWA(peer *p,AAAMessage *dwr,int result_code,int sock);
+void Snd_DWA(peer *p, AAAMessage *dwr, int result_code, int sock);
 void Snd_DPR(peer *p);
-void Snd_DPA(peer *p,AAAMessage *dpr,int result_code,int sock);
-void R_Accept(peer *p,int sock);
-void R_Reject(peer *p,int sock);
-int Process_CER(peer *p,AAAMessage *cer);
-void Snd_CEA(peer *p,AAAMessage *cer,int result_code,int sock);
-int Elect(peer *p,AAAMessage *cer);
+void Snd_DPA(peer *p, AAAMessage *dpr, int result_code, int sock);
+void R_Accept(peer *p, int sock);
+void R_Reject(peer *p, int sock);
+int Process_CER(peer *p, AAAMessage *cer);
+void Snd_CEA(peer *p, AAAMessage *cer, int result_code, int sock);
+int Elect(peer *p, AAAMessage *cer);
 
 void Snd_Message(peer *p, AAAMessage *msg);
 void Rcv_Process(peer *p, AAAMessage *msg);

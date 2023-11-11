@@ -46,9 +46,8 @@
 
 extern unsigned int debug_heavy;
 
-int create_socket(int listen_port,str bind_to,unsigned int *sock);
+int create_socket(int listen_port, str bind_to, unsigned int *sock);
 
 void accept_loop();
 
 #endif
-
