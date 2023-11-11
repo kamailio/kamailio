@@ -31,8 +31,9 @@
 /*
  * Flags stored in flags column and their meaning
  */
-enum domain_flags {
-	DOMAIN_DISABLED  = (1 << 0), /* Domain has been disabled and should not be
+enum domain_flags
+{
+	DOMAIN_DISABLED = (1 << 0), /* Domain has been disabled and should not be
 								  * loaded from the database */
 	DOMAIN_CANONICAL = (1 << 1) /* Canonical domain name (to be used in user
 								 * interfaces a.s.o.) */
@@ -44,33 +45,34 @@ enum domain_flags {
  * is identified by unique domain ID.  Each domain can have several domain
  * names (also called aliases
  */
-typedef struct domain {
-	str did;             /* Unique domain ID */
-	int n;               /* Number of domain names */
-	str* domain;         /* Array of all domains associated with did */
-	unsigned int* flags; /* Flags of each domain in the domain array */
-	avp_list_t attrs;    /* List of domain attributes */
-	struct domain* next; /* Next domain in the list */
+typedef struct domain
+{
+	str did;			 /* Unique domain ID */
+	int n;				 /* Number of domain names */
+	str *domain;		 /* Array of all domains associated with did */
+	unsigned int *flags; /* Flags of each domain in the domain array */
+	avp_list_t attrs;	 /* List of domain attributes */
+	struct domain *next; /* Next domain in the list */
 } domain_t;
 
 
 /*
  * Create domain list from domain table
  */
-int load_domains(domain_t** dest);
+int load_domains(domain_t **dest);
 
 /*
  * Load domain attributes from database
  */
-int db_load_domain_attrs(domain_t* dest);
+int db_load_domain_attrs(domain_t *dest);
 
 
 /*
  * Release all memory allocated for entire domain list
  */
-void free_domain_list(domain_t* list);
+void free_domain_list(domain_t *list);
 
-typedef int (*domain_get_did_t)(str* did, str* domain);
+typedef int (*domain_get_did_t)(str *did, str *domain);
 
 
 /* Retrieve did directly from database, without using memory cache. Use 0 as
@@ -79,14 +81,14 @@ typedef int (*domain_get_did_t)(str* did, str* domain);
  * and -1 on error.  The result is allocated using pkg_malloc and must be
  * freed.
  */
-int db_get_did(str* did, str* domain);
+int db_get_did(str *did, str *domain);
 
 /* Check if the domain name given in the parameter is one
  * of the locally configured domain names.
  * Returns 1 if yes and -1 otherwise
  */
-typedef int (*is_domain_local_f)(str* domain);
-int is_domain_local(str* domain);
+typedef int (*is_domain_local_f)(str *domain);
+int is_domain_local(str *domain);
 
 
 #endif /* _DOMAIN_H */
