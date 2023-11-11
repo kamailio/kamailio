@@ -29,8 +29,9 @@
 #include <math.h>
 #include "seatest/seatest.h"
 
-struct _str{
-	char* s;
+struct _str
+{
+	char *s;
 	int len;
 };
 

@@ -26,4 +26,4 @@
 #include "unit_tests/test.h"
 #endif
 
-const str null_str = {0,0};
+const str null_str = {0, 0};

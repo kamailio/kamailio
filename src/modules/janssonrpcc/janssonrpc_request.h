@@ -30,36 +30,38 @@
 #define JSONRPC_MAX_ID 1000000
 #define RETRY_MAX_TIME 60000 /* milliseconds */
 
-typedef enum {
+typedef enum
+{
 	RPC_REQUEST,
 	RPC_NOTIFICATION
 } rpc_type;
 
 typedef struct jsonrpc_request jsonrpc_request_t;
-struct jsonrpc_request {
+struct jsonrpc_request
+{
 	rpc_type type;
 	int id;
-	jsonrpc_request_t *next; /* pkg */
-	jsonrpc_server_t* server; /* shm */
-	jsonrpc_req_cmd_t* cmd; /* shm */
-	json_t* payload;
-	struct event* timeout_ev; /* pkg */
-	struct event* retry_ev; /* pkg */
+	jsonrpc_request_t *next;  /* pkg */
+	jsonrpc_server_t *server; /* shm */
+	jsonrpc_req_cmd_t *cmd;	  /* shm */
+	json_t *payload;
+	struct event *timeout_ev; /* pkg */
+	struct event *retry_ev;	  /* pkg */
 	int retry;
 	unsigned int ntries;
 	unsigned int timeout;
 };
 
-extern jsonrpc_request_t* request_table[JSONRPC_DEFAULT_HTABLE_SIZE];
+extern jsonrpc_request_t *request_table[JSONRPC_DEFAULT_HTABLE_SIZE];
 
-jsonrpc_request_t* create_request(jsonrpc_req_cmd_t* cmd);
-void print_request(jsonrpc_request_t* req);
-jsonrpc_request_t* pop_request(int id);
-unsigned int requests_using_server(jsonrpc_server_t* server);
-void free_request(jsonrpc_request_t* req);
-int schedule_retry(jsonrpc_request_t* req);
+jsonrpc_request_t *create_request(jsonrpc_req_cmd_t *cmd);
+void print_request(jsonrpc_request_t *req);
+jsonrpc_request_t *pop_request(int id);
+unsigned int requests_using_server(jsonrpc_server_t *server);
+void free_request(jsonrpc_request_t *req);
+int schedule_retry(jsonrpc_request_t *req);
 
-int jsonrpc_send(str conn, jsonrpc_request_t* req, bool notify_only);
-void fail_request(int code, jsonrpc_request_t* req, char* error_str);
+int jsonrpc_send(str conn, jsonrpc_request_t *req, bool notify_only);
+void fail_request(int code, jsonrpc_request_t *req, char *error_str);
 
 #endif /* _JSONRPC_H_ */
