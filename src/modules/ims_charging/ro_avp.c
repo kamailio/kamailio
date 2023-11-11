@@ -13,14 +13,10 @@ extern struct cdp_binds cdpb;
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
  */
-int ro_add_destination_realm_avp(AAAMessage *msg, str data) {
-    return
-    Ro_add_avp(msg, data.s, data.len,
-            AVP_Destination_Realm,
-            AAA_AVP_FLAG_MANDATORY,
-            0,
-            AVP_DUPLICATE_DATA,
-            __FUNCTION__);
+int ro_add_destination_realm_avp(AAAMessage *msg, str data)
+{
+	return Ro_add_avp(msg, data.s, data.len, AVP_Destination_Realm,
+			AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
 
 /**
@@ -35,19 +31,21 @@ int ro_add_destination_realm_avp(AAAMessage *msg, str data) {
  * @param func - the name of the calling function, for debugging purposes
  * @returns 1 on success or 0 on failure
  */
-int Ro_add_avp(AAAMessage *m, char *d, int len, int avp_code, int flags, int vendorid, int data_do, const char *func) {
-    AAA_AVP *avp;
-    if (vendorid != 0) flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
-    avp = cdpb.AAACreateAVP(avp_code, flags, vendorid, d, len, data_do);
-    if (!avp) {
-        LM_ERR("%s: Failed creating avp\n", func);
-        return 0;
-    }
-    if (cdpb.AAAAddAVPToMessage(m, avp, m->avpList.tail) != AAA_ERR_SUCCESS) {
-        LM_ERR("%s: Failed adding avp to message\n", func);
-       cdpb.AAAFreeAVP(&avp);
-        return 0;
-    }
-    return 1;
+int Ro_add_avp(AAAMessage *m, char *d, int len, int avp_code, int flags,
+		int vendorid, int data_do, const char *func)
+{
+	AAA_AVP *avp;
+	if(vendorid != 0)
+		flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
+	avp = cdpb.AAACreateAVP(avp_code, flags, vendorid, d, len, data_do);
+	if(!avp) {
+		LM_ERR("%s: Failed creating avp\n", func);
+		return 0;
+	}
+	if(cdpb.AAAAddAVPToMessage(m, avp, m->avpList.tail) != AAA_ERR_SUCCESS) {
+		LM_ERR("%s: Failed adding avp to message\n", func);
+		cdpb.AAAFreeAVP(&avp);
+		return 0;
+	}
+	return 1;
 }
-
