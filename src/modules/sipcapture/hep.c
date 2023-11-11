@@ -83,8 +83,9 @@ int hep_msg_received(sr_event_param_t *evp)
 		return hepv3_received(buf, *len, ri);
 	} else {
 
-		LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: not supported version "
-				   "or bad length: v:[%d] l:[%d]\n",
+		LOG(L_ERR,
+				"ERROR: sipcapture:hep_msg_received: not supported version "
+				"or bad length: v:[%d] l:[%d]\n",
 				heph->hp_v, heph->hp_l);
 		return -1;
 	}
@@ -112,8 +113,9 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri)
 	hl = hep_offset = sizeof(struct hep_hdr);
 	end = buf + len;
 	if(unlikely(len < hep_offset)) {
-		LOG(L_ERR, "ERROR: sipcapture:hep_msg_received len less than offset "
-				   "[%i] vs [%i]\n",
+		LOG(L_ERR,
+				"ERROR: sipcapture:hep_msg_received len less than offset "
+				"[%i] vs [%i]\n",
 				len, hep_offset);
 		return -1;
 	}
@@ -129,8 +131,9 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri)
 			hl += sizeof(struct hep_ip6hdr);
 			break;
 		default:
-			LOG(L_ERR, "ERROR: sipcapture:hep_msg_received:  unsupported "
-					   "family [%d]\n",
+			LOG(L_ERR,
+					"ERROR: sipcapture:hep_msg_received:  unsupported "
+					"family [%d]\n",
 					heph->hp_f);
 			return -1;
 	}
@@ -739,11 +742,10 @@ int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 	else if(hg->ip_proto->data == IPPROTO_UDP)
 		msg->rcv.proto = PROTO_UDP;
 
-	if(payload != NULL)
-	{
+	if(payload != NULL) {
 		ret = len - payload_len;
 		msg->buf = payload;
-                msg->len = payload_len;
+		msg->len = payload_len;
 	}
 
 
@@ -787,8 +789,9 @@ int hepv2_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 	hl = hep_offset = sizeof(struct hep_hdr);
 	end = buf + len;
 	if(unlikely(len < hep_offset)) {
-		LOG(L_ERR, "ERROR: sipcapture:hep_msg_received len less than offset "
-				   "[%i] vs [%i]\n",
+		LOG(L_ERR,
+				"ERROR: sipcapture:hep_msg_received len less than offset "
+				"[%i] vs [%i]\n",
 				len, hep_offset);
 		return -1;
 	}
@@ -804,8 +807,9 @@ int hepv2_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 			hl += sizeof(struct hep_ip6hdr);
 			break;
 		default:
-			LOG(L_ERR, "ERROR: sipcapture:hep_msg_received:  unsupported "
-					   "family [%d]\n",
+			LOG(L_ERR,
+					"ERROR: sipcapture:hep_msg_received:  unsupported "
+					"family [%d]\n",
 					heph->hp_f);
 			return -1;
 	}
