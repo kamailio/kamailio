@@ -29,46 +29,52 @@
 
 
 /* table entry */
-struct lrkproxy_hash_entry {
-    str src_ipv4;   //media ip address of initiator call in INVITE SIP message.
-    str dst_ipv4;   //media ip address of selected node in 200Ok SIP message.
-    str snat_ipv4;  //change media ip address to selected node.
-    str dnat_ipv4;  //change media ip address to orgin destination party.
-    str src_port;   //media port of initiator call in INVITE SIP message
-    str dst_port;   //media port of selected node in 200Ok SIP message.
-    str snat_port;  //change media port to selected node.
-    str dnat_port;  //change media port to orgin destination party.
+struct lrkproxy_hash_entry
+{
+	str src_ipv4;  //media ip address of initiator call in INVITE SIP message.
+	str dst_ipv4;  //media ip address of selected node in 200Ok SIP message.
+	str snat_ipv4; //change media ip address to selected node.
+	str dnat_ipv4; //change media ip address to orgin destination party.
+	str src_port;  //media port of initiator call in INVITE SIP message
+	str dst_port;  //media port of selected node in 200Ok SIP message.
+	str snat_port; //change media port to selected node.
+	str dnat_port; //change media port to orgin destination party.
 
-    str callid;				// call callid
-    str viabranch;				// call viabranch
-    struct lrkp_node *node;			// call selected node
+	str callid;				// call callid
+	str viabranch;			// call viabranch
+	struct lrkp_node *node; // call selected node
 
-    unsigned int tout;			// call timeout
-    struct lrkproxy_hash_entry *next;	// call next
+	unsigned int tout;				  // call timeout
+	struct lrkproxy_hash_entry *next; // call next
 };
 
 /* table */
-struct lrkproxy_hash_table {
-    struct lrkproxy_hash_entry **row_entry_list;	// vector of size pointers to entry
-    gen_lock_t **row_locks;				// vector of size pointers to locks
-    unsigned int *row_totals;			// vector of size numbers of entries in the hashtable rows
-    unsigned int size;				// hash table size
+struct lrkproxy_hash_table
+{
+	struct lrkproxy_hash_entry *
+			*row_entry_list; // vector of size pointers to entry
+	gen_lock_t **row_locks;	 // vector of size pointers to locks
+	unsigned int *
+			row_totals; // vector of size numbers of entries in the hashtable rows
+	unsigned int size; // hash table size
 };
-
 
 
 int lrkproxy_hash_table_init(int hsize);
 int lrkproxy_hash_table_destroy();
-int lrkproxy_hash_table_insert(str callid, str viabranch, struct lrkproxy_hash_entry *value);
+int lrkproxy_hash_table_insert(
+		str callid, str viabranch, struct lrkproxy_hash_entry *value);
 int lrkproxy_hash_table_remove(str callid, str viabranch, enum lrk_operation);
-struct lrkproxy_hash_entry *lrkproxy_hash_table_lookup(str callid, str viabranch);
+struct lrkproxy_hash_entry *lrkproxy_hash_table_lookup(
+		str callid, str viabranch);
 //struct lrkproxy_hash_entry *lrkproxy_hash_table_lookup(str callid, str viabranch, enum lrk_operation);
 //struct lrkp_node *lrkproxy_hash_table_lookup(str callid, str viabranch, enum lrk_operation);
 //void lrkproxy_hash_table_print();
 //unsigned int lrkproxy_hash_table_total();
 
 void lrkproxy_hash_table_free_entry(struct lrkproxy_hash_entry *entry);
-void lrkproxy_hash_table_free_row_entry_list(struct lrkproxy_hash_entry *row_entry_list);
+void lrkproxy_hash_table_free_row_entry_list(
+		struct lrkproxy_hash_entry *row_entry_list);
 
 int lrkproxy_hash_table_sanity_checks();
 
