@@ -170,8 +170,8 @@ static int mod_init(void)
 		return 0;
 	}
 
-	LM_DBG("db_url=%s (len=%d addr=%p)\n", ZSW(pxml_db_url.s),
-			pxml_db_url.len, pxml_db_url.s);
+	LM_DBG("db_url=%s (len=%d addr=%p)\n", ZSW(pxml_db_url.s), pxml_db_url.len,
+			pxml_db_url.s);
 
 	/* bind the SL API */
 	if(sl_load_api(&slb) != 0) {
