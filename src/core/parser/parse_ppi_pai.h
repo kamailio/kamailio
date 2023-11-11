@@ -31,20 +31,21 @@
 #include "msg_parser.h"
 #include "parse_to.h"
 
-typedef struct p_id_body {
+typedef struct p_id_body
+{
 	to_body_t *id;
 	int num_ids;
 	struct p_id_body *next;
 } p_id_body_t;
 
-int parse_pai_header(struct sip_msg* const msg);
-int parse_ppi_header(struct sip_msg* const msg);
+int parse_pai_header(struct sip_msg *const msg);
+int parse_ppi_header(struct sip_msg *const msg);
 
 /*! casting macro for accessing P-Asserted-Identity body */
-#define get_pai(p_msg)  ((p_id_body_t*)(p_msg)->pai->parsed)
+#define get_pai(p_msg) ((p_id_body_t *)(p_msg)->pai->parsed)
 
 /*! casting macro for accessing P-Preferred-Identity body */
-#define get_ppi(p_msg)  ((p_id_body_t*)(p_msg)->ppi->parsed)
+#define get_ppi(p_msg) ((p_id_body_t *)(p_msg)->ppi->parsed)
 
 int free_pai_ppi_body(p_id_body_t *pid_b);
 

@@ -31,18 +31,17 @@
 extern int memdbg;
 
 #ifdef NO_DEBUG
-	#ifdef __SUNPRO_C
-		#define MDBG(...)
-	#else
-		#define MDBG(fmt, args...)
-	#endif
+#ifdef __SUNPRO_C
+#define MDBG(...)
+#else
+#define MDBG(fmt, args...)
+#endif
 #else /* NO_DEBUG */
-	#ifdef __SUNPRO_C
-		#define MDBG(...) LOG(cfg_get(core, core_cfg, memdbg), __VA_ARGS__)
-	#else
-		#define MDBG(fmt, args...) \
-			LOG(cfg_get(core, core_cfg, memdbg), fmt,  ## args)
-	#endif
+#ifdef __SUNPRO_C
+#define MDBG(...) LOG(cfg_get(core, core_cfg, memdbg), __VA_ARGS__)
+#else
+#define MDBG(fmt, args...) LOG(cfg_get(core, core_cfg, memdbg), fmt, ##args)
+#endif
 #endif /* NO_DEBUG */
 
 

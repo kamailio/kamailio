@@ -28,7 +28,7 @@
 #ifndef _daemonize_h
 #define _daemonize_h
 
-int daemonize(char* name, int daemon_status_fd_input);
+int daemonize(char *name, int daemon_status_fd_input);
 int do_suid(void);
 int increase_open_fds(int target);
 int set_core_dump(int enable, long unsigned int size);
@@ -43,12 +43,13 @@ void daemon_status_on_fork_cleanup(void);
 
 extern int ksr_atexit_mode;
 
-#define ksr_exit(excode) do { \
-		if(ksr_atexit_mode==1) { \
-			exit(excode); \
-		} else { \
-			_exit(excode); \
-		} \
+#define ksr_exit(excode)           \
+	do {                           \
+		if(ksr_atexit_mode == 1) { \
+			exit(excode);          \
+		} else {                   \
+			_exit(excode);         \
+		}                          \
 	} while(0)
 
 #endif /*_daemonize_h */

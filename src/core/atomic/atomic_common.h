@@ -41,7 +41,10 @@
  * atomic_t defined as a struct to easily catch non atomic operations on it,
  * e.g. atomic_t foo; foo++  will generate a compile error.
  */
-typedef struct{ volatile int val; } atomic_t; 
+typedef struct
+{
+	volatile int val;
+} atomic_t;
 
 
 /** 
@@ -54,12 +57,12 @@ typedef struct{ volatile int val; } atomic_t;
 
 /*@{ */
 
-#define atomic_set_int(pvar, i) (*(int*)(pvar)=i)
-#define atomic_set_long(pvar, i) (*(long*)(pvar)=i)
-#define atomic_get_int(pvar) (*(int*)(pvar))
-#define atomic_get_long(pvar) (*(long*)(pvar))
+#define atomic_set_int(pvar, i) (*(int *)(pvar) = i)
+#define atomic_set_long(pvar, i) (*(long *)(pvar) = i)
+#define atomic_get_int(pvar) (*(int *)(pvar))
+#define atomic_get_long(pvar) (*(long *)(pvar))
 
-#define atomic_set(at_var, value)	(atomic_set_int(&((at_var)->val), (value)))
+#define atomic_set(at_var, value) (atomic_set_int(&((at_var)->val), (value)))
 
 inline static int atomic_get(atomic_t *v)
 {

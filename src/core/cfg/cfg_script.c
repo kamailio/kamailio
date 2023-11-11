@@ -31,18 +31,18 @@
 /* allocates memory for a new config script variable
  * The value of the variable is not set!
  */
-cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type,
-					char *descr)
+cfg_script_var_t *new_cfg_script_var(
+		char *gname, char *vname, unsigned int type, char *descr)
 {
-	cfg_group_t	*group;
-	cfg_script_var_t	*var, **last_var;
-	int	gname_len, vname_len, descr_len;
+	cfg_group_t *group;
+	cfg_script_var_t *var, **last_var;
+	int gname_len, vname_len, descr_len;
 
 	LM_DBG("declaring %s.%s\n", gname, vname);
 
-	if (cfg_shmized) {
+	if(cfg_shmized) {
 		LM_ERR("too late variable declaration, "
-			"the config has been already shmized\n");
+			   "the config has been already shmized\n");
 		return NULL;
 	}
 
@@ -50,65 +50,63 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 	vname_len = strlen(vname);
 	/* the group may have been already declared */
 	group = cfg_lookup_group(gname, gname_len);
-	if (group) {
-		if (group->dynamic == CFG_GROUP_STATIC) {
+	if(group) {
+		if(group->dynamic == CFG_GROUP_STATIC) {
 			/* the group has been already declared by a module or by the core */
 			LM_ERR("configuration group has been already declared: %s\n",
-				gname);
+					gname);
 			return NULL;
 		}
 		/* the dynamic or empty group is found */
 		/* verify that the variable does not exist */
-		for (	var = (cfg_script_var_t *)group->vars;
-			var;
-			var = var->next
-		) {
-			if ((var->name_len == vname_len) &&
-			(memcmp(var->name, vname, vname_len) == 0)) {
+		for(var = (cfg_script_var_t *)group->vars; var; var = var->next) {
+			if((var->name_len == vname_len)
+					&& (memcmp(var->name, vname, vname_len) == 0)) {
 				LM_ERR("variable already exists: %s.%s\n", gname, vname);
 				return NULL;
 			}
 		}
-		if (group->dynamic == CFG_GROUP_UNKNOWN)
+		if(group->dynamic == CFG_GROUP_UNKNOWN)
 			group->dynamic = CFG_GROUP_DYNAMIC;
 
 	} else {
 		/* create a new group with NULL values, we will fix it later,
 		when all the variables are known */
-		group = cfg_new_group(gname, gname_len,
-					0 /* num */, NULL /* mapping */,
-					NULL /* vars */, 0 /* size */, NULL /* handle */);
-		if (!group) goto error;
+		group = cfg_new_group(gname, gname_len, 0 /* num */, NULL /* mapping */,
+				NULL /* vars */, 0 /* size */, NULL /* handle */);
+		if(!group)
+			goto error;
 		group->dynamic = CFG_GROUP_DYNAMIC;
 	}
 
-	switch (type) {
-	case CFG_VAR_INT:
-		group->size = ROUND_INT(group->size);
-		group->size += sizeof(int);
-		break;
+	switch(type) {
+		case CFG_VAR_INT:
+			group->size = ROUND_INT(group->size);
+			group->size += sizeof(int);
+			break;
 
-	case CFG_VAR_STR:
-		group->size = ROUND_POINTER(group->size);
-		group->size += sizeof(str);
-		break;
+		case CFG_VAR_STR:
+			group->size = ROUND_POINTER(group->size);
+			group->size += sizeof(str);
+			break;
 
-	default:
-		LM_ERR("unsupported variable type\n");
-		return NULL;
+		default:
+			LM_ERR("unsupported variable type\n");
+			return NULL;
 	}
 
 	group->num++;
-	if (group->num > CFG_MAX_VAR_NUM) {
+	if(group->num > CFG_MAX_VAR_NUM) {
 		LM_ERR("too many variables (%d) within a single group,"
-				" the limit is %d. Increase CFG_MAX_VAR_NUM, or split the group"
-				" into multiple definitions.\n",
-			group->num, CFG_MAX_VAR_NUM);
+			   " the limit is %d. Increase CFG_MAX_VAR_NUM, or split the group"
+			   " into multiple definitions.\n",
+				group->num, CFG_MAX_VAR_NUM);
 		return NULL;
 	}
 
 	var = (cfg_script_var_t *)pkg_malloc(sizeof(cfg_script_var_t));
-	if (!var) goto error;
+	if(!var)
+		goto error;
 	memset(var, 0, sizeof(cfg_script_var_t));
 	var->type = type;
 
@@ -117,22 +115,24 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 	 * The list will be travelled later again, which must be done in
 	 * the same order. */
 	last_var = (cfg_script_var_t **)(void **)&group->vars;
-	while ((*last_var))
+	while((*last_var))
 		last_var = &((*last_var)->next);
 	*last_var = var;
 	var->next = NULL;
 
 	/* clone the name of the variable */
 	var->name = (char *)pkg_malloc(sizeof(char) * (vname_len + 1));
-	if (!var->name) goto error;
+	if(!var->name)
+		goto error;
 	memcpy(var->name, vname, vname_len + 1);
 	var->name_len = vname_len;
 
-	if (descr) {
+	if(descr) {
 		/* save the description */
 		descr_len = strlen(descr);
 		var->descr = (char *)pkg_malloc(sizeof(char) * (descr_len + 1));
-		if (!var->descr) goto error;
+		if(!var->descr)
+			goto error;
 		memcpy(var->descr, descr, descr_len + 1);
 	}
 
@@ -149,62 +149,58 @@ error:
  *	-1: error
  *	 1: variable not found
  */
-int cfg_set_script_var(cfg_group_t *group, str *var_name,
-			void *val, unsigned int val_type)
+int cfg_set_script_var(
+		cfg_group_t *group, str *var_name, void *val, unsigned int val_type)
 {
-	cfg_script_var_t	*var;
-	void	*v;
-	str	s;
+	cfg_script_var_t *var;
+	void *v;
+	str s;
 
-	if (cfg_shmized || (group->dynamic != CFG_GROUP_DYNAMIC)) {
+	if(cfg_shmized || (group->dynamic != CFG_GROUP_DYNAMIC)) {
 		LM_ERR("not a dynamic group before forking\n");
 		return -1;
 	}
 
-	for (	var = (cfg_script_var_t *)(void *)group->vars;
-		var;
-		var = var->next
-	) {
-		if ((var->name_len == var_name->len)
-			&& (memcmp(var->name, var_name->s, var_name->len) == 0)
-		) {
-			switch (var->type) {
-			case CFG_VAR_INT:
-				if (convert_val(val_type, val, CFG_INPUT_INT, &v))
-					goto error;
-				if ((var->min || var->max)
-					&& ((var->min > (int)(long)v) || (var->max < (int)(long)v))
-				) {
-					LM_ERR("integer value is out of range\n");
-					goto error;
-				}
-				var->val.i = (int)(long)v;
-				break;
-
-			case CFG_VAR_STR:
-				if (convert_val(val_type, val, CFG_INPUT_STR, &v))
-					goto error;
-				if (((str *)v)->s) {
-					s.len = ((str *)v)->len;
-					s.s = pkg_malloc(sizeof(char) * (s.len + 1));
-					if (!s.s) {
-						PKG_MEM_ERROR;
+	for(var = (cfg_script_var_t *)(void *)group->vars; var; var = var->next) {
+		if((var->name_len == var_name->len)
+				&& (memcmp(var->name, var_name->s, var_name->len) == 0)) {
+			switch(var->type) {
+				case CFG_VAR_INT:
+					if(convert_val(val_type, val, CFG_INPUT_INT, &v))
+						goto error;
+					if((var->min || var->max)
+							&& ((var->min > (int)(long)v)
+									|| (var->max < (int)(long)v))) {
+						LM_ERR("integer value is out of range\n");
 						goto error;
 					}
-					memcpy(s.s, ((str *)v)->s, s.len);
-					s.s[s.len] = '\0';
-				} else {
-					s.s = NULL;
-					s.len = 0;
-				}
-				if (var->val.s.s)
-					pkg_free(var->val.s.s);
-				var->val.s = s;
-				break;
+					var->val.i = (int)(long)v;
+					break;
 
-			default:
-				LM_ERR("unsupported variable type\n");
-				goto error;
+				case CFG_VAR_STR:
+					if(convert_val(val_type, val, CFG_INPUT_STR, &v))
+						goto error;
+					if(((str *)v)->s) {
+						s.len = ((str *)v)->len;
+						s.s = pkg_malloc(sizeof(char) * (s.len + 1));
+						if(!s.s) {
+							PKG_MEM_ERROR;
+							goto error;
+						}
+						memcpy(s.s, ((str *)v)->s, s.len);
+						s.s[s.len] = '\0';
+					} else {
+						s.s = NULL;
+						s.len = 0;
+					}
+					if(var->val.s.s)
+						pkg_free(var->val.s.s);
+					var->val.s = s;
+					break;
+
+				default:
+					LM_ERR("unsupported variable type\n");
+					goto error;
 			}
 
 			convert_val_cleanup();
@@ -215,9 +211,8 @@ int cfg_set_script_var(cfg_group_t *group, str *var_name,
 	return 1;
 
 error:
-	LM_ERR("failed to set the script variable: %.*s.%.*s\n",
-			group->name_len, group->name,
-			var_name->len, var_name->s);
+	LM_ERR("failed to set the script variable: %.*s.%.*s\n", group->name_len,
+			group->name, var_name->len, var_name->s);
 	return -1;
 }
 
@@ -227,33 +222,33 @@ error:
  */
 int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 {
-	cfg_mapping_t		*mapping = NULL;
-	cfg_def_t		*def = NULL;
-	void			**handle = NULL;
-	int			i, offset;
-	cfg_script_var_t	*script_var, *script_var2;
-	str			s;
+	cfg_mapping_t *mapping = NULL;
+	cfg_def_t *def = NULL;
+	void **handle = NULL;
+	int i, offset;
+	cfg_script_var_t *script_var, *script_var2;
+	str s;
 
-	if(group==NULL || group->vars==NULL) {
+	if(group == NULL || group->vars == NULL) {
 		LM_ERR("invalid group parameter: %p\n", group);
 		return -1;
 	}
-	mapping = (cfg_mapping_t *)pkg_malloc(sizeof(cfg_mapping_t)*group->num);
-	if (!mapping) goto error;
-	memset(mapping, 0, sizeof(cfg_mapping_t)*group->num);
+	mapping = (cfg_mapping_t *)pkg_malloc(sizeof(cfg_mapping_t) * group->num);
+	if(!mapping)
+		goto error;
+	memset(mapping, 0, sizeof(cfg_mapping_t) * group->num);
 
 	/* The variable definition array must look like as if it was declared
 	 * in C code, thus, add an additional slot at the end with NULL values */
-	def = (cfg_def_t *)pkg_malloc(sizeof(cfg_def_t)*(group->num + 1));
-	if (!def) goto error;
-	memset(def, 0, sizeof(cfg_def_t)*(group->num + 1));
+	def = (cfg_def_t *)pkg_malloc(sizeof(cfg_def_t) * (group->num + 1));
+	if(!def)
+		goto error;
+	memset(def, 0, sizeof(cfg_def_t) * (group->num + 1));
 
 	/* fill the definition and the mapping arrays */
 	offset = 0;
-	for (	i = 0, script_var = (cfg_script_var_t *)group->vars;
-		script_var;
-		i++, script_var = script_var->next
-	) {
+	for(i = 0, script_var = (cfg_script_var_t *)group->vars; script_var;
+			i++, script_var = script_var->next) {
 		/* there has been already memory allocated for the name */
 		def[i].name = script_var->name;
 		def[i].type = script_var->type | (script_var->type << CFG_INPUT_SHIFT);
@@ -265,34 +260,37 @@ int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 		mapping[i].name_len = script_var->name_len;
 		mapping[i].pos = i;
 
-		switch (script_var->type) {
-		case CFG_VAR_INT:
-			offset = ROUND_INT(offset);
-			mapping[i].offset = offset;
+		switch(script_var->type) {
+			case CFG_VAR_INT:
+				offset = ROUND_INT(offset);
+				mapping[i].offset = offset;
 
-			*(int *)(block + offset) = script_var->val.i;
+				*(int *)(block + offset) = script_var->val.i;
 
-			offset += sizeof(int);
-			break;
+				offset += sizeof(int);
+				break;
 
-		case CFG_VAR_STR:
-			offset = ROUND_POINTER(offset);
-			mapping[i].offset = offset;
+			case CFG_VAR_STR:
+				offset = ROUND_POINTER(offset);
+				mapping[i].offset = offset;
 
-			if (cfg_clone_str(&(script_var->val.s), &s)) goto error;
-			memcpy(block + offset, &s, sizeof(str));
-			mapping[i].flag |= cfg_var_shmized;
+				if(cfg_clone_str(&(script_var->val.s), &s))
+					goto error;
+				memcpy(block + offset, &s, sizeof(str));
+				mapping[i].flag |= cfg_var_shmized;
 
-			offset += sizeof(str);
-			break;
+				offset += sizeof(str);
+				break;
 		}
 	}
 
 	/* Sanity check for the group size, make sure that the
 	 * newly calculated size equals the already calculated
 	 * group size. */
-	if (offset != group->size) {
-		LM_ERR("BUG: incorrect group size: %d; previously calculated value: %d \n", offset, group->size);
+	if(offset != group->size) {
+		LM_ERR("BUG: incorrect group size: %d; previously calculated value: %d "
+			   "\n",
+				offset, group->size);
 		goto error;
 	}
 
@@ -301,7 +299,8 @@ int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 	cfg_get_* functions access the memory block via the handle
 	to make sure that it is always safe, thus, it must be created */
 	handle = (void **)pkg_malloc(sizeof(void *));
-	if (!handle) goto error;
+	if(!handle)
+		goto error;
 	*handle = NULL;
 	group->handle = handle;
 
@@ -310,9 +309,9 @@ int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 	/* everything went fine, we can free the temporary list */
 	script_var = (cfg_script_var_t *)group->vars;
 	group->vars = NULL;
-	while (script_var) {
+	while(script_var) {
 		script_var2 = script_var->next;
-		if ((script_var->type == CFG_VAR_STR) && script_var->val.s.s)
+		if((script_var->type == CFG_VAR_STR) && script_var->val.s.s)
 			pkg_free(script_var->val.s.s);
 		pkg_free(script_var);
 		script_var = script_var2;
@@ -321,9 +320,12 @@ int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 	return 0;
 
 error:
-	if (mapping) pkg_free(mapping);
-	if (def) pkg_free(def);
-	if (handle) pkg_free(handle);
+	if(mapping)
+		pkg_free(mapping);
+	if(def)
+		pkg_free(def);
+	if(handle)
+		pkg_free(handle);
 
 	PKG_MEM_ERROR;
 	return -1;
@@ -332,27 +334,29 @@ error:
 /* destory a dynamically allocated group definition */
 void cfg_script_destroy(cfg_group_t *group)
 {
-	int	i;
-	cfg_script_var_t	*script_var, *script_var2;
+	int i;
+	cfg_script_var_t *script_var, *script_var2;
 
-	if (group->mapping && group->mapping->def) {
-		for (i=0; i<group->num; i++) {
-			if (group->mapping->def[i].name)
+	if(group->mapping && group->mapping->def) {
+		for(i = 0; i < group->num; i++) {
+			if(group->mapping->def[i].name)
 				pkg_free(group->mapping->def[i].name);
-			if (group->mapping->def[i].descr)
+			if(group->mapping->def[i].descr)
 				pkg_free(group->mapping->def[i].descr);
 		}
 		pkg_free(group->mapping->def);
 	}
-	if (group->mapping) pkg_free(group->mapping);
-	if (group->handle) pkg_free(group->handle);
+	if(group->mapping)
+		pkg_free(group->mapping);
+	if(group->handle)
+		pkg_free(group->handle);
 
 	/* it may happen that the temporary var list
 	still exists because the fixup failed and did not complete */
 	script_var = (cfg_script_var_t *)group->vars;
-	while (script_var) {
+	while(script_var) {
 		script_var2 = script_var->next;
-		if ((script_var->type == CFG_VAR_STR) && script_var->val.s.s)
+		if((script_var->type == CFG_VAR_STR) && script_var->val.s.s)
 			pkg_free(script_var->val.s.s);
 		pkg_free(script_var);
 		script_var = script_var2;

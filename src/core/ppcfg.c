@@ -37,7 +37,8 @@
 #include "ppcfg.h"
 #include "fmsg.h"
 
-typedef struct _pp_subst_rule {
+typedef struct _pp_subst_rule
+{
 	char *indata;
 	void *ppdata;
 	struct _pp_subst_rule *next;
@@ -64,7 +65,7 @@ int pp_def_qvalue(str *defval, str *outval)
 	newval.s[defval->len + 2] = '\0';
 	newval.len = defval->len + 2;
 	sb = str_list_block_add(&_ksr_substdef_strlist, newval.s, newval.len);
-	if(sb==NULL) {
+	if(sb == NULL) {
 		LM_ERR("failed to link quoted value [%.*s]\n", defval->len, defval->s);
 		return -1;
 	}
@@ -75,34 +76,31 @@ int pp_def_qvalue(str *defval, str *outval)
 
 int pp_subst_add(char *data)
 {
-	struct subst_expr* se;
+	struct subst_expr *se;
 	str subst;
 	pp_subst_rule_t *pr;
 
 	subst.s = data;
 	subst.len = strlen(subst.s);
 	/* check for early invalid rule */
-	if(subst.len<=0)
+	if(subst.len <= 0)
 		return -1;
-	pr = (pp_subst_rule_t*)pkg_malloc(sizeof(pp_subst_rule_t));
-	if(pr==NULL)
-	{
+	pr = (pp_subst_rule_t *)pkg_malloc(sizeof(pp_subst_rule_t));
+	if(pr == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(pr, 0, sizeof(pp_subst_rule_t));
 
-	se=subst_parser(&subst);
-	if (se==0)
-	{
+	se = subst_parser(&subst);
+	if(se == 0) {
 		LM_ERR("bad subst expression: %s\n", data);
 		pkg_free(pr);
 		return -2;
 	}
 	pr->indata = data;
-	pr->ppdata = (void*)se;
-	if(pp_subst_rules_head==NULL)
-	{
+	pr->ppdata = (void *)se;
+	if(pp_subst_rules_head == NULL) {
 		pp_subst_rules_head = pr;
 	} else {
 		pp_subst_rules_tail->next = pr;
@@ -124,23 +122,23 @@ int pp_substdef_add(char *data, int mode)
 	sip_msg_t *fmsg;
 	str_list_t *sb;
 
-	if(pp_subst_add(data)<0) {
+	if(pp_subst_add(data) < 0) {
 		LM_ERR("subst rule cannot be added\n");
 		goto error;
 	}
 
-	p=data;
-	c=*p;
-	if (c=='\\') {
+	p = data;
+	c = *p;
+	if(c == '\\') {
 		LM_ERR("invalid separator char [%c] in [%s]\n", c, data);
 		goto error;
 	}
 	p++;
 	/* find regexp */
-	defname.s=p;
-	for ( ; *p; p++) {
+	defname.s = p;
+	for(; *p; p++) {
 		/* if unescaped sep. char */
-		if ((*p==c) && (*(p-1)!='\\'))
+		if((*p == c) && (*(p - 1) != '\\'))
 			goto found_regexp;
 	}
 	LM_ERR("separator [%c] not found after regexp: [%s]\n", c, data);
@@ -148,7 +146,7 @@ int pp_substdef_add(char *data, int mode)
 
 found_regexp:
 	defname.len = p - defname.s;
-	if(defname.len==0) {
+	if(defname.len == 0) {
 		LM_ERR("define name too short\n");
 		goto error;
 	}
@@ -156,9 +154,9 @@ found_regexp:
 	p++;
 	defvalue.s = p;
 	/* find replacement */
-	for ( ; *p; p++) {
+	for(; *p; p++) {
 		/* if unescaped sep. char */
-		if ((*p==c) && (*(p-1)!='\\'))
+		if((*p == c) && (*(p - 1) != '\\'))
 			goto found_repl;
 	}
 	LM_ERR("separator [%c] not found after replacement: [%s]\n", c, data);
@@ -168,16 +166,17 @@ found_repl:
 	defvalue.len = p - defvalue.s;
 
 	pp_define_set_type(0);
-	if(pp_define(defname.len, defname.s)<0) {
+	if(pp_define(defname.len, defname.s) < 0) {
 		LM_ERR("cannot set define name\n");
 		goto error;
 	}
 	if(memchr(defvalue.s, '$', defvalue.len) != NULL) {
 		fmsg = faked_msg_get_next();
-		if(pv_eval_str(fmsg, &newval, &defvalue)>=0) {
-			if(mode!=KSR_PPDEF_QUOTED) {
-				sb = str_list_block_add(&_ksr_substdef_strlist, newval.s, newval.len);
-				if(sb==NULL) {
+		if(pv_eval_str(fmsg, &newval, &defvalue) >= 0) {
+			if(mode != KSR_PPDEF_QUOTED) {
+				sb = str_list_block_add(
+						&_ksr_substdef_strlist, newval.s, newval.len);
+				if(sb == NULL) {
 					LM_ERR("failed to handle substdef: [%s]\n", data);
 					return -1;
 				}
@@ -187,14 +186,14 @@ found_repl:
 			}
 		}
 	}
-	if(mode==KSR_PPDEF_QUOTED) {
+	if(mode == KSR_PPDEF_QUOTED) {
 		if(pp_def_qvalue(&defvalue, &newval) < 0) {
 			LM_ERR("failed to enclose in quotes the value\n");
 			return -1;
 		}
 		defvalue = newval;
 	}
-	if(pp_define_set(defvalue.len, defvalue.s, KSR_PPDEF_QUOTED)<0) {
+	if(pp_define_set(defvalue.len, defvalue.s, KSR_PPDEF_QUOTED) < 0) {
 		LM_ERR("cannot set define value\n");
 		goto error;
 	}
@@ -210,30 +209,29 @@ error:
 
 int pp_subst_run(char **data)
 {
-	str* result;
+	str *result;
 	pp_subst_rule_t *pr;
 	int i;
 
-	if(pp_subst_rules_head==NULL)
+	if(pp_subst_rules_head == NULL)
 		return 0;
-	if(data==NULL || *data==NULL)
+	if(data == NULL || *data == NULL)
 		return 0;
 
-	if(strlen(*data)==0)
+	if(strlen(*data) == 0)
 		return 0;
 	pr = pp_subst_rules_head;
 
 	i = 0;
-	while(pr)
-	{
+	while(pr) {
 		sip_msg_t *fmsg = faked_msg_get_next();
-		result=subst_str(*data, fmsg,
-				(struct subst_expr*)pr->ppdata, 0); /* pkg malloc'ed result */
-		if(result!=NULL)
-		{
+		result = subst_str(*data, fmsg, (struct subst_expr *)pr->ppdata,
+				0); /* pkg malloc'ed result */
+		if(result != NULL) {
 			i++;
 			LM_DBG("preprocess subst applied [#%d] to [%s]"
-					" - returning new string [%s]\n", i, *data, result->s);
+				   " - returning new string [%s]\n",
+					i, *data, result->s);
 			pkg_free(*data);
 			*data = result->s;
 			pkg_free(result);
@@ -241,7 +239,7 @@ int pp_subst_run(char **data)
 		pr = pr->next;
 	}
 
-	if(i!=0)
+	if(i != 0)
 		return 1;
 	return 0;
 }
@@ -259,24 +257,26 @@ void pp_ifdef_level_update(int val)
  */
 int pp_ifdef_level_check(void)
 {
-	if(_pp_ifdef_level!=0) {
+	if(_pp_ifdef_level != 0) {
 		return -1;
 	} else {
 		LM_DBG("same number of pairing preprocessor directives"
-			" #!IF[N]DEF - #!ENDIF\n");
+			   " #!IF[N]DEF - #!ENDIF\n");
 	}
 	return 0;
 }
 
 void pp_ifdef_level_error(void)
 {
-	if(_pp_ifdef_level!=0) {
-		if (_pp_ifdef_level > 0) {
+	if(_pp_ifdef_level != 0) {
+		if(_pp_ifdef_level > 0) {
 			LM_ERR("different number of preprocessor directives:"
-				" %d more #!if[n]def as #!endif\n", _pp_ifdef_level);
+				   " %d more #!if[n]def as #!endif\n",
+					_pp_ifdef_level);
 		} else {
 			LM_ERR("different number of preprocessor directives:"
-				" %d more #!endif as #!if[n]def\n", (_pp_ifdef_level)*-1);
+				   " %d more #!endif as #!if[n]def\n",
+					(_pp_ifdef_level) * -1);
 		}
 	}
 }
@@ -297,37 +297,37 @@ void pp_define_core(void)
 		p++;
 	}
 
-	n = snprintf(p, 64 - (int)(p-defval), "_%u", VERSIONVAL/1000000);
-	if(n<0 || n>=64 - (int)(p-defval)) {
+	n = snprintf(p, 64 - (int)(p - defval), "_%u", VERSIONVAL / 1000000);
+	if(n < 0 || n >= 64 - (int)(p - defval)) {
 		LM_ERR("failed to build define token\n");
 		return;
 	}
 	pp_define_set_type(0);
-	if(pp_define(strlen(defval), defval)<0) {
+	if(pp_define(strlen(defval), defval) < 0) {
 		LM_ERR("unable to set cfg define: %s\n", defval);
 		return;
 	}
 
-	n = snprintf(p, 64 - (int)(p-defval), "_%u_%u", VERSIONVAL/1000000,
-			(VERSIONVAL%1000000)/1000);
-	if(n<0 || n>=64 - (int)(p-defval)) {
+	n = snprintf(p, 64 - (int)(p - defval), "_%u_%u", VERSIONVAL / 1000000,
+			(VERSIONVAL % 1000000) / 1000);
+	if(n < 0 || n >= 64 - (int)(p - defval)) {
 		LM_ERR("failed to build define token\n");
 		return;
 	}
 	pp_define_set_type(0);
-	if(pp_define(strlen(defval), defval)<0) {
+	if(pp_define(strlen(defval), defval) < 0) {
 		LM_ERR("unable to set cfg define: %s\n", defval);
 		return;
 	}
 
-	n = snprintf(p, 64 - (int)(p-defval), "_%u_%u_%u", VERSIONVAL/1000000,
-			(VERSIONVAL%1000000)/1000, VERSIONVAL%1000);
-	if(n<0 || n>=64 - (int)(p-defval)) {
+	n = snprintf(p, 64 - (int)(p - defval), "_%u_%u_%u", VERSIONVAL / 1000000,
+			(VERSIONVAL % 1000000) / 1000, VERSIONVAL % 1000);
+	if(n < 0 || n >= 64 - (int)(p - defval)) {
 		LM_ERR("failed to build define token\n");
 		return;
 	}
 	pp_define_set_type(0);
-	if(pp_define(strlen(defval), defval)<0) {
+	if(pp_define(strlen(defval), defval) < 0) {
 		LM_ERR("unable to set cfg define: %s\n", defval);
 		return;
 	}

@@ -49,8 +49,8 @@
 /* likely/unlikely */
 #if __GNUC__ >= 3
 
-#define likely(expr)              __builtin_expect(!!(expr), 1)
-#define unlikely(expr)            __builtin_expect(!!(expr), 0)
+#define likely(expr) __builtin_expect(!!(expr), 1)
+#define unlikely(expr) __builtin_expect(!!(expr), 0)
 
 #else /* __GNUC__ */
 
@@ -61,12 +61,11 @@
 #endif /* __GNUC__ */
 
 
-
 /* prefetch* */
-#if ( __GNUC__ > 3 ) || ( __GNUC__ == 3 && __GNUC_MINOR__ >= 1 )
+#if(__GNUC__ > 3) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)
 
-#define prefetch(addr)            __builtin_prefetch((addr))
-#define prefetch_w(addr)          __builtin_prefetch((addr), 1)
+#define prefetch(addr) __builtin_prefetch((addr))
+#define prefetch_w(addr) __builtin_prefetch((addr), 1)
 #define prefetch_loc_r(addr, loc) __builtin_prefetch((addr), 0, (loc))
 #define prefetch_loc_w(addr, loc) __builtin_prefetch((addr), 1, (loc))
 

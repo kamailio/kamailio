@@ -30,7 +30,7 @@
 
 #include "../str.h"
 
-#define MD5_LEN	32
+#define MD5_LEN 32
 
 /*!
   * \brief Calculate a MD5 digests over a string array
@@ -42,6 +42,6 @@
   * \param src string input array
   * \param size elements in the input array
   */
-void MD5StringArray (char *dst, str src[], int size);
+void MD5StringArray(char *dst, str src[], int size);
 
 #endif /* _MD5UTILS_H */

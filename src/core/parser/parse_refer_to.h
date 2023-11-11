@@ -23,20 +23,20 @@
  *
  * \ingroup parser
  */
- 
+
 #ifndef PARSE_REFER_TO_H
 #define PARSE_REFER_TO_H
- 
+
 #include "msg_parser.h"
- 
- 
+
+
 /*! \brief casting macro for accessing Refer-To body */
-#define get_refer_to(p_msg)  ((struct to_body*)(p_msg)->refer_to->parsed)
+#define get_refer_to(p_msg) ((struct to_body *)(p_msg)->refer_to->parsed)
 
 
 /*
  * Refer-To header field parser
  */
-int parse_refer_to_header( struct sip_msg *msg);
- 
+int parse_refer_to_header(struct sip_msg *msg);
+
 #endif /* PARSE_REFER_TO_H */

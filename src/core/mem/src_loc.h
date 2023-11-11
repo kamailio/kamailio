@@ -42,39 +42,39 @@
 
 /* C >= 99 has __func__, older gcc versions have __FUNCTION__ */
 #ifndef _SRC_FUNCTION_
-#	if __STDC_VERSION__ < 199901L
-#		if __GNUC__ >= 2
-#			define _SRC_FUNCTION_ __FUNCTION__
-#		else
-#			define _SRC_FUNCTION_ ""
-#		endif
-#	else
-#		define _SRC_FUNCTION_ __func__
-#	endif /* __STDC_VERSION_ < 199901L */
+#if __STDC_VERSION__ < 199901L
+#if __GNUC__ >= 2
+#define _SRC_FUNCTION_ __FUNCTION__
+#else
+#define _SRC_FUNCTION_ ""
+#endif
+#else
+#define _SRC_FUNCTION_ __func__
+#endif /* __STDC_VERSION_ < 199901L */
 #endif /* _FUNC_NAME_ */
 
 
 #ifndef _SRC_FILENAME_
-#	define _SRC_FILENAME_ __FILE__
+#define _SRC_FILENAME_ __FILE__
 #endif /* _SRC_FILENAME_ */
 
 
 #ifndef _SRC_LINE_
-#	define _SRC_LINE_ __LINE__
+#define _SRC_LINE_ __LINE__
 #endif /* _SRC_LINE_ */
 
 
 #ifndef _SRC_MODULE_
-#	ifdef MOD_NAME
-#		define _SRC_MODULE_ MOD_NAME
-#	else
-#		define _SRC_MODULE_ "core"
-#	endif /* MOD_NAME */
+#ifdef MOD_NAME
+#define _SRC_MODULE_ MOD_NAME
+#else
+#define _SRC_MODULE_ "core"
+#endif /* MOD_NAME */
 #endif /* _SRC_MODULE_ */
 
 
 #ifndef _SRC_LOC_
-#	define _SRC_LOC_ _SRC_MODULE_ ": " _SRC_FILENAME_
+#define _SRC_LOC_ _SRC_MODULE_ ": " _SRC_FILENAME_
 #endif /*_SRC_LOC_ */
 
 

@@ -27,7 +27,6 @@
 #define __sock_ut_h
 
 
-
 int sock_get_ttl(int sock);
 int sock_set_ttl(int sock, int ttl);
 

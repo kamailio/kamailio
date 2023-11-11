@@ -30,7 +30,7 @@
 #include "ip_addr.h"
 #include "stun.h"
 
-int stun_process_msg(char* buf, unsigned int len, struct receive_info* ri)
+int stun_process_msg(char *buf, unsigned int len, struct receive_info *ri)
 {
 	int ret;
 	stun_event_info_t sev;
@@ -47,7 +47,7 @@ int stun_process_msg(char* buf, unsigned int len, struct receive_info* ri)
 		ret = sr_event_exec(SREV_STUN_IN, &evp);
 	} else {
 		LM_DBG("no callback registering for handling STUN -"
-				" dropping!\n");
+			   " dropping!\n");
 	}
 	return ret;
 }

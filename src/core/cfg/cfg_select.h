@@ -24,9 +24,10 @@
 
 #include "../select.h"
 
-struct cfg_read_handle {
-	void	*group;
-	void	*var;
+struct cfg_read_handle
+{
+	void *group;
+	void *var;
 };
 
 /* free the list of not yet fixed selects */
@@ -45,7 +46,8 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg);
  *	fixed-up later.
  * <0 - error
  */
-int read_cfg_var_fixup(char *gname, char *vname, struct cfg_read_handle *read_handle);
+int read_cfg_var_fixup(
+		char *gname, char *vname, struct cfg_read_handle *read_handle);
 
 /* read the value of a variable via a group and variable name previously fixed up
  * Returns the type of the variable

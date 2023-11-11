@@ -29,23 +29,21 @@
 
 #if 0
 #ifdef PKG_MALLOC
-#	include "q_malloc.h"
-#	define MY_MALLOC qm_malloc
-#	define MY_FREE qm_free
-#	define MY_INIT qm_malloc_init
-#	define MY_BLOCK qm_block
-#	define MY_STATUS qm_status
+#include "q_malloc.h"
+#define MY_MALLOC qm_malloc
+#define MY_FREE qm_free
+#define MY_INIT qm_malloc_init
+#define MY_BLOCK qm_block
+#define MY_STATUS qm_status
 #endif
 
 void memtest()
 {
-#define	TEST_SIZE 1024*1024
-#define	TEST_RUN 1024
+#define TEST_SIZE 1024 * 1024
+#define TEST_RUN 1024
 #define LONG_RUN 100000
-#define ma(s) MY_MALLOC(mem_block, (s),__FILE__, __FUNCTION__, \
-                                                                __LINE__);
-#define mf(p)   MY_FREE(mem_block, (p), __FILE__,  __FUNCTION__, \
-                                                                __LINE__);
+#define ma(s) MY_MALLOC(mem_block, (s), __FILE__, __FUNCTION__, __LINE__);
+#define mf(p) MY_FREE(mem_block, (p), __FILE__, __FUNCTION__, __LINE__);
 	char tst_mem[TEST_SIZE];
 	struct MY_BLOCK* mem_block;
 	char *p0,*p1,*p2,*p3,*p4,*p5,*p6/*,*p7,*p8,*p9*/;

@@ -29,14 +29,16 @@
 
 #include "hf.h"
 
-typedef enum {
+typedef enum
+{
 	ss_active,
 	ss_pending,
 	ss_terminated,
 	ss_extension
 } substate_value_t;
 
-typedef struct _subscription_state_t {
+typedef struct _subscription_state_t
+{
 	substate_value_t value;
 	unsigned int expires;
 	int expires_set; /* expires is valid if nonzero here */

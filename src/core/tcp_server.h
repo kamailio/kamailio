@@ -27,13 +27,13 @@
 
 /* "public" functions*/
 
-int tcp_send(struct dest_info* dst, union sockaddr_union* from,
-				const char* buf, unsigned len);
+int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
+		unsigned len);
 
 int tcpconn_add_alias(int id, int port, int proto);
 
 
-int wss_send(dest_info_t* dst, const char* buf, unsigned len);
+int wss_send(dest_info_t *dst, const char *buf, unsigned len);
 
 
 #endif

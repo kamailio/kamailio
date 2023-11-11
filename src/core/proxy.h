@@ -33,9 +33,10 @@
 #include "str.h"
 #include "config.h"
 
-typedef struct proxy_l{
-	struct proxy_l* next;
-	str name; /* original name */
+typedef struct proxy_l
+{
+	struct proxy_l *next;
+	str name;			 /* original name */
 	struct hostent host; /* addresses */
 	unsigned short port;
 	unsigned short reserved; /*align*/
@@ -43,48 +44,50 @@ typedef struct proxy_l{
 
 	/* socket ? */
 
-	int addr_idx;	/* crt. addr. idx. */
-	int ok; /* 0 on error */
+	int addr_idx; /* crt. addr. idx. */
+	int ok;		  /* 0 on error */
 	/*statistics*/
 	int tx;
 	int tx_bytes;
 	int errors;
 } proxy_l_t;
 
-extern struct proxy_l* proxies;
+extern struct proxy_l *proxies;
 
-struct proxy_l* add_proxy(str* name, unsigned short port, int proto);
-struct proxy_l* mk_proxy(str* name, unsigned short port, int proto);
-struct proxy_l* mk_shm_proxy(str* name, unsigned short port, int proto);
-struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port,
-									int proto);
-void free_proxy(struct proxy_l* p);
-void free_shm_proxy(struct proxy_l* p);
+struct proxy_l *add_proxy(str *name, unsigned short port, int proto);
+struct proxy_l *mk_proxy(str *name, unsigned short port, int proto);
+struct proxy_l *mk_shm_proxy(str *name, unsigned short port, int proto);
+struct proxy_l *mk_proxy_from_ip(
+		struct ip_addr *ip, unsigned short port, int proto);
+void free_proxy(struct proxy_l *p);
+void free_shm_proxy(struct proxy_l *p);
 
 
 /** returns 0 on success, -1 on error (unknown af/bug) */
-inline static int proxy2su(union sockaddr_union* su, struct proxy_l* p)
+inline static int proxy2su(union sockaddr_union *su, struct proxy_l *p)
 {
 	/* if error try next ip address if possible */
-	if (p->ok==0){
-		if (p->host.h_addr_list[p->addr_idx+1])
+	if(p->ok == 0) {
+		if(p->host.h_addr_list[p->addr_idx + 1])
 			p->addr_idx++;
-		else p->addr_idx=0;
-		p->ok=1;
+		else
+			p->addr_idx = 0;
+		p->ok = 1;
 	}
 
 	return hostent2su(su, &p->host, p->addr_idx,
-				(p->port)?p->port:((p->proto==PROTO_TLS)?SIPS_PORT:SIP_PORT) );
+			(p->port) ? p->port
+					  : ((p->proto == PROTO_TLS) ? SIPS_PORT : SIP_PORT));
 }
 
 
 /** mark proxy either as ok (err>=0) or as bad (err<0) */
-inline static void proxy_mark(struct proxy_l* p, int err)
+inline static void proxy_mark(struct proxy_l *p, int err)
 {
-	if (err<0){
+	if(err < 0) {
 		p->errors++;
-		p->ok=0;
-	}else{
+		p->ok = 0;
+	} else {
 		p->tx++;
 	}
 }

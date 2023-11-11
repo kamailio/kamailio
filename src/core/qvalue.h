@@ -77,21 +77,20 @@ typedef int qvalue_t;
 #define Q_PREFIX_LEN (sizeof(Q_PREFIX) - 1)
 
 
-
 /*
  * Calculate the length of printed q
  */
 static inline size_t len_q(qvalue_t q)
 {
-	if (q == Q_UNSPECIFIED) {
+	if(q == Q_UNSPECIFIED) {
 		return 0;
-	} else if (q >= MAX_Q) {
+	} else if(q >= MAX_Q) {
 		return MAX_Q_STR_LEN;
-	} else if (q <= MIN_Q) {
+	} else if(q <= MIN_Q) {
 		return MIN_Q_STR_LEN;
-	} else if (q % 100 == 0) {
+	} else if(q % 100 == 0) {
 		return Q_PREFIX_LEN + 1;
-	} else if (q % 10 == 0) {
+	} else if(q % 10 == 0) {
 		return Q_PREFIX_LEN + 2;
 	} else {
 		return Q_PREFIX_LEN + 3;
@@ -104,7 +103,7 @@ static inline size_t len_q(qvalue_t q)
  */
 static inline double q2double(qvalue_t q)
 {
-	if (q == Q_UNSPECIFIED) {
+	if(q == Q_UNSPECIFIED) {
 		return -1;
 	} else {
 		return (double)((double)q / (double)1000);
@@ -117,7 +116,7 @@ static inline double q2double(qvalue_t q)
  */
 static inline qvalue_t double2q(double q)
 {
-	if (q == -1) {
+	if(q == -1) {
 		return Q_UNSPECIFIED;
 	} else {
 		return q * 1000;
@@ -128,37 +127,39 @@ static inline qvalue_t double2q(double q)
 /*
  * Convert q value to string
  */
-static inline char* q2str(qvalue_t q, unsigned int* len)
+static inline char *q2str(qvalue_t q, unsigned int *len)
 {
 	static char buf[sizeof("0.123")];
-	char* p;
+	char *p;
 
 	p = buf;
-	if (q == Q_UNSPECIFIED) {
-		     /* Do nothing */
-	} else if (q >= MAX_Q) {
+	if(q == Q_UNSPECIFIED) {
+		/* Do nothing */
+	} else if(q >= MAX_Q) {
 		memcpy(p, MAX_Q_STR, MAX_Q_STR_LEN);
 		p += MAX_Q_STR_LEN;
-	} else if (q <= MIN_Q) {
+	} else if(q <= MIN_Q) {
 		memcpy(p, MIN_Q_STR, MIN_Q_STR_LEN);
 		p += MIN_Q_STR_LEN;
 	} else {
 		memcpy(p, Q_PREFIX, Q_PREFIX_LEN);
 		p += Q_PREFIX_LEN;
-		
+
 		*p++ = q / 100 + '0';
 		q %= 100;
-		if (!q) goto end;
+		if(!q)
+			goto end;
 
 		*p++ = q / 10 + '0';
 		q %= 10;
-		if (!q) goto end;
+		if(!q)
+			goto end;
 
 		*p++ = q + '0';
 	}
- end:
+end:
 	*p = '\0';
-	if (len) {
+	if(len) {
 		*len = p - buf;
 	}
 	return buf;
@@ -168,7 +169,7 @@ static inline char* q2str(qvalue_t q, unsigned int* len)
 /*
  * Convert string representation of q parameter in qvalue_t
  */
-int str2q(qvalue_t* q, char* s, int len);
+int str2q(qvalue_t *q, char *s, int len);
 
 
 #endif /* _QVALUE_H */

@@ -26,10 +26,10 @@
  *
  */
 
-#include <string.h>        /* memset */
+#include <string.h>		   /* memset */
 #include "../../mem/mem.h" /* pkg_malloc, pkg_free */
 #include "../../dprint.h"
-#include "../../trim.h"    /* trim_leading, trim_trailing */
+#include "../../trim.h" /* trim_leading, trim_trailing */
 #include "contact.h"
 
 
@@ -45,7 +45,7 @@
  * Skip URI, stops when , (next contact)
  * or ; (parameter) is found
  */
-static inline int skip_uri(str* _s)
+static inline int skip_uri(str *_s)
 {
 	register int st = ST1;
 
@@ -53,28 +53,47 @@ static inline int skip_uri(str* _s)
 		switch(*(_s->s)) {
 			case ',':
 			case ';':
-				if (st == ST1) return 0;
+				if(st == ST1)
+					return 0;
 				break;
 
 			case '\"':
 				switch(st) {
-					case ST1: st = ST2; break;
-					case ST2: st = ST1; break;
-					case ST3: st = ST4; break;
-					case ST4: st = ST3; break;
-					case ST5: st = ST2; break;
-					case ST6: st = ST4; break;
+					case ST1:
+						st = ST2;
+						break;
+					case ST2:
+						st = ST1;
+						break;
+					case ST3:
+						st = ST4;
+						break;
+					case ST4:
+						st = ST3;
+						break;
+					case ST5:
+						st = ST2;
+						break;
+					case ST6:
+						st = ST4;
+						break;
 				}
 				break;
 
 			case '<':
 				switch(st) {
-					case ST1: st = ST3; break;
+					case ST1:
+						st = ST3;
+						break;
 					case ST3:
-							  LM_ERR("second bracket < found\n");
-							  return -1;
-					case ST5: st = ST2; break;
-					case ST6: st = ST4; break;
+						LM_ERR("second bracket < found\n");
+						return -1;
+					case ST5:
+						st = ST2;
+						break;
+					case ST6:
+						st = ST4;
+						break;
 				}
 				break;
 
@@ -84,30 +103,44 @@ static inline int skip_uri(str* _s)
 						LM_ERR("bracket > is first\n");
 						return -2;
 
-					case ST3: st = ST1; break;
-					case ST5: st = ST2; break;
-					case ST6: st = ST4; break;
+					case ST3:
+						st = ST1;
+						break;
+					case ST5:
+						st = ST2;
+						break;
+					case ST6:
+						st = ST4;
+						break;
 				}
 				break;
 
 			case '\\':
 				switch(st) {
-					case ST2: st = ST5; break;
-					case ST4: st = ST6; break;
-					case ST5: st = ST2; break;
-					case ST6: st = ST4; break;
+					case ST2:
+						st = ST5;
+						break;
+					case ST4:
+						st = ST6;
+						break;
+					case ST5:
+						st = ST2;
+						break;
+					case ST6:
+						st = ST4;
+						break;
 				}
 				break;
 
-			default: break;
-
+			default:
+				break;
 		}
 
 		_s->s++;
 		_s->len--;
 	}
 
-	if (st != ST1) {
+	if(st != ST1) {
 		LM_ERR("bracket < or \" not closed\n");
 		return -3;
 	}
@@ -122,12 +155,12 @@ static inline int skip_uri(str* _s)
  * _s will be adjusted to point at the beginning
  * of URI
  */
-static inline int skip_name(str* _s)
+static inline int skip_name(str *_s)
 {
-	char* last_wsp, *p;
+	char *last_wsp, *p;
 	int i, quoted = 0;
 
-	if (!_s) {
+	if(!_s) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
@@ -137,35 +170,36 @@ static inline int skip_name(str* _s)
 	last_wsp = 0;
 
 	for(i = 0; i < _s->len; i++) {
-		if (!quoted) {
-			if ((*p == ' ') || (*p == '\t')) {
+		if(!quoted) {
+			if((*p == ' ') || (*p == '\t')) {
 				last_wsp = p;
 			} else {
-				if (*p == '<') {
+				if(*p == '<') {
 					_s->s = p;
 					_s->len -= i;
 					return 0;
 				}
 
-				if (*p == ':' || *p == ';') {
-					if (last_wsp) {
+				if(*p == ':' || *p == ';') {
+					if(last_wsp) {
 						_s->len -= last_wsp - _s->s + 1;
 						_s->s = last_wsp;
 					}
 					return 0;
 				}
 
-				if (*p == '\"') {
+				if(*p == '\"') {
 					quoted = 1;
 				}
 			}
 		} else {
-			if ((*p == '\"') && (*(p-1) != '\\')) quoted = 0;
+			if((*p == '\"') && (*(p - 1) != '\\'))
+				quoted = 0;
 		}
 		p++;
 	}
 
-	if (quoted) {
+	if(quoted) {
 		LM_ERR("closing quote missing in name part of Contact\n");
 	} else {
 		LM_ERR("error in contact, scheme separator not found\n");
@@ -178,9 +212,9 @@ static inline int skip_name(str* _s)
 /*
  * Parse contacts in a Contact HF
  */
-int parse_contacts(str* _s, contact_t** _c)
+int parse_contacts(str *_s, contact_t **_c)
 {
-	contact_t* c;
+	contact_t *c;
 	param_hooks_t hooks;
 	str sv;
 
@@ -188,8 +222,8 @@ int parse_contacts(str* _s, contact_t** _c)
 
 	while(1) {
 		/* Allocate and clear contact structure */
-		c = (contact_t*)pkg_malloc(sizeof(contact_t));
-		if (c == 0) {
+		c = (contact_t *)pkg_malloc(sizeof(contact_t));
+		if(c == 0) {
 			PKG_MEM_ERROR;
 			goto error;
 		}
@@ -197,7 +231,7 @@ int parse_contacts(str* _s, contact_t** _c)
 
 		c->name.s = _s->s;
 
-		if (skip_name(_s) < 0) {
+		if(skip_name(_s) < 0) {
 			LM_ERR("error while skipping name part\n");
 			goto error;
 		}
@@ -207,16 +241,16 @@ int parse_contacts(str* _s, contact_t** _c)
 		trim_trailing(&c->name);
 
 		/* Find the end of the URI */
-		if (skip_uri(_s) < 0) {
+		if(skip_uri(_s) < 0) {
 			LM_ERR("error while skipping URI\n");
 			goto error;
 		}
 
 		c->uri.len = _s->s - c->uri.s; /* Calculate URI length */
-		trim_trailing(&(c->uri));      /* Remove any trailing spaces from URI */
+		trim_trailing(&(c->uri));	   /* Remove any trailing spaces from URI */
 
 		/* Remove <> if any */
-		if ((c->uri.len >= 2) && (c->uri.s[0] == '<')
+		if((c->uri.len >= 2) && (c->uri.s[0] == '<')
 				&& (c->uri.s[c->uri.len - 1] == '>')) {
 			c->uri.s++;
 			c->uri.len -= 2;
@@ -228,19 +262,20 @@ int parse_contacts(str* _s, contact_t** _c)
 			goto error;
 		}
 
-		if (_s->len == 0) goto ok;
+		if(_s->len == 0)
+			goto ok;
 
-		if (_s->s[0] == ';') {         /* Contact parameter found */
+		if(_s->s[0] == ';') { /* Contact parameter found */
 			_s->s++;
 			_s->len--;
 			trim_leading(_s);
 
-			if (_s->len == 0) {
+			if(_s->len == 0) {
 				LM_ERR("error while parsing params\n");
 				goto error;
 			}
 
-			if (parse_params(_s, CLASS_CONTACT, &hooks, &c->params) < 0) {
+			if(parse_params(_s, CLASS_CONTACT, &hooks, &c->params) < 0) {
 				LM_ERR("error while parsing parameters\n");
 				goto error;
 			}
@@ -253,7 +288,8 @@ int parse_contacts(str* _s, contact_t** _c)
 			c->reg_id = hooks.contact.reg_id;
 			c->flags = hooks.contact.flags;
 
-			if (_s->len == 0) goto ok;
+			if(_s->len == 0)
+				goto ok;
 		}
 
 		/* Next character is comma */
@@ -266,7 +302,7 @@ int parse_contacts(str* _s, contact_t** _c)
 		*_c = c;
 		c = NULL;
 
-		if (_s->len == 0) {
+		if(_s->len == 0) {
 			LM_ERR("text after comma missing\n");
 			goto error;
 		}
@@ -275,7 +311,8 @@ int parse_contacts(str* _s, contact_t** _c)
 error:
 	LM_ERR("failure parsing '%.*s' (%d) [%p/%p/%d]\n", sv.len, sv.s, sv.len,
 			sv.s, _s->s, (int)(_s->s - sv.s));
-	if (c) pkg_free(c);
+	if(c)
+		pkg_free(c);
 	free_contacts(_c); /* Free any contacts created so far */
 	return -1;
 
@@ -291,14 +328,14 @@ ok:
  * Free list of contacts
  * _c is head of the list
  */
-void free_contacts(contact_t** _c)
+void free_contacts(contact_t **_c)
 {
-	contact_t* ptr;
+	contact_t *ptr;
 
 	while(*_c) {
 		ptr = *_c;
 		*_c = (*_c)->next;
-		if (ptr->params) {
+		if(ptr->params) {
 			free_params(ptr->params);
 		}
 		pkg_free(ptr);
@@ -309,9 +346,9 @@ void free_contacts(contact_t** _c)
 /*
  * Print list of contacts, just for debugging
  */
-void print_contacts(FILE* _o, contact_t* _c)
+void print_contacts(FILE *_o, contact_t *_c)
 {
-	contact_t* ptr;
+	contact_t *ptr;
 
 	ptr = _c;
 
@@ -327,7 +364,7 @@ void print_contacts(FILE* _o, contact_t* _c)
 		fprintf(_o, "reg-id  : %p\n", ptr->reg_id);
 		fprintf(_o, "flags   : %p\n", ptr->flags);
 		fprintf(_o, "len     : %d\n", ptr->len);
-		if (ptr->params) {
+		if(ptr->params) {
 			print_params(_o, ptr->params);
 		}
 		fprintf(_o, "---/Contact---\n");

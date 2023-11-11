@@ -43,7 +43,7 @@
 #include "mem/mem.h"
 
 /* Number of cb types = last cb type */
-#define SCRIPT_CB_NUM	(MAX_CB_TYPE-1)
+#define SCRIPT_CB_NUM (MAX_CB_TYPE - 1)
 
 static struct script_cb *pre_script_cb[SCRIPT_CB_NUM];
 static struct script_cb *post_script_cb[SCRIPT_CB_NUM];
@@ -51,13 +51,13 @@ static struct script_cb *post_script_cb[SCRIPT_CB_NUM];
 /* Add a script callback to the beginning of the linked list.
  * Returns -1 on error
  */
-static inline int add_callback( struct script_cb **list,
-	cb_function f, void *param)
+static inline int add_callback(
+		struct script_cb **list, cb_function f, void *param)
 {
 	struct script_cb *new_cb;
 
-	new_cb=pkg_malloc(sizeof(struct script_cb));
-	if (new_cb==0) {
+	new_cb = pkg_malloc(sizeof(struct script_cb));
+	if(new_cb == 0) {
 		PKG_MEM_CRITICAL;
 		return -1;
 	}
@@ -72,28 +72,27 @@ static inline int add_callback( struct script_cb **list,
 /* Register pre- or post-script callbacks.
  * Returns -1 on error, 0 on success
  */
-int register_script_cb( cb_function f, unsigned int flags, void *param )
+int register_script_cb(cb_function f, unsigned int flags, void *param)
 {
-	struct script_cb	**cb_array;
-	int	i;
+	struct script_cb **cb_array;
+	int i;
 
 	/* type checkings */
-	if ( (flags&((1u<<SCRIPT_CB_NUM)-1))==0 ) {
+	if((flags & ((1u << SCRIPT_CB_NUM) - 1)) == 0) {
 		LM_BUG("callback flag not specified\n");
 		return -1;
 	}
-	if ( (flags&(~(PRE_SCRIPT_CB|POST_SCRIPT_CB))) >= 1u<<SCRIPT_CB_NUM ) {
-		LM_BUG("unsupported callback flags: %u\n",
-			flags);
+	if((flags & (~(PRE_SCRIPT_CB | POST_SCRIPT_CB))) >= 1u << SCRIPT_CB_NUM) {
+		LM_BUG("unsupported callback flags: %u\n", flags);
 		return -1;
 	}
-	if ( (flags&(PRE_SCRIPT_CB|POST_SCRIPT_CB))==0 ||
-	(flags&PRE_SCRIPT_CB && flags&POST_SCRIPT_CB) ) {
+	if((flags & (PRE_SCRIPT_CB | POST_SCRIPT_CB)) == 0
+			|| (flags & PRE_SCRIPT_CB && flags & POST_SCRIPT_CB)) {
 		LM_BUG("callback POST or PRE type must be exactly one\n");
 		return -1;
 	}
 
-	if (flags&PRE_SCRIPT_CB)
+	if(flags & PRE_SCRIPT_CB)
 		cb_array = pre_script_cb;
 	else
 		cb_array = post_script_cb;
@@ -101,10 +100,10 @@ int register_script_cb( cb_function f, unsigned int flags, void *param )
 	/* Add the callback to the lists.
 	 * (as many times as many flags are set)
 	 */
-	for (i=0; i<SCRIPT_CB_NUM; i++) {
-		if ((flags&(1u<<i)) == 0)
+	for(i = 0; i < SCRIPT_CB_NUM; i++) {
+		if((flags & (1u << i)) == 0)
 			continue;
-		if (add_callback(&cb_array[i], f, param) < 0)
+		if(add_callback(&cb_array[i], f, param) < 0)
 			goto add_error;
 	}
 	return 0;
@@ -125,18 +124,18 @@ static inline void destroy_cb_list(struct script_cb **list)
 {
 	struct script_cb *foo;
 
-	while( *list ) {
+	while(*list) {
 		foo = *list;
 		*list = (*list)->next;
-		pkg_free( foo );
+		pkg_free(foo);
 	}
 }
 
 void destroy_script_cb()
 {
-	int	i;
+	int i;
 
-	for (i=0; i<SCRIPT_CB_NUM; i++) {
+	for(i = 0; i < SCRIPT_CB_NUM; i++) {
 		destroy_cb_list(&pre_script_cb[i]);
 		destroy_cb_list(&post_script_cb[i]);
 	}
@@ -145,20 +144,20 @@ void destroy_script_cb()
 /* Execute pre-script callbacks of a given type.
  * Returns 0 on error, 1 on success
  */
-int exec_pre_script_cb( struct sip_msg *msg, enum script_cb_type type)
+int exec_pre_script_cb(struct sip_msg *msg, enum script_cb_type type)
 {
-	struct script_cb	*cb;
-	unsigned int	flags;
+	struct script_cb *cb;
+	unsigned int flags;
 
-	if (type > SCRIPT_CB_NUM) {
+	if(type > SCRIPT_CB_NUM) {
 		LM_BUG("unknown callback type %d\n", type);
 		return 0;
 	}
 
-	flags = PRE_SCRIPT_CB | (1u<<(type-1));
-	for (cb=pre_script_cb[type-1]; cb ; cb=cb->next ) {
+	flags = PRE_SCRIPT_CB | (1u << (type - 1));
+	for(cb = pre_script_cb[type - 1]; cb; cb = cb->next) {
 		/* stop on error */
-		if (cb->cbf(msg, flags, cb->param)==0)
+		if(cb->cbf(msg, flags, cb->param) == 0)
 			return 0;
 	}
 	return 1;
@@ -167,18 +166,18 @@ int exec_pre_script_cb( struct sip_msg *msg, enum script_cb_type type)
 /* Execute post-script callbacks of a given type.
  * Always returns 1, success.
  */
-int exec_post_script_cb( struct sip_msg *msg, enum script_cb_type type)
+int exec_post_script_cb(struct sip_msg *msg, enum script_cb_type type)
 {
-	struct script_cb	*cb;
-	unsigned int	flags;
+	struct script_cb *cb;
+	unsigned int flags;
 
-	if (type > SCRIPT_CB_NUM) {
+	if(type > SCRIPT_CB_NUM) {
 		LM_BUG("unknown callback type %d\n", type);
 		return 1;
 	}
 
-	flags = POST_SCRIPT_CB | (1u<<(type-1));
-	for (cb=post_script_cb[type-1]; cb ; cb=cb->next){
+	flags = POST_SCRIPT_CB | (1u << (type - 1));
+	for(cb = post_script_cb[type - 1]; cb; cb = cb->next) {
 		cb->cbf(msg, flags, cb->param);
 	}
 	return 1;

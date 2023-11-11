@@ -44,8 +44,8 @@
 
 #include "atomic_x86.h"
 
-#elif defined __CPU_mips2 || defined __CPU_mips64 || \
-	  ( defined __CPU_mips && defined MIPS_HAS_LLSC )
+#elif defined __CPU_mips2 || defined __CPU_mips64 \
+		|| (defined __CPU_mips && defined MIPS_HAS_LLSC)
 
 #include "atomic_mips2.h"
 

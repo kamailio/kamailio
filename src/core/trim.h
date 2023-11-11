@@ -30,16 +30,17 @@
  * define characters that should be skipped 
  * here.
  */
-#define TRIM_SWITCH(c) switch(c) {     \
-                       case ' ':       \
-                       case '\t':      \
-                       case '\r':      \
-                       case '\n':      \
-                               break;  \
-                                       \
-                       default:        \
-                               return; \
-                       }
+#define TRIM_SWITCH(c) \
+	switch(c) {        \
+		case ' ':      \
+		case '\t':     \
+		case '\r':     \
+		case '\n':     \
+			break;     \
+                       \
+		default:       \
+			return;    \
+	}
 
 
 /*
@@ -53,7 +54,7 @@
  *          example !
  *
  */
-static inline void trim_leading(str* _s)
+static inline void trim_leading(str *_s)
 {
 	for(; _s->len > 0; _s->len--, _s->s++) {
 		TRIM_SWITCH(*(_s->s));
@@ -70,7 +71,7 @@ static inline void trim_leading(str* _s)
  *          might be unable to free _s->s for
  *          example !
  */
-static inline void trim_trailing(str* _s)
+static inline void trim_trailing(str *_s)
 {
 	for(; _s->len > 0; _s->len--) {
 		TRIM_SWITCH(_s->s[_s->len - 1]);
@@ -85,7 +86,7 @@ static inline void trim_trailing(str* _s)
  *          Make a copy otherwise you might be
  *          unable to free _s->s for example !
  */
-static inline void trim(str* _s)
+static inline void trim(str *_s)
 {
 	trim_leading(_s);
 	trim_trailing(_s);
@@ -99,11 +100,13 @@ static inline void trim(str* _s)
  *          Make a copy otherwise you might be
  *          unable to free _s_->s for example !
  */
-#define trim_spaces_lr(_s_)												\
-	do{																	\
-		for(;(_s_).s[(_s_).len-1]==' ';(_s_).s[--(_s_).len]=0);			\
-		for(;(_s_).s[0]==' ';(_s_).s=(_s_).s+1,(_s_).len--);			\
-																		\
+#define trim_spaces_lr(_s_)                                            \
+	do {                                                               \
+		for(; (_s_).s[(_s_).len - 1] == ' '; (_s_).s[--(_s_).len] = 0) \
+			;                                                          \
+		for(; (_s_).s[0] == ' '; (_s_).s = (_s_).s + 1, (_s_).len--)   \
+			;                                                          \
+                                                                       \
 	} while(0);
 
 /*
@@ -113,11 +116,13 @@ static inline void trim(str* _s)
  *          Make a copy otherwise you might be
  *          unable to free _s_->s for example !
  */
-#define trim_zeros_lr(_s_)												\
-	do{																	\
-		for(;(_s_)->s[(_s_)->len-1]=='\0';(_s_)->s[--(_s_)->len]=0);	\
-		for(;(_s_)->s[0]=='\0';(_s_)->s=(_s_)->s+1,(_s_)->len--);		\
-																		\
+#define trim_zeros_lr(_s_)                                                  \
+	do {                                                                    \
+		for(; (_s_)->s[(_s_)->len - 1] == '\0'; (_s_)->s[--(_s_)->len] = 0) \
+			;                                                               \
+		for(; (_s_)->s[0] == '\0'; (_s_)->s = (_s_)->s + 1, (_s_)->len--)   \
+			;                                                               \
+                                                                            \
 	} while(0);
 
 #endif /* TRIM_H */

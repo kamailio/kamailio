@@ -79,8 +79,8 @@ static inline void parse_event_dialog_class(param_hooks_t *h, param_t *p)
 		case 'i':
 		case 'I':
 			if((p->name.len == 27)
-					&& (!strncasecmp(p->name.s + 1,
-							"nclude-session-description", 26))) {
+					&& (!strncasecmp(
+							p->name.s + 1, "nclude-session-description", 26))) {
 				p->type = P_ISD;
 				h->event_dialog.include_session_description = p;
 			}
@@ -154,7 +154,7 @@ static inline void parse_contact_class(param_hooks_t *_h, param_t *_p)
 				_p->type = P_RECEIVED;
 				_h->contact.received = _p;
 			} else if((_p->name.len == 6)
-						&& (!strncasecmp(_p->name.s + 1, "eg-id", 5))) {
+					  && (!strncasecmp(_p->name.s + 1, "eg-id", 5))) {
 				_p->type = P_REG_ID;
 				_h->contact.reg_id = _p;
 			}
@@ -175,8 +175,8 @@ static inline void parse_contact_class(param_hooks_t *_h, param_t *_p)
 			break;
 		case 'f':
 		case 'F':
-			if ((_p->name.len == 5) &&
-				(!strncasecmp(_p->name.s + 1, "lags", 4))) {
+			if((_p->name.len == 5)
+					&& (!strncasecmp(_p->name.s + 1, "lags", 4))) {
 				_p->type = P_FLAGS;
 				_h->contact.flags = _p;
 			}
@@ -249,7 +249,7 @@ static inline void parse_uri_class(param_hooks_t *_h, param_t *_p)
 				_p->type = P_DSTIP;
 				_h->uri.dstip = _p;
 			} else if((_p->name.len == 7)
-						&& (!strncasecmp(_p->name.s + 1, "stport", 6))) {
+					  && (!strncasecmp(_p->name.s + 1, "stport", 6))) {
 				_p->type = P_DSTPORT;
 				_h->uri.dstport = _p;
 			}
@@ -584,7 +584,7 @@ int parse_params2(
 		memset(_h, 0, sizeof(param_hooks_t));
 	*_p = 0;
 
-	if(!_s->s || _s->len<=0) { /* no parameters at all -- we're done */
+	if(!_s->s || _s->len <= 0) { /* no parameters at all -- we're done */
 		LM_DBG("empty uri params, skipping\n");
 		return 0;
 	}
@@ -779,7 +779,7 @@ static inline int do_duplicate_params(param_t **_n, param_t *_p, int _shm)
 			t = (param_t *)pkg_malloc(sizeof(param_t));
 		}
 		if(!t) {
-			if (_shm) {
+			if(_shm) {
 				SHM_MEM_ERROR;
 			} else {
 				PKG_MEM_ERROR;
