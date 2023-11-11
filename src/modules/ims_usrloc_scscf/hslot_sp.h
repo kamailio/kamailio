@@ -50,39 +50,40 @@
 
 #include "usrloc.h"
 
-typedef struct hslot_sp {
-	int n;                  			/*!< Number of elements in the collision slot */
-	struct ims_subscription_s* first;	/*!< First element in the list */
-	struct ims_subscription_s* last;	/*!< Last element in the list */
+typedef struct hslot_sp
+{
+	int n; /*!< Number of elements in the collision slot */
+	struct ims_subscription_s *first; /*!< First element in the list */
+	struct ims_subscription_s *last;  /*!< Last element in the list */
 #ifdef GEN_LOCK_T_PREFERED
-	gen_lock_t *lock;       			/*!< Lock for hash entry - fastlock */
+	gen_lock_t *lock; /*!< Lock for hash entry - fastlock */
 #else
-	int lockidx;            			/*!< Lock index for hash entry - the rest*/
+	int lockidx; /*!< Lock index for hash entry - the rest*/
 #endif
 } hslot_sp_t;
 
 /*! \brief
  * Initialize slot structure
  */
-void subs_init_slot(hslot_sp_t* _s, int n);
+void subs_init_slot(hslot_sp_t *_s, int n);
 
 
 /*! \brief
  * Deinitialize given slot structure
  */
-void subs_deinit_slot(hslot_sp_t* _s);
+void subs_deinit_slot(hslot_sp_t *_s);
 
 
 /*! \brief
  * Add an element to slot linked list
  */
-void subs_slot_add(hslot_sp_t* _s, struct ims_subscription_s* _r);
+void subs_slot_add(hslot_sp_t *_s, struct ims_subscription_s *_r);
 
 
 /*! \brief
  * Remove an element from slot linked list
  */
-void subs_slot_rem(hslot_sp_t* _s, struct ims_subscription_s* _r);
+void subs_slot_rem(hslot_sp_t *_s, struct ims_subscription_s *_r);
 
 
 /*!
