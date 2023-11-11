@@ -718,7 +718,7 @@ int bdb_insert(db1_con_t *_h, db_key_t *_k, db_val_t *_v, int _n)
 		switch(ret) {
 			/*The following are all critical/fatal */
 			case DB_LOCK_DEADLOCK:
-			/* The operation was selected to resolve a deadlock. */
+				/* The operation was selected to resolve a deadlock. */
 
 			case DB_RUNRECOVERY:
 			default:
