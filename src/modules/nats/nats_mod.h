@@ -56,8 +56,7 @@ init_nats_sub_ptr _init_nats_sub_new(char *sub, char *queue_group);
 int init_nats_sub_add(char *sub);
 int nats_cleanup_init_sub();
 
-void nats_consumer_worker_proc(
-		nats_consumer_worker_t *worker);
+void nats_consumer_worker_proc(nats_consumer_worker_t *worker);
 int nats_pv_get_event_payload(struct sip_msg *, pv_param_t *, pv_value_t *);
 
 

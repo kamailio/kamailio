@@ -115,10 +115,11 @@ void _nats_pub_worker_cb(uv_poll_t *handle, int status, int events)
 		LM_ERR("failed to read from command pipe: %s\n", strerror(errno));
 		return;
 	}
-	if((s = natsConnection_PublishString(worker->nc->conn, ptr->subject, ptr->payload))
+	if((s = natsConnection_PublishString(
+				worker->nc->conn, ptr->subject, ptr->payload))
 			!= NATS_OK) {
-		LM_ERR("could not publish to subject [%s] payload [%s] error [%s]\n", ptr->subject, ptr->payload,
-				natsStatus_GetText(s));
+		LM_ERR("could not publish to subject [%s] payload [%s] error [%s]\n",
+				ptr->subject, ptr->payload, natsStatus_GetText(s));
 	}
 	nats_pub_free_delivery_ptr(ptr);
 }
