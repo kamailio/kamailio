@@ -32,7 +32,7 @@
 #include "../../core/parser/msg_parser.h"
 
 int tps_update_hdr_replaces(sip_msg_t *msg);
-char* tps_msg_update(sip_msg_t *msg, unsigned int *olen);
+char *tps_msg_update(sip_msg_t *msg, unsigned int *olen);
 int tps_skip_msg(sip_msg_t *msg);
 
 int tps_request_received(sip_msg_t *msg, int dialog);
