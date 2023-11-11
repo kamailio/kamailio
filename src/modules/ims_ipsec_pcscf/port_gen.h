@@ -30,11 +30,12 @@
 // PORT GEN is based on SPI list, because the logics of the SPI gen and PORT gen are basically the same.
 // It is used as an unique port generator for the TCP client and server ports.
 
-int init_port_gen(uint32_t sport_start_val, uint32_t cport_start_val, uint32_t range);
+int init_port_gen(
+		uint32_t sport_start_val, uint32_t cport_start_val, uint32_t range);
 int clean_port_lists();
 int destroy_port_gen();
-uint32_t acquire_sport(); // acquare server port
-uint32_t acquire_cport(); // acquare client port
+uint32_t acquire_sport();		  // acquare server port
+uint32_t acquire_cport();		  // acquare client port
 int release_sport(uint32_t port); // release server port
 int release_cport(uint32_t port); // release client port
 
