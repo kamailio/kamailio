@@ -21,14 +21,13 @@
  *
  */
 
-		       
+
 #ifndef _DEBUGGER_ACT_H_
 #define _DEBUGGER_ACT_H_
 
 #include "../../core/str.h"
-#include "../../core/route_struct.h"     
+#include "../../core/route_struct.h"
 
-str* dbg_get_action_name(struct action *a);
+str *dbg_get_action_name(struct action *a);
 
 #endif
-
