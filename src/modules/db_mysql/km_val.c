@@ -42,88 +42,90 @@
  * \param _len target string length
  * \return 0 on success, negative on error
  */
-int db_mysql_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
+int db_mysql_val2str(
+		const db1_con_t *_c, const db_val_t *_v, char *_s, int *_len)
 {
 	int l, tmp;
-	char* old_s;
+	char *old_s;
 
 	switch(VAL_TYPE(_v)) {
-	case DB1_DATETIME:
-		if (my_server_timezone) {
-			/* Let MySQL handle timestamp to internal time representation */
-			if (!_s || !_len || !*_len) {
-				LM_ERR("Invalid parameter value\n");
-				return -1;
+		case DB1_DATETIME:
+			if(my_server_timezone) {
+				/* Let MySQL handle timestamp to internal time representation */
+				if(!_s || !_len || !*_len) {
+					LM_ERR("Invalid parameter value\n");
+					return -1;
+				}
+				l = snprintf(_s, *_len, "FROM_UNIXTIME(%d)", VAL_INT(_v));
+				if(l < 0 || l >= *_len) {
+					LM_ERR("Error in snprintf\n");
+					return -1;
+				}
+				*_len = l;
+				return 0;
 			}
-			l = snprintf(_s, *_len, "FROM_UNIXTIME(%d)", VAL_INT(_v));
-			if (l < 0 || l >= *_len) {
-				LM_ERR("Error in snprintf\n");
-				return -1;
-			}
-			*_len  = l;
-			return 0;
-		}
-		break;
-	default:
-		break;
+			break;
+		default:
+			break;
 	};
 
 	tmp = db_val2str(_c, _v, _s, _len);
-	if (tmp < 1)
+	if(tmp < 1)
 		return tmp;
 
 	switch(VAL_TYPE(_v)) {
-	case DB1_STRING:
-		l = strlen(VAL_STRING(_v));
-		if (*_len < (l * 2 + 3)) {
-			LM_ERR("destination buffer too short\n");
-			return -6;
-		} else {
-			old_s = _s;
-			*_s++ = '\'';
-			_s += mysql_real_escape_string(CON_CONNECTION(_c), _s,
-					VAL_STRING(_v), l);
-			*_s++ = '\'';
-			*_s = '\0'; /* FIXME */
-			*_len = _s - old_s;
-			return 0;
-		}
-		break;
+		case DB1_STRING:
+			l = strlen(VAL_STRING(_v));
+			if(*_len < (l * 2 + 3)) {
+				LM_ERR("destination buffer too short\n");
+				return -6;
+			} else {
+				old_s = _s;
+				*_s++ = '\'';
+				_s += mysql_real_escape_string(
+						CON_CONNECTION(_c), _s, VAL_STRING(_v), l);
+				*_s++ = '\'';
+				*_s = '\0'; /* FIXME */
+				*_len = _s - old_s;
+				return 0;
+			}
+			break;
 
-	case DB1_STR:
-		if (*_len < (VAL_STR(_v).len * 2 + 3)) {
-			LM_ERR("destination buffer too short\n");
-			return -7;
-		} else {
-			old_s = _s;
-			*_s++ = '\'';
-			_s += mysql_real_escape_string(CON_CONNECTION(_c), _s,
-					VAL_STR(_v).s, VAL_STR(_v).len);
-			*_s++ = '\'';
-			*_s = '\0';
-			*_len = _s - old_s;
-			return 0;
-		}
-		break;
+		case DB1_STR:
+			if(*_len < (VAL_STR(_v).len * 2 + 3)) {
+				LM_ERR("destination buffer too short\n");
+				return -7;
+			} else {
+				old_s = _s;
+				*_s++ = '\'';
+				_s += mysql_real_escape_string(
+						CON_CONNECTION(_c), _s, VAL_STR(_v).s, VAL_STR(_v).len);
+				*_s++ = '\'';
+				*_s = '\0';
+				*_len = _s - old_s;
+				return 0;
+			}
+			break;
 
-	case DB1_BLOB:
-		l = VAL_BLOB(_v).len;
-		if (*_len < (l * 2 + 3)) {
-			LM_ERR("destination buffer too short\n");
-			return -9;
-		} else {
-			old_s = _s;
-			*_s++ = '\'';
-			_s += mysql_real_escape_string(CON_CONNECTION(_c), _s, VAL_STR(_v).s, l);
-			*_s++ = '\'';
-			*_s = '\0';
-			*_len = _s - old_s;
-			return 0;
-		}
-		break;
+		case DB1_BLOB:
+			l = VAL_BLOB(_v).len;
+			if(*_len < (l * 2 + 3)) {
+				LM_ERR("destination buffer too short\n");
+				return -9;
+			} else {
+				old_s = _s;
+				*_s++ = '\'';
+				_s += mysql_real_escape_string(
+						CON_CONNECTION(_c), _s, VAL_STR(_v).s, l);
+				*_s++ = '\'';
+				*_s = '\0';
+				*_len = _s - old_s;
+				return 0;
+			}
+			break;
 
-	default:
-		LM_ERR("unknown data type\n");
-		return -10;
+		default:
+			LM_ERR("unknown data type\n");
+			return -10;
 	}
 }
