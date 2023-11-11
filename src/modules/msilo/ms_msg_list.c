@@ -63,14 +63,13 @@ void msg_list_el_free(msg_list_el mle)
  */
 void msg_list_el_free_all(msg_list_el mle)
 {
-	msg_list_el p0, p1;	
-	
+	msg_list_el p0, p1;
+
 	if(!mle)
 		return;
-	
+
 	p0 = mle;
-	while(p0)
-	{
+	while(p0) {
 		p1 = p0;
 		p0 = p0->next;
 		msg_list_el_free(p1);
@@ -83,16 +82,16 @@ void msg_list_el_free_all(msg_list_el mle)
 msg_list msg_list_init(void)
 {
 	msg_list ml = NULL;
-	
+
 	ml = (msg_list)shm_malloc(sizeof(t_msg_list));
 	if(ml == NULL)
 		return NULL;
 	/* init locks */
-	if (lock_init(&ml->sem_sent)==0){
+	if(lock_init(&ml->sem_sent) == 0) {
 		LM_CRIT("could not initialize a lock\n");
 		goto clean;
 	};
-	if (lock_init(&ml->sem_done)==0){
+	if(lock_init(&ml->sem_done) == 0) {
 		LM_CRIT("could not initialize a lock\n");
 		lock_destroy(&ml->sem_sent);
 		goto clean;
@@ -101,7 +100,7 @@ msg_list msg_list_init(void)
 	ml->nrdone = 0;
 	ml->lsent = NULL;
 	ml->ldone = NULL;
-	
+
 	return ml;
 
 clean:
@@ -122,33 +121,29 @@ void msg_list_free(msg_list ml)
 	lock_destroy(&ml->sem_sent);
 	lock_destroy(&ml->sem_done);
 
-	if(ml->nrsent>0 && ml->lsent)
-	{ // free sent list
+	if(ml->nrsent > 0 && ml->lsent) { // free sent list
 		p0 = ml->lsent;
 		ml->lsent = NULL;
 		ml->nrsent = 0;
-		while(p0)
-		{
-			p1 = p0->next;
-			msg_list_el_free(p0);
-			p0 = p1;
-		}		
-	}
-
-	if(ml->nrdone>0 && ml->ldone)
-	{ // free done list
-		p0 = ml->ldone;
-		ml->ldone = NULL;
-		ml->nrdone = 0;
-		while(p0)
-		{
+		while(p0) {
 			p1 = p0->next;
 			msg_list_el_free(p0);
 			p0 = p1;
 		}
 	}
-	
-	shm_free(ml);	
+
+	if(ml->nrdone > 0 && ml->ldone) { // free done list
+		p0 = ml->ldone;
+		ml->ldone = NULL;
+		ml->nrdone = 0;
+		while(p0) {
+			p1 = p0->next;
+			msg_list_el_free(p0);
+			p0 = p1;
+		}
+	}
+
+	shm_free(ml);
 }
 
 /**
@@ -156,42 +151,39 @@ void msg_list_free(msg_list ml)
  */
 int msg_list_check_msg(msg_list ml, int mid)
 {
-	msg_list_el p0, p1;	
-	
-	if(!ml || mid==0)
+	msg_list_el p0, p1;
+
+	if(!ml || mid == 0)
 		goto errorx;
 
 	LM_DBG("checking msgid=%d\n", mid);
-	
+
 	lock_get(&ml->sem_sent);
 
 	p0 = p1 = ml->lsent;
-	while(p0)
-	{
-		if(p0->msgid==mid)
+	while(p0) {
+		if(p0->msgid == mid)
 			goto exist;
 		p1 = p0;
 		p0 = p0->next;
 	}
 
 	p0 = msg_list_el_new();
-	if(!p0)
-	{
+	if(!p0) {
 		LM_ERR("failed to create new msg elem.\n");
 		goto error;
 	}
 	p0->msgid = mid;
 	p0->flag |= MS_MSG_SENT;
 
-	if(p1)
-	{
+	if(p1) {
 		p1->next = p0;
 		p0->prev = p1;
 		goto done;
 	}
-	
+
 	ml->lsent = p0;
-		
+
 done:
 	ml->nrsent++;
 	lock_release(&ml->sem_sent);
@@ -200,7 +192,7 @@ done:
 exist:
 	lock_release(&ml->sem_sent);
 	LM_DBG("msg already in sent list.\n");
-	return MSG_LIST_EXIST;	
+	return MSG_LIST_EXIST;
 error:
 	lock_release(&ml->sem_sent);
 errorx:
@@ -212,21 +204,18 @@ errorx:
  */
 int msg_list_set_flag(msg_list ml, int mid, int fl)
 {
-	msg_list_el p0;	
-	
-	if(ml==0 || mid==0)
-	{
+	msg_list_el p0;
+
+	if(ml == 0 || mid == 0) {
 		LM_ERR("bad param %p / %d\n", ml, fl);
 		goto errorx;
 	}
-	
+
 	lock_get(&ml->sem_sent);
 
 	p0 = ml->lsent;
-	while(p0)
-	{
-		if(p0->msgid==mid)
-		{
+	while(p0) {
+		if(p0->msgid == mid) {
 			p0->flag |= fl;
 			LM_DBG("mid:%d fl:%d\n", p0->msgid, fl);
 			goto done;
@@ -248,27 +237,25 @@ int msg_list_check(msg_list ml)
 {
 	msg_list_el p0;
 	msg_list_el p1;
-	
+
 	if(!ml)
 		goto errorx;
-	
+
 	lock_get(&ml->sem_sent);
-	if(ml->nrsent<=0)
+	if(ml->nrsent <= 0)
 		goto done;
-	
+
 	lock_get(&ml->sem_done);
-	
+
 	p0 = ml->lsent;
-	while(p0)
-	{
+	while(p0) {
 		p1 = p0->next;
-		if(p0->flag & MS_MSG_DONE || p0->flag & MS_MSG_ERRO)
-		{
+		if(p0->flag & MS_MSG_DONE || p0->flag & MS_MSG_ERRO) {
 			LM_DBG("mid:%d got reply\n", p0->msgid);
 			if(p0->prev)
 				(p0->prev)->next = p0->next;
 			else
-			    ml->lsent = p0->next;
+				ml->lsent = p0->next;
 			if(p0->next)
 				(p0->next)->prev = p0->prev;
 			ml->nrsent--;
@@ -278,7 +265,7 @@ int msg_list_check(msg_list ml)
 			if(ml->ldone)
 				(ml->ldone)->prev = p0;
 			p0->next = ml->ldone;
-			
+
 			p0->prev = NULL;
 
 			ml->ldone = p0;
@@ -302,17 +289,16 @@ errorx:
  */
 msg_list_el msg_list_reset(msg_list ml)
 {
-	msg_list_el p0;	
-	
+	msg_list_el p0;
+
 	if(!ml)
 		return NULL;
-	
+
 	lock_get(&ml->sem_done);
 	p0 = ml->ldone;
 	ml->ldone = NULL;
 	ml->nrdone = 0;
 	lock_release(&ml->sem_done);
-	
+
 	return p0;
 }
-
