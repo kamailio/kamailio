@@ -47,12 +47,13 @@
 /*
  * Find credentials with given realm in a SIP message header
  */
-int ims_find_credentials(struct sip_msg* _m, str* _realm,
-		hdr_types_t _hftype, struct hdr_field** _h) {
-	struct hdr_field** hook, *ptr, *prev;
+int ims_find_credentials(struct sip_msg *_m, str *_realm, hdr_types_t _hftype,
+		struct hdr_field **_h)
+{
+	struct hdr_field **hook, *ptr, *prev;
 	hdr_flags_t hdr_flags;
 	int res;
-	str* r;
+	str *r;
 
 	LM_DBG("Searching credentials in realm [%.*s]\n", _realm->len, _realm->s);
 
@@ -61,29 +62,30 @@ int ims_find_credentials(struct sip_msg* _m, str* _realm,
 	 * Proxy-Authorization header fields, this parameter
 	 * is set in www_authorize and proxy_authorize
 	 */
-	switch (_hftype) {
-	case HDR_AUTHORIZATION_T:
-		hook = &(_m->authorization);
-		hdr_flags = HDR_AUTHORIZATION_F;
-		break;
-	case HDR_PROXYAUTH_T:
-		hook = &(_m->proxy_auth);
-		hdr_flags = HDR_PROXYAUTH_F;
-		break;
-	default:
-		LM_WARN("unexpected header type %d - using authorization\n", _hftype);
-		hook = &(_m->authorization);
-		hdr_flags = HDR_AUTHORIZATION_F;
-		break;
+	switch(_hftype) {
+		case HDR_AUTHORIZATION_T:
+			hook = &(_m->authorization);
+			hdr_flags = HDR_AUTHORIZATION_F;
+			break;
+		case HDR_PROXYAUTH_T:
+			hook = &(_m->proxy_auth);
+			hdr_flags = HDR_PROXYAUTH_F;
+			break;
+		default:
+			LM_WARN("unexpected header type %d - using authorization\n",
+					_hftype);
+			hook = &(_m->authorization);
+			hdr_flags = HDR_AUTHORIZATION_F;
+			break;
 	}
 
 	/*
 	 * If the credentials haven't been parsed yet, do it now
 	 */
-	if (*hook == 0) {
+	if(*hook == 0) {
 		/* No credentials parsed yet */
 		LM_DBG("*hook == 0, No credentials parsed yet\n");
-		if (parse_headers(_m, hdr_flags, 0) == -1) {
+		if(parse_headers(_m, hdr_flags, 0) == -1) {
 			LM_ERR("Error while parsing headers\n");
 			return -1;
 		}
@@ -95,18 +97,19 @@ int ims_find_credentials(struct sip_msg* _m, str* _realm,
 	 * Iterate through the credentials in the message and
 	 * find credentials with given realm
 	 */
-	while (ptr) {
+	while(ptr) {
 		res = parse_credentials(ptr);
-		if (res < 0) {
+		if(res < 0) {
 			LM_ERR("Error while parsing credentials\n");
 			return (res == -1) ? -2 : -3;
-		} else if (res == 0) {
+		} else if(res == 0) {
 			LM_DBG("Credential parsed successfully\n");
-			if (_realm->len) {
-				r = &(((auth_body_t*) (ptr->parsed))->digest.realm);
-				LM_DBG("Comparing realm <%.*s> and <%.*s>\n", _realm->len, _realm->s, r->len, r->s);
-				if (r->len == _realm->len) {
-					if (!strncasecmp(_realm->s, r->s, r->len)) {
+			if(_realm->len) {
+				r = &(((auth_body_t *)(ptr->parsed))->digest.realm);
+				LM_DBG("Comparing realm <%.*s> and <%.*s>\n", _realm->len,
+						_realm->s, r->len, r->s);
+				if(r->len == _realm->len) {
+					if(!strncasecmp(_realm->s, r->s, r->len)) {
 						*_h = ptr;
 						return 0;
 					}
@@ -115,16 +118,15 @@ int ims_find_credentials(struct sip_msg* _m, str* _realm,
 				*_h = ptr;
 				return 0;
 			}
-
 		}
 
 		prev = ptr;
-		if (parse_headers(_m, hdr_flags, 1) == -1) {
+		if(parse_headers(_m, hdr_flags, 1) == -1) {
 			LM_ERR("Error while parsing headers\n");
 			return -4;
 		} else {
-			if (prev != _m->last_header) {
-				if (_m->last_header->type == _hftype)
+			if(prev != _m->last_header) {
+				if(_m->last_header->type == _hftype)
 					ptr = _m->last_header;
 				else
 					break;
@@ -148,71 +150,74 @@ int ims_find_credentials(struct sip_msg* _m, str* _realm,
  * @param response - param to fill with the response
  * @returns 1 if found, 0 if not
  */
-int get_nonce_response(struct sip_msg *msg, str *username, str realm,str *nonce,str *response,
-	enum qop_type *qop,str *qop_str,str *nc,str *cnonce,str *uri, int is_proxy_auth)
+int get_nonce_response(struct sip_msg *msg, str *username, str realm,
+		str *nonce, str *response, enum qop_type *qop, str *qop_str, str *nc,
+		str *cnonce, str *uri, int is_proxy_auth)
 {
-	struct hdr_field* h = 0;
+	struct hdr_field *h = 0;
 	int ret;
 
 
-	ret = parse_headers(msg, is_proxy_auth ? HDR_PROXYAUTH_F : HDR_AUTHORIZATION_F, 0);
+	ret = parse_headers(
+			msg, is_proxy_auth ? HDR_PROXYAUTH_F : HDR_AUTHORIZATION_F, 0);
 
-	if (ret != 0) {
+	if(ret != 0) {
 		return 0;
 	}
 
-	if ((!is_proxy_auth && !msg->authorization)
-		|| (is_proxy_auth && !msg->proxy_auth)) {
+	if((!is_proxy_auth && !msg->authorization)
+			|| (is_proxy_auth && !msg->proxy_auth)) {
 		return 0;
 	}
 
 	LM_DBG("Calling find_credentials with realm [%.*s]\n", realm.len, realm.s);
-	ret = ims_find_credentials(msg, &realm, is_proxy_auth ? HDR_PROXYAUTH_T : HDR_AUTHORIZATION_T, &h);
-	if (ret < 0) {
+	ret = ims_find_credentials(msg, &realm,
+			is_proxy_auth ? HDR_PROXYAUTH_T : HDR_AUTHORIZATION_T, &h);
+	if(ret < 0) {
 		return 0;
-	} else if (ret > 0) {
+	} else if(ret > 0) {
 		LM_DBG("ret > 0");
 		return 0;
 	}
 
-	if (h && h->parsed) {
-		if (nonce)
-			*nonce = ((auth_body_t*) h->parsed)->digest.nonce;
-		if (response)
-			*response = ((auth_body_t*) h->parsed)->digest.response;
-		if (qop)
-			*qop = ((auth_body_t*) h->parsed)->digest.qop.qop_parsed;
-		if (qop_str)
-			*qop_str = ((auth_body_t*) h->parsed)->digest.qop.qop_str;
-		if (nc)
-			*nc = ((auth_body_t*) h->parsed)->digest.nc;
-		if (cnonce)
-			*cnonce = ((auth_body_t*) h->parsed)->digest.cnonce;
-		if (uri)
-			*uri = ((auth_body_t*) h->parsed)->digest.uri;
-		if (username)
-			*username = ((auth_body_t*) h->parsed)->digest.username.whole;
+	if(h && h->parsed) {
+		if(nonce)
+			*nonce = ((auth_body_t *)h->parsed)->digest.nonce;
+		if(response)
+			*response = ((auth_body_t *)h->parsed)->digest.response;
+		if(qop)
+			*qop = ((auth_body_t *)h->parsed)->digest.qop.qop_parsed;
+		if(qop_str)
+			*qop_str = ((auth_body_t *)h->parsed)->digest.qop.qop_str;
+		if(nc)
+			*nc = ((auth_body_t *)h->parsed)->digest.nc;
+		if(cnonce)
+			*cnonce = ((auth_body_t *)h->parsed)->digest.cnonce;
+		if(uri)
+			*uri = ((auth_body_t *)h->parsed)->digest.uri;
+		if(username)
+			*username = ((auth_body_t *)h->parsed)->digest.username.whole;
 	}
 	LM_DBG("Found nonce response\n");
 	return 1;
 }
 
-str ims_get_body(struct sip_msg * msg)
-{		
-	str x={0,0};
-	
-	if (parse_headers(msg,HDR_CONTENTLENGTH_F,0)!=0) {
+str ims_get_body(struct sip_msg *msg)
+{
+	str x = {0, 0};
+
+	if(parse_headers(msg, HDR_CONTENTLENGTH_F, 0) != 0) {
 		LM_DBG("Error parsing until header Content-Length: \n");
 		return x;
 	}
-	if (msg->content_length)
-	    // Content-Length header might be missing
-	    x.len = (int)(long)msg->content_length->parsed;
-        
-        if (x.len>0) 
-            x.s = get_body(msg);	
-	
-        return x;
+	if(msg->content_length)
+		// Content-Length header might be missing
+		x.len = (int)(long)msg->content_length->parsed;
+
+	if(x.len > 0)
+		x.s = get_body(msg);
+
+	return x;
 }
 
 
@@ -224,42 +229,45 @@ str ims_get_body(struct sip_msg * msg)
  */
 str ims_get_auts(struct sip_msg *msg, str realm, int is_proxy_auth)
 {
-	str name={"auts=\"",6};
-	struct hdr_field* h=0;
-	int i,ret;
-	str auts={0,0};
+	str name = {"auts=\"", 6};
+	struct hdr_field *h = 0;
+	int i, ret;
+	str auts = {0, 0};
 
-	if (parse_headers(msg, is_proxy_auth ? HDR_PROXYAUTH_F : HDR_AUTHORIZATION_F,0)!=0) {
+	if(parse_headers(
+			   msg, is_proxy_auth ? HDR_PROXYAUTH_F : HDR_AUTHORIZATION_F, 0)
+			!= 0) {
 		LM_ERR("Error parsing until header Authorization: \n");
 		return auts;
 	}
 
-	if ((!is_proxy_auth && !msg->authorization)
-			|| (is_proxy_auth && !msg->proxy_auth)){
-		LM_ERR("Message does not contain Authorization nor Proxy-Authorization header.\n");
+	if((!is_proxy_auth && !msg->authorization)
+			|| (is_proxy_auth && !msg->proxy_auth)) {
+		LM_ERR("Message does not contain Authorization nor Proxy-Authorization "
+			   "header.\n");
 		return auts;
 	}
 
-	ret = find_credentials(msg, &realm, is_proxy_auth ? HDR_PROXYAUTH_T : HDR_AUTHORIZATION_T, &h);
-	if (ret < 0) {
+	ret = find_credentials(msg, &realm,
+			is_proxy_auth ? HDR_PROXYAUTH_T : HDR_AUTHORIZATION_T, &h);
+	if(ret < 0) {
 		LM_ERR("Error while looking for credentials.\n");
 		return auts;
-	} else 
-		if (ret > 0) {
-			LM_ERR("No credentials for this realm found.\n");
-			return auts;
-		}
-	
-	if (h) {
-		for(i=0;i<h->body.len-name.len;i++)
-			if (strncasecmp(h->body.s+i,name.s,name.len)==0){
-				auts.s = h->body.s+i+name.len;
-				while(i+auts.len<h->body.len && auts.s[auts.len]!='\"')
+	} else if(ret > 0) {
+		LM_ERR("No credentials for this realm found.\n");
+		return auts;
+	}
+
+	if(h) {
+		for(i = 0; i < h->body.len - name.len; i++)
+			if(strncasecmp(h->body.s + i, name.s, name.len) == 0) {
+				auts.s = h->body.s + i + name.len;
+				while(i + auts.len < h->body.len && auts.s[auts.len] != '\"')
 					auts.len++;
 			}
 	}
-	
-	return auts;	
+
+	return auts;
 }
 
 /**
@@ -270,35 +278,34 @@ str ims_get_auts(struct sip_msg *msg, str realm, int is_proxy_auth)
  */
 str ims_get_nonce(struct sip_msg *msg, str realm)
 {
-	struct hdr_field* h=0;
+	struct hdr_field *h = 0;
 	int ret;
-	str nonce={0,0};
+	str nonce = {0, 0};
 
-	if (parse_headers(msg,HDR_AUTHORIZATION_F,0)!=0) {
+	if(parse_headers(msg, HDR_AUTHORIZATION_F, 0) != 0) {
 		LM_ERR("Error parsing until header Authorization: \n");
 		return nonce;
 	}
 
-	if (!msg->authorization){
+	if(!msg->authorization) {
 		LM_ERR("Message does not contain Authorization header.\n");
 		return nonce;
 	}
 
 	ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_T, &h);
-	if (ret < 0) {
+	if(ret < 0) {
 		LM_ERR("Error while looking for credentials.\n");
 		return nonce;
-	} else 
-		if (ret > 0) {
-			LM_ERR("No credentials for this realm found.\n");
-			return nonce;
-		}
-	
-	if (h&&h->parsed) {
-		nonce = ((auth_body_t*)h->parsed)->digest.nonce;
+	} else if(ret > 0) {
+		LM_ERR("No credentials for this realm found.\n");
+		return nonce;
 	}
-	
-	return nonce;	
+
+	if(h && h->parsed) {
+		nonce = ((auth_body_t *)h->parsed)->digest.nonce;
+	}
+
+	return nonce;
 }
 
 /**
@@ -309,12 +316,9 @@ str ims_get_nonce(struct sip_msg *msg, str realm)
  */
 int ims_add_header_rpl(struct sip_msg *msg, str *hdr)
 {
-	if (add_lump_rpl( msg, hdr->s, hdr->len, LUMP_RPL_HDR)==0) {
-		LM_ERR("Can't add header <%.*s>\n",
-			hdr->len,hdr->s);
- 		return 0;
- 	}
- 	return 1;
+	if(add_lump_rpl(msg, hdr->s, hdr->len, LUMP_RPL_HDR) == 0) {
+		LM_ERR("Can't add header <%.*s>\n", hdr->len, hdr->s);
+		return 0;
+	}
+	return 1;
 }
-
-
