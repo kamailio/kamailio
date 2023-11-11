@@ -37,8 +37,8 @@ MODULE_VERSION
 
 str _rtjson_xavp_name = str_init("rtjson");
 
-static int  mod_init(void);
-static int  child_init(int);
+static int mod_init(void);
+static int child_init(int);
 static void mod_destroy(void);
 
 static int w_rtjson_init_routes(sip_msg_t *msg, char *rdoc, char *rflags);
@@ -46,34 +46,28 @@ static int w_rtjson_push_routes(sip_msg_t *msg, char *p1, char *p2);
 static int w_rtjson_next_route(sip_msg_t *msg, char *p1, char *p2);
 static int w_rtjson_update_branch(sip_msg_t *msg, char *p1, char *p2);
 
-static cmd_export_t cmds[]={
-	{"rtjson_init_routes", (cmd_function)w_rtjson_init_routes, 1, fixup_spve_null,
-		0, REQUEST_ROUTE},
-	{"rtjson_push_routes", (cmd_function)w_rtjson_push_routes,     0, 0,
-		0, REQUEST_ROUTE},
-	{"rtjson_next_route", (cmd_function)w_rtjson_next_route,       0, 0,
-		0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"rtjson_update_branch", (cmd_function)w_rtjson_update_branch, 0, 0,
-		0, BRANCH_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {
+		{"rtjson_init_routes", (cmd_function)w_rtjson_init_routes, 1,
+				fixup_spve_null, 0, REQUEST_ROUTE},
+		{"rtjson_push_routes", (cmd_function)w_rtjson_push_routes, 0, 0, 0,
+				REQUEST_ROUTE},
+		{"rtjson_next_route", (cmd_function)w_rtjson_next_route, 0, 0, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"rtjson_update_branch", (cmd_function)w_rtjson_update_branch, 0, 0, 0,
+				BRANCH_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[]={
-	{"xavp_cfg", PARAM_STR, &_rtjson_xavp_name},
-	{0, 0, 0}
-};
+static param_export_t params[] = {
+		{"xavp_cfg", PARAM_STR, &_rtjson_xavp_name}, {0, 0, 0}};
 
 struct module_exports exports = {
-	"rtjson",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,              /* exported RPC methods */
-	0,              /* exported pseudo-variables */
-	0,              /* response function */
-	mod_init,       /* module initialization function */
-	child_init,     /* per child init function */
-	mod_destroy     /* destroy function */
+		"rtjson", DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds, params, 0,		   /* exported RPC methods */
+		0,						   /* exported pseudo-variables */
+		0,						   /* response function */
+		mod_init,				   /* module initialization function */
+		child_init,				   /* per child init function */
+		mod_destroy				   /* destroy function */
 };
 
 /**
@@ -81,11 +75,11 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	if(_rtjson_xavp_name.s==NULL || _rtjson_xavp_name.len<=0) {
+	if(_rtjson_xavp_name.s == NULL || _rtjson_xavp_name.len <= 0) {
 		LM_ERR("invalid xavp name\n");
 		return -1;
 	}
-	if(rtjson_init()<0) {
+	if(rtjson_init() < 0) {
 		LM_ERR("failed to initialize\n");
 		return -1;
 	}
@@ -113,14 +107,14 @@ static int w_rtjson_init_routes(sip_msg_t *msg, char *rdoc, char *rflags)
 {
 	str srdoc = {0};
 
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(fixup_get_svalue(msg, (gparam_t*)rdoc, &srdoc)!=0 || srdoc.len<=0) {
+	if(fixup_get_svalue(msg, (gparam_t *)rdoc, &srdoc) != 0 || srdoc.len <= 0) {
 		LM_ERR("no routing information\n");
 		return -1;
 	}
-	if(rtjson_init_routes(msg, &srdoc)<0)
+	if(rtjson_init_routes(msg, &srdoc) < 0)
 		return -1;
 
 	return 1;
@@ -131,10 +125,10 @@ static int w_rtjson_init_routes(sip_msg_t *msg, char *rdoc, char *rflags)
  */
 static int w_rtjson_push_routes(sip_msg_t *msg, char *p1, char *p2)
 {
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(rtjson_push_routes(msg)<0)
+	if(rtjson_push_routes(msg) < 0)
 		return -1;
 
 	return 1;
@@ -145,10 +139,10 @@ static int w_rtjson_push_routes(sip_msg_t *msg, char *p1, char *p2)
  */
 static int w_rtjson_next_route(sip_msg_t *msg, char *p1, char *p2)
 {
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(rtjson_next_route(msg)<0)
+	if(rtjson_next_route(msg) < 0)
 		return -1;
 
 	return 1;
@@ -159,10 +153,10 @@ static int w_rtjson_next_route(sip_msg_t *msg, char *p1, char *p2)
  */
 static int w_rtjson_update_branch(sip_msg_t *msg, char *p1, char *p2)
 {
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(rtjson_update_branch(msg)<0)
+	if(rtjson_update_branch(msg) < 0)
 		return -1;
 
 	return 1;
@@ -173,10 +167,10 @@ static int w_rtjson_update_branch(sip_msg_t *msg, char *p1, char *p2)
  */
 static int ki_rtjson_init_routes(sip_msg_t *msg, str *srdoc)
 {
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(rtjson_init_routes(msg, srdoc)<0)
+	if(rtjson_init_routes(msg, srdoc) < 0)
 		return -1;
 
 	return 1;
@@ -187,10 +181,10 @@ static int ki_rtjson_init_routes(sip_msg_t *msg, str *srdoc)
  */
 static int ki_rtjson_push_routes(sip_msg_t *msg)
 {
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(rtjson_push_routes(msg)<0)
+	if(rtjson_push_routes(msg) < 0)
 		return -1;
 
 	return 1;
@@ -201,10 +195,10 @@ static int ki_rtjson_push_routes(sip_msg_t *msg)
  */
 static int ki_rtjson_next_route(sip_msg_t *msg)
 {
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(rtjson_next_route(msg)<0)
+	if(rtjson_next_route(msg) < 0)
 		return -1;
 
 	return 1;
@@ -215,10 +209,10 @@ static int ki_rtjson_next_route(sip_msg_t *msg)
  */
 static int ki_rtjson_update_branch(sip_msg_t *msg)
 {
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(rtjson_update_branch(msg)<0)
+	if(rtjson_update_branch(msg) < 0)
 		return -1;
 
 	return 1;
