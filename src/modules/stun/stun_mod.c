@@ -37,32 +37,31 @@ static int mod_init(void);
 static int stun_msg_receive(sr_event_param_t *evp);
 
 struct module_exports exports = {
-	"stun",          /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	0,               /* exported functions */
-	0,               /* exported parameters */
-	0,               /* exported RPC functions */
-	0,               /* exported pseudo-variables */
-	0,               /* response function */
-	mod_init,        /* module initialization function */
-	0,               /* per-child initialization function */
-	0                /* destroy function */
+		"stun",			 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		0,				 /* exported functions */
+		0,				 /* exported parameters */
+		0,				 /* exported RPC functions */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response function */
+		mod_init,		 /* module initialization function */
+		0,				 /* per-child initialization function */
+		0				 /* destroy function */
 };
 
 static int mod_init(void)
 {
-	if (sr_event_register_cb(SREV_STUN_IN, stun_msg_receive) != 0)
-	{
+	if(sr_event_register_cb(SREV_STUN_IN, stun_msg_receive) != 0) {
 		LM_ERR("registering STUN receive call-back\n");
 		return -1;
 	}
 
-        if (cfg_declare("stun", stun_cfg_def, &default_stun_cfg,
-                        cfg_sizeof(stun), &stun_cfg)) {
-                LM_ERR("declaring config framework variable\n");
-                return -1;
-        }
-        default_stun_cfg.stun_active = 1;
+	if(cfg_declare("stun", stun_cfg_def, &default_stun_cfg, cfg_sizeof(stun),
+			   &stun_cfg)) {
+		LM_ERR("declaring config framework variable\n");
+		return -1;
+	}
+	default_stun_cfg.stun_active = 1;
 
 	return 0;
 }
