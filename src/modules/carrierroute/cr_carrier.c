@@ -43,9 +43,11 @@
  * @return a pointer to the newly allocated carrier data or NULL on
  * error, in which case it LOGs an error message.
  */
-struct carrier_data_t * create_carrier_data(int carrier_id, str *carrier_name, int domains) {
-	struct carrier_data_t * tmp;
-	if ((tmp = shm_malloc(sizeof(struct carrier_data_t))) == NULL) {
+struct carrier_data_t *create_carrier_data(
+		int carrier_id, str *carrier_name, int domains)
+{
+	struct carrier_data_t *tmp;
+	if((tmp = shm_malloc(sizeof(struct carrier_data_t))) == NULL) {
 		SHM_MEM_ERROR;
 		return NULL;
 	}
@@ -53,8 +55,9 @@ struct carrier_data_t * create_carrier_data(int carrier_id, str *carrier_name, i
 	tmp->id = carrier_id;
 	tmp->name = carrier_name;
 	tmp->domain_num = domains;
-	if(domains > 0){
-		if ((tmp->domains = shm_malloc(sizeof(struct domain_data_t *) * domains)) == NULL) {
+	if(domains > 0) {
+		if((tmp->domains = shm_malloc(sizeof(struct domain_data_t *) * domains))
+				== NULL) {
 			SHM_MEM_ERROR;
 			shm_free(tmp);
 			return NULL;
@@ -70,11 +73,12 @@ struct carrier_data_t * create_carrier_data(int carrier_id, str *carrier_name, i
  *
  * @param carrier_data the structure to be destroyed.
  */
-void destroy_carrier_data(struct carrier_data_t *carrier_data) {
+void destroy_carrier_data(struct carrier_data_t *carrier_data)
+{
 	int i;
-	if (carrier_data) {
-		if (carrier_data->domains != NULL) {
-			for (i=0; i<carrier_data->domain_num; i++) {
+	if(carrier_data) {
+		if(carrier_data->domains != NULL) {
+			for(i = 0; i < carrier_data->domain_num; i++) {
 				destroy_domain_data(carrier_data->domains[i]);
 			}
 			shm_free(carrier_data->domains);
@@ -94,23 +98,35 @@ void destroy_carrier_data(struct carrier_data_t *carrier_data) {
  *
  * @return 0 on success, -1 on failure
  */
-int add_domain_data(struct carrier_data_t * carrier_data, struct domain_data_t * domain_data, int index) {
-	LM_INFO("adding domain %d '%.*s' to carrier %d '%.*s'", domain_data->id, domain_data->name->len, domain_data->name->s, carrier_data->id, carrier_data->name->len, carrier_data->name->s);
- 	LM_DBG("domain position %d (domain_num=%d, first_empty_domain=%d)", index, (int) carrier_data->domain_num, (int) carrier_data->first_empty_domain);
+int add_domain_data(struct carrier_data_t *carrier_data,
+		struct domain_data_t *domain_data, int index)
+{
+	LM_INFO("adding domain %d '%.*s' to carrier %d '%.*s'", domain_data->id,
+			domain_data->name->len, domain_data->name->s, carrier_data->id,
+			carrier_data->name->len, carrier_data->name->s);
+	LM_DBG("domain position %d (domain_num=%d, first_empty_domain=%d)", index,
+			(int)carrier_data->domain_num,
+			(int)carrier_data->first_empty_domain);
 
-	if ((index < 0) || (index > carrier_data->first_empty_domain)) {
+	if((index < 0) || (index > carrier_data->first_empty_domain)) {
 		LM_ERR("got invalid index during binary search\n");
 		return -1;
 	}
-		
-	if (carrier_data->first_empty_domain >= carrier_data->domain_num) {
-		LM_ERR("cannot add new domain '%.*s' into carrier '%.*s' - array already full\n", domain_data->name->len, domain_data->name->s, carrier_data->name->len, carrier_data->name->s);
+
+	if(carrier_data->first_empty_domain >= carrier_data->domain_num) {
+		LM_ERR("cannot add new domain '%.*s' into carrier '%.*s' - array "
+			   "already full\n",
+				domain_data->name->len, domain_data->name->s,
+				carrier_data->name->len, carrier_data->name->s);
 		return -1;
 	}
 
-	if (index < carrier_data->first_empty_domain) {
+	if(index < carrier_data->first_empty_domain) {
 		/* move other entries one position up */
-		memmove(&carrier_data->domains[index+1], &carrier_data->domains[index], sizeof(struct domain_data_t *)*(carrier_data->first_empty_domain-index));
+		memmove(&carrier_data->domains[index + 1],
+				&carrier_data->domains[index],
+				sizeof(struct domain_data_t *)
+						* (carrier_data->first_empty_domain - index));
 	}
 	carrier_data->domains[index] = domain_data;
 	carrier_data->first_empty_domain++;
@@ -128,18 +144,22 @@ int add_domain_data(struct carrier_data_t * carrier_data, struct domain_data_t *
  *
  * @return a pointer to the desired domain data, NULL if not found.
  */
-struct domain_data_t * get_domain_data(struct carrier_data_t * carrier_data, int domain_id) {
+struct domain_data_t *get_domain_data(
+		struct carrier_data_t *carrier_data, int domain_id)
+{
 	struct domain_data_t **ret;
 	struct domain_data_t key;
 	struct domain_data_t *pkey = &key;
 
-	if (!carrier_data) {
+	if(!carrier_data) {
 		LM_ERR("NULL pointer in parameter\n");
 		return NULL;
 	}
 	key.id = domain_id;
-	ret = bsearch(&pkey, carrier_data->domains, carrier_data->domain_num, sizeof(carrier_data->domains[0]), compare_domain_data);
-	if (ret) return *ret;
+	ret = bsearch(&pkey, carrier_data->domains, carrier_data->domain_num,
+			sizeof(carrier_data->domains[0]), compare_domain_data);
+	if(ret)
+		return *ret;
 	return NULL;
 }
 
@@ -150,19 +170,25 @@ struct domain_data_t * get_domain_data(struct carrier_data_t * carrier_data, int
  *
  * @return -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2
  */
-int compare_carrier_data(const void *v1, const void *v2) {
-  struct carrier_data_t *c1 = *(struct carrier_data_t * const *)v1;
-	struct carrier_data_t *c2 = *(struct carrier_data_t * const *)v2;
-	if (c1 == NULL) {
-		if (c2 == NULL) return 0;
-		else return 1;
-	}
-	else {
-		if (c2 == NULL) return -1;
+int compare_carrier_data(const void *v1, const void *v2)
+{
+	struct carrier_data_t *c1 = *(struct carrier_data_t *const *)v1;
+	struct carrier_data_t *c2 = *(struct carrier_data_t *const *)v2;
+	if(c1 == NULL) {
+		if(c2 == NULL)
+			return 0;
+		else
+			return 1;
+	} else {
+		if(c2 == NULL)
+			return -1;
 		else {
-			if (c1->id < c2->id) return -1;
-			else if (c1->id > c2->id) return 1;
-			else return 0;
+			if(c1->id < c2->id)
+				return -1;
+			else if(c1->id > c2->id)
+				return 1;
+			else
+				return 0;
 		}
 	}
 }
