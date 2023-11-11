@@ -54,33 +54,43 @@
 #include "hslot.h"
 #include "usrloc.h"
 
-struct hslot;   /*!< Hash table slot */
+struct hslot;	 /*!< Hash table slot */
 struct pcontact; /*!< contact record */
 
-int new_udomain(str* _n, int _s, udomain_t** _d);
-void free_udomain(udomain_t* _d);
-void print_udomain(FILE* _f, udomain_t* _d);
+int new_udomain(str *_n, int _s, udomain_t **_d);
+void free_udomain(udomain_t *_d);
+void print_udomain(FILE *_f, udomain_t *_d);
 
-void mem_timer_udomain(udomain_t* _d);
-int mem_insert_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, struct pcontact** _c);
-void mem_delete_pcontact(udomain_t* _d, struct pcontact* _r);
+void mem_timer_udomain(udomain_t *_d);
+int mem_insert_pcontact(struct udomain *_d, str *_contact,
+		struct pcontact_info *_ci, struct pcontact **_c);
+void mem_delete_pcontact(udomain_t *_d, struct pcontact *_r);
 
-void lock_udomain(udomain_t* _d, str* _via_host, unsigned short via_port, unsigned short via_protot);
-void unlock_udomain(udomain_t* _d, str* _via_host, unsigned short via_port, unsigned short via_proto);
+void lock_udomain(udomain_t *_d, str *_via_host, unsigned short via_port,
+		unsigned short via_protot);
+void unlock_udomain(udomain_t *_d, str *_via_host, unsigned short via_port,
+		unsigned short via_proto);
 
-void lock_ulslot(udomain_t* _d, int i);
-void unlock_ulslot(udomain_t* _d, int i);
+void lock_ulslot(udomain_t *_d, int i);
+void unlock_ulslot(udomain_t *_d, int i);
 
-int update_rx_regsession(struct udomain* _d, str* session_id, struct pcontact* _c);
-int update_pcontact(struct udomain* _d, struct pcontact_info* _ci, struct pcontact* _c);
-int insert_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, struct pcontact** _r);
-int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact** _c, int reverse_search);
-int assert_identity(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity);
-int delete_pcontact(udomain_t* _d, struct pcontact* _r);
-int unreg_pending_contacts_cb(udomain_t* _d, pcontact_t* _c, int type);
-int update_security(udomain_t* _d, security_type _t, security_t* _s, struct pcontact* _c);
-int update_temp_security(udomain_t* _d, security_type _t, security_t* _s, struct pcontact* _c);
+int update_rx_regsession(
+		struct udomain *_d, str *session_id, struct pcontact *_c);
+int update_pcontact(
+		struct udomain *_d, struct pcontact_info *_ci, struct pcontact *_c);
+int insert_pcontact(struct udomain *_d, str *_contact,
+		struct pcontact_info *_ci, struct pcontact **_r);
+int get_pcontact(udomain_t *_d, pcontact_info_t *contact_info,
+		struct pcontact **_c, int reverse_search);
+int assert_identity(udomain_t *_d, str *_host, unsigned short _port,
+		unsigned short _proto, str *_identity);
+int delete_pcontact(udomain_t *_d, struct pcontact *_r);
+int unreg_pending_contacts_cb(udomain_t *_d, pcontact_t *_c, int type);
+int update_security(
+		udomain_t *_d, security_type _t, security_t *_s, struct pcontact *_c);
+int update_temp_security(
+		udomain_t *_d, security_type _t, security_t *_s, struct pcontact *_c);
 
-int preload_udomain(db1_con_t* _c, udomain_t* _d);
+int preload_udomain(db1_con_t *_c, udomain_t *_d);
 
 #endif
