@@ -39,7 +39,7 @@
 /*! \brief
  * Extract Address of Record
  */
-int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
+int extract_aor(str *_uri, str *_a, sip_uri_t *_pu)
 {
 	static char aor_buf[MAX_AOR_LEN];
 	str tmp;
@@ -50,22 +50,22 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 	str realm_prefix = {0};
 
 	memset(aor_buf, 0, MAX_AOR_LEN);
-	uri=_uri;
+	uri = _uri;
 
-	if(_pu!=NULL)
+	if(_pu != NULL)
 		puri = _pu;
 	else
 		puri = &turi;
 
-	if (parse_uri(uri->s, uri->len, puri) < 0) {
+	if(parse_uri(uri->s, uri->len, puri) < 0) {
 		rerrno = R_AOR_PARSE;
 		LM_ERR("failed to parse AoR [%.*s]\n", uri->len, uri->s);
 		return -1;
 	}
 
-	if ( (puri->user.len + puri->host.len + 1) > MAX_AOR_LEN
-	|| puri->user.len > USERNAME_MAX_SIZE
-	||  puri->host.len > DOMAIN_MAX_SIZE ) {
+	if((puri->user.len + puri->host.len + 1) > MAX_AOR_LEN
+			|| puri->user.len > USERNAME_MAX_SIZE
+			|| puri->host.len > DOMAIN_MAX_SIZE) {
 		rerrno = R_AOR_LEN;
 		LM_ERR("Address Of Record too long\n");
 		return -2;
@@ -74,7 +74,7 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 	_a->s = aor_buf;
 	_a->len = puri->user.len;
 
-	if (un_escape(&puri->user, _a) < 0) {
+	if(un_escape(&puri->user, _a) < 0) {
 		rerrno = R_UNESCAPE;
 		LM_ERR("failed to unescape username\n");
 		return -3;
@@ -82,20 +82,19 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 
 	user_len = _a->len;
 
-	if (reg_use_domain) {
-		if (user_len)
+	if(reg_use_domain) {
+		if(user_len)
 			aor_buf[_a->len++] = '@';
 		/* strip prefix (if defined) */
 		realm_prefix.len = cfg_get(registrar, registrar_cfg, realm_pref).len;
-		if(realm_prefix.len>0) {
+		if(realm_prefix.len > 0) {
 			realm_prefix.s = cfg_get(registrar, registrar_cfg, realm_pref).s;
 			LM_DBG("realm prefix is [%.*s]\n", realm_prefix.len,
-					(realm_prefix.len>0)?realm_prefix.s:"");
+					(realm_prefix.len > 0) ? realm_prefix.s : "");
 		}
-		if (realm_prefix.len>0
-				&& realm_prefix.len<puri->host.len
-				&& (memcmp(realm_prefix.s, puri->host.s, realm_prefix.len)==0))
-		{
+		if(realm_prefix.len > 0 && realm_prefix.len < puri->host.len
+				&& (memcmp(realm_prefix.s, puri->host.s, realm_prefix.len)
+						== 0)) {
 			memcpy(aor_buf + _a->len, puri->host.s + realm_prefix.len,
 					puri->host.len - realm_prefix.len);
 			_a->len += puri->host.len - realm_prefix.len;
@@ -105,7 +104,7 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 		}
 	}
 
-	if (cfg_get(registrar, registrar_cfg, case_sensitive) && user_len) {
+	if(cfg_get(registrar, registrar_cfg, case_sensitive) && user_len) {
 		tmp.s = _a->s + user_len + 1;
 		tmp.len = _a->s + _a->len - tmp.s;
 		strlower(&tmp);

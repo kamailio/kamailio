@@ -39,8 +39,8 @@
 /*! \brief
  * Process REGISTER request and save it's contacts
  */
-int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str* _uri);
-int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri, str *_ruid);
-int set_q_override(struct sip_msg* _m, int _q);
+int save(struct sip_msg *_m, udomain_t *_d, int _cflags, str *_uri);
+int unregister(struct sip_msg *_m, udomain_t *_d, str *_uri, str *_ruid);
+int set_q_override(struct sip_msg *_m, int _q);
 
 #endif /* SAVE_H */
