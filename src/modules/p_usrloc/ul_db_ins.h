@@ -25,6 +25,7 @@
 #include "../../lib/srdb1/db.h"
 #include "ul_db_handle.h"
 
-int db_insert(ul_db_handle_t * handle, str * table,  db_key_t* _k, db_val_t* _v, int _n);
+int db_insert(
+		ul_db_handle_t *handle, str *table, db_key_t *_k, db_val_t *_v, int _n);
 
 #endif

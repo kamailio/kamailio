@@ -22,7 +22,9 @@
 #include "ul_db_repl.h"
 #include "ul_db_form_query.h"
 
-int db_replace(ul_db_handle_t * handle, str * table,
-              db_key_t* _k, db_val_t* _v, int _n, int _un) {
-	return db_submit_query(UL_DB_REPL, handle, table, _k, NULL, _v, NULL, NULL, _n, _un);
+int db_replace(ul_db_handle_t *handle, str *table, db_key_t *_k, db_val_t *_v,
+		int _n, int _un)
+{
+	return db_submit_query(
+			UL_DB_REPL, handle, table, _k, NULL, _v, NULL, NULL, _n, _un);
 }
