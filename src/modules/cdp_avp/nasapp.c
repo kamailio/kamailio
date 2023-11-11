@@ -55,9 +55,6 @@ extern struct cdp_binds *cdp;
 
 #define CDP_AVP_DEFINITION
 
-	#include "nasapp.h"
+#include "nasapp.h"
 
 #undef CDP_AVP_DEFINITION
-
-
-
