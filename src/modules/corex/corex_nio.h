@@ -44,7 +44,7 @@ int nio_msg_received(sr_event_param_t *evp);
 int nio_msg_sent(sr_event_param_t *evp);
 
 int nio_check_incoming(void);
-char* nio_msg_update(sip_msg_t *msg, unsigned int *olen);
+char *nio_msg_update(sip_msg_t *msg, unsigned int *olen);
 
 int nio_intercept_init(void);
 
