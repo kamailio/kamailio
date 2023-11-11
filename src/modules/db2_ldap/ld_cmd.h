@@ -47,16 +47,18 @@
  * This data structure extends the generic data structure db_cmd in the
  * database API with data specific to the ldap driver.
  */
-struct ld_cmd {
-	db_drv_t gen; /**< Generic part of the data structure (must be first */
-	char* base;   /**< Search base of the command */
-	int scope;    /**< Scope of the search */
-	str filter;   /**< To be added to the search filter */
-	char** result; /**< An array with result attribute names for ldap_search */
+struct ld_cmd
+{
+	db_drv_t gen;  /**< Generic part of the data structure (must be first */
+	char *base;	   /**< Search base of the command */
+	int scope;	   /**< Scope of the search */
+	str filter;	   /**< To be added to the search filter */
+	char **result; /**< An array with result attribute names for ldap_search */
 	int sizelimit; /**< retrieve at most sizelimit entries for a search */
-	struct timeval timelimit; /**< wait at most timelimit seconds for a search to complete */
-	int chase_references;  /**< dereference option for LDAP library */
-	int chase_referrals;   /**< follow referrals option for LDAP library */
+	struct timeval
+			timelimit; /**< wait at most timelimit seconds for a search to complete */
+	int chase_references; /**< dereference option for LDAP library */
+	int chase_referrals;  /**< follow referrals option for LDAP library */
 };
 
 
@@ -67,7 +69,7 @@ struct ld_cmd {
  * @param cmd A generic db_cmd structure to which the newly created ld_cmd
  *            structure will be attached.
  */
-int ld_cmd(db_cmd_t* cmd);
+int ld_cmd(db_cmd_t *cmd);
 
 
 /** The main execution function in ldap SER driver.
@@ -80,15 +82,15 @@ int ld_cmd(db_cmd_t* cmd);
  * @retval A negative number if the database server failed to execute command
  * @retval A positive number if there was an error on client side (SER)
  */
-int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd);
+int ld_cmd_exec(db_res_t *res, db_cmd_t *cmd);
 
 
-int ld_cmd_first(db_res_t* res);
+int ld_cmd_first(db_res_t *res);
 
 
-int ld_cmd_next(db_res_t* res);
+int ld_cmd_next(db_res_t *res);
 
-int ld_cmd_setopt(db_cmd_t* cmd, char* optname, va_list ap);
+int ld_cmd_setopt(db_cmd_t *cmd, char *optname, va_list ap);
 
 /** @} */
 

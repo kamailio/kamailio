@@ -48,63 +48,65 @@
  * @param con A generic db_con connection structure.
  * @param payload LDAP specific payload to be freed.
  */
-static void ld_con_free(db_con_t* con, struct ld_con* payload)
+static void ld_con_free(db_con_t *con, struct ld_con *payload)
 {
-	struct ld_uri* luri;
+	struct ld_uri *luri;
 	int ret;
-	if (!payload) return;
+	if(!payload)
+		return;
 
 	luri = DB_GET_PAYLOAD(con->uri);
 
 	/* Delete the structure only if there are no more references
 	 * to it in the connection pool
 	 */
-	if (db_pool_remove((db_pool_entry_t*)payload) == 0) return;
+	if(db_pool_remove((db_pool_entry_t *)payload) == 0)
+		return;
 
 	db_pool_entry_free(&payload->gen);
-	if (payload->con) {
+	if(payload->con) {
 		ret = ldap_unbind_ext_s(payload->con, NULL, NULL);
-		if (ret != LDAP_SUCCESS) {
-			ERR("ldap: Error while unbinding from %s: %s\n",
-				luri->uri, ldap_err2string(ret));
+		if(ret != LDAP_SUCCESS) {
+			ERR("ldap: Error while unbinding from %s: %s\n", luri->uri,
+					ldap_err2string(ret));
 		}
 	}
 	pkg_free(payload);
 }
 
 
-int ld_con(db_con_t* con)
+int ld_con(db_con_t *con)
 {
-	struct ld_con* lcon;
-	struct ld_uri* luri;
+	struct ld_con *lcon;
+	struct ld_uri *luri;
 
 	luri = DB_GET_PAYLOAD(con->uri);
 
 	/* First try to lookup the connection in the connection pool and
 	 * re-use it if a match is found
 	 */
-	lcon = (struct ld_con*)db_pool_get(con->uri);
-	if (lcon) {
-		DBG("ldap: Connection to %s found in connection pool\n",
-			luri->uri);
+	lcon = (struct ld_con *)db_pool_get(con->uri);
+	if(lcon) {
+		DBG("ldap: Connection to %s found in connection pool\n", luri->uri);
 		goto found;
 	}
 
-	lcon = (struct ld_con*)pkg_malloc(sizeof(struct ld_con));
-	if (!lcon) {
+	lcon = (struct ld_con *)pkg_malloc(sizeof(struct ld_con));
+	if(!lcon) {
 		ERR("ldap: No memory left\n");
 		goto error;
 	}
 	memset(lcon, '\0', sizeof(struct ld_con));
-	if (db_pool_entry_init(&lcon->gen, ld_con_free, con->uri) < 0) goto error;
+	if(db_pool_entry_init(&lcon->gen, ld_con_free, con->uri) < 0)
+		goto error;
 
 	DBG("ldap: Preparing new connection to %s\n", luri->uri);
 
 	/* Put the newly created LDAP connection into the pool */
-	db_pool_put((struct db_pool_entry*)lcon);
+	db_pool_put((struct db_pool_entry *)lcon);
 	DBG("ldap: Connection stored in connection pool\n");
 
- found:
+found:
 	/* Attach driver payload to the db_con structure and set connect and
 	 * disconnect functions
 	 */
@@ -113,8 +115,8 @@ int ld_con(db_con_t* con)
 	con->disconnect = ld_con_disconnect;
 	return 0;
 
- error:
-	if (lcon) {
+error:
+	if(lcon) {
 		db_pool_entry_free(&lcon->gen);
 		pkg_free(lcon);
 	}
@@ -122,30 +124,26 @@ int ld_con(db_con_t* con)
 }
 
 
-int lutil_sasl_interact(
-	LDAP *ld,
-	unsigned flags,
-	void *defaults,
-	void *in )
+int lutil_sasl_interact(LDAP *ld, unsigned flags, void *defaults, void *in)
 {
 	sasl_interact_t *interact = in;
 	const char *dflt = interact->defresult;
 
 
-	if (ld == NULL)
+	if(ld == NULL)
 		return LDAP_PARAM_ERROR;
 
-	while (interact->id != SASL_CB_LIST_END) {
-		switch( interact->id ) {
+	while(interact->id != SASL_CB_LIST_END) {
+		switch(interact->id) {
 			// the username to authenticate
 			case SASL_CB_AUTHNAME:
-				if (defaults)
-					dflt = ((struct ld_uri*)defaults)->username;
+				if(defaults)
+					dflt = ((struct ld_uri *)defaults)->username;
 				break;
 			// the password for the provided username
 			case SASL_CB_PASS:
-				if (defaults)
-					dflt = ((struct ld_uri*)defaults)->password;
+				if(defaults)
+					dflt = ((struct ld_uri *)defaults)->password;
 				break;
 			// the realm for the authentication attempt
 			case SASL_CB_GETREALM:
@@ -168,59 +166,60 @@ int lutil_sasl_interact(
 }
 
 
-int ld_con_connect(db_con_t* con)
+int ld_con_connect(db_con_t *con)
 {
-	struct ld_con* lcon;
-	struct ld_uri* luri;
+	struct ld_con *lcon;
+	struct ld_uri *luri;
 	int ret, version = 3;
-	char* err_str = NULL;
+	char *err_str = NULL;
 
 	lcon = DB_GET_PAYLOAD(con);
 	luri = DB_GET_PAYLOAD(con->uri);
 
 	/* Do not reconnect already connected connections */
-	if (lcon->flags & LD_CONNECTED) return 0;
+	if(lcon->flags & LD_CONNECTED)
+		return 0;
 
 	DBG("ldap: Connecting to %s\n", luri->uri);
 
-	if (lcon->con) {
+	if(lcon->con) {
 		ret = ldap_unbind_ext_s(lcon->con, NULL, NULL);
-		if (ret != LDAP_SUCCESS) {
-			ERR("ldap: Error while unbinding from %s: %s\n",
-				luri->uri, ldap_err2string(ret));
+		if(ret != LDAP_SUCCESS) {
+			ERR("ldap: Error while unbinding from %s: %s\n", luri->uri,
+					ldap_err2string(ret));
 		}
 	}
 
 	/* we pass the TLS_REQCERT and TLS_REQCERT attributes over environment
 	   variables to ldap library */
-	if (luri->tls) {
-		if (setenv("LDAPTLS_CACERT", luri->ca_list, 1)) {
+	if(luri->tls) {
+		if(setenv("LDAPTLS_CACERT", luri->ca_list, 1)) {
 			ERR("ldap: Can't set environment variable 'LDAPTLS_CACERT'\n");
 			goto error;
 		}
-		if (setenv("LDAPTLS_REQCERT", luri->req_cert, 1)) {
+		if(setenv("LDAPTLS_REQCERT", luri->req_cert, 1)) {
 			ERR("ldap: Can't set environment variable 'LDAPTLS_REQCERT'\n");
 			goto error;
 		}
 	}
 
 	ret = ldap_initialize(&lcon->con, luri->uri);
-	if (lcon->con == NULL) {
+	if(lcon->con == NULL) {
 		ERR("ldap: Error while initializing new LDAP connection to %s\n",
-			luri->uri);
+				luri->uri);
 		goto error;
 	}
 
 	ret = ldap_set_option(lcon->con, LDAP_OPT_PROTOCOL_VERSION, &version);
-	if (ret != LDAP_OPT_SUCCESS) {
+	if(ret != LDAP_OPT_SUCCESS) {
 		ERR("ldap: Error while setting protocol version 3: %s\n",
-			ldap_err2string(ret));
+				ldap_err2string(ret));
 		goto error;
 	}
 
-	if (luri->tls) {
+	if(luri->tls) {
 		ret = ldap_start_tls_s(lcon->con, NULL, NULL);
-		if (ret != LDAP_SUCCESS) {
+		if(ret != LDAP_SUCCESS) {
 			/* get addition info of this error */
 #ifdef OPENLDAP23
 			ldap_get_option(lcon->con, LDAP_OPT_ERROR_STRING, &err_str);
@@ -228,7 +227,7 @@ int ld_con_connect(db_con_t* con)
 			ldap_get_option(lcon->con, LDAP_OPT_DIAGNOSTIC_MESSAGE, &err_str);
 #endif
 			ERR("ldap: Error while starting TLS: %s\n", ldap_err2string(ret));
-			if (err_str) {
+			if(err_str) {
 				ERR("ldap: %s\n", err_str);
 				ldap_memfree(err_str);
 			}
@@ -236,7 +235,7 @@ int ld_con_connect(db_con_t* con)
 		}
 	}
 
-	switch (luri->authmech) {
+	switch(luri->authmech) {
 		case LDAP_AUTHMECH_NONE:
 			ret = ldap_simple_bind_s(lcon->con, NULL, NULL);
 			break;
@@ -244,9 +243,9 @@ int ld_con_connect(db_con_t* con)
 			ret = ldap_simple_bind_s(lcon->con, luri->username, luri->password);
 			break;
 		case LDAP_AUTHMECH_DIGESTMD5:
-			ret = ldap_sasl_interactive_bind_s( lcon->con, NULL,
-					LDAP_MECHANISM_STR_DIGESTMD5, NULL, NULL,
-					0, lutil_sasl_interact, luri );
+			ret = ldap_sasl_interactive_bind_s(lcon->con, NULL,
+					LDAP_MECHANISM_STR_DIGESTMD5, NULL, NULL, 0,
+					lutil_sasl_interact, luri);
 			break;
 		case LDAP_AUTHMECH_EXTERNAL:
 		default:
@@ -254,9 +253,8 @@ int ld_con_connect(db_con_t* con)
 			break;
 	}
 
-	if (ret != LDAP_SUCCESS) {
-		ERR("ldap: Bind to %s failed: %s\n",
-			luri->uri, ldap_err2string(ret));
+	if(ret != LDAP_SUCCESS) {
+		ERR("ldap: Bind to %s failed: %s\n", luri->uri, ldap_err2string(ret));
 		goto error;
 	}
 
@@ -264,12 +262,12 @@ int ld_con_connect(db_con_t* con)
 	lcon->flags |= LD_CONNECTED;
 	return 0;
 
- error:
-	if (lcon->con) {
+error:
+	if(lcon->con) {
 		ret = ldap_unbind_ext_s(lcon->con, NULL, NULL);
-		if (ret) {
-			ERR("ldap: Error while unbinding from %s: %s\n",
-				luri->uri, ldap_err2string(ret));
+		if(ret) {
+			ERR("ldap: Error while unbinding from %s: %s\n", luri->uri,
+					ldap_err2string(ret));
 		}
 	}
 	lcon->con = NULL;
@@ -277,24 +275,25 @@ int ld_con_connect(db_con_t* con)
 }
 
 
-void ld_con_disconnect(db_con_t* con)
+void ld_con_disconnect(db_con_t *con)
 {
-	struct ld_con* lcon;
-	struct ld_uri* luri;
+	struct ld_con *lcon;
+	struct ld_uri *luri;
 	int ret;
 
 	lcon = DB_GET_PAYLOAD(con);
 	luri = DB_GET_PAYLOAD(con->uri);
 
-	if ((lcon->flags & LD_CONNECTED) == 0) return;
+	if((lcon->flags & LD_CONNECTED) == 0)
+		return;
 
 	DBG("ldap: Unbinding from %s\n", luri->uri);
 
-	if (lcon->con) {
+	if(lcon->con) {
 		ret = ldap_unbind_ext_s(lcon->con, NULL, NULL);
-		if (ret) {
-			ERR("ldap: Error while unbinding from %s: %s\n",
-				luri->uri, ldap_err2string(ret));
+		if(ret) {
+			ERR("ldap: Error while unbinding from %s: %s\n", luri->uri,
+					ldap_err2string(ret));
 		}
 	}
 
