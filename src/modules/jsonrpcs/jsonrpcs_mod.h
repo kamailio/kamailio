@@ -29,7 +29,7 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/utils/srjson.h"
 
-#define JSONRPC_ID_SIZE	64
+#define JSONRPC_ID_SIZE 64
 
 /** The context of the jsonrpc request being processed.
  *
@@ -39,45 +39,46 @@
  *
  * There is always one context per jsonrpc request.
  */
-typedef struct jsonrpc_ctx {
-	sip_msg_t* msg;        /**< The SIP/HTTP received message. */
+typedef struct jsonrpc_ctx
+{
+	sip_msg_t *msg;			/**< The SIP/HTTP received message. */
 	int msg_shm_block_size; /**< non-zero for delayed reply contexts with
 							  shm cloned msgs */
-	char* method;          /**< Name of the management function to be called */
-	unsigned int flags;    /**< Various flags, such as return value type */
-	srjson_doc_t *jreq;    /**< JSON request document */
-	srjson_t *req_node;    /**< Pointer to crt node in json req parameter list */
-	srjson_doc_t *jrpl;    /**< JSON reply document */
-	srjson_t *rpl_node;    /**< Pointer to crt node in json reply doc */
-	int reply_sent;        /**< Flag set if the json reply was sent */
-	int error_code;        /**< Json error code */
-	str error_text;        /**< Json error text */
-	int http_code;         /**< http reply code */
-	str http_text;         /**< http reply reason text */
-	int transport;         /**< RPC transport */
-	int jsrid_type;        /**< type for Json RPC id value */
+	char *method;			/**< Name of the management function to be called */
+	unsigned int flags;		/**< Various flags, such as return value type */
+	srjson_doc_t *jreq;		/**< JSON request document */
+	srjson_t *req_node; /**< Pointer to crt node in json req parameter list */
+	srjson_doc_t *jrpl; /**< JSON reply document */
+	srjson_t *rpl_node; /**< Pointer to crt node in json reply doc */
+	int reply_sent;		/**< Flag set if the json reply was sent */
+	int error_code;		/**< Json error code */
+	str error_text;		/**< Json error text */
+	int http_code;		/**< http reply code */
+	str http_text;		/**< http reply reason text */
+	int transport;		/**< RPC transport */
+	int jsrid_type;		/**< type for Json RPC id value */
 	char jsrid_val[JSONRPC_ID_SIZE]; /**< value for Json RPC id */
 } jsonrpc_ctx_t;
 
 /* extra rpc_ctx_t flags */
 /* first 8 bits reserved for rpc flags (e.g. RET_ARRAY) */
-#define JSONRPC_DELAYED_CTX_F	256
-#define JSONRPC_DELAYED_REPLY_F	512
+#define JSONRPC_DELAYED_CTX_F 256
+#define JSONRPC_DELAYED_REPLY_F 512
 
-#define JSONRPC_TRANS_NONE	0
-#define JSONRPC_TRANS_HTTP	1
-#define JSONRPC_TRANS_FIFO	2
-#define JSONRPC_TRANS_DGRAM	3
+#define JSONRPC_TRANS_NONE 0
+#define JSONRPC_TRANS_HTTP 1
+#define JSONRPC_TRANS_FIFO 2
+#define JSONRPC_TRANS_DGRAM 3
 
-typedef struct jsonrpc_plain_reply {
-	int rcode;         /**< reply code */
-	str rtext;         /**< reply reason text */
-	str rbody;         /**< reply body */
+typedef struct jsonrpc_plain_reply
+{
+	int rcode; /**< reply code */
+	str rtext; /**< reply reason text */
+	str rbody; /**< reply body */
 } jsonrpc_plain_reply_t;
 
-jsonrpc_plain_reply_t* jsonrpc_plain_reply_get(void);
+jsonrpc_plain_reply_t *jsonrpc_plain_reply_get(void);
 
 int jsonrpc_exec_ex(str *cmd, str *rpath);
 
 #endif
-
