@@ -37,7 +37,8 @@
  * User friendly wrapper around add_hf_helper, to be called from 
  * other modules.
  */
-int append_hf_api(struct sip_msg *msg, str* str_hf){
+int append_hf_api(struct sip_msg *msg, str *str_hf)
+{
 	return add_hf_helper(msg, str_hf, NULL, NULL, 0, NULL);
 }
 
@@ -45,8 +46,9 @@ int append_hf_api(struct sip_msg *msg, str* str_hf){
  * User friendly wrapper around remove_hf_f, to be called from 
  * other modules.
  */
-int remove_hf_api(struct sip_msg *msg, str* str_hf){
-	return remove_hf_f(msg, (char*)str_hf,NULL);
+int remove_hf_api(struct sip_msg *msg, str *str_hf)
+{
+	return remove_hf_f(msg, (char *)str_hf, NULL);
 }
 
 
@@ -55,62 +57,63 @@ int remove_hf_api(struct sip_msg *msg, str* str_hf){
  * modules
  */
 
-int search_append_api(struct sip_msg *msg, str *regex, str *data_str){
+int search_append_api(struct sip_msg *msg, str *regex, str *data_str)
+{
 	int retval;
 	char *data;
 	void **param;
-	
-	data=pkg_malloc(data_str->len+1);
-	memcpy(data,data_str->s,data_str->len);
-	memset(data+data_str->len,0,1);
-	
-	param=pkg_malloc(sizeof(void*));
-	*param=pkg_malloc(regex->len+1);
-	memcpy(*param,regex->s,regex->len);
-	memset(*param+regex->len,0,1);
-	
-	fixup_regexp_none(param,1);
-	
-	retval=search_append_f(msg, *param, data);
-	
-	fixup_free_regexp_none(param,1);
+
+	data = pkg_malloc(data_str->len + 1);
+	memcpy(data, data_str->s, data_str->len);
+	memset(data + data_str->len, 0, 1);
+
+	param = pkg_malloc(sizeof(void *));
+	*param = pkg_malloc(regex->len + 1);
+	memcpy(*param, regex->s, regex->len);
+	memset(*param + regex->len, 0, 1);
+
+	fixup_regexp_none(param, 1);
+
+	retval = search_append_f(msg, *param, data);
+
+	fixup_free_regexp_none(param, 1);
 
 	pkg_free(param);
 	pkg_free(data);
-	
+
 	return retval;
-	
 }
 
 /*
  * User friendly wrapper to call search from other modules.
  */
-int search_api(struct sip_msg *msg, str *regex){
+int search_api(struct sip_msg *msg, str *regex)
+{
 	int retval;
 
-	void **param=pkg_malloc(sizeof(void*));
-	
-	*param=pkg_malloc(regex->len+1);
-	memcpy(*param,regex->s,regex->len);
-	memset(*param+regex->len,0,1);
-	
-	fixup_regexp_none(param,1);
-	
-	retval=search_f(msg, *param, NULL);
-	
-	fixup_free_regexp_none(param,1);
+	void **param = pkg_malloc(sizeof(void *));
+
+	*param = pkg_malloc(regex->len + 1);
+	memcpy(*param, regex->s, regex->len);
+	memset(*param + regex->len, 0, 1);
+
+	fixup_regexp_none(param, 1);
+
+	retval = search_f(msg, *param, NULL);
+
+	fixup_free_regexp_none(param, 1);
 	pkg_free(param);
-	
+
 	return retval;
-	
 }
 
-int is_privacy_api(struct sip_msg *msg, str* privacy_type){
+int is_privacy_api(struct sip_msg *msg, str *privacy_type)
+{
 	int retval;
-	void **param=pkg_malloc(sizeof(void*));
-	*param=pkg_malloc(privacy_type->len+1);
-	memcpy(*param,privacy_type->s,privacy_type->len);
-	memset(*param+privacy_type->len,0,1);
+	void **param = pkg_malloc(sizeof(void *));
+	*param = pkg_malloc(privacy_type->len + 1);
+	memcpy(*param, privacy_type->s, privacy_type->len);
+	memset(*param + privacy_type->len, 0, 1);
 
 	fixup_privacy(param, 1);
 	retval = is_privacy_f(msg, *param, NULL);
@@ -122,34 +125,36 @@ int is_privacy_api(struct sip_msg *msg, str* privacy_type){
 
 int set_body_api(struct sip_msg *msg, str *body, str *content_type)
 {
-    return set_body(msg, body, content_type);
+	return set_body(msg, body, content_type);
 }
 
 int set_body_multipart_api(struct sip_msg *msg)
 {
-    return set_body_multipart(msg);
+	return set_body_multipart(msg);
 }
 
-int append_body_part_api(struct sip_msg *msg, str *body, str *content_type, str *content_disposition)
+int append_body_part_api(struct sip_msg *msg, str *body, str *content_type,
+		str *content_disposition)
 {
-    return append_body_part(msg, body, content_type, content_disposition);
+	return append_body_part(msg, body, content_type, content_disposition);
 }
 
 /*
  * Function to load the textops api.
  */
-int bind_textops(textops_api_t *tob){
-	if(tob==NULL){
+int bind_textops(textops_api_t *tob)
+{
+	if(tob == NULL) {
 		LM_WARN("textops_binds: Cannot load textops API into a NULL pointer\n");
 		return -1;
 	}
-	tob->append_hf=append_hf_api;
-	tob->remove_hf=remove_hf_api;
-	tob->search_append=search_append_api;
-	tob->search=search_api;
-	tob->is_privacy=is_privacy_api;
-	tob->set_body=set_body_api;
-	tob->set_body_multipart=set_body_multipart_api;
-	tob->append_body_part=append_body_part_api;
+	tob->append_hf = append_hf_api;
+	tob->remove_hf = remove_hf_api;
+	tob->search_append = search_append_api;
+	tob->search = search_api;
+	tob->is_privacy = is_privacy_api;
+	tob->set_body = set_body_api;
+	tob->set_body_multipart = set_body_multipart_api;
+	tob->append_body_part = append_body_part_api;
 	return 0;
 }
