@@ -29,12 +29,12 @@
 #include "../../core/mem/mem.h"
 #include "sub_list.h"
 
-struct node*   append_to_list(struct node *head, char *offset, char *name)
+struct node *append_to_list(struct node *head, char *offset, char *name)
 {
 	struct node *new_node;
 
 	new_node = pkg_malloc(sizeof(struct node));
-	if (!new_node)
+	if(!new_node)
 		return 0;
 	new_node->offset = offset;
 	new_node->name = name;
@@ -44,15 +44,13 @@ struct node*   append_to_list(struct node *head, char *offset, char *name)
 }
 
 
-
-
-char* search_the_list(struct node *head, char *name)
+char *search_the_list(struct node *head, char *name)
 {
 	struct node *n;
 
 	n = head;
-	while (n) {
-		if (strcasecmp(n->name,name)==0)
+	while(n) {
+		if(strcasecmp(n->name, name) == 0)
 			return n->offset;
 		n = n->next;
 	}
@@ -60,17 +58,13 @@ char* search_the_list(struct node *head, char *name)
 }
 
 
-
-
-void delete_list(struct node* head)
+void delete_list(struct node *head)
 {
 	struct node *n;
-;
-	while (head) {
-		n=head->next;
+	;
+	while(head) {
+		n = head->next;
 		pkg_free(head);
 		head = n;
 	}
 }
-
-
