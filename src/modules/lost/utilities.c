@@ -307,7 +307,6 @@ void lost_free_string(str *string)
 		pkg_free(ptr.s);
 
 		LM_DBG("### string object removed\n");
-	
 	}
 
 	string->s = NULL;
@@ -453,11 +452,12 @@ p_lost_geolist_t lost_get_geolocation_header(struct sip_msg *msg, int *items)
 		if((hf->type == HDR_OTHER_T)
 				&& (hf->name.len == LOST_GEOLOC_HEADER_SIZE - 2)) {
 			/* possible hit */
-			if(strncasecmp(hf->name.s, LOST_GEOLOC_HEADER,
-					LOST_GEOLOC_HEADER_SIZE) == 0) {
-                
+			if(strncasecmp(
+					   hf->name.s, LOST_GEOLOC_HEADER, LOST_GEOLOC_HEADER_SIZE)
+					== 0) {
+
 				hdr.s = hf->body.s;
-                hdr.len = hf->body.len;
+				hdr.len = hf->body.len;
 
 				LM_DBG("found geolocation header [%.*s]\n", hdr.len, hdr.s);
 
@@ -485,9 +485,9 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 	*lgth = 0;
 
 	if(parse_pai_header(msg) == -1) {
-		
+
 		LM_DBG("failed to parse P-A-I header\n");
-		
+
 		return res;
 	}
 
@@ -504,7 +504,7 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 
 	LM_DBG("P-A-I body: [%.*s]\n", p_body->id->body.len, p_body->id->body.s);
 
-	/* accept any identity string (body), but remove <..> if present */ 
+	/* accept any identity string (body), but remove <..> if present */
 	tmp = p_body->id->body.s;
 	len = p_body->id->body.len;
 	if(tmp[0] == '<' && tmp[len - 1] == '>') {
@@ -694,7 +694,8 @@ void lost_free_geoheader_list(p_lost_geolist_t *list)
  * lost_get_geoheader_value(list, type, rtype)
  * returns geoheader value and type (rtype) of given type
  */
-char *lost_get_geoheader_value(p_lost_geolist_t list, lost_geotype_t type, int *rtype)
+char *lost_get_geoheader_value(
+		p_lost_geolist_t list, lost_geotype_t type, int *rtype)
 {
 	p_lost_geolist_t head = list;
 	char *value = NULL;
@@ -806,7 +807,8 @@ int lost_new_geoheader_list(p_lost_geolist_t *list, str hdr)
 					len++;
 				}
 				if((*(ptr + len) == '>') && (len > 6)) {
-					new = (p_lost_geolist_t)pkg_malloc(sizeof(s_lost_geolist_t));
+					new = (p_lost_geolist_t)pkg_malloc(
+							sizeof(s_lost_geolist_t));
 					if(new == NULL) {
 						PKG_MEM_ERROR;
 					} else {
@@ -848,7 +850,8 @@ int lost_new_geoheader_list(p_lost_geolist_t *list, str hdr)
 					len++;
 				}
 				if((*(ptr + len) == '>') && (len > 10)) {
-					new = (p_lost_geolist_t)pkg_malloc(sizeof(s_lost_geolist_t));
+					new = (p_lost_geolist_t)pkg_malloc(
+							sizeof(s_lost_geolist_t));
 					if(new == NULL) {
 						PKG_MEM_ERROR;
 					} else {
@@ -863,8 +866,8 @@ int lost_new_geoheader_list(p_lost_geolist_t *list, str hdr)
 
 							new->type = HTTP;
 						} else if(((*(search + 5) == 's')
-								|| (*(search + 5) == 'S'))
-								&& (*(search + 6) == ':')) {
+										  || (*(search + 5) == 'S'))
+								  && (*(search + 6) == ':')) {
 
 							LM_DBG("adding https url [%s]\n", new->value);
 
@@ -1193,7 +1196,8 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 				if(i == select) {
 					/* return the current profile */
 					if(s_profile != NULL) {
-						loc->profile = (char *)pkg_malloc(strlen(s_profile) + 1);
+						loc->profile =
+								(char *)pkg_malloc(strlen(s_profile) + 1);
 						if(loc->profile == NULL) {
 							xmlFree(xmlbuff); /* clean up */
 							xmlFreeDoc(new);

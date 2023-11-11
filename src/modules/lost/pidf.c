@@ -98,8 +98,11 @@ xmlNodePtr xmlNodeGetNodeByName(
 	while(cur) {
 		xmlNodePtr match = NULL;
 		if(xmlStrcasecmp(cur->name, (unsigned char *)name) == 0) {
-			if(!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix,
-									(unsigned char *)ns) == 0))
+			if(!ns
+					|| (cur->ns
+							&& xmlStrcasecmp(
+									   cur->ns->prefix, (unsigned char *)ns)
+									   == 0))
 				return cur;
 		}
 		match = xmlNodeGetNodeByName(cur->children, name, ns);

@@ -212,7 +212,7 @@ static int fixup_lost_held_query(void **param, int param_no)
 static int fixup_free_lost_held_query(void **param, int param_no)
 {
 	if(param_no == 1) {
-		return fixup_spve_null(param, 1);	
+		return fixup_spve_null(param, 1);
 	}
 	if((param_no == 2) || (param_no == 3) || (param_no == 4)) {
 		return fixup_free_pvar_null(param, 1);

@@ -378,7 +378,7 @@ int lost_search_response_list(p_lost_list_t *list, char **val, const char *str)
 				*val = cur->value;
 
 				LM_DBG("###\t[%s] found\n", cur->value);
-				
+
 				return 1;
 			}
 		}
@@ -633,11 +633,11 @@ p_lost_issue_t lost_get_response_issues(xmlNodePtr node)
 				/* source property not found, clean up and return */
 				lost_delete_response_type(&issue); /* clean up */
 				break;
-			}			
+			}
 
 			LM_DBG("###\t[%s]\n", issue->type);
 
-			/* type and source property found ... parse text and copy */ 
+			/* type and source property found ... parse text and copy */
 			if(issue->info != NULL) {
 				issue->info->text = lost_get_property(cur, PROP_MSG, &len);
 				issue->info->lang = lost_get_property(cur, PROP_LANG, &len);
