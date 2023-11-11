@@ -38,43 +38,37 @@ MODULE_VERSION
 
 static char *geoip2_path = NULL;
 
-static int  mod_init(void);
+static int mod_init(void);
 static void mod_destroy(void);
 static int geoip2_rpc_init(void);
 
-static int w_geoip2_match(struct sip_msg* msg, char* str1, char* str2);
+static int w_geoip2_match(struct sip_msg *msg, char *str1, char *str2);
 static int geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass);
-static int geoip2_resid_param(modparam_t type, void* val);
+static int geoip2_resid_param(modparam_t type, void *val);
 
 static pv_export_t mod_pvs[] = {
-	{ {"gip2", sizeof("gip2")-1}, PVT_OTHER, pv_get_geoip2, 0,
-		pv_parse_geoip2_name, 0, 0, 0 },
-	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
-};
+		{{"gip2", sizeof("gip2") - 1}, PVT_OTHER, pv_get_geoip2, 0,
+				pv_parse_geoip2_name, 0, 0, 0},
+		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
-static cmd_export_t cmds[]={
-	{"geoip2_match", (cmd_function)w_geoip2_match, 2, fixup_spve_spve,
-		0, ANY_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{"geoip2_match", (cmd_function)w_geoip2_match, 2,
+									  fixup_spve_spve, 0, ANY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[]={
-	{"path",  PARAM_STRING, &geoip2_path},
-	{"resid", PARAM_STR|PARAM_USE_FUNC, &geoip2_resid_param},
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"path", PARAM_STRING, &geoip2_path},
+		{"resid", PARAM_STR | PARAM_USE_FUNC, &geoip2_resid_param}, {0, 0, 0}};
 
 struct module_exports exports = {
-	"geoip2",			/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* exported functions */
-	params,				/* exported parameters */
-	0,					/* RPC method exports */
-	mod_pvs,			/* exported pseudo-variables */
-	0,					/* response handling function */
-	mod_init,			/* module initialization function */
-	0,					/* per-child init function */
-	mod_destroy			/* module destroy function */
+		"geoip2",		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* RPC method exports */
+		mod_pvs,		 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		0,				 /* per-child init function */
+		mod_destroy		 /* module destroy function */
 };
 
 /**
@@ -82,22 +76,20 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	LM_INFO("using GeoIP database path %s, library version %s\n", geoip2_path, MMDB_lib_version());
+	LM_INFO("using GeoIP database path %s, library version %s\n", geoip2_path,
+			MMDB_lib_version());
 
-	if(geoip2_path==NULL || strlen(geoip2_path)==0)
-	{
+	if(geoip2_path == NULL || strlen(geoip2_path) == 0) {
 		LM_ERR("path to GeoIP database file not set\n");
 		return -1;
 	}
 
-	if(geoip2_init_pv(geoip2_path)!=0)
-	{
+	if(geoip2_init_pv(geoip2_path) != 0) {
 		LM_ERR("cannot init for database file at: %s\n", geoip2_path);
 		return -1;
 	}
 
-	if (geoip2_rpc_init() < 0)
-	{
+	if(geoip2_rpc_init() < 0) {
 		LM_ERR("error during RPC initialization\n");
 		return -1;
 	}
@@ -113,14 +105,14 @@ static void mod_destroy(void)
 	geoip2_destroy_pv();
 }
 
-static int geoip2_resid_param(modparam_t type, void* val)
+static int geoip2_resid_param(modparam_t type, void *val)
 {
 	str rname;
 
-	rname = *((str*)val);
+	rname = *((str *)val);
 	if(sr_geoip2_add_resid(&rname) < 0) {
-		LM_ERR("failed to register result container with id: %.*s\n",
-				rname.len, rname.s);
+		LM_ERR("failed to register result container with id: %.*s\n", rname.len,
+				rname.s);
 		return -1;
 	}
 	return 0;
@@ -133,21 +125,21 @@ static int geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass)
 	return geoip2_update_pv(tomatch, pvclass);
 }
 
-static int w_geoip2_match(sip_msg_t* msg, char* target, char* pvname)
+static int w_geoip2_match(sip_msg_t *msg, char *target, char *pvname)
 {
 	str tomatch = STR_NULL;
 	str pvclass = STR_NULL;
 
-	if(msg==NULL) {
+	if(msg == NULL) {
 		LM_ERR("received null msg\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)target, &tomatch)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)target, &tomatch) < 0) {
 		LM_ERR("cannot get the address\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)pvname, &pvclass)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)pvname, &pvclass) < 0) {
 		LM_ERR("cannot get the pv class\n");
 		return -1;
 	}
@@ -155,36 +147,28 @@ static int w_geoip2_match(sip_msg_t* msg, char* target, char* pvname)
 	return geoip2_match(msg, &tomatch, &pvclass);
 }
 
-static void geoip2_rpc_reload(rpc_t* rpc, void* ctx)
+static void geoip2_rpc_reload(rpc_t *rpc, void *ctx)
 {
-	if(geoip2_reload_pv(geoip2_path) != 0)
-	{
+	if(geoip2_reload_pv(geoip2_path) != 0) {
 		rpc->fault(ctx, 500, "Reload failed");
 		return;
 	}
 }
 
-static const char* geoip2_rpc_reload_doc[2] =
-{
-	"Reload GeoIP2 database file.",
-	0
-};
+static const char *geoip2_rpc_reload_doc[2] = {
+		"Reload GeoIP2 database file.", 0};
 
-rpc_export_t ubl_rpc[] =
-{
-	{"geoip2.reload", geoip2_rpc_reload,
-		geoip2_rpc_reload_doc, 0},
-	{0, 0, 0, 0}
-};
+rpc_export_t ubl_rpc[] = {
+		{"geoip2.reload", geoip2_rpc_reload, geoip2_rpc_reload_doc, 0},
+		{0, 0, 0, 0}};
 
 static int geoip2_rpc_init(void)
 {
-        if (rpc_register_array(ubl_rpc)!=0)
-        {
-                LM_ERR("failed to register RPC commands\n");
-                return -1;
-        }
-        return 0;
+	if(rpc_register_array(ubl_rpc) != 0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }
 
 /**
@@ -202,7 +186,8 @@ static sr_kemi_t sr_kemi_geoip2_exports[] = {
 };
 /* clang-format on */
 
-int mod_register(char *path, int *dlflags, void *p1, void *p2) {
-    sr_kemi_modules_add(sr_kemi_geoip2_exports);
-    return 0;
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_geoip2_exports);
+	return 0;
 }
