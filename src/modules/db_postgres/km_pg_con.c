@@ -38,7 +38,7 @@
 
 
 extern int pg_bytea_output_escape;
-extern pg_con_param_t* pg_con_param_list;
+extern pg_con_param_t *pg_con_param_list;
 
 /*!
  * \brief Create a new connection
@@ -55,7 +55,7 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 	int i = 0;
 	const char *keywords[32], *values[32];
 	PGresult *res = NULL;
-	pg_con_param_t* pg_con_param;
+	pg_con_param_t *pg_con_param;
 
 	LM_DBG("db_id = %p\n", id);
 
@@ -66,7 +66,8 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 
 	ptr = (struct pg_con *)pkg_malloc(sizeof(struct pg_con));
 	if(!ptr) {
-		PKG_MEM_ERROR_FMT("%lu bytes for connection structure", (unsigned long)sizeof(struct pg_con));
+		PKG_MEM_ERROR_FMT("%lu bytes for connection structure",
+				(unsigned long)sizeof(struct pg_con));
 		return 0;
 	}
 	LM_DBG("%p=pkg_malloc(%lu)\n", ptr, (unsigned long)sizeof(struct pg_con));
@@ -100,7 +101,7 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 
 	/* add other connection parameters */
 	pg_con_param = pg_con_param_list;
-	while(pg_con_param){
+	while(pg_con_param) {
 		keywords[i] = pg_con_param->name;
 		values[i++] = pg_con_param->value;
 		pg_con_param = pg_con_param->next;
@@ -145,10 +146,9 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 	}
 #endif
 
-	if(pg_bytea_output_escape!=0) {
+	if(pg_bytea_output_escape != 0) {
 		res = PQexec(ptr->con, "SET bytea_output=escape");
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
+		if(PQresultStatus(res) != PGRES_COMMAND_OK) {
 			LM_ERR("cannot set blob output escaping format\n");
 			PQclear(res);
 			goto err;
