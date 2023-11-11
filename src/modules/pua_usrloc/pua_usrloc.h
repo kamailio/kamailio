@@ -32,10 +32,10 @@
 #define _PUA_UL_
 #include "../pua/pua_bind.h"
 
-void ul_publish(ucontact_t* c, int type, void* param);
-int w_pua_set_publish(sip_msg_t*, char*, char*);
-int ki_pua_set_publish(sip_msg_t*);
-int pua_unset_publish(struct sip_msg* msg, unsigned int flags, void* param);
+void ul_publish(ucontact_t *c, int type, void *param);
+int w_pua_set_publish(sip_msg_t *, char *, char *);
+int ki_pua_set_publish(sip_msg_t *);
+int pua_unset_publish(struct sip_msg *msg, unsigned int flags, void *param);
 
 extern str pres_prefix;
 extern int pua_ul_bflag;
