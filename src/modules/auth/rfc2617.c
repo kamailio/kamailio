@@ -37,9 +37,9 @@ inline void cvt_hex(HASH _b, HASHHEX _h)
 	unsigned short i;
 	unsigned char j;
 
-	for (i = 0; i < HASHLEN; i++) {
+	for(i = 0; i < HASHLEN; i++) {
 		j = (_b[i] >> 4) & 0xf;
-		if (j <= 9) {
+		if(j <= 9) {
 			_h[i * 2] = (j + '0');
 		} else {
 			_h[i * 2] = (j + 'a' - 10);
@@ -47,7 +47,7 @@ inline void cvt_hex(HASH _b, HASHHEX _h)
 
 		j = _b[i] & 0xf;
 
-		if (j <= 9) {
+		if(j <= 9) {
 			_h[i * 2 + 1] = (j + '0');
 		} else {
 			_h[i * 2 + 1] = (j + 'a' - 10);
@@ -61,8 +61,8 @@ inline void cvt_hex(HASH _b, HASHHEX _h)
 /*
  * calculate H(A1) as per spec
  */
-void calc_HA1_md5(ha_alg_t _alg, str* _username, str* _realm, str* _password,
-		str* _nonce, str* _cnonce, HASHHEX _sess_key)
+void calc_HA1_md5(ha_alg_t _alg, str *_username, str *_realm, str *_password,
+		str *_nonce, str *_cnonce, HASHHEX _sess_key)
 {
 	MD5_CTX Md5Ctx;
 	HASH HA1;
@@ -75,7 +75,7 @@ void calc_HA1_md5(ha_alg_t _alg, str* _username, str* _realm, str* _password,
 	MD5Update(&Md5Ctx, _password->s, _password->len);
 	MD5Final(HA1, &Md5Ctx);
 
-	if (_alg == HA_MD5_SESS) {
+	if(_alg == HA_MD5_SESS) {
 		MD5Init(&Md5Ctx);
 		MD5Update(&Md5Ctx, HA1, HASHLEN);
 		MD5Update(&Md5Ctx, ":", 1);
@@ -92,16 +92,16 @@ void calc_HA1_md5(ha_alg_t _alg, str* _username, str* _realm, str* _password,
 /*
  * calculate request-digest/response-digest as per HTTP Digest spec
  */
-void calc_response_md5(HASHHEX _ha1,      /* H(A1) */
-		str* _nonce,       /* nonce from server */
-		str* _nc,          /* 8 hex digits */
-		str* _cnonce,      /* client nonce */
-		str* _qop,         /* qop-value: "", "auth", "auth-int" */
-		int _auth_int,     /* 1 if auth-int is used */
-		str* _method,      /* method from the request */
-		str* _uri,         /* requested URL */
-		HASHHEX _hentity,  /* H(entity body) if qop="auth-int" */
-		HASHHEX _response) /* request-digest or response-digest */
+void calc_response_md5(HASHHEX _ha1, /* H(A1) */
+		str *_nonce,				 /* nonce from server */
+		str *_nc,					 /* 8 hex digits */
+		str *_cnonce,				 /* client nonce */
+		str *_qop,					 /* qop-value: "", "auth", "auth-int" */
+		int _auth_int,				 /* 1 if auth-int is used */
+		str *_method,				 /* method from the request */
+		str *_uri,					 /* requested URL */
+		HASHHEX _hentity,			 /* H(entity body) if qop="auth-int" */
+		HASHHEX _response)			 /* request-digest or response-digest */
 {
 	MD5_CTX Md5Ctx;
 	HASH HA2;
@@ -110,13 +110,13 @@ void calc_response_md5(HASHHEX _ha1,      /* H(A1) */
 
 	/* calculate H(A2) */
 	MD5Init(&Md5Ctx);
-	if (_method) {
+	if(_method) {
 		MD5Update(&Md5Ctx, _method->s, _method->len);
 	}
 	MD5Update(&Md5Ctx, ":", 1);
 	MD5Update(&Md5Ctx, _uri->s, _uri->len);
 
-	if (_auth_int) {
+	if(_auth_int) {
 		MD5Update(&Md5Ctx, ":", 1);
 		MD5Update(&Md5Ctx, _hentity, HASHHEXLEN);
 	};
@@ -131,7 +131,7 @@ void calc_response_md5(HASHHEX _ha1,      /* H(A1) */
 	MD5Update(&Md5Ctx, _nonce->s, _nonce->len);
 	MD5Update(&Md5Ctx, ":", 1);
 
-	if (_qop->len) {
+	if(_qop->len) {
 		MD5Update(&Md5Ctx, _nc->s, _nc->len);
 		MD5Update(&Md5Ctx, ":", 1);
 		MD5Update(&Md5Ctx, _cnonce->s, _cnonce->len);
