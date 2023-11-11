@@ -46,35 +46,38 @@
 #include "../../core/parser/msg_parser.h"
 #include "encode_allow.h"
 
-char *mismetodos[]={"UNDEF","INVITE","CANCEL","ACK","BYE","INFO","OPTIONS","UPDATE","REGISTER","MESSAGE","SUBSCRIBE","NOTIFY","PRACK","REFER","OTHER"};
+char *mismetodos[] = {"UNDEF", "INVITE", "CANCEL", "ACK", "BYE", "INFO",
+		"OPTIONS", "UPDATE", "REGISTER", "MESSAGE", "SUBSCRIBE", "NOTIFY",
+		"PRACK", "REFER", "OTHER"};
 
 /**
  * Encodes allow header.
  *
  * TODO: Does not support the UNDEFINED header type !!!
  */
-int encode_allow(char *hdrstart,int hdrlen,unsigned int *bodi,char *where)
+int encode_allow(char *hdrstart, int hdrlen, unsigned int *bodi, char *where)
 {
-   unsigned int i;
-   memcpy(&i,bodi,4);
-   i=htonl(i);
-   memcpy(where,&i,4);
-   return 4;
+	unsigned int i;
+	memcpy(&i, bodi, 4);
+	i = htonl(i);
+	memcpy(where, &i, 4);
+	return 4;
 }
 
-int print_encoded_allow(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
+int print_encoded_allow(FILE *fd, char *hdr, int hdrlen, unsigned char *payload,
+		int paylen, char *prefix)
 {
-   unsigned int i,j=0,body;
+	unsigned int i, j = 0, body;
 
-   memcpy(&body,payload,4);
-   body=ntohl(body);
-   fprintf(fd,"%sMETHODS=",prefix);
-   if(body==0)
-      fprintf(fd,"UNKNOWN");
-   for(i=0;i<32;j=(0x01<<i),i++){
-      if(body & (j<15))
-	 fprintf(fd,",%s",mismetodos[i]);
-   }
-   fprintf(fd,"\n");
-   return 1;
+	memcpy(&body, payload, 4);
+	body = ntohl(body);
+	fprintf(fd, "%sMETHODS=", prefix);
+	if(body == 0)
+		fprintf(fd, "UNKNOWN");
+	for(i = 0; i < 32; j = (0x01 << i), i++) {
+		if(body & (j < 15))
+			fprintf(fd, ",%s", mismetodos[i]);
+	}
+	fprintf(fd, "\n");
+	return 1;
 }
