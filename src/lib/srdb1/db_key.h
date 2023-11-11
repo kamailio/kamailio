@@ -35,7 +35,7 @@
  * This type represents a database key (column).
  * Every time you need to specify a key value, this type should be used.
  */
-typedef str* db_key_t;
+typedef str *db_key_t;
 
 
 #endif /* DB1_KEY_H */

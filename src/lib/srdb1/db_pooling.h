@@ -30,7 +30,8 @@
 #define DB1_POOLING_H
 
 
-typedef enum {
+typedef enum
+{
 	DB_POOLING_PERMITTED,
 	DB_POOLING_NONE
 } db_pooling_t;

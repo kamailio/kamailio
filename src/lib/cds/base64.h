@@ -30,7 +30,8 @@
 #ifndef base64_h
 #define base64_h
 
-void base64decode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len);
-void base64encode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len, int quoted);
+void base64decode(char *src_buf, int src_len, char *tgt_buf, int *tgt_len);
+void base64encode(
+		char *src_buf, int src_len, char *tgt_buf, int *tgt_len, int quoted);
 
 #endif

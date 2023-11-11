@@ -43,42 +43,44 @@
  * 
  */
 
-#define STR_SHM_DUP(dest,src,txt)\
-{\
-        if ((src).len==0) {\
-                (dest).s=0;\
-                (dest).len=0;\
-        }else {\
-                (dest).s = shm_malloc((src).len);\
-                if (!(dest).s){\
-                        LM_ERR("Error allocating %d bytes\n",(src).len);\
-                        (dest).len = 0;\
-                        goto out_of_memory;\
-                }else{\
-                        (dest).len = (src).len;\
-                        memcpy((dest).s,(src).s,(src).len);\
-                }\
-        }\
-}
+#define STR_SHM_DUP(dest, src, txt)                               \
+	{                                                             \
+		if((src).len == 0) {                                      \
+			(dest).s = 0;                                         \
+			(dest).len = 0;                                       \
+		} else {                                                  \
+			(dest).s = shm_malloc((src).len);                     \
+			if(!(dest).s) {                                       \
+				LM_ERR("Error allocating %d bytes\n", (src).len); \
+				(dest).len = 0;                                   \
+				goto out_of_memory;                               \
+			} else {                                              \
+				(dest).len = (src).len;                           \
+				memcpy((dest).s, (src).s, (src).len);             \
+			}                                                     \
+		}                                                         \
+	}
 
-#define STR_PKG_DUP(dest,src,txt)\
-{\
-        if ((src).len==0) {\
-                (dest).s=0;\
-                (dest).len=0;\
-        }else {\
-                (dest).s = pkg_malloc((src).len);\
-                if (!(dest).s){\
-                        LM_ERR("Error allocating %d bytes\n",(src).len);\
-                        (dest).len = 0;\
-                        goto out_of_memory;\
-                }else{\
-                        (dest).len = (src).len;\
-                        memcpy((dest).s,(src).s,(src).len);\
-                }\
-        }\
-}
+#define STR_PKG_DUP(dest, src, txt)                               \
+	{                                                             \
+		if((src).len == 0) {                                      \
+			(dest).s = 0;                                         \
+			(dest).len = 0;                                       \
+		} else {                                                  \
+			(dest).s = pkg_malloc((src).len);                     \
+			if(!(dest).s) {                                       \
+				LM_ERR("Error allocating %d bytes\n", (src).len); \
+				(dest).len = 0;                                   \
+				goto out_of_memory;                               \
+			} else {                                              \
+				(dest).len = (src).len;                           \
+				memcpy((dest).s, (src).s, (src).len);             \
+			}                                                     \
+		}                                                         \
+	}
 
-#define STR_APPEND(dst,src)\
-	{memcpy((dst).s+(dst).len,(src).s,(src).len);\
-	(dst).len = (dst).len + (src).len;}
+#define STR_APPEND(dst, src)                             \
+	{                                                    \
+		memcpy((dst).s + (dst).len, (src).s, (src).len); \
+		(dst).len = (dst).len + (src).len;               \
+	}

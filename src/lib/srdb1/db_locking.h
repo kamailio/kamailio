@@ -27,7 +27,8 @@
 #define DB1_LOCKING_H
 
 
-typedef enum {
+typedef enum
+{
 	DB_LOCKING_NONE,
 	DB_LOCKING_WRITE,
 	DB_LOCKING_FULL

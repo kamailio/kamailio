@@ -27,21 +27,22 @@
 #define __QSA_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include <cds/sstr.h>
 #include <presence/notifier_domain.h>
-	
-int qsa_initialize();
-void qsa_cleanup();
 
-notifier_domain_t *qsa_register_domain(const str_t *name);
-notifier_domain_t *qsa_get_default_domain();
-void qsa_release_domain(notifier_domain_t *domain);
+	int qsa_initialize();
+	void qsa_cleanup();
+
+	notifier_domain_t *qsa_register_domain(const str_t *name);
+	notifier_domain_t *qsa_get_default_domain();
+	void qsa_release_domain(notifier_domain_t *domain);
 
 #ifdef __cplusplus
 }
 #endif
-	
+
 #endif
