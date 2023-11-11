@@ -27,17 +27,17 @@
 #include "../../core/route_struct.h"
 #include "../../core/pvar.h"
 
-#define JSONRPC_SERVER_CONNECTED    1
+#define JSONRPC_SERVER_CONNECTED 1
 #define JSONRPC_SERVER_DISCONNECTED 2
-#define JSONRPC_SERVER_FAILURE      3
+#define JSONRPC_SERVER_FAILURE 3
 
 /* interval (in seconds) at which failed servers are retried */
-#define JSONRPC_RECONNECT_INTERVAL  3
+#define JSONRPC_RECONNECT_INTERVAL 3
 
 /* time (in ms) after which the error route is called */
-#define JSONRPC_TIMEOUT 			500
+#define JSONRPC_TIMEOUT 500
 
-struct jsonrpc_pipe_cmd 
+struct jsonrpc_pipe_cmd
 {
 	char *method, *params, *cb_route, *err_route;
 	unsigned int t_hash, t_label, notify_only;
@@ -45,7 +45,7 @@ struct jsonrpc_pipe_cmd
 	struct sip_msg *msg;
 };
 
-int jsonrpc_io_child_process(int data_pipe, char* servers);
-void free_pipe_cmd(struct jsonrpc_pipe_cmd *cmd); 
+int jsonrpc_io_child_process(int data_pipe, char *servers);
+void free_pipe_cmd(struct jsonrpc_pipe_cmd *cmd);
 
 #endif /* _JSONRPC_IO_H_ */
