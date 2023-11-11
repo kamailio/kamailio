@@ -26,7 +26,6 @@
  */
 
 
-
 #ifndef _DIALOG_DLG_PROFILE_H_
 #define _DIALOG_DLG_PROFILE_H_
 
@@ -38,7 +37,6 @@
 #include "../../core/utils/sruid.h"
 
 
-
 /*!
  * \file
  * \brief Profile related functions for the dialog module
@@ -48,8 +46,9 @@
 
 
 /*! dialog profile hash list */
-typedef struct dlg_profile_hash {
-	str value; /*!< hash value */
+typedef struct dlg_profile_hash
+{
+	str value;			  /*!< hash value */
 	struct dlg_cell *dlg; /*!< dialog cell */
 	char puid[SRUID_SIZE];
 	int puid_len;
@@ -63,31 +62,35 @@ typedef struct dlg_profile_hash {
 
 
 /*! list with links to dialog profiles */
-typedef struct dlg_profile_link {
+typedef struct dlg_profile_link
+{
 	struct dlg_profile_hash hash_linker;
-	struct dlg_profile_link  *next;
+	struct dlg_profile_link *next;
 	struct dlg_profile_table *profile;
 } dlg_profile_link_t;
 
 
 /*! dialog profile entry */
-struct dlg_profile_entry {
+struct dlg_profile_entry
+{
 	struct dlg_profile_hash *first;
 	unsigned int content; /*!< content of the entry */
 };
 
 
 /*! dialog profile table */
-struct dlg_profile_table {
-	str name; /*!< name of the dialog profile */
+struct dlg_profile_table
+{
+	str name;		   /*!< name of the dialog profile */
 	unsigned int size; /*!< size of the dialog profile */
-	unsigned int has_value; /*!< 0 for profiles without value, otherwise it has a value */
+	unsigned int
+			has_value; /*!< 0 for profiles without value, otherwise it has a value */
 	gen_lock_t lock; /*! lock for concurrent access */
 	struct dlg_profile_entry *entries;
 	struct dlg_profile_table *next;
 };
 
-struct dlg_cell* get_dialog_from_tm(struct cell *t);
+struct dlg_cell *get_dialog_from_tm(struct cell *t);
 
 /*!
  * \brief Add profile definitions to the global list
@@ -96,7 +99,7 @@ struct dlg_cell* get_dialog_from_tm(struct cell *t);
  * \param has_value set to 0 for a profile without value, otherwise it has a value
  * \return 0 on success, -1 on failure
  */
-int add_profile_definitions( char* profiles, unsigned int has_value);
+int add_profile_definitions(char *profiles, unsigned int has_value);
 
 
 /*!
@@ -111,7 +114,7 @@ void destroy_dlg_profiles(void);
  * \param name searched dialog profile
  * \return pointer to the profile on success, NULL otherwise
  */
-struct dlg_profile_table* search_dlg_profile(str *name);
+struct dlg_profile_table *search_dlg_profile(str *name);
 
 
 /*!
@@ -121,13 +124,13 @@ struct dlg_profile_table* search_dlg_profile(str *name);
  * \param param unused
  * \return 1
  */
-int profile_cleanup( struct sip_msg *msg, unsigned int flags, void *param );
+int profile_cleanup(struct sip_msg *msg, unsigned int flags, void *param);
 
 
 /*!
  * \brief Destroy dialog linkers
  * \param linker dialog linker
- */ 
+ */
 void destroy_linkers(struct dlg_profile_link *linker);
 
 
@@ -146,8 +149,8 @@ void set_current_dialog(struct sip_msg *msg, struct dlg_cell *dlg);
  * \param profile dialog profile table
  * \return 0 on success, -1 on failure
  */
-int set_dlg_profile(struct sip_msg *msg, str *value,
-		struct dlg_profile_table *profile);
+int set_dlg_profile(
+		struct sip_msg *msg, str *value, struct dlg_profile_table *profile);
 
 
 /*!
@@ -157,8 +160,8 @@ int set_dlg_profile(struct sip_msg *msg, str *value,
  * \param profile dialog profile table
  * \return 1 on success, -1 on failure
  */
-int unset_dlg_profile(struct sip_msg *msg, str *value,
-		struct dlg_profile_table *profile);
+int unset_dlg_profile(
+		struct sip_msg *msg, str *value, struct dlg_profile_table *profile);
 
 
 /*!
@@ -168,8 +171,8 @@ int unset_dlg_profile(struct sip_msg *msg, str *value,
  * \param value value
  * \return 1 on success, -1 on failure
  */
-int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
-		str *value);
+int is_dlg_in_profile(
+		struct sip_msg *msg, struct dlg_profile_table *profile, str *value);
 
 
 /*!
@@ -187,7 +190,7 @@ unsigned int get_profile_size(struct dlg_profile_table *profile, str *value);
  * \param param MI parameter
  * \return MI root output on success, NULL on failure
  */
-struct mi_root * mi_get_profile(struct mi_root *cmd_tree, void *param );
+struct mi_root *mi_get_profile(struct mi_root *cmd_tree, void *param);
 
 
 /*!
@@ -196,7 +199,7 @@ struct mi_root * mi_get_profile(struct mi_root *cmd_tree, void *param );
  * \param param unused
  * \return MI root output on success, NULL on failure
  */
-struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param );
+struct mi_root *mi_profile_list(struct mi_root *cmd_tree, void *param);
 
 /*!
  * \brief return true if the messages belongs to a tracked dialog
