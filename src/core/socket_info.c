@@ -1090,14 +1090,15 @@ static struct socket_info *new_sock2list(char *name, struct name_lst *addr_l,
 #ifdef USE_MCAST
 	if(mcast != 0) {
 		si->mcast.len = strlen(mcast);
-		si->mcast.s = (char *)pkg_malloc(si->mcast.len + 1);
+		si->mcast.s = (char *)pkg_mallocxz(si->mcast.len + 1);
 		if(si->mcast.s == 0) {
 			PKG_MEM_ERROR;
+			si->mcast.len = 0;
 			pkg_free(si->name.s);
 			pkg_free(si);
 			return 0;
 		}
-		strcpy(si->mcast.s, mcast);
+		memcpy(si->mcast.s, mcast, si->mcast.len);
 		mcast = 0;
 	}
 #endif /* USE_MCAST */
