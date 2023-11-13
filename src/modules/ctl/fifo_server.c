@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -34,7 +34,7 @@
  * via the proc file system. This might be used for
  * making ser do things for you (such as initiating new
  * transaction from webpages) or inspect server's health.
- * 
+ *
  * FIFO server allows new functionality to be registered
  * with it -- thats what register_fifo_cmd is good for.
  * Remember, the initialization must take place before
@@ -135,8 +135,8 @@ struct text_chunk
 };
 
 
-/* 
- * This is the parameter if rpc_struct_add 
+/*
+ * This is the parameter if rpc_struct_add
  */
 struct rpc_struct_out
 {
@@ -570,7 +570,7 @@ static int read_line(char **b, int *read, struct readline_handle *rh)
 /*
  * Remove directory path from filename and replace it
  * with the path configured through a module parameter.
- * 
+ *
  * The result is allocated using ctl_malloc and thus
  * has to be freed using ctl_free
  */
@@ -604,7 +604,7 @@ static char *trim_filename(char *file)
 /* reply fifo security checks:
  * checks if fd is a fifo, is not hardlinked and it's not a softlink
  * opened file descriptor + file name (for soft link check)
- * returns 0 if ok, <0 if not 
+ * returns 0 if ok, <0 if not
  */
 static int fifo_check(int fd, char *fname)
 {
@@ -667,7 +667,7 @@ static int open_reply_pipe(char *pipe_name)
 	}
 
 tryagain:
-	/* open non-blocking to make sure that a broken client will not 
+	/* open non-blocking to make sure that a broken client will not
 	      * block the FIFO server forever */
 	fifofd = open(pipe_name, O_WRONLY | O_NONBLOCK);
 	if(fifofd == -1) {
@@ -692,7 +692,7 @@ tryagain:
 		ERR("Open error (%s): %s\n", pipe_name, strerror(errno));
 		goto error;
 	}
-	/* security checks: is this really a fifo?, is 
+	/* security checks: is this really a fifo?, is
 	      * it hardlinked? is it a soft link? */
 	if(fifo_check(fifofd, pipe_name) < 0)
 		goto error;
