@@ -29,7 +29,7 @@
 	</para>
 	<para>
 		Please also take a look at the <quote>pipelimit</quote> module,
-		that implements the pipe policy with database support. Note that it 
+		that implements the pipe policy with database support. Note that it
 		doesn't implement the queues that exist in this module.
 	</para>
 	</section>
@@ -110,7 +110,7 @@
 		The total amount of bytes waiting to be consumed on all the network
 		interfaces is retrieved once every timer_interval seconds.
 		If the returned amount exceeds the limit specified in the modparam,
-		rl_check returns an error. 
+		rl_check returns an error.
 		</para>
 	</section>
 	<section>
@@ -172,7 +172,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
