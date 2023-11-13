@@ -10,19 +10,19 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section id="qos.overview">
 		<title>Overview</title>
 
 		<para>The qos module provides a way to keep track of
 		per dialog SDP session(s).</para>
 	</section>
-	
+
 	<section>
 	<title>How it works</title>
-	
+
 	<para>
 	The <emphasis>qos</emphasis> module uses the
 	<emphasis>dialog</emphasis> module to be notified of any new or
@@ -86,7 +86,7 @@
 	<title>Dependencies</title>
 	<section>
 		<title>&kamailio; Modules</title>
-		
+
 		<para>The following modules must be loaded
 		before this module:
 		<itemizedlist>
@@ -118,7 +118,7 @@
 	<title>Parameters</title>
 	<section id="qos.p.qos_flag">
 		<title><varname>qos_flag</varname> (integer)</title>
-		
+
 		<para>The module will not do anything to any message unless
 		instructed to do so via the config script. You must set the
 		<varname>qos_flag</varname> value in the <function>setflag()</function>
