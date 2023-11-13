@@ -5,7 +5,7 @@
  * Compile with:
  *  gcc -o dns_query2 dns_query.c ../resolve.o ../dprint.o ../mem/ *.o -lresolv
  *  (and first compile Kamailio with qm_malloc)
- * 
+ *
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -21,8 +21,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 	struct a_rdata* ip;
 
 	name=type_str=0;
-	
+
 	opterr=0;
 	while ((c=getopt(argc, argv, "n:t:hV"))!=-1){
 		switch(c){
@@ -115,7 +115,7 @@ int main(int argc, char** argv)
 				abort();
 		}
 	}
-	
+
 	if (name==0){
 		fprintf(stderr, "Missing domain name (-n name)\n");
 		goto error;
@@ -164,7 +164,7 @@ int main(int argc, char** argv)
 				case T_CNAME:
 					printf("CNAME  type= %d class=%d  ttl=%d\n",
 							l->type, l->class, l->ttl);
-					printf("       name=[%s]\n", 
+					printf("       name=[%s]\n",
 								((struct cname_rdata*)l->rdata)->name);
 					break;
 				case T_A:
@@ -178,7 +178,7 @@ int main(int argc, char** argv)
 					printf("AAAA   type= %d class=%d  ttl=%d\n",
 							l->type, l->class, l->ttl);
 					printf("        ip6= ");
-					for(r=0;r<16;r++) 
+					for(r=0;r<16;r++)
 						printf("%x ", ((struct aaaa_rdata*)l->rdata)->ip6[r]);
 					printf("\n");
 					break;
@@ -189,13 +189,13 @@ int main(int argc, char** argv)
 					printf("       order= %d pref=%d\n",
 								naptr->order, naptr->pref);
 					printf("       flags_len= %d,     flags= [%.*s]\n",
-									naptr->flags_len, 
+									naptr->flags_len,
 									naptr->flags_len, naptr->flags);
 					printf("       services_len= %d,  services= [%.*s]\n",
-									naptr->services_len, 
+									naptr->services_len,
 									naptr->services_len, naptr->services);
 					printf("       regexp_len= %d,    regexp= [%.*s]\n",
-									naptr->regexp_len, 
+									naptr->regexp_len,
 									naptr->regexp_len, naptr->regexp);
 					printf("       repl_len= %d,      repl= [%s]\n",
 									naptr->repl_len, naptr->repl);

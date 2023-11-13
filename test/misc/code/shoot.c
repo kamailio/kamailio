@@ -29,7 +29,7 @@ regex_t* regexp;
 
 #define RESIZE		1024
 
-/* take either a dot.decimal string of ip address or a 
+/* take either a dot.decimal string of ip address or a
 domain name and returns a NETWORK ordered long int containing
 the address. i chose to internally represent the address as long for speedier
 comparisons.
@@ -94,7 +94,7 @@ long getaddress(char *host)
 /*
 shoot:
 takes:
-	1. the text message of buff to 
+	1. the text message of buff to
 	2. the address (network ordered byte order)
 	3. and port (not network byte ordered).
 
@@ -148,15 +148,15 @@ void shoot(char *buff, long address, int lport, int rport )
 	/* should capture: SIP/2.0 100 Trying */
 	/* compile("^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", compiledre, &compiledre[RESIZE], '\0'); */
 	regexp=(regex_t*)malloc(sizeof(regex_t));
-	regcomp(regexp, "^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
-	
+	regcomp(regexp, "^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE);
+
 
 	/* jku - e */
 
 	addr.sin_addr.s_addr = address;
 	addr.sin_port = htons((short)rport);
 	addr.sin_family = AF_INET;
-	
+
 	/* we connect as per the RFC 2543 recommendations
 	modified from sendto/recvfrom */
 
@@ -178,16 +178,16 @@ void shoot(char *buff, long address, int lport, int rport )
 			perror("send failure");
 			exit( 1 );
 		}
-		
+
 
 		tv.tv_sec = retryAfter/1000;
 		tv.tv_usec = (retryAfter % 1000) * 1000;
 
 		FD_ZERO(&fd);
-		FD_SET(ssock, &fd); 
+		FD_SET(ssock, &fd);
 
 		/* TO-DO: there does appear to be a problem with this select returning a zero
-		even when there is data pending in the recv queue. 
+		even when there is data pending in the recv queue.
 		please help, someone! */
 
 		ret = select(6, &fd, NULL, NULL, &tv);
@@ -230,8 +230,8 @@ void shoot(char *buff, long address, int lport, int rport )
 				puts(" final received; congratulations!\n ");
 				exit(0);
 			}
-		
-		} 
+
+		}
 		else	{
 			perror("recv error");
 			exit(2);
@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
 
 	shoot(buff, address, lport, rport );
 
-	/* visual studio closes the debug console as soon as the 
+	/* visual studio closes the debug console as soon as the
 	program terminates. This is to hold the window from collapsing
 	Uncomment it if needed.
 	getchar();*/
@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
 /*
 shoot will exercise all the types of sip servers.
 it is not to be used to measure round-trips and general connectivity.
-use ping for that. 
+use ping for that.
 written by farhan on 10th august, 2000.
 
 TO-DO:
