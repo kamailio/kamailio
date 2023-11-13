@@ -9,7 +9,7 @@
 ]>
 <chapter>
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -22,9 +22,9 @@
 	An additional functionality that this module provides is the ability
 	to handle global blocklists. This lists are loaded on startup into
 	memory, thus providing a better performance than the userblocklist
-	case. These global blocklists are useful to allow only calls to certain 
+	case. These global blocklists are useful to allow only calls to certain
 	international destinations, i.e. block all not allowlisted numbers.
-	They could also be used to prevent the blocklisting of important	
+	They could also be used to prevent the blocklisting of important
 	numbers, as allowlisting is supported too. This is useful for example
 	to prevent the customer from blocking emergency call number or service
 	hotlines.
@@ -49,12 +49,12 @@
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
-			The module depends on the following modules (in the other words 
+			The module depends on the following modules (in the other words
 			the listed modules must be loaded before this module):
 			</para>
 			<itemizedlist>
 			<listitem>
-				<para><emphasis>database</emphasis> 
+				<para><emphasis>database</emphasis>
 				-- Any db_* database module</para>
 			</listitem>
 			</itemizedlist>
@@ -62,7 +62,7 @@
 		<section>
 			<title>External Libraries or Applications</title>
 			<para>
-			The following libraries or applications must be installed 
+			The following libraries or applications must be installed
 			before running &kamailio; with this module loaded:
 			</para>
 			<itemizedlist>
@@ -99,10 +99,10 @@ modparam("userblocklist", "use_domain", 1)
     <section id="userblocklist.p.match_mode">
     	    <title><varname>match_mode</varname> (integer)</title>
 	    <para>
-		The number of individual characters that are used for matching. 
-		Valid values are 10 or 128. When you specify 10, only digits will be used for matching, 
-		this operation mode is equivalent to the old behaviour. When configured with 128, 
-		all standard ASCII chars are available for matching. Please be aware that memory 
+		The number of individual characters that are used for matching.
+		Valid values are 10 or 128. When you specify 10, only digits will be used for matching,
+		this operation mode is equivalent to the old behaviour. When configured with 128,
+		all standard ASCII chars are available for matching. Please be aware that memory
 		requirements for storing the routing tree in shared memory will also
 		increase by a factor of 12.8.
 	    </para>
@@ -120,7 +120,7 @@ modparam("userblocklist", "match_mode", 128)
 		    </programlisting>
 	    </example>
     </section>
-    
+
   <section id="userblocklist.p.db_url">
     <title><varname>db_url</varname> (String)</title>
     <para>URL to the database containing the data.</para>
@@ -344,7 +344,7 @@ if (!check_user_allowlist("$avp(i:80)", "$avp(i:82)")) {
 	    <para>
 		Finds the longest prefix that matches the request URI for the
 		given table. If a match is found and it is not set to allowlist,
-		false is returned. Otherwise, true is returned. If no table is given, 
+		false is returned. Otherwise, true is returned. If no table is given,
 		then globalblocklist_table is used.
 	    </para>
 	<example>
@@ -408,7 +408,7 @@ if (!check_allowlist("globalblocklist")) {
 			</title>
 			<para>
 				Dumps the default, in memory, global_blocklist content to stdout.
-				Note that a reload_blocklist should be issued before, 
+				Note that a reload_blocklist should be issued before,
 				in order to see the latest content of the database.
 			</para>
 			<example>
@@ -427,11 +427,11 @@ if (!check_allowlist("globalblocklist")) {
 				<function moreinfo="none">userblocklist.check_blocklist prefix</function>
 			</title>
 			<para>
-				Searches in the default, in memory, global list. 
-				Finds the longest prefix that matches the given prefix parameter. 
-				Returns true if the prefix is found and the allowlist is <emphasis>not</emphasis> set. 
-				Returns false otherwise - either prefix found and allowlist set or prefix not found. 
-				Note that a reload_blocklist should be issued before, 
+				Searches in the default, in memory, global list.
+				Finds the longest prefix that matches the given prefix parameter.
+				Returns true if the prefix is found and the allowlist is <emphasis>not</emphasis> set.
+				Returns false otherwise - either prefix found and allowlist set or prefix not found.
+				Note that a reload_blocklist should be issued before,
 				in order to check through the latest content of the database.
 			</para>
 			<example>
@@ -449,12 +449,12 @@ if (!check_allowlist("globalblocklist")) {
 				<function moreinfo="none">userblocklist.check_allowlist prefix</function>
 			</title>
 			<para>
-				Searches in the default, in memory, global list. 
-				Finds the longest prefix that matches the given prefix parameter. 
-				Returns true if the prefix is found and the allowlist is set. 
-				Returns false otherwise - either prefix found and allowlist 
-				<emphasis>not</emphasis> set or prefix not found. 
-				Note that a reload_blocklist should be issued before, 
+				Searches in the default, in memory, global list.
+				Finds the longest prefix that matches the given prefix parameter.
+				Returns true if the prefix is found and the allowlist is set.
+				Returns false otherwise - either prefix found and allowlist
+				<emphasis>not</emphasis> set or prefix not found.
+				Note that a reload_blocklist should be issued before,
 				in order to check through the latest content of the database.
 			</para>
 			<example>
@@ -473,11 +473,11 @@ if (!check_allowlist("globalblocklist")) {
 			</title>
 			<para>
 				Searches in the default user list table.
-				Finds the longest prefix for the given user@domain that matches the given prefix parameter. 
-				Returns true if the prefix is found and the allowlist is <emphasis>not</emphasis> set. 
-				Returns false otherwise - either prefix found and allowlist set or prefix not found. 
-				Note that the domain parameter is optional. 
-				If not given, the second parameter is the considered to be the prefix. 
+				Finds the longest prefix for the given user@domain that matches the given prefix parameter.
+				Returns true if the prefix is found and the allowlist is <emphasis>not</emphasis> set.
+				Returns false otherwise - either prefix found and allowlist set or prefix not found.
+				Note that the domain parameter is optional.
+				If not given, the second parameter is the considered to be the prefix.
 			</para>
 			<example>
 				<title><function>userblocklist.check_userblocklist</function> usage</title>
@@ -495,12 +495,12 @@ if (!check_allowlist("globalblocklist")) {
 			</title>
 			<para>
 				Searches in the default user list table.
-				Finds the longest prefix for the given user@domain that matches the given prefix parameter. 
-				Returns true if the prefix is found and the allowlist is set. 
-				Returns false otherwise - either prefix found and allowlist 
-				<emphasis>not</emphasis> set or prefix not found. 
-				Note that the domain parameter is optional. 
-				If not given, the second parameter is the considered to be the prefix. 
+				Finds the longest prefix for the given user@domain that matches the given prefix parameter.
+				Returns true if the prefix is found and the allowlist is set.
+				Returns false otherwise - either prefix found and allowlist
+				<emphasis>not</emphasis> set or prefix not found.
+				Note that the domain parameter is optional.
+				If not given, the second parameter is the considered to be the prefix.
 			</para>
 			<example>
 				<title><function>userblocklist.check_userallowlist</function> usage</title>
@@ -523,10 +523,10 @@ if (!check_allowlist("globalblocklist")) {
 			read the blocklist data. For that, if the table was not created
 			by the installation script or you choose to install everything
 			by yourself you can use the <emphasis>userblocklist-create.sql</emphasis>
-			<acronym>SQL</acronym> script in the database directories in the 
-			kamailio/scripts folder as template. 
-			Database and table name can be set with module parameters so they 
-			can be changed, but the name of the columns must be as they are 
+			<acronym>SQL</acronym> script in the database directories in the
+			kamailio/scripts folder as template.
+			Database and table name can be set with module parameters so they
+			can be changed, but the name of the columns must be as they are
 			in the <acronym>SQL</acronym> script.
 			You can also find the complete database documentation on the
 			project webpage, &kamailiodbdocs;.
