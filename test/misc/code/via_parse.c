@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -24,7 +24,7 @@
 /* parsing:           compact form:
  */
 
-/* 
+/*
  * still TODO/test:
  *  - parse next via
  *  - return a list of header structs
@@ -118,9 +118,9 @@ enum
 #define LOG(lev, fmt, args...) fprintf(stderr, fmt, ##args)
 
 
-/* entry state must be F_PARAM, or saved_state=F_PARAM and 
+/* entry state must be F_PARAM, or saved_state=F_PARAM and
  * state=F_{LF,CR,CRLF}!
- * output state = L_PARAM or F_PARAM or END_OF_HEADER 
+ * output state = L_PARAM or F_PARAM or END_OF_HEADER
  * (and saved_state= last state); everything else => error */
 __inline char *parse_via_param(char *p, int *pstate, int *psaved_state)
 {

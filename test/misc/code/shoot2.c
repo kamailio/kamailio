@@ -34,7 +34,7 @@ regex_t *regexp;
 #define VIA_BEGIN_STR "Via: SIP/2.0/UDP "
 #define VIA_BEGIN_STR_LEN 17
 
-/* take either a dot.decimal string of ip address or a 
+/* take either a dot.decimal string of ip address or a
 domain name and returns a NETWORK ordered long int containing
 the address. i chose to internally represent the address as long for speedier
 comparisons.
@@ -140,7 +140,7 @@ add_via(char *mes)
 /*
 shoot:
 takes:
-	1. the text message of buff to 
+	1. the text message of buff to
 	2. the address (network ordered byte order)
 	3. and port (not network byte ordered).
 
@@ -235,7 +235,7 @@ void shoot(char *buff, long address, int lport, int rport)
 		FD_SET(ssock, &fd);
 
 		/* TO-DO: there does appear to be a problem with this select returning a zero
-		even when there is data pending in the recv queue. 
+		even when there is data pending in the recv queue.
 		please help, someone! */
 
 		ret = select(6, &fd, NULL, NULL, &tv);
@@ -378,7 +378,7 @@ int main(int argc, char *argv[])
 
 	shoot(buff, address, lport, rport);
 
-	/* visual studio closes the debug console as soon as the 
+	/* visual studio closes the debug console as soon as the
 	program terminates. this is to hold the window from collapsing
 	Uncomment it if needed.
 	getchar();*/
@@ -391,7 +391,7 @@ int main(int argc, char *argv[])
 /*
 shoot will exercise all the types of sip servers.
 it is not to be used to measure round-trips and general connectivity.
-use ping for that. 
+use ping for that.
 written by farhan on 10th august, 2000.
 
 TO-DO:

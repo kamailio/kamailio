@@ -1,7 +1,7 @@
 /*
  * test bit_scan operations from bit_scan.h
  *  (both for correctness  and speed)
- * 
+ *
  * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -16,7 +16,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* 
+/*
  * Example gcc command line:
  *  gcc -O9 -Wall -DCC_GCC_LIKE_ASM  -D__CPU_x86 bit_scan_test.c ../bit_scan.c
  *      -o bit_scan_test

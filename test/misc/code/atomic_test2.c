@@ -13,24 +13,24 @@
  *           __CPU_xxx - use __CPU_xxx code
  *           SPARC64_MODE - compile for a sparc 64 in 64 bit mode (gcc -m64
  *                          must be used on solaris in this case)
- *  Example:  
+ *  Example:
  *    gcc -Wall -O3 -D__CPU_i386 -DNOSMP -DMEMBAR -DTYPE=long atomic_test2.c
- * 
+ *
  *  Compile with: gcc -Wall -O3 -D__CPU_i386  ... on x86 machines
  *                gcc -Wall -O3 -D__CPU_x86_64 ... on amd64 machines
  *                gcc -mips2 -Wall -O2 -D__CPU_mips2  ... on mips machines
  *                gcc -m64 -Wall -O2 -D__CPU_mips64 ... on mips64 machines
  *                gcc -O3 -Wall -D__CPU_ppc ... on powerpc machines
  *                gcc -m64 -O3 -Wall -D__CPU_ppc64 ... on powerpc machines
- *                gcc -m64 -O3 -Wall -D__CPU_sparc64 -DSPARC64_MODE ... on 
+ *                gcc -m64 -O3 -Wall -D__CPU_sparc64 -DSPARC64_MODE ... on
  *                                                   ultrasparc machines
- *                gcc -mcpu=v9 -O3 -Wall -D__CPU_sparc64  ... for 32 bit code 
- *                                                   (sparc32plus) on 
+ *                gcc -mcpu=v9 -O3 -Wall -D__CPU_sparc64  ... for 32 bit code
+ *                                                   (sparc32plus) on
  *                                                   ultrasparc machines
  *                gcc -O3 -Wall -D__CPU_sparc ... on sparc v8 machines
  *  -- andrei
  *
- *  
+ *
  */
 
 #include <stdio.h>
