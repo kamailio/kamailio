@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -89,10 +89,10 @@ void destroy_domain_data(struct domain_data_t *domain_data);
  * @param rewrite_local_suffix the rewrite suffix
  * @param status the status of the rule
  * @param hash_index the hash index of the rule
- * @param backup indicates if the route is backed up by another. only 
+ * @param backup indicates if the route is backed up by another. only
                  useful if status==0, if set, it is the hash value
                  of another rule
- * @param backed_up an -1-termintated array of hash indices of the route 
+ * @param backed_up an -1-termintated array of hash indices of the route
                     for which this route is backup
  * @param comment a comment for the route rule
  *
@@ -118,7 +118,7 @@ int add_route_to_tree(struct dtrie_node_t *node, const str *scan_prefix,
  * @param scan_prefix the prefix for which to add the rule (must not contain non-digits)
  * @param full_prefix the whole scan prefix
  * @param host the hostname last tried
- * @param reply_code the reply code 
+ * @param reply_code the reply code
  * @param flags user defined flags
  * @param mask mask for user defined flags
  * @param next_domain continue routing with this domain id

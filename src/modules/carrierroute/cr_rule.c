@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -331,7 +331,7 @@ static int failure_rule_prio_cmp(
  * @param frr_head pointer to the head of the failure route rule list, might be changed during insert
  * @param prefix the whole scan prefix
  * @param host the hostname last tried
- * @param reply_code the reply code 
+ * @param reply_code the reply code
  * @param flags user defined flags
  * @param mask mask for user defined flags
  * @param next_domain continue routing with this domain
