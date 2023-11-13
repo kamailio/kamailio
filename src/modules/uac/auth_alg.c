@@ -124,7 +124,7 @@ void uac_calc_HA1(struct uac_credential *crd, struct authenticate_body *auth,
 }
 
 
-/* 
+/*
  * calculate H(A2)
  */
 void uac_calc_HA2(str *method, str *uri, struct authenticate_body *auth,
@@ -148,8 +148,8 @@ void uac_calc_HA2(str *method, str *uri, struct authenticate_body *auth,
 }
 
 
-/* 
- * calculate request-digest/response-digest as per HTTP Digest spec 
+/*
+ * calculate request-digest/response-digest as per HTTP Digest spec
  */
 void uac_calc_response(HASHHEX ha1, HASHHEX ha2, struct authenticate_body *auth,
 		str *nc, str *cnonce, HASHHEX response)
