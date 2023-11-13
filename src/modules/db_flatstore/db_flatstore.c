@@ -16,15 +16,15 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /** \addtogroup flatstore
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * Flatstore module interface.
  */
 #include "db_flatstore.h"
@@ -50,7 +50,7 @@ static int mod_init(void);
 static void mod_destroy(void);
 
 
-/** PID to be used in file names.  
+/** PID to be used in file names.
  * The flatstore module generates one file per SER process to ensure that
  * every SER process has its own file and no locking/synchronization is
  * necessary.  This variable contains a unique id of the SER process which

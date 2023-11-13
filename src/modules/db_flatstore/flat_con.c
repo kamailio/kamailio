@@ -16,15 +16,15 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /** \addtogroup flatstore
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * Inmplementation of flatstore "connections".
  */
 
@@ -253,7 +253,7 @@ int flat_open_table(int *idx, db_con_t *con, str *name)
 	if(fcon->n == i) {
 		/* Perform operations that can fail first (before resizing
 		 * fcon->file, so that we can fail gracefully if one of the
-		 * operations fail. 
+		 * operations fail.
 		 */
 		if((filename = get_filename(&furi->path, name)) == NULL)
 			goto no_mem;
