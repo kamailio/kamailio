@@ -285,7 +285,7 @@ static void xmpp_process(int rank)
 
 /*********************************************************************************/
 
-/*! \brief Relay a MESSAGE to a SIP client 
+/*! \brief Relay a MESSAGE to a SIP client
 	\todo This assumes that a message is text/plain, which is not always the case with
 		XMPP messages. We should propably also set the character set, as all
 		SIP clients doesn't assume utf8 for text/plain

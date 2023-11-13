@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -366,7 +366,7 @@ static char *conv_10(register wide_int num, register bool_int is_unsigned,
 		*is_negative = (num < 0);
 
 		/*
-         * On a 2's complement machine, negating the most negative integer 
+         * On a 2's complement machine, negating the most negative integer
          * results in a number that cannot be represented as a signed integer.
          * Here is what we do to obtain the number's magnitude:
          *      a. add 1 to the number
@@ -383,7 +383,7 @@ static char *conv_10(register wide_int num, register bool_int is_unsigned,
 	}
 
 	/*
-     * We use a do-while loop so that we write at least 1 digit 
+     * We use a do-while loop so that we write at least 1 digit
      */
 	do {
 		register u_wide_int new_magnitude = magnitude / 10;
@@ -803,11 +803,11 @@ static int format_converter(register buffy *odp, const char *fmt, va_list ap)
 					break;
 
 					/*
-                 * Always extract the argument as a "char *" pointer. We 
-                 * should be using "void *" but there are still machines 
+                 * Always extract the argument as a "char *" pointer. We
+                 * should be using "void *" but there are still machines
                  * that don't understand it.
                  * If the pointer size is equal to the size of an unsigned
-                 * integer we convert the pointer to a hex number, otherwise 
+                 * integer we convert the pointer to a hex number, otherwise
                  * we print "%p" to indicate that we don't handle "%p".
                  */
 				case 'p':
@@ -865,7 +865,7 @@ static int format_converter(register buffy *odp, const char *fmt, va_list ap)
 				PAD(min_width, s_len, pad_char);
 			}
 			/*
-             * Print the string s. 
+             * Print the string s.
              */
 			for(i = s_len; i != 0; i--) {
 				INS_CHAR(*s, sp, bep, cc);

@@ -90,7 +90,7 @@ extern "C"
 
 
 	/* xode_pool_cleaner - callback type which is associated
-   with a pool entry; invoked when the pool entry is 
+   with a pool entry; invoked when the pool entry is
    free'd */
 	typedef void (*xode_pool_cleaner)(void *arg);
 
@@ -190,8 +190,8 @@ extern "C"
 #define XODE_TYPE_LAST 2
 #define XODE_TYPE_UNDEF -1
 
-	/* -------------------------------------------------------------------------- 
-   Node structure. Do not use directly! Always use accessors macros 
+	/* --------------------------------------------------------------------------
+   Node structure. Do not use directly! Always use accessors macros
    and methods!
    -------------------------------------------------------------------------- */
 	typedef struct xode_struct

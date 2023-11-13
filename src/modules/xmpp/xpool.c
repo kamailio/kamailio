@@ -15,22 +15,22 @@
  *
  *  Jabber
  *  Copyright (C) 1998-1999 The Jabber Team http://jabber.org/
- *  
+ *
  *  2/27/00:3am, random plans by jer
- *  
+ *
  *  ok based on gprof, we really need some innovation here... my thoughs are this:
- *  
+ *
  *  most things are strings, so have a string-based true-blue garbage collector
  *  one big global hash containing all the strings created by any pstrdup, returning const char *
  *  a refcount on each string block
  *  when a pool is freed, it moves down the refcount
  *  garbage collector collects pools on the free stack, and runs through the hash for unused strings
  *  j_strcmp can check for == (if they are both from a pstrdup)
- *  
+ *
  *  let's see... this would change:
  *  pstrdup: do a hash lookup, success=return, fail=pmalloc & hash put
- *  pool_free: 
- *  
+ *  pool_free:
+ *
  */
 
 /*! \file
