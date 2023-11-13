@@ -72,7 +72,7 @@ typedef struct str_map
 static int str_map_str(const str_map_t *map, const str *key, int *ret);
 static int str_map_int(const str_map_t *map, int key, str *ret);
 
-/* PIPE_ALGO_FEEDBACK holds cpu usage to a fixed value using 
+/* PIPE_ALGO_FEEDBACK holds cpu usage to a fixed value using
  * negative feedback according to the PID controller model
  *
  * <http://en.wikipedia.org/wiki/PID_controller>
@@ -406,8 +406,8 @@ static void do_update_load(void)
 	dif_err = err - last_err;
 
 	/*
-	 * TODO?: the 'if' is needed so low cpu loads for 
-	 * long periods (which can't be compensated by 
+	 * TODO?: the 'if' is needed so low cpu loads for
+	 * long periods (which can't be compensated by
 	 * negative drop rates) don't confuse the controller
 	 *
 	 * NB: - "err < 0" means "desired_cpuload < actual_cpuload"
@@ -791,7 +791,7 @@ static int pipe_push(struct sip_msg *msg, int id)
 	return ret;
 }
 
-/**     
+/**
  * runs the current request through the queues
  * \param       msg
  * \param       forced_pipe     is >= 0 if a specific pipe should be used, < 0 otherwise
@@ -979,7 +979,7 @@ static int parse_queue_params(char *line, rl_queue_params_t *params)
 }
 
 /**
- * checks that all FEEDBACK pipes use the same setpoint 
+ * checks that all FEEDBACK pipes use the same setpoint
  * cpu load. also sets (common) cfg_setpoint value
  * \param	modparam 1 to check modparam (static) fields, 0 to use shm ones
  *
