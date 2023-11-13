@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -46,7 +46,7 @@ extern "C"
 	struct _notifier_domain_t;
 	typedef struct _notifier_domain_t notifier_domain_t;
 
-	/* data hold by subscriber for the time of subscription duration 
+	/* data hold by subscriber for the time of subscription duration
  * (from subscribe to unsubscribe; after calling unsubscribe can
  * be destroyed contents of them) */
 	typedef struct _qsa_subscription_data_t

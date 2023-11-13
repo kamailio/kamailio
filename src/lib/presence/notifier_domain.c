@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -226,7 +226,7 @@ static void free_subscription(qsa_subscription_t *s)
 /*static void add_server_subscription(notifier_t *n, qsa_subscription_t *s)
 {
 	server_subscription_t server_s;
-	
+
 	server_s.notifier_data = NULL;
 	if (n->subscribe(n, &s->record_id, s, &server_s.notifier_data) == 0) {
 		server_s.notifier = n;
@@ -234,7 +234,7 @@ static void free_subscription(qsa_subscription_t *s)
 	}
 	else ERROR_LOG("subscription not accepted by notifier %p\n", n);
 }
-			
+
 static void remove_notifier_from_subscription(qsa_subscription_t *s, notifier_t *n)
 {
 	int cnt,i;
@@ -286,7 +286,7 @@ void destroy_notifier_domain(notifier_domain_t *domain)
 	qsa_content_type_t *c, *tmp;
 
 	/* this function is always called only if no only one reference
-	 * to domain exists (see domain maintainer), this should mean, that 
+	 * to domain exists (see domain maintainer), this should mean, that
 	 * all subscribers freed their subscriptions */
 
 	lock_notifier_domain(domain);
@@ -348,7 +348,7 @@ notifier_t *register_notifier(notifier_domain_t *domain, const str_t *package,
 
 	DOUBLE_LINKED_LIST_ADD(p->first_notifier, p->last_notifier, info);
 
-	/* go through all subscriptions for package and 
+	/* go through all subscriptions for package and
 	 * add them to this notifier */
 	s = p->first_subscription;
 	while(s) {
@@ -374,7 +374,7 @@ void unregister_notifier(notifier_domain_t *domain, notifier_t *info)
 
 	p = info->package;
 	if(p) {
-		/* accepted subscriptions MUST be removed by the notifier 
+		/* accepted subscriptions MUST be removed by the notifier
 		 * how to solve this ? */
 
 		/* qsa_subscription_t *s;

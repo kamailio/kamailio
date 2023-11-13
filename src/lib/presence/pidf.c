@@ -1,8 +1,8 @@
-/* 
+/*
  * PIDF parser
  *
  * $Id$
- * 
+ *
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
