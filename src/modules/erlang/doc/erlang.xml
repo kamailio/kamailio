@@ -30,9 +30,9 @@
 		</copyright>
 	</bookinfo>
 	<toc></toc>
-    
+
     <xi:include href="erlang_admin.xml"/>
     <xi:include href="erlang_use.xml"/>
     <xi:include href="erlang_devel.xml"/>
-    
+
 </book>
