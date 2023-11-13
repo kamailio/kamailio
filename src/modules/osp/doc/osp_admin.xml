@@ -10,7 +10,7 @@
 <!-- OSP Module User's Guide -->
 
 <chapter>
-  
+
   <title>&adminguide;</title>
   <section>
     <title>Overview</title>
@@ -164,7 +164,7 @@ modparam("osp","persistence",1000)
     </section>
     <section>
       <title><varname>retry_delay</varname></title>
-      <para>The retry_delay (integer) parameter defines the time, in seconds, between retrying connection attempts to an OSP peering server. After exhausting all peering servers the OSP Module will delay for this amount of time before resuming connection attempts. This is an optional field with default value is 1 second.</para> 
+      <para>The retry_delay (integer) parameter defines the time, in seconds, between retrying connection attempts to an OSP peering server. After exhausting all peering servers the OSP Module will delay for this amount of time before resuming connection attempts. This is an optional field with default value is 1 second.</para>
       <example>
         <title>Setting the retry delay</title>
         <programlisting format="linespecific">
@@ -174,7 +174,7 @@ modparam("osp","retry_delay",1)
     </section>
     <section>
       <title><varname>retry_limit</varname></title>
-      <para>The retry_limit (integer) parameter defines the maximum number of retries for connection attempts to a peering server. If no connection is established after this many retry attempts to all peering servers, the OSP Module will cease connection attempts and return appropriate error codes. This number does not count the initial connection attempt, so that a retry_limit of 1 will result in a total of two connection attempts to every peering server. The default value is 2.</para> 
+      <para>The retry_limit (integer) parameter defines the maximum number of retries for connection attempts to a peering server. If no connection is established after this many retry attempts to all peering servers, the OSP Module will cease connection attempts and return appropriate error codes. This number does not count the initial connection attempt, so that a retry_limit of 1 will result in a total of two connection attempts to every peering server. The default value is 2.</para>
       <example>
         <title>Setting the retry limit</title>
         <programlisting format="linespecific">
@@ -248,7 +248,7 @@ modparam("osp","source_networkid_avp","$avp(s:snid)")
     <section>
       <title><function moreinfo="none">checkospheader()</function></title>
       <para>This function checks for the existence of the OSP-Auth-Token header field.</para>
-      <para>This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.</para> 
+      <para>This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.</para>
       <example>
         <title>checkospheader usage</title>
         <programlisting format="linespecific">
@@ -265,7 +265,7 @@ if (checkospheader()) {
     <section>
       <title><function moreinfo="none">validateospheader()</function></title>
       <para>This function validates an OSP-Token specified in the OSP-Auth-Tokenheader field of the SIP message. If a peering token is present, it will be validated locally. If no OSP header is found or the header token is invalid or expired, -1 is returned; on successful validation 1 is returned.</para>
-      <para>This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.</para> 
+      <para>This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.</para>
       <example>
         <title>validateospheader usage</title>
         <programlisting format="linespecific">
@@ -283,7 +283,7 @@ if (validateospheader()) {
       <title><function moreinfo="none">requestosprouting()</function></title>
       <para>This function launches a query to the peering server requesting the IP address of one or more destination peers serving the called party. If destination peers are available, the peering server will return the IP address and a peering authorization token for each destination peer. The OSP-Auth-Token Header field is inserted into the SIP message and the SIP uri is rewritten to the IP address of destination peer provided by the peering server.</para>
       <para>The address of the called party must be a valid E164 number, otherwise this function returns -1. If the transaction was accepted by the peering server, the uri is being rewritten and 1 returned, on errors (peering servers are not available, authentication failed or there is no route to destination or the route is blocked) -1 is returned.</para>
-      <para>This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.</para> 
+      <para>This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.</para>
       <example>
         <title>requestosprouting usage</title>
         <programlisting format="linespecific">
@@ -300,7 +300,7 @@ if (requestosprouting()) {
     <section>
       <title><function moreinfo="none">checkosproute()</function></title>
       <para>This function is used to check if there is any route for the call.</para>
-      <para>This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.</para> 
+      <para>This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.</para>
       <example>
         <title>checkosproute usage</title>
         <programlisting format="linespecific">
@@ -317,7 +317,7 @@ if (checkosproute()) {
     <section>
       <title><function moreinfo="none">prepareosproute()</function></title>
       <para>This function tries to prepare the INVITE to be forwarded using the destination in the list returned by the peering server. If the calling number is translated, a RPID value for the RPID AVP will be set. If the route could not be prepared, the function returns 'FALSE' back to the script, which can then decide how to handle the failure. Note, if checkosproute has been called and returns 'TRUE' before calling prepareosproute, prepareosproute should not return 'FALSE' because checkosproute has confirmed that there is at least one route.</para>
-      <para>This function can be used from BRANCH_ROUTE.</para> 
+      <para>This function can be used from BRANCH_ROUTE.</para>
       <example>
         <title>prepareosproute usage</title>
         <programlisting format="linespecific">
@@ -334,7 +334,7 @@ if (prepareosproute()) {
     <section>
       <title><function moreinfo="none">checkcallingtranslation()</function></title>
       <para>This function is used to check if the calling number is translated. Before calling checkcallingtranslation, prepareosproute should be called. If the calling number does been translated, the original Remote-Party-ID, if it exists, should be removed from the INVITE message. And a new Remote-Party-ID header should be added (a RPID value for the RPID AVP has been set by prepareosproute). If the calling number is not translated, nothing should be done.</para>
-      <para>This function can be used from BRANCH_ROUTE.</para> 
+      <para>This function can be used from BRANCH_ROUTE.</para>
       <example>
         <title>checkcallingtranslation usage</title>
         <programlisting format="linespecific">
@@ -354,7 +354,7 @@ if (checkcallingtranslation()) {
     <section>
       <title><function moreinfo="none">prepareallosproute()</function></title>
       <para>This function tries to prepare all the routes in the list returned by the peering server. The message is then either forked off or redirected to the destination. If unsuccessful in preparing the routes a SIP 500 is sent back and a trace message is logged.</para>
-      <para>This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.</para> 
+      <para>This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.</para>
       <example>
         <title>prepareallosproute usage</title>
         <programlisting format="linespecific">
@@ -380,8 +380,8 @@ if (prepareallosproute()) {
             <para>"1" - Destination device releases the call.</para>
           </listitem>
         </itemizedlist>
-      </para> 
-      <para>This function can be used from REQUEST_ROUTE.</para> 
+      </para>
+      <para>This function can be used from REQUEST_ROUTE.</para>
       <example>
         <title>reportospusage usage</title>
         <programlisting format="linespecific">
