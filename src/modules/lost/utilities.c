@@ -959,7 +959,7 @@ err:
 
 /*
  * lost_parse_geo(node, loc)
- * parses locationResponse (pos|circle) and writes 
+ * parses locationResponse (pos|circle) and writes
  * results to location object
  */
 int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
@@ -1034,7 +1034,7 @@ err:
 
 /*
  * lost_xpath_location(doc, path, loc)
- * performs xpath expression on locationResponse and writes 
+ * performs xpath expression on locationResponse and writes
  * results (location-info child element) to location object
  */
 int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
