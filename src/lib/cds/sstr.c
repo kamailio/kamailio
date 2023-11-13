@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -231,7 +231,7 @@ int str_case_equals(const str_t *a, const str_t *b)
 	if ((s->len > 0) && (s->s)) cds_free(s->s);
 	s->len = 0;
 	s->s = NULL;
-} 
+}
 
 void str_free(str_t *s)
 {
@@ -333,7 +333,7 @@ int replace_str(
 	/* if (!dst) return -1;
 	 if (!src) {
 		str_clear(dst);
-		return -1; 
+		return -1;
 	} */
 
 	if(is_str_empty(sample)) {

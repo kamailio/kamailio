@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -40,7 +40,7 @@ extern "C"
 		int element_count;
 		/** the number of allocated elements */
 		int allocated_count;
-		/** number of elements allocated together (better than allocation 
+		/** number of elements allocated together (better than allocation
 	 * for each element separately) */
 		int allocation_count;
 		void *data;

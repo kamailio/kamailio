@@ -22,7 +22,7 @@ extern "C"
 #endif
 
 /* macros for conversion to string representation of DBID
- * (if dbid becomes structure with binary information 
+ * (if dbid becomes structure with binary information
  * these should be removed and replaced by functions) */
 #define dbid_strlen(id) strlen(id)
 #define dbid_strptr(id) ((char *)(id))
