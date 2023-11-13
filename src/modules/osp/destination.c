@@ -65,7 +65,7 @@ osp_dest *ospInitDestination(osp_dest *dest)
 	return dest;
 }
 
-/* 
+/*
  * Save destination as an AVP
  *     name - OSP_ORIGDEST_NAME / OSP_TERMDEST_NAME
  *     value - osp_dest wrapped in a string
@@ -81,8 +81,8 @@ static int ospSaveDestination(osp_dest *dest, const str *name)
 	wrapper.s = (char *)dest;
 	wrapper.len = sizeof(osp_dest);
 
-	/* 
-     * add_avp will make a private copy of both the name and value in shared memory 
+	/*
+     * add_avp will make a private copy of both the name and value in shared memory
      * which will be released by TM at the end of the transaction
      */
 	if(add_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)*name, (int_str)wrapper)
@@ -116,7 +116,7 @@ int ospSaveTermDestination(osp_dest *dest)
 	return ospSaveDestination(dest, &OSP_TERMDEST_NAME);
 }
 
-/* 
+/*
  * Check if there is an unused and supported originate destination from an AVP
  *     name - OSP_ORIGDEST_NAME
  *     value - osp_dest wrapped in a string
@@ -159,11 +159,11 @@ int ospCheckOrigDestination(void)
 	return result;
 }
 
-/* 
+/*
  * Retrieved an unused and supported originate destination from an AVP
  *     name - OSP_ORIGDEST_NAME
  *     value - osp_dest wrapped in a string
- *     There can be 0, 1 or more originate destinations. 
+ *     There can be 0, 1 or more originate destinations.
  *     Find the 1st unused destination (used==0) & supported (support==1),
  *     return it, and mark it as used (used==1).
  * return NULL on failure
@@ -213,7 +213,7 @@ osp_dest *ospGetNextOrigDestination(void)
  * Retrieved the last used originate destination from an AVP
  *    name - OSP_ORIGDEST_NAME
  *    value - osp_dest wrapped in a string
- *    There can be 0, 1 or more destinations. 
+ *    There can be 0, 1 or more destinations.
  *    Find the last used destination (used==1) & supported (support==1),
  *    and return it.
  *    In normal condition, this one is the current destination. But it may
@@ -249,7 +249,7 @@ osp_dest *ospGetLastOrigDestination(void)
 	return lastdest;
 }
 
-/* 
+/*
  * Retrieved the terminate destination from an AVP
  *     name - OSP_TERMDEST_NAME
  *     value - osp_dest wrapped in a string
