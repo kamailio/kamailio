@@ -202,7 +202,7 @@ static struct xmpp_connection *conn_find_domain(char *domain, int type)
 static struct xmpp_connection *conn_find_fd(int fd)
 {
 	struct xmpp_connection *conn;
-	
+
 	for (conn = conn_list; conn; conn = conn->next)
 		if (conn->fd == fd)
 			return conn;

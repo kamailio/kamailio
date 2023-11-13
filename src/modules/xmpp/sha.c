@@ -12,7 +12,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- * 
+ *
  *  Gabber
  *  Copyright (C) 1999-2000 Dave Smith & Julian Missig
  *
@@ -23,7 +23,7 @@
  */
 
 
-/* 
+/*
    Implements the Secure Hash Algorithm (SHA1)
 
    Copyright (C) 1999 Scott G. Miller
@@ -31,12 +31,12 @@
    Released under the terms of the GNU General Public License v2
    see file COPYING for details
 
-   Credits: 
-      Robert Klep <robert@ilse.nl>  -- Expansion function fix 
+   Credits:
+      Robert Klep <robert@ilse.nl>  -- Expansion function fix
 	  Thomas "temas" Muldowney <temas@box5.net>:
 	  		-- shahash() for string fun
 			-- Will add the int32 stuff in a few
-	  		
+
    ---
    FIXME: This source takes int to be a 32 bit integer.  This
    may vary from system to system.  I'd use autoconf if I was familiar
@@ -117,7 +117,7 @@ int sha_hash(int *data, int *hash)
 		W[t] = rol1(x);
 	}
 
-	/* SHA1 main loop (t=0 to 79) 
+	/* SHA1 main loop (t=0 to 79)
    This is broken down into four subloops in order to use
    the correct round function and constant */
 	for(t = 0; t < 20; t++) {
