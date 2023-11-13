@@ -579,7 +579,7 @@ int mqtt_prepare_publish(str *topic, str *payload, int qos)
 }
 
 /**
- * 
+ *
  */
 void mqtt_request_notify(
 		struct ev_loop *loop, struct ev_io *watcher, int revents)
@@ -621,7 +621,7 @@ void mqtt_request_notify(
 }
 
 /**
- * 
+ *
  */
 int mqtt_publish(str *topic, str *payload, int qos)
 {
@@ -640,7 +640,7 @@ int mqtt_publish(str *topic, str *payload, int qos)
 }
 
 /**
- * 
+ *
  */
 int mqtt_prepare_subscribe(str *topic, int qos)
 {
@@ -691,7 +691,7 @@ int mqtt_prepare_subscribe(str *topic, int qos)
 }
 
 /**
- * 
+ *
  */
 int mqtt_subscribe(str *topic, int qos)
 {
@@ -707,7 +707,7 @@ int mqtt_subscribe(str *topic, int qos)
 }
 
 /**
- * 
+ *
  */
 int mqtt_prepare_unsubscribe(str *topic)
 {
@@ -754,7 +754,7 @@ int mqtt_prepare_unsubscribe(str *topic)
 }
 
 /**
- * 
+ *
  */
 int mqtt_unsubscribe(str *topic)
 {
