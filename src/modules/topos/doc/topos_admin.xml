@@ -143,7 +143,7 @@ modparam("topos", "db_url", "&exampledb;")
 			Call-id.
 			Topoh module should be loaded with use_mode paramerter set to 1
 		</para>
-		
+
 		<para>
 		<emphasis>
 			Default value is 0 (do not mask).
