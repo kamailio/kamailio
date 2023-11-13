@@ -345,7 +345,7 @@ static inline int parse_naptr_regexp(
 
 /*
  * Tests if one result record is "greater" that the other.  Non-NAPTR records
- * greater that NAPTR record.  An invalid NAPTR record is greater than a 
+ * greater that NAPTR record.  An invalid NAPTR record is greater than a
  * valid one.  Valid NAPTR records are compared based on their
  * (order,preference).
  *
