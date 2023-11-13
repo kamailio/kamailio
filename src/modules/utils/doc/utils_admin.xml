@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -53,7 +53,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be
-		installed before  
+		installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -65,7 +65,7 @@
 		</para>
 	</section>
 	</section>
-	
+
 	<section>
 		<title>Parameters</title>
 		<section id="utils.p.forward_active">
@@ -144,7 +144,7 @@ modparam("utils", "xcap_table", "pres_xcap")
 			<para>
 			Both watcher_uri and presentity_uri are
 			pseudo variables. The function returns
-			ACTIVE_STATUS, if a subscription is 
+			ACTIVE_STATUS, if a subscription is
 			allowed and PENDING_STATUS, TERMINATED_STATUS,
 			or WAITING_STATUS otherwise. See
 			presence/subscribe.h for the corresponding integer
@@ -170,10 +170,10 @@ if (method=="MESSAGE") {
 			</example>
 		</section>
 	</section>
-	
+
 	<section>
 	    <title><acronym>MI</acronym> Commands</title>
-		
+
 	<section id="utils.m.forward_list">
 	    <title><function moreinfo="none">forward_list</function></title>
 	    <para>
@@ -256,7 +256,7 @@ id switch                         filter proxy
 	    </example>
 	</section>
 	</section>
-	
+
 	<section>
 		<title>Configuration syntax</title>
 		<para>This grammar specify the usable configuration syntax</para>
