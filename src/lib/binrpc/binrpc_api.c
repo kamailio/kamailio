@@ -738,7 +738,7 @@ int binrpc_get_response_type(struct binrpc_response_handle *resp_handle)
  *          printf("%.*s", size, s);
  *          if (type==-1)
  *            continue;
- *          else 
+ *          else
  *             printf("now we should get & print an object of type %d\n", type)
  *        }
  */
