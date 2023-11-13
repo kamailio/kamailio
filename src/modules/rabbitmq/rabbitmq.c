@@ -561,7 +561,7 @@ static int rabbitmq_connect(amqp_connection_state_t *conn)
 	int ret;
 	int log_ret;
 	//	amqp_rpc_reply_t reply;
-	
+
 	// amqp_ssl_init_called should only be called once
 	if(amqp_info.ssl && !amqp_ssl_init_called) {
 		amqp_set_initialize_ssl_library(1);
