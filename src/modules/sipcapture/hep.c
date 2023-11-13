@@ -220,10 +220,10 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri)
 	ri->dst_port = ntohs(heph->hp_dport);
 
 	/* cut off the offset */
-	/* 
+	/*
 	 *  len -= offset;
          *  p = buf + offset;
-	 *  memmove(buf, p, BUF_SIZE+1); 
+	 *  memmove(buf, p, BUF_SIZE+1);
 	*/
 
 	hep_payload = buf + hep_offset;
