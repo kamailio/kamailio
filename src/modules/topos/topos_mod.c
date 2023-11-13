@@ -102,6 +102,8 @@ int _tps_clean_interval = 60;
 #define TPS_EVENTRT_SENDING 2
 #define TPS_EVENTRT_INCOMING 4
 #define TPS_EVENTRT_RECEIVING 8
+#define TT_TABLE_VERSION 2
+#define TD_TABLE_VERSION 2
 static int _tps_eventrt_mode = TPS_EVENTRT_OUTGOING | TPS_EVENTRT_SENDING
 							   | TPS_EVENTRT_INCOMING | TPS_EVENTRT_RECEIVING;
 static int _tps_eventrt_outgoing = -1;
@@ -198,6 +200,7 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	db1_con_t *topos_db_con = NULL;
 	_tps_eventrt_outgoing =
 			route_lookup(&event_rt, _tps_eventrt_outgoing_name.s);
 	if(_tps_eventrt_outgoing < 0
@@ -252,6 +255,23 @@ static int mod_init(void)
 					"provide all functions needed\n");
 			return -1;
 		}
+		topos_db_con = _tpsdbf.init(&_tps_db_url);
+		if(topos_db_con == NULL) {
+			LM_ERR("failed to open database connection\n");
+			goto dberror;
+		}
+		if(db_check_table_version(
+				   &_tpsdbf, topos_db_con, &td_table_name, TD_TABLE_VERSION)
+				< 0) {
+			DB_TABLE_VERSION_ERROR(td_table_name);
+			goto dberror;
+		}
+		if(db_check_table_version(
+				   &_tpsdbf, topos_db_con, &tt_table_name, TT_TABLE_VERSION)
+				< 0) {
+			DB_TABLE_VERSION_ERROR(tt_table_name);
+			goto dberror;
+		}
 	} else {
 		if(_tps_storage.len != 7 && strncmp(_tps_storage.s, "redis", 5) != 0) {
 			LM_ERR("unknown storage type: %.*s\n", _tps_storage.len,
@@ -302,6 +322,12 @@ static int mod_init(void)
 
 	return 0;
 error:
+	return -1;
+dberror:
+	if(topos_db_con) {
+		_tpsdbf.close(topos_db_con);
+		topos_db_con = NULL;
+	}
 	return -1;
 }
 
