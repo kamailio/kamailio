@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -50,9 +50,9 @@ int encode_contact(struct sip_msg *msg, char *encoding_prefix, char *public_ip)
 
 
 	/*
-	 * I have a list of contacts in contact->parsed which is of type contact_body_t 
+	 * I have a list of contacts in contact->parsed which is of type contact_body_t
 	 * inside i have a contact->parsed->contact which is the head of the list of contacts
-	 * inside it is a 
+	 * inside it is a
 	 * str uri;
 	 * struct contact *next;
 	 * I just have to visit each uri and encode each uri according to a scheme
@@ -561,7 +561,7 @@ int decode2format(str *uri, char separator, struct uri_format *format)
 	}
 
 
-	/* we must be in state EX_RCVPROTO and protocol is between lastpos and 
+	/* we must be in state EX_RCVPROTO and protocol is between lastpos and
 	 * end@ */
 	if(state != EX_RCVPROTO)
 		return -6;

@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -142,9 +142,9 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 		pmatch.rm_eo--; /* return with one space */
 #endif
 
-		/* 
+		/*
                 for BSD and Solaris we avoid memrchr
-                pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so); 
+                pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so);
                 */
 		pos = begin + pmatch.rm_eo;
 #ifdef EXTRA_DEBUG
@@ -434,9 +434,9 @@ int sdp_mangle_ip(struct sip_msg *msg, char *oldip, char *newip)
 		pmatch.rm_eo--; /* return with one space,\n,\r */
 #endif
 
-		/* 
+		/*
                 for BSD and Solaris we avoid memrchr
-                pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so); 
+                pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so);
                 */
 		pos = begin + pmatch.rm_eo;
 		do {
