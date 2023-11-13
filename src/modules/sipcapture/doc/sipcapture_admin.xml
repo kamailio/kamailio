@@ -125,7 +125,7 @@ modparam("sipcapture", "table_name", "homer_capture1|homer_capture2");
 	<section id="sipcapture.p.mt_mode">
 		<title><varname>mt_mode</varname> (str)</title>
 		<para>
-		Name of the mode used for storing data in multiple tables. Modes can be "rand" (random), "round_robin" (use a round_robin algorithm) or "hash" (use hashing to determine the table to store). These modes are only triggered if there is more than one table specified in table_name parameter, separated by "|". 
+		Name of the mode used for storing data in multiple tables. Modes can be "rand" (random), "round_robin" (use a round_robin algorithm) or "hash" (use hashing to determine the table to store). These modes are only triggered if there is more than one table specified in table_name parameter, separated by "|".
 		</para>
 		<para>
 		<emphasis>
@@ -263,7 +263,7 @@ modparam("sipcapture", "raw_ipip_capture_on", 1)
                 <title><varname>raw_moni_capture_on</varname> (integer)</title>
                 <para>
                 Parameter to enable/disable monitoring/mirroring port capturing (on(1)/off(0))
-		Only one mode on raw socket can be enabled! Monitoring port capturing currently 
+		Only one mode on raw socket can be enabled! Monitoring port capturing currently
 		supported only on Linux.
                 </para>
                 <para>
@@ -283,14 +283,14 @@ modparam("sipcapture", "raw_moni_capture_on", 1)
 	<section id="sipcapture.p.raw_socket_listen">
                 <title><varname>raw_socket_listen</varname> (string)</title>
                 <para>
-                Parameter indicate a listen IP address of RAW socket for IPIP capturing. 
-                You can also define a port/portrange for IPIP/Mirroring mode, to capture 
+                Parameter indicate a listen IP address of RAW socket for IPIP capturing.
+                You can also define a port/portrange for IPIP/Mirroring mode, to capture
                 SIP messages in specific ports:
 		<para>
 		"10.0.0.1:5060" - the source/destination port of the SIP message must be equal 5060
 		</para>
 		<para>
-		"10.0.0.1:5060-5090" - the source/destination port of the SIP message must be 
+		"10.0.0.1:5060-5090" - the source/destination port of the SIP message must be
 		equal or be between 5060 and 5090.
 		</para>
 		<para>
@@ -376,7 +376,7 @@ modparam("sipcapture", "promiscuous_on", 1)
 	<section id="sipcapture.p.raw_moni_bpf_on">
                 <title><varname>raw_moni_bpf_on</varname> (integer)</title>
                 <para>
-                Activate Linux Socket Filter (LSF based on BPF) on the mirroring interface. 
+                Activate Linux Socket Filter (LSF based on BPF) on the mirroring interface.
                 The structure is defined in linux/filter.h. The default LSF accept a port/portrange
                 from the raw_socket_listen param. Currently LSF supported only on Linux.
                 </para>
@@ -393,7 +393,7 @@ modparam("sipcapture", "raw_moni_bpf_on", 1)
 ...
 </programlisting>
                 </example>
-        </section>        
+        </section>
 	<section id="sipcapture.p.capture_node">
 		<title><varname>capture_node</varname> (str)</title>
 		<para>
@@ -578,7 +578,7 @@ modparam("sipcapture", "capture_bad_msgs", 1)
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-		<para><emphasis>table</emphasis> - The table where HEP SIP message will be stored. Homer 5 use now tables with datestamp. 
+		<para><emphasis>table</emphasis> - The table where HEP SIP message will be stored. Homer 5 use now tables with datestamp.
 		To generate an automatic table's name please use strftime parameters. I.e. $var(table) = "sip_capture_call_%Y%m%d" and set the variable
 		as an argument of the sip_capture function.
 		</para>
@@ -783,11 +783,11 @@ event_route[sipcapture:request] {
 	<section>
 		<title>Database setup</title>
 		<para>
-		Before running &kamailio; with the sipcapture module, you have to setup the database 
-		tables where the module will store the data. For that, if the table were not 
-		created by the installation script or you choose to install everything by 
-		yourself you can use the homer_databases.sql, <acronym>SQL</acronym> script 
-		in the sql folder of sipcapture module as template. You can also find the 
+		Before running &kamailio; with the sipcapture module, you have to setup the database
+		tables where the module will store the data. For that, if the table were not
+		created by the installation script or you choose to install everything by
+		yourself you can use the homer_databases.sql, <acronym>SQL</acronym> script
+		in the sql folder of sipcapture module as template. You can also find the
 		complete database documentation on the project webpage, &kamailiodbdocslink;.
 		</para>
 	</section>
@@ -795,7 +795,7 @@ event_route[sipcapture:request] {
         <title>Limitations</title>
 	<itemizedlist>
 		<listitem>
-		1. Only one capturing mode on RAW socket is supported: IPIP or monitoring/mirroring port. 
+		1. Only one capturing mode on RAW socket is supported: IPIP or monitoring/mirroring port.
 		   Don't activate both at the same time. Obsolete. Please use HEP mirroring now.
 		</listitem>
 		<listitem>
