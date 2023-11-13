@@ -196,7 +196,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 	unsigned int flags;
 
 	/* dup can be:
-	 *    0 - sh reply but nothing duplicated 
+	 *    0 - sh reply but nothing duplicated
 	 *    1 - sh reply but only contact body parsed
 	 *    2 - sh reply and contact header and body parsed
 	 *    3 - private reply
@@ -211,7 +211,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 	if(sh_rpl->contact == 0) {
 		/* contact header is not parsed */
 		if(sh_rpl->msg_flags & FL_SHM_CLONE) {
-			/* duplicate the reply into private memory to be able 
+			/* duplicate the reply into private memory to be able
 			 * to parse it and afterwards to free the parsed mems */
 			memcpy(&dup_rpl, sh_rpl, sizeof(struct sip_msg));
 			dup = 2;
@@ -338,7 +338,7 @@ restore:
 	} else if(dup == 2) {
 		/* are any new headers found? */
 		if(dup_rpl.last_header != sh_rpl->last_header) {
-			/* identify in the new headere list (from dup_rpl) 
+			/* identify in the new headere list (from dup_rpl)
 			 * the sh_rpl->last_header and start remove everything after */
 			hdr = sh_rpl->last_header;
 			free_hdr_field_lst(hdr->next);
