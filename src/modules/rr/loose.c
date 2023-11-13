@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -88,7 +88,7 @@ static int is_preloaded(struct sip_msg *msg)
 
 /*!
  * \brief Parse the message and find first occurrence of Route header field.
- * \param _m SIP message 
+ * \param _m SIP message
  * \return -1 or -2 on a parser error, 0 if there is a Route HF and 1 if there is no Route HF
  */
 static inline int find_first_route(struct sip_msg *_m)
@@ -665,7 +665,7 @@ static inline int after_strict(struct sip_msg *_m)
 	}
 
 	/* set the hooks for the param
-	 * important note: RURI is already parsed by the above function, so 
+	 * important note: RURI is already parsed by the above function, so
 	 * we just used it without any checking */
 	routed_msg_id.msgid = _m->id;
 	routed_msg_id.pid = _m->pid;
@@ -680,7 +680,7 @@ static inline int after_strict(struct sip_msg *_m)
 
 		/* Note: when there is only one Route URI left (endpoint), it will
 		 * always be a strict router because endpoints don't use ;lr parameter
-		 * In this case we will simply put the URI in R-URI and forward it, 
+		 * In this case we will simply put the URI in R-URI and forward it,
 		 * which will work perfectly */
 		if(get_maddr_uri(&uri, &puri) != 0) {
 			LM_ERR("failed to check maddr\n");
@@ -715,8 +715,8 @@ static inline int after_strict(struct sip_msg *_m)
 		}
 
 		/* Next hop is a loose router - Which means that is is not endpoint yet
-		 * In This case we have to recover from previous strict routing, that 
-		 * means we have to find the last Route URI and put in in R-URI and 
+		 * In This case we have to recover from previous strict routing, that
+		 * means we have to find the last Route URI and put in in R-URI and
 		 * remove the last Route URI. */
 		if(rt != hdr->parsed) {
 			/* There is a previous route uri which was 2nd uri of mine
@@ -749,8 +749,8 @@ static inline int after_strict(struct sip_msg *_m)
 			return RR_ERROR;
 		}
 
-		/* The first character if uri will be either '<' when it is the 
-		 * only URI in a Route header field or ',' if there is more than 
+		/* The first character if uri will be either '<' when it is the
+		 * only URI in a Route header field or ',' if there is more than
 		 * one URI in the header field */
 		LM_DBG("The last route URI: '%.*s'\n", rt->nameaddr.uri.len,
 				ZSW(rt->nameaddr.uri.s));
