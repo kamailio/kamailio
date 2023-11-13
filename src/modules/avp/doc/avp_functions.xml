@@ -33,7 +33,7 @@
 		</para>
 	    </listitem>
 	</itemizedlist>
-	
+
 	<example>
 	    <title><function>set_iattr</function> usage</title>
 	    <programlisting>
@@ -43,7 +43,7 @@ set_iattr("fr_inv_timer", "60")
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="avp.f.flags2attr">
 	<title><function>flags2attr("$avp")</function></title>
 	<para>
@@ -58,7 +58,7 @@ flags2attr("$msg_flags")
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="avp.f.set_sattr">
 	<title><function>set_sattr(attribute, value)</function></title>
 	<para>
@@ -76,7 +76,7 @@ flags2attr("$msg_flags")
 		</para>
 	    </listitem>
 	</itemizedlist>
-	
+
 	<example>
 	    <title><function>set_sattr</function> usage</title>
 	    <programlisting>
@@ -100,7 +100,7 @@ set_sattr("called_number", "1234")
 	    </listitem>
 	</itemizedlist>
     </section>
-    
+
     <section id="avp.f.attr2uri">
 	<title><function>attr2uri($attribute[, uri-part])</function></title>
 	<para>
@@ -119,8 +119,8 @@ set_sattr("called_number", "1234")
 			 that will be rewritten.  The supported values are: "prefix",
 			 "uri", "username", "user",  "usernamepassword", "userpass",
 			 "domain", "host", "domainport", "hostport", "port", "strip",
-			 "strip_tail". "prefix" will add the AVP as a prefix to the 
-			 username (equivalent to prefix("string")), "strip" and 
+			 "strip_tail". "prefix" will add the AVP as a prefix to the
+			 username (equivalent to prefix("string")), "strip" and
 			 "strip_tail" expect a number in the AVP and they will remove the
 			 specified number of characters from the beginning, respective the
 			  end of the username part of the uri. The rest of the uri-part
@@ -158,7 +158,7 @@ if (attr_exists("saved_ruri")) {
 	</example>
     </section>
 
-    
+
     <section id="avp.f.attr_equals">
 	<title><function>attr_equals(attribute, value)</function></title>
 	<para>
@@ -180,7 +180,7 @@ if (attr_exists("saved_ruri")) {
 	    </listitem>
 	</itemizedlist>
     </section>
-    
+
     <section id="avp.f.attr_equals_xl">
 	<title><function>attr_equals_xl(attribute, xl_format)</function></title>
 	<para>
@@ -216,7 +216,7 @@ if (attr_equals_xl("my_avp", "%ct")) {
 	    </programlisting>
 	</example>
     </section>
-    
+
 	<section id="avp.f.dump_attrs">
 	<title><function>dump_attrs()</function></title>
 	<para>
@@ -224,7 +224,7 @@ if (attr_equals_xl("my_avp", "%ct")) {
 	</para>
 	<para>The function does not require any parameters.</para>
     </section>
-    
+
 	<section id="avp.f.xlset_attr">
 	<title><function>xlset_attr($attribute, xl_format)</function></title>
 	<para>
@@ -261,8 +261,8 @@ if (attr_equals_xl("my_avp", "%ct")) {
 	    </listitem>
 	</itemizedlist>
     </section>
-    
-    
+
+
 	<section id="avp.f.insert_attr_hf_1">
 	<title><function>insert_attr_hf(name)</function></title>
 	<para>
@@ -283,7 +283,7 @@ if (attr_equals_xl("my_avp", "%ct")) {
         </listitem>
     </itemizedlist>
 	</section>
-	
+
 	<section id="avp.f.insert_attr_hf_2">
 	<title><function>insert_attr_hf(header_name, $avp_name)</function></title>
 	<para>
@@ -317,7 +317,7 @@ insert_attr_hf("Route", "$my_route");
 	    </programlisting>
 	</example>
 	</section>
-	
+
 	<section id="avp.f.append_attr_hf_1">
 	<title><function>append_attr_hf(name)</function></title>
 	<para>
@@ -338,7 +338,7 @@ insert_attr_hf("Route", "$my_route");
         </listitem>
     </itemizedlist>
 	</section>
-	
+
 	<section id="avp.f.append_attr_hf_2">
 	<title><function>append_attr_hf(header_name, $avp_name)</function></title>
 	<para>
@@ -363,7 +363,7 @@ insert_attr_hf("Route", "$my_route");
         </listitem>
     </itemizedlist>
 	</section>
-	
+
 	<section id="avp.f.replace_attr_hf_1">
 	<title><function>replace_attr_hf(name)</function></title>
 	<para>
@@ -384,7 +384,7 @@ insert_attr_hf("Route", "$my_route");
         </listitem>
     </itemizedlist>
 	</section>
-	
+
 	<section id="avp.f.replace_attr_hf_2">
 	<title><function>replace_attr_hf(header_name, $avp_name)</function></title>
 	<para>
@@ -409,7 +409,7 @@ insert_attr_hf("Route", "$my_route");
         </listitem>
     </itemizedlist>
 	</section>
-	
+
 	<section id="avp.f.attr_to_reply_1">
 	<title><function>attr_to_reply(name)</function></title>
 	<para>
@@ -423,18 +423,18 @@ insert_attr_hf("Route", "$my_route");
     <itemizedlist>
         <listitem>
         <para><emphasis>name</emphasis>
-		- The name of the header field which is appended into 
+		- The name of the header field which is appended into
 		reply as well as name of AVP which's value is put as the header field
 		value.
 		</para>
         </listitem>
     </itemizedlist>
 	</section>
-	
+
 	<section id="avp.f.attr_to_reply_2">
 	<title><function>attr_to_reply(header_name, $avp_name)</function></title>
 	<para>
-		Appends new header into the reply at the request time processing. 
+		Appends new header into the reply at the request time processing.
 	</para>
     <para>Meaning of the parameter is as follows:</para>
     <itemizedlist>
@@ -461,11 +461,11 @@ attr_to_reply("P-Hint-Route", "my_route");
 	    </programlisting>
 	</example>
 	</section>
-	
+
 	<section id="avp.f.attr_destination">
 	<title><function>attr_destination($avp_name)</function></title>
 	<para>
-		Sets the destination of the forwarded request to the value of AVP, 
+		Sets the destination of the forwarded request to the value of AVP,
 		which must be either a SIP URI or a string in nameaddr format
 		(e.g. "Foo Bar" &lt;sip:uri&gt;).
 	</para>
@@ -489,7 +489,7 @@ t_relay();
 	    </programlisting>
 	</example>
 	</section>
-	
+
 	<section id="avp.f.xlset_destination">
 	<title><function>xlset_destination(xl_format)</function></title>
 	<para>
@@ -514,7 +514,7 @@ t_relay();
 	    </programlisting>
 	</example>
 	</section>
-	
+
 	<section id="avp.f.subst_attr">
 	<title><function>subst_attr($avp_name, subst_re)</function></title>
 	<para>
@@ -545,7 +545,7 @@ subst_attr("$uri","/tel:[0-9]*/sip:\1@foo.bar;user=phone/");
 	    </programlisting>
 	</example>
 	</section>
-	
+
 	<section id="avp.f.del_attr">
 	<title><function>del_attr($avp_name)</function></title>
 	<para>
@@ -576,11 +576,11 @@ failure_route[1] {
 	    </programlisting>
 	</example>
 	</section>
-	
+
 	<section id="avp.f.hdr_body2attrs">
 	<title><function>hdr_body2attrs(headername, prefix)</function></title>
 	<para>
-		Function parses a header body content scans for fld1=val1,fld2=val2,... and creates bunch of avps prefixfld1:= val1, prefixfld2:= val2, .... 
+		Function parses a header body content scans for fld1=val1,fld2=val2,... and creates bunch of avps prefixfld1:= val1, prefixfld2:= val2, ....
 		If possible stores values as integers.
 	</para>
     <para>Meaning of the parameter is as follows:</para>
@@ -603,7 +603,7 @@ failure_route[1] {
 	<section id="avp.f.hdr_body2attrs2">
 	<title><function>hdr_body2attrs2(headername, prefix)</function></title>
 	<para>
-		Function parses a header body content scans for fld1=val1,val2;fld2=val3,... and creates bunch of avps prefixfld1#1:= val1, prefixfld1#2:= val2, prefixfld2:=val3 .... 
+		Function parses a header body content scans for fld1=val1,val2;fld2=val3,... and creates bunch of avps prefixfld1#1:= val1, prefixfld1#2:= val2, prefixfld2:=val3 ....
 		If possible stores values as integers.
 	</para>
     <para>Meaning of the parameter is as follows:</para>
