@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -41,7 +41,7 @@ static int read_entry(xmlNode *entry_node, entry_t **dst)
 {
 	xmlAttr *a;
 	const char *a_val;
-	
+
 	/ * allocate memory and prepare empty node * /
 	if (!dst) return -1;
 	*dst = (entry_t*)cds_malloc(sizeof(entry_t));
