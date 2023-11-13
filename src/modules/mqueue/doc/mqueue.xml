@@ -51,7 +51,7 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
 	<xi:include href="mqueue_admin.xml"/>
-    
+
 </book>
