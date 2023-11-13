@@ -85,11 +85,11 @@ static char *concat( const char *name, int index )
 {
 	char *ptr;
 	int rv;
-	
+
 	rv = asprintf(&ptr, "%s%d", name, index);
 	if ( rv == -1 )
 		return 0;
-	
+
 	return ptr;
 }
 
@@ -172,10 +172,10 @@ int process_options(int argc, char *argv[], int *options, int *mask_length)
 			{0,0,0,0}
 	};
 	int c, index, counter;
-	
+
 	*options = 0;
 	counter = 0;
-	
+
 	while ( (c=getopt_long(argc, argv, "hwam:", long_options, &index)) != -1 ) {
 		switch (c) {
 			case 'h':
@@ -225,22 +225,22 @@ int get_int_from_struct_by_name(xmlrpc_value *structP, const char *element_name,
 	xmlrpc_env env;
 	xmlrpc_env_init(&env);
 	xmlrpc_value *valueP;
-	
+
 	xmlrpc_struct_find_value(&env, structP, element_name, &valueP);
 	if ( env.fault_occurred )
 		goto error;
-	
+
 	xmlrpc_read_int(&env, valueP, rv);
 	if ( env.fault_occurred )
 		goto error1;
-	
+
 	xmlrpc_DECREF(valueP);
 	return 1;
 
 error1:
 	xmlrpc_DECREF(valueP);
 error:
-	return 0;	
+	return 0;
 }
 /* Get a new string value from struct result of xmlrpc_client_call()
  * @param structP pointer to a result struct
@@ -255,7 +255,7 @@ int get_string_from_struct_by_name(xmlrpc_value *structP, const char *element_na
 	xmlrpc_env_init(&env);
 	xmlrpc_value *valueP;
 	int length;
-	
+
 	xmlrpc_struct_find_value(&env, structP, element_name, &valueP);
 	die_if_fault_occurred_line(&env, __LINE__);
 	xmlrpc_read_string(&env, valueP, (const char **)rv);
@@ -276,7 +276,7 @@ int get_int_from_struct_by_idx(xmlrpc_value *structP, int index, int *rv)
 	xmlrpc_env_init(&env);
 	xmlrpc_value *keyP;
 	xmlrpc_value *valueP;
-	
+
 	xmlrpc_struct_read_member(&env, structP, index, &keyP, &valueP);            /* increment refcount of returned values */
 	die_if_fault_occurred_line(&env, __LINE__);
 	xmlrpc_read_int(&env, valueP, rv);
@@ -330,7 +330,7 @@ int get_struct_item_by_idx(xmlrpc_value *structP, int index, key_value_pair *rv)
 	xmlrpc_value *valueP;
 	int length;
 	const char *string;
-	
+
 	xmlrpc_struct_read_member(&env, structP, index, &keyP, &valueP);		/* increment refcount of returned values */
 	die_if_fault_occurred_line(&env, __LINE__);
 	xmlrpc_read_string(&env, keyP, (const char **)&rv->key);
@@ -370,7 +370,7 @@ int read_row(xmlrpc_value *structP, int index, TopItem *top_item)
 {
 	char *elem;
 	char *string = 0;
-	
+
 	elem = concat(IP_ADDR, index);
 	if ( ! get_string_from_struct_by_name(structP, elem, &string) )
 		goto error;
@@ -419,7 +419,7 @@ void print_row(TopItem *ti)
 		printf("%-15s %10s %10s %10s %-10s\n", "IP address", "HITS PREV", "HITS CURR", "EXPIRES", "STATUS");
 		return;
 	}
-	
+
 	if ( strlen(ti->ip_addr) > 15 )	// IPv6 addr
 		fmt = "%s\n                %10d %10d %10d %-10s\n";
 
@@ -436,7 +436,7 @@ void print_row_agg(TopItem *ti)		/* IPv4 only */
 		printf("%-15s %10s %10s %5s\n", "IP address", "HITS PREV", "HITS CURR", "COUNT");
 		return;
 	}
-	
+
 	fmt = "%-15s %10d %10d %5d\n";
 
 	printf(fmt, ti->ip_addr, ti->leaf_hits[0], ti->leaf_hits[1], ti->num_of_ips);
@@ -454,12 +454,12 @@ void print_rows(TopItem *root, int nmemb, int mask_length)
 {
 	int i;
 	void (*print_function)(TopItem *);
-	
+
 	if (mask_length == 32)
 		print_function = print_row;
 	else
 		print_function = print_row_agg;
-	
+
 	print_function(0);
 	for ( i = 0; i < nmemb; ++i, ++root ) {
 		print_function(root);
@@ -509,7 +509,7 @@ int main( int argc, char *argv[] )
 
 	/* Start up our XML-RPC client library. */
 	xmlrpc_client_init(XMLRPC_CLIENT_NO_FLAGS, NAME, VERSION);
-	
+
 	/* Initialize our error-handling environment. */
 	xmlrpc_env_init(&env);
 
@@ -524,7 +524,7 @@ int main( int argc, char *argv[] )
 	                             "(s)", stropts);
 	free(uri);
 	die_if_fault_occurred_line(&env, __LINE__);
-	
+
 	/* parse returned structure */
 	if ( xmlrpc_value_type(resultP) != XMLRPC_TYPE_STRUCT ) {
 		printf("unexpected result - should be structure\n");
@@ -553,10 +553,10 @@ int main( int argc, char *argv[] )
 	memset(top_items, 0, sizeof(top_items));
 
 	/* aggregated values */
-	
+
 	if ( rows == 0 )
 		return 0;
-	
+
 	for ( i = 0, item = top_items; i < rows; ++i, ++item ) {
 		if ( ! read_row(resultP, i, item) ) {
 			fprintf(stderr, "ERROR: while reading row number %d\n", i);
@@ -570,14 +570,14 @@ int main( int argc, char *argv[] )
 			fprintf(stderr, "IP conversion failed - not an IPv4 address: '%s'\n", item->ip_addr);	/* conversion failed from any reason */
 			printf("item[%d].ipv4_addr = %x\n", i, item->ipv4_addr);
 		}
-			
+
 	}
 
 	assert( rows > 0 );
 	/* if IP mask length is shorter than 32 then aggregate list according to the mask */
 	if ( mask_length < 32 ) {
 		uint32_t ip_mask = htonl(mask(mask_length));
-		
+
 		qsort(top_items, rows, sizeof(TopItem), compare_TopItem_ipv4_addr);		/* sort by IPv4 */
 
 		/* skip items without ipv4 address */
@@ -591,13 +591,13 @@ int main( int argc, char *argv[] )
 		j = 0;	/* index of aggregated items */
 		if ( i == 0 )
 			++i;
-		
+
 		top_items[0].ipv4_addr &= ip_mask;
 		top_items[0].num_of_ips = 1;
 		inet_ntop(AF_INET, &top_items[0].ipv4_addr, top_items[0].ip_addr, sizeof(top_items[0].ip_addr));
 		while ( i < rows ) {
 			top_items[i].ipv4_addr &= ip_mask;
-			
+
 			if ( top_items[j].ipv4_addr == top_items[i].ipv4_addr ) {
 				top_items[j].leaf_hits[0] += top_items[i].leaf_hits[0];
 				top_items[j].leaf_hits[1] += top_items[i].leaf_hits[1];
