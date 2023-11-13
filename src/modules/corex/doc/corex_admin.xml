@@ -1097,7 +1097,7 @@ route[reply] {
         <para>
             Please note this event route is meant to <emphasis>prepare</emphasis>
             the message for on-wire communication, e.g. to do custom encryption or
-            decryption, compression/decompression etc. of the message sent to or 
+            decryption, compression/decompression etc. of the message sent to or
 			received from remote host. Therefore, except text operations,
 			no module functions or pseudo variables are available in this event route.
         </para>
@@ -1115,9 +1115,9 @@ route[reply] {
     <section>
     <title>Examples of Usage</title>
         <para>
-			To use network event_route[network:msg] the remote SIP UA must also implement and 
+			To use network event_route[network:msg] the remote SIP UA must also implement and
 			understand the encoding / decoding done in this event route. It is up to  &kamailio;
-			config script writer to define and implement how encoding and decoding is done. 
+			config script writer to define and implement how encoding and decoding is done.
 			Any language module such as app_perl or app_lua can be called in
 			in event_route[network:msg] to implement desired logic.
         </para>
@@ -1134,7 +1134,7 @@ route[reply] {
 			and sent to SIP application server at remote location unencrypted, where they are
 			processed as normal. One the way back, the messages received from SIP application
 			server at edge proxy can be encrypted before being sent to actual destination.
-			The edge proxy can check whether received message came from end-user or SIP 
+			The edge proxy can check whether received message came from end-user or SIP
 			application server by using simple regular expressions.
         </para>
         <para>
