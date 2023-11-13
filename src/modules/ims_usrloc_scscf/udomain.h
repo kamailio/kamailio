@@ -168,7 +168,7 @@ void unlock_subscription_slot(int i);
 /* ===== module interface ======= */
 
 /*!
- * 
+ *
  * \param _d domain to insert the new record
  * \param public_identity
  * \param private_identity
@@ -180,7 +180,7 @@ void unlock_subscription_slot(int i);
  * \param ecf1
  * \param ecf2
  * \param _r new created record
- * \return 
+ * \return
  */
 int insert_impurecord(struct udomain *_d, str *public_identity,
 		str *private_identity, int reg_state, int barring, ims_subscription **s,

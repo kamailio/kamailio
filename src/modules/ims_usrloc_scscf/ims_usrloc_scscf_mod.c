@@ -387,7 +387,7 @@ static int mod_init(void)
 	ims_uls_init_flag = 1;
 
 	/* From contact_dlg_handlers.c
-         * 
+         *
          * V1.1*/
 
 	if(dlgb.register_dlgcb(
