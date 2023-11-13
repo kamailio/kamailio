@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -56,7 +56,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -72,22 +72,22 @@
 	</section>
 <section>
      <title>Parameters</title>
- 
+
      <section>
        <title><varname>general_query_flags</varname> (integer)</title>
- 
- 
+
+
  		<para> Set this parameter to an integer value containing of an ORed result of one or more of the following
 		values
 		(constant present only for documentation process, as they are mostly mapped to libval flags). Setting this
-		parameter will cause the libval defaults to be completely overwritten</para> 
+		parameter will cause the libval defaults to be completely overwritten</para>
  		<para>QUERY_DONT_VALIDATE == 1&lt;&lt;0
 		causes the validator to disable validation for this query.</para>
 
 		<para>QUERY_IGNORE_SKEW == 1&lt;&lt;1
 		causes the validator to disable checking signature inception and expiration times on RRSIGs.</para>
 
-		<para>QUERY_AC_DETAIL == 1&lt;&lt;2 
+		<para>QUERY_AC_DETAIL == 1&lt;&lt;2
 		causes the validator to copy the authentication chain details into the val_rc_answer member within the returned val_result_chain structure.
 		</para>
 
@@ -112,13 +112,13 @@
 		forces libval to ignore cached data while trying to resolve a name.
 		</para>
        <para><emphasis> Default value is 0(no changes)</emphasis></para>
- 
+
        <example>
          <title>Set <varname>general_query_flags</varname> parameter</title>
- 
+
          <programlisting format="linespecific">
  ...
- modparam("dnssec", "general_query_flags", 1) # QUERY_DONT_VALIDATE disable validation  
+ modparam("dnssec", "general_query_flags", 1) # QUERY_DONT_VALIDATE disable validation
  modparam("dnssec", "general_query_flags", 10) # QUERY_IGNORE_SKEW | QUERY_NO_DLV
  ...
  </programlisting>
