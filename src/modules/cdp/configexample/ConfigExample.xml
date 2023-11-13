@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 
+<!--
 
- DiameterPeer Parameters 
+ DiameterPeer Parameters
   - FQDN - FQDN of this peer, as it should apper in the Origin-Host AVP
   - Realm - Realm of this peer, as it should apper in the Origin-Realm AVP
   - Vendor_Id - Default Vendor-Id to appear in the Capabilities Exchange
-  - Product_Name - Product Name to appear in the Capabilities Exchange 
-  - AcceptUnknownPeers - Whether to accept (1) or deny (0) connections from peers with FQDN 
+  - Product_Name - Product Name to appear in the Capabilities Exchange
+  - AcceptUnknownPeers - Whether to accept (1) or deny (0) connections from peers with FQDN
     not configured below
   - DropUnknownOnDisconnect - Whether to drop (1) or keep (0) and retry connections (until restart)
     unknown peers in the list of peers after a disconnection.
@@ -23,17 +23,17 @@
   - ConnectTimeout - time in seconds to wait for an outbound TCP connection to be established.
   - TransactionTimeout - time in seconds after which the transaction timeout callback will be fired,
     when using transactional processing.
-  - SessionsHashSize - size of the hash-table to use for the Diameter sessions. When searching for a 
-    session, the time required for this operation will be that of sequential searching in a list of 
+  - SessionsHashSize - size of the hash-table to use for the Diameter sessions. When searching for a
+    session, the time required for this operation will be that of sequential searching in a list of
     NumberOfActiveSessions/SessionsHashSize. So higher the better, yet each hashslot will consume an
     extra 2xsizeof(void*) bytes (typically 8 or 16 bytes extra).
-  - DefaultAuthSessionTimeout - default value to use when there is no Authorization Session Timeout 
+  - DefaultAuthSessionTimeout - default value to use when there is no Authorization Session Timeout
   AVP present.
   - MaxAuthSessionTimeout - maximum Authorization Session Timeout as a cut-out measure meant to
   enforce session refreshes.
-      
+
  -->
-<DiameterPeer 
+<DiameterPeer
 	FQDN="xcscf.open-ims.test"
 	Realm="open-ims.test"
 	Vendor_Id="10415"
@@ -64,25 +64,25 @@
 	<Acceptor port="3868" ip_proto="SCTP" />
 	<Acceptor port="3869" bind="127.0.0.1" />
 	<Acceptor port="3870" bind="192.168.1.1" />
-	
+
 	<!--
 		Definition of Auth (authorization) and Acct (accounting) supported applications. This
 		information is sent as part of the Capabilities Exchange procedures on connecting to
 		peers. If no common application is found, the peers will disconnect. Messages will only
-		be sent to a peer if that peer actually has declared support for the application id of 
+		be sent to a peer if that peer actually has declared support for the application id of
 		the message.
 	-->
 	<Acct id="16777216" vendor="10415" />
 	<Acct id="16777216" vendor="0" />
 	<Auth id="16777216" vendor="10415"/>
 	<Auth id="16777216" vendor="0" />
-	
-	<!-- 
+
+	<!--
 		Supported Vendor IDs - list of values which will be sent in the CER/CEA in the
 		Supported-Vendor-ID AVPs
 	-->
 	<SupportedVendor vendor="10415" />
-	
+
 	<!--
 		Realm routing definition.
 		Each Realm can have a different table of peers to route towards. In case the Destination
@@ -91,7 +91,7 @@
 		Note: In case a message already contains a Destination-Host AVP, Realm Routeing will not be
 		applied.
 		Note: Routing will only happen towards connected and application id supporting peers.
-		
+
 		The metric is used to order the list of prefered peers, while looking for a connected and
 		application id supporting peer. In the end, of course, just one peer will be selected.
 	-->
