@@ -10,7 +10,7 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-	
+
 	<title>&develguide;</title>
 	<section>
 	<title>Available Functions</title>
@@ -19,19 +19,19 @@
 		<function moreinfo="none">ul_register_domain(name)</function>
 		</title>
 		<para>
-		The function registers a new domain. Domain is just another name for 
-		table used in registrar. The function is called from fixups in 
-		registrar. It gets name of the domain as a parameter and returns 
-		pointer to a new domain structure. The fixup than 'fixes' the 
+		The function registers a new domain. Domain is just another name for
+		table used in registrar. The function is called from fixups in
+		registrar. It gets name of the domain as a parameter and returns
+		pointer to a new domain structure. The fixup than 'fixes' the
 		parameter in registrar so that it will pass the pointer instead of the
-		name every time save() or lookup() is called. Some usrloc functions 
-		get the pointer as parameter when called. For more details see 
+		name every time save() or lookup() is called. Some usrloc functions
+		get the pointer as parameter when called. For more details see
 		implementation of save function in registrar.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>const char* name</emphasis> - Name of the domain 
+			<para><emphasis>const char* name</emphasis> - Name of the domain
 				(also called table) to be registered.
 			</para>
 		</listitem>
@@ -43,29 +43,29 @@
 		<function moreinfo="none">ul_insert_urecord(domain, aor, rec)</function>
 		</title>
 		<para>
-		The function creates a new record structure and inserts it in the 
-		specified domain. The record is structure that contains all the 
+		The function creates a new record structure and inserts it in the
+		specified domain. The record is structure that contains all the
 		contacts for belonging to the specified username.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>udomain_t* domain</emphasis> - Pointer to domain 
+			<para><emphasis>udomain_t* domain</emphasis> - Pointer to domain
 				returned by ul_register_udomain.
 			</para>
 		</listitem>
 		</itemizedlist>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>str* aor</emphasis> - Address of Record (aka 
-			username) of the new record (at this time the record will 
+			<para><emphasis>str* aor</emphasis> - Address of Record (aka
+			username) of the new record (at this time the record will
 			contain no contacts yet).
 			</para>
 		</listitem>
 		</itemizedlist>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>urecord_t** rec</emphasis> - The newly created 
+			<para><emphasis>urecord_t** rec</emphasis> - The newly created
 			record structure.
 			</para>
 		</listitem>
@@ -78,20 +78,20 @@
 		<function moreinfo="none">ul_delete_urecord(domain, aor)</function>
 		</title>
 		<para>
-		The function deletes all the contacts bound with the given Address 
+		The function deletes all the contacts bound with the given Address
 		Of Record.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>udomain_t* domain</emphasis> - Pointer to domain 
+			<para><emphasis>udomain_t* domain</emphasis> - Pointer to domain
 			returned by ul_register_udomain.
 			</para>
 		</listitem>
 		</itemizedlist>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>str* aor</emphasis> - Address of record (aka 
+			<para><emphasis>str* aor</emphasis> - Address of record (aka
 			username) of the record, that should be deleted.
 			</para>
 		</listitem>
@@ -133,14 +133,14 @@
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>udomain_t* domain</emphasis> - Pointer to domain 
+			<para><emphasis>udomain_t* domain</emphasis> - Pointer to domain
 			returned by ul_register_udomain.
 			</para>
 		</listitem>
 		</itemizedlist>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>str* aor</emphasis> - Address of Record of request 
+			<para><emphasis>str* aor</emphasis> - Address of Record of request
 			record.
 			</para>
 		</listitem>
@@ -152,10 +152,10 @@
 		<function moreinfo="none">ul_lock_udomain(domain)</function>
 		</title>
 		<para>
-		The function lock the specified domain, it means, that no other 
-		processes will be able to access during the time. This prevents race 
-		conditions. Scope of the lock is the specified domain, that means, 
-		that multiple domain can be accessed simultaneously, they don't block 
+		The function lock the specified domain, it means, that no other
+		processes will be able to access during the time. This prevents race
+		conditions. Scope of the lock is the specified domain, that means,
+		that multiple domain can be accessed simultaneously, they don't block
 		each other.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -177,7 +177,7 @@
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>udomain_t* domain</emphasis> - Domain to be 
+			<para><emphasis>udomain_t* domain</emphasis> - Domain to be
 			unlocked.
 			</para>
 		</listitem>
@@ -189,13 +189,13 @@
 		<function moreinfo="none">ul_release_urecord(record)</function>
 		</title>
 		<para>
-		Do some sanity checks - if all contacts have been removed, delete 
+		Do some sanity checks - if all contacts have been removed, delete
 		the entire record structure.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>urecord_t* record</emphasis> - Record to be 
+			<para><emphasis>urecord_t* record</emphasis> - Record to be
 			released.
 			</para>
 		</listitem>
@@ -204,17 +204,17 @@
 
 	<section>
 		<title>
-		<function moreinfo="none">ul_insert_ucontact(record, contact, 
+		<function moreinfo="none">ul_insert_ucontact(record, contact,
 		expires, q, callid, cseq, flags, cont, ua, sock)</function>
 		</title>
 		<para>
-		The function inserts a new contact in the given record with 
+		The function inserts a new contact in the given record with
 		specified parameters.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>urecord_t* record</emphasis> - Record in which 
+			<para><emphasis>urecord_t* record</emphasis> - Record in which
 			the contact should be inserted.
 			</para>
 		</listitem>
@@ -223,7 +223,7 @@
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>time_t expires</emphasis> - Expires of the 
+			<para><emphasis>time_t expires</emphasis> - Expires of the
 			contact in absolute value.
 			</para>
 		</listitem>
@@ -232,26 +232,26 @@
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>str* callid</emphasis> - Call-ID of the REGISTER 
+			<para><emphasis>str* callid</emphasis> - Call-ID of the REGISTER
 			message that contained the contact.
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>int cseq</emphasis> - CSeq of the REGISTER 
+			<para><emphasis>int cseq</emphasis> - CSeq of the REGISTER
 			message that contained the contact.
 			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>unsigned int flags</emphasis> - Flags to be set.
-			</para> 
+			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>ucontact_t* cont</emphasis> - Pointer to newly 
+			<para><emphasis>ucontact_t* cont</emphasis> - Pointer to newly
 			created structure.
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>str* ua</emphasis> - User-Agent of the REGISTER 
+			<para><emphasis>str* ua</emphasis> - User-Agent of the REGISTER
 			message that contained the contact.
 			</para>
 		</listitem>
@@ -274,14 +274,14 @@
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>urecord_t* record</emphasis> - Record from which 
+			<para><emphasis>urecord_t* record</emphasis> - Record from which
 			the contact should be removed.
 			</para>
 		</listitem>
 		</itemizedlist>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>ucontact_t* contact</emphasis> - Contact to be 
+			<para><emphasis>ucontact_t* contact</emphasis> - Contact to be
 			deleted.
 			</para>
 		</listitem>
@@ -293,13 +293,13 @@
 		<function moreinfo="none">ul_get_ucontact(record, contact)</function>
 		</title>
 		<para>
-		The function tries to find contact with given Contact &uri; and 
+		The function tries to find contact with given Contact &uri; and
 		returns pointer to structure representing the contact.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>urecord_t* record</emphasis> - Record to be 
+			<para><emphasis>urecord_t* record</emphasis> - Record to be
 			searched for the contact.
 			</para>
 		</listitem>
@@ -319,24 +319,24 @@
 			(buf, len, flags)</function>
 		</title>
 		<para>
-		The function retrieves all contacts of all registered users and 
+		The function retrieves all contacts of all registered users and
 		returns them in the caller-supplied buffer. If the buffer is too small,
-		the function returns positive value indicating how much additional 
-		space would be necessary to accommodate all of them. Please note 
-		that the positive return value should be used only as a 
-		<quote>hint</quote>, as there is no guarantee that during the time 
-		between two subsequent calls number of registered contacts will 
+		the function returns positive value indicating how much additional
+		space would be necessary to accommodate all of them. Please note
+		that the positive return value should be used only as a
+		<quote>hint</quote>, as there is no guarantee that during the time
+		between two subsequent calls number of registered contacts will
 		remain the same.
 		</para>
 		<para>
-		If flag parameter is set to non-zero value then only contacts that 
-		have the specified flags set will be returned. It is, for example, 
+		If flag parameter is set to non-zero value then only contacts that
+		have the specified flags set will be returned. It is, for example,
 		possible to list only contacts that are behind NAT.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>void* buf</emphasis> - Buffer for returning 
+			<para><emphasis>void* buf</emphasis> - Buffer for returning
 			contacts.
 			</para>
 		</listitem>
@@ -358,7 +358,7 @@
 
 	<section>
 		<title>
-		<function moreinfo="none">ul_update_ucontact(contact, expires, q, 
+		<function moreinfo="none">ul_update_ucontact(contact, expires, q,
 		callid, cseq, set, res, ua, sock)</function>
 		</title>
 		<para>
@@ -371,7 +371,7 @@
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>time_t expires</emphasis> - Expires of the 
+			<para><emphasis>time_t expires</emphasis> - Expires of the
 			contact in absolute value.
 			</para>
 		</listitem>
@@ -380,29 +380,29 @@
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>str* callid</emphasis> - Call-ID of the REGISTER 
+			<para><emphasis>str* callid</emphasis> - Call-ID of the REGISTER
 			message that contained the contact.
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>int cseq</emphasis> - CSeq of the REGISTER message 
+			<para><emphasis>int cseq</emphasis> - CSeq of the REGISTER message
 			that contained the contact.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			<emphasis>unsigned int set</emphasis> - OR value of flags to 
+			<emphasis>unsigned int set</emphasis> - OR value of flags to
 			be set.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			<emphasis>unsigned int res</emphasis> - OR value of flags to be 
+			<emphasis>unsigned int res</emphasis> - OR value of flags to be
 			reset.
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>str* ua</emphasis> - User-Agent of the REGISTER 
+			<para><emphasis>str* ua</emphasis> - User-Agent of the REGISTER
 			message that contained the contact.
 			</para>
 		</listitem>
@@ -420,7 +420,7 @@
 			</function>
 		</title>
 		<para>
-		The function imports all functions that are exported by the 
+		The function imports all functions that are exported by the
 		USRLOC module. Overs for other modules which want to user the
 		internal USRLOC API an easy way to load and access the functions.
 		</para>
