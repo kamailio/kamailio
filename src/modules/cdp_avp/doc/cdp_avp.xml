@@ -46,9 +46,9 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="cdp_avp_admin.xml"/>
 	<xi:include href="cdp_avp_devel.xml"/>
 	<xi:include href="cdp_avp_faq.xml"/>
-	
+
 </book>
