@@ -30,8 +30,8 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="ndb_mongodb_admin.xml"/>
-    
-    
+
+
 </book>
