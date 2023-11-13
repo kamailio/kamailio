@@ -28,7 +28,7 @@
  */
 
 /*! \file
- * Berkeley DB : 
+ * Berkeley DB :
  * Implementation of bdb_fld data structure representing BDB fields and
  * related functions.
  *

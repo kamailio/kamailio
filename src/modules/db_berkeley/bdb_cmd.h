@@ -28,7 +28,7 @@
  */
 
 /*! \file
- * Berkeley DB : 
+ * Berkeley DB :
  * Declaration of bdb_cmd data structure that contains BDB specific data
  * stored in db_cmd structures and related functions.
  *
