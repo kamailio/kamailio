@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -79,11 +79,11 @@ static void sigterm_handler(int signal)
  *
  *   1) Registers itself with the Master Agent
  *   2) Initializes all of the SNMPStats modules scalars and tables, while
- *      simultaneously registering their respective SNMP OID's and handlers 
+ *      simultaneously registering their respective SNMP OID's and handlers
  *      with the master agent.
  *   3) Repeatedly checks for new SNMP messages to process
  *
- * \note This function never returns, so it should always be called from a 
+ * \note This function never returns, so it should always be called from a
  *       sub-process.
  */
 static int initialize_agentx(void)

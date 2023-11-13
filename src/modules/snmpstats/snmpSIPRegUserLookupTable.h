@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -23,13 +23,13 @@
  * This file implements the kamailioSIPRegUserLookupTable.  For a full
  * description of the table, please see the KAMAILIO-SIP-SERVER-MIB.
  *
- * This file consists of many more functions than the other header files.  
+ * This file consists of many more functions than the other header files.
  * This is because this table is writable, bringing a lot of SNMP overhead.
  *
  * Most of the contents are auto-generated (aside from white space and comment
  * changes), and can be ignored.  The functions that have been modified are:
  *
- * 1) kamailioSIPRegUserLookupTable_extract_index() 
+ * 1) kamailioSIPRegUserLookupTable_extract_index()
  *
  * 2) kamailioSIPRegUserLookupTable_can_[activate|deactivate|delete]()
  *
@@ -38,7 +38,7 @@
  * 4) kamailioSIPRegUserLookupTable_set_action()
  *
  * Full details can be found in kamailioSIPRegUserLookupTable.c.  You can safely
- * ignore the other functions.  
+ * ignore the other functions.
  */
 
 #ifndef KAMAILIOSIPREGUSERLOOKUPTABLE_H
@@ -82,22 +82,22 @@ extern "C"
 	/*
  * Initializes the kamailioSIPRegUserLookupTable table.  This step is easier
  * than in the other tables because there is no table population.  All table
- * population takes place during run time. 
+ * population takes place during run time.
  */
 	void init_kamailioSIPRegUserLookupTable(void);
 
 
 	/*
  * Initialize the kamailioSIPRegUserLookupTable table by defining how it is
- * structured. 
+ * structured.
  *
  * This function is mostly auto-generated.
  */
 	void initialize_table_kamailioSIPRegUserLookupTable(void);
 
-	/* 
+	/*
  * This function was auto-generated and didn't need modifications from its
- * auto-generation.  It is called to handle an SNMP GET request. 
+ * auto-generation.  It is called to handle an SNMP GET request.
  */
 	int kamailioSIPRegUserLookupTable_get_value(netsnmp_request_info *,
 			netsnmp_index *, netsnmp_table_request_info *);
@@ -151,7 +151,7 @@ extern "C"
 	netsnmp_index *kamailioSIPRegUserLookupTable_delete_row(
 			kamailioSIPRegUserLookupTable_context *);
 
-	/* Used to check if there is a reason why a row can't be activated 
+	/* Used to check if there is a reason why a row can't be activated
  * (There is no reason in our implementation)
  */
 	int kamailioSIPRegUserLookupTable_can_activate(
@@ -159,7 +159,7 @@ extern "C"
 			kamailioSIPRegUserLookupTable_context *row_ctx,
 			netsnmp_request_group *rg);
 
-	/* Used to check if there is a reason why a row can't be deactivated 
+	/* Used to check if there is a reason why a row can't be deactivated
  * (There is no reason in our implementation)
  */
 	int kamailioSIPRegUserLookupTable_can_deactivate(

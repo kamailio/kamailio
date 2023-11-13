@@ -1,5 +1,5 @@
-/* 
- * SNMPStats Module 
+/*
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -43,11 +43,11 @@
 
 /*!
  * This function copies a Kamailio "str" datatype into a '\\0' terminated char*
- * string. 
+ * string.
  *
  * \note Make sure to free the memory allocated to *copiedString, when you no
  *       longer have any use for it. (It is allocated with shm_malloc(), so make
- *       sure to deallocate it with shm_free()) 
+ *       sure to deallocate it with shm_free())
  */
 int convertStrToCharString(str *strToConvert, char **copiedString);
 
@@ -58,7 +58,7 @@ int stringHandlerSanityCheck(modparam_t type, void *val, char *parameterName);
 /*!
  * This function is a wrapper around the standard statistic framework.  It will
  * return the value of the statistic denoted with statName, or zero if the
- * statistic was not found. 
+ * statistic was not found.
  */
 int get_statistic(char *statName);
 
@@ -67,7 +67,7 @@ int get_statistic(char *statName);
  * counted on to be around if this function is called again. */
 char *convertTMToSNMPDateAndTime(struct tm *timeStructure);
 
-/*! \brief Get config framework variable 
+/*! \brief Get config framework variable
  * type will return cfg_type - CFG_VAR_INT, CFG_VAR_STRING, CFG_VAR_STR
  * If type is CFG_VAR_UNSET then call failed and return value should be ignored.
 */

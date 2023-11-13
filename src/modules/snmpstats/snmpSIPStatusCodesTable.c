@@ -86,10 +86,10 @@ size_t kamailioSIPStatusCodesTable_oid_len =
 		OID_LENGTH(kamailioSIPStatusCodesTable_oid);
 
 
-/* 
+/*
  * Initializes the kamailioSIPStatusCodesTable module.  This step is easier
  * than in the other tables because there is no table population.  All table
- * population takes place during run time. 
+ * population takes place during run time.
  */
 void init_kamailioSIPStatusCodesTable(void)
 {
@@ -133,13 +133,13 @@ static int kamailioSIPStatusCodesTable_row_copy(
 /*
  * the *_extract_index routine (Mostly auto-generated)
  *
- * This routine is called when a set request is received for an index that 
+ * This routine is called when a set request is received for an index that
  * was not found in the table container. Here, we parse the oid in the
- * individual index components and copy those indexes to the context. Then 
+ * individual index components and copy those indexes to the context. Then
  * we make sure the indexes for the new row are valid.
  *
  * It has been modified from its original form in that the indexes aren't
- * returned if they are invalid.  An index is invalid if it is not between 
+ * returned if they are invalid.  An index is invalid if it is not between
  * 100 and 699 (Inclusive).
  */
 int kamailioSIPStatusCodesTable_extract_index(
@@ -221,10 +221,10 @@ int kamailioSIPStatusCodesTable_extract_index(
 
 
 /*
- * This is an auto-generated function.  In general the *_can_activate routine 
+ * This is an auto-generated function.  In general the *_can_activate routine
  * is called when a row is changed to determine if all the values set are
  * consistent with the row's rules for a row status of ACTIVE.  If not, then 0
- * can be returned to prevent the row status from becomming final. 
+ * can be returned to prevent the row status from becomming final.
  *
  * For our purposes, we have no need for this check, so we always return 1.
  */
@@ -236,7 +236,7 @@ int kamailioSIPStatusCodesTable_can_activate(
 }
 
 
-/* 
+/*
  * This is an auto-generated function.  In general the *_can_deactivate routine
  * is called when a row that is currently ACTIVE is set to a state other than
  * ACTIVE. If there are conditions in which a row should not be allowed to
@@ -258,10 +258,10 @@ int kamailioSIPStatusCodesTable_can_deactivate(
  * This is an auto-generated function.  In general the *_can_delete routine is
  * called to determine if a row can be deleted.  This usually involved checking
  * if it can be deactivated, and if it can be, then checking for other
- * conditions.  
+ * conditions.
  *
  * Since this table ha no reason why row deletion shouldn't be allowed, we
- * always return 1, unless we can't deactivate.  
+ * always return 1, unless we can't deactivate.
  */
 int kamailioSIPStatusCodesTable_can_delete(
 		kamailioSIPStatusCodesTable_context *undo_ctx,
@@ -274,12 +274,12 @@ int kamailioSIPStatusCodesTable_can_delete(
 }
 
 /*
- * (Mostly auto-generated function) 
+ * (Mostly auto-generated function)
  *
  * The *_create_row routine is called by the table handler to create a new row
  * for a given index. This is the first stage of the row creation process.  The
  * *_set_reserve_* functions can be used to prevent the row from being inserted
- * into the table even if the row passes any preliminary checks set here. 
+ * into the table even if the row passes any preliminary checks set here.
  *
  * Returns a newly allocated kamailioSIPRegUserLookupTable_context structure (a
  * row in the table) if the indexes are legal.  NULL will be returned otherwise.
@@ -287,10 +287,10 @@ int kamailioSIPStatusCodesTable_can_delete(
  * The function has been modified from its original form, in that it will store
  * the number of messages 'in' to the system, and the number of messages 'out'
  * of the system, that had a status code matching this rows status code, at the
- * time this row was created.  
+ * time this row was created.
  *
  * This value will be used in the future to calculate the delta between now and
- * the time this row has been read.  
+ * the time this row has been read.
  * */
 kamailioSIPStatusCodesTable_context *kamailioSIPStatusCodesTable_create_row(
 		netsnmp_index *hdr)
@@ -342,7 +342,7 @@ kamailioSIPStatusCodesTable_context *kamailioSIPStatusCodesTable_create_row(
 }
 
 
-/* 
+/*
  * Auto-generated function.  The *_duplicate row routine
  */
 kamailioSIPStatusCodesTable_context *kamailioSIPStatusCodesTable_duplicate_row(
@@ -366,12 +366,12 @@ kamailioSIPStatusCodesTable_context *kamailioSIPStatusCodesTable_duplicate_row(
 }
 
 
-/* 
+/*
  * The *_delete_row method is auto-generated, and is called to delete a row.
  *
  * This will not be called if earlier checks said that this row can't be
  * deleted.  However, in our implementation there is never a reason why this
- * function can't be called. 
+ * function can't be called.
  */
 netsnmp_index *kamailioSIPStatusCodesTable_delete_row(
 		kamailioSIPStatusCodesTable_context *ctx)
@@ -389,20 +389,20 @@ netsnmp_index *kamailioSIPStatusCodesTable_delete_row(
  * Large parts of this function have been auto-generated.  The functions purpose
  * is to check to make sure all SNMP set values for the given row, have been
  * valid.  If not, then the process is supposed to be aborted.  Otherwise, we
- * pass on to the *_reserve2 function.  
+ * pass on to the *_reserve2 function.
  *
  * For our purposes, our only check is to make sure that either of the following
- * conditions are true: 
+ * conditions are true:
  *
  * 1) If this row already exists, then the SET request is setting the rowStatus
  *    column to 'destroy'.
  *
- * 2) If this row does not already exist, then the SET request is setting the 
- *    rowStatus to 'createAndGo'. 
+ * 2) If this row does not already exist, then the SET request is setting the
+ *    rowStatus to 'createAndGo'.
  *
  * Since the MIB specified there are to be no other modifications to the row,
  * any other condition is considered illegal, and will result in an SNMP error
- * being returned. 
+ * being returned.
  */
 void kamailioSIPStatusCodesTable_set_reserve1(netsnmp_request_group *rg)
 {
@@ -503,10 +503,10 @@ void kamailioSIPStatusCodesTable_set_reserve2(netsnmp_request_group *rg)
 /*
  * This function is called only when all the *_reserve[1|2] functions were
  * succeful.  Its purpose is to make any changes to the row before it is
- * inserted into the table.  
+ * inserted into the table.
  *
  * In our case, we don't require any changes.  So we leave the original
- * auto-generated code as is.   
+ * auto-generated code as is.
  */
 void kamailioSIPStatusCodesTable_set_action(netsnmp_request_group *rg)
 {
@@ -593,17 +593,17 @@ void kamailioSIPStatusCodesTable_set_commit(netsnmp_request_group *rg)
  * This function is called if the *_reserve[1|2] calls failed.  Its supposed to
  * free up any resources allocated earlier.  However, we already take care of
  * all these resources in earlier functions.  So for our purposes, the function
- * body is empty. 
+ * body is empty.
  */
 void kamailioSIPStatusCodesTable_set_free(netsnmp_request_group *rg)
 {
 }
 
 
-/* 
+/*
  * This function is called if an ACTION phase fails, to do extra clean-up work.
  * We don't have anything complicated enough to warrant putting anything in this
- * function.  Therefore, its just left with an empty function body. 
+ * function.  Therefore, its just left with an empty function body.
  */
 void kamailioSIPStatusCodesTable_set_undo(netsnmp_request_group *rg)
 {
@@ -612,7 +612,7 @@ void kamailioSIPStatusCodesTable_set_undo(netsnmp_request_group *rg)
 
 /*
  * Initialize the kamailioSIPStatusCodesTable table by defining how it is
- * structured. 
+ * structured.
  *
  * This function is mostly auto-generated.
  */
@@ -711,17 +711,17 @@ void initialize_table_kamailioSIPStatusCodesTable(void)
 }
 
 /*
- * This function is called to handle SNMP GET requests.  
+ * This function is called to handle SNMP GET requests.
  *
  * The row which this function is called with, will store a message code.  The
  * function will retrieve the 'number of messages in' and 'number of messages
  * out' statistic for this particular message code from the statistics
- * framework.  
+ * framework.
  *
  * The function will then subtract from this value the value it was initialized
  * with when the row was first created.  In this sense, the row shows how many
  * ins and how many outs have been received (With respect to the message code)
- * since this row was created. 
+ * since this row was created.
  */
 int kamailioSIPStatusCodesTable_get_value(netsnmp_request_info *request,
 		netsnmp_index *item, netsnmp_table_request_info *table_info)
