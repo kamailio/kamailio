@@ -14,26 +14,26 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*
  * =====================================================================================
- * 
+ *
  *        Filename:  xaddress.c
- * 
+ *
  *     Description:  Address manipulation tools
- * 
+ *
  *         Version:  1.0
  *         Created:  17/11/05 02:09:44 CET
  *        Revision:  none
  *        Compiler:  gcc
- * 
+ *
  *          Author:  Elias Baixas (EB), elias@conillera.net
  *         Company:  VozTele.com
- * 
+ *
  * =====================================================================================
  */
 #define _GNU_SOURCE
@@ -61,7 +61,7 @@ int encode_cseq(char *hdrstart, int hdrlen, struct cseq_body *body,
 	unsigned int cseqnum;
 	unsigned char i;
 
-	/*which is the first bit set to 1 ? if i==0, the first bit, 
+	/*which is the first bit set to 1 ? if i==0, the first bit,
     * if i==31, the last, if i==32, none*/
 	for(i = 0; (!(body->method_id & (0x01 << i))) && i < 32; i++)
 		;

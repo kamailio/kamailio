@@ -14,26 +14,26 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*
  * =====================================================================================
- * 
+ *
  *        Filename:  encode_contact.c
- * 
+ *
  *     Description:  functions to encode/decode/print the contact header
- * 
+ *
  *         Version:  1.0
  *         Created:  20/11/05 04:24:55 CET
  *        Revision:  none
  *        Compiler:  gcc
- * 
+ *
  *          Author:  Elias Baixas (EB), elias@conillera.net
  *         Company:  VozTele.com
- * 
+ *
  * =====================================================================================
  */
 
@@ -58,7 +58,7 @@
  * encoding is:
  * 1: flags
  * 	0x01 this is a star contact (*)
- *[ 
+ *[
  * 1: number of contacts present
  * N: fore each contact present, the length of the contact structure
  * N*M: the contact structures concatenated

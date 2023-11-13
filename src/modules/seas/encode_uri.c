@@ -14,26 +14,26 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*
  * =====================================================================================
- * 
+ *
  *        Filename:  xuri.c
- * 
+ *
  *     Description:  first trial to implement xuri
- * 
+ *
  *         Version:  1.0
  *         Created:  16/11/05 18:07:24 CET
  *        Revision:  none
  *        Compiler:  gcc
- * 
+ *
  *          Author:  Elias Baixas (EB), elias@conillera.net
  *         Company:  VozTele.com
- * 
+ *
  * =====================================================================================
  */
 
@@ -63,9 +63,9 @@
  *
  * 1: The first byte of the structure, is a
  * HEADER_START-based pointer to the beginning of the URI
- * (including the "sip:").  
- * 1: The next byte is the length of the uri, so URIMAX 
- * is 256 (enough...) 
+ * (including the "sip:").
+ * 1: The next byte is the length of the uri, so URIMAX
+ * is 256 (enough...)
  * 2: Flags specifying the parts that are present in the URI
  *
  * as follows:
@@ -102,14 +102,14 @@
  * The reason to have the OTHER and HEADERS flags at the
  * beginning(just after the strictly-uri stuff), is that it
  * will be necessary to know the length of the parameters
- * section and the headers section.  
+ * section and the headers section.
  *
  * The parameters can
  * appear in an arbitrary order, so they won't be following
  * the convention of transport-ttl-user-method-maddr-lr, so
  * we can't rely on the next pointer to compute the length
- * of the previous pointer field, as the ttl param can 
- * appear before the transport param. so the parameter 
+ * of the previous pointer field, as the ttl param can
+ * appear before the transport param. so the parameter
  * pointers must have 2 bytes: pointer+length.
  *
  */
