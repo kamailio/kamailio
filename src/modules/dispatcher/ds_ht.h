@@ -46,7 +46,7 @@ typedef struct _ds_cell {
 typedef struct _ds_entry {
 	unsigned int esize;
 	ds_cell_t *first;
-	gen_lock_t lock;	
+	gen_lock_t lock;
 } ds_entry_t;
 
 typedef struct _ds_ht {
