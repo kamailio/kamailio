@@ -83,7 +83,7 @@ msg_set_buffer("INVITE sip:...");
 	    <function>change_reply_status(code, reason)</function>
 	</title>
 	<para>
-		Intercept a SIP reply (in an onreply_route) and change its status code 
+		Intercept a SIP reply (in an onreply_route) and change its status code
 		and reason phrase prior to forwarding it.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
