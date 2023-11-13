@@ -11,7 +11,7 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
 
 
@@ -25,7 +25,7 @@
 		are usable directly from configuration script. </para>
 		<para>The module implements functions for
 		interfacing DB resources (loading/storing/removing), functions
-		for swapping information between AVPs and SIP messages and a function for 
+		for swapping information between AVPs and SIP messages and a function for
 		testing/checking the value of an AVP.
 		</para>
 		<para>
@@ -34,7 +34,7 @@
 		<emphasis>sqlops</emphasis> module instead.
 		</para>
 		<para>
-		AVPs are persistent per SIP transaction, being available in "route", 
+		AVPs are persistent per SIP transaction, being available in "route",
 		"branch_route" and "failure_route". A tutorial providing more information (detailed
 		explanations and commented examples) can be found on the SIP-router web site.
 		</para>
@@ -57,7 +57,7 @@
 		<section>
 			<title>External Libraries or Applications</title>
 			<para>
-				The following libraries or applications must be installed 
+				The following libraries or applications must be installed
 				before running &kamailio; with this module loaded:
 				<itemizedlist>
 				<listitem>
@@ -179,7 +179,7 @@ modparam("avpops","avp_table","avptable")
 		<section id="avpops.p.use_domain">
 			<title><varname>use_domain</varname> (integer)</title>
 			<para>
-				If the domain part of the URI should be used for 
+				If the domain part of the URI should be used for
 				identifying an AVP in DB operations.
 			</para>
 			<para>
@@ -298,7 +298,7 @@ modparam("avpops","value_column","value")
 				</emphasis>
 			</para>
 			<para>
-			Possible column values are 
+			Possible column values are
 			<itemizedlist>
 			<listitem><para><emphasis>
 				0 - AVP with string name and string value
@@ -383,13 +383,13 @@ modparam("avpops","db_scheme",
 			<para>
 			Loads from DB into memory the AVPs corresponding to the given
 			<emphasis>source</emphasis>. If given, it sets the script flags
-			for loaded AVPs. It returns true if it loaded some values 
+			for loaded AVPs. It returns true if it loaded some values
 			in AVPs, false otherwise (db error, no avp loaded ...).
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
 			<listitem>
-				<para><emphasis>source</emphasis> - what info is used for 
+				<para><emphasis>source</emphasis> - what info is used for
 				identifying the AVPs. Parameter syntax:
 				<itemizedlist>
 					<listitem><para><emphasis>
@@ -420,7 +420,7 @@ modparam("avpops","db_scheme",
 					[script_flags]
 					</emphasis></para><para>'a' or 'A' means matching any of
 					AVP name types ('i' and 's') (NOTE: matching_flags cannot
-					be used with $db_scheme because the name of AVP to save in 
+					be used with $db_scheme because the name of AVP to save in
 					cannot be specified), the rest have the
 					meaning described in 'AVP naming format' chapter.</para>
 					</listitem>
@@ -432,7 +432,7 @@ modparam("avpops","db_scheme",
 			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 			</para>
-			
+
 			<example>
 				<title><function>avp_db_load</function> usage</title>
 				<programlisting format="linespecific">
@@ -461,7 +461,7 @@ avp_db_load("$ru","$avp(i1:123)/$some_scheme");
 			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 			</para>
-			
+
 			<example>
 				<title><function>avp_db_store</function> usage</title>
 				<programlisting format="linespecific">
@@ -517,11 +517,11 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 				query. The parameter can contain pseudo-variables.</para>
 				<para>You must escape any pseudo-variables manually to prevent
 				SQL injection attacks. You can use the existing transformations
-				<emphasis>escape.common</emphasis> and 
+				<emphasis>escape.common</emphasis> and
 				<emphasis>unescape.common</emphasis>
 				to escape and unescape the content of any pseudo-variable.
-				Failing to escape the variables used in the query makes you 
-				vulnerable to SQL injection, e.g. make it possible for an 
+				Failing to escape the variables used in the query makes you
+				vulnerable to SQL injection, e.g. make it possible for an
 				outside attacker to alter your database content.
 				</para>
 			</listitem>
@@ -529,7 +529,7 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 				<para><emphasis>dest</emphasis> - a list with AVP names where
 				to store the result. The format is
 				<quote>$avp(name1);$avp(name2);...</quote>. If this parameter
-				is ommited, the result is stored in 
+				is ommited, the result is stored in
 				<quote>$avp(i:1);$avp(i:2);...</quote>. If the result gives
 				many rows, then multiple AVPs with corresponding name will
 				be added. The value type of the AVP (string or integer) will
@@ -639,7 +639,7 @@ avp_delete("a3");
 					$du - write the AVP in 'dst_uri' field
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					$br - write the AVP directly as a new branch (does not 
+					$br - write the AVP directly as a new branch (does not
 					affect RURI)
 					</emphasis></para></listitem>
 				</itemizedlist>
@@ -689,7 +689,7 @@ avp_pushto("$br","$avp(i:680)");
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
 			<listitem>
-				<para><emphasis>name</emphasis> - which AVP(s) should be 
+				<para><emphasis>name</emphasis> - which AVP(s) should be
 				checked.
 				Parameter syntax is:
 				<itemizedlist>
@@ -700,7 +700,7 @@ avp_pushto("$br","$avp(i:680)");
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>op_value</emphasis> - define the operator, 
+				<para><emphasis>op_value</emphasis> - define the operator,
 				the value and flags for checking.
 				Parameter syntax is:
 				</para>
@@ -800,7 +800,7 @@ avp_check("$xavp(op=>foo[*])","fm/$xavp(op=>fm[$var(id)])/g");
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
 			<listitem>
-				<para><emphasis>name1</emphasis> - which AVP(s) should be 
+				<para><emphasis>name1</emphasis> - which AVP(s) should be
 				copied/moved.
 				Parameter syntax is:
 				<itemizedlist>
@@ -811,7 +811,7 @@ avp_check("$xavp(op=>foo[*])","fm/$xavp(op=>fm[$var(id)])/g");
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>name2</emphasis> - the new name of the 
+				<para><emphasis>name2</emphasis> - the new name of the
 				copied/moved AVP(s).
 				Parameter syntax is:
 				<itemizedlist>
@@ -861,7 +861,7 @@ avp_copy("$avp(old)","$avp(new)/gd");
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
 			<listitem>
-				<para><emphasis>dest</emphasis> - in which AVP should be 
+				<para><emphasis>dest</emphasis> - in which AVP should be
 				stored the result.
 				Parameter syntax is:
 				</para>
@@ -931,12 +931,12 @@ avp_printf("$avp(i:20)", "This is a $rm request with call-id $hdr(call-id)");
 					regexp - regular expression
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					replacement - replacement string, can include 
-					pseudo-variables and \1, ..., \9 for matching tokens, 
+					replacement - replacement string, can include
+					pseudo-variables and \1, ..., \9 for matching tokens,
 					\0 for whole matching text
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					flags = 'g' | 'G' | 'i' | 'i' (g, G - replace all 
+					flags = 'g' | 'G' | 'i' | 'i' (g, G - replace all
 					matching tokens; i, I - match ignore case)
 					</emphasis></para></listitem>
 				</itemizedlist>
@@ -1013,7 +1013,7 @@ avp_subst_pv("$avp(src)", "$var(x)");
 			<itemizedlist>
 			<listitem>
 				<para><emphasis>name</emphasis>
-				- 'source_avp/destination_avp' - which AVP(s) should be 
+				- 'source_avp/destination_avp' - which AVP(s) should be
 				processed and where to store the result. If 'destination_avp'
 				is missing, same name as 'source_avp' is used to store the
 				result.
@@ -1036,7 +1036,7 @@ avp_subst_pv("$avp(src)", "$var(x)");
 				</itemizedlist>
 			</listitem>
 			<listitem>
-				<para><emphasis>op_value</emphasis> - define the operation, 
+				<para><emphasis>op_value</emphasis> - define the operation,
 				the value and flags.
 				Parameter syntax is:
 				<itemizedlist>
