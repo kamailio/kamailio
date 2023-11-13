@@ -237,11 +237,11 @@ event_route[tm:branch-failure:myroute] {
 ...
 loadmodule "/usr/local/lib/ser/modules/nathelper.so"
 ...
-route { 
+route {
 	/* if natted */
-	t_on_reply("1"); 
-	t_relay(); 
-} 
+	t_on_reply("1");
+	t_relay();
+}
 
 onreply_route[1] {
 	if (status=~ "(183)|2[0-9][0-9]"){
@@ -765,7 +765,7 @@ route {
 	    </listitem>
 	</itemizedlist>
 	<para>
-		See also: 
+		See also:
 			<varname>retr_timer1</varname>,
 			<varname>retr_timer2</varname>,
 			<function>t_reset_retr()</function>.
