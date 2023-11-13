@@ -79,7 +79,7 @@
 		    </listitem>
 		    <listitem>
 			<para>
-			    <emphasis>python3-config</emphasis> - (part of python3-dev) 
+			    <emphasis>python3-config</emphasis> - (part of python3-dev)
 				tool to output C includes and library paths.
 			</para>
 		    </listitem>
