@@ -34,8 +34,8 @@
 		<para>
 		The module includes Dockerfile that can also be used as a reference on how to build everything
 		from source on Debian, the package of libmediastreamer on Linux is usually outdated.
-		
-		A Docker image is also available from dockerhub 
+
+		A Docker image is also available from dockerhub
 		<ulink url="https://hub.docker.com/r/jchavanton/rtp_media_server">https://hub.docker.com/r/jchavanton/rtp_media_server</ulink>
 		</para>
 	</section>
@@ -74,7 +74,7 @@
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>mediastreamer2</emphasis> git clone 
+				<emphasis>mediastreamer2</emphasis> git clone
 				<ulink url="git://git.linphone.org/mediastreamer2.git">git://git.linphone.org/mediastreamer2.git</ulink>
 			</para>
 			<para>
