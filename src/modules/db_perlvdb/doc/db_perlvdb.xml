@@ -35,9 +35,9 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="db_perlvdb_admin.xml"/>
 	<xi:include href="db_perlvdb_devel.xml"/>
-	
-	
+
+
 </book>
