@@ -206,7 +206,7 @@ static void destroy(void)
 }
 
 /**
- * 
+ *
  */
 static int bm_init_mycfg(void)
 {
