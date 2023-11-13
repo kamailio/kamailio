@@ -35,9 +35,9 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="pike_admin.xml"/>
 	<xi:include href="pike_rpc.xml"/>
 	<xi:include href="pike_devel.xml"/>
-	
+
 </book>
