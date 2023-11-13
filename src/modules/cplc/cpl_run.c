@@ -25,7 +25,7 @@
  * 2003-09-11 : build_lump_rpl() merged into add_lump_rpl() (bogdan)
  * 2004-06-14 : all global variables merged into cpl_env and cpl_fct;
  *              append_branches param added to lookup node (bogdan)
- * 2004-06-14 : flag CPL_IS_STATEFUL is set now immediately after the 
+ * 2004-06-14 : flag CPL_IS_STATEFUL is set now immediately after the
  *              transaction is created (bogdan)
 */
 
@@ -946,7 +946,7 @@ static inline int run_default(struct cpl_interpreter *intr)
 				return SCRIPT_DEFAULT;
 			} else {
 				/* case 2 : no location modifications or signaling operations
-				 * performed, location set non-empty: (This can only happen 
+				 * performed, location set non-empty: (This can only happen
 				 * for outgoing calls.) ->
 				 * Proxy the call to the address in the location set.
 				 * With other words, let ser to continue processing the
@@ -954,7 +954,7 @@ static inline int run_default(struct cpl_interpreter *intr)
 				return SCRIPT_DEFAULT;
 			}
 		} else {
-			/* case 3 : location modifications performed, no signaling 
+			/* case 3 : location modifications performed, no signaling
 			 * operations ->
 			 * Proxy the call to the addresses in the location set */
 			if(!cpl_proxy_to_loc_set(intr->msg, &(intr->loc_set), intr->flags))
@@ -962,7 +962,7 @@ static inline int run_default(struct cpl_interpreter *intr)
 			return SCRIPT_RUN_ERROR;
 		}
 	} else {
-		/* case 4 : proxy operation previously taken -> return whatever the 
+		/* case 4 : proxy operation previously taken -> return whatever the
 		 * "best" response is of all accumulated responses to the call to this
 		 * point, according to the rules of the underlying signaling
 		 * protocol. */

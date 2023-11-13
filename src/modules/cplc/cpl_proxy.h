@@ -22,7 +22,7 @@
  * History:
  * -------
  * 2003-07-29: file created (bogdan)
- * 2004-06-14: flag CPL_IS_STATEFUL is set now immediately after the 
+ * 2004-06-14: flag CPL_IS_STATEFUL is set now immediately after the
  *             transaction is created (bogdan)
  */
 
@@ -276,7 +276,7 @@ static void reply_callback(struct cell *t, int type, struct tmcb_params *ps)
 			rez = cpl_run_script(intr);
 		switch(rez) {
 			case SCRIPT_END:
-				/* we don't need to free the interpreter here since it will 
+				/* we don't need to free the interpreter here since it will
 				 * be freed in the final_reply callback */
 			case SCRIPT_TO_BE_CONTINUED:
 				return;

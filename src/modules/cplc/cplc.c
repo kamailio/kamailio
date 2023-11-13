@@ -545,9 +545,9 @@ static inline int get_orig_user(struct sip_msg *msg, str *username, str *domain)
 }
 
 
-/* Params: 
- *   str1 - as unsigned int - can be CPL_RUN_INCOMING or CPL_RUN_OUTGOING 
- *   str2 - as unsigned int - flags regarding state(less)|(ful) 
+/* Params:
+ *   str1 - as unsigned int - can be CPL_RUN_INCOMING or CPL_RUN_OUTGOING
+ *   str2 - as unsigned int - flags regarding state(less)|(ful)
  *   str3 - URI in SPVE structure
  */
 static int cpl_invoke_script3(
@@ -641,9 +641,9 @@ error0:
 	return -1;
 }
 
-/* Params: 
- *   str1 - as unsigned int - can be CPL_RUN_INCOMING or CPL_RUN_OUTGOING 
- *   str2 - as unsigned int - flags regarding state(less)|(ful) 
+/* Params:
+ *   str1 - as unsigned int - can be CPL_RUN_INCOMING or CPL_RUN_OUTGOING
+ *   str2 - as unsigned int - flags regarding state(less)|(ful)
  */
 static int cpl_invoke_script(struct sip_msg *msg, char *str1, char *str2)
 {
