@@ -137,7 +137,7 @@ modparam("carrierroute", "subscriber_user_col", "username")
     <section>
       <title><varname>subscriber_domain_col</varname> (string)</title>
       <para>
-        The name of the column in the subscriber table containing the domain of 
+        The name of the column in the subscriber table containing the domain of
         the subscriber.
       </para>
       <para>
@@ -304,8 +304,8 @@ modparam("carrierroute", "fetch_rows", 3000)
     <section>
       <title><varname>db_load_description</varname> (integer)</title>
       <para>
-        Toggle on/off loading in memory the description column in the 
-        carrierroute/carrierfailureroute database tables. This reduces the 
+        Toggle on/off loading in memory the description column in the
+        carrierroute/carrierfailureroute database tables. This reduces the
         shared memory used by the module.
       </para>
       <para>
@@ -350,7 +350,7 @@ modparam("carrierroute", "match_mode", 10)
     <section>
       <title><varname>avoid_failed_destinations</varname> (integer)</title>
       <para>
-        Integer parameter to toggle on/off the possibility that in the failurerouting cases 
+        Integer parameter to toggle on/off the possibility that in the failurerouting cases
         destinations that previously failed are avoided. Possible values are 0 (off), 1 (on).
         Also see cr_route section.
       </para>
@@ -470,7 +470,7 @@ cr_tree_rewrite_uri(tree, domain)
       <itemizedlist>
         <listitem>
           <para>
-            <emphasis>carrier</emphasis> - The routing tree to be used. It must be 
+            <emphasis>carrier</emphasis> - The routing tree to be used. It must be
             string containing either carrier id (nummeric) or carrier name (arbitrary string).
             It also accepts any pseudo-variable as input.
           </para>
@@ -545,7 +545,7 @@ cr_tree_rewrite_uri(tree, domain)
       <itemizedlist>
         <listitem>
           <para>
-            <emphasis>carrier</emphasis> - The routing tree to be used. It must be 
+            <emphasis>carrier</emphasis> - The routing tree to be used. It must be
             string containing either carrier id (nummeric) or carrier name (arbitrary string).
             It also accepts any pseudo-variable as input.
           </para>
@@ -613,7 +613,7 @@ cr_tree_rewrite_uri(tree, domain)
       <itemizedlist>
         <listitem>
           <para>
-            <emphasis>carrier</emphasis> - The routing tree to be used. It must be 
+            <emphasis>carrier</emphasis> - The routing tree to be used. It must be
             string containing either carrier id (nummeric) or carrier name (arbitrary string).
             It also accepts any pseudo-variable as input.
           </para>
@@ -627,7 +627,7 @@ cr_tree_rewrite_uri(tree, domain)
         </listitem>
         <listitem>
           <para><emphasis>prefix_matching</emphasis> - User name to be used for prefix matching
-            in the routing tree. 
+            in the routing tree.
             It also accepts any pseudo-variable as input.
           </para>
         </listitem>
@@ -663,7 +663,7 @@ cr_tree_rewrite_uri(tree, domain)
 route {
     # route calls based on hash over callid
     # choose route domain 0 of the default carrier
-    
+
     if(!cr_route("default", "0", "$rU", "$rU", "call_id")){
         sl_send_reply("403", "Not allowed");
     } else {
@@ -806,14 +806,14 @@ domain register {
     <section>
       <title>Database setup</title>
       <para>
-        Before running &kamailio; with carrierroute, you have to setup the database 
-        table where the module will store the routing data. For that, if 
+        Before running &kamailio; with carrierroute, you have to setup the database
+        table where the module will store the routing data. For that, if
         the table was not created by the installation script or you choose
         to install everything by yourself you can use the carrierroute-create.sql
-        <acronym>SQL</acronym> script in the database directories in the 
-        kamailio/scripts folder as template. 
-        Database and table name can be set with module parameters so they 
-        can be changed, but the name of the columns must be as they are 
+        <acronym>SQL</acronym> script in the database directories in the
+        kamailio/scripts folder as template.
+        Database and table name can be set with module parameters so they
+        can be changed, but the name of the columns must be as they are
         in the <acronym>SQL</acronym> script.
         You can also find the complete database documentation on the
         project webpage, &kamailiodbdocs;.
@@ -859,7 +859,7 @@ domain register {
         support the user specific carrier lookup. The routing rules for carrier 1
         and carrier 2 for the <quote>49</quote> prefix contains an additional rule
         with the domain 2, that can be used for example as fallback if the gateways
-        in domain 1 are not reachable. Two more fallback rules (domain 3 and 4) for 
+        in domain 1 are not reachable. Two more fallback rules (domain 3 and 4) for
         carrier 1 are also supplied to support the functionality of the carrierfailureroute
         table example that is provided in the next section.
       </para>
@@ -971,7 +971,7 @@ domain register {
         <para>Suggested changes:</para>
         <programlisting format="linespecific">
 ...
-ALTER TABLE subscriber ADD cr_preferred_carrier int(10) default NULL; 
+ALTER TABLE subscriber ADD cr_preferred_carrier int(10) default NULL;
 ...
         </programlisting>
       </example>
