@@ -1,4 +1,4 @@
-/* 
+/*
  * TLS module - certificate verification function
  *
  * Copyright (C) 2005 iptelorg GmbH
@@ -28,7 +28,7 @@
 
 #include <openssl/ssl.h>
 
-/* This callback is called during each verification process, 
+/* This callback is called during each verification process,
 at each step during the chain of certificates (this function
 is not the certificate_verification one!). */
 int verify_callback(int pre_verify_ok, X509_STORE_CTX *ctx);

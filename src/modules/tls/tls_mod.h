@@ -1,4 +1,4 @@
-/* 
+/*
  * TLS module - module interface
  *
  * Copyright (C) 2005 iptelorg GmbH

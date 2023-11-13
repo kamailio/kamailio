@@ -1,6 +1,6 @@
-/* 
+/*
  * TLS module
- * 
+ *
  * Copyright (C) 2010 iptelorg GmbH
  * Copyright (C) 2013 Motorola Solutions, Inc.
  *

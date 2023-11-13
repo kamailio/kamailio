@@ -1,4 +1,4 @@
-/* 
+/*
  * TLS module
  *
  * Copyright (C) 2010 iptelorg GmbH
@@ -123,7 +123,7 @@ static int ssl_flush(void *tcp_c, void *error, const void *buf, unsigned size)
 
 /**
  * @brief Wrapper over tls_ct_q_flush()
- * 
+ *
  * Wrapper over tls_ct_q_flush(), besides doing a tls_ct_q_add it
  * also keeps track of queue size and total queued bytes.
  * @param c TCP connection
@@ -150,7 +150,7 @@ int tls_ct_wq_flush(
 
 /**
  * @brief Wrapper over tls_ct_q_add()
- * 
+ *
  * Wrapper over tls_ct_q_add(), besides doing a tls_ct_q_add it
  * also keeps track of queue size and total queued bytes.
  * If the maximum queue size is exceeded => error.

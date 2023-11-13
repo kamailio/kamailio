@@ -1,4 +1,4 @@
-/* 
+/*
  * TLS module
  *
  * Copyright (C) 2010 iptelorg GmbH
@@ -69,7 +69,7 @@ error:
 
 /**
  * @brief Destroy a buffer queue
- * 
+ *
  * Everything is destroyed from a buffer queue (shm_free()'d), included the queue head.
  * @warning it does no attempt to synchronize access/lock. If needed it should
  * be called under lock.
@@ -92,8 +92,8 @@ inline static unsigned int tls_ct_q_destroy(tls_ct_q **ct_q)
 
 /**
  * @brief Tries to flush the tls clear text queue
- * 
- * Tries to flush as much as possible from the given queue, using the 
+ *
+ * Tries to flush as much as possible from the given queue, using the
  * given callback.
  * @warning it does no attempt to synchronize access/lock. If needed it should
  * be called under lock.

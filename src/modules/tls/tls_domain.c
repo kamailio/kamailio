@@ -173,7 +173,7 @@ static void setup_dh(SSL_CTX *ctx)
 
 /**
  * @brief Create a new TLS domain structure
- * 
+ *
  * Create a new domain structure in new allocated shared memory.
  * @param type domain Type
  * @param ip domain IP
@@ -327,7 +327,7 @@ char *tls_domain_str(tls_domain_t *d)
 
 /**
  * @brief Initialize TLS domain parameters that have not been configured yet
- * 
+ *
  * Initialize TLS domain parameters that have not been configured from
  * parent domain (usually one of default domains)
  * @param d initialized domain
@@ -409,7 +409,7 @@ static int ksr_tls_fill_missing(tls_domain_t *d, tls_domain_t *parent)
 }
 
 
-/** 
+/**
  * @brief Called for ctx, with 2 args
  * @param ctx SSL context
  * @param larg ?
@@ -526,12 +526,12 @@ static int tls_foreach_CTX_in_cfg(
 
 /**
  * @brief Fix pathnames when loading domain keys or other list
- * 
+ *
  * Fix pathnames, to be used when loading the domain key, cert, ca list a.s.o.
  * It will replace path with a fixed shm allocated version. Assumes path->s
  * was shm allocated.
  * @param path path to be fixed. If it starts with '.' or '/' is left alone
- * (forced "relative" or "absolute" path). Otherwise the path is considered 
+ * (forced "relative" or "absolute" path). Otherwise the path is considered
  * to be relative to the main config file directory
  * (e.g. for /etc/ser/ser.cfg => /etc/ser/\<path\>).
  * @return  0 on success, -1 on error
@@ -824,7 +824,7 @@ static void sr_ssl_ctx_info_callback(const SSL *ssl, int event, int ret)
 }
 
 /**
- * @brief Configure generic SSL parameters 
+ * @brief Configure generic SSL parameters
  * @param d domain
  * @return 0
  */
@@ -879,7 +879,7 @@ static int set_ssl_options(tls_domain_t *d)
 
 
 /**
- * @brief Configure TLS session cache parameters 
+ * @brief Configure TLS session cache parameters
  * @param d domain
  * @return 0
  */
@@ -1327,7 +1327,7 @@ static int load_engine_private_key(tls_domain_t *d)
 }
 #endif
 /**
- * @brief Load a private key from a file 
+ * @brief Load a private key from a file
  * @param d TLS domain
  * @return 0 on success, -1 on error
  */
@@ -1586,7 +1586,7 @@ int tls_fix_domains_cfg(tls_domains_cfg_t *cfg, tls_domain_t *srv_defaults,
 
 /**
  * @brief Create new configuration structure
- * 
+ *
  * Create new configuration structure in new allocated shared memory
  * @return configuration structure or zero on error
  */

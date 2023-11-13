@@ -1,4 +1,4 @@
-/* 
+/*
  * Kamailio TLS module
  *
  * Copyright (C) 2010 iptelorg GmbH
@@ -206,7 +206,7 @@ inline static unsigned int sbufq_destroy(struct sbuffer_queue *q)
 
 
 /** tries to flush the queue.
- * Tries to flush as much as possible from the given queue, using the 
+ * Tries to flush as much as possible from the given queue, using the
  * given callback.
  * WARNING: it does no attempt to synchronize access/lock. If needed it should
  * be called under lock.
