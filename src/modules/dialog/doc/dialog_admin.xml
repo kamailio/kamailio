@@ -63,7 +63,7 @@
 	<title>Dialog states</title>
 	<para>
 	Dialogs have states that are shown in the RPC interface as well as stored
-	in the database. 
+	in the database.
 	</para>
 	<itemizedlist>
 		<listitem>
@@ -92,7 +92,7 @@
 	Dialog profiling is a mechanism that helps in classifying, sorting and
 	keeping track of certain types of dialogs.  The classification criteria
 	can be any attributes desired by the administrator;  it can be SIP message
-	attributes, other pseudo-variables, custom values, etc.  
+	attributes, other pseudo-variables, custom values, etc.
 	Dialogs can be dynamically added into one or more profile
 	tables.  Logically, each profile table can have a special meaning (like
 	dialogs outside the domain, dialogs terminated to the PSTN, etc.).
@@ -103,8 +103,8 @@
 		<listitem>
 		<para>
 			<emphasis>with no value</emphasis> - a dialog simply belongs
-			to a profile (for instance, an outbound calls profile). There is 
-			no other additional information to describe the dialog beyond 
+			to a profile (for instance, an outbound calls profile). There is
+			no other additional information to describe the dialog beyond
 			its membership in the profile per se.
 		</para>
 		</listitem>
@@ -115,7 +115,7 @@
 			is the caller ID). The membership of the dialog in the profile is
 			strictly related to the value.  For example, if the account ID
 			of the caller is stored in the pseudo-variable $var(account_id),
-			you can use $var(account_id) as a value/key by which to group 
+			you can use $var(account_id) as a value/key by which to group
 			dialogs so that you can count the number of open dialogs for
 			each account, enforce concurrent call limits as necessary, etc.
 		</para>
@@ -416,8 +416,8 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 		<para>
 		Note: DID-based matching does not replace callid/fromtag/totag comparison. It will speed
 		up dialog matching by not iterating over the whole dialog list for callid/fromtag/totag comparison, but
-		instead it uses a hash table to find the respective dialog and then doing only one callid/fromtag/totag 
-		comparison. Thus, there is no security 
+		instead it uses a hash table to find the respective dialog and then doing only one callid/fromtag/totag
+		comparison. Thus, there is no security
 		issue when using DID based matching. Use DID_FALLBACK for maximum interoperability or use DID_ONLY to
 		reject buggy clients or hacking attempts. DID_NONE is only useful, when you want to hide dialog-tracking
 		from the users (preventing the DID Record-Route cookie).
@@ -570,11 +570,11 @@ modparam("dialog", "db_update_period", 120)
 	<section id="dialog.p.db_fetch_rows">
 		<title><varname>db_fetch_rows</varname> (integer)</title>
 		<para>
-			The number of the rows to be fetched at once from database 
+			The number of the rows to be fetched at once from database
 			when loading the dialog records at startup from the database.
-			This value can be used to tune the load time at startup. 
+			This value can be used to tune the load time at startup.
 			For 1MB of private memory (default), it should be below 400.
-			The database driver must support the fetch_result() capability. 
+			The database driver must support the fetch_result() capability.
 			A value of 0 means the database fetch is not limited.
 		</para>
 		<para>
@@ -1138,7 +1138,7 @@ modparam("dialog", "vars_key_column", "vars_key_name")
 	<section id="dialog.p.vars_value_column">
 		<title><varname>vars_value_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the values of a 
+			The column name in the database to store the values of a
 			dialog variable.
 		</para>
 		<para>
@@ -1180,7 +1180,7 @@ modparam("dialog", "profiles_with_value", "caller ; my_profile")
 	<section id="dialog.p.profiles_no_value">
 		<title><varname>profiles_no_value</varname> (string)</title>
 		<para>
-			List of names for profiles without values, separated	
+			List of names for profiles without values, separated
 			with semi-colon ";".
 		</para>
 		<para>
@@ -1449,7 +1449,7 @@ modparam("dialog", "timeout_noreset", 1)
 	<section id="dialog.p.timer_procs">
 		<title><varname>timer_procs</varname> (int)</title>
 		<para>
-			If set to 1, the dialog module will start a separate 
+			If set to 1, the dialog module will start a separate
 			dialog timer process to execute dialog timeout tasks.
 			The default is to use the core timer process.
 		</para>
@@ -2025,7 +2025,7 @@ dlg_resetflag("1");
 		<function moreinfo="none">dlg_bye(side)</function>
 		</title>
 		<para>
-		Send BYE to parties of a dialog or - if in early stage - a CANCEL to the 
+		Send BYE to parties of a dialog or - if in early stage - a CANCEL to the
 		B-Party and a SIP response to the A-Party (as defined in bye_early_code /
 		bye_early_reason).
 		</para>
@@ -2674,7 +2674,7 @@ dlg_reset_property("timeout-noreset");
 				<emphasis>content</emphasis> (optional) - Content to be sent as body.
 			</para>
 		</listitem>
-		</itemizedlist>		
+		</itemizedlist>
 		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
