@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -61,7 +61,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -75,18 +75,18 @@
 	</section>
  	<section>
      <title>Parameters</title>
- 
+
 	<section id="secfilter.p.db_url">
        <title><varname>db_url</varname> (string)</title>
- 
- 		<para> 
+
+ 		<para>
 	 	Database URL.
- 		</para> 
+ 		</para>
        <para><emphasis> Default value is ""</emphasis></para>
- 
+
        <example>
          <title>Set <varname>db_url</varname> parameter</title>
- 
+
          <programlisting format="linespecific">
 		...
 		modparam("secfilter", "db_url", "mysql://user:pass@localhost/kamailio")
@@ -97,15 +97,15 @@
 
 	<section id="secfilter.p.table_name">
        <title><varname>table_name</varname> (string)</title>
- 
- 		<para> 
+
+ 		<para>
 		Name of the table used to store the blacklisted and whitelisted values.
- 		</para> 
+ 		</para>
        <para><emphasis> Default value is secfilter</emphasis></para>
- 
+
        <example>
          <title>Set <varname>table_name</varname> parameter</title>
- 
+
          <programlisting format="linespecific">
 		...
 		modparam("secfilter", "table_name", "secfilter")
@@ -116,8 +116,8 @@
 
 	<section id="secfilter.p.action_col">
        <title><varname>action_col</varname> (string)</title>
- 
- 		<para> 
+
+ 		<para>
  		Name of database column containing the type of list.
  		The possible values are:
  		</para>
@@ -127,12 +127,12 @@
                 <listitem>1 = whitelisted data</listitem>
                 <listitem>2 = blacklisted destination number</listitem>
                 </itemizedlist>
- 		</para> 
+ 		</para>
        <para><emphasis> Default value is action</emphasis></para>
- 
+
        <example>
          <title>Set <varname>action_col</varname> parameter</title>
- 
+
          <programlisting format="linespecific">
 		...
 		modparam("secfilter", "action_col", "action")
@@ -143,8 +143,8 @@
 
 	<section id="secfilter.p.type_col">
        <title><varname>type_col</varname> (string)</title>
- 
- 		<para> 
+
+ 		<para>
  		Name of database column containing the type of values.
  		The possible values are:
  		</para>
@@ -157,12 +157,12 @@
                 <listitem>3 = IP address</listitem>
                 <listitem>4 = user</listitem>
                 </itemizedlist>
- 		</para> 
+ 		</para>
        <para><emphasis> Default value is type</emphasis></para>
- 
+
        <example>
          <title>Set <varname>type_col</varname> parameter</title>
- 
+
          <programlisting format="linespecific">
 		...
 		modparam("secfilter", "type_col", "type")
@@ -173,15 +173,15 @@
 
 	<section id="secfilter.p.data_col">
        <title><varname>data_col</varname> (string)</title>
- 
- 		<para> 
+
+ 		<para>
  		Name of database column containing blacklisted and whitelisted values.
- 		</para> 
+ 		</para>
        <para><emphasis> Default value is data</emphasis></para>
- 
+
        <example>
          <title>Set <varname>data_col</varname> parameter</title>
- 
+
          <programlisting format="linespecific">
 		...
 		modparam("secfilter", "data_col", "data")
@@ -192,19 +192,19 @@
 
 	<section id="secfilter.p.dst_exact_match">
        <title><varname>dst_exact_match</varname> (integer)</title>
- 
- 		<para> 
+
+ 		<para>
  		This value is used in the destinations blacklist and corresponds to the numbers
  		that we want to prevent calling. If the value is <emphasis>1</emphasis>, the call will appear as
  		blacklisted if the destination is exactly the same. If the value is <emphasis>0</emphasis>, every
  		destination whose number begins with a number appearing on the destination blacklist
  		will be rejected.
-    		</para> 
+    		</para>
        <para><emphasis> Default value is 1</emphasis></para>
- 
+
        <example>
          <title>Set <varname>dst_exact_match</varname> parameter</title>
- 
+
          <programlisting format="linespecific">
 		...
 		modparam("secfilter", "dst_exact_match", 1)
@@ -257,30 +257,30 @@
 
  	<section>
      <title>Functions</title>
- 
+
 	<section id="secfilter.fsecf_.check_ip">
        <title>
 		<function moreinfo="none">secf_check_ip
 		()</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		It checks if the source IP address is blacklisted. The search is approximate and data stored
 		in the database will be compared as a prefix. For example, if we have blacklisted IP address
 		<emphasis>192.168.1.</emphasis> all messages from IPs like 192.168.1.% will be rejected.
- 		</para> 
- 		<para> 
+ 		</para>
+ 		<para>
 		Return values are:
 		<itemizedlist>
 		<listitem> 2 = the value is whitelisted</listitem>
 		<listitem> 1 = the value is not found</listitem>
 		<listitem>-2 = the value is blacklisted</listitem>
 		</itemizedlist>
- 		</para> 
- 
+ 		</para>
+
        <example>
          <title><function>secf_check_ip</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
         secf_check_ip();
@@ -298,15 +298,15 @@
 		<function moreinfo="none">secf_check_ua
 		()</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		It checks if the user-agent is blacklisted. The search is approximate and the
 		comparison will be made using the values of the database as a prefix. If
 		we add to the user-agent blacklist the word <emphasis>sipcli</emphasis>,
 		every message whose user-agent is named, for example, <emphasis>sipcli/1.6</emphasis> or <emphasis>sipcli/1.8</emphasis> will
 		be blocked. It is very useful to block different versions of the same program.
- 		</para> 
- 		<para> 
+ 		</para>
+ 		<para>
 		Return values are:
 		<itemizedlist>
 		<listitem> 2 = the value is whitelisted</listitem>
@@ -314,11 +314,11 @@
 		<listitem>-1 = error</listitem>
 		<listitem>-2 = the value is blacklisted</listitem>
 		</itemizedlist>
- 		</para> 
- 
+ 		</para>
+
        <example>
          <title><function>secf_check_ua</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
         secf_check_ua();
@@ -336,12 +336,12 @@
 		<function moreinfo="none">secf_check_country
 		(string)</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		Similar to secf_check_ua. It checks if the country (IP address) is blacklisted.
 		<emphasis>Geoip</emphasis> module must be loaded to get the country code.
- 		</para> 
- 		<para> 
+ 		</para>
+ 		<para>
 		Return values are:
 		<itemizedlist>
 		<listitem> 2 = the value is whitelisted</listitem>
@@ -349,11 +349,11 @@
 		<listitem>-1 = error</listitem>
 		<listitem>-2 = the value is blacklisted</listitem>
 		</itemizedlist>
- 		</para> 
- 
+ 		</para>
+
        <example>
          <title><function>secf_check_country</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
         if (geoip2_match("$si", "src")) {
@@ -373,15 +373,15 @@
 		<function moreinfo="none">secf_check_from_hdr
 		()</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		It checks if any value of <emphasis>from header</emphasis> is blacklisted. It checks if from name or from user
 		are in the users blacklist or whitelist. It also checks if the from domain is in the
 		domains blacklist or whitelist. The blacklisted value will be used as a prefix and if we block, for
 		example, the user <emphasis>sipvicious</emphasis>, all users whose name starts with this word will be
 		considered as blacklisted.
- 		</para> 
- 		<para> 
+ 		</para>
+ 		<para>
 		Return values are:
 		<itemizedlist>
 		<listitem> 4 = from name is whitelisted</listitem>
@@ -393,11 +393,11 @@
 		<listitem>-3 = from domain is blacklisted</listitem>
 		<listitem>-4 = from name is blacklisted</listitem>
 		</itemizedlist>
- 		</para> 
- 
+ 		</para>
+
        <example>
          <title><function>secf_check_from_hdr</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
         secf_check_from_hdr();
@@ -422,11 +422,11 @@
 		<function moreinfo="none">secf_check_to_hdr
 		()</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		Do the same as <emphasis>secf_check_from_hdr</emphasis> function but with the <emphasis>to header</emphasis>.
- 		</para> 
- 		<para> 
+ 		</para>
+ 		<para>
 		Return values are:
 		<itemizedlist>
 		<listitem> 4 = to name is whitelisted</listitem>
@@ -438,11 +438,11 @@
 		<listitem>-3 = to domain is blacklisted</listitem>
 		<listitem>-4 = to name is blacklisted</listitem>
 		</itemizedlist>
- 		</para> 
- 
+ 		</para>
+
        <example>
          <title><function>secf_check_to_hdr</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
         secf_check_to_hdr();
@@ -467,11 +467,11 @@
 		<function moreinfo="none">secf_check_contact_hdr
 		()</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		Do the same as <emphasis>secf_check_from_hdr</emphasis> function but with the <emphasis>contact header</emphasis>.
- 		</para> 
- 		<para> 
+ 		</para>
+ 		<para>
 		Return values are:
 		<itemizedlist>
 		<listitem> 3 = contact domain is whitelisted</listitem>
@@ -481,11 +481,11 @@
 		<listitem>-2 = contact user is blacklisted</listitem>
 		<listitem>-3 = contact domain is blacklisted</listitem>
 		</itemizedlist>
- 		</para> 
- 
+ 		</para>
+
        <example>
          <title><function>secf_check_contact_hdr</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
         secf_check_contact_hdr();
@@ -507,25 +507,25 @@
 		<function moreinfo="none">secf_check_dst
 		(string)</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		It checks if the destination number is blacklisted. It must be user for INVITE
 		messages. If the value of <emphasis>dst_exact_match</emphasis> is <emphasis>1</emphasis>, the call will
 		appear as blacklisted if the destination is exactly the same. If the value is <emphasis>0</emphasis>,
 		every destination whose number begins with a number appearing on the destination blacklist will be rejected.
- 		</para> 
- 		<para> 
+ 		</para>
+ 		<para>
 		Return values are:
 		<itemizedlist>
 		<listitem> 2 (if the value is whitelisted)</listitem>
 		<listitem> 1 (if the value not found)</listitem>
 		<listitem>-2 (if the value is blacklisted)</listitem>
 		</itemizedlist>
- 		</para> 
- 
+ 		</para>
+
        <example>
          <title><function>secf_check_dst</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
 		if (is_method("INVITE")) {
@@ -546,14 +546,14 @@
 		<function moreinfo="none">secf_check_sqli_hdr
 		(string)</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		Search for illegal characters in the given value.
-		</para> 
- 
+		</para>
+
        <example>
          <title><function>secf_check_sqli_hdr</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
         secf_check_sqli_hdr($ua);
@@ -572,15 +572,15 @@
 		<function moreinfo="none">secf_check_sqli_all
 		()</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		Search for illegal characters in several headers (user-agent, from, to and contact). If illegal
 		characters are found the message will be dropped.
-		</para> 
- 
+		</para>
+
        <example>
          <title><function>secf_check_sqli_all</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
 		secf_check_sqli_all();
@@ -592,19 +592,19 @@
 
  	<section>
      <title>RPC commands</title>
- 
+
 	<section id="secfilter.r.reload">
        <title>
 		<function moreinfo="none">secfilter.reload</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		Reload all blacklisted and whitelisted values from database.
- 		</para> 
- 
+ 		</para>
+
        <example>
          <title><function>secfilter.reload</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
 		&kamcmd; secfilter.reload
@@ -617,13 +617,13 @@
        <title>
 		<function moreinfo="none">secfilter.print</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		Print blacklisted and whitelisted values. Without parameters it will print all
 		values. If you enter a type it will print this type values only.
- 		</para> 
- 
- 		<para> 
+ 		</para>
+
+ 		<para>
  		Possible values are:
 		<itemizedlist>
 		<listitem>(none)  (show all data)</listitem>
@@ -634,11 +634,11 @@
 		<listitem>ip      (show blacklisted and whitelisted IP addresses)</listitem>
 		<listitem>dst     (show blacklisted destinations)</listitem>
 		</itemizedlist>
- 		</para> 
+ 		</para>
 
        <example>
          <title><function>secfilter.print</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
 		&kamcmd; secfilter.print
@@ -654,14 +654,14 @@
        <title>
 		<function moreinfo="none">secfilter.stats</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		Print statistics of blocked and allowed messages.
- 		</para> 
- 
+ 		</para>
+
  		<example>
          <title><function>secfilter.stats</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
 		&kamcmd; secfilter.stats
@@ -674,14 +674,14 @@
        <title>
 		<function moreinfo="none">secfilter.stats_reset</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		Reset all statistics.
- 		</para> 
- 
+ 		</para>
+
  		<example>
          <title><function>secfilter.stats_reset</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
 		&kamcmd; secfilter.stats_reset
@@ -694,22 +694,22 @@
        <title>
 		<function moreinfo="none">secfilter.add_dst</function>
 	  </title>
- 
- 		<para> 
-		Insert values into destination blacklist. These values will be checked with the 
-		function <emphasis>secf_check_dst</emphasis> to verify if the destination number can be called. 
- 		</para> 
- 
- 		<para> 
+
+ 		<para>
+		Insert values into destination blacklist. These values will be checked with the
+		function <emphasis>secf_check_dst</emphasis> to verify if the destination number can be called.
+ 		</para>
+
+ 		<para>
  		Parameters:
 		<itemizedlist>
 		<listitem>number (number to add to the destination blacklist)</listitem>
 		</itemizedlist>
- 		</para> 
+ 		</para>
 
        <example>
          <title><function>secfilter.add_dst</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
 		&kamcmd; secfilter.add_dst 555123123
@@ -722,22 +722,22 @@
        <title>
 		<function moreinfo="none">secfilter.add_bl</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		Insert values into blacklist.
- 		</para> 
- 
- 		<para> 
+ 		</para>
+
+ 		<para>
  		Parameters:
 		<itemizedlist>
 		<listitem>type  (must be: ua, country, domain, user or ip)</listitem>
 		<listitem>value (value to add to the blacklist)</listitem>
 		</itemizedlist>
- 		</para> 
+ 		</para>
 
        <example>
          <title><function>secfilter.add_bl</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
 		&kamcmd; secfilter.add_bl ua friendly-scanner
@@ -751,22 +751,22 @@
        <title>
 		<function moreinfo="none">secfilter.add_wl</function>
 	  </title>
- 
- 		<para> 
+
+ 		<para>
 		Insert values into whitelist.
- 		</para> 
- 
- 		<para> 
+ 		</para>
+
+ 		<para>
  		Parameters:
 		<itemizedlist>
 		<listitem>type  (must be: ua, country, domain, user or ip)</listitem>
 		<listitem>value (value to add to the whitelist)</listitem>
 		</itemizedlist>
- 		</para> 
+ 		</para>
 
        <example>
          <title><function>secfilter.add_wl</function> usage</title>
- 
+
          <programlisting format="linespecific">
 		...
 		&kamcmd; secfilter.add_wl country es
@@ -776,31 +776,31 @@
        </example>
      </section>
 	</section>
-	
+
  	<section>
      <title>Installation</title>
- 
+
 	<section>
        <title>Database setup</title>
- 
- 		<para> 
+
+ 		<para>
 		Before running &kamailio; with the secfilter module,
 		it is necessary to setup the database table where the module will
-		read the blacklist data from. In order to do that, if the table was 
+		read the blacklist data from. In order to do that, if the table was
 		not created by the installation script or you choose to install everything
 		by yourself you can use the <emphasis>secfilter-create.sql</emphasis>
-		<acronym>SQL</acronym> script in the database directories in the 
-		kamailio/scripts folder as a template. 
-		Database and table name can be set with module parameters so they 
-		can be changed, but the name of the columns must match the ones 
+		<acronym>SQL</acronym> script in the database directories in the
+		kamailio/scripts folder as a template.
+		Database and table name can be set with module parameters so they
+		can be changed, but the name of the columns must match the ones
 		in the <acronym>SQL</acronym> script.
 		You can also find the complete database documentation on the
 		project webpage, &kamailiodbdocs;.
- 		</para> 
- 
+ 		</para>
+
        <example>
          <title>Example database content - secfilter table</title>
- 
+
          <programlisting format="linespecific">
 		...
 		+----+-----------+-----------+------------------+
@@ -844,13 +844,13 @@
 
  	<section>
      <title>Some examples</title>
- 
+
 	<section>
        <title>Print data</title>
- 
+
        <example>
          <title>kamcmd secfilter.print ua</title>
- 
+
          <programlisting format="linespecific">
 		...
 {
@@ -888,10 +888,10 @@
 
 	<section>
        <title>Statistics</title>
- 
+
        <example>
          <title>kamcmd secfilter.stats</title>
- 
+
          <programlisting format="linespecific">
 		...
 {
