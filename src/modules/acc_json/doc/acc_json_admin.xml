@@ -253,8 +253,8 @@ route[RUN_ACC_PUBLISH] {
 ...
 </programlisting>
 		</example>
-	</section>	
-	
+	</section>
+
 	<section id="acc_json.p.acc_output_syslog">
 		<title><varname>acc_output_syslog</varname> (integer)</title>
 		<para>
@@ -322,7 +322,7 @@ modparam("acc_json", "acc_log_level", 2) # Set acc_log_level to 2 (L_INFO)
 </programlisting>
 		</example>
 	</section>
-	
+
 	<section id="acc.p.cdr_enable">
 		<title><varname>cdr_enable</varname> (int)</title>
 		<para>
@@ -346,12 +346,12 @@ modparam("acc_json", "cdr_enable", 1)
 ...
 </programlisting>
 		</example>
-	</section>	
-	
+	</section>
+
 	<section id="acc.p.cdr_extra">
 		<title><varname>cdr_extra</varname> (str)</title>
 		<para>
-		Set of pseudo-variables defining custom CDR fields. 
+		Set of pseudo-variables defining custom CDR fields.
 		</para>
 		<para>
 		Default value is NULL.
@@ -390,10 +390,10 @@ $avp(json_data) = '{"b":2, "c":3}';
 	<section id="acc.p.cdr_expired_dlg_enable">
 		<title><varname>cdr_expired_dlg_enable</varname> (str)</title>
 		<para>
-		Should CDR-based logging be enabled in case of expired dialogs? 
+		Should CDR-based logging be enabled in case of expired dialogs?
 		</para>
 		<para>
-		0 - off (default). 1 - on. 
+		0 - off (default). 1 - on.
 		</para>
 		<example>
 		<title>cdr_expired_dlg_enable example</title>
@@ -404,7 +404,7 @@ modparam("acc_json", "cdr_expired_dlg_enable", 1)
 </programlisting>
 		</example>
 	</section>
-	
+
 	<section id="acc_json.p.cdr_output_mqueue">
 		<title><varname>cdr_output_mqueue</varname> (integer)</title>
 		<para>
