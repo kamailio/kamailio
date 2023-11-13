@@ -2,7 +2,7 @@
  * lost module naptr functions
  *
  * Copyright (C) 2002-2010 Juha Heinanen
- * 
+ *
  * Copyright (C) 2021 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
