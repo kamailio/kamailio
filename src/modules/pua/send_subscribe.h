@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -43,7 +43,7 @@ typedef struct subs_info
 	int expires;
 	int source_flag;
 	int flag; /*  it can be : INSERT_TYPE or UPDATE_TYPE; not compulsory */
-	void *cb_param; /* the parameter for the function to be called on the callback 
+	void *cb_param; /* the parameter for the function to be called on the callback
 						 for the received reply; it must be allocated in share memory;
 						 a reference to it will be found in the cb_param filed of the ua_pres_structure
 						 received as a parameter for the registered function*/
