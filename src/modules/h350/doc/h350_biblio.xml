@@ -37,7 +37,7 @@
           <publishername>ITU-T</publishername>
         </publisher>
       </biblioentry>
-      
+
       <biblioentry id="H350-6" xreflabel="[H.350.6]">
         <abbrev>H.350.6</abbrev>
 
@@ -49,7 +49,7 @@
           <publishername>ITU-T</publishername>
         </publisher>
       </biblioentry>
-      
+
       <biblioentry id="vide-H350-cookbook" xreflabel="[vide-h.350-cb]">
         <abbrev>ViDe-H.350-Cookbook</abbrev>
 
@@ -61,7 +61,7 @@
           <publishername>ViDe</publishername>
         </publisher>
       </biblioentry>
-        
+
       <biblioentry id="RFC4510" xreflabel="[RFC4510]">
         <abbrev>RFC4510</abbrev>
 
