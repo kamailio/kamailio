@@ -10,7 +10,7 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-    
+
     <title>&develguide;</title>
 	<para>
 	The module exports no function to be used in other &kamailio; modules.
