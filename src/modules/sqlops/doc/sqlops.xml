@@ -36,8 +36,8 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="sqlops_admin.xml"/>
-    
-    
+
+
 </book>
