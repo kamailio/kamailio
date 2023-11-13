@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -53,7 +53,7 @@
 
 /**
  * \brief Specify table name that will be used for subsequent operations.
- * 
+ *
  * The function db_use_table takes a table name and stores it db1_con_t structure.
  * All subsequent operations (insert, delete, update, query) are performed on
  * that table.
@@ -69,11 +69,11 @@ typedef int (*db_use_table_f)(db1_con_t *_h, const str *_t);
  * This function initializes the database API and opens a new database
  * connection. This function must be called after bind_dbmod but before any
  * other database API function is called.
- * 
+ *
  * The function takes one parameter, the parameter must contain the database
- * connection URL. The URL is of the form 
+ * connection URL. The URL is of the form
  * mysql://username:password\@host:port/database where:
- * 
+ *
  * username: Username to use when logging into database (optional).
  * password: password if it was set (optional)
  * host:     Hosname or IP address of the host where database server lives (mandatory)
@@ -93,11 +93,11 @@ typedef db1_con_t *(*db_init_f)(const str *_sqlurl);
  * This function initializes the database API and opens a new database
  * connection. This function must be called after bind_dbmod but before any
  * other database API function is called.
- * 
+ *
  * The function takes one parameter, the parameter must contain the database
- * connection URL. The URL is of the form 
+ * connection URL. The URL is of the form
  * mysql://username:password\@host:port/database where:
- * 
+ *
  * username: Username to use when logging into database (optional).
  * password: password if it was set (optional)
  * host:     Hosname or IP address of the host where database server lives (mandatory)
@@ -115,7 +115,7 @@ typedef db1_con_t *(*db_init2_f)(const str *_sqlurl, db_pooling_t _pooling);
 /**
  * \brief Close a database connection and free all memory used.
  *
- * The function closes previously open connection and frees all previously 
+ * The function closes previously open connection and frees all previously
  * allocated memory. The function db_close must be the very last function called.
  * \param _h db1_con_t structure representing the database connection
  */
@@ -225,11 +225,11 @@ typedef int (*db_free_result_f)(db1_con_t *_h, db1_res_t *_r);
 
 /**
  * \brief Insert a row into the specified table.
- * 
+ *
  * This function implements INSERT SQL directive, you can insert one or more
  * rows in a table using this function.
  * \param _h database connection handle
- * \param _k array of keys (column names) 
+ * \param _k array of keys (column names)
  * \param _v array of values for keys specified in _k parameter
  * \param _n number of keys-value pairs int _k and _v parameters
  * \return returns 0 if everything is OK, otherwise returns value < 0
@@ -246,7 +246,7 @@ typedef int (*db_insert_f)(const db1_con_t *_h, const db_key_t *_k,
  * If _k is NULL and _v is NULL and _n is zero, all rows are deleted, the
  * resulting table will be empty.
  * If _o is NULL, the equal operator "=" will be used for the comparison.
- * 
+ *
  * \param _h database connection handle
  * \param _k array of keys (column names) that will be matched
  * \param _o array of operators to be used with key-value pairs
@@ -303,7 +303,7 @@ typedef int (*db_replace_f)(const db1_con_t *handle, const db_key_t *keys,
  * \brief Retrieve the last inserted ID in a table.
  *
  * The function returns the value generated for an AUTO_INCREMENT column by the
- * previous INSERT or UPDATE  statement. Use this function after you have 
+ * previous INSERT or UPDATE  statement. Use this function after you have
  * performed an INSERT statement into a table that contains an AUTO_INCREMENT
  * field.
  * \param _h structure representing database connection
@@ -315,7 +315,7 @@ typedef int (*db_last_inserted_id_f)(const db1_con_t *_h);
 
 /**
  * \brief Insert a row into specified table, update on duplicate key.
- * 
+ *
  * The function implements the INSERT ON DUPLICATE KEY UPDATE SQL directive.
  * It is possible to insert a row and update if one already exists.
  * The old row will not deleted before the insertion of the new data.
@@ -369,7 +369,7 @@ typedef int (*db_insert_async_f)(const db1_con_t *_h, const db_key_t *_k,
 typedef int (*db_affected_rows_f)(const db1_con_t *_h);
 
 /**
- * \brief Start a single transaction that will consist of one or more queries. 
+ * \brief Start a single transaction that will consist of one or more queries.
  *
  * \param _h structure representing database connection
  * \return 0 if everything is OK, otherwise returns < 0
@@ -377,7 +377,7 @@ typedef int (*db_affected_rows_f)(const db1_con_t *_h);
 typedef int (*db_start_transaction_f)(db1_con_t *_h, db_locking_t _l);
 
 /**
- * \brief End a transaction. 
+ * \brief End a transaction.
  *
  * \param _h structure representing database connection
  * \return 0 if everything is OK, otherwise returns < 0
@@ -396,7 +396,7 @@ typedef int (*db_abort_transaction_f)(db1_con_t *_h);
 
 /**
  * \brief Database module callbacks
- * 
+ *
  * This structure holds function pointer to all database functions. Before this
  * structure can be used it must be initialized with bind_dbmod.
  * \see bind_dbmod
@@ -437,7 +437,7 @@ typedef struct db_func
  * \brief Bind database module functions
  *
  * This function is special, it's only purpose is to call find_export function in
- * the core and find the addresses of all other database related functions. The 
+ * the core and find the addresses of all other database related functions. The
  * db_func_t callback given as parameter is updated with the found addresses.
  *
  * This function must be called before any other database API call!
@@ -485,7 +485,7 @@ db1_con_t *db_do_init2(
 /**
  * \brief Helper for db_close function.
  *
- * This helper method does some work for the closing of a database 
+ * This helper method does some work for the closing of a database
  * connection. No function should be called after this
  * \param _h database connection handle
  * \param (*free_connection) Pointer to the db specific free_connection method
