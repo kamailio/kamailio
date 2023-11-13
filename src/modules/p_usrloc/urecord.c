@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -584,7 +584,7 @@ static inline struct ucontact *contact_path_match(
  * \param _path path
  * \param _cseq CSEQ number
  * \param _co found contact
- * \return 0 - found, 1 - not found, -1 - invalid found, 
+ * \return 0 - found, 1 - not found, -1 - invalid found,
  * -2 - found, but to be skipped (same cseq)
  */
 int get_ucontact(urecord_t *_r, str *_c, str *_callid, str *_path, int _cseq,

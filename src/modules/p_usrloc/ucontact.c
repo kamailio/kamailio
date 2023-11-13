@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -264,7 +264,7 @@ int mem_update_ucontact(ucontact_t *_c, ucontact_info_t *_ci)
 		update_str(&_c->callid, _ci->callid);
 	}
 
-	/* No need to update Callid as it is constant 
+	/* No need to update Callid as it is constant
 	 * per ucontact (set at insert time)  -bogdan */
 
 	update_str(&_c->user_agent, _ci->user_agent);
@@ -317,9 +317,9 @@ void st_update_ucontact(ucontact_t *_c)
 			break;
 
 		case CS_SYNC:
-			/* For db mode 1 & 2 a modified contact needs to be 
-			  * updated also in the database, so transit into 
-			  * CS_DIRTY and let the timer to do the update 
+			/* For db mode 1 & 2 a modified contact needs to be
+			  * updated also in the database, so transit into
+			  * CS_DIRTY and let the timer to do the update
 			  * again. For db mode 1 we try to update right
 			  * now and if fails, let the timer to do the job
 			  */
@@ -355,10 +355,10 @@ int st_delete_ucontact(ucontact_t *_c)
 		case CS_SYNC:
 		case CS_DIRTY:
 			/* Contact is in the database,
-		      * we cannot remove it from the memory 
+		      * we cannot remove it from the memory
 		      * directly, but we can set expires to zero
-		      * and the timer will take care of deleting 
-		      * the contact from the memory as well as 
+		      * and the timer will take care of deleting
+		      * the contact from the memory as well as
 		      * from the database
 		      */
 			if(db_mode == WRITE_BACK) {
