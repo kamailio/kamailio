@@ -76,7 +76,7 @@
 			</itemizedlist>
 	</para>
     </section>
-    
+
     <xi:include href="auth_params.xml"/>
     <xi:include href="auth_functions.xml"/>
 
