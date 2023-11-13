@@ -231,7 +231,7 @@ int declare_attr_group(modparam_t type, char *_param)
 	return 0;
 }
 
-/** Initialize all queries needed by 'extra attributes' for given table. 
+/** Initialize all queries needed by 'extra attributes' for given table.
  * Variable default_res holds columns which can used by read_attrs. */
 static int init_queries(db_ctx_t *ctx, registered_table_t *t)
 {
