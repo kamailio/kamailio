@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -121,8 +121,8 @@ static void destroy(void)
 
 
 /*
- * Fix test_curl_connect params: 
- * 1. connection(string/pvar) 
+ * Fix test_curl_connect params:
+ * 1. connection(string/pvar)
  * 2. url (string that may contain pvars) and
  * 3. result (writable pvar).
  */
