@@ -10,16 +10,16 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 
 	<title>&adminguide;</title>
-	
+
 	<section>
 	  <title>Overview</title>
-	    <para> 
-		The module extends the presence server implementation, providing the ability 
+	    <para>
+		The module extends the presence server implementation, providing the ability
 		to handle the 'ua-profile' event. When a user agent subscribes to ua-profile
-		event for its own AoR, it retrieves the profile data document from the body 
+		event for its own AoR, it retrieves the profile data document from the body
 		of a NOTIFY request.
 	    </para>
 	    <para>
@@ -61,7 +61,7 @@
 		</para>
 	  </section>
 	</section>
-	
+
 	<section>
 	  <title>Exported Parameters</title>
             <section id="presence_profile.p.default_expires">
