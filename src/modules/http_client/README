@@ -262,6 +262,13 @@ Chapter 1. Admin Guide
    3.19. config_file (string)
    3.20. netinterface (string)
 
+   The parameters are loaded in order. That can lead to unexpected
+   behavior: If httpcon is set at first, the default values for all other
+   parameters are used, and not the values that might be set after
+   httpcon. For example, if setting verify_peer=0 or verify_host=0 after
+   httpcon, the certificates are checked and self-signed certificates are
+   rejected nevertheless.
+
 3.1. httpredirect (int)
 
    If set to 1, enabled, http_client will follow HTTP 302 Redirects. If

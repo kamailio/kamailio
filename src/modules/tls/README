@@ -245,6 +245,10 @@ Chapter 1. Admin Guide
    memory. For example, such case has been reported for Ubuntu 20.04 or
    RedHat 8.
 
+   Note: with some particular combination of OS, openssl and mysql-client
+   libraries, there were reports of random crashes, in such case try to
+   set the db_mysql module parameter opt_ssl_mode to 1.
+
 2. Quick Start
 
    The default kamailio.cfg file has basic tls support included, it has to
