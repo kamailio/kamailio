@@ -54,7 +54,7 @@ typedef struct qos_ctx_st
 } qos_ctx_t;
 
 /*
- 
+
 ** AFTER INVITE/183 **
 
 qos_ctx:
@@ -65,7 +65,7 @@ qos_ctx:
  +----------------+    | *prev          |
                        +----------------+
                        | *next          |
-                       +----------------+  
+                       +----------------+
 		       | method_dir     |      sdp_session (caller)
 		       | method_id      |  +-->+----------+
 		       | method         |  |   |          |
@@ -87,7 +87,7 @@ qos_ctx:
  +----------------+    | *prev          |
  | *pending_sdp   |    +----------------+
  +----------------+    | *next          |
-                       +----------------+  
+                       +----------------+
 		       | method_dir     |      sdp_session (caller)
 		       | method_id      |  +-->+----------+
 		       | method         |  |   |          |
