@@ -5,19 +5,19 @@
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
 %docentities;
- 
+
 ]>
 
 <!-- Module User's Guide -->
-     
+
 <chapter>
 
   <title>&adminguide;</title>
-       
+
   <section>
-         
+
     <title>Overview</title>
-         
+
     <para>
       The IPops module offers operations for handling IP addresses, both IPv4 and IPv6.
     </para>
@@ -40,19 +40,19 @@
     </itemizedlist>
 
     <para>
-      	When using IPv6 in an URI (i.e. a SIP URI) the IP address must be written in "IPv6 reference" format 
+      	When using IPv6 in an URI (i.e. a SIP URI) the IP address must be written in "IPv6 reference" format
 	(which is the textual representation of the IPv6 enclosed between [ ] symbols).
 	An example is <quote>sip:alice@[2001:DB8:0:0:8:800:200C:417A]</quote>. This allows separation of
 	address and port number with a :, like <quote>[2001:DB8:0:0:8:800:200C:417A]:5060</quote>.
 	This module also allows comparing an IPv6 address with its IPv6 reference representation.
     </para>
-           
+
   </section>
-           
+
   <section>
-             
+
     <title>Dependencies</title>
-             
+
     <section>
       <title>&siprouter; Modules</title>
       <para>
@@ -66,7 +66,7 @@
         </itemizedlist>
       </para>
     </section>
-               
+
     <section>
       <title>External Libraries or Applications</title>
       <para>
@@ -80,19 +80,19 @@
         </itemizedlist>
       </para>
     </section>
-             
+
   </section>
-           
+
   <section>
 
     <title>Parameters</title>
-             
+
   </section>
-           
+
   <section>
 
     <title>Functions</title>
-             
+
     <section id="ipops.f.is_ip">
       <title>
         <function moreinfo="none">is_ip (ip)</function>
@@ -376,20 +376,20 @@ switch($rc) {
             <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
           </para>
 	</listitem>
-        <listitem> 
+        <listitem>
    	  <para>
             <emphasis>result</emphasis> - String or pseudo-variable containing the detailed type of the IP.
           </para>
           <para>
             <itemizedlist>
-              <listitem>  
-		<emphasis> IPv4 </emphasis> - PUBLIC, RIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST     
+              <listitem>
+		<emphasis> IPv4 </emphasis> - PUBLIC, RIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST
  	      </listitem>
-	      <listitem>  
-		<emphasis> IPv6 </emphasis> - UNSPECIFIED,  LOOPBACK, IPV4MAP, RESERVED, DISCARD, GLOBAL-UNICAST, TEREDO, BMWG, DOCUMENTATION, ORCHID, 6TO4, UNIQUE-LOCAL-UNICAST, LINK-LOCAL-UNICAST, MULTICAST     
- 	      </listitem>              
-  	    </itemizedlist>		
-	  </para>	
+	      <listitem>
+		<emphasis> IPv6 </emphasis> - UNSPECIFIED,  LOOPBACK, IPV4MAP, RESERVED, DISCARD, GLOBAL-UNICAST, TEREDO, BMWG, DOCUMENTATION, ORCHID, 6TO4, UNIQUE-LOCAL-UNICAST, LINK-LOCAL-UNICAST, MULTICAST
+ 	      </listitem>
+  	    </itemizedlist>
+	  </para>
         </listitem>
       </itemizedlist>
 
@@ -405,7 +405,7 @@ switch($rc) {
           <para>
             <emphasis>negative value</emphasis> - error occurred
           </para>
-        </listitem>       
+        </listitem>
       </itemizedlist>
 
       <para>
@@ -443,17 +443,17 @@ switch($rc) {
             <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
           </para>
 	</listitem>
-        <listitem> 
+        <listitem>
    	  <para>
             <emphasis>result</emphasis> - String or pseudo-variable containing the detailed type of the IP.
           </para>
           <para>
             <itemizedlist>
-              <listitem>  
-		<emphasis> IPv4 </emphasis> - PUBLIC, PRIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST     
- 	      </listitem>	                 
-  	    </itemizedlist>		
-	  </para>	
+              <listitem>
+		<emphasis> IPv4 </emphasis> - PUBLIC, PRIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST
+ 	      </listitem>
+  	    </itemizedlist>
+	  </para>
         </listitem>
       </itemizedlist>
 
@@ -469,7 +469,7 @@ switch($rc) {
           <para>
             <emphasis>negative value</emphasis> - error occurred
           </para>
-        </listitem>       
+        </listitem>
       </itemizedlist>
 
       <para>
@@ -488,7 +488,7 @@ switch($rc) {
         </programlisting>
       </example>
 
-    </section>	
+    </section>
 
     <section id="ipops.f.detailed_ipv6_type">
       <title>
@@ -507,17 +507,17 @@ switch($rc) {
             <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
           </para>
 	</listitem>
-        <listitem> 
+        <listitem>
    	  <para>
             <emphasis>result</emphasis> - String or pseudo-variable containing the detailed type of the IP.
           </para>
           <para>
             <itemizedlist>
-              <listitem>  
-		<emphasis> IPv6 </emphasis> - UNSPECIFIED,  LOOPBACK, IPV4MAP, RESERVED, DISCARD, GLOBAL-UNICAST, TEREDO, BMWG, DOCUMENTATION, ORCHID, 6TO4, UNIQUE-LOCAL-UNICAST, LINK-LOCAL-UNICAST, MULTICAST    
- 	      </listitem>	                 
-  	    </itemizedlist>		
-	  </para>	
+              <listitem>
+		<emphasis> IPv6 </emphasis> - UNSPECIFIED,  LOOPBACK, IPV4MAP, RESERVED, DISCARD, GLOBAL-UNICAST, TEREDO, BMWG, DOCUMENTATION, ORCHID, 6TO4, UNIQUE-LOCAL-UNICAST, LINK-LOCAL-UNICAST, MULTICAST
+ 	      </listitem>
+  	    </itemizedlist>
+	  </para>
         </listitem>
       </itemizedlist>
 
@@ -533,7 +533,7 @@ switch($rc) {
           <para>
             <emphasis>negative value</emphasis> - error occurred
           </para>
-        </listitem>       
+        </listitem>
       </itemizedlist>
 
       <para>
@@ -550,12 +550,12 @@ switch($rc) {
     xlog("L_ERR","IP address is of detailed type: $var(result) ");
 
     detailed_ipv6_type("[2001:8d8:7c0:402:217:72:194:30]","$var(result)");
-    xlog("L_ERR","IP address is of detailed type: $var(result) ");	
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");
 ...
         </programlisting>
       </example>
 
-    </section>	
+    </section>
 
 
     <section id="ipops.f.compare_ips">
@@ -608,7 +608,7 @@ if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
       </title>
 
       <para>
-        Returns TRUE if both IP's are the same. FALSE otherwise. This function does NOT 
+        Returns TRUE if both IP's are the same. FALSE otherwise. This function does NOT
 	allow comparing an IPv6 against an IPv6 reference.
       </para>
 
@@ -683,7 +683,7 @@ if (is_ip_rfc1918("10.0.123.123")) {
       </example>
 
     </section>
- 
+
     <section id="ipops.f.is_in_subnet">
       <title>
         <function moreinfo="none">is_in_subnet (ip, subnets_list)</function>
@@ -966,7 +966,7 @@ if (srv_query ("_sip._udp.example.com", "udp") > 0) {
         </programlisting>
       </example>
     </section>
- 
+
     <section id="ipops.f.naptr_query">
       <title>
         <function moreinfo="none">naptr_query(domain, pvid)</function>
