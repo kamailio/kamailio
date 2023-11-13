@@ -486,7 +486,7 @@ if (dp_apply_policy()) {
 			Calls from other members are expected to use TLS and authenticate
 			using a client-CERT. To implement this, we cannot share a TCP/TLS port
 			with other incoming connections. Thus we need to use tls_server_domain[] to
-			dedicate a TCP port for this federation. 
+			dedicate a TCP port for this federation.
 		</para>
 		<programlisting format="linespecific">
 tls_server_domain[1.2.3.4:5066] {
@@ -503,10 +503,10 @@ tls_server_domain[1.2.3.4:5066] {
 		<listitem>
 		<para><emphasis>Outgoing SIP configuration</emphasis>
 		</para><para>
-			Calls to other members must also use the proper client cert. 
-			Therefore, a TLS client domain must be configured. We use the 
-			federation name as TLS client domain identifier. Therefore, the 
-			content of the "tls_client_domain_avp" must be set to this identifier 
+			Calls to other members must also use the proper client cert.
+			Therefore, a TLS client domain must be configured. We use the
+			federation name as TLS client domain identifier. Therefore, the
+			content of the "tls_client_domain_avp" must be set to this identifier
 			(e.g. by putting it as rule into the domainpolicy table).
 		</para>
 		<programlisting format="linespecific">
@@ -570,7 +570,7 @@ mysql> select * from domainpolicy;
 		</listitem>
 	</itemizedlist>
 	</section>
-	
+
 
 
 
@@ -581,14 +581,14 @@ mysql> select * from domainpolicy;
 	a secure Layer 3 network between their proxies. It does not
 	matter whether this network is built by means of IPsec, a private
 	Layer 2 network, or by simple firewalling. We will use the 10.x
-	network (for the walled garden net) and "http://l3fed.org/" 
+	network (for the walled garden net) and "http://l3fed.org/"
 	(as federation identifier) in this example.
 	</para>
 	<para>
 	A member of this federation (e.g. example.com) can not announce its
 	SIP proxy's 10.x address in the standard SRV / A records of his domain,
 	as this address is only meaningful for other members of this federation.
-	In order to facilitate different IP address resolution paths within the 
+	In order to facilitate different IP address resolution paths within the
 	federation vs. outside the federation, all members of "http://l3fed.org/"
 	agree to prefix the destination domains with "l3fed" before the
 	SRV (or A) lookup.
@@ -610,7 +610,7 @@ $ORIGIN example.com
 _sip._udp      IN SRV 10 10 5060 publicsip.example.com.
 _sip._udp.l3fe IN SRV 10 10 5060 l3fedsip.example.com.
 
-publicsip      IN A   193.XXX.YYY.ZZZ 
+publicsip      IN A   193.XXX.YYY.ZZZ
 l3fedsip       IN A   10.0.0.42
 		</programlisting>
 		</listitem>
@@ -634,7 +634,7 @@ mysql> select * from domainpolicy;
 		</listitem>
 	</itemizedlist>
 	</section>
-	
+
 
 	</section>
 
