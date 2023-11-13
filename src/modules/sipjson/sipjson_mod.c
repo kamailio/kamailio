@@ -120,7 +120,7 @@ error:
 }
 
 /**
- * 
+ *
  */
 static int ki_sj_serialize(sip_msg_t *msg, str *smode, str *pvn)
 {
@@ -136,7 +136,7 @@ static int ki_sj_serialize(sip_msg_t *msg, str *smode, str *pvn)
 }
 
 /**
- * 
+ *
  */
 static int w_sj_serialize(sip_msg_t *msg, char *mode, char *vout)
 {
@@ -154,7 +154,7 @@ static int w_sj_serialize(sip_msg_t *msg, char *mode, char *vout)
 }
 
 /**
- * 
+ *
  */
 static int sj_add_xuri_attr(sip_uri_t *puri, int atype, char *aname, int alen,
 		srjson_doc_t *jdoc, srjson_t *jr)
@@ -202,7 +202,7 @@ static int sj_add_xuri_attr(sip_uri_t *puri, int atype, char *aname, int alen,
 }
 
 /**
- * 
+ *
  */
 static int sj_serialize_data(sip_msg_t *msg, srjson_doc_t *jdoc, str *smode)
 {
