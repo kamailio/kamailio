@@ -7,14 +7,14 @@
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Focus. Thanks for great work! This is an effort to 
+ * FhG Focus. Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -32,18 +32,18 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 
-/* 
+/*
  * RFC 3588 Base AVPs
- * 
+ *
  * http://tools.ietf.org/html/rfc3588
- * 
+ *
  */
 
 #include "macros.h"
@@ -70,29 +70,29 @@
 
 /*
  * The list of AVPs must be declared in the following format:
- * 
+ *
  * 		cdp_avp_add(<avp_name>.<vendor_id>,<flags>,<avp_type>,<data_type>)
  * 		or
  * 		cdp_avp_add_ptr(<avp_name>.<vendor_id>,<flags>,<avp_type>,<data_type>)
- * 
+ *
  * 		cdp_avp_get(<avp_name>.<vendor_id>,<avp_type>,<data_type>)
- * 
+ *
  * or, to add both add and get at once:
- * 
+ *
  * 		cdp_avp(<avp_name>.<vendor_id>,<flags>,<avp_type>,<data_type>)
- * 		or 
+ * 		or
  * 		cdp_avp_ptr(<avp_name>.<vendor_id>,<flags>,<avp_type>,<data_type>)
- * 
+ *
  * The add macros ending in _ptr will generate function with the extra AVPDataStatus data_do parameter
- * 
+ *
  * Parameters:
  *  - avp_name - a value of AVP_<avp_name> must resolve to the AVP code
  *  - vendor_id - an int value
  *  - flags	- AVP Flags to add to the AVP
  *  - avp_type - an avp type for which a function was defined a
  * 				int cdp_avp_get_<avp_type>(AAA_AVP *avp,<data_type> *data)
- * 		Some valid suggestions (and the data_type):		
- *  
+ * 		Some valid suggestions (and the data_type):
+ *
  *  			OctetString 	- str
  *  			Integer32		- int32_t
  *  			Integer64 		- int64_t
@@ -101,7 +101,7 @@
  *  			Float32 		- float
  *  			Float64 		- double
  *  			Grouped 		- AAA_AVP_LIST
- *  
+ *
  *  			Address 		- ip_address
  *  			Time 			- time_t
  *  			UTF8String 		- str
@@ -111,48 +111,48 @@
  *  			IPFilterRule	- str
  *  			QoSFilterRule	- str
  *  - data_type - the respective data type for the avp_type defined above
- *  
+ *
  *  The functions generated will return 1 on success or 0 on error or not found
  *  The prototype of the function will be:
- *  
+ *
  *  	int cdp_avp_get_<avp_name_group>(AAA_AVP_LIST list,<data_type> *data,AAA_AVP **avp_ptr)
- * 
- * 
- *  
+ *
+ *
+ *
  *  For Grouped AVPs with 2 or 3 known inside AVPs, you can define a shortcut function which will find the group and
- *  also extract the 2 or 3 AVPs. 
+ *  also extract the 2 or 3 AVPs.
  *  Do not define both 2 and 3 for the same type!
- * 
- * 
+ *
+ *
  *		cdp_avp_add2(<avp_name_group>.<vendor_id_group>,<flags_group>,<avp_name_1>,<data_type_1>,<avp_name_2>,<data_type_2>)
  * 		cdp_avp_get2(<avp_name_group>.<vendor_id_group>,<avp_name_1>,<data_type_1>,<avp_name_2>,<data_type_2>)
- *  	
+ *
  *		cdp_avp_get3(<avp_name_group>.<vendor_id_group>,<flags_group>,<avp_name_1>,<data_type_1>,<avp_name_2>,<data_type_2>,<avp_name_3>,<data_type_3>)
  *  	cdp_avp_get3(<avp_name_group>.<vendor_id_group>,<avp_name_1>,<data_type_1>,<avp_name_2>,<data_type_2>,<avp_name_3>,<data_type_3>)
- * 
+ *
  * 	 or, to add both add and get at once:
- * 
+ *
  *		cdp_avp2(<avp_name_group>.<vendor_id_group>,<flags_group>,<avp_name_1>,<data_type_1>,<avp_name_2>,<data_type_2>)
  * 		cdp_avp3(<avp_name_group>.<vendor_id_group>,<flags_group>,<avp_name_1>,<data_type_1>,<avp_name_2>,<data_type_2>)
- *  
+ *
  *  avp_name_group - a value of AVP_<avp_name_group> must resolve to the AVP code of the group
- *  
+ *
  *  vendor_id_group - an int value
- *  
-*  avp_name_N	- the name of the Nth parameter. 
+ *
+*  avp_name_N	- the name of the Nth parameter.
 	   *  	Previously, a cdp_avp_get(<avp_name_N>,<vendor_id_N>,<avp_type_N>,<data_type_N>) must be defined!
-	*  
-	   *  data_type_N	- the respective data type for avp_type_N (same as <data_type_N) 
-		  *  
+	*
+	   *  data_type_N	- the respective data type for avp_type_N (same as <data_type_N)
+		  *
 			 *  The functions generated will return the number of found AVPs inside on success or 0 on error or not found
 				*  The prototype of the function will be:
-	*  
+	*
 	   *  	int cdp_avp_get_<avp_name_group>_Group(AAA_AVP_LIST list,<data_type_1> *avp_name_1,<data_type_2> *avp_name_2[,<data_type_3> *avp_name_3],AAA_AVP **avp_ptr)
-		  *  
+		  *
 			 *  Note - generally, all data of type str will need to be defined with ..._ptr
 				*  Note - Groups must be defined with:
 				   *  	 cdp_avp_add_ptr(...) and data_type AAA_AVP_LIST*
-				   *  	 cdp_avp_get(...) and data_type AAA_AVP_LIST 	
+				   *  	 cdp_avp_get(...) and data_type AAA_AVP_LIST
 				   */
 
 /* clang-format off */
@@ -505,13 +505,13 @@ cdp_avp_ptr(
 
 	/*
 	 * Put here your supplimentary definitions. Typically:
-	 * 
+	 *
 	 * int <function1>(param1)
 	 * {
 	 *   code1
 	 * }
-	 * 
-	 * 
+	 *
+	 *
 	 */
 
 int cdp_avp_add_Vendor_Specific_Application_Id_Group(AAA_AVP_LIST *list,
@@ -568,11 +568,11 @@ error:
 #elif defined(CDP_AVP_EXPORT)
 
 /*
- * Put here your supplimentary exports in the format: 
- * 	<function_type1> <nice_function_name1>; 
+ * Put here your supplimentary exports in the format:
+ * 	<function_type1> <nice_function_name1>;
  *  <function_type2> <nice_function_name1>;
  *  ...
- *  
+ *
  */
 
 cdp_avp_add_Vendor_Specific_Application_Id_Group_f
@@ -585,13 +585,13 @@ get_Vendor_Specific_Application_Id_example;
 #elif defined(CDP_AVP_INIT)
 
 /*
- * Put here your supplimentary inits in the format: 
+ * Put here your supplimentary inits in the format:
  * 	<function1>,
  *  <function2>,
  *  ...
- * 
+ *
  * Make sure you keep the same order as in export!
- * 
+ *
  */
 
 cdp_avp_add_Vendor_Specific_Application_Id_Group,
@@ -604,8 +604,8 @@ cdp_avp_add_Vendor_Specific_Application_Id_Group,
 	 * Put here what you want to get in the reference. Typically:
 	 * <function1>
 	 * <function2>
-	 * ... 
-	 * 
+	 * ...
+	 *
 	 */
 int CDP_AVP_MODULE.add_Vendor_Specific_Application_Id_Group(
 		AAA_AVP_LIST *list, uint32_t vendor_id, uint32_t auth_app_id,
@@ -622,15 +622,15 @@ int CDP_AVP_MODULE.get_Vendor_Specific_Application_Id_example(AAA_AVP_LIST list,
 
 /*
  * Put here your definitions according to the declarations, exports, init, etc above. Typically:
- * 
+ *
  * int <function1(params1);>
  * typedef int <*function_type1>(params1);
- * 
+ *
  * int <function2(param2);>
  * typedef int <*function_type2>(params2);
- * 
+ *
  * ...
- *  
+ *
  */
 
 #ifndef _CDP_AVP_BASE_H_2
