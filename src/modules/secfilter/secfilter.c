@@ -409,8 +409,8 @@ static int w_check_contact_hdr(struct sip_msg *msg)
 }
 
 
-/* 
-Check if the current user is allowed 
+/*
+Check if the current user is allowed
 
 Return codes:
  4 = name whitelisted
