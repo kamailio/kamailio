@@ -95,12 +95,12 @@ modparam("imc", "db_url", "&exampledb;")
 		<title><varname>db_mode</varname>(integer)</title>
 		<para>
 		The module supports 2 modes of operation, high speed memory
-		based storage (mode 0), and database only (mode 2) where all 
+		based storage (mode 0), and database only (mode 2) where all
 		data is stored in a database, allowing scalability at the
 		expense of speed. Mode 1 is reserved.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>0</quote> 	
+		<emphasis>	Default value is <quote>0</quote>
 		</emphasis>
 		</para>
 		<example>
