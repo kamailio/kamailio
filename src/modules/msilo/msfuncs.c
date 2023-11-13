@@ -106,7 +106,7 @@ int timetToSipDateStr(time_t date, char *buf, int bufLen)
 			dayArray[gmt.tm_wday], gmt.tm_mday, monthArray[gmt.tm_mon],
 			1900 + gmt.tm_year, gmt.tm_hour, gmt.tm_min, gmt.tm_sec);
 
-	/* snprintf returns number of chars it should have printed, so you 
+	/* snprintf returns number of chars it should have printed, so you
 	 * need to bounds check against input*/
 	return (len > bufLen) ? bufLen : len;
 }
@@ -172,7 +172,7 @@ error:
 	return -1;
 }
 
-/** build MESSAGE headers 
+/** build MESSAGE headers
  *
  * Add Content-Type, Contact, Date, and extra headers if they exist
  * expects - max buf len of the resulted body in body->len
