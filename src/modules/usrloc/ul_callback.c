@@ -71,7 +71,7 @@ void destroy_ulcb_list(void)
 }
 
 
-/*! \brief 
+/*! \brief
 	register a callback function 'f' for 'types' mask of events;
 */
 int register_ulcb(int types, ul_cb f, void *param)
