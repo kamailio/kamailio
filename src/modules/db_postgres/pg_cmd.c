@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -23,7 +23,7 @@
  */
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
 /** \file
@@ -79,7 +79,7 @@ static void pg_cmd_free(db_cmd_t *cmd, struct pg_cmd *payload)
  * unique within a connection to the server so we just keep a global counter
  * and the name will be that number converted to text.
  *
- * @param cmd A command whose name is to be generated 
+ * @param cmd A command whose name is to be generated
  * @return A string allocated using pkg_malloc containing the name or NULL on
  *         error.
  */
@@ -109,7 +109,7 @@ static int gen_cmd_name(db_cmd_t *cmd)
  * parameter value and types to PQexecPrepared.  The function only allocates
  * memory buffers and determines oids of parameters, actual values will be
  * assigned by another function at runtime.
- * @param cmd A command where the data strctures will be created. 
+ * @param cmd A command where the data strctures will be created.
  * @retval 0 on success.
  * @retval A negative number on error.
  */
@@ -528,7 +528,7 @@ int pg_cmd_exec(db_res_t *res, db_cmd_t *cmd)
 					puri->host);
 		}
 
-		/* Connection is either connected or has been successfully reconnected, 
+		/* Connection is either connected or has been successfully reconnected,
 		 * now figure out if the prepared command on the server still exist
 		 */
 		tmp = PQdescribePrepared(pcon->con, pcmd->name);

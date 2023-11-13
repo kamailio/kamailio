@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -23,10 +23,10 @@
  */
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * The implementation of parser parsing postgres://.. URIs.
  */
 
@@ -43,7 +43,7 @@
 
 /** compare s1 & s2  with a function f (which should return 0 if ==);
  * s1 & s2 can be null
- * return 0 if match, 1 if not 
+ * return 0 if match, 1 if not
  */
 #define cmpstr(s1, s2, f) \
 	((s1) != (s2)) && ((s1) == 0 || (s2) == 0 || (f)((s1), (s2)) != 0)
@@ -93,7 +93,7 @@ static int dupl_string(char **dst, const char *begin, const char *end)
 }
 
 
-/** Parses postgres URI of form 
+/** Parses postgres URI of form
  * //[username[:password]@]hostname[:port]/database
  *
  * Returns 0 if parsing was successful and -1 otherwise
