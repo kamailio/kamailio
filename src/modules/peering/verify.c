@@ -154,7 +154,7 @@ static int generate_avps(VALUE_PAIR *received)
 }
 
 
-/* 
+/*
  * Send Radius request to verify destination and generate AVPs from
  * reply items of positive response.
  */
@@ -255,7 +255,7 @@ err:
 }
 
 
-/* 
+/*
  * Send Radius request to verify source.
  */
 int verify_source(struct sip_msg *_msg, char *s1, char *s2)
