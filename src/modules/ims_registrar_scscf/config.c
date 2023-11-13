@@ -19,7 +19,7 @@
  */
 
 /*!
- * \file 
+ * \file
  * \brief Registrar :: Configuration
  * \ingroup Registrar
  */
