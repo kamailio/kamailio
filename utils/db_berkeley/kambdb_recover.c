@@ -16,10 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * History:
  * --------
  * 2007-09-19  genesis (wiquan)
@@ -34,7 +34,7 @@ char *db_home = NULL;
 const char *progname;
 
 /**
- * main -- 
+ * main --
  */
 int main(int argc, char *argv[])
 {
@@ -89,8 +89,8 @@ int main(int argc, char *argv[])
 
 
 /**
-* usage -- 
-* 
+* usage --
+*
 */
 int usage(void)
 {
@@ -183,7 +183,7 @@ int create_all(void)
  * parameter tn is optional,
  * 	if tablename (tn) is specified returns only jnl files for tablename (tn)
  *	else returns a sorted linkedlist of all files in d
- * returns lnode_p 
+ * returns lnode_p
  *	the head linknode points to the latests file.
  */
 lnode_p file_list(char *d, char *tn)
@@ -265,11 +265,11 @@ int compare(const void *a, const void *b)
 
 /**
 * recover -- given a journal filename, creates a new db w. metadata, and replays
-*	the events in journalized order. 
+*	the events in journalized order.
 *	Results in a new db containing the journaled data.
 *
 *	fn (filename) must be in the form:
-*	location-20070803175446.jnl 
+*	location-20070803175446.jnl
 */
 int recover(char *jfn)
 {
@@ -401,7 +401,7 @@ int recover(char *jfn)
 }
 
 /**
-* recover_all -- Iterates over all core tables in enumerated order for recovery from 
+* recover_all -- Iterates over all core tables in enumerated order for recovery from
 *	journal files (.jnl).
 *	The parm 'lastn' is the number of journal files needed to be recovered.
 *	Hardcoded to only find MAXFILES.
@@ -468,7 +468,7 @@ int recover_all(int lastn)
 * extract_key -- uses the internal schema to extract the key from the data
 * 	row that was found in the journal.
 * caller provides inititialize memory for destination key (k).
-* data is provided ; key is filled in 
+* data is provided ; key is filled in
 */
 int extract_key(table_p tp, char *k, char *d)
 {
@@ -508,7 +508,7 @@ int extract_key(table_p tp, char *k, char *d)
 }
 
 /**
-* delete -- deletes a row from the db we are trying to rebuild 
+* delete -- deletes a row from the db we are trying to rebuild
 */
 int delete(table_p tp, char *k, int len)
 {
