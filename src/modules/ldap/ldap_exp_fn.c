@@ -208,7 +208,7 @@ int ldap_result_check(struct sip_msg *_msg,
 	struct berval **attr_vals;
 
 	/*
-	* do variable substitution for check_str 
+	* do variable substitution for check_str
 	*/
 
 	if(_lrp->check_str_elem_p) {
