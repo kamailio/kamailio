@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -37,7 +37,7 @@
  * \brief
  * Determines from which part of a message the hash shall be calculated.
  * Possible values are:
- * 
+ *
  * - \b shs_call_id     the content of the Call-ID header field
  * - \b shs_from_uri    the entire URI in the From header field
  * - \b shs_from_user   the username part of the URI in the From header field
