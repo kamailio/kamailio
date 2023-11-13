@@ -322,7 +322,7 @@ static rms_dialog_info_t *rms_dialog_action_check(rms_dialog_info_t *di)
 }
 
 /**
- * Most interaction with the RTP sessions and media streams that are controlled 
+ * Most interaction with the RTP sessions and media streams that are controlled
  * in this function this is safer in the event where a library is using non shared memory
  * all the mediastreamer2 ticker threads are spawned from here.
  */
