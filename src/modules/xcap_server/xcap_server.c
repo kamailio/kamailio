@@ -1468,8 +1468,8 @@ int xcaps_generate_etag_hdr(str *etag)
 	return 0;
 }
 
-/** 
- * 
+/**
+ *
  */
 static int fixup_xcaps_put(void **param, int param_no)
 {
