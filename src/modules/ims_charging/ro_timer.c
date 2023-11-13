@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   ro_timer.c
  * Author: Jason Penton
  *

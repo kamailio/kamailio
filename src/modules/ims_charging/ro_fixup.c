@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   ro_fixup.c
  * Author: Jason Penton
  *
