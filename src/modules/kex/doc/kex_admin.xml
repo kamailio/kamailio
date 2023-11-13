@@ -912,7 +912,7 @@ resetdebug();
 		<itemizedlist>
 		<listitem>
 			<para>
-				<emphasis>module_name</emphasis> - print statistics for specific module. Either 
+				<emphasis>module_name</emphasis> - print statistics for specific module. Either
 				a module name (like "usrloc") or "core" for the &kamailio; core.
 			</para>
 		</listitem>
