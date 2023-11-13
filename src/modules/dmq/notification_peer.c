@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -358,7 +358,7 @@ dmq_node_t *add_server_and_notify(str_list_t *server_list)
  * 	From: ...
  * 	Max-Forwards: ...
  * 	Content-Length: 22
- * 	
+ *
  * 	sip:host1:port1;param1=value1
  * 	sip:host2:port2;param2=value2
  * 	...
@@ -512,7 +512,7 @@ error:
 }
 
 /**
- * builds the body of a notification message from the list of servers 
+ * builds the body of a notification message from the list of servers
  * the result will look something like:
  * sip:host1:port1;param1=value1\r\n
  * sip:host2:port2;param2=value2\r\n

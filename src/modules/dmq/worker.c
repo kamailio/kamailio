@@ -136,7 +136,7 @@ int add_dmq_job(struct sip_msg *msg, dmq_peer_t *peer)
 	int cloned_msg_len;
 
 	/* Pre-parse headers so they are included in our clone. Parsing later
-	 * will result in linking pkg structures to shm msg, eventually leading 
+	 * will result in linking pkg structures to shm msg, eventually leading
 	 * to memory errors. */
 	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse headers\n");
