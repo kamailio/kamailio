@@ -199,16 +199,16 @@ modparam("ndb_redis", "cluster", 1)
 		<para>
 			When communicating with a REDIS server, if redis_cmd or redis_execute
 			will fail for more than <quote>allowed_timeouts</quote> consecutive
-			times, the server will be temporary disabled for a number of seconds 
+			times, the server will be temporary disabled for a number of seconds
 			configured by the <quote>disable_time</quote> parameter.
 		</para>
 		<para>
 			Disabling a server means that further redis_cmd and redis_execute commands
-			will not do anything and return a negative value <quote>-2</quote>. 
+			will not do anything and return a negative value <quote>-2</quote>.
 			Messages are also logged when disabling and re-enabling a server.
 		</para>
 		<para>
-			The number of consecutive fails are counted by each Kamailio process, 
+			The number of consecutive fails are counted by each Kamailio process,
 			so when disabling a server this is done just for that process, not globally.
 		</para>
 		<para>
