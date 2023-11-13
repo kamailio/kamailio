@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -64,7 +64,7 @@
 	<section id="rtjson.p.xavp_cfg">
 		<title><varname>xavp_cfg</varname> (str)</title>
 		<para>
-			The name of the xavp to be used internally by the module. 
+			The name of the xavp to be used internally by the module.
 		</para>
 		<para>
 		<emphasis>
