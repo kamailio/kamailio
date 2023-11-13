@@ -127,7 +127,7 @@ modparam("cfgt", "mask", 12)
 		<para>
 			Prefix used to identify test scenario messages. Last char of the
 			string will be used as delimiter for the scenario ID. With parameter
-			set to <quote>NGCP%</quote> and Call-ID <quote>NGCP%123%456</quote> 
+			set to <quote>NGCP%</quote> and Call-ID <quote>NGCP%123%456</quote>
 			the scenario identified will be <quote>123</quote>.
 		</para>
 		<para>
