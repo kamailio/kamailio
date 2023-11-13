@@ -193,7 +193,7 @@ modparam("ims_registrar_pcscf", "subscription_expires", 7200)
     <section>
       <title><varname>ignore_contact_rxport_check</varname> (int)</title>
 
-      <para>Validate, if the port, from which the request was received, is the 
+      <para>Validate, if the port, from which the request was received, is the
 	same as used during registration.</para>
 
       <para>This Parameter is primarily used by the "is_registered" function.</para>
@@ -288,8 +288,8 @@ modparam("ims_registrar_pcscf", "reginfo_queue_size_threshold", 42)
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>domain</emphasis> - Logical domain within the registrar. 
-			If a database is used then this must be name of the table which 
+			<emphasis>domain</emphasis> - Logical domain within the registrar.
+			If a database is used then this must be name of the table which
 			stores the contacts.
 			</para>
 		</listitem>
@@ -313,8 +313,8 @@ pcscf_save("location");
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>domain</emphasis> - Logical domain within the registrar. 
-			If a database is used then this must be name of the table which 
+			<emphasis>domain</emphasis> - Logical domain within the registrar.
+			If a database is used then this must be name of the table which
 			stores the contacts.
 			</para>
 		</listitem>
@@ -370,8 +370,8 @@ pcscf_save("location");
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>domain</emphasis> - Logical domain within the registrar. 
-			If a database is used then this must be name of the table which 
+			<emphasis>domain</emphasis> - Logical domain within the registrar.
+			If a database is used then this must be name of the table which
 			stores the contacts.
 			</para>
 		</listitem>
@@ -386,8 +386,8 @@ pcscf_save("location");
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>domain</emphasis> - Logical domain within the registrar. 
-			If a database is used then this must be name of the table which 
+			<emphasis>domain</emphasis> - Logical domain within the registrar.
+			If a database is used then this must be name of the table which
 			stores the contacts.
 			</para>
 		</listitem>
@@ -401,8 +401,8 @@ pcscf_save("location");
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>domain</emphasis> - Logical domain within the registrar. 
-			If a database is used then this must be name of the table which 
+			<emphasis>domain</emphasis> - Logical domain within the registrar.
+			If a database is used then this must be name of the table which
 			stores the contacts.
 			</para>
 		</listitem>
