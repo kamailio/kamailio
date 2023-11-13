@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -35,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include "../../core/parser/msg_parser.h"
@@ -59,7 +59,7 @@
 
 /**
  *	Delete parameters and stuff from uri.
- * @param uri - the string to operate on 
+ * @param uri - the string to operate on
  */
 static inline void cscf_strip_uri(str *uri)
 {
@@ -364,7 +364,7 @@ str cscf_get_public_identity_from(struct sip_msg *msg)
  * Returns the expires value from the Expires header in the message.
  * It searches into the Expires header and if not found returns -1
  * @param msg - the SIP message, if available
- * @is_shm - msg from from shared memory 
+ * @is_shm - msg from from shared memory
  * @returns the value of the expire or -1 if not found
  */
 int cscf_get_expires_hdr(struct sip_msg *msg, int is_shm)
@@ -401,7 +401,7 @@ int cscf_get_expires_hdr(struct sip_msg *msg, int is_shm)
 
 /**
  * Returns the expires value from the message.
- * First it searches into the Expires header and if not found it also looks 
+ * First it searches into the Expires header and if not found it also looks
  * into the expires parameter in the contact header
  * @param msg - the SIP message
  * @param is_shm - msg from shared memory
@@ -490,7 +490,7 @@ done:
  * NB: free returned result str when done from shm
  * @param msg - the SIP message
  * @returns the contact (don't forget to free from shm)
- * 
+ *
  * NOTE: should only be called when REQ URI has been converted sip:user@IP_ADDRESS:PORT or tel:IP_ADDRESS:PORT
  */
 str cscf_get_contact_from_requri(struct sip_msg *msg)
@@ -659,7 +659,7 @@ str cscf_get_asserted_identity(struct sip_msg *msg, int is_shm)
 
 static str phone_context_s = {";phone-context=", 15};
 /**
- * Extracts the realm from a SIP/TEL URI. 
+ * Extracts the realm from a SIP/TEL URI.
  * - SIP - the hostname
  * - TEL - the phone-context parameter
  * @param msg - the SIP message
@@ -742,9 +742,9 @@ str cscf_get_realm_from_uri(str uri)
 	return realm;
 }
 
-/** 
+/**
  * Delivers the Realm from request URI
- * @param msg sip message 
+ * @param msg sip message
  * @returns realm as String on success 0 on fail
  */
 str cscf_get_realm_from_ruri(struct sip_msg *msg)
@@ -765,7 +765,7 @@ str cscf_get_realm_from_ruri(struct sip_msg *msg)
 /**
  * Looks for the Call-ID header
  * @param msg - the sip message
- * @param hr - ptr to return the found hdr_field 
+ * @param hr - ptr to return the found hdr_field
  * @returns the callid value
  */
 str cscf_get_call_id(struct sip_msg *msg, struct hdr_field **hr)
@@ -915,7 +915,7 @@ int cscf_add_header_first(struct sip_msg *msg, str *hdr, int type)
  * @param msg - the SIP message to look into
  * @param header_name - the name of the header to search for
  * @param last_header - last header to ignore in the search, or NULL if to start from the first one
- * @returns the hdr_field on success or NULL if not found  
+ * @returns the hdr_field on success or NULL if not found
  */
 struct hdr_field *cscf_get_next_header(
 		struct sip_msg *msg, str header_name, struct hdr_field *last_header)
@@ -1089,7 +1089,7 @@ int cscf_add_header(struct sip_msg *msg, str *hdr, int type)
 }
 
 /**
- *	Get the expires header value from a message. 
+ *	Get the expires header value from a message.
  * @param msg - the SIP message
  * @returns the expires value or -1 if not found
  */
@@ -1113,7 +1113,7 @@ static str prack_s = {"PRACK", 5};
 static str update_s = {"UPDATE", 6};
 static str notify_s = {"NOTIFY", 6};
 /**
- * Check if the message is an initial request for a dialog. 
+ * Check if the message is an initial request for a dialog.
  *		- BYE, PRACK, UPDATE, NOTIFY belong to an already existing dialog
  * @param msg - the message to check
  * @returns 1 if initial, 0 if not
@@ -1170,7 +1170,7 @@ int cscf_get_originating_user(struct sip_msg *msg, str *uri)
  * returns in uri the freshly pkg allocated uri - don't forget to free
  * @param msg - the SIP message
  * @param uri - uri to fill into
- * @returns 1 if found, else 0 
+ * @returns 1 if found, else 0
  */
 int cscf_get_terminating_user(struct sip_msg *msg, str *uri)
 {
@@ -1757,7 +1757,7 @@ int cscf_add_header_rpl(struct sip_msg *msg, str *hdr)
 /**
  * Looks for the Call-ID header
  * @param msg - the sip message
- * @param hr - ptr to return the found hdr_field 
+ * @param hr - ptr to return the found hdr_field
  * @returns the callid value
  */
 int cscf_get_cseq(struct sip_msg *msg, struct hdr_field **hr)
@@ -1800,7 +1800,7 @@ static str s_called_party_id = {"P-Called-Party-ID", 17};
 /**
  * Looks for the P-Called-Party-ID header and extracts the public identity from it
  * @param msg - the sip message
- * @param hr - ptr to return the found hdr_field 
+ * @param hr - ptr to return the found hdr_field
  * @returns the P-Called_Party-ID
  */
 str cscf_get_public_identity_from_called_party_id(
