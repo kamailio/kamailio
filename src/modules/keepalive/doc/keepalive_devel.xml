@@ -10,12 +10,12 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-	
+
 	<title>&develguide;</title>
 
 	<para>
-	The KeepAlive module provides an internal <acronym>API</acronym> to be used by 
-	other &kamailio; modules. This <acronym>API</acronym> offers support for destinations 
+	The KeepAlive module provides an internal <acronym>API</acronym> to be used by
+	other &kamailio; modules. This <acronym>API</acronym> offers support for destinations
 	monitoring.
 	</para>
 	<para>
@@ -33,7 +33,7 @@
 		<function moreinfo="none">add_destination(uri, owner, flags, ping_interval, [statechanged_clb, response_clb, [user_attr]])</function>
 		</title>
 		<para>
-			This function registers a new destination to monitor. 
+			This function registers a new destination to monitor.
 			Monitoring of the destination starts as soon as it returns with success (0 value).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -44,7 +44,7 @@
 			</para>
 			<itemizedlist>
 				<listitem>
-					<emphasis>proto</emphasis> being one of <emphasis>sip</emphasis> or <emphasis>sips</emphasis> (SIP over TLS). 
+					<emphasis>proto</emphasis> being one of <emphasis>sip</emphasis> or <emphasis>sips</emphasis> (SIP over TLS).
 					If omitted, <emphasis>sip</emphasis> is used by default
 				</listitem>
 				<listitem>
@@ -117,7 +117,7 @@
 			<listitem><emphasis>-1</emphasis> if an error occurred
 			</listitem>
 		</itemizedlist>
-		
+
 	</section>
 
 

@@ -286,7 +286,7 @@ ka_del_destination("sip:192.168.1.10:5060;transport=tcp", "config");
 			 keepalive.add sip:username@domain listname
 			</programlisting>
 			</example>
-			</section>	
+			</section>
 			<section id="keepalive.del">
 			<title><function>keepalive.del</function></title>
 			<para>
@@ -302,7 +302,7 @@ ka_del_destination("sip:192.168.1.10:5060;transport=tcp", "config");
 			 keepalive.del sip:username@domain listname
 			</programlisting>
 			</example>
-			</section>	
+			</section>
 			<section id="keepalive.get">
 			<title><function>keepalive.get</function></title>
 			<para>
@@ -318,7 +318,7 @@ ka_del_destination("sip:192.168.1.10:5060;transport=tcp", "config");
 			 keepalive.get sip:username@domain listname
 			</programlisting>
 			</example>
-			</section>	
+			</section>
 			<section id="keepalive.flush">
 			<title><function>keepalive.flush</function></title>
 			<para>
@@ -334,7 +334,7 @@ ka_del_destination("sip:192.168.1.10:5060;transport=tcp", "config");
 			 keepalive.flush
 			</programlisting>
 			</example>
-			</section>				
+			</section>
 		</section>
 	</section>
 </chapter>
