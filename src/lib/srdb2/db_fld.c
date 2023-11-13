@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2005 FhG FOKUS
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -14,13 +14,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/** \ingroup DB_API 
- * @{ 
+/** \ingroup DB_API
+ * @{
  */
 
 #include "db_fld.h"
@@ -112,7 +112,7 @@ db_fld_t* db_fld_copy(db_fld_t* fld)
 	for(i = 0; i < n; i++) {
 		if (db_gen_init(&newp[i].gen) < 0) goto error;
 	}
-	
+
 	return newp;
 
  error:
@@ -132,7 +132,7 @@ db_fld_t* db_fld_copy(db_fld_t* fld)
 void db_fld_free(db_fld_t* fld)
 {
 	int i;
-	
+
 	if (DB_FLD_EMPTY(fld)) return;
 	for(i = 0; !DB_FLD_LAST(fld[i]); i++) {
 		db_gen_free(&fld[i].gen);

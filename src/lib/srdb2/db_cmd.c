@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2005 FhG FOKUS
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -14,13 +14,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/** \ingroup DB_API 
- * @{ 
+/** \ingroup DB_API
+ * @{
  */
 
 #include "db_cmd.h"
@@ -33,7 +33,7 @@
 #include <stdarg.h>
 
 
-db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table, 
+db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 				 db_fld_t* result, db_fld_t* match, db_fld_t* values)
 {
 	char* fname;
@@ -49,7 +49,7 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 	newp->ctx = ctx;
 
 	newp->table.len = strlen(table);
-	newp->table.s = (char*)pkg_malloc(newp->table.len + 1);	
+	newp->table.s = (char*)pkg_malloc(newp->table.len + 1);
 	if (newp->table.s == NULL) goto err;
 	memcpy(newp->table.s, table, newp->table.len + 1);
 
@@ -152,7 +152,7 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 					con->uri->scheme.len, ZSW(con->uri->scheme.s));
 				goto err;
 			}
-			
+
 			r = db_drv_func((void*)(&newp->next[i]), &con->uri->scheme, "db_next");
 			if (r < 0) goto err;
 			if (r > 0) {
@@ -195,7 +195,7 @@ int db_exec(db_res_t** res, db_cmd_t* cmd)
 {
 	db_res_t* r = NULL;
 	int ret;
-	
+
 	if (res) {
 		r = db_res(cmd);
 		if (r == NULL) return -1;
@@ -220,15 +220,15 @@ int db_getopt(db_cmd_t* cmd, char* optname, ...)
 	db_drv_func_t func;
 	db_con_t* con;
 	va_list ap;
-	
+
 	for(i = 0; i < cmd->ctx->con_n; i++) {
 		con = cmd->ctx->con[i];
-		
+
 		r = db_drv_func(&func, &con->uri->scheme, "db_getopt");
 		if (r < 0) return -1;
 		if (r > 0) func = NULL;
 		db_payload_idx = i;
-		
+
 		va_start(ap, optname);
 		if (func && func(cmd, optname, ap) < 0) {
 			va_end(ap);
@@ -236,7 +236,7 @@ int db_getopt(db_cmd_t* cmd, char* optname, ...)
 		}
 		va_end(ap);
 	}
-	
+
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -14,13 +14,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/** \ingroup DB_API 
- * @{ 
+/** \ingroup DB_API
+ * @{
  */
 
 #include "db_res.h"
@@ -41,7 +41,7 @@ db_res_t* db_res(db_cmd_t* cmd)
     newp->cmd = cmd;
 	newp->field_count = cmd->result_count;
 
-	ret = db_drv_call(&cmd->ctx->con[db_payload_idx]->uri->scheme, 
+	ret = db_drv_call(&cmd->ctx->con[db_payload_idx]->uri->scheme,
 					  "db_res", newp, db_payload_idx);
 	if (ret < 0) goto err;
 

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -14,13 +14,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/** \ingroup DB_API 
- * @{ 
+/** \ingroup DB_API
+ * @{
  */
 
 #include "db_drv.h"
@@ -57,16 +57,16 @@ int db_drv_func(db_drv_func_t* func, str* module, char* func_name)
 {
 	static str prefix = STR_STATIC_INIT("db_");
 	char* buf = NULL, *name;
-	
+
 	if ((buf = pkg_malloc(prefix.len + module->len + 1)) == NULL) {
 		LOG(L_ERR, "db_drv_func: No memory left\n");
 		goto error;
 	}
-	
+
 	memcpy(buf, prefix.s, prefix.len);
 	memcpy(buf + prefix.len, module->s, module->len);
 	buf[prefix.len + module->len] = '\0';
-	
+
 	/* First try to find the module with prefix "db_" */
 	name = buf;
 	if (find_module_by_name(name) == 0) {
@@ -77,13 +77,13 @@ int db_drv_func(db_drv_func_t* func, str* module, char* func_name)
 			goto error;
 		}
 	}
-	
+
 	*func = (db_drv_func_t)find_mod_export(name, func_name, 0, 0);
-	
+
 	if (buf) pkg_free(buf);
 	if (*func) return 0;
 	else return 1;
-	
+
 error:
 	if (buf) pkg_free(buf);
 	return -1;
@@ -95,7 +95,7 @@ error:
  * Call function with name <func_name> in DB driver <module>, give
  * it pointer <db_struct> as the pointer to the corresponding DB structure
  * (type of the structure is function-specific) and <offset> is the offset
- * of the driver/connection within the context (used to make DB_DRV_ATTACH 
+ * of the driver/connection within the context (used to make DB_DRV_ATTACH
  * and DB_DRV_DATA macros work)
  */
 int db_drv_call(str* module, char* func_name, void* db_struct, int offset)

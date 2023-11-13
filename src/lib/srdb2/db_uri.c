@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2005 FhG FOKUS
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -14,13 +14,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/** \ingroup DB_API 
- * @{ 
+/** \ingroup DB_API
+ * @{
  */
 
 #include "db_uri.h"
@@ -65,11 +65,11 @@ db_uri_t* db_uri(const char* uri)
 	int len;
 	db_uri_t* newp;
 	char *turi;
-    
+
 	newp = (db_uri_t*)pkg_malloc(sizeof(db_uri_t));
 	if (newp == NULL) goto error;
 	memset(newp, '\0', sizeof(db_uri_t));
-	if (db_gen_init(&newp->gen) < 0) goto error;	
+	if (db_gen_init(&newp->gen) < 0) goto error;
 
 	len = strlen(uri);
 	turi = (char*)uri;
@@ -84,7 +84,7 @@ db_uri_t* db_uri(const char* uri)
 		newp->scheme.s = pkg_malloc(newp->scheme.len + 1);
 		if (newp->scheme.s == NULL) goto error;
 		memcpy(newp->scheme.s, uri, colon - uri);
-		
+
 		newp->body.len = len - newp->scheme.len - 1;
 		newp->body.s = pkg_malloc(newp->body.len + 1);
 		if (newp->body.s == NULL) goto error;
@@ -96,7 +96,7 @@ db_uri_t* db_uri(const char* uri)
 	/* Call db_uri function if the driver has it */
 	if (db_drv_call(&newp->scheme, "db_uri", newp, 0) < 0) goto error;
 	return newp;
-    
+
  error:
 	ERR("db_uri: Error while creating db_uri structure\n");
 	if (newp) {

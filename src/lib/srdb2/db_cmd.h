@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2005 FhG FOKUS
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -14,16 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef _DB_CMD_H
 #define _DB_CMD_H  1
 
-/** \ingroup DB_API 
- * @{ 
+/** \ingroup DB_API
+ * @{
  */
 
 /** \file
@@ -83,7 +83,7 @@ typedef struct db_cmd {
 } while(0)
 
 
-struct db_cmd* db_cmd(enum db_cmd_type type, struct db_ctx* ctx, char* table, 
+struct db_cmd* db_cmd(enum db_cmd_type type, struct db_ctx* ctx, char* table,
 					  db_fld_t* result, db_fld_t* match, db_fld_t* value);
 void db_cmd_free(struct db_cmd* cmd);
 

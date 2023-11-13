@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -19,13 +19,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/** \ingroup DB_API 
- * @{ 
+/** \ingroup DB_API
+ * @{
  */
 
 #include "db_ctx.h"
@@ -137,7 +137,7 @@ void db_ctx_free(db_ctx_t* ctx)
 	 */
 	memset(((db_gen_t*)ctx)->data, '\0', sizeof(((db_gen_t*)ctx)->data));
 	db_gen_free(&ctx->gen);
-	
+
 	/* Destroy the structure */
 	if (ctx->id.s) pkg_free(ctx->id.s);
     pkg_free(ctx);
@@ -221,7 +221,7 @@ int db_add_db(db_ctx_t* ctx, const char* uri)
 	}
 
 	/* We must create the db_con structure after lookup_ctx_data and associated
-	 * code above, this is to ensure that db_con in the DB driver gets called 
+	 * code above, this is to ensure that db_con in the DB driver gets called
 	 * after db_ctx in the same driver. db_con function might rely on the
 	 * previously created context structures
 	 */

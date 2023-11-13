@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -14,16 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef _DB_FLD_H
 #define _DB_FLD_H  1
 
-/** \ingroup DB_API 
- * @{ 
+/** \ingroup DB_API
+ * @{
  */
 
 #include "db_gen.h"
@@ -72,7 +72,7 @@ typedef union db_fld_val {
 	char*        cstr;   /* NULL terminated string */
 	str          lstr;   /* String with known length */
 	str          blob;   /* Blob data */
-	unsigned int bitmap; /* Bitmap data type, 32 flags, should be enough */ 
+	unsigned int bitmap; /* Bitmap data type, 32 flags, should be enough */
 	long long    int8;   /* 8-byte integer */
 } db_fld_val_t;
 
