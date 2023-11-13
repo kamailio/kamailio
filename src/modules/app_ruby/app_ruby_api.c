@@ -78,7 +78,7 @@ sr_ruby_env_t *app_ruby_sr_env_get(void)
 }
 
 /**
- * 
+ *
  */
 int ruby_sr_init_mod(void)
 {
@@ -210,7 +210,7 @@ int ruby_sr_init_child(void)
 }
 
 /**
- * 
+ *
  */
 void ruby_sr_destroy(void)
 {
@@ -224,7 +224,7 @@ void ruby_sr_destroy(void)
 }
 
 /**
- * 
+ *
  */
 int ruby_sr_initialized(void)
 {
@@ -1540,7 +1540,7 @@ int app_ruby_run(sip_msg_t *msg, char *func, char *p1, char *p2, char *p3)
 }
 
 /**
- * 
+ *
  */
 int app_ruby_runstring(sip_msg_t *msg, char *script)
 {
@@ -1549,7 +1549,7 @@ int app_ruby_runstring(sip_msg_t *msg, char *script)
 }
 
 /**
- * 
+ *
  */
 int app_ruby_dostring(sip_msg_t *msg, char *script)
 {
@@ -1558,7 +1558,7 @@ int app_ruby_dostring(sip_msg_t *msg, char *script)
 }
 
 /**
- * 
+ *
  */
 int app_ruby_dofile(sip_msg_t *msg, char *script)
 {
@@ -1575,7 +1575,7 @@ static VALUE _ksr_mKSR;
 static VALUE _ksr_mSMD[SR_RUBY_KSR_MODULES_SIZE];
 
 /**
- * 
+ *
  */
 void ksr_app_ruby_toupper(char *bin, char *bout)
 {
@@ -1586,7 +1586,7 @@ void ksr_app_ruby_toupper(char *bin, char *bout)
 	bout[i] = '\0';
 }
 /**
- * 
+ *
  */
 int app_ruby_kemi_export_libs(void)
 {
