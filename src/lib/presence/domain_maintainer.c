@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -99,7 +99,7 @@ static notifier_domain_t *add_domain_nolock(
 /* notifier_domain_t *find_notifier_domain(domain_maintainer_t *dm, const str_t *name)
 {
 	notifier_domain_t *d = NULL;
-	
+
 	if (!dm) return NULL;
 	cds_mutex_lock(&dm->mutex);
 	d = find_domain_nolock(dm, name);

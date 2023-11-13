@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -40,7 +40,7 @@ int qsa_initialize()
 {
 	int res = 0;
 
-	/* initialization should be called from one process/thread 
+	/* initialization should be called from one process/thread
 	 * it is not synchronized because it is impossible ! */
 	if(!init) {
 		init = (init_data_t *)cds_malloc(sizeof(init_data_t));
