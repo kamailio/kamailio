@@ -1,4 +1,4 @@
-/* 
+/*
  * Portions Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2003 August.Net Services, LLC
  * Portions Copyright (C) 2005-2008 iptelorg GmbH

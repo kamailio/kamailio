@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -26,10 +26,10 @@
 #define _PG_URI_H
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * The implementation of parser parsing postgres://.. URIs.
  */
 
@@ -38,7 +38,7 @@
 
 /** PostgreSQL driver specific payload to attach to db_uri structures.
  * This is the PostgreSQL specific structure that will be attached
- * to generic db_uri structures in the database API in SER. The 
+ * to generic db_uri structures in the database API in SER. The
  * structure contains parsed elements of postgres:// uri.
  */
 struct pg_uri
