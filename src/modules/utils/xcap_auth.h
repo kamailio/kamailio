@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -24,7 +24,7 @@
 
 /*!
  * \file
- * \brief Kamailio utils :: 
+ * \brief Kamailio utils ::
  * \ingroup utils
  * Module: \ref utils
  */
@@ -35,7 +35,7 @@
 #include "../../core/parser/msg_parser.h"
 
 
-/* 
+/*
  * Checks from presence server xcap table if watcher is authorized
  * to subscribe event 'presence' of presentity.
  */
