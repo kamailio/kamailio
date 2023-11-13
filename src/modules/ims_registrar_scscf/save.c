@@ -148,7 +148,7 @@ end:
 }
 
 /*! \brief
- * Process request that contained a star, in that case, 
+ * Process request that contained a star, in that case,
  * we will remove all bindings with the given impu
  * from the usrloc and return 200 OK response
  */
@@ -746,7 +746,7 @@ error:
 /**
  * Get the number of valid contacts for an impu. Ie contacts not expired and not in deleted or delete_pending state
  * @param impu
- * @return 
+ * @return
  */
 int get_number_of_valid_contacts(impurecord_t *impu)
 {
@@ -839,7 +839,7 @@ int store_explicit_dereg_contact(struct sip_msg *msg,
 }
 
 /**
- * 
+ *
  * @param msg
  * @param _d
  * @param public_identity
