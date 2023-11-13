@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -51,7 +51,7 @@
 		      <para>
 			<emphasis>thrift 0.7.0</emphasis> - available at
 			http://thrift.apache.org/
-		      </para>		      
+		      </para>
 		    </listitem>
 		  </itemizedlist>
 		</para>
@@ -166,6 +166,6 @@ modparam("ndb_cassandra", "port", 9160)
     }
 	      ...
 	    </programlisting>
-	  </example>	 
+	  </example>
 	</section>
 	</chapter>
