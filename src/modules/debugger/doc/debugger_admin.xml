@@ -277,7 +277,7 @@ modparam("debugger", "step_loops", 100)
 		Used to compute power of two as size of internal hash table to store levels
 		per module (e.g., if it is set to 4, internal hash table has 16 slots). One
 		must set its value grater than 0 such that memory to be allocated
-		to save the module specific debug levels or facility configured by 
+		to save the module specific debug levels or facility configured by
 		<varname>mod_level</varname> or <varname>mod_facility</varname>.
 		This parameter is accessible readonly via the Kamailio config framework.
 	    </para>
@@ -477,7 +477,7 @@ modparam("debugger", "cfgtest", 1)
 	    </title>
 	    <para>
 			Anchor a breakpoint at the current line of the config (the one
-			on which this function is called). The 'mode' specifies whether 
+			on which this function is called). The 'mode' specifies whether
 			the breakpoint is enabled (1) or disabled (0) at startup.
 	    </para>
 		<para>
@@ -716,7 +716,7 @@ P-Hint: My hint
 			the list of available values.</para>
 		</listitem>
 		<listitem><para>_pid_ : process id for which to apply the command.
-				If 'pid' is omitted, then the inner command will be applied 
+				If 'pid' is omitted, then the inner command will be applied
 				to all processes.</para>
 		</listitem>
 		<listitem><para>_params_ : extra params specific for each command.</para>
