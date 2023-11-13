@@ -755,7 +755,7 @@ static int do_routing(struct sip_msg *msg, int grp_id)
 /* ref the data for reading */
 again:
 	lock_get(ref_lock);
-	/* if reload must be done, do un ugly busy waiting 
+	/* if reload must be done, do un ugly busy waiting
 	 * until reload is finished */
 	if(*reload_flag) {
 		lock_release(ref_lock);
