@@ -34,7 +34,7 @@
 
 
 /*
- * User friendly wrapper around add_hf_helper, to be called from 
+ * User friendly wrapper around add_hf_helper, to be called from
  * other modules.
  */
 int append_hf_api(struct sip_msg *msg, str *str_hf)
@@ -43,7 +43,7 @@ int append_hf_api(struct sip_msg *msg, str *str_hf)
 }
 
 /*
- * User friendly wrapper around remove_hf_f, to be called from 
+ * User friendly wrapper around remove_hf_f, to be called from
  * other modules.
  */
 int remove_hf_api(struct sip_msg *msg, str *str_hf)
