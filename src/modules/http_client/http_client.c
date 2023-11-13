@@ -475,8 +475,8 @@ static int fixup_curl_connect(void **param, int param_no)
 }
 
 /*
- * Fix curl_connect params when posting (5 parameters): 
- *	connection (string/pvar), url (string with pvars), content-type, 
+ * Fix curl_connect params when posting (5 parameters):
+ *	connection (string/pvar), url (string with pvars), content-type,
  *      data (string/pvar, pvar)
  */
 static int fixup_curl_connect_post(void **param, int param_no)
@@ -507,8 +507,8 @@ static int fixup_curl_connect_post(void **param, int param_no)
 }
 
 /*
- * Fix curl_connect params when posting (5 parameters): 
- *	connection (string/pvar), url (string with pvars), content-type, 
+ * Fix curl_connect params when posting (5 parameters):
+ *	connection (string/pvar), url (string with pvars), content-type,
  *      data (string(with no pvar parsing), pvar)
  */
 static int fixup_curl_connect_post_raw(void **param, int param_no)

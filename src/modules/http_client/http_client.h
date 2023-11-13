@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -137,7 +137,7 @@ typedef struct _curl_con_pkg
 	double connecttime; /*!< Seconds used for connecting last request inc TLS setup  - see
 					     https://curl.haxx.se/libcurl/c/CURLINFO_APPCONNECT_TIME.html */
 
-	/* Potential candidates:	Last TLS fingerprint used 
+	/* Potential candidates:	Last TLS fingerprint used
 
 	*/
 	struct _curl_con_pkg *next; /*!< next connection */
