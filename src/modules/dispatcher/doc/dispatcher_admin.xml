@@ -667,7 +667,7 @@ modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=3
 			<para>Value 0: If set to 0, only the gateways with state PROBING are tested.
 			After a gateway is probed, the PROBING state is cleared in this mode.
 			This means that no probing will be executed at all only if flag in config file is set to 8/PROBING
-			(please check destination list file syntaxis for more details), it will probe only one time at startup or 
+			(please check destination list file syntaxis for more details), it will probe only one time at startup or
 			after dispatcher reload.</para>
 		</listitem>
 		<listitem>
@@ -1425,9 +1425,9 @@ ds_select_dst("1", "4", "3");
 		<programlisting format="linespecific">
 ...
 # sample of SQL provisioning statements
-INSERT INTO "dispatcher" 
+INSERT INTO "dispatcher"
 VALUES(1,1,'sip:192.168.0.1:5060',0,12,'rweight=50;weight=50;cc=1;','');
-INSERT INTO "dispatcher" 
+INSERT INTO "dispatcher"
 VALUES(2,1,'sip:192.168.0.2:5060',0,12,'rweight=50;weight=50;cc=1;','');
 ...
 modparam("dispatcher", "ds_ping_interval", 1) # ping gateways once/second
@@ -1444,13 +1444,13 @@ DEST: {
 	PRIORITY: 12
 	ATTRS: {
 		BODY: rweight=50;weight=50;cc=1 # configuration values
-		DUID: 
+		DUID:
 		MAXLOAD: 0
 		WEIGHT: 50
 		RWEIGHT: 50
-		SOCKET: 
-		SOCKNAME: 
-		OBPROXY: 
+		SOCKET:
+		SOCKNAME:
+		OBPROXY:
 	}
 	LATENCY: {
 		AVG: 20.104000
