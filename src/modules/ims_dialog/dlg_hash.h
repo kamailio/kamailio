@@ -346,9 +346,9 @@ void dlg_hash_release(str *callid);
  * \brief Get dialog that correspond to CallId, From Tag and To Tag
  *
  * Get dialog that correspond to CallId, From Tag and To Tag.
- * See RFC 3261, paragraph 4. Overview of Operation:                 
- * "The combination of the To tag, From tag, and Call-ID completely  
- * defines a peer-to-peer SIP relationship between [two UAs] and is 
+ * See RFC 3261, paragraph 4. Overview of Operation:
+ * "The combination of the To tag, From tag, and Call-ID completely
+ * defines a peer-to-peer SIP relationship between [two UAs] and is
  * referred to as a dialog."
  * Note that the caller is responsible for decrementing (or reusing)
  * the reference counter by one again iff a dialog has been found.

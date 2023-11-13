@@ -331,7 +331,7 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 	if(dlg == NULL)
 		return -1;
 
-	/* 
+	/*
 		note: we should unref the dlg here (from get_dlg). BUT, because we are setting the current dialog
 		we can ignore the unref... instead of unreffing and reffing again for the set_current_dialog. NB.
 		this function is generally called from the cfg file. If used via API, remember to unref the dlg
