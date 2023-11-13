@@ -1,14 +1,14 @@
 /*
- * Kamailio osp module. 
+ * Kamailio osp module.
  *
- * This module enables Kamailio to communicate with an Open Settlement 
- * Protocol (OSP) server.  The Open Settlement Protocol is an ETSI 
+ * This module enables Kamailio to communicate with an Open Settlement
+ * Protocol (OSP) server.  The Open Settlement Protocol is an ETSI
  * defined standard for Inter-Domain VoIP pricing, authorization
- * and usage exchange.  The technical specifications for OSP 
+ * and usage exchange.  The technical specifications for OSP
  * (ETSI TS 101 321 V4.1.1) are available at www.etsi.org.
  *
  * Uli Abend was the original contributor to this module.
- * 
+ *
  * Copyright (C) 2001-2005 Fhg Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -151,7 +151,7 @@ int ospValidateHeader(struct sip_msg *msg, char *ignore1, char *ignore2)
 		} else {
 			LM_ERR("token is invalid (%d)\n", errorcode);
 
-			/* 
+			/*
              * Update terminating status code to 401 and report terminating setup usage.
              * We may need to make 401 configurable, just in case a user decides to reply with
              * a different code.  Other options - trigger call setup usage reporting from the cpl

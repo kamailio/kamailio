@@ -1,14 +1,14 @@
 /*
- * Kamailio osp module. 
+ * Kamailio osp module.
  *
- * This module enables Kamailio to communicate with an Open Settlement 
- * Protocol (OSP) server.  The Open Settlement Protocol is an ETSI 
+ * This module enables Kamailio to communicate with an Open Settlement
+ * Protocol (OSP) server.  The Open Settlement Protocol is an ETSI
  * defined standard for Inter-Domain VoIP pricing, authorization
- * and usage exchange.  The technical specifications for OSP 
+ * and usage exchange.  The technical specifications for OSP
  * (ETSI TS 101 321 V4.1.1) are available at www.etsi.org.
  *
  * Uli Abend was the original contributor to this module.
- * 
+ *
  * Copyright (C) 2001-2005 Fhg Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -85,7 +85,7 @@ int ospSetupProvider(void)
 		}
 	}
 
-	/* 
+	/*
      * Free space allocated while loading crypto information from PEM-encoded files.
      * There are some problems to free the memory, do not free them
      */
