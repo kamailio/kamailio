@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<DiameterPeer 
+<DiameterPeer
 	FQDN="hss-dev.mnc260.mcc310.3gppnetwork.org"
 	Realm="ims.mnc260.mcc310.3gppnetwork.org"
 	Vendor_Id="10415"
@@ -14,11 +14,11 @@
 	DefaultAuthSessionTimeout="3600"
 	MaxAuthSessionTimeout="3600"
 >
-	
+
 <Peer FQDN="icscf-1.mnc260.mcc310.3gppnetwork.org" Realm="ims.mnc260.mcc310.3gppnetwork.org" port="3869"/>
 <Peer FQDN="icscf-2.mnc260.mcc310.3gppnetwork.org" Realm="ims.mnc260.mcc310.3gppnetwork.org" port="3869"/>
 <!-- <Peer FQDN="scscf.mnc260.mcc310.3gppnetwork.org" Realm="ims.mnc260.mcc310.3gppnetwork.org" port="3870"/> -->
-		
+
 	<Acceptor port="3868" bind="138.68.93.183"/>
 
 	<Auth id="16777216" vendor="10415"/><!-- 3GPP Cx -->
