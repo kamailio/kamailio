@@ -294,8 +294,8 @@ static void do_update_load(void)
 	dif_err = err - last_err;
 
 	/*
-	 * TODO?: the 'if' is needed so low cpu loads for 
-	 * long periods (which can't be compensated by 
+	 * TODO?: the 'if' is needed so low cpu loads for
+	 * long periods (which can't be compensated by
 	 * negative drop rates) don't confuse the controller
 	 *
 	 * NB: - "err < 0" means "desired_cpuload < actual_cpuload"
@@ -618,7 +618,7 @@ static int pipe_push(struct sip_msg *msg, str *pipeid)
 	return pipe_push_direct(pipe);
 }
 
-/**     
+/**
  * runs the current request through the queues
  * \param       msg
  * \param       forced_pipe     is >= 0 if a specific pipe should be used, < 0 otherwise
