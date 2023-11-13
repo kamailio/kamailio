@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -35,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include "../../core/parser/msg_parser.h"
@@ -59,7 +59,7 @@
 
 /**
  *	Delete parameters and stuff from uri.
- * @param uri - the string to operate on 
+ * @param uri - the string to operate on
  */
 static inline void cscf_strip_uri(str *uri)
 {
@@ -364,7 +364,7 @@ str cscf_get_public_identity_from(struct sip_msg *msg)
  * Returns the expires value from the Expires header in the message.
  * It searches into the Expires header and if not found returns -1
  * @param msg - the SIP message, if available
- * @is_shm - msg from from shared memory 
+ * @is_shm - msg from from shared memory
  * @returns the value of the expire or -1 if not found
  */
 int cscf_get_expires_hdr(struct sip_msg *msg, int is_shm)
@@ -401,7 +401,7 @@ int cscf_get_expires_hdr(struct sip_msg *msg, int is_shm)
 
 /**
  * Returns the expires value from the message.
- * First it searches into the Expires header and if not found it also looks 
+ * First it searches into the Expires header and if not found it also looks
  * into the expires parameter in the contact header
  * @param msg - the SIP message
  * @param is_shm - msg from shared memory
@@ -490,7 +490,7 @@ done:
  * NB: free returned result str when done from shm
  * @param msg - the SIP message
  * @returns the contact (don't forget to free from shm)
- * 
+ *
  * NOTE: should only be called when REQ URI has been converted sip:user@IP_ADDRESS:PORT or tel:IP_ADDRESS:PORT
  */
 str cscf_get_contact_from_requri(struct sip_msg *msg)
@@ -658,7 +658,7 @@ str cscf_get_asserted_identity(struct sip_msg *msg, int is_shm) {
 
 static str phone_context_s={";phone-context=",15};
 /**
- * Extracts the realm from a SIP/TEL URI. 
+ * Extracts the realm from a SIP/TEL URI.
  * - SIP - the hostname
  * - TEL - the phone-context parameter
  * @param msg - the SIP message
@@ -688,7 +688,7 @@ str cscf_get_realm_from_uri(str uri)
 			if (realm.s[i]==';'||realm.s[i]=='&'||realm.s[i]==':') {
 				realm.len = i;
 				break;
-			}		
+			}
 	}else
 		if (strncasecmp(uri.s,"tel:",4)==0) {
 			/* TEL URI */
@@ -696,7 +696,7 @@ str cscf_get_realm_from_uri(str uri)
 			while(realm.s[0]!=';' && realm.len>0){
 				realm.s++;
 				realm.len--;
-			}		
+			}
 			if (realm.len<1) {realm.len=0;return realm;}
 			else{
 				while(realm.len>phone_context_s.len){
@@ -732,12 +732,12 @@ str cscf_get_realm_from_uri(str uri)
 		}
 
 	LM_DBG( "cscf_get_realm_from_uri: realm <%.*s>.\n",realm.len,realm.s);
-	return realm;	
+	return realm;
 }
 
-/** 
+/**
  * Delivers the Realm from request URI
- * @param msg sip message 
+ * @param msg sip message
  * @returns realm as String on success 0 on fail
  */
 str cscf_get_realm_from_ruri(struct sip_msg *msg)
@@ -748,24 +748,24 @@ str cscf_get_realm_from_ruri(struct sip_msg *msg)
 		return realm;
 	}
 	if (!msg->parsed_orig_ruri_ok)
-		if (parse_orig_ruri(msg) < 0) 
+		if (parse_orig_ruri(msg) < 0)
 			return realm;
 
 	realm = msg->parsed_orig_ruri.host;
-	return realm;	
+	return realm;
 }
 
 /**
  * Looks for the Call-ID header
  * @param msg - the sip message
- * @param hr - ptr to return the found hdr_field 
+ * @param hr - ptr to return the found hdr_field
  * @returns the callid value
  */
 str cscf_get_call_id(struct sip_msg *msg,struct hdr_field **hr)
 {
 	struct hdr_field *h;
 	str call_id={0,0};
-	if (hr) *hr = 0;	
+	if (hr) *hr = 0;
 	if (!msg) return call_id;
 	if (parse_headers(msg, HDR_CALLID_F, 0)<0){
 		LM_DBG("cscf_get_call_id: error parsing headers\n");
@@ -777,7 +777,7 @@ str cscf_get_call_id(struct sip_msg *msg,struct hdr_field **hr)
 		return call_id;
 	}
 	if (hr) *hr = h;
-	call_id = h->body;	
+	call_id = h->body;
 	return call_id;
 }
 
@@ -808,8 +808,8 @@ int cscf_get_sos_uri_param(str uri)
 	if(puri.params.len <= 0)
 		return 0;
 
-	LM_DBG( "cscf_get_sos_uri_param: searching through the uri parameters:%.*s\n", 
-			puri.params.len, puri.params.s);        
+	LM_DBG( "cscf_get_sos_uri_param: searching through the uri parameters:%.*s\n",
+			puri.params.len, puri.params.s);
 
 	if(parse_params(&(puri.params), p_class, &h, &p)){
 		LM_DBG( "cscf_get_sos_uri_param:error while parsing uri parameters\n");
@@ -825,7 +825,7 @@ int cscf_get_sos_uri_param(str uri)
 				(strncmp(crt->name.s, sos_uri_par.s, sos_uri_par.len) == 0)){
 			ret =1;
 			goto end;
-		}	
+		}
 	}
 
 	end:
@@ -890,7 +890,7 @@ int cscf_add_header_first(struct sip_msg *msg, str *hdr,int type)
 	if (!(l=insert_new_lump_before(anchor, hdr->s,hdr->len,type))){
 		LM_ERR( "cscf_add_header_first: error creating lump for header\n" );
 		return 0;
-	}	
+	}
 	return 1;
 }
 
@@ -899,11 +899,11 @@ int cscf_add_header_first(struct sip_msg *msg, str *hdr,int type)
  * @param msg - the SIP message to look into
  * @param header_name - the name of the header to search for
  * @param last_header - last header to ignore in the search, or NULL if to start from the first one
- * @returns the hdr_field on success or NULL if not found  
+ * @returns the hdr_field on success or NULL if not found
  */
 struct hdr_field* cscf_get_next_header(struct sip_msg * msg ,
 		str header_name,struct hdr_field* last_header)
-{	
+{
 	struct hdr_field *h;
 	if (parse_headers(msg, HDR_EOH_F, 0)<0){
 		LM_ERR("cscf_get_next_header_field: error parsing headers\n");
@@ -939,7 +939,7 @@ struct via_body* cscf_get_first_via(struct sip_msg *msg,struct hdr_field **h)
 		return msg->h_via1->parsed;
 	}
 
-	return msg->h_via1->parsed;	
+	return msg->h_via1->parsed;
 }
 
 /**
@@ -958,7 +958,7 @@ struct via_body* cscf_get_ue_via(struct sip_msg *msg)
 	if (!vb) return 0;
 
 	if (vb->port == 0) vb->port=5060;
-	return vb;	
+	return vb;
 }
 
 /**
@@ -995,7 +995,7 @@ struct via_body* cscf_get_last_via(struct sip_msg *msg)
 	vb = h->parsed;
 	while(vb->next)
 		vb = vb->next;
-	return vb;	
+	return vb;
 }
 
 /**
@@ -1029,7 +1029,7 @@ str cscf_get_authenticate(struct sip_msg *msg,struct hdr_field **h)
 		return auth;
 	}
 
-	return auth;	
+	return auth;
 }
 
 /**
@@ -1047,7 +1047,7 @@ int cscf_add_header(struct sip_msg *msg, str *hdr,int type)
 		return 0;
 	}
 	last = msg->headers;
-	while(last->next) 
+	while(last->next)
 		last = last->next;
 	anchor = anchor_lump(msg, last->name.s + last->len - msg->buf, 0 , 0);
 	if (anchor == NULL) {
@@ -1058,17 +1058,17 @@ int cscf_add_header(struct sip_msg *msg, str *hdr,int type)
 	if (!insert_new_lump_after(anchor, hdr->s,hdr->len,type)){
 		LM_ERR( "cscf_add_header_first: error creating lump for header\n" );
 		return 0;
-	}	
+	}
 	return 1;
 }
 
 /**
- *	Get the expires header value from a message. 
+ *	Get the expires header value from a message.
  * @param msg - the SIP message
  * @returns the expires value or -1 if not found
  */
 int cscf_get_expires(struct sip_msg *msg)
-{	
+{
 	if (msg->expires) {
 		if (parse_expires(msg->expires) < 0) {
 			LM_INFO("ifc_get_expires:Error while parsing Expires header\n");
@@ -1087,7 +1087,7 @@ static str prack_s={"PRACK",5};
 static str update_s={"UPDATE",6};
 static str notify_s={"NOTIFY",6};
 /**
- * Check if the message is an initial request for a dialog. 
+ * Check if the message is an initial request for a dialog.
  *		- BYE, PRACK, UPDATE, NOTIFY belong to an already existing dialog
  * @param msg - the message to check
  * @returns 1 if initial, 0 if not
@@ -1113,7 +1113,7 @@ int cscf_get_originating_user( struct sip_msg * msg, str *uri )
 {
 	struct to_body * from;
 	*uri = cscf_get_asserted_identity(msg, 0);
-	if (!uri->len) {		
+	if (!uri->len) {
 		/* Fallback to From header */
 		if ( parse_from_header( msg ) == -1 ) {
 			LM_ERR("ERROR:cscf_get_originating_user: unable to extract URI from FROM header\n" );
@@ -1133,7 +1133,7 @@ int cscf_get_originating_user( struct sip_msg * msg, str *uri )
  * returns in uri the freshly pkg allocated uri - don't forget to free
  * @param msg - the SIP message
  * @param uri - uri to fill into
- * @returns 1 if found, else 0 
+ * @returns 1 if found, else 0
  */
 int cscf_get_terminating_user( struct sip_msg * msg, str *uri )
 {
@@ -1168,7 +1168,7 @@ str cscf_get_access_network_info(struct sip_msg *msg, struct hdr_field **h)
 			*h = hdr;
 			ani = hdr->body;
 			goto done;
-		}                 
+		}
 		hdr = hdr->next;
 	}
 	LM_DBG("cscf_get_access_network_info: P-Access-Network-Info header not found \n");
@@ -1335,9 +1335,9 @@ int cscf_get_from_tag(struct sip_msg* msg, str* tag)
 		if (tag) {tag->s = 0;tag->len = 0;}
 		return 0;
 	}
-	from = msg->from->parsed;	
-	if (tag) *tag = from->tag_value;	
-	return 1;	
+	from = msg->from->parsed;
+	if (tag) *tag = from->tag_value;
+	return 1;
 }
 
 /**
@@ -1347,14 +1347,14 @@ int cscf_get_from_tag(struct sip_msg* msg, str* tag)
  * @returns 0 on error or 1 on success
  */
 int cscf_get_to_tag(struct sip_msg* msg, str* tag)
-{	
+{
 	if (!msg || !msg->to) {
 		LM_DBG("cscf_get_to_tag(): To header field missing\n");
 		if (tag) {tag->s = 0;tag->len = 0;}
 		return 0;
 	}
 
-	if (tag) *tag = get_to(msg)->tag_value;		
+	if (tag) *tag = get_to(msg)->tag_value;
 	return 1;
 }
 
@@ -1363,9 +1363,9 @@ int cscf_get_to_tag(struct sip_msg* msg, str* tag)
  * @param msg - the message to look into
  * @param local_uri - ptr to fill with the value
  * @returns 1 on success or 0 on error
- */  
+ */
 int cscf_get_from_uri(struct sip_msg* msg,str *local_uri)
-{	
+{
 	struct to_body* from;
 
 	if (!msg || parse_from_header(msg)<0 || !msg->from || !msg->from->parsed){
@@ -1373,7 +1373,7 @@ int cscf_get_from_uri(struct sip_msg* msg,str *local_uri)
 		if (local_uri) {local_uri->s = 0;local_uri->len = 0;}
 		return 0;
 	}
-	from = msg->from->parsed;		
+	from = msg->from->parsed;
 	if (local_uri) *local_uri = from->uri;
 	return 1;
 
@@ -1384,9 +1384,9 @@ int cscf_get_from_uri(struct sip_msg* msg,str *local_uri)
  * @param msg - the message to look into
  * @param local_uri - ptr to fill with the value
  * @returns 1 on success or 0 on error
- */  
+ */
 int cscf_get_to_uri(struct sip_msg* msg,str *local_uri)
-{	
+{
 	struct to_body* to=	NULL;
 
 	if (!msg || !msg->to || !msg->to->parsed || parse_headers(msg,HDR_TO_F,0)==-1 ){
@@ -1394,7 +1394,7 @@ int cscf_get_to_uri(struct sip_msg* msg,str *local_uri)
 		if (local_uri) {local_uri->s = 0;local_uri->len = 0;}
 		return 0;
 	}
-	to = msg->to->parsed;		
+	to = msg->to->parsed;
 	if (local_uri) *local_uri = to->uri;
 	return 1;
 
@@ -1647,7 +1647,7 @@ str cscf_get_contact(struct sip_msg *msg)
 	str id={0,0};
 	struct hdr_field *h;
 	struct contact_body *cb;
-	
+
 	if (!msg) return id;
 	if (parse_headers(msg, HDR_CONTACT_F, 0)<0) {
 		LM_ERR("ERR:cscf_get_contact: Error parsing headers until Contact.\n");
@@ -1664,14 +1664,14 @@ str cscf_get_contact(struct sip_msg *msg)
 		LM_ERR("ERR:cscf_get_contact: Error parsing contacts.\n");
 		return id;
 	}
-	
+
 	cb = (struct contact_body *)h->parsed;
 	if (!cb || !cb->contacts){
 		LM_ERR("ERR:cscf_get_contact: No contacts in header.\n");
 		return id;
 	}
 	id = cb->contacts->uri;
-	
+
 	return id;
 }
 
@@ -1695,7 +1695,7 @@ int cscf_add_header_rpl(struct sip_msg *msg, str *hdr)
 /**
  * Looks for the Call-ID header
  * @param msg - the sip message
- * @param hr - ptr to return the found hdr_field 
+ * @param hr - ptr to return the found hdr_field
  * @returns the callid value
  */
 int cscf_get_cseq(struct sip_msg *msg,struct hdr_field **hr)
@@ -1703,8 +1703,8 @@ int cscf_get_cseq(struct sip_msg *msg,struct hdr_field **hr)
 	struct hdr_field *h;
 	struct cseq_body *cseq;
 	int nr = 0,i;
-	
-	if (hr) *hr = 0;	
+
+	if (hr) *hr = 0;
 	if (!msg) return 0;
 	if (parse_headers(msg, HDR_CSEQ_F, 0)<0){
 		LM_ERR("ERR:cscf_get_cseq: error parsing headers\n");
@@ -1725,7 +1725,7 @@ int cscf_get_cseq(struct sip_msg *msg,struct hdr_field **hr)
 		parse_cseq(h->body.s,h->body.s+h->body.len,cseq);
 		h->parsed = cseq;
 	}else
-		cseq = (struct cseq_body*) h->parsed;		
+		cseq = (struct cseq_body*) h->parsed;
 	for(i=0;i<cseq->number.len;i++)
 		nr = (nr*10)+(cseq->number.s[i]-'0');
 	return nr;
@@ -1735,7 +1735,7 @@ static str s_called_party_id={"P-Called-Party-ID",17};
 /**
  * Looks for the P-Called-Party-ID header and extracts the public identity from it
  * @param msg - the sip message
- * @param hr - ptr to return the found hdr_field 
+ * @param hr - ptr to return the found hdr_field
  * @returns the P-Called_Party-ID
  */
 str cscf_get_public_identity_from_called_party_id(struct sip_msg *msg,struct hdr_field **hr)
@@ -1745,7 +1745,7 @@ str cscf_get_public_identity_from_called_party_id(struct sip_msg *msg,struct hdr
 	int after_semi_colon=0;
 	int len=0;
 	int i=0;
-	
+
 	if (hr) *hr=0;
 	if (!msg) return id;
 	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
@@ -1764,7 +1764,7 @@ str cscf_get_public_identity_from_called_party_id(struct sip_msg *msg,struct hdr
 			}
 			while(id.len && (id.s[id.len-1]==' ' || id.s[id.len-1]=='\t' || id.s[id.len-1]=='>')){
 				id.len--;
-			}	
+			}
 			//get only text in front of ';' there might not even be a semi-colon
 			//this caters for extra information after the public identity - e.g. phone-context
 			len= id.len;
