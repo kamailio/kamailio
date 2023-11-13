@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -89,7 +89,7 @@ struct module_exports exports = {
 /* Module initialization function */
 static int mod_init(void)
 {
-	
+
 	LM_DBG("init httpapitest module\n");
 
 	if (httpc_load_api(&httpapi) != 0) {
@@ -104,7 +104,7 @@ static int mod_init(void)
 
 /* Child initialization function */
 static int child_init(int rank)
-{	
+{
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN) {
 		return 0; /* do nothing for the main process */
 	}
@@ -124,8 +124,8 @@ static void destroy(void)
 
 
 /*
- * Fix test_curl_connect params: 
- * 1. connection(string/pvar) 
+ * Fix test_curl_connect params:
+ * 1. connection(string/pvar)
  * 2. url (string that may contain pvars) and
  * 3. result (writable pvar).
  */
@@ -174,7 +174,7 @@ static int fixup_free_testcurl_connect(void** param, int param_no)
 	if (param_no == 3) {
 		return fixup_free_pvar_null(param, 1);
 	}
-	
+
 	LM_ERR("invalid parameter number <%d>\n", param_no);
 	return -1;
 }
@@ -205,7 +205,7 @@ static int w_testcurl_connect(struct sip_msg* _m, char* _con, char * _url, char*
 
 	LM_DBG("**** Curl Connection %s URL %s Result var %s\n", _con, _url, _result);
 
-	
+
 	/* API    http_connect(msg, connection, url, result, content_type, post) */
 	ret = httpapi.http_connect(_m, &con, &url, &result, NULL, NULL);
 
