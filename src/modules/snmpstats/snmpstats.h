@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301
  * USA
- * 
+ *
  * Structure and prototype definitions for the SNMPStats module.
  *
  * There are some important points to understanding the SNMPStat modules
@@ -28,7 +28,7 @@
  * 1) The SNMPStats module will fork off a new process in mod_child_init when
  *    the rank is equal to PROC_MAIN_PROCESS.  The sub-process will be
  *    responsible for registering with a master agent (the source of snmp
- *    requests), and handling all received requests. 
+ *    requests), and handling all received requests.
  *
  * 2) The Module will register a periodic alarm checking function with a sip
  *    timer using register_timer().  This function checks for alarm conditions,
@@ -40,7 +40,7 @@
  *    spawning a short-lived process.  For this reason, the module temporarily
  *    installs a new SIGCHLD handler to deal specifically with this process.  It
  *    does not change the normal SIGCHLD behaviour for any process except for
- *    this short lived sysUpTime process. 
+ *    this short lived sysUpTime process.
  *
  * 4) mod_init() will initialize some interprocess communication buffers, as
  *    well as callback mechanisms for the usrloc module.  To understand what the

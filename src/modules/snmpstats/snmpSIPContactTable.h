@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -29,29 +29,29 @@
  * We require Kamailios usrloc module to inform us when a contact is
  * added/removed.  The general callback process works as follows:
  *
- * 1) On startup, we register handleContactCallbacks() for USRLOC callbacks, so 
- *    we can be informed whenever a contact is added/removed from the system.  
- *    This registration happens with a call to registerForUSRLOCCallbacks().  
+ * 1) On startup, we register handleContactCallbacks() for USRLOC callbacks, so
+ *    we can be informed whenever a contact is added/removed from the system.
+ *    This registration happens with a call to registerForUSRLOCCallbacks().
  *    (This is actually called when the SNMPStats module is initialized)
  *
- * 2) Whenever we receive a contact callback, handleContactCallbacks() will 
+ * 2) Whenever we receive a contact callback, handleContactCallbacks() will
  *    quickly add the contact information and operation type to the
- *    interprocess buffer.  
+ *    interprocess buffer.
  *
  * 3) When we receive an SNMP request for user/contact information, we consume
  *    the interprocess buffer with consumeInterprocessBuffer().  The function
  *    will add/delete rows to the tables, and then service the SNMP request.
  *
- * Notes: 
+ * Notes:
  *
  * - The interprocess buffer was necessary, because NetSNMP's containers can be
  *   very inefficient at adding large amounts of data at a time, such as when
  *   Kamailio first starts up.  It was decided it is better to make an SNMP manager
  *   wait for data, instead of slowing down the rest of Kamailio while the
- *   sub-agent processes the data. 
+ *   sub-agent processes the data.
  *
  * - It is important to send periodic SNMP requests to this table (or the user
- *   table), to make sure the process buffer doesn't get too large.  
+ *   table), to make sure the process buffer doesn't get too large.
  */
 
 #ifndef KAMAILIOSIPCONTACTTABLE_H
@@ -100,25 +100,25 @@ extern "C"
 	/* Customized SNMP Prototypes */
 	/******************************/
 
-	/* 
+	/*
  * Creates an SNMP row and inserts it into the contact table. This function
  * should only be called when the interprocess buffer is being consumed.
  *
- * Returns: 1 on success, and 0 otherwise. 
+ * Returns: 1 on success, and 0 otherwise.
  */
 	int createContactRow(int userIndex, int contactIndex, char *contactName,
 			ucontact_t *contactInfo);
 
-	/* 
+	/*
  * Removes the row indexed by userIndex and contactIndex, and free's up the
  * memory allocated to it.  If the row could not be found, then nothing is done.
  */
 	void deleteContactRow(int userIndex, int contactIndex);
 
 
-	/* 
+	/*
  * This function adds a new contactToIndexStruct_t record to the front of
- * 'contactRecord'.  
+ * 'contactRecord'.
  *
  * The structure is used to map a contact name to the SNMPStats modules integer
  * indexing scheme.  It will be used later when a delete command comes in, and
@@ -131,7 +131,7 @@ extern "C"
  * This function will remove the contactToIndexStruct_T record matching
  * 'contactName' from the users contactToIndexStruct_t linked-list, and return
  * the records index.  In the event that the record could not be found, 0 will
- * be returned. 
+ * be returned.
  */
 	int deleteContactRecord(
 			contactToIndexStruct_t **contactRecord, char *contactName);

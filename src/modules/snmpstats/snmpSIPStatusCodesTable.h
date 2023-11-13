@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -26,7 +26,7 @@
  * The file implements the kamailioSIPStatusCodesTable.  For a full description
  * of the table, please see the KAMAILIO-SIP-COMMON-MIB.
  *
- * This file consists of many more functions than the other header files.  
+ * This file consists of many more functions than the other header files.
  * This is because this table is writable, bringing a lot of SNMP overhead.
  *
  * Most of the contents are auto-generated (aside from white space and comment
@@ -34,10 +34,10 @@
  *
  * 1) kamailioSIPStatusCodesTable_create_row()
  *
- * 2) kamailioSIPStatusCodesTable_extract_index() 
+ * 2) kamailioSIPStatusCodesTable_extract_index()
  *
  * 3) kamailioSIPStatusCodesTable_can_[activate|deactivate|delete]()
- *   
+ *
  * 4) kamailioSIPStatusCodesTable_set_reserve1()
  *
  * 5) kamailioSIPStatusCodesTable_get_value()
@@ -62,15 +62,15 @@ extern "C"
 
 #include "../../core/config.h"
 
-	/* 
+	/*
  * The structure has been mostly auto-generated, but its semantics have been
- * changed.  
+ * changed.
  *
  * Specifically, the kamailioSIPStatusCodeIns and kamailioSIPStatusCodeOuts
  * variables don't store the total number of messages sent or received from the
  * system at the time of a SNMP GET request.  Instead, they store the number of
  * messages in or out (with respect to the message code specified by
- * kamailioSIPStatusCodeValue) at the time of the rows *creation*. 
+ * kamailioSIPStatusCodeValue) at the time of the rows *creation*.
  *
  * When the get request is received, the statistics framework will be queried,
  * and these values subtracted from that query.  This effectively gives us how
@@ -89,16 +89,16 @@ extern "C"
 		/* The second index, specifying which status code to monitor */
 		unsigned long kamailioSIPStatusCodeValue;
 
-		/* Stores the current status code value - startingInStatusCodeValue 
+		/* Stores the current status code value - startingInStatusCodeValue
 	 * (at the time this row was created)  */
 		unsigned long kamailioSIPStatusCodeIns;
 
-		/* Stores the current status code value - startingOutStatusCodeValue 
+		/* Stores the current status code value - startingOutStatusCodeValue
 	 * (at the time this row was created)  */
 		unsigned long kamailioSIPStatusCodeOuts;
 
 		/* Initialized to zero at startup to signify uninitialized.  This can
-	 * only be assigned createAndGo(4) at this point.  It can also be 
+	 * only be assigned createAndGo(4) at this point.  It can also be
 	 * assigned destroy(6), but only if the value is in the active(1) state.
 	 */
 		long kamailioSIPStatusCodeRowStatus;
@@ -111,33 +111,33 @@ extern "C"
 
 	} kamailioSIPStatusCodesTable_context;
 
-	/* 
+	/*
  * Initializes the kamailioSIPStatusCodesTable module.  This step is easier
  * than in the other tables because there is no table population.  All table
- * population takes place during run time. 
+ * population takes place during run time.
  */
 	void init_kamailioSIPStatusCodesTable(void);
 
 	/*
  * Initialize the kamailioSIPStatusCodesTable table by defining how it is
- * structured. 
+ * structured.
  *
  * This function is mostly auto-generated.
  */
 	void initialize_table_kamailioSIPStatusCodesTable(void);
 
 	/*
- * This function is called to handle SNMP GET requests.  
+ * This function is called to handle SNMP GET requests.
  *
  * The row which this function is called with, will store a message code.  The
  * function will retrieve the 'number of messages in' and 'number of messages
  * out' statistic for this particular message code from the statistics
- * framework.  
+ * framework.
  *
  * The function will then subtract from this value the value it was initialized
  * with when the row was first created.  In this sense, the row shows how many
  * ins and how many outs have been received (With respect to the message code)
- * since this row was created. 
+ * since this row was created.
  */
 	int kamailioSIPStatusCodesTable_get_value(netsnmp_request_info *,
 			netsnmp_index *, netsnmp_table_request_info *);
@@ -189,7 +189,7 @@ extern "C"
 	netsnmp_index *kamailioSIPStatusCodesTable_delete_row(
 			kamailioSIPStatusCodesTable_context *);
 
-	/* Used to check if there is a reason why a row can't be activated 
+	/* Used to check if there is a reason why a row can't be activated
  * (There is no reason in our implementation)
  */
 	int kamailioSIPStatusCodesTable_can_activate(
@@ -197,7 +197,7 @@ extern "C"
 			kamailioSIPStatusCodesTable_context *row_ctx,
 			netsnmp_request_group *rg);
 
-	/* Used to check if there is a reason why a row can't be deactivated 
+	/* Used to check if there is a reason why a row can't be deactivated
  * (There is no reason in our implementation)
  */
 	int kamailioSIPStatusCodesTable_can_deactivate(

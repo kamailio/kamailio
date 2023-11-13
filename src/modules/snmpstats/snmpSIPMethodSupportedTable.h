@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -40,9 +40,9 @@ extern "C"
 
 #include "../../core/config.h"
 
-	/* 
+	/*
  * This strucutre represents a single row in the SNMP table, and is mostly
- * auto-generated. 
+ * auto-generated.
  */
 	typedef struct kamailioSIPMethodSupportedTable_context_s
 	{
@@ -62,7 +62,7 @@ extern "C"
 	} kamailioSIPMethodSupportedTable_context;
 
 
-	/* Initializes the kamailioSIPMethodSupportedTable, and populates the tables 
+	/* Initializes the kamailioSIPMethodSupportedTable, and populates the tables
  * contents */
 	void init_kamailioSIPMethodSupportedTable(void);
 
@@ -70,10 +70,10 @@ extern "C"
 	void initialize_table_kamailioSIPMethodSupportedTable(void);
 
 
-	/* 
+	/*
  * This routine is called to process get requests for elements of the table.
  *
- * The function is pretty much left as is from the auto-generated code. 
+ * The function is pretty much left as is from the auto-generated code.
  */
 	int kamailioSIPMethodSupportedTable_get_value(netsnmp_request_info *,
 			netsnmp_index *, netsnmp_table_request_info *);
