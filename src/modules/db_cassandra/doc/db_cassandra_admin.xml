@@ -36,8 +36,8 @@
 		storing and retrieving data. Because Cassandra is a NoSQL distributed
 		system, there are limitations on the operations that can be performed.
 		The limitations concern the indexes on which queries are performed, as
-		it is only possible to have simple conditions (equality comparison only) 
-		and only two indexing levels.  These issues will be explained in an example 
+		it is only possible to have simple conditions (equality comparison only)
+		and only two indexing levels.  These issues will be explained in an example
 		below.
 	</para>
 	<para>
@@ -56,7 +56,7 @@
 		Because the module has to do the translation from SQL to Cassandra NoSQL
 		queries, the schemas for the tables must be known by the module.
 		You will find the schemas for location, subscriber and version tables in
-		utils/kamctl/dbcassandra directory. You have to provide the path to the 
+		utils/kamctl/dbcassandra directory. You have to provide the path to the
 		directory containing the table definitions by setting the module parameter
 		schema_path.
 	</para>
@@ -71,7 +71,7 @@
    ...
    create keyspace kamailio;
    use kamailio;
-   create column family 'location' with comparator='UTF8Type' and 
+   create column family 'location' with comparator='UTF8Type' and
 default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
    ...
 </programlisting>
@@ -79,7 +79,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 	<para>
 		Special attention was given to performance in Cassandra. Therefore, the
 		implementation uses only the native row indexing in Cassandra and no secondary
-		indexes, because they are costly. Instead, we simulate a secondary index by 
+		indexes, because they are costly. Instead, we simulate a secondary index by
 		using the column names and putting information in them, which is very efficient.
 		Also, for deleting expired records, we let Cassandra take care of this with
 		its own mechanism (by setting the TTL for columns).
@@ -87,13 +87,13 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 
 	<para>
  		The module supports raw queries. However these queries must follow the
-		CQL (Cassandra Query Language) syntax. The queries can be issued 
+		CQL (Cassandra Query Language) syntax. The queries can be issued
 		in the script by means of the AVPOPS module. Keep in mind that when passing back
 		the results from the database only the first row is used to set the AVP variables.
 		(default AVPOPS behaviour)
 
-		The script lines below can be used as an example for issuing the query towards 
-		a cassandra instance. (This example will work once the column family `location` 
+		The script lines below can be used as an example for issuing the query towards
+		a cassandra instance. (This example will work once the column family `location`
 		is configured correctly in the cassandra keyspace)
 	</para>
 <programlisting format="linespecific">
@@ -150,7 +150,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 		<para>
 			The directory where the files with the table schemas are located.
 			This directory has to contain the subdirectories corresponding to the
-			database name (name of the directory = name of the database). 
+			database name (name of the directory = name of the database).
 			These directories, in turn, contain the files with the table schemas.
 			See the schemas in utils/kamctl/dbcassandra directory.
 		</para>
@@ -201,8 +201,8 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 		<title>Table schema</title>
 		<para>
 		The module must know the table schema for the tables that will be used.
-		You must configure the path to the schema directory by setting the 
-		<emphasis>schema_path</emphasis> parameter. 
+		You must configure the path to the schema directory by setting the
+		<emphasis>schema_path</emphasis> parameter.
 		</para>
 		<para>
 		A table schema document has the following structure:
@@ -216,12 +216,12 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 			The<emphasis>timestamp</emphasis> type has a special meaning. Only one column of this type can
 			be defined for a table, and it should contain the expiry time for that record.
 			If defined this value will be used to compute the <emphasis>ttl</emphasis> for the columns
-			and Cassandra will automatically delete the columns when they expire. Because we want the 
-			ttl to have meaning for the entire record, we must ensure that when the ttl is updated, it 
-			is updated for all columns for that record. In other words, to update the expiration time 
-			of a record, an insert operation must be performed from the point of view of the db_cassandra 
-			module ("insert" in Cassandra means "replace if exists or insert new record otherwise"). So, if 
-			you define a table with a timestamp column, the update operations on that table that also 
+			and Cassandra will automatically delete the columns when they expire. Because we want the
+			ttl to have meaning for the entire record, we must ensure that when the ttl is updated, it
+			is updated for all columns for that record. In other words, to update the expiration time
+			of a record, an insert operation must be performed from the point of view of the db_cassandra
+			module ("insert" in Cassandra means "replace if exists or insert new record otherwise"). So, if
+			you define a table with a timestamp column, the update operations on that table that also
 			update the timestamp must update all columns. So, these update operations must in fact be insert
 			operations.
 			</para>
@@ -255,7 +255,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 
 	<para>
 		Observe first that the <emphasis>row key is the username</emphasis> and
-		the <emphasis>secondary index is the contact</emphasis>. 
+		the <emphasis>secondary index is the contact</emphasis>.
 		We have also defined a timestamp column - <emphasis>expires</emphasis>.
 	</para>
 
@@ -279,7 +279,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 	</para>
 	<para>
 		To understand why the schema looks like this, we must first see which
-		queries are performed on the location table. 
+		queries are performed on the location table.
 		(The 'callid' condition was ignored as it doesn't really have a well defined role in the SIP RFC).
 	</para>
 	<itemizedlist>
@@ -343,7 +343,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 
 
 	<para>
-		The alternative would have been to define an index on the expire column and 
+		The alternative would have been to define an index on the expire column and
 		run an external job to periodically delete the expired records. However,
 		obviously, this would be more costly.
 	</para>
