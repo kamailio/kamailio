@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -26,7 +26,7 @@
 #define _PG_RES_H
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
 /** \file

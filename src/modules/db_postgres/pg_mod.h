@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -26,11 +26,11 @@
 #define _PG_MOD_H
 
 /** @defgroup postgres PostgreSQL Database Driver
- * @ingroup DB_API 
+ * @ingroup DB_API
  */
 /** @{ */
 
-/** \file 
+/** \file
  * Postgres module interface.
  */
 

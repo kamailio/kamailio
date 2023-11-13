@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -26,10 +26,10 @@
 #define _PG_CON_H
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * Implementation of PostgreSQL connection related data structures and functions.
  */
 
@@ -42,7 +42,7 @@
 #include <time.h>
 #include <libpq-fe.h>
 
-/** 
+/**
  * Per-connection flags for PostgreSQL connections.
  */
 enum pg_con_flags
@@ -79,7 +79,7 @@ typedef struct pg_con
 int pg_con(db_con_t *con);
 
 
-/** Establish a new connection to server.  
+/** Establish a new connection to server.
  * This function is called when a Kamailio module calls db_connect to establish a
  * new connection to the database server. After the connection is established
  * the function sends an SQL query to the server to determine the format of
