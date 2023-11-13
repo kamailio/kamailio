@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <book id="xprint" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -82,7 +82,7 @@
 		    %Cxy : color printing based on escape sequences (x - foreground
 			color, y - background color). The values for colors: x - default
 			color of the terminal; s - Black; r - Red; g - Green; y - Yellow;
-			b - Blue; p - Purple; c - Cyan; w - White 
+			b - Blue; p - Purple; c - Cyan; w - White
 		</para>
 	    </listitem>
 	    <listitem>
@@ -198,7 +198,7 @@
 	    </listitem>
 	    <listitem>
 		<para>
-		    %si : IP source address 
+		    %si : IP source address
 		</para>
 	    </listitem>
 	    <listitem>
