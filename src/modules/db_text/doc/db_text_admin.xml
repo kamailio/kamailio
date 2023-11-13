@@ -52,8 +52,8 @@
 				<para>
 				NOTE: when you use <emphasis>dbtext</emphasis> in &kamailio;,
 				the database URL for modules must be the path to the directory
-				where the table-files are located, prefixed by 
-				<quote>text://</quote>, e.g., 
+				where the table-files are located, prefixed by
+				<quote>text://</quote>, e.g.,
 				<quote>text:///var/dbtext/ser</quote>. If there is no
 				<quote>/</quote> after <quote>text://</quote> then
 				<quote>CFG_DIR/</quote> is inserted at the beginning of the
@@ -87,19 +87,19 @@
 			</listitem>
 			<listitem>
 				<para>
-				the format of a column definition is: 
+				the format of a column definition is:
 				<emphasis>name(type,attr)</emphasis>.
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				between two column definitions must be a white space, e.g., 
+				between two column definitions must be a white space, e.g.,
 				<quote>first_name(str) last_name(str)</quote>.
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				the type of a column can be: 
+				the type of a column can be:
 					<itemizedlist>
 					<listitem>
 					<para>
@@ -122,7 +122,7 @@
 			</listitem>
 			<listitem>
 				<para>
-				a column can have one of the attributes: 
+				a column can have one of the attributes:
 					<itemizedlist>
 					<listitem>
 					<para>
@@ -295,7 +295,7 @@ modparam("db_text", "db_delim", "|")
             <para>
                 connection for use with rpc query command.
             </para>
-            
+
             <para>
                 <emphasis>
                     Default value is <quote>none</quote> (off).
@@ -411,11 +411,11 @@ modparam("db_text", "max_result_rows", 1000000)
 		REMINDER: when you use <emphasis>text</emphasis> in &kamailio;,
 		the	database URL for modules must be the path to the directory
 		where the table-files are located, prefixed by
-		<quote>text://</quote>, e.g., 
+		<quote>text://</quote>, e.g.,
 		<quote>text:///var/dbtext/ser</quote>. If there is no <quote>/</quote>
 		after <quote>text://</quote> then <quote>CFG_DIR/</quote> is inserted
 		at the beginning of the database path. So, either you provide an
-		absolute path to database directory or a relative one to 
+		absolute path to database directory or a relative one to
 		<quote>CFG_DIR</quote> directory.
 		</para>
 		<example>
@@ -431,14 +431,14 @@ modparam("module_name", "db_url", "text:///path/to/dbtext/database")
 		<section>
 			<title>Using db_text with a basic &kamailio; configuration</title>
 		<para>
-		Here are definitions for the most important tables as well as a basic 
+		Here are definitions for the most important tables as well as a basic
 		configuration file to use db_text with &kamailio;. The table structures
 		may change in time and you will have to adjust these examples. Check the
 		source code directory <quote>utils/kamctl/dbtext/kamailio</quote> for
 		current definitions.
 		</para>
 		<para>
-		You have to populate the table 'subscriber' by hand with user profiles 
+		You have to populate the table 'subscriber' by hand with user profiles
 		in order to have authentication. To use with the given configuration
 		file, the table files must be placed in the '/tmp/serdb' directory.
 		</para>
@@ -454,7 +454,7 @@ username(str) domain(str) password(str) first_name(str) last_name(str) phone(str
 		<title>Definition of 'location' and 'aliases' tables (one line)</title>
 <programlisting format="linespecific">
 ...
-username(str) domain(str,null) contact(str,null) received(str) expires(int,null) q(double,null) callid(str,null) cseq(int,null) last_modified(str) flags(int) user_agent(str) socket(str) 
+username(str) domain(str,null) contact(str,null) received(str) expires(int,null) q(double,null) callid(str,null) cseq(int,null) last_modified(str) flags(int) user_agent(str) socket(str)
 ...
 </programlisting>
 		</example>
