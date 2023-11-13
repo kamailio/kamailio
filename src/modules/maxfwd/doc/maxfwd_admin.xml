@@ -17,7 +17,7 @@
 	<title>Overview</title>
 	<para>
 		The module implements all of the operations that handle the Max-Forward
-		SIP header field, like adding it (if not present) or decrementing and checking 
+		SIP header field, like adding it (if not present) or decrementing and checking
 		the value of the existent one.
 	</para>
 	<para>
