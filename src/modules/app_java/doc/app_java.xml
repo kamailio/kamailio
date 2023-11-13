@@ -29,7 +29,7 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="app_java_admin.xml"/>
-    
+
 </book>
