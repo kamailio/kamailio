@@ -11,25 +11,25 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    
+
     <title>&adminguide;</title>
-    
+
     <section>
 	<title>Overview</title>
 	<para>
-		This module allows real-time queries against the Max Mind GeoIP2 
-		database to be performed from the config script.  
+		This module allows real-time queries against the Max Mind GeoIP2
+		database to be performed from the config script.
 	</para>
 	<para>
-		The Max Mind GeoIP2 database is a map of IP network address assignments 
+		The Max Mind GeoIP2 database is a map of IP network address assignments
 		to geographical locales that can be useful -- though approximate --
 		in identifying the physical location with which an IP host address
 		is associated on a relatively granular level.
 	</para>
 	<para>
-		This database itself can be obtained on a free or commercial basis 
+		This database itself can be obtained on a free or commercial basis
 		from <ulink url="http://dev.maxmind.com/geoip/">
-		http://dev.maxmind.com/geoip/</ulink>. The 
+		http://dev.maxmind.com/geoip/</ulink>. The
 		library libmaxminddb
 		that interfaces with the Max Mind API, as well as scripts to
 		automate downloading of the on-disk version are available at
@@ -126,7 +126,7 @@ if(geoip2_match("$si", "src")) {
 	    </example>
 	</section>
 	</section>
-	
+
     <section>
 	<title>Functions</title>
  	<section>
@@ -149,7 +149,7 @@ if(geoip2_match("$si", "src"))
 </programlisting>
 	    </example>
 	</section>
-	
+
     </section>
 
     <section>
@@ -172,13 +172,13 @@ if(geoip2_match("$si", "src"))
 		</example>
 	</section>
     </section>
-	
+
 	<section>
 		<title>Exported pseudo-variables</title>
 		<itemizedlist>
 			<listitem><para>
-				<emphasis>$gip2(pvc=&gt;key)</emphasis> - <emphasis>pvc</emphasis> is an 
-				identifier for this query result;  it is designated by the second 
+				<emphasis>$gip2(pvc=&gt;key)</emphasis> - <emphasis>pvc</emphasis> is an
+				identifier for this query result;  it is designated by the second
 				parameter of geoip2_match(). The <emphasis>key</emphasis> can be one of
 				the following:
 				</para>
