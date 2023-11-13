@@ -102,12 +102,12 @@
 			</listitem>
 			<listitem>
 				<para><emphasis>count</emphasis>: number of non-acked keepalive before
-				resetting the connection. 
+				resetting the connection.
 				</para>
 			</listitem>
 			<listitem>
 				<para><emphasis>interval</emphasis> (seconds): time between two keepalive
-				probes. 
+				probes.
 				</para>
 			</listitem>
 		</itemizedlist>
@@ -135,7 +135,7 @@ onreply_route[foo] {
 			]]></programlisting>
 		</example>
 	</section>
-	
+
 	 <section id="tcpops.f.tcp_keepalive_disable">
 		<title>
 			<function>tcp_keepalive_disable([conid])</function>
@@ -203,7 +203,7 @@ onreply_route[foo] {
                         <programlisting><![CDATA[
 ...
 # use 10s as default lifetime
-tcp_connection_lifetime=10 
+tcp_connection_lifetime=10
 ...
 
 request_route {
