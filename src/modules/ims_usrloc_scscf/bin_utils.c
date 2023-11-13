@@ -3,23 +3,23 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,22 +37,22 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include "bin_utils.h"
 #include "../../core/locking.h"
 
 #include "../../lib/ims/useful_defs.h"
-/** 
- * Whether to print debug message while encoding/decoding 
+/**
+ * Whether to print debug message while encoding/decoding
  */
 #define BIN_DEBUG 0
 
-/** 
+/**
  * Whether to do sanity checks on the available data when decoding
  * If you are crazy about start-up performance you can disable this.
  * However, this is very useful for detecting broken snapshots
@@ -128,7 +128,7 @@ void bin_free(bin_data *x)
 }
 
 /**
- *	simple print function 
+ *	simple print function
  */
 void bin_print(bin_data *x)
 {
@@ -165,7 +165,7 @@ void bin_print(bin_data *x)
 
 
 /**
- *	Append a char of 1 byte 
+ *	Append a char of 1 byte
  */
 int bin_encode_char(bin_data *x, char k)
 {
@@ -196,7 +196,7 @@ int bin_decode_char(bin_data *x, char *c)
 
 
 /**
- *	Append an unsigned char of 1 byte 
+ *	Append an unsigned char of 1 byte
  */
 int bin_encode_uchar(bin_data *x, unsigned char k)
 {
@@ -228,7 +228,7 @@ int bin_decode_uchar(bin_data *x, unsigned char *c)
 
 
 /**
- *	Append the a short  
+ *	Append the a short
  */
 int bin_encode_short(bin_data *x, short k)
 {
@@ -261,7 +261,7 @@ int bin_decode_short(bin_data *x, short *v)
 
 
 /**
- *	Append the an unsigned short  
+ *	Append the an unsigned short
  */
 int bin_encode_ushort(bin_data *x, unsigned short k)
 {
@@ -447,7 +447,7 @@ int bin_decode_time_t(bin_data *x, time_t *v)
 
 
 /**
- *	Append a string 
+ *	Append a string
  */
 inline int bin_encode_str(bin_data *x, str *s)
 {
