@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="sms.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -73,32 +73,32 @@ modem_param      = name "=" value
 	    </listitem>
 	    <listitem>
 		<para>
-		    s=scan (optional) - Values: 
+		    s=scan (optional) - Values:
 		        	0: NOT SCAN uri from body sms, use URI in t=to.
 			1: SCAN uri from body sms (normal mode,
 			default mode, classic mode)
-			2: SCAN MIX (both modes), First SCAN 
+			2: SCAN MIX (both modes), First SCAN
 			Default is 1 (SCAN).
 		</para>
 	    </listitem>
 	</itemizedlist>
 	<note>
 	    <para>
-		No default value, the parameter is mandatory.		
+		No default value, the parameter is mandatory.
 	    </para>
 	</note>
 	<example>
 	    <title>Set <varname>modems</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("sms", "modems", "Nokia[d=/dev/ttyS1;s=0;t=sip:p-cscf@cidra.com.ar]") 
+modparam("sms", "modems", "Nokia[d=/dev/ttyS1;s=0;t=sip:p-cscf@cidra.com.ar]")
 modparam("sms", "modems", "Nokia [d=/dev/ttyS1;b=9600;m=new;l=30] ")
 modparam("sms", "modems", "Nokia[d=/dev/ttyS1];Siemens[d=/dev/ttyS2]")
 ...
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="networks">
 	<title><varname>networks</varname> (string)</title>
 	<para>
@@ -134,7 +134,7 @@ set_param      = name "=" value
 	</itemizedlist>
 	<note>
 	    <para>
-		No default value, the parameter is mandatory.		
+		No default value, the parameter is mandatory.
 	    </para>
 	</note>
 	<example>
@@ -146,7 +146,7 @@ modparam("sms", "networks", "D1 [m=10] ;d2[ m=20]")
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="links">
 	<title><varname>links</varname> (string)</title>
 	<para>
@@ -160,7 +160,7 @@ list_of_networks = network *( ";" network )
 	</programlisting>
 	<note>
 	    <para>
-		No default value, the parameter is mandatory.		
+		No default value, the parameter is mandatory.
 	    </para>
 	</note>
 	<example>
@@ -179,7 +179,7 @@ modparam("sms", "links", "NOKIA[D1;d2]")
 	    messages are waiting to be sent, the modem will not go in sleep.
 	</para>
     </section>
-    
+
     <section id="default_net">
 	<title><varname>default_net</varname> (string)</title>
 	<para>
@@ -197,7 +197,7 @@ modparam("sms", "default_net", "D1")
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="max_sms_parts">
 	<title><varname>max_sms_parts</varname> (integer)</title>
 	<para>
@@ -244,7 +244,7 @@ modparam("sms", "domain", "foo.bar")
 	<title><varname>use_contact</varname> (integer)</title>
 	<para>
 	    If a contact header should be added to the outgoing SIP messages. Even if the
-	    SIP draft forbids this, some UAS require it. 
+	    SIP draft forbids this, some UAS require it.
 	</para>
 	<para>
 	    Default is 0 (no).
@@ -258,7 +258,7 @@ modparam("sms", "use_contact", 1)
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="sms_report_type">
 	<title><varname>sms_report_type</varname> (integer)</title>
 	<para>
