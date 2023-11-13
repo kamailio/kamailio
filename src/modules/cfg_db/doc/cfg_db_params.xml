@@ -14,7 +14,7 @@
 	<section id="db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
-		Default database URL. 
+		Default database URL.
 		</para>
 		<para>
 		The format is:
@@ -46,15 +46,15 @@ modparam("cfg_db", "db_url", "mysql://&ser;:123@127.0.0.1:12345/&ser;");
 		The other keyword is asterisk <emphasis>*</emphasis> which matches
 		all parameters and will be used if parameter is not
 		explicitly mentioned.
-		</para>		
+		</para>
 	</section>
 	<section id="custom_tbl">
 		<title><varname>custom_tbl</varname> (string) := "cfg_custom"</title>
 		<para>
 		Name of table used for extra param declaration (group_name, name,
 		type, min/max value, description).
-		</para>		
-	</section>		
+		</para>
+	</section>
 </section>
 
 
