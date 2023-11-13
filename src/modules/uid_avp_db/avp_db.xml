@@ -323,7 +323,7 @@
       </serdoc:paraminfo>
       <para>
         The <parameter>value_column</parameter> parameter specifies the name
-        of the database column for the 
+        of the database column for the
         <serdoc:field table="user_attrs">value</serdoc:field> field.
       </para>
     </refsect2>
