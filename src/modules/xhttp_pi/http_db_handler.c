@@ -20,7 +20,7 @@
  */
 /*!
  * \file
- * \brief XHTTP_PI :: 
+ * \brief XHTTP_PI ::
  * \ingroup xhttp_pi
  * Module: \ref xhttp_pi
  */
