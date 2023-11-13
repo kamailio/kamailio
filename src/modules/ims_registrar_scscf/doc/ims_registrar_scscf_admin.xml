@@ -924,7 +924,7 @@ if (can_subscribe_to_reg("location")){
 
         <programlisting format="linespecific">...
 if (can_publish_reg("location")){
-    $var(ret)= publish_reg("location"); 
+    $var(ret)= publish_reg("location");
 }
 ...
 </programlisting>
@@ -953,7 +953,7 @@ if (can_publish_reg("location")){
 
         <programlisting format="linespecific">...
 if (can_publish_reg("location")){
-    $var(ret)= publish_reg("location"); 
+    $var(ret)= publish_reg("location");
 }
 ...
 </programlisting>
