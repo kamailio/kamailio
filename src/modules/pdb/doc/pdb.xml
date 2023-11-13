@@ -10,7 +10,7 @@
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
 	<bookinfo>
 	<title>pdb Module</title>
-	<productname class="trade">&kamailioname;</productname>        
+	<productname class="trade">&kamailioname;</productname>
 	<authorgroup>
 		<editor>
 		<firstname>Henning</firstname>
