@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 iptelorg GmbH 
+ * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

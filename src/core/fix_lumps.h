@@ -3,7 +3,7 @@
  * core functions using pkg_malloc and applied to shmem
  * requests; not doing so would result ugly memory problems
  *
- * I admit it is not a nice hack; -jiri 
+ * I admit it is not a nice hack; -jiri
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -19,8 +19,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -32,7 +32,7 @@
  * core functions using pkg_malloc and applied to shmem
  * requests; not doing so would result ugly memory problems
  *
- * I admit it is not a nice hack; -jiri 
+ * I admit it is not a nice hack; -jiri
 */
 
 

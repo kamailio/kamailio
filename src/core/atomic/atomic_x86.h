@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
 /**
  * @file
  * @brief Atomic operations and memory barriers (x86 and x86_64/amd64 specific)
- * 
+ *
  * Atomic operations and memory barriers (x86 and x86_64/amd64 specific)
  * \warning atomic ops do not include memory barriers, see atomic_ops.h for more
  * details.
@@ -93,7 +93,7 @@
 	asm volatile( \
 					" lock; addq $0, 0(%%rsp) \n\t " \
 					: : : "memory" \
-				) 
+				)
 */
 #define membar() asm volatile(" mfence \n\t " : : : "memory")
 #define membar_read() asm volatile(" lfence \n\t " : : : "memory")
@@ -122,7 +122,7 @@
 	do {                 \
 	} while(0) /* really empty, not even a cc bar. */
 /* lock barrriers: empty, not needed on x86 or x86_64 (atomic ops already
- *  force the barriers if needed); the lock/unlock should already contain the 
+ *  force the barriers if needed); the lock/unlock should already contain the
  *  gcc do_not_cache barriers*/
 #define membar_enter_lock() \
 	do {                    \

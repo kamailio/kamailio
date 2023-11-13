@@ -1954,22 +1954,22 @@ clean:
   * @param msg  - sip message structure, complete with lumps
   * @param returned_len - result length (filled in)
   * @param send_info  - dest_info structure (value/result), contains where the
-  *                     packet will be sent to (it's needed for building a 
+  *                     packet will be sent to (it's needed for building a
   *                     correct via, fill RR lumps a.s.o.). If MTU based
   *                     protocol fall-back is enabled (see flags below),
   *                     send_info->proto might be updated with the new
   *                     protocol.
   *                     msg->msg_flags used:
   *                     - FL_TCP_MTU_FB, FL_TLS_MTU_FB and FL_SCTP_MTU_FB -
-  *                       fallback to the corresp. proto if the built 
-  *                       message > mtu and send_info->proto==PROTO_UDP. 
+  *                       fallback to the corresp. proto if the built
+  *                       message > mtu and send_info->proto==PROTO_UDP.
   *                       It will also update send_info->proto.
   *                     - FL_FORCE_RPORT: add rport to via
   * @param mode - flags for building the message, can be a combination of:
   *                 * BUILD_NO_LOCAL_VIA - don't add a local via
   *                 * BUILD_NO_VIA1_UPDATE - don't update first via (rport,
   *                    received a.s.o)
-  *                 * BUILD_NO_PATH - don't add a Route: header with the 
+  *                 * BUILD_NO_PATH - don't add a Route: header with the
   *                   msg->path_vec content.
   *                 * BUILD_IN_SHM - build the result in shm memory
   *

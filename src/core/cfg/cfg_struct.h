@@ -312,7 +312,7 @@ static inline void cfg_child_cb_free_item(cfg_child_cb_t *cb)
 
 /* Move the group handle to the specified group instance pointed by dst_ginst.
  * src_ginst shall point to the active group instance.
- * Both parameters can be NULL meaning that the src/dst config is the default, 
+ * Both parameters can be NULL meaning that the src/dst config is the default,
  * not an additional group instance.
  * The function executes all the per-child process callbacks which are different
  * in the two instances.
@@ -426,7 +426,7 @@ static inline void cfg_reset_handles(void)
 }
 
 /* sets the local cfg block to the active block
- * 
+ *
  * If your module forks a new process that implements
  * an infinite loop, put cfg_update() to the beginning of
  * the cycle to make sure, that subsequent function calls see the

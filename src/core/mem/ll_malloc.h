@@ -1,5 +1,5 @@
 /*
- * shared memory, multi-process safe, pool based, mostly lockless version of 
+ * shared memory, multi-process safe, pool based, mostly lockless version of
  *  f_malloc
  *
  * This file is part of Kamailio, a free SIP server.

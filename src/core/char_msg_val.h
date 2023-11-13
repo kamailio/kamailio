@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -45,7 +45,7 @@ inline static int char_msg_val(struct sip_msg *msg, char *cv)
 		memset(cv, '0', MD5_LEN);
 		return 0;
 	}
-	/* to body is automatically parsed (via check_transactionquadruple / 
+	/* to body is automatically parsed (via check_transactionquadruple /
 	   parse_header), but the from body has to be parsed manually */
 	if(msg->from->parsed == 0) {
 		/* parse from body */

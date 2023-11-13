@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -34,25 +34,25 @@
 #include <string.h>
 
 /*
- * The q value expresses the priority of a URI within a set of URIs 
- * (Contact header field in the same SIP message or dset array in 
- * ser. The higher is the q value of a URI the higher is the priority 
+ * The q value expresses the priority of a URI within a set of URIs
+ * (Contact header field in the same SIP message or dset array in
+ * ser. The higher is the q value of a URI the higher is the priority
  * of the URI.
  *
- * The q value is usually expressed as a floating point number with 
- * limited number of decimal digits, for example 0.346. RFC3261 allows 
+ * The q value is usually expressed as a floating point number with
+ * limited number of decimal digits, for example 0.346. RFC3261 allows
  * 0-3 decimal digits.
  *
- * To speed things up we represent the q value as integer number, it 
- * is then easier to handle/print the value. To convert float into 
- * integer we multiply the q value by 1000, i.e. 
- * (float)0.567 == (int)567. In the opposite direction, values 
- * higher or equal to 1000 are converted to 1.0 and values below or 
+ * To speed things up we represent the q value as integer number, it
+ * is then easier to handle/print the value. To convert float into
+ * integer we multiply the q value by 1000, i.e.
+ * (float)0.567 == (int)567. In the opposite direction, values
+ * higher or equal to 1000 are converted to 1.0 and values below or
  * equal to 0 are converted to 0.
  *
- * Value Q_UNSPECIFIED (which is in fact -1) has a special meaning, it 
- * means that the q value is not known and the parameter should not be 
- * printed when printing Contacts, implementations will then use 
+ * Value Q_UNSPECIFIED (which is in fact -1) has a special meaning, it
+ * means that the q value is not known and the parameter should not be
+ * printed when printing Contacts, implementations will then use
  * implementation specific pre-defined values.
  */
 

@@ -114,7 +114,7 @@
 										   immediately to a child, wait for
 										   some data on it first */
 #define TCP_LISTEN_BACKLOG 1024
-#define SEND_FD_QUEUE /* queue send fd requests on EAGAIN, instead of sending 
+#define SEND_FD_QUEUE /* queue send fd requests on EAGAIN, instead of sending
 							them immediately */
 #define TCP_CHILD_NON_BLOCKING
 #ifdef SEND_FD_QUEUE
@@ -186,7 +186,7 @@ struct tcp_connection **tcpconn_id_hash = 0;
 gen_lock_t *tcpconn_lock = 0;
 
 struct tcp_child *tcp_children = 0;
-static int *connection_id = 0; /*  unique for each connection, used for 
+static int *connection_id = 0; /*  unique for each connection, used for
 								quickly finding the corresponding connection
 								for a reply */
 int unix_tcp_sock;
@@ -279,7 +279,7 @@ static inline int init_sock_keepalive(int s)
 }
 
 
-/* set all socket/fd options for new sockets (e.g. before connect): 
+/* set all socket/fd options for new sockets (e.g. before connect):
  *  disable nagle, tos lowdelay, reuseaddr, non-blocking
  *
  * return -1 on error */
@@ -378,15 +378,15 @@ error:
 }
 
 
-/* set all socket/fd options for "accepted" sockets 
+/* set all socket/fd options for "accepted" sockets
  *  only nonblocking is set since the rest is inherited from the
  *  "parent" (listening) socket
  *  Note: setting O_NONBLOCK is required on linux but it's not needed on
- *        BSD and possibly solaris (where the flag is inherited from the 
- *        parent socket). However since there is no standard document 
+ *        BSD and possibly solaris (where the flag is inherited from the
+ *        parent socket). However since there is no standard document
  *        requiring a specific behaviour in this case it's safer to always set
  *        it (at least for now)  --andrei
- *  TODO: check on which OSes  O_NONBLOCK is inherited and make this 
+ *  TODO: check on which OSes  O_NONBLOCK is inherited and make this
  *        function a nop.
  *
  * return -1 on error */
@@ -438,7 +438,7 @@ retry:
 			case ECONNREFUSED:
 			case ENETUNREACH:
 			case EHOSTUNREACH:
-				/* on *BSD we really get these errors at close() time 
+				/* on *BSD we really get these errors at close() time
 				   => ignore them */
 				ret = 0;
 				break;
@@ -451,7 +451,7 @@ retry:
 
 
 /* blocking connect on a non-blocking fd; it will timeout after
- * tcp_connect_timeout 
+ * tcp_connect_timeout
  * if BLOCKING_USE_SELECT and HAVE_SELECT are defined it will internally
  * use select() instead of poll (bad if fd > FD_SET_SIZE, poll is preferred)
  */
@@ -790,7 +790,7 @@ inline static void _wbufq_destroy(struct tcp_wbuffer_queue *q)
 
 
 /* tries to empty the queue  (safe version, c->write_lock must not be hold)
- * returns -1 on error, bytes written on success (>=0) 
+ * returns -1 on error, bytes written on success (>=0)
  * if the whole queue is emptied => sets *empty*/
 inline static int wbufq_run(int fd, struct tcp_connection *c, int *empty)
 {
@@ -1594,12 +1594,12 @@ inline static struct tcp_connection *tcpconn_add(struct tcp_connection *c)
 		/* first alias is for (peer_ip, peer_port, 0 ,0) -- for finding
 		 *  any connection to peer_ip, peer_port
 		 * the second alias is for (peer_ip, peer_port, local_addr, 0) -- for
-		 *  finding any connection to peer_ip, peer_port from local_addr 
-		 * the third alias is for (peer_ip, peer_port, local_addr, local_port) 
-		 *   -- for finding if a fully specified connection exists 
+		 *  finding any connection to peer_ip, peer_port from local_addr
+		 * the third alias is for (peer_ip, peer_port, local_addr, local_port)
+		 *   -- for finding if a fully specified connection exists
 		 * the fourth alias is for (peer_ip, peer_port, cinfo_addr, 0) -- for
 		 *  finding any connection to peer_ip, peer_port from address stored into cinfo (e.g. when proxy protocol is used)
-		 * the fifth alias is for (peer_ip, peer_port, cinfo_addr, cinfo_port) 
+		 * the fifth alias is for (peer_ip, peer_port, cinfo_addr, cinfo_port)
 		 *   -- for finding if a fully specified connection exists using address
 		 *      and port stored into cinfo*/
 		_tcpconn_add_alias_unsafe(
@@ -1821,7 +1821,7 @@ struct tcp_connection *tcpconn_get(int id, struct ip_addr *ip, int port,
 }
 
 
-/* add c->dst:port, local_addr as an alias for the "id" connection, 
+/* add c->dst:port, local_addr as an alias for the "id" connection,
  * flags: TCP_ALIAS_FORCE_ADD  - add an alias even if a previous one exists
  *        TCP_ALIAS_REPLACE    - if a prev. alias exists, replace it with the
  *                                new one
@@ -1860,8 +1860,8 @@ inline static int _tcpconn_add_alias_unsafe(struct tcp_connection *c, int port,
 					else if(flags & TCP_ALIAS_REPLACE) {
 						/* remove the alias =>
 						 * remove the current alias and all the following
-						 *  ones from the corresponding connection, shift the 
-						 *  connection aliases array and re-add the other 
+						 *  ones from the corresponding connection, shift the
+						 *  connection aliases array and re-add the other
 						 *  aliases (!= current one) */
 						p = a->parent;
 						for(i = 0;
@@ -1929,7 +1929,7 @@ error_sec:
 }
 
 
-/* add port as an alias for the "id" connection, 
+/* add port as an alias for the "id" connection,
  * returns 0 on success,-1 on failure */
 int tcpconn_add_alias(int id, int port, int proto)
 {
@@ -2610,8 +2610,8 @@ static int tcpconn_send_put(struct tcp_connection *c, const char *buf,
 		do_close_fd = 0; /* don't close the fd on exit, it's in use */
 #ifdef TCP_FD_CACHE
 		use_fd_cache = 0; /* don't cache: problems would arise due to the
-							   close() on cache eviction (if the fd is still 
-							   used). If it has to be cached then dup() _must_ 
+							   close() on cache eviction (if the fd is still
+							   used). If it has to be cached then dup() _must_
 							   be used */
 	} else if(likely(use_fd_cache
 					  && ((fd_cache_e = tcp_fd_cache_get(c)) != 0))) {
@@ -2982,7 +2982,7 @@ end:
 
 /** low level 1st send on a new connection.
  * It takes care of possible write-queueing, blocklisting a.s.o.
- * It expects a valid just-opened tcp connection. It doesn't touch the 
+ * It expects a valid just-opened tcp connection. It doesn't touch the
  * ref. counters. It's used only in the async first send case.
  * @param fd - fd used for sending.
  * @param c - existing tcp connection pointer (state and flags might be
@@ -3160,7 +3160,7 @@ int tcp_init(struct socket_info *sock_info)
 	/* Stevens, "Network Programming", Section 7.5, "Generic Socket
      * Options": "...server started,..a child continues..on existing
 	 * connection..listening server is restarted...call to bind fails
-	 * ... ALL TCP servers should specify the SO_REUSEADDRE option 
+	 * ... ALL TCP servers should specify the SO_REUSEADDRE option
 	 * to allow the server to be restarted in this situation
 	 *
 	 * Indeed, without this option, the server can't restart.
@@ -3677,7 +3677,7 @@ static int tcp_emit_closed_event(struct tcp_connection *con)
 
 /* handles io from a tcp child process
  * params: tcp_c - pointer in the tcp_children array, to the entry for
- *                 which an io event was detected 
+ *                 which an io event was detected
  *         fd_i  - fd index in the fd_array (useful for optimizing
  *                 io_watch_deletes)
  * returns:  handle_* return convention: -1 on error, 0 on EAGAIN (no more
@@ -3904,14 +3904,14 @@ error:
 
 
 /* handles io from a "generic" process (get fd or new_fd from a tcp_send)
- * 
+ *
  * params: p     - pointer in the processes array (pt[]), to the entry for
  *                 which an io event was detected
  *         fd_i  - fd index in the fd_array (useful for optimizing
  *                 io_watch_deletes)
  * returns:  handle_* return convention:
  *          -1 on error reading from the fd,
- *           0 on EAGAIN  or when no  more io events are queued 
+ *           0 on EAGAIN  or when no  more io events are queued
  *             (receive buffer empty),
  *           >0 on successfull reads from the fd (the receive buffer might
  *             be non-empty).
@@ -4069,7 +4069,7 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 					(F_CONN_MAIN_TIMER | F_CONN_READ_W | F_CONN_WANTS_RD)
 #ifdef TCP_ASYNC
 					/* not used for now, the connection is sent to tcp_main
-					 * before knowing whether we can write on it or we should 
+					 * before knowing whether we can write on it or we should
 					 * wait */
 					| (((int)!(tcpconn->flags & F_CONN_WANTS_WR) - 1)
 							& F_CONN_WRITE_W)
@@ -4079,7 +4079,7 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 			flags = POLLIN
 #ifdef TCP_ASYNC
 					/* not used for now, the connection is sent to tcp_main
-					 * before knowing if we can write on it or we should 
+					 * before knowing if we can write on it or we should
 					 * wait */
 					| (((int)!(tcpconn->flags & F_CONN_WANTS_WR) - 1) & POLLOUT)
 #endif /* TCP_ASYNC */
@@ -4203,7 +4203,7 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 						nxt_timeout = tcpconn->wbuf_q.wr_timeout - t;
 					tcpconn->flags |= F_CONN_WRITE_W | F_CONN_WANTS_WR;
 				}
-				/* activate the timer (already properly init. in 
+				/* activate the timer (already properly init. in
 				   tcpconn_new())  no need for reinit */
 				local_timer_add(
 						&tcp_main_ltimer, &tcpconn->timer, nxt_timeout, t);
@@ -4216,7 +4216,7 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 				if(TICKS_LT(tcpconn->wbuf_q.wr_timeout, tcpconn->timeout)
 						&& TICKS_LT(t, tcpconn->wbuf_q.wr_timeout))
 					nxt_timeout = tcpconn->wbuf_q.wr_timeout - t;
-				/* activate the timer (already properly init. in 
+				/* activate the timer (already properly init. in
 				   tcpconn_new())  no need for reinit */
 				local_timer_add(
 						&tcp_main_ltimer, &tcpconn->timer, nxt_timeout, t);
@@ -4524,7 +4524,7 @@ static inline int handle_new_connect(struct socket_info *si)
 
 
 /* handles an io event on one of the watched tcp connections
- * 
+ *
  * params: tcpconn - pointer to the tcp_connection for which we have an io ev.
  *         fd_i    - index in the fd_array table (needed for delete)
  * returns:  handle_* return convention, but on success it always returns 0
@@ -4542,7 +4542,7 @@ inline static int handle_tcpconn_ev(
 #endif /* TCP_ASYNC */
 	/*  is refcnt!=0 really necessary?
 	 *  No, in fact it's a bug: I can have the following situation: a send only
-	 *   tcp connection used by n processes simultaneously => refcnt = n. In 
+	 *   tcp connection used by n processes simultaneously => refcnt = n. In
 	 *   the same time I can have a read event and this situation is perfectly
 	 *   valid. -- andrei
 	 */
@@ -4568,14 +4568,14 @@ inline static int handle_tcpconn_ev(
 					|| (empty_q && tcpconn_close_after_send(tcpconn)))) {
 			if((tcpconn->flags & F_CONN_READ_W) && (ev & POLLIN)) {
 				/* connection is watched for read and there is a read event
-				 * (unfortunately if we have POLLIN here we don't know if 
+				 * (unfortunately if we have POLLIN here we don't know if
 				 * there's really any data in the read buffer or the POLLIN
 				 * was generated by the error or EOF => to avoid loosing
-				 *  data it's safer to either directly check the read buffer 
+				 *  data it's safer to either directly check the read buffer
 				 *  or try a read)*/
 				/* in most cases the read buffer will be empty, so in general
-				 * is cheaper to check it here and then send the 
-				 * conn.  to a a child only if needed (another syscall + at 
+				 * is cheaper to check it here and then send the
+				 * conn.  to a a child only if needed (another syscall + at
 				 * least 2 * syscalls in the reader + ...) */
 				if((ioctl(tcpconn->s, FIONREAD, &bytes) >= 0) && (bytes > 0)) {
 					if(unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, 0) < 0)) {
@@ -4696,7 +4696,7 @@ inline static int handle_tcpconn_ev(
 			tcpconn_put_destroy(tcpconn); /* because of the tcpconn_ref() */
 		}
 	}
-	return 0; /* we are not interested in possibly queued io events, 
+	return 0; /* we are not interested in possibly queued io events,
 				 the fd was either passed to a child, closed, or for writes,
 				 everything possible was already written */
 error:
@@ -4710,7 +4710,7 @@ error:
  * params:  fm  - pointer to a fd hash entry
  *          idx - index in the fd_array (or -1 if not known)
  * return: -1 on error
- *          0 on EAGAIN or when by some other way it is known that no more 
+ *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
  *            Useful to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
@@ -5076,8 +5076,8 @@ void destroy_tcp()
 	if(tcpconn_id_hash) {
 		if(tcpconn_lock)
 			TCPCONN_UNLOCK; /* hack: force-unlock the tcp lock in case
-								   some process was terminated while holding 
-								   it; this will allow an almost gracious 
+								   some process was terminated while holding
+								   it; this will allow an almost gracious
 								   shutdown */
 		tcpconn_destroy_all();
 		shm_free(tcpconn_id_hash);

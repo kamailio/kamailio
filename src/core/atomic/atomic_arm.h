@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,15 +17,15 @@
 /**
  * @file
  * @brief Atomic ops and memory barriers for ARM (>= v3)
- * 
+ *
  * Atomic ops and memory barriers for ARM architecture (starting from version 3)
  * see atomic_ops.h for more info.
- * 
+ *
  * Config defines:
  * - NOSMP
  * - __CPU_arm
  * - __CPU_arm6 - armv6 support (supports atomic ops via ldrex/strex)
- * - __CPU_arm7 - armv7 support 
+ * - __CPU_arm7 - armv7 support
  * @ingroup atomic
  */
 
@@ -96,7 +96,7 @@
 #include "atomic_unknown.h"
 #endif
 
-/* main asm block 
+/* main asm block
  *  use %0 as input and write the output in %1*/
 #define ATOMIC_ASM_OP(op)          \
 	"1:   ldrex %0, [%3] \n\t"     \
@@ -105,7 +105,7 @@
 	"     cmp %0, #0 \n\t"         \
 	"     bne 1b \n\t"
 
-/* same as above but writes %4 instead of %1, and %0 will contain 
+/* same as above but writes %4 instead of %1, and %0 will contain
  * the prev. val*/
 #define ATOMIC_ASM_OP2(op)         \
 	"1:   ldrex %0, [%3] \n\t"     \
@@ -183,7 +183,7 @@
 
 /* cmpxchg: %5=old, %4=new_v, %3=var
  * if (*var==old) *var=new_v
- * returns the original *var (can be used to check if it succeeded: 
+ * returns the original *var (can be used to check if it succeeded:
  *  if old==cmpxchg(var, old, new_v) -> success
  */
 #define ATOMIC_CMPXCHG_DECL(NAME, P_TYPE)                                           \
@@ -401,14 +401,14 @@ inline static long mb_atomic_add_long(volatile long *v, long i)
  *  a spinlock, e.g:
  *          mov %r0, #0x1
  *       1: swp %r1, %r0, [&atomic_val]
- *          if (%r1 & 0x1) goto 1 # wait if first bit is 1 
+ *          if (%r1 & 0x1) goto 1 # wait if first bit is 1
  *          %r1>>=1  # restore the value (only 31 bits can be used )
- *          %r1=op (%r1, ...) 
+ *          %r1=op (%r1, ...)
  *          %r1<<=1   # shift back the value, such that the first bit is 0
  *          str %r1, [&atomic_val]  # write the value
  *
  * However only 31 bits could be used (=> atomic_*_int and atomic_*_long
- *  would still have to be lock based, since in these cases we guarantee all 
+ *  would still have to be lock based, since in these cases we guarantee all
  *  the bits)  and I'm not sure there would be a significant performance
  *  benefit when compared with the fallback lock based version:
  *    lock(atomic_lock);

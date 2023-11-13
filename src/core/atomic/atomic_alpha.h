@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -14,16 +14,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/** 
+/**
  * @file
  * @brief Atomic operations and memory barriers (alpha specific)
  *
  * Atomic operations and memory barriers (alpha specific)
  * \warning atomic ops do not include memory barriers, see atomic_ops.h
  * for more details.
- * 
+ *
  * Config defines:
- * - NOSMP 
+ * - NOSMP
  * - __CPU_alpha
  * @ingroup atomic
  */
@@ -88,7 +88,7 @@
 #endif /* NOSMP */
 
 
-/* main asm block 
+/* main asm block
  * if store fails, jump _forward_ (optimization, because back jumps are
  *  always predicted to happen on alpha )*/
 #define ATOMIC_ASM_OP00_int(op) \

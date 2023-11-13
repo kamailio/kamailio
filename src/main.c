@@ -1521,7 +1521,7 @@ int main_loop(void)
 				"stand-alone receiver @ %s:%s", bind_address->name.s,
 				bind_address->port_no_str.s);
 
-		/* call it also w/ PROC_MAIN to make sure modules that init things 
+		/* call it also w/ PROC_MAIN to make sure modules that init things
 		 * only in PROC_MAIN get a chance to run */
 		if(init_child(PROC_MAIN) < 0) {
 			LM_ERR("init_child(PROC_MAIN) -- exiting\n");
@@ -1679,7 +1679,7 @@ int main_loop(void)
 #endif /* USE_TLS */
 #endif /* USE_TCP */
 
-		/* all processes should have access to all the sockets (for 
+		/* all processes should have access to all the sockets (for
 			 * sending) so we open all first*/
 		if(do_suid() == -1)
 			goto error; /* try to drop privileges */

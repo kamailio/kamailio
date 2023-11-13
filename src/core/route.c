@@ -114,7 +114,7 @@ void destroy_routes()
 
 
 /* adds route name -> i mapping
- * WARNING: it doesn't check for pre-existing routes 
+ * WARNING: it doesn't check for pre-existing routes
  * return -1 on error, route index on success
  */
 static int route_add(struct route_list *rt, char *name, int i)
@@ -211,7 +211,7 @@ end:
 }
 
 
-/* 
+/*
  * if the "name" route already exists, return its index, else
  * create a new empty route
  * return route index in rt->rlist or -1 on error
@@ -241,7 +241,7 @@ error:
 }
 
 
-/* 
+/*
  * if the "name" route already exists, return its index, else
  * return error
  * return route index in rt->rlist or -1 on error
@@ -507,7 +507,7 @@ int fix_expr(struct expr *exp)
 				LM_CRIT("unknown op %d\n", exp->op);
 		}
 	} else if(exp->type == ELEM_T) {
-		/* first calculate lengths of strings  (only right side, since 
+		/* first calculate lengths of strings  (only right side, since
 			  left side can never be a string) */
 		if(exp->r_type == STRING_ST) {
 			if(exp->r.string)
@@ -708,7 +708,7 @@ int fix_actions(struct action *a)
 					}
 					/* it's not an error anymore to have non-int in an if,
 					   only a script warning (to allow backward compat. stuff
-					   like if (@ruri) 
+					   like if (@ruri)
 					if (rve_type!=RV_LONG && rve_type!=RV_NONE){
 						LM_ERR("fix_actions: invalid expression (%d,%d):"
 								" bad type, integer expected\n",
@@ -1355,7 +1355,7 @@ inline static int comp_str(int op, str *left, int rtype, union exp_op *r,
 			 * take 0-terminated strings and our messages are not
 			 * zero-terminated; it should not hurt as long as this function
 			 * is applied to content of pkg mem, which is always the case
-			 * with calls from route{}; the same goes for fline in 
+			 * with calls from route{}; the same goes for fline in
 			 * reply_route{};
 			 *
 			 * also, the received function should always give us an extra
@@ -1364,7 +1364,7 @@ inline static int comp_str(int op, str *left, int rtype, union exp_op *r,
 			 * which might be too slow
 			 * -jiri
 			 *
-			 * janakj: AVPs are zero terminated too so this is not problem 
+			 * janakj: AVPs are zero terminated too so this is not problem
 			 * either
 			 */
 			backup = left->s[left->len];

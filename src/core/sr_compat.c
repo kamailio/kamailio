@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -21,7 +21,7 @@
  * Module: \ref core
  */
 
-/* 
+/*
  * History:
  * --------
  *  2008-11-29  initial version (andrei)

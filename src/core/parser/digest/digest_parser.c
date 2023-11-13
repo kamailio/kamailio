@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -333,7 +333,7 @@ static inline int parse_digest_params(str *_s, dig_cred_t *_c)
 		/* Try to find the next parameter */
 		comma = q_memchr(_s->s, ',', _s->len);
 		if(comma) {
-			/* Yes, there is another, 
+			/* Yes, there is another,
 			      * remove any leading white-spaces
 			      * and let _s point to the next
 			      * parameter name
@@ -375,7 +375,7 @@ int parse_digest_cred(str *_s, dig_cred_t *_c)
 	str tmp;
 
 	/* Make a temporary copy, we are
-	      * going to modify it 
+	      * going to modify it
 	      */
 	tmp.s = _s->s;
 	tmp.len = _s->len;

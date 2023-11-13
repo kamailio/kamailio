@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
 /**
  * @file
  * @brief Atomic operations and memory barriers (SPARC64 version, 32 and 64 bit modes)
- * 
+ *
  * Atomic operations and memory barriers (SPARC64 version, 32 and 64 bit modes)
  * \warning atomic ops do not include memory barriers see atomic_ops.h for
  * more details.
@@ -62,7 +62,7 @@
  *  (if the atomic ops on the specific architecture imply these barriers
  *   => these macros will be empty)
  *   Warning: these barriers don't force LoadLoad ordering between code
- *    before the lock/membar_enter_lock() and code 
+ *    before the lock/membar_enter_lock() and code
  *    after membar_leave_lock()/unlock()
  *
  *  Usage: lock(); membar_enter_lock(); .... ; membar_leave_lock(); unlock()
@@ -164,7 +164,7 @@
 		return RET_EXPR;                                        \
 	}
 
-/* same as above, but uses a short 1 op sequence 
+/* same as above, but uses a short 1 op sequence
  * %2 (or %1) is var, %0 is  v and return (ret)*/
 #define ATOMIC_FUNC_DECL1_RAW(NAME, OP, P_TYPE, RET_TYPE, RET_EXPR) \
 	inline static RET_TYPE atomic_##NAME##_##P_TYPE(                \

@@ -64,13 +64,13 @@ struct sip_uri *select_uri_p = NULL;
  * The select identifier must be of the form:
 \verbatim
  *   [@] <sel_id> [ '.' <sel_id> ...]
- *   
- * Where 
+ *
+ * Where
  *       <sel_id> = <id> |
  *                  <id> '[' <idx> ']'
  *       <id> = [a-zA-Z0-9_]+
  *       <idx> = <number> | <string>
- *       <string> = '"' <ascii> '"' | 
+ *       <string> = '"' <ascii> '"' |
  *                  '\"' <ascii> '\"'
  *
  * Examples:
@@ -79,7 +79,7 @@ struct sip_uri *select_uri_p = NULL;
  *     @msg.header["SER-Server-ID"]
  *     @eval.pop[-1]
  *     contact.uri.params.maddr
- *     cfg_get.rtp_proxy.enabled 
+ *     cfg_get.rtp_proxy.enabled
 \endverbatim
  *
  * @return -1 error
@@ -181,17 +181,17 @@ error:
 /** parse a select identifier.
  * Parse select string into select structure s and
  * moves pointer p to the first unused char.
- * 
+ *
 \verbatim
  * The select identifier must be of the form:
  *   [@] <sel_id> [ '.' <sel_id> ...]
- *   
- * Where 
+ *
+ * Where
  *       <sel_id> = <id> |
  *                  <id> '[' <idx> ']'
  *       <id> = [a-zA-Z0-9_]+
  *       <idx> = <number>  | '-' <number> | <string>
- *       <string> = '"' <ascii> '"' | 
+ *       <string> = '"' <ascii> '"' |
  *                  '\"' <ascii> '\"'
  *
  * Examples:
@@ -200,7 +200,7 @@ error:
  *     @msg.header["SER-Server-ID"]
  *     @eval.pop[-1]
  *     contact.uri.params.maddr
- *     cfg_get.rtp_proxy.enabled 
+ *     cfg_get.rtp_proxy.enabled
 \endverbatim
   *
   * @param p - double string (asciiz) pointer, *p is moved to the first char

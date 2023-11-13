@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -44,7 +44,7 @@ static int fix_max_tls_conns(void *cfg_h, str *gname, str *name, void **val);
 
 /* cfg_group_tcp description (for the config framework)*/
 static cfg_def_t tcp_cfg_def[] = {
-		/*   name        , type |input type| chg type, min, max, fixup, proc. cbk 
+		/*   name        , type |input type| chg type, min, max, fixup, proc. cbk
 	      description */
 		{"connect_timeout", CFG_VAR_INT | CFG_ATOMIC, -1,
 				TICKS_TO_S(MAX_TCP_CON_LIFETIME), fix_connect_to, 0,

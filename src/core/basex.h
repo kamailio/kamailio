@@ -36,7 +36,7 @@
  *  - base64_dec(src, src_len, dst, dst_len)    : decode from base64, standard  alphabet
  *  - base64_enc_len(len)                       : length needed to encode len bytes (macro)
  *  - base64_max_dec_len(len)                   : maximum length needed to decode len bytes (macro)
- *  - base64_dec_len(str, len)                  : size of the decoded str 
+ *  - base64_dec_len(str, len)                  : size of the decoded str
  *  - q_base64_enc(src, src_len, dst, dst_len)  : encode to special base64 alphabet (non standard)
  *  - q_base64_dec(src, src_len, dst, dst_len)  - decode from special non-standard base64 alphabet
  *
@@ -66,7 +66,7 @@
  * Defines:
  *  - BASE64_LOOKUP_TABLE/NO_BASE64_LOOKUP_TABLE : use (default)/don't use
  *     small lookup tables for conversions (faster in general).
- *  - BASE64_LOOKUP_LARGE    : use large lookup tables (2560 bytes for 
+ *  - BASE64_LOOKUP_LARGE    : use large lookup tables (2560 bytes for
  *    encoding and 256 bytes for decoding; without it 64 bytes are used for
  *    encoding and 85 bytes for decoding.
  *  - BASE64_LOOKUP_8K : use even larger lookup tables (8K for encoding and
@@ -75,7 +75,7 @@
  *
  *  - BASE16_LOOKUP_TABLE/NO_BASE16_LOOKUP_TABLE : use (default)/don't use
  *     small lookup tables for conversions (faster in general).
- *  - BASE16_LOOKUP_LARGE  : use large lookup tables (512 bytes for 
+ *  - BASE16_LOOKUP_LARGE  : use large lookup tables (512 bytes for
  *    encoding and 256 bytes for decoding
  *  - BASE16_READ_WHOLE_INTS : read an int at a time
  *
@@ -277,8 +277,8 @@ extern unsigned char _bx_ub64[0x54 + 1];
 
 #ifdef BASE16_READ_WHOLE_INTS
 
-/*! 
- * \params: 
+/*!
+ * \params:
  * \return: size used from the output buffer (dst) on success,
  *          -size_needed on error
  *
@@ -678,7 +678,7 @@ inline static int base64_dec(
 	end = src + slen - 4;
 	for(; src < end; src += 4, dst += 3) {
 #if 0
-		u=	(UNBASE64(src[0])<<18) | (UNBASE64(src[1])<<12) | 
+		u=	(UNBASE64(src[0])<<18) | (UNBASE64(src[1])<<12) |
 			(UNBASE64(src[2])<<6)  |  UNBASE64(src[3]);
 		dst[0]=u>>16;
 		dst[1]=u>>8;

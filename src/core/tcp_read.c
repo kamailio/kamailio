@@ -189,7 +189,7 @@ int tcp_http11_continue(struct tcp_connection *c)
  * @param buf - buffer where the received data will be stored.
  * @param b_size - buffer size.
  * @param flags - value/result - used to signal a seen or "forced" EOF on the
- *     connection (when it is known that no more data will come after the 
+ *     connection (when it is known that no more data will come after the
  *     current socket buffer is emptied )=> return/signal EOF on the first
  *     short read (=> don't use it on POLLPRI, as OOB data will cause short
  *     reads even if there are still remaining bytes in the socket buffer)
@@ -715,8 +715,8 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 
 			case H_STUN_MSG:
 				if((r->pos - r->body) >= sizeof(struct stun_hdr)) {
-					/* copy second short from buffer where should be body 
-					 * length 
+					/* copy second short from buffer where should be body
+					 * length
 					 */
 					memcpy(&body_len, &r->start[sizeof(unsigned short)],
 							sizeof(unsigned short));

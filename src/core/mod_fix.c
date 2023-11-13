@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -49,7 +49,7 @@ int fixup_regexpNL_none(void** param, int param_no); /* textops */
   *
   * The result (in *param) will be a fparam_t.
   *
-  * @param suffix - function suffix (fixup_ will be pre-pended to it 
+  * @param suffix - function suffix (fixup_ will be pre-pended to it
   * @param minp - minimum parameter number acceptable
   * @param maxp - maximum parameter number
   * @param no1 -  number of parameters of type1
@@ -114,7 +114,7 @@ int fixup_regexpNL_none(void** param, int param_no); /* textops */
   * rest as direct type.
   *
   * @see FIXUP_F2FP for the parameters with the exception
-  * that only the first no1 parameters are converted to 
+  * that only the first no1 parameters are converted to
   * fparamt_t and the rest directly to the corresponding type
   *
   * Side effect: declares also some _fpt_helper functions
@@ -547,7 +547,7 @@ int fixup_free_igp_spve(void **param, int param_no)
 
 
 /** macro for declaring a spve fixup and the corresponding free_fixup
-  * for a function expecting first no1 params as fparam converted spve 
+  * for a function expecting first no1 params as fparam converted spve
   * and the * rest as direct type.
   *
   * @see FIXUP_F2FP for the parameters with the exception

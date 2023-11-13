@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
  */
 /*! \brief Kamailio core :: various socket related functions.
  * @file sock_ut.h
- * @ingroup: core 
+ * @ingroup: core
  */
 /*
  * History:

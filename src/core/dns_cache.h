@@ -122,7 +122,7 @@ const char *dns_strerror(int err);
 /*@} */
 
 
-/** @brief stripped down dns rr 
+/** @brief stripped down dns rr
 	@note name, type and class are not needed, contained in struct dns_query */
 struct dns_rr
 {

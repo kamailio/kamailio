@@ -20,7 +20,7 @@
  */
 
 /** Parser :: parse headers.
- * @file 
+ * @file
  *
  * @ingroup parser
  */
@@ -34,7 +34,7 @@
 
 
 /** header types enum.
- * 
+ *
  * @note
  * if you add a new type:
  *  - make sure it's not greater than 63

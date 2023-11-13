@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2006 Andreas Granig <agranig@linguin.org>
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -62,7 +62,7 @@ struct option_tag_body
 	hf_parsed_free_f hfree;		  /* function to free the content */
 	unsigned int option_tags;	  /* option-tag mask for the current hdr */
 	unsigned int option_tags_all; /* option-tag mask for the all hdr
-	                                *  - it's set only for the first hdr in 
+	                                *  - it's set only for the first hdr in
 	                                *  sibling list*/
 };
 

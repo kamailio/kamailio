@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -43,7 +43,7 @@
 
 #ifdef HAVE_ASM_INLINE_ATOMIC_OPS
 #define HAVE_FUTEX
-#include <sys/types.h> /* hack to workaround some type conflicts 
+#include <sys/types.h> /* hack to workaround some type conflicts
                           between linux-libc-dev andlibc headers
                           in recent (6.08.2008) x86_64 debian sid
                           installations */
