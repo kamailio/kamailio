@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -13,13 +13,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* 
+/*
  * sctp options
  */
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief SIP-router core ::
  * \ingroup core
  * Module: \ref core
  */
@@ -639,7 +639,7 @@ static void set_sack_delay(str *gname, str *name)
 	} else
 #endif /* SCTP_DELAYED_SACK */
 	{
-/* setting SCTP_DELAYED_SACK failed or no lib support for 
+/* setting SCTP_DELAYED_SACK failed or no lib support for
 		   SCTP_DELAYED_SACK => try the old obsolete SCTP_DELAYED_ACK_TIME */
 #ifdef SCTP_DELAYED_ACK_TIME
 		memset(&sack_val, 0, sizeof(sack_val)); /* zero everything we don't
