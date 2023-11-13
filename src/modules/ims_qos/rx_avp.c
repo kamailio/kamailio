@@ -3,23 +3,23 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +37,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  *
  * History:
  * --------
@@ -76,7 +76,7 @@ static const int prefix_length_ipv6 = 128;
 
 /**
  * Create and add an AVP to a Diameter message.
- * @param m - Diameter message to add to 
+ * @param m - Diameter message to add to
  * @param d - the payload data
  * @param len - length of the payload data
  * @param avp_code - the code of the AVP
@@ -107,7 +107,7 @@ inline int rx_add_avp(AAAMessage *m, char *d, int len, int avp_code, int flags,
 
 /**
  * Create and add an AVP to a list of AVPs.
- * @param list - the AVP list to add to 
+ * @param list - the AVP list to add to
  * @param d - the payload data
  * @param len - length of the payload data
  * @param avp_code - the code of the AVP
@@ -165,10 +165,10 @@ static inline str rx_get_avp(
 		return avp->data;
 }
 
-/*creates an AVP for the framed-ip info: 
- * 	if ipv4: AVP_Framed_IP_Address, 
+/*creates an AVP for the framed-ip info:
+ * 	if ipv4: AVP_Framed_IP_Address,
  * 	otherwise: AVP_Framed_IPv6_Prefix
- * 	using inet_pton to convert the IP addresses 
+ * 	using inet_pton to convert the IP addresses
  * 	from human-readable strings to their bynary representation
  * 	see http://beej.us/guide/bgnet/output/html/multipage/inet_ntopman.html
  * 	http://beej.us/guide/bgnet/output/html/multipage/sockaddr_inman.html
@@ -308,7 +308,7 @@ inline int rx_add_auth_application_id_avp(AAAMessage *msg, unsigned int data)
  * @param r - the sip_message to extract the data from.
  * @param tag - originating (0) terminating (1)
  * @return CSCF_RETURN_TRUE on success or 0 on error
- * 
+ *
  */
 
 int rx_add_subscription_id_avp(
@@ -606,10 +606,10 @@ inline int rx_add_media_component_description_avp_register(AAAMessage *msg)
 
 /**
  * Creates a media-sub-component AVP
- * 
+ *
  * TODO - fix this ... or just delete it and do it again! It adds 2x Flow-Description for example, as a bug!
  * I don't think that more than 1 can be in one Media Subcomponent.
- * 
+ *
  * @param number - the flow number
  * @param proto - the protocol of the IPFilterRule
  * @param ipA - ip of the INVITE  (if creating rule for UE that sent INVITE)
@@ -617,7 +617,7 @@ inline int rx_add_media_component_description_avp_register(AAAMessage *msg)
  * @param ipB - ip of 200 OK (if creating rule for UE that sent INVITE)
  * @param portB - port of 200 OK (if creating rule for UE that sent INVITE)
  * @param options - any options to append to the IPFilterRules
- * @param attributes - indication of attributes 
+ * @param attributes - indication of attributes
  * 						0 no attributes , 1 sendonly , 2 recvonly , 3 RTCP flows, 4 AF signaling flows
  * @param bwUL - bandwidth uplink
  * @param bwDL - bandiwdth downlink
