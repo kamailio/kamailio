@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   ro_db_handler.h
  * Author: jaybeepee
  *
