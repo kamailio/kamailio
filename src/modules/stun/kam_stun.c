@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -27,7 +27,7 @@
  */
 /*!
  * \defgroup stun STUN Nat traversal support
- * 
+ *
  */
 
 #include <arpa/inet.h>
@@ -68,20 +68,20 @@ static int stun_add_common_text_attr(
  * ****************************************************************************
  */
 
-/* 
- * process_stun_msg(): 
+/*
+ * process_stun_msg():
  * 			buf - incoming message
  * 			len - length of incoming message
- * 			ri  - information about socket that received a message and 
+ * 			ri  - information about socket that received a message and
  *                also information about sender (its IP, port, protocol)
- * 
+ *
  * This function ensures processing of incoming message. It's common for both
  * TCP and UDP protocol. There is no other function as an interface.
- * 
+ *
  * Return value:	0	if there is no environment error
  * 					-1	if there is some environment error such as insufficiency
  * 						of memory
- * 
+ *
  */
 int process_stun_msg(char *buf, unsigned len, struct receive_info *ri)
 {
@@ -145,9 +145,9 @@ error:
  * stun_parse_header():
  * 			- req: request from host that should be processed
  * 			- error_code: indication of any protocol error
- * 
+ *
  * This function ensures parsing of incoming header.
- * 
+ *
  * Return value:	0	if there is no environment error
  * 					-1	if there is some environment error such as insufficiency
  * 						of memory
@@ -196,10 +196,10 @@ static int stun_parse_header(struct stun_msg *req, USHORT_T *error_code)
 /*
  * stun_parse_body():
  * 			- req: request from host that should be processed
- * 			- unknown: this is a link list header of attributes 
+ * 			- unknown: this is a link list header of attributes
  * 					   that are unknown to SER; default value is NULL
  * 			- error_code: indication of any protocol error
- * 
+ *
  * Return value:	0	if there is no environment error
  * 					-1	if there is some environment error such as insufficiency
  * 						of memory
@@ -218,7 +218,7 @@ static int stun_parse_body(struct stun_msg *req,
 	attr_size = sizeof(struct stun_attr);
 	buf = &req->msg.buf.s[sizeof(struct stun_hdr)];
 
-	/* 
+	/*
 	 * Mark the body length as unparsed.
 	 */
 	not_parsed = req->msg.buf.len - sizeof(struct stun_hdr);
@@ -319,9 +319,9 @@ static int stun_parse_body(struct stun_msg *req,
 				break;
 
 			default:
-				/* 
+				/*
 				 * the attribute is uknnown to the server
-				 * let see if it's necessary to generate error response 
+				 * let see if it's necessary to generate error response
 				 */
 #ifdef EXTRA_DEBUG
 				LOG(L_DBG, "DEBUG: low endian: attr - 0x%x   const - 0x%x\n",
@@ -374,7 +374,7 @@ static int stun_parse_body(struct stun_msg *req,
 
 	/*
 	 * The unknown attribute error code must set after parsing of whole body
-	 * because it's necessary to obtain all of unknown attributes! 
+	 * because it's necessary to obtain all of unknown attributes!
 	 */
 	if(*error_code == RESPONSE_OK && *unknown != NULL) {
 		*error_code = UNKNOWN_ATTRIBUTE_ERR;
@@ -387,17 +387,17 @@ static int stun_parse_body(struct stun_msg *req,
  * stun_create_response():
  * 			- req: original request from host
  * 			- res: this will represent response to host
- * 			- ri: information about request, necessary because of IP 
- * 				  address and port 
+ * 			- ri: information about request, necessary because of IP
+ * 				  address and port
  *			- unknown: link list of unknown attributes
  * 			- error_code: indication of any protocol error
- * 
+ *
  * The function stun_create_response ensures creating response to a host.
  * The type of response depends on value of error_code parameter.
- * 
+ *
  * Return value:	0	if there is no environment error
  * 					-1	if there is some environment error such as insufficiency
- * 						of memory  
+ * 						of memory
  */
 
 static int stun_create_response(struct stun_msg *req, struct stun_msg *res,
@@ -438,8 +438,8 @@ static int stun_create_response(struct stun_msg *req, struct stun_msg *res,
 			return FATAL_ERROR;
 		}
 
-		/* 
-		 * If the SER received message in old format, then the body will 
+		/*
+		 * If the SER received message in old format, then the body will
 		 * contain MAPPED-ADDRESS attribute instead of XOR-MAPPED-ADDRESS
 		 * attribute.
 		 */
@@ -498,8 +498,8 @@ static int stun_create_response(struct stun_msg *req, struct stun_msg *res,
 	}
 
 	if(req->old == 0) {
-		/* 
-		 * add optional information about server; attribute SOFTWARE is part of 
+		/*
+		 * add optional information about server; attribute SOFTWARE is part of
 		 * rfc5389.txt
 		 * */
 		if(stun_add_common_text_attr(res, SOFTWARE_ATTR, SERVER_HDR, PAD4)
@@ -523,14 +523,14 @@ static int stun_create_response(struct stun_msg *req, struct stun_msg *res,
  * add_unknown_attr()
  * 			- res: response representation
  * 			- unknown: link list of unknown attributes
- * 
- * The function add_unknown_attr ensures copy of link list of unknown 
+ *
+ * The function add_unknown_attr ensures copy of link list of unknown
  * attributes into response buffer.
- * 
+ *
  * Return value:	0	if there is no environment error
  * 					-1	if there is some environment error such as insufficiency
  * 						of memory
- * 
+ *
  */
 static int add_unknown_attr(
 		struct stun_msg *res, struct stun_unknown_att *unknown)
@@ -570,7 +570,7 @@ static int add_unknown_attr(
 	attr.len = htons(res->msg.buf.len - orig_len);
 	memcpy(&res->msg.buf.s[orig_len], (void *)&attr, sizeof(struct stun_attr));
 
-	/* check if there is an odd number of unknown attributes and if yes, 
+	/* check if there is an odd number of unknown attributes and if yes,
 	 * repeat one of them because of padding to 32
 	 */
 	if(counter / 2 != 0 && unknown != NULL) {
@@ -589,10 +589,10 @@ static int add_unknown_attr(
  * add_error_code()
  * 			- res: response representation
  * 			- error_code: value of error type
- * 
- * The function add_error_code ensures copy of link list of unknown 
+ *
+ * The function add_error_code ensures copy of link list of unknown
  * attributes into response buffer.
- * 
+ *
  * Return value:	0	if there is no environment error
  * 					-1	if there is some environment error such as insufficiency
  * 						of memory
@@ -705,12 +705,12 @@ error:
  * copy_str_to_buffer()
  * 			- res: response representation
  * 			- data: text data, in our case almost text representation of error
- * 			- pad: the size of pad (for how much bytes the string should be 
+ * 			- pad: the size of pad (for how much bytes the string should be
  * 				   padded
- * 
+ *
  * The function copy_str_to_buffer ensures copy of text buffer into response
  * buffer.
- * 
+ *
  * Return value:	0	if there is no environment error
  * 					-1	if there is some environment error such as insufficiency
  * 						of memory
@@ -751,14 +751,14 @@ static int copy_str_to_buffer(
  * 			- res: response representation
  * 			- af: address family
  * 			- port: port
- * 			- ip_addr: represent both IPv4 and IPv6, the differences is in 
- * 			length  
+ * 			- ip_addr: represent both IPv4 and IPv6, the differences is in
+ * 			length
  * 			- type: type of attribute
  * 			- do_xor: if the port should be XOR-ed or not.
- * 
+ *
  * The function stun_add_address_attr ensures copy of any IP attribute into
  * response buffer.
- * 
+ *
  * Return value:	0	if there is no environment error
  * 					-1	if there is some environment error such as insufficiency
  * 						of memory
@@ -815,10 +815,10 @@ static int stun_add_address_attr(struct stun_msg *res, UINT_T af, USHORT_T port,
 /*
  * stun_alloc_unknown_attr()
  * 			- type: type of unknown attribute
- * 
+ *
  * The function stun_alloc_unknown_attr ensures allocating new element for
  * the link list of unknown attributes.
- * 
+ *
  * Return value: pointer to new element of link list in positive case
  * 				 NULL if there is some environment error such as insufficiency
  * 						of memory
@@ -843,9 +843,9 @@ static struct stun_unknown_att *stun_alloc_unknown_attr(USHORT_T type)
 /*
  * stun_delete_unknown_attrs()
  * 			- unknown: link list of unknown attributes
- * 
+ *
  * The function stun_delete_unknown_attrs ensures deleting of link list
- * 
+ *
  * Return value: none
  */
 static void stun_delete_unknown_attrs(struct stun_unknown_att *unknown)
@@ -869,9 +869,9 @@ static void stun_delete_unknown_attrs(struct stun_unknown_att *unknown)
  * 			- msg: buffer where the data will be copied to
  * 			- source: source data buffer
  * 			- len: number of bytes that should be copied
- * 
+ *
  * The function buf_copy copies "len" bytes from source into msg buffer
- * 
+ *
  * Return value:	0	if there is no environment error
  * 					-1	if there is some environment error such as insufficiency
  * 						of memory
@@ -894,12 +894,12 @@ static int buf_copy(struct stun_buffer *msg, void *source, UINT_T len)
 /*
  * reallock_buffer()
  * 			- buffer: original buffer
- * 			- len: represents minimum of bytes that must be available after 
+ * 			- len: represents minimum of bytes that must be available after
  * 					reallocation
- * 
- * The function reallock_buffer reallocks buffer. New buffer's length will be 
+ *
+ * The function reallock_buffer reallocks buffer. New buffer's length will be
  * original length plus bigger from len and STUN_MSG_LEN constant.
- * 
+ *
  * Return value:	0	if there is no environment error
  * 					-1	if there is some environment error such as insufficiency
  * 						of memory
@@ -928,9 +928,9 @@ static int reallock_buffer(struct stun_buffer *buffer, UINT_T len)
  * clean_memory()
  * 			- res: structure representing response message
  * 			- unknown: link list of unknown attributes
- * 
+ *
  * The function clean_memory should free dynamic allocated memory.
- * 
+ *
  * Return value: none
  */
 static void clean_memory(struct stun_msg *req, struct stun_msg *res,
@@ -948,10 +948,10 @@ static void clean_memory(struct stun_msg *req, struct stun_msg *res,
  * 			- type: type of attribute
  * 			- value: attribute's value
  * 			- pad: size of pad
- * 
- * The function stun_add_common_text_attr copy attribute with string value 
+ *
+ * The function stun_add_common_text_attr copy attribute with string value
  * into response buffer.
- * 
+ *
  * Return value:	0	if there is no environment error
  * 					-1	if there is some environment error such as insufficiency
  * 						of memory
