@@ -29,7 +29,7 @@
 					<email>patric.marschall.@1und1.de</email>
 				</address>
 			</editor>
-			
+
 
 			<!--
 				<editor>
@@ -47,8 +47,8 @@
 			</copyright>
 	</bookinfo>
 	<toc></toc>
-		
+
 	<xi:include href="p_usrloc_admin.xml"/>
 	<xi:include href="p_usrloc_devel.xml"/>
-	
+
 </book>
