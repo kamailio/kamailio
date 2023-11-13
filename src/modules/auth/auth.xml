@@ -178,7 +178,7 @@
         rounded down to 524288. The
         <serdoc:modparam module="auth">nc_array_order</serdoc:modparam>
         parameter can be used to directly specify the power of 2. For
-        instance, a value for 
+        instance, a value for
         <serdoc:modparam module="auth">nc_array_order</serdoc:modparam>
         of 20 is equivalent to a <parameter>nc_array_size</parameter>
         of 1048576.
@@ -353,7 +353,7 @@
         time in seconds before a nonce is considered stale.
       </para>
       <para>
-        Nonces have a limited lifetime after which they 
+        Nonces have a limited lifetime after which they
         will be considered stale.
         This is to protect replay attacks. Credentials containing a stale
         nonce will be not authorized. The user agent will be challenged
@@ -361,7 +361,7 @@
         generated nonce, but also the <parameter>stale</parameter>
         parameter which indicates to the client the failure was not due
         to a wrong username or password and it doesn't need to disturb
-        the user asking for them. It can simply recalculate its answer 
+        the user asking for them. It can simply recalculate its answer
 	using existing username and password.
       </para>
     </refsect2>
@@ -499,7 +499,7 @@
         contains the name of the header field that should be used to
         include the proxy-to-user challenge.
       </para>
-    </refsect2> 
+    </refsect2>
 
     <refsect2 xml:id="module.auth.qop">
       <title><parameter>qop</parameter></title>
@@ -597,7 +597,7 @@
       When the extra checks are enabled, the nonce will include and extra
       MD5 hash over some selected parts of the message and another secret.
       This will be used to check if these parts of the message are the same
-      when a UA retries the request with the authentication response, thus 
+      when a UA retries the request with the authentication response, thus
       protecting from replay attacks or at least severely limiting their
       possibility.
     </para>
@@ -605,7 +605,7 @@
       Three module parameters control which parts of the message will be
       included for different types of requests. The parameter
       <parameter>auth_checks_register</parameter> sets them for REGISTER
-      requests. The parameter <parameter>auth_checks_no_dlg</parameter> 
+      requests. The parameter <parameter>auth_checks_no_dlg</parameter>
       does the same for requests that to not have a
       <parameter>tag</parameter> parameter in the To header field or have
       no To header field altogether (in other words requests sent outside
@@ -655,7 +655,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    <para> 
+    <para>
       For example, setting <parameter>auth_checks_register</parameter> to
       <literal>6</literal> would check if the Call-ID or the From tag
       have changed from the REGISTER message for which the nonce was
@@ -668,10 +668,10 @@
       When the <parameter>secret</parameter> parameter is set and the
       extra checks are enabled, the first half of the secret will be used
       for the expire time hash and the other half for the hash on the
-      extra checks, so make sure you have a long secret. At least 32 
+      extra checks, so make sure you have a long secret. At least 32
       characterss are recommended.
     </para>
-  </refsect1> 
+  </refsect1>
 
   <refsect1>
     <title>See Also</title>
