@@ -115,7 +115,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -420,13 +420,13 @@ modparam("pipelimit", "clean_unused", 10)
 		<para>
 		Check the current request against the 'name' pipe.
 		</para>
-		<para>	
+		<para>
 		If algorithm and limit are provided, the function attempts to create a
 		new pipe if one with that name doesn't exit. If it exists, no changes
 		to algorithm is done and the pipe limit is set to the 'limit' parameter
 		value, if this is greater than 0. Algorithm is case sensitive.
 		</para>
-		<para>	
+		<para>
 		The pipe name can be provided via a pseudo variable.
 		</para>
 		<para>The method will return:
