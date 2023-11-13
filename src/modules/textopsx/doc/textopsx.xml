@@ -33,7 +33,7 @@
     <section id="textops.overview">
 	<title>Overview</title>
 	<para>
-		This module implements functions for SIP message text operations 
+		This module implements functions for SIP message text operations
 		in routing block configurations.
 		It adds new features similar to the textops module (textops eXtentions).
 	</para>
