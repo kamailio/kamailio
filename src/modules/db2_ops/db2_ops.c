@@ -662,18 +662,18 @@ static int dbops_func(struct sip_msg *m, struct dbops_action *action)
 {
 	/*	char* order;*/
 	int res, i;
-	/* raw query is pre-compiled too 
+	/* raw query is pre-compiled too
 	if (action->is_raw_query) {
 		DEBUG(MODULE_NAME": dbops_func(raw, %d, '%s'\n", action->operation, action->raw.s);
 		res = eval_xlstr(m, &action->raw);
 		if (res < 0) return res;
-		
+
 	   	 * FIXME: We have to make sure that we do not use pre-compiled statements
 		 * here because these must not change at runtime: to be checked by janakj
 		 *
 		action->cmd->table.s = action->raw.s;
 		action->cmd->table.len = strlen(action->raw.s);
-		
+
 		if (db_exec((action->operation==OPEN_QUERY_OPS?&action->result:NULL), action->cmd) < 0) {
 			ERR(MODULE_NAME": database operation (%d) error, raw: '%s'\n", action->operation, action->raw.s);
 			return -1;
@@ -685,10 +685,10 @@ static int dbops_func(struct sip_msg *m, struct dbops_action *action)
 		DEBUG(MODULE_NAME ": dbops_func(%s, %d, raw, %d, '%s', %d)\n",
 				action->query_name, action->query_no, action->operation,
 				action->cmd->table.s, action->value_count);
-		/* raw query is pre-compiled too 
+		/* raw query is pre-compiled too
 		res = eval_xlstr(m, &action->raw);
 		if (res < 0) return res;
-		
+
 	   	 * FIXME: We have to make sure that we do not use pre-compiled statements
 		 * here because these must not change at runtime: to be checked by janakj
 		 *
@@ -702,7 +702,7 @@ static int dbops_func(struct sip_msg *m, struct dbops_action *action)
 				action->value_count);
 
 		/* FIXME: We do not support volatile table names yet */
-		/*	res = eval_xlstr(m, &action->table); 
+		/*	res = eval_xlstr(m, &action->table);
 			if (res < 0) return res;
 		*/
 
