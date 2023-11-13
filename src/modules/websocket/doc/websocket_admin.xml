@@ -715,7 +715,7 @@ event_route[websocket:closed] {
 	</section>
 
 	</section>
- 
+
 	<section>
 		<title>Exported Pseudo Variables</title>
 		<section>
