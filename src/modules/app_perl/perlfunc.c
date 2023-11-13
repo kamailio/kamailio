@@ -3,7 +3,7 @@
  *
  * Perl module for Kamailio
  *
- * Copyright (C) 2006 Collax GmbH 
+ * Copyright (C) 2006 Collax GmbH
  *                    (Bastian Friedrich <bastian.friedrich@collax.com>)
  *
  * This file is part of Kamailio, a free SIP server.
