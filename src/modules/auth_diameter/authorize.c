@@ -9,14 +9,14 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- * 
+ *
  * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -256,12 +256,12 @@ int authorize(struct sip_msg *msg, pv_elem_t *realm, int hftype)
 
 /*
  * This function creates and submits diameter authentication request as per
- * draft-srinivas-aaa-basic-digest-00.txt. 
+ * draft-srinivas-aaa-basic-digest-00.txt.
  * Service type of the request is Authenticate-Only.
  * Returns:
  * 		 1 - success
  * 		-1 - error
- * 			
+ *
  */
 int diameter_authorize(struct hdr_field *hdr, str *p_method, sip_uri_t *uri,
 		sip_uri_t *ruri, unsigned int m_id, rd_buf_t *rb)
