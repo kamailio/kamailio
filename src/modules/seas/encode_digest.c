@@ -14,26 +14,26 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*
  * =====================================================================================
- * 
+ *
  *        Filename:  encode_digest.c
- * 
+ *
  *     Description:  functions to encode/decode/print Digest headers ([proxy,www]-[authenticate,require])
- * 
+ *
  *         Version:  1.0
  *         Created:  20/11/05 04:24:55 CET
  *        Revision:  none
  *        Compiler:  gcc
- * 
+ *
  *          Author:  Elias Baixas (EB), elias@conillera.net
  *         Company:  VozTele.com
- * 
+ *
  * =====================================================================================
  */
 #define _GNU_SOURCE
@@ -73,8 +73,8 @@
  * HAS_QoP_F		0x01
  * HAS_NC_F		0x02
  * 2: hdr-start based pointer to where the scheme starts + length of the scheme (must be Digest).
- * 
- * for each field present, there are 2 bytes, one pointing the place where it starts, 
+ *
+ * for each field present, there are 2 bytes, one pointing the place where it starts,
  * the next signaling how long this field is. The URI is a special case, and is composed of 1
  * byte telling how long is the URI structure, and then the encoded URI structure.
  */
