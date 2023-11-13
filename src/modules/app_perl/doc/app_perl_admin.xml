@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 		<title>Overview</title>
 		<para>
@@ -65,7 +65,7 @@ TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/ExtUtils/ty
 ...
 if (perl_exec("ldap_alias")) {
 	...
-}	
+}
 ...
 </programlisting>
 		just as you would have done with the current alias_db module.
@@ -80,7 +80,7 @@ if (perl_exec("ldap_alias")) {
 		to the Perl interface and the full reference documentation can be found below.
 		</para>
 	</section>
-			
+
 
 	<section>
 	<title>Dependencies</title>
@@ -101,7 +101,7 @@ if (perl_exec("ldap_alias")) {
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 		<itemizedlist>
 			<listitem>

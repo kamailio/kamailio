@@ -13,7 +13,7 @@
 	<chapterinfo>
 	</chapterinfo>
 	<title>Perl samples</title>
-	
+
 	<section>
 		<title>Sample directory</title>
 		<para>
@@ -164,7 +164,7 @@
 ...
 if (perl_exec_msg("ldap_alias")) {
 	route[1];
-}	
+}
 ...
 </programlisting>
 		</para>
