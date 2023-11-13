@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -176,7 +176,7 @@ int add_route(struct route_data_t *rd, int carrier_id, int domain_id,
  * @param domain_id the routing domain id of the new route
  * @param scan_prefix the number prefix
  * @param host the hostname last tried
- * @param reply_code the reply code 
+ * @param reply_code the reply code
  * @param flags user defined flags
  * @param mask for user defined flags
  * @param next_domain_id continue routing with this domain id

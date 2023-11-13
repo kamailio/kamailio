@@ -18,7 +18,7 @@
  */
 
 /*!
- * \file 
+ * \file
  * \brief Siputils :: Configuration
  * \ingroup Siputils
  */
