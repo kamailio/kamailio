@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -38,7 +38,7 @@
  *     tcp|udp|unix:host_name
  *     host_name:port
  *     host_name
- * 
+ *
  *
  *     where host_name=string, ipv4 address, [ipv6 address],
  *         unix socket path (starts with '/')
@@ -179,7 +179,7 @@ end:
 				goto error;
 		}
 	} else {
-		/* no port, check if the hostname is a port 
+		/* no port, check if the hostname is a port
 		 * (e.g. tcp:3012 == tcp:*:3012 */
 		if(proto == TCP_SOCK || proto == UDP_SOCK) {
 			port = str2s(name, strlen(name), &err);

@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -71,10 +71,10 @@
  *      structs (struct type=3)
  *       structs are implemented as avp list:
  *           struct_start, avp1, avp2 .., struct_end
- *        an avp is a named value pair:  name, value. 
+ *        an avp is a named value pair:  name, value.
  *          - name behaves like a normal string, but has a diff. type (5)
  *          - avps are legal only inside structs.
- *        avp example:           name part (str)   val part (int here) 
+ *        avp example:           name part (str)   val part (int here)
  *         "test", int 0x0b   -> 0x55 "test" 0x00   0x10 0x0b
  *
  *      struct example:
@@ -262,7 +262,7 @@ inline static unsigned char *binrpc_write_int(
 /* API functions */
 
 /* initialize a binrpc_pkt structure, for packet creation
- * params: pkt         - binrpc body structure that will be initialized 
+ * params: pkt         - binrpc body structure that will be initialized
  *         buf, b_len  -  destination buffer/len
  * returns -1 on error, 0 on success
  *
@@ -285,7 +285,7 @@ inline static int binrpc_init_pkt(
 };
 
 
-/* used to update internal contents if the original buffer 
+/* used to update internal contents if the original buffer
  * (from binrpc_init_pkt) was realloc'ed (and has grown) */
 inline static int binrpc_pkt_update_buf(
 		struct binrpc_pkt *pkt, unsigned char *new_buf, int new_len)
@@ -301,7 +301,7 @@ inline static int binrpc_pkt_update_buf(
 
 
 /* builds a binrpc header for the binrpc pkt. body pkt and writes it in buf
- * params:  
+ * params:
  *          type     - binrpc packet type (request, reply, fault)
  *          body_len - body len
  *          cookie   - binrpc cookie value
@@ -525,7 +525,7 @@ inline static int binrpc_addavp(struct binrpc_pkt *pkt, struct binrpc_val *avp)
 	binrpc_add_str_type((pkt), (s), (len), BINRPC_T_BYTES)
 
 /* struct type format:
- *  start :         0000 | BINRPC_T_STRUCT 
+ *  start :         0000 | BINRPC_T_STRUCT
  *  end:            1000 | BINRPC_T_STRUCT
  */
 #define binrpc_start_struct(pkt) binrpc_add_tag((pkt), BINRPC_T_STRUCT, 0)
@@ -661,7 +661,7 @@ error:
 
 
 /* returns bytes needed (till the end of the packet)
- * on error (non. init ctx) returns < 0 
+ * on error (non. init ctx) returns < 0
  */
 inline static int binrpc_bytes_needed(struct binrpc_parse_ctx *ctx)
 {
@@ -671,10 +671,10 @@ inline static int binrpc_bytes_needed(struct binrpc_parse_ctx *ctx)
 }
 
 
-/* prefill v with the requested type, if type==BINRPC_T_ALL it 
- * will be replaced by the actual record type 
+/* prefill v with the requested type, if type==BINRPC_T_ALL it
+ * will be replaced by the actual record type
  * known problems: no support for arrays inside STRUCT
- * param smode: allow simple vals inside struct (needed for 
+ * param smode: allow simple vals inside struct (needed for
  * not-strict-formatted rpc responses)
  * returns position after the record and *err==0 if successful
  *         original position and *err<0 if not */
@@ -838,7 +838,7 @@ error:
 
 
 /* reads/skips an entire struct
- * the struct start/end are saved in v->u.strval.s, v->u.strval.len 
+ * the struct start/end are saved in v->u.strval.s, v->u.strval.len
  * return:  - new buffer position  and set *err to 0 if successfull
  *          - original buffer and *err<0 on error */
 inline static unsigned char *binrpc_read_struct(struct binrpc_parse_ctx *ctx,

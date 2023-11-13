@@ -213,15 +213,15 @@ error:
 /* doubles the size */
 static struct rpc_struct_l* grow_rpc_struct(struct rpc_struct_l *rs)
 {
-	
+
 	struct rpc_struct_l* new_rs;
 	int csize; /* body */
-	
+
 	csize=binrpc_pkt_len(&rs->pkt);
 	csize*=2;
 	new_rs=ctl_realloc(rs, sizeof(struct rpc_struct_l)+csize);
 	if (new_rs){
-		binrpc_pkt_update_buf(&rs->pkt, 
+		binrpc_pkt_update_buf(&rs->pkt,
 							(unsigned char*)new_rs+sizeof(struct rpc_struct_l),
 							csize);
 	}
@@ -235,7 +235,7 @@ static struct rpc_struct_l* grow_rpc_struct(struct rpc_struct_l *rs)
 inline static int append_pkt_body(struct binrpc_pkt* p, unsigned char* buf,
 							int len)
 {
-	
+
 	if ((int)(p->end-p->crt)<len){
 		goto error;
 #if 0
@@ -314,13 +314,13 @@ error:
 
 #if 0
 /* expects an initialized new_b */
-static int build_structs(struct binrpc_pkt *new_b, struct binrpc_pkt* body, 
+static int build_structs(struct binrpc_pkt *new_b, struct binrpc_pkt* body,
 							struct rpc_struct_head* sl_head)
 {
 	int offs;
 	struct rpc_struct_l* l;
 	int ret;
-	
+
 	offs=0;
 	clist_foreach(sl_head, l, next){
 		if ((ret=append_pkt_body(new_b, body->body+offs, l->offset-offs))<0)
@@ -967,7 +967,7 @@ static int rpc_scan(struct binrpc_ctx *ctx, char *fmt, ...)
 				v.type = BINRPC_T_STRUCT;
 				/* FIXME: structure reading doesn't work for now */
 #if 0
-				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s, 
+				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s,
 												ctx->in.end, &v, 0, &err);
 				if (err<0) goto error_read;
 				ctx->in.in_struct++;
