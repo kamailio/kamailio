@@ -120,7 +120,7 @@ static int child_init(int rank)
 {
 	/* skip child init for non-worker process ranks */
 	/* if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN) */
-	/* We execute kfk_init in PROC_MAIN so it cleans messages, etc right 
+	/* We execute kfk_init in PROC_MAIN so it cleans messages, etc right
 	   when destroying the module. */
 	if(rank == PROC_INIT || rank == PROC_TCP_MAIN)
 		return 0;

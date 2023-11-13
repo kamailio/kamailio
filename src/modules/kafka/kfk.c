@@ -396,7 +396,7 @@ error:
 /**
  * \brief Configure Kafka properties.
  *
- * \return 0 on success. 
+ * \return 0 on success.
  */
 static int kfk_conf_configure()
 {
