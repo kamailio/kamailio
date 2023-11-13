@@ -28,6 +28,6 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="websocket_admin.xml"/>
 </book>
