@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -25,7 +25,7 @@
 * Module: \ref core
 *
  * WARNING: this should be used only from within the same process.
- * The local timers are not multi-process or multi-thread safe 
+ * The local timers are not multi-process or multi-thread safe
  *  (there are no locks)
  *
  */

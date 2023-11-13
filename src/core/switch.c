@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -16,7 +16,7 @@
 
 /*!
  * \file
- * \brief Kamailio core :: 
+ * \brief Kamailio core ::
  * \ingroup core
  * Module: \ref core
  */
@@ -140,7 +140,7 @@ void destroy_case_stms(struct case_stms *lst)
  *  - SWITCH_JT_T(cond, jumptable) - jumptable + condition table
  * TODO: external optimizers that would "flatten" BLOCK_T w/no breaks or
  * breaks at the end.
- * 
+ *
  */
 int fix_switch(struct action *t)
 {
@@ -254,7 +254,7 @@ int fix_switch(struct action *t)
 		goto error;
 	}
 
-	/* fill condition table and jump point bookmarks and "flatten" the action 
+	/* fill condition table and jump point bookmarks and "flatten" the action
 	   lists (transform them into a single list for the entire switch, rather
 	    then one block per case ) */
 	n = 0;
@@ -288,7 +288,7 @@ int fix_switch(struct action *t)
 		if(c->actions)
 			tail = &a->next;
 	}
-	/* handle constant rve w/ no side-effects: replace the whole case 
+	/* handle constant rve w/ no side-effects: replace the whole case
 	   with the case rve block */
 	if((scr_opt_lev >= 2) && !rve_has_side_effects(sw_rve)
 			&& rve_is_constant(sw_rve)) {
@@ -576,7 +576,7 @@ static int fix_match(struct action *t)
 		goto error;
 	}
 
-	/* fill condition table and jump point bookmarks and "flatten" the action 
+	/* fill condition table and jump point bookmarks and "flatten" the action
 	   lists (transform them into a single list for the entire switch, rather
 	    then one block per case ) */
 	n = 0;
@@ -624,7 +624,7 @@ static int fix_match(struct action *t)
 		if(c->actions)
 			tail = &a->next;
 	}
-	/* handle constant rve w/ no side-effects: replace the whole case 
+	/* handle constant rve w/ no side-effects: replace the whole case
 	   with the case rve block */
 	if((scr_opt_lev >= 2) && !rve_has_side_effects(m_rve)
 			&& rve_is_constant(m_rve)) {

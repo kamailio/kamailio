@@ -1,5 +1,5 @@
 /*
- * find & manage listen addresses 
+ * find & manage listen addresses
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to" the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to" the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -24,7 +24,7 @@
  * \brief Kamailio core :: listen address
  * This file contains code that initializes and handles Kamailio listen addresses
  * lists (struct socket_info). It is used mainly on startup.
- * 
+ *
  */
 
 

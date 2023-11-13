@@ -781,7 +781,7 @@ inline static int dst_is_blocklisted_ip(
 /** add dst to the blocklist, specifying the timeout.
  * @param err_flags - reason (bitmap)
  * @param si - destination (protocol, ip and port)
- * @param msg - sip message that triggered the blocklisting (can be 0 if 
+ * @param msg - sip message that triggered the blocklisting (can be 0 if
  *               not known)
  * @param timeout - timeout in ticks
  * @return 0 on success, -1 on error

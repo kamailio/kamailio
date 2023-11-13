@@ -71,7 +71,7 @@ enum expr_op
 	NO_OP
 };
 /* expression left member "special" type (if type==ELEM_T)
-  (start at 51 for debugging purposes: it's better to not overlap with 
+  (start at 51 for debugging purposes: it's better to not overlap with
    expr_r_type)
 */
 enum _expr_l_type
@@ -285,7 +285,7 @@ typedef struct
 
 /* maximum internal array/params
  * for module function calls val[0] and val[1] store a pointer to the
- * function and the number of params, the rest are the function params 
+ * function and the number of params, the rest are the function params
  */
 #define MAX_ACTIONS (2 + 6)
 

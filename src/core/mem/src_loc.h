@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 iptelorg GmbH
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,12 +19,12 @@
 /**
  * \file
  * \brief Helper definitions for internal memory manager
- * 
+ *
  * Helper definitions for internal memory manager, defines for src location
  * (function name, module a.s.o.), used for recording a *malloc()/ *free()
  * caller. Expects MOD_NAME defined for modules (if it's not defined "core"
  * will be assumed).
- * 
+ *
  * Defines:
  * - _SRC_FUNCTION_  - current function name
  * - _SRC_FILENAME_  - current .c filename

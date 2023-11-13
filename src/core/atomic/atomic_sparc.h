@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,11 +17,11 @@
 /**
  * @file
  * @brief Memory barriers for SPARC32 ( version < v 9))
- * 
+ *
  * Memory barriers for SPARC32 ( version < v 9)), see atomic_ops.h for more
  * details.
  *
- * Config defines: 
+ * Config defines:
  * - NOSMP
  * @ingroup atomic
  */

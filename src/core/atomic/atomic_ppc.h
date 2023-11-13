@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,10 @@
 /**
  * @file
  * @brief Atomic operations and memory barriers (PowerPC and PowerPC64 versions)
- * 
+ *
  * Atomic operations and memory barriers (PowerPC and PowerPC64 versions)
  * \warning atomic ops do not include memory barriers see atomic_ops.h for
- * more details. 
+ * more details.
  * \warning not tested on ppc64
  *
  * Config defines:

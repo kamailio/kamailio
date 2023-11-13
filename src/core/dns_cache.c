@@ -4344,7 +4344,7 @@ int dns_cache_add_record(unsigned short type, str *name, int ttl, str *value,
 						LM_ERR("Failed to create an A/AAAA record\n");
 						goto error;
 					}
-					/* fix the expiration time, dns_cache_mk_ip_entry() sets it 
+					/* fix the expiration time, dns_cache_mk_ip_entry() sets it
 				 * to now-1 */
 					expire = get_ticks_raw() + S_TO_TICKS(ttl);
 					new->expire = expire;
@@ -4360,10 +4360,10 @@ int dns_cache_add_record(unsigned short type, str *name, int ttl, str *value,
 			}
 			new->ent_flags = flags;
 		} else {
-			/* we must modify the entry, so better to clone it, modify the new 
+			/* we must modify the entry, so better to clone it, modify the new
 			 * one, and replace the old with the new entry in the hash table,
-			 * because the entry might be in use (even if the dns hash is 
-			 * locked). The old entry will be removed from the hash and 
+			 * because the entry might be in use (even if the dns hash is
+			 * locked). The old entry will be removed from the hash and
 			 * automatically destroyed when its refcnt will be 0*/
 
 			/* check whether there is an rr with the same value */
@@ -4443,7 +4443,7 @@ int dns_cache_add_record(unsigned short type, str *name, int ttl, str *value,
 						memcpy(((struct srv_rdata *)rr->rdata)->name, rr_name.s,
 								rr_name.len);
 				}
-				/* maximum expire value has been already fixed by 
+				/* maximum expire value has been already fixed by
 				 * dns_cache_clone_entry() */
 			}
 
@@ -4638,10 +4638,10 @@ int dns_cache_delete_single_record(
 		 * hash entry can be deleted */
 		goto delete;
 	} else {
-		/* we must modify the entry, so better to clone it, modify the new 
+		/* we must modify the entry, so better to clone it, modify the new
 		* one, and replace the old with the new entry in the hash table,
-		* because the entry might be in use (even if the dns hash is 
-		* locked). The old entry will be removed from the hash and 
+		* because the entry might be in use (even if the dns hash is
+		* locked). The old entry will be removed from the hash and
 		* automatically destroyed when its refcnt will be 0*/
 		new = dns_cache_clone_entry(old, 0, 0, 0);
 		if(!new) {

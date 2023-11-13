@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 iptelorg GmbH 
+ * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -58,7 +58,7 @@
 		(h) += (v) ^ ((v) >> 3);                                          \
 	} while(0)
 
-/** like hash_update_str, but case insensitive 
+/** like hash_update_str, but case insensitive
  * params: char* s   - string start,
  *         char* end - end
  *         char* p,  and unsigned v temporary vars (used)
@@ -117,7 +117,7 @@ inline static unsigned int get_hash1_raw(const char *s, int len)
 }
 
 
-/** a little slower than hash_* , but better distribution for 
+/** a little slower than hash_* , but better distribution for
  * numbers and about the same for strings */
 #define hash_update_str2(s, end, p, v, h)                             \
 	do {                                                              \
@@ -154,7 +154,7 @@ inline static unsigned int get_hash1_raw(const char *s, int len)
 #define hash_finish2(h) (((h) + ((h) >> 7)) + (((h) >> 13) + ((h) >> 23)))
 
 
-/** a little slower than get_hash1_raw() , but better distribution for 
+/** a little slower than get_hash1_raw() , but better distribution for
  * numbers and about the same for strings */
 inline static unsigned int get_hash1_raw2(const char *s, int len)
 {
@@ -186,7 +186,7 @@ inline static unsigned int get_hash2_raw2(const str *key1, const str *key2)
 }
 
 
-/* "raw" 2 strings case insensitive hash (like get_hash2_raw but case 
+/* "raw" 2 strings case insensitive hash (like get_hash2_raw but case
  * insensitive)
  * returns an unsigned int (which you can use modulo table_size as hash value)
  */

@@ -1,5 +1,5 @@
 
-/* 
+/*
  * Copyright (C) 2013  mariuszbi@gmail.com
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*!
- * \file 
+ * \file
  * \brief Kamailio core :: DNS wrappers
  * \author mariuszbi@gmail.com
  * \ingroup core

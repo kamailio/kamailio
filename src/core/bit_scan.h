@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -41,7 +41,7 @@
  *                  __CPU_x86, __CPU_x86_64,
  *                  ULONG_MAX (limits.h)
  */
-/* 
+/*
  * History:
  * --------
  *  2007-06-23  created by andrei

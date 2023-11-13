@@ -230,8 +230,8 @@ static inline int btostr(char *p, unsigned char val)
 	(19 + 1 + 1 + 1) /* 2^64~= 16*10^18 =>
 									   19+1 digits + sign + \0 */
 
-/* 
- * returns a pointer to a static buffer containing l in asciiz (with base "base") & sets len 
+/*
+ * returns a pointer to a static buffer containing l in asciiz (with base "base") & sets len
  * left padded with 0 to "size"
  */
 static inline char *int2str_base_0pad(
@@ -1057,7 +1057,7 @@ static inline int str_strcasecmp(const str *str1, const str *str2)
 #endif
 
 
-/* INTeger-TO-Buffer-STRing : convers an unsigned long to a string 
+/* INTeger-TO-Buffer-STRing : convers an unsigned long to a string
  * IMPORTANT: the provided buffer must be at least INT2STR_MAX_LEN size !! */
 static inline char *int2bstr(unsigned long l, char *s, int *len)
 {
@@ -1126,7 +1126,7 @@ int group2gid(int *gid, char *group);
 
 /*
  * Replacement of timegm (does not exists on all platforms
- * Taken from 
+ * Taken from
  * http://lists.samba.org/archive/samba-technical/2002-November/025737.html
  */
 time_t _timegm(struct tm *t);

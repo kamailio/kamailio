@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2013 mariuszbi@gmail.com
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,10 @@
  * \file
  * \brief Kamailio core :: DNS wrapper functions
  * \author mariuszbi@gmail.com
- *      
- * \ingroup core 
- * Module: \ref core                    
- *  
+ *
+ * \ingroup core
+ * Module: \ref core
+ *
  *
  */
 
@@ -44,7 +44,7 @@ struct dns_func_t
 	gethostbyname2_t sr_gethostbyname2;
 };
 
-/* 
+/*
  * initiate structure with system values
  */
 //extern struct dns_func_t dns_func;

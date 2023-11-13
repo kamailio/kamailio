@@ -1,5 +1,5 @@
 /*
- * shared memory, multi-process safe, pool based, mostly lockless version of 
+ * shared memory, multi-process safe, pool based, mostly lockless version of
  *  f_malloc
  *
  * This file is part of Kamailio, a free SIP server.
@@ -86,7 +86,7 @@
 #define FRAG_WAS_USED(f) (1)
 
 /* other frag related defines:
- * MEM_COALESCE_FRAGS 
+ * MEM_COALESCE_FRAGS
  * MEM_FRAG_AVOIDANCE
  */
 #define MEM_FRAG_AVOIDANCE
@@ -98,7 +98,7 @@
 inline static unsigned long big_hash_idx(unsigned long s)
 {
 	unsigned long idx;
-	/* s is rounded => s = k*2^n (SF_ROUNDTO=2^n) 
+	/* s is rounded => s = k*2^n (SF_ROUNDTO=2^n)
 	 * index= i such that 2^i > s >= 2^(i-1)
 	 *
 	 * => index = number of the first non null bit in s*/
@@ -843,7 +843,7 @@ void *sfm_realloc(struct sfm_block *qm, void *p, unsigned long size)
 					goto not_found;
 				}
 				if(unlikely((n->id != p_id) || (n->size != n_size))) {
-					/* fragment still free, but changed, either 
+					/* fragment still free, but changed, either
 					 * moved to another pool or has a diff. size */
 					SFM_MAIN_HASH_UNLOCK(qm, hash);
 					goto try_again;
@@ -891,7 +891,7 @@ void *sfm_realloc(struct sfm_block *qm, void *p, unsigned long size)
 					goto not_found;
 				}
 				if(unlikely((n->id != p_id) || (n->size != n_size))) {
-					/* fragment still free, but changed, either 
+					/* fragment still free, but changed, either
 					 * moved to another pool or has a diff. size */
 					SFM_POOL_UNLOCK(pool, hash);
 					goto try_again;

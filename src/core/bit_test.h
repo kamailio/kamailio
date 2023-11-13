@@ -21,16 +21,16 @@
  *
  * Bit test functions:
  *  - int bit_test(int offset, unsigned int *addr)
- *      Returns the bit found at offset position 
+ *      Returns the bit found at offset position
  *      in a bitstring pointed by addr.
  *
  *  - int bit_test_and_set(int offset, unsigned int *addr)
- *      Returns the bit found at offset position 
+ *      Returns the bit found at offset position
  *      in a bitstring pointed by addr, and sets
  *      the bit at the given offset.
  *
  *  - int bit_test_and_reset(int offset, unsigned int *addr)
- *      Returns the bit found at offset position 
+ *      Returns the bit found at offset position
  *      in a bitstring pointed by addr, and resets
  *      the bit at the given offset.
  *

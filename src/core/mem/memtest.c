@@ -97,7 +97,7 @@ void memtest()
 	mf(p2);
 	mf(p5);
 	mf(p6);
-	
+
 //	MY_STATUS(mem_block);
 
 	mf(p1);
@@ -139,7 +139,7 @@ void memtest()
 	printf("now I'm really done\n");
 	MY_STATUS(mem_block);
 	printf("And I'm done with dumping final report too\n");
-	
+
 	exit(0);
 }
 #endif

@@ -5,9 +5,9 @@
  *   which is bound to request -- that helps to recognize,
  *   who generated the to-tag in loops through the same
  *   server -- in such cases, fixed part is constant, but
- *   the variable part varies because it depends on 
+ *   the variable part varies because it depends on
  *   via
- *   
+ *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 

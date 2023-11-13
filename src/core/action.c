@@ -1268,7 +1268,7 @@ int do_action(struct run_act_ctx *h, struct action *a, struct sip_msg *msg)
 					if(sjt->rest.cond[i] == v) {
 						if(likely(sjt->rest.jump[i])) {
 							ret = run_actions(h, sjt->rest.jump[i], msg);
-							h->run_flags &= ~BREAK_R_F; /* catch breaks, but 
+							h->run_flags &= ~BREAK_R_F; /* catch breaks, but
 														   let returns pass */
 						}
 						goto skip;

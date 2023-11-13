@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@
  *  Kamailio core :: endianness compile and runtime  tests
  *  @author andrei
  *  @ingroup core
- * 
+ *
  *
  * Defines:
  *  -  __IS_LITTLE_ENDIAN if the system is little endian and
@@ -28,7 +28,7 @@
  *  -   is_little_endian() - runtime test for little endian
  *  -   endianness_sanity_check() - returns 0 if the compile time
  *                                  detected endianness corresponds to
- *                                  the runtime detected one and -1 on 
+ *                                  the runtime detected one and -1 on
  *                                  error (recommended action: bail out)
  *  -   bswap16() - 16 bit byte swap
  *  -   bswap32() - 32 bit byte swap
@@ -46,7 +46,7 @@
  * bsd:   <sys/param.h>, <sys/endian.h>
  * solaris: <sys/param.h>
  *
- * Note: BIG_ENDIAN, LITTLE_ENDIAN, _BIG_ENDIAN, _LITTLE_ENDIAN cannot be 
+ * Note: BIG_ENDIAN, LITTLE_ENDIAN, _BIG_ENDIAN, _LITTLE_ENDIAN cannot be
  *       used always,  some OSes define both of them for BYTE_ORDER use
  *       (e.g. linux defines both BIG_ENDIAN & LITTLE_ENDIAN, bsds define
  *          _BIG_ENDIAN, _LITTLE_ENDIAN, BIG_ENDIAN, LITTLE_ENDIAN)

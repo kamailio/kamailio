@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -14,10 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/** 
- * @file 
+/**
+ * @file
  * @brief Atomic operations and memory barriers (MIPS isa 2 and MIPS64 specific)
- * 
+ *
  * Atomic operations and memory barriers (MIPS isa 2 and MIPS64 specific)
  * \warning atomic ops do not include memory barriers, see atomic_ops.h for
  * more details.

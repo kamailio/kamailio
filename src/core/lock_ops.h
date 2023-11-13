@@ -36,8 +36,8 @@ Implements:
 	void    lock_release(gen_lock_t* lock);  - unlock (mutex up)
 	int     lock_try(gen_lock_t* lock);      - tries to get the lock, returns
 	                                            0 on success and !=0 on failure
-	
-	lock sets: 
+
+	lock sets:
 	----------
 	gen_lock_set_t* lock_set_init(gen_lock_set_t* set);  - inits the lock set
 	void lock_set_destroy(gen_lock_set_t* s);        - removes the lock set
@@ -47,16 +47,16 @@ Implements:
 	int  lock_set_try(gen_lock_set_t* s, int i);    - tries to lock the sem i,
 	                                                  returns 0 on success and
 	                                                  !=0 on failure
-	
+
 	defines:
 	--------
 	GEN_LOCK_T_PREFERRED - defined if using  arrays of gen_lock_t is as good as
-	                      using a lock set (gen_lock_set_t). 
-						  In general is better to have the locks "close" or 
-						  inside the protected data structure rather then 
+	                      using a lock set (gen_lock_set_t).
+						  In general is better to have the locks "close" or
+						  inside the protected data structure rather then
 						  having a separate array or lock set. However in some
 						  case (e.g. SYSV_LOCKS) is better to use lock sets,
-						  either due to lock number limitations, excesive 
+						  either due to lock number limitations, excesive
 						  performance or memory overhead. In this cases
 						  GEN_LOCK_T_PREFERRED will not be defined.
 	GEN_LOCK_T_UNLIMITED - defined if there is no system imposed limit on
@@ -64,7 +64,7 @@ Implements:
 	GEN_LOCK_SET_T_UNLIMITED
 	                      - like above but for the size of a lock set.
 
-WARNING: - lock_set_init may fail for large number of sems (e.g. sysv). 
+WARNING: - lock_set_init may fail for large number of sems (e.g. sysv).
          - signals are not treated! (some locks are "awakened" by the signals)
 */
 

@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -289,7 +289,7 @@ unsigned char *dns_skipname(unsigned char *p, unsigned char *end)
  *   end   - pointer to the end of the message
  *   eor   - pointer to the end of the record/rdata
  *   rdata - pointer  to the rdata part of the srv answer
- * returns 0 on error, or a dyn. alloc'ed srv_rdata structure 
+ * returns 0 on error, or a dyn. alloc'ed srv_rdata structure
  *
  * SRV rdata format:
  *            111111
@@ -621,7 +621,7 @@ static struct ebl_rdata *dns_ebl_parser(unsigned char *msg, unsigned char *end,
 
 	ebl = 0;
 	/* check if len is at least 4 chars (minimum possible):
-	     pos (1 byte) +  sep. (min 1 byte) + apex (min. 2 bytes) 
+	     pos (1 byte) +  sep. (min 1 byte) + apex (min. 2 bytes)
 	   and also check if rdata+1 (pos) + 1 (sep. len) + sep_len + 1 is ok*/
 	if(unlikely(((rdata + 4) > eor) || ((rdata + 1 + 1 + rdata[1] + 2) > eor)))
 		goto error;
@@ -1103,7 +1103,7 @@ not_found:
 
 /** get protocol from a naptr rdata and check for validity
  * returns > 0 (PROTO_UDP, PROTO_TCP, PROTO_SCTP or PROTO_TLS)
- *         <=0  on error 
+ *         <=0  on error
  */
 char naptr_get_sip_proto(struct naptr_rdata *n)
 {
@@ -1562,8 +1562,8 @@ size_t create_srv_pref_list(char *proto, struct dns_srv_proto *list)
 	return list_len;
 }
 
-/** Resolves SRV if no naptr found. 
- * It reuse dns_pref values and according that resolves supported protocols. 
+/** Resolves SRV if no naptr found.
+ * It reuse dns_pref values and according that resolves supported protocols.
  * If dns_pref are equal then it use udp,tcp,tls,sctp order.
  * returns: hostent struct & *port filled with the port from the SRV record;
  *  0 on error
@@ -1715,7 +1715,7 @@ end:
 
 
 /** resolves a host name trying:
- * - NAPTR lookup if enabled, the address is not an ip and *proto==0 and 
+ * - NAPTR lookup if enabled, the address is not an ip and *proto==0 and
  *   *port==0. The result of the NAPTR query will be used for a SRV lookup
  * - SRV lookup if the address is not an ip *port==0. The result of the SRV
  *   query will be used for an A/AAAA lookup.

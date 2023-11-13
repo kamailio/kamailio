@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -14,10 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /**
- * @file 
+ * @file
  * @brief  ser/kamailio/openser compatibility macros & vars.
  */
-/* 
+/*
  * History:
  * --------
  *  2008-11-29  initial version (andrei)

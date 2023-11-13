@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -70,7 +70,7 @@ void tcp_stats_destroy(void);
  *  @param state - S_CONN_ACCEPT if it was the result of an accept()
  *               - S_CONN_CONNECT if it was the result of a connect()
  * Note: in general it will be called when the first packet was received or
- *   sent on the new connection and not immediately after accept() or 
+ *   sent on the new connection and not immediately after accept() or
  *   connect()
  */
 #define TCP_STATS_ESTABLISHED(state)                 \

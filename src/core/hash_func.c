@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -89,10 +89,10 @@ int new_hash2( str call_id, str cseq_nr )
 	char* p;
 	register unsigned v;
 	register unsigned h;
-	
+
 	h=0;
-	
-	
+
+
 	for (p=call_id.s; p<=(call_id.s+call_id.len-4); p+=4){
 		v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
 		h_inc;
@@ -100,7 +100,7 @@ int new_hash2( str call_id, str cseq_nr )
 	v=0;
 	for (;p<(call_id.s+call_id.len); p++){ v<<=8; v+=*p;}
 	h_inc;
-	
+
 	for (p=cseq_nr.s; p<=(cseq_nr.s+cseq_nr.len-4); p+=4){
 		v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
 		h_inc;
@@ -108,7 +108,7 @@ int new_hash2( str call_id, str cseq_nr )
 	v=0;
 	for (;p<(cseq_nr.s+cseq_nr.len); p++){ v<<=8; v+=*p;}
 	h_inc;
-	
+
 	h=((h)+(h>>11))+((h>>13)+(h>>23));
 	return (h)&(TABLE_ENTRIES-1);
 }

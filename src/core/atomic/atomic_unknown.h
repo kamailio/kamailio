@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -22,7 +22,7 @@
  * (for architectures not yet supported via inline assembler).
  *
  * \warning atomic ops do not include memory barriers, see atomic_ops.h
- * for more details 
+ * for more details
  *
  * Config defines:
  * - NOSMP (membars are null in this case)
@@ -55,8 +55,8 @@ extern gen_lock_t *__membar_lock; /* init in atomic_ops.c */
 #define _membar_lock lock_get(__membar_lock)
 #define _membar_unlock lock_release(__membar_lock)
 
-/* memory barriers 
- *  not a known cpu -> fall back unlock/lock: safe but costly  (it should 
+/* memory barriers
+ *  not a known cpu -> fall back unlock/lock: safe but costly  (it should
  *  include a memory barrier effect)
  *  lock/unlock does not imply a full memory barrier effect (it allows mixing
  *   operations from before the lock with operations after the lock _inside_
@@ -241,7 +241,7 @@ ATOMIC_FUNC_DECL1_RET(add, *var += v; ret = *var, long, long, ret)
 
 
 /* memory barrier versions, the same as "normal" versions (since the
- *  locks act as membars), *  except fot * the set/get 
+ *  locks act as membars), *  except fot * the set/get
  */
 
 /* mb_atomic_{set,get} use membar() : if we're lucky we have membars

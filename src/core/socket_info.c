@@ -1,6 +1,6 @@
 
-/* 
- * find & manage listen addresses 
+/*
+ * find & manage listen addresses
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -16,14 +16,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
  * \file
- * \brief Kamailio core :: find & manage listen addresses 
+ * \brief Kamailio core :: find & manage listen addresses
  *
  * This file contains code that initializes and handles Kamailio listen addresses
  * lists (struct socket_info). It is used mainly on startup.
@@ -549,7 +549,7 @@ static int fix_sock_str(struct socket_info *si)
 }
 
 
-/* returns 0 if support for the protocol is not compiled or if proto is 
+/* returns 0 if support for the protocol is not compiled or if proto is
    invalid */
 struct socket_info **get_sock_info_list(unsigned short proto)
 {
@@ -587,7 +587,7 @@ struct socket_info **get_sock_info_list(unsigned short proto)
  * as matches by grep_sock_info.
  *
  * Params:
- * - si - Socket info of socket that has been flagged with SI_IS_VIRTUAL, 
+ * - si - Socket info of socket that has been flagged with SI_IS_VIRTUAL,
  *   that we want to check if it's actually local right now.
  *
  * Returns 1 if socket is local, or 0 if not.
@@ -650,7 +650,7 @@ static int check_local_addresses(struct socket_info *si)
  *  host - hostname to compare with
  *  name - official name
  *  addr_str - name's resolved ip address converted to string
- *  ip_addr - name's ip address 
+ *  ip_addr - name's ip address
  *  flags - set to SI_IS_IP if name contains an IP
  *
  * returns 0 if host matches, -1 if not */

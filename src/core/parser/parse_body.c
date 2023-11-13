@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -191,7 +191,7 @@ char *get_body_part(struct sip_msg *msg, unsigned short type,
 		buf_end = msg->buf + msg->len;
 
 		/* check all the body parts delimated by the boundary value,
-		and search for the Content-Type HF with the given 
+		and search for the Content-Type HF with the given
 		type/subtype */
 	next_part:
 		while((c = search_boundary(c, buf_end, &boundary))) {
@@ -286,7 +286,7 @@ char *get_body_part(struct sip_msg *msg, unsigned short type,
  * trim leading all spaces ' ' and horizontal tabs '\\t' characters.
  * \param buffer pointer to the beginning of the buffer
  * \param end_buffer pointer to the end of the buffer
- * \return pointer to the first non-match character if success, 
+ * \return pointer to the first non-match character if success,
  * pointer to NULL if the end_buffer is reached.
  */
 char *trim_leading_hts(char *buffer, char *end_buffer)
@@ -322,7 +322,7 @@ char *trim_leading_e_r(char *buffer, char *end_buffer)
 
 /**
  * \brief part_multipart_headers_cmp
- * 
+ *
  * trim leading characters until get a '\\r'.
  * \param buffer pointer to the beginning of the headers in a part of the multipart body
  * \param end_buffer pointer to the end of the headers in the multipart body
@@ -527,7 +527,7 @@ int part_multipart_headers_cmp(char *buffer, char *end_buffer,
  *
  * Filters the multipart part from a given SIP message which matches the
  * Content-Type && || Content-ID  && || Content-Length
- * 
+ *
  * \param msg SIP message
  * \param content_type if NULL Content-Type: disabled in the search
  * \param content_subtype if NULL Content-Subtype: disabled in the search

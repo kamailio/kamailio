@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -72,7 +72,7 @@
  * @param err   - if 0 it should be ignored (no corresp. libc error), if non-0
  *                it will contain the errno.
  * @param rcv   - pointer to rcv_info structure
- * 
+ *
  */
 #define TCP_EV_SEND_TIMEOUT(err, rcv)
 

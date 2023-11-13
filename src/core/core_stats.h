@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -14,9 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/** 
+/**
  * @brief Macros used for various core statistics
- * 
+ *
  * Macros used for various core statistics, (if USE_CORE_STATS is not defined
  * they won't do anything).
  * @file
@@ -27,7 +27,7 @@
 #ifndef __core_stats_h
 #define __core_stats_h
 
-/* define USE_CORE_STATS to enable statistics events 
+/* define USE_CORE_STATS to enable statistics events
    (SREV_CORE_STATS callbacks) */
 /*#define USE_CORE_STATS */
 

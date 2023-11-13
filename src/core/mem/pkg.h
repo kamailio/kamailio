@@ -19,7 +19,7 @@
 /**
  * \file
  * \brief Main definitions for memory manager
- * 
+ *
  * Main definitions for PKG memory manager, like malloc, free and realloc
  * \ingroup mem
  */

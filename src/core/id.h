@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -65,8 +65,8 @@ int get_to_uid(str *uid, struct sip_msg *msg);
  * store the result.
  * @param uid A pointer to ::str variable where the result will be stored, the
  *            pointer in the variable will be updated to point to a static
- *            buffer in the function.  
- * @param msg The SIP message being processed.  
+ *            buffer in the function.
+ * @param msg The SIP message being processed.
  * @return 1 is returned when the attribute with UID exists and it is used, 0
  *         is returned when the function retrieved the UID from the SIP
  *         message and created the attribute, -1 is returned on error.

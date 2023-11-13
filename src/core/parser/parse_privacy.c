@@ -148,7 +148,7 @@ unsigned int parse_priv_value(
  * This method is used to parse Privacy HF body, which consist of
  * comma separated list of priv-values.  After parsing, msg->privacy->parsed
  * contains enum bits of privacy values defined in parse_privacy.h.
- * \return 0 on success and -1 on failure. 
+ * \return 0 on success and -1 on failure.
  */
 int parse_privacy(struct sip_msg *msg)
 {
