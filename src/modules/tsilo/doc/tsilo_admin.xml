@@ -101,7 +101,7 @@ modparam("tsilo", "hash_size", 1024)
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
 			Specify if the domain part of the URI should be also saved and used for
-			storing and retrieving users' transactions. Useful in multi domain scenarios. 
+			storing and retrieving users' transactions. Useful in multi domain scenarios.
 			Non 0 value means true.
 		</para>
 		<para>
