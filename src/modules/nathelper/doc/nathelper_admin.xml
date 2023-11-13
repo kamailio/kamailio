@@ -546,7 +546,7 @@ modparam("nathelper", "alias_name", "saddr")
 		<function moreinfo="none">fix_nated_contact()</function>
 		</title>
 		<para>
-		Rewrites the <quote>Contact</quote> header to contain the request's source 
+		Rewrites the <quote>Contact</quote> header to contain the request's source
 		address:port.
 		</para>
 		<para>
@@ -567,19 +567,19 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 		</title>
 		<para>
 		Alters the SDP information in order to facilitate NAT traversal. What
-		changes to be performed may be controlled via the 
+		changes to be performed may be controlled via the
 		<quote>flags</quote> parameter. Return value is -1 if error occurred,
 		1 if ip's were replaced, 2 if no ip's were replaced.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>flags</emphasis> - the value may be a bitwise OR of 
+			<emphasis>flags</emphasis> - the value may be a bitwise OR of
 			the following flags:
 			</para>
 			<itemizedlist>
 				<listitem>
-					<para><emphasis>0x01</emphasis> - adds 
+					<para><emphasis>0x01</emphasis> - adds
 					<quote>a=direction:active</quote> SDP line;
 					</para>
 				</listitem>
@@ -590,7 +590,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 					precedence over the source address).</para>
 				</listitem>
 				<listitem>
-					<para><emphasis>0x04</emphasis> - adds 
+					<para><emphasis>0x04</emphasis> - adds
 						<quote>a=nortpproxy:yes</quote> SDP line;</para>
 				</listitem>
 				<listitem>
@@ -611,7 +611,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 			</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -668,9 +668,9 @@ add_rcv_param("1"); # add the parameter to the Contact URI
 		<function moreinfo="none">fix_nated_register()</function>
 		</title>
 		<para>
-		The function creates a URI consisting of the source IP, port, and 
-		protocol and stores the URI in an Attribute-Value-Pair. The URI will 
-		be appended as "received" parameter to Contact in 200 OK and 
+		The function creates a URI consisting of the source IP, port, and
+		protocol and stores the URI in an Attribute-Value-Pair. The URI will
+		be appended as "received" parameter to Contact in 200 OK and
 		registrar will store it in the received column in the location table.
 		</para>
 		<para>
@@ -701,7 +701,7 @@ fix_nated_register();
 		<para>Meaning of the flags is as follows:</para>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>1</emphasis> -  The <quote>Contact</quote> header field is searched 
+			<emphasis>1</emphasis> -  The <quote>Contact</quote> header field is searched
 			for occurrence of RFC1918 or RFC6598 addresses.
 			</para></listitem>
 			<listitem><para>
@@ -711,11 +711,11 @@ fix_nated_register();
 			no port, it uses the default SIP port 5060
 			</para></listitem>
 			<listitem><para>
-			<emphasis>4</emphasis> -  The Top Most <quote>Via</quote> is searched 
+			<emphasis>4</emphasis> -  The Top Most <quote>Via</quote> is searched
 			for occurrence of RFC1918 or RFC6598 addresses
 			</para></listitem>
 			<listitem><para>
-			<emphasis>8</emphasis> -  The SDP is searched for occurrence of 
+			<emphasis>8</emphasis> -  The SDP is searched for occurrence of
 			RFC1918 or RFC6598 addresses
 			</para></listitem>
 			<listitem><para>
@@ -749,7 +749,7 @@ fix_nated_register();
 			</para></listitem>
 			</itemizedlist>
 		<para>
-		All flags can be bitwise combined, the test returns true if any of 
+		All flags can be bitwise combined, the test returns true if any of
 		the tests identified a NAT.
 		</para>
 		<para>
@@ -963,7 +963,7 @@ if(is_rfc1918("$rd")) {
 			If topmost Record Route in received SIP request
 			or reply is a double Record Route, value of
 			$rr_top_count is 2.  If it a single Record
-			Route, value of $rr_top_count 
+			Route, value of $rr_top_count
 			is 1.  If there is no Record Route(s), value of
 			$rr_top_count is 0.
 			</para>
