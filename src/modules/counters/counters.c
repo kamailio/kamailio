@@ -223,7 +223,7 @@ static int cnt_int_fixup(void **param, int param_no)
 
 
 /**
- * 
+ *
  */
 static int cnt_inc_f(struct sip_msg *msg, char *handle, char *bar)
 {
@@ -265,7 +265,7 @@ static int ki_cnt_inc(sip_msg_t *msg, str *sname)
 }
 
 /**
- * 
+ *
  */
 static int cnt_add_f(struct sip_msg *msg, char *handle, char *val)
 {
@@ -295,7 +295,7 @@ static int ki_cnt_add(sip_msg_t *msg, str *sname, int v)
 }
 
 /**
- * 
+ *
  */
 static int cnt_reset_f(struct sip_msg *msg, char *handle, char *bar)
 {
