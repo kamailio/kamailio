@@ -19,7 +19,7 @@
  */
 
 /*!
- * \file 
+ * \file
  * \brief Rtpengine :: Configuration
  * \ingroup Rtpengine
  */
