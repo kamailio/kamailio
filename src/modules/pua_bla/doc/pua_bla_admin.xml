@@ -10,13 +10,13 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
-		 The pua_bla module enables Bridged Line Appearances support according to 
+		 The pua_bla module enables Bridged Line Appearances support according to
 		 the specifications in draft-anil-sipping-bla-03.txt.
 	</para>
 	</section>
@@ -66,10 +66,10 @@
 		<title><varname>default_domain</varname>(str)</title>
 		<para>
 		The default domain for the registered users to be used when
-		constructing the uri for the registrar callback. 
+		constructing the uri for the registrar callback.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>NULL</quote>.	
+		<emphasis>	Default value is <quote>NULL</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -86,11 +86,11 @@ modparam("pua_bla", "default_domain", "kamailio.org")
 		<para>
 		The name of the header to be added to Publish requests.
 		It will contain the uri of the user agent that sent the
-		Notify that is transformed into Publish. It stops sending 
+		Notify that is transformed into Publish. It stops sending
 		a Notification with the same information to the sender.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>NULL</quote>.	
+		<emphasis>	Default value is <quote>NULL</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -109,7 +109,7 @@ modparam("pua_bla", "header_name", "Sender")
 		The outbound_proxy uri to be used when sending Subscribe requests.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>NULL</quote>.	
+		<emphasis>	Default value is <quote>NULL</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -136,9 +136,9 @@ modparam("pua_bla", "server_address", "sip:bla@160.34.23.12")
 		</example>
 	</section>
 
-</section>	
-	
-	
+</section>
+
+
 <section>
 	<title>Functions</title>
 		<section>
@@ -147,7 +147,7 @@ modparam("pua_bla", "server_address", "sip:bla@160.34.23.12")
 				</title>
 			<para>
 				The function is used to mark REGISTER requests made to a BLA AOR.
-				The module subscribes to the registered contacts for dialog;sla 
+				The module subscribes to the registered contacts for dialog;sla
 				event.
 			</para>
 			<para>
@@ -156,8 +156,8 @@ modparam("pua_bla", "server_address", "sip:bla@160.34.23.12")
 		<title><function>bla_set_flag</function> usage</title>
 	<programlisting format="linespecific">
 ...
-if(is_method("REGISTER") &amp;&amp; to_uri=~"bla_aor@kamailio.org") 
-	bla_set_flag();		
+if(is_method("REGISTER") &amp;&amp; to_uri=~"bla_aor@kamailio.org")
+	bla_set_flag();
 ...
 </programlisting>
 		</example>
@@ -169,7 +169,7 @@ if(is_method("REGISTER") &amp;&amp; to_uri=~"bla_aor@kamailio.org")
 				</title>
 			<para>
 				The function handles Notify requests sent from phones on the
-				same BLA to the server. The message is transformed in Publish 
+				same BLA to the server. The message is transformed in Publish
 				request and passed to presence module for further handling.
 				in case of a successful processing a 2xx reply should be sent.
 			</para>
@@ -179,17 +179,17 @@ if(is_method("REGISTER") &amp;&amp; to_uri=~"bla_aor@kamailio.org")
 		<title><function>bla_handle_notify</function> usage</title>
 	<programlisting format="linespecific">
 ...
-if(is_method("NOTIFY") &amp;&amp; to_uri=~"bla_aor@kamailio.org") 
+if(is_method("NOTIFY") &amp;&amp; to_uri=~"bla_aor@kamailio.org")
 {
-		if( bla_handle_notify() ) 
+		if( bla_handle_notify() )
 			t_reply("200", "OK");
-}	
+}
 ...
 </programlisting>
 		</example>
 
 		</section>
-</section>		
+</section>
 
 </chapter>
 
