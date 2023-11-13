@@ -92,7 +92,7 @@ static int gen_cookie()
 static void hexdump(unsigned char* buf, int len, int ascii)
 {
 	int r, i;
-	
+
 	/* dump it in hex */
 	for (r=0; r<len; r++){
 		if ((r) && ((r%16)==0)){
@@ -132,14 +132,14 @@ static int connect_unix_sock(char* name, int type, struct sockaddr_un* mysun,
 	int s;
 	int len;
 	int ret;
-	int retries;	
-	
+	int retries;
+
 	retries=0;
 	s=-1;
 	memset(&ifsun, 0, sizeof (struct sockaddr_un));
 	len=strlen(name);
 	if (len>UNIX_PATH_MAX){
-		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1, 
+		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 				"connect_unix_sock: name too long "
 				"(%d > %d): %s", len, UNIX_PATH_MAX, name);
 		goto error;
@@ -151,9 +151,9 @@ static int connect_unix_sock(char* name, int type, struct sockaddr_un* mysun,
 #endif
 	s=socket(PF_UNIX, type, 0);
 	if (s==-1){
-		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1, 
+		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"connect_unix_sock: cannot create unix socket"
-			" %s: %s [%d]", 
+			" %s: %s [%d]",
 			name, strerror(errno), errno);
 		goto error;
 	}
@@ -164,16 +164,16 @@ static int connect_unix_sock(char* name, int type, struct sockaddr_un* mysun,
 				sock_dir="/tmp";
 retry:
 			ret=snprintf(mysun->sun_path, UNIX_PATH_MAX, "%s/" NAME "_%d",
-							sock_dir, rand()); 
+							sock_dir, rand());
 			if ((ret<0) ||(ret>=UNIX_PATH_MAX)){
-				snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1, 
+				snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 							"connect_unix_sock: buffer overflow while trying to"
 							"generate unix datagram socket name");
 				goto error;
 			}
 		}else{
 			if (strlen(reply_socket)>UNIX_PATH_MAX){
-				snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1, 
+				snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 							"connect_unix_sock: buffer overflow while trying to"
 							"use the provided unix datagram socket name (%s)",
 							reply_socket);
@@ -189,7 +189,7 @@ retry:
 				/* try another one */
 				goto retry;
 			}
-			snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1, 
+			snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 					"connect_unix_sock: could not bind the unix socket to"
 					" %s: %s (%d)",
 					mysun->sun_path, strerror(errno), errno);
@@ -197,7 +197,7 @@ retry:
 		}
 	}
 	if (connect(s, (struct sockaddr *)&ifsun, sizeof(ifsun))==-1){
-		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1, 
+		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 				"connect_unix_sock: connect(%s): %s [%d]",
 				name, strerror(errno), errno);
 		goto error;
@@ -267,13 +267,13 @@ int binrpc_open_connection(struct binrpc_handle* handle, char* name, int port, i
 	handle->socket = -1;
 	handle->buf = NULL;
 	mysun.sun_path[0] = '\0';
-	
+
 	if (name == NULL) {
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"open_connection: invalid IP address or socket name");
 		goto error;
 	}
-	
+
 	handle->proto = proto;
 	switch(proto) {
 		case UDP_SOCK:
@@ -281,7 +281,7 @@ int binrpc_open_connection(struct binrpc_handle* handle, char* name, int port, i
 			if (port == 0) {
 				port=DEFAULT_CTL_PORT;
 			}
-			
+
 			handle->sock_type = (proto == UDP_SOCK) ? SOCK_DGRAM : SOCK_STREAM;
 			if ((handle->socket = connect_tcpudp_socket(name, port, handle->sock_type)) < 0) {
 				goto error;
@@ -303,17 +303,17 @@ int binrpc_open_connection(struct binrpc_handle* handle, char* name, int port, i
 		handle->buf_size = 8192;  /* max size of datagram, < SSIZE_MAX, TODO: does a platform dependent constant exist ? */
 	}
 	else {
-		handle->buf_size = BINRPC_MAX_HDR_SIZE;	
+		handle->buf_size = BINRPC_MAX_HDR_SIZE;
 	}
 	handle->buf = binrpc_malloc(handle->buf_size);
 	if (!handle->buf) {
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
-			"open_connection: not enough memory to allocate buffer. Needed %d bytes", handle->buf_size);	
+			"open_connection: not enough memory to allocate buffer. Needed %d bytes", handle->buf_size);
 		binrpc_close_connection(handle);
 	}
 	cleanup(&mysun);
 	return 0;
-	
+
 error:
 	cleanup(&mysun);
 	return FATAL_ERROR;
@@ -338,7 +338,7 @@ int binrpc_open_connection_url(struct binrpc_handle* handle, char* url) {
 	else {
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"open_connection_url: bad protocol in '%s'", c);
-		return FATAL_ERROR;	
+		return FATAL_ERROR;
 	}
 	while (*c != ':') c++;
 	c++;
@@ -348,7 +348,7 @@ int binrpc_open_connection_url(struct binrpc_handle* handle, char* url) {
 	if (c2 - c > sizeof(name)-1) {
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"open_connection_url: name is too long '%s'", c);
-		return FATAL_ERROR;	
+		return FATAL_ERROR;
 	}
 	for (i=0; c<c2; c++, i++) {
 		name[i] = *c;
@@ -357,7 +357,7 @@ int binrpc_open_connection_url(struct binrpc_handle* handle, char* url) {
 	if (strlen(name) == 0) {
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"open_connection_url: name is not specified in '%s'", url);
-		return FATAL_ERROR;	
+		return FATAL_ERROR;
 	}
 	c = c2;
 	if (*c == ':') c++;
@@ -376,10 +376,10 @@ int binrpc_open_connection_url(struct binrpc_handle* handle, char* url) {
 			if (port == 0) {
 				snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 					"open_connection_url: port is not specified in '%s'", url);
-				return FATAL_ERROR;	
+				return FATAL_ERROR;
 			}
 			break;
-	}	
+	}
 	return binrpc_open_connection(handle, name, port, proto, rpl_sock, NULL);
 }
 
@@ -401,10 +401,10 @@ static int send_binrpc_cmd(struct binrpc_handle* handle, struct binrpc_pkt *pkt,
 	struct iovec v[IOVEC_CNT];
 	unsigned char msg_hdr[BINRPC_MAX_HDR_SIZE];
 	int n;
-	
+
 	if ((n=binrpc_build_hdr(BINRPC_REQ, binrpc_pkt_len(pkt), cookie, msg_hdr,
 							BINRPC_MAX_HDR_SIZE)) < 0) {
-		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1, 
+		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"send_binrpc_cmd: build header error: %s",
 			binrpc_error(n));
 		return FATAL_ERROR;
@@ -417,7 +417,7 @@ write_again:
 	if ((n=writev(handle->socket, v, 2))<0){
 		if (errno==EINTR)
 			goto write_again;
-		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1, 
+		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"send_binrpc_cmd: send packet failed: %s (%d)", strerror(errno), errno);
 		return FATAL_ERROR;
 	}
@@ -427,18 +427,18 @@ write_again:
 
 /* reads the whole reply
  * returns < 0 on error, reply size on success + initializes resp_handle */
-static int get_reply(struct binrpc_handle *handle, 
-			int cookie, 
+static int get_reply(struct binrpc_handle *handle,
+			int cookie,
 			struct binrpc_response_handle *resp_handle)
 {
 	unsigned char *crt, *hdr_end;
 	int n, ret, tl;
-	
+
 	ret = 0;
 	resp_handle->reply_buf = NULL;
 	hdr_end = crt = handle->buf;
-	
-	do {		
+
+	do {
 		n = read(handle->socket, crt, handle->buf_size - (crt-handle->buf));
 		if (n <= 0){
 			if (errno==EINTR)
@@ -455,13 +455,13 @@ static int get_reply(struct binrpc_handle *handle,
 		}
 		if (verbose >= 3){
 			/* dump it in hex */
-			printf("received %d bytes in reply (@offset %d):\n", 
+			printf("received %d bytes in reply (@offset %d):\n",
 			       n, (int)(crt-handle->buf));
 			hexdump(crt, n, 1);
 		}
 		crt += n;
 		hdr_end = binrpc_parse_init(&resp_handle->in_pkt, handle->buf, crt - handle->buf, &ret);
-		
+
 	} while (ret == E_BINRPC_MORE_DATA);
 	if (ret < 0){
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
@@ -477,28 +477,28 @@ static int get_reply(struct binrpc_handle *handle,
 	if (resp_handle->in_pkt.cookie!=cookie){
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"get_reply: reply parsing error: "
-			"cookie doesn't match: sent: %02x, received: %02x", 
+			"cookie doesn't match: sent: %02x, received: %02x",
 			cookie, resp_handle->in_pkt.cookie);
 		return FATAL_ERROR;
 	}
 
 	/* we know total size and we can allocate buffer for received data */
 	tl = resp_handle->in_pkt.tlen;
-	
+
 	if (handle->sock_type == SOCK_DGRAM) {
 		/* we must read all datagram in one read call, otherwise unread part is truncated and lost. Read will block execution */
 		if (crt - hdr_end < tl) {
 			snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 				"get_reply: datagram truncated. Received: %ld, Expected: %d.",
 				(long int)(crt-hdr_end), tl);
-			return FATAL_ERROR;		
+			return FATAL_ERROR;
 		}
 	}
 	if (crt - hdr_end > tl) {
 		/* header contains probably data from next message, in case of STREAM it could be unread but it's waste of time */
-		crt = hdr_end + tl;	
+		crt = hdr_end + tl;
 	}
-	
+
 	resp_handle->reply_buf = (unsigned char *) binrpc_malloc(tl);
 	if (!resp_handle->reply_buf) {
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
@@ -523,23 +523,23 @@ static int get_reply(struct binrpc_handle *handle,
 		}
 		if (verbose >= 3){
 			/* dump it in hex */
-			printf("received %d bytes in reply (@offset %d):\n", 
+			printf("received %d bytes in reply (@offset %d):\n",
 			       n, (int)(crt-resp_handle->reply_buf));
 			hexdump(crt, n, 1);
 		}
 		crt += n;
 		tl -= n;
 	}
-	
+
 	return (int)(crt-resp_handle->reply_buf);
 }
 
 int binrpc_send_command_ex(
-	struct binrpc_handle* handle, struct binrpc_pkt *pkt, 
+	struct binrpc_handle* handle, struct binrpc_pkt *pkt,
 	struct binrpc_response_handle *resp_handle)
 {
 	int cookie;
-	
+
 	cookie = gen_cookie();
 	if (send_binrpc_cmd(handle, pkt, cookie) < 0) {
 		return FATAL_ERROR;
@@ -549,7 +549,7 @@ int binrpc_send_command_ex(
 	if (get_reply(handle, cookie, resp_handle) < 0) {
 		return FATAL_ERROR;
 	}
-	
+
 	/* normal exit */
 	return 0;
 }
@@ -604,14 +604,14 @@ int binrpc_send_command(
 	int i, size, res = FATAL_ERROR, ret = 0;
 	unsigned char *req_buf = NULL;
 
-	memset(&resp_handle->in_pkt, 0, sizeof(resp_handle->in_pkt));	
+	memset(&resp_handle->in_pkt, 0, sizeof(resp_handle->in_pkt));
 	if (!method || strlen(method) == 0) {
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"send_command: method name not specified");
 		goto fail;
-	
+
 	}
-	size = BINRPC_MIN_RECORD_SIZE + 8 + strlen(method) + 1; /*max.possible optional value len */	
+	size = BINRPC_MIN_RECORD_SIZE + 8 + strlen(method) + 1; /*max.possible optional value len */
 	for (i=0; i<arg_count; i++) {
 		if (parse_arg(&v, args[i]) < 0)
 			goto fail;
@@ -662,9 +662,9 @@ int binrpc_send_command(
 		goto fail;
 	}
 	res = 0;
-fail:	
+fail:
 	if (req_buf) binrpc_free(req_buf);
-	return res;	
+	return res;
 fail2:
 	snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 		"send_command: error when preparing params: %s", binrpc_error(ret));
@@ -708,7 +708,7 @@ int binrpc_get_response_type(struct binrpc_response_handle *resp_handle)
  *          printf("%.*s", size, s);
  *          if (type==-1)
  *            continue;
- *          else 
+ *          else
  *             printf("now we should get & print an object of type %d\n", type)
  *        }
  */
@@ -780,7 +780,7 @@ int binrpc_print_response(struct binrpc_response_handle *resp_handle, char* fmt)
 	char* s;
 	int f_size;
 	int fmt_has_values;
-	
+
 	if (!resp_handle) {
 		goto error;
 	}
@@ -794,7 +794,7 @@ int binrpc_print_response(struct binrpc_response_handle *resp_handle, char* fmt)
 	/* read body */
 	while(p<end){
 		if (f){
-					
+
 			do{
 				if (*f==0)
 					f=fmt; /* reset */
@@ -890,7 +890,7 @@ int binrpc_parse_response(struct binrpc_val** vals, int* val_count,
 		goto error_mem;
 	p = resp_handle->reply_buf;
 	end = p + resp_handle->in_pkt.tlen;
-	
+
 	/* read body */
 	while(p < end){
 		val.type = BINRPC_T_ALL;
@@ -933,7 +933,7 @@ int binrpc_parse_response(struct binrpc_val** vals, int* val_count,
 			}else if (val.type==BINRPC_T_BYTES){
 				if (((*vals)[i].u.strval.s=binrpc_malloc(val.u.strval.len))==0)
 					goto error_mem;
-				memcpy((*vals)[i].u.strval.s, val.u.strval.s, 
+				memcpy((*vals)[i].u.strval.s, val.u.strval.s,
 						val.u.strval.len);
 			}
 		}
@@ -967,7 +967,7 @@ error:
 int binrpc_parse_error_response(
 	struct binrpc_response_handle *resp_handle,
 	int *err_no,
-	char **err) 
+	char **err)
 {
 	struct binrpc_val val;
 	unsigned char *p, *end;
@@ -976,7 +976,7 @@ int binrpc_parse_error_response(
 	resp_handle->in_pkt.offset = resp_handle->in_pkt.in_struct = resp_handle->in_pkt.in_array = 0;
 	p = resp_handle->reply_buf;
 	end = p+resp_handle->in_pkt.tlen;
-	
+
 	val.type=BINRPC_T_INT;
 	val.name.s=0;
 	val.name.len=0;
@@ -996,7 +996,7 @@ int binrpc_parse_error_response(
 			"parse_error_response: error when parsing reply (str): %s", binrpc_error(ret)
 		);
 		return FATAL_ERROR;
-	}																																		
+	}
 	*err = val.u.strval.s;  /* it's null terminated */
 	return 0;
 }
@@ -1006,7 +1006,7 @@ static inline char* int2str_internal(unsigned int l, int* len)
 {
 	static char r[INT2STR_MAX_LEN];
 	int i;
-	
+
 	i=INT2STR_MAX_LEN-2;
 	r[INT2STR_MAX_LEN-1]=0; /* null terminate */
 	do{
@@ -1023,13 +1023,13 @@ static inline char* int2str_internal(unsigned int l, int* len)
 }
 
 static int realloc_buf(unsigned char** buf, int* buf_len, int req_len)
-{ 
+{
 	unsigned char*	tmp_buf;
 	int orig_len;
-	
+
 	orig_len = (*buf == NULL) ? 0 : strlen((char *) *buf);
 	*buf_len += (TEXT_BUFF_ALLOC_CHUNK < req_len) ? TEXT_BUFF_ALLOC_CHUNK + req_len : TEXT_BUFF_ALLOC_CHUNK;
-	
+
 	if (*buf == NULL)
 		tmp_buf = (unsigned char *) binrpc_malloc(orig_len + *buf_len);
 	else
@@ -1039,14 +1039,14 @@ static int realloc_buf(unsigned char** buf, int* buf_len, int req_len)
 			"ERROR: out of memory");
 		return FATAL_ERROR;
 	}
-	
+
 	*buf = tmp_buf;
 	(*buf)[orig_len] = '\0';
 
 	return 0;
 }
 
-static inline int str2buffer(unsigned char** buf, int* buf_len, int* pos, 
+static inline int str2buffer(unsigned char** buf, int* buf_len, int* pos,
 			     char* data, int data_len)
 {
 	if (*buf_len < data_len) {
@@ -1054,15 +1054,15 @@ static inline int str2buffer(unsigned char** buf, int* buf_len, int* pos,
 			return FATAL_ERROR;
 		}
 	}
-	
+
 	memcpy(&(*buf)[*pos], data, data_len);
 	*pos += data_len;
 	*buf_len -= data_len;
-	
+
 	return 0;
 }
 
-static inline int char2buffer(unsigned char** buf, int* buf_len, int* pos, 
+static inline int char2buffer(unsigned char** buf, int* buf_len, int* pos,
 			      char data)
 {
 	if (*buf_len < 1) {
@@ -1070,20 +1070,20 @@ static inline int char2buffer(unsigned char** buf, int* buf_len, int* pos,
 			return FATAL_ERROR;
 		}
 	}
-	
+
 	(*buf)[*pos] = data;
 	++(*pos);
 	--(*buf_len);
-	
+
 	return 0;
 }
 
-static int val2buffer(struct binrpc_val* v, unsigned char** buf, 
+static int val2buffer(struct binrpc_val* v, unsigned char** buf,
 			     int *buf_len, int* pos)
 {
 	char *number;
-	int num_len; 
-	 
+	int num_len;
+
 	if (v->name.s){
 		if(str2buffer(buf, buf_len, pos, v->name.s, v->name.len) != 0) {
 			return FATAL_ERROR;
@@ -1091,9 +1091,9 @@ static int val2buffer(struct binrpc_val* v, unsigned char** buf,
 		if(str2buffer(buf, buf_len, pos, ": ", strlen(": ")) != 0) {  /* TODO: common format */
 			return FATAL_ERROR;
 		}
-		
+
 	}
-	
+
 	switch(v->type){
 		case BINRPC_T_INT:
 			num_len = 0;
@@ -1103,7 +1103,7 @@ static int val2buffer(struct binrpc_val* v, unsigned char** buf,
 				printf("ERROR: Conversion of %d into string failed.\n", v->type);
 				return FATAL_ERROR;
 			}
-			
+
 			if(str2buffer(buf, buf_len, pos, number, num_len) != 0) {
 				return FATAL_ERROR;
 			}
@@ -1128,7 +1128,7 @@ static int val2buffer(struct binrpc_val* v, unsigned char** buf,
 			printf("ERROR: unknown type %d\n", v->type);
 			return FATAL_ERROR;
 	};
-	
+
 	return 0;
 }
 
@@ -1142,27 +1142,27 @@ int binrpc_response_to_text(
 	int ret;
 	int rec;
 	int pos;
-	
+
 	pos = 0;
-	
+
 	if (!resp_handle) {
 		goto error;
 	}
 
 	memset(&val, 0, sizeof(struct binrpc_val));
 	resp_handle->in_pkt.offset = resp_handle->in_pkt.in_struct = resp_handle->in_pkt.in_array = 0;
-	
+
 	p=resp_handle->reply_buf;
 	end=p+resp_handle->in_pkt.tlen;
 	rec=0;
-	
+
 	if (*txt_rsp == NULL) {
 		*txt_rsp_len = 0;
 		if (realloc_buf(txt_rsp, txt_rsp_len, 0) != 0) {
 			goto error;
-		} 
+		}
 	}
-	
+
 	/* read body */
 	while(p<end){
 		val.type=BINRPC_T_ALL;
@@ -1183,14 +1183,14 @@ int binrpc_response_to_text(
 		if (val2buffer(&val, txt_rsp, txt_rsp_len, &pos) != 0) {
 			goto error;
 		}
-		
+
 		if(char2buffer(txt_rsp, txt_rsp_len, &pos, delimiter) != 0) {
 			goto error;
 		}
 	}
-	
+
 	/* rewrite last char - we don't need delimiter there */
-	(*txt_rsp)[pos-1] = '\0';   
+	(*txt_rsp)[pos-1] = '\0';
 	/*
 	if(char2buffer(txt_rsp, txt_rsp_len, &pos, '\0') != 0) {
 		goto error;
@@ -1210,9 +1210,9 @@ int main(int argc, char** argv)
 	struct binrpc_val *vals = NULL;
 	int cnt, i, err_no;
 	char *errs;
-	
+
 	if (argc < 2) goto err;
-	
+
 	if (binrpc_open_connection_url(&handle, argv[1]) < 0) goto err2;
 	if (binrpc_send_command(&handle, argv[2], argv+3, argc-3, &resp_handle) < 0) {
 		binrpc_close_connection(&handle);
@@ -1222,10 +1222,10 @@ int main(int argc, char** argv)
 
 	if (binrpc_response_to_text(&resp_handle, &txt_rsp, &txt_rsp_len, '\n') < 0) goto err3;
 	fprintf(stdout, "binrpc_response_to_text():\n--------------------------\n%s\n", txt_rsp);
-	
+
 	fprintf(stdout, "\nbinrpc_print_response():\n------------------------\n");
 	binrpc_print_response(&resp_handle, NULL);
-	
+
 	fprintf(stdout, "\nbinrpc_parse_response():\n------------------------\n");
 	cnt = 0;
 	switch (binrpc_get_response_type(&resp_handle)) {
@@ -1241,18 +1241,18 @@ int main(int argc, char** argv)
 			fprintf(stdout, "%d %s\n", err_no, errs);
 			break;
 		default:
-			fprintf(stdout, "Unknown response type: %d\n", binrpc_get_response_type(&resp_handle));	
+			fprintf(stdout, "Unknown response type: %d\n", binrpc_get_response_type(&resp_handle));
 			break;
 	}
 
 	if (vals != NULL) {
 		binrpc_free_rpc_array(vals, cnt);
-	}	
+	}
 	if (txt_rsp != NULL) {
 		binrpc_free(txt_rsp);
 	}
 	binrpc_release_response(&resp_handle);
-	
+
 	return 0;
 err:
 	fprintf(stderr, "Usage: %s url mathod [params]\n", NAME);
@@ -1260,7 +1260,7 @@ err:
 err3:
 	if (vals != NULL) {
 		binrpc_free_rpc_array(vals, cnt);
-	}	
+	}
 	if (txt_rsp) {
 		binrpc_free(txt_rsp);
 	}
