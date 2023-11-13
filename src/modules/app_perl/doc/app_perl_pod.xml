@@ -545,9 +545,9 @@ $number    = $phonenumbers->dialNumber("+497612034567");]]></screen>
     <para>
       The following fields should be set:
     </para>
-    <screen><![CDATA['longDistancePrefix' 
+    <screen><![CDATA['longDistancePrefix'
 'areaCode'
-'pbxCode' 
+'pbxCode'
 'internationalPrefix'
 'publicAccessPrefix'
 'countryCode']]></screen>
