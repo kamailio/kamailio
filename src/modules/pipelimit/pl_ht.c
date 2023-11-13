@@ -366,7 +366,7 @@ extern int _pl_cfg_setpoint;
 extern double *_pl_pid_setpoint;
 
 /**
- * checks that all FEEDBACK pipes use the same setpoint 
+ * checks that all FEEDBACK pipes use the same setpoint
  * cpu load. also sets (common) cfg_setpoint value
  * \param	modparam 1 to check modparam (static) fields, 0 to use shm ones
  *
