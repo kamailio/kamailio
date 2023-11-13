@@ -1,5 +1,5 @@
-/* 
- * example library 
+/*
+ * example library
  */
 
 
