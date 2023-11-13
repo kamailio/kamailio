@@ -758,10 +758,10 @@ error:
  * 	  all domains starting with 'a' are listed
  *
  * 	  Examples
- * 	  pdt_list o 2 .    - lists the entries where sdomain is starting with 'o', 
+ * 	  pdt_list o 2 .    - lists the entries where sdomain is starting with 'o',
  * 	                      prefix is starting with '2' and domain is anything
- * 	  
- * 	  pdt_list . 2 open - lists the entries where sdomain is anything, prefix 
+ *
+ * 	  pdt_list . 2 open - lists the entries where sdomain is anything, prefix
  * 	                      starts with '2' and domain starts with 'open'
  */
 static void pdt_rpc_list(rpc_t *rpc, void *ctx)
