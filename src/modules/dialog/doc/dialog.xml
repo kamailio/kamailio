@@ -74,9 +74,9 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="dialog_admin.xml"/>
 	<xi:include href="dialog_devel.xml"/>
 	<xi:include href="dialog_faq.xml"/>
-	
+
 </book>
