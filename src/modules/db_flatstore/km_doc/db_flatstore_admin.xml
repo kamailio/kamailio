@@ -11,9 +11,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -71,7 +71,7 @@ modparam("acc", "db_url", "flatstore:/var/log/acc")
 	<section id="rotating">
 		<title>Rotating Log Files</title>
 		<para>
-		There is a new &kamailio; MI (management interface) command called 
+		There is a new &kamailio; MI (management interface) command called
 		flat_rotate.
 		When &kamailio; receives the command then it will close and reopen all
 		files used by flatstore module. The rotation itself has to be
@@ -177,7 +177,7 @@ modparam("db_flatstore", "flush", 0)
 	There are no function exported to routing script.
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Exported MI Functions</title>
 	<section>
@@ -198,7 +198,7 @@ modparam("db_flatstore", "flush", 0)
 		:flat_rotate:_reply_fifo_file_
 		_empty_line_
 		</programlisting>
-	</section>	
+	</section>
     </section>
 </chapter>
 
