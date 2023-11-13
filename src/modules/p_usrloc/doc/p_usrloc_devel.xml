@@ -22,12 +22,12 @@
 			</title>
 			<para>
 			Import the <acronym>dbd</acronym> API, setup the master database connection.
-			
+
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
 			<listitem>
-				<para><emphasis>api</emphasis> - Pointer to distributed database API structure 
+				<para><emphasis>api</emphasis> - Pointer to distributed database API structure
 				</para>
 			</listitem>
 			</itemizedlist>
@@ -129,8 +129,8 @@
 				db_key_t* _k, db_val_t* _v, int _n)</function>
 			</title>
 			<para>
-			 Lookup the first and if needed the second key, and insert on duplicate key update 
-			 the given values in the chosen databases. This is like an insert, but update 
+			 Lookup the first and if needed the second key, and insert on duplicate key update
+			 the given values in the chosen databases. This is like an insert, but update
 			 if the key already exist.
 			</para>
 			<para>Meaning of the parameters is as follows:</para>

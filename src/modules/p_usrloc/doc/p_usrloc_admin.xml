@@ -52,14 +52,14 @@
 	not available, the other database would be used. This failure is recorded in the
 	master database.
 	</para>
-	
+
 	<para>Connections to the distributed databases are setup prior the actual query
 	is executed. The module maintains a cache of the database handles to provide
 	better performance. This handles are periodically checked if there are still valid
 	and if needed updated from the master database. As default only one key is used
 	for the database lookup, but the additional usage of a second one is possible.
 	</para>
-	
+
 	<para>Changes in the master database are autodetected. For better performance it is
 	possible to use one read-only instance, that is locally installed, and write only
 	errors and other status information to a central master database.
@@ -82,7 +82,7 @@
 	    	<itemizedlist>
 		    <listitem>
 			<para>
-				<emphasis>a database module</emphasis> necessary to connect to the 
+				<emphasis>a database module</emphasis> necessary to connect to the
 				master database and to the distributed databases.
 			</para>
 		    </listitem>
@@ -155,7 +155,7 @@ modparam("p_usrloc", "read_db_url", "mysql://user:passwd@localhost/db")
 		</emphasis>
 	    </para>
 	    <example>
-		<title>Set <varname>reg_db_table</varname> parameter</title> 
+		<title>Set <varname>reg_db_table</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("p_usrloc", "reg_db_table", "locdb")
@@ -185,7 +185,7 @@ modparam("p_usrloc", "id_column", "id")
 	<section>
 		<title><varname>num_column</varname> (string)</title>
 	    <para>
-		Specifies the column where the associated number of the distributed 
+		Specifies the column where the associated number of the distributed
 		database is stored. For each distributed database ID there
 		must be at least two databases available, the databases above
 		the second are ignored.
@@ -266,7 +266,7 @@ modparam("p_usrloc", "failover_time_column", "fail")
 	<section>
 		<title><varname>spare_flag_column</varname> (string)</title>
 	    <para>
-		Specifies the column where the spare flag of the location 
+		Specifies the column where the spare flag of the location
 		databases is stored. It is possible to declare an entry in
 		the p_usrloc table as spare which is used in a failover.
 		Due to the fact that the data is stored in two databases and
@@ -290,7 +290,7 @@ modparam("p_usrloc", "spare_flag_column", "spare")
 	<section>
 		<title><varname>error_column</varname> (string)</title>
 	    <para>
-		Specifies the column where the errors of the distributed 
+		Specifies the column where the errors of the distributed
 		databases are stored. Each call to db_handle_error increases
 		the error counter. After exceeding the error threshold, the
 		database's status is set to off.
@@ -508,7 +508,7 @@ modparam("p_usrloc", "write_on_master_db", "0")
 	<section>
 		<title><varname>mdb_availability_control</varname>(str)</title>
 		<para>
-		  Checks the master database in certain time intervals specified by the <quote>retry_interval</quote> parameter. Overwrites the <quote>write_on_master_db</quote> parameter based on the reachability of master database. If the master db is unavailable then the aforementioned parameter will be deactivated.                        
+		  Checks the master database in certain time intervals specified by the <quote>retry_interval</quote> parameter. Overwrites the <quote>write_on_master_db</quote> parameter based on the reachability of master database. If the master db is unavailable then the aforementioned parameter will be deactivated.
 		</para>
                 <para>
                 <emphasis>
@@ -527,7 +527,7 @@ modparam("p_usrloc", "mdb_availability_control", 1)
 		<section>
 		<title><varname>write_on_db</varname> (int)</title>
 	    <para>
-		Sets the write access to the distributed databases. If set 
+		Sets the write access to the distributed databases. If set
 		to 0, no write operations are permitted on the databases.
 	    </para>
 	    <para>
@@ -665,7 +665,7 @@ modparam("p_usrloc", "db_ops_ruid", 2)
     </programlisting>
     </example>
 	</section>
-    
+
     <section>
         <title><varname>db_update_as_insert</varname> (string)</title>
         <para>
@@ -823,9 +823,9 @@ modparam("p_usrloc", "db_mode", 2)
 	<title><varname>db_url</varname></title> <para> This parameters is now obsolete, and replaced by specific p_usrloc parameters</para>
 	</section>
     </section>
-  
 
-    <section>	    
+
+    <section>
 	<title>Installation &amp; Running</title>
 	<section>
 	<title>Database setup</title>
@@ -833,11 +833,11 @@ modparam("p_usrloc", "db_mode", 2)
 		<title>Configuration Table</title>
 		<para>
 			Before running &kamailio; with p_usrloc, you have to setup the master database
-			table where the module will find data about the distributed databases. 
+			table where the module will find data about the distributed databases.
 			For that, if the table was not created by the installation script or you choose
 			to install everything by yourself you can use the p_usrloc-create.sql
-			<acronym>SQL</acronym> script in the database directories in the 
-			utils/kamctl/mysql/ folder as template. 
+			<acronym>SQL</acronym> script in the database directories in the
+			utils/kamctl/mysql/ folder as template.
 			Database and table name can be set with module parameters so they
 			can be changed, but the name of the columns must be as they are
 			in the <acronym>SQL</acronym> script.
@@ -860,7 +860,7 @@ modparam("p_usrloc", "db_mode", 2)
 		</programlisting>
 		<para>The URLs are omitted for a better overview, but you can use
 			standard &kamailio; database URLs like
-			&defaultdb; 
+			&defaultdb;
 			Databases don't need to be on different hosts, e.g. for testing purposes.
 		</para>
 	</example>
@@ -872,7 +872,7 @@ modparam("p_usrloc", "db_mode", 2)
 	</section>
 	<section>
 		<title>Maintenance</title>
-		
+
 		<para>The module supports the deactivation of redundant databases for maintenance
 		reasons. This can be done by setting the status column of the respective database
 		in the p_usrloc to the value <quote>2</quote>. This setting is autodetected from
@@ -894,15 +894,15 @@ modparam("p_usrloc", "db_mode", 2)
 		is set to the default value again. The database is then also used to read contacts
 		from, the cluster is in normal operation with full redundancy again.
 		</para>
-		
+
 	</section>
 	<section>
 		<title>Additional configuration</title>
-		
+
 		<para>As this module is only used internally from other modules, there is no
 		additional configuration except for the module parameter setup necessary.
 		</para>
-		
+
 	</section>
 	</section>
 </chapter>
