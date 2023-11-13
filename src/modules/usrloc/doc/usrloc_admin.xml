@@ -647,7 +647,7 @@ modparam("usrloc", "db_url", "&exampledb;")
 		<para>
 		The usrloc module can utilize a database for persistent contact storage.
 		If a database is used, the location database (contacts)  will survive
-		machine restarts or software crashes. The disadvantage is that accessing 
+		machine restarts or software crashes. The disadvantage is that accessing
 		a database can be very time consuming. Therefore, usrloc module implements
 		four database accessing modes:
 		</para>
@@ -974,9 +974,9 @@ modparam("usrloc", "db_check_update", 1)
 		</para>
 
 		<para>
-			If the number of timer processes is greater than 1, the workload 
-			of synchronization and record expiration is split up among the 
-			multiple processes. (Each process is assigned a range of slots 
+			If the number of timer processes is greater than 1, the workload
+			of synchronization and record expiration is split up among the
+			multiple processes. (Each process is assigned a range of slots
 			from the internal hash table, and is responsible for cleanup and
 			storage on those slots.)
 		</para>
@@ -1276,7 +1276,7 @@ modparam("usrloc", "version_table", 0)
 		Keepalive mode - control the internal keepalive mechanism. With this feature
 		enabled, the module sends periodically (based on timer interval) SIP requests
 		to location contacts and measures the round trip in microseconds (the
-		round trip value can be seen in the response of the RPC command 'ul.dump'). 
+		round trip value can be seen in the response of the RPC command 'ul.dump').
 		</para>
 		<para>
 		Its value is a set of flags:
