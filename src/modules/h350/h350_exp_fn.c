@@ -156,7 +156,7 @@ int h350_auth_lookup(struct sip_msg *_msg, pv_elem_t *_digest_username,
 	}
 
 
-	/* 
+	/*
 	 * search for sip digest username in H.350, store digest password
 	 */
 
