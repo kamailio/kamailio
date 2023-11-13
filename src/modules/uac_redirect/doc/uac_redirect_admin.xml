@@ -10,7 +10,7 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
 
 
@@ -26,19 +26,19 @@
 		contacts from all 3xx branches of a call.
 		</para>
 		<para>
-		The module provides a powerful mechanism for selecting and filtering 
+		The module provides a powerful mechanism for selecting and filtering
 		the contacts to be used for the new redirect:
 		</para>
 		<itemizedlist>
 			<listitem>
-			<para><emphasis>number based</emphasis> - limits like the 
-			number of total contacts to be used or the maximum number of 
+			<para><emphasis>number based</emphasis> - limits like the
+			number of total contacts to be used or the maximum number of
 			contacts per branch to be selected.
 			</para>
 			</listitem>
 			<listitem>
 			<para><emphasis>Regular Expression based</emphasis> - combinations
-			of deny and accept filters allow a strict control of the 
+			of deny and accept filters allow a strict control of the
 			contacts to be used for redirection.
 			</para>
 			</listitem>
@@ -58,8 +58,8 @@
 		</para>
 		<para>
 		The logging will be done via the accounting module functions (all are
-		supported). The information to be logged will be the same as the 
-		normal logged information directly via ACC module, but with 
+		supported). The information to be logged will be the same as the
+		normal logged information directly via ACC module, but with
 		following differences:
 		</para>
 		<itemizedlist>
@@ -76,7 +76,7 @@
 		</itemizedlist>
 		<para>
 		For each redirect contact, a separate record will be logged. For
-		example, if a call is redirected to three new contacts, the 
+		example, if a call is redirected to three new contacts, the
 		module will log three additional records corresponding to each
 		redirect URI.
 		</para>
@@ -108,7 +108,7 @@
 		<section>
 			<title>External Libraries or Applications</title>
 			<para>
-				The following libraries or applications must be installed 
+				The following libraries or applications must be installed
 				before running &kamailio; with this module loaded:
 				<itemizedlist>
 				<listitem>
@@ -126,7 +126,7 @@
 		<section id="uac_redirect.p.default_filter">
 			<title><varname>default_filter</varname> (string)</title>
 			<para>
-			The default behavior in filtering contacts. It may be 
+			The default behavior in filtering contacts. It may be
 			<quote>accept</quote> or <quote>deny</quote>.
 			</para>
 			<para>
@@ -135,7 +135,7 @@
 				</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>default_filter</varname> 
+				<title>Set <varname>default_filter</varname>
 					module parameter</title>
 				<programlisting format="linespecific">
 ...
@@ -150,24 +150,24 @@ modparam("uac_redirect","default_filter","deny")
 			The regular expression for default deny filtering. It makes sense
 			to be defined only if the <varname>default_filter</varname>
 			parameter is set to <quote>accept</quote>. All contacts matching
-			the <varname>deny_filter</varname> will be rejected; the rest 
+			the <varname>deny_filter</varname> will be rejected; the rest
 			of them will be accepted for redirection.
 			</para>
 			<para>
 			The parameter may be defined only one - multiple definition will
-			overwrite the previous definitions. If more regular expression 
-			need to be defined, use the 
+			overwrite the previous definitions. If more regular expression
+			need to be defined, use the
 			<function moreinfo="none">set_deny_filter()</function> scripting
 			function.
 			</para>
 			<para>
 				<emphasis>
-					This parameter is optional, it's default 
+					This parameter is optional, it's default
 					value being NULL.
 				</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>deny_filter</varname> 
+				<title>Set <varname>deny_filter</varname>
 					module parameter</title>
 				<programlisting format="linespecific">
 ...
@@ -182,24 +182,24 @@ modparam("uac_redirect","deny_filter",".*@siphub\.net")
 			The regular expression for default accept filtering. It makes sense
 			to be defined only if the <varname>default_filter</varname>
 			parameter is set to <quote>deny</quote>. All contacts matching
-			the <varname>accept_filter</varname> will be accepted; the rest 
+			the <varname>accept_filter</varname> will be accepted; the rest
 			of them will be rejected for redirection.
 			</para>
 			<para>
 			The parameter may be defined only one - multiple definition will
-			overwrite the previous definitions. If more regular expression 
-			need to be defined, use the 
+			overwrite the previous definitions. If more regular expression
+			need to be defined, use the
 			<function moreinfo="none">set_accept_filter()</function> scripting
 			function.
 			</para>
 			<para>
 				<emphasis>
-					This parameter is optional, it's default 
+					This parameter is optional, it's default
 					value being NULL.
 				</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>accept_filter</varname> 
+				<title>Set <varname>accept_filter</varname>
 					module parameter</title>
 				<programlisting format="linespecific">
 ...
@@ -276,12 +276,12 @@ modparam("uac_redirect","acc_db_table","acc_redirect")
 			</para>
 			<para>
 				<emphasis>
-					This parameter is optional, it's default 
+					This parameter is optional, it's default
 					value being 0.
 				</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>bflags</varname> 
+				<title>Set <varname>bflags</varname>
 					module parameter</title>
 				<programlisting format="linespecific">
 ...
@@ -388,7 +388,7 @@ modparam("uac_redirect","q_value",0)
 				</para>
 				</listitem>
 				<listitem>
-				<para><emphasis>reset_added</emphasis> - reset only the 
+				<para><emphasis>reset_added</emphasis> - reset only the
 				previous added deny filters;
 				</para>
 				</listitem>
@@ -438,7 +438,7 @@ set_deny_filter(".*@domain1.net","");
 				</para>
 				</listitem>
 				<listitem>
-				<para><emphasis>reset_added</emphasis> - reset only the 
+				<para><emphasis>reset_added</emphasis> - reset only the
 				previous added accept filters;
 				</para>
 				</listitem>
@@ -473,7 +473,7 @@ set_accept_filter(".*@domain1.net","");
 				new branches, this must be done explicitly from script.
 			</para>
 			<para>
-				How many contacts (in total and per branch) are selected 
+				How many contacts (in total and per branch) are selected
 				depends of the <emphasis>max</emphasis> parameter values.
 				Its syntax is:
 			</para>
@@ -494,8 +494,8 @@ set_accept_filter(".*@domain1.net","");
 				or "*" character.
 			</para>
 			<para>
-				NOTE that during the selection process, each set of contacts 
-				from a specific branch are ordered based on <quote>q</quote> 
+				NOTE that during the selection process, each set of contacts
+				from a specific branch are ordered based on <quote>q</quote>
 				value.
 			</para>
 			<para>
@@ -526,12 +526,12 @@ get_redirects("*");
 				<function moreinfo="none">get_redirects(max, reason)</function>
 			</title>
 			<para>
-				The function has same functionality as 
+				The function has same functionality as
 				<function moreinfo="none">get_redirects(max)</function>
 				function, but it will produce accounting records.
 			</para>
 			<para>
-				The accounting records will be mark by the 
+				The accounting records will be mark by the
 				<emphasis>reason</emphasis> phrase.
 			</para>
 			<para>
