@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -60,7 +60,7 @@ extern "C"
 
 
 	/*
- * Initializes the kamailioSIPPortTable module.  
+ * Initializes the kamailioSIPPortTable module.
  *
  * Specifically, this function will define the tables structure, and then
  * populate it with the ports and transports that Kamailio is listening on.
@@ -75,7 +75,7 @@ extern "C"
 
 	/*
  * This routine is called to process get requests for elements of the table.
- * The function is mostly left in its auto-generated form 
+ * The function is mostly left in its auto-generated form
  */
 	int kamailioSIPPortTable_get_value(netsnmp_request_info *, netsnmp_index *,
 			netsnmp_table_request_info *);

@@ -405,8 +405,8 @@ static void mod_destroy(void)
 
 
 /*! The SNMPStats module forks off a child process to run an snmp command via
- * execve(). We need a customized handler to catch and ignore its SIGCHLD when 
- * it terminates. We also need to make sure to forward other processes 
+ * execve(). We need a customized handler to catch and ignore its SIGCHLD when
+ * it terminates. We also need to make sure to forward other processes
  * SIGCHLD's to Kamailio's usual SIGCHLD handler.  We do this by resetting back
  * Kamailio's own signal handlers after we caught our appropriate SIGCHLD. */
 static void sigchld_handler(int signal)
@@ -450,9 +450,9 @@ static void sigchld_handler(int signal)
  * handler to ignore the SIGCHLD for only this process. (See sigchld_handler
  * above).
  *
- * \note sysUpTime is a scalar provided by netsnmp.  It is not the same thing as 
+ * \note sysUpTime is a scalar provided by netsnmp.  It is not the same thing as
  *       a normal system uptime. Support for this has been provided to try to
- *       match the IETF Draft SIP MIBs as closely as possible. 
+ *       match the IETF Draft SIP MIBs as closely as possible.
  */
 static int spawn_sysUpTime_child(void)
 {
