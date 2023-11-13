@@ -11,7 +11,7 @@
 <!-- Module FAQ -->
 
 <chapter>
-	
+
 	<title>&faqguide;</title>
 	<qandaset defaultlabel="number">
 	<qandaentry>
@@ -31,7 +31,7 @@
 		<answer>
 		<para>
 			First at all check if your question was already answered on one of
-			our mailing lists: 
+			our mailing lists:
 		</para>
 		<itemizedlist>
 			<listitem>
@@ -42,7 +42,7 @@
 			</listitem>
 		</itemizedlist>
 		<para>
-			E-mails regarding any stable &kamailio; release should be sent to 
+			E-mails regarding any stable &kamailio; release should be sent to
 			&kamailiousersmail; and e-mails regarding development versions
 			should be sent to &kamailiodevmail;.
 		</para>
