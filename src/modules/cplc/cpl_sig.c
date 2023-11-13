@@ -30,8 +30,8 @@
 
 
 /* forwards the msg to the given location set; if flags has set the
- * CPL_PROXY_DONE, all locations will be added as branches, otherwise, the 
- * first one will set as RURI (this is ha case when this is the first proxy 
+ * CPL_PROXY_DONE, all locations will be added as branches, otherwise, the
+ * first one will set as RURI (this is ha case when this is the first proxy
  * of the message)
  * The given list of location will be freed, returning 0 instead.
  * Returns:  0 - OK
