@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -61,7 +61,7 @@ int get_username_domain(
  * \param _msg SIP message
  * \param _hf Header field
  * \param _grp checked table
- * \return 1 on success, negative on failure 
+ * \return 1 on success, negative on failure
  */
 int is_user_in(struct sip_msg *_msg, char *_hf, char *_grp);
 
