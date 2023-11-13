@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -140,7 +140,7 @@ typedef struct
 	int replace_str(const str_t *src, str_t *dst, const str_t *sample,
 			const str_t *value);
 
-/** Copies string into another one. The destination string buffer 
+/** Copies string into another one. The destination string buffer
  * MUST be allocated in needed size! */
 #define str_cpy(dst, src)                       \
 	do {                                        \

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -185,7 +185,7 @@ int msg_queue_init_ex(msg_queue_t *q, int synchronize)
 	return 0;
 }
 
-/** \internal Destroys all internal data of message queue and 
+/** \internal Destroys all internal data of message queue and
  * optionaly frees it if no more references exist. */
 static inline void msg_queue_destroy_and_free(msg_queue_t *q, int do_free)
 {

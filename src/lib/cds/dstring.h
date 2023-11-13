@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -40,20 +40,20 @@ extern "C"
  * Dynamic strings were introduced to satisfy needs of presence
  * modules when building presence documents.
  *
- * Dynamic string uses a list of buffers holding data. 
+ * Dynamic string uses a list of buffers holding data.
  * Buffers are allocated when needed - when there is not enough
  * space in the last buffer. The whole result can be copied into one
  * destination buffer with \ref dstr_get_data, \ref dstr_get_str
  * or \ref dstr_get_str_pkg function.
  *
- * \todo Function with sprintf syntax which will help with 
+ * \todo Function with sprintf syntax which will help with
  * readibility of code using dynamic strings.
  * @{
  * */
 
-	/** Buffer used by dynamic string. 
+	/** Buffer used by dynamic string.
  *
- * \todo 'len' and 'used' can be replaced by 'unused' member 
+ * \todo 'len' and 'used' can be replaced by 'unused' member
  * but it doesn't save too much */
 	typedef struct _dstr_buff_t
 	{
@@ -64,7 +64,7 @@ extern "C"
 	} dstr_buff_t;
 
 	/** Dynamic string structure. It is used
- * for muliple appends of any strings. 
+ * for muliple appends of any strings.
  *
  * \note There was an attempt to add flags for SHM/PKG memory using, ...
  * but it shows that it slows down, thus they were removed and only the
@@ -103,13 +103,13 @@ extern "C"
 	/* int dstr_get_data_length(dstring_t *dstr); */
 
 	/** Returns data stored in dynamic string. It does NOT allocate
- * space for them - it expects that the buffer is already allocated. 
+ * space for them - it expects that the buffer is already allocated.
  * \retval 0 if successful
  * \retval negative on error */
 	int dstr_get_data(dstring_t *dstr, char *dst);
 
 	/** Returns data stored in dynamic string. It allocates space for
- * them with cds_malloc (SER's shared memory). 
+ * them with cds_malloc (SER's shared memory).
  * \retval 0 if successful
  * \retval negative on error */
 	int dstr_get_str(dstring_t *dstr, str_t *dst);
@@ -121,7 +121,7 @@ extern "C"
 	int dstr_get_str_pkg(dstring_t *dstr, str_t *dst);
 	/** Initializes dynamic string.
  * \param dstr dynamic string to be initialized
- * \param buff_size size of buffer used with this dynamic string 
+ * \param buff_size size of buffer used with this dynamic string
  * \retval 0 if successful
  * \retval negative on error */
 	int dstr_init(dstring_t *dstr, int buff_size);
