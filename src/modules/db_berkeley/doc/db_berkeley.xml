@@ -38,6 +38,6 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
 	<xi:include href="db_berkeley_admin.xml"/>
 </book>
