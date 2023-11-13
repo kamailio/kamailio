@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -96,31 +96,31 @@ extern int ul_locks_no;
  * @var params
  * defines the parameters which can be set in the Kamailio config file
  * is stored. Only used when @see use_domain is set to 1
- * @param write_db_url Url to the database where the key and database information is 
+ * @param write_db_url Url to the database where the key and database information is
  * stored and where errors are reported to. Only used when @see write_on_db is active.
- * @param read_db_url Url to the database where the key and database information is 
+ * @param read_db_url Url to the database where the key and database information is
  * stored.
- * @param reg_db_table the name of the table containing the information about the 
+ * @param reg_db_table the name of the table containing the information about the
  * partitioned databases.
  * @param id_column name of the column containing the id mapping to a key.
  * @param num_column name of the column containing the number of the entry.
  * @param url_column name of the column containing the URL to the database.
- * @param status_column name of the column containing the status of the database. 
+ * @param status_column name of the column containing the status of the database.
  * (1=ON, 2=OFF)
  * @param failover_time_column name of the column containing the time when the
  * database's status changed or a spare has been activated.
  * @param spare_flag_column name of the column containing the information if an entry
  * works as spare for broken dbs (0=no spare, 1=spare)
- * @param error_column name of the column containing the errors which occurred on 
+ * @param error_column name of the column containing the errors which occurred on
  * the database.
  * @param risk_group_column name of the column containing the databases risk group
  * Only used when spare databases are used.
  * @param expire_time specifies the expire time of contacts
- * @param db_err_threshold specifies the amount of errors when at which a db 
+ * @param db_err_threshold specifies the amount of errors when at which a db
  * gets deactivated
  * @param failover_level defines if the module shall search for spares or just
  * turnoff a broken db
- * @param db_retry_interval defines in which intervals the module shall try to 
+ * @param db_retry_interval defines in which intervals the module shall try to
  * reconnect to a deactivated database
  * @param write_on_db defines if the module has write access on the databases or not
  * @param alg_location defines the algorithm for the location matching - based on crc32 for  now
@@ -213,7 +213,7 @@ static cmd_export_t cmds[] = {
 
 
 /*! \brief
- * Exported parameters 
+ * Exported parameters
  */
 static param_export_t params[] = {{"ruid_column", PARAM_STR, &ruid_col},
 		{"user_column", PARAM_STR, &user_col},

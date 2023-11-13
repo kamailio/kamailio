@@ -19,7 +19,7 @@
  */
 
 /*!
- * \file 
+ * \file
  * \brief P_USRLOC :: Configuration
  * \ingroup usrloc
  */
