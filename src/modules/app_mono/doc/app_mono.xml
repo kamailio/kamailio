@@ -35,7 +35,7 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
 	<xi:include href="app_mono_admin.xml"/>
-    
+
 </book>
