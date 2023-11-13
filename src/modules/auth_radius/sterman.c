@@ -302,7 +302,7 @@ int radius_authorize_sterman(
 		goto err;
 	}
 
-	/* 
+	/*
 	 * Add the additional authentication fields according to the QOP.
 	 */
 	if(_cred->qop.qop_parsed == QOP_AUTH) {

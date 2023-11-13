@@ -41,8 +41,8 @@
 #include "auth_radius.h"
 
 
-/* 
- * Extract URI depending on the request from To or From header 
+/*
+ * Extract URI depending on the request from To or From header
  */
 static inline int get_uri_user(struct sip_msg *_m, str **_uri_user)
 {
