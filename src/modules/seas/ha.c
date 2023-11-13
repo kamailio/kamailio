@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -110,13 +110,13 @@ int print_pingtable(struct ha *ta, int idx, int lock)
 }
 
 /**
- * Parses the PING configuration string. Its format is 
+ * Parses the PING configuration string. Its format is
  * "ping_period:pings_lost:ping_timeout"
  * ping_period : time between pings
  * pings_lost: number of lost pings before failure
  * ping_timeout: time to consider a ping failed
  *
- * returns 
+ * returns
  * 0 if config is not set
  * -1 if config is malformed (unable to parse);
  *  1 if config is successfully set
@@ -378,13 +378,13 @@ void destroy_pingtable(struct ha *table)
 
 /**
  * event_length(4) UNSIGNED INT includes the length 4 bytes itself
- * type(1), 
+ * type(1),
  * processor_id(1), 0 means nobody, 0xFF means everybody, 0<N<0xFF means processor with id=N
- * flags(4), 
- * ping_num(4), 
+ * flags(4),
+ * ping_num(4),
  *
  * NOT REENTRANT (uses static local var to store ping seqno.)
- * 
+ *
  * returns
  * 	0 on error
  * 	pointer to the buffer on success

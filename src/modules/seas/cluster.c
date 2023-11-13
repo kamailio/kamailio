@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -36,13 +36,13 @@ char *cluster_cfg;
 
 
 /**
- * Parses the PING configuration string. Its format is 
+ * Parses the PING configuration string. Its format is
  * "ping_period:pings_lost:ping_timeout"
  * ping_period : time between pings
  * pings_lost: number of lost pings before failure
  * ping_timeout: time to consider a ping failed
  *
- * returns 
+ * returns
  * 0 if no clusters present
  * -1 if config is malformed (unable to parse);
  *  1 if config is successfully set

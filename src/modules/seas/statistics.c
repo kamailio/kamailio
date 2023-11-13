@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -217,7 +217,7 @@ void action_stat(struct cell *t)
  * stats socket should be an IP_address:port or unix://path/to_file
  * TODO handling unix sockets and IPv6 !!
  *
- * returns 
+ * returns
  * 0 if no stats
  * 1 if stats properly started
  * -1 if error
@@ -306,7 +306,7 @@ error:
  * stats socket should be an IP_address:port or unix://path/to_file
  * TODO handling unix sockets and IPv6 !!
  *
- * returns 
+ * returns
  * 0 if no stats
  * 1 if stats properly started
  * -1 if error
