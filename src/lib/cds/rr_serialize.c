@@ -8,9 +8,9 @@ static void rr_dup(rr_t **dst, rr_t *pkg_rr)
 {
 	rr_t *tmp = NULL;
 	int res;
-	
+
 	tmp = pkg_rr;
-	
+
 	while (pkg_rr) {
 		res = shm_duplicate_rr(dst, pkg_rr);
 		dst = &(*dst)->next;
@@ -32,7 +32,7 @@ static int serialize_route(sstream_t *ss, rr_t **_r)
 		else do_it = 0;
 		if (serialize_int(ss, &do_it) != 0) return -1;
 	}
-		
+
 	if (do_it) {
 		str s;
 		if (*_r) {
@@ -43,12 +43,12 @@ static int serialize_route(sstream_t *ss, rr_t **_r)
 		res = serialize_str_ex(ss, &s) | res;
 		if (is_input_sstream(ss)) {
 			rr_t *pkg_rr = NULL;
-			
+
 			parse_rr_body(s.s, s.len, &pkg_rr);
 			rr_dup(_r, pkg_rr);
 		}
 	}
-	
+
 	return res;
 }
 
@@ -60,12 +60,12 @@ int serialize_route_set(sstream_t *ss, rr_t **route_set)
 	if (is_input_sstream(ss)) { /* read */
 		do {
 			res = serialize_route(ss, &r) | res;
-			if (last) last->next = r; 
+			if (last) last->next = r;
 			else first = r;
 			last = r;
 			if (last) {
 				/* due to parsing rr (may be more rr_t than 1) */
-				while (last->next) last = last->next; 
+				while (last->next) last = last->next;
 			}
 		} while (r);
 		*route_set = first;
@@ -79,7 +79,7 @@ int serialize_route_set(sstream_t *ss, rr_t **route_set)
 		r = NULL;
 		serialize_route(ss, &r); /* store terminating route */
 	}
-	
+
 	return 0;
 }
 
@@ -87,9 +87,9 @@ int route_set2str(rr_t *rr, str_t *dst_str)
 {
 	int res = 0;
 	sstream_t store;
-	
+
 	init_output_sstream(&store, 256);
-	
+
 	if (serialize_route_set(&store, &rr) != 0) {
 		ERROR_LOG("can't serialize route set\n");
 		res = -1;
@@ -111,14 +111,14 @@ int str2route_set(const str_t *s, rr_t **rr)
 	sstream_t store;
 
 	if (!s) return -1;
-	
+
 	init_input_sstream(&store, s->s, s->len);
 	if (serialize_route_set(&store, rr) != 0) {
 		ERROR_LOG("can't de-serialize route set\n");
 		res = -1;
-	}	
+	}
 	destroy_sstream(&store);
-	
+
 	return res;
 }
 

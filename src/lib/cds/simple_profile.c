@@ -21,9 +21,9 @@ int reset_timer()
 {
 	struct itimerval tv;
 	int res;
-	
+
 	tv.it_interval.tv_sec = 0;
-	tv.it_interval.tv_usec = 1000; 
+	tv.it_interval.tv_usec = 1000;
 	/*tv.it_interval.tv_usec = 10 * 1000; */
 	tv.it_value.tv_sec = tv.it_interval.tv_sec;
 	tv.it_value.tv_usec = tv.it_interval.tv_usec;
@@ -63,7 +63,7 @@ int start_profile(trace_f tf)
 		/* ERROR_LOG("can't set signal handle (%d)\n", res);*/
 		return -1;
 	}
-	
+
 	old_sigx_action = signal(trace_signal, &trace_handler);
 
 	res = reset_timer();

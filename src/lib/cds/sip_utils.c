@@ -52,19 +52,19 @@ int is_terminating_notify(struct sip_msg *m)
 		ERR("invalid Subscription-State\n");
 		return 0; /* ignore */
 	}
-	
+
 	if (ss->value == ss_terminated) return 1;
 
 	return 0;
 }
 
-static inline int contains_extension_support(struct hdr_field *h, 
+static inline int contains_extension_support(struct hdr_field *h,
 		str *extension)
 {
 	/* "parses" Supported header and looks for extension */
 	str s, val;
 	char *c;
-	
+
 	if (!h) return 0;
 
 	s = h->body;
@@ -99,7 +99,7 @@ int supports_extension(struct sip_msg *m, str *extension)
 		ERR("Error while parsing headers (%d)\n", res);
 		return 0; /* what to return here ? */
 	}
-	
+
 	h = m->supported;
 	while (h) {
 		if (h->type == HDR_SUPPORTED_T) {
@@ -122,7 +122,7 @@ int requires_extension(struct sip_msg *m, str *extension)
 		ERR("Error while parsing headers (%d)\n", res);
 		return 0; /* what to return here ? */
 	}
-	
+
 	h = m->require;
 	while (h) {
 		if (h->type == HDR_REQUIRE_T) {

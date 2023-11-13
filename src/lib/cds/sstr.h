@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -35,7 +35,7 @@ extern "C" {
 /* If compiled for SER, use ser internal strings ! */
 #ifdef SER
 
-#include "str.h"	
+#include "str.h"
 typedef str str_t;
 
 #else
@@ -49,7 +49,7 @@ typedef struct {
 
 #endif
 
-#define FMT_STR(str)	(str).len,((str).s ? (str).s : "")	
+#define FMT_STR(str)	(str).len,((str).s ? (str).s : "")
 
 #define str_len(ptr)	((ptr)?(ptr)->len:0)
 
@@ -123,7 +123,7 @@ int str_concat(str_t *dst, str_t *a, str_t *b);
 
 int replace_str(const str_t *src, str_t *dst, const str_t *sample, const str_t *value);
 
-/** Copies string into another one. The destination string buffer 
+/** Copies string into another one. The destination string buffer
  * MUST be allocated in needed size! */
 #define str_cpy(dst, src) do { \
 	memcpy((dst)->s, (src)->s, (src)->len); \

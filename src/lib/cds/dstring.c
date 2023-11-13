@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -32,10 +32,10 @@
 
 #define get_current_buffer(dstr) (dstr)->last
 
-static dstr_buff_t *add_new_buffer(dstring_t *dstr) 
+static dstr_buff_t *add_new_buffer(dstring_t *dstr)
 {
 	dstr_buff_t *buff = NULL;
-	
+
 	/* e = dlink_element_alloc_pkg(sizeof(dstr_buff_t) + dstr->buff_size); */
 /*	if (dstr->flags & DSTR_PKG_MEM)
 		buff = cds_malloc_pkg(sizeof(dstr_buff_t) + dstr->buff_size);
@@ -63,7 +63,7 @@ int dstr_append(dstring_t *dstr, const char *s, int len)
 	if (dstr->error) return -2;
 
 	if (len == 0) return 0; /*append empty string*/
-	
+
 	buff = get_current_buffer(dstr);
 	if (!buff) buff = add_new_buffer(dstr);
 	while ((len > 0) && (buff)) {
@@ -106,10 +106,10 @@ int dstr_append_str(dstring_t *dstr, const str_t *s)
 int dstr_get_data(dstring_t *dstr, char *dst)
 {
 	dstr_buff_t* buff;
-	
+
 	/* if (!dstr) return -1; */
 	if (dstr->error) return -2; /* a previous operation returned error */
-	
+
 	buff = dstr->first;
 	while (buff) {
 		memcpy(dst, buff->data, buff->used);
@@ -122,7 +122,7 @@ int dstr_get_data(dstring_t *dstr, char *dst)
 int dstr_get_str(dstring_t *dstr, str_t *dst)
 {
 	int res = 0;
-	
+
 	if (!dst) return -1;
 	if (dstr->error) {
 		dst->s = NULL;
@@ -138,7 +138,7 @@ int dstr_get_str(dstring_t *dstr, str_t *dst)
 			dst->len = 0;
 		}
 		else res = dstr_get_data(dstr, dst->s);
-	} 
+	}
 	else {
 		dst->s = NULL;
 		dst->len = 0;
@@ -150,7 +150,7 @@ int dstr_get_str(dstring_t *dstr, str_t *dst)
 int dstr_get_str_pkg(dstring_t *dstr, str_t *dst)
 {
 	int res = 0;
-	
+
 	if (!dst) return -1;
 	if (dstr->error) {
 		dst->s = NULL;
@@ -166,7 +166,7 @@ int dstr_get_str_pkg(dstring_t *dstr, str_t *dst)
 			dst->len = 0;
 		}
 		else res = dstr_get_data(dstr, dst->s);
-	} 
+	}
 	else {
 		dst->s = NULL;
 		dst->len = 0;

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -61,7 +61,7 @@ void init_message_ex(mq_message_t *m, void *data, int data_len, destroy_function
 {
 	/* if (data_len < 0) data_len = 0; */
 	if (!m) return;
-	
+
 	m->data_len = data_len;
 	m->data = data;
 	m->next = NULL;
@@ -76,12 +76,12 @@ void set_data_destroy_function(mq_message_t *msg, destroy_function_f func)
 
 void free_message(mq_message_t *msg)
 {
-	if (msg->destroy_function && msg->data) 
+	if (msg->destroy_function && msg->data)
 		msg->destroy_function(msg->data);
 	switch (msg->allocation_style) {
-		case message_allocated_with_data: 
+		case message_allocated_with_data:
 				break;
-		case message_holding_data_ptr: 
+		case message_holding_data_ptr:
 				/* if (msg->data) cds_free(msg->data); */
 				break;
 	}
@@ -92,7 +92,7 @@ int push_message(msg_queue_t *q, mq_message_t *m)
 {
 	if ((!q) || (!m)) return -1;
 	m->next = NULL;
-	
+
 	if (q->flags & MQ_USE_MUTEX) cds_mutex_lock(&q->q_mutex);
 	if (q->last) q->last->next = m;
 	else {
@@ -101,7 +101,7 @@ int push_message(msg_queue_t *q, mq_message_t *m)
 	}
 	q->last = m;
 	if (q->flags & MQ_USE_MUTEX) cds_mutex_unlock(&q->q_mutex);
-	
+
 	return 0;
 }
 
@@ -109,13 +109,13 @@ int mq_add_to_top(msg_queue_t *q, mq_message_t *m)
 {
 	if ((!q) || (!m)) return -1;
 	m->next = NULL;
-	
+
 	if (q->flags & MQ_USE_MUTEX) cds_mutex_lock(&q->q_mutex);
 	m->next = q->first;
 	q->first = m;
 	if (!q->last) q->last = m;
 	if (q->flags & MQ_USE_MUTEX) cds_mutex_unlock(&q->q_mutex);
-	
+
 	return 0;
 }
 
@@ -135,7 +135,7 @@ mq_message_t *pop_message(msg_queue_t *q)
 		m->next = NULL;
 	}
 	if (q->flags & MQ_USE_MUTEX) cds_mutex_unlock(&q->q_mutex);
-		
+
 	return m;
 }
 
@@ -165,13 +165,13 @@ int msg_queue_init_ex(msg_queue_t *q, int synchronize)
 	return 0;
 }
 
-/** \internal Destroys all internal data of message queue and 
+/** \internal Destroys all internal data of message queue and
  * optionally frees it if no more references exist. */
 static inline void msg_queue_destroy_and_free(msg_queue_t *q, int do_free)
 {
 	mq_message_t *m,*n;
 	if (!q) return;
-	
+
 	if (q->flags & MQ_USE_REF_CNTR) {
 		if (!remove_reference(&q->ref)) {
 			/* this was NOT the last reference */

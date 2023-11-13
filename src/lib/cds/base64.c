@@ -89,7 +89,7 @@ void base64encode(char* src_buf, int src_len, char* tgt_buf, int* tgt_len, int q
 				(*tgt_len)--;
 			else
 				/* this data is going to be quoted */
-				tgt_buf[*tgt_len+2] = '='; 
+				tgt_buf[*tgt_len+2] = '=';
 		}
 		if (pos+2 < src_len)
 			tgt_buf[*tgt_len+3] = code64[(unsigned char)src_buf[pos+2] & 0x3F];

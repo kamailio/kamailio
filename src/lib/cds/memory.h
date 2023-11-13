@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -33,14 +33,14 @@ extern "C" {
 #endif
 
 /** \ingroup cds
- * @{ 
+ * @{
  *
  * \defgroup cds_memory Memory management
  *
  * Memory operations are common for whole CDS library. Because it must work
  together with SER's memory management and must work without it too, there are
  wrapper macros for memory allocation/deallocation.
- * 
+ *
  * @{ */
 
 /* typedef void*(*cds_malloc_func)(unsigned int size);
@@ -53,37 +53,37 @@ void cds_set_memory_functions(cds_malloc_func _malloc, cds_free_func _free); */
 
 /** \def cds_malloc(s)
  * Function/macro for memory allocation. Which function is choosen depends on
- * SER and TRACE_CDS_MEMORY defines. 
+ * SER and TRACE_CDS_MEMORY defines.
  *
  * When SER is defined shm_malloc is choosen, standard malloc otherwise. */
 
 /** \def cds_free(p)
  * Function/macro for memory deallocation. Which function is choosen depends
- * on SER and TRACE_CDS_MEMORY defines. 
+ * on SER and TRACE_CDS_MEMORY defines.
  *
  * If SER is defined shm_free is choosen, standard free otherwise. */
 
 /** \def cds_malloc_ptr
  * Function/macro for memory allocation when pointer to function needed. Which
- * function is choosen depends on SER and TRACE_CDS_MEMORY defines. 
+ * function is choosen depends on SER and TRACE_CDS_MEMORY defines.
  *
  * If SER is defined shm_malloc is choosen, standard malloc otherwise.  */
 
 /** \def cds_free_ptr
  * Function/macro for memory deallocation when pointer to function needed.
- * Which function is choosen depends on SER and TRACE_CDS_MEMORY defines. 
+ * Which function is choosen depends on SER and TRACE_CDS_MEMORY defines.
  *
  * If SER is defined shm_free is choosen, standard free otherwise.  */
 
 /** \def cds_malloc_pkg(s)
  * Function/macro for 'local' memory allocation. Which function is choosen
- * depends on SER and TRACE_CDS_MEMORY defines. 
+ * depends on SER and TRACE_CDS_MEMORY defines.
  *
  * When SER is defined pkg_malloc is choosen, standard malloc otherwise. */
 
 /** \def cds_free_pkg(p)
  * Function/macro for 'local' memory deallocation. Which function is choosen
- * depends on SER and TRACE_CDS_MEMORY defines. 
+ * depends on SER and TRACE_CDS_MEMORY defines.
  *
  * When SER is defined pkg_free is choosen, standard free otherwise. */
 
@@ -154,7 +154,7 @@ void shm_free_x(void *ptr);
 }
 #endif
 
-/** @} 
+/** @}
  * @} */
 
 #endif

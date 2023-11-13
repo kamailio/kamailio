@@ -13,7 +13,7 @@ DECLARE_PROF_POINT(pa_handle_subscription)
 DECLARE_PROF_POINT(pa_timer_presentity)
 DECLARE_PROF_POINT(pa_timer_pdomain)
 DECLARE_PROF_POINT(pa_response_generation)
-	
+
 DECLARE_PROF_POINT(rls_handle_subscription)
 DECLARE_PROF_POINT(rls_timer_cb)
 DECLARE_PROF_POINT(rls_is_simple_rls_target)

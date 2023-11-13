@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -53,7 +53,7 @@ void ht_destroy(hash_table_t *ht)
 {
 	ht_element_t *e, *n;
 	int i;
-	
+
 	if (!ht) return;
 	if (ht->cslots) {
 		for (i = 0; i < ht->size; i++) {
@@ -73,17 +73,17 @@ int ht_add(hash_table_t *ht, ht_key_t key, ht_data_t data)
 {
 	int h;
 	ht_element_t *new_e;
-	
+
 	if (!ht) return -1;
 	new_e = (ht_element_t*)cds_malloc(sizeof(ht_element_t));
 	if (!new_e) return -1;
 	new_e->next = NULL;
 	new_e->key = key;
 	new_e->data = data;
-	
+
 	h = ht->hash(key) % ht->size;
 	if (h < 0) h = -h;
-	
+
 	if (!ht->cslots[h].last) {
 		ht->cslots[h].first = new_e;
 	}
@@ -102,9 +102,9 @@ ht_data_t ht_find(hash_table_t *ht, ht_key_t key)
 	ht_element_t *e;
 
 	if (!ht) return NULL;
-	
+
 	ht->find_cnt++;	//monitor
-	
+
 	h = ht->hash(key) % ht->size;
 	if (h < 0) h = -h;
 	e = ht->cslots[h].first;
@@ -114,7 +114,7 @@ ht_data_t ht_find(hash_table_t *ht, ht_key_t key)
 		if (ht->cmp(e->key, key) == 0) return e->data;
 		e = e->next;
 	}
-	
+
 	ht->missed_cnt++;	//monitor
 	return NULL;
 }
@@ -124,7 +124,7 @@ ht_data_t ht_remove(hash_table_t *ht, ht_key_t key)
 	int h;
 	ht_element_t *e,*p;
 	ht_data_t data;
-	
+
 	if (!ht) return NULL;
 	h = ht->hash(key) % ht->size;
 	if (h < 0) h = -h;
@@ -166,7 +166,7 @@ void ht_get_statistic(hash_table_t *ht, ht_statistic_t *s)
 void ht_clear_statistic(hash_table_t *ht)
 {
 	if (!ht) return;
-	
+
 	ht->find_cnt = 0;
 	ht->cmp_cnt = 0;
 	ht->nocmp_cnt = 0;
@@ -197,7 +197,7 @@ ht_element_t *get_next_ht_element(ht_traversal_info_t *info)
 	if (!info) return NULL;
 
 	if (info->current) info->current = info->current->next;
-	
+
 	if (info->current) return info->current;
 	else {
 		for (i = info->slot_pos + 1; i < info->ht->size; i++) {

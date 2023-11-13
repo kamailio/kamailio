@@ -4,7 +4,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	
+
 typedef void(*trace_f)();
 
 int start_profile(trace_f tf);
@@ -43,5 +43,5 @@ typedef struct {
 #ifdef __cplusplus
 }
 #endif
- 
+
 #endif

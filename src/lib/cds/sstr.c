@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -42,12 +42,12 @@ int is_str_empty(const str_t *s)
 int str_cmp_zt(const str_t *a, const char *b)
 {
 	int i;
-	
+
 	if (!a) {
 		if (b) return 1;
 		else return 0;
 	}
-	
+
 	for (i = 0; (i < a->len) && (b[i]); i++) {
 		if (a->s[i] < b[i]) return -1;
 		if (a->s[i] > b[i]) return 1;
@@ -160,15 +160,15 @@ char *zt_strdup(const char* src)
 int str_nocase_equals(const str_t *a, const str_t *b)
 {
 	int i;
-	
+
 	if (!a) {
 		if (!b) return 0;
 		else return (b->len == 0) ? 0 : 1;
 	}
 	if (!b) return (a->len == 0) ? 0 : 1;
 	if (a->len != b->len) return 1;
-	
-	for (i = 0; i < a->len; i++) 
+
+	for (i = 0; i < a->len; i++)
 		if (tolower(a->s[i]) != tolower(b->s[i])) return 1;
 	return 0;
 }
@@ -176,15 +176,15 @@ int str_nocase_equals(const str_t *a, const str_t *b)
 int str_case_equals(const str_t *a, const str_t *b)
 {
 	int i;
-	
+
 	if (!a) {
 		if (!b) return 0;
 		else return (b->len == 0) ? 0 : 1;
 	}
 	if (!b) return (a->len == 0) ? 0 : 1;
 	if (a->len != b->len) return 1;
-	
-	for (i = 0; i < a->len; i++) 
+
+	for (i = 0; i < a->len; i++)
 		if (a->s[i] != b->s[i]) return 1;
 	return 0;
 }
@@ -195,7 +195,7 @@ int str_case_equals(const str_t *a, const str_t *b)
 	if ((s->len > 0) && (s->s)) cds_free(s->s);
 	s->len = 0;
 	s->s = NULL;
-} 
+}
 
 void str_free(str_t *s)
 {
@@ -230,7 +230,7 @@ char *str_str(const str_t *s, const str_t *search_for)
 
 	if (is_str_empty(search_for)) return s->s;
 	if (is_str_empty(s)) return NULL;
-	
+
 	if (search_for->len > s->len) return NULL;
 
 	j = 0;
@@ -254,12 +254,12 @@ int str_concat(str_t *dst, str_t *a, str_t *b)
 {
 	int al;
 	int bl;
-	
+
 	if (!dst) return -1;
-	
+
 	al = str_len(a);
 	bl = str_len(b);
-	
+
 	dst->len = al + bl;
 	if (dst->len > 0) {
 		dst->s = (char *)cds_malloc(dst->len);
@@ -273,10 +273,10 @@ int str_concat(str_t *dst, str_t *a, str_t *b)
 		dst->len = 0;
 		return 0;
 	}
-	
+
 	if (al) memcpy(dst->s, a->s, al);
 	if (bl) memcpy(dst->s + al, b->s, bl);
-	
+
 	return 0;
 }
 
@@ -286,11 +286,11 @@ int replace_str(const str_t *src, str_t *dst, const str_t *sample, const str_t *
 	char *c;
 	dstring_t str;
 	int res, len;
-	
+
 	/* if (!dst) return -1;
 	 if (!src) {
 		str_clear(dst);
-		return -1; 
+		return -1;
 	} */
 
 	if (is_str_empty(sample)) {
@@ -302,7 +302,7 @@ int replace_str(const str_t *src, str_t *dst, const str_t *sample, const str_t *
 		str_clear(dst);
 		return 0;
 	}
-	
+
 	s = *src;
 	dstr_init(&str, src->len + 32);
 	do {
@@ -317,7 +317,7 @@ int replace_str(const str_t *src, str_t *dst, const str_t *sample, const str_t *
 		}
 		else dstr_append_str(&str, &s);
 	} while (c);
-	
+
 	res = dstr_get_str(&str, dst);
 	dstr_destroy(&str);
 	return res;
