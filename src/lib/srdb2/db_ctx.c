@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -19,13 +19,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/** \ingroup DB_API 
- * @{ 
+/** \ingroup DB_API
+ * @{
  */
 
 #include "db_ctx.h"
@@ -235,7 +235,7 @@ int db_add_db(db_ctx_t *ctx, const char *uri)
 	}
 
 	/* We must create the db_con structure after lookup_ctx_data and associated
-	 * code above, this is to ensure that db_con in the DB driver gets called 
+	 * code above, this is to ensure that db_con in the DB driver gets called
 	 * after db_ctx in the same driver. db_con function might rely on the
 	 * previously created context structures
 	 */
