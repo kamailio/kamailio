@@ -77,15 +77,15 @@ modparam("kazoo", "amqp_consumer_event_subkey", "Event-Name")
 
 event_route[kazoo:consumer-event-presence-update]
 {
-# presence is the value extracted from Event-Category field in json payload 
-# update is the value extracted from Event-Name field in json payload 
+# presence is the value extracted from Event-Category field in json payload
+# update is the value extracted from Event-Name field in json payload
 xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.json,From})");
 ...
 }
 
 event_route[kazoo:consumer-event-presence]
 {
-# presence is the value extracted from Event-Category field in json payload 
+# presence is the value extracted from Event-Category field in json payload
 xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.json,From})");
 ...
 }
@@ -94,20 +94,20 @@ event_route[kazoo:consumer-event-event-category-event-name]
 {
 # event-category is the name of the amqp_consumer_event_key parameter
 # event-name is the name of the amqp_consumer_event_subkey parameter
-# this event route is executed if we can't find the previous 
+# this event route is executed if we can't find the previous
 ...
 }
 
 event_route[kazoo:consumer-event-event-category]
 {
 # event-category is the name of the amqp_consumer_event_key parameter
-# this event route is executed if we can't find the previous 
+# this event route is executed if we can't find the previous
 ...
 }
 
 event_route[kazoo:consumer-event]
 {
-# this event route is executed if we can't find the previous 
+# this event route is executed if we can't find the previous
 }
 
 </programlisting>
@@ -479,7 +479,7 @@ route[SOME_ROUTE]
 {
     $var(kz_timeout) = 12;
     kazoo_query(exchange, routingkey, payload);
-}    
+}
 
 ...
 </programlisting>
@@ -569,7 +569,7 @@ modparam("kazoo", "pua_mode", 0)
 ...
 $var(amqp_payload_request) = $_s({"Event-Category" : "directory", "Event-Name" : "reg_success", "Contact" : "$(ct{s.escape.common}{s.replace,\','}{s.replace,$$,})", "Call-ID" : "$ci", "Realm" : "$fd", "Username" : "$fU", "From-User" : "$fU", "From-Host" : "$fd", "To-User" : "$tU", "To-Host" : "$td", "User-Agent" : "$(ua{s.escape.common}{s.replace,\','}{s.replace,$$,})" });
 $var(amqp_routing_key) = "registration.success." + $(fd{kz.encode}) + "." + $fU;
-kazoo_publish("callmgr", $var(amqp_routing_key), $var(amqp_payload_request)); 
+kazoo_publish("callmgr", $var(amqp_routing_key), $var(amqp_payload_request));
 ...
 </programlisting>
 				</example>
@@ -712,7 +712,7 @@ event_route[kazoo:consumer-event-presence-update]
     xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.json,From})");
     kazoo_pua_publish($kzE);
     pres_refresh_watchers("$(kzE{kz.json,From})", "$(kzE{kz.json,Event-Package})", 1);
-}    
+}
 ...
 </programlisting>
 				</example>
