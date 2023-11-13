@@ -138,7 +138,7 @@ request_route {
 		<para>
 			This module includes several workarounds for various Openssl bugs
 			(like compression and Kerberos using the wrong memory allocations
-			functions, low memory problems a.s.o). On startup it will try to enable 
+			functions, low memory problems a.s.o). On startup it will try to enable
 			the needed workarounds based on the OpenSSL library version. Each time
 			a known problem is detected and a workaround is enabled, a message will
 			be logged. In general it is recommended to compile this module on the
@@ -163,7 +163,7 @@ request_route {
  			(see <varname>tls_disable_compression</varname>).
 		</para>
 		<para>
-			The TLS module includes workarounds for the following known openssl bugs: 
+			The TLS module includes workarounds for the following known openssl bugs:
 			<itemizedlist>
                         <listitem><para>
 			openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if compression is enabled,
@@ -173,7 +173,7 @@ request_route {
 			openssl #1468 (fix zlib compression memory allocation),
                         </para></listitem>
                         <listitem><para>
-			openssl #1467 (kerberos support will be disabled if the openssl version is less than 0.9.8e-beta1) 
+			openssl #1467 (kerberos support will be disabled if the openssl version is less than 0.9.8e-beta1)
                         </para></listitem>
                         <listitem><para>
 			openssl #1491 (stop using tls in low memory situations due to the very high risk of openssl crashing or leaking memory).
