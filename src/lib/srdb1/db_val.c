@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -45,7 +45,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 {
 	static str dummy_string = {"", 0};
 	static char dummy_string_buf[2];
-	
+
 	if (!_v) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
@@ -124,7 +124,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 			return 0;
 		}
 		break;
-	
+
 	case DB1_DOUBLE:
 		LM_DBG("converting DOUBLE [%s]\n", _s);
 		if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0) {
@@ -240,7 +240,7 @@ int db_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
 		*_len = snprintf(_s, *_len, "NULL");
 		return 0;
 	}
-	
+
 	switch(VAL_TYPE(_v)) {
 	case DB1_INT:
 		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {

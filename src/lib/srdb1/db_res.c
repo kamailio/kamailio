@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -187,7 +187,7 @@ int db_allocate_rows(db1_res_t* _res)
 	}
 	LM_DBG("allocate %d bytes for rows at %p\n", len, RES_ROWS(_res));
 	memset(RES_ROWS(_res), 0, len);
-	
+
 	return 0;
 }
 

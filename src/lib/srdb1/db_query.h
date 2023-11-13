@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -129,7 +129,7 @@ int db_do_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r,
  * \param _h structure representing database connection
  * \param _k key names
  * \param _v values of the keys
- * \param _n number of key/value pairs 
+ * \param _n number of key/value pairs
  * \param (*val2str) function pointer to the db specific val conversion function
  * \param (*submit_query) function pointer to the db specific query submit function
  * \return zero on success, negative on errors
@@ -238,5 +238,5 @@ int db_do_insert_delayed(const db1_con_t* _h, const db_key_t* _k, const db_val_t
  * \return zero on success, negative on errors
  */
 int db_query_init(void);
-    
+
 #endif

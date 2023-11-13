@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2005 iptel.org
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -84,7 +84,7 @@ static int dupl_string_name(char** dst, const char* begin, const char* end)
 
 
 /**
- * Parse a database URL of form 
+ * Parse a database URL of form
  * scheme://[username[:password]@]hostname[:port]/database
  *
  * \param id filled id struct
