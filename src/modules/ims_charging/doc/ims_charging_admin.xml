@@ -649,7 +649,7 @@ modparam("ims_charging", "service_context_id_mnc", "42")
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>voice_service_identifier</varname>(string)</title>
 
@@ -668,7 +668,7 @@ modparam("ims_charging", "voice_service_identifier", "1000")
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>voice_rating_group</varname>(string)</title>
 
@@ -706,7 +706,7 @@ modparam("ims_charging", "video_service_identifier", "1000")
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>video_rating_group</varname>(string)</title>
 
@@ -773,7 +773,7 @@ modparam("ims_charging", "service_context_id_release", "262")
       <title><varname>custom_user_avp</varname> (avp string)</title>
 
       <para>When this parameter is set and the contents of the AVP is not
-      empty, the User-AVP in the Ro-Charging-Request will be based on the 
+      empty, the User-AVP in the Ro-Charging-Request will be based on the
       this parameter rather than on the P-Asserted or From-Header.</para>
       <para>
       This parameter allows you to setup an AVP with which you can customise
@@ -887,14 +887,14 @@ modparam("ims_charging", "vendor_specific_id", 10)
           <para><emphasis>reservation_units</emphasis> how many units (at the
           moment seconds) should be reserved at the moment.</para>
         </listitem>
-	
+
 	<listitem>
-          <para><emphasis>incoming_trunk_id</emphasis> Identifies the trunk group 
+          <para><emphasis>incoming_trunk_id</emphasis> Identifies the trunk group
 	  from which this originates.</para>
         </listitem>
-	
+
 	<listitem>
-          <para><emphasis>outgoing_trunk_id</emphasis> Identifies the trunk 
+          <para><emphasis>outgoing_trunk_id</emphasis> Identifies the trunk
 	  group where this will be terminated.</para>
         </listitem>
       </itemizedlist>
@@ -913,7 +913,7 @@ modparam("ims_charging", "vendor_specific_id", 10)
     Ro_CCR("RO_ASYNC_TERM_REPLY", "term", 30, "1", "1");
 }
 
-route[CHARGING_CCR_REPLY] 
+route[CHARGING_CCR_REPLY]
   xlog("L_DBG","cca_return code is $avp(s:cca_return_code)\n");
   switch ($avp(s:cca_return_code)) {
     case 1: #success
@@ -938,7 +938,7 @@ route[CHARGING_CCR_REPLY]
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><function moreinfo="none">Ro_set_session_id_avp()</function>
       </title>
@@ -958,7 +958,7 @@ route[CHARGING_CCR_REPLY]
         </programlisting>
       </example>
     </section>
-    
+
   </section>
 
   <section>
