@@ -72,7 +72,7 @@ struct instance_list
 	struct instance_list *next;
 };
 
-/* 
+/*
  * Frees contact list used by load_contacts function
  */
 static inline void free_contact_list(struct contact *curr)
@@ -85,7 +85,7 @@ static inline void free_contact_list(struct contact *curr)
 	}
 }
 
-/* 
+/*
  * Frees instance list used by next_contacts function
  */
 static inline void free_instance_list(struct instance_list *curr)

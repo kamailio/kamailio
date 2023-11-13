@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -53,8 +53,8 @@
 								 assumes the REPLY_LOCK is not held (if it is
 								 => deadlock) */
 #define F_CANCEL_B_FORCE_C \
-	4 /* will send a cancel even if no reply was 
-								received; F_CANCEL_B_FAKE_REPLY will be 
+	4 /* will send a cancel even if no reply was
+								received; F_CANCEL_B_FAKE_REPLY will be
 								ignored */
 #define F_CANCEL_B_FORCE_RETR \
 	8					  /* will not stop request retr. on a branch
@@ -82,9 +82,9 @@ typedef void (*prepare_to_cancel_f)(
  * Can be called w/o REPLY_LOCK held
  *  between this call and the call to cancel_uacs()/cancel_branch()
  *  if noreply is set to 1 it will return true even if no reply was received
- *   (it will return false only if a final response or a cancel have already 
+ *   (it will return false only if a final response or a cancel have already
  *    been sent on the current branch).
- *  if noreply is set to 0 it will return true only if no cancel has already 
+ *  if noreply is set to 0 it will return true only if no cancel has already
  *   been sent and a provisional (<200) reply >=100 was received.
  *  WARNING: has side effects: marks branches that should be canceled
  *   and a second call won't return them again.
