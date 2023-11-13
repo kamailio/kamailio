@@ -1,4 +1,4 @@
-/* 
+/*
  * Flatstore module interface
  *
  * Copyright (C) 2004 FhG Fokus
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -59,11 +59,11 @@ db1_con_t *flat_db_init(const str *url)
 	}
 
 	/* We do not know the name of the table (and the name of the corresponding
-	 * file) at this point, we will simply store the path taken from the url 
-	 * parameter in the table variable, flat_use_table will then pick that 
+	 * file) at this point, we will simply store the path taken from the url
+	 * parameter in the table variable, flat_use_table will then pick that
 	 * value and open the file
 	 */
-	/* as the table (path) is a substring of the received str, we need to 
+	/* as the table (path) is a substring of the received str, we need to
 	 * allocate a separate str struct for it -bogdan
 	 */
 	res = pkg_malloc(
