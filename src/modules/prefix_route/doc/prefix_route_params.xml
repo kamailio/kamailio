@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="prefixroute.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<title>Parameters</title>
-	
+
 	<section id="prefixroute.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
@@ -22,7 +22,7 @@ modparam("prefix_route", "db_url", "mysql://ser:pass@db_host/ser")
 			</programlisting>
 		</example>
 	</section>
-	
+
 	<section id="prefixroute.db_table">
 		<title><varname>db_table</varname> (string)</title>
 		<para>
