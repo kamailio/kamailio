@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -66,7 +66,7 @@ void destroy_dlg_handlers(void);
 /*!
  * \brief Parse SIP message and populate leg informations
  *
- * Parse SIP message and populate leg informations. 
+ * Parse SIP message and populate leg informations.
  * \param dlg the dialog to add cseq, contact & record_route
  * \param msg sip message
  * \param t transaction
@@ -91,7 +91,7 @@ void dlg_onreq(tm_cell_t *t, int type, struct tmcb_params *param);
 
 /*!
  * \brief Function that is registered as RR callback for dialog tracking
- * 
+ *
  * Function that is registered as RR callback for dialog tracking. It
  * sets the appropriate events after the SIP method and run the state
  * machine to update the dialog state. It updates then the saved
