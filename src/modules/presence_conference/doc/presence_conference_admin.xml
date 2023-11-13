@@ -11,9 +11,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    
+
     <title>&adminguide;</title>
-    
+
     <section>
 	<title>Overview</title>
 	<para>
@@ -97,7 +97,7 @@ modparam("presence_conference", "default_expires", 3600)
 </section>
 
 	</section>
-	
+
 	<section>
 		<title>MI Commands</title>
 
@@ -113,7 +113,7 @@ modparam("presence_conference", "default_expires", 3600)
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
-			<listitem><para>none</para></listitem>	  
+			<listitem><para>none</para></listitem>
 		</itemizedlist>
 		<para>
 		MI FIFO Command Format:
