@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -13,13 +13,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* 
- * sctp one to many 
+/*
+ * sctp one to many
  */
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief SIP-router core ::
  * \ingroup core
  * Module: \ref core
  */
@@ -855,7 +855,7 @@ static int sctp_bind_sock(struct socket_info *sock_info)
 			if(ai->su.s.sa_family == AF_INET6)
 				LOG(L_ERR, "ERROR: sctp_bind_sock: might be caused by using a "
 						   "link local address, try site local or global\n");
-			/* try to continue, a secondary address bind failure is not 
+			/* try to continue, a secondary address bind failure is not
 			 * critical */
 		}
 	return 0;
@@ -1375,7 +1375,7 @@ static void sctp_con_add(struct sctp_con_elem* e)
 	unsigned hash;
 	DBG("sctp_con_add(%p) ( ser id %d, assoc_id %d)\n",
 			e, e->con.id, e->con.assoc_id);
-	
+
 	e->l.next_id=e->l.prev_id=0;
 	e->l.next_assoc=e->l.prev_assoc=0;
 #ifdef SCTP_ADDR_HASH
@@ -1640,7 +1640,7 @@ void sctp_con_tracking_flush()
 }
 
 
-/** using id, get the corresponding sctp assoc & socket. 
+/** using id, get the corresponding sctp assoc & socket.
  *  @param id - ser unique assoc id
  *  @param si  - result parameter, filled with the socket info on success
  *  @param remote - result parameter, filled with the address and port
@@ -1747,7 +1747,7 @@ skip_unlock:
 
 
 #ifdef SCTP_ADDR_HASH
-/** using the dest. & source socket, get the corresponding id and assoc_id 
+/** using the dest. & source socket, get the corresponding id and assoc_id
  *  @param remote   - peer address & port
  *  @param si       - local source socket
  *  @param assoc_id - result, filled with the sctp assoc_id
@@ -2070,7 +2070,7 @@ static char *sctp_paddr_change_state2s(unsigned int state)
 		case SCTP_ADDR_MADE_PRIM:
 			s = "SCTP_ADDR_MADE_PRIM";
 			break;
-		/* not supported by lksctp 1.0.6 
+		/* not supported by lksctp 1.0.6
 		case SCTP_ADDR_CONFIRMED:
 			s="SCTP_ADDR_CONFIRMED";
 			break;
@@ -2107,7 +2107,7 @@ static int sctp_handle_send_failed(struct socket_info *si,
 	retries = snp->sn_send_failed.ssf_info.sinfo_context;
 
 	/* don't retry on explicit remote error
-	 * (unfortunately we can't be more picky than this, we get no 
+	 * (unfortunately we can't be more picky than this, we get no
 	 * indication in the SEND_FAILED notification for other error
 	 * reasons (e.g. ABORT received, INIT timeout a.s.o)
 	 */
@@ -2203,7 +2203,7 @@ again:
 #endif /* SCTP_CONN_REUSE */
 			if(unlikely((unsigned)atomic_get(sctp_conn_no)
 						> (unsigned)cfg_get(sctp, sctp_cfg, max_assocs))) {
-				/* maximum assoc exceeded => we'll have to immediately 
+				/* maximum assoc exceeded => we'll have to immediately
 				   close it */
 				memset(&sinfo, 0, sizeof(sinfo));
 				sinfo.sinfo_flags = SCTP_UNORDERED | SCTP_ABORT;
@@ -2254,10 +2254,10 @@ again:
 		case SCTP_CANT_STR_ASSOC:
 			SCTP_STATS_CONNECT_FAILED();
 /* do nothing when failing to start an assoc
-			  (in this case we never see SCTP_COMM_UP so we never 
+			  (in this case we never see SCTP_COMM_UP so we never
 			  track the assoc) */
 #ifdef USE_DST_BLOCKLIST
-			/* blocklist only if send_retries is turned off (if on we don't 
+			/* blocklist only if send_retries is turned off (if on we don't
 			   know here if we did retry or we are at the first error) */
 			if(cfg_get(sctp, sctp_cfg, send_retries) == 0)
 				dst_blocklist_su(BLST_ERR_CONNECT, PROTO_SCTP, su, 0, 0);
@@ -2779,7 +2779,7 @@ static int sctp_msg_send_ext(struct dest_info *dst, char *buf, unsigned len,
 		msg.msg_namelen = tolen;
 #else  /* __OS_* */
 		/* fallback for solaris and others, sent back to
-		  the address recorded (not exactly what we want, but there's 
+		  the address recorded (not exactly what we want, but there's
 		  no way to fallback to dst->to) */
 		tolen = sockaddru_len(dst->to);
 		msg.msg_name = &dst->to.s;
