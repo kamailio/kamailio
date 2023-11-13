@@ -20,8 +20,8 @@
 				<function moreinfo="none">bind_presence(presence_api_t* api)</function>
 				</title>
 			<para>
-				This function binds the presence modules and fills the structure 
-				with one exported function -> add_event, which when called adds a 
+				This function binds the presence modules and fills the structure
+				with one exported function -> add_event, which when called adds a
 				new event to be handled by presence.
 			</para>
 		<example>
@@ -33,9 +33,9 @@ typedef struct presence_api {
 	contains_event_t contains_event;
 	search_event_t search_event;
 	get_event_list_t get_event_list;
-	
+
 	update_watchers_t update_watchers_status;
-	
+
 	/* subs hash table handling functions */
 	new_shtable_t new_shtable;
 	destroy_shtable_t destroy_shtable;
@@ -59,7 +59,7 @@ typedef struct presence_api {
 		</example>
 
 		</section>
-	
+
 	<section>
 		<title>
 		<function moreinfo="none">add_event</function>
@@ -93,13 +93,13 @@ typedef struct pres_ev
 	 *  0 - the standard mechanism (allocating new etag
 			for each Publish)
 	 *  1 - allocating an etag only
-			for an initial Publish 
+			for an initial Publish
 	*/
 	int req_auth;
 	get_rules_doc_t* get_rules_doc;
 	apply_auth_t*  apply_auth_nbody;
 	is_allowed_t*  get_auth_status;
-	
+
 	/* an agg_body_t function should be registered
 	 * if the event permits having multiple published
 	 * states and requires an aggregation of the information
@@ -122,9 +122,9 @@ typedef struct pres_ev
      */
     aux_body_processing_t* aux_body_processing;
     free_body_t* aux_free_body;
-	struct pres_ev* wipeer;			
+	struct pres_ev* wipeer;
 	struct pres_ev* next;
-	
+
 }pres_ev_t;
 ...
 </programlisting>
@@ -134,7 +134,7 @@ typedef struct pres_ev
 			<function moreinfo="none">get_rules_doc</function>
 		</title>
 		<para>
-		
+
 		</para>
 		<para>
 			Filed type:
@@ -147,11 +147,11 @@ typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
 		<para>
 		This function returns the authorization rules document that will be
 		used in obtaining the status of the subscription and processing the
-		notified body. A reference to the document should be put in the 
+		notified body. A reference to the document should be put in the
 		auth_rules_doc of the subs_t structure given as a parameter to the
 		functions described below.
 		</para>
-</section>	
+</section>
 
 <section>
 		<title>
@@ -161,11 +161,11 @@ typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
 			This filed is a function to be called for a subscription request
 			to return the state for that subscription according to
 			authorization rules. In the auth_rules_doc field of the subs_t
-			structure received as a parameter should contain the rules 
+			structure received as a parameter should contain the rules
 			document of the presentity in case, if it exists.
 		</para>
 		<para>
-			It is called only if the req_auth field is not 0. 
+			It is called only if the req_auth field is not 0.
 		</para>
 		<para>
 			Filed type:
@@ -175,15 +175,15 @@ typedef int (is_allowed_t)(struct subscription* subs);
 ...
 			</programlisting>
 			</para>
-</section>	
+</section>
 
 <section>
 		<title>
 			<function moreinfo="none">apply_auth_nbody</function>
 		</title>
 		<para>
-			This parameter should be a function to be called for an event 
-			that requires authorization, when constructing final body. 
+			This parameter should be a function to be called for an event
+			that requires authorization, when constructing final body.
 			The authorization document is taken from the auth_rules_doc
 			field of the subs_t structure given as a parameter.
 			It is called only if the req_auth field is not 0.
@@ -196,7 +196,7 @@ typedef int (apply_auth_t)(str* , struct subscription*, str** );
 ...
 			</programlisting>
 			</para>
-</section>			
+</section>
 
 <section>
 		<title>
@@ -213,12 +213,12 @@ typedef int (apply_auth_t)(str* , struct subscription*, str** );
 		Filed type:
 			<programlisting format="linespecific">
 ...
-typedef str* (agg_nbody_t)(str* pres_user, str* pres_domain, 
+typedef str* (agg_nbody_t)(str* pres_user, str* pres_domain,
 str** body_array, int n, int off_index);
 ..
 			</programlisting>
 		</para>
-</section>	
+</section>
 
 <section>
 		<title>
@@ -229,7 +229,7 @@ str** body_array, int n, int off_index);
 			on the info from database before being inserted in Notify
 			message body(if agg_nbody or apply_auth_nbody fields are
 			filled in). It should match the allocation function used when
-			processing the body.  
+			processing the body.
 		</para>
 		<para>
 		Filed type:
@@ -239,15 +239,15 @@ typedef void(free_body_t)(char* body);
 ..
 			</programlisting>
 		</para>
-</section>	
+</section>
 
 <section>
 		<title>
 			<function moreinfo="none">aux_body_processing</function>
 		</title>
 		<para>
-			This field must be set if the module needs to manipulate the NOTIFY body 
-			for each watcher. E.g. if the XML body includes a 'version' parameter which 
+			This field must be set if the module needs to manipulate the NOTIFY body
+			for each watcher. E.g. if the XML body includes a 'version' parameter which
 			will be increased for each NOTIFY, on a "per watcher" basis.
 			The module can either allocate a new buffer for the new body and return it (aux_free_body
 			function must be set too) or it manipulates the original body directly and returns NULL.
@@ -260,7 +260,7 @@ typedef str* (aux_body_processing_t)(struct subscription *subs, str* body);
 ..
 			</programlisting>
 		</para>
-</section>	
+</section>
 
 <section>
 		<title>
@@ -282,14 +282,14 @@ typedef void(free_body_t)(char* body);
 ..
 			</programlisting>
 		</para>
-</section>	
+</section>
 
 <section>
 		<title>
 			<function moreinfo="none">evs_publ_handl</function>
 		</title>
 		<para>
-		This function is called when handling Publish requests. Most contain 
+		This function is called when handling Publish requests. Most contain
 		body correctness check.
 		</para>
 		<para>
@@ -299,7 +299,7 @@ typedef int (publ_handling_t)(struct sip_msg*);
 ..
 			</programlisting>
 			</para>
-</section>	
+</section>
 
 <section>
 		<title>
@@ -317,7 +317,7 @@ typedef int (publ_handling_t)(struct sip_msg*);
 typedef int (subs_handling_t)(struct sip_msg*);
 ..
 </programlisting>
-</section>	
+</section>
 
 <section>
 	<title>
@@ -334,7 +334,7 @@ event_t* parsed_event);
 </programlisting>
 	<para>
 	The function parses the event name received as a parameter and searches
-	the result in the list. It returns the found event or NULL, if not found. 
+	the result in the list. It returns the found event or NULL, if not found.
 	If the second argument is an allocated event_t* structure it fills it
 	with the result of the parsing.
 	</para>
@@ -437,7 +437,7 @@ typedef void (*pres_free_presentity_t)(str *presentity, pres_ev_t *ev);
 ...
 </programlisting>
 	<para>
-	This function frees memory allocated by a call to 
+	This function frees memory allocated by a call to
 	<emphasis>get_presentity</emphasis>.  The <emphasis>ev</emphasis> parameter
 	MUST point to the same <emphasis>pres_ev_t</emphasis> data-structure
 	that was used in the call to <emphasis>get_presentity</emphasis>.
