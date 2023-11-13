@@ -20,7 +20,7 @@
 		<function moreinfo="none">dmq_load_api(dmq_api_t* api)</function>
 		</title>
 		<para>
-		This function binds the DMQ module and fills the structure 
+		This function binds the DMQ module and fills the structure
 		with the exported functions below.
 		</para>
 
@@ -43,7 +43,7 @@ typedef struct dmq_api {
                 <function moreinfo="none">register_dmq_peer(dmq_peer_t* peer)</function>
                 </title>
                 <para>
-                Registers an entity as a DMQ peer which permits receiving/sending 
+                Registers an entity as a DMQ peer which permits receiving/sending
                 messages between nodes which support the same peer.
                 </para>
 
@@ -63,10 +63,10 @@ typedef struct dmq_api {
                 dmq_resp_cback_t* resp_cback, int max_forwards, str* content_type)</function>
                 </title>
                 <para>
-                Broadcast a DMQ message to all nodes in the DMQ bus excluding self, 
+                Broadcast a DMQ message to all nodes in the DMQ bus excluding self,
 		inactive nodes and "except" if specified.
                 </para>
-		
+
                 <example>
                 <title><function>bcast_message</function> usage</title>
                 <programlisting format="linespecific">
