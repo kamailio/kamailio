@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -137,10 +137,10 @@ int delete_ucontact(urecord_t *_r, struct ucontact *_c);
  * \param _r record where to search the contacts
  * \param _c contact string
  * \param _callid callid
- * \param _path path 
+ * \param _path path
  * \param _cseq CSEQ number
  * \param _co found contact
- * \return 0 - found, 1 - not found, -1 - invalid found, 
+ * \return 0 - found, 1 - not found, -1 - invalid found,
  * -2 - found, but to be skipped (same cseq)
  */
 int get_ucontact(urecord_t *_r, str *_c, str *_callid, str *_path, int _cseq,
@@ -165,7 +165,7 @@ void release_urecord(urecord_t *_r);
  * \param _c contact string
  * \param _ci contact info (callid, cseq, instance, ...)
  * \param _co found contact
- * \return 0 - found, 1 - not found, -1 - invalid found, 
+ * \return 0 - found, 1 - not found, -1 - invalid found,
  * -2 - found, but to be skipped (same cseq)
  */
 int get_ucontact_by_instance(
