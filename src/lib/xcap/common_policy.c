@@ -186,7 +186,7 @@ int is_rule_for_uri(cp_rule_t *rule, const str_t *uri)
 	while(i) {
 		parse_uri(&i->entity, &u_, &d_);
 		/*		TRACE_LOG("comparing uris \'%.*s\' \'%.*s\' "
-				"domains \'%.*s\' \'%.*s\'\n", 
+				"domains \'%.*s\' \'%.*s\'\n",
 				FMT_STR(user), FMT_STR(u_),
 				FMT_STR(domain), FMT_STR(d_));*/
 		if(str_case_equals(&user, &u_) == 0) {
