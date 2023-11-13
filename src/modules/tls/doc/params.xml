@@ -107,7 +107,7 @@
 		compatibility with older clients SSLv23 is the option, but again, be aware
 		of security concerns, SSLv2/3 being considered very insecure by 2014.
 		For current information about what's considered secure, please consult,
-		IETF BCP 195, currently RFC 7525  - "Recommendations for Secure Use of 
+		IETF BCP 195, currently RFC 7525  - "Recommendations for Secure Use of
 		Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)"
 	</para>
 	<example>
@@ -200,7 +200,7 @@ modparam("tls", "private_key", "/usr/local/etc/kamailio/my_pkey.pem")
 		An easy way to create the CA list is to append each trusted trusted CA
 		certificate in the PEM format to one file, e.g.:
 	    <programlisting>
-for f in trusted_cas/*.pem ; do cat "$f" &gt;&gt; ca_list.pem ; done 
+for f in trusted_cas/*.pem ; do cat "$f" &gt;&gt; ca_list.pem ; done
 	    </programlisting>
 	</para>
 	<para>
@@ -319,7 +319,7 @@ modparam("tls", "crl", "/usr/local/etc/kamailio/crl.pem")
 <section id="tls.p.verify_certificate">
 	<title><varname>verify_certificate</varname> (boolean)</title>
 	<para>
-		If enabled it will force certificate verification when connecting to 
+		If enabled it will force certificate verification when connecting to
 		other SIP servers..
 		For more information see the
 		<ulink url="https://www.openssl.org/docs/manmaster/man1/verify.html">verify(1)</ulink>
@@ -469,8 +469,8 @@ modparam("tls", "connection_timeout", 60)
 		If set compression over TLS will be disabled.
 		Note that compression uses a lot of memory (about 10x more than with
 		the compression disabled), so if you want to minimize
-		memory usage is a good idea to disable it. TLS compression also 
-		expose you for the 
+		memory usage is a good idea to disable it. TLS compression also
+		expose you for the
  		<ulink url="https://en.wikipedia.org/wiki/CRIME_(security_exploit)">
 		CRIME</ulink> security vulnerability.
 	</para>
@@ -838,7 +838,7 @@ modparam("tls", "tls_debug", 10)
 		new TLS connections will start to fail. The value is expressed in KB.
 	</para>
 	<para>
-		The default value depends on whether the OpenSSL library used handles 
+		The default value depends on whether the OpenSSL library used handles
 		low memory situations in a good way (openssl bug #1491).
 		As of this writing this is not true for any OpenSSL version (including 0.9.8e).
 	</para>
@@ -958,7 +958,7 @@ modparam("tls", "low_mem_threshold2", -1)
 		<listitem>
 			<para>
 				the OpenSSL library used at compile time and the one used at
-				runtime have different Kerberos options 
+				runtime have different Kerberos options
 			</para>
 		</listitem>
 	</itemizedlist>
@@ -1209,7 +1209,7 @@ server_name_mode = 1
 	</programlisting>
 	</example>
 	<para>
-		For a more complete example check the <emphasis>tls.cfg</emphasis> distributed 
+		For a more complete example check the <emphasis>tls.cfg</emphasis> distributed
 		with the &kamailio; source (kamailio/modules/tls/tls.cfg).
 	</para>
 	<example>
