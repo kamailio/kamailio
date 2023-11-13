@@ -4,9 +4,9 @@
  * Copyright (C) 2015 Olle E. Johansson, Edvina AB
  *
  * This file is part of Kamailio, a free SIP server.
- * 
+ *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -17,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -37,7 +37,7 @@
 
 extern curl_con_t *_curl_con_root;
 
-/*! Count the number of connections 
+/*! Count the number of connections
  */
 unsigned int curl_connection_count();
 

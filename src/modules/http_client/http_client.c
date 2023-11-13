@@ -12,7 +12,7 @@
  * This file is part of Kamailio, a free SIP server.
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -477,8 +477,8 @@ static int fixup_curl_connect(void **param, int param_no)
 }
 
 /*
- * Fix curl_connect params when posting (5 parameters): 
- *	connection (string/pvar), url (string with pvars), content-type, 
+ * Fix curl_connect params when posting (5 parameters):
+ *	connection (string/pvar), url (string with pvars), content-type,
  *      data (string/pvar, pvar)
  */
 static int fixup_curl_connect_post(void **param, int param_no)
@@ -509,8 +509,8 @@ static int fixup_curl_connect_post(void **param, int param_no)
 }
 
 /*
- * Fix curl_connect params when posting (5 parameters): 
- *	connection (string/pvar), url (string with pvars), content-type, 
+ * Fix curl_connect params when posting (5 parameters):
+ *	connection (string/pvar), url (string with pvars), content-type,
  *      data (string(with no pvar parsing), pvar)
  */
 static int fixup_curl_connect_post_raw(void **param, int param_no)
