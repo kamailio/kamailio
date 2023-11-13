@@ -3,23 +3,23 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,20 +37,20 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 /**
  * \file
- * 
+ *
  * Interrogating-CSCF - Database operations
- * 
- * 
+ *
+ *
  *  \author Dragos Vingarzan vingarzan -at- fokus dot fraunhofer dot de
- * 
+ *
  */
 
 #include "db.h"
@@ -90,7 +90,7 @@ int ims_icscf_db_bind(char *db_url)
 
 
 /**
- *  Init the database connection 
+ *  Init the database connection
  * @param db_url - URL of the database
  * @param db_table_nds - name of the NDS table
  * @param db_table_scscf - name of the S-CSCF table
@@ -157,7 +157,7 @@ static str s_trusted_domain = {"trusted_domain", 14};
 /**
  *  Get the NDS list from the database.
  * @param d - array of string to fill with the db contents
- * @returns 1 on success, 0 on error 
+ * @returns 1 on success, 0 on error
  */
 int ims_icscf_db_get_nds(str *d[])
 {
@@ -245,7 +245,7 @@ static str s_s_cscf_uri = {"s_cscf_uri", 10};
 /**
  *  Get the S-CSCF names from the database and create the S-CSCF set.
  * @param cap - array of scscf_capabilities to fill with the db contents for the S-CSCF names
- * @returns 1 on success, 0 on error 
+ * @returns 1 on success, 0 on error
  */
 int ims_icscf_db_get_scscf(scscf_capabilities *cap[])
 {
@@ -321,7 +321,7 @@ static str s_capability = {"capability", 10};
 /**
  *  Get the S-CSCF capabilities from the database and fill the S-CSCF set.
  * @param cap - array of scscf_capabilities to fill with capabilities
- * @returns 1 on success, 0 on error 
+ * @returns 1 on success, 0 on error
  */
 int ims_icscf_db_get_capabilities(scscf_capabilities *cap[], int cap_cnt)
 {
