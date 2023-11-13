@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * LDAP Database Driver for SER
  *
@@ -18,7 +18,7 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
@@ -26,10 +26,10 @@
 #define _LD_CON_H
 
 /** \addtogroup ldap
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * Implementation of LDAP per-connection related data structures and functions.
  */
 
@@ -40,7 +40,7 @@
 #include <time.h>
 #include <ldap.h>
 
-/** 
+/**
  * Per-connection flags for LDAP connections.
  */
 enum ld_con_flags
@@ -52,7 +52,7 @@ enum ld_con_flags
 
 /** A structure representing a connection to a LDAP server.
  * This structure represents connections to LDAP servers. It contains
- * LDAP specific per-connection data, 
+ * LDAP specific per-connection data,
  */
 struct ld_con
 {
@@ -72,7 +72,7 @@ struct ld_con
 int ld_con(db_con_t *con);
 
 
-/** Establish a new connection to server.  
+/** Establish a new connection to server.
  * This function is called when a SER module calls db_connect to establish a
  * new connection to the database server.
  * @param con A structure representing database connection.
