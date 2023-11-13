@@ -54,7 +54,7 @@
 	(Linux, FreeBSD, DragonFly BSD, NetBSD).
 	</para>
     </section>
-    
+
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
     <xi:include href="eventroutes.xml"/>
