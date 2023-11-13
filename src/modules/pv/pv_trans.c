@@ -2563,6 +2563,10 @@ int tr_eval_val(
 					&& (*_p == ' ' || *_p == '\t' || *_p == '\n'))             \
 				_p++;                                                          \
 			while(is_in_str(_p, _in) && *_p >= '0' && *_p <= '9') {            \
+				if(_n > ((INT_MAX / 10) - 10)) {                               \
+					LM_ERR("number value is too large\n");                     \
+					goto error;                                                \
+				}                                                              \
 				_n = _n * 10 + *_p - '0';                                      \
 				_p++;                                                          \
 			}                                                                  \
