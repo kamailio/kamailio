@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <book id="uid_domain" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -40,7 +40,7 @@
 			the documentation. DID stands for "Domain IDentifier". In
 			traditional POST world the term DID has a different meaning
 			though. Please be aware that this is just pure coincidence.</para>
-			
+
 			<para>All domain names that belong to one virtual domain are
 			interchangeable. From SIP server's perspective there is no
 			difference between them. They can be used in SIP URIs
@@ -57,7 +57,7 @@
 			can use anything as long as it can be represented as string. The
 			only requirement is that the identifier of each virtual domain
 			must be unique.</para>
-		
+
 			<para>The following example illustrates how one virtual domain can
 			be represented. The iptel.org domain runs a public SIP
 			service. The users of the service can use SIP URIs of form
@@ -79,7 +79,7 @@ iptel
   +---213.192.59.75
 				</programlisting>
 			</example>
-			
+
 			<para>In the example above, we chose "iptel" as the unique
 			identifier for the virtual domain. This identifier is
 			permanent. It never changes. Over time we may change domain names
@@ -99,10 +99,10 @@ iptel
 +-------+-----------------+-------+
 | did   | domain          | flags |
 +-------+-----------------+-------+
-| iptel | iptel.org       |    33 | 
-| iptel | sip.iptel.org   |    33 | 
-| iptel | proxy.iptel.org |    33 | 
-| iptel | 213.192.59.75   |    33 | 
+| iptel | iptel.org       |    33 |
+| iptel | sip.iptel.org   |    33 |
+| iptel | proxy.iptel.org |    33 |
+| iptel | 213.192.59.75   |    33 |
 +-------+-----------------+-------+
 				</programlisting>
 			</example>
@@ -116,7 +116,7 @@ iptel
 			domain then joe will also be able to use the new domain name in
 			his SIP URI, without the need to change anything.</para>
 		</section>
-		
+
 		<section>
 			<title>Domain-level Configuration Attributes</title>
 			<para>In addition to a number of domain names, each virtual domain
@@ -128,7 +128,7 @@ iptel
 			different customers and each of the customers may have slightly
 			different configuration requirements. That's how domain-level
 			configuration attributes were born.</para>
-		
+
 			<para>Because the administrator of the SIP server seldom knows
 			configuration requirements in advance, we decided to implement a
 			generic solution and store all configuration options in named
@@ -143,7 +143,7 @@ iptel
 			configured for a particular user. In other words a domain level
 			attribute will only be effective if no user-level attribute with
 			the same name exists.</para>
-			
+
 			<para>Domain-level attributes are stored in a separate table. The
 			name of the table is domain_attrs and it is defined as follows:
 			</para>
@@ -154,11 +154,11 @@ iptel
 +-------+------------------+------+-----+---------+-------+
 | Field | Type             | Null | Key | Default | Extra |
 +-------+------------------+------+-----+---------+-------+
-| did   | varchar(64)      | YES  | MUL | NULL    |       | 
-| name  | varchar(32)      | NO   |     | NULL    |       | 
-| type  | int(11)          | NO   |     | 0       |       | 
-| value | varchar(255)     | YES  |     | NULL    |       | 
-| flags | int(10) unsigned | NO   |     | 0       |       | 
+| did   | varchar(64)      | YES  | MUL | NULL    |       |
+| name  | varchar(32)      | NO   |     | NULL    |       |
+| type  | int(11)          | NO   |     | 0       |       |
+| value | varchar(255)     | YES  |     | NULL    |       |
+| flags | int(10) unsigned | NO   |     | 0       |       |
 +-------+------------------+------+-----+---------+-------+
 				</programlisting>
 			</example>
@@ -209,7 +209,7 @@ iptel
 			attributes.</para>
 		</section>
 	</section>
-	
+
 	<section id="uid_domain.dep">
 		<title>Dependencies</title>
 		<para>
@@ -222,7 +222,7 @@ iptel
 	    </itemizedlist>
 		</para>
 	</section>
-	
+
 	<section id="uid_domain.known_limitations">
 		<title>Known Limitations</title>
 		<para>
@@ -231,7 +231,7 @@ iptel
 			reload will delete the original table still in use by the process.
 		</para>
 	</section>
-	
+
 	<xi:include href="params.xml"/>
 	<xi:include href="functions.xml"/>
 	<xi:include href="fifo.xml"/>
