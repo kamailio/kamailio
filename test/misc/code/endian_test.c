@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@
  *  compile/run with:
  *  gcc  -Wall endian_test.c ../endianness.c  -o endian_test; ./endian_test
  */
-/* 
+/*
  * History:
  * --------
  *  2008-06-13  created by andrei
@@ -33,7 +33,7 @@
  *           BYTE_ORDER == LITTLE_ENDIAN | BIG_ENDIAN
  * solaris: _LITTLE_ENDIAN | _BIG_ENDIAN
  *
- * Note: BIG_ENDIAN, LITTLE_ENDIAN, _BIG_ENDIAN, _LITTLE_ENDIAN cannot be 
+ * Note: BIG_ENDIAN, LITTLE_ENDIAN, _BIG_ENDIAN, _LITTLE_ENDIAN cannot be
  *       used always,  some OSes define both of them for BYTE_ORDER use
  *       (e.g. linux defines both BIG_ENDIAN & LITTLE_ENDIAN, bsds define
  *          _BIG_ENDIAN, _LITTLE_ENDIAN, BIG_ENDIAN, LITTLE_ENDIAN)
@@ -43,14 +43,14 @@
 
 #include <stdio.h>
 #include "../endianness.h"
-/* 
+/*
  * Tested:
  * linux:   y
  * freebsd: y
  * openbsd:
  * netbsd:
  * solaris: y
- * darwin: 
+ * darwin:
  * cygwin:
  *
  * Header files:
@@ -72,7 +72,7 @@
  *           BYTE_ORDER == LITTLE_ENDIAN | BIG_ENDIAN
  * solaris: _LITTLE_ENDIAN | _BIG_ENDIAN
  *
- * Note: BIG_ENDIAN, LITTLE_ENDIAN, _BIG_ENDIAN, _LITTLE_ENDIAN cannot be 
+ * Note: BIG_ENDIAN, LITTLE_ENDIAN, _BIG_ENDIAN, _LITTLE_ENDIAN cannot be
  *       used always,  some OSes define both of them for BYTE_ORDER use
  *       (e.g. linux defines both BIG_ENDIAN & LITTLE_ENDIAN, bsds define
  *          _BIG_ENDIAN, _LITTLE_ENDIAN, BIG_ENDIAN, LITTLE_ENDIAN)

@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
@@ -102,14 +102,14 @@ int ls_ifflags(char *name, int family, int options)
 	memset(&ifr, 0, sizeof(ifr)); /* init to 0 (check if filled)*/
 	s = socket(family, SOCK_DGRAM, 0);
 	strncpy(ifr.ifr_name, name, IFNAMSIZ);
-#if 0	
+#if 0
 	if (ioctl(s, SIOCGIFADDR, &ifr)==-1){
 		if(errno==EBADF) return 0; /* invalid descriptor => no address*/
-		fprintf(stderr, "ls_if: ioctl for %s failed: %s\n", name, 
+		fprintf(stderr, "ls_if: ioctl for %s failed: %s\n", name,
 					strerror(errno));
 		goto error;
 	};
-	
+
 	printf("%s:\n", ifr.ifr_name);
 	printf("        dbg: family=%d", ifr.ifr_addr.sa_family);
 #ifdef __FreeBSD__
@@ -121,7 +121,7 @@ int ls_ifflags(char *name, int family, int options)
 		printf("ls_if: OS BUG: SIOCGIFADDR doesn't work!\n");
 		goto error;
 	}
-	
+
 	printf("        ");
 	print_sockaddr(&ifr.ifr_addr);
 

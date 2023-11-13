@@ -21,27 +21,27 @@
  *
  * cycles_t get_cpu_cycles() - returns the current cpu cycles counter
  *
- * void     get_cpu_cycles_uint(unsigned* u1, unsigned* u2) 
- *                            - sets u1 and u2 to the least significant, 
+ * void     get_cpu_cycles_uint(unsigned* u1, unsigned* u2)
+ *                            - sets u1 and u2 to the least significant,
  *                              respective most significant 32 bit word of
  *                              the cpu cycles counter
  * struct profile_data;            - holds all the profile results
  *                               (last call cycles, max cycles, total cycles,
- *                                no. of profile_start calls, no. of 
+ *                                no. of profile_start calls, no. of
  *                                profile_end calls, name use in profile_init)
  * void     profile_init(pd, name) - initialize a profile structure
  * void     profile_start(pd)      - starts profiling (call before calling
  *                               the target function)
  * void     profile_end(pd)        - stops profiling (call after the target
  *                               function returns)
- * 
+ *
  */
 /*
  * Config defines:   CC_GCC_LIKE_ASM  - the compiler support gcc style
  *                     inline asm,
  *                  __CPU_x86, __CPU_x86_64, __CPU_sparc64
  */
-/* 
+/*
  * History:
  * --------
  *  2007-06-23  created by andrei
@@ -58,8 +58,8 @@
  *            (unsigned long long for now)
  *
  * cycles_t get_cpu_cycles() - returns the current cpu cycles counter
- * void     get_cpu_cycles_uint(unsigned* u1, unsigned* u2) 
- *                            - sets u1 and u2 to the least significant, 
+ * void     get_cpu_cycles_uint(unsigned* u1, unsigned* u2)
+ *                            - sets u1 and u2 to the least significant,
  *                              respective most significant 32 bit word of
  *                              the cpu cycles counter
  */

@@ -2,18 +2,18 @@
  *
  *  simple atomic ops testing program
  *  (no paralel stuff, just see if the opcodes are "legal")
- * 
+ *
  *  Compile with: gcc -Wall -O3 -D__CPU_i386  on x86 machines
  *                gcc -Wall -O3 -D__CPU_x86_64 on amd64 machines
  *                gcc -mips2 -Wall -O2 -D__CPU_mips2  on mips machines
  *                gcc -m64 -Wall -O2 -D__CPU_mips64 on mips64 machines
  *                gcc -O3 -Wall -D__CPU_ppc on powerpc machines
  *                gcc -m64 -O3 -Wall -D__CPU_ppc64 on powerpc machines
- *                gcc -m64 -O3 -Wall -D__CPU_sparc64 -DSPARC64_MODE on 
+ *                gcc -m64 -O3 -Wall -D__CPU_sparc64 -DSPARC64_MODE on
  *                                                   ultrasparc machines
  *  -- andrei
  *
- *  
+ *
  */
 
 #include <stdio.h>
