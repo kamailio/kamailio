@@ -19,7 +19,7 @@
         (HELD). This module implements the basic functionality to get or parse
         location information (civic and geodetic) and to query a mapping service
         (LOST) in order to get next hop based on location and service urn either
-        specified or provided with the request. 
+        specified or provided with the request.
         </para>
         <para>
         This module implements protocol functions that use the http_client api
@@ -48,7 +48,7 @@
         <para>
         The function lost_query allows &kamailio; to assemble a LOST
         findService request  as defined in RFC5222
-        (<ulink url="https://tools.ietf.org/html/rfc5255"/>) to query 
+        (<ulink url="https://tools.ietf.org/html/rfc5255"/>) to query
         routing information for a given (geodetic or civic) location and a service
         URN. Both, PIDF-LO and service URN may be provided as function parameter,
         or are taken from the request message if applicable. The findServiceResponse
@@ -135,7 +135,7 @@
             <para>
             The value is expressed as integer, either -1 'emergencyDispatch', 0 'emergencyRouting',
             a non-negative integer (>0) in units of milliseconds.
-            Note: The time value is indicative only. 
+            Note: The time value is indicative only.
             </para>
             <para>
             Default: 0 ('emergencyRouting')
@@ -445,7 +445,7 @@ xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
                 <listitem><para>
                     <emphasis>203</emphasis> - received 200 OK with location-info and locationURI element
                 </para></listitem>
-            </itemizedlist>            
+            </itemizedlist>
 			<para>
 			This function can be used from REQUEST_ROUTE,
 			ONREPLY_ROUTE, FAILURE_ROUTE, and BRANCH_ROUTE.
@@ -471,7 +471,7 @@ if ($hdr(Geolocation)=~"^&lt;http.*$") {
 			<para>
 			Sends a LOST findService request to a given connection. PIDF-LO and URN are either specified,
             or, if omitted, parsed from the message body (PIDF-LO) and request line (URN). Either "pidf-lo"
-            or "urn" can be set to an empty string in order to be ignored. 
+            or "urn" can be set to an empty string in order to be ignored.
 	    	</para>
 			<itemizedlist>
                 <listitem><para>
