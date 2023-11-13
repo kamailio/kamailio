@@ -106,7 +106,7 @@ modparam("stirshaken", "vs_verify_x509_cert_path", 1)
 		<title><varname>vs_ca_dir</varname> (str)</title>
 		<para>
 		The path to folder containing CA root certificates with names hashed. If set then must point to existing directory.
-		This must be set when enabled X509 certificate path check, otherwise no end entity certificate will pass that check. 
+		This must be set when enabled X509 certificate path check, otherwise no end entity certificate will pass that check.
 		This param has no meaning for calls to stirshaken_check_identity_with_key(key) and stirshaken_check_identity_with_cert(cert).
 		</para>
 		<para>
@@ -127,7 +127,7 @@ modparam("stirshaken", "vs_ca_dir", "/path/to/ca_dir")
 		<title><varname>vs_crl_dir</varname> (str)</title>
 		<para>
 		The path to folder containing CRLs. If set, then must point to existing directory.
-		This is optional when X509 certificate path check is enabled, only vs_ca_dir is mandatory. 
+		This is optional when X509 certificate path check is enabled, only vs_ca_dir is mandatory.
 		If X509 certificate path check is enabled, and vs_crl_dir is set, then CRLs are loaded from this directory,
 		which renders revoked certificates invalid (not trusted).
 		This param has no meaning for calls to stirshaken_check_identity_with_key(key) and stirshaken_check_identity_with_cert(cert).
@@ -171,8 +171,8 @@ modparam("stirshaken", "vs_identity_expire_s", 20)
 		During a call verification with stirshaken_check_identity() a blocking HTTP(s) call is executed to download certificate
 		referenced in PASSporT (unless certificate caching is turned on and a valid cert is found in cache).
 		This parameter defines a maximum time in seconds for this blocking HTTP(s) connection to be established.
-		After this time had passed and connection did not succeed (could not resolve host, address unreachable or other network errors) 
-		a call to stirshaken_check_identity() will return with error. 
+		After this time had passed and connection did not succeed (could not resolve host, address unreachable or other network errors)
+		a call to stirshaken_check_identity() will return with error.
 		This param has no meaning for calls to stirshaken_check_identity_with_key(key) and stirshaken_check_identity_with_cert(cert).
 		</para>
 		<para>
