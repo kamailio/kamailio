@@ -151,9 +151,9 @@ modparam("seas", "listen_sockets","127.0.0.1:5080")
 
             <programlisting format="linespecific">
 ...
-if (!as_relay_t("app_server_1")) { 
-log("Error sending to app server"); 
-t_reply("500","App Server not connected"); 
+if (!as_relay_t("app_server_1")) {
+log("Error sending to app server");
+t_reply("500","App Server not connected");
 }
 ...
 </programlisting>
@@ -220,7 +220,7 @@ t_reply("500","App Server not connected");
 
             <para><programlisting>public final class Hello extends HttpServlet {
 protected void doGet(HttpServletRequest request,HttpServletResponse response)
-      throws IOException, ServletException 
+      throws IOException, ServletException
     {
 response.setContentType("text/html");
 PrintWriter writer = response.getWriter();
@@ -279,7 +279,7 @@ writer.println("&lt;/html&gt;");
             <title>Typical Sip Servlet Example</title>
 
             <para><programlisting>public class ProxyServlet extends SipServlet {
-    protected void doInvite(SipServletRequest req) throws 
+    protected void doInvite(SipServletRequest req) throws
 ServletException, IOException
     {
         if (req.isInitial()) {
@@ -295,7 +295,7 @@ ServletException, IOException
             log("re-INVITE");
         }
     }
-    protected void doAck(SipServletRequest req) throws 
+    protected void doAck(SipServletRequest req) throws
 ServletException, IOException
     {
         log("doAck " + req.getRequestURI());
