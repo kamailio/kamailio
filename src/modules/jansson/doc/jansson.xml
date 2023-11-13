@@ -35,8 +35,8 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="jansson_admin.xml"/>
-    
-    
+
+
 </book>
