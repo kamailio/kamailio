@@ -264,7 +264,7 @@ static int ki_mqtt_publish(sip_msg_t *msg, str *topic, str *payload, int qos)
 }
 
 /**
- * 
+ *
  */
 static int fixup_mqtt_publish(void **param, int param_no)
 {
@@ -281,7 +281,7 @@ static int fixup_mqtt_publish(void **param, int param_no)
 }
 
 /**
- * Subscribe to the given topic. 
+ * Subscribe to the given topic.
  * Mqtt qos levels 0, 1 and 2 can be used.
  * Used in cfg script.
  */
@@ -313,7 +313,7 @@ static int cmd_mqtt_subscribe(sip_msg_t *msg, char *topic, char *qos)
 }
 
 /**
- * Subscribe to the given topic. 
+ * Subscribe to the given topic.
  * Mqtt qos levels 0, 1 and 2 can be used.
  * Used in kemi script.
  */
@@ -330,7 +330,7 @@ static int ki_mqtt_subscribe(sip_msg_t *msg, str *topic, int qos)
 }
 
 /**
- * 
+ *
  */
 static int fixup_mqtt_subscribe(void **param, int param_no)
 {
