@@ -11,11 +11,11 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-	
+
 	<title>&develguide;</title>
 
 	<para>
-	The benchmark module provides an internal <acronym>API</acronym> to be used by 
+	The benchmark module provides an internal <acronym>API</acronym> to be used by
 	other &kamailio; modules. The available functions are identical to the user exported
 	functions.
 	</para>
