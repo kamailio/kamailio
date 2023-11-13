@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -36,7 +36,7 @@ typedef struct {
 	str_t auth_user;
 	/** password used for authentication */
 	str_t auth_pass;
-	/** Accept unverifiable peers (ignore information 
+	/** Accept unverifiable peers (ignore information
 	 * stored in certificate and trust a certificate
 	 * without know CA). */
 	int enable_unverified_ssl_peer;
@@ -50,7 +50,7 @@ typedef enum {
 } xcap_document_type_t;
 
 char *xcap_uri_for_users_document(xcap_document_type_t doc_type,
-		const str_t *username, 
+		const str_t *username,
 		const str_t*filename,
 		xcap_query_params_t *params);
 
@@ -58,15 +58,15 @@ char *xcap_uri_for_global_document(xcap_document_type_t doc_type,
 		const str_t *filename,
 		xcap_query_params_t *params);
 
-/** Sends a XCAP query to the destination and using parameters from 
+/** Sends a XCAP query to the destination and using parameters from
  * query variable a returns received data in output variables buf
  * and bsize. */
 /* URI is absolute HTTP/HTTPS uri for the query  */
-int xcap_query(const char *uri, xcap_query_params_t *params, 
+int xcap_query(const char *uri, xcap_query_params_t *params,
 		char **buf, int *bsize);
 
-typedef int (*xcap_query_func)(const char *uri, 
-		xcap_query_params_t *params, 
+typedef int (*xcap_query_func)(const char *uri,
+		xcap_query_params_t *params,
 		char **buf, int *bsize);
 
 void free_xcap_params_content(xcap_query_params_t *params);

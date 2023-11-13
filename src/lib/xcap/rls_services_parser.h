@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -38,22 +38,22 @@ typedef struct _packages_t {
 	SEQUENCE(package_t) package;
 } packages_t;
 
-typedef enum { 
+typedef enum {
 	stc_list,
 	stc_resource_list,
 } service_content_type_t;
 
 typedef struct _service_t {
 	SEQUENCE_ABLE(struct _service_t)
-		
+
 	packages_t *packages;
-	
+
 	service_content_type_t content_type;
 	union {
 		list_t *list;
 		char *resource_list; /* uri */
 	} content;
-	
+
 	char *uri;
 } service_t;
 

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -41,7 +41,7 @@ static int read_entry_ref(xmlNode *entry_node, entry_ref_t **dst)
 {
 	xmlAttr *a;
 	const char *a_val;
-	
+
 	/* allocate memory and prepare empty node */
 	if (!dst) return -1;
 	*dst = (entry_ref_t*)cds_malloc(sizeof(entry_ref_t));
@@ -61,7 +61,7 @@ static int read_name(xmlNode *name_node, display_name_t **dst)
 {
 	xmlAttr *a;
 	const char *a_val;
-	
+
 	/* allocate memory and prepare empty node */
 	if (!dst) return -1;
 	*dst = (display_name_t*)cds_malloc(sizeof(display_name_t));
@@ -86,7 +86,7 @@ static int read_names(xmlNode *entry_node, display_name_t **dst)
 	xmlNode *n;
 	display_name_t *name, *last;
 	int res = 0;
-	
+
 	last = NULL;
 	*dst = NULL;
 	n = entry_node->children;
@@ -112,7 +112,7 @@ static int read_entry(xmlNode *entry_node, entry_t **dst)
 {
 	xmlAttr *a;
 	const char *a_val;
-	
+
 	/* allocate memory and prepare empty node */
 	if (!dst) return -1;
 	*dst = (entry_t*)cds_malloc(sizeof(entry_t));
@@ -133,7 +133,7 @@ static int read_external(xmlNode *entry_node, external_t **dst)
 {
 	xmlAttr *a;
 	const char *a_val;
-	
+
 	/* allocate memory and prepare empty node */
 	if (!dst) return -1;
 	*dst = (external_t*)cds_malloc(sizeof(external_t));
@@ -156,7 +156,7 @@ int read_list(xmlNode *list_node, list_t **dst, int read_content_only)
 	const char *a_val;
 	xmlNode *n;
 	list_content_t *l, *last_l;
-	
+
 	/* allocate memory and prepare empty node */
 	if (!dst) return -1;
 	*dst = (list_t*)cds_malloc(sizeof(list_t));
@@ -180,7 +180,7 @@ int read_list(xmlNode *list_node, list_t **dst, int read_content_only)
 			l = (list_content_t*) cds_malloc(sizeof(list_content_t));
 			if (!l) return -1;
 			memset(l, 0, sizeof(*l));
-			
+
 			if (cmp_node(n, "list", rl_namespace) >= 0) {
 				res = read_list(n, &l->u.list, 0);
 				if (res == 0) {
@@ -192,7 +192,7 @@ int read_list(xmlNode *list_node, list_t **dst, int read_content_only)
 				}
 				else break;
 			}
-			
+
 			if (cmp_node(n, "entry", rl_namespace) >= 0) {
 				res = read_entry(n, &l->u.entry);
 				if (res == 0) {
@@ -204,7 +204,7 @@ int read_list(xmlNode *list_node, list_t **dst, int read_content_only)
 				}
 				else break;
 			}
-			
+
 			if (cmp_node(n, "entry-ref", rl_namespace) >= 0) {
 				res = read_entry_ref(n, &l->u.entry_ref);
 				if (res == 0) {
@@ -216,7 +216,7 @@ int read_list(xmlNode *list_node, list_t **dst, int read_content_only)
 				}
 				else break;
 			}
-			
+
 			if (cmp_node(n, "external", rl_namespace) >= 0) {
 				res = read_external(n, &l->u.external);
 				if (res == 0) {
@@ -228,16 +228,16 @@ int read_list(xmlNode *list_node, list_t **dst, int read_content_only)
 				}
 				else break;
 			}
-			
+
 			if (l) {
 				cds_free(l);
 				l = NULL;
 			}
-			
+
 		}
 		n = n->next;
 	}
-	
+
 	return 0;
 }
 
@@ -248,11 +248,11 @@ static int read_resource_lists(xmlNode *root, resource_lists_t **dst)
 	xmlNode *n;
 	list_t *l, *last_l;
 	int res = 0;
-	
+
 	if (!dst) return -1;
 	else *dst = NULL;
 	if (!root) return -1;
-	
+
 	if (cmp_node(root, "resource-lists", rl_namespace) < 0) {
 		ERROR_LOG("document is not a resource-lists\n");
 		return -1;
@@ -262,7 +262,7 @@ static int read_resource_lists(xmlNode *root, resource_lists_t **dst)
 	if (!rl) return -2;
 	*dst = rl;
 	rl->lists = NULL;
-	
+
 	last_l = NULL;
 	n = root->children;
 	while (n) {
@@ -292,7 +292,7 @@ int parse_resource_lists_xml(const char *data, int data_len, resource_lists_t **
 		ERROR_LOG("can't parse document\n");
 		return -1;
 	}
-	
+
 	res = read_resource_lists(xmlDocGetRootElement(doc), dst);
 
 	xmlFreeDoc(doc);
@@ -310,7 +310,7 @@ int parse_list_xml(const char *data, int data_len, list_t **dst)
 		ERROR_LOG("can't parse document\n");
 		return -1;
 	}
-	
+
 	res = read_list(xmlDocGetRootElement(doc), dst, 0);
 
 	xmlFreeDoc(doc);
@@ -328,7 +328,7 @@ int parse_as_list_content_xml(const char *data, int data_len, list_t **dst)
 		ERROR_LOG("can't parse document\n");
 		return -1;
 	}
-	
+
 	res = read_list(xmlDocGetRootElement(doc), dst, 1);
 
 	xmlFreeDoc(doc);
@@ -346,7 +346,7 @@ int parse_entry_xml(const char *data, int data_len, entry_t **dst)
 		ERROR_LOG("can't parse document\n");
 		return -1;
 	}
-	
+
 	res = read_entry(xmlDocGetRootElement(doc), dst);
 
 	xmlFreeDoc(doc);
@@ -364,25 +364,25 @@ void free_display_name(display_name_t *n)
 void free_display_names(display_name_t *sequence_first)
 {
 	display_name_t *d, *n;
-	
+
 	if (!sequence_first) return;
-	
+
 	d = SEQUENCE_FIRST(sequence_first);
 	while (d) {
 		n = SEQUENCE_NEXT(d);
 		free_display_name(d);
 		d = n;
 	}
-	
+
 }
 
 void free_entry(entry_t *e)
 {
 	if (!e) return;
-	
+
 	if (e->uri) cds_free(e->uri);
 	free_display_names(e->display_names);
-	
+
 	cds_free(e);
 }
 
@@ -405,7 +405,7 @@ void free_list(list_t *l)
 	list_content_t *e, *f;
 
 	if (!l) return;
-	
+
 	if (l->name) cds_free(l->name);
 
 	e = SEQUENCE_FIRST(l->content);
@@ -429,7 +429,7 @@ void free_resource_lists(resource_lists_t *rl)
 {
 	list_t *e, *f;
 	if (!rl) return;
-	
+
 	e = SEQUENCE_FIRST(rl->lists);
 	while (e) {
 		f = SEQUENCE_NEXT(e);

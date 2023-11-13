@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -40,7 +40,7 @@ int get_msg_rules(const str_t *username, const str_t *filename,
 	int dsize = 0;
 	char *uri = NULL;
 	int res = RES_OK;
-	
+
 	uri = xcap_uri_for_users_document(xcap_doc_im_rules,
 				username, filename,
 				xcap_params);
@@ -49,7 +49,7 @@ int get_msg_rules(const str_t *username, const str_t *filename,
 		ERROR_LOG("can't build XCAP uri\n");
 		return RES_XCAP_QUERY_ERR;
 	}
-	
+
 	res = xcap_query(uri, xcap_params, &data, &dsize);
 	if (res != RES_OK) {
 		DEBUG_LOG("XCAP problems for uri \'%s\'\n", uri);
@@ -58,7 +58,7 @@ int get_msg_rules(const str_t *username, const str_t *filename,
 		return RES_XCAP_QUERY_ERR;
 	}
 	cds_free(uri);
-	
+
 	/* parse input data */
 	res = parse_msg_rules(data, dsize, dst);
 	if (res != RES_OK) {
@@ -69,22 +69,22 @@ int get_msg_rules(const str_t *username, const str_t *filename,
 	return res;
 }
 
-int get_msg_rules_action(cp_ruleset_t *r, const str_t *wuri, 
+int get_msg_rules_action(cp_ruleset_t *r, const str_t *wuri,
 		msg_handling_t *dst_action)
 {
 	int res = 1; /* rule not found */
 	cp_rule_t *rule;
 	msg_handling_t a = msg_handling_block;
 	msg_handling_t aa;
-	
+
 	if (!r) return -1;
-	
+
 	rule = r->rules;
 	while (rule) {
-		DEBUG_LOG("TRYING rule %.*s for uri %.*s\n", 
+		DEBUG_LOG("TRYING rule %.*s for uri %.*s\n",
 					FMT_STR(rule->id), FMT_STR(*wuri));
 		if (is_rule_for_uri(rule, wuri)) {
-			DEBUG_LOG("rule %.*s matches for uri %.*s\n", 
+			DEBUG_LOG("rule %.*s matches for uri %.*s\n",
 					FMT_STR(rule->id), FMT_STR(*wuri));
 
 			if (!rule->actions) continue;
@@ -96,16 +96,16 @@ int get_msg_rules_action(cp_ruleset_t *r, const str_t *wuri,
 		rule = rule->next;
 	}
 	if (dst_action && (res == 0)) *dst_action = a;
-	
+
 	return res;
 }
 
 void free_msg_actions(cp_actions_t *a)
 {
 	cp_unknown_t *u, *nu;
-	
+
 	if (!a) return;
-	
+
 	u = a->unknown;
 	while (u) {
 		nu = u->next;

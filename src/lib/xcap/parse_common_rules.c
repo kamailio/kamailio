@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -42,7 +42,7 @@ static int read_sphere(xmlNode *n, cp_sphere_t **dst)
 	if (!(*dst)) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(**dst));
 	(*dst)->next = NULL;
-	
+
 	str_dup_zt(&(*dst)->value, get_node_value(n));
 	return RES_OK;
 }
@@ -53,10 +53,10 @@ static int read_validity(xmlNode *n, cp_validity_t **dst)
 	*dst = (cp_validity_t*)cds_malloc(sizeof(cp_validity_t));
 	if (!(*dst)) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(**dst));
-	
+
 	from = get_node_value(find_node(n, "from", common_policy_ns));
 	to = get_node_value(find_node(n, "to", common_policy_ns));
-	
+
 	(*dst)->from = xmltime2time(from);
 	(*dst)->to = xmltime2time(to);
 	return RES_OK;
@@ -68,7 +68,7 @@ static int read_id(xmlNode *n, cp_id_t **dst)
 	if (!(*dst)) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(**dst));
 	(*dst)->next = NULL;
-	
+
 	get_str_attr(n, "entity", &(*dst)->entity);
 	if ((*dst)->entity.len == 0) {
 		/* hack - eyeBeams format differs from draft ! */
@@ -84,7 +84,7 @@ static int read_domain(xmlNode *n, cp_domain_t **dst)
 	if (!(*dst)) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(**dst));
 	(*dst)->next = NULL;
-	
+
 	get_str_attr(n, "domain", &(*dst)->domain);
 	return RES_OK;
 }
@@ -95,7 +95,7 @@ static int read_except(xmlNode *n, cp_except_t **dst)
 	if (!(*dst)) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(**dst));
 	(*dst)->next = NULL;
-	
+
 	get_str_attr(n, "entity", &(*dst)->entity);
 	return RES_OK;
 }
@@ -106,7 +106,7 @@ static int read_except_domain(xmlNode *n, cp_except_domain_t **dst)
 	if (!*dst) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(**dst));
 	(*dst)->next = NULL;
-	
+
 	get_str_attr(n, "domain", &(*dst)->domain);
 	return RES_OK;
 }
@@ -117,11 +117,11 @@ static int read_any_identity(xmlNode *an, cp_any_identity_t **dst)
 	cp_except_domain_t *except, *last_except = NULL;
 	xmlNode *n;
 	int res = RES_OK;
-	
+
 	*dst = (cp_any_identity_t*)cds_malloc(sizeof(cp_any_identity_t));
 	if (!*dst) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(**dst));
-	
+
 	n = an->children;
 	while (n) {
 		if (n->type == XML_ELEMENT_NODE) {
@@ -136,7 +136,7 @@ static int read_any_identity(xmlNode *an, cp_any_identity_t **dst)
 				LINKED_LIST_ADD((*dst)->except_domains, last_except, except);
 			}
 		}
-		
+
 		n = n->next;
 	}
 	return res;
@@ -149,7 +149,7 @@ static int read_identity(xmlNode *idn, cp_identity_t **dst)
 	cp_except_t *except, *last_except = NULL;
 	xmlNode *n;
 	int res = RES_OK;
-	
+
 	*dst = (cp_identity_t*)cds_malloc(sizeof(cp_identity_t));
 	if (!*dst) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(**dst));
@@ -177,10 +177,10 @@ static int read_identity(xmlNode *idn, cp_identity_t **dst)
 				if (res != 0) break;
 			}
 		}
-		
+
 		n = n->next;
 	}
-	
+
 	return res;
 }
 
@@ -190,11 +190,11 @@ static int read_conditions(xmlNode *cn, cp_conditions_t **dst)
 	int res = RES_OK;
 	cp_sphere_t *sphere, * last_sphere = NULL;
 	if ((!cn) || (!dst)) return RES_INTERNAL_ERR;
-	
+
 	*dst = (cp_conditions_t*)cds_malloc(sizeof(cp_conditions_t));
 	if (!(*dst)) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(cp_conditions_t));
-	
+
 	n = cn->children;
 	while (n) {
 		if (n->type == XML_ELEMENT_NODE) {
@@ -217,7 +217,7 @@ static int read_conditions(xmlNode *cn, cp_conditions_t **dst)
 					}
 					/* else process other elements ? */
 				}
-				
+
 			}
 		}
 		n = n->next;
@@ -230,7 +230,7 @@ static int read_transformations(xmlNode *tn, cp_transformations_t **dst)
 {
 	int res = RES_OK;
 	if ((!tn) || (!dst)) return RES_INTERNAL_ERR;
-	
+
 	*dst = (cp_transformations_t*)cds_malloc(sizeof(cp_transformations_t));
 	if (!*dst) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(cp_transformations_t));
@@ -240,14 +240,14 @@ static int read_transformations(xmlNode *tn, cp_transformations_t **dst)
 	return res;
 }
 
-static int read_rule(xmlNode *rn, cp_rule_t **dst, 
+static int read_rule(xmlNode *rn, cp_rule_t **dst,
 		cp_read_actions_func read_actions,
 		cp_free_actions_func free_actions)
 {
 	xmlNode *n;
 	int res = RES_OK;
 	if ((!rn) || (!dst)) return RES_INTERNAL_ERR;
-	
+
 	*dst = (cp_rule_t*)cds_malloc(sizeof(cp_rule_t));
 	if (!*dst) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(cp_rule_t));
@@ -256,13 +256,13 @@ static int read_rule(xmlNode *rn, cp_rule_t **dst,
 
 	n = find_node(rn, "actions", common_policy_ns);
 	if (n && (res == 0) && read_actions) res = read_actions(n, &(*dst)->actions);
-	
+
 	n = find_node(rn, "conditions", common_policy_ns);
 	if (n && (res == 0)) res = read_conditions(n, &(*dst)->conditions);
-	
+
 	n = find_node(rn, "transformations", common_policy_ns);
 	if (n && (res == 0)) res = read_transformations(n, &(*dst)->transformations);
-	
+
 	if (res != 0) {
 		free_cp_rule(*dst, free_actions);
 		*dst = NULL;
@@ -272,18 +272,18 @@ static int read_rule(xmlNode *rn, cp_rule_t **dst,
 	return 0;
 }
 
-static int read_common_rules(xmlNode *root, cp_ruleset_t **dst, 
+static int read_common_rules(xmlNode *root, cp_ruleset_t **dst,
 		cp_read_actions_func read_actions, cp_free_actions_func free_actions)
 {
 	cp_ruleset_t *rs = NULL;
 	cp_rule_t *r, *last = NULL;
 	xmlNode *n;
 	int res = RES_OK;
-	
+
 	if (!dst) return RES_INTERNAL_ERR;
 	else *dst = NULL;
 	if (!root) return RES_INTERNAL_ERR;
-	
+
 	if (cmp_node(root, "ruleset", common_policy_ns) < 0) {
 		ERROR_LOG("document is not a ruleset \n");
 		return RES_INTERNAL_ERR;
@@ -294,7 +294,7 @@ static int read_common_rules(xmlNode *root, cp_ruleset_t **dst,
 	*dst = rs;
 	memset(rs, 0, sizeof(*rs));
 
-	
+
 	/* read rules in ruleset */
 	n = root->children;
 	while (n) {
@@ -325,8 +325,8 @@ int parse_common_rules(const char *data, int dsize, cp_ruleset_t **dst,
 		ERROR_LOG("can't parse document\n");
 		return RES_INTERNAL_ERR;
 	}
-	
-	res = read_common_rules(xmlDocGetRootElement(doc), dst, 
+
+	res = read_common_rules(xmlDocGetRootElement(doc), dst,
 			read_actions, free_actions);
 	if ((res != RES_OK) && (dst)) {
 		/* may be set => must be freed */

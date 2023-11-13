@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -93,7 +93,7 @@ typedef struct {
 
 typedef struct _cp_rule_t {
 	struct _cp_rule_t *next;
-		
+
 	cp_conditions_t *conditions;
 	cp_actions_t *actions;
 	cp_transformations_t *transformations;

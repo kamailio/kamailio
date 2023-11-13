@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -33,14 +33,14 @@
 #include <cds/sstr.h>
 #include <string.h>
 
-int get_pres_rules(const str_t *username, const str_t *filename, 
+int get_pres_rules(const str_t *username, const str_t *filename,
 		xcap_query_params_t *xcap_params, cp_ruleset_t **dst)
 {
 	char *data = NULL;
 	int dsize = 0;
 	char *uri = NULL;
 	int res = RES_OK;
-	
+
 	if (dst) *dst = NULL;
 
 	uri = xcap_uri_for_users_document(xcap_doc_pres_rules,
@@ -59,12 +59,12 @@ int get_pres_rules(const str_t *username, const str_t *filename,
 		return RES_XCAP_QUERY_ERR;
 	}
 	cds_free(uri);
-	
+
 	/* parse input data */
 	res = parse_pres_rules(data, dsize, dst);
 	if (res != RES_OK) {
-		ERROR_LOG("Error occurred during parsing pres-rules for %.*s!\n", 
-				str_len(username), 
+		ERROR_LOG("Error occurred during parsing pres-rules for %.*s!\n",
+				str_len(username),
 				username ? username->s : "");
 	}
 
@@ -72,22 +72,22 @@ int get_pres_rules(const str_t *username, const str_t *filename,
 	return res;
 }
 
-int get_pres_rules_action(cp_ruleset_t *r, const str_t *wuri, 
+int get_pres_rules_action(cp_ruleset_t *r, const str_t *wuri,
 		sub_handling_t *dst_action)
 {
 	int res = 1; /* rule not found */
 	cp_rule_t *rule;
 	sub_handling_t a = sub_handling_block;
 	sub_handling_t aa;
-	
+
 	if (!r) return -1;
-	
+
 	rule = r->rules;
 	while (rule) {
-		DEBUG_LOG("TRYING rule %.*s for uri %.*s\n", 
+		DEBUG_LOG("TRYING rule %.*s for uri %.*s\n",
 					FMT_STR(rule->id), FMT_STR(*wuri));
 		if (is_rule_for_uri(rule, wuri)) {
-			DEBUG_LOG("rule %.*s matches for uri %.*s\n", 
+			DEBUG_LOG("rule %.*s matches for uri %.*s\n",
 					FMT_STR(rule->id), FMT_STR(*wuri));
 
 			if (!rule->actions) continue;
@@ -99,7 +99,7 @@ int get_pres_rules_action(cp_ruleset_t *r, const str_t *wuri,
 		rule = rule->next;
 	}
 	if (dst_action && (res == 0)) *dst_action = a;
-	
+
 	return res;
 }
 
@@ -108,9 +108,9 @@ int get_pres_rules_action(cp_ruleset_t *r, const str_t *wuri,
 void free_pres_actions(cp_actions_t *a)
 {
 	cp_unknown_t *u, *nu;
-	
+
 	if (!a) return;
-	
+
 	u = a->unknown;
 	while (u) {
 		nu = u->next;

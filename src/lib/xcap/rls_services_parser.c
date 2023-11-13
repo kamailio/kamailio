@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -41,7 +41,7 @@ static int read_entry(xmlNode *entry_node, entry_t **dst)
 {
 	xmlAttr *a;
 	const char *a_val;
-	
+
 	/ * allocate memory and prepare empty node * /
 	if (!dst) return -1;
 	*dst = (entry_t*)cds_malloc(sizeof(entry_t));
@@ -61,7 +61,7 @@ static int read_package(xmlNode *n, package_t **dst)
 {
 	const char *name;
 	if (!dst) return -1;
-	
+
 	*dst = (package_t*)cds_malloc(sizeof(package_t));
 	if (!(*dst)) return -2;
 	memset(*dst, 0, sizeof(package_t));
@@ -76,7 +76,7 @@ static int read_packages(xmlNode *list_node, packages_t **dst)
 	int res = 0;
 	xmlNode *n;
 	package_t *p, *last;
-	
+
 	/* allocate memory and prepare empty node */
 	if (!dst) return -1;
 	*dst = (packages_t*)cds_malloc(sizeof(packages_t));
@@ -97,7 +97,7 @@ static int read_packages(xmlNode *list_node, packages_t **dst)
 		}
 		n = n->next;
 	}
-	
+
 	return 0;
 }
 
@@ -158,7 +158,7 @@ int read_service(xmlNode *list_node, service_t **dst)
 		}
 		n = n->next;
 	}
-	
+
 	return 0;
 }
 
@@ -168,10 +168,10 @@ static int read_rls_services(xmlNode *root, rls_services_t **dst)
 	xmlNode *n;
 	service_t *l, *last_l;
 	int res = 0;
-	
+
 	if (!root) return -1;
 	if (!dst) return -1;
-	
+
 	if (cmp_node(root, "rls-services", rls_namespace) < 0) {
 		ERROR_LOG("document is not a rls-services\n");
 		return -1;
@@ -180,7 +180,7 @@ static int read_rls_services(xmlNode *root, rls_services_t **dst)
 	*dst = (rls_services_t*)cds_malloc(sizeof(rls_services_t));
 	if (!(*dst)) return -2;
 	(*dst)->rls_services = NULL;
-	
+
 	last_l = NULL;
 	n = root->children;
 	while (n) {
@@ -209,7 +209,7 @@ int parse_rls_services_xml(const char *data, int data_len, rls_services_t **dst)
 		ERROR_LOG("can't parse document\n");
 		return -1;
 	}
-	
+
 	res = read_rls_services(xmlDocGetRootElement(doc), dst);
 
 	xmlFreeDoc(doc);
@@ -226,7 +226,7 @@ int parse_service(const char *data, int data_len, service_t **dst)
 		ERROR_LOG("can't parse document\n");
 		return -1;
 	}
-	
+
 	res = read_service(xmlDocGetRootElement(doc), dst);
 
 	xmlFreeDoc(doc);
@@ -244,7 +244,7 @@ static void free_packages(packages_t *p)
 {
 	package_t *e, *f;
 	if (!p) return;
-	
+
 	e = SEQUENCE_FIRST(p->package);
 	while (e) {
 		f = SEQUENCE_NEXT(e);
@@ -257,14 +257,14 @@ static void free_packages(packages_t *p)
 void free_service(service_t *s)
 {
 	if (!s) return;
-	
+
 	if (s->uri) cds_free(s->uri);
 
 	switch (s->content_type) {
 		case stc_list: free_list(s->content.list); break;
 		case stc_resource_list: cds_free(s->content.resource_list); break;
 	}
-	
+
 	free_packages(s->packages);
 
 	cds_free(s);
@@ -274,7 +274,7 @@ void free_rls_services(rls_services_t *rls)
 {
 	service_t *e, *f;
 	if (!rls) return;
-	
+
 	e = SEQUENCE_FIRST(rls->rls_services);
 	while (e) {
 		f = SEQUENCE_NEXT(e);

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -39,7 +39,7 @@ char *pres_rules_ns = NULL;
 static int str2sub_handling(const char *s, sub_handling_t *dst)
 {
 	if (!s) return RES_INTERNAL_ERR;
-	
+
 	if (strcmp(s, "allow") == 0) {
 		*dst = sub_handling_allow;
 		return 0;
@@ -66,7 +66,7 @@ static int read_pres_actions(xmlNode *an, cp_actions_t **dst)
 	const char *s;
 	int res = RES_OK;
 	if ((!an) || (!dst)) return RES_INTERNAL_ERR;
-	
+
 	*dst = (cp_actions_t*)cds_malloc(sizeof(cp_actions_t));
 	if (!(*dst)) return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(cp_actions_t));
