@@ -11,7 +11,7 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-	
+
 	<title>&develguide;</title>
 	<para>
 	The module implements the DB <acronym>API</acronym>.
