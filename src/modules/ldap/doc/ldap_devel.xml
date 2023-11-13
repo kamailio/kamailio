@@ -16,7 +16,7 @@
 		<para>
 		The LDAP module API can be used by other &kamailio; modules to implement
 		LDAP search functionality. This frees the module implementer from having
-		to care about LDAP connection management and configuration. 
+		to care about LDAP connection management and configuration.
 		</para>
 		<para>
 		In order to use this API, a module has to load the API using the <varname>load_ldap_api</varname>
@@ -24,7 +24,7 @@
 		includes pointers to the API functions described below. The LDAP module source file
 		<varname>api.h</varname> includes all declarations needed to load the API, it has to
 		be included in the file that use the API. Loading the API is typically done inside a
-		module's <varname>mod_init</varname> call as the following example shows:			
+		module's <varname>mod_init</varname> call as the following example shows:
 			<example>
 				<title>Example code fragment to load LDAP module API</title>
 				<programlisting><![CDATA[
@@ -53,7 +53,7 @@ static int mod_init(void)
 }
 
 ...
-]]>		
+]]>
 				</programlisting>
 			</example>
 		</para>
@@ -63,20 +63,20 @@ static int mod_init(void)
 				<title>Example LDAP module API function call</title>
 				<programlisting><![CDATA[
 ...
-	
-    rc = ldap_api.ldap_rfc4515_escape(str1, str2, 0);	
-				
-...		
-]]>		
+
+    rc = ldap_api.ldap_rfc4515_escape(str1, str2, 0);
+
+...
+]]>
 				</programlisting>
-			</example>	
+			</example>
 		</para>
-	
+
 	</section>
-	
+
 	<section>
 		<title>API Functions</title>
-		
+
 		<section>
 			<title>ldap_params_search</title>
 			<para>
@@ -99,7 +99,7 @@ typedef int (*ldap_params_search_t)(int* _ld_result_count,
 					<listitem>
 						<para>
 						The function stores the number of returned LDAP entries
-						in <varname>_ld_result_count</varname>. 
+						in <varname>_ld_result_count</varname>.
 						</para>
 					</listitem>
 				</varlistentry>
@@ -143,13 +143,13 @@ typedef int (*ldap_params_search_t)(int* _ld_result_count,
 					<term>char* _filter</term>
 					<listitem>
 						<para>
-						LDAP search filter string according to RFC 4515. 
+						LDAP search filter string according to RFC 4515.
 						<varname>printf</varname> patterns in this string do get replaced with
 						the function arguments' values following the <varname>_filter</varname> argument.
 						</para>
 					</listitem>
 				</varlistentry>
-				
+
 			</variablelist>
 			<variablelist>
 				<title>Return Values:</title>
@@ -171,7 +171,7 @@ typedef int (*ldap_params_search_t)(int* _ld_result_count,
 				</varlistentry>
 			</variablelist>
 		</section>
-		
+
 		<section>
 			<title>ldap_url_search</title>
 			<para>
@@ -221,7 +221,7 @@ typedef int (*ldap_url_search_t)(char* _ldap_url,
 				</varlistentry>
 			</variablelist>
 		</section>
-		
+
 		<section>
 			<title>ldap_result_attr_vals</title>
 			<para>
@@ -237,7 +237,7 @@ typedef int (*ldap_url_search_t)(char* _ldap_url,
 			<programlisting><![CDATA[
 typedef int (*ldap_result_attr_vals_t)(str* _attr_name,
                                        struct berval ***_vals);
-									   
+
 typedef struct berval {
         ber_len_t       bv_len;
         char            *bv_val;
@@ -291,12 +291,12 @@ typedef struct berval {
 				</varlistentry>
 			</variablelist>
 		</section>
-		
+
 		<section>
 			<title>ldap_value_free_len</title>
 			<para>
 				Function used to free memory allocated by <varname>ldap_result_attr_vals</varname>.
-				The <varname>berval</varname> structure is defined in OpenLDAP's 
+				The <varname>berval</varname> structure is defined in OpenLDAP's
 				<varname>ldap.h</varname>, which has to be included.
 			</para>
 			<programlisting><![CDATA[
@@ -320,7 +320,7 @@ typedef struct berval {
 				</varlistentry>
 			</variablelist>
 		</section>
-		
+
 		<section>
 			<title>ldap_result_next</title>
 			<para>
@@ -359,7 +359,7 @@ typedef int (*ldap_result_next_t)();
 				</varlistentry>
 			</variablelist>
 		</section>
-		
+
 		<section>
 			<title>ldap_str2scope</title>
 			<para>
@@ -400,7 +400,7 @@ typedef int (*ldap_str2scope_t)(char* scope_str);
 				</varlistentry>
 			</variablelist>
 		</section>
-		
+
 		<section>
 			<title>ldap_rfc4515_escape</title>
 			<para>
@@ -457,7 +457,7 @@ typedef int (*ldap_rfc4515_escape_t)(str *sin, str *sout, int url_encode);
 				</varlistentry>
 			</variablelist>
 		</section>
-		
+
 		<section>
 			<title>get_ldap_handle</title>
 			<para>
@@ -509,15 +509,15 @@ typedef int (*get_ldap_handle_t)(char* _lds_name, LDAP** _ldap_handle);
 				</varlistentry>
 			</variablelist>
 		</section>
-		
+
 		<section>
 			<title>get_last_ldap_result</title>
 			<para>
-				Returns the OpenLDAP LDAP handle and OpenLDAP result handle of the last LDAP search 
+				Returns the OpenLDAP LDAP handle and OpenLDAP result handle of the last LDAP search
 				operation. These handles can be used as input for OpenLDAP LDAP result API functions.
-				<varname>LDAP</varname> and <varname>LDAPMessage</varname> structures are defined in 
+				<varname>LDAP</varname> and <varname>LDAPMessage</varname> structures are defined in
 				OpenLDAP's <varname>ldap.h</varname>, which has to be included.
-			</para> 
+			</para>
 			<programlisting><![CDATA[
 typedef void (*get_last_ldap_result_t)
 	     (LDAP** _last_ldap_handle, LDAPMessage** _last_ldap_result);
@@ -552,7 +552,7 @@ typedef void (*get_last_ldap_result_t)
 		</para>
 		<programlisting><![CDATA[
 ...
-	
+
 int rc, ld_result_count, scope = 0;
 char* sip_username = "test";
 
@@ -594,9 +594,9 @@ if (ld_result_count < 1)
 }
 
 /*
- * get password attribute value 
+ * get password attribute value
  */
- 
+
 struct berval **attr_vals = NULL;
 str ldap_pwd_attr_name = str_init("SIPIdentityPassword");
 str res_password;
@@ -624,7 +624,7 @@ LM_INFO("Password for user [%s]: [%s]\n", sip_username, res_password.s);
 
 ...
 
-return 0;		
+return 0;
 ]]>
 		</programlisting>
 	</section>
