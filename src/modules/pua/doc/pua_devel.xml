@@ -10,7 +10,7 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-    
+
     <title>&develguide;</title>
     <para>
 		The module provides the following functions that can be used
@@ -21,7 +21,7 @@
 				<function moreinfo="none">bind_pua(pua_api_t* api)</function>
 				</title>
 			<para>
-				This function binds the pua modules and fills the structure 
+				This function binds the pua modules and fills the structure
 				with the two exported functions.
 			</para>
 		<example>
@@ -53,9 +53,9 @@ typedef struct pua_api {
 typedef int (*send_publish_t)(publ_info_t* publ);
 ...
 				</programlisting>
-		</para>		
+		</para>
 		<para>
-		    This function receives as a parameter a structure with Publish 
+		    This function receives as a parameter a structure with Publish
 			required information and sends a Publish message.
 		</para>
 		<para>
@@ -67,14 +67,14 @@ typedef struct publ_info
 
   str id;             /*  (optional )a value unique for one combination
                           of pres_uri and flag */
-  str* pres_uri;      /*  the presentity uri */	
-  str* body;          /*  the body of the Publish message; 
-                          can be NULL in case of an update expires*/ 	
+  str* pres_uri;      /*  the presentity uri */
+  str* body;          /*  the body of the Publish message;
+                          can be NULL in case of an update expires*/
   int  expires;       /*  the expires value that will be used in
-                          Publish Expires header*/	
+                          Publish Expires header*/
   int flag;           /*  it can be : INSERT_TYPE or UPDATE_TYPE
-                          if missing it will be established according 
-                          to the result of the search in hash table*/ 	
+                          if missing it will be established according
+                          to the result of the search in hash table*/
   int source_flag;    /*  flag identifying the resource ;
                           supported values: UL_PUBLISH, MI_PUBLISH,
                           BLA_PUBLISH, XMPP_PUBLISH*/
@@ -86,7 +86,7 @@ typedef struct publ_info
                           for that event)*/
   str* etag;          /*  (optional) the value of the etag the request
                           should match */
-  str* outbound_proxy;/*  outbound_proxy to use when sending the 
+  str* outbound_proxy;/*  outbound_proxy to use when sending the
                           Publish request */
   str* extra_headers  /*  (optional) extra_headers that should be added
                           to Publish msg*/
@@ -106,9 +106,9 @@ typedef struct publ_info
 typedef int (*send_subscribe_t)(subs_info_t* subs);
 ...
 </programlisting>
-		</para>		
+		</para>
 		<para>
-			This function receives as a parameter a structure with Subscribe 
+			This function receives as a parameter a structure with Subscribe
 			required information and sends a Subscribe message.
 		</para>
 		<para>
@@ -119,24 +119,24 @@ typedef struct subs_info
 
   str id;              /*  an id value unique for one combination
                            of pres_uri and flag */
-  str* pres_uri;       /*  the presentity uri */	
+  str* pres_uri;       /*  the presentity uri */
   str* watcher_uri;    /*  the watcher uri */
   str* contact;        /*  the uri that will be used in
-                           Contact header*/  
+                           Contact header*/
   str* remote_target;  /*  the uri that will be used as R-URI
                            for the Subscribe message(not compulsory;
                            if not set the value of the pres_uri field
                            is used) */
-  str* outbound_proxy; /*  the outbound_proxy to use when sending the 
+  str* outbound_proxy; /*  the outbound_proxy to use when sending the
                            Subscribe request*/
-  int event;           /*  the event flag; supported value: 
-                           PRESENCE_EVENT, BLA_EVENT, PWINFO_EVENT*/ 
+  int event;           /*  the event flag; supported value:
+                           PRESENCE_EVENT, BLA_EVENT, PWINFO_EVENT*/
   int expires;         /*  the expires value that will be used in
-                           Subscribe Expires header */	
+                           Subscribe Expires header */
   int flag;            /*  it can be : INSERT_TYPE or UPDATE_TYPE
-                           not compulsory */	
+                           not compulsory */
   int source_flag;     /*  flag identifying the resource ;
-                           supported values:  MI_SUBSCRIBE, 
+                           supported values:  MI_SUBSCRIBE,
                            BLA_SUBSCRIBE, XMPP_SUBSCRIBE,
                            XMPP_INITIAL_SUBS */
 }subs_info_t;
@@ -155,21 +155,21 @@ typedef struct subs_info
 typedef int  (*query_dialog_t)(ua_pres_t* presentity);
 ...
 				</programlisting>
-		</para>			
+		</para>
 		<para>
 			This function checks is the parameter corresponds to a stored
-			Subscribe initiated dialog. 
+			Subscribe initiated dialog.
 		</para>
 		<example>
 		<title><function>pua_is_dialog </function>usage example</title>
 	<programlisting format="linespecific">
-...	
+...
 	if(pua_is_dialog(dialog) &lt; 0)
 	{
 		LM_ERR("querying dialog\n");
 		goto error;
 	}
-...	
+...
 </programlisting>
 		</example>
 		</section>
@@ -186,7 +186,7 @@ typedef int (*register_puacb_t)(int types, pua_cb f, void* param );
 ...
 				</programlisting>
 		</para>
-		
+
 		<para>
 			This function registers a callback to be called on receiving the reply message
 			for a sent Publish or Subscribe request.
@@ -205,7 +205,7 @@ typedef int (*register_puacb_t)(int types, pua_cb f, void* param );
 		LM_ERR("Could not register callback\n");
 		return -1;
 	}
-...	
+...
 	</programlisting>
 		<para>
 			The callback function type:
@@ -226,14 +226,14 @@ typedef int (pua_cb)(ua_pres_t* hentity, struct sip_msg*);
 			Field type:
 				<programlisting format="linespecific">
 ...
-typedef int (*add_pua_event_t)(int ev_flag, char* name, 
+typedef int (*add_pua_event_t)(int ev_flag, char* name,
    char* content_type,evs_process_body_t* process_body);
 
-- ev_flag     : an event flag defined as a macro in pua module		
+- ev_flag     : an event flag defined as a macro in pua module
 - name        : the event name to be used in Event request headers
-- content_type: the default content_type for Publish body for 
+- content_type: the default content_type for Publish body for
                 that event (NULL if winfo event)
-- process_body: function that processes the received body before 
+- process_body: function that processes the received body before
                 using it to construct the PUBLISH request
                 (NULL if winfo event)
 ...
@@ -241,25 +241,25 @@ typedef int (*add_pua_event_t)(int ev_flag, char* name,
 		</para>
 		<para>
 			This function allows registering new events to the pua module.
-			Now there are 4 events supported by the pua module: presence, 
-			presence;winfo, message-summary, dialog;sla, application/reginfo+xml. 
+			Now there are 4 events supported by the pua module: presence,
+			presence;winfo, message-summary, dialog;sla, application/reginfo+xml.
 			These events are registered from within the pua module.
         </para>
 		<para>
-			Filed type for process_body: 
+			Filed type for process_body:
 				<programlisting format="linespecific">
 ...
-typedef int (evs_process_body_t)(struct publ_info* publ, 
+typedef int (evs_process_body_t)(struct publ_info* publ,
   str** final_body, int ver, str* tuple);
-- publ      : the structure received as a parameter in send_publish 
+- publ      : the structure received as a parameter in send_publish
               function ( initial body found in publ->body)
-- final_body: the pointer where the result(final_body) should be stored 
+- final_body: the pointer where the result(final_body) should be stored
 - ver       : a counter for the sent Publish requests
               (used for winfo events)
 - tuple     : a unique identifier for the resource;
               if an initial Publish it should be returned as a result
               and it will be stored  for that record, otherwise it will
-              be given as a parameter;    
+              be given as a parameter;
 ...
 				</programlisting>
 		</para>
@@ -267,13 +267,13 @@ typedef int (evs_process_body_t)(struct publ_info* publ,
 		<title><function>add_event </function>usage example</title>
 	<programlisting format="linespecific">
 ...
-	if(pua.add_event((PRESENCE_EVENT, "presence", "application/pidf+xml", 
+	if(pua.add_event((PRESENCE_EVENT, "presence", "application/pidf+xml",
 				pres_process_body) &amp; 0)
 	{
 		LM_ERR("Could not register new event\n");
 		return -1;
 	}
-...	
+...
 	</programlisting>
 		</example>
 
