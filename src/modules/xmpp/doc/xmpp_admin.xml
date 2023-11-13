@@ -67,19 +67,19 @@
 		</listitem>
 		<listitem>
 			<para>listen = your ip;</para>
-		</listitem> 
+		</listitem>
 		<listitem>
 			<para>alias=&kamailio; SIP domain and alias=gateway domain;</para>
 		</listitem>
 		<listitem>
 			<para>in the following section of the configuration file, change to your gateway domain:</para>
-		</listitem>	
+		</listitem>
 	</itemizedlist>
 	<programlisting format="linespecific"> <emphasis>	<![CDATA[ ### ---8<--- cut here ---8<--- ###
 	if ($rd =="sip-xmpp.kamailio.org") {
 		if (!t_newtran()) {
 			sl_reply_error();
-	...........]]>	</emphasis> </programlisting> 	
+	...........]]>	</emphasis> </programlisting>
 	<itemizedlist>
 		<listitem>
 			<para>
@@ -97,13 +97,13 @@
 		</listitem>
 		<listitem>
 			<para>The gateway SIP domain is sip-xmpp.kamailio.org</para>
-		</listitem>	
+		</listitem>
 		<listitem>
 			<para>The XMPP server is hosting the XMPP domain xmpp.kamailio.org</para>
-		</listitem>	
+		</listitem>
 		<listitem>
 			<para>The Component is hosting the XMPP domain xmpp-sip.kamailio.org</para>
-		</listitem>	
+		</listitem>
 	</itemizedlist>
 	<para>
 		In the XMPP stand-alone server mode, the XMPP module is a minimal XMPP/Jabber server.
@@ -121,11 +121,11 @@
 		</listitem>
 		<listitem>
 			<para>The gateway is hosting the SIP domain sip-xmpp.kamailio.org;</para>
-		</listitem>	
+		</listitem>
 		<listitem>
 			<para>The "XMPP server" is running on xmpp-sip.kamailio.org.</para>
 		</listitem>
-	</itemizedlist>	
+	</itemizedlist>
 	<para>
 		Unless 'gwmap' parameter is set, in both modes (server or component), the
 		destination address must have the same pattern:
@@ -321,14 +321,14 @@
 			<emphasis>
 				This is the password for the component interface on the XMPP server,
 				when connecting as a component. Default password is "secret".
-				When connecting to jabberd2, 
+				When connecting to jabberd2,
 				you need to make sure this is the password configured in the file
 				"c2s.xml". This is how the default configuration for the jabberd2
 				looks like:
 			</emphasis>
 			<programlisting format="linespecific">
 		<![CDATA[	<router>
-	............... 
+	...............
 	<!-- Username/password to authenticate as --&gt;
     <user>jabberd</user>;          <!-- default: jabberd -->;
     <pass>secret</pass>;           <!-- default: secret -->;	]]>
