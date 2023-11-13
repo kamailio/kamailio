@@ -7,14 +7,14 @@
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Focus. Thanks for great work! This is an effort to 
+ * FhG Focus. Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -32,10 +32,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include <time.h>
@@ -173,7 +173,7 @@ cdp_avp_bind_t cdp_avp_bind = {0, /* cdp 		*/
  * Module initialization function - called once at startup.
  * \note Other modules might not be loaded at this moment.
  * If this returns failure, wharf will exit
- * 
+ *
  * @param config - abstract configuration string
  * @return 1 on success or 0 on failure
  */
@@ -205,7 +205,7 @@ error:
  * Module initialization function - called once for every process.
  * \note All modules have by now executed the mod_init.
  * If this returns failure, wharf will exit
- * 
+ *
  * @param rank - rank of the process calling this
  * @return 1 on success or 0 on failure
  */
@@ -217,7 +217,7 @@ int cdp_avp_child_init(int rank)
 
 
 /**
- * Module destroy function. 
+ * Module destroy function.
  * Spould clean-up and do nice shut-down.
  * \note Will be called multiple times, once from each process, although crashed processes might not.
  */
@@ -229,7 +229,7 @@ void cdp_avp_destroy(void)
 
 
 /**
- * Returns the module's binding. This will give the structure containing the 
+ * Returns the module's binding. This will give the structure containing the
  * functions and data to be used from other processes.
  * @return the pointer to the binding.
  */
