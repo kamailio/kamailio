@@ -23,7 +23,7 @@
 
 /*! \file
  * \brief Kamailio presence module :: Utilities
- * \ingroup presence 
+ * \ingroup presence
  */
 
 
