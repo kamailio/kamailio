@@ -1,4 +1,4 @@
-/** 
+/**
  * Functions to force or check the service-routes
  *
  * Copyright (c) 2013 Carsten Bock, ng-voice GmbH
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -46,7 +46,7 @@ static str *registration_contact;
 
 /*!
  * \brief Parse the message and find first occurrence of Route header field.
- * \param _m SIP message 
+ * \param _m SIP message
  * \return -1 or -2 on a parser error, 0 if there is a Route HF and 1 if there is no Route HF
  */
 static inline int find_first_route(struct sip_msg *_m)
