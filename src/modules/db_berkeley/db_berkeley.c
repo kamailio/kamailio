@@ -215,7 +215,7 @@ void bdb_close(db1_con_t *_h)
 	pkg_free(_h);
 }
 
-/* 
+/*
  * n can be the dbenv path or a table name
 */
 int bdb_reload(char *_n)
@@ -406,7 +406,7 @@ int km_bdb_query(db1_con_t *_con, db_key_t *_k, db_op_t *_op, db_val_t *_v,
 	data.ulen = MAX_ROW_SIZE;
 	data.flags = DB_DBT_USERMEM;
 
-	/* if _c is NULL and _nc is zero, you will get all table 
+	/* if _c is NULL and _nc is zero, you will get all table
 	   columns in the result
 	*/
 	if(_c) {
@@ -855,10 +855,10 @@ error:
 }
 
 /*
-_bdb_delete_cursor -- called from bdb_delete when the query involves operators 
+_bdb_delete_cursor -- called from bdb_delete when the query involves operators
   other than equal '='. Adds support for queries like this:
 	DELETE from SomeTable WHERE _k[0] < _v[0]
-  In this case, the keys _k are not the actually schema keys, so we need to 
+  In this case, the keys _k are not the actually schema keys, so we need to
   iterate via cursor to perform this operation.
 */
 int _bdb_delete_cursor(
@@ -981,7 +981,7 @@ error:
  * _k: key names
  * _op: operators
  * _v: values of the keys that must match
- * _uk: update keys; cols that need to be updated 
+ * _uk: update keys; cols that need to be updated
  * _uv: update values; col values that need to be commited
  * _un: number of rows to update
  */
