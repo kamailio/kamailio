@@ -155,7 +155,7 @@ static int db_unixodbc_submit_query(const db1_con_t *_h, const str *_s)
 	return ret;
 }
 
-/**                                                                                                                                                                                                                                                                               
+/**
  *
  */
 void db_unixodbc_async_exec_task(void *param)
@@ -172,7 +172,7 @@ void db_unixodbc_async_exec_task(void *param)
 		return;
 	}
 	if(db_unixodbc_submit_query(dbc, &p[1]) < 0) {
-		/* Sphere: we need the whole query for the reconciliation 
+		/* Sphere: we need the whole query for the reconciliation
 		   LM_ERR("failed to execute query [%.*s] on async worker\n",
 		         (p[1].len>100)?100:p[1].len, p[1].s);
 		*/
@@ -497,7 +497,7 @@ int db_unixodbc_raw_query(const db1_con_t *_h, const str *_s, db1_res_t **_r)
 			_h, _s, _r, db_unixodbc_submit_query, db_unixodbc_store_result);
 }
 
-/**                                                                                                                                                                                                                                                                               
+/**
  * Execute a raw SQL query via core async framework.
  * \param _h handle for the database
  * \param _s raw query string
