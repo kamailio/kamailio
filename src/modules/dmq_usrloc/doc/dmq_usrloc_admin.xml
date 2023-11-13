@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -180,7 +180,7 @@ modparam("dmq_usrloc", "batch_usleep", 1000)
 	<section id="usrloc_dmq.p.batch_msg_size">
 		<title><varname>batch_msg_size</varname> (int)</title>
 		<para>
-			The parameter controls the size of the messages during a sync. 
+			The parameter controls the size of the messages during a sync.
 			This is to make sure the messages are never larger than 65536 (the maximum datagram size).
 		</para>
 		<para>
