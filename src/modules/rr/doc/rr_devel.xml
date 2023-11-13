@@ -10,11 +10,11 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-	
+
 	<title>&develguide;</title>
 
 	<para>
-	The RR module provides an internal <acronym>API</acronym> to be used by 
+	The RR module provides an internal <acronym>API</acronym> to be used by
 	other &kamailio; modules. The <acronym>API</acronym> offers support for
 	SIP dialog based functionalities - for more about the dialog support
 	offered by RR module, see <xref linkend="RR-dialog-id"/>.
@@ -35,17 +35,17 @@
 		<function moreinfo="none">record_route(string)</function>
 		</title>
 		<para>
-		The function adds a new Record-Route header field. The header field 
-		will be inserted in the message before any other Record-Route header 
+		The function adds a new Record-Route header field. The header field
+		will be inserted in the message before any other Record-Route header
 		fields.
 		</para>
 		<para>
 		If any string is passed as parameter, it will be appended as URI
-		parameter to the Record-Route header. The string must follow the 
+		parameter to the Record-Route header. The string must follow the
 		<quote>;name=value</quote> scheme and it may contain pseudo-variables.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
 		FAILURE_ROUTE.
 		</para>
 		<example>
@@ -63,7 +63,7 @@ record_route();
 		<function moreinfo="none">record_route_advertised_address(string)</function>
 		</title>
 		<para>
-		This function will add the string into a new Record-Route header field. Don't use 
+		This function will add the string into a new Record-Route header field. Don't use
 		unless you know what you are doing.
 		The header field will be inserted in the message before any other Record-Route
 		header fields.
@@ -72,7 +72,7 @@ record_route();
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>string</emphasis> - String to be inserted into the 
+			<emphasis>string</emphasis> - String to be inserted into the
 				header field.
 			</para>
 		</listitem>
@@ -97,7 +97,7 @@ record_route_advertised_address("1.2.3.4:5090");
 		<function moreinfo="none">add_rr_param(msg, param)</function>
 		</title>
 		<para>
-		Adds a parameter to the requests's Record-Route URI (param must be in 
+		Adds a parameter to the requests's Record-Route URI (param must be in
 		<quote>;name=value</quote> format).
 		</para>
 		<para>
@@ -107,13 +107,13 @@ record_route_advertised_address("1.2.3.4:5090");
 		<itemizedlist>
 			<listitem>
 				<para><emphasis>struct sip_msg* msg</emphasis> - request that
-				will has the parameter <quote>param</quote> added to its 
+				will has the parameter <quote>param</quote> added to its
 				Record-Route header.
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>str* param</emphasis> - parameter to be added 
-				to the Record-Route header - it must be in 
+				<para><emphasis>str* param</emphasis> - parameter to be added
+				to the Record-Route header - it must be in
 				<quote>;name=value</quote> format.
 				</para>
 			</listitem>
@@ -125,9 +125,9 @@ record_route_advertised_address("1.2.3.4:5090");
 		<function moreinfo="none">check_route_param(msg, re)</function>
 		</title>
 		<para>
-		The function checks for the request <quote>msg</quote> if the URI 
-		parameters of the local Route header (corresponding to the local 
-		server) matches the given regular expression <quote>re</quote>. 
+		The function checks for the request <quote>msg</quote> if the URI
+		parameters of the local Route header (corresponding to the local
+		server) matches the given regular expression <quote>re</quote>.
 		It must be called after the loose_route was done.
 		</para>
 		<para>
@@ -153,11 +153,11 @@ record_route_advertised_address("1.2.3.4:5090");
 		<function moreinfo="none">is_direction(msg, dir)</function>
 		</title>
 		<para>
-		The function checks the flow direction of the request 
-		<quote>msg</quote>. As for checking it's used the <quote>ftag</quote> 
-		Route header parameter, the append_fromtag (see 
-		<xref linkend="append-fromtag-id"/> module parameter 
-		must be enables. Also this must be called only after the loose_route is 
+		The function checks the flow direction of the request
+		<quote>msg</quote>. As for checking it's used the <quote>ftag</quote>
+		Route header parameter, the append_fromtag (see
+		<xref linkend="append-fromtag-id"/> module parameter
+		must be enables. Also this must be called only after the loose_route is
 		done.
 		</para>
 		<para>
@@ -173,7 +173,7 @@ record_route_advertised_address("1.2.3.4:5090");
 			</listitem>
 			<listitem>
 				<para><emphasis>int dir</emphasis> - direction to be checked
-				against. It may be <quote>RR_FLOW_UPSTREAM</quote> or 
+				against. It may be <quote>RR_FLOW_UPSTREAM</quote> or
 				<quote>RR_FLOW_DOWNSTREAM</quote>.
 				</para>
 			</listitem>
@@ -185,9 +185,9 @@ record_route_advertised_address("1.2.3.4:5090");
 		<function moreinfo="none">get_route_param(msg, name, val)</function>
 		</title>
 		<para>
-		The function searches in the <quote>msg</quote>'s Route header 
+		The function searches in the <quote>msg</quote>'s Route header
 		parameters the parameter called <quote>name</quote> and returns its
-		value into <quote>val</quote>. It must be called only after the 
+		value into <quote>val</quote>. It must be called only after the
 		loose_route is done.
 		</para>
 		<para>
@@ -207,8 +207,8 @@ record_route_advertised_address("1.2.3.4:5090");
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>str *val</emphasis> - returns the value of the 
-				searched Route header parameter if found. It might be empty 
+				<para><emphasis>str *val</emphasis> - returns the value of the
+				searched Route header parameter if found. It might be empty
 				string if the parameter had no value.
 				</para>
 			</listitem>
