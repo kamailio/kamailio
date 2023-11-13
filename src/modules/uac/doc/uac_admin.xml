@@ -684,8 +684,8 @@ end
 			<para>
 			This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
 			</para>
-			<para>NOTE: Previous versions of this function added double quotes automatically to 
-			display variable. That is no longer the case, if you expect that behavior, you will 
+			<para>NOTE: Previous versions of this function added double quotes automatically to
+			display variable. That is no longer the case, if you expect that behavior, you will
 			have to add the quotes by yourself.
 			</para>
 			<para>
@@ -706,7 +706,7 @@ end
 				The other one uses the dialog module to store the original and new URI.
 				If you already use dialog module in your configuration, this is the advisable mode.
 				All you need to do to use this is to call dlg_manage() before calling uac_replace_from().
-				It works by storing the URIs as dialog variables and registering callbacks in dialog 
+				It works by storing the URIs as dialog variables and registering callbacks in dialog
 				module for in dialog requests.
 			</para>
 			<example>
@@ -785,8 +785,8 @@ uac_restore_from();
 			<para>
 			This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
 			</para>
-			<para>NOTE: Previous versions of this function added double quotes automatically to 
-			display variable. That is no longer the case, if you expect that behavior, you will 
+			<para>NOTE: Previous versions of this function added double quotes automatically to
+			display variable. That is no longer the case, if you expect that behavior, you will
 			have to add the quotes by yourself.
 			</para>
 			<example>
@@ -838,7 +838,7 @@ uac_replace_to("","");
 				The other one uses the dialog module to store the original and new URI.
 				If you already use dialog module in your configuration, this is the advisable mode.
 				All you need to do to use this is to call dlg_manage() before calling uac_replace_to().
-				It works by storing the URIs as dialog variables and registering callbacks in dialog 
+				It works by storing the URIs as dialog variables and registering callbacks in dialog
 				module for in dialog requests.
 			</para>
 
