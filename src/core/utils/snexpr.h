@@ -62,7 +62,7 @@ extern "C"
 		if(*length + 1 > *cap) {
 			void *ptr;
 			int n = (*cap == 0) ? 1 : *cap << 1;
-			ptr = realloc(*buf, n * memsz);
+			ptr = realloc(*buf, (size_t)n * memsz);
 			if(ptr == NULL) {
 				return -1; /* allocation failed */
 			}
