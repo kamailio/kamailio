@@ -498,14 +498,14 @@ int ld_ldap2fldex(db_fld_t *fld, LDAP *ldap, LDAPMessage *msg, int init)
 					/* in case of multivalue we must check if value fits in filter criteria.
 					   LDAP returns record (having each multivalue) if one particular
 					   multivalue fits in filter provided to LDAP search. We need
-					   filter out these values manually. It not perfect because 
+					   filter out these values manually. It not perfect because
 					   LDAP filtering may be based on different rule/locale than
-					   raw (ASCII,...) comparision. 
-					
+					   raw (ASCII,...) comparision.
+
 					   We reorder values so we'll have interesting values located from top up to valuesnum at the end.
 
 					   The same algorithm is applied for client side filtering
-					   
+
 					 */
 
 					do {
