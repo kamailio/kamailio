@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -14,16 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef _DB_GEN_H
 #define _DB_GEN_H 1
 
-/** \ingroup DB_API 
- * @{ 
+/** \ingroup DB_API
+ * @{
  */
 
 #include "db_drv.h"
@@ -146,7 +146,7 @@ extern "C"
 		/* Array of pointers to driver-specific data. The database API
 	 * supports access to multiple databases at the same time and each
 	 * database driver may want to append some data to generic DB structures,
-	 * hence an array. The current position in the array is stored 
+	 * hence an array. The current position in the array is stored
 	 * in db_data_idx
 	 */
 		struct db_drv *data[DB_PAYLOAD_MAX];
@@ -167,7 +167,7 @@ extern "C"
 
 
 /*
- * Attach a driver specific data structure to a generic 
+ * Attach a driver specific data structure to a generic
  * DB API structure
  */
 #define DB_SET_PAYLOAD(db_struct, drv_data)                    \
