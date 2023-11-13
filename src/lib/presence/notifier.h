@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -45,17 +45,17 @@ notifier_t *register_notifier(
 void unregister_notifier(notifier_domain_t *domain, notifier_t *info);
 
 /** accepts subscription (internally adds reference to it), thus it can
- * be handled by notifier which called this function 
- * MUST be called in notifier's subscribe function, otherwise the 
- * subscription can NOT be accepted 
+ * be handled by notifier which called this function
+ * MUST be called in notifier's subscribe function, otherwise the
+ * subscription can NOT be accepted
  *
- * Note: only for asynchonously processed subscriptions (synchronous 
+ * Note: only for asynchonously processed subscriptions (synchronous
  * don't need it) */
 void accept_subscription(qsa_subscription_t *s);
 
-/** releases accepted subscription - MUST be called on all accepted 
+/** releases accepted subscription - MUST be called on all accepted
  * subscriptions (only on them!) to be freed from memory !
- * Note: only for asynchonously processed subscriptions (synchronous 
+ * Note: only for asynchonously processed subscriptions (synchronous
  * don't need it) */
 void release_subscription(qsa_subscription_t *s);
 
@@ -72,7 +72,7 @@ typedef enum {
 
 typedef struct {
 	/* replacement for record_id, package, ... it is much more efficient */
-	qsa_subscription_t *subscription; 
+	qsa_subscription_t *subscription;
 	qsa_content_type_t *content_type;
 	void *data;
 	int data_len;
@@ -83,10 +83,10 @@ typedef struct {
 void free_client_notify_info_content(client_notify_info_t *info);
 
 /* notifications SHOULD be sent through this method */
-int notify_subscriber(qsa_subscription_t *s, 
+int notify_subscriber(qsa_subscription_t *s,
 		notifier_t *n,
-		qsa_content_type_t *content_type, 
-		void *data, 
+		qsa_content_type_t *content_type,
+		void *data,
 		qsa_subscription_status_t status);
 
 /* this can be called in notifier and the returned value is valid

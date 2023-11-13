@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -32,7 +32,7 @@ extern "C" {
 
 #include <cds/sstr.h>
 #include <presence/notifier_domain.h>
-	
+
 int qsa_initialize();
 void qsa_cleanup();
 
@@ -43,5 +43,5 @@ void qsa_release_domain(notifier_domain_t *domain);
 #ifdef __cplusplus
 }
 #endif
-	
+
 #endif

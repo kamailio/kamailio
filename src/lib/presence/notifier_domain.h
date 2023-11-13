@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -45,7 +45,7 @@ typedef struct _notifier_t notifier_t;
 struct _notifier_domain_t;
 typedef struct _notifier_domain_t notifier_domain_t;
 
-/* data hold by subscriber for the time of subscription duration 
+/* data hold by subscriber for the time of subscription duration
  * (from subscribe to unsubscribe; after calling unsubscribe can
  * be destroyed contents of them) */
 typedef struct _qsa_subscription_data_t {
@@ -88,7 +88,7 @@ struct _notifier_t {
 	server_unsubscribe_func unsubscribe;
 	void *user_data; /* private data for this notifier */
 	notifier_package_t *package;
-	struct _notifier_t *prev, *next; 
+	struct _notifier_t *prev, *next;
 };
 
 struct _notifier_package_t {
@@ -120,7 +120,7 @@ notifier_domain_t *create_notifier_domain(reference_counter_group_t *g, const st
  * if there are any notifiers, they are unregistered. */
 void destroy_notifier_domain(notifier_domain_t *domain);
 
-qsa_content_type_t *register_content_type(notifier_domain_t *d, 
+qsa_content_type_t *register_content_type(notifier_domain_t *d,
 		const str_t *name,
 		destroy_function_f destroy_func);
 

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -84,7 +84,7 @@ xmlNode *find_node(xmlNode *parent, const char *name, const char *nspace)
 const char *find_value(xmlNode *first_child)
 {
 	const char *s = NULL;
-	
+
 	xmlNode *c = first_child;
 	while (c) {
 		if (c->type == XML_TEXT_NODE) {
@@ -93,7 +93,7 @@ const char *find_value(xmlNode *first_child)
 		}
 		c = c->next;
 	}
-	
+
 	return s;
 }
 
@@ -113,7 +113,7 @@ xmlAttr *find_attr(xmlAttr *first, const char *name)
 	return a;
 }
 
-const char *get_attr_value(xmlAttr *a) 
+const char *get_attr_value(xmlAttr *a)
 {
 	if (!a) return NULL;
 	return find_value(a->children);
@@ -123,7 +123,7 @@ int cmp_node(xmlNode *node, const char *name, const char *nspace)
 {
 	if (!node) return -1;
 	if (node->type != XML_ELEMENT_NODE) return -1;
-	
+
 	if (xmlstrcmp(node->name, name) != 0) return -1;
 	if (!nspace) return 0;
 	if (!node->ns) {

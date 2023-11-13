@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -39,7 +39,7 @@ int qsa_initialize()
 {
 	int res = 0;
 
-	/* initialization should be called from one process/thread 
+	/* initialization should be called from one process/thread
 	 * it is not synchronized because it is impossible ! */
 	if (!init) {
 		init = (init_data_t*)cds_malloc(sizeof(init_data_t));
@@ -61,20 +61,20 @@ int qsa_initialize()
 			res = -1;
 		}
 	}
-			
+
 	if (res == 0) init->init_cnt++;
 	return res;
 }
 
-void qsa_cleanup() 
+void qsa_cleanup()
 {
 	if (init) {
 		if (--init->init_cnt == 0) {
 			DEBUG_LOG("cleaning the content\n");
-			
+
 			/* !!! put the real destruction here !!! */
 			if (init->dm) destroy_domain_maintainer(init->dm);
-			
+
 			cds_free(init);
 			init = NULL;
 		}
@@ -100,6 +100,6 @@ notifier_domain_t *qsa_get_default_domain()
 
 void qsa_release_domain(notifier_domain_t *domain)
 {
-	if (init) 
+	if (init)
 		if (init->dm) release_notifier_domain(init->dm, domain);
 }

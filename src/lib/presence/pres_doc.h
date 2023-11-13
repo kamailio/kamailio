@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -77,13 +77,13 @@ typedef struct {
 	presence_tuple_info_t *first_tuple, *last_tuple;
 	presence_note_t *first_note, *last_note;/* published notes */
 	extension_element_t *first_unknown_element, *last_unknown_element;
-		
+
 	char presentity_data[1];
 } presentity_info_t;
 
 typedef struct {
 	str_t uri; /* do not modify this !*/
-	
+
 	str_t pres_doc;
 	str_t content_type;
 	char uri_data[1];

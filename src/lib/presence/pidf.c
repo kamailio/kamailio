@@ -1,8 +1,8 @@
-/* 
+/*
  * PIDF parser
  *
  * $Id$
- * 
+ *
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -40,7 +40,7 @@
 static void doc_add_tuple_note(dstring_t *buf, presence_note_t *n)
 {
 	DEBUG_LOG("doc_add_tuple_note()\n");
-	
+
 	dstr_append_zt(buf, "\t\t<note");
 	if (n->lang.len > 0) {
 		dstr_append_zt(buf, " lang=\"");
@@ -48,7 +48,7 @@ static void doc_add_tuple_note(dstring_t *buf, presence_note_t *n)
 		dstr_append_zt(buf, "\"");
 	}
 	dstr_append_zt(buf, ">");
-	dstr_append_str(buf, &n->value);	
+	dstr_append_str(buf, &n->value);
 	dstr_append_zt(buf, "</note>\r\n");
 }
 
@@ -63,13 +63,13 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 	presence_note_t *n;
 	extension_element_t *e;
 	char tmp[32];
-	
+
 	DEBUG_LOG("doc_add_tuple()\n");
-	
+
 	dstr_append_zt(buf, "\t<tuple id=\"");
 	dstr_append_str(buf, &t->id);
 	dstr_append_zt(buf, "\">\r\n");
-	
+
 	dstr_append_zt(buf, "\t\t<status>\r\n");
 	if (t->status.basic != presence_tuple_undefined_status) {
 		/* do not add unknown status it is not mandatory in PIDF */
@@ -84,7 +84,7 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 		e = e->next;
 	}
 	dstr_append_zt(buf, "\t\t</status>\r\n");
-	
+
 	/* add extension elements */
 	e = t->first_unknown_element;
 	while (e) {
@@ -106,7 +106,7 @@ static void doc_add_tuple(dstring_t *buf, presentity_info_t *p, presence_tuple_i
 		doc_add_tuple_note(buf, n);
 		n = n->next;
 	}
-	
+
 	dstr_append_zt(buf, "\t</tuple>\r\n");
 }
 
@@ -114,7 +114,7 @@ static void doc_add_empty_tuple(dstring_t *buf)
 {
 	/* "empty" tuple is needed in PIDF by Microsoft Windows Messenger v. 5.1 and linphone 1.2) */
 	DEBUG_LOG("doc_add_empty_tuple()\n");
-	
+
 	dstr_append_zt(buf, "\t<tuple id=\"none\">\r\n");
 	dstr_append_zt(buf, "\t\t<status><basic>closed</basic></status>\r\n");
 
@@ -124,7 +124,7 @@ static void doc_add_empty_tuple(dstring_t *buf)
 static void doc_add_note(dstring_t *buf, presentity_info_t *p, presence_note_t *n)
 {
 	DEBUG_LOG("doc_add_note()\n");
-	
+
 	dstr_append_zt(buf, "\t<note");
 	if (n->lang.len > 0) {
 		dstr_append_zt(buf, " lang=\"");
@@ -132,7 +132,7 @@ static void doc_add_note(dstring_t *buf, presentity_info_t *p, presence_note_t *
 		dstr_append_zt(buf, "\"");
 	}
 	dstr_append_zt(buf, ">");
-	dstr_append_str(buf, &n->value);	
+	dstr_append_str(buf, &n->value);
 	dstr_append_zt(buf, "</note>\r\n");
 }
 
@@ -140,9 +140,9 @@ static void dstr_put_pres_uri(dstring_t *buf, str_t *uri)
 {
 	char *c;
 	int len = 0;
-	
+
 	if (!uri) return;
-	
+
 	c = str_strchr(uri, ':');
 	if (c) {
 		len = uri->len - (c - uri->s) - 1;
@@ -167,13 +167,13 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p, int use_cpi
 	DEBUG_LOG("doc_add_presentity()\n");
 	if (use_cpim_pidf_ns)
 		dstr_append_zt(buf, "<presence xmlns=\"urn:ietf:params:xml:ns:cpim-pidf\" entity=\"");
-	else 
+	else
 		dstr_append_zt(buf, "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"");
 	/* !!! there SHOULD be pres URI of presentity !!! */
 	dstr_put_pres_uri(buf, &p->uri);
 	/* dstr_append_str(buf, &p->presentity); */ /* only for test !!! */
 	dstr_append_zt(buf, "\">\r\n");
-	
+
 	DEBUG_LOG("adding tuples\n");
 	t = p->first_tuple;
 	if (!t) doc_add_empty_tuple(buf); /* correction for some strange clients :-) */
@@ -181,14 +181,14 @@ static void doc_add_presentity(dstring_t *buf, presentity_info_t *p, int use_cpi
 		doc_add_tuple(buf, p, t);
 		t = t->next;
 	}
-	
+
 	DEBUG_LOG("adding notes\n");
 	n = p->first_note;
 	while (n) {
 		doc_add_note(buf, p, n);
 		n = n->next;
 	}
-	
+
 	/* add extension elements */
 	DEBUG_LOG("adding extension elements\n");
 	e = p->first_unknown_element;
@@ -204,14 +204,14 @@ int create_pidf_document_ex(presentity_info_t *p, str_t *dst, str_t *dst_content
 {
 	dstring_t buf;
 	int err;
-	
+
 	if (!dst) return -1;
-	
+
 	str_clear(dst);
 	if (dst_content_type) str_clear(dst_content_type);
 
 	if (!p) return -1;
-	
+
 	if (dst_content_type) {
 		if (use_cpim_pidf_ns)
 			err = str_dup_zt(dst_content_type, "application/cpim-pidf+xml");
@@ -219,22 +219,22 @@ int create_pidf_document_ex(presentity_info_t *p, str_t *dst, str_t *dst_content
 			err = str_dup_zt(dst_content_type, "application/pidf+xml;charset=\"UTF-8\"");
 		if (err < 0) return -1;
 	}
-	
-/*	if (!p->first_tuple) return 0;*/	/* no tuples => nothing to say */ 
-	
+
+/*	if (!p->first_tuple) return 0;*/	/* no tuples => nothing to say */
+
 	dstr_init(&buf, 2048);
-	
+
 	dstr_append_zt(&buf, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n");
 	doc_add_presentity(&buf, p, use_cpim_pidf_ns);
-	
+
 	err = dstr_get_str(&buf, dst);
 	dstr_destroy(&buf);
-	
+
 	if (err != 0) {
 		str_free_content(dst);
 		if (dst_content_type) str_free_content(dst_content_type);
 	}
-	
+
 	return err;
 }
 
@@ -259,7 +259,7 @@ static int read_note(xmlNode *node, presence_note_t **dst)
 
 	*dst = create_presence_note_zt(note, lang);
 	if (!dst) return -1;
-	
+
 	return 0;
 }
 
@@ -302,10 +302,10 @@ static int read_extension(xmlNode *ex, extension_element_t **dst, xmlDocPtr doc)
 
 	if (!dst) return -1;
 	*dst = NULL;
-	
+
 	e = (extension_element_t*)cds_malloc(sizeof(extension_element_t));
 	if (!e) return -1;
-	
+
 	memset(e, 0, sizeof(*e));
 	*dst = e;
 
@@ -315,7 +315,7 @@ static int read_extension(xmlNode *ex, extension_element_t **dst, xmlDocPtr doc)
 		*dst = NULL;
 		return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -351,9 +351,9 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns
 		if (contact.len < 1) {
 			ERROR_LOG("empty contact using default\n");
 			/* return -1; */
-		}	
+		}
 	}
-	
+
 	/* process status (only one node) */
 	status_node = find_node(tuple, "status", ns);
 	if (!status_node) {
@@ -377,12 +377,12 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns
 	if (strcasecmp(s, "open") == 0) status = presence_tuple_open;
 	if (strcasecmp(s, "closed") == 0) status = presence_tuple_closed;
 	/* FIXME: handle not standardized variants too (add note to basic status) */
-	
+
 	/* get ID from tuple node attribute? */
 	id.s = (char *)get_attr_value(find_attr(tuple->properties, "id"));
 	if (id.s) id.len = strlen(id.s);
 	else id.len = 0;
-	
+
 	*dst = create_tuple_info(&contact, &id, status);
 	if (!(*dst)) return -1;
 
@@ -395,7 +395,7 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns
 			if (cmp_node(n, "note", ns) >= 0) {
 				res = read_note(n, &note);
 				if ((res == 0) && note) {
-					DOUBLE_LINKED_LIST_ADD((*dst)->first_note, 
+					DOUBLE_LINKED_LIST_ADD((*dst)->first_note,
 							(*dst)->last_note, note);
 				}
 				else break;
@@ -405,20 +405,20 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns
 			}
 			else if (cmp_node(n, "status", ns) >= 0) {
 				/* skip, already processed */
-			}	
+			}
 			else if (cmp_node(n, "timestamp", ns) >= 0) {
 				/* FIXME: process */
 			}
 			else { /* PIDF extensions - only from non-PIDF namespace? */
 				res = read_extension(n, &ex, doc);
-				if ((res == 0) && ex) 
-					DOUBLE_LINKED_LIST_ADD((*dst)->first_unknown_element, 
+				if ((res == 0) && ex)
+					DOUBLE_LINKED_LIST_ADD((*dst)->first_unknown_element,
 							(*dst)->last_unknown_element, ex);
 			}
 		}
 		n = n->next;
 	}
-	
+
 	/* handle nested elements in status */
 	if (status_node) n = status_node->children;
 	else n = NULL;
@@ -429,8 +429,8 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst, int ignore_ns
 			}
 			else { /* PIDF extensions - only from non-PIDF namespace? */
 				res = read_extension(n, &ex, doc);
-				if ((res == 0) && ex) 
-					DOUBLE_LINKED_LIST_ADD((*dst)->status.first_unknown_element, 
+				if ((res == 0) && ex)
+					DOUBLE_LINKED_LIST_ADD((*dst)->status.first_unknown_element,
 							(*dst)->status.last_unknown_element, ex);
 			}
 		}
@@ -449,7 +449,7 @@ static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns
 	int res = 0;
 	char *ns = ignore_ns ? NULL: pidf_ns;
 	extension_element_t *ex;
-	
+
 	/* TRACE_LOG("read_presentity(ns=%s)\n", ns ? ns : ""); */
 	if (cmp_node(root, "presence", ns) < 0) {
 		ERROR_LOG("document is not presence \n");
@@ -471,19 +471,19 @@ static int read_presentity(xmlNode *root, presentity_info_t **dst, int ignore_ns
 			else if (cmp_node(n, "note", ns) >= 0) {
 					res = read_note(n, &note);
 					if ((res == 0) && note) {
-						DOUBLE_LINKED_LIST_ADD((*dst)->first_note, 
+						DOUBLE_LINKED_LIST_ADD((*dst)->first_note,
 								(*dst)->last_note, note);
 					}
 					else break;
 				}
 			else { /* PIDF extensions - only from non-PIDF namespace? */
 				res = read_extension(n, &ex, doc);
-				if ((res == 0) && ex) 
-					DOUBLE_LINKED_LIST_ADD((*dst)->first_unknown_element, 
+				if ((res == 0) && ex)
+					DOUBLE_LINKED_LIST_ADD((*dst)->first_unknown_element,
 							(*dst)->last_unknown_element, ex);
 				/*if (res != 0) break; ignore errors there */
 			}
-			
+
 		}
 		n = n->next;
 	}
@@ -496,7 +496,7 @@ int parse_pidf_document_ex(presentity_info_t **dst, const char *data, int data_l
 {
 	int res = 0;
 	xmlDocPtr doc;
-	
+
 	if (!dst) return -1;
 	if ((!data) || (data_len < 1)) return -2;
 

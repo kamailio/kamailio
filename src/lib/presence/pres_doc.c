@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -60,7 +60,7 @@ presentity_info_t *create_presentity_info(const str_t *presentity_uri)
 {
 	presentity_info_t *p;
 	int len = 0;
-	
+
 	if (!is_str_empty(presentity_uri)) len = presentity_uri->len;
 	p = (presentity_info_t*)cds_malloc(sizeof(presentity_info_t) + len);
 	if (!p) {
@@ -81,7 +81,7 @@ presentity_info_t *create_presentity_info(const str_t *presentity_uri)
 	/* extensions */
 	p->first_unknown_element = NULL;
 	p->last_unknown_element = NULL;
-	
+
 	return p;
 }
 
@@ -112,7 +112,7 @@ presence_tuple_info_t *create_tuple_info(const str_t *contact, const str_t *id, 
 	t->status.last_unknown_element = NULL;
 	t->priority = 0.0;
 	t->first_note = NULL;
-	t->last_note = NULL;	
+	t->last_note = NULL;
 	t->first_unknown_element = NULL;
 	t->last_unknown_element = NULL;
 	return t;
@@ -145,32 +145,32 @@ void free_tuple_info(presence_tuple_info_t *t)
 {
 	presence_note_t *n, *nn;
 	extension_element_t *e, *ne;
-	
+
 	if (!t) return;
 	str_free_content(&t->contact);
 	str_free_content(&t->id);
-	
+
 	n = t->first_note;
 	while (n) {
 		nn = n->next;
 		free_presence_note(n);
 		n = nn;
 	}
-	
+
 	e = t->first_unknown_element;
 	while (e) {
 		ne = e->next;
 		free_extension_element(e);
 		e = ne;
 	}
-	
+
 	e = t->status.first_unknown_element;
 	while (e) {
 		ne = e->next;
 		free_extension_element(e);
 		e = ne;
 	}
-	
+
 	cds_free(t);
 }
 
@@ -179,7 +179,7 @@ void free_presentity_info(presentity_info_t *p)
 	presence_tuple_info_t *t, *tt;
 	presence_note_t *n, *nn;
 	extension_element_t *np, *ps;
-	
+
 	if (!p) return;
 	t = p->first_tuple;
 	while (t) {
@@ -187,21 +187,21 @@ void free_presentity_info(presentity_info_t *p)
 		free_tuple_info(t);
 		t = tt;
 	}
-	
+
 	n = p->first_note;
 	while (n) {
 		nn = n->next;
 		free_presence_note(n);
 		n = nn;
 	}
-	
+
 	ps = p->first_unknown_element;
 	while (ps) {
 		np = ps->next;
 		free_extension_element(ps);
 		ps = np;
 	}
-	
+
 	cds_free(p);
 }
 
@@ -209,7 +209,7 @@ raw_presence_info_t *create_raw_presence_info(const str_t *uri)
 {
 	raw_presence_info_t *p;
 	int len = 0;
-	
+
 	if (!is_str_empty(uri)) len = uri->len;
 	p = (raw_presence_info_t*)cds_malloc(sizeof(raw_presence_info_t) + len);
 	if (!p) {
@@ -222,10 +222,10 @@ raw_presence_info_t *create_raw_presence_info(const str_t *uri)
 		memcpy(p->uri.s, uri->s, len);
 	}
 	else p->uri.s = NULL;
-	
+
 	str_clear(&p->pres_doc);
 	str_clear(&p->content_type);
-	
+
 	return p;
 }
 
@@ -273,7 +273,7 @@ presence_note_t *create_presence_note_zt(const char *note, const char *lang)
 
 	note_s = zt2str((char*)note);
 	lang_s = zt2str((char*)lang);
-	
+
 	return create_presence_note(&note_s, &lang_s);
 }
 
@@ -290,14 +290,14 @@ extension_element_t *create_extension_element(const str_t *element)
 		cds_free(t);
 		return NULL;
 	}
-	
+
 	t->prev = NULL;
 	t->next = NULL;
 	return t;
 }
 
 /*************************************************************/
-static int copy_tuple_notes(presence_tuple_info_t *dst_info, 
+static int copy_tuple_notes(presence_tuple_info_t *dst_info,
 		const presence_tuple_info_t *src)
 {
 	presence_note_t *n, *nn;
@@ -368,13 +368,13 @@ presentity_info_t *dup_presentity_info(presentity_info_t *p)
 			pan = pan->next;
 		}
 	}
-	
+
 	/* extension elements */
 	if (!err) {
 		paps = p->first_unknown_element;
 		while (paps) {
 			ps = create_extension_element(&paps->element);
-			if (ps) DOUBLE_LINKED_LIST_ADD(pinfo->first_unknown_element, 
+			if (ps) DOUBLE_LINKED_LIST_ADD(pinfo->first_unknown_element,
 					pinfo->last_unknown_element, ps);
 			else {
 				ERROR_LOG("can't copy person elements\n");
@@ -384,12 +384,12 @@ presentity_info_t *dup_presentity_info(presentity_info_t *p)
 			paps = paps->next;
 		}
 	}
-	
+
 	if (err) {
 		free_presentity_info(pinfo);
 		return NULL;
 	}
-	
+
 	/* DBG("p2p_info() finished\n"); */
 	return pinfo;
 }

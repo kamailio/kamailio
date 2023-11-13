@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -36,9 +36,9 @@ extern "C" {
 
 /* If a notifier publishing watched state registers after subscribe
  * call, it receives the subscription automatically too! */
-/*qsa_subscription_t *subscribe(notifier_domain_t *domain, 
+/*qsa_subscription_t *subscribe(notifier_domain_t *domain,
 		qsa_subscription_t *params);*/
-qsa_subscription_t *subscribe(notifier_domain_t *domain, 
+qsa_subscription_t *subscribe(notifier_domain_t *domain,
 		str_t *package,
 		qsa_subscription_data_t *data);
 
@@ -49,7 +49,7 @@ void set_subscriber_data(qsa_subscription_t *s, void *data);
 void *get_subscriber_data(qsa_subscription_t *s);
 
 void clear_subscription_data(qsa_subscription_data_t *data);
-	
+
 #ifdef __cplusplus
 }
 #endif

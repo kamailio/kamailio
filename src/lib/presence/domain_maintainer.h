@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -40,13 +40,13 @@ typedef struct {
 	cds_mutex_t mutex;
 } domain_maintainer_t;
 
-	
+
 domain_maintainer_t *create_domain_maintainer();
 void destroy_domain_maintainer(domain_maintainer_t *dm);
 
 notifier_domain_t *register_notifier_domain(domain_maintainer_t *dm, const str_t *name);
 void release_notifier_domain(domain_maintainer_t *dm, notifier_domain_t *domain);
-	
+
 #ifdef __cplusplus
 }
 #endif

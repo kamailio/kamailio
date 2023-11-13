@@ -9,7 +9,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	
+
 typedef struct _qsa_subscription_params_t {
 	str_t name;
 	str_t value; /* whatever */
@@ -19,5 +19,5 @@ typedef struct _qsa_subscription_params_t {
 #ifdef __cplusplus
 }
 #endif
-	
+
 #endif
