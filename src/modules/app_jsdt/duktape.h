@@ -18,21 +18,21 @@
  *  ===============
  *  Duktape license
  *  ===============
- *  
+ *
  *  (http://opensource.org/licenses/MIT)
- *  
+ *
  *  Copyright (c) 2013-present by Duktape authors (see AUTHORS.rst)
- *  
+ *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
  *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  *  copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- *  
+ *
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
- *  
+ *
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -47,24 +47,24 @@
  *  ===============
  *  Duktape authors
  *  ===============
- *  
+ *
  *  Copyright
  *  =========
- *  
+ *
  *  Duktape copyrights are held by its authors.  Each author has a copyright
  *  to their contribution, and agrees to irrevocably license the contribution
  *  under the Duktape ``LICENSE.txt``.
- *  
+ *
  *  Authors
  *  =======
- *  
+ *
  *  Please include an e-mail address, a link to your GitHub profile, or something
  *  similar to allow your contribution to be identified accurately.
- *  
+ *
  *  The following people have contributed code, website contents, or Wiki contents,
  *  and agreed to irrevocably license their contributions under the Duktape
  *  ``LICENSE.txt`` (in order of appearance):
- *  
+ *
  *  * Sami Vaarala <sami.vaarala@iki.fi>
  *  * Niki Dobrev
  *  * Andreas \u00d6man <andreas@lonelycoder.com>
@@ -116,13 +116,13 @@
  *  * William Parks (https://github.com/WilliamParks)
  *  * Sam Hellawell (https://github.com/samhellawell)
  *  * Vladislavs Sokurenko (https://github.com/sokurenko)
- *  
+ *
  *  Other contributions
  *  ===================
- *  
+ *
  *  The following people have contributed something other than code (e.g. reported
  *  bugs, provided ideas, etc; roughly in order of appearance):
- *  
+ *
  *  * Greg Burns
  *  * Anthony Rabine
  *  * Carlos Costa
@@ -158,7 +158,7 @@
  *  * Andrew Janke (https://github.com/apjanke)
  *  * Unamer (https://github.com/unamer)
  *  * Karl Dahlke (eklhad@gmail.com)
- *  
+ *
  *  If you are accidentally missing from this list, send me an e-mail
  *  (``sami.vaarala@iki.fi``) and I'll fix the omission.
  */
