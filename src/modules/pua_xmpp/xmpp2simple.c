@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -43,7 +43,7 @@ int build_publish(xmlNodePtr pres_node, int expire);
 int presence_subscribe(xmlNodePtr pres_node, int expires, int flag);
 
 /*  the function registered as a callback in xmpp,
- *  to be called when a new message with presence type is received 
+ *  to be called when a new message with presence type is received
  *  */
 
 void pres_Xmpp2Sip(char *msg, int type, void *param)
@@ -438,7 +438,7 @@ int presence_subscribe(xmlNodePtr pres_node, int expires, int flag)
 	type= XMLNodeGetAttrContentByName(pres_node, "type" );
 	if(strcmp(type, "subscribe")==0 ||strcmp(type, "probe")== 0)
 		subs->flag|= INSERT_TYPE;
-	else	
+	else
 		if(strcmp(type, "unsubscribe")== 0)
 			subs->flag|= UPDATE_TYPE;
 	xmlFree(type);
