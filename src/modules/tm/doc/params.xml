@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	[ <!ENTITY % local.common.attrib
 	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
@@ -71,7 +71,7 @@ modparam("tm", "fr_inv_timer", 180000)
 	<section id="tm.p.max_inv_lifetime">
 	<title><varname>max_inv_lifetime</varname> (integer)</title>
 	<para>
-		Maximum time an INVITE transaction is allowed to be active (in 
+		Maximum time an INVITE transaction is allowed to be active (in
 		milliseconds). After this interval has passed from the transaction
 		creation, the transaction will be either moved into the wait state
 		or in the final response retransmission state, irrespective of the
@@ -80,28 +80,28 @@ modparam("tm", "fr_inv_timer", 180000)
 	</para>
 	<para>
 		An INVITE transaction will be kept in memory for maximum:
-		<varname>max_inv_lifetime</varname>+<varname>fr_timer</varname>(from 
+		<varname>max_inv_lifetime</varname>+<varname>fr_timer</varname>(from
 		the ACK to the final reply wait)+<varname>wt_timer</varname>.
 	</para>
 	<para>
-		The main difference between this timer and 
-		<varname>fr_inv_timer</varname> is that the 
-		<varname>fr_inv_timer</varname> is per branch, while 
+		The main difference between this timer and
+		<varname>fr_inv_timer</varname> is that the
+		<varname>fr_inv_timer</varname> is per branch, while
 		<varname>max_inv_lifetime</varname> is per the whole transaction.
-		Even on a per branch basis <varname>fr_inv_timer</varname> could be 
-		restarted. For example, by default if 
-		<varname>restart_fr_on_each_reply</varname> is not cleared, the 
-		<varname>fr_inv_timer</varname> will be restarted for each received 
+		Even on a per branch basis <varname>fr_inv_timer</varname> could be
+		restarted. For example, by default if
+		<varname>restart_fr_on_each_reply</varname> is not cleared, the
+		<varname>fr_inv_timer</varname> will be restarted for each received
 		provisional reply. Even if <varname>restart_fr_on_each_reply</varname>
 		is not set the <varname>fr_inv_timer</varname> will still be restarted
-		for each increasing reply (e.g. 180, 181, 182, ...). 
+		for each increasing reply (e.g. 180, 181, 182, ...).
 		Another example when a transaction can live substantially more than its
 		<varname>fr_inv_timer</varname> and where
-		<varname>max_inv_lifetime</varname> will help is when DNS failover is 
+		<varname>max_inv_lifetime</varname> will help is when DNS failover is
 		used (each failed DNS destination can introduce a new branch).
 	</para>
 	<para>
-		The default value is 180000 ms (180 seconds - the rfc3261 
+		The default value is 180000 ms (180 seconds - the rfc3261
 		timer C value).
 	</para>
 	<para>
@@ -127,12 +127,12 @@ modparam("tm", "max_inv_lifetime", 150000)
 	<section id="max_noninv_lifetime">
 	<title><varname>max_noninv_lifetime</varname> (integer)</title>
 	<para>
-		Maximum time a non-INVITE transaction is allowed to be active (in 
+		Maximum time a non-INVITE transaction is allowed to be active (in
 		milliseconds). After this interval has passed from the transaction
 		creation, the transaction will be either moved into the wait state
 		or in the final response retransmission state, irrespective of the
 		transaction <varname>fr_timer</varname> value.
-		It's the same as <varname>max_inv_lifetime</varname>, but for 
+		It's the same as <varname>max_inv_lifetime</varname>, but for
 		non-INVITEs.
 	</para>
 	<para>
@@ -140,9 +140,9 @@ modparam("tm", "max_inv_lifetime", 150000)
 		<varname>max_noninv_lifetime</varname>+<varname>wt_timer</varname>.
 	</para>
 	<para>
-		The main difference between this timer and 
-		<varname>fr_timer</varname> is that the 
-		<varname>fr_timer</varname> is per branch, while 
+		The main difference between this timer and
+		<varname>fr_timer</varname> is that the
+		<varname>fr_timer</varname> is per branch, while
 		<varname>max_noninv_lifetime</varname> is per the whole transaction.
 		An example when a transaction can live substantially more then its
 		<varname>fr_timer</varname> and where
@@ -175,7 +175,7 @@ modparam("tm", "max_noninv_lifetime", 30000)
 	<title><varname>wt_timer</varname> (integer)</title>
 	<para>
 	    Time for which a transaction stays in memory to absorb delayed
-	    messages after it completed (in milliseconds); also, when this 
+	    messages after it completed (in milliseconds); also, when this
 	    timer hits,
 	    retransmission of local CANCEL requests is stopped (a puristic but complex
 	    behavior would be not to enter wait state until local branches are
@@ -217,7 +217,7 @@ modparam("tm", "retr_timer1", 1000)
 	<para>
 	    Maximum retransmission period (in milliseconds). The retransmission
 		interval starts with <varname>retr_timer1</varname> and increases until
-		it reaches this value. After this it stays constant at 
+		it reaches this value. After this it stays constant at
 		<varname>retr_timer2</varname>.
 	</para>
 	<para>
@@ -236,12 +236,12 @@ modparam("tm", "retr_timer2", 2000)
     <section id="tm.p.noisy_ctimer">
 	<title><varname>noisy_ctimer</varname> (integer)</title>
 	<para>
-	    If set, INVITE transactions that time-out (FR INV timer) will be 
+	    If set, INVITE transactions that time-out (FR INV timer) will be
 		always replied. If it's not set, the transaction has only one
-		branch and no response was ever received on this branch, it 
+		branch and no response was ever received on this branch, it
 		will be silently dropped (no 408 reply will be generated)
 		This behavior is overridden if a request is forked, the transaction
-		 has a failure route or callback, or some functionality explicitly 
+		 has a failure route or callback, or some functionality explicitly
 		 turned it on  for a transaction (like the ACC module does to avoid unaccounted
 		 transactions due to expired timer).
 		Turn this off only if you know the client UACs will timeout and their
@@ -266,14 +266,14 @@ modparam("tm", "noisy_ctimer", 1)
 	<para>
 		If set (default), the <varname>fr_inv_timer</varname> for an INVITE
 		transaction will be restarted for each provisional reply received
-		(rfc3261 mandated behaviour). If not set, the 
+		(rfc3261 mandated behaviour). If not set, the
 		<varname>fr_inv_timer</varname> will be restarted only for the first
 		provisional replies and for increasing replies greater or equal 180
 		(e.g. 180, 181, 182, 185, ...).
 	</para>
 	<para>
 		Setting it to 0 is especially useful when dealing with bad UAs that
-		continuously retransmit 180s, not allowing the transaction to timeout 
+		continuously retransmit 180s, not allowing the transaction to timeout
 		(and thus making impossible the implementation of certain services,
 		like automatic voicemail after x seconds).
 	</para>
@@ -303,7 +303,7 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 	<para>
 		Setting it to 0 can be used to enable first running some tests or
 		pre-processing on the INVITE and only if some conditions are met
-		manually send a 100 (using <function>t_reply()</function>). Note 
+		manually send a 100 (using <function>t_reply()</function>). Note
 		however that in this case all the 100s have to be sent "by hand".
 		<function>t_set_auto_inv_100()</function> might help to selectively
 		turn off this feature only for some specific transactions.
@@ -313,7 +313,7 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 	</para>
 	<para>
 		See also: <function>t_set_auto_inv_100()</function>
-				  <varname>auto_inv_100_reason</varname>. 
+				  <varname>auto_inv_100_reason</varname>.
 	</para>
 	<example>
 		<title>Set <varname>auto_inv_100</varname> parameter</title>
@@ -353,7 +353,7 @@ modparam("tm", "auto_inv_100_reason", "Trying")
 	</para>
 	<para>
 		If UNIX sockets are used (e.g.: to communicate with sems) and sending
-		a message on a UNIX socket takes longer than 
+		a message on a UNIX socket takes longer than
 		<varname>unix_tx_timeout</varname>, the send will fail.
 	</para>
 	<para>
@@ -373,8 +373,8 @@ modparam("tm", "unix_tx_timeout", 250)
 	<title><varname>aggregate_challenges</varname> (integer)</title>
 	<para>
 		If set (default) and the final response is a 401 or a 407 and more than
-		one branch received a 401 or 407, then all the WWW-Authenticate and 
-		Proxy-Authenticate headers from all the 401 and 407 replies will 
+		one branch received a 401 or 407, then all the WWW-Authenticate and
+		Proxy-Authenticate headers from all the 401 and 407 replies will
 		be aggregated in a new final response. If only one branch received the
 		 winning 401 or 407 then this reply will be forwarded (no new one
 		 will be built).
@@ -464,12 +464,12 @@ modparam("tm", "ac_extra_hdrs", "myfavoriteheaders-")
 		If set and the &kamailio; blocklist support is enabled, every 503 reply source is
 		added to the blocklist. The initial blocklist timeout (or ttl) depends
 		on the presence of a "Retry-After" header in the reply and the values of
-		the following tm parameters: <varname>blst_503_def_timeout</varname>, 
-		<varname>blst_503_min_timeout</varname> and 
+		the following tm parameters: <varname>blst_503_def_timeout</varname>,
+		<varname>blst_503_min_timeout</varname> and
 		<varname>blst_503_max_timeout</varname>.
 	</para>
 	<para>
-		<emphasis>WARNING:</emphasis>blindly allowing 503 blocklisting could 
+		<emphasis>WARNING:</emphasis>blindly allowing 503 blocklisting could
 		be very easily exploited for DOS attacks in most network setups.
 	</para>
 	<para>
@@ -488,11 +488,11 @@ modparam("tm", "blst_503", 1)
     <section id="tm.p.blst_503_def_timeout">
 	<title><varname>blst_503_def_timeout</varname> (integer)</title>
 	<para>
-		
+
 		Blocklist interval in seconds for a 503 reply with no "Retry-After"
 		header.
-		See also <varname>blst_503</varname>, 
-		<varname>blst_503_min_timeout</varname> and 
+		See also <varname>blst_503</varname>,
+		<varname>blst_503_min_timeout</varname> and
 		<varname>blst_503_max_timeout</varname>.
 	</para>
 	<para>
@@ -513,18 +513,18 @@ modparam("tm", "blst_503_def_timeout", 120)
     <section id="tm.p.blst_503_min_timeout">
 	<title><varname>blst_503_min_timeout</varname> (integer)</title>
 	<para>
-		
-		Minimum blocklist interval in seconds for a 503 reply with a 
-		"Retry-After" header. It will be used if the "Retry-After" value is 
+
+		Minimum blocklist interval in seconds for a 503 reply with a
+		"Retry-After" header. It will be used if the "Retry-After" value is
 		smaller than this value.
 	</para>
 	<para>
-		See also <varname>blst_503</varname>, 
-		<varname>blst_503_def_timeout</varname> and 
+		See also <varname>blst_503</varname>,
+		<varname>blst_503_def_timeout</varname> and
 		<varname>blst_503_max_timeout</varname>.
 	</para>
 	<para>
-		The default value is 0 
+		The default value is 0
 	</para>
 	<example>
 	    <title>Set <varname>blst_503_min_timeout</varname> parameter</title>
@@ -539,18 +539,18 @@ modparam("tm", "blst_503_min_timeout", 30)
     <section id="tm.p.blst_503_max_timeout">
 	<title><varname>blst_503_max_timeout</varname> (integer)</title>
 	<para>
-		
-		Maximum blocklist interval in seconds for a 503 reply with a 
-		"Retry-After header". It will be used if the "Retry-After" value is 
+
+		Maximum blocklist interval in seconds for a 503 reply with a
+		"Retry-After header". It will be used if the "Retry-After" value is
 		greater than this limit.
 	</para>
 	<para>
-		See also <varname>blst_503</varname>, 
-		<varname>blst_503_def_timeout</varname> and 
+		See also <varname>blst_503</varname>,
+		<varname>blst_503_def_timeout</varname> and
 		<varname>blst_503_min_timeout</varname>.
 	</para>
 	<para>
-		The default value is 3600 
+		The default value is 3600
 	</para>
 	<example>
 	    <title>Set <varname>blst_503_max_timeout</varname> parameter</title>
@@ -628,9 +628,9 @@ modparam("tm", "blst_methods_lookup", 1)
 		The possible values are 0, 1, and 2.
 	</para>
 	<para>
-		- <emphasis>0</emphasis> will immediately stop the request (INVITE) 
-		retransmission on the branch and it will behave as if the branch was 
-		immediately replied with a 487 (a fake internal 487 reply). The 
+		- <emphasis>0</emphasis> will immediately stop the request (INVITE)
+		retransmission on the branch and it will behave as if the branch was
+		immediately replied with a 487 (a fake internal 487 reply). The
 		advantage is the unreplied branches will be terminated immediately.
 		However it introduces a race risk with a possible slightly delayed
 		 2xx reply. In this case we could have an UA receiving a 2xx after a
@@ -640,19 +640,19 @@ modparam("tm", "blst_methods_lookup", 1)
 		 a later time). This is the behaviour for SER versions older than 2.1.
 	</para>
 	<para>
-		- <emphasis>1</emphasis> will keep retransmitting the request on 
+		- <emphasis>1</emphasis> will keep retransmitting the request on
 		unreplied branches. If a provisional answer is received a CANCEL
-		will be immediately sent back (attempting to quickly trigger a 487). 
+		will be immediately sent back (attempting to quickly trigger a 487).
 		This approach is race free and avoids the 2xx after 487 problem, but
 		 it's more resource intensive: faced with a branch towards and UA that
 		 doesn't answer, a CANCEL attempt will keep the transaction alive for
 		 the whole timeout interval (<varname>fr_timer</varname>).
 	</para>
 	<para>
-		- <emphasis>2</emphasis> will send and retransmit CANCEL even on 
+		- <emphasis>2</emphasis> will send and retransmit CANCEL even on
 		unreplied branches, stopping the request retransmissions. This has the
-		same advantages as <emphasis>1</emphasis> and also avoids the extra 
-		roundtrip in the case of the provisional reply, but it's not RFC 3261 
+		same advantages as <emphasis>1</emphasis> and also avoids the extra
+		roundtrip in the case of the provisional reply, but it's not RFC 3261
 		conforming (the RFC allows sending CANCELs only on pending branches).
 	</para>
 	<para>
@@ -749,7 +749,7 @@ function ksr_slreply(evname) {
 	<section id ="tm.p.contacts_avp">
 		<title><varname>contacts_avp</varname> (string)</title>
 		<para>
-		This is the name of an XAVP that the 
+		This is the name of an XAVP that the
 		<function>t_load_contacts()</function> function uses to
                 store contacts of the destination set and that
                 <function>t_next_contacts()</function> function uses to
@@ -771,7 +771,7 @@ modparam("tm", "contacts_avp", "tm_contacts")
 </programlisting>
 		</example>
 	</section>
-	
+
 	<section id="tm.p.contact_flows_avp">
 		<title><varname>contact_flows_avp</varname> (string)</title>
 		<para>
@@ -810,7 +810,7 @@ modparam("tm", "contact_flows_avp", "tm_contact_flows")
 			current transaction.
 		</para>
 		<note><para>
-			The value of the AVP is expected to be expressed in 
+			The value of the AVP is expected to be expressed in
 			<emphasis>seconds</emphasis> and not milliseconds (unlike the rest
 			of the timers).
 		</para></note>
@@ -842,7 +842,7 @@ modparam("tm", "fr_timer_avp", "i:708")
 			</programlisting>
 		</example>
 	</section>
-	
+
 	<section id="tm.p.fr_inv_timer_avp">
 		<title><varname>fr_inv_timer_avp</varname> (string)</title>
 		<para>
@@ -850,8 +850,8 @@ modparam("tm", "fr_timer_avp", "i:708")
 			per-transaction basis. The administrator can provide a value to be
 			used for a particular transaction in an AVP. This parameter
 			contains the name of the AVP that will be checked. If the AVP
-			exists, is non-empty and non-zero then its value will be used 
-			for the fr_inv_timer timer, effectively overriding the value 
+			exists, is non-empty and non-zero then its value will be used
+			for the fr_inv_timer timer, effectively overriding the value
 			configured in <varname>fr_inv_timer</varname> parameter for the
 			current transaction.
 		</para>
@@ -1014,7 +1014,7 @@ modparam("tm", "callid_matching", 1)
 	<section id="tm.p.callid_cseq_matching">
 		<title><varname>callid_cseq_matching</varname> (int)</title>
 		<para>
-			If set to something other than 0, will do transaction matching 
+			If set to something other than 0, will do transaction matching
 			using callid and cseq header values instead of via branch md5 value.
 
 		<emphasis>
@@ -1118,7 +1118,7 @@ modparam("tm", "default_reason", "Unknown reason")
 	<section id="tm.p.disable_6xx_block">
 	<title><varname>disable_6xx_block</varname> (integer)</title>
 	<para>
-		If set the TM module will treat all the 6xx replies like normal replies 
+		If set the TM module will treat all the 6xx replies like normal replies
 		(warning: this would be non-RFC conformant behaviour).
 	</para>
 	<para>
@@ -1178,7 +1178,7 @@ modparam("tm", "disable_6xx_block", 1)
 	</itemizedlist>
 	<note><para>
 	Mode 1 and 2 does not follow RFC 3261, but are useful to deal with some simple UAs
-	behind a NAT (no different routing for the ACK and the contact 
+	behind a NAT (no different routing for the ACK and the contact
 	contains an address behind the NAT).
 	</para></note>
 	<para>
@@ -1199,7 +1199,7 @@ modparam("tm", "local_ack_mode", 1)
 	    </programlisting>
 	</example>
 	</section>
-	
+
 	<section id="tm.p.failure_reply_mode">
 	<title><varname>failure_reply_mode</varname> (integer)</title>
 	<para>
@@ -1261,7 +1261,7 @@ modparam("tm", "failure_reply_mode", 0)
 		to faked replies such as the infamous 408 on branch timeout.
 	</para>
 	<para>
-		Internally, every reply is assigned a priority between 0 (high prio) 
+		Internally, every reply is assigned a priority between 0 (high prio)
 		and 32000 (low prio). With this parameter the priority of fake replies
 		can be adjusted.
 	</para>

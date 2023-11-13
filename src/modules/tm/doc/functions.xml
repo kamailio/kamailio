@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="tm.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -14,20 +14,20 @@
 	</title>
 	<para>
 	    Relay a message statefully either to the destination indicated in the
-		current URI (if called without any parameters) or to the specified 
+		current URI (if called without any parameters) or to the specified
 		host and port. In the later case (host and port specified) the protocol
 		used is the same protocol on which the message was received.
 	</para>
 	<para>
-		<function>t_relay()</function> is the stateful version for 
+		<function>t_relay()</function> is the stateful version for
 		<function>forward()</function>
-		while <function>t_relay(host, port)</function> is similar to 
+		while <function>t_relay(host, port)</function> is similar to
 		<function>forward(host, port)</function>.
 	</para>
 	<para>
 		In the forward to uri case (<function>t_relay()</function>), if the
 	    original URI was rewritten (by UsrLoc, RR, strip/prefix, etc.) the new
-		URI will be taken). The destination (including the protocol) is 
+		URI will be taken). The destination (including the protocol) is
 		determined from the uri, using SIP specific DNS resolving if needed
 		(NAPTR, SRV a.s.o depending also on the dns options).
 	</para>
@@ -39,10 +39,10 @@
 	    <title><function>t_relay</function> usage</title>
 	    <programlisting>
 ...
-if (!t_relay()) 
-{ 
-    sl_reply_error(); 
-    break; 
+if (!t_relay())
+{
+    sl_reply_error();
+    break;
 };
 ...
 	    </programlisting>
@@ -54,8 +54,8 @@ if (!t_relay())
 	    <function>t_relay_to_udp([ip, port])</function>
 	</title>
 	<para>
-	    Relay a message statefully using a fixed protocol either to the 
-		 specified fixed destination or to a destination derived from the 
+	    Relay a message statefully using a fixed protocol either to the
+		 specified fixed destination or to a destination derived from the
 		 message uri (if the host address and port are not specified).
 		 These along with
 	    <function>t_relay</function> are the functions most users want to
@@ -75,7 +75,7 @@ if (!t_relay())
 	    </listitem>
 	</itemizedlist>
 	<para>If no parameters are specified the message is sent to a destination
-	 derived from the message uri (using sip specific DNS lookups), but with 
+	 derived from the message uri (using sip specific DNS lookups), but with
 	 the protocol corresponding to the function name.</para>
 	<example>
 	    <title><function>t_relay_to_udp</function> usage</title>
@@ -149,15 +149,15 @@ else
 	    <title><function>t_on_failure</function> usage</title>
 	    <programlisting>
 ...
-route { 
-    t_on_failure("1"); 
-    t_relay(); 
-} 
+route {
+    t_on_failure("1");
+    t_relay();
+}
 
 failure_route[1] {
-    revert_uri(); 
-    setuser("voicemail"); 
-    append_branch(); 
+    revert_uri();
+    setuser("voicemail");
+    append_branch();
 }
 ...
 	    </programlisting>
@@ -211,7 +211,7 @@ event_route[tm:branch-failure:myroute] {
 	    </programlisting>
 	</example>
     </section>
- 
+
 	 <section id="tm.f.t_on_reply">
 	<title>
 	    <function>t_on_reply(onreply_route)</function>
@@ -236,11 +236,11 @@ event_route[tm:branch-failure:myroute] {
 ...
 loadmodule "/usr/local/lib/ser/modules/nathelper.so"
 ...
-route { 
+route {
 	/* if natted */
-	t_on_reply("1"); 
-	t_relay(); 
-} 
+	t_on_reply("1");
+	t_relay();
+}
 
 onreply_route[1] {
 	if (status=~ "(183)|2[0-9][0-9]"){
@@ -279,10 +279,10 @@ onreply_route[1] {
 	    <title><function>t_on_branch</function> usage</title>
 	    <programlisting>
 ...
-route { 
-	t_on_branch("1"); 
-	t_relay(); 
-} 
+route {
+	t_on_branch("1");
+	t_relay();
+}
 
 branch_route[1] {
 	if (uri=~"sip:[0-9]+"){
@@ -532,7 +532,7 @@ t_forward_nonack("1.2.3.4", "5060");
 	</title>
 	<para>
 		Sets the fr_inv_timeout and optionally fr_timeout for the current
-		transaction or for transactions created during the same script 
+		transaction or for transactions created during the same script
 		invocation, after calling this function.
 		If the transaction is already created (e.g called after
 		 <function>t_relay()</function> or in an onreply_route) all the
@@ -543,18 +543,18 @@ t_forward_nonack("1.2.3.4", "5060");
 	<itemizedlist>
 	    <listitem>
 		<para><emphasis>fr_inv_timeout</emphasis> - new final response timeout
-			(in milliseconds) for INVITEs. See also 
+			(in milliseconds) for INVITEs. See also
 			<varname>fr_inv_timer</varname>.
 		</para>
 		<para><emphasis>fr_timeout</emphasis> - new final response timeout
-		 	(in milliseconds) for non-INVITE transaction, or INVITEs which 
+		 	(in milliseconds) for non-INVITE transaction, or INVITEs which
 			haven't received yet a provisional response. See also
 			<varname>fr_timer</varname>.
 		</para>
 	    </listitem>
 	</itemizedlist>
 	<para>
-		See also: 
+		See also:
 			<varname>fr_timer</varname>,
 			<varname>fr_inv_timer</varname>,
 			<function>t_reset_fr()</function>.
@@ -563,17 +563,17 @@ t_forward_nonack("1.2.3.4", "5060");
 	    <title><function>t_set_fr</function> usage</title>
 	    <programlisting>
 ...
-route { 
+route {
 	t_set_fr(10000); # set only fr invite timeout to 10s
 	t_on_branch("1");
-	t_relay(); 
-} 
+	t_relay();
+}
 
 branch_route[1] {
 	# if we are calling the pstn, extend the invite timeout to 50s
 	# for all the branches, and set the no-reply-received timeout to 2s
 	if (uri=~"sip:[0-9]+"){
-		t_set_fr(50000, 2000); 
+		t_set_fr(50000, 2000);
 	}
 }
 	    </programlisting>
@@ -585,13 +585,13 @@ branch_route[1] {
 	    <function>t_reset_fr()</function>
 	</title>
 	<para>
-		Resets the <varname>fr_inv_timer</varname> and 
+		Resets the <varname>fr_inv_timer</varname> and
 		<varname>fr_timer</varname> for the current transaction to the default
 		values (set using the tm module parameters
 		<varname>fr_inv_timer</varname> and <varname>fr_timer</varname>).
 	</para>
 	<para>
-		It will effectively cancel any previous calls to 
+		It will effectively cancel any previous calls to
 		<function>t_set_fr</function> for the same transaction.
 	</para>
 	<para>
@@ -603,11 +603,11 @@ branch_route[1] {
 		<title><function>t_reset_fr</function> usage</title>
 		<programlisting>
 ...
-route { 
+route {
 ...
 		t_reset_fr();
 ...
-} 
+}
 		</programlisting>
 	</example>
 	</section>
@@ -618,7 +618,7 @@ route {
 	    <function>t_set_max_lifetime(inv_lifetime, noninv_lifetime)</function>
 	</title>
 	<para>
-		Sets the maximum lifetime for the current INVITE or non-INVITE 
+		Sets the maximum lifetime for the current INVITE or non-INVITE
 		transaction, or for transactions created during the same script
 		invocation, after calling this function (that's why it takes values
 		for both INVITE and non-INVITE).
@@ -632,10 +632,10 @@ route {
 	<itemizedlist>
 	    <listitem>
 		<para><emphasis>inv_lifetime</emphasis> - maximum INVITE transaction
-			lifetime (in milliseconds). See also 
+			lifetime (in milliseconds). See also
 			<varname>max_inv_lifetime</varname>.
 		</para>
-		<para><emphasis>noninv_lifetime</emphasis> - maximum non-INVITE 
+		<para><emphasis>noninv_lifetime</emphasis> - maximum non-INVITE
 			transaction lifetime (in milliseconds).
 			See also <varname>max_noninv_lifetime</varname>.
 		</para>
@@ -650,14 +650,14 @@ route {
 		<title><function>t_set_max_lifetime</function> usage</title>
 		<programlisting>
 ...
-route { 
+route {
     if (src_ip=1.2.3.4)
         t_set_max_lifetime(120000, 0); # set only max_inv_lifetime to 120s
     else
         t_set_max_lifetime(90000, 15000); # set the maximum lifetime to 90s if
-                                          # the current transaction is an 
+                                          # the current transaction is an
                                           # INVITE and to 15s if not
-} 
+}
 
 		</programlisting>
 	</example>
@@ -668,13 +668,13 @@ route {
 	    <function>t_reset_max_lifetime()</function>
 	</title>
 	<para>
-		Resets the maximum lifetime for the current INVITE or non-INVITE 
+		Resets the maximum lifetime for the current INVITE or non-INVITE
 		transaction to the default value (set using the tm module parameter
-		<varname>max_inv_lifetime</varname> or 
+		<varname>max_inv_lifetime</varname> or
 		<varname>max_noninv_lifetime</varname>).
 	</para>
 	<para>
-		It will effectively cancel any previous calls to 
+		It will effectively cancel any previous calls to
 		<function>t_set_max_lifetime</function> for the same transaction.
 	</para>
 	<para>
@@ -686,11 +686,11 @@ route {
 		<title><function>t_reset_max_lifetime</function> usage</title>
 		<programlisting>
 ...
-route { 
+route {
 ...
 		t_reset_max_lifetime();
 ...
-} 
+}
 		</programlisting>
 	</example>
 	</section>
@@ -701,24 +701,24 @@ route {
 	</title>
 	<para>
 		Sets the retr_t1_interval and retr_t2_interval for the current
-		transaction or for transactions created during the same script 
+		transaction or for transactions created during the same script
 		invocation, after calling this function.
 		If one of the parameters is 0, it's value won't be changed.
 		If the transaction is already created (e.g called after
 		 <function>t_relay()</function> or in an onreply_route) all the
-		 existing branches will have their retransmissions intervals updated 
+		 existing branches will have their retransmissions intervals updated
 		 on-the-fly:
 		 if the retransmission interval for the branch has not yet reached T2
-		  the interval will be reset to retr_t1_interval, else to 
+		  the interval will be reset to retr_t1_interval, else to
 		  retr_t2_interval. Note that the change will happen after the current
-		  interval expires (after the next retransmission, the next-next 
-		  retransmission will take place at retr_t1_interval or 
+		  interval expires (after the next retransmission, the next-next
+		  retransmission will take place at retr_t1_interval or
 		  retr_t2_interval).
-		 All new branches of the same transaction will start with the new 
+		 All new branches of the same transaction will start with the new
 		 values.
 		 This function will work even if it's called in the script before
 		a transaction creating function (e.g.: t_set_retr(500, 4000);
-		t_relay()). All new transaction created after this function call, 
+		t_relay()). All new transaction created after this function call,
 		during the same script invocation will use the new values.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
@@ -728,14 +728,14 @@ route {
 			interval (in milliseconds). See also
 			<varname>retr_t1_timeout</varname>.
 		</para>
-		<para><emphasis>retr_t2_interval</emphasis> - new T2 (or maximum) 
+		<para><emphasis>retr_t2_interval</emphasis> - new T2 (or maximum)
 			retransmission interval (in milliseconds). See also
 			<varname>retr_t2_timeout</varname>.
 		</para>
 	    </listitem>
 	</itemizedlist>
 	<para>
-		See also: 
+		See also:
 			<varname>retr_timer1</varname>,
 			<varname>retr_timer2</varname>,
 			<function>t_reset_retr()</function>.
@@ -744,17 +744,17 @@ route {
 	    <title><function>t_set_retr</function> usage</title>
 	    <programlisting>
 ...
-route { 
+route {
 	t_set_retr(250, 0); # set only T1 to 250 ms
 	t_on_branch("1");
-	t_relay(); 
-} 
+	t_relay();
+}
 
 branch_route[1] {
 	# if we are calling the a remote pstn, extend T1 and decrease T2
 	# for all the branches
 	if (uri=~"sip:[0-9]+"){
-		t_set_retr(500, 2000); 
+		t_set_retr(500, 2000);
 	}
 }
 	    </programlisting>
@@ -767,13 +767,13 @@ branch_route[1] {
 	    <function>t_reset_retr()</function>
 	</title>
 	<para>
-		Resets the <varname>retr_timer1</varname> and 
-		<varname>retr_timer2</varname> for the current transaction to the 
+		Resets the <varname>retr_timer1</varname> and
+		<varname>retr_timer2</varname> for the current transaction to the
 		default values (set using the tm module parameters
 		<varname>retr_timer1</varname> and <varname>retr_timer2</varname>).
 	</para>
 	<para>
-		It will effectively cancel any previous calls to 
+		It will effectively cancel any previous calls to
 		<function>t_set_retr</function> for the same transaction.
 	</para>
 	<para>
@@ -785,11 +785,11 @@ branch_route[1] {
 		<title><function>t_reset_retr</function> usage</title>
 		<programlisting>
 ...
-route { 
+route {
 ...
 		t_reset_retr();
 ...
-} 
+}
 		</programlisting>
 	</example>
 	</section>
@@ -799,8 +799,8 @@ route {
 	    <function>t_set_auto_inv_100(0|1)</function>
 	</title>
 	<para>
-		Switch automatically sending 100 replies to INVITEs on/off on a 
-		per transaction basis. It overrides the 
+		Switch automatically sending 100 replies to INVITEs on/off on a
+		per transaction basis. It overrides the
 		<varname>auto_inv_100</varname> value for the current transaction.
 	</para>
 	<para>
@@ -810,12 +810,12 @@ route {
 		<title><function>t_set_auto_inv_100</function> usage</title>
 		<programlisting>
 ...
-route { 
+route {
 ...
 	if (src_ip==1.2.3.0/24)
 		t_set_auto_inv_100(0); # turn off automatic 100 replies
 ...
-} 
+}
 		</programlisting>
 	</example>
 	</section>
@@ -826,19 +826,19 @@ route {
 	</title>
 	<para>
 		Returns true if the failure route is executed for a branch that did
-		timeout. It can be used from 
+		timeout. It can be used from
 		FAILURE_ROUTE and BRANCH_FAILURE_ROUTE event route.
 	</para>
 	<example>
 	    <title><function>t_branch_timeout</function> usage</title>
 	    <programlisting>
 ...
-failure_route[0]{ 
+failure_route[0]{
 	if (t_branch_timeout()){
 		log("timeout\n");
-		# ... 
+		# ...
 	}
-} 
+}
 	    </programlisting>
 	</example>
 	</section>
@@ -849,7 +849,7 @@ failure_route[0]{
 	</title>
 	<para>
 		Returns true if the failure route is executed for a branch that did
-		receive at least one reply in the past (the "current" reply is not 
+		receive at least one reply in the past (the "current" reply is not
 		taken into account). It can be used from
 		<emphasis>failure_route</emphasis>  and
 		<emphasis>branch-failure</emphasis> event route.
@@ -858,15 +858,15 @@ failure_route[0]{
 	    <title><function>t_branch_replied</function> usage</title>
 	    <programlisting>
 ...
-failure_route[0]{ 
+failure_route[0]{
 	if (t_branch_timeout()){
 		if (t_branch_replied())
 			log("timeout after receiving a reply (no answer?)\n");
 		else
 			log("timeout, remote side seems to be down\n");
-		# ... 
+		# ...
 	}
-} 
+}
 	    </programlisting>
 	</example>
 	</section>
@@ -883,14 +883,14 @@ failure_route[0]{
 	    <title><function>t_any_timeout</function> usage</title>
 	    <programlisting>
 ...
-failure_route[0]{ 
+failure_route[0]{
 	if (!t_branch_timeout()){
 		if (t_any_timeout()){
 			log("one branch did timeout\n");
 			sl_send_reply("408", "Timeout");
 		}
 	}
-} 
+}
 	    </programlisting>
 	</example>
 	</section>
@@ -908,12 +908,12 @@ failure_route[0]{
 	    <title><function>t_any_replied</function> usage</title>
 	    <programlisting>
 ...
-onreply_route[0]{ 
+onreply_route[0]{
 	if (!t_any_replied()){
 		log("first reply received\n");
 		# ...
 	}
-} 
+}
 	    </programlisting>
 	</example>
 </section>
@@ -930,12 +930,12 @@ onreply_route[0]{
 	    <title><function>t_grep_status</function> usage</title>
 	    <programlisting>
 ...
-onreply_route[0]{ 
+onreply_route[0]{
 	if (t_grep_status("486")){
 		/* force a 486 reply, even if this is not the winning branch */
 		t_reply("486", "Busy");
 	}
-} 
+}
 	    </programlisting>
 	</example>
 </section>
@@ -951,12 +951,12 @@ onreply_route[0]{
 	    <title><function>t_is_canceled</function> usage</title>
 	    <programlisting>
 ...
-failure_route[0]{ 
+failure_route[0]{
 	if (t_is_canceled()){
 		log("transaction canceled\n");
 		# ...
 	}
-} 
+}
 	    </programlisting>
 	</example>
 	</section>
@@ -974,12 +974,12 @@ failure_route[0]{
 	    <title><function>t_is_expired</function> usage</title>
 	    <programlisting>
 ...
-failure_route[0]{ 
+failure_route[0]{
 	if (t_is_expired()){
 		log("transaction expired\n");
 		# There is no point in adding a new branch.
 	}
-} 
+}
 	    </programlisting>
 	</example>
 	</section>
@@ -1084,19 +1084,19 @@ if (method == CANCEL) {
 	    <title><function>t_drop_replies()</function> usage</title>
 	    <programlisting>
 ...
-failure_route[0]{ 
+failure_route[0]{
 	if (t_check_status("5[0-9][0-9]")){
 		# I do not like the 5xx responses,
 		# so I give another chance to "foobar.com",
 		# and I drop all the replies to make sure that
 		# they are not forwarded to the caller.
 		t_drop_replies();
-		
+
 		rewritehostport("foobar.com");
 		append_branch();
 		t_relay();
 	}
-} 
+}
 	    </programlisting>
 	</example>
     </section>
@@ -1158,7 +1158,7 @@ failure_route[1] {
 		</title>
 		<para>
 		  This is the first of the three functions that can be used
-		  to implement 
+		  to implement
 		  serial/parallel forking based on q and +sip.instance
 		  values of individual branches in the destination set.
 		</para>
@@ -1253,7 +1253,7 @@ if (!t_load_contacts()) {
 		  includes the highest priority contacts in contacts_avp,
 		  but only one contact with the same +sip.instance value is
 		  included.  Duplicate contacts are added to contact_flows_avp
-		  for later consumption by function 
+		  for later consumption by function
 		  <function>next_contact_flow()</function>.
 		  Upon each call, Request URI is rewritten with
 		  the first contact and the remaining contacts (if any) are
@@ -1804,11 +1804,11 @@ t_use_uac_headers();
 	    <function>t_is_retr_async_reply()</function>
 	</title>
 	<para>
-	Check to see if the reply is a retransmitted reply on a transaction that is 
-	currently suspended asynchronously (suspended during reply processing). Right now the check is only on the 
-	transaction, we don't actually check to see if the reply message is an actual 
-	retransmission of the suspended reply. This is expected as you should not process 
-	another reply until the suspended reply processing has been completed. The trick here 
+	Check to see if the reply is a retransmitted reply on a transaction that is
+	currently suspended asynchronously (suspended during reply processing). Right now the check is only on the
+	transaction, we don't actually check to see if the reply message is an actual
+	retransmission of the suspended reply. This is expected as you should not process
+	another reply until the suspended reply processing has been completed. The trick here
 	is to make sure you don't suspend for too long or even worse, indefinitely.
 	</para>
 	<para>returns true if the transaction is currently reply suspended or false if not.</para>
