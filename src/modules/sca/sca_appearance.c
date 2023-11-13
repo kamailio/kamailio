@@ -160,7 +160,7 @@ void sca_appearance_free(sca_appearance *appearance)
  * assumes slot for app_entries is locked.
  *
  * appearance-index values are 1-indexed.
- * return values: 
+ * return values:
  *	 -1:	error
  *	>=1:	index reserved for claimant
  */
