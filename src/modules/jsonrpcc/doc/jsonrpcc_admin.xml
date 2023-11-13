@@ -80,7 +80,7 @@
 		<section>
 			<title><varname>servers</varname> (string)</title>
 			<para>
-				The servers providing the remote jsonrpc service. Format is "host1:port1,priority1 host2:port2,priority2". Requests to servers of the same priority will be distributed evenly (round robin). Server groups with higher priority are used first. 
+				The servers providing the remote jsonrpc service. Format is "host1:port1,priority1 host2:port2,priority2". Requests to servers of the same priority will be distributed evenly (round robin). Server groups with higher priority are used first.
 			</para>
 			<example>
 				<title>Set <varname>servers</varname> parameter</title>
@@ -115,12 +115,12 @@ modparam("jsonrpcc", "max_conn_attempts", 10)
 			</title>
 			<para>
 				Invokes the remote 'method' with the given 'parameters' as a notification.
-				Unlike jsonrpc_request (below), notifications do not receive a response. 
+				Unlike jsonrpc_request (below), notifications do not receive a response.
 				Script processing continues in the usual fashion as soon as the notification
 				has been sent.
 			</para>
 			<para>
-				The method and parameters can be a static string or dynamic string value with 
+				The method and parameters can be a static string or dynamic string value with
 				config variables.
 			</para>
 			<example>
@@ -138,7 +138,7 @@ jsonrpc_notification("update_user", "{'id': 1234, 'name': 'Petros'}")
 				<function moreinfo="none">jsonrpc_request(method, parameters, return_route, error_route, result_var)</function>
 			</title>
 			<para>
-				Invokes the remote 'method' with the given 'parameters'. 
+				Invokes the remote 'method' with the given 'parameters'.
 				When the response is received, continues processing of the SIP request
 				with the route[return_route]. If a timeout occurs, no servers can be reached,
 				or a jsonrpc error message is received, continues process at route[error_route].
@@ -146,17 +146,17 @@ jsonrpc_notification("update_user", "{'id': 1234, 'name': 'Petros'}")
 				message received back from the jsonrpc server.
 			</para>
 			<para>
-				The method, parameters, return_route, and error_route can be a static string or 
+				The method, parameters, return_route, and error_route can be a static string or
 				a dynamic string value with config variables.
 			</para>
 			<para>
 				Since the SIP request handling is resumed in another process,
-				the config file execution is lost. As mentioned above, only 
+				the config file execution is lost. As mentioned above, only
 				shared variables ($shv, etc) should be used for any value that
 				will be needed when the script is resumed.
 			</para>
 			<para>
-				The result is stored in the pseudo-variable 'result_var'. Since this 
+				The result is stored in the pseudo-variable 'result_var'. Since this
 				variable is set <emphasis>after</emphasis> the response is received,
 				it is possible to use a $var for this parameter.
 			</para>
