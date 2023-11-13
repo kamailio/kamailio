@@ -172,7 +172,7 @@ modparam("rabbitmq", "direct_reply_to", 1)
 				<function moreinfo="none">rabbitmq_publish(exchange, routing_key, content_type, messagebody)</function>
 			</title>
 			<para>
-				The function publishes messagebody without waiting for a reply. 
+				The function publishes messagebody without waiting for a reply.
 			</para>
 			<para>
 				Meaning of the parameters is as follows:
@@ -220,7 +220,7 @@ rabbitmq_publish("exchange", "routing_key", "application/json", "$avp(json_reque
 				<function moreinfo="none">rabbitmq_publish_consume(exchange, routing_key, content_type, messagebody, reply)</function>
 			</title>
 			<para>
-				The function publishes messagebody and waits timeoute_sec + timeout_usec for a reply. 
+				The function publishes messagebody and waits timeoute_sec + timeout_usec for a reply.
 				If the reply comes, one can read it in the <emphasis>reply</emphasis> avp.
 			</para>
 			<para>
