@@ -37,7 +37,7 @@
 	<listitem><para>
 		For <emphasis>UDP</emphasis> or <emphasis>TCP</emphasis> sockets:
 		[udp|tcp]:address:port.
-		If the address is "*" or missing, it will bind to all the local 
+		If the address is "*" or missing, it will bind to all the local
 		addresses (0.0.0.0).
 		Examples: "udp:localhost:2046", "tcp:localhost:2046",
 		"tcp:3012", "udp:*:3012".
@@ -170,7 +170,7 @@ modparam("ctl", "group", 100)
 		If no protocol is specified the default is "fifo".
 		Examples: "fifo:/tmp/kamailio_fifo", "/tmp/kamailio_fifo2", "udp:*:2050",
 		"tcp:localhost:2050".
-		For more details on the UDP and TCP formats see 
+		For more details on the UDP and TCP formats see
 		<varname>binrpc</varname>.
 		Multiple fifos or fifo transports can be used in the same time
 		(just by setting the <varname>fifo</varname> parameter multiple
@@ -202,7 +202,7 @@ modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
 		if it is possible to automatically convert it to the expected type.
 	</para>
 	<para>
-		Default: off 
+		Default: off
 	</para>
 	<para>
 		It is recommended to leave this parameter to its default off value
