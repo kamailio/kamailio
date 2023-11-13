@@ -3230,7 +3230,7 @@ static int from_gw_3(
 {
 	int lcr_id;
 	str addr_str;
-	char *tmp;
+	char *tmp = NULL;
 	uri_transport transport;
 
 	/* Get and check parameter values */
@@ -3243,6 +3243,7 @@ static int from_gw_3(
 	addr_str.s = _addr;
 	addr_str.len = strlen(_addr);
 
+	tmp = NULL;
 	transport = strtol(_transport, &tmp, 10);
 	if((tmp == 0) || (*tmp) || (tmp == _transport)) {
 		LM_ERR("invalid transport parameter %s\n", _lcr_id);
@@ -3257,7 +3258,7 @@ static int from_gw_4(struct sip_msg *_m, char *_lcr_id, char *_addr,
 {
 	int lcr_id;
 	str addr_str;
-	char *tmp;
+	char *tmp = NULL;
 	uri_transport transport;
 	int src_port;
 
@@ -3271,6 +3272,7 @@ static int from_gw_4(struct sip_msg *_m, char *_lcr_id, char *_addr,
 	addr_str.s = _addr;
 	addr_str.len = strlen(_addr);
 
+	tmp = NULL;
 	transport = strtol(_transport, &tmp, 10);
 	if((tmp == 0) || (*tmp) || (tmp == _transport)) {
 		LM_ERR("invalid transport parameter %s\n", _lcr_id);
@@ -3536,7 +3538,7 @@ static int to_gw_3(
 {
 	int lcr_id;
 	int transport;
-	char *tmp;
+	char *tmp = NULL;
 	str addr_str;
 
 	/* Get and check parameter values */
@@ -3549,6 +3551,7 @@ static int to_gw_3(
 	addr_str.s = _addr;
 	addr_str.len = strlen(_addr);
 
+	tmp = NULL;
 	transport = strtol(_transport, &tmp, 10);
 	if((tmp == 0) || (*tmp) || (tmp == _transport)) {
 		LM_ERR("invalid transport parameter %s\n", _transport);
