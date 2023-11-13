@@ -486,7 +486,7 @@ int ki_is_from_user_enum_suffix_service(
 	return is_from_user_enum_helper(msg, vsuffix, vservice);
 }
 
-/* 
+/*
  * Add parameter to URI.
  */
 int add_uri_param(str *uri, str *param, str *new_uri)
@@ -567,7 +567,7 @@ int add_uri_param(str *uri, str *param, str *new_uri)
 
 /*
  * Tests if one result record is "greater" that the other.  Non-NAPTR records
- * greater that NAPTR record.  An invalid NAPTR record is greater than a 
+ * greater that NAPTR record.  An invalid NAPTR record is greater than a
  * valid one.  Valid NAPTR records are compared based on their
  * (order,preference).
  */
@@ -636,7 +636,7 @@ static inline void naptr_sort(struct rdata **head)
 
 
 /*
- * Makes enum query on name.  On success, rewrites user part and 
+ * Makes enum query on name.  On success, rewrites user part and
  * replaces Request-URI.
  */
 int do_query(struct sip_msg *_msg, char *user, char *name, str *service)
