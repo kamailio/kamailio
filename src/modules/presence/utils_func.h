@@ -24,7 +24,7 @@
 /*! \file
  * \brief Kamailio presence module :: Utility functions
  * \ref utils_func.c
- * \ingroup presence 
+ * \ingroup presence
  */
 
 
