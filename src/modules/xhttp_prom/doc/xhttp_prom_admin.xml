@@ -12,7 +12,7 @@
 <chapter>
 
   <title>&adminguide;</title>
-  
+
   <section>
 	<title>Overview</title>
 	<para>
@@ -125,7 +125,7 @@ modparam("xhttp_prom", "xhttp_prom_buf_size", 1024)
 		<title>Set <varname>xhttp_prom_timeout</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-# Set timeout to 10 hours		  
+# Set timeout to 10 hours
 modparam("xhttp_prom", "xhttp_prom_timeout", 600)
 ...
 		</programlisting>
@@ -135,7 +135,7 @@ modparam("xhttp_prom", "xhttp_prom_timeout", 600)
 	  <title><varname>xhttp_prom_stats</varname> (str)</title>
 	  <para>
 		Specifies which internal statistics from &kamailio; to show.
-		
+
 		Possible values:
 		<itemizedlist>
 		  <listitem>
@@ -250,7 +250,7 @@ the metric.
 		<title>Set <varname>prom_counter</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-		  
+
 # Create cnt_first counter with no labels.
 modparam("xhttp_prom", "prom_counter", "name=cnt_first;");
 
@@ -385,7 +385,7 @@ the metric.
 		<title>Set <varname>prom_histogram</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-		  
+
 # Create my_histo histogram with no labels and default buckets.
 modparam("xhttp_prom", "prom_histogram", "name=my_histo;");
 
@@ -926,4 +926,4 @@ event_route[xhttp:request] {
 	  </example>
 	</section>
   </section>
-</chapter>	
+</chapter>
