@@ -140,9 +140,9 @@ int redisc_init(void)
 						pit->body.s);
 				haspass = 1;
 #ifdef WITH_SSL
-			} else if(pit->name.len == 3 
+			} else if(pit->name.len == 3
 					  && strncmp(pit->name.s, "tls", 3) == 0) {
-				snprintf(pass, sizeof(pass) - 1, "%.*s", pit->body.len, 
+				snprintf(pass, sizeof(pass) - 1, "%.*s", pit->body.len,
 						pit->body.s);
 				if(str2int(&pit->body, &enable_ssl) < 0)
 					enable_ssl = 0;
