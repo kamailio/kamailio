@@ -42,13 +42,13 @@
     java: native void LM_XXXXXX(Params XXXX);
     c: JNIEXPORT void JNICALL Java_org_siprouter_NativeMethods_LM_1XXXXXX(JNIEnv *jenv, jobject this, Params XXXX)
 
-    Why (for example) Java_Kamailio_LM_1ERR but not Java_Kamailio_LM_ERR? 
+    Why (for example) Java_Kamailio_LM_1ERR but not Java_Kamailio_LM_ERR?
     See explaination here: http://qscribble.blogspot.ca/2012/04/underscores-in-jni-method-names.html
 
     Also, from here: http://192.9.162.55/docs/books/jni/html/design.html
-    The JNI adopts a simple name-encoding scheme to ensure that all Unicode characters 
-    translate into valid C function names. The underscore ("_") character separates the 
-    components of fully qualified class names. Because a name or type descriptor never 
+    The JNI adopts a simple name-encoding scheme to ensure that all Unicode characters
+    translate into valid C function names. The underscore ("_") character separates the
+    components of fully qualified class names. Because a name or type descriptor never
     begins with a number, we can use _0, ..., _9 for escape sequences, as illustrated below:
     +-------------------+------------------------------------+
     |  Escape Sequence  |            Denotes                 |
