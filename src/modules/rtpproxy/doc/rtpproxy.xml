@@ -84,8 +84,8 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="rtpproxy_admin.xml"/>
 	<xi:include href="rtpproxy_faq.xml"/>
-	
+
 </book>
