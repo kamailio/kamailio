@@ -215,7 +215,7 @@ modparam("ims_usrloc_pcscf", "expires_grace", 1800)
 </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title>audit_expired_pcontacts_interval (int)</title>
 
@@ -264,7 +264,7 @@ modparam("ims_usrloc_pcscf", "audit_expired_pcontacts_timeout", 120)
 </programlisting>
       </example>
     </section>
-    
+
   </section>
 
   <section>
