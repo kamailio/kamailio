@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   ro_timer.h
  * Author: Jason Penton
  *

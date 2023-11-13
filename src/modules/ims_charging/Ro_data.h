@@ -105,7 +105,7 @@
 	} while(0)
 
 /**
- * list operations 
+ * list operations
  */
 
 #define WL_APPEND(list, add)              \
