@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -365,7 +365,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"lcr", 
+	"lcr",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,      	 /* Exported functions */
 	params,    	 /* Exported parameters */
@@ -951,7 +951,7 @@ static struct gw_info *find_gateway_by_ip_and_port(
 	return NULL;
 }
 
-/* 
+/*
  * Insert gw info into index i or gws table
  */
 static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int gw_id,
@@ -1025,7 +1025,7 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int gw_id,
 
 
 /*
- * Insert prefix_len into list pointed by last rule hash table entry 
+ * Insert prefix_len into list pointed by last rule hash table entry
  * if not there already. Keep list in decending prefix_len order.
  */
 static int prefix_len_insert(
@@ -3005,7 +3005,7 @@ static int ki_next_gw(sip_msg_t *_m)
 }
 
 /**
- * 
+ *
  */
 static int next_gw(struct sip_msg *_m, char *_s1, char *_s2)
 {
