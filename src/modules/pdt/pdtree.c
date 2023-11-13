@@ -411,8 +411,8 @@ int pdt_check_pd_node(pdt_node_t *pn, str *sp, str *sd, char *code, int len)
 	return ret;
 }
 
-/* returns 
- * 1 if prefix or domain already exists 
+/* returns
+ * 1 if prefix or domain already exists
  * 0 if prefix or domain does not exist
  * -1 if any error
  */
