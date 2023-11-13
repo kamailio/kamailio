@@ -24,13 +24,13 @@
 	true or false, depending on a random value and a specified probability.
 	E.g. if you set via fifo or script a probability value of 5%, then 5% of
 	all calls to rand_event will return true.
-	The pseudovariable <quote>$RANDOM</quote> could be used to introduce 
+	The pseudovariable <quote>$RANDOM</quote> could be used to introduce
 	random values e.g. into a SIP reply.
 	</para>
 	<para>
 	The benefit of this module is the probability of the decision
 	can be manipulated by external applications such as web interface
-	or command line tools. The probability must be specified as 
+	or command line tools. The probability must be specified as
 	percent value, ranging from 0 to 100.
 	</para>
 	<para>
