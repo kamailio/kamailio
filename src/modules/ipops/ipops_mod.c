@@ -558,7 +558,7 @@ static int w_is_ip(sip_msg_t *_msg, char *_s, char *_p2)
 }
 
 /**
- * 
+ *
  */
 static int ki_is_ip(sip_msg_t *msg, str *sval)
 {
@@ -598,7 +598,7 @@ static int w_is_pure_ip(sip_msg_t *_msg, char *_s, char *_p2)
 }
 
 /**
- * 
+ *
  */
 static int ki_is_pure_ip(sip_msg_t *msg, str *sval)
 {
@@ -638,7 +638,7 @@ static int w_is_ipv4(sip_msg_t *_msg, char *_s, char *_p2)
 
 
 /**
- * 
+ *
  */
 static int ki_is_ip4(sip_msg_t *msg, str *sval)
 {
@@ -670,7 +670,7 @@ static int w_is_ipv6(sip_msg_t *_msg, char *_s, char *_p2)
 }
 
 /**
- * 
+ *
  */
 static int ki_is_ip6(sip_msg_t *msg, str *sval)
 {
@@ -704,7 +704,7 @@ static int w_is_ipv6_reference(sip_msg_t *_msg, char *_s, char *_p2)
 
 
 /**
- * 
+ *
  */
 static int ki_is_ip6_reference(sip_msg_t *msg, str *sval)
 {
