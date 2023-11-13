@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 		<title>Overview</title>
 		<para>
@@ -89,7 +89,7 @@
 				<title>Set <varname>no_cnodes</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("erlang", "no_cnodes", 2)	
+modparam("erlang", "no_cnodes", 2)
 ...
 				</programlisting>
 			</example>
@@ -234,7 +234,7 @@ modparam("erlang", "trace_level", 5)
 			<para>
 				Exported pseudo variable has several attributes to get type, length and formatted output
 				readable by transformations or user. Pseudo variable by self determine variable type, but
-				we need to know what type on some position is. 
+				we need to know what type on some position is.
 			</para>
 			<itemizedlist>
 				<listitem>
@@ -295,7 +295,7 @@ DEBUG: &lt;script&gt;: 131:tuple T in clear text: {example, tuple}, the type at 
 			<para>
 				<emphasis>erl_atom</emphasis> pseudo variable allows create analog to Erlang atom data type.
 				Erlang atom is a literal, a constant with name. Formatted output pseudo
-				variable atom could be enclosed in single quotes (') if it does 
+				variable atom could be enclosed in single quotes (') if it does
 				not begin with a lower-case letter or if it contains other characters
 				than alphanumeric characters, underscore (_), or @.
 			</para>
@@ -321,7 +321,7 @@ DEBUG: &lt;script&gt;: 123:$erl_atom(A): badrpc
 			<title><varname>$erl_list(name)</varname></title>
 			<para>
 				Compound data type with a variable number of terms. Formally,
-				a list is either the empty list [] or consists of one or more 
+				a list is either the empty list [] or consists of one or more
 				elements.
 			</para>
 			<para>
@@ -472,7 +472,7 @@ DEBUG: &lt;script&gt;: 410:typeof(X): tuple, length(X): 2, format(X): {line, [{i
 			</para>
 			<para>
 				The parameter <emphasis>mod</emphasis> and <emphasis>fun</emphasis>
-				are module and function name respectively. It can be a static 
+				are module and function name respectively. It can be a static
 				string or a dynamic string value with config variables.
 			</para>
 			<para>
