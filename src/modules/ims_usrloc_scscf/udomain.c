@@ -645,7 +645,7 @@ void unlock_subscription_slot(int i)
  * @param reg_state state to insert in
  * @param barring is impu barred or not
  * @param s associated subscription data
- * @param ccf1  
+ * @param ccf1
  * @param ccf2
  * @param ecf1
  * @param ecf2
@@ -919,7 +919,7 @@ int get_impus_from_subscription_as_string(udomain_t *_d, impurecord_t *impu_rec,
  *  NB - does not return with a lock on the subscription but does increment ref count
  * @param impu string of impu to search for
  * @param s ims_subscription to be returned if found
- * @param leave_slot_locked if no subscription is found return with the slot locked (in case we want to add) 
+ * @param leave_slot_locked if no subscription is found return with the slot locked (in case we want to add)
  * @return 0 on success
  */
 int get_subscription(str *impi_s, ims_subscription **s, int leave_slot_locked)
@@ -985,7 +985,7 @@ void release_subscription(ims_subscription *s)
 /**
  * @brief update/add subscription
  * @param s
- * @return 
+ * @return
  */
 int update_subscription(ims_subscription *s)
 {
