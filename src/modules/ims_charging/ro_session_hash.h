@@ -85,6 +85,8 @@ struct ro_session
 	unsigned int is_final_allocation;
 	long billed;
 	unsigned int ccr_sent;
+	str origin_host;
+	int ro_timer_buffer;
 };
 
 /*! entries in the main ro_session table */
@@ -229,7 +231,7 @@ struct ro_session *build_new_ro_session(int direction, int auth_appid,
 		unsigned int requested_secs, unsigned int validity_timeout,
 		int active_rating_group, int active_service_identifier,
 		str *incoming_trunk_id, str *outgoing_trunk_id, str *pani,
-		str *app_provided_party);
+		str *app_provided_party, int ro_timer_buffer);
 
 /*!
  * \brief Refefence a ro_session with locking
@@ -255,6 +257,8 @@ void unref_ro_session_helper(struct ro_session *ro_session, unsigned int cnt,
 
 struct ro_session *lookup_ro_session(
 		unsigned int h_entry, str *callid, int direction, unsigned int *del);
+
+struct ro_session *lookup_ro_session_by_session_id(str *session_id);
 
 void free_impu_data(struct impu_data *impu_data);
 

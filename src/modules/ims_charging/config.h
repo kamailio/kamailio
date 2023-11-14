@@ -8,6 +8,7 @@ typedef struct
 	str destination_host;
 	str destination_realm;
 	str *service_context_id;
+	int strip_plus_from_e164;
 } client_ro_cfg;
 
 #endif

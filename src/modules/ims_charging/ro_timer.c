@@ -333,13 +333,15 @@ void resume_ro_session_ontimeout(
 		} else {
 			int timer_timeout = i_req->new_credit;
 
-			if(i_req->new_credit > ro_timer_buffer /*TIMEOUTBUFFER*/) {
+			if(i_req->new_credit
+					> i_req->ro_session->ro_timer_buffer /*TIMEOUTBUFFER*/) {
 
 				// We haven't finished using our 1st block of units, and we need to set the timer to
-				// (new_credit - ro_timer_buffer[5 secs]) to ensure we get new credit before our previous
+				// (new_credit - i_req->ro_session->ro_timer_buffer[5 secs]) to ensure we get new credit before our previous
 				// reservation is exhausted. This will only be done the first time, because the timer
 				// will always be fired 5 seconds before we run out of time thanks to this operation
-				timer_timeout = i_req->new_credit - ro_timer_buffer;
+				timer_timeout =
+						i_req->new_credit - i_req->ro_session->ro_timer_buffer;
 			}
 
 			ret = insert_ro_timer(&i_req->ro_session->ro_tl, timer_timeout);

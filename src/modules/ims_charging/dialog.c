@@ -86,23 +86,27 @@ void dlg_answered(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 		   "seconds since we requested\n",
 			(int)session->reserved_secs, (int)session->valid_for,
 			(int)time_since_last_event);
-	if(session->reserved_secs < (session->valid_for - time_since_last_event)) {
-		if(session->reserved_secs > ro_timer_buffer /*TIMEOUTBUFFER*/) {
+	// valid_for might not be included in the answer from the charging server
+	if(session->valid_for == 0
+			|| session->reserved_secs
+					   < (session->valid_for - time_since_last_event)) {
+		if(session->reserved_secs
+				> session->ro_timer_buffer /*TIMEOUTBUFFER*/) {
 			ret = insert_ro_timer(&session->ro_tl,
 					session->reserved_secs
 							- (session->is_final_allocation
 											? 0
-											: ro_timer_buffer)); //subtract 5 seconds so as to get more credit before we run out
+											: session->ro_timer_buffer)); //subtract ro_timer_buffer to get more credit before we run out
 		} else {
 			ret = insert_ro_timer(&session->ro_tl, session->reserved_secs);
 		}
 	} else {
-		if(session->valid_for > ro_timer_buffer) {
+		if(session->valid_for > session->ro_timer_buffer) {
 			ret = insert_ro_timer(&session->ro_tl,
 					session->valid_for
 							- (session->is_final_allocation
 											? 0
-											: ro_timer_buffer)); //subtract 5 seconds so as to get more credit before we run out
+											: session->ro_timer_buffer)); //subtract ro_timer_buffer to get more credit before we run out
 		} else {
 			ret = insert_ro_timer(&session->ro_tl, session->valid_for);
 		}
@@ -202,6 +206,10 @@ void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode,
 		//currently the way we are doing is a hack.....
 		//if ((ro_session = lookup_ro_session(dlg->h_entry, &dlg->callid, 0, 0))) {
 		ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
+		if(!ro_session_entry) {
+			LM_ERR("ro session entry is NULL - aborting\n");
+			return;
+		}
 
 		//if the Ro session is not active we don't need to do anything. This prevents
 		//double processing for various dialog_terminated callback events.

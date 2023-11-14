@@ -1,4 +1,5 @@
 #include "../cdp_avp/cdp_avp_mod.h"
+#include "../../lib/ims/ims_getters.h"
 
 #include "ccr.h"
 #include "Ro_data.h"
@@ -402,6 +403,10 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca)
 						case AVP_Validity_Time:
 							mscc->validity_time = get_4bytes(mscc_avp->data.s);
 							break;
+						case AVP_Time_Quota_Threshold:
+							mscc->time_quota_threshold =
+									get_4bytes(mscc_avp->data.s);
+							break;
 						case AVP_Result_Code:
 							mscc->resultcode = get_4bytes(mscc_avp->data.s);
 							break;
@@ -477,6 +482,9 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca)
 			case AVP_Result_Code:
 				x = get_4bytes(avp->data.s);
 				ro_cca_data->resultcode = x;
+				break;
+			case AVP_Origin_Host:
+				str_dup(ro_cca_data->origin_host, avp->data, pkg);
 				break;
 		}
 		avp = avp->next;
