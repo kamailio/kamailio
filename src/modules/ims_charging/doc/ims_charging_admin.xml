@@ -839,6 +839,26 @@ modparam("ims_charging", "vendor_specific_id", 10)
       </example>
     </section>
 
+    <section>
+      <title><varname>strip_plus_from_e164</varname> (int)</title>
+
+      <para>Strip + from subscription id when E.164 format is used. This is according
+        to spec, but this parameter is to keep existing behavior as the default.</para>
+
+      <para><emphasis>Default value is 0.</emphasis></para>
+
+      <example>
+        <title><varname>strip_plus_from_e164</varname>parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "strip_plus_from_e164", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
   </section>
 
   <section>

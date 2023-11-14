@@ -24,6 +24,8 @@
 
 MODULE_VERSION
 
+extern gen_lock_t *process_lock; /* lock on the process table */
+
 struct dlg_binds *dlgb_p;
 
 /* parameters */
@@ -57,7 +59,8 @@ int ro_db_mode = DB_MODE_NONE;
 
 char *domain = "location";
 
-client_ro_cfg cfg = {str_init(""), str_init(""), str_init(""), str_init(""), 0};
+client_ro_cfg cfg = {
+		str_init(""), str_init(""), str_init(""), str_init(""), 0, 0};
 
 static str custom_user_spec = {NULL, 0};
 static str app_provided_party_spec = {NULL, 0};
@@ -87,6 +90,9 @@ int single_ro_session_per_dialog =
 static int mod_init(void);
 static int mod_child_init(int);
 static void mod_destroy(void);
+
+AAAMessage *callback_cdp_request(AAAMessage *request, void *param);
+int *callback_singleton; /*< Callback singleton */
 
 static int w_ro_ccr(struct sip_msg *msg, char *route_name, char *direction,
 		int reservation_units, char *incoming_trunk_id,
@@ -163,6 +169,8 @@ static param_export_t params[] = {
 				&vendor_specific_id}, /* VSI for extra charing info in Ro */
 		{"custom_user_avp", PARAM_STR, &custom_user_spec},
 		{"app_provided_party_avp", PARAM_STR, &app_provided_party_spec},
+		{"strip_plus_from_e164", INT_PARAM,
+				&cfg.strip_plus_from_e164}, /*wheter to strip or keep + sign from E164 numbers (tel: uris), according to diameter spec*/
 		{0, 0, 0}};
 
 /** module exports */
@@ -235,6 +243,9 @@ static int mod_init(void)
 {
 	int n;
 	load_tm_f load_tm;
+
+	callback_singleton = shm_malloc(sizeof(int));
+	*callback_singleton = 0;
 
 	if(!fix_parameters()) {
 		LM_ERR("unable to set Ro configuration parameters correctly\n");
@@ -349,6 +360,13 @@ static int mod_child_init(int rank)
 	if(ro_db_mode == DB_MODE_REALTIME && rank == PROC_MAIN)
 		ro_db_mode = DB_MODE_NONE;
 
+	lock_get(process_lock);
+	if((*callback_singleton) == 0) {
+		*callback_singleton = 1;
+		cdpb.AAAAddRequestHandler(callback_cdp_request, NULL);
+	}
+	lock_release(process_lock);
+
 	return 0;
 }
 
@@ -359,6 +377,45 @@ static void mod_destroy(void)
 	if(ro_db_mode == DB_MODE_SHUTDOWN) {
 		ro_update_db(0, 0);
 	}
+}
+
+/**
+ * Handler for incoming Diameter requests.
+ * @param request - the received request
+ * @param param - generic pointer
+ * @returns the answer to this request
+ */
+AAAMessage *callback_cdp_request(AAAMessage *request, void *param)
+{
+	if(is_req(request)) {
+		switch(request->applicationId) {
+			case IMS_Ro:
+				switch(request->commandCode) {
+					case IMS_RAR:
+						return ro_process_rar(request);
+						break;
+					case IMS_ASR:
+						return ro_process_asr(request);
+						break;
+					default:
+						LM_ERR("Ro request handler(): - Received unknown "
+							   "request for Ro command %d, flags %#1x "
+							   "endtoend %u hopbyhop %u\n",
+								request->commandCode, request->flags,
+								request->endtoendId, request->hopbyhopId);
+						return 0;
+						break;
+				}
+				break;
+			default:
+				LM_ERR("Ro request handler(): - Received unknown request "
+					   "for app %d command %d\n",
+						request->applicationId, request->commandCode);
+				return 0;
+				break;
+		}
+	}
+	return 0;
 }
 
 int create_response_avp_string(char *name, str *val)

@@ -138,6 +138,32 @@ static int get_app_provided_party(struct sip_msg *req, str *address)
 	return -1;
 }
 
+/*!
+ * \brief Format subscription id according to settings
+ * \param subscription_id subscription id
+ * \param subscription_id_type format according to subscription id value
+ */
+static void format_subscription_id(
+		str *subscription_id, int *subscription_id_type)
+{
+	if(strncasecmp(subscription_id->s, "tel:", 4) == 0) {
+		*subscription_id_type = Subscription_Type_MSISDN;
+		subscription_id->s += 4;
+		subscription_id->len -= 4;
+		/*if stripping is not done the format should actually be Subscription_Type_IMPU/END_USER_SIP_URI,
+		but that could be a breaking change */
+		if(cfg.strip_plus_from_e164
+				&& strncasecmp(subscription_id->s, "+", 1) == 0) {
+			//subscription should be purely digits when using MSISDN/E164 format
+			subscription_id->s += 1;
+			subscription_id->len -= 1;
+		}
+	} else {
+		*subscription_id_type =
+				Subscription_Type_IMPU; //default is END_USER_SIP_URI
+	}
+}
+
 
 void credit_control_session_callback(int event, void *session)
 {
@@ -474,7 +500,7 @@ int get_sip_header_info(struct sip_msg *req, struct sip_msg *reply,
 		int32_t *acc_record_type, str *sip_method, str *event,
 		uint32_t *expires, str *callid, str *asserted_id_uri, str *to_uri)
 {
-
+	int expires_header;
 	sip_method->s = req->first_line.u.request.method.s;
 	sip_method->len = req->first_line.u.request.method.len;
 
@@ -486,7 +512,12 @@ int get_sip_header_info(struct sip_msg *req, struct sip_msg *reply,
 		*acc_record_type = AAA_ACCT_EVENT;
 
 	*event = cscf_get_event(req);
-	*expires = cscf_get_expires_hdr(req, 0);
+	/* return value is signed int, while *expires is uint32_t.
+	when -1 is returned (header not found) and assigned directly to *expires,
+	this is actually added as an AVP in the outgoing diameter request */
+	expires_header = cscf_get_expires_hdr(req, 0);
+	if(expires_header > 0)
+		*expires = expires_header;
 	*callid = cscf_get_call_id(req, NULL);
 
 	if(get_custom_user(req, asserted_id_uri) == -1) {
@@ -602,7 +633,7 @@ Ro_CCR_t *dlg_create_ro_session(struct sip_msg *req, struct sip_msg *reply,
 	subscr.id.len = subscription_id.len;
 	subscr.type = subscription_id_type;
 
-	ro_ccr_data = new_Ro_CCR(acc_record_type, &user_name, ims_info, &subscr);
+	ro_ccr_data = new_Ro_CCR(acc_record_type, &user_name, ims_info, &subscr, 0);
 	if(!ro_ccr_data) {
 		LM_ERR("dlg_create_ro_session: no memory left for generic\n");
 		goto out_of_memory;
@@ -734,22 +765,15 @@ void send_ccr_interim(
 		goto error;
 	}
 
-	//getting subscription id type
-	if(strncasecmp(subscr.id.s, "tel:", 4) == 0) {
-		subscr.type = Subscription_Type_MSISDN;
-		// Strip "tel:":
-		subscr.id.s += 4;
-		subscr.id.len -= 4;
-	} else {
-		subscr.type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
-	}
+	format_subscription_id(&subscr.id, &subscr.type);
 
 	user_name.s = subscr.id.s;
 	user_name.len = subscr.id.len;
 
 	acc_record_type = AAA_ACCT_INTERIM;
 
-	ro_ccr_data = new_Ro_CCR(acc_record_type, &user_name, ims_info, &subscr);
+	ro_ccr_data = new_Ro_CCR(acc_record_type, &user_name, ims_info, &subscr,
+			&ro_session->origin_host);
 	if(!ro_ccr_data) {
 		LM_ERR("no memory left for generic\n");
 		goto error;
@@ -844,7 +868,8 @@ error:
 
 	if(auth) {
 		cdpb.AAASessionsUnlock(auth->hash);
-		cdpb.AAADropCCAccSession(auth);
+		/*we're no longer using cdpb.AAADropCCAccSession() here, since this
+		session might be restarted by a re-auth request from the server or by call end*/
 	}
 
 	shm_free(i_req);
@@ -909,10 +934,40 @@ static void resume_on_interim_ccr(
 	i_req->new_credit = ro_cca_data->mscc->granted_service_unit->cc_time;
 	i_req->credit_valid_for = ro_cca_data->mscc->validity_time;
 	i_req->is_final_allocation = 0;
+	if(ro_cca_data->mscc->time_quota_threshold > 0) {
+		LM_DBG("updating session ro_timer_buffer to %i from "
+			   "time_quota_threshold in server response\n",
+				ro_cca_data->mscc->time_quota_threshold);
+		i_req->ro_session->ro_timer_buffer =
+				ro_cca_data->mscc->time_quota_threshold;
+	}
 
 	if(ro_cca_data->mscc->final_unit_action
 			&& (ro_cca_data->mscc->final_unit_action->action == 0))
 		i_req->is_final_allocation = 1;
+
+	if(ro_cca_data->origin_host.s && ro_cca_data->origin_host.len > 0) {
+		if(i_req->ro_session->origin_host.s
+				&& i_req->ro_session->origin_host.len > 0
+				&& (!strncasecmp(i_req->ro_session->origin_host.s,
+							ro_cca_data->origin_host.s,
+							ro_cca_data->origin_host.len)
+						|| i_req->ro_session->origin_host.len
+								   != ro_cca_data->origin_host.len)) {
+			LM_DBG("origin host for session has changed\n");
+			i_req->ro_session->origin_host.s =
+					(char *)shm_realloc(i_req->ro_session->origin_host.s,
+							ro_cca_data->origin_host.len);
+			if(!i_req->ro_session->origin_host.s) {
+				LM_ERR("no more shm mem\n");
+				goto error;
+			}
+
+			i_req->ro_session->origin_host.len = ro_cca_data->origin_host.len;
+			memcpy(i_req->ro_session->origin_host.s, ro_cca_data->origin_host.s,
+					ro_cca_data->origin_host.len);
+		}
+	}
 
 	Ro_free_CCA(ro_cca_data);
 	cdpb.AAAFreeMessage(&cca);
@@ -1039,14 +1094,7 @@ void send_ccr_stop_with_param(
 		goto error0;
 	}
 
-	//getting subscription id type
-	if(strncasecmp(subscr.id.s, "tel:", 4) == 0) {
-		subscr.type = Subscription_Type_MSISDN;
-		subscr.id.s += 4;
-		subscr.id.len -= 4;
-	} else {
-		subscr.type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
-	}
+	format_subscription_id(&subscr.id, &subscr.type);
 
 	user_name.s = subscr.id.s;
 	user_name.len = subscr.id.len;
@@ -1054,7 +1102,8 @@ void send_ccr_stop_with_param(
 
 	acc_record_type = AAA_ACCT_STOP;
 
-	ro_ccr_data = new_Ro_CCR(acc_record_type, &user_name, ims_info, &subscr);
+	ro_ccr_data = new_Ro_CCR(acc_record_type, &user_name, ims_info, &subscr,
+			&ro_session->origin_host);
 	if(!ro_ccr_data) {
 		LM_ERR("send_ccr_stop: no memory left for generic\n");
 		goto error0;
@@ -1298,15 +1347,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir,
 		goto error;
 	}
 
-	//getting subscription id type
-	if(strncasecmp(subscription_id.s, "tel:", 4) == 0) {
-		subscription_id_type = Subscription_Type_MSISDN;
-		subscription_id.s += 4;
-		subscription_id.len -= 4;
-	} else {
-		subscription_id_type =
-				Subscription_Type_IMPU; //default is END_USER_SIP_URI
-	}
+	format_subscription_id(&subscription_id, &subscription_id_type);
 
 	str mac = {0, 0};
 	if(get_mac_avp_value(msg, &mac) != 0)
@@ -1364,7 +1405,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir,
 			&asserted_identity, &called_asserted_identity, &mac, dlg->h_entry,
 			dlg->h_id, reservation_units, 0, active_rating_group,
 			active_service_identifier, incoming_trunk_id, outgoing_trunk_id,
-			pani, &app_provided_party);
+			pani, &app_provided_party, ro_timer_buffer);
 
 	if(!new_session) {
 		LM_ERR("Couldn't create new Ro Session - this is BAD!\n");
@@ -1654,10 +1695,30 @@ static void resume_on_initial_ccr(
 			ro_cca_data->mscc->granted_service_unit->cc_time;
 	ssd->ro_session->valid_for = ro_cca_data->mscc->validity_time;
 	ssd->ro_session->is_final_allocation = 0;
+	if(ro_cca_data->mscc->time_quota_threshold > 0) {
+		LM_DBG("setting session ro_timer_buffer to %i from "
+			   "time_quota_threshold in server response\n",
+				ro_cca_data->mscc->time_quota_threshold);
+		ssd->ro_session->ro_timer_buffer =
+				ro_cca_data->mscc->time_quota_threshold;
+	}
 
 	if(ro_cca_data->mscc->final_unit_action
 			&& (ro_cca_data->mscc->final_unit_action->action == 0))
 		ssd->ro_session->is_final_allocation = 1;
+
+	if(ro_cca_data->origin_host.s && ro_cca_data->origin_host.len > 0) {
+		ssd->ro_session->origin_host.s =
+				(char *)shm_malloc(ro_cca_data->origin_host.len);
+		if(!ssd->ro_session->origin_host.s) {
+			LM_ERR("no more shm mem\n");
+			goto error0;
+		}
+
+		ssd->ro_session->origin_host.len = ro_cca_data->origin_host.len;
+		memcpy(ssd->ro_session->origin_host.s, ro_cca_data->origin_host.s,
+				ro_cca_data->origin_host.len);
+	}
 
 	Ro_free_CCA(ro_cca_data);
 
@@ -1865,4 +1926,109 @@ static int get_mac_avp_value(struct sip_msg *msg, str *value)
 
 	*value = val.rs;
 	return 0;
+}
+
+/*!
+ * \brief Process re-auth request
+ * \param request Diameter request
+ * \return diameter response
+ */
+AAAMessage *ro_process_rar(AAAMessage *request)
+{
+	AAAMessage *response;
+	struct ro_session *ro_session = NULL;
+	struct ro_session_entry *ro_session_entry;
+	unsigned int h_entry;
+	int unref = 0;
+	int result_code = DIAMETER_LIMITED_SUCCESS;
+	char x[4];
+
+	if(request->sessionId && request->sessionId->data.s) {
+		LM_INFO("Received an IMS_RAR for session id %.*s\n",
+				request->sessionId->data.len, request->sessionId->data.s);
+
+		ro_session = lookup_ro_session_by_session_id(&request->sessionId->data);
+		if(ro_session == NULL) {
+			LM_WARN("no active ro_session with id %.*s - ignoring\n",
+					request->sessionId->data.len, request->sessionId->data.s);
+			result_code = DIAMETER_UNKNOWN_SESSION_ID;
+			goto end;
+		}
+
+		h_entry = ro_session->h_entry;
+		ro_session_entry = &(ro_session_table->entries[h_entry]);
+
+		ro_session_lock(ro_session_table, ro_session_entry);
+
+		/*we might receive a re-auth request with either timer active or inactive.
+		first remove any existing. if success, decrement ref count.*/
+		if(remove_ro_timer(&ro_session->ro_tl) == 0) {
+			unref++;
+		}
+		if(insert_ro_timer(&ro_session->ro_tl, 1) == 0) {
+			/*increment ref count on timer create success */
+			ref_ro_session(ro_session, 1, 0);
+		}
+
+		/*finally, unref session returned by lookup */
+		unref_ro_session(ro_session, unref + 1, 0);
+		ro_session_unlock(ro_session_table, ro_session_entry);
+	} else {
+		LM_WARN("Received an IMS_RAR without session id\n");
+		result_code = DIAMETER_UNABLE_TO_COMPLY;
+	}
+end:
+	response = cdpb.AAACreateResponse(request);
+	if(!response)
+		return 0;
+	set_4bytes(x, result_code);
+	Ro_add_avp(response, x, 4, AVP_Result_Code, AAA_AVP_FLAG_MANDATORY, 0,
+			AVP_DUPLICATE_DATA, __FUNCTION__);
+	return response;
+}
+
+/*!
+ * \brief Process session-abort request
+ * \param request Diameter request
+ * \return diameter response
+ */
+AAAMessage *ro_process_asr(AAAMessage *request)
+{
+	AAAMessage *response;
+	struct ro_session *ro_session = NULL;
+	int result_code = DIAMETER_LIMITED_SUCCESS;
+	char x[4];
+
+	if(request->sessionId && request->sessionId->data.s) {
+		LM_INFO("Received an IMS_ASR for session id %.*s\n",
+				request->sessionId->data.len, request->sessionId->data.s);
+
+		ro_session = lookup_ro_session_by_session_id(&request->sessionId->data);
+		if(ro_session == NULL) {
+			LM_WARN("no active ro_session with id %.*s - ignoring\n",
+					request->sessionId->data.len, request->sessionId->data.s);
+			result_code = DIAMETER_UNKNOWN_SESSION_ID;
+			goto end;
+		}
+
+		if(dlgb.lookup_terminate_dlg(
+				   ro_session->dlg_h_entry, ro_session->dlg_h_id, NULL)
+				< 0) {
+			result_code = DIAMETER_UNABLE_TO_COMPLY;
+		}
+
+		unref_ro_session(ro_session, 1, 0);
+	} else {
+		LM_WARN("Received an IMS_ASR without session id\n");
+		result_code = DIAMETER_UNABLE_TO_COMPLY;
+	}
+end:
+	response = cdpb.AAACreateResponse(request);
+	if(!response)
+		return 0;
+	set_4bytes(x, result_code);
+	Ro_add_avp(response, x, 4, AVP_Result_Code, AAA_AVP_FLAG_MANDATORY, 0,
+			AVP_DUPLICATE_DATA, __FUNCTION__);
+
+	return response;
 }

@@ -35,6 +35,7 @@ str pani_column = str_init(PANI_COL);
 str mac_column = str_init(MAC_COL);
 str app_provided_party_column = str_init(APP_PROVIDED_PARTY_COL);
 str is_final_allocation_column = str_init(IS_FINAL_ALLOCATION_COL);
+str origin_host_column = str_init(ORIGIN_HOST_COL);
 
 typedef enum ro_session_field_idx
 {
@@ -61,7 +62,8 @@ typedef enum ro_session_field_idx
 	PANI_COL_IDX,
 	MAC_COL_IDX,
 	APP_PROVIDED_PARTY_COL_IDX,
-	IS_FINAL_ALLOCATION_COL_IDX
+	IS_FINAL_ALLOCATION_COL_IDX,
+	ORIGIN_HOST_COL_IDX
 
 } ro_session_field_idx_t;
 
@@ -167,7 +169,7 @@ static int select_entire_ro_session_table(db1_res_t **res, int fetch_num_rows)
 			&rating_group_column, &service_identifier_column,
 			&auth_app_id_column, &auth_session_type_column, &pani_column,
 			&mac_column, &app_provided_party_column,
-			&is_final_allocation_column};
+			&is_final_allocation_column, &origin_host_column};
 
 	if(use_ro_table() != 0) {
 		return -1;
@@ -202,18 +204,20 @@ static int get_timer_value(
 {
 	int timer_value;
 	if(session->reserved_secs < (session->valid_for - time_since_last_event)) {
-		if(session->reserved_secs > ro_timer_buffer) {
+		if(session->reserved_secs > session->ro_timer_buffer) {
 			timer_value =
 					session->reserved_secs - time_since_last_event
-					- (session->is_final_allocation ? 0 : ro_timer_buffer);
+					- (session->is_final_allocation ? 0
+													: session->ro_timer_buffer);
 		} else {
 			timer_value = session->reserved_secs - time_since_last_event;
 		}
 	} else {
-		if(session->valid_for > ro_timer_buffer) {
+		if(session->valid_for > session->ro_timer_buffer) {
 			timer_value =
 					session->valid_for - time_since_last_event
-					- (session->is_final_allocation ? 0 : ro_timer_buffer);
+					- (session->is_final_allocation ? 0
+													: session->ro_timer_buffer);
 		} else {
 			timer_value = session->valid_for - time_since_last_event;
 		}
@@ -237,7 +241,8 @@ int load_ro_info_from_db(int hash_size, int fetch_num_rows)
 	int i, nr_rows, dir, active_rating_group, active_service_identifier,
 			reservation_units, dlg_h_entry, dlg_h_id;
 	str session_id, asserted_identity, called_asserted_identity,
-			incoming_trunk_id, outgoing_trunk_id, pani, app_provided_party, mac;
+			incoming_trunk_id, outgoing_trunk_id, pani, app_provided_party, mac,
+			origin_host;
 	time_t now = get_current_time_micro();
 	time_t time_since_last_event;
 	AAASession *auth = 0;
@@ -331,6 +336,7 @@ int load_ro_info_from_db(int hash_size, int fetch_num_rows)
 			GET_STR_VALUE(mac, values, MAC_COL_IDX, 0, 0);
 			GET_STR_VALUE(app_provided_party, values,
 					APP_PROVIDED_PARTY_COL_IDX, 0, 0);
+			GET_STR_VALUE(origin_host, values, ORIGIN_HOST_COL_IDX, 0, 0);
 			active_rating_group =
 					VAL_INT(GET_FIELD_IDX(values, RATING_GROUP_COL_IDX));
 			active_service_identifier =
@@ -343,7 +349,7 @@ int load_ro_info_from_db(int hash_size, int fetch_num_rows)
 					dlg_h_entry, dlg_h_id, reservation_units, 0,
 					active_rating_group, active_service_identifier,
 					&incoming_trunk_id, &outgoing_trunk_id, &pani,
-					&app_provided_party);
+					&app_provided_party, ro_timer_buffer);
 
 			if(!session) {
 				LM_ERR("Couldn't restore Ro Session - this is BAD!\n");
@@ -370,6 +376,17 @@ int load_ro_info_from_db(int hash_size, int fetch_num_rows)
 			}
 			session->ro_session_id.len = session_id.len;
 			memcpy(session->ro_session_id.s, session_id.s, session_id.len);
+
+			if(origin_host.s && origin_host.len > 0) {
+				session->origin_host.s = (char *)shm_malloc(origin_host.len);
+				if(!session->origin_host.s) {
+					LM_ERR("no more shm mem\n");
+					goto error;
+				}
+
+				session->origin_host.len = origin_host.len;
+				memcpy(session->origin_host.s, origin_host.s, origin_host.len);
+			}
 
 			session->active = VAL_INT(GET_FIELD_IDX(values, STATE_COL_IDX));
 			session->last_event_timestamp =
@@ -543,7 +560,8 @@ int update_ro_dbinfo_unsafe(struct ro_session *ro_session)
 				&outgoing_trunk_id_column, &rating_group_column,
 				&service_identifier_column, &auth_app_id_column,
 				&auth_session_type_column, &pani_column, &mac_column,
-				&app_provided_party_column, &is_final_allocation_column};
+				&app_provided_party_column, &is_final_allocation_column,
+				&origin_host_column};
 
 		VAL_TYPE(GET_FIELD_IDX(values, ID_COL_IDX)) = DB1_INT;
 		VAL_NULL(GET_FIELD_IDX(values, ID_COL_IDX)) = 1;
@@ -582,6 +600,7 @@ int update_ro_dbinfo_unsafe(struct ro_session *ro_session)
 				&ro_session->app_provided_party);
 		db_set_int_val(values, IS_FINAL_ALLOCATION_COL_IDX,
 				ro_session->is_final_allocation);
+		db_set_str_val(values, ORIGIN_HOST_COL_IDX, &ro_session->origin_host);
 
 
 		LM_DBG("Inserting ro_session into database\n");
@@ -607,7 +626,7 @@ int update_ro_dbinfo_unsafe(struct ro_session *ro_session)
 				&rating_group_column, &service_identifier_column,
 				&auth_app_id_column, &auth_session_type_column, &pani_column,
 				&mac_column, &app_provided_party_column,
-				&is_final_allocation_column};
+				&is_final_allocation_column, &origin_host_column};
 
 		db_set_int_val(values, HASH_ENTRY_COL_IDX - 1, ro_session->h_entry);
 		db_set_int_val(values, HASH_ID_COL_IDX - 1, ro_session->h_id);
@@ -646,11 +665,13 @@ int update_ro_dbinfo_unsafe(struct ro_session *ro_session)
 				&ro_session->app_provided_party);
 		db_set_int_val(values, IS_FINAL_ALLOCATION_COL_IDX - 1,
 				ro_session->is_final_allocation);
+		db_set_str_val(
+				values, ORIGIN_HOST_COL_IDX - 1, &ro_session->origin_host);
 
 		LM_DBG("Updating ro_session in database\n");
 		if((ro_dbf.update(ro_db_handle, update_keys /*match*/, 0 /*match*/,
 				   values /*match*/, update_keys /*update*/, values /*update*/,
-				   3 /*match*/, 23 /*update*/))
+				   3 /*match*/, 24 /*update*/))
 				!= 0) {
 			LM_ERR("could not update Ro session information in DB... "
 				   "continuing\n");

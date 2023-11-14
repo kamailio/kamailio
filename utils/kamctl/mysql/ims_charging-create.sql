@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('ro_session','2');
+INSERT INTO version (table_name, table_version) values ('ro_session','3');
 CREATE TABLE `ro_session` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `hash_entry` int(10) unsigned NOT NULL,
@@ -24,6 +24,7 @@ CREATE TABLE `ro_session` (
   `mac` varchar(17) DEFAULT NULL,
   `app_provided_party` varchar(100) DEFAULT NULL,
   `is_final_allocation` int(1) unsigned NOT NULL,
+  `origin_host` varchar(150) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `hash_idx` (`hash_entry`,`hash_id`)
 );

@@ -36,4 +36,7 @@ int get_direction_as_int(str *direction);
 void init_custom_user(pv_spec_t *custom_user_avp);
 void init_app_provided_party(pv_spec_t *app_provided_party_avp_p);
 
+AAAMessage *ro_process_rar(AAAMessage *rtr);
+AAAMessage *ro_process_asr(AAAMessage *rtr);
+
 #endif /* CLIENT_RF_IMS_RO_H */

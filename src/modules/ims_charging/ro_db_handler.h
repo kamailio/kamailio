@@ -12,9 +12,9 @@
 #include "../../lib/srdb1/db.h"
 #include "ro_session_hash.h"
 
-#define RO_TABLE_VERSION 2
+#define RO_TABLE_VERSION 3
 #define RO_SESSION_TABLE_NAME "ro_session"
-#define RO_SESSION_TABLE_COL_NUM 24
+#define RO_SESSION_TABLE_COL_NUM 25
 
 #define ID_COL "id"
 #define HASH_ENTRY_COL "hash_entry"
@@ -40,6 +40,7 @@
 #define MAC_COL "mac"
 #define APP_PROVIDED_PARTY_COL "app_provided_party"
 #define IS_FINAL_ALLOCATION_COL "is_final_allocation"
+#define ORIGIN_HOST_COL "origin_host"
 
 int init_ro_db(const str *db_url, int dlg_hash_size, int db_update_period,
 		int fetch_num_rows);

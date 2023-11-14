@@ -1,36 +1,6 @@
 #include "Ro_data.h"
 #include "config.h"
-
-
-#define str_dup(dst, src, mem)                                                 \
-	do {                                                                       \
-		if((src).len) {                                                        \
-			(dst).s = mem##_malloc((src).len);                                 \
-			if(!(dst).s) {                                                     \
-				LM_ERR("Error allocating %d bytes in %s!\n", (src).len, #mem); \
-				(dst).len = 0;                                                 \
-				goto out_of_memory;                                            \
-			}                                                                  \
-			memcpy((dst).s, (src).s, (src).len);                               \
-			(dst).len = (src).len;                                             \
-		} else {                                                               \
-			(dst).s = 0;                                                       \
-			(dst).len = 0;                                                     \
-		}                                                                      \
-	} while(0)
-
-/**
- * Frees a str content.
- * @param x - the str to free
- * @param mem - type of memory that the content is using (shm/pkg)
- */
-#define str_free(x, mem)       \
-	do {                       \
-		if((x).s)              \
-			mem##_free((x).s); \
-		(x).s = 0;             \
-		(x).len = 0;           \
-	} while(0)
+#include "../../lib/ims/ims_getters.h"
 
 extern client_ro_cfg cfg;
 
@@ -198,7 +168,8 @@ out_of_memory:
 }
 
 Ro_CCR_t *new_Ro_CCR(int32_t acc_record_type, str *user_name,
-		ims_information_t *ims_info, subscription_id_t *subscription)
+		ims_information_t *ims_info, subscription_id_t *subscription,
+		str *destination_host)
 {
 
 
@@ -214,7 +185,9 @@ Ro_CCR_t *new_Ro_CCR(int32_t acc_record_type, str *user_name,
 	if(cfg.origin_realm.s && cfg.origin_realm.len > 0)
 		str_dup(x->origin_realm, cfg.origin_realm, pkg);
 
-	if(cfg.destination_host.s && cfg.destination_host.len > 0)
+	if(destination_host && destination_host->len > 0)
+		str_dup(x->destination_host, *destination_host, pkg);
+	else if(cfg.destination_host.s && cfg.destination_host.len > 0)
 		str_dup(x->destination_host, cfg.destination_host, pkg);
 
 	if(cfg.destination_realm.s && cfg.destination_realm.len > 0)
@@ -360,5 +333,6 @@ void Ro_free_CCA(Ro_CCA_t *x)
 	}
 	mem_free(x->mscc->granted_service_unit, pkg);
 	mem_free(x->mscc, pkg);
+	str_free(x->origin_host, pkg);
 	mem_free(x, pkg);
 }

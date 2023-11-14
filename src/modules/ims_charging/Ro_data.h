@@ -416,6 +416,7 @@ typedef struct
 	uint32_t validity_time;
 	final_unit_indication_t *final_unit_action;
 	uint32_t resultcode;
+	uint32_t time_quota_threshold;
 } multiple_services_credit_control_t;
 
 typedef struct
@@ -424,6 +425,7 @@ typedef struct
 	uint32_t cc_request_type;
 	uint32_t cc_request_number;
 	multiple_services_credit_control_t *mscc;
+	str origin_host;
 } Ro_CCA_t;
 
 event_type_t *new_event_type(str *sip_method, str *event, uint32_t *expires);
@@ -446,7 +448,8 @@ void ims_information_free(ims_information_t *x);
 void service_information_free(service_information_t *x);
 
 Ro_CCR_t *new_Ro_CCR(int32_t acc_record_type, str *user_name,
-		ims_information_t *ims_info, subscription_id_t *subscription);
+		ims_information_t *ims_info, subscription_id_t *subscription,
+		str *destination_host);
 void Ro_free_CCR(Ro_CCR_t *x);
 void Ro_free_CCA(Ro_CCA_t *x);
 

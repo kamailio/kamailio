@@ -175,6 +175,9 @@ inline void destroy_ro_session(struct ro_session *ro_session)
 	if(ro_session->ro_session_id.s && (ro_session->ro_session_id.len > 0)) {
 		shm_free(ro_session->ro_session_id.s);
 	}
+	if(ro_session->origin_host.s && (ro_session->origin_host.len > 0)) {
+		shm_free(ro_session->origin_host.s);
+	}
 
 	shm_free(ro_session);
 }
@@ -217,7 +220,7 @@ struct ro_session *build_new_ro_session(int direction, int auth_appid,
 		unsigned int requested_secs, unsigned int validity_timeout,
 		int active_rating_group, int active_service_identifier,
 		str *incoming_trunk_id, str *outgoing_trunk_id, str *pani,
-		str *app_provided_party)
+		str *app_provided_party, int ro_timer_buffer)
 {
 	LM_DBG("Building Ro Session **********\n");
 	char *p;
@@ -262,6 +265,8 @@ struct ro_session *build_new_ro_session(int direction, int auth_appid,
 			dlg_h_entry; /* we will use the same entry ID as the dlg - saves us using our own hash function */
 	new_ro_session->h_id = 0;
 	new_ro_session->ref = 1;
+
+	new_ro_session->ro_timer_buffer = ro_timer_buffer;
 
 	new_ro_session->rating_group = active_rating_group;
 	new_ro_session->service_identifier = active_service_identifier;
@@ -369,4 +374,43 @@ void free_impu_data(struct impu_data *impu_data)
 		shm_free(impu_data);
 		impu_data = 0;
 	}
+}
+
+/*!
+ * \brief Lookup an Ro session in the global list by session id
+ * \param session_id diameter session id
+ * \return ro_session on success, NULL on failure
+ */
+struct ro_session *lookup_ro_session_by_session_id(str *session_id)
+{
+	struct ro_session *ro_session;
+	struct ro_session_entry *ro_session_entry;
+	int h_entry;
+
+	for(h_entry = 0; h_entry < ro_session_table->size; h_entry++) {
+		ro_session_entry = &(ro_session_table->entries[h_entry]);
+
+		ro_session_lock(ro_session_table, ro_session_entry);
+
+		for(ro_session = ro_session_entry->first; ro_session;
+				ro_session = ro_session->next) {
+			if(strncmp(ro_session->ro_session_id.s, session_id->s,
+					   session_id->len)
+							== 0
+					&& ro_session->ro_session_id.len == session_id->len) {
+				ref_ro_session(ro_session, 1, 0);
+				LM_DBG("ref ro_session %p with 1 -> %d\n", ro_session,
+						ro_session->ref);
+				ro_session_unlock(ro_session_table, ro_session_entry);
+				LM_DBG("ro_session id=%u found on entry %u\n", ro_session->h_id,
+						h_entry);
+				return ro_session;
+			}
+		}
+		ro_session_unlock(ro_session_table, ro_session_entry);
+	}
+
+	LM_DBG("no ro_session for callid=%.*s found on entry %u\n", session_id->len,
+			session_id->s, h_entry);
+	return 0;
 }
