@@ -206,6 +206,15 @@ void cdp_free_trans(cdp_trans_t *x)
 int cdp_trans_timer(time_t now, void *ptr)
 {
 	cdp_trans_t *x, *n;
+	cdp_trans_list_t *cb_queue = 0;
+	cb_queue = pkg_malloc(sizeof(cdp_trans_list_t));
+	if(!cb_queue) {
+		LOG_NO_MEM("pkg", sizeof(cdp_trans_list_t));
+		return 0;
+	}
+	cb_queue->head = 0;
+	cb_queue->tail = 0;
+
 	lock_get(trans_list->lock);
 	x = trans_list->head;
 	while(x) {
@@ -215,9 +224,6 @@ int cdp_trans_timer(time_t now, void *ptr)
 							.timeout); //Transaction has timed out waiting for response
 
 			x->ans = 0;
-			if(x->cb) {
-				(x->cb)(1, *(x->ptr), 0, (now - x->expires));
-			}
 			n = x->next;
 
 			if(x->prev)
@@ -228,7 +234,17 @@ int cdp_trans_timer(time_t now, void *ptr)
 				x->next->prev = x->prev;
 			else
 				trans_list->tail = x->prev;
-			if(x->auto_drop)
+
+			if(x->cb) {
+				/* queue cb to be done after list unlock */
+				x->next = 0;
+				x->prev = cb_queue->tail;
+				if(cb_queue->tail)
+					cb_queue->tail->next = x;
+				cb_queue->tail = x;
+				if(!cb_queue->head)
+					cb_queue->head = x;
+			} else if(x->auto_drop) /* if no callback, auto drop here */
 				cdp_free_trans(x);
 
 			x = n;
@@ -236,6 +252,17 @@ int cdp_trans_timer(time_t now, void *ptr)
 			x = x->next;
 	}
 	lock_release(trans_list->lock);
+
+	/* do all queued callbacks */
+	x = cb_queue->head;
+	while(x) {
+		(x->cb)(1, *(x->ptr), 0, (now - x->expires));
+		if(x->auto_drop)
+			cdp_free_trans(x);
+		x = x->next;
+	}
+	pkg_free(cb_queue);
+
 	return 1;
 }
 
