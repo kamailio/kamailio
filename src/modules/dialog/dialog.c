@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2006 Voice Sistem SRL
  * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
+ * Copyright (C) 2023 Victor Seva, vseva@sipwise.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -660,10 +661,7 @@ static int mod_init(void)
 
 	/* register callbacks*/
 	/* listen for all incoming requests  */
-	if(d_tmb.register_tmcb(0, 0, TMCB_REQUEST_IN, dlg_onreq, 0, 0) <= 0) {
-		LM_ERR("cannot register TMCB_REQUEST_IN callback\n");
-		return -1;
-	}
+	sr_event_register_cb(SREV_NET_DATA_IN, dlg_msg_received);
 
 	/* listen for all routed requests  */
 	if(d_rrb.register_rrcb(dlg_onroute, 0) < 0) {

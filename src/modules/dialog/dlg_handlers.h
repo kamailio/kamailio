@@ -33,7 +33,7 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/str.h"
 #include "../../core/pvar.h"
-#include "../../modules/tm/t_hooks.h"
+#include "../../core/events.h"
 #include "dlg_hash.h"
 #include "dlg_timer.h"
 
@@ -80,13 +80,10 @@ int populate_leg_info(dlg_cell_t *dlg, sip_msg_t *msg, tm_cell_t *t,
 		unsigned int leg, str *tag);
 
 
-/*!
- * \brief Function that is registered as TM callback and called on requests
- * \param t transaction, used to created the dialog
- * \param type type of the entered callback
- * \param param saved dialog structure in the callback
+/**
+ * \brief Function registered as core event callback
  */
-void dlg_onreq(tm_cell_t *t, int type, struct tmcb_params *param);
+int dlg_msg_received(sr_event_param_t *evp);
 
 
 /*!

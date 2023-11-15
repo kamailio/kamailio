@@ -772,26 +772,41 @@ static void dlg_on_send(struct cell *t, int type, struct tmcb_params *param)
 	dlg_unref(dlg, 1);
 }
 
-
-/*!
- * \brief Function that is registered as TM callback and called on requests
- * \see dlg_new_dialog
- * \param t transaction, used to created the dialog
- * \param type type of the entered callback
- * \param param saved dialog structure in the callback
+/**
+ *
  */
-void dlg_onreq(struct cell *t, int type, struct tmcb_params *param)
+int dlg_prepare_msg(sip_msg_t *msg)
 {
-	sip_msg_t *req = param->req;
+	if(parse_msg(msg->buf, msg->len, msg) != 0) {
+		LM_DBG("outbuf buffer parsing failed!");
+		return 1;
+	}
+
+	if(msg->first_line.type == SIP_REQUEST) {
+		if(IS_SIP(msg)) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+void dlg_onreq(sip_msg_t *msg)
+{
+	int branch = 0, vref = 0;
+	tm_cell_t *t = NULL;
 	dlg_cell_t *dlg = NULL;
 	dlg_iuid_t *iuid = NULL;
 
-	if(req->first_line.u.request.method_value == METHOD_BYE) {
+	if(msg->first_line.u.request.method_value == METHOD_BYE) {
 		_dlg_ctx.t = 1;
 		return;
 	}
 
-	if(req->first_line.u.request.method_value != METHOD_INVITE)
+	if(msg->first_line.u.request.method_value != METHOD_INVITE)
 		return;
 
 	dlg = dlg_get_ctx_dialog();
@@ -800,24 +815,28 @@ void dlg_onreq(struct cell *t, int type, struct tmcb_params *param)
 		if(!initial_cbs_inscript) {
 			if(spiral_detected == 1)
 				run_dlg_callbacks(
-						DLGCB_SPIRALED, dlg, req, NULL, DLG_DIR_DOWNSTREAM, 0);
+						DLGCB_SPIRALED, dlg, msg, NULL, DLG_DIR_DOWNSTREAM, 0);
 			else if(spiral_detected == 0)
-				run_create_callbacks(dlg, req);
+				run_create_callbacks(dlg, msg);
 		}
 	}
 	if(dlg == NULL) {
 		if((dlg_flag_mask == 0)
-				|| (req->flags & dlg_flag_mask) != dlg_flag_mask) {
+				|| (msg->flags & dlg_flag_mask) != dlg_flag_mask) {
 			LM_DBG("flag not set for creating a new dialog\n");
 			return;
 		}
-		LM_DBG("dialog creation on config flag\n");
-		dlg_new_dialog(req, t, 1);
+		t = d_tmb.t_find(msg, &branch, &vref);
+		LM_DBG("dialog creation on config flag T[%p]\n", t);
+		dlg_new_dialog(msg, t, 1);
 		dlg = dlg_get_ctx_dialog();
 	}
 	if(dlg != NULL) {
+		if(t == NULL) {
+			t = d_tmb.t_find(msg, &branch, &vref);
+		}
 		LM_DBG("dialog added to tm callbacks\n");
-		dlg_set_tm_callbacks(t, req, dlg, spiral_detected);
+		dlg_set_tm_callbacks(t, msg, dlg, spiral_detected);
 		_dlg_ctx.t = 1;
 		dlg_release(dlg);
 	}
@@ -828,7 +847,7 @@ void dlg_onreq(struct cell *t, int type, struct tmcb_params *param)
 			LM_ERR("failed to create dialog unique id clone\n");
 		} else {
 			/* register callback for when the request is sent */
-			if(d_tmb.register_tmcb(req, t, TMCB_REQUEST_FWDED, dlg_on_send,
+			if(d_tmb.register_tmcb(msg, t, TMCB_REQUEST_FWDED, dlg_on_send,
 					   (void *)iuid, dlg_iuid_sfree)
 					< 0) {
 				LM_ERR("failed to register TMCB_REQUEST_FWDED\n");
@@ -836,8 +855,44 @@ void dlg_onreq(struct cell *t, int type, struct tmcb_params *param)
 			}
 		}
 	}
+
+	if(t != NULL && t != T_UNDEFINED && vref != 0) {
+		/*  t_find() above has the side effect of setting T and
+			REFerencing T => we must unref and unset it */
+		d_tmb.t_unset();
+		LM_DBG("T:%p unref\n", t);
+	}
 }
 
+/**
+ * listen for all incoming requests
+ */
+int dlg_msg_received(sr_event_param_t *evp)
+{
+	sip_msg_t msg;
+	str *obuf;
+	char *nbuf = NULL;
+	int ret;
+
+	obuf = (str *)evp->data;
+
+	memset(&msg, 0, sizeof(sip_msg_t));
+	msg.buf = obuf->s;
+	msg.len = obuf->len;
+
+	ret = 0;
+	if(dlg_prepare_msg(&msg) != 0) {
+		goto done;
+	}
+
+	dlg_onreq(&msg);
+
+done:
+	if(nbuf != NULL)
+		pkg_free(nbuf);
+	free_sip_msg(&msg);
+	return ret;
+}
 
 /*!
  * \brief Unreference a new dialog, helper function for dlg_onreq
