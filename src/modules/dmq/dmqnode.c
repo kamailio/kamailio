@@ -92,6 +92,18 @@ int cmp_dmq_node(dmq_node_t *node, dmq_node_t *cmpnode)
 }
 
 /**
+ * @brief compare dmq node ip addresses
+ */
+int cmp_dmq_node_ip(dmq_node_t *node, dmq_node_t *cmpnode)
+{
+	if(!node || !cmpnode) {
+		LM_ERR("cmp_dmq_node_ip - null node received\n");
+		return -1;
+	}
+	return ip_addr_cmp(&node->ip_address, &cmpnode->ip_address);
+}
+
+/**
  * @brief get the value of a parameter
  */
 str *get_param_value(param_t *params, str *param)
@@ -264,6 +276,21 @@ dmq_node_t *find_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
 	dmq_node_t *cur = list->nodes;
 	while(cur) {
 		if(cmp_dmq_node(cur, node)) {
+			return cur;
+		}
+		cur = cur->next;
+	}
+	return NULL;
+}
+
+/**
+ * @brief find dmq node ip
+ */
+dmq_node_t *find_dmq_node_ip(dmq_node_list_t *list, dmq_node_t *node)
+{
+	dmq_node_t *cur = list->nodes;
+	while(cur) {
+		if(cmp_dmq_node_ip(cur, node)) {
 			return cur;
 		}
 		cur = cur->next;
