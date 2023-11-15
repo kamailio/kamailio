@@ -272,6 +272,10 @@ static int mod_init(void)
 			DB_TABLE_VERSION_ERROR(tt_table_name);
 			goto dberror;
 		}
+		if(topos_db_con) {
+			_tpsdbf.close(topos_db_con);
+			topos_db_con = NULL;
+		}
 	} else {
 		if(_tps_storage.len != 7 && strncmp(_tps_storage.s, "redis", 5) != 0) {
 			LM_ERR("unknown storage type: %.*s\n", _tps_storage.len,
