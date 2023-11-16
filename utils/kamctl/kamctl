@@ -44,7 +44,7 @@ if [ $RC_FILE_SOURCED = "false" ] && [ -f /etc/kamailio/kamctlrc -a -r /etc/kama
 	. /etc/kamailio/kamctlrc
 	RC_FILE_SOURCED="true"
 fi
-if[ $RC_FILE_SOURCED = "false" ] &&  [ -f /usr/local/etc/kamailio/kamctlrc -a -r /usr/local/etc/kamailio/kamctlrc ]; then
+if [ $RC_FILE_SOURCED = "false" ] &&  [ -f /usr/local/etc/kamailio/kamctlrc -a -r /usr/local/etc/kamailio/kamctlrc ]; then
 	. /usr/local/etc/kamailio/kamctlrc
 	RC_FILE_SOURCED="true"
 fi
