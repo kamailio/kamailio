@@ -915,7 +915,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 					   | METHOD_NOTIFY))
 			&& stsd.b_contact.len <= 0) {
 		/* no B-side contact, look for INVITE transaction record */
-		if(metid & (METHOD_BYE | METHOD_UPDATE)) {
+		if(metid & (METHOD_BYE | METHOD_UPDATE | METHOD_NOTIFY)) {
 			/* detect direction - via from-tag */
 			if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
 				goto error;
