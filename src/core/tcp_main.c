@@ -3162,7 +3162,7 @@ int tcp_init(struct socket_info *sock_info)
 
 #if !defined(TCP_DONT_REUSEADDR)
 	/* Stevens, "Network Programming", Section 7.5, "Generic Socket
-     * Options": "...server started,..a child continues..on existing
+	 * Options": "...server started,..a child continues..on existing
 	 * connection..listening server is restarted...call to bind fails
 	 * ... ALL TCP servers should specify the SO_REUSEADDRE option
 	 * to allow the server to be restarted in this situation
