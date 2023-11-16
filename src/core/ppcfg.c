@@ -523,7 +523,7 @@ char *pp_defexp_eval(char *exval, int exlen, int qmode)
 	}
 	if(qmode == 1) {
 		res[0] = '"';
-		memcpy(res, sval.s + 1, sval.len);
+		memcpy(res + 1, sval.s, sval.len);
 		res[sval.len + 1] = '"';
 		res[sval.len + 2] = '\0';
 		LM_DBG("expression quoted string result: [%s]\n", res);
