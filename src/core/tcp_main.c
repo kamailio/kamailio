@@ -1280,12 +1280,15 @@ inline static int find_listening_sock_info(
 			int optval = 1;
 			su2ip_addr(&ip, &si->su);
 			*from = &si->su;
+#if !defined(TCP_DONT_REUSEADDR)
 			if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *)&optval,
 					   sizeof(optval))
 					== -1) {
 				LM_ERR("setsockopt SO_REUSEADDR %s\n", strerror(errno));
 				/* continue, not critical */
 			}
+#endif
+#ifdef SO_REUSEPORT
 			optval = 1;
 			if(setsockopt(s, SOL_SOCKET, SO_REUSEPORT, (void *)&optval,
 					   sizeof(optval))
@@ -1293,6 +1296,7 @@ inline static int find_listening_sock_info(
 				LM_ERR("setsockopt SO_REUSEPORT %s\n", strerror(errno));
 				/* continue, not critical */
 			}
+#endif
 			if(unlikely(bind(s, &si->su.s, sockaddru_len(si->su)) != 0)) {
 				LM_WARN("binding to source address %s failed: %s [%d]\n",
 						su2a(&si->su, sizeof(si->su)), strerror(errno), errno);
