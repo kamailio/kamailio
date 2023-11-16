@@ -962,7 +962,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		LM_DBG("use branch for routing information, request from direction "
 			   "%d\n",
 				direction);
-		if(tps_reappend_route(msg, &stsd, &stsd.s_rr, 1) < 0) {
+		if(tps_reappend_route(msg, &stsd, &stsd.s_rr, (direction == TPS_DIR_UPSTREAM) ? 0 : 1) < 0) {
 			LM_ERR("failed to reappend s-route\n");
 			return -1;
 		}
