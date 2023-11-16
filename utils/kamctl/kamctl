@@ -18,6 +18,7 @@ else
 fi
 
 ### include config files
+RC_FILE_SOURCED="false"
 
 # check for rc file at same location with kamctl
 which greadlink >/dev/null 2>&1
@@ -39,11 +40,13 @@ if [ -n "$KAMCTLFULLPATH" ] ; then
 fi
 
 # check for rc file at standard locations
-if [ -f /etc/kamailio/kamctlrc -a -r /etc/kamailio/kamctlrc ]; then
+if [ $RC_FILE_SOURCED = "false" ] && [ -f /etc/kamailio/kamctlrc -a -r /etc/kamailio/kamctlrc ]; then
 	. /etc/kamailio/kamctlrc
+	RC_FILE_SOURCED="true"
 fi
-if [ -f /usr/local/etc/kamailio/kamctlrc -a -r /usr/local/etc/kamailio/kamctlrc ]; then
+if[ $RC_FILE_SOURCED = "false" ] &&  [ -f /usr/local/etc/kamailio/kamctlrc -a -r /usr/local/etc/kamailio/kamctlrc ]; then
 	. /usr/local/etc/kamailio/kamctlrc
+	RC_FILE_SOURCED="true"
 fi
 if [ -f ~/.kamctlrc -a -r ~/.kamctlrc ]; then
 	. ~/.kamctlrc
@@ -3255,4 +3258,3 @@ case $1 in
 		exit 1
 		;;
 esac
-
