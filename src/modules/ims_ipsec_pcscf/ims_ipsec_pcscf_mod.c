@@ -56,12 +56,13 @@ static int child_init(int);
 static void mod_destroy(void);
 static int w_create(struct sip_msg *_m, char *_d, char *_cflags);
 static int w_forward(struct sip_msg *_m, char *_d, char *_cflags);
-static int w_destroy(struct sip_msg *_m, char *_d, char *_cflags);
+static int w_destroy(struct sip_msg *_m, char *_d, char *_aor);
 
 /*! \brief Fixup functions */
 static int domain_fixup(void **param, int param_no);
 static int save_fixup2(void **param, int param_no);
 static int free_uint_fixup(void **param, int param_no);
+static int unregister_fixup(void **param, int param_no);
 
 extern int bind_ipsec_pcscf(usrloc_api_t *api);
 
@@ -83,6 +84,8 @@ static cmd_export_t cmds[] = {
 		free_uint_fixup, REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"ipsec_destroy", (cmd_function)w_destroy, 1, save_fixup2,
 		0, REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"ipsec_destroy", (cmd_function)w_destroy, 2, unregister_fixup,
+		0, ANY_ROUTE },
 	{"bind_ims_ipsec_pcscf", (cmd_function)bind_ipsec_pcscf, 1, 0,
 		0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -448,6 +451,36 @@ static int save_fixup2(void **param, int param_no)
 	return 0;
 }
 
+/*! \brief
+ * Fixup for "unregister" operation - both domain and aor
+ */
+static int unregister_fixup(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return domain_fixup(param, param_no);
+	} else {
+		pv_elem_t *model=NULL;
+		str s;
+
+		/* convert to str */
+		s.s = (char*)*param;
+		s.len = strlen(s.s);
+
+		model = NULL;
+		if(s.len==0) {
+			LM_ERR("no param!\n");
+			return E_CFG;
+		}
+		if(pv_parse_format(&s, &model)<0 || model==NULL) {
+			LM_ERR("wrong format [%s]!\n", s.s);
+			return E_CFG;
+		}
+		*param = (void*)model;
+		return 0;
+	}
+	return E_CFG;
+}
+
 
 /*! \brief
  * Wrapper to ipsec functions
@@ -468,7 +501,20 @@ static int w_forward(struct sip_msg *_m, char *_d, char *_cflags)
 	return ipsec_forward(_m, (udomain_t *)_d, 0);
 }
 
-static int w_destroy(struct sip_msg *_m, char *_d, char *_cflags)
+static int w_destroy(struct sip_msg *_m, char *_d, char *_aor)
 {
-	return ipsec_destroy(_m, (udomain_t *)_d);
+        pv_elem_t *model;
+        str aor;
+
+	if(_aor) {
+                model = (pv_elem_t*)_aor;
+                if (pv_printf_s(_m, model, &aor) < 0) {
+                    LM_ERR("error - cannot print the format\n");
+                    return -1;
+                }
+                LM_DBG("URI: %.*s\n", aor.len, aor.s);
+
+		return ipsec_destroy(_m, (udomain_t *)_d, &aor);
+	}
+	return ipsec_destroy(_m, (udomain_t *)_d, NULL);
 }

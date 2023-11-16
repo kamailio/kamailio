@@ -65,7 +65,7 @@ struct udomain_t;
 
 int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags);
 int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags);
-int ipsec_destroy(struct sip_msg *m, udomain_t *d);
+int ipsec_destroy(struct sip_msg *m, udomain_t *d, str *uri);
 int ipsec_cleanall();
 int ipsec_reconfig();
 void ipsec_on_expire(pcontact_t *c, int type, void *param);

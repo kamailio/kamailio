@@ -1041,7 +1041,7 @@ cleanup:
 }
 
 
-int ipsec_destroy(struct sip_msg *m, udomain_t *d)
+int ipsec_destroy(struct sip_msg *m, udomain_t *d, str *uri)
 {
 	struct pcontact_info ci;
 	pcontact_t *pcontact = NULL;
@@ -1051,6 +1051,12 @@ int ipsec_destroy(struct sip_msg *m, udomain_t *d)
 	if(m->first_line.type == SIP_REPLY) {
 		t = tmb.t_gett();
 	}
+
+        // Insert URI in SIP message
+        if(uri != NULL) {
+                m->first_line.u.request.uri.s = uri->s;
+                m->first_line.u.request.uri.len = uri->len;
+        }
 
 	// Find the contact
 	if(fill_contact(&ci, m, t, 0) != 0) {
