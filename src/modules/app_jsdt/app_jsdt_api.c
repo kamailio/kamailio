@@ -1072,22 +1072,41 @@ duk_ret_t cb_resolve_module(duk_context *JJ)
 	const char *parent_id = duk_get_string(JJ, 1);
 
 	char requested_path[PATH_MAX];
+	char resolved_id[PATH_MAX];
+	char *ptr = NULL;
+
+	if(requested_id == NULL) {
+		return duk_generic_error(JJ, "Invalid parameter");
+	}
+	if(strlen(requested_id) >= PATH_MAX) {
+		return duk_generic_error(JJ, "Parameter too long");
+	}
+	requested_path[0] = '\0';
 	if(requested_id[0] == '/') {
 		// absolute
 		strcpy(requested_path, requested_id);
 	} else if(strncmp(requested_id, "./", 2)
 			  || strncmp(requested_id, "../", 3)) {
-		if(strlen(parent_id)) {
+		if(parent_id != NULL && strlen(parent_id) > 0) {
+			if(strlen(parent_id) >= PATH_MAX) {
+				return duk_generic_error(JJ, "Second parameter too long");
+			}
 			// relative to parent
 			strcpy(requested_path, parent_id);
 		} else {
+			if(strlen(_sr_jsdt_load_file.s) >= PATH_MAX) {
+				return duk_generic_error(JJ, "Load file path too long");
+			}
 			// no parent so relative to jsdt_load_file
 			strcpy(requested_path, _sr_jsdt_load_file.s);
 		}
-		char *ptr = strrchr(requested_path, '/');
+		ptr = strrchr(requested_path, '/');
 		if(ptr) {
 			ptr++;
 			*ptr = '\0';
+		}
+		if(strlen(requested_path) + strlen(requested_id) >= PATH_MAX) {
+			return duk_generic_error(JJ, "Path too long");
 		}
 		strcat(requested_path, requested_id);
 	} else {
@@ -1096,9 +1115,11 @@ duk_ret_t cb_resolve_module(duk_context *JJ)
 	}
 	// if missing add .js ext
 	if(strcmp(strrchr(requested_path, '\0') - 3, ".js")) {
+		if(strlen(requested_path) + 3 >= PATH_MAX) {
+			return duk_generic_error(JJ, "Path too long");
+		}
 		strcat(requested_path, ".js");
 	}
-	char resolved_id[PATH_MAX];
 	if(realpath(requested_path, resolved_id)) {
 		duk_push_string(JJ, resolved_id);
 		return 1; /*nrets*/
