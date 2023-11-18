@@ -8,6 +8,13 @@ include ../../Makefile.defs
 auto_gen=
 NAME=tls_wolfssl.so
 
+# make WOLFSSL_INTERNAL=yes...  for internal submodule
+# make WOLFSSL_INTERNAL=no... for system package
+# default: yes
+
+WOLFSSL_INTERNAL ?= yes
+
+ifeq ($(WOLFSSL_INTERNAL),yes)
 WOLFSSL_PREFIX = ../../../misc/external/wolfssl/build
 WOLFSSL_SRC = ../../../misc/external/wolfssl/wolfssl
 
@@ -33,6 +40,15 @@ $(WOLFSSL_PREFIX)/include/wolfssl/options.h $(WOLFSSL_PREFIX)/lib/libwolfssl.a:
 	@$(MAKE) -C $(WOLFSSL_SRC) DESTDIR= prefix=$(CURDIR)/$(WOLFSSL_PREFIX) exec-prefix=$(CURDIR)/$(WOLFSSL_PREFIX) install
 
 $(NAME): $(WOLFSSL_PREFIX)/lib/libwolfssl.a
+
+else
+WOLFSSL_LIBS ?= $(shell pkg-config wolfssl --libs)
+WOLFSSL_INCLUDES ?= $(shell pkg-config wolfssl --cflags)
+
+LIBS += $(WOLFSSL_LIBS)
+INCLUDES +=  $(WOLFSSL_INCLUDES)
+include ../../Makefile.modules
+endif
 
 clean-wolfssl:
 	@rm -rf $(WOLFSSL_PREFIX)/{bin,include,share,lib}; \
