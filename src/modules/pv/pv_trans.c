@@ -2563,7 +2563,7 @@ int tr_eval_val(
 					&& (*_p == ' ' || *_p == '\t' || *_p == '\n'))             \
 				_p++;                                                          \
 			while(is_in_str(_p, _in) && *_p >= '0' && *_p <= '9') {            \
-				if(_n > ((INT_MAX / 10) - 10)) {                               \
+				if(_n > ((LONG_MAX / 10) - 10)) {                              \
 					LM_ERR("number value is too large\n");                     \
 					goto error;                                                \
 				}                                                              \
@@ -2577,7 +2577,7 @@ int tr_eval_val(
 			}                                                                  \
 			memset(_tp, 0, sizeof(tr_param_t));                                \
 			_tp->type = TR_PARAM_NUMBER;                                       \
-			_tp->v.n = sign * n;                                               \
+			_tp->v.n = n * sign;                                               \
 		} else {                                                               \
 			LM_ERR("tinvalid param in transformation: %.*s!!\n", _in->len,     \
 					_in->s);                                                   \
@@ -2660,7 +2660,7 @@ char *tr_parse_string(str *in, trans_t *t)
 	str name;
 	str s;
 	pv_spec_t *spec = NULL;
-	int n;
+	long n;
 	int sign;
 	tr_param_t *tp = NULL;
 
@@ -3323,7 +3323,7 @@ char *tr_parse_paramlist(str *in, trans_t *t)
 	char *start_pos;
 	str s;
 	str name;
-	int n;
+	long n;
 	int sign;
 	pv_spec_t *spec = NULL;
 	tr_param_t *tp = NULL;
@@ -3560,7 +3560,7 @@ char *tr_parse_line(str *in, trans_t *t)
 	char *ps;
 	str s;
 	str name;
-	int n;
+	long n;
 	int sign;
 	pv_spec_t *spec = NULL;
 	tr_param_t *tp = NULL;
