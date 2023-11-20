@@ -33,7 +33,7 @@
 typedef int(cp_read_actions_func)(xmlNode *an, cp_actions_t **dst);
 
 int parse_common_rules(const char *data, int dsize, cp_ruleset_t **dst,
-	cp_read_actions_func read_actions, cp_free_actions_func free_actions);
+		cp_read_actions_func read_actions, cp_free_actions_func free_actions);
 
 /* extern char *common_policy_ns; */
 
