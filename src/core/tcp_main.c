@@ -4373,7 +4373,6 @@ inline static int send2child(struct tcp_connection *tcpconn)
 						tcpconn->s)
 				<= 0)) {
 		if((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
-			/* FIXME: remove after debugging */
 			LM_CRIT("tcp child %d, socket %d: queue full, %d requests queued "
 					"(total handled %d)\n",
 					idx, tcp_children[idx].unix_sock, min_busy,
@@ -4556,23 +4555,7 @@ inline static int handle_tcpconn_ev(
 	int empty_q;
 	int bytes;
 #endif /* TCP_ASYNC */
-	/*  is refcnt!=0 really necessary?
-	 *  No, in fact it's a bug: I can have the following situation: a send only
-	 *   tcp connection used by n processes simultaneously => refcnt = n. In
-	 *   the same time I can have a read event and this situation is perfectly
-	 *   valid. -- andrei
-	 */
-#if 0
-	if ((tcpconn->refcnt!=0)){
-		/* FIXME: might be valid for sigio_rt iff fd flags are not cleared
-		 *        (there is a short window in which it could generate a sig
-		 *         that would be caught by tcp_main) */
-		LM_CRIT("handle_tcpconn_ev: io event on referenced"
-					" tcpconn (%p), refcnt=%d, fd=%d\n",
-					tcpconn, tcpconn->refcnt, tcpconn->s);
-		return -1;
-	}
-#endif
+
 	/* pass it to child, so remove it from the io watch list  and the local
 	 *  timer */
 #ifdef TCP_ASYNC
@@ -4627,7 +4610,7 @@ inline static int handle_tcpconn_ev(
 					(void)dst_blocklist_su(BLST_ERR_SEND, tcpconn->rcv.proto,
 							&tcpconn->rcv.src_su, &tcpconn->send_flags, 0);
 #endif									   /* USE_DST_BLOCKLIST */
-					TCP_STATS_CON_RESET(); /* FIXME: it could != RST */
+					TCP_STATS_CON_RESET(); /* note: it could != RST */
 				}
 			}
 			if(unlikely(!tcpconn_try_unhash(tcpconn))) {
