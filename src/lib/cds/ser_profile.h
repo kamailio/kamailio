@@ -30,7 +30,7 @@ DECLARE_PROF_POINT(b2b_handle_notify)
 /* do NOT use directly this */
 void ser_profile_init();
 
-#define SER_PROFILE_INIT	ser_profile_init();
+#define SER_PROFILE_INIT ser_profile_init();
 
 #else /* don't profile */
 

@@ -29,24 +29,23 @@ DEFINE_PROF_POINT(b2b_handle_notify)
 
 void prof_trace(FILE *f, int pid, const char *s, profile_data_t a)
 {
-	fprintf(f, "%d\t%30s\t%d\t%u\n",
-			pid, s, a.count, a.spent_time);
-	if (a.start_count != a.stop_count)
-		fprintf(f, "%s, %d start_count != stop_count (%d != %d)\n",
-				s, pid, a.start_count, a.stop_count);
+	fprintf(f, "%d\t%30s\t%d\t%u\n", pid, s, a.count, a.spent_time);
+	if(a.start_count != a.stop_count)
+		fprintf(f, "%s, %d start_count != stop_count (%d != %d)\n", s, pid,
+				a.start_count, a.stop_count);
 }
 
 void prof_trace_nested(FILE *f, int pid, const char *s, profile_data_t a)
 {
-	fprintf(f, "%d\t%29s*\t%d\t%u\n",
-			pid, s, a.count, a.spent_time);
-	if (a.start_count != a.stop_count)
-		fprintf(f, "%s, %d start_count != stop_count (%d != %d)\n",
-				s, pid, a.start_count, a.stop_count);
+	fprintf(f, "%d\t%29s*\t%d\t%u\n", pid, s, a.count, a.spent_time);
+	if(a.start_count != a.stop_count)
+		fprintf(f, "%s, %d start_count != stop_count (%d != %d)\n", s, pid,
+				a.start_count, a.stop_count);
 }
 
-#define trace(f, p, name)	prof_trace(f, p, #name , prof_point(name))
-#define trace_nested(f, p, name)	prof_trace_nested(f, p, #name , prof_point(name))
+#define trace(f, p, name) prof_trace(f, p, #name, prof_point(name))
+#define trace_nested(f, p, name) \
+	prof_trace_nested(f, p, #name, prof_point(name))
 
 void trace_func()
 {
@@ -54,7 +53,8 @@ void trace_func()
 	FILE *f;
 
 	f = fopen("/tmp/ser.profile", "at");
-	if (!f) ERR("can't write into profile file\n");
+	if(!f)
+		ERR("can't write into profile file\n");
 	else {
 
 		trace(f, p, pa_handle_subscription);
@@ -69,7 +69,7 @@ void trace_func()
 		trace(f, p, rls_query_resource_list);
 		trace(f, p, rls_have_flat_list);
 
-	/* 	trace_nested(f, p, tem_timer_cb); */
+		/* 	trace_nested(f, p, tem_timer_cb); */
 		trace(f, p, tem_add_event);
 		trace(f, p, tem_remove_event);
 		trace(f, p, tem_do_step);

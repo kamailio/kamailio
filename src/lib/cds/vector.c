@@ -32,14 +32,16 @@
 
 int vector_add(vector_t *vector, void *element)
 {
-	if (vector->element_count >= vector->allocated_count) {
+	if(vector->element_count >= vector->allocated_count) {
 		void *new_data;
 		int new_size = vector->allocated_count + vector->allocation_count;
-		if (new_size <= vector->allocated_count) return -1;
+		if(new_size <= vector->allocated_count)
+			return -1;
 
 		new_data = (void *)cds_malloc(vector->element_size * new_size);
-		if (!new_data) return -1;
-		if (vector->data) {
+		if(!new_data)
+			return -1;
+		if(vector->data) {
 			memcpy(new_data, vector->data,
 					vector->element_size * vector->allocated_count);
 			cds_free(vector->data);
@@ -57,13 +59,14 @@ int vector_add(vector_t *vector, void *element)
 int vector_remove(vector_t *vector, int index)
 {
 	int cnt;
-	if (index >= vector->element_count) return -1;
+	if(index >= vector->element_count)
+		return -1;
 
 	cnt = vector->element_count - index - 1;
-	if (cnt > 0) {
+	if(cnt > 0) {
 		memmove(vector->data + (index * vector->element_size),
-			vector->data + ((index + 1) * vector->element_size),
-			cnt *  vector->element_size);
+				vector->data + ((index + 1) * vector->element_size),
+				cnt * vector->element_size);
 	}
 	vector->element_count--;
 
@@ -72,23 +75,28 @@ int vector_remove(vector_t *vector, int index)
 
 int vector_get(vector_t *vector, int index, void *element_dst)
 {
-	if (index >= vector->element_count) return -1;
+	if(index >= vector->element_count)
+		return -1;
 
-	memcpy(element_dst, vector->data + (index * vector->element_size), vector->element_size);
+	memcpy(element_dst, vector->data + (index * vector->element_size),
+			vector->element_size);
 
 	return 0;
 }
 
-void* vector_get_ptr(vector_t *vector, int index)
+void *vector_get_ptr(vector_t *vector, int index)
 {
-	if (index >= vector->element_count) return NULL;
-	else return vector->data + (index * vector->element_size);
+	if(index >= vector->element_count)
+		return NULL;
+	else
+		return vector->data + (index * vector->element_size);
 }
 
 void vector_destroy(vector_t *vector)
 {
-	if (vector) {
-		if (vector->data) cds_free(vector->data);
+	if(vector) {
+		if(vector->data)
+			cds_free(vector->data);
 		vector->data = NULL;
 		vector->allocation_count = 0;
 		vector->element_count = 0;
@@ -97,16 +105,16 @@ void vector_destroy(vector_t *vector)
 
 int vector_init(vector_t *vector, int element_size, int allocation_count)
 {
-	if (!vector) return -1;
+	if(!vector)
+		return -1;
 	vector->element_size = element_size;
 	vector->element_count = 0;
 	vector->allocation_count = allocation_count;
 	vector->data = (void *)cds_malloc(element_size * allocation_count);
-	if (!vector->data) {
+	if(!vector->data) {
 		vector->allocated_count = 0;
 		return -1;
-	}
-	else {
+	} else {
 		vector->allocated_count = allocation_count;
 		return 0;
 	}

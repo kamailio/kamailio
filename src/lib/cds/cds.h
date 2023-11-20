@@ -41,7 +41,8 @@
  * @{ */
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #if 0
@@ -66,7 +67,7 @@ void cds_cleanup();
 
 #endif
 
-/** @} */
+	/** @} */
 
 #ifdef __cplusplus
 }
