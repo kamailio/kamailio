@@ -183,7 +183,7 @@ void ack_msg(sip_msg_t *pmsg, call_lst *pcall)
 **********/
 
 	pcall->call_hash = pcall->call_label = 0;
-	sprintf(pcall->call_addr, "%s %s",
+	snprintf(pcall->call_addr, IP_ADDR_MAX_STR_SIZE + 4, "%s %s",
 			pmsg->rcv.dst_ip.af == AF_INET ? "IP4" : "IP6",
 			ip_addr2a(&pmsg->rcv.dst_ip));
 	pcall->call_state = CLSTA_INQUEUE;
@@ -412,12 +412,12 @@ void close_call(sip_msg_t *pmsg, call_lst *pcall)
 				+ strlen(pcall->call_via)	// Via
 				+ strlen(pcall->call_route) // Route
 				+ strlen(pquri);			// Contact
-	phdr = pkg_malloc(npos1);
+	phdr = pkg_malloc(npos1 + 1);
 	if(!phdr) {
 		LM_ERR("%sNo more memory!\n", pfncname);
 		goto bye_err;
 	}
-	sprintf(phdr, pbyemsg,
+	snprintf(phdr, npos1 + 1, pbyemsg,
 			pcall->call_via,   // Via
 			pcall->call_route, // Route
 			pquri);			   // Contact
@@ -1097,15 +1097,16 @@ void first_invite_msg(sip_msg_t *pmsg, call_lst *pcall)
 
 	str pcontact[1];
 	char *pcontacthdr = "Contact: <%s>" SIPEOL;
-	pcontact->s =
-			pkg_malloc(strlen(pcall->pmohq->mohq_uri) + strlen(pcontacthdr));
+	int tblen;
+	tblen = strlen(pcall->pmohq->mohq_uri) + strlen(pcontacthdr);
+	pcontact->s = pkg_malloc(tblen + 1);
 	if(!pcontact->s) {
 		LM_ERR("%sNo more memory!\n", pfncname);
 		end_RTP(pmsg, pcall);
 		delete_call(pcall);
 		return;
 	}
-	sprintf(pcontact->s, pcontacthdr, pcall->pmohq->mohq_uri);
+	snprintf(pcontact->s, tblen + 1, pcontacthdr, pcall->pmohq->mohq_uri);
 	pcontact->len = strlen(pcontact->s);
 	if(!add_lump_rpl2(pmsg, pcontact->s, pcontact->len, LUMP_RPL_HDR)) {
 		LM_ERR("%sUnable to add contact (%s) to call (%s)!\n", pfncname,
@@ -1557,12 +1558,12 @@ int refer_call(call_lst *pcall, mohq_lock *plock)
 				+ strlen(pcall->pmohq->mohq_uri)  // Contact
 				+ puri->len						  // Refer-To
 				+ strlen(pcall->pmohq->mohq_uri); // Referred-By
-	char *pbuf = pkg_malloc(npos1);
+	char *pbuf = pkg_malloc(npos1 + 1);
 	if(!pbuf) {
 		LM_ERR("%sNo more memory!\n", pfncname);
 		goto refererr;
 	}
-	sprintf(pbuf, prefermsg,
+	snprintf(pbuf, npos1 + 1, prefermsg,
 			pcall->call_via,		 // Via
 			pcall->call_route,		 // Route
 			pcall->pmohq->mohq_uri,	 // Contact
@@ -1863,7 +1864,7 @@ int send_prov_rsp(sip_msg_t *pmsg, call_lst *pcall)
 	char phdrtmp[200];
 	char *phdrtmplt = "Accept-Language: en" SIPEOL "Require: 100rel" SIPEOL
 					  "RSeq: %d" SIPEOL;
-	sprintf(phdrtmp, phdrtmplt, pcall->call_cseq);
+	snprintf(phdrtmp, 200, phdrtmplt, pcall->call_cseq);
 	struct lump_rpl **phdrlump =
 			add_lump_rpl2(pmsg, phdrtmp, strlen(phdrtmp), LUMP_RPL_HDR);
 	if(!phdrlump) {
@@ -2006,7 +2007,7 @@ int send_rtp_answer(sip_msg_t *pmsg, call_lst *pcall)
 		npos1 += pparse[npos2].len;
 	}
 	char pbodylen[30];
-	sprintf(pbodylen, "%s: %d\r\n\r\n", pclenhdr, pSDP->len);
+	snprintf(pbodylen, 30, "%s: %d\r\n\r\n", pclenhdr, pSDP->len);
 	npos1 += pextrahdr->len + strlen(pbodylen) + pSDP->len + 1;
 	char *pnewbuf = pkg_malloc(npos1);
 	if(!pnewbuf) {
