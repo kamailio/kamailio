@@ -23,15 +23,17 @@
 
 #include "../../modules/ctl/binrpc.h"
 
-struct binrpc_handle {
+struct binrpc_handle
+{
 	int socket;
 	int proto;
 	int sock_type;
-	unsigned char* buf;
+	unsigned char *buf;
 	int buf_size;
 };
 
-struct binrpc_response_handle {
+struct binrpc_response_handle
+{
 	unsigned char *reply_buf;
 	struct binrpc_parse_ctx in_pkt;
 };
@@ -59,10 +61,8 @@ struct binrpc_response_handle {
  * @return 0 on success, -1 on failure.
  *
  * */
-int binrpc_open_connection(
-	struct binrpc_handle* handle,
-	char* name, int port, int proto,
-	char* reply_socket, char* sock_dir);
+int binrpc_open_connection(struct binrpc_handle *handle, char *name, int port,
+		int proto, char *reply_socket, char *sock_dir);
 
 /**
  * Function: binrpc_open_connection_url
@@ -80,7 +80,7 @@ int binrpc_open_connection(
  *
  * */
 
-int binrpc_open_connection_url(struct binrpc_handle* handle, char* url);
+int binrpc_open_connection_url(struct binrpc_handle *handle, char *url);
 
 /**
  * Function: binrpc_close_connection
@@ -94,7 +94,7 @@ int binrpc_open_connection_url(struct binrpc_handle* handle, char* url);
  * @return 0 on success, -1 on failure.
  *   none
  * */
-void binrpc_close_connection(struct binrpc_handle* handle);
+void binrpc_close_connection(struct binrpc_handle *handle);
 
 /**
  * Function: binrpc_send_command
@@ -113,10 +113,8 @@ void binrpc_close_connection(struct binrpc_handle* handle);
  * @return 0 on success, -1 on failure.
  *
  * */
-int binrpc_send_command(
-	struct binrpc_handle* handle,
-	char* method, char** args, int arg_count,
-	struct binrpc_response_handle* resp_handle);
+int binrpc_send_command(struct binrpc_handle *handle, char *method, char **args,
+		int arg_count, struct binrpc_response_handle *resp_handle);
 
 /**
  * Function: binrpc_send_command_ex
@@ -132,9 +130,8 @@ int binrpc_send_command(
  * @return 0 on success, -1 on failure.
  *
  * */
-int binrpc_send_command_ex(
-	struct binrpc_handle* handle, struct binrpc_pkt* pkt,
-	struct binrpc_response_handle *resp_handle);
+int binrpc_send_command_ex(struct binrpc_handle *handle, struct binrpc_pkt *pkt,
+		struct binrpc_response_handle *resp_handle);
 
 /**
  * Function: binrpc_release_response
@@ -147,9 +144,7 @@ int binrpc_send_command_ex(
  * @return 0 on success, -1 on failure.
  *
  * */
-void binrpc_release_response(
-	struct binrpc_response_handle *resp_handle
-);
+void binrpc_release_response(struct binrpc_response_handle *resp_handle);
 
 /**
  * Function: binrpc_get_response_type
@@ -175,11 +170,8 @@ int binrpc_get_response_type(struct binrpc_response_handle *resp_handle);
  * @return -1 failure.
  *
  * */
-int binrpc_parse_response(
-	struct binrpc_val** vals,
-	int* val_count,
-	struct binrpc_response_handle *resp_handle
-);
+int binrpc_parse_response(struct binrpc_val **vals, int *val_count,
+		struct binrpc_response_handle *resp_handle);
 
 /*
  * Function: binrpc_parse_error_response
@@ -195,10 +187,7 @@ int binrpc_parse_response(
  *
  * */
 int binrpc_parse_error_response(
-	struct binrpc_response_handle *resp_handle,
-	int *err_no,
-	char **err
-);
+		struct binrpc_response_handle *resp_handle, int *err_no, char **err);
 
 /**
  * Function: binrpc_print_response
@@ -214,7 +203,8 @@ int binrpc_parse_error_response(
  * @return 0 on success, -1 on failure
  *
  * */
-int binrpc_print_response(struct binrpc_response_handle *resp_handle, char* fmt);
+int binrpc_print_response(
+		struct binrpc_response_handle *resp_handle, char *fmt);
 
 /**
  * Function: binrpc_response_to_text
@@ -238,10 +228,8 @@ int binrpc_print_response(struct binrpc_response_handle *resp_handle, char* fmt)
  * @return 0 on success, -1 on failure
  *
  * */
-int binrpc_response_to_text(
-	struct binrpc_response_handle *resp_handle,
-        unsigned char** txt_rsp, int* txt_rsp_len,
-	char delimiter);
+int binrpc_response_to_text(struct binrpc_response_handle *resp_handle,
+		unsigned char **txt_rsp, int *txt_rsp_len, char delimiter);
 
 /**
  * Function: binrpc_set_mallocs
@@ -255,7 +243,7 @@ int binrpc_response_to_text(
  * @param _free [in]:     pointer to function that ensures memory deallocation
  *
  * */
-void binrpc_set_mallocs(void* _malloc, void* _realloc, void* _free);
+void binrpc_set_mallocs(void *_malloc, void *_realloc, void *_free);
 
 /**
  * Function: binrpc_get_last_errs
@@ -283,6 +271,6 @@ void binrpc_clear_last_err();
  *    and finally frees the values array
  *
  * */
-void binrpc_free_rpc_array(struct binrpc_val* a, int size);
+void binrpc_free_rpc_array(struct binrpc_val *a, int size);
 
 #endif /*BINRPC_API_H_*/
