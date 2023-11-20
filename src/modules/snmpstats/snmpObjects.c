@@ -210,18 +210,18 @@ void init_kamailioObjects(void)
 }
 
 
-/* 
+/*
  * The following are thresholds used by:
- * 
- * - The alarm monitoring process, to decide when to send out traps.  
- * - All scalars involving alarm status's and thresholds.  
+ *
+ * - The alarm monitoring process, to decide when to send out traps.
+ * - All scalars involving alarm status' and thresholds.
  *
  * By default they are initialized to -1, which disables alarm checks.
  * These are set through the kamailio.cfg file with the following modparams to
  * the snmpstats module:
  *
- *  - dlg_minor_threshold  
- *  - dlg_major_threshold  
+ *  - dlg_minor_threshold
+ *  - dlg_major_threshold
  *
  *  - MsgQueueMinorThreshold
  *  - MsgQueueMajorThreshold
@@ -456,7 +456,7 @@ int handle_kamailioDialogUsageState(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info *reqinfo, netsnmp_request_info *requests)
 {
-	/* Return value follows the X731UsageState Textual Convention 
+	/* Return value follows the X731UsageState Textual Convention
 	 *
 	 * We default to 'unknown' */
 	int usage_state = TC_USAGE_STATE_UNKNOWN;
@@ -580,8 +580,8 @@ static int set_if_valid_threshold(
 	return 0;
 }
 
-/* 
- * Paramater Configuration Functions 
+/*
+ * Parameter Configuration Functions
  */
 
 /* Handles setting of the message queue minor alarm threshold */

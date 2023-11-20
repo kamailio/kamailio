@@ -230,7 +230,7 @@ setsflag("$var(flag)");
 
 3.2. issflagset(flag)
 
-   Return true of the script flag is set.
+   Return true if the script flag is set.
 
    Meaning of the parameters is as follows:
      * flag - the index of the script flag to be tested. Can be integer or
@@ -284,7 +284,7 @@ setbflag("$var(flag)", "1");
 
 3.5. isbflagset(flag [, branch])
 
-   Return true of the branch flag is set.
+   Return true if the branch flag is set.
 
    Meaning of the parameters is as follows:
      * flag - the index of the branch flag to be tested. Can be integer or
@@ -661,9 +661,9 @@ kamcmd core.modules
    Print the list of available internal statistics.
 
    NOTE: the result is an array of strings that have the list of
-   statistics formated like "name = value", being propagated over the time
-   from the MI variant. Use "stats.fetch" or "stats.fetchn"commands to
-   have a more JSON-friendly output.
+   statistics formatted like "name = value", being propagated over the
+   time from the MI variant. Use "stats.fetch" or "stats.fetchn"commands
+   to have a more JSON-friendly output.
 
    Parameters: statsid - which statistics to be printed. If set to 'all'
    then all statistics are printed; if set to 'statsgroup:' then all
@@ -681,7 +681,7 @@ kamcmd core.modules
    Print the list of available internal statistics with a more json
    friendly output. Each printed statistic is a field in the output
    structure: {"statsgroup.statsname" : "statsvalue"}. The value is
-   represented as string to accomodate large numbers.
+   represented as string to accommodate large numbers.
 
    Parameters: statsid - which statistics to be printed. If set to 'all'
    then all statistics are printed; if set to 'statsgroup:' then all

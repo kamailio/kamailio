@@ -54,10 +54,10 @@ int sr_mono_register_module(char *mname);
 int app_mono_exec(struct sip_msg *msg, char *script, char *param);
 int app_mono_run(sip_msg_t *msg, char *arg);
 
-typedef struct sr_M_export {
+typedef struct sr_M_export
+{
 	char *name;
-	void* method;
+	void *method;
 } sr_M_export_t;
 
 #endif
-

@@ -7,14 +7,14 @@
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Focus. Thanks for great work! This is an effort to 
+ * FhG Focus. Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -32,10 +32,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #ifndef __AVP_GET_H
@@ -43,32 +43,41 @@
 
 #ifndef CDP_AVP_REFERENCE
 
-	#include "../cdp/cdp_load.h"
+#include "../cdp/cdp_load.h"
 
-	AAA_AVP* cdp_avp_get_next_from_list(AAA_AVP_LIST list,int avp_code,int avp_vendor_id,AAA_AVP *start_avp);
-	typedef AAA_AVP* (*cdp_avp_get_next_from_list_f)(AAA_AVP_LIST list,int avp_code,int avp_vendor_id,AAA_AVP *start_avp);
-	
-	AAA_AVP* cdp_avp_get_next_from_msg(AAAMessage *msg,int avp_code,int avp_vendor_id,AAA_AVP *start_avp);
-	typedef AAA_AVP* (*cdp_avp_get_next_from_msg_f)(AAAMessage *msg,int avp_code,int avp_vendor_id,AAA_AVP *start_avp);
-	
-	AAA_AVP* cdp_avp_get_from_list(AAA_AVP_LIST list,int avp_code,int avp_vendor_id);
-	typedef AAA_AVP* (*cdp_avp_get_from_list_f)(AAA_AVP_LIST list,int avp_code,int avp_vendor_id);
-	
-	AAA_AVP* cdp_avp_get_from_msg(AAAMessage *msg,int avp_code,int avp_vendor_id);
-	typedef AAA_AVP* (*cdp_avp_get_from_msg_f)(AAAMessage *msg,int avp_code,int avp_vendor_id);
+AAA_AVP *cdp_avp_get_next_from_list(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id, AAA_AVP *start_avp);
+typedef AAA_AVP *(*cdp_avp_get_next_from_list_f)(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id, AAA_AVP *start_avp);
+
+AAA_AVP *cdp_avp_get_next_from_msg(
+		AAAMessage *msg, int avp_code, int avp_vendor_id, AAA_AVP *start_avp);
+typedef AAA_AVP *(*cdp_avp_get_next_from_msg_f)(
+		AAAMessage *msg, int avp_code, int avp_vendor_id, AAA_AVP *start_avp);
+
+AAA_AVP *cdp_avp_get_from_list(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id);
+typedef AAA_AVP *(*cdp_avp_get_from_list_f)(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id);
+
+AAA_AVP *cdp_avp_get_from_msg(AAAMessage *msg, int avp_code, int avp_vendor_id);
+typedef AAA_AVP *(*cdp_avp_get_from_msg_f)(
+		AAAMessage *msg, int avp_code, int avp_vendor_id);
 
 #else
 
-	AAA_AVP* basic.get_next_from_list(AAA_AVP_LIST list,int avp_code,int avp_vendor_id,AAA_AVP *start_avp);
+AAA_AVP *basic.get_next_from_list(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id, AAA_AVP *start_avp);
 
-	AAA_AVP* basic.get_next_from_msg(AAAMessage *msg,int avp_code,int avp_vendor_id,AAA_AVP *start_avp);
+AAA_AVP *basic.get_next_from_msg(
+		AAAMessage *msg, int avp_code, int avp_vendor_id, AAA_AVP *start_avp);
 
-	AAA_AVP* basic.get_from_list(AAA_AVP_LIST list,int avp_code,int avp_vendor_id);
+AAA_AVP *basic.get_from_list(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id);
 
-	AAA_AVP* basic.get_from_msg(AAAMessage *msg,int avp_code,int avp_vendor_id);
+AAA_AVP *basic.get_from_msg(AAAMessage *msg, int avp_code, int avp_vendor_id);
 
 #endif
-
 
 
 #endif /* __AVP_NEW_H */

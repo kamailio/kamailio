@@ -133,7 +133,7 @@ void sca_subscription_purge_expired(unsigned int ticks, void *param)
 								   "subscribers failed\n",
 									sca_event_name_from_type(sub->event),
 									STR_FMT(&sub->target_aor));
-							// fall through anyway. the state should propagate
+							// fall through anyway. The state should propagate
 							// to subscribers when they renew call-info.
 						}
 					}
@@ -669,7 +669,7 @@ sca_subscription *sca_subscription_create(str *aor, int event, str *subscriber,
 	// dialog.id.
 	//
 	// we shm_malloc this separately in case we need to update in-memory
-	// dialog saved for this subscriber. this is likely to happen if the
+	// dialog saved for this subscriber. This is likely to happen if the
 	// subscriber goes off-line for some reason.
 	len = sizeof(char) * (call_id->len + from_tag->len + to_tag->len);
 	sub->dialog.id.s = (char *)shm_malloc(len);

@@ -37,7 +37,6 @@
  */
 
 
-
 #ifndef timer_h
 #define timer_h
 
@@ -57,21 +56,18 @@ extern pid_t slow_timer_pid;
 #endif
 
 
-
-
-
 /* deprecated, old, kept for compatibility */
-typedef void (timer_function)(unsigned int ticks, void* param);
-typedef void (timer_function_w)(unsigned int ticks, int worker, void* param);
+typedef void(timer_function)(unsigned int ticks, void *param);
+typedef void(timer_function_w)(unsigned int ticks, int worker, void *param);
 /* deprecated, old, kept for compatibility
 	get_ticks()*TIMER_TICK used to be the time in s
 	for new code, use get_ticks_raw() and one of the macros defined in
 	timer_ticks.h (.e.g TICKS_TO_S(tick) to convert to s or ms )*/
 #define TIMER_TICK 1 /* 1 s, kept for compatibility */
 
-/*function prototype to execute on mili-second based basic timers */
-typedef void (utimer_function)(unsigned int uticks, void* param);
-typedef void (utimer_function_w)(unsigned int uticks, int worker, void* param);
+/*function prototype to execute on millisecond based basic timers */
+typedef void(utimer_function)(unsigned int uticks, void *param);
+typedef void(utimer_function_w)(unsigned int uticks, int worker, void *param);
 
 struct timer_ln; /* forward decl */
 /* new
@@ -84,44 +80,44 @@ struct timer_ln; /* forward decl */
  *         - a timer which wants to expire again in x ms would return:
  *             (x * TICKS_HZ + 999)/1000
  */
-typedef ticks_t (timer_handler_f)(ticks_t t, struct timer_ln* tl,
-									void* data);
+typedef ticks_t(timer_handler_f)(ticks_t t, struct timer_ln *tl, void *data);
 
 
 /* timer flags */
-#define F_TIMER_FAST	1
-#define F_TIMER_ON_SLOW_LIST	0x100
-#define F_TIMER_ACTIVE	0x200	/* timer is running or has run and expired
+#define F_TIMER_FAST 1
+#define F_TIMER_ON_SLOW_LIST 0x100
+#define F_TIMER_ACTIVE \
+	0x200 /* timer is running or has run and expired
 								 * (one shot) */
 #ifdef TIMER_DEBUG
-#define F_TIMER_DELETED	0x400
+#define F_TIMER_DELETED 0x400
 #endif
 
-struct timer_ln{ /* timer_link already used in tm */
-	struct timer_ln* next;
-	struct timer_ln* prev;
+struct timer_ln
+{ /* timer_link already used in tm */
+	struct timer_ln *next;
+	struct timer_ln *prev;
 	ticks_t expire;
 	ticks_t initial_timeout;
-	void* data;
-	timer_handler_f* f;
+	void *data;
+	timer_handler_f *f;
 	volatile unsigned int flags;
 #ifdef USE_SLOW_TIMER
 	volatile slow_idx_t slow_idx;
 #endif
 #ifdef TIMER_DEBUG
 	unsigned int expires_no; /* timer handler calls */
-	const char* add_file;
-	const char* add_func;
+	const char *add_file;
+	const char *add_func;
 	unsigned add_line;
 	unsigned add_calls;
-	const char* del_file;
-	const char* del_func;
+	const char *del_file;
+	const char *del_func;
 	unsigned del_line;
 	unsigned int del_calls;
 	unsigned int init; /* how many times was init/re-init */
 #endif
 };
-
 
 
 void timer_main(void); /* timer main loop, never exists */
@@ -137,40 +133,37 @@ void slow_timer_main(void);
 #endif
 
 
-struct timer_ln* timer_alloc(void);
-void timer_free(struct timer_ln* t);
+struct timer_ln *timer_alloc(void);
+void timer_free(struct timer_ln *t);
 
 #ifdef TIMER_DEBUG
 /* use for a deleted/expired timer that you want to add again */
-#define timer_reinit(tl) \
-	do{ \
-		(tl)->flags&=~(F_TIMER_ON_SLOW_LIST | F_TIMER_ACTIVE);\
-		(tl)->init++; \
-	}while(0)
+#define timer_reinit(tl)                                         \
+	do {                                                         \
+		(tl)->flags &= ~(F_TIMER_ON_SLOW_LIST | F_TIMER_ACTIVE); \
+		(tl)->init++;                                            \
+	} while(0)
 #else
 /* use for a deleted/expired timer that you want to add again */
-#define timer_reinit(tl) \
-	(tl)->flags&=~(F_TIMER_ON_SLOW_LIST | F_TIMER_ACTIVE)
+#define timer_reinit(tl) (tl)->flags &= ~(F_TIMER_ON_SLOW_LIST | F_TIMER_ACTIVE)
 #endif
 
-#define timer_init(tl, fun, param, flgs) \
-	do{ \
+#define timer_init(tl, fun, param, flgs)          \
+	do {                                          \
 		memset((tl), 0, sizeof(struct timer_ln)); \
-		(tl)->f=(fun); \
-		(tl)->data=(param); \
-		(tl)->flags=(flgs); \
-		timer_reinit(tl); \
-	}while(0)
+		(tl)->f = (fun);                          \
+		(tl)->data = (param);                     \
+		(tl)->flags = (flgs);                     \
+		timer_reinit(tl);                         \
+	} while(0)
 
 #ifdef TIMER_DEBUG
-int timer_add_safe(struct timer_ln *tl, ticks_t delta,
-					const char*, const char*, unsigned);
-int timer_del_safe(struct timer_ln *tl,
-					const char*, const char*, unsigned);
+int timer_add_safe(struct timer_ln *tl, ticks_t delta, const char *,
+		const char *, unsigned);
+int timer_del_safe(struct timer_ln *tl, const char *, const char *, unsigned);
 #define timer_add(tl, d) \
 	timer_add_safe((tl), (d), __FILE__, __FUNCTION__, __LINE__)
-#define timer_del(tl) \
-	timer_del_safe((tl), __FILE__, __FUNCTION__, __LINE__)
+#define timer_del(tl) timer_del_safe((tl), __FILE__, __FUNCTION__, __LINE__)
 #else
 int timer_add_safe(struct timer_ln *tl, ticks_t delta);
 int timer_del_safe(struct timer_ln *tl);
@@ -182,17 +175,18 @@ void timer_allow_del(void);
 
 /* old timer compatibility functions & structure */
 
-struct sr_timer{
+struct sr_timer
+{
 	struct timer_ln tl;
 	int id;
-	timer_function* timer_f;
-	void* t_param;
+	timer_function *timer_f;
+	void *t_param;
 };
 
 
 /*register a periodic timer;
  * ret: <0 on error*/
-int register_timer(timer_function f, void* param, unsigned int interval);
+int register_timer(timer_function f, void *param, unsigned int interval);
 ticks_t get_ticks(void);
 ticks_t get_ticks_raw(void);
 

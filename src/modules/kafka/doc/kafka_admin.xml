@@ -12,7 +12,7 @@
 <chapter>
 
   <title>&adminguide;</title>
-  
+
   <section>
 	<title>Overview</title>
 	<para>
@@ -183,7 +183,7 @@ modparam("kafka", "topic", "name=third_topic")
 		  <title><function>kafka_send</function> usage</title>
 		  <programlisting format="linespecific">
 ...
-# Send "test message" to topic "my_topic"			
+# Send "test message" to topic "my_topic"
 kafka_send("my_topic", "test message");
 ...
 		  </programlisting>
@@ -217,7 +217,7 @@ kafka_send("my_topic", "test message");
 		  <title><function>kafka_send_key</function> usage</title>
 		  <programlisting format="linespecific">
 ...
-# Send "test message" to topic "my_topic" with key "my_key"			
+# Send "test message" to topic "my_topic" with key "my_key"
 kafka_send_key("my_topic", "test message", "my_key");
 ...
 		  </programlisting>

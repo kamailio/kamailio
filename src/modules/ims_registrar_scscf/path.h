@@ -25,8 +25,8 @@
 /*!
  * \file
  * \brief SIP registrar module - helper functions for Path support
- * \ingroup registrar   
- */  
+ * \ingroup registrar
+ */
 
 #ifndef REG_PATH_H
 #define REG_PATH_H

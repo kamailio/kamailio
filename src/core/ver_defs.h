@@ -1,5 +1,5 @@
 /*
- * version and compile flags macros 
+ * version and compile flags macros
  *
  * Copyright (C) 2004 FhG Fokus
  *
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -28,7 +28,7 @@
 #ifndef version_h
 #define version_h
 
-#define SER_FULL_VERSION  NAME " " VERSION " (" ARCH "/" OS_QUOTED ")" 
+#define SER_FULL_VERSION NAME " " VERSION " (" ARCH "/" OS_QUOTED ")"
 
 #ifdef USE_TCP
 #define USE_TCP_STR "USE_TCP"
@@ -38,7 +38,7 @@
 
 #ifdef USE_TLS
 #define USE_TLS_STR ", USE_TLS"
-#else 
+#else
 #define USE_TLS_STR ""
 #endif
 
@@ -50,13 +50,13 @@
 
 #ifdef CORE_TLS
 #define CORE_TLS_STR ", CORE_TLS"
-#else 
+#else
 #define CORE_TLS_STR ""
 #endif
 
 #ifdef TLS_HOOKS
 #define TLS_HOOKS_STR ", TLS_HOOKS"
-#else 
+#else
 #define TLS_HOOKS_STR ""
 #endif
 
@@ -115,6 +115,12 @@
 #define PKG_MALLOC_STR ", PKG_MALLOC"
 #else
 #define PKG_MALLOC_STR ""
+#endif
+
+#ifdef DBG_SYS_MEMORY
+#define DBG_SYS_MEMORY_STR ", DBG_SYS_MEMORY"
+#else
+#define DBG_SYS_MEMORY_STR ""
 #endif
 
 #ifdef F_MALLOC
@@ -205,7 +211,7 @@
 #ifdef FAST_LOCK
 #ifdef BUSY_WAIT
 #define FAST_LOCK_STR ", FAST_LOCK-BUSY_WAIT"
-#elif defined (ADAPTIVE_WAIT)
+#elif defined(ADAPTIVE_WAIT)
 #define FAST_LOCK_STR ", FAST_LOCK-ADAPTIVE_WAIT"
 #else
 #define FAST_LOCK_STR ", FAST_LOCK"
@@ -282,7 +288,7 @@
 #define NO_SIG_DEBUG_STR ""
 #endif
 
-#ifdef HAVE_RESOLV_RES 
+#ifdef HAVE_RESOLV_RES
 #define HAVE_RESOLV_RES_STR ", HAVE_RESOLV_RES"
 #else
 #define HAVE_RESOLV_RES_STR ""
@@ -294,14 +300,14 @@
 #define MEM_JOIN_FREE_STR ""
 #endif
 
-#ifdef SYSLOG_CALLBACK_SUPPORT 
-#define SYSLOG_CALLBACK_SUPPORT_STR, ", SYSLOG_CALLBACK_SUPPORT"
+#ifdef SYSLOG_CALLBACK_SUPPORT
+#define SYSLOG_CALLBACK_SUPPORT_STR , ", SYSLOG_CALLBACK_SUPPORT"
 #else
 #define SYSLOG_CALLBACK_SUPPORT_STR ""
 #endif
 
 #ifdef MYSQL_FAKE_NULL
-#define MYSQL_FAKE_NULL_STR, ", MYSQL_FAKE_NULL"
+#define MYSQL_FAKE_NULL_STR , ", MYSQL_FAKE_NULL"
 #else
 #define MYSQL_FAKE_NULL_STR ""
 #endif
@@ -324,22 +330,20 @@
 #define KSR_PTHREAD_MUTEX_SHARED_STR ""
 #endif
 
-#define SER_COMPILE_FLAGS \
-	EXTRA_DEBUG_STR USE_TCP_STR USE_TLS_STR \
-	USE_SCTP_STR CORE_TLS_STR TLS_HOOKS_STR USE_RAW_SOCKS_STR \
-	DISABLE_NAGLE_STR USE_MCAST_STR NO_DEBUG_STR NO_LOG_STR \
-	NO_SIG_DEBUG_STR DNS_IP_HACK_STR \
-	SHM_MMAP_STR PKG_MALLOC_STR \
-	Q_MALLOC_STR F_MALLOC_STR DL_MALLOC_STR SF_MALLOC_STR LL_MALLOC_STR TLSF_MALLOC_STR \
-	DBG_SR_MEMORY_STR DBG_QM_MALLOC_STR DBG_F_MALLOC_STR \
-	DBG_SF_MALLOC_STR DBG_LL_MALLOC_STR DBG_TLSF_MALLOC_STR \
-	TIMER_DEBUG_STR USE_FUTEX_STR \
-	FAST_LOCK_STR NOSMP_STR USE_PTHREAD_MUTEX_STR USE_POSIX_SEM_STR \
-	USE_SYSV_SEM_STR USE_COMP_STR USE_DNS_CACHE_STR USE_DNS_FAILOVER_STR \
-	DNS_WATCHDOG_SUPPORT_STR USE_NAPTR_STR USE_DST_BLOCKLIST_STR \
-	HAVE_RESOLV_RES_STR SYSLOG_CALLBACK_SUPPORT_STR MYSQL_FAKE_NULL_STR \
-	USE_DST_BLOCKLIST_STATS_STR USE_DNS_CACHE_STATS_STR \
-	KSR_PTHREAD_MUTEX_SHARED_STR
+#define SER_COMPILE_FLAGS                                                                                                           \
+	EXTRA_DEBUG_STR USE_TCP_STR USE_TLS_STR USE_SCTP_STR CORE_TLS_STR TLS_HOOKS_STR USE_RAW_SOCKS_STR DISABLE_NAGLE_STR             \
+			USE_MCAST_STR NO_DEBUG_STR NO_LOG_STR NO_SIG_DEBUG_STR DNS_IP_HACK_STR SHM_MMAP_STR PKG_MALLOC_STR                      \
+					DBG_SYS_MEMORY_STR MEM_JOIN_FREE_STR Q_MALLOC_STR F_MALLOC_STR DL_MALLOC_STR                                    \
+							SF_MALLOC_STR LL_MALLOC_STR TLSF_MALLOC_STR DBG_SR_MEMORY_STR DBG_QM_MALLOC_STR                         \
+									DBG_F_MALLOC_STR DBG_SF_MALLOC_STR DBG_LL_MALLOC_STR DBG_TLSF_MALLOC_STR                        \
+											TIMER_DEBUG_STR USE_FUTEX_STR FAST_LOCK_STR NOSMP_STR USE_PTHREAD_MUTEX_STR             \
+													USE_POSIX_SEM_STR USE_SYSV_SEM_STR USE_COMP_STR                                 \
+															USE_DNS_CACHE_STR USE_DNS_FAILOVER_STR DNS_WATCHDOG_SUPPORT_STR         \
+																	USE_NAPTR_STR USE_DST_BLOCKLIST_STR                             \
+																			HAVE_RESOLV_RES_STR SYSLOG_CALLBACK_SUPPORT_STR         \
+																					MYSQL_FAKE_NULL_STR USE_DST_BLOCKLIST_STATS_STR \
+																							USE_DNS_CACHE_STATS_STR                 \
+																									KSR_PTHREAD_MUTEX_SHARED_STR
 
 
 #endif

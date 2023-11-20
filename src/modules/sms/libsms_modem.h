@@ -3,7 +3,7 @@ SMS Server Tools
 Copyright (C) 2000 Stefan Frings
 
 This program is free software unless you got it under another license directly
-from the author. You can redistribute it and/or modify it under the terms of 
+from the author. You can redistribute it and/or modify it under the terms of
 the GNU General Public License as published by the Free Software Foundation.
 Either version 2 of the License, or (at your option) any later version.
 
@@ -19,15 +19,15 @@ mailto:s.frings@mail.isis.de
 #include "sms_funcs.h"
 
 
-#define MODE_OLD      1
-#define MODE_DIGICOM  2
-#define MODE_ASCII    3
-#define MODE_NEW      4
+#define MODE_OLD 1
+#define MODE_DIGICOM 2
+#define MODE_ASCII 3
+#define MODE_NEW 4
 
-#define READ_SLEEP   10000
-#define READ_TIMEOUT  10
+#define READ_SLEEP 10000
+#define READ_TIMEOUT 10
 
-typedef int(*cds_report)( struct modem* , char* , int );
+typedef int (*cds_report)(struct modem *, char *, int);
 
 
 /* put_command
@@ -36,10 +36,10 @@ typedef int(*cds_report)( struct modem* , char* , int );
    The answer can be Ok, ERROR or expect.
    The command may be empty or NULL  */
 
-int put_command( struct modem *mdm, char* command, int clen, char* answer,
-											int max, int timeout,char* expect);
+int put_command(struct modem *mdm, char *command, int clen, char *answer,
+		int max, int timeout, char *expect);
 
-int setmodemparams( struct modem *mdm);
+int setmodemparams(struct modem *mdm);
 
 int checkmodem(struct modem *mdm);
 

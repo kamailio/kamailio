@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -35,7 +35,7 @@
  *
  * 2) We need a quick way of mapping usrloc indices to our integer indices.  For
  *    this reason a string indexed Hash Table was created, with each entry mapping
- *    to an integer user index. 
+ *    to an integer user index.
  *
  *    This hash table is used by the kamailioSIPContactTable (the hash table also
  *    maps a user to its contacts), as well as the kamailioSIPRegUserLookupTable.
@@ -48,19 +48,19 @@
  *    process.  Specifically:
  *
  *    - It can take a long time for the NetSNMP code base to populate a table with
- *      a large number of records. 
+ *      a large number of records.
  *
- *    - We rely on callbacks for updated user information. 
+ *    - We rely on callbacks for updated user information.
  *
  *    Clearly, using the SNMPStats module in this situation could lead to some
  *    big performance loses if we don't find another way to deal with this.  The
- *    solution was to use an interprocess communications buffer.  
+ *    solution was to use an interprocess communications buffer.
  *
  *    Instead of adding the record directly to the table, the callback functions
  *    now adds either an add/delete command to the interprocessBuffer.  When an
  *    snmp request is received by the SNMPStats sub-process, it will consume
  *    this interprocess buffer, adding and deleting users.  When it is finished,
- *    it can service the SNMP request.  
+ *    it can service the SNMP request.
  *
  *    This doesn't remove the NetSNMP inefficiency, but instead moves it to a
  *    non-critical path.  Such an approach allows SNMP support with almost no
@@ -156,9 +156,9 @@ void deleteRegUserRow(int userIndex)
  * Adds or updates a user:
  *
  *   - If a user with the name userName exists, its 'number of contacts' count
- *     will be incremented.  
+ *     will be incremented.
  *   - If the user doesn't exist, the user will be added to the table, and its
- *     number of contacts' count set to 1. 
+ *     number of contacts' count set to 1.
  */
 void updateUser(char *userName)
 {
@@ -203,14 +203,14 @@ void updateUser(char *userName)
 	/* Insert the new record of the mapping data structure into the hash
 	 * table */
 	/*insertHashRecord(hashTable,
-			createHashRecord(userIndex, userName), 
+			createHashRecord(userIndex, userName),
 			HASH_SIZE);*/
 
 	insertHashRecord(hashTable, newRecord, HASH_SIZE);
 }
 
 
-/* Creates a row and inserts it.  
+/* Creates a row and inserts it.
  *
  * Returns: The rows userIndex on success, and 0 otherwise. */
 int createRegUserRow(char *stringToRegister)
@@ -297,7 +297,7 @@ void initialize_table_kamailioSIPRegUserTable(void)
 
 	/* create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
-	if(table_info==NULL) {
+	if(table_info == NULL) {
 		snmp_log(LOG_ERR, "failed to allocate table_info\n");
 		return;
 	}

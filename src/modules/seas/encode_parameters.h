@@ -14,13 +14,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
-#include "../../core/parser/parse_param.h"  /*for param_t def*/
-int encode_parameters(unsigned char *where,void *pars,char *hdrstart,void *_body,char to);
+#include "../../core/parser/parse_param.h" /*for param_t def*/
+int encode_parameters(
+		unsigned char *where, void *pars, char *hdrstart, void *_body, char to);
 param_t *reverseParameters(param_t *p);
-int print_encoded_parameters(FILE* fd,unsigned char *payload,char *hdr,int paylen,char *prefix);
+int print_encoded_parameters(
+		FILE *fd, unsigned char *payload, char *hdr, int paylen, char *prefix);

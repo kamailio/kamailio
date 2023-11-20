@@ -3,23 +3,23 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +37,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #ifndef I_CSCF_SCSCF_LIST_H
@@ -56,38 +56,42 @@
 
 #include "../../core/timer.h"
 
-/** S-CSCF list element */ 
-typedef struct _scscf_entry {
-	str scscf_name;	/**< SIP URI of the S-CSCF */
+/** S-CSCF list element */
+typedef struct _scscf_entry
+{
+	str scscf_name; /**< SIP URI of the S-CSCF */
 	int score;		/**< score of the match */
 	time_t start_time;
-        
+
 	struct _scscf_entry *next; /**< next S-CSCF in the list */
 } scscf_entry;
 
 /** S-CSCF list */
-typedef struct _scscf_list {
-	str call_id;			/**< Call-Id from the request */
-	scscf_entry *list;		/**< S-CSCF list */
-	
-	struct _scscf_list *next;	/**< Next S-CSCF list in the hash slot */
-	struct _scscf_list *prev;	/**< Previous S-CSCF list in the hash slot */
+typedef struct _scscf_list
+{
+	str call_id;	   /**< Call-Id from the request */
+	scscf_entry *list; /**< S-CSCF list */
+
+	struct _scscf_list *next; /**< Next S-CSCF list in the hash slot */
+	struct _scscf_list *prev; /**< Previous S-CSCF list in the hash slot */
 } scscf_list;
 
 /** hash slot for S-CSCF lists */
-typedef struct {
-	scscf_list *head;					/**< first S-CSCF list in this slot */
-	scscf_list *tail;					/**< last S-CSCF list in this slot */
-	gen_lock_t *lock;				/**< slot lock 					*/	
+typedef struct
+{
+	scscf_list *head; /**< first S-CSCF list in this slot */
+	scscf_list *tail; /**< last S-CSCF list in this slot */
+	gen_lock_t *lock; /**< slot lock 					*/
 } i_hash_slot;
 
 
 /** S-CSCF with attached capabilities */
-typedef struct _scscf_capabilities {
-	int id_s_cscf;					/**< S-CSCF id in the DB */
-	str scscf_name;					/**< S-CSCF SIP URI */
-	int *capabilities;				/**< S-CSCF array of capabilities*/
-	int cnt;						/**< size of S-CSCF array of capabilities*/
+typedef struct _scscf_capabilities
+{
+	int id_s_cscf;	   /**< S-CSCF id in the DB */
+	str scscf_name;	   /**< S-CSCF SIP URI */
+	int *capabilities; /**< S-CSCF array of capabilities*/
+	int cnt;		   /**< size of S-CSCF array of capabilities*/
 } scscf_capabilities;
 
 
@@ -115,12 +119,13 @@ void free_scscf_list(scscf_list *sl);
  * @param orig - indicates originating session case
  * @returns list of S-CSCFs, terminated with a str={0,0}
  */
-scscf_entry* I_get_capab_ordered(str scscf_name,int *m,int mcnt,int *o,int ocnt, str *p, int pcnt,int orig);
+scscf_entry *I_get_capab_ordered(str scscf_name, int *m, int mcnt, int *o,
+		int ocnt, str *p, int pcnt, int orig);
 
 /**
  * Creates new scscf entry structure
  */
-scscf_entry* new_scscf_entry(str name, int score, int orig);
+scscf_entry *new_scscf_entry(str name, int score, int orig);
 
 /**
  * Returns the matching rank of a S-CSCF
@@ -133,22 +138,23 @@ scscf_entry* new_scscf_entry(str name, int score, int orig);
  * @returns - -1 if mandatory not satisfied, else count of matched optional capab
  */
 int I_get_capabilities();
-int I_get_capab_match(scscf_capabilities *c,int *m,int mcnt,int *o,int ocnt);
-int add_scscf_list(str call_id,scscf_entry *sl);
-scscf_list* new_scscf_list(str call_id,scscf_entry *sl);
-unsigned int get_call_id_hash(str callid,int hash_size);
+int I_get_capab_match(
+		scscf_capabilities *c, int *m, int mcnt, int *o, int ocnt);
+int add_scscf_list(str call_id, scscf_entry *sl);
+scscf_list *new_scscf_list(str call_id, scscf_entry *sl);
+unsigned int get_call_id_hash(str callid, int hash_size);
 void i_lock(unsigned int hash);
 void i_unlock(unsigned int hash);
-int I_scscf_select(struct sip_msg* msg, char* str1, char* str2);
+int I_scscf_select(struct sip_msg *msg, char *str1, char *str2);
 
 /**
  * Takes on S-CSCF name for the respective Call-ID from the respective name list.
  * Don't free the result.s - it is freed later!
  * @param call_id - the id of the call
- * @returns the shm_malloced S-CSCF name if found or empty string if list is empty or does not exists 
+ * @returns the shm_malloced S-CSCF name if found or empty string if list is empty or does not exists
  */
 str take_scscf_entry(str call_id);
-int I_scscf_drop(struct sip_msg* msg, char* str1, char* str2);
+int I_scscf_drop(struct sip_msg *msg, char *str1, char *str2);
 void del_scscf_list(str call_id);
 void print_scscf_list(int log_level);
 
@@ -160,7 +166,8 @@ void print_scscf_list(int log_level);
  * @returns the tmb.t_reply() result
  */
 int cscf_reply_transactional(struct sip_msg *msg, int code, char *text);
-int cscf_reply_transactional_async(struct cell* t, struct sip_msg *msg, int code, char *text);
+int cscf_reply_transactional_async(
+		struct cell *t, struct sip_msg *msg, int code, char *text);
 
 /**
  * Timeout routine called every x seconds and determines if scscf_list entries should be expired

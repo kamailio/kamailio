@@ -1,0 +1,38 @@
+{
+  /* For format details, see https://aka.ms/devcontainer.json. For config options, see the
+   * README at: https://github.com/devcontainers/templates/tree/main/src/debian
+   */
+  "name": "Debian",
+  "build": {
+    "cacheFrom": "ghcr.io/kamailio/kamailio-master-devcontainer",
+    "context": "../pkg/kamailio/deb",
+    "dockerfile": "Dockerfile"
+  },
+
+  // Features to add to the dev container. More info: https://containers.dev/features.
+  "features": {
+    "ghcr.io/wxw-matt/devcontainer-features/command_runner:0": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [
+    5060
+  ],
+
+  // Configure tool-specific properties.
+  "customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": [
+        "ms-vscode.cpptools-extension-pack",
+        "GitHub.vscode-github-actions",
+        "eamodio.gitlens",
+        "xaver.clang-format"
+      ]
+    }
+  },
+
+  // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+  "remoteUser": "root"
+}

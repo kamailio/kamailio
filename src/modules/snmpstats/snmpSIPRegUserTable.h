@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -32,7 +32,7 @@
  *
  * 2) We need a quick way of mapping usrloc indices to our integer indices.  For
  *    this reason a string indexed Hash Table was created, with each entry mapping
- *    to an integer user index. 
+ *    to an integer user index.
  *
  *    This hash table is used by the kamailioSIPContactTable (the hash table also
  *    maps a user to its contacts), as well as the kamailioSIPRegUserLookupTable.
@@ -45,19 +45,19 @@
  *    process.  Specifically:
  *
  *    - It can take a long time for the NetSNMP code base to populate a table with
- *      a large number of records. 
+ *      a large number of records.
  *
- *    - We rely on callbacks for updated user information. 
+ *    - We rely on callbacks for updated user information.
  *
  *    Clearly, using the SNMPStats module in this situation could lead to some
  *    big performance loses if we don't find another way to deal with this.  The
- *    solution was to use an interprocess communications buffer.  
+ *    solution was to use an interprocess communications buffer.
  *
  *    Instead of adding the record directly to the table, the callback functions
  *    now adds either an add/delete command to the interprocessBuffer.  When an
  *    snmp request is received by the SNMPStats sub-process, it will consume
  *    this interprocess buffer, adding and deleting users.  When it is finished,
- *    it can service the SNMP request.  
+ *    it can service the SNMP request.
  *
  *    This doesn't remove the NetSNMP inefficiency, but instead moves it to a
  *    non-critical path.  Such an approach allows SNMP support with almost no
@@ -68,7 +68,8 @@
 #define KAMAILIOSIPREGUSERTABLE_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include <net-snmp/net-snmp-config.h>
@@ -77,89 +78,89 @@ extern "C" {
 
 #include "../../core/config.h"
 
-/* Defines what each SNMP Row is made of. */
-typedef struct kamailioSIPRegUserTable_context_s
-{
-	netsnmp_index index;
+	/* Defines what each SNMP Row is made of. */
+	typedef struct kamailioSIPRegUserTable_context_s
+	{
+		netsnmp_index index;
 
-	unsigned long kamailioSIPUserIndex;
+		unsigned long kamailioSIPUserIndex;
 
-	/* There are potentially a lot of these of varying sizes, so lets
+		/* There are potentially a lot of these of varying sizes, so lets
 	 * allocate only the amount of memory we need when the row is
 	 * created. */
-	unsigned char *kamailioSIPUserUri;
+		unsigned char *kamailioSIPUserUri;
 
-	long kamailioSIPUserUri_len;
+		long kamailioSIPUserUri_len;
 
-	unsigned long kamailioSIPUserAuthenticationFailures;
+		unsigned long kamailioSIPUserAuthenticationFailures;
 
-	void *data;
+		void *data;
 
-} kamailioSIPRegUserTable_context;
+	} kamailioSIPRegUserTable_context;
 
-/*******************************/
-/*    Customized Prototypes    */
-/*******************************/
+	/*******************************/
+	/*    Customized Prototypes    */
+	/*******************************/
 
-/* If the usrloc module is loaded, this function will grab hooks into its
+	/* If the usrloc module is loaded, this function will grab hooks into its
  * callback registration function, and add handleContactCallbacks() as the
- * callback for UL_CONTACT_INSERT and UL_CONTACT_EXPIRE. 
+ * callback for UL_CONTACT_INSERT and UL_CONTACT_EXPIRE.
  *
  * Returns 1 on success, and zero otherwise */
-int registerForUSRLOCCallbacks(void);
+	int registerForUSRLOCCallbacks(void);
 
-/*
- * Creates a row and inserts it.  
+	/*
+ * Creates a row and inserts it.
  *
- * Returns: The rows userIndex on success, and 0 otherwise. 
+ * Returns: The rows userIndex on success, and 0 otherwise.
  */
-int createRegUserRow(char *stringToRegister);
+	int createRegUserRow(char *stringToRegister);
 
 
-/* Removes an SNMP row indexed by userIndex, and frees the string and index it
+	/* Removes an SNMP row indexed by userIndex, and frees the string and index it
  * pointed to. */
-void deleteRegUserRow(int userIndex);
+	void deleteRegUserRow(int userIndex);
 
-/* Creates an 'aor to userindex' record from stringName and userIndex, and pushes
+	/* Creates an 'aor to userindex' record from stringName and userIndex, and pushes
  * them onto the hash table. */
-void pushUserIntoHashTable(int userIndex, char *stringName);
+	void pushUserIntoHashTable(int userIndex, char *stringName);
 
-/*
+	/*
  * Adds or updates a user:
  *
  *   - If a user with the name userName exists, its 'number of contacts' count
- *     will be incremented.  
+ *     will be incremented.
  *   - If the user doesn't exist, the user will be added to the table, and its
- *     number of contacts' count set to 1. 
+ *     number of contacts' count set to 1.
  */
-void updateUser(char *userName);
+	void updateUser(char *userName);
 
-/*******************************/
-/* Normal Function Prototypes  */
-/*******************************/
+	/*******************************/
+	/* Normal Function Prototypes  */
+	/*******************************/
 
-/* Initializes the kamailioSIPRegUserTable module.  */
-void init_kamailioSIPRegUserTable(void);
+	/* Initializes the kamailioSIPRegUserTable module.  */
+	void init_kamailioSIPRegUserTable(void);
 
-/*
+	/*
  * Initialize the kamailioSIPRegUserTable table by defining its contents and how
  * it's structured
  */
-void initialize_table_kamailioSIPRegUserTable(void);
+	void initialize_table_kamailioSIPRegUserTable(void);
 
-const kamailioSIPRegUserTable_context *kamailioSIPRegUserTable_get_by_idx(
-		netsnmp_index *);
+	const kamailioSIPRegUserTable_context *kamailioSIPRegUserTable_get_by_idx(
+			netsnmp_index *);
 
-const kamailioSIPRegUserTable_context *kamailioSIPRegUserTable_get_by_idx_rs(
-		netsnmp_index *, int row_status);
+	const kamailioSIPRegUserTable_context *
+	kamailioSIPRegUserTable_get_by_idx_rs(netsnmp_index *, int row_status);
 
-/* Handles SNMP GET requests. */
-int kamailioSIPRegUserTable_get_value(
-		netsnmp_request_info *, netsnmp_index *, netsnmp_table_request_info *);
+	/* Handles SNMP GET requests. */
+	int kamailioSIPRegUserTable_get_value(netsnmp_request_info *,
+			netsnmp_index *, netsnmp_table_request_info *);
 
-/* OID Declarations. */
-extern oid kamailioSIPRegUserTable_oid[];
-extern size_t kamailioSIPRegUserTable_oid_len;
+	/* OID Declarations. */
+	extern oid kamailioSIPRegUserTable_oid[];
+	extern size_t kamailioSIPRegUserTable_oid_len;
 
 #define kamailioSIPRegUserTable_TABLE_OID KAMAILIO_OID, 3, 1, 2, 1, 5, 6
 

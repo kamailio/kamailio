@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -67,13 +67,13 @@ int calculateHashSlot(char *theString, int hashTableSize)
 
 /*! Searches the hash table specified as theTable, of size 'size', for a record
  * indexed with 'aor'.  If a match is found, then an aorToIndextStruct_t
- * structure is returned. 
+ * structure is returned.
  *
- * This function is called to discover the map between Kamailio's "aor" 
+ * This function is called to discover the map between Kamailio's "aor"
  * (Address of Records) indexing scheme, and the SNMPStats modules integer
- * indexing scheme for its contact/user data. 
+ * indexing scheme for its contact/user data.
  *
- * Returns: the aorToIndexStruct_t mapping structure if a match was found, 
+ * Returns: the aorToIndexStruct_t mapping structure if a match was found,
  *          or NULL otherwise.
  */
 aorToIndexStruct_t *findHashRecord(hashSlot_t *theTable, char *aor, int size)
@@ -150,7 +150,7 @@ void insertHashRecord(
 
 /*!
  * This function will search the provided hash table for an entry indexed by
- * 'aor'.  If an entry is found then: 
+ * 'aor'.  If an entry is found then:
  *
  *   - Its numContacts counter will be decremented.
  *   - If its numContacts counter reaches zero, then the entry will be removed
@@ -199,7 +199,7 @@ void deleteUser(hashSlot_t *theTable, char *aor, int hashTableSize)
 			}
 
 			if(currentRecord->next == NULL) {
-				/* Edge Case: The last element has been targetted for
+				/* Edge Case: The last element has been targeted for
 					 * deletion.  So move the pointer to the node just before
 					 * this one.  */
 				theTable[hashIndex].last = currentRecord->prev;
@@ -223,11 +223,11 @@ void deleteUser(hashSlot_t *theTable, char *aor, int hashTableSize)
 
 /*! Returns an aorToIndexStruct_t, holding the given 'userIndex' and 'aor'.  The
  * structure is used to map between the "aor" (Kamailio's way of indexing
- * users/contacts), and the SNMPStats user and contact integer indexes.  
+ * users/contacts), and the SNMPStats user and contact integer indexes.
  *
  * NOTE: that this record does not make a copy of aor, but instead points
  * directly to the parameter.  Therefore make sure that aor is not on the stack,
- * and is not going to disappear before this record is deleted. 
+ * and is not going to disappear before this record is deleted.
  */
 aorToIndexStruct_t *createHashRecord(int userIndex, char *aor)
 {

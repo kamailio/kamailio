@@ -100,7 +100,7 @@ Chapter 1. Admin Guide
 2. How it works
 
    The sst module uses the “dialog module” to be notified of any new or
-   updated dialogs. It will then look for and extract the session-expire:
+   updated dialogs. It will then look for and extract the Session-Expires:
    header value (if there is one) and override the dialog expire timer
    value for the current context dialog by setting the avp value.
 
@@ -253,13 +253,13 @@ request_route {
 
 4.4. reject_to_small (integer)
 
-   In the initial INVITE if the UAC has requested a Session-Expire: and
-   it's value is smaller than our local policies Min-SE (see min_se
-   above), then the proxy has the right to reject the call by replying to
-   the message with a “422 Session Timer Too Small” and state our local
+   In the initial INVITE if the UAC has requested a Session-Expires: and
+   its value is smaller than our local policies Min-SE (see min_se above),
+   then the proxy has the right to reject the call by replying to the
+   message with a “422 Session Timer Too Small” and state our local
    Min-SE: value. The INVITE is NOT forwarded on through the proxy.
 
-   If this flag is true, the SST module to reject the INVITE with a 422
+   If this flag is true, the SST module will reject the INVITE with a 422
    response. If false, the INVITE is forwarded through the PROXY without
    any modifications.
 

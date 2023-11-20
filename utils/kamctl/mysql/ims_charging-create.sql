@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('ro_session','6');
+INSERT INTO version (table_name, table_version) values ('ro_session','2');
 CREATE TABLE `ro_session` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `hash_entry` int(10) unsigned NOT NULL,
@@ -18,6 +18,12 @@ CREATE TABLE `ro_session` (
   `outgoing_trunk_id` varchar(20) DEFAULT NULL,
   `rating_group` int(11) DEFAULT NULL,
   `service_identifier` int(11) DEFAULT NULL,
+  `auth_app_id` int(11) NOT NULL,
+  `auth_session_type` int(11) NOT NULL,
+  `pani` varchar(100) DEFAULT NULL,
+  `mac` varchar(17) DEFAULT NULL,
+  `app_provided_party` varchar(100) DEFAULT NULL,
+  `is_final_allocation` int(1) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   KEY `hash_idx` (`hash_entry`,`hash_id`)
 );

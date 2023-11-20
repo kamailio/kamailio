@@ -29,7 +29,7 @@
 #define MEMCACHED_H
 
 /*! server string */
-extern char* mcd_srv_str;
+extern char *mcd_srv_str;
 /*! cache expire time in seconds */
 extern unsigned int mcd_expire;
 /*! cache storage mode, set or add */
@@ -41,7 +41,7 @@ extern unsigned int mcd_memory;
 /*! stringify all values retrieved from memcached */
 extern unsigned int mcd_stringify;
 /*! memcached handle */
-extern struct memcached_st* memcached_h;
+extern struct memcached_st *memcached_h;
 /*! memcached server list */
 extern struct memcached_server_st *servers;
 

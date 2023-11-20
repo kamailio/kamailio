@@ -86,9 +86,9 @@ modparam("db_postgres", "retries", 3)
 		<title><varname>timeout</varname> (integer)</title>
 		<para>
 			Setting this variable to any value larger than zero (which is the
-			default value) enables mainly query timeout. For backward compatibility 
-			it also enables connection timeout if connect_timeout param is not set 
-			using the con_param below. If a connection attempt or a query takes longer 
+			default value) enables mainly query timeout. For backward compatibility
+			it also enables connection timeout if connect_timeout param is not set
+			using the con_param below. If a connection attempt or a query takes longer
 			than this many seconds, the operation will be aborted and an error will be
 			returned.
 		</para>
@@ -174,7 +174,7 @@ modparam("db_postgres", "bytea_output_escape", 0)
 	<section>
 		<title><varname>con_param</varname> (str)</title>
 		<para>
-			Specifies the connection string parameters. 
+			Specifies the connection string parameters.
 			Parameter definition must be in the format param1=value1;param2=value2.
 			Many parameters can be set.
 		</para>

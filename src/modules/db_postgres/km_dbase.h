@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -99,7 +99,7 @@ int db_postgres_raw_query(const db1_con_t *_h, const str *_s, db1_res_t **_r);
 /*
  * Raw SQL query via async framework
  */
-int db_postgres_raw_query_async(const db1_con_t* _h, const str* _s);
+int db_postgres_raw_query_async(const db1_con_t *_h, const str *_s);
 
 /*
  * Insert a row into table
@@ -110,7 +110,8 @@ int db_postgres_insert(const db1_con_t *_h, const db_key_t *_k,
 /*
  *  * Insert a row into table via async framework
  */
-int db_postgres_insert_async(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n);
+int db_postgres_insert_async(const db1_con_t *_h, const db_key_t *_k,
+		const db_val_t *_v, const int _n);
 /*
  * Insert and update ON CONFLICT
  */

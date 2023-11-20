@@ -198,18 +198,18 @@ static inline int sip_match(struct naptr_rdata *naptr, str *service)
 			   && ((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U'))
 			   && (naptr->services_len == 7)
 			   && ((strncasecmp(naptr->services, "e2u+sip", 7) == 0)
-						  || (strncasecmp(naptr->services, "sip+e2u", 7) == 0));
+					   || (strncasecmp(naptr->services, "sip+e2u", 7) == 0));
 	} else if(service->s[0] != '+') {
 		return (naptr->flags_len == 1)
 			   && ((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U'))
 			   && (naptr->services_len == service->len + 8)
 			   && (strncasecmp(naptr->services, "e2u+", 4) == 0)
 			   && (strncasecmp(naptr->services + 4, service->s, service->len)
-						  == 0)
+					   == 0)
 			   && (strncasecmp(naptr->services + 4 + service->len, ":sip", 4)
-						  == 0);
+					   == 0);
 	} else { /* handle compound NAPTRs and multiple services */
-		str bakservice, baknaptr; /* we bakup the str */
+		str bakservice, baknaptr; /* we backup the str */
 		int naptrlen, len;		  /* length of the extracted service */
 
 		/* RFC 3761, NAPTR service field must start with E2U+ */
@@ -396,7 +396,7 @@ int is_from_user_enum_helper(sip_msg_t *_msg, str *suffix, str *service)
 			zp = 0;
 			proto = PROTO_NONE;
 			he = sip_resolvehost(&luri.host, &zp, &proto);
-			if(he==NULL) {
+			if(he == NULL) {
 				LM_ERR("failed to resolve the host\n");
 				free_rdata_list(head); /*clean up*/
 				return -8;
@@ -440,7 +440,7 @@ int is_from_user_enum_1(struct sip_msg *_msg, char *_suffix, char *_str2)
 {
 	str vsuffix;
 
-	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_suffix, &vsuffix) < 0) {
 		LM_ERR("cannot get suffix parameter value\n");
 		return -1;
 	}
@@ -465,11 +465,11 @@ int is_from_user_enum_2(struct sip_msg *_msg, char *_suffix, char *_service)
 	str vsuffix;
 	str vservice;
 
-	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_suffix, &vsuffix) < 0) {
 		LM_ERR("cannot get suffix parameter value\n");
 		return -1;
 	}
-	if(fixup_get_svalue(_msg, (gparam_t*)_service, &vservice)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_service, &vservice) < 0) {
 		LM_ERR("cannot get service parameter value\n");
 		return -1;
 	}
@@ -480,13 +480,13 @@ int is_from_user_enum_2(struct sip_msg *_msg, char *_suffix, char *_service)
 /**
  *
  */
-int ki_is_from_user_enum_suffix_service(sip_msg_t *msg, str *vsuffix,
-		str *vservice)
+int ki_is_from_user_enum_suffix_service(
+		sip_msg_t *msg, str *vsuffix, str *vservice)
 {
 	return is_from_user_enum_helper(msg, vsuffix, vservice);
 }
 
-/* 
+/*
  * Add parameter to URI.
  */
 int add_uri_param(str *uri, str *param, str *new_uri)
@@ -567,7 +567,7 @@ int add_uri_param(str *uri, str *param, str *new_uri)
 
 /*
  * Tests if one result record is "greater" that the other.  Non-NAPTR records
- * greater that NAPTR record.  An invalid NAPTR record is greater than a 
+ * greater that NAPTR record.  An invalid NAPTR record is greater than a
  * valid one.  Valid NAPTR records are compared based on their
  * (order,preference).
  */
@@ -636,7 +636,7 @@ static inline void naptr_sort(struct rdata **head)
 
 
 /*
- * Makes enum query on name.  On success, rewrites user part and 
+ * Makes enum query on name.  On success, rewrites user part and
  * replaces Request-URI.
  */
 int do_query(struct sip_msg *_msg, char *user, char *name, str *service)
@@ -770,7 +770,7 @@ int enum_query_1(struct sip_msg *_msg, char *_suffix, char *_str2)
 {
 	str vsuffix;
 
-	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_suffix, &vsuffix) < 0) {
 		LM_ERR("unable to get suffix parameter\n");
 		return -1;
 	}
@@ -793,13 +793,13 @@ int enum_query_2(struct sip_msg *_msg, char *_suffix, char *_service)
 {
 	str vsuffix, vservice;
 
-	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_suffix, &vsuffix) < 0) {
 		LM_ERR("unable to get suffix parameter\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(_msg, (gparam_t*)_service, &vservice)<0
-			|| vservice.len<=0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_service, &vservice) < 0
+			|| vservice.len <= 0) {
 		LM_ERR("unable to get service parameter\n");
 		return -1;
 	}
@@ -1041,7 +1041,7 @@ int i_enum_query_1(struct sip_msg *_msg, char *_suffix, char *_service)
 {
 	str vsuffix;
 
-	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_suffix, &vsuffix) < 0) {
 		LM_ERR("unable to get suffix parameter\n");
 		return -1;
 	}
@@ -1061,13 +1061,13 @@ int i_enum_query_2(struct sip_msg *_msg, char *_suffix, char *_service)
 {
 	str vsuffix, vservice;
 
-	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_suffix, &vsuffix) < 0) {
 		LM_ERR("unable to get suffix parameter\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(_msg, (gparam_t*)_service, &vservice)<0
-			|| vservice.len<=0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_service, &vservice) < 0
+			|| vservice.len <= 0) {
 		LM_ERR("unable to get service parameter\n");
 		return -1;
 	}
@@ -1227,7 +1227,7 @@ int enum_pv_query_1(sip_msg_t *_msg, char *_sp, char *_p2)
 {
 	str ve164;
 
-	if(fixup_get_svalue(_msg, (gparam_t*)_sp, &ve164)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_sp, &ve164) < 0) {
 		LM_ERR("cannot get e164 parameter value\n");
 		return -1;
 	}
@@ -1251,11 +1251,11 @@ int enum_pv_query_2(sip_msg_t *_msg, char *_sp, char *_suffix)
 	str ve164;
 	str vsuffix;
 
-	if(fixup_get_svalue(_msg, (gparam_t*)_sp, &ve164)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_sp, &ve164) < 0) {
 		LM_ERR("cannot get e164 parameter value\n");
 		return -1;
 	}
-	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_suffix, &vsuffix) < 0) {
 		LM_ERR("cannot get suffix parameter value\n");
 		return -1;
 	}
@@ -1281,15 +1281,15 @@ int enum_pv_query_3(sip_msg_t *_msg, char *_sp, char *_suffix, char *_service)
 	str vsuffix;
 	str vservice;
 
-	if(fixup_get_svalue(_msg, (gparam_t*)_sp, &ve164)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_sp, &ve164) < 0) {
 		LM_ERR("cannot get e164 parameter value\n");
 		return -1;
 	}
-	if(fixup_get_svalue(_msg, (gparam_t*)_suffix, &vsuffix)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_suffix, &vsuffix) < 0) {
 		LM_ERR("cannot get suffix parameter value\n");
 		return -1;
 	}
-	if(fixup_get_svalue(_msg, (gparam_t*)_service, &vservice)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)_service, &vservice) < 0) {
 		LM_ERR("cannot get service parameter value\n");
 		return -1;
 	}
@@ -1300,8 +1300,8 @@ int enum_pv_query_3(sip_msg_t *_msg, char *_sp, char *_suffix, char *_service)
 /**
  *
  */
-int ki_enum_pv_query_suffix_service(sip_msg_t *msg, str *ve164, str *vsuffix,
-		str *vservice)
+int ki_enum_pv_query_suffix_service(
+		sip_msg_t *msg, str *ve164, str *vsuffix, str *vservice)
 {
 	return enum_pv_query_helper(msg, ve164, vsuffix, vservice);
 }

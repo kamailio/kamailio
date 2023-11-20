@@ -17,16 +17,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
  * \file
  * \brief SIP registrar module - export contacts as PV
- * \ingroup registrar   
- */  
+ * \ingroup registrar
+ */
 
 
 #ifndef _REGPV_H_
@@ -34,15 +34,13 @@
 
 #include "../../core/pvar.h"
 
-int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
-int pv_set_ulc(struct sip_msg* msg, pv_param_t *param,
-		int op, pv_value_t *val);
+int pv_get_ulc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_set_ulc(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
 int pv_parse_ulc_name(pv_spec_p sp, str *in);
 
-int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
-		char* profile);
-int pv_free_contacts(struct sip_msg* msg, char* profile, char *s2);
+int pv_fetch_contacts(
+		struct sip_msg *msg, char *table, char *uri, char *profile);
+int pv_free_contacts(struct sip_msg *msg, char *profile, char *s2);
 
 void regpv_free_profiles(void);
 

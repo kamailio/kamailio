@@ -56,7 +56,8 @@ static str pu_500_rpl = str_init("Server Internal Error");
 static str pu_489_rpl = str_init("Bad Event");
 static str pu_423_rpl = str_init("Interval Too Brief");
 
-static int get_ok_reply_code() {
+static int get_ok_reply_code()
+{
 	return pres_subs_respond_200 ? 200 : 202;
 }
 
@@ -494,7 +495,8 @@ void delete_subs(
 		}
 	}
 
-	if(pres_subs_dbmode != NO_DB && delete_db_subs(to_tag, from_tag, callid) < 0)
+	if(pres_subs_dbmode != NO_DB
+			&& delete_db_subs(to_tag, from_tag, callid) < 0)
 		LM_ERR("Failed to delete subscription from database\n");
 }
 
@@ -509,7 +511,7 @@ int update_subscription_notifier(
 	/* Set the notifier/update fields for the subscription */
 	subs->updated = core_case_hash(&subs->callid, &subs->from_tag, 0)
 					% (pres_waitn_time * pres_notifier_poll_rate
-							  * pres_notifier_processes);
+							* pres_notifier_processes);
 	if(subs->event->type & WINFO_TYPE)
 		subs->updated_winfo = UPDATED_TYPE;
 	else if(subs->event->wipeer) {
@@ -545,7 +547,8 @@ int update_subscription_notifier(
 	}
 
 	reply_code = subs->event->type & PUBL_TYPE ? get_ok_reply_code() : 200;
-	if(send_2XX_reply(msg, reply_code, subs->expires, &subs->local_contact) < 0) {
+	if(send_2XX_reply(msg, reply_code, subs->expires, &subs->local_contact)
+			< 0) {
 		LM_ERR("sending %d response\n", reply_code);
 		goto error;
 	}
@@ -578,7 +581,8 @@ int update_subscription(
 
 			if(subs->event->type & PUBL_TYPE) {
 				reply_code = get_ok_reply_code();
-				if(send_2XX_reply(msg, reply_code, subs->expires, &subs->local_contact)
+				if(send_2XX_reply(
+						   msg, reply_code, subs->expires, &subs->local_contact)
 						< 0) {
 					LM_ERR("sending %d OK\n", reply_code);
 					goto error;
@@ -631,8 +635,9 @@ int update_subscription(
 		if(subs->expires != 0) {
 			if(pres_subs_dbmode != DB_ONLY) {
 				LM_DBG("inserting in shtable\n");
-				subs->db_flag = (pres_subs_dbmode == WRITE_THROUGH) ? WTHROUGHDB_FLAG
-															   : INSERTDB_FLAG;
+				subs->db_flag = (pres_subs_dbmode == WRITE_THROUGH)
+										? WTHROUGHDB_FLAG
+										: INSERTDB_FLAG;
 				hash_code = core_case_hash(
 						&subs->pres_uri, &subs->event->name, shtable_size);
 				subs->version = 0;
@@ -642,7 +647,8 @@ int update_subscription(
 				}
 			}
 
-			if(pres_subs_dbmode == DB_ONLY || pres_subs_dbmode == WRITE_THROUGH) {
+			if(pres_subs_dbmode == DB_ONLY
+					|| pres_subs_dbmode == WRITE_THROUGH) {
 				subs->version = 1;
 				if(insert_subs_db(subs, REMOTE_TYPE) < 0) {
 					LM_ERR("failed to insert new record in database\n");
@@ -662,7 +668,8 @@ int update_subscription(
 
 	if(subs->event->type & PUBL_TYPE) {
 		reply_code = get_ok_reply_code();
-		if(send_2XX_reply(msg, reply_code, subs->expires, &subs->local_contact) < 0) {
+		if(send_2XX_reply(msg, reply_code, subs->expires, &subs->local_contact)
+				< 0) {
 			LM_ERR("sending %d OK\n", reply_code);
 			goto error;
 		}
@@ -975,7 +982,8 @@ int pv_get_subscription(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	} else if(param->pvn.u.isname.name.n == 23) {
 		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->user_agent);
 	} else if(param->pvn.u.isname.name.n == 24) {
-		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->sockinfo_str);
+		return pv_get_strval(
+				msg, param, res, &_pres_subs_last_sub->sockinfo_str);
 	}
 
 	LM_ERR("unknown specifier\n");
@@ -1047,7 +1055,7 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 	str reply_str;
 	int sent_reply = 0;
 
-	if(_pres_subs_mode==1) {
+	if(_pres_subs_mode == 1) {
 		if(_pres_subs_last_sub) {
 			pkg_free(_pres_subs_last_sub);
 			_pres_subs_last_sub = NULL;
@@ -1201,7 +1209,7 @@ int handle_subscribe(struct sip_msg *msg, str watcher_user, str watcher_domain)
 		}
 	}
 
-	if(_pres_subs_mode==1) {
+	if(_pres_subs_mode == 1) {
 		_pres_subs_last_sub = mem_copy_subs(&subs, PKG_MEM_TYPE);
 	}
 
@@ -1352,7 +1360,8 @@ int extract_sdialog_info_ex(subs_t *subs, struct sip_msg *msg, uint32_t miexp,
 		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n", pto->uri.len,
 				pto->uri.s);
 	} else {
-		parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1, &tob);
+		parse_to(
+				msg->to->body.s, msg->to->body.s + msg->to->body.len + 1, &tob);
 		if(tob.uri.len <= 0) {
 			LM_DBG("'To' header NOT parsed\n");
 			goto error;
@@ -1522,8 +1531,9 @@ int extract_sdialog_info(subs_t *subs, struct sip_msg *msg, int mexp,
 {
 	int reply_code = 500;
 	str reply_str = pu_500_rpl;
-	return extract_sdialog_info_ex(subs, msg, pres_min_expires, mexp, to_tag_gen,
-			scontact, watcher_user, watcher_domain, &reply_code, &reply_str);
+	return extract_sdialog_info_ex(subs, msg, pres_min_expires, mexp,
+			to_tag_gen, scontact, watcher_user, watcher_domain, &reply_code,
+			&reply_str);
 }
 
 int get_stored_info(
@@ -1847,7 +1857,8 @@ void update_db_subs_timer_notifier(void)
 	query_cols[n_query_cols] = &str_expires_col;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val = (int)time(NULL) - pres_expires_offset;
+	query_vals[n_query_cols].val.int_val =
+			(int)time(NULL) - pres_expires_offset;
 	query_ops[n_query_cols] = OP_LT;
 	n_query_cols++;
 
@@ -2646,7 +2657,7 @@ int restore_db_subs(void)
 			s.sockinfo_str.s = (char *)row_vals[sockinfo_col].val.string_val;
 			s.sockinfo_str.len = strlen(s.sockinfo_str.s);
 			s.db_flag = (pres_subs_dbmode == WRITE_THROUGH) ? WTHROUGHDB_FLAG
-													   : NO_UPDATEDB_FLAG;
+															: NO_UPDATEDB_FLAG;
 			hash_code =
 					core_case_hash(&s.pres_uri, &s.event->name, shtable_size);
 			if(insert_shtable(subs_htable, hash_code, &s) < 0) {
@@ -2764,7 +2775,7 @@ error:
 
 static int ps_get_subs_auth(subs_t *subs, int *found)
 {
-	if(pa_db==NULL) {
+	if(pa_db == NULL) {
 		/* expecting the cache only mode -- watchers considered active */
 		subs->reason.s = NULL;
 		subs->status = ACTIVE_STATUS;
@@ -2859,7 +2870,7 @@ error:
 
 static int ps_insert_subs_auth(subs_t *subs)
 {
-	if(pa_db==NULL) {
+	if(pa_db == NULL) {
 		/* expecting the cache only mode
 		 * - no insert, watchers considered active */
 		return 0;

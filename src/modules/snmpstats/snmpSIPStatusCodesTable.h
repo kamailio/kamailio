@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -26,7 +26,7 @@
  * The file implements the kamailioSIPStatusCodesTable.  For a full description
  * of the table, please see the KAMAILIO-SIP-COMMON-MIB.
  *
- * This file consists of many more functions than the other header files.  
+ * This file consists of many more functions than the other header files.
  * This is because this table is writable, bringing a lot of SNMP overhead.
  *
  * Most of the contents are auto-generated (aside from white space and comment
@@ -34,10 +34,10 @@
  *
  * 1) kamailioSIPStatusCodesTable_create_row()
  *
- * 2) kamailioSIPStatusCodesTable_extract_index() 
+ * 2) kamailioSIPStatusCodesTable_extract_index()
  *
  * 3) kamailioSIPStatusCodesTable_can_[activate|deactivate|delete]()
- *   
+ *
  * 4) kamailioSIPStatusCodesTable_set_reserve1()
  *
  * 5) kamailioSIPStatusCodesTable_get_value()
@@ -51,7 +51,8 @@
 #define KAMAILIOSIPSTATUSCODESTABLE_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 
@@ -61,95 +62,95 @@ extern "C" {
 
 #include "../../core/config.h"
 
-/* 
+	/*
  * The structure has been mostly auto-generated, but its semantics have been
- * changed.  
+ * changed.
  *
  * Specifically, the kamailioSIPStatusCodeIns and kamailioSIPStatusCodeOuts
  * variables don't store the total number of messages sent or received from the
  * system at the time of a SNMP GET request.  Instead, they store the number of
  * messages in or out (with respect to the message code specified by
- * kamailioSIPStatusCodeValue) at the time of the rows *creation*. 
+ * kamailioSIPStatusCodeValue) at the time of the rows *creation*.
  *
  * When the get request is received, the statistics framework will be queried,
  * and these values subtracted from that query.  This effectively gives us how
  * many of the given message codes have occurred since the creation of the row,
  * insead of since Kamailio first loaded up.
  */
-typedef struct kamailioSIPStatusCodesTable_context_s
-{
+	typedef struct kamailioSIPStatusCodesTable_context_s
+	{
 
-	/* The container interface requires that this be first. */
-	netsnmp_index index;
+		/* The container interface requires that this be first. */
+		netsnmp_index index;
 
-	/* The first index. */
-	unsigned long kamailioSIPStatusCodeMethod;
+		/* The first index. */
+		unsigned long kamailioSIPStatusCodeMethod;
 
-	/* The second index, specifying which status code to monitor */
-	unsigned long kamailioSIPStatusCodeValue;
+		/* The second index, specifying which status code to monitor */
+		unsigned long kamailioSIPStatusCodeValue;
 
-	/* Stores the current status code value - startingInStatusCodeValue 
+		/* Stores the current status code value - startingInStatusCodeValue
 	 * (at the time this row was created)  */
-	unsigned long kamailioSIPStatusCodeIns;
+		unsigned long kamailioSIPStatusCodeIns;
 
-	/* Stores the current status code value - startingOutStatusCodeValue 
+		/* Stores the current status code value - startingOutStatusCodeValue
 	 * (at the time this row was created)  */
-	unsigned long kamailioSIPStatusCodeOuts;
+		unsigned long kamailioSIPStatusCodeOuts;
 
-	/* Initialized to zero at startup to signify uninitialized.  This can
-	 * only be assigned createAndGo(4) at this point.  It can also be 
+		/* Initialized to zero at startup to signify uninitialized.  This can
+	 * only be assigned createAndGo(4) at this point.  It can also be
 	 * assigned destroy(6), but only if the value is in the active(1) state.
 	 */
-	long kamailioSIPStatusCodeRowStatus;
+		long kamailioSIPStatusCodeRowStatus;
 
-	/* Added automatically, but not really used by us. */
-	void *data;
+		/* Added automatically, but not really used by us. */
+		void *data;
 
-	long startingInStatusCodeValue;
-	long startingOutStatusCodeValue;
+		long startingInStatusCodeValue;
+		long startingOutStatusCodeValue;
 
-} kamailioSIPStatusCodesTable_context;
+	} kamailioSIPStatusCodesTable_context;
 
-/* 
+	/*
  * Initializes the kamailioSIPStatusCodesTable module.  This step is easier
  * than in the other tables because there is no table population.  All table
- * population takes place during run time. 
+ * population takes place during run time.
  */
-void init_kamailioSIPStatusCodesTable(void);
+	void init_kamailioSIPStatusCodesTable(void);
 
-/*
+	/*
  * Initialize the kamailioSIPStatusCodesTable table by defining how it is
- * structured. 
+ * structured.
  *
  * This function is mostly auto-generated.
  */
-void initialize_table_kamailioSIPStatusCodesTable(void);
+	void initialize_table_kamailioSIPStatusCodesTable(void);
 
-/*
- * This function is called to handle SNMP GET requests.  
+	/*
+ * This function is called to handle SNMP GET requests.
  *
  * The row which this function is called with, will store a message code.  The
  * function will retrieve the 'number of messages in' and 'number of messages
  * out' statistic for this particular message code from the statistics
- * framework.  
+ * framework.
  *
  * The function will then subtract from this value the value it was initialized
  * with when the row was first created.  In this sense, the row shows how many
  * ins and how many outs have been received (With respect to the message code)
- * since this row was created. 
+ * since this row was created.
  */
-int kamailioSIPStatusCodesTable_get_value(
-		netsnmp_request_info *, netsnmp_index *, netsnmp_table_request_info *);
+	int kamailioSIPStatusCodesTable_get_value(netsnmp_request_info *,
+			netsnmp_index *, netsnmp_table_request_info *);
 
-const kamailioSIPStatusCodesTable_context *
-kamailioSIPStatusCodesTable_get_by_idx(netsnmp_index *);
+	const kamailioSIPStatusCodesTable_context *
+	kamailioSIPStatusCodesTable_get_by_idx(netsnmp_index *);
 
-const kamailioSIPStatusCodesTable_context *
-kamailioSIPStatusCodesTable_get_by_idx_rs(netsnmp_index *, int row_status);
+	const kamailioSIPStatusCodesTable_context *
+	kamailioSIPStatusCodesTable_get_by_idx_rs(netsnmp_index *, int row_status);
 
-/* oid declarations */
-extern oid kamailioSIPStatusCodesTable_oid[];
-extern size_t kamailioSIPStatusCodesTable_oid_len;
+	/* oid declarations */
+	extern oid kamailioSIPStatusCodesTable_oid[];
+	extern size_t kamailioSIPStatusCodesTable_oid_len;
 
 #define kamailioSIPStatusCodesTable_TABLE_OID KAMAILIO_OID, 3, 1, 1, 1, 5, 1
 
@@ -163,57 +164,58 @@ extern size_t kamailioSIPStatusCodesTable_oid_len;
 #define kamailioSIPStatusCodesTable_COL_MIN 3
 #define kamailioSIPStatusCodesTable_COL_MAX 5
 
-/* Handles index extraction for row creation */
-int kamailioSIPStatusCodesTable_extract_index(
-		kamailioSIPStatusCodesTable_context *ctx, netsnmp_index *hdr);
+	/* Handles index extraction for row creation */
+	int kamailioSIPStatusCodesTable_extract_index(
+			kamailioSIPStatusCodesTable_context *ctx, netsnmp_index *hdr);
 
-/* Handle RESERVE1 and RESERVE2 phases of an SNMP SET */
-void kamailioSIPStatusCodesTable_set_reserve1(netsnmp_request_group *);
-void kamailioSIPStatusCodesTable_set_reserve2(netsnmp_request_group *);
+	/* Handle RESERVE1 and RESERVE2 phases of an SNMP SET */
+	void kamailioSIPStatusCodesTable_set_reserve1(netsnmp_request_group *);
+	void kamailioSIPStatusCodesTable_set_reserve2(netsnmp_request_group *);
 
-/* Handle the SET and ACTION phases of an SNMP SET */
-void kamailioSIPStatusCodesTable_set_action(netsnmp_request_group *);
-void kamailioSIPStatusCodesTable_set_commit(netsnmp_request_group *);
+	/* Handle the SET and ACTION phases of an SNMP SET */
+	void kamailioSIPStatusCodesTable_set_action(netsnmp_request_group *);
+	void kamailioSIPStatusCodesTable_set_commit(netsnmp_request_group *);
 
-/* Handle Resource cleanup if the ACTION or RESERVE1/RESERVE2 phases of an
+	/* Handle Resource cleanup if the ACTION or RESERVE1/RESERVE2 phases of an
  * SNMPSET fail */
-void kamailioSIPStatusCodesTable_set_free(netsnmp_request_group *);
-void kamailioSIPStatusCodesTable_set_undo(netsnmp_request_group *);
+	void kamailioSIPStatusCodesTable_set_free(netsnmp_request_group *);
+	void kamailioSIPStatusCodesTable_set_undo(netsnmp_request_group *);
 
-kamailioSIPStatusCodesTable_context *kamailioSIPStatusCodesTable_duplicate_row(
-		kamailioSIPStatusCodesTable_context *);
+	kamailioSIPStatusCodesTable_context *
+	kamailioSIPStatusCodesTable_duplicate_row(
+			kamailioSIPStatusCodesTable_context *);
 
 
-netsnmp_index *kamailioSIPStatusCodesTable_delete_row(
-		kamailioSIPStatusCodesTable_context *);
+	netsnmp_index *kamailioSIPStatusCodesTable_delete_row(
+			kamailioSIPStatusCodesTable_context *);
 
-/* Used to check if there is a reason why a row can't be activated 
+	/* Used to check if there is a reason why a row can't be activated
  * (There is no reason in our implementation)
  */
-int kamailioSIPStatusCodesTable_can_activate(
-		kamailioSIPStatusCodesTable_context *undo_ctx,
-		kamailioSIPStatusCodesTable_context *row_ctx,
-		netsnmp_request_group *rg);
+	int kamailioSIPStatusCodesTable_can_activate(
+			kamailioSIPStatusCodesTable_context *undo_ctx,
+			kamailioSIPStatusCodesTable_context *row_ctx,
+			netsnmp_request_group *rg);
 
-/* Used to check if there is a reason why a row can't be deactivated 
+	/* Used to check if there is a reason why a row can't be deactivated
  * (There is no reason in our implementation)
  */
-int kamailioSIPStatusCodesTable_can_deactivate(
-		kamailioSIPStatusCodesTable_context *undo_ctx,
-		kamailioSIPStatusCodesTable_context *row_ctx,
-		netsnmp_request_group *rg);
+	int kamailioSIPStatusCodesTable_can_deactivate(
+			kamailioSIPStatusCodesTable_context *undo_ctx,
+			kamailioSIPStatusCodesTable_context *row_ctx,
+			netsnmp_request_group *rg);
 
-/* Used to check if there is a reason why a row can't be deleted
+	/* Used to check if there is a reason why a row can't be deleted
  * (There is no reason in our implementation)
  */
-int kamailioSIPStatusCodesTable_can_delete(
-		kamailioSIPStatusCodesTable_context *undo_ctx,
-		kamailioSIPStatusCodesTable_context *row_ctx,
-		netsnmp_request_group *rg);
+	int kamailioSIPStatusCodesTable_can_delete(
+			kamailioSIPStatusCodesTable_context *undo_ctx,
+			kamailioSIPStatusCodesTable_context *row_ctx,
+			netsnmp_request_group *rg);
 
 
-kamailioSIPStatusCodesTable_context *kamailioSIPStatusCodesTable_create_row(
-		netsnmp_index *);
+	kamailioSIPStatusCodesTable_context *kamailioSIPStatusCodesTable_create_row(
+			netsnmp_index *);
 
 
 #ifdef __cplusplus

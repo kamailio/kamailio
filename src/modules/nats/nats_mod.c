@@ -60,6 +60,8 @@ static param_export_t params[] = {
 static cmd_export_t cmds[] = {
 	{"nats_publish", (cmd_function)w_nats_publish_f,
 		  2, fixup_publish_get_value, fixup_publish_get_value_free, ANY_ROUTE},
+	{"nats_publish", (cmd_function)w_nats_publish_reply_f,
+		  3, fixup_publish_reply_get_value, fixup_publish_reply_get_value_free, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -121,8 +123,7 @@ static void closedCB(natsConnection *nc, void *closure)
 	*closed = true;
 }
 
-void nats_consumer_worker_proc(
-		nats_consumer_worker_t *worker)
+void nats_consumer_worker_proc(nats_consumer_worker_t *worker)
 {
 	natsStatus s = NATS_OK;
 
@@ -182,6 +183,7 @@ static int mod_init(void)
 		return -1;
 	}
 	register_procs(total_procs);
+	cfg_register_child(total_procs);
 
 	nats_pub_worker_pipes_fds =
 			(int *)shm_malloc(sizeof(int) * (nats_pub_workers_num)*2);
@@ -262,8 +264,7 @@ int init_worker(
 	return 0;
 }
 
-int init_pub_worker(
-		nats_pub_worker_t *worker)
+int init_pub_worker(nats_pub_worker_t *worker)
 {
 	nats_connection_ptr nc = NULL;
 	nc = _init_nats_connection();
@@ -285,8 +286,7 @@ void worker_loop(int id)
 	}
 }
 
-int _nats_pub_worker_proc(
-		nats_pub_worker_t *worker, int fd)
+int _nats_pub_worker_proc(nats_pub_worker_t *worker, int fd)
 {
 	natsStatus s = NATS_OK;
 
@@ -323,8 +323,10 @@ int _nats_pub_worker_proc(
 		LM_ERR("uv_poll_init failed\n");
 		return 0;
 	}
-	uv_handle_set_data((uv_handle_t *)&worker->poll, (nats_pub_worker_t *)worker);
-	if(uv_poll_start(&worker->poll, UV_READABLE | UV_DISCONNECT, _nats_pub_worker_cb)
+	uv_handle_set_data(
+			(uv_handle_t *)&worker->poll, (nats_pub_worker_t *)worker);
+	if(uv_poll_start(
+			   &worker->poll, UV_READABLE | UV_DISCONNECT, _nats_pub_worker_cb)
 			< 0) {
 		LM_ERR("uv_poll_start failed\n");
 		return 0;
@@ -369,6 +371,8 @@ static int mod_child_init(int rank)
 				LM_ERR("failed to fork worker process %d\n", i);
 				return -1;
 			} else if(newpid == 0) {
+				if(cfg_child_init())
+					return -1;
 				worker_loop(i);
 			} else {
 				nats_workers[i].pid = newpid;
@@ -385,7 +389,8 @@ static int mod_child_init(int rank)
 					return -1;
 				close(nats_pub_worker_pipes_fds[i * 2 + 1]);
 				cfg_update();
-				return (_nats_pub_worker_proc(&nats_pub_workers[i], nats_pub_worker_pipes_fds[i * 2]));
+				return (_nats_pub_worker_proc(&nats_pub_workers[i],
+						nats_pub_worker_pipes_fds[i * 2]));
 			} else {
 				nats_pub_workers[i].pid = newpid;
 			}
@@ -575,7 +580,7 @@ int nats_destroy_workers()
 					}
 				}
 				if(worker->on_message != NULL) {
-					if (worker->on_message->_evname) {
+					if(worker->on_message->_evname) {
 						free(worker->on_message->_evname);
 					}
 					shm_free(worker->on_message);
@@ -594,7 +599,9 @@ int nats_destroy_workers()
 						LM_ERR("could not cleanup worker connection\n");
 					}
 				}
-				uv_poll_stop(&pub_worker->poll);
+				if(uv_is_active((uv_handle_t *)&pub_worker->poll)) {
+					uv_poll_stop(&pub_worker->poll);
+				}
 				shm_free(pub_worker);
 			}
 		}
@@ -684,7 +691,8 @@ int nats_run_cfg_route(int rt, str *evname)
 
 	// check for valid route pointer
 	if(rt < 0 || !event_rt.rlist[rt]) {
-		if (keng == NULL) return 0;
+		if(keng == NULL)
+			return 0;
 	}
 
 	fmsg = faked_msg_next();
@@ -692,9 +700,9 @@ int nats_run_cfg_route(int rt, str *evname)
 	fmsg = &tmsg;
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
-	if (rt < 0 && keng) {
-		if (sr_kemi_route(keng, fmsg, EVENT_ROUTE,
-			&nats_event_callback, evname) < 0) {
+	if(rt < 0 && keng) {
+		if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &nats_event_callback, evname)
+				< 0) {
 			LM_ERR("error running event route kemi callback\n");
 		}
 		return 0;
@@ -823,7 +831,17 @@ int nats_pv_get_event_payload(
  */
 int ki_nats_publish(sip_msg_t *msg, str *subject, str *payload)
 {
-	return w_nats_publish(msg, *subject, *payload);
+	str reply = STR_NULL;
+	return w_nats_publish(msg, *subject, *payload, reply);
+}
+
+/**
+ *
+ */
+int ki_nats_publish_request(
+		sip_msg_t *msg, str *subject, str *payload, str *reply)
+{
+	return w_nats_publish(msg, *subject, *payload, *reply);
 }
 
 /**
@@ -834,6 +852,11 @@ static sr_kemi_t sr_kemi_nats_exports[] = {
 	{ str_init("nats"), str_init("publish"),
 		SR_KEMIP_INT, ki_nats_publish,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("nats"), str_init("publish_request"),
+		SR_KEMIP_INT, ki_nats_publish_request,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

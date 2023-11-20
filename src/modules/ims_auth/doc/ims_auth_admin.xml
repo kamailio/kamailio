@@ -45,7 +45,7 @@
     <section>
       <title>External Libraries or Applications</title>
 
-      <para>This modules requires the internal IMS library.</para>
+      <para>This module requires the internal IMS library.</para>
     </section>
   </section>
 
@@ -433,7 +433,7 @@ modparam("ims_auth", "av_check_only_impu", 1)
 ...
 if (!www_authorize("kamailio.org", "subscriber")) {
 	www_challenge(""REG_MAR_REPLY"", "kamailio.org", "1");
-};         
+};
 ...
 </programlisting>
       </example>
@@ -506,7 +506,7 @@ if (!proxy_authorize("$fd", "subscriber)) {
 route[REG_MAR_REPLY]
 {
      #this is async so to know status we have to check the reply avp
-     xlog("L_DBG","maa_return code is $avp(s:maa_return_code)\n");   
+     xlog("L_DBG","maa_return code is $avp(s:maa_return_code)\n");
 
      switch ($avp(s:maa_return_code)){
              case 1: #success
@@ -524,8 +524,8 @@ route[REG_MAR_REPLY]
                      t_reply("500", "Unknown response code from MAR");
                      break;
      }
-     exit;           
-}               
+     exit;
+}
 </programlisting>
       </example>
     </section>
@@ -567,7 +567,7 @@ route[REG_MAR_REPLY]
                         ims_www_resync_auth("REG_RESYNC_REPLY", "$td");
                         exit;
                 } else {
-                        xlog("L_DBG","About to challenge! auth_ims\n"); 
+                        xlog("L_DBG","About to challenge! auth_ims\n");
                         ims_www_challenge("REG_MAR_REPLY", "$td", "MD5");
                         exit;
                 }
@@ -639,7 +639,7 @@ if (!proxy_authorize("$fd", "subscriber)) {
 route[REG_MAR_REPLY]
 {
      #this is async so to know status we have to check the reply avp
-     xlog("L_DBG","maa_return code is $avp(s:maa_return_code)\n");   
+     xlog("L_DBG","maa_return code is $avp(s:maa_return_code)\n");
 
      switch ($avp(s:maa_return_code)){
              case 1: #success
@@ -657,8 +657,8 @@ route[REG_MAR_REPLY]
                      t_reply("500", "Unknown response code from MAR");
                      break;
      }
-     exit;           
-}            
+     exit;
+}
 ...
 </programlisting>
       </example>

@@ -1,4 +1,4 @@
-/** 
+/**
  * Callback functions for RTR/PPR from the HSS
  *
  * Copyright (c) 2012 Carsten Bock, ng-voice GmbH
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -29,6 +29,6 @@
  */
 int PPR_RTR_Event(void *parsed_message, int type, void *param);
 
-AAAMessage* cxdx_process_rtr(AAAMessage *request);
+AAAMessage *cxdx_process_rtr(AAAMessage *request);
 
 #endif /* CXDX_CALLBACKS_H */

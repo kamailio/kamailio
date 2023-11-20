@@ -1,6 +1,6 @@
 /**
  *
- * Copyright (C) 2015 Victor Seva (sipwise.com)
+ * Copyright (C) 2015-2023 Victor Seva (sipwise.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -48,6 +48,7 @@ typedef struct _cfgt_str_list
 {
 	str s;
 	enum _cfgt_action_type type;
+	struct timeval start, end, duration;
 	struct _cfgt_str_list *next, *prev;
 } cfgt_str_list_t, *cfgt_str_list_p;
 

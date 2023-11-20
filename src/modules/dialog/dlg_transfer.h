@@ -25,13 +25,14 @@
  * \ingroup dialog
  * Module: \ref dialog
  */
-		       
+
 #ifndef _DLG_TRANSFER_H_
 #define _DLG_TRANSFER_H_
 
 #include "dlg_hash.h"
 
-typedef struct _dlg_transfer_ctx {
+typedef struct _dlg_transfer_ctx
+{
 	int state;
 	str from;
 	str to;

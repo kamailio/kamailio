@@ -19,8 +19,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -39,7 +39,7 @@ Implements: (see also locking.h)
 	-------------
 	gen_lock_t* lock_alloc();                - allocates a lock in shared mem.
 	void    lock_dealloc(gen_lock_t* lock);  - deallocates the lock's shared m.
-	
+
 	lock sets: [implemented only for FL & SYSV so far]
 	----------
 	gen_lock_set_t* lock_set_alloc(no)               - allocs a lock set in shm.
@@ -57,46 +57,47 @@ Implements: (see also locking.h)
 #if defined(FAST_LOCK) || defined(USE_PTHREAD_MUTEX) || defined(USE_POSIX_SEM)
 /* simple locks*/
 #define lock_alloc() shm_malloc(sizeof(gen_lock_t))
-#define lock_dealloc(lock) shm_free((void*)lock)
+#define lock_dealloc(lock) shm_free((void *)lock)
 /* lock sets */
 
-inline static gen_lock_set_t* lock_set_alloc(int n)
+inline static gen_lock_set_t *lock_set_alloc(int n)
 {
-	gen_lock_set_t* ls;
-	ls=(gen_lock_set_t*)shm_malloc(sizeof(gen_lock_set_t)+n*sizeof(gen_lock_t));
-	if (ls==0){
+	gen_lock_set_t *ls;
+	ls = (gen_lock_set_t *)shm_malloc(
+			sizeof(gen_lock_set_t) + n * sizeof(gen_lock_t));
+	if(ls == 0) {
 		SHM_MEM_CRITICAL;
-	}else{
-		ls->locks=(gen_lock_t*)((char*)ls+sizeof(gen_lock_set_t));
-		ls->size=n;
+	} else {
+		ls->locks = (gen_lock_t *)((char *)ls + sizeof(gen_lock_set_t));
+		ls->size = n;
 	}
 	return ls;
 }
 
-#define lock_set_dealloc(lock_set) shm_free((void*)lock_set)
+#define lock_set_dealloc(lock_set) shm_free((void *)lock_set)
 
 #elif defined USE_SYSV_SEM
 
 /*simple locks*/
 #define lock_alloc() shm_malloc(sizeof(gen_lock_t))
-#define lock_dealloc(lock) shm_free((void*)lock)
+#define lock_dealloc(lock) shm_free((void *)lock)
 /* lock sets */
 
-inline static gen_lock_set_t* lock_set_alloc(int n)
+inline static gen_lock_set_t *lock_set_alloc(int n)
 {
-	gen_lock_set_t* ls;
-	ls=(gen_lock_set_t*)shm_malloc(sizeof(gen_lock_set_t));
-	if (ls==0){
+	gen_lock_set_t *ls;
+	ls = (gen_lock_set_t *)shm_malloc(sizeof(gen_lock_set_t));
+	if(ls == 0) {
 		SHM_MEM_CRITICAL;
-	}else{
-		ls->size=n;
-		ls->semid=-1;
+	} else {
+		ls->size = n;
+		ls->semid = -1;
 	}
 	return ls;
 }
 
 
-#define lock_set_dealloc(lock_set) shm_free((void*)lock_set)
+#define lock_set_dealloc(lock_set) shm_free((void *)lock_set)
 
 
 #else

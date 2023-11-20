@@ -1,4 +1,4 @@
-	<!-- dr_gateways provisioning -->
+	<!-- dr_gateways provisionning -->
 	<mod><mod_name>dr_gateways</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dr_gateways</db_table_id>
@@ -48,7 +48,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dr_rules provisioning -->
+	<!-- dr_rules provisionning -->
 	<mod><mod_name>dr_rules</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dr_rules</db_table_id>
@@ -101,7 +101,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dr_gw_lists provisioning -->
+	<!-- dr_gw_lists provisionning -->
 	<mod><mod_name>dr_gw_lists</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dr_gw_lists</db_table_id>
@@ -139,7 +139,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dr_groups provisioning -->
+	<!-- dr_groups provisionning -->
 	<mod><mod_name>dr_groups</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dr_groups</db_table_id>

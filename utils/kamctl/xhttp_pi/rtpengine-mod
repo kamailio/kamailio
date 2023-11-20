@@ -1,4 +1,4 @@
-	<!-- rtpengine provisioning -->
+	<!-- rtpengine provisionning -->
 	<mod><mod_name>rtpengine</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>rtpengine</db_table_id>

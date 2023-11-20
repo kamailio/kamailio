@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -42,15 +42,16 @@
  * array of db_val_t variables, where each db_val_t variable represents exactly
  * one cell in the table.
  */
-typedef struct db_row {
-	db_val_t* values;  /**< Columns in the row */
-	int n;             /**< Number of columns in the row */
+typedef struct db_row
+{
+	db_val_t *values; /**< Columns in the row */
+	int n;			  /**< Number of columns in the row */
 } db_row_t;
 
 /** Return the columns in the row */
 #define ROW_VALUES(rw) ((rw)->values)
-/** Return the number of colums */
-#define ROW_N(rw)      ((rw)->n)
+/** Return the number of columns */
+#define ROW_N(rw) ((rw)->n)
 
 /**
  * Release memory used by a row. This method only frees values that are inside
@@ -60,7 +61,7 @@ typedef struct db_row {
  * \param _r row that should be released
  * \return zero on success, negative on error
  */
-int db_free_row(db_row_t* _r);
+int db_free_row(db_row_t *_r);
 
 
 /**
@@ -69,6 +70,6 @@ int db_free_row(db_row_t* _r);
  * \param _row filled row
  * \return zero on success, negative on errors
  */
-int db_allocate_row(const db1_res_t* _res, db_row_t* _row);
+int db_allocate_row(const db1_res_t *_res, db_row_t *_row);
 
 #endif /* DB1_ROW_H */

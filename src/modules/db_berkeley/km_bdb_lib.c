@@ -16,14 +16,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 /*! \file
- * Berkeley DB : 
+ * Berkeley DB :
  *
  * \ingroup database
  */
@@ -311,7 +311,7 @@ int km_bdblib_create_dbenv(DB_ENV **_dbenv, char *_home)
 	/*
 	flags = DB_CREATE |
 		DB_RECOVER |
-		DB_INIT_LOG | 
+		DB_INIT_LOG |
 		DB_INIT_LOCK |
 		DB_INIT_MPOOL |
 		DB_THREAD |
@@ -516,16 +516,16 @@ void km_bdblib_log(int op, table_p _tp, char *_msg, int len)
 
 /**
  * The function is called to create a handle to a db table.
- * 
+ *
  * On startup, we do not create any of the db handles.
- * Instead it is done on first-use (lazy-initialized) to only create handles to 
+ * Instead it is done on first-use (lazy-initialized) to only create handles to
  * files (db) that we require.
- * 
+ *
  * There is one db file per kamailio table (eg. acc), and they should exist
  * in your DB_PATH (refer to kamctlrc) directory.
  *
  * This function does _not_ create the underlying binary db tables.
- * Creating the tables MUST be manually performed before 
+ * Creating the tables MUST be manually performed before
  * kamailio startup by 'kamdbctl create'
  *
  * Function returns NULL on error, which will cause kamailio to exit.
@@ -1080,9 +1080,9 @@ int km_bdblib_valtochar(table_p _tp, int *_lres, char *_k, int *_klen,
 			if(i == k) {
 /*
 				 KEY was provided; append to buffer;
-				 _k[j] contains a key, but its a key that 
+				 _k[j] contains a key, but it is a key that
 				 corresponds to column k of our schema.
-				 now we know its a match, and we dont need
+				 now we know it is a match, and we don't need
 				 index k for anything else
 				*/
 #ifdef BDB_EXTRA_DEBUG

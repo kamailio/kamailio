@@ -1,4 +1,4 @@
-/* 
+/*
  * Portions Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2003 August.Net Services, LLC
  * Portions Copyright (C) 2005-2008 iptelorg GmbH
@@ -27,7 +27,7 @@
 /*!
  * \file
  * \brief DB_POSTGRES :: Implementation of pg_fld data structure
- * 
+ *
  * Implementation of pg_fld data structure representing PostgreSQL fields and related functions.
  * \ingroup db_postgres
  * Module: \ref db_postgres
@@ -46,7 +46,7 @@ struct pg_fld
 
 	char *name;
 	/**
-	 * A union of varius data types from db_fld, postgres expects binary
+	 * A union of various data types from db_fld, postgres expects binary
 	 * data in network byte order so we use these variables as temporary
 	 * buffer to store values after the conversion.
 	 */
@@ -69,7 +69,7 @@ struct pg_fld
 /** Creates a new PostgreSQL specific payload.
  * This function creates a new PostgreSQL specific payload structure and
  * attaches the structure to the generic db_fld structure.
- * @param fld A generic db_fld structure to be exended.
+ * @param fld A generic db_fld structure to be extended.
  * @param table Name of the table on the server.
  * @return 0 on success, negative number on error.
  */
@@ -86,11 +86,11 @@ int pg_resolve_result_oids(db_fld_t *fld, int n, PGresult *res);
  * for PostgreSQL API functions.
  * @param dst An array of pointers to values in PostgreSQL format. The
  *               function will store pointers to converted values there.
- * @param off offset 
+ * @param off offset
  * @param types A type conversion table.
  * @param src An array of db_fld fields to be converted.
  * @param flags Connection flags controlling how values are converted.
- * @todo Implement support for bit fields with size bigger than 32 
+ * @todo Implement support for bit fields with size bigger than 32
  * @todo Implement support for varbit properly to remove leading zeroes
  * @todo Check if timezones are handled properly
  * @todo Support for DB_NONE in pg_pg2fld and pg_check_pg2fld
@@ -118,7 +118,7 @@ int pg_pg2fld(db_fld_t *dst, PGresult *src, int row, pg_type_t *types,
 		unsigned int flags);
 
 
-/** Checks if all db_fld fields have types compatible with corresponding field 
+/** Checks if all db_fld fields have types compatible with corresponding field
  * types on the server.
  * The functions checks whether all db_fld fields in the last parameter are
  * compatible with column types on the server, for conversion to postgres format.
@@ -129,7 +129,7 @@ int pg_pg2fld(db_fld_t *dst, PGresult *src, int row, pg_type_t *types,
  */
 int pg_check_fld2pg(db_fld_t *fld, pg_type_t *types);
 
-/** Checks if all db_fld fields have types compatible with corresponding field 
+/** Checks if all db_fld fields have types compatible with corresponding field
  * types on the server.
  * The functions checks whether all db_fld fields in the last parameter are
  * compatible with column types on the server, for conversion to interal DB format.

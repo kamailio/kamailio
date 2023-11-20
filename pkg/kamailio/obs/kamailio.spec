@@ -31,41 +31,6 @@
 %bcond_without xmlrpc
 %endif
 
-%if 0%{?rhel} == 6
-%if 0%{?centos_ver}
-%define dist_name centos
-%define dist_version %{?centos}
-%endif
-%if 0%{?centos_ver} == 0
-%define dist_name rhel
-%define dist_version %{?rhel}
-%endif
-%bcond_with cnxcc
-%bcond_without dnssec
-%bcond_without evapi
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without ims
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_with lwsc
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_with mongodb
-%bcond_with nats
-%bcond_without perl
-%bcond_with phonenum
-%bcond_without python2
-%bcond_with python3
-%bcond_with rabbitmq
-%bcond_with redis
-%bcond_with ruby
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
 %if 0%{?rhel} == 7
 %if 0%{?centos_ver}
 %define dist_name centos
@@ -223,11 +188,6 @@
 %bcond_without xmlrpc
 %endif
 
-# Defining missing macros on RHEL/CentOS 6
-%if 0%{?rhel} == 6
-%define _rundir %{_localstatedir}/run
-%endif
-
 # build with openssl 1.1.1 on RHEL 7 based dists
 %if 0%{?rhel} == 7
 %bcond_with openssl11
@@ -261,8 +221,8 @@ Release:    %rel
 Packager:   Sergey Safarov <s.safarov@gmail.com>
 License:    GPL-2.0
 Group:      %{PKGGROUP}
-Source:     http://kamailio.org/pub/kamailio/%{ver}/src/%{name}-%{ver}_src.tar.gz
-URL:        http://kamailio.org/
+Source:     https://kamailio.org/pub/kamailio/%{ver}/src/%{name}-%{ver}_src.tar.gz
+URL:        https://kamailio.org/
 Vendor:     kamailio.org
 BuildRoot:  %{_tmppath}/%{name}-%{ver}-buildroot
 Conflicts:  kamailio-acc_json < %ver
@@ -458,8 +418,8 @@ This module provides various cryptography tools for use in Kamailio configuratio
 %package    dialplan
 Summary:    String translations based on rules for Kamailio
 Group:      %{PKGGROUP}
-Requires:   pcre, kamailio = %ver
-BuildRequires:  pcre-devel
+Requires:   pcre2, kamailio = %ver
+BuildRequires:  pcre2-devel
 
 %description    dialplan
 String translations based on rules for Kamailio.
@@ -505,8 +465,8 @@ suspended when sending the event, to be resumed at a later point, maybe triggere
 %package    geoip
 Summary:    MaxMind GeoIP support for Kamailio
 Group:      %{PKGGROUP}
-Requires:   GeoIP, kamailio = %ver
-BuildRequires:  GeoIP-devel
+Requires:   GeoIP, libmaxminddb, kamailio = %ver
+BuildRequires:  GeoIP-devel, libmaxminddb-devel
 
 %description    geoip
 MaxMind GeoIP support for Kamailio.
@@ -544,7 +504,7 @@ BuildRequires:  libcurl-devel
 %endif
 
 %description   http_async_client
-This module implements protocol functions that use the libcurl to communicate with HTTP servers in asyncronous way.
+This module implements protocol functions that use the libcurl to communicate with HTTP servers in asynchronous way.
 %endif
 
 %package    http_client
@@ -647,8 +607,8 @@ Kazoo module for Kamailio.
 %package    lcr
 Summary:    Least cost routing for Kamailio
 Group:      %{PKGGROUP}
-Requires:   pcre, kamailio = %ver
-BuildRequires:  pcre-devel
+Requires:   pcre2, kamailio = %ver
+BuildRequires:  pcre2-devel
 
 %description    lcr
 Least cost routing for Kamailio.
@@ -736,7 +696,11 @@ BuildRequires:  zlib-devel
 Requires:   libmysqlclient18
 BuildRequires:  libmysqlclient-devel
 %else
+%if 0%{?rhel} == 6
+BuildRequires:  mysql-devel
+%else
 BuildRequires:  mariadb-devel
+%endif
 %endif
 
 %description    mysql
@@ -899,8 +863,8 @@ Redis configuration file support for Kamailio.
 %package    regex
 Summary:    PCRE mtaching operations for Kamailio
 Group:      %{PKGGROUP}
-Requires:   pcre, kamailio = %ver
-BuildRequires:  pcre-devel
+Requires:   pcre2, kamailio = %ver
+BuildRequires:  pcre2-devel
 
 %description    regex
 PCRE mtaching operations for Kamailio.
@@ -1247,6 +1211,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %endif
 %if %{with geoip}
     kgeoip \
+    kgeoip2 \
 %endif
     kgzcompress \
 %if %{with http_async_client}
@@ -1354,6 +1319,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %endif
 %if %{with geoip}
     kgeoip \
+    kgeoip2 \
 %endif
     kgzcompress \
 %if %{with http_async_client}
@@ -1566,6 +1532,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.kex
 %doc %{_docdir}/kamailio/modules/README.lrkproxy
 %doc %{_docdir}/kamailio/modules/README.mangler
+%doc %{_docdir}/kamailio/modules/README.math
 %doc %{_docdir}/kamailio/modules/README.matrix
 %doc %{_docdir}/kamailio/modules/README.maxfwd
 %doc %{_docdir}/kamailio/modules/README.mediaproxy
@@ -1727,6 +1694,7 @@ fi
 %{_libdir}/kamailio/modules/kex.so
 %{_libdir}/kamailio/modules/lrkproxy.so
 %{_libdir}/kamailio/modules/mangler.so
+%{_libdir}/kamailio/modules/math.so
 %{_libdir}/kamailio/modules/matrix.so
 %{_libdir}/kamailio/modules/maxfwd.so
 %{_libdir}/kamailio/modules/mediaproxy.so
@@ -1939,7 +1907,9 @@ fi
 %files      geoip
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.geoip
+%doc %{_docdir}/kamailio/modules/README.geoip2
 %{_libdir}/kamailio/modules/geoip.so
+%{_libdir}/kamailio/modules/geoip2.so
 %endif
 
 
@@ -2354,12 +2324,10 @@ fi
 
 %files      tls
 %defattr(-,root,root)
-%dir %{_libdir}/kamailio/openssl_mutex_shared
 %doc %{_docdir}/kamailio/modules/README.auth_identity
 %doc %{_docdir}/kamailio/modules/README.tls
 %{_libdir}/kamailio/modules/auth_identity.so
 %{_libdir}/kamailio/modules/tls.so
-%{_libdir}/kamailio/openssl_mutex_shared/openssl_mutex_shared.so
 
 
 %files      tcpops

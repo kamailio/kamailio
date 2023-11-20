@@ -1,4 +1,4 @@
-	<!-- location provisioning -->
+	<!-- location provisionning -->
 	<mod><mod_name>location</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>location</db_table_id>
@@ -96,7 +96,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- location_attrs provisioning -->
+	<!-- location_attrs provisionning -->
 	<mod><mod_name>location_attrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>location_attrs</db_table_id>

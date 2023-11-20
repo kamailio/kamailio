@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
 
 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
@@ -55,13 +55,13 @@
 	    To speed up the filtering process, the module uses a timeout
 	    mechanism. When a reply is sent, a timer is set. As long as the
 	    timer is valid, the incoming ACK requests will be checked using TO
-	    tag value. Once the timer expires, all the ACK messages are let 
-	    through - a long time passed till it sent a reply, so it does not 
+	    tag value. Once the timer expires, all the ACK messages are let
+	    through - a long time passed till it sent a reply, so it does not
 	    expect any ACK that have to be blocked.
 	</para>
 	<para>
 	    The ACK filtering may fail in some rare cases. If you think these
-	    matter to you, better use stateful processing (<acronym>TM</acronym> 
+	    matter to you, better use stateful processing (<acronym>TM</acronym>
 	    module) for INVITE processing. Particularly, the problem happens when a UA
 	    sends an INVITE which already has a to-tag in it (e.g., a
 	    re-INVITE) and the server wants to reply to it. Then, it will keep the

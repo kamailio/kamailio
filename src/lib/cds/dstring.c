@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -32,25 +32,25 @@
 
 #define get_current_buffer(dstr) (dstr)->last
 
-static dstr_buff_t *add_new_buffer(dstring_t *dstr) 
+static dstr_buff_t *add_new_buffer(dstring_t *dstr)
 {
 	dstr_buff_t *buff = NULL;
-	
+
 	/* e = dlink_element_alloc_pkg(sizeof(dstr_buff_t) + dstr->buff_size); */
-/*	if (dstr->flags & DSTR_PKG_MEM)
+	/*	if (dstr->flags & DSTR_PKG_MEM)
 		buff = cds_malloc_pkg(sizeof(dstr_buff_t) + dstr->buff_size);
 	else
 		buff = cds_malloc(sizeof(dstr_buff_t) + dstr->buff_size);
 		*/
-/*	buff = cds_malloc(sizeof(dstr_buff_t) + dstr->buff_size);*/
+	/*	buff = cds_malloc(sizeof(dstr_buff_t) + dstr->buff_size);*/
 	buff = cds_malloc_pkg(sizeof(dstr_buff_t) + dstr->buff_size);
-	if (buff) {
+	if(buff) {
 		buff->len = dstr->buff_size;
 		buff->used = 0;
 		buff->next = NULL;
 		LINKED_LIST_ADD(dstr->first, dstr->last, buff);
-	}
-	else dstr->error = 1;
+	} else
+		dstr->error = 1;
 	return buff;
 }
 
@@ -59,24 +59,29 @@ int dstr_append(dstring_t *dstr, const char *s, int len)
 	int size;
 	dstr_buff_t *buff;
 
-/*	if (!dstr) return -1; */
-	if (dstr->error) return -2;
+	/*	if (!dstr) return -1; */
+	if(dstr->error)
+		return -2;
 
-	if (len == 0) return 0; /*append empty string*/
-	
+	if(len == 0)
+		return 0; /*append empty string*/
+
 	buff = get_current_buffer(dstr);
-	if (!buff) buff = add_new_buffer(dstr);
-	while ((len > 0) && (buff)) {
+	if(!buff)
+		buff = add_new_buffer(dstr);
+	while((len > 0) && (buff)) {
 		size = buff->len - buff->used;
-		if (size > len) size = len;
+		if(size > len)
+			size = len;
 		memcpy(buff->data + buff->used, s, size);
 		buff->used += size;
 		len -= size;
 		s += size;
 		dstr->len += size;
-		if (len > 0) buff = add_new_buffer(dstr);
+		if(len > 0)
+			buff = add_new_buffer(dstr);
 	}
-	if (!buff) {
+	if(!buff) {
 		dstr->error = 1;
 		return -1;
 	}
@@ -85,15 +90,17 @@ int dstr_append(dstring_t *dstr, const char *s, int len)
 
 int dstr_append_zt(dstring_t *dstr, const char *s)
 {
-/*	if (!dstr) return -1; */
-	if (!s) return 0; /*append empty string*/
+	/*	if (!dstr) return -1; */
+	if(!s)
+		return 0; /*append empty string*/
 	return dstr_append(dstr, s, strlen(s));
 }
 
 int dstr_append_str(dstring_t *dstr, const str_t *s)
 {
-/*	if (!dstr) return -1; */
-	if (!s) return 0; /*append empty string*/
+	/*	if (!dstr) return -1; */
+	if(!s)
+		return 0; /*append empty string*/
 	return dstr_append(dstr, s->s, s->len);
 }
 
@@ -105,13 +112,14 @@ int dstr_append_str(dstring_t *dstr, const str_t *s)
 
 int dstr_get_data(dstring_t *dstr, char *dst)
 {
-	dstr_buff_t* buff;
-	
+	dstr_buff_t *buff;
+
 	/* if (!dstr) return -1; */
-	if (dstr->error) return -2; /* a previous operation returned error */
-	
+	if(dstr->error)
+		return -2; /* a previous operation returned error */
+
 	buff = dstr->first;
-	while (buff) {
+	while(buff) {
 		memcpy(dst, buff->data, buff->used);
 		dst += buff->used;
 		buff = buff->next;
@@ -122,24 +130,24 @@ int dstr_get_data(dstring_t *dstr, char *dst)
 int dstr_get_str(dstring_t *dstr, str_t *dst)
 {
 	int res = 0;
-	
-	if (!dst) return -1;
-	if (dstr->error) {
+
+	if(!dst)
+		return -1;
+	if(dstr->error) {
 		dst->s = NULL;
 		dst->len = 0;
 		return -2; /* a previous operation returned error */
 	}
 
 	dst->len = dstr_get_data_length(dstr);
-	if (dst->len > 0) {
-		dst->s = (char*)cds_malloc(dst->len);
-		if (!dst->s) {
+	if(dst->len > 0) {
+		dst->s = (char *)cds_malloc(dst->len);
+		if(!dst->s) {
 			res = -1;
 			dst->len = 0;
-		}
-		else res = dstr_get_data(dstr, dst->s);
-	} 
-	else {
+		} else
+			res = dstr_get_data(dstr, dst->s);
+	} else {
 		dst->s = NULL;
 		dst->len = 0;
 	}
@@ -150,24 +158,24 @@ int dstr_get_str(dstring_t *dstr, str_t *dst)
 int dstr_get_str_pkg(dstring_t *dstr, str_t *dst)
 {
 	int res = 0;
-	
-	if (!dst) return -1;
-	if (dstr->error) {
+
+	if(!dst)
+		return -1;
+	if(dstr->error) {
 		dst->s = NULL;
 		dst->len = 0;
 		return -2; /* a previous operation returned error */
 	}
 
 	dst->len = dstr_get_data_length(dstr);
-	if (dst->len > 0) {
-		dst->s = (char*)cds_malloc_pkg(dst->len);
-		if (!dst->s) {
+	if(dst->len > 0) {
+		dst->s = (char *)cds_malloc_pkg(dst->len);
+		if(!dst->s) {
 			res = -1;
 			dst->len = 0;
-		}
-		else res = dstr_get_data(dstr, dst->s);
-	} 
-	else {
+		} else
+			res = dstr_get_data(dstr, dst->s);
+	} else {
 		dst->s = NULL;
 		dst->len = 0;
 	}
@@ -188,15 +196,15 @@ int dstr_init(dstring_t *dstr, int buff_size)
 
 int dstr_destroy(dstring_t *dstr)
 {
-	dstr_buff_t *e,*n;
-/*	if (!dstr) return -1; */
+	dstr_buff_t *e, *n;
+	/*	if (!dstr) return -1; */
 	/* dlink_destroy(&dstr->buffers); */
 	e = dstr->first;
-	while (e) {
+	while(e) {
 		n = e->next;
-/*		if (dstr->flags & DSTR_PKG_MEM) cds_free_pkg(e);
+		/*		if (dstr->flags & DSTR_PKG_MEM) cds_free_pkg(e);
 		else cds_free(e);*/
-/*		cds_free(e);*/
+		/*		cds_free(e);*/
 		cds_free_pkg(e);
 		e = n;
 	}

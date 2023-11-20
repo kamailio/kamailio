@@ -527,7 +527,7 @@ static const SQChar *sqstd_rex_matchnode(SQRex* exp,SQRexNode *node,const SQChar
     case OP_MB:
         {
             SQInteger cb = node->left; //char that opens a balanced expression
-            if(*str != cb) return NULL; // string doesnt start with open char
+            if(*str != cb) return NULL; // string doesn't start with open char
             SQInteger ce = node->right; //char that closes a balanced expression
             SQInteger cont = 1;
             const SQChar *streol = exp->_eol;

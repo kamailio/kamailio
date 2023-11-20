@@ -39,7 +39,8 @@
 #include "ppcfg.h"
 #include "fmsg.h"
 
-typedef struct _pp_subst_rule {
+typedef struct _pp_subst_rule
+{
 	char *indata;
 	void *ppdata;
 	struct _pp_subst_rule *next;
@@ -56,7 +57,8 @@ int pp_def_qvalue(str *defval, str *outval)
 	str_list_t *sb;
 
 	if(pv_get_buffer_size() < defval->len + 4) {
-		LM_ERR("defined value is too large %d < %d\n", pv_get_buffer_size(), defval->len + 4);
+		LM_ERR("defined value is too large %d < %d\n", pv_get_buffer_size(),
+				defval->len + 4);
 		return -1;
 	}
 	newval.s = pv_get_buffer();
@@ -66,7 +68,7 @@ int pp_def_qvalue(str *defval, str *outval)
 	newval.s[defval->len + 2] = '\0';
 	newval.len = defval->len + 2;
 	sb = str_list_block_add(&_ksr_substdef_strlist, newval.s, newval.len);
-	if(sb==NULL) {
+	if(sb == NULL) {
 		LM_ERR("failed to link quoted value [%.*s]\n", defval->len, defval->s);
 		return -1;
 	}
@@ -77,34 +79,31 @@ int pp_def_qvalue(str *defval, str *outval)
 
 int pp_subst_add(char *data)
 {
-	struct subst_expr* se;
+	struct subst_expr *se;
 	str subst;
 	pp_subst_rule_t *pr;
 
 	subst.s = data;
 	subst.len = strlen(subst.s);
 	/* check for early invalid rule */
-	if(subst.len<=0)
+	if(subst.len <= 0)
 		return -1;
-	pr = (pp_subst_rule_t*)pkg_malloc(sizeof(pp_subst_rule_t));
-	if(pr==NULL)
-	{
+	pr = (pp_subst_rule_t *)pkg_malloc(sizeof(pp_subst_rule_t));
+	if(pr == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(pr, 0, sizeof(pp_subst_rule_t));
 
-	se=subst_parser(&subst);
-	if (se==0)
-	{
+	se = subst_parser(&subst);
+	if(se == 0) {
 		LM_ERR("bad subst expression: %s\n", data);
 		pkg_free(pr);
 		return -2;
 	}
 	pr->indata = data;
-	pr->ppdata = (void*)se;
-	if(pp_subst_rules_head==NULL)
-	{
+	pr->ppdata = (void *)se;
+	if(pp_subst_rules_head == NULL) {
 		pp_subst_rules_head = pr;
 	} else {
 		pp_subst_rules_tail->next = pr;
@@ -126,23 +125,23 @@ int pp_substdef_add(char *data, int mode)
 	sip_msg_t *fmsg;
 	str_list_t *sb;
 
-	if(pp_subst_add(data)<0) {
+	if(pp_subst_add(data) < 0) {
 		LM_ERR("subst rule cannot be added\n");
 		goto error;
 	}
 
-	p=data;
-	c=*p;
-	if (c=='\\') {
+	p = data;
+	c = *p;
+	if(c == '\\') {
 		LM_ERR("invalid separator char [%c] in [%s]\n", c, data);
 		goto error;
 	}
 	p++;
 	/* find regexp */
-	defname.s=p;
-	for ( ; *p; p++) {
+	defname.s = p;
+	for(; *p; p++) {
 		/* if unescaped sep. char */
-		if ((*p==c) && (*(p-1)!='\\'))
+		if((*p == c) && (*(p - 1) != '\\'))
 			goto found_regexp;
 	}
 	LM_ERR("separator [%c] not found after regexp: [%s]\n", c, data);
@@ -150,7 +149,7 @@ int pp_substdef_add(char *data, int mode)
 
 found_regexp:
 	defname.len = p - defname.s;
-	if(defname.len==0) {
+	if(defname.len == 0) {
 		LM_ERR("define name too short\n");
 		goto error;
 	}
@@ -158,9 +157,9 @@ found_regexp:
 	p++;
 	defvalue.s = p;
 	/* find replacement */
-	for ( ; *p; p++) {
+	for(; *p; p++) {
 		/* if unescaped sep. char */
-		if ((*p==c) && (*(p-1)!='\\'))
+		if((*p == c) && (*(p - 1) != '\\'))
 			goto found_repl;
 	}
 	LM_ERR("separator [%c] not found after replacement: [%s]\n", c, data);
@@ -170,16 +169,17 @@ found_repl:
 	defvalue.len = p - defvalue.s;
 
 	pp_define_set_type(KSR_PPDEF_DEFINE);
-	if(pp_define(defname.len, defname.s)<0) {
+	if(pp_define(defname.len, defname.s) < 0) {
 		LM_ERR("cannot set define name\n");
 		goto error;
 	}
 	if(memchr(defvalue.s, '$', defvalue.len) != NULL) {
 		fmsg = faked_msg_get_next();
-		if(pv_eval_str(fmsg, &newval, &defvalue)>=0) {
-			if(mode!=KSR_PPDEF_QUOTED) {
-				sb = str_list_block_add(&_ksr_substdef_strlist, newval.s, newval.len);
-				if(sb==NULL) {
+		if(pv_eval_str(fmsg, &newval, &defvalue) >= 0) {
+			if(mode != KSR_PPDEF_QUOTED) {
+				sb = str_list_block_add(
+						&_ksr_substdef_strlist, newval.s, newval.len);
+				if(sb == NULL) {
 					LM_ERR("failed to handle substdef: [%s]\n", data);
 					return -1;
 				}
@@ -189,14 +189,14 @@ found_repl:
 			}
 		}
 	}
-	if(mode==KSR_PPDEF_QUOTED) {
+	if(mode == KSR_PPDEF_QUOTED) {
 		if(pp_def_qvalue(&defvalue, &newval) < 0) {
 			LM_ERR("failed to enclose in quotes the value\n");
 			return -1;
 		}
 		defvalue = newval;
 	}
-	if(pp_define_set(defvalue.len, defvalue.s, KSR_PPDEF_QUOTED)<0) {
+	if(pp_define_set(defvalue.len, defvalue.s, KSR_PPDEF_QUOTED) < 0) {
 		LM_ERR("cannot set define value\n");
 		goto error;
 	}
@@ -212,30 +212,29 @@ error:
 
 int pp_subst_run(char **data)
 {
-	str* result;
+	str *result;
 	pp_subst_rule_t *pr;
 	int i;
 
-	if(pp_subst_rules_head==NULL)
+	if(pp_subst_rules_head == NULL)
 		return 0;
-	if(data==NULL || *data==NULL)
+	if(data == NULL || *data == NULL)
 		return 0;
 
-	if(strlen(*data)==0)
+	if(strlen(*data) == 0)
 		return 0;
 	pr = pp_subst_rules_head;
 
 	i = 0;
-	while(pr)
-	{
+	while(pr) {
 		sip_msg_t *fmsg = faked_msg_get_next();
-		result=subst_str(*data, fmsg,
-				(struct subst_expr*)pr->ppdata, 0); /* pkg malloc'ed result */
-		if(result!=NULL)
-		{
+		result = subst_str(*data, fmsg, (struct subst_expr *)pr->ppdata,
+				0); /* pkg malloc'ed result */
+		if(result != NULL) {
 			i++;
 			LM_DBG("preprocess subst applied [#%d] to [%s]"
-					" - returning new string [%s]\n", i, *data, result->s);
+				   " - returning new string [%s]\n",
+					i, *data, result->s);
 			pkg_free(*data);
 			*data = result->s;
 			pkg_free(result);
@@ -243,7 +242,7 @@ int pp_subst_run(char **data)
 		pr = pr->next;
 	}
 
-	if(i!=0)
+	if(i != 0)
 		return 1;
 	return 0;
 }
@@ -261,24 +260,26 @@ void pp_ifdef_level_update(int val)
  */
 int pp_ifdef_level_check(void)
 {
-	if(_pp_ifdef_level!=0) {
+	if(_pp_ifdef_level != 0) {
 		return -1;
 	} else {
 		LM_DBG("same number of pairing preprocessor directives"
-			" #!IF[N]DEF - #!ENDIF\n");
+			   " #!IF[N]DEF - #!ENDIF\n");
 	}
 	return 0;
 }
 
 void pp_ifdef_level_error(void)
 {
-	if(_pp_ifdef_level!=0) {
-		if (_pp_ifdef_level > 0) {
+	if(_pp_ifdef_level != 0) {
+		if(_pp_ifdef_level > 0) {
 			LM_ERR("different number of preprocessor directives:"
-				" %d more #!if[n]def as #!endif\n", _pp_ifdef_level);
+				   " %d more #!if[n]def as #!endif\n",
+					_pp_ifdef_level);
 		} else {
 			LM_ERR("different number of preprocessor directives:"
-				" %d more #!endif as #!if[n]def\n", (_pp_ifdef_level)*-1);
+				   " %d more #!endif as #!if[n]def\n",
+					(_pp_ifdef_level) * -1);
 		}
 	}
 }
@@ -300,79 +301,79 @@ void pp_define_core(void)
 		p++;
 	}
 
-	n = snprintf(p, 64 - (int)(p-defval), "_%u", VERSIONVAL/1000000);
-	if(n<0 || n>=64 - (int)(p-defval)) {
+	n = snprintf(p, 64 - (int)(p - defval), "_%u", VERSIONVAL / 1000000);
+	if(n < 0 || n >= 64 - (int)(p - defval)) {
 		LM_ERR("failed to build define token\n");
 		return;
 	}
 	pp_define_set_type(KSR_PPDEF_DEFINE);
-	if(pp_define(strlen(defval), defval)<0) {
+	if(pp_define(strlen(defval), defval) < 0) {
 		LM_ERR("unable to set cfg define: %s\n", defval);
 		return;
 	}
 
-	n = snprintf(p, 64 - (int)(p-defval), "_%u_%u", VERSIONVAL/1000000,
-			(VERSIONVAL%1000000)/1000);
-	if(n<0 || n>=64 - (int)(p-defval)) {
+	n = snprintf(p, 64 - (int)(p - defval), "_%u_%u", VERSIONVAL / 1000000,
+			(VERSIONVAL % 1000000) / 1000);
+	if(n < 0 || n >= 64 - (int)(p - defval)) {
 		LM_ERR("failed to build define token\n");
 		return;
 	}
 	pp_define_set_type(KSR_PPDEF_DEFINE);
-	if(pp_define(strlen(defval), defval)<0) {
+	if(pp_define(strlen(defval), defval) < 0) {
 		LM_ERR("unable to set cfg define: %s\n", defval);
 		return;
 	}
 
-	n = snprintf(p, 64 - (int)(p-defval), "_%u_%u_%u", VERSIONVAL/1000000,
-			(VERSIONVAL%1000000)/1000, VERSIONVAL%1000);
-	if(n<0 || n>=64 - (int)(p-defval)) {
+	n = snprintf(p, 64 - (int)(p - defval), "_%u_%u_%u", VERSIONVAL / 1000000,
+			(VERSIONVAL % 1000000) / 1000, VERSIONVAL % 1000);
+	if(n < 0 || n >= 64 - (int)(p - defval)) {
 		LM_ERR("failed to build define token\n");
 		return;
 	}
 	pp_define_set_type(KSR_PPDEF_DEFINE);
-	if(pp_define(strlen(defval), defval)<0) {
+	if(pp_define(strlen(defval), defval) < 0) {
 		LM_ERR("unable to set cfg define: %s\n", defval);
 		return;
 	}
 
 	strcpy(p, "_VERSION");
 	pp_define_set_type(KSR_PPDEF_DEFINE);
-	if(pp_define(strlen(defval), defval)<0) {
+	if(pp_define(strlen(defval), defval) < 0) {
 		LM_ERR("unable to set cfg define: %s\n", defval);
 		return;
 	}
 
 	n = snprintf(defval, 64, "%u", VERSIONVAL);
-	if(n<0 || n>=64) {
+	if(n < 0 || n >= 64) {
 		LM_ERR("failed to build version define value\n");
 		return;
 	}
 	sb = str_list_block_add(&_ksr_substdef_strlist, defval, strlen(defval));
-	if(sb==NULL) {
+	if(sb == NULL) {
 		LM_ERR("failed to store version define value\n");
 		return;
 	}
-	if(pp_define_set(sb->s.len, sb->s.s, KSR_PPDEF_NORMAL)<0) {
+	if(pp_define_set(sb->s.len, sb->s.s, KSR_PPDEF_NORMAL) < 0) {
 		LM_ERR("error setting version define value\n");
 		return;
 	}
 
-	if(pp_define(strlen("OS_NAME"), "OS_NAME")<0) {
+	if(pp_define(strlen("OS_NAME"), "OS_NAME") < 0) {
 		LM_ERR("unable to set cfg define OS_NAME\n");
 		return;
 	}
-	if(pp_define_set(strlen(OS_QUOTED), OS_QUOTED, KSR_PPDEF_NORMAL)<0) {
+	if(pp_define_set(strlen(OS_QUOTED), OS_QUOTED, KSR_PPDEF_NORMAL) < 0) {
 		LM_ERR("error setting OS_NAME define value\n");
 		return;
 	}
 }
 
-static struct snexpr* pp_snexpr_defval(char *vname)
+static struct snexpr *pp_snexpr_defval(char *vname)
 {
 	int idx = 0;
 	ksr_ppdefine_t *pd = NULL;
 
-	if(vname==NULL) {
+	if(vname == NULL) {
 		return NULL;
 	}
 
@@ -383,19 +384,24 @@ static struct snexpr* pp_snexpr_defval(char *vname)
 	}
 	pd = pp_get_define(idx);
 	if(pd == NULL) {
-		LM_DBG("define id [%s] at index [%d] not found - return 0\n", vname, idx);
+		LM_DBG("define id [%s] at index [%d] not found - return 0\n", vname,
+				idx);
 		return snexpr_convert_num(0, SNE_OP_CONSTNUM);
 	}
 
 	if(pd->value.s != NULL) {
-		LM_DBG("define id [%s] at index [%d] found with value - return [%.*s]\n",
+		LM_DBG("define id [%s] at index [%d] found with value - return "
+			   "[%.*s]\n",
 				vname, idx, pd->value.len, pd->value.s);
-		if(pd->value.len>=2 && (pd->value.s[0]=='"' || pd->value.s[0]=='\'')
-				&& pd->value.s[0]==pd->value.s[pd->value.len-1]) {
+		if(pd->value.len >= 2
+				&& (pd->value.s[0] == '"' || pd->value.s[0] == '\'')
+				&& pd->value.s[0] == pd->value.s[pd->value.len - 1]) {
 			/* strip enclosing quotes for string value */
-			return snexpr_convert_stzl(pd->value.s+1, pd->value.len-2, SNE_OP_CONSTSTZ);
+			return snexpr_convert_stzl(
+					pd->value.s + 1, pd->value.len - 2, SNE_OP_CONSTSTZ);
 		} else {
-			return snexpr_convert_stzl(pd->value.s, pd->value.len, SNE_OP_CONSTSTZ);
+			return snexpr_convert_stzl(
+					pd->value.s, pd->value.len, SNE_OP_CONSTSTZ);
 		}
 	} else {
 		LM_DBG("define id [%s] at index [%d] found without value - return 1\n",
@@ -427,7 +433,7 @@ void pp_ifexp_eval(char *exval, int exlen)
 
 	result = snexpr_eval(e);
 
-	if(result==NULL) {
+	if(result == NULL) {
 		LM_ERR("expression evaluation [%.*s] is null\n", exstr.len, exstr.s);
 		pp_ifexp_state(0);
 		goto end;
@@ -441,9 +447,10 @@ void pp_ifexp_eval(char *exval, int exlen)
 			b = 0;
 		}
 	} else if(result->type == SNE_OP_CONSTSTZ) {
-		if(result->param.stz.sval==NULL || strlen(result->param.stz.sval)==0) {
+		if(result->param.stz.sval == NULL
+				|| strlen(result->param.stz.sval) == 0) {
 			LM_DBG("expression string result: <%s>\n",
-					(result->param.stz.sval)?"empty":"null");
+					(result->param.stz.sval) ? "empty" : "null");
 			b = 0;
 		} else {
 			LM_DBG("expression string result: [%s]\n", result->param.stz.sval);
@@ -452,7 +459,7 @@ void pp_ifexp_eval(char *exval, int exlen)
 	}
 
 	LM_DBG("expression evaluation [%.*s] is [%s]\n", exstr.len, exstr.s,
-			(b)?"true":"false");
+			(b) ? "true" : "false");
 
 	pp_ifexp_state(b);
 
@@ -484,7 +491,7 @@ char *pp_defexp_eval(char *exval, int exlen, int qmode)
 
 	result = snexpr_eval(e);
 
-	if(result==NULL) {
+	if(result == NULL) {
 		LM_ERR("expression evaluation [%.*s] is null\n", exstr.len, exstr.s);
 		goto end;
 	}
@@ -492,11 +499,11 @@ char *pp_defexp_eval(char *exval, int exlen, int qmode)
 	if(result->type == SNE_OP_CONSTNUM) {
 		LM_DBG("expression number result: %g\n", result->param.num.nval);
 		sval.s = int2str((long)result->param.num.nval, &sval.len);
-		if(sval.s==NULL) {
+		if(sval.s == NULL) {
 			goto done;
 		}
 	} else if(result->type == SNE_OP_CONSTSTZ) {
-		if(result->param.stz.sval==NULL) {
+		if(result->param.stz.sval == NULL) {
 			LM_DBG("expression string result is null\n");
 			goto done;
 		}
@@ -505,20 +512,20 @@ char *pp_defexp_eval(char *exval, int exlen, int qmode)
 		sval.len = strlen(result->param.stz.sval);
 	}
 
-	if(qmode==1) {
-		res = (char*)pkg_malloc(sval.len + 3);
+	if(qmode == 1) {
+		res = (char *)pkg_malloc(sval.len + 3);
 	} else {
-		res = (char*)pkg_malloc(sval.len + 1);
+		res = (char *)pkg_malloc(sval.len + 1);
 	}
-	if(res==NULL) {
+	if(res == NULL) {
 		PKG_MEM_ERROR;
 		goto done;
 	}
-	if(qmode==1) {
+	if(qmode == 1) {
 		res[0] = '"';
-		memcpy(res, sval.s+1, sval.len);
-		res[sval.len+1] = '"';
-		res[sval.len+2] = '\0';
+		memcpy(res + 1, sval.s, sval.len);
+		res[sval.len + 1] = '"';
+		res[sval.len + 2] = '\0';
 		LM_DBG("expression quoted string result: [%s]\n", res);
 	} else {
 		memcpy(res, sval.s, sval.len);

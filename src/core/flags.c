@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -42,28 +42,33 @@
 static flag_t sflags = 0;
 
 
-int setflag( struct sip_msg* msg, flag_t flag ) {
+int setflag(struct sip_msg *msg, flag_t flag)
+{
 	msg->flags |= 1u << flag;
 	return 1;
 }
 
-int resetflag( struct sip_msg* msg, flag_t flag ) {
-	msg->flags &= ~ (1u << flag);
+int resetflag(struct sip_msg *msg, flag_t flag)
+{
+	msg->flags &= ~(1u << flag);
 	return 1;
 }
 
-int resetflags( struct sip_msg* msg, flag_t flags ) {
-	msg->flags &= ~ flags;
+int resetflags(struct sip_msg *msg, flag_t flags)
+{
+	msg->flags &= ~flags;
 	return 1;
 }
 
-int isflagset( struct sip_msg* msg, flag_t flag ) {
-	return (msg->flags & (1u<<flag)) ? 1 : -1;
+int isflagset(struct sip_msg *msg, flag_t flag)
+{
+	return (msg->flags & (1u << flag)) ? 1 : -1;
 }
 
-int flag_in_range( flag_t flag ) {
-	if (flag > MAX_FLAG ) {
-		LM_ERR("message flag %d too high; MAX=%d\n", flag, MAX_FLAG );
+int flag_in_range(flag_t flag)
+{
+	if(flag > MAX_FLAG) {
+		LM_ERR("message flag %d too high; MAX=%d\n", flag, MAX_FLAG);
 		return 0;
 	}
 	return 1;
@@ -86,14 +91,14 @@ int setsflag(flag_t flag)
 
 int resetsflag(flag_t flag)
 {
-	sflags &= ~ (1u << flag);
+	sflags &= ~(1u << flag);
 	return 1;
 }
 
 
 int issflagset(flag_t flag)
 {
-	return (sflags & (1u<<flag)) ? 1 : -1;
+	return (sflags & (1u << flag)) ? 1 : -1;
 }
 
 
@@ -104,54 +109,56 @@ flag_t getsflags(void)
 
 
 /* use 2^k */
-#define FLAGS_NAME_HASH_ENTRIES		32
+#define FLAGS_NAME_HASH_ENTRIES 32
 
-struct flag_entry{
-	struct flag_entry* next;
-	struct flag_entry* prev;
+struct flag_entry
+{
+	struct flag_entry *next;
+	struct flag_entry *prev;
 	str name;
 	int no;
 };
 
 
-struct flag_hash_head{
-	struct flag_entry* next;
-	struct flag_entry* prev;
+struct flag_hash_head
+{
+	struct flag_entry *next;
+	struct flag_entry *prev;
 };
 
-static struct flag_hash_head  name2flags[FLAGS_NAME_HASH_ENTRIES];
-static unsigned char registered_flags[MAX_FLAG+1];
+static struct flag_hash_head name2flags[FLAGS_NAME_HASH_ENTRIES];
+static unsigned char registered_flags[MAX_FLAG + 1];
 
 
 void init_named_flags()
 {
 	int r;
 
-	for (r=0; r<FLAGS_NAME_HASH_ENTRIES; r++)
+	for(r = 0; r < FLAGS_NAME_HASH_ENTRIES; r++)
 		clist_init(&name2flags[r], next, prev);
 }
-
 
 
 /* returns 0 on success, -1 on error */
 int check_flag(int n)
 {
-	if (!flag_in_range(n))
+	if(!flag_in_range(n))
 		return -1;
-	if (registered_flags[n]){
+	if(registered_flags[n]) {
 		LM_WARN("flag %d is already used by a named flag\n", n);
 	}
 	return 0;
 }
 
 
-inline static struct flag_entry* flag_search(struct flag_hash_head* lst,
-												char* name, int len)
+inline static struct flag_entry *flag_search(
+		struct flag_hash_head *lst, char *name, int len)
 {
-	struct flag_entry* fe;
+	struct flag_entry *fe;
 
-	clist_foreach(lst, fe, next){
-		if ((fe->name.len==len) && (memcmp(fe->name.s, name, len)==0)){
+	clist_foreach(lst, fe, next)
+	{
+		if((fe->name.len == len) && (memcmp(fe->name.s, name, len) == 0)) {
 			/* found */
 			return fe;
 		}
@@ -160,27 +167,24 @@ inline static struct flag_entry* flag_search(struct flag_hash_head* lst,
 }
 
 
-
 /* returns flag entry or 0 on not found */
-inline static struct flag_entry* get_flag_entry(char* name, int len)
+inline static struct flag_entry *get_flag_entry(char *name, int len)
 {
 	int h;
 	/* get hash */
-	h=get_hash1_raw(name, len) & (FLAGS_NAME_HASH_ENTRIES-1);
+	h = get_hash1_raw(name, len) & (FLAGS_NAME_HASH_ENTRIES - 1);
 	return flag_search(&name2flags[h], name, len);
 }
 
 
-
 /* returns flag number, or -1 on error */
-int get_flag_no(char* name, int len)
+int get_flag_no(char *name, int len)
 {
-	struct flag_entry* fe;
+	struct flag_entry *fe;
 
-	fe=get_flag_entry(name, len);
-	return (fe)?fe->no:-1;
+	fe = get_flag_entry(name, len);
+	return (fe) ? fe->no : -1;
 }
-
 
 
 /* resgiter a new flag name and associates it with pos
@@ -191,74 +195,73 @@ int get_flag_no(char* name, int len)
  *         -3  mem. alloc. failure
  *         -4  invalid pos
  *         -5 no free flags */
-int register_flag(char* name, int pos)
+int register_flag(char *name, int pos)
 {
-	struct flag_entry* e;
+	struct flag_entry *e;
 	int len;
 	unsigned int r;
-	static unsigned int crt_flag=0;
+	static unsigned int crt_flag = 0;
 	unsigned int last_flag;
 	unsigned int h;
 
-	len=strlen(name);
-	h=get_hash1_raw(name, len) & (FLAGS_NAME_HASH_ENTRIES-1);
+	len = strlen(name);
+	h = get_hash1_raw(name, len) & (FLAGS_NAME_HASH_ENTRIES - 1);
 	/* check if the name already exists */
-	e=flag_search(&name2flags[h], name, len);
-	if (e){
+	e = flag_search(&name2flags[h], name, len);
+	if(e) {
 		LM_ERR("flag %.*s already registered\n", len, name);
 		return -2;
 	}
 	/* check if there is already another flag registered at pos */
-	if (pos!=-1){
-		if ((pos<0) || (pos>MAX_FLAG)){
+	if(pos != -1) {
+		if((pos < 0) || (pos > MAX_FLAG)) {
 			LM_ERR("invalid flag %.*s position(%d)\n", len, name, pos);
 			return -4;
 		}
-		if (registered_flags[pos]!=0){
-			LM_WARN("%.*s:  flag %d already in use under another name\n",
-					len, name, pos);
+		if(registered_flags[pos] != 0) {
+			LM_WARN("%.*s:  flag %d already in use under another name\n", len,
+					name, pos);
 			/* continue */
 		}
-	}else{
+	} else {
 		/* alloc an empty flag */
-		last_flag=crt_flag+(MAX_FLAG+1);
-		for (; crt_flag!=last_flag; crt_flag++){
-			r=crt_flag%(MAX_FLAG+1);
-			if (registered_flags[r]==0){
-				pos=r;
+		last_flag = crt_flag + (MAX_FLAG + 1);
+		for(; crt_flag != last_flag; crt_flag++) {
+			r = crt_flag % (MAX_FLAG + 1);
+			if(registered_flags[r] == 0) {
+				pos = r;
 				break;
 			}
 		}
-		if (pos==-1){
+		if(pos == -1) {
 			LM_ERR("could not register %.*s - too many flags\n", len, name);
 			return -5;
 		}
 	}
 	registered_flags[pos]++;
 
-	e=pkg_malloc(sizeof(struct flag_entry));
-	if (e==0){
+	e = pkg_malloc(sizeof(struct flag_entry));
+	if(e == 0) {
 		PKG_MEM_ERROR;
 		return -3;
 	}
-	e->name.s=name;
-	e->name.len=len;
-	e->no=pos;
+	e->name.s = name;
+	e->name.len = len;
+	e->no = pos;
 	clist_insert(&name2flags[h], e, next, prev);
 	return pos;
 }
 
 
-
 /**
  *
  */
-int setxflag(struct sip_msg* msg, flag_t flag)
+int setxflag(struct sip_msg *msg, flag_t flag)
 {
 	uint32_t fi;
 	uint32_t fb;
-	fi = flag / (sizeof(flag_t)*CHAR_BIT);
-	fb = flag % (sizeof(flag_t)*CHAR_BIT);
+	fi = flag / (sizeof(flag_t) * CHAR_BIT);
+	fb = flag % (sizeof(flag_t) * CHAR_BIT);
 	msg->xflags[fi] |= 1u << fb;
 	return 1;
 }
@@ -266,24 +269,24 @@ int setxflag(struct sip_msg* msg, flag_t flag)
 /**
  *
  */
-int resetxflag(struct sip_msg* msg, flag_t flag)
+int resetxflag(struct sip_msg *msg, flag_t flag)
 {
 	uint32_t fi;
 	uint32_t fb;
-	fi = flag / (sizeof(flag_t)*CHAR_BIT);
-	fb = flag % (sizeof(flag_t)*CHAR_BIT);
-	msg->xflags[fi] &= ~ (1u << fb);
+	fi = flag / (sizeof(flag_t) * CHAR_BIT);
+	fb = flag % (sizeof(flag_t) * CHAR_BIT);
+	msg->xflags[fi] &= ~(1u << fb);
 	return 1;
 }
 
 /**
  *
  */
-int isxflagset(struct sip_msg* msg, flag_t flag)
+int isxflagset(struct sip_msg *msg, flag_t flag)
 {
 	uint32_t fi;
 	uint32_t fb;
-	fi = flag / (sizeof(flag_t)*CHAR_BIT);
-	fb = flag % (sizeof(flag_t)*CHAR_BIT);
-	return (msg->xflags[fi] & (1u<<fb)) ? 1 : -1;
+	fi = flag / (sizeof(flag_t) * CHAR_BIT);
+	fb = flag % (sizeof(flag_t) * CHAR_BIT);
+	return (msg->xflags[fi] & (1u << fb)) ? 1 : -1;
 }

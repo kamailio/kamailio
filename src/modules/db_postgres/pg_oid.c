@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -23,7 +23,7 @@
  */
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
 /** \file
@@ -40,9 +40,22 @@
 
 /** An array of supported PostgreSQL field types. */
 static char *pg_type_id_name[] = {
-		"bool", "bytea", "char", "int8", "int2", "int4", "text", "float4",
-		"float8", "inet", "bpchar", "varchar", "timestamp", "timestamptz",
-		"bit", "varbit",
+		"bool",
+		"bytea",
+		"char",
+		"int8",
+		"int2",
+		"int4",
+		"text",
+		"float4",
+		"float8",
+		"inet",
+		"bpchar",
+		"varchar",
+		"timestamp",
+		"timestamptz",
+		"bit",
+		"varbit",
 };
 
 

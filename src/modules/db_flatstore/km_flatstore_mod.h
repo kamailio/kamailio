@@ -1,4 +1,4 @@
-/* 
+/*
  * Flatstore module interface
  *
  * Copyright (C) 2004 FhG Fokus
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -37,14 +37,14 @@ extern int km_flat_pid;
 /*
  * Delmiter delimiting columns
  */
-extern char* km_flat_delimiter;
+extern char *km_flat_delimiter;
 
 
 /*
  * The timestamp of log rotation request from
  * the FIFO interface
  */
-extern time_t* km_flat_rotate;
+extern time_t *km_flat_rotate;
 
 
 /*

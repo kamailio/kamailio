@@ -53,36 +53,30 @@
 /* MESSAGE CREATION */
 
 AAAMessage *AAACreateRequest(AAAApplicationId app_id,
-							AAACommandCode command_code,
-							AAAMsgFlag flags,
-							AAASession *session);
-typedef AAAMessage* (*AAACreateRequest_f)(AAAApplicationId app_id,
-							AAACommandCode command_code,
-							AAAMsgFlag flags,
-							AAASession *session);
+		AAACommandCode command_code, AAAMsgFlag flags, AAASession *session);
+typedef AAAMessage *(*AAACreateRequest_f)(AAAApplicationId app_id,
+		AAACommandCode command_code, AAAMsgFlag flags, AAASession *session);
 
 AAAMessage *AAACreateResponse(AAAMessage *request);
-typedef AAAMessage* (*AAACreateResponse_f)(AAAMessage *request);
+typedef AAAMessage *(*AAACreateResponse_f)(AAAMessage *request);
 
 
-AAAMessage *AAANewMessage(
-		AAACommandCode commandCode,
-		AAAApplicationId appId,
-		AAASession *session,
-		AAAMessage *request);
+AAAMessage *AAANewMessage(AAACommandCode commandCode, AAAApplicationId appId,
+		AAASession *session, AAAMessage *request);
 
 AAAReturnCode AAAFreeAVPList(AAA_AVP_LIST *avpList);
-typedef AAAReturnCode  (*AAAFreeAVPList_f)(AAA_AVP_LIST *avpList);
+typedef AAAReturnCode (*AAAFreeAVPList_f)(AAA_AVP_LIST *avpList);
 
 
-
-AAAReturnCode AAASetMessageResultCode(AAAMessage *message,AAAResultCode resultCode);
+AAAReturnCode AAASetMessageResultCode(
+		AAAMessage *message, AAAResultCode resultCode);
 
 void AAAPrintMessage(AAAMessage *msg);
 
-AAAReturnCode AAABuildMsgBuffer(AAAMessage *msg );
+AAAReturnCode AAABuildMsgBuffer(AAAMessage *msg);
 
-AAAMessage* AAATranslateMessage(unsigned char* source,unsigned int sourceLen,int attach_buf );
+AAAMessage *AAATranslateMessage(
+		unsigned char *source, unsigned int sourceLen, int attach_buf);
 
 
 /* AVPS */
@@ -90,69 +84,49 @@ AAAMessage* AAATranslateMessage(unsigned char* source,unsigned int sourceLen,int
 /**
  * Create and add an AVP to the message, by duplicating the storage space
  */
-#define AAACreateAndAddAVPToMessage(_msg_,_code_,_flags_,_vdr_,_data_,_len_) \
-	( AAAAddAVPToMessage(_msg_, \
-	AAACreateAVP(_code_,_flags_,_vdr_,_data_,_len_, AVP_DUPLICATE_DATA),\
-	(_msg_)->avpList.tail) )
+#define AAACreateAndAddAVPToMessage(                            \
+		_msg_, _code_, _flags_, _vdr_, _data_, _len_)           \
+	(AAAAddAVPToMessage(_msg_,                                  \
+			AAACreateAVP(_code_, _flags_, _vdr_, _data_, _len_, \
+					AVP_DUPLICATE_DATA),                        \
+			(_msg_)->avpList.tail))
 
-AAA_AVP* AAACreateAVP(
-			AAA_AVPCode code,
-			AAA_AVPFlag flags,
-			AAAVendorId vendorId,
-			char *data,
-			size_t length,
-			AVPDataStatus data_status);
-typedef AAA_AVP* (*AAACreateAVP_f)(
-				AAA_AVPCode code,
-				AAA_AVPFlag flags,
-				AAAVendorId vendorId,
-				char *data,
-				size_t length,
-				AVPDataStatus data_status);
+AAA_AVP *AAACreateAVP(AAA_AVPCode code, AAA_AVPFlag flags, AAAVendorId vendorId,
+		char *data, size_t length, AVPDataStatus data_status);
+typedef AAA_AVP *(*AAACreateAVP_f)(AAA_AVPCode code, AAA_AVPFlag flags,
+		AAAVendorId vendorId, char *data, size_t length,
+		AVPDataStatus data_status);
 
-AAA_AVP* AAACloneAVP(AAA_AVP *avp,unsigned char duplicate_data);
+AAA_AVP *AAACloneAVP(AAA_AVP *avp, unsigned char duplicate_data);
 
 AAAReturnCode AAAAddAVPToMessage(
-			AAAMessage *msg,
-			AAA_AVP *avp,
-			AAA_AVP *position);
+		AAAMessage *msg, AAA_AVP *avp, AAA_AVP *position);
 typedef AAAReturnCode (*AAAAddAVPToMessage_f)(
-			AAAMessage *msg,
-			AAA_AVP *avp,
-			AAA_AVP *position);
+		AAAMessage *msg, AAA_AVP *avp, AAA_AVP *position);
 
 
-AAA_AVP *AAAFindMatchingAVP(
-			AAAMessage *msg,
-			AAA_AVP *startAvp,
-			AAA_AVPCode avpCode,
-			AAAVendorId vendorId,
-			AAASearchType searchType);
-typedef AAA_AVP* (*AAAFindMatchingAVP_f)(
-			AAAMessage *msg,
-			AAA_AVP *startAvp,
-			AAA_AVPCode avpCode,
-			AAAVendorId vendorId,
-			AAASearchType searchType);
+AAA_AVP *AAAFindMatchingAVP(AAAMessage *msg, AAA_AVP *startAvp,
+		AAA_AVPCode avpCode, AAAVendorId vendorId, AAASearchType searchType);
+typedef AAA_AVP *(*AAAFindMatchingAVP_f)(AAAMessage *msg, AAA_AVP *startAvp,
+		AAA_AVPCode avpCode, AAAVendorId vendorId, AAASearchType searchType);
 
-AAAReturnCode AAARemoveAVPFromMessage(AAAMessage *msg,AAA_AVP *avp);
+AAAReturnCode AAARemoveAVPFromMessage(AAAMessage *msg, AAA_AVP *avp);
 
 AAAReturnCode AAAFreeAVP(AAA_AVP **avp);
 typedef AAAReturnCode (*AAAFreeAVP_f)(AAA_AVP **avp);
 
 
-AAA_AVP* AAAGetFirstAVP(AAA_AVP_LIST *avpList);
+AAA_AVP *AAAGetFirstAVP(AAA_AVP_LIST *avpList);
 
-AAA_AVP* AAAGetLastAVP(AAA_AVP_LIST *avpList);
+AAA_AVP *AAAGetLastAVP(AAA_AVP_LIST *avpList);
 
-AAA_AVP* AAAGetNextAVP(AAA_AVP *avp);
-typedef AAA_AVP* (*AAAGetNextAVP_f)(AAA_AVP *avp);
+AAA_AVP *AAAGetNextAVP(AAA_AVP *avp);
+typedef AAA_AVP *(*AAAGetNextAVP_f)(AAA_AVP *avp);
 
 
-AAA_AVP* AAAGetPrevAVP(AAA_AVP *avp);
+AAA_AVP *AAAGetPrevAVP(AAA_AVP *avp);
 
-char *AAAConvertAVPToString(AAA_AVP *avp,char *dest,unsigned int destLen);
-
+char *AAAConvertAVPToString(AAA_AVP *avp, char *dest, unsigned int destLen);
 
 
 str AAAGroupAVPS(AAA_AVP_LIST avps);
@@ -162,50 +136,48 @@ AAA_AVP_LIST AAAUngroupAVPS(str buf);
 typedef AAA_AVP_LIST (*AAAUngroupAVPS_f)(str buf);
 
 
-AAA_AVP  *AAAFindMatchingAVPList(
-			AAA_AVP_LIST avpList,
-			AAA_AVP *startAvp,
-			AAA_AVPCode avpCode,
-			AAAVendorId vendorId,
-			AAASearchType searchType);
-typedef AAA_AVP  *(*AAAFindMatchingAVPList_f)(
-			AAA_AVP_LIST avpList,
-			AAA_AVP *startAvp,
-			AAA_AVPCode avpCode,
-			AAAVendorId vendorId,
-			AAASearchType searchType);
+AAA_AVP *AAAFindMatchingAVPList(AAA_AVP_LIST avpList, AAA_AVP *startAvp,
+		AAA_AVPCode avpCode, AAAVendorId vendorId, AAASearchType searchType);
+typedef AAA_AVP *(*AAAFindMatchingAVPList_f)(AAA_AVP_LIST avpList,
+		AAA_AVP *startAvp, AAA_AVPCode avpCode, AAAVendorId vendorId,
+		AAASearchType searchType);
 
 
-void AAAAddAVPToList(AAA_AVP_LIST *list,AAA_AVP *avp);
-typedef void (*AAAAddAVPToList_f)(AAA_AVP_LIST *list,AAA_AVP *avp);
+void AAAAddAVPToList(AAA_AVP_LIST *list, AAA_AVP *avp);
+typedef void (*AAAAddAVPToList_f)(AAA_AVP_LIST *list, AAA_AVP *avp);
 
 
 /* CALLBACKS */
 
 
-int AAAAddRequestHandler(AAARequestHandler_f *f,void *param);
-typedef int (*AAAAddRequestHandler_f)(AAARequestHandler_f *f,void *param);
+int AAAAddRequestHandler(AAARequestHandler_f *f, void *param);
+typedef int (*AAAAddRequestHandler_f)(AAARequestHandler_f *f, void *param);
 
-int AAAAddResponseHandler(AAAResponseHandler_f *f,void *param);
-typedef int (*AAAAddResponseHandler_f)(AAAResponseHandler_f *f,void *param);
+int AAAAddResponseHandler(AAAResponseHandler_f *f, void *param);
+typedef int (*AAAAddResponseHandler_f)(AAAResponseHandler_f *f, void *param);
 
 /* MESSAGE SENDING */
 
-AAAReturnCode AAASendMessage(AAAMessage *message,AAATransactionCallback_f *callback_f,void *callback_param);
-typedef AAAReturnCode (*AAASendMessage_f)(AAAMessage *message,AAATransactionCallback_f *callback_f,void *callback_param);
+AAAReturnCode AAASendMessage(AAAMessage *message,
+		AAATransactionCallback_f *callback_f, void *callback_param);
+typedef AAAReturnCode (*AAASendMessage_f)(AAAMessage *message,
+		AAATransactionCallback_f *callback_f, void *callback_param);
 
-AAAReturnCode AAASendMessageToPeer(AAAMessage *message,str *peer_id,AAATransactionCallback_f *callback_f,void *callback_param);
-typedef AAAReturnCode (*AAASendMessageToPeer_f)(AAAMessage *message,str *peer_id,AAATransactionCallback_f *callback_f,void *callback_param);
+AAAReturnCode AAASendMessageToPeer(AAAMessage *message, str *peer_id,
+		AAATransactionCallback_f *callback_f, void *callback_param);
+typedef AAAReturnCode (*AAASendMessageToPeer_f)(AAAMessage *message,
+		str *peer_id, AAATransactionCallback_f *callback_f,
+		void *callback_param);
 
-AAAMessage* AAASendRecvMessage(AAAMessage *msg);
-typedef AAAMessage* (*AAASendRecvMessage_f)(AAAMessage *msg);
+AAAMessage *AAASendRecvMessage(AAAMessage *msg);
+typedef AAAMessage *(*AAASendRecvMessage_f)(AAAMessage *msg);
 
-AAAMessage* AAASendRecvMessageToPeer(AAAMessage *msg, str *peer_id);
-typedef AAAMessage* (*AAASendRecvMessageToPeer_f)(AAAMessage *msg, str *peer_id);
+AAAMessage *AAASendRecvMessageToPeer(AAAMessage *msg, str *peer_id);
+typedef AAAMessage *(*AAASendRecvMessageToPeer_f)(
+		AAAMessage *msg, str *peer_id);
 
 AAAReturnCode AAAFreeMessage(AAAMessage **message);
 typedef AAAReturnCode (*AAAFreeMessage_f)(AAAMessage **message);
-
 
 
 #endif /*DIAMETER_API_H_*/

@@ -13,7 +13,7 @@ DECLARE_PROF_POINT(pa_handle_subscription)
 DECLARE_PROF_POINT(pa_timer_presentity)
 DECLARE_PROF_POINT(pa_timer_pdomain)
 DECLARE_PROF_POINT(pa_response_generation)
-	
+
 DECLARE_PROF_POINT(rls_handle_subscription)
 DECLARE_PROF_POINT(rls_timer_cb)
 DECLARE_PROF_POINT(rls_is_simple_rls_target)
@@ -30,7 +30,7 @@ DECLARE_PROF_POINT(b2b_handle_notify)
 /* do NOT use directly this */
 void ser_profile_init();
 
-#define SER_PROFILE_INIT	ser_profile_init();
+#define SER_PROFILE_INIT ser_profile_init();
 
 #else /* don't profile */
 

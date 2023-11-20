@@ -19,7 +19,13 @@ Ovidiu Sas
 
    <osas@voipembedded.com>
 
+Tyler Moore
+
+   <tmoore@dopensource.com>
+
    Copyright © 2008-2011 http://www.asipto.com
+
+   Copyright © 2023 Tyler Moore (devopsec), dOpenSource
      __________________________________________________________________
 
    Table of Contents
@@ -93,6 +99,8 @@ Ovidiu Sas
               6.11. htable.flush htable
               6.12. htable.listTables
               6.13. htable.stats
+              6.14. htable.dmqsync [htable]
+              6.15. htable.dmqresync htable
 
         7. Event routes
 
@@ -212,6 +220,8 @@ Chapter 1. Admin Guide
         6.11. htable.flush htable
         6.12. htable.listTables
         6.13. htable.stats
+        6.14. htable.dmqsync [htable]
+        6.15. htable.dmqresync htable
 
    7. Event routes
 
@@ -480,7 +490,7 @@ $ kamcmd htable.dump htable
        can be stored in a hash table, as long as there is enough free
        shared memory, new items can be added.
      * autoexpire -time in seconds to delete an item from a hash table if
-       no update was done to it. If is missing or set to 0, the items
+       no update was done to it. If it is missing or set to 0, the items
        won't expire.
      * dbtable - name of database to be loaded at startup in hash table.
        If empty or missing, no data will be loaded.
@@ -510,6 +520,35 @@ $ kamcmd htable.dump htable
        nodes (htable peers). Please note, module parameter “enable_dmq”
        must also be set in order for this to apply (see below). Default is
        0 (no replication).
+     * coldelim - the character delimeter to use when packing the htable.
+       When set, this parameter changes the column delimeter between
+       columns in a multiple column hash table. This can be useful when
+       loading JSON data types into a hash table as they conflict with the
+       default “,” delimeter, allowing these values to be parsed in the
+       routing config. See the example below on parsing a JSON array from
+       an htable with “;” as the column delimeter.
+...
+modparam("htable", "htable", "customer=>size=8;dbtable=customer;cols='dids,descr
+iption';coldelim=';'")
+...
+$avp(customer) = $sht(customer=>1);
+$var(customer_dids) = $(avp(customer){s.select,0,;});
+$var(customer_desc) = $(avp(customer){s.select,1,;});
+...
+     * colnull - the character to use when packing a NULL value into the
+       htable from the database. This parameter can be set to the empty
+       string or a single character. This can be used to simplify checking
+       a single column in a row for emptiness, in the routing config. The
+       example below shows how one would do that.
+...
+modparam("htable", "htable", "customer=>size=8;dbtable=customer;cols='name,descr
+iption';colnull=''")
+...
+$avp(customer) = $sht(customer=>1);
+$var(customer_name) = $(avp(customer){s.select,0,;});
+if (!strempty($var(customer_name))) {
+...
+}
 
    Default value is NULL.
 
@@ -769,7 +808,7 @@ sht_print();
 4.2.  sht_rm(htname, itname)
 
    Delete the item with the name 'itname' from hash table 'htname'. This
-   API function equivaluent to '$sht(htname=>itname) = $null'.
+   API function is equivalent to '$sht(htname=>itname) = $null'.
 
    This function can be used from ANY_ROUTE.
 
@@ -1123,6 +1162,8 @@ if(sht_match_str_value("ha", "eq", "alice")) {
    6.11. htable.flush htable
    6.12. htable.listTables
    6.13. htable.stats
+   6.14. htable.dmqsync [htable]
+   6.15. htable.dmqresync htable
 
 6.1.  htable.get htable key
 
@@ -1132,12 +1173,16 @@ if(sht_match_str_value("ha", "eq", "alice")) {
 
    Parameters:
      * htable : Name of the hash table to dump
-     * key : Key name of the hash table value to dump
+     * key : Key name of the hash table value to dump. Note: if key name
+       is an integer value, it should be prefixed with s:
 
    Example:
 ...
 # Dump $sht(students=>alice)
 kamcmd htable.get students alice
+
+# Dump $sht(students=>15)
+kamcmd htable.get students s:15
 
 # Dump first entry in array key course $sht(students=>course[0])
 kamcmd htable.get students course[0]
@@ -1151,12 +1196,16 @@ kamcmd htable.get students course[0]
 
    Parameters:
      * htable : Name of the hash table to delete
-     * key : Key name of the hash table value to delete
+     * key : Key name of the hash table value to delete. Note: if key name
+       is an integer value, it should be prefixed with s:
 
    Example:
 ...
 # Delete $sht(students=>alice)
 kamcmd htable.delete students alice
+
+# Delete $sht(students=>15)
+kamcmd htable.delete students s:15
 
 # Delete first entry in array key course $sht(students=>course[0])
 kamcmd htable.delete students course[0]
@@ -1170,13 +1219,17 @@ kamcmd htable.delete students course[0]
 
    Parameters:
      * htable : Name of the hash table
-     * key : Key name in the hash table
+     * key : Key name in the hash table. Note: if key name is an integer
+       value, it should be prefixed with s:
      * Value : String value for the item
 
    Example:
 ...
 # Set $sht(test=>x) as string
 kamcmd htable.sets test x abc
+
+# Set $sht(test=>5) as string
+kamcmd htable.sets test s:5 abc
 
 # Set firsti entry in array key x $sht(test=>x[0]) as string
 kamcmd htable.sets test x[0] abc
@@ -1190,13 +1243,17 @@ kamcmd htable.sets test x[0] abc
 
    Parameters:
      * htable : Name of the hash table
-     * key : Key name in the hash table
+     * key : Key name in the hash table. Note: if key name is an integer
+       value, it should be prefixed with s:
      * Value : Integer value for the item
 
    Example:
 ...
 # Set $sht(test=>x) as integer
 kamcmd htable.seti test x 123
+
+# Set $sht(test=>5) as integer
+kamcmd htable.seti test s:5 123
 
 # Set first entry in array key x $sht(test=>x[0]) as integer
 kamcmd htable.seti test x[0] 123
@@ -1210,13 +1267,17 @@ kamcmd htable.seti test x[0] 123
 
    Parameters:
      * htable : name of the hash table
-     * key : key name in the hash table
+     * key : key name in the hash table. Note: if key name is an integer
+       value, it should be prefixed with s:
      * expire : integer value for the expire (seconds)
 
    Example:
 ...
-# set  expire for $sht(test=>x) to 120 secs
-kamctl rpc htable.seti test x 120
+# set expire for $sht(test=>x) to 120 secs
+kamctl rpc htable.setex test x 120
+
+# set expire for $sht(test=>10) to 120 secs
+kamctl rpc htable.setex test s:10 120
 ...
 
 6.6.  htable.setxs htable key value expire
@@ -1227,7 +1288,8 @@ kamctl rpc htable.seti test x 120
 
    Parameters:
      * htable : name of the hash table
-     * key : key name in the hash table
+     * key : key name in the hash table. Note: if key name is an integer
+       value, it should be prefixed with s:
      * value : string value for the item
      * expire : integer value for the expire (seconds)
 
@@ -1235,6 +1297,9 @@ kamctl rpc htable.seti test x 120
 ...
 # set value to 'abc' and expire for $sht(test=>x) to 120 secs
 kamctl rpc htable.setxs test x abc 120
+
+# set value to 'abc' and expire for $sht(test=>10) to 120 secs
+kamctl rpc htable.setxs test s:10 abc 120
 ...
 
 6.7.  htable.setxi htable key value expire
@@ -1245,7 +1310,8 @@ kamctl rpc htable.setxs test x abc 120
 
    Parameters:
      * htable : name of the hash table
-     * key : key name in the hash table
+     * key : key name in the hash table. Note: if key name is an integer
+       value, it should be prefixed with s:
      * value : integer value for the item
      * expire : integer value for the expire (seconds)
 
@@ -1253,6 +1319,9 @@ kamctl rpc htable.setxs test x abc 120
 ...
 # set value to 10 and expire for $sht(test=>x) to 120 secs
 kamctl rpc htable.setxi test x 10 120
+
+# set value to 10 and expire for $sht(test=>5) to 120 secs
+kamctl rpc htable.setxi test s:5 10 120
 ...
 
 6.8.  htable.dump htable
@@ -1338,6 +1407,37 @@ kamcmd htable.listTables
    Example:
 ...
 kamcmd htable.stats
+...
+
+6.14.  htable.dmqsync [htable]
+
+   Perform a DMQ sync action.
+
+   Name: htable.dmqsync
+
+   Parameters:
+     * htable: name of the hash table to perform dmq sync for. If not
+       provided, sync is performed for all hash tables that have dmq sync
+       enabled.
+
+   Example:
+...
+kamcmd htable.dmqsync
+kamcmd htable.dmqsync ipban
+...
+
+6.15.  htable.dmqresync htable
+
+   Perform a resync action (flush and dmq sync).
+
+   Name: htable.dmqresync
+
+   Parameters:
+     * htable: name of the hash table to perform resync for.
+
+   Example:
+...
+kamcmd htable.dmqresync ipban
 ...
 
 7. Event routes

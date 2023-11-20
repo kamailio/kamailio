@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -30,63 +30,72 @@
 #ifndef _DP_DIALPLAN_H
 #define _DP_DIALPLAN_H
 
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 #include "../../core/pvar.h"
 #include "../../core/parser/msg_parser.h"
 
-#define DP_EQUAL_OP		0
-#define DP_REGEX_OP		1
-#define DP_FNMATCH_OP	2
+#define DP_EQUAL_OP 0
+#define DP_REGEX_OP 1
+#define DP_FNMATCH_OP 2
 
-#define MAX_REPLACE_WITH	10
+#define MAX_REPLACE_WITH 10
 
-#define DP_TFLAGS_PV_MATCH		(1 << 0)
-#define DP_TFLAGS_PV_SUBST		(1 << 1)
+#define DP_TFLAGS_PV_MATCH (1 << 0)
+#define DP_TFLAGS_PV_SUBST (1 << 1)
 
-typedef struct dpl_node {
-	int dpid;         /* dialplan id */
-	int pr;           /* priority */
-	int matchop;      /* matching operator */
-	int matchlen;     /* matching value length */
-	str match_exp;    /* match-first string */
-	str subst_exp;    /* match string with subtitution groupping */
-	str repl_exp;     /* replacement expression string */
-	pcre *match_comp; /* compiled matching expression */
-	pcre *subst_comp; /* compiled substitution expression */
+extern pcre2_general_context *dpl_gctx;
+extern pcre2_compile_context *dpl_ctx;
+
+typedef struct dpl_node
+{
+	int dpid;					  /* dialplan id */
+	int pr;						  /* priority */
+	int matchop;				  /* matching operator */
+	int matchlen;				  /* matching value length */
+	str match_exp;				  /* match-first string */
+	str subst_exp;				  /* match string with subtitution groupping */
+	str repl_exp;				  /* replacement expression string */
+	pcre2_code *match_comp;		  /* compiled matching expression */
+	pcre2_code *subst_comp;		  /* compiled substitution expression */
 	struct subst_expr *repl_comp; /* compiled replacement */
-	str attrs;        /* attributes string */
-	unsigned int tflags; /* flags for type of values for matching */
+	str attrs;					  /* attributes string */
+	unsigned int tflags;		  /* flags for type of values for matching */
 
-	struct dpl_node * next; /* next rule */
+	struct dpl_node *next; /* next rule */
 } dpl_node_t, *dpl_node_p;
 
 /*For every distinct length of a matching string*/
-typedef struct dpl_index{
+typedef struct dpl_index
+{
 	int len;
-	dpl_node_t * first_rule;
-	dpl_node_t * last_rule;
+	dpl_node_t *first_rule;
+	dpl_node_t *last_rule;
 
-	struct dpl_index * next; 
-}dpl_index_t, *dpl_index_p;
+	struct dpl_index *next;
+} dpl_index_t, *dpl_index_p;
 
 /*For every DPID*/
-typedef struct dpl_id{
+typedef struct dpl_id
+{
 	int dp_id;
-	dpl_index_t* first_index;/*fast access :rules with specific length*/
-	struct dpl_id * next;
-}dpl_id_t,*dpl_id_p;
+	dpl_index_t *first_index; /*fast access :rules with specific length*/
+	struct dpl_id *next;
+} dpl_id_t, *dpl_id_p;
 
 
-#define DP_VAL_INT		0
-#define DP_VAL_SPEC		1
+#define DP_VAL_INT 0
+#define DP_VAL_SPEC 1
 
-typedef struct dp_param{
+typedef struct dp_param
+{
 	int type;
-	union {
+	union
+	{
 		int id;
-		pv_spec_t* sp[2];
+		pv_spec_t *sp[2];
 	} v;
-}dp_param_t, *dp_param_p;
+} dp_param_t, *dp_param_p;
 
 int init_data();
 void destroy_data();
@@ -94,12 +103,12 @@ int dp_load_db();
 
 dpl_id_p select_dpid(int id);
 
-struct subst_expr* repl_exp_parse(str subst);
+struct subst_expr *repl_exp_parse(str subst);
 void repl_expr_free(struct subst_expr *se);
-int dp_translate_helper(sip_msg_t *msg, str *user_name, str *repl_user,
-		dpl_id_p idp, str *);
+int dp_translate_helper(
+		sip_msg_t *msg, str *user_name, str *repl_user, dpl_id_p idp, str *);
 int rule_translate(sip_msg_t *msg, str *instr, dpl_node_t *rule,
-		pcre *subst_comp, str *);
+		pcre2_code *subst_comp, str *);
 
-pcre *reg_ex_comp(const char *pattern, int *cap_cnt, int mtype);
+pcre2_code *reg_ex_comp(const char *pattern, int *cap_cnt, int mtype);
 #endif

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -27,20 +27,20 @@
 #define __CDS_SYNC_H
 
 #ifdef SER
-#	include <locking.h>
-#	define cds_mutex_t			gen_lock_t
-#	define cds_mutex_init(m)	lock_init(m)
-#	define cds_mutex_destroy(m)	lock_destroy(m)
-#	define cds_mutex_lock(m)	lock_get(m)
-#	define cds_mutex_unlock(m)	lock_release(m)
+#include <locking.h>
+#define cds_mutex_t gen_lock_t
+#define cds_mutex_init(m) lock_init(m)
+#define cds_mutex_destroy(m) lock_destroy(m)
+#define cds_mutex_lock(m) lock_get(m)
+#define cds_mutex_unlock(m) lock_release(m)
 #else
-#	include <pthread.h>
-#	include <stdlib.h>
-#	define cds_mutex_t				pthread_mutex_t
-#	define cds_mutex_init(m)		pthread_mutex_init(m, NULL)
-#	define cds_mutex_destroy(m)		pthread_mutex_destroy(m)
-#	define cds_mutex_lock(m)		pthread_mutex_lock(m)
-#	define cds_mutex_unlock(m)		pthread_mutex_unlock(m)
+#include <pthread.h>
+#include <stdlib.h>
+#define cds_mutex_t pthread_mutex_t
+#define cds_mutex_init(m) pthread_mutex_init(m, NULL)
+#define cds_mutex_destroy(m) pthread_mutex_destroy(m)
+#define cds_mutex_lock(m) pthread_mutex_lock(m)
+#define cds_mutex_unlock(m) pthread_mutex_unlock(m)
 #endif
 
 #endif

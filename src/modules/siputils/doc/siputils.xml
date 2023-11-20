@@ -43,7 +43,7 @@
 			<email>jan@iptel.org</email>
 		</address>
 		</author>
-		
+
 		<author>
 		<firstname>Daniel-Constantin</firstname>
 		<surname>Mierla</surname>
@@ -78,7 +78,7 @@
 			<email>jan@iptel.org</email>
 		</address>
 		</editor>
-		
+
 		<editor>
 		<firstname>Bogdan-Andrei</firstname>
 		<surname>Iancu</surname>
@@ -94,7 +94,7 @@
 		    <email>vasile@fokus.fraunhofer.de</email>
 		</address>
 	    	</editor>
-		
+
 	</authorgroup>
 	<copyright>
 		<year>2008</year>
@@ -107,8 +107,8 @@
 
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="siputils_admin.xml"/>
-	
-	
+
+
 </book>

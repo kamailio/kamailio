@@ -23,7 +23,7 @@
 	servers and a set of settings that apply to the specific connection.
 	</para>
 	<para>
-	The http_client module has multiple settings, some of them applies to
+	The http_client module has multiple settings, some of them apply to
 	a defined connection. You can set timeouts, max data sizes for download
 	and much more either using modparam settings or parameters to the
 	connection definition.
@@ -46,7 +46,7 @@
 	this module.
 	</para>
 	<para>
-	The http_client module use the CURL library setting up connections.
+	The http_client module uses the CURL library setting up connections.
 	The CURL library by default use the system configured DNS resolvers,
 	not the Kamailio resolver.
 	</para>
@@ -88,6 +88,13 @@
 
 	<section>
 		<title>Parameters</title>
+		<para>
+		The parameters are loaded in order. That can lead to unexpected behavior:
+		If httpcon is set at first, the default values for all other parameters are used,
+		and not the values that might be set after httpcon.
+		For example, if setting verify_peer=0 or verify_host=0 after httpcon,
+		the certificates are checked and self-signed certificates are rejected nevertheless.
+		</para>
 		<section id="http_client.p.httpredirect">
 			<title><varname>httpredirect</varname> (int)</title>
 			<para>
@@ -182,13 +189,12 @@ modparam("http_client", "maxdatasize", 2000)
 		<section id="http_client.p.connection_timeout">
 			<title><varname>connection_timeout</varname> (int)</title>
 			<para>
-			Defines in seconds how long &kamailio; waits for response
-			from servers.
+			Defines how long &kamailio; waits for response from servers.
+			Value is expressed in seconds or milliseconds, depending on parameter timeout_mode.
 			</para>
 			<para>
 			<emphasis>
-				Default value is zero, i.e.,
-				the timeout function is disabled.
+				Default value is 4 seconds.
 			</emphasis>
 			</para>
 			<example>
@@ -198,6 +204,34 @@ modparam("http_client", "maxdatasize", 2000)
 modparam("http_client", "connection_timeout", 2)
 ...
 				</programlisting>
+			</example>
+		</section>
+		<section id="http_client.p.timeout_mode">
+			<title><varname>timeout_mode</varname> (int)</title>
+			<para>
+			Defines if timeouts are enabled, and in which unit timeout values are expressed.
+			</para>
+			<para>
+			Valid values are:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para>0 - Timeouts are disabled.</para>
+			</listitem>
+			<listitem>
+				<para>1 - Timeout values are in seconds (default).</para>
+			</listitem>
+			<listitem>
+				<para>2 - Timeout values are in milliseconds.</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title>Set <varname>timeout_mode</varname> parameter</title>
+					<programlisting format="linespecific">
+...
+modparam("http_client", "timeout_mode", 1)
+...
+					</programlisting>
 			</example>
 		</section>
 		<section id="http_client.p.client_cert">
@@ -731,7 +765,7 @@ modparam("http_client", "netinterface", "eth0")
 				<title><function>http_connect()</function> usage</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
+modparam("http_client", "httpcon", "apiserver=>https://kamailio.org/api/");
 ...
 # POST Request
 $var(res) = http_connect("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
@@ -792,7 +826,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
 				<title><function>http_connect_raw()</function> usage</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
+modparam("http_client", "httpcon", "apiserver=>https://kamailio.org/api/");
 ...
 # POST Request
 $var(res) = http_connect_raw("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
@@ -863,7 +897,7 @@ http_get_redirect("apiserver", "$var(targeturl)");
 			the first line or the entire reply body (if any) is
 			stored in <quote>result</quote> parameter,
 			which must be a	writable pseudo	variable. See the query_result
-			parameter for controling what value to be stored in the result
+			parameter for controlling what value to be stored in the result
 			variable.
 			</para>
 			<para>

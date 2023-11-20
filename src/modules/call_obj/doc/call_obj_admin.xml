@@ -87,7 +87,7 @@ modparam("call_obj", "start", 10)
 			No default value. Not setting this parameter raises an error.
 		</emphasis>
 		</para>
-		<para>Its value shall be greater than zero.</para>		
+		<para>Its value shall be greater than zero.</para>
 		<example>
 			<title>Set <varname>end</varname> parameter</title>
 			<programlisting format="linespecific">
@@ -233,7 +233,7 @@ if (call_obj_free("$dlg_var(y)")) {
 			  <title><function>call_obj.list</function> usage</title>
 			  <programlisting format="linespecific">
 ...
-Show every call which duration is less than or equal to 24 seconds:				
+Show every call which duration is less than or equal to 24 seconds:
 &sercmd; call_obj.list 24
 
 Same but limit output to at most 5 calls:

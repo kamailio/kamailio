@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -76,7 +76,7 @@ int main(int argc, char** argv)
 	src=dst=0;
 	n=0;
 	use_diff_ssock=0;
-	
+
 	opterr=0;
 	while ((c=getopt(argc,argv, "l:p:d:s:n:2vhV"))!=-1){
 		switch(c){
@@ -197,7 +197,7 @@ int main(int argc, char** argv)
 		s_sock = socket(he->h_addrtype, SOCK_DGRAM, 0);
 	else
 		s_sock=sock;
-	
+
 	if ((sock==-1)||(s_sock==-1)){
 		fprintf(stderr, "ERROR: socket: %s\n", strerror(errno));
 		goto error;

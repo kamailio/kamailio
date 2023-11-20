@@ -16,7 +16,7 @@ clean_targets:=	clean proper distclean-old realclean maintainer-clean local-clea
 				clean-modules proper-modules realclean-modules \
 				distclean-modules maintainer-clean-modules \
 				clean-utils proper-utils realclean-utils distclean-utils \
-				maintaner-clean-utils \
+				maintainer-clean-utils \
 				clean-libs proper-libs realclean-libs distclean-libs \
 				maintainer-clean-libs \
 				clean-tmp clean_doxygen clean-extra-names \
@@ -26,7 +26,7 @@ doc_targets:=	README man install-doc install-man install-ser-man \
 		$(foreach m,$(modules_dirs),$(m)-doc $(m)-readme $(m)-man) \
 		$(foreach m,$(modules_dirs),install-$(m)-doc install-$(m)-man)
 
-# auxiliary: maintance, debugging, etc. (don't affect code/objects)
+# auxiliary: maintenance, debugging, etc. (don't affect code/objects)
 aux_targets:=	TAGS tar dist cfg-defs cfg config config.mak print-modules \
 		dbg dbinstall librpath.lst makecfg.lst modules.lst modules-cfg \
 		modules-list modules-lst mk-install_dirs autover.h deb
@@ -36,6 +36,6 @@ ext_targets:=	every-module modules-all $(modules_dirs) libs utils \
 		$(foreach m,$(modules_dirs),install-$(m)) \
 		install-share
 
-# all the targets that don't require code dependecies in the current dir.
+# all the targets that don't require code dependencies in the current dir.
 nodep_targets:=	$(clean_targets) $(doc_targets) $(aux_targets) $(ext_targets)
 

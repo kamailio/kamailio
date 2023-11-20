@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -150,7 +150,7 @@ xlog("stored value is $mct(test)"); # will return &lt;null&gt;
 		<title><varname>servers</varname> (str)</title>
 		<para>
 		The servers to connect to. At the moment only one server is supported.
-<!-- If more then one server is used they must be specified in the exact same order, otherwise
+<!-- If more than one server is used they must be specified in the exact same order, otherwise
      the hashing algorithm and the data access will not work. -->
 		</para>
 		<para>

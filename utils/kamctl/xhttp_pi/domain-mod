@@ -1,4 +1,4 @@
-	<!-- domain provisioning -->
+	<!-- domain provisionning -->
 	<mod><mod_name>domain</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>domain</db_table_id>
@@ -39,7 +39,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- domain_attrs provisioning -->
+	<!-- domain_attrs provisionning -->
 	<mod><mod_name>domain_attrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>domain_attrs</db_table_id>

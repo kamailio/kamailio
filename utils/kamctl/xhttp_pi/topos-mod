@@ -1,4 +1,4 @@
-	<!-- topos_d provisioning -->
+	<!-- topos_d provisionning -->
 	<mod><mod_name>topos_d</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>topos_d</db_table_id>
@@ -102,7 +102,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- topos_t provisioning -->
+	<!-- topos_t provisionning -->
 	<mod><mod_name>topos_t</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>topos_t</db_table_id>

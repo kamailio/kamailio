@@ -45,24 +45,22 @@
 
 
 /*! Which header fields should be skipped */
-#define tm_skip_hf(_hf) \
-	(((_hf)->type == HDR_FROM_T)  || \
-	((_hf)->type == HDR_TO_T)     || \
-	((_hf)->type == HDR_CALLID_T) || \
-	((_hf)->type == HDR_CSEQ_T))
+#define tm_skip_hf(_hf)                                       \
+	(((_hf)->type == HDR_FROM_T) || ((_hf)->type == HDR_TO_T) \
+			|| ((_hf)->type == HDR_CALLID_T) || ((_hf)->type == HDR_CSEQ_T))
 
 
 /* a forced_proto takes precedence if != PROTO_NONE */
-inline static enum sip_protos get_proto(enum sip_protos force_proto,
-										enum sip_protos proto)
+inline static enum sip_protos get_proto(
+		enum sip_protos force_proto, enum sip_protos proto)
 {
 	/* calculate transport protocol */
 	switch(force_proto) {
 		case PROTO_NONE: /* no protocol has been forced -- look at proto */
 			switch(proto) {
 				case PROTO_NONE: /* leave it to dns */
-						return PROTO_NONE;
-				case PROTO_UDP:/* transport specified explicitly */
+					return PROTO_NONE;
+				case PROTO_UDP: /* transport specified explicitly */
 #ifdef USE_TCP
 				case PROTO_TCP:
 				case PROTO_WS:
@@ -73,11 +71,11 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 #ifdef USE_SCTP
 				case PROTO_SCTP:
 #endif
-						return proto;
-				case PROTO_WSS:	/* should never see ;transport=wss */
+					return proto;
+				case PROTO_WSS: /* should never see ;transport=wss */
 				default:
-						LM_ERR("unsupported transport: %d\n", proto);
-						return PROTO_NONE;
+					LM_ERR("unsupported transport: %d\n", proto);
+					return PROTO_NONE;
 			}
 		case PROTO_UDP: /* some protocol has been forced -- take it */
 #ifdef USE_TCP
@@ -99,53 +97,49 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 }
 
 
-
 /*
  * Convert a URI into a proxy structure
  */
-inline static struct proxy_l *uri2proxy( str *uri, int proto )
+inline static struct proxy_l *uri2proxy(str *uri, int proto)
 {
 	struct sip_uri parsed_uri;
 	struct proxy_l *p;
 	enum sip_protos uri_proto;
 
-	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
-		LM_ERR("bad_uri: [%.*s]\n", uri->len, uri->s );
+	if(parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
+		LM_ERR("bad_uri: [%.*s]\n", uri->len, uri->s);
 		return 0;
 	}
 
-	if (parsed_uri.type==SIPS_URI_T){
-		if (parsed_uri.proto==PROTO_UDP) {
+	if(parsed_uri.type == SIPS_URI_T) {
+		if(parsed_uri.proto == PROTO_UDP) {
 			LM_ERR("bad transport for sips uri: %d\n", parsed_uri.proto);
 			return 0;
-		}else if (parsed_uri.proto != PROTO_WS)
-			uri_proto=PROTO_TLS;
+		} else if(parsed_uri.proto != PROTO_WS)
+			uri_proto = PROTO_TLS;
 		else
-			uri_proto=PROTO_WS;
-	}else
-		uri_proto=parsed_uri.proto;
+			uri_proto = PROTO_WS;
+	} else
+		uri_proto = parsed_uri.proto;
 #ifdef HONOR_MADDR
-	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
-		p = mk_proxy(&parsed_uri.maddr_val,
-				parsed_uri.port_no,
+	if(parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
+		p = mk_proxy(&parsed_uri.maddr_val, parsed_uri.port_no,
 				get_proto(proto, uri_proto));
-		if (p == 0) {
+		if(p == 0) {
 			LM_ERR("bad maddr param in URI <%.*s>\n", uri->len, ZSW(uri->s));
 			return 0;
 		}
 	} else
 #endif
-	p = mk_proxy(&parsed_uri.host,
-			parsed_uri.port_no,
-			get_proto(proto, uri_proto));
-	if (p == 0) {
+		p = mk_proxy(&parsed_uri.host, parsed_uri.port_no,
+				get_proto(proto, uri_proto));
+	if(p == 0) {
 		LM_ERR("bad host name in URI <%.*s>\n", uri->len, ZSW(uri->s));
 		return 0;
 	}
 
 	return p;
 }
-
 
 
 /*
@@ -159,44 +153,43 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
  *         comp - compression (if used)
  * returns 0 on success, < 0 on error
  */
-inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
-									char* proto, short* comp)
+inline static int get_uri_send_info(
+		str *uri, str *host, unsigned short *port, char *proto, short *comp)
 {
 	struct sip_uri parsed_uri;
 	enum sip_protos uri_proto;
 
-	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
-		LM_ERR("bad_uri: %.*s\n", uri->len, uri->s );
+	if(parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
+		LM_ERR("bad_uri: %.*s\n", uri->len, uri->s);
 		return -1;
 	}
 
-	if (parsed_uri.type==SIPS_URI_T){
-		if (parsed_uri.proto==PROTO_UDP) {
+	if(parsed_uri.type == SIPS_URI_T) {
+		if(parsed_uri.proto == PROTO_UDP) {
 			LM_ERR("bad transport for sips uri: %d\n", parsed_uri.proto);
 			return -1;
-		}else if (parsed_uri.proto != PROTO_WS)
-			uri_proto=PROTO_TLS;
+		} else if(parsed_uri.proto != PROTO_WS)
+			uri_proto = PROTO_TLS;
 		else
-			uri_proto=PROTO_WS;
-	}else
-		uri_proto=parsed_uri.proto;
+			uri_proto = PROTO_WS;
+	} else
+		uri_proto = parsed_uri.proto;
 
-	*proto= get_proto(*proto, uri_proto);
+	*proto = get_proto(*proto, uri_proto);
 #ifdef USE_COMP
-	*comp=parsed_uri.comp;
+	*comp = parsed_uri.comp;
 #endif
 #ifdef HONOR_MADDR
-	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
-		*host=parsed_uri.maddr_val;
+	if(parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
+		*host = parsed_uri.maddr_val;
 		LM_DBG("maddr dst: %.*s:%d\n", parsed_uri.maddr_val.len,
 				parsed_uri.maddr_val.s, parsed_uri.port_no);
 	} else
 #endif
-		*host=parsed_uri.host;
-	*port=parsed_uri.port_no;
+		*host = parsed_uri.host;
+	*port = parsed_uri.port_no;
 	return 0;
 }
-
 
 
 /*
@@ -220,107 +213,104 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
  * returns 0 on error, dst on success
  */
 #ifdef USE_DNS_FAILOVER
-inline static struct dest_info *uri2dst2(struct dns_srv_handle* dns_h,
-										struct dest_info* dst,
-										struct socket_info *force_send_socket,
-										snd_flags_t sflags,
-										str *uri, int proto )
+inline static struct dest_info *uri2dst2(struct dns_srv_handle *dns_h,
+		struct dest_info *dst, struct socket_info *force_send_socket,
+		snd_flags_t sflags, str *uri, int proto)
 #else
-inline static struct dest_info *uri2dst2(struct dest_info* dst,
-										struct socket_info *force_send_socket,
-										snd_flags_t sflags,
-										str *uri, int proto )
+inline static struct dest_info *uri2dst2(struct dest_info *dst,
+		struct socket_info *force_send_socket, snd_flags_t sflags, str *uri,
+		int proto)
 #endif
 {
 	struct sip_uri parsed_uri;
 	enum sip_protos uri_proto;
-	str* host;
+	str *host;
 #ifdef USE_DNS_FAILOVER
 	int ip_found;
 	union sockaddr_union to;
 	int err;
 #endif
 
-	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
-		LM_ERR("bad_uri: [%.*s]\n", uri->len, uri->s );
+	if(parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
+		LM_ERR("bad_uri: [%.*s]\n", uri->len, uri->s);
 		return 0;
 	}
 
-	if (parsed_uri.type==SIPS_URI_T){
-		if (parsed_uri.proto==PROTO_UDP) {
+	if(parsed_uri.type == SIPS_URI_T) {
+		if(parsed_uri.proto == PROTO_UDP) {
 			LM_ERR("bad transport for sips uri: %d\n", parsed_uri.proto);
 			return 0;
-		}else if (parsed_uri.proto!=PROTO_WS)
-			uri_proto=PROTO_TLS;
+		} else if(parsed_uri.proto != PROTO_WS)
+			uri_proto = PROTO_TLS;
 		else
-			uri_proto=PROTO_WS;
-	}else
-		uri_proto=parsed_uri.proto;
+			uri_proto = PROTO_WS;
+	} else
+		uri_proto = parsed_uri.proto;
 
 	init_dest_info(dst);
-	dst->proto= get_proto(proto, uri_proto);
+	dst->proto = get_proto(proto, uri_proto);
 #ifdef USE_COMP
-	dst->comp=parsed_uri.comp;
+	dst->comp = parsed_uri.comp;
 #endif
-	dst->send_flags=sflags;
+	dst->send_flags = sflags;
 #ifdef HONOR_MADDR
-	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
-		host=&parsed_uri.maddr_val;
+	if(parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
+		host = &parsed_uri.maddr_val;
 		LM_DBG("maddr dst: [%.*s:%d]\n", parsed_uri.maddr_val.len,
-								parsed_uri.maddr_val.s, parsed_uri.port_no);
+				parsed_uri.maddr_val.s, parsed_uri.port_no);
 	} else
 #endif
-		host=&parsed_uri.host;
+		host = &parsed_uri.host;
 #ifdef USE_DNS_FAILOVER
-	if (cfg_get(core, core_cfg, use_dns_failover) && dns_h){
-		ip_found=0;
-		do{
+	if(cfg_get(core, core_cfg, use_dns_failover) && dns_h) {
+		ip_found = 0;
+		do {
 			/* try all the ips until we find a good send socket */
-			err=dns_sip_resolve2su(dns_h, &to, host,
-								parsed_uri.port_no, &dst->proto, dns_flags);
-			if (err!=0){
-				if (ip_found==0){
-					if (err!=-E_DNS_EOR)
+			err = dns_sip_resolve2su(dns_h, &to, host, parsed_uri.port_no,
+					&dst->proto, dns_flags);
+			if(err != 0) {
+				if(ip_found == 0) {
+					if(err != -E_DNS_EOR)
 						LM_ERR("failed to resolve \"%.*s\" :"
-								"%s (%d)\n", host->len, ZSW(host->s),
-									dns_strerror(err), err);
+							   "%s (%d)\n",
+								host->len, ZSW(host->s), dns_strerror(err),
+								err);
 					return 0; /* error, no ip found */
 				}
 				break;
 			}
-			if (ip_found==0){
-				dst->to=to;
-				ip_found=1;
+			if(ip_found == 0) {
+				dst->to = to;
+				ip_found = 1;
 			}
-			dst->send_sock = get_send_socket2(force_send_socket, &to,
-												dst->proto, 0);
-			if (dst->send_sock){
-				dst->to=to;
+			dst->send_sock =
+					get_send_socket2(force_send_socket, &to, dst->proto, 0);
+			if(dst->send_sock) {
+				dst->to = to;
 				return dst; /* found a good one */
 			}
-		}while(dns_srv_handle_next(dns_h, err));
+		} while(dns_srv_handle_next(dns_h, err));
 		LM_ERR("no corresponding socket for \"%.*s\" af %d\n", host->len,
 				ZSW(host->s), dst->to.s.sa_family);
 		/* try to continue */
 		return dst;
 	}
 #endif
-	if (sip_hostport2su(&dst->to, host, parsed_uri.port_no, &dst->proto)!=0){
+	if(sip_hostport2su(&dst->to, host, parsed_uri.port_no, &dst->proto) != 0) {
 		LM_ERR("failed to resolve \"%.*s\"\n", host->len, ZSW(host->s));
 		return 0;
 	}
-	dst->send_sock = get_send_socket2(force_send_socket, &dst->to,
-										dst->proto, 0);
-	if (dst->send_sock==0) {
+	dst->send_sock =
+			get_send_socket2(force_send_socket, &dst->to, dst->proto, 0);
+	if(dst->send_sock == 0) {
 		LM_ERR("no corresponding socket found for \"%.*s\" af %d (%s:%s)\n",
-			host->len, ZSW(host->s), dst->to.s.sa_family,
-			proto2a(dst->proto), su2a(&dst->to, sizeof(dst->to)));
+				host->len, ZSW(host->s), dst->to.s.sa_family,
+				proto2a(dst->proto), su2a(&dst->to, sizeof(dst->to)));
 		/* ser_error = E_NO_SOCKET;*/
 		/* try to continue */
 	}
 	return dst;
 }
-
 
 
 /*
@@ -344,27 +334,24 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
  * returns 0 on error, dst on success
  */
 #ifdef USE_DNS_FAILOVER
-inline static struct dest_info *uri2dst(struct dns_srv_handle* dns_h,
-										struct dest_info* dst,
-										struct sip_msg *msg, str *uri,
-											int proto )
+inline static struct dest_info *uri2dst(struct dns_srv_handle *dns_h,
+		struct dest_info *dst, struct sip_msg *msg, str *uri, int proto)
 {
 	snd_flags_t sflags;
-	if (msg)
-		return uri2dst2(dns_h, dst, msg->force_send_socket,
-							msg->fwd_send_flags, uri, proto);
+	if(msg)
+		return uri2dst2(dns_h, dst, msg->force_send_socket, msg->fwd_send_flags,
+				uri, proto);
 	SND_FLAGS_INIT(&sflags);
 	return uri2dst2(dns_h, dst, 0, sflags, uri, proto);
 }
 #else
-inline static struct dest_info *uri2dst(struct dest_info* dst,
-										struct sip_msg *msg, str *uri,
-											int proto )
+inline static struct dest_info *uri2dst(
+		struct dest_info *dst, struct sip_msg *msg, str *uri, int proto)
 {
 	snd_flags_t sflags;
-	if (msg)
-		return uri2dst2(dst, msg->force_send_socket, msg->fwd_send_flags,
-						uri, proto);
+	if(msg)
+		return uri2dst2(
+				dst, msg->force_send_socket, msg->fwd_send_flags, uri, proto);
 	SND_FLAGS_INIT(&sflags);
 	return uri2dst2(dst, 0, sflags, uri, proto);
 }

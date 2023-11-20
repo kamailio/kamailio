@@ -32,14 +32,17 @@
 #include "../mem/mem.h"
 #include "parse_option_tags.h"
 
-#define get_supported(p_msg) \
-	((p_msg)->supported ? ((struct option_tag_body*)(p_msg)->supported->parsed)->option_tags_all : 0)
+#define get_supported(p_msg)                                                 \
+	((p_msg)->supported                                                      \
+					? ((struct option_tag_body *)(p_msg)->supported->parsed) \
+							  ->option_tags_all                              \
+					: 0)
 
 
 /*!
  * Parse all Supported headers.
  */
-int parse_supported( struct sip_msg *msg);
+int parse_supported(struct sip_msg *msg);
 
 
 void free_supported(struct option_tag_body **sb);

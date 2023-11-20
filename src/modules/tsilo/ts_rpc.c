@@ -25,40 +25,35 @@
 #include "ts_rpc.h"
 
 
-static const char* rpc_tsilo_dump_doc[2] = {
-	"Dump tsilo transactions table",
-	0
-};
+static const char *rpc_tsilo_dump_doc[2] = {"Dump tsilo transactions table", 0};
 
 
-static const char* rpc_tsilo_lookup_doc[2] = {
-	"Lookup one R-URI in the tsilo transactions table",
-	0
-};
+static const char *rpc_tsilo_lookup_doc[2] = {
+		"Lookup one R-URI in the tsilo transactions table", 0};
 
 /************************ helper functions ****************************/
 
 /*!
  * \brief Add a node for a transaction
  */
-static inline int rpc_dump_transaction(rpc_t* rpc, void* ctx, void *ih, ts_transaction_t* t)
+static inline int rpc_dump_transaction(
+		rpc_t *rpc, void *ctx, void *ih, ts_transaction_t *t)
 {
-	void* vh;
+	void *vh;
 
-	if(t==NULL)
+	if(t == NULL)
 		return -1;
 
-	if(rpc->struct_add(ih, "{", "Transaction", &vh)<0)
-	{
+	if(rpc->struct_add(ih, "{", "Transaction", &vh) < 0) {
 		rpc->fault(ctx, 500, "Internal error creating transaction struct");
 		return -1;
 	}
-	if(rpc->struct_add(vh, "d", "Tindex", t->tindex)<0) {
+	if(rpc->struct_add(vh, "d", "Tindex", t->tindex) < 0) {
 		rpc->fault(ctx, 500, "Internal error adding tindex");
 		return -1;
 	}
 
-	if(rpc->struct_add(vh, "d", "Tlabel", t->tlabel)<0) {
+	if(rpc->struct_add(vh, "d", "Tlabel", t->tlabel) < 0) {
 		rpc->fault(ctx, 500, "Internal error adding tlabel");
 		return -1;
 	}
@@ -76,72 +71,64 @@ static inline int rpc_dump_transaction(rpc_t* rpc, void* ctx, void *ih, ts_trans
  */
 static void rpc_tsilo_dump(rpc_t *rpc, void *c)
 {
-	ts_transaction_t* trans = NULL;
-	struct ts_urecord* record = NULL;
-	struct ts_entry* entry = NULL;
+	ts_transaction_t *trans = NULL;
+	struct ts_urecord *record = NULL;
+	struct ts_entry *entry = NULL;
 
 	str brief = {0, 0};
 
 	int max, res, n, ntrans, i;
 	int short_dump = 0;
 
-	void* th;
-	void* ah;
-	void* ih;
-	void* sh;
+	void *th;
+	void *ah;
+	void *ih;
+	void *sh;
 
 	rpc->scan(c, "*S", &brief);
 
-	if(brief.len==5 && (strncmp(brief.s, "brief", 5)==0))
+	if(brief.len == 5 && (strncmp(brief.s, "brief", 5) == 0))
 		/* short version */
 		short_dump = 1;
 
-	if (rpc->add(c, "{", &th) < 0)
-	{
+	if(rpc->add(c, "{", &th) < 0) {
 		rpc->fault(c, 500, "Internal error creating top rpc");
 		return;
 	}
 
-	if (short_dump==0) {
-		res = rpc->struct_add(th, "d{",
-			"Size",		t_table->size,
-			"R-URIs",	&ah);
+	if(short_dump == 0) {
+		res = rpc->struct_add(th, "d{", "Size", t_table->size, "R-URIs", &ah);
 	} else {
-		res = rpc->struct_add(th, "d",
-			"Size",		t_table->size);
+		res = rpc->struct_add(th, "d", "Size", t_table->size);
 	}
-	if (res<0)
-	{
+	if(res < 0) {
 		rpc->fault(c, 500, "Internal error creating inner struct");
 		return;
 	}
 
 	/* add the entries per hash */
-	for(i=0,n=0,max=0,ntrans=0; i<t_table->size; i++) {
+	for(i = 0, n = 0, max = 0, ntrans = 0; i < t_table->size; i++) {
 		lock_entry(&t_table->entries[i]);
 		entry = &t_table->entries[i];
 
 		n += entry->n;
-		if(max<entry->n)
-			max= entry->n;
-		for( record = entry->first ; record ; record=record->next ) {
+		if(max < entry->n)
+			max = entry->n;
+		for(record = entry->first; record; record = record->next) {
 			/* add entry */
-			if(short_dump==0)
-			{
-				if(rpc->struct_add(ah, "Sd{",
-					"R-URI", &record->ruri,
-					"Hash", record->rurihash,
-					"Transactions", &ih)<0)
-				{
+			if(short_dump == 0) {
+				if(rpc->struct_add(ah, "Sd{", "R-URI", &record->ruri, "Hash",
+						   record->rurihash, "Transactions", &ih)
+						< 0) {
 					unlock_entry(&t_table->entries[i]);
 					rpc->fault(c, 500, "Internal error creating ruri struct");
 					return;
 				}
 			}
-			for( trans=record->transactions ; trans ; trans=trans->next) {
+			for(trans = record->transactions; trans; trans = trans->next) {
 				ntrans += 1;
-				if (short_dump==0) {
-					if (rpc_dump_transaction(rpc, c, ih, trans) == -1) {
+				if(short_dump == 0) {
+					if(rpc_dump_transaction(rpc, c, ih, trans) == -1) {
 						unlock_entry(&t_table->entries[i]);
 						return;
 					}
@@ -152,15 +139,13 @@ static void rpc_tsilo_dump(rpc_t *rpc, void *c)
 	}
 
 	/* extra attributes node */
-	if(rpc->struct_add(th, "{", "Stats",    &sh)<0)	{
+	if(rpc->struct_add(th, "{", "Stats", &sh) < 0) {
 		rpc->fault(c, 500, "Internal error creating stats struct");
 		return;
 	}
-	if(rpc->struct_add(sh, "ddd",
-		"RURIs", n,
-		"Max-Slots", max,
-		"Transactions", ntrans)<0)
-	{
+	if(rpc->struct_add(
+			   sh, "ddd", "RURIs", n, "Max-Slots", max, "Transactions", ntrans)
+			< 0) {
 		rpc->fault(c, 500, "Internal error adding stats");
 		return;
 	}
@@ -172,16 +157,16 @@ static void rpc_tsilo_dump(rpc_t *rpc, void *c)
  */
 static void rpc_tsilo_lookup(rpc_t *rpc, void *c)
 {
-	ts_transaction_t* trans;
-	struct ts_urecord* record;
+	ts_transaction_t *trans;
+	struct ts_urecord *record;
 
 	str ruri = {0, 0};
 
 	int res;
 
-	void* th;
+	void *th;
 
-	if (rpc->scan(c, "S", &ruri) != 1) {
+	if(rpc->scan(c, "S", &ruri) != 1) {
 		rpc->fault(c, 500, "No RURI to lookup specified");
 		return;
 	}
@@ -190,22 +175,21 @@ static void rpc_tsilo_lookup(rpc_t *rpc, void *c)
 
 	/* look for urecord */
 	res = get_ts_urecord(&ruri, &record);
-	if (res) {
+	if(res) {
 		unlock_entry_by_ruri(&ruri);
 		rpc->fault(c, 404, "RURI not found in tsilo table");
 		return;
 	}
 
-	if (rpc->add(c, "{", &th) < 0)
-	{
+	if(rpc->add(c, "{", &th) < 0) {
 		unlock_entry_by_ruri(&ruri);
 		rpc->fault(c, 500, "Internal error creating top rpc");
 		return;
 	}
 
 	/* add the transactions */
-	for( trans=record->transactions ; trans ; trans=trans->next) {
-		if (rpc_dump_transaction(rpc, c, th, trans) == -1) {
+	for(trans = record->transactions; trans; trans = trans->next) {
+		if(rpc_dump_transaction(rpc, c, th, trans) == -1) {
 			unlock_entry_by_ruri(&ruri);
 			return;
 		}
@@ -215,8 +199,5 @@ static void rpc_tsilo_lookup(rpc_t *rpc, void *c)
 }
 
 rpc_export_t rpc_methods[] = {
-	{ "ts.dump",	rpc_tsilo_dump,		rpc_tsilo_dump_doc,		0 },
-	{ "ts.lookup",	rpc_tsilo_lookup,	rpc_tsilo_lookup_doc,	0 },
-    { 0, 0, 0, 0}
-};
-
+		{"ts.dump", rpc_tsilo_dump, rpc_tsilo_dump_doc, 0},
+		{"ts.lookup", rpc_tsilo_lookup, rpc_tsilo_lookup_doc, 0}, {0, 0, 0, 0}};

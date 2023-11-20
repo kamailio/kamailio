@@ -7,17 +7,19 @@
 #include <cds/ref_cntr.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-	
-typedef struct _qsa_subscription_params_t {
-	str_t name;
-	str_t value; /* whatever */
-	char buf[1];
-} qsa_subscription_params_t;
+
+	typedef struct _qsa_subscription_params_t
+	{
+		str_t name;
+		str_t value; /* whatever */
+		char buf[1];
+	} qsa_subscription_params_t;
 
 #ifdef __cplusplus
 }
 #endif
-	
+
 #endif

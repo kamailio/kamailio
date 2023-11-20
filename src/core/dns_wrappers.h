@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -31,7 +31,8 @@
 #ifndef __dns_wrappers_h
 #define __dns_wrappers_h
 
-struct hostent* dns_resolvehost(char* name);
-struct hostent* dns_sip_resolvehost(str* name, unsigned short* port, char* proto);
+struct hostent *dns_resolvehost(char *name);
+struct hostent *dns_sip_resolvehost(
+		str *name, unsigned short *port, char *proto);
 
 #endif

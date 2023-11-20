@@ -29,17 +29,16 @@
  */
 
 
-
 #include "parse_expires.h"
-#include <stdio.h>          /* printf */
-#include "../mem/mem.h"     /* pkg_malloc, pkg_free */
+#include <stdio.h>		/* printf */
+#include "../mem/mem.h" /* pkg_malloc, pkg_free */
 #include "../dprint.h"
-#include "../trim.h"        /* trim_leading */
-#include <string.h>         /* memset */
+#include "../trim.h" /* trim_leading */
+#include <string.h>	 /* memset */
 #include "../ut.h"
 
 
-static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
+static inline int expires_parser(char *_s, int _l, exp_body_t *_e)
 {
 	int i;
 	str tmp;
@@ -49,7 +48,7 @@ static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
 
 	trim(&tmp);
 
-	if (tmp.len == 0) {
+	if(tmp.len == 0) {
 		LM_ERR("Empty body\n");
 		_e->valid = 0;
 		return -1;
@@ -58,14 +57,14 @@ static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
 	_e->text.s = tmp.s;
 	_e->text.len = tmp.len;
 
-	/* more then 32bit/maxuint cant be valid */
-	if (tmp.len > 10) {
+	/* more than 32bit/maxuint can't be valid */
+	if(tmp.len > 10) {
 		_e->valid = 0;
 		return 0;
 	}
 
 	for(i = 0; i < tmp.len; i++) {
-		if ((tmp.s[i] >= '0') && (tmp.s[i] <= '9')) {
+		if((tmp.s[i] >= '0') && (tmp.s[i] <= '9')) {
 			_e->val *= 10;
 			_e->val += tmp.s[i] - '0';
 		} else {
@@ -100,29 +99,29 @@ static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
 /*! \brief
  * Parse expires header field body
  */
-int parse_expires(struct hdr_field* _h)
+int parse_expires(struct hdr_field *_h)
 {
-	exp_body_t* e;
+	exp_body_t *e;
 
-	if (_h->parsed) {
-		return 0;  /* Already parsed */
+	if(_h->parsed) {
+		return 0; /* Already parsed */
 	}
 
-	e = (exp_body_t*)pkg_malloc(sizeof(exp_body_t));
-	if (e == 0) {
+	e = (exp_body_t *)pkg_malloc(sizeof(exp_body_t));
+	if(e == 0) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 
 	memset(e, 0, sizeof(exp_body_t));
 
-	if (expires_parser(_h->body.s, _h->body.len, e) < 0) {
+	if(expires_parser(_h->body.s, _h->body.len, e) < 0) {
 		LM_ERR("Error while parsing\n");
 		pkg_free(e);
 		return -2;
 	}
 
-	_h->parsed = (void*)e;
+	_h->parsed = (void *)e;
 	return 0;
 }
 
@@ -130,7 +129,7 @@ int parse_expires(struct hdr_field* _h)
 /*! \brief
  * Free all memory associated with exp_body_t
  */
-void free_expires(exp_body_t** _e)
+void free_expires(exp_body_t **_e)
 {
 	pkg_free(*_e);
 	*_e = 0;
@@ -140,7 +139,7 @@ void free_expires(exp_body_t** _e)
 /*! \brief
  * Print exp_body_t content, for debugging only
  */
-void print_expires(exp_body_t* _e)
+void print_expires(exp_body_t *_e)
 {
 	printf("===Expires===\n");
 	printf("text: \'%.*s\'\n", _e->text.len, ZSW(_e->text.s));

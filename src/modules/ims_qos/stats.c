@@ -3,23 +3,23 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +37,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  *
  *
  * History:
@@ -50,14 +50,16 @@
 
 #include "stats.h"
 
-int register_stats() {
+int register_stats()
+{
 	//AAR
-	if (register_stat(MOD_NAME, "aar_replies_response_time", &aar_replies_response_time,0 )
+	if(register_stat(MOD_NAME, "aar_replies_response_time",
+			   &aar_replies_response_time, 0)
 			!= 0) {
 		LM_ERR("failed to register stat\n");
 		return -1;
 	}
-	if (register_stat(MOD_NAME, "aar_replies_received", &aar_replies_received, 0)
+	if(register_stat(MOD_NAME, "aar_replies_received", &aar_replies_received, 0)
 			!= 0) {
 		LM_ERR("failed to register stat\n");
 		return -1;
@@ -66,11 +68,12 @@ int register_stats() {
 	return 1;
 }
 
-unsigned long get_avg_aar_response_time() {
+unsigned long get_avg_aar_response_time()
+{
 
 	long rpls_received = get_stat_val(aar_replies_received);
-	if (!rpls_received)
+	if(!rpls_received)
 		return 0;
 
-	return get_stat_val(aar_replies_response_time)/rpls_received;
+	return get_stat_val(aar_replies_response_time) / rpls_received;
 }

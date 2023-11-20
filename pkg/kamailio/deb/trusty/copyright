@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Kamailio
 Upstream-Contact: sr-dev@lists.kamailio.org
-Source: http://www.kamailio.org/pub/kamailio/
+Source: https://www.kamailio.org/pub/kamailio/
 
 Files: *
 Copyright:

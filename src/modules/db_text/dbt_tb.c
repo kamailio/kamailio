@@ -43,14 +43,13 @@
 dbt_column_p dbt_column_new(char *_s, int _l)
 {
 	dbt_column_p dcp = NULL;
-	if(!_s || _l <=0)
+	if(!_s || _l <= 0)
 		return NULL;
 	dcp = (dbt_column_p)shm_malloc(sizeof(dbt_column_t));
 	if(!dcp)
 		return NULL;
-	dcp->name.s  = (char*)shm_malloc((_l+1)*sizeof(char));
-	if(!dcp->name.s)
-	{
+	dcp->name.s = (char *)shm_malloc((_l + 1) * sizeof(char));
+	if(!dcp->name.s) {
 		shm_free(dcp);
 		return NULL;
 	}
@@ -91,14 +90,13 @@ dbt_row_p dbt_row_new(int _nf)
 	if(!_drp)
 		return NULL;
 
-	_drp->fields = (dbt_val_p)shm_malloc(_nf*sizeof(dbt_val_t));
-	if(!_drp->fields)
-	{
+	_drp->fields = (dbt_val_p)shm_malloc(_nf * sizeof(dbt_val_t));
+	if(!_drp->fields) {
 		shm_free(_drp);
 		return NULL;
 	}
-	memset(_drp->fields, 0, _nf*sizeof(dbt_val_t));
-	for(i=0; i<_nf; i++)
+	memset(_drp->fields, 0, _nf * sizeof(dbt_val_t));
+	for(i = 0; i < _nf; i++)
 		_drp->fields[i].nul = 1;
 
 	_drp->next = _drp->prev = NULL;
@@ -116,11 +114,11 @@ int dbt_row_free(dbt_table_p _dtp, dbt_row_p _drp)
 	if(!_dtp || !_drp)
 		return -1;
 
-	if(_drp->fields)
-	{
-		for(i=0; i<_dtp->nrcols; i++)
-			if((_dtp->colv[i]->type==DB1_STR || _dtp->colv[i]->type==DB1_STRING
-						|| _dtp->colv[i]->type==DB1_BLOB)
+	if(_drp->fields) {
+		for(i = 0; i < _dtp->nrcols; i++)
+			if((_dtp->colv[i]->type == DB1_STR
+					   || _dtp->colv[i]->type == DB1_STRING
+					   || _dtp->colv[i]->type == DB1_BLOB)
 					&& _drp->fields[i].val.str_val.s)
 				shm_free(_drp->fields[i].val.str_val.s);
 		shm_free(_drp->fields);
@@ -133,7 +131,8 @@ int dbt_row_free(dbt_table_p _dtp, dbt_row_p _drp)
 /**
  *
  */
-dbt_table_p dbt_table_new(const str *_tbname, const str *_dbname, const char *path)
+dbt_table_p dbt_table_new(
+		const str *_tbname, const str *_dbname, const char *path)
 {
 	struct stat s;
 	dbt_table_p dtp = NULL;
@@ -144,9 +143,8 @@ dbt_table_p dbt_table_new(const str *_tbname, const str *_dbname, const char *pa
 	if(!dtp)
 		goto done;
 	memset(dtp, 0, sizeof(dbt_table_t));
-	dtp->name.s = (char*)shm_malloc((_tbname->len+1)*sizeof(char));
-	if(!dtp->name.s)
-	{
+	dtp->name.s = (char *)shm_malloc((_tbname->len + 1) * sizeof(char));
+	if(!dtp->name.s) {
 		shm_free(dtp);
 		dtp = NULL;
 		goto done;
@@ -155,9 +153,8 @@ dbt_table_p dbt_table_new(const str *_tbname, const str *_dbname, const char *pa
 	dtp->name.s[_tbname->len] = '\0';
 	dtp->name.len = _tbname->len;
 
-	dtp->dbname.s = (char*)shm_malloc((_dbname->len+1)*sizeof(char));
-	if(!dtp->dbname.s)
-	{
+	dtp->dbname.s = (char *)shm_malloc((_dbname->len + 1) * sizeof(char));
+	if(!dtp->dbname.s) {
 		shm_free(dtp->name.s);
 		shm_free(dtp);
 		dtp = NULL;
@@ -175,8 +172,7 @@ dbt_table_p dbt_table_new(const str *_tbname, const str *_dbname, const char *pa
 	dtp->nrrows = dtp->nrcols = dtp->auto_val = 0;
 	dtp->auto_col = -1;
 	dtp->mt = 0;
-	if(path && stat(path, &s) == 0)
-	{
+	if(path && stat(path, &s) == 0) {
 		dtp->mt = s.st_mtime;
 		LM_DBG("mtime is %d\n", (int)s.st_mtime);
 	}
@@ -190,15 +186,14 @@ done:
  */
 int dbt_table_free_rows(dbt_table_p _dtp)
 {
-	dbt_row_p _rp=NULL, _rp0=NULL;
+	dbt_row_p _rp = NULL, _rp0 = NULL;
 
 	if(!_dtp || !_dtp->rows || !_dtp->colv)
 		return -1;
 	_rp = _dtp->rows;
-	while(_rp)
-	{
-		_rp0=_rp;
-		_rp=_rp->next;
+	while(_rp) {
+		_rp0 = _rp;
+		_rp = _rp->next;
 		dbt_row_free(_dtp, _rp0);
 	}
 
@@ -237,7 +232,7 @@ int dbt_table_add_row(dbt_table_p _dtp, dbt_row_p _drp)
  */
 int dbt_table_free(dbt_table_p _dtp)
 {
-	dbt_column_p _cp=NULL, _cp0=NULL;
+	dbt_column_p _cp = NULL, _cp0 = NULL;
 
 	if(!_dtp)
 		return -1;
@@ -247,14 +242,13 @@ int dbt_table_free(dbt_table_p _dtp)
 	if(_dtp->dbname.s)
 		shm_free(_dtp->dbname.s);
 
-	if(_dtp->rows && _dtp->nrrows>0)
+	if(_dtp->rows && _dtp->nrrows > 0)
 		dbt_table_free_rows(_dtp);
 
 	_cp = _dtp->cols;
-	while(_cp)
-	{
-		_cp0=_cp;
-		_cp=_cp->next;
+	while(_cp) {
+		_cp0 = _cp;
+		_cp = _cp->next;
 		dbt_column_free(_cp0);
 	}
 	if(_dtp->colv)
@@ -270,68 +264,66 @@ int dbt_table_free(dbt_table_p _dtp)
  */
 int dbt_row_set_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 {
-	if(!_drp || !_vp || _idx<0)
+	if(!_drp || !_vp || _idx < 0)
 		return -1;
 
 	_drp->fields[_idx].nul = _vp->nul;
 	_drp->fields[_idx].type = _t;
 
-	if(!_vp->nul)
-	{
-		switch(_t)
-		{
+	if(!_vp->nul) {
+		switch(_t) {
 			case DB1_STR:
 			case DB1_BLOB:
 				_drp->fields[_idx].type = _t;
-				_drp->fields[_idx].val.str_val.s =
-					(char*)shm_malloc((_vp->val.str_val.len+1)*sizeof(char));
-				if(!_drp->fields[_idx].val.str_val.s)
-				{
+				_drp->fields[_idx].val.str_val.s = (char *)shm_malloc(
+						(_vp->val.str_val.len + 1) * sizeof(char));
+				if(!_drp->fields[_idx].val.str_val.s) {
 					_drp->fields[_idx].nul = 1;
 					return -1;
 				}
 				memcpy(_drp->fields[_idx].val.str_val.s, _vp->val.str_val.s,
-					_vp->val.str_val.len);
+						_vp->val.str_val.len);
 				_drp->fields[_idx].val.str_val.s[_vp->val.str_val.len] = '\0';
 				_drp->fields[_idx].val.str_val.len = _vp->val.str_val.len;
-			break;
+				break;
 
 			case DB1_STRING:
 				_drp->fields[_idx].type = _t;
-				_drp->fields[_idx].val.str_val.len=_vp->val.str_val.len;
+				_drp->fields[_idx].val.str_val.len = _vp->val.str_val.len;
 
-				_drp->fields[_idx].val.str_val.s =
-					(char*)shm_malloc((_drp->fields[_idx].val.str_val.len+1)
-								*sizeof(char));
-				if(!_drp->fields[_idx].val.str_val.s)
-				{
+				_drp->fields[_idx].val.str_val.s = (char *)shm_malloc(
+						(_drp->fields[_idx].val.str_val.len + 1)
+						* sizeof(char));
+				if(!_drp->fields[_idx].val.str_val.s) {
 					_drp->fields[_idx].nul = 1;
 					return -1;
 				}
 				memcpy(_drp->fields[_idx].val.str_val.s, _vp->val.string_val,
-					_drp->fields[_idx].val.str_val.len);
-				_drp->fields[_idx].val.str_val.s[_drp->fields[_idx].val.str_val.len] = '\0';
-			break;
+						_drp->fields[_idx].val.str_val.len);
+				_drp->fields[_idx]
+						.val.str_val.s[_drp->fields[_idx].val.str_val.len] =
+						'\0';
+				break;
 
 			case DB1_DOUBLE:
 				_drp->fields[_idx].type = DB1_DOUBLE;
 				_drp->fields[_idx].val.double_val = _vp->val.double_val;
-			break;
+				break;
 
 			case DB1_INT:
 				_drp->fields[_idx].type = DB1_INT;
 				_drp->fields[_idx].val.int_val = _vp->val.int_val;
-			break;
+				break;
 
 			case DB1_DATETIME:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.int_val = (int)_vp->val.time_val;
-			break;
+				break;
 
 			case DB1_BITMAP:
 				_drp->fields[_idx].type = DB1_INT;
 				_drp->fields[_idx].val.int_val = (int)_vp->val.bitmap_val;
-			break;
+				break;
 
 			default:
 				_drp->fields[_idx].nul = 1;
@@ -347,16 +339,14 @@ int dbt_row_set_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
  */
 int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 {
-	if(!_drp || !_vp || _idx<0)
+	if(!_drp || !_vp || _idx < 0)
 		return -1;
 
 	_drp->fields[_idx].nul = _vp->nul;
 	_drp->fields[_idx].type = _t;
 
-	if(!_vp->nul)
-	{
-		switch(_t)
-		{
+	if(!_vp->nul) {
+		switch(_t) {
 			case DB1_BLOB:
 			case DB1_STR:
 				_drp->fields[_idx].type = _t;
@@ -364,18 +354,17 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 				if(_drp->fields[_idx].val.str_val.s)
 					shm_free(_drp->fields[_idx].val.str_val.s);
 
-				_drp->fields[_idx].val.str_val.s =
-					(char*)shm_malloc((_vp->val.str_val.len+1)*sizeof(char));
-				if(!_drp->fields[_idx].val.str_val.s)
-				{
+				_drp->fields[_idx].val.str_val.s = (char *)shm_malloc(
+						(_vp->val.str_val.len + 1) * sizeof(char));
+				if(!_drp->fields[_idx].val.str_val.s) {
 					_drp->fields[_idx].nul = 1;
 					return -1;
 				}
 				memcpy(_drp->fields[_idx].val.str_val.s, _vp->val.str_val.s,
-					_vp->val.str_val.len);
+						_vp->val.str_val.len);
 				_drp->fields[_idx].val.str_val.s[_vp->val.str_val.len] = '\0';
 				_drp->fields[_idx].val.str_val.len = _vp->val.str_val.len;
-			break;
+				break;
 
 			case DB1_STRING:
 				/* free if already exists */
@@ -383,47 +372,46 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 					shm_free(_drp->fields[_idx].val.str_val.s);
 
 				_drp->fields[_idx].type = _t;
-				if(_vp->type==DB1_STR)
-					_drp->fields[_idx].val.str_val.len=_vp->val.str_val.len;
+				if(_vp->type == DB1_STR)
+					_drp->fields[_idx].val.str_val.len = _vp->val.str_val.len;
 				else
-					_drp->fields[_idx].val.str_val.len
-											=strlen(_vp->val.string_val);
+					_drp->fields[_idx].val.str_val.len =
+							strlen(_vp->val.string_val);
 
-				_drp->fields[_idx].val.str_val.s =
-					(char*)shm_malloc((_drp->fields[_idx].val.str_val.len+1)
-									*sizeof(char));
-				if(!_drp->fields[_idx].val.str_val.s)
-				{
+				_drp->fields[_idx].val.str_val.s = (char *)shm_malloc(
+						(_drp->fields[_idx].val.str_val.len + 1)
+						* sizeof(char));
+				if(!_drp->fields[_idx].val.str_val.s) {
 					_drp->fields[_idx].nul = 1;
 					return -1;
 				}
 				memcpy(_drp->fields[_idx].val.str_val.s, _vp->val.string_val,
-					_drp->fields[_idx].val.str_val.len);
+						_drp->fields[_idx].val.str_val.len);
 				_drp->fields[_idx].val.str_val.s[_vp->val.str_val.len] = '\0';
-			break;
+				break;
 
 			case DB1_DOUBLE:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.double_val = _vp->val.double_val;
-			break;
+				break;
 
 			case DB1_INT:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.int_val = _vp->val.int_val;
-			break;
+				break;
 
 			case DB1_DATETIME:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.int_val = (int)_vp->val.time_val;
-			break;
+				break;
 
 			case DB1_BITMAP:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.int_val = (int)_vp->val.bitmap_val;
-			break;
+				break;
 
 			default:
-				LM_ERR("unsupported type %d in update\n",_t);
+				LM_ERR("unsupported type %d in update\n", _t);
 				_drp->fields[_idx].nul = 1;
 				return -1;
 		}
@@ -441,12 +429,10 @@ int dbt_table_check_row(dbt_table_p _dtp, dbt_row_p _drp)
 	if(!_dtp || _dtp->nrcols <= 0 || !_drp)
 		return -1;
 
-	for(i=0; i<_dtp->nrcols; i++)
-	{
+	for(i = 0; i < _dtp->nrcols; i++) {
 		if(!_drp->fields[i].nul
-				&& dbt_is_neq_type(_dtp->colv[i]->type, _drp->fields[i].type))
-		{
-			LM_ERR("incompatible types - field %d [%d/%d]\n",i,
+				&& dbt_is_neq_type(_dtp->colv[i]->type, _drp->fields[i].type)) {
+			LM_ERR("incompatible types - field %d [%d/%d]\n", i,
 					_dtp->colv[i]->type, _drp->fields[i].type);
 			return -1;
 		}
@@ -456,16 +442,15 @@ int dbt_table_check_row(dbt_table_p _dtp, dbt_row_p _drp)
 		if(!_drp->fields[i].nul)
 			continue;
 
-		if(_dtp->colv[i]->type==DB1_INT
-			&& (_dtp->colv[i]->flag & DBT_FLAG_AUTO)
-			&& i==_dtp->auto_col)
-		{
+		if(_dtp->colv[i]->type == DB1_INT
+				&& (_dtp->colv[i]->flag & DBT_FLAG_AUTO)
+				&& i == _dtp->auto_col) {
 			_drp->fields[i].nul = 0;
 			_drp->fields[i].val.int_val = ++_dtp->auto_val;
 			continue;
 		}
 
-		LM_ERR("null value not allowed - field %d\n",i);
+		LM_ERR("null value not allowed - field %d\n", i);
 		return -1;
 	}
 
@@ -483,11 +468,10 @@ int dbt_table_update_flags(dbt_table_p _dtp, int _f, int _o, int _m)
 	if(_o == DBT_FL_SET)
 		_dtp->flag |= _f;
 	else if(_o == DBT_FL_UNSET)
-			_dtp->flag &= ~_f;
+		_dtp->flag &= ~_f;
 
 	if(_m)
 		_dtp->mark = (int)time(NULL);
 
 	return 0;
 }
-

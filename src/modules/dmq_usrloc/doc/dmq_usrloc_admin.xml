@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -180,8 +180,8 @@ modparam("dmq_usrloc", "batch_usleep", 1000)
 	<section id="usrloc_dmq.p.batch_msg_size">
 		<title><varname>batch_msg_size</varname> (int)</title>
 		<para>
-			The parameter controls the size of the messages during a sync. 
-			This is to make sure the messages are never larger then 65536 (the maximum datagram size).
+			The parameter controls the size of the messages during a sync.
+			This is to make sure the messages are never larger than 65536 (the maximum datagram size).
 		</para>
 		<para>
 			Note that batch_msg_contacts will also be checked.
@@ -263,7 +263,12 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
 			</listitem>
 			<listitem>
 			<para>
-				1 - enabled
+				1 - enabled, replicate socket by proto:host:port
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				2 - enabled, replicate socket by socket name
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -277,7 +282,7 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
 		<title>Set <varname>replicate_socket_info</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dmq_usrloc", "replicate_socket_info", 0)
+modparam("dmq_usrloc", "replicate_socket_info", 1)
 ...
 </programlisting>
 	</example>

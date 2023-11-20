@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -40,35 +40,36 @@
 #include "contact.h"
 
 
-typedef struct contact_body {
-	unsigned char star;    /* Star contact */
-	contact_t* contacts;   /* List of contacts */
+typedef struct contact_body
+{
+	unsigned char star;	 /* Star contact */
+	contact_t *contacts; /* List of contacts */
 } contact_body_t;
 
 
 /*
  * Parse contact header field body
  */
-int parse_contact(struct hdr_field* _h);
+int parse_contact(struct hdr_field *_h);
 
 
 /*
  * Free all memory
  */
-void free_contact(contact_body_t** _c);
+void free_contact(contact_body_t **_c);
 
 
 /*
  * Print structure, for debugging only
  */
-void print_contact(FILE* _o, contact_body_t* _c);
+void print_contact(FILE *_o, contact_body_t *_c);
 
 
 /*
  * Contact header field iterator, returns next contact if any, it doesn't
  * parse message header if not absolutely necessary
  */
-int contact_iterator(contact_t** c, struct sip_msg* msg, contact_t* prev);
+int contact_iterator(contact_t **c, struct sip_msg *msg, contact_t *prev);
 
 /*
  * parse all Contact headers

@@ -1,4 +1,4 @@
-# IP-Adress for incoming SIP-Traffic, in the following format:
+# IP-Address for incoming SIP-Traffic, in the following format:
 
 # SIP / UDP
 listen=udp:0.0.0.0:5060

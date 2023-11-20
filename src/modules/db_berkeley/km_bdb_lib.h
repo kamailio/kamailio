@@ -16,14 +16,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 /*! \file
- * Berkeley DB : 
+ * Berkeley DB :
  *
  * \ingroup database
  */
@@ -96,8 +96,8 @@ typedef struct _table
 	int nkeys;
 	int ro;		  /*db readonly flag*/
 	int logflags; /*flags indication what-where to journal log */
-	FILE *fp;	 /*jlog file pointer */
-	time_t t;	 /*jlog creation time */
+	FILE *fp;	  /*jlog file pointer */
+	time_t t;	  /*jlog creation time */
 	ino_t ino;
 } table_t, *table_p;
 

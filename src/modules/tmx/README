@@ -144,7 +144,7 @@ Chapter 1. Admin Guide
    This module collects extensions from Kamailio TM module.
 
    Kamailio TM (Transaction Management) module documentation is available
-   at: http://www.kamailio.org/docs/modules/stable/tm.html
+   at: https://www.kamailio.org/docs/modules/stable/modules/tm.html
 
 2. Dependencies
 

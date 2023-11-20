@@ -1,7 +1,7 @@
 #ifndef __CDS_H
 #define __CDS_H
 
-/** \defgroup cds CDS library - Common Data Structures 
+/** \defgroup cds CDS library - Common Data Structures
  *
  * This library contains many useful functions and data structures. It is
  possible to use it with Sip Express Router (SER) or without it. In the first
@@ -21,7 +21,7 @@
  * \section cds_ser_usage Usage with SER
  * There can be problems with using shared libraries on different platforms.
  * Currently supported solution is that user must supply LD_LIBRARY_PATH
- * (or something similar on his OS) with the path to the library before 
+ * (or something similar on his OS) with the path to the library before
  * starting SER with modules needed the library.
  *
  * \section cds_nonser_usage Usage without SER
@@ -35,13 +35,14 @@
  * There were following reasons to introduce this library:
  *  - many duplicated functions in modules (copy&pasted between modules)
  *  without touching SER's core
- *  - possibility to debug programs outside of SER due to its simplicity 
+ *  - possibility to debug programs outside of SER due to its simplicity
  *  and many useful tools
  *
  * @{ */
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #if 0
@@ -49,14 +50,14 @@ extern "C" {
 
 /** \defgroup cds_init Initialization/destruction
  * Library needs to be initialized before using it and
- * un-initialized after it is not used more. Use \ref cds_initialize and 
+ * un-initialized after it is not used more. Use \ref cds_initialize and
  * \ref cds_cleanup for this purpose.
  * @{ */
 
-/** Initializes CDS library. 
+/** Initializes CDS library.
  *
- * Currently initializes reference counter which is experimental and 
- * probably will be removed in the future because seems to be rather 
+ * Currently initializes reference counter which is experimental and
+ * probably will be removed in the future because seems to be rather
  * useless here. */
 int cds_initialize();
 
@@ -66,7 +67,7 @@ void cds_cleanup();
 
 #endif
 
-/** @} */
+	/** @} */
 
 #ifdef __cplusplus
 }

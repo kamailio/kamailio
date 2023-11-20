@@ -1,4 +1,4 @@
-	<!-- mtree provisioning -->
+	<!-- mtree provisionning -->
 	<mod><mod_name>mtree</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>mtree</db_table_id>
@@ -36,7 +36,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- mtrees provisioning -->
+	<!-- mtrees provisionning -->
 	<mod><mod_name>mtrees</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>mtrees</db_table_id>

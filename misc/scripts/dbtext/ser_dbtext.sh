@@ -38,7 +38,7 @@ DESCRIPTION
   actions.
 
   The database template for SER dbtext database is stored in dbtext_template
-  directory which can usualy be found in /var/lib/ser (depending on
+  directory which can usually be found in /var/lib/ser (depending on
   installation). You can use the template to create SER database manually if
   you cannot or do not want to use this shell wrapper.
 

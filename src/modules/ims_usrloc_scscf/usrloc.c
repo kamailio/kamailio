@@ -3,23 +3,23 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +37,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include "usrloc.h"
@@ -62,14 +62,15 @@ extern unsigned int ims_uls_init_flag;
  * \param api usrloc API
  * \return 0 on success, -1 on failure
  */
-int bind_usrloc(usrloc_api_t* api) {
-	if (!api) {
+int bind_usrloc(usrloc_api_t *api)
+{
+	if(!api) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	if (ims_uls_init_flag == 0) {
+	if(ims_uls_init_flag == 0) {
 		LM_ERR("configuration error - trying to bind to usrloc module"
-				" before being initialized\n");
+			   " before being initialized\n");
 		return -1;
 	}
 
@@ -78,7 +79,8 @@ int bind_usrloc(usrloc_api_t* api) {
 
 	api->insert_impurecord = insert_impurecord;
 	api->delete_impurecord = delete_impurecord;
-	api->get_impurecord = get_impurecord;           // get impu - assume no lock on domain yet. returns with lock on doma
+	api->get_impurecord =
+			get_impurecord; // get impu - assume no lock on domain yet. returns with lock on doma
 	api->update_impurecord = update_impurecord;
 
 	api->lock_udomain = lock_udomain;
@@ -87,12 +89,12 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->lock_contact_slot = lock_contact_slot;
 	api->unlock_contact_slot = unlock_contact_slot;
 	api->lock_contact_slot_i = lock_contact_slot_i;
-	api->unlock_contact_slot_i = unlock_contact_slot_i;	
+	api->unlock_contact_slot_i = unlock_contact_slot_i;
 
-        api->lock_subscription = lock_subscription;
-        api->unlock_subscription = unlock_subscription;
-        api->ref_subscription = ref_subscription;
-        api->unref_subscription = unref_subscription;
+	api->lock_subscription = lock_subscription;
+	api->unlock_subscription = unlock_subscription;
+	api->ref_subscription = ref_subscription;
+	api->unref_subscription = unref_subscription;
 
 	api->get_all_ucontacts = get_all_scontacts;
 	api->insert_ucontact = insert_scontact;
@@ -113,9 +115,11 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->external_delete_subscriber = external_delete_subscriber;
 	api->update_subscriber = update_subscriber;
 
-	api->get_impus_from_subscription_as_string = get_impus_from_subscription_as_string;
-	api->get_presentity_from_subscriber_dialog = get_presentity_from_subscriber_dialog;
-        
+	api->get_impus_from_subscription_as_string =
+			get_impus_from_subscription_as_string;
+	api->get_presentity_from_subscriber_dialog =
+			get_presentity_from_subscriber_dialog;
+
 	api->register_ulcb = register_ulcb;
 
 	//api->update_user_profile = update_user_profile;

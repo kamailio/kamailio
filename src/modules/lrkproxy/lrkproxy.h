@@ -28,71 +28,82 @@
 #include "../../core/str.h"
 
 /* Handy macros */
-#define STR2IOVEC(sx, ix)       do {(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;} while(0)
-#define SZ2IOVEC(sx, ix)        do {(ix).iov_base = (sx); (ix).iov_len = strlen(sx);} while(0)
+#define STR2IOVEC(sx, ix)        \
+	do {                         \
+		(ix).iov_base = (sx).s;  \
+		(ix).iov_len = (sx).len; \
+	} while(0)
+#define SZ2IOVEC(sx, ix)           \
+	do {                           \
+		(ix).iov_base = (sx);      \
+		(ix).iov_len = strlen(sx); \
+	} while(0)
 
 #define CR '\r'
 #define LF '\n'
 #define EOB '\0'
 
-enum lrk_operation {
-    OP_OFFER = 1,
-    OP_ANSWER,
-    OP_DELETE,
-    OP_PING,
-    OP_GETINFO,
-    OP_SETCONNT,
+enum lrk_operation
+{
+	OP_OFFER = 1,
+	OP_ANSWER,
+	OP_DELETE,
+	OP_PING,
+	OP_GETINFO,
+	OP_SETCONNT,
 
-    OP_ANY,
+	OP_ANY,
 };
 
 
-enum lrk_alg{
-    LRK_LINER=0,
-    LRK_RR
+enum lrk_alg
+{
+	LRK_LINER = 0,
+	LRK_RR
 };
 
 struct lrkp_node_conf
 {
-    int start_port;
-    int end_port;
-    int current_port;
-    char internal_ip[20];
-    char external_ip[20];
+	int start_port;
+	int end_port;
+	int current_port;
+	char internal_ip[20];
+	char external_ip[20];
 };
 
-struct lrkp_node {
-    unsigned int		idx;			/* overall index */
-    str					ln_url;			/* unparsed, deletable */
-    int					ln_umode;
-    char				*ln_address;	/* substring of rn_url */
-    int					ln_enable;	/* found unaccessible? */
-    unsigned			ln_weight;		/* for load balancing */
-//    unsigned int		ln_recheck_ticks;
-//    int                 ln_rep_supported;
-//    int                 ln_ptl_supported;
-    struct lrkp_node_conf     *lrkp_n_c;
-    struct lrkp_node	*ln_next;
-};
-
-
-
-struct lrkp_set{
-    unsigned int 		id_set;
-    unsigned			weight_sum;
-    unsigned int		lrkp_node_count;
-    int 				set_disabled;
-    unsigned int		set_recheck_ticks;
-    struct lrkp_node	*ln_first;
-    struct lrkp_node	*ln_last;
-    struct lrkp_set     *lset_next;
+struct lrkp_node
+{
+	unsigned int idx; /* overall index */
+	str ln_url;		  /* unparsed, deletable */
+	int ln_umode;
+	char *ln_address;	/* substring of rn_url */
+	int ln_enable;		/* found unaccessible? */
+	unsigned ln_weight; /* for load balancing */
+						//    unsigned int		ln_recheck_ticks;
+						//    int                 ln_rep_supported;
+						//    int                 ln_ptl_supported;
+	struct lrkp_node_conf *lrkp_n_c;
+	struct lrkp_node *ln_next;
 };
 
 
+struct lrkp_set
+{
+	unsigned int id_set;
+	unsigned weight_sum;
+	unsigned int lrkp_node_count;
+	int set_disabled;
+	unsigned int set_recheck_ticks;
+	struct lrkp_node *ln_first;
+	struct lrkp_node *ln_last;
+	struct lrkp_set *lset_next;
+};
 
-struct lrkp_set_head{
-    struct lrkp_set		*lset_first;
-    struct lrkp_set		*lset_last;
+
+struct lrkp_set_head
+{
+	struct lrkp_set *lset_first;
+	struct lrkp_set *lset_last;
 };
 /* Functions from nathelper */
 //struct lrkp_node *lrkp_node(str, int);
@@ -104,4 +115,4 @@ int insert_lrkp_node(struct lrkp_set *const lrkp_list, const str *const url,
 		const int weight, const int enable);
 
 
-#endif  //_LRKPROXY_H
+#endif //_LRKPROXY_H

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2005 iptel.org
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -40,10 +40,11 @@
  * created by the backends) must have these
  * attributes.
  */
-struct pool_con {
-	struct db_id* id;        /**< Connection identifier */
-	unsigned int ref;        /**< Reference count */
-	struct pool_con* next;   /**< Next element in the pool */
+struct pool_con
+{
+	struct db_id *id;	   /**< Connection identifier */
+	unsigned int ref;	   /**< Reference count */
+	struct pool_con *next; /**< Next element in the pool */
 };
 
 
@@ -53,14 +54,14 @@ struct pool_con {
  * \param id searched id
  * \return the connection if it could be found, NULL otherwise
  */
-struct pool_con* pool_get(const struct db_id* id);
+struct pool_con *pool_get(const struct db_id *id);
 
 
 /**
  * Insert a new connection into the pool.
- * \param con the inserted connection 
+ * \param con the inserted connection
  */
-void pool_insert(struct pool_con* con);
+void pool_insert(struct pool_con *con);
 
 
 /**
@@ -75,7 +76,7 @@ void pool_insert(struct pool_con* con);
  * \param con connection that should be removed
  * \return 1 if the connection can be freed, 0 if it can't be freed, -1 if not found
  */
-int pool_remove(struct pool_con* con);
+int pool_remove(struct pool_con *con);
 
 
 #endif /* _DB1_POOL_H */

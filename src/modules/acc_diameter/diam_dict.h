@@ -29,20 +29,21 @@
 #ifndef DIAM_ACC_H
 #define DIAM_ACC_H
 
-#define SERVICE_LEN  1
-#define SIP_ACCOUNTING	"9"
+#define SERVICE_LEN 1
+#define SIP_ACCOUNTING "9"
 
-#define vendorID	0
+#define vendorID 0
 
 /*! \brief Accounting AVPs */
-enum{
+enum
+{
 	/*Accounting*/
-	AVP_SIP_CALLID				= 550,	/* string */
-	AVP_SIP_METHOD				= 551,	/* string */
-	AVP_SIP_STATUS				= 552,	/* string */
-	AVP_SIP_FROM_TAG			= 553,	/* string */
-	AVP_SIP_TO_TAG				= 554,	/* string */
-	AVP_SIP_CODE				= 564   /* string */
+	AVP_SIP_CALLID = 550,	/* string */
+	AVP_SIP_METHOD = 551,	/* string */
+	AVP_SIP_STATUS = 552,	/* string */
+	AVP_SIP_FROM_TAG = 553, /* string */
+	AVP_SIP_TO_TAG = 554,	/* string */
+	AVP_SIP_CODE = 564		/* string */
 };
 
 #endif

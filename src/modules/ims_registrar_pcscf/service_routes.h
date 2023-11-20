@@ -1,4 +1,4 @@
-/** 
+/**
  * Functions to force or check the service-routes
  *
  * Copyright (c) 2012 Carsten Bock, ng-voice GmbH
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -31,41 +31,42 @@
 /**
  * Check, if a user-agent follows the indicated service-routes
  */
-int check_service_routes(struct sip_msg* _m, udomain_t* _d);
+int check_service_routes(struct sip_msg *_m, udomain_t *_d);
 
 /**
  * Force Service routes (upon request)
  */
-int force_service_routes(struct sip_msg* _m, udomain_t* _d);
+int force_service_routes(struct sip_msg *_m, udomain_t *_d);
 
 /**
  * Check, if source is registered.
  */
-int is_registered(struct sip_msg* _m, udomain_t* _d);
+int is_registered(struct sip_msg *_m, udomain_t *_d);
 
 /**
  * Get the current asserted identity for the user
  */
-str * get_asserted_identity(struct sip_msg* _m);
+str *get_asserted_identity(struct sip_msg *_m);
 
 /**
  * Get the contact used during registration of this user
  */
-str * get_registration_contact(struct sip_msg* _m);
+str *get_registration_contact(struct sip_msg *_m);
 
 /**
  * Assert a given identity of a user
  */
-int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity);
+int assert_identity(struct sip_msg *_m, udomain_t *_d, str identity);
 
 /**
  * Assert a given called identity of a user
  */
-int assert_called_identity(struct sip_msg* _m, udomain_t* _d);
+int assert_called_identity(struct sip_msg *_m, udomain_t *_d);
 
 /**
  * Unregister a contact
  */
-int pcscf_unregister(udomain_t* _d, str * uri, str * received_host, int received_port);
+int pcscf_unregister(
+		udomain_t *_d, str *uri, str *received_host, int received_port);
 
 #endif /* SERVICE_ROUTES_H */

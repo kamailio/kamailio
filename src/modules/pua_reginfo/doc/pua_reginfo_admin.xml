@@ -10,14 +10,14 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 
 	<title>&adminguide;</title>
-	
+
 	<section>
 	  <title>Overview</title>
-	    <para> 
-	      This modules publishes information about "reg"-events according to
+	    <para>
+	      This module publishes information about "reg"-events according to
               to RFC 3680. This can be used distribute the registration-info
               status to the subscribed watchers.
 	    </para>
@@ -32,7 +32,7 @@
               changes.
 	    </para>
 	    <para>
- 	      And finally, it can process received "NOTIFY" requests and it will 
+ 	      And finally, it can process received "NOTIFY" requests and it will
               update the local registry accordingly.
 	    </para>
 	    <para>
@@ -45,7 +45,7 @@
 		which handles offline message storage for an account, would get
 		notified, when the user comes online.
 		</listitem>
-		<listitem>A client could subscribe to it's own registration-status,
+		<listitem>A client could subscribe to its own registration-status,
 		so he would get notified as soon as his account gets administratively
 		unregistered.
 		</listitem>
@@ -89,10 +89,10 @@
 		<title><varname>default_domain</varname>(str)</title>
 		<para>
 		The default domain for the registered users to be used when
-		constructing the uri for the registrar callback. 
+		constructing the uri for the registrar callback.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>NULL</quote>.	
+		<emphasis>	Default value is <quote>NULL</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -110,7 +110,7 @@ modparam("pua_reginfo", "default_domain", "kamailio.org")
 		Whether or not to generate PUBLISH requests.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>1</quote> (enabled).	
+		<emphasis>	Default value is <quote>1</quote> (enabled).
 		</emphasis>
 		</para>
 		<example>
@@ -128,7 +128,7 @@ modparam("pua_reginfo", "publish_reginfo", 0)
 		The outbound_proxy uri to be used when sending Subscribe and Publish requests.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>NULL</quote>.	
+		<emphasis>	Default value is <quote>NULL</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -154,7 +154,7 @@ modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
 </programlisting>
 		</example>
 	</section>
-	</section>	
+	</section>
 	<section>
 		<title>Functions</title>
 		<section id="pua_reginfo.f.reginfo_handle_notify">
@@ -194,7 +194,7 @@ modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
 				<title><function>reginfo_handle_notify</function> usage</title>
 				<programlisting format="linespecific">
 ...
-if(is_method("NOTIFY")) 
+if(is_method("NOTIFY"))
 	if (reginfo_handle_notify("location"))
 		send_reply("202", "Accepted");
 ...
@@ -231,8 +231,8 @@ route {
 }
 
 reply_route[1] {
-	if (t_check_status("200")) 
-		reginfo_subscribe("$ru");		
+	if (t_check_status("200"))
+		reginfo_subscribe("$ru");
 }
 ...
 				</programlisting>

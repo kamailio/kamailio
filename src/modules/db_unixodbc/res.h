@@ -35,7 +35,7 @@
  * \param _r result structure
  * \return zero on success, negative on errors
  */
-int db_unixodbc_convert_result(const db1_con_t* _h, db1_res_t* _r);
-int db_unixodbc_get_columns(const db1_con_t* _h, db1_res_t* _r);
+int db_unixodbc_convert_result(const db1_con_t *_h, db1_res_t *_r);
+int db_unixodbc_get_columns(const db1_con_t *_h, db1_res_t *_r);
 
 #endif /* RES_H */

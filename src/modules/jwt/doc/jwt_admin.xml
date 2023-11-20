@@ -101,7 +101,7 @@ modparam("jwt", "key_mode", 1)
 			</listitem>
 			<listitem>
 			<para>
-			alg - the algoritm to build the signature, as supported by the
+			alg - the algorithm to build the signature, as supported by the
 			libjwt (e.g., RS256, HS256, ES256, ...)
 			</para>
 			</listitem>
@@ -158,7 +158,7 @@ modparam("jwt", "key_mode", 1)
 			</listitem>
 			<listitem>
 			<para>
-			alg - the algoritm to build the signature, as supported by the
+			alg - the algorithm to build the signature, as supported by the
 			libjwt (e.g., RS256, HS256, ES256, ...)
 			</para>
 			</listitem>
@@ -210,7 +210,7 @@ modparam("jwt", "key_mode", 1)
 			</listitem>
 			<listitem>
 			<para>
-			alg - the algoritm to build the signature, as supported by the
+			alg - the algorithm to build the signature, as supported by the
 			libjwt (e.g., RS256, HS256, ES256, ...)
 			</para>
 			</listitem>

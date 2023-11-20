@@ -5,9 +5,9 @@
  <!-- Include general documentation entities -->
  <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
  %docentities;
- 
+
 ]>
-   
+
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <bookinfo>
     <title>ipops Module</title>

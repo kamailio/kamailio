@@ -33,13 +33,12 @@ int app_lua_return_true(lua_State *L);
 void lua_sr_core_openlibs(lua_State *L);
 void lua_sr_kemi_register_libs(lua_State *L);
 
-int sr_kemi_lua_exec_func(lua_State* L, int eidx);
+int sr_kemi_lua_exec_func(lua_State *L, int eidx);
 
 #if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 504
-void ksr_luaL_openlib(lua_State *L, const char *libname,
-			     const luaL_Reg *lfuncs, int nup);
+void ksr_luaL_openlib(
+		lua_State *L, const char *libname, const luaL_Reg *lfuncs, int nup);
 #define luaL_openlib ksr_luaL_openlib
 #endif
 
 #endif
-

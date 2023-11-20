@@ -1068,7 +1068,7 @@ append_urihf("CC-Diversion: ", "\r\n");
 		<note>
 		<para>
 			The function is also able to distinguish the compact names. For
-			exmaple <quote>From</quote> will match with <quote>f</quote>
+			example <quote>From</quote> will match with <quote>f</quote>.
 		</para>
 		</note>
 		<para>Meaning of the parameters is as follows:</para>
@@ -1894,6 +1894,29 @@ if (str_ifind("$rU", "Alice")) {
 		</example>
 	</section>
 
+	<section id="textops.f.str_any_in">
+		<title>
+		<function moreinfo="none">str_any_in(txt, clist)</function>
+		</title>
+		<para>
+			Return 1 (true) if any character in "clist" is found inside "txt".
+			Both paramters can contain variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>str_any_in</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (str_any_in("$hdr(X-Hdr)", ";',:")) {
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.set_body_multipart">
 		<title>
 		<function moreinfo="none">set_body_multipart([txt, content_type][, boundary])</function>
@@ -2277,6 +2300,41 @@ msg_apply_changes();
 	----
 	...
 	</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.via_param_rm">
+		<title>
+		<function moreinfo="none">via_param_rm(name, idx)</function>
+		</title>
+		<para>
+		Remove parameter matching by name from Via body at the specified index.
+		The index starts from 0 (first Via body). Negative index counts from the
+		end of the list for Via header bodies (-1 is the last Via body).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>name</emphasis> - name of the parameter
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>idx</emphasis> - index of the Via body.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>The parameters can also be variables.</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>via_param_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+via_param_rm("p1", "0");
+...
+</programlisting>
 		</example>
 	</section>
 

@@ -26,6 +26,8 @@ endif
 ifneq ($(OS),darwin)
 	LIBS += -lrt
 	LIBS += -lpthread
+	LIBS += -lssl
+	LIBS += -lcrypto
 endif
 
 include ../../Makefile.modules

@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -37,7 +37,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/ut.h"
-#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/parser/msg_parser.h" /* struct sip_msg */
 
 regex_t *portExpression = NULL;
 regex_t *ipExpression = NULL;
@@ -46,7 +46,7 @@ regex_t *ipExpression = NULL;
 int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 {
 	int oldContentLength, newContentLength, oldlen, err, oldPort, newPort, diff,
-			offsetValue, len, off, ret, needToDealocate;
+			offsetValue, len, off, ret, needToDeallocate;
 	struct lump *l;
 	regmatch_t pmatch;
 	regex_t *re;
@@ -65,7 +65,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 
 	if((msg->content_length == 0)
 			&& ((parse_headers(msg, HDR_CONTENTLENGTH_F, 0) == -1)
-					   || (msg->content_length == 0))) {
+					|| (msg->content_length == 0))) {
 		LOG(L_ERR, "ERROR: sdp_mangle_port: bad or missing "
 				   "Content-Length \n");
 		return -2;
@@ -101,7 +101,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 	ret = -1;
 
 	/* try to use pre-compiled expressions */
-	needToDealocate = 0;
+	needToDeallocate = 0;
 	if(portExpression != NULL) {
 		re = portExpression;
 #ifdef EXTRA_DEBUG
@@ -114,7 +114,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 			LOG(L_ERR, "ERROR: sdp_mangle_port: Unable to allocate re\n");
 			return -4;
 		}
-		needToDealocate = 1;
+		needToDeallocate = 1;
 		if((regcomp(re, key, REG_EXTENDED)) != 0) {
 			LOG(L_ERR, "ERROR: sdp_mangle_port: Unable to compile %s \n", key);
 			pkg_free(re);
@@ -131,7 +131,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 		off = begin - msg->buf;
 		if(pmatch.rm_so == -1) {
 			LOG(L_ERR, "ERROR: sdp_mangle_port: offset unknown\n");
-			if(needToDealocate) {
+			if(needToDeallocate) {
 				regfree(re);
 				pkg_free(re);
 			}
@@ -142,9 +142,9 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 		pmatch.rm_eo--; /* return with one space */
 #endif
 
-		/* 
+		/*
                 for BSD and Solaris we avoid memrchr
-                pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so); 
+                pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so);
                 */
 		pos = begin + pmatch.rm_eo;
 #ifdef EXTRA_DEBUG
@@ -170,7 +170,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 					"ERROR: sdp_mangle_port: Error converting [%.*s] to int\n",
 					oldlen, pos);
 #ifdef STRICT_CHECK
-			if(needToDealocate) {
+			if(needToDeallocate) {
 				regfree(re);
 				pkg_free(re);
 			}
@@ -181,7 +181,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 		}
 		if((oldPort < MIN_ORIGINAL_PORT)
 				|| (oldPort
-						   > MAX_ORIGINAL_PORT)) /* we silently fail,we ignore this match or return -11 */
+						> MAX_ORIGINAL_PORT)) /* we silently fail,we ignore this match or return -11 */
 		{
 #ifdef EXTRA_DEBUG
 			printf("WARNING: sdp_mangle_port: Silent fail for not matching old "
@@ -189,11 +189,12 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 					oldPort);
 #endif
 
-			LOG(L_WARN, "WARNING: sdp_mangle_port: Silent fail for not "
-						"matching old port %d\n",
+			LOG(L_WARN,
+					"WARNING: sdp_mangle_port: Silent fail for not "
+					"matching old port %d\n",
 					oldPort);
 #ifdef STRICT_CHECK
-			if(needToDealocate) {
+			if(needToDeallocate) {
 				regfree(re);
 				pkg_free(re);
 			}
@@ -209,7 +210,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 		/* new port is between 1 and 65536, or so should be */
 		if((newPort < MIN_MANGLED_PORT)
 				|| (newPort
-						   > MAX_MANGLED_PORT)) /* we silently fail,we ignore this match */
+						> MAX_MANGLED_PORT)) /* we silently fail,we ignore this match */
 		{
 #ifdef EXTRA_DEBUG
 			printf("WARNING: sdp_mangle_port: Silent fail for not matching new "
@@ -217,11 +218,12 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 					newPort);
 #endif
 
-			LOG(L_WARN, "WARNING: sdp_mangle_port: Silent fail for not "
-						"matching new port %d\n",
+			LOG(L_WARN,
+					"WARNING: sdp_mangle_port: Silent fail for not "
+					"matching new port %d\n",
 					newPort);
 #ifdef STRICT_CHECK
-			if(needToDealocate) {
+			if(needToDeallocate) {
 				regfree(re);
 				pkg_free(re);
 			}
@@ -260,7 +262,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 					0))
 				== 0) {
 			LOG(L_ERR, "ERROR: sdp_mangle_port: del_lump failed\n");
-			if(needToDealocate) {
+			if(needToDeallocate) {
 				regfree(re);
 				pkg_free(re);
 			}
@@ -269,7 +271,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 		s = pkg_malloc(len);
 		if(s == 0) {
 			LOG(L_ERR, "ERROR: sdp_mangle_port : memory allocation failure\n");
-			if(needToDealocate) {
+			if(needToDeallocate) {
 				regfree(re);
 				pkg_free(re);
 			}
@@ -281,7 +283,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 		if(insert_new_lump_after(l, s, len, 0) == 0) {
 			LOG(L_ERR, "ERROR: sdp_mangle_port: could not insert new lump\n");
 			pkg_free(s);
-			if(needToDealocate) {
+			if(needToDeallocate) {
 				regfree(re);
 				pkg_free(re);
 			}
@@ -296,7 +298,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 		begin = begin + pmatch.rm_eo;
 
 	} /* while  */
-	if(needToDealocate) {
+	if(needToDeallocate) {
 		regfree(re);
 		pkg_free(re);
 #ifdef EXTRA_DEBUG
@@ -320,7 +322,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 int sdp_mangle_ip(struct sip_msg *msg, char *oldip, char *newip)
 {
 	int i, oldContentLength, newContentLength, diff, oldlen, len, off, ret,
-			needToDealocate;
+			needToDeallocate;
 	unsigned int mask, address, locatedIp;
 	struct lump *l;
 	regmatch_t pmatch;
@@ -344,7 +346,7 @@ int sdp_mangle_ip(struct sip_msg *msg, char *oldip, char *newip)
 	}
 	if((msg->content_length == 0)
 			&& ((parse_headers(msg, HDR_CONTENTLENGTH_F, 0) == -1)
-					   || (msg->content_length == 0))) {
+					|| (msg->content_length == 0))) {
 		LOG(L_ERR, "ERROR: sdp_mangle_port: bad or missing "
 				   "Content-Length \n");
 		return -2;
@@ -393,7 +395,7 @@ int sdp_mangle_ip(struct sip_msg *msg, char *oldip, char *newip)
 	len = strlen(newip);
 
 	/* try to use pre-compiled expressions */
-	needToDealocate = 0;
+	needToDeallocate = 0;
 	if(ipExpression != NULL) {
 		re = ipExpression;
 #ifdef EXTRA_DEBUG
@@ -407,7 +409,7 @@ int sdp_mangle_ip(struct sip_msg *msg, char *oldip, char *newip)
 			LOG(L_ERR, "ERROR: sdp_mangle_ip: Unable to allocate re\n");
 			return -7;
 		}
-		needToDealocate = 1;
+		needToDeallocate = 1;
 		if((regcomp(re, key, REG_EXTENDED)) != 0) {
 			LOG(L_ERR, "ERROR: sdp_mangle_ip: Unable to compile %s \n", key);
 			pkg_free(re);
@@ -432,9 +434,9 @@ int sdp_mangle_ip(struct sip_msg *msg, char *oldip, char *newip)
 		pmatch.rm_eo--; /* return with one space,\n,\r */
 #endif
 
-		/* 
+		/*
                 for BSD and Solaris we avoid memrchr
-                pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so); 
+                pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so);
                 */
 		pos = begin + pmatch.rm_eo;
 		do {
@@ -515,7 +517,7 @@ int sdp_mangle_ip(struct sip_msg *msg, char *oldip, char *newip)
 		begin = begin + pmatch.rm_eo;
 
 	} /* while */
-	if(needToDealocate) {
+	if(needToDeallocate) {
 		regfree(re); /* if I am going to use pre-compiled expressions to be removed */
 		pkg_free(re);
 #ifdef EXTRA_DEBUG
@@ -535,57 +537,54 @@ int sdp_mangle_ip(struct sip_msg *msg, char *oldip, char *newip)
 	return ret + 2;
 }
 
-int compile_expresions(char *port,char *ip)
+int compile_expressions(char *port, char *ip)
 {
 	portExpression = NULL;
 	portExpression = pkg_malloc(sizeof(regex_t));
-	if (portExpression != NULL)
-		{
-		if ((regcomp (portExpression,port, REG_EXTENDED)) != 0)
-			{
-			LOG(L_ERR,"ERROR: compile_expresions: Unable to compile portExpression [%s]\n",port);
+	if(portExpression != NULL) {
+		if((regcomp(portExpression, port, REG_EXTENDED)) != 0) {
+			LOG(L_ERR,
+					"ERROR: compile_expressions: Unable to compile "
+					"portExpression [%s]\n",
+					port);
 			pkg_free(portExpression);
 			portExpression = NULL;
-			}
 		}
-	else
-		{
-			LOG(L_ERR,"ERROR: compile_expresions: Unable to alloc portExpression \n");
-		}
-	
+	} else {
+		LOG(L_ERR, "ERROR: compile_expressions: Unable to alloc portExpression "
+				   "\n");
+	}
+
 	ipExpression = NULL;
 	ipExpression = pkg_malloc(sizeof(regex_t));
-	if (ipExpression != NULL)
-		{
-		if ((regcomp (ipExpression,ip, REG_EXTENDED)) != 0)
-			{
-			LOG(L_ERR,"ERROR: compile_expresions: Unable to compile ipExpression [%s]\n",ip);
+	if(ipExpression != NULL) {
+		if((regcomp(ipExpression, ip, REG_EXTENDED)) != 0) {
+			LOG(L_ERR,
+					"ERROR: compile_expressions: Unable to compile "
+					"ipExpression [%s]\n",
+					ip);
 			pkg_free(ipExpression);
 			ipExpression = NULL;
-			}
 		}
-	else
-		{
-			LOG(L_ERR,"ERROR: compile_expresions: Unable to alloc ipExpression \n");
-		}
-	
+	} else {
+		LOG(L_ERR,
+				"ERROR: compile_expressions: Unable to alloc ipExpression \n");
+	}
+
 	return 0;
 }
 
-int free_compiled_expresions()
+int free_compiled_expressions()
 {
-	if (portExpression != NULL) 
-		{
+	if(portExpression != NULL) {
 		regfree(portExpression);
 		pkg_free(portExpression);
 		portExpression = NULL;
-		}
-	if (ipExpression != NULL) 
-		{
+	}
+	if(ipExpression != NULL) {
 		regfree(ipExpression);
 		pkg_free(ipExpression);
 		ipExpression = NULL;
-		}
+	}
 	return 0;
 }
-

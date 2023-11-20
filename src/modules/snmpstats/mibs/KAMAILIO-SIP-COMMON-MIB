@@ -3,7 +3,7 @@
 -- This MIB provides information related to the Kamailio SIP Router.
 -- 
 -- Copyright (c) The Internet Society (2006)
--- Ammendments (c) Soma Networks, Inc. (2006)
+-- Amendments (c) Soma Networks, Inc. (2006)
 --
 -- All rights reserved.
 -- *****************************************************************
@@ -49,7 +49,7 @@ KAMAILIO-SIP-COMMON-MIB DEFINITIONS ::= BEGIN
         LAST-UPDATED "200603221200Z"
         ORGANIZATION "Kamailio"
         CONTACT-INFO
-                "http://www.kamailio.org"
+                "https://www.kamailio.org"
         DESCRIPTION
              "Originally taken from the IETF Session Initiation Protocol 
               Working Group (sip@ietf.org). The description is pulled from 

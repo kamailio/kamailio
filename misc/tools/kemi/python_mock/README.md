@@ -19,10 +19,10 @@ Return values can be injected through the dictionary \_mock\_data
 
 ```python
 
-#set retun value for all calls to the function
+#set return value for all calls to the function
 _mock_data[module][function] = value
 
-#set retun value for specific parameters being passed
+#set return value for specific parameters being passed
 _mock_data[module][function][param_value] = value
 
 #call the function myFunc when func is passed, return of myFunc will

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -43,7 +43,7 @@
 
 #ifdef HAVE_ASM_INLINE_ATOMIC_OPS
 #define HAVE_FUTEX
-#include <sys/types.h> /* hack to workaround some type conflicts 
+#include <sys/types.h> /* hack to workaround some type conflicts
                           between linux-libc-dev andlibc headers
                           in recent (6.08.2008) x86_64 debian sid
                           installations */
@@ -71,7 +71,7 @@ struct task_struct;
 /* either syscall directly or #include <sys/linux/syscall.h> and use
  * sys_futex directly */
 #define sys_futex(addr, op, val, timeout, addr2, val3) \
-	syscall(__NR_futex , (addr), (op), (val), (timeout), (addr2), (val3))
+	syscall(__NR_futex, (addr), (op), (val), (timeout), (addr2), (val3))
 
 typedef atomic_t futex_lock_t;
 
@@ -80,69 +80,69 @@ typedef atomic_t futex_lock_t;
  *                         2 - locked w/ 0 or more waiting processes/threads
  */
 
-inline static futex_lock_t* futex_init(futex_lock_t* lock)
+inline static futex_lock_t *futex_init(futex_lock_t *lock)
 {
 	atomic_set(lock, 0);
 	return lock;
 }
 
 
-inline static void futex_get(futex_lock_t* lock)
+inline static void futex_get(futex_lock_t *lock)
 {
 	int v;
 #ifdef ADAPTIVE_WAIT
-	register int i=ADAPTIVE_WAIT_LOOPS;
-	
+	register int i = ADAPTIVE_WAIT_LOOPS;
+
 retry:
 #endif
-	
-	v=atomic_cmpxchg(lock, 0, 1); /* lock if 0 */
-	if (likely(v==0)){  /* optimize for the uncontended case */
+
+	v = atomic_cmpxchg(lock, 0, 1); /* lock if 0 */
+	if(likely(v == 0)) {			/* optimize for the uncontended case */
 		/* success */
 		membar_enter_lock();
 		return;
-	}else if (unlikely(v==2)){ /* if contended, optimize for the one waiter
+	} else if(unlikely(v == 2)) { /* if contended, optimize for the one waiter
 								case */
 		/* waiting processes/threads => add ourselves to the queue */
-		do{
+		do {
 			sys_futex(&(lock)->val, FUTEX_WAIT, 2, 0, 0, 0);
-			v=atomic_get_and_set(lock, 2);
-		}while(v);
-	}else{
+			v = atomic_get_and_set(lock, 2);
+		} while(v);
+	} else {
 		/* v==1 */
 #ifdef ADAPTIVE_WAIT
-		if (i>0){
+		if(i > 0) {
 			i--;
 			goto retry;
 		}
 #endif
-		v=atomic_get_and_set(lock, 2);
-		while(v){
+		v = atomic_get_and_set(lock, 2);
+		while(v) {
 			sys_futex(&(lock)->val, FUTEX_WAIT, 2, 0, 0, 0);
-			v=atomic_get_and_set(lock, 2);
+			v = atomic_get_and_set(lock, 2);
 		}
 	}
 	membar_enter_lock();
 }
 
 
-inline static void futex_release(futex_lock_t* lock)
+inline static void futex_release(futex_lock_t *lock)
 {
 	int v;
-	
+
 	membar_leave_lock();
-	v=atomic_get_and_set(lock, 0);
-	if (unlikely(v==2)){ /* optimize for the uncontended case */
+	v = atomic_get_and_set(lock, 0);
+	if(unlikely(v == 2)) { /* optimize for the uncontended case */
 		sys_futex(&(lock)->val, FUTEX_WAKE, 1, 0, 0, 0);
 	}
 }
 
 
-static inline int futex_try(futex_lock_t* lock)
+static inline int futex_try(futex_lock_t *lock)
 {
 	int c;
-	c=atomic_cmpxchg(lock, 0, 1);
-	if (likely(c==0))
+	c = atomic_cmpxchg(lock, 0, 1);
+	if(likely(c == 0))
 		membar_enter_lock();
 	return c;
 }

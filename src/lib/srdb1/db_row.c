@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -37,18 +37,18 @@
 /*
  * Release memory used by row
  */
-int db_free_row(db_row_t* _r)
+int db_free_row(db_row_t *_r)
 {
 	int col;
-	db_val_t* _val;
+	db_val_t *_val;
 
-	if (!_r) {
+	if(!_r) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
 	/*
-	 * Loop thru each columm, then check to determine if the storage pointed to
+	 * Loop thru each column, then check to determine if the storage pointed to
 	 * by db_val_t structure must be freed. This is required for all data types
 	 * which use a pointer to a buffer like DB1_STRING, DB1_STR and DB1_BLOB and
 	 * the database module copied them during the assignment.
@@ -56,29 +56,28 @@ int db_free_row(db_row_t* _r)
 	 * Don't try to free the static dummy string (as indicated from the NULL value),
 	 * as this is not valid.
 	 */
-	for (col = 0; col < ROW_N(_r); col++) {
+	for(col = 0; col < ROW_N(_r); col++) {
 		_val = &(ROW_VALUES(_r)[col]);
-		switch (VAL_TYPE(_val)) {
+		switch(VAL_TYPE(_val)) {
 			case DB1_STRING:
-				if ( (!VAL_NULL(_val)) && VAL_FREE(_val)) {
+				if((!VAL_NULL(_val)) && VAL_FREE(_val)) {
 					LM_DBG("free VAL_STRING[%d] '%s' at %p\n", col,
-							(char *)VAL_STRING(_val),
-							(char *)VAL_STRING(_val));
+							(char *)VAL_STRING(_val), (char *)VAL_STRING(_val));
 					pkg_free((char *)VAL_STRING(_val));
 					VAL_STRING(_val) = NULL;
 				}
 				break;
 			case DB1_STR:
-				if ( (!VAL_NULL(_val)) && VAL_FREE(_val)) {
+				if((!VAL_NULL(_val)) && VAL_FREE(_val)) {
 					LM_DBG("free VAL_STR[%d] '%.*s' at %p\n", col,
-							VAL_STR(_val).len,
-							VAL_STR(_val).s, VAL_STR(_val).s);
+							VAL_STR(_val).len, VAL_STR(_val).s,
+							VAL_STR(_val).s);
 					pkg_free(VAL_STR(_val).s);
 					VAL_STR(_val).s = NULL;
 				}
 				break;
 			case DB1_BLOB:
-				if ( (!VAL_NULL(_val)) && VAL_FREE(_val)) {
+				if((!VAL_NULL(_val)) && VAL_FREE(_val)) {
 					LM_DBG("free VAL_BLOB[%d] at %p\n", col, VAL_BLOB(_val).s);
 					pkg_free(VAL_BLOB(_val).s);
 					VAL_BLOB(_val).s = NULL;
@@ -88,10 +87,10 @@ int db_free_row(db_row_t* _r)
 				break;
 		}
 	}
-	/* now as we freed all, set number of colums to zero again */
+	/* now as we freed all, set number of columns to zero again */
 	ROW_N(_r) = 0;
 
-	if (ROW_VALUES(_r)) {
+	if(ROW_VALUES(_r)) {
 		LM_DBG("freeing row values at %p\n", ROW_VALUES(_r));
 		pkg_free(ROW_VALUES(_r));
 		ROW_VALUES(_r) = NULL;
@@ -106,11 +105,11 @@ int db_free_row(db_row_t* _r)
  * \param _row filled row
  * \return zero on success, negative on errors
  */
-int db_allocate_row(const db1_res_t* _res, db_row_t* _row)
+int db_allocate_row(const db1_res_t *_res, db_row_t *_row)
 {
 	int len = sizeof(db_val_t) * RES_COL_N(_res);
-	ROW_VALUES(_row) = (db_val_t*)pkg_malloc(len);
-	if (!ROW_VALUES(_row)) {
+	ROW_VALUES(_row) = (db_val_t *)pkg_malloc(len);
+	if(!ROW_VALUES(_row)) {
 		PKG_MEM_ERROR;
 		return -1;
 	}

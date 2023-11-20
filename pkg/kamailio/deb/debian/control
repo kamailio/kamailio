@@ -27,13 +27,14 @@ Build-Depends:
  liblua5.1-0-dev,
  libmaxminddb-dev,
  libmemcached-dev,
+ libmicrohttpd-dev,
  libmnl-dev,
  libmongoc-dev,
  libmono-2.0-dev [amd64 armel armhf i386 mipsel kfreebsd-amd64 kfreebsd-i386 ppc64 ppc64el s390x],
  libmosquitto-dev,
  libnats-dev,
  libncurses5-dev,
- libpcre3-dev,
+ libpcre2-dev,
  libperl-dev,
  libphonenumber-dev (>= 7),
  libpq-dev,
@@ -63,7 +64,7 @@ Build-Depends:
  xsltproc,
  zlib1g-dev,
 Standards-Version: 4.6.0.1
-Homepage: http://www.kamailio.org/
+Homepage: https://www.kamailio.org/
 Vcs-Git: https://github.com/kamailio/kamailio.git
 Vcs-Browser: https://github.com/kamailio/kamailio/
 Rules-Requires-Root: no
@@ -918,6 +919,22 @@ Description: Nats module for the Kamailio SIP server
  This package contains the nats module, which provides a NATS consumer for Kamailio.
  NATS is a real time distributed messaging platform, more details about it can be
  found at nats.io.
+
+Package: kamailio-microhttpd-modules
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Microhttpd module for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides an embedded HTTP server using libmicrohttpd.
 
 Package: kamailio-extra-modules
 Architecture: any

@@ -37,12 +37,13 @@ typedef int ka_state;
 #define KA_STATE_UP 1
 #define KA_STATE_DOWN 2
 
-typedef int (*ka_add_dest_f)(str *uri, str *owner, int flags,
-        int ping_interval, ka_statechanged_f statechanged_clb, ka_response_f response_clb,
-        void *user_attr);
+typedef int (*ka_add_dest_f)(str *uri, str *owner, int flags, int ping_interval,
+		ka_statechanged_f statechanged_clb, ka_response_f response_clb,
+		void *user_attr);
 typedef ka_state (*ka_dest_state_f)(str *uri);
 typedef int (*ka_del_destination_f)(str *uri, str *owner);
-typedef int (*ka_find_destination_f)(str *uri, str *owner,ka_dest_t **target,ka_dest_t **head);
+typedef int (*ka_find_destination_f)(
+		str *uri, str *owner, ka_dest_t **target, ka_dest_t **head);
 typedef int (*ka_lock_destination_list_f)();
 typedef int (*ka_unlock_destination_list_f)();
 

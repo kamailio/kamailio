@@ -34,7 +34,7 @@ Build-Depends:
  libmosquitto-dev,
  libmysqlclient-dev,
  libncurses5-dev,
- libpcre3-dev,
+ libpcre2-dev,
  libperl-dev,
  libphonenumber-dev (>= 7),
  libpq-dev,
@@ -62,7 +62,7 @@ Build-Depends:
  xsltproc,
  zlib1g-dev,
 Standards-Version: 4.6.0.1
-Homepage: http://www.kamailio.org/
+Homepage: https://www.kamailio.org/
 Vcs-Git: https://github.com/kamailio/kamailio.git
 Vcs-Browser: https://github.com/kamailio/kamailio/
 Rules-Requires-Root: no
@@ -571,23 +571,6 @@ Description: LDAP modules for the Kamailio SIP server
  This package provides the ldap and h350 modules for Kamailio, enabling LDAP
  queries from the Kamailio routing scripts and storage of SIP account data in an LDAP
  directory.
-
-Package: kamailio-ims-modules
-Architecture: any
-Multi-Arch: same
-Pre-Depends:
- ${misc:Pre-Depends},
-Depends:
- kamailio (= ${binary:Version}),
- ${misc:Depends},
- ${shlibs:Depends},
-Description: IMS module for the Kamailio SIP server
- Kamailio is a very fast and flexible SIP (RFC3261)
- server. Written entirely in C, Kamailio can handle thousands calls
- per second even on low-budget hardware.
- .
- This package contains various Diameter interfaces and modules for Kamailio
- to run as an IMS core.
 
 Package: kamailio-utils-modules
 Architecture: any

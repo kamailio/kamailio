@@ -30,38 +30,38 @@
 #define _timer_ticks_h
 
 /** @brief how many ticks per second (must >1 and < 100 (on linux x86))
- * recomended values >=8, <=32 (a 2^k value is better/faster)*/
-#define TIMER_TICKS_HZ	16U
+ * recommended values >=8, <=32 (a 2^k value is better/faster)*/
+#define TIMER_TICKS_HZ 16U
 
 /** @brief how many ticks per m milliseconds? (rounded up) */
-#define MS_TO_TICKS(m)  (((m)*TIMER_TICKS_HZ+999U)/1000U)
+#define MS_TO_TICKS(m) (((m)*TIMER_TICKS_HZ + 999U) / 1000U)
 
 
 /** @brief how many ticks per s seconds? */
-#define S_TO_TICKS(s)	((s)*TIMER_TICKS_HZ)
+#define S_TO_TICKS(s) ((s)*TIMER_TICKS_HZ)
 
 
 /** @brief how many s pe per t ticks, integer value */
-#define TICKS_TO_S(t)	((t)/TIMER_TICKS_HZ)
+#define TICKS_TO_S(t) ((t) / TIMER_TICKS_HZ)
 
 /** @brief how many ms per t ticks, integer value */
-#define TICKS_TO_MS(t) (((t)*1000U)/TIMER_TICKS_HZ)
+#define TICKS_TO_MS(t) (((t)*1000U) / TIMER_TICKS_HZ)
 
 
 /** @brief ticks comparison operations: t1 OP t2, where OP can be <, >, <=, >= */
 #define TICKS_CMP_OP(t1, t2, OP) \
-	(((s_ticks_t)((ticks_t)(t1)-(ticks_t)(t2))) OP (s_ticks_t)0)
+	(((s_ticks_t)((ticks_t)(t1) - (ticks_t)(t2))) OP(s_ticks_t) 0)
 /** @brief t1 < t2 */
-#define TICKS_LT(t1, t2)  TICKS_CMP_OP(t1, t2, <)
+#define TICKS_LT(t1, t2) TICKS_CMP_OP(t1, t2, <)
 /** @brief t1 <= t2 */
-#define TICKS_LE(t1, t2)  TICKS_CMP_OP(t1, t2, <=)
+#define TICKS_LE(t1, t2) TICKS_CMP_OP(t1, t2, <=)
 /** @brief t1 > t2 */
-#define TICKS_GT(t1, t2)  TICKS_CMP_OP(t1, t2, >)
+#define TICKS_GT(t1, t2) TICKS_CMP_OP(t1, t2, >)
 /** @brief t1 >= t2 */
-#define TICKS_GE(t1, t2)  TICKS_CMP_OP(t1, t2, >=)
+#define TICKS_GE(t1, t2) TICKS_CMP_OP(t1, t2, >=)
 
 
-typedef unsigned int ticks_t;/* type used to keep the ticks (must be 32 bits)*/
-typedef signed   int s_ticks_t; /* signed ticks type */
+typedef unsigned int ticks_t; /* type used to keep the ticks (must be 32 bits)*/
+typedef signed int s_ticks_t; /* signed ticks type */
 
 #endif

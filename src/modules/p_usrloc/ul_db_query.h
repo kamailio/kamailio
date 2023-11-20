@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -25,7 +25,8 @@
 #include "../../lib/srdb1/db.h"
 #include "ul_db_handle.h"
 
-int db_query(ul_db_handle_t * handle, db1_con_t *** _r_h, db_func_t ** _r_f, str * table, db_key_t* _k, db_op_t * _op, db_val_t * _v,
-                db_key_t * _c, int _n, int _nc, db_key_t _o, db1_res_t ** _r, int rw);
+int db_query(ul_db_handle_t *handle, db1_con_t ***_r_h, db_func_t **_r_f,
+		str *table, db_key_t *_k, db_op_t *_op, db_val_t *_v, db_key_t *_c,
+		int _n, int _nc, db_key_t _o, db1_res_t **_r, int rw);
 
 #endif

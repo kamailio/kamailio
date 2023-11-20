@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -33,30 +33,31 @@
 typedef struct subs_info
 {
 	str id;
-	str* pres_uri;
-	str* watcher_uri;
-	str* contact;
-	str* remote_target;
-	str* outbound_proxy;
+	str *pres_uri;
+	str *watcher_uri;
+	str *contact;
+	str *remote_target;
+	str *outbound_proxy;
 	int event;
-	str* extra_headers;
+	str *extra_headers;
 	int expires;
 	int source_flag;
-	int flag;         /*  it can be : INSERT_TYPE or UPDATE_TYPE; not compulsory */
-	void* cb_param;  /* the parameter for the function to be called on the callback 
+	int flag; /*  it can be : INSERT_TYPE or UPDATE_TYPE; not compulsory */
+	void *cb_param; /* the parameter for the function to be called on the callback
 						 for the received reply; it must be allocated in share memory;
 						 a reference to it will be found in the cb_param filed of the ua_pres_structure
-						 receied as a parameter for the registered function*/
+						 received as a parameter for the registered function*/
 	int internal_update_flag;
-}subs_info_t;
+} subs_info_t;
 
 
-typedef int (*send_subscribe_t)(subs_info_t* subs);
-int send_subscribe(subs_info_t* subs);
+typedef int (*send_subscribe_t)(subs_info_t *subs);
+int send_subscribe(subs_info_t *subs);
 void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps);
-str* subs_build_hdr(str* watcher_uri, int expires, int event, str* extra_headers);
-dlg_t* pua_build_dlg_t(ua_pres_t* presentity);
-ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag);
-ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag);
+str *subs_build_hdr(
+		str *watcher_uri, int expires, int event, str *extra_headers);
+dlg_t *pua_build_dlg_t(ua_pres_t *presentity);
+ua_pres_t *subscribe_cbparam(subs_info_t *subs, int ua_flag);
+ua_pres_t *subs_cbparam_indlg(ua_pres_t *subs, int expires, int ua_flag);
 
 #endif

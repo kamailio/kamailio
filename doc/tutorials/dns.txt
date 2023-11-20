@@ -143,7 +143,7 @@ DNS Resolver Options
       If set to yes - the additional part is checked against the search list.
 
  The maximum time a DNS request can take (before failing) is:
- (dns_retr_time*dns_retr_no) * (search_list_domains) If dns_try_ipv6 is yes,
+ (dns_retr_time*dns_retr_no) * (search_list_domains). If dns_try_ipv6 is yes,
  multiply it again by 2.
 
  The option combination that produces the "fastest" DNS resolver config
@@ -167,8 +167,9 @@ DNS Resolver Compile Options
 ----------------------------
 
    USE_NAPTR - if defined the naptr lookup support will be compiled in.
-      NAPTR support still has to be enabled from Kamailio's config file (it's
-      off by default).
+      NAPTR support still has to be enabled from Kamailio's config file.
+      USE_NAPTR is defined by default. NAPTR support is disabled from the
+      config file by default.
 
 
 DNS Cache and Failover Config Variables
@@ -182,7 +183,7 @@ DNS Cache and Failover Config Variables
       server.
       Default: on.
 
-   use_dns_failover = on |off - if on and sending a request fails (due to not
+   use_dns_failover = on | off - if on and sending a request fails (due to not
       being allowed from an onsend_route, send failure, blocklisted destination
       or, when using tm, invite timeout), and the destination resolves to
       multiple ip addresses and/or multiple SRV records, the send will be
@@ -260,7 +261,7 @@ DNS Cache and Failover Config Variables
       Default: no
 
    dns_cache_init = on | off - if off, the DNS cache is not initialized
-      at startup and cannot be enabled runtime, that saves some memory.
+      at startup and cannot be enabled at runtime, that saves some memory.
       Default: on
 
 DNS Cache Compile Options
@@ -301,7 +302,7 @@ DNS Cache Compile Options
        If this option is not defined (experimental), everything in the AR
        section will be added to the cache.
 
- Note: To remove a compile options,  edit Kamailio's Makefile.defs and remove it 
+ Note: To remove a compile options, edit Kamailio's Makefile.defs and remove it 
    from DEFS list. To add a compile options add it to the make command line,
      e.g.: make proper; make all extra_defs=-DUSE_DNS_FAILOVER
    or for a permanent solution, edit Makefile.defs and add it to DEFS 

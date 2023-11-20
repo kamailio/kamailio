@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -34,12 +34,11 @@
 /**
  * used to map names to numbers for faster access.
  */
-struct name_map_t {
+struct name_map_t
+{
 	str name; /*!< name of the routing domain or carrier */
-	int id; /*!< the corresponding id */
+	int id;	  /*!< the corresponding id */
 };
-
-
 
 
 /**
@@ -49,9 +48,9 @@ struct name_map_t {
  * @param size the size of the list
  * @param name the name, we are looking for
  *
- * @return values: on succcess the id for this name, -1 on failure
+ * @return values: on success the id for this name, -1 on failure
  */
-int map_name2id(struct name_map_t * map, int size, const str * name);
+int map_name2id(struct name_map_t *map, int size, const str *name);
 
 
 /**
@@ -61,9 +60,9 @@ int map_name2id(struct name_map_t * map, int size, const str * name);
  * @param size the size of the list
  * @param id the id, we are looking for
  *
- * @return values: on succcess the name for this id, NULL on failure
+ * @return values: on success the name for this id, NULL on failure
  */
-str * map_id2name(struct name_map_t * map, int size, int id);
+str *map_id2name(struct name_map_t *map, int size, int id);
 
 
 /**

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -29,110 +29,128 @@
 #include <cds/memory.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /* If compiled for SER, use ser internal strings ! */
 #ifdef SER
 
-#include "str.h"	
-typedef str str_t;
+#include "str.h"
+	typedef str str_t;
 
 #else
 
-typedef struct {
+typedef struct
+{
 	char *s;
 	int len;
 } str_t;
 
-#define STR_STATIC_INIT(v) {(v), sizeof(v) - 1}
+#define STR_STATIC_INIT(v) \
+	{                      \
+		(v), sizeof(v) - 1 \
+	}
 
 #endif
 
-#define FMT_STR(str)	(str).len,((str).s ? (str).s : "")	
+#define FMT_STR(str) (str).len, ((str).s ? (str).s : "")
 
-#define str_len(ptr)	((ptr)?(ptr)->len:0)
+#define str_len(ptr) ((ptr) ? (ptr)->len : 0)
 
-/** transalate zero-terminated string to str_t (both uses the input buffer!)*/
-str_t zt2str(char *str);
+	/** translate zero-terminated string to str_t (both uses the input buffer!)*/
+	str_t zt2str(char *str);
 
-/** returns 1 if the string is empty */
-int is_str_empty(const str_t *s);
+	/** returns 1 if the string is empty */
+	int is_str_empty(const str_t *s);
 
-/** duplicate string into given destination (data region is newly allocated) */
-int str_dup_impl(str_t* dst, const str_t* src);
-int str_dup_dbg(str_t* dst, const str_t* src, const char *file, int line);
+	/** duplicate string into given destination (data region is newly allocated) */
+	int str_dup_impl(str_t *dst, const str_t *src);
+	int str_dup_dbg(str_t *dst, const str_t *src, const char *file, int line);
 /*#define str_dup(dst,src)	str_dup_dbg(dst,src,__FILE__,__LINE__)*/
-#define str_dup(dst,src)	str_dup_impl(dst,src)
+#define str_dup(dst, src) str_dup_impl(dst, src)
 
 
-/** duplicate string into newly allocated destination (data and str structure are newly allocated) */
-str_t *str_dup_new(const str_t* src);
+	/** duplicate string into newly allocated destination (data and str structure are newly allocated) */
+	str_t *str_dup_new(const str_t *src);
 
-/** duplicate zero-terminated string */
-int str_dup_zt(str_t* dst, const char* src);
+	/** duplicate zero-terminated string */
+	int str_dup_zt(str_t *dst, const char *src);
 
-/** duplicate zero-terminated string to zero-terminated string */
-char *zt_strdup(const char*src);
+	/** duplicate zero-terminated string to zero-terminated string */
+	char *zt_strdup(const char *src);
 
 /** frees string content if allocated */
 /* void str_free_content(str_t *s); */
-#define str_free_content(str)	do { if (str != NULL) { \
-		if (((str)->len > 0) && ((str)->s)) cds_free((str)->s);\
-		(str)->len = 0; \
-		(str)->s = 0; \
-	} } while (0)
+#define str_free_content(str)                  \
+	do {                                       \
+		if(str != NULL) {                      \
+			if(((str)->len > 0) && ((str)->s)) \
+				cds_free((str)->s);            \
+			(str)->len = 0;                    \
+			(str)->s = 0;                      \
+		}                                      \
+	} while(0)
 
 /** frees string content if allocated and then the string itself */
 /* void str_free(str_t *s); */
-#define str_free(str)	do { if (str != NULL) { \
-		if (((str)->len > 0) && ((str)->s)) cds_free((str)->s);\
-		cds_free(str); \
-	} } while (0)
+#define str_free(str)                          \
+	do {                                       \
+		if(str != NULL) {                      \
+			if(((str)->len > 0) && ((str)->s)) \
+				cds_free((str)->s);            \
+			cds_free(str);                     \
+		}                                      \
+	} while(0)
 
 /* clears string content */
-#define str_clear(str)	do { if (str != NULL) { \
-		(str)->len = 0; \
-		(str)->s = 0; \
-	} } while (0)
+#define str_clear(str)      \
+	do {                    \
+		if(str != NULL) {   \
+			(str)->len = 0; \
+			(str)->s = 0;   \
+		}                   \
+	} while(0)
 
 
-/** case sensitive comparation - returns 0 if equal, nonzero otherwise */
-int str_case_equals(const str_t *a, const str_t *b);
-/** case insensitive comparation - returns 0 if equal, nonzero otherwise */
-int str_nocase_equals(const str_t *a, const str_t *b);
+	/** case sensitive comparation - returns 0 if equal, nonzero otherwise */
+	int str_case_equals(const str_t *a, const str_t *b);
+	/** case insensitive comparation - returns 0 if equal, nonzero otherwise */
+	int str_nocase_equals(const str_t *a, const str_t *b);
 
-/** compare str_t and zero terminated string */
-int str_cmp_zt(const str_t *a, const char *b); /* renamed sz_cmp */
+	/** compare str_t and zero terminated string */
+	int str_cmp_zt(const str_t *a, const char *b); /* renamed sz_cmp */
 
-/** is b prefix of a */
-int str_prefix(const str_t *a, const str_t *b); /* ss_start */
+	/** is b prefix of a */
+	int str_prefix(const str_t *a, const str_t *b); /* ss_start */
 
-/* #define ss_cmp(const str_t *a, const str_t *b) ((a->len == b->len)?sz_cmp(a, b->s):(-1)) */
+	/* #define ss_cmp(const str_t *a, const str_t *b) ((a->len == b->len)?sz_cmp(a, b->s):(-1)) */
 
-/* void str_clear(str_t *s); */
+	/* void str_clear(str_t *s); */
 
-/** locate character in string */
-char *str_strchr(const str_t *s, char c);
+	/** locate character in string */
+	char *str_strchr(const str_t *s, char c);
 
-/** locate string in string */
-char *str_str(const str_t *s, const str_t *search_for);
+	/** locate string in string */
+	char *str_str(const str_t *s, const str_t *search_for);
 
-/* creates new string as concatenation of a and b */
-int str_concat(str_t *dst, str_t *a, str_t *b);
+	/* creates new string as concatenation of a and b */
+	int str_concat(str_t *dst, str_t *a, str_t *b);
 
-int replace_str(const str_t *src, str_t *dst, const str_t *sample, const str_t *value);
+	int replace_str(const str_t *src, str_t *dst, const str_t *sample,
+			const str_t *value);
 
-/** Copies string into another one. The destination string buffer 
+/** Copies string into another one. The destination string buffer
  * MUST be allocated in needed size! */
-#define str_cpy(dst, src) do { \
-	memcpy((dst)->s, (src)->s, (src)->len); \
-	(dst)->len = (src)->len; \
-	} while (0)
+#define str_cpy(dst, src)                       \
+	do {                                        \
+		memcpy((dst)->s, (src)->s, (src)->len); \
+		(dst)->len = (src)->len;                \
+	} while(0)
 
 /* pointer after given string - often used when strings
  * allocated together with data structure holding them */
-#define after_str_ptr(ss)	((ss)->s + (ss)->len)
+#define after_str_ptr(ss) ((ss)->s + (ss)->len)
 
 /*
  * Append a string app with length app_len
@@ -140,10 +158,10 @@ int replace_str(const str_t *src, str_t *dst, const str_t *sample, const str_t *
  * the buffer must be large enough
  */
 #define str_append(str, app, app_len)                    \
-    do {                                                 \
-        memcpy((str)->s + (str)->len, (app), (app_len)); \
-        (str)->len += (app_len);                         \
-    } while(0)
+	do {                                                 \
+		memcpy((str)->s + (str)->len, (app), (app_len)); \
+		(str)->len += (app_len);                         \
+	} while(0)
 
 #ifdef __cplusplus
 }

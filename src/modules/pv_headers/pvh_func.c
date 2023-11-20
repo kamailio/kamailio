@@ -96,7 +96,7 @@ int pvh_collect_headers(struct sip_msg *msg)
 		val.len = hf->body.len;
 		val.s = hf->body.s;
 
-		if(( marker = pvh_detect_split_char(val.s)) != NULL
+		if((marker = pvh_detect_split_char(val.s)) != NULL
 				&& str_hash_case_get(&split_headers, name.s, name.len)) {
 
 			if(pvh_split_values(&val, hvals, &d_size, 1, marker) < 0) {
@@ -325,12 +325,17 @@ int pvh_check_header(struct sip_msg *msg, str *hname)
 
 int pvh_append_header(struct sip_msg *msg, str *hname, str *hvalue)
 {
-	return pvh_set_xavi(msg, &xavi_name, hname, hvalue, SR_XTYPE_STR, 0, 1);
+	if(pvh_set_xavi(msg, &xavi_name, hname, hvalue, SR_XTYPE_STR, 0, 1) == NULL)
+		return -1;
+	return 1;
 }
 
 int pvh_modify_header(struct sip_msg *msg, str *hname, str *hvalue, int indx)
 {
-	return pvh_set_xavi(msg, &xavi_name, hname, hvalue, SR_XTYPE_STR, indx, 0);
+	if(pvh_set_xavi(msg, &xavi_name, hname, hvalue, SR_XTYPE_STR, indx, 0)
+			== NULL)
+		return -1;
+	return 1;
 }
 
 int pvh_remove_header(struct sip_msg *msg, str *hname, int indx)
@@ -346,12 +351,12 @@ int pvh_remove_header(struct sip_msg *msg, str *hname, int indx)
 		do {
 			if(pvh_set_xavi(
 					   msg, &xavi_name, hname, NULL, SR_XTYPE_STR, indx++, 0)
-					< 1)
+					== NULL)
 				return -1;
 		} while(indx < count);
 	} else {
 		if(pvh_set_xavi(msg, &xavi_name, hname, NULL, SR_XTYPE_STR, indx, 0)
-				< 1)
+				== NULL)
 			return -1;
 	}
 
@@ -360,19 +365,19 @@ int pvh_remove_header(struct sip_msg *msg, str *hname, int indx)
 
 int pvh_header_param_exists(struct sip_msg *msg, str *hname, str *hvalue)
 {
-	sr_xavp_t *avi=NULL;
+	sr_xavp_t *avi = NULL;
 	char head_name[header_name_size];
 	str br_xname = {head_name, header_name_size};
 
-	avi = xavi_get(&xavi_name,NULL);
+	avi = xavi_get(&xavi_name, NULL);
 	pvh_get_branch_xname(msg, &xavi_name, &br_xname);
 
 	avi = xavi_get_child(&br_xname, hname);
 
-	while(avi)
-	{
-		if (avi->val.type == SR_XTYPE_STR && avi->val.v.s.s != NULL && _strnstr(avi->val.v.s.s, hvalue->s, avi->val.v.s.len) != NULL)
-		{
+	while(avi) {
+		if(avi->val.type == SR_XTYPE_STR && avi->val.v.s.s != NULL
+				&& _strnstr(avi->val.v.s.s, hvalue->s, avi->val.v.s.len)
+						   != NULL) {
 			return 1;
 		}
 		avi = xavi_get_next(avi);
@@ -397,13 +402,16 @@ int pvh_remove_header_param_helper(str *orig, const str *toRemove, str *dst)
 	strncpy(t, orig->s, orig->len);
 	t[orig->len] = '\0';
 	token = strtok_r(t, ", ", &saveptr);
-	dst->s = NULL; dst->len = -1;
+	dst->s = NULL;
+	dst->len = -1;
 	while(token) {
 		notTarget = strncasecmp(token, toRemove->s, toRemove->len);
 		LM_DBG("offset:%d token:%s notTarget:%d\n", offset, token, notTarget);
 		if(notTarget) {
-			writtenChars = snprintf(result + offset, maxSize - offset, "%s, ", token);
-			if(writtenChars < 0) break;
+			writtenChars =
+					snprintf(result + offset, maxSize - offset, "%s, ", token);
+			if(writtenChars < 0)
+				break;
 			offset += writtenChars;
 		} else {
 			dst->len = 0; /* we found a token */
@@ -413,7 +421,8 @@ int pvh_remove_header_param_helper(str *orig, const str *toRemove, str *dst)
 
 	if(offset > 0) {
 		dst->s = result;
-		if(offset > 2 && result[offset-2] == ',' && result[offset-1] == ' ') {
+		if(offset > 2 && result[offset - 2] == ','
+				&& result[offset - 1] == ' ') {
 			LM_DBG("remove last separator\n");
 			offset = offset - 2;
 			result[offset] = '\0';

@@ -27,8 +27,7 @@
 #include "../../core/pvar.h"
 
 int pv_parse_phonenum_name(pv_spec_p sp, str *in);
-int pv_get_phonenum(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_phonenum(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 int phonenum_init_pv(int smode);
 void phonenum_destroy_pv(void);
@@ -37,4 +36,3 @@ int phonenum_update_pv(str *tomatch, str *cncode, str *pvclass);
 int sr_phonenum_add_resid(str *rname);
 
 #endif
-

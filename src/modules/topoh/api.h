@@ -33,13 +33,14 @@ typedef int (*topoh_mask_callid_f)(str *icallid, str *ocallid);
 typedef int (*topoh_unmask_callid_f)(str *icallid, str *ocallid);
 
 
-typedef struct topoh_api {
+typedef struct topoh_api
+{
 	topoh_mask_callid_f mask_callid;
 	topoh_unmask_callid_f unmask_callid;
 } topoh_api_t;
 
-typedef int (*bind_topoh_f)(topoh_api_t* api);
-int bind_topoh(topoh_api_t* api);
+typedef int (*bind_topoh_f)(topoh_api_t *api);
+int bind_topoh(topoh_api_t *api);
 
 /**
  * @brief Load the topoh API
@@ -53,8 +54,7 @@ static inline int topoh_load_api(topoh_api_t *api)
 		LM_ERR("cannot find bind_topoh\n");
 		return -1;
 	}
-	if(bindtopoh(api)<0)
-	{
+	if(bindtopoh(api) < 0) {
 		LM_ERR("cannot bind topoh api\n");
 		return -1;
 	}

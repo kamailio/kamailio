@@ -35,16 +35,16 @@
 #include "../str.h"
 #include "../parser/msg_parser.h"
 
-extern str	s_sip, s_sips, s_tel, s_tels, s_urn;
+extern str s_sip, s_sips, s_tel, s_tels, s_urn;
 
-/* buf= pointer to begining of uri (sip:x@foo.bar:5060;a=b?h=i)
+/* buf= pointer to beginning of uri (sip:x@foo.bar:5060;a=b?h=i)
  * len= len of uri
  * returns: fills uri & returns <0 on error or 0 if ok
  */
-int parse_uri(char *buf, int len, struct sip_uri* uri);
-int parse_sip_msg_uri(struct sip_msg* msg);
-int parse_orig_ruri(struct sip_msg* msg);
-int normalize_tel_user(char* res, str* src);
+int parse_uri(char *buf, int len, struct sip_uri *uri);
+int parse_sip_msg_uri(struct sip_msg *msg);
+int parse_orig_ruri(struct sip_msg *msg);
+int normalize_tel_user(char *res, str *src);
 void uri_type_to_str(uri_type type, str *s);
 void proto_type_to_str(unsigned short type, str *s);
 

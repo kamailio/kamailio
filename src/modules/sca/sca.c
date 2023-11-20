@@ -28,9 +28,9 @@
 /*!
  * \defgroup sca :: The Kamailio shared call appearance Module
  *
- * The sca module implements Shared Call Appearances. It handles SUBSCRIBE messages for call-info 
+ * The sca module implements Shared Call Appearances. It handles SUBSCRIBE messages for call-info
  * and line-seize events, and sends call-info NOTIFYs to line subscribers to implement line bridging.
- * The module implements SCA as defined in Broadworks SIP Access Side Extensions Interface 
+ * The module implements SCA as defined in Broadworks SIP Access Side Extensions Interface
  * Specifications, Release 13.0, version 1, sections 2, 3 and 4.
  */
 #include "sca_common.h"

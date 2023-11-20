@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -14,16 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef _DB_CON_H
-#define _DB_CON_H  1
+#define _DB_CON_H 1
 
-/** \ingroup DB_API 
- * @{ 
+/** \ingroup DB_API
+ * @{
  */
 
 #include "db_gen.h"
@@ -31,27 +31,29 @@
 #include "db_uri.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif /* __cplusplus */
 
-struct db_con;
-struct db_ctx;
+	struct db_con;
+	struct db_ctx;
 
-typedef int (db_con_connect_t)(struct db_con* con);
-typedef void (db_con_disconnect_t)(struct db_con* con);
+	typedef int(db_con_connect_t)(struct db_con *con);
+	typedef void(db_con_disconnect_t)(struct db_con *con);
 
 
-typedef struct db_con {
-	db_gen_t gen;            /* Generic part of the structure */
-	db_con_connect_t* connect;
-	db_con_disconnect_t* disconnect;
+	typedef struct db_con
+	{
+		db_gen_t gen; /* Generic part of the structure */
+		db_con_connect_t *connect;
+		db_con_disconnect_t *disconnect;
 
-	struct db_ctx* ctx;
-	db_uri_t* uri;
-} db_con_t;
+		struct db_ctx *ctx;
+		db_uri_t *uri;
+	} db_con_t;
 
-struct db_con* db_con(struct db_ctx* ctx, db_uri_t* uri);
-void db_con_free(struct db_con* con);
+	struct db_con *db_con(struct db_ctx *ctx, db_uri_t *uri);
+	void db_con_free(struct db_con *con);
 
 #ifdef __cplusplus
 }
@@ -60,5 +62,3 @@ void db_con_free(struct db_con* con);
 /** @} */
 
 #endif /* _DB_CON_H */
-
-

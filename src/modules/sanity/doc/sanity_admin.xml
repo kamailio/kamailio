@@ -158,7 +158,7 @@
 	<para>
 	    Default value is <quote>3047</quote>. This resolves to the following list of
 		checks: ruri_sip_version (1), ruri_scheme (2), required_headers (4),
-		cseq_method (32), cseq_value (64), content_length (128), 
+		cseq_method (32), cseq_value (64), content_length (128),
 		expires_value (256), proxy_require (512), digest credentials (2048).
 	</para>
 	<example>
@@ -215,7 +215,7 @@ modparam("sanity", "proxy_require", "foo, bar")
 	<section id="sanity.p.autodrop">
 	<title><varname>autodrop</varname> (integer)</title>
 	<para>
-		This parameter controls whether the module drops 
+		This parameter controls whether the module drops
 		the SIP message automatically if the sanity checks fail. Default value
 		is 1 (auto drop). If set to 0, sanity_check() function will return
 		-1 (false) to configuration file, allowing to write log messages for
@@ -268,7 +268,7 @@ modparam("sanity", "noreply", 1)
 		If autodrop=0, the function returns false (-1) if one of the checks failed.
 		When autodrop=1, the function stops the execution of configuration file.
 		In both cases, if one of the checks fails the module sends a precise error
-		reply via SL <function>send_reply()</function>. Thus there is no need to reply with a generic 
+		reply via SL <function>send_reply()</function>. Thus there is no need to reply with a generic
 		error message.
 	</para>
 	<para>
@@ -288,7 +288,7 @@ if (!sanity_check()) {
 	</example>
 	<para>
 		Optionally the function takes an integer argument which overwrites
-		the global module parameter <varname>default_checks</varname>. 
+		the global module parameter <varname>default_checks</varname>.
 		This makes it possible to run certain tests from script regions.
 		The integer value is again the sum
 		of the checks (like for the module parameter) which should be executed

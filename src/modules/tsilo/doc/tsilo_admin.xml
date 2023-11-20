@@ -101,7 +101,7 @@ modparam("tsilo", "hash_size", 1024)
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
 			Specify if the domain part of the URI should be also saved and used for
-			storing and retrieving users' transactions. Useful in multi domain scenarios. 
+			storing and retrieving users' transactions. Useful in multi domain scenarios.
 			Non 0 value means true.
 		</para>
 		<para>
@@ -259,8 +259,8 @@ if (is_method("REGISTER")) {
 		<programlisting format="linespecific">
 ...
 if (is_method("REGISTER")) {
-	$var(formated_ct) = $(x_hdr(Contact){nameaddr.uri});
-	ts_append_by_contact("location", "$tu", "$var(formated_ct)");
+	$var(formatted_ct) = $(x_hdr(Contact){nameaddr.uri});
+	ts_append_by_contact("location", "$tu", "$var(formatted_ct)");
 }
 ...
 </programlisting>
@@ -310,7 +310,7 @@ if (is_method("REGISTER")) {
 if (is_method("REGISTER")) {
 	$var(tindex) = ...
 	$var(tlabel) = ...
-	ts_append_to("$var(tindex)", "$var(tlabel", "location");
+	ts_append_to("$var(tindex)", "$var(tlabel)", "location");
 }
 ...
 </programlisting>

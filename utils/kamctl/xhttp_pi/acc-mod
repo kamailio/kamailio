@@ -1,4 +1,4 @@
-	<!-- acc provisioning -->
+	<!-- acc provisionning -->
 	<mod><mod_name>acc</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>acc</db_table_id>
@@ -51,7 +51,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- acc_cdrs provisioning -->
+	<!-- acc_cdrs provisionning -->
 	<mod><mod_name>acc_cdrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>acc_cdrs</db_table_id>
@@ -92,7 +92,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- missed_calls provisioning -->
+	<!-- missed_calls provisionning -->
 	<mod><mod_name>missed_calls</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>missed_calls</db_table_id>

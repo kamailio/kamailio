@@ -27,14 +27,14 @@
 #include <stdio.h>
 #include <stdlib.h> /* malloc */
 #include <string.h>
-#include <netdb.h> /* getservbyname*/
+#include <netdb.h>	   /* getservbyname*/
 #include <arpa/inet.h> /* ntohs */
 
 #include "parse_listen_id.h"
 
 /* ser source compat. defines*/
 #define pkg_malloc malloc
-#define pkg_free   free
+#define pkg_free free
 
 #ifdef EXTRA_DEBUG
 static int _debug = 1;
@@ -43,66 +43,65 @@ static int _debug = 0;
 #endif
 
 #ifdef __SUNPRO_C
-#define DBG(...) \
-	do { \
-		if(_debug==1) \
-			fprintf(stderr,  __VA_ARGS__); \
+#define DBG(...)                          \
+	do {                                  \
+		if(_debug == 1)                   \
+			fprintf(stderr, __VA_ARGS__); \
 	} while(0)
-#define ERR(...) fprintf(stderr,  __VA_ARGS__)
+#define ERR(...) fprintf(stderr, __VA_ARGS__)
 #else
-#define DBG(fmt, args...) \
-	do { \
-		if(_debug==1) \
-			fprintf(stderr, fmt, ## args); \
+#define DBG(fmt, args...)                 \
+	do {                                  \
+		if(_debug == 1)                   \
+			fprintf(stderr, fmt, ##args); \
 	} while(0)
-#define ERR(fmt, args...) fprintf(stderr, fmt, ## args)
+#define ERR(fmt, args...) fprintf(stderr, fmt, ##args)
 #endif
-
-
-
 
 
 /* converts a str to an u. short, returns the u. short and sets *err on
  * error and if err!=null
   */
-static inline unsigned short str2s(const char* s, unsigned int len,
-									int *err)
+static inline unsigned short str2s(const char *s, unsigned int len, int *err)
 {
 	unsigned short ret;
 	int i;
 	unsigned char *limit;
 	unsigned char *init;
-	unsigned char* str;
+	unsigned char *str;
 
 	/*init*/
-	str=(unsigned char*)s;
-	ret=i=0;
-	limit=str+len;
-	init=str;
+	str = (unsigned char *)s;
+	ret = i = 0;
+	limit = str + len;
+	init = str;
 
-	for(;str<limit ;str++){
-		if ( (*str <= '9' ) && (*str >= '0') ){
-				ret=ret*10+*str-'0';
-				i++;
-				if (i>5) goto error_digits;
-		}else{
-				/* error unknown char */
-				goto error_char;
+	for(; str < limit; str++) {
+		if((*str <= '9') && (*str >= '0')) {
+			ret = ret * 10 + *str - '0';
+			i++;
+			if(i > 5)
+				goto error_digits;
+		} else {
+			/* error unknown char */
+			goto error_char;
 		}
 	}
-	if (err) *err=0;
+	if(err)
+		*err = 0;
 	return ret;
 
 error_digits:
 	DBG("ERROR: too many letters in [%.*s]\n", (int)len, init);
-	if (err) *err=1;
+	if(err)
+		*err = 1;
 	return 0;
 error_char:
 	DBG("ERROR: unexpected char %c in %.*s\n", *str, (int)len, init);
-	if (err) *err=1;
+	if(err)
+		*err = 1;
 	return 0;
 }
-
 
 
 /* parse proto:address:port   or proto:address */
@@ -118,159 +117,169 @@ error_char:
  *     where host_name=string, ipv4 address, [ipv6 address],
  *         unix socket path (starts with '/')
  */
-struct id_list* parse_listen_id(char* l, int len, enum socket_protos def)
+struct id_list *parse_listen_id(char *l, int len, enum socket_protos def)
 {
-	char* p;
+	char *p;
 	enum socket_protos proto;
-	char* name;
-	char* port_str;
+	char *name;
+	char *port_str;
 	int port;
 	int err;
-	struct servent* se;
-	char* s;
-	struct id_list* id;
+	struct servent *se;
+	char *s;
+	struct id_list *id;
 
-	s=pkg_malloc((len+1)*sizeof(char));
-	if (s==0){
+	s = pkg_malloc((len + 1) * sizeof(char));
+	if(s == 0) {
 		ERR("ERROR:parse_listen_id: out of memory\n");
 		goto error;
 	}
 	memcpy(s, l, len);
-	s[len]=0; /* null terminate */
+	s[len] = 0; /* null terminate */
 
 	/* duplicate */
-	proto=UNKNOWN_SOCK;
-	port=0;
-	name=0;
-	port_str=0;
-	p=s;
+	proto = UNKNOWN_SOCK;
+	port = 0;
+	name = 0;
+	port_str = 0;
+	p = s;
 
-	if ((*p)=='[') goto ipv6;
+	if((*p) == '[')
+		goto ipv6;
 	/* find proto or name */
-	for (; *p; p++){
-		if (*p==':'){
-			*p=0;
-			if (strcasecmp("tcp", s)==0){
-				proto=TCP_SOCK;
+	for(; *p; p++) {
+		if(*p == ':') {
+			*p = 0;
+			if(strcasecmp("tcp", s) == 0) {
+				proto = TCP_SOCK;
 				goto find_host;
-			}else if (strcasecmp("udp", s)==0){
-				proto=UDP_SOCK;
+			} else if(strcasecmp("udp", s) == 0) {
+				proto = UDP_SOCK;
 				goto find_host;
-			}else if (strcasecmp("unixd", s)==0){
-				proto=UNIXD_SOCK;
+			} else if(strcasecmp("unixd", s) == 0) {
+				proto = UNIXD_SOCK;
 				goto find_host;
-			}else if ((strcasecmp("unix", s)==0)||(strcasecmp("unixs", s)==0)){
-				proto=UNIXS_SOCK;
+			} else if((strcasecmp("unix", s) == 0)
+					  || (strcasecmp("unixs", s) == 0)) {
+				proto = UNIXS_SOCK;
 				goto find_host;
 #ifdef USE_FIFO
-			}else if (strcasecmp("fifo", s)==0){
-				proto=FIFO_SOCK;
+			} else if(strcasecmp("fifo", s) == 0) {
+				proto = FIFO_SOCK;
 				goto find_host;
 #endif
-			}else{
-				proto=UNKNOWN_SOCK;
+			} else {
+				proto = UNKNOWN_SOCK;
 				/* this might be the host */
-				name=s;
+				name = s;
 				goto find_port;
 			}
 		}
 	}
-	name=s;
+	name = s;
 	goto end; /* only name found */
 find_host:
 	p++;
-	if (*p=='[') goto ipv6;
-	name=p;
-	for (; *p; p++){
-		if ((*p)==':'){
-			*p=0;
+	if(*p == '[')
+		goto ipv6;
+	name = p;
+	for(; *p; p++) {
+		if((*p) == ':') {
+			*p = 0;
 			goto find_port;
 		}
 	}
 	goto end; /* nothing after name */
 ipv6:
-	name=p;
+	name = p;
 	p++;
-	for(;*p;p++){
-		if(*p==']'){
-			if(*(p+1)==':'){
-				p++; *p=0;
+	for(; *p; p++) {
+		if(*p == ']') {
+			if(*(p + 1) == ':') {
+				p++;
+				*p = 0;
 				goto find_port;
-			}else if (*(p+1)==0) goto end;
-		}else{
+			} else if(*(p + 1) == 0)
+				goto end;
+		} else {
 			goto error;
 		}
 	}
 
 find_port:
 	p++;
-	port_str=(*p)?p:0;
+	port_str = (*p) ? p : 0;
 
 end:
 	/* fix all the stuff */
-	if (name==0) goto error;
-	if (proto==UNKNOWN_SOCK){
+	if(name == 0)
+		goto error;
+	if(proto == UNKNOWN_SOCK) {
 		/* try to guess */
-		if (port_str){
-			switch(def){
+		if(port_str) {
+			switch(def) {
 				case TCP_SOCK:
 				case UDP_SOCK:
-					proto=def;
+					proto = def;
 					break;
 				default:
-					proto=UDP_SOCK;
+					proto = UDP_SOCK;
 					DBG("guess:%s is a tcp socket\n", name);
 			}
-		}else if (name && strchr(name, '/')){
-			switch(def){
+		} else if(name && strchr(name, '/')) {
+			switch(def) {
 				case TCP_SOCK:
 				case UDP_SOCK:
 					DBG("guess:%s is a unix socket\n", name);
-					proto=UNIXS_SOCK;
+					proto = UNIXS_SOCK;
 					break;
 				default:
 					/* def is filename based => use default */
-					proto=def;
+					proto = def;
 			}
-		}else{
+		} else {
 			/* using default */
-			proto=def;
+			proto = def;
 		}
 	}
-	if (port_str){
-		port=str2s(port_str, strlen(port_str), &err);
-		if (err){
+	if(port_str) {
+		port = str2s(port_str, strlen(port_str), &err);
+		if(err) {
 			/* try getservbyname */
-			se=getservbyname(port_str,
-					(proto==TCP_SOCK)?"tcp":(proto==UDP_SOCK)?"udp":0);
-			if (se) port=ntohs(se->s_port);
-			else goto error;
+			se = getservbyname(port_str,
+					(proto == TCP_SOCK) ? "tcp"
+										: (proto == UDP_SOCK) ? "udp" : 0);
+			if(se)
+				port = ntohs(se->s_port);
+			else
+				goto error;
 		}
-	}else{
+	} else {
 		/* no port, check if the hostname is a port
 		 * (e.g. tcp:3012 == tcp:*:3012 */
-		if (proto==TCP_SOCK|| proto==UDP_SOCK){
-			port=str2s(name, strlen(name), &err);
-			if (err){
-				port=0;
-			}else{
-				name="*"; /* inaddr any  */
+		if(proto == TCP_SOCK || proto == UDP_SOCK) {
+			port = str2s(name, strlen(name), &err);
+			if(err) {
+				port = 0;
+			} else {
+				name = "*"; /* inaddr any  */
 			}
 		}
 	}
-	id=pkg_malloc(sizeof(struct id_list));
-	if (id==0){
+	id = pkg_malloc(sizeof(struct id_list));
+	if(id == 0) {
 		ERR("ERROR:parse_listen_id: out of memory\n");
 		goto error;
 	}
-	id->name=name;
-	id->proto=proto;
-	id->data_proto=P_BINRPC;
-	id->port=port;
-	id->buf=s;
-	id->next=0;
+	id->name = name;
+	id->proto = proto;
+	id->data_proto = P_BINRPC;
+	id->port = port;
+	id->buf = s;
+	id->next = 0;
 	return id;
 error:
-	if (s) pkg_free(s);
+	if(s)
+		pkg_free(s);
 	return 0;
 }

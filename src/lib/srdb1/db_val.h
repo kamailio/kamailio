@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -46,24 +46,25 @@
  * enumeration represents one datatype that is recognized by the database
  * API.
  */
-typedef enum {
-	DB1_INT,        /**< represents an 32 bit integer number      */
-	DB1_BIGINT,     /**< represents an 64 bit integer number      */
-	DB1_DOUBLE,     /**< represents a floating point number       */
-	DB1_STRING,     /**< represents a zero terminated const char* */
-	DB1_STR,        /**< represents a string of 'str' type        */
-	DB1_DATETIME,   /**< represents date and time                 */
-	DB1_BLOB,       /**< represents a large binary object         */
-	DB1_BITMAP,     /**< an one-dimensional array of 32 flags     */
-	DB1_UINT,       /**< represents an 32 bit unsigned int number */
-	DB1_UBIGINT,    /**< represents an 64 bit unsigned int number */
-	DB1_UNKNOWN     /**< represents an unknown type               */
+typedef enum
+{
+	DB1_INT,	  /**< represents an 32 bit integer number      */
+	DB1_BIGINT,	  /**< represents an 64 bit integer number      */
+	DB1_DOUBLE,	  /**< represents a floating point number       */
+	DB1_STRING,	  /**< represents a zero terminated const char* */
+	DB1_STR,	  /**< represents a string of 'str' type        */
+	DB1_DATETIME, /**< represents date and time                 */
+	DB1_BLOB,	  /**< represents a large binary object         */
+	DB1_BITMAP,	  /**< an one-dimensional array of 32 flags     */
+	DB1_UINT,	  /**< represents an 32 bit unsigned int number */
+	DB1_UBIGINT,  /**< represents an 64 bit unsigned int number */
+	DB1_UNKNOWN	  /**< represents an unknown type               */
 } db_type_t;
 
 
 /**
  * This structure represents a value in the database. Several datatypes are
- * recognized and converted by the database API. These datatypes are automaticaly
+ * recognized and converted by the database API. These datatypes are automatically
  * recognized, converted from internal database representation and stored in the
  * variable of corresponding type.
  *
@@ -75,22 +76,24 @@ typedef enum {
  * be set to a non-zero value. A free flag of zero means that the string
  * data must be freed internally by the database driver.
  */
-typedef struct {
+typedef struct
+{
 	db_type_t type; /**< Type of the value                              */
 	int nul;		/**< Means that the column in database has no value */
 	int free;		/**< Means that the value should be freed */
 	/** Column value structure that holds the actual data in a union.  */
-	union {
-		int            int_val;    /**< integer value              */
-		long long      ll_val;     /**< long long value            */
-		double         double_val; /**< double value               */
-		time_t         time_val;   /**< unix time_t value          */
-		const char*    string_val; /**< zero terminated string     */
-		str            str_val;    /**< str type string value      */
-		str            blob_val;   /**< binary object data         */
-		unsigned int   bitmap_val; /**< Bitmap data type           */
-		unsigned int   uint_val;   /**< unsigned integer value     */
-		unsigned long long ull_val;  /**< unsigned long long value */
+	union
+	{
+		int int_val;				/**< integer value              */
+		long long ll_val;			/**< long long value            */
+		double double_val;			/**< double value               */
+		time_t time_val;			/**< unix time_t value          */
+		const char *string_val;		/**< zero terminated string     */
+		str str_val;				/**< str type string value      */
+		str blob_val;				/**< binary object data         */
+		unsigned int bitmap_val;	/**< Bitmap data type           */
+		unsigned int uint_val;		/**< unsigned integer value     */
+		unsigned long long ull_val; /**< unsigned long long value */
 	} val;
 } db_val_t;
 
@@ -103,7 +106,7 @@ typedef struct {
 /**
  * Use this macro if you need to set/get the type of the value.
  */
-#define VAL_TYPE(dv)   ((dv)->type)
+#define VAL_TYPE(dv) ((dv)->type)
 
 
 /**
@@ -111,7 +114,7 @@ typedef struct {
  * the corresponding cell in the database contains no data (a NULL value in MySQL
  * terminology).
  */
-#define VAL_NULL(dv)   ((dv)->nul)
+#define VAL_NULL(dv) ((dv)->nul)
 
 
 /**
@@ -119,32 +122,32 @@ typedef struct {
  * the corresponding cell in the database contains data that must be freed from the
  * DB API.
  */
-#define VAL_FREE(dv)   ((dv)->free)
+#define VAL_FREE(dv) ((dv)->free)
 
 
 /**
  * Use this macro if you need to access the integer value in the db_val_t structure.
  */
-#define VAL_INT(dv)    ((dv)->val.int_val)
+#define VAL_INT(dv) ((dv)->val.int_val)
 
 
 /**
  * Use this macro if you need to access the unsigned integer value in
  * the db_val_t structure.
  */
-#define VAL_UINT(dv)    ((dv)->val.uint_val)
+#define VAL_UINT(dv) ((dv)->val.uint_val)
 
 
 /**
  * Use this macro if you need to access the long long value in the db_val_t structure.
  */
-#define VAL_BIGINT(dv)    ((dv)->val.ll_val)
+#define VAL_BIGINT(dv) ((dv)->val.ll_val)
 
 /**
  * Use this macro if you need to access the unsigned long long value in
  * the db_val_t structure.
  */
-#define VAL_UBIGINT(dv)   ((dv)->val.ull_val)
+#define VAL_UBIGINT(dv) ((dv)->val.ull_val)
 
 /**
  * Use this macro if you need to access the double value in the db_val_t structure.
@@ -155,7 +158,7 @@ typedef struct {
 /**
  * Use this macro if you need to access the time_t value in the db_val_t structure.
  */
-#define VAL_TIME(dv)   ((dv)->val.time_val)
+#define VAL_TIME(dv) ((dv)->val.time_val)
 
 
 /**
@@ -167,13 +170,13 @@ typedef struct {
 /**
  * Use this macro if you need to access the str structure in the db_val_t structure.
  */
-#define VAL_STR(dv)    ((dv)->val.str_val)
+#define VAL_STR(dv) ((dv)->val.str_val)
 
 
 /**
  * Use this macro if you need to access the blob value in the db_val_t structure.
  */
-#define VAL_BLOB(dv)   ((dv)->val.blob_val)
+#define VAL_BLOB(dv) ((dv)->val.blob_val)
 
 
 /**
@@ -193,7 +196,7 @@ typedef struct {
  * \param _cpy when set to zero does not copy strings, otherwise copy strings
  * \return 0 on success, negative on error
  */
-int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
+int db_str2val(const db_type_t _t, db_val_t *_v, const char *_s, const int _l,
 		const unsigned int _cpy);
 
 
@@ -208,6 +211,6 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
  * \param _len target string length
  * \return 0 on success, negative on error, 1 if value must be converted by other means
  */
-int db_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len);
+int db_val2str(const db1_con_t *_c, const db_val_t *_v, char *_s, int *_len);
 
 #endif /* DB1_VAL_H */

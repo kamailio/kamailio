@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -27,25 +27,25 @@
 
 #include "../../core/locking.h"
 
-#define MS_MSG_NULL	0
-#define MS_MSG_SENT	1
-#define MS_MSG_DONE	4
-#define MS_MSG_ERRO	8
-#define MS_MSG_TSND	16
+#define MS_MSG_NULL 0
+#define MS_MSG_SENT 1
+#define MS_MSG_DONE 4
+#define MS_MSG_ERRO 8
+#define MS_MSG_TSND 16
 
-#define MS_SEM_SENT	0
+#define MS_SEM_SENT 0
 #define MS_SEM_DONE 1
 
-#define MSG_LIST_OK		0
-#define MSG_LIST_ERR	-1
-#define MSG_LIST_EXIST	1
+#define MSG_LIST_OK 0
+#define MSG_LIST_ERR -1
+#define MSG_LIST_EXIST 1
 
 typedef struct _msg_list_el
 {
 	int msgid;
 	int flag;
-	struct _msg_list_el * prev;
-	struct _msg_list_el * next;
+	struct _msg_list_el *prev;
+	struct _msg_list_el *next;
 } t_msg_list_el, *msg_list_el;
 
 typedef struct _msg_list
@@ -54,8 +54,8 @@ typedef struct _msg_list
 	int nrdone;
 	msg_list_el lsent;
 	msg_list_el ldone;
-	gen_lock_t  sem_sent;
-	gen_lock_t  sem_done;
+	gen_lock_t sem_sent;
+	gen_lock_t sem_done;
 } t_msg_list, *msg_list;
 
 msg_list_el msg_list_el_new(void);
@@ -70,4 +70,3 @@ int msg_list_check(msg_list);
 msg_list_el msg_list_reset(msg_list);
 
 #endif
-

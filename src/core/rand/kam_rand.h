@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 #if RAND_MAX < INT_MAX
-#define KAM_RAND_MAX ((int) (0x7FFFFFFF)) /* (1<<31) - 1 */
+#define KAM_RAND_MAX ((int)(0x7FFFFFFF)) /* (1<<31) - 1 */
 #define kam_rand(x) ((int)random(x))
 #define kam_srand(x) srandom(x)
 #else

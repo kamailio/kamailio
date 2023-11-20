@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -30,7 +30,7 @@
  * between Kamailio's "aor" (Address of Record) and string indexing mechanisms,
  * and the SNMPStats modules integer indexing scheme for users and contacts.
  * While it would have been a more natural fit to use string indexes in the
- * SNMPStats module, SNMP limitations precluded this.  
+ * SNMPStats module, SNMP limitations precluded this.
  *
  * aorToIndexStruct: maps an aor to:
  *  - a userIndex, to uniquely identify each RegUserTable SNMP row
@@ -39,7 +39,7 @@
  *
  * The aorToIndexStruct also contains a numContacts counter. Each time a new
  * contact is associated with the aor (user), the counter is incremented.  Each
- * time a contact is dissasociated (due to an expiration), the counter is
+ * time a contact is disassociated (due to an expiration), the counter is
  * decremented.  When the counter reaches zero the structure will be deleted.
  *
  *  contactToIndexStruct: maps a contact name to:
@@ -54,7 +54,7 @@
 
 /*!
  * Used to map between a 'contact' name (Kamailio's index) and a contact index.
- * (SNMPStats Index) 
+ * (SNMPStats Index)
  */
 typedef struct contactToIndexStruct
 {
@@ -70,7 +70,7 @@ typedef struct contactToIndexStruct
 /*!
  * Used to map between an 'aor' (Kamailio index) and a user index. (SNMPStats
  * index).  Since each user can have multiple contacts, the structure also has a
- * 'contactIndex', and a reference to the contactToIndexStruct list. 
+ * 'contactIndex', and a reference to the contactToIndexStruct list.
  */
 typedef struct aorToIndexStruct
 {
@@ -128,11 +128,11 @@ typedef struct hashSlot
 
 /*! Returns an aorToIndexStruct_t, holding the given 'userIndex' and 'aor'.  The
  * structure is used to map between the "aor" (Kamailio's way of indexing
- * users/contacts), and the SNMPStats user and contact integer indexes.  
+ * users/contacts), and the SNMPStats user and contact integer indexes.
  *
  * \note This record does not make a copy of aor, but instead points
  * directly to the parameter.  Therefore make sure that aor is not on the stack,
- * and is not going to disappear before this record is deleted. 
+ * and is not going to disappear before this record is deleted.
  */
 aorToIndexStruct_t *createHashRecord(int userIndex, char *aor);
 
@@ -151,13 +151,13 @@ int calculateHashSlot(char *theString, int hashTableSize);
 
 /*! Searches the hash table specified as theTable, of size 'size', for a record
  * indexed with 'aor'.  If a match is found, then an aorToIndextStruct_t
- * structure is returned. 
+ * structure is returned.
  *
- * This function is called to discover the map between Kamailio's "aor" 
+ * This function is called to discover the map between Kamailio's "aor"
  * (Address of Records) indexing scheme, and the SNMPStats modules integer
- * indexing scheme for its contact/user data. 
+ * indexing scheme for its contact/user data.
  *
- * Returns: the aorToIndexStruct_t mapping structure if a match was found, 
+ * Returns: the aorToIndexStruct_t mapping structure if a match was found,
  *          or NULL otherwise.
  */
 aorToIndexStruct_t *findHashRecord(hashSlot_t *theTable, char *aor, int size);
@@ -178,7 +178,7 @@ int deleteHashRecord(hashSlot_t *theTable, char *aor, int hashTableSize);
 
 /*!
  * This function will search the provided hash table for an entry indexed by
- * 'aor'.  If an entry is found then: 
+ * 'aor'.  If an entry is found then:
  *
  *   - Its numContacts counter will be decremented.
  *   - If its numContacts counter reaches zero, then the entry will be removed

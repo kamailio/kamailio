@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -137,7 +137,7 @@ modparam("ndb_mongodb", "server", "name=mgs2;uri='mongodb://127.0.0.2/kamailio'"
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>cname</emphasis> - MongodDB collection (table) name.
+				<emphasis>cname</emphasis> - MongoDB collection (table) name.
 			</para>
 			</listitem>
 			<listitem>

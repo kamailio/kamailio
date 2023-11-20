@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006 iptelorg GmbH
  *
  * This file is part of Kamailio, a free SIP server.
@@ -27,7 +27,7 @@
  * \ingroup core
  * Module: \ref core
  *
- * Needed for lock intializing if no native asm locks are available
+ * Needed for lock initializing if no native asm locks are available
  *  for the current arch./compiler combination, see \ref atomic_ops.c
  */
 

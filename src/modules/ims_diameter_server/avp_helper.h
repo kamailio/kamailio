@@ -14,10 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #ifndef AVP_HELPER_H
@@ -28,7 +28,7 @@ int pv_get_response(struct sip_msg *, pv_param_t *, pv_value_t *);
 int pv_set_response(struct sip_msg *, pv_param_t *, int, pv_value_t *);
 int pv_get_command(struct sip_msg *, pv_param_t *, pv_value_t *);
 int pv_get_application(struct sip_msg *, pv_param_t *, pv_value_t *);
-int addAVPsfromJSON(AAAMessage *, str * json);
+int addAVPsfromJSON(AAAMessage *, str *json);
 int AAAmsg2json(AAAMessage *, str *);
 
 #endif /* AVP_HELPER_H */

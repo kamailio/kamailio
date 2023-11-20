@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="auth_db.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -28,7 +28,7 @@ modparam("auth_db", "db_url", "mysql://foo:bar@foobar.org/ser")
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="user_column">
 	<title><varname>user_column</varname> (string)</title>
 	<para>
@@ -167,7 +167,7 @@ modparam("auth_db", "plain_password_column", "password")
 	    of column holding pre-calculated HA1 string that were calculated
 	    including the domain in the username. This parameter is used only
 	    when <varname>calculate_ha1</varname> is set to 0 and user agent
-	    send a credentials containing the domain in the username.
+	    sends credentials containing the domain in the username.
 	</para>
 	<para>
 	    Default value of the parameter is ha1b.

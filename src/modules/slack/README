@@ -142,7 +142,7 @@ modparam("slack", "icon_emoji", ":ghost:")
    Send a formatted message to slack channel.
 
    The parameters are:
-     * format - The formatted string to be send.
+     * format - The formatted string to be sent.
 
    The parameters can contain pseudo-variables.
 

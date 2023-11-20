@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -29,39 +29,46 @@
 #include <xcap/xml_utils.h>
 #include <xcap/resource_lists_parser.h>
 
-typedef struct _package_t {
+typedef struct _package_t
+{
 	SEQUENCE_ABLE(struct _package_t)
 	char *name;
 } package_t;
 
-typedef struct _packages_t {
+typedef struct _packages_t
+{
 	SEQUENCE(package_t) package;
 } packages_t;
 
-typedef enum { 
+typedef enum
+{
 	stc_list,
 	stc_resource_list,
 } service_content_type_t;
 
-typedef struct _service_t {
+typedef struct _service_t
+{
 	SEQUENCE_ABLE(struct _service_t)
-		
+
 	packages_t *packages;
-	
+
 	service_content_type_t content_type;
-	union {
+	union
+	{
 		list_t *list;
 		char *resource_list; /* uri */
 	} content;
-	
+
 	char *uri;
 } service_t;
 
-typedef struct {
+typedef struct
+{
 	SEQUENCE(service_t) rls_services;
 } rls_services_t;
 
-int parse_rls_services_xml(const char *data, int data_len, rls_services_t **dst);
+int parse_rls_services_xml(
+		const char *data, int data_len, rls_services_t **dst);
 int parse_service(const char *data, int data_len, service_t **dst);
 void free_rls_services(rls_services_t *rl);
 void free_service(service_t *s);

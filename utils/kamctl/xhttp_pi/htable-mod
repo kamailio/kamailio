@@ -1,4 +1,4 @@
-	<!-- htable provisioning -->
+	<!-- htable provisionning -->
 	<mod><mod_name>htable</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>htable</db_table_id>

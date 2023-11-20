@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -27,14 +27,14 @@
 #define __XCAP_RESULT_CODES_H
 
 /* result codes returned by XCAP operations */
-#define RES_OK						0
-#define RES_INTERNAL_ERR			(-1)
-#define RES_MEMORY_ERR				(-2)
-#define RES_BAD_EVENT_PACKAGE_ERR	(-5)
-#define RES_BAD_GATEWAY_ERR			(-6)
-#define RES_XCAP_QUERY_ERR			(-7)
-#define RES_XCAP_PARSE_ERR			(-8)
+#define RES_OK 0
+#define RES_INTERNAL_ERR (-1)
+#define RES_MEMORY_ERR (-2)
+#define RES_BAD_EVENT_PACKAGE_ERR (-5)
+#define RES_BAD_GATEWAY_ERR (-6)
+#define RES_XCAP_QUERY_ERR (-7)
+#define RES_XCAP_PARSE_ERR (-8)
 
-#define LAST_XCAP_RES_CODE			RES_XCAP_PARSE_ERR
+#define LAST_XCAP_RES_CODE RES_XCAP_PARSE_ERR
 
 #endif

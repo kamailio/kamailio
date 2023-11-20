@@ -58,7 +58,7 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="dialplan_admin.xml"/>
 	<xi:include href="dialplan_devel.xml"/>
 </book>

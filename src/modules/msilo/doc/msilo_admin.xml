@@ -300,6 +300,36 @@ modparam("msilo", "sc_stored_hdrs", "extra_headers")
 </programlisting>
 		</example>
 	</section>
+	<section id="msilo.p.sc_callid">
+		<title><varname>sc_callid</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing callid.
+		</para>
+		<para>Default value is <quote>callid</quote>.</para>
+		<example>
+		<title>Set the <quote>sc_callid</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msilo", "sc_callid", "call_id")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="msilo.p.sc_status">
+		<title><varname>sc_callid</varname> (string)</title>
+		<para>
+		The name of the column in silo table, storing status.
+		</para>
+		<para>Default value is <quote>status</quote>.</para>
+		<example>
+		<title>Set the <quote>sc_status</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msilo", "sc_status", "st")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="msilo.p.from_address">
 		<title><varname>from_address</varname> (string)</title>
 		<para>
@@ -560,8 +590,8 @@ modparam("msilo", "use_contact", 0)
 	<section id="msilo.p.snd_time_avp">
 		<title><varname>snd_time_avp</varname> (str)</title>
 		<para>
-		The name of an AVP which may contain the time when to sent
-		the received message as reminder. The AVP is used ony by m_store().
+		The name of an AVP which may contain the time when to send
+		the received message as reminder. The AVP is used only by m_store().
 		</para>
 		<para>
 		If the parameter is not set, the module does not look for this AVP. If
@@ -696,6 +726,27 @@ m_store(...);
 		</example>
 	</section>
 
+	<section id="msilo.p.use_mode">
+		<title><varname>use_mode</varname> (int)</title>
+		<para>
+		If set to 1, the call-id header of incoming MESSAGE is stored and reused
+		later for delivery MESSAGE.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>use_mode</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msilo", "use_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -730,6 +781,49 @@ m_store(...);
 ...
 m_store();
 m_store("$tu");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="msilo.f.m_store_addrs">
+		<title><function moreinfo="none">m_store_addrs(owner, srcaddr, dstaddr)</function></title>
+		<para>
+		Similar to m_store(), but instead of getting source user address from
+		From-URI and destination user address from To_URI, this function allows
+		to give them via parameters.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>owner</emphasis> - is a string that must contain
+			a SIP URI in whose inbox the message will be stored. It can have
+			any pseudo variable.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>srcaddr</emphasis> - is a string that must contain
+			a SIP URI corresponding to From user. It can have
+			any pseudo variable.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>dstaddr</emphasis> - is a string that must contain
+			a SIP URI correspinding to To user. It can have
+			any pseudo variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>m_store_addrs</function> usage</title>
+		<programlisting format="linespecific">
+...
+m_store_addrs("sip:$rU@a.com", "sip:$fU@a.com", "sip:$tU@a.com");
 ...
 </programlisting>
 		</example>

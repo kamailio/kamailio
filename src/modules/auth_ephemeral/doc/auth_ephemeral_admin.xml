@@ -332,7 +332,7 @@ if (!autheph_www("$fd")) {
 		<para>This function combines the functionalities of
 		<function moreinfo="none">autheph_www</function> and
 		<function moreinfo="none">autheph_proxy</function>, the first
-		being exectuted if the SIP request is a REGISTER, the second for
+		being executed if the SIP request is a REGISTER, the second for
 		the rest.</para>
 		<note><para>This function can only be used when the
 		<emphasis>auth</emphasis> module is loaded before this module.

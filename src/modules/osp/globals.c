@@ -1,14 +1,14 @@
 /*
- * Kamailio osp module. 
+ * Kamailio osp module.
  *
- * This module enables Kamailio to communicate with an Open Settlement 
- * Protocol (OSP) server.  The Open Settlement Protocol is an ETSI 
+ * This module enables Kamailio to communicate with an Open Settlement
+ * Protocol (OSP) server.  The Open Settlement Protocol is an ETSI
  * defined standard for Inter-Domain VoIP pricing, authorization
- * and usage exchange.  The technical specifications for OSP 
+ * and usage exchange.  The technical specifications for OSP
  * (ETSI TS 101 321 V4.1.1) are available at www.etsi.org.
  *
  * Uli Abend was the original contributor to this module.
- * 
+ *
  * Copyright (C) 2001-2005 Fhg Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -34,18 +34,17 @@
 #include "osp_mod.h"
 
 unsigned int _osp_sp_number;
-char* _osp_sp_uris[OSP_DEF_SPS];
-unsigned long _osp_sp_weights[OSP_DEF_SPS] = {
-    OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
-    OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
-    OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
-    OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT
-};
-char* _osp_device_ip = NULL;
-char* _osp_device_port = NULL;
-unsigned char* _osp_private_key = NULL;
-unsigned char* _osp_local_certificate = NULL;
-unsigned char* _osp_ca_certificate = NULL;
+char *_osp_sp_uris[OSP_DEF_SPS];
+unsigned long _osp_sp_weights[OSP_DEF_SPS] = {OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
+		OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
+		OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
+		OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
+		OSP_DEF_WEIGHT, OSP_DEF_WEIGHT};
+char *_osp_device_ip = NULL;
+char *_osp_device_port = NULL;
+unsigned char *_osp_private_key = NULL;
+unsigned char *_osp_local_certificate = NULL;
+unsigned char *_osp_ca_certificate = NULL;
 int _osp_crypto_hw = OSP_DEF_HW;
 int _osp_validate_callid = OSP_DEF_CALLID;
 int _osp_token_format = OSP_DEF_TOKEN;
@@ -60,9 +59,8 @@ int _osp_redir_uri = OSP_DEF_REDIRURI;
 char _osp_PRIVATE_KEY[OSP_KEYBUF_SIZE];
 char _osp_LOCAL_CERTIFICATE[OSP_KEYBUF_SIZE];
 char _osp_CA_CERTIFICATE[OSP_KEYBUF_SIZE];
-char* _osp_snid_avp = OSP_DEF_SNIDAVP;
+char *_osp_snid_avp = OSP_DEF_SNIDAVP;
 int_str _osp_snid_avpname;
 unsigned short _osp_snid_avptype;
 
 OSPTPROVHANDLE _osp_provider = -1;
-

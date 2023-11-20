@@ -7,14 +7,14 @@
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Focus. Thanks for great work! This is an effort to 
+ * FhG Focus. Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -32,23 +32,23 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 /**
  * \file
- * 
+ *
  * The purpose of this file is solely to make the get_reference.sh script work easily
- * 
+ *
  * All headers that are reference important should be included here
- * 
- * 
+ *
+ *
  *  \author Dragos Vingarzan dragos dot vingarzan -at- fokus dot fraunhofer dot de
- * 
- */ 
+ *
+ */
 
 #undef CDP_AVP_REFERENCE
 #define CDP_AVP_REFERENCE
@@ -66,4 +66,3 @@
 #include "ccapp.h"
 #include "imsapp.h"
 #include "epcapp.h"
-

@@ -26,7 +26,8 @@
 #include <regex.h>
 #include "locking.h"
 
-typedef struct shm_regex {
+typedef struct shm_regex
+{
 	regex_t regexp;
 	gen_lock_t lock;
 } shm_regex_t;
@@ -34,8 +35,8 @@ typedef struct shm_regex {
 int shm_regcomp(shm_regex_t *preg, const char *regex, int cflags);
 void shm_regfree(shm_regex_t *preg);
 int shm_regexec(shm_regex_t *preg, const char *string, size_t nmatch,
-                   regmatch_t pmatch[], int eflags);
-size_t shm_regerror(int errcode, const shm_regex_t *preg, char *errbuf,
-                      size_t errbuf_size);
+		regmatch_t pmatch[], int eflags);
+size_t shm_regerror(
+		int errcode, const shm_regex_t *preg, char *errbuf, size_t errbuf_size);
 
 #endif /* _SHM_REGEX_H */

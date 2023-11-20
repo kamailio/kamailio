@@ -35,11 +35,10 @@
 
 /*! \brief circular list */
 #define clist_init(c, next, prev) \
-	do{ \
-		(c)->next=(void*)(c); \
-		(c)->prev=(void*)(c); \
+	do {                          \
+		(c)->next = (void *)(c);  \
+		(c)->prev = (void *)(c);  \
 	} while(0)
-
 
 
 /*! \brief adds an entire sublist { s,e } (including s & e )
@@ -51,13 +50,12 @@
  *  instead!
  */
 #define clist_insert_sublist(head, s, e, next, prev) \
-	do{ \
-		(s)->prev=(void*)(head); \
-		(e)->next=(head)->next; \
-		(e)->next->prev=(e); \
-		(head)->next=s;   \
-	}while(0)
-
+	do {                                             \
+		(s)->prev = (void *)(head);                  \
+		(e)->next = (head)->next;                    \
+		(e)->next->prev = (e);                       \
+		(head)->next = s;                            \
+	} while(0)
 
 
 /*! \brief appends an entire sublist { s,e } (including s & e )
@@ -68,14 +66,12 @@
  *  instead!
  */
 #define clist_append_sublist(head, s, e, next, prev) \
-	do{ \
-		(s)->prev=(head)->prev; \
-		(e)->next=(void*)(head); \
-		(s)->prev->next=(s); \
-		(head)->prev=(e);   \
-	}while(0)
-
-
+	do {                                             \
+		(s)->prev = (head)->prev;                    \
+		(e)->next = (void *)(head);                  \
+		(s)->prev->next = (s);                       \
+		(head)->prev = (e);                          \
+	} while(0)
 
 
 /*! \brief remove sublist { s,e } (including s & e )
@@ -85,13 +81,12 @@
  *  (macro!), use  e=n->prev; clist_rm_sublist(n, e, ...)
  *  instead! */
 #define clist_rm_sublist(s, e, next, prev) \
-	do{\
-		(s)->prev->next=(e)->next;  \
-		(e)->next->prev=(s)->prev;  \
-		(s)->prev=NULL; \
-		(e)->next=NULL; \
-	}while(0)
-
+	do {                                   \
+		(s)->prev->next = (e)->next;       \
+		(e)->next->prev = (s)->prev;       \
+		(s)->prev = NULL;                  \
+		(e)->next = NULL;                  \
+	} while(0)
 
 
 /*! \brief insert after (head) */
@@ -99,32 +94,27 @@
 	clist_insert_sublist(head, c, c, next, prev)
 
 
-
 /*! \brief  append at the end of the list (head->prev) */
 #define clist_append(head, c, next, prev) \
 	clist_append_sublist(head, c, c, next, prev)
 
 
-
 /*! \brief  remove and element */
-#define clist_rm(c, next, prev) \
-	clist_rm_sublist(c, c, next, prev)
-
+#define clist_rm(c, next, prev) clist_rm_sublist(c, c, next, prev)
 
 
 /*! \brief  iterate on a clist */
 #define clist_foreach(head, v, dir) \
-	for((v)=(head)->dir; (v)!=(void*)(head); (v)=(v)->dir)
+	for((v) = (head)->dir; (v) != (void *)(head); (v) = (v)->dir)
 
 /*! \brief  iterate on a clist, safe version (requires an extra bak. var)
  * (it allows removing of the current element) */
-#define clist_foreach_safe(head, v, bak,  dir) \
-	for((v)=(head)->dir, (bak)=(v)->dir; (v)!=(void*)(head); \
-				(v)=(bak), (bak)=(v)->dir)
+#define clist_foreach_safe(head, v, bak, dir)                       \
+	for((v) = (head)->dir, (bak) = (v)->dir; (v) != (void *)(head); \
+			(v) = (bak), (bak) = (v)->dir)
 
 /*! \brief test if clist is empty (1 - empty; 0 - not empty)*/
-#define clist_empty(head, dir) \
-	(((head)->dir!=(void*)(head))?0:1)
+#define clist_empty(head, dir) (((head)->dir != (void *)(head)) ? 0 : 1)
 
 
 #endif

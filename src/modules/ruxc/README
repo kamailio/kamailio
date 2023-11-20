@@ -129,7 +129,7 @@ Chapter 1. Admin Guide
 
 3.1. http_timeout (int)
 
-   The interval in miliseconds after which the HTTP GET or POST query
+   The interval in milliseconds after which the HTTP GET or POST query
    times out. It is the overall timeout, including DNS resolution,
    connecting time, redirects, and reading the response body. Slow DNS
    resolution may cause a request to exceed the timeout, because the DNS
@@ -149,9 +149,9 @@ modparam("ruxc", "http_timeout", 2000)
 
 3.2. http_timeout_connect (int)
 
-   The interval in miliseconds after which to give up on connecting to the
-   HTTP/S server. If http_timeout is set, this one takes precedence. The
-   library beneath has a default 30 seconds connect timeout.
+   The interval in milliseconds after which to give up on connecting to
+   the HTTP/S server. If http_timeout is set, this one takes precedence.
+   The library beneath has a default 30 seconds connect timeout.
 
    Use 0 to disable setting it in the library.
 
@@ -164,7 +164,7 @@ modparam("ruxc", "http_timeout_connect", 2000)
 
 3.3. http_timeout_read (int)
 
-   The interval in miliseconds after which the read on HTTP/S connection
+   The interval in milliseconds after which the read on HTTP/S connection
    socket timeouts. If http_timeout is set, it takes precedence.
 
    Use 0 to disable setting it in the library.
@@ -178,7 +178,7 @@ modparam("ruxc", "http_timeout_read", 2000)
 
 3.4. http_timeout_write (int)
 
-   The interval in miliseconds after which the write on HTTP/S connection
+   The interval in milliseconds after which the write on HTTP/S connection
    socket timeouts. If http_timeout is set, it takes precedence.
 
    Use 0 to disable setting it in the library.

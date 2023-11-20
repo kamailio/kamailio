@@ -52,6 +52,7 @@
 
 #include <stdint.h>
 #include <amqp_tcp_socket.h>
+#include <amqp_ssl_socket.h>
 #include <amqp.h>
 #include <amqp_framing.h>
 
@@ -73,10 +74,12 @@ static amqp_connection_state_t amqp_conn = NULL;
 /* module parameters */
 static struct amqp_connection_info amqp_info;
 static char *amqp_url = RABBITMQ_DEFAULT_AMQP_URL;
+static char *rmq_amqps_ca_file = NULL;
 static int max_reconnect_attempts = 1;
 static int timeout_sec = 1;
 static int timeout_usec = 0;
 static int direct_reply_to = 0;
+static int amqp_ssl_init_called = 0;
 
 /* module helper functions */
 static int rabbitmq_connect(amqp_connection_state_t *conn);
@@ -116,34 +119,31 @@ static int rbmq_fixup_free_params(void **param, int param_no)
 
 /* module commands */
 static cmd_export_t cmds[] = {
-	{"rabbitmq_publish", (cmd_function)rabbitmq_publish, 4, fixup_spve_all,
-			fixup_free_spve_all, REQUEST_ROUTE},
-	{"rabbitmq_publish_consume", (cmd_function)rabbitmq_publish_consume, 5,
-			rbmq_fixup_params, rbmq_fixup_free_params, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"rabbitmq_publish", (cmd_function)rabbitmq_publish, 4, fixup_spve_all,
+				fixup_free_spve_all, ANY_ROUTE},
+		{"rabbitmq_publish_consume", (cmd_function)rabbitmq_publish_consume, 5,
+				rbmq_fixup_params, rbmq_fixup_free_params, REQUEST_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 /* module parameters */
-static param_export_t params[] = {
-	{"url", PARAM_STRING, &amqp_url},
-	{"timeout_sec", PARAM_INT, &timeout_sec},
-	{"timeout_usec", PARAM_INT, &timeout_usec},
-	{"direct_reply_to", PARAM_INT, &direct_reply_to},
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"url", PARAM_STRING, &amqp_url},
+		{"amqps_ca_file", PARAM_STRING, &rmq_amqps_ca_file},
+		{"timeout_sec", PARAM_INT, &timeout_sec},
+		{"timeout_usec", PARAM_INT, &timeout_usec},
+		{"direct_reply_to", PARAM_INT, &direct_reply_to}, {0, 0, 0}};
 
 /* module exports */
 struct module_exports exports = {
-	"rabbitmq",				/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* exported functions */
-	params,				/* exported parameters */
-	0,					/* RPC method exports */
-	0,					/* exported pseudo-variables */
-	0,					/* response handling function */
-	mod_init,			/* module initialization function */
-	mod_child_init,		/* per-child init function */
-	0					/* module destroy function */
+		"rabbitmq",		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		mod_child_init,	 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 /* module init */
@@ -180,7 +180,7 @@ static int mod_child_init(int rank)
 
 /* module helper functions */
 static int ki_rabbitmq_publish(sip_msg_t *msg, str *exchange, str *routingkey,
-	str *contenttype, str *messagebody)
+		str *contenttype, str *messagebody)
 {
 	int reconnect_attempts = 0;
 	int log_ret;
@@ -188,8 +188,8 @@ static int ki_rabbitmq_publish(sip_msg_t *msg, str *exchange, str *routingkey,
 reconnect:
 	// open channel
 	amqp_channel_open(amqp_conn, 1);
-	log_ret =
-			log_on_amqp_error(amqp_get_rpc_reply(amqp_conn), "amqp_channel_open()");
+	log_ret = log_on_amqp_error(
+			amqp_get_rpc_reply(amqp_conn), "amqp_channel_open()");
 
 	// open channel - failed
 	if(log_ret != AMQP_RESPONSE_NORMAL) {
@@ -228,9 +228,10 @@ reconnect:
 	props.correlation_id = amqp_cstring_bytes("1");
 
 	// publish
-	if(log_on_error(amqp_basic_publish(amqp_conn, 1, amqp_cstring_bytes(exchange->s),
-							amqp_cstring_bytes(routingkey->s), 0, 0, &props,
-							amqp_cstring_bytes(messagebody->s)),
+	if(log_on_error(
+			   amqp_basic_publish(amqp_conn, 1, amqp_cstring_bytes(exchange->s),
+					   amqp_cstring_bytes(routingkey->s), 0, 0, &props,
+					   amqp_cstring_bytes(messagebody->s)),
 			   "amqp_basic_publish()")
 			!= AMQP_RESPONSE_NORMAL) {
 		// debug
@@ -282,13 +283,12 @@ static int rabbitmq_publish(struct sip_msg *msg, char *in_exchange,
 		return -1;
 	}
 
-	return ki_rabbitmq_publish(msg, &exchange, &routingkey, &contenttype,
-			&messagebody);
+	return ki_rabbitmq_publish(
+			msg, &exchange, &routingkey, &contenttype, &messagebody);
 }
 
 static int rabbitmq_publish_consume_helper(sip_msg_t *msg, str *exchange,
-		str *routingkey, str *contenttype, str *messagebody,
-		pv_spec_t *dst)
+		str *routingkey, str *contenttype, str *messagebody, pv_spec_t *dst)
 {
 	pv_value_t val;
 	amqp_frame_t frame;
@@ -313,8 +313,8 @@ static int rabbitmq_publish_consume_helper(sip_msg_t *msg, str *exchange,
 reconnect:
 	// open channel
 	amqp_channel_open(amqp_conn, 1);
-	log_ret =
-			log_on_amqp_error(amqp_get_rpc_reply(amqp_conn), "amqp_channel_open()");
+	log_ret = log_on_amqp_error(
+			amqp_get_rpc_reply(amqp_conn), "amqp_channel_open()");
 
 	// open channel - failed
 	if(log_ret != AMQP_RESPONSE_NORMAL) {
@@ -356,9 +356,9 @@ reconnect:
 		strcpy(reply_to_buffer, "kamailio-");
 		strcat(reply_to_buffer, uuid_buffer);
 
-		reply_to =
-				amqp_queue_declare(amqp_conn, 1, amqp_cstring_bytes(reply_to_buffer),
-						0, 0, 1, 1, amqp_empty_table);
+		reply_to = amqp_queue_declare(amqp_conn, 1,
+				amqp_cstring_bytes(reply_to_buffer), 0, 0, 1, 1,
+				amqp_empty_table);
 	}
 
 	if(log_on_amqp_error(amqp_get_rpc_reply(amqp_conn), "amqp_queue_declare()")
@@ -396,9 +396,10 @@ reconnect:
 	}
 
 	// publish
-	if(log_on_error(amqp_basic_publish(amqp_conn, 1, amqp_cstring_bytes(exchange->s),
-							amqp_cstring_bytes(routingkey->s), 0, 0, &props,
-							amqp_cstring_bytes(messagebody->s)),
+	if(log_on_error(
+			   amqp_basic_publish(amqp_conn, 1, amqp_cstring_bytes(exchange->s),
+					   amqp_cstring_bytes(routingkey->s), 0, 0, &props,
+					   amqp_cstring_bytes(messagebody->s)),
 			   "amqp_basic_publish()")
 			!= AMQP_RESPONSE_NORMAL) {
 		LM_ERR("FAIL: amqp_basic_publish()\n");
@@ -508,7 +509,7 @@ static int ki_rabbitmq_publish_consume(sip_msg_t *msg, str *exchange,
 
 	dst = pv_cache_get(dpv);
 
-	if(dst==NULL) {
+	if(dst == NULL) {
 		LM_ERR("failed getting pv: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
@@ -517,8 +518,8 @@ static int ki_rabbitmq_publish_consume(sip_msg_t *msg, str *exchange,
 		return -1;
 	}
 
-	return rabbitmq_publish_consume_helper(msg, exchange, routingkey,
-			contenttype, messagebody, dst);
+	return rabbitmq_publish_consume_helper(
+			msg, exchange, routingkey, contenttype, messagebody, dst);
 }
 
 static int rabbitmq_publish_consume(struct sip_msg *msg, char *in_exchange,
@@ -551,8 +552,8 @@ static int rabbitmq_publish_consume(struct sip_msg *msg, char *in_exchange,
 
 	dst = (pv_spec_t *)reply;
 
-	return rabbitmq_publish_consume_helper(msg, &exchange, &routingkey,
-			&contenttype, &messagebody, dst);
+	return rabbitmq_publish_consume_helper(
+			msg, &exchange, &routingkey, &contenttype, &messagebody, dst);
 }
 
 static int rabbitmq_connect(amqp_connection_state_t *conn)
@@ -561,24 +562,51 @@ static int rabbitmq_connect(amqp_connection_state_t *conn)
 	int log_ret;
 	//	amqp_rpc_reply_t reply;
 
+	// amqp_ssl_init_called should only be called once
+	if(amqp_info.ssl && !amqp_ssl_init_called) {
+		amqp_set_initialize_ssl_library(1);
+		amqp_ssl_init_called = 1;
+		LM_DBG("AMQP SSL library initialized\n");
+	}
+
 	// establish a new connection to RabbitMQ server
 	*conn = amqp_new_connection();
+	if(!*conn) {
+		LM_ERR("FAIL: create AMQP connection\n");
+		return RABBITMQ_ERR_CREATE;
+	}
 	log_ret = log_on_amqp_error(
 			amqp_get_rpc_reply(*conn), "amqp_new_connection()");
 	if(log_ret != AMQP_RESPONSE_NORMAL && log_ret != AMQP_RESPONSE_NONE) {
 		return RABBITMQ_ERR_CONNECT;
 	}
 
-	amqp_sock = amqp_tcp_socket_new(*conn);
+	amqp_sock = (amqp_info.ssl) ? amqp_ssl_socket_new(*conn)
+								: amqp_tcp_socket_new(*conn);
 	if(!amqp_sock) {
 		LM_ERR("FAIL: create TCP amqp_sock");
 		amqp_destroy_connection(*conn);
 		return RABBITMQ_ERR_SOCK;
 	}
 
+	if(rmq_amqps_ca_file) {
+		if(amqp_ssl_socket_set_cacert(amqp_sock, rmq_amqps_ca_file)) {
+			LM_ERR("Failed to set CA certificate for amqps connection\n");
+			return RABBITMQ_ERR_SSL_CACERT;
+		}
+	}
+
+#if AMQP_VERSION_MAJOR == 0 && AMQP_VERSION_MINOR < 8
+	amqp_ssl_socket_set_verify(amqp_sock, (rmq_amqps_ca_file) ? 1 : 0);
+#else
+	amqp_ssl_socket_set_verify_peer(amqp_sock, (rmq_amqps_ca_file) ? 1 : 0);
+	amqp_ssl_socket_set_verify_hostname(amqp_sock, (rmq_amqps_ca_file) ? 1 : 0);
+#endif
+
 	ret = amqp_socket_open(amqp_sock, amqp_info.host, amqp_info.port);
 	if(ret != AMQP_STATUS_OK) {
-		LM_ERR("FAIL: open TCP sock, amqp_status=%d", ret);
+		LM_ERR("FAIL: open %s sock, amqp_status=%d",
+				(amqp_info.ssl) ? "SSL" : "TCP", ret);
 		// amqp_destroy_connection(*conn);
 		return RABBITMQ_ERR_SOCK;
 	}

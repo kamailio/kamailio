@@ -16,15 +16,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * * History:
  * ========
- * 
+ *
  * Nov 2013 Richard Good migrated pua_reginfo functionality to ims_registrar_pcscf
- * 
+ *
  */
 
 #ifndef NOTIFY_H
@@ -32,6 +32,6 @@
 
 #include "../../core/parser/msg_parser.h"
 
-int reginfo_handle_notify(struct sip_msg*, char*, char*);
+int reginfo_handle_notify(struct sip_msg *, char *, char *);
 
 #endif

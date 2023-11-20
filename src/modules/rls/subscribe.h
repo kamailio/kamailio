@@ -27,14 +27,14 @@
 #include <libxml/parser.h>
 #include "../../core/parser/msg_parser.h"
 
-int w_rls_handle_subscribe0(sip_msg_t* msg, char *p1, char *p2);
-int w_rls_handle_subscribe1(sip_msg_t* msg, char* watcher_uri, char *p2);
-int rls_handle_subscribe(struct sip_msg* msg, str watcher_user,
-		str watcher_domain);
+int w_rls_handle_subscribe0(sip_msg_t *msg, char *p1, char *p2);
+int w_rls_handle_subscribe1(sip_msg_t *msg, char *watcher_uri, char *p2);
+int rls_handle_subscribe(
+		struct sip_msg *msg, str watcher_user, str watcher_domain);
 int w_rls_update_subs(struct sip_msg *msg, char *puri, char *pevent);
 
-int ki_rls_handle_subscribe(struct sip_msg* msg);
-int ki_rls_handle_subscribe_uri(sip_msg_t* msg, str *wuri);
+int ki_rls_handle_subscribe(struct sip_msg *msg);
+int ki_rls_handle_subscribe_uri(sip_msg_t *msg, str *wuri);
 int ki_rls_update_subs(struct sip_msg *msg, str *uri, str *event);
 
 #endif

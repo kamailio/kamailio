@@ -27,14 +27,18 @@
 #include "../../core/str.h"
 #include <libxml/parser.h>
 
-typedef xmlNodePtr (*xmlDocGetNodeByName_t)(xmlDocPtr doc, const char *name, const char *ns);
-typedef xmlNodePtr (*xmlNodeGetNodeByName_t)(xmlNodePtr node, const char *name, const char *ns);
-typedef char* (*xmlNodeGetNodeContentByName_t)(xmlNodePtr root, const char *name,
-		const char *ns);
-typedef char* (*xmlNodeGetAttrContentByName_t)(xmlNodePtr node, const char *name);
-xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,
-															const char *ns);
-typedef struct libxml_api {
+typedef xmlNodePtr (*xmlDocGetNodeByName_t)(
+		xmlDocPtr doc, const char *name, const char *ns);
+typedef xmlNodePtr (*xmlNodeGetNodeByName_t)(
+		xmlNodePtr node, const char *name, const char *ns);
+typedef char *(*xmlNodeGetNodeContentByName_t)(
+		xmlNodePtr root, const char *name, const char *ns);
+typedef char *(*xmlNodeGetAttrContentByName_t)(
+		xmlNodePtr node, const char *name);
+xmlNodePtr xmlNodeGetNodeByName(
+		xmlNodePtr node, const char *name, const char *ns);
+typedef struct libxml_api
+{
 	xmlDocGetNodeByName_t xmlDocGetNodeByName;
 	xmlNodeGetNodeByName_t xmlNodeGetNodeByName;
 	xmlNodeGetNodeContentByName_t xmlNodeGetNodeContentByName;
@@ -44,12 +48,12 @@ typedef struct libxml_api {
 xmlNodePtr xmlDocGetNodeByName(xmlDocPtr doc, const char *name, const char *ns);
 xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name);
 
-char *xmlNodeGetNodeContentByName(xmlNodePtr root, const char *name,
-		const char *ns);
+char *xmlNodeGetNodeContentByName(
+		xmlNodePtr root, const char *name, const char *ns);
 char *xmlNodeGetAttrContentByName(xmlNodePtr node, const char *name);
 
-typedef int (*bind_libxml_t)(libxml_api_t* api);
+typedef int (*bind_libxml_t)(libxml_api_t *api);
 
-int bind_libxml_api(libxml_api_t* api);
+int bind_libxml_api(libxml_api_t *api);
 
 #endif /* PUA_PIDF_H */

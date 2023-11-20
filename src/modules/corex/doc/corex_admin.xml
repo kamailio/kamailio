@@ -567,7 +567,7 @@ setxflag("$var(flag)");
 		<section id="corex.f.isxflagset">
 		<title><function moreinfo="none">isxflagset(flag)</function></title>
 		<para>
-			Return true of the extended message (transaction) flag is set.
+			Return true if the extended message (transaction) flag is set.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -854,6 +854,42 @@ request_route {
 </programlisting>
 		</example>
 		</section>
+		<section id="corex.f.via_reply_add_xavp_params">
+		<title><function moreinfo="none">via_reply_add_xavp_params(flags)</function></title>
+		<para>
+			Control if fields of the xavp with the name specified by
+			xavp_via_reply_params global parameter are added or not to the top Via
+			of replies.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flags</emphasis>: 1 - add xavp parameters; 0 - do not
+				add xavp parameters.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>via_reply_add_xavp_params</function> usage</title>
+		<programlisting format="linespecific">
+...
+xavp_via_reply_params="xviarpl"
+...
+request_route {
+    ...
+	$xavp(xviarpl=&gt;srvid) = "1";
+	$xavp(xviarpl[0]=&gt;myval) = "xyz";
+    via_reply_add_xavp_params("1");
+    ...
+}
+...
+</programlisting>
+		</example>
+		</section>
 	<section id="corex.f.is_faked_msg">
 		<title>
 			<function moreinfo="none">is_faked_msg()</function>
@@ -1070,6 +1106,26 @@ route[reply] {
 		&kamcli; rpc shm.stats
 		</programlisting>
     </section>
+	<section id="corex.rpc.shm.rprint">
+		<title>
+		<function moreinfo="none">corex.shm.rprint</function>
+		</title>
+		<para>
+			Shared memory usage status report printed to file upon filter match
+			with the file of allocation.
+		</para>
+		<para>
+			It takes two parameters: the path to file where to write the report;
+			the string to match the allocation file (the match is done as value
+			included in the path fo the allocation file).
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+			&kamcli; rpc shm.rprint /tmp/kamailioshm.txt dns_cache.c
+		</programlisting>
+    </section>
     </section>
 
     <section>
@@ -1097,7 +1153,7 @@ route[reply] {
         <para>
             Please note this event route is meant to <emphasis>prepare</emphasis>
             the message for on-wire communication, e.g. to do custom encryption or
-            decryption, compression/decompression etc. of the message sent to or 
+            decryption, compression/decompression etc. of the message sent to or
 			received from remote host. Therefore, except text operations,
 			no module functions or pseudo variables are available in this event route.
         </para>
@@ -1115,9 +1171,9 @@ route[reply] {
     <section>
     <title>Examples of Usage</title>
         <para>
-			To use network event_route[network:msg] the remote SIP UA must also implement and 
+			To use network event_route[network:msg] the remote SIP UA must also implement and
 			understand the encoding / decoding done in this event route. It is up to  &kamailio;
-			config script writer to define and implement how encoding and decoding is done. 
+			config script writer to define and implement how encoding and decoding is done.
 			Any language module such as app_perl or app_lua can be called in
 			in event_route[network:msg] to implement desired logic.
         </para>
@@ -1134,7 +1190,7 @@ route[reply] {
 			and sent to SIP application server at remote location unencrypted, where they are
 			processed as normal. One the way back, the messages received from SIP application
 			server at edge proxy can be encrypted before being sent to actual destination.
-			The edge proxy can check whether received message came from end-user or SIP 
+			The edge proxy can check whether received message came from end-user or SIP
 			application server by using simple regular expressions.
         </para>
         <para>

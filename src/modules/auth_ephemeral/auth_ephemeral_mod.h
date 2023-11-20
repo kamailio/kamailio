@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * Exception: permission to copy, modify, propagate, and distribute a work
@@ -39,26 +39,27 @@ struct secret
 	struct secret *prev;
 	struct secret *next;
 };
-extern struct secret *secret_list;
 
-typedef enum {
-	AUTHEPH_USERNAME_NON_IETF	= 0,
-	AUTHEPH_USERNAME_IETF		= 1,
+typedef enum
+{
+	AUTHEPH_USERNAME_NON_IETF = 0,
+	AUTHEPH_USERNAME_IETF = 1,
 } autheph_username_format_t;
 extern autheph_username_format_t autheph_username_format;
 
-typedef enum {
-	AUTHEPH_SHA1	= 0,
-	AUTHEPH_SHA256	= 1,
-	AUTHEPH_SHA384	= 2,
-	AUTHEPH_SHA512	= 3,
+typedef enum
+{
+	AUTHEPH_SHA1 = 0,
+	AUTHEPH_SHA256 = 1,
+	AUTHEPH_SHA384 = 2,
+	AUTHEPH_SHA512 = 3,
 } autheph_sha_alg_t;
 extern autheph_sha_alg_t autheph_sha_alg;
 
 extern auth_api_s_t eph_auth_api;
 
 extern gen_lock_t *autheph_secret_lock;
-#define SECRET_LOCK	lock_get(autheph_secret_lock)
-#define SECRET_UNLOCK	lock_release(autheph_secret_lock)
+#define SECRET_LOCK lock_get(autheph_secret_lock)
+#define SECRET_UNLOCK lock_release(autheph_secret_lock)
 
 #endif /* AUTHEPH_MOD_H */

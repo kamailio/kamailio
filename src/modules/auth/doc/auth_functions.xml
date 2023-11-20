@@ -40,7 +40,7 @@ if (www_authenticate("realm", "subscriber")) {
     <section id="auth.f.has_credentials">
 	<title><function>has_credentials(realm)</function></title>
 	<para>
-		This function returns true of the request has Authorization or
+		This function returns true if the request has Authorization or
 		Proxy-Authorization header with provided realm. The parameter
 		can be string with pseudo-variables.
 	</para>

@@ -15,14 +15,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * History:
  * --------
  * 2012-01 initial version (Anca Vamanu)
- * 
+ *
  */
 
 
@@ -32,9 +32,9 @@
 #include "../../core/str.h"
 #include "../../lib/srdb1/db_val.h"
 
-#define DBCASSA_DELIM     ':'
-#define DBCASSA_DELIM_C   ' '
-#define DBCASSA_DELIM_R   '\n'
+#define DBCASSA_DELIM ':'
+#define DBCASSA_DELIM_C ' '
+#define DBCASSA_DELIM_R '\n'
 
 typedef struct _dbcassa_column
 {
@@ -56,12 +56,13 @@ typedef struct _dbcassa_table
 	dbcassa_column_p cols;
 	dbcassa_column_p *key;
 	dbcassa_column_p *sec_key;
-	dbcassa_column_p ts_col; /* timestamp col- special col used as the timestamp for the row */
+	dbcassa_column_p
+			ts_col; /* timestamp col- special col used as the timestamp for the row */
 	struct _dbcassa_table *next;
 } dbcassa_table_t, *dbcassa_table_p;
 
 void dbcassa_lock_release(dbcassa_table_p tbc);
-dbcassa_table_p dbcassa_db_get_table(const str* dbn, const str* tbn);
+dbcassa_table_p dbcassa_db_get_table(const str *dbn, const str *tbn);
 int dbcassa_read_table_schemas(void);
 void dbcassa_destroy_htable(void);
 

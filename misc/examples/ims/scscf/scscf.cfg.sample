@@ -25,7 +25,7 @@ alias=scscf.mnc001.mcc001.3gppnetwork.org
 ##!define DB_URL "con1=>mysql://scscf:heslo@127.0.0.1/scscf"
 ##!define DB_URL2 "con2=>mysql://scscf:heslo@127.0.0.1/scscf"
 
-# Select Authorization Algorhithm:
+# Select Authorization Algorithm:
 ##!define REG_AUTH_DEFAULT_ALG "AKAv1-MD5"
 ##!define REG_AUTH_DEFAULT_ALG "AKAv2-MD5"
 ##!define REG_AUTH_DEFAULT_ALG "MD5"

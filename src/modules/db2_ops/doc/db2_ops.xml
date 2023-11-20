@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <book id="db2_ops" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -34,7 +34,7 @@
 
 	<section id="db_ops.dep">
 		<title>Dependencies</title>
-				   
+
 		<para>
 		none
 		</para>
@@ -47,7 +47,7 @@
 	database = type "://" user:psw "@" host "/" database_name
 	field = xltext
 	fields = field [ "," field ... ]
-	op = "=" | "&lt;" | ">" | "&lt;=" | ">=" | "&lt;>" | "!=" 
+	op = "=" | "&lt;" | ">" | "&lt;=" | ">=" | "&lt;>" | "!="
 	where = fields
 	ops = op [ "," op ... ]
 	order = field
@@ -78,7 +78,7 @@
 		<section id="db_url">
 			<title><varname>db_url</varname> (string)</title>
 			<para>
-			Default database URL. 
+			Default database URL.
 			</para>
 			<para>
 			The format is:
@@ -148,7 +148,7 @@
 				<function>db_query(query | query_id[, handle])</function>
 			</title>
 			<para>
-				Executes query and in case of SELECT returns result via <emphasis>handle</emphasis>, seeks the first 
+				Executes query and in case of SELECT returns result via <emphasis>handle</emphasis>, seeks the first
 				record and returns TRUE if table is not empty.
 				The result is accessible using <function>@db.fetch</function> select. See also <varname>declare_handle</varname>.
 				<emphasis>Query_id</emphasis> references to query declared using <varname>declare_query</varname>,
@@ -160,7 +160,7 @@
 				<programlisting>
 	...
 	db_query("delete/silo///");
-	if (db_query("select/silo/body/uid//inc_time/%$f.uid", my_handle)) { 	
+	if (db_query("select/silo/body/uid//inc_time/%$f.uid", my_handle)) {
 	...
 	}
 	...
@@ -261,7 +261,7 @@
 	route["print_row"] {
 	....
 	}
-	
+
 	...
 	if (db_foreach(my_handle, print_row)) {
 	...
@@ -285,7 +285,7 @@
 
 	failure_route["my_failure"] {
 		db_proper();
-		db_query(my_query, my_handle);		
+		db_query(my_query, my_handle);
 	....
 	}
 				</programlisting>
@@ -408,13 +408,13 @@
 			</example>
 		</section>
 
-		
+
 		<section id="db.fetch.handle">
 			<title>
 				<function>@db.fetch.handle</function>
 			</title>
 			<para>
-				Similar functionality as <function>@db.query</function> selects with exception that 
+				Similar functionality as <function>@db.query</function> selects with exception that
 				operation is performed at query has been opened by <function>db_query</function>.
 			</para>
 			<para>
@@ -435,7 +435,7 @@
 		}
 	}
 	db_close(my_handle);
-	
+
 				</programlisting>
 			</example>
 		</section>
@@ -467,9 +467,9 @@
 	}
 	if (@db.fetch.my_handle.row_no == "1") {	# always false because .count has invalidated current record!
 
-	}	
+	}
 	db_close(my_handle);
-	
+
 				</programlisting>
 			</example>
 		</section>
@@ -481,9 +481,9 @@
 		<example>
 			<title>db_ops common example</title>
 			<programlisting>
-modparam("db_ops", "declare_query", "sel1=select/location/received/uid///%$f.uid");  
-modparam("db_ops", "declare_query", "sel2=select/subscriber/email_address,greeting/uid,allow_find///%$uidparam,1");  
-modparam("db_ops", "declare_query", "sel3=select/silo/body/uid//inc_time/%$f.uid");  
+modparam("db_ops", "declare_query", "sel1=select/location/received/uid///%$f.uid");
+modparam("db_ops", "declare_query", "sel2=select/subscriber/email_address,greeting/uid,allow_find///%$uidparam,1");
+modparam("db_ops", "declare_query", "sel3=select/silo/body/uid//inc_time/%$f.uid");
 modparam("db_ops", "declare_query", "del1=delete from location where expires&lt;now()"); # raw query
 
 # @db.query.sel1             ..  SELECT received FROM location WHERE uid = "%$f.uid"
@@ -589,7 +589,7 @@ route["print_tbl"] {
 route["db_test"] {
 
 	route("print_count");
-	
+
 	$f.uid="QWERTY";
 	xplog("L_INFO", "query #1\n");
 	if (db_query("q1", "h0")) {
@@ -597,7 +597,7 @@ route["db_test"] {
 	}
 	db_close("h0");
 
-	xplog("L_INFO", "replace\n"); 
+	xplog("L_INFO", "replace\n");
 	db_query("q4");
 
 	xplog("L_INFO", "query #2\n");
@@ -618,7 +618,7 @@ route["db_test"] {
 	db_query("q5");
 	route("print_count");
 
-	
+
 	xplog("L_INFO", "foreach\n");
 	db_query("q1", "h0");
 	db_foreach("h0", "print_record");

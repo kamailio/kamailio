@@ -1,4 +1,4 @@
-	<!-- grp provisioning -->
+	<!-- grp provisionning -->
 	<mod><mod_name>grp</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>grp</db_table_id>
@@ -42,7 +42,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- re_grp provisioning -->
+	<!-- re_grp provisionning -->
 	<mod><mod_name>re_grp</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>re_grp</db_table_id>

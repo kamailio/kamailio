@@ -27,10 +27,9 @@
 
 #include "auth.h"
 
-int parse_authenticate_body( str *body, struct authenticate_body *auth);
+int parse_authenticate_body(str *body, struct authenticate_body *auth);
 
-str* build_authorization_hdr(int code, str *uri,
-		struct uac_credential *crd, struct authenticate_body *auth,
-		char *response);
+str *build_authorization_hdr(int code, str *uri, struct uac_credential *crd,
+		struct authenticate_body *auth, char *response);
 
 #endif

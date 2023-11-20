@@ -490,8 +490,8 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    Name: rl.push_load
 
    Parameters:
-     * load - the forced value of load (it must be greater then 0.0 and
-       smaller then 1.0).
+     * load - the forced value of load (it must be greater than 0.0 and
+       less than 1.0).
 
    RPC Command Format:
                 kamcmd rl.push_load 0.85

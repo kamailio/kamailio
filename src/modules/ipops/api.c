@@ -26,8 +26,10 @@
 #include "api.h"
 #include "ip_parser.h"
 
-extern int _compare_ips(char*, size_t, enum enum_ip_type, char*, size_t, enum enum_ip_type);
-extern int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, size_t len2, enum enum_ip_type ip2_type, int netmask);
+extern int _compare_ips(
+		char *, size_t, enum enum_ip_type, char *, size_t, enum enum_ip_type);
+extern int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type,
+		char *ip2, size_t len2, enum enum_ip_type ip2_type, int netmask);
 /**
  *
  */
@@ -62,7 +64,8 @@ int ipopsapi_compare_ips(const str *const ip1, const str *const ip2)
 			break;
 	}
 
-	if (_compare_ips(string1.s, string1.len, ip1_type, string2.s, string2.len, ip2_type))
+	if(_compare_ips(string1.s, string1.len, ip1_type, string2.s, string2.len,
+			   ip2_type))
 		return 1;
 	else
 		return -1;
@@ -90,14 +93,15 @@ int ipopsapi_ip_is_in_subnet(const str *const ip1, const str *const ip2)
 			break;
 	}
 	cidr_pos = string2.s + string2.len - 1;
-	while (cidr_pos > string2.s)
-	{
-		if (*cidr_pos == '/') break;
+	while(cidr_pos > string2.s) {
+		if(*cidr_pos == '/')
+			break;
 		cidr_pos--;
 	}
-	if (cidr_pos == string2.s) return -1;
+	if(cidr_pos == string2.s)
+		return -1;
 	string2.len = (cidr_pos - string2.s);
-	netmask = atoi(cidr_pos+1);
+	netmask = atoi(cidr_pos + 1);
 	switch(ip2_type = ip_parser_execute(string2.s, string2.len)) {
 		case(ip_type_error):
 			return -1;
@@ -109,7 +113,8 @@ int ipopsapi_ip_is_in_subnet(const str *const ip1, const str *const ip2)
 			break;
 	}
 
-	if (_ip_is_in_subnet(string1.s, string1.len, ip1_type, string2.s, string2.len, ip2_type, netmask))
+	if(_ip_is_in_subnet(string1.s, string1.len, ip1_type, string2.s,
+			   string2.len, ip2_type, netmask))
 		return 1;
 	else
 		return -1;
@@ -118,9 +123,9 @@ int ipopsapi_ip_is_in_subnet(const str *const ip1, const str *const ip2)
 /**
  *
  */
-int ipopsapi_is_ip(const str * const ip)
+int ipopsapi_is_ip(const str *const ip)
 {
-	if (ip_parser_execute(ip->s, ip->len) != ip_type_error)
+	if(ip_parser_execute(ip->s, ip->len) != ip_type_error)
 		return 1;
 	else
 		return -1;
@@ -129,15 +134,15 @@ int ipopsapi_is_ip(const str * const ip)
 /**
  *
  */
-int bind_ipops(ipops_api_t* api)
+int bind_ipops(ipops_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
-	api->compare_ips     = ipopsapi_compare_ips;
+	api->compare_ips = ipopsapi_compare_ips;
 	api->ip_is_in_subnet = ipopsapi_ip_is_in_subnet;
-	api->is_ip           = ipopsapi_is_ip;
+	api->is_ip = ipopsapi_is_ip;
 
 	return 0;
 }

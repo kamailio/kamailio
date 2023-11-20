@@ -52,11 +52,9 @@
 
 // Diameter Application Identifier used in the EPC
 
-#define EPC_vendor_id_3GPP 		10415		/**< Vendor Id for 3GPP */
-#define EPC_vendor_id_3GPP_char "10415" 	/**< char value for 3GPP's Vendor Id */
-#define EPC_vendor_id_3GPP_len	5			/**< len of char value for 3GPP's Vendor Id */
-
-
+#define EPC_vendor_id_3GPP 10415		/**< Vendor Id for 3GPP */
+#define EPC_vendor_id_3GPP_char "10415" /**< char value for 3GPP's Vendor Id */
+#define EPC_vendor_id_3GPP_len 5 /**< len of char value for 3GPP's Vendor Id */
 
 
 #endif /*DIAMETER_EPC_H_*/

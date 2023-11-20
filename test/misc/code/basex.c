@@ -76,9 +76,9 @@
 #define QUOTEME(x) #x
 
 static char* id="$Id$";
-static char* version="basex test 0.1 " 
+static char* version="basex test 0.1 "
 "BASE" QUOTE_MACRO(BASEX)  ": " QUOTE_MACRO(B_ENC) ", " QUOTE_MACRO(B_DEC) ""
-#if defined BASE64_LOOKUP_TABLE 
+#if defined BASE64_LOOKUP_TABLE
 #ifdef BASE64_LOOKUP_LARGE
 " (large b64 lookup table)"
 #else
@@ -125,7 +125,7 @@ void dump_profile_info(struct profile_data* pd)
 {
 	printf("profiling for %s (%ld/%ld):  %lld/%lld/%lld (max/avg/last),"
 			" total %lld\n",
-			pd->name, pd->entries, pd->exits, pd->max_cycles, 
+			pd->name, pd->entries, pd->exits, pd->max_cycles,
 			pd->entries?pd->total_cycles/pd->entries:0, pd->cycles,
 			pd->total_cycles);
 }
@@ -135,7 +135,7 @@ void dump_profile_info(struct profile_data* pd)
 int seed_prng()
 {
 	int seed, rfd;
-	
+
 	if ((rfd=open("/dev/urandom", O_RDONLY))!=-1){
 try_again:
 		if (read(rfd, (void*)&seed, sizeof(seed))==-1){
@@ -328,27 +328,27 @@ int main(int argc, char** argv)
 	}
 	dec_buf+=e_offset; /* make sure it's off by e_offset bytes from the
 						  aligned stuff malloc returns */
-	
-	
+
+
 	seed_prng();
 	/* profile */
 	profile_init(&pf1, "encode");
 	profile_init(&pf2, "decode");
-	
+
 	init_basex();
 	if (verbose)
 		printf("starting (loops %d, min size %d, max size %d, offset %d,"
 				", e_offset %d, buffer sizes %d %d %d)\n",
 				loops, min_len, max_len, offset, e_offset, ibuf_len,
 				enc_buf_len, dec_buf_len);
-		
+
 		for (r=0; r<loops; r++){
 			if (min_len!=max_len)
 				/* test encode/decode random data w/ random length*/
 				c_len= min_len+(int)((float)(max_len-min_len+1)*
 											(rand()/(RAND_MAX+1.0)));
-			else 
-				/* test encode /decode random data w/ fixed lenght*/
+			else
+				/* test encode /decode random data w/ fixed length*/
 				c_len=max_len;
 			if (offset==-1)
 				/* offset between 0 & MIN(clen,3) */
@@ -361,9 +361,9 @@ int main(int argc, char** argv)
 				printf("loop %d, current len %d, offset %d, start %p\n",
 							r, c_len-offs, offs, &ibuf[offs]);
 			else if ((verbose >1) && (r %10==0)) putchar('.');
-			
+
 			fill_rand(ibuf, c_len);
-			
+
 			c_len-=offs;
 			e_len=B_ENC_LEN(c_len);
 			profile_start(&pf1);

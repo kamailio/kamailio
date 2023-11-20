@@ -8,13 +8,14 @@
 
 //#include "../../core/sr_module.h"
 
-typedef int (*msilo_f)(struct sip_msg*, str*);
-typedef struct msilo_api {
+typedef int (*msilo_f)(struct sip_msg *, str *);
+typedef struct msilo_api
+{
 	msilo_f m_store;
 	msilo_f m_dump;
 } msilo_api_t;
 
-typedef int (*bind_msilo_f)(msilo_api_t* api);
+typedef int (*bind_msilo_f)(msilo_api_t *api);
 
 /**
  * @brief Load the MSILO API
@@ -28,8 +29,7 @@ static inline int load_msilo_api(msilo_api_t *api)
 		LM_ERR("cannot find bind_msilo\n");
 		return -1;
 	}
-	if(bindmsilo(api)<0)
-	{
+	if(bindmsilo(api) < 0) {
 		LM_ERR("cannot bind msilo api\n");
 		return -1;
 	}

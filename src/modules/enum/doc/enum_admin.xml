@@ -24,7 +24,7 @@
 		least 2 and at most 20. Out of this number
 		<function moreinfo="none">enum_query</function> forms a domain name,
 		where the digits are in reverse order and separated by dots followed by
-		domain suffix that by default is <quote>e164.arpa.</quote>. For example, 
+		domain suffix that by default is <quote>e164.arpa.</quote>. For example,
 		if the user part is +35831234567, the domain
 		name will be <quote>7.6.5.4.3.2.1.3.8.5.3.e164.arpa.</quote>.
 		<function moreinfo="none">i_enum_query</function> operates in a similar
@@ -59,7 +59,7 @@
 		When using <function moreinfo="none">enum_query</function> without any
 		parameters, it searches for NAPTRs with service type "e2u+sip" in the
 		default enum tree. When using
-		<function moreinfo="none">enum_query</function> with a single parameter, 
+		<function moreinfo="none">enum_query</function> with a single parameter,
 		this parameter will be used as enum tree. When using
 		<function moreinfo="none">enum_query</function>
 		with two parameters, the functionality depends on the first letter in
@@ -362,7 +362,7 @@ enum_pv_query("$avp(i:100)","e164.arpa.","+sip+voice:sip");
         </title>
         <para>
         The function performs an enum query and rewrites the Request-URI with
-        the result of the query. This the Infrastructure-ENUM version of enum_query().
+        the result of the query. This is the Infrastructure-ENUM version of enum_query().
         The only difference to enum_query() is in the calculation of the
         FQDN where NAPTR records are looked for.
 		</para>

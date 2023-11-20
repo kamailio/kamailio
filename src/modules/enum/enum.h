@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -78,8 +78,8 @@ int i_enum_query_2(struct sip_msg *_msg, char *_suffix, char *_service);
  */
 int ki_is_from_user_enum(sip_msg_t *msg);
 int ki_is_from_user_enum_suffix(sip_msg_t *msg, str *vsuffix);
-int ki_is_from_user_enum_suffix_service(sip_msg_t *msg, str *vsuffix,
-		str *vservice);
+int ki_is_from_user_enum_suffix_service(
+		sip_msg_t *msg, str *vsuffix, str *vservice);
 int ki_enum_query(sip_msg_t *msg);
 int ki_enum_query_suffix(sip_msg_t *msg, str *vsuffix);
 int ki_enum_query_suffix_service(sip_msg_t *msg, str *vsuffix, str *vservice);
@@ -88,7 +88,7 @@ int ki_i_enum_query_suffix(sip_msg_t *msg, str *vsuffix);
 int ki_i_enum_query_suffix_service(sip_msg_t *msg, str *vsuffix, str *vservice);
 int ki_enum_pv_query(sip_msg_t *msg, str *ve164);
 int ki_enum_pv_query_suffix(sip_msg_t *msg, str *ve164, str *vsuffix);
-int ki_enum_pv_query_suffix_service(sip_msg_t *msg, str *ve164, str *vsuffix,
-		str *vservice);
+int ki_enum_pv_query_suffix_service(
+		sip_msg_t *msg, str *ve164, str *vsuffix, str *vservice);
 
 #endif /* ENUM_H */

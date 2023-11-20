@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -30,23 +30,40 @@
 
 #include <stdio.h>
 
-#define ERROR_LOG(a,args...)		do{printf(a,##args);}while(0)
-#define DEBUG_LOG(a,args...)		do{printf(a,##args);}while(0)
-#define TRACE_LOG(a,args...)		do{printf(a,##args);}while(0)
-#define WARN_LOG(a,args...)			do{printf(a,##args);}while(0)
-#define FLUSH_LOG()					do{fflush(stdout);}while(0)
+#define ERROR_LOG(a, args...) \
+	do {                      \
+		printf(a, ##args);    \
+	} while(0)
+#define DEBUG_LOG(a, args...) \
+	do {                      \
+		printf(a, ##args);    \
+	} while(0)
+#define TRACE_LOG(a, args...) \
+	do {                      \
+		printf(a, ##args);    \
+	} while(0)
+#define WARN_LOG(a, args...) \
+	do {                     \
+		printf(a, ##args);   \
+	} while(0)
+#define FLUSH_LOG()     \
+	do {                \
+		fflush(stdout); \
+	} while(0)
 
 #else
 /* TODO: logging for SER */
 
 #include "dprint.h"
 
-#define ERROR_LOG(a,args...)		ERR(a,##args)
-#define DEBUG_LOG(a,args...)		DBG(a,##args)
+#define ERROR_LOG(a, args...) ERR(a, ##args)
+#define DEBUG_LOG(a, args...) DBG(a, ##args)
 /* #define TRACE_LOG(a,args...)		ERR(a,##args) */
-#define TRACE_LOG(fmt, args...)     LOG(L_ERR, "TRACE: "  LOC_INFO fmt, ##args)
-#define WARN_LOG(a,args...)			WARN(a,##args)
-#define FLUSH_LOG()					do{}while(0)
+#define TRACE_LOG(fmt, args...) LOG(L_ERR, "TRACE: " LOC_INFO fmt, ##args)
+#define WARN_LOG(a, args...) WARN(a, ##args)
+#define FLUSH_LOG() \
+	do {            \
+	} while(0)
 
 #endif
 

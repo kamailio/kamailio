@@ -1,6 +1,6 @@
 /**
  *
- * Copyright (C) 2015 Victor Seva (sipwise.com)
+ * Copyright (C) 2015-2023 Victor Seva (sipwise.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -22,6 +22,7 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <dirent.h>
 #include <string.h>
 #include <errno.h>
@@ -32,6 +33,7 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/parser/msg_parser.h"
+#include "../../core/script_cb.h"
 
 #include "cfgt_int.h"
 #include "cfgt_json.h"
@@ -43,6 +45,8 @@ cfgt_hash_p _cfgt_uuid = NULL;
 str cfgt_hdr_prefix = {"NGCP%", 5};
 str cfgt_basedir = {"/tmp", 4};
 int cfgt_mask = CFGT_DP_ALL;
+int cfgt_skip_unknown = 0;
+int cfgt_route_log = 0;
 int not_sip = 0;
 
 int _cfgt_get_filename(int msgid, str uuid, str *dest, int *dir);
@@ -79,7 +83,7 @@ void _cfgt_remove_report(const str *scen)
 	DIR *folder = NULL;
 	struct dirent *next_file = NULL;
 
-	if(_cfgt_get_filename(0, *scen, &dest, &dir) < 0) {
+	if(_cfgt_get_filename(0, *scen, &dest, &dir) < 0 || dest.s == NULL) {
 		LM_ERR("can't build filename for uuid: %.*s\n", scen->len, scen->s);
 		return;
 	}
@@ -104,7 +108,7 @@ void _cfgt_remove_report(const str *scen)
 				}
 			}
 			snprintf(filepath.s, dest.len + 1, "%s/%s", dest.s,
-				next_file->d_name);
+					next_file->d_name);
 			if(remove(filepath.s) < 0) {
 				LM_ERR("failed removing file: %s\n", strerror(errno));
 			} else {
@@ -124,10 +128,11 @@ void _cfgt_remove_report(const str *scen)
 	}
 
 end:
-	if(filepath.s)
+	if(filepath.s) {
 		pkg_free(filepath.s);
-	if(dest.s)
-		pkg_free(dest.s);
+	}
+
+	pkg_free(dest.s);
 }
 
 int _cfgt_remove_uuid(const str *uuid, int remove_report)
@@ -384,6 +389,10 @@ void cfgt_save_node(cfgt_node_p node)
 	str dest = STR_NULL;
 	int dir = 0;
 	struct stat sb;
+	if(cfgt_skip_unknown && strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
+		LM_DBG("skip unknown\n");
+		return;
+	}
 	if(_cfgt_get_filename(node->msgid, node->uuid, &dest, &dir) < 0) {
 		LM_ERR("can't build filename\n");
 		return;
@@ -454,10 +463,25 @@ void _cfgt_print_node(cfgt_node_p node, int json)
 
 int _cfgt_set_dump(struct sip_msg *msg, cfgt_node_p node, str *flow)
 {
+	int len;
+	char v;
+	unsigned long int tdiff;
 	srjson_t *f, *vars;
 
 	if(node == NULL || flow == NULL)
 		return -1;
+
+	/* don't generate two same nodes */
+	if((len = srjson_GetArraySize(&node->jdoc, node->flow)) >= 1) {
+		f = srjson_GetArrayItem(&node->jdoc, node->flow, len - 1);
+		STR_VTOZ(flow->s[flow->len], v);
+		f = srjson_GetObjectItem(&node->jdoc, f, flow->s);
+		STR_ZTOV(flow->s[flow->len], v);
+		if(f != NULL) {
+			LM_DBG("node[%.*s] flow already there\n", flow->len, flow->s);
+			return 0;
+		}
+	}
 
 	vars = srjson_CreateObject(&node->jdoc);
 	if(vars == NULL) {
@@ -473,6 +497,17 @@ int _cfgt_set_dump(struct sip_msg *msg, cfgt_node_p node, str *flow)
 		return -1;
 	}
 
+	if(node->route->duration.tv_usec > 0) {
+		tdiff = (node->route->duration.tv_sec) * 1000000
+				+ (node->route->duration.tv_usec);
+		f = srjson_CreateNumber(&node->jdoc, tdiff);
+		if(f == NULL) {
+			LM_ERR("cannot create json object\n");
+			return -1;
+		}
+		srjson_AddItemToObject(&node->jdoc, vars, "execution_usec", f);
+	}
+
 	f = srjson_CreateObject(&node->jdoc);
 	if(f == NULL) {
 		LM_ERR("cannot create json object\n");
@@ -483,6 +518,20 @@ int _cfgt_set_dump(struct sip_msg *msg, cfgt_node_p node, str *flow)
 	srjson_AddItemToArray(&node->jdoc, node->flow, f);
 	LM_DBG("node[%.*s] flow created\n", flow->len, flow->s);
 	return 0;
+}
+
+static void _cfgt_log_route(cfgt_str_list_p route)
+{
+	unsigned long int tdiff;
+	if(!route) {
+		LM_BUG("empty route\n");
+		return;
+	}
+
+	if(route->duration.tv_usec > 0) {
+		tdiff = (route->duration.tv_sec) * 1000000 + (route->duration.tv_usec);
+		LM_WARN("[%.*s] exectime=%lu usec\n", route->s.len, route->s.s, tdiff);
+	}
 }
 
 void _cfgt_set_type(cfgt_str_list_p route, struct action *a)
@@ -500,6 +549,8 @@ void _cfgt_set_type(cfgt_str_list_p route, struct action *a)
 				route->type = CFGT_DROP_E;
 				LM_DBG("set[%.*s]->CFGT_DROP_E\n", route->s.len, route->s.s);
 			}
+			gettimeofday(&route->end, NULL);
+			timersub(&route->end, &route->start, &route->duration);
 			break;
 		case ROUTE_T:
 			route->type = CFGT_ROUTE;
@@ -514,6 +565,8 @@ void _cfgt_set_type(cfgt_str_list_p route, struct action *a)
 				LM_DBG("[%.*s] already set to CFGT_DROP_E[%d]\n", route->s.len,
 						route->s.s, a->type);
 			}
+			gettimeofday(&route->end, NULL);
+			timersub(&route->end, &route->start, &route->duration);
 			break;
 	}
 }
@@ -533,6 +586,7 @@ int _cfgt_add_routename(cfgt_node_p node, struct action *a, str *routename)
 		memset(node->route, 0, sizeof(cfgt_str_list_t));
 		node->flow_head = node->route;
 		node->route->type = CFGT_ROUTE;
+		gettimeofday(&node->route->start, NULL);
 		ret = 1;
 	} else {
 		LM_DBG("actual routename:[%.*s][%d]\n", node->route->s.len,
@@ -580,6 +634,7 @@ int _cfgt_add_routename(cfgt_node_p node, struct action *a, str *routename)
 		route->prev = node->route;
 		node->route->next = route;
 		node->route = route;
+		gettimeofday(&node->route->start, NULL);
 		_cfgt_set_type(node->route, a);
 	}
 	node->route->s.s = routename->s;
@@ -597,6 +652,8 @@ void _cfgt_del_routename(cfgt_node_p node)
 	}
 	LM_DBG("del route[%.*s]\n", node->route->s.len, node->route->s.s);
 	node->route = node->route->prev;
+	if(cfgt_route_log)
+		_cfgt_log_route(node->route->next);
 	pkg_free(node->route->next);
 	node->route->next = NULL;
 }
@@ -656,6 +713,9 @@ int cfgt_process_route(struct sip_msg *msg, struct action *a)
 	if(!_cfgt_node) {
 		LM_ERR("node empty\n");
 		return -1;
+	}
+	if(cfgt_skip_unknown && strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
+		return 0;
 	}
 	if(a->rname == NULL) {
 		LM_DBG("no routename. type:%d\n", a->type);
@@ -754,11 +814,35 @@ int cfgt_msgin(sr_event_param_t *evp)
 	return -1;
 }
 
+static inline void print_cb_flags(unsigned int flags)
+{
+	LM_DBG("flags:");
+	if(flags & REQUEST_CB)
+		LM_DBG("REQUEST_CB");
+	if(flags & FAILURE_CB)
+		LM_DBG("FAILURE_CB");
+	if(flags & ONREPLY_CB)
+		LM_DBG("ONREPLY_CB");
+	if(flags & BRANCH_CB)
+		LM_DBG("BRANCH_CB");
+	if(flags & ONSEND_CB)
+		LM_DBG("ONSEND_CB");
+	if(flags & ERROR_CB)
+		LM_DBG("ERROR_CB");
+	if(flags & LOCAL_CB)
+		LM_DBG("LOCAL_CB");
+	if(flags & EVENT_CB)
+		LM_DBG("EVENT_CB");
+	if(flags & BRANCH_FAILURE_CB)
+		LM_DBG("BRANCH_FAILURE_CB");
+}
+
 int cfgt_pre(struct sip_msg *msg, unsigned int flags, void *bar)
 {
 	str unknown = {"unknown", 7};
 	int get_hdr_result = 0, res;
 
+	print_cb_flags(flags);
 	if(_cfgt_node) {
 		if(_cfgt_node->msgid == 0) {
 			LM_DBG("new node\n");
@@ -778,7 +862,7 @@ int cfgt_pre(struct sip_msg *msg, unsigned int flags, void *bar)
 			}
 			res = _cfgt_get_uuid_id(_cfgt_node);
 			LM_INFO("*** node uuid:[%.*s] id:[%d] created ***\n",
-				STR_FMT(&_cfgt_node->uuid), _cfgt_node->msgid);
+					STR_FMT(&_cfgt_node->uuid), _cfgt_node->msgid);
 			return res;
 		} else {
 			LM_DBG("_cfgt_node->uuid:[%.*s]\n", _cfgt_node->uuid.len,
@@ -803,8 +887,12 @@ int cfgt_pre(struct sip_msg *msg, unsigned int flags, void *bar)
 int cfgt_post(struct sip_msg *msg, unsigned int flags, void *bar)
 {
 	str flowname = STR_NULL;
-
+	print_cb_flags(flags);
 	if(_cfgt_node) {
+		if(cfgt_skip_unknown
+				&& strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
+			return 1;
+		}
 		LM_DBG("dump last flow\n");
 		if(_cfgt_node->route == NULL
 				&& strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0)
@@ -843,6 +931,10 @@ int cfgt_msgout(sr_event_param_t *evp)
 	}
 
 	if(_cfgt_node) {
+		if(cfgt_skip_unknown
+				&& strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
+			return 0;
+		}
 		jobj = srjson_CreateStr(&_cfgt_node->jdoc, buf->s, buf->len);
 		if(jobj == NULL) {
 			LM_ERR("cannot create json object\n");

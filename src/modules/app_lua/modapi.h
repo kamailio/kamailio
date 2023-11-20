@@ -28,8 +28,8 @@
 
 #include "../../core/sr_module.h"
 
-#define SRLUA_FALSE	0
-#define SRLUA_TRUE	1
+#define SRLUA_FALSE 0
+#define SRLUA_TRUE 1
 
 typedef struct _sr_lua_env
 {
@@ -42,16 +42,17 @@ typedef struct _sr_lua_env
 
 typedef int (*app_lua_openlibs_f)(lua_State *L);
 
-typedef sr_lua_env_t* (*app_lua_env_get_f)(void);
+typedef sr_lua_env_t *(*app_lua_env_get_f)(void);
 typedef int (*app_lua_openlibs_register_f)(app_lua_openlibs_f rfunc);
 
-typedef struct app_lua_api {
+typedef struct app_lua_api
+{
 	app_lua_env_get_f env_get_f;
 	app_lua_openlibs_register_f openlibs_register_f;
 } app_lua_api_t;
 
-typedef int (*bind_app_lua_f)(app_lua_api_t* api);
-int bind_app_lua(app_lua_api_t* api);
+typedef int (*bind_app_lua_f)(app_lua_api_t *api);
+int bind_app_lua(app_lua_api_t *api);
 
 /**
  * @brief Load the app_lua API
@@ -65,7 +66,7 @@ static inline int app_lua_load_api(app_lua_api_t *api)
 		LM_ERR("cannot find bind_app_lua\n");
 		return -1;
 	}
-	if(bindapplua(api)<0) {
+	if(bindapplua(api) < 0) {
 		LM_ERR("cannot bind app_lua api\n");
 		return -1;
 	}

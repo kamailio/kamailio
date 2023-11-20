@@ -16,7 +16,7 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -24,10 +24,10 @@
 #define _FLAT_CMD_H
 
 /** \addtogroup flatstore
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * Inmplementation of flatstore commands.
  */
 
@@ -39,7 +39,8 @@
  * This data structure extends the generic data structure db_cmd in the
  * database API with data specific to the flatstore driver.
  */
-struct flat_cmd {
+struct flat_cmd
+{
 	db_drv_t gen; /**< Generic part of the data structure (must be first) */
 	int file_index;
 };
@@ -52,7 +53,7 @@ struct flat_cmd {
  * @param cmd A generic db_cmd structure to which the newly created flat_cmd
  *            structure will be attached.
  */
-int flat_cmd(db_cmd_t* cmd);
+int flat_cmd(db_cmd_t *cmd);
 
 
 /** The main execution function in the flat driver.
@@ -66,7 +67,7 @@ int flat_cmd(db_cmd_t* cmd);
  * @retval A negative number if the database server failed to execute command
  * @retval A positive number if there was an error on client side (SER)
  */
-int flat_put(db_res_t* res, db_cmd_t* cmd);
+int flat_put(db_res_t *res, db_cmd_t *cmd);
 
 
 /** @} */

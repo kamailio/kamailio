@@ -34,12 +34,22 @@ MODULE_VERSION
 static int mod_init(void);
 void mod_destroy(void);
 static int func_gauge(struct sip_msg *msg, char *key, char *val);
+static int func_gauge_with_labels(
+		struct sip_msg *msg, char *key, char *val, char *labels);
 static int func_histogram(struct sip_msg *msg, char *key, char *val);
+static int func_histogram_with_labels(
+		struct sip_msg *msg, char *key, char *val, char *labels);
 static int func_set(struct sip_msg *msg, char *key, char *val);
+static int func_set_with_labels(
+		struct sip_msg *msg, char *key, char *val, char *labels);
 static int func_time_start(struct sip_msg *msg, char *key);
 static int func_time_end(struct sip_msg *msg, char *key);
+static int func_time_end_with_labels(
+		struct sip_msg *msg, char *key, char *labels);
 static int func_incr(struct sip_msg *msg, char *key);
+static int func_incr_with_labels(struct sip_msg *msg, char *key, char *labels);
 static int func_decr(struct sip_msg *msg, char *key);
+static int func_decr_with_labels(struct sip_msg *msg, char *key, char *labels);
 static char *get_milliseconds(char *dst);
 
 typedef struct StatsdParams
@@ -52,12 +62,18 @@ static StatsdParams statsd_params = {};
 /* clang-format off */
 static cmd_export_t commands[] = {
 	{"statsd_gauge", (cmd_function)func_gauge, 2, 0, 0, ANY_ROUTE},
+	{"statsd_gauge", (cmd_function)func_gauge_with_labels, 3, 0, 0, ANY_ROUTE},
 	{"statsd_histogram", (cmd_function)func_histogram, 2, 0, 0, ANY_ROUTE},
+	{"statsd_histogram", (cmd_function)func_histogram_with_labels, 3, 0, 0, ANY_ROUTE},
 	{"statsd_start", (cmd_function)func_time_start, 1, 0, 0, ANY_ROUTE},
 	{"statsd_stop", (cmd_function)func_time_end, 1, 0, 0, ANY_ROUTE},
+	{"statsd_stop", (cmd_function)func_time_end_with_labels, 2, 0, 0, ANY_ROUTE},
 	{"statsd_incr", (cmd_function)func_incr, 1, 0, 0, ANY_ROUTE},
+	{"statsd_incr", (cmd_function)func_incr_with_labels, 2, 0, 0, ANY_ROUTE},
 	{"statsd_decr", (cmd_function)func_decr, 1, 0, 0, ANY_ROUTE},
+	{"statsd_decr", (cmd_function)func_decr_with_labels, 2, 0, 0, ANY_ROUTE},
 	{"statsd_set", (cmd_function)func_set, 2, 0, 0, ANY_ROUTE},
+	{"statsd_set", (cmd_function)func_set_with_labels, 3, 0, 0, ANY_ROUTE},
     {0, 0, 0, 0, 0, 0}
 };
 
@@ -117,32 +133,69 @@ void mod_destroy(void)
 
 static int func_gauge(struct sip_msg *msg, char *key, char *val)
 {
-	return statsd_gauge(key, val);
+	return statsd_gauge(key, val, NULL);
 }
 
-static int func_histogram(struct sip_msg *msg, char *key, char *val)
+static int func_gauge_with_labels(
+		struct sip_msg *msg, char *key, char *val, char *labels)
 {
-	return statsd_histogram(key, val);
+	return statsd_gauge(key, val, labels);
 }
 
 static int ki_statsd_gauge(sip_msg_t *msg, str *key, str *val)
 {
-	return statsd_gauge(key->s, val->s);
+	return statsd_gauge(key->s, val->s, NULL);
 }
+
+static int ki_statsd_gauge_with_labels(
+		sip_msg_t *msg, str *key, str *val, str *labels)
+{
+	return statsd_gauge(key->s, val->s, labels->s);
+}
+
+static int func_histogram(struct sip_msg *msg, char *key, char *val)
+{
+	return statsd_histogram(key, val, NULL);
+}
+
+static int func_histogram_with_labels(
+		struct sip_msg *msg, char *key, char *val, char *labels)
+{
+	return statsd_histogram(key, val, labels);
+}
+
 
 static int ki_statsd_histogram(sip_msg_t *msg, str *key, str *val)
 {
-	return statsd_histogram(key->s, val->s);
+	return statsd_histogram(key->s, val->s, NULL);
+}
+
+static int ki_statsd_histogram_with_labels(
+		sip_msg_t *msg, str *key, str *val, str *labels)
+{
+	return statsd_histogram(key->s, val->s, labels->s);
 }
 
 static int func_set(struct sip_msg *msg, char *key, char *val)
 {
-	return statsd_set(key, val);
+	return statsd_set(key, val, NULL);
+}
+
+static int func_set_with_labels(
+		struct sip_msg *msg, char *key, char *val, char *labels)
+{
+	return statsd_set(key, val, labels);
 }
 
 static int ki_statsd_set(sip_msg_t *msg, str *key, str *val)
 {
-	return statsd_set(key->s, val->s);
+	return statsd_set(key->s, val->s, NULL);
+}
+
+static int ki_statsd_set_with_labels(
+		sip_msg_t *msg, str *key, str *val, str *labels)
+{
+	return statsd_set(key->s, val->s, labels->s);
 }
 
 static int func_time_start(struct sip_msg *msg, char *key)
@@ -168,7 +221,13 @@ static int ki_statsd_start(sip_msg_t *msg, str *key)
 	return func_time_start(msg, key->s);
 }
 
+
 static int func_time_end(struct sip_msg *msg, char *key)
+{
+	return func_time_end_with_labels(msg, key, NULL);
+}
+
+int func_time_end_with_labels(struct sip_msg *msg, char *key, char *labels)
 {
 	char unix_time[24];
 	char *endptr;
@@ -204,7 +263,7 @@ static int func_time_end(struct sip_msg *msg, char *key)
 	LM_DBG("Statsd: statsd_stop Start_time=%ld unix_time=%ld (%i)\n",
 			start_time, atol(unix_time), result);
 	destroy_avp(prev_avp);
-	return statsd_timing(key, result);
+	return statsd_timing(key, result, labels);
 }
 
 static int ki_statsd_stop(sip_msg_t *msg, str *key)
@@ -212,24 +271,49 @@ static int ki_statsd_stop(sip_msg_t *msg, str *key)
 	return func_time_end(msg, key->s);
 }
 
+static int ki_statsd_stop_with_labels(sip_msg_t *msg, str *key, str *labels)
+{
+	return func_time_end_with_labels(msg, key->s, labels->s);
+}
+
 static int func_incr(struct sip_msg *msg, char *key)
 {
-	return statsd_count(key, "+1");
+	return statsd_count(key, "+1", NULL);
+}
+
+static int func_incr_with_labels(struct sip_msg *msg, char *key, char *labels)
+{
+	return statsd_count(key, "+1", labels);
 }
 
 static int ki_statsd_incr(sip_msg_t *msg, str *key)
 {
-	return statsd_count(key->s, "+1");
+	return statsd_count(key->s, "+1", NULL);
+}
+
+static int ki_statsd_incr_with_labels(sip_msg_t *msg, str *key, str *labels)
+{
+	return statsd_count(key->s, "+1", labels->s);
 }
 
 static int func_decr(struct sip_msg *msg, char *key)
 {
-	return statsd_count(key, "-1");
+	return statsd_count(key, "-1", NULL);
+}
+
+static int func_decr_with_labels(struct sip_msg *msg, char *key, char *labels)
+{
+	return statsd_count(key, "-1", labels);
 }
 
 static int ki_statsd_decr(sip_msg_t *msg, str *key)
 {
-	return statsd_count(key->s, "-1");
+	return statsd_count(key->s, "-1", NULL);
+}
+
+static int ki_statsd_decr_with_labels(sip_msg_t *msg, str *key, str *labels)
+{
+	return statsd_count(key->s, "-1", labels->s);
 }
 
 char *get_milliseconds(char *dst)
@@ -253,9 +337,19 @@ static sr_kemi_t sr_kemi_statsd_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("statsd"), str_init("statsd_labels_gauge"),
+		SR_KEMIP_INT, ki_statsd_gauge_with_labels,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("statsd"), str_init("statsd_histogram"),
 		SR_KEMIP_INT, ki_statsd_histogram,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("statsd"), str_init("statsd_labels_histogram"),
+		SR_KEMIP_INT, ki_statsd_histogram_with_labels,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("statsd"), str_init("statsd_start"),
@@ -268,9 +362,19 @@ static sr_kemi_t sr_kemi_statsd_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("statsd"), str_init("statsd_labels_stop"),
+		SR_KEMIP_INT, ki_statsd_stop_with_labels,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("statsd"), str_init("statsd_incr"),
 		SR_KEMIP_INT, ki_statsd_incr,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("statsd"), str_init("statsd_labels_incr"),
+		SR_KEMIP_INT, ki_statsd_incr_with_labels,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("statsd"), str_init("statsd_decr"),
@@ -278,9 +382,19 @@ static sr_kemi_t sr_kemi_statsd_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("statsd"), str_init("statsd_labels_decr"),
+		SR_KEMIP_INT, ki_statsd_decr_with_labels,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("statsd"), str_init("statsd_set"),
 		SR_KEMIP_INT, ki_statsd_set,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("statsd"), str_init("statsd_labels_set"),
+		SR_KEMIP_INT, ki_statsd_set_with_labels,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

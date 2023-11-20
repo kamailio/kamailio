@@ -22,55 +22,54 @@
 #ifndef error_h
 #define error_h
 
-#define E_OK			0
-#define E_UNSPEC		-1
-#define E_OUT_OF_MEM	-2
-#define E_BAD_RE		-3
+#define E_OK 0
+#define E_UNSPEC -1
+#define E_OUT_OF_MEM -2
+#define E_BAD_RE -3
 /* #define E_BAD_ADDRESS -4 */
-#define E_BUG			-5
-#define E_CFG			-6
-#define E_NO_SOCKET		-7
+#define E_BUG -5
+#define E_CFG -6
+#define E_NO_SOCKET -7
 /* unresolvable topmost Via */
-#define E_BAD_VIA		-8
+#define E_BAD_VIA -8
 /* incomplete transaction tuple */
-#define E_BAD_TUPEL		-9
+#define E_BAD_TUPEL -9
 /* script programming error */
-#define E_SCRIPT		-10
+#define E_SCRIPT -10
 /* error in execution of external tools */
-#define E_EXEC			-11
+#define E_EXEC -11
 /* too many branches demanded */
-#define E_TOO_MANY_BRANCHES	-12
-#define E_BAD_TO		-13
+#define E_TOO_MANY_BRANCHES -12
+#define E_BAD_TO -13
 /* invalid params */
-#define E_INVALID_PARAMS	-14
+#define E_INVALID_PARAMS -14
 
-#define E_Q_INV_CHAR	-15 /* Invalid character in q */
-#define E_Q_EMPTY		-16 /* Empty q */
-#define E_Q_TOO_BIG		-17 /* q too big (> 1) */
-#define E_Q_DEC_MISSING	-18 /* Decimal part missing */
-#define E_DROP			-19 /* Dropped in script */
+#define E_Q_INV_CHAR -15	/* Invalid character in q */
+#define E_Q_EMPTY -16		/* Empty q */
+#define E_Q_TOO_BIG -17		/* q too big (> 1) */
+#define E_Q_DEC_MISSING -18 /* Decimal part missing */
+#define E_DROP -19			/* Dropped in script */
+#define E_UNEXPECTED_STATE -20	/* Unexpected processing state */
 
-
-
-#define E_SEND			-477
+#define E_SEND -477
 /* unresolvable next-hop address */
-#define E_BAD_ADDRESS	-478
+#define E_BAD_ADDRESS -478
 /* unparseable URI */
-#define E_BAD_URI		-479
+#define E_BAD_URI -479
 /* bad protocol, like */
-#define E_BAD_PROTO		-480
+#define E_BAD_PROTO -480
 /* malformed request */
-#define E_BAD_REQ		-400
+#define E_BAD_REQ -400
 
-#define E_CANCELED		-487 /* transaction already canceled */
+#define E_CANCELED -487 /* transaction already canceled */
 
 /* error in server */
-#define E_BAD_SERVER		-500
-#define E_ADM_PROHIBITED	-510
-#define E_BLOCKLISTED		-520
+#define E_BAD_SERVER -500
+#define E_ADM_PROHIBITED -510
+#define E_BLOCKLISTED -520
 
 
-#define MAX_REASON_LEN	128
+#define MAX_REASON_LEN 128
 
 #include "str.h"
 
@@ -81,8 +80,8 @@ extern int prev_ser_error;
 struct sip_msg;
 
 /* ser error -> SIP error */
-int err2reason_phrase(int ser_error, int *sip_error,
-		char *phrase, int etl, char *signature);
+int err2reason_phrase(
+		int ser_error, int *sip_error, char *phrase, int etl, char *signature);
 
 /* SIP error core -> SIP text */
 char *error_text(int code);

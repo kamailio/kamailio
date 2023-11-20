@@ -27,7 +27,7 @@ void out_res(const res_t* _r)
 			pl[i] = ps[i]->len;
 		for(j = 0; j < nr; j++) {
 			ps = _r->rows[j];
-			for(i = 0; i < nc; i++) 
+			for(i = 0; i < nc; i++)
 				if(pl[i] < ps[i]->len) pl[i] = ps[i]->len;
 		}
 

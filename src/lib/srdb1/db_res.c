@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -39,16 +39,16 @@
 /*
  * Release memory used by rows
  */
-int db_free_rows(db1_res_t* _r)
+int db_free_rows(db1_res_t *_r)
 {
 	int i;
 
-	if (!_r) {
+	if(!_r) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if(RES_ROWS(_r)){
+	if(RES_ROWS(_r)) {
 		LM_DBG("freeing %d rows\n", RES_ROW_N(_r));
 		for(i = 0; i < RES_ROW_N(_r); i++) {
 			db_free_row(&(RES_ROWS(_r)[i]));
@@ -56,7 +56,7 @@ int db_free_rows(db1_res_t* _r)
 	}
 	RES_ROW_N(_r) = 0;
 
-	if (RES_ROWS(_r)) {
+	if(RES_ROWS(_r)) {
 		LM_DBG("freeing rows at %p\n", RES_ROWS(_r));
 		pkg_free(RES_ROWS(_r));
 		RES_ROWS(_r) = NULL;
@@ -68,21 +68,22 @@ int db_free_rows(db1_res_t* _r)
 /*
  * Release memory used by columns
  */
-int db_free_columns(db1_res_t* _r)
+int db_free_columns(db1_res_t *_r)
 {
 	int col;
 
-	if (!_r) {
+	if(!_r) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 	LM_DBG("freeing %d columns\n", RES_COL_N(_r));
 	/* free memory previously allocated to save column names */
 	for(col = 0; col < RES_COL_N(_r); col++) {
-		if (RES_NAMES(_r)[col]!=NULL) {
+		if(RES_NAMES(_r)[col] != NULL) {
 			LM_DBG("freeing RES_NAMES[%d] at %p\n", col, RES_NAMES(_r)[col]);
 			/* free column name if it was allocated */
-			if ((RES_COL_FLAGS(_r) & DB1_FCOL_FREE) && RES_NAMES(_r)[col]->s != NULL) {
+			if((RES_COL_FLAGS(_r) & DB1_FCOL_FREE)
+					&& RES_NAMES(_r)[col]->s != NULL) {
 				pkg_free(RES_NAMES(_r)[col]->s);
 			}
 			pkg_free((str *)RES_NAMES(_r)[col]);
@@ -92,12 +93,12 @@ int db_free_columns(db1_res_t* _r)
 	RES_COL_N(_r) = 0;
 
 	/* free names and types */
-	if (RES_NAMES(_r)) {
+	if(RES_NAMES(_r)) {
 		LM_DBG("freeing result names at %p\n", RES_NAMES(_r));
 		pkg_free(RES_NAMES(_r));
 		RES_NAMES(_r) = NULL;
 	}
-	if (RES_TYPES(_r)) {
+	if(RES_TYPES(_r)) {
 		LM_DBG("freeing result types at %p\n", RES_TYPES(_r));
 		pkg_free(RES_TYPES(_r));
 		RES_TYPES(_r) = NULL;
@@ -108,16 +109,16 @@ int db_free_columns(db1_res_t* _r)
 /*
  * Create a new result structure and initialize it
  */
-db1_res_t* db_new_result(void)
+db1_res_t *db_new_result(void)
 {
-	db1_res_t* r = NULL;
-	r = (db1_res_t*)pkg_malloc(sizeof(db1_res_t));
-	if (!r) {
+	db1_res_t *r = NULL;
+	r = (db1_res_t *)pkg_malloc(sizeof(db1_res_t));
+	if(!r) {
 		PKG_MEM_ERROR;
 		return 0;
 	}
-	LM_DBG("allocate %d bytes for result set at %p\n",
-		(int)sizeof(db1_res_t), r);
+	LM_DBG("allocate %d bytes for result set at %p\n", (int)sizeof(db1_res_t),
+			r);
 	memset(r, 0, sizeof(db1_res_t));
 	return r;
 }
@@ -125,10 +126,9 @@ db1_res_t* db_new_result(void)
 /*
  * Release memory used by a result structure
  */
-int db_free_result(db1_res_t* _r)
+int db_free_result(db1_res_t *_r)
 {
-	if (!_r)
-	{
+	if(!_r) {
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
@@ -145,28 +145,26 @@ int db_free_result(db1_res_t* _r)
  * Allocate storage for column names and type in existing
  * result structure.
  */
-int db_allocate_columns(db1_res_t* _r, const unsigned int cols)
+int db_allocate_columns(db1_res_t *_r, const unsigned int cols)
 {
-	RES_NAMES(_r) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * cols);
-	if (!RES_NAMES(_r)) {
+	RES_NAMES(_r) = (db_key_t *)pkg_malloc(sizeof(db_key_t) * cols);
+	if(!RES_NAMES(_r)) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(RES_NAMES(_r), 0, sizeof(db_key_t) * cols);
 	LM_DBG("allocate %d bytes for result names at %p\n",
-		(int)(sizeof(db_key_t) * cols),
-		RES_NAMES(_r));
+			(int)(sizeof(db_key_t) * cols), RES_NAMES(_r));
 
-	RES_TYPES(_r) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * cols);
-	if (!RES_TYPES(_r)) {
+	RES_TYPES(_r) = (db_type_t *)pkg_malloc(sizeof(db_type_t) * cols);
+	if(!RES_TYPES(_r)) {
 		PKG_MEM_ERROR;
 		pkg_free(RES_NAMES(_r));
 		return -1;
 	}
 	memset(RES_TYPES(_r), 0, sizeof(db_type_t) * cols);
 	LM_DBG("allocate %d bytes for result types at %p\n",
-		(int)(sizeof(db_type_t) * cols),
-		RES_TYPES(_r));
+			(int)(sizeof(db_type_t) * cols), RES_TYPES(_r));
 
 	return 0;
 }
@@ -177,17 +175,17 @@ int db_allocate_columns(db1_res_t* _r, const unsigned int cols)
  * \param _res result set
  * \return zero on success, negative on errors
  */
-int db_allocate_rows(db1_res_t* _res)
+int db_allocate_rows(db1_res_t *_res)
 {
 	int len = sizeof(db_row_t) * RES_ROW_N(_res);
-	RES_ROWS(_res) = (struct db_row*)pkg_malloc(len);
-	if (!RES_ROWS(_res)) {
+	RES_ROWS(_res) = (struct db_row *)pkg_malloc(len);
+	if(!RES_ROWS(_res)) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 	LM_DBG("allocate %d bytes for rows at %p\n", len, RES_ROWS(_res));
 	memset(RES_ROWS(_res), 0, len);
-	
+
 	return 0;
 }
 
@@ -197,7 +195,7 @@ int db_allocate_rows(db1_res_t* _res)
  * \param _nsize new number of rows in result set
  * \return zero on success, negative on errors
  */
-int db_reallocate_rows(db1_res_t* _res, int _nsize)
+int db_reallocate_rows(db1_res_t *_res, int _nsize)
 {
 	int len;
 	int osize;
@@ -208,18 +206,18 @@ int db_reallocate_rows(db1_res_t* _res, int _nsize)
 
 	RES_ROW_N(_res) = _nsize;
 	len = sizeof(db_row_t) * RES_ROW_N(_res);
-	RES_ROWS(_res) = (struct db_row*)pkg_malloc(len);
-	if (!RES_ROWS(_res)) {
+	RES_ROWS(_res) = (struct db_row *)pkg_malloc(len);
+	if(!RES_ROWS(_res)) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 	LM_DBG("allocate %d bytes for rows at %p\n", len, RES_ROWS(_res));
 	memset(RES_ROWS(_res), 0, len);
 
-	if(orows==NULL)
+	if(orows == NULL)
 		return 0;
 	memcpy(RES_ROWS(_res), orows,
-			((osize<_nsize)?osize:_nsize)*sizeof(db_row_t));
+			((osize < _nsize) ? osize : _nsize) * sizeof(db_row_t));
 	pkg_free(orows);
 	return 0;
 }

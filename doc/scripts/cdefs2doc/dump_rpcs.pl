@@ -121,7 +121,7 @@ Options:
                                  C code.
          -s | --src | --source - name of the source file, needed only if
                                  the input file is in "raw" translation
-                                 unit format (--tu) and usefull to restrict
+                                 unit format (--tu) and useful to restrict
                                  and speed-up the search.
          --patch               - show patches needed for the
                                  GCC::TranslationUnit package.

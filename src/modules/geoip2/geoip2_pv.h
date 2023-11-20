@@ -27,8 +27,7 @@
 #include "../../core/pvar.h"
 
 int pv_parse_geoip2_name(pv_spec_p sp, str *in);
-int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 int geoip2_init_pv(char *path);
 void geoip2_destroy_pv(void);
@@ -36,6 +35,7 @@ int geoip2_reload_pv(char *path);
 void geoip2_pv_reset(str *pvclass);
 int geoip2_update_pv(str *tomatch, str *pvclass);
 int sr_geoip2_add_resid(str *rname);
+MMDB_s *get_geoip_handle(void);
+gen_lock_t *get_gen_lock(void);
 
 #endif
-

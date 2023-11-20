@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 Sippy Software, Inc., http://www.sippysoft.com
  *
  * This file is part of Kamailio, a free SIP server.
@@ -20,7 +20,7 @@
 */
 
 #ifndef _PYTHON_SUPPORT_H
-#define  _PYTHON_SUPPORT_H
+#define _PYTHON_SUPPORT_H
 
 #include <Python.h>
 #include <stdarg.h>

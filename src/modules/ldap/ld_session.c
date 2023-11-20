@@ -43,7 +43,7 @@ int add_ld_session(char *_name, LDAP *_ldh, dictionary *_d)
 
 	new_lds = (struct ld_session *)pkg_malloc(sizeof(struct ld_session));
 	if(new_lds == NULL) {
-		LM_ERR("no memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(new_lds, 0, sizeof(struct ld_session));
@@ -58,7 +58,7 @@ int add_ld_session(char *_name, LDAP *_ldh, dictionary *_d)
 			_d, get_ini_key_name(_name, CFG_N_LDAP_HOST), CFG_DEF_HOST_NAME);
 	new_lds->host_name = (char *)pkg_malloc(strlen(host_name) + 1);
 	if(new_lds->host_name == NULL) {
-		LM_ERR("no memory\n");
+		PKG_MEM_ERROR;
 		pkg_free(new_lds);
 		return -1;
 	}
@@ -104,7 +104,7 @@ int add_ld_session(char *_name, LDAP *_ldh, dictionary *_d)
 			get_ini_key_name(_name, CFG_N_LDAP_BIND_DN), CFG_DEF_LDAP_BIND_DN);
 	new_lds->bind_dn = (char *)pkg_malloc(strlen(bind_dn) + 1);
 	if(new_lds->bind_dn == NULL) {
-		LM_ERR("no memory\n");
+		PKG_MEM_ERROR;
 		pkg_free(new_lds->host_name);
 		pkg_free(new_lds);
 		return -1;
@@ -117,7 +117,7 @@ int add_ld_session(char *_name, LDAP *_ldh, dictionary *_d)
 			CFG_DEF_LDAP_BIND_PWD);
 	new_lds->bind_pwd = (char *)pkg_malloc(strlen(bind_pwd) + 1);
 	if(new_lds->bind_pwd == NULL) {
-		LM_ERR("no memory\n");
+		PKG_MEM_ERROR;
 		pkg_free(new_lds->bind_dn);
 		pkg_free(new_lds->host_name);
 		pkg_free(new_lds);

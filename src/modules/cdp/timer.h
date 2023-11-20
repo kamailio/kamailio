@@ -47,26 +47,28 @@
 #include "worker.h"
 
 /** callback function for timer event */
-typedef int (*callback_f)(time_t now,void *ptr);
+typedef int (*callback_f)(time_t now, void *ptr);
 
 /** timer element */
-typedef struct _timer_cb_t{
-	time_t expires;		/**< time of expiration */
-	int one_time;		/**< if to trigger the event just one_time and then remove */
-	callback_f cb;		/**< callback function to be called on timer expiration */
-	void **ptr;			/**< generic parameter to call the callback with		*/
+typedef struct _timer_cb_t
+{
+	time_t expires; /**< time of expiration */
+	int one_time;  /**< if to trigger the event just one_time and then remove */
+	callback_f cb; /**< callback function to be called on timer expiration */
+	void **ptr;	   /**< generic parameter to call the callback with		*/
 
-	struct _timer_cb_t *next;/**< next timer in the timer list */
-	struct _timer_cb_t *prev;/**< previous timer in the timer list */
+	struct _timer_cb_t *next; /**< next timer in the timer list */
+	struct _timer_cb_t *prev; /**< previous timer in the timer list */
 } timer_cb_t;
 
 /** timer list */
-typedef struct {
-	timer_cb_t *head;	/**< first element in the timer list */
-	timer_cb_t *tail;	/**< last element in the timer list */
+typedef struct
+{
+	timer_cb_t *head; /**< first element in the timer list */
+	timer_cb_t *tail; /**< last element in the timer list */
 } timer_cb_list_t;
 
-int add_timer(int expires_in,int one_time,callback_f cb,void *ptr);
+int add_timer(int expires_in, int one_time, callback_f cb, void *ptr);
 
 void timer_cdp_init();
 
@@ -76,6 +78,4 @@ void timer_cdp_destroy();
 void timer_process(int returns);
 
 
-
 #endif
-

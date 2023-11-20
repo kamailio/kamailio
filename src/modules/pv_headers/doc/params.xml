@@ -163,7 +163,7 @@ modparam("pv_headers", "split_headers", "Diversion")
 	<section id="pv_headers.p.auto_msg">
 		<title><varname>auto_msg</varname> (int)</title>
 		<para>
-		Defines wether the headers are automatically collected for incoming
+		Defines whether the headers are automatically collected for incoming
 		messages, as well as automatically applied for forwarded messages.
 		</para>
 		<para>It is enabled by default and requires the 'tm' module to be loaded, otherwise the mode is disabled

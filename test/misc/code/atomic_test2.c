@@ -1,7 +1,7 @@
 /*
  *
  *  simple atomic ops testing program
- *  (no paralel stuff, just see if the opcodes are "legal")
+ *  (no parallel stuff, just see if the opcodes are "legal")
  *
  *  Defines: TYPE - not defined => use atomic_t and the corresponding
  *                  atomic functions
@@ -13,24 +13,24 @@
  *           __CPU_xxx - use __CPU_xxx code
  *           SPARC64_MODE - compile for a sparc 64 in 64 bit mode (gcc -m64
  *                          must be used on solaris in this case)
- *  Example:  
+ *  Example:
  *    gcc -Wall -O3 -D__CPU_i386 -DNOSMP -DMEMBAR -DTYPE=long atomic_test2.c
- * 
+ *
  *  Compile with: gcc -Wall -O3 -D__CPU_i386  ... on x86 machines
  *                gcc -Wall -O3 -D__CPU_x86_64 ... on amd64 machines
  *                gcc -mips2 -Wall -O2 -D__CPU_mips2  ... on mips machines
  *                gcc -m64 -Wall -O2 -D__CPU_mips64 ... on mips64 machines
  *                gcc -O3 -Wall -D__CPU_ppc ... on powerpc machines
  *                gcc -m64 -O3 -Wall -D__CPU_ppc64 ... on powerpc machines
- *                gcc -m64 -O3 -Wall -D__CPU_sparc64 -DSPARC64_MODE ... on 
+ *                gcc -m64 -O3 -Wall -D__CPU_sparc64 -DSPARC64_MODE ... on
  *                                                   ultrasparc machines
- *                gcc -mcpu=v9 -O3 -Wall -D__CPU_sparc64  ... for 32 bit code 
- *                                                   (sparc32plus) on 
+ *                gcc -mcpu=v9 -O3 -Wall -D__CPU_sparc64  ... for 32 bit code
+ *                                                   (sparc32plus) on
  *                                                   ultrasparc machines
  *                gcc -O3 -Wall -D__CPU_sparc ... on sparc v8 machines
  *  -- andrei
  *
- *  
+ *
  */
 
 #include <stdio.h>
@@ -165,12 +165,12 @@ int main(int argc, char** argv)
 {
 	ATOMIC_TYPE var;
 	VALUE_TYPE r;
-	
+
 	ATOMIC_TYPE* v;
-	
+
 	v=&var;
-	
-	
+
+
 #ifdef MEMBAR_USES_LOCK
 	__membar_lock=&dummy_membar_lock;
 	if (lock_init(__membar_lock)==0){
@@ -199,9 +199,9 @@ int main(int argc, char** argv)
 		goto error;
 	}
 #endif
-	
+
 	printf("%s\n", flags);
-	
+
 	printf("starting memory barrier opcode tests...\n");
 	membar();
 	printf(" membar() .............................. ok\n");
@@ -227,9 +227,9 @@ int main(int argc, char** argv)
 	printf(" membar_write_atomic_op() .............. ok\n");
 	membar_write_atomic_setget();
 	printf(" membar_write_atomic_setget() .......... ok\n");
-	
+
 	printf("\nstarting atomic ops basic tests...\n");
-	
+
 	VERIFY(at_set(v, 1), 1);
 	printf(" atomic_set, v should be 1 ............. %2d\n", (int)at_get(v));
 	VERIFY(at_inc(v), 2);
@@ -237,7 +237,7 @@ int main(int argc, char** argv)
 	VERIFY(r=at_inc_and_test(v), 3);
 	printf(" atomic_inc_and_test, v should be  3 ... %2d\n", (int)at_get(v));
 	printf("                      r should be  0 ... %2d\n", (int)r);
-	
+
 	VERIFY(at_dec(v), 2);
 	printf(" atomic_dec, v should be 2 ............. %2d\n", (int)at_get(v));
 	VERIFY(r=at_dec_and_test(v), 1);
@@ -249,10 +249,10 @@ int main(int argc, char** argv)
 	VERIFY(r=at_dec_and_test(v), -1);
 	printf(" atomic_dec_and_test, v should be -1 ... %2d\n", (int)at_get(v));
 	printf("                      r should be  0 ... %2d\n", (int)r);
-	
+
 	VERIFY(at_and(v, 2), 2);
 	printf(" atomic_and, v should be 2 ............. %2d\n", (int)at_get(v));
-	
+
 	VERIFY(at_or(v, 5), 7);
 	printf(" atomic_or,  v should be 7 ............. %2d\n", (int)at_get(v));
 	VERIFY(r=at_get_and_set(v, 0), 0);
@@ -274,7 +274,7 @@ int main(int argc, char** argv)
 	printf(" atomic_add, v should be -1 ............ %2d\n", (int)at_get(v));
 	printf("             r should be -1 ............ %2d\n", (int)r);
 
-	
+
 	printf("\ndone.\n");
 #ifdef MEMBAR_USES_LOCK
 	lock_destroy(__membar_lock);

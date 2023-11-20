@@ -235,7 +235,7 @@ Chapter 1. Admin Guide
    function to predictable destinations. The hash source is configurable,
    two different hash functions are available.
 
-   This modules scales up to more than a few million users, and is able to
+   This module scales up to more than a few million users, and is able to
    handle more than several hundred thousand routing table entries. We
    received reports of some setups that used more than a million routing
    table entries. It also supports a large number of carriers and domains
@@ -246,9 +246,9 @@ Chapter 1. Admin Guide
 
    Routing tables can be reloaded and edited (in config file mode) with
    the RPC interface, the config file is updated according to the changes.
-   This is not implemented for the db interface, because its easier to do
-   the changes directly on the db. But the reload and dump functions work
-   of course here as well.
+   This is not implemented for the db interface, because it is easier to
+   do the changes directly on the db. But the reload and dump functions
+   work of course here as well.
 
    Some module functionality is not fully available in the config file
    mode, as it is not possible to specify all information that can be
@@ -285,8 +285,8 @@ Chapter 1. Admin Guide
    The following module must be loaded before this module:
      * a database module, when a database is used as configuration data
        source. Only SQL based databases are supported, as this module
-       needs the capability to issue raw queries. Its not possible to use
-       the dbtext or db_berkeley module at the moment.
+       needs the capability to issue raw queries. It is not possible to
+       use the dbtext or db_berkeley module at the moment.
      * The tm module, when you want to use the $T_reply_code
        pseudo-variable in the “cr_next_domain” function.
 
@@ -518,7 +518,7 @@ cr_tree_rewrite_uri(tree, domain)
        a string any pseudo-variable could be used as input.
      * domain - Name of the routing domain to be used. Additional to a
        string any pseudo-variable could be used as input.
-     * dstvar - Name of the writaable config variable (e.g., an AVP) where
+     * dstvar - Name of the writable config variable (e.g., an AVP) where
        to store the carrier id.
 
 4.2.  cr_route(carrier, domain, prefix_matching, rewrite_user, hash_source,
@@ -963,7 +963,7 @@ domain register {
    gateways. For any (failure) reply code the respective next domain is
    chosen. After that no more failure routes are available, an error will
    be returned from the “cr_next_domain” function. Not all table columns
-   are show here for brevity.
+   are shown here for brevity.
 
    For each failure route domain and carrier that is added to the
    carrierfailureroute table there must be at least one corresponding
@@ -995,7 +995,7 @@ domain register {
    and has call-forwarding deactivated. In order to use the routing that
    is specified above, a matching carrierroute table must be provided,
    that holds domain entries for this routing rules. Not all table columns
-   are show here for brevity.
+   are shown here for brevity.
 
    Example 1.20. Example database content - carrier_name table
 ...
@@ -1166,7 +1166,7 @@ modparam("carrierroute", "carrierroute_mask_col", "mask")
    probabilities for a given prefix, tree and domain don't add to 100%,
    the prefix values will be adjusted according the given prob values.
    E.g. if three hosts with prob values of 0.5, 0.5 and 0.4 are defined,
-   the resulting probabilities are 35.714, 35.714 and 28.571%. But its
+   the resulting probabilities are 35.714, 35.714 and 28.571%. But it is
    better to choose meaningful values in the first place because of
    clarity.
 

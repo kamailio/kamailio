@@ -4,23 +4,23 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -38,19 +38,19 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
- 
+
 /**
  * \file
- * 
+ *
  * Interrogating-CSCF - Network Domain Security Operations
- * 
+ *
  *  \author Dragos Vingarzan vingarzan -at- fokus dot fraunhofer dot de
- * 
+ *
  */
 
 
@@ -58,16 +58,16 @@
 #define I_CSCF_NDS_H
 
 #include "../../core/sr_module.h"
- 
-#define MSG_403 "Forbidden" 
+
+#define MSG_403 "Forbidden"
 #define MSG_500 "I-CSCF Error while stripping untrusted headers"
 
 
-int I_NDS_check_trusted(struct sip_msg* msg, char* str1, char* str2);
+int I_NDS_check_trusted(struct sip_msg *msg, char *str1, char *str2);
 
-int I_NDS_is_trusted(struct sip_msg *msg, char* str1, char* str2);
+int I_NDS_is_trusted(struct sip_msg *msg, char *str1, char *str2);
 
-int I_NDS_strip_headers(struct sip_msg *msg, char* str1, char* str2);
+int I_NDS_strip_headers(struct sip_msg *msg, char *str1, char *str2);
 
 int I_NDS_get_trusted_domains();
 

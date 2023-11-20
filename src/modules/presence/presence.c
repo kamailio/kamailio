@@ -142,7 +142,7 @@ static int fixup_has_subscribers(void **param, int param_no);
 int pres_counter = 0;
 int pres_pid = 0;
 char pres_prefix = 'a';
-int pres_startup_time = 0;
+unsigned int pres_startup_time = 0;
 str pres_db_url = {0, 0};
 int pres_expires_offset = 0;
 int pres_cseq_offset = 0;
@@ -335,7 +335,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(pres_server_address.s == NULL || pres_server_address.len==0) {
+	if(pres_server_address.s == NULL || pres_server_address.len == 0) {
 		LM_DBG("server_address parameter not set in configuration file\n");
 	}
 
@@ -351,7 +351,8 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(publ_cache_mode==PS_PCACHE_HYBRID || publ_cache_mode==PS_PCACHE_RECORD) {
+	if(publ_cache_mode == PS_PCACHE_HYBRID
+			|| publ_cache_mode == PS_PCACHE_RECORD) {
 		if(phtable_size < 1) {
 			phtable_size = 256;
 		} else {
@@ -359,7 +360,7 @@ static int mod_init(void)
 		}
 	}
 
-	if(publ_cache_mode==PS_PCACHE_RECORD) {
+	if(publ_cache_mode == PS_PCACHE_RECORD) {
 		if(ps_ptable_init(phtable_size) < 0) {
 			return -1;
 		}
@@ -379,7 +380,7 @@ static int mod_init(void)
 		}
 	}
 
-	if(publ_cache_mode==PS_PCACHE_HYBRID) {
+	if(publ_cache_mode == PS_PCACHE_HYBRID) {
 		pres_htable = new_phtable();
 		if(pres_htable == NULL) {
 			LM_ERR("initializing presentity hash table\n");
@@ -417,14 +418,14 @@ static int mod_init(void)
 				   < 0)
 				|| (db_check_table_version(
 							&pa_dbf, pa_db, &watchers_table, S_TABLE_VERSION)
-						   < 0)) {
+						< 0)) {
 			DB_TABLE_VERSION_ERROR(presentity_table);
 			goto dberror;
 		}
 
 		if(pres_subs_dbmode != NO_DB
-				&& db_check_table_version(&pa_dbf, pa_db, &active_watchers_table,
-						   ACTWATCH_TABLE_VERSION)
+				&& db_check_table_version(&pa_dbf, pa_db,
+						   &active_watchers_table, ACTWATCH_TABLE_VERSION)
 						   < 0) {
 			DB_TABLE_VERSION_ERROR(active_watchers_table);
 			goto dberror;
@@ -438,7 +439,7 @@ static int mod_init(void)
 			}
 		}
 
-		if(publ_cache_mode==PS_PCACHE_HYBRID) {
+		if(publ_cache_mode == PS_PCACHE_HYBRID) {
 			if(pres_htable_db_restore() < 0) {
 				LM_ERR("filling in presentity hash table from database\n");
 				goto dberror;
@@ -447,25 +448,29 @@ static int mod_init(void)
 	}
 
 
-	pres_startup_time = (int)time(NULL);
+	pres_startup_time = (unsigned int)(uint64_t)time(NULL);
 	if(pres_clean_period > 0) {
-		if(pres_timer_mode==0) {
+		if(pres_timer_mode == 0) {
 			register_timer(ps_presentity_db_timer_clean, 0, pres_clean_period);
 			register_timer(ps_watchers_db_timer_clean, 0, pres_clean_period);
-			if(publ_cache_mode==PS_PCACHE_RECORD) {
+			register_timer(
+					ps_active_watchers_db_timer_clean, 0, pres_clean_period);
+			if(publ_cache_mode == PS_PCACHE_RECORD) {
 				register_timer(ps_ptable_timer_clean, 0, pres_clean_period);
 			}
 		} else {
 			sr_wtimer_add(ps_presentity_db_timer_clean, 0, pres_clean_period);
 			sr_wtimer_add(ps_watchers_db_timer_clean, 0, pres_clean_period);
-			if(publ_cache_mode==PS_PCACHE_RECORD) {
+			sr_wtimer_add(
+					ps_active_watchers_db_timer_clean, 0, pres_clean_period);
+			if(publ_cache_mode == PS_PCACHE_RECORD) {
 				sr_wtimer_add(ps_ptable_timer_clean, 0, pres_clean_period);
 			}
 		}
 	}
 
 	if(pres_db_update_period > 0) {
-		if(pres_timer_mode==0) {
+		if(pres_timer_mode == 0) {
 			register_timer(timer_db_update, 0, pres_db_update_period);
 		} else {
 			sr_wtimer_add(timer_db_update, 0, pres_db_update_period);
@@ -803,7 +808,7 @@ int pres_update_status(subs_t *subs, str reason, db_key_t *query_cols,
 
 	if(subs->status != status || reason.len != subs->reason.len
 			|| (reason.s && subs->reason.s
-					   && strncmp(reason.s, subs->reason.s, reason.len))) {
+					&& strncmp(reason.s, subs->reason.s, reason.len))) {
 		/* update in watchers_table */
 		query_vals[q_wuser_col].val.str_val = subs->watcher_user;
 		query_vals[q_wdomain_col].val.str_val = subs->watcher_domain;
@@ -1366,12 +1371,12 @@ static int update_pw_dialogs_dbonlymode(subs_t *subs, subs_t **subs_array)
 		db_vals[n_update_cols].val.int_val =
 				(int)((kam_rand() / (KAM_RAND_MAX + 1.0))
 						* (pres_waitn_time * pres_notifier_poll_rate
-								  * pres_notifier_processes));
+								* pres_notifier_processes));
 	} else {
 		db_vals[n_update_cols].val.int_val =
 				core_case_hash(&subs->callid, &subs->from_tag, 0)
 				% (pres_waitn_time * pres_notifier_poll_rate
-						  * pres_notifier_processes);
+						* pres_notifier_processes);
 	}
 	n_update_cols++;
 
@@ -1728,7 +1733,7 @@ static int fixup_update_watchers(void **param, int param_no)
  *  rpc cmd: presence.refreshWatchers
  *			\<presentity_uri>
  *			\<event>
- *          \<refresh_type> // can be:  = 0 -> watchers autentification type or
+ *          \<refresh_type> // can be:  = 0 -> watchers authentification type or
  *									  != 0 -> publish type //
  *		* */
 void rpc_presence_refresh_watchers(rpc_t *rpc, void *ctx)
@@ -1790,9 +1795,7 @@ void rpc_presence_refresh_watchers(rpc_t *rpc, void *ctx)
 }
 
 static const char *rpc_presence_refresh_watchers_doc[2] = {
-	"Trigger refresh of watchers",
-	0
-};
+		"Trigger refresh of watchers", 0};
 
 /*! \brief
  *  rpc cmd: presence.updateWatchers
@@ -1824,19 +1827,17 @@ void rpc_presence_update_watchers(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "Empty event parameter");
 		return;
 	}
-	LM_DBG("uri '%.*s' - event '%.*s'\n", pres_uri.len, pres_uri.s,
-			event.len, event.s);
+	LM_DBG("uri '%.*s' - event '%.*s'\n", pres_uri.len, pres_uri.s, event.len,
+			event.s);
 
-	if(ki_pres_update_watchers(NULL, &pres_uri, &event)<0) {
+	if(ki_pres_update_watchers(NULL, &pres_uri, &event) < 0) {
 		rpc->fault(ctx, 500, "Processing error");
 		return;
 	}
 }
 
 static const char *rpc_presence_update_watchers_doc[2] = {
-	"Trigger update of watchers",
-	0
-};
+		"Trigger update of watchers", 0};
 
 
 void rpc_presence_cleanup(rpc_t *rpc, void *c)
@@ -1845,6 +1846,7 @@ void rpc_presence_cleanup(rpc_t *rpc, void *c)
 
 	(void)ps_watchers_db_timer_clean(0, 0);
 	(void)ps_presentity_db_timer_clean(0, 0);
+	(void)ps_active_watchers_db_timer_clean(0, 0);
 	(void)ps_ptable_timer_clean(0, 0);
 	(void)timer_db_update(0, 0);
 
@@ -1853,72 +1855,112 @@ void rpc_presence_cleanup(rpc_t *rpc, void *c)
 }
 
 static const char *rpc_presence_cleanup_doc[3] = {
-	"Manually triggers the cleanup functions for the active_watchers, "
-	"presentity, and watchers tables.",
-	0
-};
+		"Manually triggers the cleanup functions for the active_watchers, "
+		"presentity, and watchers tables.",
+		0};
+
+
+void rpc_presence_publish_cache_sync(rpc_t *rpc, void *ctx)
+{
+	LM_DBG("Synchronizing presentity table with the publish cache.\n");
+	if(pres_htable_db_restore() == -1) {
+		rpc->fault(ctx, 500,
+				"Failed to sync presinity table with the publish cache.");
+	} else {
+		rpc->rpl_printf(ctx, "OK");
+	}
+	return;
+}
+
+static const char *rpc_presence_publish_cache_sync_doc[4] = {
+		"Syncs changes made to presentity table with the publish cache.", 0};
+
 
 /*! \brief
- *  rpc cmd: presence.presentity_list
- *			\mode - output attributes control
- *		* */
-void rpc_presence_presentity_list(rpc_t *rpc, void *ctx)
+ *  Build the rpc response for listing presentity records
+ *	- imode - output attributes control
+ *	- user - filter by user
+ *  - domain - filter by domain
+ */
+void rpc_presence_presentity_list_filter(
+		rpc_t *rpc, void *ctx, int imode, str *user, str *domain)
 {
-	str omode = {0, 0};
-	int imode = 0;
 	int i = 0;
+	int skip = 0;
 	ps_ptable_t *ptb = NULL;
 	ps_presentity_t *ptn = NULL;
-	void* th = NULL;
+	void *th = NULL;
 	str pempty = str_init("");
 
-	LM_DBG("listing in memory presentity records\n");
+	LM_DBG("listing in memory presentity records - imode: %d, user: %.*s,"
+		   " domain: %.*s\n",
+			imode, (user && user->len > 0) ? user->len : 0,
+			(user && user->len > 0) ? user->s : "",
+			(domain && domain->len > 0) ? domain->len : 0,
+			(domain && domain->len > 0) ? domain->s : "");
 
-	imode = rpc->scan(ctx, "*S", &omode);
-	if(imode < 1) {
-		imode = 0;
-	} else {
-		if(omode.len == 4 && strncmp(omode.s, "full", 4)==0) {
-			imode = 1;
-		} else {
-			imode = 0;
-		}
-	}
 	ptb = ps_ptable_get();
 	if(ptb == NULL) {
 		return;
 	}
 
-	for(i=0; i<ptb->ssize; i++) {
+	for(i = 0; i < ptb->ssize; i++) {
 		lock_get(&ptb->slots[i].lock);
 		ptn = ptb->slots[i].plist;
-		while(ptn!=NULL) {
+		while(ptn != NULL) {
+			skip = 0;
+			if(user != NULL && user->len > 0) {
+				if(ptn->user.len == user->len
+						&& strncasecmp(ptn->user.s, user->s, user->len) == 0) {
+					if(domain != NULL && domain->len > 0) {
+						if(ptn->domain.len != domain->len
+								|| strncasecmp(ptn->domain.s, domain->s,
+										   domain->len)
+										   != 0) {
+							skip = 1;
+						}
+					}
+				} else {
+					skip = 1;
+				}
+			} else {
+				if(domain != NULL && domain->len > 0) {
+					if(ptn->domain.len != domain->len
+							|| strncasecmp(
+									   ptn->domain.s, domain->s, domain->len)
+									   != 0) {
+						skip = 1;
+					}
+				}
+			}
+			if(skip == 1) {
+				ptn = ptn->next;
+				continue;
+			}
 			/* add record node */
-			if (rpc->add(ctx, "{", &th) < 0) {
+			if(rpc->add(ctx, "{", &th) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating rpc");
 				lock_release(&ptb->slots[i].lock);
 				return;
 			}
 			/* add common fields */
-			if(rpc->struct_add(th, "SSSSSd",
-					"user",  &ptn->user,
-					"domain", &ptn->domain,
-					"event", &ptn->event,
-					"etag", &ptn->etag,
-					"sender", (ptn->sender.s)?&ptn->sender:&pempty,
-					"expires", ptn->expires)<0) {
+			if(rpc->struct_add(th, "SSSSSd", "user", &ptn->user, "domain",
+					   &ptn->domain, "event", &ptn->event, "etag", &ptn->etag,
+					   "sender", (ptn->sender.s) ? &ptn->sender : &pempty,
+					   "expires", ptn->expires)
+					< 0) {
 				rpc->fault(ctx, 500, "Internal error adding item");
 				lock_release(&ptb->slots[i].lock);
 				return;
 			}
-			if(imode==1) {
+			if(imode == 1) {
 				/* add extra fields */
-				if(rpc->struct_add(th, "ddSSd",
-						"received_time",  ptn->received_time,
-						"priority", ptn->priority,
-						"ruid", (ptn->ruid.s)?&ptn->ruid:&pempty,
-						"body", (ptn->body.s)?&ptn->body:&pempty,
-						"hashid", ptn->hashid)<0) {
+				if(rpc->struct_add(th, "ddSSd", "received_time",
+						   ptn->received_time, "priority", ptn->priority,
+						   "ruid", (ptn->ruid.s) ? &ptn->ruid : &pempty, "body",
+						   (ptn->body.s) ? &ptn->body : &pempty, "hashid",
+						   ptn->hashid)
+						< 0) {
 					rpc->fault(ctx, 500, "Internal error adding item");
 					lock_release(&ptb->slots[i].lock);
 					return;
@@ -1931,21 +1973,188 @@ void rpc_presence_presentity_list(rpc_t *rpc, void *ctx)
 	return;
 }
 
+/*! \brief
+ *  rpc cmd: presence.presentity_list
+ *			\mode - output attributes control
+ *		* */
+void rpc_presence_presentity_list(rpc_t *rpc, void *ctx)
+{
+	str omode = {0, 0};
+	int imode = 0;
+
+	LM_DBG("listing in memory presentity records\n");
+
+	imode = rpc->scan(ctx, "*S", &omode);
+	if(imode < 1) {
+		imode = 0;
+	} else {
+		if(omode.len == 4 && strncmp(omode.s, "full", 4) == 0) {
+			imode = 1;
+		} else {
+			imode = 0;
+		}
+	}
+	rpc_presence_presentity_list_filter(rpc, ctx, imode, NULL, NULL);
+}
+
+
 static const char *rpc_presence_presentity_list_doc[2] = {
-	"Trigger update of watchers",
-	0
-};
+		"Trigger update of watchers", 0};
+
+
+/*! \brief
+ *  rpc cmd: presence.presentity_show
+ *			\mode - output attributes control
+ *			\user - filter by user
+ *			\domain - filter by domain
+ *		* */
+void rpc_presence_presentity_show(rpc_t *rpc, void *ctx)
+{
+	str omode = {0, 0};
+	int imode = 0;
+	str user = str_init("");
+	str domain = str_init("");
+
+	LM_DBG("listing in memory presentity records\n");
+
+	imode = rpc->scan(ctx, "SSS", &omode, &user, &domain);
+	if(imode < 3) {
+		rpc->fault(ctx, 500, "Not enough parameters");
+		return;
+	}
+	if(omode.len == 4 && strncmp(omode.s, "full", 4) == 0) {
+		imode = 1;
+	} else if(omode.len == 5 && strncmp(omode.s, "basic", 5) == 0) {
+		imode = 0;
+	} else {
+		rpc->fault(ctx, 500, "Unknown output mode");
+		return;
+	}
+	if(user.len == 1 && user.s[0] == '*') {
+		user.len = 0;
+	}
+	if(domain.len == 1 && domain.s[0] == '*') {
+		domain.len = 0;
+	}
+
+	rpc_presence_presentity_list_filter(rpc, ctx, imode,
+			(user.len > 0) ? &user : NULL, (domain.len > 0) ? &domain : NULL);
+}
+
+static const char *rpc_presence_presentity_show_doc[2] = {
+		"Show the presentity records for a specific user", 0};
+
+/*! \brief
+ *  rpc cmd: presence.watcher_list
+ *			\mode - output attributes control
+ *			\presuri - filter by presentity uri
+ */
+void rpc_presence_watcher_list(rpc_t *rpc, void *ctx)
+{
+	int i = 0;
+	str omode = {0, 0};
+	int imode = 0;
+	str presuri = str_init("");
+	str pempty = str_init("");
+	subs_t *s = NULL;
+	void *th = NULL;
+
+	LM_DBG("listing in memory presentity records\n");
+
+	imode = rpc->scan(ctx, "SS", &omode, &presuri);
+	if(imode < 2) {
+		rpc->fault(ctx, 500, "Not enough parameters");
+		return;
+	}
+	if(omode.len == 4 && strncmp(omode.s, "full", 4) == 0) {
+		imode = 1;
+	} else if(omode.len == 5 && strncmp(omode.s, "basic", 5) == 0) {
+		imode = 0;
+	} else {
+		rpc->fault(ctx, 500, "Unknown output mode");
+		return;
+	}
+
+	for(i = 0; i < shtable_size; i++) {
+		lock_get(&subs_htable[i].lock);
+		for(s = subs_htable[i].entries->next; s != NULL; s = s->next) {
+			if(s->pres_uri.len == presuri.len
+					&& strncasecmp(s->pres_uri.s, presuri.s, presuri.len)
+							   == 0) {
+				/* add record node */
+				if(rpc->add(ctx, "{", &th) < 0) {
+					rpc->fault(ctx, 500, "Internal error creating response");
+					lock_release(&subs_htable[i].lock);
+					return;
+				}
+
+				/* add common fields */
+				if(rpc->struct_add(th, "SSSSSSSSSSSuudu", "pres_uri",
+						   &s->pres_uri, "to_user", &s->to_user, "to_domain",
+						   &s->to_domain, "from_user", &s->from_user,
+						   "from_domain", &s->from_domain, "watcher_user",
+						   &s->watcher_user, "watcher_domain",
+						   &s->watcher_domain, "contact", &s->contact,
+						   "event_id", &s->event_id, "callid", &s->callid,
+						   "user_agent",
+						   (s->user_agent.s) ? &s->user_agent : &pempty,
+						   "expires", s->expires, "status", s->status,
+						   "version", s->version, "flags", s->flags)
+						< 0) {
+					rpc->fault(ctx, 500, "Internal error adding attributes");
+					lock_release(&subs_htable[i].lock);
+					return;
+				}
+				if(imode == 1) {
+					/* add extra fields */
+					if(rpc->struct_add(th, "SSSSSSSuuddd", "reason",
+							   (s->reason.s) ? &s->reason : &pempty, "to_tag",
+							   &s->to_tag, "from_tag", &s->from_tag, "socket",
+							   (s->sockinfo_str.s) ? &s->sockinfo_str : &pempty,
+							   "local_contact",
+							   (s->local_contact.s) ? &s->local_contact
+													: &pempty,
+							   "record_route",
+							   (s->record_route.s) ? &s->record_route : &pempty,
+							   "auth_rules",
+							   (s->auth_rules_doc) ? s->auth_rules_doc
+												   : &pempty,
+							   "remote_cseq", s->remote_cseq, "local_cseq",
+							   s->local_cseq, "recv_event", s->recv_event,
+							   "updated", s->updated, "updated_winfo",
+							   s->updated_winfo)
+							< 0) {
+						rpc->fault(ctx, 500,
+								"Internal error adding extra attributes");
+						lock_release(&subs_htable[i].lock);
+						return;
+					}
+				}
+			}
+		}
+		lock_release(&subs_htable[i].lock);
+	}
+}
+
+static const char *rpc_presence_watcher_list_doc[2] = {
+		"Show the watcher records for a specific presentity user", 0};
+
 
 rpc_export_t presence_rpc[] = {
-	{"presence.cleanup", rpc_presence_cleanup, rpc_presence_cleanup_doc, 0},
-	{"presence.refreshWatchers", rpc_presence_refresh_watchers,
-			rpc_presence_refresh_watchers_doc, 0},
-	{"presence.updateWatchers", rpc_presence_update_watchers,
-			rpc_presence_update_watchers_doc, 0},
-	{"presence.presentity_list", rpc_presence_presentity_list,
-			rpc_presence_presentity_list_doc, RET_ARRAY},
-	{0, 0, 0, 0}
-};
+		{"presence.publish_cache_sync", rpc_presence_publish_cache_sync,
+				rpc_presence_publish_cache_sync_doc, 0},
+		{"presence.cleanup", rpc_presence_cleanup, rpc_presence_cleanup_doc, 0},
+		{"presence.refreshWatchers", rpc_presence_refresh_watchers,
+				rpc_presence_refresh_watchers_doc, 0},
+		{"presence.updateWatchers", rpc_presence_update_watchers,
+				rpc_presence_update_watchers_doc, 0},
+		{"presence.presentity_list", rpc_presence_presentity_list,
+				rpc_presence_presentity_list_doc, RET_ARRAY},
+		{"presence.presentity_show", rpc_presence_presentity_show,
+				rpc_presence_presentity_show_doc, RET_ARRAY},
+		{"presence.watcher_list", rpc_presence_watcher_list,
+				rpc_presence_watcher_list_doc, RET_ARRAY},
+		{0, 0, 0, 0}};
 
 static int presence_init_rpc(void)
 {

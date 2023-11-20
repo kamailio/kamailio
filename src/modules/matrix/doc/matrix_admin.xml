@@ -36,7 +36,7 @@
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
-			The module depends on the following modules (in the other words
+			The module depends on the following modules (in other words
 			the listed modules must be loaded before this module):
 			</para>
 			<itemizedlist>
@@ -213,7 +213,7 @@ cr_route("$avp(route_tree)", "$rd", "$rU", "$rU", "call_id");
 				table where the module will read the matrix data. For that, if
 				the table was not created by the installation script or you choose
 				to install everything by yourself you can use the matrix-create.sql
-				<acronym>SQL</acronym> script in the database directories in the 
+				<acronym>SQL</acronym> script in the database directories in the
 				kamailio/scripts folder as template.
 				Database, table, and column names can be set with module parameters so they
 				can be changed.

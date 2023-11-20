@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -21,7 +21,7 @@
  * Module: \ref core
  */
 
-/* 
+/*
  * History:
  * --------
  *  2008-11-29  initial version (andrei)
@@ -47,5 +47,5 @@
 #define SR_DEFAULT_COMPAT SR_COMPAT_MAX
 #endif
 
-int sr_compat=SR_DEFAULT_COMPAT;
-int sr_cfg_compat=SR_DEFAULT_COMPAT;
+int sr_compat = SR_DEFAULT_COMPAT;
+int sr_cfg_compat = SR_DEFAULT_COMPAT;

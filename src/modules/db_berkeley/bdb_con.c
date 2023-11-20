@@ -42,7 +42,7 @@
 #include "bdb_lib.h"
 
 /** Free all memory allocated for a bdb_con structure.
- * This function function frees all memory that is in use by
+ * This function frees all memory that is in use by
  * a bdb_con structure.
  * @param con A generic db_con connection structure.
  * @param payload BDB specific payload to be freed.

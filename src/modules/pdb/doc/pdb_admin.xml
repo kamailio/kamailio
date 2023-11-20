@@ -37,7 +37,7 @@
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
-			The module depends on the following modules (in the other words
+			The module depends on the following modules (in other words
 			the listed modules must be loaded before this module):
 			</para>
 			<itemizedlist>
@@ -94,6 +94,27 @@ modparam("pdb", "timeout", 10)
 		    <programlisting format="linespecific">
 ...
 modparam("pdb", "server", "localhost:10001,host.name:10001,192.168.1.7:10002")
+...
+		    </programlisting>
+	    </example>
+    </section>
+   <section>
+	    <title><varname>ll_info</varname> (int)</title>
+	    <para>
+			Local log level (per module) for specific INFO messages. It has to
+			be a valid log level value (see xlog() function from xlog module for
+			more details).
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>2</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>ll_info</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("pdb", "ll_info", 3)
 ...
 		    </programlisting>
 	    </example>

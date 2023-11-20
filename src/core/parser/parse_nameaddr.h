@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -34,10 +34,11 @@
 /*! \brief
  * Name-addr structure, see RFC3261 for more details
  */
-typedef struct name_addr {
-	str name;   /*!< Display name part */
-	str uri;    /*!< Uri part without surrounding <> */
-	int len;    /*!< Total length of the field (including all
+typedef struct name_addr
+{
+	str name; /*!< Display name part */
+	str uri;  /*!< Uri part without surrounding <> */
+	int len;  /*!< Total length of the field (including all
 		    * whitechars present in the parsed message */
 } name_addr_t;
 
@@ -46,13 +47,13 @@ typedef struct name_addr {
  * Parse name-addr part, the given string can be longer,
  * parsing will stop when closing > is found
  */
-int parse_nameaddr(str* _s, name_addr_t* _a);
+int parse_nameaddr(str *_s, name_addr_t *_a);
 
 
 /*! \brief
  * Print a name-addr structure, just for debugging
  */
-void print_nameaddr(FILE* _o, name_addr_t* _a);
+void print_nameaddr(FILE *_o, name_addr_t *_a);
 
 
 #endif /* PARSE_NAMEADDR_H */

@@ -2,9 +2,9 @@
  * Copyright (C) 2015 Hugh Waite
  *
  * This file is part of Kamailio, a free SIP server.
- * 
+ *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -39,8 +39,8 @@ typedef int (*httpcapi_httpconnect_f)(struct sip_msg *msg,
 		const char *contenttype, const str *_post);
 typedef int (*httpcapi_httpquery_f)(
 		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_hdrs);
-typedef int (*httpcapi_httpquery_c_f)(
-		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_ctype, char *_hdrs);
+typedef int (*httpcapi_httpquery_c_f)(struct sip_msg *_m, char *_url, str *_dst,
+		char *_post, char *_ctype, char *_hdrs);
 typedef int (*httpcapi_curlcon_exists_f)(str *_name);
 typedef char *(*httpcapi_res_content_type_f)(const str *_name);
 

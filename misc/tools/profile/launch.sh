@@ -69,7 +69,7 @@ function report()
 cat > $REP << EOF
 first line ... time spent in tested procedure
 second line (yyrestart) ... total time
-third line (receive_msg) ... numer of calls
+third line (receive_msg) ... number of calls
    %   cumulative   self              self     total
  time   seconds   seconds    calls  ms/call  ms/call  name
 EOF

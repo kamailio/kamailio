@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <book id="uid_auth_db" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -27,7 +27,7 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
     <chapter>
 	<title>Admin Guide</title>
     <section id="uid_auth_db.overview">
@@ -46,7 +46,7 @@
     <section id="uid_auth_db.dep">
 	<title>Dependencies</title>
 	<para>
-	    The module depends on the following modules (in the other words the listed modules
+	    The module depends on the following modules (in other words the listed modules
 	    must be loaded before this module):
 	    <itemizedlist>
 		<listitem>
@@ -68,7 +68,7 @@
 	    </itemizedlist>
 	</para>
     </section>
-    
+
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
     </chapter>

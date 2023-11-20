@@ -348,8 +348,7 @@ modparam("auth_identity","accept_pem_certs",1)
    then this function checks whether it falls in message timeout (set by
    msg_timeout parameter). If there is not any Date header then the module
    adds one. This function also checks whether the certificate of the
-   authentication service (set by certificate_path parameter) has been
-   expired.
+   authentication service (set by certificate_path parameter) has expired.
 
 6.1.1. Dependencies
 

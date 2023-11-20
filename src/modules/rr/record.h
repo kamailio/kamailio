@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -40,7 +40,7 @@
  * \param params RR parameter
  * \return 0 on success, negative on failure
  */
-int record_route(struct sip_msg* _m, str* _param);
+int record_route(struct sip_msg *_m, str *_param);
 
 
 /*!
@@ -53,7 +53,7 @@ int record_route(struct sip_msg* _m, str* _param);
  * \param _data manually created RR header
  * \return 1 on success, negative on failure
  */
-int record_route_preset(struct sip_msg* _m, str* _data);
+int record_route_preset(struct sip_msg *_m, str *_data);
 
 
 /*!
@@ -69,7 +69,7 @@ int record_route_preset(struct sip_msg* _m, str* _data);
  * \param _data manually created RR header
  * \return 1 on success, negative on failure
  */
-int record_route_advertised_address(struct sip_msg* _m, str* _data);
+int record_route_advertised_address(struct sip_msg *_m, str *_data);
 
 
 /*!
@@ -78,7 +78,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data);
  * \param rr_param RR parameter
  * \return 0 on success, -1 on failure
  */
-int add_rr_param(struct sip_msg* msg, str* rr_param);
+int add_rr_param(struct sip_msg *msg, str *rr_param);
 
 void init_custom_user(pv_spec_t *custom_user_avp);
 

@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -25,28 +25,19 @@
 #include "../../core/pvar.h"
 
 int pv_parse_time_name(pv_spec_p sp, str *in);
-int pv_get_local_time(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_get_utc_time(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_local_time(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_utc_time(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 int pv_parse_strftime_name(pv_spec_p sp, str *in);
-int pv_get_local_strftime(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_get_utc_strftime(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_get_timenows(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_get_timenowf(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_get_times(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_get_timef(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_get_timeb(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_local_strftime(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_utc_strftime(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_timenows(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_timenowf(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_times(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_timef(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_timeb(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 int pv_parse_timeval_name(pv_spec_p sp, str *in);
-int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
-        pv_value_t *res);
+int pv_get_timeval(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 #endif
-

@@ -44,7 +44,7 @@
 #include "callid.h"
 #include "uac.h"
 
-#define NORMAL_ORDER 0  /* Create route set in normal order - UAS */
+#define NORMAL_ORDER 0	/* Create route set in normal order - UAS */
 #define REVERSE_ORDER 1 /* Create route set in reverse order - UAC */
 
 
@@ -368,7 +368,7 @@ int new_dlg_uac(str *_cid, str *_ltag, unsigned int _lseq, str *_luri,
  * @brief Store display names into a dialog
  * @param _d - dialog structure
  * @param _ldname - local party display name
- * @param _rdname - remote party dispaly name
+ * @param _rdname - remote party display name
  * @return 0 on success; negative on error
  */
 

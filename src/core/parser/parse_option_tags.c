@@ -24,7 +24,7 @@
 
 static inline void free_option_tag(struct option_tag_body **otb)
 {
-	if (otb && *otb) {
+	if(otb && *otb) {
 		pkg_free(*otb);
 		*otb = 0;
 	}
@@ -33,6 +33,6 @@ static inline void free_option_tag(struct option_tag_body **otb)
 void hf_free_option_tag(void *parsed)
 {
 	struct option_tag_body *otb;
-	otb = (struct option_tag_body *) parsed;
+	otb = (struct option_tag_body *)parsed;
 	free_option_tag(&otb);
 }

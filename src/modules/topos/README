@@ -91,7 +91,7 @@ Frederic Gaisnon
    1.23. Usage of event_route[topos:msg-outgoing]
    1.24. Usage of event_route[topos:msg-sending]
    1.25. Usage of event_route[topos:msg-incoming]
-   1.26. Usage of event_route[topos:msg-receoving]
+   1.26. Usage of event_route[topos:msg-receiving]
 
 Chapter 1. Admin Guide
 
@@ -171,6 +171,7 @@ Chapter 1. Admin Guide
        requests).
      * database module - to store the data for topology stripping and
        restoring.
+     * topoh module - in case of Call-ID mask for Call-ID masking.
 
 2.2. External Libraries or Applications
 
@@ -228,11 +229,11 @@ modparam("topos", "db_url", "dbdriver://username:password@dbhost/dbname")
 
 3.3. mask_callid (int)
 
-   Note: this functionality is not implemented yet - the parameter is
-   present in order to be in pair with topoh module.
-
-   Whether to replace or not the Call-ID with another unique id generated
-   by Kamailio.
+   Whether to encode the Call-id: header. Some SIP extensions include the
+   Call-id in the SIP message payload or header, so it is safe to not
+   encode Call-id in such cases. Well-known extensions such as call
+   transfer or conference join will be added to work with encoded Call-id.
+   Topoh module should be loaded with use_mode parameter set to 1
 
    Default value is 0 (do not mask).
 
@@ -409,7 +410,7 @@ modparam("topos", "xavu_field_a_contact", "a_contact")
 
 3.14. xavu_field_a_contact (str)
 
-   Name of the field inside root XAVU specifed by `xavu_cfg` to evaluate
+   Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
    for the A-side Contact Header user part. This parameter is only
    necessary in contact_mode (2).
 
@@ -425,7 +426,7 @@ modparam("topos", "xavu_field_a_contact", "a_contact")
 
 3.15. xavu_field_b_contact (str)
 
-   Name of the field inside root XAVU specifed by `xavu_cfg` to evaluate
+   Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
    for the B-side Contact Header user part. This parameter is only
    necessary in contact_mode (2).
 
@@ -515,7 +516,7 @@ modparam("topos", "header_mode", 1)
 
 3.21. methods_noinitial (str)
 
-   List of SIP methods to skip doing topos if it is an intial request (no
+   List of SIP methods to skip doing topos if it is an initial request (no
    To-tag).
 
    Default value is “” (no method).
@@ -621,7 +622,7 @@ event_route[topos:msg-incoming] {
    Inside the event route the variables $si, $sp and $proto point to the
    source address. The SIP message is the one to be sent out.
 
-   Example 1.26. Usage of event_route[topos:msg-receoving]
+   Example 1.26. Usage of event_route[topos:msg-receiving]
 ...
 event_route[topos:msg-receiving] {
   if(is_request() and $fU=="alice") {

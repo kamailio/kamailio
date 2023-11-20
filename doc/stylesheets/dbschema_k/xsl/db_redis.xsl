@@ -46,8 +46,8 @@
 		 <xsl:apply-templates select="version"/>
 		<!-- this is not exactly what we want for dbtext, as the version data gets
 		     appended to the actual table file, and no to the 'version' table.
-		     But its not possible (at least with XSL 1.0, AFAIK) to append data to a
-		     file. So it's much more easier to do this in the Makefile -->
+		     But it is not possible (at least with XSL 1.0, AFAIK) to append data to a
+		     file. So it's much easier to do this in the Makefile -->
 	</xsl:document>
     </xsl:template>
 

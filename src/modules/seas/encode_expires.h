@@ -14,11 +14,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
-int encode_expires(char *hdrstart,int hdrlen,exp_body_t *body,unsigned char *where);
-int print_encoded_expires(FILE* fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix);
+int encode_expires(
+		char *hdrstart, int hdrlen, exp_body_t *body, unsigned char *where);
+int print_encoded_expires(FILE *fd, char *hdr, int hdrlen,
+		unsigned char *payload, int paylen, char *prefix);

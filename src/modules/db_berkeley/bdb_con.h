@@ -1,4 +1,4 @@
-/* 
+/*
  * BDB Database Driver for Kamailio
  *
  * Copyright (C) 2008 iptelorg GmbH
@@ -16,7 +16,7 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
@@ -24,7 +24,7 @@
 #define _BDB_CON_H_
 
 /** \addtogroup bdb
- * @{ 
+ * @{
  */
 
 /*! \file
@@ -42,7 +42,7 @@
 
 #include "bdb_lib.h"
 
-/** 
+/**
  * Per-connection flags for BDB connections.
  */
 enum bdb_con_flags
@@ -54,14 +54,14 @@ enum bdb_con_flags
 
 /** A structure representing a connection to a BDB.
  * This structure represents connections to BDB. It contains
- * BDB specific per-connection data, 
+ * BDB specific per-connection data,
  */
 
 typedef struct _bdb_con
 {
 	db_pool_entry_t gen; /**< Generic part of the structure */
 	bdb_db_t *dbp;		 /**< DB structure handle */
-	unsigned int flags;  /**< Flags */
+	unsigned int flags;	 /**< Flags */
 } bdb_con_t, *bdb_con_p;
 
 /** Create a new bdb_con structure.
@@ -74,7 +74,7 @@ typedef struct _bdb_con
 int bdb_con(db_con_t *con);
 
 
-/** Establish a new connection to server.  
+/** Establish a new connection to server.
  * This function is called when a SER module calls db_connect to establish a
  * new connection to the database server.
  * @param con A structure representing database connection.

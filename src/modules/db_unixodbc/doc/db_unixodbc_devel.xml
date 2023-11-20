@@ -10,10 +10,10 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-	
+
 	<title>&develguide;</title>
 	<para>
-	The module implements the &kamailio; DB <acronym>API</acronym>, in order to 
+	The module implements the &kamailio; DB <acronym>API</acronym>, in order to
 	be used by other modules.
 	</para>
 </chapter>

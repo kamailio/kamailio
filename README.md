@@ -2,6 +2,7 @@
 
 [![Build Status](https://github.com/kamailio/kamailio/actions/workflows/main.yml/badge.svg)](https://github.com/kamailio/kamailio/actions)
 [![Code Triage Badge](https://www.codetriage.com/kamailio/kamailio/badges/users.svg)](https://www.codetriage.com/kamailio/kamailio)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 Project Website:
 
@@ -86,15 +87,15 @@ To report a bug or make a request for new features, use the Issues Page in the K
 
 Mailing list for discussions regarding stable versions of Kamailio:
 
-  * **sr-users (at) lists.kamailio.org** - [sr-users web page](https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users)
+  * **sr-users (at) lists.kamailio.org** - [sr-users web page](https://lists.kamailio.org/mailman3/postorius/lists/sr-users.lists.kamailio.org/)
 
 Mailing list for discussions regarding the development of Kamailio and the state of master (devel) branch:
 
-  * **sr-dev (at) lists.kamailio.org** - [sr-dev web page](https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev)
+  * **sr-dev (at) lists.kamailio.org** - [sr-dev web page](https://lists.kamailio.org/mailman3/postorius/lists/sr-dev.lists.kamailio.org/)
 
 Mailing list for discussions with commercial purpose:
 
-  * **business (at) lists.kamailio.org** - [business web page](https://lists.kamailio.org/cgi-bin/mailman/listinfo/business)
+  * **business (at) lists.kamailio.org** - [business web page](https://lists.kamailio.org/mailman3/postorius/lists/business.lists.kamailio.org/)
 
 For more information about the mailing lists, please see:
 
@@ -120,10 +121,5 @@ News:
 
   * https://www.kamailio.org/w/category/news/
   * Twitter @kamailio
-
-## Travis-CI - Testing Build Environment
-
- * [travis-ci](https://travis-ci.org/kamailio/kamailio/builds/)
- * [docker build](/test/travis/README.md)
 
 **Thank you for flying Kamailio!**

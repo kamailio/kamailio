@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -29,10 +29,14 @@
 #include <cds/sstr.h>
 #include <presence/pres_doc.h>
 
-int create_pidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_type);
-int create_cpim_pidf_document(presentity_info_t *p, str_t *dst, str_t *dst_content_type);
+int create_pidf_document(
+		presentity_info_t *p, str_t *dst, str_t *dst_content_type);
+int create_cpim_pidf_document(
+		presentity_info_t *p, str_t *dst, str_t *dst_content_type);
 
-int parse_pidf_document(presentity_info_t **dst, const char *data, int data_len);
-int parse_cpim_pidf_document(presentity_info_t **dst, const char *data, int data_len);
+int parse_pidf_document(
+		presentity_info_t **dst, const char *data, int data_len);
+int parse_cpim_pidf_document(
+		presentity_info_t **dst, const char *data, int data_len);
 
 #endif

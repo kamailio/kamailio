@@ -5,7 +5,7 @@
 #===================================================================
 
 ### version for this script
-VERSION='5.6.0'
+VERSION='5.8.0'
 
 PATH=$PATH:/usr/local/sbin/
 
@@ -18,6 +18,7 @@ else
 fi
 
 ### include config files
+RC_FILE_SOURCED="false"
 
 # check for rc file at same location with kamctl
 which greadlink >/dev/null 2>&1
@@ -39,13 +40,15 @@ if [ -n "$KAMCTLFULLPATH" ] ; then
 fi
 
 # check for rc file at standard locations
-if [ -f /etc/kamailio/kamctlrc ]; then
+if [ $RC_FILE_SOURCED = "false" ] && [ -f /etc/kamailio/kamctlrc -a -r /etc/kamailio/kamctlrc ]; then
 	. /etc/kamailio/kamctlrc
+	RC_FILE_SOURCED="true"
 fi
-if [ -f /usr/local/etc/kamailio/kamctlrc ]; then
+if [ $RC_FILE_SOURCED = "false" ] &&  [ -f /usr/local/etc/kamailio/kamctlrc -a -r /usr/local/etc/kamailio/kamctlrc ]; then
 	. /usr/local/etc/kamailio/kamctlrc
+	RC_FILE_SOURCED="true"
 fi
-if [ -f ~/.kamctlrc ]; then
+if [ -f ~/.kamctlrc -a -r ~/.kamctlrc ]; then
 	. ~/.kamctlrc
 fi
 
@@ -71,6 +74,10 @@ if [ -z "$MYLIBDIR" ] ; then
 	if [ ! -d "$MYLIBDIR" ]; then
 		MYLIBDIR=$MYDIR
 	fi
+fi
+
+if [ -z "$STARTUP_CONFIG_FILE" ]; then
+	STARTUP_CONFIG_FILE="kamailio.cfg"
 fi
 
 ##### ------------------------------------------------ #####
@@ -1752,6 +1759,40 @@ dispatcher() {
 			fi
 
 			;;
+	  rmip)
+			require_dbengine
+			shift
+			if [ $# -ne 2 ] ; then
+				merr "missing gateway ip address and/or setid to be removed"
+				exit 1
+			fi
+
+			QUERY="delete from $DISPATCHER_TABLE where $DISPATCHER_SETID_COLUMN='$2' and $DISPATCHER_DESTINATION_COLUMN like 'sip:$1:%';"
+			$DBCMD "$QUERY"
+
+			if [ $? -ne 0 ] ; then
+				merr "dispatcher - SQL Error"
+				exit 1
+			fi
+
+	    ;;
+	  rmset)
+			require_dbengine
+			shift
+			if [ $# -ne 2 ] ; then
+				merr "missing gateway setid to be removed"
+				exit 1
+			fi
+
+			QUERY="delete from $DISPATCHER_TABLE where $DISPATCHER_SETID_COLUMN='$1'' and $DISPATCHER_DESTINATION_COLUMN like 'sip:$1:%'';"
+			$DBCMD "$QUERY"
+
+			if [ $? -ne 0 ] ; then
+				merr "dispatcher - SQL Error"
+				exit 1
+			fi
+
+	    ;;
 		reload)
 			require_ctlengine
 			ctl_cmd_run dispatcher.reload
@@ -2007,9 +2048,9 @@ kamailio_start() {
 		exit 1
 	fi
 	if [ $SYSLOG = 1 ] ; then
-		$KAMBIN -P $PID_FILE  -f $ETCDIR/kamailio.cfg $STARTOPTIONS 1>/dev/null 2>/dev/null
+		$KAMBIN -P $PID_FILE  -f $ETCDIR/$STARTUP_CONFIG_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
 	else
-		$KAMBIN -P $PID_FILE -E  -f $ETCDIR/kamailio.cfg $STARTOPTIONS
+		$KAMBIN -P $PID_FILE -E  -f $ETCDIR/$STARTUP_CONFIG_FILE $STARTOPTIONS
 	fi
 	sleep 3
 	if [ ! -s $PID_FILE ] ; then
@@ -3217,4 +3258,3 @@ case $1 in
 		exit 1
 		;;
 esac
-

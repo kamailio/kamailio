@@ -51,7 +51,7 @@ void destroy_list(spi_list_t *lst)
 }
 
 int spi_add(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid,
-		uint16_t sport, uint16_t cport)
+		uint16_t cport, uint16_t sport)
 {
 	if(!list) {
 		return 1;
@@ -135,7 +135,7 @@ int spi_remove(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid)
 			//detach node
 			prev->next = curr->next;
 
-			//is it the last elemet
+			//is it the last element
 			if(t == list->tail) {
 				list->tail = prev;
 			}

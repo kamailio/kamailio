@@ -10,14 +10,14 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 
 	<title>&adminguide;</title>
-	
+
 	<section>
 	  <title>Overview</title>
-	    <para> 
-	      The module enables the handling of "Event: dialog" (as defined 
+	    <para>
+	      The module enables the handling of "Event: dialog" (as defined
 	      in RFC 4235) inside of the presence module. This can be used
 	      distribute the dialog-info status to the subscribed watchers.
 	    </para>
@@ -25,25 +25,25 @@
  	      The module does not currently implement any authorization
 	      rules.  It assumes that publish requests are only issued by
 	      an authorized application and subscribe requests only by
-	      authorized users.  Authorization can thus be easily done in 
-	      &kamailio; configuration file before calling handle_publish() 
+	      authorized users.  Authorization can thus be easily done in
+	      &kamailio; configuration file before calling handle_publish()
 	      and handle_subscribe() functions.
 	    </para>
 	    <para>
-	      Note: This module only activates the processing of the "dialog" 
-	      in the presence module. To send dialog-info to watchers you also 
+	      Note: This module only activates the processing of the "dialog"
+	      in the presence module. To send dialog-info to watchers you also
 	      need a source which PUBLISH the dialog info to the presence module.
 	      For example you can use the pua_dialoginfo module or any external
 	      component. This approach allows to have the presence server and the
-	      dialog-info aware publisher (e.g. the main proxy) on different 
+	      dialog-info aware publisher (e.g. the main proxy) on different
 	      &kamailio; instances.
 	    </para>
 	    <para>
-			This module by default does body aggregation. That means, if the presence 
+			This module by default does body aggregation. That means, if the presence
 			module received PUBLISH from multiple presentities (e.g. if the entity has
 			multiple dialogs the pua_dialoginfo will send multiple PUBLISH), the
-			module will parse all the received (and still valid, depending on the Expires 
-			header in the PUBLISH request) XML documents and generate a single 
+			module will parse all the received (and still valid, depending on the Expires
+			header in the PUBLISH request) XML documents and generate a single
 			XML document with multiple "dialog" elements. This is perfectly valid, but
 			unfortunately not supported by all SIP phones, e.g. Linksys SPA962 crashes
 			when it receives dialog-info with multiple dialog elements. In this case use
@@ -107,14 +107,14 @@ alice@example   presence   bob@example   watcher@example
 					PUBLISH is received and handled by presence module. Presence
 					module updates the "presentity". Presence module checks for active watchers
 					of the presentity. It gives all the XML documents to presence_dialoginfo
-					module to aggregate them into a single XML document. Then it sends the 
+					module to aggregate them into a single XML document. Then it sends the
 					NOTIFY with the aggregated XML document to all active watchers.
 				</para></listitem>
 			</itemizedlist>
 
-			The presence server can also be separated from the main proxy by using a separate 
+			The presence server can also be separated from the main proxy by using a separate
 			&kamailio; instance as shown in the following figure. (Either set the outbound_proxy
-			parameter of pua module or make sure to route the "looped" PUBLISH requests from the 
+			parameter of pua module or make sure to route the "looped" PUBLISH requests from the
 			main proxy to the presence server).
 
         <programlisting format="linespecific">
@@ -153,7 +153,7 @@ alice@example    server     server     bob@example   watcher@example
 			Known issues:
 			<itemizedlist>
 				<listitem><para>
-					The "version" attribute is increased for every NOTIFY, even 
+					The "version" attribute is increased for every NOTIFY, even
 					if the XML document has not changed. This is of course valid,
 					but not very smart.
 				</para></listitem>
@@ -187,7 +187,7 @@ alice@example    server     server     bob@example   watcher@example
 		</para>
 	  </section>
 	</section>
-	
+
 	<section>
 		<title>Parameters</title>
 
@@ -201,13 +201,13 @@ alice@example    server     server     bob@example   watcher@example
 		</para>
 		<para>
 			If this parameter is set, only the dialog element with the
-			currently most interesting dialog state will be put into the 
+			currently most interesting dialog state will be put into the
 			dialog-info document. Thus, the dialog-info element will contain
 			only a single "dialog" element. The algorithm chooses the state
 			based on the following order of priority (least important first):
 			terminated, trying, proceeding, confirmed, early. Note: I consider
 			the "early" state more interesting than confirmed as often you might
-			want to pickup a call if the original callee is already busy in a 
+			want to pickup a call if the original callee is already busy in a
 			call.
 		</para>
 		<para>
@@ -226,8 +226,8 @@ modparam("presence_dialoginfo", "force_single_dialog", 1)
         <section>
         <title><varname>force_dummy_dialog</varname> (int)</title>
         <para>
-            By default the module returns null body 
-            if there are no bodies to aggregate. 
+            By default the module returns null body
+            if there are no bodies to aggregate.
             some sip clients like Bria expect at least one dialog.
             you can activate this parameter to send a dummy dialog.
         </para>

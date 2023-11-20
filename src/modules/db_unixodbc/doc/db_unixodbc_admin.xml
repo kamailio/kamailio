@@ -10,14 +10,14 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
-	This module allows to use the unixodbc package with &kamailio;. It have been 
-	tested with mysql and the odbc connector, but it should work also with 
+	This module allows to use the unixodbc package with &kamailio;. It have been
+	tested with mysql and the odbc connector, but it should work also with
 	other database. The auth_db module works.
 	</para>
 	<para>
@@ -25,7 +25,7 @@
 	http://www.unixodbc.org/</ulink> project web page.
 	</para>
 	<para>
-	To see what DB engines can be used via unixodbc, look at 
+	To see what DB engines can be used via unixodbc, look at
 	<ulink url="http://www.unixodbc.org/drivers.html">
 	http://www.unixodbc.org/drivers.html</ulink>.
 	</para>
@@ -188,9 +188,9 @@ modparam("db_unixodbc", "quote_char", "`")
 	<section>
 	<title>Installing</title>
 	<para>
-	Prerequirement: you should first install unixodbc (or another program that 
-	implements the odbc standard, such iodbc), your database, and the right 
-	connector. Set the DSN in the odbc.ini file and the connector drivers in 
+	Prerequirement: you should first install unixodbc (or another program that
+	implements the odbc standard, such iodbc), your database, and the right
+	connector. Set the DSN in the odbc.ini file and the connector drivers in
 	the odbcinst.ini file.
 	</para>
 	</section>
@@ -218,12 +218,12 @@ modparam("auth_db", "password_column", "password")
 ....
 </programlisting>
 	<para>
-	and setting the DSN specified in the odbc.ini, inserting this with the 
+	and setting the DSN specified in the odbc.ini, inserting this with the
 	url adding this line:
 	</para>
 	<programlisting format="linespecific">
 ....
-modparam("usrloc|auth_db", "db_url", 
+modparam("usrloc|auth_db", "db_url",
     "unixodbc://kamailio:kamailiorw@localhost/my_dsn")
 ....
 </programlisting>
@@ -231,14 +231,14 @@ modparam("usrloc|auth_db", "db_url",
 	replacing my_dsn with the correct value.
 	</para>
 	<para>
-	HINT: if unixodbc don't want to connect to mysql server, try restarting 
+	HINT: if unixodbc don't want to connect to mysql server, try restarting
 	mysql server with:
 	</para>
 	<programlisting format="linespecific">
 shell>safe_mysqld --user=mysql --socket=/var/lib/mysql/mysql.sock
 </programlisting>
 	<para>
-	The connector search the socket in /var/lib/mysql/mysql.sock and not 
+	The connector search the socket in /var/lib/mysql/mysql.sock and not
 	in /tmp/mysql.sock
 	</para>
 

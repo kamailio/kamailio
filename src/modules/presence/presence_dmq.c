@@ -102,7 +102,7 @@ static int pres_dmq_init_proc()
 		}
 	}
 
-	if(publ_cache_mode==PS_PCACHE_RECORD && pres_subs_dbmode==NO_DB) {
+	if(publ_cache_mode == PS_PCACHE_RECORD && pres_subs_dbmode == NO_DB) {
 		goto finish;
 	}
 
@@ -303,7 +303,7 @@ int pres_dmq_handle_msg(
 		} else if(strcmp(it->string, "body") == 0) {
 			p_body.s = it->valuestring;
 			p_body.len = strlen(it->valuestring);
-			if(p_body.len==0) {
+			if(p_body.len == 0) {
 				p_body.s = NULL;
 			}
 		} else {

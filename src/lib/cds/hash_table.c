@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -29,13 +29,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-int ht_init(hash_table_t *ht, hash_func_t hash_func, key_cmp_func_t cmp_keys, int size)
+int ht_init(hash_table_t *ht, hash_func_t hash_func, key_cmp_func_t cmp_keys,
+		int size)
 {
-	if (!ht) return -1;
-	if ((!hash_func) || (!cmp_keys)) return -1;
+	if(!ht)
+		return -1;
+	if((!hash_func) || (!cmp_keys))
+		return -1;
 
-	ht->cslots = (ht_cslot_t*)cds_malloc(size * sizeof(ht_cslot_t));
-	if (!ht->cslots) return -1;
+	ht->cslots = (ht_cslot_t *)cds_malloc(size * sizeof(ht_cslot_t));
+	if(!ht->cslots)
+		return -1;
 	memset(ht->cslots, 0, size * sizeof(ht_cslot_t));
 
 	ht->size = size;
@@ -53,12 +57,13 @@ void ht_destroy(hash_table_t *ht)
 {
 	ht_element_t *e, *n;
 	int i;
-	
-	if (!ht) return;
-	if (ht->cslots) {
-		for (i = 0; i < ht->size; i++) {
+
+	if(!ht)
+		return;
+	if(ht->cslots) {
+		for(i = 0; i < ht->size; i++) {
 			e = ht->cslots[i].first;
-			while (e) {
+			while(e) {
 				n = e->next;
 				cds_free(e);
 				e = n;
@@ -73,21 +78,23 @@ int ht_add(hash_table_t *ht, ht_key_t key, ht_data_t data)
 {
 	int h;
 	ht_element_t *new_e;
-	
-	if (!ht) return -1;
-	new_e = (ht_element_t*)cds_malloc(sizeof(ht_element_t));
-	if (!new_e) return -1;
+
+	if(!ht)
+		return -1;
+	new_e = (ht_element_t *)cds_malloc(sizeof(ht_element_t));
+	if(!new_e)
+		return -1;
 	new_e->next = NULL;
 	new_e->key = key;
 	new_e->data = data;
-	
+
 	h = ht->hash(key) % ht->size;
-	if (h < 0) h = -h;
-	
-	if (!ht->cslots[h].last) {
+	if(h < 0)
+		h = -h;
+
+	if(!ht->cslots[h].last) {
 		ht->cslots[h].first = new_e;
-	}
-	else {
+	} else {
 		ht->cslots[h].last->next = new_e;
 	}
 
@@ -101,41 +108,50 @@ ht_data_t ht_find(hash_table_t *ht, ht_key_t key)
 	int h;
 	ht_element_t *e;
 
-	if (!ht) return NULL;
-	
-	ht->find_cnt++;	//monitor
-	
+	if(!ht)
+		return NULL;
+
+	ht->find_cnt++; //monitor
+
 	h = ht->hash(key) % ht->size;
-	if (h < 0) h = -h;
+	if(h < 0)
+		h = -h;
 	e = ht->cslots[h].first;
-	if (!e) ht->nocmp_cnt++;	//monitor
-	while (e) {
-		ht->cmp_cnt++;	//monitor
-		if (ht->cmp(e->key, key) == 0) return e->data;
+	if(!e)
+		ht->nocmp_cnt++; //monitor
+	while(e) {
+		ht->cmp_cnt++; //monitor
+		if(ht->cmp(e->key, key) == 0)
+			return e->data;
 		e = e->next;
 	}
-	
-	ht->missed_cnt++;	//monitor
+
+	ht->missed_cnt++; //monitor
 	return NULL;
 }
 
 ht_data_t ht_remove(hash_table_t *ht, ht_key_t key)
 {
 	int h;
-	ht_element_t *e,*p;
+	ht_element_t *e, *p;
 	ht_data_t data;
-	
-	if (!ht) return NULL;
+
+	if(!ht)
+		return NULL;
 	h = ht->hash(key) % ht->size;
-	if (h < 0) h = -h;
+	if(h < 0)
+		h = -h;
 	e = ht->cslots[h].first;
 	p = NULL;
-	while (e) {
-		if (ht->cmp(e->key, key) == 0) {
-			if (p) p->next = e->next;
-			else ht->cslots[h].first = e->next;
+	while(e) {
+		if(ht->cmp(e->key, key) == 0) {
+			if(p)
+				p->next = e->next;
+			else
+				ht->cslots[h].first = e->next;
 			ht->cslots[h].cnt--;
-			if (!e->next) ht->cslots[h].last = p;
+			if(!e->next)
+				ht->cslots[h].last = p;
 			data = e->data;
 			cds_free(e);
 			return data;
@@ -148,14 +164,14 @@ ht_data_t ht_remove(hash_table_t *ht, ht_key_t key)
 
 void ht_get_statistic(hash_table_t *ht, ht_statistic_t *s)
 {
-	if (!s) return;
-	if (!ht) {
+	if(!s)
+		return;
+	if(!ht) {
 		s->find_cnt = 0;
 		s->cmp_cnt = 0;
 		s->nocmp_cnt = 0;
 		s->missed_cnt = 0;
-	}
-	else {
+	} else {
 		s->find_cnt = ht->find_cnt;
 		s->cmp_cnt = ht->cmp_cnt;
 		s->nocmp_cnt = ht->nocmp_cnt;
@@ -165,8 +181,9 @@ void ht_get_statistic(hash_table_t *ht, ht_statistic_t *s)
 
 void ht_clear_statistic(hash_table_t *ht)
 {
-	if (!ht) return;
-	
+	if(!ht)
+		return;
+
 	ht->find_cnt = 0;
 	ht->cmp_cnt = 0;
 	ht->nocmp_cnt = 0;
@@ -178,11 +195,12 @@ void ht_clear_statistic(hash_table_t *ht)
 ht_element_t *get_first_ht_element(hash_table_t *ht, ht_traversal_info_t *info)
 {
 	int i;
-	if (!info) return NULL;
+	if(!info)
+		return NULL;
 	info->ht = ht;
 	info->current = NULL;
-	for (i = 0; i < ht->size; i++) {
-		if (ht->cslots[i].first) {
+	for(i = 0; i < ht->size; i++) {
+		if(ht->cslots[i].first) {
 			info->current = ht->cslots[i].first;
 			break;
 		}
@@ -194,14 +212,17 @@ ht_element_t *get_first_ht_element(hash_table_t *ht, ht_traversal_info_t *info)
 ht_element_t *get_next_ht_element(ht_traversal_info_t *info)
 {
 	int i;
-	if (!info) return NULL;
+	if(!info)
+		return NULL;
 
-	if (info->current) info->current = info->current->next;
-	
-	if (info->current) return info->current;
+	if(info->current)
+		info->current = info->current->next;
+
+	if(info->current)
+		return info->current;
 	else {
-		for (i = info->slot_pos + 1; i < info->ht->size; i++) {
-			if (info->ht->cslots[i].first) {
+		for(i = info->slot_pos + 1; i < info->ht->size; i++) {
+			if(info->ht->cslots[i].first) {
 				info->current = info->ht->cslots[i].first;
 				break;
 			}
@@ -213,7 +234,7 @@ ht_element_t *get_next_ht_element(ht_traversal_info_t *info)
 
 /* --------- HASH functions -------- */
 
-unsigned int rshash(const char* str, unsigned int len)
+unsigned int rshash(const char *str, unsigned int len)
 {
 	unsigned int b = 378551;
 	unsigned int a = 63689;
@@ -227,4 +248,3 @@ unsigned int rshash(const char* str, unsigned int len)
 
 	return (hash & 0x7FFFFFFF);
 }
-

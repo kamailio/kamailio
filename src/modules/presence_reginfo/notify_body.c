@@ -39,7 +39,7 @@
 #include "../presence/presence.h"
 
 
-str *agregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n);
+str *aggregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n);
 
 void free_xml_body(char *body)
 {
@@ -62,7 +62,7 @@ str *reginfo_agg_nbody(str *pres_user, str *pres_domain, str **body_array,
 		return NULL;
 	}
 
-	n_body = agregate_xmls(pres_user, pres_domain, body_array, n);
+	n_body = aggregate_xmls(pres_user, pres_domain, body_array, n);
 	LM_DBG("[n_body]=%p\n", n_body);
 	if(n_body) {
 		LM_DBG("[*n_body]=%.*s\n", n_body->len, n_body->s);
@@ -77,7 +77,7 @@ str *reginfo_agg_nbody(str *pres_user, str *pres_domain, str **body_array,
 	return n_body;
 }
 
-str *agregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n)
+str *aggregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n)
 {
 	int i, j = 0;
 
@@ -235,7 +235,7 @@ error:
 str *reginfo_body_setversion(subs_t *subs, str *body)
 {
 	char *version_start = 0;
-	char version[MAX_INT_LEN + 2]; /* +2 becasue of trailing " and \0 */
+	char version[MAX_INT_LEN + 2]; /* +2 because of trailing " and \0 */
 	int version_len;
 	str *aux_body = NULL;
 

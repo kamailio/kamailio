@@ -30,7 +30,7 @@ static sr_generate_callid_f _sr_generate_callid_func = NULL;
  */
 int sr_register_callid_func(sr_generate_callid_f f)
 {
-	if(_sr_generate_callid_func!=NULL) {
+	if(_sr_generate_callid_func != NULL) {
 		LM_INFO("overwriting generate callid function\n");
 	}
 	_sr_generate_callid_func = f;
@@ -65,7 +65,7 @@ void sr_cfgenv_init(void)
 /**
  *
  */
-sr_cfgenv_t* sr_cfgenv_get(void)
+sr_cfgenv_t *sr_cfgenv_get(void)
 {
 	return &_sr_cfgenv;
 }

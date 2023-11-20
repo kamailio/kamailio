@@ -76,7 +76,7 @@ struct cassa_con {
 /*!
  * \brief Open connection to Cassandra cluster
  * \param id database id
- * \return zero on succes
+ * \return zero on success
  */
 oac::CassandraClient* dbcassa_open(struct db_id* id)
 {
@@ -395,7 +395,7 @@ int cassa_result_separate_rows(std::vector<oac::ColumnOrSuperColumn> result) {
 
 		found = result[i].column.name.find(cassa_key_delim);
 		if(found< 0) {
-			LM_ERR("Wrong formated column name - secondary key part not found [%s]\n",
+			LM_ERR("Wrong formatted column name - secondary key part not found [%s]\n",
 					result[i].column.name.c_str());
 			return -1;
 		}
@@ -592,7 +592,7 @@ ColumnVecPtr cassa_translate_query(const db1_con_t* _h, const db_key_t* _k,
 
 
 /** 
- *  This function check the CQLresult of the CQL query and   
+ *  This function checks the CQLresult of the CQL query and
  *  adds the columns to the returning result structure. 
  *
  * \param _cql_res  handle for the CQLResult
@@ -731,7 +731,7 @@ static int cassa_convert_result_raw(db_val_t* sr_cell, str *col_val) {
 
 
 /**
- *  This function convert the rows returned in CQL query 
+ *  This function converts the rows returned in CQL query
  *  and adds the values to the returning result structure.
  *
  * Handle CQLresult
@@ -1041,7 +1041,7 @@ int db_cassa_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 			/* pass through the result once to see how many rows there are */
 			rows_no = cassa_result_separate_rows(*cassa_result);
 			if(rows_no < 0) {
-				LM_ERR("Wrong formated column names\n");
+				LM_ERR("Wrong formatted column names\n");
 				goto error;
 			}
 		}

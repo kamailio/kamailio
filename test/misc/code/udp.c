@@ -27,8 +27,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -49,7 +49,7 @@
 
 /*
 shot written by ashhar farhan, is not bound by any licensing at all.
-you are free to use this code as you deem fit. just dont blame the author
+you are free to use this code as you deem fit. Just don't blame the author
 for any problems you may have using it.
 bouquets and brickbats to farhan@hotfoon.com
 */
@@ -127,15 +127,15 @@ void shoot()
 #endif
 
 
-	/* destination socket init here because it could be changed in a 
+	/* destination socket init here because it could be changed in a
 	   case of a redirect */
 	addr.sin_addr.s_addr = inet_addr("192.168.99.100");
 	addr.sin_port = htons((short)888);
 	addr.sin_family = AF_INET;
 
-	/* if we dont connect, even on Linux, nothing will happen */
+	/* if we don't connect, even on Linux, nothing will happen */
 
-#ifdef CONNECTED	
+#ifdef CONNECTED
 	/* we connect as per the RFC 2543 recommendations
 	   modified from sendto/recvfrom */
 	ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
@@ -151,14 +151,14 @@ void shoot()
 	}
 	printf("BSD compat: %d\n", bsd_compat);
 
-	/* here we go for the number of nretries which heavily depends on the 
+	/* here we go for the number of nretries which heavily depends on the
 	   mode */
 	for (i = 0; i <= nretries; i++)
 	{
 		/* lets fire the request to the server and store when we did */
 
 		/* if we send too fast, ICMP will arrive back when we are already
-		   done and we wont be able to recognize an error
+		   done and we won't be able to recognize an error
 		*/
 #ifdef CONNECTED
 		ret = send(sock, buff, strlen(buff), 0);

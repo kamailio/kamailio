@@ -647,7 +647,7 @@ modparam("usrloc", "db_url", "&exampledb;")
 		<para>
 		The usrloc module can utilize a database for persistent contact storage.
 		If a database is used, the location database (contacts)  will survive
-		machine restarts or software crashes. The disadvantage is that accessing 
+		machine restarts or software crashes. The disadvantage is that accessing
 		a database can be very time consuming. Therefore, usrloc module implements
 		four database accessing modes:
 		</para>
@@ -700,7 +700,7 @@ modparam("usrloc", "db_url", "&exampledb;")
 			4 - This uses database to load records at startup but uses only
 			memory during the runtime. Records are not written back at all,
 			not even at shutdown. Useful for scenarios when registrations are
-			replicated to a node that does the storage in database during
+			replicated to a node that does the storage in a database during
 			runtime.
 			</para>
 		</listitem>
@@ -730,8 +730,8 @@ modparam("usrloc", "db_mode", 2)
 	<section id="usrloc.p.db_load">
 		<title><varname>db_load</varname> (int)</title>
 		<para>
-		Determine if the usrloc module should load contacts from the database storage during module initialization
-		A value of 0 disable the loading from the database, this parameter is ignored if db_mode 4 is set
+		Determine if the usrloc module should load contacts from the database storage during module initialization.
+		A value of 0 disables the loading from the database, this parameter is ignored if db_mode 4 is set.
 		</para>
 		<para>
 		<emphasis>
@@ -974,9 +974,9 @@ modparam("usrloc", "db_check_update", 1)
 		</para>
 
 		<para>
-			If the number of timer processes is greater than 1, the workload 
-			of synchronization and record expiration is split up among the 
-			multiple processes. (Each process is assigned a range of slots 
+			If the number of timer processes is greater than 1, the workload
+			of synchronization and record expiration is split up among the
+			multiple processes. (Each process is assigned a range of slots
 			from the internal hash table, and is responsible for cleanup and
 			storage on those slots.)
 		</para>
@@ -1276,7 +1276,7 @@ modparam("usrloc", "version_table", 0)
 		Keepalive mode - control the internal keepalive mechanism. With this feature
 		enabled, the module sends periodically (based on timer interval) SIP requests
 		to location contacts and measures the round trip in microseconds (the
-		round trip value can be seen in the response of the RPC command 'ul.dump'). 
+		round trip value can be seen in the response of the RPC command 'ul.dump').
 		</para>
 		<para>
 		Its value is a set of flags:
@@ -1323,7 +1323,7 @@ modparam("usrloc", "version_table", 0)
 		</para>
 		<para>
 		Note: Keepalives will be sent to the IP and port using the transport
-		defined in the “received” column.  If not set, then keepalives will be sent
+		defined in the <quote>received</quote> column.  If not set, then keepalives will be sent
 		to the AOR using UDP as a default transport.  If available, the TCP
 		connection will be re-used for WS, TCP and TLS.
 		</para>
@@ -1504,6 +1504,29 @@ modparam("usrloc", "ka_logmsg", " to-uri: [$tu] remote-addr: [$sas]")
 		</example>
 	</section>
 
+	<section id="usrloc.p.ka_reply_codes">
+		<title><varname>ka_reply_codes</varname> (str)</title>
+		<para>
+			Comma separated list of reply code values or reply code classes to be
+			considered valid for keepalive processing. If the reply code does not
+			match any of them, then the reply is ignored, not considered a valid
+			response to keepalive request. It could be useful to skip replies
+			from intermediary proxies that could not forward the request.
+		</para>
+		<para>
+			Default value is <quote>0</quote> (checking of reply code is not done,
+			are responses are considered valid).
+		</para>
+		<example>
+		<title><varname>ka_reply_codes</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_reply_codes", "2,405,486")
+...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="usrloc.p.load_rank">
 		<title><varname>load_rank</varname> (int)</title>
 		<para>
@@ -1633,7 +1656,9 @@ modparam("usrloc", "db_clean_tcp", 1)
 		<function moreinfo="none">ul.flush</function>
 		</title>
 		<para>
-		Triggers the flush of USRLOC memory cache into DB.
+		Triggers the flush of USRLOC memory cache into DB from the RPC process. It
+		succeeds only if the the db_mode is set to a value that enables connectivity
+		to database.
 		</para>
 	</section>
 	<section id="usrloc.r.add">
@@ -1755,7 +1780,7 @@ modparam("usrloc", "db_clean_tcp", 1)
 		<title>users</title>
 			<para>
 			Number of AOR existing in the USRLOC memory cache for that domain
-			- can not be reset; this statistic will be register for each
+			- can not be reset; this statistic will be registered for each
 			used domain (Ex: location).
 			</para>
 		</section>
@@ -1763,7 +1788,7 @@ modparam("usrloc", "db_clean_tcp", 1)
 		<title>contacts</title>
 			<para>
 			Number of contacts existing in the USRLOC memory cache for that
-			domain - can not be reset; this statistic will be register for
+			domain - can not be reset; this statistic will be registered for
 			each used domain (Ex: location).
 			</para>
 		</section>
@@ -1771,7 +1796,7 @@ modparam("usrloc", "db_clean_tcp", 1)
 		<title>expires</title>
 			<para>
 			Total number of expired contacts for that domain - can be reset;
-			 this statistic will be register for each used domain
+			 this statistic will be registered for each used domain
 			(Ex: location).
 			</para>
 		</section>

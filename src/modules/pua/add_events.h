@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -28,14 +28,19 @@
 
 /*
  *  should return:   0  if not changed ( fin_body points to publ->body)
- *                   1  if changed ( must be freed)	
+ *                   1  if changed ( must be freed)
  * */
 int pua_add_events(void);
 
-int pres_process_body(struct publ_info* publ, str** fin_body, int ver, str** tuple);
-int bla_process_body (struct publ_info* publ, str** fin_body, int ver, str** tuple);
-int mwi_process_body (struct publ_info* publ, str** fin_body, int ver, str** tuple);
-int dlg_process_body (struct publ_info* publ, str** fin_body, int ver, str** tuple);
-int reginfo_process_body (struct publ_info* publ, str** fin_body, int ver, str** tuple);
+int pres_process_body(
+		struct publ_info *publ, str **fin_body, int ver, str **tuple);
+int bla_process_body(
+		struct publ_info *publ, str **fin_body, int ver, str **tuple);
+int mwi_process_body(
+		struct publ_info *publ, str **fin_body, int ver, str **tuple);
+int dlg_process_body(
+		struct publ_info *publ, str **fin_body, int ver, str **tuple);
+int reginfo_process_body(
+		struct publ_info *publ, str **fin_body, int ver, str **tuple);
 
 #endif

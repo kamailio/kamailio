@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -30,7 +30,7 @@
  * Convert a str to a db value, copy strings if _cpy is not zero.
  * Copying is not necessary if the result from the database client library
  * is freed after the result inside the server is processed. If the result
- * is freed earlier, e.g. because its saved inside some temporary storage,
+ * is freed earlier, e.g. because it is saved inside some temporary storage,
  * then it must be copied in order to be use it reliable.
  *
  * \param _t destination value type
@@ -40,21 +40,21 @@
  * \param _cpy when set to zero does not copy strings, otherwise copy strings
  * \return 0 on success, negative on error
  */
-int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
+int db_str2val(const db_type_t _t, db_val_t *_v, const char *_s, const int _l,
 		const unsigned int _cpy)
 {
 	static str dummy_string = {"", 0};
 	static char dummy_string_buf[2];
-	
-	if (!_v) {
+
+	if(!_v) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	/* A NULL string is a SQL NULL value, otherwise its an empty value */
-	if (!_s) {
+	/* A NULL string is a SQL NULL value, otherwise it is an empty value */
+	if(!_s) {
 		LM_DBG("converting NULL value\n");
 		memset(_v, 0, sizeof(db_val_t));
-			/* Initialize the string pointers to a dummy empty
+		/* Initialize the string pointers to a dummy empty
 			 * string so that we do not crash when the NULL flag
 			 * is set but the module does not check it properly
 			 */
@@ -70,145 +70,151 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 	VAL_NULL(_v) = 0;
 
 	switch(_t) {
-	case DB1_INT:
-		LM_DBG("converting INT [%s]\n", _s);
-		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
-			LM_ERR("error while converting integer value from string\n");
-			return -2;
-		} else {
-			VAL_TYPE(_v) = DB1_INT;
-			return 0;
-		}
-		break;
-
-	case DB1_UINT:
-		LM_DBG("converting UNSIGNED INT [%s]\n", _s);
-		if (db_str2uint(_s, &VAL_UINT(_v)) < 0) {
-			LM_ERR("error while converting unsigned integer value from string\n");
-			return -2;
-		} else {
-			VAL_TYPE(_v) = DB1_UINT;
-			return 0;
-		}
-		break;
-
-	case DB1_BIGINT:
-		LM_DBG("converting BIGINT [%s]\n", _s);
-		if (db_str2longlong(_s, &VAL_BIGINT(_v)) < 0) {
-			LM_ERR("error while converting big integer value from string\n");
-			return -3;
-		} else {
-			VAL_TYPE(_v) = DB1_BIGINT;
-			return 0;
-		}
-		break;
-
-	case DB1_UBIGINT:
-		LM_DBG("converting UNSIGNED BIGINT [%s]\n", _s);
-		if (db_str2ulonglong(_s, &VAL_UBIGINT(_v)) < 0) {
-			LM_ERR("error while converting unsigned big integer value from string\n");
-			return -3;
-		} else {
-			VAL_TYPE(_v) = DB1_UBIGINT;
-			return 0;
-		}
-		break;
-
-	case DB1_BITMAP:
-		LM_DBG("converting BITMAP [%s]\n", _s);
-		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
-			LM_ERR("error while converting bitmap value from string\n");
-			return -4;
-		} else {
-			VAL_TYPE(_v) = DB1_BITMAP;
-			return 0;
-		}
-		break;
-	
-	case DB1_DOUBLE:
-		LM_DBG("converting DOUBLE [%s]\n", _s);
-		if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0) {
-			LM_ERR("error while converting double value from string\n");
-			return -5;
-		} else {
-			VAL_TYPE(_v) = DB1_DOUBLE;
-			return 0;
-		}
-		break;
-
-	case DB1_STRING:
-		LM_DBG("converting STRING [%s]\n", _s);
-
-		if (_cpy == 0) {
-			VAL_STRING(_v) = _s;
-		} else {
-			VAL_STRING(_v) = pkg_malloc(_l + 1);
-			if (VAL_STRING(_v) == NULL) {
-				PKG_MEM_ERROR;
-				return -6;
+		case DB1_INT:
+			LM_DBG("converting INT [%s]\n", _s);
+			if(db_str2int(_s, &VAL_INT(_v)) < 0) {
+				LM_ERR("error while converting integer value from string\n");
+				return -2;
+			} else {
+				VAL_TYPE(_v) = DB1_INT;
+				return 0;
 			}
-			LM_DBG("allocate %d bytes memory for STRING at %p\n", _l + 1, VAL_STRING(_v));
-			strncpy((char*)VAL_STRING(_v), _s, _l);
-			((char*)VAL_STRING(_v))[_l] = '\0';
-			VAL_FREE(_v) = 1;
-		}
+			break;
 
-		VAL_TYPE(_v) = DB1_STRING;
-		return 0;
-
-	case DB1_STR:
-		LM_DBG("converting STR [%.*s]\n", _l, _s);
-
-		if (_cpy == 0) {
-			VAL_STR(_v).s = (char*) _s;
-		} else {
-			VAL_STR(_v).s = pkg_malloc(_l);
-			if (VAL_STR(_v).s == NULL) {
-				PKG_MEM_ERROR;
-				return -7;
+		case DB1_UINT:
+			LM_DBG("converting UNSIGNED INT [%s]\n", _s);
+			if(db_str2uint(_s, &VAL_UINT(_v)) < 0) {
+				LM_ERR("error while converting unsigned integer value from "
+					   "string\n");
+				return -2;
+			} else {
+				VAL_TYPE(_v) = DB1_UINT;
+				return 0;
 			}
-			LM_DBG("allocate %d bytes memory for STR at %p\n", _l, VAL_STR(_v).s);
-			strncpy(VAL_STR(_v).s, _s, _l);
-			VAL_FREE(_v) = 1;
-		}
+			break;
 
-		VAL_STR(_v).len = _l;
-		VAL_TYPE(_v) = DB1_STR;
-		return 0;
+		case DB1_BIGINT:
+			LM_DBG("converting BIGINT [%s]\n", _s);
+			if(db_str2longlong(_s, &VAL_BIGINT(_v)) < 0) {
+				LM_ERR("error while converting big integer value from "
+					   "string\n");
+				return -3;
+			} else {
+				VAL_TYPE(_v) = DB1_BIGINT;
+				return 0;
+			}
+			break;
 
-	case DB1_DATETIME:
-		LM_DBG("converting DATETIME [%s]\n", _s);
-		if (db_str2time(_s, &VAL_TIME(_v)) < 0) {
-			LM_ERR("error while converting datetime value from string\n");
-			return -8;
-		} else {
-			VAL_TYPE(_v) = DB1_DATETIME;
+		case DB1_UBIGINT:
+			LM_DBG("converting UNSIGNED BIGINT [%s]\n", _s);
+			if(db_str2ulonglong(_s, &VAL_UBIGINT(_v)) < 0) {
+				LM_ERR("error while converting unsigned big integer value from "
+					   "string\n");
+				return -3;
+			} else {
+				VAL_TYPE(_v) = DB1_UBIGINT;
+				return 0;
+			}
+			break;
+
+		case DB1_BITMAP:
+			LM_DBG("converting BITMAP [%s]\n", _s);
+			if(db_str2int(_s, &VAL_INT(_v)) < 0) {
+				LM_ERR("error while converting bitmap value from string\n");
+				return -4;
+			} else {
+				VAL_TYPE(_v) = DB1_BITMAP;
+				return 0;
+			}
+			break;
+
+		case DB1_DOUBLE:
+			LM_DBG("converting DOUBLE [%s]\n", _s);
+			if(db_str2double(_s, &VAL_DOUBLE(_v)) < 0) {
+				LM_ERR("error while converting double value from string\n");
+				return -5;
+			} else {
+				VAL_TYPE(_v) = DB1_DOUBLE;
+				return 0;
+			}
+			break;
+
+		case DB1_STRING:
+			LM_DBG("converting STRING [%s]\n", _s);
+
+			if(_cpy == 0) {
+				VAL_STRING(_v) = _s;
+			} else {
+				VAL_STRING(_v) = pkg_malloc(_l + 1);
+				if(VAL_STRING(_v) == NULL) {
+					PKG_MEM_ERROR;
+					return -6;
+				}
+				LM_DBG("allocate %d bytes memory for STRING at %p\n", _l + 1,
+						VAL_STRING(_v));
+				strncpy((char *)VAL_STRING(_v), _s, _l);
+				((char *)VAL_STRING(_v))[_l] = '\0';
+				VAL_FREE(_v) = 1;
+			}
+
+			VAL_TYPE(_v) = DB1_STRING;
 			return 0;
-		}
-		break;
 
-	case DB1_BLOB:
-		LM_DBG("converting BLOB [%.*s]\n", _l, _s);
+		case DB1_STR:
+			LM_DBG("converting STR [%.*s]\n", _l, _s);
 
-		if (_cpy == 0) {
-			VAL_BLOB(_v).s = (char*) _s;
-		} else {
-			VAL_BLOB(_v).s = pkg_malloc(_l);
-			if (VAL_BLOB(_v).s == NULL) {
-				PKG_MEM_ERROR;
-				return -9;
+			if(_cpy == 0) {
+				VAL_STR(_v).s = (char *)_s;
+			} else {
+				VAL_STR(_v).s = pkg_malloc(_l);
+				if(VAL_STR(_v).s == NULL) {
+					PKG_MEM_ERROR;
+					return -7;
+				}
+				LM_DBG("allocate %d bytes memory for STR at %p\n", _l,
+						VAL_STR(_v).s);
+				strncpy(VAL_STR(_v).s, _s, _l);
+				VAL_FREE(_v) = 1;
 			}
-			LM_DBG("allocate %d bytes memory for BLOB at %p\n", _l, VAL_BLOB(_v).s);
-			strncpy(VAL_BLOB(_v).s, _s, _l);
-			VAL_FREE(_v) = 1;
-		}
 
-		VAL_BLOB(_v).len = _l;
-		VAL_TYPE(_v) = DB1_BLOB;
-		return 0;
+			VAL_STR(_v).len = _l;
+			VAL_TYPE(_v) = DB1_STR;
+			return 0;
 
-	default:
-		return -10;
+		case DB1_DATETIME:
+			LM_DBG("converting DATETIME [%s]\n", _s);
+			if(db_str2time(_s, &VAL_TIME(_v)) < 0) {
+				LM_ERR("error while converting datetime value from string\n");
+				return -8;
+			} else {
+				VAL_TYPE(_v) = DB1_DATETIME;
+				return 0;
+			}
+			break;
+
+		case DB1_BLOB:
+			LM_DBG("converting BLOB [%.*s]\n", _l, _s);
+
+			if(_cpy == 0) {
+				VAL_BLOB(_v).s = (char *)_s;
+			} else {
+				VAL_BLOB(_v).s = pkg_malloc(_l);
+				if(VAL_BLOB(_v).s == NULL) {
+					PKG_MEM_ERROR;
+					return -9;
+				}
+				LM_DBG("allocate %d bytes memory for BLOB at %p\n", _l,
+						VAL_BLOB(_v).s);
+				strncpy(VAL_BLOB(_v).s, _s, _l);
+				VAL_FREE(_v) = 1;
+			}
+
+			VAL_BLOB(_v).len = _l;
+			VAL_TYPE(_v) = DB1_BLOB;
+			return 0;
+
+		default:
+			return -10;
 	}
 	return -10;
 }
@@ -225,87 +231,87 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
  * \param _len target string length
  * \return 0 on success, negative on error, 1 if value must be converted by other means
  */
-int db_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
+int db_val2str(const db1_con_t *_c, const db_val_t *_v, char *_s, int *_len)
 {
-	if (!_c || !_v || !_s || !_len || !*_len) {
+	if(!_c || !_v || !_s || !_len || !*_len) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (VAL_NULL(_v)) {
-		if (*_len < sizeof("NULL")) {
+	if(VAL_NULL(_v)) {
+		if(*_len < sizeof("NULL")) {
 			LM_ERR("buffer too small\n");
 			return -1;
 		}
 		*_len = snprintf(_s, *_len, "NULL");
 		return 0;
 	}
-	
+
 	switch(VAL_TYPE(_v)) {
-	case DB1_INT:
-		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {
-			LM_ERR("error while converting int to string\n");
-			return -2;
-		} else {
-			return 0;
-		}
-		break;
+		case DB1_INT:
+			if(db_int2str(VAL_INT(_v), _s, _len) < 0) {
+				LM_ERR("error while converting int to string\n");
+				return -2;
+			} else {
+				return 0;
+			}
+			break;
 
-	case DB1_UINT:
-		if (db_uint2str(VAL_UINT(_v), _s, _len) < 0) {
-			LM_ERR("error while converting unsigned int to string\n");
-			return -2;
-		} else {
-			return 0;
-		}
-		break;
+		case DB1_UINT:
+			if(db_uint2str(VAL_UINT(_v), _s, _len) < 0) {
+				LM_ERR("error while converting unsigned int to string\n");
+				return -2;
+			} else {
+				return 0;
+			}
+			break;
 
-	case DB1_BIGINT:
-		if (db_longlong2str(VAL_BIGINT(_v), _s, _len) < 0) {
-			LM_ERR("error while converting big int to string\n");
-			return -3;
-		} else {
-			return 0;
-		}
-		break;
+		case DB1_BIGINT:
+			if(db_longlong2str(VAL_BIGINT(_v), _s, _len) < 0) {
+				LM_ERR("error while converting big int to string\n");
+				return -3;
+			} else {
+				return 0;
+			}
+			break;
 
-	case DB1_UBIGINT:
-		if (db_ulonglong2str(VAL_UBIGINT(_v), _s, _len) < 0) {
-			LM_ERR("error while converting unsigned big int to string\n");
-			return -3;
-		} else {
-			return 0;
-		}
-		break;
+		case DB1_UBIGINT:
+			if(db_ulonglong2str(VAL_UBIGINT(_v), _s, _len) < 0) {
+				LM_ERR("error while converting unsigned big int to string\n");
+				return -3;
+			} else {
+				return 0;
+			}
+			break;
 
-	case DB1_BITMAP:
-		if (db_uint2str(VAL_BITMAP(_v), _s, _len) < 0) {
-			LM_ERR("error while converting bitmap to string\n");
-			return -4;
-		} else {
-			return 0;
-		}
-		break;
+		case DB1_BITMAP:
+			if(db_uint2str(VAL_BITMAP(_v), _s, _len) < 0) {
+				LM_ERR("error while converting bitmap to string\n");
+				return -4;
+			} else {
+				return 0;
+			}
+			break;
 
-	case DB1_DOUBLE:
-		if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
-			LM_ERR("error while converting double to string\n");
-			return -5;
-		} else {
-			return 0;
-		}
-		break;
+		case DB1_DOUBLE:
+			if(db_double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
+				LM_ERR("error while converting double to string\n");
+				return -5;
+			} else {
+				return 0;
+			}
+			break;
 
-	case DB1_DATETIME:
-		if (db_time2str(VAL_TIME(_v), _s, _len) < 0) {
-			LM_ERR("failed to convert time_t string\n");
-			return -8;
-		} else {
-			return 0;
-		}
-		break;
+		case DB1_DATETIME:
+			if(db_time2str(VAL_TIME(_v), _s, _len) < 0) {
+				LM_ERR("failed to convert time_t string\n");
+				return -8;
+			} else {
+				return 0;
+			}
+			break;
 
-	default:
-		return 1;
+		default:
+			return 1;
 	}
 }

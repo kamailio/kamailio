@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -28,15 +28,15 @@
 
 #include <presence/notifier_domain.h>
 
-typedef struct _subscription_info_t {
+typedef struct _subscription_info_t
+{
 
 	client_notify_func notify;
 	str_t record_id;
-	str_t package;	
+	str_t package;
 	subscription_t *subscription;
-	
+
 	struct _subscription_info_t *prev, *next;
 } subscription_info_t;
 
 #endif
-

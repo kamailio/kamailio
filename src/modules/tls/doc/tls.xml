@@ -73,6 +73,11 @@
 			to crashes because it destroys and then accesses shared memory. For
 			example, such case has been reported for Ubuntu 20.04 or RedHat 8.
 		</para>
+		<para>
+			Note: with some particular combination of OS, openssl and mysql-client
+			libraries, there were reports of random crashes, in such case try to set
+			the db_mysql module parameter opt_ssl_mode to 1.
+		</para>
 	</section>
 	<section id="tls.quick_start">
 		<title>Quick Start</title>
@@ -131,14 +136,9 @@ request_route {
 			options, run kamailio -V and look for USE_TLS and TLS_HOOKS among the flags.
 		</para>
 		<para>
-			For OpenSSL (libssl) v1.1.x, it is required to preload
-			'openssl_mutex_shared' library shipped by &kamailio;. For more details
-			see 'src/modules/tls/utils/openssl_mutex_shared/README.md'.
-		</para>
-		<para>
 			This module includes several workarounds for various Openssl bugs
 			(like compression and Kerberos using the wrong memory allocations
-			functions, low memory problems a.s.o). On startup it will try to enable 
+			functions, low memory problems a.s.o). On startup it will try to enable
 			the needed workarounds based on the OpenSSL library version. Each time
 			a known problem is detected and a workaround is enabled, a message will
 			be logged. In general it is recommended to compile this module on the
@@ -163,7 +163,7 @@ request_route {
  			(see <varname>tls_disable_compression</varname>).
 		</para>
 		<para>
-			The TLS module includes workarounds for the following known openssl bugs: 
+			The TLS module includes workarounds for the following known openssl bugs:
 			<itemizedlist>
                         <listitem><para>
 			openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if compression is enabled,
@@ -173,7 +173,7 @@ request_route {
 			openssl #1468 (fix zlib compression memory allocation),
                         </para></listitem>
                         <listitem><para>
-			openssl #1467 (kerberos support will be disabled if the openssl version is less than 0.9.8e-beta1) 
+			openssl #1467 (kerberos support will be disabled if the openssl version is less than 0.9.8e-beta1)
                         </para></listitem>
                         <listitem><para>
 			openssl #1491 (stop using tls in low memory situations due to the very high risk of openssl crashing or leaking memory).
@@ -228,7 +228,7 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 			allocations start to fail (due to memory shortage), Openssl can crash or cause memory
 			leaks (making the memory shortage even worse). As of this writing all Openssl versions
 			were affected (including 0.9.8e), see Openssl bug #1491. The TLS module has some
-			workarounds for preventing this problem (see <varname>low_mem_treshold1</varname>
+			workarounds for preventing this problem (see <varname>low_mem_threshold1</varname>
 			and <varname>low_mem_threshold2</varname>), however starting Kamailio with enough shared
 			memory is higly recommended. When this is not possible a quick way to significantly
 			reduce Openssl memory usage it to  disable compression (see <varname>tls_disable_compression</varname>).

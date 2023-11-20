@@ -26,7 +26,7 @@
 #include "../../core/utils/srjson.h"
 #include "../../core/route_struct.h"
 
-int dbg_get_json(struct sip_msg* msg, unsigned int mask, srjson_doc_t *jdoc,
-	srjson_t *head);
-int dbg_dump_json(struct sip_msg* msg, unsigned int mask, int level);
+int dbg_get_json(struct sip_msg *msg, unsigned int mask, srjson_doc_t *jdoc,
+		srjson_t *head);
+int dbg_dump_json(struct sip_msg *msg, unsigned int mask, int level);
 #endif

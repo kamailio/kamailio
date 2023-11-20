@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
 
 	int so;
 	struct sockaddr_in sa;
-		
+
 	while ((opt = getopt(argc, argv, "m:i:p:vhdl:")) != -1) {
 		switch (opt) {
 		case 'm':
@@ -272,13 +272,13 @@ int main(int argc, char *argv[]) {
 		LERR("cannot initialize backend.\n");
 		return -1;
 	}
-	
+
 	so = socket(AF_INET, SOCK_DGRAM, 0);
 	if (so<0) {
 		LERR("socket() failed with errno=%d (%s)\n", errno, strerror(errno));
 		return -1;
 	}
-	
+
 	memset(&sa, 0, sizeof(sa));
 	sa.sin_family = AF_INET;
 	sa.sin_port = htons(bind_port);
@@ -287,13 +287,13 @@ int main(int argc, char *argv[]) {
 		close(so);
 		return -1;
 	}
-	
+
 	if (bind(so, (struct sockaddr *) &sa, sizeof(sa))<0) {
 		LERR("bind() failed with errno=%d (%s)\n", errno, strerror(errno));
 		close(so);
 		return -1;
 	}
-	
+
 	udp_server(so);
 	close(so);
 

@@ -15,15 +15,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
 /*! \file
  * \brief Kamailio presence module :: Hash tables
- * \ingroup presence 
+ * \ingroup presence
  */
 
 
@@ -140,9 +140,10 @@ int delete_phtable(str *pres_uri, int event);
 
 void destroy_phtable(void);
 
-int delete_db_subs(str* to_tag, str* from_tag, str* callid);
+int delete_db_subs(str *to_tag, str *from_tag, str *callid);
 
-typedef struct ps_presentity {
+typedef struct ps_presentity
+{
 	uint32_t bsize;
 	uint32_t hashid;
 	str user;
@@ -159,12 +160,14 @@ typedef struct ps_presentity {
 	struct ps_presentity *prev;
 } ps_presentity_t;
 
-typedef struct ps_pslot {
+typedef struct ps_pslot
+{
 	ps_presentity_t *plist;
 	gen_lock_t lock;
 } ps_pslot_t;
 
-typedef struct ps_ptable {
+typedef struct ps_ptable
+{
 	int ssize;
 	ps_pslot_t *slots;
 } ps_ptable_t;
@@ -180,7 +183,8 @@ int ps_ptable_replace(ps_presentity_t *ptm, ps_presentity_t *pt);
 int ps_ptable_update(ps_presentity_t *ptm, ps_presentity_t *pt);
 int ps_ptable_remove(ps_presentity_t *pt);
 ps_presentity_t *ps_ptable_get_list(str *user, str *domain);
-ps_presentity_t *ps_ptable_get_item(str *user, str *domain, str *event, str *etag);
+ps_presentity_t *ps_ptable_get_item(
+		str *user, str *domain, str *event, str *etag);
 ps_presentity_t *ps_ptable_search(ps_presentity_t *ptm, int mmode, int rmode);
 ps_presentity_t *ps_ptable_get_expired(int eval);
 ps_ptable_t *ps_ptable_get(void);

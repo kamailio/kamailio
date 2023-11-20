@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -34,7 +34,8 @@ int ptr_vector_add(ptr_vector_t *vector, void *ptr)
 void *ptr_vector_get(ptr_vector_t *vector, int index)
 {
 	void *ptr = NULL;
-	if (vector_get(vector, index, &ptr) != 0) return NULL;
+	if(vector_get(vector, index, &ptr) != 0)
+		return NULL;
 	return ptr;
 }
 
@@ -52,4 +53,3 @@ int ptr_vector_init(vector_t *vector, int allocation_count)
 {
 	return vector_init(vector, sizeof(void *), allocation_count);
 }
-

@@ -11,7 +11,7 @@ import sys
 
 from collections import defaultdict
 
-#python 3.2 doesnt support types.Union
+#python 3.2 doesn't support types.Union
 noUnion = False
 
 def printMocReturn(module_name, func, indent):

@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * LDAP Database Driver for SER
  *
@@ -18,7 +18,7 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -26,7 +26,7 @@
 #define _LD_RES_H
 
 /** \addtogroup ldap
- * @{ 
+ * @{
  */
 
 /** \file
@@ -39,13 +39,14 @@
 
 #include <ldap.h>
 
-struct ld_res {
+struct ld_res
+{
 	db_drv_t gen;
-	LDAPMessage* msg;
-	LDAPMessage* current;
+	LDAPMessage *msg;
+	LDAPMessage *current;
 };
 
-int ld_res(db_res_t* res);
+int ld_res(db_res_t *res);
 
 /** @} */
 

@@ -465,7 +465,7 @@ int sca_call_is_held(sip_msg_t *msg)
 		return (0);
 	}
 
-	// Cf. modules_k/textops's exported is_audio_on_hold
+	// Cf. modules_k/textops' exported is_audio_on_hold
 	for(n_sess = 0, session = get_sdp_session(msg, n_sess); session != NULL;
 			n_sess++, session = get_sdp_session(msg, n_sess)) {
 

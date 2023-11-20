@@ -10,14 +10,14 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section id="xlog.overview">
 	<title>Overview</title>
 	<para>
 		This module provides the possibility to print user formatted log or
-		debug messages from &kamailio; scripts, similar to the printf function. 
+		debug messages from &kamailio; scripts, similar to the printf function.
 		A C-style printf specifier is replaced with a part of the &sip; request or other
 		variables from system.
 	</para>
@@ -194,7 +194,7 @@ modparam("xlog", "prefix_mode", 1)
 		<title><varname>log_facility</varname> (string)</title>
 		<para>
 		Syslog facility to be used for the xlog output.
-		By setting this, and configuring syslog, you can get the xlog messages 
+		By setting this, and configuring syslog, you can get the xlog messages
 		in a separate syslog file than the debug messages issued from the source code.
 		</para>
 		<para>
@@ -256,7 +256,7 @@ kamcmd cfg.set_now_int xlog methods_filter 15
 		<title>Set <varname>methods_filter</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("xlog", "long_format", 1)
+modparam("xlog", "methods_filter", 15)
 ...
 </programlisting>
 		</example>
@@ -344,7 +344,7 @@ modparam("xlog", "long_format", 1)
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>format</emphasis> - The formatted string to be printed. 
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
 			</para>
 		</listitem>
 		</itemizedlist>

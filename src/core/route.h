@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -47,16 +47,16 @@
 #define REQUEST_ROUTE (1 << 0)
 #define FAILURE_ROUTE (1 << 1)
 #define TM_ONREPLY_ROUTE (1 << 2)
-#define BRANCH_ROUTE  (1 << 3)
-#define ONSEND_ROUTE  (1 << 4)
-#define ERROR_ROUTE   (1 << 5)
-#define LOCAL_ROUTE   (1 << 6)
+#define BRANCH_ROUTE (1 << 3)
+#define ONSEND_ROUTE (1 << 4)
+#define ERROR_ROUTE (1 << 5)
+#define LOCAL_ROUTE (1 << 6)
 #define CORE_ONREPLY_ROUTE (1 << 7)
 #define BRANCH_FAILURE_ROUTE (1 << 8)
-#define ONREPLY_ROUTE (TM_ONREPLY_ROUTE|CORE_ONREPLY_ROUTE)
+#define ONREPLY_ROUTE (TM_ONREPLY_ROUTE | CORE_ONREPLY_ROUTE)
 #define ONEVENT_ROUTE (1 << 9)
-#define EVENT_ROUTE   (REQUEST_ROUTE|ONEVENT_ROUTE)
-#define ANY_ROUTE     (0xFFFFFFFF)
+#define EVENT_ROUTE (REQUEST_ROUTE | ONEVENT_ROUTE)
+#define ANY_ROUTE (0xFFFFFFFF)
 
 /* The value of this variable is one of the route types defined above and it
  * determines the type of the route being executed, module functions can use
@@ -65,18 +65,19 @@
 extern int route_type;
 
 #define set_route_type(type) \
-	do {					 \
+	do {                     \
 		route_type = (type); \
 	} while(0)
 
-#define get_route_type()	route_type
+#define get_route_type() route_type
 
 #define is_route_type(type) (route_type & (type))
 
-struct route_list{
-	struct action** rlist;
-	int idx; /* first empty entry */
-	int entries; /* total number of entries */
+struct route_list
+{
+	struct action **rlist;
+	int idx;					 /* first empty entry */
+	int entries;				 /* total number of entries */
 	struct str_hash_table names; /* name to route index mappings */
 };
 
@@ -95,21 +96,20 @@ extern int scr_opt_lev;
 
 int init_routes(void);
 void destroy_routes(void);
-int route_get(struct route_list* rt, char* name);
-int route_lookup(struct route_list* rt, char* name);
+int route_get(struct route_list *rt, char *name);
+int route_lookup(struct route_list *rt, char *name);
 
-void push(struct action* a, struct action** head);
-int add_actions(struct action* a, struct action** head);
+void push(struct action *a, struct action **head);
+int add_actions(struct action *a, struct action **head);
 void print_rls(void);
 int fix_rls(void);
 
-int eval_expr(struct run_act_ctx* h, struct expr* e, struct sip_msg* msg);
+int eval_expr(struct run_act_ctx *h, struct expr *e, struct sip_msg *msg);
 
 
 /* fixup functions*/
-int fix_actions(struct action* a);
-int fix_expr(struct expr* exp);
-
+int fix_actions(struct action *a);
+int fix_expr(struct expr *exp);
 
 
 #endif

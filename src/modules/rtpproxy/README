@@ -22,7 +22,7 @@ Carsten Bock
 
    ng-voice GmbH
 
-   Copyright © 2003-2008 Sippy Software, Inc.
+   Copyright © 2003-2023 Sippy Software, Inc.
 
    Copyright © 2005 Voice Sistem SRL
 
@@ -50,11 +50,12 @@ Carsten Bock
               4.4. rtpproxy_retr (integer)
               4.5. nortpproxy_str (string)
               4.6. timeout_socket (string)
-              4.7. ice_candidate_priority_avp (string)
-              4.8. extra_id_pv (string)
-              4.9. db_url (string)
-              4.10. table_name (string)
-              4.11. rtp_inst_pvar (string)
+              4.7. timeout_tag_pv (string)
+              4.8. ice_candidate_priority_avp (string)
+              4.9. extra_id_pv (string)
+              4.10. db_url (string)
+              4.11. table_name (string)
+              4.12. rtp_inst_pvar (string)
 
         5. Functions
 
@@ -90,23 +91,24 @@ Carsten Bock
    1.4. Set rtpproxy_retr parameter
    1.5. Set nortpproxy_str parameter
    1.6. Set timeout_socket parameter
-   1.7. Set ice_candidate_priority_avp parameter
-   1.8. Set extra_id_pv parameter
-   1.9. Set db_url parameter
-   1.10. Set table_name parameter
-   1.11. Set rtp_inst_pvar parameter
-   1.12. rtp_inst_pvar usage
-   1.13. set_rtp_proxy_set usage
-   1.14. rtpproxy_offer usage
-   1.15. rtpproxy_answer usage
-   1.16. rtpproxy_destroy usage
-   1.17. rtpproxy_manage usage
-   1.18. rtpproxy_stream2xxx usage
-   1.19. rtpproxy_stop_stream2uas usage
-   1.20. start_recording usage
-   1.21. $rtppstat Usage
-   1.22. rtpproxy.enable usage
-   1.23. rtpproxy.list usage
+   1.7. Set timeout_tag_pv parameter
+   1.8. Set ice_candidate_priority_avp parameter
+   1.9. Set extra_id_pv parameter
+   1.10. Set db_url parameter
+   1.11. Set table_name parameter
+   1.12. Set rtp_inst_pvar parameter
+   1.13. rtp_inst_pvar usage
+   1.14. set_rtp_proxy_set usage
+   1.15. rtpproxy_offer usage
+   1.16. rtpproxy_answer usage
+   1.17. rtpproxy_destroy usage
+   1.18. rtpproxy_manage usage
+   1.19. rtpproxy_stream2xxx usage
+   1.20. rtpproxy_stop_stream2uas usage
+   1.21. start_recording usage
+   1.22. $rtppstat Usage
+   1.23. rtpproxy.enable usage
+   1.24. rtpproxy.list usage
 
 Chapter 1. Admin Guide
 
@@ -127,11 +129,12 @@ Chapter 1. Admin Guide
         4.4. rtpproxy_retr (integer)
         4.5. nortpproxy_str (string)
         4.6. timeout_socket (string)
-        4.7. ice_candidate_priority_avp (string)
-        4.8. extra_id_pv (string)
-        4.9. db_url (string)
-        4.10. table_name (string)
-        4.11. rtp_inst_pvar (string)
+        4.7. timeout_tag_pv (string)
+        4.8. ice_candidate_priority_avp (string)
+        4.9. extra_id_pv (string)
+        4.10. db_url (string)
+        4.11. table_name (string)
+        4.12. rtp_inst_pvar (string)
 
    5. Functions
 
@@ -159,12 +162,8 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This is a module that enables media streams to be proxied via an
-   rtpproxy. Rtpproxies know to work with this module are Sippy RTPproxy
-   http://www.rtpproxy.org and ngcp-rtpproxy-ng
-   http://deb.sipwise.com/spce/2.6/pool/main/n/ngcp-mediaproxy-ng. Some
-   features of the rtpproxy module apply only to one of the two
-   rtpproxies.
+   This is a module that enables media streams to be proxied via the Sippy
+   RTPproxy http://www.rtpproxy.org.
 
 2. Multiple RTPProxy usage
 
@@ -216,11 +215,12 @@ Chapter 1. Admin Guide
    4.4. rtpproxy_retr (integer)
    4.5. nortpproxy_str (string)
    4.6. timeout_socket (string)
-   4.7. ice_candidate_priority_avp (string)
-   4.8. extra_id_pv (string)
-   4.9. db_url (string)
-   4.10. table_name (string)
-   4.11. rtp_inst_pvar (string)
+   4.7. timeout_tag_pv (string)
+   4.8. ice_candidate_priority_avp (string)
+   4.9. extra_id_pv (string)
+   4.10. db_url (string)
+   4.11. table_name (string)
+   4.12. rtp_inst_pvar (string)
 
 4.1. rtpproxy_sock (string)
 
@@ -319,10 +319,29 @@ modparam("rtpproxy", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 
    Example 1.6. Set timeout_socket parameter
 ...
-modparam("rtpproxy", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
+modparam("rtpproxy", "timeout_socket", "tcp:127.0.0.1:8000")
 ...
 
-4.7. ice_candidate_priority_avp (string)
+4.7. timeout_tag_pv (string)
+
+   The parameter devines the AVP of the string to be provided to the
+   RTP-Proxy.
+
+   The content of the AVP must be a valid URL-encoded string with no
+   spaces. It will be decoded and send by the RTP proxy to the timeout
+   socket if the media timeout has happened.
+
+   This parameter is required in order for the timeout notification
+   mechanism to work properly.
+
+   Default value is “” (nothing).
+
+   Example 1.7. Set timeout_tag_pv parameter
+...
+modparam("rtpproxy", "timeout_tag_pv", "$avp(rtpp_ntag)")
+...
+
+4.8. ice_candidate_priority_avp (string)
 
    If specified and if value of the avp value is not 0, rtpproxy_manage
    function adds ICE relay candidate attributes to sdp stream(s)
@@ -334,12 +353,12 @@ modparam("rtpproxy", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
    There is no default value meaning that no ICE relay candidates are
    added in any circumstance.
 
-   Example 1.7. Set ice_candidate_priority_avp parameter
+   Example 1.8. Set ice_candidate_priority_avp parameter
 ...
 modparam("rtpproxy", "ice_candidate_priority_avp", "$avp(ice_priority)")
 ...
 
-4.8. extra_id_pv (string)
+4.9. extra_id_pv (string)
 
    The parameter sets the PV definition to use when the “b” parameter is
    used on unforce_rtp_proxy(), rtpproxy_offer(), rtpproxy_answer() or
@@ -347,12 +366,12 @@ modparam("rtpproxy", "ice_candidate_priority_avp", "$avp(ice_priority)")
 
    Default is empty, the “b” parameter may not be used then.
 
-   Example 1.8. Set extra_id_pv parameter
+   Example 1.9. Set extra_id_pv parameter
 ...
 modparam("rtpproxy", "extra_id_pv", "$avp(extra_id)")
 ...
 
-4.9. db_url (string)
+4.10. db_url (string)
 
    The database URL to load rtp_proxy sets from. If this parameter is set,
    the module will attempt to load the rtpproxy sets from the specified
@@ -360,23 +379,23 @@ modparam("rtpproxy", "extra_id_pv", "$avp(extra_id)")
 
    Default is empty, a database will not be used.
 
-   Example 1.9. Set db_url parameter
+   Example 1.10. Set db_url parameter
 ...
-modparam("rtpproxy", "db_url", "mysql://user:passwb@localhost/database")
+modparam("rtpproxy", "db_url", "mysql://user:passwd@localhost/database")
 ...
 
-4.10. table_name (string)
+4.11. table_name (string)
 
    The name of the table containing the rtpproxy sets.
 
    Default value is “rtpproxy”.
 
-   Example 1.10. Set table_name parameter
+   Example 1.11. Set table_name parameter
 ...
 modparam("rtpproxy", "table_name", "my_rtpp_sets")
 ...
 
-4.11. rtp_inst_pvar (string)
+4.12. rtp_inst_pvar (string)
 
    A pseudo variable to store the chosen RTPProxy address. If this
    parameter is set, the instance URL will be stored in the given
@@ -384,12 +403,12 @@ modparam("rtpproxy", "table_name", "my_rtpp_sets")
 
    By default, this parameter is not set.
 
-   Example 1.11. Set rtp_inst_pvar parameter
+   Example 1.12. Set rtp_inst_pvar parameter
 ...
 modparam("rtpproxy", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
 ...
 
-   Example 1.12. rtp_inst_pvar usage
+   Example 1.13. rtp_inst_pvar usage
 modparam("rtpproxy", "rtpproxy_sock",
         "udp:localhost:12221 udp:localhost:12222")
 modparam("rtpproxy", "rtp_inst_pvar", "$var(RTP_INSTANCE)")
@@ -423,7 +442,7 @@ xlog("L_INFO", "Chose rtpp instance $var(RTP_INSTANCE)\n");
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.13. set_rtp_proxy_set usage
+   Example 1.14. set_rtp_proxy_set usage
 ...
 set_rtp_proxy_set("2");
 rtpproxy_offer();
@@ -501,9 +520,8 @@ rtpproxy_offer();
             different m-lines with different IP-protocols grouped
             together.
           + f - instructs rtpproxy to ignore marks inserted by another
-            rtpproxy in transit to indicate that the session is already
-            goes through another proxy. Allows creating a chain of
-            proxies.
+            rtpproxy in transit to indicate that the session already goes
+            through another proxy. Allows creating a chain of proxies.
           + r - flags that IP address in SDP should be trusted. Without
             this flag, rtpproxy ignores address in the SDP and uses source
             address of the SIP message as media address which is passed to
@@ -529,7 +547,7 @@ rtpproxy_offer();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.14. rtpproxy_offer usage
+   Example 1.15. rtpproxy_offer usage
 route {
 ...
     if (is_method("INVITE")) {
@@ -573,7 +591,7 @@ onreply_route[2]
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.15. rtpproxy_answer usage
+   Example 1.16. rtpproxy_answer usage
 
    See rtpproxy_offer() function example above for example.
 
@@ -608,7 +626,7 @@ onreply_route[2]
             rtpproxy call when 200 OK is received on a branch, where
             rtpproxy is not needed.
 
-   Example 1.16. rtpproxy_destroy usage
+   Example 1.17. rtpproxy_destroy usage
 ...
 rtpproxy_destroy();
 ...
@@ -648,7 +666,7 @@ rtpproxy_destroy();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.17. rtpproxy_manage usage
+   Example 1.18. rtpproxy_manage usage
 ...
 rtpproxy_manage();
 ...
@@ -684,7 +702,7 @@ rtpproxy_manage();
        -1 means that it will be streaming in a loop indefinitely, until
        the appropriate rtpproxy_stop_stream2xxx is issued.
 
-   Example 1.18. rtpproxy_stream2xxx usage
+   Example 1.19. rtpproxy_stream2xxx usage
 ...
     if (is_method("INVITE")) {
         rtpproxy_offer();
@@ -713,7 +731,7 @@ rtpproxy_manage();
 
    See function rtpproxy_stop_stream2uac().
 
-   Example 1.19. rtpproxy_stop_stream2uas usage
+   Example 1.20. rtpproxy_stop_stream2uas usage
 ...
     if (is_method("INVITE")) {
         rtpproxy_offer();
@@ -733,7 +751,7 @@ rtpproxy_manage();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.20. start_recording usage
+   Example 1.21. start_recording usage
 ...
 start_recording();
 ...
@@ -751,7 +769,7 @@ start_recording();
    deleted (before unforce_rtpproxy()). It is the output of RTPProxy 'Q'
    command.
 
-   Example 1.21. $rtppstat Usage
+   Example 1.22. $rtppstat Usage
 ...
     append_hf("X-RTP-Statistics: $rtppstat\r\n");
 ...
@@ -778,7 +796,7 @@ start_recording();
    NOTE: if a rtpproxy is defined multiple times (in the same or different
    sets), all of its instances will be enabled/disabled.
 
-   Example 1.22.  rtpproxy.enable usage
+   Example 1.23.  rtpproxy.enable usage
 ...
 $ kamcmd rtpproxy.enable udp:192.168.2.133:8081 0
 ...
@@ -790,7 +808,7 @@ $ kamcmd rtpproxy.enable udp:192.168.2.133:8081 0
 
    No parameter.
 
-   Example 1.23.  rtpproxy.list usage
+   Example 1.24.  rtpproxy.list usage
 ...
 $ kamcmd rtpproxy.list
 ...
@@ -823,9 +841,11 @@ Chapter 2. Frequently Asked Questions
    First at all check if your question was already answered on one of our
    mailing lists:
      * User Mailing List -
-       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
+       https://lists.kamailio.org/mailman3/postorius/lists/sr-users.lists.
+       kamailio.org/
      * Developer Mailing List -
-       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
+       https://lists.kamailio.org/mailman3/postorius/lists/sr-dev.lists.ka
+       mailio.org/
 
    E-mails regarding any stable Kamailio release should be sent to
    <sr-users@lists.kamailio.org> and e-mails regarding development

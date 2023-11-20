@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -40,12 +40,16 @@ int get_str_attr(xmlNode *n, const char *attr_name, str_t *dst);
 
 time_t xmltime2time(const char *xt);
 
-#define SEQUENCE(type)	type*
-#define SEQUENCE_ABLE(type)	type *__next;
-#define SEQUENCE_ADD(first,last,e) do { \
-	if (last) last->__next = e; \
-	else first = e; \
-	last = e; } while(0);
+#define SEQUENCE(type) type *
+#define SEQUENCE_ABLE(type) type *__next;
+#define SEQUENCE_ADD(first, last, e) \
+	do {                             \
+		if(last)                     \
+			last->__next = e;        \
+		else                         \
+			first = e;               \
+		last = e;                    \
+	} while(0);
 #define SEQUENCE_FIRST(first) first
 #define SEQUENCE_NEXT(e) (e)->__next
 

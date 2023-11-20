@@ -9,11 +9,11 @@ Kamailio Project uses GitHub Issues only for bugs in the code or feature request
 
 If you have questions about using Kamailio or related to its configuration file, ask on sr-users mailing list:
 
-  * http://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
+  * https://lists.kamailio.org/mailman3/postorius/lists/sr-users.lists.kamailio.org/
 
 If you have questions about developing extensions to Kamailio or its existing C code, ask on sr-dev mailing list:
 
-  * http://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
+  * https://lists.kamailio.org/mailman3/postorius/lists/sr-dev.lists.kamailio.org/
 
 Please try to fill this template as much as possible for any issue. It helps the developers to troubleshoot the issue.
 

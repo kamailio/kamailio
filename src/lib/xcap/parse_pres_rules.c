@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -38,21 +38,22 @@ char *pres_rules_ns = NULL;
 
 static int str2sub_handling(const char *s, sub_handling_t *dst)
 {
-	if (!s) return RES_INTERNAL_ERR;
-	
-	if (strcmp(s, "allow") == 0) {
+	if(!s)
+		return RES_INTERNAL_ERR;
+
+	if(strcmp(s, "allow") == 0) {
 		*dst = sub_handling_allow;
 		return 0;
 	}
-	if (strcmp(s, "block") == 0) {
+	if(strcmp(s, "block") == 0) {
 		*dst = sub_handling_block;
 		return 0;
 	}
-	if (strcmp(s, "polite-block") == 0) {
+	if(strcmp(s, "polite-block") == 0) {
 		*dst = sub_handling_polite_block;
 		return 0;
 	}
-	if (strcmp(s, "confirm") == 0) {
+	if(strcmp(s, "confirm") == 0) {
 		*dst = sub_handling_confirm;
 		return 0;
 	}
@@ -65,19 +66,22 @@ static int read_pres_actions(xmlNode *an, cp_actions_t **dst)
 	xmlNode *n;
 	const char *s;
 	int res = RES_OK;
-	if ((!an) || (!dst)) return RES_INTERNAL_ERR;
-	
-	*dst = (cp_actions_t*)cds_malloc(sizeof(cp_actions_t));
-	if (!(*dst)) return RES_MEMORY_ERR;
+	if((!an) || (!dst))
+		return RES_INTERNAL_ERR;
+
+	*dst = (cp_actions_t *)cds_malloc(sizeof(cp_actions_t));
+	if(!(*dst))
+		return RES_MEMORY_ERR;
 	memset(*dst, 0, sizeof(cp_actions_t));
 
 	n = find_node(an, "sub-handling", pres_rules_ns);
-	if (n) {
+	if(n) {
 		/* may be only one sub-handling node? */
 		s = get_node_value(n);
 		(*dst)->unknown = create_unknown(sizeof(sub_handling_t));
-		if (!(*dst)->unknown) return RES_MEMORY_ERR;
-		res = str2sub_handling(s, (sub_handling_t*)(*dst)->unknown->data);
+		if(!(*dst)->unknown)
+			return RES_MEMORY_ERR;
+		res = str2sub_handling(s, (sub_handling_t *)(*dst)->unknown->data);
 	}
 
 	return res;
@@ -85,6 +89,6 @@ static int read_pres_actions(xmlNode *an, cp_actions_t **dst)
 
 int parse_pres_rules(const char *data, int dsize, cp_ruleset_t **dst)
 {
-	return parse_common_rules(data, dsize, dst, read_pres_actions, free_pres_actions);
+	return parse_common_rules(
+			data, dsize, dst, read_pres_actions, free_pres_actions);
 }
-

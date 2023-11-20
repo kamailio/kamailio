@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -26,7 +26,7 @@
 
 #include "../pua/pua_bind.h"
 
-int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2);
-int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg);
+int Notify2Xmpp(struct sip_msg *msg, char *s1, char *s2);
+int Sipreply2Xmpp(ua_pres_t *hentity, struct sip_msg *msg);
 
 #endif

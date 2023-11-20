@@ -723,7 +723,7 @@ reg_free_contacts("callee");
 
    This function checks to see that a SUBSCRIBE request is authorised to
    subscribe to the particular identity. Only 3 entities can subscribe:
-     * The user agent to it's own state
+     * The user agent to its own state
      * The P-CSCF specified in the path header for that user
      * Application Server (AS) not yet implemented
 
@@ -760,7 +760,7 @@ if (can_subscribe_to_reg("location")){
 
    This function checks to see that a PUBLISH request is authorised to
    publish for a particular identity. Only 3 entities can publish:
-     * The user agent to it's own state
+     * The user agent to its own state
      * The P-CSCF specified in the path header for that user
      * Application Server (AS) not yet implemented
 
@@ -842,9 +842,11 @@ Chapter 2. Frequently Asked Questions
    First at all check if your question was already answered on one of our
    mailing lists:
      * User Mailing List -
-       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
+       https://lists.kamailio.org/mailman3/postorius/lists/sr-users.lists.
+       kamailio.org/
      * Developer Mailing List -
-       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
+       https://lists.kamailio.org/mailman3/postorius/lists/sr-dev.lists.ka
+       mailio.org/
 
    E-mails regarding any stable Kamailio release should be sent to
    <sr-users@lists.kamailio.org> and e-mails regarding development

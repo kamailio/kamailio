@@ -128,7 +128,7 @@ Options:
                                  C code.
          -s | --src | --source - name of the source file, needed only if
                                  the input file is in "raw" translation
-                                 unit format (--tu) and usefull to restrict
+                                 unit format (--tu) and useful to restrict
                                  and speed-up the search.
          --patch               - show patches needed for the
                                  GCC::TranslationUnit package.
@@ -389,7 +389,7 @@ if (@cfg_defs > 0){
 	my $no=@cfg_default;
 	$i=0;
 	if ($no > 0 && @cfg_defs != $no) {
-		print(STDERR "WARNING: different array lenghts ($def_cfg_name($no) &&",
+		print(STDERR "WARNING: different array lengths ($def_cfg_name($no) &&",
 				" $cfg_var_name($(scalar @cfg_defs)))\n");
 		$no=0;
 	}

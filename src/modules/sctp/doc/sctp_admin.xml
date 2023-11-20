@@ -143,7 +143,7 @@ modparam("sctp", "sctp_autoclose", 300)
 		</para>
 		<para>
 		<emphasis>
-			Default value is 32000 (miliseconds - 32 seconds).
+			Default value is 32000 (milliseconds - 32 seconds).
 		</emphasis>
 		</para>
 		<example>
@@ -172,7 +172,7 @@ modparam("sctp", "sctp_send_ttl", 10000)
 			"multiplying" traffic to unresponding hosts.
 		</para>
 		<para>
-			Can be changed at runtime. 
+			Can be changed at runtime.
 		</para>
 		<para>
 		<emphasis>
@@ -211,7 +211,7 @@ modparam("sctp", "sctp_send_retries", 1)
 		</para>
 		<para>
 			Config options depending on sctp_assoc_tracking being on:
-			sctp_assoc_reuse. 
+			sctp_assoc_reuse.
 		</para>
 		<para>
 		<emphasis>
@@ -241,7 +241,7 @@ modparam("sctp", "sctp_assoc_tracking", 0)
 			rport is turned on (force_rport() or via containing a rport
 			option), the association will be automatically reused by the
 			sctp stack. Can be changed at runtime (sctp assoc_reuse), but it
-			can be turned on only if sctp_assoc_tracking is on. 
+			can be turned on only if sctp_assoc_tracking is on.
 		</para>
 		<para>
 		<emphasis>
@@ -277,7 +277,7 @@ modparam("sctp", "sctp_assoc_reuse", 0)
 			association and no packet will be sent. However if
 			sctp_assoc_tracking is off, the association will first be opened
 			and then immediately closed. In general this means that the initial
-			sip packet will be sent (as part of the 4-way handshake). 
+			sip packet will be sent (as part of the 4-way handshake).
 		</para>
 		<para>
 		<emphasis>
@@ -297,12 +297,12 @@ modparam("sctp", "sctp_max_assocs", 10)
 	<section id="sctp.p.sctp_srto_initial">
 		<title><varname>sctp_srto_initial</varname> (int)</title>
 		<para>
-			Initial value of the retransmission timeout (in miliseconds),
+			Initial value of the retransmission timeout (in milliseconds),
 			used in RTO calculations.
 		</para>
 		<para>
 			Can be changed at runtime (sctp srto_initial) but it will affect
-			only new associations. 
+			only new associations.
 		</para>
 		<para>
 		<emphasis>
@@ -325,13 +325,13 @@ modparam("sctp", "sctp_srto_initial", 1000)
 			Maximum value of the retransmission timeout (RTO) in milliseconds.
 		</para>
 		<para>
-			WARNING: values lower then the sctp sack_delay will cause lots
+			WARNING: values lower than the sctp sack_delay will cause lots
 			of retransmissions and connection instability (see sctp_srto_min
 			for more details).
 		</para>
 		<para>
 			Can be changed at runtime (sctp srto_max) but it will affect only
-			new associations. 
+			new associations.
 		</para>
 		<para>
 		<emphasis>
@@ -354,16 +354,16 @@ modparam("sctp", "sctp_srto_max", 2000)
 			Minimum value of the retransmission timeout (RTO) in milliseconds.
 		</para>
 		<para>
-			WARNING: values lower then the sctp sack_delay of any peer might
+			WARNING: values lower than the sctp sack_delay of any peer might
 			cause retransmissions and possible interoperability problems.
 			According to the standard the sack_delay should be between 200
-			and 500 ms, so avoid trying values lower then 500 ms unless you
+			and 500 ms, so avoid trying values lower than 500 ms unless you
 			control all the possible sctp peers and you do make sure their
 			sack_delay is higher or their sack_freq is 1.
 		</para>
 		<para>
 			Can be changed at runtime (sctp srto_min) but it will affect only
-			new associations. 
+			new associations.
 		</para>
 		<para>
 		<emphasis>
@@ -388,7 +388,7 @@ modparam("sctp", "sctp_srto_min", 800)
 		</para>
 		<para>
 			Can be changed at runtime (sctp asocmaxrxt) but it will affect
-			only new associations. 
+			only new associations.
 		</para>
 		<para>
 		<emphasis>
@@ -411,7 +411,7 @@ modparam("sctp", "sctp_asocmaxrxt", 5)
 			Maximum INIT retransmission attempts.
 		</para>
 		<para>
-			Can be changed at runtime (sctp init_max_attempts). 
+			Can be changed at runtime (sctp init_max_attempts).
 		</para>
 		<para>
 		<emphasis>
@@ -432,10 +432,10 @@ modparam("sctp", "sctp_init_max_attempts", 3)
 		<title><varname>sctp_init_max_timeo</varname> (int)</title>
 		<para>
 			Maximum INIT retransmission timeout (RTO max for INIT) in
-			miliseconds.
+			milliseconds.
 		</para>
 		<para>
-			Can be changed at runtime (sctp init_max_timeo). 
+			Can be changed at runtime (sctp init_max_timeo).
 		</para>
 		<para>
 		<emphasis>
@@ -460,7 +460,7 @@ modparam("sctp", "sctp_init_max_timeo", 1000)
 		</para>
 		<para>
 			Can be changed at runtime (sctp hbinterval) but it will affect only
-			new associations. 
+			new associations.
 		</para>
 		<para>
 		<emphasis>
@@ -485,7 +485,7 @@ modparam("sctp", "sctp_hbinterval", 2000)
 		</para>
 		<para>
 			Can be changed at runtime (sctp pathmaxrxt) but it will affect
-			only new associations. 
+			only new associations.
 		</para>
 		<para>
 		<emphasis>
@@ -506,18 +506,18 @@ modparam("sctp", "sctp_pathmaxrxt", 2)
 		<title><varname>sctp_sack_delay</varname> (int)</title>
 		<para>
 			Delay until an ACK is generated after receiving a packet (in
-			miliseconds).
+			milliseconds).
 		</para>
 		<para>
-			WARNING: a value higher then srto_min can cause a lot of
-			retransmissions (and strange problems). A value higher then
+			WARNING: a value higher than srto_min can cause a lot of
+			retransmissions (and strange problems). A value higher than
 			srto_max will result in very high connections instability.
 			According to the standard the sack_delay value should be between
 			200 and 500 ms.
 		</para>
 		<para>
 			Can be changed at runtime (sctp sack_delay) but it will affect
-			only new associations. 
+			only new associations.
 		</para>
 		<para>
 		<emphasis>
@@ -547,7 +547,7 @@ modparam("sctp", "sctp_sack_delay", 400)
 		</para>
 		<para>
 			Can be changed at runtime (sctp sack_freq) but it will affect only
-			new associations. 
+			new associations.
 		</para>
 		<para>
 		<emphasis>
@@ -571,7 +571,7 @@ modparam("sctp", "sctp_sack_freq", 3)
 		</para>
 		<para>
 			Can be changed at runtime (sctp max_burst) but it will affect only
-			new associations. 
+			new associations.
 		</para>
 		<para>
 		<emphasis>

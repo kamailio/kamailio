@@ -15,7 +15,7 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
@@ -23,25 +23,26 @@
 #define _FLAT_URI_H
 
 /** \addtogroup flatstore
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * The functions parsing and interpreting flatstore: URIs.
  */
 
 #include "../../lib/srdb2/db_uri.h"
 #include "../../lib/srdb2/db_drv.h"
 
-/** Flatstore driver specific payload to attach to db_uri structures.  
+/** Flatstore driver specific payload to attach to db_uri structures.
  * This is the flatstore specific structure that will be attached to generic
  * db_uri structures in the database API in SER. The structure is used to
  * convert relative pathnames in flatstore URIs to absolute.
  */
-struct flat_uri {
+struct flat_uri
+{
 	db_drv_t drv;
 	/** Absolute pathname to the database directory, zero terminated */
-    str path;  
+	str path;
 };
 
 
@@ -52,7 +53,7 @@ struct flat_uri {
  * @retval 0 on success
  * @retval A negative number on error.
  */
-int flat_uri(db_uri_t* uri);
+int flat_uri(db_uri_t *uri);
 
 
 /** @} */

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <book id="sms" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -67,7 +67,7 @@
 		Romania, Connex = +40 722 123456 A number in this format is
 		expected to be placed as username into <acronym>RURI</acronym>
 		or in the To header. If <acronym>RURI</acronym> misses the
-		username, the To header will be consider. Also, the gateway
+		username, the To header will be considered. Also, the gateway
 		will advertise in this format the username in Contact headers
 		(in SIP replies and requests) and in From headers (in SIP
 		requests).

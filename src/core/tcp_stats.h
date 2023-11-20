@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -43,7 +43,8 @@
 
 #include "counters.h"
 
-struct tcp_counters_h {
+struct tcp_counters_h
+{
 	counter_handle_t established;
 	counter_handle_t passive_open;
 	counter_handle_t connect_success;
@@ -69,52 +70,46 @@ void tcp_stats_destroy(void);
  *  @param state - S_CONN_ACCEPT if it was the result of an accept()
  *               - S_CONN_CONNECT if it was the result of a connect()
  * Note: in general it will be called when the first packet was received or
- *   sent on the new connection and not immediately after accept() or 
+ *   sent on the new connection and not immediately after accept() or
  *   connect()
  */
-#define TCP_STATS_ESTABLISHED(state) \
-	do { \
-		counter_inc(tcp_cnts_h.established); \
-		if (state == S_CONN_ACCEPT) \
-			counter_inc(tcp_cnts_h.passive_open); \
-		else \
+#define TCP_STATS_ESTABLISHED(state)                 \
+	do {                                             \
+		counter_inc(tcp_cnts_h.established);         \
+		if(state == S_CONN_ACCEPT)                   \
+			counter_inc(tcp_cnts_h.passive_open);    \
+		else                                         \
 			counter_inc(tcp_cnts_h.connect_success); \
-	}while(0)
+	} while(0)
 
 /** called each time a new outgoing connection fails.  */
-#define TCP_STATS_CONNECT_FAILED() \
-	counter_inc(tcp_cnts_h.connect_failed)
+#define TCP_STATS_CONNECT_FAILED() counter_inc(tcp_cnts_h.connect_failed)
 
 /** called each time a new incoming connection is rejected.
  * (accept() denied due to maximum number of TCP connections being exceeded)
  */
-#define TCP_STATS_LOCAL_REJECT() \
-	counter_inc(tcp_cnts_h.local_reject)
+#define TCP_STATS_LOCAL_REJECT() counter_inc(tcp_cnts_h.local_reject)
 
 
 /** called each time a connection lifetime expires.
   * (the connection is closed for being idle for too long)
   */
-#define TCP_STATS_CON_TIMEOUT() \
-	counter_inc(tcp_cnts_h.con_timeout)
+#define TCP_STATS_CON_TIMEOUT() counter_inc(tcp_cnts_h.con_timeout)
 
 
 /** called each time a TCP RST is received on an established connection.  */
-#define TCP_STATS_CON_RESET() \
-	counter_inc(tcp_cnts_h.con_reset)
+#define TCP_STATS_CON_RESET() counter_inc(tcp_cnts_h.con_reset)
 
 /** called each time a send operation fails due to a timeout.
-  * FIXME: it works only in async mode (in sync. mode a send might timeout
+  * - note: it works only in async mode (in sync. mode a send might timeout
   *  but the stats won't be increased).
   */
-#define TCP_STATS_SEND_TIMEOUT() \
-	counter_inc(tcp_cnts_h.send_timeout)
+#define TCP_STATS_SEND_TIMEOUT() counter_inc(tcp_cnts_h.send_timeout)
 
 /** called each time a send fails due to the buffering capacity being exceeded.
   * (used only in tcp async mode)
   */
-#define TCP_STATS_SENDQ_FULL() \
-	counter_inc(tcp_cnts_h.sendq_full)
+#define TCP_STATS_SENDQ_FULL() counter_inc(tcp_cnts_h.sendq_full)
 
 #endif /* USE_TCP_STATS */
 

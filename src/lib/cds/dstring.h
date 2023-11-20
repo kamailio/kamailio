@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -29,102 +29,105 @@
 #include <cds/sstr.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/**
+	/**
  * \ingroup cds
  * \defgroup cds_dstring Dynamic strings
  *
  * Dynamic strings were introduced to satisfy needs of presence
  * modules when building presence documents.
  *
- * Dynamic string uses a list of buffers holding data. 
+ * Dynamic string uses a list of buffers holding data.
  * Buffers are allocated when needed - when there is not enough
  * space in the last buffer. The whole result can be copied into one
  * destination buffer with \ref dstr_get_data, \ref dstr_get_str
  * or \ref dstr_get_str_pkg function.
  *
- * \todo Function with sprintf syntax which will help with 
+ * \todo Function with sprintf syntax which will help with
  * readibility of code using dynamic strings.
  * @{
  * */
 
-/** Buffer used by dynamic string. 
+	/** Buffer used by dynamic string.
  *
- * \todo 'len' and 'used' can be replaced by 'unused' member 
+ * \todo 'len' and 'used' can be replaced by 'unused' member
  * but it doesn't save too much */
-typedef struct _dstr_buff_t {
-	int len; /**< the buffer length */
-	int used; /**< already used bytes from buffer */
-	struct _dstr_buff_t *next; /**< pointer to next buffer in the list*/
-	char data[1]; /** buffer data */
-} dstr_buff_t;
+	typedef struct _dstr_buff_t
+	{
+		int len;				   /**< the buffer length */
+		int used;				   /**< already used bytes from buffer */
+		struct _dstr_buff_t *next; /**< pointer to next buffer in the list*/
+		char data[1];			   /** buffer data */
+	} dstr_buff_t;
 
-/** Dynamic string structure. It is used
- * for muliple appends of any strings. 
+	/** Dynamic string structure. It is used
+ * for multiple appends of any string.
  *
  * \note There was an attempt to add flags for SHM/PKG memory using, ...
  * but it shows that it slows down, thus they were removed and only the
  * "most quick" version is used (rather two functions than one with param) */
-typedef struct _dstring_t {
-	/** pointer to the first buffer in the list */
-	dstr_buff_t *first;
-	/** pointer to the last buffer in the list */
-	dstr_buff_t *last;
-	/** the length of whole string */
-	int len;
-	/** predefined buffer size */
-	int buff_size;
+	typedef struct _dstring_t
+	{
+		/** pointer to the first buffer in the list */
+		dstr_buff_t *first;
+		/** pointer to the last buffer in the list */
+		dstr_buff_t *last;
+		/** the length of whole string */
+		int len;
+		/** predefined buffer size */
+		int buff_size;
 
-	/** a operation on this string was unsuccessful ->
+		/** a operation on this string was unsuccessful ->
 	 * all other operations will produce error */
-	int error;
-} dstring_t;
+		int error;
+	} dstring_t;
 
-/** Appends zero terminated string to dynamic string.
+	/** Appends zero terminated string to dynamic string.
  * \retval 0 if successful
  * \retval negative on error */
-int dstr_append_zt(dstring_t *dstr, const char *s);
+	int dstr_append_zt(dstring_t *dstr, const char *s);
 
-/** Appends string with given length to dynamic string.
+	/** Appends string with given length to dynamic string.
  * \retval 0 if successful
  * \retval negative on error */
-int dstr_append(dstring_t *dstr, const char *s, int len);
+	int dstr_append(dstring_t *dstr, const char *s, int len);
 
-/** Appends string to dynamic string.
+	/** Appends string to dynamic string.
  * \retval 0 if successful
  * \retval negative on error */
-int dstr_append_str(dstring_t *dstr, const str_t *s);
+	int dstr_append_str(dstring_t *dstr, const str_t *s);
 
-/* int dstr_get_data_length(dstring_t *dstr); */
+	/* int dstr_get_data_length(dstring_t *dstr); */
 
-/** Returns data stored in dynamic string. It does NOT allocate
- * space for them - it expects that the buffer is already allocated. 
+	/** Returns data stored in dynamic string. It does NOT allocate
+ * space for them - it expects that the buffer is already allocated.
  * \retval 0 if successful
  * \retval negative on error */
-int dstr_get_data(dstring_t *dstr, char *dst);
+	int dstr_get_data(dstring_t *dstr, char *dst);
 
-/** Returns data stored in dynamic string. It allocates space for
- * them with cds_malloc (SER's shared memory). 
+	/** Returns data stored in dynamic string. It allocates space for
+ * them with cds_malloc (SER's shared memory).
  * \retval 0 if successful
  * \retval negative on error */
-int dstr_get_str(dstring_t *dstr, str_t *dst);
+	int dstr_get_str(dstring_t *dstr, str_t *dst);
 
-/** Returns data stored in dynamic string. It allocates space for
+	/** Returns data stored in dynamic string. It allocates space for
  * them with cds_malloc_pkg (SER's package memory).
  * \retval 0 if successful
  * \retval negative on error */
-int dstr_get_str_pkg(dstring_t *dstr, str_t *dst);
-/** Initializes dynamic string.
+	int dstr_get_str_pkg(dstring_t *dstr, str_t *dst);
+	/** Initializes dynamic string.
  * \param dstr dynamic string to be initialized
- * \param buff_size size of buffer used with this dynamic string 
+ * \param buff_size size of buffer used with this dynamic string
  * \retval 0 if successful
  * \retval negative on error */
-int dstr_init(dstring_t *dstr, int buff_size);
+	int dstr_init(dstring_t *dstr, int buff_size);
 
-/** Destroys dynamic string. It frees all allocated buffers. */
-int dstr_destroy(dstring_t *dstr);
+	/** Destroys dynamic string. It frees all allocated buffers. */
+	int dstr_destroy(dstring_t *dstr);
 
 /* returns nozero if error !!! */
 /* int dstr_error(dstring_t *dstr);
@@ -141,10 +144,10 @@ void dstr_clear_error(dstring_t *dstr); */
 /** Macro for cleaning error flag in dynamic string. */
 #define dstr_clear_error(dstr) (dstr)->error = 0
 
-/** @} */
+	/** @} */
 
 #ifdef __cplusplus
 }
 #endif
-	
+
 #endif

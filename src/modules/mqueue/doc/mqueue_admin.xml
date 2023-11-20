@@ -124,10 +124,11 @@ val character varying(4096) DEFAULT "" NOT NULL
 			<listitem>
 				<para>
 				<emphasis>dbmode</emphasis>: If set to 1, the content of the queue
+				is read from database at startup and
 				is written to database table when the SIP server is stopped
 				(i.e., ensure persistency over restarts).
-				If set to 2, it is written at shutdown but not read at startup.
-				If set to 3, it is read at sartup but not written at shutdown.
+				If set to 2, it is read at startup but not written at shutdown.
+				If set to 3, it is written at shutdown but not read at startup.
 				Default value is 0 (no db table interaction).
 				</para>
 			</listitem>

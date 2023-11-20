@@ -34,7 +34,7 @@ typedef struct textopsx_binds
 typedef int (*bind_textopsx_f)(textopsx_api_t *);
 
 /*
- * Function to be called direclty from other modules to load
+ * Function to be called directly from other modules to load
  * the textops API.
  */
 inline static int load_textopsx_api(textopsx_api_t *tob)

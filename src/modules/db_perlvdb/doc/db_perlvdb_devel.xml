@@ -10,7 +10,7 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-	
+
 	<title>&develguide;</title>
 	<section><title>Introduction</title>
 		<para>
@@ -117,7 +117,7 @@ my $cols = new Kamailio::VDB::Column(\@types, \@names);
 	<section><title>Adapters</title>
 		<para>
 			Adapters should be used to turn the relational structured database request into
-			pure Perl function arguments. The alias_db function alias_db_lookup for example 
+			pure Perl function arguments. The alias_db function alias_db_lookup for example
 			takes a user/host pair, and turns it into another user/host pair. The Alias
 			adapter turns the ReqCond array into two separate scalars that are used as parameters
 			for a VTab call.

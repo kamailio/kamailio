@@ -12,7 +12,7 @@
   <section>
     <title>Overview</title>
 
-    <para>This module provides the functionality for an IMS S-CSCF to implement 
+    <para>This module provides the functionality for an IMS S-CSCF to implement
     the ISC interface between S-CSCF and SIP Application Server.
     </para>
   </section>
@@ -40,7 +40,7 @@
     <section>
       <title>External Libraries or Applications</title>
 
-      <para>This modules requires the Kamailio internal IMS library.</para>
+      <para>This module requires the Kamailio internal IMS library.</para>
     </section>
   </section>
 
@@ -69,9 +69,9 @@ modparam("ims_isc", "my_uri", "sip:scscf.ims.smilecoms.com:6060")
     <section>
       <title><varname>expires_grace</varname> (integer)</title>
 
-      <para>This is the expires value to add to the expires during 3rd party 
+      <para>This is the expires value to add to the expires during 3rd party
       registration to prevent expiration in Application Server.</para>
-      
+
       <para><emphasis> Default value is 120.</emphasis></para>
 
       <example>
@@ -160,7 +160,7 @@ modparam("ims_isc", "add_p_served_user", 1)
       the destination URI to forward to the relevant Application Server.
       </para>
 
-      <para>A positive return code (1) means that the REGISTER message has 
+      <para>A positive return code (1) means that the REGISTER message has
       matched to Initial Filter Criteria and is armed for routing.</para>
 
       <para>This function handles also the Service Info (if sent by the
@@ -170,17 +170,17 @@ modparam("ims_isc", "add_p_served_user", 1)
       response is added to the body of the REGISTER message, before it is
       forwarded to the relevant Application Server. Multipart body is not
       supported in this case.</para>
- 
+
       <para>Meaning of the parameters is as follows:</para>
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>reg_state</emphasis> if the user was previously 
-          registered 0 - for initial registration, 1 for re/de-registration. 
+          <para><emphasis>reg_state</emphasis> if the user was previously
+          registered 0 - for initial registration, 1 for re/de-registration.
           </para>
         </listitem>
         <listitem>
-          <para><emphasis>domain</emphasis> that usrloc_scscf uses to store 
+          <para><emphasis>domain</emphasis> that usrloc_scscf uses to store
           user information. </para>
         </listitem>
       </itemizedlist>
@@ -197,30 +197,30 @@ isc_match_filter_reg("1","location");
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><function
       moreinfo="none">isc_match_filter(direction,domain)</function></title>
 
-      <para>This function checks if a non-REGISTER messages matches Initial 
-      Filter Criteria - if so it inserts the necessary route headers and 
-      modifies the destination URI to forward to the relevant Application 
+      <para>This function checks if a non-REGISTER messages matches Initial
+      Filter Criteria - if so it inserts the necessary route headers and
+      modifies the destination URI to forward to the relevant Application
       Server.
       </para>
 
-      <para>A positive return code (1) means that the message has 
+      <para>A positive return code (1) means that the message has
       matched to Initial Filter Criteria and is armed for routing.</para>
 
       <para>Meaning of the parameters is as follows:</para>
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>direction</emphasis> the direction of this message - 
+          <para><emphasis>direction</emphasis> the direction of this message -
           orig, term, etc.
           </para>
         </listitem>
         <listitem>
-          <para><emphasis>domain</emphasis> that usrloc_scscf uses to store 
+          <para><emphasis>domain</emphasis> that usrloc_scscf uses to store
           user information. </para>
         </listitem>
       </itemizedlist>
@@ -238,7 +238,7 @@ isc_match_filter("orig","location");
         </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><function
       moreinfo="none">isc_from_as(direction)</function></title>
@@ -247,14 +247,14 @@ isc_match_filter("orig","location");
       Server.
       </para>
 
-      <para>A positive return code (1) means that the message has 
+      <para>A positive return code (1) means that the message has
       come from an Application Server.</para>
 
       <para>Meaning of the parameters is as follows:</para>
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>direction</emphasis> the direction of this message - 
+          <para><emphasis>direction</emphasis> the direction of this message -
           orig, term, etc.
           </para>
         </listitem>

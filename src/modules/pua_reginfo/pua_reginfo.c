@@ -56,34 +56,31 @@ static int mod_init(void);
 
 /* Commands */
 static cmd_export_t cmds[] = {
-	{"reginfo_subscribe", (cmd_function)reginfo_subscribe, 1,
-			fixup_subscribe, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
-	{"reginfo_subscribe", (cmd_function)reginfo_subscribe2, 2,
-			fixup_subscribe, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
-	{"reginfo_handle_notify", (cmd_function)reginfo_handle_notify, 1,
-			domain_fixup, 0, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"reginfo_subscribe", (cmd_function)reginfo_subscribe, 1,
+				fixup_subscribe, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+		{"reginfo_subscribe", (cmd_function)reginfo_subscribe2, 2,
+				fixup_subscribe, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+		{"reginfo_handle_notify", (cmd_function)reginfo_handle_notify, 1,
+				domain_fixup, 0, REQUEST_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-	{"default_domain", PARAM_STR, &default_domain},
-	{"outbound_proxy", PARAM_STR, &outbound_proxy},
-	{"server_address", PARAM_STR, &server_address},
-	{"publish_reginfo", INT_PARAM, &publish_reginfo},
-	{0, 0, 0}
-};
+		{"default_domain", PARAM_STR, &default_domain},
+		{"outbound_proxy", PARAM_STR, &outbound_proxy},
+		{"server_address", PARAM_STR, &server_address},
+		{"publish_reginfo", INT_PARAM, &publish_reginfo}, {0, 0, 0}};
 
 struct module_exports exports = {
-	"pua_reginfo",	 /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,			 /* exported functions */
-	params,			 /* exported parameters */
-	0,				 /* RPC method exports */
-	0,				 /* exported pseudo-variables */
-	0,				 /* response handling function */
-	mod_init,		 /* module initialization function */
-	0,				 /* per-child init function */
-	0				 /* module destroy function */
+		"pua_reginfo",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		0,				 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 /**

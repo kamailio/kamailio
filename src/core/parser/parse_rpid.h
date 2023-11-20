@@ -13,30 +13,30 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
- 
+
 /*! \file
  * \brief Parser :: Remote-party-id: header parser
  *
  * \ingroup parser
  */
- 
+
 #ifndef PARSE_RPID_H
 #define PARSE_RPID_H
- 
+
 #include "msg_parser.h"
- 
- 
+
+
 /*! \brief casting macro for accessing RPID body */
-#define get_rpid(p_msg)  ((struct to_body*)(p_msg)->rpid->parsed)
+#define get_rpid(p_msg) ((struct to_body *)(p_msg)->rpid->parsed)
 
 
 /*
  * RPID header field parser
  */
-int parse_rpid_header( struct sip_msg *msg);
- 
+int parse_rpid_header(struct sip_msg *msg);
+
 #endif /* PARSE_RPID_H */

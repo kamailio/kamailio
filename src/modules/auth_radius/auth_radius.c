@@ -120,7 +120,8 @@ static int mod_init(void)
 	int n;
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
-		LM_ERR("failed to open configuration file \n");
+		LM_ERR("failed to open configuration file: %s\n",
+				(radius_config)?radius_config:"none");
 		return -1;
 	}
 

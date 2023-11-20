@@ -32,19 +32,19 @@
 
 #include "../../core/parser/msg_parser.h"
 
-int auth_db_init(char* db_url);
-int auth_db_bind(char* db_url);
+int auth_db_init(char *db_url);
+int auth_db_bind(char *db_url);
 void auth_db_close();
 
 /*
  * Authorize using Proxy-Authorization header field
  */
-int proxy_authenticate(struct sip_msg* msg, char* realm, char* table);
+int proxy_authenticate(struct sip_msg *msg, char *realm, char *table);
 
 
 /*
  * Authorize using WWW-Authorization header field
  */
-int www_authenticate(struct sip_msg* msg, char* realm, char* table);
+int www_authenticate(struct sip_msg *msg, char *realm, char *table);
 
 #endif /* AUTHORIZE_H */

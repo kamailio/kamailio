@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -33,9 +33,10 @@
 typedef cp_ruleset_t msg_rules_t;
 
 /* Type defining action for pres_rules */
-typedef enum {
+typedef enum
+{
 	msg_handling_block,
-/*	msg_handling_confirm, */
+	/*	msg_handling_confirm, */
 	msg_handling_allow
 } msg_handling_t;
 
@@ -45,6 +46,7 @@ void free_msg_rules(cp_ruleset_t *r);
 void free_msg_actions(cp_actions_t *a);
 
 /* returns 0 if rule found, 1 if not found and -1 on error */
-int get_msg_rules_action(msg_rules_t *r, const str_t *wuri, msg_handling_t *dst_action);
+int get_msg_rules_action(
+		msg_rules_t *r, const str_t *wuri, msg_handling_t *dst_action);
 
 #endif

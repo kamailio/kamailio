@@ -33,16 +33,16 @@
 #include "dbt_raw_util.h"
 
 
-int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
+int dbt_raw_query_select(db1_con_t *_h, str *_s, db1_res_t **_r)
 {
 	int res = -1;
 	int i, len;
-	char* table_ptr = NULL;
-	char* fields_end_ptr = NULL;
-	char* fields_ptr = NULL;
-	char* where_ptr = NULL;
-	char* order_start_ptr = NULL;
-	char** tokens = NULL;
+	char *table_ptr = NULL;
+	char *fields_end_ptr = NULL;
+	char *fields_ptr = NULL;
+	char *where_ptr = NULL;
+	char *order_start_ptr = NULL;
+	char **tokens = NULL;
 	str table;
 	dbt_table_p _tbc = NULL;
 	int cols;
@@ -50,9 +50,9 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 	int ncols = 0;
 	int nc = 0;
 	db_key_t *result_cols = NULL;
-	db_key_t* _k = NULL;
-	db_op_t* _op = NULL;
-	db_val_t* _v = NULL;
+	db_key_t *_k = NULL;
+	db_op_t *_op = NULL;
+	db_val_t *_v = NULL;
 	str order;
 	db_key_t k_order = NULL;
 
@@ -63,8 +63,8 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 		return res;
 
 	len = fields_end_ptr - (_s->s + 6) + 1;
-	fields_ptr = pkg_malloc(len+1);
-	memset(fields_ptr, 0, len+1);
+	fields_ptr = pkg_malloc(len + 1);
+	memset(fields_ptr, 0, len + 1);
 	strncpy(fields_ptr, _s->s + 6, len);
 	dbt_trim(fields_ptr);
 
@@ -83,14 +83,14 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 		nc = dbt_build_where(where_ptr + 7, &_k, &_op, &_v);
 	}
 
-	table_ptr = pkg_malloc(len+1);
-	memset(table_ptr, 0, len+1);
+	table_ptr = pkg_malloc(len + 1);
+	memset(table_ptr, 0, len + 1);
 	strncpy(table_ptr, fields_end_ptr + 6, len);
 	dbt_trim(table_ptr);
 
 	table.s = table_ptr;
-    table.len = strlen(table_ptr);
-    LM_DBG("using table '%.*s'\n", table.len, table.s);
+	table.len = strlen(table_ptr);
+	LM_DBG("using table '%.*s'\n", table.len, table.s);
 
 	if(dbt_use_table(_h, &table) != 0) {
 		LM_ERR("use table is invalid %.*s\n", table.len, table.s);
@@ -98,16 +98,16 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 	}
 
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
-	if(!_tbc)
-	{
-		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	if(!_tbc) {
+		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len,
+				CON_TABLE(_h)->s);
 		goto error;
 	}
 
 	tokens = dbt_str_split(fields_ptr, ',', &ncols);
 	pkg_free(fields_ptr);
 	fields_ptr = NULL;
-	if (!tokens) {
+	if(!tokens) {
 		LM_ERR("error extracting tokens\n");
 		goto error;
 	}
@@ -115,46 +115,49 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 	if(ncols == 1 && strncmp(*tokens, "*", 1) == 0) {
 		cols = _tbc->nrcols;
 		result_cols = pkg_malloc(sizeof(db_key_t) * cols);
-        if(result_cols == NULL) {
-            LM_ERR("no more memory allocating");
-            goto error;
-        }
+		if(result_cols == NULL) {
+			LM_ERR("no more memory allocating");
+			goto error;
+		}
 		memset(result_cols, 0, sizeof(db_key_t) * cols);
-		for(n=0; n < cols; n++) {
+		for(n = 0; n < cols; n++) {
 			result_cols[n] = pkg_malloc(sizeof(str));
-            if(result_cols[n] == NULL) {
-                LM_ERR("no more memory allocating");
-                goto error;
-            }
+			if(result_cols[n] == NULL) {
+				LM_ERR("no more memory allocating");
+				goto error;
+			}
 			result_cols[n]->len = _tbc->colv[n]->name.len;
-			result_cols[n]->s = pkg_malloc((_tbc->colv[n]->name.len + 1) * sizeof(char));
-            if(result_cols[n]->s == NULL) {
-                LM_ERR("no more memory allocating");
-                goto error;
-            }
-			strncpy(result_cols[n]->s, _tbc->colv[n]->name.s, _tbc->colv[n]->name.len);
+			result_cols[n]->s =
+					pkg_malloc((_tbc->colv[n]->name.len + 1) * sizeof(char));
+			if(result_cols[n]->s == NULL) {
+				LM_ERR("no more memory allocating");
+				goto error;
+			}
+			strncpy(result_cols[n]->s, _tbc->colv[n]->name.s,
+					_tbc->colv[n]->name.len);
 			result_cols[n]->s[_tbc->colv[n]->name.len] = '\0';
 		}
 	} else {
 		cols = ncols;
 		result_cols = pkg_malloc(sizeof(db_key_t) * cols);
-        if(result_cols == NULL) {
-            LM_ERR("no more memory allocating");
-            goto error;
-        }
+		if(result_cols == NULL) {
+			LM_ERR("no more memory allocating");
+			goto error;
+		}
 		memset(result_cols, 0, sizeof(db_key_t) * cols);
-		for(n=0; *(tokens + n); n++) {
+		for(n = 0; *(tokens + n); n++) {
 			result_cols[n] = pkg_malloc(sizeof(str));
-            if(result_cols[n] == NULL) {
-                LM_ERR("no more memory allocating");
-                goto error;
-            }
+			if(result_cols[n] == NULL) {
+				LM_ERR("no more memory allocating");
+				goto error;
+			}
 			result_cols[n]->len = strlen(*(tokens + n));
-			result_cols[n]->s = pkg_malloc((strlen(*(tokens + n)) + 1) * sizeof(char));
-            if(result_cols[n]->s == NULL) {
-                LM_ERR("no more memory allocating");
-                goto error;
-            }
+			result_cols[n]->s =
+					pkg_malloc((strlen(*(tokens + n)) + 1) * sizeof(char));
+			if(result_cols[n]->s == NULL) {
+				LM_ERR("no more memory allocating");
+				goto error;
+			}
 			strncpy(result_cols[n]->s, *(tokens + n), strlen(*(tokens + n)));
 			result_cols[n]->s[strlen(*(tokens + n))] = '\0';
 		}
@@ -176,7 +179,7 @@ error:
 		dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
 	if(tokens) {
-		for (i = 0; *(tokens + i); i++) {
+		for(i = 0; *(tokens + i); i++) {
 			pkg_free(*(tokens + i));
 		}
 		pkg_free(tokens);
@@ -190,11 +193,11 @@ error:
 	dbt_clean_where(nc, _k, _op, _v);
 
 	if(result_cols) {
-		for(n=0; n < cols; n++) {
-            if(result_cols[n]->s)
-                pkg_free(result_cols[n]->s);
-            if(result_cols[n])
-                pkg_free(result_cols[n]);
+		for(n = 0; n < cols; n++) {
+			if(result_cols[n]->s)
+				pkg_free(result_cols[n]->s);
+			if(result_cols[n])
+				pkg_free(result_cols[n]);
 		}
 		pkg_free(result_cols);
 	}
@@ -202,27 +205,27 @@ error:
 	return res;
 }
 
-int dbt_raw_query_update(db1_con_t* _h, str* _s, db1_res_t** _r)
+int dbt_raw_query_update(db1_con_t *_h, str *_s, db1_res_t **_r)
 {
 	int res = -1;
 	int len;
-	char* table_ptr = NULL;
-	char* fields_end_ptr = NULL;
-	char* fields_start_ptr = NULL;
-	char* fields_ptr = NULL;
-	char* where_ptr = NULL;
-	char* table_start_ptr = NULL;
+	char *table_ptr = NULL;
+	char *fields_end_ptr = NULL;
+	char *fields_start_ptr = NULL;
+	char *fields_ptr = NULL;
+	char *where_ptr = NULL;
+	char *table_start_ptr = NULL;
 	str table;
 	dbt_table_p _tbc = NULL;
 	int ncols = 0;
 	int nkeys = 0;
-	db_key_t* _k = NULL;
-	db_op_t* _op1 = NULL;
-	db_val_t* _kv = NULL;
+	db_key_t *_k = NULL;
+	db_op_t *_op1 = NULL;
+	db_val_t *_kv = NULL;
 
-	db_key_t* _c = NULL;
-	db_op_t* _op2 = NULL;
-	db_val_t* _cv = NULL;
+	db_key_t *_c = NULL;
+	db_op_t *_op2 = NULL;
+	db_val_t *_cv = NULL;
 
 	LM_DBG("SQLRAW : %.*s\n", _s->len, _s->s);
 
@@ -232,8 +235,8 @@ int dbt_raw_query_update(db1_con_t* _h, str* _s, db1_res_t** _r)
 		return res;
 
 	len = fields_start_ptr - table_start_ptr;
-	table_ptr = pkg_malloc(len+1);
-	memset(table_ptr, 0, len+1);
+	table_ptr = pkg_malloc(len + 1);
+	memset(table_ptr, 0, len + 1);
 	strncpy(table_ptr, table_start_ptr, len);
 	dbt_trim(table_ptr);
 	table.s = table_ptr;
@@ -244,16 +247,16 @@ int dbt_raw_query_update(db1_con_t* _h, str* _s, db1_res_t** _r)
 		LM_ERR("specify where clause to determine keys\n");
 		goto error;
 	}
-	
+
 	fields_end_ptr = where_ptr;
-	len = fields_end_ptr - ( fields_start_ptr + 4) + 1;
-	fields_ptr = pkg_malloc(len+1);
-	memset(fields_ptr, 0, len+1);
+	len = fields_end_ptr - (fields_start_ptr + 4) + 1;
+	fields_ptr = pkg_malloc(len + 1);
+	memset(fields_ptr, 0, len + 1);
 	strncpy(fields_ptr, fields_start_ptr + 4, len);
 	dbt_trim(fields_ptr);
 
 	ncols = dbt_build_where(fields_ptr, &_c, &_op2, &_cv);
-	if(ncols <0) {
+	if(ncols < 0) {
 		LM_ERR("unexpected error buuilding fields\n");
 		goto error;
 	}
@@ -273,9 +276,9 @@ int dbt_raw_query_update(db1_con_t* _h, str* _s, db1_res_t** _r)
 	}
 
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
-	if(!_tbc)
-	{
-		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	if(!_tbc) {
+		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len,
+				CON_TABLE(_h)->s);
 		goto error;
 	}
 
@@ -298,23 +301,22 @@ error:
 	dbt_clean_where(ncols, _c, _op2, _cv);
 
 	return res;
-
 }
 
-int dbt_raw_query_delete(db1_con_t* _h, str* _s, db1_res_t** _r)
+int dbt_raw_query_delete(db1_con_t *_h, str *_s, db1_res_t **_r)
 {
 	int res = -1;
 	int len;
-	char* table_ptr = NULL;
-	char* fields_end_ptr = NULL;
-	char* fields_ptr = NULL;
-	char* where_ptr = NULL;
+	char *table_ptr = NULL;
+	char *fields_end_ptr = NULL;
+	char *fields_ptr = NULL;
+	char *where_ptr = NULL;
 	str table;
 	dbt_table_p _tbc = NULL;
 	int nkeys = 0;
-	db_key_t* _k = NULL;
-	db_op_t* _op1 = NULL;
-	db_val_t* _kv = NULL;
+	db_key_t *_k = NULL;
+	db_op_t *_op1 = NULL;
+	db_val_t *_kv = NULL;
 
 	LM_DBG("SQLRAW : %.*s\n", _s->len, _s->s);
 
@@ -330,8 +332,8 @@ int dbt_raw_query_delete(db1_con_t* _h, str* _s, db1_res_t** _r)
 		nkeys = dbt_build_where(where_ptr + 7, &_k, &_op1, &_kv);
 	}
 
-	table_ptr = pkg_malloc(len+1);
-	memset(table_ptr, 0, len+1);
+	table_ptr = pkg_malloc(len + 1);
+	memset(table_ptr, 0, len + 1);
 	strncpy(table_ptr, fields_end_ptr + 6, len);
 	dbt_trim(table_ptr);
 
@@ -345,9 +347,9 @@ int dbt_raw_query_delete(db1_con_t* _h, str* _s, db1_res_t** _r)
 	}
 
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
-	if(!_tbc)
-	{
-		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	if(!_tbc) {
+		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len,
+				CON_TABLE(_h)->s);
 		goto error;
 	}
 
@@ -371,41 +373,40 @@ error:
 	return res;
 }
 
-int dbt_raw_query_insert(db1_con_t* _h, str* _s, db1_res_t** _r)
+int dbt_raw_query_insert(db1_con_t *_h, str *_s, db1_res_t **_r)
 {
 	int res = -1;
-
 
 
 	return res;
 }
 
-int dbt_raw_query_replace(db1_con_t* _h, str* _s, db1_res_t** _r)
+int dbt_raw_query_replace(db1_con_t *_h, str *_s, db1_res_t **_r)
 {
 	int res = -1;
 	int i, len;
-	char* table_ptr = NULL;
-	char* fields_end_ptr = NULL;
-	char* fields_start_ptr = NULL;
-	char* fields_ptr = NULL;
-	char* where_ptr = NULL;
-	char* table_start_ptr = NULL;
+	char *table_ptr = NULL;
+	char *fields_end_ptr = NULL;
+	char *fields_start_ptr = NULL;
+	char *fields_ptr = NULL;
+	char *where_ptr = NULL;
+	char *table_start_ptr = NULL;
 	str table;
 	dbt_table_p _tbc = NULL;
 	int cols;
 	int n = 0;
 	int ncols = 0;
 	int nkeys = 0;
-	db_key_t* _k = NULL;
-	db_op_t* _op1 = NULL;
-	db_val_t* _kv = NULL;
+	db_key_t *_k = NULL;
+	db_op_t *_op1 = NULL;
+	db_val_t *_kv = NULL;
 
-	db_key_t* _c = NULL;
-	db_op_t* _op2 = NULL;
-	db_val_t* _cv = NULL;
+	db_key_t *_c = NULL;
+	db_op_t *_op2 = NULL;
+	db_val_t *_cv = NULL;
 
-	db_key_t* _f = NULL;
-	db_val_t* _v = NULL;
+	db_key_t *_f = NULL;
+	db_val_t *_v = NULL;
 
 	LM_DBG("SQLRAW : %.*s\n", _s->len, _s->s);
 
@@ -415,8 +416,8 @@ int dbt_raw_query_replace(db1_con_t* _h, str* _s, db1_res_t** _r)
 		return res;
 
 	len = fields_start_ptr - table_start_ptr;
-	table_ptr = pkg_malloc(len+1);
-	memset(table_ptr, 0, len+1);
+	table_ptr = pkg_malloc(len + 1);
+	memset(table_ptr, 0, len + 1);
 	strncpy(table_ptr, table_start_ptr, len);
 	dbt_trim(table_ptr);
 	table.s = table_ptr;
@@ -427,16 +428,16 @@ int dbt_raw_query_replace(db1_con_t* _h, str* _s, db1_res_t** _r)
 		LM_ERR("specify where clause to determine keys\n");
 		goto error;
 	}
-	
+
 	fields_end_ptr = where_ptr;
-	len = fields_end_ptr - ( fields_start_ptr + 4) + 1;
-	fields_ptr = pkg_malloc(len+1);
-	memset(fields_ptr, 0, len+1);
+	len = fields_end_ptr - (fields_start_ptr + 4) + 1;
+	fields_ptr = pkg_malloc(len + 1);
+	memset(fields_ptr, 0, len + 1);
 	strncpy(fields_ptr, fields_start_ptr + 4, len);
 	dbt_trim(fields_ptr);
 
 	ncols = dbt_build_where(fields_ptr, &_c, &_op2, &_cv);
-	if(ncols <0) {
+	if(ncols < 0) {
 		LM_ERR("unexpected error buuilding fields\n");
 		goto error;
 	}
@@ -456,9 +457,9 @@ int dbt_raw_query_replace(db1_con_t* _h, str* _s, db1_res_t** _r)
 	}
 
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
-	if(!_tbc)
-	{
-		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	if(!_tbc) {
+		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len,
+				CON_TABLE(_h)->s);
 		goto error;
 	}
 
@@ -467,13 +468,13 @@ int dbt_raw_query_replace(db1_con_t* _h, str* _s, db1_res_t** _r)
 	_v = pkg_malloc(sizeof(db_val_t) * cols);
 	memset(_f, 0, sizeof(db_key_t) * cols);
 	memset(_v, 0, sizeof(db_key_t) * cols);
-	for(n=0; n < nkeys; n++) {
+	for(n = 0; n < nkeys; n++) {
 		_f[n] = _k[n];
 		_v[n] = _kv[n];
 	}
-	for(i=n; i < cols; i++) {
-		_f[i] = _c[i-n];
-		_v[i] = _cv[i-n];
+	for(i = n; i < cols; i++) {
+		_f[i] = _c[i - n];
+		_v[i] = _cv[i - n];
 	}
 
 
@@ -501,17 +502,13 @@ error:
 		pkg_free(_v);
 
 	return res;
-
 }
-
-
-
 
 
 /*
  * Raw SQL query -- is not the case to have this method
  */
-int dbt_raw_query(db1_con_t* _h, str* _s, db1_res_t** _r)
+int dbt_raw_query(db1_con_t *_h, str *_s, db1_res_t **_r)
 {
 	*_r = NULL;
 	int res = -1;

@@ -93,8 +93,8 @@ void worker_loop(int id)
 					}
 				}
 				/* send the reply */
-				if(peer_response.resp_code>0 && peer_response.reason.s!=NULL
-						&& peer_response.reason.len>0) {
+				if(peer_response.resp_code > 0 && peer_response.reason.s != NULL
+						&& peer_response.reason.len > 0) {
 					if(slb.freply(current_job->msg, peer_response.resp_code,
 							   &peer_response.reason)
 							< 0) {
@@ -107,7 +107,7 @@ void worker_loop(int id)
 				}
 				worker->jobs_processed++;
 
-nextjob:
+			nextjob:
 				/* if body given, free the lumps and free the body */
 				if(peer_response.body.s) {
 					del_nonshm_lump_rpl(&current_job->msg->reply_lump);
@@ -136,7 +136,7 @@ int add_dmq_job(struct sip_msg *msg, dmq_peer_t *peer)
 	int cloned_msg_len;
 
 	/* Pre-parse headers so they are included in our clone. Parsing later
-	 * will result in linking pkg structures to shm msg, eventually leading 
+	 * will result in linking pkg structures to shm msg, eventually leading
 	 * to memory errors. */
 	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse headers\n");
@@ -205,7 +205,7 @@ int init_worker(dmq_worker_t *worker)
 		lock_get(&worker->lock);
 	}
 	worker->queue = alloc_job_queue();
-	if(worker->queue==NULL) {
+	if(worker->queue == NULL) {
 		LM_ERR("queue could not be initialized\n");
 		return -1;
 	}
@@ -221,7 +221,7 @@ job_queue_t *alloc_job_queue()
 
 	queue = shm_malloc(sizeof(job_queue_t));
 	if(queue == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(queue, 0, sizeof(job_queue_t));
@@ -257,7 +257,7 @@ int job_queue_push(job_queue_t *queue, dmq_job_t *job)
 
 	newjob = shm_malloc(sizeof(dmq_job_t));
 	if(newjob == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 

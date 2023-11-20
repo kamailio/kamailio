@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -26,7 +26,7 @@
 #define _PG_OID_H
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
 /** \file
@@ -52,7 +52,7 @@ typedef struct pg_type
  * by this driver, that means this driver will be able to convert
  * to and from these types.
  *
- * This enum is primarilly used as index to arrays of pg_type_t that are
+ * This enum is primarily used as index to arrays of pg_type_t that are
  * stored in pg_con structures. Upon connecting to a PostgreSQL server the
  * driver retrieves the list of supported data types and oids from the server
  * and stores then in an array. Different PostgreSQL servers can have
@@ -68,11 +68,11 @@ enum pg_type_id
 	PG_INT2,	  /**< Integer with 2-byte storage */
 	PG_INT4,	  /**< Integer with 4-byte storage */
 	PG_TEXT,	  /**< Variable-length string, no limit specified */
-	PG_FLOAT4,	/**< Single-precision floating point number, 4-byte storage */
-	PG_FLOAT8,	/**< Double-precision floating point number, 8-byte storage */
+	PG_FLOAT4,	  /**< Single-precision floating point number, 4-byte storage */
+	PG_FLOAT8,	  /**< Double-precision floating point number, 8-byte storage */
 	PG_INET,	  /**< IP address/netmask, host address */
-	PG_BPCHAR,	/**< Blank-padded string, fixed storage length */
-	PG_VARCHAR,   /**< Non-blank padded string, variable storage length */
+	PG_BPCHAR,	  /**< Blank-padded string, fixed storage length */
+	PG_VARCHAR,	  /**< Non-blank padded string, variable storage length */
 	PG_TIMESTAMP, /**< Date and time */
 	PG_TIMESTAMPTZ, /**< Date and time with time zone */
 	PG_BIT,			/**< Fixed-length bit string */

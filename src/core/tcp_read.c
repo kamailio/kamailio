@@ -73,30 +73,35 @@
 #include "nonsip_hooks.h"
 
 #ifdef READ_HTTP11
-#define HTTP11CONTINUE	"HTTP/1.1 100 Continue\r\nContent-Length: 0\r\n\r\n"
-#define HTTP11CONTINUE_LEN	(sizeof(HTTP11CONTINUE)-1)
+#define HTTP11CONTINUE "HTTP/1.1 100 Continue\r\nContent-Length: 0\r\n\r\n"
+#define HTTP11CONTINUE_LEN (sizeof(HTTP11CONTINUE) - 1)
 #endif
 
-#define TCPCONN_TIMEOUT_MIN_RUN  1 /* run the timers each new tick */
+#define TCPCONN_TIMEOUT_MIN_RUN 1 /* run the timers each new tick */
 
 /* types used in io_wait* */
-enum fd_types { F_NONE, F_TCPMAIN, F_TCPCONN };
+enum fd_types
+{
+	F_NONE,
+	F_TCPMAIN,
+	F_TCPCONN
+};
 
 /* list of tcp connections handled by this process */
-static struct tcp_connection* tcp_conn_lst=0;
+static struct tcp_connection *tcp_conn_lst = 0;
 static io_wait_h io_w; /* io_wait handler*/
-static int tcpmain_sock=-1;
+static int tcpmain_sock = -1;
 
 static struct local_timer tcp_reader_ltimer;
 static ticks_t tcp_reader_prev_ticks;
 
-int is_msg_complete(struct tcp_req* r);
+int is_msg_complete(struct tcp_req *r);
 
-int ksr_tcp_accept_hep3=0;
-int ksr_tcp_accept_haproxy=0;
+int ksr_tcp_accept_hep3 = 0;
+int ksr_tcp_accept_haproxy = 0;
 
-#define TCP_SCRIPT_MODE_CONTINUE (1<<0)
-int ksr_tcp_script_mode=0;
+#define TCP_SCRIPT_MODE_CONTINUE (1 << 0)
+int ksr_tcp_script_mode = 0;
 
 /**
  * control cloning of TCP receive buffer
@@ -134,33 +139,31 @@ int tcp_http11_continue(struct tcp_connection *c)
 	msg.len = c->req.pos - c->req.start;
 #ifdef READ_MSRP
 	/* skip if MSRP message */
-	if(c->req.flags&F_TCP_REQ_MSRP_FRAME)
+	if(c->req.flags & F_TCP_REQ_MSRP_FRAME)
 		return 0;
 #endif
 	p = parse_first_line(msg.s, msg.len, &fline);
-	if(p==NULL)
+	if(p == NULL)
 		return 0;
 
-	if(fline.type!=SIP_REQUEST)
+	if(fline.type != SIP_REQUEST)
 		return 0;
 
 	/* check if http request */
 	if(fline.u.request.version.len < HTTP_VERSION_LEN
-			|| strncasecmp(fline.u.request.version.s,
-				HTTP_VERSION, HTTP_VERSION_LEN))
+			|| strncasecmp(
+					fline.u.request.version.s, HTTP_VERSION, HTTP_VERSION_LEN))
 		return 0;
 
 	/* check for Expect header */
-	if(str_casesearch_strz(&msg, "Expect: 100-continue")!=NULL)
-	{
+	if(str_casesearch_strz(&msg, "Expect: 100-continue") != NULL) {
 		init_dst_from_rcv(&dst, &c->rcv);
-		if (tcp_send(&dst, 0, HTTP11CONTINUE, HTTP11CONTINUE_LEN) < 0) {
+		if(tcp_send(&dst, 0, HTTP11CONTINUE, HTTP11CONTINUE_LEN) < 0) {
 			LM_ERR("HTTP/1.1 continue failed\n");
 		}
 	}
 	/* check for Transfer-Encoding header */
-	if(str_casesearch_strz(&msg, "Transfer-Encoding: chunked")!=NULL)
-	{
+	if(str_casesearch_strz(&msg, "Transfer-Encoding: chunked") != NULL) {
 		c->req.flags |= F_TCP_REQ_BCHUNKED;
 		ret = 1;
 	}
@@ -168,8 +171,7 @@ int tcp_http11_continue(struct tcp_connection *c)
 	 * - HTTP Via format is different that SIP Via
 	 * - workaround: replace with Hia to be ignored by SIP parser
 	 */
-	if((p=str_casesearch_strz(&msg, "\nVia:"))!=NULL)
-	{
+	if((p = str_casesearch_strz(&msg, "\nVia:")) != NULL) {
 		p++;
 		*p = 'H';
 		LM_DBG("replaced HTTP Via with Hia [[\n%.*s]]\n", msg.len, msg.s);
@@ -187,7 +189,7 @@ int tcp_http11_continue(struct tcp_connection *c)
  * @param buf - buffer where the received data will be stored.
  * @param b_size - buffer size.
  * @param flags - value/result - used to signal a seen or "forced" EOF on the
- *     connection (when it is known that no more data will come after the 
+ *     connection (when it is known that no more data will come after the
  *     current socket buffer is emptied )=> return/signal EOF on the first
  *     short read (=> don't use it on POLLPRI, as OOB data will cause short
  *     reads even if there are still remaining bytes in the socket buffer)
@@ -207,28 +209,27 @@ int tcp_http11_continue(struct tcp_connection *c)
  * RD_CONN_SHORT_READ is also set in *flags for short reads.
  * EOF checking should be done by checking the RD_CONN_EOF flag.
  */
-int tcp_read_data(int fd, struct tcp_connection *c,
-					char* buf, int b_size, rd_conn_flags_t* flags)
+int tcp_read_data(int fd, struct tcp_connection *c, char *buf, int b_size,
+		rd_conn_flags_t *flags)
 {
 	int bytes_read;
 
 again:
-	bytes_read=read(fd, buf, b_size);
+	bytes_read = read(fd, buf, b_size);
 
-	if (likely(bytes_read!=b_size)){
-		if(unlikely(bytes_read==-1)){
-			if (errno == EWOULDBLOCK || errno == EAGAIN){
-				bytes_read=0; /* nothing has been read */
-			}else if (errno == EINTR){
+	if(likely(bytes_read != b_size)) {
+		if(unlikely(bytes_read == -1)) {
+			if(errno == EWOULDBLOCK || errno == EAGAIN) {
+				bytes_read = 0; /* nothing has been read */
+			} else if(errno == EINTR) {
 				goto again;
-			}else{
-				if (unlikely(c->state==S_CONN_CONNECT)){
-					switch(errno){
+			} else {
+				if(unlikely(c->state == S_CONN_CONNECT)) {
+					switch(errno) {
 						case ECONNRESET:
 #ifdef USE_DST_BLOCKLIST
 							dst_blocklist_su(BLST_ERR_CONNECT, c->rcv.proto,
-												&c->rcv.src_su,
-												&c->send_flags, 0);
+									&c->rcv.src_su, &c->send_flags, 0);
 #endif /* USE_DST_BLOCKLIST */
 							TCP_EV_CONNECT_RST(errno, TCP_LADDR(c),
 									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
@@ -236,8 +237,7 @@ again:
 						case ETIMEDOUT:
 #ifdef USE_DST_BLOCKLIST
 							dst_blocklist_su(BLST_ERR_CONNECT, c->rcv.proto,
-												&c->rcv.src_su,
-												&c->send_flags, 0);
+									&c->rcv.src_su, &c->send_flags, 0);
 #endif /* USE_DST_BLOCKLIST */
 							TCP_EV_CONNECT_TIMEOUT(errno, TCP_LADDR(c),
 									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
@@ -247,65 +247,61 @@ again:
 									TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
 					}
 					TCP_STATS_CONNECT_FAILED();
-				}else{
-						switch(errno){
-							case ECONNRESET:
-								TCP_STATS_CON_RESET();
+				} else {
+					switch(errno) {
+						case ECONNRESET:
+							TCP_STATS_CON_RESET();
 #ifdef USE_DST_BLOCKLIST
-								dst_blocklist_su(BLST_ERR_SEND, c->rcv.proto,
-													&c->rcv.src_su,
-													&c->send_flags, 0);
+							dst_blocklist_su(BLST_ERR_SEND, c->rcv.proto,
+									&c->rcv.src_su, &c->send_flags, 0);
 #endif /* USE_DST_BLOCKLIST */
-								break;
-							case ETIMEDOUT:
+							break;
+						case ETIMEDOUT:
 #ifdef USE_DST_BLOCKLIST
-								dst_blocklist_su(BLST_ERR_SEND, c->rcv.proto,
-													&c->rcv.src_su,
-													&c->send_flags, 0);
+							dst_blocklist_su(BLST_ERR_SEND, c->rcv.proto,
+									&c->rcv.src_su, &c->send_flags, 0);
 #endif /* USE_DST_BLOCKLIST */
-								break;
-						}
+							break;
+					}
 				}
 				LOG(cfg_get(core, core_cfg, corelog),
-						"error reading: %s (%d) ([%s]:%u ->",
-						strerror(errno), errno,
-						ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
-				LOG(cfg_get(core, core_cfg, corelog),"-> [%s]:%u)\n",
+						"error reading: %s (%d) ([%s]:%u ->", strerror(errno),
+						errno, ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
+				LOG(cfg_get(core, core_cfg, corelog), "-> [%s]:%u)\n",
 						ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
-				if (errno == ETIMEDOUT) {
+				if(errno == ETIMEDOUT) {
 					c->event = TCP_CLOSED_TIMEOUT;
-				} else if (errno == ECONNRESET) {
+				} else if(errno == ECONNRESET) {
 					c->event = TCP_CLOSED_RESET;
 				}
 				return -1;
 			}
-		}else if (unlikely((bytes_read==0) ||
-					(*flags & RD_CONN_FORCE_EOF))){
+		} else if(unlikely((bytes_read == 0) || (*flags & RD_CONN_FORCE_EOF))) {
 			LM_DBG("EOF on connection %p (state: %u, flags: %x) - FD %d,"
-					" bytes %d, rd-flags %x ([%s]:%u -> [%s]:%u)",
+				   " bytes %d, rd-flags %x ([%s]:%u -> [%s]:%u)",
 					c, c->state, c->flags, fd, bytes_read, *flags,
 					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
-			c->state=S_CONN_EOF;
-			*flags|=RD_CONN_EOF;
-			c->event=TCP_CLOSED_EOF;
-		}else{
-			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
+			c->state = S_CONN_EOF;
+			*flags |= RD_CONN_EOF;
+			c->event = TCP_CLOSED_EOF;
+		} else {
+			if(unlikely(c->state == S_CONN_CONNECT
+						|| c->state == S_CONN_ACCEPT)) {
 				TCP_STATS_ESTABLISHED(c->state);
-				c->state=S_CONN_OK;
+				c->state = S_CONN_OK;
 			}
 		}
 		/* short read */
-		*flags|=RD_CONN_SHORT_READ;
-	}else{ /* else normal full read */
-		if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
+		*flags |= RD_CONN_SHORT_READ;
+	} else { /* else normal full read */
+		if(unlikely(c->state == S_CONN_CONNECT || c->state == S_CONN_ACCEPT)) {
 			TCP_STATS_ESTABLISHED(c->state);
-			c->state=S_CONN_OK;
+			c->state = S_CONN_OK;
 		}
 	}
 	return bytes_read;
 }
-
 
 
 /* reads next available bytes
@@ -321,35 +317,34 @@ again:
  * (to distinguish from reads that would block which could return 0)
  * RD_CONN_SHORT_READ is also set in *flags for short reads.
  * sets also r->error */
-int tcp_read(struct tcp_connection *c, rd_conn_flags_t* flags)
+int tcp_read(struct tcp_connection *c, rd_conn_flags_t *flags)
 {
 	int bytes_free, bytes_read;
 	struct tcp_req *r;
 	int fd;
 
-	r=&c->req;
-	fd=c->fd;
-	bytes_free=r->b_size - (unsigned int)(r->pos - r->buf);
+	r = &c->req;
+	fd = c->fd;
+	bytes_free = r->b_size - (unsigned int)(r->pos - r->buf);
 
-	if (unlikely(bytes_free<=0)){
+	if(unlikely(bytes_free <= 0)) {
 		LM_ERR("buffer overrun, dropping ([%s]:%u -> [%s]:%u)\n",
 				ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 				ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
-		r->error=TCP_REQ_OVERRUN;
+		r->error = TCP_REQ_OVERRUN;
 		return -1;
 	}
 	bytes_read = tcp_read_data(fd, c, r->pos, bytes_free, flags);
-	if (unlikely(bytes_read < 0)){
-		r->error=TCP_READ_ERROR;
+	if(unlikely(bytes_read < 0)) {
+		r->error = TCP_READ_ERROR;
 		return -1;
 	}
 #ifdef EXTRA_DEBUG
 	LM_DBG("read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
 #endif
-	r->pos+=bytes_read;
+	r->pos += bytes_read;
 	return bytes_read;
 }
-
 
 
 /* reads all headers (until double crlf), & parses the content-length header
@@ -361,100 +356,122 @@ int tcp_read(struct tcp_connection *c, rd_conn_flags_t* flags)
  * when either r->body!=0 or r->state==H_BODY =>
  * all headers have been read. It should be called in a while loop.
  * returns < 0 if error or 0 if EOF */
-int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
+int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 {
 	int bytes, remaining;
 	char *p;
-	struct tcp_req* r;
-	unsigned int mc;   /* magic cookie */
+	struct tcp_req *r;
+	unsigned int mc; /* magic cookie */
 	unsigned short body_len;
+	struct timeval tvnow;
+	long long tvdiff;
 
 #ifdef READ_MSRP
 	char *mfline;
 	str mtransid;
 #endif
 
-	#define crlf_default_skip_case \
-					case '\n': \
-						r->state=H_LF; \
-						break; \
-					default: \
-						r->state=H_SKIP
-	
-	#define content_len_beg_case \
-					case ' ': \
-					case '\t': \
-						if (!TCP_REQ_HAS_CLEN(r)) r->state=H_STARTWS; \
-						else r->state=H_SKIP; \
-							/* not interested if we already found one */ \
-						break; \
-					case 'C': \
-					case 'c': \
-						if(!TCP_REQ_HAS_CLEN(r)) r->state=H_CONT_LEN1; \
-						else r->state=H_SKIP; \
-						break; \
-					case 'l': \
-					case 'L': \
-						/* short form for Content-Length */ \
-						if (!TCP_REQ_HAS_CLEN(r)) r->state=H_L_COLON; \
-						else r->state=H_SKIP; \
-						break
-						
-	#define change_state(upper, lower, newstate)\
-					switch(*p){ \
-						case upper: \
-						case lower: \
-							r->state=(newstate); break; \
-						crlf_default_skip_case; \
-					}
+#define crlf_default_skip_case \
+	case '\n':                 \
+		r->state = H_LF;       \
+		break;                 \
+	default:                   \
+		r->state = H_SKIP
 
-	#define change_state_case(state0, upper, lower, newstate)\
-					case state0: \
-							  change_state(upper, lower, newstate); \
-							  p++; \
-							  break
+#define content_len_beg_case                         \
+	case ' ':                                        \
+	case '\t':                                       \
+		if(!TCP_REQ_HAS_CLEN(r))                     \
+			r->state = H_STARTWS;                    \
+		else                                         \
+			r->state = H_SKIP;                       \
+		/* not interested if we already found one */ \
+		break;                                       \
+	case 'C':                                        \
+	case 'c':                                        \
+		if(!TCP_REQ_HAS_CLEN(r))                     \
+			r->state = H_CONT_LEN1;                  \
+		else                                         \
+			r->state = H_SKIP;                       \
+		break;                                       \
+	case 'l':                                        \
+	case 'L':                                        \
+		/* short form for Content-Length */          \
+		if(!TCP_REQ_HAS_CLEN(r))                     \
+			r->state = H_L_COLON;                    \
+		else                                         \
+			r->state = H_SKIP;                       \
+		break
+
+#define change_state(upper, lower, newstate) \
+	switch(*p) {                             \
+		case upper:                          \
+		case lower:                          \
+			r->state = (newstate);           \
+			break;                           \
+			crlf_default_skip_case;          \
+	}
+
+#define change_state_case(state0, upper, lower, newstate) \
+	case state0:                                          \
+		change_state(upper, lower, newstate);             \
+		p++;                                              \
+		break
 
 
-	r=&c->req;
-	if(r->parsed<r->buf || r->parsed>r->buf+r->b_size) {
-		if(r->parsed<r->buf && (unsigned char)r->state==H_SKIP_EMPTY) {
+	r = &c->req;
+	if(r->parsed < r->buf || r->parsed > r->buf + r->b_size) {
+		if(r->parsed < r->buf && (unsigned char)r->state == H_SKIP_EMPTY) {
 			/* give it a chance to parse from beginning */
 			LM_WARN("resetting parsed pointer (buf:%p parsed:%p bsize:%u)\n",
-				r->buf, r->parsed, r->b_size);
+					r->buf, r->parsed, r->b_size);
 			r->parsed = r->buf;
 		} else {
 			LM_ERR("out of bounds parsed pointer (buf:%p parsed:%p bsize:%u)\n",
-				r->buf, r->parsed, r->b_size);
+					r->buf, r->parsed, r->b_size);
 			r->parsed = r->buf;
-			r->content_len=0;
-			r->error=TCP_REQ_BAD_LEN;
-			r->state=H_SKIP; /* skip state now */
+			r->content_len = 0;
+			r->error = TCP_REQ_BAD_LEN;
+			r->state = H_SKIP; /* skip state now */
 			return -1;
 		}
 	}
 	/* if we still have some unparsed part, parse it first, don't do the read*/
-	if (unlikely(r->parsed<r->pos)){
-		bytes=0;
-	}else{
+	if(unlikely(r->parsed < r->pos)) {
+		bytes = 0;
+	} else {
 #ifdef USE_TLS
-		if (unlikely(c->type==PROTO_TLS))
-			bytes=tls_read(c, read_flags);
+		if(unlikely(c->type == PROTO_TLS))
+			bytes = tls_read(c, read_flags);
 		else
 #endif
-			bytes=tcp_read(c, read_flags);
-		if (bytes<=0) return bytes;
+			bytes = tcp_read(c, read_flags);
+		if(bytes <= 0)
+			return bytes;
+		gettimeofday(&tvnow, NULL);
+		tvdiff = 1000000 * (tvnow.tv_sec - r->tvrstart.tv_sec)
+				 + (tvnow.tv_usec - r->tvrstart.tv_usec);
+		if(tvdiff >= ksr_tcp_msg_read_timeout * 1000000) {
+			LM_ERR("message reading timeout after %lld usec\n", tvdiff);
+			r->parsed = r->buf;
+			r->content_len = 0;
+			r->error = TCP_REQ_BAD_LEN;
+			r->state = H_SKIP; /* skip now */
+			return -1;
+		}
 	}
-	p=r->parsed;
+	p = r->parsed;
 
-	while(p<r->pos && r->error==TCP_REQ_OK){
-		switch((unsigned char)r->state){
+	while(p < r->pos && r->error == TCP_REQ_OK) {
+		switch((unsigned char)r->state) {
 			case H_BODY: /* read the body*/
-				remaining=r->pos-p;
-				if (remaining>r->bytes_to_go) remaining=r->bytes_to_go;
-				r->bytes_to_go-=remaining;
-				p+=remaining;
-				if (r->bytes_to_go==0){
-					r->flags|=F_TCP_REQ_COMPLETE;
+				remaining = r->pos - p;
+				if(remaining > r->bytes_to_go)
+					remaining = r->bytes_to_go;
+				r->bytes_to_go -= remaining;
+				p += remaining;
+				if(r->bytes_to_go == 0) {
+					r->flags |= F_TCP_REQ_COMPLETE;
 					goto skip;
 				}
 				break;
@@ -462,15 +479,14 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 			case H_SKIP:
 				/* find lf, we are in this state if we are not interested
 				 * in anything till end of line*/
-				p=q_memchr(p, '\n', r->pos-p);
-				if (p){
+				p = q_memchr(p, '\n', r->pos - p);
+				if(p) {
 #ifdef READ_MSRP
 					/* catch if it is MSRP or not with first '\n' */
-					if(!((r->flags&F_TCP_REQ_MSRP_NO)
-								|| (r->flags&F_TCP_REQ_MSRP_FRAME))) {
-						if((r->pos - r->start)>5
-									&& strncmp(r->start, "MSRP ", 5)==0)
-						{
+					if(!((r->flags & F_TCP_REQ_MSRP_NO)
+							   || (r->flags & F_TCP_REQ_MSRP_FRAME))) {
+						if((r->pos - r->start) > 5
+								&& strncmp(r->start, "MSRP ", 5) == 0) {
 							r->flags |= F_TCP_REQ_MSRP_FRAME;
 						} else {
 							r->flags |= F_TCP_REQ_MSRP_NO;
@@ -478,334 +494,330 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 					}
 #endif
 					p++;
-					r->state=H_LF;
-				}else{
-					p=r->pos;
+					r->state = H_LF;
+				} else {
+					p = r->pos;
 				}
 				break;
-				
+
 			case H_LF:
 				/* terminate on LF CR LF or LF LF */
-				switch (*p){
+				switch(*p) {
 					case '\r':
-						r->state=H_LFCR;
+						r->state = H_LFCR;
 						break;
 					case '\n':
 						/* found LF LF */
-						r->state=H_BODY;
+						r->state = H_BODY;
 #ifdef READ_HTTP11
-						if (cfg_get(tcp, tcp_cfg, accept_no_cl)!=0)
+						if(cfg_get(tcp, tcp_cfg, accept_no_cl) != 0)
 							tcp_http11_continue(c);
 #endif
-						if (TCP_REQ_HAS_CLEN(r)){
-							r->body=p+1;
-							r->bytes_to_go=r->content_len;
-							if (r->bytes_to_go==0){
-								r->flags|=F_TCP_REQ_COMPLETE;
+						if(TCP_REQ_HAS_CLEN(r)) {
+							r->body = p + 1;
+							r->bytes_to_go = r->content_len;
+							if(r->bytes_to_go == 0) {
+								r->flags |= F_TCP_REQ_COMPLETE;
 								p++;
 								goto skip;
 							}
-						}else{
-							if(cfg_get(tcp, tcp_cfg, accept_no_cl)!=0) {
+						} else {
+							if(cfg_get(tcp, tcp_cfg, accept_no_cl) != 0) {
 #ifdef READ_MSRP
 								/* if MSRP message */
-								if(c->req.flags&F_TCP_REQ_MSRP_FRAME)
-								{
-									r->body=p+1;
+								if(c->req.flags & F_TCP_REQ_MSRP_FRAME) {
+									r->body = p + 1;
 									/* at least 3 bytes: 0\r\n */
-									r->bytes_to_go=3;
+									r->bytes_to_go = 3;
 									p++;
 									r->content_len = 0;
-									r->state=H_MSRP_BODY;
+									r->state = H_MSRP_BODY;
 									break;
 								}
 #endif
 
 #ifdef READ_HTTP11
 								if(TCP_REQ_BCHUNKED(r)) {
-									r->body=p+1;
+									r->body = p + 1;
 									/* at least 3 bytes: 0\r\n */
-									r->bytes_to_go=3;
+									r->bytes_to_go = 3;
 									p++;
 									r->content_len = 0;
-									r->state=H_HTTP11_CHUNK_START;
+									r->state = H_HTTP11_CHUNK_START;
 									break;
 								}
 #endif
-								r->body=p+1;
-								r->bytes_to_go=0;
-								r->flags|=F_TCP_REQ_COMPLETE;
+								r->body = p + 1;
+								r->bytes_to_go = 0;
+								r->flags |= F_TCP_REQ_COMPLETE;
 								p++;
 								goto skip;
 							} else {
 								LM_DBG("no clen, p=%X\n", *p);
-								r->error=TCP_REQ_BAD_LEN;
+								r->error = TCP_REQ_BAD_LEN;
 							}
 						}
 						break;
 					case '-':
-						r->state=H_SKIP;
+						r->state = H_SKIP;
 #ifdef READ_MSRP
 						/* catch end of MSRP frame without body
 						 *     '-------sessid$\r\n'
-						 * follows headers wihtout extra CRLF */
-						if(r->flags&F_TCP_REQ_MSRP_FRAME) {
+						 * follows headers without extra CRLF */
+						if(r->flags & F_TCP_REQ_MSRP_FRAME) {
 							p--;
-							r->state=H_MSRP_BODY_END;
+							r->state = H_MSRP_BODY_END;
 						}
 #endif
 						break;
-					content_len_beg_case;
-					default: 
-						r->state=H_SKIP;
+						content_len_beg_case;
+					default:
+						r->state = H_SKIP;
 				}
 				p++;
 				break;
 			case H_LFCR:
-				if (*p=='\n'){
+				if(*p == '\n') {
 					/* found LF CR LF */
-					r->state=H_BODY;
+					r->state = H_BODY;
 #ifdef READ_HTTP11
-					if (cfg_get(tcp, tcp_cfg, accept_no_cl)!=0)
+					if(cfg_get(tcp, tcp_cfg, accept_no_cl) != 0)
 						tcp_http11_continue(c);
 #endif
-					if (TCP_REQ_HAS_CLEN(r)){
-						r->body=p+1;
-						r->bytes_to_go=r->content_len;
-						if (r->bytes_to_go==0){
-							r->flags|=F_TCP_REQ_COMPLETE;
+					if(TCP_REQ_HAS_CLEN(r)) {
+						r->body = p + 1;
+						r->bytes_to_go = r->content_len;
+						if(r->bytes_to_go == 0) {
+							r->flags |= F_TCP_REQ_COMPLETE;
 							p++;
 							goto skip;
 						}
-					}else{
-						if (cfg_get(tcp, tcp_cfg, accept_no_cl)!=0) {
+					} else {
+						if(cfg_get(tcp, tcp_cfg, accept_no_cl) != 0) {
 #ifdef READ_MSRP
 							/* if MSRP message */
-							if(c->req.flags&F_TCP_REQ_MSRP_FRAME)
-							{
-								r->body=p+1;
+							if(c->req.flags & F_TCP_REQ_MSRP_FRAME) {
+								r->body = p + 1;
 								/* at least 3 bytes: 0\r\n */
-								r->bytes_to_go=3;
+								r->bytes_to_go = 3;
 								p++;
 								r->content_len = 0;
-								r->state=H_MSRP_BODY;
+								r->state = H_MSRP_BODY;
 								break;
 							}
 #endif
 
 #ifdef READ_HTTP11
 							if(TCP_REQ_BCHUNKED(r)) {
-								r->body=p+1;
+								r->body = p + 1;
 								/* at least 3 bytes: 0\r\n */
-								r->bytes_to_go=3;
+								r->bytes_to_go = 3;
 								p++;
 								r->content_len = 0;
-								r->state=H_HTTP11_CHUNK_START;
+								r->state = H_HTTP11_CHUNK_START;
 								break;
 							}
 #endif
-							r->body=p+1;
-							r->bytes_to_go=0;
-							r->flags|=F_TCP_REQ_COMPLETE;
+							r->body = p + 1;
+							r->bytes_to_go = 0;
+							r->flags |= F_TCP_REQ_COMPLETE;
 							p++;
 							goto skip;
 						} else {
 							LM_DBG("no clen, p=%X\n", *p);
-							r->error=TCP_REQ_BAD_LEN;
+							r->error = TCP_REQ_BAD_LEN;
 						}
 					}
-				}else r->state=H_SKIP;
+				} else
+					r->state = H_SKIP;
 				p++;
 				break;
-				
+
 			case H_STARTWS:
-				switch (*p){
+				switch(*p) {
 					content_len_beg_case;
 					crlf_default_skip_case;
 				}
 				p++;
 				break;
 			case H_SKIP_EMPTY:
-				switch (*p){
+				switch(*p) {
 					case '\n':
 						break;
 					case '\r':
-						if (cfg_get(tcp, tcp_cfg, crlf_ping)) {
-							r->state=H_SKIP_EMPTY_CR_FOUND;
-							r->start=p;
+						if(cfg_get(tcp, tcp_cfg, crlf_ping)) {
+							r->state = H_SKIP_EMPTY_CR_FOUND;
+							r->start = p;
 						}
 						break;
 					case ' ':
 					case '\t':
 						/* skip empty lines */
 						break;
-					case 'C': 
-					case 'c': 
-						r->state=H_CONT_LEN1; 
-						r->start=p;
+					case 'C':
+					case 'c':
+						r->state = H_CONT_LEN1;
+						r->start = p;
 						break;
 					case 'l':
 					case 'L':
 						/* short form for Content-Length */
-						r->state=H_L_COLON;
-						r->start=p;
+						r->state = H_L_COLON;
+						r->start = p;
 						break;
 					default:
 						/* stun test */
-						if (unlikely(sr_event_enabled(SREV_STUN_IN)) && (unsigned char)*p == 0x00) {
-							r->state=H_STUN_MSG;
+						if(unlikely(sr_event_enabled(SREV_STUN_IN))
+								&& (unsigned char)*p == 0x00) {
+							r->state = H_STUN_MSG;
 							/* body is used as pointer to the last used byte */
-							r->body=p;
+							r->body = p;
 							r->content_len = 0;
 							LM_DBG("stun msg detected\n");
 						} else {
-							r->state=H_SKIP;
+							r->state = H_SKIP;
 						}
-						r->start=p;
+						r->start = p;
 				};
 				p++;
 				break;
 
 			case H_SKIP_EMPTY_CR_FOUND:
-				if (*p=='\n'){
-					r->state=H_SKIP_EMPTY_CRLF_FOUND;
+				if(*p == '\n') {
+					r->state = H_SKIP_EMPTY_CRLF_FOUND;
 					p++;
-				}else{
-					r->state=H_SKIP_EMPTY;
+				} else {
+					r->state = H_SKIP_EMPTY;
 				}
 				break;
 
 			case H_SKIP_EMPTY_CRLF_FOUND:
-				if (*p=='\r'){
+				if(*p == '\r') {
 					r->state = H_SKIP_EMPTY_CRLFCR_FOUND;
 					p++;
-				}else{
+				} else {
 					r->state = H_SKIP_EMPTY;
 				}
 				break;
 
 			case H_SKIP_EMPTY_CRLFCR_FOUND:
-				if (*p=='\n'){
+				if(*p == '\n') {
 					r->state = H_PING_CRLF;
-					r->flags |= F_TCP_REQ_HAS_CLEN |
-							F_TCP_REQ_COMPLETE; /* hack to avoid error check */
+					r->flags |=
+							F_TCP_REQ_HAS_CLEN
+							| F_TCP_REQ_COMPLETE; /* hack to avoid error check */
 					p++;
 					goto skip;
-				}else{
+				} else {
 					r->state = H_SKIP_EMPTY;
 				}
 				break;
 
 			case H_STUN_MSG:
-				if ((r->pos - r->body) >= sizeof(struct stun_hdr)) {
-					/* copy second short from buffer where should be body 
-					 * length 
+				if((r->pos - r->body) >= sizeof(struct stun_hdr)) {
+					/* copy second short from buffer where should be body
+					 * length
 					 */
-					memcpy(&body_len, &r->start[sizeof(unsigned short)], 
-						sizeof(unsigned short));
-					
+					memcpy(&body_len, &r->start[sizeof(unsigned short)],
+							sizeof(unsigned short));
+
 					body_len = ntohs(body_len);
-					
+
 					/* check if there is valid magic cookie */
-					memcpy(&mc, &r->start[sizeof(unsigned int)], 
-						sizeof(unsigned int));
+					memcpy(&mc, &r->start[sizeof(unsigned int)],
+							sizeof(unsigned int));
 					mc = ntohl(mc);
 					/* using has_content_len as a flag if there should be
 					 * fingerprint or no
 					 */
 					r->flags |= (mc == MAGIC_COOKIE) ? F_TCP_REQ_HAS_CLEN : 0;
-					
+
 					r->body += sizeof(struct stun_hdr);
-					p = r->body; 
-					
-					if (body_len > 0) {
+					p = r->body;
+
+					if(body_len > 0) {
 						r->state = H_STUN_READ_BODY;
-					}
-					else {
-						if (is_msg_complete(r) != 0) {
+					} else {
+						if(is_msg_complete(r) != 0) {
 							goto skip;
-						}
-						else {
+						} else {
 							/* set content_len to length of fingerprint */
 							body_len = sizeof(struct stun_attr) + 20;
 							/* 20 is SHA_DIGEST_LENGTH from openssl/sha.h */
 						}
 					}
-					r->content_len=body_len;
-				}
-				else {
-					p = r->pos; 
+					r->content_len = body_len;
+				} else {
+					p = r->pos;
 				}
 				break;
-				
+
 			case H_STUN_READ_BODY:
 				/* check if the whole body was read */
-				body_len=r->content_len;
-				if ((r->pos - r->body) >= body_len) {
+				body_len = r->content_len;
+				if((r->pos - r->body) >= body_len) {
 					r->body += body_len;
 					p = r->body;
-					if (is_msg_complete(r) != 0) {
-						r->content_len=0;
+					if(is_msg_complete(r) != 0) {
+						r->content_len = 0;
 						goto skip;
-					}
-					else {
+					} else {
 						/* set content_len to length of fingerprint */
 						body_len = sizeof(struct stun_attr) + 20;
 						/* 20 is SHA_DIGEST_LENGTH from openssl/sha.h */
-						r->content_len=body_len;
+						r->content_len = body_len;
 					}
-				}
-				else {
+				} else {
 					p = r->pos;
 				}
 				break;
-				
+
 			case H_STUN_FP:
 				/* content_len contains length of fingerprint in this place! */
-				body_len=r->content_len;
-				if ((r->pos - r->body) >= body_len) {
+				body_len = r->content_len;
+				if((r->pos - r->body) >= body_len) {
 					r->body += body_len;
 					p = r->body;
 					r->state = H_STUN_END;
-					r->flags |= F_TCP_REQ_COMPLETE |
-						F_TCP_REQ_HAS_CLEN; /* hack to avoid error check */
-					r->content_len=0;
+					r->flags |=
+							F_TCP_REQ_COMPLETE
+							| F_TCP_REQ_HAS_CLEN; /* hack to avoid error check */
+					r->content_len = 0;
 					goto skip;
-				}
-				else {
+				} else {
 					p = r->pos;
 				}
 				break;
 
-			change_state_case(H_CONT_LEN1,  'O', 'o', H_CONT_LEN2);
-			change_state_case(H_CONT_LEN2,  'N', 'n', H_CONT_LEN3);
-			change_state_case(H_CONT_LEN3,  'T', 't', H_CONT_LEN4);
-			change_state_case(H_CONT_LEN4,  'E', 'e', H_CONT_LEN5);
-			change_state_case(H_CONT_LEN5,  'N', 'n', H_CONT_LEN6);
-			change_state_case(H_CONT_LEN6,  'T', 't', H_CONT_LEN7);
-			change_state_case(H_CONT_LEN7,  '-', '_', H_CONT_LEN8);
-			change_state_case(H_CONT_LEN8,  'L', 'l', H_CONT_LEN9);
-			change_state_case(H_CONT_LEN9,  'E', 'e', H_CONT_LEN10);
-			change_state_case(H_CONT_LEN10, 'N', 'n', H_CONT_LEN11);
-			change_state_case(H_CONT_LEN11, 'G', 'g', H_CONT_LEN12);
-			change_state_case(H_CONT_LEN12, 'T', 't', H_CONT_LEN13);
-			change_state_case(H_CONT_LEN13, 'H', 'h', H_L_COLON);
+				change_state_case(H_CONT_LEN1, 'O', 'o', H_CONT_LEN2);
+				change_state_case(H_CONT_LEN2, 'N', 'n', H_CONT_LEN3);
+				change_state_case(H_CONT_LEN3, 'T', 't', H_CONT_LEN4);
+				change_state_case(H_CONT_LEN4, 'E', 'e', H_CONT_LEN5);
+				change_state_case(H_CONT_LEN5, 'N', 'n', H_CONT_LEN6);
+				change_state_case(H_CONT_LEN6, 'T', 't', H_CONT_LEN7);
+				change_state_case(H_CONT_LEN7, '-', '_', H_CONT_LEN8);
+				change_state_case(H_CONT_LEN8, 'L', 'l', H_CONT_LEN9);
+				change_state_case(H_CONT_LEN9, 'E', 'e', H_CONT_LEN10);
+				change_state_case(H_CONT_LEN10, 'N', 'n', H_CONT_LEN11);
+				change_state_case(H_CONT_LEN11, 'G', 'g', H_CONT_LEN12);
+				change_state_case(H_CONT_LEN12, 'T', 't', H_CONT_LEN13);
+				change_state_case(H_CONT_LEN13, 'H', 'h', H_L_COLON);
 
 			case H_L_COLON:
-				switch(*p){
+				switch(*p) {
 					case ' ':
 					case '\t':
 						break; /* skip space */
 					case ':':
-						r->state=H_CONT_LEN_BODY;
+						r->state = H_CONT_LEN_BODY;
 						break;
-					crlf_default_skip_case;
+						crlf_default_skip_case;
 				};
 				p++;
 				break;
 
-			case  H_CONT_LEN_BODY:
-				switch(*p){
+			case H_CONT_LEN_BODY:
+				switch(*p) {
 					case ' ':
 					case '\t':
 						break; /* eat space */
@@ -819,17 +831,18 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 					case '7':
 					case '8':
 					case '9':
-						r->state=H_CONT_LEN_BODY_PARSE;
-						r->content_len=(*p-'0');
+						r->state = H_CONT_LEN_BODY_PARSE;
+						r->content_len = (*p - '0');
 						break;
-					/*FIXME: content length on different lines ! */
-					crlf_default_skip_case;
+						/* note: review case of content-length
+						 * on different lines */
+						crlf_default_skip_case;
 				}
 				p++;
 				break;
 
 			case H_CONT_LEN_BODY_PARSE:
-				switch(*p){
+				switch(*p) {
 					case '0':
 					case '1':
 					case '2':
@@ -840,55 +853,59 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 					case '7':
 					case '8':
 					case '9':
-						r->content_len=r->content_len*10+(*p-'0');
+						r->content_len = r->content_len * 10 + (*p - '0');
 						break;
 					case '\r':
 					case ' ':
-					case '\t': /* FIXME: check if line contains only WS */
-						if(r->content_len<0) {
+					case '\t':
+						if(r->content_len < 0) {
 							LM_ERR("bad Content-Length header value %d in"
-									" state %d\n", r->content_len, r->state);
-							r->content_len=0;
-							r->error=TCP_REQ_BAD_LEN;
-							r->state=H_SKIP; /* skip now */
+								   " state %d\n",
+									r->content_len, r->state);
+							r->content_len = 0;
+							r->error = TCP_REQ_BAD_LEN;
+							r->state = H_SKIP; /* skip now */
 						}
-						r->state=H_SKIP;
-						r->flags|=F_TCP_REQ_HAS_CLEN;
+						r->state = H_SKIP;
+						r->flags |= F_TCP_REQ_HAS_CLEN;
 						break;
 					case '\n':
 						/* end of line, parse successful */
-						if(r->content_len<0) {
+						if(r->content_len < 0) {
 							LM_ERR("bad Content-Length header value %d in"
-									" state %d\n", r->content_len, r->state);
-							r->content_len=0;
-							r->error=TCP_REQ_BAD_LEN;
-							r->state=H_SKIP; /* skip now */
+								   " state %d\n",
+									r->content_len, r->state);
+							r->content_len = 0;
+							r->error = TCP_REQ_BAD_LEN;
+							r->state = H_SKIP; /* skip now */
 						}
-						r->state=H_LF;
-						r->flags|=F_TCP_REQ_HAS_CLEN;
+						r->state = H_LF;
+						r->flags |= F_TCP_REQ_HAS_CLEN;
 						break;
 					default:
 						LM_ERR("bad Content-Length header value, unexpected "
-								"char %c in state %d\n", *p, r->state);
-						r->state=H_SKIP; /* try to find another?*/
+							   "char %c in state %d\n",
+								*p, r->state);
+						r->state = H_SKIP; /* try to find another?*/
 				}
 				p++;
 				break;
-			
+
 #ifdef READ_HTTP11
 			case H_HTTP11_CHUNK_START: /* start a new body chunk: SIZE\r\nBODY\r\n */
 				r->chunk_size = 0;
 				r->state = H_HTTP11_CHUNK_SIZE;
 				break;
-			case H_HTTP11_CHUNK_BODY: /* content of chunnk */
-				remaining=r->pos-p;
-				if (remaining>r->bytes_to_go) remaining=r->bytes_to_go;
-				r->bytes_to_go-=remaining;
-				p+=remaining;
-				if (r->bytes_to_go==0){
+			case H_HTTP11_CHUNK_BODY: /* content of chunk */
+				remaining = r->pos - p;
+				if(remaining > r->bytes_to_go)
+					remaining = r->bytes_to_go;
+				r->bytes_to_go -= remaining;
+				p += remaining;
+				if(r->bytes_to_go == 0) {
 					r->state = H_HTTP11_CHUNK_END;
 					/* shift back body content */
-					if(r->chunk_size>0 && p-r->chunk_size>r->body) {
+					if(r->chunk_size > 0 && p - r->chunk_size > r->body) {
 						memmove(r->body + r->content_len, p - r->chunk_size,
 								r->chunk_size);
 						r->content_len += r->chunk_size;
@@ -898,7 +915,7 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 				break;
 
 			case H_HTTP11_CHUNK_END:
-				switch(*p){
+				switch(*p) {
 					case '\r':
 					case ' ':
 					case '\t': /* skip */
@@ -908,27 +925,43 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 						break;
 					default:
 						LM_ERR("bad chunk, unexpected "
-								"char %c in state %d\n", *p, r->state);
-						r->state=H_SKIP; /* try to find another?*/
+							   "char %c in state %d\n",
+								*p, r->state);
+						r->state = H_SKIP; /* try to find another?*/
 				}
 				p++;
 				break;
 
 			case H_HTTP11_CHUNK_SIZE:
-				switch(*p){
-					case '0': case '1': case '2': case '3':
-					case '4': case '5': case '6': case '7':
-					case '8': case '9':
+				switch(*p) {
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+					case '9':
 						r->chunk_size <<= 4;
 						r->chunk_size += *p - '0';
 						break;
-					case 'a': case 'b': case 'c': case 'd':
-					case 'e': case 'f':
+					case 'a':
+					case 'b':
+					case 'c':
+					case 'd':
+					case 'e':
+					case 'f':
 						r->chunk_size <<= 4;
 						r->chunk_size += *p - 'a' + 10;
 						break;
-					case 'A': case 'B': case 'C': case 'D':
-					case 'E': case 'F':
+					case 'A':
+					case 'B':
+					case 'C':
+					case 'D':
+					case 'E':
+					case 'F':
 						r->chunk_size <<= 4;
 						r->chunk_size += *p - 'A' + 10;
 						break;
@@ -938,19 +971,20 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 						break;
 					case '\n':
 						/* end of line, parse successful */
-						r->state=H_HTTP11_CHUNK_BODY;
+						r->state = H_HTTP11_CHUNK_BODY;
 						r->bytes_to_go = r->chunk_size;
-						if (r->bytes_to_go==0){
-							r->state=H_HTTP11_CHUNK_FINISH;
-							r->flags|=F_TCP_REQ_COMPLETE;
+						if(r->bytes_to_go == 0) {
+							r->state = H_HTTP11_CHUNK_FINISH;
+							r->flags |= F_TCP_REQ_COMPLETE;
 							p++;
 							goto skip;
 						}
 						break;
 					default:
 						LM_ERR("bad chunk size value, unexpected "
-								"char %c in state %d\n", *p, r->state);
-						r->state=H_SKIP; /* try to find another?*/
+							   "char %c in state %d\n",
+								*p, r->state);
+						r->state = H_SKIP; /* try to find another?*/
 				}
 				p++;
 				break;
@@ -960,78 +994,81 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 				/* find lf, we are in this state if we are not interested
 				 * in anything till end of line*/
 				r->flags |= F_TCP_REQ_MSRP_BODY;
-				p = q_memchr(p, '\n', r->pos-p);
-				if (p) {
+				p = q_memchr(p, '\n', r->pos - p);
+				if(p) {
 					p++;
-					r->state=H_MSRP_BODY_LF;
+					r->state = H_MSRP_BODY_LF;
 				} else {
-					p=r->pos;
+					p = r->pos;
 				}
 				break;
 			case H_MSRP_BODY_LF: /* LF in body of msrp frame */
-				switch (*p) {
+				switch(*p) {
 					case '-':
-							p--;
-							r->state=H_MSRP_BODY_END;
+						p--;
+						r->state = H_MSRP_BODY_END;
 						break;
 					default:
-						r->state=H_MSRP_BODY;
+						r->state = H_MSRP_BODY;
 				}
 				p++;
 				break;
 			case H_MSRP_BODY_END: /* end of body for msrp frame */
 				/* find LF and check if it is end-line */
-				p = q_memchr(p, '\n', r->pos-p);
-				if (p) {
+				p = q_memchr(p, '\n', r->pos - p);
+				if(p) {
 					/* check if it is end line '-------sessid$\r\n' */
 					if(r->pos - r->start < 10) {
 						LM_ERR("weird situation when reading MSRP frame"
-								" - continue reading\n");
+							   " - continue reading\n");
 						/* *p=='\n' */
-						r->state=H_MSRP_BODY_LF;
+						r->state = H_MSRP_BODY_LF;
 						p++;
 						break;
 					}
-					if(*(p-1)!='\r') {
+					if(*(p - 1) != '\r') {
 						/* not ending in '\r\n' - not end-line */
 						/* *p=='\n' */
-						r->state=H_MSRP_BODY_LF;
+						r->state = H_MSRP_BODY_LF;
 						p++;
 						break;
 					}
 					/* locate transaction id in first line
 					 * -- first line exists, that's why we are here */
-					mfline =  q_memchr(r->start, '\n', r->pos-r->start);
-					mtransid.s = q_memchr(r->start + 5 /* 'MSRP ' */, ' ',
-							mfline - r->start);
+					mfline = q_memchr(r->start, '\n', r->pos - r->start);
+					mtransid.s = q_memchr(
+							r->start + 5 /* 'MSRP ' */, ' ', mfline - r->start);
 					mtransid.len = mtransid.s - r->start - 5;
 					mtransid.s = r->start + 5;
 					trim(&mtransid);
 					if(memcmp(mtransid.s,
-							p - 1 /*\r*/ - 1 /* '+'|'#'|'$' */ - mtransid.len,
-							mtransid.len)!=0) {
+							   p - 1 /*\r*/ - 1 /* '+'|'#'|'$' */
+									   - mtransid.len,
+							   mtransid.len)
+							!= 0) {
 						/* no match on session id - not end-line */
 						/* *p=='\n' */
-						r->state=H_MSRP_BODY_LF;
+						r->state = H_MSRP_BODY_LF;
 						p++;
 						break;
 					}
 					if(memcmp(p - 1 /*\r*/ - 1 /* '+'|'#'|'$' */ - mtransid.len
-								- 7 /* 7 x '-' */ - 1 /* '\n' */, "\n-------",
-								8)!=0) {
+									   - 7 /* 7 x '-' */ - 1 /* '\n' */,
+							   "\n-------", 8)
+							!= 0) {
 						/* no match on "\n-------" - not end-line */
 						/* *p=='\n' */
-						r->state=H_MSRP_BODY_LF;
+						r->state = H_MSRP_BODY_LF;
 						p++;
 						break;
 					}
-					r->state=H_MSRP_FINISH;
-					r->flags|=F_TCP_REQ_COMPLETE;
+					r->state = H_MSRP_FINISH;
+					r->flags |= F_TCP_REQ_COMPLETE;
 					p++;
 					goto skip;
 
 				} else {
-					p=r->pos;
+					p = r->pos;
 				}
 				break;
 #endif
@@ -1042,14 +1079,14 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 		}
 	}
 skip:
-	r->parsed=p;
+	r->parsed = p;
 	return bytes;
 }
 
 
 #ifdef READ_MSRP
-int msrp_process_msg(char* tcpbuf, unsigned int len,
-		struct receive_info* rcv_info, struct tcp_connection* con)
+int msrp_process_msg(char *tcpbuf, unsigned int len,
+		struct receive_info *rcv_info, struct tcp_connection *con)
 {
 	int ret;
 	tcp_event_info_t tev;
@@ -1064,7 +1101,7 @@ int msrp_process_msg(char* tcpbuf, unsigned int len,
 		tev.len = len;
 		tev.rcv = rcv_info;
 		tev.con = con;
-		evp.data = (void*)(&tev);
+		evp.data = (void *)(&tev);
 		ret = sr_event_exec(SREV_TCP_MSRP_FRAME, &evp);
 	} else {
 		LM_DBG("no callback registering for handling MSRP - dropping!\n");
@@ -1074,30 +1111,30 @@ int msrp_process_msg(char* tcpbuf, unsigned int len,
 #endif
 
 #ifdef READ_WS
-static int tcp_read_ws(struct tcp_connection *c, rd_conn_flags_t* read_flags)
+static int tcp_read_ws(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 {
 	int bytes;
 	uint32_t size, pos, mask_present, len;
 	char *p;
 	struct tcp_req *r;
 
-	r=&c->req;
+	r = &c->req;
 #ifdef USE_TLS
-	if (unlikely(c->type == PROTO_WSS))
+	if(unlikely(c->type == PROTO_WSS))
 		bytes = tls_read(c, read_flags);
 	else
 #endif
 		bytes = tcp_read(c, read_flags);
 
-	if (bytes < 0) {
+	if(bytes < 0) {
 		/* read error */
 		return bytes;
 	}
-	if (r->parsed == r->pos) {
+	if(r->parsed == r->pos) {
 		/* nothing else to parse */
 		return bytes;
 	}
-	if (r->parsed > r->pos) {
+	if(r->parsed > r->pos) {
 		LM_ERR("req buf pos (%p) before parsed (%p) [%d]\n", r->pos, r->parsed,
 				bytes);
 		return -1;
@@ -1143,7 +1180,7 @@ static int tcp_read_ws(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 	*/
 
 	/* Process first two bytes */
-	if (size < pos + 2)
+	if(size < pos + 2)
 		goto skip;
 	pos++;
 	mask_present = p[pos] & 0x80;
@@ -1151,49 +1188,47 @@ static int tcp_read_ws(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 	pos++;
 
 	/* Work out real length */
-	if (len == 126) {
+	if(len == 126) {
 		/* 2 bytes store the payload size */
-		if (size < pos + 2)
+		if(size < pos + 2)
 			goto skip;
 
-		len = ((p[pos + 0] & 0xff) <<  8) | ((p[pos + 1] & 0xff) <<  0);
+		len = ((p[pos + 0] & 0xff) << 8) | ((p[pos + 1] & 0xff) << 0);
 		pos += 2;
-	} else if (len == 127) {
+	} else if(len == 127) {
 		/* 8 bytes store the payload size */
-		if (size < pos + 8) {
+		if(size < pos + 8) {
 			goto skip;
 		}
 
 		/* Only decoding the last four bytes of the length...
 		   This limits the size of WebSocket messages that can be
 		   handled to 2^32 - which should be plenty for SIP! */
-		if((p[pos] & 0xff)!=0 || (p[pos + 1] & 0xff)!=0
-				|| (p[pos + 2] & 0xff)!=0 || (p[pos + 3] & 0xff)!=0) {
+		if((p[pos] & 0xff) != 0 || (p[pos + 1] & 0xff) != 0
+				|| (p[pos + 2] & 0xff) != 0 || (p[pos + 3] & 0xff) != 0) {
 			LM_WARN("advertised length is too large (more than 2^32)\n");
 			goto skip;
 		}
-		len = ((p[pos + 4] & 0xff) << 24)
-			| ((p[pos + 5] & 0xff) << 16)
-			| ((p[pos + 6] & 0xff) <<  8)
-			| ((p[pos + 7] & 0xff) <<  0);
+		len = ((p[pos + 4] & 0xff) << 24) | ((p[pos + 5] & 0xff) << 16)
+			  | ((p[pos + 6] & 0xff) << 8) | ((p[pos + 7] & 0xff) << 0);
 		pos += 8;
 	}
 
 	/* Skip mask */
-	if (mask_present) {
-		if (size < pos + 4)
+	if(mask_present) {
+		if(size < pos + 4)
 			goto skip;
 		pos += 4;
 	}
 
 	/* check if advertised length fits in read buffer */
-	if(len>=r->b_size) {
-		LM_WARN("advertised length (%u) greater than buffer size (%u)\n",
-				len, r->b_size);
+	if(len >= r->b_size) {
+		LM_WARN("advertised length (%u) greater than buffer size (%u)\n", len,
+				r->b_size);
 		goto skip;
 	}
 	/* Now check the whole message has been received */
-	if (size < pos + len)
+	if(size < pos + len)
 		goto skip;
 
 	pos += len;
@@ -1204,8 +1239,8 @@ skip:
 	return bytes;
 }
 
-static int ws_process_msg(char* tcpbuf, unsigned int len,
-		struct receive_info* rcv_info, struct tcp_connection* con)
+static int ws_process_msg(char *tcpbuf, unsigned int len,
+		struct receive_info *rcv_info, struct tcp_connection *con)
 {
 	int ret;
 	tcp_event_info_t tev;
@@ -1220,7 +1255,7 @@ static int ws_process_msg(char* tcpbuf, unsigned int len,
 		tev.len = len;
 		tev.rcv = rcv_info;
 		tev.con = con;
-		evp.data = (void*)(&tev);
+		evp.data = (void *)(&tev);
 		ret = sr_event_exec(SREV_TCP_WS_FRAME_IN, &evp);
 	} else {
 		LM_DBG("no callback registering for handling WebSockets - dropping!\n");
@@ -1229,16 +1264,16 @@ static int ws_process_msg(char* tcpbuf, unsigned int len,
 }
 #endif
 
-static int tcp_read_hep3(struct tcp_connection *c, rd_conn_flags_t* read_flags)
+static int tcp_read_hep3(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 {
 	int bytes;
 	uint32_t size, len;
 	char *p;
 	struct tcp_req *r;
 
-	r=&c->req;
+	r = &c->req;
 #ifdef USE_TLS
-	if (unlikely(c->type == PROTO_TLS)) {
+	if(unlikely(c->type == PROTO_TLS)) {
 		bytes = tls_read(c, read_flags);
 	} else {
 #endif
@@ -1247,8 +1282,8 @@ static int tcp_read_hep3(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 	}
 #endif
 
-	if (bytes <= 0) {
-		if (likely(r->parsed >= r->pos)) {
+	if(bytes <= 0) {
+		if(likely(r->parsed >= r->pos)) {
 			LM_DBG("no new bytes to read, but still unparsed content\n");
 			return 0;
 		}
@@ -1259,29 +1294,29 @@ static int tcp_read_hep3(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 	p = r->parsed;
 
 	/* Process first six bytes (HEP3 + 2 bytes the size)*/
-	if (size < 6) {
+	if(size < 6) {
 		LM_DBG("not enough bytes to parse (%u)\n", size);
 		goto skip;
 	}
 
-	if(p[0]!='H' || p[1]!='E' || p[2]!='P' || p[3]!='3') {
+	if(p[0] != 'H' || p[1] != 'E' || p[2] != 'P' || p[3] != '3') {
 		/* not hep3 */
-		LM_DBG("not HEP3 packet header (%u): %c %c %c %c / %x %x %x %x\n",
-				size, p[0], p[1], p[2], p[3], p[0], p[1], p[2], p[3]);
+		LM_DBG("not HEP3 packet header (%u): %c %c %c %c / %x %x %x %x\n", size,
+				p[0], p[1], p[2], p[3], p[0], p[1], p[2], p[3]);
 		goto skip;
 	}
 	r->flags |= F_TCP_REQ_HEP3;
 
-	len = ((uint32_t)(p[4] & 0xff) <<  8) + (p[5] & 0xff);
+	len = ((uint32_t)(p[4] & 0xff) << 8) + (p[5] & 0xff);
 
 	/* check if advertised length fits in read buffer */
-	if(len>=r->b_size) {
-		LM_WARN("advertised length (%u) greater than buffer size (%u)\n",
-				len, r->b_size);
+	if(len >= r->b_size) {
+		LM_WARN("advertised length (%u) greater than buffer size (%u)\n", len,
+				r->b_size);
 		goto skip;
 	}
 	/* check the whole message has been received */
-	if (size < len) {
+	if(size < len) {
 		LM_DBG("incomplete HEP3 packet (%u / %u)\n", len, size);
 		goto skip;
 	}
@@ -1294,8 +1329,8 @@ skip:
 	return bytes;
 }
 
-static int hep3_process_msg(char* tcpbuf, unsigned int len,
-		struct receive_info* rcv_info, struct tcp_connection* con)
+static int hep3_process_msg(char *tcpbuf, unsigned int len,
+		struct receive_info *rcv_info, struct tcp_connection *con)
 {
 	sip_msg_t msg;
 	int ret;
@@ -1303,20 +1338,21 @@ static int hep3_process_msg(char* tcpbuf, unsigned int len,
 
 	memset(&msg, 0, sizeof(sip_msg_t)); /* init everything to 0 */
 	/* fill in msg */
-	msg.buf=tcpbuf;
-	msg.len=len;
+	msg.buf = tcpbuf;
+	msg.len = len;
 	/* zero termination (termination of orig message below not that
 	 * useful as most of the work is done with scratch-pad; -jiri  */
 	/* buf[len]=0; */ /* WARNING: zero term removed! */
-	msg.rcv=*rcv_info;
-	msg.id=msg_no;
-	msg.pid=my_pid();
-	msg.set_global_address=default_global_address;
-	msg.set_global_port=default_global_port;
+	msg.rcv = *rcv_info;
+	msg.id = msg_no;
+	msg.pid = my_pid();
+	msg.set_global_address = default_global_address;
+	msg.set_global_port = default_global_port;
 
-	if(likely(sr_msg_time==1)) msg_set_time(&msg);
-	evp.data = (void*)(&msg);
-	ret=sr_event_exec(SREV_RCV_NOSIP, &evp);
+	if(likely(sr_msg_time == 1))
+		msg_set_time(&msg);
+	evp.data = (void *)(&msg);
+	ret = sr_event_exec(SREV_RCV_NOSIP, &evp);
 	LM_DBG("running hep3 handling event returned %d\n", ret);
 	if(ret == NONSIP_MSG_DROP) {
 		free_sip_msg(&msg);
@@ -1343,8 +1379,8 @@ static int hep3_process_msg(char* tcpbuf, unsigned int len,
  * the content of the stream. Safer, make a clone of buf content in a local
  * buffer and give that to receive_msg() to link to msg->buf
  */
-int receive_tcp_msg(char* tcpbuf, unsigned int len,
-		struct receive_info* rcv_info, struct tcp_connection* con)
+int receive_tcp_msg(char *tcpbuf, unsigned int len,
+		struct receive_info *rcv_info, struct tcp_connection *con)
 {
 	int ret = 0;
 #ifdef TCP_CLONE_RCVBUF
@@ -1353,20 +1389,20 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 	int blen;
 
 	/* cloning is disabled via parameter */
-	if(likely(tcp_clone_rcvbuf==0)) {
+	if(likely(tcp_clone_rcvbuf == 0)) {
 #ifdef READ_MSRP
-		if(unlikely(con->req.flags&F_TCP_REQ_MSRP_FRAME))
+		if(unlikely(con->req.flags & F_TCP_REQ_MSRP_FRAME))
 			return msrp_process_msg(tcpbuf, len, rcv_info, con);
 #endif
 #ifdef READ_WS
 		if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 			return ws_process_msg(tcpbuf, len, rcv_info, con);
 #endif
-		if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
+		if(unlikely(con->req.flags & F_TCP_REQ_HEP3))
 			return hep3_process_msg(tcpbuf, len, rcv_info, con);
 
 		ret = receive_msg(tcpbuf, len, rcv_info);
-		if (ksr_tcp_script_mode&TCP_SCRIPT_MODE_CONTINUE) {
+		if(ksr_tcp_script_mode & TCP_SCRIPT_MODE_CONTINUE) {
 			return 0;
 		}
 		return ret;
@@ -1379,7 +1415,7 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 
 	/* allocate buffer when needed
 	 * - no buffer yet
-	 * - existing buffer too small (min size is BUF_SIZE - to accomodate most
+	 * - existing buffer too small (min size is BUF_SIZE - to accommodate most
 	 *   of SIP messages; expected larger for HTTP/XCAP)
 	 * - existing buffer too large (e.g., we got a too big message in the past,
 	 *   let's free it)
@@ -1387,11 +1423,11 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 	 * - also, use system memory, not to eat from PKG (same as static buffer
 	 *   from PKG pov)
 	 */
-	if(buf==NULL || bsize < blen || blen < bsize/2) {
-		if(buf!=NULL)
+	if(buf == NULL || bsize < blen || blen < bsize / 2) {
+		if(buf != NULL)
 			free(buf);
-		buf=malloc(blen+1);
-		if (buf==0) {
+		buf = malloc(blen + 1);
+		if(buf == 0) {
 			SYS_MEM_ERROR;
 			return -1;
 		}
@@ -1401,304 +1437,309 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 	memcpy(buf, tcpbuf, len);
 	buf[len] = '\0';
 #ifdef READ_MSRP
-	if(unlikely(con->req.flags&F_TCP_REQ_MSRP_FRAME))
+	if(unlikely(con->req.flags & F_TCP_REQ_MSRP_FRAME))
 		return msrp_process_msg(buf, len, rcv_info, con);
 #endif
 #ifdef READ_WS
 	if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 		return ws_process_msg(buf, len, rcv_info, con);
 #endif
-	if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
+	if(unlikely(con->req.flags & F_TCP_REQ_HEP3))
 		return hep3_process_msg(tcpbuf, len, rcv_info, con);
 	ret = receive_msg(buf, len, rcv_info);
-	if (ksr_tcp_script_mode&TCP_SCRIPT_MODE_CONTINUE) {
+	if(ksr_tcp_script_mode & TCP_SCRIPT_MODE_CONTINUE) {
 		return 0;
 	}
 	return ret;
 #else /* TCP_CLONE_RCVBUF */
 #ifdef READ_MSRP
-	if(unlikely(con->req.flags&F_TCP_REQ_MSRP_FRAME))
+	if(unlikely(con->req.flags & F_TCP_REQ_MSRP_FRAME))
 		return msrp_process_msg(tcpbuf, len, rcv_info, con);
 #endif
 #ifdef READ_WS
 	if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 		return ws_process_msg(tcpbuf, len, rcv_info, con);
 #endif
-	if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
+	if(unlikely(con->req.flags & F_TCP_REQ_HEP3))
 		return hep3_process_msg(tcpbuf, len, rcv_info, con);
 	ret = receive_msg(tcpbuf, len, rcv_info);
-	if (ksr_tcp_script_mode&TCP_SCRIPT_MODE_CONTINUE) {
+	if(ksr_tcp_script_mode & TCP_SCRIPT_MODE_CONTINUE) {
 		return 0;
 	}
 	return ret;
 #endif /* TCP_CLONE_RCVBUF */
 }
 
-int tcp_read_req(struct tcp_connection* con, int* bytes_read, rd_conn_flags_t* read_flags)
+int tcp_read_req(struct tcp_connection *con, int *bytes_read,
+		rd_conn_flags_t *read_flags)
 {
 	int bytes;
 	int total_bytes;
 	int resp;
 	long size;
-	struct tcp_req* req;
+	struct tcp_req *req;
 	struct dest_info dst;
 	char c;
 	int ret;
 
-	bytes=-1;
-	total_bytes=0;
-	resp=CONN_RELEASE;
-	req=&con->req;
+	bytes = -1;
+	total_bytes = 0;
+	resp = CONN_RELEASE;
+	req = &con->req;
+	if(req->tvrstart.tv_sec == 0) {
+		gettimeofday(&req->tvrstart, NULL);
+	}
 
 again:
-		if (likely(req->error==TCP_REQ_OK)){
+	if(likely(req->error == TCP_REQ_OK)) {
 #ifdef READ_WS
-			if (unlikely(con->type == PROTO_WS || con->type == PROTO_WSS)) {
-				bytes=tcp_read_ws(con, read_flags);
-			} else {
+		if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS)) {
+			bytes = tcp_read_ws(con, read_flags);
+		} else {
 #endif
-				if(unlikely(ksr_tcp_accept_hep3!=0)) {
-					bytes=tcp_read_hep3(con, read_flags);
-					if (bytes>=0) {
-						if(!(con->req.flags & F_TCP_REQ_HEP3)) {
-							/* not hep3, try to read headers */
-							bytes=tcp_read_headers(con, read_flags);
-						}
+			if(unlikely(ksr_tcp_accept_hep3 != 0)) {
+				bytes = tcp_read_hep3(con, read_flags);
+				if(bytes >= 0) {
+					if(!(con->req.flags & F_TCP_REQ_HEP3)) {
+						/* not hep3, try to read headers */
+						bytes = tcp_read_headers(con, read_flags);
 					}
-				} else {
-					bytes=tcp_read_headers(con, read_flags);
 				}
-#ifdef READ_WS
+			} else {
+				bytes = tcp_read_headers(con, read_flags);
 			}
+#ifdef READ_WS
+		}
 #endif
 
-			if (unlikely(bytes<0)){
-				LOG(cfg_get(core, core_cfg, corelog),
-						"ERROR: tcp_read_req: error reading - c: %p r: %p (%d)\n",
-						con, req, bytes);
-				resp=CONN_ERROR;
-				goto end_req;
-			}
+		if(ksr_msg_recv_max_size <= (int)(req->parsed - req->start)) {
+			LOG(cfg_get(core, core_cfg, corelog),
+					"read message too large: %d - c: %p r: %p (%d)\n",
+					(int)(req->parsed - req->start), con, req, bytes);
+			resp = CONN_ERROR;
+			goto end_req;
+		}
+
+		if(unlikely(bytes < 0)) {
+			LOG(cfg_get(core, core_cfg, corelog),
+					"ERROR: tcp_read_req: error reading - c: %p r: %p (%d)\n",
+					con, req, bytes);
+			resp = CONN_ERROR;
+			goto end_req;
+		}
 
 #ifdef EXTRA_DEBUG
-						/* if timeout state=0; goto end__req; */
-			LM_DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
-					bytes, (int)(req->parsed-req->start), req->state,
-					req->error );
-			LM_DBG("last char=0x%02X, parsed msg=\n%.*s\n",
-					*(req->parsed-1), (int)(req->parsed-req->start),
-					req->start);
+		/* if timeout state=0; goto end__req; */
+		LM_DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n", bytes,
+				(int)(req->parsed - req->start), req->state, req->error);
+		LM_DBG("last char=0x%02X, parsed msg=\n%.*s\n", *(req->parsed - 1),
+				(int)(req->parsed - req->start), req->start);
 #endif
-			total_bytes+=bytes;
-			/* eof check:
+		total_bytes += bytes;
+		/* eof check:
 			 * is EOF if eof on fd and req.  not complete yet,
 			 * if req. is complete we might have a second unparsed
 			 * request after it, so postpone release_with_eof
 			 */
-			if (unlikely((con->state==S_CONN_EOF) &&
-						(! TCP_REQ_COMPLETE(req)))) {
-				LM_DBG("EOF\n");
-				resp=CONN_EOF;
+		if(unlikely((con->state == S_CONN_EOF) && (!TCP_REQ_COMPLETE(req)))) {
+			LM_DBG("EOF\n");
+			resp = CONN_EOF;
+			goto end_req;
+		}
+	}
+	if(unlikely(req->error != TCP_REQ_OK)) {
+		if(req->buf != NULL && req->start != NULL && req->pos != NULL
+				&& req->pos >= req->buf && req->parsed >= req->start) {
+			LM_ERR("bad request, state=%d, error=%d "
+				   "buf:\n%.*s\nparsed:\n%.*s\n",
+					req->state, req->error, (int)(req->pos - req->buf),
+					req->buf, (int)(req->parsed - req->start), req->start);
+		} else {
+			LM_ERR("bad request, state=%d, error=%d buf:%d - %p,"
+				   " parsed:%d - %p\n",
+					req->state, req->error, (int)(req->pos - req->buf),
+					req->buf, (int)(req->parsed - req->start), req->start);
+		}
+		LM_DBG("received from: port %d\n", con->rcv.src_port);
+		print_ip("received from: ip", &con->rcv.src_ip, "\n");
+		resp = CONN_ERROR;
+		goto end_req;
+	}
+	if(likely(TCP_REQ_COMPLETE(req))) {
+#ifdef EXTRA_DEBUG
+		LM_DBG("end of header part\n");
+		LM_DBG("received from: port %d\n", con->rcv.src_port);
+		print_ip("received from: ip", &con->rcv.src_ip, "\n");
+		LM_DBG("headers:\n%.*s.\n", (int)(req->body - req->start), req->start);
+#endif
+		if(likely(TCP_REQ_HAS_CLEN(req))) {
+			LM_DBG("content-length=%d\n", req->content_len);
+#ifdef EXTRA_DEBUG
+			LM_DBG("body:\n%.*s\n", req->content_len, req->body);
+#endif
+		} else {
+			if(cfg_get(tcp, tcp_cfg, accept_no_cl) == 0) {
+				req->error = TCP_REQ_BAD_LEN;
+				LM_ERR("content length not present or unparsable\n");
+				resp = CONN_ERROR;
 				goto end_req;
 			}
 		}
-		if (unlikely(req->error!=TCP_REQ_OK)){
-			if(req->buf!=NULL && req->start!=NULL && req->pos!=NULL
-					&& req->pos>=req->buf && req->parsed>=req->start) {
-				LM_ERR("bad request, state=%d, error=%d buf:\n%.*s\nparsed:\n%.*s\n",
-					req->state, req->error,
-					(int)(req->pos-req->buf), req->buf,
-					(int)(req->parsed-req->start), req->start);
-			} else {
-				LM_ERR("bad request, state=%d, error=%d buf:%d - %p,"
-						" parsed:%d - %p\n",
-					req->state, req->error,
-					(int)(req->pos-req->buf), req->buf,
-					(int)(req->parsed-req->start), req->start);
-			}
-			LM_DBG("received from: port %d\n", con->rcv.src_port);
-			print_ip("received from: ip", &con->rcv.src_ip, "\n");
-			resp=CONN_ERROR;
-			goto end_req;
+		/* if we are here everything is nice and ok*/
+		resp = CONN_RELEASE;
+		if(req->state != H_PING_CRLF) {
+			req->dxstate |= KSR_TCP_REQSTATE_DATARECV;
 		}
-		if (likely(TCP_REQ_COMPLETE(req))){
 #ifdef EXTRA_DEBUG
-			LM_DBG("end of header part\n");
-			LM_DBG("received from: port %d\n", con->rcv.src_port);
-			print_ip("received from: ip", &con->rcv.src_ip, "\n");
-			LM_DBG("headers:\n%.*s.\n",
-					(int)(req->body-req->start), req->start);
+		LM_DBG("receiving msg(%p, %d)\n", req->start,
+				(int)(req->parsed - req->start));
 #endif
-			if (likely(TCP_REQ_HAS_CLEN(req))){
-				LM_DBG("content-length=%d\n", req->content_len);
-#ifdef EXTRA_DEBUG
-				LM_DBG("body:\n%.*s\n", req->content_len,req->body);
-#endif
-			}else{
-				if (cfg_get(tcp, tcp_cfg, accept_no_cl)==0) {
-					req->error=TCP_REQ_BAD_LEN;
-					LM_ERR("content length not present or unparsable\n");
-					resp=CONN_ERROR;
-					goto end_req;
-				}
-			}
-			/* if we are here everything is nice and ok*/
-			resp=CONN_RELEASE;
-#ifdef EXTRA_DEBUG
-			LM_DBG("receiving msg(%p, %d)\n",
-					req->start, (int)(req->parsed-req->start));
-#endif
-			/* rcv.bind_address should always be !=0 */
-			bind_address=con->rcv.bind_address;
-			/* just for debugging use sendipv4 as receiving socket  FIXME*/
-			/*
-			if (con->rcv.dst_ip.af==AF_INET6){
-				bind_address=sendipv6_tcp;
-			}else{
-				bind_address=sendipv4_tcp;
-			}
-			*/
-			con->rcv.proto_reserved1=con->id; /* copy the id */
-			c=*req->parsed; /* ugly hack: zero term the msg & save the
+		/* rcv.bind_address should always be !=0 */
+		bind_address = con->rcv.bind_address;
+
+		con->rcv.proto_reserved1 = con->id; /* copy the id */
+		c = *req->parsed; /* ugly hack: zero term the msg & save the
 							   previous char, req->parsed should be ok
 							   because we always alloc BUF_SIZE+1 */
-			*req->parsed=0;
+		*req->parsed = 0;
 
-			if (req->state==H_PING_CRLF) {
-				init_dst_from_rcv(&dst, &con->rcv);
+		if(req->state == H_PING_CRLF) {
+			init_dst_from_rcv(&dst, &con->rcv);
 
-				if (tcp_send(&dst, 0, CRLF, CRLF_LEN) < 0) {
-					LM_ERR("CRLF ping: tcp_send() failed ([%s]:%u -> [%s]:%u)\n",
-							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
-							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
-				}
-				ret = 0;
-			} else if (unlikely(req->state==H_STUN_END)) {
-				/* stun request */
-				ret = stun_process_msg(req->start, req->parsed-req->start,
-									 &con->rcv);
-			} else
+			if(tcp_send(&dst, 0, CRLF, CRLF_LEN) < 0) {
+				LM_ERR("CRLF ping: tcp_send() failed ([%s]:%u -> [%s]:%u)\n",
+						ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
+						ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
+			}
+			ret = 0;
+		} else if(unlikely(req->state == H_STUN_END)) {
+			/* stun request */
+			ret = stun_process_msg(
+					req->start, req->parsed - req->start, &con->rcv);
+		} else
 #ifdef READ_MSRP
 			// if (unlikely(req->flags&F_TCP_REQ_MSRP_FRAME)){
-			if (unlikely(req->state==H_MSRP_FINISH)){
+			if(unlikely(req->state == H_MSRP_FINISH)) {
 				/* msrp frame */
-				ret = receive_tcp_msg(req->start, req->parsed-req->start,
-									&con->rcv, con);
-			}else
+				ret = receive_tcp_msg(
+						req->start, req->parsed - req->start, &con->rcv, con);
+			} else
 #endif
 #ifdef READ_HTTP11
-			if (unlikely(req->state==H_HTTP11_CHUNK_FINISH)){
+					if(unlikely(req->state == H_HTTP11_CHUNK_FINISH)) {
 				/* http chunked request */
 				req->body[req->content_len] = 0;
 				ret = receive_tcp_msg(req->start,
-						req->body + req->content_len - req->start,
-						&con->rcv, con);
-			}else
+						req->body + req->content_len - req->start, &con->rcv,
+						con);
+			} else
 #endif
 #ifdef READ_WS
-			if (unlikely(con->type == PROTO_WS || con->type == PROTO_WSS)){
-				ret = receive_tcp_msg(req->start, req->parsed-req->start,
-									&con->rcv, con);
-			}else
+					if(unlikely(con->type == PROTO_WS
+								|| con->type == PROTO_WSS)) {
+				ret = receive_tcp_msg(
+						req->start, req->parsed - req->start, &con->rcv, con);
+			} else
 #endif
-				ret = receive_tcp_msg(req->start, req->parsed-req->start,
-									&con->rcv, con);
+				ret = receive_tcp_msg(
+						req->start, req->parsed - req->start, &con->rcv, con);
 
-			if (unlikely(ret < 0)) {
-				*req->parsed=c;
-				resp=CONN_ERROR;
-				goto end_req;
-			}
-			*req->parsed=c;
-
-			/* prepare for next request */
-			size=req->pos-req->parsed;
-			req->start=req->buf;
-			req->body=0;
-			req->error=TCP_REQ_OK;
-			req->state=H_SKIP_EMPTY;
-			req->flags=0;
-			req->content_len=0;
-			req->bytes_to_go=0;
-			req->pos=req->buf+size;
-
-			if (unlikely(size)){
-				memmove(req->buf, req->parsed, size);
-				req->parsed=req->buf; /* fix req->parsed after using it */
-#ifdef EXTRA_DEBUG
-				LM_DBG("preparing for new request, kept %ld bytes\n", size);
-#endif
-				/*if we still have some unparsed bytes, try to parse them too*/
-				goto again;
-			} else if (unlikely(con->state==S_CONN_EOF)){
-				LM_DBG("EOF after reading complete request ([%s]:%u -> [%s]:%u)\n",
-						ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
-						ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
-				resp=CONN_EOF;
-			}
-			req->parsed=req->buf; /* fix req->parsed */
+		if(unlikely(ret < 0)) {
+			*req->parsed = c;
+			resp = CONN_ERROR;
+			goto end_req;
 		}
+		*req->parsed = c;
 
-	end_req:
-		if (likely(bytes_read)) *bytes_read=total_bytes;
-		return resp;
+		/* prepare for next request */
+		size = req->pos - req->parsed;
+		req->start = req->buf;
+		req->body = 0;
+		req->error = TCP_REQ_OK;
+		req->state = H_SKIP_EMPTY;
+		req->flags = 0;
+		req->content_len = 0;
+		req->bytes_to_go = 0;
+		req->pos = req->buf + size;
+		req->tvrstart.tv_sec = 0;
+		req->tvrstart.tv_usec = 0;
+
+		if(unlikely(size)) {
+			gettimeofday(&req->tvrstart, NULL);
+			memmove(req->buf, req->parsed, size);
+			req->parsed = req->buf; /* fix req->parsed after using it */
+#ifdef EXTRA_DEBUG
+			LM_DBG("preparing for new request, kept %ld bytes\n", size);
+#endif
+			/*if we still have some unparsed bytes, try to parse them too*/
+			goto again;
+		} else if(unlikely(con->state == S_CONN_EOF)) {
+			LM_DBG("EOF after reading complete request ([%s]:%u -> [%s]:%u)\n",
+					ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
+					ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
+			resp = CONN_EOF;
+		}
+		req->parsed = req->buf; /* fix req->parsed */
+	}
+
+end_req:
+	if(likely(bytes_read))
+		*bytes_read = total_bytes;
+	return resp;
 }
 
 
-
-void release_tcpconn(struct tcp_connection* c, long state, int unix_sock)
+void release_tcpconn(struct tcp_connection *c, long state, int unix_sock)
 {
 	long response[2];
-	
-		LM_DBG("releasing con %p, state %ld, fd=%d, id=%d ([%s]:%u -> [%s]:%u)\n",
-				c, state, c->fd, c->id,
-				ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
-				ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
-		LM_DBG("extra_data %p\n", c->extra_data);
-		/* release req & signal the parent */
-		c->reader_pid=0; /* reset it */
-		if (c->fd!=-1){
-			close(c->fd);
-			c->fd=-1;
-		}
-		/* errno==EINTR, EWOULDBLOCK a.s.o todo */
-		response[0]=(long)c;
-		response[1]=state;
-		
-		if (tsend_stream(unix_sock, (char*)response, sizeof(response), -1)<=0)
-			LM_ERR("tsend_stream failed\n");
+
+	LM_DBG("releasing con %p, state %ld, fd=%d, id=%d ([%s]:%u -> [%s]:%u)\n",
+			c, state, c->fd, c->id, ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
+			ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+	LM_DBG("extra_data %p\n", c->extra_data);
+	/* release req & signal the parent */
+	c->reader_pid = 0; /* reset it */
+	if(c->fd != -1) {
+		close(c->fd);
+		c->fd = -1;
+	}
+	/* errno==EINTR, EWOULDBLOCK a.s.o todo */
+	response[0] = (long)c;
+	response[1] = state;
+
+	if(tsend_stream(unix_sock, (char *)response, sizeof(response), -1) <= 0)
+		LM_ERR("tsend_stream failed\n");
 }
 
 
-
-static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
+static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln *tl, void *data)
 {
 	struct tcp_connection *c;
 
-	c=(struct tcp_connection*)data;
+	c = (struct tcp_connection *)data;
 	/* or (struct tcp...*)(tl-offset(c->timer)) */
 
-	if (likely(!(c->state<0) && TICKS_LT(t, c->timeout))){
+	if(likely(!(c->state < 0) && TICKS_LT(t, c->timeout))) {
 		/* timeout extended, exit */
 		return (ticks_t)(c->timeout - t);
 	}
 	/* if conn->state is ERROR or BAD => force timeout too */
-	if (unlikely(io_watch_del(&io_w, c->fd, -1, IO_FD_CLOSING)<0)){
+	if(unlikely(io_watch_del(&io_w, c->fd, -1, IO_FD_CLOSING) < 0)) {
 		LM_ERR("io_watch_del failed for %p"
-					" id %d fd %d, state %d, flags %x, main fd %d"
-					" ([%s]:%u -> [%s]:%u)\n",
-					c, c->id, c->fd, c->state, c->flags, c->s,
-					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
-					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+			   " id %d fd %d, state %d, flags %x, main fd %d"
+			   " ([%s]:%u -> [%s]:%u)\n",
+				c, c->id, c->fd, c->state, c->flags, c->s,
+				ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
+				ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 	}
-	if(tcp_conn_lst!=NULL) {
+	if(tcp_conn_lst != NULL) {
 		tcpconn_listrm(tcp_conn_lst, c, c_next, c_prev);
 		c->event = TCP_CLOSED_TIMEOUT;
-		release_tcpconn(c, (c->state<0)?CONN_ERROR:CONN_RELEASE, tcpmain_sock);
+		release_tcpconn(
+				c, (c->state < 0) ? CONN_ERROR : CONN_RELEASE, tcpmain_sock);
 	}
 	return 0;
 }
-
 
 
 /* handle io routine, based on the fd_map type
@@ -1709,17 +1750,17 @@ static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
  *            from this fd (e.g.: we are closing it )
  *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
- *            Usefull to detect when there are no more io events queued for
+ *            Useful to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
  *         >0 on successfull read from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)
  */
-inline static int handle_io(struct fd_map* fm, short events, int idx)
+inline static int handle_io(struct fd_map *fm, short events, int idx)
 {
 	int ret;
 	int n;
 	rd_conn_flags_t read_flags;
-	struct tcp_connection* con;
+	struct tcp_connection *con;
 	int s;
 	long resp;
 	ticks_t t;
@@ -1728,67 +1769,72 @@ inline static int handle_io(struct fd_map* fm, short events, int idx)
 	/* update the local config */
 	cfg_update();
 
-	switch(fm->type){
+	switch(fm->type) {
 		case F_TCPMAIN:
-again:
-			ret=n=receive_fd(fm->fd, &con, sizeof(con), &s, 0);
+		again:
+			ret = n = receive_fd(fm->fd, &con, sizeof(con), &s, 0);
 			LM_DBG("received n=%d con=%p, fd=%d\n", n, con, s);
-			if (unlikely(n<0)){
-				if (errno == EWOULDBLOCK || errno == EAGAIN){
-					ret=0;
+			if(unlikely(n < 0)) {
+				if(errno == EWOULDBLOCK || errno == EAGAIN) {
+					ret = 0;
 					break;
-				}else if (errno == EINTR) goto again;
-				else{
+				} else if(errno == EINTR)
+					goto again;
+				else {
 					LM_CRIT("read_fd: %s \n", strerror(errno));
-						abort(); /* big error*/
+					abort(); /* big error*/
 				}
 			}
-			if (unlikely(n==0)){
+			if(unlikely(n == 0)) {
 				LM_ERR("0 bytes read\n");
 				goto error;
 			}
-			if (unlikely(con==0)){
-					LM_CRIT("null pointer\n");
-					goto error;
+			if(unlikely(con == 0)) {
+				LM_CRIT("null pointer\n");
+				goto error;
 			}
-			con->fd=s;
-			if (unlikely(s==-1)) {
+			con->fd = s;
+			if(unlikely(s == -1)) {
 				LM_ERR("read_fd: no fd read\n");
 				goto con_error;
 			}
-			con->reader_pid=my_pid();
-			if (unlikely(con==tcp_conn_lst)){
-				LM_CRIT("duplicate connection received: %p, id %d, fd %d, refcnt %d"
-							" state %d (n=%d)\n", con, con->id, con->fd,
-							atomic_get(&con->refcnt), con->state, n);
+			con->reader_pid = my_pid();
+			if(unlikely(con == tcp_conn_lst)) {
+				LM_CRIT("duplicate connection received: %p, id %d, fd %d, "
+						"refcnt %d"
+						" state %d (n=%d)\n",
+						con, con->id, con->fd, atomic_get(&con->refcnt),
+						con->state, n);
 				goto con_error;
 				break; /* try to recover */
 			}
-			if (unlikely(con->state==S_CONN_BAD)){
-				LM_WARN("received an already bad connection: %p id %d refcnt %d\n",
-							con, con->id, atomic_get(&con->refcnt));
+			if(unlikely(con->state == S_CONN_BAD)) {
+				LM_WARN("received an already bad connection: %p id %d refcnt "
+						"%d\n",
+						con, con->id, atomic_get(&con->refcnt));
 				goto con_error;
 			}
 			/* if we received the fd there is most likely data waiting to
 			 * be read => process it first to avoid extra sys calls */
-			read_flags=((con->flags & (F_CONN_EOF_SEEN|F_CONN_FORCE_EOF)) &&
-						!(con->flags & F_CONN_OOB_DATA))? RD_CONN_FORCE_EOF
-						:0;
+			read_flags = ((con->flags & (F_CONN_EOF_SEEN | F_CONN_FORCE_EOF))
+								 && !(con->flags & F_CONN_OOB_DATA))
+								 ? RD_CONN_FORCE_EOF
+								 : 0;
 #ifdef USE_TLS
-repeat_1st_read:
+		repeat_1st_read:
 #endif /* USE_TLS */
-			resp=tcp_read_req(con, &n, &read_flags);
-			if (unlikely(resp<0)){
+			resp = tcp_read_req(con, &n, &read_flags);
+			if(unlikely(resp < 0)) {
 				/* some error occurred, but on the new fd, not on the tcp
 				 * main fd, so keep the ret value */
-				if (unlikely(resp!=CONN_EOF))
-					con->state=S_CONN_BAD;
+				if(unlikely(resp != CONN_EOF))
+					con->state = S_CONN_BAD;
 				release_tcpconn(con, resp, tcpmain_sock);
 				break;
 			}
 #ifdef USE_TLS
 			/* repeat read if requested (for now only tls might do this) */
-			if (unlikely(read_flags & RD_CONN_REPEAT_READ))
+			if(unlikely(read_flags & RD_CONN_REPEAT_READ))
 				goto repeat_1st_read;
 #endif /* USE_TLS */
 
@@ -1797,33 +1843,34 @@ repeat_1st_read:
 			 * handle_io might decide to del. the new connection =>
 			 * must be in the list */
 			tcpconn_listadd(tcp_conn_lst, con, c_next, c_prev);
-			t=get_ticks_raw();
-			con->timeout=t+S_TO_TICKS(TCP_CHILD_TIMEOUT);
+			t = get_ticks_raw();
+			con->timeout = t + S_TO_TICKS(TCP_CHILD_TIMEOUT);
 			/* re-activate the timer */
-			con->timer.f=tcpconn_read_timeout;
+			con->timer.f = tcpconn_read_timeout;
 			local_timer_reinit(&con->timer);
 			local_timer_add(&tcp_reader_ltimer, &con->timer,
-								S_TO_TICKS(TCP_CHILD_TIMEOUT), t);
-			if (unlikely(io_watch_add(&io_w, s, POLLIN, F_TCPCONN, con)<0)) {
-				LM_CRIT("io_watch_add failed for %p id %d fd %d, state %d, flags %x,"
-							" main fd %d, refcnt %d ([%s]:%u -> [%s]:%u)\n",
-							con, con->id, con->fd, con->state, con->flags,
-							con->s, atomic_get(&con->refcnt),
-							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
-							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
+					S_TO_TICKS(TCP_CHILD_TIMEOUT), t);
+			if(unlikely(io_watch_add(&io_w, s, POLLIN, F_TCPCONN, con) < 0)) {
+				LM_CRIT("io_watch_add failed for %p id %d fd %d, state %d, "
+						"flags %x,"
+						" main fd %d, refcnt %d ([%s]:%u -> [%s]:%u)\n",
+						con, con->id, con->fd, con->state, con->flags, con->s,
+						atomic_get(&con->refcnt), ip_addr2a(&con->rcv.src_ip),
+						con->rcv.src_port, ip_addr2a(&con->rcv.dst_ip),
+						con->rcv.dst_port);
 				ee = get_fd_map(&io_w, s);
-				if(ee!=0 && ee->type==F_TCPCONN) {
+				if(ee != 0 && ee->type == F_TCPCONN) {
 					tcp_connection_t *ec;
-					ec = (tcp_connection_t*)ee->data;
-					LM_CRIT("existing tcp con %p id %d fd %d, state %d, flags %x,"
+					ec = (tcp_connection_t *)ee->data;
+					LM_CRIT("existing tcp con %p id %d fd %d, state %d, flags "
+							"%x,"
 							" main fd %d, refcnt %d ([%s]:%u -> [%s]:%u)\n",
-							ec, ec->id, ec->fd, ec->state, ec->flags,
-							ec->s, atomic_get(&ec->refcnt),
-							ip_addr2a(&ec->rcv.src_ip), ec->rcv.src_port,
-							ip_addr2a(&ec->rcv.dst_ip), ec->rcv.dst_port);
-
+							ec, ec->id, ec->fd, ec->state, ec->flags, ec->s,
+							atomic_get(&ec->refcnt), ip_addr2a(&ec->rcv.src_ip),
+							ec->rcv.src_port, ip_addr2a(&ec->rcv.dst_ip),
+							ec->rcv.dst_port);
 				}
-				if(tcp_conn_lst!=NULL) {
+				if(tcp_conn_lst != NULL) {
 					tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
 					local_timer_del(&tcp_reader_ltimer, &con->timer);
 				}
@@ -1831,10 +1878,10 @@ repeat_1st_read:
 			}
 			break;
 		case F_TCPCONN:
-			con=(struct tcp_connection*)fm->data;
-			if (unlikely(con->state==S_CONN_BAD)){
-				resp=CONN_ERROR;
-				if (!(con->send_flags.f & SND_F_CON_CLOSE))
+			con = (struct tcp_connection *)fm->data;
+			if(unlikely(con->state == S_CONN_BAD)) {
+				resp = CONN_ERROR;
+				if(!(con->send_flags.f & SND_F_CON_CLOSE))
 					LM_WARN("F_TCPCONN connection marked as bad: %p id %d fd %d"
 							" refcnt %d ([%s]:%u -> [%s]:%u)\n",
 							con, con->id, con->fd, atomic_get(&con->refcnt),
@@ -1842,61 +1889,65 @@ repeat_1st_read:
 							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
 				goto read_error;
 			}
-			read_flags=((
+			read_flags =
+					((
 #ifdef POLLRDHUP
-						(events & POLLRDHUP) |
+							 (events & POLLRDHUP) |
 #endif /* POLLRDHUP */
-						(events & (POLLHUP|POLLERR)) |
-							(con->flags & (F_CONN_EOF_SEEN|F_CONN_FORCE_EOF)))
-						&& !(events & POLLPRI))? RD_CONN_FORCE_EOF: 0;
+							 (events & (POLLHUP | POLLERR))
+							 | (con->flags
+									 & (F_CONN_EOF_SEEN | F_CONN_FORCE_EOF)))
+							&& !(events & POLLPRI))
+							? RD_CONN_FORCE_EOF
+							: 0;
 #ifdef USE_TLS
-repeat_read:
+		repeat_read:
 #endif /* USE_TLS */
-			resp=tcp_read_req(con, &ret, &read_flags);
-			if (unlikely(resp<0)){
-read_error:
-				ret=-1; /* some error occurred */
-				if (unlikely(io_watch_del(&io_w, con->fd, idx,
-											IO_FD_CLOSING) < 0)){
+			resp = tcp_read_req(con, &ret, &read_flags);
+			if(unlikely(resp < 0)) {
+			read_error:
+				ret = -1; /* some error occurred */
+				if(unlikely(io_watch_del(&io_w, con->fd, idx, IO_FD_CLOSING)
+							< 0)) {
 					LM_CRIT("io_watch_del failed for %p id %d fd %d,"
 							" state %d, flags %x, main fd %d, refcnt %d"
 							" ([%s]:%u -> [%s]:%u)\n",
-							con, con->id, con->fd, con->state,
-							con->flags, con->s, atomic_get(&con->refcnt),
+							con, con->id, con->fd, con->state, con->flags,
+							con->s, atomic_get(&con->refcnt),
 							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
 							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
 				}
-				if(tcp_conn_lst!=NULL) {
+				if(tcp_conn_lst != NULL) {
 					LM_DBG("removing from list %p id %d fd %d,"
-							" state %d, flags %x, main fd %d, refcnt %d"
-							" ([%s]:%u -> [%s]:%u)\n",
-							con, con->id, con->fd, con->state,
-							con->flags, con->s, atomic_get(&con->refcnt),
+						   " state %d, flags %x, main fd %d, refcnt %d"
+						   " ([%s]:%u -> [%s]:%u)\n",
+							con, con->id, con->fd, con->state, con->flags,
+							con->s, atomic_get(&con->refcnt),
 							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
 							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
 					tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
 					local_timer_del(&tcp_reader_ltimer, &con->timer);
-					if (unlikely(resp!=CONN_EOF))
-						con->state=S_CONN_BAD;
+					if(unlikely(resp != CONN_EOF))
+						con->state = S_CONN_BAD;
 					release_tcpconn(con, resp, tcpmain_sock);
 				}
-			}else{
+			} else {
 #ifdef USE_TLS
-				if (unlikely(read_flags & RD_CONN_REPEAT_READ))
-						goto repeat_read;
+				if(unlikely(read_flags & RD_CONN_REPEAT_READ))
+					goto repeat_read;
 #endif /* USE_TLS */
 				/* update timeout */
-				con->timeout=get_ticks_raw()+S_TO_TICKS(TCP_CHILD_TIMEOUT);
+				con->timeout = get_ticks_raw() + S_TO_TICKS(TCP_CHILD_TIMEOUT);
 				/* ret= 0 (read the whole socket buffer) if short read
 				 * & !POLLPRI,  bytes read otherwise */
-				ret&=(((read_flags & RD_CONN_SHORT_READ) &&
-						!(events & POLLPRI)) - 1);
+				ret &= (((read_flags & RD_CONN_SHORT_READ)
+								&& !(events & POLLPRI))
+						- 1);
 			}
 			break;
 		case F_NONE:
-			LM_CRIT("empty fd map %p (%d): {%d, %d, %p}\n",
-						fm, (int)(fm-io_w.fd_hash),
-						fm->fd, fm->type, fm->data);
+			LM_CRIT("empty fd map %p (%d): {%d, %d, %p}\n", fm,
+					(int)(fm - io_w.fd_hash), fm->fd, fm->type, fm->data);
 			goto error;
 		default:
 			LM_CRIT("unknown fd type %d\n", fm->type);
@@ -1905,7 +1956,7 @@ read_error:
 
 	return ret;
 con_error:
-	con->state=S_CONN_BAD;
+	con->state = S_CONN_BAD;
 	release_tcpconn(con, CONN_ERROR, tcpmain_sock);
 	return ret;
 error:
@@ -1913,50 +1964,49 @@ error:
 }
 
 
-
 inline static void tcp_reader_timer_run(void)
 {
 	ticks_t ticks;
-	
-	ticks=get_ticks_raw();
-	if (unlikely((ticks-tcp_reader_prev_ticks)<TCPCONN_TIMEOUT_MIN_RUN))
+
+	ticks = get_ticks_raw();
+	if(unlikely((ticks - tcp_reader_prev_ticks) < TCPCONN_TIMEOUT_MIN_RUN))
 		return;
-	tcp_reader_prev_ticks=ticks;
+	tcp_reader_prev_ticks = ticks;
 	local_timer_run(&tcp_reader_ltimer, ticks);
 }
 
 
-
 void tcp_receive_loop(int unix_sock)
 {
-	
+
 	/* init */
-	tcpmain_sock=unix_sock; /* init com. socket */
-	if (init_io_wait(&io_w, get_max_open_fds(), tcp_poll_method)<0)
+	tcpmain_sock = unix_sock; /* init com. socket */
+	if(init_io_wait(&io_w, get_max_open_fds(), tcp_poll_method) < 0)
 		goto error;
-	tcp_reader_prev_ticks=get_ticks_raw();
-	if (init_local_timer(&tcp_reader_ltimer, get_ticks_raw())!=0)
+	tcp_reader_prev_ticks = get_ticks_raw();
+	if(init_local_timer(&tcp_reader_ltimer, get_ticks_raw()) != 0)
 		goto error;
 	/* add the unix socket */
-	if (io_watch_add(&io_w, tcpmain_sock, POLLIN,  F_TCPMAIN, 0)<0){
+	if(io_watch_add(&io_w, tcpmain_sock, POLLIN, F_TCPMAIN, 0) < 0) {
 		LM_CRIT("failed to add tcp main socket to the fd list\n");
 		goto error;
 	}
 
 	/* initialize the config framework */
-	if (cfg_child_init()) goto error;
+	if(cfg_child_init())
+		goto error;
 
 	/* main loop */
-	switch(io_w.poll_method){
+	switch(io_w.poll_method) {
 		case POLL_POLL:
-				while(1){
-					io_wait_loop_poll(&io_w, TCP_CHILD_SELECT_TIMEOUT, 0);
-					tcp_reader_timer_run();
-				}
-				break;
+			while(1) {
+				io_wait_loop_poll(&io_w, TCP_CHILD_SELECT_TIMEOUT, 0);
+				tcp_reader_timer_run();
+			}
+			break;
 #ifdef HAVE_SELECT
 		case POLL_SELECT:
-			while(1){
+			while(1) {
 				io_wait_loop_select(&io_w, TCP_CHILD_SELECT_TIMEOUT, 0);
 				tcp_reader_timer_run();
 			}
@@ -1964,7 +2014,7 @@ void tcp_receive_loop(int unix_sock)
 #endif
 #ifdef HAVE_SIGIO_RT
 		case POLL_SIGIO_RT:
-			while(1){
+			while(1) {
 				io_wait_loop_sigio_rt(&io_w, TCP_CHILD_SELECT_TIMEOUT);
 				tcp_reader_timer_run();
 			}
@@ -1972,13 +2022,13 @@ void tcp_receive_loop(int unix_sock)
 #endif
 #ifdef HAVE_EPOLL
 		case POLL_EPOLL_LT:
-			while(1){
+			while(1) {
 				io_wait_loop_epoll(&io_w, TCP_CHILD_SELECT_TIMEOUT, 0);
 				tcp_reader_timer_run();
 			}
 			break;
 		case POLL_EPOLL_ET:
-			while(1){
+			while(1) {
 				io_wait_loop_epoll(&io_w, TCP_CHILD_SELECT_TIMEOUT, 1);
 				tcp_reader_timer_run();
 			}
@@ -1986,7 +2036,7 @@ void tcp_receive_loop(int unix_sock)
 #endif
 #ifdef HAVE_KQUEUE
 		case POLL_KQUEUE:
-			while(1){
+			while(1) {
 				io_wait_loop_kqueue(&io_w, TCP_CHILD_SELECT_TIMEOUT, 0);
 				tcp_reader_timer_run();
 			}
@@ -1994,14 +2044,14 @@ void tcp_receive_loop(int unix_sock)
 #endif
 #ifdef HAVE_DEVPOLL
 		case POLL_DEVPOLL:
-			while(1){
+			while(1) {
 				io_wait_loop_devpoll(&io_w, TCP_CHILD_SELECT_TIMEOUT, 0);
 				tcp_reader_timer_run();
 			}
 			break;
 #endif
 		default:
-			LM_CRIT("no support for poll method %s (%d)\n", 
+			LM_CRIT("no support for poll method %s (%d)\n",
 					poll_method_name(io_w.poll_method), io_w.poll_method);
 			goto error;
 	}
@@ -2012,17 +2062,16 @@ error:
 }
 
 
-int is_msg_complete(struct tcp_req* r)
+int is_msg_complete(struct tcp_req *r)
 {
-	if (TCP_REQ_HAS_CLEN(r)) {
+	if(TCP_REQ_HAS_CLEN(r)) {
 		r->state = H_STUN_FP;
 		return 0;
-	}
-	else {
+	} else {
 		/* STUN message is complete */
 		r->state = H_STUN_END;
-		r->flags |= F_TCP_REQ_COMPLETE |
-					F_TCP_REQ_HAS_CLEN; /* hack to avoid error check */
+		r->flags |= F_TCP_REQ_COMPLETE
+					| F_TCP_REQ_HAS_CLEN; /* hack to avoid error check */
 		return 1;
 	}
 }

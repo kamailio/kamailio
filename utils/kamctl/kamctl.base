@@ -10,7 +10,7 @@ locate_tool() {
 	while [ -n "$1" ]
 	do
 		if [ -x /usr/bin/which ] ; then
-			TOOLPATH=`which $1`
+			TOOLPATH=`which $1 2> /dev/null`
 			if [ -n "$TOOLPATH" ]; then
 				return
 			fi
@@ -512,6 +512,8 @@ cat <<EOF
  dispatcher add <setid> <destination> [flags] [priority] [attrs] [description]
             .......................... add gateway
  dispatcher rm <id> .................. delete gateway
+ dispatcher rmip <ip> <setid>......... delete gateway <ip> in <setid>
+ dispatcher rmset <setid> ............. delete all gateways in <setid>
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_dispatcher"
@@ -579,7 +581,7 @@ USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_mtree"
 
 usage_acc() {
 	echo
-	mecho " -- command 'acc' - manage accounding records"
+	mecho " -- command 'acc' - manage accounting records"
 	echo
 cat <<EOF
  acc initdb .................. init acc table by adding extra columns

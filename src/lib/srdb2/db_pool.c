@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2005 iptel.org
  * Copyright (C) 2006-2007 iptelorg GmbH
  *
@@ -14,13 +14,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/** \ingroup DB_API 
- * @{ 
+/** \ingroup DB_API
+ * @{
  */
 
 #include "db_pool.h"
@@ -35,9 +35,11 @@ SLIST_HEAD(db_pool_head, db_pool_entry);
 struct db_pool_head db_pool = SLIST_HEAD_INITIALIZER(db_pool);
 
 
-int db_pool_entry_init(struct db_pool_entry *entry, void* free_func, db_uri_t* uri)
+int db_pool_entry_init(
+		struct db_pool_entry *entry, void *free_func, db_uri_t *uri)
 {
-	if (db_drv_init(&entry->drv_gen, free_func) < 0) return -1;
+	if(db_drv_init(&entry->drv_gen, free_func) < 0)
+		return -1;
 	SLIST_NEXT(entry, next) = NULL;
 	entry->uri = uri;
 	entry->ref = 1;
@@ -45,7 +47,7 @@ int db_pool_entry_init(struct db_pool_entry *entry, void* free_func, db_uri_t* u
 }
 
 
-void db_pool_entry_free(struct db_pool_entry* entry)
+void db_pool_entry_free(struct db_pool_entry *entry)
 {
 	db_drv_free(&entry->drv_gen);
 	entry->uri = NULL;
@@ -58,12 +60,13 @@ void db_pool_entry_free(struct db_pool_entry* entry)
  * the URI equal to uri, NULL is returned
  * when no connection is found
  */
-struct db_pool_entry* db_pool_get(db_uri_t* uri)
+struct db_pool_entry *db_pool_get(db_uri_t *uri)
 {
-	db_pool_entry_t* ptr;
+	db_pool_entry_t *ptr;
 
-	SLIST_FOREACH(ptr, &db_pool, next) {
-		if (db_uri_cmp(ptr->uri, uri)) {
+	SLIST_FOREACH(ptr, &db_pool, next)
+	{
+		if(db_uri_cmp(ptr->uri, uri)) {
 			ptr->ref++;
 			return ptr;
 		}
@@ -75,7 +78,7 @@ struct db_pool_entry* db_pool_get(db_uri_t* uri)
 /*
  * Insert a new connection into the pool
  */
-void db_pool_put(db_pool_entry_t* entry)
+void db_pool_put(db_pool_entry_t *entry)
 {
 	SLIST_INSERT_HEAD(&db_pool, entry, next);
 }
@@ -91,12 +94,13 @@ void db_pool_put(db_pool_entry_t* entry)
  * The function returns -1 if the connection is
  * not in the pool.
  */
-int db_pool_remove(db_pool_entry_t* entry)
+int db_pool_remove(db_pool_entry_t *entry)
 {
-	if (!entry) return -2;
+	if(!entry)
+		return -2;
 
-	if (entry->ref > 1) {
-		     /* There are still other users, just
+	if(entry->ref > 1) {
+		/* There are still other users, just
 		      * decrease the reference count and return
 		      */
 		DBG("db_pool_remove: Connection still kept in the pool\n");

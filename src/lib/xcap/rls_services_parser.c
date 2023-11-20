@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -41,7 +41,7 @@ static int read_entry(xmlNode *entry_node, entry_t **dst)
 {
 	xmlAttr *a;
 	const char *a_val;
-	
+
 	/ * allocate memory and prepare empty node * /
 	if (!dst) return -1;
 	*dst = (entry_t*)cds_malloc(sizeof(entry_t));
@@ -60,14 +60,17 @@ static int read_entry(xmlNode *entry_node, entry_t **dst)
 static int read_package(xmlNode *n, package_t **dst)
 {
 	const char *name;
-	if (!dst) return -1;
-	
-	*dst = (package_t*)cds_malloc(sizeof(package_t));
-	if (!(*dst)) return -2;
+	if(!dst)
+		return -1;
+
+	*dst = (package_t *)cds_malloc(sizeof(package_t));
+	if(!(*dst))
+		return -2;
 	memset(*dst, 0, sizeof(package_t));
 
 	name = get_node_value(n);
-	if (name) (*dst)->name = zt_strdup(name);
+	if(name)
+		(*dst)->name = zt_strdup(name);
 	return 0;
 }
 
@@ -76,28 +79,30 @@ static int read_packages(xmlNode *list_node, packages_t **dst)
 	int res = 0;
 	xmlNode *n;
 	package_t *p, *last;
-	
+
 	/* allocate memory and prepare empty node */
-	if (!dst) return -1;
-	*dst = (packages_t*)cds_malloc(sizeof(packages_t));
-	if (!(*dst)) return -2;
+	if(!dst)
+		return -1;
+	*dst = (packages_t *)cds_malloc(sizeof(packages_t));
+	if(!(*dst))
+		return -2;
 	memset(*dst, 0, sizeof(packages_t));
 
 	/* read packages */
 	n = list_node->children;
 	last = NULL;
-	while (n) {
-		if (n->type == XML_ELEMENT_NODE) {
-			if (cmp_node(n, "package", rls_namespace) >= 0) {
+	while(n) {
+		if(n->type == XML_ELEMENT_NODE) {
+			if(cmp_node(n, "package", rls_namespace) >= 0) {
 				res = read_package(n, &p);
-				if ((res == 0) && p) {
+				if((res == 0) && p) {
 					SEQUENCE_ADD((*dst)->package, last, p);
 				}
 			}
 		}
 		n = n->next;
 	}
-	
+
 	return 0;
 }
 
@@ -111,46 +116,47 @@ int read_service(xmlNode *list_node, service_t **dst)
 
 	DEBUG_LOG("read_service(): called\n");
 	/* allocate memory and prepare empty node */
-	if (!dst) return -1;
-	*dst = (service_t*)cds_malloc(sizeof(service_t));
-	if (!(*dst)) return -2;
+	if(!dst)
+		return -1;
+	*dst = (service_t *)cds_malloc(sizeof(service_t));
+	if(!(*dst))
+		return -2;
 	memset(*dst, 0, sizeof(service_t));
 
 	/* get attributes */
 	a = find_attr(list_node->properties, "uri");
-	if (a) {
+	if(a) {
 		a_val = get_attr_value(a);
-		if (a_val) (*dst)->uri = zt_strdup(a_val);
+		if(a_val)
+			(*dst)->uri = zt_strdup(a_val);
 	}
 
 	/* read child nodes */
 	n = list_node->children;
 	first_node = 1;
-	while (n) {
-		if (n->type == XML_ELEMENT_NODE) {
-			if (first_node) {
+	while(n) {
+		if(n->type == XML_ELEMENT_NODE) {
+			if(first_node) {
 				/* element must be list or resource-list */
-				if (cmp_node(n, "list", rls_namespace) >= 0) {
+				if(cmp_node(n, "list", rls_namespace) >= 0) {
 					res = read_list(n, &(*dst)->content.list, 0);
-					if ( (res == 0) && ((*dst)->content.list) ) {
+					if((res == 0) && ((*dst)->content.list)) {
 						(*dst)->content_type = stc_list;
-					}
-					else return -1;
-				}
-				else if (cmp_node(n, "resource-list", rls_namespace) >= 0) {
+					} else
+						return -1;
+				} else if(cmp_node(n, "resource-list", rls_namespace) >= 0) {
 					a_val = get_node_value(n);
-					if (a_val)
+					if(a_val)
 						(*dst)->content.resource_list = zt_strdup(a_val);
 					else
 						(*dst)->content.resource_list = NULL;
 					(*dst)->content_type = stc_resource_list;
-				}
-				else return -1;
+				} else
+					return -1;
 
 				first_node = 0;
-			}
-			else { /* packages node */
-				if (cmp_node(n, "packages", rls_namespace) >= 0) {
+			} else { /* packages node */
+				if(cmp_node(n, "packages", rls_namespace) >= 0) {
 					res = read_packages(n, &(*dst)->packages);
 				}
 				break;
@@ -158,7 +164,7 @@ int read_service(xmlNode *list_node, service_t **dst)
 		}
 		n = n->next;
 	}
-	
+
 	return 0;
 }
 
@@ -168,29 +174,33 @@ static int read_rls_services(xmlNode *root, rls_services_t **dst)
 	xmlNode *n;
 	service_t *l, *last_l;
 	int res = 0;
-	
-	if (!root) return -1;
-	if (!dst) return -1;
-	
-	if (cmp_node(root, "rls-services", rls_namespace) < 0) {
+
+	if(!root)
+		return -1;
+	if(!dst)
+		return -1;
+
+	if(cmp_node(root, "rls-services", rls_namespace) < 0) {
 		ERROR_LOG("document is not a rls-services\n");
 		return -1;
 	}
 
-	*dst = (rls_services_t*)cds_malloc(sizeof(rls_services_t));
-	if (!(*dst)) return -2;
+	*dst = (rls_services_t *)cds_malloc(sizeof(rls_services_t));
+	if(!(*dst))
+		return -2;
 	(*dst)->rls_services = NULL;
-	
+
 	last_l = NULL;
 	n = root->children;
-	while (n) {
-		if (n->type == XML_ELEMENT_NODE) {
-			if (cmp_node(n, "service", rls_namespace) >= 0) {
+	while(n) {
+		if(n->type == XML_ELEMENT_NODE) {
+			if(cmp_node(n, "service", rls_namespace) >= 0) {
 				res = read_service(n, &l);
-				if (res == 0) {
-					if (l) SEQUENCE_ADD((*dst)->rls_services, last_l, l);
-				}
-				else break;
+				if(res == 0) {
+					if(l)
+						SEQUENCE_ADD((*dst)->rls_services, last_l, l);
+				} else
+					break;
 			}
 		}
 		n = n->next;
@@ -205,11 +215,11 @@ int parse_rls_services_xml(const char *data, int data_len, rls_services_t **dst)
 	xmlDocPtr doc; /* the resulting document tree */
 
 	doc = xmlReadMemory(data, data_len, NULL, NULL, xml_parser_flags);
-	if (doc == NULL) {
+	if(doc == NULL) {
 		ERROR_LOG("can't parse document\n");
 		return -1;
 	}
-	
+
 	res = read_rls_services(xmlDocGetRootElement(doc), dst);
 
 	xmlFreeDoc(doc);
@@ -222,11 +232,11 @@ int parse_service(const char *data, int data_len, service_t **dst)
 	xmlDocPtr doc; /* the resulting document tree */
 
 	doc = xmlReadMemory(data, data_len, NULL, NULL, xml_parser_flags);
-	if (doc == NULL) {
+	if(doc == NULL) {
 		ERROR_LOG("can't parse document\n");
 		return -1;
 	}
-	
+
 	res = read_service(xmlDocGetRootElement(doc), dst);
 
 	xmlFreeDoc(doc);
@@ -235,18 +245,21 @@ int parse_service(const char *data, int data_len, service_t **dst)
 
 static void free_package(package_t *p)
 {
-	if (!p) return;
-	if (p->name) cds_free(p->name);
+	if(!p)
+		return;
+	if(p->name)
+		cds_free(p->name);
 	cds_free(p);
 }
 
 static void free_packages(packages_t *p)
 {
 	package_t *e, *f;
-	if (!p) return;
-	
+	if(!p)
+		return;
+
 	e = SEQUENCE_FIRST(p->package);
-	while (e) {
+	while(e) {
 		f = SEQUENCE_NEXT(e);
 		free_package(e);
 		e = f;
@@ -256,15 +269,21 @@ static void free_packages(packages_t *p)
 
 void free_service(service_t *s)
 {
-	if (!s) return;
-	
-	if (s->uri) cds_free(s->uri);
+	if(!s)
+		return;
 
-	switch (s->content_type) {
-		case stc_list: free_list(s->content.list); break;
-		case stc_resource_list: cds_free(s->content.resource_list); break;
+	if(s->uri)
+		cds_free(s->uri);
+
+	switch(s->content_type) {
+		case stc_list:
+			free_list(s->content.list);
+			break;
+		case stc_resource_list:
+			cds_free(s->content.resource_list);
+			break;
 	}
-	
+
 	free_packages(s->packages);
 
 	cds_free(s);
@@ -273,14 +292,14 @@ void free_service(service_t *s)
 void free_rls_services(rls_services_t *rls)
 {
 	service_t *e, *f;
-	if (!rls) return;
-	
+	if(!rls)
+		return;
+
 	e = SEQUENCE_FIRST(rls->rls_services);
-	while (e) {
+	while(e) {
 		f = SEQUENCE_NEXT(e);
 		free_service(e);
 		e = f;
 	}
 	cds_free(rls);
 }
-

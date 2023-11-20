@@ -31,7 +31,7 @@
 #include "../../core/proxy.h"
 #include "h_table.h"
 
-int t_append_branches(str * contact);
-typedef int (*t_append_branches_f)(str * contact);
+int t_append_branches(str *contact);
+typedef int (*t_append_branches_f)(str *contact);
 
 #endif

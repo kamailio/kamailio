@@ -34,7 +34,8 @@
 
 #include "../../core/cfg/cfg.h"
 
-struct cfg_group_outbound {
+struct cfg_group_outbound
+{
 	int outbound_active;
 };
 

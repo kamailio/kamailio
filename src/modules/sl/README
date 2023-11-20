@@ -32,6 +32,7 @@ Daniel-Constantin Mierla
               3.3. send_reply_mode(code, reason, mode)
               3.4. sl_reply_error()
               3.5. sl_forward_reply([ code, [ reason ] ])
+              3.6. send_reply_error()
 
         4. Statistics
 
@@ -78,6 +79,7 @@ Daniel-Constantin Mierla
    1.9. send_reply_mode usage
    1.10. sl_reply_error usage
    1.11. send_reply usage
+   1.12. send_reply_error usage
 
 Chapter 1. Admin Guide
 
@@ -100,6 +102,7 @@ Chapter 1. Admin Guide
         3.3. send_reply_mode(code, reason, mode)
         3.4. sl_reply_error()
         3.5. sl_forward_reply([ code, [ reason ] ])
+        3.6. send_reply_error()
 
    4. Statistics
 
@@ -252,6 +255,7 @@ modparam("sl", "event_callback_lres_sent", "ksr_event_sl_local_response")
    3.3. send_reply_mode(code, reason, mode)
    3.4. sl_reply_error()
    3.5. sl_forward_reply([ code, [ reason ] ])
+   3.6. send_reply_error()
 
 3.1.  sl_send_reply(code, reason)
 
@@ -348,6 +352,20 @@ sl_reply_error();
 ...
 if(status=="408")
     sl_forward_reply("404", "Not found");
+...
+
+3.6.  send_reply_error()
+
+   For the current request, the internal error code reply is sent back
+   stateful or stateless, depending of the TM module: if a transaction
+   exists for the current request, then the reply is sent statefully,
+   otherwise stateless.
+
+   It can be used from REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+
+   Example 1.12. send_reply_error usage
+...
+send_reply_error();
 ...
 
 4. Statistics

@@ -51,7 +51,7 @@
  */
 
 #include "ucontact.h"
-#include <string.h>             /* memcpy */
+#include <string.h> /* memcpy */
 #include "../../core/mem/shm_mem.h"
 #include "../../core/ut.h"
 #include "../../core/ip_addr.h"
@@ -67,7 +67,7 @@
 #include "contact_hslot.h"
 #include "utime.h"
 
-extern struct contact_list* contact_list;
+extern struct contact_list *contact_list;
 extern int db_mode;
 
 /*!
@@ -78,170 +78,200 @@ extern int db_mode;
  * \param _ci contact informations
  * \return new created contact on success, 0 on failure
  */
-ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _ci) {
-    ucontact_t *c;
-    param_t *prev = NULL;
-    param_t *curr, *param;
-    int first = 1;
+ucontact_t *new_ucontact(
+		str *_dom, str *_aor, str *_contact, ucontact_info_t *_ci)
+{
+	ucontact_t *c;
+	param_t *prev = NULL;
+	param_t *curr, *param;
+	int first = 1;
 
-    c = (ucontact_t*) shm_malloc(sizeof (ucontact_t));
-    if (!c) {
-        LM_ERR("no more shm memory\n");
-        return 0;
-    }
-    memset(c, 0, sizeof (ucontact_t));
-    
-    c->lock = lock_alloc();
-    if (c->lock==0){
-        goto error;
-    }
-    if (lock_init(c->lock)==0){
-	lock_dealloc(c->lock);
-	c->lock=0;
-	goto error;
-    }
+	c = (ucontact_t *)shm_malloc(sizeof(ucontact_t));
+	if(!c) {
+		LM_ERR("no more shm memory\n");
+		return 0;
+	}
+	memset(c, 0, sizeof(ucontact_t));
 
-    //setup callback list
-    c->cbs = (struct ulcb_head_list*) shm_malloc(sizeof (struct ulcb_head_list));
-    if (c->cbs == 0) {
-        LM_CRIT("no more shared mem\n");
-        goto error;
-    }
-    c->cbs->first = 0;
-    c->cbs->reg_types = 0;
-    
-    /*Copy parameter list into shm**/
-    param = _ci->params;
-    while(param) {
-        LM_DBG("Checking param [%.*s]\n", param->name.len, param->name.s);
-        if (param->name.len == 16 && (memcmp(param->name.s, "+g.3gpp.icsi-ref", 16)==0)) {
-            c->is_3gpp = 1;
-        }
-	/*Copy first param in curr*/
-	curr = shm_malloc(sizeof (param_t));
-	curr->len = param->len;
-	curr->type = param->type;
-	curr->next = 0;
-	if (param->body.len > 0 && param->body.s) {
-		if (shm_str_dup(&curr->body, &param->body) < 0) goto error;
-	} else {
-		curr->body.s = 0;
-		curr->body.len = 0;
+	c->lock = lock_alloc();
+	if(c->lock == 0) {
+		goto error;
 	}
-	if (param->name.len > 0 && param->name.s) {
-		if (shm_str_dup(&curr->name, &param->name) < 0) goto error;
-	} else {
-		curr->name.s = 0;
-		curr->name.len = 0;
+	if(lock_init(c->lock) == 0) {
+		lock_dealloc(c->lock);
+		c->lock = 0;
+		goto error;
 	}
-	
-	if(first) {
-	    c->params = curr;
-	    first = 0;
-	} else {
-	    prev->next = curr;
-	}
-	prev = curr;
-	param = param->next;
-	
-    }
-    
-    if (shm_str_dup(&c->c, _contact) < 0) goto error;
-	
-	if (_ci->callid && _ci->callid->len > 0) {
-		if (shm_str_dup(&c->callid, _ci->callid) < 0) goto error;
-	}
-	if (_ci->user_agent && _ci->user_agent->len > 0) {
-		if (shm_str_dup(&c->user_agent, _ci->user_agent) < 0) goto error;
-	}
-	if (_aor && _aor->len > 0) {
-		if (shm_str_dup(&c->aor, _aor) < 0) goto error;
-	}
-	if (_dom && _dom->len > 0) {
-		if (shm_str_dup(&c->domain, _dom) < 0) goto error;
-	}
-    
-    if (_ci->received.len > 0) {
-        if (shm_str_dup(&c->received, &_ci->received) < 0) goto error;
-    }
-    if (_ci->path && _ci->path->len > 0) {
-        if (shm_str_dup(&c->path, _ci->path) < 0) goto error;
-    }
-    
-    LM_DBG("generating hash based on [%.*s]\n", _contact->len, _contact->s);
-    c->sl = core_hash(_contact, 0, contact_list->size);
-    c->ref_count = 1;
-    c->expires = _ci->expires;
-    c->q = _ci->q;
-    c->sock = _ci->sock;
-    c->cseq = _ci->cseq;
-    c->flags = _ci->flags;
-    c->cflags = _ci->cflags;
-    c->methods = _ci->methods;
-    c->last_modified = _ci->last_modified;
 
-    return c;
+	//setup callback list
+	c->cbs = (struct ulcb_head_list *)shm_malloc(sizeof(struct ulcb_head_list));
+	if(c->cbs == 0) {
+		LM_CRIT("no more shared mem\n");
+		goto error;
+	}
+	c->cbs->first = 0;
+	c->cbs->reg_types = 0;
+
+	/*Copy parameter list into shm**/
+	param = _ci->params;
+	while(param) {
+		LM_DBG("Checking param [%.*s]\n", param->name.len, param->name.s);
+		if(param->name.len == 16
+				&& (memcmp(param->name.s, "+g.3gpp.icsi-ref", 16) == 0)) {
+			c->is_3gpp = 1;
+		}
+		/*Copy first param in curr*/
+		curr = shm_malloc(sizeof(param_t));
+		curr->len = param->len;
+		curr->type = param->type;
+		curr->next = 0;
+		if(param->body.len > 0 && param->body.s) {
+			if(shm_str_dup(&curr->body, &param->body) < 0)
+				goto error;
+		} else {
+			curr->body.s = 0;
+			curr->body.len = 0;
+		}
+		if(param->name.len > 0 && param->name.s) {
+			if(shm_str_dup(&curr->name, &param->name) < 0)
+				goto error;
+		} else {
+			curr->name.s = 0;
+			curr->name.len = 0;
+		}
+
+		if(first) {
+			c->params = curr;
+			first = 0;
+		} else {
+			prev->next = curr;
+		}
+		prev = curr;
+		param = param->next;
+	}
+
+	if(shm_str_dup(&c->c, _contact) < 0)
+		goto error;
+
+	if(_ci->callid && _ci->callid->len > 0) {
+		if(shm_str_dup(&c->callid, _ci->callid) < 0)
+			goto error;
+	}
+	if(_ci->user_agent && _ci->user_agent->len > 0) {
+		if(shm_str_dup(&c->user_agent, _ci->user_agent) < 0)
+			goto error;
+	}
+	if(_aor && _aor->len > 0) {
+		if(shm_str_dup(&c->aor, _aor) < 0)
+			goto error;
+	}
+	if(_dom && _dom->len > 0) {
+		if(shm_str_dup(&c->domain, _dom) < 0)
+			goto error;
+	}
+
+	if(_ci->received.len > 0) {
+		if(shm_str_dup(&c->received, &_ci->received) < 0)
+			goto error;
+	}
+	if(_ci->path && _ci->path->len > 0) {
+		if(shm_str_dup(&c->path, _ci->path) < 0)
+			goto error;
+	}
+
+	LM_DBG("generating hash based on [%.*s]\n", _contact->len, _contact->s);
+	c->sl = core_hash(_contact, 0, contact_list->size);
+	c->ref_count = 1;
+	c->expires = _ci->expires;
+	c->q = _ci->q;
+	c->sock = _ci->sock;
+	c->cseq = _ci->cseq;
+	c->flags = _ci->flags;
+	c->cflags = _ci->cflags;
+	c->methods = _ci->methods;
+	c->last_modified = _ci->last_modified;
+
+	return c;
 error:
-    LM_ERR("no more shm memory\n");
-    if (c->path.s) shm_free(c->path.s);
-    if (c->received.s) shm_free(c->received.s);
-    if (c->user_agent.s) shm_free(c->user_agent.s);
-    if (c->callid.s) shm_free(c->callid.s);
-    if (c->c.s) shm_free(c->c.s);
-    if (c->domain.s) shm_free(c->domain.s);
-    if (c->aor.s) shm_free(c->aor.s);
-    shm_free(c);
-    return 0;
+	LM_ERR("no more shm memory\n");
+	if(c->path.s)
+		shm_free(c->path.s);
+	if(c->received.s)
+		shm_free(c->received.s);
+	if(c->user_agent.s)
+		shm_free(c->user_agent.s);
+	if(c->callid.s)
+		shm_free(c->callid.s);
+	if(c->c.s)
+		shm_free(c->c.s);
+	if(c->domain.s)
+		shm_free(c->domain.s);
+	if(c->aor.s)
+		shm_free(c->aor.s);
+	shm_free(c);
+	return 0;
 }
 
 /*!
  * \brief Free all memory associated with given contact structure
  * \param _c freed contact
  */
-void free_ucontact(ucontact_t* _c) {
-    struct ul_callback *cbp, *cbp_tmp;
-    struct contact_dialog_data *dialog_data, *tmp_dialog_data; 
-    param_t * tmp, *tmp1;
-    
-    if (!_c) return;
-    LM_DBG("Freeing ucontact [%p] => [%.*s]\n", _c, _c->c.len, _c->c.s);    
-    if (_c->path.s) shm_free(_c->path.s);
-    if (_c->received.s) shm_free(_c->received.s);
-    if (_c->user_agent.s) shm_free(_c->user_agent.s);
-    if (_c->callid.s) shm_free(_c->callid.s);
-    if (_c->c.s) shm_free(_c->c.s);
-    
-    tmp = _c->params;
-    while(tmp){
-	tmp1 = tmp->next;
-	if (tmp->body.s) shm_free(tmp->body.s);
-	if (tmp->name.s) shm_free(tmp->name.s);
-	if(tmp) shm_free(tmp);
-	tmp = tmp1;
-    }
-    
-    if (_c->domain.s) shm_free(_c->domain.s);
-    if (_c->aor.s) shm_free(_c->aor.s);
+void free_ucontact(ucontact_t *_c)
+{
+	struct ul_callback *cbp, *cbp_tmp;
+	struct contact_dialog_data *dialog_data, *tmp_dialog_data;
+	param_t *tmp, *tmp1;
 
-    //free dialog data
-    for (dialog_data = _c->first_dialog_data; dialog_data;) {
-        tmp_dialog_data = dialog_data;
-        dialog_data = dialog_data->next;
+	if(!_c)
+		return;
+	LM_DBG("Freeing ucontact [%p] => [%.*s]\n", _c, _c->c.len, _c->c.s);
+	if(_c->path.s)
+		shm_free(_c->path.s);
+	if(_c->received.s)
+		shm_free(_c->received.s);
+	if(_c->user_agent.s)
+		shm_free(_c->user_agent.s);
+	if(_c->callid.s)
+		shm_free(_c->callid.s);
+	if(_c->c.s)
+		shm_free(_c->c.s);
+
+	tmp = _c->params;
+	while(tmp) {
+		tmp1 = tmp->next;
+		if(tmp->body.s)
+			shm_free(tmp->body.s);
+		if(tmp->name.s)
+			shm_free(tmp->name.s);
+		if(tmp)
+			shm_free(tmp);
+		tmp = tmp1;
+	}
+
+	if(_c->domain.s)
+		shm_free(_c->domain.s);
+	if(_c->aor.s)
+		shm_free(_c->aor.s);
+
+	//free dialog data
+	for(dialog_data = _c->first_dialog_data; dialog_data;) {
+		tmp_dialog_data = dialog_data;
+		dialog_data = dialog_data->next;
 		shm_free(tmp_dialog_data);
-    }
-    
-    //free callback list
-    for (cbp = _c->cbs->first; cbp;) {
-        cbp_tmp = cbp;
-        cbp = cbp->next;
-        if (cbp_tmp->param)
-            shm_free(cbp_tmp->param);
-        shm_free(cbp_tmp);
-    }
-    shm_free(_c->cbs);
-    lock_dealloc(_c->lock);
-    lock_destroy(_c->lock);
-    shm_free(_c);
+	}
+
+	//free callback list
+	for(cbp = _c->cbs->first; cbp;) {
+		cbp_tmp = cbp;
+		cbp = cbp->next;
+		if(cbp_tmp->param)
+			shm_free(cbp_tmp->param);
+		shm_free(cbp_tmp);
+	}
+	shm_free(_c->cbs);
+	lock_dealloc(_c->lock);
+	lock_destroy(_c->lock);
+	shm_free(_c);
 }
 
 /*!
@@ -249,54 +279,56 @@ void free_ucontact(ucontact_t* _c) {
  * \param _f output file
  * \param _c printed contact
  */
-void print_ucontact(FILE* _f, ucontact_t* _c) {
-    time_t t = time(0);
-    param_t * tmp;
-    
-    fprintf(_f, "\t~~~Contact(%p) (refcount: %d)~~~\n", _c, _c->ref_count);
-    fprintf(_f, "\t\tdomain    : '%.*s'\n", _c->domain.len, ZSW(_c->domain.s));
-    fprintf(_f, "\t\taor       : '%.*s'\n", _c->aor.len, ZSW(_c->aor.s));
-    fprintf(_f, "\t\tContact   : '%.*s'\n", _c->c.len, ZSW(_c->c.s));
-    
-    fprintf(_f, "\t\tParams   :\n");
-    tmp = _c->params;
-    while (tmp) {
-	fprintf(_f, "\t\t\tParam Name: '%.*s' Param Body '%.*s'\n", tmp->name.len, ZSW(tmp->name.s), tmp->body.len, ZSW(tmp->body.s));
-	tmp = tmp->next;
-    }
-    
-    
-    fprintf(_f, "\t\tExpires   : ");
-    if (_c->expires == 0) {
-        fprintf(_f, "\t\tPermanent\n");
-    } else if (_c->expires == UL_EXPIRED_TIME) {
-        fprintf(_f, "\t\tDeleted\n");
-    } else if (t > _c->expires) {
-        fprintf(_f, "\t\tExpired\n");
-    } else {
-        fprintf(_f, "\t\t%u\n", (unsigned int) (_c->expires - t));
-    }
-    fprintf(_f, "\t\tq         : %s\n", q2str(_c->q, 0));
-    fprintf(_f, "\t\tCall-ID   : '%.*s'\n", _c->callid.len, ZSW(_c->callid.s));
-    fprintf(_f, "\t\tCSeq      : %d\n", _c->cseq);
-    fprintf(_f, "\t\tUser-Agent: '%.*s'\n",
-            _c->user_agent.len, ZSW(_c->user_agent.s));
-    fprintf(_f, "\t\treceived  : '%.*s'\n",
-            _c->received.len, ZSW(_c->received.s));
-    fprintf(_f, "\t\tPath      : '%.*s'\n",
-            _c->path.len, ZSW(_c->path.s));
-    fprintf(_f, "\t\tState     : %s\n", get_contact_state_as_string(_c->state));
-    fprintf(_f, "\t\tFlags     : %u\n", _c->flags);
-    if (_c->sock) {
-        fprintf(_f, "\t\tSock      : %.*s (%p)\n",
-                _c->sock->sock_str.len, _c->sock->sock_str.s, _c->sock);
-    } else {
-        fprintf(_f, "\t\tSock      : none (null)\n");
-    }
-    fprintf(_f, "\t\tMethods   : %u\n", _c->methods);
-    fprintf(_f, "\t\tnext      : %p\n", _c->next);
-    fprintf(_f, "\t\tprev      : %p\n", _c->prev);
-    fprintf(_f, "\t~~~/Contact~~~~\n");
+void print_ucontact(FILE *_f, ucontact_t *_c)
+{
+	time_t t = time(0);
+	param_t *tmp;
+
+	fprintf(_f, "\t~~~Contact(%p) (refcount: %d)~~~\n", _c, _c->ref_count);
+	fprintf(_f, "\t\tdomain    : '%.*s'\n", _c->domain.len, ZSW(_c->domain.s));
+	fprintf(_f, "\t\taor       : '%.*s'\n", _c->aor.len, ZSW(_c->aor.s));
+	fprintf(_f, "\t\tContact   : '%.*s'\n", _c->c.len, ZSW(_c->c.s));
+
+	fprintf(_f, "\t\tParams   :\n");
+	tmp = _c->params;
+	while(tmp) {
+		fprintf(_f, "\t\t\tParam Name: '%.*s' Param Body '%.*s'\n",
+				tmp->name.len, ZSW(tmp->name.s), tmp->body.len,
+				ZSW(tmp->body.s));
+		tmp = tmp->next;
+	}
+
+
+	fprintf(_f, "\t\tExpires   : ");
+	if(_c->expires == 0) {
+		fprintf(_f, "\t\tPermanent\n");
+	} else if(_c->expires == UL_EXPIRED_TIME) {
+		fprintf(_f, "\t\tDeleted\n");
+	} else if(t > _c->expires) {
+		fprintf(_f, "\t\tExpired\n");
+	} else {
+		fprintf(_f, "\t\t%u\n", (unsigned int)(_c->expires - t));
+	}
+	fprintf(_f, "\t\tq         : %s\n", q2str(_c->q, 0));
+	fprintf(_f, "\t\tCall-ID   : '%.*s'\n", _c->callid.len, ZSW(_c->callid.s));
+	fprintf(_f, "\t\tCSeq      : %d\n", _c->cseq);
+	fprintf(_f, "\t\tUser-Agent: '%.*s'\n", _c->user_agent.len,
+			ZSW(_c->user_agent.s));
+	fprintf(_f, "\t\treceived  : '%.*s'\n", _c->received.len,
+			ZSW(_c->received.s));
+	fprintf(_f, "\t\tPath      : '%.*s'\n", _c->path.len, ZSW(_c->path.s));
+	fprintf(_f, "\t\tState     : %s\n", get_contact_state_as_string(_c->state));
+	fprintf(_f, "\t\tFlags     : %u\n", _c->flags);
+	if(_c->sock) {
+		fprintf(_f, "\t\tSock      : %.*s (%p)\n", _c->sock->sock_str.len,
+				_c->sock->sock_str.s, _c->sock);
+	} else {
+		fprintf(_f, "\t\tSock      : none (null)\n");
+	}
+	fprintf(_f, "\t\tMethods   : %u\n", _c->methods);
+	fprintf(_f, "\t\tnext      : %p\n", _c->next);
+	fprintf(_f, "\t\tprev      : %p\n", _c->prev);
+	fprintf(_f, "\t~~~/Contact~~~~\n");
 }
 
 /*!
@@ -305,58 +337,64 @@ void print_ucontact(FILE* _f, ucontact_t* _c) {
  * \param _ci contact informations
  * \return 0 on success, -1 on failure
  */
-int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci) {
-#define update_str(_old,_new) \
-	do{\
-		if ((_old)->len < (_new)->len) { \
-			ptr = (char*)shm_malloc((_new)->len); \
-			if (ptr == 0) { \
-				LM_ERR("no more shm memory\n"); \
-				return -1; \
-			}\
-			memcpy(ptr, (_new)->s, (_new)->len);\
-			if ((_old)->s) shm_free((_old)->s);\
-			(_old)->s = ptr;\
-		} else {\
-			memcpy((_old)->s, (_new)->s, (_new)->len);\
-		}\
-		(_old)->len = (_new)->len;\
+int mem_update_ucontact(ucontact_t *_c, ucontact_info_t *_ci)
+{
+#define update_str(_old, _new)                         \
+	do {                                               \
+		if((_old)->len < (_new)->len) {                \
+			ptr = (char *)shm_malloc((_new)->len);     \
+			if(ptr == 0) {                             \
+				LM_ERR("no more shm memory\n");        \
+				return -1;                             \
+			}                                          \
+			memcpy(ptr, (_new)->s, (_new)->len);       \
+			if((_old)->s)                              \
+				shm_free((_old)->s);                   \
+			(_old)->s = ptr;                           \
+		} else {                                       \
+			memcpy((_old)->s, (_new)->s, (_new)->len); \
+		}                                              \
+		(_old)->len = (_new)->len;                     \
 	} while(0)
 
-    char* ptr;
+	char *ptr;
 
-    /* No need to update Callid as it is constant
+	/* No need to update Callid as it is constant
      * per ucontact (set at insert time)  -bogdan */
 
-    update_str(&_c->user_agent, _ci->user_agent);
+	update_str(&_c->user_agent, _ci->user_agent);
 
-    if (_ci->received.s && _ci->received.len) {
-        update_str(&_c->received, &_ci->received);
-    } else {
-        if (_c->received.s) shm_free(_c->received.s);
-        _c->received.s = 0;
-        _c->received.len = 0;
-    }
+	if(_ci->received.s && _ci->received.len) {
+		update_str(&_c->received, &_ci->received);
+	} else {
+		if(_c->received.s)
+			shm_free(_c->received.s);
+		_c->received.s = 0;
+		_c->received.len = 0;
+	}
 
-    if (_ci->path) {
-        update_str(&_c->path, _ci->path);
-    } else {
-        if (_c->path.s) shm_free(_c->path.s);
-        _c->path.s = 0;
-        _c->path.len = 0;
-    }
-    
-    LM_DBG("Setting contact expires to %d which is in %d seconds time\n", (unsigned int) _ci->expires, (unsigned int) (_ci->expires - time(NULL)));
-    _c->sock = _ci->sock;
-    _c->expires = _ci->expires;
-    _c->q = _ci->q;
-    _c->cseq = _ci->cseq;
-    _c->methods = _ci->methods;
-    _c->last_modified = _ci->last_modified;
-    _c->flags = _ci->flags;
-    _c->cflags = _ci->cflags;
+	if(_ci->path) {
+		update_str(&_c->path, _ci->path);
+	} else {
+		if(_c->path.s)
+			shm_free(_c->path.s);
+		_c->path.s = 0;
+		_c->path.len = 0;
+	}
 
-    return 0;
+	LM_DBG("Setting contact expires to %d which is in %d seconds time\n",
+			(unsigned int)_ci->expires,
+			(unsigned int)(_ci->expires - time(NULL)));
+	_c->sock = _ci->sock;
+	_c->expires = _ci->expires;
+	_c->q = _ci->q;
+	_c->cseq = _ci->cseq;
+	_c->methods = _ci->methods;
+	_c->last_modified = _ci->last_modified;
+	_c->flags = _ci->flags;
+	_c->cflags = _ci->cflags;
+
+	return 0;
 }
 
 /*!
@@ -364,11 +402,12 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci) {
  * \param _c contact
   * \return 0 on success, -1 on failure
  */
-int mem_expire_ucontact(ucontact_t* _c) {
-    get_act_time();
-    _c->expires = act_time;
+int mem_expire_ucontact(ucontact_t *_c)
+{
+	get_act_time();
+	_c->expires = act_time;
 
-    return 0;
+	return 0;
 }
 
 /*!
@@ -377,35 +416,39 @@ int mem_expire_ucontact(ucontact_t* _c) {
  * \param _c updated contact
  * \return 0 on success, -1 on failure
  */
-int expire_scontact(struct impurecord* _r, ucontact_t* _c) {
-    /* we have to update memory in any case, but database directly
+int expire_scontact(struct impurecord *_r, ucontact_t *_c)
+{
+	/* we have to update memory in any case, but database directly
      * only in db_mode 1 */
-    LM_DBG("Expiring contact aor: [%.*s] and contact uri: [%.*s]\n", _c->aor.len, _c->aor.s, _c->c.len, _c->c.s);
-    if (mem_expire_ucontact(_c) < 0) {
-        LM_ERR("failed to update memory\n");
-        return -1;
-    }
-    
-    if (db_mode == WRITE_THROUGH && (db_insert_ucontact(_r, _c) != 0)) {  /* this is an insert/update */
-	LM_ERR("failed to update contact in DB [%.*s]\n", _c->aor.len, _c->aor.s);
-	return -1;
-    }
-    
-    //make sure IMPU is linked to this contact
-    link_contact_to_impu(_r, _c, 1);
+	LM_DBG("Expiring contact aor: [%.*s] and contact uri: [%.*s]\n",
+			_c->aor.len, _c->aor.s, _c->c.len, _c->c.s);
+	if(mem_expire_ucontact(_c) < 0) {
+		LM_ERR("failed to update memory\n");
+		return -1;
+	}
 
-    /* run callbacks for UPDATE event */
-    if (exists_ulcb_type(_c->cbs, UL_CONTACT_EXPIRE)) {
-        LM_DBG("exists callback for type= UL_CONTACT_UPDATE\n");
-        run_ul_callbacks(_c->cbs, UL_CONTACT_EXPIRE, _r, _c);
-    }
-    if (exists_ulcb_type(_r->cbs, UL_IMPU_EXPIRE_CONTACT)) {
-        run_ul_callbacks(_r->cbs, UL_IMPU_EXPIRE_CONTACT, _r, _c);
-    }
+	if(db_mode == WRITE_THROUGH
+			&& (db_insert_ucontact(_r, _c)
+					!= 0)) { /* this is an insert/update */
+		LM_ERR("failed to update contact in DB [%.*s]\n", _c->aor.len,
+				_c->aor.s);
+		return -1;
+	}
 
-    return 0;
+	//make sure IMPU is linked to this contact
+	link_contact_to_impu(_r, _c, 1);
+
+	/* run callbacks for UPDATE event */
+	if(exists_ulcb_type(_c->cbs, UL_CONTACT_EXPIRE)) {
+		LM_DBG("exists callback for type= UL_CONTACT_UPDATE\n");
+		run_ul_callbacks(_c->cbs, UL_CONTACT_EXPIRE, _r, _c);
+	}
+	if(exists_ulcb_type(_r->cbs, UL_IMPU_EXPIRE_CONTACT)) {
+		run_ul_callbacks(_r->cbs, UL_IMPU_EXPIRE_CONTACT, _r, _c);
+	}
+
+	return 0;
 }
-
 
 
 /*!
@@ -415,105 +458,120 @@ int expire_scontact(struct impurecord* _r, ucontact_t* _c) {
  * \param _ci new contact informations
  * \return 0 on success, -1 on failure
  */
-int update_scontact(struct impurecord* _r, ucontact_t* _c, ucontact_info_t* _ci) {
-    /* we have to update memory in any case, but database directly
+int update_scontact(struct impurecord *_r, ucontact_t *_c, ucontact_info_t *_ci)
+{
+	/* we have to update memory in any case, but database directly
      * only in db_mode 1 */
-    LM_DBG("Updating contact aor: [%.*s] and contact uri: [%.*s]\n", _c->aor.len, _c->aor.s, _c->c.len, _c->c.s);
-    if (mem_update_ucontact(_c, _ci) < 0) {
-        LM_ERR("failed to update memory\n");
-        return -1;
-    }
-    
-    if (db_mode == WRITE_THROUGH && (db_insert_ucontact(_r, _c) != 0)) {  /* this is an insert/update */
-	LM_ERR("failed to update contact in DB [%.*s]\n", _c->aor.len, _c->aor.s);
-	return -1;
-    }
-    
-    //make sure IMPU is linked to this contact
-    link_contact_to_impu(_r, _c, 1);
-
-    /* run callbacks for UPDATE event */
-    if (exists_ulcb_type(_c->cbs, UL_CONTACT_UPDATE)) {
-        LM_DBG("exists callback for type= UL_CONTACT_UPDATE\n");
-        run_ul_callbacks(_c->cbs, UL_CONTACT_UPDATE, _r, _c);
-    }
-    if (exists_ulcb_type(_r->cbs, UL_IMPU_UPDATE_CONTACT)) {
-        run_ul_callbacks(_r->cbs, UL_IMPU_UPDATE_CONTACT, _r, _c);
-    }
-
-//    update_contact_pos(_r, _c);
-
-    return 0;
-}
-
-
-/*!
- * \brief Add dialog data to contact
- * used when this contact is part of a confirmed dialog so we can tear down the dialog if the contact is removed
- */
-int add_dialog_data_to_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id) {
-    
-    struct contact_dialog_data *dialog_data = (struct contact_dialog_data*)shm_malloc(sizeof( struct contact_dialog_data));
-    
-    LM_DBG("Adding dialog data to contact <%.*s> with h_entry <%d> and h_id <%d>", _c->c.len, _c->c.s, h_entry, h_id);
-
-    memset(dialog_data, 0, sizeof( struct contact_dialog_data));
-    
-    dialog_data->h_entry = h_entry;
-    dialog_data->h_id = h_id;
-    dialog_data->next = 0;
-    dialog_data->prev = 0;
-    
-    if(_c->first_dialog_data==0){
-	//first entry in the list
-	_c->first_dialog_data = dialog_data;
-	_c->last_dialog_data = dialog_data;
-    }else {
-	//not first entry in list
-	_c->last_dialog_data->next = dialog_data;
-	dialog_data->prev = _c->last_dialog_data;
-	_c->last_dialog_data = dialog_data;
-    }
-    
-    return 0;
-    
-}
-
-/*!
- * \brief Add dialog data to contact
- * used when this contact is part of a confirmed dialog so we can tear down the dialog if the contact is removed
- */
-int remove_dialog_data_from_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id) {
-    struct contact_dialog_data *dialog_data, *tmp_dialog_data;     
-    LM_DBG("Removing dialog data from contact <%.*s> with h_entry <%d> and h_id <%d>", _c->c.len, _c->c.s, h_entry, h_id);
-    
-    for (dialog_data = _c->first_dialog_data; dialog_data;) {
-        tmp_dialog_data = dialog_data;
-        dialog_data = dialog_data->next;
-	if(tmp_dialog_data->h_entry == h_entry && tmp_dialog_data->h_id == h_id){
-	    LM_DBG("Found matching dialog data so will remove it");
-	    if(tmp_dialog_data->prev) {
-		tmp_dialog_data->prev->next = tmp_dialog_data->next;
-	    } else {
-		_c->first_dialog_data =  tmp_dialog_data->next;
-	    }
-	    if(tmp_dialog_data->next){
-		tmp_dialog_data->next->prev = tmp_dialog_data->prev;
-	    }else{
-	       _c->last_dialog_data =  tmp_dialog_data->prev;
-	    }
-	    shm_free(tmp_dialog_data);            
-	    return 0; 
+	LM_DBG("Updating contact aor: [%.*s] and contact uri: [%.*s]\n",
+			_c->aor.len, _c->aor.s, _c->c.len, _c->c.s);
+	if(mem_update_ucontact(_c, _ci) < 0) {
+		LM_ERR("failed to update memory\n");
+		return -1;
 	}
-        
-    }
-   
-      LM_DBG("Did not find dialog data to remove from contact");
-      return 1;              
+
+	if(db_mode == WRITE_THROUGH
+			&& (db_insert_ucontact(_r, _c)
+					!= 0)) { /* this is an insert/update */
+		LM_ERR("failed to update contact in DB [%.*s]\n", _c->aor.len,
+				_c->aor.s);
+		return -1;
+	}
+
+	//make sure IMPU is linked to this contact
+	link_contact_to_impu(_r, _c, 1);
+
+	/* run callbacks for UPDATE event */
+	if(exists_ulcb_type(_c->cbs, UL_CONTACT_UPDATE)) {
+		LM_DBG("exists callback for type= UL_CONTACT_UPDATE\n");
+		run_ul_callbacks(_c->cbs, UL_CONTACT_UPDATE, _r, _c);
+	}
+	if(exists_ulcb_type(_r->cbs, UL_IMPU_UPDATE_CONTACT)) {
+		run_ul_callbacks(_r->cbs, UL_IMPU_UPDATE_CONTACT, _r, _c);
+	}
+
+	//    update_contact_pos(_r, _c);
+
+	return 0;
 }
 
-void release_scontact(struct ucontact* _c) {
-    lock_contact_slot_i(_c->sl);
-    unref_contact_unsafe(_c);
-    unlock_contact_slot_i(_c->sl);
+
+/*!
+ * \brief Add dialog data to contact
+ * used when this contact is part of a confirmed dialog so we can tear down the dialog if the contact is removed
+ */
+int add_dialog_data_to_contact(
+		ucontact_t *_c, unsigned int h_entry, unsigned int h_id)
+{
+
+	struct contact_dialog_data *dialog_data =
+			(struct contact_dialog_data *)shm_malloc(
+					sizeof(struct contact_dialog_data));
+
+	LM_DBG("Adding dialog data to contact <%.*s> with h_entry <%d> and h_id "
+		   "<%d>",
+			_c->c.len, _c->c.s, h_entry, h_id);
+
+	memset(dialog_data, 0, sizeof(struct contact_dialog_data));
+
+	dialog_data->h_entry = h_entry;
+	dialog_data->h_id = h_id;
+	dialog_data->next = 0;
+	dialog_data->prev = 0;
+
+	if(_c->first_dialog_data == 0) {
+		//first entry in the list
+		_c->first_dialog_data = dialog_data;
+		_c->last_dialog_data = dialog_data;
+	} else {
+		//not first entry in list
+		_c->last_dialog_data->next = dialog_data;
+		dialog_data->prev = _c->last_dialog_data;
+		_c->last_dialog_data = dialog_data;
+	}
+
+	return 0;
+}
+
+/*!
+ * \brief Add dialog data to contact
+ * used when this contact is part of a confirmed dialog so we can tear down the dialog if the contact is removed
+ */
+int remove_dialog_data_from_contact(
+		ucontact_t *_c, unsigned int h_entry, unsigned int h_id)
+{
+	struct contact_dialog_data *dialog_data, *tmp_dialog_data;
+	LM_DBG("Removing dialog data from contact <%.*s> with h_entry <%d> and "
+		   "h_id <%d>",
+			_c->c.len, _c->c.s, h_entry, h_id);
+
+	for(dialog_data = _c->first_dialog_data; dialog_data;) {
+		tmp_dialog_data = dialog_data;
+		dialog_data = dialog_data->next;
+		if(tmp_dialog_data->h_entry == h_entry
+				&& tmp_dialog_data->h_id == h_id) {
+			LM_DBG("Found matching dialog data so will remove it");
+			if(tmp_dialog_data->prev) {
+				tmp_dialog_data->prev->next = tmp_dialog_data->next;
+			} else {
+				_c->first_dialog_data = tmp_dialog_data->next;
+			}
+			if(tmp_dialog_data->next) {
+				tmp_dialog_data->next->prev = tmp_dialog_data->prev;
+			} else {
+				_c->last_dialog_data = tmp_dialog_data->prev;
+			}
+			shm_free(tmp_dialog_data);
+			return 0;
+		}
+	}
+
+	LM_DBG("Did not find dialog data to remove from contact");
+	return 1;
+}
+
+void release_scontact(struct ucontact *_c)
+{
+	lock_contact_slot_i(_c->sl);
+	unref_contact_unsafe(_c);
+	unlock_contact_slot_i(_c->sl);
 }

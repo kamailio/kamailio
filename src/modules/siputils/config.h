@@ -30,14 +30,15 @@
 #include "../../core/cfg/cfg.h"
 #include "../../core/str.h"
 
-struct cfg_group_siputils {
-	unsigned int	ring_timeout;
+struct cfg_group_siputils
+{
+	unsigned int ring_timeout;
 };
 
-extern struct cfg_group_siputils	default_siputils_cfg;
-extern void	*siputils_cfg;
-extern cfg_def_t	siputils_cfg_def[];
+extern struct cfg_group_siputils default_siputils_cfg;
+extern void *siputils_cfg;
+extern cfg_def_t siputils_cfg_def[];
 
-int ring_timeout_fixup(void*, str*, str*, void**);
+int ring_timeout_fixup(void *, str *, str *, void **);
 
 #endif

@@ -3,23 +3,23 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +37,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 
@@ -55,14 +55,15 @@
 /*!
  * List of all domains registered with usrloc
  */
-typedef struct dlist {
-	str name;            /*!< Name of the domain (null terminated) */
-	udomain_t* d;        /*!< Payload */
-	struct dlist* next;  /*!< Next element in the list */
+typedef struct dlist
+{
+	str name;			/*!< Name of the domain (null terminated) */
+	udomain_t *d;		/*!< Payload */
+	struct dlist *next; /*!< Next element in the list */
 } dlist_t;
 
 /*! \brief Global list of all registered domains */
-extern dlist_t* root;
+extern dlist_t *root;
 
 
 /*!
@@ -75,7 +76,7 @@ extern dlist_t* root;
  * \param _d new created domain
  * \return 0 on success, -1 on failure
  */
-int register_udomain(const char* _n, udomain_t** _d);
+int register_udomain(const char *_n, udomain_t **_d);
 
 
 /*!
@@ -88,7 +89,7 @@ void free_all_udomains(void);
  * \brief Print all domains, just for debugging
  * \param _f output file
  */
-void print_all_udomains(FILE* _f);
+void print_all_udomains(FILE *_f);
 
 
 /*!
@@ -141,7 +142,7 @@ int get_all_scontacts(void *buf, int len, unsigned int flags,
  * \param _d usrloc domain (location table)
  * \return 0 on success, -1 on failure
  */
- int get_udomain(const char* _n, udomain_t** _d);
+int get_udomain(const char *_n, udomain_t **_d);
 
 /*!
  * \brief Find a particular domain, small wrapper around find_dlist
@@ -149,7 +150,7 @@ int get_all_scontacts(void *buf, int len, unsigned int flags,
  * \param _p pointer to domain if found
  * \return 1 if domain was found, 0 otherwise
  */
-int find_domain(str* _d, udomain_t** _p);
+int find_domain(str *_d, udomain_t **_p);
 
 
 #endif

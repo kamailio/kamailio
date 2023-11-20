@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -27,26 +27,30 @@
 #define __DOMAIN_MAINTAINER_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include <presence/notifier_domain.h>
 #include <cds/ptr_vector.h>
 #include <cds/sync.h>
 
-typedef struct {
-	ptr_vector_t registered_domains;
-	reference_counter_group_t *rc_grp;
-	cds_mutex_t mutex;
-} domain_maintainer_t;
+	typedef struct
+	{
+		ptr_vector_t registered_domains;
+		reference_counter_group_t *rc_grp;
+		cds_mutex_t mutex;
+	} domain_maintainer_t;
 
-	
-domain_maintainer_t *create_domain_maintainer();
-void destroy_domain_maintainer(domain_maintainer_t *dm);
 
-notifier_domain_t *register_notifier_domain(domain_maintainer_t *dm, const str_t *name);
-void release_notifier_domain(domain_maintainer_t *dm, notifier_domain_t *domain);
-	
+	domain_maintainer_t *create_domain_maintainer();
+	void destroy_domain_maintainer(domain_maintainer_t *dm);
+
+	notifier_domain_t *register_notifier_domain(
+			domain_maintainer_t *dm, const str_t *name);
+	void release_notifier_domain(
+			domain_maintainer_t *dm, notifier_domain_t *domain);
+
 #ifdef __cplusplus
 }
 #endif

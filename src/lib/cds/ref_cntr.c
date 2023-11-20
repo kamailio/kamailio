@@ -10,12 +10,12 @@ reference_counter_group_t *create_reference_counter_group(int mutex_cnt)
 	int i;
 
 	g = cds_malloc(sizeof(*g) + mutex_cnt * sizeof(cds_mutex_t));
-	if (!g) {
+	if(!g) {
 		ERROR_LOG("can't allocate memory\n");
 		return NULL;
 	}
 
-	for (i = 0; i < mutex_cnt; i++) {
+	for(i = 0; i < mutex_cnt; i++) {
 		cds_mutex_init(&g->mutexes[i]);
 	}
 	g->mutex_to_assign = 0;
@@ -27,8 +27,8 @@ reference_counter_group_t *create_reference_counter_group(int mutex_cnt)
 void free_reference_counter_group(reference_counter_group_t *grp)
 {
 	int i;
-	if (grp) {
-		for (i = 0; i < grp->mutex_cnt; i++) {
+	if(grp) {
+		for(i = 0; i < grp->mutex_cnt; i++) {
 			cds_mutex_destroy(&grp->mutexes[i]);
 		}
 		cds_free(grp);
@@ -37,10 +37,11 @@ void free_reference_counter_group(reference_counter_group_t *grp)
 
 /* -------------------------------------------------------------------- */
 
-void init_reference_counter(reference_counter_group_t *grp, reference_counter_data_t *ref)
+void init_reference_counter(
+		reference_counter_group_t *grp, reference_counter_data_t *ref)
 {
 	int m;
-	if (ref && grp) {
+	if(ref && grp) {
 		m = grp->mutex_to_assign;
 		ref->cntr = 1;
 		ref->mutex = grp->mutexes + m;
@@ -51,20 +52,24 @@ void init_reference_counter(reference_counter_group_t *grp, reference_counter_da
 
 void add_reference(reference_counter_data_t *ref)
 {
-	if (ref) {
-		if (ref->mutex) cds_mutex_lock(ref->mutex);
+	if(ref) {
+		if(ref->mutex)
+			cds_mutex_lock(ref->mutex);
 		ref->cntr++;
-		if (ref->mutex) cds_mutex_unlock(ref->mutex);
+		if(ref->mutex)
+			cds_mutex_unlock(ref->mutex);
 	}
 }
 
 int get_reference_count(reference_counter_data_t *ref)
 {
 	int res = 0;
-	if (ref) {
-		if (ref->mutex) cds_mutex_lock(ref->mutex);
+	if(ref) {
+		if(ref->mutex)
+			cds_mutex_lock(ref->mutex);
 		res = ref->cntr;
-		if (ref->mutex) cds_mutex_unlock(ref->mutex);
+		if(ref->mutex)
+			cds_mutex_unlock(ref->mutex);
 	}
 	return res;
 }
@@ -72,12 +77,15 @@ int get_reference_count(reference_counter_data_t *ref)
 int remove_reference(reference_counter_data_t *ref)
 {
 	int res = 0;
-	if (ref) {
-		if (ref->mutex) cds_mutex_lock(ref->mutex);
-		if (ref->cntr > 0) ref->cntr--;
-		if (ref->cntr == 0) res = 1;
-		if (ref->mutex) cds_mutex_unlock(ref->mutex);
+	if(ref) {
+		if(ref->mutex)
+			cds_mutex_lock(ref->mutex);
+		if(ref->cntr > 0)
+			ref->cntr--;
+		if(ref->cntr == 0)
+			res = 1;
+		if(ref->mutex)
+			cds_mutex_unlock(ref->mutex);
 	}
 	return res;
 }
-

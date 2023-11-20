@@ -60,6 +60,6 @@
 	<para></para>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="auth_radius_admin.xml"/>
 </book>

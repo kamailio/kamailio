@@ -146,7 +146,7 @@ modparam("cdp", "workerq_latency_threshold", 250)
     <section>
       <title><varname>workerq_length_threshold_percentage</varname> (int)</title>
 
-      <para>The threshold of the length of the worker queue as a percentage of 
+      <para>The threshold of the length of the worker queue as a percentage of
 	  the maximum queue size - when exceeded a warning is written to the log
 	  file. 0  means disabled</para>
 
@@ -176,6 +176,134 @@ modparam("cdp", "workerq_length_threshold_percentage", 25)
 
         <programlisting format="linespecific">...
 modparam("cdp", "debug_heavy", 1)
+...
+	</programlisting>
+      </example>
+ </section>
+ <section>
+      <title>enable_tls (int)</title>
+
+      <para>Flag to enable TLS for communication with all the peers.</para>
+
+      <para><emphasis> Default value is <quote>0</quote>. </emphasis></para>
+
+      <example>
+        <title>Set <varname>enable_tls</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("cdp", "enable_tls", 1)
+...
+	</programlisting>
+      </example>
+ </section>
+ <section>
+      <title>tls_method (string)</title>
+
+      <para>Sets the TLS protocol method. Possible values are:</para>
+      <itemizedlist>
+          <listitem>
+            <para>
+            <emphasis>TLSv1.3+</emphasis> - TLSv1.3 or newer
+            connections are accepted (available starting with openssl/libssl v1.1.1)
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+            <emphasis>TLSv1.3</emphasis> - only TLSv1.3 connections are accepted
+            (available starting with openssl/libssl v1.1.1)
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+            <emphasis>TLSv1.2+</emphasis> - TLSv1.2 or newer (TLSv1.3, ...)
+            connections are accepted (available starting with openssl/libssl v1.1.1)
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+            <emphasis>TLSv1.2</emphasis> - only TLSv1.2 connections are accepted
+            (available starting with openssl/libssl v1.0.1e)
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+            <emphasis>TLSv1.1+</emphasis> - TLSv1.1 or newer (TLSv1.2, ...)
+            connections are accepted (available starting with openssl/libssl v1.0.1)
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+            <emphasis>TLSv1.1</emphasis> - only TLSv1.1 connections are accepted
+            (available starting with openssl/libssl v1.0.1)
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+            <emphasis>TLSv1+</emphasis> - TLSv1.0 or newer (TLSv1.1, TLSv1.2, ...)
+            connections are accepted.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+            <emphasis>TLSv1</emphasis> - only TLSv1 (TLSv1.0) connections are
+            accepted. This is the default value.
+            </para>
+          </listitem>
+      </itemizedlist>
+      <para><emphasis> Default value is <quote>TLSv1.2</quote>. </emphasis></para>
+
+      <example>
+        <title>Set <varname>tls_method</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("tls", "tls_method", "TLSv1")
+...
+	</programlisting>
+      </example>
+ </section>
+ <section>
+      <title>private_key (string)</title>
+
+      <para>Sets the private key file name.</para>
+
+      <example>
+        <title>Set <varname>private_key</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("cdp", "private_key", "/usr/local/etc/kamailio/my_pkey.pem")
+...
+	</programlisting>
+      </example>
+ </section>
+ <section>
+      <title>certificate (string)</title>
+
+      <para>Sets the certificate file name. Must be in PEM format.</para>
+
+      <example>
+        <title>Set <varname>certificate</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("cdp", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
+...
+	</programlisting>
+      </example>
+ </section>
+ <section>
+      <title>ca_list (string)</title>
+
+      <para>Sets the CA list file name. This file contains a list of all the trusted CAs certificates used
+        when connecting to other SIP implementations. If a signature in a certificate chain belongs to one
+        of the listed CAs, the verification of that certificate will succeed. If not set, the PCRF sent
+        certificate is not checked.</para>
+      <para>The parameter must contain an absolute path. Only PEM files are accepted.</para>
+      <para>By default this parameter is not set.</para>
+      <para>An easy way to create the CA list is to append each trusted trusted CA certificate in the PEM format to one file.</para>
+      <example>
+        <title>Set <varname>ca_list</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("cdp", "ca_list", "/usr/local/etc/kamailio/ca_list.pem")
 ...
 	</programlisting>
       </example>
@@ -272,7 +400,7 @@ if(!cdp_has_app("16777216")) {
     <section>
       <title>cdp.enable_peer</title>
 
-      <para>enabe/re-enable a diameter peer</para>
+      <para>enable/re-enable a diameter peer</para>
     </section>
   </section>
 
@@ -290,14 +418,14 @@ if(!cdp_has_app("16777216")) {
         <title>DiameterPeer.xml example</title>
 
         <programlisting format="linespecific">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
-&lt;!-- 
+&lt;!--
 
- DiameterPeer Parameters 
+ DiameterPeer Parameters
   - FQDN - FQDN of this peer, as it should appear in the Origin-Host AVP
   - Realm - Realm of this peer, as it should appear in the Origin-Realm AVP
   - Vendor_Id - Default Vendor-Id to appear in the Capabilities Exchange
-  - Product_Name - Product Name to appear in the Capabilities Exchange 
-  - AcceptUnknownPeers - Whether to accept (1) or deny (0) connections from peers with FQDN 
+  - Product_Name - Product Name to appear in the Capabilities Exchange
+  - AcceptUnknownPeers - Whether to accept (1) or deny (0) connections from peers with FQDN
     not configured below
   - DropUnknownOnDisconnect - Whether to drop (1) or keep (0) and retry connections (until restart)
     unknown peers in the list of peers after a disconnection.
@@ -312,17 +440,17 @@ if(!cdp_has_app("16777216")) {
   - ConnectTimeout - time in seconds to wait for an outbound TCP connection to be established.
   - TransactionTimeout - time in seconds after which the transaction timeout callback will be fired,
     when using transactional processing.
-  - SessionsHashSize - size of the hash-table to use for the Diameter sessions. When searching for a 
-    session, the time required for this operation will be that of sequential searching in a list of 
+  - SessionsHashSize - size of the hash-table to use for the Diameter sessions. When searching for a
+    session, the time required for this operation will be that of sequential searching in a list of
     NumberOfActiveSessions/SessionsHashSize. So higher the better, yet each hashslot will consume an
     extra 2xsizeof(void*) bytes (typically 8 or 16 bytes extra).
-  - DefaultAuthSessionTimeout - default value to use when there is no Authorization Session Timeout 
+  - DefaultAuthSessionTimeout - default value to use when there is no Authorization Session Timeout
   AVP present.
   - MaxAuthSessionTimeout - maximum Authorization Session Timeout as a cut-out measure meant to
   enforce session refreshes.
-      
+
  --&gt;
-&lt;DiameterPeer 
+&lt;DiameterPeer
         FQDN="pcscf.ims.smilecoms.com"
         Realm="ims.smilecoms.com"
         Vendor_Id="10415"
@@ -363,7 +491,7 @@ if(!cdp_has_app("16777216")) {
                 Definition of Auth (authorization) and Acct (accounting) supported applications. This
                 information is sent as part of the Capabilities Exchange procedures on connecting to
                 peers. If no common application is found, the peers will disconnect. Messages will only
-                be sent to a peer if that peer actually has declared support for the application id of 
+                be sent to a peer if that peer actually has declared support for the application id of
                 the message.
         --&gt;
         &lt;Acct id="16777216" vendor="10415" /&gt;
@@ -371,7 +499,7 @@ if(!cdp_has_app("16777216")) {
         &lt;Auth id="16777216" vendor="10415"/&gt;
         &lt;Auth id="16777216" vendor="0" /&gt;
 
-        &lt;!-- 
+        &lt;!--
                 Supported Vendor IDs - list of values which will be sent in the CER/CEA in the
                 Supported-Vendor-ID AVPs
         --&gt;
@@ -385,7 +513,7 @@ if(!cdp_has_app("16777216")) {
                 Note: In case a message already contains a Destination-Host AVP, Realm Routing will not be
                 applied.
                 Note: Routing will only happen towards connected and application id supporting peers.
-                
+
                 The metric is used to order the list of preferred peers, while looking for a connected and
                 application id supporting peer. In the end, of course, just one peer will be selected.
         --&gt;

@@ -33,15 +33,15 @@
 /*
  * Used when converting the query to a result
  */
-int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
-		const unsigned int _cpy)
+int db_unixodbc_str2val(const db_type_t _t, db_val_t *_v, const char *_s,
+		const int _l, const unsigned int _cpy)
 {
 	/* db_unixodbc uses the NULL string for NULL SQL values */
-	if (_v && _s && !strcmp(_s, "NULL")) {
+	if(_v && _s && !strcmp(_s, "NULL")) {
 		LM_DBG("converting NULL value");
 		static str dummy_string = {"", 0};
 		memset(_v, 0, sizeof(db_val_t));
-			/* Initialize the string pointers to a dummy empty
+		/* Initialize the string pointers to a dummy empty
 			 * string so that we do not crash when the NULL flag
 			 * is set but the module does not check it properly
 			 */
@@ -59,32 +59,28 @@ int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 /*
  * Used when converting a result from the query
  */
-int db_unixodbc_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
+int db_unixodbc_val2str(
+		const db1_con_t *_c, const db_val_t *_v, char *_s, int *_len)
 {
 	int l, tmp;
-	char* old_s;
+	char *old_s;
 
 	/* db_unixodbc uses a custom escape function */
 	tmp = db_val2str(_c, _v, _s, _len);
-	if (tmp < 1)
+	if(tmp < 1)
 		return tmp;
 
-	switch(VAL_TYPE(_v))
-	{
+	switch(VAL_TYPE(_v)) {
 		case DB1_STRING:
 			l = strlen(VAL_STRING(_v));
-			if (*_len < (l * 2 + 3))
-			{
+			if(*_len < (l * 2 + 3)) {
 				LM_ERR("destination buffer too short\n");
 				return -6;
-			}
-			else
-			{
+			} else {
 				old_s = _s;
 				*_s++ = '\'';
-				if(use_escape_common)
-				{
-					_s += escape_common(_s, (char*)VAL_STRING(_v), l);
+				if(use_escape_common) {
+					_s += escape_common(_s, (char *)VAL_STRING(_v), l);
 				} else {
 					memcpy(_s, VAL_STRING(_v), l);
 					_s += l;
@@ -98,17 +94,13 @@ int db_unixodbc_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* 
 
 		case DB1_STR:
 			l = VAL_STR(_v).len;
-			if (*_len < (l * 2 + 3))
-			{
+			if(*_len < (l * 2 + 3)) {
 				LM_ERR("destination buffer too short\n");
 				return -7;
-			}
-			else
-			{
+			} else {
 				old_s = _s;
 				*_s++ = '\'';
-				if(use_escape_common)
-				{
+				if(use_escape_common) {
 					_s += escape_common(_s, VAL_STR(_v).s, l);
 				} else {
 					memcpy(_s, VAL_STR(_v).s, l);
@@ -123,17 +115,13 @@ int db_unixodbc_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* 
 
 		case DB1_BLOB:
 			l = VAL_BLOB(_v).len;
-			if (*_len < (l * 2 + 3))
-			{
+			if(*_len < (l * 2 + 3)) {
 				LM_ERR("destination buffer too short\n");
 				return -9;
-			}
-			else
-			{
+			} else {
 				old_s = _s;
 				*_s++ = '\'';
-				if(use_escape_common)
-				{
+				if(use_escape_common) {
 					_s += escape_common(_s, VAL_BLOB(_v).s, l);
 				} else {
 					memcpy(_s, VAL_BLOB(_v).s, l);

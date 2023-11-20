@@ -65,7 +65,7 @@ create_radius_seqfile ()
     # root because DUMP_CORE is enabled and creates this file as user
     # root and then later it switches back to user kamailio and cannot
     # write to the file. If the file exists before kamailio starts, it
-    # won't change it's ownership and will be writable for both root
+    # won't change its ownership and will be writable for both root
     # and kamailio, no matter what options are chosen at install time
     RADIUS_SEQ_FILE="$HOMEDIR/kamailio_radius.seq"
     if [ -d $HOMEDIR ]; then

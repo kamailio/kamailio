@@ -60,9 +60,10 @@ Muhammad Shahzad Shafi
               4.20. via_add_srvid(flags)
               4.21. via_add_xavp_params(flags)
               4.22. via_use_xavp_fields(flags)
-              4.23. is_faked_msg()
-              4.24. is_socket_name(sockname)
-              4.25. forward_reply()
+              4.23. via_reply_add_xavp_params(flags)
+              4.24. is_faked_msg()
+              4.25. is_socket_name(sockname)
+              4.26. forward_reply()
 
         5. RPC Commands
 
@@ -75,6 +76,7 @@ Muhammad Shahzad Shafi
               5.7. corex.shm.info
               5.8. corex.shm.report
               5.9. corex.shm.stats
+              5.10. corex.shm.rprint
 
         6. Event Routes
 
@@ -113,11 +115,12 @@ Muhammad Shahzad Shafi
    1.26. via_add_srvid usage
    1.27. via_add_xavp_params usage
    1.28. via_use_xavp_fields usage
-   1.29. is_faked_msg usage
-   1.30. is_socket_name usage
-   1.31. forward_reply usage
-   1.32. event_route[network:msg] use cases
-   1.33. Sample PERL code for do_compress and do_uncompress
+   1.29. via_reply_add_xavp_params usage
+   1.30. is_faked_msg usage
+   1.31. is_socket_name usage
+   1.32. forward_reply usage
+   1.33. event_route[network:msg] use cases
+   1.34. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -162,9 +165,10 @@ Chapter 1. Admin Guide
         4.20. via_add_srvid(flags)
         4.21. via_add_xavp_params(flags)
         4.22. via_use_xavp_fields(flags)
-        4.23. is_faked_msg()
-        4.24. is_socket_name(sockname)
-        4.25. forward_reply()
+        4.23. via_reply_add_xavp_params(flags)
+        4.24. is_faked_msg()
+        4.25. is_socket_name(sockname)
+        4.26. forward_reply()
 
    5. RPC Commands
 
@@ -177,6 +181,7 @@ Chapter 1. Admin Guide
         5.7. corex.shm.info
         5.8. corex.shm.report
         5.9. corex.shm.stats
+        5.10. corex.shm.rprint
 
    6. Event Routes
 
@@ -352,9 +357,10 @@ modparam("corex", "nio_msg_avp", "$avp(msg)")
    4.20. via_add_srvid(flags)
    4.21. via_add_xavp_params(flags)
    4.22. via_use_xavp_fields(flags)
-   4.23. is_faked_msg()
-   4.24. is_socket_name(sockname)
-   4.25. forward_reply()
+   4.23. via_reply_add_xavp_params(flags)
+   4.24. is_faked_msg()
+   4.25. is_socket_name(sockname)
+   4.26. forward_reply()
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -545,7 +551,7 @@ setxflag("$var(flag)");
 
 4.13. isxflagset(flag)
 
-   Return true of the extended message (transaction) flag is set.
+   Return true if the extended message (transaction) flag is set.
 
    Meaning of the parameters is as follows:
      * flag - the index of the flag to be tested. Can be integer or
@@ -712,7 +718,31 @@ request_route {
 }
 ...
 
-4.23.  is_faked_msg()
+4.23. via_reply_add_xavp_params(flags)
+
+   Control if fields of the xavp with the name specified by
+   xavp_via_reply_params global parameter are added or not to the top Via
+   of replies.
+
+   Meaning of the parameters is as follows:
+     * flags: 1 - add xavp parameters; 0 - do not add xavp parameters.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.29. via_reply_add_xavp_params usage
+...
+xavp_via_reply_params="xviarpl"
+...
+request_route {
+    ...
+        $xavp(xviarpl=>srvid) = "1";
+        $xavp(xviarpl[0]=>myval) = "xyz";
+    via_reply_add_xavp_params("1");
+    ...
+}
+...
+
+4.24.  is_faked_msg()
 
    Returns 1 (native config true) if the SIP message under processing is
    the internal faked msg structure. Returns -1 (native config false) if
@@ -724,7 +754,7 @@ request_route {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.29. is_faked_msg usage
+   Example 1.30. is_faked_msg usage
 ...
 event_route[dispatcher:dst-down] {
     if (is_faked_msg()) {
@@ -733,7 +763,7 @@ event_route[dispatcher:dst-down] {
 }
 ...
 
-4.24.  is_socket_name(sockname)
+4.25.  is_socket_name(sockname)
 
    Returns 1 (native config true) if the parameter matches a local socket
    name, otherwise -1 (native config false). The parameter can contain
@@ -741,20 +771,20 @@ event_route[dispatcher:dst-down] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.30. is_socket_name usage
+   Example 1.31. is_socket_name usage
 ...
     if (is_socket_name("socktls")) {
         xinfo("matched local socket name\n");
     }
 ...
 
-4.25.  forward_reply()
+4.26.  forward_reply()
 
    Forward received reply on demand.
 
    This function can be used in CORE_ONREPLY_ROUTE.
 
-   Example 1.31. forward_reply usage
+   Example 1.32. forward_reply usage
 ...
 route[reply] {
     forward_reply();
@@ -772,6 +802,7 @@ route[reply] {
    5.7. corex.shm.info
    5.8. corex.shm.report
    5.9. corex.shm.stats
+   5.10. corex.shm.rprint
 
 5.1.  corex.debug
 
@@ -844,6 +875,18 @@ route[reply] {
 
    Example:
                 kamcli rpc shm.stats
+
+5.10.  corex.shm.rprint
+
+   Shared memory usage status report printed to file upon filter match
+   with the file of allocation.
+
+   It takes two parameters: the path to file where to write the report;
+   the string to match the allocation file (the match is done as value
+   included in the path fo the allocation file).
+
+   Example:
+                        kamcli rpc shm.rprint /tmp/kamailioshm.txt dns_cache.c
 
 6. Event Routes
 
@@ -924,7 +967,7 @@ route[reply] {
    Next is a basic usage example where encoding and decoding is done using
    PERL.
 
-   Example 1.32. event_route[network:msg] use cases
+   Example 1.33. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -955,7 +998,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.33. Sample PERL code for do_compress and do_uncompress
+   Example 1.34. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;

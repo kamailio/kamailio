@@ -68,7 +68,7 @@ Creating the CA certificate
 1. Create the CA directory
 	mkdir ca
 	cd ca
-	
+
 2. Create the CA directory structure and files  (see ca(1))
 	mkdir demoCA 		#default CA name, edit /etc/ssl/openssl.cnf
 	mkdir  demoCA/private
@@ -76,11 +76,11 @@ Creating the CA certificate
 	touch demoCA/index.txt
 	echo 01 >demoCA/serial
 	echo 01 >demoCA/crlnumber
-	
+
 2. Create CA private key
 	openssl genrsa -out demoCA/private/cakey.pem 2048
 	chmod 600 demoCA/private/cakey.pem
-	
+
 3. Create CA self-signed certificate
 	openssl req -out demoCA/cacert.pem   -x509 -new -key demoCA/private/cakey.pem
 
@@ -92,10 +92,10 @@ Creating a server/client TLS certificate
 	openssl req -out kamailio1_cert_req.pem -new -nodes
 
 	WARNING: the organization name should be the same as in the CA certificate.
-	
+
 2. Sign it with the CA certificate
 	openssl ca -in kamailio1_cert_req.pem -out kamailio1_cert.pem
-	
+
 3. Copy kamailio1_cert.pem to your &kamailio; configuration dir
 
 
@@ -104,32 +104,32 @@ Setting &kamailio; to use the TLS certificate
 1. Create the CA list file:
 	for each of your CA certificates that you intend to use do:
 		cat cacert.pem >>calist.pem
-	
-2. Copy your &kamailio; certificate, private key and ca list file to your 
+
+2. Copy your &kamailio; certificate, private key and ca list file to your
 	intended machine (preferably in your &kamailio; configuration directory,
 	 this is the default place &kamailio; searches for).
-	
+
 3. Set up &kamailio;.cfg to use the certificate
 	if your &kamailio; certificate name is different from cert.pem or it is not
 	placed in &kamailio; cfg. directory, add to your kamailio.cfg:
 		modparam("tls", "certificate", "/path/cert_file_name")
-	
+
 4. Set up &kamailio; to use the private key
 	if your private key is not contained in the same file as the certificate
 	(or the certificate name is not the default cert.pem), add to your
 	 &kamailio;.cfg:
 		modparam("tls", "private_key", "/path/private_key_file")
-	
+
 5. Set up &kamailio; to use the CA list (optional)
    The CA list is not used for your server certificate - it's used to approve other servers
    and clients connecting to your server with a client certificate or for approving
    a certificate used by a server your server connects to.
 	add to your &kamailio;.cfg:
 		modparam("tls", "ca_list", "/path/ca_list_file")
-	
+
 6. Set up TLS authentication options:
 		modparam("tls", "verify_certificate", 1)
-		modparam("tls", "require_certificate", 1) 
+		modparam("tls", "require_certificate", 1)
 	(for more information see the module parameters documentation)
 
 
@@ -137,12 +137,12 @@ Revoking a certificate and using a CRL
 --------------------------------------
 1. Revoking a certificate:
 	openssl ca -revoke bad_cert.pem
-	
+
 2. Generate/update the certificate revocation list:
 	openssl ca -gencrl -out my_crl.pem
-	
+
 3. Copy my_crl.pem to your &kamailio; config. dir
-	
+
 4. Set up &kamailio; to use the CRL:
 		modparam("tls", "crl", "path/my_crl.pem")
 

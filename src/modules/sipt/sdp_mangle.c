@@ -14,33 +14,32 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * 
+ *
  */
 
 #include "sdp_mangle.h"
 
-int replace_body_segment(struct sdp_mangler * mangler, int offset, int len, unsigned char * new_data, int new_len)
+int replace_body_segment(struct sdp_mangler *mangler, int offset, int len,
+		unsigned char *new_data, int new_len)
 {
-	
-	struct lump * l;
+
+	struct lump *l;
 	char *s;
 
 	l = del_lump(mangler->msg, mangler->body_offset + offset, len, 0);
 
-	if(l == NULL)
-	{
+	if(l == NULL) {
 		return -1;
 	}
 
- 	s = pkg_malloc(new_len);
+	s = pkg_malloc(new_len);
 	memcpy(s, new_data, new_len);
 
-	if(insert_new_lump_after(l, s, new_len, 0) == 0)
-	{
+	if(insert_new_lump_after(l, s, new_len, 0) == 0) {
 		pkg_free(s);
 		return -2;
 	}
@@ -48,26 +47,25 @@ int replace_body_segment(struct sdp_mangler * mangler, int offset, int len, unsi
 	return 0;
 }
 
-int add_body_segment(struct sdp_mangler * mangler, int offset, unsigned char * new_data, int new_len)
+int add_body_segment(struct sdp_mangler *mangler, int offset,
+		unsigned char *new_data, int new_len)
 {
-	
-	struct lump * l;
+
+	struct lump *l;
 	char *s;
 	int exists;
-	l = anchor_lump2(mangler->msg, mangler->body_offset + offset, 0, 0, &exists);
-	if(l == NULL)
-	{
+	l = anchor_lump2(
+			mangler->msg, mangler->body_offset + offset, 0, 0, &exists);
+	if(l == NULL) {
 		return -1;
 	}
 
- 	s = pkg_malloc(new_len);
+	s = pkg_malloc(new_len);
 	memcpy(s, new_data, new_len);
-	if(insert_new_lump_after(l, s, new_len, 0) == 0)
-	{
+	if(insert_new_lump_after(l, s, new_len, 0) == 0) {
 		pkg_free(s);
 		return -2;
 	}
 
 	return 0;
 }
-

@@ -64,6 +64,7 @@ Carsten Bock
               3.21. omit_flow_ports integer
               3.22. rs_default_bandwidth integer
               3.23. rr_default_bandwidth integer
+              3.24. suspend_transaction integer
 
         4. Functions
 
@@ -101,8 +102,9 @@ Carsten Bock
    1.21. omit_flow_ports parameter usage
    1.22. rs_default_bandwidth parameter usage
    1.23. rr_default_bandwidth parameter usage
-   1.24. Rx_AAR_Register
-   1.25. Rx_AAR
+   1.24. suspend_transaction parameter usage
+   1.25. Rx_AAR_Register
+   1.26. Rx_AAR
 
 Chapter 1. Admin Guide
 
@@ -139,6 +141,7 @@ Chapter 1. Admin Guide
         3.21. omit_flow_ports integer
         3.22. rs_default_bandwidth integer
         3.23. rr_default_bandwidth integer
+        3.24. suspend_transaction integer
 
    4. Functions
 
@@ -167,7 +170,7 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The Following modules must be loaded before this module:
-     * Dialog
+     * IMS Dialog
      * Usrloc PCSCF
      * TM - Transaction Manager
      * CDP - C Diameter Peer
@@ -175,7 +178,7 @@ Chapter 1. Admin Guide
 
 2.2. External Libraries or Applications
 
-   This modules requires the internal IMS library.
+   This module requires the internal IMS library.
 
 3. Parameters
 
@@ -202,6 +205,7 @@ Chapter 1. Admin Guide
    3.21. omit_flow_ports integer
    3.22. rs_default_bandwidth integer
    3.23. rr_default_bandwidth integer
+   3.24. suspend_transaction integer
 
 3.1. rx_dest_realm (string)
 
@@ -492,6 +496,17 @@ modparam("ims_qos", "rs_default_bandwidth", 600)
 modparam("ims_qos", "rr_default_bandwidth", 2000)
 ...
 
+3.24. suspend_transaction integer
+
+   If enabled, suspends the tm transaction while doing the AAR.
+
+   Default value is 1 (enabled)
+
+   Example 1.24. suspend_transaction parameter usage
+...
+modparam("ims_qos", "suspend_transaction", 0)
+...
+
 4. Functions
 
    4.1. Rx_AAR_Register(route_block, domain)
@@ -522,7 +537,7 @@ modparam("ims_qos", "rr_default_bandwidth", 2000)
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.24. Rx_AAR_Register
+   Example 1.25. Rx_AAR_Register
 ...
 if(Rx_AAR_Register("REG_AAR_REPLY","location")==0){
     exit;
@@ -559,12 +574,14 @@ route[REG_AAR_REPLY]
        default. This is as per RFC 4006: END_USER_E164 0, END_USER_IMSI 1,
        END_USER_SIP_URI 2, END_USER_NAI 3, END_USER_PRIVATE 4
 
-   This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
+   This function can be used only from ONREPLY_ROUTE, only for replies to
+   INVITE, UPDATE, PRACK. The reply and request must have SDP, for this
+   function to work properly.
 
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.25. Rx_AAR
+   Example 1.26. Rx_AAR
 ...
 if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig","",-1)==0){
     exit;

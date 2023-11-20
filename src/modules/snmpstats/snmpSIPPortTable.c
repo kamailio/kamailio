@@ -56,7 +56,7 @@ size_t kamailioSIPPortTable_oid_len = OID_LENGTH(kamailioSIPPortTable_oid);
  * sizeOfOID will be assigned the length of the oid.
  *
  * Note: This function returns a newly allocated block of memory.  Make sure to
- * deallocate the memory when you no longer need it. 
+ * deallocate the memory when you no longer need it.
  */
 static oid *createIndex(int ipType, int *ipAddress, int *sizeOfOID)
 {
@@ -101,7 +101,7 @@ static oid *createIndex(int ipType, int *ipAddress, int *sizeOfOID)
  * return a new one otherwise.  If the row is new, then the provided index will be
  * assigned to the new row.
  *
- * Note: NULL will be returned on an error 
+ * Note: NULL will be returned on an error
  */
 kamailioSIPPortTable_context *getRow(int ipType, int *ipAddress)
 {
@@ -160,7 +160,7 @@ kamailioSIPPortTable_context *getRow(int ipType, int *ipAddress)
  * can point to any integer >= zero.  All rows created by this function will be
  * indexed starting at snmpIndex++.  The parameter is implemented as a pointer
  * to an integer so that if the function is called again with another
- * 'protocol', we can continue from the last index. 
+ * 'protocol', we can continue from the last index.
  */
 static void createRowsFromIPList(
 		int *theList, int listSize, int protocol, int *snmpIndex, int family)
@@ -190,7 +190,7 @@ static void createRowsFromIPList(
 		curIndexOfIP = (num_octets + 1) * curSocketIdx;
 
 		/* Retrieve an existing row, or a new row if one doesn't
-		 * already exist. 
+		 * already exist.
 		 * RFC 4001 defined IPv4 as 1, IPv6 as 2
 		*/
 		currentRow = getRow(family == AF_INET ? 1 : 2, &theList[curIndexOfIP]);
@@ -217,7 +217,7 @@ static int *_sr_snmp_TLS6List = NULL;
 static int *_sr_snmp_SCTP6List = NULL;
 
 /*
- * Initializes the kamailioSIPPortTable module.  
+ * Initializes the kamailioSIPPortTable module.
  *
  * Specifically, this function will define the tables structure, and then
  * populate it with the ports and transports that Kamailio is listening on.
@@ -307,7 +307,7 @@ void initialize_table_kamailioSIPPortTable(void)
 
 	/* create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
-	if(table_info==NULL) {
+	if(table_info == NULL) {
 		snmp_log(LOG_ERR, "failed to allocate table_info\n");
 		return;
 	}
@@ -349,7 +349,7 @@ void initialize_table_kamailioSIPPortTable(void)
 /*
  * This routine is called to process get requests for elements of the table.
  *
- * The function is mostly left in its auto-generated form 
+ * The function is mostly left in its auto-generated form
  */
 int kamailioSIPPortTable_get_value(netsnmp_request_info *request,
 		netsnmp_index *item, netsnmp_table_request_info *table_info)

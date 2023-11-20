@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -36,10 +36,10 @@
 /* Add lcr entry into hash table */
 int rule_hash_table_insert(struct rule_info **hash_table, unsigned int lcr_id,
 		unsigned int rule_id, unsigned short prefix_len, char *prefix,
-		unsigned short from_uri_len, char *from_uri, pcre *from_uri_re,
+		unsigned short from_uri_len, char *from_uri, pcre2_code *from_uri_re,
 		unsigned short mt_tvalue_len, char *mt_tvalue,
-		unsigned short request_uri_len, char *request_uri, pcre *request_uri_re,
-		unsigned short stopper)
+		unsigned short request_uri_len, char *request_uri,
+		pcre2_code *request_uri_re, unsigned short stopper)
 {
 	struct rule_info *rule;
 	str prefix_str;
@@ -48,11 +48,11 @@ int rule_hash_table_insert(struct rule_info **hash_table, unsigned int lcr_id,
 
 	rule = (struct rule_info *)shm_malloc(sizeof(struct rule_info));
 	if(rule == NULL) {
-		LM_ERR("no shm memory for rule hash table entry\n");
+		SHM_MEM_ERROR_FMT("for rule hash table entry\n");
 		if(from_uri_re)
-			shm_free(from_uri_re);
+			pcre2_code_free(from_uri_re);
 		if(request_uri_re)
-			shm_free(request_uri_re);
+			pcre2_code_free(request_uri_re);
 		return 0;
 	}
 	memset(rule, 0, sizeof(struct rule_info));
@@ -97,7 +97,12 @@ int rule_hash_table_insert(struct rule_info **hash_table, unsigned int lcr_id,
 	/* Add rule_id info to rule_id hash table */
 	rid = (struct rule_id_info *)pkg_malloc(sizeof(struct rule_id_info));
 	if(rid == NULL) {
-		LM_ERR("no pkg memory for rule_id hash table entry\n");
+		PKG_MEM_ERROR_FMT("for rule_id hash table entry\n");
+		if(from_uri_re)
+			pcre2_code_free(from_uri_re);
+		if(request_uri_re)
+			pcre2_code_free(request_uri_re);
+		shm_free(rule);
 		return 0;
 	}
 	memset(rid, 0, sizeof(struct rule_id_info));
@@ -143,7 +148,7 @@ int rule_hash_table_insert_target(struct rule_info **hash_table,
 
 	target = (struct target *)shm_malloc(sizeof(struct target));
 	if(target == NULL) {
-		LM_ERR("cannot allocate memory for rule target\n");
+		SHM_MEM_ERROR_FMT("for rule target\n");
 		return 0;
 	}
 
@@ -175,7 +180,7 @@ int rule_hash_table_insert_target(struct rule_info **hash_table,
 }
 
 
-/* 
+/*
  * Return pointer to lcr hash table entry to which given prefix hashes to.
  */
 struct rule_info *rule_hash_table_lookup(
@@ -204,10 +209,10 @@ void rule_hash_table_contents_free(struct rule_info **hash_table)
 		r = hash_table[i];
 		while(r) {
 			if(r->from_uri_re) {
-				shm_free(r->from_uri_re);
+				pcre2_code_free(r->from_uri_re);
 			}
 			if(r->request_uri_re)
-				shm_free(r->request_uri_re);
+				pcre2_code_free(r->request_uri_re);
 			t = r->targets;
 			while(t) {
 				next_t = t->next;

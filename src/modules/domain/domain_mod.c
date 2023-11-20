@@ -73,8 +73,8 @@ str domain_table = str_init(DOMAIN_TABLE); /* Name of domain table */
 str domain_attrs_table = str_init(DOMAIN_ATTRS_TABLE);
 str did_col = str_init(DID_COL);	   /* Name of domain id column */
 str domain_col = str_init(DOMAIN_COL); /* Name of domain column */
-str name_col = str_init(NAME_COL);	 /* Name of attribute name column */
-str type_col = str_init(TYPE_COL);	 /* Name of attribute type column */
+str name_col = str_init(NAME_COL);	   /* Name of attribute name column */
+str type_col = str_init(TYPE_COL);	   /* Name of attribute type column */
 str value_col = str_init(VALUE_COL);   /* Name of attribute value column */
 int domain_reg_myself = 0;
 
@@ -340,9 +340,7 @@ static void domain_rpc_dump(rpc_t *rpc, void *ctx)
 
 rpc_export_t domain_rpc_list[] = {
 		{"domain.reload", domain_rpc_reload, domain_rpc_reload_doc, 0},
-		{"domain.dump", domain_rpc_dump, domain_rpc_dump_doc, 0},
-		{0, 0, 0, 0}
-};
+		{"domain.dump", domain_rpc_dump, domain_rpc_dump_doc, 0}, {0, 0, 0, 0}};
 
 static int domain_init_rpc(void)
 {

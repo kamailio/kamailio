@@ -69,7 +69,7 @@ new config variables:
       udp4_raw can be used on Linux and FreeBSD. For other BSDs and Darwin
       one must compile with -DUSE_RAW_SOCKS.
       On Linux one should also set udp4_raw_mtu if the MTU on any network
-      interface that could be used for sending is smaller then 1500.
+      interface that could be used for sending is smaller than 1500.
       Can be set at runtime as long as sr was started with enough privileges
       (core.udp4_raw).
   - udp4_raw_mtu - MTU value used for UDP IPv4 packets when udp4_raw is
@@ -215,7 +215,7 @@ core:
       defined expr - returns true if expr is defined, and false if not.
                      Note: only a standalone avp or pvar can be
                      undefined, everything else is defined.
-      strlen(expr) - returns the lenght of expr evaluated as string.
+      strlen(expr) - returns the length of expr evaluated as string.
       strempty(expr) - returns true if expr evaluates to the empty
                        string (equivalent to expr=="").
     e.g.: if (defined $v && !strempty($v)) $len=strlen($v);
@@ -374,7 +374,7 @@ modules:
              - t_relay_to renamed to t_relay_to_avp (undocumented function)
              - t_relay() can now also take host and port parameters (e.g.
                t_relay(host, port)), behaving like a statefull 
-               forwad(host, port) version (forward to host:port using the same
+               forward(host, port) version (forward to host:port using the same
                protocol on which the message was received)
              - t_relay_to_udp(), t_relay_to_tcp() and t_relay_to_tls() work
                now even with no parameters: in this case the message is 
@@ -400,7 +400,7 @@ modules:
                reply arrives on such a branch
              - noisy_ctimer is now 1 (on) by default
              - added maximum transaction lifetime - a transaction is not
-               allowed to be active longer then this interval. See
+               allowed to be active longer than this interval. See
                t_set_max_lifetime(), max_inv_lifetime and max_noninv_lifetime.
              - support for changing the retransmission intervals on the fly,
                on a per transaction basis (it is enabled if tm is compiled
@@ -497,7 +497,7 @@ core:
                (can be changed at runtime, e.g. 
                  sercmd cfg.set_now_int tcp connection_lifetime 180 )
              - fallback to tcp or other congestion controlled transport 
-               protocol if a forwarded udp sip request is greater then 
+               protocol if a forwarded udp sip request is greater than 
                udp_mtu (config). Default off. See udp_mtu and 
                udp_mtu_try_proto.
              - sctp support (one-to-many, work in progress, for now linux
@@ -528,7 +528,7 @@ new config variables:
                     maximum datagram size that can be received over tcp.
                     Default: 4096, can be changed at runtime.
   tcp_wq_blk_size = block size used for tcp async writes. It should be big
-                    enough to hold a few datagrams. If it's smaller then a
+                    enough to hold a few datagrams. If it's smaller than a
                     datagram (in fact a tcp write()) size, it will be rounded
                     up. It has no influenced on the number of datagrams 
                     queued (for that see tcp_conn_wq_max or tcp_wq_max).
@@ -539,7 +539,7 @@ new config variables:
                      Default: no, can be changed at runtime.
   udp_mtu = number - fallback to another protocol (udp_mtu_try_proto must be
                      set also either globally or per packet) if the constructed
-                     request size is greater then udp_mtu.
+                     request size is greater than udp_mtu.
                      Recommended size: 1300. Default: 0 (off).
   udp_mtu_try_proto = TCP|TLS|SCTP|UDP - if udp_mtu !=0 and udp forwarded
                      request size (after adding all the "local" headers) >
@@ -618,17 +618,17 @@ new config variables:
      associations.
   sctp_srto_max = milliseconds - maximum value of the retransmission timeout
      (RTO) (default: OS specific).
-     WARNING: values lower then the sctp sack_delay will cause lots of
+     WARNING: values lower than the sctp sack_delay will cause lots of
      retransmissions and connection instability (see sctp_srto_min for more
      details).
      Can be changed at runtime (sctp srto_max) but it will affect only new
      associations.
   sctp_srto_min = milliseconds - minimum value of the retransmission timeout
      (RTO) (default: OS specific).
-     WARNING: values lower then the sctp sack_delay of any peer might cause
+     WARNING: values lower than the sctp sack_delay of any peer might cause
      retransmissions and possible interoperability problems. According to the
      standard the sack_delay should be between 200 and 500 ms, so avoid trying
-     values lower then 500 ms unless you control all the possible sctp peers
+     values lower than 500 ms unless you control all the possible sctp peers
      and you do make sure their sack_delay is higher or their sack_freq is 1.
      Can be changed at runtime (sctp srto_min) but it will affect only new
      associations.
@@ -653,8 +653,8 @@ new config variables:
      associations.
   sctp_sack_delay = milliseconds - delay until an ACK is generated after
      receiving a packet. Default: OS specific.
-     WARNING: a value higher then srto_min can cause a lot of retransmissions
-     (and strange problems). A value higher then srto_max will result in very
+     WARNING: a value higher than srto_min can cause a lot of retransmissions
+     (and strange problems). A value higher than srto_max will result in very
      high connections instability. According to the standard the sack_delay
      value should be between 200 and 500 ms.
      Can be changed at runtime (sctp sack_delay) but it will affect only new
@@ -891,7 +891,7 @@ core:
  - default log level switched to 0 (only messages < L_WARN will be printed
    by default)
  - separate memdbg log level which controls the memory/malloc related
-   debug messages (to see them ser must be compiled with malloc debuging:
+   debug messages (to see them ser must be compiled with malloc debugging:
      -DDBG_QM_MALLOC or -DDBG_FM_MALLOC and memdbg must be <= debug )
  - added named routes: names can be used instead of numbers in all the
    route commads or route declarations. route(number) is equivalent to
@@ -915,7 +915,7 @@ core:
    a route reaches its end without executing a return statement, it returns 1.
    If return is used in the top level route is equivalent with exit [val].
  - drop /exit [n] now will end the script execution
-   exit n will exit with code n (usefull in onreply/onsend routes where
+   exit n will exit with code n (useful in onreply/onsend routes where
    if script code !=0 a reply is generated/the message is sent or to force
    script errors)
  - added $? which can be used to check the return code of the last executed
@@ -956,14 +956,14 @@ core:
              (see below dns_* and man resolv.conf(6)).
              The maximum time a dns request can take (before failing) is:
               (dns_retr_time*dns_retr_no)*(search_list_domains)
-             If dns_try_ipv6 is yes, mutliply it again by 2.
+             If dns_try_ipv6 is yes, multiply it again by 2.
              The fastest possible dns config (max 1s):
                 dns_try_ipv6=no
                 dns_retr_time=1
                 dns_retr_no=1
                 dns_use_search_list=no
 - default on reply route added: onreply_route {.. } will add a default 
-    onreply route that will be executed for any reply (usefull to catch
+    onreply route that will be executed for any reply (useful to catch
     replies without using tm)
 - branch_routes added (tm triggered), only a very limited number of commands
    are available (see tm docs)
@@ -1013,7 +1013,7 @@ new config variables:
       fact search "" (so even if the search list is empty/missing there will
       still be 2 dns queries, eg. foo+'.' and foo+""+'.')
    tcp_connection_lifetime = value (s) - how long the lifetime of a
-      tcp connection will be exteneded after an IO event (accept, connect, 
+      tcp connection will be extended after an IO event (accept, connect, 
       read, write). Default: 120 s.
    tcp_poll_method = poll|select|sigio_rt|epoll_et|epoll-lt|kqueue|devpoll - 
       poll method used (by default the best one for the current OS is selected)
@@ -1040,7 +1040,7 @@ WARNING: - older 0.10.99-dev version (< 0.10.99-dev46) returned a 480 reply
  
 general:
  - gcc 4.0 support
- - mutlicast options are set for all the sockets
+ - multicast options are set for all the sockets
  - mediaproxy: memory leak, unchecked memory allocations
  - postgress: some bugs and cleanups (compiles cleanly now)
  - tm: shm cloned lumps (SER-55) 
@@ -1084,7 +1084,7 @@ modules:
  - TM has a new parameter: restart_fr_on_each_reply. If set (default)
    fr_inv timer will be restarted for each provisional reply, if not set
    it will be restarted only for the first reply and for replies >=180
-   (but only if increasing, eg.: 180, 181 ...). Usefull when dealing with bad
+   (but only if increasing, eg.: 180, 181 ...). Useful when dealing with bad
    UAs that re-transmit 180s.
  - TM saves the avp list into transactions, and make it available into
    callbacks, failure and reply routes.
@@ -1096,7 +1096,7 @@ modules:
    email value from DB (as VM), TM looks for the "email" attribute to get the
    value.
    vm() function was replaced with t_write_req()
-   vm_reply() fifo functions was replcated by TM with t_reply() fifo function
+   vm_reply() fifo functions was replaced by TM with t_reply() fifo function
    NOTE!! because current version of SEMS/AA try to send reply via vm_reply,
    it will not work with the TM version.
  - xlog - printing the body of any header by specifying the name; new
@@ -1106,7 +1106,7 @@ modules:
 new modules:
  - avp / avp_db / avp_radius - load and check avps per caller or callee
  - avpops - flexible module for operations with avps and database, introducing
-   a pseudo-varible support in SER configuration file
+   a pseudo-variable support in SER configuration file
  - cpl-c - implementation of Call Processing Language
  - dispatcher - implements a dispatcher for incoming requests using hashes
    over parts of the request to select the destination
@@ -1143,7 +1143,7 @@ core:
     - avp (Attribute-Value Pair) support added
     - avp alias support added
     - multicast support added (see mcast_loopback & mcast_ttl)
-    - saving of procces group id enabled, if the -G option is specified
+    - saving of process group id enabled, if the -G option is specified
       (a safe way to quickly kill all ser processes)
     - core dump-ing is enabled by default, see also disable_core_dump
     - protocol and port can be specified in the alias and listen lines, e.g.:
@@ -1196,7 +1196,7 @@ core:
    log_facility = LOG_LOCAL0
        if ser logs to syslog, you can control the facility for logging. Very
        useful when you want to divert all ser logs to a different log file.
-       See man page syslog(3) for more detailes.
+       See man page syslog(3) for more details.
    unix_sock = "/tmp/ser.sock"
        The name of the socket the unixsock server should listen on.
    unix_sock_children = 1
@@ -1212,7 +1212,7 @@ core:
    force_tcp_alias()
    force_tcp_alias(port)
        adds a tcp port alias for the current connection (if tcp).
-       Usefull if you want to send all the trafic to port_alias through
+       Useful if you want to send all the traffic to port_alias through
        the same connection this request came from [it could help 
        for firewall or nat traversal].
        With no parameters adds the port from the message via as the alias.
@@ -1288,7 +1288,7 @@ auth_db:
 Bug fixes
 =========
 - memory leak in digest credentials parser fixed
-- authenticathion ha1 didn't include domain if username was of the form
+- authentication ha1 didn't include domain if username was of the form
   user@domain and calculate_ha1 was set to yes (modules/auth_db)
 - tm reply processing race condition (modules/tm), special thanks go to
  Dong Liu
@@ -1355,7 +1355,7 @@ Changes to use of ser scripts
 
 About Multiple Transport Support
 --------------------------------
-SER now suports multiple transport protocols: UDP and TCP. As there
+SER now supports multiple transport protocols: UDP and TCP. As there
 may be UAs which support only either protocol and cannot speak to
 each other directly, we recommend to alway record-route SIP requests,
 to keep the transport-translating SER in path. Also, if a destination
@@ -1390,7 +1390,7 @@ auth module:
   authentication
 - auth_radius contains functions needed for radius authentication
 - group module contains group membership checking functions
-- group_radius contains radius group membeship checking functions
+- group_radius contains radius group membership checking functions
 - is_in_group has been renamed to is_user_in and places to groups
   module
 - check_to and check_from have been moved to the uri module
@@ -1404,7 +1404,7 @@ exec module:
 ------------
 - exec_uri and exec_user have been obsoleted by exec_dset; 
   exec_dset is identical to exec_uri in capabilities; it 
-  additionaly passes content of request elements (header 
+  additionally passes content of request elements (header 
   fields and URI parts) in environment variables; users of 
   exec_user can use exec_dset now and use the "URI_USER"  
   variable to learn user part of URI
@@ -1444,7 +1444,7 @@ rr module:
 - a new option, "enable_full_lr" can be set to make life
   with misimplemented UAs easier and put LR in from "lr=on"
 - rr module can insert two Record-Route header fields when
-  necesarry (disconnected networks, UDP->TCP and so on)
+  necessary (disconnected networks, UDP->TCP and so on)
 
 tm module:
 ----------

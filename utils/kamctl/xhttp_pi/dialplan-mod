@@ -1,4 +1,4 @@
-	<!-- dialplan provisioning -->
+	<!-- dialplan provisionning -->
 	<mod><mod_name>dialplan</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dialplan</db_table_id>

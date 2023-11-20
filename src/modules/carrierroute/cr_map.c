@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -31,7 +31,6 @@
 #include "../../core/ut.h"
 
 
-
 /**
  * Searches for the ID of a name
  *
@@ -39,17 +38,19 @@
  * @param size the size of the list
  * @param name the name, we are looking for
  *
- * @return values: on succcess the id for this name, -1 on failure
+ * @return values: on success the id for this name, -1 on failure
  */
-int map_name2id(struct name_map_t * map, int size, const str * name) {
+int map_name2id(struct name_map_t *map, int size, const str *name)
+{
 	int i;
 
-	if ((!name) || (name->len <= 0)) {
+	if((!name) || (name->len <= 0)) {
 		return -1;
 	}
 
-	for (i=0; i<size; i++) {
-		if (str_strcmp(&map[i].name, name) == 0) return map[i].id;
+	for(i = 0; i < size; i++) {
+		if(str_strcmp(&map[i].name, name) == 0)
+			return map[i].id;
 	}
 	return -1;
 }
@@ -62,15 +63,17 @@ int map_name2id(struct name_map_t * map, int size, const str * name) {
  * @param size the size of the list
  * @param id the id, we are looking for
  *
- * @return values: on succcess the name for this id, NULL on failure
+ * @return values: on success the name for this id, NULL on failure
  */
-str * map_id2name(struct name_map_t * map, int size, int id) {
+str *map_id2name(struct name_map_t *map, int size, int id)
+{
 	struct name_map_t key;
-	struct name_map_t * tmp;
+	struct name_map_t *tmp;
 
 	key.id = id;
 	tmp = bsearch(&key, map, size, sizeof(struct name_map_t), compare_name_map);
-	if (tmp == NULL) return NULL;
+	if(tmp == NULL)
+		return NULL;
 	return &tmp->name;
 }
 
@@ -80,8 +83,12 @@ str * map_id2name(struct name_map_t * map, int size, int id) {
  *
  * @return -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2
  */
-int compare_name_map(const void *v1, const void *v2) {
-	if (((struct name_map_t *)v1)->id < ((struct name_map_t *)v2)->id) return -1;
-	else if (((struct name_map_t *)v1)->id > ((struct name_map_t *)v2)->id) return 1;
-	else return 0;
+int compare_name_map(const void *v1, const void *v2)
+{
+	if(((struct name_map_t *)v1)->id < ((struct name_map_t *)v2)->id)
+		return -1;
+	else if(((struct name_map_t *)v1)->id > ((struct name_map_t *)v2)->id)
+		return 1;
+	else
+		return 0;
 }

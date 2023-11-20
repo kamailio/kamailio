@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -34,17 +34,18 @@
  * Module parameters variables
  */
 
-extern str user_column;     /* 'username' column name */
-extern str domain_column;   /* 'domain' column name */
-extern str pass_column;     /* 'password' column name */
-extern str pass_column_2;   /* Column containing HA1 string constructed
+extern str user_column;	  /* 'username' column name */
+extern str domain_column; /* 'domain' column name */
+extern str pass_column;	  /* 'password' column name */
+extern str pass_column_2; /* Column containing HA1 string constructed
 			     * of user@domain username
 			     */
 
-extern int calc_ha1;          /* if set to 1, ha1 is calculated by the server */
-extern int use_domain;        /* If set to 1 then the domain will be used when selecting a row */
+extern int calc_ha1; /* if set to 1, ha1 is calculated by the server */
+extern int
+		use_domain; /* If set to 1 then the domain will be used when selecting a row */
 
-extern db1_con_t* auth_db_handle; /* database connection handle */
+extern db1_con_t *auth_db_handle; /* database connection handle */
 extern db_func_t auth_dbf;
 
 extern auth_api_s_t auth_api;

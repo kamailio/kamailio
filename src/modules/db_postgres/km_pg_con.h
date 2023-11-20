@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -39,14 +39,14 @@
 /*! Postgres specific connection data */
 struct pg_con
 {
-	struct db_id *id;	  /*!< Connection identifier */
-	unsigned int ref;	  /*!< Reference count */
+	struct db_id *id;	   /*!< Connection identifier */
+	unsigned int ref;	   /*!< Reference count */
 	struct pool_con *next; /*!< Next connection in the pool */
 
 	int connected; /*!< connection status */
 	char *sqlurl; /*!< the url we are connected to, all connection memory parents from this */
 	PGconn *con;	   /*!< this is the postgres connection */
-	PGresult *res;	 /*!< this is the current result */
+	PGresult *res;	   /*!< this is the current result */
 	char **row;		   /*!< Actual row in the result */
 	time_t timestamp;  /*!< Timestamp of last query */
 	int affected_rows; /*!< Number of rows affected by the last statement */

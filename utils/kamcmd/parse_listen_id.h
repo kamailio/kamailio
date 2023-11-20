@@ -27,27 +27,37 @@
 #ifndef parse_listen_id_h
 #define parse_listen_id_h
 
-enum payload_proto	{ P_BINRPC , P_FIFO };
+enum payload_proto
+{
+	P_BINRPC,
+	P_FIFO
+};
 
-enum socket_protos	{	UNKNOWN_SOCK=0, UDP_SOCK, TCP_SOCK,
-						UNIXS_SOCK, UNIXD_SOCK
+enum socket_protos
+{
+	UNKNOWN_SOCK = 0,
+	UDP_SOCK,
+	TCP_SOCK,
+	UNIXS_SOCK,
+	UNIXD_SOCK
 #ifdef USE_FIFO
-							, FIFO_SOCK
+	,
+	FIFO_SOCK
 #endif
 };
 
 
-
-struct id_list{
-	char* name;
+struct id_list
+{
+	char *name;
 	enum socket_protos proto;
 	enum payload_proto data_proto;
 	int port;
-	char* buf; /* name points somewhere here */
-	struct id_list* next;
+	char *buf; /* name points somewhere here */
+	struct id_list *next;
 };
 
 
-struct id_list* parse_listen_id(char* l, int len, enum socket_protos def);
+struct id_list *parse_listen_id(char *l, int len, enum socket_protos def);
 
 #endif

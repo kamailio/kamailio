@@ -10,7 +10,7 @@
 <!-- Module FAQ -->
 
 <chapter>
-	
+
 	<title>&faqguide;</title>
 	<qandaset defaultlabel="number">
 
@@ -46,7 +46,7 @@
 		</question>
 		<answer>
 		<para>
-			There functions were merged into the new 
+			There functions were merged into the new
 			<quote>save(domain,flags)</quote> functions. If a reply should be
 			sent or if the DB should be updated also is controlled via the
 			flags.
@@ -71,7 +71,7 @@
 		<answer>
 		<para>
 			First at all check if your question was already answered on one of
-			our mailing lists: 
+			our mailing lists:
 		</para>
 		<itemizedlist>
 			<listitem>
@@ -82,7 +82,7 @@
 			</listitem>
 		</itemizedlist>
 		<para>
-			E-mails regarding any stable &kamailio; release should be sent to 
+			E-mails regarding any stable &kamailio; release should be sent to
 			&kamailiousersmail; and e-mails regarding development versions
 			should be sent to &kamailiodevmail;.
 		</para>

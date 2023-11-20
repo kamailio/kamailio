@@ -48,6 +48,7 @@
 
 #include "pidf.h"
 #include "utilities.h"
+#include "response.h"
 
 extern int lost_recursion;
 extern int lost_profile;
@@ -307,7 +308,6 @@ void lost_free_string(str *string)
 		pkg_free(ptr.s);
 
 		LM_DBG("### string object removed\n");
-	
 	}
 
 	string->s = NULL;
@@ -453,11 +453,12 @@ p_lost_geolist_t lost_get_geolocation_header(struct sip_msg *msg, int *items)
 		if((hf->type == HDR_OTHER_T)
 				&& (hf->name.len == LOST_GEOLOC_HEADER_SIZE - 2)) {
 			/* possible hit */
-			if(strncasecmp(hf->name.s, LOST_GEOLOC_HEADER,
-					LOST_GEOLOC_HEADER_SIZE) == 0) {
-                
+			if(strncasecmp(
+					   hf->name.s, LOST_GEOLOC_HEADER, LOST_GEOLOC_HEADER_SIZE)
+					== 0) {
+
 				hdr.s = hf->body.s;
-                hdr.len = hf->body.len;
+				hdr.len = hf->body.len;
 
 				LM_DBG("found geolocation header [%.*s]\n", hdr.len, hdr.s);
 
@@ -476,50 +477,45 @@ p_lost_geolist_t lost_get_geolocation_header(struct sip_msg *msg, int *items)
  */
 char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 {
-	p_id_body_t *p_body;
-
-	char *tmp = NULL;
+	to_body_t *p_pai;
 	char *res = NULL;
-	int len = 0;
 
 	*lgth = 0;
 
-	if(parse_pai_header(msg) == -1) {
-		
-		LM_DBG("failed to parse P-A-I header\n");
-		
+	if((parse_pai_header(msg) == 0) && (msg->pai) && (msg->pai->parsed)) {
+		/* return the first header entry */
+		p_pai = get_pai(msg)->id;
+		if((p_pai->parsed_uri.user.s == NULL)
+				&& (parse_uri(p_pai->uri.s, p_pai->uri.len, &p_pai->parsed_uri)
+						< 0)) {
+
+			LM_DBG("failed to parse P-A-I header\n");
+
+			return res;
+		}
+	} else {
+
+		LM_DBG("P-A-I header not found or failed to parse\n");
+
 		return res;
 	}
 
-	if(msg->pai == NULL || get_pai(msg) == NULL) {
-		LM_ERR("P-A-I header not found\n");
-		return res;
-	}
-	p_body = get_pai(msg);
-
-	/* warning in case multiple P-A-I headers were found and use first */
-	if(p_body->num_ids > 1) {
-		LM_WARN("multiple P-A-I headers found, selecting first!\n");
+	/* warning in case multiple P-A-I headers were found */
+	if(get_pai(msg)->num_ids > 1) {
+		LM_WARN("multiple P-A-I headers found, selected first!\n");
 	}
 
-	LM_DBG("P-A-I body: [%.*s]\n", p_body->id->body.len, p_body->id->body.s);
+	LM_DBG("P-A-I uri: [%.*s]\n", p_pai->uri.len, p_pai->uri.s);
 
-	/* accept any identity string (body), but remove <..> if present */ 
-	tmp = p_body->id->body.s;
-	len = p_body->id->body.len;
-	if(tmp[0] == '<' && tmp[len - 1] == '>') {
-		tmp++;
-		len -= 2;
-	}
 	/* allocate memory, copy and \0 terminate string */
-	res = (char *)pkg_malloc((len + 1) * sizeof(char));
+	res = (char *)pkg_malloc((p_pai->uri.len + 1) * sizeof(char));
 	if(res == NULL) {
 		PKG_MEM_ERROR;
 		return res;
 	} else {
-		memset(res, 0, len);
-		memcpy(res, tmp, len);
-		res[len] = '\0';
+		memset(res, 0, p_pai->uri.len);
+		memcpy(res, p_pai->uri.s, p_pai->uri.len);
+		res[p_pai->uri.len] = '\0';
 		*lgth = strlen(res);
 	}
 
@@ -694,7 +690,8 @@ void lost_free_geoheader_list(p_lost_geolist_t *list)
  * lost_get_geoheader_value(list, type, rtype)
  * returns geoheader value and type (rtype) of given type
  */
-char *lost_get_geoheader_value(p_lost_geolist_t list, lost_geotype_t type, int *rtype)
+char *lost_get_geoheader_value(
+		p_lost_geolist_t list, lost_geotype_t type, int *rtype)
 {
 	p_lost_geolist_t head = list;
 	char *value = NULL;
@@ -806,7 +803,8 @@ int lost_new_geoheader_list(p_lost_geolist_t *list, str hdr)
 					len++;
 				}
 				if((*(ptr + len) == '>') && (len > 6)) {
-					new = (p_lost_geolist_t)pkg_malloc(sizeof(s_lost_geolist_t));
+					new = (p_lost_geolist_t)pkg_malloc(
+							sizeof(s_lost_geolist_t));
 					if(new == NULL) {
 						PKG_MEM_ERROR;
 					} else {
@@ -848,7 +846,8 @@ int lost_new_geoheader_list(p_lost_geolist_t *list, str hdr)
 					len++;
 				}
 				if((*(ptr + len) == '>') && (len > 10)) {
-					new = (p_lost_geolist_t)pkg_malloc(sizeof(s_lost_geolist_t));
+					new = (p_lost_geolist_t)pkg_malloc(
+							sizeof(s_lost_geolist_t));
 					if(new == NULL) {
 						PKG_MEM_ERROR;
 					} else {
@@ -863,8 +862,8 @@ int lost_new_geoheader_list(p_lost_geolist_t *list, str hdr)
 
 							new->type = HTTP;
 						} else if(((*(search + 5) == 's')
-								|| (*(search + 5) == 'S'))
-								&& (*(search + 6) == ':')) {
+										  || (*(search + 5) == 'S'))
+								  && (*(search + 6) == ':')) {
 
 							LM_DBG("adding https url [%s]\n", new->value);
 
@@ -956,7 +955,7 @@ err:
 
 /*
  * lost_parse_geo(node, loc)
- * parses locationResponse (pos|circle) and writes 
+ * parses locationResponse (pos|circle) and writes
  * results to location object
  */
 int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
@@ -1031,7 +1030,7 @@ err:
 
 /*
  * lost_xpath_location(doc, path, loc)
- * performs xpath expression on locationResponse and writes 
+ * performs xpath expression on locationResponse and writes
  * results (location-info child element) to location object
  */
 int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
@@ -1193,7 +1192,8 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 				if(i == select) {
 					/* return the current profile */
 					if(s_profile != NULL) {
-						loc->profile = (char *)pkg_malloc(strlen(s_profile) + 1);
+						loc->profile =
+								(char *)pkg_malloc(strlen(s_profile) + 1);
 						if(loc->profile == NULL) {
 							xmlFree(xmlbuff); /* clean up */
 							xmlFreeDoc(new);
@@ -1492,10 +1492,48 @@ https://tools.ietf.org/html/rfc5985
 }
 
 /*
- * lost_find_service_request(loc, lgth)
+ * lost_append_via_element(head, parent)
+ * appends via elements and returns the number of via elements added
+ */
+int lost_append_via_element(p_lost_list_t *head, xmlNodePtr *parent)
+{
+	int cnt = 0;
+	int i;
+	p_lost_list_t current = NULL;
+
+	if(head == NULL) {
+		return 0;
+	}
+
+	/* at least one <via> element to add */
+	current = *head;
+	cnt++;
+
+	/* check for more <via> elements to add */
+	while(current->next != NULL) {
+		cnt++;
+		current = current->next;
+	}
+
+	current = *head;
+	xmlNodePtr ptrVia[cnt];
+
+	/* ad <via> elements to <path> element */
+	for(i = 0; i < cnt; i++) {
+		ptrVia[i] = xmlNewChild(*parent, NULL, BAD_CAST "via", NULL);
+		xmlNewProp(ptrVia[i], BAD_CAST "source", BAD_CAST current->value);
+		current = current->next;
+	}
+
+	return cnt;
+}
+
+
+/*
+ * lost_find_service_request(loc, path, lgth)
  * assembles and returns findService request string (allocated in private memory)
  */
-char *lost_find_service_request(p_lost_loc_t loc, int *lgth)
+char *lost_find_service_request(p_lost_loc_t loc, p_lost_list_t path, int *lgth)
 {
 	int buffersize = 0;
 
@@ -1511,6 +1549,7 @@ char *lost_find_service_request(p_lost_loc_t loc, int *lgth)
 	xmlNodePtr ptrCircle = NULL;
 	xmlNodePtr ptrRadius = NULL;
 	xmlNodePtr ptrNode = NULL;
+	xmlNodePtr ptrPath = NULL;
 
 	xmlKeepBlanksDefault(1);
 
@@ -1531,6 +1570,10 @@ https://tools.ietf.org/html/rfc5222
         </p2:Point>
     </location>
     <service>urn:service:sos.police</service>
+		<path>
+			<via source="resolver.example"/>
+			<via source="authoritative.example"/>
+		</path>
 </findService>
  */
 	/* create request */
@@ -1623,6 +1666,20 @@ https://tools.ietf.org/html/rfc5222
 	/* service - element */
 	snprintf(buf, BUFSIZE, "%s", loc->urn);
 	xmlNewChild(ptrFindService, NULL, BAD_CAST "service", BAD_CAST buf);
+	/* service - element */
+	if(path != NULL) {
+		ptrPath = xmlNewChild(ptrFindService, NULL, BAD_CAST "path", NULL);
+		if(ptrPath == NULL) {
+			LM_ERR("locationRequest xmlNewChild() failed\n");
+			xmlFreeDoc(request);
+			return doc;
+		}
+		if(lost_append_via_element(&path, &ptrPath) == 0) {
+			LM_ERR("appending <via> elements to <path> failed\n");
+			xmlFreeDoc(request);
+			return doc;
+		}
+	}
 
 	xmlDocDumpFormatMemory(request, &xmlbuff, &buffersize, 0);
 	if(xmlbuff == NULL) {

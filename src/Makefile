@@ -32,7 +32,7 @@ include Makefile.targets
 err_fail?=1
 
 # whether or not to install $(MAIN_NAME).cfg or just $(MAIN_NAME).cfg.default
-# ($(MAIN_NAME).cfg will never be overwritten by make install, this is usefull
+# ($(MAIN_NAME).cfg will never be overwritten by make install, this is useful
 #  when creating packages)
 skip_cfg_install?=
 
@@ -471,13 +471,10 @@ install-$(1)-doc: modules.lst $(doc_prefix)/$(doc_dir)$(1)
 		if [ -n "$$$$r" -a -r $(1)/"$$$$r/Makefile" ]; then \
 			if [ -f $(1)/"$$$$r"/README ]; then \
 				$$(call try_err,\
-					$(INSTALL_TOUCH) $(doc_prefix)/$(doc_dir)$(1)/README ); \
+					$(INSTALL_TOUCH) $(doc_prefix)/$(doc_dir)$(1)/README."$$$$r" ); \
 				$$(call try_err,\
 					$(INSTALL_DOC)  $(1)/"$$$$r"/README  \
-									$(doc_prefix)/$(doc_dir)$(1)/README ); \
-				$$(call try_err,\
-					mv -f $(doc_prefix)/$(doc_dir)$(1)/README \
-							$(doc_prefix)/$(doc_dir)$(1)/README."$$$$r" ); \
+									$(doc_prefix)/$(doc_dir)$(1)/README."$$$$r" ); \
 			fi ; \
 		fi ; \
 	done; true
@@ -985,11 +982,11 @@ install_initd_debian install-initd-debian:
 		-e "s#HOMEDIR=/run/kamailio#HOMEDIR=/run/$(NAME)#g" \
 		-e "s#DEFAULTS=/etc/default/kamailio#DEFAULTS=/etc/default/$(NAME)#g" \
 		-e "s#CFGFILE=/etc/kamailio/kamailio.cfg#CFGFILE=$(cfg_prefix)/$(cfg_dir)$(NAME).cfg#g" \
-		< pkg/kamailio/deb/debian/kamailio.init \
+		< ../pkg/kamailio/deb/debian/kamailio.init \
 		> /etc/init.d/$(NAME)
 	chmod +x /etc/init.d/$(NAME)
 	sed -e "s#RUN_KAMAILIO=no#RUN_KAMAILIO=yes#g" \
-		< pkg/kamailio/deb/debian/kamailio.default \
+		< ../pkg/kamailio/deb/debian/kamailio.default \
 		> /etc/default/$(NAME)
 	mkdir -p /run/$(NAME)
 	adduser --quiet --system --group --disabled-password \
@@ -1005,13 +1002,13 @@ install_initd_centos install-initd-centos:
 		-e "s#PID_FILE=/run/kamailio.pid#PID_FILE=/run/$(NAME).pid#g" \
 		-e "s#LOCK_FILE=/var/lock/subsys/kamailio#LOCK_FILE=/var/lock/subsys/$(NAME)#g" \
 		-e "s#KAMCFG=/etc/kamailio/kamailio.cfg#KAMCFG=$(cfg_prefix)/$(cfg_dir)$(NAME).cfg#g" \
-		< pkg/kamailio/rpm/kamailio.init \
+		< ../pkg/kamailio/rpm/kamailio.init \
 		> /etc/init.d/$(NAME)
 	chmod +x /etc/init.d/$(NAME)
 	sed -e "s#RUN_KAMAILIO=no#RUN_KAMAILIO=yes#g" \
 		-e "s#USER=kamailio#USER=$(NAME)#g" \
 		-e "s#GROUP=kamailio#GROUP=$(NAME)#g" \
-		< pkg/kamailio/rpm/kamailio.default \
+		< ../pkg/kamailio/rpm/kamailio.default \
 		> /etc/default/$(NAME)
 	mkdir -p /run/$(NAME)
 	/usr/sbin/groupadd -r $(NAME)

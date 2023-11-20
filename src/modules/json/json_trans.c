@@ -55,7 +55,8 @@ int json_tr_init_buffers(void)
 {
 	int i;
 
-	_json_tr_buffer_list = (char **)malloc(JSON_TR_BUFFER_SLOTS * sizeof(char *));
+	_json_tr_buffer_list =
+			(char **)malloc(JSON_TR_BUFFER_SLOTS * sizeof(char *));
 
 	if(_json_tr_buffer_list == NULL)
 		return -1;
@@ -65,8 +66,8 @@ int json_tr_init_buffers(void)
 			return -1;
 	}
 
-	_json_parse_specs =
-			(pv_spec_t **)malloc(JSON_TR_ALLOC_PARSE_SIZE * sizeof(pv_spec_t *));
+	_json_parse_specs = (pv_spec_t **)malloc(
+			JSON_TR_ALLOC_PARSE_SIZE * sizeof(pv_spec_t *));
 	for(i = 0; i < JSON_TR_ALLOC_PARSE_SIZE; i++)
 		_json_parse_specs[i] = NULL;
 
@@ -123,11 +124,11 @@ char *json_tr_set_crt_buffer(void)
 }
 
 #define json_tr_string_clone_result                       \
-	do {                                                 \
+	do {                                                  \
 		if(val->rs.len > JSON_TR_BUFFER_SIZE - 1) {       \
-			LM_ERR("result is too big\n");               \
-			return -1;                                   \
-		}                                                \
+			LM_ERR("result is too big\n");                \
+			return -1;                                    \
+		}                                                 \
 		strncpy(_json_tr_buffer, val->rs.s, val->rs.len); \
 		val->rs.s = _json_tr_buffer;                      \
 	} while(0);
@@ -330,7 +331,7 @@ int json_tr_eval(
 	return 0;
 }
 
-#define _json_tr_parse_sparam(_p, _p0, _tp, _spec, _ps, _in, _s)                \
+#define _json_tr_parse_sparam(_p, _p0, _tp, _spec, _ps, _in, _s)               \
 	while(is_in_str(_p, _in) && (*_p == ' ' || *_p == '\t' || *_p == '\n'))    \
 		_p++;                                                                  \
 	if(*_p == PV_MARKER) { /* pseudo-variable */                               \
@@ -356,8 +357,8 @@ int json_tr_eval(
 		memset(_tp, 0, sizeof(tr_param_t));                                    \
 		_tp->type = TR_PARAM_SPEC;                                             \
 		_tp->v.data = (void *)_spec;                                           \
-		_json_parse_specs[_json_tr_parse_spec++] = _spec;                        \
-		_json_parse_params[_json_tr_parse_params++] = _tp;                       \
+		_json_parse_specs[_json_tr_parse_spec++] = _spec;                      \
+		_json_parse_params[_json_tr_parse_params++] = _tp;                     \
 	} else { /* string */                                                      \
 		_ps = _p;                                                              \
 		while(is_in_str(_p, _in) && *_p != '\t' && *_p != '\n'                 \
@@ -379,7 +380,7 @@ int json_tr_eval(
 		_tp->v.s.s = (char *)malloc((tp->v.s.len + 1) * sizeof(char));         \
 		strncpy(_tp->v.s.s, _ps, tp->v.s.len);                                 \
 		_tp->v.s.s[tp->v.s.len] = '\0';                                        \
-		_json_parse_params[_json_tr_parse_params++] = _tp;                       \
+		_json_parse_params[_json_tr_parse_params++] = _tp;                     \
 	}
 
 

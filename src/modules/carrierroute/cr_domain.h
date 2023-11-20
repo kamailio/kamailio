@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -37,12 +37,15 @@
  * The struct for the domain.
  * Contains the head of each prefix tree.
  */
-struct domain_data_t {
-	int id; /*!< the numerical id of the routing tree */
-	str * name; /*!< the name of the routing tree. This points to the name in domain_map to avoid duplication. */
+struct domain_data_t
+{
+	int id;	   /*!< the numerical id of the routing tree */
+	str *name; /*!< the name of the routing tree. This points to the name in domain_map to avoid duplication. */
 	double sum_prob; /*!< sums the probabilities of all entries in the normal tree. Used to warn that (carrier, domain) has only routes with probability 0. */
-	struct dtrie_node_t * tree; /*!< the root node of the routing tree. Payload is of type (struct route_flags *) */
-	struct dtrie_node_t * failure_tree; /*!< the root node of the failure routing tree. Payload is of type (struct failure_route_rule *) */
+	struct dtrie_node_t *
+			tree; /*!< the root node of the routing tree. Payload is of type (struct route_flags *) */
+	struct dtrie_node_t *
+			failure_tree; /*!< the root node of the failure routing tree. Payload is of type (struct failure_route_rule *) */
 };
 
 
@@ -55,7 +58,7 @@ struct domain_data_t {
  * @return a pointer to the newly allocated domain data or NULL on
  * error, in which case it LOGs an error message.
  */
-struct domain_data_t * create_domain_data(int id, str * domain);
+struct domain_data_t *create_domain_data(int id, str *domain);
 
 
 /**
@@ -86,10 +89,10 @@ void destroy_domain_data(struct domain_data_t *domain_data);
  * @param rewrite_local_suffix the rewrite suffix
  * @param status the status of the rule
  * @param hash_index the hash index of the rule
- * @param backup indicates if the route is backed up by another. only 
+ * @param backup indicates if the route is backed up by another. only
                  useful if status==0, if set, it is the hash value
                  of another rule
- * @param backed_up an -1-termintated array of hash indices of the route 
+ * @param backed_up an -1-termintated array of hash indices of the route
                     for which this route is backup
  * @param comment a comment for the route rule
  *
@@ -97,11 +100,12 @@ void destroy_domain_data(struct domain_data_t *domain_data);
  *
  * @see add_route()
  */
-int add_route_to_tree(struct dtrie_node_t *node, const str * scan_prefix,
-		flag_t flags, flag_t mask, const str * full_prefix, int max_targets, double prob,
-		const str * rewrite_hostpart, int strip, const str * rewrite_local_prefix,
-		const str * rewrite_local_suffix, int status, int hash_index, 
-		int backup, int * backed_up, const str * comment);
+int add_route_to_tree(struct dtrie_node_t *node, const str *scan_prefix,
+		flag_t flags, flag_t mask, const str *full_prefix, int max_targets,
+		double prob, const str *rewrite_hostpart, int strip,
+		const str *rewrite_local_prefix, const str *rewrite_local_suffix,
+		int status, int hash_index, int backup, int *backed_up,
+		const str *comment);
 
 
 /**
@@ -114,7 +118,7 @@ int add_route_to_tree(struct dtrie_node_t *node, const str * scan_prefix,
  * @param scan_prefix the prefix for which to add the rule (must not contain non-digits)
  * @param full_prefix the whole scan prefix
  * @param host the hostname last tried
- * @param reply_code the reply code 
+ * @param reply_code the reply code
  * @param flags user defined flags
  * @param mask mask for user defined flags
  * @param next_domain continue routing with this domain id
@@ -124,9 +128,10 @@ int add_route_to_tree(struct dtrie_node_t *node, const str * scan_prefix,
  *
  * @see add_route()
  */
-int add_failure_route_to_tree(struct dtrie_node_t * failure_node, const str * scan_prefix,
-		const str * full_prefix, const str * host, const str * reply_code,
-		const flag_t flags, const flag_t mask, const int next_domain, const str * comment);
+int add_failure_route_to_tree(struct dtrie_node_t *failure_node,
+		const str *scan_prefix, const str *full_prefix, const str *host,
+		const str *reply_code, const flag_t flags, const flag_t mask,
+		const int next_domain, const str *comment);
 
 
 /**

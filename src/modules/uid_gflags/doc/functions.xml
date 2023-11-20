@@ -29,7 +29,7 @@ set_ugflag("2");
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="reset_ugflag">
 	<title><function>reset_ugflag(flag_num)</function></title>
 	<para>
@@ -45,7 +45,7 @@ reset_ugflag("2");
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="is_ugflag">
 	<title><function moreinfo="none">is_ugflag(flag_num)</function></title>
 	<para>

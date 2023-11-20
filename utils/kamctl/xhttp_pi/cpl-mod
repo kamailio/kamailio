@@ -1,4 +1,4 @@
-	<!-- cpl provisioning -->
+	<!-- cpl provisionning -->
 	<mod><mod_name>cpl</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>cpl</db_table_id>

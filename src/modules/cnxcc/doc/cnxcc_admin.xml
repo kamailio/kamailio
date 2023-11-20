@@ -145,19 +145,19 @@ modparam("cnxcc", "credit_check_period", 1)
 				The cps (float) value is the cost per second for the current call.
 			</para>
 			<para>
-				The ipuse (integer) value is the initial pulse and establishes the minimum 
-				time to be charged. For example, value 1 establishes a charge per second 
-				and value 60 sets a charge per minute. If it is taken as value 60, even 
+				The ipuse (integer) value is the initial pulse and establishes the minimum
+				time to be charged. For example, value 1 establishes a charge per second
+				and value 60 sets a charge per minute. If it is taken as value 60, even
 				if the duration is 5 seconds, 1 minute will be charged.
 			</para>
 			<para>
-				The fpulse (integer) value is the final pulse and establishes, from the initial 
-				pulse, the time range to be charged. For example, the value 1 establishes a charge 
+				The fpulse (integer) value is the final pulse and establishes, from the initial
+				pulse, the time range to be charged. For example, the value 1 establishes a charge
 				per second, 5 sets a charge in blocks of 5 seconds, 60 sets a full minute charge.
 			</para>
 			<para>
-				1/1 will make a charge per seconds for the entire call. 60/1 will make a 
-				charge per seconds with the first full minute. 60/60 always perform 
+				1/1 will make a charge per seconds for the entire call. 60/1 will make a
+				charge per seconds with the first full minute. 60/60 always perform
 				a full minute charge.
 			</para>
 			<para>
@@ -450,7 +450,7 @@ if (!cnxcc_terminate_all("$var(customer)")) {
 		<section id="cnxcc.rpc.check_client">
 			<title>cnxcc.check_client</title>
 			<para>
-				Retrives all calls from a particular identifier.
+				Retrieves all calls from a particular identifier.
 			</para>
 			<para>
 				Parameters: <emphasis>client/customer identifier</emphasis>

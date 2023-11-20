@@ -28,7 +28,7 @@
  */
 
 /*! \file
- * Berkeley DB : 
+ * Berkeley DB :
  * Declaration of bdb_cmd data structure that contains BDB specific data
  * stored in db_cmd structures and related functions.
  *
@@ -52,7 +52,7 @@
  */
 typedef struct _bdb_cmd
 {
-	db_drv_t gen;	/**< Generic part of the data structure (must be first */
+	db_drv_t gen;	 /**< Generic part of the data structure (must be first */
 	bdb_con_t *bcon; /**< DB connection handle */
 	DB *dbp;		 /**< DB structure handle */
 	DBC *dbcp;		 /**< DB cursor handle */

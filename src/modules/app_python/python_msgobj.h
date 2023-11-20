@@ -20,7 +20,7 @@
 */
 
 #ifndef _PYTHON_MSGOBJ_H
-#define  _PYTHON_MSGOBJ_H
+#define _PYTHON_MSGOBJ_H
 
 #include "../../core/parser/msg_parser.h"
 

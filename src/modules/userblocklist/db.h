@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -34,7 +34,8 @@
 #define MARK_ALLOWLIST 1
 #define MARK_BLOCKLIST 2
 
-int db_build_userbl_tree(const str *user, const str *domain, const str *table, struct dtrie_node_t *root, int use_domain);
+int db_build_userbl_tree(const str *user, const str *domain, const str *table,
+		struct dtrie_node_t *root, int use_domain);
 int db_reload_source(const str *table, struct dtrie_node_t *root);
 
 #endif

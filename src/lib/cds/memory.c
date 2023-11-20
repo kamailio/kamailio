@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -38,19 +38,20 @@ cds_mutex_t *mem_mutex = NULL;
 int *allocated_cnt = NULL;
 char *debug_file = "/tmp/mem.log";
 
-#define write_debug(s,args...)	if (1) { \
-	FILE *f = fopen(debug_file, "a"); \
-	if (f) { \
-		fprintf(f,s,##args); \
-		fclose(f); \
-	} \
-	TRACE_LOG(s,##args); \
-}
+#define write_debug(s, args...)           \
+	if(1) {                               \
+		FILE *f = fopen(debug_file, "a"); \
+		if(f) {                           \
+			fprintf(f, s, ##args);        \
+			fclose(f);                    \
+		}                                 \
+		TRACE_LOG(s, ##args);             \
+	}
 
 void *debug_malloc(int size, const char *file, int line)
 {
 	void *m = NULL;
-	if (allocated_cnt && mem_mutex) {
+	if(allocated_cnt && mem_mutex) {
 		cds_mutex_lock(mem_mutex);
 		(*allocated_cnt)++;
 		cds_mutex_unlock(mem_mutex);
@@ -67,7 +68,7 @@ void *debug_malloc(int size, const char *file, int line)
 
 void debug_free(void *block, const char *file, int line)
 {
-	if (allocated_cnt && mem_mutex) {
+	if(allocated_cnt && mem_mutex) {
 		cds_mutex_lock(mem_mutex);
 		(*allocated_cnt)--;
 		cds_mutex_unlock(mem_mutex);
@@ -99,9 +100,10 @@ void cds_memory_trace_init()
 
 void cds_memory_trace(char *dst, int dst_len)
 {
-	if (allocated_cnt && mem_mutex) {
+	if(allocated_cnt && mem_mutex) {
 		cds_mutex_lock(mem_mutex);
-		snprintf(dst, dst_len, "There are allocated: %d memory blocks\n", *allocated_cnt);
+		snprintf(dst, dst_len, "There are allocated: %d memory blocks\n",
+				*allocated_cnt);
 		cds_mutex_unlock(mem_mutex);
 	}
 }
@@ -110,7 +112,7 @@ void cds_memory_trace(char *dst, int dst_len)
 
 #ifdef SER
 
-void* shm_malloc_x(unsigned int size)
+void *shm_malloc_x(unsigned int size)
 {
 	return shm_malloc(size);
 }

@@ -11,12 +11,12 @@
 <!-- Peering Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
 
 	<section>
 	<title>Overview</title>
-	<para>The peering module allows SIP providers (operators or organizations) 
+	<para>The peering module allows SIP providers (operators or organizations)
 	to verify from a broker if source or destination of a SIP request is
     a trusted peer.
     </para>
@@ -24,7 +24,7 @@
     </para>
     <para>
 	In order to participate in the trust community provided by a
-	broker, each SIP provider registers the domains (host parts of SIP URIs) 
+	broker, each SIP provider registers the domains (host parts of SIP URIs)
 	that they serve with the broker.  When a SIP proxy of a
 	provider needs to send a SIP request to a non-local domain, it
 	can find out from the broker using verify_destination() function
@@ -53,7 +53,7 @@
 		<title>&kamailio; Modules</title>
 			<para>
 			The module depends on the following modules
-			(in the other words 
+			(in other words
 			the listed modules must be loaded before this module):
 			<itemizedlist>
 				<listitem>
@@ -65,15 +65,15 @@
 		<section>
 			<title>External Libraries or Applications</title>
 			<para>
-			The following libraries or applications must be installed 
+			The following libraries or applications must be installed
 			before compiling &kamailio; with this module
 				loaded:
 			</para>
 			<itemizedlist>
 				<listitem>
 				<para><emphasis>radiusclient-ng</emphasis>
-				0.5.0 or higher -- 
-				library and development files. See <ulink 
+				0.5.0 or higher --
+				library and development files. See <ulink
 				url='http://developer.berlios.de/projects/radiusclient-ng/'>
 				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
 				</para>
@@ -87,11 +87,11 @@
 	<section>
 		<title><varname>radius_config</varname> (string)</title>
 		<para>
-		This is the location of the configuration file of Radius client 
+		This is the location of the configuration file of Radius client
 		libraries.
 		</para>
 		<para>
-		Default value is 
+		Default value is
 			<quote>/usr/local/etc/radiusclient-ng/radiusclient.conf</quote>.
 		</para>
 		<example>
@@ -182,7 +182,7 @@ modparam("peering", "verify_source_service_type", 22)
 		 </para>
 		 <para>
 		 One of the SIP-AVP reply attributes contains a string
-		 that the source peer must include "as is" in a 
+		 that the source peer must include "as is" in a
 		 <emphasis>P-Request-Hash:</emphasis> header when it sends the SIP request to
 		 the destination peer.  The string value may, for
 		 example, be of form hash@timestamp, where hash contains
@@ -200,7 +200,7 @@ modparam("peering", "verify_source_service_type", 22)
 		</para>
 		<example>
 		<title><function
-	moreinfo="none">verify_destination()</function> usage</title> 
+	moreinfo="none">verify_destination()</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (verify_destination()) {
@@ -249,7 +249,7 @@ if (verify_destination()) {
 		 </para>
 		 <para>
 		 Value of each SIP-AVP reply attribute is mapped to a
-		 &kamailio; 
+		 &kamailio;
 		 AVP.  Prefix # in front of name or value indicates a
 		string name or string value, respectively.
 		 </para>
@@ -263,7 +263,7 @@ if (verify_destination()) {
 		</para>
 		<example>
 		<title><function
-	moreinfo="none">verify_source()</function> usage</title>  
+	moreinfo="none">verify_source()</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (is_present_hf("P-Request-Hash")) {

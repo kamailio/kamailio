@@ -30,7 +30,8 @@
 #include "../str.h"
 #include "msg_parser.h"
 
-enum {
+enum
+{
 	II_START,
 	II_URI_BEGIN,
 	II_URI_DOMAIN,
@@ -49,7 +50,8 @@ enum {
 	II_ENDHEADER
 };
 
-enum {
+enum
+{
 	II_M_START,
 	II_M_URI_BEGIN,
 	II_M_URI_END,
@@ -59,22 +61,25 @@ enum {
 	II_M_TOKEN
 };
 
-struct identityinfo_body {
-	int error;  	/* Error code */
-	str uri;    	/* URI */
-	str domain; 	/* Domain part of the URI */
-	str alg; 		/* Identity-Info header field MUST contain an 'alg' parameter */
+struct identityinfo_body
+{
+	int error;	/* Error code */
+	str uri;	/* URI */
+	str domain; /* Domain part of the URI */
+	str alg;	/* Identity-Info header field MUST contain an 'alg' parameter */
 };
 
 
 /* casting macro for accessing IDENTITY-INFO body */
-#define get_identityinfo(p_msg) ((struct identityinfo_body*)(p_msg)->identity_info->parsed)
+#define get_identityinfo(p_msg) \
+	((struct identityinfo_body *)(p_msg)->identity_info->parsed)
 
 
 /*
  * Parse Identity-Info header field
  */
-void parse_identityinfo(char *buffer, char* end, struct identityinfo_body *ii_b);
+void parse_identityinfo(
+		char *buffer, char *end, struct identityinfo_body *ii_b);
 int parse_identityinfo_header(struct sip_msg *msg);
 
 /*

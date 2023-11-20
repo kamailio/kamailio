@@ -10,22 +10,22 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
 		 The pua_usrloc module is the connector between the usrloc and pua modules.
 		 With this module, you can monitor the status of SIP registrations.
-		 The module sends PUBLISH requests for user location record changes, 
+		 The module sends PUBLISH requests for user location record changes,
 		 based on specific events (e.g., when a new record is
 		 added in usrloc, a PUBLISH with status open (online) is issued;
 		 when expires, it sends closed (offline)).
 	</para>
 	<para>
 		Using this module phones which have no support for presence can
-		be seen as online/offline. 
+		be seen as online/offline.
 	</para>
 	</section>
 		<section>
@@ -70,10 +70,10 @@
 		<para>
 		The default domain to use when constructing the presentity
 		URI if it is missing from stored AOR in the usrloc table (in
-		memory or database). 
+		memory or database).
 		</para>
 		<para>
-		<emphasis>Default value is <quote>NULL</quote>.	
+		<emphasis>Default value is <quote>NULL</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -93,11 +93,11 @@ modparam("pua_usrloc", "default_domain", "kamailio.org")
 		(ex: pres:user@domain ).
 		</para>
 		<para>
-		<emphasis>Default value is <quote>NULL</quote>.	
+		<emphasis>Default value is <quote>NULL</quote>.
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>presentity_prefix</varname> parameter</title>
+		<title>Set <varname>entity_prefix</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("pua_usrloc", "entity_prefix", "pres")
@@ -113,7 +113,7 @@ modparam("pua_usrloc", "entity_prefix", "pres")
 		to generate PUBLISH. Valid values are 0 to 31.
 		</para>
 		<para>
-		<emphasis>Default value is <quote>-1</quote> (disabled).	
+		<emphasis>Default value is <quote>-1</quote> (disabled).
 		</emphasis>
 		</para>
 		<example>
@@ -144,15 +144,15 @@ modparam("pua_usrloc", "branch_flag", 9)
 		<title><function>pua_set_publish</function> usage</title>
 	<programlisting format="linespecific">
 ...
-if(is_method("REGISTER") &amp;&amp; from_uri=~"john@kamailio.org") 
-	pua_set_publish();		
+if(is_method("REGISTER") &amp;&amp; from_uri=~"john@kamailio.org")
+	pua_set_publish();
 ...
 </programlisting>
 		</example>
 
 		</section>
 
-</section>		
+</section>
 
 </chapter>
 

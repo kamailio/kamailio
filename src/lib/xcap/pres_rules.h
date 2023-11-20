@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -33,18 +33,21 @@
 typedef cp_ruleset_t presence_rules_t;
 
 /* Type defining action for pres_rules */
-typedef enum {
+typedef enum
+{
 	sub_handling_block,
 	sub_handling_confirm,
 	sub_handling_polite_block,
 	sub_handling_allow
 } sub_handling_t;
 
-int get_pres_rules(const str_t *username, const str_t *filename, xcap_query_params_t *xcap_params, cp_ruleset_t **dst);
+int get_pres_rules(const str_t *username, const str_t *filename,
+		xcap_query_params_t *xcap_params, cp_ruleset_t **dst);
 void free_pres_rules(cp_ruleset_t *r);
 void free_pres_actions(cp_actions_t *a);
 
 /* returns 0 if rule found, 1 if not found and -1 on error */
-int get_pres_rules_action(cp_ruleset_t *r, const str_t *wuri, sub_handling_t *dst_action);
+int get_pres_rules_action(
+		cp_ruleset_t *r, const str_t *wuri, sub_handling_t *dst_action);
 
 #endif

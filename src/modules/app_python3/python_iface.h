@@ -20,7 +20,7 @@
 */
 
 #ifndef _PYTHON_IFACE_H
-#define  _PYTHON_IFACE_H
+#define _PYTHON_IFACE_H
 
 #include <Python.h>
 

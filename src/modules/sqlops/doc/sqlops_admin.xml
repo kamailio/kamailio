@@ -336,7 +336,7 @@ sql_result_free("ra");
 		<listitem>
 			<para>
 				<emphasis>result</emphasis> - string name to identify the
-				result xavp. Each row will be added to this xavp, each column can 
+				result xavp. Each row will be added to this xavp, each column can
 				be accessed by its name.
 			</para>
 		</listitem>
@@ -384,7 +384,7 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1) {
 			<para>
 				<emphasis>result</emphasis> - a list with PV names where
 				to store the result. The format is
-				<quote>$pv;$pv;...</quote>. Every PV that is writable may 
+				<quote>$pv;$pv;...</quote>. Every PV that is writable may
 				be used (for example $var, $avp, $xavp, $ru, $du, $sht, etc).
 			</para>
 			<para>
@@ -396,7 +396,7 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1) {
 			</para>
 			<para>
 				Beware that if multiple rows are returned, non-(x)avp variables
-				will only hold the last added value, which corresponds to the 
+				will only hold the last added value, which corresponds to the
 				first returned row.
 			</para>
 			<para>
@@ -494,7 +494,7 @@ sql_query_async("ca", "delete from domain");
 
 	<section>
 	<title>Exported pseudo-variables</title>
-		
+
 		<section>
 			<title><varname>$dbr(result=>key)</varname></title>
 			<para>
@@ -512,11 +512,11 @@ sql_query_async("ca", "delete from domain");
 				<listitem>
 					<para><emphasis>rows</emphasis> - return the number of rows in
 						query result</para>
-				</listitem>	  
+				</listitem>
 				<listitem>
 					<para><emphasis>cols</emphasis> - return the number of
 						columns in the result.</para>
-				</listitem>	  
+				</listitem>
 				<listitem>
 					<para><emphasis>[row,col]</emphasis> - return the value
 					at position (row,col) in the result set. 'row' and 'col' must
@@ -525,7 +525,7 @@ sql_query_async("ca", "delete from domain");
 				<listitem>
 					<para><emphasis>colname[N]</emphasis> - return the name
 					of the N-th column in the result set.</para>
-				</listitem>	  
+				</listitem>
 			</itemizedlist>
 
 			<example>
@@ -586,7 +586,7 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1)
 			<title><varname>$sqlrows(con)</varname></title>
 			<para>
 				Number of affected rows of the previous query on the
-				specified connection. It's primary use is to get the number
+				specified connection. Its primary use is to get the number
 				of rows affected by UPDATE, INSERT and DELETE queries.
 			</para>
 			<para>

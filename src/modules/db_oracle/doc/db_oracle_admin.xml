@@ -71,7 +71,7 @@
 		</emphasis>
 		</para>
 		<para>
-		If value of timeout parameter set to 0, module use synchronous
+		If the value of timeout parameter is set to 0, the module uses synchronous
 		mode (without timeout).
 		</para>
 		<example>

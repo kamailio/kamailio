@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -24,7 +24,7 @@
  * populated by looking to see which modules are loaded, and guessing what SIP
  * Methods they  provide.  It is quite possible that this initial implementation
  * is not very good at guessing.  This should be fixed in future releases as
- * more information becomes available.  
+ * more information becomes available.
  *
  * For full details, please see the KAMAILIO-SIP-COMMON-MIB.
  *
@@ -105,7 +105,7 @@ void createRow(int index, char *stringToRegister)
 }
 
 
-/* Initializes the kamailioSIPMethodSupportedTable, and populates the tables 
+/* Initializes the kamailioSIPMethodSupportedTable, and populates the tables
  * contents */
 void init_kamailioSIPMethodSupportedTable(void)
 {
@@ -130,7 +130,7 @@ void init_kamailioSIPMethodSupportedTable(void)
 	 *
 	 * We should keep these indices fixed.  For example if we don't support
 	 * METHOD_REGISTER but we do support METHOD_MESSAGE, then METHOD_MESSAGE
-	 * should still be at index 9.  
+	 * should still be at index 9.
 	 *
 	 * NOTE: My way of checking what METHODS we support is probably wrong.
 	 * Please feel free to correct it! */
@@ -176,7 +176,7 @@ void initialize_table_kamailioSIPMethodSupportedTable(void)
 
 	/** create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
-	if(table_info==NULL) {
+	if(table_info == NULL) {
 		snmp_log(LOG_ERR, "failed to allocate table_info\n");
 		return;
 	}
@@ -216,10 +216,10 @@ void initialize_table_kamailioSIPMethodSupportedTable(void)
 			my_handler, table_info, &cb, cb.container, 1);
 }
 
-/* 
+/*
  * This routine is called to process get requests for elements of the table.
  *
- * The function is pretty much left as is from the auto-generated code. 
+ * The function is pretty much left as is from the auto-generated code.
  */
 int kamailioSIPMethodSupportedTable_get_value(netsnmp_request_info *request,
 		netsnmp_index *item, netsnmp_table_request_info *table_info)

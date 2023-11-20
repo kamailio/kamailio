@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -55,7 +55,7 @@
  *
  *    1) maps all aor's to snmp's UserIndex for help in deleting SNMP Rows.
  *
- *    2) maps a given aor to a contact list. 
+ *    2) maps a given aor to a contact list.
  */
 hashSlot_t *hashTable = NULL;
 
@@ -70,7 +70,7 @@ gen_lock_t *interprocessCBLock = NULL;
 /*!
  * This function takes an element of the interprocess buffer passed to it, and
  * handles populating the respective user and contact tables with its contained
- * data.  
+ * data.
  */
 static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer);
 
@@ -130,7 +130,7 @@ int initInterprocessBuffers(void)
  * The callback type will be passed in 'type', and the contact the callback
  * applies to will be supplied in 'contactInfo.  This information will be copied
  * into the interprocess buffer.  The interprocess buffer will be consumed at a
- * later time, when consumeInterprocessBuffer() is called.  
+ * later time, when consumeInterprocessBuffer() is called.
  *
  * This callback is thread safe with respect to the consumeInterprocessBuffer()
  * function.  Specifically, the interprocess buffer should not be corrupted by
@@ -151,9 +151,9 @@ void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param)
 	}
 
 	/* We need to maintain our own copies of the AOR and contact address to
-	 * prevent the corruption of our internal data structures.  
+	 * prevent the corruption of our internal data structures.
 	 *
-	 * If we do not maintain our own copies, then the AOR and contact adress
+	 * If we do not maintain our own copies, then the AOR and contact address
 	 * pointed to could be removed and reallocated to another thread before
 	 * we get a chance to consume our interprocess buffer.  */
 	convertStrToCharString(contactInfo->aor, &addressOfRecord);
@@ -203,11 +203,11 @@ error:
  * \note This function is believed to be thread safe.  Specifically, it protects
  *       corruption of the interprocess buffer through the interprocessCBLock.
  *       This ensures no corruption of the buffer by race conditions.  The lock
- *       has been designed to be occupied for as short a period as possible, so 
- *       as to prevent long waits.  Specifically, once we start consumption of 
+ *       has been designed to be occupied for as short a period as possible, so
+ *       as to prevent long waits.  Specifically, once we start consumption of
  *       the list, other processes are free to continue even before we are done.
  *       This is made possible by simply changing the head of the interprocess
- *       buffer, and then releasing the lock.  
+ *       buffer, and then releasing the lock.
  */
 void consumeInterprocessBuffer(void)
 {
@@ -253,7 +253,7 @@ void consumeInterprocessBuffer(void)
 /*!
  * This function takes an element of the interprocess buffer passed to it, and
  * handles populating the respective user and contact tables with its contained
- * data.  
+ * data.
  */
 static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 {
@@ -262,7 +262,7 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 	aorToIndexStruct_t *currentUser;
 
 	if(currentBuffer->callbackType == UL_CONTACT_INSERT) {
-		/* Add the user if the user doesn't exist, or increment its 
+		/* Add the user if the user doesn't exist, or increment its
 		 * contact index otherwise. */
 		updateUser(currentBuffer->stringName);
 	} else if(currentBuffer->callbackType != UL_CONTACT_EXPIRE) {
@@ -295,7 +295,7 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 		currentUser->contactIndex++;
 
 		/* We should do this after we create the row in the snmptable.
-		 * Its easier to delete the SNMP Row than the contact record. */
+		 * It is easier to delete the SNMP Row than the contact record. */
 		if(!insertContactRecord(&(currentUser->contactList),
 				   currentUser->contactIndex, currentBuffer->stringContact)) {
 
@@ -322,7 +322,7 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 		delContactIndex = deleteContactRecord(
 				&(currentUser->contactList), currentBuffer->stringContact);
 
-		/* This should never happen.  But its probably wise to check and
+		/* This should never happen.  But it is probably wise to check and
 		 * to print out debug messages in case there is a hidden bug.  */
 		if(delContactIndex == 0) {
 

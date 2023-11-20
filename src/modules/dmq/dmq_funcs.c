@@ -88,10 +88,10 @@ int build_uri_str(str *username, struct sip_uri *uri, str *from)
 	}
 
 	from_len = username->len + uri->host.len + uri->port.len + 12
-				+ TRANSPORT_PARAM_LEN;
+			   + TRANSPORT_PARAM_LEN;
 	from->s = pkg_malloc(from_len);
 	if(from->s == NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	from->len = 0;
@@ -115,9 +115,9 @@ int build_uri_str(str *username, struct sip_uri *uri, str *from)
 		from->len += uri->port.len;
 	}
 
-	if(uri->proto!=PROTO_NONE && uri->proto!=PROTO_UDP
-			&& uri->proto!=PROTO_OTHER) {
-		if(get_valid_proto_string(uri->proto, 1, 0, &sproto)<0) {
+	if(uri->proto != PROTO_NONE && uri->proto != PROTO_UDP
+			&& uri->proto != PROTO_OTHER) {
+		if(get_valid_proto_string(uri->proto, 1, 0, &sproto) < 0) {
 			LM_WARN("unknown transport protocol - fall back to udp\n");
 			sproto.s = "udp";
 			sproto.len = 3;
@@ -202,7 +202,8 @@ error:
 int bcast_dmq_message(dmq_peer_t *peer, str *body, dmq_node_t *except,
 		dmq_resp_cback_t *resp_cback, int max_forwards, str *content_type)
 {
-	return bcast_dmq_message1(peer, body, except, resp_cback, max_forwards, content_type, 0);
+	return bcast_dmq_message1(
+			peer, body, except, resp_cback, max_forwards, content_type, 0);
 }
 
 /**
@@ -231,7 +232,7 @@ int dmq_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
 	str_hdr.len = 34 + content_type->len + (CRLF_LEN * 2);
 	str_hdr.s = pkg_malloc(str_hdr.len);
 	if(str_hdr.s == NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	len += sprintf(str_hdr.s, "Max-Forwards: %d" CRLF "Content-Type: %.*s" CRLF,
@@ -240,7 +241,7 @@ int dmq_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
 
 	cb_param = shm_malloc(sizeof(*cb_param));
 	if(cb_param == NULL) {
-		LM_ERR("no more shm for building callback parameter\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(cb_param, 0, sizeof(*cb_param));
@@ -291,8 +292,8 @@ error:
 /**
  * @brief kemi function for sending dmq message
  */
-int ki_dmq_send_message(sip_msg_t *msg, str *peer_str, str *to_str,
-		str *body_str, str *ct_str)
+int ki_dmq_send_message(
+		sip_msg_t *msg, str *peer_str, str *to_str, str *body_str, str *ct_str)
 {
 	LM_DBG("cfg_dmq_send_message: %.*s - %.*s - %.*s - %.*s\n", peer_str->len,
 			peer_str->s, to_str->len, to_str->s, body_str->len, body_str->s,
@@ -362,8 +363,8 @@ int cfg_dmq_send_message(struct sip_msg *msg, char *peer, char *to, char *body,
 /**
  * @brief config file function for broadcasting dmq message
  */
-int ki_dmq_bcast_message(sip_msg_t *msg, str *peer_str, str *body_str,
-		str *ct_str)
+int ki_dmq_bcast_message(
+		sip_msg_t *msg, str *peer_str, str *body_str, str *ct_str)
 {
 	LM_DBG("cfg_dmq_bcast_message: %.*s - %.*s - %.*s\n", peer_str->len,
 			peer_str->s, body_str->len, body_str->s, ct_str->len, ct_str->s);
@@ -383,8 +384,9 @@ int ki_dmq_bcast_message(sip_msg_t *msg, str *peer_str, str *body_str,
 			goto error;
 		}
 	}
-	if(bcast_dmq_message(destination_peer, body_str, 0, &dmq_notification_resp_callback,
-			   1, ct_str) < 0) {
+	if(bcast_dmq_message(destination_peer, body_str, 0,
+			   &dmq_notification_resp_callback, 1, ct_str)
+			< 0) {
 		LM_ERR("cannot send dmq message\n");
 		goto error;
 	}
@@ -396,8 +398,8 @@ error:
 /**
  * @brief config file function for broadcasting dmq message
  */
-int cfg_dmq_bcast_message(sip_msg_t *msg, char *peer, char *body,
-		char *content_type)
+int cfg_dmq_bcast_message(
+		sip_msg_t *msg, char *peer, char *body, char *content_type)
 {
 	str peer_str;
 	str body_str;
@@ -431,7 +433,7 @@ int ki_dmq_t_replicate_mode(struct sip_msg *msg, int mode)
 	/* avoid loops - do not replicate if message has come from another node
 	 * (override if optional parameter is set)
 	 */
-	if(mode==0	&& is_from_remote_node(msg) > 0) {
+	if(mode == 0 && is_from_remote_node(msg) > 0) {
 		LM_DBG("message is from another node - skipping replication\n");
 		return -1;
 	}
@@ -491,7 +493,7 @@ int ki_dmq_t_replicate(sip_msg_t *msg)
 int cfg_dmq_t_replicate(struct sip_msg *msg, char *s, char *p2)
 {
 	int i = 0;
-	if(s!=NULL && get_int_fparam(&i, msg, (fparam_t *)s) < 0) {
+	if(s != NULL && get_int_fparam(&i, msg, (fparam_t *)s) < 0) {
 		LM_ERR("failed to get parameter value\n");
 		return -1;
 	}
@@ -510,7 +512,7 @@ int cfg_dmq_is_from_node(struct sip_msg *msg, char *p1, char *p2)
  * @brief pings the servers in the nodelist
  *
  * if the server does not reply to the ping, it is removed from the list
- * the ping messages are actualy notification requests
+ * the ping messages are actually notification requests
  * this way the ping will have two uses:
  *   - checks if the servers in the list are up and running
  *   - updates the list of servers from the other nodes
@@ -530,7 +532,8 @@ void ping_servers(unsigned int ticks, void *param)
 			dmq_notification_node =
 					add_server_and_notify(dmq_notification_address_list);
 			if(!dmq_notification_node) {
-				LM_ERR("cannot retrieve initial nodelist, first list entry%.*s\n",
+				LM_ERR("cannot retrieve initial nodelist, first list "
+					   "entry%.*s\n",
 						STR_FMT(&dmq_notification_address_list->s));
 			}
 		} else {
@@ -545,7 +548,8 @@ void ping_servers(unsigned int ticks, void *param)
 		return;
 	}
 	ret = bcast_dmq_message1(dmq_notification_peer, body, NULL,
-			&dmq_notification_resp_callback, 1, &dmq_notification_content_type, 1);
+			&dmq_notification_resp_callback, 1, &dmq_notification_content_type,
+			1);
 	pkg_free(body->s);
 	pkg_free(body);
 	if(ret < 0) {

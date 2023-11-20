@@ -15,15 +15,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
 /*! \file
  * \brief Kamailio presence module :: NOTIFY support
- * \ingroup presence 
+ * \ingroup presence
  */
 
 
@@ -129,4 +129,5 @@ char *get_status_str(int flag);
 str *get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag, str *contact);
 void free_notify_body(str *body, pres_ev_t *ev);
 void pres_timer_send_notify(unsigned int ticks, void *param);
+void ps_active_watchers_db_timer_clean(unsigned int ticks, void *param);
 #endif

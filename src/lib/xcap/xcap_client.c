@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -40,12 +40,16 @@ static const str_t *get_xcap_doc_dir(xcap_document_type_t doc_type)
 	static str_t rls_services = STR_STATIC_INIT("rls-services");
 	static str_t resource_lists = STR_STATIC_INIT("resource-lists");
 
-	switch (doc_type) {
-		case xcap_doc_pres_rules: return &pres_rules;
-		case xcap_doc_im_rules: return &im_rules;
-		case xcap_doc_rls_services: return &rls_services;
-		case xcap_doc_resource_lists: return &resource_lists;
-		/* when new doc_type added, there will be a warning -> add it there */
+	switch(doc_type) {
+		case xcap_doc_pres_rules:
+			return &pres_rules;
+		case xcap_doc_im_rules:
+			return &im_rules;
+		case xcap_doc_rls_services:
+			return &rls_services;
+		case xcap_doc_resource_lists:
+			return &resource_lists;
+			/* when new doc_type added, there will be a warning -> add it there */
 	}
 	WARN_LOG("unknown XCAP document type\n");
 	return NULL;
@@ -58,12 +62,16 @@ static const str_t *get_default_user_doc(xcap_document_type_t doc_type)
 	static str_t rls_services = STR_STATIC_INIT("rls-services.xml");
 	static str_t resource_lists = STR_STATIC_INIT("resource-list.xml");
 
-	switch (doc_type) {
-		case xcap_doc_pres_rules: return &pres_rules;
-		case xcap_doc_im_rules: return &im_rules;
-		case xcap_doc_rls_services: return &rls_services;
-		case xcap_doc_resource_lists: return &resource_lists;
-		/* when new doc_type added, there will be a warning -> add it there */
+	switch(doc_type) {
+		case xcap_doc_pres_rules:
+			return &pres_rules;
+		case xcap_doc_im_rules:
+			return &im_rules;
+		case xcap_doc_rls_services:
+			return &rls_services;
+		case xcap_doc_resource_lists:
+			return &resource_lists;
+			/* when new doc_type added, there will be a warning -> add it there */
 	}
 	WARN_LOG("unknown XCAP document type\n");
 	return NULL;
@@ -71,14 +79,14 @@ static const str_t *get_default_user_doc(xcap_document_type_t doc_type)
 
 static int ends_with_separator(str_t *s)
 {
-	if (!is_str_empty(s))
-		if (s->s[s->len - 1] == '/') return 1;
+	if(!is_str_empty(s))
+		if(s->s[s->len - 1] == '/')
+			return 1;
 	return 0;
 }
 
 char *xcap_uri_for_users_document(xcap_document_type_t doc_type,
-		const str_t *username, 
-		const str_t*filename,
+		const str_t *username, const str_t *filename,
 		xcap_query_params_t *params)
 {
 	dstring_t s;
@@ -87,41 +95,41 @@ char *xcap_uri_for_users_document(xcap_document_type_t doc_type,
 	char *dst = NULL;
 
 	dstr_init(&s, 128);
-	if (params) {
+	if(params) {
 		dstr_append_str(&s, &params->xcap_root);
-		if (!ends_with_separator(&params->xcap_root))
+		if(!ends_with_separator(&params->xcap_root))
 			dstr_append(&s, "/", 1);
-	}
-	else dstr_append(&s, "/", 1);
+	} else
+		dstr_append(&s, "/", 1);
 	dstr_append_str(&s, get_xcap_doc_dir(doc_type));
 	dstr_append_zt(&s, "/users/");
 	dstr_append_str(&s, username);
 	dstr_append(&s, "/", 1);
-	if (filename) dstr_append_str(&s, filename);
+	if(filename)
+		dstr_append_str(&s, filename);
 	else {
 		/* default filename if NULL */
 		dstr_append_str(&s, get_default_user_doc(doc_type));
 	}
 	/* res = dstr_get_str(&s, dst); */
-	
+
 	l = dstr_get_data_length(&s);
-	if (l > 0) {
+	if(l > 0) {
 		dst = (char *)cds_malloc(l + 1);
-		if (dst) {
+		if(dst) {
 			dstr_get_data(&s, dst);
 			dst[l] = 0;
-		}
-		else ERROR_LOG("can't allocate memory (%d bytes)\n", l);
+		} else
+			ERROR_LOG("can't allocate memory (%d bytes)\n", l);
 	}
-	
+
 	dstr_destroy(&s);
 	return dst;
 }
 
 
 char *xcap_uri_for_global_document(xcap_document_type_t doc_type,
-		const str_t *filename, 
-		xcap_query_params_t *params)
+		const str_t *filename, xcap_query_params_t *params)
 {
 	dstring_t s;
 	/* int res = RES_OK; */
@@ -129,32 +137,31 @@ char *xcap_uri_for_global_document(xcap_document_type_t doc_type,
 	int l = 0;
 
 	dstr_init(&s, 128);
-	if (params) {
+	if(params) {
 		dstr_append_str(&s, &params->xcap_root);
-		if (!ends_with_separator(&params->xcap_root))
+		if(!ends_with_separator(&params->xcap_root))
 			dstr_append(&s, "/", 1);
-	}
-	else dstr_append(&s, "/", 1);
+	} else
+		dstr_append(&s, "/", 1);
 	dstr_append_str(&s, get_xcap_doc_dir(doc_type));
-	if (filename) {
+	if(filename) {
 		dstr_append_zt(&s, "/global/");
 		dstr_append_str(&s, filename);
-	}
-	else {
+	} else {
 		/* default filename if NULL */
 		dstr_append_zt(&s, "/global/index");
 	}
 	/* res = dstr_get_str(&s, dst); */
-	
+
 	l = dstr_get_data_length(&s);
-	if (l > 0) {
+	if(l > 0) {
 		dst = (char *)cds_malloc(l + 1);
-		if (dst) {
+		if(dst) {
 			dstr_get_data(&s, dst);
 			dst[l] = 0;
 		}
 	}
-	
+
 	dstr_destroy(&s);
 	return dst;
 }
@@ -163,22 +170,23 @@ char *xcap_uri_for_global_document(xcap_document_type_t doc_type,
 
 #include "sr_module.h"
 
-int xcap_query(const char *uri, 
-		xcap_query_params_t *params, char **buf, int *bsize)
+int xcap_query(
+		const char *uri, xcap_query_params_t *params, char **buf, int *bsize)
 {
 	static xcap_query_func query = NULL;
 	static int initialized = 0;
 
-	if (!initialized) {
+	if(!initialized) {
 		query = (xcap_query_func)find_export("xcap_query", 0, -1);
 		initialized = 1;
-		if (!query) WARN_LOG("No XCAP query support! (Missing module?)\n");
+		if(!query)
+			WARN_LOG("No XCAP query support! (Missing module?)\n");
 	}
-	if (!query) {
+	if(!query) {
 		/* no function for doing XCAP queries */
 		return -1;
 	}
-	
+
 	/* all XCAP queries are done through XCAP module */
 	return query(uri, params, buf, bsize);
 }
@@ -187,12 +195,13 @@ int xcap_query(const char *uri,
 
 #include <curl/curl.h>
 
-static size_t write_data_func(void *ptr, size_t size, size_t nmemb, void *stream)
+static size_t write_data_func(
+		void *ptr, size_t size, size_t nmemb, void *stream)
 {
 	int s = size * nmemb;
-/*	TRACE_LOG("%d bytes writen\n", s);*/
-	if (s != 0) {
-		if (dstr_append((dstring_t*)stream, ptr, s) != 0) {
+	/*	TRACE_LOG("%d bytes written\n", s);*/
+	if(s != 0) {
+		if(dstr_append((dstring_t *)stream, ptr, s) != 0) {
 			ERROR_LOG("can't append %d bytes into data buffer\n", s);
 			return 0;
 		}
@@ -201,7 +210,8 @@ static size_t write_data_func(void *ptr, size_t size, size_t nmemb, void *stream
 }
 
 
-int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bsize)
+int xcap_query(
+		const char *uri, xcap_query_params_t *params, char **buf, int *bsize)
 {
 	CURLcode res = -1;
 	static CURL *handle = NULL;
@@ -209,38 +219,42 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 	char *auth = NULL;
 	int i;
 	long auth_methods;
-	
-	if (!uri) {
+
+	if(!uri) {
 		ERROR_LOG("BUG: no uri given\n");
 		return -1;
 	}
-	if (!buf) {
+	if(!buf) {
 		ERROR_LOG("BUG: no buf given\n");
 		return -1;
 	}
 
 	i = 0;
-	if (params) {
-		if (params->auth_user.s) i += params->auth_user.len;
-		if (params->auth_pass.s) i += params->auth_pass.len;
+	if(params) {
+		if(params->auth_user.s)
+			i += params->auth_user.len;
+		if(params->auth_pass.s)
+			i += params->auth_pass.len;
 	}
-	if (i > 0) {
+	if(i > 0) {
 		/* do authentication */
 		auth = (char *)cds_malloc(i + 2);
-		if (!auth) return -1;
-		sprintf(auth, "%s:%s", params->auth_user.s ? params->auth_user.s: "",
-				params->auth_pass.s ? params->auth_pass.s: "");
+		if(!auth)
+			return -1;
+		sprintf(auth, "%s:%s", params->auth_user.s ? params->auth_user.s : "",
+				params->auth_pass.s ? params->auth_pass.s : "");
 	}
 
 	auth_methods = CURLAUTH_BASIC | CURLAUTH_DIGEST;
-	
+
 	dstr_init(&data, 512);
-	
-	if (!handle) handle = curl_easy_init(); 
-	if (handle) {
+
+	if(!handle)
+		handle = curl_easy_init();
+	if(handle) {
 		curl_easy_setopt(handle, CURLOPT_URL, uri);
 		/* TRACE_LOG("uri: %s\n", uri ? uri : "<null>"); */
-		
+
 		/* do not store data into a file - store them in memory */
 		curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_data_func);
 		curl_easy_setopt(handle, CURLOPT_WRITEDATA, &data);
@@ -249,50 +263,52 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 		/* be quiet */
 		curl_easy_setopt(handle, CURLOPT_MUTE, 1);
 #endif /* CURLOPT_MUTE */
-		
+
 		/* non-2xx => error */
 		curl_easy_setopt(handle, CURLOPT_FAILONERROR, 1);
 
 		/* auth */
-		curl_easy_setopt(handle, CURLOPT_HTTPAUTH, auth_methods); /* TODO possibility of selection */
+		curl_easy_setopt(handle, CURLOPT_HTTPAUTH,
+				auth_methods); /* TODO possibility of selection */
 		curl_easy_setopt(handle, CURLOPT_NETRC, CURL_NETRC_IGNORED);
 		curl_easy_setopt(handle, CURLOPT_USERPWD, auth);
 
 		/* SSL */
-		if (params) {
-			if (params->enable_unverified_ssl_peer) {
+		if(params) {
+			if(params->enable_unverified_ssl_peer) {
 				curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0);
 				curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 0);
 			}
 		}
-		
+
 		/* follow redirects (needed for apache mod_speling - case insesitive names) */
 		curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1);
-		
-	/*	curl_easy_setopt(handle, CURLOPT_TCP_NODELAY, 1);
+
+		/*	curl_easy_setopt(handle, CURLOPT_TCP_NODELAY, 1);
 		curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 10);*/
-		
+
 		/* Accept headers */
-		
+
 		res = curl_easy_perform(handle);
 		/* curl_easy_cleanup(handle); */ /* FIXME: experimental */
-	}
-	else ERROR_LOG("can't initialize curl handle\n");
-	if (res == 0) {
+	} else
+		ERROR_LOG("can't initialize curl handle\n");
+	if(res == 0) {
 		*bsize = dstr_get_data_length(&data);
-		if (*bsize) {
-			*buf = (char*)cds_malloc(*bsize);
-			if (!*buf) {
+		if(*bsize) {
+			*buf = (char *)cds_malloc(*bsize);
+			if(!*buf) {
 				ERROR_LOG("can't allocate %d bytes\n", *bsize);
 				res = -1;
 				*bsize = 0;
-			}
-			else dstr_get_data(&data, *buf);
+			} else
+				dstr_get_data(&data, *buf);
 		}
-	}
-	else DEBUG_LOG("curl error: %d\n", res);
+	} else
+		DEBUG_LOG("curl error: %d\n", res);
 	dstr_destroy(&data);
-	if (auth) cds_free(auth);
+	if(auth)
+		cds_free(auth);
 	return res;
 }
 
@@ -300,7 +316,7 @@ int xcap_query(const char *uri, xcap_query_params_t *params, char **buf, int *bs
 
 void free_xcap_params_content(xcap_query_params_t *params)
 {
-	if (params) {
+	if(params) {
 		str_free_content(&params->xcap_root);
 		str_free_content(&params->auth_user);
 		str_free_content(&params->auth_pass);
@@ -311,29 +327,33 @@ void free_xcap_params_content(xcap_query_params_t *params)
 int dup_xcap_params(xcap_query_params_t *dst, xcap_query_params_t *src)
 {
 	int res = -10;
-	
-	if (dst) memset(dst, 0, sizeof(*dst));
-	
-	if (src && dst) {
+
+	if(dst)
+		memset(dst, 0, sizeof(*dst));
+
+	if(src && dst) {
 		res = 0;
-		
+
 		res = str_dup(&dst->xcap_root, &src->xcap_root);
-		if (res == 0) res = str_dup(&dst->auth_user, &src->auth_user);
-		if (res == 0) res = str_dup(&dst->auth_pass, &src->auth_pass);
-		
-		if (res != 0) free_xcap_params_content(dst);
+		if(res == 0)
+			res = str_dup(&dst->auth_user, &src->auth_user);
+		if(res == 0)
+			res = str_dup(&dst->auth_pass, &src->auth_pass);
+
+		if(res != 0)
+			free_xcap_params_content(dst);
 	}
-	
+
 	return res;
 }
 
 int get_inline_xcap_buf_len(xcap_query_params_t *params)
 {
 	int len;
-	
+
 	/* counts the length for data buffer storing values of
 	 * xcap parameter members */
-	if (!params) {
+	if(!params) {
 		ERROR_LOG("BUG: empty params given\n");
 		return 0;
 	}
@@ -345,17 +365,18 @@ int get_inline_xcap_buf_len(xcap_query_params_t *params)
 	return len;
 }
 
-int dup_xcap_params_inline(xcap_query_params_t *dst, xcap_query_params_t *src, char *data_buffer)
+int dup_xcap_params_inline(
+		xcap_query_params_t *dst, xcap_query_params_t *src, char *data_buffer)
 {
 	int res = -10;
-	
+
 	/* copies structure into existing buffer */
-	if (dst) {
+	if(dst) {
 		memset(dst, 0, sizeof(*dst));
 		res = 0;
 	}
-	
-	if (src && dst) {
+
+	if(src && dst) {
 		dst->xcap_root.s = data_buffer;
 		str_cpy(&dst->xcap_root, &src->xcap_root);
 
@@ -370,8 +391,8 @@ int dup_xcap_params_inline(xcap_query_params_t *dst, xcap_query_params_t *src, c
 int serialize_xcap_params(sstream_t *ss, xcap_query_params_t *xp)
 {
 	int res = 0;
-	
-	if (is_input_sstream(ss)) {
+
+	if(is_input_sstream(ss)) {
 		memset(xp, 0, sizeof(*xp));
 	}
 	res = serialize_str(ss, &xp->xcap_root) | res;
@@ -386,15 +407,16 @@ int str2xcap_params(xcap_query_params_t *dst, const str_t *src)
 	int res = 0;
 	sstream_t store;
 
-	if (!src) return -1;
-	
+	if(!src)
+		return -1;
+
 	init_input_sstream(&store, src->s, src->len);
-	if (serialize_xcap_params(&store, dst) != 0) {
+	if(serialize_xcap_params(&store, dst) != 0) {
 		ERROR_LOG("can't de-serialize xcap_params\n");
 		res = -1;
-	}	
+	}
 	destroy_sstream(&store);
-	
+
 	return res;
 }
 
@@ -402,15 +424,14 @@ int xcap_params2str(str_t *dst, xcap_query_params_t *src)
 {
 	int res = 0;
 	sstream_t store;
-	
+
 	init_output_sstream(&store, 256);
-	
-	if (serialize_xcap_params(&store, src) != 0) {
+
+	if(serialize_xcap_params(&store, src) != 0) {
 		ERROR_LOG("can't serialize dialog\n");
 		res = -1;
-	}
-	else {
-		if (get_serialized_sstream(&store, dst) != 0) {
+	} else {
+		if(get_serialized_sstream(&store, dst) != 0) {
 			ERROR_LOG("can't get serialized data\n");
 			res = -1;
 		}
@@ -419,4 +440,3 @@ int xcap_params2str(str_t *dst, xcap_query_params_t *src)
 	destroy_sstream(&store);
 	return res;
 }
-

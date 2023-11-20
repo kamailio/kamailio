@@ -30,7 +30,7 @@ Will Quan
         4. Functions
         5. RPC Commands
 
-              5.1. db_berkely.reload
+              5.1. db_berkeley.reload
 
         6. Installation and Running
         7. Database Schema and Metadata
@@ -74,7 +74,7 @@ Chapter 1. Admin Guide
    4. Functions
    5. RPC Commands
 
-        5.1. db_berkely.reload
+        5.1. db_berkeley.reload
 
    6. Installation and Running
    7. Database Schema and Metadata
@@ -164,9 +164,9 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 
 5. RPC Commands
 
-   5.1. db_berkely.reload
+   5.1. db_berkeley.reload
 
-5.1. db_berkely.reload
+5.1. db_berkeley.reload
 
    Causes db_berkeley module to re-read the contents of specified table
    (or dbenv). The db_berkeley DB actually loads each table on demand, as
@@ -174,7 +174,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
    implemented as a close followed by a reopen. Note- bdb_reload will fail
    if a table has not been accessed before (because the close will fail).
 
-   Name: db_berkely.reload
+   Name: db_berkeley.reload
 
    Parameters: tablename (or db_path); to reload a particular table
    provide the tablename as the argument (eg subscriber); to reload all

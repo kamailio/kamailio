@@ -79,7 +79,11 @@ typedef struct
 	ws_connection_t *wsc;
 } ws_frame_t;
 
-typedef enum { CONN_CLOSE_DO = 0, CONN_CLOSE_DONT } conn_close_t;
+typedef enum
+{
+	CONN_CLOSE_DO = 0,
+	CONN_CLOSE_DONT
+} conn_close_t;
 
 #define BYTE0_MASK_FIN (0x80)
 #define BYTE0_MASK_RSV1 (0x40)
@@ -203,7 +207,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	/* Allocate send buffer and build frame */
 	frame_length = frame->payload_len + extended_length + 2;
 	if((send_buf = pkg_malloc(sizeof(char) * frame_length)) == NULL) {
-		LM_ERR("allocating send buffer from pkg memory\n");
+		PKG_MEM_ERROR_FMT("for send buffer\n");
 		return -1;
 	}
 	memset(send_buf, 0, sizeof(char) * frame_length);
@@ -316,7 +320,7 @@ static int close_connection(ws_connection_t **p_wsc, ws_close_type_t type,
 	if(wsc->state == WS_S_OPEN) {
 		data = pkg_malloc(sizeof(char) * (reason.len + 2));
 		if(data == NULL) {
-			LM_ERR("allocating pkg memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 
@@ -630,9 +634,9 @@ int ws_frame_receive(sr_event_param_t *evp)
 				if((frame.payload_len == CRLF_LEN
 						   && strncmp(frame.payload_data, CRLF, CRLF_LEN) == 0)
 						|| (frame.payload_len == CRLFCRLF_LEN
-								   && strncmp(frame.payload_data, CRLFCRLF,
-											  CRLFCRLF_LEN)
-											  == 0)) {
+								&& strncmp(frame.payload_data, CRLFCRLF,
+										   CRLFCRLF_LEN)
+										   == 0)) {
 					ws_send_crlf(frame.wsc, opcode);
 					wsconn_put(frame.wsc);
 					return 0;
@@ -676,7 +680,8 @@ int ws_frame_receive(sr_event_param_t *evp)
 					return -1;
 				}
 			} else {
-				LM_ERR("Unrecognized WebSocket subprotocol: %u\n", frame.wsc->sub_protocol);
+				LM_ERR("Unrecognized WebSocket subprotocol: %u\n",
+						frame.wsc->sub_protocol);
 				return -1;
 			}
 
@@ -802,20 +807,22 @@ void ws_keepalive(unsigned int ticks, void *param)
 	if(!list_head)
 		return;
 
-	while(list_head[i].id!=-1) {
+	while(list_head[i].id != -1) {
 		wsc = wsconn_get(list_head[i].id);
 		if(wsc && wsc->last_used < check_time) {
 			if(wsc->state == WS_S_CLOSING || wsc->awaiting_pong) {
 				LM_WARN("forcibly closing connection\n");
 				wsconn_close_now(wsc);
-			} else if (ws_keepalive_mechanism == KEEPALIVE_MECHANISM_CONCHECK) {
+			} else if(ws_keepalive_mechanism == KEEPALIVE_MECHANISM_CONCHECK) {
 				if(wsc->state == WS_S_REMOVING) {
-					LM_DBG("ws (id: %d wsc: %p) in removing state ignoring keepalive\n",
+					LM_DBG("ws (id: %d wsc: %p) in removing state ignoring "
+						   "keepalive\n",
 							wsc->id, wsc);
 				} else {
 					tcp_connection_t *con = tcpconn_get(wsc->id, 0, 0, 0, 0);
-					if(con==NULL) {
-						LM_INFO("tcp connection has been lost (id: %d wsc: %p)\n",
+					if(con == NULL) {
+						LM_INFO("tcp connection has been lost (id: %d wsc: "
+								"%p)\n",
 								wsc->id, wsc);
 						wsc->state = WS_S_CLOSING;
 					} else {
@@ -823,9 +830,10 @@ void ws_keepalive(unsigned int ticks, void *param)
 					}
 				}
 			} else {
-				int opcode = (ws_keepalive_mechanism == KEEPALIVE_MECHANISM_PING)
-								 ? OPCODE_PING
-								 : OPCODE_PONG;
+				int opcode =
+						(ws_keepalive_mechanism == KEEPALIVE_MECHANISM_PING)
+								? OPCODE_PING
+								: OPCODE_PONG;
 				ping_pong(wsc, opcode);
 			}
 		}
@@ -833,7 +841,6 @@ void ws_keepalive(unsigned int ticks, void *param)
 			wsconn_put_id(list_head[i].id);
 		}
 		i++;
-
 	}
 
 	wsconn_put_list_ids(list_head);

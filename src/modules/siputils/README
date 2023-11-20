@@ -1007,7 +1007,7 @@ if (is_supported("outbound")) { ... }
    Note that it does not detect spirals, which can have the condition for
    replies true also in the case of additional SIP reply reception.
 
-   Parameter mode is optional and can be an integer or a varaible holding
+   Parameter mode is optional and can be an integer or a variable holding
    an integer. If not provided, the behaviour is like mode==0.
 
    This function can be used from ANY_ROUTE.

@@ -55,18 +55,29 @@
 #include "../../core/cfg/cfg_struct.h"
 #include "cdp_stats.h"
 #include "cdp_functions.h"
+#include "cdp_tls.h"
 #include "../../core/mod_fix.h"
 
 MODULE_VERSION
 
-char* config_file="DiameterPeer.xml"; 	/**< default DiameterPeer configuration filename */
-unsigned int latency_threshold = 500;			/**< default threshold for Diameter calls (ms) */
+char *config_file =
+		"DiameterPeer.xml"; /**< default DiameterPeer configuration filename */
+unsigned int latency_threshold =
+		500; /**< default threshold for Diameter calls (ms) */
 unsigned int *latency_threshold_p = &latency_threshold;
-unsigned int workerq_latency_threshold = 100;	/**< default threshold for putting a task into worker queue (ms) */
-unsigned int workerq_length_threshold_percentage = 0;	/**< default threshold for worker queue length, percentage of max queue length - by default disabled */
+unsigned int workerq_latency_threshold =
+		100; /**< default threshold for putting a task into worker queue (ms) */
+unsigned int workerq_length_threshold_percentage =
+		0; /**< default threshold for worker queue length, percentage of max queue length - by default disabled */
 unsigned int debug_heavy = 0;
+unsigned int enable_tls = 0;
+int method = 0;
+str tls_method = str_init("TLSv1.1");
+str private_key = STR_NULL;
+str certificate = STR_NULL;
+str ca_list = STR_NULL;
 
-extern dp_config *config; 				/**< DiameterPeer configuration structure */
+extern dp_config *config; /**< DiameterPeer configuration structure */
 
 static int w_cdp_check_peer(sip_msg_t *msg, char *peer, char *p2);
 static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param);
@@ -74,11 +85,12 @@ static int w_cdp_has_app2(sip_msg_t *msg, char *vendor, char *appid);
 static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param);
 
 
+/* clang-format off */
+#define EXP_FUNC(NAME) {#NAME, (cmd_function)NAME, NO_SCRIPT, 0, 0}
+/* clang-format on */
 
-#define EXP_FUNC(NAME) \
-{#NAME, (cmd_function)NAME, NO_SCRIPT, 0, 0},
 /**
- * Exported functions. This is the API available for use from other SER modules.
+ * Exported functions. This is the API available for use from other modules.
  * If you require more, please add them here.
  * <p>
  * - load_cdp() - find and load the CDiameterPeer function bindings
@@ -111,65 +123,56 @@ static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param);
  * - AAAAddRequestHandler() - add a #AAARequestHandler_f callback to request being received
  * - AAAAddResponseHandler() - add a #AAAResponseHandler_f callback to responses being received
  */
+
+/* clang-format off */
 static cmd_export_t cdp_cmds[] = {
 	{"cdp_check_peer", (cmd_function)w_cdp_check_peer, 1, fixup_spve_null,
 		0, ANY_ROUTE},
-	{"cdp_has_app", (cmd_function)w_cdp_has_app, 1, fixup_igp_null,
-		0, ANY_ROUTE},
-	{"cdp_has_app", (cmd_function)w_cdp_has_app2, 2, fixup_igp_igp,
-		0, ANY_ROUTE},
-	{"load_cdp",					(cmd_function)load_cdp, 				NO_SCRIPT, 0, 0},
+	{"cdp_has_app", (cmd_function)w_cdp_has_app, 1, fixup_igp_null, 0,
+		ANY_ROUTE},
+	{"cdp_has_app", (cmd_function)w_cdp_has_app2, 2, fixup_igp_igp, 0,
+		ANY_ROUTE},
+	{"load_cdp", (cmd_function)load_cdp, NO_SCRIPT, 0, 0},
 
-	EXP_FUNC(AAACreateRequest)
-		EXP_FUNC(AAACreateResponse)
-		EXP_FUNC(AAAFreeMessage)
+	EXP_FUNC(AAACreateRequest),
+	EXP_FUNC(AAACreateResponse),
+	EXP_FUNC(AAAFreeMessage),
+	EXP_FUNC(AAACreateAVP),
+	EXP_FUNC(AAAAddAVPToMessage),
+	EXP_FUNC(AAAAddAVPToList),
+	EXP_FUNC(AAAFindMatchingAVP),
+	EXP_FUNC(AAAFindMatchingAVPList),
+	EXP_FUNC(AAAGetNextAVP),
+	EXP_FUNC(AAAFreeAVP),
+	EXP_FUNC(AAAFreeAVPList),
+	EXP_FUNC(AAAGroupAVPS),
+	EXP_FUNC(AAAUngroupAVPS),
+	EXP_FUNC(AAASendMessage),
+	EXP_FUNC(AAASendMessageToPeer),
+	EXP_FUNC(AAASendRecvMessage),
+	EXP_FUNC(AAASendRecvMessageToPeer),
+	EXP_FUNC(AAAAddRequestHandler),
+	EXP_FUNC(AAAAddResponseHandler),
+	EXP_FUNC(AAACreateTransaction),
+	EXP_FUNC(AAADropTransaction),
+	EXP_FUNC(AAACreateSession),
+	EXP_FUNC(AAAMakeSession),
+	EXP_FUNC(AAAGetSession),
+	EXP_FUNC(AAADropSession),
+	EXP_FUNC(AAASessionsLock),
+	EXP_FUNC(AAASessionsUnlock),
+	EXP_FUNC(AAACreateClientAuthSession),
+	EXP_FUNC(AAACreateServerAuthSession),
+	EXP_FUNC(AAAGetAuthSession),
+	EXP_FUNC(AAADropAuthSession),
+	EXP_FUNC(AAATerminateAuthSession),
+	EXP_FUNC(AAACreateCCAccSession),
+	EXP_FUNC(AAAStartChargingCCAccSession),
+	EXP_FUNC(AAAGetCCAccSession),
+	EXP_FUNC(AAADropCCAccSession),
+	EXP_FUNC(AAATerminateCCAccSession),
 
-
-		EXP_FUNC(AAACreateAVP)
-		EXP_FUNC(AAAAddAVPToMessage)
-		EXP_FUNC(AAAAddAVPToList)
-		EXP_FUNC(AAAFindMatchingAVP)
-		EXP_FUNC(AAAFindMatchingAVPList)
-		EXP_FUNC(AAAGetNextAVP)
-		EXP_FUNC(AAAFreeAVP)
-		EXP_FUNC(AAAFreeAVPList)
-		EXP_FUNC(AAAGroupAVPS)
-		EXP_FUNC(AAAUngroupAVPS)
-
-		EXP_FUNC(AAASendMessage)
-		EXP_FUNC(AAASendMessageToPeer)
-		EXP_FUNC(AAASendRecvMessage)
-		EXP_FUNC(AAASendRecvMessageToPeer)
-
-
-		EXP_FUNC(AAAAddRequestHandler)
-		EXP_FUNC(AAAAddResponseHandler)
-
-
-		EXP_FUNC(AAACreateTransaction)
-		EXP_FUNC(AAADropTransaction)
-
-
-		EXP_FUNC(AAACreateSession)
-		EXP_FUNC(AAAMakeSession)
-		EXP_FUNC(AAAGetSession)
-		EXP_FUNC(AAADropSession)
-		EXP_FUNC(AAASessionsLock)
-		EXP_FUNC(AAASessionsUnlock)
-
-		EXP_FUNC(AAACreateClientAuthSession)
-		EXP_FUNC(AAACreateServerAuthSession)
-		EXP_FUNC(AAAGetAuthSession)
-		EXP_FUNC(AAADropAuthSession)
-		EXP_FUNC(AAATerminateAuthSession)
-
-		EXP_FUNC(AAACreateCCAccSession)
-		EXP_FUNC(AAAStartChargingCCAccSession)
-		EXP_FUNC(AAAGetCCAccSession)
-		EXP_FUNC(AAADropCCAccSession)
-		EXP_FUNC(AAATerminateCCAccSession)
-
-		{ 0, 0, 0, 0, 0 }
+	{0, 0, 0, 0, 0}
 };
 
 
@@ -178,11 +181,20 @@ static cmd_export_t cdp_cmds[] = {
  * - config_file - Configuration filename. See configdtd.h for the structure and ConfigExample.xml.
  */
 static param_export_t cdp_params[] = {
-	{ "config_file",				PARAM_STRING,	&config_file}, 				/**< configuration filename */
-	{ "latency_threshold", 			PARAM_INT, 		&latency_threshold},		/**<threshold above which we will log*/
-	{ "workerq_latency_threshold", 	PARAM_INT, 		&workerq_latency_threshold},/**<time threshold putting job into queue*/
-	{ "workerq_length_threshold_percentage", 	PARAM_INT, 		&workerq_length_threshold_percentage},/**<queue length threshold - percentage of max queue length*/
+	{"config_file", PARAM_STRING,
+			&config_file}, /**< configuration filename */
+	{"latency_threshold", PARAM_INT,
+			&latency_threshold}, /**<threshold above which we will log*/
+	{"workerq_latency_threshold", PARAM_INT,
+			&workerq_latency_threshold}, /**<time threshold putting job into queue*/
+	{"workerq_length_threshold_percentage", PARAM_INT,
+			&workerq_length_threshold_percentage}, /**<queue length threshold - percentage of max queue length*/
 	{"debug_heavy", PARAM_INT, &debug_heavy},
+	{"enable_tls",					PARAM_INT,	&enable_tls}, 				/**< is TLS required or not */
+	{"tls_method",					PARAM_STR,	&tls_method}, 				/**< TLS version */
+	{"private_key",				PARAM_STR,	&private_key}, 				/**< full path to private key (if needed) */
+	{"certificate",				PARAM_STR,	&certificate}, 				/**< full path to certificate (if needed) */
+	{"ca_list", PARAM_STR, &ca_list}, /**<  CA list filename */
 	{ 0, 0, 0 }
 };
 
@@ -193,14 +205,16 @@ struct module_exports exports = {
 	"cdp",
 	DEFAULT_DLFLAGS,
 	cdp_cmds,		/**< Exported functions */
-	cdp_params,             /**< Exported parameters */
-	0,			/**< RPC cmds */
-	0,			/**< pseudovariables */
+	cdp_params,		/**< Exported parameters */
+	0,				/**< RPC cmds */
+	0,				/**< pseudovariables */
 	0,
-	cdp_init,               /**< Module initialization function */
-	cdp_child_init,		/**< per-child init function */
+	cdp_init,		/**< Module initialization function */
+	cdp_child_init, /**< per-child init function */
 	cdp_exit
 };
+/* clang-format on */
+
 
 /**
  * Module init function.
@@ -208,24 +222,41 @@ struct module_exports exports = {
  * - Initializes the diameter peer using the provided configuration file.
  * - Registers with pt the required number of processes.
  */
-static int cdp_init( void )
+static int cdp_init(void)
 {
-	if (rpc_register_array(cdp_rpc) != 0) {
+	if(rpc_register_array(cdp_rpc) != 0) {
 		LM_ERR("failed to register RPC commands for CDP module\n");
 		return -1;
 	}
 
-	if (cdp_init_counters() != 0) {
+	if(cdp_init_counters() != 0) {
 		LM_ERR("Failed to register counters for CDP modules\n");
 		return -1;
 	}
 
-	if (!diameter_peer_init(config_file)){
+	if(!diameter_peer_init(config_file)) {
 		LM_ERR("error initializing the diameter peer\n");
 		return 1;
 	}
-	register_procs(2+config->workers + 2 * config->peers_cnt);
-	cfg_register_child(2+config->workers + 2 * config->peers_cnt);
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	if(enable_tls) {
+		init_ssl_methods();
+		method = tls_parse_method(&tls_method);
+		if(method < 0) {
+			LM_ERR("Invalid tls_method parameter value\n");
+			return -1;
+		}
+	}
+#else
+	if(enable_tls) {
+		LM_ERR("TLS requires openssl 1.1.0 or newer\n");
+		return -1;
+	}
+#endif
+
+	register_procs(2 + config->workers + 2 * config->peers_cnt);
+	cfg_register_child(2 + config->workers + 2 * config->peers_cnt);
 	return 0;
 }
 
@@ -234,9 +265,9 @@ static int cdp_init( void )
  * - starts the DiameterPeer by forking the processes
  * @param rank - id of the child
  */
-static int cdp_child_init( int rank )
+static int cdp_child_init(int rank)
 {
-	if (rank == PROC_MAIN) {
+	if(rank == PROC_MAIN) {
 		LM_INFO("CDiameterPeer child starting ...\n");
 		diameter_peer_start(0);
 		LM_INFO("... CDiameterPeer child started\n");
@@ -250,7 +281,7 @@ static int cdp_child_init( int rank )
  *	Module termination function.
  * - stop the DiameterPeer processes in a civilized manner
  */
-static void cdp_exit( void )
+static void cdp_exit(void)
 {
 	LM_INFO("CDiameterPeer child stopping ...\n");
 	diameter_peer_destroy();
@@ -258,34 +289,34 @@ static void cdp_exit( void )
 	return;
 }
 
-int w_cdp_check_peer(sip_msg_t *msg, char *peer, char *p2) {
+int w_cdp_check_peer(sip_msg_t *msg, char *peer, char *p2)
+{
 	str s;
-	if(fixup_get_svalue(msg, (gparam_p)peer, &s)<0)
-	{
+	if(fixup_get_svalue(msg, (gparam_p)peer, &s) < 0) {
 		LM_ERR("cannot get the peer\n");
 		return -1;
 	}
-	if (s.len > 0) {
+	if(s.len > 0) {
 		return check_peer(&s);
 	}
 	return -1;
 }
 
-static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param) {
+static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param)
+{
 	unsigned int app_flags;
 	str app_s = STR_NULL;
 	int a;
 	if(msg == NULL)
 		return -1;
 
-	if (get_is_fparam(&a, &app_s, msg, (fparam_t *)appid, &app_flags) != 0) {
+	if(get_is_fparam(&a, &app_s, msg, (fparam_t *)appid, &app_flags) != 0) {
 		LM_ERR("no Vendor-ID\n");
 		return -1;
-	}  
+	}
 	if(!(app_flags & PARAM_INT)) {
 		if(app_flags & PARAM_STR)
-			LM_ERR("unable to get app from [%.*s]\n", app_s.len,
-					app_s.s);
+			LM_ERR("unable to get app from [%.*s]\n", app_s.len, app_s.s);
 		else
 			LM_ERR("unable to get app\n");
 		return -1;
@@ -293,7 +324,8 @@ static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param) {
 	return check_application(-1, a);
 }
 
-static int w_cdp_has_app2(sip_msg_t *msg, char *vendor, char *appid) {
+static int w_cdp_has_app2(sip_msg_t *msg, char *vendor, char *appid)
+{
 	unsigned int vendor_flags, app_flags;
 	str vendor_s = STR_NULL;
 	str app_s = STR_NULL;
@@ -301,10 +333,11 @@ static int w_cdp_has_app2(sip_msg_t *msg, char *vendor, char *appid) {
 	if(msg == NULL)
 		return -1;
 
-	if (get_is_fparam(&v, &vendor_s, msg, (fparam_t *)vendor, &vendor_flags) != 0) {
+	if(get_is_fparam(&v, &vendor_s, msg, (fparam_t *)vendor, &vendor_flags)
+			!= 0) {
 		LM_ERR("no Vendor-ID\n");
 		return -1;
-	} 
+	}
 	if(!(vendor_flags & PARAM_INT)) {
 		if(vendor_flags & PARAM_STR)
 			LM_ERR("unable to get vendor from [%.*s]\n", vendor_s.len,
@@ -313,14 +346,13 @@ static int w_cdp_has_app2(sip_msg_t *msg, char *vendor, char *appid) {
 			LM_ERR("unable to get vendor\n");
 		return -1;
 	}
-	if (get_is_fparam(&a, &app_s, msg, (fparam_t *)appid, &app_flags) != 0) {
+	if(get_is_fparam(&a, &app_s, msg, (fparam_t *)appid, &app_flags) != 0) {
 		LM_ERR("no Vendor-ID\n");
 		return -1;
-	}  
+	}
 	if(!(app_flags & PARAM_INT)) {
 		if(app_flags & PARAM_STR)
-			LM_ERR("unable to get app from [%.*s]\n", app_s.len,
-					app_s.s);
+			LM_ERR("unable to get app from [%.*s]\n", app_s.len, app_s.s);
 		else
 			LM_ERR("unable to get app\n");
 		return -1;

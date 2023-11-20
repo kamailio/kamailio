@@ -36,13 +36,13 @@ int tps_redis_insert_dialog(tps_data_t *td);
 int tps_redis_clean_dialogs(void);
 int tps_redis_insert_branch(tps_data_t *td);
 int tps_redis_clean_branches(void);
-int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
-		uint32_t mode);
+int tps_redis_load_branch(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
 int tps_redis_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
-int tps_redis_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
-		uint32_t mode);
-int tps_redis_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
-		uint32_t mode);
+int tps_redis_update_branch(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
+int tps_redis_update_dialog(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
 int tps_redis_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 
 #endif

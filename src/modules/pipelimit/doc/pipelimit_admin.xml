@@ -115,7 +115,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -174,7 +174,7 @@ modparam("pipelimit", "db_url", "&exampledb;")
 	<section id="pipelimit.p.plp_table_name">
 	    <title><varname>plp_table_name</varname> (string)</title>
 	    <para>
-			Name of DB table where data definition for pipes is stores.
+			Name of DB table where data definition for pipes is stored.
 	    </para>
 	    <para>
 		<emphasis>
@@ -218,7 +218,7 @@ modparam("pipelimit", "plp_pipeid_column", "name")
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>limit</quote>.
+		    Default value is <quote>plimit</quote>.
 		</emphasis>
 	    </para>
 	    <example>
@@ -420,13 +420,13 @@ modparam("pipelimit", "clean_unused", 10)
 		<para>
 		Check the current request against the 'name' pipe.
 		</para>
-		<para>	
+		<para>
 		If algorithm and limit are provided, the function attempts to create a
 		new pipe if one with that name doesn't exit. If it exists, no changes
 		to algorithm is done and the pipe limit is set to the 'limit' parameter
 		value, if this is greater than 0. Algorithm is case sensitive.
 		</para>
-		<para>	
+		<para>
 		The pipe name can be provided via a pseudo variable.
 		</para>
 		<para>The method will return:
@@ -655,6 +655,56 @@ kamcmd pl.stats
 		<programlisting  format="linespecific">
 ...
 kamcmd pl.set_pipe 2 RED 10
+...
+		</programlisting>
+	</section>
+	<section id="pipelimit.r.pl.reset_pipe">
+		<title>
+		<function moreinfo="none">pl.reset_pipe</function>
+		</title>
+		<para>
+		Reset the values associated with the pipe.
+		</para>
+		<para>
+		Name: <emphasis>pl.reset_pipe</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>pipe_id</emphasis> - pipe id.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+kamcmd pl.reset_pipe p01
+...
+		</programlisting>
+	</section>
+	<section id="pipelimit.r.pl.rm_pipe">
+		<title>
+		<function moreinfo="none">pl.rm_pipe</function>
+		</title>
+		<para>
+		Remove the pipe structure matching the given pipe id.
+		</para>
+		<para>
+		Name: <emphasis>pl.rm_pipe</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>pipe_id</emphasis> - pipe id.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+kamcmd pl.rm_pipe p01
 ...
 		</programlisting>
 	</section>

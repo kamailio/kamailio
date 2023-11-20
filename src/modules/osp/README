@@ -221,7 +221,7 @@ modparam("osp","device_ip","[1.1.1.1]")
 
    The device_port (string) parameter is an optional field which includes
    the SIP port being used by Kamailio in the peering request (as
-   SourceAlternate type=network) to the peering server. If is not
+   SourceAlternate type=network) to the peering server. If it is not
    configured, this information is not included in the peering request.
    This field is useful if multiple Kamailio are running on the same Linux
    computer since it enables the peering server to administer different
@@ -393,7 +393,7 @@ modparam("osp","redirection_uri_format",1)
    value is "$avp(s:_osp_source_networkid_)". Then the source network ID
    can be set by "$avp(s:_osp_source_networkid_) = pseudo-variables". All
    pseudo variables are described in
-   http://kamailio.org/dokuwiki/doku.php/pseudovariables:1.3.x.
+   https://www.kamailio.org/wikidocs/cookbooks/devel/pseudovariables/.
 
    Example 1.17. Setting the source network ID AVP
 modparam("osp","source_networkid_avp","$avp(s:snid)")

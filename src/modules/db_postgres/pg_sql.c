@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -23,7 +23,7 @@
  */
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
 /** \file
@@ -91,7 +91,7 @@ struct string_buffer
 {
 	char *s;	   /**< allocated memory itself */
 	int len;	   /**< used memory */
-	int size;	  /**< total size of allocated memory */
+	int size;	   /**< total size of allocated memory */
 	int increment; /**< increment when realloc is necessary */
 };
 

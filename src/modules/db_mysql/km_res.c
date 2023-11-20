@@ -49,25 +49,25 @@ extern int db_mysql_unsigned_type;
  * \param _r database result set
  * \return 0 on success, negative on failure
  */
-int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
+int db_mysql_get_columns(const db1_con_t *_h, db1_res_t *_r)
 {
 	int col;
-	MYSQL_FIELD* fields;
+	MYSQL_FIELD *fields;
 
-	if ((!_h) || (!_r)) {
+	if((!_h) || (!_r)) {
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
 	RES_COL_N(_r) = mysql_field_count(CON_CONNECTION(_h));
-	if (!RES_COL_N(_r)) {
+	if(!RES_COL_N(_r)) {
 		LM_ERR("no columns returned from the query\n");
 		return -2;
 	} else {
 		LM_DBG("%d columns returned from the query\n", RES_COL_N(_r));
 	}
 
-	if (db_allocate_columns(_r, RES_COL_N(_r)) != 0) {
+	if(db_allocate_columns(_r, RES_COL_N(_r)) != 0) {
 		RES_COL_N(_r) = 0;
 		LM_ERR("could not allocate columns\n");
 		return -3;
@@ -75,8 +75,8 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 
 	fields = mysql_fetch_fields(RES_RESULT(_r));
 	for(col = 0; col < RES_COL_N(_r); col++) {
-		RES_NAMES(_r)[col] = (str*)pkg_malloc(sizeof(str));
-		if (! RES_NAMES(_r)[col]) {
+		RES_NAMES(_r)[col] = (str *)pkg_malloc(sizeof(str));
+		if(!RES_NAMES(_r)[col]) {
 			PKG_MEM_ERROR;
 			db_free_columns(_r);
 			return -4;
@@ -97,7 +97,7 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 			case MYSQL_TYPE_LONG:
 			case MYSQL_TYPE_INT24:
 			case MYSQL_TYPE_TIMESTAMP:
-				if ((db_mysql_unsigned_type != 0)
+				if((db_mysql_unsigned_type != 0)
 						&& (fields[col].flags & UNSIGNED_FLAG)) {
 					LM_DBG("use DB1_UINT result type\n");
 					RES_TYPES(_r)[col] = DB1_UINT;
@@ -108,7 +108,7 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 				break;
 
 			case MYSQL_TYPE_LONGLONG:
-				if ((db_mysql_unsigned_type != 0)
+				if((db_mysql_unsigned_type != 0)
 						&& (fields[col].flags & UNSIGNED_FLAG)) {
 					LM_DBG("use DB1_UBIGINT result type\n");
 					RES_TYPES(_r)[col] = DB1_UBIGINT;
@@ -140,9 +140,9 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 				break;
 
 			case MYSQL_TYPE_DECIMAL:
-			#if MYSQL_VERSION_ID > 49999
+#if MYSQL_VERSION_ID > 49999
 			case MYSQL_TYPE_NEWDECIMAL:
-			#endif
+#endif
 			case MYSQL_TYPE_STRING:
 			case MYSQL_TYPE_VAR_STRING:
 				LM_DBG("use DB1_STRING result type\n");
@@ -151,8 +151,9 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 
 			default:
 				LM_WARN("unhandled data type column (%.*s) type id (%d), "
-						"use DB1_STRING as default\n", RES_NAMES(_r)[col]->len,
-						RES_NAMES(_r)[col]->s, fields[col].type);
+						"use DB1_STRING as default\n",
+						RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s,
+						fields[col].type);
 				RES_TYPES(_r)[col] = DB1_STRING;
 				break;
 		}
@@ -167,23 +168,23 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
  * \param _r database result set
  * \return 0 on success, negative on failure
  */
-static inline int db_mysql_convert_rows(const db1_con_t* _h, db1_res_t* _r)
+static inline int db_mysql_convert_rows(const db1_con_t *_h, db1_res_t *_r)
 {
 	int row;
 
-	if ((!_h) || (!_r)) {
+	if((!_h) || (!_r)) {
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
 	RES_ROW_N(_r) = mysql_num_rows(RES_RESULT(_r));
-	if (!RES_ROW_N(_r)) {
+	if(!RES_ROW_N(_r)) {
 		LM_DBG("no rows returned from the query\n");
 		RES_ROWS(_r) = 0;
 		return 0;
 	}
 
-	if (db_allocate_rows(_r) < 0) {
+	if(db_allocate_rows(_r) < 0) {
 		LM_ERR("could not allocate rows");
 		RES_ROW_N(_r) = 0;
 		return -2;
@@ -191,13 +192,13 @@ static inline int db_mysql_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 
 	for(row = 0; row < RES_ROW_N(_r); row++) {
 		RES_ROW(_r) = mysql_fetch_row(RES_RESULT(_r));
-		if (!RES_ROW(_r)) {
+		if(!RES_ROW(_r)) {
 			LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
 			RES_ROW_N(_r) = row;
 			db_free_rows(_r);
 			return -3;
 		}
-		if (db_mysql_convert_row(_h, _r, &(RES_ROWS(_r)[row])) < 0) {
+		if(db_mysql_convert_row(_h, _r, &(RES_ROWS(_r)[row])) < 0) {
 			LM_ERR("error while converting row #%d\n", row);
 			RES_ROW_N(_r) = row;
 			db_free_rows(_r);
@@ -214,19 +215,19 @@ static inline int db_mysql_convert_rows(const db1_con_t* _h, db1_res_t* _r)
  * \param _r database result
  * \return 0 on success, negative on failure
  */
-int db_mysql_convert_result(const db1_con_t* _h, db1_res_t* _r)
+int db_mysql_convert_result(const db1_con_t *_h, db1_res_t *_r)
 {
-	if ((!_h) || (!_r)) {
+	if((!_h) || (!_r)) {
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
-	if (db_mysql_get_columns(_h, _r) < 0) {
+	if(db_mysql_get_columns(_h, _r) < 0) {
 		LM_ERR("error while getting column names\n");
 		return -2;
 	}
 
-	if (db_mysql_convert_rows(_h, _r) < 0) {
+	if(db_mysql_convert_rows(_h, _r) < 0) {
 		LM_ERR("error while converting rows\n");
 		db_free_columns(_r);
 		return -3;
@@ -239,15 +240,15 @@ int db_mysql_convert_result(const db1_con_t* _h, db1_res_t* _r)
  * \brief Allocate new result set with private structure
  * \return db1_res_t object on success, NULL on failure
  */
-db1_res_t* db_mysql_new_result(void)
+db1_res_t *db_mysql_new_result(void)
 {
-	db1_res_t* obj;
+	db1_res_t *obj;
 
 	obj = db_new_result();
-	if (!obj)
+	if(!obj)
 		return NULL;
 	RES_PTR(obj) = pkg_malloc(sizeof(struct my_res));
-	if (!RES_PTR(obj)) {
+	if(!RES_PTR(obj)) {
 		PKG_MEM_ERROR;
 		db_free_result(obj);
 		return NULL;

@@ -54,7 +54,7 @@
 #include "utilities.h"
 #include "response.h"
 
-/* 
+/*
  * is_http_laquot(search)
  * return 1 if true else 0
  */
@@ -77,7 +77,7 @@ int is_http_laquot(char *search)
 	return 0;
 }
 
-/* 
+/*
  * is_https_laquot(search)
  * return 1 if true else 0
  */
@@ -101,7 +101,7 @@ int is_https_laquot(char *search)
 	return 0;
 }
 
-/* 
+/*
  * is_http(search)
  * return 1 if true else 0
  */
@@ -123,7 +123,7 @@ int is_http(char *search)
 	return 0;
 }
 
-/* 
+/*
  * is_https(search)
  * return 1 if true else 0
  */
@@ -146,7 +146,7 @@ int is_https(char *search)
 	return 0;
 }
 
-/* 
+/*
  * is_cid_laquot(search)
  * return 1 if true else 0
  */
@@ -168,7 +168,7 @@ int is_cid_laquot(char *search)
 	return 0;
 }
 
-/* 
+/*
  * is_cid(search)
  * return 1 if true else 0
  */
@@ -189,7 +189,7 @@ int is_cid(char *search)
 	return 0;
 }
 
-/* 
+/*
  * is_urn(search)
  * return 1 if true else 0
  */
@@ -354,6 +354,35 @@ void lost_reverse_response_list(p_lost_list_t *head)
 }
 
 /*
+ * lost_append_response_list(list, str)
+ * appends str value to list object and returns str len
+ */
+int lost_append_response_list(p_lost_list_t *head, str val)
+{
+	int len = 0;
+	p_lost_list_t new = NULL;
+	p_lost_list_t current = *head;
+
+	new = lost_new_response_list();
+	if(new != NULL) {
+		new->value = lost_copy_string(val, &len);
+		new->next = NULL;
+
+		LM_DBG("### new list data [%.*s]\n", val.len, val.s);
+
+		if(current == NULL) {
+			*head = new;
+			return len;
+		}
+		while(current->next != NULL) {
+			current = current->next;
+		}
+		current->next = new;
+	}
+	return len;
+}
+
+/*
  * lost_search_response_list(list, value, search)
  * looks for search string in list object and returns pointer if found
  */
@@ -378,7 +407,7 @@ int lost_search_response_list(p_lost_list_t *list, char **val, const char *str)
 				*val = cur->value;
 
 				LM_DBG("###\t[%s] found\n", cur->value);
-				
+
 				return 1;
 			}
 		}
@@ -500,7 +529,7 @@ void lost_delete_response_issues(p_lost_issue_t *list)
 
 /*
  * lost_delete_response_issue(mapping)
- * removes respone data object from private memory
+ * removes response data object from private memory
  */
 void lost_delete_response_data(p_lost_data_t *m)
 {
@@ -583,7 +612,7 @@ void lost_free_findServiceResponse(p_lost_fsr_t *res)
 
 /*
  * lost_get_response_issue(node)
- * parses response issue (errors, warnings) and writes 
+ * parses response issue (errors, warnings) and writes
  * results to issue object
  */
 p_lost_issue_t lost_get_response_issues(xmlNodePtr node)
@@ -633,11 +662,11 @@ p_lost_issue_t lost_get_response_issues(xmlNodePtr node)
 				/* source property not found, clean up and return */
 				lost_delete_response_type(&issue); /* clean up */
 				break;
-			}			
+			}
 
 			LM_DBG("###\t[%s]\n", issue->type);
 
-			/* type and source property found ... parse text and copy */ 
+			/* type and source property found ... parse text and copy */
 			if(issue->info != NULL) {
 				issue->info->text = lost_get_property(cur, PROP_MSG, &len);
 				issue->info->lang = lost_get_property(cur, PROP_LANG, &len);
@@ -1043,7 +1072,7 @@ p_lost_fsr_t lost_parse_findServiceResponse(str ret)
  * 1: location reference found
  * 2: location value found
  * 3: location value and reference found
- * multiple occurences are ignored
+ * multiple occurrences are ignored
  */
 int lost_check_HeldResponse(xmlNodePtr node)
 {

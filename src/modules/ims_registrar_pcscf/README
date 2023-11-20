@@ -124,7 +124,7 @@ Chapter 1. Admin Guide
 
 2.2. External Libraries or Applications
 
-   This modules requires the internal IMS library.
+   This module requires the internal IMS library.
 
 3. Parameters
 
@@ -172,7 +172,7 @@ modparam("ims_registrar_pcscf", "received_avp", "$avp(i:42)")
 
 3.4. is_registered_fallback2ip (int)
 
-   Defines, whether a contact should be searched by it's contact only or
+   Defines, whether a contact should be searched by its Contact: only or
    alternatively by the received IP-Address.
 
    The option may have the following values:
@@ -311,6 +311,33 @@ pcscf_save("location");
    Meaning of the parameters is as follows:
      * domain - Logical domain within the registrar. If a database is used
        then this must be name of the table which stores the contacts.
+
+   The return code may have the following values:
+     * ( 1) OK
+     * (-1) Parsing of contact data failed
+     * (-2) Deregistration in progress
+
+   For db_mode = DB_ONLY (3) setting for ims_usrloc_pcscf module modparam
+   following logic is implemented:
+     * To avoid race time conditions between a REREGISTER and the expiry
+       handler state machine in the scscf an approach is chosen to refuse
+       a REREGISTER in time window of 20 seconds after pcontact expiry on
+       the pcscf (thus allowing expiry handling to finish). REREGISTER is
+       refused in this scenario with return code -2.
+     * In case a REREGISTER arrives at pcscf and the respective pcontact
+       is expired longer than time window of 20 seconds registration also
+       is refused with return code -2 and additionaly PUBLISH is sent to
+       scscf with expiry = 0.
+     * The rc -2 shall be handled in register.cfg script as follows:
+       pcscf_save_pending("location");
+       switch ($retcode) {
+       case -1:
+       .......
+       case -2:
+       send_reply("500", "Deregister in progress - Please try again");
+       exit;
+       break;
+       }
 
 4.3. pcscf_follows_service_routes(domain)
 

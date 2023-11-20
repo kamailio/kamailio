@@ -247,7 +247,7 @@ static int w_ldap_search(struct sip_msg *msg, char *ldap_url, char *param)
 {
 	str ldap_url_val = STR_NULL;
 
-	if(fixup_get_svalue(msg, (gparam_t*)ldap_url, &ldap_url_val)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)ldap_url, &ldap_url_val) < 0) {
 		LM_ERR("failed to get ldap url parameter\n");
 		return -1;
 	}
@@ -328,7 +328,7 @@ static int ldap_result_fixup(void **param, int param_no)
 		lp = (struct ldap_result_params *)pkg_malloc(
 				sizeof(struct ldap_result_params));
 		if(lp == NULL) {
-			LM_ERR("no memory\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		memset(lp, 0, sizeof(struct ldap_result_params));
@@ -388,7 +388,7 @@ static int ldap_result_check_fixup(void **param, int param_no)
 		lp = (struct ldap_result_check_params *)pkg_malloc(
 				sizeof(struct ldap_result_check_params));
 		if(lp == NULL) {
-			LM_ERR("no memory\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		memset(lp, 0, sizeof(struct ldap_result_check_params));
@@ -444,7 +444,7 @@ static int ldap_filter_url_encode_fixup(void **param, int param_no)
 	} else if(param_no == 2) {
 		spec_p = (pv_spec_t *)pkg_malloc(sizeof(pv_spec_t));
 		if(spec_p == NULL) {
-			LM_ERR("no memory\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		s.s = (char *)*param;
@@ -483,8 +483,8 @@ static int ki_ldap_result_str(sip_msg_t *msg, str *attrname, str *avpname)
 	int_str dst_avp_name;
 
 	dst_avp_name.s = *avpname;
-	return ldap_result_toavp(msg, attrname, NULL, &dst_avp_name,
-			AVP_NAME_STR, 0 /*str result*/);
+	return ldap_result_toavp(
+			msg, attrname, NULL, &dst_avp_name, AVP_NAME_STR, 0 /*str result*/);
 }
 
 /**

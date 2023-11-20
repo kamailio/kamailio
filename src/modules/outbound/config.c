@@ -32,15 +32,13 @@
 #include "config.h"
 
 struct cfg_group_outbound default_outbound_cfg = {
-		0,	/* Read only variable to mark if outbound is enabled */
+		0, /* Read only variable to mark if outbound is enabled */
 };
 
 void *outbound_cfg = &default_outbound_cfg;
 
 cfg_def_t outbound_cfg_def[] = {
-	{ "outbound_enabled", CFG_VAR_INT | CFG_ATOMIC | CFG_READONLY,
-	  0, 0, 0, 0,
-	  "If set to one (true) Outbound is enabled." },
+		{"outbound_enabled", CFG_VAR_INT | CFG_ATOMIC | CFG_READONLY, 0, 0, 0,
+				0, "If set to one (true) Outbound is enabled."},
 
-	{0, 0, 0, 0, 0, 0}
-};
+		{0, 0, 0, 0, 0, 0}};

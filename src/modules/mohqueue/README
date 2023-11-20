@@ -327,7 +327,7 @@ $var(mohq) = "operators";
    volatile database in memory of call status. If the module is restarted
    it loses the internal database and clears the external one.
 
-   On a reqular basis it checks the external table that defines the queues
+   On a regular basis it checks the external table that defines the queues
    to see if the definition has changed. It makes this check under the
    following conditions: the queue has not been checked in the last 60
    seconds AND no call is currently in queue or transitioning in or out.

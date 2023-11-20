@@ -11,7 +11,7 @@
 <section id="auth.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
 
     <title>Parameters</title>
-    
+
     <section id="auth.p.auth_checks_register">
 	<title><varname>auth_checks_register</varname> (flags)</title>
 	<para>
@@ -30,8 +30,8 @@
 		<title><varname>auth_checks_in_dlg</varname> (flags)</title>
 	<para>
 		These three module parameters control which optional integrity
-        	checks will be performed on the SIP message carrying digest response
-        	during SIP MD5 digest authentication. <varname>auth_check_register</varname>
+		checks will be performed on the SIP message carrying digest response
+		during SIP MD5 digest authentication. <varname>auth_checks_register</varname>
         	controls integrity checks to be performed on REGISTER messages,
         	<varname>auth_checks_no_dlg</varname> controls which optional
         	integrity checks will be performed on SIP requests that have no To
@@ -48,7 +48,7 @@
 	<para>
 		Without the extra checks the nonce will protect only against expired
 		values. Some reply attacks are still possible in the expire "window".
-		A possible workaround is to always force qop authentication and 
+		A possible workaround is to always force qop authentication and
 		always check the uri from the authorization header, but this would
 		not work if an upstream proxy rewrites the uri
 		and it will also not work with a lot of UA implementations.
@@ -61,9 +61,9 @@
 	</para>
 	<para>
 		When the extra checks are enabled, the nonce will include an extra
-		MD5 over the selected part/parts of the message (see below) and some 
-		other secret. This will be used to check if the selected part of 
-		the message is the same when an UA tries to reuse the nonce, thus 
+		MD5 over the selected part/parts of the message (see below) and some
+		other secret. This will be used to check if the selected part of
+		the message is the same when an UA tries to reuse the nonce, thus
 		protecting or severely limiting reply attacks.
 	</para>
 	<para>
@@ -106,13 +106,13 @@
 	</para></warning>
 	<para>
 		When the <varname>secret</varname> parameter is set and the extra
-		checks are enabled, the first half of the <varname>secret</varname> 
+		checks are enabled, the first half of the <varname>secret</varname>
 		will be used for the expire time MD5 and the other half for the extra
 		checks MD5, so make sure you have a long secret (32 chars or longer are
 		recommended).
 	</para>
 	<example>
-	    <title>Setting the <varname>auth_checks_register</varname> module 
+	    <title>Setting the <varname>auth_checks_register</varname> module
 				parameter</title>
 	    <programlisting>
 ...
@@ -144,16 +144,16 @@ modparam("auth", "auth_checks_in_dlg", 15)
 	<title><varname>qop</varname> (string)</title>
 	<para>
 		If set, enable <emphasis>qop</emphasis> for challenges: each challenge
-		will include a <emphasis>qop</emphasis> parameter. This is the 
+		will include a <emphasis>qop</emphasis> parameter. This is the
 		recommended way, but some older non rfc3261 compliant UAs might get
 		confused and might not authenticate properly if <varname>qop</varname>
 		is enabled.
 	</para>
 	<para>
 		Enabling <varname>qop</varname> together with
-		<varname>nonce_count</varname> will provide extra-security 
-		(protection against replay attacks) while still allowing 
-		credentials caching at the UA side and thus not compromising 
+		<varname>nonce_count</varname> will provide extra-security
+		(protection against replay attacks) while still allowing
+		credentials caching at the UA side and thus not compromising
 		performance.
 	</para>
 	<para>
@@ -179,63 +179,64 @@ modparam("auth", "qop", "auth")   # set qop=auth
     <section id="auth.p.nonce_count">
 	<title><varname>nonce_count</varname> (boolean)</title>
 	<para>
-		If enabled the received <emphasis>nc</emphasis> value is remembered 
+		If enabled the received <emphasis>nc</emphasis> value is remembered
 		and checked against the older value (for a successful authentication
-		the received <emphasis>nc</emphasis> must be greater then the 
-		previously received one, see rfc2617 for more details). This will 
+		the received <emphasis>nc</emphasis> must be greater than the
+		previously received one, see rfc2617 for more details). This will
 		provide protection against replay attacks while still allowing
 		credentials caching at the UA side.
 	</para>
 	<para>
-		It depends on <varname>qop</varname> being enabled (if 
+		It depends on <varname>qop</varname> being enabled (if
 		<varname>qop</varname> is not enabled, the challenges won't include
 		<emphasis>qop</emphasis> and so the UA will probably not include the
 		<emphasis>qop</emphasis> or <emphasis>nc</emphasis> parameters in its
 		response).
 	</para>
 	<para>
-		If a response doesn't include <emphasis>qop</emphasis> or 
+		If a response doesn't include <emphasis>qop</emphasis> or
 		<emphasis>nc</emphasis> (for example obsolete UAs that don't support
 		them) the response will be checked according to the other enabled
-		nonce checks, in this order: one_time_nonce and auth_check_*.
+		nonce checks, in this order: <varname>one_time_nonce</varname> and
+		<varname>auth_checks_*</varname>.
 		If a response includes <emphasis>nc</emphasis> only the normal
-		<varname>nonce_expire</varname> checks and the 
+		<varname>nonce_expire</varname> checks and the
 		<varname>nonce_count</varname> checks will be performed, all
 		the other checks will be ignored.
 	</para>
 	<para>
 		The <varname>nonce_count</varname> checks work by tracking a limited
 		number of nonces. The maximum number of tracked nonces is set using
-		the <varname>nc_array_size</varname> or 
-		<varname>nc_array_order</varname> parameters. If this number is 
+		the <varname>nc_array_size</varname> or
+		<varname>nc_array_order</varname> parameters. If this number is
 		exceeded, older entries will be overwritten. As long as the maximum
-		rate of challengeable messages per average response time is lower then
+		rate of challengeable messages per average response time is lower than
 		<varname>nc_array_size</varname>, the <varname>nonce_count</varname>
 		checks should work flawlessly. For optimum performance (maximum reuse
 		of cache credentials) <varname>nc_array_size</varname> divided by
-		<varname>nid_pool_no</varname> should be lower then the message rate
+		<varname>nid_pool_no</varname> should be lower than the message rate
 		 multiplied by the desired <varname>nonce_expire</varname>.
 	</para>
 	<para>
-		The maximum accepted <emphasis>nc</emphasis> value is 255. If 
-		<emphasis>nc</emphasis> becomes greater then this, the nonce will be
+		The maximum accepted <emphasis>nc</emphasis> value is 255. If
+		<emphasis>nc</emphasis> becomes greater than this, the nonce will be
 		considered stale and the UA will be re-challenged.
 	</para>
 	<para>
-		<emphasis>Note:</emphasis> <varname>nonce_count</varname> should be 
+		<emphasis>Note:</emphasis> <varname>nonce_count</varname> should be
 		enabled only in stateful mode (a transaction should be created prior
 		to the authentication check to absorb possible retransmissions and all
-		the replies should be sent statefully, using 
+		the replies should be sent statefully, using
 		<function>t_reply()</function>).
 		If <varname>nonce_count</varname> and the authentication checks are
-		used in the stateless mode then all retransmissions will be 
+		used in the stateless mode then all retransmissions will be
 		challenged.
 	</para>
 	<para>
 		The default value is 0 (off).
 	</para>
 	<para>
-		See also: 
+		See also:
 			<varname>qop</varname>,
 			<varname>nc_array_size</varname>,
 			<varname>nc_array_order</varname>,
@@ -260,15 +261,15 @@ route{
 	};
 	if (method=="REGISTER"){
 		if (!www_authenticate("test", "credentials")){
-			# reply must be sent with t_reply because the 
-			# transaction is already created at this point 
+			# reply must be sent with t_reply because the
+			# transaction is already created at this point
 			# (we are in "stateful" mode)
 			if ($? == -2){
 				t_reply("500", "Internal Server Error");
 			}else if ($? == -3){
 				t_reply("400", "Bad Request");
 			}else{
-				if ($digest_challenge) 
+				if ($digest_challenge)
 					append_to_reply("%$digest_challenge");
 				t_reply("401", "Unauthorized");
 			}
@@ -279,7 +280,7 @@ route{
 			drop;
 		}
 		append_to_reply("%$contact");
-		t_reply("$code", "$reason"); # no %, avps are used directly 
+		t_reply("$code", "$reason"); # no %, avps are used directly
 		drop;
 	}else{
 		if (!proxy_authenticate("my_realm", "credentials")){
@@ -288,7 +289,7 @@ route{
 			}else if ($? == -3){
 				t_reply("400", "Bad Request");
 			}else{
-				if ($digest_challenge) 
+				if ($digest_challenge)
 					append_to_reply("%$digest_challenge");
 				t_reply("401", "Unauthorized");
 			}
@@ -304,7 +305,7 @@ route{
 	<title><varname>one_time_nonce</varname> (boolean)</title>
 	<para>
 		If set to 1 nonce reuse is disabled: each nonce is allowed only once,
-		in the first response to a challenge. All the messages will be 
+		in the first response to a challenge. All the messages will be
 		challenged, even retransmissions. Stateful mode should be used, to
 		catch retransmissions before the authentication checks (using
 		<function>t_newtran()</function> before the authentication checks
@@ -313,37 +314,37 @@ route{
 	<para>
 		<varname>one_time_nonce</varname> provides enhanced replay protections
 		at the cost of invalidating UA side credentials caching, challenging
-		every message (and thus generating extra messages and extra 
-		round-trips) and requiring stateful mode. In general 
+		every message (and thus generating extra messages and extra
+		round-trips) and requiring stateful mode. In general
 		<varname>qop</varname> and <varname>nonce_count</varname> should
-		be prefered (if possible) with fallback to 
-		<varname>auth_checks_*</varname>. Due to the disadvantages listed 
-		above, <varname>one_time_nonce</varname> should be used only if the 
+		be prefered (if possible) with fallback to
+		<varname>auth_checks_*</varname>. Due to the disadvantages listed
+		above, <varname>one_time_nonce</varname> should be used only if the
 		extra checks provided by <varname>auth_checks_register</varname>,
 		<varname>auth_checks_no_dlg</varname> and
 		<varname>auth_checks_in_dlg</varname> are deemed insufficient for a
 		specific setup.
 	</para>
 	<para>
-		Compared to <varname>nonce_count</varname>, 
+		Compared to <varname>nonce_count</varname>,
 		<varname>one_time_nonce</varname> provides the same protection, but at
 		a higher message cost. The only advantages are that it works with
-		user agents that do not support <emphasis>qop</emphasis> and 
+		user agents that do not support <emphasis>qop</emphasis> and
 		<emphasis>nc</emphasis> and that it uses less memory for the same
 		supported number of maximum in-flight nonces (by a factor of 8).
 		<varname>one_time_nonce</varname> can be used as fallback from
-		<varname>nonce_count</varname>, when the UA doesn't support 
+		<varname>nonce_count</varname>, when the UA doesn't support
 		<emphasis>nc</emphasis> (it happens automatically when both of them
 		are enabled).
 	</para>
 	<para>
 		Like <varname>nonce_count</varname>, <varname>one_time_nonce</varname>
-		works by tracking a limited number of nonces. The maximum number of 
+		works by tracking a limited number of nonces. The maximum number of
 		tracked nonces is set using the <varname>otn_in_flight_no</varname> or
-		<varname>otn_in_flight_order</varname> parameters. If this number is 
+		<varname>otn_in_flight_order</varname> parameters. If this number is
 		exceeded, older entries will be overwritten. As long as the maximum
-		rate of challengeable messages per average response time is lower then
-		<varname>otn_in_flight_no</varname>, the 
+		rate of challengeable messages per average response time is lower than
+		<varname>otn_in_flight_no</varname>, the
 		<varname>one_time_nonce</varname> checks should work flawlessly.
 	</para>
 	<para>
@@ -370,7 +371,7 @@ modparam("auth", "one_time_nonce", 1)
     <section id="auth.p.nid_pool_no">
 	<title><varname>nid_pool_no</varname> (integer)</title>
 	<para>
-		Controls the number of partitions for the 
+		Controls the number of partitions for the
 		<varname>nonce_count</varname> and <varname>one_time_nonce</varname>
 		arrays (it's common to both of them to reduce the nonce size).
 	</para>
@@ -378,25 +379,25 @@ modparam("auth", "one_time_nonce", 1)
 		Instead of using single arrays for keeping nonce state, these arrays
 		can be divided into more partitions. Each &kamailio; process is assigned to
 		one of these partitions, allowing for higher concurrency on multi-CPU
-		machines. Besides increasing performance, increasing 
+		machines. Besides increasing performance, increasing
 		<varname>nid_pool_no</varname> has also a negative effect: it could
 		decrease the maximum supported in-flight nonces in certain conditions.
-		In the worst case, when only one &kamailio; process receives most of the 
-		traffic (e.g. very busy tcp connection between two proxies), the 
-		in-flight nonces could be limited to the array size 
+		In the worst case, when only one &kamailio; process receives most of the
+		traffic (e.g. very busy tcp connection between two proxies), the
+		in-flight nonces could be limited to the array size
 		(<varname>nc_array_size</varname> for <varname>nonce_count</varname>
-		 or <varname>otn_in_flight_no</varname> for 
+		 or <varname>otn_in_flight_no</varname> for
 		 <varname>one_time_nonce</varname>) divided by the partitions number
 		 (<varname>nid_pool_no</varname>). However for normal traffic, when
-		 the process receiving a message is either random or chosen in 
-		 a round-robin fashion the maximum in-flight nonces number will be 
-		 very little influenced by <varname>nid_pool_no</varname> (the 
+		 the process receiving a message is either random or chosen in
+		 a round-robin fashion the maximum in-flight nonces number will be
+		 very little influenced by <varname>nid_pool_no</varname> (the
 		 messages will be close to equally distributed to processes using
 		 different partitions).
 	</para>
 	<para>
 		<varname>nid_pool_no</varname> value should be one of: 1, 2, 4, 8, 16,
-		32 or 64 (the maximum value is 64 and all values should be of the 
+		32 or 64 (the maximum value is 64 and all values should be of the
 		form 2^k or else they will be rounded down to 2^k).
 	</para>
 	<para>
@@ -424,20 +425,20 @@ modparam("auth", "nid_pool_no", 4)
 	<para>
 		Maximum number of in-flight nonces for <varname>nonce_count</varname>.
 		It represents the maximum nonces for which state will be kept. When
-		this number is exceeded, state for the older nonces will be 
-		discarded to make space for new ones (see 
+		this number is exceeded, state for the older nonces will be
+		discarded to make space for new ones (see
 		<varname>nonce_count</varname> for more details).
 	</para>
 	<para>
 		The value should be of the form 2^k. If it's not it will be rounded
 		down to 2^k (for example a value of 1000000 will be rounded down to
-		2^19=524288). <varname>nc_array_order</varname> can be used to 
-		directly specify the power of 2 (e.g. 
+		2^19=524288). <varname>nc_array_order</varname> can be used to
+		directly specify the power of 2 (e.g.
 		<varname>nc_array_order</varname> set to 20 is equivalent to
 		<varname>nc_array_size</varname> set to 1048576).
 	</para>
 	<para>
-		The memory used to keep the nonce state will be 
+		The memory used to keep the nonce state will be
 		<varname>nc_array_size</varname> in bytes.
 	</para>
 	<para>
@@ -461,7 +462,7 @@ modparam("auth", "nc_array_size", 4194304)   # 4Mb
     <section id="auth.p.nc_array_order">
 	<title><varname>nc_array_order</varname> (integer)</title>
 	<para>
-		Equivalent to <varname>nc_array_size</varname>, but instead of 
+		Equivalent to <varname>nc_array_size</varname>, but instead of
 		directly specifying the size, its value is the power at which 2 should
 		be raised (log2(<varname>nc_array_size</varname>)).
 	</para>
@@ -491,9 +492,9 @@ modparam("auth", "nc_array_order", 22)   # 4Mb
     <section id="auth.p.otn_in_flight_no">
 	<title><varname>otn_in_flight_no</varname> (integer)</title>
 	<para>
-		Maximum number of in-flight nonces for 
+		Maximum number of in-flight nonces for
 		<varname>one_time_nonce</varname>. It represents the maximum number
-		of nonces remembered for the one-time-nonce check. When this 
+		of nonces remembered for the one-time-nonce check. When this
 		number is exceeded, information about older nonces will be discarded
 		and overwritten with information about the new generated ones (see
 		<varname>one_time_nonce</varname> for more details).
@@ -501,8 +502,8 @@ modparam("auth", "nc_array_order", 22)   # 4Mb
 	<para>
 		The value should be of the form 2^k. If it's not it will be rounded
 		down to 2^k (for example a value of 1000000 will be rounded down to
-		2^19=524288). <varname>otn_in_flight_no</varname> can be used to 
-		directly specify the power of 2 (e.g. 
+		2^19=524288). <varname>otn_in_flight_no</varname> can be used to
+		directly specify the power of 2 (e.g.
 		<varname>otn_in_flight_order</varname> set to 19 is equivalent to
 		<varname>otn_in_fligh_number</varname> set to 524288).
 	</para>
@@ -512,7 +513,7 @@ modparam("auth", "nc_array_order", 22)   # 4Mb
 		is kept per nonce).
 	</para>
 	<para>
-		The default value is 1048576 (1M in-flight nonces, using 
+		The default value is 1048576 (1M in-flight nonces, using
 		128Kb memory).
 	</para>
 	<para>
@@ -538,7 +539,7 @@ modparam("auth", "otn_in_flight_no", 8388608)   # 8 Mb (1Mb memory)
 		be raised (log2(<varname>otn_in_flight_no</varname>)).
 	</para>
 	<para>
-		<varname>otn_in_flight_no</varname> = 
+		<varname>otn_in_flight_no</varname> =
 		2^<varname>otn_in_flight_order</varname>.
 		For more details see <varname>otn_in_flight_order</varname>.
 	</para>
@@ -567,10 +568,10 @@ modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 	the client for authentication.</para>
 	<para>If you use multiple servers in your installation, and would like to
 	authenticate on the second server against the nonce generated at the
-	first one its necessary to explicitly set the secret to the same value
+	first one, it is necessary to explicitly set the secret to the same value
 	on all servers. However, as the use of a shared (and fixed) secret as
 	nonce is insecure, it is much better is to stay with the default. Any
-	clients should send the authenticated request to the server that 
+	clients should send the authenticated request to the server that
 	issued the challenge.
 	</para>
 	<para>
@@ -618,10 +619,10 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 		current time, if the nonce creation time appears to be in the future.
 	</para>
 	<para>
-		In some cases, like shortly after a system time backward adjustment 
+		In some cases, like shortly after a system time backward adjustment
 		or when the current proxy is part of a cluster which is not
 		time-synchronized, it's possible to receive a nonce with creation time
-		in the future. In this case if the difference is greater then
+		in the future. In this case if the difference is greater than
 		<varname>nonce_auth_max_drift</varname> seconds, consider the nonce
 		stale and re-challenge (otherwise after a dramatic time change
 		backwards, it might happen that some previously generated nonces will
@@ -667,9 +668,9 @@ modparam("auth", "force_stateless_reply", 1)
 		<para>
 			Prefix to be automatically stripped from the realm. As an alternative to
 			SRV records (not all SIP clients support SRV lookup), a subdomain
-			of the master domain can be defined for SIP purposes (like 
+			of the master domain can be defined for SIP purposes (like
 			sip.mydomain.net pointing to same IP address as the SRV
-			record for mydomain.net). By ignoring the realm_prefix 
+			record for mydomain.net). By ignoring the realm_prefix
 			<quote>sip.</quote>, at authentication, sip.example.com will be
 			equivalent to example.com .
 		</para>

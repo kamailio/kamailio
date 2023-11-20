@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -29,28 +29,33 @@
 #include <xcap/xml_utils.h>
 #include <cds/memory.h>
 
-typedef struct _display_name_t {
+typedef struct _display_name_t
+{
 	SEQUENCE_ABLE(struct _display_name_t)
 	char *name;
 	char *lang;
 } display_name_t;
 
-typedef struct {
+typedef struct
+{
 	char *uri;
 	SEQUENCE(display_name_t) display_names;
 } entry_t;
 
-typedef struct {
+typedef struct
+{
 	char *anchor;
 	/* SEQUENCE(display_name_t) display_names; */
 } external_t;
 
-typedef struct {
+typedef struct
+{
 	char *ref;
 	/* SEQUENCE(display_name_t) display_names; */
 } entry_ref_t;
 
-typedef enum { 
+typedef enum
+{
 	lct_list,
 	lct_entry,
 	lct_entry_ref,
@@ -59,11 +64,13 @@ typedef enum {
 
 struct _list_t;
 
-typedef struct _list_content_t {
+typedef struct _list_content_t
+{
 	SEQUENCE_ABLE(struct _list_content_t)
-		
+
 	list_content_type_t type;
-	union {
+	union
+	{
 		struct _list_t *list;
 		entry_t *entry;
 		entry_ref_t *entry_ref;
@@ -71,24 +78,27 @@ typedef struct _list_content_t {
 	} u;
 } list_content_t;
 
-typedef struct _list_t {
+typedef struct _list_t
+{
 	SEQUENCE_ABLE(struct _list_t)
-		
-/*	entry_t *entries;*/
+
+	/*	entry_t *entries;*/
 	char *display_name;
-	
+
 	SEQUENCE(list_content_t) content;
-	
+
 	char *name;
 } list_t;
 
-typedef struct {
+typedef struct
+{
 	/* list_t *lists; */
 	SEQUENCE(list_t) lists;
-	
+
 } resource_lists_t;
 
-int parse_resource_lists_xml(const char *data, int data_len, resource_lists_t **dst);
+int parse_resource_lists_xml(
+		const char *data, int data_len, resource_lists_t **dst);
 int parse_list_xml(const char *data, int data_len, list_t **dst);
 int parse_as_list_content_xml(const char *data, int data_len, list_t **dst);
 int parse_entry_xml(const char *data, int data_len, entry_t **dst);

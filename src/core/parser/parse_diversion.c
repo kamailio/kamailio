@@ -42,29 +42,29 @@
  * returns 0 on success,
  *        -1 on failure.
  *
- * limitations: it parses only the first occurence
+ * limitations: it parses only the first occurrence
  */
 int parse_diversion_header(struct sip_msg *msg)
 {
-	struct to_body* diversion_b;
+	struct to_body *diversion_b;
 
-	if (!msg->diversion && (parse_headers(msg, HDR_DIVERSION_F, 0) == -1)) {
+	if(!msg->diversion && (parse_headers(msg, HDR_DIVERSION_F, 0) == -1)) {
 		goto error;
 	}
 
-	if (!msg->diversion) {
+	if(!msg->diversion) {
 		/* header not found */
 		return -1;
 	}
 
 	/* maybe the header is already parsed! */
-	if (msg->diversion->parsed)
+	if(msg->diversion->parsed)
 		return 0;
 
 	/* bad luck! :-( - we have to parse it */
 	/* first, get some memory */
 	diversion_b = pkg_malloc(sizeof(struct to_body));
-	if (diversion_b == 0) {
+	if(diversion_b == 0) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
@@ -72,9 +72,9 @@ int parse_diversion_header(struct sip_msg *msg)
 	/* now parse it!! */
 	memset(diversion_b, 0, sizeof(struct to_body));
 	parse_addr_spec(msg->diversion->body.s,
-			msg->diversion->body.s + msg->diversion->body.len + 1,
-			diversion_b, 1);
-	if (diversion_b->error == PARSE_ERROR) {
+			msg->diversion->body.s + msg->diversion->body.len + 1, diversion_b,
+			1);
+	if(diversion_b->error == PARSE_ERROR) {
 		LM_ERR("bad diversion header\n");
 		free_to(diversion_b);
 		goto error;
@@ -90,20 +90,20 @@ error:
 /*! \brief
  * Get the value of a given diversion parameter
  */
-str *get_diversion_param(struct sip_msg *msg, str* name)
+str *get_diversion_param(struct sip_msg *msg, str *name)
 {
 	struct to_param *params;
 
-	if (parse_diversion_header(msg) < 0) {
+	if(parse_diversion_header(msg) < 0) {
 		LM_ERR("could not get diversion parameter\n");
 		return 0;
 	}
 
-	params =  ((struct to_body*)(msg->diversion->parsed))->param_lst;
+	params = ((struct to_body *)(msg->diversion->parsed))->param_lst;
 
-	while (params) {
-		if ((params->name.len == name->len) &&
-				(strncmp(params->name.s, name->s, name->len) == 0)) {
+	while(params) {
+		if((params->name.len == name->len)
+				&& (strncmp(params->name.s, name->s, name->len) == 0)) {
 			return &params->value;
 		}
 		params = params->next;

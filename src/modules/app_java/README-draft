@@ -344,7 +344,7 @@ java_method_exec("ExampleMethod", "ZB", "true", "0x05");
 # Equivalent of java prototype:  public int ExampleMethod();
 java_method_exec("ExampleMethod", "V");
 
-# Equivalent of java prototype:  public int ExampleMethod(String SipMessageBuffer, int SipMessageLenght);
+# Equivalent of java prototype:  public int ExampleMethod(String SipMessageBuffer, int SipMessageLength);
 java_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 ...
 
@@ -359,7 +359,7 @@ java_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 # Equivalent of java prototype:  public synchronized int ExampleMethod();
 java_s_method_exec("ExampleMethod", "V");
 
-# Equivalent of java prototype:  public synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLenght);
+# Equivalent of java prototype:  public synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLength);
 java_s_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 ...
 
@@ -373,7 +373,7 @@ java_s_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 # Equivalent of java prototype:  public static int ExampleMethod();
 java_staticmethod_exec("ExampleMethod", "V");
 
-# Equivalent of java prototype:  public static int ExampleMethod(String SipMessageBuffer, int SipMessageLenght);
+# Equivalent of java prototype:  public static int ExampleMethod(String SipMessageBuffer, int SipMessageLength);
 java_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 ...
 
@@ -388,7 +388,7 @@ java_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 # Equivalent of java prototype:  public static synchronized int ExampleMethod();
 java_s_staticmethod_exec("ExampleMethod", "V");
 
-# Equivalent of java prototype:  public static synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLenght);
+# Equivalent of java prototype:  public static synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLength);
 java_s_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
 ...
 
@@ -567,7 +567,7 @@ public class Kamailio extends NativeMethods
 
    5.3.8.   String dst_uri;
 
-	    Destination URI, must be forwarded to this URI if dst_url lenght != 0
+	    Destination URI, must be forwarded to this URI if dst_url length != 0
 
    5.3.9.   int parsed_uri_ok;
 
@@ -583,7 +583,7 @@ public class Kamailio extends NativeMethods
 
    5.3.12.  int add_to_branch_len;
 
-	    Lenght of add_to_branch_s
+	    Length of add_to_branch_s
 
    5.3.13.  int hash_index;
 

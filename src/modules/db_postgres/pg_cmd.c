@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -23,7 +23,7 @@
  */
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
 /** \file
@@ -79,7 +79,7 @@ static void pg_cmd_free(db_cmd_t *cmd, struct pg_cmd *payload)
  * unique within a connection to the server so we just keep a global counter
  * and the name will be that number converted to text.
  *
- * @param cmd A command whose name is to be generated 
+ * @param cmd A command whose name is to be generated
  * @return A string allocated using pkg_malloc containing the name or NULL on
  *         error.
  */
@@ -109,7 +109,7 @@ static int gen_cmd_name(db_cmd_t *cmd)
  * parameter value and types to PQexecPrepared.  The function only allocates
  * memory buffers and determines oids of parameters, actual values will be
  * assigned by another function at runtime.
- * @param cmd A command where the data strctures will be created. 
+ * @param cmd A command where the data strctures will be created.
  * @retval 0 on success.
  * @retval A negative number on error.
  */
@@ -129,7 +129,7 @@ static int create_pg_params(db_cmd_t *cmd)
 	pcmd->params.fmt = (int *)pkg_malloc(sizeof(int) * num);
 
 	if(!pcmd->params.val || !pcmd->params.len || !pcmd->params.fmt) {
-	        PKG_MEM_ERROR;
+		PKG_MEM_ERROR;
 		goto error;
 	}
 
@@ -231,7 +231,7 @@ static int get_types(db_cmd_t *cmd)
 			f = DB_GET_PAYLOAD(cmd->result + i);
 			f->name = pkg_malloc(strlen(PQfname(pcmd->types, i)) + 1);
 			if(f->name == NULL) {
-			        PKG_MEM_ERROR;
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			strcpy(f->name, PQfname(pcmd->types, i));
@@ -298,7 +298,7 @@ int pg_cmd(db_cmd_t *cmd)
 
 	pcmd = (struct pg_cmd *)pkg_malloc(sizeof(struct pg_cmd));
 	if(pcmd == NULL) {
-	        PKG_MEM_ERROR;
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(pcmd, '\0', sizeof(struct pg_cmd));
@@ -329,7 +329,7 @@ int pg_cmd(db_cmd_t *cmd)
 		case DB_SQL:
 			pcmd->sql_cmd.s = (char *)pkg_malloc(cmd->table.len + 1);
 			if(pcmd->sql_cmd.s == NULL) {
-			        PKG_MEM_ERROR;
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memcpy(pcmd->sql_cmd.s, cmd->table.s, cmd->table.len);
@@ -528,7 +528,7 @@ int pg_cmd_exec(db_res_t *res, db_cmd_t *cmd)
 					puri->host);
 		}
 
-		/* Connection is either connected or has been successfully reconnected, 
+		/* Connection is either connected or has been successfully reconnected,
 		 * now figure out if the prepared command on the server still exist
 		 */
 		tmp = PQdescribePrepared(pcon->con, pcmd->name);

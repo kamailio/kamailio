@@ -3,23 +3,23 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +37,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 
@@ -52,11 +52,13 @@
  * - fills routes
  * - replaces dst_uri
  * @param msg - the SIP message
- * @param m  - the isc_match that matched with info about where to forward it 
+ * @param m  - the isc_match that matched with info about where to forward it
  * @param mark  - the isc_mark that should be used to mark the message
  * @returns #ISC_RETURN_TRUE if OK, #ISC_RETURN_ERROR if not
  */
-int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark, int firstflag) {
+int isc_forward(
+		struct sip_msg *msg, isc_match *m, isc_mark *mark, int firstflag)
+{
 	struct cell *t;
 	unsigned int hash, label;
 	ticks_t fr_timeout, fr_inv_timeout;
@@ -64,10 +66,10 @@ int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark, int firstflag
 
 	isc_mark_set(msg, m, mark);
 	/* change destination so it forwards to the app server */
-	if (msg->dst_uri.s)
+	if(msg->dst_uri.s)
 		pkg_free(msg->dst_uri.s);
 	msg->dst_uri.s = pkg_malloc(m->server_name.len + 1);
-	if (!msg->dst_uri.s) {
+	if(!msg->dst_uri.s) {
 		LM_ERR("error allocating %d bytes\n", m->server_name.len);
 		return ISC_RETURN_ERROR;
 	}
@@ -76,17 +78,18 @@ int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark, int firstflag
 	msg->dst_uri.s[msg->dst_uri.len] = '\0';
 
 	/* append branch if last trigger failed */
-	if (is_route_type(FAILURE_ROUTE) && !firstflag)
-		append_branch(msg, &(msg->first_line.u.request.uri), &(msg->dst_uri), 0, Q_UNSPECIFIED, 0, 0, 0, 0, 0, 0);
+	if(is_route_type(FAILURE_ROUTE) && !firstflag)
+		append_branch(msg, &(msg->first_line.u.request.uri), &(msg->dst_uri), 0,
+				Q_UNSPECIFIED, 0, 0, 0, 0, 0, 0);
 
 	// Determines the tm transaction identifiers.
 	// If no transaction, then creates one
 
-	if (isc_tmb.t_get_trans_ident(msg, &hash, &label) < 0) {
+	if(isc_tmb.t_get_trans_ident(msg, &hash, &label) < 0) {
 		LM_DBG("SIP message without transaction. OK - first request\n");
-		if (isc_tmb.t_newtran(msg) < 0)
+		if(isc_tmb.t_newtran(msg) < 0)
 			LM_INFO("Failed creating SIP transaction\n");
-		if (isc_tmb.t_get_trans_ident(msg, &hash, &label) < 0) {
+		if(isc_tmb.t_get_trans_ident(msg, &hash, &label) < 0) {
 			LM_INFO("SIP message still without transaction\n");
 		} else {
 			LM_DBG("New SIP message transaction %u %u\n", hash, label);

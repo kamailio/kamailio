@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -65,7 +65,7 @@ int main (int argc, char** argv)
 	char* buf[BUF_SIZE];
 	struct hostent* he;
 	struct sockaddr_in addr;
-	
+
 	int count;
 	int verbose;
 	char *fname;
@@ -74,7 +74,7 @@ int main (int argc, char** argv)
 #ifdef __linux__
 	int optval;
 #endif
-	
+
 	/* init */
 	count=0;
 	verbose=0;
@@ -133,7 +133,7 @@ int main (int argc, char** argv)
 					abort();
 		}
 	}
-	
+
 	/* check if all the required params are present */
 	if (fname==0){
 		fprintf(stderr, "Missing -f file\n");
@@ -157,7 +157,7 @@ int main (int argc, char** argv)
 		fprintf(stderr, "Invalid packet count (-c %d)\n", count);
 		exit(-1);
 	}
-	
+
 	/* open packet file */
 	fd=open(fname, O_RDONLY);
 	if (fd<0){
@@ -184,7 +184,7 @@ int main (int argc, char** argv)
 	addr.sin_family=he->h_addrtype;
 	addr.sin_port=htons(port);
 	memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], he->h_length);
-	
+
 	sock = socket(he->h_addrtype, SOCK_DGRAM, 0);
 	if (sock==-1){
 		fprintf(stderr, "ERROR: socket: %s\n", strerror(errno));

@@ -169,7 +169,7 @@ Chapter 1. Admin Guide
    the global blocklist cache.
 
    Please note that only numerical strings for matching are supported at
-   the moment (the used library supports this already, but its not yet
+   the moment (the used library supports this already, but it is not yet
    implemented in the module). Non-digits on the beginning of the matched
    string are skipped, any later non-digits will stop the matching on this
    position.
@@ -181,8 +181,8 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   The module depends on the following modules (in the other words the
-   listed modules must be loaded before this module):
+   The module depends on the following modules (in other words the listed
+   modules must be loaded before this module):
      * database -- Any db_* database module
 
 2.2. External Libraries or Applications

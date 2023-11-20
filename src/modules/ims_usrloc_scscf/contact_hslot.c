@@ -3,23 +3,23 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,18 +37,18 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include "contact_hslot.h"
 
 /*! number of locks */
-int contacts_locks_no=4;
+int contacts_locks_no = 4;
 /*! global list of locks */
-gen_lock_set_t* contacts_locks=0;
+gen_lock_set_t *contacts_locks = 0;
 
 
 /*!
@@ -60,25 +60,22 @@ int init_contacts_locks(void)
 	int i;
 	i = contacts_locks_no;
 	do {
-		if ((( contacts_locks=lock_set_alloc(i))!=0)&&
-				(lock_set_init(contacts_locks)!=0))
-		{
+		if(((contacts_locks = lock_set_alloc(i)) != 0)
+				&& (lock_set_init(contacts_locks) != 0)) {
 			contacts_locks_no = i;
 			LM_INFO("locks array size %d\n", contacts_locks_no);
 			return 0;
-
 		}
-		if (contacts_locks){
+		if(contacts_locks) {
 			lock_set_dealloc(contacts_locks);
-			contacts_locks=0;
+			contacts_locks = 0;
 		}
 		i--;
-		if(i==0)
-		{
+		if(i == 0) {
 			LM_ERR("failed to allocate locks\n");
 			return -1;
 		}
-	} while (1);
+	} while(1);
 }
 
 
@@ -89,10 +86,10 @@ void unlock_contacts_locks(void)
 {
 	unsigned int i;
 
-	if (contacts_locks==0)
+	if(contacts_locks == 0)
 		return;
 
-	for (i=0;i<contacts_locks_no;i++) {
+	for(i = 0; i < contacts_locks_no; i++) {
 #ifdef GEN_LOCK_T_PREFERED
 		lock_release(&contacts_locks->locks[i]);
 #else
@@ -107,7 +104,7 @@ void unlock_contacts_locks(void)
  */
 void destroy_contacts_locks(void)
 {
-	if (contacts_locks !=0){
+	if(contacts_locks != 0) {
 		lock_set_destroy(contacts_locks);
 		lock_set_dealloc(contacts_locks);
 	};
@@ -140,17 +137,17 @@ void release_contacts_idx(int idx)
  * \param _s hash slot
  * \param n used to get the slot number (modulo number or locks)
  */
-void init_contact_slot(contact_hslot_t* _s, int n)
+void init_contact_slot(contact_hslot_t *_s, int n)
 {
 	_s->n = 0;
 	_s->first = 0;
 	_s->last = 0;
-//	_s->d = _d;
+	//	_s->d = _d;
 
 #ifdef GEN_LOCK_T_PREFERED
-	_s->lock = &contacts_locks->locks[n%contacts_locks_no];
+	_s->lock = &contacts_locks->locks[n % contacts_locks_no];
 #else
-	_s->lockidx = n%contacts_locks_no;
+	_s->lockidx = n % contacts_locks_no;
 #endif
 }
 
@@ -159,20 +156,20 @@ void init_contact_slot(contact_hslot_t* _s, int n)
  * \brief Deinitialize given slot structure
  * \param _s hash slot
  */
-void deinit_contact_slot(contact_hslot_t* _s)
+void deinit_contact_slot(contact_hslot_t *_s)
 {
-	struct ucontact* ptr;
-	
-	     /* Remove all elements */
+	struct ucontact *ptr;
+
+	/* Remove all elements */
 	while(_s->first) {
 		ptr = _s->first;
 		_s->first = _s->first->next;
 		free_ucontact(ptr);
 	}
-	
+
 	_s->n = 0;
 	_s->last = 0;
-//    _s->d = 0;
+	//    _s->d = 0;
 }
 
 
@@ -181,9 +178,9 @@ void deinit_contact_slot(contact_hslot_t* _s)
  * \param _s hash slot
  * \param _r added record
  */
-void contact_slot_add(contact_hslot_t* _s, struct ucontact* _c)
+void contact_slot_add(contact_hslot_t *_s, struct ucontact *_c)
 {
-	if (_s->n == 0) {
+	if(_s->n == 0) {
 		_s->first = _s->last = _c;
 	} else {
 		_c->prev = _s->last;
@@ -200,15 +197,15 @@ void contact_slot_add(contact_hslot_t* _s, struct ucontact* _c)
  * \param _s hash slot
  * \param _r removed record
  */
-void contact_slot_rem(contact_hslot_t* _s, struct ucontact* _c)
+void contact_slot_rem(contact_hslot_t *_s, struct ucontact *_c)
 {
-	if (_c->prev) {
+	if(_c->prev) {
 		_c->prev->next = _c->next;
 	} else {
 		_s->first = _c->next;
 	}
 
-	if (_c->next) {
+	if(_c->next) {
 		_c->next->prev = _c->prev;
 	} else {
 		_s->last = _c->prev;
@@ -218,4 +215,3 @@ void contact_slot_rem(contact_hslot_t* _s, struct ucontact* _c)
 	_c->slot = 0;
 	_s->n--;
 }
-

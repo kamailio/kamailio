@@ -41,30 +41,31 @@
  * returns 0 on success,
  *        -1 on failure.
  */
-int parse_rpid_header( struct sip_msg *msg )
+int parse_rpid_header(struct sip_msg *msg)
 {
-	struct to_body* rpid_b;
+	struct to_body *rpid_b;
 
-	if ( !msg->rpid && (parse_headers(msg, HDR_RPID_F, 0)==-1 || !msg->rpid)) {
+	if(!msg->rpid && (parse_headers(msg, HDR_RPID_F, 0) == -1 || !msg->rpid)) {
 		goto error;
 	}
 
 	/* maybe the header is already parsed! */
-	if (msg->rpid->parsed)
+	if(msg->rpid->parsed)
 		return 0;
 
 	/* needs to parse it */
 	/* first, get some memory */
 	rpid_b = pkg_malloc(sizeof(struct to_body));
-	if (rpid_b == 0) {
+	if(rpid_b == 0) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
 
 	/* now parse it!! */
 	memset(rpid_b, 0, sizeof(struct to_body));
-	parse_to(msg->rpid->body.s,msg->rpid->body.s+msg->rpid->body.len+1,rpid_b);
-	if (rpid_b->error == PARSE_ERROR) {
+	parse_to(msg->rpid->body.s, msg->rpid->body.s + msg->rpid->body.len + 1,
+			rpid_b);
+	if(rpid_b->error == PARSE_ERROR) {
 		LM_ERR("bad rpid header\n");
 		free_to(rpid_b);
 		goto error;
