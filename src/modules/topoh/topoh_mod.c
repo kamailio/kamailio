@@ -236,6 +236,11 @@ static int mod_init(void)
 #endif
 	return 0;
 error:
+	if(th_socket_hash_table != NULL && th_socket_hash_table->table)
+		pkg_free(th_socket_hash_table->table);
+
+	if(th_socket_hash_table != NULL)
+		pkg_free( th_socket_hash_table );
 	return -1;
 }
 
