@@ -1815,11 +1815,11 @@ static int rtpproxy_manage2(struct sip_msg *msg, char *flags, char *ip)
 
 static int rtpproxy_offer1_helper_f(struct sip_msg *msg, char *flags)
 {
-	char *cp;
 	char newip[IP_ADDR_MAX_STR_SIZE];
+	int len;
 
-	cp = ip_addr2a(&msg->rcv.dst_ip);
-	strcpy(newip, cp);
+	len = ip_addr2sbuf(&msg->rcv.dst_ip, newip, IP_ADDR_MAX_STR_SIZE - 1);
+	newip[len] = 0;
 
 	return force_rtp_proxy(msg, flags, newip, 1, 0);
 }
