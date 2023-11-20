@@ -50,19 +50,20 @@
 #include "../../core/parser/contact/parse_contact.h"
 
 /** Return and break the execution of routng script */
-#define CSCF_RETURN_BREAK	0
+#define CSCF_RETURN_BREAK 0
 /** Return true in the routing script */
-#define CSCF_RETURN_TRUE	1
+#define CSCF_RETURN_TRUE 1
 /** Return false in the routing script */
 #define CSCF_RETURN_FALSE -1
 /** Return error in the routing script */
 #define CSCF_RETURN_ERROR -2
 
 /** Enumeration for dialog directions */
-enum cscf_dialog_direction {
-	CSCF_MOBILE_ORIGINATING=0,
-	CSCF_MOBILE_TERMINATING=1,
-	CSCF_MOBILE_UNKNOWN=2
+enum cscf_dialog_direction
+{
+	CSCF_MOBILE_ORIGINATING = 0,
+	CSCF_MOBILE_TERMINATING = 1,
+	CSCF_MOBILE_UNKNOWN = 2
 };
 
 /**
@@ -77,32 +78,35 @@ enum cscf_dialog_direction {
  * @param src - source src
  * @param mem - type of mem to duplicate into (shm/pkg)
  */
-#define str_dup(dst,src,mem) \
-do {\
-	if ((src).len) {\
-		(dst).s = mem##_malloc((src).len);\
-		if (!(dst).s){\
-			LM_ERR("Error allocating %d bytes in %s!\n",(src).len,#mem);\
-			(dst).len = 0;\
-			goto out_of_memory;\
-		}\
-		memcpy((dst).s,(src).s,(src).len);\
-		(dst).len = (src).len;\
-	}else{\
-		(dst).s=0;(dst).len=0;\
-	}\
-} while (0)
+#define str_dup(dst, src, mem)                                                 \
+	do {                                                                       \
+		if((src).len) {                                                        \
+			(dst).s = mem##_malloc((src).len);                                 \
+			if(!(dst).s) {                                                     \
+				LM_ERR("Error allocating %d bytes in %s!\n", (src).len, #mem); \
+				(dst).len = 0;                                                 \
+				goto out_of_memory;                                            \
+			}                                                                  \
+			memcpy((dst).s, (src).s, (src).len);                               \
+			(dst).len = (src).len;                                             \
+		} else {                                                               \
+			(dst).s = 0;                                                       \
+			(dst).len = 0;                                                     \
+		}                                                                      \
+	} while(0)
 
 /**
  * Frees a str content.
  * @param x - the str to free
  * @param mem - type of memory that the content is using (shm/pkg)
  */
-#define str_free(x,mem) \
-do {\
-	if ((x).s) mem##_free((x).s);\
-	(x).s=0;(x).len=0;\
-} while(0)
+#define str_free(x, mem)       \
+	do {                       \
+		if((x).s)              \
+			mem##_free((x).s); \
+		(x).s = 0;             \
+		(x).len = 0;           \
+	} while(0)
 
 /**
  * Parses all the contact headers.
@@ -238,27 +242,28 @@ int cscf_add_header_first(struct sip_msg *msg, str *hdr, int type);
  * @param last_header - last header to ignore in the search, or NULL if to start from the first one
  * @returns the hdr_field on success or NULL if not found
  */
-struct hdr_field* cscf_get_next_header(struct sip_msg * msg,
-        /**
+struct hdr_field *cscf_get_next_header(struct sip_msg *msg,
+		/**
          * Looks for the First Via header and returns its body.
          * @param msg - the SIP message
          * @param h - the hdr_field to fill with the result
          * @returns the first via_body
-         */ str header_name, struct hdr_field* last_header);
-struct via_body* cscf_get_first_via(struct sip_msg *msg, struct hdr_field **h);
+         */
+		str header_name, struct hdr_field *last_header);
+struct via_body *cscf_get_first_via(struct sip_msg *msg, struct hdr_field **h);
 /**
  * Looks for the Last Via header and returns it.
  * @param msg - the SIP message
  * @returns the last via body body
  */
-struct via_body* cscf_get_last_via(struct sip_msg *msg);
+struct via_body *cscf_get_last_via(struct sip_msg *msg);
 /**
  * Looks for the UE Via in First Via header if it is a request
  * or in the last if it is a response and returns its body
  * @param msg - the SIP message
  * @returns the via of the UE
  */
-struct via_body* cscf_get_ue_via(struct sip_msg *msg);
+struct via_body *cscf_get_ue_via(struct sip_msg *msg);
 /**
  * Looks for the WWW-Authenticate header and returns its body.
  * @param msg - the SIP message
@@ -293,7 +298,7 @@ int cscf_is_initial_request(struct sip_msg *msg);
  * @param uri - uri to fill into
  * @returns 1 if found, 0 if not
  */
-int cscf_get_originating_user(struct sip_msg * msg, str *uri);
+int cscf_get_originating_user(struct sip_msg *msg, str *uri);
 
 /**
  *	Get public identity from Request-URI for terminating.
@@ -302,7 +307,7 @@ int cscf_get_originating_user(struct sip_msg * msg, str *uri);
  * @param uri - uri to fill into
  * @returns 1 if found, else 0
  */
-int cscf_get_terminating_user(struct sip_msg * msg, str *uri);
+int cscf_get_terminating_user(struct sip_msg *msg, str *uri);
 
 /**
  * Return the P-Access-Network-Info header
@@ -325,8 +330,8 @@ str cscf_get_charging_vector(struct sip_msg *msg, struct hdr_field **h);
  * @param msg - the SIP message
  * @returns the str with icid, orig_ioi and term_ioi
  */
-int cscf_get_p_charging_vector(struct sip_msg *msg, str * icid, str * orig_ioi,
-	str * term_ioi);
+int cscf_get_p_charging_vector(
+		struct sip_msg *msg, str *icid, str *orig_ioi, str *term_ioi);
 
 
 /**
@@ -335,7 +340,7 @@ int cscf_get_p_charging_vector(struct sip_msg *msg, str * icid, str * orig_ioi,
  * @param tag - the pointer to the tag to write to
  * @returns 0 on error or 1 on success
  */
-int cscf_get_to_tag(struct sip_msg* msg, str* tag);
+int cscf_get_to_tag(struct sip_msg *msg, str *tag);
 
 /**
  * Get the from tag
@@ -343,8 +348,7 @@ int cscf_get_to_tag(struct sip_msg* msg, str* tag);
  * @param tag - the pointer to the tag to write to
  * @returns 0 on error or 1 on success
  */
-int cscf_get_from_tag(struct sip_msg* msg, str* tag);
-
+int cscf_get_from_tag(struct sip_msg *msg, str *tag);
 
 
 /**
@@ -353,7 +357,7 @@ int cscf_get_from_tag(struct sip_msg* msg, str* tag);
  * @param local_uri - ptr to fill with the value
  * @returns 1 on success or 0 on error
  */
-int cscf_get_from_uri(struct sip_msg* msg, str *local_uri);
+int cscf_get_from_uri(struct sip_msg *msg, str *local_uri);
 
 /**
  * Get the local uri from the To header.
@@ -361,7 +365,7 @@ int cscf_get_from_uri(struct sip_msg* msg, str *local_uri);
  * @param local_uri - ptr to fill with the value
  * @returns 1 on success or 0 on error
  */
-int cscf_get_to_uri(struct sip_msg* msg, str *local_uri);
+int cscf_get_to_uri(struct sip_msg *msg, str *local_uri);
 
 /**
  * Looks for the Event header and extracts its content.
@@ -375,12 +379,12 @@ str cscf_get_event(struct sip_msg *msg);
  * The whole message must be parsed before calling the function
  * _s indicates whether the contact was star
  */
-int cscf_check_contacts(struct sip_msg* _m, int* _s);
+int cscf_check_contacts(struct sip_msg *_m, int *_s);
 
 /*! \brief
  * parse all the messages required by the registrar
  */
-int cscf_parse_message_for_register(struct sip_msg* _m);
+int cscf_parse_message_for_register(struct sip_msg *_m);
 
 /**
  * Returns the content of the P-Associated-URI header
@@ -392,7 +396,8 @@ int cscf_parse_message_for_register(struct sip_msg* _m);
  * @param is_shm - msg from shared memory
  * @returns 1 on success or 0 on error
  */
-int cscf_get_p_associated_uri(struct sip_msg *msg,str **public_id,int *public_id_cnt, int is_shm);
+int cscf_get_p_associated_uri(
+		struct sip_msg *msg, str **public_id, int *public_id_cnt, int is_shm);
 
 /**
  * Looks for the realm parameter in the Authorization header and returns its value.
@@ -410,7 +415,7 @@ str cscf_get_realm(struct sip_msg *msg);
  * @param is_shm - msg from shared memory
  * @returns - the str vector of uris
  */
-str* cscf_get_service_route(struct sip_msg *msg, int *size, int is_shm);
+str *cscf_get_service_route(struct sip_msg *msg, int *size, int is_shm);
 
 /**
  * Returns the s_dialog_direction from the direction string.
@@ -419,7 +424,7 @@ str* cscf_get_service_route(struct sip_msg *msg, int *size, int is_shm);
  */
 enum cscf_dialog_direction cscf_get_dialog_direction(char *direction);
 
-long cscf_get_content_length (struct sip_msg* msg);
+long cscf_get_content_length(struct sip_msg *msg);
 
 /**
  * Looks for the Contact header and extracts its content
@@ -442,7 +447,7 @@ int cscf_add_header_rpl(struct sip_msg *msg, str *hdr);
  * @param hr - ptr to return the found hdr_field
  * @returns the callid value
  */
-int cscf_get_cseq(struct sip_msg *msg,struct hdr_field **hr);
+int cscf_get_cseq(struct sip_msg *msg, struct hdr_field **hr);
 
 /**
  * Looks for the P-Called-Party-ID header and extracts the public identity from it
@@ -450,7 +455,7 @@ int cscf_get_cseq(struct sip_msg *msg,struct hdr_field **hr);
  * @param hr - ptr to return the found hdr_field
  * @returns the P-Called_Party-ID
  */
-str cscf_get_public_identity_from_called_party_id(struct sip_msg *msg,struct hdr_field **hr);
+str cscf_get_public_identity_from_called_party_id(
+		struct sip_msg *msg, struct hdr_field **hr);
 
 #endif
-
