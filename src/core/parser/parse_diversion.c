@@ -31,6 +31,7 @@
 #include "../dprint.h"
 #include "../ut.h"
 #include "../mem/mem.h"
+#include "parse_diversion.h"
 #include "parse_from.h"
 #include "parse_to.h"
 #include "msg_parser.h"
@@ -44,48 +45,144 @@
  *
  * limitations: it parses only the first occurrence
  */
-int parse_diversion_header(struct sip_msg *msg)
+#define NUM_DIVERSION_BODIES 10
+int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 {
-	struct to_body *diversion_b;
-
-	if(!msg->diversion && (parse_headers(msg, HDR_DIVERSION_F, 0) == -1)) {
-		goto error;
-	}
-
-	if(!msg->diversion) {
-		/* header not found */
+	static to_body_t uri_b[NUM_DIVERSION_BODIES]; /* Temporary storage */
+	int num_uri = 0;
+	char *tmp;
+	int i;
+	
+	// Reserves memory max NUM_DIVERSION_BODIES times
+	memset(uri_b, 0, NUM_DIVERSION_BODIES * sizeof(to_body_t));
+	if ( uri_b == NULL ) {
+		LM_ERR("Error allocating memory for uri_b\n");
 		return -1;
 	}
 
+	// tmp should point to the end of the parsed string 
+	// (',' -> if multiples bodies exist)
+	tmp = parse_addr_spec(buf, buf + len, &uri_b[num_uri], 1);
+	if(uri_b[num_uri].error == PARSE_ERROR) {
+		LM_ERR("Error parsing Diversion body %u '%.*s'\n", num_uri, len, buf);
+		return -1;
+	}
+
+	/* should be no header params, but in case there are, free them */
+	// TODO: Diversion header can have parameters
+	free_to_params(&uri_b[num_uri]);
+	num_uri++;
+	while (*tmp == ',' && (num_uri < NUM_DIVERSION_BODIES))
+	{
+		tmp++;
+		// Skip spaces and tabs
+		while (tmp < buf + len && (*tmp == ' ' || *tmp == '\t'))
+			tmp++;
+		
+		if (tmp >= buf + len) {
+			LM_ERR("no content after comma when parsing Diversion body %u '%.*s'\n",
+					num_uri, len, buf);
+			return -1;
+		}
+
+		if( (tmp < buf + len -1 && *tmp == '\n')
+			|| (tmp < buf + len -2 && *tmp == '\r' && *(tmp+1) == '\n') ){
+			if(*tmp == '\n') {
+				tmp++;
+			} else {
+				tmp += 2;
+			}
+			if(*tmp != ' ' && *tmp != '\t') {
+				// TODO: Check if this is the correct error message
+				LM_ERR("no space after EOL when parsing Diversion body %u '%.*s'\n",
+						num_uri, len, buf);
+				return -1;
+			}
+			tmp++;
+		}
+		// Parse next body
+		tmp = parse_addr_spec(tmp, buf + len, &uri_b[num_uri], 1);
+		if(uri_b[num_uri].error == PARSE_ERROR) {
+			LM_ERR("Error parsing Diversion body %u '%.*s'\n", num_uri, len, buf);
+			return -1;
+		}
+
+		/* should be no header params, but in case there are, free them */
+		free_to_params(&uri_b[num_uri]);
+		num_uri++;
+	}
+	if(num_uri >= NUM_DIVERSION_BODIES) {
+		LM_WARN("Too many bodies in Diversion header '%.*s'\n", len, buf);
+		LM_WARN("Ignoring bodies beyond %u\n", NUM_DIVERSION_BODIES);
+	}
+	*body = pkg_malloc(sizeof(diversion_body_t) + num_uri * sizeof(to_body_t));
+	if(*body == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	memset(*body, 0, sizeof(diversion_body_t));
+	(*body)->id = (to_body_t *)((char *)(*body) + sizeof(diversion_body_t));
+	(*body)->num_ids = num_uri;
+	for(i = 0; i < num_uri; i++) {
+		memcpy(&(*body)->id[i], &uri_b[i], sizeof(to_body_t));
+	}
+	return 0;
+}
+
+int parse_diversion_header(struct sip_msg *msg)
+{	
+	diversion_body_t *diversion_b;
+	diversion_body_t **prev_diversion_body;
+	hdr_field_t *hf;
+	void **vp;
+
+	if(!msg->diversion){
+		if(parse_headers(msg, HDR_DIVERSION_F, 0) < 0) {
+			LM_ERR("Error parsing Diversion header\n");
+			return -1;
+		}
+
+		if(!msg->diversion) {
+			/* Diversion header not found */
+			LM_DBG("Diversion header not found\n");
+			return -1;
+		}
+	}
 	/* maybe the header is already parsed! */
 	if(msg->diversion->parsed)
 		return 0;
 
-	/* bad luck! :-( - we have to parse it */
-	/* first, get some memory */
-	diversion_b = pkg_malloc(sizeof(struct to_body));
-	if(diversion_b == 0) {
-		PKG_MEM_ERROR;
-		goto error;
-	}
+	// Assign the parsed header to void pointer that may or may 
+	// not contain multiple bodies
+	vp = &msg->diversion->parsed;
+	// Set it as the first header in the list
+	prev_diversion_body = (diversion_body_t **)vp;
 
-	/* now parse it!! */
-	memset(diversion_b, 0, sizeof(struct to_body));
-	parse_addr_spec(msg->diversion->body.s,
-			msg->diversion->body.s + msg->diversion->body.len + 1, diversion_b,
-			1);
-	if(diversion_b->error == PARSE_ERROR) {
-		LM_ERR("bad diversion header\n");
-		free_to(diversion_b);
-		goto error;
-	}
-	msg->diversion->parsed = diversion_b;
+	// Loop through all the Diversion headers
+	for(hf = msg->diversion; hf != NULL; hf = next_sibling_hdr(hf)){
+		if(parse_diversion_body(hf->body.s, hf->body.len, &diversion_b) < 0) {
+			LM_ERR("Error parsing Diversion header\n");
+			return -1;
+		}
+		hf->parsed = (void *)diversion_b;
+		*prev_diversion_body = diversion_b;
+		prev_diversion_body = &diversion_b->next;
 
+		if(parse_headers(msg, HDR_DIVERSION_F, 1) < 0) {
+			LM_ERR("Error looking for subsequent Diversion header\n");
+			return -1;
+		}
+	}
 	return 0;
-error:
-	return -1;
 }
 
+int free_diversion_body(diversion_body_t *div_b)
+{
+	if(div_b != NULL) {
+		pkg_free(div_b);
+	}
+	return 0;
+}
 
 /*! \brief
  * Get the value of a given diversion parameter
