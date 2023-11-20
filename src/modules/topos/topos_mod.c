@@ -104,6 +104,9 @@ int _tps_clean_interval = 60;
 #define TPS_EVENTRT_RECEIVING 8
 #define TT_TABLE_VERSION 2
 #define TD_TABLE_VERSION 2
+
+static int _tps_version_table_check = 1;
+
 static int _tps_eventrt_mode = TPS_EVENTRT_OUTGOING | TPS_EVENTRT_SENDING
 							   | TPS_EVENTRT_INCOMING | TPS_EVENTRT_RECEIVING;
 static int _tps_eventrt_outgoing = -1;
@@ -177,6 +180,7 @@ static param_export_t params[] = {{"storage", PARAM_STR, &_tps_storage},
 		{"context", PARAM_STR, &_tps_context_param},
 		{"methods_nocontact", PARAM_STR, &_tps_methods_nocontact_list},
 		{"methods_noinitial", PARAM_STR, &_tps_methods_noinitial_list},
+		{"version_table", INT_PARAM, &_tps_version_table_check},
 
 		{0, 0, 0}};
 
@@ -260,15 +264,17 @@ static int mod_init(void)
 			LM_ERR("failed to open database connection\n");
 			goto dberror;
 		}
-		if(db_check_table_version(
-				   &_tpsdbf, topos_db_con, &td_table_name, TD_TABLE_VERSION)
-				< 0) {
+		if(_tps_version_table_check != 0
+				&& db_check_table_version(&_tpsdbf, topos_db_con,
+						   &td_table_name, TD_TABLE_VERSION)
+						   < 0) {
 			DB_TABLE_VERSION_ERROR(td_table_name);
 			goto dberror;
 		}
-		if(db_check_table_version(
-				   &_tpsdbf, topos_db_con, &tt_table_name, TT_TABLE_VERSION)
-				< 0) {
+		if(_tps_version_table_check != 0
+				&& db_check_table_version(&_tpsdbf, topos_db_con,
+						   &tt_table_name, TT_TABLE_VERSION)
+						   < 0) {
 			DB_TABLE_VERSION_ERROR(tt_table_name);
 			goto dberror;
 		}
