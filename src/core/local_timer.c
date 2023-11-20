@@ -192,7 +192,7 @@ inline static void local_timer_list_expire(
 		tl = h->next;
 		_timer_rm_list(tl);		 /* detach */
 		tl->next = tl->prev = 0; /* debugging */
-		/*FIXME: process tcpconn */
+		/* note to review: process tcpconn */
 		ret = tl->f(t, tl, tl->data);
 		if(ret != 0) {
 			/* not one-shot, re-add it */

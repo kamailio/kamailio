@@ -834,7 +834,8 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 						r->state = H_CONT_LEN_BODY_PARSE;
 						r->content_len = (*p - '0');
 						break;
-						/*FIXME: content length on different lines ! */
+						/* note: review case of content-length
+						 * on different lines */
 						crlf_default_skip_case;
 				}
 				p++;
@@ -856,7 +857,7 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 						break;
 					case '\r':
 					case ' ':
-					case '\t': /* FIXME: check if line contains only WS */
+					case '\t':
 						if(r->content_len < 0) {
 							LM_ERR("bad Content-Length header value %d in"
 								   " state %d\n",
@@ -1595,14 +1596,7 @@ again:
 #endif
 		/* rcv.bind_address should always be !=0 */
 		bind_address = con->rcv.bind_address;
-		/* just for debugging use sendipv4 as receiving socket  FIXME*/
-		/*
-			if (con->rcv.dst_ip.af==AF_INET6){
-				bind_address=sendipv6_tcp;
-			}else{
-				bind_address=sendipv4_tcp;
-			}
-			*/
+
 		con->rcv.proto_reserved1 = con->id; /* copy the id */
 		c = *req->parsed; /* ugly hack: zero term the msg & save the
 							   previous char, req->parsed should be ok

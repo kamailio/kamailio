@@ -601,16 +601,14 @@ static inline int lumps_len(
 				if(msg->rcv.bind_address->address.af != AF_INET)             \
 					new_len += 2;                                            \
 			} else {                                                         \
-				/* FIXME */                                                  \
-				LM_CRIT("FIXME: null bind_address\n");                       \
+				LM_CRIT("rcv ip - null bind_address\n");                     \
 			};                                                               \
 			break;                                                           \
 		case SUBST_RCV_PORT:                                                 \
 			if(msg->rcv.bind_address && STR_WITHVAL(recv_port_str)) {        \
 				new_len += recv_port_str->len;                               \
 			} else {                                                         \
-				/* FIXME */                                                  \
-				LM_CRIT("FIXME: null bind_address\n");                       \
+				LM_CRIT(" rcv port - null bind_address\n");                  \
 			};                                                               \
 			break;                                                           \
 		case SUBST_RCV_PROTO:                                                \
@@ -640,8 +638,7 @@ static inline int lumps_len(
 								msg->rcv.bind_address->proto);               \
 				}                                                            \
 			} else {                                                         \
-				/* FIXME */                                                  \
-				LM_CRIT("FIXME: null bind_address\n");                       \
+				LM_CRIT("null bind_address\n");                              \
 			};                                                               \
 			break;                                                           \
 		case SUBST_RCV_ALL:                                                  \
@@ -693,8 +690,7 @@ static inline int lumps_len(
 				}                                                            \
 				RCVCOMP_LUMP_LEN                                             \
 			} else {                                                         \
-				/* FIXME */                                                  \
-				LM_CRIT("FIXME: null bind_address\n");                       \
+				LM_CRIT("null bind_address\n");                              \
 			};                                                               \
 			break;                                                           \
 		case SUBST_SND_IP:                                                   \
@@ -704,14 +700,14 @@ static inline int lumps_len(
 						&& send_address_str->s[0] != '[')                    \
 					new_len += 2;                                            \
 			} else {                                                         \
-				LM_CRIT("FIXME: null send_sock\n");                          \
+				LM_CRIT("null send_sock\n");                                 \
 			};                                                               \
 			break;                                                           \
 		case SUBST_SND_PORT:                                                 \
 			if(send_sock) {                                                  \
 				new_len += send_port_str->len;                               \
 			} else {                                                         \
-				LM_CRIT("FIXME: null send_sock\n");                          \
+				LM_CRIT("null send_sock\n");                                 \
 			};                                                               \
 			break;                                                           \
 		case SUBST_SND_PROTO:                                                \
@@ -740,7 +736,7 @@ static inline int lumps_len(
 						LM_CRIT("unknown proto %d\n", send_sock->proto);     \
 				}                                                            \
 			} else {                                                         \
-				LM_CRIT("FIXME: null send_sock\n");                          \
+				LM_CRIT("null send_sock\n");                                 \
 			};                                                               \
 			break;                                                           \
 		case SUBST_SND_ALL:                                                  \
@@ -791,8 +787,7 @@ static inline int lumps_len(
 				}                                                            \
 				SENDCOMP_LUMP_LEN                                            \
 			} else {                                                         \
-				/* FIXME */                                                  \
-				LM_CRIT("FIXME: null send_sock\n");                          \
+				LM_CRIT("null send_sock\n");                                 \
 			};                                                               \
 			break;                                                           \
 		case SUBST_NOP: /* do nothing */                                     \
@@ -1018,8 +1013,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 					offset++;                                                \
 				}                                                            \
 			} else {                                                         \
-				/*FIXME*/                                                    \
-				LM_CRIT("FIXME: null bind_address\n");                       \
+				LM_CRIT("null bind_address\n");                              \
 			};                                                               \
 			break;                                                           \
 		case SUBST_RCV_PORT:                                                 \
@@ -1028,8 +1022,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 						recv_port_str->len);                                 \
 				offset += recv_port_str->len;                                \
 			} else {                                                         \
-				/*FIXME*/                                                    \
-				LM_CRIT("FIXME: null bind_address\n");                       \
+				LM_CRIT("null bind_address\n");                              \
 			};                                                               \
 			break;                                                           \
 		case SUBST_RCV_ALL:                                                  \
@@ -1123,8 +1116,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 				}                                                            \
 				RCVCOMP_PARAM_ADD                                            \
 			} else {                                                         \
-				/*FIXME*/                                                    \
-				LM_CRIT("FIXME: null bind_address\n");                       \
+				LM_CRIT("null bind_address\n");                              \
 			};                                                               \
 			break;                                                           \
 		case SUBST_SND_IP:                                                   \
@@ -1143,8 +1135,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 					offset++;                                                \
 				}                                                            \
 			} else {                                                         \
-				/*FIXME*/                                                    \
-				LM_CRIT("FIXME: null send_sock\n");                          \
+				LM_CRIT("null send_sock\n");                                 \
 			};                                                               \
 			break;                                                           \
 		case SUBST_SND_PORT:                                                 \
@@ -1153,8 +1144,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 						send_port_str->len);                                 \
 				offset += send_port_str->len;                                \
 			} else {                                                         \
-				/*FIXME*/                                                    \
-				LM_CRIT("FIXME: null send_sock\n");                          \
+				LM_CRIT("null send_sock\n");                                 \
 			};                                                               \
 			break;                                                           \
 		case SUBST_SND_ALL:                                                  \
@@ -1247,8 +1237,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 				}                                                            \
 				SENDCOMP_PARAM_ADD                                           \
 			} else {                                                         \
-				/*FIXME*/                                                    \
-				LM_CRIT("FIXME: null bind_address\n");                       \
+				LM_CRIT("null bind_address\n");                              \
 			};                                                               \
 			break;                                                           \
 		case SUBST_RCV_PROTO:                                                \
@@ -1287,8 +1276,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 								msg->rcv.bind_address->proto);               \
 				}                                                            \
 			} else {                                                         \
-				/*FIXME*/                                                    \
-				LM_CRIT("FIXME: null send_sock \n");                         \
+				LM_CRIT("null send_sock\n");                                 \
 			};                                                               \
 			break;                                                           \
 		case SUBST_SND_PROTO:                                                \
@@ -1326,8 +1314,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 						LM_CRIT("unknown proto %d\n", send_sock->proto);     \
 				}                                                            \
 			} else {                                                         \
-				/*FIXME*/                                                    \
-				LM_CRIT("FIXME: null send_sock \n");                         \
+				LM_CRIT("null send_sock\n");                                 \
 			};                                                               \
 			break;                                                           \
 		default:                                                             \
@@ -2429,9 +2416,8 @@ char *generate_res_buf_from_sip_res(
 		}
 	}
 
-	new_len =
-			len + body_delta + lumps_len(msg, msg->add_rm, 0); /*FIXME: we don't
-														know the send sock */
+	/* note: unknow the send sock */
+	new_len = len + body_delta + lumps_len(msg, msg->add_rm, 0);
 
 	LM_DBG("old size: %d, new size: %d\n", len, new_len);
 	new_buf = (char *)pkg_malloc(new_len + 1); /* +1 is for debugging
@@ -2442,9 +2428,9 @@ char *generate_res_buf_from_sip_res(
 	}
 	new_buf[new_len] = 0; /* debug: print the message */
 	offset = s_offset = 0;
-	/*FIXME: no send sock*/
-	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, 0,
-			FLAG_MSG_ALL); /*FIXME:*/
+	/* note: no send sock*/
+	process_lumps(
+			msg, msg->add_rm, new_buf, &offset, &s_offset, 0, FLAG_MSG_ALL);
 	process_lumps(
 			msg, msg->body_lumps, new_buf, &offset, &s_offset, 0, FLAG_MSG_ALL);
 	/* copy the rest of the message */

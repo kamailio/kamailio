@@ -164,7 +164,7 @@ int raw_socket(int proto, struct ip_addr *ip, str *iface, int iphdr_incl)
 		goto error;
 #endif /* SO_BINDTODEVICE */
 	}
-	/* FIXME: probe_max_receive_buffer(sock) missing */
+	/* note: probe_max_receive_buffer(sock) missing */
 	if(ip) {
 		init_su(&su, ip, 0);
 		if(bind(sock, &su.s, sockaddru_len(su)) == -1) {
@@ -323,8 +323,6 @@ int raw_udp4_recv(int rsock, char **buf, int len, union sockaddr_union *from,
 		*buf = *buf + sizeof(struct ip);
 	}
 
-	/* FIXME: if initial buffer is aligned, one could skip the memcpy
-	   and directly cast ip and udphdr pointer to the memory */
 	memcpy(&iph, *buf, sizeof(struct ip));
 	udph_start = *buf + iph.ip_hl * 4;
 	udp_payload = udph_start + sizeof(struct udphdr);

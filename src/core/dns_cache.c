@@ -30,9 +30,7 @@
 
 #ifdef USE_DNS_CACHE
 
-#ifdef DNS_SRV_LB
-#include <stdlib.h> /* FIXME: rand() */
-#endif
+#include <stdlib.h>
 #include <string.h>
 
 #include "globals.h"

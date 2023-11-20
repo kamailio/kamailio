@@ -587,7 +587,7 @@ void qm_free(void *qmp, void *p)
 			qm_detach_free(qm, next);
 			size += next->size + FRAG_OVERHEAD;
 			qm->real_used -= FRAG_OVERHEAD;
-			qm->free_hash[GET_HASH(next->size)].no--; /* FIXME slow */
+			qm->free_hash[GET_HASH(next->size)].no--;
 			qm->ffrags--;
 		}
 
@@ -603,7 +603,7 @@ void qm_free(void *qmp, void *p)
 				qm_detach_free(qm, prev);
 				size += prev->size + FRAG_OVERHEAD;
 				qm->real_used -= FRAG_OVERHEAD;
-				qm->free_hash[GET_HASH(prev->size)].no--; /* FIXME slow */
+				qm->free_hash[GET_HASH(prev->size)].no--;
 				qm->ffrags--;
 				f = prev;
 			}
@@ -715,7 +715,7 @@ void *qm_realloc(void *qmp, void *p, size_t size)
 				&& ((n->size + FRAG_OVERHEAD) >= diff)) {
 			/* join  */
 			qm_detach_free(qm, n);
-			qm->free_hash[GET_HASH(n->size)].no--; /*FIXME: slow*/
+			qm->free_hash[GET_HASH(n->size)].no--;
 			qm->ffrags--;
 			f->size += n->size + FRAG_OVERHEAD;
 			qm->real_used -= FRAG_OVERHEAD;

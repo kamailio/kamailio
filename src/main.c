@@ -464,7 +464,7 @@ struct socket_info *sctp_listen = 0;
 #endif
 struct socket_info *bind_address = 0; /* pointer to the crt. proc.
 									 listening address*/
-struct socket_info *sendipv4; /* ipv4 socket to use when msg. comes from ipv6*/
+struct socket_info *sendipv4; /* ipv4 socket to use when msg comes from ipv6 */
 struct socket_info *sendipv6; /* same as above for ipv6 */
 #ifdef USE_RAW_SOCKS
 int raw_udp4_send_sock = -1; /* raw socket used for sending udp4 packets */

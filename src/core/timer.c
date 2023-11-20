@@ -823,7 +823,7 @@ inline static void timer_list_expire(ticks_t t, struct timer_head *h
 	*/
 	while(h->next != (struct timer_ln *)h) {
 		tl = h->next;
-#ifdef TIMER_DEBUG /* FIXME: replace w/ EXTRA_DEBUG */
+#ifdef TIMER_DEBUG
 		if(tl == 0) {
 			LM_CRIT("timer_list_expire: tl=%p, h=%p {%p, %p}\n", tl, h, h->next,
 					h->prev);

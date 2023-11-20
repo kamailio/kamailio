@@ -290,10 +290,10 @@ not_forced:
 		case PROTO_WS:
 		case PROTO_TCP:
 			/* on tcp just use the "main address", we don't really know the
-		 * sending address (we can find it out, but we'll need also to see
-		 * if we listen on it, and if yes on which port -> too complicated*/
+			 * sending address (we can find it out, but we'll need also to see
+			 * if we listen on it, and if yes on which port
+			 * -> too complicated */
 			switch(to->s.sa_family) {
-				/* FIXME */
 				case AF_INET:
 					send_sock = sendipv4_tcp;
 					break;
@@ -310,7 +310,6 @@ not_forced:
 		case PROTO_WSS:
 		case PROTO_TLS:
 			switch(to->s.sa_family) {
-				/* FIXME */
 				case AF_INET:
 					send_sock = sendipv4_tls;
 					break;

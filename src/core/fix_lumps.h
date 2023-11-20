@@ -28,12 +28,10 @@
 * \brief Kamailio core :: Lump handling
 * \ingroup core
 * Module: \ref core
- * here, we delete message lumps which are generated in
+ * delete message lumps which are generated in
  * core functions using pkg_malloc and applied to shmem
  * requests; not doing so would result ugly memory problems
- *
- * I admit it is not a nice hack; -jiri
-*/
+ */
 
 
 #ifndef _FIX_LUMPS_H
@@ -51,8 +49,7 @@
    is stored in shmem for branch picking, forwarded lated and
    Via removal is applied to the shmem-ed message
 
-   the same thing for Content-Length lumps (FIXME: this
-   should be done in a nicer way)
+   the same thing for Content-Length lumps
 */
 inline static void free_via_clen_lump(struct lump **list)
 {

@@ -598,9 +598,7 @@ avp_t *search_avp_by_index(
 	return 0;
 }
 
-/* FIXME */
 /********* free functions ********/
-
 void destroy_avp(avp_t *avp_del)
 {
 	int i;

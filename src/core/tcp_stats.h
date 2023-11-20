@@ -101,7 +101,7 @@ void tcp_stats_destroy(void);
 #define TCP_STATS_CON_RESET() counter_inc(tcp_cnts_h.con_reset)
 
 /** called each time a send operation fails due to a timeout.
-  * FIXME: it works only in async mode (in sync. mode a send might timeout
+  * - note: it works only in async mode (in sync. mode a send might timeout
   *  but the stats won't be increased).
   */
 #define TCP_STATS_SEND_TIMEOUT() counter_inc(tcp_cnts_h.send_timeout)

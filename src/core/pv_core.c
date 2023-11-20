@@ -39,8 +39,6 @@ extern int _last_returned_code;
 
 static int pv_get_retcode(struct sip_msg *msg, pv_param_t *p, pv_value_t *res)
 {
-	/* FIXME: as soon as PVs support script context, use it instead of the
-	 * return in global variable hack */
 	return pv_get_sintval(msg, p, res, _last_returned_code);
 }
 

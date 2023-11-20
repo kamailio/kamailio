@@ -220,7 +220,6 @@ error:
 	return 0;
 }
 
-/* FIXME - we should use the same error logic as in HOSTENT_CPY */
 #define MK_PROXY(name, port, protocol, p_malloc, p_free, he_cpy) \
 	do {                                                         \
 		struct proxy_l *p;                                       \

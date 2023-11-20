@@ -56,34 +56,34 @@ extern int uid;
 extern int gid;
 extern char *pid_file;
 extern char *pgid_file;
-extern int
-		own_pgid; /* whether or not we have our own pgid (and it's ok to use kill(0, sig) */
+/* whether or not we have our own pgid (and it's ok to use kill(0, sig) */
+extern int own_pgid;
 
 extern int server_id; /* A unique ID of the SIP server */
 
 extern struct socket_info *bind_address; /* pointer to the crt. proc.
 											listening address */
-extern struct socket_info *sendipv4;	 /* ipv4 socket to use when msg.
-										comes from ipv6*/
+extern struct socket_info *sendipv4;	 /* ipv4 socket to use when msg
+											comes from ipv6 */
 extern struct socket_info *sendipv6;	 /* same as above for ipv6 */
 #ifdef USE_RAW_SOCKS
 extern int raw_udp4_send_sock;
 #endif /* USE_RAW_SOCKS */
 
 #ifdef USE_TCP
-extern struct socket_info *sendipv4_tcp; /* ipv4 socket to use when msg.
-										comes from ipv6*/
+extern struct socket_info *sendipv4_tcp; /* ipv4 socket to use when msg
+											comes from ipv6 */
 extern struct socket_info *sendipv6_tcp; /* same as above for ipv6 */
-extern int unix_tcp_sock; /* socket used for communication with tcp main*/
+extern int unix_tcp_sock; /* socket used for communication with tcp main */
 #endif
 #ifdef USE_TLS
-extern struct socket_info *sendipv4_tls; /* ipv4 socket to use when msg.
-										comes from ipv6*/
+extern struct socket_info *sendipv4_tls; /* ipv4 socket to use when msg
+											comes from ipv6 */
 extern struct socket_info *sendipv6_tls; /* same as above for ipv6 */
 #endif
 #ifdef USE_SCTP
-extern struct socket_info *sendipv4_sctp; /* ipv4 socket to use when msg.
-										comes from ipv6*/
+extern struct socket_info *sendipv4_sctp; /* ipv4 socket to use when msg
+											 comes from ipv6 */
 extern struct socket_info *sendipv6_sctp; /* same as above for ipv6 */
 #endif
 
