@@ -600,6 +600,23 @@ modparam("topos", "methods_noinitial", "OPTIONS,NOTIFY")
 </programlisting>
 		</example>
 	</section>
+	<section id="topos.p.version_table">
+		<title><varname>version_table</varname> (integer)</title>
+		<para>
+		If set to 0, the module will skip checking the version of the tables.
+		</para>
+		<para>
+		Default value is <quote>1 (check for table version)</quote>.
+		</para>
+		<example>
+		<title><varname>version_table</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "version_table", 0)
+...
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
