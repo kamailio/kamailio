@@ -33,7 +33,7 @@ int db_payload_idx = 0;
  * Initialize a db_gen structure and make space for the data
  * from n database drivers
  */
-int db_gen_init(db_gen_t* gen)
+int db_gen_init(db_gen_t *gen)
 {
 	memset(gen, '\0', sizeof(db_gen_t));
 	return 0;
@@ -43,13 +43,14 @@ int db_gen_init(db_gen_t* gen)
 /*
  * Free all memory allocated by a db_gen structure
  */
-void db_gen_free(db_gen_t* gen)
+void db_gen_free(db_gen_t *gen)
 {
 	int i;
 
 	/* Dispose all the attached data structures */
 	for(i = 0; i < DB_PAYLOAD_MAX && gen->data[i]; i++) {
-		if (gen->data[i]) gen->data[i]->free(gen, gen->data[i]);
+		if(gen->data[i])
+			gen->data[i]->free(gen, gen->data[i]);
 	}
 }
 

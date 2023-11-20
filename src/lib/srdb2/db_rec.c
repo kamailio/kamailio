@@ -32,35 +32,37 @@
 #include <string.h>
 
 
-
-db_rec_t* db_rec(db_res_t* res, db_fld_t* fld)
+db_rec_t *db_rec(db_res_t *res, db_fld_t *fld)
 {
-    db_rec_t* newp;
+	db_rec_t *newp;
 
-    newp = (db_rec_t*)pkg_malloc(sizeof(db_rec_t));
-    if (newp == NULL) goto err;
-    memset(newp, '\0', sizeof(db_rec_t));
-	if (db_gen_init(&newp->gen) < 0) goto err;
+	newp = (db_rec_t *)pkg_malloc(sizeof(db_rec_t));
+	if(newp == NULL)
+		goto err;
+	memset(newp, '\0', sizeof(db_rec_t));
+	if(db_gen_init(&newp->gen) < 0)
+		goto err;
 	newp->res = res;
 	newp->fld = fld;
-    return newp;
+	return newp;
 
- err:
-    ERR("Cannot create db_rec structure\n");
-	if (newp) {
+err:
+	ERR("Cannot create db_rec structure\n");
+	if(newp) {
 		db_gen_free(&newp->gen);
 		pkg_free(newp);
 	}
-    return NULL;
+	return NULL;
 }
 
 
-void db_rec_free(db_rec_t* r)
+void db_rec_free(db_rec_t *r)
 {
-    if (r == NULL) return;
+	if(r == NULL)
+		return;
 	/* Do not release fld here, it points to an array in db_cmd */
 	db_gen_free(&r->gen);
-    pkg_free(r);
+	pkg_free(r);
 }
 
 /** @} */
