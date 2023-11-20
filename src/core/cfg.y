@@ -2761,11 +2761,13 @@ host_if_id: ID
 		| NUM_ID
 		| NUMBER {
 			/* get string version */
-			$$=pkg_malloc(strlen(yy_number_str)+1);
+			i_tmp = strlen(yy_number_str);
+			$$=pkg_malloc(i_tmp + 1);
 			if ($$==0) {
 				PKG_MEM_ERROR;
 			} else {
-				strcpy($$, yy_number_str);
+				memcpy($$, yy_number_str, i_tmp);
+				$$[i_tmp] = '\0';
 			}
 		}
 		;
