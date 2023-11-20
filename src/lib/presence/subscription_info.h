@@ -28,7 +28,8 @@
 
 #include <presence/notifier_domain.h>
 
-typedef struct _subscription_info_t {
+typedef struct _subscription_info_t
+{
 
 	client_notify_func notify;
 	str_t record_id;
@@ -39,4 +40,3 @@ typedef struct _subscription_info_t {
 } subscription_info_t;
 
 #endif
-
