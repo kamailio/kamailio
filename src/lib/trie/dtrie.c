@@ -126,7 +126,8 @@ int dtrie_insert(struct dtrie_node_t *root, const char *number,
 		void *data, const unsigned int branches)
 {
 	struct dtrie_node_t *node = root;
-	unsigned char digit, i=0;
+	unsigned char digit;
+	unsigned i=0;
 
 	if (root == NULL) return -1;
 	if (number == NULL) return -1;
@@ -233,7 +234,8 @@ void **dtrie_longest_match(struct dtrie_node_t *root, const char *number,
 		const unsigned int branches)
 {
 	struct dtrie_node_t *node = root;
-	unsigned char digit, i = 0;
+	unsigned char digit;
+	unsigned int i = 0;
 	void **ret = NULL;
 
 	if (root == NULL) return NULL;
