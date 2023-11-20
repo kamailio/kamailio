@@ -29,11 +29,11 @@
 #define DB1_OP_H
 
 /** operator less than */
-#define OP_LT  "<"
+#define OP_LT "<"
 /** operator greater than */
-#define OP_GT  ">"
+#define OP_GT ">"
 /** operator equal */
-#define OP_EQ  "="
+#define OP_EQ "="
 /** operator less than equal */
 #define OP_LEQ "<="
 /** operator greater than equal */
@@ -47,7 +47,7 @@
 /**
  * This type represents an expression operator uses for SQL queries.
  */
-typedef const char* db_op_t;
+typedef const char *db_op_t;
 
 
 #endif /* DB1_OP_H */

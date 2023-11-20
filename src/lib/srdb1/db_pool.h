@@ -40,10 +40,11 @@
  * created by the backends) must have these
  * attributes.
  */
-struct pool_con {
-	struct db_id* id;        /**< Connection identifier */
-	unsigned int ref;        /**< Reference count */
-	struct pool_con* next;   /**< Next element in the pool */
+struct pool_con
+{
+	struct db_id *id;	   /**< Connection identifier */
+	unsigned int ref;	   /**< Reference count */
+	struct pool_con *next; /**< Next element in the pool */
 };
 
 
@@ -53,14 +54,14 @@ struct pool_con {
  * \param id searched id
  * \return the connection if it could be found, NULL otherwise
  */
-struct pool_con* pool_get(const struct db_id* id);
+struct pool_con *pool_get(const struct db_id *id);
 
 
 /**
  * Insert a new connection into the pool.
  * \param con the inserted connection
  */
-void pool_insert(struct pool_con* con);
+void pool_insert(struct pool_con *con);
 
 
 /**
@@ -75,7 +76,7 @@ void pool_insert(struct pool_con* con);
  * \param con connection that should be removed
  * \return 1 if the connection can be freed, 0 if it can't be freed, -1 if not found
  */
-int pool_remove(struct pool_con* con);
+int pool_remove(struct pool_con *con);
 
 
 #endif /* _DB1_POOL_H */
