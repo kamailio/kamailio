@@ -52,15 +52,15 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 	int num_uri = 0;
 	char *tmp;
 	int i;
-	
+
 	// Reserves memory max NUM_DIVERSION_BODIES times
 	memset(uri_b, 0, NUM_DIVERSION_BODIES * sizeof(to_body_t));
-	if ( uri_b == NULL ) {
+	if(uri_b == NULL) {
 		LM_ERR("Error allocating memory for uri_b\n");
 		return -1;
 	}
 
-	// tmp should point to the end of the parsed string 
+	// tmp should point to the end of the parsed string
 	// (',' -> if multiples bodies exist)
 	tmp = parse_addr_spec(buf, buf + len, &uri_b[num_uri], 1);
 	if(uri_b[num_uri].error == PARSE_ERROR) {
@@ -72,21 +72,22 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 	// TODO: Diversion header can have parameters
 	free_to_params(&uri_b[num_uri]);
 	num_uri++;
-	while (*tmp == ',' && (num_uri < NUM_DIVERSION_BODIES))
-	{
+	while(*tmp == ',' && (num_uri < NUM_DIVERSION_BODIES)) {
 		tmp++;
 		// Skip spaces and tabs
-		while (tmp < buf + len && (*tmp == ' ' || *tmp == '\t'))
+		while(tmp < buf + len && (*tmp == ' ' || *tmp == '\t'))
 			tmp++;
-		
-		if (tmp >= buf + len) {
-			LM_ERR("no content after comma when parsing Diversion body %u '%.*s'\n",
+
+		if(tmp >= buf + len) {
+			LM_ERR("no content after comma when parsing Diversion body %u "
+				   "'%.*s'\n",
 					num_uri, len, buf);
 			return -1;
 		}
 
-		if( (tmp < buf + len -1 && *tmp == '\n')
-			|| (tmp < buf + len -2 && *tmp == '\r' && *(tmp+1) == '\n') ){
+		if((tmp < buf + len - 1 && *tmp == '\n')
+				|| (tmp < buf + len - 2 && *tmp == '\r'
+						&& *(tmp + 1) == '\n')) {
 			if(*tmp == '\n') {
 				tmp++;
 			} else {
@@ -94,7 +95,8 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 			}
 			if(*tmp != ' ' && *tmp != '\t') {
 				// TODO: Check if this is the correct error message
-				LM_ERR("no space after EOL when parsing Diversion body %u '%.*s'\n",
+				LM_ERR("no space after EOL when parsing Diversion body %u "
+					   "'%.*s'\n",
 						num_uri, len, buf);
 				return -1;
 			}
@@ -103,7 +105,8 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 		// Parse next body
 		tmp = parse_addr_spec(tmp, buf + len, &uri_b[num_uri], 1);
 		if(uri_b[num_uri].error == PARSE_ERROR) {
-			LM_ERR("Error parsing Diversion body %u '%.*s'\n", num_uri, len, buf);
+			LM_ERR("Error parsing Diversion body %u '%.*s'\n", num_uri, len,
+					buf);
 			return -1;
 		}
 
@@ -130,13 +133,13 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 }
 
 int parse_diversion_header(struct sip_msg *msg)
-{	
+{
 	diversion_body_t *diversion_b;
 	diversion_body_t **prev_diversion_body;
 	hdr_field_t *hf;
 	void **vp;
 
-	if(!msg->diversion){
+	if(!msg->diversion) {
 		if(parse_headers(msg, HDR_DIVERSION_F, 0) < 0) {
 			LM_ERR("Error parsing Diversion header\n");
 			return -1;
@@ -152,14 +155,14 @@ int parse_diversion_header(struct sip_msg *msg)
 	if(msg->diversion->parsed)
 		return 0;
 
-	// Assign the parsed header to void pointer that may or may 
+	// Assign the parsed header to void pointer that may or may
 	// not contain multiple bodies
 	vp = &msg->diversion->parsed;
 	// Set it as the first header in the list
 	prev_diversion_body = (diversion_body_t **)vp;
 
 	// Loop through all the Diversion headers
-	for(hf = msg->diversion; hf != NULL; hf = next_sibling_hdr(hf)){
+	for(hf = msg->diversion; hf != NULL; hf = next_sibling_hdr(hf)) {
 		if(parse_diversion_body(hf->body.s, hf->body.len, &diversion_b) < 0) {
 			LM_ERR("Error parsing Diversion header\n");
 			return -1;

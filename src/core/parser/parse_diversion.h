@@ -34,10 +34,11 @@
 /*! \brief
  * Structure representing a Diversion header
  */
-typedef struct diversion_body {
+typedef struct diversion_body
+{
 	to_body_t *id;
 	int num_ids;
-    struct diversion_body *next; /*!< Next Diversion in the list */
+	struct diversion_body *next; /*!< Next Diversion in the list */
 } diversion_body_t;
 
 
