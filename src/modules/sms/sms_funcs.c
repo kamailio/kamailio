@@ -487,7 +487,7 @@ int send_as_sms(struct sms_msg *sms_messg, struct modem *mdm)
 			goto error;
 		if(sms_report_type != NO_REPORT)
 			add_sms_into_report_queue(ret_code, sms_messg,
-					p - use_nice * (nr_chunks > 1) * SMS_EDGE_PART_LEN,
+					p - SMS_EDGE_PART_LEN * use_nice * (nr_chunks > 1),
 					len_array[i]);
 	}
 

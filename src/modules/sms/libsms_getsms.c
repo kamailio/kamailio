@@ -160,7 +160,7 @@ static int fetchsms(struct modem *mdm, int sim, char *pdu)
 		}
 	} else {
 		LM_DBG("Trying to get stored message %i\n", sim);
-		clen = sprintf(command, "AT+CMGR=%i\r", sim);
+		clen = snprintf(command, 16, "AT+CMGR=%i\r", sim);
 		put_command(mdm, command, clen, answer, sizeof(answer), 50, 0);
 		/* search for beginning of the answer */
 		position = strstr(answer, "+CMGR:");
@@ -200,7 +200,7 @@ static void deletesms(struct modem *mdm, int sim)
 	int clen;
 
 	LM_DBG("Deleting message %i !\n", sim);
-	clen = sprintf(command, "AT+CMGD=%i\r", sim);
+	clen = snprintf(command, 32, "AT+CMGD=%i\r", sim);
 	put_command(mdm, command, clen, answer, sizeof(answer), 50, 0);
 }
 
@@ -308,13 +308,13 @@ static int splitascii(struct modem *mdm, char *source, struct incame_sms *sms)
 	}
 	/* Get the date */
 	start = end + 3;
-	sprintf(dbuf, "%c%c-%c%c-%c%c", start[3], start[4], start[0], start[1],
-			start[6], start[7]);
+	snprintf(dbuf, DATE_LEN + 1, "%c%c-%c%c-%c%c", start[3], start[4], start[0],
+			start[1], start[6], start[7]);
 	memcpy(sms->date, dbuf, DATE_LEN);
 	/* Get the time */
 	start += 9;
-	sprintf(tbuf, "%c%c:%c%c:%c%c", start[0], start[1], start[3], start[4],
-			start[7], start[7]);
+	snprintf(tbuf, TIME_LEN + 1, "%c%c:%c%c:%c%c", start[0], start[1], start[3],
+			start[4], start[7], start[7]);
 	memcpy(sms->time, tbuf, TIME_LEN);
 	sms->userdatalength = strlen(sms->ascii);
 	return 1;

@@ -225,7 +225,8 @@ int initmodem(struct modem *mdm, cds_report cds_report_f)
 		put_command(mdm, "AT+CPIN?\r", 9, answer, sizeof(answer), 50, 0);
 		if(strstr(answer, "+CPIN: SIM PIN")) {
 			LM_INFO("Modem needs PIN, entering PIN...\n");
-			clen = sprintf(command, "AT+CPIN=\"%s\"\r", mdm->pin);
+			clen = snprintf(
+					command, MAX_CHAR_BUF + 12, "AT+CPIN=\"%s\"\r", mdm->pin);
 			put_command(mdm, command, clen, answer, sizeof(answer), 100, 0);
 			put_command(mdm, "AT+CPIN?\r", 9, answer, sizeof(answer), 50, 0);
 			if(!strstr(answer, "+CPIN: READY")) {
@@ -377,7 +378,7 @@ int setsmsc(struct modem *mdm, char *smsc)
 	int clen;
 
 	if(smsc && smsc[0]) {
-		clen = sprintf(command, "AT+CSCA=\"+%s\"\r", smsc);
+		clen = snprintf(command, 100, "AT+CSCA=\"+%s\"\r", smsc);
 		put_command(mdm, command, clen, answer, sizeof(answer), 50, 0);
 	}
 	return 0;
