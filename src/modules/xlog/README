@@ -266,7 +266,7 @@ kamcmd cfg.set_now_int xlog methods_filter 15
 
    Example 1.8. Set methods_filter parameter
 ...
-modparam("xlog", "long_format", 1)
+modparam("xlog", "methods_filter", 15)
 ...
 
 5. Functions

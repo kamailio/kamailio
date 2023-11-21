@@ -149,7 +149,7 @@ Chapter 1. Admin Guide
 
    Set the path to the Lua script to be loaded at startup. Then you can
    use lua_run(function, params) to execute a function from the script at
-   runtime.
+   runtime. The script can be in Lua-source or bytecode.
 
    Default value is “null”.
 
