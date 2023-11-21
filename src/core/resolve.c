@@ -1026,7 +1026,7 @@ again:
 			/* check if enough space is left for type, class, ttl & size */
 			if(unlikely((p + 2 + 2 + 4 + 2) > end))
 				goto error_boundary;
-			memcpy((void *)&rdlength, (void *)p + 2 + 2 + 4, 2);
+			memcpy((void *)&rdlength, (void *)(p + 2 + 2 + 4), 2);
 			p += 2 + 2 + 4 + 2 + ntohs(rdlength);
 		}
 		answers_no = ntohs((unsigned short)buff.hdr.arcount);
