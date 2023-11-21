@@ -1058,9 +1058,10 @@ void tlsf_free(tlsf_t tlsf, void *ptr)
 		control->allocated -= block_size(block);
 		control->real_used -=
 				(block_size(block)
-						+ (ptr
-								- (void *)block
-								/* prev_phys_block is melted in the previous block when the current block is used */
+						+ ((char *)ptr
+								- (char *)block
+								/* prev_phys_block is melted in the previous
+								 * block when the current block is used */
 								+ sizeof(block->prev_phys_block)));
 #ifdef DBG_TLSF_MALLOC
 		block->alloc_info.file = file;
