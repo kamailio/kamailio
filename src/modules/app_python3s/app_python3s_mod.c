@@ -83,7 +83,7 @@ static cmd_export_t cmds[] = {
 };
 
 /** module exports */
-struct module_exports exports = {
+struct module_exports _app_python3s_exports = {
 	"app_python3s",			/* module name */
 	RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
 	cmds,					/* exported functions */
