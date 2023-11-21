@@ -2335,6 +2335,162 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		return pv_get_null(msg, param, res);
 	}
 
+	if((tv.flags == 0) && (tv.ri == HDR_DIVERSION_T)) {
+		if(msg->diversion == NULL) {
+			LM_WARN("no Diversion header\n");
+			return pv_get_null(msg, param, res);
+		}
+
+		if(parse_diversion_header(msg) < 0) {
+			LM_WARN("failed to parse Diversion headers\n");
+			return pv_get_null(msg, param, res);
+		}
+
+		diversion_body_t *db = (diversion_body_t *)msg->diversion->parsed;
+		int diversion_header_count = 0;
+
+		while(db != NULL) {
+			diversion_header_count += db->num_ids;
+			db = db->next;
+		}
+
+		if(idx < 0) {
+			idx = -idx;
+			if(idx > diversion_header_count) {
+				LM_WARN("index out of range\n");
+				return pv_get_null(msg, param, res);
+			}
+			idx = diversion_header_count - idx;
+		}
+
+		n = 0;
+		db = (diversion_body_t *)msg->diversion->parsed;
+		// loop through all parsed Diversion headers lists
+		while(db != NULL) {
+			if(n + db->num_ids > idx) {
+				// Calculate the index within this specific list
+				int innerIndex = idx - n;
+
+				// Access the desired element within this list
+				sval.s = db->id[innerIndex].body.s;
+				sval.len = db->id[innerIndex].body.len;
+				trim(&sval);
+				res->rs = sval;
+				return 0;
+			}
+
+			// Move to the next Diversion header list
+			n += db->num_ids;
+			db = db->next;
+		}
+		LM_DBG("unexpected diversion index out of range\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if((tv.flags == 0) && (tv.ri == HDR_PPI_T)) {
+		if(msg->ppi == NULL) {
+			LM_WARN("no PPI header\n");
+			return pv_get_null(msg, param, res);
+		}
+
+		if(parse_ppi_header(msg) < 0) {
+			LM_WARN("failed to parse PPI headers\n");
+			return pv_get_null(msg, param, res);
+		}
+
+		p_id_body_t *ppi_b = (p_id_body_t *)msg->ppi->parsed;
+		int ppi_header_count = 0;
+
+		while(ppi_b != NULL) {
+			ppi_header_count += ppi_b->num_ids;
+			ppi_b = ppi_b->next;
+		}
+
+		if(idx < 0) {
+			idx = -idx;
+			if(idx > ppi_header_count) {
+				LM_WARN("index out of range\n");
+				return pv_get_null(msg, param, res);
+			}
+			idx = ppi_header_count - idx;
+		}
+
+		n = 0;
+		ppi_b = (p_id_body_t *)msg->ppi->parsed;
+		// loop through all parsed Diversion headers lists
+		while(ppi_b != NULL) {
+			if(n + ppi_b->num_ids > idx) {
+				// Calculate the index within this specific list
+				int innerIndex = idx - n;
+
+				// Access the desired element within this list
+				sval.s = ppi_b->id[innerIndex].body.s;
+				sval.len = ppi_b->id[innerIndex].body.len;
+				trim(&sval);
+				res->rs = sval;
+				return 0;
+			}
+
+			// Move to the next Diversion header list
+			n += ppi_b->num_ids;
+			ppi_b = ppi_b->next;
+		}
+		LM_DBG("unexpected diversion index out of range\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if((tv.flags == 0) && (tv.ri == HDR_PAI_T)) {
+		if(msg->pai == NULL) {
+			LM_WARN("no PAI header\n");
+			return pv_get_null(msg, param, res);
+		}
+
+		if(parse_pai_header(msg) < 0) {
+			LM_WARN("failed to parse PAI headers\n");
+			return pv_get_null(msg, param, res);
+		}
+
+		p_id_body_t *pai_b = (p_id_body_t *)msg->pai->parsed;
+		int pai_header_count = 0;
+
+		while(pai_b != NULL) {
+			pai_header_count += pai_b->num_ids;
+			pai_b = pai_b->next;
+		}
+
+		if(idx < 0) {
+			idx = -idx;
+			if(idx > pai_header_count) {
+				LM_WARN("index out of range\n");
+				return pv_get_null(msg, param, res);
+			}
+			idx = pai_header_count - idx;
+		}
+
+		n = 0;
+		pai_b = (p_id_body_t *)msg->pai->parsed;
+		// loop through all parsed Diversion headers lists
+		while(pai_b != NULL) {
+			if(n + pai_b->num_ids > idx) {
+				// Calculate the index within this specific list
+				int innerIndex = idx - n;
+
+				// Access the desired element within this list
+				sval.s = pai_b->id[innerIndex].body.s;
+				sval.len = pai_b->id[innerIndex].body.len;
+				trim(&sval);
+				res->rs = sval;
+				return 0;
+			}
+
+			// Move to the next Diversion header list
+			n += pai_b->num_ids;
+			pai_b = pai_b->next;
+		}
+		LM_DBG("unexpected diversion index out of range\n");
+		return pv_get_null(msg, param, res);
+	}
+
 	return pv_get_hdr_helper(msg, param, res, &tv, idx, idxf);
 }
 
@@ -2450,6 +2606,25 @@ int pv_get_hflc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			}
 		}
 		return pv_get_sintval(msg, param, res, n);
+	}
+
+	if((tv.flags == 0) && (tv.ri == HDR_DIVERSION_T)) {
+		if(msg->diversion == NULL) {
+			LM_DBG("no Diversion header\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		if(parse_diversion_header(msg) < 0) {
+			LM_DBG("failed to parse Diversion headers\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+
+		diversion_body_t *db = (diversion_body_t *)msg->diversion->parsed;
+		int diversion_body_count = 0;
+		while(db != NULL) {
+			diversion_body_count += db->num_ids;
+			db = db->next;
+		}
+		return pv_get_sintval(msg, param, res, diversion_body_count);
 	}
 
 	for(hf = msg->headers; hf; hf = hf->next) {
