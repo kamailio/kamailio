@@ -18,6 +18,7 @@ ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 endif
 
 export RADCLI=1
+export WOLFSSL_INTERNAL=no
 
 # Modules not in the "main" kamailio package:
 EXCLUDED_MODULES =

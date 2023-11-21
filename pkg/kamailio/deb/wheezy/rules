@@ -18,6 +18,7 @@ ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 endif
 
 export JAVA_HOME=/usr/lib/jvm/java-gcj
+export WOLFSSL_INTERNAL=no
 
 # Modules not in the "main" kamailio package:
 EXCLUDED_MODULES =
