@@ -1511,7 +1511,7 @@ size_t create_srv_pref_list(char *proto, struct dns_srv_proto *list)
 {
 	struct dns_srv_proto tmp;
 	size_t i, j, list_len;
-	int default_order, max;
+	int default_order = 1, max;
 
 	/* if proto available, then add only the forced protocol to the list */
 	if(proto && *proto != PROTO_NONE) {
@@ -1661,7 +1661,7 @@ struct hostent *naptr_sip_resolvehost(
 	char n_proto;
 	str srv_name;
 	naptr_bmp_t tried_bmp; /* tried bitmap */
-	char origproto;
+	char origproto = PROTO_NONE;
 
 	if(proto)
 		origproto = *proto;
