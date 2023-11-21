@@ -56,6 +56,7 @@ str_map_t algo_names[] = {
 int pl_init_htable(unsigned int hsize)
 {
 	int i;
+	int j;
 
 	if(_pl_pipes_ht != NULL)
 		return -1;
@@ -80,10 +81,10 @@ int pl_init_htable(unsigned int hsize)
 	for(i = 0; i < _pl_pipes_ht->htsize; i++) {
 		if(lock_init(&_pl_pipes_ht->slots[i].lock) == 0) {
 			LM_ERR("cannot initialize lock[%d]\n", i);
-			i--;
-			while(i >= 0) {
-				lock_destroy(&_pl_pipes_ht->slots[i].lock);
-				i--;
+			j = i - 1;
+			while(j >= 0) {
+				lock_destroy(&_pl_pipes_ht->slots[j].lock);
+				j--;
 			}
 			shm_free(_pl_pipes_ht->slots);
 			shm_free(_pl_pipes_ht);

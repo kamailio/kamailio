@@ -214,13 +214,16 @@ int get_num_cpus()
 /* not using /proc/loadavg because it only works when our_timer_interval == theirs */
 static int get_cpuload(double *load)
 {
-	static long long o_user, o_nice, o_sys, o_idle, o_iow, o_irq, o_sirq, o_stl;
-	long long n_user, n_nice, n_sys, n_idle, n_iow, n_irq, n_sirq, n_stl;
+	static long long o_user = 0, o_nice = 0, o_sys = 0, o_idle = 0, o_iow = 0,
+					 o_irq = 0, o_sirq = 0, o_stl = 0;
+	long long n_user = 0, n_nice = 0, n_sys = 0, n_idle = 0, n_iow = 0,
+			  n_irq = 0, n_sirq = 0, n_stl = 0;
 	static int first_time = 1;
 	FILE *f = fopen("/proc/stat", "r");
-	double vload;
-	int ncpu;
+	double vload = 0.0;
+	int ncpu = 0;
 	static int errormsg = 0;
+	int n = 0;
 
 	if(!f) {
 		/* Only write this error message five times. Otherwise you will annoy
@@ -231,9 +234,9 @@ static int get_cpuload(double *load)
 		}
 		return -1;
 	}
-	if(fscanf(f, "cpu  %lld%lld%lld%lld%lld%lld%lld%lld", &n_user, &n_nice,
-			   &n_sys, &n_idle, &n_iow, &n_irq, &n_sirq, &n_stl)
-			< 0) {
+	n = fscanf(f, "cpu  %lld%lld%lld%lld%lld%lld%lld%lld", &n_user, &n_nice,
+			&n_sys, &n_idle, &n_iow, &n_irq, &n_sirq, &n_stl);
+	if(n < 8) {
 		LM_ERR("could not parse load information\n");
 		fclose(f);
 		return -1;
