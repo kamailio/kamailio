@@ -29,6 +29,7 @@
 #include "pt.h"
 #include "ut.h"
 #include "mem/shm_mem.h"
+#include "sr_module.h"
 
 #include <unistd.h>
 
@@ -76,6 +77,9 @@ int fork_basic_timer(int child_id, char *desc, int make_sock, timer_function *f,
 		if(cfg_child_init())
 			return -1;
 		for(;;) {
+			if(unlikely(ksr_shutdown_phase() != 0)) {
+				return 0;
+			}
 			sleep(interval);
 			cfg_update();
 			f(get_ticks(), param); /* ticks in s for compatibility with old
@@ -99,6 +103,9 @@ int fork_basic_timer_w(int child_id, char *desc, int make_sock,
 		if(cfg_child_init())
 			return -1;
 		for(;;) {
+			if(unlikely(ksr_shutdown_phase() != 0)) {
+				return 0;
+			}
 			sleep(interval);
 			cfg_update();
 			f(get_ticks(), worker,
@@ -141,6 +148,9 @@ int fork_basic_utimer(int child_id, char *desc, int make_sock,
 		if(cfg_child_init())
 			return -1;
 		for(;;) {
+			if(unlikely(ksr_shutdown_phase() != 0)) {
+				return 0;
+			}
 			sleep_us(uinterval);
 			cfg_update();
 			ts = get_ticks_raw();
@@ -165,6 +175,9 @@ int fork_basic_utimer_w(int child_id, char *desc, int make_sock,
 		if(cfg_child_init())
 			return -1;
 		for(;;) {
+			if(unlikely(ksr_shutdown_phase() != 0)) {
+				return 0;
+			}
 			sleep_us(uinterval);
 			cfg_update();
 			ts = get_ticks_raw();
@@ -273,6 +286,9 @@ int fork_sync_timer(int child_id, char *desc, int make_sock, timer_function *f,
 		if(cfg_child_init())
 			return -1;
 		for(;;) {
+			if(unlikely(ksr_shutdown_phase() != 0)) {
+				return 0;
+			}
 			if(ts2 > interval)
 				sleep_us(1000); /* 1 millisecond sleep to catch up */
 			else
@@ -324,6 +340,9 @@ int fork_sync_utimer(int child_id, char *desc, int make_sock,
 		if(cfg_child_init())
 			return -1;
 		for(;;) {
+			if(unlikely(ksr_shutdown_phase() != 0)) {
+				return 0;
+			}
 			if(ts2 > uinterval)
 				sleep_us(1);
 			else
