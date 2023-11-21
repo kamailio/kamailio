@@ -39,6 +39,13 @@ sed -i -e '/^ libmicrohttpd-dev,/d' \
 sed -i -e '/^PACKAGE_GROUPS += microhttpd/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += microhttpd' ${DIST}/rules
 
+# libwolfssl-dev < 5.2
+sed -i -e '/^ libwolfssl-dev,/d' \
+  -e '/^Package: kamailio-wolftls-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^PACKAGE_GROUPS += tls_wolfssl/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += tls_wolfssl' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
