@@ -60,37 +60,42 @@ PyThreadState *myThreadState = NULL;
 
 int apy3s_script_init_exec(PyObject *pModule, str *fname, int *vparam);
 
+/* clang-format off */
 /** module parameters */
-static param_export_t params[] = {{"load", PARAM_STR, &_sr_python_load_file},
-		{"script_init", PARAM_STR, &_sr_apy3s_script_init},
-		{"script_child_init", PARAM_STR, &_sr_apy3s_script_child_init},
+static param_export_t params[] = {
+	{"load", PARAM_STR, &_sr_python_load_file},
+	{"script_init", PARAM_STR, &_sr_apy3s_script_init},
+	{"script_child_init", PARAM_STR, &_sr_apy3s_script_child_init},
 
-		{0, 0, 0}};
+	{0, 0, 0}
+};
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"app_python3s_exec", (cmd_function)w_app_python3s_exec1, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"app_python3s_exec", (cmd_function)w_app_python3s_exec2, 2,
-				fixup_spve_spve, 0, ANY_ROUTE},
+	{"app_python3s_exec", (cmd_function)w_app_python3s_exec1, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"app_python3s_exec", (cmd_function)w_app_python3s_exec2, 2,
+			fixup_spve_spve, 0, ANY_ROUTE},
 
-		{0, 0, 0, 0, 0, 0}};
+	{0, 0, 0, 0, 0, 0}
+};
 
 /** module exports */
 struct module_exports exports = {
-		"app_python3s",			/* module name */
-		RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
-		cmds,					/* exported functions */
-		params,					/* exported parameters */
-		0,						/* exported rpc functions */
-		0,						/* exported pseudo-variables */
-		0,						/* response handling function */
-		mod_init,				/* module init function */
-		child_init,				/* per-child init function */
-		mod_destroy				/* destroy function */
+	"app_python3s",			/* module name */
+	RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
+	cmds,					/* exported functions */
+	params,					/* exported parameters */
+	0,						/* exported rpc functions */
+	0,						/* exported pseudo-variables */
+	0,						/* response handling function */
+	mod_init,				/* module init function */
+	child_init,				/* per-child init function */
+	mod_destroy				/* destroy function */
 };
+/* clang-format on */
 
 
 /**
