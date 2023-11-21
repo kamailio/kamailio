@@ -85,8 +85,6 @@ typedef struct tps_data
 	int32_t expires;
 } tps_data_t;
 
-extern str tt_table_name;
-extern str td_table_name;
 int tps_storage_dialog_find(sip_msg_t *msg, tps_data_t *td);
 int tps_storage_dialog_save(sip_msg_t *msg, tps_data_t *td);
 int tps_storage_dialog_rm(sip_msg_t *msg, tps_data_t *td);

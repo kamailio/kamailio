@@ -79,6 +79,9 @@ db_func_t _tpsdbf;
 /* sruid to get internal uid */
 sruid_t _tps_sruid;
 
+extern str tt_table_name;
+extern str td_table_name;
+
 /** module parameters */
 static str _tps_db_url = str_init(DEFAULT_DB_URL);
 int _tps_param_mask_callid = 0;
@@ -259,26 +262,24 @@ static int mod_init(void)
 					"provide all functions needed\n");
 			return -1;
 		}
-		topos_db_con = _tpsdbf.init(&_tps_db_url);
-		if(topos_db_con == NULL) {
-			LM_ERR("failed to open database connection\n");
-			goto dberror;
-		}
-		if(_tps_version_table_check != 0
-				&& db_check_table_version(&_tpsdbf, topos_db_con,
-						   &td_table_name, TD_TABLE_VERSION)
-						   < 0) {
-			DB_TABLE_VERSION_ERROR(td_table_name);
-			goto dberror;
-		}
-		if(_tps_version_table_check != 0
-				&& db_check_table_version(&_tpsdbf, topos_db_con,
-						   &tt_table_name, TT_TABLE_VERSION)
-						   < 0) {
-			DB_TABLE_VERSION_ERROR(tt_table_name);
-			goto dberror;
-		}
-		if(topos_db_con) {
+		if(_tps_version_table_check != 0) {
+			topos_db_con = _tpsdbf.init(&_tps_db_url);
+			if(topos_db_con == NULL) {
+				LM_ERR("failed to open database connection\n");
+				goto dberror;
+			}
+			if(db_check_table_version(
+					   &_tpsdbf, topos_db_con, &td_table_name, TD_TABLE_VERSION)
+					< 0) {
+				DB_TABLE_VERSION_ERROR(td_table_name);
+				goto dberror;
+			}
+			if(db_check_table_version(
+					   &_tpsdbf, topos_db_con, &tt_table_name, TT_TABLE_VERSION)
+					< 0) {
+				DB_TABLE_VERSION_ERROR(tt_table_name);
+				goto dberror;
+			}
 			_tpsdbf.close(topos_db_con);
 			topos_db_con = NULL;
 		}
