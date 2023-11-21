@@ -101,7 +101,8 @@ int binary2pdu(char *binary, int length, char *pdu)
 
 
 /* make the PDU string. The destination variable pdu has to be big enough. */
-int make_pdu(struct sms_msg *msg, struct modem *mdm, char *pdu)
+int make_pdu(struct sms_msg *msg, struct modem *mdm, char *pdu,
+		unsigned int pdu_size)
 {
 	int coding;
 	int flags;
@@ -127,11 +128,11 @@ int make_pdu(struct sms_msg *msg, struct modem *mdm, char *pdu)
 		flags += 16; // Validity field
 	/* concatenate the first part of the PDU string */
 	if(mdm->mode == MODE_OLD)
-		pdu_len += sprintf(pdu, "%02X00%02X91%s00%02X%02X", flags, msg->to.len,
-				tmp, coding, msg->text.len);
-	else
-		pdu_len += sprintf(pdu, "00%02X00%02X91%s00%02XA7%02X", flags,
+		pdu_len += snprintf(pdu, pdu_size, "%02X00%02X91%s00%02X%02X", flags,
 				msg->to.len, tmp, coding, msg->text.len);
+	else
+		pdu_len += snprintf(pdu, pdu_size, "00%02X00%02X91%s00%02XA7%02X",
+				flags, msg->to.len, tmp, coding, msg->text.len);
 	/* Create the PDU string of the message */
 	/* pdu_len += binary2pdu(msg->text.s,msg->text.len,pdu+pdu_len); */
 	pdu_len +=
@@ -180,20 +181,20 @@ int putsms(struct sms_msg *sms_messg, struct modem *mdm)
 	int pdu_len;
 	int sms_id;
 
-	pdu_len = make_pdu(sms_messg, mdm, pdu);
+	pdu_len = make_pdu(sms_messg, mdm, pdu, 500);
 	if(mdm->mode == MODE_OLD)
-		clen = sprintf(command, "AT+CMGS=%i\r", pdu_len / 2);
+		clen = snprintf(command, 500, "AT+CMGS=%i\r", pdu_len / 2);
 	else if(mdm->mode == MODE_ASCII)
-		clen = sprintf(command, "AT+CMGS=\"+%.*s\"\r", sms_messg->to.len,
+		clen = snprintf(command, 500, "AT+CMGS=\"+%.*s\"\r", sms_messg->to.len,
 				sms_messg->to.s);
 	else
-		clen = sprintf(command, "AT+CMGS=%i\r", pdu_len / 2 - 1);
+		clen = snprintf(command, 500, "AT+CMGS=%i\r", pdu_len / 2 - 1);
 
 	if(mdm->mode == MODE_ASCII)
-		clen2 = sprintf(
-				command2, "%.*s\x1A", sms_messg->text.len, sms_messg->text.s);
+		clen2 = snprintf(command2, 500, "%.*s\x1A", sms_messg->text.len,
+				sms_messg->text.s);
 	else
-		clen2 = sprintf(command2, "%.*s\x1A", pdu_len, pdu);
+		clen2 = snprintf(command2, 500, "%.*s\x1A", pdu_len, pdu);
 
 	sms_id = 0;
 	for(err_code = 0, retries = 0; err_code < 2 && retries < mdm->retry;
