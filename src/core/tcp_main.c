@@ -2064,15 +2064,15 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 	struct tcp_connection *c;
 	struct ip_addr ip;
 	int port;
-	int fd;
+	int fd = -1;
 	long response[2];
 	int n;
 	ticks_t con_lifetime;
 	int try_local_port;
 #ifdef USE_TLS
-	const char *rest_buf;
-	const char *t_buf;
-	unsigned rest_len, t_len;
+	const char *rest_buf = NULL;
+	const char *t_buf = NULL;
+	unsigned rest_len = 0, t_len = 0;
 	long resp;
 	snd_flags_t t_send_flags;
 #endif /* USE_TLS */
@@ -3548,6 +3548,7 @@ static void destroy_send_fd_queues(void)
 }
 
 
+#ifdef SEND_FD_QUEUE
 inline static int send_fd_queue_add(
 		struct tcp_send_fd_q *q, int unix_sock, struct tcp_connection *t)
 {
@@ -3585,7 +3586,7 @@ inline static int send_fd_queue_add(
 error:
 	return -1;
 }
-
+#endif
 
 inline static void send_fd_queue_run(struct tcp_send_fd_q *q)
 {
