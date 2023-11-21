@@ -61,35 +61,41 @@ int _apy_process_rank = 0;
 
 PyThreadState *myThreadState;
 
+/* clang-format off */
 /** module parameters */
 static param_export_t params[] = {
-		{"script_name", PARAM_STR, &_sr_python_load_file},
-		{"load", PARAM_STR, &_sr_python_load_file},
-		{"mod_init_function", PARAM_STR, &mod_init_fname},
-		{"child_init_method", PARAM_STR, &child_init_mname}, {0, 0, 0}};
+	{"script_name", PARAM_STR, &_sr_python_load_file},
+	{"load", PARAM_STR, &_sr_python_load_file},
+	{"mod_init_function", PARAM_STR, &mod_init_fname},
+	{"child_init_method", PARAM_STR, &child_init_mname},
+	{0, 0, 0}
+};
 
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] = {{"python_exec", (cmd_function)python_exec1, 1,
-									  fixup_spve_null, 0, ANY_ROUTE},
-		{"python_exec", (cmd_function)python_exec2, 2, fixup_spve_spve, 0,
-				ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+static cmd_export_t cmds[] = {
+	{"python_exec", (cmd_function)python_exec1, 1,
+		fixup_spve_null, 0, ANY_ROUTE},
+	{"python_exec", (cmd_function)python_exec2, 2,
+		fixup_spve_spve, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /** module exports */
 struct module_exports exports = {
-		"app_python3",			/* module name */
-		RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
-		cmds,					/* exported functions */
-		params,					/* exported parameters */
-		0,						/* exported rpc functions */
-		0,						/* exported pseudo-variables */
-		0,						/* response handling function */
-		mod_init,				/* module init function */
-		child_init,				/* per-child init function */
-		mod_destroy				/* destroy function */
+	"app_python3",			/* module name */
+	RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
+	cmds,					/* exported functions */
+	params,					/* exported parameters */
+	0,						/* exported rpc functions */
+	0,						/* exported pseudo-variables */
+	0,						/* response handling function */
+	mod_init,				/* module init function */
+	child_init,				/* per-child init function */
+	mod_destroy				/* destroy function */
 };
+/* clang-format on */
 
 
 /**
