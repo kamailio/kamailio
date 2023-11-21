@@ -90,7 +90,7 @@ static cmd_export_t cmds[] = {
 	{0, 0, 0, 0, 0, 0}
 };
 
-struct module_exports exports = {
+struct module_exports _app_lua_exports = {
 	"app_lua",					/* module name */
 	DEFAULT_DLFLAGS,			/* dlopen flags */
 	cmds,						/* exported functions */
