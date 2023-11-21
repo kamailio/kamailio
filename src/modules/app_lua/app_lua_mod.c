@@ -62,39 +62,47 @@ int app_lua_reload_param(modparam_t type, void *val);
 
 int _ksr_app_lua_log_mode = 0;
 
+/* clang-format off */
 static param_export_t params[] = {
-		{"load", PARAM_STRING | USE_FUNC_PARAM, (void *)app_lua_load_param},
-		{"reload", INT_PARAM | USE_FUNC_PARAM, (void *)app_lua_reload_param},
-		{"log_mode", PARAM_INT, &_ksr_app_lua_log_mode}, {0, 0, 0}};
+	{"load", PARAM_STRING | USE_FUNC_PARAM, (void *)app_lua_load_param},
+	{"reload", INT_PARAM | USE_FUNC_PARAM, (void *)app_lua_reload_param},
+	{"log_mode", PARAM_INT, &_ksr_app_lua_log_mode},
+	{0, 0, 0}
+};
 
-static cmd_export_t cmds[] = {{"lua_dostring", (cmd_function)w_app_lua_dostring,
-									  1, fixup_spve_null, 0, ANY_ROUTE},
-		{"lua_dofile", (cmd_function)w_app_lua_dofile, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"lua_runstring", (cmd_function)w_app_lua_runstring, 1, fixup_spve_null,
-				0, ANY_ROUTE},
-		{"lua_run", (cmd_function)w_app_lua_run0, 1, fixup_lua_run, 0,
-				ANY_ROUTE},
-		{"lua_run", (cmd_function)w_app_lua_run1, 2, fixup_lua_run, 0,
-				ANY_ROUTE},
-		{"lua_run", (cmd_function)w_app_lua_run2, 3, fixup_lua_run, 0,
-				ANY_ROUTE},
-		{"lua_run", (cmd_function)w_app_lua_run3, 4, fixup_lua_run, 0,
-				ANY_ROUTE},
-		{"bind_app_lua", (cmd_function)bind_app_lua, 0, 0, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+static cmd_export_t cmds[] = {
+	{"lua_dostring", (cmd_function)w_app_lua_dostring, 1,
+		fixup_spve_null, 0, ANY_ROUTE},
+	{"lua_dofile", (cmd_function)w_app_lua_dofile, 1,
+		fixup_spve_null, 0, ANY_ROUTE},
+	{"lua_runstring", (cmd_function)w_app_lua_runstring, 1,
+		fixup_spve_null, 0, ANY_ROUTE},
+	{"lua_run", (cmd_function)w_app_lua_run0, 1,
+		fixup_lua_run, 0, ANY_ROUTE},
+	{"lua_run", (cmd_function)w_app_lua_run1, 2,
+		fixup_lua_run, 0, ANY_ROUTE},
+	{"lua_run", (cmd_function)w_app_lua_run2, 3,
+		fixup_lua_run, 0, ANY_ROUTE},
+	{"lua_run", (cmd_function)w_app_lua_run3, 4,
+		fixup_lua_run, 0, ANY_ROUTE},
+	{"bind_app_lua", (cmd_function)bind_app_lua, 0,
+		0, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 struct module_exports exports = {
-		"app_lua", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,						/*·exported·functions·*/
-		params,						/*·exported·params·*/
-		0,							/*·exported·RPC·methods·*/
-		0,							/* exported pseudo-variables */
-		0,							/*·response·function·*/
-		mod_init,					/* initialization module*/
-		child_init,					/* per child init function */
-		mod_destroy					/* destroy function */
+	"app_lua",					/* module name */
+	DEFAULT_DLFLAGS,			/* dlopen flags */
+	cmds,						/* exported functions */
+	params,						/* exported params */
+	0,							/* exported RPC methods */
+	0,							/* exported pseudo-variables */
+	0,							/* response function */
+	mod_init,					/* initialization module */
+	child_init,					/* per child init function */
+	mod_destroy					/* destroy function */
 };
+/* clang-format on */
 
 /**
  *
