@@ -345,7 +345,7 @@ ipsec_forward("location", "1");
     </section>
 
     <section>
-      <title><function moreinfo="none">ipsec_destroy(domain)</function></title>
+      <title><function moreinfo="none">ipsec_destroy(domain [, aor])</function></title>
       <para>The function destroys IPSec tunnel, created with ipsec_create.</para>
       <para>Meaning of the parameters is as follows:</para>
       <itemizedlist>
@@ -354,6 +354,10 @@ ipsec_forward("location", "1");
           <emphasis>domain</emphasis> - Logical domain within the registrar.
           If a database is used then this must be name of the table which
           stores the contacts.
+          </para>
+          <para>
+			  <emphasis>aor</emphasis> - SIP URI to match the record. If not
+			  provided, then R-URI is used.
           </para>
         </listitem>
 		  </itemizedlist>
