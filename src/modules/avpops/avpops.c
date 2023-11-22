@@ -810,12 +810,12 @@ static int fixup_subst(void **param, int param_no)
 		}
 		*param = (void *)av;
 	} else if(param_no == 2) {
-		LM_DBG("%s fixing %s\n", exports.name, (char *)(*param));
+		LM_DBG("fixing: %s\n", (char *)(*param));
 		subst.s = *param;
 		subst.len = strlen(*param);
 		se = subst_parser(&subst);
 		if(se == 0) {
-			LM_ERR("%s: bad subst re %s\n", exports.name, (char *)*param);
+			LM_ERR("bad subst re: %s\n", (char *)*param);
 			return E_BAD_RE;
 		}
 		/* don't free string -- needed for specifiers */
