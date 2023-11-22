@@ -86,7 +86,7 @@ static param_export_t params[]={
 	{0, 0, 0}
 };
 
-struct module_exports exports = {
+struct module_exports _app_ruby_exports = {
 	"app_ruby",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* exported functions */
