@@ -2090,9 +2090,14 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	via_body_t *vb = NULL;
 	rr_t *rrb = NULL;
 	contact_t *cb = NULL;
+	p_id_body_t *ppib = NULL;
+	p_id_body_t *paib = NULL;
 	hdr_field_t *hf = NULL;
 	hdr_field_t thdr = {0};
 	int n = 0;
+	int ppi_header_count = 0;
+	int pai_header_count = 0;
+	int innerIndex = 0;
 	str sval = STR_NULL;
 
 	if(msg == NULL || res == NULL || param == NULL)
@@ -2335,6 +2340,110 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		return pv_get_null(msg, param, res);
 	}
 
+	if((tv.flags == 0) && (tv.ri == HDR_PPI_T)) {
+		if(msg->ppi == NULL) {
+			LM_DBG("no PPI header\n");
+			return pv_get_null(msg, param, res);
+		}
+
+		if(parse_ppi_header(msg) < 0) {
+			LM_DBG("failed to parse PPI headers\n");
+			return pv_get_null(msg, param, res);
+		}
+
+		ppib = (p_id_body_t *)msg->ppi->parsed;
+		ppi_header_count = 0;
+
+		while(ppib != NULL) {
+			ppi_header_count += ppib->num_ids;
+			ppib = ppib->next;
+		}
+
+		if(idx < 0) {
+			idx = -idx;
+			if(idx > ppi_header_count) {
+				LM_DBG("index out of range\n");
+				return pv_get_null(msg, param, res);
+			}
+			idx = ppi_header_count - idx;
+		}
+
+		n = 0;
+		ppib = (p_id_body_t *)msg->ppi->parsed;
+		/* loop through all parsed ppi headers lists */
+		while(ppib != NULL) {
+			if(n + ppib->num_ids > idx) {
+				/* Calculate the index within this specific list */
+				int innerIndex = idx - n;
+
+				/* Access the desired element within this list */
+				sval.s = ppib->id[innerIndex].body.s;
+				sval.len = ppib->id[innerIndex].body.len;
+				trim(&sval);
+				res->rs = sval;
+				return 0;
+			}
+
+			/* Move to the next ppi header list */
+			n += ppib->num_ids;
+			ppib = ppib->next;
+		}
+		LM_DBG("unexpected PPI index out of range\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if((tv.flags == 0) && (tv.ri == HDR_PAI_T)) {
+		if(msg->pai == NULL) {
+			LM_DBG("no PAI header\n");
+			return pv_get_null(msg, param, res);
+		}
+
+		if(parse_pai_header(msg) < 0) {
+			LM_DBG("failed to parse PAI headers\n");
+			return pv_get_null(msg, param, res);
+		}
+
+		paib = (p_id_body_t *)msg->pai->parsed;
+		pai_header_count = 0;
+
+		while(paib != NULL) {
+			pai_header_count += paib->num_ids;
+			paib = paib->next;
+		}
+
+		if(idx < 0) {
+			idx = -idx;
+			if(idx > pai_header_count) {
+				LM_DBG("index out of range\n");
+				return pv_get_null(msg, param, res);
+			}
+			idx = pai_header_count - idx;
+		}
+
+		n = 0;
+		paib = (p_id_body_t *)msg->pai->parsed;
+		/* loop through all parsed PAI headers lists */
+		while(paib != NULL) {
+			if(n + paib->num_ids > idx) {
+				/* Calculate the index within this specific list */
+				int innerIndex = idx - n;
+
+				/* Access the desired element within this list */
+				sval.s = paib->id[innerIndex].body.s;
+				sval.len = paib->id[innerIndex].body.len;
+				trim(&sval);
+				res->rs = sval;
+				return 0;
+			}
+
+			/* Move to the next PAI header list */
+			n += paib->num_ids;
+			paib = paib->next;
+		}
+		LM_DBG("unexpected PAI index out of range\n");
+		return pv_get_null(msg, param, res);
+	}
+
 	return pv_get_hdr_helper(msg, param, res, &tv, idx, idxf);
 }
 
@@ -2347,6 +2456,8 @@ int pv_get_hflc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	via_body_t *vb = NULL;
 	rr_t *rrb = NULL;
 	contact_t *cb = NULL;
+	p_id_body_t *ppib = NULL;
+	p_id_body_t *paib = NULL;
 	hdr_field_t *hf = NULL;
 	hdr_field_t thdr = {0};
 	int n = 0;
@@ -2448,6 +2559,45 @@ int pv_get_hflc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 					n++;
 				}
 			}
+		}
+		return pv_get_sintval(msg, param, res, n);
+	}
+
+	if((tv.flags == 0) && (tv.ri == HDR_PPI_T)) {
+		if(msg->ppi == NULL) {
+			LM_DBG("no PPI header\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+
+		if(parse_ppi_header(msg) < 0) {
+			LM_DBG("failed to parse PPI headers\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+
+		ppib = (p_id_body_t *)msg->ppi->parsed;
+		n = 0;
+		while(ppib != NULL) {
+			n += ppib->num_ids;
+			ppib = ppib->next;
+		}
+		return pv_get_sintval(msg, param, res, n);
+	}
+
+	if((tv.flags == 0) && (tv.ri == HDR_PAI_T)) {
+		if(msg->pai == NULL) {
+			LM_DBG("no PAI header\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		if(parse_pai_header(msg) < 0) {
+			LM_DBG("failed to parse PAI headers\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+
+		paib = (p_id_body_t *)msg->pai->parsed;
+		n = 0;
+		while(paib != NULL) {
+			n += paib->num_ids;
+			paib = paib->next;
 		}
 		return pv_get_sintval(msg, param, res, n);
 	}
