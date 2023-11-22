@@ -154,53 +154,58 @@ static int w_tps_set_context(sip_msg_t *msg, char *pctx, char *p2);
 
 int bind_topos(topos_api_t *api);
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"tps_set_context", (cmd_function)w_tps_set_context, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
+	{"tps_set_context", (cmd_function)w_tps_set_context, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
 
-		{"bind_topos", (cmd_function)bind_topos, 0, 0, 0, 0},
+	{"bind_topos", (cmd_function)bind_topos, 0, 0, 0, 0},
 
-		{0, 0, 0, 0, 0, 0}};
+	{0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{"storage", PARAM_STR, &_tps_storage},
-		{"db_url", PARAM_STR, &_tps_db_url},
-		{"mask_callid", PARAM_INT, &_tps_param_mask_callid},
-		{"sanity_checks", PARAM_INT, &_tps_sanity_checks},
-		{"header_mode", PARAM_INT, &_tps_header_mode},
-		{"branch_expire", PARAM_INT, &_tps_branch_expire},
-		{"dialog_expire", PARAM_INT, &_tps_dialog_expire},
-		{"clean_interval", PARAM_INT, &_tps_clean_interval},
-		{"event_callback", PARAM_STR, &_tps_eventrt_callback},
-		{"event_mode", PARAM_INT, &_tps_eventrt_mode},
-		{"contact_host", PARAM_STR, &_tps_contact_host},
-		{"contact_mode", PARAM_INT, &_tps_contact_mode},
-		{"cparam_name", PARAM_STR, &_tps_cparam_name},
-		{"xavu_cfg", PARAM_STR, &_tps_xavu_cfg},
-		{"xavu_field_a_contact", PARAM_STR, &_tps_xavu_field_acontact},
-		{"xavu_field_b_contact", PARAM_STR, &_tps_xavu_field_bcontact},
-		{"xavu_field_contact_host", PARAM_STR, &_tps_xavu_field_contact_host},
-		{"rr_update", PARAM_INT, &_tps_rr_update},
-		{"context", PARAM_STR, &_tps_context_param},
-		{"methods_nocontact", PARAM_STR, &_tps_methods_nocontact_list},
-		{"methods_noinitial", PARAM_STR, &_tps_methods_noinitial_list},
-		{"version_table", INT_PARAM, &_tps_version_table_check},
+static param_export_t params[] = {
+	{"storage", PARAM_STR, &_tps_storage},
+	{"db_url", PARAM_STR, &_tps_db_url},
+	{"mask_callid", PARAM_INT, &_tps_param_mask_callid},
+	{"sanity_checks", PARAM_INT, &_tps_sanity_checks},
+	{"header_mode", PARAM_INT, &_tps_header_mode},
+	{"branch_expire", PARAM_INT, &_tps_branch_expire},
+	{"dialog_expire", PARAM_INT, &_tps_dialog_expire},
+	{"clean_interval", PARAM_INT, &_tps_clean_interval},
+	{"event_callback", PARAM_STR, &_tps_eventrt_callback},
+	{"event_mode", PARAM_INT, &_tps_eventrt_mode},
+	{"contact_host", PARAM_STR, &_tps_contact_host},
+	{"contact_mode", PARAM_INT, &_tps_contact_mode},
+	{"cparam_name", PARAM_STR, &_tps_cparam_name},
+	{"xavu_cfg", PARAM_STR, &_tps_xavu_cfg},
+	{"xavu_field_a_contact", PARAM_STR, &_tps_xavu_field_acontact},
+	{"xavu_field_b_contact", PARAM_STR, &_tps_xavu_field_bcontact},
+	{"xavu_field_contact_host", PARAM_STR, &_tps_xavu_field_contact_host},
+	{"rr_update", PARAM_INT, &_tps_rr_update},
+	{"context", PARAM_STR, &_tps_context_param},
+	{"methods_nocontact", PARAM_STR, &_tps_methods_nocontact_list},
+	{"methods_noinitial", PARAM_STR, &_tps_methods_noinitial_list},
+	{"version_table", INT_PARAM, &_tps_version_table_check},
 
-		{0, 0, 0}};
+	{0, 0, 0}
+};
 
 
 /** module exports */
 struct module_exports exports = {
-		"topos",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported  functions */
-		params,			 /* exported parameters */
-		0,				 /* exported rpc functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* child initialization function */
-		destroy			 /* destroy function */
+	"topos",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported  functions */
+	params,			 /* exported parameters */
+	0,				 /* exported rpc functions */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* child initialization function */
+	destroy			 /* destroy function */
 };
+/* clang-format on */
 
 /**
  * init module function
