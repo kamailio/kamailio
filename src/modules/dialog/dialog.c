@@ -552,7 +552,7 @@ static int mod_init(void)
 	/* register statistics */
 	if(dlg_enable_stats
 			&& (register_module_stats(exports.name, mod_stats) != 0)) {
-		LM_ERR("failed to register %s statistics\n", exports.name);
+		LM_ERR("failed to register statistics\n");
 		return -1;
 	}
 #endif
