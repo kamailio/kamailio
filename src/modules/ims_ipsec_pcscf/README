@@ -58,7 +58,7 @@ Tsvetomir Dimitrov
 
               4.1. ipsec_create(domain)
               4.2. ipsec_forward(domain, flags)
-              4.3. ipsec_destroy(domain)
+              4.3. ipsec_destroy(domain [, aor])
 
    List of Examples
 
@@ -103,7 +103,7 @@ Chapter 1. Admin Guide
 
         4.1. ipsec_create(domain)
         4.2. ipsec_forward(domain, flags)
-        4.3. ipsec_destroy(domain)
+        4.3. ipsec_destroy(domain [, aor])
 
 1. Overview
 
@@ -270,7 +270,7 @@ modparam("ims_ipsec_pcscf", "ipsec_preferred_ealg", "aes-cbc")
 
    4.1. ipsec_create(domain)
    4.2. ipsec_forward(domain, flags)
-   4.3. ipsec_destroy(domain)
+   4.3. ipsec_destroy(domain [, aor])
 
 4.1. ipsec_create(domain)
 
@@ -325,13 +325,15 @@ ipsec_forward("location");
 ipsec_forward("location", "1");
 ...
 
-4.3. ipsec_destroy(domain)
+4.3. ipsec_destroy(domain [, aor])
 
    The function destroys IPSec tunnel, created with ipsec_create.
 
    Meaning of the parameters is as follows:
      * domain - Logical domain within the registrar. If a database is used
        then this must be name of the table which stores the contacts.
+       aor - SIP URI to match the record. If not provided, then R-URI is
+       used.
 
    Example 1.13. ipsec_destroy
 ...
