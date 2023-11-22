@@ -84,7 +84,7 @@ static param_export_t params[]={
 	{0, 0, 0}
 };
 
-struct module_exports exports = {
+struct module_exports _app_jsdt_exports = {
 	"app_jsdt",     /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,           /* exported functions */
