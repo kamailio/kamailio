@@ -66,6 +66,7 @@ Carlos Ruiz Diaz
               4.26. app_provided_party_avp (avp string)
               4.27. vendor_specific_chargeinfo (int)
               4.28. vendor_specific_id (int)
+              4.29. strip_plus_from_e164 (int)
 
         5. Functions
 
@@ -123,8 +124,9 @@ Carlos Ruiz Diaz
    1.26. app_provided_party_avpparameter usage
    1.27. vendor_specific_chargeinfoparameter usage
    1.28. vendor_specific_idparameter usage
-   1.29. Ro_CCR
-   1.30. Ro_set_session_id_avp
+   1.29. strip_plus_from_e164parameter usage
+   1.30. Ro_CCR
+   1.31. Ro_set_session_id_avp
 
 Chapter 1. Admin Guide
 
@@ -172,6 +174,7 @@ Chapter 1. Admin Guide
         4.26. app_provided_party_avp (avp string)
         4.27. vendor_specific_chargeinfo (int)
         4.28. vendor_specific_id (int)
+        4.29. strip_plus_from_e164 (int)
 
    5. Functions
 
@@ -374,6 +377,7 @@ Chapter 1. Admin Guide
    4.26. app_provided_party_avp (avp string)
    4.27. vendor_specific_chargeinfo (int)
    4.28. vendor_specific_id (int)
+   4.29. strip_plus_from_e164 (int)
 
 4.1. hash_size(int)
 
@@ -755,6 +759,19 @@ modparam("ims_charging", "vendor_specific_chargeinfo", 1)
 modparam("ims_charging", "vendor_specific_id", 10)
 ...
 
+4.29. strip_plus_from_e164 (int)
+
+   Strip + from subscription id when E.164 format is used. This is
+   according to spec, but this parameter is to keep existing behavior as
+   the default.
+
+   Default value is 0.
+
+   Example 1.29. strip_plus_from_e164parameter usage
+...
+modparam("ims_charging", "strip_plus_from_e164", 1)
+...
+
 5. Functions
 
    5.1. Ro_CCR(route_name, direction, reservation_units,
@@ -782,7 +799,7 @@ outgoing_trunk_id)
    This method is executed asynchronously. See example on how to retrieve
    return value.
 
-   Example 1.29. Ro_CCR
+   Example 1.30. Ro_CCR
 ...
   xlog("L_DBG","Sending initial CCR Request for call\n");
     Ro_CCR("RO_ASYNC_TERM_REPLY", "term", 30, "1", "1");
@@ -818,7 +835,7 @@ n");
 
    This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
 
-   Example 1.30. Ro_set_session_id_avp
+   Example 1.31. Ro_set_session_id_avp
 ...
             Ro_set_session_id_avp();
             xlog("L_DBG","Ro session AVP has been set: $avp(ro_session_id)\n");
