@@ -23,6 +23,7 @@
  */
 
 #include "../../core/sr_module.h"
+#include "../../core/mod_fix.h"
 #include "../../modules/tm/tm_load.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
 
@@ -459,24 +460,7 @@ static int unregister_fixup(void **param, int param_no)
 	if(param_no == 1) {
 		return domain_fixup(param, param_no);
 	} else {
-		pv_elem_t *model = NULL;
-		str s;
-
-		/* convert to str */
-		s.s = (char *)*param;
-		s.len = strlen(s.s);
-
-		model = NULL;
-		if(s.len == 0) {
-			LM_ERR("no param!\n");
-			return E_CFG;
-		}
-		if(pv_parse_format(&s, &model) < 0 || model == NULL) {
-			LM_ERR("wrong format [%s]!\n", s.s);
-			return E_CFG;
-		}
-		*param = (void *)model;
-		return 0;
+		return fixup_spve_all(param, param_no);
 	}
 	return E_CFG;
 }
@@ -503,13 +487,11 @@ static int w_forward(struct sip_msg *_m, char *_d, char *_cflags)
 
 static int w_destroy(struct sip_msg *_m, char *_d, char *_aor)
 {
-	pv_elem_t *model;
 	str aor;
 
 	if(_aor) {
-		model = (pv_elem_t *)_aor;
-		if(pv_printf_s(_m, model, &aor) < 0) {
-			LM_ERR("error - cannot print the format\n");
+		if(fixup_get_svalue(_m, (gparam_t *)_aor, &aor) < 0) {
+			LM_ERR("failed to get aor parameter\n");
 			return -1;
 		}
 		LM_DBG("URI: %.*s\n", aor.len, aor.s);

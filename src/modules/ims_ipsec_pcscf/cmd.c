@@ -162,7 +162,7 @@ static str get_www_auth_param(const char *param_name, str www_auth)
 }
 
 static int fill_contact(
-		pcontact_info_t *ci, sip_msg_t *m, tm_cell_t *t, int sflags)
+		pcontact_info_t *ci, sip_msg_t *m, tm_cell_t *t, str *ruri, int sflags)
 {
 	contact_body_t *cb = NULL;
 	struct via_body *vb = NULL;
@@ -183,8 +183,13 @@ static int fill_contact(
 
 		memset(&uri, 0, sizeof(struct sip_uri));
 
-		if((sflags & IPSEC_DSTADDR_SEARCH) && m->dst_uri.s != NULL
-				&& m->dst_uri.len > 0) {
+		if(ruri != NULL && ruri->len > 0) {
+			suri.s = ruri->s;
+			suri.len = ruri->len;
+			LM_DBG("using param r-uri for contact filling: %.*s\n", suri.len,
+					suri.s);
+		} else if((sflags & IPSEC_DSTADDR_SEARCH) && m->dst_uri.s != NULL
+				  && m->dst_uri.len > 0) {
 			suri = m->dst_uri;
 			LM_DBG("using dst uri for contact filling: %.*s\n", suri.len,
 					suri.s);
@@ -702,7 +707,7 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		t = tmb.t_gett();
 	}
 	// Find the contact
-	if(fill_contact(&ci, m, t, _cflags) != 0) {
+	if(fill_contact(&ci, m, t, NULL, _cflags) != 0) {
 		LM_ERR("Error filling in contact data\n");
 		return ret;
 	}
@@ -860,7 +865,7 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	//
 	// Find the contact
 	//
-	if(fill_contact(&ci, m, t, _cflags) != 0) {
+	if(fill_contact(&ci, m, t, NULL, _cflags) != 0) {
 		LM_ERR("Error filling in contact data\n");
 		return ret;
 	}
@@ -1052,14 +1057,8 @@ int ipsec_destroy(struct sip_msg *m, udomain_t *d, str *uri)
 		t = tmb.t_gett();
 	}
 
-	// Insert URI in SIP message
-	if(uri != NULL) {
-		m->first_line.u.request.uri.s = uri->s;
-		m->first_line.u.request.uri.len = uri->len;
-	}
-
 	// Find the contact
-	if(fill_contact(&ci, m, t, 0) != 0) {
+	if(fill_contact(&ci, m, t, uri, 0) != 0) {
 		LM_ERR("Error filling in contact data\n");
 		return ret;
 	}
