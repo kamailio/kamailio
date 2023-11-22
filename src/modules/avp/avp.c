@@ -1704,6 +1704,6 @@ select_row_t sel_declaration[] = {{NULL, SEL_PARAM_STR, STR_STATIC_INIT("avp"),
 
 static int mod_init()
 {
-	DBG("%s - initializing\n", exports.name);
+	DBG("initializing\n");
 	return register_select_table(sel_declaration);
 }
