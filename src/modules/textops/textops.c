@@ -1334,15 +1334,15 @@ static int subst_helper_f(sip_msg_t *msg, struct subst_expr *se)
 	if(lst == 0)
 		goto error; /* not found */
 	for(rpl = lst; rpl; rpl = rpl->next) {
-		LM_DBG("%s: replacing at offset %d [%.*s] with [%.*s]\n", exports.name,
-				rpl->offset + off, rpl->size, rpl->offset + off + msg->buf,
-				rpl->rpl.len, rpl->rpl.s);
+		LM_DBG("replacing at offset %d [%.*s] with [%.*s]\n", rpl->offset + off,
+				rpl->size, rpl->offset + off + msg->buf, rpl->rpl.len,
+				rpl->rpl.s);
 		if((l = del_lump(msg, rpl->offset + off, rpl->size, 0)) == 0)
 			goto error;
 		/* hack to avoid re-copying rpl, possible because both
 		 * replace_lst & lumps use pkg_malloc */
 		if(insert_new_lump_after(l, rpl->rpl.s, rpl->rpl.len, 0) == 0) {
-			LM_ERR("%s: could not insert new lump\n", exports.name);
+			LM_ERR("could not insert new lump\n");
 			goto error;
 		}
 		/* hack continued: set rpl.s to 0 so that replace_lst_free will
@@ -1356,7 +1356,7 @@ error:
 	if(lst)
 		replace_lst_free(lst);
 	if(nmatches < 0)
-		LM_ERR("%s: subst_run failed\n", exports.name);
+		LM_ERR("subst_run failed\n");
 	return ret;
 }
 
@@ -1391,9 +1391,8 @@ static int subst_uri_helper_f(struct sip_msg *msg, struct subst_expr *se)
 	result = subst_str(tmp, msg, se, 0); /* pkg malloc'ed result */
 	tmp[len] = c;
 	if(result) {
-		LM_DBG("%s match - old uri= [%.*s], new uri= [%.*s]\n", exports.name,
-				len, tmp, (result->len) ? result->len : 0,
-				(result->s) ? result->s : "");
+		LM_DBG("match - old uri= [%.*s], new uri= [%.*s]\n", len, tmp,
+				(result->len) ? result->len : 0, (result->s) ? result->s : "");
 		if(msg->new_uri.s)
 			pkg_free(msg->new_uri.s);
 		msg->new_uri = *result;
@@ -1497,15 +1496,15 @@ static int subst_body_helper_f(struct sip_msg *msg, struct subst_expr *se)
 	if(lst == 0)
 		goto error; /* not found */
 	for(rpl = lst; rpl; rpl = rpl->next) {
-		LM_DBG("%s replacing at offset %d [%.*s] with [%.*s]\n", exports.name,
-				rpl->offset + off, rpl->size, rpl->offset + off + msg->buf,
-				rpl->rpl.len, rpl->rpl.s);
+		LM_DBG("replacing at offset %d [%.*s] with [%.*s]\n", rpl->offset + off,
+				rpl->size, rpl->offset + off + msg->buf, rpl->rpl.len,
+				rpl->rpl.s);
 		if((l = del_lump(msg, rpl->offset + off, rpl->size, 0)) == 0)
 			goto error;
 		/* hack to avoid re-copying rpl, possible because both
 		 * replace_lst & lumps use pkg_malloc */
 		if(insert_new_lump_after(l, rpl->rpl.s, rpl->rpl.len, 0) == 0) {
-			LM_ERR("%s could not insert new lump\n", exports.name);
+			LM_ERR("could not insert new lump\n");
 			goto error;
 		}
 		/* hack continued: set rpl.s to 0 so that replace_lst_free will
@@ -1519,7 +1518,7 @@ error:
 	if(lst)
 		replace_lst_free(lst);
 	if(nmatches < 0)
-		LM_ERR("%s subst_run failed\n", exports.name);
+		LM_ERR("subst_run failed\n");
 	return ret;
 }
 
@@ -2305,14 +2304,14 @@ static int fixup_substre(void **param, int param_no)
 	struct subst_expr *se;
 	str subst;
 
-	LM_DBG("%s module -- fixing %s\n", exports.name, (char *)(*param));
+	LM_DBG("fixing: %s\n", (char *)(*param));
 	if(param_no != 1)
 		return 0;
 	subst.s = *param;
 	subst.len = strlen(*param);
 	se = subst_parser(&subst);
 	if(se == 0) {
-		LM_ERR("%s: bad subst. re %s\n", exports.name, (char *)*param);
+		LM_ERR("bad subst re: %s\n", (char *)*param);
 		return E_BAD_RE;
 	}
 	/* don't free string -- needed for specifiers */
@@ -4782,8 +4781,8 @@ static int subst_hf_helper_f(
 			if(lst != 0)
 				ret = 1;
 			for(rpl = lst; rpl; rpl = rpl->next) {
-				LM_DBG("%s replacing at offset %d [%.*s] with [%.*s]\n",
-						exports.name, rpl->offset + off, rpl->size,
+				LM_DBG("replacing at offset %d [%.*s] with [%.*s]\n",
+						rpl->offset + off, rpl->size,
 						rpl->offset + off + msg->buf, rpl->rpl.len, rpl->rpl.s);
 				if((l = del_lump(msg, rpl->offset + off, rpl->size, 0)) == 0) {
 					ret = -1;
@@ -4792,7 +4791,7 @@ static int subst_hf_helper_f(
 				/* hack to avoid re-copying rpl, possible because both
 				 * replace_lst & lumps use pkg_malloc */
 				if(insert_new_lump_after(l, rpl->rpl.s, rpl->rpl.len, 0) == 0) {
-					LM_ERR("%s could not insert new lump\n", exports.name);
+					LM_ERR("could not insert new lump\n");
 					ret = -1;
 					goto error;
 				}
@@ -4824,9 +4823,9 @@ static int subst_hf_helper_f(
 			goto error; /* not found */
 		ret = 1;
 		for(rpl = lst; rpl; rpl = rpl->next) {
-			LM_DBG("%s replacing at offset %d [%.*s] with [%.*s]\n",
-					exports.name, rpl->offset + off, rpl->size,
-					rpl->offset + off + msg->buf, rpl->rpl.len, rpl->rpl.s);
+			LM_DBG("replacing at offset %d [%.*s] with [%.*s]\n",
+					rpl->offset + off, rpl->size, rpl->offset + off + msg->buf,
+					rpl->rpl.len, rpl->rpl.s);
 			if((l = del_lump(msg, rpl->offset + off, rpl->size, 0)) == 0) {
 				ret = -1;
 				goto error;
@@ -4834,7 +4833,7 @@ static int subst_hf_helper_f(
 			/* hack to avoid re-copying rpl, possible because both
 			 * replace_lst & lumps use pkg_malloc */
 			if(insert_new_lump_after(l, rpl->rpl.s, rpl->rpl.len, 0) == 0) {
-				LM_ERR("%s could not insert new lump\n", exports.name);
+				LM_ERR("could not insert new lump\n");
 				ret = -1;
 				goto error;
 			}
@@ -4846,7 +4845,7 @@ static int subst_hf_helper_f(
 	}
 error:
 	if(nmatches < 0)
-		LM_ERR("%s subst_run failed\n", exports.name);
+		LM_ERR("subst_run failed\n");
 	LM_DBG("lst was %p\n", lst);
 done:
 	if(lst)
