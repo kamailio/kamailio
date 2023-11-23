@@ -1,3 +1,4 @@
 [submodule "pkg/docker"]
 	path = pkg/docker
 	url = https://github.com/kamailio/kamailio-ci.git
+	branch = 5.6
