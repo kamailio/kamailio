@@ -1861,7 +1861,7 @@ static int mod_init(void)
 
 #ifdef STATISTICS
 	// we need the statistics initialized before restoring the keepalive state
-	if(register_module_stats(exports.name, statistics) < 0) {
+	if(register_module_stats("nat_traversal", statistics) < 0) {
 		LM_ERR("failed to initialize module statistics\n");
 		return -1;
 	}
