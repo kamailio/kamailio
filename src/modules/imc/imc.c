@@ -144,7 +144,7 @@ static int mod_init(void)
 {
 #ifdef STATISTICS
 	/* register statistics */
-	if(register_module_stats(exports.name, imc_stats) != 0) {
+	if(register_module_stats("imc", imc_stats) != 0) {
 		LM_ERR("failed to register core statistics\n");
 		return -1;
 	}
