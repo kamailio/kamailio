@@ -194,7 +194,7 @@ static int mod_init(void)
 		goto error;
 	}
 
-	if(register_module_stats(exports.name, stats) != 0) {
+	if(register_module_stats("websocket", stats) != 0) {
 		LM_ERR("registering core statistics\n");
 		goto error;
 	}
