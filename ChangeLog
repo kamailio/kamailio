@@ -1,3 +1,4107 @@
+===================== 2023-11-23 Version 5.6.5 Released =====================
+
+===================== Changes Since Version 5.6.4 ===========================
+
+commit 8d4f75ff50cbccf0538f29810c679258d1d91ff9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 08:21:16 2023 +0100
+
+    Makefile.defs: version set to 5.6.5
+
+commit ded68af35349dc78a5e38945ba52769c4ce0ac12
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 08:19:16 2023 +0100
+
+    pkg: deb specs updated for v5.6.5
+
+commit c1d7e9d6de4c19f783cd7f30593a468a4470eb77
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 08:18:22 2023 +0100
+
+    pkg: version set to 5.6.5 for rpms and alpine specs
+
+commit 3a7afccf8db3936d46bcc1b190ea23c3b5d27447
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 26 08:06:42 2023 +0200
+
+    rabbitmq: backport of RABBITMQ_ERR_CREATE needed for handling allocation error
+    
+    (cherry picked from commit f764cef139d55adb5d38ffc6a1a65fd14bda5f4c)
+
+commit 351c8c962bc4573863b1b21da4d3728e8c7d0e33
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Nov 21 11:16:58 2023 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 25521d7a7d433eed271f5c44da88595042bc633b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 10 07:31:38 2023 +0100
+
+    app_python3: enable error log mode for some of missing callback functions
+    
+    - tm-specific callbacks should trigger error log messages if not found
+    
+    (cherry picked from commit 695dc54dc1547fdee18b00cfa8e4d15f047834a5)
+    (cherry picked from commit 40f5343d4ca2b4c1cf76eaf168a9b1ae4a722a6a)
+
+commit 17907f4137b28862a1bc86c5b61de96b90aef800
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 3 11:00:34 2023 +0100
+
+    db_redis: init allocated redis table structure
+    
+    (cherry picked from commit e24df12d10d8b88582907481d161c6a2db5cf8f1)
+    (cherry picked from commit d015ee9c06a8cb6644101d08e4b54f80b96accf6)
+
+commit 7f5fc6f5fbae4f0edd694a5f94007792687c82c2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 25 18:06:36 2023 +0200
+
+    dmq_usrloc: avoid needless second local socket search
+    
+    - remove overwriting local socket string value with received item
+    
+    (cherry picked from commit f97149aec9da71085df9dcf4541abba7b756939c)
+    (cherry picked from commit ba19a8f30d6c9f7757ef0c8d55e2139a8279d375)
+
+commit 76c538ec31184456ce57487ee6deec26360aca4e
+Author: VoIPNuggets.com <akash@voipnuggets.com>
+Date:   Tue Oct 17 19:19:48 2023 +0530
+
+    tools: route_graph - added README file and updated reference URL [skip ci]
+    
+    (cherry picked from commit 976da8c72e9a056b724f584a803a4a8114f70d30)
+    (cherry picked from commit acd47ad9a175684548dd3fb9c45d18ca81ba6fdb)
+
+commit 49e01375e6d6c43a432ff11dc215564f0d208210
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 6 12:32:53 2023 +0200
+
+    kamdbctl: check if kamctlrc is readable
+    
+    (cherry picked from commit f16ec35fa448d03613e6bbbff4c354012f56073e)
+    (cherry picked from commit b503b95a2a62a2e51a5cff20caaa30212d078e84)
+
+commit 8f56ad7736399588305188f068fd0122ac139b72
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 6 08:19:18 2023 +0200
+
+    kamctl: check if kamctlrc is readable
+    
+    - related to GH #3594
+    
+    (cherry picked from commit a3fd3b12ca9b1c3688255e9d645085947052bc6d)
+    (cherry picked from commit 259812f03ec26d49776050ca5eb657f2771ce8d5)
+
+commit 198af0d4777487650c2893ce3b2ebea421069ddd
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Fri Aug 25 20:54:52 2023 +0200
+
+    [app_lua] clarify the file scripts can be in source or bytecode
+    
+    (cherry picked from commit a8747aa02ff3fbffd7a63bdc1e5c06188472edfa)
+    (cherry picked from commit 9be895a16c91bcf4eb299ce0ffb14624755baa48)
+
+commit f5c9c75eff82182174d1af52aa57d650d533432c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 23 13:03:02 2023 +0200
+
+    msilo: cast to fix storage size warning
+    
+    (cherry picked from commit c11fcbbe9ed19bc54b800100d15d9ae269735f0c)
+    (cherry picked from commit 35f0efadeceaecc8e3315f4682d9ac4eba36e363)
+
+commit d1334e78eca6601195caa786de5d99d6500a1c00
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 7 14:16:49 2023 +0200
+
+    core: parser - set via->params.len when body is finished
+    
+    (cherry picked from commit 82b0f273e1cf65051b6c50301c5073dce56c1149)
+    (cherry picked from commit 59d0ebe41017c2270b62f6171285bae02673da3a)
+
+commit d77981dbb365d2fc345872fc8695a1f204740131
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 22 17:09:37 2023 +0200
+
+    rabbitmq: proper check for allocated pointer
+    
+    (cherry picked from commit 4d58141ab84cf248e8c44a96181642ad0f187e80)
+    (cherry picked from commit 3a217af6b9229989b3c7a788a01609e9513024c4)
+
+commit f2ba8a78c9981740d7db22195bb8286a90f67be8
+Author: Rick Barenthin <rick@ng-voice.com>
+Date:   Tue Aug 15 22:30:58 2023 +0200
+
+    core: cfg.y typo in parsing XAVPVIAFIELDS
+    
+    In the XAVPVIAFIELDS block there is the string written to the wrong variable.
+    
+    The string is stored in _ksr_xavp_via_params.s but the lenght is stored in _ksr_xavp_via_fields.len. This breaks XAVPVIAPARAMS and XAVPVIAFIELDS.
+    
+    (cherry picked from commit 722a79a9ba8ca2608e699ec14684ce004ae10d60)
+    (cherry picked from commit 34a2d87479d1bcc37d74f3d8fcb4186aea90fc84)
+
+commit fc0faa5a7701720de17de734dab261ad4fdfdbfc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Aug 12 13:30:39 2023 +0200
+
+    xhttp: note about available variables during http request processing
+    
+    (cherry picked from commit 170067e633ef32ea7b17adad46fdfe2c85fadda0)
+    (cherry picked from commit 774b464af7c561e49253066e8ce3b4ee55463d9a)
+
+commit 20b947cbd9c5379be34597d5dd8f8666ab793c40
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 11 20:16:37 2023 +0200
+
+    http_async_client: docs - dependency on libevent
+    
+    - list style for dependencies and links to projects
+    
+    (cherry picked from commit f16d2658bbefb7a9f43076cbaa958fb3a27f6a0c)
+    (cherry picked from commit 5b1592900920143c9ce5c188e2835c1afd27d489)
+
+commit be104e03ede628ac130073a2a22f30cd15faa308
+Author: MVONDO Eric OBS/OINIS <bycl2332@orange.com>
+Date:   Tue Jun 20 10:22:48 2023 +0100
+
+    siptrace: fix pseudo var direction attribute length
+    
+    (cherry picked from commit 508886c3054a8470fe4469e78e63aa37ae93922d)
+    (cherry picked from commit 3e197c7c41c97badece29cbc6477119180b8dcad)
+
+commit 16a1a3aff860efa54c3523792bf4b9a0cc3f0ff0
+Author: Norbert KoppÃ¡ny Legyes <norbert.legyes@protonmail.com>
+Date:   Tue Jul 4 17:27:17 2023 +0200
+
+    xlog: fix docs example for modparam methods_filter
+    
+    (cherry picked from commit b5a37683e364f596b6c5b4ebbba1fff951d7be84)
+    (cherry picked from commit 80b26beb7d4f9cd4b3858e9e2dae4588feec8e28)
+
+commit 515420337ec110252012522f405cbc605388b23e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 30 08:49:19 2023 +0200
+
+    jansson: print unknown type in log message
+    
+    (cherry picked from commit b8cae4fbcd026ffb81e8242500212582d9672ad5)
+    (cherry picked from commit e681aa8236b502de31ad6600932517a259b6b62e)
+
+commit 99ec027801904aacbb4e2c34c030c3fdc98501dd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 3 08:26:07 2023 +0200
+
+    http_client: use LIBCURL_VERSION_NUM instead of CURL_AT_LEAST_VERSION
+    
+    - older distros have compilers that don't cope with the later
+    
+    (cherry picked from commit 7cd32bf9631a81c7c4382d45f498bdc9c7f9b34c)
+    (cherry picked from commit 7630473f57c7c0ad600067cea7a89693d9926a81)
+
+commit 6c833deb60daa4382974aa234b53b3f72795e682
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 22 14:37:18 2023 +0200
+
+    http_client: fix depecration of CURLOPT_REDIR_PROTOCOLS
+    
+    - GH #3492
+    
+    (cherry picked from commit 4d8263f9be97a541a24cbc6acc9855509640780b)
+    (cherry picked from commit 2bd813b0c4c1b942ee634eca5e68a025be9fab8e)
+
+commit a6830a127b0a135f7b5e8164c278d45ada6be751
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 21 09:27:28 2023 +0200
+
+    http_client: fix depecration of CURLOPT_PROTOCOLS and CURLINFO_SIZE_DOWNLOAD
+    
+    - GH #3484
+    
+    (cherry picked from commit b7b3c67fc1205d114fadf360a594930ef69835a3)
+    (cherry picked from commit 23a121e5d8ffa172f71433c2ef74f323a54e8315)
+
+commit 82d774a3611a0c91cbd357efde8b8949f93bf4a9
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Mon Jun 12 12:00:13 2023 -0400
+
+    mqueue: fix documentation to match the code
+    
+    (cherry picked from commit 23d43645332451ec1ec6dab11da777f9c3bfe304)
+    (cherry picked from commit 91cb5d0adf887db6a34e2a394ab34aae51f475bf)
+
+commit 49b3285b8cd2be85e85862ca2896ab0e2fff2821
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon Jun 12 08:24:01 2023 +0000
+
+    tools: use python3 for route_graph.py tool, for old systems with both python2/python3, fix file closing
+    
+    (cherry picked from commit 7b1fe0483b684693c7baea9b62b471b64c6e22a9)
+    (cherry picked from commit 4f3c32e48b79688ab905802c173b981f92c54e56)
+
+commit 106a8da206220ba9148845b4c7027e8b9ed71e33
+Author: Akash Gupta <listen2akash@gmail.com>
+Date:   Sat Jun 10 14:48:03 2023 +0530
+
+    tool: port the route_graph.py script to python version 3.x
+    
+    (cherry picked from commit fa2a69e2ae919b7ba221e87e2001bde83113ce2a)
+    (cherry picked from commit 14638ef43f9b2ef710ae3a6464fb5db0b9de3377)
+
+commit 3c48704f19133f29f730ecaf8e53461377cb8fb8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 31 11:53:14 2023 +0200
+
+    async: use _async_timer_exec_last_slot = UINT_MAX for initial value
+    
+    (cherry picked from commit bc544daea2ee4bb568cf0314f6d32b8aa0c81ecc)
+    (cherry picked from commit b68cb1ace4d44ba0a471a9fd9a6138f3738efef4)
+
+commit 9705b10871c7056c192c54c3ba5c76f709324408
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 30 17:00:27 2023 +0200
+
+    cfgt: reworked test on dest.s for freeing
+    
+    (cherry picked from commit b2f99145fa7f4088c80dd3e759372445f93f5492)
+    (cherry picked from commit 3b6d0bd508d62b6f6cd0176551311d25225bf63e)
+
+commit 357230ff85dfeb46819e527be255faa979bc945b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 24 21:06:45 2023 +0200
+
+    siprepo: check if list is set on insert
+    
+    (cherry picked from commit 423a818cf6e8f6d672630a0365e13877a173508f)
+    (cherry picked from commit e95a79eef0589be2f7d0470bfe6ba19b006730c6)
+
+commit 69f483cc9195d912fbdb04bbd7588b3407e1129c
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Apr 10 10:38:56 2023 +0200
+
+    kemix: update Kamailio URLs to HTTP â HTTPS
+    
+    (cherry picked from commit 79fc3f1fc9561f43146a107c824d1d97d3a8b021)
+
+commit 8c7224f575018302e9efd6555e90cacf80d50e45
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 19 08:02:44 2023 +0200
+
+    siprepo: translate pointers to the new buffer
+    
+    - GH #3418
+    
+    (cherry picked from commit 15c7f861d72c57ee57f41c108d948027e50a0a27)
+
+commit e547217dd93db36b107b92f224fea07a80f4c535
+Author: Pantelis Kolatsis <pk@gilawa.com>
+Date:   Tue Mar 21 16:22:24 2023 +0000
+
+    async: convert to memory error logging helper
+    
+    (cherry picked from commit b9d397c84cb3e0911e9823386b6eb4944b02c9ed)
+
+commit 8c11f2f93e30c41221a0c43836a1f0703277a21e
+Author: Pantelis Kolatsis <pk@gilawa.com>
+Date:   Tue Mar 14 21:10:04 2023 +0000
+
+    dmq: add missing memory allocation checks, convert to memory log macros
+    
+    (cherry picked from commit 7e617ab89f5275f1b269382ae2c1fee508854cf1)
+
+commit bf47b53fbd5f2dfa82060a3c4f2ec44caa426456
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Tue Mar 14 17:20:14 2023 +0000
+
+    dispatcher: small formatting adaption related to 6aee3bd7c
+    
+    (cherry picked from commit aa4d015a58bb24ba5bda6e6133b0e9f314e2318e)
+
+commit d6c60c09e30da3a1cd8ab1cf333650c6643bf058
+Author: Pantelis Kolatsis <pk@gilawa.com>
+Date:   Tue Mar 14 17:17:28 2023 +0000
+
+    dispatcher: add missing memory allocation checks, convert to memory log macros
+    
+    (cherry picked from commit 6aee3bd7c86a1874cc140a7874b740981f14f5f5)
+
+commit b2083e806c0a8c5d2a202482e3670fa6509e21ea
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Mar 14 11:55:34 2023 +0100
+
+    lcr: fix building warnings initializating values
+    
+    > https://kamailio.sipwise.com/job/kamailiodev-nightly-binaries/architecture=amd64,distribution=bookworm/2381/consoleText
+    > [...]
+    > lcr_mod.c:2630:9: warning: 'tmp_tag.len' may be used uninitialized [-Wmaybe-uninitialized]
+    
+    (cherry picked from commit 781ee072593f16a100ef00b5ef71fcfd6f8ded2b)
+
+commit cd156834b7217fbbbefff7367a83dc802b636139
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Mar 1 07:34:43 2023 +0000
+
+    htable: fix XML syntax errors introduced in 23c67322c244fc4bf
+    
+    (cherry picked from commit 70d8308bbf849b00be69d5c3091b57dfe214b81b)
+
+commit 1121b39f80a371e670480997e91f956bfafb154e
+Author: Ihor Olkhovskyi <ihor.olkhovskyi@cern.ch>
+Date:   Tue Feb 28 09:40:04 2023 +0100
+
+    doc/htable: adding examples in a case of key value is an integer
+    
+    (cherry picked from commit 23c67322c244fc4bf6e990379d2fd876b55b2cbe)
+
+commit b230a4621c4fa4a19860c6e909bc06da3d4633c5
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Nov 13 16:56:16 2023 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit ff719e07a235b38323a9b2f6ad3dfe178da35b4e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    xprint: docs - removed trailing spaces
+
+commit 13223e79fb646a2d78b8422ad4076731dd36ac3c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    xmpp: docs - removed trailing spaces
+
+commit c81ee5e7ddb86f41033b80c4619c326c68b5b301
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    xmlops: docs - removed trailing spaces
+
+commit 4a986501f4367b9f8319217e9cfc587582d1b62f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    xlog: docs - removed trailing spaces
+
+commit 9984f0b22eb670c94b2205086d11f881554446e9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    xhttp_rpc: docs - removed trailing spaces
+
+commit c4bc63a009db123b97679e750c2929244759d104
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    xhttp_prom: docs - removed trailing spaces
+
+commit 2a31e6ce8f509bf7678e8fb756b47cb3d8ec7f56
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    xhttp_pi: docs - removed trailing spaces
+
+commit 41213b3639abc595b63d03e60e20f960bd7dc8c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    xhttp: docs - removed trailing spaces
+
+commit 4578322f48efdb830b92412c4c312b42d5d964bf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    xcap_server: docs - removed trailing spaces
+
+commit cdddbde6ab564701fc5ba7c62b04d44f5abb996a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    xcap_client: docs - removed trailing spaces
+
+commit 382cc11e0e08a79031041be16f5906a063c36fd1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    websocket: docs - removed trailing spaces
+
+commit 67e5b034f7f237c6d2e940d7963761a0861d446d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    uuid: docs - removed trailing spaces
+
+commit 4f693ad76da8a02cf454af19d72d2fad9f9af5bb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:39 2023 +0100
+
+    utils: docs - removed trailing spaces
+
+commit 63f7e0a85f189bc8547e038db079216d85a23067
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    usrloc: docs - removed trailing spaces
+
+commit f332d86788343e00262e480403fde42089db1bee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    userblocklist: docs - removed trailing spaces
+
+commit 7265f2f6ce1a68c3fcaf1fb795b81070c6e249a6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    uri_db: docs - removed trailing spaces
+
+commit 6344fd5e3416f43c617d0984d213f2c9bf775b71
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    uid_uri_db: docs - removed trailing spaces
+
+commit 7ece804a07389d312c33c87efbe6d73f3825700b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    uid_gflags: docs - removed trailing spaces
+
+commit c410757e4e8f8e64e57d415b5cd21fa2270c9616
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    uid_domain: docs - removed trailing spaces
+
+commit c5c5d528b82f07d4ebbf289cfa1bbe019e76d2c2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    uid_avp_db: docs - removed trailing spaces
+
+commit fa4c5e70815d42bdbb739c6bca2dfc9af9dadd25
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    uid_auth_db: docs - removed trailing spaces
+
+commit 35e447cb413ba1401df1b89d39c04313f8dc098f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    uac_redirect: docs - removed trailing spaces
+
+commit 2c02350793fa8547f09b050200a4e2a9a6209de1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    uac: docs - removed trailing spaces
+
+commit ef0fd2e907eb6fa1944bbb7e373bcdb5afb3631a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    tsilo: docs - removed trailing spaces
+
+commit 2660a8e79ef27ee293ffcda032c2ebbad098f555
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    topos: docs - removed trailing spaces
+
+commit 30bb91fff1e2983d9ad8ee20832cb7fa3075deb9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    tmx: docs - removed trailing spaces
+
+commit 94217994a4b1e0f86c598937477c6fb52bd8f9bb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    tmrec: docs - removed trailing spaces
+
+commit 172a81d707c19c287bbd2f8adfb3c7a9ed5a2ef3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    tm: docs - removed trailing spaces
+
+commit 1263ee02cb7302fed86ebbc2ea913c7d284cc732
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    tls: docs - removed trailing spaces
+
+commit f0d1113c7724669fa2776bba43732378d83368d8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    textopsx: docs - removed trailing spaces
+
+commit 91f82608c7c25c1e7611b61da6882b01e9e5d0fe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    textops: docs - removed trailing spaces
+
+commit 0fcf8f8b816890917eee7696d4fc3cd501fd47ec
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    tcpops: docs - removed trailing spaces
+
+commit 5428641db79c734f48fb4eab28b907e213dca8a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    stun: docs - removed trailing spaces
+
+commit a8b6ba9ed170af84ad6bb8248fa720b331dc4243
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    stirshaken: docs - removed trailing spaces
+
+commit 90a179a0193155fc24f31b1be409fecda9bc8a0b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    statsd: docs - removed trailing spaces
+
+commit 63f4913953e6d0898d45c5d2db097259381faf26
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    statistics: docs - removed trailing spaces
+
+commit e51d3323a06796190c9d8bf2cf65a9ec80315552
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    sst: docs - removed trailing spaces
+
+commit d10e8c4d2892ff0e34507be5494690b8ba3e449b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:38 2023 +0100
+
+    sqlops: docs - removed trailing spaces
+
+commit a83b47eadab26da9218ba280a35b3246e2d2c37e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    snmpstats: docs - removed trailing spaces
+
+commit d13644ae639f3c17b30feef30ee57929498b2faf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    smsops: docs - removed trailing spaces
+
+commit 6bbf5a6b0976bc25c0db845623bfeead23673a64
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    sms: docs - removed trailing spaces
+
+commit d69068c5aeed0d58ae105a34e9647db4c9a75d0c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    sl: docs - removed trailing spaces
+
+commit 3ec418399cdcd2531dee97339ce5e8fe4038bce4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    siputils: docs - removed trailing spaces
+
+commit 9c86825542cf8cc20ce7fabe4cb59a306ef0c3ed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    siptrace: docs - removed trailing spaces
+
+commit f6c40b29fb86036290d4dad22a5f28310d9d9f9c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    sipt: docs - removed trailing spaces
+
+commit b04fbfbffc387fbf574cbbb1dc2df96472e16ee3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    sipcapture: docs - removed trailing spaces
+
+commit be4aaccab9781432f8dc0085a741f230e728e78e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    secfilter: docs - removed trailing spaces
+
+commit 4dc130cc084f299d936167e11e0f67f766326a0b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    seas: docs - removed trailing spaces
+
+commit a62e7f109ce3212f32d9e1a9cb7f4fb835c48265
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    sdpops: docs - removed trailing spaces
+
+commit 243c203b77889fe339dc64b14ac8e5f718593b50
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    sctp: docs - removed trailing spaces
+
+commit 92c04d825bcd4e6821af67b8fed0f180e179abff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    sanity: docs - removed trailing spaces
+
+commit f35c09cf315d02787a297486f6fa783dd8edd1eb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    rtpproxy: docs - removed trailing spaces
+
+commit e9bc146f2eb5c67326f10ddce295340d4d166843
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    rtp_media_server: docs - removed trailing spaces
+
+commit e03845415d9f6ba539d23ffaae5e2f873fce822a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    rtjson: docs - removed trailing spaces
+
+commit f34715ae440f6b80793a7a673252381ecf62edbe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    rtimer: docs - removed trailing spaces
+
+commit ad4b22e644b3be83088f8a59b1114c46a411925e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    rr: docs - removed trailing spaces
+
+commit 4899204d6ac9d8f977fbe381b07be63264890469
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    rls: docs - removed trailing spaces
+
+commit 71450f41c62c7fc254c6247948346fc00b1702d6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    registrar: docs - removed trailing spaces
+
+commit 5767ba6ac41240fcec1e0ffba262659fd36f1182
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    regex: docs - removed trailing spaces
+
+commit dc1fdd5d526c59cb7b4cae9e297b391832dba380
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    ratelimit: docs - removed trailing spaces
+
+commit bf687958888d3e20ca7b16579bbc01186aa02465
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    rabbitmq: docs - removed trailing spaces
+
+commit 6a698e6e5dae445588f59ee08421197fbd9d805a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    qos: docs - removed trailing spaces
+
+commit 78d24a5d29597112cd30ee2c448de9d05792f467
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:37 2023 +0100
+
+    pv_headers: docs - removed trailing spaces
+
+commit c18790a60f5ad6b2da7fd35f7545361798ab4a77
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    pv: docs - removed trailing spaces
+
+commit d2877d53eb639db985df337a888b02bf0d78d7eb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    pua_xmpp: docs - removed trailing spaces
+
+commit 46ac51776fb194cba3b4a3c999f481adc552fa10
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    pua_usrloc: docs - removed trailing spaces
+
+commit 0459e8ae0ba7f490ab997bf167cd5781827377f4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    pua_reginfo: docs - removed trailing spaces
+
+commit b08882b04972a1d541f7a50a294e2f6b8caa7190
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    pua_json: docs - removed trailing spaces
+
+commit 7339090e4dbd3a757d6103e3daec83474e4f594e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    pua_dialoginfo: docs - removed trailing spaces
+
+commit 7b334af7267e212e846fb98626cb44e3cf33651c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    pua_bla: docs - removed trailing spaces
+
+commit ccea98a0300621d9a3f22270b1d2fce9ce5408dc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    pua: docs - removed trailing spaces
+
+commit 23c52c3dfcfc3e5f39660f5abc83a11200cfd72e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    print_lib: docs - removed trailing spaces
+
+commit 8b5ef8eea4243d661ff018f9c47bb946b3ad2611
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    print: docs - removed trailing spaces
+
+commit 8f0619adb39f9cd70c348b5bab3cc533eb0d00c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    presence_xml: docs - removed trailing spaces
+
+commit d6d71dff1f0a4a48e326ac7512fc7ff33fdd61a7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    presence_reginfo: docs - removed trailing spaces
+
+commit 2589b4ad8156aeb795ec632affcb70cd8eb0e5a8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    presence_profile: docs - removed trailing spaces
+
+commit cc8e644d95b93dbc8f27bfd57c80673ff5b22c9b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    presence_mwi: docs - removed trailing spaces
+
+commit 9c0c903af9cd11ef9657222d2c3236e64399e205
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    presence_dialoginfo: docs - removed trailing spaces
+
+commit 91a8be9bf3d0e43b17817828936588633827f3ef
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    presence_conference: docs - removed trailing spaces
+
+commit 7925943c950308e44514a01a5c2e68afed191fdc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    presence: docs - removed trailing spaces
+
+commit 66887a5b42f39c2ba6bb98bbadbca38170f88fe3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    prefix_route: docs - removed trailing spaces
+
+commit ad1ad7d629d1c94ff63152f8466d03b9e634c4c0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    pipelimit: docs - removed trailing spaces
+
+commit 3b905ce5619a4358e0340c05a1a31c4e231e943d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    pike: docs - removed trailing spaces
+
+commit ca757ce04c4e79aca24903ba680f9ca64ab53e2e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    permissions: docs - removed trailing spaces
+
+commit 9ec2c8fee654432d7b3976576600401c4db075e3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    peering: docs - removed trailing spaces
+
+commit 9b230ae5356d0cd694f0cf2c72fb9785d0f4b54d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    pdt: docs - removed trailing spaces
+
+commit a4d9dc22011cbf608890a0bd581b15fcfd433e9f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    pdb: docs - removed trailing spaces
+
+commit 3a14f2bc551887978d7ede7bf6d9e477d35f71cf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    path: docs - removed trailing spaces
+
+commit 77b2c177434816ab4fde9dc4a18beba80fe53b20
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:36 2023 +0100
+
+    p_usrloc: docs - removed trailing spaces
+
+commit e6b9d5dd9e6986701709ec8d664a080edbde1243
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    outbound: docs - removed trailing spaces
+
+commit d1a74755e3519094772c78256541ed090b674bdc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    osp: docs - removed trailing spaces
+
+commit 7554b5bddfb89e2e882b40430a095504584032c5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    nsq: docs - removed trailing spaces
+
+commit fdb23eea896f1f55733a4694b09c518e33ba5212
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    nosip: docs - removed trailing spaces
+
+commit 1065895b5b54c938926cf2509cd53e4a9c76ee5a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    ndb_redis: docs - removed trailing spaces
+
+commit 0bc00d717cbf42682cb7e6591a9a3c9717766e7f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    ndb_mongodb: docs - removed trailing spaces
+
+commit a8a2e5e8b83877e4144e7093636450fe1da09514
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    ndb_cassandra: docs - removed trailing spaces
+
+commit 35e8e011044249066ebfd7b4f6267f17ba146836
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    nathelper: docs - removed trailing spaces
+
+commit 3a986a96f7b7f1860739343e097c673ea9ed2684
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    nat_traversal: docs - removed trailing spaces
+
+commit b6789049be435f6297741cb290996e3936a5b050
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    mtree: docs - removed trailing spaces
+
+commit 65956147310b25ca4855e33bdf01fe4ecefa4a44
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    msrp: docs - removed trailing spaces
+
+commit f822bd19bb719ff257da3d229ba38f5c695adf1c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    msilo: docs - removed trailing spaces
+
+commit 2f1edead3cc53c3ebb79b72741850105300a86aa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    mqueue: docs - removed trailing spaces
+
+commit 86a5d90c6974ba0d1be3181d756823b677bce383
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    mqtt: docs - removed trailing spaces
+
+commit f6db47d4d3334aba5eccbef7f9889c2256d6b0c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    misctest: docs - removed trailing spaces
+
+commit e682a23676d7c008be88ffef2998971f9abc383a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    misc_radius: docs - removed trailing spaces
+
+commit 15ae241829c3c8a8d98f8a4d025f0205df37ef25
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    memcached: docs - removed trailing spaces
+
+commit e1d8bb9dd9ee2a2a342c7ff489fa232af6d38a46
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    maxfwd: docs - removed trailing spaces
+
+commit af52b9bb21662cdfed273e4d6d54fa6338fe1343
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    matrix: docs - removed trailing spaces
+
+commit f800390a4df7fe43919165659c09196836f01a28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    mangler: docs - removed trailing spaces
+
+commit 10fd6a38dc1782022b01909a625aba1066b49dcb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    lrkproxy: docs - removed trailing spaces
+
+commit 7c8989ac3ca1a1e44629c8574d03fd01e23ac9fe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    lost: docs - removed trailing spaces
+
+commit 6a4025ba495f80f3faad49dbec356f889f1089dd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    log_systemd: docs - removed trailing spaces
+
+commit f4e677da0c33e35ea6badec055ac3e842a35b905
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    log_custom: docs - removed trailing spaces
+
+commit 9172e44f5510a6236f457573452916aebf140e45
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    ldap: docs - removed trailing spaces
+
+commit dfea38dd198697e0fd8a4ab6a21b3b39a4c30a98
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:35 2023 +0100
+
+    lcr: docs - removed trailing spaces
+
+commit 8d597f8c403d5e416acfc87d57ceab18e1d2e106
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    kex: docs - removed trailing spaces
+
+commit 202c34115869e5ac411ad66dd08677d2f206ac48
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    keepalive: docs - removed trailing spaces
+
+commit 7f3c1aeaf4cfd46827c20b8ec17f80f363cf54b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    kazoo: docs - removed trailing spaces
+
+commit b6c5092572fbbc4de58ebb03ae7ec29f7ea50344
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    kafka: docs - removed trailing spaces
+
+commit f00cc15b1cf59349f90b16ca67302fb234a298c5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    jsonrpcc: docs - removed trailing spaces
+
+commit 4747a9ecb3e060ce907a813206a572d625eb2b47
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    json: docs - removed trailing spaces
+
+commit 976d28cd708bdab7fbc01512c40be93fd5f2644a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    janssonrpcc: docs - removed trailing spaces
+
+commit 6b9c62e08d8892236e40c7910d5ccc439b162a15
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    jansson: docs - removed trailing spaces
+
+commit c7e7125768d6d486facee36db18a667eafd6522e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    ipops: docs - removed trailing spaces
+
+commit 77c9eb1816e591d47c828985a3795a3c16b4dd1c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    ims_usrloc_scscf: docs - removed trailing spaces
+
+commit fd6ced228ad10dfe26f10a68ee9aa4f453c73e8a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    ims_usrloc_pcscf: docs - removed trailing spaces
+
+commit 5d727b7b5cc28eec7502bd033e9f1309a8cb7834
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    ims_registrar_scscf: docs - removed trailing spaces
+
+commit 7576a4c2df9a7901e5d3a095220932715baa4249
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    ims_registrar_pcscf: docs - removed trailing spaces
+
+commit edf4817a534efebb9d799a9c91057eab6a0eb388
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    ims_qos: docs - removed trailing spaces
+
+commit 4044340cabca14584cdaecaf812d4f6338075811
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    ims_ocs: docs - removed trailing spaces
+
+commit f214b3bf1397a972b15c1580e7e7f9a6e3d53478
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    ims_isc: docs - removed trailing spaces
+
+commit 878a39251af715899c4f58b2eeb4526c73d103e9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    ims_icscf: docs - removed trailing spaces
+
+commit c8b0655b3e25e34aee574771d5756918112363be
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    ims_diameter_server: docs - removed trailing spaces
+
+commit f3cc3883450d70f6b8efb486ef49fc40c5f2be72
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    ims_charging: docs - removed trailing spaces
+
+commit 5cee44c2093c9279412eee7c2dbef155156d6bbd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    ims_auth: docs - removed trailing spaces
+
+commit 222cc0249212e3fa46a7dafc2c92f4a361ccc76c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    imc: docs - removed trailing spaces
+
+commit be6df83558ded5f71e7f0d2a3cbd7fde2fd6a619
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    http_async_client: docs - removed trailing spaces
+
+commit a0f8adf6a47b3b586be38161169bfa2c156ef91f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    htable: docs - removed trailing spaces
+
+commit a1d216c8cd9b0ab0f90e61056f754db8ad55b24f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    h350: docs - removed trailing spaces
+
+commit efc2212d928ffc0a18daefaab1c3d107ded5bf8b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:34 2023 +0100
+
+    gzcompress: docs - removed trailing spaces
+
+commit 26c651ebb2017a0c36d6af8fbf300af939e31127
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    group: docs - removed trailing spaces
+
+commit dd69b790d6b9aeac26ac2fa2cf3fcb859e1ec2a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    geoip2: docs - removed trailing spaces
+
+commit d557f4fcfb606250d6e6f1b5e2a1c26e93b87b06
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    geoip: docs - removed trailing spaces
+
+commit 4dfd0a687a32d10fcbe2b0c329244edbf6ab58d2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    exec: docs - removed trailing spaces
+
+commit 2b7b39468bdb50a96d83f5af08c59bba69dd24c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    evapi: docs - removed trailing spaces
+
+commit 440f8062157dff2933a5f0143430d450fb7d87f8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    erlang: docs - removed trailing spaces
+
+commit 3d6a67c75e5614ad96294319d2e88f1b0a35977b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    enum: docs - removed trailing spaces
+
+commit 41b4e13bf872883ba9a15282edc3e47839c2e581
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    domainpolicy: docs - removed trailing spaces
+
+commit 6400676a5bb27b272135d73a3d83257724dcd13e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    domain: docs - removed trailing spaces
+
+commit 9434833a3b4b29da30a8477b80307a94c87f40bc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    dnssec: docs - removed trailing spaces
+
+commit da17af47e8e5e0161eb07c34c289f98412d0a094
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    dmq_usrloc: docs - removed trailing spaces
+
+commit 4a89eea5692c1c20055bb1f9d470c467b0b53e50
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    dmq: docs - removed trailing spaces
+
+commit d03fe294ef148c6f0651bd72c334301c3acc731d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    diversion: docs - removed trailing spaces
+
+commit 4cd46d3c4c1ec52c7c6c2116045108c00b5c16aa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    dispatcher: docs - removed trailing spaces
+
+commit dea6e5ebf594a0dccb1739ed84e3037b7c6f23a9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    dialplan: docs - removed trailing spaces
+
+commit 996bcd0245894e418a4e4557c53848a809e4ad5f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    dialog: docs - removed trailing spaces
+
+commit 378304bf653a9e55354729e83271f42435a4c639
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    debugger: docs - removed trailing spaces
+
+commit 2a98c60f13f181a41a57b9e067af08b384ac6f6b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    db_unixodbc: docs - removed trailing spaces
+
+commit eef283bcc15cd3dc39f79903f9ade2af7b53c041
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    db_text: docs - removed trailing spaces
+
+commit 6ba1c56a285ad83abec95616c33cc5bf773832cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    db_postgres: docs - removed trailing spaces
+
+commit 7b38fc959d9d65f7230676ced9665250fe0afd2c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    db_perlvdb: docs - removed trailing spaces
+
+commit faaaf09fb0bdb3405aa37340708b5a3cf3bf0b4c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    db_oracle: docs - removed trailing spaces
+
+commit 2c7bcb0682facbcf307935569148ed068967304f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    db_mysql: docs - removed trailing spaces
+
+commit 685fab94a9e4993835741abcfa39a91502e5c919
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    db_mongodb: docs - removed trailing spaces
+
+commit 4faa76689c2135150c463125351ec0a53908be2e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    db_flatstore: docs - removed trailing spaces
+
+commit ff913dab64fab4f29eddbc344313209a84c8d4c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:33 2023 +0100
+
+    db_cluster: docs - removed trailing spaces
+
+commit e52026f1ec79a22e98c02fab46e9124d4ef12d28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    db_cassandra: docs - removed trailing spaces
+
+commit 4d819a647494712569eea9b55bb520c2c7d8529f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    db_berkeley: docs - removed trailing spaces
+
+commit b3b94e60379d85ee167b9603c88e7c53c1380e18
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    db2_ops: docs - removed trailing spaces
+
+commit b1e5f0df404b181df07689d59ba0401aa31d376e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    db2_ldap: docs - removed trailing spaces
+
+commit 65af789efc33afe61f8179c15dbda72f4f8896ad
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    ctl: docs - removed trailing spaces
+
+commit 8270f84cd0d5208893b36891db4ab447f9fbffcc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    crypto: docs - removed trailing spaces
+
+commit c0f0aa1ca1bfe7805315bdbcfef2f0832549affa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    cplc: docs - removed trailing spaces
+
+commit 8eb6d5209020b27177a6eb818fcb94a69ce667c7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    counters: docs - removed trailing spaces
+
+commit f65aa7874810bf74e4de8b152b6376de5e01de49
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    corex: docs - removed trailing spaces
+
+commit 4f6820b1d50897dfe681f95fa703d0540b1b70c6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    cnxcc: docs - removed trailing spaces
+
+commit 284ea7c5aed87cb8829e94ad16c8e8a3daf0be4e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    cfgutils: docs - removed trailing spaces
+
+commit d5826b2f2e70008ccba66a2d54436610c904f8de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    cfgt: docs - removed trailing spaces
+
+commit 196a1430ac697f28cb7dc89430dcc57f357ca45c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    cfg_db: docs - removed trailing spaces
+
+commit 9b657dbae6d57f3637818104924057eaaf175af0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    cdp_avp: docs - removed trailing spaces
+
+commit 7025a98c96a585c5e6168c8d6f20c94237054446
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    cdp: docs - removed trailing spaces
+
+commit 762e843ca4a5291d7f6d5fb710be0f05e67b8177
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    carrierroute: docs - removed trailing spaces
+
+commit 03f46916fc1c0dce721301fee0f1c59e8886776b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    call_obj: docs - removed trailing spaces
+
+commit 5e6a6f3031f0dce1ae36fbfff34a836eceb0861d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    call_control: docs - removed trailing spaces
+
+commit 0280f18c7062b961b69a4f12f3a8d7e01ae7428b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    blst: docs - removed trailing spaces
+
+commit cae321e7c386e058744ec1cda88be0184d0a1521
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    benchmark: docs - removed trailing spaces
+
+commit 4edc39b663facc36ceff7178bf41a62b74ac2aee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    avpops: docs - removed trailing spaces
+
+commit 86026fe6d6faaafd55298eedc799cdc73ac2b151
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    avp: docs - removed trailing spaces
+
+commit 1905df92bd3ec5286892d9bf54ad50cf0ed29078
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    auth_xkeys: docs - removed trailing spaces
+
+commit c481b14cb41cb38832c2d98ff83a2395acf1d229
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    auth_radius: docs - removed trailing spaces
+
+commit 738c63a63e3e789d0b6349de12d79557b3952a61
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:32 2023 +0100
+
+    auth_identity: docs - removed trailing spaces
+
+commit 77ac225505f769b56bf6ad9d6c2819d9f92efd2f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:31 2023 +0100
+
+    auth_diameter: docs - removed trailing spaces
+
+commit f5e67c3dc41c70c071b4db61a1a99c9c44d17877
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:31 2023 +0100
+
+    auth: docs - removed trailing spaces
+
+commit a7eed02bde1fe14dd9495d0e8ca9d86065533c30
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:31 2023 +0100
+
+    app_python3: docs - removed trailing spaces
+
+commit 3f6a2623554815b7ad771b9e771c9a4c6c48cad2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:31 2023 +0100
+
+    app_python: docs - removed trailing spaces
+
+commit 749793302f4afb3970a5ea9701064ef3590be986
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:31 2023 +0100
+
+    app_perl: docs - removed trailing spaces
+
+commit 8af6989a05611f2dd869b78394dbb1caa317dd37
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:31 2023 +0100
+
+    app_mono: docs - removed trailing spaces
+
+commit 770e24e1d0b412930f658194bd7b092b1f1d33e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:31 2023 +0100
+
+    app_lua_sr: docs - removed trailing spaces
+
+commit 89f987e3d8987f70b1794d42afe2b47cb0aa093e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:31 2023 +0100
+
+    app_lua: docs - removed trailing spaces
+
+commit 6cc4bff42cb168eb32758ba3b751c69ec19b5878
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:31 2023 +0100
+
+    app_java: docs - removed trailing spaces
+
+commit 48d55bab693d2ffc3ed22ca6c043dcc605401e67
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:31 2023 +0100
+
+    alias_db: docs - removed trailing spaces
+
+commit bef3517acb09d95426072d29d58cb9416243084c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:31 2023 +0100
+
+    acc_json: docs - removed trailing spaces
+
+commit 07d76edc96f8f417c836c95b9c3177cf4b756539
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:47:31 2023 +0100
+
+    acc: docs - removed trailing spaces
+
+commit ac1765a17211aeb28ba92db88e4353fab1d39298
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:46:31 2023 +0100
+
+    test/mod_httpapitest: removed trailing spaces
+
+commit 386bf69889186affdbfbaeb738545b852fb0ad46
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:45:59 2023 +0100
+
+    test/misc/code: removed trailing spaces
+
+commit 41343906705ad0f8ebb2c119d80a1760453337c7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:45:27 2023 +0100
+
+    core: removed trailing spaces
+
+commit 72c4b1ec784025f726c1f6d53bae7c993c8681b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:32 2023 +0100
+
+    pdbt: removed trailing spaces
+
+commit ddd619609c3219b4df719f6d1f361f541e2654e9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:32 2023 +0100
+
+    db_berkeley: removed trailing spaces
+
+commit 2cdff474ae4c6a1b83b14409e3a5a864e73225d3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:29 2023 +0100
+
+    xcap: removed trailing spaces
+
+commit 6f3e03bebeb45ca1ac894911df8b3d7bbf05ac07
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:29 2023 +0100
+
+    srdb2: removed trailing spaces
+
+commit b15c82c5d0376e924a81967eae5ee9ae46c5f138
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:29 2023 +0100
+
+    srdb1: removed trailing spaces
+
+commit 84a0d88ed638d32241ed1068ce66fa2aa91d7c95
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:29 2023 +0100
+
+    print: removed trailing spaces
+
+commit b8d1b32f08f6745eff38cd938332ee52817f4516
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:29 2023 +0100
+
+    presence: removed trailing spaces
+
+commit d2fe06a97d4c93dce084fbc51cd167ab3f98ccb2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:29 2023 +0100
+
+    ims: removed trailing spaces
+
+commit 598b6be18d69409ce8cc342a31cb2cf6d2386b9e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:29 2023 +0100
+
+    cds: removed trailing spaces
+
+commit 9bc73b4c5c28fc944ae496017fb0948d0ab1e5dc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:29 2023 +0100
+
+    binrpc: removed trailing spaces
+
+commit ca4777643eb4730c2edfc9292c8902bb7a476eef
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    xmpp: removed trailing spaces
+
+commit 52fb5f703aab3abace5f31be85d8a92733a0648b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    xlog: removed trailing spaces
+
+commit aa037e965add728ea529616b8c21967c8a793908
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    xhttp_pi: removed trailing spaces
+
+commit afbb6c053c71572ed9b927f8413ac26b78514388
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    xcap_server: removed trailing spaces
+
+commit c4674c71fc716a610b83df737caf9392da714e81
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    xcap_client: removed trailing spaces
+
+commit 6ead55e52997630ae142fefe388489c5eacfec32
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    utils: removed trailing spaces
+
+commit c34ffc7774ac393f4c1aa19ccb6c3bab2f1b9a22
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    usrloc: removed trailing spaces
+
+commit 618954322e6952312258a262bfc4bdd47a8036c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    userblocklist: removed trailing spaces
+
+commit 1664cdf816a8b43baf173e4c493869ca74d2fbb3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    uri_db: removed trailing spaces
+
+commit 1bd8fc93aaa1599f21d1dc8f6da147bbb78311ba
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    uid_avp_db: removed trailing spaces
+
+commit 33258caa9c8d5a60345c0639acc0ff63ebe0d08e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    uac_redirect: removed trailing spaces
+
+commit 939504d2a6d70a3bbafbbb068f150fd4b8fe5d04
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    uac: removed trailing spaces
+
+commit 610a363043ec026a9668e2b4d4a2044aca40d33d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    tm: removed trailing spaces
+
+commit cc2d5f1689624256b83cec884a238c2e1a641a52
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:23 2023 +0100
+
+    tls: removed trailing spaces
+
+commit dfd495e7880ca5817946e841509cd6f12d82b911
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    textops: removed trailing spaces
+
+commit e074055ee905b7220be5da9ff92544345a84c107
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    stun: removed trailing spaces
+
+commit f48ccd54c77f2497ff37bc7a353fd4aac8f7e49f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    statistics: removed trailing spaces
+
+commit cc7606a659c6281cbec5bf606faaef680f97f3a3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    snmpstats: removed trailing spaces
+
+commit d93e07532ddb2e4bd47ea60f529374071fd977e4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    sms: removed trailing spaces
+
+commit 4b7c129e57d01605be5dc1df47fded5e25cdceb1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    sl: removed trailing spaces
+
+commit de6df908e945b00c28e471f9ce87a17c6d8a4297
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    sipt: removed trailing spaces
+
+commit 0673e57d5eac35995a8c469cc475be9d8e583c15
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    sipjson: removed trailing spaces
+
+commit bb72437b8a4f9ffc2286d96538a8a40fcf3be0ec
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    sipcapture: removed trailing spaces
+
+commit 5ddc73f5e7f907e0cb9c802827a0ecb7c3c4c667
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    secfilter: removed trailing spaces
+
+commit fe52dbbe1de753f724e56e62e864924ae118c70a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    seas: removed trailing spaces
+
+commit 80b50fc1eee3abde41c9b70bad2825ac34272e1f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    sctp: removed trailing spaces
+
+commit 4576b9a7b03c752739d6ed02ea05080ed0d3f55a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    sca: removed trailing spaces
+
+commit 91f3aafe0c9b364643319f21a5547f6b5b18e10b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    rtpengine: removed trailing spaces
+
+commit 6b8d0aee09bfde20af586e77444359e60f0b6613
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    rtp_media_server: removed trailing spaces
+
+commit 824b76aa2169d0332db5d4b9bc6f54d9bde16a3b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    rr: removed trailing spaces
+
+commit 122bb55ea8dbd7ab0fb31f5675a209c39af5ed89
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    rls: removed trailing spaces
+
+commit 0feac933442286a919228364097824e59cd81487
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    ratelimit: removed trailing spaces
+
+commit 3197bc7ef712016e839ba887dd966561db69bd37
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    qos: removed trailing spaces
+
+commit 0d3e8df8267f47e4403ea733f31f4da7cb8840ad
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    pv: removed trailing spaces
+
+commit be5a34f4eb4d9c42ebd29b20906912c91395cebf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    pua_xmpp: removed trailing spaces
+
+commit 2d36ab18e544305245b8445dbc8dc75e807b88b8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    pua: removed trailing spaces
+
+commit 22a210ffaac0267b113f8a492a7f95ae9dbb736c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    presence: removed trailing spaces
+
+commit 8a18b89fad8335085a28e29da115359f02308388
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    pipelimit: removed trailing spaces
+
+commit 2f4558e2e1ae1173ca68e73889165227a7a5358a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    peering: removed trailing spaces
+
+commit 42c5e3f542bb4b90e5acd15846b22850956004ed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:22 2023 +0100
+
+    pdt: removed trailing spaces
+
+commit 95339450e2ba1252778af154de5b433de3a7cac2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    pdb: removed trailing spaces
+
+commit ed9e48221aaa3d5dbf26568c2fe0e5a1608a7280
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    p_usrloc: removed trailing spaces
+
+commit 7372f0c4325412674d7a37af27c8f653b60edfa5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    osp: removed trailing spaces
+
+commit 10c397c2b921c5a28e833c238e911e66b3702f9a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    ndb_mongodb: removed trailing spaces
+
+commit 58f7aa7aeba414d2365012596c9da8b1a51065a2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    msilo: removed trailing spaces
+
+commit 90f1069b07f7a95a23c4113da5a977e3b0379615
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    mqtt: removed trailing spaces
+
+commit 88d072de66520904278ab2915a8ae809eb463daf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    misc_radius: removed trailing spaces
+
+commit 6eacd49043aa3ea08f2b94b542e3af262ad3ef54
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    mediaproxy: removed trailing spaces
+
+commit 924982b74bc91d0d0ec86af1ee865f77f1488efd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    mangler: removed trailing spaces
+
+commit 8cd758b2f8d07c4fca202aa2c581635fa0900018
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    lost: removed trailing spaces
+
+commit c3bfc76850a81c83fd38d50d32e5144fe9d5eb10
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    ldap: removed trailing spaces
+
+commit 25539193c7c21366ec96f509ddbae8a0dbf5c0d6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    lcr: removed trailing spaces
+
+commit 2249095fbba9623989c7f261e47d742288fe53d1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    kazoo: removed trailing spaces
+
+commit 4b9a70894a0b3b1cdf2fb043c7f09b55693afe9b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    kafka: removed trailing spaces
+
+commit b462e4efb5e200ad898a944ba47b3bc5acb4c5b7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    jsonrpcs: removed trailing spaces
+
+commit 25bd75c098cf4bd4eeb93445d393505d34e8acb1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    ipops: removed trailing spaces
+
+commit f65a4618db5fc1016939a3ebdd1e692fb986c16b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    ims_usrloc_scscf: removed trailing spaces
+
+commit bac74f5edf0c8c66ac9fdde1421a4c044fc718b8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    ims_usrloc_pcscf: removed trailing spaces
+
+commit 75c2a43315eb8045c80c318e9f5a01ec4048228f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    ims_registrar_scscf: removed trailing spaces
+
+commit 5ff9fa2612eb4725f5d0228d13e70562f1a88f9d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    ims_registrar_pcscf: removed trailing spaces
+
+commit 1daa77a4eddef2c6b86658599e552f0437401c0f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    ims_qos: removed trailing spaces
+
+commit ba90eb85d49c8f3aef3f511efd001821a4f90112
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    ims_ocs: removed trailing spaces
+
+commit bf9c6f48b849d0a389c00d1d770e9e7e8366c9b2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    ims_isc: removed trailing spaces
+
+commit 1061ff993e5d9856984c789a3b48d36cdcd8e09b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:21 2023 +0100
+
+    ims_icscf: removed trailing spaces
+
+commit 63bc8a9c72299b90fb5c2c242fb3aca487b4d177
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    ims_diameter_server: removed trailing spaces
+
+commit fd36ceb6e490c7f50926a97824b558cbe8efac35
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    ims_dialog: removed trailing spaces
+
+commit 823ff6752ff4486f91c171449fbd945ec3eca62f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    ims_charging: removed trailing spaces
+
+commit 012d67ffb6268bdf7bf076f412ac56e42b522c93
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    ims_auth: removed trailing spaces
+
+commit b3cdb73e24b1b1917fd653990e45ad1a1cfb84b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    imc: removed trailing spaces
+
+commit 6362e58d0d7f73309443e8b22c453d1822523272
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    http_client: removed trailing spaces
+
+commit 668a63932ee4550986fb266d22fc1755cf87d4db
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    htable: removed trailing spaces
+
+commit a13d41b7ad324467ac73f375584821bfa98e1c52
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    h350: removed trailing spaces
+
+commit e5032f0782b1c3c1413572d61475390263090da1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    group: removed trailing spaces
+
+commit b028854dd9ca06d199fb945330075893b5f9c44f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    enum: removed trailing spaces
+
+commit c7683f1f2a2c9fb9c14c3bdc7a635bab50297db7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    drouting: removed trailing spaces
+
+commit 4503809c2b90967c470bfe6ec3488228490dc010
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    domainpolicy: removed trailing spaces
+
+commit 0d53cb9b724e10c46655ab4277a852d1e3ebd956
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    domain: removed trailing spaces
+
+commit 66139a7dc4b25ca13470fe1738e70b6257a833df
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    dmq: removed trailing spaces
+
+commit 687ef1df1b4e972b0017285434cd6d823c982794
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    diversion: removed trailing spaces
+
+commit d30ea1b98a69008881df314385aaa14ae5f5e5df
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    dispatcher: removed trailing spaces
+
+commit eb506475fe5dd21a7cf703ef2ac0733ca34d48ce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    dialplan: removed trailing spaces
+
+commit 44a364f2d408775a5e2c843ad2f3807d28252bf2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    dialog: removed trailing spaces
+
+commit 5d3d16835f0c3d37be0b7444f98f4d56bb52b8b6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    db_unixodbc: removed trailing spaces
+
+commit d489b5de6cceda909d1f64c149a0f0214b5e94dc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    db_text: removed trailing spaces
+
+commit 1b9cb796ab72050a8c944f1846c2e1b69446d66a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    db_postgres: removed trailing spaces
+
+commit 90f9b82a457612e89fc92c65b142de88594075ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    db_perlvdb: removed trailing spaces
+
+commit 102df470714e0d32392def9319c2d441046004ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    db_mongodb: removed trailing spaces
+
+commit 0b3f5e49da8f63d2bb3c4949e279a46cd5219027
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    db_flatstore: removed trailing spaces
+
+commit 830762b85abab18c3b3711e2bfa513a8d654ca65
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    db_cassandra: removed trailing spaces
+
+commit 19306daed55eea3233c9c47ec8052fe8ad143fe6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:20 2023 +0100
+
+    db_berkeley: removed trailing spaces
+
+commit 51a318e669f3eb2c81f617d250a9a455c1af1a24
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    db2_ops: removed trailing spaces
+
+commit f227d81ddfa2cb3da0590429304ffeefbb3c3998
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    db2_ldap: removed trailing spaces
+
+commit f12251a07d5c98410ec9f9eb34c2de7431ac1a4d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    ctl: removed trailing spaces
+
+commit 048678abf134e36158a9c6aaf1c98bedf494490e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    cplc: removed trailing spaces
+
+commit 2e138460742e7c23e2915276054df1999aaec4ea
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    counters: removed trailing spaces
+
+commit a22d2aa019f1ecd13c902106b3fed7288dc4aa4b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    cdp_avp: removed trailing spaces
+
+commit 76343d774088e1a0ecc3f497cb18f4d477d8d040
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    carrierroute: removed trailing spaces
+
+commit 8cb4d4ea74d6c09d60db2411a516b42107acc553
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    benchmark: removed trailing spaces
+
+commit 844aa8e09ff92dea70d8f473948a752e120de975
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    auth_radius: removed trailing spaces
+
+commit 161e96ab4b17989b0f5dfabe98297d52117cb1f9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    auth_ephemeral: removed trailing spaces
+
+commit b5f4d3548ca0fda2fcd4dc8b09fe992262c0f021
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    auth_diameter: removed trailing spaces
+
+commit 619206fd2f770259152ef23722b6431e2b8ff139
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    auth_db: removed trailing spaces
+
+commit e6fb0ec5d65fde6ccb661b08f85d76a5e0a64a4d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    app_ruby: removed trailing spaces
+
+commit 9a6d669327299396c343821258eb1dae2948dc2e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    app_python3: removed trailing spaces
+
+commit b346b7e3c384acc23a60de080931925fed91ff4a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    app_python: removed trailing spaces
+
+commit a4f111fd2b96ad86a3c9bd0a3b884fcbc210b91b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    app_perl: removed trailing spaces
+
+commit c7e0c67da40a8309b5c095bb429dbaed2ddb6ab0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    app_jsdt: removed trailing spaces
+
+commit 510cc2fc0d3b2d1a728966e88a9a781e5a6088cb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 13 16:44:19 2023 +0100
+
+    app_java: removed trailing spaces
+
+commit 8f081973196e044d44b912cb9a3b73ddc8636aea
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:21:24 2023 +0100
+
+    utils: clang-format for coherent indentation and coding style
+
+commit 466f95a6b1b268187ab3338b6980635ac27210d6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:21:14 2023 +0100
+
+    misc: clang-format for coherent indentation and coding style
+
+commit f02c3d9df5c47753e7daf47fb724f6b20e1acea4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:20:44 2023 +0100
+
+    test: clang-format for coherent indentation and coding style
+
+commit fa991e068c7020638f763ecf2ef8c40ecb4d3c0e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:20:32 2023 +0100
+
+    lib: clang-format for coherent indentation and coding style
+
+commit 96d0a897b33b85f7c235b65ad386c4dbb9eee3bd
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:35 2023 +0100
+
+    xprint: clang-format for coherent indentation and coding style
+
+commit 8516c7db1572410150fd01ddb8968324fbe99757
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:35 2023 +0100
+
+    xmpp: clang-format for coherent indentation and coding style
+
+commit bcd2663b26189b0ef090ef88784e0a0f3f18adf4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:35 2023 +0100
+
+    xmlrpc: clang-format for coherent indentation and coding style
+
+commit 41a6be7d6f7c508c93b2e3dc66430917efc96e3a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:35 2023 +0100
+
+    xmlops: clang-format for coherent indentation and coding style
+
+commit 4eab8a443b1c2d399ce8eca378b0427c9daafa75
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:35 2023 +0100
+
+    xlog: clang-format for coherent indentation and coding style
+
+commit 3f437f0895720b84c29a9bfed9712e9824575f7a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:34 2023 +0100
+
+    xhttp_rpc: clang-format for coherent indentation and coding style
+
+commit 6c4fba95eae19538d37b4d88d7390ea06fb25912
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:34 2023 +0100
+
+    xhttp_prom: clang-format for coherent indentation and coding style
+
+commit 94021882bc6b95dcd35cfd46f7e63996f50930e6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:34 2023 +0100
+
+    xhttp_pi: clang-format for coherent indentation and coding style
+
+commit 7e51a3203b3dd091e57bbee87a4dc940bfa66eb5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:34 2023 +0100
+
+    xhttp: clang-format for coherent indentation and coding style
+
+commit 4096f90c0cddaf6bbfa2a625f3af04c259b09ac4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:34 2023 +0100
+
+    xcap_server: clang-format for coherent indentation and coding style
+
+commit 9686dd98636240ab7ff7d50136efedb0745f12e4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:34 2023 +0100
+
+    xcap_client: clang-format for coherent indentation and coding style
+
+commit dbb8cfd6c9d65c58ea677b47526a1fa47f3ab812
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:33 2023 +0100
+
+    websocket: clang-format for coherent indentation and coding style
+
+commit fba84f4a609c93ec6793b69d82acb03e68a8e198
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:33 2023 +0100
+
+    uuid: clang-format for coherent indentation and coding style
+
+commit 846baea9e62546f288b8b2375ecd692a841f0aa7
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:33 2023 +0100
+
+    utils: clang-format for coherent indentation and coding style
+
+commit 241b0960ae012359ca1a45698e36a39f46ebfdd0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:33 2023 +0100
+
+    usrloc: clang-format for coherent indentation and coding style
+
+commit 95eea3aa41d2584bcaab4bc4dd616a8e6aa27547
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:33 2023 +0100
+
+    userblocklist: clang-format for coherent indentation and coding style
+
+commit aed21a6a1495faaac33f3b3b73dd6aaf20c801b5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:33 2023 +0100
+
+    uri_db: clang-format for coherent indentation and coding style
+
+commit 874f8fc7fe4f23bb03e6408fab748efd43171199
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:33 2023 +0100
+
+    uid_uri_db: clang-format for coherent indentation and coding style
+
+commit c809a6c9dcecfe0ef6e182e68b39c52a65013f82
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:32 2023 +0100
+
+    uid_gflags: clang-format for coherent indentation and coding style
+
+commit 777f0e164f56c9a57eb8ce3f3320e35160ec1eb6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:32 2023 +0100
+
+    uid_domain: clang-format for coherent indentation and coding style
+
+commit aee139133ef56b1ec2db17de4a8c4844d7585272
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:32 2023 +0100
+
+    uid_avp_db: clang-format for coherent indentation and coding style
+
+commit e8a49973231fca8147c26b102adc2a9b2d4ddee1
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:32 2023 +0100
+
+    uid_auth_db: clang-format for coherent indentation and coding style
+
+commit 533e3ae85a2d7d66d55fbed04e7e650f08c8e90e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:32 2023 +0100
+
+    uac_redirect: clang-format for coherent indentation and coding style
+
+commit bb80f694e06f4eaa878b35ced26e5ef9b13e817c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:32 2023 +0100
+
+    uac: clang-format for coherent indentation and coding style
+
+commit 5a79e3c10fc5beb0e0ffe72bedc47eed89345058
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:31 2023 +0100
+
+    tsilo: clang-format for coherent indentation and coding style
+
+commit f7ca36af945f90353aae1c0cae9ef801530415e9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:31 2023 +0100
+
+    topos_redis: clang-format for coherent indentation and coding style
+
+commit 908f4a25b681a7a8f1e45c277b517285fc9e6de5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:31 2023 +0100
+
+    topos: clang-format for coherent indentation and coding style
+
+commit 9e1cf9ef897dc1b2edb10fd123b27363742e4799
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:31 2023 +0100
+
+    topoh: clang-format for coherent indentation and coding style
+
+commit 27e9be9b86f01d6e43b473f26a123963cdb75ba9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:31 2023 +0100
+
+    tmx: clang-format for coherent indentation and coding style
+
+commit 69c561f73be35688e8e8cb18bc8f992e96d557d8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:31 2023 +0100
+
+    tmrec: clang-format for coherent indentation and coding style
+
+commit c727d83743d9a112e6c58d2ffe233440e5662605
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:30 2023 +0100
+
+    tm: clang-format for coherent indentation and coding style
+
+commit e44b95d1ccdaa7e14257ed344ffb8a382a42c091
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:30 2023 +0100
+
+    tlsa: clang-format for coherent indentation and coding style
+
+commit 6c161829b22d9fd1c28aa7ca076f8d28aacaf6e9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:24 2023 +0100
+
+    tls: clang-format for coherent indentation and coding style
+
+commit c4cc3ed66fb4da8d7462b2a64d897bcf6c5e863e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:23 2023 +0100
+
+    timer: clang-format for coherent indentation and coding style
+
+commit 2b0d1c074a590729637dde47387aeb4247258bab
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:23 2023 +0100
+
+    textopsx: clang-format for coherent indentation and coding style
+
+commit 8d51620d8b5e395f0162f777f047ceee4830715a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:23 2023 +0100
+
+    textops: clang-format for coherent indentation and coding style
+
+commit 1b96bc44216acf2c86cf7927b695088e7a8e72da
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:23 2023 +0100
+
+    tcpops: clang-format for coherent indentation and coding style
+
+commit 4b17ea6fcf4e6fb2c630cb901c32591ba15f4f92
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:23 2023 +0100
+
+    systemdops: clang-format for coherent indentation and coding style
+
+commit 6dbd49df4bd5ecc31d1545c5151ce07deadb6bd0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:23 2023 +0100
+
+    sworker: clang-format for coherent indentation and coding style
+
+commit cbc04c50c742651a1ff0d490d348d708215e776d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:23 2023 +0100
+
+    stun: clang-format for coherent indentation and coding style
+
+commit d96807f199a53173a92cb1fa912ef58f767b0154
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:22 2023 +0100
+
+    stirshaken: clang-format for coherent indentation and coding style
+
+commit 331c1a4dc794ebdc67a2f58e96d08f003b5d3cfe
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:22 2023 +0100
+
+    statsc: clang-format for coherent indentation and coding style
+
+commit 2ef910475acc378f17be274bd0da7019d005676f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:22 2023 +0100
+
+    statistics: clang-format for coherent indentation and coding style
+
+commit 1faa9dae5441eaa868c937497baf4d0d41c123da
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:22 2023 +0100
+
+    sst: clang-format for coherent indentation and coding style
+
+commit de6617b1b343b0765868ff7a9c40e6725df13542
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:22 2023 +0100
+
+    ss7ops: clang-format for coherent indentation and coding style
+
+commit c22c60afa4db0d9e4e853815cbbca95fe13c73ab
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:22 2023 +0100
+
+    sqlops: clang-format for coherent indentation and coding style
+
+commit 8d493422f4a0206a0c32b0665563c762b208ed55
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:22 2023 +0100
+
+    speeddial: clang-format for coherent indentation and coding style
+
+commit 14deb9a3340d8253c7698c5eefd7085cd7f5d473
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:21 2023 +0100
+
+    snmpstats: clang-format for coherent indentation and coding style
+
+commit f87363109af00889703a63c21fc57cd24b054baf
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:21 2023 +0100
+
+    smsops: clang-format for coherent indentation and coding style
+
+commit a39ed9d81fa846c4fe1e2fde1b9b342477a6560e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:21 2023 +0100
+
+    sms: clang-format for coherent indentation and coding style
+
+commit 66869561f8d873f251a452814973b75fa3844605
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:21 2023 +0100
+
+    slack: clang-format for coherent indentation and coding style
+
+commit 41e7cc46eae8be28f9bfbb7f0a1d41272839d553
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:21 2023 +0100
+
+    sl: clang-format for coherent indentation and coding style
+
+commit 2edb312492d5c0e708f982f5dd9b3ca2a84ca3a9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:21 2023 +0100
+
+    siputils: clang-format for coherent indentation and coding style
+
+commit 75f120ccc02e85ad410dc271f0608cd5d635ff44
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:20 2023 +0100
+
+    siptrace: clang-format for coherent indentation and coding style
+
+commit af7d50bbfdf3f7a607ac145ea6e4c1719b0ba2fc
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:20 2023 +0100
+
+    sipt: clang-format for coherent indentation and coding style
+
+commit 532a4f1f616d394c85f486dde88cad9365b936a8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:20 2023 +0100
+
+    siprepo: clang-format for coherent indentation and coding style
+
+commit ee94e24075f95aae6b4a9349962c5d2019598043
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:20 2023 +0100
+
+    sipjson: clang-format for coherent indentation and coding style
+
+commit 23c69955cf51e4c695c7cee640a20b35f30b8c6b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:20 2023 +0100
+
+    sipdump: clang-format for coherent indentation and coding style
+
+commit 13e49f1035f682d1980ede99037b957c9c054128
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:20 2023 +0100
+
+    sipcapture: clang-format for coherent indentation and coding style
+
+commit 0d0208b7172838891eae5a46d342d5833e27678b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:20 2023 +0100
+
+    secsipid_proc: clang-format for coherent indentation and coding style
+
+commit 783ee7a35b72e792518a5fd6e24dfa096d0611c8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:19 2023 +0100
+
+    secsipid: clang-format for coherent indentation and coding style
+
+commit 2866d3965fc2232067c037683f3a60f6558a1e04
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:19 2023 +0100
+
+    secfilter: clang-format for coherent indentation and coding style
+
+commit c298e4f5e21e2c71448e6ca0bae53843d754e922
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:19 2023 +0100
+
+    seas: clang-format for coherent indentation and coding style
+
+commit 5d1ab2f21063ab7f36cfdaa8dca92865c75bb52f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:19 2023 +0100
+
+    sdpops: clang-format for coherent indentation and coding style
+
+commit 6e332212821ac36c7203e6f22df3ed323e953b11
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:19 2023 +0100
+
+    sctp: clang-format for coherent indentation and coding style
+
+commit a16d144c1a5df8aac5a775bb5aa9208e72f04241
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:19 2023 +0100
+
+    sanity: clang-format for coherent indentation and coding style
+
+commit fb3f3b160825f3625f9244339fc0c52456fbacc1
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:18 2023 +0100
+
+    ruxc: clang-format for coherent indentation and coding style
+
+commit 180c8cf3eb7cbb31fb4d6fb15447e76433a17aac
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:18 2023 +0100
+
+    rtpproxy: clang-format for coherent indentation and coding style
+
+commit 2c3b2ac89449fb2f03318dcfb2d7dd270d2f15f8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:18 2023 +0100
+
+    rtpengine: clang-format for coherent indentation and coding style
+
+commit 27fb40d8ca46b818e7e7b2fa46424bb67d10cd31
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:18 2023 +0100
+
+    rtp_media_server: clang-format for coherent indentation and coding style
+
+commit 433c07cc9f66a0dce005db44a0bb4225771407d9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:18 2023 +0100
+
+    rtjson: clang-format for coherent indentation and coding style
+
+commit 2a6ce8185d94b1576e18745f8a510c327f73b1b5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:18 2023 +0100
+
+    rtimer: clang-format for coherent indentation and coding style
+
+commit 6cc854b9fd4ffb3c20eb8f8add361adfa13cc608
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:17 2023 +0100
+
+    rr: clang-format for coherent indentation and coding style
+
+commit 8be0d16ed4adf27551f55feea27fff3f0d823ff9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:17 2023 +0100
+
+    rls: clang-format for coherent indentation and coding style
+
+commit 242e6272628f26d98a4ae5c78b185f273dc8dc12
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:17 2023 +0100
+
+    registrar: clang-format for coherent indentation and coding style
+
+commit 9cc733eefc9b9d321721c12b6fd1fee3a71f3df4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:17 2023 +0100
+
+    regex: clang-format for coherent indentation and coding style
+
+commit cbfc7092df73f7f901adc614d49dab3bbd620acb
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:17 2023 +0100
+
+    ratelimit: clang-format for coherent indentation and coding style
+
+commit 980568be5e644aae2aa03500148cf738bcb6a619
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:17 2023 +0100
+
+    rabbitmq: clang-format for coherent indentation and coding style
+
+commit 4251817efd1e83869c7642eb5aaafbcdf8794895
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:17 2023 +0100
+
+    qos: clang-format for coherent indentation and coding style
+
+commit 7f7b2751136761d5cee7fbd973403e5487fe39a6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:16 2023 +0100
+
+    pv_headers: clang-format for coherent indentation and coding style
+
+commit 935548e587d1a038955e6bec5e7ff9ddea5d4302
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:16 2023 +0100
+
+    pv: clang-format for coherent indentation and coding style
+
+commit 3fa23b407bc9224617789072bc99389a2c546107
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:16 2023 +0100
+
+    pua_xmpp: clang-format for coherent indentation and coding style
+
+commit 7013cea9ac4c1fff65ca288adee1a88984674902
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:16 2023 +0100
+
+    pua_usrloc: clang-format for coherent indentation and coding style
+
+commit fd471e558ea7a4238c1580db4d13ddee31e41677
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:16 2023 +0100
+
+    pua_rpc: clang-format for coherent indentation and coding style
+
+commit 364e8eb874f075776bf21d32a2f559c352c5b383
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:16 2023 +0100
+
+    pua_reginfo: clang-format for coherent indentation and coding style
+
+commit 0fdc5a73af1102f7f7908d8fdfbac1a8307f92fe
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:15 2023 +0100
+
+    pua_json: clang-format for coherent indentation and coding style
+
+commit 565c38580f56200afc1d89e2123625844c3f9110
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:15 2023 +0100
+
+    pua_dialoginfo: clang-format for coherent indentation and coding style
+
+commit ab705951a3f43fd42577daf1160c7a23ed132f34
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:15 2023 +0100
+
+    pua: clang-format for coherent indentation and coding style
+
+commit 7cd64f6f2de08855dc43be26ab236e796410376e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:15 2023 +0100
+
+    print_lib: clang-format for coherent indentation and coding style
+
+commit 6a160706767db00e79cd4c29c78c6f5e3a202f02
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:15 2023 +0100
+
+    print: clang-format for coherent indentation and coding style
+
+commit 4aed6352a8438b66bff071787713be5a0983bbdc
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:15 2023 +0100
+
+    presence_xml: clang-format for coherent indentation and coding style
+
+commit 655be0a86cdc7eaeb24248fd87894d1865e44f0a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:15 2023 +0100
+
+    presence_reginfo: clang-format for coherent indentation and coding style
+
+commit 717681af772a2a5b2149347f332b79f248072dae
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:14 2023 +0100
+
+    presence_profile: clang-format for coherent indentation and coding style
+
+commit 428ddbb7a8175c8d3f911cbb2f91b1400cc3e9b3
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:14 2023 +0100
+
+    presence_mwi: clang-format for coherent indentation and coding style
+
+commit 76c4a1d8ac3233841a5dab98884fab12f2f10be6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:14 2023 +0100
+
+    presence_dialoginfo: clang-format for coherent indentation and coding style
+
+commit 93bf9e2671cf5b49fb609134fc553422215eb04f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:14 2023 +0100
+
+    presence_conference: clang-format for coherent indentation and coding style
+
+commit edc5875275dd21db0c4e3aa58b5cbd135feeeb05
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:14 2023 +0100
+
+    presence: clang-format for coherent indentation and coding style
+
+commit 39aa48c2311640d1092407e1aa89621da2e7ad44
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:14 2023 +0100
+
+    prefix_route: clang-format for coherent indentation and coding style
+
+commit dfdb8444490a324e3894fe6b93f51b5bb0735565
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:13 2023 +0100
+
+    posops: clang-format for coherent indentation and coding style
+
+commit 542de1858c1f801c99d3eada5bd0ecbd84a31a63
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:13 2023 +0100
+
+    pipelimit: clang-format for coherent indentation and coding style
+
+commit 48c7f0df7614eaebac1bd0c0ee485062494ef342
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:13 2023 +0100
+
+    pike: clang-format for coherent indentation and coding style
+
+commit 827f9b87ea3907c7d0f7e403a50756c7c71ec77d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:13 2023 +0100
+
+    phonenum: clang-format for coherent indentation and coding style
+
+commit 1c092a4a1a3b176ea76a8052e4f96ca0e3ff8f5d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:13 2023 +0100
+
+    permissions: clang-format for coherent indentation and coding style
+
+commit 16ccee24fb47fcaa04d074802575deb02bf0d55e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:13 2023 +0100
+
+    peering: clang-format for coherent indentation and coding style
+
+commit 0f6a74a2dc2e03d205f5937696638178105d5629
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:13 2023 +0100
+
+    pdt: clang-format for coherent indentation and coding style
+
+commit 5ca32bedf2bc074b1c52f50c139c607fe48423fe
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:12 2023 +0100
+
+    pdb: clang-format for coherent indentation and coding style
+
+commit 997002830c42cca5ae59e8bd71769ab14f257463
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:12 2023 +0100
+
+    path: clang-format for coherent indentation and coding style
+
+commit f3539f551acbfa5153925205eb850a852c480af1
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:12 2023 +0100
+
+    p_usrloc: clang-format for coherent indentation and coding style
+
+commit 20f2efaa1bc9e74a048ae1a29053bf25685334b4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:12 2023 +0100
+
+    outbound: clang-format for coherent indentation and coding style
+
+commit 51e689b930f7922b14868b18526b7b059321c7b0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:12 2023 +0100
+
+    osp: clang-format for coherent indentation and coding style
+
+commit 8645ff9b4110b4ad087de2c70a51d14011744245
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:12 2023 +0100
+
+    nsq: clang-format for coherent indentation and coding style
+
+commit 128e352d63a2aedc921700795317ef3ae990d5cf
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:11 2023 +0100
+
+    nosip: clang-format for coherent indentation and coding style
+
+commit 32e5b2fce9c1bf44c5f435c9a8b3ba116b43b9f5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:11 2023 +0100
+
+    ndb_redis: clang-format for coherent indentation and coding style
+
+commit 4848f765c75817993e5f3f11d93755dbce77c20b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:11 2023 +0100
+
+    ndb_mongodb: clang-format for coherent indentation and coding style
+
+commit 09b7af420b6d8d793bc0c87adeb22e901ee3250b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:09 2023 +0100
+
+    ndb_cassandra: clang-format for coherent indentation and coding style
+
+commit 4c6847b2c609821e5917c39d33d72bb8e86e0dc4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:08 2023 +0100
+
+    nats: clang-format for coherent indentation and coding style
+
+commit de2e0d94db9abdae998fe5811364f54de0bf9774
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:08 2023 +0100
+
+    nathelper: clang-format for coherent indentation and coding style
+
+commit 8cb0ded3cdf1ac2615253eada8bc85a6662f47cd
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:08 2023 +0100
+
+    nat_traversal: clang-format for coherent indentation and coding style
+
+commit adb1bea6da230aa1b54f9181094288172905d4ba
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:08 2023 +0100
+
+    mtree: clang-format for coherent indentation and coding style
+
+commit 6f71349092c2524008f20921bee124414327e313
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:08 2023 +0100
+
+    msrp: clang-format for coherent indentation and coding style
+
+commit 1cd49c67df75f0219e8544ccfbaf64e21ce92381
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:08 2023 +0100
+
+    msilo: clang-format for coherent indentation and coding style
+
+commit 932633c407147d9b61d22e66ae968e70eeb7fcae
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:08 2023 +0100
+
+    mqueue: clang-format for coherent indentation and coding style
+
+commit 4d889999c12f2cacf753d29ee248902909291a90
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:07 2023 +0100
+
+    mqtt: clang-format for coherent indentation and coding style
+
+commit 416d3be07a1a0ccec5722418384a298ac7d0746e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:07 2023 +0100
+
+    mohqueue: clang-format for coherent indentation and coding style
+
+commit 7bd3615ce8d3d3f22ee64bf9290a863c37e9f612
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:07 2023 +0100
+
+    misctest: clang-format for coherent indentation and coding style
+
+commit 0c7278510597d211667d097300cdf49b133574e8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:07 2023 +0100
+
+    misc_radius: clang-format for coherent indentation and coding style
+
+commit 4be70c23e7b79ce5e58df4d05bc4f8c72e951986
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:07 2023 +0100
+
+    memcached: clang-format for coherent indentation and coding style
+
+commit 842dd67df2003bbfbf8f94ad8ee04ba53cfd85f1
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:07 2023 +0100
+
+    mediaproxy: clang-format for coherent indentation and coding style
+
+commit bf6c243515f4b2906dfb0472625fdb172d7b759c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:06 2023 +0100
+
+    matrix: clang-format for coherent indentation and coding style
+
+commit be073f893515278e2a86567866ca9f8ee70ba2c2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:06 2023 +0100
+
+    mangler: clang-format for coherent indentation and coding style
+
+commit d0e0167be7dca61afe98ec929b67aa4ac453777e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:06 2023 +0100
+
+    lwsc: clang-format for coherent indentation and coding style
+
+commit aff4195f9c17290cc9321716df16a2d764bb5feb
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:06 2023 +0100
+
+    lrkproxy: clang-format for coherent indentation and coding style
+
+commit 688d544613483f660e187b5bb7da6960307e1386
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:06 2023 +0100
+
+    lost: clang-format for coherent indentation and coding style
+
+commit a59ebdaa2a48b500f0154ecf87c1a56724064da3
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:06 2023 +0100
+
+    log_systemd: clang-format for coherent indentation and coding style
+
+commit eda9dc10ef79a9f3074388e362370552e9781952
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:06 2023 +0100
+
+    log_custom: clang-format for coherent indentation and coding style
+
+commit 6425f07b8f7722e0095caf4f916c0a7c1d88dfaa
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:05 2023 +0100
+
+    ldap: clang-format for coherent indentation and coding style
+
+commit 02fa1346f2dea0f34174999eb3bd0b306354f7c9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:05 2023 +0100
+
+    lcr: clang-format for coherent indentation and coding style
+
+commit 04a4327fe067fa2e1bf76533a0ce0f6821778129
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:05 2023 +0100
+
+    kex: clang-format for coherent indentation and coding style
+
+commit 5d0f40b5bedd17652650666b0b80e3eefb3c2eb9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:05 2023 +0100
+
+    kemix: clang-format for coherent indentation and coding style
+
+commit f4255c1b7410412a669814928085b6aba2cbe55c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:05 2023 +0100
+
+    keepalive: clang-format for coherent indentation and coding style
+
+commit 2dfc4060caedd35d02d1af6c2b47ed8c8cfdf37d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:05 2023 +0100
+
+    kazoo: clang-format for coherent indentation and coding style
+
+commit 39f4e107f0f7b6e123de130447963cd29035852c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:04 2023 +0100
+
+    kafka: clang-format for coherent indentation and coding style
+
+commit ce7008bb6f8d54ee5310af24a37d5645f966e0c5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:04 2023 +0100
+
+    jwt: clang-format for coherent indentation and coding style
+
+commit 3ab4c8765b8ef275f6f6b81934a4f0ab13245fdb
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:04 2023 +0100
+
+    jsonrpcs: clang-format for coherent indentation and coding style
+
+commit d20433a6b8a6406326074fd4df4d27d9b9fa42c8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:04 2023 +0100
+
+    jsonrpcc: clang-format for coherent indentation and coding style
+
+commit 9c0eb8d095471fdba02338bb010444131b2c5f41
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:04 2023 +0100
+
+    json: clang-format for coherent indentation and coding style
+
+commit 8e6c5b942f8b509f6566a953ab8f3d5ea7e2fa6c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:02 2023 +0100
+
+    janssonrpcc: clang-format for coherent indentation and coding style
+
+commit 95d5a17685959740763e8fb70f77b482f3226961
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:02 2023 +0100
+
+    jansson: clang-format for coherent indentation and coding style
+
+commit 69de7dde624fb7de6d56e888d59d314e8772797b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:01 2023 +0100
+
+    ipops: clang-format for coherent indentation and coding style
+
+commit 0e8e03b48045ba7c0568a5fc9d1d7af0b646420b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:01 2023 +0100
+
+    ims_usrloc_scscf: clang-format for coherent indentation and coding style
+
+commit fd4b21c772cc08f360651e4f68c555cb08dec345
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:01 2023 +0100
+
+    ims_usrloc_pcscf: clang-format for coherent indentation and coding style
+
+commit bcc11fc240542764bffc6bc53f15805ab3338f57
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:01 2023 +0100
+
+    ims_registrar_scscf: clang-format for coherent indentation and coding style
+
+commit 1c5f255032057cd199941d21f26c2b2ab6066229
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:01 2023 +0100
+
+    ims_registrar_pcscf: clang-format for coherent indentation and coding style
+
+commit b4dcd9a9a03718c8ef87ea78e7b553e7f73629c2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:01 2023 +0100
+
+    ims_qos: clang-format for coherent indentation and coding style
+
+commit cd4cedc42a270cf8eb48724ee341f917c6cb4d93
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:00 2023 +0100
+
+    ims_ocs: clang-format for coherent indentation and coding style
+
+commit aa916afc6f12e33d68d3959dabd4e64374f66fe5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:00 2023 +0100
+
+    ims_isc: clang-format for coherent indentation and coding style
+
+commit 7ad44f2cab819d595b92a639b61929a0b575f6b3
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:00 2023 +0100
+
+    ims_ipsec_pcscf: clang-format for coherent indentation and coding style
+
+commit cd510d6addd8461a26f8f0917e4f4e5936782d35
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:00 2023 +0100
+
+    ims_icscf: clang-format for coherent indentation and coding style
+
+commit 9b1fd59d4d919b588dadc80f1012745c68b9682f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:00 2023 +0100
+
+    ims_diameter_server: clang-format for coherent indentation and coding style
+
+commit 262b884b1729703521a8a9dcfab4697a6cae3965
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:00 2023 +0100
+
+    ims_dialog: clang-format for coherent indentation and coding style
+
+commit 541d3727a65808a63d73d092a109c3b410c3a94d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:19:00 2023 +0100
+
+    ims_charging: clang-format for coherent indentation and coding style
+
+commit c7e9b67f2c768e47b51518721395f4decc27fe2d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:59 2023 +0100
+
+    ims_auth: clang-format for coherent indentation and coding style
+
+commit 7e52342e27d636f9050e42b29b6f2e92f1dda521
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:59 2023 +0100
+
+    imc: clang-format for coherent indentation and coding style
+
+commit a2cb8785229e34a556efbebb59e1156818c2539c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:59 2023 +0100
+
+    http_client: clang-format for coherent indentation and coding style
+
+commit 4b65fd41e8d22230f91615470ff63abab0891423
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:59 2023 +0100
+
+    http_async_client: clang-format for coherent indentation and coding style
+
+commit e2ef8a5534a365f15b85789e908c3c17fe5ba33a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:59 2023 +0100
+
+    htable: clang-format for coherent indentation and coding style
+
+commit 3f51af74dfc25c6142d99f262677e59396a0d638
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:59 2023 +0100
+
+    h350: clang-format for coherent indentation and coding style
+
+commit 4c71f8d4b8b5000fc1d03032e9327aa6616382fd
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:58 2023 +0100
+
+    gzcompress: clang-format for coherent indentation and coding style
+
+commit a857b336e81853f38b8084051a1b44f4b5ceadfe
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:58 2023 +0100
+
+    group: clang-format for coherent indentation and coding style
+
+commit cbaac0c32263cc89dea9769071e8eae8f5319e64
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:58 2023 +0100
+
+    geoip2: clang-format for coherent indentation and coding style
+
+commit ce40a3d2e0c1ea024931fd4c0022d3be8e1879cd
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:58 2023 +0100
+
+    geoip: clang-format for coherent indentation and coding style
+
+commit 8919fb4265f33186c6ee7dffc75e021549a14999
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:58 2023 +0100
+
+    exec: clang-format for coherent indentation and coding style
+
+commit 813f882ad1d79dab2f8e8c8a347dae769cb72037
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:58 2023 +0100
+
+    evrexec: clang-format for coherent indentation and coding style
+
+commit 65acd9c15d79a66ef72bbb0fa28a752d4587139c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:57 2023 +0100
+
+    evapi: clang-format for coherent indentation and coding style
+
+commit 5cdc473704a1bee4b788ceed835a20c12dbddc26
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:57 2023 +0100
+
+    erlang: clang-format for coherent indentation and coding style
+
+commit 7a8479aade6b3310038ff5d3c9848005039e59d4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:57 2023 +0100
+
+    enum: clang-format for coherent indentation and coding style
+
+commit 5d5f169f8d520b2855b64873bbc585c519fb28f2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:57 2023 +0100
+
+    drouting: clang-format for coherent indentation and coding style
+
+commit 9ee062d3def95cac003e36f38969a114b7294a71
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:57 2023 +0100
+
+    domainpolicy: clang-format for coherent indentation and coding style
+
+commit be694689caa1bf625045fb536b206d46e5d2ce5d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:57 2023 +0100
+
+    domain: clang-format for coherent indentation and coding style
+
+commit 35c1e2e11b37941412c265424e3997ac9b607602
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:57 2023 +0100
+
+    dnssec: clang-format for coherent indentation and coding style
+
+commit 800ef9ca2561dea0aeefb76403b4b02bee734f17
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:56 2023 +0100
+
+    dmq_usrloc: clang-format for coherent indentation and coding style
+
+commit 92e1e12785b79cb4bf25f963c29590040745e10e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:56 2023 +0100
+
+    dmq: clang-format for coherent indentation and coding style
+
+commit d4d7312837ef9a7d71de39369461989c4976fa07
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:56 2023 +0100
+
+    dlgs: clang-format for coherent indentation and coding style
+
+commit 5ae296658706bbaeaac30edc587a388e41e1270a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:56 2023 +0100
+
+    diversion: clang-format for coherent indentation and coding style
+
+commit a0ed9e761921d9cc37532b9b37901ac52e0d7aa8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:56 2023 +0100
+
+    dispatcher: clang-format for coherent indentation and coding style
+
+commit a31adde9220ebc27f9f7ade3a3df542be6834078
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:56 2023 +0100
+
+    dialplan: clang-format for coherent indentation and coding style
+
+commit 64e70f3e7c91ec670e5e3308bb41226288eeec2e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:55 2023 +0100
+
+    dialog: clang-format for coherent indentation and coding style
+
+commit d6d398fa0462544d0bf25ddeba0c91bb5790b3f0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:55 2023 +0100
+
+    debugger: clang-format for coherent indentation and coding style
+
+commit febaa99f81a27a9be08c92394f8c998081c68835
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:55 2023 +0100
+
+    db_unixodbc: clang-format for coherent indentation and coding style
+
+commit b786b80240da43cd04af8888debb98964ee1c891
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:55 2023 +0100
+
+    db_text: clang-format for coherent indentation and coding style
+
+commit ce78d71b49fc6bf958cfb7f8ee5178b36779cd07
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:55 2023 +0100
+
+    db_sqlite: clang-format for coherent indentation and coding style
+
+commit 62e98a7b4b36f05f28de33dd83e5779f98fd009f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:55 2023 +0100
+
+    db_redis: clang-format for coherent indentation and coding style
+
+commit ee3dc33f3b2d03de4cd5ef7918e95f56015ac13e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:55 2023 +0100
+
+    db_postgres: clang-format for coherent indentation and coding style
+
+commit a84634981f36051b81e85abfc5298b40739a8410
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:54 2023 +0100
+
+    db_perlvdb: clang-format for coherent indentation and coding style
+
+commit 6d21773bc5aa71e284875777ca6e41d2405a26c5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:54 2023 +0100
+
+    db_oracle: clang-format for coherent indentation and coding style
+
+commit 074167eef485dc3a45498b77f4725ea02b1b6b05
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:54 2023 +0100
+
+    db_mysql: clang-format for coherent indentation and coding style
+
+commit e91c79146d45c4f055f84ec3f58c34ec18e65d9f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:54 2023 +0100
+
+    db_mongodb: clang-format for coherent indentation and coding style
+
+commit 19fb24dfdb54aebdf871c7cccd28149d74d5c1d2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:54 2023 +0100
+
+    db_flatstore: clang-format for coherent indentation and coding style
+
+commit bc9d2f760e9c0117060a9f2be5b63cd0510f516e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:54 2023 +0100
+
+    db_cluster: clang-format for coherent indentation and coding style
+
+commit 86c03d47b410f19b2bb9cd83f979ad60541a7fe9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:53 2023 +0100
+
+    db_cassandra: clang-format for coherent indentation and coding style
+
+commit ab418756af063520633de5f97bc92ffee586932b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:53 2023 +0100
+
+    db_berkeley: clang-format for coherent indentation and coding style
+
+commit a74091e26606a8113712930e332f8880aa4a6f63
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:53 2023 +0100
+
+    db2_ops: clang-format for coherent indentation and coding style
+
+commit 8f8cc394f01580a2ced0f5b9ad053324f90ffe07
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:53 2023 +0100
+
+    db2_ldap: clang-format for coherent indentation and coding style
+
+commit 64876913947e84bb3adf38357d39fc93c482f3b4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:53 2023 +0100
+
+    ctl: clang-format for coherent indentation and coding style
+
+commit 25420cf9ecad44982cc0fdad19abd17f89834f7c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:53 2023 +0100
+
+    crypto: clang-format for coherent indentation and coding style
+
+commit beb440c0be9dbef745c6949e263dd2c7b05116c2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:52 2023 +0100
+
+    cplc: clang-format for coherent indentation and coding style
+
+commit 3fe85711ad322370ae1a1c7317f8c11cba0dc6fd
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:52 2023 +0100
+
+    counters: clang-format for coherent indentation and coding style
+
+commit 3c7b355c555662d412a72b1ba1a336c6dc8f9380
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:52 2023 +0100
+
+    corex: clang-format for coherent indentation and coding style
+
+commit e9c9f7dd0a7e856499c7135dda7daf58105f7a70
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:52 2023 +0100
+
+    cnxcc: clang-format for coherent indentation and coding style
+
+commit f206ee87a5d65234a61b20ad51ced6df9dbf8a25
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:52 2023 +0100
+
+    cfgutils: clang-format for coherent indentation and coding style
+
+commit 8231482b81e540ed39a641fc67d945fe938d26ad
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:52 2023 +0100
+
+    cfgt: clang-format for coherent indentation and coding style
+
+commit 44006419c2548fc354d332f665df4d9a35674794
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:51 2023 +0100
+
+    cfg_db: clang-format for coherent indentation and coding style
+
+commit 0ea9116e0228d63a715821e0a9a517ff20372e7d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:51 2023 +0100
+
+    cdp_avp: clang-format for coherent indentation and coding style
+
+commit d0c8a763e8be35b2c9073384825bfae9319aea88
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:51 2023 +0100
+
+    cdp: clang-format for coherent indentation and coding style
+
+commit 766eb97cfbed47dfa8e188b8e7b4ab1dc0c66a2f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:51 2023 +0100
+
+    carrierroute: clang-format for coherent indentation and coding style
+
+commit e5276b01264511b72cc7ff2f3102f79cb25be158
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:51 2023 +0100
+
+    call_obj: clang-format for coherent indentation and coding style
+
+commit 4bdddcb67060beae3344733b455e8fcddc9f45fc
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:51 2023 +0100
+
+    call_control: clang-format for coherent indentation and coding style
+
+commit e7245ec807d09960d09bfd7df84361c1af145961
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:50 2023 +0100
+
+    blst: clang-format for coherent indentation and coding style
+
+commit 1985bf4082b1bebeb081a6a4fdf83eba6f6b02af
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:50 2023 +0100
+
+    benchmark: clang-format for coherent indentation and coding style
+
+commit 858c31da725cff5c87e518f85d7d61fc0275815c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:50 2023 +0100
+
+    avpops: clang-format for coherent indentation and coding style
+
+commit 03f1530e1e02ad87c0098aa2af19e6d07f29feca
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:50 2023 +0100
+
+    avp: clang-format for coherent indentation and coding style
+
+commit 8495cd64bf3253258ffbb2ea47299ee454b85db4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:50 2023 +0100
+
+    auth_xkeys: clang-format for coherent indentation and coding style
+
+commit a53dabf4eb112c32132898793ac3c07b0bd77aa3
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:50 2023 +0100
+
+    auth_radius: clang-format for coherent indentation and coding style
+
+commit 07fbd3fa5c9cfd4f3ee90735d518ac2c9c1a8dfb
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:49 2023 +0100
+
+    auth_identity: clang-format for coherent indentation and coding style
+
+commit 13ecf2727f2beb8eb94e2ed87560bf13fe040276
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:49 2023 +0100
+
+    auth_ephemeral: clang-format for coherent indentation and coding style
+
+commit 29606444d0e840490fd3750128d19ee08f430df2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:49 2023 +0100
+
+    auth_diameter: clang-format for coherent indentation and coding style
+
+commit e8bf6b8a9658e67951917579b7143e5e12b394e4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:49 2023 +0100
+
+    auth_db: clang-format for coherent indentation and coding style
+
+commit a3ce7b426ebe1d7a11b5fc926b1acf8a64e7b5b8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:49 2023 +0100
+
+    auth: clang-format for coherent indentation and coding style
+
+commit 48382aa9916a7602f89ce691f8b5422bc9af78e1
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:49 2023 +0100
+
+    async: clang-format for coherent indentation and coding style
+
+commit 5926f011bcbc5d4ca8d9790fb7339fd296a6539f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:46 2023 +0100
+
+    app_sqlang: clang-format for coherent indentation and coding style
+
+commit d19bcf4547047280cb65a6858011b386c47434d0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:46 2023 +0100
+
+    app_ruby: clang-format for coherent indentation and coding style
+
+commit e70aa00cc17e962a0b2d13e56897f95173b2e3c4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:45 2023 +0100
+
+    app_python3: clang-format for coherent indentation and coding style
+
+commit 8d20bde68b463d10b83bfb90a74aeddef5358821
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:45 2023 +0100
+
+    app_python: clang-format for coherent indentation and coding style
+
+commit b3a3e8088d40b55af3ec0bb42edffe55403d34ff
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:45 2023 +0100
+
+    app_perl: clang-format for coherent indentation and coding style
+
+commit 07bcb5b2a7674404f2b0090868ffebb784c651e5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:45 2023 +0100
+
+    app_mono: clang-format for coherent indentation and coding style
+
+commit 9e89f7174a38a7c7886aaedf7ec7e7889856348c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:45 2023 +0100
+
+    app_lua_sr: clang-format for coherent indentation and coding style
+
+commit e674bca02aeb0b6b5d05078c5f841cd6c1a93b6a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:45 2023 +0100
+
+    app_lua: clang-format for coherent indentation and coding style
+
+commit ebbeeb1c15a4b4cef61fffda503de471ae0d3d85
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:44 2023 +0100
+
+    app_jsdt: clang-format for coherent indentation and coding style
+
+commit bc35f600ff628c6fdac37b2f6da7c622a1f0a361
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:44 2023 +0100
+
+    app_java: clang-format for coherent indentation and coding style
+
+commit 7d6537afe6d7a02b7b9965cec137e4af5d9c0c54
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:44 2023 +0100
+
+    acc_json: clang-format for coherent indentation and coding style
+
+commit d36e402dfd369f949307df8e54572c575dbbd65e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:44 2023 +0100
+
+    acc_diameter: clang-format for coherent indentation and coding style
+
+commit 61afa03647d03e898385bf756b03ce807b5f0451
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:18:44 2023 +0100
+
+    acc: clang-format for coherent indentation and coding style
+
+commit 5557cc4ca8d0fd9c757ee2f1344082345c8b1b9f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Nov 11 12:17:57 2023 +0100
+
+    core: clang-format for coherent indentation and coding style
+
+commit 239d0a4623dc827b4285d8e888f873d0cd3c8b1e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Oct 26 10:18:29 2023 +0200
+
+    pkg/kamailio/deb: refresh files [skip ci]
+    
+    related to #3617
+
+commit 9326e98d2677ada18f90e28ef37f496ab4d2e985
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Oct 26 10:17:28 2023 +0200
+
+    pkg/kamailio/deb: fix backports scripts [skip ci]
+    
+    missing space was causing some modules not to be build
+    
+    fixes #3617
+
+commit 929777428cdcfc18bdee55d09dce1b2b554c5df9
+Author: Victor Seva <vseva@sipwise.com>
+Date:   Mon Oct 23 14:36:49 2023 +0200
+
+    pv_headers: pvh_xavi_get_child() fix fallback logic
+    
+    * don't fallback to Initial request headers for Replies
+    
+    (cherry picked from commit 19a32b863d9a79c0cbaf04a7a9864e0c08a914f7)
+    (cherry picked from commit 7af9dc940e29fa3aecda011096820e011de0b254)
+
+commit 776d9064a3e9fa5dbcdbddc5bf0374de09c55fe6
+Author: Stefan-Cristian Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Fri Aug 18 10:59:57 2023 +0300
+
+    ims_dialog: kemi export some functions
+    
+    (cherry-picked from commit 3994410)
+
+commit cace93692134228eee0b8ebf1d43f0f90d79302a
+Author: Stefan-Cristian Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Wed Aug 16 11:01:08 2023 +0300
+
+    ims_qos: kemi export
+    
+    (cherry picked from commit eb23e6b)
+
+commit d4d28c098ddc07ab1b956a13878cd8e6f180fe3d
+Author: Stefan Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Wed Jul 19 13:48:09 2023 +0300
+
+    dialog: set cbs list to NULL after destroying
+    
+    (cherry picked from commit 6881faadec45dd16dd896b13db44862e7df70422)
+    (cherry picked from commit 20be29ab3638d803341ec376b02edd7c14a9174a)
+
+commit 7ee2bfb30f1119bc8c5b2eddf8f81be77f4804da
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Jul 17 11:18:01 2023 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 5fc4cca395e057714376b681bbad4935a9570d0d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 31 09:01:13 2023 +0200
+
+    sst: fix condition on sst_min_se for sst_check_min()
+    
+    (cherry picked from commit a059af04ac47fd31238ca4f22ad868529e035c43)
+    (cherry picked from commit febfc9722f83d992a3c1643fa373468b73cb3fa0)
+
+commit 771fcd42e315376c9d3c16bb63983a72e508be18
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 23 09:41:13 2023 +0200
+
+    ipops: create container items if not found for srv and naptr functions
+    
+    - GH #3419
+    
+    (cherry picked from commit 7971d825361bee29d65fcea69f2978d7af31eeaa)
+    (cherry picked from commit 408643ec916bc00f9f9447952e553d129f8ec896)
+
+commit 249f476403f987917ed7d5c7f6d7ea70e1f43e63
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 16 17:28:02 2023 +0200
+
+    htable: set dbload filed on empty db result
+    
+    (cherry picked from commit ba9d663c5d382edef3c98b31aa4341b21c307a34)
+    (cherry picked from commit 27ab4b757805083c231ceb109a46f5501b1baa7c)
+
+commit 2f86215a704ff10a58cb3f5e57497918c381a048
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Sat Apr 8 01:48:11 2023 -0400
+
+    tm: enhance documentation for on_sl_reply param
+    
+    (cherry picked from commit a4970749b2be40cd598d4ce5cf2eaa6b38fc2307)
+
+commit b524321a4871c349e6ebb464ea018e138bc6d5ed
+Author: Victor Seva <vseva@sipwise.com>
+Date:   Fri Mar 24 10:26:15 2023 +0100
+
+    app_lua: fix crash on exausted memory scenario
+    
+    (cherry picked from commit ef94da7bac8e2aaf5a452d7b7dc3e2b544153ff6)
+
+commit ca13a3382b9067a0dc14fc7ec995ec2d95c8c6cb
+Author: Dennis <dennis_y@mail.ru>
+Date:   Fri Mar 10 17:46:21 2023 +0300
+
+    auth_ephemeral: fix authentication with secrets added at runtime (#3390)
+    
+    * auth_ephemeral: fix authentication with secrets added at runtime
+    
+    - proper way to work with shm pointer to secret list
+    
+    * fix: free secret_struct shm
+    
+    Free shm secret_struct in case the allocation error of secret_list pointer.
+    
+    (cherry picked from commit 6fa5a8fa8ddfe09bdab2fb445bee94e51d86b7fc)
+
+commit 9daacc36e3ed858eca97e9b7ac7eaa90e10c0803
+Author: Pantelis Kolatsis <pk@gilawa.com>
+Date:   Mon Mar 6 10:44:19 2023 +0000
+
+    sqlops: do not allow empty name component in URL
+    
+    (cherry picked from commit b15db86e93120824dcfc879099432f3ec1c3b0c7)
+
+commit 5154f20964e08d2853bbf96afdeecceac8fe7650
+Author: Stefan Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Wed Jul 5 13:54:29 2023 +0300
+
+    ims_qos: check and log for NULL sessionId
+    
+    (cherry picked from commit 1b291315b43da1148cee5f3821ddbe49b0c86b7f)
+
+commit edd4744a4cd7be96549f5515512187b801335d66
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jun 23 09:06:43 2023 +0200
+
+    utils/kamcmd: fix memory leak
+    
+    fixes #3478
+    
+    (cherry picked from commit badc81cb427ba5aaf03ca26e4c2654d58ee08588)
+    (cherry picked from commit 402bab6f63b515a13a72ac2dad6e40075ded1479)
+
+commit ada8f757407712fe757398a38dab6d452545f018
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Tue Jun 20 09:05:53 2023 +0300
+
+    pkg/docker: submodule update [skip ci]
+
+commit 5f982c9f46f203d7976a57f12789213f78eaa261
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Jun 12 22:20:57 2023 +0300
+
+    pkg/kamailio/alpine: packaged lwsc
+    
+    (cherry picked from commit 768dd96da6f52e46bc227d9815f7225b33042295)
+    (cherry picked from commit 6005e8e4e3e0d9488693eca1484122dfed303ac6)
+
+commit a24659dc380e05fa2b6715ade62c341ad0307c4b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 2 21:20:59 2023 +0200
+
+    pv: exported {val} transformation
+    
+    (cherry picked from commit 79b82198075250420cb08d6b5fd5b100ff672606)
+    (cherry picked from commit 1c23c2ff23b5c25c943856f5064739794d71bc7f)
+
+commit e93ede91bf6937137ed3caaca4e438677f86f845
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sun May 21 07:33:56 2023 +0300
+
+    .github/workflows/alpine: disabled latest docker tag for 5.6 branch [skip ci]
+
+commit 5f9cbfd382fd86e9a485b2c6392727b794bc8d08
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Wed Apr 19 18:52:30 2023 +0300
+
+    .github/workflows: added GitHub action script to build Alpine based docker image
+    
+    (cherry picked from commit 83789e7efe6e1a3479e7742812eaff2ffd7ebdd3)
+
+commit f0881388a1bccec5c57b252fa795ebf359f2bd80
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sat May 20 20:04:41 2023 +0300
+
+    pkg/docker: submodule update
+
+commit 1787e32eb86641464728671467bc3c96e1b020f8
+Author: Kaufman <bkaufman@nexvortex.com>
+Date:   Sun Oct 9 11:14:37 2022 -0400
+
+    APKBUILD: remove python2 references
+    
+    - Remove python2 references from APKBUILD reported by GH #3257
+    
+    (cherry picked from commit fafcf5f9c711d0d1cb32f2f3ab71df374e28bc16)
+
+commit d13a0b21d3a2d9c5f453957490c06d924af7e043
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Thu May 18 10:52:52 2023 +0000
+
+    dispatcher: fix force send socket functionality, was not working in some TCP scenarios
+    
+    (cherry picked from commit 6183319381573e42b882d05ae1748539f7547d8c)
+    (cherry picked from commit da7944e2f4c7e6f344d125da325c388e1836662f)
+
+commit 0a4d8819b1dccf4404be557278dbd5350eacd156
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon May 15 13:22:09 2023 +0000
+
+    topos: fix early-dialog b-side UPDATE requests routing (GH #3437)
+    
+    (cherry picked from commit 091dc9a76bcec5c8a4bc73e863ed10b1b9d76c92)
+    (cherry picked from commit 1b55a80b71bf9a7edfe29eb40627b472565ace69)
+
+commit 8d7dee8bb08ef7f44394c0add165dea66bf9c316
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu May 11 14:31:43 2023 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 916abbb53aff22ff9214b9f7677904564ca021b3
+Author: Vadim Gaysin <gaysin@zvonok.com>
+Date:   Wed Nov 30 09:31:45 2022 +0100
+
+    geoip2: new parameter to register result id to get pv work in kemi
+    
+    (cherry picked from commit 21817906853140322c701f8cbb8201049d2b58f0)
+
+commit 24989241cfc58c6ba47d48c9a86921251f4ba235
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Tue May 9 15:05:39 2023 +0200
+
+    rtpengine: fix unaligned memory access
+    
+    Make sure the pointers we return from our continuous memory buffer is
+    always 64-bit aligned as it's used not only for strings, but also for
+    structs/objects, and such unaligned memory access is undefined on some
+    archs and flagged as such by ASAN.
+    
+    From https://github.com/sipwise/rtpengine/commit/ade8100d3b10308f1ff63f8cb06fdf292618edca
+    
+    fixes #3444
+    
+    (cherry-picked from commit 43ac6b27d7ca7bc522f362c25ebb3c22ab918280)
+
+commit 2d7b6c32552b1e2a8b095192bb22e0f776e18100
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 9 23:28:04 2023 +0200
+
+    dialplan: fix ki_dp_translate() checks for input/output parameters
+    
+    fixes #3447
+    
+    (cherry picked from commit ab0a2be6b522c1b48a2442447c24e7ab156e3d4e)
+    (cherry picked from commit 5f3ed08b5e234465d4fb909460367a63ed63a550)
+
+commit dc2ff878fb5971f78760f62eb1a70ba9ac1c0d9a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu May 4 20:12:32 2023 +0200
+
+    lcr: fix crash be calling load_gw* via KEMI
+    
+    move the check of lcr_id to the helper
+    
+    fixes #3435
+    
+    (cherry picked from commit c88e506fe6a1ba0f588c5866a63ffb18fa25478a)
+
+commit 8189ae69e563c1cffed0c4e12d57d258d2a541f6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Apr 6 14:03:57 2023 +0200
+
+    github: use Github Packages registry [skip ci]
+    
+    (cherry picked from commit 8bba1aa866b736f1fd98dace67fe4a4b1eeca5c7)
+
+commit d4ff1550a7c7f9647236f03559dc2fc3106a2b8d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 30 12:48:44 2023 +0200
+
+    ndb_redis: fix index on parsing sentinel address
+    
+    (cherry picked from commit 5c8eed0ce78d029f28a1819262516940b7dd749e)
+
+commit 21fc0e010ef97d86093d7673b5038b2e65f839cb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 28 08:12:00 2023 +0200
+
+    ndb_redis: break on finding a server via sentinel
+    
+    (cherry picked from commit cc9501663d6dd0fa91aef23ce00a7cdf86319201)
+
+commit 7fcfc9ef6d624d7c817c83b5bb8008638d387e78
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Fri Mar 24 14:20:13 2023 +0000
+
+    carrierroute: remove redundant capabilities check, related to commit cf147ab7888c4e2
+    
+    (cherry picked from commit f44e93a4171668d1c1182b186bea8c41db0a9300)
+
+commit ce9c0e6715010c4403463b6d664b6e4a5632c04a
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Thu Mar 23 18:21:26 2023 +0000
+
+    carrierroute: check during startup for required DB capabilities (GH #3405)
+    
+    (cherry picked from commit cf147ab7888c4e2b26db9dd44e494001bb71a61c)
+
+
 ===================== 2023-02-27 Version 5.6.4 Released =====================
 
 ===================== Changes Since Version 5.6.3 ===========================
