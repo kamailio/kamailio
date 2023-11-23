@@ -172,7 +172,7 @@ static int mod_init(void)
 	int route_no;
 
 #ifdef STATISTICS
-	if(register_module_stats(exports.name, mod_stats) != 0) {
+	if(register_module_stats("ims_icscf", mod_stats) != 0) {
 		LM_ERR("failed to register core statistics\n");
 		goto error;
 	}
