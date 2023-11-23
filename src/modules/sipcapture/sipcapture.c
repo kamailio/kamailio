@@ -930,7 +930,7 @@ static int mod_init(void)
 	sipcapture_stats = stats;
 
 	/* register statistics */
-	if(register_module_stats(exports.name, sipcapture_stats) != 0) {
+	if(register_module_stats("sipcapture", sipcapture_stats) != 0) {
 		LM_ERR("failed to register core statistics\n");
 		return -1;
 	}
