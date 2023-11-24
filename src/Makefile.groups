@@ -88,11 +88,11 @@ mod_list_memcached=memcached
 # - modules depending on openssl library
 mod_list_tlsdeps=crypto tls
 
-# - modules depending on openssl (+curl) library
-mod_list_tlsdeps_curl=auth_identity
-
 # - modules depending on static openssl library
 mod_list_tlsa=tlsa
+
+# - modules depending on openssl (+curl) library
+mod_list_tlsdeps_curl=auth_identity
 
 # - modules depending on static wolfssl library
 mod_list_tls_wolfssl=tls_wolfssl
@@ -403,11 +403,13 @@ module_group_kmemcached=$(mod_list_memcached)
 # pkg tls module
 module_group_ktls_basic=$(mod_list_tlsdeps)
 
+ifeq ($(KTLS_INCLUDE_TLSA),yes)
 # pkg tls module with curl
-module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl)
-
+module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl) $(mod_list_tlsa)
+else
 # pkg tlsa module
 module_group_ktlsa=$(mod_list_tlsa)
+endif
 
 # pkg tls_wolfssl module
 module_group_ktls_wolfssl=$(mod_list_tls_wolfssl)
