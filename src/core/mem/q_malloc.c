@@ -405,6 +405,8 @@ void *qm_malloc(void *qmp, size_t size)
 	/*malloc(0) should return a valid pointer according to specs*/
 	if(unlikely(size == 0))
 		size = 4;
+	/*add the value of core parameter that can be set for extra safety*/
+	size += ksr_mem_add_size;
 	/*size must be a multiple of 8*/
 	size = ROUNDUP(size);
 	if(size > (qm->size - qm->real_used))
@@ -682,8 +684,9 @@ void *qm_realloc(void *qmp, void *p, size_t size)
 		abort();
 	}
 #endif
-	/* find first acceptable size */
-	size = ROUNDUP(size);
+	/* find first acceptable size
+	 * - consider the value of core parameter that can be set for extra safety */
+	size = ROUNDUP(size + ksr_mem_add_size);
 	if(f->size > size) {
 		orig_size = f->size;
 		/* shrink */
@@ -733,7 +736,9 @@ void *qm_realloc(void *qmp, void *p, size_t size)
 			qm->real_used += (f->size - orig_size);
 			qm->used += (f->size - orig_size);
 		} else {
-			/* could not join => realloc */
+			/* could not join => realloc
+			 * - qm_malloc adds ksr_mem_add_size */
+			size = ROUNDUP(size - ksr_mem_add_size);
 #ifdef DBG_QM_MALLOC
 			ptr = qm_malloc(qm, size, file, func, line, mname);
 #else
