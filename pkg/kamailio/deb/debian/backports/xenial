@@ -44,6 +44,9 @@ sed -i -e '/^ libnats-dev,/d' \
 sed -i -e '/^PACKAGE_GROUPS += nats/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += nats' ${DIST}/rules
 
+# tlsa build fails
+sed -i -e 's/KTLS_INCLUDE_TLSA=yes/KTLS_INCLUDE_TLSA=no/' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

@@ -18,6 +18,10 @@ ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 endif
 
 export JAVA_HOME=/usr/lib/jvm/java-gcj
+# tlsa
+export KTLS_INCLUDE_TLSA=yes
+export LIBSSL_STATIC_SRCLIB=yes
+export LIBSSL_STATIC_SRCPATH=/usr/$(LIBDIR)
 
 # Modules not in the "main" kamailio package:
 EXCLUDED_MODULES =
