@@ -401,6 +401,7 @@ extern char *default_routename;
 %token MEMDBG
 %token MEMSUM
 %token MEMSAFETY
+%token MEMADDSIZE
 %token MEMJOIN
 %token MEMSTATUSMODE
 %token SIP_PARSER_LOG_ONELINE
@@ -1072,6 +1073,8 @@ assign_stm:
 	| MEMSUM EQUAL error { yyerror("int value expected"); }
 	| MEMSAFETY EQUAL intno { default_core_cfg.mem_safety=$3; }
 	| MEMSAFETY EQUAL error { yyerror("int value expected"); }
+	| MEMADDSIZE EQUAL intno { ksr_mem_add_size=$3; }
+	| MEMADDSIZE EQUAL error { yyerror("int value expected"); }
 	| MEMJOIN EQUAL intno { default_core_cfg.mem_join=$3; }
 	| MEMJOIN EQUAL error { yyerror("int value expected"); }
 	| MEMSTATUSMODE EQUAL intno { default_core_cfg.mem_status_mode=$3; }

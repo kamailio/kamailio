@@ -165,6 +165,8 @@ extern int reply_to_via;
 extern int _ksr_is_main;
 extern int fixup_complete;
 
+extern int ksr_mem_add_size;
+
 /* debugging level for dumping memory status */
 extern int memlog;
 /* debugging level for malloc debugging messages */

@@ -385,6 +385,7 @@ MEMLOG		"memlog"|"mem_log"
 MEMDBG		"memdbg"|"mem_dbg"
 MEMSUM		"mem_summary"
 MEMSAFETY	"mem_safety"
+MEMADDSIZE	"mem_add_size"
 MEMJOIN		"mem_join"
 MEMSTATUSMODE		"mem_status_mode"
 CORELOG		"corelog"|"core_log"
@@ -874,6 +875,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{MEMDBG}	{ count(); yylval.strval=yytext; return MEMDBG; }
 <INITIAL>{MEMSUM}	{ count(); yylval.strval=yytext; return MEMSUM; }
 <INITIAL>{MEMSAFETY}	{ count(); yylval.strval=yytext; return MEMSAFETY; }
+<INITIAL>{MEMADDSIZE}	{ count(); yylval.strval=yytext; return MEMADDSIZE; }
 <INITIAL>{MEMJOIN}	{ count(); yylval.strval=yytext; return MEMJOIN; }
 <INITIAL>{MEMSTATUSMODE}	{ count(); yylval.strval=yytext; return MEMSTATUSMODE; }
 <INITIAL>{SIP_PARSER_LOG_ONELINE}  { count(); yylval.strval=yytext; return SIP_PARSER_LOG_ONELINE; }
