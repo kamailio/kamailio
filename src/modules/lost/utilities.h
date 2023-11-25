@@ -1,7 +1,7 @@
 /*
  * lost module utility functions
  *
- * Copyright (C) 2021 Wolfgang Kampichler
+ * Copyright (C) 2023 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -57,10 +57,18 @@
 	"gm=http://www.opengis.net/gml"
 
 #define LOST_PRO_GEO2D "geodetic-2d"
+#define LOST_PRO_GEO3D "geodetic-3d"
 #define LOST_PRO_CIVIC "civic"
 
+/* shape representation RFC 5491 */
 #define LOST_PNT "Point"
+#define LOST_POL "Polygon"
 #define LOST_CIR "Circle"
+#define LOST_ELL "Ellipse"
+#define LOST_ARC "ArcBand"
+#define LOST_SPH "Sphere"
+#define LOST_OID "Ellipsoid"
+#define LOST_PSM "Prism"
 #define LOST_CIV "civicAddress"
 
 #define HELD_TYPE_ANY "any"
@@ -89,6 +97,7 @@ typedef struct lost_loc
 	char *geodetic;	 /* geodetic location (findServiceRequest) */
 	char *longitude; /* geo longitude */
 	char *latitude;	 /* geo latitude */
+	char *altitude;  /* geo altitude */
 	char *profile;	 /* location profile (findServiceRequest) */
 	int radius;		 /* geo radius (findServiceRequest) */
 	int recursive;	 /* recursion true|false (findServiceRequest)*/

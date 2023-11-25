@@ -1,7 +1,7 @@
 /*
  * lost module utility functions
  *
- * Copyright (C) 2021 Wolfgang Kampichler
+ * Copyright (C) 2023 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -52,6 +52,7 @@
 
 extern int lost_recursion;
 extern int lost_profile;
+extern int lost_geoloc_3d;
 
 /*
  * lost_trim_content(dest, lgth)
@@ -140,6 +141,7 @@ p_lost_loc_t lost_new_loc(str rurn)
 	ptr->urn = urn;
 	ptr->longitude = NULL;
 	ptr->latitude = NULL;
+	ptr->altitude = NULL;
 	ptr->geodetic = NULL;
 	ptr->xpath = NULL;
 	ptr->profile = NULL;
@@ -228,6 +230,8 @@ void lost_free_loc(p_lost_loc_t *loc)
 		pkg_free(ptr->longitude);
 	if(ptr->latitude)
 		pkg_free(ptr->latitude);
+	if(ptr->altitude)
+		pkg_free(ptr->altitude);
 	if(ptr->profile)
 		pkg_free(ptr->profile);
 
@@ -902,7 +906,9 @@ p_lost_loc_t lost_parse_pidf(str pidf, str urn)
 
 	if(doc == NULL) {
 		LM_WARN("invalid xml (pidf-lo): [%.*s]\n", pidf.len, pidf.s);
-		doc = xmlRecoverMemory(pidf.s, pidf.len);
+	doc = xmlReadMemory(pidf.s, pidf.len, 0, NULL,
+			XML_PARSE_NOBLANKS | XML_PARSE_NONET |
+			XML_PARSE_NOCDATA | XML_PARSE_RECOVER);
 		if(doc == NULL) {
 			LM_ERR("xml (pidf-lo) recovery failed on: [%.*s]\n", pidf.len,
 					pidf.s);
@@ -954,22 +960,16 @@ err:
 }
 
 /*
- * lost_parse_geo(node, loc)
- * parses locationResponse (pos|circle) and writes
- * results to location object
+ * lost_check_3d(node)
+ * checks if pos is 3D and returns 1 if true
+ * <gml:pos>-34.407 150.883 24.8</gml:pos>
  */
-int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
+int lost_check_3d(xmlNodePtr node)
 {
 	xmlNodePtr cur = NULL;
 
-	char bufLat[BUFSIZE];
-	char bufLon[BUFSIZE];
 	char *content = NULL;
-
-	char s_profile[] = LOST_PRO_GEO2D;
-
-	int iRadius = 0;
-	int len = 0;
+	int ret = 0;
 
 	cur = node;
 	/* find <pos> element */
@@ -980,9 +980,68 @@ int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
 		return -1;
 	}
 
-	sscanf(content, "%s %s", bufLat, bufLon);
+	int len = 0;
+	char *tmp = lost_trim_content(content, &len);
+
+	if(len == 0) {
+		LM_WARN("could not find pos element\n");
+		xmlFree(content); /* clean up */
+		return -1;
+	}
+
+	int i = 0;
+	while(*tmp) {
+		if(isspace(*tmp))
+			i++;
+		tmp++;
+	}
+
+	if(i > 1) {
+		ret = 1;
+	}
+	/* clean up */
 	xmlFree(content);
 
+	return ret;
+}
+
+/*
+ * lost_parse_geo(node, loc)
+ * parses locationResponse (pos|circle) and writes 
+ * results to location object
+ */
+int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
+{
+	xmlNodePtr cur = NULL;
+
+	char bufLat[BUFSIZE];
+	char bufLon[BUFSIZE];
+	char bufAlt[BUFSIZE];
+	char *content = NULL;
+
+	char *s_profile = LOST_PRO_GEO2D;
+
+	int iRadius = 0;
+	int len = 0;
+	int scan = 0;
+
+	cur = node;
+	/* find <pos> element */
+	content = xmlNodeGetNodeContentByName(cur, "pos", NULL);
+
+	if(content == NULL) {
+		LM_WARN("could not find pos element\n");
+		return -1;
+	}
+
+	scan = sscanf(content, "%s %s %s", bufLat, bufLon, bufAlt);
+	xmlFree(content);
+
+	if(scan < 2) {
+		LM_WARN("invalid pos element\n");
+		return -1;
+	}
+	/* latitude */
 	len = strlen((char *)bufLat);
 	loc->latitude = (char *)pkg_malloc(len + 1);
 	if(loc->latitude == NULL)
@@ -990,6 +1049,7 @@ int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
 
 	snprintf(loc->latitude, len, "%s", (char *)bufLat);
 
+	/* logitude */
 	len = strlen((char *)bufLon);
 	loc->longitude = (char *)pkg_malloc(len + 1);
 	if(loc->longitude == NULL) {
@@ -999,15 +1059,40 @@ int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
 
 	snprintf(loc->longitude, len, "%s", (char *)bufLon);
 
-	len = strlen((char *)bufLat) + strlen((char *)bufLon) + 1;
-	loc->geodetic = (char *)pkg_malloc(len + 1);
-	if(loc->longitude == NULL) {
-		pkg_free(loc->latitude);
-		pkg_free(loc->longitude);
-		goto err;
+	/* altitude */
+	if(scan == 3) {
+		LM_INFO("3d geolocation in pos element\n");
+
+		len = strlen((char *)bufAlt);
+		loc->altitude = (char *)pkg_malloc(len + 1);
+		if(loc->altitude == NULL) {
+			pkg_free(loc->latitude);
+			pkg_free(loc->longitude);
+			goto err;
+		}
+		
+		snprintf(loc->altitude, len, "%s", (char *)bufAlt);
 	}
 
-	snprintf(loc->geodetic, len, "%s %s", (char *)bufLat, (char *)bufLon);
+	/* geolocation */
+	len = strlen((char *)bufLat) + strlen((char *)bufLon) + 1;
+	if((scan == 3) && (lost_geoloc_3d == 1)) {
+		len += strlen((char *)bufAlt);
+	}
+	loc->geodetic = (char *)pkg_malloc(len + 1);
+	if(loc->geodetic == NULL) {
+		pkg_free(loc->latitude);
+		pkg_free(loc->longitude);
+		if(loc->altitude)
+			pkg_free(loc->altitude);
+		goto err;
+	}
+	if((scan == 3) && (lost_geoloc_3d == 1)) {
+		s_profile = LOST_PRO_GEO3D;
+		snprintf(loc->geodetic, len, "%s %s %s", (char *)bufLat, (char *)bufLon, (char *)bufAlt);
+	} else {
+		snprintf(loc->geodetic, len, "%s %s", (char *)bufLat, (char *)bufLon);
+	}
 
 	/* find <radius> element */
 	content = xmlNodeGetNodeContentByName(cur, "radius", NULL);
@@ -1030,7 +1115,7 @@ err:
 
 /*
  * lost_xpath_location(doc, path, loc)
- * performs xpath expression on locationResponse and writes
+ * performs xpath expression on locationResponse and writes 
  * results (location-info child element) to location object
  */
 int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
@@ -1044,8 +1129,15 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 	xmlChar *xmlbuff = NULL;
 	xmlChar *cname = NULL;
 
+	/* shape representation RFC 5491 */
 	const unsigned char s_point[] = LOST_PNT;
+	const unsigned char s_polygon[] = LOST_POL;
 	const unsigned char s_circle[] = LOST_CIR;
+	const unsigned char s_ellipse[] = LOST_ELL;
+	const unsigned char s_arcband[] = LOST_ARC;
+	const unsigned char s_sphere[] = LOST_SPH;
+	const unsigned char s_ellipsoid[] = LOST_OID;
+	const unsigned char s_prism[] = LOST_PSM;
 	const unsigned char s_civic[] = LOST_CIV;
 
 	char *ptr = NULL;
@@ -1082,7 +1174,7 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 			}
 			if(nodes->nodeTab[i]->type == XML_ELEMENT_NODE) {
 				cur = nodes->nodeTab[i];
-				/* check if child element is point, circle or civic */
+				/* check if child element is point, circle, ... or civic */
 				while(nok < LOST_XPATH_DPTH) {
 					if(cur->children == NULL) {
 						/* no additional DOM level */
@@ -1092,14 +1184,38 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 						nok++;
 						cname = BAD_CAST cur->name;
 						if(xmlStrcasecmp(cname, s_point) == 0) {
-							s_profile = LOST_PRO_GEO2D;
-							selgeo = i;
-							break;
+							if((lost_check_3d(cur) == 1)
+								&& (lost_geoloc_3d == 1)) {
+								s_profile = LOST_PRO_GEO3D;
+								selgeo = i;
+								break;
+							}
+							if(lost_check_3d(cur) == 0) {
+								s_profile = LOST_PRO_GEO2D;
+								selgeo = i;
+								break;
+							}
 						}
 						if(xmlStrcasecmp(cname, s_circle) == 0) {
 							s_profile = LOST_PRO_GEO2D;
 							selgeo = i;
 							break;
+						}
+						if((xmlStrcasecmp(cname, s_polygon) == 0)
+							|| (xmlStrcasecmp(cname, s_ellipse) == 0)
+							|| (xmlStrcasecmp(cname, s_arcband) == 0)) {
+							s_profile = LOST_PRO_GEO2D;
+							selgeo = i;
+							break;
+						}
+						if((xmlStrcasecmp(cname, s_sphere) == 0)
+							|| (xmlStrcasecmp(cname, s_ellipsoid) == 0)
+							|| (xmlStrcasecmp(cname, s_prism) == 0)) {
+							if(lost_geoloc_3d == 1) {
+								s_profile = LOST_PRO_GEO3D;
+								selgeo = i;
+								break;
+							}
 						}
 						if(xmlStrcasecmp(cname, s_civic) == 0) {
 							s_profile = LOST_PRO_CIVIC;
@@ -1115,8 +1231,8 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 					LM_DBG("xpath '%s' returned valid element (level %d/%d)\n",
 							xpath, nok, LOST_XPATH_DPTH);
 				} else if(nok < LOST_XPATH_DPTH) {
-					/* malformed pidf-lo but still ok */
-					LM_WARN("xpath '%s' returned malformed pidf-lo (level "
+					/* no matching location ... pidf-lo still ok */
+					LM_WARN("xpath '%s' shape representation not found (level "
 							"%d/%d)\n",
 							xpath, nok, LOST_XPATH_DPTH);
 				} else {
@@ -1205,8 +1321,9 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 					} else {
 						xmlFree(xmlbuff); /* clean up */
 						xmlFreeDoc(new);
+						LM_DBG("xpath '%s' no valid profile found\n", xpath);
 						xmlXPathFreeObject(result);
-						goto err;
+						return -1;
 					}
 					/* remove xml header from location element */
 					remove = strlen("<?xml version='1.0'?>\n");
@@ -1241,7 +1358,7 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 					pkg_free(ptr); /* clean up */
 					ptr = NULL;
 				} else {
-					LM_WARN("xpath location-info element(%d) ignored\n", i + 1);
+					LM_WARN("location-info element[%d] dropped!\n", i + 1);
 				}
 				/* clean up */
 				xmlFree(xmlbuff);
@@ -1251,7 +1368,7 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 			}
 		}
 	} else {
-		LM_WARN("xpath '%s' failed\n", xpath);
+		LM_WARN("xpath '%s' error\n", xpath);
 		xmlXPathFreeObject(result);
 		return -1;
 	}
