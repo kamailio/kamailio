@@ -162,12 +162,12 @@ modparam("topoh", "mask_key", "some secret here")
    IP address to be used in masked headers to build valid SIP URIs. Can be
    any IP address, even a private-space or non-existing IP address (e.g.,
    192.168.1.1, 127.0.0.2), including the SIP server address, but must not
-   be an address potentially used by clients. If not set, the advertised
-   IP of the incoming or outgoing socket is used. If there is no
-   advertised IP, the IP of the socket is used. It is not used at all for
-   SIP routing.
+   be an address potentially used by clients. If set to empty string, the
+   advertised IP of the incoming or outgoing socket is used when
+   specified, otherwise the IP of the socket is used. Note that the value
+   is actually not used at all for SIP routing.
 
-   Default value is empty.
+   Default value is "127.0.0.8".
 
    Example 1.2. Set mask_ip parameter
 ...
