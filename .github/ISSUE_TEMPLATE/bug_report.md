@@ -17,6 +17,15 @@ If you have questions about developing extensions to Kamailio or its existing C 
 
 Please try to fill this template as much as possible for any issue. It helps the developers to troubleshoot the issue.
 
+Note that an issue report may be closed automatically after about 2 months
+if there is no interest from developers or community users on pursuing it, being
+considered expired. In such case, it can be reopened by writing a comment that includes
+the token `/notexpired`. About two weeks before considered expired, the issue is
+marked with the label `stale`, trying to notify the submitter and everyone else
+that might be interested in it. To remove the label `stale`, write a comment that
+includes the token `/notstale`. Also, any comment postpone the `expire` timeline,
+being considered that there is interest in pursuing the issue.
+
 If there is no content to be filled in a section, the entire section can be removed.
 
 You can delete the comments from the template sections when filling.

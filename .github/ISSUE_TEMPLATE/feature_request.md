@@ -21,6 +21,15 @@ If you submit a feature request (or enhancement) add the description of what you
 
 If there is no content to be filled in a section, the entire section can be removed.
 
+Note that a feature request may be closed automatically after about 2 months
+if there is no interest from developers or community users to implement it, being
+considered expired. In such case can be reopened by writing a comment that includes
+the token `/notexpired`. About two weeks before considered expired, the item is
+marked with the label `stale`, trying to notify the submitter and everyone else
+that might be interested in it. To remove the label `stale`, write a comment that
+includes the token `/notstale`. Also, any comment postpone the `expire` timeline,
+being considered that there is interest in the proposed feature request.
+
 You can delete the comments from the template sections when filling.
 
 You can delete next line and everything above before submitting (it is a comment).
