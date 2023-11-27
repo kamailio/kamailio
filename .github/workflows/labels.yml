@@ -11,10 +11,10 @@ jobs:
         with:
           script: |
             github.rest.issues.removeLabel({
-              context.repo.owner,
-              context.repo.repo,
-              context.issue.number,
-              name,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number:context.issue.number,
+              name: "stale",
             });
       - uses: actions/github-script@v7
         if: ${{ !github.event.issue.pull_request && contains(github.event.comment.body, '/notexpired') }}
@@ -35,4 +35,20 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number,
               state: "open",
+            });
+      - uses: actions/github-script@v7
+        if: ${{ contains(github.event.comment.body, '/notexpired') }}
+        with:
+          script: |
+            github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              name: "stale",
+            });
+            github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              name: "expired",
             });
