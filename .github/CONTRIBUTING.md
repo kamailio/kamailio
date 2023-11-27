@@ -20,6 +20,7 @@ changes to this document in a pull request.
       * [Commit Message Examples](#commit-message-examples)
       * [See Also](#see-also)
   * [Reporting Issues](#reporting-issues)
+  * [Issue And PR Automatic Management](#issue-and-pr-automatic-management)
   * [License](#license)
     * [License Of New Code Contributions](#license-of-new-code-contributions)
   * [Further Assistance](#further-assistance)
@@ -250,6 +251,32 @@ Always useful to have:
 Note: replace any sensitive information in the content you add to the issue
 (e.g., passwords in modparams can be replaced with xyz, each IP address can be
 replaced with tokens like a.b.c.d, f.g.h.j).
+
+## Issue And PR Automatic Management ##
+
+This section presents details about the automatic management of potential bug
+reports and requests for new features using github actions.
+
+Kamailio is an open source collaborative project, in order to be fair for those
+that volunteer to spend time and resources for development of Kamailio, the users
+have to stay engaged, not just report and forget about.
+
+To reduce the work load on volunteering contributors, GitHub Actions are used
+for various tasks related to project development and management (e.g., automatic
+builds on commits and pull requests to detect compile errors or code formatting
+mistakes).
+
+One task managed with GitHub Actions is related to the check of open
+issues and pull requests to evaluate the interest of submitter, developers and
+community users. If there is no activity on an issue (potential bug or feature
+request) or a pull request, after 6 weeks it is marked with the label `stale`.
+After two more weeks of no activity, the issue or the pull request is marked
+with the label `expired` and closed.
+
+A registered developer can remove labels and reopen a closed issue or pull
+request. The other contributors have to make a comment that includes the token
+`/notstale` to remove the label `stale` or includes the token `/notexpired` to
+reopen a closed item.
 
 ## License ##
 
