@@ -64,11 +64,18 @@ MODULE_VERSION
 #define TH_MASKMODE_SLIP3XXCONTACT 1
 #define TH_HT_SIZE 10
 
+struct th_socket_strings
+{
+	str ip;
+	str via_prefix;
+	str uri_prefix;
+};
+
 /** module parameters */
 str _th_key = str_init("aL9.n8~Hm]Z");
 str th_cookie_name = str_init("TH"); /* lost parameter? */
-str th_cookie_value = {0, 0};        /* lost parameter? */
-str th_ip = STR_NULL;
+str th_cookie_value = {0, 0};		 /* lost parameter? */
+str th_ip = str_init("127.0.0.8");
 str th_uparam_name = str_init("line");
 str th_uparam_prefix = str_init("sr-");
 str th_vparam_name = str_init("branch");
@@ -110,44 +117,44 @@ static str _th_eventrt_outgoing_name = str_init("topoh:msg-outgoing");
 static int _th_eventrt_sending = -1;
 static str _th_eventrt_sending_name = str_init("topoh:msg-sending");
 
-static param_export_t params[]={{"mask_key",		PARAM_STR, &_th_key},
-	{"mask_ip",		PARAM_STR, &th_ip},
-	{"mask_callid",		PARAM_INT, &th_param_mask_callid},
-	{"mask_mode",		PARAM_INT, &th_param_mask_mode},
-	{"uparam_name",		PARAM_STR, &th_uparam_name},
-	{"uparam_prefix",	PARAM_STR, &th_uparam_prefix},
-	{"vparam_name",		PARAM_STR, &th_vparam_name},
-	{"vparam_prefix",	PARAM_STR, &th_vparam_prefix},
-	{"callid_prefix",	PARAM_STR, &th_callid_prefix},
-	{"sanity_checks",	PARAM_INT, &th_sanity_checks},
-	{"uri_prefix_checks",	PARAM_INT, &th_uri_prefix_checks},
-	{"event_callback",	PARAM_STR, &_th_eventrt_callback},
-	{"event_mode",		PARAM_INT, &_th_eventrt_mode},
-	{"use_mode",		PARAM_INT, &_th_use_mode}, {0, 0, 0}};
+/* clang-format off */
+static param_export_t params[] = {
+	{"mask_key", PARAM_STR, &_th_key},
+	{"mask_ip", PARAM_STR, &th_ip},
+	{"mask_callid", PARAM_INT, &th_param_mask_callid},
+	{"mask_mode", PARAM_INT, &th_param_mask_mode},
+	{"uparam_name", PARAM_STR, &th_uparam_name},
+	{"uparam_prefix", PARAM_STR, &th_uparam_prefix},
+	{"vparam_name", PARAM_STR, &th_vparam_name},
+	{"vparam_prefix", PARAM_STR, &th_vparam_prefix},
+	{"callid_prefix", PARAM_STR, &th_callid_prefix},
+	{"sanity_checks", PARAM_INT, &th_sanity_checks},
+	{"uri_prefix_checks", PARAM_INT, &th_uri_prefix_checks},
+	{"event_callback", PARAM_STR, &_th_eventrt_callback},
+	{"event_mode", PARAM_INT, &_th_eventrt_mode},
+	{"use_mode", PARAM_INT, &_th_use_mode},
+	{0, 0, 0}
+};
 
 static cmd_export_t cmds[] = {
-		{"bind_topoh", (cmd_function)bind_topoh, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
+	{"bind_topoh", (cmd_function)bind_topoh, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /** module exports */
 struct module_exports exports = {
-		"topoh",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported rpc functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		0				 /* module destroy function */
+	"topoh",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* exported rpc functions */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	0,				 /* per-child init function */
+	0				 /* module destroy function */
 };
-
-struct th_socket_strings {
-	str ip;
-	str via_prefix;
-	str uri_prefix;
-};
+/* clang-format on */
 
 /**
  * init module function
@@ -191,17 +198,16 @@ static int mod_init(void)
 			goto error;
 		}
 		memcpy(buri, "sip:", 4);
-		memcpy(buri+4, th_ip.s, th_ip.len);
-		buri[th_ip.len+8] = '\0';
+		memcpy(buri + 4, th_ip.s, th_ip.len);
+		buri[th_ip.len + 8] = '\0';
 
-		if(parse_uri(buri, th_ip.len+4, &puri) < 0) {
+		if(parse_uri(buri, th_ip.len + 4, &puri) < 0) {
 			LM_ERR("mask uri is invalid\n");
 			goto error;
 		}
 		if(check_self(&puri.host, puri.port_no, 0) == 1) {
 			th_mask_addr_myself = 1;
-			LM_INFO("mask address matches myself [%.*s]\n",
-					th_ip.len, th_ip.s);
+			LM_INFO("mask address matches myself [%.*s]\n", th_ip.len, th_ip.s);
 		}
 
 		if(th_build_via_prefix(&th_via_prefix, &th_ip)) {
@@ -212,7 +218,7 @@ static int mod_init(void)
 		}
 	} else {
 		th_socket_hash_table = pkg_malloc(sizeof(struct str_hash_table));
-		if(th_socket_hash_table == NULL){
+		if(th_socket_hash_table == NULL) {
 			PKG_MEM_ERROR_FMT("th_socket_hash_table\n");
 			goto error;
 		}
@@ -220,12 +226,11 @@ static int mod_init(void)
 			goto error;
 
 		str_hash_init(th_socket_hash_table);
-		if(th_parse_socket_list(*get_sock_info_list(PROTO_UDP)) != 0 ||
-		   th_parse_socket_list(*get_sock_info_list(PROTO_TCP)) != 0 ||
-		   th_parse_socket_list(*get_sock_info_list(PROTO_TLS)) != 0 ||
-		   th_parse_socket_list(*get_sock_info_list(PROTO_SCTP)) !=0)
+		if(th_parse_socket_list(*get_sock_info_list(PROTO_UDP)) != 0
+				|| th_parse_socket_list(*get_sock_info_list(PROTO_TCP)) != 0
+				|| th_parse_socket_list(*get_sock_info_list(PROTO_TLS)) != 0
+				|| th_parse_socket_list(*get_sock_info_list(PROTO_SCTP)) != 0)
 			goto error;
-
 	}
 
 	th_mask_init();
@@ -240,7 +245,7 @@ error:
 		pkg_free(th_socket_hash_table->table);
 
 	if(th_socket_hash_table != NULL)
-		pkg_free( th_socket_hash_table );
+		pkg_free(th_socket_hash_table);
 	return -1;
 }
 
@@ -250,9 +255,9 @@ error:
 int th_build_via_prefix(str *via_prefix, str *ip)
 {
 	/* 'SIP/2.0/UDP ' + ip + ';' + param + '=' + prefix (+ '\0') */
-	via_prefix->len = 12 + ip->len + 1 + th_vparam_name.len + 1
-		+ th_vparam_prefix.len;
-	via_prefix->s = (char*)pkg_malloc(via_prefix->len+1);
+	via_prefix->len =
+			12 + ip->len + 1 + th_vparam_name.len + 1 + th_vparam_prefix.len;
+	via_prefix->s = (char *)pkg_malloc(via_prefix->len + 1);
 	if(via_prefix->s == NULL) {
 		PKG_MEM_ERROR_FMT("via prefix\n");
 		return 1;
@@ -260,12 +265,12 @@ int th_build_via_prefix(str *via_prefix, str *ip)
 
 	/* build via prefix */
 	memcpy(via_prefix->s, "SIP/2.0/UDP ", 12);
-	memcpy(via_prefix->s+12, ip->s, ip->len);
-	via_prefix->s[12+ip->len] = ';';
-	memcpy(via_prefix->s+12+ip->len+1, th_vparam_name.s,
+	memcpy(via_prefix->s + 12, ip->s, ip->len);
+	via_prefix->s[12 + ip->len] = ';';
+	memcpy(via_prefix->s + 12 + ip->len + 1, th_vparam_name.s,
 			th_vparam_name.len);
-	via_prefix->s[12+ip->len+1+th_vparam_name.len] = '=';
-	memcpy(via_prefix->s+12+ip->len+1+th_vparam_name.len+1,
+	via_prefix->s[12 + ip->len + 1 + th_vparam_name.len] = '=';
+	memcpy(via_prefix->s + 12 + ip->len + 1 + th_vparam_name.len + 1,
 			th_vparam_prefix.s, th_vparam_prefix.len);
 	via_prefix->s[via_prefix->len] = '\0';
 	LM_DBG("VIA prefix: [%s]\n", via_prefix->s);
@@ -279,9 +284,9 @@ int th_build_via_prefix(str *via_prefix, str *ip)
 int th_build_uri_prefix(str *uri_prefix, str *ip)
 {
 	/* 'sip:' + ip + ';' + param + '=' + prefix (+ '\0') */
-	uri_prefix->len = 4 + ip->len + 1 + th_uparam_name.len + 1
-		+ th_uparam_prefix.len;
-	uri_prefix->s = (char*)pkg_malloc(uri_prefix->len+1);
+	uri_prefix->len =
+			4 + ip->len + 1 + th_uparam_name.len + 1 + th_uparam_prefix.len;
+	uri_prefix->s = (char *)pkg_malloc(uri_prefix->len + 1);
 	if(uri_prefix->s == NULL) {
 		PKG_MEM_ERROR_FMT("uri prefix\n");
 		return 1;
@@ -289,11 +294,12 @@ int th_build_uri_prefix(str *uri_prefix, str *ip)
 
 	/* build uri prefix */
 	memcpy(uri_prefix->s, "sip:", 4);
-	memcpy(uri_prefix->s+4, ip->s, ip->len);
-	uri_prefix->s[4+ip->len] = ';';
-	memcpy(uri_prefix->s+4+ip->len+1, th_uparam_name.s, th_uparam_name.len);
-	uri_prefix->s[4+ip->len+1+th_uparam_name.len] = '=';
-	memcpy(uri_prefix->s+4+ip->len+1+th_uparam_name.len+1,
+	memcpy(uri_prefix->s + 4, ip->s, ip->len);
+	uri_prefix->s[4 + ip->len] = ';';
+	memcpy(uri_prefix->s + 4 + ip->len + 1, th_uparam_name.s,
+			th_uparam_name.len);
+	uri_prefix->s[4 + ip->len + 1 + th_uparam_name.len] = '=';
+	memcpy(uri_prefix->s + 4 + ip->len + 1 + th_uparam_name.len + 1,
 			th_uparam_prefix.s, th_uparam_prefix.len);
 	uri_prefix->s[uri_prefix->len] = '\0';
 	LM_DBG("URI prefix: [%s]\n", uri_prefix->s);
@@ -310,7 +316,9 @@ int th_build_socket_strings(socket_info_t *socket)
 	struct str_hash_entry *table_entry;
 	str *socket_ip;
 
-	if(str_hash_get(th_socket_hash_table, socket->sockname.s, socket->sockname.len) != 0)
+	if(str_hash_get(
+			   th_socket_hash_table, socket->sockname.s, socket->sockname.len)
+			!= 0)
 		return 0;
 
 	socket_strings = pkg_malloc(sizeof(struct th_socket_strings));
@@ -330,10 +338,12 @@ int th_build_socket_strings(socket_info_t *socket)
 	table_entry->u.p = socket_strings;
 
 	if(socket->useinfo.address_str.len > 0) {
-		LM_DBG("Using socket %s advertised ip %s\n", socket->sockname.s, socket->useinfo.address_str.s);
+		LM_DBG("Using socket %s advertised ip %s\n", socket->sockname.s,
+				socket->useinfo.address_str.s);
 		socket_ip = &socket->useinfo.address_str;
 	} else {
-		LM_DBG("using socket %s ip %s\n", socket->sockname.s, socket->address_str.s);
+		LM_DBG("using socket %s ip %s\n", socket->sockname.s,
+				socket->address_str.s);
 		socket_ip = &socket->address_str;
 	}
 	if(pkg_str_dup(&socket_strings->ip, socket_ip)) {
@@ -347,7 +357,7 @@ int th_build_socket_strings(socket_info_t *socket)
 	return 0;
 
 error:
-	if(socket_strings->ip.s!=NULL)
+	if(socket_strings->ip.s != NULL)
 		pkg_free(socket_strings->ip.s);
 	if(table_entry->key.s != NULL)
 		pkg_free(table_entry->key.s);
@@ -375,18 +385,20 @@ int th_parse_socket_list(socket_info_t *socket)
 /**
  *
  */
-int th_get_socket_strings(socket_info_t *socket, str **ip, str **via_prefix, str **uri_prefix)
+int th_get_socket_strings(
+		socket_info_t *socket, str **ip, str **via_prefix, str **uri_prefix)
 {
 	struct th_socket_strings *socket_strings;
 	struct str_hash_entry *table_entry;
 
-	if(th_ip.len > 0){
+	if(th_ip.len > 0) {
 		*ip = &th_ip;
 		*via_prefix = &th_via_prefix;
 		*uri_prefix = &th_uri_prefix;
 	} else {
-		table_entry = str_hash_get(th_socket_hash_table, socket->sockname.s, socket->sockname.len);
-		if(table_entry==0) {
+		table_entry = str_hash_get(
+				th_socket_hash_table, socket->sockname.s, socket->sockname.len);
+		if(table_entry == 0) {
 			LM_DBG("No entry for socket %s", socket->sockname.s);
 			return -1;
 		} else {
@@ -475,7 +487,8 @@ int th_msg_received(sr_event_param_t *evp)
 	str *via_prefix;
 	str *uri_prefix;
 
-	if(th_get_socket_strings(evp->rcv->bind_address, &ip, &via_prefix, &uri_prefix)) {
+	if(th_get_socket_strings(
+			   evp->rcv->bind_address, &ip, &via_prefix, &uri_prefix)) {
 		LM_ERR("Socket address handling failed\n");
 		return -1;
 	}
@@ -578,7 +591,8 @@ int th_msg_sent(sr_event_param_t *evp)
 	str *via_prefix;
 	str *uri_prefix;
 
-	if(th_get_socket_strings(evp->dst->send_sock, &ip, &via_prefix, &uri_prefix)) {
+	if(th_get_socket_strings(
+			   evp->dst->send_sock, &ip, &via_prefix, &uri_prefix)) {
 		LM_ERR("Socket address handling failed\n");
 		return -1;
 	}
