@@ -29,14 +29,14 @@ Carsten Bock
 
         3. Functions
 
-              3.1. jansson_get(key/path, src, dst)
+              3.1. jansson_get(path, src, dst)
               3.2. jansson_pv_get(key/path, srcvar, dst)
               3.3. jansson_set(type, key/path, value, result)
               3.4. jansson_append(type, key/path, value, result)
               3.5. jansson_array_size(key/path, src, dst)
               3.6. jansson_xdecode(json, xavp)
               3.7. jansson_xencode(xavp, pv)
-              3.8. jansson_get_field(src, field_name, dst)
+              3.8. jansson_get_field(field_name, src, dst)
 
    List of Examples
 
@@ -62,14 +62,14 @@ Chapter 1. Admin Guide
 
    3. Functions
 
-        3.1. jansson_get(key/path, src, dst)
+        3.1. jansson_get(path, src, dst)
         3.2. jansson_pv_get(key/path, srcvar, dst)
         3.3. jansson_set(type, key/path, value, result)
         3.4. jansson_append(type, key/path, value, result)
         3.5. jansson_array_size(key/path, src, dst)
         3.6. jansson_xdecode(json, xavp)
         3.7. jansson_xencode(xavp, pv)
-        3.8. jansson_get_field(src, field_name, dst)
+        3.8. jansson_get_field(field_name, src, dst)
 
 1. Overview
 
@@ -94,20 +94,24 @@ Chapter 1. Admin Guide
 
 3. Functions
 
-   3.1. jansson_get(key/path, src, dst)
+   3.1. jansson_get(path, src, dst)
    3.2. jansson_pv_get(key/path, srcvar, dst)
    3.3. jansson_set(type, key/path, value, result)
    3.4. jansson_append(type, key/path, value, result)
    3.5. jansson_array_size(key/path, src, dst)
    3.6. jansson_xdecode(json, xavp)
    3.7. jansson_xencode(xavp, pv)
-   3.8. jansson_get_field(src, field_name, dst)
+   3.8. jansson_get_field(field_name, src, dst)
 
-3.1.  jansson_get(key/path, src, dst)
+3.1.  jansson_get(path, src, dst)
 
    Copy the value at the location 'path' from the json object 'src' and
-   store it in pvar 'dst'. The 'src' can be a static string or a dynamic
-   string with variables.
+   store it in variable 'dst'. The path can also be a simple field name (a
+   key), if it does not include any path separator. To retrieve the value
+   of a field that includes path separators in the name, use
+   jansson_get_field().
+
+   The 'src' can be a static string or a dynamic string with variables.
 
    The path string supports dot delimited notation (e.g. foo.bar.baz),
    array notation (e.g. [0]), or a combination of the two (e.g.
@@ -116,8 +120,8 @@ Chapter 1. Admin Guide
    Returns FALSE if the data can not be parsed, TRUE otherwise.
 
    The function can put a string, integer, null, or new json string into
-   destination. If the key/path can't be found in the JSON data structure,
-   the pvar is not changed. If it had a previous value, that value remains
+   destination. If the path can't be found in the JSON data structure, the
+   pvar is not changed. If it had a previous value, that value remains
    unchanged.
 
    Note: For JSON-Integer values exceeding the C-Integer boundaries, a
@@ -275,17 +279,21 @@ jansson_xencode("a", "$var(js)");
 # $var(js) = '{"foo":"bar"}'
 ...
 
-3.8.  jansson_get_field(src, field_name, dst)
+3.8.  jansson_get_field(field_name, src, dst)
 
-   Copy field 'field_name' from json object 'src' and store it in pvar
-   'dst'.
+   Copy the value of the field 'field_name' from json object 'src' and
+   store it in pvar 'dst'. The field name is not evaluated as JSON path,
+   therefore it has a different behaviour than jansson_get() and can be
+   used when the field name contains path delimiters.
 
-   This function is deprecated but kept for backwards compatibility. Right
-   now it is just a wrapper around jansson_get, and its functionality is
-   the same.
+   Note that till version 5.7.x, this function was similar to
+   jansson_get(), after that its behaviour changed to work as described
+   above. Also, the order of parameters changed.
 
    Example 1.9. jansson_get_field usage
 ...
-jansson_get_field("{'foo':'bar'}", "foo", "$var(foo)");
+jansson_get_field("foo", "{'foo':'bar'}", "$var(foo)");
 xlog("foo is $var(foo)");
+jansson_get_field("foo.foz", "{'foo.foz':'bar.buz'}", "$var(foofoz)");
+xlog("foo.foz is $var(foofoz)");
 ...
