@@ -34,7 +34,7 @@
 #include "jansson_utils.h"
 
 int janssonmod_get_helper(
-		sip_msg_t *msg, str *path_s, str *src_s, pv_spec_t *dst_pv)
+		sip_msg_t *msg, str *path_s, int pmode, str *src_s, pv_spec_t *dst_pv)
 {
 	char c;
 	pv_value_t dst_val;
@@ -52,7 +52,7 @@ int janssonmod_get_helper(
 
 	char *path = path_s->s;
 
-	json_t *v = json_path_get(json, path, 0);
+	json_t *v = json_path_get(json, path, pmode);
 	if(!v) {
 		goto fail;
 	}
@@ -91,7 +91,26 @@ int janssonmod_get(struct sip_msg *msg, char *path_in, char *src_in, char *dst)
 		return -1;
 	}
 
-	return janssonmod_get_helper(msg, &path_s, &src_s, (pv_spec_t *)dst);
+	return janssonmod_get_helper(msg, &path_s, 0, &src_s, (pv_spec_t *)dst);
+}
+
+int janssonmod_get_field(
+		struct sip_msg *msg, char *path_in, char *src_in, char *dst)
+{
+	str src_s;
+	str path_s;
+
+	if(fixup_get_svalue(msg, (gparam_p)src_in, &src_s) != 0) {
+		ERR("cannot get json string value\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)path_in, &path_s) != 0) {
+		ERR("cannot get path string value\n");
+		return -1;
+	}
+
+	return janssonmod_get_helper(msg, &path_s, 1, &src_s, (pv_spec_t *)dst);
 }
 
 int janssonmod_pv_get(
@@ -111,7 +130,7 @@ int janssonmod_pv_get(
 		return -1;
 	}
 
-	ret = janssonmod_get_helper(msg, &path_s, &val.rs, (pv_spec_t *)dst);
+	ret = janssonmod_get_helper(msg, &path_s, 0, &val.rs, (pv_spec_t *)dst);
 
 	pv_value_destroy(&val);
 

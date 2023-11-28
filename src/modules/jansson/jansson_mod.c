@@ -55,11 +55,6 @@ int janssonmod_set_append(struct sip_msg *msg, char *type_in, char *path_in,
 {
 	return janssonmod_set(1, msg, type_in, path_in, value_in, result);
 }
-int janssonmod_get_field(
-		struct sip_msg *msg, char *jansson_in, char *path_in, char *result)
-{
-	return janssonmod_get(msg, path_in, jansson_in, result);
-}
 
 /* clang-format off */
 /* Exported functions */
@@ -246,7 +241,7 @@ static int ki_jansson_get(sip_msg_t *msg, str *spath, str *sdoc, str *spv)
 		return -1;
 	}
 
-	return janssonmod_get_helper(msg, spath, sdoc, pvs);
+	return janssonmod_get_helper(msg, spath, 0, sdoc, pvs);
 }
 
 /**
