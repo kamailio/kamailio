@@ -123,7 +123,7 @@ static int _tps_eventrt_receiving = -1;
 static str _tps_eventrt_receiving_name = str_init("topos:msg-receiving");
 
 str _tps_contact_host = str_init("");
-int _tps_contact_mode = 0;
+int _tps_contact_mode = TPS_CONTACT_MODE_SKEYUSER;
 str _tps_cparam_name = str_init("tps");
 
 str _tps_xavu_cfg = STR_NULL;
@@ -310,7 +310,7 @@ static int mod_init(void)
 	if(sruid_init(&_tps_sruid, '-', "tpsh", SRUID_INC) < 0)
 		return -1;
 
-	if(_tps_contact_mode == 2
+	if(_tps_contact_mode == TPS_CONTACT_MODE_XAVPUSER
 			&& (_tps_xavu_cfg.len <= 0 || _tps_xavu_field_acontact.len <= 0
 					|| _tps_xavu_field_bcontact.len <= 0)) {
 		LM_ERR("contact_mode parameter is 2,"

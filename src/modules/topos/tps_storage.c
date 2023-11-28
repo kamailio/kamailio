@@ -244,7 +244,8 @@ int tps_storage_fill_contact(
 	if(_tps_contact_host.len)
 		contact_len = sv.len - puri.host.len + _tps_contact_host.len;
 
-	if(ctmode == 1 || ctmode == 2) {
+	if(ctmode == TPS_CONTACT_MODE_RURIUSER
+			|| ctmode == TPS_CONTACT_MODE_XAVPUSER) {
 		cparam_len = _tps_cparam_name.len;
 	} else {
 		cparam_len = 0;
@@ -285,9 +286,10 @@ int tps_storage_fill_contact(
 		if(sv.s[i] == ':')
 			break;
 	}
-	if(ctmode == 1 || ctmode == 2) {
+	if(ctmode == TPS_CONTACT_MODE_RURIUSER
+			|| ctmode == TPS_CONTACT_MODE_XAVPUSER) {
 		/* create new URI parameter for Contact header */
-		if(ctmode == 1) {
+		if(ctmode == TPS_CONTACT_MODE_RURIUSER) {
 			if(dir == TPS_DIR_DOWNSTREAM) {
 				/* extract the contact address */
 				if(parse_headers(msg, HDR_CONTACT_F, 0) < 0
@@ -332,7 +334,7 @@ int tps_storage_fill_contact(
 						msg->parsed_uri.user.len);
 				td->cp += msg->parsed_uri.user.len;
 			}
-		} else if(ctmode == 2) {
+		} else if(ctmode == TPS_CONTACT_MODE_XAVPUSER) {
 			if(dir == TPS_DIR_DOWNSTREAM) {
 				/* extract the a contact */
 				vavu = xavu_get_child_with_sval(
@@ -356,8 +358,8 @@ int tps_storage_fill_contact(
 			}
 		}
 
-		if(!((ctmode == 1) && (dir == TPS_DIR_DOWNSTREAM)
-				   && (curi.user.len <= 0))) {
+		if(!((ctmode == TPS_CONTACT_MODE_RURIUSER)
+				   && (dir == TPS_DIR_DOWNSTREAM) && (curi.user.len <= 0))) {
 			*td->cp = '@';
 			td->cp++;
 		}

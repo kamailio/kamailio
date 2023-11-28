@@ -324,7 +324,8 @@ int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 		return -1;
 	}
 
-	if(ctmode == 1 || ctmode == 2) {
+	if(ctmode == TPS_CONTACT_MODE_RURIUSER
+			|| ctmode == TPS_CONTACT_MODE_XAVPUSER) {
 		if(msg->parsed_uri.sip_params.len < TPS_TUUID_MIN_LEN) {
 			LM_DBG("not an expected param format\n");
 			return 1;
@@ -962,7 +963,9 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		LM_DBG("use branch for routing information, request from direction "
 			   "%d\n",
 				direction);
-		if(tps_reappend_route(msg, &stsd, &stsd.s_rr, (direction == TPS_DIR_UPSTREAM) ? 0 : 1) < 0) {
+		if(tps_reappend_route(msg, &stsd, &stsd.s_rr,
+				   (direction == TPS_DIR_UPSTREAM) ? 0 : 1)
+				< 0) {
 			LM_ERR("failed to reappend s-route\n");
 			return -1;
 		}
