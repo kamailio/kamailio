@@ -56,10 +56,16 @@
     <title>Functions</title>
     <section id="jansson.f.jansson_get">
         <title>
-            <function moreinfo="none">jansson_get(key/path, src, dst)</function>
+            <function moreinfo="none">jansson_get(path, src, dst)</function>
         </title>
         <para>
-			Copy the value at the location 'path' from the json object 'src' and store it in pvar 'dst'.
+			Copy the value at the location 'path' from the json object 'src'
+			and store it in variable 'dst'. The path can also be a simple field name
+			(a key), if it does not include any path separator. To retrieve the
+			value of a field that includes path separators in the name, use
+			jansson_get_field().
+        </para>
+        <para>
 			The 'src' can be a static string or a dynamic string with variables.
         </para>
         <para>
@@ -71,7 +77,7 @@
         </para>
         <para>
 			The function can put a string, integer, null, or new json string into destination.
-			If the key/path can't be found in the JSON data structure, the pvar is not changed.
+			If the path can't be found in the JSON data structure, the pvar is not changed.
 			If it had a previous
 	    value, that value remains unchanged.
         </para>
@@ -280,22 +286,27 @@ jansson_xencode("a", "$var(js)");
     </section>
     <section id="jansson.f.jansson_get_field">
         <title>
-            <function moreinfo="none">jansson_get_field(src, field_name, dst)</function>
+            <function moreinfo="none">jansson_get_field(field_name, src, dst)</function>
         </title>
         <para>
-            Copy field 'field_name' from json object 'src' and store it in pvar 'dst'.
+			Copy the value of the field 'field_name' from json object 'src'
+			and store it in pvar 'dst'. The field name is not evaluated as JSON
+			path, therefore it has a different behaviour than jansson_get() and
+			can be used when the field name contains path delimiters.
         </para>
         <para>
-			<emphasis>This function is deprecated</emphasis> but kept for backwards compatibility.
-			Right now it is just a wrapper around <function>jansson_get</function>, and its
-			functionality is the same.
+			Note that till version 5.7.x, this function was similar to jansson_get(),
+			after that its behaviour changed to work as described above. Also,
+			the order of parameters changed.
         </para>
         <example>
         <title><function>jansson_get_field</function> usage</title>
         <programlisting format="linespecific">
 ...
-jansson_get_field("{'foo':'bar'}", "foo", "$var(foo)");
+jansson_get_field("foo", "{'foo':'bar'}", "$var(foo)");
 xlog("foo is $var(foo)");
+jansson_get_field("foo.foz", "{'foo.foz':'bar.buz'}", "$var(foofoz)");
+xlog("foo.foz is $var(foofoz)");
 ...
         </programlisting>
         </example>
