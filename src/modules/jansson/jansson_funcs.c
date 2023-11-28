@@ -52,7 +52,7 @@ int janssonmod_get_helper(
 
 	char *path = path_s->s;
 
-	json_t *v = json_path_get(json, path);
+	json_t *v = json_path_get(json, path, 0);
 	if(!v) {
 		goto fail;
 	}
@@ -252,7 +252,7 @@ int janssonmod_set(unsigned int append, struct sip_msg *msg, char *type_in,
 		goto fail;
 	}
 
-	if(json_path_set(result_json, path, value, append) < 0) {
+	if(json_path_set(result_json, path, 0, value, append) < 0) {
 		goto fail;
 	}
 
@@ -307,7 +307,7 @@ int janssonmod_array_size(
 
 	char *path = path_s.s;
 
-	json_t *v = json_path_get(json, path);
+	json_t *v = json_path_get(json, path, 0);
 	if(!v) {
 		ERR("failed to find %s in json\n", path);
 		goto fail;

@@ -25,7 +25,7 @@ static char *jsonp_strdup(const char *str);
 static json_malloc_t do_malloc = malloc;
 static json_free_t do_free = free;
 
-json_t *json_path_get(const json_t *json, const char *path)
+json_t *json_path_get(const json_t *json, const char *path, const int pmode)
 {
 	static const char array_open = '[';
 	static const char *path_delims = ".[", *array_close = "]";
@@ -50,7 +50,11 @@ json_t *json_path_get(const json_t *json, const char *path)
 
 	while(peek && *peek && cursor) {
 		char *last_peek = peek;
-		peek = strpbrk(peek, expect);
+		if(pmode == 0) {
+			peek = strpbrk(peek, expect);
+		} else {
+			peek = NULL;
+		}
 		if(peek) {
 			if(!token && peek != last_peek)
 				goto fail;
@@ -85,8 +89,8 @@ fail:
 	return NULL;
 }
 
-int json_path_set(
-		json_t *json, const char *path, json_t *value, unsigned int append)
+int json_path_set(json_t *json, const char *path, const int pmode,
+		json_t *value, unsigned int append)
 {
 	static const char array_open = '[';
 	static const char object_delim = '.';
@@ -117,8 +121,11 @@ int json_path_set(
 
 	while(peek && *peek && cursor) {
 		char *last_peek = peek;
-		peek = strpbrk(last_peek, expect);
-
+		if(pmode == 0) {
+			peek = strpbrk(last_peek, expect);
+		} else {
+			peek = NULL;
+		}
 		if(peek) {
 			if(!token && peek != last_peek) {
 				ERR("unexpected trailing chars in JSON path at pos %zu\n",
