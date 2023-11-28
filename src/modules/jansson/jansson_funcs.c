@@ -95,22 +95,22 @@ int janssonmod_get(struct sip_msg *msg, char *path_in, char *src_in, char *dst)
 }
 
 int janssonmod_get_field(
-		struct sip_msg *msg, char *path_in, char *src_in, char *dst)
+		struct sip_msg *msg, char *field_in, char *src_in, char *dst)
 {
 	str src_s;
-	str path_s;
+	str field_s;
+
+	if(fixup_get_svalue(msg, (gparam_p)field_in, &field_s) != 0) {
+		ERR("cannot get field name string value\n");
+		return -1;
+	}
 
 	if(fixup_get_svalue(msg, (gparam_p)src_in, &src_s) != 0) {
 		ERR("cannot get json string value\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_p)path_in, &path_s) != 0) {
-		ERR("cannot get path string value\n");
-		return -1;
-	}
-
-	return janssonmod_get_helper(msg, &path_s, 1, &src_s, (pv_spec_t *)dst);
+	return janssonmod_get_helper(msg, &field_s, 1, &src_s, (pv_spec_t *)dst);
 }
 
 int janssonmod_pv_get(
