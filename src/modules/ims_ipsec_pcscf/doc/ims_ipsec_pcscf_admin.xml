@@ -371,5 +371,39 @@ ipsec_destroy("location");
         </programlisting>
       </example>
     </section>
+    <section>
+      <title><function moreinfo="none">ipsec_destroy_by_contact(domain, aor, recv_host, recv_port)</function></title>
+      <para>The function destroys IPSec tunnel, created with ipsec_create.</para>
+      <para>Meaning of the parameters is as follows:</para>
+      <itemizedlist>
+        <listitem>
+          <para>
+          <emphasis>domain</emphasis> - Logical domain within the registrar.
+          If a database is used then this must be name of the table which
+          stores the contacts.
+          </para>
+          <para>
+			<emphasis>aor</emphasis> - SIP URI to match the record.
+          </para>
+          <para>
+			<emphasis>recv_host</emphasis> - received host to match the record.
+          </para>
+          <para>
+			<emphasis>recv_port</emphasis> - received port to match the record.
+          </para>
+        </listitem>
+		  </itemizedlist>
+		  <para>The last three parameters have to be string valies and can contain
+			variables.</para>
+      <example>
+        <title>ipsec_destroy_by_contact()</title>
+
+        <programlisting format="linespecific">
+...
+ipsec_destroy_by_contact("location", "...", "...", "...");
+...
+        </programlisting>
+      </example>
+    </section>
   </section>
 </chapter>
