@@ -724,7 +724,7 @@ int add_security_server_header(struct sip_msg *m, ipsec_t *s)
 	memset(sec_hdr_buf, 0, sizeof(sec_hdr_buf));
 	sec_header->len = snprintf(sec_hdr_buf, sizeof(sec_hdr_buf) - 1,
 			"Security-Server: "
-			"ipsec-3gpp;prot=esp;mod=trans;spi-c=%d;spi-s=%d;port-c=%d;port-s=%"
+			"ipsec-3gpp;q=0.1;prot=esp;mod=trans;spi-c=%d;spi-s=%d;port-c=%d;port-s=%"
 			"d;alg=%.*s;ealg=%.*s\r\n",
 			s->spi_pc, s->spi_ps, s->port_pc, s->port_ps, s->r_alg.len,
 			s->r_alg.s, s->r_ealg.len, s->r_ealg.s);
