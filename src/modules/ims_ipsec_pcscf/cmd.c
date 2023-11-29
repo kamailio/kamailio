@@ -501,6 +501,35 @@ static int create_ipsec_tunnel(const struct ip_addr *remote_addr, ipsec_t *s)
 	add_policy(sock, remote_addr, ipsec_addr, s->port_us, s->port_pc, s->spi_pc,
 			IPSEC_POLICY_DIRECTION_IN);
 
+	/* cope with some broken In-Dialog routing */
+	// SA5 UE client to P-CSCF client
+	//               src adrr     dst addr     src port    dst port
+	add_sa(sock, remote_addr, ipsec_addr, s->port_uc, s->port_pc, s->spi_ps,
+			s->ck, s->ik, s->r_alg, s->r_ealg);
+	add_policy(sock, remote_addr, ipsec_addr, s->port_uc, s->port_pc, s->spi_ps,
+			IPSEC_POLICY_DIRECTION_IN);
+
+	// SA6 P-CSCF client to UE client
+	//               src adrr     dst addr     src port    dst port
+	add_sa(sock, ipsec_addr, remote_addr, s->port_pc, s->port_uc, s->spi_us,
+			s->ck, s->ik, s->r_alg, s->r_ealg);
+	add_policy(sock, ipsec_addr, remote_addr, s->port_pc, s->port_uc, s->spi_us,
+			IPSEC_POLICY_DIRECTION_OUT);
+
+	// SA7 P-CSCF server to UE server
+	//               src adrr     dst addr     src port    dst port
+	add_sa(sock, ipsec_addr, remote_addr, s->port_ps, s->port_us, s->spi_uc,
+			s->ck, s->ik, s->r_alg, s->r_ealg);
+	add_policy(sock, ipsec_addr, remote_addr, s->port_ps, s->port_us, s->spi_uc,
+			IPSEC_POLICY_DIRECTION_OUT);
+
+	// SA8 UE server to P-CSCF server
+	//               src adrr     dst addr     src port    dst port
+	add_sa(sock, remote_addr, ipsec_addr, s->port_us, s->port_ps, s->spi_pc,
+			s->ck, s->ik, s->r_alg, s->r_ealg);
+	add_policy(sock, remote_addr, ipsec_addr, s->port_us, s->port_ps, s->spi_pc,
+			IPSEC_POLICY_DIRECTION_IN);
+
 	close_mnl_socket(sock);
 
 	return 0;
@@ -560,6 +589,31 @@ static int destroy_ipsec_tunnel(
 	remove_sa(sock, remote_addr, ipsec_addr, s->port_us, s->port_pc, s->spi_pc,
 			ip_addr.af);
 	remove_policy(sock, remote_addr, ipsec_addr, s->port_us, s->port_pc,
+			s->spi_pc, ip_addr.af, IPSEC_POLICY_DIRECTION_IN);
+
+	/* cope with some broken In-Dialog routing */
+	// SA5 UE client to P-CSCF client
+	remove_sa(sock, remote_addr, ipsec_addr, s->port_uc, s->port_pc, s->spi_ps,
+			ip_addr.af);
+	remove_policy(sock, remote_addr, ipsec_addr, s->port_uc, s->port_pc,
+			s->spi_ps, ip_addr.af, IPSEC_POLICY_DIRECTION_IN);
+
+	// SA6 P-CSCF client to UE client
+	remove_sa(sock, ipsec_addr, remote_addr, s->port_pc, s->port_uc, s->spi_us,
+			ip_addr.af);
+	remove_policy(sock, ipsec_addr, remote_addr, s->port_pc, s->port_uc,
+			s->spi_us, ip_addr.af, IPSEC_POLICY_DIRECTION_OUT);
+
+	// SA7 P-CSCF server to UE server
+	remove_sa(sock, ipsec_addr, remote_addr, s->port_ps, s->port_us, s->spi_uc,
+			ip_addr.af);
+	remove_policy(sock, ipsec_addr, remote_addr, s->port_ps, s->port_us,
+			s->spi_uc, ip_addr.af, IPSEC_POLICY_DIRECTION_OUT);
+
+	// SA8 UE server to P-CSCF server
+	remove_sa(sock, remote_addr, ipsec_addr, s->port_us, s->port_ps, s->spi_pc,
+			ip_addr.af);
+	remove_policy(sock, remote_addr, ipsec_addr, s->port_us, s->port_ps,
 			s->spi_pc, ip_addr.af, IPSEC_POLICY_DIRECTION_IN);
 
 	// Release SPIs
