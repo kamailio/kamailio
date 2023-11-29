@@ -199,6 +199,13 @@ int parse_diversion_header(struct sip_msg *msg)
 
 int free_diversion_body(diversion_body_t *div_b)
 {
+	for(int i = 0; i < div_b->num_ids; i++) {
+		/* Free to_body pointer */
+		if(div_b->id[i].param_lst) {
+			free_to_params(&(div_b->id[i]));
+		}
+	}
+
 	if(div_b != NULL) {
 		pkg_free(div_b);
 	}
