@@ -411,6 +411,9 @@ ifeq ($(KTLS_INCLUDE_TLSA),yes)
 # pkg tls module with curl
 module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl) $(mod_list_tlsa)
 else
+# pkg tls module with curl
+module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl)
+
 # pkg tlsa module
 module_group_ktlsa=$(mod_list_tlsa)
 endif
@@ -547,4 +550,3 @@ module_group_krtp_media_server=$(mod_list_rtp_media_server)
 # list of static modules
 #
 static_modules:=
-
