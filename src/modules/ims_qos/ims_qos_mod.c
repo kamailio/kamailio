@@ -166,6 +166,8 @@ int omit_flow_ports = 0;
 int rs_default_bandwidth = 0;
 int rr_default_bandwidth = 0;
 
+ims_qos_params_t _imsqos_params = {.recv_mode = 0};
+
 /* commands wrappers and fixups */
 static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *id,
 		int id_type, int cfg_type);
@@ -253,7 +255,7 @@ static param_export_t params[] = {{"rx_dest_realm", PARAM_STR, &rx_dest_realm},
 				&regex_sdp_ip_prefix_to_maintain_in_fd},
 		{"include_rtcp_fd", INT_PARAM, &include_rtcp_fd},
 		{"suspend_transaction", INT_PARAM, &_ims_qos_suspend_transaction},
-		{0, 0, 0}};
+		{"recv_mode", PARAM_INT, &_imsqos_params.recv_mode}, {0, 0, 0}};
 
 
 /** module exports */
@@ -1463,18 +1465,29 @@ static int w_rx_aar_register(
 		goto error;
 	}
 
-	//we use the received IP address for the framed_ip_address
-	recv_ip.s = ip_addr2a(&msg->rcv.src_ip);
-	recv_ip.len = strlen(ip_addr2a(&msg->rcv.src_ip));
+	char buff[IP_ADDR_MAX_STR_SIZE];
+	if(_imsqos_params.recv_mode == 0) {
+		//we use the received IP address for the framed_ip_address
+		recv_ip.s = ip_addr2a(&msg->rcv.src_ip);
+		recv_ip.len = strlen(ip_addr2a(&msg->rcv.src_ip));
 
+		recv_port = msg->rcv.src_port;
+		recv_proto = msg->rcv.proto;
+	} else {
+		memset(&recv_ip, 0, sizeof(str));
+		memcpy(&buff, vb->host.s, vb->host.len);
+		buff[vb->host.len] = 0;
+		recv_ip.s = buff;
+		recv_ip.len = strlen(buff);
+
+		recv_port = via_port;
+		recv_proto = via_proto;
+	}
 	ip_version = check_ip_version(recv_ip);
 	if(!ip_version) {
 		LM_ERR("check_ip_version returned 0 \n");
 		goto error;
 	}
-
-	recv_port = msg->rcv.src_port;
-	recv_proto = msg->rcv.proto;
 
 	LM_DBG("Message received IP address is: [%.*s]\n", recv_ip.len, recv_ip.s);
 	LM_DBG("Message via is [%d://%.*s:%d]\n", vb->proto, vb->host.len,
