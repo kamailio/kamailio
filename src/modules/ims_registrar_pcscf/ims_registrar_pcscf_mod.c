@@ -105,6 +105,10 @@ char *rcv_avp_param = 0;
 unsigned short rcv_avp_type = 0;
 int_str rcv_avp_name;
 
+ims_registrar_pcscf_params_t _imsregp_params = {
+	.delete_delay = 0
+};
+
 // static str orig_prefix = {"sip:orig@",9};
 
 /*! \brief Module init & destroy function */
@@ -186,6 +190,7 @@ static param_export_t params[] = {{"pcscf_uri", PARAM_STR, &pcscf_uri},
 		{"force_icscf_uri", PARAM_STR, &force_icscf_uri},
 		{"reginfo_queue_size_threshold", INT_PARAM,
 				&reginfo_queue_size_threshold},
+		{"delete_delay", PARAM_INT, &_imsregp_params.delete_delay},
 		//	{"store_profile_dereg",	INT_PARAM, &store_data_on_dereg},
 		{0, 0, 0}};
 

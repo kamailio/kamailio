@@ -57,6 +57,10 @@
 #define USERNAME_MAX_SIZE 64
 #define DOMAIN_MAX_SIZE 128
 
+typedef struct ims_registrar_pcscf_params {
+	int delete_delay;
+} ims_registrar_pcscf_params_t;
+
 extern unsigned short rcv_avp_type;
 extern int_str rcv_avp_name;
 extern int is_registered_fallback2ip;
