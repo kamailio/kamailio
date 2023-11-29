@@ -54,8 +54,10 @@ static inline int find_contact_from_impu(
 		impurecord_t *impu, str *search_aor, ucontact_t **scontact)
 {
 	impu_contact_t *impucontact;
-	short i_searchlen;
+	short i_searchlen, c_searchlen, alias_searchlen;
 	char *s_term;
+	char *c_term;
+	char *alias_term;
 
 	if(!search_aor)
 		return 1;
@@ -63,29 +65,57 @@ static inline int find_contact_from_impu(
 	LM_DBG("Looking for contact [%.*s] for IMPU [%.*s]\n", search_aor->len,
 			search_aor->s, impu->public_identity.len, impu->public_identity.s);
 
-	s_term = memchr(search_aor->s, '@', search_aor->len);
+
+	/* Filter out sip: and anything before @ from search URI */
+	s_term = strstr(search_aor->s, "@");
 	if(!s_term) {
-		LM_DBG("Malformed contact...bailing search\n");
-		return 1;
+		s_term = strstr(search_aor->s, ":");
 	}
-	i_searchlen = s_term - search_aor->s;
+	s_term += 1;
+	if(s_term - search_aor->s >= search_aor->len) {
+		goto error;
+	}
+	i_searchlen = search_aor->len - (s_term - search_aor->s);
+
+	/* Compare the entire contact including alias, if not until alias IP */
+	alias_term = strstr(s_term, "~");
+	if(!alias_term) {
+		alias_searchlen = i_searchlen;
+	} else {
+		alias_term += 1;
+		alias_searchlen = alias_term - s_term;
+	}
 
 	impucontact = impu->linked_contacts.head;
 
 	while(impucontact) {
-		if(impucontact->contact
-				&& impucontact->contact->aor.s[i_searchlen] == '@'
-				&& (memcmp(impucontact->contact->aor.s, search_aor->s,
-							i_searchlen)
-						== 0)) {
-			*scontact = impucontact->contact;
-			return 0;
+		if(impucontact->contact) {
+
+			c_term = strstr(impucontact->contact->c.s, "@");
+			if(!c_term) {
+				c_term = strstr(impucontact->contact->c.s, ":");
+			}
+			c_term += 1;
+			c_searchlen = impucontact->contact->c.len
+						  - (c_term - impucontact->contact->c.s);
+
+			LM_DBG("Comparing [%.*s] and [%.*s]\n", i_searchlen, s_term,
+					c_searchlen, c_term);
+			LM_DBG("Comparing [%.*s] and [%.*s]\n", alias_searchlen, s_term,
+					c_searchlen, c_term);
+			if((strncmp(c_term, s_term, i_searchlen) == 0)
+					|| (strncmp(c_term, s_term, alias_searchlen) == 0)) {
+				*scontact = impucontact->contact;
+				return 0;
+			}
 		}
 		if(impucontact->contact)
-			LM_DBG("Skipping %.*s\n", impucontact->contact->aor.len,
-					impucontact->contact->aor.s);
+			LM_DBG("Skipping %.*s\n", impucontact->contact->c.len,
+					impucontact->contact->c.s);
 		impucontact = impucontact->next;
 	}
+error:
+	LM_INFO("malformed contact, bailing search\n");
 	return 1;
 }
 
