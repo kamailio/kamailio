@@ -69,5 +69,7 @@ int ipsec_destroy(struct sip_msg *m, udomain_t *d, str *uri);
 int ipsec_cleanall();
 int ipsec_reconfig();
 void ipsec_on_expire(pcontact_t *c, int type, void *param);
+int ipsec_destroy_by_contact(
+		udomain_t *_d, str *uri, str *received_host, int received_port);
 
 #endif /* IPSEC_CMD_H */

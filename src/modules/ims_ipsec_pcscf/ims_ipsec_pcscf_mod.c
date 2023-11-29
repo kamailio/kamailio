@@ -58,12 +58,15 @@ static void mod_destroy(void);
 static int w_create(struct sip_msg *_m, char *_d, char *_cflags);
 static int w_forward(struct sip_msg *_m, char *_d, char *_cflags);
 static int w_destroy(struct sip_msg *_m, char *_d, char *_aor);
+static int w_destroy_by_contact(struct sip_msg *_m, char *_d, char *_aor,
+		char *_received_host, char *_received_port, char *_cflags);
 
 /*! \brief Fixup functions */
 static int domain_fixup(void **param, int param_no);
 static int save_fixup2(void **param, int param_no);
 static int free_uint_fixup(void **param, int param_no);
 static int unregister_fixup(void **param, int param_no);
+static int unregister2_fixup(void **param, int param_no);
 
 extern int bind_ipsec_pcscf(usrloc_api_t *api);
 
@@ -87,6 +90,7 @@ static cmd_export_t cmds[] = {
 		0, REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"ipsec_destroy", (cmd_function)w_destroy, 2, unregister_fixup,
 		0, ANY_ROUTE },
+	{"ipsec_destroy_by_contact", (cmd_function)w_destroy_by_contact, 4, unregister2_fixup, 0, ANY_ROUTE},
 	{"bind_ims_ipsec_pcscf", (cmd_function)bind_ipsec_pcscf, 1, 0,
 		0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -465,6 +469,32 @@ static int unregister_fixup(void **param, int param_no)
 	return E_CFG;
 }
 
+static int unregister2_fixup(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return domain_fixup(param, param_no);
+	} else {
+		pv_elem_t *model = NULL;
+		str s;
+
+		/* convert to str */
+		s.s = (char *)*param;
+		s.len = strlen(s.s);
+
+		model = NULL;
+		if(s.len == 0) {
+			LM_ERR("no param!\n");
+			return E_CFG;
+		}
+		if(pv_parse_format(&s, &model) < 0 || model == NULL) {
+			LM_ERR("wrong format [%s]!\n", s.s);
+			return E_CFG;
+		}
+		*param = (void *)model;
+		return 0;
+	}
+	return E_CFG;
+}
 
 /*! \brief
  * Wrapper to ipsec functions
@@ -499,4 +529,48 @@ static int w_destroy(struct sip_msg *_m, char *_d, char *_aor)
 		return ipsec_destroy(_m, (udomain_t *)_d, &aor);
 	}
 	return ipsec_destroy(_m, (udomain_t *)_d, NULL);
+}
+
+static int w_destroy_by_contact(struct sip_msg *_m, char *_d, char *_aor,
+		char *_received_host, char *_received_port, char *_cflags)
+{
+	pv_elem_t *model;
+	str aor;
+	str received_host;
+	str received_port;
+	int port = 0;
+
+	if((_aor == NULL) || (_received_host == NULL) || (_received_port == NULL)) {
+		LM_ERR("error - bad parameters\n");
+		return -1;
+	}
+
+	model = (pv_elem_t *)_aor;
+	if(pv_printf_s(_m, model, &aor) < 0) {
+		LM_ERR("error - cannot print the format\n");
+		return -1;
+	}
+	LM_DBG("URI: %.*s\n", aor.len, aor.s);
+
+	model = (pv_elem_t *)_received_host;
+	if(pv_printf_s(_m, model, &received_host) < 0) {
+		LM_ERR("error - cannot print the format\n");
+		return -1;
+	}
+	LM_DBG("Received-Host: %.*s\n", received_host.len, received_host.s);
+
+	model = (pv_elem_t *)_received_port;
+	if(pv_printf_s(_m, model, &received_port) < 0) {
+		LM_ERR("error - cannot print the format\n");
+		return -1;
+	}
+	LM_DBG("Received-Port: %.*s\n", received_port.len, received_port.s);
+	if(str2sint(&received_port, &port) != 0) {
+		LM_ERR("error - cannot convert %.*s to an int!\n", received_port.len,
+				received_port.s);
+		return -1;
+	}
+
+	return ipsec_destroy_by_contact(
+			(udomain_t *)_d, &aor, &received_host, port);
 }

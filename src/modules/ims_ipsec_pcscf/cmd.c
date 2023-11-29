@@ -1097,6 +1097,69 @@ cleanup:
 	return ret;
 }
 
+int ipsec_destroy_by_contact(
+		udomain_t *_d, str *uri, str *received_host, int received_port)
+{
+
+	pcontact_t *pcontact = NULL;
+	int ret = IPSEC_CMD_FAIL; // FAIL by default
+
+	pcontact_info_t search_ci;
+	memset(&search_ci, 0, sizeof(struct pcontact_info));
+
+	sip_uri_t contact_uri;
+	if(parse_uri(uri->s, uri->len, &contact_uri) != 0) {
+		LM_WARN("Failed to parse aor [%.*s]\n", uri->len, uri->s);
+		return ret;
+	}
+
+	search_ci.received_host.s = received_host->s;
+	search_ci.received_host.len = received_host->len;
+	search_ci.received_port = received_port;
+	search_ci.received_proto =
+			contact_uri.proto ? contact_uri.proto : PROTO_UDP;
+	search_ci.searchflag = SEARCH_RECEIVED;
+	search_ci.via_host.s = received_host->s;
+	search_ci.via_host.len = received_host->len;
+	search_ci.via_port = received_port;
+	search_ci.via_prot = search_ci.received_proto;
+	search_ci.aor.s = uri->s;
+	search_ci.aor.len = uri->len;
+	search_ci.reg_state = PCONTACT_ANY;
+
+	if(ul.get_pcontact(_d, &search_ci, &pcontact, 0) != 0) {
+		LM_ERR("Contact doesn't exist\n");
+		return ret;
+	}
+
+	/* Lock this record while working with the data: */
+	ul.lock_udomain(
+			_d, &pcontact->via_host, pcontact->via_port, pcontact->via_proto);
+
+	if(pcontact->security_temp == NULL) {
+		LM_ERR("No security parameters found in contact\n");
+		goto cleanup;
+	}
+
+	//get security parameters
+	if(pcontact->security_temp->type != SECURITY_IPSEC) {
+		LM_ERR("Unsupported security type: %d\n",
+				pcontact->security_temp->type);
+		goto cleanup;
+	}
+
+	destroy_ipsec_tunnel(search_ci.received_host,
+			pcontact->security_temp->data.ipsec, pcontact->contact_port);
+
+	ret = IPSEC_CMD_SUCCESS; // all good, set ret to SUCCESS, and exit
+
+cleanup:
+	/* Unlock domain */
+	ul.unlock_udomain(
+			_d, &pcontact->via_host, pcontact->via_port, pcontact->via_proto);
+	return ret;
+}
+
 int ipsec_reconfig()
 {
 	if(ul.get_number_of_contacts() != 0) {
