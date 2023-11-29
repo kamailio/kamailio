@@ -270,6 +270,25 @@ modparam("ims_registrar_pcscf", "reginfo_queue_size_threshold", 42)
       </example>
     </section>
 
+    <section>
+      <title><varname>delete_delay</varname> (int)</title>
+
+	  <para>If set greater than 0, the delete of a pcontact record is delayed
+	  with its value instead of being done immediately.</para>
+
+      <para><emphasis>Default value is 0 (delete immediately).</emphasis></para>
+
+      <example>
+        <title><varname>delete_delay</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "delete_delay", 10)
+...
+        </programlisting>
+      </example>
+    </section>
+
   </section>
 
   <section>
