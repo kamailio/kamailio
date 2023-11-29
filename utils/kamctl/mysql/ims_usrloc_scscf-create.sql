@@ -49,7 +49,7 @@ CREATE TABLE `subscriber` (
   `call_id` varchar(50) NOT NULL,
   `from_tag` varchar(50) NOT NULL,
   `to_tag` varchar(50) NOT NULL,
-  `record_route` varchar(50) NOT NULL,
+  `record_route` TEXT NOT NULL,
   `sockinfo_str` varchar(50) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `watcher_uri` (`event`,`watcher_contact`,`presentity_uri`)
