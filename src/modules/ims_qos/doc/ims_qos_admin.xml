@@ -536,6 +536,27 @@ modparam("ims_qos", "suspend_transaction", 0)
         </programlisting>
       </example>
     </section>
+
+    <section>
+      <title><varname>recv_mode</varname> integer</title>
+
+	  <para>If set to 0, rx_aar_register() takes the received-from address values
+	  (IP, port, proto) from the IP frame. If set to 1, it takes them from
+      Via header. </para>
+
+      <para><emphasis> Default value is 0</emphasis></para>
+
+      <example>
+        <title><varname>recv_mode</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "recv_mode", 1)
+...
+        </programlisting>
+      </example>
+    </section>
   </section>
 
   <section>
