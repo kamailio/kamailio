@@ -166,7 +166,8 @@ int omit_flow_ports = 0;
 int rs_default_bandwidth = 0;
 int rr_default_bandwidth = 0;
 
-ims_qos_params_t _imsqos_params = {.recv_mode = 0};
+ims_qos_params_t _imsqos_params = {
+		.recv_mode = 0, .dlg_direction = DLG_MOBILE_REGISTER};
 
 /* commands wrappers and fixups */
 static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *id,
@@ -255,7 +256,9 @@ static param_export_t params[] = {{"rx_dest_realm", PARAM_STR, &rx_dest_realm},
 				&regex_sdp_ip_prefix_to_maintain_in_fd},
 		{"include_rtcp_fd", INT_PARAM, &include_rtcp_fd},
 		{"suspend_transaction", INT_PARAM, &_ims_qos_suspend_transaction},
-		{"recv_mode", PARAM_INT, &_imsqos_params.recv_mode}, {0, 0, 0}};
+		{"recv_mode", PARAM_INT, &_imsqos_params.recv_mode},
+		{"dialog_direction", PARAM_INT, &_imsqos_params.dlg_direction},
+		{0, 0, 0}};
 
 
 /** module exports */
@@ -276,6 +279,10 @@ static int mod_init(void)
 
 	callback_singleton = shm_malloc(sizeof(int));
 	*callback_singleton = 0;
+
+	if(_imsqos_params.dlg_direction != DLG_MOBILE_ORIGINATING) {
+		_imsqos_params.dlg_direction = DLG_MOBILE_REGISTER;
+	}
 
 	/*register space for event processor*/
 	register_procs(1);

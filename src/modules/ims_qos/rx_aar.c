@@ -82,6 +82,7 @@ extern str af_signaling_ip;
 extern str af_signaling_ip6;
 extern str component_media_type;
 extern str flow_protocol;
+extern ims_qos_params_t _imsqos_params;
 
 str IMS_Serv_AVP_val = {"IMS Services", 12};
 str IMS_Em_Serv_AVP_val = {"Emergency IMS Call", 18};
@@ -613,7 +614,6 @@ int add_media_components(AAAMessage *aar, struct sip_msg *req,
 							ipA = req_sdp_session->ip_addr;
 							portA = req_sdp_stream->port;
 
-
 							ipB = rpl_sdp_session->ip_addr;
 							portB = rpl_sdp_stream->port;
 						}
@@ -1130,7 +1130,7 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession *auth,
 			&via_host, &port_from,
 			ip_version == AF_INET ? &af_signaling_ip : &af_signaling_ip6,
 			&port_to, &flow_protocol, &raw_stream, &raw_stream,
-			DLG_MOBILE_REGISTER, AVP_EPC_Flow_Usage_AF_Signaling);
+			_imsqos_params.dlg_direction, AVP_EPC_Flow_Usage_AF_Signaling);
 
 	/* Add specific action AVP's */
 	rx_add_specific_action_avp(aar, 1); // CHARGING_CORRELATION_EXCHANGE
