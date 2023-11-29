@@ -557,6 +557,28 @@ modparam("ims_qos", "recv_mode", 1)
         </programlisting>
       </example>
     </section>
+
+    <section>
+      <title><varname>dialog_direction</varname> integer</title>
+
+	  <para>If set to 1, DLG_MOBILE_ORIGINATING is set to
+	  rx_add_media_component_description_avp() instead of DLG_MOBILE_REGISTER
+	  (which corresponds to value 3).
+      </para>
+
+      <para><emphasis> Default value is 3</emphasis></para>
+
+      <example>
+        <title><varname>dialog_direction</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "dialog_direction", 1)
+...
+        </programlisting>
+      </example>
+    </section>
   </section>
 
   <section>
