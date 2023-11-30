@@ -238,7 +238,7 @@ static int fill_contact(
 		}
 		if(alias_start != NULL && *(alias_start - 1) == ';') {
 			char *p, *port_s, *proto_s;
-			char portbuf[5];
+			char portbuf[6];
 			str alias_s;
 
 			LM_DBG("contact has an alias [%.*s] - use that as the received\n",
@@ -267,12 +267,16 @@ static int fill_contact(
 				port_s = p + 1;
 				p = _strnistr(port_s, "~", alias_s.len - ci->received_host.len);
 				if(p != NULL) {
-					memset(portbuf, 0, 5);
+					if((p - port_s)>5) {
+						LM_ERR("invalid port value\n");
+						return -1;
+					}
+					memset(portbuf, 0, 6);
 					memcpy(portbuf, port_s, (p - port_s));
 					ci->received_port = atoi(portbuf);
 
 					proto_s = p + 1;
-					memset(portbuf, 0, 5);
+					memset(portbuf, 0, 6);
 					memcpy(portbuf, proto_s, 1);
 					ci->received_proto = atoi(portbuf);
 
