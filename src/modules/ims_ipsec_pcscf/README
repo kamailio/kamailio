@@ -59,6 +59,8 @@ Tsvetomir Dimitrov
               4.1. ipsec_create(domain)
               4.2. ipsec_forward(domain, flags)
               4.3. ipsec_destroy(domain [, aor])
+              4.4. ipsec_destroy_by_contact(domain, aor, recv_host,
+                      recv_port)
 
    List of Examples
 
@@ -75,6 +77,7 @@ Tsvetomir Dimitrov
    1.11. ipsec_create
    1.12. ipsec_forward
    1.13. ipsec_destroy
+   1.14. ipsec_destroy_by_contact()
 
 Chapter 1. Admin Guide
 
@@ -104,6 +107,7 @@ Chapter 1. Admin Guide
         4.1. ipsec_create(domain)
         4.2. ipsec_forward(domain, flags)
         4.3. ipsec_destroy(domain [, aor])
+        4.4. ipsec_destroy_by_contact(domain, aor, recv_host, recv_port)
 
 1. Overview
 
@@ -271,6 +275,7 @@ modparam("ims_ipsec_pcscf", "ipsec_preferred_ealg", "aes-cbc")
    4.1. ipsec_create(domain)
    4.2. ipsec_forward(domain, flags)
    4.3. ipsec_destroy(domain [, aor])
+   4.4. ipsec_destroy_by_contact(domain, aor, recv_host, recv_port)
 
 4.1. ipsec_create(domain)
 
@@ -338,4 +343,23 @@ ipsec_forward("location", "1");
    Example 1.13. ipsec_destroy
 ...
 ipsec_destroy("location");
+...
+
+4.4. ipsec_destroy_by_contact(domain, aor, recv_host, recv_port)
+
+   The function destroys IPSec tunnel, created with ipsec_create.
+
+   Meaning of the parameters is as follows:
+     * domain - Logical domain within the registrar. If a database is used
+       then this must be name of the table which stores the contacts.
+       aor - SIP URI to match the record.
+       recv_host - received host to match the record.
+       recv_port - received port to match the record.
+
+   The last three parameters have to be string valies and can contain
+   variables.
+
+   Example 1.14. ipsec_destroy_by_contact()
+...
+ipsec_destroy_by_contact("location", "...", "...", "...");
 ...

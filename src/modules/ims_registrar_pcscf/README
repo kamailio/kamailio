@@ -50,6 +50,7 @@ Carsten Bock
               3.9. ignore_reg_state (int)
               3.10. force_icscf_uri (string)
               3.11. reginfo_queue_size_threshold (int)
+              3.12. delete_delay (int)
 
         4. Functions
 
@@ -72,7 +73,8 @@ Carsten Bock
    1.9. ignore_reg_state parameter usage
    1.10. force_icscf_uri parameter usage
    1.11. reginfo_queue_size_threshold parameter usage
-   1.12. pcscf_save
+   1.12. delete_delay parameter usage
+   1.13. pcscf_save
 
 Chapter 1. Admin Guide
 
@@ -97,6 +99,7 @@ Chapter 1. Admin Guide
         3.9. ignore_reg_state (int)
         3.10. force_icscf_uri (string)
         3.11. reginfo_queue_size_threshold (int)
+        3.12. delete_delay (int)
 
    4. Functions
 
@@ -139,6 +142,7 @@ Chapter 1. Admin Guide
    3.9. ignore_reg_state (int)
    3.10. force_icscf_uri (string)
    3.11. reginfo_queue_size_threshold (int)
+   3.12. delete_delay (int)
 
 3.1. pcscf_uri (string)
 
@@ -280,6 +284,18 @@ network.org")
 modparam("ims_registrar_pcscf", "reginfo_queue_size_threshold", 42)
 ...
 
+3.12. delete_delay (int)
+
+   If set greater than 0, the delete of a pcontact record is delayed with
+   its value instead of being done immediately.
+
+   Default value is 0 (delete immediately).
+
+   Example 1.12. delete_delay parameter usage
+...
+modparam("ims_registrar_pcscf", "delete_delay", 10)
+...
+
 4. Functions
 
    4.1. pcscf_save(domain)
@@ -298,7 +314,7 @@ modparam("ims_registrar_pcscf", "reginfo_queue_size_threshold", 42)
      * domain - Logical domain within the registrar. If a database is used
        then this must be name of the table which stores the contacts.
 
-   Example 1.12. pcscf_save
+   Example 1.13. pcscf_save
 ...
 pcscf_save("location");
 ...
