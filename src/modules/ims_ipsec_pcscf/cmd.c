@@ -166,8 +166,11 @@ static int fill_contact(
 {
 	contact_body_t *cb = NULL;
 	struct via_body *vb = NULL;
-	struct sip_msg *req = NULL;
 	char *srcip = NULL;
+	str aor = STR_NULL;
+	sip_msg_t tmsg;
+	char tbuf[BUF_SIZE];
+	int i;
 
 	if(!ci) {
 		LM_ERR("called with null ptr\n");
@@ -209,13 +212,14 @@ static int fill_contact(
 			return -1;
 		}
 
-		req = m;
-
 		// populate host,port, aor in CI
 		ci->via_host = uri.host;
 		ci->via_port = uri.port_no ? uri.port_no : 5060;
 		ci->via_prot = 0;
-		ci->aor = m->first_line.u.request.uri;
+		if(pkg_str_dup(&aor, &suri) < 0) {
+			LM_ERR("failed to duplicate aor\n");
+			return -1;
+		}
 		ci->searchflag = SEARCH_NORMAL;
 
 		if(ci->via_host.s == NULL || ci->via_host.len == 0) {
@@ -223,7 +227,7 @@ static int fill_contact(
 			vb = cscf_get_ue_via(m);
 			if(!vb) {
 				LM_ERR("Reply No via body headers\n");
-				return -1;
+				goto error;
 			}
 
 			// populate CI with bare minimum
@@ -253,7 +257,7 @@ static int fill_contact(
 
 				if(ci->received_host.len > IP6_MAX_STR_SIZE + 2) {
 					LM_ERR("Invalid length for source IP address\n");
-					return -1;
+					goto error;
 				}
 
 				if((srcip = pkg_malloc(50)) == NULL) {
@@ -267,9 +271,9 @@ static int fill_contact(
 				port_s = p + 1;
 				p = _strnistr(port_s, "~", alias_s.len - ci->received_host.len);
 				if(p != NULL) {
-					if((p - port_s)>5) {
+					if((p - port_s) > 5) {
 						LM_ERR("invalid port value\n");
-						return -1;
+						goto error;
 					}
 					memset(portbuf, 0, 6);
 					memcpy(portbuf, port_s, (p - port_s));
@@ -290,27 +294,45 @@ static int fill_contact(
 		} else {
 			if((srcip = pkg_malloc(50)) == NULL) {
 				LM_ERR("Error allocating memory for source IP address\n");
-				return -1;
+				goto error;
 			}
 
-			ci->received_host.len = ip_addr2sbuf(&req->rcv.src_ip, srcip, 50);
+			ci->received_host.len = ip_addr2sbuf(&m->rcv.src_ip, srcip, 50);
 			ci->received_host.s = srcip;
-			ci->received_port = req->rcv.src_port;
-			ci->received_proto = req->rcv.proto;
+			ci->received_port = m->rcv.src_port;
+			ci->received_proto = m->rcv.proto;
 		}
 	} else if(m->first_line.type == SIP_REPLY) {
 		if(!t || t == (void *)-1) {
 			LM_ERR("Reply without transaction\n");
-			return -1;
+			goto error;
 		}
 
-		req = t->uas.request;
-
-		cb = cscf_parse_contacts(req);
+		if(t->uas.request->len >= BUF_SIZE - 1) {
+			LM_ERR("message too long\n");
+			goto error;
+		}
+		memset(&tmsg, 0, sizeof(sip_msg_t));
+		tmsg.buf = tbuf;
+		memcpy(tmsg.buf, t->uas.request->buf, t->uas.request->len);
+		tmsg.buf[t->uas.request->len] = '\0';
+		tmsg.len = t->uas.request->len;
+		if(parse_msg(tmsg.buf, tmsg.len, &tmsg) != 0) {
+			LM_ERR("buffer parsing failed!");
+			goto error;
+		}
+		cb = cscf_parse_contacts(&tmsg);
 		if(!cb || (!cb->contacts)) {
 			LM_ERR("Reply No contact headers\n");
-			return -1;
+			free_sip_msg(&tmsg);
+			goto error;
 		}
+		if(pkg_str_dup(&aor, &cb->contacts->uri) < 0) {
+			LM_ERR("failed to duplicate aor\n");
+			free_sip_msg(&tmsg);
+			goto error;
+		}
+		free_sip_msg(&tmsg);
 
 		vb = cscf_get_ue_via(m);
 		if(!vb) {
@@ -322,7 +344,6 @@ static int fill_contact(
 		ci->via_host = vb->host;
 		ci->via_port = vb->port;
 		ci->via_prot = vb->proto;
-		ci->aor = cb->contacts->uri;
 		ci->searchflag = SEARCH_RECEIVED;
 
 		if((srcip = pkg_malloc(50)) == NULL) {
@@ -330,14 +351,24 @@ static int fill_contact(
 			return -1;
 		}
 
-		ci->received_host.len = ip_addr2sbuf(&req->rcv.src_ip, srcip, 50);
+		ci->received_host.len =
+				ip_addr2sbuf(&t->uas.request->rcv.src_ip, srcip, 50);
 		ci->received_host.s = srcip;
-		ci->received_port = req->rcv.src_port;
-		ci->received_proto = req->rcv.proto;
+		ci->received_port = t->uas.request->rcv.src_port;
+		ci->received_proto = t->uas.request->rcv.proto;
 	} else {
 		LM_ERR("Unknown first line type: %d\n", m->first_line.type);
-		return -1;
+		goto error;
 	}
+
+	for(i = 4; i < aor.len; i++) {
+		if(aor.s[i] == ';') {
+			aor.len = i;
+			break;
+		}
+	}
+
+	ci->aor = aor;
 
 	LM_DBG("SIP %s fill contact with AOR [%.*s], VIA [%d://%.*s:%d], "
 		   "received_host [%d://%.*s:%d]\n",
@@ -350,8 +381,18 @@ static int fill_contact(
 	if(ci->received_port == 0)
 		ci->received_port = 5060;
 
-
 	return 0;
+
+error:
+	if(aor.s != NULL) {
+		pkg_free(aor.s);
+	}
+	if(srcip != NULL) {
+		pkg_free(srcip);
+	}
+	ci->aor.s = NULL;
+	ci->received_host.s = NULL;
+	return -1;
 }
 
 // Get CK and IK from WWW-Authenticate
@@ -728,7 +769,8 @@ int add_security_server_header(struct sip_msg *m, ipsec_t *s)
 	memset(sec_hdr_buf, 0, sizeof(sec_hdr_buf));
 	sec_header->len = snprintf(sec_hdr_buf, sizeof(sec_hdr_buf) - 1,
 			"Security-Server: "
-			"ipsec-3gpp;q=0.1;prot=esp;mod=trans;spi-c=%d;spi-s=%d;port-c=%d;port-s=%"
+			"ipsec-3gpp;q=0.1;prot=esp;mod=trans;spi-c=%d;spi-s=%d;port-c=%d;"
+			"port-s=%"
 			"d;alg=%.*s;ealg=%.*s\r\n",
 			s->spi_pc, s->spi_ps, s->port_pc, s->port_ps, s->r_alg.len,
 			s->r_alg.s, s->r_ealg.len, s->r_ealg.s);
@@ -885,6 +927,7 @@ cleanup:
 	// Do not free str* sec_header! It will be freed in data_lump.c -> free_lump()
 	ul.unlock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 	pkg_free(ci.received_host.s);
+	pkg_free(ci.aor.s);
 	if(t) {
 		tmb.t_uas_request_clean_parsed(t);
 	}
@@ -1097,6 +1140,7 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 cleanup:
 	ul.unlock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 	pkg_free(ci.received_host.s);
+	pkg_free(ci.aor.s);
 	if(t) {
 		tmb.t_uas_request_clean_parsed(t);
 	}
@@ -1149,6 +1193,7 @@ int ipsec_destroy(struct sip_msg *m, udomain_t *d, str *uri)
 cleanup:
 	ul.unlock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 	pkg_free(ci.received_host.s);
+	pkg_free(ci.aor.s);
 	if(t) {
 		tmb.t_uas_request_clean_parsed(t);
 	}
