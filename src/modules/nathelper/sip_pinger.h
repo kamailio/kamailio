@@ -151,7 +151,7 @@ static inline char *build_sipping(str *curi, struct socket_info *s, str *path,
 					+ ruid->len + 1 + 8 + 1 + 8 + s_len(CRLF "To: ") + curi->len
 					+ s_len(CRLF "Call-ID: ") + sipping_callid.len + 1 + 8 + 1
 					+ 8 + 1 + s->address_str.len + s_len(CRLF "CSeq: 1 ")
-					+ sipping_method.len
+					+ sipping_method.len + s_len(CRLF "Max-Forwards: 70")
 					+ s_len(CRLF "Content-Length: 0" CRLF CRLF)
 			> MAX_SIPPING_SIZE) {
 		LM_ERR("len exceeds %d\n", MAX_SIPPING_SIZE);
@@ -205,6 +205,7 @@ static inline char *build_sipping(str *curi, struct socket_info *s, str *path,
 	append_str(p, s->address_str.s, s->address_str.len);
 	append_fix(p, CRLF "CSeq: 1 ");
 	append_str(p, sipping_method.s, sipping_method.len);
+	append_fix(p, CRLF "Max-Forwards: 70");
 	append_fix(p, CRLF "Content-Length: 0" CRLF CRLF);
 
 	*len_p = p - buf;
