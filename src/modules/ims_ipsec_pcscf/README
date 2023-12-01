@@ -321,6 +321,10 @@ ipsec_create("location", "1");
             requests.
           + 0x80 (128) - set transport parameter in the new dst uri for
             TCP requests.
+          + 0x100 (256) - use Via attributes (port and protocol) for
+            routing UDP reply.
+          + 0x200 (512) - try TCP if corresponding UDP socket is not
+            found.
        This is an optional parameter, default value - 0.
 
    Example 1.12. ipsec_forward
