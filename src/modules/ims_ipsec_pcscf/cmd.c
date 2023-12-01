@@ -92,6 +92,10 @@ extern struct tm_binds tmb;
 #define IPSEC_TCPPORT_UEC (1 << 6)
 /* if set - build new dst uri with transport parameter for TCP */
 #define IPSEC_SETDSTURI_FULL (1 << 7)
+/* if set - use Via attributes for routing reply */
+#define IPSEC_FORWARD_USEVIA (1 << 8)
+/* if set - try TCP if corresponding UDP socket is not found */
+#define IPSEC_FORWARD_TRYTCP (1 << 9)
 
 /* if set - delete unused tunnels before every registration */
 #define IPSEC_CREATE_DELETE_UNUSED_TUNNELS 0x01
@@ -945,19 +949,19 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	unsigned short src_port = 0;
 	ip_addr_t via_host;
 	struct sip_msg *req = NULL;
-	struct cell *t = NULL;
+	tm_cell_t *t = NULL;
 	struct socket_info *client_sock = NULL;
+	via_body_t *vb = NULL;
 
 	LM_DBG("processing with flags: 0x%x\n", _cflags);
 
 	if(m->first_line.type == SIP_REPLY) {
 		// Get request from reply
 		t = tmb.t_gett();
-		if(!t) {
+		if(t == NULL || t == T_UNDEFINED) {
 			LM_ERR("Error getting transaction\n");
 			return ret;
 		}
-
 		req = t->uas.request;
 	} else {
 		req = m;
@@ -1015,42 +1019,99 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 		m->dst_uri.len = 0;
 	}
 
+	if(_cflags & IPSEC_FORWARD_USEVIA) {
+		vb = cscf_get_last_via(m);
+	}
+
 	if(m->first_line.type == SIP_REPLY) {
-		// for Reply get the dest proto from the received request
-		dst_proto = req->rcv.proto;
+		if(_cflags & IPSEC_FORWARD_USEVIA) {
+			dst_proto = vb ? vb->proto : req->rcv.proto;
 
-		// for Reply and TCP sends from P-CSCF server port, for Reply and UDP sends from P-CSCF client port
-		src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
+			// As per ETSI TS 133 203 V11.2.0, 7.1 Security association parameters
+			// https://tools.ietf.org/html/rfc3261#section-18
+			// From Reply and TCP send via the same ports Request was recevied.
+			if(dst_proto == PROTO_TCP) {
+				src_port = req->rcv.dst_port;
+				dst_port = req->rcv.src_port;
+			} else {
+				src_port = s->port_pc;
+				if(vb
+						&& ((vb->port == s->port_uc)
+								|| (vb->port == s->port_us))) {
+					dst_port = vb->port;
+				} else {
+					dst_port = s->port_us;
+				}
+			}
+		} else {
+			// for Reply get the dest proto from the received request
+			dst_proto = req->rcv.proto;
+			// for Reply and TCP sends from P-CSCF server port, for Reply and UDP sends from P-CSCF client port
+			src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
 
-		// for Reply and TCP sends to UE client port, for Reply and UDP sends to UE server port
-		dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
+			// for Reply and TCP sends to UE client port, for Reply and UDP sends to UE server port
+			dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
 
-		// Check send socket
+			// Check send socket
+			client_sock =
+					grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr
+														  : &ipsec_listen_addr6,
+							src_port, dst_proto);
+			if(!client_sock) {
+				src_port = s->port_pc;
+				dst_port = s->port_us;
+			}
+		}
+	} else {
+		if(_cflags & IPSEC_FORWARD_USEVIA) {
+			if(req->first_line.u.request.method_value == METHOD_REGISTER) {
+				// for Request get the dest proto from the saved contact
+				dst_proto = pcontact->received_proto;
+			} else {
+				if(m->dst_uri.s != NULL
+						&& strstr(m->dst_uri.s, ";transport=tcp") != NULL) {
+					dst_proto = PROTO_TCP;
+				} else if(m->dst_uri.s != NULL
+						  && strstr(m->dst_uri.s, ";transport=tls") != NULL) {
+					dst_proto = PROTO_TLS;
+				} else {
+					dst_proto = m->rcv.proto;
+				}
+			}
+
+			// for Request sends from P-CSCF client port
+			src_port = s->port_pc;
+			// for Request sends to UE server port
+			dst_port = s->port_us;
+		} else {
+			// for Request get the dest proto from the saved contact
+			dst_proto = pcontact->received_proto;
+
+			if(_cflags & IPSEC_TCPPORT_UEC) {
+				// for Request and TCP sends from P-CSCF server port, for Request and UDP sends from P-CSCF client port
+				src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
+
+				// for Request and TCP sends to UE client port, for Request and UDP sends to UE server port
+				dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
+
+			} else {
+				// for Request sends from P-CSCF client port
+				src_port = s->port_pc;
+
+				// for Request sends to UE server port
+				dst_port = s->port_us;
+			}
+		}
+	}
+
+	if(_cflags & IPSEC_FORWARD_TRYTCP) {
 		client_sock =
 				grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr
 													  : &ipsec_listen_addr6,
 						src_port, dst_proto);
-		if(!client_sock) {
-			src_port = s->port_pc;
-			dst_port = s->port_us;
-		}
-	} else {
-		// for Request get the dest proto from the saved contact
-		dst_proto = pcontact->received_proto;
-
-		if(_cflags & IPSEC_TCPPORT_UEC) {
-			// for Request and TCP sends from P-CSCF server port, for Request and UDP sends from P-CSCF client port
-			src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
-
-			// for Request and TCP sends to UE client port, for Request and UDP sends to UE server port
-			dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
-
-		} else {
-			// for Request sends from P-CSCF client port
-			src_port = s->port_pc;
-
-			// for Request sends to UE server port
-			dst_port = s->port_us;
+		if(!client_sock && dst_proto == PROTO_UDP) {
+			LM_ERR("UDP socket not found for IPSec forward, trying for TCP\n");
+			dst_proto = PROTO_TCP;
 		}
 	}
 
@@ -1108,9 +1169,9 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 
 	// Update dst_info in message
 	if(m->first_line.type == SIP_REPLY) {
-		if(!t) {
+		if(t == NULL || t == T_UNDEFINED) {
 			t = tmb.t_gett();
-			if(!t) {
+			if(t == NULL || t == T_UNDEFINED) {
 				LM_ERR("Error getting transaction\n");
 				goto cleanup;
 			}
