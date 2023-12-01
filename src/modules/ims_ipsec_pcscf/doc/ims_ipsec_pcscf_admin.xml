@@ -324,6 +324,16 @@ ipsec_create("location", "1");
 				  <emphasis>0x80</emphasis> (128) - set transport parameter in the new dst uri for TCP requests.
 			  </para>
 			</listitem>
+			<listitem>
+			  <para>
+				  <emphasis>0x100</emphasis> (256) - use Via attributes (port and protocol) for routing UDP reply.
+			  </para>
+			</listitem>
+			<listitem>
+			  <para>
+				  <emphasis>0x200</emphasis> (512) - try TCP if corresponding UDP socket is not found.
+			  </para>
+			</listitem>
 		  </itemizedlist>
           </para>
 		  <para>
