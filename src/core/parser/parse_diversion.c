@@ -53,6 +53,7 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 	int body_len = 0;
 	char *tmp;
 	int i;
+	to_param_t *params;
 
 	/* Reserves memory max NUM_DIVERSION_BODIES times */
 	memset(uri_b, 0, NUM_DIVERSION_BODIES * sizeof(to_body_t));
@@ -71,7 +72,7 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 	body_len = uri_b[num_uri].body.len;
 
 	/* Loop over all params */
-	to_param_t *params = uri_b[num_uri].param_lst;
+	params = uri_b[num_uri].param_lst;
 	while(params) {
 		body_len +=
 				params->name.len + params->value.len + 2; // 2 for '=' and ';'
@@ -90,6 +91,11 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 			LM_ERR("no content after comma when parsing Diversion body %u "
 				   "'%.*s'\n",
 					num_uri, len, buf);
+			// Free params already allocated
+			while(num_uri >= 0) {
+				free_to_params(&uri_b[num_uri]);
+				num_uri--;
+			}
 			return -1;
 		}
 
@@ -106,6 +112,11 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 				LM_ERR("no space after EOL when parsing Diversion body %u "
 					   "'%.*s'\n",
 						num_uri, len, buf);
+				// Free params already allocated
+				while(num_uri >= 0) {
+					free_to_params(&uri_b[num_uri]);
+					num_uri--;
+				}
 				return -1;
 			}
 			tmp++;
@@ -115,6 +126,11 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 		if(uri_b[num_uri].error == PARSE_ERROR) {
 			LM_ERR("Error parsing Diversion body %u '%.*s'\n", num_uri, len,
 					buf);
+			// Free params already allocated
+			while(num_uri >= 0) {
+				free_to_params(&uri_b[num_uri]);
+				num_uri--;
+			}
 			return -1;
 		}
 
@@ -122,7 +138,7 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 		body_len = uri_b[num_uri].body.len;
 
 		/* Loop over all params */
-		to_param_t *params = uri_b[num_uri].param_lst;
+		params = uri_b[num_uri].param_lst;
 		while(params) {
 			body_len += params->name.len + params->value.len
 						+ 2; /*  2 for '=' and ';' */
@@ -200,7 +216,7 @@ int parse_diversion_header(struct sip_msg *msg)
 int free_diversion_body(diversion_body_t *div_b)
 {
 	for(int i = 0; i < div_b->num_ids; i++) {
-		/* Free to_body pointer */
+		/* Free to_body pointer parameters */
 		if(div_b->id[i].param_lst) {
 			free_to_params(&(div_b->id[i]));
 		}
