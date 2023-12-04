@@ -76,6 +76,7 @@ struct cfg_group_tm default_tm_cfg = {
 		500,				 /* default_code */
 		1,					 /* reparse_invite */
 
+		0, /* tm_dns_failover_branch_failure -- if 1 in case 503 will be executed branch_failure route*/
 		0, /* tm_blst_503 -- if 1 blocklist 503 sources, using tm_blst_503_min,
 		 * tm_blst_503_max, tm_blst_503_default and the Retry-After header
 		 * in the 503 reply */
@@ -169,6 +170,8 @@ cfg_def_t tm_cfg_def[] = {
 				"if set to 1, the CANCEL and negative ACK requests are "
 				"constructed from the INVITE message which was sent out "
 				"instead of building them from the received request"},
+		{"dns_failover_branch_failure",	CFG_VAR_INT | CFG_ATOMIC, 0, 1, 0, 0,
+				"if set to 1, branch_failure route will be executed in case 503 reply"},
 		{"blst_503", CFG_VAR_INT | CFG_ATOMIC, 0, 1, 0, 0,
 				"if set to 1, blocklist 503 SIP response sources"},
 		{"blst_503_def_timeout", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0,

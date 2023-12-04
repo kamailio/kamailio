@@ -2340,8 +2340,8 @@ int reply_received(struct sip_msg *p_msg)
 	sr_xavp_t **backup_xavis;
 	int replies_locked = 0;
 #ifdef USE_DNS_FAILOVER
-	int branch_ret;
-	int prev_branch;
+	int branch_ret = -1;
+	int prev_branch = -1;
 	int failover_continue = 0;
 #endif
 #ifdef USE_DST_BLOCKLIST
@@ -2505,8 +2505,33 @@ int reply_received(struct sip_msg *p_msg)
 	 * corresponding branch had it set on send */
 	p_msg->fwd_send_flags.blst_imask |=
 			uac->request.dst.send_flags.blst_imask & BLST_503;
+#ifdef USE_DNS_FAILOVER
+	/* if this is a 503 reply, and the destination resolves to more ips,
+	 *  add another branch/uac.
+	 *  This code is out of LOCK_REPLIES() to minimize the time the
+	 *  reply lock is held (the lock won't be held while sending the
+	 *   message)*/
+
+
+	failover_continue = (failover_reply_codes_str.s!=NULL && failover_reply_codes_str.len>0 &&
+						t_failover_check_reply_code(msg_status));
+
+	if (cfg_get(core, core_cfg, use_dns_failover) && (msg_status==503 || failover_continue)) {
+		branch_ret=add_uac_dns_fallback(t, t->uas.request,
+											uac, !replies_locked);
+		prev_branch=-1;
+		while((branch_ret>=0) &&(branch_ret!=prev_branch)){
+			prev_branch=branch_ret;
+			branch_ret=t_send_branch(t, branch_ret, t->uas.request , 0, 1);
+		}
+	}
+#endif
 	/* processing of on_reply block */
-	if(onreply_route || sr_event_enabled(SREV_SIP_REPLY_OUT)) {
+	if ((onreply_route || sr_event_enabled(SREV_SIP_REPLY_OUT))
+#ifdef USE_DNS_FAILOVER
+		&& (cfg_get(tm, tm_cfg, tm_dns_failover_branch_failure) ? (branch_ret<0) : 1 )
+#endif
+	) {
 		set_route_type(TM_ONREPLY_ROUTE);
 		/* transfer transaction flag to message context */
 		if(t->uas.request) {
@@ -2651,29 +2676,6 @@ int reply_received(struct sip_msg *p_msg)
 		}
 	}
 #endif /* USE_DST_BLOCKLIST */
-#ifdef USE_DNS_FAILOVER
-	/* if this is a 503 reply, and the destination resolves to more ips,
-		 *  add another branch/uac.
-		 *  This code is out of LOCK_REPLIES() to minimize the time the
-		 *  reply lock is held (the lock won't be held while sending the
-		 *   message)*/
-
-
-	failover_continue = (failover_reply_codes_str.s != NULL
-						 && failover_reply_codes_str.len > 0
-						 && t_failover_check_reply_code(msg_status));
-
-	if(cfg_get(core, core_cfg, use_dns_failover)
-			&& (msg_status == 503 || failover_continue)) {
-		branch_ret =
-				add_uac_dns_fallback(t, t->uas.request, uac, !replies_locked);
-		prev_branch = -1;
-		while((branch_ret >= 0) && (branch_ret != prev_branch)) {
-			prev_branch = branch_ret;
-			branch_ret = t_send_branch(t, branch_ret, t->uas.request, 0, 1);
-		}
-	}
-#endif
 
 	if(t->flags & T_ASYNC_SUSPENDED) {
 		LM_DBG("Reply for suspended transaction, done.\n");

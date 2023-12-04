@@ -481,6 +481,8 @@ static param_export_t params[] = {
 	{"default_reason", PARAM_STRING, &default_tm_cfg.default_reason},
 	{"reparse_invite", PARAM_INT, &default_tm_cfg.reparse_invite},
 	{"ac_extra_hdrs", PARAM_STR, &default_tm_cfg.ac_extra_hdrs},
+	{"dns_failover_branch_failure", PARAM_INT,
+			&default_tm_cfg.tm_dns_failover_branch_failure},
 	{"blst_503", PARAM_INT, &default_tm_cfg.tm_blst_503},
 	{"blst_503_def_timeout", PARAM_INT,
 			&default_tm_cfg.tm_blst_503_default},
