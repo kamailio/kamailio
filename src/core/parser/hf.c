@@ -88,7 +88,7 @@ void clean_hdr_field(struct hdr_field *const hf)
 				break;
 
 			case HDR_DIVERSION_T:
-				free_diversion_body(hf->parsed);
+				free_diversion_body((diversion_body_t *)(hf->parsed));
 				break;
 
 			case HDR_EVENT_T:
