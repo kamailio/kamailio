@@ -855,7 +855,9 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 	ipsec_t *old_s = NULL;
 
 	// Update contacts only for initial registration, for re-registration the existing contacts shouldn't be updated.
-	if(ci.via_port == SIP_PORT) {
+	if(ci.via_port == SIP_PORT
+			|| (pcontact->security_temp->data.ipsec->port_ps == 0
+					&& pcontact->security_temp->data.ipsec->port_pc == 0)) {
 		LM_DBG("Registration for contact with AOR [%.*s], VIA [%d://%.*s:%d], "
 			   "received_host [%d://%.*s:%d]\n",
 				ci.aor.len, ci.aor.s, ci.via_prot, ci.via_host.len,
