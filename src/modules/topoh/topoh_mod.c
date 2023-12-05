@@ -357,14 +357,18 @@ int th_build_socket_strings(socket_info_t *socket)
 	return 0;
 
 error:
-	if(socket_strings->ip.s != NULL)
-		pkg_free(socket_strings->ip.s);
-	if(table_entry->key.s != NULL)
-		pkg_free(table_entry->key.s);
-	if(table_entry != NULL)
-		pkg_free(table_entry);
-	if(socket_strings != NULL)
+	if(socket_strings != NULL) {
+		if(socket_strings->ip.s != NULL) {
+			pkg_free(socket_strings->ip.s);
+		}
 		pkg_free(socket_strings);
+	}
+	if(table_entry != NULL) {
+		if(table_entry->key.s != NULL) {
+			pkg_free(table_entry->key.s);
+		}
+		pkg_free(table_entry);
+	}
 	return -1;
 }
 
