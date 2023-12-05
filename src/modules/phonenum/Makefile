@@ -7,6 +7,7 @@ NAME=phonenum.so
 
 CXX?=g++
 LD?=g++
+CSTDVER?="c++17"
 
 LIBS+=-L$(LOCALBASE)/lib cphonenumber.o -lphonenumber -lgeocoding
 DEFS+=-I$(LOCALBASE)/include
@@ -18,7 +19,7 @@ include ../../Makefile.modules
 
 cphonenumber.o: cphonenumber.cpp cphonenumber.h
 	@echo "Compiling $<"
-	$(CXX) -std=c++11 $(CXXFLAGS) $(CFLAGS) $(C_DEFS) $(DEFS) -c $< -o $@
+	$(CXX) -std=$(CSTDVER) $(CXXFLAGS) $(CFLAGS) $(C_DEFS) $(DEFS) -c $< -o $@
 
 phonenum.so: cphonenumber.o
 
