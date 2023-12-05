@@ -312,9 +312,9 @@ int th_build_uri_prefix(str *uri_prefix, str *ip)
  */
 int th_build_socket_strings(socket_info_t *socket)
 {
-	struct th_socket_strings *socket_strings;
-	struct str_hash_entry *table_entry;
-	str *socket_ip;
+	struct th_socket_strings *socket_strings = NULL;
+	struct str_hash_entry *table_entry = NULL;
+	str *socket_ip = NULL;
 
 	if(str_hash_get(
 			   th_socket_hash_table, socket->sockname.s, socket->sockname.len)
