@@ -717,7 +717,9 @@ void ro_update_db(unsigned int ticks, void *param)
 
 		for(ro_session = ro_session_entry.first; ro_session != NULL;
 				ro_session = ro_session->next) {
-			update_ro_dbinfo_unsafe(ro_session);
+			if(update_ro_dbinfo_unsafe(ro_session) != 0) {
+				LM_ERR("failed to update ro_session in DB\n");
+			}
 		}
 		ro_session_unlock(ro_session_table, &ro_session_entry);
 	}
