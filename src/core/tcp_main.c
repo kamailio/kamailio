@@ -5489,11 +5489,11 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 				cidset = 0;
 				if(con->state == S_CONN_OK) {
 					if(con->req.tvrstart.tv_sec > 0) {
-						tvdiff = 1000000
+						tvdiff = 1000000LL
 										 * (tvnow.tv_sec
 												 - con->req.tvrstart.tv_sec)
 								 + (tvnow.tv_usec - con->req.tvrstart.tv_usec);
-						if(tvdiff >= ksr_tcp_msg_read_timeout * 1000000) {
+						if(tvdiff >= 1000000LL * ksr_tcp_msg_read_timeout) {
 							LM_DBG("n: %d - connection id: %d - message "
 								   "reading timeout: %lld\n",
 									n, con->id, tvdiff);
