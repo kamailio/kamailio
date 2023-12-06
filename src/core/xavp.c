@@ -1147,24 +1147,35 @@ int xavp_serialize_fields_style(str *rname, int mode, char *obuf, int olen)
 		switch(avp->val.type) {
 			case SR_XTYPE_LONG:
 				LM_DBG("     XAVP long int value: %ld\n", avp->val.v.l);
-				ostr.len = snprintf(ostr.s, olen - rlen, "%s%.*s=%lu%s",
-						pr, avp->name.len, avp->name.s,
-						(unsigned long)avp->val.v.l, sf);
+				ostr.len = snprintf(ostr.s, olen - rlen, "%s%.*s=%lu%s", pr,
+						avp->name.len, avp->name.s, (unsigned long)avp->val.v.l,
+						sf);
 				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
-					LM_ERR("failed to serialize int value (%d/%d\n", ostr.len,
-							olen - rlen);
+					LM_ERR("failed to serialize long int value (%d/%d\n",
+							ostr.len, olen - rlen);
+					return -1;
+				}
+				break;
+			case SR_XTYPE_LLONG:
+				LM_DBG("     XAVP long long int value: %lld\n", avp->val.v.ll);
+				ostr.len = snprintf(ostr.s, olen - rlen, "%s%.*s=%llu%s", pr,
+						avp->name.len, avp->name.s,
+						(unsigned long long)avp->val.v.ll, sf);
+				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
+					LM_ERR("failed to serialize long long value (%d/%d\n",
+							ostr.len, olen - rlen);
 					return -1;
 				}
 				break;
 			case SR_XTYPE_STR:
 				LM_DBG("     XAVP str value: %s\n", avp->val.v.s.s);
 				if(avp->val.v.s.len == 0) {
-					ostr.len = snprintf(ostr.s, olen - rlen, "%s%.*s%s",
-							pr, avp->name.len, avp->name.s, sf);
+					ostr.len = snprintf(ostr.s, olen - rlen, "%s%.*s%s", pr,
+							avp->name.len, avp->name.s, sf);
 				} else {
-					ostr.len = snprintf(ostr.s, olen - rlen, "%s%.*s=%s%.*s%s%s",
-							pr, avp->name.len, avp->name.s, qs, avp->val.v.s.len,
-							avp->val.v.s.s, qs, sf);
+					ostr.len = snprintf(ostr.s, olen - rlen,
+							"%s%.*s=%s%.*s%s%s", pr, avp->name.len, avp->name.s,
+							qs, avp->val.v.s.len, avp->val.v.s.s, qs, sf);
 				}
 				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
 					LM_ERR("failed to serialize int value (%d/%d\n", ostr.len,
@@ -1634,8 +1645,19 @@ int xavu_serialize_fields(str *rname, char *obuf, int olen)
 						avu->name.len, avu->name.s,
 						(unsigned long)avu->val.v.l);
 				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
-					LM_ERR("failed to serialize int value (%d/%d\n", ostr.len,
-							olen - rlen);
+					LM_ERR("failed to serialize long int value (%d/%d\n",
+							ostr.len, olen - rlen);
+					return -1;
+				}
+				break;
+			case SR_XTYPE_LLONG:
+				LM_DBG("     XAVP long long int value: %lld\n", avu->val.v.ll);
+				ostr.len = snprintf(ostr.s, olen - rlen, "%.*s=%llu;",
+						avu->name.len, avu->name.s,
+						(unsigned long long)avu->val.v.ll);
+				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
+					LM_ERR("failed to serialize long long value (%d/%d\n",
+							ostr.len, olen - rlen);
 					return -1;
 				}
 				break;
@@ -2597,8 +2619,19 @@ int xavi_serialize_fields(str *rname, char *obuf, int olen)
 						avi->name.len, avi->name.s,
 						(unsigned long)avi->val.v.l);
 				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
-					LM_ERR("failed to serialize int value (%d/%d\n", ostr.len,
-							olen - rlen);
+					LM_ERR("failed to serialize long int value (%d/%d\n",
+							ostr.len, olen - rlen);
+					return -1;
+				}
+				break;
+			case SR_XTYPE_LLONG:
+				LM_DBG("     XAVP long long int value: %lld\n", avi->val.v.ll);
+				ostr.len = snprintf(ostr.s, olen - rlen, "%.*s=%llu;",
+						avi->name.len, avi->name.s,
+						(unsigned long long)avi->val.v.ll);
+				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
+					LM_ERR("failed to serialize long long value (%d/%d\n",
+							ostr.len, olen - rlen);
 					return -1;
 				}
 				break;
