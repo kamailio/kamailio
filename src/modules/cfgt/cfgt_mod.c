@@ -38,12 +38,15 @@ static int child_init(int rank); /*!< Per-child init function */
 extern int bind_cfgt(cfgt_api_t *api);
 
 /*! flag to protect against wrong initialization */
-unsigned int init_flag = 0;
-extern int cfgt_mask;
-extern str cfgt_basedir;
-extern str cfgt_hdr_prefix;
-extern int cfgt_skip_unknown;
-extern int cfgt_route_log;
+unsigned _cfgt_init_flag = 0;
+_cfgt_params_t _cfgt_params = {
+		.hdr_prefix = {"NGCP%", 5},
+		.basedir = {"/tmp", 4},
+		.mask = CFGT_DP_ALL,
+		.skip_unknown = 0,
+		.route_log = 0,
+};
+
 /* clang-format off */
 /*! \brief
  * Exported functions
@@ -57,11 +60,11 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"basedir", PARAM_STR, &cfgt_basedir},
-	{"mask", INT_PARAM, &cfgt_mask},
-	{"callid_prefix", PARAM_STR, &cfgt_hdr_prefix},
-	{"skip_unknown", INT_PARAM, &cfgt_skip_unknown},
-	{"route_log", INT_PARAM, &cfgt_route_log},
+	{"basedir", PARAM_STR, &_cfgt_params.basedir},
+	{"mask", INT_PARAM, &_cfgt_params.mask},
+	{"callid_prefix", PARAM_STR, &_cfgt_params.hdr_prefix},
+	{"skip_unknown", INT_PARAM, &_cfgt_params.skip_unknown},
+	{"route_log", INT_PARAM, &_cfgt_params.route_log},
 	{0, 0, 0}
 };
 
@@ -97,7 +100,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	init_flag = 1;
+	_cfgt_init_flag = 1;
 	return 0;
 }
 

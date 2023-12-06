@@ -40,14 +40,9 @@
 
 static str _cfgt_route_prefix[] = {str_init("start|"), str_init("exit|"),
 		str_init("drop|"), str_init("return|"), {0, 0}};
-cfgt_node_p _cfgt_node = NULL;
-cfgt_hash_p _cfgt_uuid = NULL;
-str cfgt_hdr_prefix = {"NGCP%", 5};
-str cfgt_basedir = {"/tmp", 4};
-int cfgt_mask = CFGT_DP_ALL;
-int cfgt_skip_unknown = 0;
-int cfgt_route_log = 0;
-int not_sip = 0;
+static cfgt_node_p _cfgt_node = NULL;
+static cfgt_hash_p _cfgt_uuid = NULL;
+static int not_sip = 0;
 
 int _cfgt_get_filename(int msgid, str uuid, str *dest, int *dir);
 
@@ -232,8 +227,10 @@ int _cfgt_get_hdr_helper(struct sip_msg *msg, str *res, int mode)
 	if(!hf)
 		return 1;
 
-	if(strncmp(hf->body.s, cfgt_hdr_prefix.s, cfgt_hdr_prefix.len) == 0) {
-		tmp.s = hf->body.s + cfgt_hdr_prefix.len;
+	if(strncmp(hf->body.s, _cfgt_params.hdr_prefix.s,
+			   _cfgt_params.hdr_prefix.len)
+			== 0) {
+		tmp.s = hf->body.s + _cfgt_params.hdr_prefix.len;
 		delimiter = tmp.s - 1;
 		LM_DBG("Prefix detected. delimiter[%c]\n", *delimiter);
 		if(mode == 0) {
@@ -343,8 +340,8 @@ int _cfgt_get_filename(int msgid, str uuid, str *dest, int *dir)
 	if(dest == NULL || uuid.len == 0)
 		return -1;
 
-	dest->len = cfgt_basedir.len + uuid.len;
-	if(cfgt_basedir.s[cfgt_basedir.len - 1] != '/') {
+	dest->len = _cfgt_params.basedir.len + uuid.len;
+	if(_cfgt_params.basedir.s[_cfgt_params.basedir.len - 1] != '/') {
 		dest->len = dest->len + 1;
 		format = "%.*s/%.*s/%.*s.json";
 	}
@@ -356,8 +353,8 @@ int _cfgt_get_filename(int msgid, str uuid, str *dest, int *dir)
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	snprintf(dest->s, dest->len + 1, format, cfgt_basedir.len, cfgt_basedir.s,
-			uuid.len, uuid.s, lid, sid);
+	snprintf(dest->s, dest->len + 1, format, _cfgt_params.basedir.len,
+			_cfgt_params.basedir.s, uuid.len, uuid.s, lid, sid);
 	return 0;
 }
 
@@ -389,7 +386,8 @@ void cfgt_save_node(cfgt_node_p node)
 	str dest = STR_NULL;
 	int dir = 0;
 	struct stat sb;
-	if(cfgt_skip_unknown && strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
+	if(_cfgt_params.skip_unknown
+			&& strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
 		LM_DBG("skip unknown\n");
 		return;
 	}
@@ -652,7 +650,7 @@ void _cfgt_del_routename(cfgt_node_p node)
 	}
 	LM_DBG("del route[%.*s]\n", node->route->s.len, node->route->s.s);
 	node->route = node->route->prev;
-	if(cfgt_route_log)
+	if(_cfgt_params.route_log)
 		_cfgt_log_route(node->route->next);
 	pkg_free(node->route->next);
 	node->route->next = NULL;
@@ -714,7 +712,8 @@ int cfgt_process_route(struct sip_msg *msg, struct action *a)
 		LM_ERR("node empty\n");
 		return -1;
 	}
-	if(cfgt_skip_unknown && strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
+	if(_cfgt_params.skip_unknown
+			&& strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
 		return 0;
 	}
 	if(a->rname == NULL) {
@@ -889,7 +888,7 @@ int cfgt_post(struct sip_msg *msg, unsigned int flags, void *bar)
 	str flowname = STR_NULL;
 	print_cb_flags(flags);
 	if(_cfgt_node) {
-		if(cfgt_skip_unknown
+		if(_cfgt_params.skip_unknown
 				&& strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
 			return 1;
 		}
@@ -931,7 +930,7 @@ int cfgt_msgout(sr_event_param_t *evp)
 	}
 
 	if(_cfgt_node) {
-		if(cfgt_skip_unknown
+		if(_cfgt_params.skip_unknown
 				&& strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
 			return 0;
 		}
@@ -1010,7 +1009,7 @@ static void cfgt_rpc_mask(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "invalid parameters");
 		return;
 	}
-	cfgt_mask = mask;
+	_cfgt_params.mask = mask;
 	rpc->add(ctx, "s", "200 ok");
 }
 
