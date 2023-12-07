@@ -1721,6 +1721,7 @@ static void resume_on_initial_ccr(
 	}
 
 	Ro_free_CCA(ro_cca_data);
+	ro_cca_data = NULL;
 
 	LM_DBG("Freeing CCA message\n");
 	cdpb.AAAFreeMessage(&cca);
@@ -1757,9 +1758,11 @@ static void resume_on_initial_ccr(
 	return;
 
 error1:
-	Ro_free_CCA(ro_cca_data);
-
 error0:
+	if(ro_cca_data != NULL) {
+		Ro_free_CCA(ro_cca_data);
+	}
+
 	LM_DBG("Trying to reserve credit on initial INVITE failed on cdp "
 		   "callback\n");
 	//    counter_add(ims_charging_cnts_h.active_ro_sessions, -1); /*we bumped active on the original initial ccr sent */
