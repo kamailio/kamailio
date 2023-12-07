@@ -2,7 +2,7 @@
  * pv_headers
  *
  * Copyright (C)
- * 2020 Victor Seva <vseva@sipwise.com>
+ * 2020-2023 Victor Seva <vseva@sipwise.com>
  * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
  * This file is part of Kamailio, a free SIP server.
@@ -36,22 +36,29 @@ typedef struct _xavp_c_data
 	str value;
 } xavp_c_data_t;
 
-extern uac_api_t uac;
+extern uac_api_t pvh_uac;
 
-extern str xavi_name;
-extern str xavi_parsed_xname;
-extern str xavi_helper_xname;
+#define PVH_HDRS_COLLECTED 0
+#define PVH_HDRS_APPLIED 1
+typedef struct _pvh_params
+{
+	str xavi_name;
+	str xavi_helper_xname;
+	str xavi_parsed_xname;
+	unsigned int hdr_value_size;
+	int flags[2];
+	str skip_hdrs;
+	str split_hdrs;
+	str single_hdrs;
+	unsigned int auto_msg;
+} _pvh_params_t;
+extern _pvh_params_t _pvh_params;
 
-extern unsigned int header_name_size;
-extern unsigned int header_value_size;
-
-extern str _hdr_from;
-extern str _hdr_to;
-extern str _hdr_reply_reason;
-extern int _branch;
-extern int _reply_counter;
-
-extern int FL_PV_HDRS_COLLECTED;
-extern int FL_PV_HDRS_APPLIED;
+extern unsigned int pvh_hdr_name_size;
+extern str pvh_hdr_from;
+extern str pvh_hdr_to;
+extern str pvh_hdr_reply_reason;
+extern int pvh_branch;
+extern int pvh_reply_counter;
 
 #endif /* PV_HEADERS_H */

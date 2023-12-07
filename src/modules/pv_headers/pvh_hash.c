@@ -2,7 +2,7 @@
  * pv_headers
  *
  * Copyright (C)
- * 2020 Victor Seva <vseva@sipwise.com>
+ * 2020-2023 Victor Seva <vseva@sipwise.com>
  * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
  * This file is part of Kamailio, a free SIP server.
@@ -27,13 +27,13 @@
 #include "pvh_hash.h"
 #include "pvh_str.h"
 
-struct str_hash_table skip_headers;
-struct str_hash_table split_headers;
-struct str_hash_table single_headers;
+struct str_hash_table skip_hdrs;
+struct str_hash_table split_hdrs;
+struct str_hash_table single_hdrs;
 
 int pvh_str_hash_init(struct str_hash_table *ht, str *keys, char *desc)
 {
-	char split[header_name_size][header_value_size];
+	char split[pvh_hdr_name_size][_pvh_params.hdr_value_size];
 	int idx = 0, d_size = 0;
 	str val = STR_NULL;
 
@@ -117,7 +117,7 @@ int pvh_skip_header(str *hname)
 	if(hname == NULL)
 		return 0;
 
-	if(str_hash_case_get(&skip_headers, hname->s, hname->len))
+	if(str_hash_case_get(&skip_hdrs, hname->s, hname->len))
 		return 1;
 
 	return 0;
@@ -128,7 +128,7 @@ int pvh_single_header(str *hname)
 	if(hname == NULL)
 		return 0;
 
-	if(str_hash_case_get(&single_headers, hname->s, hname->len))
+	if(str_hash_case_get(&single_hdrs, hname->s, hname->len))
 		return 1;
 
 	return 0;

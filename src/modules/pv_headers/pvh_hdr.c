@@ -2,7 +2,7 @@
  * pv_headers
  *
  * Copyright (C)
- * 2020 Victor Seva <vseva@sipwise.com>
+ * 2020-2023 Victor Seva <vseva@sipwise.com>
  * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
  * This file is part of Kamailio, a free SIP server.
@@ -31,11 +31,11 @@
 int pvh_hdrs_collected(struct sip_msg *msg)
 {
 	if(msg->first_line.type == SIP_REPLY) {
-		if(isflagset(msg, FL_PV_HDRS_COLLECTED) == 1) {
+		if(isflagset(msg, _pvh_params.flags[PVH_HDRS_COLLECTED]) == 1) {
 			return 1;
 		}
 	} else {
-		if(isbflagset(_branch, FL_PV_HDRS_COLLECTED) == 1) {
+		if(isbflagset(pvh_branch, _pvh_params.flags[PVH_HDRS_COLLECTED]) == 1) {
 			return 1;
 		}
 	}
@@ -45,11 +45,11 @@ int pvh_hdrs_collected(struct sip_msg *msg)
 int pvh_hdrs_applied(struct sip_msg *msg)
 {
 	if(msg->first_line.type == SIP_REPLY) {
-		if(isflagset(msg, FL_PV_HDRS_APPLIED) == 1) {
+		if(isflagset(msg, _pvh_params.flags[PVH_HDRS_APPLIED]) == 1) {
 			return 1;
 		}
 	} else {
-		if(isbflagset(_branch, FL_PV_HDRS_APPLIED) == 1) {
+		if(isbflagset(pvh_branch, _pvh_params.flags[PVH_HDRS_APPLIED]) == 1) {
 			return 1;
 		}
 	}
@@ -59,29 +59,29 @@ int pvh_hdrs_applied(struct sip_msg *msg)
 void pvh_hdrs_set_applied(struct sip_msg *msg)
 {
 	if(msg->first_line.type == SIP_REPLY) {
-		setflag(msg, FL_PV_HDRS_APPLIED);
+		setflag(msg, _pvh_params.flags[PVH_HDRS_APPLIED]);
 	} else {
-		setbflag(_branch, FL_PV_HDRS_APPLIED);
+		setbflag(pvh_branch, _pvh_params.flags[PVH_HDRS_APPLIED]);
 	}
 }
 
 void pvh_hdrs_set_collected(struct sip_msg *msg)
 {
 	if(msg->first_line.type == SIP_REPLY) {
-		setflag(msg, FL_PV_HDRS_COLLECTED);
+		setflag(msg, _pvh_params.flags[PVH_HDRS_COLLECTED]);
 	} else {
-		setbflag(_branch, FL_PV_HDRS_COLLECTED);
+		setbflag(pvh_branch, _pvh_params.flags[PVH_HDRS_COLLECTED]);
 	}
 }
 
 void pvh_hdrs_reset_flags(struct sip_msg *msg)
 {
 	if(msg->first_line.type == SIP_REPLY) {
-		resetflag(msg, FL_PV_HDRS_COLLECTED);
-		resetflag(msg, FL_PV_HDRS_APPLIED);
+		resetflag(msg, _pvh_params.flags[PVH_HDRS_COLLECTED]);
+		resetflag(msg, _pvh_params.flags[PVH_HDRS_APPLIED]);
 	} else {
-		resetbflag(_branch, FL_PV_HDRS_COLLECTED);
-		resetbflag(_branch, FL_PV_HDRS_APPLIED);
+		resetbflag(pvh_branch, _pvh_params.flags[PVH_HDRS_COLLECTED]);
+		resetbflag(pvh_branch, _pvh_params.flags[PVH_HDRS_APPLIED]);
 	}
 }
 

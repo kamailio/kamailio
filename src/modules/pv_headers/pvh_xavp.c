@@ -2,7 +2,7 @@
  * pv_headers
  *
  * Copyright (C)
- * 2020 Victor Seva <vseva@sipwise.com>
+ * 2020-2023 Victor Seva <vseva@sipwise.com>
  * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
  * This file is part of Kamailio, a free SIP server.
@@ -62,8 +62,8 @@ int pvh_reply_append(sr_xavp_t **start)
 	sr_xavp_t *xavi = NULL;
 	sr_xval_t xval;
 
-	xavi = pvh_xavi_get_child_with_ival(
-			&xavi_helper_xname, &reply_counter, start ? *start : NULL);
+	xavi = pvh_xavi_get_child_with_ival(&_pvh_params.xavi_helper_xname,
+			&reply_counter, start ? *start : NULL);
 	if(xavi) {
 		xavi->val.v.l++;
 		LM_DBG("reply message: %ld\n", xavi->val.v.l);
@@ -74,17 +74,18 @@ int pvh_reply_append(sr_xavp_t **start)
 	xval.type = SR_XTYPE_LONG;
 	xval.v.l = 0;
 
-	xavi = xavi_get(&xavi_helper_xname, start ? *start : NULL);
+	xavi = xavi_get(&_pvh_params.xavi_helper_xname, start ? *start : NULL);
 	if(xavi == NULL) {
-		if(xavi_add_xavi_value(&xavi_helper_xname, &reply_counter, &xval,
-				   start ? start : NULL)
+		if(xavi_add_xavi_value(&_pvh_params.xavi_helper_xname, &reply_counter,
+				   &xval, start ? start : NULL)
 				== NULL) {
-			LM_ERR("can't create xavi:%.*s\n", xavi_helper_xname.len,
-					xavi_helper_xname.s);
+			LM_ERR("can't create xavi:%.*s\n",
+					_pvh_params.xavi_helper_xname.len,
+					_pvh_params.xavi_helper_xname.s);
 			return -1;
 		}
-		LM_DBG("xavi_name:%.*s created\n", xavi_helper_xname.len,
-				xavi_helper_xname.s);
+		LM_DBG("xavi_name:%.*s created\n", _pvh_params.xavi_helper_xname.len,
+				_pvh_params.xavi_helper_xname.s);
 	} else {
 		if(xavi_add_value(&reply_counter, &xval, &xavi->val.v.xavp) == NULL) {
 			LM_ERR("can't add reply_counter value\n");
@@ -180,8 +181,8 @@ static sr_xavp_t *pvh_xavi_set_value(
 static sr_xavp_t *pvh_get_xavi(struct sip_msg *msg, str *xname)
 {
 	sr_xavp_t *xavi = NULL;
-	char t[header_name_size];
-	str br_xname = {t, header_name_size};
+	char t[pvh_hdr_name_size];
+	str br_xname = {t, pvh_hdr_name_size};
 
 	pvh_get_branch_xname(msg, xname, &br_xname);
 	if((xavi = xavi_get(&br_xname, NULL)) == NULL) {
@@ -228,7 +229,7 @@ int pvh_parse_header_name(pv_spec_p sp, str *hname)
 		return -1;
 	}
 
-	if(hname->len >= header_name_size) {
+	if(hname->len >= pvh_hdr_name_size) {
 		LM_ERR("header name is too long\n");
 		return -1;
 	}
@@ -280,8 +281,8 @@ static sr_xval_t *pvh_xavi_get_value(
 sr_xavp_t *pvh_xavi_get_child(struct sip_msg *msg, str *xname, str *name)
 {
 	sr_xavp_t *xavi = NULL;
-	char t[header_name_size];
-	str br_xname = {t, header_name_size};
+	char t[pvh_hdr_name_size];
+	str br_xname = {t, pvh_hdr_name_size};
 
 	pvh_get_branch_xname(msg, xname, &br_xname);
 	xavi = xavi_get_child(&br_xname, name);
@@ -362,8 +363,8 @@ sr_xavp_t *pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
 	sr_xavp_t *result = NULL;
 	sr_xval_t root_xval;
 	sr_xval_t xval;
-	char t[header_name_size];
-	str br_xname = {t, header_name_size};
+	char t[pvh_hdr_name_size];
+	str br_xname = {t, pvh_hdr_name_size};
 
 	if(xname == NULL || name == NULL) {
 		LM_ERR("missing xavi/pv name\n");
@@ -393,7 +394,7 @@ sr_xavp_t *pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
 
 	root = xavi_get(&br_xname, NULL);
 
-	if(root == NULL && _branch > 0) {
+	if(root == NULL && pvh_branch > 0) {
 		pvh_clone_branch_xavi(msg, xname);
 		root = xavi_get(&br_xname, NULL);
 	}
@@ -447,8 +448,8 @@ int pvh_get_branch_xname(struct sip_msg *msg, str *xname, str *dst)
 	memcpy(dst->s, xname->s, xname->len);
 	os += xname->len;
 
-	if(_branch > 0) {
-		snprintf(br_idx_s, 32, "%d", _branch - 1);
+	if(pvh_branch > 0) {
+		snprintf(br_idx_s, 32, "%d", pvh_branch - 1);
 		br_idx_len = strlen(br_idx_s);
 		memcpy(dst->s + os, ".", 1);
 		os += 1;
@@ -456,7 +457,7 @@ int pvh_get_branch_xname(struct sip_msg *msg, str *xname, str *dst)
 		os += br_idx_len;
 	}
 	if(msg->first_line.type == SIP_REPLY) {
-		snprintf(br_idx_s, 32, ".r.%d", _reply_counter);
+		snprintf(br_idx_s, 32, ".r.%d", pvh_reply_counter);
 		br_idx_len = strlen(br_idx_s);
 		memcpy(dst->s + os, br_idx_s, br_idx_len);
 		os += br_idx_len;
@@ -476,8 +477,8 @@ int pvh_clone_branch_xavi(struct sip_msg *msg, str *xname)
 	sr_xavp_t *br_xavi = NULL;
 	sr_xavp_t *sub = NULL;
 	sr_xval_t root_xval;
-	char t[header_name_size];
-	str br_xname = {t, header_name_size};
+	char t[pvh_hdr_name_size];
+	str br_xname = {t, pvh_hdr_name_size};
 	int i = 0;
 
 	if((xavi = xavi_get(xname, NULL)) == NULL) {
@@ -487,12 +488,14 @@ int pvh_clone_branch_xavi(struct sip_msg *msg, str *xname)
 	}
 
 	if(xavi->val.type != SR_XTYPE_XAVP) {
-		LM_ERR("not xavp child type %.*s\n", xavi_name.len, xavi_name.s);
+		LM_ERR("not xavp child type %.*s\n", _pvh_params.xavi_name.len,
+				_pvh_params.xavi_name.s);
 		return -1;
 	}
 
 	if((sub = xavi->val.v.xavp) == NULL) {
-		LM_ERR("invalid xavi structure: %.*s\n", xavi_name.len, xavi_name.s);
+		LM_ERR("invalid xavi structure: %.*s\n", _pvh_params.xavi_name.len,
+				_pvh_params.xavi_name.s);
 		return -1;
 	}
 
@@ -507,7 +510,7 @@ int pvh_clone_branch_xavi(struct sip_msg *msg, str *xname)
 		return -1;
 	}
 
-	if(cmp_str(xname, &xavi_parsed_xname) == 0) {
+	if(cmp_str(xname, &_pvh_params.xavi_parsed_xname) == 0) {
 		return 1;
 	}
 
@@ -551,7 +554,8 @@ int pvh_get_header(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	}
 
 	if(idx < 0) {
-		if((xavi = pvh_xavi_get_child(msg, &xavi_name, hname)) == NULL)
+		if((xavi = pvh_xavi_get_child(msg, &_pvh_params.xavi_name, hname))
+				== NULL)
 			cnt = 0;
 		else
 			cnt = xavi_count(hname, &xavi);
@@ -560,7 +564,7 @@ int pvh_get_header(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_null(msg, param, res);
 	}
 
-	xval = pvh_xavi_get_value(msg, &xavi_name, hname, idx);
+	xval = pvh_xavi_get_value(msg, &_pvh_params.xavi_name, hname, idx);
 
 	if(xval == NULL || !xval->v.s.s)
 		return pv_get_null(msg, param, res);
@@ -593,8 +597,9 @@ int pvh_set_header(
 		return -1;
 	}
 
-	if((xavi = pvh_get_xavi(msg, &xavi_name)) == NULL) {
-		LM_ERR("xavi %.*s not found\n", xavi_name.len, xavi_name.s);
+	if((xavi = pvh_get_xavi(msg, &_pvh_params.xavi_name)) == NULL) {
+		LM_ERR("xavi %.*s not found\n", _pvh_params.xavi_name.len,
+				_pvh_params.xavi_name.s);
 		return -1;
 	}
 	avi = xavi->val.v.xavp;
@@ -618,11 +623,13 @@ int pvh_set_header(
 				LM_DBG("removed %d values of %.*s=>%.*s, set $null\n", cnt,
 						xavi->name.len, xavi->name.s, hname->len, hname->s);
 			}
-			if(pvh_set_xavi(msg, &xavi_name, hname, NULL, SR_XTYPE_NULL, 0, 0)
+			if(pvh_set_xavi(msg, &_pvh_params.xavi_name, hname, NULL,
+					   SR_XTYPE_NULL, 0, 0)
 					== NULL)
 				goto err;
 		} else {
-			if(pvh_set_xavi(msg, &xavi_name, hname, NULL, SR_XTYPE_NULL, idx, 0)
+			if(pvh_set_xavi(msg, &_pvh_params.xavi_name, hname, NULL,
+					   SR_XTYPE_NULL, idx, 0)
 					== NULL)
 				goto err;
 		}
@@ -641,7 +648,8 @@ int pvh_set_header(
 			goto err;
 		}
 		if(idx == 0 && idxf == PV_IDX_NONE) {
-			if(pvh_set_xavi(msg, &xavi_name, hname, &fval, SR_XTYPE_STR, 0, 1)
+			if(pvh_set_xavi(msg, &_pvh_params.xavi_name, hname, &fval,
+					   SR_XTYPE_STR, 0, 1)
 					== NULL)
 				goto err;
 		} else if(idxf == PV_IDX_ALL) {
@@ -650,12 +658,13 @@ int pvh_set_header(
 				LM_DBG("removed %d values of %.*s=>%.*s\n", cnt, xavi->name.len,
 						xavi->name.s, hname->len, hname->s);
 			}
-			if(pvh_set_xavi(msg, &xavi_name, hname, &fval, SR_XTYPE_STR, 0,
-					   hname_cnt ? 0 : 1)
+			if(pvh_set_xavi(msg, &_pvh_params.xavi_name, hname, &fval,
+					   SR_XTYPE_STR, 0, hname_cnt ? 0 : 1)
 					== NULL)
 				goto err;
 		} else {
-			if(pvh_set_xavi(msg, &xavi_name, hname, &fval, SR_XTYPE_STR, idx, 0)
+			if(pvh_set_xavi(msg, &_pvh_params.xavi_name, hname, &fval,
+					   SR_XTYPE_STR, idx, 0)
 					== NULL)
 				goto err;
 		}
@@ -693,7 +702,8 @@ xavp_c_data_t *pvh_set_parsed(
 		val = cur;
 	if(pvh_merge_uri(msg, SET_URI_T, cur, val, c_data) < 0)
 		goto err;
-	if(pvh_set_xavi(msg, &xavi_parsed_xname, hname, c_data, SR_XTYPE_DATA, 0, 0)
+	if(pvh_set_xavi(msg, &_pvh_params.xavi_parsed_xname, hname, c_data,
+			   SR_XTYPE_DATA, 0, 0)
 			== NULL)
 		goto err;
 	LM_DBG("c_data from pvh_merge_uri hname:%.*s\n", hname->len, hname->s);
@@ -717,23 +727,24 @@ int pvh_get_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	str sval = STR_NULL;
 	int ival = 0;
 	int is_strint = 0;
-	char t[header_name_size];
-	str hname = {t, header_name_size - 1};
+	char t[pvh_hdr_name_size];
+	str hname = {t, pvh_hdr_name_size - 1};
 
 	p_no = param->pvn.u.isname.name.n;
 	if(p_no >= 1 && p_no <= 5)
-		pvh_str_copy(&hname, &_hdr_from, header_name_size);
+		pvh_str_copy(&hname, &pvh_hdr_from, pvh_hdr_name_size);
 	else if(p_no >= 6 && p_no <= 10)
-		pvh_str_copy(&hname, &_hdr_to, header_name_size);
+		pvh_str_copy(&hname, &pvh_hdr_to, pvh_hdr_name_size);
 
-	xval = pvh_xavi_get_value(msg, &xavi_name, &hname, 0);
+	xval = pvh_xavi_get_value(msg, &_pvh_params.xavi_name, &hname, 0);
 	if(xval == NULL || !xval->v.s.s) {
 		/*	LM_DBG("xavi:%.*s hname:%.*s is null\n", xavi_name.len, xavi_name.s,
 				hname.len, hname.s); */
 		goto err;
 	}
 
-	xval_pd = pvh_xavi_get_value(msg, &xavi_parsed_xname, &hname, 0);
+	xval_pd =
+			pvh_xavi_get_value(msg, &_pvh_params.xavi_parsed_xname, &hname, 0);
 
 	if(xval_pd) {
 		/*	LM_DBG("p_no:%d c_data from xavi_parsed_xname hname:%.*s\n", p_no,
@@ -795,15 +806,15 @@ int pvh_set_uri(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 	pv_elem_p pv_format = NULL;
 	int p_no = 0;
 	enum action_type a_type;
-	char t[header_name_size];
-	str hname = {t, header_name_size - 1};
+	char t[pvh_hdr_name_size];
+	str hname = {t, pvh_hdr_name_size - 1};
 	str fval;
 
 	p_no = param->pvn.u.isname.name.n;
 	if(p_no >= 1 && p_no <= 5)
-		pvh_str_copy(&hname, &_hdr_from, header_name_size);
+		pvh_str_copy(&hname, &pvh_hdr_from, pvh_hdr_name_size);
 	else if(p_no >= 6 && p_no <= 10)
-		pvh_str_copy(&hname, &_hdr_to, header_name_size);
+		pvh_str_copy(&hname, &pvh_hdr_to, pvh_hdr_name_size);
 
 	switch(p_no) {
 		case 1: // uri from
@@ -842,7 +853,7 @@ int pvh_set_uri(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 		goto err;
 	}
 
-	xval = pvh_xavi_get_value(msg, &xavi_name, &hname, 0);
+	xval = pvh_xavi_get_value(msg, &_pvh_params.xavi_name, &hname, 0);
 	if(xval == NULL || !xval->v.s.s)
 		goto err;
 
@@ -854,14 +865,15 @@ int pvh_set_uri(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 	memset(c_data, 0, sizeof(xavp_c_data_t));
 	if(pvh_merge_uri(msg, a_type, &xval->v.s, &fval, c_data) < 0)
 		goto err;
-	/*	LM_DBG("xavi:%.*s hname:%.*s value:%.*s\n", xavi_name.len, xavi_name.s,
+	/*	LM_DBG("xavi:%.*s hname:%.*s value:%.*s\n", _pvh_params.xavi_name.len, _pvh_params.xavi_name.s,
 			hname.len, hname.s, c_data->value.len, c_data->value.s); */
-	if(pvh_set_xavi(msg, &xavi_name, &hname, &c_data->value, SR_XTYPE_STR, 0, 0)
+	if(pvh_set_xavi(msg, &_pvh_params.xavi_name, &hname, &c_data->value,
+			   SR_XTYPE_STR, 0, 0)
 			== NULL)
 		goto err;
 
-	if(pvh_set_xavi(
-			   msg, &xavi_parsed_xname, &hname, c_data, SR_XTYPE_DATA, 0, 0)
+	if(pvh_set_xavi(msg, &_pvh_params.xavi_parsed_xname, &hname, c_data,
+			   SR_XTYPE_DATA, 0, 0)
 			== NULL)
 		goto err;
 
@@ -904,7 +916,7 @@ int pvh_merge_uri(struct sip_msg *msg, enum action_type type, str *cur,
 	}
 	puri = tb.parsed_uri;
 
-	c_data->value.s = (char *)shm_malloc(header_value_size);
+	c_data->value.s = (char *)shm_malloc(_pvh_params.hdr_value_size);
 	if(c_data->value.s == NULL) {
 		SHM_MEM_ERROR;
 		goto err;
@@ -912,7 +924,7 @@ int pvh_merge_uri(struct sip_msg *msg, enum action_type type, str *cur,
 	merged = &c_data->value;
 
 	if(type == SET_URI_T && strchr(new->s, '<')) {
-		pvh_str_copy(merged, new, header_value_size);
+		pvh_str_copy(merged, new, _pvh_params.hdr_value_size);
 		goto reparse;
 	}
 
@@ -1054,7 +1066,8 @@ int pvh_get_reply_sr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 					&msg->first_line.u.reply.status);
 			break;
 		case 2: // reason
-			xval = pvh_xavi_get_value(msg, &xavi_name, &_hdr_reply_reason, 0);
+			xval = pvh_xavi_get_value(
+					msg, &_pvh_params.xavi_name, &pvh_hdr_reply_reason, 0);
 			return pv_get_strval(msg, param, res,
 					xval && xval->v.s.s ? &xval->v.s
 										: &msg->first_line.u.reply.reason);
@@ -1125,8 +1138,8 @@ int pvh_set_reply_sr(
 			msg->first_line.u.reply.status.s[0] = code + '0';
 			break;
 		case 2: // reason
-			if(pvh_set_xavi(msg, &xavi_name, &_hdr_reply_reason, &fval,
-					   SR_XTYPE_STR, 0, 0)
+			if(pvh_set_xavi(msg, &_pvh_params.xavi_name, &pvh_hdr_reply_reason,
+					   &fval, SR_XTYPE_STR, 0, 0)
 					== NULL) {
 				LM_ERR("set reply: cannot set reply reason\n");
 				goto err;
