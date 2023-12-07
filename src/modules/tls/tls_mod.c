@@ -402,10 +402,6 @@ static int mod_init(void)
 	if(tls_check_sockets(*tls_domains_cfg) < 0)
 		goto error;
 
-	if(ksr_tls_lock_init() < 0) {
-		goto error;
-	}
-
 	LM_INFO("use OpenSSL version: %08x\n", (uint32_t)(OPENSSL_VERSION_NUMBER));
 #ifndef OPENSSL_NO_ECDH
 	LM_INFO("With ECDH-Support!\n");
@@ -673,6 +669,10 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 	/* shm is used, be sure it is initialized */
 	if(!shm_initialized() && init_shm() < 0)
 		return -1;
+
+	if(ksr_tls_lock_init() < 0) {
+		return -1;
+	}
 
 	if(tls_pre_init() < 0)
 		return -1;
