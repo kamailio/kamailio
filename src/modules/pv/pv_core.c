@@ -1100,7 +1100,7 @@ int pv_get_diversion(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	}
 
 	if(param->pvn.u.isname.name.n == 1) { /* uri */
-		return pv_get_strval(msg, param, res, &(get_diversion(msg)->uri));
+		return pv_get_strval(msg, param, res, &(get_diversion(msg)->id->uri));
 	}
 
 	if(param->pvn.u.isname.name.n == 2) { /* reason param */
@@ -2090,6 +2090,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	via_body_t *vb = NULL;
 	rr_t *rrb = NULL;
 	contact_t *cb = NULL;
+	diversion_body_t *db = NULL;
 	p_id_body_t *ppib = NULL;
 	p_id_body_t *paib = NULL;
 	hdr_field_t *hf = NULL;
@@ -2340,6 +2341,58 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		return pv_get_null(msg, param, res);
 	}
 
+	if((tv.flags == 0) && (tv.ri == HDR_DIVERSION_T)) {
+		if(msg->diversion == NULL) {
+			LM_WARN("no Diversion header\n");
+			return pv_get_null(msg, param, res);
+		}
+
+		if(parse_diversion_header(msg) < 0) {
+			LM_WARN("failed to parse Diversion headers\n");
+			return pv_get_null(msg, param, res);
+		}
+
+		db = (diversion_body_t *)msg->diversion->parsed;
+		n = 0;
+
+		while(db != NULL) {
+			n += db->num_ids;
+			db = db->next;
+		}
+
+		if(idx < 0) {
+			idx = -idx;
+			if(idx > n) {
+				LM_WARN("index out of range\n");
+				return pv_get_null(msg, param, res);
+			}
+			idx = n - idx;
+		}
+
+		n = 0;
+		db = (diversion_body_t *)msg->diversion->parsed;
+		/* loop through all parsed Diversion headers lists */
+		while(db != NULL) {
+			if(n + db->num_ids > idx) {
+				/* Calculate the index within this specific list */
+				int innerIndex = idx - n;
+
+				/* Access the desired element within this list */
+				sval.s = db->id[innerIndex].body.s;
+				sval.len = db->id[innerIndex].body.len;
+				trim(&sval);
+				res->rs = sval;
+				return 0;
+			}
+
+			/* Move to the next Diversion header list */
+			n += db->num_ids;
+			db = db->next;
+		}
+		LM_DBG("unexpected diversion index out of range\n");
+		return pv_get_null(msg, param, res);
+	}
+
 	if((tv.flags == 0) && (tv.ri == HDR_PPI_T)) {
 		if(msg->ppi == NULL) {
 			LM_DBG("no PPI header\n");
@@ -2561,6 +2614,25 @@ int pv_get_hflc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			}
 		}
 		return pv_get_sintval(msg, param, res, n);
+	}
+
+	if((tv.flags == 0) && (tv.ri == HDR_DIVERSION_T)) {
+		if(msg->diversion == NULL) {
+			LM_DBG("no Diversion header\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		if(parse_diversion_header(msg) < 0) {
+			LM_DBG("failed to parse Diversion headers\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+
+		diversion_body_t *db = (diversion_body_t *)msg->diversion->parsed;
+		int diversion_body_count = 0;
+		while(db != NULL) {
+			diversion_body_count += db->num_ids;
+			db = db->next;
+		}
+		return pv_get_sintval(msg, param, res, diversion_body_count);
 	}
 
 	if((tv.flags == 0) && (tv.ri == HDR_PPI_T)) {
