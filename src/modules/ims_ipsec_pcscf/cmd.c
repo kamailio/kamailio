@@ -806,6 +806,10 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 	struct pcontact_info ci;
 	int ret = IPSEC_CMD_FAIL; // FAIL by default
 	tm_cell_t *t = NULL;
+	sip_msg_t *req = NULL;
+	security_t *req_sec_params = NULL;
+	ipsec_t *s = NULL;
+	ipsec_t *old_s = NULL;
 
 	if(m->first_line.type == SIP_REPLY) {
 		t = tmb.t_gett();
@@ -847,15 +851,15 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		goto cleanup;
 	}
 
-	struct sip_msg *req = t->uas.request;
+	req = t->uas.request;
 
 	// Parse security parameters from the REGISTER request and get some data for the new tunnels
-	security_t *req_sec_params = cscf_get_security(req);
-	ipsec_t *s;
-	ipsec_t *old_s = NULL;
+	req_sec_params = cscf_get_security(req);
 
 	// Update contacts only for initial registration, for re-registration the existing contacts shouldn't be updated.
-	if(ci.via_port == SIP_PORT) {
+	if(ci.via_port == SIP_PORT
+			|| (pcontact->security_temp->data.ipsec->port_ps == 0
+					&& pcontact->security_temp->data.ipsec->port_pc == 0)) {
 		LM_DBG("Registration for contact with AOR [%.*s], VIA [%d://%.*s:%d], "
 			   "received_host [%d://%.*s:%d]\n",
 				ci.aor.len, ci.aor.s, ci.via_prot, ci.via_host.len,

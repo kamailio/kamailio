@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Victor Seva (sipwise.com)
+ * Copyright (C) 2015-2023 Victor Seva (sipwise.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *

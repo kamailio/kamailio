@@ -2,7 +2,7 @@
  * pv_headers
  *
  * Copyright (C)
- * 2020 Victor Seva <vseva@sipwise.com>
+ * 2020-2023 Victor Seva <vseva@sipwise.com>
  * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
  * This file is part of Kamailio, a free SIP server.
@@ -132,7 +132,7 @@ char *pvh_detect_split_char(char *val)
 	return pvh_detect_split_char(val + (quote_b - val + 1));
 }
 
-int pvh_split_values(str *s, char d[][header_value_size], int *d_size,
+int pvh_split_values(str *s, char d[][_pvh_params.hdr_value_size], int *d_size,
 		int keep_spaces, char *marker)
 {
 	char *p = NULL;
@@ -157,7 +157,7 @@ int pvh_split_values(str *s, char d[][header_value_size], int *d_size,
 			}
 			if(c_idx == 0)
 				continue;
-			if(c_idx + 1 < header_value_size)
+			if(c_idx + 1 < _pvh_params.hdr_value_size)
 				c_idx++;
 			d[*d_size][c_idx] = '\0';
 			c_idx = 0;
@@ -169,7 +169,7 @@ int pvh_split_values(str *s, char d[][header_value_size], int *d_size,
 	}
 
 	if(c_idx > 0) {
-		if(c_idx >= header_value_size)
+		if(c_idx >= _pvh_params.hdr_value_size)
 			c_idx--;
 		d[*d_size][c_idx] = '\0';
 	}

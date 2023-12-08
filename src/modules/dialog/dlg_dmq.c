@@ -535,6 +535,7 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t *dlg,
 					&jdoc, jdoc.root, "to_uri", dlg->to_uri.s, dlg->to_uri.len);
 			srjson_AddStrToObject(&jdoc, jdoc.root, "req_uri", dlg->req_uri.s,
 					dlg->req_uri.len);
+
 			srjson_AddStrToObject(
 					&jdoc, jdoc.root, "tag1", dlg->tag[0].s, dlg->tag[0].len);
 			srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1", dlg->cseq[0].s,
@@ -578,14 +579,16 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t *dlg,
 					srjson_AddNumberToObject(
 							&jdoc, jdoc.root, "lifetime", dlg->lifetime);
 
-					srjson_AddStrToObject(&jdoc, jdoc.root, "tag1",
-							dlg->tag[0].s, dlg->tag[0].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1",
-							dlg->cseq[0].s, dlg->cseq[0].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "route_set1",
-							dlg->route_set[0].s, dlg->route_set[0].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "contact1",
-							dlg->contact[0].s, dlg->contact[0].len);
+					if(action != DLG_DMQ_UPDATE) {
+						srjson_AddStrToObject(&jdoc, jdoc.root, "tag1",
+								dlg->tag[0].s, dlg->tag[0].len);
+						srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1",
+								dlg->cseq[0].s, dlg->cseq[0].len);
+						srjson_AddStrToObject(&jdoc, jdoc.root, "route_set1",
+								dlg->route_set[0].s, dlg->route_set[0].len);
+						srjson_AddStrToObject(&jdoc, jdoc.root, "contact1",
+								dlg->contact[0].s, dlg->contact[0].len);
+					}
 					break;
 				case DLG_STATE_CONFIRMED:
 					srjson_AddNumberToObject(
@@ -593,23 +596,24 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t *dlg,
 					srjson_AddNumberToObject(
 							&jdoc, jdoc.root, "lifetime", dlg->lifetime);
 
-					srjson_AddStrToObject(&jdoc, jdoc.root, "tag1",
-							dlg->tag[0].s, dlg->tag[0].len);
+					if(action != DLG_DMQ_UPDATE) {
+						srjson_AddStrToObject(&jdoc, jdoc.root, "tag1",
+								dlg->tag[0].s, dlg->tag[0].len);
+						srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1",
+								dlg->cseq[0].s, dlg->cseq[0].len);
+						srjson_AddStrToObject(&jdoc, jdoc.root, "route_set1",
+								dlg->route_set[0].s, dlg->route_set[0].len);
+						srjson_AddStrToObject(&jdoc, jdoc.root, "contact1",
+								dlg->contact[0].s, dlg->contact[0].len);
+					}
 					srjson_AddStrToObject(&jdoc, jdoc.root, "tag2",
 							dlg->tag[1].s, dlg->tag[1].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1",
-							dlg->cseq[0].s, dlg->cseq[0].len);
 					srjson_AddStrToObject(&jdoc, jdoc.root, "cseq2",
 							dlg->cseq[1].s, dlg->cseq[1].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "route_set1",
-							dlg->route_set[0].s, dlg->route_set[0].len);
 					srjson_AddStrToObject(&jdoc, jdoc.root, "route_set2",
 							dlg->route_set[1].s, dlg->route_set[1].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "contact1",
-							dlg->contact[0].s, dlg->contact[0].len);
 					srjson_AddStrToObject(&jdoc, jdoc.root, "contact2",
 							dlg->contact[1].s, dlg->contact[1].len);
-
 					break;
 				case DLG_STATE_DELETED:
 					//dlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;

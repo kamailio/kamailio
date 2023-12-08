@@ -2,7 +2,7 @@
  * pv_headers
  *
  * Copyright (C)
- * 2020 Victor Seva <vseva@sipwise.com>
+ * 2020-2023 Victor Seva <vseva@sipwise.com>
  * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
  * This file is part of Kamailio, a free SIP server.
@@ -35,7 +35,7 @@ int pvh_str_free(str *s);
 int pvh_str_copy(str *dst, str *src, unsigned int max_size);
 int pvh_extract_display_uri(char *suri, str *display, str *duri);
 char *pvh_detect_split_char(char *s);
-int pvh_split_values(str *s, char d[][header_value_size], int *d_size,
+int pvh_split_values(str *s, char d[][_pvh_params.hdr_value_size], int *d_size,
 		int keep_spaces, char *marker);
 
 #endif /* PV_STR_H */

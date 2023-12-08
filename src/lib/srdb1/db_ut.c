@@ -610,11 +610,16 @@ int db_val2pv_spec(struct sip_msg *msg, db_val_t *dbval, pv_spec_t *pvs)
 				pv.rs.len = LL_LEN;
 				db_longlong2str(dbval->val.ll_val, ll_buf, &pv.rs.len);
 				pv.rs.s = ll_buf;
-				/* if it fits, also store as 32 bit integer*/
-				if(!((unsigned long long)dbval->val.ll_val
-						   & 0xffffffff00000000ULL)) {
+				/* if it fits, also store as long number */
+				if(sizeof(long long) == sizeof(long)) {
 					pv.flags |= PV_VAL_INT | PV_TYPE_INT;
-					pv.ri = (int)dbval->val.ll_val;
+					pv.ri = (long)dbval->val.ll_val;
+				} else {
+					if(dbval->val.ll_val >= LONG_MIN
+							&& dbval->val.ll_val <= LONG_MAX) {
+						pv.flags |= PV_VAL_INT | PV_TYPE_INT;
+						pv.ri = (long)dbval->val.ll_val;
+					}
 				}
 				break;
 			default:

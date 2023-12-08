@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Victor Seva (sipwise.com)
+ * Copyright (C) 2015-2023 Victor Seva (sipwise.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -24,6 +24,6 @@
 #define _CFGT_MOD_H
 
 /*! flag to protect against wrong initialization */
-extern unsigned int init_flag;
+extern unsigned int _cfgt_init_flag;
 
 #endif

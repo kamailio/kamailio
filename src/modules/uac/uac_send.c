@@ -210,6 +210,7 @@ int pv_set_uac_req(
 				_uac_req.s_body.len = 0;
 				_uac_req.s_method.len = 0;
 				_uac_req.s_callid.len = 0;
+				_uac_req.s_sock.len = 0;
 				_uac_req.evroute = 0;
 				_uac_req.evtype = 0;
 				_uac_req.evcode = 0;
@@ -399,7 +400,7 @@ int pv_set_uac_req(
 			break;
 		case 12:
 			if(tval == NULL) {
-				_uac_req.s_apasswd.len = 0;
+				_uac_req.s_sock.len = 0;
 				return 0;
 			}
 			if(!(tval->flags & PV_VAL_STR)) {
