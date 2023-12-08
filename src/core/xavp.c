@@ -1184,7 +1184,8 @@ int xavp_serialize_fields_style(str *rname, int mode, char *obuf, int olen)
 				}
 				break;
 			default:
-				LM_DBG("skipping value type: %d\n", avp->val.type);
+				LM_INFO("skipping field [%.*s] value type: %d\n", avp->name.len,
+						avp->name.s, avp->val.type);
 				ostr.len = 0;
 		}
 		if(ostr.len > 0) {
@@ -1678,7 +1679,8 @@ int xavu_serialize_fields(str *rname, char *obuf, int olen)
 				}
 				break;
 			default:
-				LM_DBG("skipping value type: %d\n", avu->val.type);
+				LM_INFO("skipping field [%.*s] value type: %d\n", avu->name.len,
+						avu->name.s, avu->val.type);
 				ostr.len = 0;
 		}
 		if(ostr.len > 0) {
@@ -2652,7 +2654,8 @@ int xavi_serialize_fields(str *rname, char *obuf, int olen)
 				}
 				break;
 			default:
-				LM_DBG("skipping value type: %d\n", avi->val.type);
+				LM_INFO("skipping field [%.*s] value type: %d\n", avi->name.len,
+						avi->name.s, avi->val.type);
 				ostr.len = 0;
 		}
 		if(ostr.len > 0) {
