@@ -1341,6 +1341,7 @@ int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype)
 	char *p;
 	str ip, port;
 	int len;
+	int af;
 	str proto = STR_NULL;
 
 	if(!uri || !m || !m->rcv.bind_address) {
@@ -1385,8 +1386,13 @@ int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype)
 		port.s = m->rcv.bind_address->useinfo.port_no_str.s;
 		port.len = m->rcv.bind_address->useinfo.port_no_str.len;
 	}
+	if(atype == 1 && m->rcv.bind_address->useinfo.address_str.len > 0) {
+		af = m->rcv.bind_address->useinfo.af;
+	} else {
+		af = m->rcv.src_ip.af;
+	}
 
-	len = 4 + ip.len + 2 * (m->rcv.src_ip.af == AF_INET6) + 1 + port.len;
+	len = 4 + ip.len + 2 * (af == AF_INET6) + 1 + port.len;
 	if(proto.s) {
 		len += TRANSPORT_PARAM_LEN;
 		len += proto.len;
@@ -1401,11 +1407,11 @@ int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype)
 	memcpy(p, "sip:", 4);
 	p += 4;
 
-	if(m->rcv.src_ip.af == AF_INET6)
+	if(af == AF_INET6)
 		*p++ = '[';
 	memcpy(p, ip.s, ip.len);
 	p += ip.len;
-	if(m->rcv.src_ip.af == AF_INET6)
+	if(af == AF_INET6)
 		*p++ = ']';
 
 	*p++ = ':';
