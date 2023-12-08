@@ -178,14 +178,13 @@ int parse_privacy(struct sip_msg *msg)
 
 	values = 0;
 	p = next.s;
-	len = next.len;
-	beyond = p + len;
+	beyond = next.s + next.len;
 
 	while(p < beyond) {
+		len = beyond - p;
 		if((val_len = parse_priv_value(p, len, &value)) != 0) {
 			values |= value;
 			p = p + val_len;
-			len = len - val_len;
 		} else {
 			LM_ERR("invalid privacy value\n");
 			return -1;
