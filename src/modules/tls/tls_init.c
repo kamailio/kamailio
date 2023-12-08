@@ -78,7 +78,7 @@ int ksr_tls_lock_init(void)
 {
 	pthread_mutexattr_t attr;
 
-	if(!(ksr_tls_init_mode & TLS_MODE_PTHREAD_LOCK_SHM)) {
+	if(ksr_tls_lock_shm != NULL) {
 		return 0;
 	}
 	ksr_tls_lock_shm = (pthread_mutex_t *)shm_mallocxz(sizeof(pthread_mutex_t));
@@ -721,6 +721,11 @@ int tls_pre_init(void)
 	LM_INFO("libssl linked mode: static\n");
 #endif
 
+	if(ksr_tls_lock_init() < 0) {
+		LM_ERR("failed to init local lock\n");
+		return -1;
+	}
+
 	/*
 	 * this has to be called before any function calling CRYPTO_malloc,
 	 * CRYPTO_malloc will set allow_customize in openssl to 0
@@ -771,6 +776,10 @@ int tls_h_mod_pre_init_f(void)
 	if(tls_mod_preinitialized == 1) {
 		LM_DBG("already mod pre-initialized\n");
 		return 0;
+	}
+	if(ksr_tls_lock_init() < 0) {
+		LM_ERR("failed to init local lock\n");
+		return -1;
 	}
 	LM_DBG("preparing tls env for modules initialization\n");
 #if OPENSSL_VERSION_NUMBER >= 0x010100000L && !defined(LIBRESSL_VERSION_NUMBER)
