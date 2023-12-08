@@ -122,6 +122,7 @@ typedef struct advertise_info
 {
 	str name;				/* name - eg.: foo.bar or 10.0.0.1 */
 	int proto;				/* protocol id */
+	int af;					/* address family based on [  ] around name */
 	unsigned short port_no; /* port number */
 	short port_pad;			/* padding field */
 	str port_no_str;		/* port number converted to string -- optimization*/

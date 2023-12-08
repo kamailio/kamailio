@@ -336,6 +336,7 @@ static inline struct socket_info *new_sock_info(char *name,
 		if(usename[0] == '[' && usename[si->useinfo.name.len - 1] == ']') {
 			si->useinfo.address_str.len = si->useinfo.name.len - 2;
 			p = si->useinfo.name.s + 1;
+			si->useinfo.af = AF_INET6;
 		} else {
 			si->useinfo.address_str.len = si->useinfo.name.len;
 			p = si->useinfo.name.s;
