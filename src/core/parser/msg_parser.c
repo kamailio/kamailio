@@ -1341,31 +1341,32 @@ int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype)
 	char *p;
 	str ip, port;
 	int len;
-	str proto;
+	str proto = STR_NULL;
 
 	if(!uri || !m || !m->rcv.bind_address) {
 		ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if(tmode == 0) {
-		switch(m->rcv.proto) {
-			case PROTO_NONE:
-			case PROTO_UDP:
-				proto.s =
-						0; /* Do not add transport parameter, UDP is default */
-				proto.len = 0;
-				break;
-			default:
-				if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto) < 0) {
-					ERR("unknown transport protocol\n");
-					return -1;
-				}
-		}
+	if((tmode == 0)
+			&& (m->rcv.proto == PROTO_NONE || m->rcv.proto == PROTO_UDP)) {
+		/* do not add transport parameter, UDP is default */
+		proto.s = NULL;
+		proto.len = 0;
 	} else {
-		if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto) < 0) {
-			ERR("unknown transport protocol\n");
-			return -1;
+		if(atype == 0 || m->rcv.bind_address->useinfo.address_str.len <= 0
+				|| m->rcv.bind_address->useinfo.proto == PROTO_NONE) {
+			if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto) < 0) {
+				ERR("unknown transport protocol\n");
+				return -1;
+			}
+		} else {
+			if(get_valid_proto_string(
+					   m->rcv.bind_address->useinfo.proto, 1, 0, &proto)
+					< 0) {
+				ERR("unknown transport protocol\n");
+				return -1;
+			}
 		}
 	}
 
