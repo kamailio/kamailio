@@ -112,6 +112,7 @@ static int sca_call_info_header_append_appearances(
 	str state_str;
 	int slot_idx;
 	int len = -1;
+	int l1 = -1;
 	int usedlen = -1;
 
 	slot_idx =
@@ -153,9 +154,14 @@ static int sca_call_info_header_append_appearances(
 		sca_appearance_state_to_str(app->state, &state_str);
 
 		// state_str.s is a nul-terminated string literal
-		len += snprintf(hdrbuf + len, maxlen - len,
+		l1 = snprintf(hdrbuf + len, maxlen - len,
 				">;appearance-index=%d;appearance-state=%s", app->index,
 				state_str.s);
+		if(l1 < 0 || l1 >= maxlen - len) {
+			LM_ERR("failed to print the header\n");
+			return -1;
+		}
+		len += l1;
 
 		if(!SCA_STR_EMPTY(&app->uri)) {
 			hdrbuf[len] = ';';
