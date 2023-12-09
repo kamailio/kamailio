@@ -667,8 +667,8 @@ int pv_set_dlg_ctx(
 			break;
 		case 4:
 			if(val && val->flags & PV_VAL_STR) {
-				if(val->rs.s[val->rs.len] == '\0'
-						&& val->rs.len < DLG_TOROUTE_SIZE) {
+				if(val->rs.len < DLG_TOROUTE_SIZE
+						&& val->rs.s[val->rs.len] == '\0') {
 					_dlg_ctx.to_route = route_lookup(&main_rt, val->rs.s);
 					strcpy(_dlg_ctx.to_route_name, val->rs.s);
 				} else {
