@@ -33,6 +33,7 @@
 #include <limits.h>
 #include <time.h>
 #include <unistd.h>
+#include <stddef.h>
 #include <ctype.h>
 #include <string.h>
 #include <strings.h>
@@ -143,6 +144,8 @@
 
 #define is_in_str(p, in) (p < in->s + in->len && *p)
 
+#define ksr_container_of(ptr, type, member) \
+	((type *)((char *)(ptr)-offsetof(type, member)))
 
 /* links a value to a msgid */
 struct msgid_var
