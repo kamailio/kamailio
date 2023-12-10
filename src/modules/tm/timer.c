@@ -486,8 +486,8 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln *tl, void *p)
 	unsigned long crt_retr_interval_ms;
 	struct cell *t;
 
-	rbuf = (struct retr_buf *)((void *)tl
-							   - (void *)(&((struct retr_buf *)0)->timer));
+	rbuf = ksr_container_of(tl, struct retr_buf, timer);
+
 	membar_depends(); /* to be on the safe side */
 	t = rbuf->my_T;
 
