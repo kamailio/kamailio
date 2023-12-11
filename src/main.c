@@ -2094,6 +2094,7 @@ int main(int argc, char **argv)
 	struct name_lst *n_lst;
 	char *p;
 	struct stat st = {0};
+	long l1 = 0;
 
 #define KSR_TBUF_SIZE 512
 	char tbuf[KSR_TBUF_SIZE];
@@ -2181,12 +2182,20 @@ int main(int argc, char **argv)
 					fprintf(stderr, "bad private mem size\n");
 					goto error;
 				}
-				pkg_mem_size = strtol(optarg, &tmp, 10) * 1024 * 1024;
+				l1 = strtol(optarg, &tmp, 10);
 				if(tmp && (*tmp)) {
 					fprintf(stderr, "bad private mem size number: -M %s\n",
 							optarg);
 					goto error;
-				};
+				}
+				/* safety check for upper limit of 1TB */
+				if(l1 <= 0 || l1 > 1024L * 1024) {
+					fprintf(stderr,
+							"our of limits private mem size number: -M %s\n",
+							optarg);
+					goto error;
+				}
+				pkg_mem_size = 1024UL * 1024 * l1;
 				break;
 			case 'x':
 				sr_memmng_shm = optarg;
@@ -2315,11 +2324,18 @@ int main(int argc, char **argv)
 					fprintf(stderr, "bad shared mem size\n");
 					goto error;
 				}
-				shm_mem_size = strtol(optarg, &tmp, 10) * 1024 * 1024;
+				l1 = strtol(optarg, &tmp, 10);
 				if(tmp && (*tmp)) {
 					fprintf(stderr, "bad shmem size number: -m %s\n", optarg);
 					goto error;
-				};
+				}
+				/* safety check for upper limit of 16TB */
+				if(l1 <= 0 || l1 > 16L * 1024 * 1024) {
+					fprintf(stderr, "our of limits shmem size number: -m %s\n",
+							optarg);
+					goto error;
+				}
+				shm_mem_size = 1024UL * 1024 * l1;
 				LM_INFO("shared memory: %ld bytes\n", shm_mem_size);
 				break;
 			case 'd':
