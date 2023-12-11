@@ -1092,7 +1092,7 @@ action_u_t *fixup_get_param(
 {
 	action_u_t *a;
 	/* cur_param points to a->u.string, get pointer to a */
-	a = (void *)((char *)cur_param - offsetof(action_u_t, u.string));
+	a = (action_u_t *)((char *)cur_param - offsetof(action_u_t, u.string));
 	return a + required_param_no - cur_param_no;
 }
 
@@ -1114,7 +1114,7 @@ int fixup_get_param_count(void **cur_param, int cur_param_no)
 action_param_type *fixup_get_param_ptype(void **param)
 {
 	action_u_t *a;
-	a = (void *)((char *)param - offsetof(action_u_t, u.string));
+	a = (action_u_t *)((char *)param - offsetof(action_u_t, u.string));
 	return &a->type;
 }
 
