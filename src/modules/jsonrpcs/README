@@ -354,7 +354,7 @@ modparam("jsonrpcs", "dgram_timeout", 2000)
 
    Example 1.14. Set tcp_socket parameter
 ...
-modparam("jsonrpcs", "tcp_socket", "udp:1.2.3.4:5042")
+modparam("jsonrpcs", "tcp_socket", "tcp:1.2.3.4:5042")
 ...
 
 5. Functions
