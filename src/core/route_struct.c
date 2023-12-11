@@ -561,11 +561,12 @@ void print_actions(struct action *a)
  */
 struct action *get_action_from_param(void **param, int param_no)
 {
-	struct action *ac, ac2;
-	action_u_t *au, au2;
+	cfg_action_t *ac;
+	action_u_t *au;
 	/* param points to au->u.string, get pointer to au */
-	au = (void *)((char *)param - ((char *)&au2.u.string - (char *)&au2));
+	au = ksr_container_of(param, action_u_t, u.string);
 	au = au - 1 - param_no;
-	ac = (void *)((char *)au - ((char *)&ac2.val - (char *)&ac2));
+	/* au points to ac->val, get pointer to ac */
+	ac = ksr_container_of(au, cfg_action_t, val);
 	return ac;
 }
