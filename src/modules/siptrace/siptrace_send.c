@@ -158,7 +158,8 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	char *searchend = NULL;
 	char *eoh = NULL;
 	char *xheaders = NULL;
-	long long unsigned int tv_sec, tv_usec;
+	long long unsigned int tv_sec = 0, tv_usec = 0;
+	int rv = 0;
 
 	if(trace_xheaders_read == 0) {
 		return 0;
@@ -202,16 +203,17 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	}
 
 	// Parse the x-headers: scanf()
-	if(sscanf(xheaders,
-			   "\r\n"
-			   "X-Siptrace-Fromip: %50s\r\n"
-			   "X-Siptrace-Toip: %50s\r\n"
-			   "X-Siptrace-Time: %llu %llu\r\n"
-			   "X-Siptrace-Method: %50s\r\n"
-			   "X-Siptrace-Dir: %3s",
-			   sto->fromip.s, sto->toip.s, &tv_sec, &tv_usec, sto->method.s,
-			   sto->dir)
-			== EOF) {
+	rv = sscanf(xheaders,
+			"\r\n"
+			"X-Siptrace-Fromip: %50s\r\n"
+			"X-Siptrace-Toip: %50s\r\n"
+			"X-Siptrace-Time: %llu %llu\r\n"
+			"X-Siptrace-Method: %50s\r\n"
+			"X-Siptrace-Dir: %3s",
+			sto->fromip.s, sto->toip.s, &tv_sec, &tv_usec, sto->method.s,
+			sto->dir);
+
+	if(rv == EOF || rv < 6) {
 		LM_ERR("malformed x-headers\n");
 		goto erroraftermalloc;
 	}
