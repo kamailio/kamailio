@@ -154,7 +154,7 @@ credentials()
 mdbg() {
 	if [ "0$VERBOSE" -ne 0 ] ; then
 		if [ -t 1 -a -z "$NOHLPRINT" ] ; then
-			echo -e "\033[1m$1\033[0m"
+			printf "\033[1m%s\033[0m\n" "$1"
 		else
 			echo "$1"
 		fi
@@ -163,7 +163,7 @@ mdbg() {
 
 mwarn() {
 	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
-		echo -e '\E[37;32m'"\033[1mWARNING: $1\033[0m"
+		printf "\033[32;1mWARNING: %s\033[0m\n" "$1"
 	else
 		echo "** WARNING: $1"
 	fi
@@ -171,7 +171,7 @@ mwarn() {
 
 minfo() {
 	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
-		echo -e '\E[37;33m'"\033[1mINFO: $1\033[0m"
+		printf "\033[33;1mINFO: %s\033[0m\n" "$1"
 	else
 		echo "** INFO: $1"
 	fi
@@ -179,7 +179,7 @@ minfo() {
 
 mecho() {
 	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
-		echo -e "\033[1m$1\033[0m"
+		printf "\033[1m%s\033[0m\n" "$1"
 	else
 		echo "$1"
 	fi
@@ -187,7 +187,7 @@ mecho() {
 
 merr() {
 	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
-		echo -e '\E[37;31m'"\033[1mERROR: $1\033[0m"
+		printf "\033[31;1mERROR: %s\033[0m\n" "$1"
 	else
 		echo "** ERROR: $1"
 	fi

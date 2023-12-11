@@ -48,7 +48,7 @@ check_kamailio_config ()
         retcode=$?
         if [ "$retcode" != '0' ]; then
             echo "Not starting $PROG: invalid configuration file!"
-            echo -e "\n$out\n"
+            printf "\n$out\n\n"
             exit 1
         fi
 }

@@ -86,7 +86,7 @@ fi
 if [ -f "$MYLIBDIR/kamctl.base" ]; then
 	. "$MYLIBDIR/kamctl.base"
 else
-	echo -e "Cannot load core functions '$MYLIBDIR/kamctl.base' - exiting ...\n"
+	printf "Cannot load core functions '%s' - exiting ...\n\n" "$MYLIBDIR/kamctl.base"
 	exit -1
 fi
 
