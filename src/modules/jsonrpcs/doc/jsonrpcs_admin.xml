@@ -413,7 +413,7 @@ modparam("jsonrpcs", "dgram_timeout", 2000)
 		<title>Set <varname>tcp_socket</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpcs", "tcp_socket", "udp:1.2.3.4:5042")
+modparam("jsonrpcs", "tcp_socket", "tcp:1.2.3.4:5042")
 ...
 </programlisting>
 		</example>
@@ -638,4 +638,3 @@ rm /tmp/kamailio_jsonrpc_reply_fifo
 	</section>
 
 </chapter>
-
