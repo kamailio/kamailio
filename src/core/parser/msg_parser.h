@@ -396,6 +396,8 @@ typedef struct sip_msg
 	char *unparsed; /*!< here we stopped parsing*/
 
 	struct receive_info rcv; /*!< source & dest ip, ports, proto a.s.o*/
+	struct receive_info
+			haproxy_rcv; /*!< source & dest ip, ports, proto a.s.o for the message from haproxy*/
 
 	char *buf;		  /*!< scratch pad, holds a modified message,
 						*  via, etc. point into it */

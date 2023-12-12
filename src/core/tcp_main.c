@@ -1002,6 +1002,8 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 	src_ip = &c->rcv.src_ip;
 	dst_ip = &c->rcv.dst_ip;
 
+	c->haproxy_rcv = c->rcv;
+
 	if(bytes >= 16 && memcmp(&hdr.v2, v2sig, 12) == 0
 			&& (hdr.v2.ver_cmd & 0xF0) == 0x20) {
 		LM_DBG("received PROXY protocol v2 header\n");
@@ -1195,7 +1197,8 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 		int state)
 {
 	struct tcp_connection *c;
-	int rd_b_size, ret;
+	int rd_b_size;
+	int ret = -1;
 
 	rd_b_size = cfg_get(tcp, tcp_cfg, rd_buf_size);
 	c = shm_malloc(sizeof(struct tcp_connection) + rd_b_size);
@@ -1243,7 +1246,7 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 	init_tcp_req(&c->req, (char *)c + sizeof(struct tcp_connection), rd_b_size);
 	c->id = (*connection_id)++;
 	c->rcv.proto_reserved1 = 0; /* this will be filled before receive_message*/
-	c->rcv.proto_reserved2 = 0;
+	c->rcv.proto_reserved2 = !ret ? 1 : 0; /* haproxy msg marker */
 	c->state = state;
 	c->initstate = state;
 	c->extra_data = 0;
