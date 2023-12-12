@@ -141,6 +141,7 @@ time_t xml_parse_dateTime(char *xml_time_str)
 	char h1, h2, m1, m2;
 	int sign = 1;
 	signed int timezone_diff = 0;
+	int rv = 0;
 
 	p = strptime(xml_time_str, "%F", &tm);
 	if(p == NULL) {
@@ -178,7 +179,8 @@ time_t xml_parse_dateTime(char *xml_time_str)
 
 	p++;
 
-	if(sscanf(p, "%c%c:%c%c", &h1, &h2, &m1, &m2) < 0) {
+	rv = sscanf(p, "%c%c:%c%c", &h1, &h2, &m1, &m2);
+	if(rv == EOF || rv < 4) {
 		printf("error: failed to parse time\n");
 		return 0;
 	}
