@@ -1595,7 +1595,6 @@ int tr_eval_uri(
 			sv.len++;
 			memcpy(_tr_buffer, sv.s, sv.len);
 			sv.s = _tr_buffer;
-			sv.len++;
 			if((_tr_parsed_uri.user.len > 0) && (subtype != TR_URI_DURI)) {
 				memcpy(sv.s + sv.len, _tr_parsed_uri.user.s,
 						_tr_parsed_uri.user.len);
