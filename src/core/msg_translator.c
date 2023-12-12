@@ -115,6 +115,7 @@
 
 extern char version[];
 extern int version_len;
+extern int ksr_tcp_accept_haproxy;
 
 str _ksr_xavp_via_params = STR_NULL;
 str _ksr_xavp_via_fields = STR_NULL;
@@ -588,6 +589,9 @@ static inline int lumps_len(
 	int recv_proto_id = PROTO_NONE;
 	int recv_af = 0;
 	struct socket_info *send_sock;
+	char ip_buf[MAX_URI_SIZE] = {0};
+	str _recv_address_str = STR_NULL;
+	str _recv_port_str = STR_NULL;
 
 
 #ifdef USE_COMP
@@ -869,6 +873,12 @@ static inline int lumps_len(
 		if(msg->rcv.bind_address->useinfo.name.len > 0) {
 			recv_address_str = &(msg->rcv.bind_address->useinfo.name);
 			recv_af = msg->rcv.bind_address->useinfo.af;
+		} else if(ksr_tcp_accept_haproxy && msg->rcv.proto_reserved2) {
+			ip_addr2sbuf(&msg->rcv.dst_ip, ip_buf, MAX_URI_SIZE);
+			recv_address_str = &_recv_address_str;
+			recv_address_str->s = ip_buf;
+			recv_address_str->len = strlen(ip_buf);
+			recv_af = msg->rcv.dst_ip.af;
 		} else {
 			recv_address_str = &(msg->rcv.bind_address->address_str);
 			recv_af = msg->rcv.bind_address->address.af;
@@ -878,6 +888,10 @@ static inline int lumps_len(
 				recv_port_str = &(msg->rcv.bind_address->useinfo.port_no_str);
 				recv_port_no = msg->rcv.bind_address->useinfo.port_no;
 			}
+		} else if(ksr_tcp_accept_haproxy && msg->rcv.proto_reserved2) {
+			recv_port_str = &_recv_port_str;
+			recv_port_str->s = int2str(msg->rcv.dst_port, &recv_port_str->len);
+			recv_port_no = msg->rcv.dst_port;
 		} else {
 			recv_port_str = &(msg->rcv.bind_address->port_no_str);
 			recv_port_no = msg->rcv.bind_address->port_no;
@@ -1002,6 +1016,9 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 	int recv_proto_id = PROTO_NONE;
 	int recv_af = 0;
 	struct socket_info *send_sock;
+	char ip_buf[MAX_URI_SIZE] = {0};
+	str _recv_address_str = STR_NULL;
+	str _recv_port_str = STR_NULL;
 
 #ifdef USE_COMP
 #define RCVCOMP_PARAM_ADD                                             \
@@ -1409,6 +1426,12 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 		if(msg->rcv.bind_address->useinfo.name.len > 0) {
 			recv_address_str = &(msg->rcv.bind_address->useinfo.name);
 			recv_af = msg->rcv.bind_address->useinfo.af;
+		} else if(ksr_tcp_accept_haproxy && msg->rcv.proto_reserved2) {
+			ip_addr2sbuf(&msg->rcv.dst_ip, ip_buf, MAX_URI_SIZE);
+			recv_address_str = &_recv_address_str;
+			recv_address_str->s = ip_buf;
+			recv_address_str->len = strlen(ip_buf);
+			recv_af = msg->rcv.dst_ip.af;
 		} else {
 			recv_address_str = &(msg->rcv.bind_address->address_str);
 			recv_af = msg->rcv.bind_address->address.af;
@@ -1418,6 +1441,10 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 				recv_port_str = &(msg->rcv.bind_address->useinfo.port_no_str);
 				recv_port_no = msg->rcv.bind_address->useinfo.port_no;
 			}
+		} else if(ksr_tcp_accept_haproxy && msg->rcv.proto_reserved2) {
+			recv_port_str = &_recv_port_str;
+			recv_port_str->s = int2str(msg->rcv.dst_port, &recv_port_str->len);
+			recv_port_no = msg->rcv.dst_port;
 		} else {
 			recv_port_str = &(msg->rcv.bind_address->port_no_str);
 			recv_port_no = msg->rcv.bind_address->port_no;
@@ -3649,6 +3676,8 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 		msg->path_vec.s = NULL;
 		msg->path_vec.len = 0;
 	}
+	/* reset haproxy_rcv pointer to avoid freeing - restored later */
+	msg->haproxy_rcv = NULL;
 
 	/* free old msg structure */
 	free_sip_msg(msg);
@@ -3659,6 +3688,7 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 	msg->id = tmp.id;
 	msg->pid = tmp.pid;
 	msg->rcv = tmp.rcv;
+	msg->haproxy_rcv = tmp.haproxy_rcv;
 	msg->set_global_address = tmp.set_global_address;
 	msg->set_global_port = tmp.set_global_port;
 	msg->flags = tmp.flags;
