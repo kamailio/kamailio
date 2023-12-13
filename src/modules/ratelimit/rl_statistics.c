@@ -182,7 +182,7 @@ int get_socket_list_from_proto_and_family(
 		return 0;
 	}
 
-	*ipList = pkg_malloc(numberOfSockets * (num_ip_octets + 1) * sizeof(int));
+	*ipList = pkg_malloc(sizeof(int) * numberOfSockets * (num_ip_octets + 1));
 
 	/* We couldn't allocate memory for the IP List.  So all we can do is
 	 * fail. */
