@@ -483,7 +483,7 @@ int parse_table_names(str table_name, str **table_names)
 	char *p = NULL;
 	unsigned int no_tables;
 	char *table_name_cpy;
-	unsigned int i;
+	int i;
 
 	/*parse and save table names*/
 	no_tables = 1;
