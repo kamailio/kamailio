@@ -1249,6 +1249,10 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 	// Check for UDH
 	concat = GetConcatShortMsg8bitRefIE(rp_send_data);
+	if(concat == NULL) {
+		LM_ERR("message building failure\n");
+		return -1;
+	}
 	if(concat->max_num_sm && concat->seq) {
 		sms_body.s[sms_body.len++] =
 				5; // always 5 for TP_UDH_IE_CONCAT_SM_8BIT_REF
