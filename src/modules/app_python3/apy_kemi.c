@@ -567,6 +567,12 @@ static PyObject *init_KSR(void)
 					emods[k].kexp[0].mname.s);
 
 			PyModuleDef *mmodule = malloc(sizeof(PyModuleDef));
+			if(mmodule == NULL) {
+				LM_ERR("failed to allocate system memory\n");
+				free(_sr_KSRMethods);
+				_sr_KSRMethods = NULL;
+				return NULL;
+			}
 			memset(mmodule, 0, sizeof(PyModuleDef));
 			mmodule->m_name = strndup(mname, 127);
 			mmodule->m_methods = _sr_crt_KSRMethods;
