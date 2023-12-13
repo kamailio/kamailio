@@ -2527,6 +2527,10 @@ int t_check_trans(struct sip_msg *msg)
 				return 1;
 			case 1: /* found */
 				t = get_t();
+				if(t == NULL || t == T_UNDEFINED) {
+					LM_WARN("unexpected transaction value\n");
+					return -1;
+				}
 				if(msg->REQ_METHOD == METHOD_ACK) {
 					/* ack to neg. reply  or ack to local trans.
 					 * => process it and end the script */
