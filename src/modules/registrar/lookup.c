@@ -703,8 +703,9 @@ int lookup_branches(sip_msg_t *msg, udomain_t *d)
 	for(i = 0; i < nr_branches_start; i++) {
 		crt = get_sip_branch(i);
 		/* it has to be a clean branch to do lookup for it */
-		if(crt->len <= 0 || crt->dst_uri_len > 0 || crt->path_len > 0
-				|| crt->force_send_socket != NULL || crt->flags != 0)
+		if(crt == NULL || crt->len <= 0 || crt->dst_uri_len > 0
+				|| crt->path_len > 0 || crt->force_send_socket != NULL
+				|| crt->flags != 0)
 			continue;
 		/* set the new uri from branch and lookup */
 		new_uri.s = crt->uri;
