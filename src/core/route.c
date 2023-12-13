@@ -1560,6 +1560,11 @@ inline static int comp_rve(int op, struct rval_expr *rve, int rtype,
 	if(unlikely(rv)) {
 		/* no int => str */
 		rv1 = rval_convert(h, msg, RV_STR, rv, &c1);
+		if(rv1 == NULL) {
+			LM_ERR("failure converting expression\n");
+			i = 0; /* false */
+			goto int_expr;
+		}
 		i = comp_str(op, &rv1->v.s, rtype, r, msg, h);
 		rval_destroy(rv1);
 		rval_destroy(rv);
