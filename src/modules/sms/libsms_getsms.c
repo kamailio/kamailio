@@ -187,8 +187,10 @@ static int fetchsms(struct modem *mdm, int sim, char *pdu)
 		return 0;
 	/* Now we have the end of the PDU or ASCII string */
 	*end = 0;
-	if(strlen(beginning) < SMS_BUF_SIZE) {
-		strcpy(pdu, beginning);
+	clen = strlen(beginning);
+	if(clen < SMS_BUF_SIZE) {
+		memcpy(pdu, beginning, clen);
+		pdu[clen] = '\0';
 	} else {
 		/* truncate */
 		memcpy(pdu, beginning, SMS_BUF_SIZE - 1);
