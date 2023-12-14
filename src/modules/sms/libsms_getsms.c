@@ -26,6 +26,7 @@ mailto:s.frings@mail.isis.de
 #include "libsms_sms.h"
 #include "sms_funcs.h"
 
+#define SMS_BUF_SIZE 512
 
 #define set_date(_date, _Pointer)   \
 	{                               \
@@ -131,7 +132,7 @@ static int pdu2binary(char *pdu, char *binary)
 static int fetchsms(struct modem *mdm, int sim, char *pdu)
 {
 	char command[16];
-	char answer[512];
+	char answer[SMS_BUF_SIZE];
 	char *position;
 	char *beginning;
 	char *end;
@@ -186,7 +187,13 @@ static int fetchsms(struct modem *mdm, int sim, char *pdu)
 		return 0;
 	/* Now we have the end of the PDU or ASCII string */
 	*end = 0;
-	strcpy(pdu, beginning);
+	if(strlen(beginning) < SMS_BUF_SIZE) {
+		strcpy(pdu, beginning);
+	} else {
+		/* truncate */
+		memcpy(pdu, beginning, SMS_BUF_SIZE - 1);
+		pdu[SMS_BUF_SIZE - 1] = '\0';
+	}
 
 	return sim;
 }
@@ -480,7 +487,7 @@ static inline int decode_pdu(
 
 int getsms(struct incame_sms *sms, struct modem *mdm, int sim)
 {
-	char pdu[512];
+	char pdu[SMS_BUF_SIZE];
 	int found;
 	int ret;
 
