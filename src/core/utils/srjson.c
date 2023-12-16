@@ -272,7 +272,10 @@ static const char *parse_string(
 					*ptr2++ = '\t';
 					break;
 				case 'u': /* transcode utf16 to utf8. */
-					sscanf(ptr + 1, "%4x", &uc);
+					uc = 0;
+					if(sscanf(ptr + 1, "%4x", &uc) < 1) {
+						break;
+					}
 					ptr += 4; /* get the unicode char. */
 
 					if((uc >= 0xDC00 && uc <= 0xDFFF) || uc == 0)
@@ -283,8 +286,11 @@ static const char *parse_string(
 					{
 						if(ptr[1] != '\\' || ptr[2] != 'u')
 							break;
+						uc2 = 0;
 						//missing second - half of surrogate.
-						sscanf(ptr + 3, "%4x", &uc2);
+						if(sscanf(ptr + 3, "%4x", &uc2) < 1) {
+							break;
+						}
 						ptr += 6;
 						if(uc2 < 0xDC00 || uc2 > 0xDFFF)
 							break;
