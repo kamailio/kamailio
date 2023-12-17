@@ -224,17 +224,17 @@ void t_on_reply(unsigned int go_to)
 }
 
 
-unsigned int get_on_failure()
+int get_on_failure()
 {
 	return goto_on_failure;
 }
 
-unsigned int get_on_branch_failure()
+int get_on_branch_failure()
 {
 	return goto_on_branch_failure;
 }
 
-unsigned int get_on_reply()
+int get_on_reply()
 {
 	return goto_on_reply;
 }

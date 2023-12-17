@@ -199,11 +199,11 @@ void on_failure_reply(
    replies arrive
 */
 void t_on_failure(unsigned int go_to);
-unsigned int get_on_failure(void);
+int get_on_failure(void);
 void t_on_branch_failure(unsigned int go_to);
-unsigned int get_on_branch_failure(void);
+int get_on_branch_failure(void);
 void t_on_reply(unsigned int go_to);
-unsigned int get_on_reply(void);
+int get_on_reply(void);
 
 int t_retransmit_reply(struct cell *t);
 

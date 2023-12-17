@@ -225,13 +225,11 @@ typedef struct ua_client
 	 */
 	struct retr_buf *local_ack;
 	/* the route to take if no final positive reply arrived */
-	unsigned short on_failure;
+	int on_failure;
 	/* the route to take for all failure replies */
-	unsigned short on_branch_failure;
+	int on_branch_failure;
 	/* the onreply_route to be processed if registered to do so */
-	unsigned short on_reply;
-	/* unused - keep the structure aligned to 32b */
-	unsigned short on_unused;
+	int on_reply;
 } tm_ua_client_t;
 
 
@@ -429,18 +427,18 @@ typedef struct cell
 
 	/* nr of replied branch; 0..sr_dst_max_branches=branch value,
 	 * -1 no reply, -2 local reply */
-	short relayed_reply_branch;
+	int relayed_reply_branch;
 
 	/* the route to take if no final positive reply arrived */
-	unsigned short on_failure;
+	int on_failure;
 	/* the route to take for all failure replies */
-	unsigned short on_branch_failure;
+	int on_branch_failure;
 	/* the onreply_route to be processed if registered to do so */
-	unsigned short on_reply;
+	int on_reply;
 	/* The route to take for each downstream branch separately */
-	unsigned short on_branch;
+	int on_branch;
 	/* branch route backup for late branch add (t_append_branch) */
-	unsigned short on_branch_delayed;
+	int on_branch_delayed;
 
 	/* place holder for MD5checksum, MD5_LEN bytes are extra alloc'ed */
 	char md5[0];
