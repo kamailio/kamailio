@@ -1406,7 +1406,7 @@ int tr_eval_string(
 		case TR_S_FMTLINES:
 		case TR_S_FMTLINET:
 			if(tp == NULL || tp->next == NULL) {
-				LM_ERR("substr invalid parameters (cfg line: %d)\n",
+				LM_ERR("fmtline invalid parameters (cfg line: %d)\n",
 						get_cfg_crt_line());
 				return -1;
 			}
