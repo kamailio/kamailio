@@ -1439,7 +1439,7 @@ int tr_eval_string(
 						get_cfg_crt_line());
 				return -1;
 			}
-			if(n == 0 || m >= val->rs.len) {
+			if(m >= val->rs.len) {
 				if(val->rs.len > TR_BUFFER_SIZE - 2) {
 					LM_ERR("value too large: %d\n", val->rs.len);
 					return -1;
