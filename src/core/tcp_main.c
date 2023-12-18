@@ -1018,12 +1018,12 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 						src_ip->af = AF_INET;
 						src_ip->len = 4;
 						src_ip->u.addr32[0] = hdr.v2.addr.ip4.src_addr;
-						c->rcv.src_port = hdr.v2.addr.ip4.src_port;
+						c->rcv.src_port = htons(hdr.v2.addr.ip4.src_port);
 
 						dst_ip->af = AF_INET;
 						dst_ip->len = 4;
 						dst_ip->u.addr32[0] = hdr.v2.addr.ip4.dst_addr;
-						c->rcv.dst_port = hdr.v2.addr.ip4.dst_port;
+						c->rcv.dst_port = htons(hdr.v2.addr.ip4.dst_port);
 
 						goto done;
 
@@ -1031,12 +1031,12 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 						src_ip->af = AF_INET6;
 						src_ip->len = 16;
 						memcpy(src_ip->u.addr, hdr.v2.addr.ip6.src_addr, 16);
-						c->rcv.src_port = hdr.v2.addr.ip6.src_port;
+						c->rcv.src_port = htons(hdr.v2.addr.ip6.src_port);
 
 						dst_ip->af = AF_INET6;
 						dst_ip->len = 16;
-						memcpy(dst_ip->u.addr, hdr.v2.addr.ip6.src_addr, 16);
-						c->rcv.dst_port = hdr.v2.addr.ip6.dst_port;
+						memcpy(dst_ip->u.addr, hdr.v2.addr.ip6.dst_addr, 16);
+						c->rcv.dst_port = htons(hdr.v2.addr.ip6.dst_port);
 
 						goto done;
 
