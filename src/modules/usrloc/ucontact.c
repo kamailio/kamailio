@@ -62,12 +62,13 @@ void ucontact_xavp_store(ucontact_t *_c)
 		return;
 	if(ul_xavp_contact_name.s == NULL)
 		return;
+	xavp = xavp_get(&ul_xavp_contact_name, NULL);
+	if(xavp == NULL) {
+		return;
+	}
 	/* remove old list if it is set -- update case */
 	if(_c->xavp)
 		xavp_destroy_list(&_c->xavp);
-	xavp = xavp_get(&ul_xavp_contact_name, NULL);
-	if(xavp == NULL)
-		return;
 	/* clone the xavp found in core */
 	LM_DBG("trying to clone per contact xavps\n");
 	_c->xavp = xavp_clone_level_nodata(xavp);
@@ -124,6 +125,12 @@ ucontact_t *new_ucontact(
 		if(shm_str_dup(&c->instance, &_ci->instance) < 0)
 			goto error;
 	}
+	if(_ci->xavp) {
+		if(c->xavp)
+			xavp_destroy_list(&c->xavp);
+		c->xavp = xavp_clone_level_nodata(_ci->xavp);
+		// c->xavp = _ci->xavp;
+	}
 
 	c->domain = _dom;
 	c->aor = _aor;
@@ -141,6 +148,9 @@ ucontact_t *new_ucontact(
 	c->tcpconn_id = _ci->tcpconn_id;
 	c->server_id = _ci->server_id;
 	c->keepalive = (_ci->cflags & ul_nat_bflag) ? 1 : 0;
+	if(c->xavp)
+		xavp_destroy_list(&c->xavp);
+	c->xavp = xavp_clone_level_nodata(_ci->xavp);
 	ucontact_xavp_store(c);
 
 
@@ -317,6 +327,16 @@ int mem_update_ucontact(ucontact_t *_c, ucontact_info_t *_ci)
 		_c->path.len = 0;
 	}
 
+	if(_ci->xavp) {
+		if(_c->xavp)
+			xavp_destroy_list(&_c->xavp);
+		_c->xavp = xavp_clone_level_nodata(_ci->xavp);
+		// _c->xavp = _ci->xavp;
+	} else {
+		if(_c->xavp)
+			xavp_destroy_list(&_c->xavp);
+		_c->xavp = NULL;
+	}
 	ucontact_xavp_store(_c);
 
 	_c->sock = _ci->sock;
