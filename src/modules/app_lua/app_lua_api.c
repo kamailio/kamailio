@@ -448,7 +448,7 @@ int lua_sr_reload_script(int pos)
 				lock_set_release(sr_lua_locks, i);
 			}
 		} else {
-			if(pos >= 0 && pos < len) {
+			if(pos < len) {
 				lock_set_get(sr_lua_locks, pos);
 				sr_lua_script_ver->version[pos] += 1;
 				lock_set_release(sr_lua_locks, pos);
