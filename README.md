@@ -101,13 +101,6 @@ For more information about the mailing lists, please see:
 
   * https://www.kamailio.org/w/mailing-lists/
 
-### IRC Channel
-
-An open IRC discussion channel is managed by the community:
-
-  * irc server: irc.freenode.net
-  * irc channel: #kamailio
-
 ### Matrix Channel
 
 An open Matrix discussion channel is managed by the community:
