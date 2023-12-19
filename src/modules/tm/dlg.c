@@ -666,7 +666,7 @@ static inline int dlg_new_resp_uac(dlg_t *_d, struct sip_msg *_m)
 	code = _m->first_line.u.reply.statuscode;
 
 	if(code < 200) {
-		/* A provisional response, do nothing, we could
+		/* 100-199: a provisional response, do nothing, we could
 		 * update remote tag and route set but we will do that
 		 * for a positive final response anyway and I don't want
 		 * bet on presence of these fields in provisional responses
@@ -674,8 +674,8 @@ static inline int dlg_new_resp_uac(dlg_t *_d, struct sip_msg *_m)
 		 * Send a request to jan@iptel.org if you need to update
 		 * the structures here
 		 */
-	} else if((code >= 200) && (code < 299)) {
-		/* A final response, update the structures and transit
+	} else if(code < 299) {
+		/* 200-299: a final response, update the structures and transit
 		 * into DLG_CONFIRMED
 		 */
 		if(response2dlg(_m, _d) < 0)
@@ -687,7 +687,7 @@ static inline int dlg_new_resp_uac(dlg_t *_d, struct sip_msg *_m)
 			return -2;
 		}
 	} else {
-		/* A negative final response, mark the dialog as destroyed
+		/* 300-699: a negative final response, mark the dialog as destroyed
 		 * Again, I do not update the structures here because it
 		 * makes no sense to me, a dialog shouldn't be used after
 		 * it is destroyed
