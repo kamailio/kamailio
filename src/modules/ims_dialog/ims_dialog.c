@@ -1068,7 +1068,6 @@ static int ki_is_known_dlg(sip_msg_t *msg)
 static int ki_set_dlg_profile(sip_msg_t *msg, str *sprofile, str *svalue)
 {
 	struct dlg_profile_table *profile = NULL;
-	pv_elem_t *pvvalue = NULL;
 
 	if(sprofile == NULL || sprofile->s == NULL || sprofile->len <= 0) {
 		LM_ERR("invalid profile identifier\n");
@@ -1080,14 +1079,18 @@ static int ki_set_dlg_profile(sip_msg_t *msg, str *sprofile, str *svalue)
 		LM_CRIT("profile <%.*s> not defined\n", sprofile->len, sprofile->s);
 		return -1;
 	}
-
-	if(pv_parse_format(svalue, &pvvalue) || pvvalue == NULL) {
-		LM_ERR("wrong format [%.*s] for value param!\n", svalue->len,
-				svalue->s);
-		return -1;
+	if(svalue != NULL && svalue->len > 0) {
+		if(set_dlg_profile(msg, svalue, profile) < 0) {
+			LM_ERR("failed to set profile with value\n");
+			return -1;
+		}
+	} else {
+		if(set_dlg_profile(msg, NULL, profile) < 0) {
+			LM_ERR("failed to set profile\n");
+			return -1;
+		}
 	}
-
-	return w_set_dlg_profile(msg, (char *)profile, (char *)pvvalue);
+	return 1;
 }
 
 static int ki_get_profile_size(
@@ -1095,8 +1098,9 @@ static int ki_get_profile_size(
 
 {
 	struct dlg_profile_table *profile = NULL;
-	pv_elem_t *pvvalue = NULL;
 	pv_spec_t *pvs = NULL;
+	unsigned int size;
+	pv_value_t val;
 
 	if(sprofile == NULL || sprofile->s == NULL || sprofile->len <= 0) {
 		LM_ERR("invalid profile identifier\n");
@@ -1111,11 +1115,6 @@ static int ki_get_profile_size(
 		LM_CRIT("profile <%.*s> not defined\n", sprofile->len, sprofile->s);
 		return -1;
 	}
-	if(pv_parse_format(svalue, &pvvalue) || pvvalue == NULL) {
-		LM_ERR("wrong format [%.*s] for value param!\n", svalue->len,
-				svalue->s);
-		return -1;
-	}
 	pvs = pv_cache_get(spv);
 	if(pvs == NULL) {
 		LM_ERR("cannot get pv spec for [%.*s]\n", spv->len, spv->s);
@@ -1125,9 +1124,22 @@ static int ki_get_profile_size(
 		LM_ERR("return must be an AVP or SCRIPT VAR!\n");
 		return -1;
 	}
+	if(svalue != NULL && svalue->len > 0 && profile->has_value != 0) {
+		size = get_profile_size(profile, svalue);
+	} else {
+		size = get_profile_size(profile, NULL);
+	}
 
-	return w_get_profile_size3(
-			msg, (char *)profile, (char *)pvvalue, (char *)pvs);
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags = PV_VAL_INT | PV_TYPE_INT;
+	val.ri = (long)size;
+
+	if(pvs->setf(msg, &pvs->pvp, (int)EQ_T, &val) < 0) {
+		LM_ERR("setting profile PV failed\n");
+		return -1;
+	}
+
+	return 1;
 }
 
 /* clang-format off */
