@@ -70,29 +70,29 @@ MODULE_VERSION
 /** SL API structure */
 static sl_api_t _pl_slb;
 
-enum
-{
+/* clang-format off */
+enum {
 	LOAD_SOURCE_CPU,
 	LOAD_SOURCE_EXTERNAL
 };
 
 str_map_t source_names[] = {
-		{str_init("cpu"), LOAD_SOURCE_CPU},
-		{str_init("external"), LOAD_SOURCE_EXTERNAL},
-		{{0, 0}, 0},
+	{str_init("cpu"), LOAD_SOURCE_CPU},
+	{str_init("external"), LOAD_SOURCE_EXTERNAL},
+	{{0, 0}, 0},
 };
 
-static int pl_drop_code = 503;
-static str pl_drop_reason = str_init("Server Unavailable");
-static int pl_hash_size = 6;
-
-typedef struct pl_queue
-{
+typedef struct pl_queue {
 	int *pipe;
 	int pipe_mp;
 	str *method;
 	str method_mp;
 } pl_queue_t;
+/* clang-format on */
+
+static int pl_drop_code = 503;
+static str pl_drop_reason = str_init("Server Unavailable");
+static int pl_hash_size = 6;
 
 static struct timer_ln *pl_timer = NULL;
 
@@ -133,50 +133,53 @@ static int w_pl_drop(struct sip_msg *, char *, char *);
 static void destroy(void);
 static int fixup_pl_check3(void **param, int param_no);
 
-static cmd_export_t cmds[] = {{"pl_check", (cmd_function)w_pl_check, 1,
-									  fixup_spve_null, 0, ANY_ROUTE},
-		{"pl_check", (cmd_function)w_pl_check3, 3, fixup_pl_check3, 0,
-				ANY_ROUTE},
-		{"pl_active", (cmd_function)w_pl_active, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"pl_drop", (cmd_function)w_pl_drop_default, 0, 0, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
-		{"pl_drop", (cmd_function)w_pl_drop_forced, 1, fixup_uint_null, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
-		{"pl_drop", (cmd_function)w_pl_drop, 2, fixup_uint_uint, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-static param_export_t params[] = {
-		{"timer_interval", INT_PARAM, &pl_timer_interval},
-		{"timer_mode", INT_PARAM, &pl_timer_mode},
-		{"reply_code", INT_PARAM, &pl_drop_code},
-		{"reply_reason", PARAM_STR, &pl_drop_reason},
-		{"db_url", PARAM_STR, &pl_db_url},
-		{"plp_table_name", PARAM_STR, &rlp_table_name},
-		{"plp_pipeid_column", PARAM_STR, &rlp_pipeid_col},
-		{"plp_limit_column", PARAM_STR, &rlp_limit_col},
-		{"plp_algorithm_column", PARAM_STR, &rlp_algorithm_col},
-		{"hash_size", INT_PARAM, &pl_hash_size},
-		{"load_fetch", INT_PARAM, &pl_load_fetch},
-		{"clean_unused", INT_PARAM, &pl_clean_unused},
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"pl_check", (cmd_function)w_pl_check, 1, fixup_spve_null, 0, ANY_ROUTE},
+	{"pl_check", (cmd_function)w_pl_check3, 3, fixup_pl_check3, 0, ANY_ROUTE},
+	{"pl_active", (cmd_function)w_pl_active, 1, fixup_spve_null, 0, ANY_ROUTE},
+	{"pl_drop", (cmd_function)w_pl_drop_default, 0, 0, 0,
+		REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
+	{"pl_drop", (cmd_function)w_pl_drop_forced, 1, fixup_uint_null, 0,
+		REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
+	{"pl_drop", (cmd_function)w_pl_drop, 2, fixup_uint_uint, 0,
+		REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
-		{0, 0, 0}};
+static param_export_t params[] = {
+	{"timer_interval", INT_PARAM, &pl_timer_interval},
+	{"timer_mode", INT_PARAM, &pl_timer_mode},
+	{"reply_code", INT_PARAM, &pl_drop_code},
+	{"reply_reason", PARAM_STR, &pl_drop_reason},
+	{"db_url", PARAM_STR, &pl_db_url},
+	{"plp_table_name", PARAM_STR, &rlp_table_name},
+	{"plp_pipeid_column", PARAM_STR, &rlp_pipeid_col},
+	{"plp_limit_column", PARAM_STR, &rlp_limit_col},
+	{"plp_algorithm_column", PARAM_STR, &rlp_algorithm_col},
+	{"hash_size", INT_PARAM, &pl_hash_size},
+	{"load_fetch", INT_PARAM, &pl_load_fetch},
+	{"clean_unused", INT_PARAM, &pl_clean_unused},
+
+	{0, 0, 0}
+};
 
 static rpc_export_t rpc_methods[];
 
 /** module exports */
 struct module_exports exports = {
-		"pipelimit",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		0,				 /* per-child init function */
-		destroy			 /* module exit function */
+	"pipelimit",	 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd exports */
+	params,			 /* param exports */
+	0,				 /* RPC method exports */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	0,				 /* per-child init function */
+	destroy			 /* module exit function */
 };
+/* clang-format on */
 
 #ifdef __OS_darwin
 #include <sys/param.h>
