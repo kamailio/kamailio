@@ -68,7 +68,7 @@ MODULE_VERSION
 #define PL_TIMER_INTERVAL_DEFAULT 10
 
 /** SL API structure */
-sl_api_t slb;
+static sl_api_t _pl_slb;
 
 enum
 {
@@ -368,7 +368,7 @@ static int mod_init(void)
 	}
 
 	/* bind the SL API */
-	if(sl_load_api(&slb) != 0) {
+	if(sl_load_api(&_pl_slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
@@ -479,7 +479,7 @@ static int pl_drop(struct sip_msg *msg, unsigned int low, unsigned int high)
 
 	LM_DBG("(%d, %d)\n", low, high);
 
-	if(slb.freply != 0) {
+	if(_pl_slb.freply != 0) {
 		if(low != 0 && high != 0) {
 			hdr.s = (char *)pkg_malloc(64);
 			if(hdr.s == 0) {
@@ -505,11 +505,11 @@ static int pl_drop(struct sip_msg *msg, unsigned int low, unsigned int high)
 				return 0;
 			}
 
-			ret = slb.freply(msg, pl_drop_code, &pl_drop_reason);
+			ret = _pl_slb.freply(msg, pl_drop_code, &pl_drop_reason);
 
 			pkg_free(hdr.s);
 		} else {
-			ret = slb.freply(msg, pl_drop_code, &pl_drop_reason);
+			ret = _pl_slb.freply(msg, pl_drop_code, &pl_drop_reason);
 		}
 	} else {
 		LM_ERR("Can't send reply\n");
