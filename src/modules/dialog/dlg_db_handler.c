@@ -509,6 +509,9 @@ int load_dialog_info_from_db(
 					get_ticks());
 
 			dlg->dflags = 0;
+			if(mode == 0 && dlg_db_mode == DB_MODE_SHUTDOWN) {
+				dlg->dflags |= DLG_FLAG_NEW;
+			}
 
 			if(mode != 0) {
 				if(loaded_extra < DLG_MAX_DB_LOAD_EXTRA) {
