@@ -298,8 +298,6 @@ static struct sock_filter BPF_code[] = {
 
 //str* table_names = NULL;
 
-unsigned int no_tables = 0;
-
 enum e_mt_mode mtmode = mode_random;
 enum hash_source source = hs_error;
 
@@ -481,12 +479,12 @@ int parse_table_names(str table_name, str **table_names)
 {
 
 	char *p = NULL;
-	unsigned int no_tables;
+	unsigned int l_no_tables;
 	char *table_name_cpy;
 	int i;
 
 	/*parse and save table names*/
-	no_tables = 1;
+	l_no_tables = 1;
 	i = 0;
 
 	str *names;
@@ -503,12 +501,12 @@ int parse_table_names(str table_name, str **table_names)
 
 	while(*p) {
 		if(*p == '|') {
-			no_tables++;
+			l_no_tables++;
 		}
 		p++;
 	}
 
-	names = (str *)pkg_malloc(sizeof(str) * no_tables);
+	names = (str *)pkg_malloc(sizeof(str) * l_no_tables);
 	if(names == NULL) {
 		PKG_MEM_ERROR;
 		pkg_free(table_name_cpy);
@@ -539,7 +537,7 @@ int parse_table_names(str table_name, str **table_names)
 
 	*table_names = names;
 
-	return no_tables;
+	return l_no_tables;
 }
 
 /* checks for some missing fields*/
