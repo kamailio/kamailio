@@ -2375,7 +2375,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		while(db != NULL) {
 			if(n + db->num_ids > idx) {
 				/* Calculate the index within this specific list */
-				int innerIndex = idx - n;
+				innerIndex = idx - n;
 
 				/* Access the desired element within this list */
 				sval.s = db->id[innerIndex].body.s;
