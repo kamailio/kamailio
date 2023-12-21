@@ -279,6 +279,7 @@ static int splitascii(struct modem *mdm, char *source, struct incame_sms *sms)
 	char *end;
 	char tbuf[TIME_LEN + 1];
 	char dbuf[DATE_LEN + 1];
+	int l1 = 0;
 
 	/* the text is after the \r */
 	for(start = source; *start && *start != '\r'; start++)
@@ -313,7 +314,13 @@ static int splitascii(struct modem *mdm, char *source, struct incame_sms *sms)
 			return 1;
 		}
 		*end = 0;
-		strcpy(sms->name, start);
+		l1 = strlen(start);
+		if(l1 >= SMS_NAME_LEN) {
+			/* truncate */
+			l1 = SMS_NAME_LEN - 1;
+		}
+		memcpy(sms->name, start, l1);
+		sms->name[l1] = '\0';
 	}
 	/* Get the date */
 	start = end + 3;

@@ -91,10 +91,11 @@ struct sms_msg
 	int ref;
 };
 
+#define SMS_NAME_LEN 64
 struct incame_sms
 {
 	char sender[31];
-	char name[64];
+	char name[SMS_NAME_LEN];
 	char date[DATE_LEN];
 	char time[TIME_LEN];
 	char ascii[500];
