@@ -72,19 +72,20 @@ static int _tmx_ptran_size = 0;
  */
 int tmx_init_pretran_table(void)
 {
-	int n;
-	int pn;
+	unsigned int n;
+	unsigned int pn;
 
-	pn = get_max_procs();
+	pn = (unsigned int)get_max_procs();
 
-	if(pn <= 0)
+	if(pn == 0)
 		return -1;
 	if(_tmx_ptran_table != NULL)
 		return -1;
+	n = 1;
 	/* get the highest power of two less than number of processes */
-	n = -1;
-	while(pn >> ++n > 0)
-		;
+	while((pn >> n) > 0) {
+		n++;
+	}
 	n--;
 	if(n <= 1)
 		n = 2;
