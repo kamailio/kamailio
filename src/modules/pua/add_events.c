@@ -82,7 +82,7 @@ int pua_add_events(void)
 	}
 
 	/* add application/reginfo+xml */
-	if(dlginfo_increase_version) {
+	if(reginfo_increase_version) {
 		if(add_pua_event(REGINFO_EVENT, "reg", "application/reginfo+xml",
 				   reginfo_process_body)
 				< 0) {
