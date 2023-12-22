@@ -92,14 +92,18 @@ struct sms_msg
 };
 
 #define SMS_NAME_LEN 64
+#define SMS_SENDER_LEN 32
+#define SMS_ASCII_LEN 500
+#define SMS_SMSC_LEN 32
+
 struct incame_sms
 {
-	char sender[31];
+	char sender[SMS_SENDER_LEN];
 	char name[SMS_NAME_LEN];
 	char date[DATE_LEN];
 	char time[TIME_LEN];
-	char ascii[500];
-	char smsc[31];
+	char ascii[SMS_ASCII_LEN];
+	char smsc[SMS_SMSC_LEN];
 	int userdatalength;
 	int is_statusreport;
 	int sms_id;
