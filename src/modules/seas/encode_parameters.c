@@ -36,7 +36,9 @@
  *
  * =====================================================================================
  */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <stdio.h>
 #include "../../core/str.h"
 #include "../../core/parser/parse_param.h"

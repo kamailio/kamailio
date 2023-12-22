@@ -36,8 +36,9 @@
  *
  * =====================================================================================
  */
-
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <stdio.h>
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/parser/contact/contact.h"

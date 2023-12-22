@@ -36,7 +36,9 @@
  *
  * =====================================================================================
  */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <stdio.h>
 
 #include "../../core/parser/digest/digest_parser.h"
