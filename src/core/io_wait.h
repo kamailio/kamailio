@@ -47,7 +47,9 @@
 #include <signal.h>		/* sigprocmask, sigwait a.s.o */
 #endif
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE /* for POLLRDHUP on linux */
+#endif
 #include <poll.h>
 #include <fcntl.h>
 
