@@ -55,12 +55,7 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 	int i;
 	to_param_t *params;
 
-	/* Reserves memory max NUM_DIVERSION_BODIES times */
 	memset(uri_b, 0, NUM_DIVERSION_BODIES * sizeof(to_body_t));
-	if(uri_b == NULL) {
-		LM_ERR("Error allocating memory for uri_b\n");
-		return -1;
-	}
 
 	tmp = parse_addr_spec(buf, buf + len, &uri_b[num_uri], 1);
 	if(uri_b[num_uri].error == PARSE_ERROR) {
