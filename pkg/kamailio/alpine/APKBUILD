@@ -227,9 +227,6 @@ _mod_list_jansson="acc_json jansson janssonrpcc"
 # - modules depending on libm
 _mod_list_jsdt="app_jsdt"
 
-# - modules depending on sqlang
-_mod_list_sqlang="app_sqlang"
-
 # - modules depending on rabbitmq
 _mod_list_rabbitmq="rabbitmq"
 
@@ -251,7 +248,7 @@ for _i in db postgres sqlite dbtext mysql \
 	cpl xml unixodbc snmpstats xmpp carrierroute \
 	ldap utils tls presence lua ims outbound debugger \
 	extras json websocket authephemeral mongodb\
-	uuid ev memcached redis geoip2 jansson sqlang sipdump \
+	uuid ev memcached redis geoip2 jansson sipdump \
 	jsdt http_async kazoo rabbitmq sctp radius perl \
 	python3 ruby; do
 
@@ -555,11 +552,6 @@ python3() {
 ruby() {
 	_generic_pkg "Execute embedded Ruby scripts" \
 		"$_mod_list_ruby"
-}
-
-sqlang() {
-	_generic_pkg "Squirrel Language (SQLang) for Kamailio" \
-		"$_mod_list_sqlang"
 }
 
 rabbitmq() {
