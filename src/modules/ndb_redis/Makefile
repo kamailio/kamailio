@@ -24,7 +24,7 @@ else
 	HIREDISLIBS = $(shell $(HIREDIS_BUILDER) --libs)
 	HIREDISLIBSPATH = $(shell $(HIREDIS_BUILDER) --libs-only-L | cut -c 3-)
     ifeq ($(HIREDISLIBSPATH),)
-        GCCSEARCHDIRS = $(shell $(CC) -print-search-dirs | grep -Po '^.*libraries: =.*' | cut -d "=" -f2- | tr : ' ')
+        GCCSEARCHDIRS = $(shell $(CC) -print-search-dirs | grep -Eo '^.*libraries: =.*' | cut -d "=" -f2- | tr : ' ')
         ifneq ($(shell find $(GCCSEARCHDIRS) -name libhiredis_ssl.so 2>/dev/null),)
             HIREDISDEFS += -DWITH_SSL
             HIREDISLIBS += -lhiredis_ssl
