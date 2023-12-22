@@ -618,6 +618,7 @@ static int _reply_light(struct cell *trans, char *buf, unsigned int len,
 					}
 					set_route_type(backup_rt);
 					p_onsend = 0;
+					_tm_local_response_sent_lookup = 0;
 
 					free_sip_msg(&pmsg);
 				} else {
