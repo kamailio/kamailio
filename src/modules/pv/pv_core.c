@@ -2773,7 +2773,7 @@ int pv_get_cnt(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			 * But this would be less intuitive in our case for counting.
 			 */
 			pv_xavp_name_t *xname, *xname_sub;
-			sr_xavp_t *ravp, *sub_avp;
+			sr_xavp_t *ravp = NULL, *sub_avp = NULL;
 			int root_idxf, root_idx_spec, root_idx;
 			int sub_idxf, sub_idx_spec, sub_idx;
 			int count;
