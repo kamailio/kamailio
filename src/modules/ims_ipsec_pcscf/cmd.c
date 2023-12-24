@@ -1016,13 +1016,6 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	//    from URI
 	//int uri_len = 4 /* strlen("sip:") */ + ci.via_host.len + 5 /* max len of port number */ ;
 
-	if(!(_cflags & IPSEC_NODSTURI_RESET) && (m->dst_uri.s != NULL)) {
-		LM_DBG("resetting dst uri [%.*s]\n", m->dst_uri.len, m->dst_uri.s);
-		pkg_free(m->dst_uri.s);
-		m->dst_uri.s = NULL;
-		m->dst_uri.len = 0;
-	}
-
 	if(_cflags & IPSEC_FORWARD_USEVIA) {
 		vb = cscf_get_last_via(m);
 	}
@@ -1117,6 +1110,13 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 			LM_ERR("UDP socket not found for IPSec forward, trying for TCP\n");
 			dst_proto = PROTO_TCP;
 		}
+	}
+
+	if(!(_cflags & IPSEC_NODSTURI_RESET) && (m->dst_uri.s != NULL)) {
+		LM_DBG("resetting dst uri [%.*s]\n", m->dst_uri.len, m->dst_uri.s);
+		pkg_free(m->dst_uri.s);
+		m->dst_uri.s = NULL;
+		m->dst_uri.len = 0;
 	}
 
 	if(!(_cflags & IPSEC_NODSTURI_RESET)) {
