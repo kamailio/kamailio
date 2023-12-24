@@ -1,4 +1,3 @@
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 #include "cdp_tls.h"
 
 cfg_option_t methods[] = {{"TLSv1", .val = TLS_USE_TLSv1},
@@ -14,6 +13,7 @@ cfg_option_t methods[] = {{"TLSv1", .val = TLS_USE_TLSv1},
 
 tls_methods_t tls_methods[TLS_METHOD_MAX];
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 void init_ssl_methods(void)
 {
 	/* openssl 1.1.0+ */
@@ -76,10 +76,12 @@ void init_ssl_methods(void)
 	tls_methods[TLS_USE_TLSv1_3_PLUS - 1].TLSMethodMin = TLS1_3_VERSION;
 #endif
 }
+#endif
 
 /*
  * Convert TLS method string to integer
  */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 int tls_parse_method(str *m)
 {
 	cfg_option_t *opt;
@@ -95,7 +97,9 @@ int tls_parse_method(str *m)
 
 	return opt->val;
 }
+#endif
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 SSL_CTX *init_ssl_ctx(int method)
 {
 	SSL_CTX *ctx;
@@ -131,7 +135,9 @@ SSL_CTX *init_ssl_ctx(int method)
 	}
 	return ctx;
 }
+#endif
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 int load_certificates(SSL_CTX *ctx, str *cert, str *key)
 {
 	str cert_fixed = STR_NULL;
@@ -163,6 +169,7 @@ int load_certificates(SSL_CTX *ctx, str *cert, str *key)
 	}
 	return 0;
 }
+#endif
 
 /*
  * Get any leftover errors from OpenSSL and print them.
@@ -170,6 +177,7 @@ int load_certificates(SSL_CTX *ctx, str *cert, str *key)
  * This is useful to call before any SSL_* IO calls to make sure
  * we don't have any leftover errors from previous calls (OpenSSL docs).
  */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 void cdp_openssl_clear_errors(void)
 {
 	int i;
@@ -179,7 +187,9 @@ void cdp_openssl_clear_errors(void)
 		LM_INFO("clearing leftover error before SSL_* calls: %s\n", err);
 	}
 }
+#endif
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 SSL *init_ssl_conn(int client_fd, SSL_CTX *ctx)
 {
 	X509 *cert = NULL;
@@ -237,14 +247,18 @@ cleanup:
 
 	return NULL;
 }
+#endif
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 void cleanup_ssl(SSL_CTX *tls_ctx, SSL *tls_conn)
 {
 	SSL_shutdown(tls_conn);
 	SSL_free(tls_conn);
 	SSL_CTX_free(tls_ctx);
 }
+#endif
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 int to_ssl(SSL_CTX **tls_ctx_p, SSL **tls_conn_p, int tcp_sock, int method)
 {
 	*tls_ctx_p = init_ssl_ctx(method);
