@@ -91,9 +91,6 @@ mod_list_tlsdeps=crypto tls
 # - modules depending on static openssl library
 mod_list_tlsa=tlsa
 
-# - modules depending on openssl (+curl) library
-mod_list_tlsdeps_curl=auth_identity
-
 # - modules depending on static wolfssl library
 mod_list_tls_wolfssl=tls_wolfssl
 
@@ -255,7 +252,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_xmpp) \
 			   $(mod_list_berkeley) $(mod_list_utils) \
 			   $(mod_list_memcached) \
-			   $(mod_list_tlsdeps) $(mod_list_tlsdeps_curl) \
+			   $(mod_list_tlsdeps) \
 			   $(mod_list_websocket) \
 			   $(mod_list_snmpstats) $(mod_list_presence) \
 			   $(mod_list_lua) $(mod_list_python) \
@@ -314,7 +311,7 @@ module_group_standard=$(mod_list_basic) $(mod_list_extra) \
 module_group_common=$(mod_list_db) $(mod_list_dbuid) \
 					$(mod_list_pcre) $(mod_list_radius) \
 					$(mod_list_xmldeps) $(mod_list_presence) \
-					$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl)
+					$(mod_list_tlsdeps)
 
 # For db use (db modules, excluding drivers)
 module_group_db=$(mod_list_db)
@@ -409,10 +406,10 @@ module_group_ktls_basic=$(mod_list_tlsdeps)
 
 ifeq ($(KTLS_INCLUDE_TLSA),yes)
 # pkg tls module with curl
-module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl) $(mod_list_tlsa)
+module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsa)
 else
 # pkg tls module with curl
-module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl)
+module_group_ktls=$(mod_list_tlsdeps)
 
 # pkg tlsa module
 module_group_ktlsa=$(mod_list_tlsa)
