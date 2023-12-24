@@ -840,6 +840,7 @@ static inline int lumps_len(
 		recv_port_str = &_recv_port_str;
 		recv_port_str->s = int2str(msg->rcv.dst_port, &recv_port_str->len);
 		recv_port_no = msg->rcv.dst_port;
+		recv_proto_id = msg->rcv.bind_address->proto;
 	} else if(msg->rcv.bind_address) {
 		if(msg->rcv.bind_address->useinfo.name.len > 0) {
 			recv_address_str = &(msg->rcv.bind_address->useinfo.name);
@@ -1379,6 +1380,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 		recv_port_str = &_recv_port_str;
 		recv_port_str->s = int2str(msg->rcv.dst_port, &recv_port_str->len);
 		recv_port_no = msg->rcv.dst_port;
+		recv_proto_id = msg->rcv.bind_address->proto;
 	} else if(msg->rcv.bind_address) {
 		if(msg->rcv.bind_address->useinfo.name.len > 0) {
 			recv_address_str = &(msg->rcv.bind_address->useinfo.name);
