@@ -102,10 +102,11 @@ int tmx_init_pretran_table(void)
 	for(n = 0; n < _tmx_ptran_size; n++) {
 		if(lock_init(&_tmx_ptran_table[n].lock) == NULL) {
 			LM_ERR("cannot init the lock %d\n", n);
-			n--;
-			while(n >= 0) {
-				lock_destroy(&_tmx_ptran_table[n].lock);
-				n--;
+			if(n > 0) {
+				do {
+					n--;
+					lock_destroy(&_tmx_ptran_table[n].lock);
+				} while(n > 0);
 			}
 			shm_free(_tmx_ptran_table);
 			_tmx_ptran_table = 0;
