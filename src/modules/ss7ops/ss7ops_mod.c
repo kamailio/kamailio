@@ -221,9 +221,7 @@ static const uint8_t *extract_from_m2pa(const uint8_t *data, size_t *len)
 	}
 	data += 8;
 	data_len -= 8;
-	if(data_len == 0)
-		return NULL;
-	else if(data_len < 1) {
+	if(data_len < 1) {
 		LM_ERR("M2PA no space for prio %u\n", data_len);
 		return NULL;
 	}
