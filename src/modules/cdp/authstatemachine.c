@@ -751,7 +751,7 @@ void auth_server_stateless_sm_process(
 int dup_routing_avps(AAAMessage *src, AAAMessage *dest)
 {
 
-	AAA_AVP *avp;
+	AAA_AVP *avp, *avp2;
 	str dest_realm;
 
 	if(!src)
@@ -782,18 +782,24 @@ int dup_routing_avps(AAAMessage *src, AAAMessage *dest)
 		LM_DBG("dup_routing_avps: Origin Realm AVP present, duplicating %.*s\n",
 				avp->data.len, avp->data.s);
 		dest_realm = avp->data;
-		avp = AAACreateAVP(AVP_Destination_Realm, AAA_AVP_FLAG_MANDATORY, 0,
-				dest_realm.s, dest_realm.len, AVP_DUPLICATE_DATA);
-		if(!avp) {
-			LM_ERR("dup_routing_avps: Failed creating Destination Host avp\n");
-			goto error;
-		}
-		if(AAAAddAVPToMessage(dest, avp, dest->avpList.tail)
-				!= AAA_ERR_SUCCESS) {
-			LM_ERR("dup_routing_avps: Failed adding Destination Host avp to "
-				   "message\n");
-			AAAFreeAVP(&avp);
-			goto error;
+		avp2 = AAAFindMatchingAVP(src, src->avpList.head, AVP_Destination_Realm,
+				0, AAA_FORWARD_SEARCH);
+		if(!avp2) {
+			avp = AAACreateAVP(AVP_Destination_Realm, AAA_AVP_FLAG_MANDATORY, 0,
+					dest_realm.s, dest_realm.len, AVP_DUPLICATE_DATA);
+			if(!avp) {
+				LM_ERR("dup_routing_avps: Failed creating Destination Realm "
+					   "avp\n");
+				goto error;
+			}
+			if(AAAAddAVPToMessage(dest, avp, dest->avpList.tail)
+					!= AAA_ERR_SUCCESS) {
+				LM_ERR("dup_routing_avps: Failed adding Destination Realm avp "
+					   "to "
+					   "message\n");
+				AAAFreeAVP(&avp);
+				goto error;
+			}
 		}
 	}
 
