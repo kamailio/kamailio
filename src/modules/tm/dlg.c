@@ -712,8 +712,9 @@ static inline int dlg_early_resp_uac(dlg_t *_d, struct sip_msg *_m)
 
 	if(code < 200) {
 		/* We are in early state already, do nothing */
-	} else if((code >= 200) && (code <= 299)) {
-		/* Warning - we can handle here response for non-initial request (for
+	} else if(code <= 299) {
+		/* (200-299)
+		 * Warning - we can handle here response for non-initial request (for
 		 * example UPDATE within early INVITE/BYE dialog) and move into
 		 * confirmed state may be error! But this depends on dialog type... */
 
