@@ -176,7 +176,7 @@ static int hep_version(struct sip_msg *msg);
 
 
 static str db_url = str_init(DEFAULT_DB_URL);
-static str table_name = str_init("sip_capture");
+static str _sipcap_table_name = str_init("sip_capture");
 static str hash_source = str_init("call_id");
 static str mt_mode = str_init("rand");
 static str date_column = str_init("date");
@@ -338,7 +338,7 @@ int capture_mode_param(modparam_t type, void *val);
  * Exported parameters
  */
 static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
-		{"table_name", PARAM_STR, &table_name},
+		{"table_name", PARAM_STR, &_sipcap_table_name},
 		{"hash_source", PARAM_STR, &hash_source},
 		{"mt_mode", PARAM_STR, &mt_mode},
 		{"date_column", PARAM_STR, &date_column},
@@ -818,9 +818,9 @@ static int mod_init(void)
 		}
 	}
 
-	/* Check the table name - if table_name is empty and no capture modes
+	/* Check the table name - if _sipcap_table_name is empty and no capture modes
 	 * are defined, then error*/
-	if(!table_name.len && capture_modes_root == NULL) {
+	if(!_sipcap_table_name.len && capture_modes_root == NULL) {
 		LM_ERR("ERROR: sipcapture: mod_init: table_name is not defined or "
 			   "empty\n");
 		return -1;
@@ -831,14 +831,14 @@ static int mod_init(void)
 	def_params = (char *)pkg_malloc(
 			snprintf(NULL, 0,
 					"db_url=%s;table_name=%s;mt_mode=%s;hash_source=%s",
-					db_url.s, table_name.s, mt_mode.s, hash_source.s)
+					db_url.s, _sipcap_table_name.s, mt_mode.s, hash_source.s)
 			+ 1);
 	if(!def_params) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 	sprintf(def_params, "db_url=%s;table_name=%s;mt_mode=%s;hash_source=%s",
-			db_url.s, table_name.s, mt_mode.s, hash_source.s);
+			db_url.s, _sipcap_table_name.s, mt_mode.s, hash_source.s);
 
 	str def_name, def_par;
 	def_name.s = strdup("default");
@@ -1777,7 +1777,7 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable,
 		}
 		table = &c->table_names[ii];
 	} else {
-		table = &table_name;
+		table = &_sipcap_table_name;
 	}
 
 	tvsec_ = (time_t)(sco->tmstamp / 1000000);
