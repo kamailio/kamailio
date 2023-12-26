@@ -83,7 +83,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	int rc = 0;
+	bool rc = false;
 	if(!statsd_params.ip) {
 		LM_INFO("Statsd init ip value is null. use default 127.0.0.1\n");
 	} else {
@@ -97,7 +97,7 @@ static int mod_init(void)
 	}
 
 	rc = statsd_init(statsd_params.ip, statsd_params.port);
-	if(rc < 0) {
+	if(rc == false) {
 		LM_ERR("Statsd connection failed (ERROR_CODE: %i)\n", rc);
 		return -1;
 	} else {
