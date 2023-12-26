@@ -114,7 +114,7 @@ int prom_histogram_param(modparam_t type, void *val);
  * being currently processed.
  * @sa prom_ctx
  */
-static prom_ctx_t ctx;
+static prom_ctx_t _prom_ctx;
 
 static xhttp_api_t xhttp_api;
 
@@ -250,6 +250,8 @@ static int mod_init(void)
 	/* Check xhttp_prom_buf_size param */
 	if(buf_size == 0)
 		buf_size = pkg_mem_size / 3;
+
+	memset(&_prom_ctx, 0, sizeof(prom_ctx_t));
 
 	/* Initialize Prometheus metrics. */
 	if(prom_metric_init()) {
@@ -441,22 +443,22 @@ static int ki_xhttp_prom_dispatch(sip_msg_t *msg)
 	}
 
 	/* Init xhttp_prom context */
-	if(ctx.reply.buf.s) {
-		LM_ERR("Unexpected buf value [%p][%d]\n", ctx.reply.buf.s,
-				ctx.reply.buf.len);
+	if(_prom_ctx.reply.buf.s) {
+		LM_ERR("Unexpected buf value [%p][%d]\n", _prom_ctx.reply.buf.s,
+				_prom_ctx.reply.buf.len);
 
 		/* Something happened and this memory was not freed. */
-		xhttp_prom_reply_free(&ctx);
+		xhttp_prom_reply_free(&_prom_ctx);
 	}
-	memset(&ctx, 0, sizeof(prom_ctx_t));
-	ctx.msg = msg;
-	if(init_xhttp_prom_reply(&ctx) < 0) {
+	memset(&_prom_ctx, 0, sizeof(prom_ctx_t));
+	_prom_ctx.msg = msg;
+	if(init_xhttp_prom_reply(&_prom_ctx) < 0) {
 		goto send_reply;
 	}
 
 send_reply:
-	if(!ctx.reply_sent) {
-		ret = prom_send(&ctx);
+	if(!_prom_ctx.reply_sent) {
+		ret = prom_send(&_prom_ctx);
 	}
 	if(ret < 0) {
 		return -1;
@@ -2317,18 +2319,18 @@ static void rpc_prom_histogram_observe(rpc_t *rpc, void *ct)
 static void rpc_prom_metric_list_print(rpc_t *rpc, void *ct)
 {
 	/* We reuse ctx->reply for the occasion. */
-	if(init_xhttp_prom_reply(&ctx) < 0) {
+	if(init_xhttp_prom_reply(&_prom_ctx) < 0) {
 		goto clean;
 	}
 
-	if(prom_metric_list_print(&ctx)) {
+	if(prom_metric_list_print(&_prom_ctx)) {
 		LM_ERR("Cannot print a list of metrics\n");
 		goto clean;
 	}
 
 	/* Convert to zero terminated string. */
 	struct xhttp_prom_reply *reply;
-	reply = &(ctx.reply);
+	reply = &(_prom_ctx.reply);
 	reply->body.s[reply->body.len] = '\0';
 
 	/* Print content of reply buffer. */
@@ -2339,7 +2341,7 @@ static void rpc_prom_metric_list_print(rpc_t *rpc, void *ct)
 
 clean:
 
-	xhttp_prom_reply_free(&ctx);
+	xhttp_prom_reply_free(&_prom_ctx);
 
 	return;
 }
