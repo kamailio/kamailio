@@ -312,9 +312,7 @@ int dispatcher_main_loop(void)
 						poll_fds[3 + as_nr].revents = 0;
 						as_nr++; /*not very sure if this is thread-safe*/
 						unc_as_nr--;
-					} else if(
-							fd
-							<= 0) { /* pull the upper set of incomplete AS down and take this one out*/
+					} else { /* pull the upper set of incomplete AS down and take this one out*/
 						poll_tmp->revents = 0;
 						for(k = i; k < (unc_as_nr - 1); k++) {
 							j = 3 + as_nr + k;
