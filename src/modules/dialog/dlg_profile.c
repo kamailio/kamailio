@@ -70,21 +70,21 @@ static sruid_t _dlg_profile_sruid;
 /*!
  * \brief Add profile definitions to the global list
  * \see new_dlg_profile
- * \param profiles profile name
+ * \param profiledef profile name
  * \param has_value set to 0 for a profile without value, otherwise it has a value
  * \return 0 on success, -1 on failure
  */
-int add_profile_definitions(char *profiles, unsigned int has_value)
+int add_profile_definitions(char *profiledef, unsigned int has_value)
 {
 	char *p;
 	char *d;
 	str name;
 	unsigned int i;
 
-	if(profiles == NULL || strlen(profiles) == 0)
+	if(profiledef == NULL || strlen(profiledef) == 0)
 		return 0;
 
-	p = profiles;
+	p = profiledef;
 	do {
 		/* locate name of profile */
 		name.s = p;
