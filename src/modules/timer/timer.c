@@ -88,12 +88,12 @@ static timer_action_t *timer_executed = 0;
 	}
 
 static timer_action_t *find_action_by_name(
-		timer_action_t *timer_actions, char *name, int len)
+		timer_action_t *timer_actions_list, char *name, int len)
 {
 	timer_action_t *a;
 	if(len == -1)
 		len = strlen(name);
-	for(a = timer_actions; a; a = a->next) {
+	for(a = timer_actions_list; a; a = a->next) {
 		if(a->timer_name && strlen(a->timer_name) == len
 				&& strncmp(name, a->timer_name, len) == 0)
 			return a;
