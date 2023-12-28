@@ -33,7 +33,7 @@
 static struct TopListItem_t *top_list_root = 0;
 static struct TopListItem_t *top_list_iter = 0;
 
-static char buff[PIKE_BUFF_SIZE];
+static char _pike_top_buff[PIKE_BUFF_SIZE];
 
 struct TopListItem_t *pike_top_get_root()
 {
@@ -72,7 +72,8 @@ char *pike_top_print_addr(
 /* if you do not need global buffer, you can use this simpler call */
 static char *print_addr(unsigned char *ip, int iplen)
 {
-	return pike_top_print_addr(ip, iplen, buff, sizeof(buff));
+	return pike_top_print_addr(
+			ip, iplen, _pike_top_buff, sizeof(_pike_top_buff));
 }
 
 int pike_top_add_entry(unsigned char *ip_addr, int addr_len,
@@ -88,8 +89,8 @@ int pike_top_add_entry(unsigned char *ip_addr, int addr_len,
 	print_addr(ip_addr, addr_len);
 	DBG("pike_top_add_enrty(ip: %s, leaf_hits[%d,%d], hits[%d,%d],"
 		" expires: %d, status: %d)",
-			buff, leaf_hits[0], leaf_hits[1], hits[0], hits[1], expires,
-			status);
+			_pike_top_buff, leaf_hits[0], leaf_hits[1], hits[0], hits[1],
+			expires, status);
 	assert(new_item != 0);
 
 	memset((void *)new_item, 0, sizeof(struct TopListItem_t));
@@ -123,5 +124,5 @@ void pike_top_list_clear()
 		top_list_iter = ptr;
 	}
 	top_list_root = 0;
-	memset(buff, 0, sizeof(buff));
+	memset(_pike_top_buff, 0, sizeof(_pike_top_buff));
 }
