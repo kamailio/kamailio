@@ -2870,6 +2870,49 @@ int branch_builder(unsigned int hash_index,
 	return size;
 }
 
+static int is_haproxy(
+		struct dest_info *send_info, struct receive_info *haproxy_rcv)
+{
+	int port;
+	struct ip_addr ip;
+	union sockaddr_union *from = NULL;
+	union sockaddr_union local_addr;
+	struct tcp_connection *con = NULL;
+	int haproxy = 0;
+
+	if(!send_info || !haproxy_rcv) {
+		LM_ERR("wrong arguments\n");
+		return 0;
+	}
+
+	if(unlikely(send_info->send_flags.f & SND_F_FORCE_SOCKET
+				&& send_info->send_sock)) {
+		local_addr = send_info->send_sock->su;
+		su_setport(&local_addr, 0); /* any local port will do */
+		from = &local_addr;
+	}
+
+	port = su_getport(&send_info->to);
+	if(likely(port)) {
+		su2ip_addr(&ip, &send_info->to);
+		con = tcpconn_get(send_info->id, &ip, port, from, 0);
+	} else if(likely(send_info->id))
+		con = tcpconn_get(send_info->id, 0, 0, 0, 0);
+	else {
+		LM_CRIT("null_id & to\n");
+		return 0;
+	}
+
+	if(con == NULL) {
+		LM_DBG("TCP/TLS connection (id: %d) for is not found\n", send_info->id);
+		return 0;
+	}
+
+	*haproxy_rcv = con->rcv;
+	haproxy = con->rcv.proto_reserved2;
+	tcpconn_put(con);
+	return haproxy;
+}
 
 /* uses only the send_info->send_socket, send_info->proto, send_info->id and
  * send_info->comp (so that a send_info used for sending can be passed
@@ -2897,6 +2940,11 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 	struct tcp_connection *con = NULL;
 	sr_xavp_t *rxavp = NULL;
 	str xname;
+	char ip_buf[MAX_URI_SIZE] = {0};
+	str haproxy_address_str = STR_NULL;
+	str haproxy_port_str = STR_NULL;
+	struct receive_info haproxy_rcv;
+	int haproxy = is_haproxy(send_info, &haproxy_rcv);
 
 	send_sock = send_info->send_sock;
 	/* use pre-set address in via, the outbound socket alias or address one */
@@ -2908,6 +2956,11 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 		if(rxavp != NULL) {
 			address_str = &rxavp->val.v.s;
 		}
+	} else if(ksr_tcp_accept_haproxy && haproxy) {
+		ip_addr2sbuf(&haproxy_rcv.dst_ip, ip_buf, MAX_URI_SIZE);
+		address_str = &haproxy_address_str;
+		address_str->s = ip_buf;
+		address_str->len = strlen(ip_buf);
 	}
 	if(address_str == NULL) {
 		if(hp && hp->host->len)
@@ -2925,6 +2978,9 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 		if(rxavp != NULL) {
 			port_str = &rxavp->val.v.s;
 		}
+	} else if(ksr_tcp_accept_haproxy && haproxy) {
+		port_str = &haproxy_port_str;
+		port_str->s = int2str(haproxy_rcv.dst_port, &port_str->len);
 	}
 	if(port_str == NULL) {
 		if(hp && hp->port->len)
@@ -2943,6 +2999,8 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 		if(rxavp != NULL) {
 			proto = get_valid_proto_id(&rxavp->val.v.s);
 		}
+	} else if(ksr_tcp_accept_haproxy && haproxy) {
+		proto = haproxy_rcv.proto;
 	}
 	if(proto == PROTO_NONE) {
 		if(send_sock->useinfo.proto != PROTO_NONE) {

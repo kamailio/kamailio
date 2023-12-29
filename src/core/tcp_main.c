@@ -1003,6 +1003,7 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 	dst_ip = &c->rcv.dst_ip;
 
 	c->haproxy_rcv = c->rcv;
+	c->haproxy_rcv.proto = PROTO_TCP;
 
 	if(bytes >= 16 && memcmp(&hdr.v2, v2sig, 12) == 0
 			&& (hdr.v2.ver_cmd & 0xF0) == 0x20) {
@@ -1623,10 +1624,10 @@ inline static struct tcp_connection *tcpconn_add(struct tcp_connection *c)
 		}
 		if(unlikely(c->cinfo.dst_ip.af && !ip_addr_any(&c->cinfo.dst_ip)
 					&& !ip_addr_cmp(&c->rcv.dst_ip, &c->cinfo.dst_ip))) {
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip, 0,
-					new_conn_alias_flags);
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip,
-					c->cinfo.dst_port, new_conn_alias_flags);
+			_tcpconn_add_alias_unsafe(c, c->haproxy_rcv.src_port,
+					&c->cinfo.dst_ip, 0, new_conn_alias_flags);
+			_tcpconn_add_alias_unsafe(c, c->haproxy_rcv.src_port,
+					&c->cinfo.dst_ip, c->cinfo.dst_port, new_conn_alias_flags);
 		}
 
 		/* ignore add_alias errors, there are some valid cases when one
@@ -1740,8 +1741,10 @@ struct tcp_connection *_tcpconn_find(
 			print_ip("ip=", &a->parent->rcv.src_ip, "\n");
 #endif
 			if((a->parent->state != S_CONN_BAD) && (port == a->port)
-					&& ((l_port == 0) || (l_port == a->parent->rcv.dst_port))
-					&& (ip_addr_cmp(ip, &a->parent->rcv.src_ip))
+					&& ((l_port == 0) || (l_port == a->parent->rcv.dst_port)
+							|| (l_port == a->parent->cinfo.dst_port))
+					&& (ip_addr_cmp(ip, &a->parent->rcv.src_ip)
+							|| ip_addr_cmp(ip, &a->parent->cinfo.src_ip))
 					&& (is_local_ip_any
 							|| ip_addr_cmp(l_ip, &a->parent->rcv.dst_ip)
 							|| ip_addr_cmp(l_ip, &a->parent->cinfo.dst_ip))) {
@@ -1853,7 +1856,10 @@ inline static int _tcpconn_add_alias_unsafe(struct tcp_connection *c, int port,
 	a = 0;
 	is_local_ip_any = ip_addr_any(l_ip);
 	if(likely(c)) {
-		hash = tcp_addr_hash(&c->rcv.src_ip, port, l_ip, l_port);
+		hash = tcp_addr_hash(c->rcv.proto_reserved2 ? &c->haproxy_rcv.src_ip
+													: &c->rcv.src_ip,
+				port, l_ip, l_port);
+
 		/* search the aliases for an already existing one */
 		for(a = tcpconn_aliases_hash[hash], nxt = 0; a; a = nxt) {
 			nxt = a->next;
