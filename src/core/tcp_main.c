@@ -1029,6 +1029,7 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 	dst_ip = &c->rcv.dst_ip;
 
 	c->haproxy_rcv = c->rcv;
+	c->haproxy_rcv.proto = PROTO_TCP;
 
 	if(bytes >= 16 && memcmp(&hdr.v2, v2sig, 12) == 0
 			&& (hdr.v2.ver_cmd & 0xF0) == 0x20) {
