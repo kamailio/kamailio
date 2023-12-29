@@ -141,6 +141,8 @@ static cmd_export_t cmds[] = {
 				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
 		{"tel2sip", (cmd_function)tel2sip, 3, fixup_tel2sip, 0,
 				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
+		{"tel2sip2", (cmd_function)tel2sip2, 3, fixup_tel2sip, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
 		{"is_uri", (cmd_function)is_uri, 1, fixup_spve_null,
 				fixup_free_spve_null, ANY_ROUTE},
 		{"is_e164", (cmd_function)w_is_e164, 1, fixup_pvar_null,

@@ -74,6 +74,8 @@ int ki_add_uri_param(struct sip_msg *_msg, str *param);
  */
 int tel2sip(struct sip_msg *_msg, char *_uri, char *_hostpart, char *_res);
 
+int tel2sip2(struct sip_msg *_msg, char *_uri, char *_hostpart, char *_res);
+
 /*
  * Check if pseudo variable contains a valid uri
  */

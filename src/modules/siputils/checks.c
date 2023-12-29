@@ -663,6 +663,231 @@ int tel2sip(struct sip_msg *_msg, char *_uri, char *_hostpart, char *_res)
 
 
 /*
+ * Compare function to sort tel: uri options acording to standard
+ * before inserting into sip: uri
+ *
+ * See "RFC 3261 SIP: Session Initiation Protocol June 2002"
+ *     19.1.6 Relating SIP URIs and tel URLs
+ */
+typedef struct
+{
+	char *name;
+	char *value;
+} tel_param_t;
+
+#define MAX_TEL_PARAMS 10
+
+int compare_tel_options(const void *v1, const void *v2)
+{
+	tel_param_t *p1 = (tel_param_t *)v1;
+	tel_param_t *p2 = (tel_param_t *)v2;
+
+	if(0 == strcasecmp(p1->name, "isdn-subaddress")) {
+		return -1;
+	} else if(0 == strcasecmp(p2->name, "isdn-subaddress")) {
+		return 1;
+	} else if(0 == strcasecmp(p1->name, "post-dial")) {
+		return -1;
+	} else if(0 == strcasecmp(p2->name, "post-dial")) {
+		return 1;
+	} else {
+		return strcasecmp(p1->name, p2->name);
+	}
+}
+
+/*
+ *   Remove visual separators from the phone number
+ *   Assume it has been validated as a number containing
+ *   ONLY leading '+', digits, and visual separators.
+ */
+static void remove_visual_separators_from_phone(char *p)
+{
+	char *p2;
+	p2 = p;
+	while(*p != '\0') {
+		/* Skip all visual separators */
+		while((*p != '\0')
+				&& ((*p == '.') || (*p == '-') || (*p == '(') || (*p == ')'))) {
+			p++;
+		}
+		*p2 = *p; /* Until the first visual separator, these both point to  the same place. */
+		/* but, more efficient to just do it than an if statement each time. */
+		/* If we arrived at a terminator in the inner loop, time to exit */
+		if(*p == '\0')
+			return;
+		/* Now we increment both pointers. */
+		p++;
+		p2++;
+	}
+	*p2 = '\0'; /* Make sure that the string is terminated after the last valid digit. */
+}
+
+/*
+ * Check if this is a phone number.
+ *   Assume possible leading '+'
+ *   Assume separators '.', '-', '(', or ')' could be present.
+ */
+static int is_telnumber_format(const char *p)
+{
+	if(*p == '+')
+		p++;
+	while(*p != '\0') {
+		if((!isdigit(*p)) && (*p != '.') && (*p != '-') && (*p != '(')
+				&& (*p != ')'))
+			return 0;
+		p++;
+	}
+	return 1;
+}
+
+
+/*
+ * Converts URI, if it is tel URI, to SIP URI.  Returns 1, if
+ * conversion succeeded or if no conversion was needed, i.e., URI was not
+ * tel URI. Returns -1, if conversion failed. Takes SIP URI hostpart from
+ * second parameter and (if needed) writes the result to third parameter.
+ * This one attempts to be standards compliant and sort tel: uri parameters
+ * copied to the sip: uri in the manner defined in the standard. It also
+ * deletes the "phone-context" parameter if it is a domain, and, takes visual
+ * separators from the "phone-context" parameter if it is a telephone number.
+ */
+int tel2sip2(struct sip_msg *_msg, char *_uri, char *_hostpart, char *_res)
+{
+	str uri, hostpart, tel_uri, sip_uri;
+	char *at;
+	int i, j, in_tel_parameters = 0;
+	int n_tel_params = 0;
+	pv_spec_t *res;
+	pv_value_t res_val;
+	char *tmp_ptr = NULL;
+	tel_param_t params[MAX_TEL_PARAMS];
+
+	/* get parameters */
+	if(get_str_fparam(&uri, _msg, (fparam_t *)_uri) < 0) {
+		LM_ERR("failed to get uri value\n");
+		return -1;
+	}
+	if(get_str_fparam(&hostpart, _msg, (fparam_t *)_hostpart) < 0) {
+		LM_ERR("failed to get hostpart value\n");
+		return -1;
+	}
+	res = (pv_spec_t *)_res;
+
+	/* check if anything needs to be done */
+	if(uri.len < 4)
+		return 1;
+	if(strncasecmp(uri.s, "tel:", 4) != 0)
+		return 1;
+
+	/* reserve memory for clean tel uri */
+	tel_uri.s = pkg_malloc(uri.len + 1);
+	if(tel_uri.s == 0) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+
+	/* Remove visual separators before converting to SIP URI. Don't remove
+	 * visual separators in TEL URI parameters (after the first ";") */
+	for(i = 0, j = 0; i < uri.len; i++) {
+		if(in_tel_parameters == 0) {
+			if(uri.s[i] == ';')
+				in_tel_parameters = 1;
+		}
+		if(in_tel_parameters == 0) {
+			if((uri.s[i] != '-') && (uri.s[i] != '.') && (uri.s[i] != '(')
+					&& (uri.s[i] != ')'))
+				tel_uri.s[j++] = tolower(uri.s[i]);
+		} else {
+			tel_uri.s[j++] = tolower(uri.s[i]);
+		}
+	}
+	tel_uri.s[j] = '\0';
+	tel_uri.len = strlen(tel_uri.s);
+
+	/*** Start Code to sort tel: params ***/
+	tmp_ptr = tel_uri.s + 4; /* skip tel: */
+
+	for(i = 0; i < MAX_TEL_PARAMS; i++) {
+		tmp_ptr = strchr(tmp_ptr, ';');
+		if(tmp_ptr == NULL) {
+			break;
+		}
+		*tmp_ptr = '\0';
+		tmp_ptr++;
+		n_tel_params++;
+		params[i].name = tmp_ptr;
+	}
+	for(i = 0; i < n_tel_params; i++) {
+		tmp_ptr = strchr(params[i].name, '=');
+		if(tmp_ptr == NULL) {
+			params[i].value = "";
+		} else {
+			*tmp_ptr = '\0';
+			tmp_ptr++;
+			params[i].value = tmp_ptr;
+		}
+		if((0 == strcasecmp(params[i].name, "phone-context"))
+				&& (is_telnumber_format(params[i].value))) {
+			remove_visual_separators_from_phone(params[i].value);
+		}
+	}
+	if(n_tel_params > 1) {
+		qsort(&params[0], n_tel_params, sizeof(tel_param_t),
+				compare_tel_options);
+	}
+	/*** End Code to sort tel: params ***/
+
+	/* reserve memory for resulting sip uri */
+	sip_uri.len = 4 + tel_uri.len - 4 + 1 + hostpart.len + 1 + 10;
+	sip_uri.s = pkg_malloc(sip_uri.len + 1);
+	if(sip_uri.s == 0) {
+		LM_ERR("no more pkg memory\n");
+		pkg_free(tel_uri.s);
+		return -1;
+	}
+
+	/* create resulting sip uri */
+	at = sip_uri.s;
+	append_str(at, "sip:", 4);
+	/***** Start Code for sorted tel: parameters ****/
+	/* This string was terminated after the number */
+	append_str(at, tel_uri.s + 4, strlen(tel_uri.s + 4));
+	/** Now we need to insert sorted tel: parameters **/
+	for(i = 0; i < n_tel_params; i++) {
+		/* If the phone context is a domain,
+           * it has already been extracted and is in the "host part" */
+		if((0 != strcasecmp(params[i].name, "phone-context"))
+				|| (is_telnumber_format(params[i].value))) {
+			append_chr(at, ';');
+			append_str(at, params[i].name, strlen(params[i].name));
+			append_chr(at, '=');
+			append_str(at, params[i].value, strlen(params[i].value));
+		}
+	}
+	/***** End Code for sort tel: parameters ****/
+	append_chr(at, '@');
+	append_str(at, hostpart.s, hostpart.len);
+	append_chr(at, ';');
+	append_str(at, "user=phone", 10);
+
+	/* tel_uri is not needed anymore */
+	pkg_free(tel_uri.s);
+
+	/* set result pv value and write sip uri to result pv */
+	res_val.rs = sip_uri;
+	res_val.flags = PV_VAL_STR;
+	if(res->setf(_msg, &res->pvp, (int)EQ_T, &res_val) != 0) {
+		LM_ERR("failed to set result pvar\n");
+		pkg_free(sip_uri.s);
+		return -1;
+	}
+
+	/* free allocated pkg memory and return */
+	pkg_free(sip_uri.s);
+	return 1;
+}
+
+/*
  * Check if parameter is an e164 number.
  */
 int siputils_e164_check(str *_user)
