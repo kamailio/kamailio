@@ -539,13 +539,15 @@ if (uri_param_rm("param1")) {
 		<para>
 		The conversion follows the rules in RFC 3261 section 19.1.6:
 		<itemizedlist>
-                <listitem>
-                        <para>Visual separators ( "-", ".", "(", ")" ) are removed from tel URI number before converting it to SIP URI userinfo.</para>
+        <listitem>
+			<para>Visual separators ( "-", ".", "(", ")" ) are removed
+			from tel URI number before converting it to SIP URI userinfo.</para>
 		</listitem>
 		<listitem>
-			<para>tel URI parameters are downcased before appending them to SIP URI userinfo</para>
-                </listitem>
-                </itemizedlist>
+			<para>tel URI parameters are downcased before appending them
+			to SIP URI userinfo</para>
+        </listitem>
+        </itemizedlist>
 		</para>
 		<para>
 		The SIP URI hostpart is taken from second param
@@ -568,6 +570,36 @@ tel2sip("$ru", $fd", "$ru");
 # $fu: sip:test@foo.com
 tel2sip("$ru", $fd", "$ru");
 # $ru:  sip:+12345678;ext=200;isub=+123-456@foo.com;user=phone
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siputils.f.tel2sip2">
+		<title>
+		<function moreinfo="none">tel2sip2(uri, hostpart, result)</function>
+		</title>
+		<para>
+		Alternative to sip2tel() function that tries to follow closer the RFC
+		requrements (e.g., sort tel: uri parameters copied to the sip: uri in
+		the manner defined in the standard; deletes the phone-context parameter
+		if it is a domain, and, takes visual separators from the phone-context
+		parameter if it is a telephone number).
+		</para>
+		<para>
+		Its parameters have the same meaning as for tel2sip().
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE, or ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>tel2sip2</function> usage</title>
+		<programlisting format="linespecific">
+...
+# $ru: tel:+(34)-999-888-777
+# $fu: sip:test@foo.com
+tel2sip2("$ru", $fd", "$ru");
+# $ru:  sip:+34999888777@foo.com;user=phone
 ...
 </programlisting>
 		</example>
