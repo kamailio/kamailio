@@ -2193,7 +2193,7 @@ int main(int argc, char **argv)
 				/* safety check for upper limit of 1TB */
 				if(l1 <= 0 || l1 > 1024L * 1024) {
 					fprintf(stderr,
-							"our of limits private mem size number: -M %s\n",
+							"out of limits private mem size number: -M %s\n",
 							optarg);
 					goto error;
 				}
@@ -2333,7 +2333,7 @@ int main(int argc, char **argv)
 				}
 				/* safety check for upper limit of 16TB */
 				if(l1 <= 0 || l1 > 16L * 1024 * 1024) {
-					fprintf(stderr, "our of limits shmem size number: -m %s\n",
+					fprintf(stderr, "out of limits shmem size number: -m %s\n",
 							optarg);
 					goto error;
 				}
