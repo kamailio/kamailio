@@ -1865,11 +1865,18 @@ assign_stm:
 	| OPEN_FD_LIMIT EQUAL NUMBER { open_files_limit=$3; }
 	| OPEN_FD_LIMIT EQUAL error { yyerror("number expected"); }
 	| SHM_MEM_SZ EQUAL NUMBER {
-		if (shm_initialized())
+		if (shm_initialized()) {
 			yyerror("shm/shm_mem_size must be before any modparam or the"
 					" route blocks");
-		else if (shm_mem_size == 0 || shm_mem_size == SHM_MEM_POOL_SIZE)
+		} else if (shm_mem_size == 0 || shm_mem_size == SHM_MEM_POOL_SIZE) {
+			/* safety check for upper limit of 16TB */
+			if($3 <= 0 || $3 > 16L * 1024 * 1024) {
+				LM_ERR("out of limits shmem size number: %ld\n", (long int)$3);
+				yyerror("invalid config option");
+				YYABORT;
+			}
 			shm_mem_size=$3 * 1024 * 1024;
+		}
 	}
 	| SHM_MEM_SZ EQUAL error { yyerror("number expected"); }
 	| SHM_FORCE_ALLOC EQUAL NUMBER {
