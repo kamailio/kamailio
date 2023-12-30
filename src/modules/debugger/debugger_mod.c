@@ -324,7 +324,7 @@ static struct action *dbg_fixup_get_action(void **param, int param_no)
 	action_u_t *au;
 	/* param points to au->u.string, get pointer to au */
 	au = ksr_container_of(param, action_u_t, u.string);
-	au = au - 1 - param_no;
+	au = (action_u_t *)au - 1 - param_no;
 	/* au points to ac->val, get pointer to ac */
 	ac = ksr_container_of(au, cfg_action_t, val);
 	return ac;
