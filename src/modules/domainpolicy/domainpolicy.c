@@ -900,14 +900,9 @@ int dp_apply_policy(struct sip_msg *_msg, char *_s1, char *_s2)
 	}
 
 	at = (char *)&(duri[0]);
-	len = 0;
-	if((len + 4) > MAX_URI_SIZE) {
-		LM_ERR("duri buffer to small to add uri schema\n");
-		return -1;
-	}
+	len = 4;
 	memcpy(at, "sip:", 4);
 	at = at + 4;
-	len = len + 4;
 
 	domain = &(_msg->parsed_uri.host);
 	LM_DBG("domain is %.*s.\n", domain->len, ZSW(domain->s));
