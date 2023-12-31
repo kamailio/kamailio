@@ -199,10 +199,6 @@ void sca_rpc_deactivate_all_subscriptions(rpc_t *rpc, void *ctx)
 			rpc->rpl_printf(ctx, "Deactivating %s subscription from %.*s",
 					sca_event_name_from_type(sub->event),
 					STR_FMT(&sub->subscriber));
-			if(rc < 0) {
-				// make sure we unlock below
-				break;
-			}
 
 			rc = sca_notify_subscriber(
 					sca, sub, SCA_CALL_INFO_APPEARANCE_INDEX_ANY);

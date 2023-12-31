@@ -1426,7 +1426,7 @@ int sca_subscription_reply(sca_mod *scam, int status_code, char *status_msg,
 		extra_headers.s = hdr_buf;
 		len = snprintf(extra_headers.s, sizeof(hdr_buf), "Event: %s%s",
 				sca_event_name_from_type(event_type), CRLF);
-		if(len >= sizeof(hdr_buf) || len < 0) {
+		if(len < 0 || len >= sizeof(hdr_buf)) {
 			LM_ERR("sca_subscription_reply: extra headers too long\n");
 			return (-1);
 		}
@@ -1446,7 +1446,7 @@ int sca_subscription_reply(sca_mod *scam, int status_code, char *status_msg,
 		len = snprintf(extra_headers.s + extra_headers.len,
 				sizeof(hdr_buf) - extra_headers.len, "Expires: %d%s", expires,
 				CRLF);
-		if(len >= (sizeof(hdr_buf) - extra_headers.len) || len < 0) {
+		if(len < 0 || len >= (sizeof(hdr_buf) - extra_headers.len)) {
 			LM_ERR("sca_subscription_reply: extra headers too long\n");
 			return (-1);
 		}
