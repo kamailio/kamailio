@@ -1256,7 +1256,7 @@ static void rpc_set_queue(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "dSd", &queue_no, &method, &pipe_no) < 3)
 		return;
 
-	if(pipe_no >= MAX_PIPES || (int)pipe_no < 0) {
+	if(pipe_no >= MAX_PIPES) {
 		LM_ERR("Invalid pipe number: %d\n", pipe_no);
 		rpc->fault(c, 400, "Invalid pipe number");
 		return;
