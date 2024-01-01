@@ -50,7 +50,7 @@
 #define MAX_UACD_SIZE 128
 
 /** TM bind */
-struct tm_binds tmb;
+static struct tm_binds _uac_send_tmb = {0};
 
 typedef struct _uac_send_info
 {
@@ -120,7 +120,7 @@ uac_send_info_t *uac_send_info_clone(uac_send_info_t *ur)
 
 int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	if(param == NULL || tmb.t_request == NULL)
+	if(param == NULL || _uac_send_tmb.t_request == NULL)
 		return -1;
 
 	switch(param->pvn.u.isname.name.n) {
@@ -191,7 +191,7 @@ int pv_set_uac_req(
 {
 	pv_value_t *tval;
 
-	if(param == NULL || tmb.t_request == NULL)
+	if(param == NULL || _uac_send_tmb.t_request == NULL)
 		return -1;
 
 	tval = val;
@@ -545,9 +545,9 @@ error:
 void uac_req_init(void)
 {
 	/* load the TM API */
-	if(load_tm_api(&tmb) != 0) {
+	if(load_tm_api(&_uac_send_tmb) != 0) {
 		LM_DBG("can't load TM API - disable it\n");
-		memset(&tmb, 0, sizeof(struct tm_binds));
+		memset(&_uac_send_tmb, 0, sizeof(struct tm_binds));
 		return;
 	}
 	memset(&_uac_req, 0, sizeof(struct _uac_send_info));
@@ -788,7 +788,7 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		/* Callback parameter */
 		uac_r.cbp = (void *)tp;
 	}
-	ret = tmb.t_request_within(&uac_r);
+	ret = _uac_send_tmb.t_request_within(&uac_r);
 
 	if(ret < 0) {
 		LM_ERR("failed to send request with authentication\n");
@@ -816,7 +816,7 @@ int uac_req_send(void)
 	uac_send_info_t *tp = NULL;
 
 	if(_uac_req.s_ruri.len <= 0 || _uac_req.s_method.len == 0
-			|| tmb.t_request == NULL)
+			|| _uac_send_tmb.t_request == NULL)
 		return -1;
 
 	memset(&uac_r, '\0', sizeof(uac_r));
@@ -856,8 +856,8 @@ int uac_req_send(void)
 		uac_r.cbp = (void *)tp;
 	}
 	uac_r.callid = (_uac_req.s_callid.len <= 0) ? NULL : &_uac_req.s_callid;
-	ret = tmb.t_request(&uac_r, /* UAC Req */
-			&_uac_req.s_ruri,	/* Request-URI */
+	ret = _uac_send_tmb.t_request(&uac_r, /* UAC Req */
+			&_uac_req.s_ruri,			  /* Request-URI */
 			(_uac_req.s_turi.len <= 0) ? &_uac_req.s_ruri
 									   : &_uac_req.s_turi, /* To */
 			(_uac_req.s_furi.len <= 0) ? &_uac_req.s_ruri
