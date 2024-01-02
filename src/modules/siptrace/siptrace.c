@@ -42,6 +42,7 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../lib/srdb1/db.h"
+#include "../../core/tcp_conn.h"
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_cseq.h"
@@ -203,6 +204,8 @@ static db_func_t db_funcs;		 /*!< Database functions */
 int trace_dialog_ack = 1;
 int trace_dialog_spiral = 1;
 static int spiral_tracked;
+
+extern int ksr_tcp_accept_haproxy;
 
 int pv_parse_siptrace_name(pv_spec_t *sp, str *in);
 int pv_get_siptrace(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
@@ -2431,7 +2434,28 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 	sto.body.s = nd->data.s;
 	sto.body.len = nd->data.len;
 
-	if(unlikely(new_dst.send_sock == 0)) {
+	if(ksr_tcp_accept_haproxy && new_dst.proto == PROTO_TCP) {
+		tcp_connection_t *con = NULL;
+		unsigned short dest_port = su_getport(&new_dst.to);
+		if(likely(new_dst.id)) {
+			con = tcpconn_get(new_dst.id, 0, 0, 0, 0);
+		} else if(likely(dest_port)) {
+			ip_addr_t ip;
+			su2ip_addr(&ip, &new_dst.to);
+			con = tcpconn_get(
+					new_dst.id, &ip, dest_port, &new_dst.send_sock->su, 0);
+		}
+
+		if(con == NULL) {
+			LM_WARN("TCP connection could not be found\n");
+		} else {
+			sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX,
+					"%s:%s:%d", siptrace_proto_name(con->rcv.proto),
+					ip_addr2a(&con->rcv.dst_ip), (int)con->rcv.dst_port);
+			proto = PROTO_TCP;
+			tcpconn_put(con);
+		}
+	} else if(unlikely(new_dst.send_sock == 0)) {
 		LM_WARN("no sending socket found\n");
 		strcpy(sto.fromip_buff, SIPTRACE_ANYADDR);
 		sto.fromip.len = SIPTRACE_ANYADDR_LEN;
