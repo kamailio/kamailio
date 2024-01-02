@@ -72,7 +72,7 @@ static int xhttp_rpc_dispatch(sip_msg_t *msg, char *s1, char *s2);
  * being currently processed.
  * @sa rpc_ctx
  */
-static rpc_ctx_t ctx;
+static rpc_ctx_t _xhttp_rpc_ctx;
 
 static xhttp_api_t xhttp_api;
 
@@ -841,64 +841,65 @@ static int ki_xhttp_rpc_dispatch(sip_msg_t *msg)
 	}
 
 	/* Init xhttp_rpc context */
-	if(ctx.reply.buf.s)
-		LM_ERR("Unexpected buf value [%p][%d]\n", ctx.reply.buf.s,
-				ctx.reply.buf.len);
-	memset(&ctx, 0, sizeof(rpc_ctx_t));
-	ctx.msg = msg;
-	ctx.mod = ctx.cmd = -1;
-	if(init_xhttp_rpc_reply(&ctx) < 0)
+	if(_xhttp_rpc_ctx.reply.buf.s)
+		LM_ERR("Unexpected buf value [%p][%d]\n", _xhttp_rpc_ctx.reply.buf.s,
+				_xhttp_rpc_ctx.reply.buf.len);
+	memset(&_xhttp_rpc_ctx, 0, sizeof(rpc_ctx_t));
+	_xhttp_rpc_ctx.msg = msg;
+	_xhttp_rpc_ctx.mod = _xhttp_rpc_ctx.cmd = -1;
+	if(init_xhttp_rpc_reply(&_xhttp_rpc_ctx) < 0)
 		goto send_reply;
 
 	/* Extract arguments from url */
 	if(0
-			!= xhttp_rpc_parse_url(
-					&msg->first_line.u.request.uri, &ctx.mod, &ctx.cmd, &arg)) {
-		rpc_fault(&ctx, 500, "Bad URL");
+			!= xhttp_rpc_parse_url(&msg->first_line.u.request.uri,
+					&_xhttp_rpc_ctx.mod, &_xhttp_rpc_ctx.cmd, &arg)) {
+		rpc_fault(&_xhttp_rpc_ctx, 500, "Bad URL");
 		goto send_reply;
 	}
 
 	if(arg.s) {
 		if(arg.len) {
 			/* Unescape args */
-			ctx.arg.s = pkg_malloc((arg.len + 1) * sizeof(char));
-			if(ctx.arg.s == NULL) {
+			_xhttp_rpc_ctx.arg.s = pkg_malloc((arg.len + 1) * sizeof(char));
+			if(_xhttp_rpc_ctx.arg.s == NULL) {
 				PKG_MEM_ERROR;
-				rpc_fault(&ctx, 500, "Internal Server Error (oom)");
+				rpc_fault(&_xhttp_rpc_ctx, 500, "Internal Server Error (oom)");
 				goto send_reply;
 			}
 			for(i = 0; i < arg.len; i++)
 				if(arg.s[i] == '+')
 					arg.s[i] = ' ';
-			if(0 > un_escape(&arg, &ctx.arg)) {
+			if(0 > un_escape(&arg, &_xhttp_rpc_ctx.arg)) {
 				LM_ERR("unable to escape [%.*s]\n", arg.len, arg.s);
-				rpc_fault(&ctx, 500, "Bad arg in URL");
+				rpc_fault(&_xhttp_rpc_ctx, 500, "Bad arg in URL");
 				goto send_reply;
 			}
-			ctx.arg.s[ctx.arg.len] = '\0';
-			ctx.arg.len++;
-			ctx.arg2scan = ctx.arg;
+			_xhttp_rpc_ctx.arg.s[_xhttp_rpc_ctx.arg.len] = '\0';
+			_xhttp_rpc_ctx.arg.len++;
+			_xhttp_rpc_ctx.arg2scan = _xhttp_rpc_ctx.arg;
 		}
-		ctx.arg_received = 1;
+		_xhttp_rpc_ctx.arg_received = 1;
 	} else {
 		goto send_reply;
 	}
 
 	/*
-	rpc_e=find_rpc_export((char*)rpc_sarray[xhttp_rpc_mod_cmds[ctx.mod].rpc_e_index+ctx.cmd]->name, 0);
+	rpc_e=find_rpc_export((char*)rpc_sarray[xhttp_rpc_mod_cmds[_xhttp_rpc_ctx.mod].rpc_e_index+_xhttp_rpc_ctx.cmd]->name, 0);
 	if ((rpc_e==NULL) || (rpc_e->function==NULL)){
 		LM_ERR("Unable to find rpc command [%s]\n",
-		rpc_sarray[xhttp_rpc_mod_cmds[ctx.mod].rpc_e_index+ctx.cmd]->name);
-		rpc_fault(&ctx, 500, "Method not found");
+		rpc_sarray[xhttp_rpc_mod_cmds[_xhttp_rpc_ctx.mod].rpc_e_index+_xhttp_rpc_ctx.cmd]->name);
+		rpc_fault(&_xhttp_rpc_ctx, 500, "Method not found");
 		goto send_reply;
 	}
 	*/
-	rpc_e = rpc_sarray[xhttp_rpc_mod_cmds[ctx.mod].rpc_e_index + ctx.cmd];
-	rpc_e->r.function(&func_param, &ctx);
+	rpc_e = rpc_sarray[xhttp_rpc_mod_cmds[_xhttp_rpc_ctx.mod].rpc_e_index
+					   + _xhttp_rpc_ctx.cmd];
+	rpc_e->r.function(&func_param, &_xhttp_rpc_ctx);
 
 send_reply:
-	if(!ctx.reply_sent) {
-		ret = rpc_send(&ctx);
+	if(!_xhttp_rpc_ctx.reply_sent) {
+		ret = rpc_send(&_xhttp_rpc_ctx);
 	}
 	if(ret < 0)
 		return -1;
