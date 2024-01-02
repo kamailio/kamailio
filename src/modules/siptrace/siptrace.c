@@ -45,6 +45,7 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../lib/srdb1/db.h"
+#include "../../core/tcp_conn.h"
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_cseq.h"
@@ -211,6 +212,8 @@ static db_func_t db_funcs;		 /*!< Database functions */
 int trace_dialog_ack = 1;
 int trace_dialog_spiral = 1;
 static int spiral_tracked;
+
+extern int ksr_tcp_accept_haproxy;
 
 int pv_parse_siptrace_name(pv_spec_t *sp, str *in);
 int pv_get_siptrace(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
@@ -1279,6 +1282,109 @@ static int ki_sip_trace_msg(sip_msg_t *msg, str *vmsg, str *saddr, str *taddr,
 }
 
 /**
+ * Format proto:host:port for parse_phostport (IPv6 host in brackets).
+ * @return written length, or -1 on error
+ */
+static int siptrace_format_phostport_ip(
+		char *buf, int bufsize, int proto, struct ip_addr *ip, int port)
+{
+	int n;
+
+	if(buf == NULL || ip == NULL || bufsize <= 0)
+		return -1;
+
+	n = snprintf(buf, bufsize, "%s:%s:%d", siptrace_proto_name(proto),
+			ip_addr2strz(ip), port);
+	if(n < 0 || n >= bufsize)
+		return -1;
+	return n;
+}
+
+static int siptrace_is_conn_oriented(sip_protos_t proto)
+{
+	return proto == PROTO_TCP || proto == PROTO_TLS || proto == PROTO_WS
+		   || proto == PROTO_WSS;
+}
+
+static struct tcp_connection *siptrace_tcpcon_get(dest_info_t *dst)
+{
+	struct tcp_connection *con = NULL;
+	ip_addr_t ip;
+	int port;
+
+	if(dst == NULL || !siptrace_is_conn_oriented(dst->proto))
+		return NULL;
+
+	if(dst->id > 0)
+		con = tcpconn_get(dst->id, 0, 0, 0, 0);
+
+	if(con == NULL) {
+		port = su_getport(&dst->to);
+		if(port) {
+			su2ip_addr(&ip, &dst->to);
+			con = tcpconn_get(dst->id, &ip, port, 0, 0);
+			if(con == NULL && dst->send_sock)
+				con = tcpconn_get(dst->id, &ip, port, &dst->send_sock->su, 0);
+		}
+	}
+	return con;
+}
+
+/**
+ * Fill fromip for outbound traced messages.
+ * When the send path uses HAProxy, use the connection PROXY dst address
+ * (same as Via on HAProxy connections), not the local socket string.
+ * @return 1 if fromip was set, 0 if caller should use its default logic
+ */
+static int siptrace_fill_fromip_out(
+		siptrace_data_t *sto, dest_info_t *dst, sip_msg_t *msg)
+{
+	struct tcp_connection *con = NULL;
+	struct ip_addr *ip;
+	int proto;
+	unsigned short port;
+
+	if(trace_local_ip.s && trace_local_ip.len > 0) {
+		sto->fromip = trace_local_ip;
+		return 1;
+	}
+
+	if(ksr_tcp_accept_haproxy && dst && siptrace_is_conn_oriented(dst->proto)) {
+		con = siptrace_tcpcon_get(dst);
+		if(con) {
+			if(con->rcv.proto_reserved2) {
+				proto = con->rcv.proto;
+				ip = &con->rcv.dst_ip;
+				port = con->rcv.dst_port;
+				sto->fromip.len = siptrace_format_phostport_ip(sto->fromip_buff,
+						SIPTRACE_ADDR_MAX, proto, ip, (int)port);
+				tcpconn_put(con);
+				if(sto->fromip.len > 0 && sto->fromip.len < SIPTRACE_ADDR_MAX) {
+					sto->fromip.s = sto->fromip_buff;
+					return 1;
+				}
+			}
+			tcpconn_put(con);
+		}
+	}
+
+	if(msg && ksr_tcp_accept_haproxy && msg->rcv.proto_reserved2
+			&& siptrace_is_conn_oriented(msg->rcv.proto)) {
+		proto = msg->rcv.proto;
+		ip = &msg->rcv.dst_ip;
+		port = msg->rcv.dst_port;
+		sto->fromip.len = siptrace_format_phostport_ip(
+				sto->fromip_buff, SIPTRACE_ADDR_MAX, proto, ip, (int)port);
+		if(sto->fromip.len > 0 && sto->fromip.len < SIPTRACE_ADDR_MAX) {
+			sto->fromip.s = sto->fromip_buff;
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+/**
  * link call-id, method, from-tag and to-tag
  */
 static int sip_trace_msg_attrs(sip_msg_t *msg, siptrace_data_t *sto)
@@ -1345,9 +1451,9 @@ static int sip_trace(
 				&& strncmp(sto.dir, "out", 3) == 0) {
 			sto.fromip = trace_local_ip;
 		} else {
-			sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX,
-					"%s:%s:%d", siptrace_proto_name(msg->rcv.proto),
-					ip_addr2a(&msg->rcv.src_ip), (int)msg->rcv.src_port);
+			sto.fromip.len = siptrace_format_phostport_ip(sto.fromip_buff,
+					SIPTRACE_ADDR_MAX, msg->rcv.proto, &msg->rcv.src_ip,
+					(int)msg->rcv.src_port);
 			if(sto.fromip.len < 0 || sto.fromip.len >= SIPTRACE_ADDR_MAX) {
 				LM_ERR("failed to format toip buffer (%d)\n", sto.fromip.len);
 				sto.fromip.s = SIPTRACE_ANYADDR;
@@ -1361,9 +1467,9 @@ static int sip_trace(
 				&& strncmp(sto.dir, "in", 2) == 0) {
 			sto.toip = trace_local_ip;
 		} else {
-			sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX,
-					"%s:%s:%d", siptrace_proto_name(msg->rcv.proto),
-					ip_addr2a(&msg->rcv.dst_ip), (int)msg->rcv.dst_port);
+			sto.toip.len = siptrace_format_phostport_ip(sto.toip_buff,
+					SIPTRACE_ADDR_MAX, msg->rcv.proto, &msg->rcv.dst_ip,
+					(int)msg->rcv.dst_port);
 			if(sto.toip.len < 0 || sto.toip.len >= SIPTRACE_ADDR_MAX) {
 				LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
 				sto.toip.s = SIPTRACE_ANYADDR;
@@ -1376,10 +1482,10 @@ static int sip_trace(
 		sto.body.s = snd_inf->buf;
 		sto.body.len = snd_inf->len;
 
-		if(trace_local_ip.s && trace_local_ip.len > 0) {
-			sto.fromip = trace_local_ip;
-		} else {
-			if(snd_inf->send_sock->sock_str.len >= SIPTRACE_ADDR_MAX - 1) {
+		if(!siptrace_fill_fromip_out(&sto, snd_inf->dst, snd_inf->msg)) {
+			if(snd_inf->send_sock == NULL
+					|| snd_inf->send_sock->sock_str.len
+							   >= SIPTRACE_ADDR_MAX - 1) {
 				LM_WARN("local socket address is too large\n");
 				sto.fromip.s = SIPTRACE_ANYADDR;
 				sto.fromip.len = SIPTRACE_ANYADDR_LEN;
@@ -1392,7 +1498,9 @@ static int sip_trace(
 		}
 
 		sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
-				siptrace_proto_name(snd_inf->send_sock->proto),
+				siptrace_proto_name(snd_inf->send_sock
+											? snd_inf->send_sock->proto
+											: PROTO_UDP),
 				suip2a(snd_inf->to, sizeof(*snd_inf->to)),
 				(int)su_getport(snd_inf->to));
 		if(sto.toip.len < 0 || sto.toip.len >= SIPTRACE_ADDR_MAX) {
@@ -1577,13 +1685,11 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 	 * used to send the message */
 	dst = ps->dst;
 
-	if(trace_local_ip.s && trace_local_ip.len > 0) {
-		sto.fromip = trace_local_ip;
-	} else {
+	if(!siptrace_fill_fromip_out(&sto, dst, msg)) {
 		if(dst == 0 || dst->send_sock == 0 || dst->send_sock->sock_str.s == 0) {
-			sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX,
-					"%s:%s:%d", siptrace_proto_name(msg->rcv.proto),
-					ip_addr2a(&msg->rcv.dst_ip), (int)msg->rcv.dst_port);
+			sto.fromip.len = siptrace_format_phostport_ip(sto.fromip_buff,
+					SIPTRACE_ADDR_MAX, msg->rcv.proto, &msg->rcv.dst_ip,
+					(int)msg->rcv.dst_port);
 			if(sto.fromip.len < 0 || sto.fromip.len >= SIPTRACE_ADDR_MAX) {
 				LM_ERR("failed to format toip buffer (%d)\n", sto.fromip.len);
 				sto.fromip.s = SIPTRACE_ANYADDR;
@@ -1601,9 +1707,9 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 		sto.toip.len = SIPTRACE_ANYADDR_LEN;
 	} else {
 		su2ip_addr(&to_ip, &dst->to);
-		sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
-				siptrace_proto_name(dst->proto), ip_addr2a(&to_ip),
-				(int)su_getport(&dst->to));
+		sto.toip.len =
+				siptrace_format_phostport_ip(sto.toip_buff, SIPTRACE_ADDR_MAX,
+						dst->proto, &to_ip, (int)su_getport(&dst->to));
 		if(sto.toip.len < 0 || sto.toip.len >= SIPTRACE_ADDR_MAX) {
 			LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
 			sto.toip.s = SIPTRACE_ANYADDR;
@@ -1686,9 +1792,9 @@ static void trace_onreply_in(struct cell *t, int type, struct tmcb_params *ps)
 		return;
 	}
 
-	sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
-			siptrace_proto_name(msg->rcv.proto), ip_addr2a(&msg->rcv.src_ip),
-			(int)msg->rcv.src_port);
+	sto.fromip.len =
+			siptrace_format_phostport_ip(sto.fromip_buff, SIPTRACE_ADDR_MAX,
+					msg->rcv.proto, &msg->rcv.src_ip, (int)msg->rcv.src_port);
 	if(sto.fromip.len < 0 || sto.fromip.len >= SIPTRACE_ADDR_MAX) {
 		LM_ERR("failed to format fromip buffer (%d)\n", sto.fromip.len);
 		sto.fromip.s = SIPTRACE_ANYADDR;
@@ -1700,9 +1806,9 @@ static void trace_onreply_in(struct cell *t, int type, struct tmcb_params *ps)
 	if(trace_local_ip.s && trace_local_ip.len > 0) {
 		sto.toip = trace_local_ip;
 	} else {
-		sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
-				siptrace_proto_name(msg->rcv.proto),
-				ip_addr2a(&msg->rcv.dst_ip), (int)msg->rcv.dst_port);
+		sto.toip.len = siptrace_format_phostport_ip(sto.toip_buff,
+				SIPTRACE_ADDR_MAX, msg->rcv.proto, &msg->rcv.dst_ip,
+				(int)msg->rcv.dst_port);
 		if(sto.toip.len < 0 || sto.toip.len >= SIPTRACE_ADDR_MAX) {
 			LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
 			sto.toip.s = SIPTRACE_ANYADDR;
@@ -1810,12 +1916,11 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 		}
 	}
 
-	if(trace_local_ip.s && trace_local_ip.len > 0) {
-		sto.fromip = trace_local_ip;
-	} else {
-		sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX,
-				"%s:%s:%d", siptrace_proto_name(msg->rcv.proto),
-				ip_addr2a(&req->rcv.dst_ip), (int)req->rcv.dst_port);
+	dst = ps->dst;
+	if(!siptrace_fill_fromip_out(&sto, dst, req)) {
+		sto.fromip.len = siptrace_format_phostport_ip(sto.fromip_buff,
+				SIPTRACE_ADDR_MAX, msg->rcv.proto, &req->rcv.dst_ip,
+				(int)req->rcv.dst_port);
 		if(sto.fromip.len < 0 || sto.fromip.len >= SIPTRACE_ADDR_MAX) {
 			LM_ERR("failed to format fromip buffer (%d)\n", sto.fromip.len);
 			sto.fromip.s = SIPTRACE_ANYADDR;
@@ -1833,15 +1938,14 @@ static void trace_onreply_out(struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 	memset(&to_ip, 0, sizeof(struct ip_addr));
-	dst = ps->dst;
 	if(dst == 0) {
 		sto.toip.s = SIPTRACE_ANYADDR;
 		sto.toip.len = SIPTRACE_ANYADDR_LEN;
 	} else {
 		su2ip_addr(&to_ip, &dst->to);
-		sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
-				siptrace_proto_name(dst->proto), ip_addr2a(&to_ip),
-				(int)su_getport(&dst->to));
+		sto.toip.len =
+				siptrace_format_phostport_ip(sto.toip_buff, SIPTRACE_ADDR_MAX,
+						dst->proto, &to_ip, (int)su_getport(&dst->to));
 		if(sto.toip.len < 0 || sto.toip.len >= SIPTRACE_ADDR_MAX) {
 			LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
 			sto.toip.s = SIPTRACE_ANYADDR;
@@ -2005,12 +2109,10 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 	sto.body.s = (slcbp->reply) ? slcbp->reply->s : "";
 	sto.body.len = (slcbp->reply) ? slcbp->reply->len : 0;
 
-	if(trace_local_ip.len > 0) {
-		sto.fromip = trace_local_ip;
-	} else {
-		sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX,
-				"%s:%s:%d", siptrace_proto_name(req->rcv.proto),
-				ip_addr2a(&req->rcv.dst_ip), req->rcv.dst_port);
+	if(!siptrace_fill_fromip_out(&sto, slcbp->dst, req)) {
+		sto.fromip.len = siptrace_format_phostport_ip(sto.fromip_buff,
+				SIPTRACE_ADDR_MAX, req->rcv.proto, &req->rcv.dst_ip,
+				(int)req->rcv.dst_port);
 		if(sto.fromip.len < 0 || sto.fromip.len >= SIPTRACE_ADDR_MAX) {
 			LM_ERR("failed to format toip buffer (%d)\n", sto.fromip.len);
 			sto.fromip.s = SIPTRACE_ANYADDR;
@@ -2033,8 +2135,8 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 		sto.toip.len = SIPTRACE_ANYADDR_LEN;
 	} else {
 		su2ip_addr(&to_ip, &slcbp->dst->to);
-		sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
-				siptrace_proto_name(req->rcv.proto), ip_addr2a(&to_ip),
+		sto.toip.len = siptrace_format_phostport_ip(sto.toip_buff,
+				SIPTRACE_ADDR_MAX, req->rcv.proto, &to_ip,
 				(int)su_getport(&slcbp->dst->to));
 		if(sto.toip.len < 0 || sto.toip.len >= SIPTRACE_ADDR_MAX) {
 			LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
@@ -2308,9 +2410,9 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 	sto.body.s = nd->data.s;
 	sto.body.len = nd->data.len;
 
-	sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
-			siptrace_proto_name(nd->rcv->proto), ip_addr2strz(&nd->rcv->src_ip),
-			(int)nd->rcv->src_port);
+	sto.fromip.len =
+			siptrace_format_phostport_ip(sto.fromip_buff, SIPTRACE_ADDR_MAX,
+					nd->rcv->proto, &nd->rcv->src_ip, (int)nd->rcv->src_port);
 	if(sto.fromip.len < 0 || sto.fromip.len >= SIPTRACE_ADDR_MAX) {
 		LM_ERR("failed to format toip buffer (%d)\n", sto.fromip.len);
 		sto.fromip.s = SIPTRACE_ANYADDR;
@@ -2330,9 +2432,9 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 		sto.toip_buff[sto.toip.len] = '\0';
 		sto.toip.s = sto.toip_buff;
 	} else {
-		sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
-				siptrace_proto_name(nd->rcv->proto),
-				ip_addr2strz(&nd->rcv->dst_ip), (int)nd->rcv->dst_port);
+		sto.toip.len = siptrace_format_phostport_ip(sto.toip_buff,
+				SIPTRACE_ADDR_MAX, nd->rcv->proto, &nd->rcv->dst_ip,
+				(int)nd->rcv->dst_port);
 		if(sto.toip.len < 0 || sto.toip.len >= SIPTRACE_ADDR_MAX) {
 			LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
 			sto.toip.s = SIPTRACE_ANYADDR;
@@ -2455,38 +2557,40 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 	sto.body.s = nd->data.s;
 	sto.body.len = nd->data.len;
 
-	if(unlikely(new_dst.send_sock == 0)) {
-		LM_WARN("no sending socket found\n");
-		strcpy(sto.fromip_buff, SIPTRACE_ANYADDR);
-		sto.fromip.len = SIPTRACE_ANYADDR_LEN;
-		proto = PROTO_UDP;
-	} else if(trace_ephemeral_socket && new_dst.ephemeral.vset) {
-		/* use actual local address (ephemeral port) for outbound TCP/TLS */
-		sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX,
-				"%s:%s:%d", siptrace_proto_name(new_dst.ephemeral.proto),
-				ip_addr2strz(&new_dst.ephemeral.ip),
-				(int)new_dst.ephemeral.port);
-		if(sto.fromip.len < 0 || sto.fromip.len >= SIPTRACE_ADDR_MAX) {
-			LM_ERR("failed to format fromip buffer (%d)\n", sto.fromip.len);
+	proto = new_dst.proto;
+	if(!siptrace_fill_fromip_out(&sto, &new_dst, NULL)) {
+		if(unlikely(new_dst.send_sock == 0)) {
+			LM_WARN("no sending socket found\n");
 			strcpy(sto.fromip_buff, SIPTRACE_ANYADDR);
 			sto.fromip.len = SIPTRACE_ANYADDR_LEN;
-		}
-		proto = new_dst.ephemeral.proto;
-	} else {
-		if((_siptrace_data_mode & SIPTRACE_DATA_MODE_ADVADDR)
-				&& new_dst.send_sock->useinfo.sock_str.len > 0) {
-			vsock = new_dst.send_sock->useinfo.sock_str;
+			proto = PROTO_UDP;
+		} else if(trace_ephemeral_socket && new_dst.ephemeral.vset) {
+			/* use actual local address (ephemeral port) for outbound TCP/TLS */
+			sto.fromip.len = siptrace_format_phostport_ip(sto.fromip_buff,
+					SIPTRACE_ADDR_MAX, new_dst.ephemeral.proto,
+					&new_dst.ephemeral.ip, (int)new_dst.ephemeral.port);
+			if(sto.fromip.len < 0 || sto.fromip.len >= SIPTRACE_ADDR_MAX) {
+				LM_ERR("failed to format fromip buffer (%d)\n", sto.fromip.len);
+				strcpy(sto.fromip_buff, SIPTRACE_ANYADDR);
+				sto.fromip.len = SIPTRACE_ANYADDR_LEN;
+			}
+			proto = new_dst.ephemeral.proto;
 		} else {
-			vsock = new_dst.send_sock->sock_str;
+			if((_siptrace_data_mode & SIPTRACE_DATA_MODE_ADVADDR)
+					&& new_dst.send_sock->useinfo.sock_str.len > 0) {
+				vsock = new_dst.send_sock->useinfo.sock_str;
+			} else {
+				vsock = new_dst.send_sock->sock_str;
+			}
+			if(vsock.len >= SIPTRACE_ADDR_MAX - 1) {
+				LM_ERR("socket string is too large: %d\n", vsock.len);
+				return -1;
+			}
+			memcpy(sto.fromip_buff, vsock.s, vsock.len);
+			sto.fromip.len = vsock.len;
+			sto.fromip_buff[sto.fromip.len] = '\0';
+			proto = new_dst.send_sock->proto;
 		}
-		if(vsock.len >= SIPTRACE_ADDR_MAX - 1) {
-			LM_ERR("socket string is too large: %d\n", vsock.len);
-			return -1;
-		}
-		memcpy(sto.fromip_buff, vsock.s, vsock.len);
-		sto.fromip.len = vsock.len;
-		sto.fromip_buff[sto.fromip.len] = '\0';
-		proto = new_dst.send_sock->proto;
 	}
 	sto.fromip.s = sto.fromip_buff;
 
