@@ -59,7 +59,7 @@ char *default_net_str = 0;
 /*global variables*/
 int default_net = 0;
 int max_sms_parts = MAX_SMS_PARTS;
-str domain = {0, 0};
+str _sms_domain = {0, 0};
 int *queued_msgs = 0;
 int use_contact = 0;
 int sms_report_type = NO_REPORT;
@@ -77,7 +77,7 @@ static param_export_t params[] = {{"networks", PARAM_STRING, &networks_config},
 		{"links", PARAM_STRING, &links_config},
 		{"default_net", PARAM_STRING, &default_net_str},
 		{"max_sms_parts", INT_PARAM, &max_sms_parts},
-		{"domain", PARAM_STR, &domain},
+		{"domain", PARAM_STR, &_sms_domain},
 		{"use_contact", INT_PARAM, &use_contact},
 		{"sms_report_type", INT_PARAM, &sms_report_type}, {0, 0, 0}};
 
@@ -515,11 +515,11 @@ int global_init(void)
 		goto error;
 	}
 	/* let the auto-loading function load all TM stuff */
-	if(load_tm(&tmb) == -1)
+	if(load_tm(&_sms_tmb) == -1)
 		goto error;
 
-	/*fix domain*/
-	if(!domain.s) {
+	/*discover domain*/
+	if(!_sms_domain.s) {
 		si = get_first_socket();
 		if(si == 0) {
 			LM_CRIT("null listen socket list\n");
@@ -527,13 +527,13 @@ int global_init(void)
 		}
 		/*do I have to add port?*/
 		i = (si->port_no_str.len && si->port_no != 5060);
-		domain.len = si->name.len + i * (si->port_no_str.len + 1);
-		domain.s = (char *)pkg_malloc(domain.len);
-		if(!domain.s) {
+		_sms_domain.len = si->name.len + i * (si->port_no_str.len + 1);
+		_sms_domain.s = (char *)pkg_malloc(_sms_domain.len);
+		if(!_sms_domain.s) {
 			PKG_MEM_ERROR;
 			goto error;
 		}
-		p = domain.s;
+		p = _sms_domain.s;
 		memcpy(p, si->name.s, si->name.len);
 		p += si->name.len;
 		if(i) {

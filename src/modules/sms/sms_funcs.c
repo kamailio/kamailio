@@ -45,7 +45,7 @@ struct network networks[MAX_NETWORKS];
 int net_pipes_in[MAX_NETWORKS];
 int nr_of_networks;
 int nr_of_modems;
-struct tm_binds tmb;
+struct tm_binds _sms_tmb;
 
 
 #define ERR_NUMBER_TEXT                                                   \
@@ -101,7 +101,7 @@ inline int add_contact(struct sip_msg* msg , str* user)
 	int len;
 
 	len = 9 /*"Contact: "*/ + user->len/*user*/ + 1 /*"@"*/
-		+ domain.len/*host*/ + 6/*"<sip:>"*/ + CRLF_LEN;
+		+ _sms_domain.len/*host*/ + 6/*"<sip:>"*/ + CRLF_LEN;
 
 	buf = pkg_malloc( len );
 	if(!buf) {
@@ -114,7 +114,7 @@ inline int add_contact(struct sip_msg* msg , str* user)
 	append_str( p, "<sip:" , 5);
 	append_str( p, user->s, user->len);
 	*(p++) = '@';
-	append_str( p, domain.s, domain.len);
+	append_str( p, _sms_domain.s, _sms_domain.len);
 	*(p++) = '>';
 	append_str( p, CRLF, CRLF_LEN);
 
@@ -288,7 +288,7 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 
 	/* From header */
 	from.len = 6 /*"<sip:+"*/ + from_user->len /*user*/ + 1 /*"@"*/
-			   + domain.len /*host*/ + 1 /*">"*/;
+			   + _sms_domain.len /*host*/ + 1 /*">"*/;
 	from.s = (char *)pkg_malloc(from.len);
 	if(!from.s)
 		goto error;
@@ -296,15 +296,16 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 	append_str(p, "<sip:+", 6);
 	append_str(p, from_user->s, from_user->len);
 	*(p++) = '@';
-	append_str(p, domain.s, domain.len);
+	append_str(p, _sms_domain.s, _sms_domain.len);
 	*(p++) = '>';
 
 	/* hdrs = Contact header + Content-type */
 	/* length */
 	hdrs.len = CONTENT_TYPE_HDR_LEN + CRLF_LEN;
 	if(use_contact)
-		hdrs.len += 15 /*"Contact: <sip:+"*/ + from_user->len /*user*/
-					+ 1 /*"@"*/ + domain.len /*host*/ + 1 /*">"*/ + CRLF_LEN;
+		hdrs.len +=
+				15 /*"Contact: <sip:+"*/ + from_user->len /*user*/
+				+ 1 /*"@"*/ + _sms_domain.len /*host*/ + 1 /*">"*/ + CRLF_LEN;
 	hdrs.s = (char *)pkg_malloc(hdrs.len);
 	if(!hdrs.s)
 		goto error;
@@ -315,7 +316,7 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 		append_str(p, "Contact: <sip:+", 15);
 		append_str(p, from_user->s, from_user->len);
 		*(p++) = '@';
-		append_str(p, domain.s, domain.len);
+		append_str(p, _sms_domain.s, _sms_domain.len);
 		append_str(p, ">" CRLF, 1 + CRLF_LEN);
 	}
 
@@ -329,10 +330,10 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 			0					   /* Callback parameter */
 	);
 
-	foo = tmb.t_request(&uac_r, 0, /* Request-URI */
-			to,					   /* To */
-			&from,				   /* From */
-			0					   /* next hop */
+	foo = _sms_tmb.t_request(&uac_r, 0, /* Request-URI */
+			to,							/* To */
+			&from,						/* From */
+			0							/* next hop */
 	);
 
 	if(from.s)

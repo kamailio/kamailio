@@ -116,11 +116,11 @@ extern int net_pipes_in[MAX_NETWORKS];
 extern int nr_of_networks;
 extern int nr_of_modems;
 extern int max_sms_parts;
-extern str domain;
+extern str _sms_domain;
 extern int *queued_msgs;
 extern int use_contact;
 extern int sms_report_type;
-extern struct tm_binds tmb;
+extern struct tm_binds _sms_tmb;
 
 void modem_process(struct modem *);
 int push_on_network(struct sip_msg *, int);
