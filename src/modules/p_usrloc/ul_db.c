@@ -35,7 +35,7 @@
 
 ul_db_handle_t dbh_tmp;
 
-ul_master_db_set_t mdb;
+ul_master_db_set_t _pusrl_mdb;
 
 int required_caps = DB_CAP_QUERY | DB_CAP_RAW_QUERY | DB_CAP_INSERT
 					| DB_CAP_DELETE | DB_CAP_UPDATE | DB_CAP_INSERT_UPDATE;
@@ -58,28 +58,28 @@ static db_func_t *get_and_remove_dbf(db1_res_t *res);
 
 int ul_db_init(void)
 {
-	mdb.read.url = &read_db_url;
-	mdb.write.url = &write_db_url;
+	_pusrl_mdb.read.url = &read_db_url;
+	_pusrl_mdb.write.url = &write_db_url;
 
 	memset(results, 0, sizeof(results));
 
 	if(db_master_write) {
-		if(db_bind_mod(mdb.write.url, &mdb.write.dbf) < 0) {
+		if(db_bind_mod(_pusrl_mdb.write.url, &_pusrl_mdb.write.dbf) < 0) {
 			LM_ERR("could not bind api for write db.\n");
 			return -1;
 		}
-		if(!(mdb.write.dbf.cap & required_caps)) {
+		if(!(_pusrl_mdb.write.dbf.cap & required_caps)) {
 			LM_ERR("db api of write db doesn't support required operation.\n");
 			return -1;
 		}
 		LM_INFO("write db initialized\n");
 	}
 
-	if(db_bind_mod(mdb.read.url, &mdb.read.dbf) < 0) {
+	if(db_bind_mod(_pusrl_mdb.read.url, &_pusrl_mdb.read.dbf) < 0) {
 		LM_ERR("could not bind db api for read db.\n");
 		return -1;
 	}
-	if(!(mdb.read.dbf.cap & required_caps)) {
+	if(!(_pusrl_mdb.read.dbf.cap & required_caps)) {
 		LM_ERR("db api of read db doesn't support required operation.\n");
 		return -1;
 	}
@@ -89,15 +89,16 @@ int ul_db_init(void)
 
 int ul_db_child_init(void)
 {
-	if(mdb.read.dbh) {
-		mdb.read.dbf.close(mdb.read.dbh);
-		mdb.read.dbh = NULL;
+	if(_pusrl_mdb.read.dbh) {
+		_pusrl_mdb.read.dbf.close(_pusrl_mdb.read.dbh);
+		_pusrl_mdb.read.dbh = NULL;
 	}
-	if(mdb.write.dbh) {
-		mdb.write.dbf.close(mdb.write.dbh);
-		mdb.write.dbh = NULL;
+	if(_pusrl_mdb.write.dbh) {
+		_pusrl_mdb.write.dbf.close(_pusrl_mdb.write.dbh);
+		_pusrl_mdb.write.dbh = NULL;
 	}
-	if((mdb.read.dbh = mdb.read.dbf.init(mdb.read.url)) == NULL) {
+	if((_pusrl_mdb.read.dbh = _pusrl_mdb.read.dbf.init(_pusrl_mdb.read.url))
+			== NULL) {
 		LM_ERR("could not connect to sip master db (read).\n");
 		return -1;
 	}
@@ -108,7 +109,9 @@ int ul_db_child_init(void)
 
 	LM_INFO("location number is %d\n", max_loc_nr);
 	if(db_master_write) {
-		if((mdb.write.dbh = mdb.write.dbf.init(mdb.write.url)) == NULL) {
+		if((_pusrl_mdb.write.dbh =
+						   _pusrl_mdb.write.dbf.init(_pusrl_mdb.write.url))
+				== NULL) {
 			if(mdb_availability_control) {
 				LM_INFO("starting with no connection to sip master db write\n");
 				return 0;
@@ -124,11 +127,13 @@ int ul_db_child_init(void)
 
 int ul_db_child_locnr_init(void)
 {
-	if(!mdb.read.dbh) {
+	if(!_pusrl_mdb.read.dbh) {
 		LM_ERR("Sip master DB connection(read) is down\n");
 		return -1;
 	}
-	if(load_location_number(&mdb.read.dbf, mdb.read.dbh, &max_loc_nr) != 0) {
+	if(load_location_number(
+			   &_pusrl_mdb.read.dbf, _pusrl_mdb.read.dbh, &max_loc_nr)
+			!= 0) {
 		LM_ERR("could not load location number\n");
 		return -1;
 	}
@@ -138,11 +143,11 @@ int ul_db_child_locnr_init(void)
 void ul_db_shutdown(void)
 {
 	destroy_handles();
-	if(mdb.read.dbh) {
-		mdb.read.dbf.close(mdb.read.dbh);
+	if(_pusrl_mdb.read.dbh) {
+		_pusrl_mdb.read.dbf.close(_pusrl_mdb.read.dbh);
 	}
-	if(mdb.write.dbh) {
-		mdb.write.dbf.close(mdb.write.dbh);
+	if(_pusrl_mdb.write.dbh) {
+		_pusrl_mdb.write.dbf.close(_pusrl_mdb.write.dbh);
 	}
 	return;
 }
@@ -209,10 +214,10 @@ int db_handle_error(ul_db_handle_t *handle, int no)
 		tmp.s = query;
 		tmp.len = strlen(query);
 
-		if(init_w_dbh(&mdb.write) < 0)
+		if(init_w_dbh(&_pusrl_mdb.write) < 0)
 			return -1;
 
-		if(mdb.write.dbf.raw_query(mdb.write.dbh, &tmp, NULL)) {
+		if(_pusrl_mdb.write.dbf.raw_query(_pusrl_mdb.write.dbh, &tmp, NULL)) {
 			LM_ERR("error in database update.\n");
 			return -1;
 		}
@@ -225,7 +230,9 @@ int db_handle_error(ul_db_handle_t *handle, int no)
 		}
 	}
 
-	if(load_data(&mdb.read.dbf, mdb.read.dbh, &dbh_tmp, handle->id) < 0) {
+	if(load_data(
+			   &_pusrl_mdb.read.dbf, _pusrl_mdb.read.dbh, &dbh_tmp, handle->id)
+			< 0) {
 		LM_ERR("could not load id %i\n", handle->id);
 		return -1;
 	}
@@ -236,13 +243,17 @@ int db_handle_error(ul_db_handle_t *handle, int no)
 			cfg_get(p_usrloc, p_usrloc_cfg, db_err_threshold));
 	if(db->errors >= cfg_get(p_usrloc, p_usrloc_cfg, db_err_threshold)) {
 		LM_DBG("db_handle_error: now doing failover\n");
-		if(init_w_dbh(&mdb.write) < 0)
+		if(init_w_dbh(&_pusrl_mdb.write) < 0)
 			return -1;
-		if((db_failover(&mdb.write.dbf, mdb.write.dbh, handle, no)) < 0) {
+		if((db_failover(
+				   &_pusrl_mdb.write.dbf, _pusrl_mdb.write.dbh, handle, no))
+				< 0) {
 			LM_ERR("error in doing failover.\n");
 			return -1;
 		}
-		if(load_data(&mdb.read.dbf, mdb.read.dbh, &dbh_tmp, handle->id) < 0) {
+		if(load_data(&_pusrl_mdb.read.dbf, _pusrl_mdb.read.dbh, &dbh_tmp,
+				   handle->id)
+				< 0) {
 			return -1;
 		}
 		refresh_handle(handle, &dbh_tmp, 0);
@@ -347,7 +358,8 @@ int ul_db_insert(
 		LM_ERR("not allowed in read only mode, abort.\n");
 		return -1;
 	}
-	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))
+	if((handle = get_handle(
+				&_pusrl_mdb.read.dbf, _pusrl_mdb.read.dbh, first, second))
 			== NULL) {
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
@@ -363,7 +375,8 @@ int ul_db_replace(str *table, str *first, str *second, db_key_t *_k,
 		LM_ERR("not allowed in read only mode, abort.\n");
 		return -1;
 	}
-	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))
+	if((handle = get_handle(
+				&_pusrl_mdb.read.dbf, _pusrl_mdb.read.dbh, first, second))
 			== NULL) {
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
@@ -380,7 +393,8 @@ int ul_db_update(str *table, str *first, str *second, db_key_t *_k,
 		LM_ERR("not allowed in read only mode, abort.\n");
 		return -1;
 	}
-	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))
+	if((handle = get_handle(
+				&_pusrl_mdb.read.dbf, _pusrl_mdb.read.dbh, first, second))
 			== NULL) {
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
@@ -396,7 +410,8 @@ int ul_db_insert_update(
 		LM_ERR("not allowed in read only mode, abort.\n");
 		return -1;
 	}
-	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))
+	if((handle = get_handle(
+				&_pusrl_mdb.read.dbf, _pusrl_mdb.read.dbh, first, second))
 			== NULL) {
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
@@ -412,7 +427,8 @@ int ul_db_delete(str *table, str *first, str *second, db_key_t *_k, db_op_t *_o,
 		LM_ERR("not allowed in read only mode, abort.\n");
 		return -1;
 	}
-	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))
+	if((handle = get_handle(
+				&_pusrl_mdb.read.dbf, _pusrl_mdb.read.dbh, first, second))
 			== NULL) {
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
@@ -427,7 +443,8 @@ int ul_db_query(str *table, str *first, str *second, db1_con_t ***_r_h,
 	ul_db_handle_t *handle;
 	db_func_t *f;
 	int ret;
-	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))
+	if((handle = get_handle(
+				&_pusrl_mdb.read.dbf, _pusrl_mdb.read.dbh, first, second))
 			== NULL) {
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
@@ -460,9 +477,10 @@ int db_reactivate(ul_db_handle_t *handle, int no)
 		LM_ERR("running in read only mode, abort.\n");
 		return -1;
 	}
-	if(init_w_dbh(&mdb.write) < 0)
+	if(init_w_dbh(&_pusrl_mdb.write) < 0)
 		return -1;
-	return db_failover_reactivate(&mdb.write.dbf, mdb.write.dbh, handle, no);
+	return db_failover_reactivate(
+			&_pusrl_mdb.write.dbf, _pusrl_mdb.write.dbh, handle, no);
 }
 
 int db_reset_failover_time(ul_db_handle_t *handle, int no)
@@ -471,17 +489,19 @@ int db_reset_failover_time(ul_db_handle_t *handle, int no)
 		LM_ERR("running in read only mode, abort.\n");
 		return -1;
 	}
-	if(init_w_dbh(&mdb.write) < 0)
+	if(init_w_dbh(&_pusrl_mdb.write) < 0)
 		return -1;
-	return db_failover_reset(&mdb.write.dbf, mdb.write.dbh, handle->id, no);
+	return db_failover_reset(
+			&_pusrl_mdb.write.dbf, _pusrl_mdb.write.dbh, handle->id, no);
 }
 
 int ul_db_check(ul_db_handle_t *handle)
 {
 	if(db_master_write) {
-		if(init_w_dbh(&mdb.write) < 0)
+		if(init_w_dbh(&_pusrl_mdb.write) < 0)
 			return -1;
-		return check_handle(&mdb.write.dbf, mdb.write.dbh, handle);
+		return check_handle(
+				&_pusrl_mdb.write.dbf, _pusrl_mdb.write.dbh, handle);
 	} else {
 		LM_ERR("checking is useless in read-only mode\n");
 		return 0;

@@ -163,12 +163,13 @@ void check_dbs(unsigned int ticks, void *param)
 
 void check_master_db()
 {
-	if(mdb.write.dbh) {
-		mdb.write.dbf.close(mdb.write.dbh);
-		mdb.write.dbh = NULL;
+	if(_pusrl_mdb.write.dbh) {
+		_pusrl_mdb.write.dbf.close(_pusrl_mdb.write.dbh);
+		_pusrl_mdb.write.dbh = NULL;
 	}
 
-	if((mdb.write.dbh = mdb.write.dbf.init(mdb.write.url)) == NULL) {
+	if((_pusrl_mdb.write.dbh = _pusrl_mdb.write.dbf.init(_pusrl_mdb.write.url))
+			== NULL) {
 		LM_INFO("Master db is unavailable.\n");
 		*mdb_w_available = 0;
 	} else {
