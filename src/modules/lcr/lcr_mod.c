@@ -135,7 +135,7 @@ gen_lock_t *reload_lock;
 
 /* database variables */
 /* clang-format off */
-static str db_url           = str_init(DEFAULT_RODB_URL);
+static str lcr_db_url       = str_init(DEFAULT_RODB_URL);
 static str lcr_rule_table   = str_init(LCR_RULE_TABLE);
 static str lcr_rule_target_table = str_init(LCR_RULE_TARGET_TABLE);
 static str lcr_gw_table     = str_init(LCR_GW_TABLE);
@@ -313,7 +313,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-    {"db_url",                   PARAM_STR, &db_url},
+    {"db_url",                   PARAM_STR, &lcr_db_url},
     {"lcr_rule_table",           PARAM_STR, &lcr_rule_table},
     {"lcr_rule_target_table",    PARAM_STR, &lcr_rule_target_table},
     {"lcr_gw_table",             PARAM_STR, &lcr_gw_table},
@@ -455,7 +455,7 @@ static int mod_init(void)
 	}
 
 	/* Bind database */
-	if(lcr_db_bind(&db_url)) {
+	if(lcr_db_bind(&lcr_db_url)) {
 		LM_ERR("no database module found\n");
 		return -1;
 	}
@@ -692,7 +692,7 @@ static int mod_init(void)
 	}
 
 	/* Check table version */
-	if(lcr_db_init(&db_url) < 0) {
+	if(lcr_db_init(&lcr_db_url) < 0) {
 		LM_ERR("unable to open database connection\n");
 		return -1;
 	}
@@ -1484,7 +1484,7 @@ int reload_tables()
 
 	request_uri_re = from_uri_re = 0;
 
-	if(lcr_db_init(&db_url) < 0) {
+	if(lcr_db_init(&lcr_db_url) < 0) {
 		LM_ERR("unable to open database connection\n");
 		return -1;
 	}
