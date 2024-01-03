@@ -440,7 +440,13 @@ static int mod_child(int rank)
 
 	/* fix tls config only from the main proc/PROC_INIT., when we know
 	 * the exact process number and before any other process starts*/
+
+        /* OpenSSL 3: initialization in PROC_SIPINIT to avoid init'ing ERR_STATE */
+#if OPENSSL_VERSION_NUMBER < 0x030000000L
 	if(rank == PROC_INIT) {
+#else
+        if(rank == PROC_SIPINIT) {
+#endif
 		if(cfg_get(tls, tls_cfg, config_file).s) {
 			if(tls_fix_domains_cfg(
 					   *tls_domains_cfg, &srv_defaults, &cli_defaults)
