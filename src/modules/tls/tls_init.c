@@ -828,10 +828,10 @@ int tls_h_mod_pre_init_f(void)
 	LM_DBG("preparing tls env for modules initialization\n");
 #if OPENSSL_VERSION_NUMBER >= 0x010100000L && !defined(LIBRESSL_VERSION_NUMBER)
 	LM_DBG("preparing tls env for modules initialization (libssl >=1.1)\n");
-#if OPENSSL_VERSION_NUMBER == 0x010101000L
+#if OPENSSL_VERSION_NUMBER == 0x010100000L
         // not needed for OpenSSL 3
 	OPENSSL_init_ssl(OPENSSL_INIT_ATFORK, NULL);
-#else
+#elif OPENSSL_VERSION_NUMBER < 0x010100000L
 	OPENSSL_init_ssl(0, NULL);
 #endif
 #else
