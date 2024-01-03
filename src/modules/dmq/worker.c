@@ -95,8 +95,8 @@ void worker_loop(int id)
 				/* send the reply */
 				if(peer_response.resp_code > 0 && peer_response.reason.s != NULL
 						&& peer_response.reason.len > 0) {
-					if(slb.freply(current_job->msg, peer_response.resp_code,
-							   &peer_response.reason)
+					if(_dmq_slb.freply(current_job->msg,
+							   peer_response.resp_code, &peer_response.reason)
 							< 0) {
 						LM_ERR("error sending reply\n");
 					} else {

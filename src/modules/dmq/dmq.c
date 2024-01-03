@@ -68,9 +68,9 @@ static sip_uri_t dmq_notification_uri = {0};
 int dmq_ping_interval = 60;
 
 /* TM bind */
-struct tm_binds tmb = {0};
+struct tm_binds _dmq_tmb = {0};
 /* SL API structure */
-sl_api_t slb = {0};
+sl_api_t _dmq_slb = {0};
 
 /** module variables */
 str dmq_request_method = str_init("KDMQ");
@@ -190,13 +190,13 @@ static int make_socket_str_from_uri(struct sip_uri *uri, str *socket)
 static int mod_init(void)
 {
 	/* bind the SL API */
-	if(sl_load_api(&slb) != 0) {
+	if(sl_load_api(&_dmq_slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
 	/* load all TM stuff */
-	if(load_tm_api(&tmb) == -1) {
+	if(load_tm_api(&_dmq_tmb) == -1) {
 		LM_ERR("can't load tm functions. TM module probably not loaded\n");
 		return -1;
 	}

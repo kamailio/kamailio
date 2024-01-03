@@ -94,7 +94,7 @@ int ki_dmq_handle_message_rc(sip_msg_t *msg, int returnval)
 	if(!peer) {
 		LM_DBG("no peer found for %.*s\n", msg->parsed_uri.user.len,
 				msg->parsed_uri.user.s);
-		if(slb.freply(msg, 404, &dmq_404_rpl) < 0) {
+		if(_dmq_slb.freply(msg, 404, &dmq_404_rpl) < 0) {
 			LM_ERR("sending reply\n");
 			goto error;
 		}
@@ -158,7 +158,7 @@ int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval)
 	if(!peer) {
 		LM_DBG("no peer found for %.*s\n", msg->parsed_uri.user.len,
 				msg->parsed_uri.user.s);
-		if(slb.freply(msg, 404, &dmq_404_rpl) < 0) {
+		if(_dmq_slb.freply(msg, 404, &dmq_404_rpl) < 0) {
 			LM_ERR("sending reply\n");
 			goto error;
 		}
@@ -190,7 +190,7 @@ int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval)
 	/* send the reply */
 	if(peer_response.resp_code > 0 && peer_response.reason.s != NULL
 			&& peer_response.reason.len > 0) {
-		if(slb.freply(msg, peer_response.resp_code, &peer_response.reason)
+		if(_dmq_slb.freply(msg, peer_response.resp_code, &peer_response.reason)
 				< 0) {
 			LM_ERR("error sending reply\n");
 		} else {

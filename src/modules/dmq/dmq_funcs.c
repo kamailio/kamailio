@@ -266,9 +266,9 @@ int dmq_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
 			TMCB_LOCAL_COMPLETED, dmq_tm_callback, (void *)cb_param);
 	uac_r.ssock = &dmq_server_socket;
 
-	result = tmb.t_request(&uac_r, &to, &to, &from, NULL);
+	result = _dmq_tmb.t_request(&uac_r, &to, &to, &from, NULL);
 	if(result < 0) {
-		LM_ERR("error in tmb.t_request_within\n");
+		LM_ERR("error in tm t_request_within()\n");
 		goto error;
 	}
 	pkg_free(str_hdr.s);
@@ -468,7 +468,7 @@ int ki_dmq_t_replicate_mode(struct sip_msg *msg, int mode)
 			first = 0;
 		}
 
-		if(tmb.t_replicate(msg, &node->orig_uri) < 0) {
+		if(_dmq_tmb.t_replicate(msg, &node->orig_uri) < 0) {
 			LM_ERR("error calling t_replicate\n");
 			goto error;
 		}

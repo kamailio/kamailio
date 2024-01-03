@@ -49,8 +49,8 @@ extern sip_uri_t dmq_server_uri;
 extern str_list_t *dmq_notification_address_list;
 extern int dmq_multi_notify;
 /* sl and tm */
-extern struct tm_binds tmb;
-extern sl_api_t slb;
+extern struct tm_binds _dmq_tmb;
+extern sl_api_t _dmq_slb;
 
 extern str dmq_200_rpl;
 extern str dmq_400_rpl;
