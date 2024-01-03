@@ -2411,6 +2411,8 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 	int proto;
 	int evcb_ret;
 	int ret = 0;
+	int dst_to_updated = 0;
+	int found = 0;
 
 	if(evp->data == 0)
 		return -1;
@@ -2448,40 +2450,63 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 
 		if(con == NULL) {
 			LM_WARN("TCP connection could not be found\n");
-		} else {
+		} else if(con->rcv.proto_reserved2) {
 			sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX,
 					"%s:%s:%d", siptrace_proto_name(con->rcv.proto),
 					ip_addr2a(&con->rcv.dst_ip), (int)con->rcv.dst_port);
 			proto = PROTO_TCP;
+			sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX,
+					"%s:%s:%d", siptrace_proto_name(proto),
+					ip_addr2a(&con->rcv.src_ip), (int)con->rcv.src_port);
+			if(sto.toip.len < 0 || sto.toip.len >= SIPTRACE_ADDR_MAX) {
+				LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
+				sto.toip.s = SIPTRACE_ANYADDR;
+				sto.toip.len = SIPTRACE_ANYADDR_LEN;
+			} else {
+				sto.toip.s = sto.toip_buff;
+			}
+			dst_to_updated = 1;
+			found = 1;
+			tcpconn_put(con);
+		} else {
+			LM_WARN("Current TCP connection is not a connection to haproxy "
+					"server\n");
 			tcpconn_put(con);
 		}
-	} else if(unlikely(new_dst.send_sock == 0)) {
-		LM_WARN("no sending socket found\n");
-		strcpy(sto.fromip_buff, SIPTRACE_ANYADDR);
-		sto.fromip.len = SIPTRACE_ANYADDR_LEN;
-		proto = PROTO_UDP;
-	} else {
-		if(new_dst.send_sock->sock_str.len >= SIPTRACE_ADDR_MAX - 1) {
-			LM_ERR("socket string is too large: %d\n",
+	}
+
+	if(!found) {
+		if(unlikely(new_dst.send_sock == 0)) {
+			LM_WARN("no sending socket found\n");
+			strcpy(sto.fromip_buff, SIPTRACE_ANYADDR);
+			sto.fromip.len = SIPTRACE_ANYADDR_LEN;
+			proto = PROTO_UDP;
+		} else {
+			if(new_dst.send_sock->sock_str.len >= SIPTRACE_ADDR_MAX - 1) {
+				LM_ERR("socket string is too large: %d\n",
+						new_dst.send_sock->sock_str.len);
+				return -1;
+			}
+			strncpy(sto.fromip_buff, new_dst.send_sock->sock_str.s,
 					new_dst.send_sock->sock_str.len);
-			return -1;
+			sto.fromip.len = new_dst.send_sock->sock_str.len;
+			proto = new_dst.send_sock->proto;
 		}
-		strncpy(sto.fromip_buff, new_dst.send_sock->sock_str.s,
-				new_dst.send_sock->sock_str.len);
-		sto.fromip.len = new_dst.send_sock->sock_str.len;
-		proto = new_dst.send_sock->proto;
 	}
 	sto.fromip.s = sto.fromip_buff;
 
-	sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
-			siptrace_proto_name(proto), suip2a(&new_dst.to, sizeof(new_dst.to)),
-			(int)su_getport(&new_dst.to));
-	if(sto.toip.len < 0 || sto.toip.len >= SIPTRACE_ADDR_MAX) {
-		LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
-		sto.toip.s = SIPTRACE_ANYADDR;
-		sto.toip.len = SIPTRACE_ANYADDR_LEN;
-	} else {
-		sto.toip.s = sto.toip_buff;
+	if(!dst_to_updated) {
+		sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
+				siptrace_proto_name(proto),
+				suip2a(&new_dst.to, sizeof(new_dst.to)),
+				(int)su_getport(&new_dst.to));
+		if(sto.toip.len < 0 || sto.toip.len >= SIPTRACE_ADDR_MAX) {
+			LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
+			sto.toip.s = SIPTRACE_ANYADDR;
+			sto.toip.len = SIPTRACE_ANYADDR_LEN;
+		} else {
+			sto.toip.s = sto.toip_buff;
+		}
 	}
 
 	sto.dir = "out";
