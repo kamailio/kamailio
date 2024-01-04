@@ -110,7 +110,7 @@ static int mod_init(void)
 	}
 	ob_key.len = OB_KEY_LEN;
 
-#if OPENSSL_VERSION_NUMBER < 0x030000000L
+#if OPENSSL_VERSION_NUMBER < 0x010101000L
         mod_init_openssl(NULL);
 #else
         pthread_t tid;
