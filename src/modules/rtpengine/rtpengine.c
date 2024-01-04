@@ -113,6 +113,7 @@ MODULE_VERSION
 
 #define RTPENGINE_DTMF_EVENT_BUFFER 32768
 
+/* clang-format off */
 enum {
 	RPC_FOUND_ALL = 2,
 	RPC_FOUND_ONE = 1,
@@ -121,8 +122,7 @@ enum {
 
 #define CPORT "22222"
 
-struct ng_flags_parse
-{
+struct ng_flags_parse {
 	int via, to, packetize, transport, directional;
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux, *sdes, *t38,
 			*received_from, *codec, *codec_strip, *codec_offer,
@@ -131,28 +131,27 @@ struct ng_flags_parse
 };
 
 static const char *command_strings[] = {
-		[OP_OFFER] = "offer",
-		[OP_ANSWER] = "answer",
-		[OP_DELETE] = "delete",
-		[OP_START_RECORDING] = "start recording",
-		[OP_QUERY] = "query",
-		[OP_PING] = "ping",
-		[OP_STOP_RECORDING] = "stop recording",
-		[OP_BLOCK_DTMF] = "block DTMF",
-		[OP_UNBLOCK_DTMF] = "unblock DTMF",
-		[OP_BLOCK_MEDIA] = "block media",
-		[OP_UNBLOCK_MEDIA] = "unblock media",
-		[OP_SILENCE_MEDIA] = "silence media",
-		[OP_UNSILENCE_MEDIA] = "unsilence media",
-		[OP_START_FORWARDING] = "start forwarding",
-		[OP_STOP_FORWARDING] = "stop forwarding",
-		[OP_PLAY_MEDIA] = "play media",
-		[OP_STOP_MEDIA] = "stop media",
-		[OP_PLAY_DTMF] = "play DTMF",
+	[OP_OFFER] = "offer",
+	[OP_ANSWER] = "answer",
+	[OP_DELETE] = "delete",
+	[OP_START_RECORDING] = "start recording",
+	[OP_QUERY] = "query",
+	[OP_PING] = "ping",
+	[OP_STOP_RECORDING] = "stop recording",
+	[OP_BLOCK_DTMF] = "block DTMF",
+	[OP_UNBLOCK_DTMF] = "unblock DTMF",
+	[OP_BLOCK_MEDIA] = "block media",
+	[OP_UNBLOCK_MEDIA] = "unblock media",
+	[OP_SILENCE_MEDIA] = "silence media",
+	[OP_UNSILENCE_MEDIA] = "unsilence media",
+	[OP_START_FORWARDING] = "start forwarding",
+	[OP_STOP_FORWARDING] = "stop forwarding",
+	[OP_PLAY_MEDIA] = "play media",
+	[OP_STOP_MEDIA] = "stop media",
+	[OP_PLAY_DTMF] = "play DTMF",
 };
 
-struct minmax_mos_stats
-{
+struct minmax_mos_stats {
 	str mos_param;
 	str at_param;
 	str packetloss_param;
@@ -169,8 +168,7 @@ struct minmax_mos_stats
 	pv_elem_t *roundtrip_leg_pv;
 	pv_elem_t *samples_pv;
 };
-struct minmax_mos_label_stats
-{
+struct minmax_mos_label_stats {
 	int got_any_pvs;
 
 	str label_param;
@@ -178,8 +176,7 @@ struct minmax_mos_label_stats
 
 	struct minmax_mos_stats min, max, average;
 };
-struct minmax_stats_vals
-{
+struct minmax_stats_vals {
 	long long int mos;
 	long long int at;
 	long long int packetloss;
@@ -193,11 +190,11 @@ struct minmax_stats_vals
 
 #define RTPE_LIST_VERSION_DELAY 10
 
-typedef struct rtpe_list_version
-{
+typedef struct rtpe_list_version {
 	int vernum;
 	time_t vertime;
 } rtpe_list_version_t;
+/* clang-format on */
 
 static rtpe_list_version_t *_rtpe_list_version = NULL;
 static int _rtpe_list_vernum_local = 0;
@@ -249,7 +246,8 @@ static int get_extra_id(struct sip_msg *msg, str *id_str);
 
 static int rtpengine_set_store(modparam_t type, void *val);
 static int rtpengine_set_dtmf_events_sock(modparam_t type, void *val);
-static int rtpengine_add_rtpengine_set(char * rtp_proxies, unsigned int weight, int disabled, unsigned int ticks);
+static int rtpengine_add_rtpengine_set(char *rtp_proxies, unsigned int weight,
+		int disabled, unsigned int ticks);
 
 static int mod_init(void);
 static int child_init(int);
@@ -349,10 +347,12 @@ static str rtpengine_dtmf_event_sock;
 static int rtpengine_dtmf_event_fd;
 int dtmf_event_rt = -1; /* default disabled */
 
+/* clang-format off */
 typedef struct rtpp_set_link {
 	struct rtpp_set *rset;
 	pv_spec_t *rpv;
 } rtpp_set_link_t;
+/* clang-format on */
 
 /* tm */
 static struct tm_binds tmb;
@@ -366,221 +366,242 @@ int got_any_mos_pvs;
 struct crypto_binds rtpengine_cb;
 
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"set_rtpengine_set", (cmd_function)set_rtpengine_set_f, 1,
-				fixup_set_id, 0, ANY_ROUTE},
-		{"set_rtpengine_set", (cmd_function)set_rtpengine_set_f, 2,
-				fixup_set_id, 0, ANY_ROUTE},
-		{"start_recording", (cmd_function)start_recording_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"start_recording", (cmd_function)start_recording_f, 1, fixup_spve_null,
-				0, ANY_ROUTE},
-		{"stop_recording", (cmd_function)stop_recording_f, 0, 0, 0, ANY_ROUTE},
-		{"stop_recording", (cmd_function)stop_recording_f, 1, fixup_spve_null,
-				0, ANY_ROUTE},
-		{"block_dtmf", (cmd_function)block_dtmf_f, 0, 0, 0, ANY_ROUTE},
-		{"unblock_dtmf", (cmd_function)unblock_dtmf_f, 0, 0, 0, ANY_ROUTE},
-		{"block_media", (cmd_function)block_media_f, 0, 0, 0, ANY_ROUTE},
-		{"unblock_media", (cmd_function)unblock_media_f, 0, 0, 0, ANY_ROUTE},
-		{"silence_media", (cmd_function)silence_media_f, 0, 0, 0, ANY_ROUTE},
-		{"unsilence_media", (cmd_function)unsilence_media_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"block_dtmf", (cmd_function)block_dtmf_f, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"unblock_dtmf", (cmd_function)unblock_dtmf_f, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"block_media", (cmd_function)block_media_f, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"unblock_media", (cmd_function)unblock_media_f, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"silence_media", (cmd_function)silence_media_f, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"unsilence_media", (cmd_function)unsilence_media_f, 1, fixup_spve_null,
-				0, ANY_ROUTE},
-		{"start_forwarding", (cmd_function)start_forwarding_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"stop_forwarding", (cmd_function)stop_forwarding_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"start_forwarding", (cmd_function)start_forwarding_f, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"stop_forwarding", (cmd_function)stop_forwarding_f, 1, fixup_spve_null,
-				0, ANY_ROUTE},
-		{"play_media", (cmd_function)play_media_f, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"stop_media", (cmd_function)stop_media_f, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"stop_media", (cmd_function)stop_media_f, 0, 0, 0, ANY_ROUTE},
-		{"play_dtmf", (cmd_function)play_dtmf_f, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"rtpengine_offer", (cmd_function)rtpengine_offer1_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"rtpengine_offer", (cmd_function)rtpengine_offer1_f, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"rtpengine_answer", (cmd_function)rtpengine_answer1_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"rtpengine_answer", (cmd_function)rtpengine_answer1_f, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"rtpengine_info", (cmd_function)rtpengine_info1_f, 0, 0, 0, ANY_ROUTE},
-		{"rtpengine_info", (cmd_function)rtpengine_info1_f, 1, fixup_spve_null,
-				0, ANY_ROUTE},
-		{"rtpengine_manage", (cmd_function)rtpengine_manage1_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"rtpengine_manage", (cmd_function)rtpengine_manage1_f, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"rtpengine_delete", (cmd_function)rtpengine_delete1_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"rtpengine_delete", (cmd_function)rtpengine_delete1_f, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"rtpengine_query", (cmd_function)rtpengine_query1_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"rtpengine_query", (cmd_function)rtpengine_query1_f, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"rtpengine_query_v", (cmd_function)w_rtpengine_query_v, 2,
-				fixup_rtpengine_query_v, fixup_free_rtpengine_query_v,
-				ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"set_rtpengine_set", (cmd_function)set_rtpengine_set_f, 1,
+			fixup_set_id, 0, ANY_ROUTE},
+	{"set_rtpengine_set", (cmd_function)set_rtpengine_set_f, 2,
+			fixup_set_id, 0, ANY_ROUTE},
+	{"start_recording", (cmd_function)start_recording_f, 0, 0, 0,
+			ANY_ROUTE},
+	{"start_recording", (cmd_function)start_recording_f, 1, fixup_spve_null,
+			0, ANY_ROUTE},
+	{"stop_recording", (cmd_function)stop_recording_f, 0, 0, 0, ANY_ROUTE},
+	{"stop_recording", (cmd_function)stop_recording_f, 1, fixup_spve_null,
+			0, ANY_ROUTE},
+	{"block_dtmf", (cmd_function)block_dtmf_f, 0, 0, 0, ANY_ROUTE},
+	{"unblock_dtmf", (cmd_function)unblock_dtmf_f, 0, 0, 0, ANY_ROUTE},
+	{"block_media", (cmd_function)block_media_f, 0, 0, 0, ANY_ROUTE},
+	{"unblock_media", (cmd_function)unblock_media_f, 0, 0, 0, ANY_ROUTE},
+	{"silence_media", (cmd_function)silence_media_f, 0, 0, 0, ANY_ROUTE},
+	{"unsilence_media", (cmd_function)unsilence_media_f, 0, 0, 0,
+			ANY_ROUTE},
+	{"block_dtmf", (cmd_function)block_dtmf_f, 1, fixup_spve_null, 0,
+			ANY_ROUTE},
+	{"unblock_dtmf", (cmd_function)unblock_dtmf_f, 1, fixup_spve_null, 0,
+			ANY_ROUTE},
+	{"block_media", (cmd_function)block_media_f, 1, fixup_spve_null, 0,
+			ANY_ROUTE},
+	{"unblock_media", (cmd_function)unblock_media_f, 1, fixup_spve_null, 0,
+			ANY_ROUTE},
+	{"silence_media", (cmd_function)silence_media_f, 1, fixup_spve_null, 0,
+			ANY_ROUTE},
+	{"unsilence_media", (cmd_function)unsilence_media_f, 1, fixup_spve_null,
+			0, ANY_ROUTE},
+	{"start_forwarding", (cmd_function)start_forwarding_f, 0, 0, 0,
+			ANY_ROUTE},
+	{"stop_forwarding", (cmd_function)stop_forwarding_f, 0, 0, 0,
+			ANY_ROUTE},
+	{"start_forwarding", (cmd_function)start_forwarding_f, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"stop_forwarding", (cmd_function)stop_forwarding_f, 1, fixup_spve_null,
+			0, ANY_ROUTE},
+	{"play_media", (cmd_function)play_media_f, 1, fixup_spve_null, 0,
+			ANY_ROUTE},
+	{"stop_media", (cmd_function)stop_media_f, 1, fixup_spve_null, 0,
+			ANY_ROUTE},
+	{"stop_media", (cmd_function)stop_media_f, 0, 0, 0, ANY_ROUTE},
+	{"play_dtmf", (cmd_function)play_dtmf_f, 1, fixup_spve_null, 0,
+			ANY_ROUTE},
+	{"rtpengine_offer", (cmd_function)rtpengine_offer1_f, 0, 0, 0,
+			ANY_ROUTE},
+	{"rtpengine_offer", (cmd_function)rtpengine_offer1_f, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"rtpengine_answer", (cmd_function)rtpengine_answer1_f, 0, 0, 0,
+			ANY_ROUTE},
+	{"rtpengine_answer", (cmd_function)rtpengine_answer1_f, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"rtpengine_info", (cmd_function)rtpengine_info1_f, 0, 0, 0, ANY_ROUTE},
+	{"rtpengine_info", (cmd_function)rtpengine_info1_f, 1, fixup_spve_null,
+			0, ANY_ROUTE},
+	{"rtpengine_manage", (cmd_function)rtpengine_manage1_f, 0, 0, 0,
+			ANY_ROUTE},
+	{"rtpengine_manage", (cmd_function)rtpengine_manage1_f, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"rtpengine_delete", (cmd_function)rtpengine_delete1_f, 0, 0, 0,
+			ANY_ROUTE},
+	{"rtpengine_delete", (cmd_function)rtpengine_delete1_f, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"rtpengine_query", (cmd_function)rtpengine_query1_f, 0, 0, 0,
+			ANY_ROUTE},
+	{"rtpengine_query", (cmd_function)rtpengine_query1_f, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"rtpengine_query_v", (cmd_function)w_rtpengine_query_v, 2,
+			fixup_rtpengine_query_v, fixup_free_rtpengine_query_v,
+			ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static pv_export_t mod_pvs[] = {
-		{{"rtpstat", (sizeof("rtpstat") - 1)}, /* RTP-Statistics */
-				PVT_OTHER, pv_get_rtpestat_f, 0, 0, 0, 0, 0},
-		{{"rtpestat", (sizeof("rtpestat") - 1)}, /* RTP-Statistics */
-				PVT_OTHER, pv_get_rtpestat_f, 0, 0, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"rtpstat", (sizeof("rtpstat") - 1)}, /* RTP-Statistics */
+			PVT_OTHER, pv_get_rtpestat_f, 0, 0, 0, 0, 0},
+	{{"rtpestat", (sizeof("rtpestat") - 1)}, /* RTP-Statistics */
+			PVT_OTHER, pv_get_rtpestat_f, 0, 0, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-	{"rtpengine_sock",        PARAM_STRING|USE_FUNC_PARAM,
-	                         (void*)rtpengine_set_store          },
-	{"rtpengine_disable_tout",INT_PARAM, &default_rtpengine_cfg.rtpengine_disable_tout },
-	{"aggressive_redetection",INT_PARAM, &default_rtpengine_cfg.aggressive_redetection },
-	{"rtpengine_retr",        INT_PARAM, &default_rtpengine_cfg.rtpengine_retr         },
-	{"queried_nodes_limit",   INT_PARAM, &default_rtpengine_cfg.queried_nodes_limit    },
-	{"rtpengine_tout_ms",     INT_PARAM, &default_rtpengine_cfg.rtpengine_tout_ms      },
-	{"rtpengine_allow_op",    INT_PARAM, &rtpengine_allow_op     },
-	{"control_cmd_tos",       INT_PARAM, &control_cmd_tos        },
-	{"db_url",                PARAM_STR, &rtpp_db_url            },
-	{"table_name",            PARAM_STR, &rtpp_table_name        },
-	{"setid_col",             PARAM_STR, &rtpp_setid_col         },
-	{"url_col",               PARAM_STR, &rtpp_url_col           },
-	{"weight_col",            PARAM_STR, &rtpp_weight_col        },
-	{"disabled_col",          PARAM_STR, &rtpp_disabled_col      },
-	{"extra_id_pv",           PARAM_STR, &extra_id_pv_param      },
-	{"setid_avp",             PARAM_STRING, &setid_avp_param     },
-	{"force_send_interface",  PARAM_STRING, &force_send_ip_str   },
-	{"rtp_inst_pvar",         PARAM_STR, &rtp_inst_pv_param      },
-	{"write_sdp_pv",          PARAM_STR, &write_sdp_pvar_str     },
-	{"read_sdp_pv",           PARAM_STR, &read_sdp_pvar_str      },
-	{"hash_table_tout",       INT_PARAM, &hash_table_tout        },
-	{"hash_table_size",       INT_PARAM, &hash_table_size        },
-	{"setid_default",         INT_PARAM, &setid_default          },
-	{"media_duration",        PARAM_STR, &media_duration_pvar_str},
-	{"hash_algo",             INT_PARAM, &hash_algo},
-	{"dtmf_events_sock",      STR_PARAM|USE_FUNC_PARAM, (void *)rtpengine_set_dtmf_events_sock},
-	{"dtmf_event_callid",     PARAM_STR, &dtmf_event_callid_pvar_str   },
-	{"dtmf_event_source_tag", PARAM_STR, &dtmf_event_source_tag_pvar_str   },
-	{"dtmf_event_timestamp",  PARAM_STR, &dtmf_event_timestamp_pvar_str   },
-	{"dtmf_event",    	  	  PARAM_STR, &dtmf_event_pvar_str   },
+	{"rtpengine_sock", PARAM_STRING | USE_FUNC_PARAM,
+			(void *)rtpengine_set_store},
+	{"rtpengine_disable_tout", INT_PARAM,
+			&default_rtpengine_cfg.rtpengine_disable_tout},
+	{"aggressive_redetection", INT_PARAM,
+			&default_rtpengine_cfg.aggressive_redetection},
+	{"rtpengine_retr", INT_PARAM, &default_rtpengine_cfg.rtpengine_retr},
+	{"queried_nodes_limit", INT_PARAM,
+			&default_rtpengine_cfg.queried_nodes_limit},
+	{"rtpengine_tout_ms", INT_PARAM,
+			&default_rtpengine_cfg.rtpengine_tout_ms},
+	{"rtpengine_allow_op", INT_PARAM, &rtpengine_allow_op},
+	{"control_cmd_tos", INT_PARAM, &control_cmd_tos},
+	{"db_url", PARAM_STR, &rtpp_db_url},
+	{"table_name", PARAM_STR, &rtpp_table_name},
+	{"setid_col", PARAM_STR, &rtpp_setid_col},
+	{"url_col", PARAM_STR, &rtpp_url_col},
+	{"weight_col", PARAM_STR, &rtpp_weight_col},
+	{"disabled_col", PARAM_STR, &rtpp_disabled_col},
+	{"extra_id_pv", PARAM_STR, &extra_id_pv_param},
+	{"setid_avp", PARAM_STRING, &setid_avp_param},
+	{"force_send_interface", PARAM_STRING, &force_send_ip_str},
+	{"rtp_inst_pvar", PARAM_STR, &rtp_inst_pv_param},
+	{"write_sdp_pv", PARAM_STR, &write_sdp_pvar_str},
+	{"read_sdp_pv", PARAM_STR, &read_sdp_pvar_str},
+	{"hash_table_tout", INT_PARAM, &hash_table_tout},
+	{"hash_table_size", INT_PARAM, &hash_table_size},
+	{"setid_default", INT_PARAM, &setid_default},
+	{"media_duration", PARAM_STR, &media_duration_pvar_str},
+	{"hash_algo", INT_PARAM, &hash_algo},
+	{"dtmf_events_sock", STR_PARAM | USE_FUNC_PARAM,
+			(void *)rtpengine_set_dtmf_events_sock},
+	{"dtmf_event_callid", PARAM_STR, &dtmf_event_callid_pvar_str},
+	{"dtmf_event_source_tag", PARAM_STR, &dtmf_event_source_tag_pvar_str},
+	{"dtmf_event_timestamp", PARAM_STR, &dtmf_event_timestamp_pvar_str},
+	{"dtmf_event", PARAM_STR, &dtmf_event_pvar_str},
 
 	/* MOS stats output */
 	/* global averages */
-	{"mos_min_pv",                PARAM_STR, &global_mos_stats.min.mos_param             },
-	{"mos_min_at_pv",             PARAM_STR, &global_mos_stats.min.at_param              },
-	{"mos_min_packetloss_pv",     PARAM_STR, &global_mos_stats.min.packetloss_param      },
-	{"mos_min_jitter_pv",         PARAM_STR, &global_mos_stats.min.jitter_param          },
-	{"mos_min_roundtrip_pv",      PARAM_STR, &global_mos_stats.min.roundtrip_param       },
-	{"mos_min_roundtrip_leg_pv",  PARAM_STR, &global_mos_stats.min.roundtrip_leg_param   },
-	{"mos_max_pv",                PARAM_STR, &global_mos_stats.max.mos_param             },
-	{"mos_max_at_pv",             PARAM_STR, &global_mos_stats.max.at_param              },
-	{"mos_max_packetloss_pv",     PARAM_STR, &global_mos_stats.max.packetloss_param      },
-	{"mos_max_jitter_pv",         PARAM_STR, &global_mos_stats.max.jitter_param          },
-	{"mos_max_roundtrip_pv",      PARAM_STR, &global_mos_stats.max.roundtrip_param       },
-	{"mos_max_roundtrip_leg_pv",  PARAM_STR, &global_mos_stats.max.roundtrip_leg_param   },
-	{"mos_average_pv",            PARAM_STR, &global_mos_stats.average.mos_param         },
-	{"mos_average_packetloss_pv", PARAM_STR, &global_mos_stats.average.packetloss_param  },
-	{"mos_average_jitter_pv",     PARAM_STR, &global_mos_stats.average.jitter_param      },
-	{"mos_average_roundtrip_pv",  PARAM_STR, &global_mos_stats.average.roundtrip_param   },
-	{"mos_average_roundtrip_leg_pv", PARAM_STR, &global_mos_stats.average.roundtrip_leg_param },
-	{"mos_average_samples_pv",    PARAM_STR, &global_mos_stats.average.samples_param     },
+	{"mos_min_pv", PARAM_STR, &global_mos_stats.min.mos_param},
+	{"mos_min_at_pv", PARAM_STR, &global_mos_stats.min.at_param},
+	{"mos_min_packetloss_pv", PARAM_STR,
+			&global_mos_stats.min.packetloss_param},
+	{"mos_min_jitter_pv", PARAM_STR, &global_mos_stats.min.jitter_param},
+	{"mos_min_roundtrip_pv", PARAM_STR,
+			&global_mos_stats.min.roundtrip_param},
+	{"mos_min_roundtrip_leg_pv", PARAM_STR,
+			&global_mos_stats.min.roundtrip_leg_param},
+	{"mos_max_pv", PARAM_STR, &global_mos_stats.max.mos_param},
+	{"mos_max_at_pv", PARAM_STR, &global_mos_stats.max.at_param},
+	{"mos_max_packetloss_pv", PARAM_STR,
+			&global_mos_stats.max.packetloss_param},
+	{"mos_max_jitter_pv", PARAM_STR, &global_mos_stats.max.jitter_param},
+	{"mos_max_roundtrip_pv", PARAM_STR,
+			&global_mos_stats.max.roundtrip_param},
+	{"mos_max_roundtrip_leg_pv", PARAM_STR,
+			&global_mos_stats.max.roundtrip_leg_param},
+	{"mos_average_pv", PARAM_STR, &global_mos_stats.average.mos_param},
+	{"mos_average_packetloss_pv", PARAM_STR,
+			&global_mos_stats.average.packetloss_param},
+	{"mos_average_jitter_pv", PARAM_STR,
+			&global_mos_stats.average.jitter_param},
+	{"mos_average_roundtrip_pv", PARAM_STR,
+			&global_mos_stats.average.roundtrip_param},
+	{"mos_average_roundtrip_leg_pv", PARAM_STR,
+			&global_mos_stats.average.roundtrip_leg_param},
+	{"mos_average_samples_pv", PARAM_STR,
+			&global_mos_stats.average.samples_param},
 
-		/* designated side A */
-		{"mos_A_label_pv", PARAM_STR, &side_A_mos_stats.label_param},
-		{"mos_min_A_pv", PARAM_STR, &side_A_mos_stats.min.mos_param},
-		{"mos_min_at_A_pv", PARAM_STR, &side_A_mos_stats.min.at_param},
-		{"mos_min_packetloss_A_pv", PARAM_STR,
-				&side_A_mos_stats.min.packetloss_param},
-		{"mos_min_jitter_A_pv", PARAM_STR, &side_A_mos_stats.min.jitter_param},
-		{"mos_min_roundtrip_A_pv", PARAM_STR,
-				&side_A_mos_stats.min.roundtrip_param},
-		{"mos_min_roundtrip_leg_A_pv", PARAM_STR,
-				&side_A_mos_stats.min.roundtrip_leg_param},
-		{"mos_max_A_pv", PARAM_STR, &side_A_mos_stats.max.mos_param},
-		{"mos_max_at_A_pv", PARAM_STR, &side_A_mos_stats.max.at_param},
-		{"mos_max_packetloss_A_pv", PARAM_STR,
-				&side_A_mos_stats.max.packetloss_param},
-		{"mos_max_jitter_A_pv", PARAM_STR, &side_A_mos_stats.max.jitter_param},
-		{"mos_max_roundtrip_A_pv", PARAM_STR,
-				&side_A_mos_stats.max.roundtrip_param},
-		{"mos_max_roundtrip_leg_A_pv", PARAM_STR,
-				&side_A_mos_stats.max.roundtrip_leg_param},
-		{"mos_average_A_pv", PARAM_STR, &side_A_mos_stats.average.mos_param},
-		{"mos_average_packetloss_A_pv", PARAM_STR,
-				&side_A_mos_stats.average.packetloss_param},
-		{"mos_average_jitter_A_pv", PARAM_STR,
-				&side_A_mos_stats.average.jitter_param},
-		{"mos_average_roundtrip_A_pv", PARAM_STR,
-				&side_A_mos_stats.average.roundtrip_param},
-		{"mos_average_roundtrip_leg_A_pv", PARAM_STR,
-				&side_A_mos_stats.average.roundtrip_leg_param},
-		{"mos_average_samples_A_pv", PARAM_STR,
-				&side_A_mos_stats.average.samples_param},
+	/* designated side A */
+	{"mos_A_label_pv", PARAM_STR, &side_A_mos_stats.label_param},
+	{"mos_min_A_pv", PARAM_STR, &side_A_mos_stats.min.mos_param},
+	{"mos_min_at_A_pv", PARAM_STR, &side_A_mos_stats.min.at_param},
+	{"mos_min_packetloss_A_pv", PARAM_STR,
+			&side_A_mos_stats.min.packetloss_param},
+	{"mos_min_jitter_A_pv", PARAM_STR, &side_A_mos_stats.min.jitter_param},
+	{"mos_min_roundtrip_A_pv", PARAM_STR,
+			&side_A_mos_stats.min.roundtrip_param},
+	{"mos_min_roundtrip_leg_A_pv", PARAM_STR,
+			&side_A_mos_stats.min.roundtrip_leg_param},
+	{"mos_max_A_pv", PARAM_STR, &side_A_mos_stats.max.mos_param},
+	{"mos_max_at_A_pv", PARAM_STR, &side_A_mos_stats.max.at_param},
+	{"mos_max_packetloss_A_pv", PARAM_STR,
+			&side_A_mos_stats.max.packetloss_param},
+	{"mos_max_jitter_A_pv", PARAM_STR, &side_A_mos_stats.max.jitter_param},
+	{"mos_max_roundtrip_A_pv", PARAM_STR,
+			&side_A_mos_stats.max.roundtrip_param},
+	{"mos_max_roundtrip_leg_A_pv", PARAM_STR,
+			&side_A_mos_stats.max.roundtrip_leg_param},
+	{"mos_average_A_pv", PARAM_STR, &side_A_mos_stats.average.mos_param},
+	{"mos_average_packetloss_A_pv", PARAM_STR,
+			&side_A_mos_stats.average.packetloss_param},
+	{"mos_average_jitter_A_pv", PARAM_STR,
+			&side_A_mos_stats.average.jitter_param},
+	{"mos_average_roundtrip_A_pv", PARAM_STR,
+			&side_A_mos_stats.average.roundtrip_param},
+	{"mos_average_roundtrip_leg_A_pv", PARAM_STR,
+			&side_A_mos_stats.average.roundtrip_leg_param},
+	{"mos_average_samples_A_pv", PARAM_STR,
+			&side_A_mos_stats.average.samples_param},
 
-		/* designated side B */
-		{"mos_B_label_pv", PARAM_STR, &side_B_mos_stats.label_param},
-		{"mos_min_B_pv", PARAM_STR, &side_B_mos_stats.min.mos_param},
-		{"mos_min_at_B_pv", PARAM_STR, &side_B_mos_stats.min.at_param},
-		{"mos_min_packetloss_B_pv", PARAM_STR,
-				&side_B_mos_stats.min.packetloss_param},
-		{"mos_min_jitter_B_pv", PARAM_STR, &side_B_mos_stats.min.jitter_param},
-		{"mos_min_roundtrip_B_pv", PARAM_STR,
-				&side_B_mos_stats.min.roundtrip_param},
-		{"mos_min_roundtrip_leg_B_pv", PARAM_STR,
-				&side_B_mos_stats.min.roundtrip_leg_param},
-		{"mos_max_B_pv", PARAM_STR, &side_B_mos_stats.max.mos_param},
-		{"mos_max_at_B_pv", PARAM_STR, &side_B_mos_stats.max.at_param},
-		{"mos_max_packetloss_B_pv", PARAM_STR,
-				&side_B_mos_stats.max.packetloss_param},
-		{"mos_max_jitter_B_pv", PARAM_STR, &side_B_mos_stats.max.jitter_param},
-		{"mos_max_roundtrip_B_pv", PARAM_STR,
-				&side_B_mos_stats.max.roundtrip_param},
-		{"mos_max_roundtrip_leg_B_pv", PARAM_STR,
-				&side_B_mos_stats.max.roundtrip_leg_param},
-		{"mos_average_B_pv", PARAM_STR, &side_B_mos_stats.average.mos_param},
-		{"mos_average_packetloss_B_pv", PARAM_STR,
-				&side_B_mos_stats.average.packetloss_param},
-		{"mos_average_jitter_B_pv", PARAM_STR,
-				&side_B_mos_stats.average.jitter_param},
-		{"mos_average_roundtrip_B_pv", PARAM_STR,
-				&side_B_mos_stats.average.roundtrip_param},
-		{"mos_average_roundtrip_leg_B_pv", PARAM_STR,
-				&side_B_mos_stats.average.roundtrip_leg_param},
-		{"mos_average_samples_B_pv", PARAM_STR,
-				&side_B_mos_stats.average.samples_param},
+	/* designated side B */
+	{"mos_B_label_pv", PARAM_STR, &side_B_mos_stats.label_param},
+	{"mos_min_B_pv", PARAM_STR, &side_B_mos_stats.min.mos_param},
+	{"mos_min_at_B_pv", PARAM_STR, &side_B_mos_stats.min.at_param},
+	{"mos_min_packetloss_B_pv", PARAM_STR,
+			&side_B_mos_stats.min.packetloss_param},
+	{"mos_min_jitter_B_pv", PARAM_STR, &side_B_mos_stats.min.jitter_param},
+	{"mos_min_roundtrip_B_pv", PARAM_STR,
+			&side_B_mos_stats.min.roundtrip_param},
+	{"mos_min_roundtrip_leg_B_pv", PARAM_STR,
+			&side_B_mos_stats.min.roundtrip_leg_param},
+	{"mos_max_B_pv", PARAM_STR, &side_B_mos_stats.max.mos_param},
+	{"mos_max_at_B_pv", PARAM_STR, &side_B_mos_stats.max.at_param},
+	{"mos_max_packetloss_B_pv", PARAM_STR,
+			&side_B_mos_stats.max.packetloss_param},
+	{"mos_max_jitter_B_pv", PARAM_STR, &side_B_mos_stats.max.jitter_param},
+	{"mos_max_roundtrip_B_pv", PARAM_STR,
+			&side_B_mos_stats.max.roundtrip_param},
+	{"mos_max_roundtrip_leg_B_pv", PARAM_STR,
+			&side_B_mos_stats.max.roundtrip_leg_param},
+	{"mos_average_B_pv", PARAM_STR, &side_B_mos_stats.average.mos_param},
+	{"mos_average_packetloss_B_pv", PARAM_STR,
+			&side_B_mos_stats.average.packetloss_param},
+	{"mos_average_jitter_B_pv", PARAM_STR,
+			&side_B_mos_stats.average.jitter_param},
+	{"mos_average_roundtrip_B_pv", PARAM_STR,
+			&side_B_mos_stats.average.roundtrip_param},
+	{"mos_average_roundtrip_leg_B_pv", PARAM_STR,
+			&side_B_mos_stats.average.roundtrip_leg_param},
+	{"mos_average_samples_B_pv", PARAM_STR,
+			&side_B_mos_stats.average.samples_param},
 
-		{"wsapi", PARAM_STR, &_rtpe_wsapi},
+	{"wsapi", PARAM_STR, &_rtpe_wsapi},
 
-		{0, 0, 0}};
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"rtpengine",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	"rtpengine",	 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	params,			 /* param exports */
+	0,				 /* RPC method exports */
+	mod_pvs,		 /* pseudo-variables exports */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	child_init,		 /* per-child init function */
+	mod_destroy		 /* module destroy function */
 };
+/* clang-format on */
 
 /* check if the node is already queried */
 static int is_queried_node(struct rtpp_node *node,
@@ -1267,6 +1288,9 @@ static int rtpengine_set_dtmf_events_sock(modparam_t type, void *val)
 	return 0;
 }
 
+/**
+ * DTMF events loop
+ */
 static void rtpengine_dtmf_events_loop(void)
 {
 	int ret;
@@ -1277,18 +1301,24 @@ static void rtpengine_dtmf_events_loop(void)
 	union sockaddr_union udp_addr;
 	char buffer[RTPENGINE_DTMF_EVENT_BUFFER];
 
-	p = q_memchr(rtpengine_dtmf_event_sock.s, ':', rtpengine_dtmf_event_sock.len);
+	p = q_memchr(
+			rtpengine_dtmf_event_sock.s, ':', rtpengine_dtmf_event_sock.len);
 
 	if(!p) {
-		LM_ERR("failed to initialize dtmf event listener because no port was specified %.*s!\n", rtpengine_dtmf_event_sock.len, rtpengine_dtmf_event_sock.s);
+		LM_ERR("failed to initialize dtmf event listener because no port was "
+			   "specified %.*s!\n",
+				rtpengine_dtmf_event_sock.len, rtpengine_dtmf_event_sock.s);
 		return;
 	}
 
 	s_port.s = p + 1;
-	s_port.len = rtpengine_dtmf_event_sock.s + rtpengine_dtmf_event_sock.len - s_port.s;
+	s_port.len = rtpengine_dtmf_event_sock.s + rtpengine_dtmf_event_sock.len
+				 - s_port.s;
 
 	if(s_port.len <= 0 || str2int(&s_port, &port) < 0 || port > 65535) {
-		LM_ERR("failed to initialize dtmf event listener because port is invalid %.*s\n", rtpengine_dtmf_event_sock.len, rtpengine_dtmf_event_sock.s);
+		LM_ERR("failed to initialize dtmf event listener because port is "
+			   "invalid %.*s\n",
+				rtpengine_dtmf_event_sock.len, rtpengine_dtmf_event_sock.s);
 		return;
 	}
 	rtpengine_dtmf_event_sock.len -= s_port.len + 1;
@@ -1301,16 +1331,20 @@ static void rtpengine_dtmf_events_loop(void)
 		udp_addr.sin6.sin6_family = AF_INET6;
 		udp_addr.sin6.sin6_port = htons(port);
 		socket_len = sizeof(struct sockaddr_in6);
-		ret = inet_pton(AF_INET6, rtpengine_dtmf_event_sock.s, &udp_addr.sin6.sin6_addr);
+		ret = inet_pton(AF_INET6, rtpengine_dtmf_event_sock.s,
+				&udp_addr.sin6.sin6_addr);
 	} else {
 		udp_addr.sin.sin_family = AF_INET;
 		udp_addr.sin.sin_port = htons(port);
 		socket_len = sizeof(struct sockaddr_in);
-		ret = inet_pton(AF_INET, rtpengine_dtmf_event_sock.s, &udp_addr.sin.sin_addr);
+		ret = inet_pton(
+				AF_INET, rtpengine_dtmf_event_sock.s, &udp_addr.sin.sin_addr);
 	}
 
 	if(ret != 1) {
-		LM_ERR("failed to initialize dtmf event listener because address could not be created for %s\n", rtpengine_dtmf_event_sock.s);
+		LM_ERR("failed to initialize dtmf event listener because address could "
+			   "not be created for %s\n",
+				rtpengine_dtmf_event_sock.s);
 		return;
 	}
 
@@ -1322,18 +1356,22 @@ static void rtpengine_dtmf_events_loop(void)
 	}
 
 	if(bind(rtpengine_dtmf_event_fd, &udp_addr.s, socket_len) < 0) {
-		LM_ERR("could not bind dtmf events socket %s:%u (%s:%d)\n", rtpengine_dtmf_event_sock.s, port, strerror(errno), errno);
+		LM_ERR("could not bind dtmf events socket %s:%u (%s:%d)\n",
+				rtpengine_dtmf_event_sock.s, port, strerror(errno), errno);
 		goto end;
 	}
-	LM_INFO("dtmf event listener started on %s:%u\n", rtpengine_dtmf_event_sock.s, port);
+	LM_INFO("dtmf event listener started on %s:%u\n",
+			rtpengine_dtmf_event_sock.s, port);
 
 	for(;;) {
 		do
-			ret = read(rtpengine_dtmf_event_fd, buffer, RTPENGINE_DTMF_EVENT_BUFFER);
+			ret = read(rtpengine_dtmf_event_fd, buffer,
+					RTPENGINE_DTMF_EVENT_BUFFER);
 		while(ret == -1 && errno == EINTR);
 
 		if(ret < 0) {
-			LM_ERR("problem reading on socket %s:%u (%s:%d)\n",rtpengine_dtmf_event_sock.s, port, strerror(errno), errno);
+			LM_ERR("problem reading on socket %s:%u (%s:%d)\n",
+					rtpengine_dtmf_event_sock.s, port, strerror(errno), errno);
 			goto end;
 		}
 
@@ -1360,7 +1398,11 @@ end:
 	close(rtpengine_dtmf_event_fd);
 }
 
-static int rtpengine_raise_dtmf_event(char *buffer, int len) {
+/**
+ * Raise DTMF event
+ */
+static int rtpengine_raise_dtmf_event(char *buffer, int len)
+{
 	srjson_doc_t jdoc;
 	srjson_t *it = NULL;
 	struct sip_msg *fmsg = NULL;
@@ -1395,8 +1437,12 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			pv_val.rs.len = strlen(it->valuestring);
 			pv_val.flags = PV_VAL_STR;
 
-			if(dtmf_event_callid_pvar->setf(0, &dtmf_event_callid_pvar->pvp, (int)EQ_T, &pv_val) < 0) {
-				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_callid_pvar_str.len, dtmf_event_callid_pvar_str.s);
+			if(dtmf_event_callid_pvar->setf(
+					   0, &dtmf_event_callid_pvar->pvp, (int)EQ_T, &pv_val)
+					< 0) {
+				LM_ERR("error setting pvar <%.*s>\n",
+						dtmf_event_callid_pvar_str.len,
+						dtmf_event_callid_pvar_str.s);
 				goto error;
 			}
 		} else if(strcmp(it->string, "source_tag") == 0) {
@@ -1405,8 +1451,12 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			pv_val.rs.len = strlen(it->valuestring);
 			pv_val.flags = PV_VAL_STR;
 
-			if(dtmf_event_source_tag_pvar->setf(0, &dtmf_event_source_tag_pvar->pvp, (int)EQ_T, &pv_val) < 0) {
-				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_source_tag_pvar_str.len, dtmf_event_source_tag_pvar_str.s);
+			if(dtmf_event_source_tag_pvar->setf(
+					   0, &dtmf_event_source_tag_pvar->pvp, (int)EQ_T, &pv_val)
+					< 0) {
+				LM_ERR("error setting pvar <%.*s>\n",
+						dtmf_event_source_tag_pvar_str.len,
+						dtmf_event_source_tag_pvar_str.s);
 				goto error;
 			}
 		} else if(strcmp(it->string, "timestamp") == 0) {
@@ -1420,8 +1470,12 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			pv_val.rs.len = strlen(intbuf);
 			pv_val.flags = PV_VAL_STR;
 
-			if(dtmf_event_timestamp_pvar->setf(0, &dtmf_event_timestamp_pvar->pvp, (int)EQ_T, &pv_val) < 0) {
-				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_timestamp_pvar_str.len, dtmf_event_timestamp_pvar_str.s);
+			if(dtmf_event_timestamp_pvar->setf(
+					   0, &dtmf_event_timestamp_pvar->pvp, (int)EQ_T, &pv_val)
+					< 0) {
+				LM_ERR("error setting pvar <%.*s>\n",
+						dtmf_event_timestamp_pvar_str.len,
+						dtmf_event_timestamp_pvar_str.s);
 				goto error;
 			}
 		} else if(strcmp(it->string, "event") == 0) {
@@ -1435,8 +1489,11 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			pv_val.rs.len = strlen(intbuf);
 			pv_val.flags = PV_VAL_STR;
 
-			if(dtmf_event_pvar->setf(0, &dtmf_event_pvar->pvp, (int)EQ_T, &pv_val) < 0) {
-				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_pvar_str.len, dtmf_event_pvar_str.s);
+			if(dtmf_event_pvar->setf(
+					   0, &dtmf_event_pvar->pvp, (int)EQ_T, &pv_val)
+					< 0) {
+				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_pvar_str.len,
+						dtmf_event_pvar_str.s);
 				goto error;
 			}
 		}
@@ -1462,7 +1519,7 @@ error:
 	return -1;
 }
 
-static int fixup_set_id(void ** param, int param_no)
+static int fixup_set_id(void **param, int param_no)
 {
 	int int_val;
 	unsigned int set_id;
@@ -2033,7 +2090,7 @@ static int mod_init(void)
 		}
 	}
 
-	if (rtpp_strings)
+	if(rtpp_strings)
 		pkg_free(rtpp_strings);
 
 	if(load_tm_api(&tmb) < 0) {
@@ -2085,32 +2142,54 @@ static int mod_init(void)
 	} else {
 		if(dtmf_event_callid_pvar_str.len > 0) {
 			dtmf_event_callid_pvar = pv_cache_get(&dtmf_event_callid_pvar_str);
-			if(dtmf_event_callid_pvar == NULL || (dtmf_event_callid_pvar->type != PVT_AVP && dtmf_event_callid_pvar->type != PVT_SCRIPTVAR)) {
-				LM_ERR("dtmf_event_callid_pv: not a valid AVP or VAR definition <%.*s>\n", dtmf_event_callid_pvar_str.len, dtmf_event_callid_pvar_str.s);
+			if(dtmf_event_callid_pvar == NULL
+					|| (dtmf_event_callid_pvar->type != PVT_AVP
+							&& dtmf_event_callid_pvar->type != PVT_SCRIPTVAR)) {
+				LM_ERR("dtmf_event_callid_pv: not a valid AVP or VAR "
+					   "definition <%.*s>\n",
+						dtmf_event_callid_pvar_str.len,
+						dtmf_event_callid_pvar_str.s);
 				return -1;
 			}
 		}
 
 		if(dtmf_event_source_tag_pvar_str.len > 0) {
-			dtmf_event_source_tag_pvar = pv_cache_get(&dtmf_event_source_tag_pvar_str);
-			if(dtmf_event_source_tag_pvar == NULL || (dtmf_event_source_tag_pvar->type != PVT_AVP && dtmf_event_source_tag_pvar->type != PVT_SCRIPTVAR)) {
-				LM_ERR("dtmf_event_source_tag_pv: not a valid AVP or VAR definition <%.*s>\n", dtmf_event_source_tag_pvar_str.len, dtmf_event_source_tag_pvar_str.s);
+			dtmf_event_source_tag_pvar =
+					pv_cache_get(&dtmf_event_source_tag_pvar_str);
+			if(dtmf_event_source_tag_pvar == NULL
+					|| (dtmf_event_source_tag_pvar->type != PVT_AVP
+							&& dtmf_event_source_tag_pvar->type
+									   != PVT_SCRIPTVAR)) {
+				LM_ERR("dtmf_event_source_tag_pv: not a valid AVP or VAR "
+					   "definition <%.*s>\n",
+						dtmf_event_source_tag_pvar_str.len,
+						dtmf_event_source_tag_pvar_str.s);
 				return -1;
 			}
 		}
 
 		if(dtmf_event_timestamp_pvar_str.len > 0) {
-			dtmf_event_timestamp_pvar = pv_cache_get(&dtmf_event_timestamp_pvar_str);
-			if(dtmf_event_timestamp_pvar == NULL || (dtmf_event_timestamp_pvar->type != PVT_AVP && dtmf_event_timestamp_pvar->type != PVT_SCRIPTVAR)) {
-				LM_ERR("dtmf_event_timestamp_pv: not a valid AVP or VAR definition <%.*s>\n", dtmf_event_timestamp_pvar_str.len, dtmf_event_timestamp_pvar_str.s);
+			dtmf_event_timestamp_pvar =
+					pv_cache_get(&dtmf_event_timestamp_pvar_str);
+			if(dtmf_event_timestamp_pvar == NULL
+					|| (dtmf_event_timestamp_pvar->type != PVT_AVP
+							&& dtmf_event_timestamp_pvar->type
+									   != PVT_SCRIPTVAR)) {
+				LM_ERR("dtmf_event_timestamp_pv: not a valid AVP or VAR "
+					   "definition <%.*s>\n",
+						dtmf_event_timestamp_pvar_str.len,
+						dtmf_event_timestamp_pvar_str.s);
 				return -1;
 			}
 		}
 
 		if(dtmf_event_pvar_str.len > 0) {
 			dtmf_event_pvar = pv_cache_get(&dtmf_event_pvar_str);
-			if(dtmf_event_pvar == NULL || (dtmf_event_pvar->type != PVT_AVP && dtmf_event_pvar->type != PVT_SCRIPTVAR)) {
-				LM_ERR("event_pv: not a valid AVP or VAR definition <%.*s>\n", dtmf_event_pvar_str.len, dtmf_event_pvar_str.s);
+			if(dtmf_event_pvar == NULL
+					|| (dtmf_event_pvar->type != PVT_AVP
+							&& dtmf_event_pvar->type != PVT_SCRIPTVAR)) {
+				LM_ERR("event_pv: not a valid AVP or VAR definition <%.*s>\n",
+						dtmf_event_pvar_str.len, dtmf_event_pvar_str.s);
 				return -1;
 			}
 		}
@@ -2563,6 +2642,9 @@ static int parse_codec_flag(struct ng_flags_parse *ng_flags, const str *key,
 	return 1;
 }
 
+/**
+ * Parse the flags string
+ */
 static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg,
 		enum rtpe_operation *op, const char *flags_str)
 {
@@ -4419,15 +4501,15 @@ static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags,
 			pkg_free(newbody.s);
 
 		} else {
-			if (cl_field.len) {
+			if(cl_field.len) {
 				anchor = del_lump(msg, cl_field.s - msg->buf, cl_field.len, 0);
 				cl_repl.s = pkg_malloc(10);
-				if (!cl_repl.s) {
+				if(!cl_repl.s) {
 					LM_ERR("pkg_malloc for Content-Length failed\n");
 					goto error_free;
 				}
-				cl_repl.len = snprintf(cl_repl.s, 10, "%i", (int) newbody.len);
-				if (!insert_new_lump_after(anchor, cl_repl.s, cl_repl.len, 0)) {
+				cl_repl.len = snprintf(cl_repl.s, 10, "%i", (int)newbody.len);
+				if(!insert_new_lump_after(anchor, cl_repl.s, cl_repl.len, 0)) {
 					LM_ERR("insert_new_lump_after failed\n");
 					goto error_free;
 				}
@@ -4461,7 +4543,7 @@ static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags,
 
 error_free:
 	pkg_free(newbody.s);
-	if (cl_repl.s)
+	if(cl_repl.s)
 		pkg_free(cl_repl.s);
 error:
 	bencode_buffer_free(&bencbuf);
