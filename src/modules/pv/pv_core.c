@@ -2149,7 +2149,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_null(msg, param, res);
 		}
 		if(idx < 0) {
-			n = 1;
+			n = 0;
 			/* count Via header bodies */
 			for(hf = msg->h_via1; hf != NULL; hf = hf->next) {
 				if(hf->type == HDR_VIA_T) {
@@ -2207,7 +2207,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		}
 
 		if(idx < 0) {
-			n = 1;
+			n = 0;
 			/* count Record-Route/Route header bodies */
 			for(; hf != NULL; hf = hf->next) {
 				if(hf->type == tv.ri) {
@@ -2290,7 +2290,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_null(msg, param, res);
 		}
 		if(idx < 0) {
-			n = 1;
+			n = 0;
 			/* count Contact header bodies */
 			for(hf = msg->contact; hf != NULL; hf = hf->next) {
 				if(hf->type == HDR_CONTACT_T) {
