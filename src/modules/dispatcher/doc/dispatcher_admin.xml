@@ -1803,7 +1803,10 @@ if(ds_list_exists("10")) {
 				active status is ignored.
 				If bit one is set, then port is ignored.
 				If bit two is set, then protocol is ignored.
-				If bit three is set, then state must be active.	The parameter
+				If bit three is set, then state must be active.
+				If bit four is set, then socket/sockname be matched.
+				If bit five is set, then try to find the most complete 
+				"address/protocol/port/local socket" combination for all dispatcher targets.	The parameter
 				can be an integer or a variable holding an integer value.
 				It must be provided if the uri parameter is provided.
 			</para>
