@@ -438,20 +438,9 @@ static int mod_child(int rank)
 	if(tls_disable || (tls_domains_cfg == 0))
 		return 0;
 
-	/* fix tls config only from the main proc/PROC_INIT., when we know
-	 * the exact process number and before any other process starts*/
-        if(rank == PROC_INIT) {
-#if OPENSSL_VERSION_NUMBER >= 0x010101000L      \
-    && OPENSSL_VERSION_NUMBER < 0x030000000L
-            if(ksr_tls_init_mode & TLS_MODE_FORK_PREPARE) {
-                // not needed on Linux: OPENSSL_fork_prepare();
-            }
-#endif
-        }
-
 #if OPENSSL_VERSION_NUMBER >= 0x010101000L
         /*
-         * OpenSSL 3.x: create shared SSL_CTX* in worker to avoid init of
+         * OpenSSL 3.x/1.1.1: create shared SSL_CTX* in worker to avoid init of
          * libssl in rank 0(thread#1)
          */
         if(rank == PROC_SIPINIT) {
@@ -470,22 +459,6 @@ static int mod_child(int rank)
 		}
 		return 0;
 	}
-
-#if OPENSSL_VERSION_NUMBER >= 0x010101000L \
-		&& OPENSSL_VERSION_NUMBER < 0x030000000L
-	if(ksr_tls_init_mode & TLS_MODE_FORK_PREPARE) {
-		if(rank == PROC_POSTCHILDINIT) {
-			/*
-			 * this is called after forking of all child processes
-			 */
-			// not needed on Linux: OPENSSL_fork_parent();
-			return 0;
-		}
-		if(!_ksr_is_main) {
-                    // not needed on Linux: OPENSSL_fork_child();
-		}
-	}
-#endif
 
 #ifndef OPENSSL_NO_ENGINE
 	/*
@@ -514,6 +487,11 @@ static void mod_destroy(void)
 	 *   => nothing to do here */
 }
 
+/*
+ * GH #3695: OpenSSL 1.1.1: it is no longer necessary to replace RAND
+ * - early init in rank 0 causes workers to inherit public_drbg/private_drbg
+ *   which are not thread-safe
+ */
 
 int ksr_rand_engine_param(modparam_t type, void *val)
 {
@@ -690,12 +668,10 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 
 	register_tls_hooks(&tls_h);
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
-		&& OPENSSL_VERSION_NUMBER < 0x030000000L
-	LM_DBG("setting cryptorand random engine\n");
-	// RAND_set_rand_method(RAND_ksr_cryptorand_method());
-#endif
-
+        /*
+         * GH #3695: OpenSSL 1.1.1 historical note: it is no longer
+         * needed to replace RAND with cryptorand
+         */
 	sr_kemi_modules_add(sr_kemi_tls_exports);
 
 	return 0;
