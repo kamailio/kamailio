@@ -440,7 +440,16 @@ static int mod_child(int rank)
 
 	/* fix tls config only from the main proc/PROC_INIT., when we know
 	 * the exact process number and before any other process starts*/
-	if(rank == PROC_INIT) {
+
+#if OPENSSL_VERSION_NUMBER >= 0x030000000L
+        /*
+         * OpenSSL 3.x: create shared SSL_CTX* in worker to avoid init of
+         * libssl in rank 0(thread#1)
+         */
+        if(rank == PROC_SIPINIT) {
+#else
+        if(rank == PROC_INIT) {
+#endif
 		if(cfg_get(tls, tls_cfg, config_file).s) {
 			if(tls_fix_domains_cfg(
 					   *tls_domains_cfg, &srv_defaults, &cli_defaults)
