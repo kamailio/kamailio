@@ -440,8 +440,16 @@ static int mod_child(int rank)
 
 	/* fix tls config only from the main proc/PROC_INIT., when we know
 	 * the exact process number and before any other process starts*/
+        if(rank == PROC_INIT) {
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L      \
+    && OPENSSL_VERSION_NUMBER < 0x030000000L
+            if(ksr_tls_init_mode & TLS_MODE_FORK_PREPARE) {
+                // not needed on Linux: OPENSSL_fork_prepare();
+            }
+#endif
+        }
 
-#if OPENSSL_VERSION_NUMBER >= 0x030000000L
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L
         /*
          * OpenSSL 3.x: create shared SSL_CTX* in worker to avoid init of
          * libssl in rank 0(thread#1)
@@ -460,12 +468,6 @@ static int mod_child(int rank)
 					< 0)
 				return -1;
 		}
-#if OPENSSL_VERSION_NUMBER >= 0x010101000L \
-		&& OPENSSL_VERSION_NUMBER < 0x030000000L
-		if(ksr_tls_init_mode & TLS_MODE_FORK_PREPARE) {
-			OPENSSL_fork_prepare();
-		}
-#endif
 		return 0;
 	}
 
@@ -476,11 +478,11 @@ static int mod_child(int rank)
 			/*
 			 * this is called after forking of all child processes
 			 */
-			OPENSSL_fork_parent();
+			// not needed on Linux: OPENSSL_fork_parent();
 			return 0;
 		}
 		if(!_ksr_is_main) {
-			OPENSSL_fork_child();
+                    // not needed on Linux: OPENSSL_fork_child();
 		}
 	}
 #endif
@@ -691,7 +693,7 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L \
 		&& OPENSSL_VERSION_NUMBER < 0x030000000L
 	LM_DBG("setting cryptorand random engine\n");
-	RAND_set_rand_method(RAND_ksr_cryptorand_method());
+	// RAND_set_rand_method(RAND_ksr_cryptorand_method());
 #endif
 
 	sr_kemi_modules_add(sr_kemi_tls_exports);

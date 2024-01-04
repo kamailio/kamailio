@@ -825,7 +825,8 @@ int tls_h_mod_pre_init_f(void)
 #if OPENSSL_VERSION_NUMBER >= 0x030000000L
         // skip init for 3.x
 #elif OPENSSL_VERSION_NUMBER >= 0x010101000L
-	OPENSSL_init_ssl(OPENSSL_INIT_ATFORK, NULL);
+        //not needed on Linux
+	//OPENSSL_init_ssl(OPENSSL_INIT_ATFORK, NULL);
 #else
 	OPENSSL_init_ssl(0, NULL);
 #endif
@@ -833,7 +834,7 @@ int tls_h_mod_pre_init_f(void)
 	LM_DBG("preparing tls env for modules initialization (libssl <=1.0)\n");
 	SSL_library_init();
 #endif
-#if OPENSSL_VERSION_NUMBER < 0x030000000L
+#if OPENSSL_VERSION_NUMBER < 0x010101000L
 	SSL_load_error_strings();
 #endif
 
