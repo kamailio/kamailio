@@ -771,6 +771,7 @@ int tls_pre_init(void)
  * tls mod pre-init function
  * - executed before any mod_init()
  */
+#if OPENSSL_VERSION_NUMBER >= 0x030000000L
 long tls_h_mod_randctx(void *) {
     do {
         OSSL_LIB_CTX *osslglobal = NULL;
@@ -808,6 +809,7 @@ long tls_h_mod_randctx(void *) {
 
     return 0L;
 }
+#endif
 
 int tls_h_mod_pre_init_f(void)
 {
