@@ -769,6 +769,44 @@ int tls_pre_init(void)
  * tls mod pre-init function
  * - executed before any mod_init()
  */
+long tls_h_mod_randctx(void *) {
+    do {
+        OSSL_LIB_CTX *osslglobal = NULL;
+        EVP_RAND_CTX *randctx = NULL;
+
+        LM_DBG("enabling locking for rand ctx\n");
+
+        osslglobal = OSSL_LIB_CTX_get0_global_default();
+        if(osslglobal == NULL) {
+            LM_ERR("failed to get lib ssl global ctx\n");
+            return -1L;
+        }
+
+        randctx = RAND_get0_primary(osslglobal);
+        if(randctx == NULL) {
+            LM_ERR("primary rand ctx is null\n");
+            return -1L;
+        }
+        EVP_RAND_enable_locking(randctx);
+
+        randctx = RAND_get0_public(osslglobal);
+        if(randctx == NULL) {
+            LM_ERR("public rand ctx is null\n");
+            return -1L;
+        }
+        EVP_RAND_enable_locking(randctx);
+
+        randctx = RAND_get0_private(osslglobal);
+        if(randctx == NULL) {
+            LM_ERR("private rand ctx is null\n");
+            return -1L;
+        }
+        EVP_RAND_enable_locking(randctx);
+    } while(0);
+
+    return 0L;
+}
+
 int tls_h_mod_pre_init_f(void)
 {
 	if(tls_mod_preinitialized == 1) {
@@ -782,7 +820,9 @@ int tls_h_mod_pre_init_f(void)
 	LM_DBG("preparing tls env for modules initialization\n");
 #if OPENSSL_VERSION_NUMBER >= 0x010100000L && !defined(LIBRESSL_VERSION_NUMBER)
 	LM_DBG("preparing tls env for modules initialization (libssl >=1.1)\n");
-#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+#if OPENSSL_VERSION_NUMBER >= 0x030000000L
+        // skip init for 3.x
+#elif OPENSSL_VERSION_NUMBER >= 0x010101000L
 	OPENSSL_init_ssl(OPENSSL_INIT_ATFORK, NULL);
 #else
 	OPENSSL_init_ssl(0, NULL);
@@ -791,42 +831,17 @@ int tls_h_mod_pre_init_f(void)
 	LM_DBG("preparing tls env for modules initialization (libssl <=1.0)\n");
 	SSL_library_init();
 #endif
+#if OPENSSL_VERSION_NUMBER < 0x030000000L
 	SSL_load_error_strings();
+#endif
 
 #if OPENSSL_VERSION_NUMBER >= 0x030000000L
-	do {
-		OSSL_LIB_CTX *osslglobal = NULL;
-		EVP_RAND_CTX *randctx = NULL;
-
-		LM_DBG("enabling locking for rand ctx\n");
-
-		osslglobal = OSSL_LIB_CTX_get0_global_default();
-		if(osslglobal == NULL) {
-			LM_ERR("failed to get lib ssl global ctx\n");
-			return -1;
-		}
-
-		randctx = RAND_get0_primary(osslglobal);
-		if(randctx == NULL) {
-			LM_ERR("primary rand ctx is null\n");
-			return -1;
-		}
-		EVP_RAND_enable_locking(randctx);
-
-		randctx = RAND_get0_public(osslglobal);
-		if(randctx == NULL) {
-			LM_ERR("public rand ctx is null\n");
-			return -1;
-		}
-		EVP_RAND_enable_locking(randctx);
-
-		randctx = RAND_get0_private(osslglobal);
-		if(randctx == NULL) {
-			LM_ERR("private rand ctx is null\n");
-			return -1;
-		}
-		EVP_RAND_enable_locking(randctx);
-	} while(0);
+        pthread_t tid;
+        long rl;
+        pthread_create(&tid, NULL, (void *(*)(void *))tls_h_mod_randctx, NULL);
+        pthread_join(tid, (void **)&rl);
+        if ((int)rl)
+            return (int)rl;
 #endif
 
 	tls_mod_preinitialized = 1;
