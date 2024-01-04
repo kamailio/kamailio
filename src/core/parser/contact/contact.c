@@ -208,6 +208,18 @@ static inline int skip_name(str *_s)
 	return -1;
 }
 
+static inline void contact_append(contact_t **head, contact_t *node)
+{
+	contact_t *ptr = *head;
+	if(*head == NULL) {
+		*head = node;
+		return;
+	}
+	while(ptr->next != NULL) {
+		ptr = ptr->next;
+	}
+	ptr->next = node;
+}
 
 /*
  * Parse contacts in a Contact HF
@@ -298,8 +310,7 @@ int parse_contacts(str *_s, contact_t **_c)
 		_s->len--;
 		trim_leading(_s);
 
-		c->next = *_c;
-		*_c = c;
+		contact_append(_c, c);
 		c = NULL;
 
 		if(_s->len == 0) {
@@ -318,8 +329,8 @@ error:
 
 ok:
 	c->len = _s->s - c->name.s;
-	c->next = *_c;
-	*_c = c;
+	contact_append(_c, c);
+	c = NULL;
 	return 0;
 }
 
