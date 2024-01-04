@@ -82,6 +82,11 @@
 
 #define DS_HN_SIZE 256
 
+#define DS_MATCHED_ADDR 1
+#define DS_MATCHED_PORT (1 << 1)
+#define DS_MATCHED_PROTO (1 << 2)
+#define DS_MATCHED_SOCK (1 << 3)
+
 /* increment call load */
 #define DS_LOAD_INC(dgrp, didx)      \
 	do {                             \
@@ -125,6 +130,10 @@ static ds_set_t **ds_lists = NULL;
 static int *ds_list_nr = NULL;
 static int *ds_crt_idx = NULL;
 static int *ds_next_idx = NULL;
+
+static ds_set_t *ds_strictest_node = NULL;
+static int ds_strictest_idx;
+static int ds_strictness;
 
 #define _ds_list (ds_lists[*ds_crt_idx])
 #define _ds_list_nr (*ds_list_nr)
@@ -3514,17 +3523,45 @@ int ds_fprint_list(FILE *fout)
 	return 0;
 }
 
+static int ds_set_vars(
+		sip_msg_t *_m, ds_set_t *node, int idx, int export_set_pv)
+{
+	pv_value_t val;
+	if(!node)
+		return -1;
+
+	if(export_set_pv && ds_setid_pvname.s != 0) {
+		memset(&val, 0, sizeof(pv_value_t));
+		val.flags = PV_VAL_INT | PV_TYPE_INT;
+
+		val.ri = node->id;
+		if(ds_setid_pv.setf(_m, &ds_setid_pv.pvp, (int)EQ_T, &val) < 0) {
+			LM_ERR("setting PV failed\n");
+			return -2;
+		}
+	}
+	if(ds_attrs_pvname.s != 0 && node->dlist[idx].attrs.body.len > 0) {
+		memset(&val, 0, sizeof(pv_value_t));
+		val.flags = PV_VAL_STR;
+		val.rs = node->dlist[idx].attrs.body;
+		if(ds_attrs_pv.setf(_m, &ds_attrs_pv.pvp, (int)EQ_T, &val) < 0) {
+			LM_ERR("setting attrs pv failed\n");
+			return -3;
+		}
+	}
+	return 1;
+}
 
 int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 		unsigned short tport, unsigned short tproto, ds_set_t *node, int mode,
 		int export_set_pv)
 {
-	pv_value_t val;
 	ip_addr_t *ipa;
 	ip_addr_t ipaddress;
 	char hn[DS_HN_SIZE];
 	struct hostent *he;
 	int j;
+	int node_strictness;
 	unsigned short sport = 0;
 	char sproto = PROTO_NONE;
 
@@ -3567,33 +3604,54 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 		}
 		if(ip_addr_cmp(pipaddr, ipa)
 				&& ((mode & DS_MATCH_NOPORT) || node->dlist[j].port == 0
-						|| tport == node->dlist[j].port)
-				&& ((mode & DS_MATCH_NOPROTO) || tproto == node->dlist[j].proto)
+						|| tport == node->dlist[j].port
+						|| (mode & DS_MATCH_TRY_FULLADDRSOCK))
+				&& ((mode & DS_MATCH_NOPROTO) || tproto == node->dlist[j].proto
+						|| (mode & DS_MATCH_TRY_FULLADDRSOCK))
 				&& (((mode & DS_MATCH_ACTIVE)
 							&& !ds_skip_dst(node->dlist[j].flags))
-						|| !(mode & DS_MATCH_ACTIVE))) {
-			if(export_set_pv && ds_setid_pvname.s != 0) {
-				memset(&val, 0, sizeof(pv_value_t));
-				val.flags = PV_VAL_INT | PV_TYPE_INT;
+						|| !(mode & DS_MATCH_ACTIVE))
+				&& (((mode & DS_MATCH_SOCKET)
+							&& node->dlist[j].sock == _m->rcv.bind_address)
+						|| !node->dlist[j].sock || !(mode & DS_MATCH_SOCKET))) {
 
-				val.ri = node->id;
-				if(ds_setid_pv.setf(_m, &ds_setid_pv.pvp, (int)EQ_T, &val)
-						< 0) {
-					LM_ERR("setting PV failed\n");
-					return -2;
+			if(mode & DS_MATCH_TRY_FULLADDRSOCK) {
+				node_strictness = DS_MATCHED_ADDR;
+				if(node->dlist[j].port) {
+					if(tport != node->dlist[j].port)
+						continue;
+					else
+						node_strictness |= DS_MATCHED_PORT;
 				}
-			}
-			if(ds_attrs_pvname.s != 0 && node->dlist[j].attrs.body.len > 0) {
-				memset(&val, 0, sizeof(pv_value_t));
-				val.flags = PV_VAL_STR;
-				val.rs = node->dlist[j].attrs.body;
-				if(ds_attrs_pv.setf(_m, &ds_attrs_pv.pvp, (int)EQ_T, &val)
-						< 0) {
-					LM_ERR("setting attrs pv failed\n");
-					return -3;
+
+				if(node->dlist[j].proto) {
+					if(tproto != node->dlist[j].proto)
+						continue;
+					else
+						node_strictness |= DS_MATCHED_PROTO;
 				}
+
+				if(node->dlist[j].sock) {
+					if(node->dlist[j].sock != _m->rcv.bind_address)
+						continue;
+					else
+						node_strictness |= DS_MATCHED_SOCK;
+				}
+
+				if(node_strictness
+						== (DS_MATCHED_ADDR | DS_MATCHED_PORT | DS_MATCHED_PROTO
+								| DS_MATCHED_SOCK))
+					return ds_set_vars(_m, node, j, export_set_pv);
+
+				if(ds_strictness < node_strictness) {
+					ds_strictness = node_strictness;
+					ds_strictest_node = node;
+					ds_strictest_idx = j;
+				}
+				continue;
 			}
-			return 1;
+
+			return ds_set_vars(_m, node, j, export_set_pv);
 		}
 	}
 	return -1;
@@ -3680,6 +3738,11 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 	}
 
 
+	if(mode & DS_MATCH_TRY_FULLADDRSOCK) {
+		ds_strictness = 0;
+		ds_strictest_node = NULL;
+	}
+
 	if(group == -1) {
 		rc = ds_is_addr_from_set_r(
 				_m, pipaddr, tport, tproto, _ds_list, mode, 1);
@@ -3688,6 +3751,11 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 		if(list) {
 			rc = ds_is_addr_from_set(_m, pipaddr, tport, tproto, list, mode, 0);
 		}
+	}
+
+	if(rc == -1 && mode & DS_MATCH_TRY_FULLADDRSOCK && ds_strictest_node) {
+		rc = ds_set_vars(
+				_m, ds_strictest_node, ds_strictest_idx, group == -1 ? 1 : 0);
 	}
 
 	return rc;
