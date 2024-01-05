@@ -75,7 +75,7 @@ struct module_exports exports = {
 		destroy						 /* destroy function */
 };
 
-static void *mod_init_openssl(void *) {
+static void *mod_init_openssl(void *arg) {
     if(flow_token_secret.s) {
         assert(ob_key.len == SHA_DIGEST_LENGTH);
         LM_DBG("flow_token_secret mod param set. use persistent ob_key");
