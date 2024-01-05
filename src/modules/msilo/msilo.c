@@ -104,10 +104,10 @@ static db1_con_t *db_con = NULL;
 static db_func_t msilo_dbf;
 
 /** processed msg list - used for dumping the messages */
-msg_list ml = NULL;
+static msg_list _msilo_ml = NULL;
 
 /** TM bind */
-struct tm_binds tmb;
+static struct tm_binds _msilo_tmb;
 
 /** parameters */
 
@@ -152,7 +152,8 @@ static int ms_skip_notification_flag = -1;
 static int mod_init(void);
 static int child_init(int);
 
-static int m_store_addrs(sip_msg_t *msg, str *owner, str *srcaddr, str *dstaddr);
+static int m_store_addrs(
+		sip_msg_t *msg, str *owner, str *srcaddr, str *dstaddr);
 static int m_store_uri(sip_msg_t *msg, str *owner);
 static int m_dump(sip_msg_t *msg, str *owner_s);
 
@@ -362,7 +363,7 @@ static int mod_init(void)
 	db_con = NULL;
 
 	/* load the TM API */
-	if(load_tm_api(&tmb) != 0) {
+	if(load_tm_api(&_msilo_tmb) != 0) {
 		LM_ERR("can't load TM API\n");
 		return -1;
 	}
@@ -432,8 +433,8 @@ static int mod_init(void)
 		return -1;
 	}
 
-	ml = msg_list_init();
-	if(ml == NULL) {
+	_msilo_ml = msg_list_init();
+	if(_msilo_ml == NULL) {
 		LM_ERR("can't initialize msg list\n");
 		return -1;
 	}
@@ -884,7 +885,7 @@ static int m_store_addrs(sip_msg_t *msg, str *owner, str *srcaddr, str *dstaddr)
 	uac_r.method = &msg_type;
 	uac_r.headers = &str_hdr;
 	uac_r.body = &notify_body;
-	tmb.t_request(&uac_r,								   /* UAC Req */
+	_msilo_tmb.t_request(&uac_r,						   /* UAC Req */
 			(ctaddr.s) ? &ctaddr : &pfrom->uri,			   /* Request-URI */
 			&pfrom->uri,								   /* To */
 			&notify_from,								   /* From */
@@ -899,7 +900,7 @@ error:
 
 static int m_store_uri(sip_msg_t *msg, str *owner)
 {
-	return  m_store_addrs(msg, owner, NULL, NULL);
+	return m_store_addrs(msg, owner, NULL, NULL);
 }
 
 /**
@@ -928,15 +929,15 @@ static int m_store3(sip_msg_t *msg, char *owner, char *srcaddr, char *dstaddr)
 	str srcaddr_s;
 	str dstaddr_s;
 
-	if(fixup_get_svalue(msg, (gparam_t*)owner, &owner_s) != 0) {
+	if(fixup_get_svalue(msg, (gparam_t *)owner, &owner_s) != 0) {
 		LM_ERR("invalid owner uri parameter");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)srcaddr, &srcaddr_s) != 0) {
+	if(fixup_get_svalue(msg, (gparam_t *)srcaddr, &srcaddr_s) != 0) {
 		LM_ERR("invalid srcaddr uri parameter");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)dstaddr, &dstaddr_s) != 0) {
+	if(fixup_get_svalue(msg, (gparam_t *)dstaddr, &dstaddr_s) != 0) {
 		LM_ERR("invalid dstaddr uri parameter");
 		return -1;
 	}
@@ -1081,7 +1082,7 @@ static int m_dump(sip_msg_t *msg, str *owner_s)
 
 	for(i = 0; i < RES_ROW_N(db_res); i++) {
 		mid = RES_ROWS(db_res)[i].values[0].val.int_val;
-		if(msg_list_check_msg(ml, mid)) {
+		if(msg_list_check_msg(_msilo_ml, mid)) {
 			LM_DBG("message[%d] mid=%d already sent.\n", i, mid);
 			continue;
 		}
@@ -1114,7 +1115,7 @@ static int m_dump(sip_msg_t *msg, str *owner_s)
 				LM_ERR("Out of pkg memory");
 				if(msilo_dbf.free_result(db_con, db_res) < 0)
 					LM_ERR("failed to free the query result\n");
-				msg_list_set_flag(ml, mid, MS_MSG_ERRO);
+				msg_list_set_flag(_msilo_ml, mid, MS_MSG_ERRO);
 				goto error;
 			}
 			if(extra_hdrs_str.len > 0)
@@ -1135,7 +1136,7 @@ static int m_dump(sip_msg_t *msg, str *owner_s)
 				pkg_free(tmp_extra_hdrs.s);
 			if(msilo_dbf.free_result(db_con, db_res) < 0)
 				LM_ERR("failed to free the query result\n");
-			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
+			msg_list_set_flag(_msilo_ml, mid, MS_MSG_ERRO);
 			goto error;
 		}
 		if(tmp_extra_hdrs.len > 0)
@@ -1170,7 +1171,7 @@ static int m_dump(sip_msg_t *msg, str *owner_s)
 			}
 		}
 
-		tmb.t_request(&uac_r,								   /* UAC Req */
+		_msilo_tmb.t_request(&uac_r,						   /* UAC Req */
 				&str_vals[1],								   /* Request-URI */
 				&str_vals[1],								   /* To */
 				&str_vals[0],								   /* From */
@@ -1229,8 +1230,8 @@ void m_clean_silo(unsigned int ticks, void *param)
 
 	LM_DBG("cleaning stored messages - %d\n", ticks);
 
-	msg_list_check(ml);
-	mle = p = msg_list_reset(ml);
+	msg_list_check(_msilo_ml);
+	mle = p = msg_list_reset(_msilo_ml);
 	n = 0;
 	if(msilo_dbf.use_table(db_con, &ms_db_table) < 0) {
 		LM_ERR("failed to use_table\n");
@@ -1296,7 +1297,7 @@ void m_clean_silo(unsigned int ticks, void *param)
  */
 static void destroy(void)
 {
-	msg_list_free(ml);
+	msg_list_free(_msilo_ml);
 
 	if(db_con && msilo_dbf.close)
 		msilo_dbf.close(db_con);
@@ -1320,12 +1321,12 @@ void m_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	}
 	if(ps->code >= 300) {
 		LM_DBG("message <%d> was not sent successfully\n", *((int *)ps->param));
-		msg_list_set_flag(ml, *((int *)ps->param), MS_MSG_ERRO);
+		msg_list_set_flag(_msilo_ml, *((int *)ps->param), MS_MSG_ERRO);
 		goto done;
 	}
 
 	LM_DBG("message <%d> was sent successfully\n", *((int *)ps->param));
-	msg_list_set_flag(ml, *((int *)ps->param), MS_MSG_DONE);
+	msg_list_set_flag(_msilo_ml, *((int *)ps->param), MS_MSG_DONE);
 
 done:
 	return;
@@ -1405,7 +1406,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 
 	for(i = 0; i < RES_ROW_N(db_res); i++) {
 		mid = RES_ROWS(db_res)[i].values[0].val.int_val;
-		if(msg_list_check_msg(ml, mid)) {
+		if(msg_list_check_msg(_msilo_ml, mid)) {
 			LM_DBG("message[%d] mid=%d already sent.\n", i, mid);
 			continue;
 		}
@@ -1429,7 +1430,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 			LM_ERR("headers building failed [%d]\n", mid);
 			if(msilo_dbf.free_result(db_con, db_res) < 0)
 				LM_DBG("failed to free result of query\n");
-			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
+			msg_list_set_flag(_msilo_ml, mid, MS_MSG_ERRO);
 			return;
 		}
 
@@ -1452,7 +1453,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		else
 			LM_DBG("sending composed body\n");
 
-		msg_list_set_flag(ml, mid, MS_MSG_TSND);
+		msg_list_set_flag(_msilo_ml, mid, MS_MSG_TSND);
 
 
 		memset(&uac_r, 0, sizeof(uac_r));
@@ -1462,7 +1463,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
 		uac_r.cb = m_tm_callback;
 		uac_r.cbp = (void *)(long)mid;
-		tmb.t_request(&uac_r,								   /* UAC Req */
+		_msilo_tmb.t_request(&uac_r,						   /* UAC Req */
 				&puri,										   /* Request-URI */
 				&puri,										   /* To */
 				&ms_reminder,								   /* From */
