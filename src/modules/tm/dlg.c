@@ -333,17 +333,25 @@ int new_dlg_uac(str *_cid, str *_ltag, unsigned int _lseq, str *_luri,
 	memset(res, 0, sizeof(dlg_t));
 
 	/* Make a copy of Call-ID */
-	if(str_duplicate(&res->id.call_id, _cid) < 0)
+	if(str_duplicate(&res->id.call_id, _cid) < 0) {
+		free_dlg(res);
 		return -3;
+	}
 	/* Make a copy of local tag (usually From tag) */
-	if(str_duplicate(&res->id.loc_tag, _ltag) < 0)
+	if(str_duplicate(&res->id.loc_tag, _ltag) < 0) {
+		free_dlg(res);
 		return -4;
+	}
 	/* Make a copy of local URI (usually From) */
-	if(str_duplicate(&res->loc_uri, _luri) < 0)
+	if(str_duplicate(&res->loc_uri, _luri) < 0) {
+		free_dlg(res);
 		return -5;
+	}
 	/* Make a copy of remote URI (usually To) */
-	if(str_duplicate(&res->rem_uri, _ruri) < 0)
+	if(str_duplicate(&res->rem_uri, _ruri) < 0) {
+		free_dlg(res);
 		return -6;
+	}
 	/* Make a copy of local sequence (usually CSeq) */
 	res->loc_seq.value = _lseq;
 	/* And mark it as set */
@@ -353,8 +361,9 @@ int new_dlg_uac(str *_cid, str *_ltag, unsigned int _lseq, str *_luri,
 
 	if(calculate_hooks(*_d) < 0) {
 		LM_ERR("error while calculating hooks\n");
-		/* FIXME: free everything here */
-		shm_free(res);
+		/* free everything here */
+		free_dlg(res);
+		*_d = NULL;
 		return -2;
 	}
 #ifdef DIALOG_CALLBACKS

@@ -272,7 +272,7 @@ int t_relay_to(
 		/* transaction previously found (E_SCRIPT) and msg==ACK
 			    => ack to neg. reply  or ack to local trans.
 			    => process it and exit */
-		/* FIXME: there's no way to distinguish here between acks to
+		/* - there's no way to distinguish here between acks to
 			   local trans. and neg. acks */
 		/* in normal operation we should never reach this point, if we
 			   do WARN(), it might hide some real bug (apart from possibly

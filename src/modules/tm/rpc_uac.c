@@ -387,7 +387,6 @@ static int get_hfblock(str *uri, struct hdr_field *hf, int proto,
 						if(!append_str_list(sock_name->s, sock_name->len, &last,
 								   &total_len))
 							goto error;
-						/* inefficient - FIXME --andrei*/
 						if(!append_str_list(":", 1, &last, &total_len))
 							goto error;
 						if(!append_str_list(portname->s, portname->len, &last,

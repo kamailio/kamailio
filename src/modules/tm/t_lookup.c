@@ -429,7 +429,7 @@ static int matching_3261(struct sip_msg *p_msg, struct cell **trans,
 					 *  which is interested in it (E2EACK* callbacks)
 					 * if ret==3 => partial match => we should at least
 					 *  make sure the ACK is not for a negative reply
-					 *  (FIXME: ret==3 should never happen, it's a bug catch
+					 *  (note: ret==3 should never happen, it's a bug catch
 					 *    case)*/
 					if(unlikely(ret == 1))
 						goto found;

@@ -663,7 +663,7 @@ static int fixup_hostport2proxy(void **param, int param_no)
 		}
 		s.s = host;
 		s.len = strlen(host);
-		proxy = mk_proxy(&s, port, 0); /* FIXME: udp or tcp? */
+		proxy = mk_proxy(&s, port, 0);
 		if(proxy == 0) {
 			LM_ERR("bad host name in URI <%s>\n", host);
 			return E_BAD_ADDRESS;
@@ -2572,7 +2572,7 @@ int t_check_trans(struct sip_msg *msg)
 				if(msg->REQ_METHOD == METHOD_ACK) {
 					/* ack to neg. reply  or ack to local trans.
 					 * => process it and end the script */
-					/* FIXME: there's no way to distinguish here
+					/* - there's no way to distinguish here
 					 * between acks to local trans. and neg. acks */
 					if(unlikely(has_tran_tmcbs(t, TMCB_ACK_NEG_IN)))
 						run_trans_callbacks(

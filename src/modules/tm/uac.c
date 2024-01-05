@@ -936,8 +936,7 @@ int ack_local_uac(struct cell *trans, str *hdrs, str *body)
 
 	ret = 0;
 fin:
-	/* TODO: ugly! */
-	/* FIXME: the T had been obtain by t_lookup_ident()'ing for it, so, it is
+	/* note: the T had been obtain by t_lookup_ident()'ing for it, so, it is
 	 * ref-counted. The t_unref() can not be used, as it requests a valid SIP
 	 * message (all available might be the reply, but if AS goes wrong and
 	 * tries to ACK before the final reply is received, we still have to
