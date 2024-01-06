@@ -91,7 +91,7 @@ static int rpc_child_init(void);
 static void mod_destroy();
 
 /* debug function for the new client <-> server protocol */
-static void pdb_msg_dbg(struct pdb_msg msg, char *dbg_msg);
+static void pdb_msg_dbg(struct pdb_msg *msg, char *dbg_msg);
 
 /* build the new protocol message before transmission */
 static int pdb_msg_format_send(struct pdb_msg *msg, uint8_t version,
@@ -152,15 +152,15 @@ static struct server_list_t *server_list;
 
 
 /* debug function for the new client <-> server protocol */
-static void pdb_msg_dbg(struct pdb_msg msg, char *dbg_msg)
+static void pdb_msg_dbg(struct pdb_msg *msg, char *dbg_msg)
 {
 	int i;
 	char buf[PAYLOADSIZE * 3 + 1];
 	char *ptr = buf;
 
-	if(msg.hdr.length > sizeof(msg.hdr)) {
-		for(i = 0; i < msg.hdr.length - sizeof(msg.hdr); i++) {
-			ptr += sprintf(ptr, "%02X ", msg.bdy.payload[i]);
+	if(msg->hdr.length > sizeof(msg->hdr)) {
+		for(i = 0; i < msg->hdr.length - sizeof(msg->hdr); i++) {
+			ptr += sprintf(ptr, "%02X ", msg->bdy.payload[i]);
 		}
 	} else {
 		*ptr = '\0';
@@ -169,8 +169,8 @@ static void pdb_msg_dbg(struct pdb_msg msg, char *dbg_msg)
 	LM_DBG("%s\n"
 		   "version = %d\ntype = %d\ncode = %d\nid = %d\nlen = %d\n"
 		   "payload = %s\n",
-			dbg_msg, msg.hdr.version, msg.hdr.type, msg.hdr.code, msg.hdr.id,
-			msg.hdr.length, buf);
+			dbg_msg, msg->hdr.version, msg->hdr.type, msg->hdr.code,
+			msg->hdr.id, msg->hdr.length, buf);
 }
 
 /* build the message before send */
@@ -304,7 +304,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 		case PDB_VERSION_1:
 			pdb_msg_format_send(&msg, PDB_VERSION, PDB_TYPE_REQUEST_ID,
 					PDB_CODE_DEFAULT, htons(*global_id), buf, reqlen);
-			pdb_msg_dbg(msg, "Kamailio pdb client sends:");
+			pdb_msg_dbg(&msg, "Kamailio pdb client sends:");
 
 			/* increment msg id for the next request */
 			*global_id = *global_id + 1;
@@ -376,7 +376,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 					switch(PDB_VERSION) {
 						case PDB_VERSION_1:
 							memcpy(&msg, buf, bytes_received);
-							pdb_msg_dbg(msg, "Kamailio pdb client receives:");
+							pdb_msg_dbg(&msg, "Kamailio pdb client receives:");
 
 							_idv = msg.hdr.id; /* make gcc happy */
 							msg.hdr.id = ntohs(_idv);
