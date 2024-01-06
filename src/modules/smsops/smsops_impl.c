@@ -157,9 +157,9 @@ typedef struct _sms_rp_data
 } sms_rp_data_t;
 
 // Pointer to current parsed rp_data/tpdu
-static sms_rp_data_t *rp_data = NULL;
+static sms_rp_data_t *_smsops_rp_data = NULL;
 // Pointer to rp_data/tpdu used for sending
-static sms_rp_data_t *rp_send_data = NULL;
+static sms_rp_data_t *_smsops_rp_send_data = NULL;
 
 // ID of current message
 static unsigned int current_msg_id = 0;
@@ -806,112 +806,118 @@ int decode_3gpp_sms(struct sip_msg *msg)
 		}
 
 		// Get structure for RP-DATA:
-		if(rp_data) {
-			freeRP_DATA(rp_data);
+		if(_smsops_rp_data) {
+			freeRP_DATA(_smsops_rp_data);
 		}
-		rp_data = (sms_rp_data_t *)pkg_malloc(sizeof(struct _sms_rp_data));
-		if(!rp_data) {
+		_smsops_rp_data =
+				(sms_rp_data_t *)pkg_malloc(sizeof(struct _sms_rp_data));
+		if(!_smsops_rp_data) {
 			LM_ERR("Error allocating %lu bytes!\n",
 					(unsigned long)sizeof(struct _sms_rp_data));
 			return -1;
 		}
 
 		// Initialize structure:
-		memset(rp_data, 0, sizeof(struct _sms_rp_data));
+		memset(_smsops_rp_data, 0, sizeof(struct _sms_rp_data));
 
 		////////////////////////////////////////////////
 		// RP-Data
 		////////////////////////////////////////////////
-		rp_data->msg_type = (unsigned char)body.s[p++];
-		rp_data->reference = (unsigned char)body.s[p++];
-		if((rp_data->msg_type == RP_DATA_MS_TO_NETWORK)
-				|| (rp_data->msg_type == RP_DATA_NETWORK_TO_MS)) {
+		_smsops_rp_data->msg_type = (unsigned char)body.s[p++];
+		_smsops_rp_data->reference = (unsigned char)body.s[p++];
+		if((_smsops_rp_data->msg_type == RP_DATA_MS_TO_NETWORK)
+				|| (_smsops_rp_data->msg_type == RP_DATA_NETWORK_TO_MS)) {
 			len = body.s[p++];
 			if(len > 0) {
 				p++;   // Type of Number, we assume E164, thus ignored
 				len--; // Deduct the type of number from the len
-				rp_data->originator.s = pkg_malloc(len * 2);
-				rp_data->originator.len = DecodePhoneNumber(
-						&body.s[p], len * 2, rp_data->originator);
+				_smsops_rp_data->originator.s = pkg_malloc(len * 2);
+				_smsops_rp_data->originator.len = DecodePhoneNumber(
+						&body.s[p], len * 2, _smsops_rp_data->originator);
 				p += len;
 			}
 			len = body.s[p++];
 			if(len > 0) {
 				p++;   // Type of Number, we assume E164, thus ignored
 				len--; // Deduct the type of number from the len
-				rp_data->destination.s = pkg_malloc(len * 2);
-				rp_data->destination.len = DecodePhoneNumber(
-						&body.s[p], len * 2, rp_data->destination);
+				_smsops_rp_data->destination.s = pkg_malloc(len * 2);
+				_smsops_rp_data->destination.len = DecodePhoneNumber(
+						&body.s[p], len * 2, _smsops_rp_data->destination);
 				p += len;
 			}
 
 			////////////////////////////////////////////////
 			// TPDU
 			////////////////////////////////////////////////
-			rp_data->pdu_len = body.s[p++];
-			if(rp_data->pdu_len > 0) {
-				rp_data->pdu.flags = (unsigned char)body.s[p++];
-				rp_data->pdu.msg_type =
-						(unsigned char)rp_data->pdu.flags & 0x03;
+			_smsops_rp_data->pdu_len = body.s[p++];
+			if(_smsops_rp_data->pdu_len > 0) {
+				_smsops_rp_data->pdu.flags = (unsigned char)body.s[p++];
+				_smsops_rp_data->pdu.msg_type =
+						(unsigned char)_smsops_rp_data->pdu.flags & 0x03;
 
-				if(rp_data->pdu.msg_type == SUBMIT
-						|| rp_data->pdu.msg_type == COMMAND) {
-					rp_data->pdu.reference = (unsigned char)body.s[p++];
+				if(_smsops_rp_data->pdu.msg_type == SUBMIT
+						|| _smsops_rp_data->pdu.msg_type == COMMAND) {
+					_smsops_rp_data->pdu.reference = (unsigned char)body.s[p++];
 				}
 
-				if(rp_data->pdu.msg_type == SUBMIT) {
+				if(_smsops_rp_data->pdu.msg_type == SUBMIT) {
 					// TP-DA
-					rp_data->pdu.destination.len = body.s[p++];
-					if(rp_data->pdu.destination.len > 0) {
-						rp_data->pdu.destination_flags =
+					_smsops_rp_data->pdu.destination.len = body.s[p++];
+					if(_smsops_rp_data->pdu.destination.len > 0) {
+						_smsops_rp_data->pdu.destination_flags =
 								(unsigned char)body.s[p++];
-						rp_data->pdu.destination.s =
-								pkg_malloc(rp_data->pdu.destination.len);
+						_smsops_rp_data->pdu.destination.s = pkg_malloc(
+								_smsops_rp_data->pdu.destination.len);
 						DecodePhoneNumber(&body.s[p],
-								rp_data->pdu.destination.len,
-								rp_data->pdu.destination);
-						if(rp_data->pdu.destination.len % 2 == 0) {
-							p += rp_data->pdu.destination.len / 2;
+								_smsops_rp_data->pdu.destination.len,
+								_smsops_rp_data->pdu.destination);
+						if(_smsops_rp_data->pdu.destination.len % 2 == 0) {
+							p += _smsops_rp_data->pdu.destination.len / 2;
 						} else {
-							p += (rp_data->pdu.destination.len / 2) + 1;
+							p += (_smsops_rp_data->pdu.destination.len / 2) + 1;
 						}
 					}
-				} else if(rp_data->pdu.msg_type == DELIVER) {
+				} else if(_smsops_rp_data->pdu.msg_type == DELIVER) {
 					// TP-OA
-					rp_data->pdu.originating_address.len = body.s[p++];
-					if(rp_data->pdu.originating_address.len > 0) {
-						rp_data->pdu.originating_address_flags =
+					_smsops_rp_data->pdu.originating_address.len = body.s[p++];
+					if(_smsops_rp_data->pdu.originating_address.len > 0) {
+						_smsops_rp_data->pdu.originating_address_flags =
 								(unsigned char)body.s[p++];
-						rp_data->pdu.originating_address.s = pkg_malloc(
-								rp_data->pdu.originating_address.len);
+						_smsops_rp_data->pdu.originating_address.s = pkg_malloc(
+								_smsops_rp_data->pdu.originating_address.len);
 						DecodePhoneNumber(&body.s[p],
-								rp_data->pdu.originating_address.len,
-								rp_data->pdu.originating_address);
-						if(rp_data->pdu.originating_address.len % 2 == 0) {
-							p += rp_data->pdu.originating_address.len / 2;
+								_smsops_rp_data->pdu.originating_address.len,
+								_smsops_rp_data->pdu.originating_address);
+						if(_smsops_rp_data->pdu.originating_address.len % 2
+								== 0) {
+							p += _smsops_rp_data->pdu.originating_address.len
+								 / 2;
 						} else {
-							p += (rp_data->pdu.originating_address.len / 2) + 1;
+							p += (_smsops_rp_data->pdu.originating_address.len
+										 / 2)
+								 + 1;
 						}
 					}
 				}
 
-				rp_data->pdu.pid = (unsigned char)body.s[p++];
+				_smsops_rp_data->pdu.pid = (unsigned char)body.s[p++];
 
-				if(rp_data->pdu.msg_type == SUBMIT
-						|| rp_data->pdu.msg_type == DELIVER) {
-					rp_data->pdu.coding = (unsigned char)body.s[p++];
+				if(_smsops_rp_data->pdu.msg_type == SUBMIT
+						|| _smsops_rp_data->pdu.msg_type == DELIVER) {
+					_smsops_rp_data->pdu.coding = (unsigned char)body.s[p++];
 				}
 
 				// 3GPP TS 03.40 9.2.2.2 SMS SUBMIT type
 				// https://en.wikipedia.org/wiki/GSM_03.40
-				if(rp_data->pdu.msg_type == SUBMIT) {
+				if(_smsops_rp_data->pdu.msg_type == SUBMIT) {
 					// 3GPP TS 03.40 9.2.3.3 TP Validity Period Format (TP VPF)
-					switch(rp_data->pdu.flags & BITMASK_TP_VPF) {
+					switch(_smsops_rp_data->pdu.flags & BITMASK_TP_VPF) {
 						case BITMASK_TP_VPF_RELATIVE: // 3GPP TS 03.40 9.2.3.12.1 TP-VP (Relative format)
-							rp_data->pdu.validity = (unsigned char)body.s[p++];
+							_smsops_rp_data->pdu.validity =
+									(unsigned char)body.s[p++];
 							break;
 						case BITMASK_TP_VPF_ABSOLUTE: // 3GPP TS 03.40 9.2.3.12.2 TP-VP (Absolute format)
-							DecodeTime(&body.s[p], &rp_data->pdu.time);
+							DecodeTime(&body.s[p], &_smsops_rp_data->pdu.time);
 							p += 7;
 							break;
 						case BITMASK_TP_VPF_ENHANCED: // 3GPP TS 03.40 9.2.3.12.3 TP-VP (Enhanced format)
@@ -922,24 +928,24 @@ int decode_3gpp_sms(struct sip_msg *msg)
 						default:
 							break;
 					}
-				} else if(rp_data->pdu.msg_type == DELIVER) {
+				} else if(_smsops_rp_data->pdu.msg_type == DELIVER) {
 					// TP-SCTS
-					DecodeTime(&body.s[p], &rp_data->pdu.time);
+					DecodeTime(&body.s[p], &_smsops_rp_data->pdu.time);
 					p += 7;
 				}
 
-				if(rp_data->pdu.msg_type == SUBMIT
-						|| rp_data->pdu.msg_type == DELIVER) {
+				if(_smsops_rp_data->pdu.msg_type == SUBMIT
+						|| _smsops_rp_data->pdu.msg_type == DELIVER) {
 					//TP-User-Data-Length and TP-User-Data
 					len = (unsigned char)body.s[p++];
 					int fill_bits = 0;
 					if(len > 0) {
-						if((unsigned char)rp_data->pdu.flags
+						if((unsigned char)_smsops_rp_data->pdu.flags
 								& BITMASK_TP_UDHI) { //TP-UDHI
 							int udh_len = (unsigned char)body.s[p++];
 							int udh_read = 0;
 
-							if(rp_data->pdu.coding == 0) {
+							if(_smsops_rp_data->pdu.coding == 0) {
 								//calcucate padding size for 7bit coding
 								//udh_len + 1, because the length field itself should be included
 								fill_bits = (7 - (udh_len + 1) % 7)
@@ -1011,7 +1017,7 @@ int decode_3gpp_sms(struct sip_msg *msg)
 								}
 
 								if(prev_ie == NULL) {
-									rp_data->pdu.payload.header = ie;
+									_smsops_rp_data->pdu.payload.header = ie;
 								} else {
 									prev_ie->next = ie;
 								}
@@ -1023,7 +1029,7 @@ int decode_3gpp_sms(struct sip_msg *msg)
 
 							// TS 23.040, Sec. 9.2.3.16
 							// Coding: 7 Bit
-							if(rp_data->pdu.coding == 0x00) {
+							if(_smsops_rp_data->pdu.coding == 0x00) {
 								int udh_bit_len =
 										(1 + udh_len)
 										* 8; // add 1 octet for the udh length
@@ -1043,32 +1049,33 @@ int decode_3gpp_sms(struct sip_msg *msg)
 						}
 
 						// Check for maximum TP-User-Data payload length since SMS concatenation is not supported
-						if((rp_data->pdu.coding == 0x00 && len > 160)
-								|| (rp_data->pdu.coding != 0x00 && len > 70)) {
+						if((_smsops_rp_data->pdu.coding == 0x00 && len > 160)
+								|| (_smsops_rp_data->pdu.coding != 0x00
+										&& len > 70)) {
 							LM_ERR("Length of TP-User-Data payload exceeds "
 								   "maximum length!\n");
 							return -1;
 						}
 
 						blen = 2 + len * 4;
-						rp_data->pdu.payload.sm.s = pkg_malloc(blen);
-						if(rp_data->pdu.payload.sm.s == NULL) {
+						_smsops_rp_data->pdu.payload.sm.s = pkg_malloc(blen);
+						if(_smsops_rp_data->pdu.payload.sm.s == NULL) {
 							LM_ERR("no more pkg\n");
 							return -1;
 						}
-						memset(rp_data->pdu.payload.sm.s, 0, blen);
+						memset(_smsops_rp_data->pdu.payload.sm.s, 0, blen);
 						// Coding: 7 Bit
-						if(rp_data->pdu.coding == 0x00) {
+						if(_smsops_rp_data->pdu.coding == 0x00) {
 							// We don't care about the extra used bytes here.
-							rp_data->pdu.payload.sm.len = len;
-							rp_data->pdu.payload.sm.len =
-									gsm_to_ascii(&body.s[p], len,
-											rp_data->pdu.payload.sm, fill_bits);
+							_smsops_rp_data->pdu.payload.sm.len = len;
+							_smsops_rp_data->pdu.payload.sm.len = gsm_to_ascii(
+									&body.s[p], len,
+									_smsops_rp_data->pdu.payload.sm, fill_bits);
 						} else {
 							// Length is worst-case 2 * len (UCS2 is 2 Bytes, UTF8 is worst-case 4 Bytes)
 							j = ucs2_to_utf8(&body.s[p], len,
-									&rp_data->pdu.payload.sm.s[0]);
-							rp_data->pdu.payload.sm.len = j < 0 ? 0 : j;
+									&_smsops_rp_data->pdu.payload.sm.s[0]);
+							_smsops_rp_data->pdu.payload.sm.len = j < 0 ? 0 : j;
 						}
 					}
 				}
@@ -1161,7 +1168,7 @@ int pv_sms_ack(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	// Always ACK NETWORK to MS
 	rp_data_ack.s[0] = RP_ACK_NETWORK_TO_MS;
 	// Take the reference from request:
-	rp_data_ack.s[1] = rp_data->reference;
+	rp_data_ack.s[1] = _smsops_rp_data->reference;
 	// RP-Data-Element-ID
 	rp_data_ack.s[2] = 0x41;
 	// Length
@@ -1183,7 +1190,7 @@ int pv_sms_ack(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
  */
 int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	dumpRPData(rp_send_data, L_DBG);
+	dumpRPData(_smsops_rp_send_data, L_DBG);
 
 	str sms_body = {0, 0};
 	int buffer_size = 1024, lenpos = 0, i = 0, smstext_len_pos = 0;
@@ -1198,26 +1205,26 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	}
 
 	// Encode the data (RP-Data)
-	sms_body.s[sms_body.len++] = rp_send_data->msg_type;
-	sms_body.s[sms_body.len++] = rp_send_data->reference;
+	sms_body.s[sms_body.len++] = _smsops_rp_send_data->msg_type;
+	sms_body.s[sms_body.len++] = _smsops_rp_send_data->reference;
 	lenpos = sms_body.len;
 	sms_body.s[sms_body.len++] = 0x00;
-	if(rp_send_data->originator.len > 0) {
+	if(_smsops_rp_send_data->originator.len > 0) {
 		sms_body.s[sms_body.len++] =
-				rp_send_data
+				_smsops_rp_send_data
 						->originator_flags; // Type of number: ISDN/Telephony Numbering (E164), no extension
-		i = EncodePhoneNumber(rp_send_data->originator,
+		i = EncodePhoneNumber(_smsops_rp_send_data->originator,
 				&sms_body.s[sms_body.len], buffer_size - sms_body.len);
 		sms_body.s[lenpos] = i + 1;
 		sms_body.len += i;
 	}
 	lenpos = sms_body.len;
 	sms_body.s[sms_body.len++] = 0x00;
-	if(rp_send_data->destination.len > 0) {
+	if(_smsops_rp_send_data->destination.len > 0) {
 		sms_body.s[sms_body.len++] =
-				rp_send_data
+				_smsops_rp_send_data
 						->destination_flags; // Type of number: ISDN/Telephony Numbering (E164), no extension
-		i = EncodePhoneNumber(rp_send_data->destination,
+		i = EncodePhoneNumber(_smsops_rp_send_data->destination,
 				&sms_body.s[sms_body.len], buffer_size - sms_body.len);
 		sms_body.s[lenpos] = i + 1;
 		sms_body.len += i;
@@ -1230,25 +1237,28 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	// T-PDU
 	///////////////////////////////////////////////////
 	sms_body.s[sms_body.len++] =
-			rp_send_data->pdu.msg_type | rp_send_data->pdu.flags
+			_smsops_rp_send_data->pdu.msg_type | _smsops_rp_send_data->pdu.flags
 			| 0x4; // We've always got no more messages to send.
 	// Originating Address:
-	sms_body.s[sms_body.len++] = rp_send_data->pdu.originating_address.len;
-	sms_body.s[sms_body.len++] = rp_send_data->pdu.originating_address_flags;
-	sms_body.len += EncodePhoneNumber(rp_send_data->pdu.originating_address,
-			&sms_body.s[sms_body.len], buffer_size - sms_body.len);
+	sms_body.s[sms_body.len++] =
+			_smsops_rp_send_data->pdu.originating_address.len;
+	sms_body.s[sms_body.len++] =
+			_smsops_rp_send_data->pdu.originating_address_flags;
+	sms_body.len +=
+			EncodePhoneNumber(_smsops_rp_send_data->pdu.originating_address,
+					&sms_body.s[sms_body.len], buffer_size - sms_body.len);
 	// Protocol ID
-	sms_body.s[sms_body.len++] = rp_send_data->pdu.pid;
+	sms_body.s[sms_body.len++] = _smsops_rp_send_data->pdu.pid;
 	// Encoding (0 => default 7 Bit)
-	sms_body.s[sms_body.len++] = rp_send_data->pdu.coding;
+	sms_body.s[sms_body.len++] = _smsops_rp_send_data->pdu.coding;
 	// Service-Center-Timestamp (always 7 octets)
 	EncodeTime(&sms_body.s[sms_body.len]);
 	sms_body.len += 7;
 	smstext_len_pos = sms_body.len;
-	sms_body.s[sms_body.len++] = rp_send_data->pdu.payload.sm.len;
+	sms_body.s[sms_body.len++] = _smsops_rp_send_data->pdu.payload.sm.len;
 
 	// Check for UDH
-	concat = GetConcatShortMsg8bitRefIE(rp_send_data);
+	concat = GetConcatShortMsg8bitRefIE(_smsops_rp_send_data);
 	if(concat == NULL) {
 		LM_ERR("message building failure\n");
 		return -1;
@@ -1266,23 +1276,23 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	}
 
 	// Coding: 7 Bit
-	if(rp_send_data->pdu.coding == 0x00) {
+	if(_smsops_rp_send_data->pdu.coding == 0x00) {
 		int actual_text_size = 0;
 		unsigned char paddingBits = (udh_len * 8) % 7;
 		if(paddingBits) {
 			paddingBits = 7 - paddingBits;
 		}
 
-		i = ascii_to_gsm(rp_send_data->pdu.payload.sm,
+		i = ascii_to_gsm(_smsops_rp_send_data->pdu.payload.sm,
 				&sms_body.s[sms_body.len], buffer_size - sms_body.len,
 				&actual_text_size, paddingBits);
 		sms_body.len += i;
 		sms_body.s[smstext_len_pos] = actual_text_size + udh_len;
 	} else {
 		// Coding: ucs2
-		int ucs2len = utf8_to_ucs2(&rp_send_data->pdu.payload.sm.s[0],
-				rp_send_data->pdu.payload.sm.len, &sms_body.s[sms_body.len],
-				buffer_size - sms_body.len);
+		int ucs2len = utf8_to_ucs2(&_smsops_rp_send_data->pdu.payload.sm.s[0],
+				_smsops_rp_send_data->pdu.payload.sm.len,
+				&sms_body.s[sms_body.len], buffer_size - sms_body.len);
 		if(ucs2len < 0) {
 			// Failed in coding UCS2.
 			LM_ERR("Error encoding SMS in UCS-2 format!\n");
@@ -1313,34 +1323,45 @@ int pv_get_sms(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 	switch(param->pvn.u.isname.name.n) {
 		case SMS_RPDATA_TYPE:
-			return pv_get_sintval(msg, param, res, (int)rp_data->msg_type);
+			return pv_get_sintval(
+					msg, param, res, (int)_smsops_rp_data->msg_type);
 		case SMS_RPDATA_REFERENCE:
-			return pv_get_sintval(msg, param, res, (int)rp_data->reference);
+			return pv_get_sintval(
+					msg, param, res, (int)_smsops_rp_data->reference);
 		case SMS_RPDATA_ORIGINATOR:
-			return pv_get_strval(msg, param, res, &rp_data->originator);
+			return pv_get_strval(msg, param, res, &_smsops_rp_data->originator);
 		case SMS_RPDATA_DESTINATION:
-			return pv_get_strval(msg, param, res, &rp_data->destination);
+			return pv_get_strval(
+					msg, param, res, &_smsops_rp_data->destination);
 		case SMS_TPDU_TYPE:
-			return pv_get_sintval(msg, param, res, (int)rp_data->pdu.msg_type);
+			return pv_get_sintval(
+					msg, param, res, (int)_smsops_rp_data->pdu.msg_type);
 		case SMS_TPDU_FLAGS:
-			return pv_get_sintval(msg, param, res, (int)rp_data->pdu.flags);
+			return pv_get_sintval(
+					msg, param, res, (int)_smsops_rp_data->pdu.flags);
 		case SMS_TPDU_CODING:
-			return pv_get_sintval(msg, param, res, (int)rp_data->pdu.coding);
+			return pv_get_sintval(
+					msg, param, res, (int)_smsops_rp_data->pdu.coding);
 		case SMS_TPDU_PROTOCOL:
-			return pv_get_sintval(msg, param, res, (int)rp_data->pdu.pid);
+			return pv_get_sintval(
+					msg, param, res, (int)_smsops_rp_data->pdu.pid);
 		case SMS_TPDU_VALIDITY:
-			return pv_get_sintval(msg, param, res, (int)rp_data->pdu.validity);
+			return pv_get_sintval(
+					msg, param, res, (int)_smsops_rp_data->pdu.validity);
 		case SMS_TPDU_REFERENCE:
-			return pv_get_sintval(msg, param, res, (int)rp_data->pdu.reference);
+			return pv_get_sintval(
+					msg, param, res, (int)_smsops_rp_data->pdu.reference);
 		case SMS_TPDU_PAYLOAD:
-			return pv_get_strval(msg, param, res, &rp_data->pdu.payload.sm);
+			return pv_get_strval(
+					msg, param, res, &_smsops_rp_data->pdu.payload.sm);
 		case SMS_TPDU_DESTINATION:
-			return pv_get_strval(msg, param, res, &rp_data->pdu.destination);
+			return pv_get_strval(
+					msg, param, res, &_smsops_rp_data->pdu.destination);
 		case SMS_TPDU_ORIGINATING_ADDRESS:
 			return pv_get_strval(
-					msg, param, res, &rp_data->pdu.originating_address);
+					msg, param, res, &_smsops_rp_data->pdu.originating_address);
 		case SMS_UDH_CONCATSM_REF: {
-			tp_udh_inf_element_t *ie = rp_data->pdu.payload.header;
+			tp_udh_inf_element_t *ie = _smsops_rp_data->pdu.payload.header;
 			while(ie) {
 				if(ie->identifier == TP_UDH_IE_CONCAT_SM_8BIT_REF)
 					return pv_get_uintval(msg, param, res,
@@ -1350,7 +1371,7 @@ int pv_get_sms(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			return -1;
 		}
 		case SMS_UDH_CONCATSM_MAX_NUM_SM: {
-			tp_udh_inf_element_t *ie = rp_data->pdu.payload.header;
+			tp_udh_inf_element_t *ie = _smsops_rp_data->pdu.payload.header;
 			while(ie) {
 				if(ie->identifier == TP_UDH_IE_CONCAT_SM_8BIT_REF)
 					return pv_get_uintval(msg, param, res,
@@ -1360,7 +1381,7 @@ int pv_get_sms(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			return -1;
 		}
 		case SMS_UDH_CONCATSM_SEQ: {
-			tp_udh_inf_element_t *ie = rp_data->pdu.payload.header;
+			tp_udh_inf_element_t *ie = _smsops_rp_data->pdu.payload.header;
 			while(ie) {
 				if(ie->identifier == TP_UDH_IE_CONCAT_SM_8BIT_REF)
 					return pv_get_uintval(msg, param, res,
@@ -1371,16 +1392,16 @@ int pv_get_sms(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		}
 		case SMS_TPDU_ORIGINATING_ADDRESS_FLAGS:
 			return pv_get_sintval(msg, param, res,
-					(int)rp_data->pdu.originating_address_flags);
+					(int)_smsops_rp_data->pdu.originating_address_flags);
 		case SMS_TPDU_DESTINATION_FLAGS:
-			return pv_get_sintval(
-					msg, param, res, (int)rp_data->pdu.destination_flags);
+			return pv_get_sintval(msg, param, res,
+					(int)_smsops_rp_data->pdu.destination_flags);
 		case SMS_RPDATA_ORIGINATOR_FLAGS:
 			return pv_get_sintval(
-					msg, param, res, (int)rp_data->originator_flags);
+					msg, param, res, (int)_smsops_rp_data->originator_flags);
 		case SMS_RPDATA_DESTINATION_FLAGS:
 			return pv_get_sintval(
-					msg, param, res, (int)rp_data->destination_flags);
+					msg, param, res, (int)_smsops_rp_data->destination_flags);
 	}
 	return 0;
 }
@@ -1390,60 +1411,61 @@ int pv_set_sms(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 	if(param == NULL)
 		return -1;
 
-	if(!rp_send_data) {
-		rp_send_data = (sms_rp_data_t *)pkg_malloc(sizeof(struct _sms_rp_data));
-		if(!rp_send_data) {
+	if(!_smsops_rp_send_data) {
+		_smsops_rp_send_data =
+				(sms_rp_data_t *)pkg_malloc(sizeof(struct _sms_rp_data));
+		if(!_smsops_rp_send_data) {
 			LM_ERR("Error allocating %lu bytes!\n",
 					(unsigned long)sizeof(struct _sms_rp_data));
 			return -1;
 		}
 		// Initialize structure:
-		memset(rp_send_data, 0, sizeof(struct _sms_rp_data));
-		rp_send_data->pdu.originating_address_flags =
+		memset(_smsops_rp_send_data, 0, sizeof(struct _sms_rp_data));
+		_smsops_rp_send_data->pdu.originating_address_flags =
 				0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
-		rp_send_data->pdu.destination_flags = 0x91;
-		rp_send_data->originator_flags = 0x91;
-		rp_send_data->destination_flags = 0x91;
+		_smsops_rp_send_data->pdu.destination_flags = 0x91;
+		_smsops_rp_send_data->originator_flags = 0x91;
+		_smsops_rp_send_data->destination_flags = 0x91;
 	}
 
 	switch(param->pvn.u.isname.name.n) {
 		case SMS_ALL:
-			freeRP_DATA(rp_send_data);
+			freeRP_DATA(_smsops_rp_send_data);
 			// Initialize structure:
-			memset(rp_send_data, 0, sizeof(struct _sms_rp_data));
-			rp_send_data->pdu.originating_address_flags =
+			memset(_smsops_rp_send_data, 0, sizeof(struct _sms_rp_data));
+			_smsops_rp_send_data->pdu.originating_address_flags =
 					0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
-			rp_send_data->pdu.destination_flags = 0x91;
-			rp_send_data->originator_flags = 0x91;
-			rp_send_data->destination_flags = 0x91;
+			_smsops_rp_send_data->pdu.destination_flags = 0x91;
+			_smsops_rp_send_data->originator_flags = 0x91;
+			_smsops_rp_send_data->destination_flags = 0x91;
 			break;
 		case SMS_RPDATA_TYPE:
 			if(val == NULL) {
-				rp_send_data->msg_type = 0;
+				_smsops_rp_send_data->msg_type = 0;
 				return 0;
 			}
 			if(!(val->flags & PV_VAL_INT)) {
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			rp_send_data->msg_type = (unsigned char)val->ri;
+			_smsops_rp_send_data->msg_type = (unsigned char)val->ri;
 			break;
 		case SMS_RPDATA_REFERENCE:
 			if(val == NULL) {
-				rp_send_data->reference = 0;
+				_smsops_rp_send_data->reference = 0;
 				return 0;
 			}
 			if(!(val->flags & PV_VAL_INT)) {
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			rp_send_data->reference = (unsigned char)val->ri;
+			_smsops_rp_send_data->reference = (unsigned char)val->ri;
 			break;
 		case SMS_RPDATA_ORIGINATOR:
-			if(rp_send_data->originator.s) {
-				pkg_free(rp_send_data->originator.s);
-				rp_send_data->originator.s = 0;
-				rp_send_data->originator.len = 0;
+			if(_smsops_rp_send_data->originator.s) {
+				pkg_free(_smsops_rp_send_data->originator.s);
+				_smsops_rp_send_data->originator.s = 0;
+				_smsops_rp_send_data->originator.len = 0;
 			}
 			if(val == NULL)
 				return 0;
@@ -1451,19 +1473,19 @@ int pv_set_sms(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 				LM_ERR("Invalid type\n");
 				return -1;
 			}
-			rp_send_data->originator.s = pkg_malloc(val->rs.len);
-			if(rp_send_data->originator.s == NULL) {
+			_smsops_rp_send_data->originator.s = pkg_malloc(val->rs.len);
+			if(_smsops_rp_send_data->originator.s == NULL) {
 				LM_ERR("no more pkg\n");
 				return -1;
 			}
-			rp_send_data->originator.len = val->rs.len;
-			memcpy(rp_send_data->originator.s, val->rs.s, val->rs.len);
+			_smsops_rp_send_data->originator.len = val->rs.len;
+			memcpy(_smsops_rp_send_data->originator.s, val->rs.s, val->rs.len);
 			break;
 		case SMS_RPDATA_DESTINATION:
-			if(rp_send_data->destination.s) {
-				pkg_free(rp_send_data->destination.s);
-				rp_send_data->destination.s = 0;
-				rp_send_data->destination.len = 0;
+			if(_smsops_rp_send_data->destination.s) {
+				pkg_free(_smsops_rp_send_data->destination.s);
+				_smsops_rp_send_data->destination.s = 0;
+				_smsops_rp_send_data->destination.len = 0;
 			}
 			if(val == NULL)
 				return 0;
@@ -1471,86 +1493,86 @@ int pv_set_sms(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 				LM_ERR("Invalid type\n");
 				return -1;
 			}
-			rp_send_data->destination.s = pkg_malloc(val->rs.len);
-			if(rp_send_data->destination.s == NULL) {
+			_smsops_rp_send_data->destination.s = pkg_malloc(val->rs.len);
+			if(_smsops_rp_send_data->destination.s == NULL) {
 				LM_ERR("no more pkg\n");
 				return -1;
 			}
-			rp_send_data->destination.len = val->rs.len;
-			memcpy(rp_send_data->destination.s, val->rs.s, val->rs.len);
+			_smsops_rp_send_data->destination.len = val->rs.len;
+			memcpy(_smsops_rp_send_data->destination.s, val->rs.s, val->rs.len);
 			break;
 		case SMS_TPDU_TYPE:
 			if(val == NULL) {
-				rp_send_data->pdu.msg_type = 0;
+				_smsops_rp_send_data->pdu.msg_type = 0;
 				return 0;
 			}
 			if(!(val->flags & PV_VAL_INT)) {
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			rp_send_data->pdu.msg_type = (unsigned char)val->ri;
+			_smsops_rp_send_data->pdu.msg_type = (unsigned char)val->ri;
 			break;
 
 		case SMS_TPDU_FLAGS:
 			if(val == NULL) {
-				rp_send_data->pdu.flags = 0;
+				_smsops_rp_send_data->pdu.flags = 0;
 				return 0;
 			}
 			if(!(val->flags & PV_VAL_INT)) {
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			rp_send_data->pdu.flags = (unsigned char)val->ri;
+			_smsops_rp_send_data->pdu.flags = (unsigned char)val->ri;
 			break;
 		case SMS_TPDU_CODING:
 			if(val == NULL) {
-				rp_send_data->pdu.coding = 0;
+				_smsops_rp_send_data->pdu.coding = 0;
 				return 0;
 			}
 			if(!(val->flags & PV_VAL_INT)) {
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			rp_send_data->pdu.coding = (unsigned char)val->ri;
+			_smsops_rp_send_data->pdu.coding = (unsigned char)val->ri;
 			break;
 		case SMS_TPDU_PROTOCOL:
 			if(val == NULL) {
-				rp_send_data->pdu.pid = 0;
+				_smsops_rp_send_data->pdu.pid = 0;
 				return 0;
 			}
 			if(!(val->flags & PV_VAL_INT)) {
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			rp_send_data->pdu.pid = (unsigned char)val->ri;
+			_smsops_rp_send_data->pdu.pid = (unsigned char)val->ri;
 			break;
 		case SMS_TPDU_REFERENCE:
 			if(val == NULL) {
-				rp_send_data->pdu.reference = 0;
+				_smsops_rp_send_data->pdu.reference = 0;
 				return 0;
 			}
 			if(!(val->flags & PV_VAL_INT)) {
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			rp_send_data->pdu.reference = (unsigned char)val->ri;
+			_smsops_rp_send_data->pdu.reference = (unsigned char)val->ri;
 			break;
 		case SMS_TPDU_VALIDITY:
 			if(val == NULL) {
-				rp_send_data->pdu.validity = 0;
+				_smsops_rp_send_data->pdu.validity = 0;
 				return 0;
 			}
 			if(!(val->flags & PV_VAL_INT)) {
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			rp_send_data->pdu.validity = (unsigned char)val->ri;
+			_smsops_rp_send_data->pdu.validity = (unsigned char)val->ri;
 			break;
 		case SMS_TPDU_PAYLOAD:
-			if(rp_send_data->pdu.payload.sm.s) {
-				pkg_free(rp_send_data->pdu.payload.sm.s);
-				rp_send_data->pdu.payload.sm.s = 0;
-				rp_send_data->pdu.payload.sm.len = 0;
+			if(_smsops_rp_send_data->pdu.payload.sm.s) {
+				pkg_free(_smsops_rp_send_data->pdu.payload.sm.s);
+				_smsops_rp_send_data->pdu.payload.sm.s = 0;
+				_smsops_rp_send_data->pdu.payload.sm.len = 0;
 			}
 			if(val == NULL)
 				return 0;
@@ -1558,19 +1580,20 @@ int pv_set_sms(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 				LM_ERR("Invalid type\n");
 				return -1;
 			}
-			rp_send_data->pdu.payload.sm.s = pkg_malloc(val->rs.len);
-			if(rp_send_data->pdu.payload.sm.s == NULL) {
+			_smsops_rp_send_data->pdu.payload.sm.s = pkg_malloc(val->rs.len);
+			if(_smsops_rp_send_data->pdu.payload.sm.s == NULL) {
 				LM_ERR("no more pkg\n");
 				return -1;
 			}
-			rp_send_data->pdu.payload.sm.len = val->rs.len;
-			memcpy(rp_send_data->pdu.payload.sm.s, val->rs.s, val->rs.len);
+			_smsops_rp_send_data->pdu.payload.sm.len = val->rs.len;
+			memcpy(_smsops_rp_send_data->pdu.payload.sm.s, val->rs.s,
+					val->rs.len);
 			break;
 		case SMS_TPDU_DESTINATION:
-			if(rp_send_data->pdu.destination.s) {
-				pkg_free(rp_send_data->pdu.destination.s);
-				rp_send_data->pdu.destination.s = 0;
-				rp_send_data->pdu.destination.len = 0;
+			if(_smsops_rp_send_data->pdu.destination.s) {
+				pkg_free(_smsops_rp_send_data->pdu.destination.s);
+				_smsops_rp_send_data->pdu.destination.s = 0;
+				_smsops_rp_send_data->pdu.destination.len = 0;
 			}
 			if(val == NULL)
 				return 0;
@@ -1578,19 +1601,20 @@ int pv_set_sms(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 				LM_ERR("Invalid type\n");
 				return -1;
 			}
-			rp_send_data->pdu.destination.s = pkg_malloc(val->rs.len);
-			if(rp_send_data->pdu.destination.s == NULL) {
+			_smsops_rp_send_data->pdu.destination.s = pkg_malloc(val->rs.len);
+			if(_smsops_rp_send_data->pdu.destination.s == NULL) {
 				LM_ERR("no more pkg\n");
 				return -1;
 			}
-			rp_send_data->pdu.destination.len = val->rs.len;
-			memcpy(rp_send_data->pdu.destination.s, val->rs.s, val->rs.len);
+			_smsops_rp_send_data->pdu.destination.len = val->rs.len;
+			memcpy(_smsops_rp_send_data->pdu.destination.s, val->rs.s,
+					val->rs.len);
 			break;
 		case SMS_TPDU_ORIGINATING_ADDRESS:
-			if(rp_send_data->pdu.originating_address.s) {
-				pkg_free(rp_send_data->pdu.originating_address.s);
-				rp_send_data->pdu.originating_address.s = 0;
-				rp_send_data->pdu.originating_address.len = 0;
+			if(_smsops_rp_send_data->pdu.originating_address.s) {
+				pkg_free(_smsops_rp_send_data->pdu.originating_address.s);
+				_smsops_rp_send_data->pdu.originating_address.s = 0;
+				_smsops_rp_send_data->pdu.originating_address.len = 0;
 			}
 			if(val == NULL)
 				return 0;
@@ -1598,13 +1622,14 @@ int pv_set_sms(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 				LM_ERR("Invalid type\n");
 				return -1;
 			}
-			rp_send_data->pdu.originating_address.s = pkg_malloc(val->rs.len);
-			if(rp_send_data->pdu.originating_address.s == NULL) {
+			_smsops_rp_send_data->pdu.originating_address.s =
+					pkg_malloc(val->rs.len);
+			if(_smsops_rp_send_data->pdu.originating_address.s == NULL) {
 				LM_ERR("no more pkg\n");
 				return -1;
 			}
-			rp_send_data->pdu.originating_address.len = val->rs.len;
-			memcpy(rp_send_data->pdu.originating_address.s, val->rs.s,
+			_smsops_rp_send_data->pdu.originating_address.len = val->rs.len;
+			memcpy(_smsops_rp_send_data->pdu.originating_address.s, val->rs.s,
 					val->rs.len);
 			break;
 		case SMS_UDH_CONCATSM_REF: {
@@ -1615,7 +1640,7 @@ int pv_set_sms(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 				return -1;
 			}
 			struct ie_concat_sm_8bit_ref *concat =
-					GetConcatShortMsg8bitRefIE(rp_send_data);
+					GetConcatShortMsg8bitRefIE(_smsops_rp_send_data);
 			if(concat == NULL)
 				return -1;
 
@@ -1630,7 +1655,7 @@ int pv_set_sms(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 				return -1;
 			}
 			struct ie_concat_sm_8bit_ref *concat =
-					GetConcatShortMsg8bitRefIE(rp_send_data);
+					GetConcatShortMsg8bitRefIE(_smsops_rp_send_data);
 			if(concat == NULL)
 				return -1;
 
@@ -1645,7 +1670,7 @@ int pv_set_sms(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 				return -1;
 			}
 			struct ie_concat_sm_8bit_ref *concat =
-					GetConcatShortMsg8bitRefIE(rp_send_data);
+					GetConcatShortMsg8bitRefIE(_smsops_rp_send_data);
 			if(concat == NULL)
 				return -1;
 
@@ -1654,51 +1679,52 @@ int pv_set_sms(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 		}
 		case SMS_TPDU_ORIGINATING_ADDRESS_FLAGS: {
 			if(val == NULL) {
-				rp_send_data->pdu.originating_address_flags = 0;
+				_smsops_rp_send_data->pdu.originating_address_flags = 0;
 				return 0;
 			}
 			if(!(val->flags & PV_VAL_INT)) {
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			rp_send_data->pdu.originating_address_flags =
+			_smsops_rp_send_data->pdu.originating_address_flags =
 					(unsigned char)val->ri;
 			break;
 		}
 		case SMS_TPDU_DESTINATION_FLAGS: {
 			if(val == NULL) {
-				rp_send_data->pdu.destination_flags = 0;
+				_smsops_rp_send_data->pdu.destination_flags = 0;
 				return 0;
 			}
 			if(!(val->flags & PV_VAL_INT)) {
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			rp_send_data->pdu.destination_flags = (unsigned char)val->ri;
+			_smsops_rp_send_data->pdu.destination_flags =
+					(unsigned char)val->ri;
 			break;
 		}
 		case SMS_RPDATA_ORIGINATOR_FLAGS: {
 			if(val == NULL) {
-				rp_send_data->originator_flags = 0;
+				_smsops_rp_send_data->originator_flags = 0;
 				return 0;
 			}
 			if(!(val->flags & PV_VAL_INT)) {
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			rp_send_data->originator_flags = (unsigned char)val->ri;
+			_smsops_rp_send_data->originator_flags = (unsigned char)val->ri;
 			break;
 		}
 		case SMS_RPDATA_DESTINATION_FLAGS: {
 			if(val == NULL) {
-				rp_send_data->destination_flags = 0;
+				_smsops_rp_send_data->destination_flags = 0;
 				return 0;
 			}
 			if(!(val->flags & PV_VAL_INT)) {
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			rp_send_data->destination_flags = (unsigned char)val->ri;
+			_smsops_rp_send_data->destination_flags = (unsigned char)val->ri;
 			break;
 		}
 	}
@@ -1867,7 +1893,7 @@ int smsdump(struct sip_msg *msg, char *str1, char *str2)
 		return -1;
 	}
 
-	return dumpRPData(rp_data, L_DBG);
+	return dumpRPData(_smsops_rp_data, L_DBG);
 }
 
 int isRPDATA(struct sip_msg *msg, char *str1, char *str2)
@@ -1877,8 +1903,8 @@ int isRPDATA(struct sip_msg *msg, char *str1, char *str2)
 		LM_ERR("Error getting/decoding RP-Data from request!\n");
 		return -1;
 	}
-	if((rp_data->msg_type == RP_DATA_MS_TO_NETWORK)
-			|| (rp_data->msg_type == RP_DATA_NETWORK_TO_MS))
+	if((_smsops_rp_data->msg_type == RP_DATA_MS_TO_NETWORK)
+			|| (_smsops_rp_data->msg_type == RP_DATA_NETWORK_TO_MS))
 		return 1;
 	else
 		return -1;
