@@ -116,9 +116,9 @@ static void trace_sl_ack_in(sl_cbp_t *slcb);
 static void trace_transaction(
 		sip_msg_t *msg, siptrace_info_t *info, int dlg_tran);
 static void trace_dialog(
-		struct dlg_cell *dlg, int type, struct dlg_cb_params *params);
+		struct dlg_cell *dlg, int type, struct dlg_cb_params *cbp);
 static void trace_dialog_transaction(
-		struct dlg_cell *dlg, int type, struct dlg_cb_params *params);
+		struct dlg_cell *dlg, int type, struct dlg_cb_params *cbp);
 static void trace_free_info(void *trace_info);
 static int trace_add_info_xavp(siptrace_info_t *info);
 static inline int trace_parse_raw_uri(siptrace_info_t *info);
@@ -2101,7 +2101,7 @@ static void trace_transaction(
 
 //static void trace_dialog(sip_msg_t* msg, siptrace_info_t* info)
 static void trace_dialog(
-		struct dlg_cell *dlg, int type, struct dlg_cb_params *params)
+		struct dlg_cell *dlg, int type, struct dlg_cb_params *cbp)
 {
 	sr_xavp_t *xavp;
 
@@ -2110,13 +2110,13 @@ static void trace_dialog(
 		return;
 	}
 
-	/* request - params->req */
-	if(params == NULL || (!trace_dialog_spiral && params->req == NULL)) {
+	/* request - cbp->req */
+	if(cbp == NULL || (!trace_dialog_spiral && cbp->req == NULL)) {
 		LM_ERR("Invalid args!\n");
 		return;
 	}
 
-	if(trace_dialog_spiral && *params->param == NULL) {
+	if(trace_dialog_spiral && *cbp->param == NULL) {
 		LM_DBG("Spiraled dialog!\n");
 		if(dlgb.register_dlgcb(
 				   dlg, DLGCB_SPIRALED, trace_dialog, &spiral_tracked, NULL)
@@ -2126,7 +2126,7 @@ static void trace_dialog(
 		}
 	}
 
-	if(!trace_dialog_spiral && !(params->req->msg_flags & FL_SIPTRACE)) {
+	if(!trace_dialog_spiral && !(cbp->req->msg_flags & FL_SIPTRACE)) {
 		LM_DBG("Trace is off for this request...\n");
 		return;
 	}
@@ -2171,12 +2171,12 @@ static void trace_dialog(
 
 
 static void trace_dialog_transaction(
-		struct dlg_cell *dlg, int type, struct dlg_cb_params *params)
+		struct dlg_cell *dlg, int type, struct dlg_cb_params *cbp)
 {
 	siptrace_info_t *info;
 
 	/* coverity fix - there shouldn't be a scenario for this to happen */
-	if(params == NULL || params->param == NULL) {
+	if(cbp == NULL || cbp->param == NULL) {
 		LM_ERR("NULL dialog params!\n");
 		return;
 	}
@@ -2187,15 +2187,15 @@ static void trace_dialog_transaction(
 	 * transaction callbacks to catch caller and callee BYEs and their
 	 * responses
 	 */
-	if(params->req == NULL && params->rpl == NULL) {
+	if(cbp->req == NULL && cbp->rpl == NULL) {
 		LM_DBG("dual bye!\n");
 		return;
 	}
-	info = (siptrace_info_t *)*params->param;
+	info = (siptrace_info_t *)*cbp->param;
 
-	trace_transaction(params->req, info, 1);
+	trace_transaction(cbp->req, info, 1);
 
-	sip_trace(params->req, &info->u.dest_info, &info->correlation_id, NULL);
+	sip_trace(cbp->req, &info->u.dest_info, &info->correlation_id, NULL);
 }
 
 static void trace_free_info(void *trace_info)
