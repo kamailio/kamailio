@@ -605,16 +605,16 @@ struct module_exports exports = {
 
 /* check if the node is already queried */
 static int is_queried_node(struct rtpp_node *node,
-		struct rtpp_node **queried_nodes_ptr, int queried_nodes)
+		struct rtpp_node **queried_nodes_list, int queried_nodes)
 {
 	int i;
 
-	if(!queried_nodes_ptr) {
+	if(!queried_nodes_list) {
 		return 0;
 	}
 
 	for(i = 0; i < queried_nodes; i++) {
-		if(node == queried_nodes_ptr[i]) {
+		if(node == queried_nodes_list[i]) {
 			return 1;
 		}
 	}
@@ -3631,7 +3631,7 @@ static struct rtpp_set *select_rtpp_set(unsigned int id_set)
  * run the selection algorithm and return the new selected node
  */
 static struct rtpp_node *select_rtpp_node_new(str callid, str viabranch,
-		int do_test, struct rtpp_node **queried_nodes_ptr, int queried_nodes)
+		int do_test, struct rtpp_node **queried_nodes_list, int queried_nodes)
 {
 	struct rtpp_node *node;
 	unsigned i, sum, sumcut, weight_sum;
@@ -3695,7 +3695,7 @@ retry:
 
 		/* Select only between enabled machines */
 		if(!node->rn_disabled
-				&& !is_queried_node(node, queried_nodes_ptr, queried_nodes)) {
+				&& !is_queried_node(node, queried_nodes_list, queried_nodes)) {
 			weight_sum += node->rn_weight;
 		}
 	}
@@ -3746,7 +3746,7 @@ retry:
 			continue;
 
 		/* Select only between not already queried machines */
-		if(is_queried_node(node, queried_nodes_ptr, queried_nodes))
+		if(is_queried_node(node, queried_nodes_list, queried_nodes))
 			continue;
 
 		/* Found machine */
@@ -3819,7 +3819,7 @@ unsigned int node_in_set(struct rtpp_node *node, struct rtpp_set *set)
  * the call if some proxies were disabled or enabled (e.g. kamctl command)
  */
 static struct rtpp_node *select_rtpp_node(str callid, str viabranch,
-		int do_test, struct rtpp_node **queried_nodes_ptr, int queried_nodes,
+		int do_test, struct rtpp_node **queried_nodes_list, int queried_nodes,
 		enum rtpe_operation op)
 {
 	struct rtpp_node *node = NULL;
@@ -3842,7 +3842,7 @@ static struct rtpp_node *select_rtpp_node(str callid, str viabranch,
 	// lookup node
 	node = select_rtpp_node_old(callid, viabranch, do_test, op);
 
-	if(node && is_queried_node(node, queried_nodes_ptr, queried_nodes)) {
+	if(node && is_queried_node(node, queried_nodes_list, queried_nodes)) {
 		LM_ERR("rtpengine node for callid=%.*s is known (%.*s) but it has "
 			   "already been queried, therefore not returning it\n",
 				callid.len, callid.s, node->rn_url.len, node->rn_url.s);
@@ -3853,7 +3853,7 @@ static struct rtpp_node *select_rtpp_node(str callid, str viabranch,
 	if(!node || (node_in_set(node, active_rtpp_set) == 0)) {
 		// run the selection algorithm
 		node = select_rtpp_node_new(
-				callid, viabranch, do_test, queried_nodes_ptr, queried_nodes);
+				callid, viabranch, do_test, queried_nodes_list, queried_nodes);
 
 		// check node
 		if(!node) {
