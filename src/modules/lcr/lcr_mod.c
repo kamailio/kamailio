@@ -989,7 +989,7 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int gw_id,
 		char *gw_name, unsigned int gw_name_len, char *scheme,
 		unsigned int scheme_len, struct ip_addr *ip_addr, unsigned int port,
 		uri_transport transport_code, char *transport,
-		unsigned int transport_len, char *params, unsigned int params_len,
+		unsigned int transport_len, char *uparams, unsigned int uparams_len,
 		char *hostname, unsigned int hostname_len, char *ip_string,
 		unsigned int strip, char *prefix, unsigned int prefix_len, char *tag,
 		unsigned int tag_len, unsigned int flags, unsigned int defunct_until)
@@ -1009,9 +1009,9 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int gw_id,
 	if(transport_len)
 		memcpy(&(gws[i].transport[0]), transport, transport_len);
 	gws[i].transport_len = transport_len;
-	if(params_len)
-		memcpy(&(gws[i].params[0]), params, params_len);
-	gws[i].params_len = params_len;
+	if(uparams_len)
+		memcpy(&(gws[i].params[0]), uparams, uparams_len);
+	gws[i].params_len = uparams_len;
 	if(hostname_len)
 		memcpy(&(gws[i].hostname[0]), hostname, hostname_len);
 	gws[i].hostname_len = hostname_len;
@@ -1101,10 +1101,10 @@ static int prefix_len_insert(
 static int insert_gws(db1_res_t *res, struct gw_info *gws,
 		unsigned int *null_gw_ip_addr, unsigned int *gw_cnt)
 {
-	unsigned int i, gw_id, defunct_until, gw_name_len, port, params_len,
+	unsigned int i, gw_id, defunct_until, gw_name_len, port, uparams_len,
 			hostname_len, strip, prefix_len, tag_len, flags, scheme_len,
 			transport_len;
-	char *gw_name, *params, *hostname, *prefix, *tag, *scheme, *transport;
+	char *gw_name, *uparams, *hostname, *prefix, *tag, *scheme, *transport;
 	uri_transport transport_code;
 	db_row_t *row;
 	struct in_addr in_addr;
@@ -1289,32 +1289,32 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 			return 0;
 		}
 		if(VAL_NULL(ROW_VALUES(row) + 5)) {
-			params_len = 0;
-			params = (char *)0;
+			uparams_len = 0;
+			uparams = (char *)0;
 		} else {
 			switch(VAL_TYPE(ROW_VALUES(row) + 5)) {
 				case DB1_STR:
-					params = VAL_STR(ROW_VALUES(row) + 5).s;
-					params_len = VAL_STR(ROW_VALUES(row) + 5).len;
+					uparams = VAL_STR(ROW_VALUES(row) + 5).s;
+					uparams_len = VAL_STR(ROW_VALUES(row) + 5).len;
 					break;
 				case DB1_STRING:
-					params = (char *)VAL_STRING(ROW_VALUES(row) + 5);
-					params_len = strlen(params);
+					uparams = (char *)VAL_STRING(ROW_VALUES(row) + 5);
+					uparams_len = strlen(uparams);
 					break;
 				default:
 					LM_ERR("lcr_gw params at row <%u> is not string\n", i);
 					return 0;
 			}
-			if((params_len > 0) && (params[0] != ';')) {
+			if((uparams_len > 0) && (uparams[0] != ';')) {
 				LM_ERR("lcr_gw params at row <%u> does not start "
 					   "with ';'\n",
 						i);
 				return 0;
 			}
 		}
-		if(params_len > MAX_PARAMS_LEN) {
+		if(uparams_len > MAX_PARAMS_LEN) {
 			LM_ERR("lcr_gw params length <%u> at row <%u> it too large\n",
-					params_len, i);
+					uparams_len, i);
 			return 0;
 		}
 		if(VAL_NULL(ROW_VALUES(row) + 6)) {
@@ -1417,7 +1417,7 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 		(*gw_cnt)++;
 		if(!insert_gw(gws, *gw_cnt, gw_id, gw_name, gw_name_len, scheme,
 				   scheme_len, &ip_addr, port, transport_code, transport,
-				   transport_len, params, params_len, hostname, hostname_len,
+				   transport_len, uparams, uparams_len, hostname, hostname_len,
 				   ip_string.s, strip, prefix, prefix_len, tag, tag_len, flags,
 				   defunct_until)) {
 			return 0;
@@ -1911,7 +1911,7 @@ static inline int encode_avp_value(char *value, unsigned int gw_index,
 		char *scheme, unsigned int scheme_len, unsigned int strip, char *prefix,
 		unsigned int prefix_len, char *tag, unsigned int tag_len,
 		struct ip_addr *ip_addr, char *hostname, unsigned int hostname_len,
-		unsigned int port, char *params, unsigned int params_len,
+		unsigned int port, char *uparams, unsigned int uparams_len,
 		char *transport, unsigned int transport_len, unsigned int flags,
 		unsigned int rule_id)
 {
@@ -1957,7 +1957,7 @@ static inline int encode_avp_value(char *value, unsigned int gw_index,
 	}
 	append_chr(at, '|');
 	/* params */
-	append_str(at, params, params_len);
+	append_str(at, uparams, uparams_len);
 	append_chr(at, '|');
 	/* transport */
 	append_str(at, transport, transport_len);
@@ -1974,7 +1974,7 @@ static inline int encode_avp_value(char *value, unsigned int gw_index,
 
 static inline int decode_avp_value(char *value, unsigned int *gw_index,
 		str *scheme, unsigned int *strip, str *prefix, str *tag,
-		struct ip_addr *addr, str *hostname, str *port, str *params,
+		struct ip_addr *addr, str *hostname, str *port, str *uparams,
 		str *transport, unsigned int *flags, unsigned int *rule_id)
 {
 	unsigned int u = 0;
@@ -2063,13 +2063,13 @@ static inline int decode_avp_value(char *value, unsigned int *gw_index,
 	}
 	port->len = sep - port->s;
 	/* params */
-	params->s = sep + 1;
-	sep = index(params->s, '|');
+	uparams->s = sep + 1;
+	sep = index(uparams->s, '|');
 	if(sep == NULL) {
 		LM_ERR("params was not found in AVP value\n");
 		return 0;
 	}
-	params->len = sep - params->s;
+	uparams->len = sep - uparams->s;
 	/* transport */
 	transport->s = sep + 1;
 	sep = index(transport->s, '|');
@@ -2100,7 +2100,7 @@ static inline int decode_avp_value(char *value, unsigned int *gw_index,
 void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 		unsigned int gw_cnt, str *ruri_user)
 {
-	unsigned int i, index, strip, hostname_len, params_len, rule_id;
+	unsigned int i, index, strip, hostname_len, uparams_len, rule_id;
 	int prefix_len, tag_len;
 	str value;
 	char encoded_value[MAX_URI_LEN];
@@ -2115,7 +2115,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 		index = matched_gws[i].gw_index;
 		rule_id = matched_gws[i].rule_id;
 		hostname_len = gws[index].hostname_len;
-		params_len = gws[index].params_len;
+		uparams_len = gws[index].params_len;
 		strip = gws[index].strip;
 		if(strip > ruri_user->len) {
 			LM_ERR("strip count of gw is too large <%u>\n", strip);
@@ -2128,10 +2128,10 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 						+ ((hostname_len > IP6_MAX_STR_SIZE + 2)
 										? hostname_len
 										: IP6_MAX_STR_SIZE + 2)
-						+ 6 /* port */ + params_len /* params */
-						+ 15 /* transport */ + 10	/* flags */
-						+ 7							/* separators */
-						+ 10						/* rule_id */
+						+ 6 /* port */ + uparams_len /* params */
+						+ 15 /* transport */ + 10	 /* flags */
+						+ 7							 /* separators */
+						+ 10						 /* rule_id */
 				> MAX_URI_LEN) {
 			LM_ERR("too long AVP value\n");
 			goto skip;
@@ -2140,7 +2140,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 				gws[index].scheme_len, strip, gws[index].prefix, prefix_len,
 				gws[index].tag, tag_len, &gws[index].ip_addr,
 				gws[index].hostname, hostname_len, gws[index].port,
-				gws[index].params, params_len, gws[index].transport,
+				gws[index].params, uparams_len, gws[index].transport,
 				gws[index].transport_len, gws[index].flags, rule_id);
 		value.s = (char *)&(encoded_value[0]);
 		val.s = value;
@@ -2602,7 +2602,7 @@ static int generate_uris(struct sip_msg *_m, char *r_uri, str *r_uri_user,
 	str prefix = STR_NULL;
 	str hostname = STR_NULL;
 	str port = STR_NULL;
-	str params = STR_NULL;
+	str uparams = STR_NULL;
 	str transport = STR_NULL;
 	str addr_str = STR_NULL;
 	str tmp_tag = STR_NULL;
@@ -2619,7 +2619,7 @@ static int generate_uris(struct sip_msg *_m, char *r_uri, str *r_uri_user,
 		return 0; /* No more gateways left */
 
 	decode_avp_value(gw_uri_val.s.s, gw_index, &scheme, &strip, &prefix,
-			&tmp_tag, addr, &hostname, &port, &params, &transport, flags,
+			&tmp_tag, addr, &hostname, &port, &uparams, &transport, flags,
 			rule_id);
 
 	if(addr->af != 0) {
@@ -2633,7 +2633,7 @@ static int generate_uris(struct sip_msg *_m, char *r_uri, str *r_uri_user,
 					+ ((hostname.len > IP6_MAX_STR_SIZE + 2)
 									? hostname.len
 									: IP6_MAX_STR_SIZE + 2)
-					+ 1 /* : */ + port.len + params.len + transport.len
+					+ 1 /* : */ + port.len + uparams.len + transport.len
 					+ 1 /* null */
 			> MAX_URI_LEN) {
 		LM_ERR("too long Request URI or DST URI\n");
@@ -2663,8 +2663,8 @@ static int generate_uris(struct sip_msg *_m, char *r_uri, str *r_uri_user,
 		/* both ip_addr and hostname specified:
 	   place hostname in r-uri and ip_addr in dst-uri */
 		append_str(at, hostname.s, hostname.len);
-		if(params.len > 0) {
-			append_str(at, params.s, params.len);
+		if(uparams.len > 0) {
+			append_str(at, uparams.s, uparams.len);
 		}
 		*at = '\0';
 		*r_uri_len = at - r_uri;
@@ -2703,8 +2703,8 @@ static int generate_uris(struct sip_msg *_m, char *r_uri, str *r_uri_user,
 		if(transport.len > 0) {
 			append_str(at, transport.s, transport.len);
 		}
-		if(params.len > 0) {
-			append_str(at, params.s, params.len);
+		if(uparams.len > 0) {
+			append_str(at, uparams.s, uparams.len);
 		}
 		*at = '\0';
 		*r_uri_len = at - r_uri;
