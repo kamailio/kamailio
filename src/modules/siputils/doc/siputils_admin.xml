@@ -1375,6 +1375,35 @@ if (is_method("REGISTER") and src_ip == 1.2.3.4) {
 </programlisting>
 		</example>
 	</section>
+	<section id="siputils.f.contact_param_check">
+		<title>
+		<function moreinfo="none">contact_param_check(pname)</function>
+		</title>
+		<para>
+		This function returns true (1) if the URI inside the Contact
+		header contains the parameter with the name 'pname'. Otherwise it
+		returns false (-1).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>pname</emphasis> - name of the URI parameter.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>contact_param_check</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (contact_param_check("myparam")) {
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="siputils.f.hdr_date_check">
 		<title>
 		<function moreinfo="none">hdr_date_check(tdiff)</function>
