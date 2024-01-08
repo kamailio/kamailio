@@ -103,7 +103,8 @@ Gabriel Vasile
               4.37. contact_param_decode(pname)
               4.38. contact_param_decode_uri(pname)
               4.39. contact_param_rm(pname)
-              4.40. hdr_date_check(tdiff)
+              4.40. contact_param_check(pname)
+              4.41. hdr_date_check(tdiff)
 
         5. Exported pseudo-variables
 
@@ -163,7 +164,8 @@ Gabriel Vasile
    1.46. contact_param_decode usage
    1.47. contact_param_decode_ruri usage
    1.48. contact_param_rm usage
-   1.49. hdr_date_check usage
+   1.49. contact_param_check usage
+   1.50. hdr_date_check usage
 
 Chapter 1. Admin Guide
 
@@ -228,7 +230,8 @@ Chapter 1. Admin Guide
         4.37. contact_param_decode(pname)
         4.38. contact_param_decode_uri(pname)
         4.39. contact_param_rm(pname)
-        4.40. hdr_date_check(tdiff)
+        4.40. contact_param_check(pname)
+        4.41. hdr_date_check(tdiff)
 
    5. Exported pseudo-variables
 
@@ -442,7 +445,8 @@ modparam("siputils", "e164_max_len", 20)
    4.37. contact_param_decode(pname)
    4.38. contact_param_decode_uri(pname)
    4.39. contact_param_rm(pname)
-   4.40. hdr_date_check(tdiff)
+   4.40. contact_param_check(pname)
+   4.41. hdr_date_check(tdiff)
 
 4.1.  options_reply()
 
@@ -1129,7 +1133,24 @@ if (is_method("REGISTER") and src_ip == 1.2.3.4) {
 }
 ...
 
-4.40.  hdr_date_check(tdiff)
+4.40.  contact_param_check(pname)
+
+   This function returns true (1) if the URI inside the Contact header
+   contains the parameter with the name 'pname'. Otherwise it returns
+   false (-1).
+
+   Meaning of the parameters is as follows:
+     * pname - name of the URI parameter.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.49. contact_param_check usage
+...
+if (contact_param_check("myparam")) {
+}
+...
+
+4.41.  hdr_date_check(tdiff)
 
    Returns true if sip message has Date header and its value is lower than
    'NOW() - tdiff'.
@@ -1140,7 +1161,7 @@ if (is_method("REGISTER") and src_ip == 1.2.3.4) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.49. hdr_date_check usage
+   Example 1.50. hdr_date_check usage
 ...
 if (!hdr_date_check("10")) {
     sl_send_reply("403", "Outdated date");
