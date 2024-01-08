@@ -107,6 +107,7 @@ static int w_contact_param_encode(sip_msg_t *msg, char *pnparam, char *psaddr);
 static int w_contact_param_decode(sip_msg_t *msg, char *pnparam, char *p2);
 static int w_contact_param_decode_ruri(sip_msg_t *msg, char *pnparam, char *p2);
 static int w_contact_param_rm(sip_msg_t *msg, char *pnparam, char *p2);
+static int w_contact_param_check(sip_msg_t *msg, char *pnparam, char *p2);
 
 static int w_hdr_date_check(sip_msg_t *msg, char *ptdiff, char *p2);
 
@@ -200,6 +201,8 @@ static cmd_export_t cmds[] = {
 		{"contact_param_rm", (cmd_function)w_contact_param_rm, 1,
 				fixup_spve_null, fixup_free_spve_null,
 				REQUEST_ROUTE | ONREPLY_ROUTE},
+		{"contact_param_check", (cmd_function)w_contact_param_check, 1,
+				fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 		{"hdr_date_check", (cmd_function)w_hdr_date_check, 1, fixup_igp_null,
 				fixup_free_igp_null, ANY_ROUTE},
 
@@ -505,6 +508,18 @@ static int w_contact_param_rm(sip_msg_t *msg, char *pnparam, char *p2)
 	return ki_contact_param_rm(msg, &nparam);
 }
 
+static int w_contact_param_check(sip_msg_t *msg, char *pnparam, char *p2)
+{
+	str nparam = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pnparam, &nparam) < 0) {
+		LM_ERR("failed to get p1\n");
+		return -1;
+	}
+
+	return ki_contact_param_check(msg, &nparam);
+}
+
 /*
  * Check if pseudo variable contains a valid uri
  */
@@ -698,6 +713,11 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	},
 	{ str_init("siputils"), str_init("contact_param_rm"),
 		SR_KEMIP_INT, ki_contact_param_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("contact_param_check"),
+		SR_KEMIP_INT, ki_contact_param_check,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

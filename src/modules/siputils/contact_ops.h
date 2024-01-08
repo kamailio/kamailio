@@ -76,5 +76,6 @@ int ki_contact_param_encode(sip_msg_t *msg, str *nparam, str *saddr);
 int ki_contact_param_decode(sip_msg_t *msg, str *nparam);
 int ki_contact_param_decode_ruri(sip_msg_t *msg, str *nparam);
 int ki_contact_param_rm(sip_msg_t *msg, str *nparam);
+int ki_contact_param_check(sip_msg_t *msg, str *nparam);
 
 #endif

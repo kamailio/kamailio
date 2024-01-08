@@ -1027,3 +1027,76 @@ int ki_contact_param_rm(sip_msg_t *msg, str *nparam)
 
 	return 1;
 }
+
+/**
+ *
+ */
+int ki_contact_param_check(sip_msg_t *msg, str *nparam)
+{
+	contact_body_t *cb;
+	contact_t *c;
+	sip_uri_t puri;
+	str sparams;
+	hdr_field_t *hf = NULL;
+	param_t *params = NULL;
+	param_hooks_t phooks;
+	param_t *pit;
+
+	if(parse_contact_headers(msg) < 0 || msg->contact == NULL
+			|| msg->contact->parsed == NULL) {
+		LM_DBG("no Contact header present\n");
+		return 1;
+	}
+
+	hf = msg->contact;
+	while(hf) {
+		if(hf->type != HDR_CONTACT_T) {
+			hf = hf->next;
+			continue;
+		}
+		cb = (contact_body_t *)hf->parsed;
+		for(c = cb->contacts; c != NULL; c = c->next) {
+			if(c->uri.len < 4) {
+				continue;
+			}
+			if(parse_uri(c->uri.s, c->uri.len, &puri) < 0) {
+				LM_ERR("failed to parse contact uri [%.*s]\n", c->uri.len,
+						c->uri.s);
+				return -1;
+			}
+			if(puri.sip_params.len > 0) {
+				sparams = puri.sip_params;
+			} else if(puri.params.len > 0) {
+				sparams = puri.params;
+			} else {
+				continue;
+			}
+
+			if(parse_params2(&sparams, CLASS_ANY, &phooks, &params, ';') < 0) {
+				LM_ERR("failed to parse uri params [%.*s]\n", c->uri.len,
+						c->uri.s);
+				continue;
+			}
+
+			pit = params;
+			while(pit != NULL) {
+				if(pit->name.len == nparam->len
+						&& strncasecmp(pit->name.s, nparam->s, nparam->len)
+								   == 0) {
+					break;
+				}
+				pit = pit->next;
+			}
+			if(pit == NULL) {
+				free_params(params);
+				params = NULL;
+				continue;
+			}
+			free_params(params);
+			return 1;
+		}
+		hf = hf->next;
+	}
+
+	return -1;
+}
