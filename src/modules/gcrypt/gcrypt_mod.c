@@ -53,6 +53,8 @@ static int fixup_gcrypt_aes_decrypt(void **param, int param_no);
 /* init vector value */
 static str _gcrypt_init_vector = str_init("SIP/2.0 is RFC3261");
 static int _gcrypt_register_callid = 0;
+static int _gcrypt_aes_mode_param = 0;
+static int _gcrypt_aes_mode = GCRY_CIPHER_MODE_ECB;
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
@@ -66,6 +68,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"init_vector", PARAM_STR, &_gcrypt_init_vector},
 	{"register_callid", PARAM_INT, &_gcrypt_register_callid},
+	{"aes_mode", PARAM_INT, &_gcrypt_aes_mode_param},
 
 	{0, 0, 0}
 };
@@ -99,6 +102,9 @@ static int mod_init(void)
 			return -1;
 		}
 		LM_DBG("registered crypto callid callback\n");
+	}
+	if(_gcrypt_aes_mode_param == 1) {
+		_gcrypt_aes_mode = GCRY_CIPHER_MODE_CBC;
 	}
 
 	return 0;
@@ -140,7 +146,7 @@ static int ki_gcrypt_aes_encrypt_helper(
 
 	gcry_ret = gcry_cipher_open(&cipher_hd, // gcry_cipher_hd_t *hd
 			GCRY_CIPHER_AES256,				// int algo
-			GCRY_CIPHER_MODE_ECB,			// int mode
+			_gcrypt_aes_mode,				// int mode
 			0);								// unsigned int flags
 	if(gcry_ret) {
 		LM_ERR("gcry cipher open failed:  %s/%s\n", gcry_strsource(gcry_ret),
@@ -306,7 +312,7 @@ static int ki_gcrypt_aes_decrypt_helper(
 
 	gcry_ret = gcry_cipher_open(&cipher_hd, // gcry_cipher_hd_t *hd
 			GCRY_CIPHER_AES256,				// int algo
-			GCRY_CIPHER_MODE_ECB,			// int mode
+			_gcrypt_aes_mode,				// int mode
 			0);								// unsigned int flags
 	if(gcry_ret) {
 		LM_ERR("gcry cipher open failed:  %s/%s\n", gcry_strsource(gcry_ret),
