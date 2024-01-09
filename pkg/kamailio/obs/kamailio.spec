@@ -1008,9 +1008,6 @@ Group:          %{PKGGROUP}
 Requires:       kamailio = %version
 BuildRequires:  gcc-c++
 
-%description    sqlang
-app_sqlang module for Kamailio.
-
 
 %package    sqlite
 Summary:    SQLite database connectivity for Kamailio
@@ -2316,12 +2313,6 @@ fi
 %defattr(-,root,root)
 %{_docdir}/kamailio/modules/README.statsd
 %{_libdir}/kamailio/modules/statsd.so
-
-
-%files          sqlang
-%defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules/README.app_sqlang
-%{_libdir}/kamailio/modules/app_sqlang.so
 
 
 %files      sqlite
