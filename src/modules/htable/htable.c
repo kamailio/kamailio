@@ -1628,7 +1628,8 @@ static void htable_rpc_seti(rpc_t *rpc, void *c)
 	int_str keyvalue;
 	ht_t *ht;
 
-	if(rpc->scan(c, "SS.d", &htname, &keyname, &keyvalue.n) < 3) {
+	keyvalue.n = 0;
+	if(rpc->scan(c, "SSl", &htname, &keyname, &keyvalue.n) < 3) {
 		rpc->fault(c, 500,
 				"Not enough parameters (htable name, key name and value)");
 		return;
@@ -1665,7 +1666,7 @@ static void htable_rpc_setex(rpc_t *rpc, void *c)
 	int exval;
 	ht_t *ht;
 
-	if(rpc->scan(c, "SS.d", &htname, &itname, &exval) < 3) {
+	if(rpc->scan(c, "SSd", &htname, &itname, &exval) < 3) {
 		rpc->fault(c, 500,
 				"Not enough parameters (htable name, item name and expire)");
 		return;
@@ -1716,10 +1717,10 @@ static void htable_rpc_setxs(rpc_t *rpc, void *c)
 static void htable_rpc_setxi(rpc_t *rpc, void *c)
 {
 	str htname, keyname;
-	int ival;
+	int ival = 0;
 	int exval;
 
-	if(rpc->scan(c, "SS.dd", &htname, &keyname, &ival, &exval) < 4) {
+	if(rpc->scan(c, "SSdd", &htname, &keyname, &ival, &exval) < 4) {
 		rpc->fault(c, 500,
 				"Not enough parameters (htable name, key name, value and "
 				"expire)");
