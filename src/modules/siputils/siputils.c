@@ -123,122 +123,129 @@ static int ki_is_gruu(sip_msg_t *msg);
 
 char *contact_flds_separator = DEFAULT_SEPARATOR;
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"options_reply", (cmd_function)opt_reply, 0, 0, 0, REQUEST_ROUTE},
-		{"is_user", (cmd_function)is_user, 1, fixup_spve_null, 0,
-				REQUEST_ROUTE | LOCAL_ROUTE},
-		{"has_totag", (cmd_function)w_has_totag, 0, 0, 0, ANY_ROUTE},
-		{"uri_param", (cmd_function)uri_param_1, 1, fixup_spve_null, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"uri_param", (cmd_function)uri_param_2, 2, fixup_spve_spve, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"uri_param_any", (cmd_function)w_uri_param_any, 1, fixup_spve_null, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"add_uri_param", (cmd_function)add_uri_param, 1, fixup_str_null, 0,
-				REQUEST_ROUTE},
-		{"get_uri_param", (cmd_function)get_uri_param, 2, fixup_get_uri_param,
-				free_fixup_get_uri_param, REQUEST_ROUTE | LOCAL_ROUTE},
-		{"uri_param_rm", (cmd_function)w_uri_param_rm, 1, fixup_spve_null, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"tel2sip", (cmd_function)tel2sip, 3, fixup_tel2sip, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
-		{"tel2sip2", (cmd_function)tel2sip2, 3, fixup_tel2sip, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
-		{"is_uri", (cmd_function)is_uri, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"is_e164", (cmd_function)w_is_e164, 1, fixup_pvar_null,
-				fixup_free_pvar_null,
-				REQUEST_ROUTE | FAILURE_ROUTE | LOCAL_ROUTE},
-		{"is_uri_user_e164", (cmd_function)w_is_uri_user_e164, 1,
-				fixup_pvar_null, fixup_free_pvar_null, ANY_ROUTE},
-		{"encode_contact", (cmd_function)encode_contact, 2, 0, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"decode_contact", (cmd_function)decode_contact, 0, 0, 0,
-				REQUEST_ROUTE},
-		{"decode_contact_header", (cmd_function)decode_contact_header, 0, 0, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"cmp_uri", (cmd_function)w_cmp_uri, 2, fixup_spve_spve, 0, ANY_ROUTE},
-		{"cmp_aor", (cmd_function)w_cmp_aor, 2, fixup_spve_spve, 0, ANY_ROUTE},
-		{"cmp_hdr_name", (cmd_function)w_cmp_hdr_name, 2, fixup_spve_spve, 0,
-				ANY_ROUTE},
-		{"is_rpid_user_e164", (cmd_function)is_rpid_user_e164, 0, 0, 0,
-				REQUEST_ROUTE},
-		{"append_rpid_hf", (cmd_function)append_rpid_hf, 0, 0, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"append_rpid_hf", (cmd_function)append_rpid_hf_p, 2, fixup_str_str, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"set_uri_user", (cmd_function)set_uri_user, 2, fixup_set_uri,
-				fixup_free_set_uri, ANY_ROUTE},
-		{"set_uri_host", (cmd_function)set_uri_host, 2, fixup_set_uri,
-				fixup_free_set_uri, ANY_ROUTE},
-		{"is_request", (cmd_function)w_is_request, 0, 0, 0, ANY_ROUTE},
-		{"is_reply", (cmd_function)w_is_reply, 0, 0, 0, ANY_ROUTE},
-		{"is_gruu", (cmd_function)w_is_gruu, 0, 0, 0, ANY_ROUTE},
-		{"is_gruu", (cmd_function)w_is_gruu, 1, fixup_spve_null, 0, ANY_ROUTE},
-		{"is_supported", (cmd_function)w_is_supported, 1, fixup_option, 0,
-				ANY_ROUTE},
-		{"is_first_hop", (cmd_function)w_is_first_hop, 0, 0, 0, ANY_ROUTE},
-		{"is_first_hop", (cmd_function)w_is_first_hop, 1, fixup_igp_null,
-				fixup_free_igp_null, ANY_ROUTE},
-		{"is_tel_number", (cmd_function)is_tel_number, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"is_numeric", (cmd_function)is_numeric, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"is_alphanum", (cmd_function)ksr_is_alphanum, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"is_alphanumex", (cmd_function)ksr_is_alphanumex, 2, fixup_spve_spve,
-				0, ANY_ROUTE},
-		{"sip_p_charging_vector", (cmd_function)sip_handle_pcv, 1,
-				fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
-		{"contact_param_encode", (cmd_function)w_contact_param_encode, 2,
-				fixup_spve_spve, fixup_free_spve_spve,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"contact_param_decode", (cmd_function)w_contact_param_decode, 1,
-				fixup_spve_null, fixup_free_spve_null,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"contact_param_decode_ruri", (cmd_function)w_contact_param_decode_ruri,
-				1, fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
-		{"contact_param_rm", (cmd_function)w_contact_param_rm, 1,
-				fixup_spve_null, fixup_free_spve_null,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"contact_param_check", (cmd_function)w_contact_param_check, 1,
-				fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
-		{"hdr_date_check", (cmd_function)w_hdr_date_check, 1, fixup_igp_null,
-				fixup_free_igp_null, ANY_ROUTE},
+	{"options_reply", (cmd_function)opt_reply, 0, 0, 0, REQUEST_ROUTE},
+	{"is_user", (cmd_function)is_user, 1, fixup_spve_null, 0,
+			REQUEST_ROUTE | LOCAL_ROUTE},
+	{"has_totag", (cmd_function)w_has_totag, 0, 0, 0, ANY_ROUTE},
+	{"uri_param", (cmd_function)uri_param_1, 1, fixup_spve_null, 0,
+			REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"uri_param", (cmd_function)uri_param_2, 2, fixup_spve_spve, 0,
+			REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"uri_param_any", (cmd_function)w_uri_param_any, 1, fixup_spve_null, 0,
+			REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"add_uri_param", (cmd_function)add_uri_param, 1, fixup_str_null, 0,
+			REQUEST_ROUTE},
+	{"get_uri_param", (cmd_function)get_uri_param, 2, fixup_get_uri_param,
+			free_fixup_get_uri_param, REQUEST_ROUTE | LOCAL_ROUTE},
+	{"uri_param_rm", (cmd_function)w_uri_param_rm, 1, fixup_spve_null, 0,
+			REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"tel2sip", (cmd_function)tel2sip, 3, fixup_tel2sip, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
+	{"tel2sip2", (cmd_function)tel2sip2, 3, fixup_tel2sip, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
+	{"is_uri", (cmd_function)is_uri, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"is_e164", (cmd_function)w_is_e164, 1, fixup_pvar_null,
+			fixup_free_pvar_null,
+			REQUEST_ROUTE | FAILURE_ROUTE | LOCAL_ROUTE},
+	{"is_uri_user_e164", (cmd_function)w_is_uri_user_e164, 1,
+			fixup_pvar_null, fixup_free_pvar_null, ANY_ROUTE},
+	{"encode_contact", (cmd_function)encode_contact, 2, 0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"decode_contact", (cmd_function)decode_contact, 0, 0, 0,
+			REQUEST_ROUTE},
+	{"decode_contact_header", (cmd_function)decode_contact_header, 0, 0, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"cmp_uri", (cmd_function)w_cmp_uri, 2, fixup_spve_spve, 0, ANY_ROUTE},
+	{"cmp_aor", (cmd_function)w_cmp_aor, 2, fixup_spve_spve, 0, ANY_ROUTE},
+	{"cmp_hdr_name", (cmd_function)w_cmp_hdr_name, 2, fixup_spve_spve, 0,
+			ANY_ROUTE},
+	{"is_rpid_user_e164", (cmd_function)is_rpid_user_e164, 0, 0, 0,
+			REQUEST_ROUTE},
+	{"append_rpid_hf", (cmd_function)append_rpid_hf, 0, 0, 0,
+			REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"append_rpid_hf", (cmd_function)append_rpid_hf_p, 2, fixup_str_str, 0,
+			REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"set_uri_user", (cmd_function)set_uri_user, 2, fixup_set_uri,
+			fixup_free_set_uri, ANY_ROUTE},
+	{"set_uri_host", (cmd_function)set_uri_host, 2, fixup_set_uri,
+			fixup_free_set_uri, ANY_ROUTE},
+	{"is_request", (cmd_function)w_is_request, 0, 0, 0, ANY_ROUTE},
+	{"is_reply", (cmd_function)w_is_reply, 0, 0, 0, ANY_ROUTE},
+	{"is_gruu", (cmd_function)w_is_gruu, 0, 0, 0, ANY_ROUTE},
+	{"is_gruu", (cmd_function)w_is_gruu, 1, fixup_spve_null, 0, ANY_ROUTE},
+	{"is_supported", (cmd_function)w_is_supported, 1, fixup_option, 0,
+			ANY_ROUTE},
+	{"is_first_hop", (cmd_function)w_is_first_hop, 0, 0, 0, ANY_ROUTE},
+	{"is_first_hop", (cmd_function)w_is_first_hop, 1, fixup_igp_null,
+			fixup_free_igp_null, ANY_ROUTE},
+	{"is_tel_number", (cmd_function)is_tel_number, 1, fixup_spve_null, 0,
+			ANY_ROUTE},
+	{"is_numeric", (cmd_function)is_numeric, 1, fixup_spve_null, 0,
+			ANY_ROUTE},
+	{"is_alphanum", (cmd_function)ksr_is_alphanum, 1, fixup_spve_null, 0,
+			ANY_ROUTE},
+	{"is_alphanumex", (cmd_function)ksr_is_alphanumex, 2, fixup_spve_spve,
+			0, ANY_ROUTE},
+	{"sip_p_charging_vector", (cmd_function)sip_handle_pcv, 1,
+			fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"contact_param_encode", (cmd_function)w_contact_param_encode, 2,
+			fixup_spve_spve, fixup_free_spve_spve,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"contact_param_decode", (cmd_function)w_contact_param_decode, 1,
+			fixup_spve_null, fixup_free_spve_null,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"contact_param_decode_ruri", (cmd_function)w_contact_param_decode_ruri,
+			1, fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
+	{"contact_param_rm", (cmd_function)w_contact_param_rm, 1,
+			fixup_spve_null, fixup_free_spve_null,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"contact_param_check", (cmd_function)w_contact_param_check, 1,
+			fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"hdr_date_check", (cmd_function)w_hdr_date_check, 1, fixup_igp_null,
+			fixup_free_igp_null, ANY_ROUTE},
 
-		{"bind_siputils", (cmd_function)bind_siputils, 1, 0, 0, 0},
+	{"bind_siputils", (cmd_function)bind_siputils, 1, 0, 0, 0},
 
-		{0, 0, 0, 0, 0, 0}};
+	{0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{"options_accept", PARAM_STR, &opt_accept},
-		{"options_accept_encoding", PARAM_STR, &opt_accept_enc},
-		{"options_accept_language", PARAM_STR, &opt_accept_lang},
-		{"options_support", PARAM_STR, &opt_supported},
-		{"contact_flds_separator", PARAM_STRING, &contact_flds_separator},
-		{"rpid_prefix", PARAM_STR, &rpid_prefix},
-		{"rpid_suffix", PARAM_STR, &rpid_suffix},
-		{"rpid_avp", PARAM_STRING, &rpid_avp_param},
-		{"e164_max_len", PARAM_INT, &e164_max_len}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"options_accept", PARAM_STR, &opt_accept},
+	{"options_accept_encoding", PARAM_STR, &opt_accept_enc},
+	{"options_accept_language", PARAM_STR, &opt_accept_lang},
+	{"options_support", PARAM_STR, &opt_supported},
+	{"contact_flds_separator", PARAM_STRING, &contact_flds_separator},
+	{"rpid_prefix", PARAM_STR, &rpid_prefix},
+	{"rpid_suffix", PARAM_STR, &rpid_suffix},
+	{"rpid_avp", PARAM_STRING, &rpid_avp_param},
+	{"e164_max_len", PARAM_INT, &e164_max_len},
+	{0, 0, 0}
+};
 
 
 static pv_export_t mod_pvs[] = {
-		{{"pcv", (sizeof("pcv") - 1)}, PVT_OTHER, pv_get_charging_vector, 0,
-				pv_parse_charging_vector_name, 0, 0, 0},
+	{{"pcv", (sizeof("pcv") - 1)}, PVT_OTHER, pv_get_charging_vector, 0,
+			pv_parse_charging_vector_name, 0, 0, 0},
 
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 struct module_exports exports = {
-		"siputils",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* param exports */
-		0,				 /* exported RPC functions */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response function */
-		mod_init,		 /* initialization function */
-		0,				 /* child init function */
-		mod_destroy		 /* destroy function */
+	"siputils",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions */
+	params,			 /* param exports */
+	0,				 /* exported RPC functions */
+	mod_pvs,		 /* exported pseudo-variables */
+	0,				 /* response function */
+	mod_init,		 /* initialization function */
+	0,				 /* child init function */
+	mod_destroy		 /* destroy function */
 };
+/* clang-format on */
 
 
 static int mod_init(void)
