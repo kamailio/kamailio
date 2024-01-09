@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <gcrypt.h>
+
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
@@ -33,8 +35,7 @@
 #include "../../core/basex.h"
 #include "../../core/kemi.h"
 
-#include <gcrypt.h>
-
+#include "gcrypt_uuid.h"
 
 MODULE_VERSION
 
@@ -51,6 +52,7 @@ static int fixup_gcrypt_aes_decrypt(void **param, int param_no);
 
 /* init vector value */
 static str _gcrypt_init_vector = str_init("SIP/2.0 is RFC3261");
+static int _gcrypt_register_callid = 0;
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
@@ -63,6 +65,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"init_vector", PARAM_STR, &_gcrypt_init_vector},
+	{"register_callid", PARAM_INT, &_gcrypt_register_callid},
 
 	{0, 0, 0}
 };
@@ -90,6 +93,14 @@ static int mod_init(void)
 		LM_ERR("init vector value has to be longer\n");
 		return -1;
 	}
+	if(_gcrypt_register_callid != 0) {
+		if(gcrypt_register_callid_func() < 0) {
+			LM_ERR("unable to register callid callback\n");
+			return -1;
+		}
+		LM_DBG("registered crypto callid callback\n");
+	}
+
 	return 0;
 }
 
