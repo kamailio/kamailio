@@ -296,7 +296,7 @@ static int mod_init(void)
 
 	if(load_tm_api(&tmb) < 0) {
 		LM_INFO("cannot load the TM-functions - async relay disabled\n");
-		memset(&tmb, 0, sizeof(tm_api_t));
+		return -1;
 	}
 
 	/* allocate workers array */
