@@ -1460,6 +1460,27 @@ modparam("usrloc", "ka_timeout", 120)
 		</example>
 	</section>
 
+	<section id="usrloc.p.ka_interval">
+		<title><varname>ka_interval</varname> (int)</title>
+		<para>
+		The parameter sets the interval in seconds after which a new keepalive
+		request should be sent for a location record.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>40</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ka_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_interval", 30)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="usrloc.p.ka_loglevel">
 		<title><varname>ka_loglevel</varname> (int)</title>
 		<para>
