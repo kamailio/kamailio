@@ -44,6 +44,7 @@
 
 extern int ul_keepalive_timeout;
 extern int ul_ka_interval;
+extern int ul_ka_randomize;
 
 static int ul_ka_send(str *kamsg, dest_info_t *kadst);
 
@@ -110,6 +111,7 @@ int ul_ka_urecord(urecord_t *ur)
 	int i;
 	struct timeval tv;
 	time_t tnow = 0;
+	int ka_limit = 0;
 
 	if(ul_ka_mode == ULKA_NONE) {
 		return 0;
@@ -160,10 +162,12 @@ int ul_ka_urecord(urecord_t *ur)
 				}
 			}
 		}
-		if(ul_ka_interval > 0 && uc->last_keepalive > 0
-				&& (uc->last_keepalive + ul_ka_interval) < tnow) {
-			/* not yet the time for keepalive */
-			continue;
+		if(ul_ka_interval > 0 && uc->last_keepalive > 0) {
+			ka_limit = ul_ka_interval - (fastrand() % ul_ka_randomize);
+			if((uc->last_keepalive + ka_limit) < tnow) {
+				/* not yet the time for keepalive */
+				continue;
+			}
 		}
 		if(uc->received.len > 0) {
 			sdst = uc->received;
