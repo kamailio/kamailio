@@ -127,6 +127,7 @@ str ul_ka_domain = str_init("kamailio.org");
 str ul_ka_method = str_init("OPTIONS");
 int ul_ka_mode = 0;
 int ul_ka_filter = 0;
+int ul_ka_interval = 40;
 int ul_ka_loglevel = 255;
 str ul_ka_logmsg = str_init(" to-uri: [$tu] remote-addr: [$sas]");
 pv_elem_t *ul_ka_logfmt = NULL;
@@ -300,6 +301,7 @@ static param_export_t params[] = {
 	{"ka_domain", PARAM_STR, &ul_ka_domain},
 	{"ka_method", PARAM_STR, &ul_ka_method},
 	{"ka_filter", PARAM_INT, &ul_ka_filter},
+	{"ka_interval", PARAM_INT, &ul_ka_interval},
 	{"ka_timeout", PARAM_INT, &ul_keepalive_timeout},
 	{"ka_loglevel", PARAM_INT, &ul_ka_loglevel},
 	{"ka_logmsg", PARAM_STR, &ul_ka_logmsg},

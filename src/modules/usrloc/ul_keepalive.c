@@ -43,6 +43,7 @@
 #include "ul_keepalive.h"
 
 extern int ul_keepalive_timeout;
+extern int ul_ka_interval;
 
 static int ul_ka_send(str *kamsg, dest_info_t *kadst);
 
@@ -158,6 +159,11 @@ int ul_ka_urecord(urecord_t *ur)
 					continue;
 				}
 			}
+		}
+		if(ul_ka_interval > 0 && uc->last_keepalive > 0
+				&& (uc->last_keepalive + ul_ka_interval) < tnow) {
+			/* not yet the time for keepalive */
+			continue;
 		}
 		if(uc->received.len > 0) {
 			sdst = uc->received;
