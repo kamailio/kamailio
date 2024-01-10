@@ -48,15 +48,17 @@ static struct hdr_field *act_contact;
  */
 static inline int randomize_expires(int expires, int range)
 {
-	int range_min;
+	float range_min;
 
 	/* if no range is given just return expires */
 	if(range == 0)
 		return expires;
 
-	range_min = expires - (float)range / 100 * expires;
+	range_min = (float)expires * (1.0 - ((float)range / 100));
 
-	return range_min + (float)(kam_rand() % 100) / 100 * (expires - range_min);
+	return (int)(range_min
+				 + ((float)(kam_rand() % 100) / 100)
+						   * ((float)expires - range_min));
 }
 
 
