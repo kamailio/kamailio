@@ -1481,6 +1481,31 @@ modparam("usrloc", "ka_interval", 30)
 		</example>
 	</section>
 
+	<section id="usrloc.p.ka_randomize">
+		<title><varname>ka_randomize</varname> (int)</title>
+		<para>
+		The parameter sets the the upper limit to the range of random seconds
+		to be added to ka_interval before checking if a new keepalive request
+		has to be sent. It should help to distribute better the sending of
+		keepalive requests. The keepalive for a location record is going to be
+		sent in a random fashion between (ka_interval + 0) and
+		(ka_interval + ka_randomize).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>20</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ka_randomize</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ka_interval", 30)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="usrloc.p.ka_loglevel">
 		<title><varname>ka_loglevel</varname> (int)</title>
 		<para>
