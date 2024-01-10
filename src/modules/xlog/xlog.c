@@ -878,8 +878,9 @@ error:
 /**
  * write message after evaluation of lmsg for pseudo-variables
  */
-int ki_xlog_ex(sip_msg_t *msg, int llevel, str *lmsg)
+int ki_xlog_ex(sip_msg_t *msg, str *lfacility, int llevel, str *lmsg)
 {
+	int lf = xlog_facility;
 	pv_elem_t *xmodel = NULL;
 	str txt = {0, 0};
 
@@ -896,13 +897,23 @@ int ki_xlog_ex(sip_msg_t *msg, int llevel, str *lmsg)
 		pv_elem_free_all(xmodel);
 		return -1;
 	}
-	LOG_FN(xlog_facility, llevel, _xlog_prefix, "%.*s", txt.len, txt.s);
+
+	if(lfacility != NULL) {
+		lfacility->s[lfacility->len] = '\0';
+		lf = str2facility(lfacility->s);
+		if(lf == -1) {
+			LM_WARN("invalid syslog facility %.*s, using default\n",
+					lfacility->len, lfacility->s);
+			lf = xlog_facility;
+		}
+	}
+	LOG_FN(lf, llevel, _xlog_prefix, "%.*s", txt.len, txt.s);
 	;
 	pv_elem_free_all(xmodel);
 	return 1;
 }
 
-int ki_xlog(sip_msg_t *msg, str *slevel, str *lmsg)
+int ki_xlog_get_level(str *slevel)
 {
 	int llevel;
 
@@ -927,42 +938,55 @@ int ki_xlog(sip_msg_t *msg, str *slevel, str *lmsg)
 	} else {
 		llevel = L_ERR;
 	}
-	return ki_xlog_ex(msg, llevel, lmsg);
+
+	return llevel;
+}
+
+int ki_xlog_facility(sip_msg_t *msg, str *lfacility, str *slevel, str *lmsg)
+{
+	int llevel = ki_xlog_get_level(slevel);
+	return ki_xlog_ex(msg, lfacility, llevel, lmsg);
+}
+
+int ki_xlog(sip_msg_t *msg, str *slevel, str *lmsg)
+{
+	int llevel = ki_xlog_get_level(slevel);
+	return ki_xlog_ex(msg, NULL, llevel, lmsg);
 }
 
 int ki_xdbg(sip_msg_t *msg, str *lmsg)
 {
-	return ki_xlog_ex(msg, L_DBG, lmsg);
+	return ki_xlog_ex(msg, NULL, L_DBG, lmsg);
 }
 
 int ki_xerr(sip_msg_t *msg, str *lmsg)
 {
-	return ki_xlog_ex(msg, L_ERR, lmsg);
+	return ki_xlog_ex(msg, NULL, L_ERR, lmsg);
 }
 
 int ki_xinfo(sip_msg_t *msg, str *lmsg)
 {
-	return ki_xlog_ex(msg, L_INFO, lmsg);
+	return ki_xlog_ex(msg, NULL, L_INFO, lmsg);
 }
 
 int ki_xnotice(sip_msg_t *msg, str *lmsg)
 {
-	return ki_xlog_ex(msg, L_NOTICE, lmsg);
+	return ki_xlog_ex(msg, NULL, L_NOTICE, lmsg);
 }
 
 int ki_xwarn(sip_msg_t *msg, str *lmsg)
 {
-	return ki_xlog_ex(msg, L_WARN, lmsg);
+	return ki_xlog_ex(msg, NULL, L_WARN, lmsg);
 }
 
 int ki_xalert(sip_msg_t *msg, str *lmsg)
 {
-	return ki_xlog_ex(msg, L_ALERT, lmsg);
+	return ki_xlog_ex(msg, NULL, L_ALERT, lmsg);
 }
 
 int ki_xcrit(sip_msg_t *msg, str *lmsg)
 {
-	return ki_xlog_ex(msg, L_CRIT, lmsg);
+	return ki_xlog_ex(msg, NULL, L_CRIT, lmsg);
 }
 
 /**
@@ -1008,6 +1032,11 @@ static sr_kemi_t sr_kemi_xlog_exports[] = {
 	{ str_init("xlog"), str_init("xlog"),
 		SR_KEMIP_INT, ki_xlog,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xlog"), str_init("xlog_facility"),
+		SR_KEMIP_INT, ki_xlog_facility,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
