@@ -294,7 +294,7 @@ static int mod_init(void)
 	}
 
 	if(load_tm_api(&tmb) < 0) {
-		LM_INFO("cannot load the TM-functions - async relay disabled\n");
+		LM_ERR("cannot load the TM-functions - async relay disabled\n");
 		return -1;
 	}
 
