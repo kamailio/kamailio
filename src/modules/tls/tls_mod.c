@@ -433,6 +433,16 @@ static int tls_engine_init();
 int tls_fix_engine_keys(tls_domains_cfg_t *, tls_domain_t *, tls_domain_t *);
 #endif
 
+/*
+ * OpenSSL 1.1.1+: SSL_CTX is repeated in each worker
+ *
+ * OpenSSL RSA blinding works in single-process multi-threaded mode
+ * and depends on pthread_self() to separate threads. In Kamailio multi-process workers
+ * pthread_self() will not necessarily be unique, this will result in incorrect BN
+ * operations—hence we create a separate SSL_CTX for each worker
+ *
+ * EC operations do not use pthread_self(), so could use shared SSL_CTX
+ */
 static int mod_child(int rank)
 {
 	if(tls_disable || (tls_domains_cfg == 0))
