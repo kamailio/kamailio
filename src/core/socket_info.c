@@ -359,11 +359,13 @@ static inline struct socket_info *new_sock_info(char *name,
 
 		he = resolvehost(si->useinfo.name.s);
 		if(he == 0) {
-			LM_ERR("unable to resolve advertised name %s\n",
+			LM_WARN("unable to resolve advertised name %s\n",
 					si->useinfo.name.s);
-			goto error;
+			si->useinfo.address.len = 0;
+			si->useinfo.address.af = 0;
+		} else {
+			hostent2ip_addr(&si->useinfo.address, he, 0);
 		}
-		hostent2ip_addr(&si->useinfo.address, he, 0);
 	}
 	return si;
 error:
