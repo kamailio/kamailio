@@ -2747,6 +2747,11 @@ rtpengine_offer();
 				</para></listitem>
 
 				<listitem><para>
+				<emphasis>codec-consume=...</emphasis> - Identical to mask but enables the transcoding engine even if no other transcoding
+				related options are given.
+				</para></listitem>
+
+				<listitem><para>
 				<emphasis>T.38=decode</emphasis> - If the offered &sdp; contains a media section
 				advertising T.38 over UDPTL, translate it to a regular audio media section
 				over RTP. By default, PCMU and PCMA will be used as audio codecs, but that can
