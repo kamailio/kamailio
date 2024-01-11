@@ -126,7 +126,8 @@ struct ng_flags_parse {
 	int via, to, packetize, transport, directional;
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux, *sdes, *t38,
 			*received_from, *codec, *codec_strip, *codec_offer,
-			*codec_transcode, *codec_mask, *codec_set, *codec_except;
+			*codec_transcode, *codec_mask, *codec_set, *codec_except, *codec_accept,
+			*codec_consume;
 	str call_id, from_tag, to_tag;
 };
 
@@ -2734,6 +2735,12 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg,
 			goto next;
 		if(parse_codec_flag(ng_flags, &key, &val, "codec-except", NULL,
 				   "except", &ng_flags->codec_except))
+			goto next;
+		if(parse_codec_flag(ng_flags, &key, &val, "codec-accept", NULL,
+				   "accept", &ng_flags->codec_accept))
+			goto next;
+		if(parse_codec_flag(ng_flags, &key, &val, "codec-consume", NULL,
+				   "consume", &ng_flags->codec_consume))
 			goto next;
 
 		/* check for specially handled items */
