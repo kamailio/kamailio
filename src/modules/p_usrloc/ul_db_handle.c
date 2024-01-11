@@ -28,7 +28,7 @@
 
 static ul_db_handle_list_t *db_handles = NULL;
 
-static ul_db_handle_t tmp;
+static ul_db_handle_t _pusrl_db_tmp;
 
 static ul_db_handle_t *allocate_handle(void);
 
@@ -76,7 +76,7 @@ ul_db_handle_t *get_handle(
 */
 	}
 
-	if(load_data(dbf, dbh, &tmp, id) < 0) {
+	if(load_data(dbf, dbh, &_pusrl_db_tmp, id) < 0) {
 		// load_data should explain this
 		return NULL;
 	}
@@ -84,10 +84,10 @@ ul_db_handle_t *get_handle(
 	element = db_handles;
 	db_ok = 0;
 	while(element && element->handle) {
-		if(element->handle->id == tmp.id) {
+		if(element->handle->id == _pusrl_db_tmp.id) {
 			LM_DBG("found handle with id %i\n", element->handle->id);
 			element->handle->expires = time(NULL) + connection_expires;
-			if(check_status(element->handle, &tmp) == 0) {
+			if(check_status(element->handle, &_pusrl_db_tmp) == 0) {
 				db_ok = 1;
 			}
 			ret = element->handle;
@@ -104,18 +104,18 @@ ul_db_handle_t *get_handle(
 	element = NULL;
 
 	if(ret == NULL) {
-		LM_DBG("didn't find handle with id %i\n", tmp.id);
+		LM_DBG("didn't find handle with id %i\n", _pusrl_db_tmp.id);
 		if((element = allocate_handle_list()) == NULL) {
 			LM_ERR("could not allocate handle.\n");
 			return NULL;
 		}
 		ret = element->handle;
-		ret->id = tmp.id;
+		ret->id = _pusrl_db_tmp.id;
 		activate_handle(ret);
 		element->next = db_handles;
 		db_handles = element;
 	}
-	if(refresh_handle(ret, &tmp, db_write) < 0) {
+	if(refresh_handle(ret, &_pusrl_db_tmp, db_write) < 0) {
 		ret = NULL;
 	}
 ret:
@@ -266,7 +266,7 @@ int load_location_number(db_func_t *dbf, db1_con_t *dbh, int *loc_nr)
 	db1_res_t *res;
 	db_row_t *row;
 	int query_len;
-	str tmp;
+	str stmp;
 
 	if(!loc_nr || !dbf || !dbh) {
 		LM_ERR("NULL parameter passed \n");
@@ -294,10 +294,10 @@ int load_location_number(db_func_t *dbf, db1_con_t *dbh, int *loc_nr)
 	}
 	LM_DBG("%s\n", query);
 
-	tmp.s = query;
-	tmp.len = strlen(query);
+	stmp.s = query;
+	stmp.len = strlen(query);
 
-	if(dbf->raw_query(dbh, &tmp, &res) < 0) {
+	if(dbf->raw_query(dbh, &stmp, &res) < 0) {
 		LM_ERR("in database query.\n");
 		return -1;
 	}
@@ -337,11 +337,11 @@ int refresh_handles(db_func_t *dbf, db1_con_t *dbh)
 				element->handle->db[i].dbh = NULL;
 			}
 		}
-		if(load_data(dbf, dbh, &tmp, element->handle->id) < 0) {
+		if(load_data(dbf, dbh, &_pusrl_db_tmp, element->handle->id) < 0) {
 			LM_ERR("couldn't load handle data.\n");
 			return -1;
 		}
-		if(refresh_handle(element->handle, &tmp, db_write) < 0) {
+		if(refresh_handle(element->handle, &_pusrl_db_tmp, db_write) < 0) {
 			LM_ERR("couldn't refresh handle data.\n");
 			return -1;
 		}
@@ -384,10 +384,10 @@ int check_handle(db_func_t *dbf, db1_con_t *dbh, ul_db_handle_t *handle)
 	int i;
 	str tmpurl;
 	LM_INFO("checking id %i\n", handle->id);
-	if(load_data(dbf, dbh, &tmp, handle->id) < 0) {
+	if(load_data(dbf, dbh, &_pusrl_db_tmp, handle->id) < 0) {
 		return -1;
 	}
-	refresh_handle(handle, &tmp, 1);
+	refresh_handle(handle, &_pusrl_db_tmp, 1);
 	for(i = 0; i < DB_NUM; i++) {
 		if(handle->db[i].url.len > 0) {
 			LM_INFO("checking id %i no %i, url %.*s, status %s\n", handle->id,
@@ -503,7 +503,7 @@ static int compute_id(str *first, str *second)
 	unsigned int crc32_val;
 #define BUF_MAXSIZE 1024
 	char aux[BUF_MAXSIZE];
-	str tmp;
+	str stmp;
 	if(!first) {
 		LM_ERR("Null first parameter received\n");
 		return -1;
@@ -518,17 +518,17 @@ static int compute_id(str *first, str *second)
 			return -1;
 		}
 
-		tmp.len = first->len + second->len + 1;
-		if(tmp.len > BUF_MAXSIZE - 1) {
+		stmp.len = first->len + second->len + 1;
+		if(stmp.len > BUF_MAXSIZE - 1) {
 			LM_ERR("Very long user or domain\n");
 			return -1;
 		}
 		memcpy(aux, first->s, first->len);
 		aux[first->len] = '@';
 		memcpy(aux + first->len + 1, second->s, second->len);
-		tmp.s = aux;
+		stmp.s = aux;
 
-		crc32_uint(&tmp, &crc32_val);
+		crc32_uint(&stmp, &crc32_val);
 		return crc32_val % max_loc_nr + 1;
 	} else {
 		crc32_uint(first, &crc32_val);
