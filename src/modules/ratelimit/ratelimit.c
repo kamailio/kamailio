@@ -924,7 +924,7 @@ static int init_params(void)
  * parses a "pipe_no:algorithm:bandwidth" line
  * \return      0 on success
  */
-static int parse_pipe_params(char *line, pipe_params_t *params)
+static int parse_pipe_params(char *line, pipe_params_t *pparams)
 {
 	regmatch_t m[4];
 	str algo_str;
@@ -938,12 +938,12 @@ static int parse_pipe_params(char *line, pipe_params_t *params)
 	LM_DBG("pipe: [%.*s|%.*s|%.*s]\n", RXLS(m, line, 1), RXLS(m, line, 2),
 			RXLS(m, line, 3));
 
-	params->no = atoi(RXS(m, line, 1));
-	params->limit = atoi(RXS(m, line, 3));
+	pparams->no = atoi(RXS(m, line, 1));
+	pparams->limit = atoi(RXS(m, line, 3));
 
 	algo_str.s = RXS(m, line, 2);
 	algo_str.len = RXL(m, line, 2);
-	if(str_map_str(algo_names, &algo_str, &params->algo))
+	if(str_map_str(algo_names, &algo_str, &pparams->algo))
 		return -1;
 
 	return 0;
@@ -953,7 +953,7 @@ static int parse_pipe_params(char *line, pipe_params_t *params)
  * parses a "pipe_no:method" line
  * \return      0 on success
  */
-static int parse_queue_params(char *line, rl_queue_params_t *params)
+static int parse_queue_params(char *line, rl_queue_params_t *qparams)
 {
 	regmatch_t m[3];
 	int len;
@@ -966,16 +966,16 @@ static int parse_queue_params(char *line, rl_queue_params_t *params)
 	}
 	LM_DBG("queue: [%.*s|%.*s]\n", RXLS(m, line, 1), RXLS(m, line, 2));
 
-	params->pipe = atoi(RXS(m, line, 1));
+	qparams->pipe = atoi(RXS(m, line, 1));
 
 	len = RXL(m, line, 2);
-	params->method.s = (char *)pkg_malloc(len + 1);
-	if(params->method.s == 0) {
+	qparams->method.s = (char *)pkg_malloc(len + 1);
+	if(qparams->method.s == 0) {
 		LM_ERR("no memory left for method in params\n");
 		return -1;
 	}
-	params->method.len = len;
-	memcpy(params->method.s, RXS(m, line, 2), len + 1);
+	qparams->method.len = len;
+	memcpy(qparams->method.s, RXS(m, line, 2), len + 1);
 
 	return 0;
 }
@@ -1017,19 +1017,19 @@ static int check_feedback_setpoints(int modparam)
 static int add_pipe_params(modparam_t type, void *val)
 {
 	char *param_line = val;
-	pipe_params_t params;
+	pipe_params_t pparams;
 
-	if(parse_pipe_params(param_line, &params))
+	if(parse_pipe_params(param_line, &pparams))
 		return -1;
 
-	if(params.no < 0 || params.no >= MAX_PIPES) {
+	if(pparams.no < 0 || pparams.no >= MAX_PIPES) {
 		LM_ERR("pipe number %d not allowed (MAX_PIPES=%d, 0-based)\n",
-				params.no, MAX_PIPES);
+				pparams.no, MAX_PIPES);
 		return -1;
 	}
 
-	pipes[params.no].algo_mp = params.algo;
-	pipes[params.no].limit_mp = params.limit;
+	pipes[pparams.no].algo_mp = pparams.algo;
+	pipes[pparams.no].limit_mp = pparams.limit;
 
 	return check_feedback_setpoints(1);
 }
@@ -1037,24 +1037,24 @@ static int add_pipe_params(modparam_t type, void *val)
 static int add_queue_params(modparam_t type, void *val)
 {
 	char *param_line = val;
-	rl_queue_params_t params;
+	rl_queue_params_t qparams;
 
 	if(nqueues_mp >= MAX_QUEUES) {
 		LM_ERR("MAX_QUEUES reached (%d)\n", MAX_QUEUES);
 		return -1;
 	}
 
-	if(parse_queue_params(param_line, &params))
+	if(parse_queue_params(param_line, &qparams))
 		return -1;
 
-	if(params.pipe >= MAX_PIPES) {
+	if(qparams.pipe >= MAX_PIPES) {
 		LM_ERR("pipe number %d not allowed (MAX_PIPES=%d, 0-based)\n",
-				params.pipe, MAX_PIPES);
+				qparams.pipe, MAX_PIPES);
 		return -1;
 	}
 
-	queues[nqueues_mp].pipe_mp = params.pipe;
-	queues[nqueues_mp].method_mp = params.method;
+	queues[nqueues_mp].pipe_mp = qparams.pipe;
+	queues[nqueues_mp].method_mp = qparams.method;
 	nqueues_mp++;
 
 	return 0;
