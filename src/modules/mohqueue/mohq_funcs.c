@@ -1278,17 +1278,17 @@ int form_rtp_SDP(str *pstr, call_lst *pcall, char *pSDP)
 **********/
 
 	char *pfncname = "form_rtp_SDP: ";
-	rtpmap **pmohfiles =
+	rtpmap **lpmohfiles =
 			find_MOH(pcall->pmohq->mohq_mohdir, pcall->pmohq->mohq_mohfile);
-	if(!pmohfiles[0]) {
+	if(!lpmohfiles[0]) {
 		LM_ERR("%sUnable to find any MOH files for queue (%s)!\n", pfncname,
 				pcall->pmohq->mohq_name);
 		return 0;
 	}
 	int nsize = strlen(pSDP) + 2;
 	int nidx;
-	for(nidx = 0; pmohfiles[nidx]; nidx++) {
-		nsize += strlen(pmohfiles[nidx]->pencode) // encode length
+	for(nidx = 0; lpmohfiles[nidx]; nidx++) {
+		nsize += strlen(lpmohfiles[nidx]->pencode) // encode length
 				 + 19; // space, type number, "a=rtpmap:%d ", EOL
 	}
 
@@ -1707,7 +1707,7 @@ void reinvite_msg(sip_msg_t *pmsg, call_lst *pcall)
 * o look for hold condition and matching payload type
 **********/
 
-	rtpmap **pmohfiles =
+	rtpmap **lpmohfiles =
 			find_MOH(pcall->pmohq->mohq_mohdir, pcall->pmohq->mohq_mohfile);
 	int bhold = 0;
 	int bmatch = 0;
@@ -1749,8 +1749,8 @@ void reinvite_msg(sip_msg_t *pmsg, call_lst *pcall)
 					ppayload = ppayload->next) {
 				int ntype = atoi(ppayload->rtp_payload.s);
 				int nidx;
-				for(nidx = 0; pmohfiles[nidx]; nidx++) {
-					if(pmohfiles[nidx]->ntype == ntype) {
+				for(nidx = 0; lpmohfiles[nidx]; nidx++) {
+					if(lpmohfiles[nidx]->ntype == ntype) {
 						bmatch = 1;
 						break;
 					}
