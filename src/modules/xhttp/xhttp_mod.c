@@ -65,7 +65,7 @@ static char *xhttp_url_skip = NULL;
 static regex_t xhttp_url_skip_regexp;
 
 /** SL API structure */
-sl_api_t slb;
+static sl_api_t _xhttp_slb;
 
 static str xhttp_event_callback = STR_NULL;
 
@@ -149,7 +149,7 @@ static int mod_init(void)
 	}
 
 	/* bind the SL API */
-	if(sl_load_api(&slb) != 0) {
+	if(sl_load_api(&_xhttp_slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
@@ -424,7 +424,7 @@ static int xhttp_send_reply(
 		LM_DBG("response with body: %.*s\n", body->len, body->s);
 	}
 	LM_DBG("sending out response: %d %.*s\n", code, reason->len, reason->s);
-	if(slb.sreply(msg, code, reason) < 0) {
+	if(_xhttp_slb.sreply(msg, code, reason) < 0) {
 		LM_ERR("Error while sending reply\n");
 		return -1;
 	}
