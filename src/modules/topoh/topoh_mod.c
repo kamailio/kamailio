@@ -95,7 +95,7 @@ int _th_use_mode = 0;
 
 struct str_hash_table *th_socket_hash_table;
 
-sanity_api_t scb;
+static sanity_api_t _tph_scb;
 
 int th_msg_received(sr_event_param_t *evp);
 int th_msg_sent(sr_event_param_t *evp);
@@ -186,7 +186,7 @@ static int mod_init(void)
 	}
 
 	if(th_sanity_checks != 0) {
-		if(sanity_load_api(&scb) < 0) {
+		if(sanity_load_api(&_tph_scb) < 0) {
 			LM_ERR("cannot bind to sanity module\n");
 			goto error;
 		}
@@ -515,7 +515,7 @@ int th_msg_received(sr_event_param_t *evp)
 	th_cookie_value.len = 2;
 	if(msg.first_line.type == SIP_REQUEST) {
 		if(th_sanity_checks != 0) {
-			if(scb.check_defaults(&msg) < 1) {
+			if(_tph_scb.check_defaults(&msg) < 1) {
 				LM_ERR("sanity checks failed\n");
 				goto done;
 			}
