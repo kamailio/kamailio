@@ -1454,7 +1454,7 @@ static int attr_hdr_body2attrs2(
 
 static int attr_hdr_body2attrs_fixup(void **param, int param_no)
 {
-	char *c, *params;
+	char *c, *sparams;
 	hdr_name_t *h = NULL;
 	int n;
 	str *s;
@@ -1467,9 +1467,9 @@ static int attr_hdr_body2attrs_fixup(void **param, int param_no)
 					c);
 			return E_CFG;
 		} else {
-			params = strchr(c, PARAM_DELIM);
-			if(params)
-				n = params - c;
+			sparams = strchr(c, PARAM_DELIM);
+			if(sparams)
+				n = sparams - c;
 			else
 				n = strlen(c);
 			if(n == 0) {
@@ -1486,10 +1486,10 @@ static int attr_hdr_body2attrs_fixup(void **param, int param_no)
 			h->name.s.s = (char *)h + sizeof(hdr_name_t);
 			memcpy(h->name.s.s, c, n + 1);
 		}
-		if(params) {
+		if(sparams) {
 			h->val_types = 0;
-			while(*params) {
-				switch(*params) {
+			while(*sparams) {
+				switch(*sparams) {
 					case 'i':
 					case 'I':
 						h->val_types = VAL_TYPE_INT;
@@ -1504,11 +1504,11 @@ static int attr_hdr_body2attrs_fixup(void **param, int param_no)
 						LOG(L_ERR,
 								"attr_hdr_body2attrs_fixup: bad field param "
 								"modifier near '%s'\n",
-								params);
+								sparams);
 						pkg_free(h);
 						return E_CFG;
 				}
-				params++;
+				sparams++;
 			}
 			if(!h->val_types) {
 				LOG(L_ERR, "attr_hdr_body2attrs_fixup: no field param modifier "
