@@ -34,7 +34,7 @@ MODULE_VERSION
 
 #define PROXY_REQUIRE_DEF ""
 
-str pr_str = STR_STATIC_INIT(PROXY_REQUIRE_DEF);
+static str _sanity_prval = STR_STATIC_INIT(PROXY_REQUIRE_DEF);
 
 int default_msg_checks = SANITY_DEFAULT_CHECKS;
 int default_uri_checks = SANITY_DEFAULT_URI_CHECKS;
@@ -43,7 +43,7 @@ int ksr_sanity_noreply = 0;
 
 str_list_t *proxyrequire_list = NULL;
 
-sl_api_t slb;
+sl_api_t _sanity_slb;
 
 static int mod_init(void);
 static int w_sanity_check(sip_msg_t *_msg, char *_msg_check, char *_uri_check);
@@ -70,7 +70,7 @@ static cmd_export_t cmds[] = {{"sanity_check", (cmd_function)w_sanity_check, 0,
 static param_export_t params[] = {
 		{"default_checks", PARAM_INT, &default_msg_checks},
 		{"uri_checks", PARAM_INT, &default_uri_checks},
-		{"proxy_require", PARAM_STR, &pr_str},
+		{"proxy_require", PARAM_STR, &_sanity_prval},
 		{"autodrop", PARAM_INT, &_sanity_drop},
 		{"noreply", PARAM_INT, &ksr_sanity_noreply}, {0, 0, 0}};
 
@@ -102,13 +102,13 @@ static int mod_init(void)
 	ksr_sanity_info_init();
 
 	/* bind the SL API */
-	if(sl_load_api(&slb) != 0) {
+	if(sl_load_api(&_sanity_slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
 	LM_DBG("parsing proxy requires string:\n");
-	ptr = parse_str_list(&pr_str);
+	ptr = parse_str_list(&_sanity_prval);
 
 	proxyrequire_list = ptr;
 

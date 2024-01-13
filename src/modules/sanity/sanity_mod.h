@@ -72,6 +72,6 @@
 extern int default_checks;
 extern str_list_t *proxyrequire_list;
 
-extern sl_api_t slb;
+extern sl_api_t _sanity_slb;
 
 #endif /* MOD_SANITY_CHK_H */

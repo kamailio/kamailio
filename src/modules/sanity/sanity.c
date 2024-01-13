@@ -81,12 +81,13 @@ int ki_sanity_reply(sip_msg_t *msg)
 				|| msg->id != _ksr_sanity_info.msgid
 				|| msg->pid != _ksr_sanity_info.msgpid) {
 			LM_INFO("no sanity reply info set - sending 500\n");
-			if(slb.zreply(msg, 500, "Server Sanity Failure") < 0) {
+			if(_sanity_slb.zreply(msg, 500, "Server Sanity Failure") < 0) {
 				return -1;
 			}
 			return 1;
 		}
-		if(slb.zreply(msg, _ksr_sanity_info.code, _ksr_sanity_info.reason)
+		if(_sanity_slb.zreply(
+				   msg, _ksr_sanity_info.code, _ksr_sanity_info.reason)
 				< 0) {
 			return -1;
 		}
@@ -120,7 +121,7 @@ int sanity_reply(sip_msg_t *msg, int code, char *reason)
 		_ksr_sanity_info.msgpid = msg->pid;
 	} else {
 		if(!(msg->msg_flags & FL_MSG_NOREPLY)) {
-			if(slb.zreply(msg, code, reason) < 0) {
+			if(_sanity_slb.zreply(msg, code, reason) < 0) {
 				return -1;
 			}
 		}
