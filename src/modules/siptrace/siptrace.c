@@ -72,11 +72,11 @@ MODULE_VERSION
 
 #define is_null_pv(_str) (!str_strcmp(&_str, pv_get_null_str()))
 
-struct tm_binds tmb;
-struct dlg_binds dlgb;
+static struct tm_binds _siptrace_tmb;
+static struct dlg_binds _siptrace_dlgb;
 
 /** SL API structure */
-sl_api_t slb;
+static sl_api_t _siptrace_slb;
 
 /* module function prototypes */
 static int mod_init(void);
@@ -426,14 +426,14 @@ static int mod_init(void)
 		}
 
 		/* register callbacks to TM */
-		if(load_tm_api(&tmb) != 0) {
+		if(load_tm_api(&_siptrace_tmb) != 0) {
 			LM_WARN("can't load tm api. Will not install tm callbacks.\n");
 		}
 
-		if(load_dlg_api(&dlgb) < 0) {
+		if(load_dlg_api(&_siptrace_dlgb) < 0) {
 			LM_INFO("can't load dlg api. Will not install dialog callbacks.\n");
 		} else {
-			if(dlgb.register_dlgcb(
+			if(_siptrace_dlgb.register_dlgcb(
 					   NULL, DLGCB_CREATED, trace_dialog, NULL, NULL)
 					!= 0) {
 				LM_ERR("failed to register dialog callbacks! Tracing dialogs "
@@ -442,7 +442,7 @@ static int mod_init(void)
 		}
 
 		/* bind the SL API */
-		if(sl_load_api(&slb) != 0) {
+		if(sl_load_api(&_siptrace_slb) != 0) {
 			LM_WARN("cannot bind to SL API. Will not install sl callbacks.\n");
 		} else {
 			/* register sl callbacks */
@@ -450,7 +450,7 @@ static int mod_init(void)
 
 			slcb.type = SLCB_REPLY_READY;
 			slcb.cbf = trace_sl_onreply_out;
-			if(slb.register_cb(&slcb) != 0) {
+			if(_siptrace_slb.register_cb(&slcb) != 0) {
 				LM_ERR("can't register for SLCB_REPLY_READY\n");
 				return -1;
 			}
@@ -458,7 +458,7 @@ static int mod_init(void)
 			if(trace_sl_acks) {
 				slcb.type = SLCB_ACK_FILTERED;
 				slcb.cbf = trace_sl_ack_in;
-				if(slb.register_cb(&slcb) != 0) {
+				if(_siptrace_slb.register_cb(&slcb) != 0) {
 					LM_ERR("can't register for SLCB_ACK_FILTERED\n");
 					return -1;
 				}
@@ -910,7 +910,7 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 		 * dialog: it's an INVITE; dialog module is loaded
 		 *
 		 * */
-		if(tmb.t_gett == NULL) {
+		if(_siptrace_tmb.t_gett == NULL) {
 			LM_WARN("TM module not loaded! Tracing only current message!\n");
 			goto trace_current;
 		}
@@ -919,14 +919,14 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 	 * capturing it if the cancelled transaction is already being traced
 	 */
 		if(msg->REQ_METHOD == METHOD_CANCEL) {
-			t_invite = tmb.t_lookup_original(msg);
+			t_invite = _siptrace_tmb.t_lookup_original(msg);
 			if(t_invite != T_NULL_CELL) {
 				if(t_invite->uas.request->msg_flags & FL_SIPTRACE) {
 					LM_DBG("Transaction is already been traced, skipping.\n");
-					tmb.t_unref(msg);
+					_siptrace_tmb.t_unref(msg);
 					return 1;
 				}
-				tmb.t_unref(msg);
+				_siptrace_tmb.t_unref(msg);
 			}
 		}
 
@@ -935,25 +935,25 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 		 * an already traced transaction
 		 */
 		if(msg->REQ_METHOD == METHOD_ACK) {
-			orig_t = tmb.t_gett();
-			if(tmb.t_lookup_request(msg, 0, &canceled)) {
-				t_invite = tmb.t_gett();
+			orig_t = _siptrace_tmb.t_gett();
+			if(_siptrace_tmb.t_lookup_request(msg, 0, &canceled)) {
+				t_invite = _siptrace_tmb.t_gett();
 				if(t_invite != T_NULL_CELL) {
 					if(t_invite->uas.request->msg_flags & FL_SIPTRACE) {
 						LM_DBG("Transaction is already been traced, "
 							   "skipping.\n");
 						ret = 1;
 					}
-					tmb.t_release_transaction(t_invite);
-					tmb.t_unref(msg);
+					_siptrace_tmb.t_release_transaction(t_invite);
+					_siptrace_tmb.t_unref(msg);
 				}
 			}
-			tmb.t_sett(orig_t, T_BR_UNDEFINED);
+			_siptrace_tmb.t_sett(orig_t, T_BR_UNDEFINED);
 			if(ret)
 				return 1;
 		}
 
-		if(trace_type == SIPTRACE_DIALOG && dlgb.get_dlg == NULL) {
+		if(trace_type == SIPTRACE_DIALOG && _siptrace_dlgb.get_dlg == NULL) {
 			LM_WARN("DIALOG module not loaded! Tracing only current "
 					"message!\n");
 			goto trace_current;
@@ -1010,7 +1010,7 @@ static int sip_trace_helper(sip_msg_t *msg, dest_info_t *dst, str *duri,
 		if(trace_type == SIPTRACE_TRANSACTION) {
 			trace_transaction(msg, info, 0);
 		} else if(trace_type == SIPTRACE_DIALOG) {
-			if(unlikely(dlgb.set_dlg_var == NULL)) {
+			if(unlikely(_siptrace_dlgb.set_dlg_var == NULL)) {
 				/* FIXME should we abort tracing here? */
 				LM_WARN("Dialog api not loaded! will trace only current "
 						"transaction!\n");
@@ -1471,7 +1471,7 @@ static void trace_cancel_in(struct cell *t, int type, struct tmcb_params *ps)
 
 	info = (siptrace_info_t *)(*ps->param);
 	msg = ps->req;
-	if(tmb.register_tmcb(
+	if(_siptrace_tmb.register_tmcb(
 			   msg, 0, TMCB_RESPONSE_READY, trace_onreply_out, info, 0)
 			<= 0) {
 		LM_ERR("can't register trace_onreply_out\n");
@@ -2062,22 +2062,24 @@ static void trace_transaction(
 		}
 	}
 
-	if(tmb.register_tmcb(msg, 0, TMCB_REQUEST_SENT, trace_onreq_out, info, 0)
+	if(_siptrace_tmb.register_tmcb(
+			   msg, 0, TMCB_REQUEST_SENT, trace_onreq_out, info, 0)
 			<= 0) {
 		LM_ERR("can't register trace_onreq_out\n");
 		return;
 	}
 
 	/* trace reply on in */
-	if(tmb.register_tmcb(msg, 0, TMCB_RESPONSE_IN, trace_onreply_in, info, 0)
+	if(_siptrace_tmb.register_tmcb(
+			   msg, 0, TMCB_RESPONSE_IN, trace_onreply_in, info, 0)
 			<= 0) {
 		LM_ERR("can't register trace_onreply_in\n");
 		return;
 	}
 
 	/* trace reply on out */
-	if(tmb.register_tmcb(msg, 0, TMCB_RESPONSE_SENT, trace_onreply_out, info,
-			   dlg_tran ? 0 : trace_free_info)
+	if(_siptrace_tmb.register_tmcb(msg, 0, TMCB_RESPONSE_SENT,
+			   trace_onreply_out, info, dlg_tran ? 0 : trace_free_info)
 			<= 0) {
 		LM_ERR("can't register trace_onreply_out\n");
 		return;
@@ -2086,13 +2088,15 @@ static void trace_transaction(
 	/* TODO */
 	/* check the following callbacks: TMCB_REQUEST_PENDING, TMCB_RESPONSE_READY, TMCB_ACK_NEG_IN */
 	/* trace reply on in */
-	if(tmb.register_tmcb(msg, 0, TMCB_ACK_NEG_IN, trace_tm_neg_ack_in, info, 0)
+	if(_siptrace_tmb.register_tmcb(
+			   msg, 0, TMCB_ACK_NEG_IN, trace_tm_neg_ack_in, info, 0)
 			<= 0) {
 		LM_ERR("can't register trace_onreply_in\n");
 		return;
 	}
 
-	if(tmb.register_tmcb(msg, 0, TMCB_E2ECANCEL_IN, trace_cancel_in, info, 0)
+	if(_siptrace_tmb.register_tmcb(
+			   msg, 0, TMCB_E2ECANCEL_IN, trace_cancel_in, info, 0)
 			<= 0) {
 		LM_ERR("can't register trace_onreply_in\n");
 		return;
@@ -2105,7 +2109,7 @@ static void trace_dialog(
 {
 	sr_xavp_t *xavp;
 
-	if(!dlgb.get_dlg) {
+	if(!_siptrace_dlgb.get_dlg) {
 		LM_ERR("Dialog API not loaded! Trace off...\n");
 		return;
 	}
@@ -2118,7 +2122,7 @@ static void trace_dialog(
 
 	if(trace_dialog_spiral && *cbp->param == NULL) {
 		LM_DBG("Spiraled dialog!\n");
-		if(dlgb.register_dlgcb(
+		if(_siptrace_dlgb.register_dlgcb(
 				   dlg, DLGCB_SPIRALED, trace_dialog, &spiral_tracked, NULL)
 				!= 0) {
 			LM_ERR("could not register consider_exporting() for dialog event "
@@ -2143,8 +2147,8 @@ static void trace_dialog(
 		return;
 	}
 
-	if(dlgb.register_dlgcb(dlg, DLGCB_REQ_WITHIN, trace_dialog_transaction,
-			   xavp->val.v.vptr, 0)
+	if(_siptrace_dlgb.register_dlgcb(dlg, DLGCB_REQ_WITHIN,
+			   trace_dialog_transaction, xavp->val.v.vptr, 0)
 			!= 0) {
 		LM_ERR("Failed to register DLGCB_REQ_WITHIN callback!\n");
 		return;
@@ -2152,15 +2156,15 @@ static void trace_dialog(
 
 	/* this will trace in-dialog ACK */
 	if(trace_dialog_ack
-			&& dlgb.register_dlgcb(dlg, DLGCB_CONFIRMED,
+			&& _siptrace_dlgb.register_dlgcb(dlg, DLGCB_CONFIRMED,
 					   trace_dialog_transaction, xavp->val.v.vptr, 0)
 					   != 0) {
 		LM_ERR("Failed to register DLGCB_CONFIRMED callback!\n");
 		return;
 	}
 
-	if(dlgb.register_dlgcb(dlg, DLGCB_TERMINATED, trace_dialog_transaction,
-			   xavp->val.v.vptr, trace_free_info)
+	if(_siptrace_dlgb.register_dlgcb(dlg, DLGCB_TERMINATED,
+			   trace_dialog_transaction, xavp->val.v.vptr, trace_free_info)
 			!= 0) {
 		LM_ERR("Failed to register DLGCB_TERMINATED callback!\n");
 		return;
