@@ -240,7 +240,7 @@ struct gw_info **gw_pt = (struct gw_info **)NULL;
 struct rule_id_info **rule_id_hash_table = (struct rule_id_info **)NULL;
 
 /* Pinging related vars */
-struct tm_binds tmb;
+struct tm_binds _lcr_tmb;
 void ping_timer(unsigned int ticks, void *param);
 unsigned int ping_valid_reply_codes[MAX_NO_OF_REPLY_CODES];
 str ping_method = {"OPTIONS", 7};
@@ -622,7 +622,7 @@ static int mod_init(void)
 			return -1;
 		}
 		if(ping_interval_param > 0) {
-			if(load_tm_api(&tmb) == -1) {
+			if(load_tm_api(&_lcr_tmb) == -1) {
 				LM_ERR("could not bind tm api\n");
 				return -1;
 			}
@@ -2951,7 +2951,8 @@ void ping_timer(unsigned int ticks, void *param)
 					uac_r.ssock = &ping_socket_param;
 				}
 
-				if(tmb.t_request(&uac_r, &uri, &uri, &ping_from_param, 0) < 0) {
+				if(_lcr_tmb.t_request(&uac_r, &uri, &uri, &ping_from_param, 0)
+						< 0) {
 					LM_ERR("unable to ping [%.*s]\n", uri.len, uri.s);
 				}
 			}
