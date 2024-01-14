@@ -104,9 +104,9 @@ static inline int star(sip_msg_t *_m, udomain_t *_d, str *_a, str *_h)
 	urecord_t *r;
 	ucontact_t *c;
 
-	ul.lock_udomain(_d, _a);
+	_reg_ul.lock_udomain(_d, _a);
 
-	if(!ul.get_urecord(_d, _a, &r)) {
+	if(!_reg_ul.get_urecord(_d, _a, &r)) {
 		c = r->contacts;
 		while(c) {
 			if(mem_only) {
@@ -120,7 +120,7 @@ static inline int star(sip_msg_t *_m, udomain_t *_d, str *_a, str *_h)
 		r = NULL;
 	}
 
-	if(ul.delete_urecord(_d, _a, r) < 0) {
+	if(_reg_ul.delete_urecord(_d, _a, r) < 0) {
 		LM_ERR("failed to remove record from usrloc\n");
 
 		/* Delete failed, try to get corresponding
@@ -128,14 +128,14 @@ static inline int star(sip_msg_t *_m, udomain_t *_d, str *_a, str *_h)
 		 * contacts
 		 */
 		rerrno = R_UL_DEL_R;
-		if(!ul.get_urecord(_d, _a, &r)) {
+		if(!_reg_ul.get_urecord(_d, _a, &r)) {
 			build_contact(_m, r->contacts, _h);
-			ul.release_urecord(r);
+			_reg_ul.release_urecord(r);
 		}
-		ul.unlock_udomain(_d, _a);
+		_reg_ul.unlock_udomain(_d, _a);
 		return -1;
 	}
-	ul.unlock_udomain(_d, _a);
+	_reg_ul.unlock_udomain(_d, _a);
 	return 0;
 }
 
@@ -215,22 +215,22 @@ static inline int no_contacts(sip_msg_t *_m, udomain_t *_d, str *_a, str *_h)
 	urecord_t *r;
 	int res;
 
-	ul.lock_udomain(_d, _a);
-	res = ul.get_urecord(_d, _a, &r);
+	_reg_ul.lock_udomain(_d, _a);
+	res = _reg_ul.get_urecord(_d, _a, &r);
 	if(res < 0) {
 		rerrno = R_UL_GET_R;
 		LM_ERR("failed to retrieve record from usrloc\n");
-		ul.unlock_udomain(_d, _a);
+		_reg_ul.unlock_udomain(_d, _a);
 		return -1;
 	}
 
 	if(res == 0) { /* Contacts found */
 		build_contact(_m, r->contacts, _h);
-		ul.release_urecord(r);
+		_reg_ul.release_urecord(r);
 	} else { /* No contacts found */
 		build_contact(_m, NULL, _h);
 	}
-	ul.unlock_udomain(_d, _a);
+	_reg_ul.unlock_udomain(_d, _a);
 	return 0;
 }
 
@@ -338,7 +338,7 @@ static inline ucontact_info_t *pack_ci(struct sip_msg *_m, contact_t *_c,
 
 		/* get received */
 		if(path_received.len && path_received.s) {
-			ci.cflags |= ul.nat_flag;
+			ci.cflags |= _reg_ul.nat_flag;
 			ci.received = path_received;
 		}
 
@@ -538,7 +538,7 @@ static inline int insert_contacts(struct sip_msg *_m, udomain_t *_d, str *_a,
 		num++;
 
 		if(r == 0) {
-			if(ul.insert_urecord(_d, _a, &r) < 0) {
+			if(_reg_ul.insert_urecord(_d, _a, &r) < 0) {
 				rerrno = R_UL_NEW_R;
 				LM_ERR("failed to insert new record structure\n");
 				goto error;
@@ -557,16 +557,16 @@ static inline int insert_contacts(struct sip_msg *_m, udomain_t *_d, str *_a,
 		 * one already added, then update */
 		ci->cseq++;
 		if(r->contacts == 0
-				|| ul.get_ucontact_by_instance(r, &_c->uri, ci, &c) != 0) {
+				|| _reg_ul.get_ucontact_by_instance(r, &_c->uri, ci, &c) != 0) {
 			ci->cseq--;
-			if(ul.insert_ucontact(r, &_c->uri, ci, &c) < 0) {
+			if(_reg_ul.insert_ucontact(r, &_c->uri, ci, &c) < 0) {
 				rerrno = R_UL_INS_C;
 				LM_ERR("failed to insert contact\n");
 				goto error;
 			}
 		} else {
 			ci->cseq--;
-			if(ul.update_ucontact(r, c, ci) < 0) {
+			if(_reg_ul.update_ucontact(r, c, ci) < 0) {
 				rerrno = R_UL_UPD_C;
 				LM_ERR("failed to update contact\n");
 				goto error;
@@ -595,7 +595,7 @@ static inline int insert_contacts(struct sip_msg *_m, udomain_t *_d, str *_a,
 	if(r) {
 		if(r->contacts)
 			build_contact(_m, r->contacts, &u->host);
-		ul.release_urecord(r);
+		_reg_ul.release_urecord(r);
 	} else { /* No contacts found */
 		build_contact(_m, NULL, &u->host);
 	}
@@ -611,7 +611,7 @@ static inline int insert_contacts(struct sip_msg *_m, udomain_t *_d, str *_a,
 	return 0;
 error:
 	if(r)
-		ul.delete_urecord(_d, _a, r);
+		_reg_ul.delete_urecord(_d, _a, r);
 
 	return -1;
 }
@@ -639,7 +639,7 @@ static int test_max_contacts(struct sip_msg *_m, urecord_t *_r, contact_t *_c,
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &e, 0);
 
-		ret = ul.get_ucontact_by_instance(_r, &_c->uri, ci, &cont);
+		ret = _reg_ul.get_ucontact_by_instance(_r, &_c->uri, ci, &cont);
 		if(ret == -1) {
 			LM_ERR("invalid cseq for aor <%.*s>\n", _r->aor.len, _r->aor.s);
 			rerrno = R_INV_CSEQ;
@@ -743,7 +743,7 @@ static inline int update_contacts(struct sip_msg *_m, urecord_t *_r, int _mode,
 		}
 
 		/* search for the contact*/
-		ret = ul.get_ucontact_by_instance(_r, &_c->uri, ci, &c);
+		ret = _reg_ul.get_ucontact_by_instance(_r, &_c->uri, ci, &c);
 		if(ret == -1) {
 			LM_ERR("invalid cseq for aor <%.*s>\n", _r->aor.len, _r->aor.s);
 			rerrno = R_INV_CSEQ;
@@ -759,7 +759,7 @@ static inline int update_contacts(struct sip_msg *_m, urecord_t *_r, int _mode,
 			if(expires == 0)
 				continue;
 
-			if(ul.insert_ucontact(_r, &_c->uri, ci, &c) < 0) {
+			if(_reg_ul.insert_ucontact(_r, &_c->uri, ci, &c) < 0) {
 				rerrno = R_UL_INS_C;
 				LM_ERR("failed to insert contact\n");
 				goto error;
@@ -770,7 +770,7 @@ static inline int update_contacts(struct sip_msg *_m, urecord_t *_r, int _mode,
 				while(ptr) {
 					ptr0 = ptr->next;
 					if(ptr != c)
-						ul.delete_ucontact(_r, ptr);
+						_reg_ul.delete_ucontact(_r, ptr);
 					ptr = ptr0;
 				}
 				updated = 1;
@@ -785,7 +785,7 @@ static inline int update_contacts(struct sip_msg *_m, urecord_t *_r, int _mode,
 					c->flags &= ~FL_MEM;
 				}
 
-				if(ul.delete_ucontact(_r, c) < 0) {
+				if(_reg_ul.delete_ucontact(_r, c) < 0) {
 					rerrno = R_UL_DEL_C;
 					LM_ERR("failed to delete contact\n");
 					goto error;
@@ -798,7 +798,7 @@ static inline int update_contacts(struct sip_msg *_m, urecord_t *_r, int _mode,
 					while(ptr) {
 						ptr0 = ptr->next;
 						if(ptr != c)
-							ul.delete_ucontact(_r, ptr);
+							_reg_ul.delete_ucontact(_r, ptr);
 						ptr = ptr0;
 					}
 					updated = 1;
@@ -817,13 +817,13 @@ static inline int update_contacts(struct sip_msg *_m, urecord_t *_r, int _mode,
 								&& strncmp(ptr->instance.s, c->instance.s,
 										   ptr->instance.len)
 										   == 0) {
-							ul.delete_ucontact(_r, ptr);
+							_reg_ul.delete_ucontact(_r, ptr);
 						}
 						ptr = ptr0;
 					}
 					updated = 1;
 				}
-				if(ul.update_ucontact(_r, c, ci) < 0) {
+				if(_reg_ul.update_ucontact(_r, c, ci) < 0) {
 					rerrno = R_UL_UPD_C;
 					LM_ERR("failed to update contact\n");
 					goto error;
@@ -885,32 +885,32 @@ static inline int add_contacts(struct sip_msg *_m, udomain_t *_d, str *_a,
 		return -2;
 
 	ret = 0;
-	ul.lock_udomain(_d, _a);
-	res = ul.get_urecord(_d, _a, &r);
+	_reg_ul.lock_udomain(_d, _a);
+	res = _reg_ul.get_urecord(_d, _a, &r);
 	if(res < 0) {
 		rerrno = R_UL_GET_R;
 		LM_ERR("failed to retrieve record from usrloc\n");
-		ul.unlock_udomain(_d, _a);
+		_reg_ul.unlock_udomain(_d, _a);
 		return -2;
 	}
 
 	if(res == 0) { /* Contacts found */
 		if((ret = update_contacts(_m, r, _mode, _use_regid, novariation)) < 0) {
 			build_contact(_m, r->contacts, &u->host);
-			ul.release_urecord(r);
-			ul.unlock_udomain(_d, _a);
+			_reg_ul.release_urecord(r);
+			_reg_ul.unlock_udomain(_d, _a);
 			return -3;
 		}
 		build_contact(_m, r->contacts, &u->host);
-		ul.release_urecord(r);
+		_reg_ul.release_urecord(r);
 	} else {
 		if(insert_contacts(_m, _d, _a, _use_regid, novariation) < 0) {
-			ul.unlock_udomain(_d, _a);
+			_reg_ul.unlock_udomain(_d, _a);
 			return -4;
 		}
 		ret = 1;
 	}
-	ul.unlock_udomain(_d, _a);
+	_reg_ul.unlock_udomain(_d, _a);
 	return ret;
 }
 
@@ -1126,21 +1126,22 @@ int unregister(struct sip_msg *_m, udomain_t *_d, str *_uri, str *_ruid)
 				return -1;
 			}
 
-			if(ul.get_urecord_by_ruid(_d, ul.get_aorhash(&aor), _ruid, &r, &c)
+			if(_reg_ul.get_urecord_by_ruid(
+					   _d, _reg_ul.get_aorhash(&aor), _ruid, &r, &c)
 					!= 0) {
 				LM_WARN("AOR/Contact not found\n");
 				return -3;
 			}
-			if(ul.delete_ucontact(r, c) != 0) {
-				ul.unlock_udomain(_d, &aor);
+			if(_reg_ul.delete_ucontact(r, c) != 0) {
+				_reg_ul.unlock_udomain(_d, &aor);
 				LM_WARN("could not delete contact\n");
 				return -2;
 			}
-			ul.unlock_udomain(_d, &aor);
+			_reg_ul.unlock_udomain(_d, &aor);
 
 		} else {
 
-			res = ul.delete_urecord_by_ruid(_d, _ruid);
+			res = _reg_ul.delete_urecord_by_ruid(_d, _ruid);
 			switch(res) {
 				case -1:
 					LM_ERR("could not delete contact\n");

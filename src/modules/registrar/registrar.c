@@ -59,7 +59,7 @@
 
 MODULE_VERSION
 
-usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
+usrloc_api_t _reg_ul; /*!< Structure containing pointers to usrloc functions*/
 
 /*! \brief Module init & destroy function */
 static int mod_init(void);
@@ -159,7 +159,7 @@ stat_var *default_expire_stat;
 stat_var *default_expire_range_stat;
 stat_var *expire_range_stat;
 /** SL API structure */
-sl_api_t slb;
+sl_api_t _reg_slb;
 
 /*! \brief
  * Exported PV
@@ -311,7 +311,7 @@ static int mod_init(void)
 #endif
 
 	/* bind the SL API */
-	if(sl_load_api(&slb) != 0) {
+	if(sl_load_api(&_reg_slb) != 0) {
 		LM_ERR("Cannot bind to SL API. Please load the SL module before"
 			   " loading this module.\n");
 		return -1;
@@ -361,11 +361,11 @@ static int mod_init(void)
 	}
 	cfg_get(registrar, registrar_cfg, default_q) = dq;
 
-	if(bind_usrloc(&ul) < 0) {
+	if(bind_usrloc(&_reg_ul) < 0) {
 		return -1;
 	}
 
-	if(ul.register_ulcb != NULL) {
+	if(_reg_ul.register_ulcb != NULL) {
 		if(reg_event_callback.s == NULL || reg_event_callback.len <= 0) {
 			reg_expire_event_rt =
 					route_lookup(&event_rt, "usrloc:contact-expired");
@@ -382,7 +382,8 @@ static int mod_init(void)
 		if(reg_expire_event_rt >= 0
 				|| (reg_event_callback.s != NULL && keng != NULL)) {
 			set_child_rpc_sip_mode();
-			if(ul.register_ulcb(UL_CONTACT_EXPIRE, reg_ul_expired_contact, 0)
+			if(_reg_ul.register_ulcb(
+					   UL_CONTACT_EXPIRE, reg_ul_expired_contact, 0)
 					< 0) {
 				LM_ERR("Can not register callback for expired contacts"
 					   " (usrloc module)\n");
@@ -393,7 +394,7 @@ static int mod_init(void)
 	/*
 	 * Import use_domain parameter from usrloc
 	 */
-	reg_use_domain = ul.use_domain;
+	reg_use_domain = _reg_ul.use_domain;
 
 	if(sock_hdr_name.s) {
 		if(sock_hdr_name.len == 0 || sock_flag == -1) {
@@ -523,7 +524,7 @@ static int ki_lookup_branches(sip_msg_t *_m, str *_dtable)
 {
 	udomain_t *d;
 
-	if(ul.get_udomain(_dtable->s, &d) < 0) {
+	if(_reg_ul.get_udomain(_dtable->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", _dtable->s);
 		return -1;
 	}
@@ -598,7 +599,7 @@ static int ki_registered_uri(sip_msg_t *_m, str *_dtable, str *_uri)
 {
 	udomain_t *d;
 
-	if(ul.get_udomain(_dtable->s, &d) < 0) {
+	if(_reg_ul.get_udomain(_dtable->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", _dtable->s);
 		return -1;
 	}
@@ -628,7 +629,7 @@ static int ki_registered_flags(sip_msg_t *_m, str *_dtable, str *_uri, int _f)
 {
 	udomain_t *d;
 
-	if(ul.get_udomain(_dtable->s, &d) < 0) {
+	if(_reg_ul.get_udomain(_dtable->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", _dtable->s);
 		return -1;
 	}
@@ -668,7 +669,7 @@ static int ki_registered_action(
 {
 	udomain_t *d;
 
-	if(ul.get_udomain(_dtable->s, &d) < 0) {
+	if(_reg_ul.get_udomain(_dtable->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", _dtable->s);
 		return -1;
 	}
@@ -696,7 +697,7 @@ static int ki_unregister(sip_msg_t *_m, str *_dtable, str *_uri)
 		LM_ERR("invalid uri parameter\n");
 		return -1;
 	}
-	if(ul.get_udomain(_dtable->s, &d) < 0) {
+	if(_reg_ul.get_udomain(_dtable->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", _dtable->s);
 		return -1;
 	}
@@ -729,7 +730,7 @@ static int ki_unregister_ruid(
 		LM_ERR("invalid uri parameter\n");
 		return -1;
 	}
-	if(ul.get_udomain(_dtable->s, &d) < 0) {
+	if(_reg_ul.get_udomain(_dtable->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", _dtable->s);
 		return -1;
 	}
@@ -763,7 +764,7 @@ static int domain_fixup(void **param, int param_no)
 	udomain_t *d;
 
 	if(param_no == 1) {
-		if(ul.register_udomain((char *)*param, &d) < 0) {
+		if(_reg_ul.register_udomain((char *)*param, &d) < 0) {
 			LM_ERR("failed to register domain\n");
 			return E_UNSPEC;
 		}
@@ -835,7 +836,7 @@ static int save_fixup(void **param, int param_no)
 			LM_ERR("bad flags <%s>\n", (char *)(*param));
 			return E_CFG;
 		}
-		if(ul.db_mode == DB_ONLY && flags & REG_SAVE_MEM_FL) {
+		if(_reg_ul.db_mode == DB_ONLY && flags & REG_SAVE_MEM_FL) {
 			LM_ERR("MEM flag set while using the DB_ONLY mode in USRLOC\n");
 			return E_CFG;
 		}

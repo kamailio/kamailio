@@ -106,9 +106,10 @@ extern int reg_sock_mode;
 extern str reg_xavp_cfg;
 extern str reg_xavp_rcd;
 extern int reg_xavp_rcd_mask;
-extern usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
+/*!< Structure containing pointers to usrloc functions*/
+extern usrloc_api_t _reg_ul;
 
-extern sl_api_t slb;
+extern sl_api_t _reg_slb;
 
 extern int reg_expire_event_rt;
 extern int reg_min_expires_mode;

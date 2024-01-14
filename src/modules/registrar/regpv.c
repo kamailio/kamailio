@@ -574,11 +574,11 @@ int pv_fetch_contacts_helper(
 
 	/* copy contacts */
 	ilen = sizeof(ucontact_t);
-	ul.lock_udomain(dt, &aor);
-	res = ul.get_urecord(dt, &aor, &r);
+	_reg_ul.lock_udomain(dt, &aor);
+	res = _reg_ul.get_urecord(dt, &aor, &r);
 	if(res > 0) {
 		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-		ul.unlock_udomain(dt, &aor);
+		_reg_ul.unlock_udomain(dt, &aor);
 		return -1;
 	}
 
@@ -594,8 +594,8 @@ int pv_fetch_contacts_helper(
 		c0 = (ucontact_t *)pkg_malloc(olen);
 		if(c0 == NULL) {
 			LM_ERR("no more pkg\n");
-			ul.release_urecord(r);
-			ul.unlock_udomain(dt, &aor);
+			_reg_ul.release_urecord(r);
+			_reg_ul.unlock_udomain(dt, &aor);
 			goto error;
 		}
 		memcpy(c0, ptr, ilen);
@@ -666,8 +666,8 @@ int pv_fetch_contacts_helper(
 		ptr0 = c0;
 		ptr = ptr->next;
 	}
-	ul.release_urecord(r);
-	ul.unlock_udomain(dt, &aor);
+	_reg_ul.release_urecord(r);
+	_reg_ul.unlock_udomain(dt, &aor);
 	rpp->nrc = n;
 	LM_DBG("fetched <%d> contacts for <%.*s> in [%.*s]\n", n, aor.len, aor.s,
 			rpp->pname.len, rpp->pname.s);
@@ -694,7 +694,7 @@ int ki_reg_fetch_contacts(sip_msg_t *msg, str *dtable, str *uri, str *profile)
 {
 	udomain_t *d;
 
-	if(ul.get_udomain(dtable->s, &d) < 0) {
+	if(_reg_ul.get_udomain(dtable->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", dtable->s);
 		return -1;
 	}
@@ -870,7 +870,7 @@ int ki_lookup_xavp(
 		return -1;
 	}
 
-	if(ul.get_udomain(utname->s, &dt) < 0) {
+	if(_reg_ul.get_udomain(utname->s, &dt) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", utname->s);
 		return -1;
 	}
@@ -886,11 +886,11 @@ int ki_lookup_xavp(
 	}
 
 	/* copy contacts */
-	ul.lock_udomain(dt, &aor);
-	res = ul.get_urecord(dt, &aor, &r);
+	_reg_ul.lock_udomain(dt, &aor);
+	res = _reg_ul.get_urecord(dt, &aor, &r);
 	if(res > 0) {
 		LM_DBG("'%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
-		ul.unlock_udomain(dt, &aor);
+		_reg_ul.unlock_udomain(dt, &aor);
 		xavp_destroy_list(&rxavp);
 		return -1;
 	}
@@ -939,8 +939,8 @@ int ki_lookup_xavp(
 		n++;
 		ptr = ptr->next;
 	}
-	ul.release_urecord(r);
-	ul.unlock_udomain(dt, &aor);
+	_reg_ul.release_urecord(r);
+	_reg_ul.unlock_udomain(dt, &aor);
 
 	/* add record count field */
 	memset(&nxval, 0, sizeof(sr_xval_t));
@@ -968,8 +968,8 @@ int ki_lookup_xavp(
 	return 1;
 
 error:
-	ul.release_urecord(r);
-	ul.unlock_udomain(dt, &aor);
+	_reg_ul.release_urecord(r);
+	_reg_ul.unlock_udomain(dt, &aor);
 	if(cxavp != NULL) {
 		xavp_destroy_list(&cxavp);
 	}
@@ -1000,17 +1000,17 @@ int ki_reg_from_user(sip_msg_t *msg, str *utname, str *uri, int vmode)
 		return -1;
 	}
 
-	if(ul.get_udomain(utname->s, &dt) < 0) {
+	if(_reg_ul.get_udomain(utname->s, &dt) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", utname->s);
 		return -1;
 	}
 
 	/* copy contacts */
-	ul.lock_udomain(dt, &aor);
-	res = ul.get_urecord(dt, &aor, &r);
+	_reg_ul.lock_udomain(dt, &aor);
+	res = _reg_ul.get_urecord(dt, &aor, &r);
 	if(res > 0) {
 		LM_DBG("'%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
-		ul.unlock_udomain(dt, &aor);
+		_reg_ul.unlock_udomain(dt, &aor);
 		return -1;
 	}
 
@@ -1051,13 +1051,13 @@ int ki_reg_from_user(sip_msg_t *msg, str *utname, str *uri, int vmode)
 		ret = 1;
 		break;
 	}
-	ul.release_urecord(r);
-	ul.unlock_udomain(dt, &aor);
+	_reg_ul.release_urecord(r);
+	_reg_ul.unlock_udomain(dt, &aor);
 
 	return ret;
 
 error:
-	ul.release_urecord(r);
-	ul.unlock_udomain(dt, &aor);
+	_reg_ul.release_urecord(r);
+	_reg_ul.unlock_udomain(dt, &aor);
 	return -1;
 }

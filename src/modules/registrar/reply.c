@@ -278,7 +278,7 @@ int build_contact(sip_msg_t *msg, ucontact_t *c, str *host)
 				memcpy(p, c->ruid.s, c->ruid.len);
 				p += c->ruid.len;
 				*p++ = '-';
-				ahash = ul.get_aorhash(c->aor);
+				ahash = _reg_ul.get_aorhash(c->aor);
 				while(ahash != 0) {
 					digit = ahash & 0x0f;
 					*p++ = (digit >= 10) ? digit + 'a' - 10 : digit + '0';
@@ -748,7 +748,7 @@ int reg_reply_helper(struct sip_msg *_m, int _mode)
 	}
 
 	if(likely(_mode)) {
-		if(slb.freply(_m, code, &msg) < 0) {
+		if(_reg_slb.freply(_m, code, &msg) < 0) {
 			LM_ERR("failed to send %ld %.*s\n", code, msg.len, msg.s);
 			return -1;
 		}
