@@ -733,6 +733,12 @@ int tls_pre_init(void)
  * - executed before any mod_init()
  */
 #if OPENSSL_VERSION_NUMBER >= 0x030000000L
+/*
+ * With late initialisation it is not necessary to
+ * enable threading on the EVP_RAND_CTX. This function
+ * left here in case more complex requirements arise in
+ * OpenSSL >= 3.2.
+ */
 long tls_h_mod_randctx(void *) {
     do {
         OSSL_LIB_CTX *osslglobal = NULL;
@@ -770,7 +776,7 @@ long tls_h_mod_randctx(void *) {
 
     return 0L;
 }
-#endif
+#endif /* OPENSSL_VERSION_NUMBER */
 
 int tls_h_mod_pre_init_f(void)
 {
@@ -796,14 +802,21 @@ int tls_h_mod_pre_init_f(void)
 	SSL_load_error_strings();
 #endif
 
+#if 0
 #if OPENSSL_VERSION_NUMBER >= 0x030000000L
+        /*
+         * With deferred initialisation it is not necessary to enable threading
+         * on the EVP_RAND_CTX. We leave this block here as an example of how
+         * to do it in case of future requirements.
+         */
         pthread_t tid;
         long rl;
         pthread_create(&tid, NULL, (void *(*)(void *))tls_h_mod_randctx, NULL);
         pthread_join(tid, (void **)&rl);
         if ((int)rl)
             return (int)rl;
-#endif
+#endif /* OPENSSL_VERSION_NUMBER */
+#endif /* 0 */
 
 	tls_mod_preinitialized = 1;
 	return 0;
