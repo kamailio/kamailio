@@ -51,6 +51,10 @@ int usrloc_dmq_send_multi_contact(
 		ucontact_t *ptr, str aor, int action, dmq_node_t *node);
 void usrloc_dmq_send_multi_contact_flush(dmq_node_t *node);
 
+static int traverse_avp_tree(
+		sr_xavp_t *avp_list, srjson_doc_t *jdoc, srjson_t *root);
+static void srjson_to_xavp(srjson_t *json, sr_xavp_t **xavp);
+
 #define MAX_AOR_LEN 256
 
 extern int _dmq_usrloc_sync;
@@ -340,6 +344,8 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t *node)
 	static str host = STR_NULL, c = STR_NULL, callid = STR_NULL,
 			   path = STR_NULL, user_agent = STR_NULL;
 
+	sr_xavp_t *xavp = NULL;
+
 	action = expires = cseq = flags = cflags = q = last_modified = methods =
 			reg_id = server_id = port = proto = 0;
 
@@ -414,6 +420,8 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t *node)
 			reg_id = SRJSON_GET_UINT(it);
 		} else if(strcmp(it->string, "server_id") == 0) {
 			server_id = SRJSON_GET_UINT(it);
+		} else if(strncmp(it->string, "xavps", 5) == 0) {
+			srjson_to_xavp(it->child, &xavp);
 		} else {
 			LM_ERR("unrecognized field in json object\n");
 		}
@@ -439,6 +447,7 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t *node)
 	ci.server_id = server_id;
 	ci.tcpconn_id = -1;
 	ci.last_modified = last_modified;
+	ci.xavp = xavp;
 
 	switch(action) {
 		case DMQ_UPDATE:
@@ -457,7 +466,13 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t *node)
 			LM_DBG("Received DMQ_NONE. Not used...\n");
 			break;
 		default:
+			if(xavp != NULL) {
+				xavp_destroy_list(&xavp);
+			}
 			return 0;
+	}
+	if(xavp != NULL) {
+		xavp_destroy_list(&xavp);
 	}
 	return 1;
 }
@@ -782,6 +797,8 @@ int usrloc_dmq_send_multi_contact(
 int usrloc_dmq_send_contact(
 		ucontact_t *ptr, str aor, int action, dmq_node_t *node)
 {
+	srjson_t *jdoc_xavp;
+
 	srjson_doc_t jdoc;
 	srjson_InitDoc(&jdoc, NULL);
 
@@ -825,6 +842,16 @@ int usrloc_dmq_send_contact(
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "reg_id", ptr->reg_id);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "server_id", ptr->server_id);
 
+	/*  Loop through Χavp attributes of the contact and and create a json object */
+	jdoc_xavp = srjson_CreateObject(&jdoc);
+	if(traverse_avp_tree(ptr->xavp, &jdoc, jdoc_xavp) < 0) {
+		LM_ERR("traverse_avp_tree failed\n");
+		goto error;
+	}
+
+	/* Append the new json object to the end of with name "xavps" */
+	srjson_AddItemToObject(&jdoc, jdoc.root, "xavps", jdoc_xavp);
+
 	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
 	if(jdoc.buf.s == NULL) {
 		LM_ERR("unable to serialize data\n");
@@ -849,6 +876,124 @@ error:
 	}
 	srjson_DestroyDoc(&jdoc);
 	return -1;
+}
+
+int traverse_avp_tree(sr_xavp_t *avp_list, srjson_doc_t *jdoc, srjson_t *root)
+{
+	if(!avp_list) {
+		return 0;
+	}
+
+	str name;
+	sr_xval_t val;
+	srjson_t *nestedObject;
+
+	while(avp_list) {
+		name = avp_list->name;
+		val = avp_list->val;
+
+		/* Handle different AVP value types */
+		switch(val.type) {
+			case SR_XTYPE_LONG:
+				srjson_AddNumberToObject(jdoc, root, name.s, val.v.l);
+				break;
+			case SR_XTYPE_LLONG:
+				srjson_AddNumberToObject(jdoc, root, name.s, val.v.ll);
+				break;
+			case SR_XTYPE_STR:
+				srjson_AddStrToObject(
+						jdoc, root, name.s, val.v.s.s, val.v.s.len);
+				break;
+			case SR_XTYPE_XAVP: {
+				/* Create a new JSON object for the nested XAVP */
+				nestedObject = srjson_CreateObject(jdoc);
+				if(!nestedObject) {
+					LM_ERR("Create json object failed\n");
+					return -1;
+				}
+				srjson_AddItemToObject(jdoc, root, name.s, nestedObject);
+
+				/* Recursively traverse the inner XAVP */
+				traverse_avp_tree(val.v.xavp, jdoc, nestedObject);
+				break;
+			}
+			default:
+				/* Handle unknown AVP value types or other cases */
+				LM_ERR("Unknown AVP value type: %d\n", val.type);
+				break;
+		}
+
+		avp_list = avp_list->next;
+	}
+
+	return 0;
+}
+
+void srjson_to_xavp(srjson_t *json, sr_xavp_t **xavp)
+{
+	if(!json) {
+		return;
+	}
+
+	sr_xavp_t *xavp_new = NULL;
+	srjson_t *jdoc_xavps = NULL;
+	sr_xval_t val;
+	str xvap_name = {0, 0};
+	memset(&val, 0, sizeof(sr_xval_t));
+
+	for(jdoc_xavps = json; jdoc_xavps; jdoc_xavps = jdoc_xavps->next) {
+		if(jdoc_xavps->type == srjson_Object) {
+			/* Handle nested objects recursively */
+			LM_DBG("Object [%s]\n", jdoc_xavps->string);
+
+			if(jdoc_xavps->child) {
+				srjson_to_xavp(jdoc_xavps->child, &xavp_new);
+			}
+
+			/* Add this in xavp */
+			xvap_name.s = jdoc_xavps->string;
+			xvap_name.len = strlen(xvap_name.s);
+			val.type = SR_XTYPE_XAVP;
+			val.v.xavp = xavp_new;
+			xavp_add_value(&xvap_name, &val, xavp);
+
+		} else if(jdoc_xavps->type == srjson_Array) {
+			LM_DBG("Array [%s]\n", jdoc_xavps->string);
+			/* Handle nested arrays recursively */
+			if(jdoc_xavps->child) {
+				srjson_to_xavp(jdoc_xavps->child, &xavp_new);
+			}
+
+			/* Add this in xavp */
+			xvap_name.s = jdoc_xavps->string;
+			xvap_name.len = strlen(xvap_name.s);
+			val.type = SR_XTYPE_XAVP;
+			val.v.xavp = xavp_new;
+			xavp_add_value(&xvap_name, &val, xavp);
+
+		} else if(jdoc_xavps->type == srjson_Number) {
+			LM_DBG("Number [%s] value [%ld]\n", jdoc_xavps->string,
+					SRJSON_GET_LONG(jdoc_xavps));
+			xvap_name.s = jdoc_xavps->string;
+			xvap_name.len = strlen(xvap_name.s);
+			val.type = SR_XTYPE_LONG;
+			val.v.l = jdoc_xavps->valuedouble;
+			xavp_add_value(&xvap_name, &val, xavp);
+
+		} else if(jdoc_xavps->type == srjson_String) {
+			LM_DBG("String [%s] value: [%s]\n", jdoc_xavps->string,
+					jdoc_xavps->valuestring);
+			xvap_name.s = jdoc_xavps->string;
+			xvap_name.len = strlen(xvap_name.s);
+			val.type = SR_XTYPE_STR;
+			val.v.s.s = jdoc_xavps->valuestring;
+			val.v.s.len = strlen(val.v.s.s);
+			xavp_add_value(&xvap_name, &val, xavp);
+
+		} else {
+			LM_ERR("Unknown type [%s]\n", jdoc_xavps->string);
+		}
+	}
 }
 
 int usrloc_dmq_resp_callback_f(
