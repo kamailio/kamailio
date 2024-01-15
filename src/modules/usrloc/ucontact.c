@@ -50,10 +50,10 @@ void ul_set_xavp_contact_clone(int v)
 }
 
 /*!
- * \brief Store xavp list per contact
+ * \brief Store xavp list per contact from core, update existing contact as well
  * \param _c contact structure
  */
-void ucontact_xavp_store(ucontact_t *_c)
+static void ucontact_xavp_store(ucontact_t *_c)
 {
 	sr_xavp_t *xavp;
 	if(_c == NULL)
@@ -62,12 +62,15 @@ void ucontact_xavp_store(ucontact_t *_c)
 		return;
 	if(ul_xavp_contact_name.s == NULL)
 		return;
-	/* remove old list if it is set -- update case */
-	if(_c->xavp)
-		xavp_destroy_list(&_c->xavp);
+	/* XAVP from core */
 	xavp = xavp_get(&ul_xavp_contact_name, NULL);
-	if(xavp == NULL)
+	if(xavp == NULL) {
 		return;
+	}
+	/* remove old xavp if it is set -- update case */
+	if(_c->xavp) {
+		xavp_destroy_list(&_c->xavp);
+	}
 	/* clone the xavp found in core */
 	LM_DBG("trying to clone per contact xavps\n");
 	_c->xavp = xavp_clone_level_nodata(xavp);
@@ -124,6 +127,15 @@ ucontact_t *new_ucontact(
 		if(shm_str_dup(&c->instance, &_ci->instance) < 0)
 			goto error;
 	}
+	/* we got a xavp from e.g. DMQ */
+	if(_ci->xavp) {
+		/* destroy the existing contact xavp */
+		if(c->xavp) {
+			xavp_destroy_list(&c->xavp);
+		}
+		/* clone the DMQ xavp because it will be destroyed */
+		c->xavp = xavp_clone_level_nodata(_ci->xavp);
+	}
 
 	c->domain = _dom;
 	c->aor = _aor;
@@ -141,6 +153,8 @@ ucontact_t *new_ucontact(
 	c->tcpconn_id = _ci->tcpconn_id;
 	c->server_id = _ci->server_id;
 	c->keepalive = (_ci->cflags & ul_nat_bflag) ? 1 : 0;
+
+	/* Use core xavp if set, otherwise does nothing */
 	ucontact_xavp_store(c);
 
 
@@ -317,6 +331,16 @@ int mem_update_ucontact(ucontact_t *_c, ucontact_info_t *_ci)
 		_c->path.len = 0;
 	}
 
+	/* we got a xavp from e.g. DMQ */
+	if(_ci->xavp) {
+		/* destroy the existing contact xavp */
+		if(_c->xavp) {
+			xavp_destroy_list(&_c->xavp);
+		}
+		/* clone the DMQ xavp because it will be destroyed */
+		_c->xavp = xavp_clone_level_nodata(_ci->xavp);
+	}
+	/* Use core xavp if set, otherwise does nothing */
 	ucontact_xavp_store(_c);
 
 	_c->sock = _ci->sock;
