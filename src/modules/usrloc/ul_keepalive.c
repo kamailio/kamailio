@@ -163,7 +163,7 @@ int ul_ka_urecord(urecord_t *ur)
 			}
 		}
 		if(ul_ka_interval > 0 && uc->last_keepalive > 0) {
-			ka_limit = ul_ka_interval - (fastrand() % ul_ka_randomize);
+			ka_limit = ul_ka_interval + (fastrand() % ul_ka_randomize);
 			if((uc->last_keepalive + ka_limit) < tnow) {
 				/* not yet the time for keepalive */
 				continue;
