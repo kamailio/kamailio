@@ -18,5 +18,5 @@ jobs:
     - name: Delete untagged images
       uses: camargo/delete-untagged-action@v1
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ secrets.CLEAN_PACKAGES }}
         package-name: ${{ env.IMAGE_NAME }}
