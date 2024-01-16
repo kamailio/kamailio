@@ -288,6 +288,11 @@
 #endif
 #endif
 
+/* LoongArch */
+#if defined(__loongarch64)
+#define DUK_F_LOONGARCH64
+#endif
+
 /* RISC-V, https://github.com/riscv/riscv-toolchain-conventions#cc-preprocessor-definitions */
 #if defined(__riscv)
 #define DUK_F_RISCV
@@ -978,6 +983,12 @@
 #define DUK_USE_ARCH_STRING "sparc64"
 /* SPARC byte order varies so rely on autodetection. */
 #undef DUK_USE_PACKED_TVAL
+#define DUK_F_PACKED_TVAL_PROVIDED
+#elif defined(DUK_F_LOONGARCH64)
+/* --- LOONGARCH 64-bit --- */
+#define DUK_USE_ARCH_STRING "loongarch64"
+#define DUK_USE_BYTEORDER 1
+#define DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_RISCV32)
 /* --- RISC-V 32-bit --- */
