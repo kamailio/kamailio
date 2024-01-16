@@ -408,12 +408,27 @@ static int rms_sip_reply(
 	return 1;
 }
 
+static str _rms_default_user = str_init("rms");
+static void rms_link_user(str *suri, str *suser)
+{
+	sip_uri_t puri;
+	if(parse_uri(suri->s, suri->len, &puri) < 0 || puri.user.s == NULL
+			|| puri.user.len <= 0) {
+		suser->s = _rms_default_user.s;
+		suser->len = _rms_default_user.len;
+		return;
+	}
+	suser->s = puri.user.s;
+	suser->len = puri.user.len;
+}
+
 static int rms_answer_call(
 		struct cell *cell, rms_dialog_info_t *di, rms_sdp_info_t *sdp_info)
 {
-	char buffer[128];
+	char buffer[256];
 	str reason = str_init("OK");
 	str contact_hdr;
+	str luser;
 	if(di->state == RMS_ST_CONNECTED) {
 		return 1;
 	}
@@ -428,9 +443,10 @@ static int rms_answer_call(
 	sdp_info->local_ip.s = di->local_ip.s;
 	sdp_info->local_ip.len = di->local_ip.len;
 
-	snprintf(buffer, 128,
-			"Contact: <sip:rms@%s:%d>\r\nContent-Type: application/sdp\r\n",
-			di->local_ip.s, di->local_port);
+	rms_link_user(&di->local_uri, &luser);
+	snprintf(buffer, 256,
+			"Contact: <sip:%.*s@%s:%d>\r\nContent-Type: application/sdp\r\n",
+			luser.len, luser.s, di->local_ip.s, di->local_port);
 	contact_hdr.len = strlen(buffer);
 	contact_hdr.s = buffer;
 
@@ -592,6 +608,7 @@ static int rms_bridging_call(rms_dialog_info_t *di, rms_action_t *a)
 	int result;
 	str method_invite = str_init("INVITE");
 	str headers;
+	str luser;
 
 	struct sip_uri ruri_t;
 	str *param_uri = &a->param;
@@ -609,10 +626,11 @@ static int rms_bridging_call(rms_dialog_info_t *di, rms_action_t *a)
 		goto error;
 	}
 
+	rms_link_user(&di->local_uri, &luser);
 	snprintf(buff, 256,
 			"Max-Forwards: 70\r\nContact: "
-			"<sip:rms@%s:%d>\r\nContent-Type: application/sdp\r\n",
-			di->local_ip.s, di->local_port);
+			"<sip:%.*s@%s:%d>\r\nContent-Type: application/sdp\r\n",
+			luser.len, luser.s, di->local_ip.s, di->local_port);
 	headers.len = strlen(buff);
 	headers.s = buff;
 	LM_INFO("si[%p]call-id[%.*s]cseq[%d]ruri[%d|%s]remote_uri[%s]local_uri[%s]"
@@ -997,6 +1015,7 @@ static int rms_sip_forward(
 	int result;
 	str headers;
 	char buff[1024];
+	str luser;
 
 	if(!rms_create_trans(msg))
 		return 0;
@@ -1020,10 +1039,11 @@ static int rms_sip_forward(
 		return 0;
 	}
 
+	rms_link_user(&di->local_uri, &luser);
 	snprintf(buff, 256,
 			"Max-Forwards: 70\r\nContact: "
-			"<sip:rms@%s:%d>\r\nContent-Type: application/sdp\r\n",
-			di->local_ip.s, di->local_port);
+			"<sip:%.*s@%s:%d>\r\nContent-Type: application/sdp\r\n",
+			luser.len, luser.s, di->local_ip.s, di->local_port);
 	headers.len = strlen(buff);
 	headers.s = buff;
 
