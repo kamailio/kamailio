@@ -737,7 +737,8 @@ int tls_pre_init(void)
  * left here in case more complex requirements arise in
  * OpenSSL >= 3.2.
  */
-long tls_h_mod_randctx(void *) {
+long tls_h_mod_randctx(void *param)
+{
     do {
         OSSL_LIB_CTX *osslglobal = NULL;
         EVP_RAND_CTX *randctx = NULL;
