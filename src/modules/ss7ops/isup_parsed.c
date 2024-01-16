@@ -1067,7 +1067,7 @@ static int do_parse(
 
 		while(opt_left > 0) {
 			uint8_t ie = opt_data[0];
-			size_t len;
+			size_t len1;
 			opt_data += 1;
 			opt_left -= 1;
 
@@ -1078,20 +1078,20 @@ static int do_parse(
 				LM_ERR("ISUP no space for len %zu\n", opt_left);
 				return -1;
 			}
-			len = opt_data[0];
+			len1 = opt_data[0];
 			opt_left -= 1;
 			opt_data += 1;
 
-			if(opt_left < len) {
+			if(opt_left < len1) {
 				LM_ERR("ISUP no space optional data %zu vs. %zu\n", opt_left,
-						len);
+						len1);
 				return -1;
 			}
 
-			visitor(ie, opt_data, len, ptr);
+			visitor(ie, opt_data, len1, ptr);
 
-			opt_data += len;
-			opt_left -= len;
+			opt_data += len1;
+			opt_left -= len1;
 		}
 	}
 
