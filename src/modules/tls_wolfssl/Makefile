@@ -30,7 +30,7 @@ $(WOLFSSL_PREFIX)/include/wolfssl/options.h $(WOLFSSL_PREFIX)/lib/libwolfssl.a:
 		--prefix=$(CURDIR)/$(WOLFSSL_PREFIX) \
 		--exec-prefix=$(CURDIR)/$(WOLFSSL_PREFIX); \
 	fi;
-	@$(MAKE) -C $(WOLFSSL_SRC) prefix=$(CURDIR)/$(WOLFSSL_PREFIX) exec-prefix=$(CURDIR)/$(WOLFSSL_PREFIX) install
+	@$(MAKE) -C $(WOLFSSL_SRC) DESTDIR= prefix=$(CURDIR)/$(WOLFSSL_PREFIX) exec-prefix=$(CURDIR)/$(WOLFSSL_PREFIX) install
 
 $(NAME): $(WOLFSSL_PREFIX)/lib/libwolfssl.a
 
