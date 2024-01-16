@@ -383,6 +383,14 @@ static inline int send_bye(struct dlg_cell *cell, int dir, str *hdrs)
 	dlg_iuid_t *iuid = NULL;
 	str lhdrs;
 
+	/* dialog is already in deleted state, nothing to do */
+	if(cell->state == DLG_STATE_DELETED) {
+		LM_WARN("dlg [%u:%u] with callid %.*s already in deleted state, BYE "
+				"not sent.\n",
+				cell->h_entry, cell->h_id, cell->callid.len, cell->callid.s);
+		return 0;
+	}
+
 	/* Send Cancel or final response for non-confirmed dialogs */
 	if(cell->state != DLG_STATE_CONFIRMED_NA
 			&& cell->state != DLG_STATE_CONFIRMED) {
