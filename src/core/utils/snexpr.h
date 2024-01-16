@@ -1254,10 +1254,10 @@ extern "C"
 							sne_vec_free(&arg.args);
 							goto cleanup; /* first argument is not a variable */
 						}
-						struct snexpr_var *v;
-						for(v = vars->head; v; v = v->next) {
-							if(v == u->param.var.vref) {
-								struct macro m = {v->name, arg.args};
+						struct snexpr_var *v1;
+						for(v1 = vars->head; v1; v1 = v1->next) {
+							if(v1 == u->param.var.vref) {
+								struct macro m = {v1->name, arg.args};
 								sne_vec_push(&macros, m);
 								break;
 							}
@@ -1284,9 +1284,9 @@ extern "C"
 								char varname[14];
 								snprintf(varname, sizeof(varname) - 1, "$%d",
 										(j + 1));
-								struct snexpr_var *v = snexpr_var_find(
+								struct snexpr_var *v1 = snexpr_var_find(
 										vars, varname, strlen(varname));
-								struct snexpr ev = snexpr_varref(v);
+								struct snexpr ev = snexpr_varref(v1);
 								struct snexpr assign =
 										snexpr_binary(SNE_OP_ASSIGN, ev,
 												sne_vec_nth(&arg.args, j));
@@ -1409,10 +1409,10 @@ extern "C"
 	cleanup:
 		sne_vec_foreach(&macros, m, i)
 		{
-			struct snexpr e;
-			sne_vec_foreach(&m.body, e, j)
+			struct snexpr e1;
+			sne_vec_foreach(&m.body, e1, j)
 			{
-				snexpr_destroy_args(&e);
+				snexpr_destroy_args(&e1);
 			}
 			sne_vec_free(&m.body);
 		}
