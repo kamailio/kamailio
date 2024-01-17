@@ -360,7 +360,8 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
 		<listitem>
 			<para>
 				<emphasis>uri</emphasis> - Valid SIP URI or IP address to
-				check against the list of local IP addresses or domains.
+				check against the list of local IP addresses or domains, matching
+				as well the port and protocol if they are provided.
 				The parameter value can contain pseudo-variables.
 			</para>
 		</listitem>
@@ -373,6 +374,37 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
 		<programlisting format="linespecific">
 ...
 if(is_myself("$fu")) {
+    ...
+}
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="kex.f.is_myhost">
+		<title><function moreinfo="none">is_myhost(uri)</function></title>
+		<para>
+			Check if the host part of the parameter matches a local domain
+			or IP address.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>uri</emphasis> - Valid SIP URI, hostname of IP address to
+				check against the list of local IP addresses or domains. If it
+				is a SIP URI, the port and protocol are ignored.
+				The parameter value can contain pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>is_myhost</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(is_myhost("$tu")) {
     ...
 }
 ...
@@ -992,4 +1024,3 @@ Module: kex
 
     </section>
 </chapter>
-
