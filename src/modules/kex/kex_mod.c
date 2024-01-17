@@ -50,6 +50,7 @@ MODULE_VERSION
 
 /** module functions */
 int w_is_myself(struct sip_msg *msg, char *uri, str *s2);
+int w_is_myhost(struct sip_msg *msg, char *uri, str *s2);
 int w_setdebug(struct sip_msg *msg, char *level, str *s2);
 int w_resetdebug(struct sip_msg *msg, char *uri, str *s2);
 
@@ -95,6 +96,8 @@ static cmd_export_t cmds[] = {
 		{"avp_printf", (cmd_function)w_pv_printf, 2, pv_printf_fixup, 0,
 				ANY_ROUTE},
 		{"is_myself", (cmd_function)w_is_myself, 1, fixup_spve_null,
+				fixup_free_spve_null, ANY_ROUTE},
+		{"is_myhost", (cmd_function)w_is_myhost, 1, fixup_spve_null,
 				fixup_free_spve_null, ANY_ROUTE},
 		{"setdebug", (cmd_function)w_setdebug, 1, fixup_igp_null,
 				fixup_free_igp_null, ANY_ROUTE},
@@ -180,6 +183,35 @@ int w_is_myself(struct sip_msg *msg, char *uri, str *s2)
 		}
 		ret = check_self(&puri.host, (puri.port.s) ? puri.port_no : 0,
 				(puri.transport_val.s) ? puri.proto : 0);
+	} else {
+		ret = check_self(&suri, 0, 0);
+	}
+	if(ret != 1)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+int w_is_myhost(struct sip_msg *msg, char *uri, str *s2)
+{
+	int ret;
+	str suri;
+	struct sip_uri puri;
+
+	if(fixup_get_svalue(msg, (gparam_p)uri, &suri) != 0) {
+		LM_ERR("cannot get the URI parameter\n");
+		return -1;
+	}
+	if(suri.len > 4
+			&& (strncmp(suri.s, "sip:", 4) == 0
+					|| strncmp(suri.s, "sips:", 5) == 0)) {
+		if(parse_uri(suri.s, suri.len, &puri) != 0) {
+			LM_ERR("failed to parse uri [%.*s]\n", suri.len, suri.s);
+			return -1;
+		}
+		ret = check_self(&puri.host, 0, 0);
 	} else {
 		ret = check_self(&suri, 0, 0);
 	}
