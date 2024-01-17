@@ -1037,7 +1037,6 @@ TLS transport for Kamailio.
 %package    tls_wolfssl
 Summary:    TLS transport for Kamailio based on wolfSSL
 Group:      %{PKGGROUP}
-Requires: wolfssl>=5.6.4
 BuildRequires: pkgconfig(wolfssl)
 
 %description    tls_wolfssl
