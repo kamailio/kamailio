@@ -604,7 +604,7 @@ static int get_validity(str *res, int local, int bound, sip_msg_t *msg)
 			goto err;
 	}
 
-	mem = BIO_new(BIO_s_mem());
+	mem = wolfSSL_BIO_new(wolfSSL_BIO_s_mem());
 	if(!mem) {
 		ERR("Error while creating memory BIO\n");
 		goto err;
@@ -779,7 +779,7 @@ static int cert_to_buf(X509 *cert, char **bufptr, size_t *len)
 	static char buf[MAX_CERT_SIZE];
 	BIO *mem = NULL;
 
-	mem = BIO_new(BIO_s_mem());
+	mem = wolfSSL_BIO_new(wolfSSL_BIO_s_mem());
 	if(!mem) {
 		ERR("Error while creating memory BIO\n");
 		goto err;

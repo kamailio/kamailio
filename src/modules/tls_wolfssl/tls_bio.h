@@ -45,7 +45,7 @@ struct tls_bio_mbuf_data
 
 WOLFSSL_BIO_METHOD *tls_BIO_mbuf(void);
 WOLFSSL_BIO *tls_BIO_new_mbuf(struct tls_mbuf *rd, struct tls_mbuf *wr);
-int tls_BIO_mbuf_set(BIO *b, struct tls_mbuf *rd, struct tls_mbuf *wr);
+int tls_BIO_mbuf_set(WOLFSSL_BIO *b, struct tls_mbuf *rd, struct tls_mbuf *wr);
 
 
 /** initialize an mbuf structure.

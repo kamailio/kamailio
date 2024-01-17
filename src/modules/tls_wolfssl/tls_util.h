@@ -34,7 +34,7 @@
 #include "tls_domain.h"
 
 static inline int tls_err_ret(
-		char *s, SSL *ssl, tls_domains_cfg_t **tls_domains_cfg)
+		char *s, WOLFSSL *ssl, tls_domains_cfg_t **tls_domains_cfg)
 {
 	long err;
 	int ret = 0;
@@ -43,11 +43,11 @@ static inline int tls_err_ret(
 	if((*tls_domains_cfg)->srv_default->ctx
 			&& (*tls_domains_cfg)->srv_default->ctx[0]) {
 		if(ssl) {
-			sn = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+			sn = wolfSSL_get_servername(ssl, WOLFSSL_SNI_HOST_NAME);
 		}
 		while((err = ERR_get_error())) {
 			ret = 1;
-			ERR("%s%s (sni: %s)\n", s ? s : "", ERR_error_string(err, 0),
+			ERR("%s%s (sni: %s)\n", s ? s : "", wolfSSL_ERR_error_string(err, 0),
 					(sn) ? sn : "unknown");
 		}
 	}

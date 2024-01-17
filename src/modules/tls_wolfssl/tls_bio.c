@@ -110,7 +110,7 @@ WOLFSSL_BIO *tls_BIO_new_mbuf(struct tls_mbuf *rd, struct tls_mbuf *wr)
 /** sets the read and write mbuf for an  mbuf BIO.
  * @return 1 on success, 0 on error (openssl BIO convention).
  */
-int tls_BIO_mbuf_set(BIO *b, struct tls_mbuf *rd, struct tls_mbuf *wr)
+int tls_BIO_mbuf_set(WOLFSSL_BIO *b, struct tls_mbuf *rd, struct tls_mbuf *wr)
 {
 	struct tls_bio_mbuf_data *d;
 
@@ -131,7 +131,7 @@ int tls_BIO_mbuf_set(BIO *b, struct tls_mbuf *rd, struct tls_mbuf *wr)
  * (internal openssl use via the tls_mbuf method)
  * @return 1 on success, 0 on error.
  */
-static int tls_bio_mbuf_new(BIO *b)
+static int tls_bio_mbuf_new(WOLFSSL_BIO *b)
 {
 	struct tls_bio_mbuf_data *d;
 
@@ -151,7 +151,7 @@ static int tls_bio_mbuf_new(BIO *b)
  * (internal openssl use via the tls_mbuf method)
  * @return 1 on success, 0 on error.
  */
-static int tls_bio_mbuf_free(BIO *b)
+static int tls_bio_mbuf_free(WOLFSSL_BIO *b)
 {
 	TLS_BIO_DBG("tls_bio_mbuf_free called (%p)\n", b);
 	if(unlikely(b == 0))
@@ -174,7 +174,7 @@ static int tls_bio_mbuf_free(BIO *b)
  * @return bytes read on success (0< ret <=dst_len), -1 on empty buffer & sets
  *  should_retry_read, -1 on some other errors (w/o should_retry_read set).
  */
-static int tls_bio_mbuf_read(BIO *b, char *dst, int dst_len)
+static int tls_bio_mbuf_read(WOLFSSL_BIO *b, char *dst, int dst_len)
 {
 	struct tls_bio_mbuf_data *d;
 	struct tls_mbuf *rd;
@@ -226,7 +226,7 @@ static int tls_bio_mbuf_read(BIO *b, char *dst, int dst_len)
  * @return bytes written on success (0<= ret <=src_len), -1 on error or buffer
  * full (in this case sets should_retry_write).
  */
-static int tls_bio_mbuf_write(BIO *b, const char *src, int src_len)
+static int tls_bio_mbuf_write(WOLFSSL_BIO *b, const char *src, int src_len)
 {
 	struct tls_bio_mbuf_data *d;
 	struct tls_mbuf *wr;
@@ -296,7 +296,7 @@ static long tls_bio_mbuf_ctrl(WOLFSSL_BIO *b, int cmd, long arg1, void *arg2)
 }
 
 
-static int tls_bio_mbuf_puts(BIO *b, const char *s)
+static int tls_bio_mbuf_puts(WOLFSSL_BIO *b, const char *s)
 {
 	int len;
 

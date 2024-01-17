@@ -31,7 +31,7 @@
 #include <wolfssl/ssl.h>
 
 // WOLFFIX
-#define SSL_get_cipher_version(s) \
+#define GET_CIPHER_VERSION(s) \
 	wolfSSL_CIPHER_get_version(wolfSSL_get_current_cipher(s))
 
 
@@ -427,7 +427,7 @@ int tls_accept(struct tcp_connection *c, int *error)
 		tls_log = cfg_get(tls, tls_cfg, log);
 		LOG(tls_log, "tls_accept: new connection from %s:%d using %s %s %d\n",
 				ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
-				SSL_get_cipher_version(ssl), wolfSSL_get_cipher_name(ssl),
+				GET_CIPHER_VERSION(ssl), wolfSSL_get_cipher_name(ssl),
 				SSL_get_cipher_bits(ssl, 0));
 		LOG(tls_log, "tls_accept: local socket: %s:%d\n",
 				ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
@@ -490,7 +490,7 @@ int tls_connect(struct tcp_connection *c, int *error)
 		tls_log = cfg_get(tls, tls_cfg, log);
 		LOG(tls_log, "tls_connect: new connection to %s:%d using %s %s %d\n",
 				ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
-				SSL_get_cipher_version(ssl), wolfSSL_get_cipher_name(ssl),
+				GET_CIPHER_VERSION(ssl), wolfSSL_get_cipher_name(ssl),
 				SSL_get_cipher_bits(ssl, 0));
 		LOG(tls_log, "tls_connect: sending socket: %s:%d \n",
 				ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
