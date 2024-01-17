@@ -1008,6 +1008,9 @@ Group:          %{PKGGROUP}
 Requires:       kamailio = %version
 BuildRequires:  gcc-c++
 
+%description    sqlang
+Squirrel Language (SQLang) for Kamailio
+
 
 %package    sqlite
 Summary:    SQLite database connectivity for Kamailio
