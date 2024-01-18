@@ -26,9 +26,6 @@
 #ifndef _TLS_UTIL_H
 #define _TLS_UTIL_H
 
-#include <wolfssl/options.h>
-#include <wolfssl/ssl.h>
-
 #include "../../core/dprint.h"
 #include "../../core/str.h"
 #include "tls_domain.h"

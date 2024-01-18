@@ -26,10 +26,6 @@
 
 #include <stdlib.h>
 
-#include <wolfssl/options.h>
-#include <wolfssl/ssl.h>
-
-// # include <wolfssl/openssl/ui.h>
 #include "../../core/ut.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/pt.h"
