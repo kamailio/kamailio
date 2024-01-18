@@ -29,9 +29,6 @@
 #include "../../core/str.h"
 #include "tls_domain.h"
 
-#include <wolfssl/options.h>
-#include <wolfssl/ssl.h>
-
 tls_domains_cfg_t *tls_load_config(str *filename);
 
 /*

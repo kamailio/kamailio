@@ -29,7 +29,6 @@
 #define __tls_ct_wrq_h
 
 #include "tls_ct_q.h"
-#include "tls_server.h"
 #include "../../core/tcp_conn.h"
 
 
