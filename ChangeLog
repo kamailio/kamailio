@@ -1,3 +1,739 @@
+===================== 2024-01-18 Version 5.7.4 Released =====================
+
+===================== Changes Since Version 5.7.3 ===========================
+
+
+commit 116ce498cba50a071ee878e803dbcf63530688cc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 18 10:49:23 2024 +0100
+
+    Makefile.defs: version set to 5.7.4
+
+commit 743cfae479bed2e5f09ed8e1cd4f3a959299e3ab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 18 10:30:20 2024 +0100
+
+    pkg: deb specs updated for v5.7.4
+
+commit d5cf7148375feb7d4202a07023caaeaeda3396c7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 18 09:30:27 2024 +0100
+
+    pkg: version set to 5.7.4 for rpms and alpine specs
+
+commit 3b79c1ef3cc6c1019fe7cb99ff77e0c51d8e789a
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Jan 18 06:21:55 2024 +0800
+
+    tls_wolfssl: clean-upâusing wolfSSL native naming for functions / structs
+    
+    (cherry-pick from 5bbb224fdad1770150dd2fc37c69393aeda96d40)
+
+commit 784bb3b397cc1922d06054c611c443dd19216504
+Author: Elena-Ramona Modroiu <anomarme@users.noreply.github.com>
+Date:   Tue Jan 16 16:07:43 2024 +0100
+
+    tls: set parameter name for tls_h_mod_randctx()
+    
+    - without it fails to compile on Unbuntu 22.04 with low latency kernel
+    
+    (cherry picked from commit 03456e5e5983e2236b8e182cf3317d14ebf34e18)
+
+commit a539ca32ec3a898e354aab90d899b99564064392
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 11 08:21:00 2024 +0100
+
+    core: keep listen socket even if advertise address does not resolve
+    
+    - the core advertise_address parameter works in the same fashion
+    - previously it was starting by skipping the listen, which resulted in
+      unexpected runtime list of sockets
+    
+    (cherry picked from commit b50036200c5bc09fd2d412a18585b42d63763b27)
+
+commit 2dff6f52d1393cf8eabe714262ec8e56aad0d212
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Wed Jan 10 08:52:03 2024 +0100
+
+    http_async_client: exit mod_init if tm is not loaded
+    
+    (cherry picked from commit 5a40d1ef1b484c4fc437a3f0183a101241e80313)
+
+commit dc59286c26e9799f86e698a9698c9da846a2a41a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 9 14:06:21 2024 +0100
+
+    htable: read rpc number value as long
+    
+    - remove autoconvert for number, it is only for string values
+    - GH #3674
+    
+    (cherry picked from commit 577fb11010ff61af3c4b567581c0bbc5404654c8)
+
+commit 37a07037b6e3485f3ddd1b27b1998af6e4283bcb
+Author: Dennis Yurasov <dennis-y@yandex-team.ru>
+Date:   Wed Dec 20 16:11:56 2023 +0300
+
+    dialog: fixed saving dialogs on shutdown that are already loaded at startup when using db_mode 3
+    
+    - The dialogs that loaded at startup are not saved in DB on shutdown, and so not loaded at restart,
+      fixes issue #3669
+    
+    (cherry picked from commit 2d00ce546bb0852dc1784d5bc2e794d06f919577)
+
+commit be5b4b160ecff8dc398735fbd28ceb71845f1bef
+Author: Nikolay Ivanuschak <ivanuschak.nikolay@gmail.com>
+Date:   Mon Dec 18 22:20:50 2023 +0300
+
+    core: fixed haproxy protocol parser
+    
+    fixes GH #3683
+    
+    (cherry picked from commit c5237830f3e7fbeec403a0190471a066081c1117)
+
+commit fc0bd88b55121e3588f5793480f0594e44bf2b17
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 26 17:51:48 2023 +0100
+
+    statsd: use bool type for local variable to match return of function
+    
+    (cherry picked from commit 0186246fce8f0e4bb46b30c05174983cd957a3ba)
+
+commit 6cd8f2acc0601fbd040999d776f15b828d6e4946
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Dec 24 12:20:57 2023 +0100
+
+    tmx: rework cleaning up on init failure
+    
+    (cherry picked from commit 5192e5d275761ccd1af49d4bf9dd12e1438947b7)
+
+commit 916d02d883dc938247576bdf8f5c5b23a588cb9c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 22 14:50:59 2023 +0100
+
+    tm: make lookup event_route[tm:local-response] only once
+    
+    - related to issue #3064 and PR #3687
+    
+    (cherry picked from commit 1f5444fd2e25d227ffd70f1087d057a3b8002558)
+
+commit 5a26d9e9fba36a49a93bb3b886836615f62ed3d1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 18 12:31:34 2023 +0100
+
+    pv: removed unnecessary condition
+    
+    (cherry picked from commit 2f43510be37c157f800389dfb432b6c52d7435a7)
+
+commit 2d385c1983a921a95fb392e8aea0332fdc10a387
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 18 12:22:25 2023 +0100
+
+    pv: typo in transformation log message
+    
+    (cherry picked from commit ca2a9479adf720e67bf50c9d2795cc8937e223dc)
+
+commit 0ca30e87655798e3841c005abb63ca66bb2ca0aa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Dec 16 20:04:08 2023 +0100
+
+    core: srjson - init vars and check scanned values
+    
+    (cherry picked from commit 678b1a68de86d9539adeaf0262d9735b8d435077)
+
+commit 4371adffc07bb555e2a52dedd6cd5afa2631287a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 13 12:23:23 2023 +0100
+
+    app_python3: check allocated pointer
+    
+    (cherry picked from commit 49b3b90cd229b7c4da06b61cdfd782450d383cc9)
+
+commit 62b76c076ff0f36b847a13c180b7d5090e98d94e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 13 12:15:28 2023 +0100
+
+    core: check if conversion could not be done
+    
+    (cherry picked from commit 077651fa3bfd50e0f654c907f3783b1421497bd5)
+
+commit 0712576dc4d57ba41e45012486dd206d955c35e6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 13 12:08:56 2023 +0100
+
+    registrar: check returned branch pointer
+    
+    (cherry picked from commit 5d641f56fc1bc342d9be008ecd96959e114fef66)
+
+commit 1189bb2962dd80c21a1d497125f3199ccc018270
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 13 12:02:01 2023 +0100
+
+    tm: check get_t() result for consistency
+    
+    (cherry picked from commit 1191ab4e5e03b35714ec1ad9d9bf2dd9665c71fd)
+
+commit 37621005e38a0191a93fbaf4f39b8b88c7486c9d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Dec 9 20:07:37 2023 +0100
+
+    dialog: check first the size
+    
+    (cherry picked from commit 9db18bc48bff0d230e66973a45c8e72e1b7744e8)
+
+commit 81dce4e5003f3c00301671144ac67877f5824b72
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 8 16:23:03 2023 +0100
+
+    core: xavp - info long when skipping serializing a field
+    
+    (cherry picked from commit 5d97afefd2a8f53072a36b6eb8927c180fb984c9)
+
+commit 3046d01bed4bdd0fe763fd770ffc8f7aeeae3418
+Author: PeÌter BarabaÌs <peter.barabas@securesoft.hu>
+Date:   Wed Dec 6 21:16:46 2023 +0100
+
+    uac: fix socket length settings
+    
+    - set _uac_req.s_sock.len value to 0 in pv_set_uac_req() method in case of "all" case
+    - change setting of _uac_req.s_apasswd.len to _uac_req.s_sock.len in pv_set_uac_req() method in case of "sock" case
+    
+    (cherry picked from commit 10519d199f6cac116399f4473bd82f2b08de72ba)
+
+commit 065203150aaf2f99bd6fe40ce5ffb960bd430c16
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 5 10:27:32 2023 +0100
+
+    dialog: prevent duplicate of leg1 attributes in json for dmq
+    
+    - reported by #3656
+    
+    (cherry picked from commit ca7e1e49aecd3e0f12cc783e3b97868980f1d3d2)
+
+commit 18fead63dca0982df500b35b7c4e2d06550d9b40
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 20 10:07:50 2023 +0100
+
+    core: set proto on fixing forward actions
+    
+    (cherry picked from commit e51ccd11fe51f2d53dd7719b8fdec561a6ba7494)
+
+commit d411c6ea4358e6d9dd367349e877ed5f5bf4bb2f
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Tue Jan 16 09:42:27 2024 +0100
+
+    dialog: don't send the BYE if dialog is in deleted state (#3714)
+    
+    (cherry picked from commit 695f155f3a127f0bbe220a6b44a0fc3887e1e4be)
+
+commit b6796b110adbe4dec7ac1acb1d7d70bdc58bf1c2
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Jan 16 16:36:25 2024 +0800
+
+    tls_wolfssl: mask outer make DESTDIR=XX if building internal submodule
+
+commit d5ebc2716992c2480c604555511511ce043bead7
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Jan 16 16:13:55 2024 +0800
+
+    tls_wolfssl: update to v5.6.6-stable
+
+commit 449155221586294d716e760fbabbd4e101ad1be2
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Mon Jan 15 21:32:53 2024 +0800
+
+    outbound: update to OpenSSL 3 API
+    
+    (cherry-pick from fe5c7125c66e37d2db032a63328ad713738a4b0c)
+
+commit bbbcb27040c632642c50209455efbb8225888723
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sun Jan 14 14:08:03 2024 +0800
+
+    tls: remove thread-enablement on EVP_RAND_CTX
+    
+    - with late initialisation it is not necessary to enable thread locking
+      on EVP_RAND_CTX
+    - the function remains but is not used in case requirements change
+      with OpenSSL >= 3.2
+    
+    (cherry-pick from 8dffc45ee91aeed839efb38d17040359dcac953a)
+
+commit c5ed0e65b2530443b1367986dac2b3da111c0701
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Jan 11 08:03:07 2024 +0800
+
+    tls: historical code comment on repeating SSL_CTX per worker
+    
+    (cherry-pick from 29007ada5bc9e07ede3cdbce285f04d1298c0612)
+
+commit 1eb1d50e676fe8f81521c209f37ffe907fa9cf94
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Fri Jan 5 20:56:39 2024 +0800
+
+    outbound: build, fix missing argument name
+    
+    (cherry-pick from 4708f537d7f5d28123b48cd89474a4931dd698ad)
+
+commit fe0968687d5ee7918f6a18591623fcb1b5fe2004
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Jan 4 21:47:23 2024 +0800
+
+    outbound: OpenSSL 1.1.1 thread-local, init libssl in thread
+    
+    (cherry-pick from 689de2736f5c92f11860e5854ccd95c84239f032)
+
+commit 31e42aade0a42aac8a128a4af3f37edb23bb3ab8
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Jan 4 20:11:21 2024 +0800
+
+    outbound: OpenSSL 3.x thread-local, init libssl in thread
+    
+    (cherry-pick from 4742c8131aba878c4fc954e42b656b9d4bafdd24)
+
+commit 7060ad2b0ebf90288be9d8d7e9d789ccbb3aebdc
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Fri Jan 5 07:38:56 2024 +0800
+
+    tls: OpenSSL 3.x/1.1.1 thread-local, clean-up dead code and preprocessor blocks
+    
+    (cherry-pick from 798cc26908395d2ba21015684ad6f0ac4f012b2e)
+
+commit e73b07e9835ba5f0b89065616d8cd6390898d700
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Fri Jan 5 08:09:34 2024 +0800
+
+    tls: thread-local, revert 1a9b0b6361 as double-layer locking is redundant
+    
+    - the 2nd lock was put in place as defensive programming for shm contention
+    - GH #3695: the underlying issue is early init of thread-locals
+    
+    (cherry-pick from 1c70775530b1a3a905e8a983610cb0d092b0d240)
+
+commit c011f518b083fc2f7da3a08a2c1a306c6122b04c
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Jan 4 21:56:00 2024 +0800
+
+    tls: OpenSSL 1.1.1 thread-local, init libssl in thread
+    
+    - no need for RAND workaround; default is OpenSSL 1.1.1 RAND
+    - linux/pthreads will handle forking
+    
+    (cherry-pick from 7b531cfe038fae5e3414ac74c4e076c10e32b86c)
+
+commit 90ea4120c04cb70f858f417309ee4fab71a070e7
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Jan 4 21:51:15 2024 +0800
+
+    tls: fix compilation with OpenSSL <= 1.1.1
+    
+    (cherry-pick from 7111687e1107261bcdd7a9f8cc90959754c93272)
+
+commit ed2d70359723458089dd8a62fe1e37a60dd83869
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Jan 4 20:00:09 2024 +0800
+
+    tls: OpenSSL 3.x thread-local, init libssl in thread or PROC_SIPINIT
+    
+    - avoid initialising ERR_STATE in rank 0(thread#1)
+    
+    (cherry-pick from e49a60e1052c6c1dcebe7f78f2ac970338eabe2e)
+
+commit bfc63986ae7239a64803b8f20f634522bc584948
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Dec 12 15:38:33 2023 +0100
+
+    pkg/kamailio/deb: override lintian error on stretch [skip ci]
+    
+    (cherry picked from commit aaeb54c8b630b4aac50df75ff430ad5baea6746c)
+
+commit 75aecd3f2e10509d5ed71cc5e89ae6f5c3bd0fea
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 12 13:08:18 2023 +0100
+
+    pv: remove extra len increment for some uri transformations
+    
+    (cherry picked from commit 3fe9a279abecf6f367ce9fd2d4b085c41c87ad77)
+
+commit 8674b333300d5829bff9cb4993886bcf7bea249b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 8 22:10:36 2023 +0100
+
+    core: parse privacy recompute lenght of rest to parse
+    
+    (cherry picked from commit 804ee651b45498727196886c97cb55d20b254c4a)
+
+commit b634dc7f4d8f1653502328488f0dded134547b54
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 8 12:34:56 2023 +0100
+
+    tls: init early the local lock for memory
+    
+    - needed to done before mod param init_mode is set
+    - runtime uses the modparam to do lock/unlock
+    - #3668
+    
+    (cherry picked from commit 1a9b0b63617afebcee2aecb3b2240d7684ecabc2)
+
+commit 63e8749132257ef1f8c8d86ec78f6db2c699f1c8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 7 13:00:50 2023 +0100
+
+    tls: rework init mode 1 to set PTHREAD_PROCESS_SHARED
+    
+    - pthread mutex set in shm
+    - GH #3635
+    
+    (cherry picked from commit 4b068f49b618dca5fa85a1687bd9054c1d98ae6a)
+
+commit b29d5808505aa072fd23b59adf7943fb13ea98a2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Nov 29 17:21:59 2023 +0100
+
+    Makefile.groups: fix ktls when KTLS_INCLUDE_TLSA is not set
+    
+    fix #3660
+    
+    (cherry picked from commit aef29af56cabaf626e2ae552ae69c3cd2f692a27)
+
+commit 0d028d9a4900411856a64ab31f81f57e3fc68099
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Nov 24 14:21:27 2023 +0100
+
+    pkg/kamailio/deb: include tlsa in tls package [skip ci]
+    
+    * skip xenial since build fails
+
+commit 7f07a6ef9ae90baee4281394d0dcf505b30c8fcb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 24 10:38:49 2023 +0100
+
+    Makefile.groups: tlsa in packaging group ktls if KTLS_INCLUDE_TLSA=yes
+    
+    - if not, then it is in separate group module_group_ktlsa
+    
+    (cherry picked from commit a49c8d8d968e31a539e47db6c06a0756e4be55e3)
+
+commit 1de0032363ffb0fb6e257497a173f70deac58525
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:48 2023 +0100
+
+    websocket: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit 93609b53d70df84788741800fc2b80c5502a3358)
+
+commit 292c8764b22d3cdb78a85f101b0359424d138d5d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    usrloc: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit 186ae3eef7f3e1b5ad6222c98a2f35a487deb316)
+
+commit bf665fc6d398009a0643cb60f9dad95f66cdb17c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    tsilo: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit a9d29645ab417c9b0f7afc6745e6dd54bdac07b4)
+
+commit d5829f56bfc36133ba6db124bf738a6b9a90c904
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    tmx: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit d4c0e1bbcb0e423a545650aad4fbb4b2da8bb488)
+
+commit 21abe7ab16d450f1b085a97a4c0f416d45ac2daf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    sst: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit 96bdd69945af9f08e6c89fb725248b8b268ee71a)
+
+commit 9a768e006eb0b6ab508ebc5385690eb87711e14f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    siptrace: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit 92cdcb4bd280850743b3a952f1b6003be69daaf2)
+
+commit 9a658e0533e592641f86db037eb398ae34f65848
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    sipcapture: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit 01abed3ef17f6a5f0f215675a2980f0b9a4267fd)
+
+commit 1467f7517b6256a712eeb93288561934477f36a4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    registrar: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit 0516fb802628ddb659a130aa2959df5b0b8e0c96)
+
+commit 59c32aef1e40edcfb081a18728b4e6029d2d2be8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    p_usrloc: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit a951cb44ecbcd0f9cba937176ea5117c6a1d15b6)
+
+commit 21f4e3c9ce4a6d7ae87ad746742b283dde621a50
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    nat_traversal: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit f35f327a528670dcca0d7a767643a222f1aebd89)
+
+commit 51937a32b205288ebeddfac7c4310b1f3ce698e7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    msilo: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit 609960812c572d2d19ba774b064fdf7e2ac45765)
+
+commit 876fa1d0667acb2c46e5b8643cdb994546e45b21
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    ims_usrloc_pcscf: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit d29b3d6515f74d4cd7417dc9030d8ca53d57054e)
+
+commit e96ecec877f2f9bc13000c7bd752ed8f1ec41935
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    ims_registrar_scscf: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit 641d29820f8536247c49d5fb4caa882764dbd9af)
+
+commit b5a2b0c782a18cd807d6d4851baa9be2bd299a0c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    ims_icscf: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit 39514660001b37eabfe3af6818949586fae9a4bf)
+
+commit 6f3f297ea64a8fed4c77fdaf2abc90e468f6443c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    ims_auth: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit 524eeca084e0a0e61ad80f349ea79f8b1c3031f6)
+
+commit c8a09510204e7d0ed9e486f4dc871353f1820866
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    imc: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit 407168804cc1806b857c2ce78399e02a81692d1e)
+
+commit 583a403d58c3e0e0b64a354d2e5fe4a28192403f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    http_async_client: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit 40dd9f4e0fbe54046b7786e3572b491103af03d1)
+
+commit d343b6d99cdb9a23ec5bfa332a34245cdce4c3af
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 23 12:35:47 2023 +0100
+
+    dialog: use literal module name for stats group
+    
+    - prevent conflicts with global exports
+    
+    (cherry picked from commit d434270933f06b4de43cdf6d4b464bd264a3cb92)
+
+commit 84b1543cf7b77bfffba0c3e6369b4cb06bf149b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 22 14:52:59 2023 +0100
+
+    dialog: do not print module name in log messages
+    
+    - it is added automatically
+    
+    (cherry picked from commit e45c97d112c7c396ae0a11b7a431582a71361e5b)
+
+commit 48fd5246c186524413d452032320378d9c87afc4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 22 14:52:18 2023 +0100
+
+    avp: do not print module name in log messages
+    
+    - it is added automatically
+    
+    (cherry picked from commit 463d5b34390e330a2b733deb673c1c77e5be9fcb)
+
+commit c97e6b96821f0ffaf449643ed2229086b7bf0001
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 22 14:26:23 2023 +0100
+
+    avpops: do not print module name in log messages
+    
+    - it is added automatically
+    
+    (cherry picked from commit 89a95ce1abefd772c0f09054473b07bbfc5426bc)
+
+commit 3ab5e87f2e162704a261c3a45eeb5c000b6ddb99
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 22 14:20:13 2023 +0100
+
+    textops: do not print module name in log messages
+    
+    - it is added automatically
+    
+    (cherry picked from commit ba1c0424732f1f2ab01bfd078ee272221a6b3e10)
+
+commit 069876708076154387a599bf039edd83f5067974
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 22 14:02:59 2023 +0100
+
+    app_ruby: use module name prefix for exports structure
+    
+    (cherry picked from commit 65322a8ea66ed18fb2d089ade54702341e064944)
+
+commit 8c5a7a8db1309515a1d2f167754a4ee046684569
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 22 13:59:14 2023 +0100
+
+    app_jsdt: use module name prefix for exports structure
+    
+    (cherry picked from commit a81e3c45dad338378fc8cf417bb0e9da1172a854)
+
+commit 2442079e05b410cc9393fd15daf1f94169f80139
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 21 15:43:11 2023 +0100
+
+    app_lua: use module name prefix for exports structure
+    
+    (cherry picked from commit 35e191e1bea5463e766cb6f8f2ffb4862bd812a8)
+
+commit ef9c5e79b6923401a686c31a15af390e376e63e3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 21 15:39:21 2023 +0100
+
+    app_lua: reformat exports structures
+    
+    (cherry picked from commit c6feb52c97bbd3fc33dc837d2b23e56c75f09583)
+
+commit d38cc3c15698b554c177e77e05f7393ae6a1baa7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 21 15:35:04 2023 +0100
+
+    app_python3s: use module name prefix for exports structure
+    
+    (cherry picked from commit ebe77a2068c5073b436a1f8fefdfd689c9010816)
+
+commit 340efb9e3951fb4d15ae32e834ac58470b2c06f1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 21 15:32:57 2023 +0100
+
+    app_python3s: reformat exports structures
+    
+    (cherry picked from commit 9fb9cbddee8974a1733b999807cc1943248753f7)
+
+commit 986cadb088805f5126c61d55fc0b72cec6fd3d18
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 21 15:29:49 2023 +0100
+
+    app_python3: use module name prefix for exports structure
+    
+    (cherry picked from commit 114d6fe510d7c1876782054ed89e4017d39d5f69)
+
+commit 4d04bafdba440b82a7da8424682b06db23721c8f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 21 15:26:23 2023 +0100
+
+    app_python3: reformat exports structures
+    
+    (cherry picked from commit 042bb9d10e12a256f9e4461031347e09b89fbe98)
+
+commit d2f5603aff1bad106340b024d4a33f2be7791980
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 21 15:14:39 2023 +0100
+
+    core: resolve - variables initialisation
+    
+    (cherry picked from commit 1623f9ed1728455b72abf0a74f06bfd24365cefb)
+
+commit 55584b4de5ac60a1385edf245fc7f5bb516c271e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 21 13:57:52 2023 +0100
+
+    core/mem: tlsf - cast to char* for pointer operations
+    
+    (cherry picked from commit d0a353342b559191aafc732174773e132554694a)
+
+commit 8779039f655e6cdc27c35a0145985de00ecef81e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 21 13:30:26 2023 +0100
+
+    core: resolve - cast after pointer operations for RES_AR
+    
+    (cherry picked from commit 30c42aab767d777e3beb1493165458489957e92d)
+
+commit 9b72b6dd4ffcf67f47f9d51c862e7a101c110c3f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Nov 23 13:29:15 2023 +0100
+
+    github: refresh alpine workflow [skip ci]
+
+commit 7ea47e5fc72d08384223fb479f6bcc098e236990
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Nov 23 13:27:51 2023 +0100
+
+    pkg/docker: set branch 5.7 and refresh [skip ci]
+
 ===================== 2023-11-17 Version 5.7.3 Released =====================
 
 ===================== Changes Since Version 5.7.2 ===========================
