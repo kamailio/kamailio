@@ -47,9 +47,10 @@ Ovidiu Sas
               3.9. isdsturiset()
               3.10. pv_printf(var, str)
               3.11. is_myself(uri)
-              3.12. setdebug(level)
-              3.13. resetdebug()
-              3.14. km_append_branch([uri])
+              3.12. is_myhost(uri)
+              3.13. setdebug(level)
+              3.14. resetdebug()
+              3.15. km_append_branch([uri])
 
         4. RPC Commands
 
@@ -102,8 +103,9 @@ Ovidiu Sas
    1.9. isdsturiset usage
    1.10. pv_printf usage
    1.11. is_myself usage
-   1.12. setdebug usage
-   1.13. resetdebug usage
+   1.12. is_myhost usage
+   1.13. setdebug usage
+   1.14. resetdebug usage
 
 Chapter 1. Admin Guide
 
@@ -128,9 +130,10 @@ Chapter 1. Admin Guide
         3.9. isdsturiset()
         3.10. pv_printf(var, str)
         3.11. is_myself(uri)
-        3.12. setdebug(level)
-        3.13. resetdebug()
-        3.14. km_append_branch([uri])
+        3.12. is_myhost(uri)
+        3.13. setdebug(level)
+        3.14. resetdebug()
+        3.15. km_append_branch([uri])
 
    4. RPC Commands
 
@@ -206,9 +209,10 @@ Chapter 1. Admin Guide
    3.9. isdsturiset()
    3.10. pv_printf(var, str)
    3.11. is_myself(uri)
-   3.12. setdebug(level)
-   3.13. resetdebug()
-   3.14. km_append_branch([uri])
+   3.12. is_myhost(uri)
+   3.13. setdebug(level)
+   3.14. resetdebug()
+   3.15. km_append_branch([uri])
 
 3.1. setsflag(flag)
 
@@ -391,7 +395,8 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
 
    Meaning of the parameters is as follows:
      * uri - Valid SIP URI or IP address to check against the list of
-       local IP addresses or domains. The parameter value can contain
+       local IP addresses or domains, matching as well the port and
+       protocol if they are provided. The parameter value can contain
        pseudo-variables.
 
    This function can be used from ANY_ROUTE.
@@ -403,7 +408,27 @@ if(is_myself("$fu")) {
 }
 ...
 
-3.12. setdebug(level)
+3.12. is_myhost(uri)
+
+   Check if the host part of the parameter matches a local domain or IP
+   address.
+
+   Meaning of the parameters is as follows:
+     * uri - Valid SIP URI, hostname of IP address to check against the
+       list of local IP addresses or domains. If it is a SIP URI, the port
+       and protocol are ignored. The parameter value can contain
+       pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. is_myhost usage
+...
+if(is_myhost("$tu")) {
+    ...
+}
+...
+
+3.13. setdebug(level)
 
    Set the debug log level per process.
 
@@ -413,7 +438,7 @@ if(is_myself("$fu")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. setdebug usage
+   Example 1.13. setdebug usage
 ...
 setdebug("1");
 ...
@@ -421,19 +446,19 @@ $var(level) = 2;
 setdebug("$var(level)");
 ...
 
-3.13. resetdebug()
+3.14. resetdebug()
 
    Reset the local debug log level back to the value of core parameter
    'debug'.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.13. resetdebug usage
+   Example 1.14. resetdebug usage
 ...
 resetdebug();
 ...
 
-3.14. km_append_branch([uri])
+3.15. km_append_branch([uri])
 
    This function was replaced by append_branch() from corex module,
    starting with version 4.0.0.
