@@ -183,6 +183,7 @@ static int ki_gcrypt_aes_encrypt_helper(
 		SYS_MEM_ERROR;
 		goto error;
 	}
+	encypted_txt[0] = '\0';
 	gcry_ret = gcry_cipher_encrypt(cipher_hd, // gcry_cipher_hd_t h
 			encypted_txt,					  // unsigned char *out
 			ins->len,						  // size_t outsize
@@ -349,6 +350,7 @@ static int ki_gcrypt_aes_decrypt_helper(
 		SYS_MEM_ERROR;
 		goto error;
 	}
+	decrypted_txt[0] = '\0';
 	gcry_ret = gcry_cipher_decrypt(cipher_hd, // gcry_cipher_hd_t h
 			decrypted_txt,					  // unsigned char *out
 			etext.len,						  // size_t outsize
