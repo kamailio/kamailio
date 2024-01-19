@@ -1011,7 +1011,7 @@ int tr_eval_string(
 				return -1;
 			}
 			if(!(val->flags & PV_VAL_INT)
-					&& (str2int(&val->rs, (unsigned int *)&val->ri) != 0)) {
+					&& (str2slong(&val->rs, &val->ri) != 0)) {
 				LM_ERR("value is not numeric (cfg line: %d)\n",
 						get_cfg_crt_line());
 				return -1;
@@ -1036,6 +1036,8 @@ int tr_eval_string(
 			memcpy(s, st.s, st.len);
 			s[st.len] = '\0';
 			t = val->ri;
+			memset(&tmv, 0, sizeof(struct tm));
+			_tr_buffer[0] = '\0';
 			localtime_r(&t, &tmv);
 			val->rs.len = strftime(_tr_buffer, TR_BUFFER_SIZE - 1, s, &tmv);
 			pkg_free(s);
