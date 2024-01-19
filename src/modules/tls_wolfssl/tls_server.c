@@ -258,7 +258,7 @@ static int tls_complete_init(struct tcp_connection *c)
 		goto error;
 	}
 	DBG("Using initial TLS domain %s (dom %p ctx %p sn [%s])\n",
-			tls_domain_str(dom), dom, dom->ctx[process_no],
+			tls_domain_str(dom), dom, dom->ctx[0],
 			ZSW(dom->server_name.s));
 
 	data = (struct tls_extra_data *)shm_malloc(sizeof(struct tls_extra_data));
@@ -267,7 +267,7 @@ static int tls_complete_init(struct tcp_connection *c)
 		goto error;
 	}
 	memset(data, '\0', sizeof(struct tls_extra_data));
-	data->ssl = wolfSSL_new(dom->ctx[process_no]);
+	data->ssl = wolfSSL_new(dom->ctx[0]);
 	data->rwbio = tls_BIO_new_mbuf(0, 0);
 	data->cfg = cfg;
 	data->state = state;
