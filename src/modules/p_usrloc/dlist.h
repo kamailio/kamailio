@@ -118,5 +118,13 @@ int get_all_ucontacts(void *, int, unsigned int, unsigned int part_idx,
  */
 int find_domain(str *_d, udomain_t **_p);
 
+/*!
+ * \brief Find and return usrloc domain
+ *
+ * \param _n domain name
+ * \param _d usrloc domain (location table)
+ * \return 0 on success, -1 on failure
+ */
+int get_udomain(const char *_n, udomain_t **_d);
 
 #endif

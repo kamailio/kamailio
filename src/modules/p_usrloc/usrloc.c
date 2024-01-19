@@ -79,5 +79,6 @@ int bind_usrloc(usrloc_api_t *api)
 	api->db_mode = db_mode;
 	api->nat_flag = nat_bflag;
 
+	api->get_udomain = get_udomain;
 	return 0;
 }

@@ -171,3 +171,42 @@ int synchronize_all_udomains(void)
 	LM_INFO("not available with partitioned interface\n");
 	return res;
 }
+
+/*!
+ * \brief Registers a new domain with usrloc
+ *
+ * Find and return a usrloc domain (location table)
+ * \param _n domain name
+ * \param _d usrloc domain
+ * \return 0 on success, -1 on failure
+ */
+int get_udomain(const char *_n, udomain_t **_d)
+{
+	struct domain_list_item *item;
+	str s;
+
+	if(_n == NULL) {
+		LM_ERR("null location table name\n");
+		goto notfound;
+	}
+
+	s.s = (char *)_n;
+	s.len = strlen(_n);
+	if(s.len <= 0) {
+		LM_ERR("empty location table name\n");
+		goto notfound;
+	}
+
+	item = find_dlist(&s);
+	if(item == NULL) {
+		LM_ERR("domain %s not found.\n", _n);
+		goto notfound;
+	}
+
+	*_d = &item->domain;
+	return 0;
+
+notfound:
+	*_d = NULL;
+	return -1;
+}
