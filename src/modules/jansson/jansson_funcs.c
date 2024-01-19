@@ -40,6 +40,9 @@ int janssonmod_get_helper(
 	pv_value_t dst_val;
 	json_t *json = NULL;
 	json_error_t parsing_error;
+	char *path = NULL;
+	char *freeme = NULL;
+
 	STR_VTOZ(src_s->s[src_s->len], c);
 	json = json_loads(src_s->s, JSON_REJECT_DUPLICATES, &parsing_error);
 	STR_ZTOV(src_s->s[src_s->len], c);
@@ -50,14 +53,13 @@ int janssonmod_get_helper(
 		goto fail;
 	}
 
-	char *path = path_s->s;
+	path = path_s->s;
 
 	json_t *v = json_path_get(json, path);
 	if(!v) {
 		goto fail;
 	}
 
-	char *freeme = NULL;
 
 	if(jansson_to_val(&dst_val, &freeme, v) < 0)
 		goto fail;
@@ -130,6 +132,12 @@ int janssonmod_set(unsigned int append, struct sip_msg *msg, char *type_in,
 	char c;
 	pv_spec_t *result_pv;
 	pv_value_t result_val;
+	json_t *result_json = NULL;
+	json_t *value = NULL;
+	char *freeme = NULL;
+	json_error_t parsing_error = {0};
+	char *endptr;
+	char *path = NULL;
 
 	if(fixup_get_svalue(msg, (gparam_p)type_in, &type_s) != 0) {
 		ERR("cannot get type string value\n");
@@ -160,12 +168,6 @@ int janssonmod_set(unsigned int append, struct sip_msg *msg, char *type_in,
 	LM_DBG("path is: %.*s\n", path_s.len, path_s.s);
 	LM_DBG("value is: %.*s\n", value_s.len, value_s.s);
 	LM_DBG("result is: %.*s\n", result_val.rs.len, result_val.rs.s);
-
-	json_t *result_json = NULL;
-	json_t *value = NULL;
-	char *freeme = NULL;
-	json_error_t parsing_error = {0};
-	char *endptr;
 
 	/* check the type */
 	if(STR_EQ_STATIC(type_s, "object") || STR_EQ_STATIC(type_s, "obj")) {
@@ -241,7 +243,8 @@ int janssonmod_set(unsigned int append, struct sip_msg *msg, char *type_in,
 		goto fail;
 	}
 
-	char *path = path_s.s;
+	path = path_s.s;
+
 	STR_VTOZ(result_val.rs.s[result_val.rs.len], c);
 	result_json =
 			json_loads(result_val.rs.s, JSON_REJECT_DUPLICATES, &parsing_error);
@@ -281,6 +284,8 @@ int janssonmod_array_size(
 	str path_s;
 	pv_spec_t *dst_pv;
 	pv_value_t dst_val;
+	char *path = NULL;
+	int size = 0;
 
 	if(fixup_get_svalue(msg, (gparam_p)src_in, &src_s) != 0) {
 		ERR("cannot get json string value\n");
@@ -305,7 +310,7 @@ int janssonmod_array_size(
 		goto fail;
 	}
 
-	char *path = path_s.s;
+	path = path_s.s;
 
 	json_t *v = json_path_get(json, path);
 	if(!v) {
@@ -318,7 +323,7 @@ int janssonmod_array_size(
 		goto fail;
 	}
 
-	int size = json_array_size(v);
+	size = json_array_size(v);
 	dst_val.ri = size;
 	dst_val.flags = PV_TYPE_INT | PV_VAL_INT;
 
