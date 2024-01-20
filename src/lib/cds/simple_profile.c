@@ -4,9 +4,6 @@
 #include <sys/time.h>
 #include <string.h>
 
-/* FIXME: only for testing */
-/*#include "dprint.h"*/
-
 #define trace_signal SIGTRAP
 
 typedef void (*_sig_t)(int);

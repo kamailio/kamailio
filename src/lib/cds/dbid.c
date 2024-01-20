@@ -9,7 +9,6 @@
 void generate_dbid_ptr(dbid_t dst, void *data_ptr)
 {
 	/* TODO: add cluster distinctive member */
-	/* FIXME: replace sprintf by something more effective */
 	snprintf(dst, MAX_DBID_LEN, "%px%xx%x", data_ptr, (int)time(NULL), rand());
 }
 
@@ -26,7 +25,6 @@ void generate_dbid(dbid_t dst)
 	}
 
 	/* TODO: add cluster distinctive member */
-	/* FIXME: replace sprintf by something more effective */
 	snprintf(dst, MAX_DBID_LEN, "%xy%xy%xy%x", my_pid, cntr++, (int)time(NULL),
 			rand());
 }

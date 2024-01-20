@@ -263,7 +263,6 @@ char *str_strchr(const str_t *s, char c)
 char *str_str(const str_t *s, const str_t *search_for)
 {
 	int i, j;
-	/* FIXME: reimplement using better algorithm */
 
 	if(is_str_empty(search_for))
 		return s->s;
