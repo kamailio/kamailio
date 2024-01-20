@@ -175,7 +175,7 @@ int is_rule_for_uri(cp_rule_t *rule, const str_t *uri)
 	if(!rule)
 		return 0;
 	if(!rule->conditions)
-		return 1; /* FIXME: ??? */
+		return 1;
 	id = rule->conditions->identity;
 	if(!id)
 		return 0;

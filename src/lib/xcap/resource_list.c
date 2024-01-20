@@ -169,9 +169,9 @@ void free_traversed_list(traversed_list_t *list)
 
 /* ------- helper functions (doing flat list) ------- */
 
+/* absolute uri from ref (RFC 3986, section 5.2) */
 static char *relative2absolute_uri(const str_t *xcap_root, const char *relative)
 {
-	/* FIXME: do absolute uri from ref (RFC 3986, section 5.2) */
 	int len;
 	int root_len = 0;
 	int rel_len = 0;

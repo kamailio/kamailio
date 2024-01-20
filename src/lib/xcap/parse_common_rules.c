@@ -211,13 +211,11 @@ static int read_conditions(xmlNode *cn, cp_conditions_t **dst)
 	while(n) {
 		if(n->type == XML_ELEMENT_NODE) {
 			if(cmp_node(n, "validity", common_policy_ns) >= 0) {
-				/* FIXME: free existing validity */
 				res = read_validity(n, &(*dst)->validity);
 				if(res != 0)
 					break;
 			} else {
 				if(cmp_node(n, "identity", common_policy_ns) >= 0) {
-					/* FIXME: free existing identity */
 					res = read_identity(n, &(*dst)->identity);
 					if(res != 0)
 						break;

@@ -284,13 +284,8 @@ int xcap_query(
 		/* follow redirects (needed for apache mod_speling - case insesitive names) */
 		curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1);
 
-		/*	curl_easy_setopt(handle, CURLOPT_TCP_NODELAY, 1);
-		curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 10);*/
-
 		/* Accept headers */
-
 		res = curl_easy_perform(handle);
-		/* curl_easy_cleanup(handle); */ /* FIXME: experimental */
 	} else
 		ERROR_LOG("can't initialize curl handle\n");
 	if(res == 0) {
