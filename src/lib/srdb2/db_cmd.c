@@ -58,7 +58,7 @@ db_cmd_t *db_cmd(enum db_cmd_type type, db_ctx_t *ctx, char *table,
 
 	newp->type = type;
 
-	/** FIXME: it is not clear now that this is necessary
+	/** NOTE: it is not clear now that this is necessary
 	 *         when we have match and value separate arrays */
 	if(result) {
 		newp->result = db_fld_copy(result);
@@ -78,7 +78,7 @@ db_cmd_t *db_cmd(enum db_cmd_type type, db_ctx_t *ctx, char *table,
 			goto err;
 	}
 
-	/* FIXME: This should be redesigned so that we do not need to connect
+	/* NOTE: This should be redesigned so that we do not need to connect
 	 * connections in context before commands are created, this takes splitting
 	 * the command initialization sequence in two steps, one would be creating
 	 * all the data structures and the second would be checking corresponding
@@ -242,7 +242,6 @@ int db_exec(db_res_t **res, db_cmd_t *cmd)
 			return -1;
 	}
 
-	/* FIXME */
 	db_payload_idx = 0;
 	ret = cmd->exec[0](r, cmd);
 	if(ret < 0) {

@@ -95,7 +95,7 @@ extern "C"
  */
 
 /*
- * FIXME: We should find some other way of doing this than just copying
+ * NOTE: We should find some other way of doing this than just copying
  * and pasting the code from STAILQ_FOREACH
  */
 #define DBLIST_FOREACH(var, head)                    \
@@ -111,7 +111,7 @@ extern "C"
  */
 
 /*
- * FIXME: We should find some other way of doing this than just copying
+ * NOTE: We should find some other way of doing this than just copying
  * and pasting the code from STAILQ_FOREACH_SAFE
  */
 #define DBLIST_FOREACH_SAFE(var, head, tvar)                                  \
