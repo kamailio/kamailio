@@ -62,7 +62,7 @@ typedef struct tls_extra_data
 							 * (openssl code might add buffering BIOs so
 							 * it's better to remember our original BIO) */
 	tls_ct_q *ct_wq;
-	struct tls_rd_buf *enc_rd_buf;
+
 	unsigned int flags;
 	enum tls_conn_states state;
 } tls_extra_data_t;
