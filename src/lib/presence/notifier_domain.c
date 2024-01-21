@@ -223,33 +223,6 @@ static void free_subscription(qsa_subscription_t *s)
 	cds_free(s);
 }
 
-/*static void add_server_subscription(notifier_t *n, qsa_subscription_t *s)
-{
-	server_subscription_t server_s;
-
-	server_s.notifier_data = NULL;
-	if (n->subscribe(n, &s->record_id, s, &server_s.notifier_data) == 0) {
-		server_s.notifier = n;
-		vector_add(&s->server_subscriptions, &server_s);
-	}
-	else ERROR_LOG("subscription not accepted by notifier %p\n", n);
-}
-
-static void remove_notifier_from_subscription(qsa_subscription_t *s, notifier_t *n)
-{
-	int cnt,i;
-
-	cnt = vector_size(&s->server_subscriptions);
-	for (i = 0; i < cnt; i++) {
-		ss = vector_get_ptr(&s->server_subscriptions, i);
-		if (!ss) continue;
-		/ * FIXME: call n->unsubscribe ???
-		 * NO this is called from unregister which is initiated
-		 * by the notifier (may be synchronized there!) * /
-		if (ss->notifier == n) ss->notifier = NULL; / * "zombie" * /
-	}
-}
-*/
 
 /* -------- Domain initialization/destruction functions -------- */
 

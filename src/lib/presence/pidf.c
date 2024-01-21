@@ -170,9 +170,9 @@ static void doc_add_presentity(
 
 	DEBUG_LOG("doc_add_presentity()\n");
 	if(use_cpim_pidf_ns)
-		dstr_append_zt(
-				buf, "<presence xmlns=\"urn:ietf:params:xml:ns:cpim-pidf\" "
-					 "entity=\"");
+		dstr_append_zt(buf,
+				"<presence xmlns=\"urn:ietf:params:xml:ns:cpim-pidf\" "
+				"entity=\"");
 	else
 		dstr_append_zt(buf,
 				"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"");
@@ -402,7 +402,7 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst,
 		status = presence_tuple_open;
 	if(strcasecmp(s, "closed") == 0)
 		status = presence_tuple_closed;
-	/* FIXME: handle not standardized variants too (add note to basic status) */
+	/* NOTE: handle not standardized variants too (add note to basic status) */
 
 	/* get ID from tuple node attribute? */
 	id.s = (char *)get_attr_value(find_attr(tuple->properties, "id"));
@@ -433,7 +433,7 @@ static int read_tuple(xmlNode *tuple, presence_tuple_info_t **dst,
 			} else if(cmp_node(n, "status", ns) >= 0) {
 				/* skip, already processed */
 			} else if(cmp_node(n, "timestamp", ns) >= 0) {
-				/* FIXME: process */
+				/* TODO: process */
 			} else { /* PIDF extensions - only from non-PIDF namespace? */
 				res = read_extension(n, &ex, doc);
 				if((res == 0) && ex)
