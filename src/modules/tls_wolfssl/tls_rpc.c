@@ -188,13 +188,11 @@ static void tls_list(rpc_t *rpc, void *c)
 				}
 				rpc->struct_add(handle, "sddds", "cipher", tls_info,
 						"ct_wq_size", tls_d->ct_wq ? tls_d->ct_wq->queued : 0,
-						"enc_rd_buf",
-						tls_d->enc_rd_buf ? tls_d->enc_rd_buf->size : 0,
 						"flags", tls_d->flags, "state", state);
 				lock_release(&con->write_lock);
 			} else {
 				rpc->struct_add(handle, "sddds", "cipher", "unknown",
-						"ct_wq_size", 0, "enc_rd_buf", 0, "flags", 0, "state",
+						"ct_wq_size", 0, "flags", 0, "state",
 						"pre-init");
 			}
 		}
