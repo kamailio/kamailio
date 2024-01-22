@@ -58,6 +58,12 @@ static int fixup_xhttp_reply(void **param, int param_no);
 
 static int pv_get_huri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
+#define FAKE_RURI "sip:127.0.0.1:9;uri="
+#define FAKE_RURI_LEN (sizeof(FAKE_RURI) - 1)
+#define FAKE_URI "<sip:127.0.0.1>"
+#define FAKE_HDR "From: " FAKE_URI "\r\nTo: " FAKE_URI "\r\nCall-ID: 1\r\nCSeq: 1 POST\r\n"
+#define FAKE_HDR_LEN (sizeof(FAKE_HDR) - 1)
+
 static int xhttp_route_no = DEFAULT_RT;
 static char *xhttp_url_match = NULL;
 static regex_t xhttp_url_match_regexp;
@@ -217,7 +223,9 @@ static char *xhttp_to_sip(sip_msg_t *msg, int *new_msg_len)
 		LM_DBG("failed to build via\n");
 		return 0;
 	}
-	len = via_len + msg->len;
+	len = msg->first_line.u.request.method.len + 1 /* space */ + FAKE_RURI_LEN + msg->first_line.u.request.uri.len
+		  + 1 /* space */ + msg->first_line.u.request.version.len + CRLF_LEN
+		  + via_len + FAKE_HDR_LEN + (msg->len - msg->first_line.len);
 	p = new_msg = pkg_malloc(len + 1);
 	if(new_msg == 0) {
 		PKG_MEM_ERROR_FMT(" (%d bytes)\n", len);
@@ -226,14 +234,35 @@ static char *xhttp_to_sip(sip_msg_t *msg, int *new_msg_len)
 	}
 
 	/* new message:
-	 * <orig first line>
+	 * <orig_http_method> sip:127.0.0.1:9;uri=<orig_http_uri> HTTP/1.x
 	 * Via: <faked via>
-	 * <orig http message w/o the first line>
+	 * From: <faked from>
+	 * To: <faked to>
+	 * Call-ID: <faked call-id>
+	 * CSeq: <faked cseq>
+	 * <orig. http message w/o the first line>
 	 */
-	memcpy(p, msg->first_line.u.request.method.s, msg->first_line.len);
-	p += msg->first_line.len;
+	memcpy(p, msg->first_line.u.request.method.s,
+			msg->first_line.u.request.method.len);
+	p += msg->first_line.u.request.method.len;
+	*p = ' ';
+	p++;
+	memcpy(p, FAKE_RURI, FAKE_RURI_LEN);
+	p += FAKE_RURI_LEN;
+	memcpy(p, msg->first_line.u.request.uri.s,
+			msg->first_line.u.request.uri.len);
+	p += msg->first_line.u.request.uri.len;
+	*p = ' ';
+	p++;
+	memcpy(p, msg->first_line.u.request.version.s,
+			msg->first_line.u.request.version.len);
+	p += msg->first_line.u.request.version.len;
+	memcpy(p, CRLF, CRLF_LEN);
+	p += CRLF_LEN;
 	memcpy(p, via, via_len);
 	p += via_len;
+	memcpy(p, FAKE_HDR, FAKE_HDR_LEN);
+	p += FAKE_HDR_LEN;
 	memcpy(p, SIP_MSG_START(msg) + msg->first_line.len,
 			msg->len - msg->first_line.len);
 	new_msg[len] = 0;
