@@ -337,6 +337,10 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 		goto error;
 	}
 
+	if(code >= 200) {
+		msg->msg_flags |= FL_FINAL_REPLY;
+	}
+
 	update_sl_stats(code);
 	return 1;
 
@@ -405,6 +409,11 @@ int sl_reply_error(struct sip_msg *msg)
 
 	if(msg->msg_flags & FL_MSG_NOREPLY) {
 		LM_INFO("message marked with no-reply flag\n");
+		return -2;
+	}
+
+	if(msg->msg_flags & FL_FINAL_REPLY) {
+		LM_INFO("message marked with final-reply flag\n");
 		return -2;
 	}
 

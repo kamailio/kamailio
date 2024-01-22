@@ -335,6 +335,12 @@ static int w_send_reply(struct sip_msg *msg, char *p1, char *p2)
 static int ki_send_reply_error(sip_msg_t *msg)
 {
 	int ret;
+
+	if(msg->msg_flags & FL_FINAL_REPLY) {
+		LM_INFO("message marked with final-reply flag\n");
+		return -2;
+	}
+
 	if(sl_bind_tm != 0 && tmb.t_reply_error != NULL) {
 		ret = tmb.t_reply_error(msg);
 		if(ret > 0) {
