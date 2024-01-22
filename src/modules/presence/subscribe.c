@@ -124,7 +124,7 @@ static int send_2XX_reply(sip_msg_t *msg, int reply_code, unsigned int lexpire,
 		goto error;
 	}
 
-	if(slb.freply(msg, reply_code, &su_200_rpl) < 0) {
+	if(_pres_slb.freply(msg, reply_code, &su_200_rpl) < 0) {
 		LM_ERR("sending reply\n");
 		goto error;
 	}
@@ -996,7 +996,7 @@ int handle_subscribe0(struct sip_msg *msg)
 
 	if(parse_from_uri(msg) == NULL) {
 		LM_ERR("failed to find From header\n");
-		if(slb.freply(msg, 400, &pu_400_rpl) < 0) {
+		if(_pres_slb.freply(msg, 400, &pu_400_rpl) < 0) {
 			LM_ERR("while sending 400 reply\n");
 			return -1;
 		}
@@ -1418,7 +1418,8 @@ int extract_sdialog_info_ex(subs_t *subs, struct sip_msg *msg, uint32_t miexp,
 		LM_DBG("generating to_tag\n");
 		*to_tag_gen = 1;
 		rtag_value.len = 0;
-		if(slb.get_reply_totag(msg, &rtag_value) < 0 || rtag_value.len <= 0) {
+		if(_pres_slb.get_reply_totag(msg, &rtag_value) < 0
+				|| rtag_value.len <= 0) {
 			LM_ERR("while creating to_tag\n");
 			goto error;
 		}

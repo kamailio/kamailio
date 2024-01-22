@@ -132,7 +132,7 @@ int send_error_reply(struct sip_msg *msg, int reply_code, str reply_str)
 		}
 	}
 
-	if(slb.freply(msg, reply_code, &reply_str) < 0) {
+	if(_pres_slb.freply(msg, reply_code, &reply_str) < 0) {
 		LM_ERR("sending %d %.*s reply\n", reply_code, reply_str.len,
 				reply_str.s);
 		return -1;

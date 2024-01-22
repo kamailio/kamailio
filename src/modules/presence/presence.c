@@ -111,9 +111,9 @@ static int sip_uri_case_sensitive_match(str *s1, str *s2);
 static int sip_uri_case_insensitive_match(str *s1, str *s2);
 
 /* TM bind */
-struct tm_binds tmb;
+struct tm_binds _pres_tmb;
 /* SL API structure */
-sl_api_t slb;
+sl_api_t _pres_slb;
 
 /** module functions */
 
@@ -340,13 +340,13 @@ static int mod_init(void)
 	}
 
 	/* bind the SL API */
-	if(sl_load_api(&slb) != 0) {
+	if(sl_load_api(&_pres_slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
 	/* load all TM stuff */
-	if(load_tm_api(&tmb) == -1) {
+	if(load_tm_api(&_pres_tmb) == -1) {
 		LM_ERR("Can't load tm functions. Module TM not loaded?\n");
 		return -1;
 	}

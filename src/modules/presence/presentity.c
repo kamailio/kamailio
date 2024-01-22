@@ -143,7 +143,7 @@ int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 		goto error;
 	}
 
-	if(slb.freply(msg, 200, &pu_200_rpl) < 0) {
+	if(_pres_slb.freply(msg, 200, &pu_200_rpl) < 0) {
 		LM_ERR("sending reply\n");
 		goto error;
 	}
@@ -1377,7 +1377,7 @@ send_412:
 	}
 
 	if(msg != NULL) {
-		if(slb.freply(msg, 412, &pu_412_rpl) < 0) {
+		if(_pres_slb.freply(msg, 412, &pu_412_rpl) < 0) {
 			LM_ERR("sending '412 Conditional request failed' reply\n");
 			goto error;
 		}
@@ -1858,7 +1858,7 @@ send_412:
 	}
 
 	if(msg != NULL) {
-		if(slb.freply(msg, 412, &pu_412_rpl) < 0) {
+		if(_pres_slb.freply(msg, 412, &pu_412_rpl) < 0) {
 			LM_ERR("sending '412 Conditional request failed' reply\n");
 			goto error;
 		}

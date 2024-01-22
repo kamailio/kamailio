@@ -57,9 +57,9 @@
 #define PS_PCACHE_RECORD 2
 
 /** TM bind */
-extern struct tm_binds tmb;
+extern struct tm_binds _pres_tmb;
 
-extern sl_api_t slb;
+extern sl_api_t _pres_slb;
 
 /* DB module bind */
 extern db_func_t pa_dbf;
