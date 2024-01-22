@@ -640,6 +640,11 @@ static int _reply_light(struct cell *trans, char *buf, unsigned int len,
 		 * (timer_allow_del()) (there's no chance of having the wait handler
 		 *  executed while we still need t) --andrei */
 		put_on_wait(trans);
+
+		/* mark the request with final reply flag */
+		if(trans->uas.request != NULL) {
+			trans->uas.request->msg_flags |= FL_FINAL_REPLY;
+		}
 	}
 	pkg_free(buf);
 	LM_DBG("finished\n");

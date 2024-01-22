@@ -1608,6 +1608,11 @@ int ki_t_reply_error(sip_msg_t *msg)
 	int sip_err;
 	int ret;
 
+	if(msg->msg_flags & FL_FINAL_REPLY) {
+		LM_INFO("message marked with final-reply flag\n");
+		return -2;
+	}
+
 	ret = err2reason_phrase(
 			prev_ser_error, &sip_err, err_buffer, sizeof(err_buffer), "TM");
 	if(ret > 0) {
