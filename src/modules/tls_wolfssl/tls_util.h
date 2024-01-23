@@ -28,6 +28,7 @@
 
 #include "../../core/dprint.h"
 #include "../../core/str.h"
+#include "tls_cfg.h"
 #include "tls_domain.h"
 
 static inline int tls_err_ret(
@@ -79,5 +80,7 @@ int shm_asciiz_dup(char **dest, char *val);
  * Delete old TLS configuration that is not needed anymore
  */
 void collect_garbage(void);
+
+void tls_dump_verification_failure(long verification_result);
 
 #endif /* _TLS_UTIL_H */

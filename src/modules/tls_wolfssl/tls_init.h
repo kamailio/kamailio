@@ -32,7 +32,7 @@
 
 typedef struct sr_tls_methods_s
 {
-	const SSL_METHOD *TLSMethod;
+	const WOLFSSL_METHOD *TLSMethod;
 	int TLSMethodMin;
 	int TLSMethodMax;
 } sr_tls_methods_t;

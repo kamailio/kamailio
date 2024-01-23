@@ -90,8 +90,6 @@ struct cfg_group_tls
 	 * now)
 	 */
 	int ssl_read_ahead;
-	int low_mem_threshold1;
-	int low_mem_threshold2;
 	int ct_wq_max;		/* maximum overall tls write clear text queued bytes */
 	int con_ct_wq_max;	/* maximum clear text write queued bytes per con */
 	int ct_wq_blk_size; /* minimum block size for the clear text write queue */
