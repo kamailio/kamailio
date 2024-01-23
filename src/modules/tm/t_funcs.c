@@ -177,6 +177,11 @@ int kill_transaction(struct cell *trans, int error)
 	int reply_ret;
 	int ret;
 
+	if((trans->uas.request != NULL)
+			&& (trans->uas.request->msg_flags & FL_FINAL_REPLY)) {
+		return t_release_transaction(trans);
+	}
+
 	/*  we reply statefully and enter WAIT state since error might
 		have occurred in middle of forking and we do not
 		want to put the forking burden on upstream client;
@@ -204,6 +209,11 @@ int kill_transaction_unsafe(struct cell *trans, int error)
 	int sip_err;
 	int reply_ret;
 	int ret;
+
+	if((trans->uas.request != NULL)
+			&& (trans->uas.request->msg_flags & FL_FINAL_REPLY)) {
+		return t_release_transaction(trans);
+	}
 
 	/*  we reply statefully and enter WAIT state since error might
 		have occurred in middle of forking and we do not
