@@ -60,8 +60,6 @@ struct cfg_group_tls default_tls_cfg = {
 		-1, /* ssl_max_send_fragment (use the default: 16k), requires openssl
 		   > 0.9.9 */
 		0,	/* ssl_read_ahead (off, not needed, we have our own buffering BIO)*/
-		-1, /* low_mem_threshold1 */
-		-1, /* low_mem_threshold2 */
 		10 * 1024 * 1024, /* ct_wq_max: 10 Mb by default */
 		64 * 1024,		  /* con_ct_wq_max: 64Kb by default */
 		4096,			  /* ct_wq_blk_size */
@@ -200,12 +198,6 @@ cfg_def_t tls_cfg_def[] = {{"force_run", CFG_VAR_INT | CFG_READONLY, 0, 1, 0, 0,
 				" module versions it is better to have read ahead disabled, "
 				"since"
 				" everything it is buffered in memory anyway"},
-		{"low_mem_threshold1", CFG_VAR_INT | CFG_ATOMIC, -1, 1 << 30, 0, 0,
-				"sets the minimum amount of free memory for accepting new TLS"
-				" connections (KB)"},
-		{"low_mem_threshold2", CFG_VAR_INT | CFG_ATOMIC, -1, 1 << 30, 0, 0,
-				"sets the minimum amount of free memory after which no more TLS"
-				" operations will be attempted (even on existing connections)"},
 		{"ct_wq_max", CFG_VAR_INT | CFG_ATOMIC, 0, 1 << 30, 0, 0,
 				"maximum bytes queued globally for write when write has to "
 				"wait due"

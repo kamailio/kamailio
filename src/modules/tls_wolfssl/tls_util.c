@@ -96,3 +96,19 @@ void collect_garbage(void)
 
 	lock_release(tls_domains_cfg_lock);
 }
+
+
+/** log the verification failure reason.
+ * wolfSSL has a different set of return values
+ * than OpenSSL
+ */
+void tls_dump_verification_failure(long verification_result)
+{
+	int tls_log;
+
+	tls_log = cfg_get(tls, tls_cfg, log);
+	LOG(tls_log, "%s\n", wolfSSL_ERR_reason_error_string(verification_result));
+}
+
+
+/* vi: set ts=4 sw=4 tw=79:ai:cindent: */

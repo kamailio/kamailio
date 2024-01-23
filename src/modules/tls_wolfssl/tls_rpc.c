@@ -186,12 +186,12 @@ static void tls_list(rpc_t *rpc, void *c)
 						state = "established";
 						break;
 				}
-				rpc->struct_add(handle, "sddds", "cipher", tls_info,
+				rpc->struct_add(handle, "sdds", "cipher", tls_info,
 						"ct_wq_size", tls_d->ct_wq ? tls_d->ct_wq->queued : 0,
 						"flags", tls_d->flags, "state", state);
 				lock_release(&con->write_lock);
 			} else {
-				rpc->struct_add(handle, "sddds", "cipher", "unknown",
+				rpc->struct_add(handle, "sdds", "cipher", "unknown",
 						"ct_wq_size", 0, "flags", 0, "state",
 						"pre-init");
 			}
@@ -223,36 +223,33 @@ static void tls_options(rpc_t *rpc, void *c)
 {
 	void *handle;
 	rpc->add(c, "{", &handle);
-	rpc->struct_add(handle, "dSdddSSSSSdSSdddddddddddddd", "force_run",
-			cfg_get(tls, tls_cfg, force_run), "method",
-			&cfg_get(tls, tls_cfg, method), "verify_certificate",
-			cfg_get(tls, tls_cfg, verify_cert),
-
-			"verify_depth", cfg_get(tls, tls_cfg, verify_depth),
-			"require_certificate", cfg_get(tls, tls_cfg, require_cert),
-			"verify_client", &cfg_get(tls, tls_cfg, verify_client),
-			"private_key", &cfg_get(tls, tls_cfg, private_key), "ca_list",
-			&cfg_get(tls, tls_cfg, ca_list), "certificate",
-			&cfg_get(tls, tls_cfg, certificate), "cipher_list",
-			&cfg_get(tls, tls_cfg, cipher_list), "session_cache",
-			cfg_get(tls, tls_cfg, session_cache), "session_id",
-			&cfg_get(tls, tls_cfg, session_id), "config",
-			&cfg_get(tls, tls_cfg, config_file), "log",
-			cfg_get(tls, tls_cfg, log), "debug", cfg_get(tls, tls_cfg, debug),
-			"connection_timeout",
-			TICKS_TO_S(cfg_get(tls, tls_cfg, con_lifetime)),
-			"disable_compression", cfg_get(tls, tls_cfg, disable_compression),
-			"ssl_release_buffers", cfg_get(tls, tls_cfg, ssl_release_buffers),
-			"ssl_freelist_max", cfg_get(tls, tls_cfg, ssl_freelist_max),
-			"ssl_max_send_fragment",
-			cfg_get(tls, tls_cfg, ssl_max_send_fragment), "ssl_read_ahead",
-			cfg_get(tls, tls_cfg, ssl_read_ahead), "send_close_notify",
-			cfg_get(tls, tls_cfg, send_close_notify), "low_mem_threshold1",
-			cfg_get(tls, tls_cfg, low_mem_threshold1), "low_mem_threshold2",
-			cfg_get(tls, tls_cfg, low_mem_threshold2), "ct_wq_max",
-			cfg_get(tls, tls_cfg, ct_wq_max), "con_ct_wq_max",
-			cfg_get(tls, tls_cfg, con_ct_wq_max), "ct_wq_blk_size",
-			cfg_get(tls, tls_cfg, ct_wq_blk_size));
+	rpc->struct_add(
+		handle, "dSdddSSSSSdSSdddddddddddd",
+		"force_run", cfg_get(tls, tls_cfg, force_run),
+		"method", &cfg_get(tls, tls_cfg, method),
+		"verify_certificate", cfg_get(tls, tls_cfg, verify_cert),
+		"verify_depth", cfg_get(tls, tls_cfg, verify_depth),
+		"require_certificate", cfg_get(tls, tls_cfg, require_cert),
+		"verify_client", &cfg_get(tls, tls_cfg, verify_client),
+		"private_key", &cfg_get(tls, tls_cfg, private_key),
+		"ca_list", &cfg_get(tls, tls_cfg, ca_list),
+		"certificate", &cfg_get(tls, tls_cfg, certificate),
+		"cipher_list", &cfg_get(tls, tls_cfg, cipher_list),
+		"session_cache", cfg_get(tls, tls_cfg, session_cache),
+		"session_id", &cfg_get(tls, tls_cfg, session_id),
+		"config", &cfg_get(tls, tls_cfg, config_file),
+		"log", cfg_get(tls, tls_cfg, log),
+		"debug", cfg_get(tls, tls_cfg, debug),
+		"connection_timeout", TICKS_TO_S(cfg_get(tls, tls_cfg, con_lifetime)),
+		"disable_compression", cfg_get(tls, tls_cfg, disable_compression),
+		"ssl_release_buffers", cfg_get(tls, tls_cfg, ssl_release_buffers),
+		"ssl_freelist_max", cfg_get(tls, tls_cfg, ssl_freelist_max),
+		"ssl_max_send_fragment", cfg_get(tls, tls_cfg, ssl_max_send_fragment),
+		"ssl_read_ahead", cfg_get(tls, tls_cfg, ssl_read_ahead),
+		"send_close_notify", cfg_get(tls, tls_cfg, send_close_notify),
+		"ct_wq_max", cfg_get(tls, tls_cfg, ct_wq_max),
+		"con_ct_wq_max", cfg_get(tls, tls_cfg, con_ct_wq_max),
+		"ct_wq_blk_size", cfg_get(tls, tls_cfg, ct_wq_blk_size));
 }
 
 

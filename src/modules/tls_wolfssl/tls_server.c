@@ -58,7 +58,6 @@
 #include "tls_server.h"
 #include "tls_select.h"
 
-#include "tls_dump_vf.h"
 #include "tls_cfg.h"
 
 int tls_run_event_routes(struct tcp_connection *c);

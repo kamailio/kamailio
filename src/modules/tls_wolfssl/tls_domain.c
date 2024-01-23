@@ -598,8 +598,8 @@ static int load_crl(tls_domain_t *d)
 			return -1;
 		}
 		store = wolfSSL_CTX_get_cert_store(d->ctx[0]);
-		X509_STORE_set_flags(
-				store, X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
+		wolfSSL_X509_STORE_set_flags(
+				store, WOLFSSL_CRL_CHECK | WOLFSSL_CRL_CHECKALL);
 	}while(0);
 	return 0;
 }
@@ -621,27 +621,6 @@ static int set_cipher_list(tls_domain_t *d)
 	char *cipher_list;
 
 	cipher_list = d->cipher_list.s;
-#ifdef TLS_KSSL_WORKAROUND
-	if(openssl_kssl_malloc_bug) { /* is openssl bug #1467 present ? */
-		if(d->cipher_list.s == 0) {
-			/* use "DEFAULT:!KRB5" */
-			cipher_list = "DEFAULT:!KRB5";
-		} else {
-			/* append ":!KRB5" */
-			cipher_list =
-					shm_malloc(d->cipher_list.len + C_NO_KRB5_SUFFIX_LEN + 1);
-			if(cipher_list) {
-				memcpy(cipher_list, d->cipher_list.s, d->cipher_list.len);
-				memcpy(cipher_list + d->cipher_list.len, C_NO_KRB5_SUFFIX,
-						C_NO_KRB5_SUFFIX_LEN);
-				cipher_list[d->cipher_list.len + C_NO_KRB5_SUFFIX_LEN] = 0;
-				shm_free(d->cipher_list.s);
-				d->cipher_list.s = cipher_list;
-				d->cipher_list.len += C_NO_KRB5_SUFFIX_LEN;
-			}
-		}
-	}
-#endif /* TLS_KSSL_WORKAROUND */
 	if(!cipher_list)
 		return 0;
 
@@ -749,9 +728,9 @@ static int set_ssl_options(tls_domain_t *d)
 {
 	long options;
 
-	options = SSL_OP_ALL; /* all the bug workarounds by default */
-	options |= SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
-			   | SSL_OP_CIPHER_SERVER_PREFERENCE;
+	options = WOLFSSL_OP_ALL; /* all the bug workarounds by default */
+	options |= WOLFSSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+			   | WOLFSSL_OP_CIPHER_SERVER_PREFERENCE;
 
 	do {
 		wolfSSL_CTX_set_options(d->ctx[0], options);
@@ -778,8 +757,8 @@ static int set_session_cache(tls_domain_t *d)
 		 * thus sessions among processes will not be reused
 		 */
 		wolfSSL_CTX_set_session_cache_mode(d->ctx[0],
-				cfg_get(tls, tls_cfg, session_cache) ? SSL_SESS_CACHE_SERVER
-													 : SSL_SESS_CACHE_OFF);
+				cfg_get(tls, tls_cfg, session_cache) ? WOLFSSL_SESS_CACHE_SERVER
+													 : WOLFSSL_SESS_CACHE_OFF);
 		/* not really needed is SSL_SESS_CACHE_OFF */
 		wolfSSL_CTX_set_session_id_context(d->ctx[0],
 				(unsigned char *)tls_session_id.s, tls_session_id.len);
@@ -815,6 +794,7 @@ static int tls_ssl_ctx_mode(WOLFSSL_CTX *ctx, long mode, void *clear)
  */
 static int tls_ssl_ctx_set_freelist(WOLFSSL_CTX *ctx, long val, void *unused)
 {
+	/* NOOP */
 	return 0;
 }
 
@@ -828,10 +808,7 @@ static int tls_ssl_ctx_set_freelist(WOLFSSL_CTX *ctx, long val, void *unused)
 static int tls_ssl_ctx_set_max_send_fragment(
 		WOLFSSL_CTX *ctx, long val, void *unused)
 {
-	/* WOLFFIX if (val >= 0)
-		return SSL_CTX_set_max_send_fragment(ctx, val) -1;
-	*/
-
+	/* NOOP */
 	return 0;
 }
 
@@ -863,7 +840,7 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 
 	orig_domain = (tls_domain_t *)private;
 	server_name.s =
-			(char *)wolfSSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+			(char *)wolfSSL_get_servername(ssl, WOLFSSL_SNI_HOST_NAME);
 	if(server_name.s) {
 		LM_DBG("received server_name (TLS extension): '%s'\n", server_name.s);
 	} else {

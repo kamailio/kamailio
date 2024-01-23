@@ -222,8 +222,6 @@ static param_export_t params[] = {
 		{"ct_wq_max", PARAM_INT, &default_tls_cfg.ct_wq_max},
 		{"ct_wq_blk_size", PARAM_INT, &default_tls_cfg.ct_wq_blk_size},
 		{"tls_force_run", PARAM_INT, &default_tls_cfg.force_run},
-		{"low_mem_threshold1", PARAM_INT, &default_tls_cfg.low_mem_threshold1},
-		{"low_mem_threshold2", PARAM_INT, &default_tls_cfg.low_mem_threshold2},
 		{"renegotiation", PARAM_INT, &sr_tls_renegotiation},
 		{"xavp_cfg", PARAM_STR, &sr_tls_xavp_cfg},
 		{"event_callback", PARAM_STR, &sr_tls_event_callback},
