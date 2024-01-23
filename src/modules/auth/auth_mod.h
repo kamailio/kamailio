@@ -38,7 +38,6 @@ extern str secret1;			 /* secret phrase used to generate nonce */
 extern str secret2;			 /* secret phrase used to generate nonce */
 extern int nonce_expire;	 /* nonce expire interval */
 extern int protect_contacts; /* Enable/disable contact hashing in nonce */
-extern sl_api_t sl;
 extern avp_ident_t challenge_avpid;
 extern str proxy_challenge_header;
 extern str www_challenge_header;

@@ -223,7 +223,7 @@ int calc_nonce(char *nonce, int *nonce_len, int cfg, unsigned int since,
 	len = calc_bin_nonce_md5(&b_nonce, cfg, secret1, secret2, msg);
 	*nonce_len = base64_enc(
 			&b_nonce.raw[0], len, (unsigned char *)nonce, *nonce_len);
-	assert(*nonce_len >= 0); /*FIXME*/
+	assert(*nonce_len >= 0);
 	return 0;
 }
 

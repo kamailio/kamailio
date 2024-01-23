@@ -138,7 +138,7 @@ calc_response_t calc_response;
 
 
 /*! SL API structure */
-sl_api_t slb;
+sl_api_t _auth_slb;
 
 /*
  * Exported functions
@@ -248,8 +248,6 @@ static inline int generate_random_secret(void)
 	secret2.s = sec_rand2;
 	secret2.len = RAND_SECRET_LEN;
 
-	/* DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
-
 	return 0;
 }
 
@@ -263,7 +261,7 @@ static int mod_init(void)
 	auth_realm_prefix.len = strlen(auth_realm_prefix.s);
 
 	/* bind the SL API */
-	if(sl_load_api(&slb) != 0) {
+	if(sl_load_api(&_auth_slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
@@ -949,8 +947,8 @@ static int auth_send_reply(
 	reason_str.s = reason;
 	reason_str.len = strlen(reason);
 
-	return force_stateless_reply ? slb.sreply(msg, code, &reason_str)
-								 : slb.freply(msg, code, &reason_str);
+	return force_stateless_reply ? _auth_slb.sreply(msg, code, &reason_str)
+								 : _auth_slb.freply(msg, code, &reason_str);
 }
 
 /**

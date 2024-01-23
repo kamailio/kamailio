@@ -77,11 +77,6 @@ int init_nonce_id()
 	for(r = 0; r < nid_pool_no; r++)
 		atomic_set(&nid_crt[r].id, random());
 	return 0;
-	/*
-error:
-	destroy_nonce_id();
-	return -1;
-*/
 }
 
 
