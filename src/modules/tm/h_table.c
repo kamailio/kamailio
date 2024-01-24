@@ -52,7 +52,7 @@
 						- sizeof(((tm_cell_t *)0)->md5)))
 
 
-static enum kill_reason kr;
+static enum kill_reason _tm_kr;
 
 /* pointer to the big table where all the transaction data lives */
 struct s_table *_tm_table;
@@ -64,18 +64,18 @@ struct s_table *tm_get_table(void)
 
 void reset_kr(void)
 {
-	kr = 0;
+	_tm_kr = 0;
 }
 
 void set_kr(enum kill_reason _kr)
 {
-	kr |= _kr;
+	_tm_kr |= _kr;
 }
 
 
 enum kill_reason get_kr()
 {
-	return kr;
+	return _tm_kr;
 }
 
 
