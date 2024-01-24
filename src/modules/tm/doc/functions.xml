@@ -42,7 +42,7 @@
 ...
 if (!t_relay())
 {
-    sl_reply_error();
+    send_reply_error();
     break;
 };
 ...
