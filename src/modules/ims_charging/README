@@ -67,6 +67,8 @@ Carlos Ruiz Diaz
               4.27. vendor_specific_chargeinfo (int)
               4.28. vendor_specific_id (int)
               4.29. strip_plus_from_e164 (int)
+              4.30. use_pani_from_term_invite (int)
+              4.31. node_func (int)
 
         5. Functions
 
@@ -125,8 +127,10 @@ Carlos Ruiz Diaz
    1.27. vendor_specific_chargeinfoparameter usage
    1.28. vendor_specific_idparameter usage
    1.29. strip_plus_from_e164parameter usage
-   1.30. Ro_CCR
-   1.31. Ro_set_session_id_avp
+   1.30. use_pani_from_term_inviteparameter usage
+   1.31. node_funcparameter usage
+   1.32. Ro_CCR
+   1.33. Ro_set_session_id_avp
 
 Chapter 1. Admin Guide
 
@@ -175,6 +179,8 @@ Chapter 1. Admin Guide
         4.27. vendor_specific_chargeinfo (int)
         4.28. vendor_specific_id (int)
         4.29. strip_plus_from_e164 (int)
+        4.30. use_pani_from_term_invite (int)
+        4.31. node_func (int)
 
    5. Functions
 
@@ -378,6 +384,8 @@ Chapter 1. Admin Guide
    4.27. vendor_specific_chargeinfo (int)
    4.28. vendor_specific_id (int)
    4.29. strip_plus_from_e164 (int)
+   4.30. use_pani_from_term_invite (int)
+   4.31. node_func (int)
 
 4.1. hash_size(int)
 
@@ -772,6 +780,34 @@ modparam("ims_charging", "vendor_specific_id", 10)
 modparam("ims_charging", "strip_plus_from_e164", 1)
 ...
 
+4.30. use_pani_from_term_invite (int)
+
+   P-Access-Network-Info is normally relevant for the "orig" scenario
+   where it's extracted from INVITE. This setting instruct Kamailio to
+   include it in "term" scenario too, where it might have been added to
+   the INVITE based on info from a REGISTER. Normally used to start a
+   charging session when the user is roaming.
+
+   Default value is 0.
+
+   Example 1.30. use_pani_from_term_inviteparameter usage
+...
+modparam("ims_charging", "use_pani_from_term_invite", 1)
+...
+
+4.31. node_func (int)
+
+   Defines what should be sent as Node-Functionality (862) in the Diameter
+   Ro request. Possible values are: 0 (S-CSCF), 1 (P-CSCF), 2 (I-CSCF), 3
+   (MRFC), 4 (MGCF), 5 (BFCF) or 6 (AS)
+
+   Default value is 0 (S-CSCF).
+
+   Example 1.31. node_funcparameter usage
+...
+modparam("ims_charging", "node_func", 1)
+...
+
 5. Functions
 
    5.1. Ro_CCR(route_name, direction, reservation_units,
@@ -799,7 +835,7 @@ outgoing_trunk_id)
    This method is executed asynchronously. See example on how to retrieve
    return value.
 
-   Example 1.30. Ro_CCR
+   Example 1.32. Ro_CCR
 ...
   xlog("L_DBG","Sending initial CCR Request for call\n");
     Ro_CCR("RO_ASYNC_TERM_REPLY", "term", 30, "1", "1");
@@ -835,7 +871,7 @@ n");
 
    This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
 
-   Example 1.31. Ro_set_session_id_avp
+   Example 1.33. Ro_set_session_id_avp
 ...
             Ro_set_session_id_avp();
             xlog("L_DBG","Ro session AVP has been set: $avp(ro_session_id)\n");
