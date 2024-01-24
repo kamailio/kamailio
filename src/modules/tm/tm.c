@@ -1844,16 +1844,26 @@ static int _w_t_relay_to(
 		if(res <= 0) {
 			if(res != E_CFG) {
 				LM_ERR("t_forward_noack failed\n");
-				/* let us save the error code, we might need it later
-				 * when the failure_route has finished (Miklos) */
+				if(get_kr() == REQ_ERR_DELAYED) {
+					p_msg->msg_flags |= FL_DELAYED_REPLY;
+				}
 			}
+			/* let us save the error code, we might need it later
+			 * when the failure_route has finished (Miklos) */
 			tm_error = ser_error;
 			return -1;
 		}
 		return 1;
 	}
-	if(is_route_type(REQUEST_ROUTE))
-		return t_relay_to(p_msg, proxy, force_proto, 0 /* no replication */);
+	if(is_route_type(REQUEST_ROUTE)) {
+		res = t_relay_to(p_msg, proxy, force_proto, 0 /* no replication */);
+		if(res < 0) {
+			if(get_kr() == REQ_ERR_DELAYED) {
+				p_msg->msg_flags |= FL_DELAYED_REPLY;
+			}
+		}
+		return res;
+	}
 	LM_CRIT("unsupported route type: %d\n", get_route_type());
 	return 0;
 }
