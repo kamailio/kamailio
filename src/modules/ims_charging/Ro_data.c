@@ -88,7 +88,7 @@ ims_information_t *new_ims_information(event_type_t *event_type,
 	mem_new(x->role_of_node, sizeof(int32_t), pkg);
 	*(x->role_of_node) = node_role;
 
-	//x->node_functionality = cfg.node_func;
+	x->node_functionality = cfg.node_func;
 
 	if(outgoing_session_id && outgoing_session_id->s)
 		str_dup_ptr(x->outgoing_session_id, *outgoing_session_id, pkg);

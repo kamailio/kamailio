@@ -859,6 +859,47 @@ modparam("ims_charging", "strip_plus_from_e164", 1)
       </example>
     </section>
 
+    <section>
+      <title><varname>use_pani_from_term_invite</varname> (int)</title>
+
+      <para>P-Access-Network-Info is normally relevant for the "orig" scenario where it's extracted from INVITE. This setting instruct Kamailio
+        to include it in "term" scenario too, where it might have been added to the INVITE based on info from a REGISTER. 
+        Normally used to start a charging session when the user is roaming.</para>
+
+      <para><emphasis>Default value is 0.</emphasis></para>
+
+      <example>
+        <title><varname>use_pani_from_term_invite</varname>parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "use_pani_from_term_invite", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>node_func</varname> (int)</title>
+
+      <para>Defines what should be sent as Node-Functionality (862) in the Diameter Ro request.
+        Possible values are: 0 (S-CSCF), 1 (P-CSCF), 2 (I-CSCF), 3 (MRFC), 4 (MGCF), 5 (BFCF) or 6 (AS)</para>
+
+      <para><emphasis>Default value is 0 (S-CSCF).</emphasis></para>
+
+      <example>
+        <title><varname>node_func</varname>parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "node_func", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
   </section>
 
   <section>

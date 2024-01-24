@@ -171,6 +171,9 @@ static param_export_t params[] = {
 		{"app_provided_party_avp", PARAM_STR, &app_provided_party_spec},
 		{"strip_plus_from_e164", INT_PARAM,
 				&cfg.strip_plus_from_e164}, /*wheter to strip or keep + sign from E164 numbers (tel: uris), according to diameter spec*/
+		{"use_pani_from_term_invite", INT_PARAM,
+				&cfg.use_pani_from_term_invite}, /*wheter to read and use P-Access-Network-Info header from INVITE on term scenario*/
+		{"node_func", INT_PARAM, &cfg.node_func}, /* node functionality */
 		{0, 0, 0}};
 
 /** module exports */
@@ -230,6 +233,10 @@ int fix_parameters()
 					app_provided_party_spec.len, app_provided_party_spec.s);
 			return -1;
 		}
+	}
+	if(cfg.node_func < 0 || cfg.node_func > 6) {
+		LM_ERR("node_func: invalid value - must be between 0 and 6\n");
+		return 0;
 	}
 
 	init_custom_user(custom_user_spec.s ? &custom_user_avp : 0);
@@ -647,6 +654,9 @@ static int ki_ro_ccr(sip_msg_t *msg, str *s_route_name, str *s_direction,
 
 		pani = cscf_get_access_network_info(msg, &h);
 	} else if(dir == RO_TERM_DIRECTION) {
+		if(cfg.use_pani_from_term_invite) {
+			pani = cscf_get_access_network_info(msg, &h);
+		}
 		//get callee IMPU from called part id - if not present then skip this
 		if((identity = cscf_get_public_identity_from_called_party_id(msg, &h))
 						.len
