@@ -1891,7 +1891,7 @@ modparam("tm", "failover_reply_codes", "code=403;code=488;class=5")
 ...
 if (!t_relay())
 {
-    sl_reply_error();
+    send_reply_error();
     break;
 };
 ...
