@@ -133,7 +133,8 @@ typedef enum request_method
 /* WARNING: Value (1 << 31) is reserved for use in kamailio
  * nat_traversal module (flag FL_DO_KEEPALIVE)! */
 
-#define FL_FINAL_REPLY (1ULL << 32) /* final reply sent */
+#define FL_FINAL_REPLY (1ULL << 32)	  /* local final reply sent */
+#define FL_DELAYED_REPLY (1ULL << 33) /* local reply sending delayed */
 
 #define FL_MTU_FB_MASK (FL_MTU_TCP_FB | FL_MTU_TLS_FB | FL_MTU_SCTP_FB)
 
