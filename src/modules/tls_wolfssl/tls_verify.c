@@ -31,7 +31,7 @@
 #define VERIFY_DEPTH_S 3
 
 int verify_callback_unconditional_success(
-		int pre_verify_ok, X509_STORE_CTX *ctx)
+		int pre_verify_ok, WOLFSSL_X509_STORE_CTX *ctx)
 {
 	LM_NOTICE("Post-verification callback: unconditional success\n");
 	return 1;
