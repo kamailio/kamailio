@@ -416,6 +416,10 @@ int sl_reply_error(struct sip_msg *msg)
 		LM_INFO("message marked with final-reply flag\n");
 		return -2;
 	}
+	if(msg->msg_flags & FL_DELAYED_REPLY) {
+		LM_INFO("message marked with delayed-reply flag\n");
+		return -3;
+	}
 
 	ret = err2reason_phrase(
 			prev_ser_error, &sip_error, err_buf, sizeof(err_buf), "SL");
