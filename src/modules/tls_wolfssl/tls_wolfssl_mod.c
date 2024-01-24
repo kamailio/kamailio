@@ -420,7 +420,7 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 	struct tcp_connection *c;
 	SSL *ssl;
 	long ssl_verify;
-	X509 *x509_cert;
+	WOLFSSL_X509 *x509_cert;
 
 	LM_DBG("started...\n");
 	if(msg->rcv.proto != PROTO_TLS) {
@@ -453,7 +453,7 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 	ssl = ((struct tls_extra_data *)c->extra_data)->ssl;
 
 	ssl_verify = wolfSSL_get_verify_result(ssl);
-	if(ssl_verify != X509_V_OK) {
+	if(ssl_verify != WOLFSSL_X509_V_OK) {
 		LM_WARN("verification of presented certificate failed... return -1\n");
 		tcpconn_put(c);
 		return -1;
@@ -470,7 +470,7 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 		return -1;
 	}
 
-	X509_free(x509_cert);
+	wolfSSL_X509_free(x509_cert);
 
 	tcpconn_put(c);
 

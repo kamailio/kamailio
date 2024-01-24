@@ -159,9 +159,9 @@ static SSL *get_ssl(struct tcp_connection *c)
 
 
 static int get_cert(
-		X509 **cert, struct tcp_connection **c, struct sip_msg *msg, int my)
+		WOLFSSL_X509 **cert, struct tcp_connection **c, struct sip_msg *msg, int my)
 {
-	SSL *ssl;
+	WOLFSSL *ssl;
 
 	*cert = 0;
 	*c = get_cur_connection(msg);
@@ -197,7 +197,7 @@ static int get_cipher(str *res, sip_msg_t *msg)
 	static char buf[1024];
 
 	struct tcp_connection *c;
-	SSL *ssl;
+	WOLFSSL *ssl;
 
 	c = get_cur_connection(msg);
 	if(!c) {
@@ -253,7 +253,7 @@ static int get_bits(str *res, long *i, sip_msg_t *msg)
 	static char buf[1024];
 
 	struct tcp_connection *c;
-	SSL *ssl;
+	WOLFSSL *ssl;
 
 	c = get_cur_connection(msg);
 	if(!c) {
@@ -404,17 +404,17 @@ static int pv_desc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 static int get_cert_version(str *res, int local, sip_msg_t *msg)
 {
 	static char buf[INT2STR_MAX_LEN];
-	X509 *cert;
+	WOLFSSL_X509 *cert;
 	struct tcp_connection *c;
 	char *version;
 
 	if(get_cert(&cert, &c, msg, local) < 0)
 		return -1;
-	version = int2str(X509_get_version(cert), &res->len);
+	version = int2str(wolfSSL_X509_get_version(cert), &res->len);
 	memcpy(buf, version, res->len);
 	res->s = buf;
 	if(!local)
-		X509_free(cert);
+		wolfSSL_X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 }
@@ -470,7 +470,7 @@ static int check_cert(str *res, long *ires, int local, int err, sip_msg_t *msg)
 
 	struct tcp_connection *c;
 	SSL *ssl;
-	X509 *cert = 0;
+	WOLFSSL_X509 *cert = 0;
 
 	c = get_cur_connection(msg);
 	if(!c)
@@ -485,7 +485,7 @@ static int check_cert(str *res, long *ires, int local, int err, sip_msg_t *msg)
 		goto error;
 	} else {
 		if((cert = wolfSSL_get_peer_certificate(ssl))
-				&& SSL_get_verify_result(ssl) == err) {
+				&& wolfSSL_get_verify_result(ssl) == err) {
 			*res = succ;
 			if(ires)
 				*ires = 1;
@@ -497,7 +497,7 @@ static int check_cert(str *res, long *ires, int local, int err, sip_msg_t *msg)
 	}
 
 	if(cert)
-		X509_free(cert);
+		wolfSSL_X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 
@@ -583,21 +583,21 @@ static int get_validity(str *res, int local, int bound, sip_msg_t *msg)
 #define NOT_BEFORE 0
 #define NOT_AFTER 1
 	static char buf[1024];
-	X509 *cert;
+	WOLFSSL_X509 *cert;
 	struct tcp_connection *c;
-	BUF_MEM *p;
-	BIO *mem = 0;
-	ASN1_TIME *date;
+	WOLFSSL_BUF_MEM *p;
+	WOLFSSL_BIO *mem = 0;
+	WOLFSSL_ASN1_TIME *date;
 
 	if(get_cert(&cert, &c, msg, local) < 0)
 		return -1;
 
 	switch(bound) {
 		case NOT_BEFORE:
-			date = X509_get_notBefore(cert);
+			date = wolfSSL_X509_get_notBefore(cert);
 			break;
 		case NOT_AFTER:
-			date = X509_get_notAfter(cert);
+			date = wolfSSL_X509_get_notAfter(cert);
 			break;
 		default:
 			BUG("Unexpected parameter value \"%d\"\n", bound);
@@ -610,12 +610,12 @@ static int get_validity(str *res, int local, int bound, sip_msg_t *msg)
 		goto err;
 	}
 
-	if(!ASN1_TIME_print(mem, date)) {
+	if(!wolfSSL_ASN1_TIME_print(mem, date)) {
 		ERR("Error while printing certificate date/time\n");
 		goto err;
 	}
 
-	BIO_get_mem_ptr(mem, &p);
+	wolfSSL_BIO_get_mem_ptr(mem, &p);
 	if(p->length >= 1024) {
 		ERR("Date/time too long\n");
 		goto err;
@@ -624,16 +624,16 @@ static int get_validity(str *res, int local, int bound, sip_msg_t *msg)
 	res->s = buf;
 	res->len = p->length;
 
-	BIO_free(mem);
+	wolfSSL_BIO_free(mem);
 	if(!local)
-		X509_free(cert);
+		wolfSSL_X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 err:
 	if(mem)
-		BIO_free(mem);
+		wolfSSL_BIO_free(mem);
 	if(!local)
-		X509_free(cert);
+		wolfSSL_X509_free(cert);
 	tcpconn_put(c);
 	return -1;
 }
@@ -699,7 +699,7 @@ static int pv_validity(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 static int get_sn(str *res, int local, sip_msg_t *msg)
 {
 	static char buf[80]; // > log(2^256,10)
-	X509 *cert;
+	WOLFSSL_X509 *cert;
 	struct tcp_connection *c;
 	char *sn = NULL;
 	WOLFSSL_BIGNUM *bn = NULL;
@@ -718,7 +718,7 @@ static int get_sn(str *res, int local, sip_msg_t *msg)
 	res->s = buf;
 
 	if(!local)
-		X509_free(cert);
+		wolfSSL_X509_free(cert);
 	tcpconn_put(c);
 	wolfSSL_OPENSSL_free(sn);
 	wolfSSL_BN_free(bn);
@@ -777,7 +777,7 @@ static int cert_to_buf(X509 *cert, char **bufptr, size_t *len)
 {
 #define MAX_CERT_SIZE 16384
 	static char buf[MAX_CERT_SIZE];
-	BIO *mem = NULL;
+	WOLFSSL_BIO *mem = NULL;
 
 	mem = wolfSSL_BIO_new(wolfSSL_BIO_s_mem());
 	if(!mem) {
@@ -786,29 +786,29 @@ static int cert_to_buf(X509 *cert, char **bufptr, size_t *len)
 	}
 
 	/* Write a certificate to a BIO */
-	if(!PEM_write_bio_X509(mem, cert)) {
+	if(!wolfSSL_PEM_write_bio_X509(mem, cert)) {
 		goto err;
 	}
 
-	*len = BIO_pending(mem);
+	*len = wolfSSL_BIO_pending(mem);
 	if(*len > MAX_CERT_SIZE) {
 		ERR("certificate is too long\n");
 		goto err;
 	}
 
-	if(BIO_read(mem, buf, *len) <= 0) {
+	if(wolfSSL_BIO_read(mem, buf, *len) <= 0) {
 		ERR("problem reading data out of BIO");
 		goto err;
 	}
 
 	*bufptr = buf;
 
-	BIO_free(mem);
+	wolfSSL_BIO_free(mem);
 	return 0;
 err:
 
 	if(mem)
-		BIO_free(mem);
+		wolfSSL_BIO_free(mem);
 	return -1;
 }
 
@@ -818,7 +818,7 @@ static int get_ssl_cert(str *res, int local, int urlencoded, sip_msg_t *msg)
 	char *buf = NULL;
 	/* buf2 holds the urlencoded version of buf, which can be up to 3 times its size */
 	static char buf2[MAX_CERT_SIZE * 3 + 1];
-	X509 *cert;
+	WOLFSSL_X509 *cert;
 	struct tcp_connection *c;
 	size_t len;
 	str temp_str;
@@ -847,13 +847,13 @@ static int get_ssl_cert(str *res, int local, int urlencoded, sip_msg_t *msg)
 	}
 
 	if(!local)
-		X509_free(cert);
+		wolfSSL_X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 
 err:
 	if(!local)
-		X509_free(cert);
+		wolfSSL_X509_free(cert);
 	tcpconn_put(c);
 	return -1;
 }
@@ -919,7 +919,7 @@ static int pv_ssl_cert(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 /* NB: SSL_get0_verified_chain() was introduced in OpenSSL 1.1.0 */
 static int get_verified_cert_chain(
-		STACK_OF(X509) * *chain, struct tcp_connection **c, struct sip_msg *msg)
+		WOLF_STACK_OF(WOLFSSL_X509) * *chain, struct tcp_connection **c, struct sip_msg *msg)
 {
 	SSL *ssl;
 
@@ -950,8 +950,8 @@ static int sel_ssl_verified_cert_chain(str *res, select_t *s, sip_msg_t *msg)
 	char *buf = NULL;
 	struct tcp_connection *c;
 	size_t len;
-	STACK_OF(X509) * chain;
-	X509 *cert;
+	WOLF_STACK_OF(WOLFSSL_X509) * chain;
+	WOLFSSL_X509 *cert;
 	int i;
 
 	if(get_verified_cert_chain(&chain, &c, msg) < 0)
@@ -962,10 +962,10 @@ static int sel_ssl_verified_cert_chain(str *res, select_t *s, sip_msg_t *msg)
 	} else
 		return -1;
 
-	if(i < 0 || i >= sk_X509_num(chain))
+	if(i < 0 || i >= wolfSSL_sk_X509_num(chain))
 		return -1;
 
-	cert = sk_X509_value(chain, i);
+	cert = wolfSSL_sk_X509_value(chain, i);
 	if(!cert)
 		return -1;
 
@@ -989,11 +989,11 @@ err:
 static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 {
 	static char buf[1024];
-	X509 *cert;
+	WOLFSSL_X509 *cert;
 	struct tcp_connection *c;
-	X509_NAME *name;
-	X509_NAME_ENTRY *e;
-	ASN1_STRING *asn1;
+	WOLFSSL_X509_NAME *name;
+	WOLFSSL_X509_NAME_ENTRY *e;
+	WOLFSSL_ASN1_STRING *asn1;
 	int index, text_len;
 	char *elem;
 	unsigned char *text_s;
@@ -1003,13 +1003,13 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 	if(get_cert(&cert, &c, msg, local) < 0)
 		return -1;
 
-	name = issuer ? X509_get_issuer_name(cert) : X509_get_subject_name(cert);
+	name = issuer ? wolfSSL_X509_get_issuer_name(cert) : wolfSSL_X509_get_subject_name(cert);
 	if(!name) {
 		ERR("Cannot extract subject or issuer name from peer certificate\n");
 		goto err;
 	}
 
-	index = X509_NAME_get_index_by_NID(name, nid, -1);
+	index = wolfSSL_X509_NAME_get_index_by_NID(name, nid, -1);
 	if(index == -1) {
 		switch(nid) {
 			case NID_commonName:
@@ -1041,9 +1041,9 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 		goto err;
 	}
 
-	e = X509_NAME_get_entry(name, index);
-	asn1 = X509_NAME_ENTRY_get_data(e);
-	text_len = ASN1_STRING_to_UTF8(&text_s, asn1);
+	e = wolfSSL_X509_NAME_get_entry(name, index);
+	asn1 = wolfSSL_X509_NAME_ENTRY_get_data(e);
+	text_len = wolfSSL_ASN1_STRING_to_UTF8(&text_s, asn1);
 	if(text_len < 0 || text_len >= 1024) {
 		ERR("Error converting ASN1 string\n");
 		goto err;
@@ -1054,7 +1054,7 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 
 	wolfSSL_OPENSSL_free(text_s);
 	if(!local)
-		X509_free(cert);
+		wolfSSL_X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 
@@ -1187,9 +1187,9 @@ static int get_alt(str *res, int local, int type, sip_msg_t *msg)
 {
 	static char buf[1024];
 	int n, found = 0;
-	STACK_OF(GENERAL_NAME) *names = 0;
-	GENERAL_NAME *nm;
-	X509 *cert;
+	WOLF_STACK_OF(WOLF_GENERAL_NAME) *names = 0;
+	WOLFSSL_GENERAL_NAME *nm;
+	WOLFSSL_X509 *cert;
 	struct tcp_connection *c;
 	str text;
 	struct ip_addr ip;
@@ -1197,14 +1197,14 @@ static int get_alt(str *res, int local, int type, sip_msg_t *msg)
 	if(get_cert(&cert, &c, msg, local) < 0)
 		return -1;
 
-	names = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
+	names = wolfSSL_X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
 	if(!names) {
 		DBG("Cannot get certificate alternative subject\n");
 		goto err;
 	}
 
-	for(n = 0; n < sk_GENERAL_NAME_num(names); n++) {
-		nm = sk_GENERAL_NAME_value(names, n);
+	for(n = 0; n < wolfSSL_sk_GENERAL_NAME_num(names); n++) {
+		nm = wolfSSL_sk_GENERAL_NAME_value(names, n);
 		if(nm->type != type)
 			continue;
 		switch(type) {
@@ -1241,16 +1241,16 @@ static int get_alt(str *res, int local, int type, sip_msg_t *msg)
 		goto err;
 
 	if(names)
-		sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
+		wolfSSL_sk_GENERAL_NAME_pop_free(names, wolfSSL_GENERAL_NAME_free);
 	if(!local)
-		X509_free(cert);
+		wolfSSL_X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 err:
 	if(names)
-		sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
+		wolfSSL_sk_GENERAL_NAME_pop_free(names, wolfSSL_GENERAL_NAME_free);
 	if(!local)
-		X509_free(cert);
+		wolfSSL_X509_free(cert);
 	tcpconn_put(c);
 	return -1;
 }
@@ -1467,7 +1467,7 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	SSL *ssl = NULL;
 	tcp_connection_t *c = NULL;
-	X509 *cert = NULL;
+	WOLFSSL_X509 *cert = NULL;
 	str sv = STR_NULL;
 
 	if(msg == NULL || param == NULL) {

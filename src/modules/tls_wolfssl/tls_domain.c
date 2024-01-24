@@ -578,7 +578,7 @@ static int load_ca_list(tls_domain_t *d)
  */
 static int load_crl(tls_domain_t *d)
 {
-	X509_STORE *store;
+	WOLFSSL_X509_STORE *store;
 
 	if(!d->crl_file.s) {
 		DBG("%s: No CRL configured\n", tls_domain_str(d));
