@@ -453,7 +453,8 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 	ssl = ((struct tls_extra_data *)c->extra_data)->ssl;
 
 	ssl_verify = wolfSSL_get_verify_result(ssl);
-	if(ssl_verify != WOLFSSL_X509_V_OK) {
+	// WOLFSSL_X509_V_OK / X509_V_OK
+	if(ssl_verify != 0) {
 		LM_WARN("verification of presented certificate failed... return -1\n");
 		tcpconn_put(c);
 		return -1;
