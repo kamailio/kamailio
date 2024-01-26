@@ -608,7 +608,14 @@ if(is_method("INVITE") && has_body("application/sdp")){
 					<emphasis>$sdp(body)</emphasis> - full SDP body (read only)
 				</para></listitem>
 				<listitem><para>
-					<emphasis>$sdp(sess_version)</emphasis> - sess-version -attribute from SDP o= -line. When set to special value -1, current value is incremented. (read + write)
+					<emphasis>$sdp(sess_version)</emphasis> - sess-version -attribute
+					from SDP o= -line. When set to special value -1, current value
+					is incremented. (read + write)
+				</para></listitem>
+				<listitem><para>
+					<emphasis>$sdp(c:ip)</emphasis> - connection IP (read only)
+					- taken from first media strea if specified, otherwise from
+					first session.
 				</para></listitem>
 				</itemizedlist>
 			<para>
