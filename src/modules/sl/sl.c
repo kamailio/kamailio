@@ -89,42 +89,48 @@ static int pv_get_ltt(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_ltt_name(pv_spec_p sp, str *in);
 
 
+/* clang-format off */
 static pv_export_t mod_pvs[] = {
-		{{"ltt", (sizeof("ltt") - 1)}, PVT_OTHER, pv_get_ltt, 0,
+	{{"ltt", (sizeof("ltt") - 1)}, PVT_OTHER, pv_get_ltt, 0,
 				pv_parse_ltt_name, 0, 0, 0},
 
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 static cmd_export_t cmds[] = {
-		{"sl_send_reply", w_sl_send_reply, 2, fixup_sl_reply, 0, REQUEST_ROUTE},
-		{"sl_reply", w_sl_send_reply, 2, fixup_sl_reply, 0, REQUEST_ROUTE},
-		{"send_reply", w_send_reply, 2, fixup_sl_reply, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-		{"send_reply_mode", (cmd_function)w_send_reply_mode, 3,
-				fixup_sl_reply_mode, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-		{"send_reply_error", w_send_reply_error, 0, 0, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-		{"sl_reply_error", w_sl_reply_error, 0, 0, 0, REQUEST_ROUTE},
-		{"sl_forward_reply", w_sl_forward_reply0, 0, 0, 0, ONREPLY_ROUTE},
-		{"sl_forward_reply", w_sl_forward_reply1, 1, fixup_spve_all, 0,
-				ONREPLY_ROUTE},
-		{"sl_forward_reply", w_sl_forward_reply2, 2, fixup_spve_all, 0,
-				ONREPLY_ROUTE},
-		{"bind_sl", (cmd_function)bind_sl, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
+	{"sl_send_reply", w_sl_send_reply, 2, fixup_sl_reply, 0, REQUEST_ROUTE},
+	{"sl_reply", w_sl_send_reply, 2, fixup_sl_reply, 0, REQUEST_ROUTE},
+	{"send_reply", w_send_reply, 2, fixup_sl_reply, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"send_reply_mode", (cmd_function)w_send_reply_mode, 3,
+			fixup_sl_reply_mode, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"send_reply_error", w_send_reply_error, 0, 0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"sl_reply_error", w_sl_reply_error, 0, 0, 0, REQUEST_ROUTE},
+	{"sl_forward_reply", w_sl_forward_reply0, 0, 0, 0, ONREPLY_ROUTE},
+	{"sl_forward_reply", w_sl_forward_reply1, 1, fixup_spve_all, 0,
+			ONREPLY_ROUTE},
+	{"sl_forward_reply", w_sl_forward_reply2, 2, fixup_spve_all, 0,
+			ONREPLY_ROUTE},
+	{"bind_sl", (cmd_function)bind_sl, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {{"default_code", PARAM_INT, &default_code},
-		{"default_reason", PARAM_STR, &default_reason},
-		{"bind_tm", PARAM_INT, &sl_bind_tm},
-		{"rich_redirect", PARAM_INT, &sl_rich_redirect},
-		{"event_callback_fl_ack", PARAM_STR, &_sl_event_callback_fl_ack},
-		{"event_callback_lres_sent", PARAM_STR, &_sl_event_callback_lres_sent},
+static param_export_t params[] = {
+	{"default_code", PARAM_INT, &default_code},
+	{"default_reason", PARAM_STR, &default_reason},
+	{"bind_tm", PARAM_INT, &sl_bind_tm},
+	{"rich_redirect", PARAM_INT, &sl_rich_redirect},
+	{"event_callback_fl_ack", PARAM_STR, &_sl_event_callback_fl_ack},
+	{"event_callback_lres_sent", PARAM_STR, &_sl_event_callback_lres_sent},
 
-		{0, 0, 0}};
+	{0, 0, 0}
+};
 
 
 #ifdef STATIC_SL
@@ -132,17 +138,18 @@ struct module_exports sl_exports = {
 #else
 struct module_exports exports = {
 #endif
-		"sl",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		sl_rpc,			 /* RPC method exports */
-		mod_pvs,		 /* pv exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	"sl",			 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	params,			 /* param exports */
+	sl_rpc,			 /* RPC method exports */
+	mod_pvs,		 /* pv exports */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	child_init,		 /* per-child init function */
+	mod_destroy		 /* module destroy function */
 };
+/* clang-format on */
 
 
 static int mod_init(void)
