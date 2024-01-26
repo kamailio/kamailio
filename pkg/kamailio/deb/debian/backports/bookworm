@@ -35,13 +35,6 @@ sed -i -e '/lsb-base/d' ${DIST}/control
 # libncurses
 sed -i -e 's/libncurses5-dev/libncurses-dev/g' ${DIST}/control
 
-# libwolfssl-dev < 5.6.6
-sed -i -e '/^ libwolfssl-dev,/d' \
-  -e '/^Package: kamailio-wolftls-modules/,/^$/d' \
-  ${DIST}/control
-sed -i -e '/^PACKAGE_GROUPS += tls_wolfssl/d' ${DIST}/rules
-sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += tls_wolfssl' ${DIST}/rules
-
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

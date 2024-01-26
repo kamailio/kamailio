@@ -38,7 +38,6 @@ EXTRA_EXCLUDED_MODULES += iptrtpproxy
 EXTRA_EXCLUDED_MODULES += dnssec
 EXTRA_EXCLUDED_MODULES += java
 EXTRA_EXCLUDED_MODULES += python
-EXTRA_EXCLUDED_MODULES += tls_wolfssl
 ## --EXCLUDED--
 
 
@@ -87,6 +86,7 @@ PACKAGE_GROUPS += mqtt
 PACKAGE_GROUPS += secsipid
 PACKAGE_GROUPS += lwsc
 PACKAGE_GROUPS += nats
+PACKAGE_GROUPS += tls_wolfssl
 PACKAGE_GROUPS += microhttpd
 
 # Module groups to be packaged onto kamailio-extra-modules.
