@@ -1,28 +1,50 @@
 # IP-Address for incoming SIP-Traffic, in the following format:
 
 # SIP / UDP
-listen=udp:0.0.0.0:5060
+listen=udp:11.22.33.44:5060
 # SIP / TCP
-#listen=tcp:0.0.0.0:5060
+listen=tcp:11.22.33.44:5060
 # SIP / TCP/TLS
-#listen=tls:0.0.0.0:5061
+#listen=tls:11.22.33.44:5061
 
 # IPSEC / UDP
-#!define IPSEC_LISTEN_ADDR "0.0.0.0"
-#!define IPSEC_CLIENT_PORT 5062
-#!define IPSEC_SERVER_PORT 5063
+#!define IPSEC_LISTEN_ADDR "11.22.33.44"
+#!define IPSEC_CLIENT_PORT 5100
+#!define IPSEC_SERVER_PORT 6100
+#!define IPSEC_MAX_CONN 10
 
-alias=pcscf.mnc001.mcc001.3gppnetwork.org
+# Value: 1 for true and 0 for false
+#!define IPSEC_DELETE_UNUSED_TUNNELS 1
+
+# Delay in seconds to delete contact from registrar
+#!define CONTACT_DELETE_DELAY 10
+
+# Logical OR of following flags:
+# - IPSEC_SEND_FORCE_SOCKET 1
+# - IPSEC_SETDSTURI_FULL 128
+# - IPSEC_FORWARD_USEVIA 256
+# - IPSEC_FORWARD_TRYTCP 512
+#!define IPSEC_FORWARD_FLAGS 897
+
+#!define RX_IMS_REG_DIALOG_DIRECTION 3
+
+# IP used in Rx_AAR_Register - IP of this P-CSCF, to be used in the flow for the AF-signaling
+#!define RX_AF_SIGNALING_IP "10.4.128.21"
+# Uncomment the below line only when UE is behind double NAT (e.g. VoIP calling over WiFi/ CN behind a NAT)
+##!define RX_AF_SIGNALING_IP "172.24.15.30"
+
+alias=pcscf.ims.mnc001.mcc001.3gppnetwork.org
 
 #!define MY_WS_PORT 80
 #!define MY_WSS_PORT 443
 
-#!define PCSCF_URL "sip:pcscf.mnc001.mcc001.3gppnetwork.org"
+#!define PCSCF_URL "sip:pcscf.ims.mnc001.mcc001.3gppnetwork.org:5060"
 
 #!define TCP_PROCESSES 8
 
-#!subst "/NETWORKNAME/mnc001.mcc001.3gppnetwork.org/"
-#!subst "/HOSTNAME/pcscf.mnc001.mcc001.3gppnetwork.org/"
+#!subst "/NETWORKNAME/ims.mnc001.mcc001.3gppnetwork.org/"
+#!subst "/HOSTNAME/pcscf.ims.mnc001.mcc001.3gppnetwork.org/"
+#!subst "/PCRF_REALM/epc.mnc001.mcc001.3gppnetwork.org/"
 
 # SIP-Address of capturing node, if not set, capturing is disabled.
 ##!define CAPTURE_NODE "sip:127.0.0.1:9060"
@@ -41,7 +63,7 @@ alias=pcscf.mnc001.mcc001.3gppnetwork.org
 #! Optional: Server-URL for Websocket-Requests
 ##!define WEBSOCKET_WEBSERVER "phone.ng-voice.com"
 
-##!define TRF_FUNCTION "trf.mnc001.mcc001.3gppnetwork.org"
+##!define TRF_FUNCTION "trf.ims.mnc001.mcc001.3gppnetwork.org"
 
 #
 # Several features can be enabled using '#!define WITH_FEATURE' directives:
@@ -99,10 +121,10 @@ alias=pcscf.mnc001.mcc001.3gppnetwork.org
 ##!define WITH_XMLRPC
 ##!define WITH_IPBLOCK
 ##!define WITH_ANTIFLOOD
-##!define WITH_RX
-##!define WITH_RX_REG
-##!define WITH_RX_CALL
-##!define WITH_TCP
+#!define WITH_RX
+#!define WITH_RX_REG
+#!define WITH_RX_CALL
+#!define WITH_TCP
 ##!define WITH_RTPIPV4
 ##!define WITH_SBC
 ##!define WITH_SBC_CALL
@@ -110,3 +132,6 @@ alias=pcscf.mnc001.mcc001.3gppnetwork.org
 ##!define WITH_RTPPING
 ##!define WITH_WEBSOCKET
 #!define WITH_IPSEC
+#!define WITH_IMS_HDR_CACHE
+#!define WITH_PING_UDP
+#!define WITH_PING_TCP

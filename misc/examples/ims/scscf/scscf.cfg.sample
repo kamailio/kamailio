@@ -1,25 +1,30 @@
 # SIP / UDP
 listen=udp:11.22.33.44:6060
 # SIP / TCP
-#listen=tcp:11.22.33.44:6060
+listen=tcp:11.22.33.44:6060
 # SIP / TCP/TLS
 #listen=tls:11.22.33.44:6061
 
 #!define NETWORKNAME "ims.mnc001.mcc001.3gppnetwork.org"
-#!define HOSTNAME "scscf.mnc001.mcc001.3gppnetwork.org"
-#!define URI "sip:scscf.mnc001.mcc001.3gppnetwork.org:6060"
+#!define NETWORKNAME_ESC "ims\.mnc001\.mcc001\.3gppnetwork\.org"
+#!define HOSTNAME "scscf.ims.mnc001.mcc001.3gppnetwork.org"
+#!define HOSTNAME_ESC "scscf\.ims\.mnc001\.mcc001\.3gppnetwork\.org"
+#!define URI "sip:scscf.ims.mnc001.mcc001.3gppnetwork.org:6060"
 
-alias=scscf.mnc001.mcc001.3gppnetwork.org
+#!subst "/NETWORKNAME/ims.mnc001.mcc001.3gppnetwork.org/"
+#!subst "/HSS_REALM/ims.mnc001.mcc001.3gppnetwork.org/"
+
+alias=scscf.ims.mnc001.mcc001.3gppnetwork.org
 
 # ENUM-Server to query:
-#!define ENUM_SUFFIX "mnc001.mcc001.3gppnetwork.org."
+#!define ENUM_SUFFIX "ims.mnc001.mcc001.3gppnetwork.org."
 
 # SIP-Address of capturing node, if not set, capturing is disabled.
 ##!define CAPTURE_NODE "sip:127.0.0.1:9060"
 
 # Connection URL for the database:
 # For use with a single database:
-##!define DB_URL "mysql://scscf:heslo@127.0.0.1/scscf"
+#!define DB_URL "mysql://scscf:heslo@127.0.0.1/scscf"
 
 # For use with DB_Cluster: con1 (primary), con2 (backup)
 ##!define DB_URL "con1=>mysql://scscf:heslo@127.0.0.1/scscf"
@@ -42,8 +47,8 @@ alias=scscf.mnc001.mcc001.3gppnetwork.org
 #!define RO_DESTINATION "hssocs.voiceblue.com"
 #!define RO_ROOT "32260@3gpp.org"
 #!define RO_EXT "ext"
-#!define RO_MNC "07"
-#!define RO_MCC "262"
+#!define RO_MNC "02"
+#!define RO_MCC "001"
 #(see https://en.wikipedia.org/wiki/Mobile_country_code_(MCC))
 #!define RO_RELEASE "8"
 # See http://tools.ietf.org/html/rfc4006#section-4.1.2 for the definition of the Service-Context
@@ -73,7 +78,8 @@ alias=scscf.mnc001.mcc001.3gppnetwork.org
 #
 # Enabled Features for this host:
 ##!define WITH_DEBUG
+#!define WITH_TCP
 ##!define WITH_XMLRPC
 ##!define WITH_RO
 ##!define WITH_RO_TERM
-##!define WITH_AUTH
+#!define WITH_AUTH
