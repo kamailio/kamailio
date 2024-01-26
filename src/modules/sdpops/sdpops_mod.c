@@ -2053,13 +2053,12 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	}
 
 	switch(param->pvn.u.isname.name.n) {
-
-			/* body */
 		case 0:
+			/* body */
 			LM_DBG("param->pvn.u.isname.name.n=0\n");
 			return pv_get_strval(msg, param, res, &sdp->raw_sdp);
-			/* sess_version */
 		case 1:
+			/* sess_version */
 			if(sdp_get_sess_version(msg, &sess_version, &sess_version_num)
 					== 1) {
 				if(sess_version.len > 0 && sess_version.s != NULL) {
@@ -2068,6 +2067,34 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 				}
 			}
 			return pv_get_null(msg, param, res);
+		case 2:
+			/* connection ip */
+			if(sdp->sessions == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams == NULL) {
+				if(sdp->sessions->ip_addr.s != NULL
+						&& sdp->sessions->ip_addr.len > 0) {
+					return pv_get_strval(
+							msg, param, res, &sdp->sessions->ip_addr);
+				} else {
+					return pv_get_null(msg, param, res);
+				}
+			} else {
+				if(sdp->sessions->streams->ip_addr.s != NULL
+						&& sdp->sessions->streams->ip_addr.len > 0) {
+					return pv_get_strval(
+							msg, param, res, &sdp->sessions->streams->ip_addr);
+				} else {
+					if(sdp->sessions->ip_addr.s != NULL
+							&& sdp->sessions->ip_addr.len > 0) {
+						return pv_get_strval(
+								msg, param, res, &sdp->sessions->ip_addr);
+					} else {
+						return pv_get_null(msg, param, res);
+					}
+				}
+			}
 
 		default:
 			return pv_get_null(msg, param, res);
@@ -2114,6 +2141,8 @@ static int pv_parse_sdp_name(pv_spec_p sp, str *in)
 		case 4:
 			if(strncmp(in->s, "body", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 0;
+			if(strncmp(in->s, "c:ip", 4) == 0)
+				sp->pvp.pvn.u.isname.name.n = 2;
 			else
 				goto error;
 			break;
