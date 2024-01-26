@@ -79,78 +79,82 @@ static int pv_parse_sdp_name(pv_spec_p sp, str *in);
 
 static int mod_init(void);
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"sdp_remove_line_by_prefix", (cmd_function)w_sdp_remove_line_by_prefix,
-				1, fixup_spve_null, 0, ANY_ROUTE},
-		{"sdp_remove_line_by_prefix", (cmd_function)w_sdp_remove_line_by_prefix,
-				2, fixup_spve_spve, 0, ANY_ROUTE},
-		{"sdp_remove_codecs_by_id", (cmd_function)w_sdp_remove_codecs_by_id, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"sdp_remove_codecs_by_id", (cmd_function)w_sdp_remove_codecs_by_id, 2,
-				fixup_spve_spve, 0, ANY_ROUTE},
-		{"sdp_remove_codecs_by_name", (cmd_function)w_sdp_remove_codecs_by_name,
-				1, fixup_spve_null, 0, ANY_ROUTE},
-		{"sdp_remove_codecs_by_name", (cmd_function)w_sdp_remove_codecs_by_name,
-				2, fixup_spve_spve, 0, ANY_ROUTE},
-		{"sdp_keep_codecs_by_id", (cmd_function)w_sdp_keep_codecs_by_id, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"sdp_keep_codecs_by_id", (cmd_function)w_sdp_keep_codecs_by_id, 2,
-				fixup_spve_spve, 0, ANY_ROUTE},
-		{"sdp_keep_codecs_by_name", (cmd_function)w_sdp_keep_codecs_by_name, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"sdp_keep_codecs_by_name", (cmd_function)w_sdp_keep_codecs_by_name, 2,
-				fixup_spve_spve, 0, ANY_ROUTE},
-		{"sdp_with_media", (cmd_function)w_sdp_with_media, 1, fixup_spve_null,
-				0, ANY_ROUTE},
-		{"sdp_with_active_media", (cmd_function)w_sdp_with_active_media, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"sdp_remove_media", (cmd_function)w_sdp_remove_media, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"sdp_with_transport", (cmd_function)w_sdp_with_transport, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"sdp_with_transport_like", (cmd_function)w_sdp_with_transport_like, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"sdp_remove_transport", (cmd_function)w_sdp_remove_transport, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"sdp_transport", (cmd_function)w_sdp_transport, 1, 0, 0, ANY_ROUTE},
-		{"sdp_with_codecs_by_id", (cmd_function)w_sdp_with_codecs_by_id, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"sdp_with_codecs_by_name", (cmd_function)w_sdp_with_codecs_by_name, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"sdp_print", (cmd_function)w_sdp_print, 1, fixup_igp_null, 0,
-				ANY_ROUTE},
-		{"sdp_get", (cmd_function)w_sdp_get, 1, 0, 0, ANY_ROUTE},
-		{"sdp_content", (cmd_function)w_sdp_content, 0, 0, 0, ANY_ROUTE},
-		{"sdp_content", (cmd_function)w_sdp_content_sloppy, 1, 0, 0, ANY_ROUTE},
-		{"sdp_with_ice", (cmd_function)w_sdp_with_ice, 0, 0, 0, ANY_ROUTE},
-		{"sdp_get_line_startswith", (cmd_function)w_sdp_get_line_startswith, 2,
-				fixup_none_spve, 0, ANY_ROUTE},
-		{"sdp_get_address_family", (cmd_function)w_sdp_get_address_family, 0, 0,
-				0, ANY_ROUTE},
-		{"bind_sdpops", (cmd_function)bind_sdpops, 1, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
+	{"sdp_remove_line_by_prefix", (cmd_function)w_sdp_remove_line_by_prefix,
+			1, fixup_spve_null, 0, ANY_ROUTE},
+	{"sdp_remove_line_by_prefix", (cmd_function)w_sdp_remove_line_by_prefix,
+			2, fixup_spve_spve, 0, ANY_ROUTE},
+	{"sdp_remove_codecs_by_id", (cmd_function)w_sdp_remove_codecs_by_id, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"sdp_remove_codecs_by_id", (cmd_function)w_sdp_remove_codecs_by_id, 2,
+			fixup_spve_spve, 0, ANY_ROUTE},
+	{"sdp_remove_codecs_by_name", (cmd_function)w_sdp_remove_codecs_by_name,
+			1, fixup_spve_null, 0, ANY_ROUTE},
+	{"sdp_remove_codecs_by_name", (cmd_function)w_sdp_remove_codecs_by_name,
+			2, fixup_spve_spve, 0, ANY_ROUTE},
+	{"sdp_keep_codecs_by_id", (cmd_function)w_sdp_keep_codecs_by_id, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"sdp_keep_codecs_by_id", (cmd_function)w_sdp_keep_codecs_by_id, 2,
+			fixup_spve_spve, 0, ANY_ROUTE},
+	{"sdp_keep_codecs_by_name", (cmd_function)w_sdp_keep_codecs_by_name, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"sdp_keep_codecs_by_name", (cmd_function)w_sdp_keep_codecs_by_name, 2,
+			fixup_spve_spve, 0, ANY_ROUTE},
+	{"sdp_with_media", (cmd_function)w_sdp_with_media, 1, fixup_spve_null,
+			0, ANY_ROUTE},
+	{"sdp_with_active_media", (cmd_function)w_sdp_with_active_media, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"sdp_remove_media", (cmd_function)w_sdp_remove_media, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"sdp_with_transport", (cmd_function)w_sdp_with_transport, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"sdp_with_transport_like", (cmd_function)w_sdp_with_transport_like, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"sdp_remove_transport", (cmd_function)w_sdp_remove_transport, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"sdp_transport", (cmd_function)w_sdp_transport, 1, 0, 0, ANY_ROUTE},
+	{"sdp_with_codecs_by_id", (cmd_function)w_sdp_with_codecs_by_id, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"sdp_with_codecs_by_name", (cmd_function)w_sdp_with_codecs_by_name, 1,
+			fixup_spve_null, 0, ANY_ROUTE},
+	{"sdp_print", (cmd_function)w_sdp_print, 1, fixup_igp_null, 0,
+			ANY_ROUTE},
+	{"sdp_get", (cmd_function)w_sdp_get, 1, 0, 0, ANY_ROUTE},
+	{"sdp_content", (cmd_function)w_sdp_content, 0, 0, 0, ANY_ROUTE},
+	{"sdp_content", (cmd_function)w_sdp_content_sloppy, 1, 0, 0, ANY_ROUTE},
+	{"sdp_with_ice", (cmd_function)w_sdp_with_ice, 0, 0, 0, ANY_ROUTE},
+	{"sdp_get_line_startswith", (cmd_function)w_sdp_get_line_startswith, 2,
+			fixup_none_spve, 0, ANY_ROUTE},
+	{"sdp_get_address_family", (cmd_function)w_sdp_get_address_family, 0, 0,
+			0, ANY_ROUTE},
+	{"bind_sdpops", (cmd_function)bind_sdpops, 1, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static pv_export_t mod_pvs[] = {
-		{{"sdp", (sizeof("sdp") - 1)}, /* */
-				PVT_OTHER, pv_get_sdp, pv_set_sdp, pv_parse_sdp_name, 0, 0, 0},
+	{{"sdp", (sizeof("sdp") - 1)}, /* */
+			PVT_OTHER, pv_get_sdp, pv_set_sdp, pv_parse_sdp_name, 0, 0, 0},
 
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {{0, 0, 0}};
 
 /** module exports */
 struct module_exports exports = {
-		"sdpops",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		0,				 /* per-child init function */
-		0				 /* module destroy function */
+	"sdpops",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd exports */
+	params,			 /* param exports */
+	0,				 /* RPC method exports */
+	mod_pvs,		 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	0,				 /* per-child init function */
+	0				 /* module destroy function */
 };
+/* clang-format on */
 
 /**
  *
