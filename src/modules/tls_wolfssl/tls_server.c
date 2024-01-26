@@ -637,6 +637,7 @@ void tls_h_tcpconn_clean_f(struct tcp_connection *c)
  * wolfSSL implementation detail: BIO pair uses a ring buffer -
  * wolfSSL_BIO_read does not do wrap-around; you may need a 2-pass read
  * 1st read - front of buffer, 2nd read - wrap-around
+ * fixed in 4f1d777090 post-v5.6.6-stable
  */
 
 void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd)
@@ -1040,7 +1041,16 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 				goto error;
 		}
 		rd_pending = bytes_read;
-		nw = wolfSSL_BIO_write(rwbio, rd_buf, rd_pending);
+		/*
+		 * use 2-pass write for wolfSSL ring buffer
+		 * fixed in 4f1d777090, post-v5.6.6-stable
+		 */
+		for(nw = 0; nw < rd_pending; ) {
+			npos = wolfSSL_BIO_write(rwbio, rd_buf+nw, rd_pending-nw);
+			if(npos<=0)
+				break;
+			nw += npos;
+		}
 		assert(nw==rd_pending);
 	}
  continue_ssl_read:
