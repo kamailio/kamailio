@@ -22,7 +22,7 @@
  *
  */
 
-
+#include <pthread.h>
 #include "../../core/mem/mem.h"
 #include "../../core/dprint.h"
 #include "../../core/async_task.h"
@@ -227,14 +227,28 @@ extern char *db_unixodbc_tquote;
 /*
  * Initialize database module
  * No function should be called before this
+ *
+ * Init libssl in a thread
  */
-db1_con_t *db_unixodbc_init(const str *_url)
+static db1_con_t *db_unixodbc_init0(const str *_url)
 {
 	db1_con_t *c;
 	c = db_do_init(_url, (void *)db_unixodbc_new_connection);
 	if(c && db_unixodbc_tquote)
 		CON_TQUOTE(c) = db_unixodbc_tquote;
 	return c;
+}
+
+db1_con_t *db_unixodbc_init(const str *_url)
+{
+	pthread_t tid;
+	db1_con_t *ret;
+
+	pthread_create(
+			&tid, NULL, (void *(*)(void *))db_unixodbc_init0, (void *)_url);
+	pthread_join(tid, (void **)&ret);
+
+	return ret;
 }
 
 /*
