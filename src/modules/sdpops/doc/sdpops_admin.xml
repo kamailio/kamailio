@@ -595,7 +595,174 @@ if(is_method("INVITE") && has_body("application/sdp")){
 		</programlisting>
 			</example>
 	</section>
-
+	<section id="sdpops.f.sdp_iterator_start">
+		<title>
+		<function moreinfo="none">sdp_iterator_start(iname)</function>
+		</title>
+		<para>
+			Start an iterator for lines in the body of the current SIP message.
+			The parameter iname is used to identify the iterator. There
+			can be up to 4 iterators at the same time, with different name.
+		</para>
+		<para>
+			The parameter can be a dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sdp_iterator_start</function> usage</title>
+		<programlisting format="linespecific">
+...
+sdp_iterator_start("s1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sdpops.f.sdp_iterator_end">
+		<title>
+		<function moreinfo="none">sdp_iterator_end(iname)</function>
+		</title>
+		<para>
+			Close the iterator identified by iname parameter. The iname value
+			must be the same used for sdp_iterator_start().
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sdp_iterator_end</function> usage</title>
+		<programlisting format="linespecific">
+...
+sdp_iterator_end("s1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sdpops.f.sdp_iterator_next">
+		<title>
+		<function moreinfo="none">sdp_iterator_next(iname)</function>
+		</title>
+		<para>
+			Move the iterator to the next line in the body. It must
+			be called also after sdp_iterator_start() to get the first
+			header.
+		</para>
+		<para>
+			The return code is false when there is no other header in the list.
+		</para>
+		<para>
+			The SDP line is accessible via variable $sdpitval(iname) - it contains
+			also the EOL chars.
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sdp_iterator_next</function> usage</title>
+		<programlisting format="linespecific">
+...
+    sdp_iterator_start("s1");
+    while(sdp_iterator_next("s1")) {
+        xlog("body line: $sdpitval(s1)");
+    }
+    sdp_iterator_end("s1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sdpops.f.sdp_iterator_rm">
+		<title>
+		<function moreinfo="none">sdp_iterator_rm(iname)</function>
+		</title>
+		<para>
+			Remove the body line at the current iterator position.
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sdp_iterator_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+    sdp_iterator_start("s1");
+    while(sdp_iterator_next("s1")) {
+        if($sdpitval(s1)=~"abc") {
+            sdp_iterator_rm("s1");
+        }
+    }
+    sdp_iterator_end("s1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sdpops.f.sdp_iterator_append">
+		<title>
+		<function moreinfo="none">sdp_iterator_append(iname, text)</function>
+		</title>
+		<para>
+			Add text after the line at the current iterator possition.
+		</para>
+		<para>
+			The parameters can be dynamic strings with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sdp_iterator_append</function> usage</title>
+		<programlisting format="linespecific">
+...
+    sdp_iterator_start("s1");
+    while(sdp_iterator_next("s1")) {
+        if($sdpitval(s1)=~"^a=info:xyz") {
+            sdp_iterator_append("s1", "a=info:abc\r\n");
+            break;
+        }
+    }
+    sdp_iterator_end("s1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sdpops.f.sdp_iterator_insert">
+		<title>
+		<function moreinfo="none">sdp_iterator_insert(iname, text)</function>
+		</title>
+		<para>
+			Add text before the line at the current iterator possition.
+		</para>
+		<para>
+			The parameters can be dynamic strings with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sdp_iterator_insert</function> usage</title>
+		<programlisting format="linespecific">
+...
+    sdp_iterator_start("s1");
+    while(sdp_iterator_next("s1")) {
+        if($sdpitval(s1)=~"^a=info:xyz") {
+            sdp_iterator_insert("s1", "a=info:abc\r\n");
+            break;
+        }
+    }
+    sdp_iterator_end("s1");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -621,6 +788,11 @@ if(is_method("INVITE") && has_body("application/sdp")){
 			<para>
 			Exported pseudo-variables are also documented at &kamwikilink;
 			</para>
+		</section>
+		<section>
+			<title><varname>$sdpitval( )</varname></title>
+			<para>Return the value of to SDP line iterator with the given
+			name: $sdpitval(name).</para>
 		</section>
 	</section>
 
