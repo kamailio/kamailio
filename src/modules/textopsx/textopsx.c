@@ -2441,7 +2441,7 @@ static int pv_get_hf_iterator_hbody(
 typedef struct bl_iterator
 {
 	str name;
-	char bname[HF_ITERATOR_NAME_SIZE];
+	char bname[BL_ITERATOR_NAME_SIZE];
 	str body;
 	str it;
 	int eob;
