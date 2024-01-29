@@ -153,13 +153,13 @@ tls_domain_t *tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
  */
 void tls_free_domain(tls_domain_t *d)
 {
-    if(!d)
+	if(!d)
 		return;
 	if(d->ctx) {
 		do {
 			if(d->ctx[0])
 				wolfSSL_CTX_free(d->ctx[0]);
-		}while(0);
+		} while(0);
 		shm_free(d->ctx);
 	}
 
@@ -375,7 +375,7 @@ static int tls_domain_foreach_CTX(
 	do {
 		if((ret = ctx_cbk(d->ctx[0], l1, p2)) < 0)
 			return ret;
-	}while(0);
+	} while(0);
 	return 0;
 }
 
@@ -523,7 +523,7 @@ static int load_cert(tls_domain_t *d)
 			TLS_ERR("load_cert:");
 			return -1;
 		}
-	}while(0);
+	} while(0);
 	return 0;
 }
 
@@ -566,7 +566,7 @@ static int load_ca_list(tls_domain_t *d)
 				return -1;
 			}
 		}
-	}while(0);
+	} while(0);
 	return 0;
 }
 
@@ -600,7 +600,7 @@ static int load_crl(tls_domain_t *d)
 		store = wolfSSL_CTX_get_cert_store(d->ctx[0]);
 		wolfSSL_X509_STORE_set_flags(
 				store, WOLFSSL_CRL_CHECK | WOLFSSL_CRL_CHECKALL);
-	}while(0);
+	} while(0);
 	return 0;
 }
 
@@ -631,7 +631,7 @@ static int set_cipher_list(tls_domain_t *d)
 			return -1;
 		}
 		setup_dh(d->ctx[0]);
-	}while(0);
+	} while(0);
 	return 0;
 }
 
@@ -685,7 +685,7 @@ static int set_verification(tls_domain_t *d)
 			wolfSSL_CTX_set_verify(d->ctx[0], verify_mode, 0);
 		}
 		wolfSSL_CTX_set_verify_depth(d->ctx[0], d->verify_depth);
-	}while(0);
+	} while(0);
 	return 0;
 }
 
@@ -736,7 +736,7 @@ static int set_ssl_options(tls_domain_t *d)
 		wolfSSL_CTX_set_options(d->ctx[0], options);
 		if(sr_tls_renegotiation == 0)
 			wolfSSL_CTX_set_info_callback(d->ctx[0], sr_ssl_ctx_info_callback);
-	}while(0);
+	} while(0);
 	return 0;
 }
 
@@ -762,7 +762,7 @@ static int set_session_cache(tls_domain_t *d)
 		/* not really needed is SSL_SESS_CACHE_OFF */
 		wolfSSL_CTX_set_session_id_context(d->ctx[0],
 				(unsigned char *)tls_session_id.s, tls_session_id.len);
-	}while(0);
+	} while(0);
 	return 0;
 }
 
@@ -839,8 +839,7 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 	str server_name;
 
 	orig_domain = (tls_domain_t *)private;
-	server_name.s =
-			(char *)wolfSSL_get_servername(ssl, WOLFSSL_SNI_HOST_NAME);
+	server_name.s = (char *)wolfSSL_get_servername(ssl, WOLFSSL_SNI_HOST_NAME);
 	if(server_name.s) {
 		LM_DBG("received server_name (TLS extension): '%s'\n", server_name.s);
 	} else {
@@ -866,8 +865,7 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 		   " socket [%s:%d] server name='%s' -"
 		   " switching SSL CTX to %p dom %p%s\n",
 			server_name.s, ip_addr2a(&new_domain->ip), new_domain->port,
-			ZSW(new_domain->server_name.s), new_domain->ctx[0],
-			new_domain,
+			ZSW(new_domain->server_name.s), new_domain->ctx[0], new_domain,
 			(new_domain->type & TLS_DOMAIN_DEF) ? " (default)" : "");
 	wolfSSL_set_SSL_CTX(ssl, new_domain->ctx[0]);
 	/* SSL_set_SSL_CTX only sets the correct certificate parameters, but does
@@ -959,7 +957,7 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 				return -1;
 			}
 		}
-	}while(0);
+	} while(0);
 
 	if((d->type & TLS_DOMAIN_SRV)
 			&& (d->server_name.len > 0 || (d->type & TLS_DOMAIN_DEF))) {
@@ -1029,7 +1027,7 @@ static int load_private_key(tls_domain_t *d)
 			TLS_ERR("load_private_key:");
 			return -1;
 		}
-	}while(0);
+	} while(0);
 
 	DBG("%s: Key '%s' successfully loaded\n", tls_domain_str(d),
 			d->pkey_file.s);
