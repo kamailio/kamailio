@@ -34,7 +34,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include "../../core/dprint.h"
 #include "../../core/mem/mem.h"
 #include "../../lib/srdb1/db.h"
@@ -44,6 +43,8 @@
 #include "../../core/locking.h"
 #include "../../core/hashes.h"
 #include "../../core/clist.h"
+#define KSR_RTHREAD_NEED_PI
+#include "../../core/rthreads.h"
 #include "km_dbase.h"
 #include "km_pg_con.h"
 #include "km_val.h"
@@ -119,14 +120,7 @@ static db1_con_t *db_postgres_init0(const str *_url)
 
 db1_con_t *db_postgres_init(const str *_url)
 {
-	pthread_t tid;
-	db1_con_t *ret;
-
-	pthread_create(
-			&tid, NULL, (void *(*)(void *))db_postgres_init0, (void *)_url);
-	pthread_join(tid, (void **)&ret);
-
-	return ret;
+	return run_threadP((_thread_proto)db_postgres_init0, (void *)_url);
 }
 /*!
  * \brief Initialize database for future queries, specify pooling
@@ -137,28 +131,15 @@ db1_con_t *db_postgres_init(const str *_url)
  *
  * Init libssl in thread
  */
-struct _thread_args
+static db1_con_t *db_postgres_init2_impl(const str *_url, db_pooling_t pooling)
 {
-	const str *_url;
-	db_pooling_t pooling;
-};
-
-static db1_con_t *_db_postgres_init2(struct _thread_args *args)
-{
-	return db_do_init2(
-			args->_url, (void *)db_postgres_new_connection, args->pooling);
+	return db_do_init2(_url, (void *)db_postgres_new_connection, pooling);
 }
 
 db1_con_t *db_postgres_init2(const str *_url, db_pooling_t pooling)
 {
-	pthread_t tid;
-	db1_con_t *ret;
-
-	pthread_create(&tid, NULL, (void *(*)(void *))_db_postgres_init2,
-			(void *)&(struct _thread_args){_url, pooling});
-	pthread_join(tid, (void **)&ret);
-
-	return ret;
+	return run_threadPI(
+			(_thread_protoPI)db_postgres_init2_impl, (void *)_url, pooling);
 }
 /*!
  * \brief Close database when the database is no longer needed
