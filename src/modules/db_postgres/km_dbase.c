@@ -34,6 +34,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "../../core/dprint.h"
 #include "../../core/mem/mem.h"
 #include "../../lib/srdb1/db.h"
@@ -108,24 +109,57 @@ static void db_postgres_free_query(const db1_con_t *_con);
  * \param _url URL of the database that should be opened
  * \return database connection on success, NULL on error
  * \note this function must be called prior to any database functions
+ *
+ * Init libssl in a thread
  */
-db1_con_t *db_postgres_init(const str *_url)
+static db1_con_t *db_postgres_init0(const str *_url)
 {
 	return db_do_init(_url, (void *)db_postgres_new_connection);
 }
 
+db1_con_t *db_postgres_init(const str *_url)
+{
+	pthread_t tid;
+	db1_con_t *ret;
+
+	pthread_create(
+			&tid, NULL, (void *(*)(void *))db_postgres_init0, (void *)_url);
+	pthread_join(tid, (void **)&ret);
+
+	return ret;
+}
 /*!
  * \brief Initialize database for future queries, specify pooling
  * \param _url URL of the database that should be opened
  * \param pooling whether or not to use a pooled connection
  * \return database connection on success, NULL on error
  * \note this function must be called prior to any database functions
+ *
+ * Init libssl in thread
  */
-db1_con_t *db_postgres_init2(const str *_url, db_pooling_t pooling)
+struct _thread_args
 {
-	return db_do_init2(_url, (void *)db_postgres_new_connection, pooling);
+	const str *_url;
+	db_pooling_t pooling;
+};
+
+static db1_con_t *_db_postgres_init2(struct _thread_args *args)
+{
+	return db_do_init2(
+			args->_url, (void *)db_postgres_new_connection, args->pooling);
 }
 
+db1_con_t *db_postgres_init2(const str *_url, db_pooling_t pooling)
+{
+	pthread_t tid;
+	db1_con_t *ret;
+
+	pthread_create(&tid, NULL, (void *(*)(void *))_db_postgres_init2,
+			(void *)&(struct _thread_args){_url, pooling});
+	pthread_join(tid, (void **)&ret);
+
+	return ret;
+}
 /*!
  * \brief Close database when the database is no longer needed
  * \param _h closed connection, as returned from db_postgres_init
