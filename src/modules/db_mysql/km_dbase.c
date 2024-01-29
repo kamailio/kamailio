@@ -34,11 +34,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <mysql.h>
-#include <pthread.h>
 #include <errmsg.h>
 #include "../../core/mem/mem.h"
 #include "../../core/dprint.h"
 #include "../../core/async_task.h"
+#include "../../core/rthreads.h"
 #include "../../lib/srdb1/db_query.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "db_mysql.h"
@@ -213,13 +213,7 @@ static db1_con_t *db_mysql_init0(const str *_url)
 
 db1_con_t *db_mysql_init(const str *_url)
 {
-	pthread_t tid;
-	db1_con_t *ret;
-
-	pthread_create(&tid, NULL, (void *(*)(void *))db_mysql_init0, (void *)_url);
-	pthread_join(tid, (void **)&ret);
-
-	return ret;
+	return run_threadP((_thread_proto)db_mysql_init0, (void *)_url);
 }
 /**
  * Shut down the database module.
