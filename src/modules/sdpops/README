@@ -46,10 +46,17 @@ Daniel-Constantin Mierla
               4.18. sdp_with_ice()
               4.19. sdp_get_line_startswith(avpvar, string)
               4.20. sdp_get_address_family()
+              4.21. sdp_iterator_start(iname)
+              4.22. sdp_iterator_end(iname)
+              4.23. sdp_iterator_next(iname)
+              4.24. sdp_iterator_rm(iname)
+              4.25. sdp_iterator_append(iname, text)
+              4.26. sdp_iterator_insert(iname, text)
 
         5. Exported Variables
 
               5.1. $sdp( )
+              5.2. $sdpitval( )
 
    List of Examples
 
@@ -73,6 +80,12 @@ Daniel-Constantin Mierla
    1.18. sdp_with_ice usage
    1.19. sdp_get_line_startswith usage
    1.20. sdp_get_address_familyusage
+   1.21. sdp_iterator_start usage
+   1.22. sdp_iterator_end usage
+   1.23. sdp_iterator_next usage
+   1.24. sdp_iterator_rm usage
+   1.25. sdp_iterator_append usage
+   1.26. sdp_iterator_insert usage
 
 Chapter 1. Admin Guide
 
@@ -107,10 +120,17 @@ Chapter 1. Admin Guide
         4.18. sdp_with_ice()
         4.19. sdp_get_line_startswith(avpvar, string)
         4.20. sdp_get_address_family()
+        4.21. sdp_iterator_start(iname)
+        4.22. sdp_iterator_end(iname)
+        4.23. sdp_iterator_next(iname)
+        4.24. sdp_iterator_rm(iname)
+        4.25. sdp_iterator_append(iname, text)
+        4.26. sdp_iterator_insert(iname, text)
 
    5. Exported Variables
 
         5.1. $sdp( )
+        5.2. $sdpitval( )
 
 1. Overview
 
@@ -164,6 +184,12 @@ Chapter 1. Admin Guide
    4.18. sdp_with_ice()
    4.19. sdp_get_line_startswith(avpvar, string)
    4.20. sdp_get_address_family()
+   4.21. sdp_iterator_start(iname)
+   4.22. sdp_iterator_end(iname)
+   4.23. sdp_iterator_next(iname)
+   4.24. sdp_iterator_rm(iname)
+   4.25. sdp_iterator_append(iname, text)
+   4.26. sdp_iterator_insert(iname, text)
 
 4.1.  sdp_remove_codecs_by_id(list [, mtype])
 
@@ -518,9 +544,121 @@ if(is_method("INVITE") && has_body("application/sdp")){
 }
 ...
 
+4.21.  sdp_iterator_start(iname)
+
+   Start an iterator for lines in the body of the current SIP message. The
+   parameter iname is used to identify the iterator. There can be up to 4
+   iterators at the same time, with different name.
+
+   The parameter can be a dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.21. sdp_iterator_start usage
+...
+sdp_iterator_start("s1");
+...
+
+4.22.  sdp_iterator_end(iname)
+
+   Close the iterator identified by iname parameter. The iname value must
+   be the same used for sdp_iterator_start().
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.22. sdp_iterator_end usage
+...
+sdp_iterator_end("s1");
+...
+
+4.23.  sdp_iterator_next(iname)
+
+   Move the iterator to the next line in the body. It must be called also
+   after sdp_iterator_start() to get the first header.
+
+   The return code is false when there is no other header in the list.
+
+   The SDP line is accessible via variable $sdpitval(iname) - it contains
+   also the EOL chars.
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.23. sdp_iterator_next usage
+...
+    sdp_iterator_start("s1");
+    while(sdp_iterator_next("s1")) {
+        xlog("body line: $sdpitval(s1)");
+    }
+    sdp_iterator_end("s1");
+...
+
+4.24.  sdp_iterator_rm(iname)
+
+   Remove the body line at the current iterator position.
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.24. sdp_iterator_rm usage
+...
+    sdp_iterator_start("s1");
+    while(sdp_iterator_next("s1")) {
+        if($sdpitval(s1)=~"abc") {
+            sdp_iterator_rm("s1");
+        }
+    }
+    sdp_iterator_end("s1");
+...
+
+4.25.  sdp_iterator_append(iname, text)
+
+   Add text after the line at the current iterator possition.
+
+   The parameters can be dynamic strings with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.25. sdp_iterator_append usage
+...
+    sdp_iterator_start("s1");
+    while(sdp_iterator_next("s1")) {
+        if($sdpitval(s1)=~"^a=info:xyz") {
+            sdp_iterator_append("s1", "a=info:abc\r\n");
+            break;
+        }
+    }
+    sdp_iterator_end("s1");
+...
+
+4.26.  sdp_iterator_insert(iname, text)
+
+   Add text before the line at the current iterator possition.
+
+   The parameters can be dynamic strings with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.26. sdp_iterator_insert usage
+...
+    sdp_iterator_start("s1");
+    while(sdp_iterator_next("s1")) {
+        if($sdpitval(s1)=~"^a=info:xyz") {
+            sdp_iterator_insert("s1", "a=info:abc\r\n");
+            break;
+        }
+    }
+    sdp_iterator_end("s1");
+...
+
 5. Exported Variables
 
    5.1. $sdp( )
+   5.2. $sdpitval( )
 
 5.1. $sdp( )
 
@@ -534,3 +672,8 @@ if(is_method("INVITE") && has_body("application/sdp")){
 
    Exported pseudo-variables are also documented at
    https://www.kamailio.org/wikidocs/
+
+5.2. $sdpitval( )
+
+   Return the value of to SDP line iterator with the given name:
+   $sdpitval(name).
