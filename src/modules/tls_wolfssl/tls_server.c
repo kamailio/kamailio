@@ -669,8 +669,8 @@ void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd)
 		 * Since this is a close, we don't want to queue the write
 		 * (if it can't write immediately, just fail silently)
 		 */
-		wr_used = wolfSSL_BIO_pending(rwbio);
 		/* use 2-pass read for wolfSSL ring buffer */
+		wr_used = wolfSSL_BIO_pending(rwbio);
 		if(wr_used) {
 			for(nr = 0; nr < wr_used;) {
 				npos = wolfSSL_BIO_read(rwbio, wr_buf + nr, wr_used - nr);
@@ -728,7 +728,7 @@ int tls_h_encode_f(struct tcp_connection *c, const char **pbuf,
 	WOLFSSL_BIO *rwbio;
 	struct tls_extra_data *tls_c;
 	static unsigned char wr_buf[TLS_WR_MBUF_SZ];
-	size_t wr_used, nr, npos;
+	size_t wr_used = 0, nr, npos;
 
 	int ssl_error;
 	char *err_src;
@@ -918,6 +918,7 @@ redo_wr:
 	}
 end:
 	/* use 2-pass read for wolfSSL ring buffer */
+	wr_used = wolfSSL_BIO_pending(rwbio);
 	for(nr = 0; nr < wr_used;) {
 		npos = wolfSSL_BIO_read(rwbio, wr_buf + nr, wr_used - nr);
 		if(npos <= 0)
@@ -941,6 +942,7 @@ ssl_eof:
 	c->state = S_CONN_EOF;
 	c->flags |= F_CONN_FORCE_EOF;
 	/* use 2-pass read for wolfSSL ring buffer */
+	wr_used = wolfSSL_BIO_pending(rwbio);
 	for(nr = 0; nr < wr_used;) {
 		npos = wolfSSL_BIO_read(rwbio, wr_buf + nr, wr_used - nr);
 		if(npos <= 0)
@@ -991,7 +993,7 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 	WOLFSSL_BIO *rwbio;
 	unsigned char rd_buf[TLS_RD_MBUF_SZ];
 	unsigned char wr_buf[TLS_WR_MBUF_SZ];
-	size_t wr_used, rd_pending, rd_unused;
+	size_t wr_used, rd_unused;
 	size_t nr, npos, nw;
 	struct tls_extra_data *tls_c;
 	int n, flush_flags;
@@ -1040,18 +1042,18 @@ redo_read:
 		if(unlikely(bytes_read < 0)) {
 			goto error;
 		}
-		rd_pending = bytes_read;
+
 		/*
 		 * use 2-pass write for wolfSSL ring buffer
 		 * fixed in 4f1d777090, post-v5.6.6-stable
 		 */
-		for(nw = 0; nw < rd_pending;) {
-			npos = wolfSSL_BIO_write(rwbio, rd_buf + nw, rd_pending - nw);
+		for(nw = 0; nw < bytes_read;) {
+			npos = wolfSSL_BIO_write(rwbio, rd_buf + nw, bytes_read - nw);
 			if(npos <= 0)
 				break;
 			nw += npos;
 		}
-		assert(nw == rd_pending);
+		assert(nw == bytes_read);
 	}
 continue_ssl_read:
 	ssl_error = WOLFSSL_ERROR_NONE;
@@ -1213,11 +1215,6 @@ continue_ssl_read:
 	}
 	/* quickly catch bugs: segfault if accessed and not set */
 	lock_release(&c->write_lock);
-	rd_unused = wolfSSL_BIO_wpending(rwbio);
-	if(rd_unused) {
-		LM_WARN("==== SSL unconsumed encrypted data rd_unused = %d\n",
-				(int)rd_unused);
-	}
 	switch(ssl_error) {
 		case WOLFSSL_ERROR_NONE:
 			if(unlikely(n < 0)) {
@@ -1233,12 +1230,11 @@ continue_ssl_read:
 			TLS_RD_TRACE("(%p, %p) SSL_ERROR_WANT_READ *flags=%d\n", c, flags,
 					*flags);
 			/* needs to read more data */
-			//if(unlikely(rd.pos != rd.used)) {
-			if(unlikely(wolfSSL_BIO_wpending(rwbio) > 0)) {
+			if(unlikely((rd_unused = wolfSSL_BIO_wpending(rwbio)))) {
 				/* data still in the read buffer */
 				BUG("SSL_ERROR_WANT_READ but data still in"
-					" the rbio (%p, %d bytes at %d)\n",
-						rd_buf, (int)rd_unused, (int)(rd_pending - rd_unused));
+					" the rbio (%d bytes)\n",
+						(int)rd_unused);
 				goto bug;
 			}
 			if(unlikely((*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)) == 0)
