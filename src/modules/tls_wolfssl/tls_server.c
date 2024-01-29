@@ -31,7 +31,7 @@
 #include <wolfssl/ssl.h>
 
 // WOLFFIX
-#define GET_CIPHER_VERSION(s)						\
+#define GET_CIPHER_VERSION(s) \
 	wolfSSL_CIPHER_get_version(wolfSSL_get_current_cipher(s))
 
 
@@ -85,13 +85,13 @@ int tls_run_event_routes(struct tcp_connection *c);
 
 #ifdef TLS_F_DEBUG
 #ifdef __SUNPRO_C
-#define TLS_F_TRACE(fmt, ...)						\
-	LOG_FP(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug),		\
-	       "TLS_TRACE: " LOC_INFO, " %s" fmt, _FUNC_NAME_, __VA_ARGS__)
+#define TLS_F_TRACE(fmt, ...)                              \
+	LOG_FP(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug), \
+			"TLS_TRACE: " LOC_INFO, " %s" fmt, _FUNC_NAME_, __VA_ARGS__)
 #else
-#define TLS_F_TRACE(fmt, args...)					\
-	LOG_FP(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug),		\
-	       "TLS_TRACE: " LOC_INFO, " %s" fmt, _FUNC_NAME_, ##args)
+#define TLS_F_TRACE(fmt, args...)                          \
+	LOG_FP(DEFAULT_FACILITY, cfg_get(tls, tls_cfg, debug), \
+			"TLS_TRACE: " LOC_INFO, " %s" fmt, _FUNC_NAME_, ##args)
 #endif /* __SUNPRO_c */
 #else  /* TLS_F_DEBUG */
 #ifdef __SUNPRO_C
@@ -174,8 +174,8 @@ static str *tls_get_connect_server_id(void)
 		LM_DBG("xavp with outbound server id not found\n");
 		if(_ksr_tls_connect_server_id.len > 0) {
 			LM_DBG("found global outbound server id: %.*s\n",
-			       _ksr_tls_connect_server_id.len,
-			       _ksr_tls_connect_server_id.s);
+					_ksr_tls_connect_server_id.len,
+					_ksr_tls_connect_server_id.s);
 			return &_ksr_tls_connect_server_id;
 		}
 		LM_DBG("outbound server id not set\n");
@@ -246,13 +246,13 @@ static int tls_complete_init(struct tcp_connection *c)
 	if(c->flags & F_CONN_PASSIVE) {
 		state = S_TLS_ACCEPTING;
 		dom = tls_lookup_cfg(
-				     cfg, TLS_DOMAIN_SRV, &c->rcv.dst_ip, c->rcv.dst_port, 0, 0);
+				cfg, TLS_DOMAIN_SRV, &c->rcv.dst_ip, c->rcv.dst_port, 0, 0);
 	} else {
 		state = S_TLS_CONNECTING;
 		sname = tls_get_connect_server_name();
 		srvid = tls_get_connect_server_id();
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, &c->rcv.dst_ip,
-				     c->rcv.dst_port, sname, srvid);
+				c->rcv.dst_port, sname, srvid);
 		ksr_tls_set_connect_server_id(NULL);
 	}
 	if(unlikely(c->state < 0)) {
@@ -260,8 +260,7 @@ static int tls_complete_init(struct tcp_connection *c)
 		goto error;
 	}
 	DBG("Using initial TLS domain %s (dom %p ctx %p sn [%s])\n",
-	    tls_domain_str(dom), dom, dom->ctx[0],
-	    ZSW(dom->server_name.s));
+			tls_domain_str(dom), dom, dom->ctx[0], ZSW(dom->server_name.s));
 
 	data = (struct tls_extra_data *)shm_malloc(sizeof(struct tls_extra_data));
 	if(!data) {
@@ -270,7 +269,8 @@ static int tls_complete_init(struct tcp_connection *c)
 	}
 	memset(data, '\0', sizeof(struct tls_extra_data));
 	data->ssl = wolfSSL_new(dom->ctx[0]);
-	wolfSSL_BIO_new_bio_pair(&internal_bio, TLS_WR_MBUF_SZ, &rw_bio, TLS_RD_MBUF_SZ);
+	wolfSSL_BIO_new_bio_pair(
+			&internal_bio, TLS_WR_MBUF_SZ, &rw_bio, TLS_RD_MBUF_SZ);
 	data->rwbio = rw_bio;
 	data->cfg = cfg;
 	data->state = state;
@@ -304,7 +304,7 @@ static int tls_complete_init(struct tcp_connection *c)
 	wolfSSL_set_app_data(data->ssl, data);
 	return 0;
 
- error:
+error:
 	atomic_dec(&cfg->ref_count);
 	if(data)
 		shm_free(data);
@@ -361,7 +361,8 @@ static void tls_dump_cert_info(char *s, WOLFSSL_X509 *cert)
 
 	subj = issuer = 0;
 	subj = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_subject_name(cert), 0, 0);
-	issuer = wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_issuer_name(cert), 0, 0);
+	issuer =
+			wolfSSL_X509_NAME_oneline(wolfSSL_X509_get_issuer_name(cert), 0, 0);
 
 	if(subj) {
 		LOG(cfg_get(tls, tls_cfg, log), "%s subject:%s\n", s ? s : "", subj);
@@ -410,17 +411,17 @@ int tls_accept(struct tcp_connection *c, int *error)
 		tls_c->state = S_TLS_ESTABLISHED;
 		tls_log = cfg_get(tls, tls_cfg, log);
 		LOG(tls_log, "tls_accept: new connection from %s:%d using %s %s %d\n",
-		    ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
-		    GET_CIPHER_VERSION(ssl), wolfSSL_get_cipher_name(ssl),
-		    SSL_get_cipher_bits(ssl, 0));
+				ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
+				GET_CIPHER_VERSION(ssl), wolfSSL_get_cipher_name(ssl),
+				SSL_get_cipher_bits(ssl, 0));
 		LOG(tls_log, "tls_accept: local socket: %s:%d\n",
-		    ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+				ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 		cert = wolfSSL_get_peer_certificate(ssl);
 		if(cert != 0) {
 			tls_dump_cert_info("tls_accept: client certificate", cert);
 			if(wolfSSL_get_verify_result(ssl) != X509_V_OK) {
 				LOG(tls_log, "WARNING: tls_accept: client certificate "
-				    "verification failed!!!\n");
+							 "verification failed!!!\n");
 				tls_dump_verification_failure(wolfSSL_get_verify_result(ssl));
 			}
 			wolfSSL_X509_free(cert);
@@ -431,7 +432,7 @@ int tls_accept(struct tcp_connection *c, int *error)
 		*error = wolfSSL_get_error(ssl, ret);
 	}
 	return ret;
- err:
+err:
 	/* internal non openssl related errors */
 	return -2;
 }
@@ -473,31 +474,31 @@ int tls_connect(struct tcp_connection *c, int *error)
 		tls_c->state = S_TLS_ESTABLISHED;
 		tls_log = cfg_get(tls, tls_cfg, log);
 		LOG(tls_log, "tls_connect: new connection to %s:%d using %s %s %d\n",
-		    ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
-		    GET_CIPHER_VERSION(ssl), wolfSSL_get_cipher_name(ssl),
-		    SSL_get_cipher_bits(ssl, 0));
+				ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
+				GET_CIPHER_VERSION(ssl), wolfSSL_get_cipher_name(ssl),
+				SSL_get_cipher_bits(ssl, 0));
 		LOG(tls_log, "tls_connect: sending socket: %s:%d \n",
-		    ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+				ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 		cert = wolfSSL_get_peer_certificate(ssl);
 		if(cert != 0) {
 			tls_dump_cert_info("tls_connect: server certificate", cert);
 			if(wolfSSL_get_verify_result(ssl) != X509_V_OK) {
 				LOG(tls_log, "WARNING: tls_connect: server certificate "
-				    "verification failed!!!\n");
+							 "verification failed!!!\n");
 				tls_dump_verification_failure(wolfSSL_get_verify_result(ssl));
 			}
 			wolfSSL_X509_free(cert);
 		} else {
 			/* this should not happen, servers always present a cert */
 			LOG(tls_log, "tls_connect: server did not "
-			    "present a certificate\n");
+						 "present a certificate\n");
 		}
 		tls_run_event_routes(c);
 	} else { /* 0 or < 0 */
 		*error = wolfSSL_get_error(ssl, ret);
 	}
 	return ret;
- err:
+err:
 	/* internal non openssl related errors */
 	return -2;
 }
@@ -533,51 +534,51 @@ static int tls_shutdown(struct tcp_connection *c)
 	} else {
 		err = wolfSSL_get_error(ssl, ret);
 		switch(err) {
-		case WOLFSSL_ERROR_ZERO_RETURN:
-			DBG("TLS shutdown failed cleanly\n");
-			goto err;
+			case WOLFSSL_ERROR_ZERO_RETURN:
+				DBG("TLS shutdown failed cleanly\n");
+				goto err;
 
-		case WOLFSSL_ERROR_WANT_READ:
-			DBG("Need to get more data to finish TLS shutdown\n");
-			break;
+			case WOLFSSL_ERROR_WANT_READ:
+				DBG("Need to get more data to finish TLS shutdown\n");
+				break;
 
-		case WOLFSSL_ERROR_WANT_WRITE:
-			DBG("Need to send more data to finish TLS shutdown\n");
-			break;
+			case WOLFSSL_ERROR_WANT_WRITE:
+				DBG("Need to send more data to finish TLS shutdown\n");
+				break;
 
-		case WOLFSSL_ERROR_WANT_CONNECT:
-			DBG("Need to retry connect\n");
-			break;
+			case WOLFSSL_ERROR_WANT_CONNECT:
+				DBG("Need to retry connect\n");
+				break;
 
-		case WOLFSSL_ERROR_WANT_ACCEPT:
-			DBG("Need to retry accept\n");
-			break;
+			case WOLFSSL_ERROR_WANT_ACCEPT:
+				DBG("Need to retry accept\n");
+				break;
 
-		case WOLFSSL_ERROR_WANT_X509_LOOKUP:
-			DBG("Application callback asked to be called again\n");
-			break;
+			case WOLFSSL_ERROR_WANT_X509_LOOKUP:
+				DBG("Application callback asked to be called again\n");
+				break;
 
-		case WOLFSSL_ERROR_SYSCALL:
-			TLS_ERR_RET(ssl_err, "TLS shutdown");
-			if(!ssl_err) {
-				if(ret == 0) {
-					WARN("Unexpected EOF occurred while performing TLS "
-					     "shutdown\n");
-				} else {
-					ERR("IO error: (%d) %s\n", errno, strerror(errno));
+			case WOLFSSL_ERROR_SYSCALL:
+				TLS_ERR_RET(ssl_err, "TLS shutdown");
+				if(!ssl_err) {
+					if(ret == 0) {
+						WARN("Unexpected EOF occurred while performing TLS "
+							 "shutdown\n");
+					} else {
+						ERR("IO error: (%d) %s\n", errno, strerror(errno));
+					}
 				}
-			}
-			goto err;
+				goto err;
 
-		case WOLFSSL_ERROR_SSL:
-		default:
-			TLS_ERR("SSL error:");
-			goto err;
+			case WOLFSSL_ERROR_SSL:
+			default:
+				TLS_ERR("SSL error:");
+				goto err;
 		}
 	}
 
 	return 0;
- err:
+err:
 	return -1;
 }
 
@@ -620,7 +621,7 @@ void tls_h_tcpconn_clean_f(struct tcp_connection *c)
 	if(c->extra_data) {
 		extra = (struct tls_extra_data *)c->extra_data;
 		wolfSSL_free(extra->ssl);
-                wolfSSL_BIO_free_all(extra->rwbio);
+		wolfSSL_BIO_free_all(extra->rwbio);
 		atomic_dec(&extra->cfg->ref_count);
 		if(extra->ct_wq)
 			tls_ct_wq_free(&extra->ct_wq);
@@ -671,16 +672,16 @@ void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd)
 		wr_used = wolfSSL_BIO_pending(rwbio);
 		/* use 2-pass read for wolfSSL ring buffer */
 		if(wr_used) {
-			for(nr = 0; nr<wr_used; ){
+			for(nr = 0; nr < wr_used;) {
 				npos = wolfSSL_BIO_read(rwbio, wr_buf + nr, wr_used - nr);
-				if(npos<=0)
+				if(npos <= 0)
 					break;
 				nr += npos;
 			}
-			assert(nr==wr_used);
+			assert(nr == wr_used);
 			_tcpconn_write_nb(fd, c, (char *)wr_buf, wr_used);
 		}
-        /* we don't bother reading anything (we don't want to wait
+		/* we don't bother reading anything (we don't want to wait
            on close) */
 
 		lock_release(&c->write_lock);
@@ -690,7 +691,7 @@ void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd)
 
 /* generic tcpconn_{do,1st}_send() function pointer type */
 typedef int (*tcp_low_level_send_t)(int fd, struct tcp_connection *c, char *buf,
-				    unsigned len, snd_flags_t send_flags, long *resp, int locked);
+		unsigned len, snd_flags_t send_flags, long *resp, int locked);
 
 
 /** tls encrypt before sending function.
@@ -719,8 +720,8 @@ typedef int (*tcp_low_level_send_t)(int fd, struct tcp_connection *c, char *buf,
  * @return *plen on success (>=0), < 0 on error.
  */
 int tls_h_encode_f(struct tcp_connection *c, const char **pbuf,
-		   unsigned int *plen, const char **rest_buf, unsigned int *rest_len,
-		   snd_flags_t *send_flags)
+		unsigned int *plen, const char **rest_buf, unsigned int *rest_len,
+		snd_flags_t *send_flags)
 {
 	int n, offs;
 	WOLFSSL *ssl = NULL;
@@ -741,8 +742,8 @@ int tls_h_encode_f(struct tcp_connection *c, const char **pbuf,
 	*rest_buf = 0;
 	*rest_len = 0;
 	TLS_WR_TRACE("(%p, %p, %d, ... 0x%0x) start (%s:%d* -> %s)\n", c, buf, len,
-		     send_flags->f, ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
-		     su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)));
+			send_flags->f, ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
+			su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)));
 	n = 0;
 	offs = 0;
 	ssl_error = WOLFSSL_ERROR_NONE;
@@ -750,21 +751,21 @@ int tls_h_encode_f(struct tcp_connection *c, const char **pbuf,
 	if(unlikely(tls_fix_connection_unsafe(c) < 0)) {
 		/* c->extra_data might be null => exit immediately */
 		TLS_WR_TRACE("(%p) end: tls_fix_connection_unsafe failed =>"
-			     " immediate error exit\n",
-			     c);
+					 " immediate error exit\n",
+				c);
 		return -1;
 	}
 	tls_c = (struct tls_extra_data *)c->extra_data;
 	ssl = tls_c->ssl;
-        rwbio = tls_c->rwbio;
+	rwbio = tls_c->rwbio;
 	/* clear text already queued (WANTS_READ) queue directly*/
 	if(unlikely(tls_write_wants_read(tls_c))) {
 		TLS_WR_TRACE("(%p) WANTS_READ queue present => queueing"
-			     " (%d bytes,  %p + %d)\n",
-			     c, len - offs, buf, offs);
+					 " (%d bytes,  %p + %d)\n",
+				c, len - offs, buf, offs);
 		if(unlikely(tls_ct_wq_add(&tls_c->ct_wq, buf + offs, len - offs) < 0)) {
 			ERR("ct write buffer full for %p (%d bytes)\n", c,
-			    tls_c->ct_wq ? tls_c->ct_wq->queued : 0);
+					tls_c->ct_wq ? tls_c->ct_wq->queued : 0);
 			goto error_wq_full;
 		}
 		/* buffer queued for a future send attempt, after first reading
@@ -774,7 +775,7 @@ int tls_h_encode_f(struct tcp_connection *c, const char **pbuf,
 		goto end;
 	}
 
- redo_wr:
+redo_wr:
 	if(unlikely(tls_c->state == S_TLS_CONNECTING)) {
 		n = tls_connect(c, &ssl_error);
 		TLS_WR_TRACE("(%p) tls_connect() => %d (err=%d)\n", c, n, ssl_error);
@@ -806,147 +807,147 @@ int tls_h_encode_f(struct tcp_connection *c, const char **pbuf,
 		if(unlikely(n <= 0))
 			ssl_error = wolfSSL_get_error(ssl, n);
 	}
-	TLS_WR_TRACE("(%p) wolfSSL_write(%p + %d, %d) => %d (err=%d)\n", c, buf, offs,
-		     len - offs, n, ssl_error);
+	TLS_WR_TRACE("(%p) wolfSSL_write(%p + %d, %d) => %d (err=%d)\n", c, buf,
+			offs, len - offs, n, ssl_error);
 	/* check for possible ssl errors */
 	wr_used = wolfSSL_BIO_pending(rwbio);
 
 	if(unlikely(n <= 0)) {
 		switch(ssl_error) {
-		case WOLFSSL_ERROR_NONE:
-			BUG("unexpected SSL_ERROR_NONE for n=%d\n", n);
-			goto error;
-			break;
-		case WOLFSSL_ERROR_ZERO_RETURN:
-			/* SSL EOF */
-			ERR("ssl level EOF\n");
-			goto ssl_eof;
-		case WOLFSSL_ERROR_WANT_READ:
-			/* queue write buffer */
-			TLS_WR_TRACE("(%p) SSL_ERROR_WANT_READ => queueing for read"
-				     " (%p + %d, %d)\n",
-				     c, buf, offs, len - offs);
-			if(unlikely(tls_ct_wq_add(&tls_c->ct_wq, buf + offs, len - offs)
-				    < 0)) {
-				ERR("ct write buffer full (%d bytes)\n",
-				    tls_c->ct_wq ? tls_c->ct_wq->queued : 0);
-				goto error_wq_full;
-			}
-			tls_c->flags |= F_TLS_CON_WR_WANTS_RD;
-			/* buffer queued for a future send attempt, after first
+			case WOLFSSL_ERROR_NONE:
+				BUG("unexpected SSL_ERROR_NONE for n=%d\n", n);
+				goto error;
+				break;
+			case WOLFSSL_ERROR_ZERO_RETURN:
+				/* SSL EOF */
+				ERR("ssl level EOF\n");
+				goto ssl_eof;
+			case WOLFSSL_ERROR_WANT_READ:
+				/* queue write buffer */
+				TLS_WR_TRACE("(%p) SSL_ERROR_WANT_READ => queueing for read"
+							 " (%p + %d, %d)\n",
+						c, buf, offs, len - offs);
+				if(unlikely(tls_ct_wq_add(&tls_c->ct_wq, buf + offs, len - offs)
+							< 0)) {
+					ERR("ct write buffer full (%d bytes)\n",
+							tls_c->ct_wq ? tls_c->ct_wq->queued : 0);
+					goto error_wq_full;
+				}
+				tls_c->flags |= F_TLS_CON_WR_WANTS_RD;
+				/* buffer queued for a future send attempt, after first
 			 * reading some data (key exchange) => don't allow immediate
 			 * closing of the connection */
-			send_flags->f &= ~SND_F_CON_CLOSE;
-			break; /* or goto end */
-		case WOLFSSL_ERROR_WANT_WRITE:
-			if(unlikely(offs == 0)) {
-				/*  error, no record fits in the buffer or
+				send_flags->f &= ~SND_F_CON_CLOSE;
+				break; /* or goto end */
+			case WOLFSSL_ERROR_WANT_WRITE:
+				if(unlikely(offs == 0)) {
+					/*  error, no record fits in the buffer or
 				 * no partial write enabled and buffer to small to fit
 				 * all the records */
-				BUG("write buffer too small (%d/%d bytes)\n", (int)wr_used,
-				    TLS_WR_MBUF_SZ);
-				goto bug;
-			} else {
-				/* offs != 0 => something was "written"  */
-				*rest_buf = buf + offs;
-				*rest_len = len - offs;
-				/* this function should be called again => disallow
+					BUG("write buffer too small (%d/%d bytes)\n", (int)wr_used,
+							TLS_WR_MBUF_SZ);
+					goto bug;
+				} else {
+					/* offs != 0 => something was "written"  */
+					*rest_buf = buf + offs;
+					*rest_len = len - offs;
+					/* this function should be called again => disallow
 				 * immediate closing of the connection */
-				send_flags->f &= ~SND_F_CON_CLOSE;
-				TLS_WR_TRACE("(%p) SSL_ERROR_WANT_WRITE partial write"
-					     " (written %p , %d, rest_buf=%p"
-					     " rest_len=%d))\n",
-					     c, buf, offs, *rest_buf, *rest_len);
-			}
-			break; /* or goto end */
-		case WOLFSSL_ERROR_SSL:
-			/* protocol level error */
-			ERR("protocol level error\n");
-			TLS_ERR_SSL(err_src, ssl);
-			memset(ip_buf, 0, sizeof(buf));
-			ip_addr2sbuf(&(c->rcv.src_ip), ip_buf, sizeof(ip_buf));
-			ERR("source IP: %s\n", ip_buf);
-			memset(ip_buf, 0, sizeof(buf));
-			ip_addr2sbuf(&(c->rcv.dst_ip), ip_buf, sizeof(ip_buf));
-			ERR("destination IP: %s\n", ip_buf);
+					send_flags->f &= ~SND_F_CON_CLOSE;
+					TLS_WR_TRACE("(%p) SSL_ERROR_WANT_WRITE partial write"
+								 " (written %p , %d, rest_buf=%p"
+								 " rest_len=%d))\n",
+							c, buf, offs, *rest_buf, *rest_len);
+				}
+				break; /* or goto end */
+			case WOLFSSL_ERROR_SSL:
+				/* protocol level error */
+				ERR("protocol level error\n");
+				TLS_ERR_SSL(err_src, ssl);
+				memset(ip_buf, 0, sizeof(buf));
+				ip_addr2sbuf(&(c->rcv.src_ip), ip_buf, sizeof(ip_buf));
+				ERR("source IP: %s\n", ip_buf);
+				memset(ip_buf, 0, sizeof(buf));
+				ip_addr2sbuf(&(c->rcv.dst_ip), ip_buf, sizeof(ip_buf));
+				ERR("destination IP: %s\n", ip_buf);
 
-			goto error;
+				goto error;
 
-		case WOLFSSL_ERROR_WANT_CONNECT:
-			/* only if the underlying BIO is not yet connected
+			case WOLFSSL_ERROR_WANT_CONNECT:
+				/* only if the underlying BIO is not yet connected
 			 * and the call would block in connect().
 			 * (not possible in our case) */
-			BUG("unexpected SSL_ERROR_WANT_CONNECT\n");
-			break;
-		case WOLFSSL_ERROR_WANT_ACCEPT:
-			/* only if the underlying BIO is not yet connected
+				BUG("unexpected SSL_ERROR_WANT_CONNECT\n");
+				break;
+			case WOLFSSL_ERROR_WANT_ACCEPT:
+				/* only if the underlying BIO is not yet connected
 			 * and call would block in accept()
 			 * (not possible in our case) */
-			BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
-			break;
+				BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
+				break;
 
-		case WOLFSSL_ERROR_WANT_X509_LOOKUP:
-			/* can only appear on client application and it indicates that
+			case WOLFSSL_ERROR_WANT_X509_LOOKUP:
+				/* can only appear on client application and it indicates that
 			 * an installed client cert. callback should be called again
 			 * (it returned < 0 indicated that it wants to be called
 			 * later). Not possible in our case */
-			BUG("unsupported SSL_ERROR_WANT_X509_LOOKUP");
-			goto bug;
-		case WOLFSSL_ERROR_SYSCALL:
-			TLS_ERR_RET(x, err_src);
-			if(!x) {
-				if(n == 0) {
-					WARN("Unexpected EOF\n");
-				} else
-					/* should never happen */
-					BUG("IO error (%d) %s\n", errno, strerror(errno));
-			}
-			goto error;
-		default:
-			TLS_ERR_SSL(err_src, ssl);
-			BUG("unexpected SSL error %d\n", ssl_error);
-			goto bug;
+				BUG("unsupported SSL_ERROR_WANT_X509_LOOKUP");
+				goto bug;
+			case WOLFSSL_ERROR_SYSCALL:
+				TLS_ERR_RET(x, err_src);
+				if(!x) {
+					if(n == 0) {
+						WARN("Unexpected EOF\n");
+					} else
+						/* should never happen */
+						BUG("IO error (%d) %s\n", errno, strerror(errno));
+				}
+				goto error;
+			default:
+				TLS_ERR_SSL(err_src, ssl);
+				BUG("unexpected SSL error %d\n", ssl_error);
+				goto bug;
 		}
 	} else if(unlikely(n < (len - offs))) {
 		/* partial ssl write (possible if SSL_MODE_ENABLE_PARTIAL_WRITE) =>
 		 * retry with the rest */
 		TLS_WR_TRACE("(%p) partial write (%d < %d, offset %d), retry\n", c, n,
-			     len - offs, offs);
+				len - offs, offs);
 		offs += n;
 		goto redo_wr;
 	}
- end:
+end:
 	/* use 2-pass read for wolfSSL ring buffer */
-	for(nr = 0; nr < wr_used; ){
-		npos = wolfSSL_BIO_read(rwbio, wr_buf + nr , wr_used - nr);
-		if(npos<=0)
+	for(nr = 0; nr < wr_used;) {
+		npos = wolfSSL_BIO_read(rwbio, wr_buf + nr, wr_used - nr);
+		if(npos <= 0)
 			break;
 		nr += npos;
 	}
-	assert(nr==wr_used);
+	assert(nr == wr_used);
 	*plen = wr_used;
 	*pbuf = (const char *)wr_buf;
 	TLS_WR_TRACE("(%p) end (offs %d, rest_buf=%p rest_len=%d 0x%0x) => %d \n",
-				 c, offs, *rest_buf, *rest_len, send_flags->f, *plen);
+			c, offs, *rest_buf, *rest_len, send_flags->f, *plen);
 	return *plen;
- error:
+error:
 	/*error_send:*/
- error_wq_full:
- bug:
+error_wq_full:
+bug:
 	TLS_WR_TRACE(
-				 "(%p) end error (offs %d, %d encoded) => -1\n", c, offs, wr_used);
+			"(%p) end error (offs %d, %d encoded) => -1\n", c, offs, wr_used);
 	return -1;
- ssl_eof:
+ssl_eof:
 	c->state = S_CONN_EOF;
 	c->flags |= F_CONN_FORCE_EOF;
 	/* use 2-pass read for wolfSSL ring buffer */
-	for(nr = 0; nr<wr_used; ) {
+	for(nr = 0; nr < wr_used;) {
 		npos = wolfSSL_BIO_read(rwbio, wr_buf + nr, wr_used - nr);
-		if(npos<=0)
+		if(npos <= 0)
 			break;
 		nr += npos;
 	}
-	assert(nr==wr_used);
+	assert(nr == wr_used);
 	*plen = wr_used;
 	*pbuf = (const char *)wr_buf;
 	DBG("TLS connection has been closed\n");
@@ -1001,16 +1002,16 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 
 	ssl = NULL;
 	TLS_RD_TRACE("(%p, %p (%d)) start (%s -> %s:%d*)\n", c, flags, *flags,
-		     su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
-		     ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+			su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
+			ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 	ssl_read = 0;
 	r = &c->req;
 
 	*flags &= ~RD_CONN_REPEAT_READ;
 	if(unlikely(tls_fix_connection(c) < 0)) {
 		TLS_RD_TRACE("(%p, %p) end: tls_fix_connection failed =>"
-			     " immediate error exit\n",
-			     c, flags);
+					 " immediate error exit\n",
+				c, flags);
 		return -1;
 	}
 	/* here it's safe to use c->extra_data in read-only mode.
@@ -1024,36 +1025,35 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 		r->error = TCP_REQ_OVERRUN;
 		return -1;
 	}
- redo_read:
+redo_read:
 	/* real read() */
 	/* read() only if no previously detected EOF, or previous
      * short read (which means the socket buffer was emptied) */
 	if(likely(!(*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)))) {
 		/* don't read more than the free bytes in the tcp req buffer */
 		read_size = MIN_unsigned(TLS_RD_MBUF_SZ, bytes_free);
-		bytes_read =
-				tcp_read_data(c->fd, c, (char *)rd_buf, read_size, flags);
-		TLS_RD_TRACE("(%p, %p) tcp_read_data(..., %d, *%d) => %d bytes\n",
-					 c, flags, read_size, *flags, bytes_read);
+		bytes_read = tcp_read_data(c->fd, c, (char *)rd_buf, read_size, flags);
+		TLS_RD_TRACE("(%p, %p) tcp_read_data(..., %d, *%d) => %d bytes\n", c,
+				flags, read_size, *flags, bytes_read);
 		/* try SSL_read even on 0 bytes read, it might have
 		 * internally buffered data */
 		if(unlikely(bytes_read < 0)) {
-				goto error;
+			goto error;
 		}
 		rd_pending = bytes_read;
 		/*
 		 * use 2-pass write for wolfSSL ring buffer
 		 * fixed in 4f1d777090, post-v5.6.6-stable
 		 */
-		for(nw = 0; nw < rd_pending; ) {
-			npos = wolfSSL_BIO_write(rwbio, rd_buf+nw, rd_pending-nw);
-			if(npos<=0)
+		for(nw = 0; nw < rd_pending;) {
+			npos = wolfSSL_BIO_write(rwbio, rd_buf + nw, rd_pending - nw);
+			if(npos <= 0)
 				break;
 			nw += npos;
 		}
-		assert(nw==rd_pending);
+		assert(nw == rd_pending);
 	}
- continue_ssl_read:
+continue_ssl_read:
 	ssl_error = WOLFSSL_ERROR_NONE;
 	err_src = "TLS read:";
 	/* we have to avoid to run in the same time
@@ -1067,8 +1067,8 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 	if(unlikely(tls_write_wants_read(tls_c) && !(*flags & RD_CONN_EOF))) {
 		n = tls_ct_wq_flush(c, &tls_c->ct_wq, &flush_flags, &ssl_error);
 		TLS_RD_TRACE("(%p, %p) tls write on read (WRITE_WANTS_READ):"
-			     " ct_wq_flush()=> %d (ff=%d ssl_error=%d))\n",
-			     c, flags, n, flush_flags, ssl_error);
+					 " ct_wq_flush()=> %d (ff=%d ssl_error=%d))\n",
+				c, flags, n, flush_flags, ssl_error);
 		if(unlikely(n < 0)) {
 			lock_release(&c->write_lock);
 			ERR("write flush error (%d)\n", n);
@@ -1083,7 +1083,7 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 		if(unlikely(tls_c->state == S_TLS_CONNECTING)) {
 			n = tls_connect(c, &ssl_error);
 			TLS_RD_TRACE("(%p, %p) tls_connect() => %d (err=%d)\n", c, flags, n,
-				     ssl_error);
+					ssl_error);
 			if(unlikely(n >= 1)) {
 				n = wolfSSL_read(ssl, r->pos, bytes_free);
 			} else {
@@ -1098,7 +1098,7 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 		} else if(unlikely(tls_c->state == S_TLS_ACCEPTING)) {
 			n = tls_accept(c, &ssl_error);
 			TLS_RD_TRACE("(%p, %p) tls_accept() => %d (err=%d)\n", c, flags, n,
-				     ssl_error);
+					ssl_error);
 			if(unlikely(n >= 1)) {
 				n = wolfSSL_read(ssl, r->pos, bytes_free);
 			} else {
@@ -1169,8 +1169,8 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 			 * - simulate SSL EOF to force close connection*/
 			tls_dbg = cfg_get(tls, tls_cfg, debug);
 			LOG(tls_dbg,
-			    "Reading on a renegotiation of connection (n:%d) (%d)\n", n,
-			    wolfSSL_get_error(ssl, n));
+					"Reading on a renegotiation of connection (n:%d) (%d)\n", n,
+					wolfSSL_get_error(ssl, n));
 			err_src = "TLS R-N read:";
 			ssl_error = WOLFSSL_ERROR_ZERO_RETURN;
 		} else {
@@ -1186,26 +1186,26 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 			}
 		}
 		TLS_RD_TRACE("(%p, %p) SSL_read() => %d (err=%d) ssl_read=%d"
-			     " *flags=%d tls_c->flags=%d\n",
-			     c, flags, n, ssl_error, ssl_read, *flags, tls_c->flags);
+					 " *flags=%d tls_c->flags=%d\n",
+				c, flags, n, ssl_error, ssl_read, *flags, tls_c->flags);
 	ssl_read_skipped:;
 	}
 	wr_used = wolfSSL_BIO_pending(rwbio);
 	if(unlikely(wr_used != 0 && ssl_error != WOLFSSL_ERROR_ZERO_RETURN)) {
 		TLS_RD_TRACE(
-			     "(%p, %p) tcpconn_send_unsafe %d bytes\n", c, flags, wr_used);
+				"(%p, %p) tcpconn_send_unsafe %d bytes\n", c, flags, wr_used);
 		/* something was written and it's not ssl EOF*/
 		/* use 2-pass read for wolfSSL ring buffer */
-		for(nr = 0; nr < wr_used; ){
+		for(nr = 0; nr < wr_used;) {
 			npos = wolfSSL_BIO_read(rwbio, wr_buf + nr, wr_used - nr);
-			if (npos <= 0)
+			if(npos <= 0)
 				break;
 			nr += npos;
 		}
-		assert(nr==wr_used);
+		assert(nr == wr_used);
 		if(unlikely(tcpconn_send_unsafe(
-										c->fd, c, (char *)wr_buf, wr_used, c->send_flags)
-			    < 0)) {
+							c->fd, c, (char *)wr_buf, wr_used, c->send_flags)
+					< 0)) {
 			lock_release(&c->write_lock);
 			TLS_RD_TRACE("(%p, %p) tcpconn_send_unsafe error\n", c, flags);
 			goto error_send;
@@ -1214,102 +1214,104 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 	/* quickly catch bugs: segfault if accessed and not set */
 	lock_release(&c->write_lock);
 	rd_unused = wolfSSL_BIO_wpending(rwbio);
-	if (rd_unused) {
-		LM_WARN("==== SSL unconsumed encrypted data rd_unused = %d\n", (int)rd_unused);
+	if(rd_unused) {
+		LM_WARN("==== SSL unconsumed encrypted data rd_unused = %d\n",
+				(int)rd_unused);
 	}
 	switch(ssl_error) {
-	case WOLFSSL_ERROR_NONE:
-		if(unlikely(n < 0)) {
-			BUG("unexpected SSL_ERROR_NONE for n=%d\n", n);
-			goto error;
-		}
-		break;
-	case WOLFSSL_ERROR_ZERO_RETURN:
-		/* SSL EOF */
-		TLS_RD_TRACE("(%p, %p) SSL EOF (fd=%d)\n", c, flags, c->fd);
-		goto ssl_eof;
-	case WOLFSSL_ERROR_WANT_READ:
-		TLS_RD_TRACE("(%p, %p) SSL_ERROR_WANT_READ *flags=%d\n", c, flags,
-			     *flags);
-		/* needs to read more data */
-		//if(unlikely(rd.pos != rd.used)) {
-		if(unlikely(wolfSSL_BIO_wpending(rwbio)>0)) {
-			/* data still in the read buffer */
-			BUG("SSL_ERROR_WANT_READ but data still in"
-			    " the rbio (%p, %d bytes at %d)\n",
-			    rd_buf, (int)rd_unused, (int)(rd_pending - rd_unused));
-			goto bug;
-		}
-		if(unlikely((*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)) == 0)
-		   && bytes_free) {
-			/* there might still be data to read and there is space
+		case WOLFSSL_ERROR_NONE:
+			if(unlikely(n < 0)) {
+				BUG("unexpected SSL_ERROR_NONE for n=%d\n", n);
+				goto error;
+			}
+			break;
+		case WOLFSSL_ERROR_ZERO_RETURN:
+			/* SSL EOF */
+			TLS_RD_TRACE("(%p, %p) SSL EOF (fd=%d)\n", c, flags, c->fd);
+			goto ssl_eof;
+		case WOLFSSL_ERROR_WANT_READ:
+			TLS_RD_TRACE("(%p, %p) SSL_ERROR_WANT_READ *flags=%d\n", c, flags,
+					*flags);
+			/* needs to read more data */
+			//if(unlikely(rd.pos != rd.used)) {
+			if(unlikely(wolfSSL_BIO_wpending(rwbio) > 0)) {
+				/* data still in the read buffer */
+				BUG("SSL_ERROR_WANT_READ but data still in"
+					" the rbio (%p, %d bytes at %d)\n",
+						rd_buf, (int)rd_unused, (int)(rd_pending - rd_unused));
+				goto bug;
+			}
+			if(unlikely((*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)) == 0)
+					&& bytes_free) {
+				/* there might still be data to read and there is space
 			 * to decrypt it in tcp_req (no byte has been written into
 			 * tcp_req in this case) */
-			TLS_RD_TRACE("(%p, %p) redo read *flags=%d bytes_free=%d\n", c,
-				     flags, *flags, bytes_free);
-			goto redo_read;
-		}
-		goto end; /* no more data to read */
-	case WOLFSSL_ERROR_WANT_WRITE:
-		if(wr_used) {
-			/* something was written => buffer not big enough to hold
+				TLS_RD_TRACE("(%p, %p) redo read *flags=%d bytes_free=%d\n", c,
+						flags, *flags, bytes_free);
+				goto redo_read;
+			}
+			goto end; /* no more data to read */
+		case WOLFSSL_ERROR_WANT_WRITE:
+			if(wr_used) {
+				/* something was written => buffer not big enough to hold
 			 * everything => reset buffer & retry (the tcp_write already
 			 * happened if we are here) */
-			TLS_RD_TRACE("(%p) SSL_ERROR_WANT_WRITE partial write"
-				     " (written  %d), retrying\n",
-				     c, wr_used);
-			goto continue_ssl_read;
-		}
-		/* else write buffer too small, nothing written */
-		BUG("write buffer too small (%d/%d bytes)\n", (int)wr_used, TLS_WR_MBUF_SZ);
-		goto bug;
-	case WOLFSSL_ERROR_SSL:
-		/* protocol level error */
-		ERR("protocol level error\n");
-		TLS_ERR_SSL(err_src, ssl);
-		memset(ip_buf, 0, sizeof(ip_buf));
-		ip_addr2sbuf(&(c->rcv.src_ip), ip_buf, sizeof(ip_buf));
-		ERR("src addr: %s:%d\n", ip_buf, c->rcv.src_port);
-		memset(ip_buf, 0, sizeof(ip_buf));
-		ip_addr2sbuf(&(c->rcv.dst_ip), ip_buf, sizeof(ip_buf));
-		ERR("dst addr: %s:%d\n", ip_buf, c->rcv.dst_port);
+				TLS_RD_TRACE("(%p) SSL_ERROR_WANT_WRITE partial write"
+							 " (written  %d), retrying\n",
+						c, wr_used);
+				goto continue_ssl_read;
+			}
+			/* else write buffer too small, nothing written */
+			BUG("write buffer too small (%d/%d bytes)\n", (int)wr_used,
+					TLS_WR_MBUF_SZ);
+			goto bug;
+		case WOLFSSL_ERROR_SSL:
+			/* protocol level error */
+			ERR("protocol level error\n");
+			TLS_ERR_SSL(err_src, ssl);
+			memset(ip_buf, 0, sizeof(ip_buf));
+			ip_addr2sbuf(&(c->rcv.src_ip), ip_buf, sizeof(ip_buf));
+			ERR("src addr: %s:%d\n", ip_buf, c->rcv.src_port);
+			memset(ip_buf, 0, sizeof(ip_buf));
+			ip_addr2sbuf(&(c->rcv.dst_ip), ip_buf, sizeof(ip_buf));
+			ERR("dst addr: %s:%d\n", ip_buf, c->rcv.dst_port);
 
-		goto error;
+			goto error;
 
-	case WOLFSSL_ERROR_WANT_CONNECT:
-		/* only if the underlying BIO is not yet connected
+		case WOLFSSL_ERROR_WANT_CONNECT:
+			/* only if the underlying BIO is not yet connected
 		 * and the call would block in connect().
 		 * (not possible in our case) */
-		BUG("unexpected SSL_ERROR_WANT_CONNECT\n");
-		goto bug;
-	case WOLFSSL_ERROR_WANT_ACCEPT:
-		/* only if the underlying BIO is not yet connected
+			BUG("unexpected SSL_ERROR_WANT_CONNECT\n");
+			goto bug;
+		case WOLFSSL_ERROR_WANT_ACCEPT:
+			/* only if the underlying BIO is not yet connected
 		 * and call would block in accept()
 		 * (not possible in our case) */
-		BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
-		goto bug;
+			BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
+			goto bug;
 
-	case WOLFSSL_ERROR_WANT_X509_LOOKUP:
-		/* can only appear on client application and it indicates that
+		case WOLFSSL_ERROR_WANT_X509_LOOKUP:
+			/* can only appear on client application and it indicates that
 		 * an installed client cert. callback should be called again
 		 * (it returned < 0 indicated that it wants to be called
 		 * later). Not possible in our case */
-		BUG("unsupported SSL_ERROR_WANT_X509_LOOKUP");
-		goto bug;
-	case WOLFSSL_ERROR_SYSCALL:
-		TLS_ERR_RET(x, err_src);
-		if(!x) {
-			if(n == 0) {
-				WARN("Unexpected EOF\n");
-			} else
-				/* should never happen */
-				BUG("IO error (%d) %s\n", errno, strerror(errno));
-		}
-		goto error;
-	default:
-		TLS_ERR_SSL(err_src, ssl);
-		BUG("unexpected SSL error %d\n", ssl_error);
-		goto bug;
+			BUG("unsupported SSL_ERROR_WANT_X509_LOOKUP");
+			goto bug;
+		case WOLFSSL_ERROR_SYSCALL:
+			TLS_ERR_RET(x, err_src);
+			if(!x) {
+				if(n == 0) {
+					WARN("Unexpected EOF\n");
+				} else
+					/* should never happen */
+					BUG("IO error (%d) %s\n", errno, strerror(errno));
+			}
+			goto error;
+		default:
+			TLS_ERR_SSL(err_src, ssl);
+			BUG("unexpected SSL error %d\n", ssl_error);
+			goto bug;
 	}
 	if(unlikely(n < 0)) {
 		/* here n should always be >= 0 */
@@ -1317,7 +1319,7 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 		goto bug;
 	}
 
-	if (bytes_free != 0) {
+	if(bytes_free != 0) {
 		/*  2f or 2p: input fully consumed (rd.pos == rd.used),
 		 *  output buffer not filled, still possible to have pending
 		 *  data buffered by openssl */
@@ -1326,8 +1328,8 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 			 * not a short read and not an EOF (possible more data in
 			 * the socket buffer) => try a new tcp read too */
 			TLS_RD_TRACE("(%p, %p) retry read (still space and no short"
-				     " tcp read: %d)\n",
-				     c, flags, *flags);
+						 " tcp read: %d)\n",
+					c, flags, *flags);
 			goto redo_read;
 		} else {
 			/* don't tcp_read() anymore, but there might still be data
@@ -1336,7 +1338,7 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 			 * (if no more internally SSL buffered data => WANT_READ => exit).
 			 */
 			TLS_RD_TRACE("(%p, %p) retry SSL_read only (*flags =%d)\n", c,
-				     flags, *flags);
+					flags, *flags);
 			goto continue_ssl_read;
 		}
 	} else {
@@ -1348,27 +1350,27 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 		 * SSL_read() comment above) */
 		*flags |= RD_CONN_REPEAT_READ;
 		TLS_RD_TRACE("(%p, %p) output filled, exit asking to be called again"
-			     " (*flags =%d)\n",
-			     c, flags, *flags);
+					 " (*flags =%d)\n",
+				c, flags, *flags);
 	}
 
- end:
+end:
 	TLS_RD_TRACE(
-		     "(%p, %p) end => %d (*flags=%d)\n", c, flags, ssl_read, *flags);
+			"(%p, %p) end => %d (*flags=%d)\n", c, flags, ssl_read, *flags);
 	return ssl_read;
- ssl_eof:
+ssl_eof:
 	/* behave as an EOF would have been received at the tcp level */
 	c->state = S_CONN_EOF;
 	*flags |= RD_CONN_EOF;
 	TLS_RD_TRACE(
-		     "(%p, %p) end EOF => %d (*flags=%d)\n", c, flags, ssl_read, *flags);
+			"(%p, %p) end EOF => %d (*flags=%d)\n", c, flags, ssl_read, *flags);
 	return ssl_read;
- error_send:
- error:
- bug:
+error_send:
+error:
+bug:
 	r->error = TCP_READ_ERROR;
 	TLS_RD_TRACE("(%p, %p) end error => %d (*flags=%d)\n", c, flags, ssl_read,
-		     *flags);
+			*flags);
 	return -1;
 }
 
@@ -1383,7 +1385,7 @@ void tls_lookup_event_routes(void)
 {
 	_tls_evrt_connection_out = route_lookup(&event_rt, "tls:connection-out");
 	if(_tls_evrt_connection_out >= 0
-	   && event_rt.rlist[_tls_evrt_connection_out] == 0)
+			&& event_rt.rlist[_tls_evrt_connection_out] == 0)
 		_tls_evrt_connection_out = -1; /* disable */
 	if(_tls_evrt_connection_out != -1)
 		forward_set_send_info(1);
@@ -1420,8 +1422,8 @@ int tls_run_event_routes(struct tcp_connection *c)
 		keng = sr_kemi_eng_get();
 		if(keng != NULL) {
 			if(sr_kemi_ctx_route(keng, &ctx, fmsg, EVENT_ROUTE,
-					     &sr_tls_event_callback, &evname)
-			   < 0) {
+					   &sr_tls_event_callback, &evname)
+					< 0) {
 				LM_ERR("error running event route kemi callback\n");
 				return -1;
 			}

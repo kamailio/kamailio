@@ -158,8 +158,8 @@ static SSL *get_ssl(struct tcp_connection *c)
 }
 
 
-static int get_cert(
-		WOLFSSL_X509 **cert, struct tcp_connection **c, struct sip_msg *msg, int my)
+static int get_cert(WOLFSSL_X509 **cert, struct tcp_connection **c,
+		struct sip_msg *msg, int my)
 {
 	WOLFSSL *ssl;
 
@@ -918,8 +918,8 @@ static int pv_ssl_cert(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 
 /* NB: SSL_get0_verified_chain() was introduced in OpenSSL 1.1.0 */
-static int get_verified_cert_chain(
-		WOLF_STACK_OF(WOLFSSL_X509) * *chain, struct tcp_connection **c, struct sip_msg *msg)
+static int get_verified_cert_chain(WOLF_STACK_OF(WOLFSSL_X509) * *chain,
+		struct tcp_connection **c, struct sip_msg *msg)
 {
 	SSL *ssl;
 
@@ -1003,7 +1003,8 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 	if(get_cert(&cert, &c, msg, local) < 0)
 		return -1;
 
-	name = issuer ? wolfSSL_X509_get_issuer_name(cert) : wolfSSL_X509_get_subject_name(cert);
+	name = issuer ? wolfSSL_X509_get_issuer_name(cert)
+				  : wolfSSL_X509_get_subject_name(cert);
 	if(!name) {
 		ERR("Cannot extract subject or issuer name from peer certificate\n");
 		goto err;

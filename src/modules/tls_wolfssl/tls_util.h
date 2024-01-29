@@ -45,8 +45,8 @@ static inline int tls_err_ret(
 		}
 		while((err = ERR_get_error())) {
 			ret = 1;
-			ERR("%s%s (sni: %s)\n", s ? s : "", wolfSSL_ERR_error_string(err, 0),
-					(sn) ? sn : "unknown");
+			ERR("%s%s (sni: %s)\n", s ? s : "",
+					wolfSSL_ERR_error_string(err, 0), (sn) ? sn : "unknown");
 		}
 	}
 	return ret;
