@@ -46,6 +46,7 @@
 			<listitem>
 			<para>
 				<emphasis>mysql</emphasis> - the development libraries for the MySQL database. In some Linux distributions named "libmysqlclient-dev".
+				<emphasis>MariaDB</emphasis> - the development libraries for the MariaDB database. In some Linux distributions named "libmariadbclient-dev".
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -198,7 +199,10 @@ modparam("db_mysql", "update_affected_found", 1)
 		defined.
 		</para>
 		<para>
-		Note: this option is supported only by libmysqlclient, not by libmariadbclient.
+                MariaDB client configuration uses the following values: 0, 1 use plain, 2/3/4 for MYSQL_OPT_SSL_ENFORCE,
+                5 for MYSQL_OPT_SSL_VERIFY_SERVER_CERT (see MariaDB Connector/C documentation)
+
+                Other values are ignored.
 		</para>
 		<para>
 		<emphasis>
@@ -298,4 +302,3 @@ default-character-set = utf8
 		</para>
 	</section>
 </chapter>
-
