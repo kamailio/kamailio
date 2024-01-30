@@ -728,8 +728,8 @@ static int set_ssl_options(tls_domain_t *d)
 {
 	long options;
 
-	options = WOLFSSL_OP_ALL; /* all the bug workarounds by default */
-	options |= WOLFSSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+	options = SSL_OP_ALL; /* all the bug workarounds by default */
+	options |= SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
 			   | WOLFSSL_OP_CIPHER_SERVER_PREFERENCE;
 
 	do {
