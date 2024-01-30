@@ -7,3 +7,9 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "github: [skip ci]"
+  - package-ecosystem: "devcontainers"
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "github: [skip ci]"
