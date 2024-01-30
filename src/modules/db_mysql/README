@@ -94,7 +94,9 @@ Chapter 1. Admin Guide
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * mysql - the development libraries for the MySQL database. In some
-       Linux distributions named "libmysqlclient-dev".
+       Linux distributions named "libmysqlclient-dev". MariaDB - the
+       development libraries for the MariaDB database. In some Linux
+       distributions named "libmariadbclient-dev".
 
 3. Parameters
 
@@ -199,8 +201,9 @@ modparam("db_mysql", "update_affected_found", 1)
    SSL_MODE_DISABLED, any other value is passed to the mysql_options(),
    not checking if it is defined.
 
-   Note: this option is supported only by libmysqlclient, not by
-   libmariadbclient.
+   MariaDB client configuration uses the following values: 0, 1 use plain,
+   2/3/4 for MYSQL_OPT_SSL_ENFORCE, 5 for MYSQL_OPT_SSL_VERIFY_SERVER_CERT
+   (see MariaDB Connector/C documentation) Other values are ignored.
 
    Default value is 0 (0 - off).
 
