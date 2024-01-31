@@ -141,7 +141,7 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 			break;
 	}
 #else
-#ifdef MYSQL_VERSION_ID> 50710
+#if MYSQL_VERSION_ID > 50710
 	if(db_mysql_opt_ssl_mode != 0) {
 		unsigned int optuint = 0;
 		if(db_mysql_opt_ssl_mode == 1) {
