@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+		<title>Overview</title>
+		<para>
+		This is a simple module to support fast streaming output to file name
+		and handle that changes on an interval. It implements only one function
+		that streams a chunk of text to the current output file handle.
+		</para>
+		<para>
+		The module can be used to write logs for up to 10 different log files.
+		Each log file can be configured to have a different name and extension.
+		String can contain pseudo-variables. The module will replace the
+		pseudo-variables with the actual values. The module will also rotate
+		the log files at a specified interval. The interval is specified in seconds.
+		</para>
+	</section>
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+		The following modules must be loaded before this module:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>none</emphasis>.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>none</emphasis>.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+	<section>
+		<title>Parameters</title>
+		<section>
+			<title>
+				<varname>base_folder</varname> (string)</title>
+			<para>
+		Absolute path to the folder where log files should be saved.
+
+			</para>
+			<para>
+				<emphasis>
+		    Default value is <quote>/var/log/kamailio/file_out/</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>base_folder</varname> parameter</title>
+				<programlisting format="linespecific">
+		...
+		modparam("file_out", "base_folder", "/tmp/file_out/")
+		...
+				</programlisting>
+			</example>
+
+			<title>
+				<varname>base_filename</varname> (string)</title>
+			<para>
+		The filename to be used for each file. Don't include the extension. Required.
+			</para>
+			<para>
+				<emphasis>
+		    Default value is <quote>null</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>base_filename</varname> parameter</title>
+				<programlisting format="linespecific">
+			...
+			modparam("file_out", "base_filename", "accounting")
+			...
+				</programlisting>
+			</example>
+
+			<title>
+				<varname>extension</varname> (string)</title>
+			<para>
+		The extension to be used for each file.
+			</para>
+			<para>
+				<emphasis>
+		    Default value is <quote>.out</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>extension</varname> parameter</title>
+				<programlisting format="linespecific">
+			...
+			modparam("file_out", "extension", ".txt")
+			...
+				</programlisting>
+			</example>
+
+			<title>
+				<varname>interval_seconds</varname> (int)</title>
+			<para>
+		The interval in seconds between file rotation.
+			</para>
+			<para>
+				<emphasis>
+		    Default value is <quote>600</quote> (10 minutes).
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>interval_seconds</varname> parameter</title>
+				<programlisting format="linespecific">
+			...
+			modparam("file_out", "interval_seconds", "300")
+			...
+				</programlisting>
+			</example>
+
+		</section>
+
+	</section>
+
+	<section>
+		<title>Functions</title>
+		<section>
+			<title>
+				<function moreinfo="none">file_out(index, string)</function>
+			</title>
+			<para>
+		This function is used to write a string to a file. The file is
+		determined by the index parameter. The string parameter is the
+		string to be written to the file.
+
+		Index order is the same as the order in which the log files are
+		defined in the configuration file starting from 0.
+			</para>
+			<example>
+				<title>
+					<function>file_out</function> usage</title>
+				<programlisting format="linespecific">
+			...
+			modparam("file_out", "base_filename", "accounting")
+			modparam("file_out", "base_filename", "missed_calls")
+			...
+			request_route {
+
+			file_out("0", "Writing  to accounting.out file $rm from $fu (IP:$si:$sp)");
+			file_out("1", "Writing  to missed_calls.out file $rm from $fu (IP:$si:$sp)");
+			...
+			}
+				</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+	<section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>none</emphasis>.
+				</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+
+</chapter>
