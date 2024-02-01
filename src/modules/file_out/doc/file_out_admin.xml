@@ -76,9 +76,9 @@
 			<example>
 				<title>Set <varname>base_folder</varname> parameter</title>
 				<programlisting format="linespecific">
-		...
-		modparam("file_out", "base_folder", "/tmp/file_out/")
-		...
+...
+modparam("file_out", "base_folder", "/tmp/file_out/")
+...
 				</programlisting>
 			</example>
 
@@ -95,9 +95,9 @@
 			<example>
 				<title>Set <varname>base_filename</varname> parameter</title>
 				<programlisting format="linespecific">
-			...
-			modparam("file_out", "base_filename", "accounting")
-			...
+...
+modparam("file_out", "base_filename", "accounting")
+...
 				</programlisting>
 			</example>
 
@@ -114,9 +114,9 @@
 			<example>
 				<title>Set <varname>extension</varname> parameter</title>
 				<programlisting format="linespecific">
-			...
-			modparam("file_out", "extension", ".txt")
-			...
+...
+modparam("file_out", "extension", ".txt")
+...
 				</programlisting>
 			</example>
 
@@ -133,9 +133,9 @@
 			<example>
 				<title>Set <varname>interval_seconds</varname> parameter</title>
 				<programlisting format="linespecific">
-			...
-			modparam("file_out", "interval_seconds", "300")
-			...
+...
+modparam("file_out", "interval_seconds", "300")
+...
 				</programlisting>
 			</example>
 
@@ -161,16 +161,15 @@
 				<title>
 					<function>file_out</function> usage</title>
 				<programlisting format="linespecific">
-			...
-			modparam("file_out", "base_filename", "accounting")
-			modparam("file_out", "base_filename", "missed_calls")
-			...
-			request_route {
+...
+modparam("file_out", "base_filename", "accounting")
+modparam("file_out", "base_filename", "missed_calls")
 
-			file_out("0", "Writing  to accounting.out file $rm from $fu (IP:$si:$sp)");
-			file_out("1", "Writing  to missed_calls.out file $rm from $fu (IP:$si:$sp)");
-			...
-			}
+request_route {
+	file_out("0", "Writing to accounting.out file $rm from $fu");
+	file_out("1", "Writing to missed_calls.out file $rm from $fu");
+}
+...
 				</programlisting>
 			</example>
 		</section>
