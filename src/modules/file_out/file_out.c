@@ -62,7 +62,7 @@ char *fo_extension = ".out";
 int fo_interval_seconds = 10 * 60;
 
 /* Shared variables */
-Queue *fo_queue = NULL;
+fo_queue_t *fo_queue = NULL;
 int *fo_number_of_files = NULL;
 
 time_t fo_stored_timestamp = 0;
@@ -102,7 +102,7 @@ static int mod_init(void)
 	LM_DBG("extension = %s\n", fo_extension);
 
 	//*  Create shared variables */
-	fo_queue = (Queue *)shm_malloc(sizeof(Queue));
+	fo_queue = (fo_queue_t *)shm_malloc(sizeof(fo_queue_t));
 	if(!fo_queue) {
 		SHM_MEM_ERROR;
 		return -1;
@@ -182,10 +182,10 @@ static void destroy(void)
 
 static void fo_log_writer_process(int rank)
 {
-	LogMessage log_message;
+	fo_log_message_t log_message;
 	int result = 0;
-	while(!isQueueEmpty(fo_queue)) {
-		result = deQueue(fo_queue, &log_message);
+	while(!fo_is_queue_empty(fo_queue)) {
+		result = fo_dequeue(fo_queue, &log_message);
 		if(result < 0) {
 			LM_ERR("deque error\n");
 			return;
@@ -371,10 +371,10 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 	}
 
 	/* Add the logging string to the global gueue */
-	LogMessage logMessage;
+	fo_log_message_t logMessage;
 	logMessage.message = value.s;
 	logMessage.dest_file = file_index;
-	enQueue(fo_queue, logMessage);
+	fo_enqueue(fo_queue, logMessage);
 
 	return 1;
 }

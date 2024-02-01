@@ -23,24 +23,24 @@
 
 #include "types.h"
 
-Node *newNode(LogMessage data)
+static fo_node_t *fo_new_node(fo_log_message_t data)
 {
-	Node *temp = (Node *)shm_malloc(sizeof(Node));
+	fo_node_t *temp = (fo_node_t *)shm_malloc(sizeof(fo_node_t));
 	temp->data = data;
 	temp->next = NULL;
 	return temp;
 }
 
 
-int enQueue(Queue *q, LogMessage data)
+int fo_enqueue(fo_queue_t *q, fo_log_message_t data)
 {
 	/*
 	Copy the contents of data.message
     */
-	char *messageCopy = (char *)shm_malloc(strlen(data.message) + 1);
-	strcpy(messageCopy, data.message);
-	data.message = messageCopy;
-	Node *temp = newNode(data);
+	char *message_copy = (char *)shm_malloc(strlen(data.message) + 1);
+	strcpy(message_copy, data.message);
+	data.message = message_copy;
+	fo_node_t *temp = fo_new_node(data);
 
 	lock_get(&(q->lock));
 
@@ -57,7 +57,7 @@ int enQueue(Queue *q, LogMessage data)
 	return 1;
 }
 
-int deQueue(Queue *q, LogMessage *data)
+int fo_dequeue(fo_queue_t *q, fo_log_message_t *data)
 {
 	lock_get(&(q->lock));
 
@@ -65,7 +65,7 @@ int deQueue(Queue *q, LogMessage *data)
 		lock_release(&(q->lock));
 		return -1;
 	}
-	Node *temp = q->front;
+	fo_node_t *temp = q->front;
 	*data = temp->data;
 	q->front = q->front->next;
 
@@ -86,7 +86,7 @@ int deQueue(Queue *q, LogMessage *data)
 	return 1;
 }
 
-int isQueueEmpty(Queue *q)
+int fo_is_queue_empty(fo_queue_t *q)
 {
 	lock_get(&(q->lock));
 	int result = (q->front == NULL);
@@ -94,11 +94,11 @@ int isQueueEmpty(Queue *q)
 	return result;
 }
 
-int queueSize(Queue *q)
+int fo_queue_size(fo_queue_t *q)
 {
 	lock_get(&(q->lock));
 	int count = 0;
-	Node *temp = q->front;
+	fo_node_t *temp = q->front;
 	while(temp != NULL) {
 		count++;
 		temp = temp->next;

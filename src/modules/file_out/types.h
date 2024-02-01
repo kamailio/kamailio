@@ -24,22 +24,22 @@ typedef struct log_message
 {
 	char *message;
 	int dest_file;
-} LogMessage;
+} fo_log_message_t;
 
 typedef struct node
 {
 	struct log_message data;
 	struct node *next;
-} Node;
+} fo_node_t;
 
 typedef struct queue
 {
 	struct node *front;
 	struct node *rear;
 	gen_lock_t lock;
-} Queue;
+} fo_queue_t;
 
-int enQueue(Queue *q, LogMessage data);
-int deQueue(Queue *q, LogMessage *data);
-int isQueueEmpty(Queue *q);
-int queueSize(Queue *q);
+int fo_enqueue(fo_queue_t *q, fo_log_message_t data);
+int fo_dequeue(fo_queue_t *q, fo_log_message_t *data);
+int fo_is_queue_empty(fo_queue_t *q);
+int fo_queue_size(fo_queue_t *q);
