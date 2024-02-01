@@ -347,6 +347,7 @@ static enum hash_algo_t hash_algo = RTP_HASH_CALLID;
 static str rtpengine_dtmf_event_sock;
 static int rtpengine_dtmf_event_fd;
 int dtmf_event_rt = -1; /* default disabled */
+static int rtpengine_ping_mode = 1;
 
 /* clang-format off */
 typedef struct rtpp_set_link {
@@ -465,6 +466,7 @@ static param_export_t params[] = {
 			&default_rtpengine_cfg.rtpengine_tout_ms},
 	{"rtpengine_allow_op", INT_PARAM, &rtpengine_allow_op},
 	{"control_cmd_tos", INT_PARAM, &control_cmd_tos},
+	{"ping_mode", PARAM_INT, &rtpengine_ping_mode},
 	{"db_url", PARAM_STR, &rtpp_db_url},
 	{"table_name", PARAM_STR, &rtpp_table_name},
 	{"setid_col", PARAM_STR, &rtpp_setid_col},
@@ -2519,7 +2521,7 @@ static int child_init(int rank)
 	/* Iterate known RTPEngine instances - create sockets */
 	if(rank == PROC_SIPINIT) {
 		/* probe rtpengines only in first worker */
-		if(build_rtpp_socks(0, 1))
+		if(build_rtpp_socks(0, rtpengine_ping_mode))
 			return -1;
 		else {
 			if(build_rtpp_socks(0, 0))
