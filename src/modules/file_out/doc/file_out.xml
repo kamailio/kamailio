@@ -34,6 +34,6 @@
 	</bookinfo>
 	<toc></toc>
 
-	<xi:include href="fileout_admin.xml"/>
+	<xi:include href="file_out_admin.xml"/>
 
 </book>
