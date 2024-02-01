@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a client connector for InfluxDB.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="influxdbc.p.server">
+		<title><varname>server</varname> (int)</title>
+		<para>
+			Address of InfluxDB server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is empty.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>server</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("influxdbc", "server", "127.0.0.1")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="influxdb.f.influxdbc_measure">
+		<title>
+		<function moreinfo="none">influxdbc_measure(name)</function>
+		</title>
+		<para>
+		Start a measure group with the given name.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>async_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    influxdbc_measure("stats");
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
