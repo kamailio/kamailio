@@ -166,8 +166,8 @@ modparam("file_out", "base_filename", "accounting")
 modparam("file_out", "base_filename", "missed_calls")
 
 request_route {
-	file_out("0", "Writing to accounting.out file $rm from $fu");
-	file_out("1", "Writing to missed_calls.out file $rm from $fu");
+	file_out("accounting", "Writing to accounting.out file $rm from $fu");
+	file_out("missed_calls", "Writing to missed_calls.out file $rm from $fu");
 }
 ...
 				</programlisting>

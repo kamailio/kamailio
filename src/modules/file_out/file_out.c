@@ -51,6 +51,7 @@ static int fo_init_file(const int index);
 static int fo_close_file(const int index);
 static int fo_check_interval();
 static int fo_fixup_int_pvar(void **param, int param_no);
+static int fo_fixup_str_index(void **param, int param_no);
 static int fo_count_assigned_files();
 static void fo_log_writer_process(int rank);
 static int fo_add_filename(modparam_t type, void *val);
@@ -201,6 +202,37 @@ static void fo_log_writer_process(int rank)
 	}
 }
 
+static int fo_fixup_str_index(void **param, int param_no)
+{
+
+	fparam_t *p;
+	int index = 0;
+
+	p = (fparam_t *)pkg_malloc(sizeof(fparam_t));
+	if(!p) {
+		PKG_MEM_ERROR;
+		return E_OUT_OF_MEM;
+	}
+	memset(p, 0, sizeof(fparam_t));
+	p->orig = *param;
+
+	/* Map string to index */
+	while(index < *fo_number_of_files) {
+		if(strcmp(fo_base_filename[index], (char *)*param) == 0) {
+			LM_DBG("Found index %d for %s\n", index, (char *)*param);
+			p->v.i = (int)index;
+			p->fixed = (void *)(long)index;
+			p->type = FPARAM_INT;
+			*param = (void *)p;
+			return 0;
+		}
+		index++;
+	}
+
+	LM_ERR("Couldn't find index for %s\n", (char *)*param);
+	pkg_free(p);
+	return -1;
+}
 /*
 * fixup function for two parameters
 * 1st param: int
@@ -209,7 +241,7 @@ static void fo_log_writer_process(int rank)
 static int fo_fixup_int_pvar(void **param, int param_no)
 {
 	if(param_no == 1) {
-		return fixup_igp_null(param, param_no);
+		return fo_fixup_str_index(param, param_no);
 	} else if(param_no == 2) {
 		return fixup_var_pve_str_12(param, param_no);
 	}
