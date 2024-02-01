@@ -38,6 +38,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/dprint.h"
 #include "../../core/async_task.h"
+#include "../../core/rthreads.h"
 #include "../../lib/srdb1/db_query.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "db_mysql.h"
@@ -197,8 +198,10 @@ static char *db_mysql_tquote = "`";
  * No function should be called before this
  * \param _url URL used for initialization
  * \return zero on success, negative value on failure
+ *
+ * Init libssl in a thread
  */
-db1_con_t *db_mysql_init(const str *_url)
+static db1_con_t *db_mysql_init0(const str *_url)
 {
 	db1_con_t *c;
 	c = db_do_init(_url, (void *)db_mysql_new_connection);
@@ -208,6 +211,10 @@ db1_con_t *db_mysql_init(const str *_url)
 }
 
 
+db1_con_t *db_mysql_init(const str *_url)
+{
+	return run_threadP((_thread_proto)db_mysql_init0, (void *)_url);
+}
 /**
  * Shut down the database module.
  * No function should be called after this
