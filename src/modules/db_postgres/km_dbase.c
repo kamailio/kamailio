@@ -43,6 +43,8 @@
 #include "../../core/locking.h"
 #include "../../core/hashes.h"
 #include "../../core/clist.h"
+#define KSR_RTHREAD_NEED_PI
+#include "../../core/rthreads.h"
 #include "km_dbase.h"
 #include "km_pg_con.h"
 #include "km_val.h"
@@ -108,24 +110,37 @@ static void db_postgres_free_query(const db1_con_t *_con);
  * \param _url URL of the database that should be opened
  * \return database connection on success, NULL on error
  * \note this function must be called prior to any database functions
+ *
+ * Init libssl in a thread
  */
-db1_con_t *db_postgres_init(const str *_url)
+static db1_con_t *db_postgres_init0(const str *_url)
 {
 	return db_do_init(_url, (void *)db_postgres_new_connection);
 }
 
+db1_con_t *db_postgres_init(const str *_url)
+{
+	return run_threadP((_thread_proto)db_postgres_init0, (void *)_url);
+}
 /*!
  * \brief Initialize database for future queries, specify pooling
  * \param _url URL of the database that should be opened
  * \param pooling whether or not to use a pooled connection
  * \return database connection on success, NULL on error
  * \note this function must be called prior to any database functions
+ *
+ * Init libssl in thread
  */
-db1_con_t *db_postgres_init2(const str *_url, db_pooling_t pooling)
+static db1_con_t *db_postgres_init2_impl(const str *_url, db_pooling_t pooling)
 {
 	return db_do_init2(_url, (void *)db_postgres_new_connection, pooling);
 }
 
+db1_con_t *db_postgres_init2(const str *_url, db_pooling_t pooling)
+{
+	return run_threadPI(
+			(_thread_protoPI)db_postgres_init2_impl, (void *)_url, pooling);
+}
 /*!
  * \brief Close database when the database is no longer needed
  * \param _h closed connection, as returned from db_postgres_init
