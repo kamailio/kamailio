@@ -1609,6 +1609,8 @@ error:
 static void rtpengine_rpc_reload(rpc_t *rpc, void *ctx)
 {
 	time_t tnow;
+	int rping = 1;
+	int n = 0;
 
 	if(rtpp_db_url.s == NULL) {
 		// no database
@@ -1619,6 +1621,13 @@ static void rtpengine_rpc_reload(rpc_t *rpc, void *ctx)
 	if(!sr_instance_ready()) {
 		rpc->fault(ctx, 500, "Initializing - try later");
 		return;
+	}
+
+	n = rpc->scan(ctx, "*d", &rping);
+	if(n != 1) {
+		rping = 1;
+	} else if(rping != 0) {
+		rping = 1;
 	}
 
 	tnow = time(NULL);
@@ -1634,7 +1643,7 @@ static void rtpengine_rpc_reload(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	if(build_rtpp_socks(1, 1)) {
+	if(build_rtpp_socks(1, rping)) {
 		rpc->fault(ctx, 500, "Failed to build rtpengine sockets");
 		return;
 	}
