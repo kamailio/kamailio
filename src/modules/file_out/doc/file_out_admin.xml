@@ -17,15 +17,15 @@
 	<section>
 		<title>Overview</title>
 		<para>
-		This is a simple module to support fast streaming output to file name
-		and handle that changes on an interval. It implements only one function
-		that streams a chunk of text to the current output file handle.
+		This is a small module to support fast streaming output to files
+		and process this changes depending on an interval. It implements only one
+		function that streams a chunk of text to the current output file handle.
 		</para>
 		<para>
 		The module can be used to write logs for up to 10 different log files.
 		Each log file can be configured to have a different name and extension.
-		String can contain pseudo-variables. The module will replace the
-		pseudo-variables with the actual values. The module will also rotate
+		The processed string can contain pseudo-variables. The module will replace
+		the pseudo-variables with the actual values. The module will also rotate
 		the log files at a specified interval. The interval is specified in seconds.
 		</para>
 	</section>
