@@ -49,6 +49,8 @@ static int w_influxdbc_measure(sip_msg_t *msg, char *pname, char *p2);
 static int w_influxdbc_measureend(sip_msg_t *msg, char *p1, char *p2);
 static int w_influxdbc_push(sip_msg_t *msg, char *p1, char *p2);
 static int w_influxdbc_long(sip_msg_t *msg, char *pname, char *pvalue);
+static int w_influxdbc_string(sip_msg_t *msg, char *pname, char *pvalue);
+static int w_influxdbc_double(sip_msg_t *msg, char *pname, char *pvalue);
 
 static int mod_init(void);
 static int child_init(int);
@@ -64,6 +66,10 @@ static cmd_export_t cmds[] = {
 			0, 0, 0, ANY_ROUTE},
 	{"influxdbc_long", (cmd_function)w_influxdbc_long,
 			2, fixup_spve_igp, 0, ANY_ROUTE},
+	{"influxdbc_string", (cmd_function)w_influxdbc_string,
+			2, fixup_spve_spve, 0, ANY_ROUTE},
+	{"influxdbc_double", (cmd_function)w_influxdbc_double,
+			2, fixup_spve_spve, 0, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -194,6 +200,53 @@ static int w_influxdbc_long(sip_msg_t *msg, char *pname, char *pvalue)
 
 	return 1;
 }
+
+/**
+ *
+ */
+static int w_influxdbc_string(sip_msg_t *msg, char *pname, char *pvalue)
+{
+	str sname;
+	str sval;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pname, &sname) != 0) {
+		LM_ERR("unable to get name parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pvalue, &sval) != 0) {
+		LM_ERR("unable to get value parameter\n");
+		return -1;
+	}
+
+	ic_string(sname.s, sval.s);
+
+	return 1;
+}
+
+
+/**
+ *
+ */
+static int w_influxdbc_double(sip_msg_t *msg, char *pname, char *pvalue)
+{
+	str sname;
+	str sval;
+	double dval = 0.0;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pname, &sname) != 0) {
+		LM_ERR("unable to get name parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pvalue, &sval) != 0) {
+		LM_ERR("unable to get value parameter\n");
+		return -1;
+	}
+
+	ic_double(sname.s, dval);
+
+	return 1;
+}
+
 
 /**
  *
