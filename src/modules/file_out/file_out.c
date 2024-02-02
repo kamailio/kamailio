@@ -61,6 +61,7 @@ char *fo_base_folder = "/var/log/kamailio/file_out/";
 char *fo_base_filename[FO_MAX_FILES] = {""};
 char *fo_extension = ".out";
 int fo_interval_seconds = 10 * 60;
+int fo_worker_usleep = 10000;
 
 /* Shared variables */
 fo_queue_t *fo_queue = NULL;
@@ -78,7 +79,8 @@ static param_export_t params[] = {
 		{"base_folder", PARAM_STRING, &fo_base_folder},
 		{"base_filename", PARAM_STRING | PARAM_USE_FUNC, &fo_add_filename},
 		{"interval_seconds", PARAM_INT, &fo_interval_seconds},
-		{"extension", PARAM_STRING, &fo_extension}, {0, 0, 0}};
+		{"extension", PARAM_STRING, &fo_extension},
+		{"worker_usleep", PARAM_INT, &fo_worker_usleep}, {0, 0, 0}};
 
 struct module_exports exports = {
 		"file_out",		 /* module name */
@@ -139,7 +141,7 @@ static int child_init(int rank)
 		return 0;
 	}
 
-	pid = fork_process(PROC_NOCHLDINIT, "log_writ", 1);
+	pid = fork_process(PROC_NOCHLDINIT, "fo_writer", 1);
 	if(pid < 0) {
 		LM_ERR("fork failed\n");
 		return -1; /* error */
@@ -159,7 +161,7 @@ static int child_init(int rank)
 			/* update the local config framework structures */
 			cfg_update();
 
-			usleep(10000);
+			usleep(fo_worker_usleep);
 			fo_log_writer_process(rank);
 		}
 		// return 0;

@@ -139,6 +139,25 @@ modparam("file_out", "interval_seconds", "300")
 				</programlisting>
 			</example>
 
+			<title>
+				<varname>worker_usleep</varname> (int)</title>
+			<para>
+		The time in microseconds which worker will sleep for until next iteration.
+			</para>
+			<para>
+				<emphasis>
+		    Default value is <quote>10000</quote> (10 ms).
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>worker_usleep</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("file_out", "worker_usleep", "1000")
+...
+				</programlisting>
+			</example>
+
 		</section>
 
 	</section>
