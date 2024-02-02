@@ -117,6 +117,7 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 	mysql_options(ptr->con, MYSQL_OPT_WRITE_TIMEOUT,
 			(const void *)&db_mysql_timeout_interval);
 
+#if MYSQL_VERSION_ID > 50710
 #ifdef MARIADB_BASE_VERSION
 	/*
 	 * emulate SSL_MODE_XXXX from MySQL
@@ -141,7 +142,6 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 			break;
 	}
 #else
-#if MYSQL_VERSION_ID > 50710
 	if(db_mysql_opt_ssl_mode != 0) {
 		unsigned int optuint = 0;
 		if(db_mysql_opt_ssl_mode == 1) {
@@ -155,6 +155,7 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 		}
 		mysql_options(ptr->con, MYSQL_OPT_SSL_MODE, (const void *)&optuint);
 	}
+#endif /* MARIADB_BASE_VERSION */
 #else
 	if(db_mysql_opt_ssl_mode != 0) {
 		LM_WARN("ssl mode not supported by mysql version (value %u) - "
@@ -162,7 +163,6 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 				(unsigned int)db_mysql_opt_ssl_mode);
 	}
 #endif /* MYSQL_VERSION_ID */
-#endif /* MARIADB_BASE_VERSION */
 
 #if MYSQL_VERSION_ID > 50012
 	/* set reconnect flag if enabled */
