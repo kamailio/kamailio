@@ -107,7 +107,7 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 VERSION = 5
 PATCHLEVEL = 8
 SUBLEVEL =  0
-EXTRAVERSION = -dev2
+EXTRAVERSION = -dev3
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
@@ -2212,4 +2212,3 @@ export $(saved_chg_vars)
 
 endif # ifneq ($(exported_vars),1)
 endif # ifeq ($(makefile_defs),1)
-
