@@ -87,7 +87,18 @@ int run_onsend(sip_msg_t *orig_msg, dest_info_t *dst, char *buf, int len)
 			orig_msg->fwd_send_flags = fwd_snd_flags_bak;
 			orig_msg->rpl_send_flags = rpl_snd_flags_bak;
 			exec_post_script_cb(orig_msg, ONSEND_CB_TYPE);
-			if((ret == 0) && !(ra_ctx.run_flags & DROP_R_F)) {
+			/* - handle drop action with flag DROP_R_F
+			 * KEMI case (python,lua,jsdt)
+			 * ret = 1 always
+			 * Native case:
+			 * ret = 1 success
+			 * ret = 0 drop the message
+			 */
+			if(ra_ctx.run_flags & DROP_R_F) {
+				ret = 0;
+			} else if(ret == 0) {
+				/* native case where run_actions return 0
+				 * but DROP_R_F is not set */
 				ret = 1;
 			}
 		} else {
