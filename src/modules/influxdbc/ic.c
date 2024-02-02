@@ -145,8 +145,6 @@ void ic_influx_userpw(char *user, char *pw)
 
 int create_socket() /* returns 1 for error and 0 for ok */
 {
-	int i;
-	static char buffer[4096];
 	static struct sockaddr_in serv_addr;
 
 	if(debug)
@@ -171,11 +169,11 @@ int create_socket() /* returns 1 for error and 0 for ok */
 
 void ic_check(long adding) /* Check the buffer space */
 {
-	if(output == (char *)0) { /* First time create the buffer *
-	if( (output = (char *)malloc(MEGABYTE)) == (char *)-1)
+	if(output == (char *)0) { /* First time create the buffer */
+		/* if( (output = (char *)malloc(MEGABYTE)) == (char *)-1)
 	    error("failed to malloc() output buffer");
     }
-    if(output_char + (2*adding) > output_size) /* When near the end of the output buffer, extend it*/
+    if(output_char + (2*adding) > output_size) */ /* When near the end of the output buffer, extend it*/
 		if((output = (char *)realloc(output, output_size + MEGABYTE))
 				== (char *)-1)
 			error("failed to realloc() output buffer");
@@ -293,7 +291,6 @@ void ic_string(char *name, char *value)
 
 void ic_push()
 {
-	char header[1024];
 	char result[1024];
 	char buffer[1024 * 8];
 	int ret;
