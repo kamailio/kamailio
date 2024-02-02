@@ -121,6 +121,12 @@ sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += nats' ${DIST}/rules
 # no libpcre2-dev
 sed -i -e 's/libpcre2-dev/libpcre3-dev/' ${DIST}/control
 
+# no libmono-2.0-dev
+sed -i -e '/libmono-2.0-dev/d' -e '/^Package: kamailio-mono-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e '/^PACKAGE_GROUPS += mono/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += mono' ${DIST}/rules
+
 # libwolfssl-dev < 5.2
 sed -i -e '/^ libwolfssl-dev,/d' \
   -e '/^Package: kamailio-wolftls-modules/,/^$/d' \
