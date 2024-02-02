@@ -55,6 +55,9 @@ sed -i -e '/^ libnats-dev,/d' \
 sed -i -e '/^PACKAGE_GROUPS += nats/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += nats' ${DIST}/rules
 
+# no libpcre2-dev
+sed -i -e 's/libpcre2-dev/libpcre3-dev/' ${DIST}/control
+
 # libwolfssl-dev < 5.2
 sed -i -e '/^ libwolfssl-dev,/d' \
   -e '/^Package: kamailio-wolftls-modules/,/^$/d' \
