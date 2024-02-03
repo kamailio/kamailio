@@ -129,10 +129,14 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 		case 2: /* SSL_MODE_PREFERRED */
 		case 3: /* SSL_MODE_REQUIRED */
 		case 4: /* SSL_MODE_VERIFY_CA */
-			mysql_optionsv(ptr->con, MYSQL_OPT_SSL_ENFORCE, (void *)&(int){1});
+#if MYSQL_VERSION_ID >= 100339
+			mysql_options(ptr->con, MYSQL_OPT_SSL_ENFORCE, (void *)&(int){1});
+#else
+			LM_WARN("ssl mode not supported by %s\n", MARIADB_BASE_VERSION);
+#endif
 			break;
 		case 5: /* SSL_MODE_VERIFY_IDENTITY */
-			mysql_optionsv(ptr->con, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
+			mysql_options(ptr->con, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
 					(void *)&(int){1});
 			break;
 		default:
