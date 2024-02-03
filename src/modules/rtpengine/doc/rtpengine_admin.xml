@@ -2348,6 +2348,28 @@ modparam("rtpengine", "dtmf_events_sock", "127.0.0.1:2223")
 		</example>
 	</section>
 
+	<section id="rtpengine.p.ping_mode">
+		<title><varname>ping_mode</varname> (integer)</title>
+		<para>
+		Specify if the RTPEngine instances have to be pinged at startup to
+		detect if they are active. Set it to 0 to disable pinging and to 1
+		to activate pinging.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ping_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "ping_mode", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
