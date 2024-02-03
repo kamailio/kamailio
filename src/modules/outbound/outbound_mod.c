@@ -119,7 +119,7 @@ static int mod_init(void)
 	ob_key.len = OB_KEY_LEN;
 
 #if OPENSSL_VERSION_NUMBER < 0x010101000L
-	mod_init_openssl(NULL);
+	mod_init_openssl();
 #else
 	run_threadV(mod_init_openssl);
 #endif
