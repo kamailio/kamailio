@@ -1538,6 +1538,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.group
 %doc %{_docdir}/kamailio/modules/README.htable
 %doc %{_docdir}/kamailio/modules/README.imc
+%doc %{_docdir}/kamailio/modules/README.influxdbc
 %doc %{_docdir}/kamailio/modules/README.ipops
 %doc %{_docdir}/kamailio/modules/README.kemix
 %doc %{_docdir}/kamailio/modules/README.kex
@@ -1697,9 +1698,11 @@ fi
 %{_libdir}/kamailio/modules/drouting.so
 %{_libdir}/kamailio/modules/enum.so
 %{_libdir}/kamailio/modules/exec.so
+%{_libdir}/kamailio/modules/file_out.so
 %{_libdir}/kamailio/modules/group.so
 %{_libdir}/kamailio/modules/htable.so
 %{_libdir}/kamailio/modules/imc.so
+%{_libdir}/kamailio/modules/influxdbc.so
 %{_libdir}/kamailio/modules/ipops.so
 %{_libdir}/kamailio/modules/kemix.so
 %{_libdir}/kamailio/modules/kex.so
