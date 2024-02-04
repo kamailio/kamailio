@@ -71,6 +71,44 @@ modparam("influxdbc", "server", "127.0.0.1")
 </programlisting>
 		</example>
 	</section>
+	<section id="influxdbc.p.port">
+		<title><varname>port</varname> (int)</title>
+		<para>
+			Address of InfluxDB server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 8086.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>port</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("influxdbc", "port", 8808)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="influxdbc.p.database">
+		<title><varname>database</varname> (int)</title>
+		<para>
+			Database of InfluxDB server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is empty.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>database</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("influxdbc", "database", "stats")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -86,12 +124,59 @@ modparam("influxdbc", "server", "127.0.0.1")
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>async_route</function> usage</title>
+		<title><function>influxdbc_measure()</function> usage</title>
 		<programlisting format="linespecific">
 ...
 request_route {
     ...
     influxdbc_measure("stats");
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="influxdb.f.influxdbc_measureend">
+		<title>
+		<function moreinfo="none">influxdbc_measureend()</function>
+		</title>
+		<para>
+		End the current measure group.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>influxdbc_measureend()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    influxdbc_measureend();
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="influxdb.f.influxdbc_lomg">
+		<title>
+		<function moreinfo="none">influxdbc_long(name, value)</function>
+		</title>
+		<para>
+			Save the pair with provided name and value. Both parameters can
+			have variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>influxdbc_long()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    influxdbc_long("active", "$shv(active)");
     ...
 }
 ...
