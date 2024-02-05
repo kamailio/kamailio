@@ -242,6 +242,8 @@ static int w_influxdbc_double(sip_msg_t *msg, char *pname, char *pvalue)
 		return -1;
 	}
 
+	dval = strtod(sval.s, NULL);
+
 	ic_double(sname.s, dval);
 
 	return 1;
