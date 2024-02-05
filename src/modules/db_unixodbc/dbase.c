@@ -25,6 +25,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/dprint.h"
 #include "../../core/async_task.h"
+#define KSR_RTHREAD_NEED_4PP
 #include "../../core/rthreads.h"
 #include "../../lib/srdb1/db_query.h"
 #include "val.h"
@@ -81,7 +82,7 @@ static int reconnect(const db1_con_t *_h)
 /*
  * Send an SQL query to the server
  */
-static int db_unixodbc_submit_query(const db1_con_t *_h, const str *_s)
+static int db_unixodbc_submit_query_impl(const db1_con_t *_h, const str *_s)
 {
 	int ret = 0;
 	SQLCHAR sqlstate[7];
@@ -155,6 +156,11 @@ static int db_unixodbc_submit_query(const db1_con_t *_h, const str *_s)
 	return ret;
 }
 
+static int db_unixodbc_submit_query(const db1_con_t *_h, const str *_s)
+{
+	return run_thread4PP((_thread_proto4PP)db_unixodbc_submit_query_impl,
+			(void *)_h, (void *)_s);
+}
 /**
  *
  */
