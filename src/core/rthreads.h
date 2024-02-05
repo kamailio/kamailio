@@ -98,3 +98,60 @@ static void run_threadV(_thread_protoV fn)
 	pthread_join(tid, NULL);
 }
 #endif
+
+/*
+ * prototype: int fn(void *, void *) { ... }
+ */
+#ifdef KSR_RTHREAD_NEED_4PP
+typedef int (*_thread_proto4PP)(void *, void *);
+struct _thread_args4PP
+{
+	_thread_proto4PP fn;
+	void *arg1;
+	void *arg2;
+	int *ret;
+};
+static void *run_thread_wrap4PP(struct _thread_args4PP *args)
+{
+	*args->ret = (*args->fn)(args->arg1, args->arg2);
+	return NULL;
+}
+
+static int run_thread4PP(_thread_proto4PP fn, void *arg1, void *arg2)
+{
+	pthread_t tid;
+	int ret;
+
+	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap4PP,
+			&(struct _thread_args4PP){fn, arg1, arg2, &ret});
+	pthread_join(tid, NULL);
+
+	return ret;
+}
+#endif
+
+/*
+ * prototype: void fn(void *) { ... }
+ */
+#ifdef KSR_RTHREAD_NEED_0P
+typedef void (*_thread_proto0P)(void *);
+struct _thread_args0P
+{
+	_thread_proto0P fn;
+	void *arg1;
+};
+static void *run_thread_wrap0P(struct _thread_args0P *args)
+{
+	(*args->fn)(args->arg1);
+	return NULL;
+}
+
+static void run_thread0P(_thread_proto0P fn, void *arg1)
+{
+	pthread_t tid;
+
+	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap0P,
+			&(struct _thread_args0P){fn, arg1});
+	pthread_join(tid, NULL);
+}
+#endif
