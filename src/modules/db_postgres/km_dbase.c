@@ -44,6 +44,7 @@
 #include "../../core/hashes.h"
 #include "../../core/clist.h"
 #define KSR_RTHREAD_NEED_PI
+#define KSR_RTHREAD_NEED_4PP
 #include "../../core/rthreads.h"
 #include "km_dbase.h"
 #include "km_pg_con.h"
@@ -158,7 +159,7 @@ void db_postgres_close(db1_con_t *_h)
  * \param _s query string
  * \return 0 on success, negative on failure
  */
-static int db_postgres_submit_query(const db1_con_t *_con, const str *_s)
+static int db_postgres_submit_query_impl(const db1_con_t *_con, const str *_s)
 {
 	char *s = NULL;
 	int i, retries;
@@ -284,6 +285,12 @@ static int db_postgres_submit_query(const db1_con_t *_con, const str *_s)
 			PQerrorMessage(CON_CONNECTION(_con)), _s->len, _s->s);
 	pkg_free(s);
 	return -1;
+}
+
+static int db_postgres_submit_query(const db1_con_t *_con, const str *_s)
+{
+	return run_thread4PP((_thread_proto4PP)db_postgres_submit_query_impl,
+			(void *)_con, (void *)_s);
 }
 
 void db_postgres_async_exec_task(void *param)
