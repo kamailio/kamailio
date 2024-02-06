@@ -80,6 +80,7 @@ static int w_ldap_result_check_2(
 * Default module parameter values
 */
 #define DEF_LDAP_CONFIG "/usr/local/etc/kamailio/ldap.cfg"
+static int ldap_connect_mode = 0;
 
 /*
 * Module parameter variables
@@ -125,6 +126,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 
 	{"config_file",          PARAM_STR, &ldap_config},
+	{"connect_mode",    PARAM_INT, &ldap_connect_mode},
 	{0, 0, 0}
 };
 
@@ -151,6 +153,7 @@ static int child_init(int rank)
 {
 	int i = 0, ld_count = 0;
 	char *ld_name;
+	int ret = 0;
 
 	/* don't do anything for non-worker processes */
 	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
@@ -168,9 +171,15 @@ static int child_init(int rank)
 		}
 
 		if(oldap_connect(ld_name) != 0) {
-			LM_ERR("[%s]: failed to connect to LDAP host(s)\n", ld_name);
-			ldap_disconnect(ld_name);
-			return -1;
+			if(ldap_connect_mode == 1) {
+				LM_INFO("[%s]: Failed to connect to LDAP host(s) but start "
+						"without connection enabled - proceed",
+						ld_name);
+			} else {
+				LM_ERR("[%s]: failed to connect to LDAP host(s)\n", ld_name);
+				ldap_disconnect(ld_name);
+				return -1;
+			}
 		}
 	}
 
