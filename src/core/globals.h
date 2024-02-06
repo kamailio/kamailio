@@ -108,6 +108,7 @@ extern int ksr_tcp_script_mode;
 #ifdef USE_TLS
 extern int tls_disable;
 extern unsigned short tls_port_no;
+extern int ksr_tls_threads_mode;
 #endif
 #ifdef USE_SCTP
 extern int sctp_disable;

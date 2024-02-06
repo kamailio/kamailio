@@ -469,6 +469,7 @@ extern char *default_routename;
 %token TCP_SCRIPT_MODE
 %token DISABLE_TLS
 %token ENABLE_TLS
+%token TLS_THREADS_MODE
 %token TLSLOG
 %token TLS_PORT_NO
 %token TLS_METHOD
@@ -1440,6 +1441,14 @@ assign_stm:
 		#endif
 	}
 	| ENABLE_TLS EQUAL error { yyerror("boolean value expected"); }
+	| TLS_THREADS_MODE EQUAL NUMBER {
+		#ifdef USE_TLS
+			ksr_tls_threads_mode = $3;
+		#else
+			warn("tls support not compiled in");
+		#endif
+	}
+	| TLS_THREADS_MODE EQUAL error { yyerror("int value expected"); }
 	| TLSLOG EQUAL NUMBER {
 		#ifdef CORE_TLS
 			tls_log=$3;
