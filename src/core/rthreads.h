@@ -49,7 +49,7 @@ static void *run_threadP(_thread_proto fn, void *arg)
 
 	return ret;
 #else
-        fn(arg);
+        return fn(arg);
 #endif /* USE_TLS */
 }
 #endif
