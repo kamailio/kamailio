@@ -27,6 +27,7 @@
  */
 #include <pthread.h>
 
+#include "./globals.h"
 /*
  * prototype: void *fn(void *arg) { ... }
  */
@@ -37,6 +38,10 @@ static void *run_threadP(_thread_proto fn, void *arg)
 {
 	pthread_t tid;
 	void *ret;
+
+        if(likely(ksr_tls_threads_mode == 0 || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+            return fn(arg);
+        }
 
 	pthread_create(&tid, NULL, fn, arg);
 	pthread_join(tid, &ret);
@@ -66,6 +71,10 @@ static void *run_threadPI(_thread_protoPI fn, void *arg1, int arg2)
 	pthread_t tid;
 	void *ret;
 
+        if(likely(ksr_tls_threads_mode == 0 || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+            return fn(arg1, arg2);
+        }
+
 	pthread_create(&tid, NULL, (_thread_proto)&run_thread_wrapPI,
 			&(struct _thread_argsPI){fn, arg1, arg2});
 	pthread_join(tid, &ret);
@@ -92,6 +101,10 @@ static void *run_thread_wrapV(struct _thread_argsV *args)
 static void run_threadV(_thread_protoV fn)
 {
 	pthread_t tid;
+
+        if(likely(ksr_tls_threads_mode == 0 || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+            fn();
+        }
 
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrapV,
 			&(struct _thread_argsV){fn});
@@ -122,6 +135,9 @@ static int run_thread4PP(_thread_proto4PP fn, void *arg1, void *arg2)
 	pthread_t tid;
 	int ret;
 
+        if(likely(ksr_tls_threads_mode == 0 || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+            return fn(arg1, arg2);
+        }
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap4PP,
 			&(struct _thread_args4PP){fn, arg1, arg2, &ret});
 	pthread_join(tid, NULL);
@@ -150,6 +166,9 @@ static void run_thread0P(_thread_proto0P fn, void *arg1)
 {
 	pthread_t tid;
 
+        if(likely(ksr_tls_threads_mode == 0 || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+            fn(arg1);
+        }
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap0P,
 			&(struct _thread_args0P){fn, arg1});
 	pthread_join(tid, NULL);
