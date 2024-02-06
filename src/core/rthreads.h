@@ -35,13 +35,20 @@ typedef void *(*_thread_proto)(void *);
 #ifndef KSR_RTHREAD_SKIP_P
 static void *run_threadP(_thread_proto fn, void *arg)
 {
+#ifdef USE_TLS
 	pthread_t tid;
 	void *ret;
 
+	if(likely(process_no)) {
+		return fn(arg);
+	}
 	pthread_create(&tid, NULL, fn, arg);
 	pthread_join(tid, &ret);
 
 	return ret;
+#else
+	return fn(arg);
+#endif /* USE_TLS */
 }
 #endif
 
@@ -63,14 +70,21 @@ static void *run_thread_wrapPI(struct _thread_argsPI *args)
 
 static void *run_threadPI(_thread_protoPI fn, void *arg1, int arg2)
 {
+#ifdef USE_TLS
 	pthread_t tid;
 	void *ret;
+	if(likely(process_no)) {
+		return fn(arg1, arg2);
+	}
 
 	pthread_create(&tid, NULL, (_thread_proto)&run_thread_wrapPI,
 			&(struct _thread_argsPI){fn, arg1, arg2});
 	pthread_join(tid, &ret);
 
 	return ret;
+#else
+	return fn(arg1, arg2);
+#endif /* USE_TLS */
 }
 #endif
 
@@ -91,11 +105,20 @@ static void *run_thread_wrapV(struct _thread_argsV *args)
 
 static void run_threadV(_thread_protoV fn)
 {
+#ifdef USE_TLS
 	pthread_t tid;
+	if(likely(process_no)) {
+		fn();
+		return;
+	}
+
 
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrapV,
 			&(struct _thread_argsV){fn});
 	pthread_join(tid, NULL);
+#else
+	fn();
+#endif /* USE_TLS */
 }
 #endif
 
@@ -119,14 +142,22 @@ static void *run_thread_wrap4PP(struct _thread_args4PP *args)
 
 static int run_thread4PP(_thread_proto4PP fn, void *arg1, void *arg2)
 {
+#ifdef USE_TLS
 	pthread_t tid;
 	int ret;
+
+	if(likely(process_no)) {
+		return fn(arg1, arg2);
+	}
 
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap4PP,
 			&(struct _thread_args4PP){fn, arg1, arg2, &ret});
 	pthread_join(tid, NULL);
 
 	return ret;
+#else
+	return fn(arg1, arg2);
+#endif
 }
 #endif
 
@@ -148,10 +179,19 @@ static void *run_thread_wrap0P(struct _thread_args0P *args)
 
 static void run_thread0P(_thread_proto0P fn, void *arg1)
 {
+#ifdef USE_TLS
 	pthread_t tid;
+
+	if(likely(process_no)) {
+		fn(arg1);
+		return;
+	}
 
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap0P,
 			&(struct _thread_args0P){fn, arg1});
 	pthread_join(tid, NULL);
+#else
+	fn(arg1);
+#endif /* USE_TLS */
 }
 #endif
