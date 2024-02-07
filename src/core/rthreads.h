@@ -195,3 +195,55 @@ static void run_thread0P(_thread_proto0P fn, void *arg1)
 #endif /* USE_TLS */
 }
 #endif
+
+/*
+ * prototype:
+ * db_unixodbc_query(const db1_con_t *_h, const db_key_t *_k,
+ *    const db_op_t *_op, const db_val_t *_v, const db_key_t *_c,
+ *    const int _n, const int _nc, const db_key_t _o, db1_res_t **_r)
+ */
+#ifdef KSR_RTHREAD_NEED_4P5I2P2
+typedef int (*_thread_proto4P5I2P2)(
+		void *, void *, void *, void *, void *, int, int, void *, void *);
+struct _thread_args4P5I2P2
+{
+	_thread_proto4P5I2P2 fn;
+	void *arg1;
+	void *arg2;
+	void *arg3;
+	void *arg4;
+	void *arg5;
+	int arg6;
+	int arg7;
+	void *arg8;
+	void *arg9;
+	int *ret;
+};
+static void *run_thread_wrap4P5I2P2(struct _thread_args4P5I2P2 *args)
+{
+	*args->ret = (*args->fn)(args->arg1, args->arg2, args->arg3, args->arg4,
+			args->arg5, args->arg6, args->arg7, args->arg8, args->arg9);
+	return NULL;
+}
+
+static int run_thread4P5I2P2(_thread_proto4P5I2P2 fn, void *arg1, void *arg2,
+		void *arg3, void *arg4, void *arg5, int arg6, int arg7, void *arg8,
+		void *arg9)
+{
+#ifdef USE_TLS
+	pthread_t tid;
+	int ret;
+
+	if(likely(process_no)) {
+		return fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+	}
+	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap4P5I2P2,
+			&(struct _thread_args4P5I2P2){fn, arg1, arg2, arg3, arg4, arg5,
+					arg6, arg7, arg8, arg9, &ret});
+	pthread_join(tid, NULL);
+	return ret;
+#else
+	return fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+#endif
+}
+#endif
