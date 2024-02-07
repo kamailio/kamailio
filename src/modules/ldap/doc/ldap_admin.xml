@@ -455,6 +455,23 @@ modparam("ldap", "config_file", "/usr/local/etc/&kamailiobinary;/ldap.ini")
 		  </programlisting>
         </example>
       </section>
+
+      <section>
+        <title><varname>connect_mode</varname> (int)</title>
+
+        <para>Control if the module must stop loading when connecting to server fails during start up. Values: 0 - stop loading; 1 - continue even if connecting to database server fails..</para>
+        <para>Default value:
+        <varname>0</varname></para>
+
+        <example>
+          <title>Set <varname>connect_mode</varname> parameter</title>
+
+          <programlisting format="linespecific">
+modparam("ldap", "connect_mode", 1)
+		      </programlisting>
+        </example>
+      </section>
+
     </section>
 
     <section>
@@ -1079,4 +1096,3 @@ if (ldap_search(
       </section>
     </section>
   </chapter>
-
