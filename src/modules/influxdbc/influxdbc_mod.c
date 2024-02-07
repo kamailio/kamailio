@@ -47,6 +47,8 @@ static char *_infdbc_tags = NULL;
 
 static int w_influxdbc_measure(sip_msg_t *msg, char *pname, char *p2);
 static int w_influxdbc_measureend(sip_msg_t *msg, char *p1, char *p2);
+static int w_influxdbc_sub(sip_msg_t *msg, char *pname, char *p2);
+static int w_influxdbc_subend(sip_msg_t *msg, char *p1, char *p2);
 static int w_influxdbc_push(sip_msg_t *msg, char *p1, char *p2);
 static int w_influxdbc_long(sip_msg_t *msg, char *pname, char *pvalue);
 static int w_influxdbc_string(sip_msg_t *msg, char *pname, char *pvalue);
@@ -61,6 +63,10 @@ static cmd_export_t cmds[] = {
 	{"influxdbc_measure", (cmd_function)w_influxdbc_measure,
 			1, fixup_spve_null, 0, ANY_ROUTE},
 	{"influxdbc_measureend", (cmd_function)w_influxdbc_measureend,
+			0, 0, 0, ANY_ROUTE},
+	{"influxdbc_sub", (cmd_function)w_influxdbc_sub,
+			1, fixup_spve_null, 0, ANY_ROUTE},
+	{"influxdbc_subend", (cmd_function)w_influxdbc_subend,
 			0, 0, 0, ANY_ROUTE},
 	{"influxdbc_push", (cmd_function)w_influxdbc_push,
 			0, 0, 0, ANY_ROUTE},
@@ -165,6 +171,33 @@ static int w_influxdbc_measure(sip_msg_t *msg, char *pname, char *p2)
 static int w_influxdbc_measureend(sip_msg_t *msg, char *p1, char *p2)
 {
 	ic_measureend();
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_influxdbc_sub(sip_msg_t *msg, char *pname, char *p2)
+{
+	str sname;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pname, &sname) != 0) {
+		LM_ERR("unable to get name parameter\n");
+		return -1;
+	}
+
+	ic_sub(sname.s);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_influxdbc_subend(sip_msg_t *msg, char *p1, char *p2)
+{
+	ic_subend();
 
 	return 1;
 }
