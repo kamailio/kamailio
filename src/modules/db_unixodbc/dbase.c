@@ -26,6 +26,8 @@
 #include "../../core/dprint.h"
 #include "../../core/async_task.h"
 #define KSR_RTHREAD_NEED_4PP
+#define KSR_RTHREAD_NEED_4P5I2P2
+#define KSR_RTHREAD_NEED_0P
 #include "../../core/rthreads.h"
 #include "../../lib/srdb1/db_query.h"
 #include "val.h"
@@ -254,9 +256,14 @@ db1_con_t *db_unixodbc_init(const str *_url)
  * Shut down database module
  * No function should be called after this
  */
-void db_unixodbc_close(db1_con_t *_h)
+static void db_unixodbc_close_impl(db1_con_t *_h)
 {
 	return db_do_close(_h, db_unixodbc_free_connection);
+}
+
+void db_unixodbc_close(db1_con_t *_h)
+{
+	run_thread0P((_thread_proto0P)db_unixodbc_close_impl, _h);
 }
 
 /*
@@ -299,7 +306,7 @@ static int db_unixodbc_store_result(const db1_con_t *_h, db1_res_t **_r)
 /*
  * Release a result set from memory
  */
-int db_unixodbc_free_result(db1_con_t *_h, db1_res_t *_r)
+static int db_unixodbc_free_result_impl(db1_con_t *_h, db1_res_t *_r)
 {
 	if((!_h) || (!_r)) {
 		LM_ERR("invalid parameter value\n");
@@ -315,6 +322,11 @@ int db_unixodbc_free_result(db1_con_t *_h, db1_res_t *_r)
 	return 0;
 }
 
+int db_unixodbc_free_result(db1_con_t *_h, db1_res_t *_r)
+{
+	return run_thread4PP((_thread_proto4PP)db_unixodbc_free_result_impl, _h, _r);
+}
+
 /*
  * Query table for specified rows
  * _h: structure representing database connection
@@ -326,13 +338,22 @@ int db_unixodbc_free_result(db1_con_t *_h, db1_res_t *_r)
  * _nc: number of columns to return
  * _o: order by the specified column
  */
-int db_unixodbc_query(const db1_con_t *_h, const db_key_t *_k,
+static int db_unixodbc_query_impl(const db1_con_t *_h, const db_key_t *_k,
 		const db_op_t *_op, const db_val_t *_v, const db_key_t *_c,
 		const int _n, const int _nc, const db_key_t _o, db1_res_t **_r)
 {
 	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r,
 			db_unixodbc_val2str, db_unixodbc_submit_query,
 			db_unixodbc_store_result);
+}
+
+int db_unixodbc_query(const db1_con_t *_h, const db_key_t *_k,
+		const db_op_t *_op, const db_val_t *_v, const db_key_t *_c,
+		const int _n, const int _nc, const db_key_t _o, db1_res_t **_r)
+{
+	return run_thread4P5I2P2((_thread_proto4P5I2P2)db_unixodbc_query_impl,
+			(void *)_h, (void *)_k, (void *)_op, (void *)_v, (void *)_c, _n,
+			_nc, (void *)_o, (void *)_r);
 }
 
 /*!
