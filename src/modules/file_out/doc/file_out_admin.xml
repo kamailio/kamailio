@@ -28,6 +28,16 @@
 		the pseudo-variables with the actual values. The module will also rotate
 		the log files at a specified interval. The interval is specified in seconds.
 		</para>
+		<para>
+		Known limitations on the rotation interval are:
+		<itemizedlist>
+					<listitem>
+						<para>
+		If there is no messages coming, the rotation will not be done until the next message arrives.
+						</para>
+					</listitem>
+				</itemizedlist>
+		</para>
 	</section>
 	<section>
 		<title>Dependencies</title>
@@ -59,6 +69,7 @@
 			</para>
 		</section>
 	</section>
+
 	<section>
 		<title>Parameters</title>
 		<section>
@@ -66,7 +77,6 @@
 				<varname>base_folder</varname> (string)</title>
 			<para>
 		Absolute path to the folder where log files should be saved.
-
 			</para>
 			<para>
 				<emphasis>
@@ -81,64 +91,74 @@ modparam("file_out", "base_folder", "/tmp/file_out/")
 ...
 				</programlisting>
 			</example>
+		</section>
 
+		<section>
 			<title>
-				<varname>base_filename</varname> (string)</title>
+				<varname>file</varname> (string)</title>
 			<para>
-		The filename to be used for each file. Don't include the extension. Required.
+		The definition of a file and its properties. The value of the parameter may have the following format:
 			</para>
-			<para>
-				<emphasis>
-		    Default value is <quote>null</quote>.
-				</emphasis>
-			</para>
-			<example>
-				<title>Set <varname>base_filename</varname> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("file_out", "base_filename", "accounting")
-...
-				</programlisting>
-			</example>
+		<itemizedlist>
+			<listitem>
+				<para>
+		"name=accounting;extension=.out;interval=20"
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			<emphasis>
+	The parameter can be set multiple times to define more files in same configuration file.
+			</emphasis>
+		</para>
 
-			<title>
-				<varname>extension</varname> (string)</title>
-			<para>
-		The extension to be used for each file.
+		<itemizedlist>
+			<listitem>
+				<para>
+		name (Required) - the name of the file
+				</para>
+				<para>
+					<emphasis>
+					No default value. This parameter is required.
+					</emphasis>
 			</para>
-			<para>
-				<emphasis>
+			</listitem>
+
+			<listitem>
+				<para>
+		extension (Optional) - the extension of the file
+				</para>
+				<para>
+					<emphasis>
 		    Default value is <quote>.out</quote>.
-				</emphasis>
+					</emphasis>
 			</para>
+			</listitem>
+
+			<listitem>
+				<para>
+		interval (Optional) - the interval in seconds of the file rotation
+				</para>
+				<para>
+					<emphasis>
+		    Default value is <quote>600</quote> (10min).
+					</emphasis>
+			</para>
+			</listitem>
+		</itemizedlist>
+
 			<example>
-				<title>Set <varname>extension</varname> parameter</title>
+				<title>Set <varname>file</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("file_out", "extension", ".txt")
+modparam("file_out", "file", "name=missed_calls;interval=30;extension=.json")
+modparam("file_out", "file", "name=accounting;extension=.txt")
 ...
 				</programlisting>
 			</example>
+		</section>
 
-			<title>
-				<varname>interval_seconds</varname> (int)</title>
-			<para>
-		The interval in seconds between file rotation.
-			</para>
-			<para>
-				<emphasis>
-		    Default value is <quote>600</quote> (10 minutes).
-				</emphasis>
-			</para>
-			<example>
-				<title>Set <varname>interval_seconds</varname> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("file_out", "interval_seconds", "300")
-...
-				</programlisting>
-			</example>
-
+		<section>
 			<title>
 				<varname>worker_usleep</varname> (int)</title>
 			<para>
@@ -157,7 +177,6 @@ modparam("file_out", "worker_usleep", "1000")
 ...
 				</programlisting>
 			</example>
-
 		</section>
 
 	</section>
@@ -166,23 +185,21 @@ modparam("file_out", "worker_usleep", "1000")
 		<title>Functions</title>
 		<section>
 			<title>
-				<function moreinfo="none">file_out(index, string)</function>
+				<function moreinfo="none">file_out(filename, string)</function>
 			</title>
 			<para>
 		This function is used to write a string to a file. The file is
-		determined by the index parameter. The string parameter is the
-		string to be written to the file.
+		determined by the filename parameter. The string parameter is the
+		string to be written to the file. Filename is the name of the file defined in the configuration file as name=filename.
 
-		Index order is the same as the order in which the log files are
-		defined in the configuration file starting from 0.
 			</para>
 			<example>
 				<title>
 					<function>file_out</function> usage</title>
 				<programlisting format="linespecific">
 ...
-modparam("file_out", "base_filename", "accounting")
-modparam("file_out", "base_filename", "missed_calls")
+modparam("file_out", "file", "name=accounting;interval=200")
+modparam("file_out", "file", "name=missed_calls;extension=.json;interval=300")
 
 request_route {
 	file_out("accounting", "Writing to accounting.out file $rm from $fu");
