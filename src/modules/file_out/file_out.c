@@ -38,6 +38,8 @@ MODULE_VERSION
 
 #define FO_MAX_PATH_LEN 2048
 #define FO_MAX_FILES 10 /* Maximum number of files */
+#define FO_DEFAULT_INTERVAL 10 * 60
+#define FO_DEFAULT_EXTENSION ".out"
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -49,25 +51,26 @@ static FILE *fo_get_file_handle(const int index);
 static int fo_get_full_path(const int index, char *full_path);
 static int fo_init_file(const int index);
 static int fo_close_file(const int index);
-static int fo_check_interval();
+static int fo_check_interval(int index);
 static int fo_fixup_int_pvar(void **param, int param_no);
 static int fo_fixup_str_index(void **param, int param_no);
 static int fo_count_assigned_files();
 static void fo_log_writer_process(int rank);
 static int fo_add_filename(modparam_t type, void *val);
+static int fo_parse_filename_params(str input);
 
 /* Default parameters */
 char *fo_base_folder = "/var/log/kamailio/file_out/";
 char *fo_base_filename[FO_MAX_FILES] = {""};
-char *fo_extension = ".out";
-int fo_interval_seconds = 10 * 60;
+char *fo_extension[FO_MAX_FILES] = {".out"};
+int fo_interval_seconds[FO_MAX_FILES] = {10 * 60};
 int fo_worker_usleep = 10000;
 
 /* Shared variables */
 fo_queue_t *fo_queue = NULL;
 int *fo_number_of_files = NULL;
 
-time_t fo_stored_timestamp = 0;
+time_t fo_stored_timestamp[FO_MAX_FILES] = {0};
 time_t fo_current_timestamp = 0;
 FILE *fo_file_output[FO_MAX_FILES];
 
@@ -77,9 +80,7 @@ static cmd_export_t cmds[] = {{"file_out", (cmd_function)fo_write_to_file, 2,
 
 static param_export_t params[] = {
 		{"base_folder", PARAM_STRING, &fo_base_folder},
-		{"base_filename", PARAM_STRING | PARAM_USE_FUNC, &fo_add_filename},
-		{"interval_seconds", PARAM_INT, &fo_interval_seconds},
-		{"extension", PARAM_STRING, &fo_extension},
+		{"file", PARAM_STRING | PARAM_USE_FUNC, &fo_add_filename},
 		{"worker_usleep", PARAM_INT, &fo_worker_usleep}, {0, 0, 0}};
 
 struct module_exports exports = {
@@ -100,9 +101,6 @@ static int mod_init(void)
 {
 	LM_DBG("initializing\n");
 	LM_DBG("base_folder = %s\n", fo_base_folder);
-	LM_DBG("base_filename_path= %s\n", fo_base_filename[0]);
-	LM_DBG("interval_seconds = %d\n", fo_interval_seconds);
-	LM_DBG("extension = %s\n", fo_extension);
 
 	//*  Create shared variables */
 	fo_queue = (fo_queue_t *)shm_malloc(sizeof(fo_queue_t));
@@ -122,7 +120,9 @@ static int mod_init(void)
 	*fo_number_of_files = fo_count_assigned_files();
 
 	/* Initialize per process vars */
-	fo_stored_timestamp = time(NULL);
+	for(int i = 0; i < *fo_number_of_files; i++) {
+		fo_stored_timestamp[i] = time(NULL);
+	}
 
 	/* Register worker process */
 	register_procs(1);
@@ -206,9 +206,13 @@ static void fo_log_writer_process(int rank)
 
 static int fo_fixup_str_index(void **param, int param_no)
 {
-
 	fparam_t *p;
 	int index = 0;
+
+	if(strlen((char *)*param) == 0) {
+		LM_ERR("function param value is required\n");
+		return -1;
+	}
 
 	p = (fparam_t *)pkg_malloc(sizeof(fparam_t));
 	if(!p) {
@@ -231,13 +235,16 @@ static int fo_fixup_str_index(void **param, int param_no)
 		index++;
 	}
 
-	LM_ERR("Couldn't find index for %s\n", (char *)*param);
+	LM_ERR("Couldn't find %s\n", (char *)*param);
+	LM_ERR("Make sure the file [%s] is defined as modparam and not exceeding "
+		   "file limit\n",
+			(char *)*param);
 	pkg_free(p);
 	return -1;
 }
 /*
 * fixup function for two parameters
-* 1st param: int
+* 1st param: string assoicated with file (returning an index)
 * 2nd param: string containing PVs
 */
 static int fo_fixup_int_pvar(void **param, int param_no)
@@ -252,8 +259,15 @@ static int fo_fixup_int_pvar(void **param, int param_no)
 
 static int fo_add_filename(modparam_t type, void *val)
 {
+	str in;
+
+	if(val != NULL && strlen((char *)val) == 0) {
+		LM_ERR("modparam value is empty\n");
+		return -1;
+	}
+
 	if(fo_number_of_files == NULL) {
-		LM_ERR("fo_number_of_files is NULL\n");
+		LM_DBG("fo_number_of_files is NULL\n");
 		fo_number_of_files = (int *)shm_malloc(sizeof(int));
 		if(!fo_number_of_files) {
 			SHM_MEM_ERROR;
@@ -270,19 +284,79 @@ static int fo_add_filename(modparam_t type, void *val)
 	if(fo_number_of_files != NULL && *fo_number_of_files >= FO_MAX_FILES) {
 		LM_ERR("Maximum number of files [%d] reached. The rest will not be "
 			   "processed \n",
-				FO_MAX_FILES);
+				*fo_number_of_files);
 		return 0;
 	}
-	fo_base_filename[*fo_number_of_files] = (char *)val;
-	LM_DBG("fo_base_filename[%d] = %s\n", *fo_number_of_files,
-			fo_base_filename[*fo_number_of_files]);
+
+	/* parse: name=missed_calls;extension=.txt;interval=600 */
+	in.s = (char *)val;
+	in.len = strlen(in.s);
+
+	if(fo_parse_filename_params(in) < 0)
+		return -1;
+
 	(*fo_number_of_files)++;
 	return 0;
 }
 
 /*
-* Count the number of files that are assigned
-* return the number of files (saved also in shared fo_number_of_files)
+* Parse the filename parameters
+* name, extension, interval
+* return 1 if successful
+* return -1 if failed
+*/
+static int fo_parse_filename_params(str in)
+{
+	LM_DBG("Parsing filename params\n");
+	char *name = NULL;
+	char *extension = NULL;
+	char *interval = NULL;
+	char *token = NULL;
+	char *saveptr = NULL;
+	char *input = in.s;
+	token = strtok_r(input, ";", &saveptr);
+	while(token != NULL) {
+		if(strstr(token, "name=") != NULL) {
+			name = token + 5;
+		} else if(strstr(token, "extension=") != NULL) {
+			extension = token + 10;
+		} else if(strstr(token, "interval=") != NULL) {
+			interval = token + 9;
+		}
+		token = strtok_r(NULL, ";", &saveptr);
+	}
+	if(name != NULL) {
+		LM_ERR("name = %s\n", name);
+		fo_base_filename[*fo_number_of_files] = name;
+	} else {
+		LM_ERR("name is required. Make sure you provided name= in modparam "
+			   "value\n");
+		return -1;
+	}
+
+	if(extension != NULL) {
+		LM_DBG("extension = %s\n", extension);
+		fo_extension[*fo_number_of_files] = extension;
+	} else {
+		LM_DBG("no extension= provided. Using default %s\n",
+				FO_DEFAULT_EXTENSION);
+		fo_extension[*fo_number_of_files] = FO_DEFAULT_EXTENSION;
+	}
+
+	if(interval != NULL) {
+		LM_DBG("interval = %s\n", interval);
+		fo_interval_seconds[*fo_number_of_files] = atoi(interval);
+	} else {
+		LM_DBG("no interval= provided. Using default %d\n",
+				FO_DEFAULT_INTERVAL);
+		fo_interval_seconds[*fo_number_of_files] = FO_DEFAULT_INTERVAL;
+	}
+
+	return 1;
+}
+
+/*
+* return the number of files assigned
 */
 static int fo_count_assigned_files()
 {
@@ -319,49 +393,40 @@ static int fo_close_file(const int index)
 * return 1 if interval has passed
 * return 0 if interval has not passed
 */
-static int fo_check_interval()
+static int fo_check_interval(int index)
 {
 	fo_current_timestamp = time(NULL);
 
 	// Calculate the difference between the current timestamp and the stored timestamp
-	int difference = difftime(fo_current_timestamp, fo_stored_timestamp);
-	if(difference >= fo_interval_seconds) {
+	int difference = difftime(fo_current_timestamp, fo_stored_timestamp[index]);
+	if(difference >= fo_interval_seconds[index]) {
 		LM_ERR("interval has passed\n");
 		return 1;
 	}
-	// LM_ERR("interval has not passed\n");
 	return 0;
 }
-/**
- * maintain file handle
- */
 
+/**
+ * Get file handle for file at index
+ */
 static FILE *fo_get_file_handle(const int index)
 {
 	int result = 0;
-	if(fo_check_interval()) {
+	if(fo_check_interval(index)) {
 		/* Interval passed. Close all files and open new ones */
-		for(int i = 0; i < *fo_number_of_files; i++) {
-			result = fo_close_file(i);
-			if(result != 1) {
-				LM_ERR("Failed to close output file");
-				return NULL;
-			}
+		result = fo_close_file(index);
+		if(result != 1) {
+			LM_ERR("Failed to close output file");
+			return NULL;
 		}
-		fo_stored_timestamp = fo_current_timestamp;
+		fo_stored_timestamp[index] = fo_current_timestamp;
 
-		LM_DBG("Opening new files due to interval passed\n");
-		/* Make sure we know how many files we need */
-		if(fo_number_of_files == NULL) {
-			*fo_number_of_files = fo_count_assigned_files();
-		}
+		LM_DBG("Opening new file due to interval passed\n");
 		/* Initialize and open files  */
-		for(int i = 0; i < *fo_number_of_files; i++) {
-			result = fo_init_file(i);
-			if(result != 1) {
-				LM_ERR("Failed to initialize output file");
-				return NULL;
-			}
+		result = fo_init_file(index);
+		if(result != 1) {
+			LM_ERR("Failed to initialize output file");
+			return NULL;
 		}
 		return fo_file_output[index];
 	} else {
@@ -377,8 +442,9 @@ static FILE *fo_get_file_handle(const int index)
 static int fo_get_full_path(const int index, char *full_path)
 {
 	snprintf(full_path, FO_MAX_PATH_LEN, "%s/%s_%.f%s", fo_base_folder,
-			fo_base_filename[index], difftime(fo_stored_timestamp, (time_t)0),
-			fo_extension);
+			fo_base_filename[index],
+			difftime(fo_stored_timestamp[index], (time_t)0),
+			fo_extension[index]);
 	LM_INFO("Path to write to: %s\n", full_path);
 	return 1;
 }
@@ -387,7 +453,7 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 {
 	int result, file_index;
 	if(index == NULL || log_message == NULL) {
-		LM_ERR("index or log_messsage is NULL\n");
+		LM_ERR("filename or log_messsage is NULL\n");
 		return -1;
 	}
 
