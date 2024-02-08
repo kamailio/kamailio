@@ -168,7 +168,27 @@ static int w_influxdbc_measure(sip_msg_t *msg, char *pname, char *p2)
 /**
  *
  */
+static int ki_influxdbc_measure(sip_msg_t *msg, str *name)
+{
+	ic_measure(name->s);
+
+	return 1;
+}
+
+/**
+ *
+ */
 static int w_influxdbc_measureend(sip_msg_t *msg, char *p1, char *p2)
+{
+	ic_measureend();
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_influxdbc_measureend(sip_msg_t *msg)
 {
 	ic_measureend();
 
@@ -215,6 +235,16 @@ static int w_influxdbc_push(sip_msg_t *msg, char *p1, char *p2)
 /**
  *
  */
+static int ki_influxdbc_push(sip_msg_t *msg)
+{
+	ic_push();
+
+	return 1;
+}
+
+/**
+ *
+ */
 static int w_influxdbc_long(sip_msg_t *msg, char *pname, char *pvalue)
 {
 	str sname;
@@ -230,6 +260,16 @@ static int w_influxdbc_long(sip_msg_t *msg, char *pname, char *pvalue)
 	}
 
 	ic_long(sname.s, ival);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_influxdbc_long(sip_msg_t *msg, str *name, int val)
+{
+	ic_long(name->s, val);
 
 	return 1;
 }
@@ -288,6 +328,27 @@ static int w_influxdbc_double(sip_msg_t *msg, char *pname, char *pvalue)
  */
 /* clang-format off */
 static sr_kemi_t sr_kemi_influxdbc_exports[] = {
+    { str_init("influxdbc"), str_init("measure"),
+        SR_KEMIP_INT, ki_influxdbc_measure,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("influxdbc"), str_init("measureend"),
+        SR_KEMIP_INT, ki_influxdbc_measureend,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("influxdbc"), str_init("ic_long"),
+        SR_KEMIP_INT, ki_influxdbc_long,
+        { SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("influxdbc"), str_init("push"),
+        SR_KEMIP_INT, ki_influxdbc_push,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */
