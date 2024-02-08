@@ -11,18 +11,21 @@ import sys
 
 from collections import defaultdict
 
-#python 3.2 doesn't support types.Union
+#python 3.2 doesnt support types.Union
 noUnion = False
+
+reserved_keywords = {"async"}
+
 
 def printMocReturn(module_name, func, indent):
     param_names = []
     param_list = []
     param_signature = ""
-    if (func['params'] != 'none'):
+    if func['params'] is not None and func['params'] != 'none':
         param_list = func['params'].split(", ")
     i = 0
 
-    for param in param_list:
+    for _ in param_list:
         param_names.append("param"+str(i))
         i = i + 1
 
@@ -56,13 +59,13 @@ def printDefaultReturn(func, indent):
     for i in range(indent):
         prefix = prefix+"\t"
 
-    if(func['ret'] == "bool"):
+    if func['ret'] == "bool":
         print(prefix + "return True")
-    elif(func['ret'] == "int"):
+    elif func['ret'] == "int":
         print(prefix + "return 1")
-    elif (func['ret'] == "str"):
+    elif func['ret'] == "str":
         print(prefix + "return \"\"")
-    elif (func['ret'] == "xval"):
+    elif func['ret'] == "xval":
         print(prefix + "return None")
     else:
         print(prefix + "return")
@@ -78,38 +81,40 @@ def printFunction(module_name, func, indent):
 
     log_format_params = "%s"
 
-    if indent > 0:
-        params = "self"
-
     param_list = []
-    if(func['params']!="none"):
+    print("func['params']=%s" % func['params'])
+    if func['params'] is not None and func['params'] != "none":
         param_list = func['params'].split(", ")
         i = 0
-        for param in param_list:
+        for _ in param_list:
             if params != "":
                  params = params + ", "
             params = params + "param" + str(i) + ": " + param_list[i]
             log_params = log_params + ", param" + str(i)
             log_format_params = log_format_params + ", %s"
             i = i+1
+    if len(param_list) > 0:
+        log_params = "(" + log_params + ")"
     prefix = ""
     for i in range(indent):
         prefix = prefix+"\t"
-    if(func['ret'] == "bool"):
+    if indent > 0:
+        print(prefix + "@staticmethod")
+    if func['ret'] == "bool":
         print(prefix + "def " + func['name'] +"("+params+") -> bool:")
-    elif(func['ret'] == "int"):
+    elif func['ret'] == "int":
         print(prefix + "def " + func['name'] +"("+params+") -> int:")
-    elif (func['ret'] == "str"):
+    elif func['ret'] == "str":
         print(prefix + "def " + func['name'] + "(" + params + ") -> int:")
-    elif(func['ret'] == "xval"):
+    elif func['ret'] == "xval":
         if noUnion:
             print(prefix + "def " + func['name'] + "(" + params + "):")
         else:
-            print(prefix + "def " + func['name'] +"("+params+") -> Union[int,str]:")
+            print(prefix + "def " + func['name'] +"("+params+") -> Union[int, str, None]:")
     else:
         print(prefix + "def " + func['name'] +"("+params+"):")
 
-    print(prefix + "\tprint(\"Calling " + log_format_params + "\" % ("+log_params+"))")
+    print(prefix + "\tprint(\"Calling " + log_format_params + "\" % "+log_params+")")
     printMocReturn(module_name, func, indent+1)
     print("")
 
@@ -128,8 +133,10 @@ if len(sys.argv) > 2:
 if not noUnion:
     print("from typing import Union")
 
+print("import sys")
 print("import types")
-print("_mock_data={}")
+print("_mock_data = {}")
+print("")
 
 with open(sys.argv[1]) as f:
     data = json.load(f)
@@ -177,6 +184,7 @@ if "pv" not in classes:
 
 for module_name, module in classes.items():
     if module_name != "":
+        print("")
         print("class " + module_name.capitalize() + ":")
 
         for func in module:
@@ -188,7 +196,10 @@ for func in classes['']:
 
 for module_name in classes.keys():
     if module_name != "":
-        print(module_name + " = "+module_name.capitalize()+"()")
+        if module_name in reserved_keywords:
+            print("setattr(sys.modules[__name__], '" + module_name + "', " + module_name.capitalize() + "())")
+        else:
+            print(module_name + " = "+module_name.capitalize()+"()")
 
 print("")
 
