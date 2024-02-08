@@ -40,6 +40,7 @@
 #include "../../core/async_task.h"
 
 #define KSR_RTHREAD_NEED_4PP
+#define KSR_RTHREAD_NEED_0P
 #include "../../core/rthreads.h"
 #include "../../lib/srdb1/db_query.h"
 #include "../../lib/srdb1/db_ut.h"
@@ -228,9 +229,14 @@ db1_con_t *db_mysql_init(const str *_url)
  * \param _h handle to the closed connection
  * \return zero on success, negative value on failure
  */
-void db_mysql_close(db1_con_t *_h)
+static void db_mysql_close_impl(db1_con_t *_h)
 {
 	db_do_close(_h, db_mysql_free_connection);
+}
+
+void db_mysql_close(db1_con_t *_h)
+{
+	run_thread0P((_thread_proto0P)db_mysql_close_impl, _h);
 }
 
 
