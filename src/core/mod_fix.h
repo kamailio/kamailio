@@ -168,6 +168,9 @@ int fixup_free_igp_regexp(void **param, int param_no);
 int fixup_ssi(void **param, int param_no);
 int fixup_free_ssi(void **param, int param_no);
 
+int fixup_sii(void **param, int param_no);
+int fixup_free_sii(void **param, int param_no);
+
 int fixup_sssi(void **param, int param_no);
 int fixup_free_sssi(void **param, int param_no);
 
