@@ -2,6 +2,13 @@
 
 import KSR
 
+# this assumes you have your mock KSR.py in the local directory e.g. /test/
+# and your kemi code is in ../conf/kamailio.py
+
+sys.path.insert(0, "../conf/")
+import kamailio as kamailio
+
+
 #return sip:hello@world only if $ru is passed to pv.get
 KSR._mock_data['pv']['get'] = {}
 KSR._mock_data['pv']['get']['$ru'] = "sip:hello@world"
@@ -22,6 +29,11 @@ def appendHeader(param0: str):
 
 KSR._mock_data['hdr']['append'] = appendHeader
 KSR.hdr.append("X-HDR: my-header")
+
+k = kamailio.kamailio()
+k.ksr_request_route(None) # Call the kemi script, the mock implementations will be called
+
+# Validate the results
 if appendCalled:
     print("hdr.append successfully called!")
 else:
