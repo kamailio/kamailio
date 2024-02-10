@@ -53,6 +53,8 @@ static int w_influxdbc_push(sip_msg_t *msg, char *p1, char *p2);
 static int w_influxdbc_long(sip_msg_t *msg, char *pname, char *pvalue);
 static int w_influxdbc_string(sip_msg_t *msg, char *pname, char *pvalue);
 static int w_influxdbc_double(sip_msg_t *msg, char *pname, char *pvalue);
+static int w_influxdbc_division(
+		sip_msg_t *msg, char *pname, char *pdividend, char *pdivisor);
 
 static int mod_init(void);
 static int child_init(int);
@@ -76,6 +78,8 @@ static cmd_export_t cmds[] = {
 			2, fixup_spve_spve, 0, ANY_ROUTE},
 	{"influxdbc_double", (cmd_function)w_influxdbc_double,
 			2, fixup_spve_spve, 0, ANY_ROUTE},
+	{"influxdbc_division", (cmd_function)w_influxdbc_division,
+			3, fixup_sii, fixup_free_sii, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -322,6 +326,38 @@ static int w_influxdbc_double(sip_msg_t *msg, char *pname, char *pvalue)
 	return 1;
 }
 
+
+/**
+ *
+ */
+static int w_influxdbc_division(
+		sip_msg_t *msg, char *pname, char *pdividend, char *pdivisor)
+{
+	str sname;
+	int idividend;
+	int idivisor;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pname, &sname) != 0) {
+		LM_ERR("unable to get name parameter\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t *)pdividend, &idividend) != 0) {
+		LM_ERR("unable to get dividend parameter\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t *)pdivisor, &idivisor) != 0) {
+		LM_ERR("unable to get divisor parameter\n");
+		return -1;
+	}
+	if(idivisor == 0) {
+		ic_double(sname.s, 0.0);
+		return 1;
+	}
+
+	ic_double(sname.s, (double)idividend / (double)idivisor);
+
+	return 1;
+}
 
 /**
  *
