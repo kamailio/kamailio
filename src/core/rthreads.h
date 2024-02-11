@@ -27,6 +27,7 @@
  */
 #include <pthread.h>
 
+#include "./globals.h"
 /*
  * prototype: void *fn(void *arg) { ... }
  */
@@ -39,9 +40,11 @@ static void *run_threadP(_thread_proto fn, void *arg)
 	pthread_t tid;
 	void *ret;
 
-	if(likely(process_no)) {
+	if(likely(ksr_tls_threads_mode == 0
+			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
 		return fn(arg);
 	}
+
 	pthread_create(&tid, NULL, fn, arg);
 	pthread_join(tid, &ret);
 
@@ -73,7 +76,9 @@ static void *run_threadPI(_thread_protoPI fn, void *arg1, int arg2)
 #ifdef USE_TLS
 	pthread_t tid;
 	void *ret;
-	if(likely(process_no)) {
+
+	if(likely(ksr_tls_threads_mode == 0
+			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
 		return fn(arg1, arg2);
 	}
 
@@ -84,7 +89,7 @@ static void *run_threadPI(_thread_protoPI fn, void *arg1, int arg2)
 	return ret;
 #else
 	return fn(arg1, arg2);
-#endif /* USE_TLS */
+#endif
 }
 #endif
 
@@ -107,18 +112,19 @@ static void run_threadV(_thread_protoV fn)
 {
 #ifdef USE_TLS
 	pthread_t tid;
-	if(likely(process_no)) {
+
+	if(likely(ksr_tls_threads_mode == 0
+			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
 		fn();
 		return;
 	}
-
 
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrapV,
 			&(struct _thread_argsV){fn});
 	pthread_join(tid, NULL);
 #else
 	fn();
-#endif /* USE_TLS */
+#endif
 }
 #endif
 
@@ -146,10 +152,10 @@ static int run_thread4PP(_thread_proto4PP fn, void *arg1, void *arg2)
 	pthread_t tid;
 	int ret;
 
-	if(likely(process_no)) {
+	if(likely(ksr_tls_threads_mode == 0
+			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
 		return fn(arg1, arg2);
 	}
-
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap4PP,
 			&(struct _thread_args4PP){fn, arg1, arg2, &ret});
 	pthread_join(tid, NULL);
@@ -182,17 +188,17 @@ static void run_thread0P(_thread_proto0P fn, void *arg1)
 #ifdef USE_TLS
 	pthread_t tid;
 
-	if(likely(process_no)) {
+	if(likely(ksr_tls_threads_mode == 0
+			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
 		fn(arg1);
 		return;
 	}
-
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap0P,
 			&(struct _thread_args0P){fn, arg1});
 	pthread_join(tid, NULL);
 #else
-	fn(arg1);
-#endif /* USE_TLS */
+	fn(arg1)
+#endif
 }
 #endif
 
@@ -234,7 +240,8 @@ static int run_thread4P5I2P2(_thread_proto4P5I2P2 fn, void *arg1, void *arg2,
 	pthread_t tid;
 	int ret;
 
-	if(likely(process_no)) {
+	if(likely(ksr_tls_threads_mode == 0
+			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
 		return fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
 	}
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap4P5I2P2,
