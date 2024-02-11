@@ -451,9 +451,9 @@ static int mod_child(int rank)
 #if OPENSSL_VERSION_NUMBER >= 0x010101000L
         /*
          * OpenSSL 3.x/1.1.1: create shared SSL_CTX* in worker to avoid init of
-         * libssl in rank 0(thread#1)
+         * libssl in rank 0(thread#1). Requires tls_threads_mode = 1 config.
          */
-        if(rank == PROC_SIPINIT) {
+        if((rank == PROC_SIPINIT && ksr_tls_threads_mode) || (rank == PROC_INIT && !ksr_tls_threads_mode)) {
 #else
         if(rank == PROC_INIT) {
 #endif
