@@ -737,43 +737,43 @@ int tls_pre_init(void)
  * left here in case more complex requirements arise in
  * OpenSSL >= 3.2.
  */
-long tls_h_mod_randctx(void *param)
+int tls_h_mod_randctx()
 {
-    do {
-        OSSL_LIB_CTX *osslglobal = NULL;
-        EVP_RAND_CTX *randctx = NULL;
+	do {
+		OSSL_LIB_CTX *osslglobal = NULL;
+		EVP_RAND_CTX *randctx = NULL;
 
-        LM_DBG("enabling locking for rand ctx\n");
+		LM_DBG("enabling locking for rand ctx\n");
 
-        osslglobal = OSSL_LIB_CTX_get0_global_default();
-        if(osslglobal == NULL) {
-            LM_ERR("failed to get lib ssl global ctx\n");
-            return -1L;
-        }
+		osslglobal = OSSL_LIB_CTX_get0_global_default();
+		if(osslglobal == NULL) {
+			LM_ERR("failed to get lib ssl global ctx\n");
+			return -1;
+		}
 
-        randctx = RAND_get0_primary(osslglobal);
-        if(randctx == NULL) {
-            LM_ERR("primary rand ctx is null\n");
-            return -1L;
-        }
-        EVP_RAND_enable_locking(randctx);
+		randctx = RAND_get0_primary(osslglobal);
+		if(randctx == NULL) {
+			LM_ERR("primary rand ctx is null\n");
+			return -1;
+		}
+		EVP_RAND_enable_locking(randctx);
 
-        randctx = RAND_get0_public(osslglobal);
-        if(randctx == NULL) {
-            LM_ERR("public rand ctx is null\n");
-            return -1L;
-        }
-        EVP_RAND_enable_locking(randctx);
+		randctx = RAND_get0_public(osslglobal);
+		if(randctx == NULL) {
+			LM_ERR("public rand ctx is null\n");
+			return -1;
+		}
+		EVP_RAND_enable_locking(randctx);
 
-        randctx = RAND_get0_private(osslglobal);
-        if(randctx == NULL) {
-            LM_ERR("private rand ctx is null\n");
-            return -1L;
-        }
-        EVP_RAND_enable_locking(randctx);
-    } while(0);
+		randctx = RAND_get0_private(osslglobal);
+		if(randctx == NULL) {
+			LM_ERR("private rand ctx is null\n");
+			return -1;
+		}
+		EVP_RAND_enable_locking(randctx);
+	} while(0);
 
-    return 0L;
+	return 0;
 }
 #endif /* OPENSSL_VERSION_NUMBER */
 
@@ -801,21 +801,19 @@ int tls_h_mod_pre_init_f(void)
 	SSL_load_error_strings();
 #endif
 
-#if 0
 #if OPENSSL_VERSION_NUMBER >= 0x030000000L
-        /*
+	/*
          * With deferred initialisation it is not necessary to enable threading
-         * on the EVP_RAND_CTX. We leave this block here as an example of how
-         * to do it in case of future requirements.
+         * on the EVP_RAND_CTX in tls_threads_mode = 1
          */
-        pthread_t tid;
-        long rl;
-        pthread_create(&tid, NULL, (void *(*)(void *))tls_h_mod_randctx, NULL);
-        pthread_join(tid, (void **)&rl);
-        if ((int)rl)
-            return (int)rl;
+	int ret;
+
+	if(ksr_tls_threads_mode == 0) {
+		ret = tls_h_mod_randctx();
+		if(ret)
+			return ret;
+	}
 #endif /* OPENSSL_VERSION_NUMBER */
-#endif /* 0 */
 
 	tls_mod_preinitialized = 1;
 	return 0;

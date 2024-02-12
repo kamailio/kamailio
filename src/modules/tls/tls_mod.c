@@ -449,13 +449,14 @@ static int mod_child(int rank)
 		return 0;
 
 #if OPENSSL_VERSION_NUMBER >= 0x010101000L
-        /*
+	/*
          * OpenSSL 3.x/1.1.1: create shared SSL_CTX* in worker to avoid init of
          * libssl in rank 0(thread#1). Requires tls_threads_mode = 1 config.
          */
-        if((rank == PROC_SIPINIT && ksr_tls_threads_mode) || (rank == PROC_INIT && !ksr_tls_threads_mode)) {
+	if((rank == PROC_SIPINIT && ksr_tls_threads_mode)
+			|| (rank == PROC_INIT && !ksr_tls_threads_mode)) {
 #else
-        if(rank == PROC_INIT) {
+	if(rank == PROC_INIT) {
 #endif
 		if(cfg_get(tls, tls_cfg, config_file).s) {
 			if(tls_fix_domains_cfg(
@@ -678,10 +679,18 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 
 	register_tls_hooks(&tls_h);
 
-        /*
+	/*
          * GH #3695: OpenSSL 1.1.1 historical note: it is no longer
-         * needed to replace RAND with cryptorand
+         * needed to replace RAND with cryptorand in tls_threads_mode = 1
          */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L
+	if(ksr_tls_threads_mode == 0) {
+		LM_DBG("setting cryptorand random engine\n");
+		RAND_set_rand_method(RAND_ksr_cryptorand_method());
+	}
+#endif
+
 	sr_kemi_modules_add(sr_kemi_tls_exports);
 
 	return 0;
