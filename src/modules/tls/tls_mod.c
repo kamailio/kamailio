@@ -458,6 +458,9 @@ static int mod_child(int rank)
 #else
 	if(rank == PROC_INIT) {
 #endif
+		LM_DBG("Loading SSL_CTX in process_no=%d rank=%d "
+			   "ksr_tls_threads_mode=%d\n",
+				process_no, rank, ksr_tls_threads_mode);
 		if(cfg_get(tls, tls_cfg, config_file).s) {
 			if(tls_fix_domains_cfg(
 					   *tls_domains_cfg, &srv_defaults, &cli_defaults)
