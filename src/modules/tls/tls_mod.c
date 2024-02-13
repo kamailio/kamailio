@@ -689,7 +689,7 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L \
 		&& OPENSSL_VERSION_NUMBER < 0x030000000L
 	if(ksr_tls_threads_mode == 0) {
-		LM_DBG("setting cryptorand random engine\n");
+		LM_WARN("OpenSSL 1.1.1 setting cryptorand random engine\n");
 		RAND_set_rand_method(RAND_ksr_cryptorand_method());
 	}
 #endif
