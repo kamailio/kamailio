@@ -41,6 +41,7 @@
 
 #define KSR_RTHREAD_NEED_4PP
 #define KSR_RTHREAD_NEED_0P
+#define KSR_RTHREAD_NEED_4P5I2P2
 #include "../../core/rthreads.h"
 #include "../../lib/srdb1/db_query.h"
 #include "../../lib/srdb1/db_ut.h"
@@ -348,12 +349,26 @@ int db_mysql_free_result(const db1_con_t *_h, db1_res_t *_r)
  * \param _r pointer to a structure representing the result
  * \return zero on success, negative value on failure
  */
+
+/*
+ * this function observed to invoke SSL_read() under libmysqlclient.so.21
+ * but not libmariadb.so.3; apply libssl guard
+ */
+static int db_mysql_query_impl(const db1_con_t *_h, const db_key_t *_k,
+		const db_op_t *_op, const db_val_t *_v, const db_key_t *_c,
+		const int _n, const int _nc, const db_key_t _o, db1_res_t **_r)
+{
+	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r, db_mysql_val2str,
+			db_mysql_submit_query, db_mysql_store_result);
+}
+
 int db_mysql_query(const db1_con_t *_h, const db_key_t *_k, const db_op_t *_op,
 		const db_val_t *_v, const db_key_t *_c, const int _n, const int _nc,
 		const db_key_t _o, db1_res_t **_r)
 {
-	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r, db_mysql_val2str,
-			db_mysql_submit_query, db_mysql_store_result);
+	return run_thread4P5I2P2((_thread_proto4P5I2P2)&db_mysql_query_impl,
+			(void *)_h, (void *)_k, (void *)_op, (void *)_v, (void *)_c, _n,
+			_nc, (void *)_o, (void *)_r);
 }
 
 /**
