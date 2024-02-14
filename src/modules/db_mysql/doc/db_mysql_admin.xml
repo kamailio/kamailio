@@ -214,6 +214,30 @@ modparam("db_mysql", "opt_ssl_mode", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="db_mysql.p.opt_ssl_ca">
+		<title><varname>opt_ssl_ca</varname> (string)</title>
+		<para>
+		Configures the CA certs used to verify the MySQL server cert when
+		SSL is enabled.
+		</para>
+		<para>
+		Required when opt_ssl_mode = 4 or 5 and db_mysql is built
+		with libmysqlclient.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (NULL - not configured).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>opt_ssl_ca</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_mysql", "opt_ssl_ca", "/etc/ssl/certs/mysql-ca.pem")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Functions</title>
