@@ -32,7 +32,7 @@ Daniel-Constantin Mierla
               3.5. insert_delayed (integer)
               3.6. update_affected_found (integer)
               3.7. opt_ssl_mode (integer)
-              3.8. opt_ssl_ca (integer)
+              3.8. opt_ssl_ca (string)
 
         4. Functions
         5. Installation
@@ -71,7 +71,7 @@ Chapter 1. Admin Guide
         3.5. insert_delayed (integer)
         3.6. update_affected_found (integer)
         3.7. opt_ssl_mode (integer)
-        3.8. opt_ssl_ca (integer)
+        3.8. opt_ssl_ca (string)
 
    4. Functions
    5. Installation
@@ -110,7 +110,7 @@ Chapter 1. Admin Guide
    3.5. insert_delayed (integer)
    3.6. update_affected_found (integer)
    3.7. opt_ssl_mode (integer)
-   3.8. opt_ssl_ca (integer)
+   3.8. opt_ssl_ca (string)
 
 3.1. ping_interval (integer)
 
@@ -216,7 +216,7 @@ modparam("db_mysql", "update_affected_found", 1)
 modparam("db_mysql", "opt_ssl_mode", 1)
 ...
 
-3.8. opt_ssl_ca (integer)
+3.8. opt_ssl_ca (string)
 
    Configures the CA certs used to verify the MySQL server cert when SSL
    is enabled.
