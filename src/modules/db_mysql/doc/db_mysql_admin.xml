@@ -219,7 +219,7 @@ modparam("db_mysql", "opt_ssl_mode", 1)
 		</example>
 	</section>
 	<section id="db_mysql.p.opt_ssl_ca">
-		<title><varname>opt_ssl_ca</varname> (integer)</title>
+		<title><varname>opt_ssl_ca</varname> (string)</title>
 		<para>
 		Configures the CA certs used to verify the MySQL server cert when
 		SSL is enabled.
