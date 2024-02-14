@@ -41,6 +41,7 @@
 #include "db_mysql.h"
 
 extern int db_mysql_opt_ssl_mode;
+extern char *db_mysql_opt_ssl_ca;
 
 /*! \brief
  * Create a new connection structure,
@@ -167,6 +168,9 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 	}
 #endif /* MYSQL_VERSION_ID */
 #endif /* MARIADB_BASE_VERSION */
+	if(db_mysql_opt_ssl_ca)
+		mysql_options(
+				ptr->con, MYSQL_OPT_SSL_CA, (const void *)db_mysql_opt_ssl_ca);
 
 #if MYSQL_VERSION_ID > 50012
 	/* set reconnect flag if enabled */
