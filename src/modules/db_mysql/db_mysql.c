@@ -47,6 +47,7 @@ unsigned int my_server_timezone =
 unsigned long my_client_ver = 0;
 int db_mysql_unsigned_type = 0;
 int db_mysql_opt_ssl_mode = 0;
+char *db_mysql_opt_ssl_ca = NULL;
 
 struct mysql_counters_h mysql_cnts_h;
 counter_def_t mysql_cnt_defs[] = {
@@ -100,6 +101,7 @@ static param_export_t params[] = {
 		{"insert_delayed", INT_PARAM, &db_mysql_insert_all_delayed},
 		{"update_affected_found", INT_PARAM, &db_mysql_update_affected_found},
 		{"unsigned_type", PARAM_INT, &db_mysql_unsigned_type},
+		{"opt_ssl_ca", PARAM_STRING, &db_mysql_opt_ssl_ca},
 		{"opt_ssl_mode", PARAM_INT, &db_mysql_opt_ssl_mode}, {0, 0, 0}};
 
 
