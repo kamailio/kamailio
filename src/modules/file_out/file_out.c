@@ -54,6 +54,7 @@ static int fo_close_file(const int index);
 static int fo_check_interval(int index);
 static int fo_fixup_int_pvar(void **param, int param_no);
 static int fo_fixup_str_index(void **param, int param_no);
+static int fo_fixup_free_int_pvar(void **param, int param_no);
 static int fo_count_assigned_files();
 static void fo_log_writer_process(int rank);
 static int fo_add_filename(modparam_t type, void *val);
@@ -74,8 +75,9 @@ time_t fo_stored_timestamp[FO_MAX_FILES] = {0};
 time_t fo_current_timestamp = 0;
 FILE *fo_file_output[FO_MAX_FILES];
 
-static cmd_export_t cmds[] = {{"file_out", (cmd_function)fo_write_to_file, 2,
-									  fo_fixup_int_pvar, 0, ANY_ROUTE},
+static cmd_export_t cmds[] = {
+		{"file_out", (cmd_function)fo_write_to_file, 2, fo_fixup_int_pvar,
+				fo_fixup_free_int_pvar, ANY_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
@@ -266,8 +268,19 @@ static int fo_fixup_int_pvar(void **param, int param_no)
 	if(param_no == 1) {
 		return fo_fixup_str_index(param, param_no);
 	} else if(param_no == 2) {
-		return fixup_var_pve_str_12(param, param_no);
+		return fixup_spve_all(param, param_no);
 	}
+	return 0;
+}
+
+static int fo_fixup_free_int_pvar(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_igp_null(param, param_no);
+	} else if(param_no == 2) {
+		return fixup_free_spve_all(param, param_no);
+	}
+
 	return 0;
 }
 
