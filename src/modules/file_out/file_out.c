@@ -60,7 +60,7 @@ static int fo_add_filename(modparam_t type, void *val);
 static int fo_parse_filename_params(str input);
 
 /* Default parameters */
-char *fo_base_folder = "/var/log/kamailio/file_out/";
+char *fo_base_folder = "/var/log/kamailio/file_out";
 char *fo_base_filename[FO_MAX_FILES] = {""};
 char *fo_extension[FO_MAX_FILES] = {".out"};
 int fo_interval_seconds[FO_MAX_FILES] = {10 * 60};
