@@ -1,0 +1,171 @@
+file_out Module
+
+Xenofon Karamanos
+
+   GILAWA Ltd
+   <xk@gilawa.com>
+
+   Copyright © 2024 GILAWA Ltd
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. base_folder (string)
+              3.2. file (string)
+              3.3. worker_usleep (int)
+
+        4. Functions
+
+              4.1. file_out(filename, string)
+
+        5. Exported pseudo-variables
+
+   List of Examples
+
+   1.1. Set base_folder parameter
+   1.2. Set file parameter
+   1.3. Set worker_usleep parameter
+   1.4. file_out usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. base_folder (string)
+        3.2. file (string)
+        3.3. worker_usleep (int)
+
+   4. Functions
+
+        4.1. file_out(filename, string)
+
+   5. Exported pseudo-variables
+
+1. Overview
+
+   This is a small module to support fast streaming output to files and
+   process this changes depending on an interval. It implements only one
+   function that streams a chunk of text to the current output file
+   handle.
+
+   The module can be used to write logs for up to 10 different log files.
+   Each log file can be configured to have a different name and extension.
+   The processed string can contain pseudo-variables. The module will
+   replace the pseudo-variables with the actual values. The module will
+   also rotate the log files at a specified interval. The interval is
+   specified in seconds.
+
+   Known limitations on the rotation interval are:
+     * If there is no messages coming, the rotation will not be done until
+       the next message arrives.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none.
+
+3. Parameters
+
+   3.1. base_folder (string)
+   3.2. file (string)
+   3.3. worker_usleep (int)
+
+3.1.  base_folder (string)
+
+   Absolute path to the folder where log files should be saved.
+
+   Default value is “/var/log/kamailio/file_out/”.
+
+   Example 1.1. Set base_folder parameter
+...
+modparam("file_out", "base_folder", "/tmp/file_out/")
+...
+
+3.2.  file (string)
+
+   The definition of a file and its properties. The value of the parameter
+   may have the following format:
+     * "name=accounting;extension=.out;interval=20"
+
+   The parameter can be set multiple times to define more files in same
+   configuration file.
+     * name (Required) - the name of the file
+       No default value. This parameter is required.
+     * extension (Optional) - the extension of the file
+       Default value is “.out”.
+     * interval (Optional) - the interval in seconds of the file rotation
+       Default value is “600” (10min).
+
+   Example 1.2. Set file parameter
+...
+modparam("file_out", "file", "name=missed_calls;interval=30;extension=.json")
+modparam("file_out", "file", "name=accounting;extension=.txt")
+...
+
+3.3.  worker_usleep (int)
+
+   The time in microseconds which worker will sleep for until next
+   iteration.
+
+   Default value is “10000” (10 ms).
+
+   Example 1.3. Set worker_usleep parameter
+...
+modparam("file_out", "worker_usleep", "1000")
+...
+
+4. Functions
+
+   4.1. file_out(filename, string)
+
+4.1.  file_out(filename, string)
+
+   This function is used to write a string to a file. The file is
+   determined by the filename parameter. The string parameter is the
+   string to be written to the file. Filename is the name of the file
+   defined in the configuration file as name=filename.
+
+   Example 1.4.  file_out usage
+...
+modparam("file_out", "file", "name=accounting;interval=200")
+modparam("file_out", "file", "name=missed_calls;extension=.json;interval=300")
+
+request_route {
+        file_out("accounting", "Writing to accounting.out file $rm from $fu");
+        file_out("missed_calls", "Writing to missed_calls.out file $rm from $fu"
+);
+}
+...
+
+5. Exported pseudo-variables
+
+     * none.
