@@ -199,8 +199,14 @@ static void fo_log_writer_process(int rank)
 			return;
 		}
 
-		fprintf(out, "%s\n", log_message.message);
-		fflush(out);
+		if(fprintf(out, "%.*s\n", log_message.message->len,
+				   log_message.message->s)
+				< 0) {
+			LM_ERR("Failed to write to file with err {%s}\n", strerror(errno));
+		}
+		if(fflush(out) < 0) {
+			LM_ERR("Failed to flush file with err {%s}\n", strerror(errno));
+		}
 	}
 }
 
@@ -463,7 +469,7 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 		return -1;
 	}
 
-	str value;
+	str value = str_init("");
 	result = get_str_fparam(&value, msg, (fparam_t *)log_message);
 	if(result < 0) {
 		LM_ERR("Failed to string from param 1: %d\n", result);
@@ -471,8 +477,8 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 	}
 
 	/* Add the logging string to the global gueue */
-	fo_log_message_t logMessage;
-	logMessage.message = value.s;
+	fo_log_message_t logMessage = {0, 0};
+	logMessage.message = &value;
 	logMessage.dest_file = file_index;
 	fo_enqueue(fo_queue, logMessage);
 

@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "types.h"
+#include "../../core/ut.h"
 
 static fo_node_t *fo_new_node(fo_log_message_t data)
 {
@@ -37,8 +38,18 @@ int fo_enqueue(fo_queue_t *q, fo_log_message_t data)
 	/*
 	Copy the contents of data.message
     */
-	char *message_copy = (char *)shm_malloc(strlen(data.message) + 1);
-	strcpy(message_copy, data.message);
+	str *message_copy = 0;
+	message_copy = (str *)shm_malloc(sizeof(str));
+	if(message_copy == 0) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
+	if(shm_str_dup(message_copy, data.message) < 0) {
+		LM_ERR("Failed to duplicate message\n");
+		return -1;
+	}
+
 	data.message = message_copy;
 	fo_node_t *temp = fo_new_node(data);
 
@@ -74,10 +85,6 @@ int fo_dequeue(fo_queue_t *q, fo_log_message_t *data)
 
 
 	if(temp != NULL) {
-		if(temp->data.message != NULL) {
-			shm_free(temp->data.message);
-			temp->data.message = NULL;
-		}
 		shm_free(temp);
 		temp = NULL;
 	}
