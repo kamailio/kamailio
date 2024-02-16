@@ -195,7 +195,7 @@ static void fo_log_writer_process(int rank)
 		}
 		FILE *out = fo_get_file_handle(log_message.dest_file);
 		if(out == NULL) {
-			LM_ERR("out is NULL\n");
+			LM_ERR("file handle is NULL\n");
 			return;
 		}
 
@@ -340,7 +340,7 @@ static int fo_parse_filename_params(str in)
 		token = strtok_r(NULL, ";", &saveptr);
 	}
 	if(name != NULL) {
-		LM_ERR("name = %s\n", name);
+		LM_DBG("name = %s\n", name);
 		fo_base_filename[*fo_number_of_files] = name;
 	} else {
 		LM_ERR("name is required. Make sure you provided name= in modparam "
@@ -414,7 +414,6 @@ static int fo_check_interval(int index)
 	// Calculate the difference between the current timestamp and the stored timestamp
 	int difference = difftime(fo_current_timestamp, fo_stored_timestamp[index]);
 	if(difference >= fo_interval_seconds[index]) {
-		LM_ERR("interval has passed\n");
 		return 1;
 	}
 	return 0;
@@ -480,7 +479,7 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 	str value = str_init("");
 	result = get_str_fparam(&value, msg, (fparam_t *)log_message);
 	if(result < 0) {
-		LM_ERR("Failed to string from param 1: %d\n", result);
+		LM_ERR("Failed to get string from param 1: %d\n", result);
 		return -1;
 	}
 
