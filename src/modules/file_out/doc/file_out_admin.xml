@@ -80,14 +80,14 @@
 			</para>
 			<para>
 				<emphasis>
-		    Default value is <quote>/var/log/kamailio/file_out/</quote>.
+		    Default value is <quote>/var/log/kamailio/file_out</quote>.
 				</emphasis>
 			</para>
 			<example>
 				<title>Set <varname>base_folder</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("file_out", "base_folder", "/tmp/file_out/")
+modparam("file_out", "base_folder", "/tmp/file_out") # Trailling slash will be added.
 ...
 				</programlisting>
 			</example>
