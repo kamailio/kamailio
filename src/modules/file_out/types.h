@@ -22,7 +22,7 @@
 
 typedef struct log_message
 {
-	char *message;
+	str *message;
 	int dest_file;
 } fo_log_message_t;
 
