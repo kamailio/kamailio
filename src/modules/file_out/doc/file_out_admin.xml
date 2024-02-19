@@ -102,7 +102,7 @@ modparam("file_out", "base_folder", "/tmp/file_out") # Trailling slash will be a
 		<itemizedlist>
 			<listitem>
 				<para>
-		"name=accounting;extension=.out;interval=20"
+		"name=accounting;extension=.out;interval=20;prefix=acc_"
 				</para>
 			</listitem>
 		</itemizedlist>
@@ -142,6 +142,17 @@ modparam("file_out", "base_folder", "/tmp/file_out") # Trailling slash will be a
 				<para>
 					<emphasis>
 		    Default value is <quote>600</quote> (10min).
+					</emphasis>
+			</para>
+			</listitem>
+
+			<listitem>
+				<para>
+		prefix (Optional) - the prefix for log messages
+				</para>
+				<para>
+					<emphasis>
+		    Default value is <quote>""</quote> (empty string).
 					</emphasis>
 			</para>
 			</listitem>
