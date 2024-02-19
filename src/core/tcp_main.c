@@ -1169,6 +1169,10 @@ int tcp_connection_limit_srcip(union sockaddr_union *srcaddr, int limit)
 	int n;
 	int i;
 
+	if(limit <= 0) {
+		return 0;
+	}
+
 	n = 0;
 	su2ip_addr(&src_ip, srcaddr);
 	TCPCONN_LOCK;
