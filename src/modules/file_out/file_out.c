@@ -40,6 +40,7 @@ MODULE_VERSION
 #define FO_MAX_FILES 10 /* Maximum number of files */
 #define FO_DEFAULT_INTERVAL 10 * 60
 #define FO_DEFAULT_EXTENSION ".out"
+#define FO_DEFAULT_PREFIX ""
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -64,6 +65,7 @@ static int fo_parse_filename_params(str input);
 char *fo_base_folder = "/var/log/kamailio/file_out";
 char *fo_base_filename[FO_MAX_FILES] = {""};
 char *fo_extension[FO_MAX_FILES] = {".out"};
+char *fo_prefix[FO_MAX_FILES] = {""};
 int fo_interval_seconds[FO_MAX_FILES] = {10 * 60};
 int fo_worker_usleep = 10000;
 
@@ -211,6 +213,13 @@ static void fo_log_writer_process(int rank)
 			return;
 		}
 
+		/* Get prefix for the file */
+		if(fo_prefix[log_message.dest_file] != NULL) {
+			if(fprintf(out, "%s", fo_prefix[log_message.dest_file]) < 0) {
+				LM_ERR("Failed to write prefix to file with err {%s}\n",
+						strerror(errno));
+			}
+		}
 		if(fprintf(out, "%.*s\n", log_message.message->len,
 				   log_message.message->s)
 				< 0) {
@@ -348,6 +357,7 @@ static int fo_parse_filename_params(str in)
 	char *name = NULL;
 	char *extension = NULL;
 	char *interval = NULL;
+	char *prefix = NULL;
 	char *token = NULL;
 	char *saveptr = NULL;
 	char *input = in.s;
@@ -359,6 +369,11 @@ static int fo_parse_filename_params(str in)
 			extension = token + 10;
 		} else if(strstr(token, "interval=") != NULL) {
 			interval = token + 9;
+		} else if(strstr(token, "prefix=") != NULL) {
+			prefix = token + 7;
+		} else {
+			LM_ERR("Unknown parameter %s\n", token);
+			return -1;
 		}
 		token = strtok_r(NULL, ";", &saveptr);
 	}
@@ -389,6 +404,13 @@ static int fo_parse_filename_params(str in)
 		fo_interval_seconds[*fo_number_of_files] = FO_DEFAULT_INTERVAL;
 	}
 
+	if(prefix != NULL) {
+		LM_DBG("prefix = %s\n", prefix);
+		fo_prefix[*fo_number_of_files] = prefix;
+	} else {
+		LM_DBG("no prefix= provided. Using default %s\n", FO_DEFAULT_PREFIX);
+		fo_prefix[*fo_number_of_files] = FO_DEFAULT_PREFIX;
+	}
 	return 1;
 }
 
