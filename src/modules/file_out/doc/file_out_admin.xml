@@ -87,7 +87,7 @@
 				<title>Set <varname>base_folder</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("file_out", "base_folder", "/tmp/file_out") # Trailling slash will be added.
+modparam("file_out", "base_folder", "/tmp/file_out") # trailing slash will be added.
 ...
 				</programlisting>
 			</example>
@@ -102,7 +102,7 @@ modparam("file_out", "base_folder", "/tmp/file_out") # Trailling slash will be a
 		<itemizedlist>
 			<listitem>
 				<para>
-		"name=accounting;extension=.out;interval=20;prefix=acc_"
+		"name=accounting;extension=.out;interval=20;prefix=accounting:"
 				</para>
 			</listitem>
 		</itemizedlist>
