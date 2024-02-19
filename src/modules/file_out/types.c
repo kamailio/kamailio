@@ -113,3 +113,12 @@ int fo_queue_size(fo_queue_t *q)
 	lock_release(&(q->lock));
 	return count;
 }
+
+void fo_free_queue(fo_queue_t *q)
+{
+	fo_log_message_t data;
+	while(fo_dequeue(q, &data) > 0) {
+		shm_free(data.message);
+	}
+	shm_free(q);
+}

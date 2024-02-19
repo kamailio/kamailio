@@ -43,3 +43,4 @@ int fo_enqueue(fo_queue_t *q, fo_log_message_t data);
 int fo_dequeue(fo_queue_t *q, fo_log_message_t *data);
 int fo_is_queue_empty(fo_queue_t *q);
 int fo_queue_size(fo_queue_t *q);
+void fo_free_queue(fo_queue_t *q);

@@ -183,6 +183,16 @@ static void destroy(void)
 			ERR("Failed to close output file");
 		}
 	}
+
+	/* Free allocated mem */
+	if(fo_number_of_files != NULL) {
+		shm_free(fo_number_of_files);
+		fo_number_of_files = NULL;
+	}
+
+	if(fo_queue != NULL) {
+		fo_free_queue(fo_queue);
+	}
 }
 
 static void fo_log_writer_process(int rank)
