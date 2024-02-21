@@ -82,7 +82,6 @@ def printFunction(module_name, func, indent):
     log_format_params = "%s"
 
     param_list = []
-    print("func['params']=%s" % func['params'])
     if func['params'] is not None and func['params'] != "none":
         param_list = func['params'].split(", ")
         i = 0
