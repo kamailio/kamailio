@@ -136,3 +136,23 @@ void fo_free_queue(fo_queue_t *q)
 	}
 	shm_free(q);
 }
+
+int fo_file_properties_destroy(fo_file_properties_t *fp)
+{
+	if(fp == NULL) {
+		return 1;
+	}
+	if(fp->fo_prefix_pvs != NULL) {
+		if(pv_elem_free_all(fp->fo_prefix_pvs) < 0) {
+			LM_ERR("Failed to free prefix pvs\n");
+			return -1;
+		}
+	}
+	if(fp->fo_file_output != NULL) {
+		if(fclose(fp->fo_file_output) != 0) {
+			LM_ERR("Failed to close file\n");
+			return -1;
+		}
+	}
+	return 1;
+}
