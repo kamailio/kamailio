@@ -37,7 +37,6 @@ MODULE_VERSION
 
 
 #define FO_MAX_PATH_LEN 2048
-#define FO_MAX_FILES 10 /* Maximum number of files */
 #define FO_DEFAULT_INTERVAL 10 * 60
 #define FO_DEFAULT_EXTENSION ".out"
 #define FO_DEFAULT_PREFIX ""
@@ -64,32 +63,25 @@ static int fo_parse_filename_params(str input);
 /* Default parameters */
 static int buf_size = 4096;
 
-char *fo_base_folder = "/var/log/kamailio/file_out";
-char *fo_base_filename[FO_MAX_FILES] = {""};
-char *fo_extension[FO_MAX_FILES] = {".out"};
-char *fo_prefix[FO_MAX_FILES] = {""};
-int fo_interval_seconds[FO_MAX_FILES] = {10 * 60};
+str fo_base_folder = str_init("/var/log/kamailio/file_out");
 int fo_worker_usleep = 10000;
+fo_file_properties_t fo_files[FO_MAX_FILES];
 
-pv_elem_t *fo_prefix_pvs[FO_MAX_FILES] = {NULL};
 char *fo_prefix_buf = NULL;
 
 /* Shared variables */
 fo_queue_t *fo_queue = NULL;
 int *fo_number_of_files = NULL;
 
-time_t fo_stored_timestamp[FO_MAX_FILES] = {0};
 time_t fo_current_timestamp = 0;
-FILE *fo_file_output[FO_MAX_FILES];
 
 static cmd_export_t cmds[] = {
 		{"file_out", (cmd_function)fo_write_to_file, 2, fo_fixup_int_pvar,
 				fo_fixup_free_int_pvar, ANY_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[] = {
-		{"base_folder", PARAM_STRING, &fo_base_folder},
-		{"file", PARAM_STRING | PARAM_USE_FUNC, &fo_add_filename},
+static param_export_t params[] = {{"base_folder", PARAM_STR, &fo_base_folder},
+		{"file", PARAM_STR | PARAM_USE_FUNC, &fo_add_filename},
 		{"worker_usleep", PARAM_INT, &fo_worker_usleep}, {0, 0, 0}};
 
 struct module_exports exports = {
@@ -109,7 +101,7 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	LM_DBG("initializing\n");
-	LM_DBG("base_folder = %s\n", fo_base_folder);
+	LM_DBG("base_folder = %.*s\n", fo_base_folder.len, fo_base_folder.s);
 
 	//*  Create shared variables */
 	fo_queue = (fo_queue_t *)shm_malloc(sizeof(fo_queue_t));
@@ -131,25 +123,24 @@ static int mod_init(void)
 	/* Fixup the prefix */
 	for(int i = 0; i < *fo_number_of_files; i++) {
 		str s;
-		s.s = fo_prefix[i];
-		s.len = strlen(s.s);
+		s.s = fo_files[i].fo_prefix.s;
+		s.len = fo_files[i].fo_prefix.len;
 
-		if(pv_parse_format(&s, &fo_prefix_pvs[i]) < 0) {
+		if(pv_parse_format(&s, &fo_files[i].fo_prefix_pvs) < 0) {
 			LM_ERR("wrong format[%s]\n", s.s);
 			return -1;
 		}
-		LM_ERR("prefix_pvs = %s\n", fo_prefix_pvs[i]->text.s);
-
-		fo_prefix_buf = (char *)pkg_malloc((buf_size + 1) * sizeof(char));
-		if(fo_prefix_buf == NULL) {
-			pkg_free(fo_prefix_buf);
-			PKG_MEM_ERROR;
-			return -1;
-		}
 	}
+
+	fo_prefix_buf = (char *)pkg_malloc((buf_size + 1) * sizeof(char));
+	if(fo_prefix_buf == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+
 	/* Initialize per process vars */
 	for(int i = 0; i < *fo_number_of_files; i++) {
-		fo_stored_timestamp[i] = time(NULL);
+		fo_files[i].fo_stored_timestamp = time(NULL);
 	}
 
 	/* Register worker process */
@@ -203,20 +194,17 @@ static int child_init(int rank)
 static void destroy(void)
 {
 	int result = 0;
-	if(fo_file_output[0] != NULL) {
-		result = fclose(fo_file_output[0]);
-		if(result != 0) {
-			ERR("Failed to close output file");
+	for(int i = 0; i < *fo_number_of_files; i++) {
+		result = fo_file_properties_destroy(&fo_files[i]);
+		if(result < 0) {
+			LM_ERR("Failed to destroy file properties\n");
 		}
 	}
 
-	if(fo_prefix_buf)
+	if(fo_prefix_buf) {
 		pkg_free(fo_prefix_buf);
-
-	for(int i = 0; i < *fo_number_of_files; i++) {
-		if(fo_prefix_pvs[i])
-			pv_elem_free_all(fo_prefix_pvs[i]);
 	}
+
 	/* Free allocated mem */
 	if(fo_number_of_files != NULL) {
 		shm_free(fo_number_of_files);
@@ -292,7 +280,10 @@ static int fo_fixup_str_index(void **param, int param_no)
 
 	/* Map string to index */
 	while(index < *fo_number_of_files) {
-		if(strcmp(fo_base_filename[index], (char *)*param) == 0) {
+		str s;
+		s.s = fo_files[index].fo_base_filename.s;
+		s.len = fo_files[index].fo_base_filename.len;
+		if(strncmp(s.s, (char *)*param, s.len) == 0) {
 			LM_DBG("Found index %d for %s\n", index, (char *)*param);
 			p->v.i = (int)index;
 			p->fixed = (void *)(long)index;
@@ -338,8 +329,6 @@ static int fo_fixup_free_int_pvar(void **param, int param_no)
 
 static int fo_add_filename(modparam_t type, void *val)
 {
-	str in;
-
 	if(val != NULL && strlen((char *)val) == 0) {
 		LM_ERR("modparam value is empty\n");
 		return -1;
@@ -355,7 +344,7 @@ static int fo_add_filename(modparam_t type, void *val)
 		*fo_number_of_files = 0;
 	}
 
-	if((type & PARAM_STRING) == 0) {
+	if((type & PARAM_STR) == 0) {
 		LM_ERR("bad parameter type %d\n", type);
 		return -1;
 	}
@@ -367,11 +356,8 @@ static int fo_add_filename(modparam_t type, void *val)
 		return 0;
 	}
 
-	/* parse: name=missed_calls;extension=.txt;interval=600 */
-	in.s = (char *)val;
-	in.len = strlen(in.s);
-
-	if(fo_parse_filename_params(in) < 0)
+	/* parse: param_name=value; ... */
+	if(fo_parse_filename_params(*((str *)val)) < 0)
 		return -1;
 
 	(*fo_number_of_files)++;
@@ -412,7 +398,8 @@ static int fo_parse_filename_params(str in)
 	}
 	if(name != NULL) {
 		LM_DBG("name = %s\n", name);
-		fo_base_filename[*fo_number_of_files] = name;
+		fo_files[*fo_number_of_files].fo_base_filename.s = name;
+		fo_files[*fo_number_of_files].fo_base_filename.len = strlen(name);
 	} else {
 		LM_ERR("name is required. Make sure you provided name= in modparam "
 			   "value\n");
@@ -421,28 +408,33 @@ static int fo_parse_filename_params(str in)
 
 	if(extension != NULL) {
 		LM_DBG("extension = %s\n", extension);
-		fo_extension[*fo_number_of_files] = extension;
+		fo_files[*fo_number_of_files].fo_extension.s = extension;
+		fo_files[*fo_number_of_files].fo_extension.len = strlen(extension);
 	} else {
 		LM_DBG("no extension= provided. Using default %s\n",
 				FO_DEFAULT_EXTENSION);
-		fo_extension[*fo_number_of_files] = FO_DEFAULT_EXTENSION;
+		fo_files[*fo_number_of_files].fo_extension.s = FO_DEFAULT_EXTENSION;
+		fo_files[*fo_number_of_files].fo_extension.len =
+				strlen(FO_DEFAULT_EXTENSION);
 	}
 
 	if(interval != NULL) {
 		LM_DBG("interval = %s\n", interval);
-		fo_interval_seconds[*fo_number_of_files] = atoi(interval);
+		fo_files[*fo_number_of_files].fo_interval_seconds = atoi(interval);
 	} else {
 		LM_DBG("no interval= provided. Using default %d\n",
 				FO_DEFAULT_INTERVAL);
-		fo_interval_seconds[*fo_number_of_files] = FO_DEFAULT_INTERVAL;
+		fo_files[*fo_number_of_files].fo_interval_seconds = FO_DEFAULT_INTERVAL;
 	}
 
 	if(prefix != NULL) {
 		LM_DBG("prefix = %s\n", prefix);
-		fo_prefix[*fo_number_of_files] = prefix;
+		fo_files[*fo_number_of_files].fo_prefix.s = prefix;
+		fo_files[*fo_number_of_files].fo_prefix.len = strlen(prefix);
 	} else {
 		LM_DBG("no prefix= provided. Using default %s\n", FO_DEFAULT_PREFIX);
-		fo_prefix[*fo_number_of_files] = FO_DEFAULT_PREFIX;
+		fo_files[*fo_number_of_files].fo_prefix.s = FO_DEFAULT_PREFIX;
+		fo_files[*fo_number_of_files].fo_prefix.len = strlen(FO_DEFAULT_PREFIX);
 	}
 	return 1;
 }
@@ -459,8 +451,8 @@ static int fo_init_file(const int index)
 {
 	char full_path[FO_MAX_PATH_LEN];
 	fo_get_full_path(index, full_path);
-	fo_file_output[index] = fopen(full_path, "a");
-	if(fo_file_output[index] == NULL) {
+	fo_files[index].fo_file_output = fopen(full_path, "a");
+	if(fo_files[index].fo_file_output == NULL) {
 		LM_ERR("Couldn't open file %s\n", strerror(errno));
 		return -1;
 	}
@@ -470,8 +462,8 @@ static int fo_init_file(const int index)
 static int fo_close_file(const int index)
 {
 	int result = 0;
-	if(fo_file_output[index] != NULL) {
-		result = fclose(fo_file_output[index]);
+	if(fo_files[index].fo_file_output != NULL) {
+		result = fclose(fo_files[index].fo_file_output);
 		if(result != 0) {
 			ERR("Failed to close output file");
 			return -1;
@@ -489,9 +481,10 @@ static int fo_check_interval(int index)
 {
 	fo_current_timestamp = time(NULL);
 
-	// Calculate the difference between the current timestamp and the stored timestamp
-	int difference = difftime(fo_current_timestamp, fo_stored_timestamp[index]);
-	if(difference >= fo_interval_seconds[index]) {
+	/* Calculate the difference between the current timestamp and the stored timestamp */
+	int difference =
+			difftime(fo_current_timestamp, fo_files[index].fo_stored_timestamp);
+	if(difference >= fo_files[index].fo_interval_seconds) {
 		return 1;
 	}
 	return 0;
@@ -510,7 +503,7 @@ static FILE *fo_get_file_handle(const int index)
 			LM_ERR("Failed to close output file");
 			return NULL;
 		}
-		fo_stored_timestamp[index] = fo_current_timestamp;
+		fo_files[index].fo_stored_timestamp = fo_current_timestamp;
 
 		LM_DBG("Opening new file due to interval passed\n");
 		/* Initialize and open files  */
@@ -519,11 +512,11 @@ static FILE *fo_get_file_handle(const int index)
 			LM_ERR("Failed to initialize output file");
 			return NULL;
 		}
-		return fo_file_output[index];
+		return fo_files[index].fo_file_output;
 	} else {
 		/* Interval has not passed */
 		/* Assume files are correct */
-		return fo_file_output[index];
+		return fo_files[index].fo_file_output;
 	}
 }
 
@@ -532,10 +525,11 @@ static FILE *fo_get_file_handle(const int index)
  */
 static int fo_get_full_path(const int index, char *full_path)
 {
-	snprintf(full_path, FO_MAX_PATH_LEN, "%s/%s_%.f%s", fo_base_folder,
-			fo_base_filename[index],
-			difftime(fo_stored_timestamp[index], (time_t)0),
-			fo_extension[index]);
+	fo_file_properties_t fp = fo_files[index];
+	snprintf(full_path, FO_MAX_PATH_LEN, "%.*s/%.*s_%.f%.*s",
+			fo_base_folder.len, fo_base_folder.s, fp.fo_base_filename.len,
+			fp.fo_base_filename.s, difftime(fp.fo_stored_timestamp, (time_t)0),
+			fp.fo_extension.len, fp.fo_extension.s);
 	LM_INFO("Path to write to: %s\n", full_path);
 	return 1;
 }
@@ -543,6 +537,8 @@ static int fo_get_full_path(const int index, char *full_path)
 static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 {
 	int result, file_index;
+	str fo_prefix_str, fo_prefix_val;
+
 	if(index == NULL || log_message == NULL) {
 		LM_ERR("filename or log_messsage is NULL\n");
 		return -1;
@@ -561,18 +557,15 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 		return -1;
 	}
 
-	str fo_prefix_str, fo_prefix_val;
 	fo_prefix_str.s = fo_prefix_buf;
 	fo_prefix_str.len = buf_size;
-	if(pv_printf(msg, fo_prefix_pvs[file_index], fo_prefix_str.s,
+	if(pv_printf(msg, fo_files[file_index].fo_prefix_pvs, fo_prefix_str.s,
 			   &fo_prefix_str.len)
 					== 0
 			&& fo_prefix_str.len > 0) {
 		fo_prefix_val.s = fo_prefix_str.s;
 		fo_prefix_val.len = fo_prefix_str.len;
 	}
-
-	LM_ERR("fo_prefix_val = %.*s\n", fo_prefix_val.len, fo_prefix_val.s);
 
 	/* Add the logging string to the global gueue */
 	fo_log_message_t logMessage = {0, 0, 0};

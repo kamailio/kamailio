@@ -19,6 +19,9 @@
  */
 
 #include "../../core/locking.h"
+#include "../../core/pvar.h"
+
+#define FO_MAX_FILES 10 /* Maximum number of files */
 
 typedef struct log_message
 {
@@ -45,3 +48,16 @@ int fo_dequeue(fo_queue_t *q, fo_log_message_t *data);
 int fo_is_queue_empty(fo_queue_t *q);
 int fo_queue_size(fo_queue_t *q);
 void fo_free_queue(fo_queue_t *q);
+
+typedef struct fo_file_properties
+{
+	str fo_base_filename;
+	str fo_extension;
+	str fo_prefix;
+	int fo_interval_seconds;
+	pv_elem_t *fo_prefix_pvs;
+	time_t fo_stored_timestamp;
+	FILE *fo_file_output;
+} fo_file_properties_t;
+
+int fo_file_properties_destroy(fo_file_properties_t *fp);
