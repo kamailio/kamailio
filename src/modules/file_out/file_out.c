@@ -62,12 +62,17 @@ static int fo_add_filename(modparam_t type, void *val);
 static int fo_parse_filename_params(str input);
 
 /* Default parameters */
+static int buf_size = 4096;
+
 char *fo_base_folder = "/var/log/kamailio/file_out";
 char *fo_base_filename[FO_MAX_FILES] = {""};
 char *fo_extension[FO_MAX_FILES] = {".out"};
 char *fo_prefix[FO_MAX_FILES] = {""};
 int fo_interval_seconds[FO_MAX_FILES] = {10 * 60};
 int fo_worker_usleep = 10000;
+
+pv_elem_t *fo_prefix_pvs[FO_MAX_FILES] = {NULL};
+char *fo_prefix_buf = NULL;
 
 /* Shared variables */
 fo_queue_t *fo_queue = NULL;
@@ -123,6 +128,25 @@ static int mod_init(void)
 	/* Count the given files */
 	*fo_number_of_files = fo_count_assigned_files();
 
+	/* Fixup the prefix */
+	for(int i = 0; i < *fo_number_of_files; i++) {
+		str s;
+		s.s = fo_prefix[i];
+		s.len = strlen(s.s);
+
+		if(pv_parse_format(&s, &fo_prefix_pvs[i]) < 0) {
+			LM_ERR("wrong format[%s]\n", s.s);
+			return -1;
+		}
+		LM_ERR("prefix_pvs = %s\n", fo_prefix_pvs[i]->text.s);
+
+		fo_prefix_buf = (char *)pkg_malloc((buf_size + 1) * sizeof(char));
+		if(fo_prefix_buf == NULL) {
+			pkg_free(fo_prefix_buf);
+			PKG_MEM_ERROR;
+			return -1;
+		}
+	}
 	/* Initialize per process vars */
 	for(int i = 0; i < *fo_number_of_files; i++) {
 		fo_stored_timestamp[i] = time(NULL);
@@ -186,6 +210,13 @@ static void destroy(void)
 		}
 	}
 
+	if(fo_prefix_buf)
+		pkg_free(fo_prefix_buf);
+
+	for(int i = 0; i < *fo_number_of_files; i++) {
+		if(fo_prefix_pvs[i])
+			pv_elem_free_all(fo_prefix_pvs[i]);
+	}
 	/* Free allocated mem */
 	if(fo_number_of_files != NULL) {
 		shm_free(fo_number_of_files);
@@ -214,8 +245,10 @@ static void fo_log_writer_process(int rank)
 		}
 
 		/* Get prefix for the file */
-		if(fo_prefix[log_message.dest_file] != NULL) {
-			if(fprintf(out, "%s", fo_prefix[log_message.dest_file]) < 0) {
+		if(log_message.prefix != NULL && log_message.prefix->len > 0) {
+			if(fprintf(out, "%.*s", log_message.prefix->len,
+					   log_message.prefix->s)
+					< 0) {
 				LM_ERR("Failed to write prefix to file with err {%s}\n",
 						strerror(errno));
 			}
@@ -528,8 +561,22 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 		return -1;
 	}
 
+	str fo_prefix_str, fo_prefix_val;
+	fo_prefix_str.s = fo_prefix_buf;
+	fo_prefix_str.len = buf_size;
+	if(pv_printf(msg, fo_prefix_pvs[file_index], fo_prefix_str.s,
+			   &fo_prefix_str.len)
+					== 0
+			&& fo_prefix_str.len > 0) {
+		fo_prefix_val.s = fo_prefix_str.s;
+		fo_prefix_val.len = fo_prefix_str.len;
+	}
+
+	LM_ERR("fo_prefix_val = %.*s\n", fo_prefix_val.len, fo_prefix_val.s);
+
 	/* Add the logging string to the global gueue */
-	fo_log_message_t logMessage = {0, 0};
+	fo_log_message_t logMessage = {0, 0, 0};
+	logMessage.prefix = &fo_prefix_val;
 	logMessage.message = &value;
 	logMessage.dest_file = file_index;
 	fo_enqueue(fo_queue, logMessage);
