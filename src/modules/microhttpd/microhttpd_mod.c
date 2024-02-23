@@ -236,6 +236,13 @@ int pv_parse_mhttpd_name(pv_spec_p sp, str *in)
 			}
 			break;
 		default:
+			if(in->len > 2 && in->s[1] == ':'
+					&& (in->s[0] == 'h' || in->s[0] == 'H')) {
+				sp->pvp.pvn.type = PV_NAME_INTSTR;
+				sp->pvp.pvn.u.isname.type = PVT_HDR;
+				sp->pvp.pvn.u.isname.name.s = *in;
+				return 0;
+			}
 			goto error;
 	}
 	sp->pvp.pvn.type = PV_NAME_INTSTR;
@@ -254,12 +261,23 @@ error:
 int pv_get_mhttpd(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	struct sockaddr *srcaddr = NULL;
+	const char *hdrval = NULL;
+
 	if(param == NULL) {
 		return -1;
 	}
 	if(_ksr_mhttpd_ctx.connection == NULL) {
 		return pv_get_null(msg, param, res);
 	}
+	if(param->pvn.u.isname.type == PVT_HDR) {
+		hdrval = MHD_lookup_connection_value(_ksr_mhttpd_ctx.connection,
+				MHD_HEADER_KIND, param->pvn.u.isname.name.s.s + 2);
+		if(hdrval == NULL) {
+			return pv_get_null(msg, param, res);
+		}
+		return pv_get_strzval(msg, param, res, (char *)hdrval);
+	}
+
 	switch(param->pvn.u.isname.name.n) {
 		case 0: /* url */
 			return pv_get_strval(msg, param, res, &_ksr_mhttpd_ctx.url);
