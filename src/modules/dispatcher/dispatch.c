@@ -3605,9 +3605,9 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 		if(ip_addr_cmp(pipaddr, ipa)
 				&& ((mode & DS_MATCH_NOPORT) || node->dlist[j].port == 0
 						|| tport == node->dlist[j].port
-						|| (mode & DS_MATCH_TRY_FULLADDRSOCK))
+						|| (mode & DS_MATCH_MIXSOCKPRPORT))
 				&& ((mode & DS_MATCH_NOPROTO) || tproto == node->dlist[j].proto
-						|| (mode & DS_MATCH_TRY_FULLADDRSOCK))
+						|| (mode & DS_MATCH_MIXSOCKPRPORT))
 				&& (((mode & DS_MATCH_ACTIVE)
 							&& !ds_skip_dst(node->dlist[j].flags))
 						|| !(mode & DS_MATCH_ACTIVE))
@@ -3615,7 +3615,7 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 							&& node->dlist[j].sock == _m->rcv.bind_address)
 						|| !node->dlist[j].sock || !(mode & DS_MATCH_SOCKET))) {
 
-			if(mode & DS_MATCH_TRY_FULLADDRSOCK) {
+			if(mode & DS_MATCH_MIXSOCKPRPORT) {
 				node_strictness = DS_MATCHED_ADDR;
 				if(node->dlist[j].port) {
 					if(tport != node->dlist[j].port)
@@ -3738,7 +3738,7 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 	}
 
 
-	if(mode & DS_MATCH_TRY_FULLADDRSOCK) {
+	if(mode & DS_MATCH_MIXSOCKPRPORT) {
 		ds_strictness = 0;
 		ds_strictest_node = NULL;
 	}
@@ -3753,7 +3753,7 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 		}
 	}
 
-	if(rc == -1 && mode & DS_MATCH_TRY_FULLADDRSOCK && ds_strictest_node) {
+	if(rc == -1 && (mode & DS_MATCH_MIXSOCKPRPORT) && ds_strictest_node) {
 		rc = ds_set_vars(
 				_m, ds_strictest_node, ds_strictest_idx, group == -1 ? 1 : 0);
 	}
