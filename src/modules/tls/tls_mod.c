@@ -468,19 +468,13 @@ static int mod_child(int rank)
 	if(tls_disable || (tls_domains_cfg == 0))
 		return 0;
 
-#if OPENSSL_VERSION_NUMBER >= 0x010101000L
 	/*
          * OpenSSL 3.x/1.1.1: create shared SSL_CTX* in thread executor
-         * to avoid init of libssl in thread#1
+         * to avoid init of libssl in thread#1: ksr_tls_threads_mode = 1
          */
-	if(rank == PROC_INIT && ksr_tls_threads_mode != 0) {
+	if(rank == PROC_INIT) {
 		return run_thread4PP((_thread_proto4PP)mod_child_hook, &rank, NULL);
 	}
-#else
-	if(rank == PROC_INIT) {
-		return mod_child_hook(&rank, NULL);
-	}
-#endif /* OPENSSL_VERSION_NUMBER */
 
 #ifndef OPENSSL_NO_ENGINE
 	/*
