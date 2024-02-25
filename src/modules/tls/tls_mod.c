@@ -688,6 +688,14 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
          * GH #3695: OpenSSL 1.1.1 historical note: it is no longer
          * needed to replace RAND with cryptorand
          */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L
+	if(ksr_tls_threads_mode == 0) {
+		LM_WARN("OpenSSL 1.1.1 setting cryptorand random engine\n");
+		RAND_set_rand_method(RAND_ksr_cryptorand_method());
+	}
+#endif
+
 	sr_kemi_modules_add(sr_kemi_tls_exports);
 
 	return 0;
