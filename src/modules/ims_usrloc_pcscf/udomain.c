@@ -616,32 +616,40 @@ int get_pcontact_from_cache(udomain_t *_d, pcontact_info_t *contact_info,
 						continue;
 					}
 				}
-				if((contact_info->aor.len > 0) && (needle_uri.user.len != 0)) {
-					if((needle_uri.user.len != c->contact_user.len)
-							|| (memcmp(needle_uri.user.s, c->contact_user.s,
-										needle_uri.user.len)
-									!= 0)) {
-						LM_ERR("user name does not match - no match here...\n");
-						LM_DBG("found pcontact username [%d]: [%.*s]\n", i,
-								c->contact_user.len, c->contact_user.s);
-						LM_DBG("incoming contact username: [%.*s]\n",
-								needle_uri.user.len, needle_uri.user.s);
-						c = c->next;
-						continue;
+
+				// perform full contact match
+				if(match_contact_host_port == 0) {
+					if((contact_info->aor.len > 0)
+							&& (needle_uri.user.len != 0)) {
+						if((needle_uri.user.len != c->contact_user.len)
+								|| (memcmp(needle_uri.user.s, c->contact_user.s,
+											needle_uri.user.len)
+										!= 0)) {
+							LM_ERR("user name does not match - no match "
+								   "here...\n");
+							LM_DBG("found pcontact username [%d]: [%.*s]\n", i,
+									c->contact_user.len, c->contact_user.s);
+							LM_DBG("incoming contact username: [%.*s]\n",
+									needle_uri.user.len, needle_uri.user.s);
+							c = c->next;
+							continue;
+						}
+						if((contact_info->aor.len >= 4)
+								&& (memcmp(contact_info->aor.s, c->aor.s, 4)
+										!= 0)) { // do not mix up sip- and tel-URIs.
+							LM_ERR("scheme does not match - no match "
+								   "here...\n");
+							LM_DBG("found pcontact scheme [%d]: [%.*s]\n", i, 4,
+									c->aor.s);
+							LM_DBG("incoming contact scheme: [%.*s]\n", 4,
+									contact_info->aor.s);
+							c = c->next;
+							continue;
+						}
+					} else {
+						LM_DBG("No user name present - abort user name "
+							   "check\n");
 					}
-					if((contact_info->aor.len >= 4)
-							&& (memcmp(contact_info->aor.s, c->aor.s, 4)
-									!= 0)) { // do not mix up sip- and tel-URIs.
-						LM_ERR("scheme does not match - no match here...\n");
-						LM_DBG("found pcontact scheme [%d]: [%.*s]\n", i, 4,
-								c->aor.s);
-						LM_DBG("incoming contact scheme: [%.*s]\n", 4,
-								contact_info->aor.s);
-						c = c->next;
-						continue;
-					}
-				} else {
-					LM_DBG("No user name present - abort user name check\n");
 				}
 
 
