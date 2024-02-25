@@ -91,64 +91,71 @@ static int pv_get_rediscd(
 		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_rediscd_name(pv_spec_p sp, str *in);
 
+/* clang-format off */
 static pv_export_t mod_pvs[] = {
-		{{"redis", sizeof("redis") - 1}, PVT_OTHER, pv_get_redisc, 0,
-				pv_parse_redisc_name, 0, 0, 0},
-		{{"redisd", sizeof("redisd") - 1}, PVT_OTHER, pv_get_rediscd, 0,
-				pv_parse_rediscd_name, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"redis", sizeof("redis") - 1}, PVT_OTHER, pv_get_redisc, 0,
+			pv_parse_redisc_name, 0, 0, 0},
+	{{"redisd", sizeof("redisd") - 1}, PVT_OTHER, pv_get_rediscd, 0,
+			pv_parse_rediscd_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 
-static cmd_export_t cmds[] = {{"redis_cmd", (cmd_function)w_redis_cmd3, 3,
-									  fixup_redis_cmd6, 0, ANY_ROUTE},
-		{"redis_cmd", (cmd_function)w_redis_cmd4, 4, fixup_redis_cmd6, 0,
-				ANY_ROUTE},
-		{"redis_cmd", (cmd_function)w_redis_cmd5, 5, fixup_redis_cmd6, 0,
-				ANY_ROUTE},
-		{"redis_cmd", (cmd_function)w_redis_cmd6, 6, fixup_redis_cmd6, 0,
-				ANY_ROUTE},
-		{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd3, 3, fixup_redis_cmd6,
-				0, ANY_ROUTE},
-		{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd4, 4, fixup_redis_cmd6,
-				0, ANY_ROUTE},
-		{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd5, 5, fixup_redis_cmd6,
-				0, ANY_ROUTE},
-		{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd6, 6, fixup_redis_cmd6,
-				0, ANY_ROUTE},
-		{"redis_execute", (cmd_function)w_redis_execute, 1, fixup_redis_cmd6, 0,
-				ANY_ROUTE},
-		{"redis_free", (cmd_function)w_redis_free_reply, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
+static cmd_export_t cmds[] = {
+	{"redis_cmd", (cmd_function)w_redis_cmd3, 3,
+			fixup_redis_cmd6, 0, ANY_ROUTE},
+	{"redis_cmd", (cmd_function)w_redis_cmd4, 4, fixup_redis_cmd6, 0,
+			ANY_ROUTE},
+	{"redis_cmd", (cmd_function)w_redis_cmd5, 5, fixup_redis_cmd6, 0,
+			ANY_ROUTE},
+	{"redis_cmd", (cmd_function)w_redis_cmd6, 6, fixup_redis_cmd6, 0,
+			ANY_ROUTE},
+	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd3, 3, fixup_redis_cmd6,
+			0, ANY_ROUTE},
+	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd4, 4, fixup_redis_cmd6,
+			0, ANY_ROUTE},
+	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd5, 5, fixup_redis_cmd6,
+			0, ANY_ROUTE},
+	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd6, 6, fixup_redis_cmd6,
+			0, ANY_ROUTE},
+	{"redis_execute", (cmd_function)w_redis_execute, 1, fixup_redis_cmd6, 0,
+			ANY_ROUTE},
+	{"redis_free", (cmd_function)w_redis_free_reply, 1, fixup_spve_null, 0,
+			ANY_ROUTE},
 
-		{"bind_ndb_redis", (cmd_function)bind_ndb_redis, 0, 0, 0, 0},
+	{"bind_ndb_redis", (cmd_function)bind_ndb_redis, 0, 0, 0, 0},
 
-		{0, 0, 0, 0, 0, 0}};
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"server", PARAM_STRING | USE_FUNC_PARAM, (void *)redis_srv_param},
-		{"init_without_redis", INT_PARAM, &init_without_redis},
-		{"connect_timeout", INT_PARAM, &redis_connect_timeout_param},
-		{"cmd_timeout", INT_PARAM, &redis_cmd_timeout_param},
-		{"cluster", INT_PARAM, &redis_cluster_param},
-		{"disable_time", INT_PARAM, &redis_disable_time_param},
-		{"allowed_timeouts", INT_PARAM, &redis_allowed_timeouts_param},
-		{"flush_on_reconnect", INT_PARAM, &redis_flush_on_reconnect_param},
-		{"allow_dynamic_nodes", INT_PARAM, &redis_allow_dynamic_nodes_param},
-		{"debug", PARAM_INT, &ndb_redis_debug},
+	{"server", PARAM_STRING | USE_FUNC_PARAM, (void *)redis_srv_param},
+	{"init_without_redis", INT_PARAM, &init_without_redis},
+	{"connect_timeout", INT_PARAM, &redis_connect_timeout_param},
+	{"cmd_timeout", INT_PARAM, &redis_cmd_timeout_param},
+	{"cluster", INT_PARAM, &redis_cluster_param},
+	{"disable_time", INT_PARAM, &redis_disable_time_param},
+	{"allowed_timeouts", INT_PARAM, &redis_allowed_timeouts_param},
+	{"flush_on_reconnect", INT_PARAM, &redis_flush_on_reconnect_param},
+	{"allow_dynamic_nodes", INT_PARAM, &redis_allow_dynamic_nodes_param},
+	{"debug", PARAM_INT, &ndb_redis_debug},
 #ifdef WITH_SSL
-		{"ca_path", PARAM_STRING, &ndb_redis_ca_path},
+	{"ca_path", PARAM_STRING, &ndb_redis_ca_path},
 #endif
-		{0, 0, 0}};
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"ndb_redis", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds, params, 0,			  /* exported RPC methods */
-		mod_pvs,					  /* exported pseudo-variables */
-		0,							  /* response function */
-		0,							  /* module initialization function */
-		child_init,					  /* per child init function */
-		mod_destroy					  /* destroy function */
+	"ndb_redis",
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds, params, 0,	/* exported RPC methods */
+	mod_pvs,			/* exported pseudo-variables */
+	0,					/* response function */
+	0,					/* module initialization function */
+	child_init,			/* per child init function */
+	mod_destroy			/* destroy function */
 };
+/* clang-format on */
 
 
 /* each child get a new connection to the database */
