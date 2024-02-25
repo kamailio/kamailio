@@ -74,29 +74,33 @@ void evrexec_process_socket(evrexec_task_t *it, int idx);
 static int pv_get_evr(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_evr_name(pv_spec_p sp, str *in);
 
+/* clang-format off */
 static param_export_t params[] = {
-		{"exec", PARAM_STRING | USE_FUNC_PARAM, (void *)evrexec_param},
-		{0, 0, 0}};
+	{"exec", PARAM_STRING | USE_FUNC_PARAM, (void *)evrexec_param},
+	{0, 0, 0}
+};
 
 static pv_export_t mod_pvs[] = {
-		{{"evr", (sizeof("evr") - 1)}, PVT_OTHER, pv_get_evr, 0,
-				pv_parse_evr_name, 0, 0, 0},
+	{{"evr", (sizeof("evr") - 1)}, PVT_OTHER, pv_get_evr, 0,
+			pv_parse_evr_name, 0, 0, 0},
 
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 /** module exports */
 struct module_exports exports = {
-		"evrexec",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		0,				 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per-child init function */
-		0				 /* module destroy function */
+	"evrexec",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	0,				 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* RPC method exports */
+	mod_pvs,		 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* per-child init function */
+	0				 /* module destroy function */
 };
+/* clang-format on */
 
 static rpc_export_t evr_rpc_methods[];
 
@@ -583,5 +587,9 @@ void rpc_evr_run(rpc_t *rpc, void *c)
 /**
  *
  */
+/* clang-format off */
 static rpc_export_t evr_rpc_methods[] = {
-		{"evrexec.run", rpc_evr_run, rpc_evr_run_doc, 0}, {0, 0, 0, 0}};
+	{"evrexec.run", rpc_evr_run, rpc_evr_run_doc, 0},
+	{0, 0, 0, 0}
+};
+/* clang-format on */
