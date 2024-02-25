@@ -42,6 +42,10 @@
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
+
+#define KSR_RTHREAD_SKIP_P
+#define KSR_RTHREAD_NEED_4PP
+#include "../../core/rthreads.h"
 #include "tls_init.h"
 #include "tls_server.h"
 #include "tls_domain.h"
@@ -443,32 +447,40 @@ int tls_fix_engine_keys(tls_domains_cfg_t *, tls_domain_t *, tls_domain_t *);
  *
  * EC operations do not use pthread_self(), so could use shared SSL_CTX
  */
+static int mod_child_hook(int *rank, void *dummy)
+{
+	LM_DBG("Loading SSL_CTX in process_no=%d rank=%d "
+		   "ksr_tls_threads_mode=%d\n",
+			process_no, *rank, ksr_tls_threads_mode);
+	if(cfg_get(tls, tls_cfg, config_file).s) {
+		if(tls_fix_domains_cfg(*tls_domains_cfg, &srv_defaults, &cli_defaults)
+				< 0)
+			return -1;
+	} else {
+		if(tls_fix_domains_cfg(*tls_domains_cfg, &mod_params, &mod_params) < 0)
+			return -1;
+	}
+	return 0;
+}
+
 static int mod_child(int rank)
 {
 	if(tls_disable || (tls_domains_cfg == 0))
 		return 0;
 
 #if OPENSSL_VERSION_NUMBER >= 0x010101000L
-        /*
-         * OpenSSL 3.x/1.1.1: create shared SSL_CTX* in worker to avoid init of
-         * libssl in rank 0(thread#1)
+	/*
+         * OpenSSL 3.x/1.1.1: create shared SSL_CTX* in thread executor
+         * to avoid init of libssl in thread#1
          */
-        if(rank == PROC_SIPINIT) {
-#else
-        if(rank == PROC_INIT) {
-#endif
-		if(cfg_get(tls, tls_cfg, config_file).s) {
-			if(tls_fix_domains_cfg(
-					   *tls_domains_cfg, &srv_defaults, &cli_defaults)
-					< 0)
-				return -1;
-		} else {
-			if(tls_fix_domains_cfg(*tls_domains_cfg, &mod_params, &mod_params)
-					< 0)
-				return -1;
-		}
-		return 0;
+	if(rank == PROC_INIT && ksr_tls_threads_mode != 0) {
+		return run_thread4PP((_thread_proto4PP)mod_child_hook, &rank, NULL);
 	}
+#else
+	if(rank == PROC_INIT) {
+		return mod_child_hook(&rank, NULL);
+	}
+#endif /* OPENSSL_VERSION_NUMBER */
 
 #ifndef OPENSSL_NO_ENGINE
 	/*
@@ -678,7 +690,7 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 
 	register_tls_hooks(&tls_h);
 
-        /*
+	/*
          * GH #3695: OpenSSL 1.1.1 historical note: it is no longer
          * needed to replace RAND with cryptorand
          */
