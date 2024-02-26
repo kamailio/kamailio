@@ -79,8 +79,9 @@ static int w_redis_execute(struct sip_msg *msg, char *ssrv);
 
 static int w_redis_free_reply(struct sip_msg *msg, char *res);
 
-static void mod_destroy(void);
+static int mod_init(void);
 static int child_init(int rank);
+static void mod_destroy(void);
 
 int bind_ndb_redis(ndb_redis_api_t *api);
 
@@ -146,23 +147,37 @@ static param_export_t params[] = {
 };
 
 struct module_exports exports = {
-	"ndb_redis",
+	"ndb_redis",		/* module name */
 	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds, params, 0,	/* exported RPC methods */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,					/* exported RPC methods */
 	mod_pvs,			/* exported pseudo-variables */
 	0,					/* response function */
-	0,					/* module initialization function */
+	mod_init,			/* module initialization function */
 	child_init,			/* per child init function */
 	mod_destroy			/* destroy function */
 };
 /* clang-format on */
 
+/**
+ *
+ */
+static int mod_init(void)
+{
+	/*
+	 * register the need to be called post-fork of all children
+	 * with the special rank PROC_POSTCHILDINIT by main attendant
+	 */
+	ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
+	return 0;
+}
 
 /* each child get a new connection to the database */
 static int child_init(int rank)
 {
-	/* skip child init for non-worker process ranks */
-	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
+	/* skip child init for special process ranks */
+	if(rank == PROC_INIT || rank == PROC_MAIN)
 		return 0;
 
 	if(redisc_init() < 0) {
