@@ -157,6 +157,11 @@ event_route[microhttpd:request] {
         <para>
 			The event route is executed when a new HTTP request is received.
         </para>
+        <para>
+			Inside it, the $mhttpd(...) group of variables is available, giving
+			access to several attributes of the HTTP request, such as method,
+			URL, data (body) or headers.
+        </para>
         <programlisting  format="linespecific">
 ...
 ...
