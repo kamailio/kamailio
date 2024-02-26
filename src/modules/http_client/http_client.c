@@ -64,6 +64,9 @@
 #include "../../core/lvalue.h"
 #include "../../core/pt.h" /* Process table */
 #include "../../core/kemi.h"
+#define KSR_RTHREAD_NEED_4L
+#define KSR_RTHREAD_SKIP_P
+#include "../../core/rthreads.h"
 
 #include "functions.h"
 #include "curlcon.h"
@@ -278,7 +281,7 @@ static int mod_init(void)
 	LM_DBG("init curl module\n");
 
 	/* Initialize curl */
-	if(curl_global_init(CURL_GLOBAL_ALL)) {
+	if(run_thread4L((_thread_proto4L)&curl_global_init, CURL_GLOBAL_ALL)) {
 		LM_ERR("curl_global_init failed\n");
 		return -1;
 	}
