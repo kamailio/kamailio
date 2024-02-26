@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef _FO_TYPES_H
+#define _FO_TYPES_H
+
 #include "../../core/locking.h"
 #include "../../core/pvar.h"
 
@@ -61,3 +64,5 @@ typedef struct fo_file_properties
 } fo_file_properties_t;
 
 int fo_file_properties_destroy(fo_file_properties_t *fp);
+
+#endif
