@@ -32,6 +32,9 @@
 #include "../../core/mem/mem.h"
 #include "../../core/ut.h"
 #include "../../core/hashes.h"
+#define KSR_RTHREAD_NEED_4L
+#define KSR_RTHREAD_SKIP_P
+#include "../../core/rthreads.h"
 #include "http_multi.h"
 
 extern int hash_size;
@@ -389,7 +392,8 @@ void set_curl_mem_callbacks(void)
 			break;
 		case 1:
 			LM_DBG("Initilizing cURL with sys malloc\n");
-			rc = curl_global_init(CURL_GLOBAL_ALL);
+			rc = run_thread4L(
+					(_thread_proto4L)curl_global_init, CURL_GLOBAL_ALL);
 			if(rc != 0) {
 				LM_ERR("Cannot initialize cURL: %d\n", rc);
 			}
