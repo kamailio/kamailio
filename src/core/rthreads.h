@@ -254,3 +254,41 @@ static int run_thread4P5I2P2(_thread_proto4P5I2P2 fn, void *arg1, void *arg2,
 #endif
 }
 #endif
+
+/*
+ * prototype: CURLcode curl_global_init(long flags) { ... }
+ */
+#ifdef KSR_RTHREAD_NEED_4L
+typedef int (*_thread_proto4L)(long);
+struct _thread_args4L
+{
+	_thread_proto4L fn;
+	long arg1;
+	int *ret;
+};
+static void *run_thread_wrap4L(struct _thread_args4L *args)
+{
+	*args->ret = (*args->fn)(args->arg1);
+	return NULL;
+}
+
+static int run_thread4L(_thread_proto4L fn, long arg1)
+{
+#ifdef USE_TLS
+	pthread_t tid;
+	int ret;
+
+	if(likely(ksr_tls_threads_mode == 0
+			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+		return fn(arg1);
+	}
+	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap4L,
+			&(struct _thread_args4L){fn, arg1, &ret});
+	pthread_join(tid, NULL);
+
+	return ret;
+#else
+	return fn(arg1)
+#endif
+}
+#endif
