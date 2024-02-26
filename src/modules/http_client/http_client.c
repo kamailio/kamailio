@@ -64,6 +64,9 @@
 #include "../../core/lvalue.h"
 #include "../../core/pt.h" /* Process table */
 #include "../../core/kemi.h"
+#define KSR_RTHREAD_NEED_4L
+#define KSR_RTHREAD_SKIP_P
+#include "../../core/rthreads.h"
 
 #include "functions.h"
 #include "curlcon.h"
@@ -76,8 +79,10 @@ MODULE_VERSION
 #define CURL_USER_AGENT_LEN (sizeof(CURL_USER_AGENT) - 1)
 
 /* Module parameter variables */
-unsigned int default_connection_timeout = 0; /*!< 0 = not user configured - the default (4 seconds) will be used */
-unsigned int timeout_mode = 1; /*!< 0 = timeout disabled, 1 (default) = timeout in seconds, 2 = timeout in ms */
+unsigned int default_connection_timeout =
+		0; /*!< 0 = not user configured - the default (4 seconds) will be used */
+unsigned int timeout_mode =
+		1; /*!< 0 = timeout disabled, 1 (default) = timeout in seconds, 2 = timeout in ms */
 char *default_tls_cacert =
 		NULL; /*!< File name: Default CA cert to use for curl TLS connection */
 str default_tls_clientcert =
@@ -280,7 +285,7 @@ static int mod_init(void)
 	LM_DBG("init curl module\n");
 
 	/* Initialize curl */
-	if(curl_global_init(CURL_GLOBAL_ALL)) {
+	if(run_thread4L((_thread_proto4L)&curl_global_init, CURL_GLOBAL_ALL)) {
 		LM_ERR("curl_global_init failed\n");
 		return -1;
 	}
@@ -317,16 +322,16 @@ static int mod_init(void)
 	 * - 1 (default) : timeout value is in seconds.
 	 * - 2 : timeout value is in milliseconds.
 	 */
-	if (!(timeout_mode == 1 || timeout_mode == 2)) {
-		if (default_connection_timeout > 0) {
+	if(!(timeout_mode == 1 || timeout_mode == 2)) {
+		if(default_connection_timeout > 0) {
 			LM_WARN("configured connection_timeout is ignored "
-				"because timeouts are disabled (timeout_mode)\n");
+					"because timeouts are disabled (timeout_mode)\n");
 		}
-	} else if (default_connection_timeout == 0) {
+	} else if(default_connection_timeout == 0) {
 		LM_INFO("curl connection timeout set to zero. Using default 4 secs\n");
-		if (timeout_mode == 1) { /* timeout is in seconds (default) */
+		if(timeout_mode == 1) { /* timeout is in seconds (default) */
 			default_connection_timeout = 4;
-		} else if (timeout_mode == 2) { /* timeout is in milliseconds */
+		} else if(timeout_mode == 2) { /* timeout is in milliseconds */
 			default_connection_timeout = 4000;
 		}
 	}
