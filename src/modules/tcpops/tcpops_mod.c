@@ -762,24 +762,42 @@ static int pv_get_tcp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		return -1;
 	}
 
-	if((con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0)) == NULL) {
-		return pv_get_null(msg, param, res);
-	}
 
 	switch(param->pvn.u.isname.name.n) {
 		case 1:
+			sval.s = ip_addr2a(&msg->rcv.src_ip);
+			sval.len = strlen(sval.s);
+			return pv_get_strval(msg, param, res, &sval);
+		case 2:
+			ival = msg->rcv.src_port;
+			return pv_get_sintval(msg, param, res, ival);
+		case 3:
+			if((con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0))
+					== NULL) {
+				return pv_get_null(msg, param, res);
+			}
 			sval.s = ip_addr2a(&con->cinfo.src_ip);
 			tcpconn_put(con);
 			sval.len = strlen(sval.s);
 			return pv_get_strval(msg, param, res, &sval);
-		case 2:
+		case 4:
+			if((con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0))
+					== NULL) {
+				return pv_get_null(msg, param, res);
+			}
 			ival = con->cinfo.src_port;
 			tcpconn_put(con);
 			return pv_get_sintval(msg, param, res, ival);
-		default:
+		case 5:
+			if((con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0))
+					== NULL) {
+				return pv_get_null(msg, param, res);
+			}
 			ival = con->id;
 			tcpconn_put(con);
 			return pv_get_sintval(msg, param, res, ival);
+		default:
+			return pv_get_sintval(msg, param, res, msg->rcv.proto_reserved1);
 	}
 }
 
@@ -805,6 +823,17 @@ static int pv_parse_tcp_name(pv_spec_p sp, str *in)
 		case 5:
 			if(strncmp(in->s, "conid", 5) == 0) {
 				sp->pvp.pvn.u.isname.name.n = 0;
+			} else if(strncmp(in->s, "ac_si", 5) == 0) {
+				sp->pvp.pvn.u.isname.name.n = 3;
+			} else if(strncmp(in->s, "ac_sp", 5) == 0) {
+				sp->pvp.pvn.u.isname.name.n = 4;
+			} else {
+				goto error;
+			}
+			break;
+		case 6:
+			if(strncmp(in->s, "aconid", 6) == 0) {
+				sp->pvp.pvn.u.isname.name.n = 5;
 			} else {
 				goto error;
 			}
