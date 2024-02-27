@@ -250,6 +250,14 @@ static void fo_log_writer_process(int rank)
 			LM_ERR("Failed to flush file with err {%s}\n", strerror(errno));
 		}
 
+		if(log_message.prefix != NULL) {
+			if(log_message.prefix->s != NULL) {
+				shm_free(log_message.prefix->s);
+			}
+			shm_free(log_message.prefix);
+			log_message.prefix = NULL;
+		}
+
 		if(log_message.message != NULL) {
 			if(log_message.message->s != NULL) {
 				shm_free(log_message.message->s);
