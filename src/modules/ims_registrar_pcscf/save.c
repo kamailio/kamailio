@@ -477,8 +477,15 @@ int save_pending(struct sip_msg *_m, udomain_t *_d)
 				ul.unlock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 				return -2;
 			}
-		} else {
-			LM_DBG("Contact already exists - not doing anything for now\n");
+		} else if(pcontact->reg_state == PCONTACT_DEREG_PENDING_PUBLISH) {
+			LM_DBG("Contact already exists - Updating contact [%.*s]: setting "
+				   "state to PCONTACT_REG_PENDING\n",
+					pcontact->aor.len, pcontact->aor.s);
+
+			memset(&ci_, 0, sizeof(struct pcontact_info));
+			ci_.reg_state = PCONTACT_REG_PENDING;
+			ci_.num_service_routes = 0;
+			ul.update_pcontact(_d, &ci_, pcontact);
 		}
 	}
 
