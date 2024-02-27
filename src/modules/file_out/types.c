@@ -132,7 +132,19 @@ void fo_free_queue(fo_queue_t *q)
 {
 	fo_log_message_t data;
 	while(fo_dequeue(q, &data) > 0) {
-		shm_free(data.message);
+		if(data.prefix != NULL) {
+			if(data.prefix->s != NULL) {
+				shm_free(data.prefix->s);
+			}
+			shm_free(data.prefix);
+		}
+
+		if(data.message != NULL) {
+			if(data.message->s != NULL) {
+				shm_free(data.message->s);
+			}
+			shm_free(data.message);
+		}
 	}
 	shm_free(q);
 }
