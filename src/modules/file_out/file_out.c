@@ -589,9 +589,31 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 		fo_prefix_val.len = fo_prefix_str.len;
 	}
 
+	/* Allocate memory */
+	logMessage.prefix = (str *)shm_malloc(sizeof(str));
+	if(logMessage.prefix == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
+	logMessage.message = (str *)shm_malloc(sizeof(str));
+	if(logMessage.message == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
+	/* Copy the value */
+	if(shm_str_dup(logMessage.prefix, &fo_prefix_val) < 0) {
+		LM_ERR("Failed to copy prefix\n");
+		return -1;
+	}
+
+	if(shm_str_dup(logMessage.message, &value) < 0) {
+		LM_ERR("Failed to copy message\n");
+		return -1;
+	}
+
 	/* Add the logging string to the global gueue */
-	logMessage.prefix = &fo_prefix_val;
-	logMessage.message = &value;
 	logMessage.dest_file = file_index;
 	fo_enqueue(fo_queue, logMessage);
 
