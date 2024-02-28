@@ -37,36 +37,6 @@ static fo_node_t *fo_new_node(fo_log_message_t data)
 
 int fo_enqueue(fo_queue_t *q, fo_log_message_t data)
 {
-	/*
-	Copy the contents of data.message
-    */
-	str *message_copy = 0;
-	str *prefix_copy = 0;
-	/*
-	 * Allocate memory for the message and prefix
-	 */
-	message_copy = (str *)shm_malloc(sizeof(str));
-	if(message_copy == 0) {
-		SHM_MEM_ERROR;
-		return -1;
-	}
-	if(shm_str_dup(message_copy, data.message) < 0) {
-		LM_ERR("Failed to duplicate message\n");
-		return -1;
-	}
-	data.message = message_copy;
-
-	prefix_copy = (str *)shm_malloc(sizeof(str));
-	if(prefix_copy == 0) {
-		SHM_MEM_ERROR;
-		return -1;
-	}
-	if(shm_str_dup(prefix_copy, data.prefix) < 0) {
-		LM_ERR("Failed to duplicate prefix\n");
-		return -1;
-	}
-	data.prefix = prefix_copy;
-
 	fo_node_t *temp = fo_new_node(data);
 
 	lock_get(&(q->lock));
