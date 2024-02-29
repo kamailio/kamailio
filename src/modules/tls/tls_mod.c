@@ -728,6 +728,7 @@ static int tls_engine_init()
 	 * We are in the child process and the global engine linked-list
 	 * is initialized in the parent.
 	 */
+	ENGINE_load_builtin_engines();
 	e = ENGINE_by_id("dynamic");
 	if(!e) {
 		err = "Error loading dynamic engine";
