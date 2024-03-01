@@ -91,8 +91,9 @@ int ksr_rand_engine_param(modparam_t type, void *val);
 
 MODULE_VERSION
 
-#if OPENSSL_VERSION_NUMBER >= 0x030000000L
-#define OPENSSL_NO_ENGINE
+/* Engine is deprecated in OpenSSL 3 */
+#if !defined(OPENSSL_NO_ENGINE) && OPENSSL_VERSION_NUMBER < 0x030000000L
+#define KSR_SSL_ENGINE
 #endif
 
 extern str sr_tls_event_callback;
@@ -149,7 +150,7 @@ tls_domain_t srv_defaults = {
 };
 
 
-#ifndef OPENSSL_NO_ENGINE
+#ifdef KSR_SSL_ENGINE
 
 typedef struct tls_engine
 {
@@ -166,7 +167,7 @@ static tls_engine_t tls_engine_settings = {
 		STR_STATIC_INIT("NONE"),
 		STR_STATIC_INIT("ALL"),
 };
-#endif /* OPENSSL_NO_ENGINE */
+#endif /* KSR_SSL_ENGINE */
 /*
  * Default settings for client domains when using external config file
  */
@@ -231,12 +232,12 @@ static param_export_t params[] = {
 		{"crl", PARAM_STR, &default_tls_cfg.crl},
 		{"cipher_list", PARAM_STR, &default_tls_cfg.cipher_list},
 		{"connection_timeout", PARAM_INT, &default_tls_cfg.con_lifetime},
-#ifndef OPENSSL_NO_ENGINE
+#ifdef KSR_SSL_ENGINE
 		{"engine", PARAM_STR, &tls_engine_settings.engine},
 		{"engine_config", PARAM_STR, &tls_engine_settings.engine_config},
 		{"engine_algorithms", PARAM_STR,
 				&tls_engine_settings.engine_algorithms},
-#endif /* OPENSSL_NO_ENGINE */
+#endif /* KSR_SSL_ENGINE */
 		{"tls_log", PARAM_INT, &default_tls_cfg.log},
 		{"tls_debug", PARAM_INT, &default_tls_cfg.debug},
 		{"session_cache", PARAM_INT, &default_tls_cfg.session_cache},
@@ -432,10 +433,10 @@ error:
 }
 
 
-#ifndef OPENSSL_NO_ENGINE
+#ifdef KSR_SSL_ENGINE
 static int tls_engine_init();
 int tls_fix_engine_keys(tls_domains_cfg_t *, tls_domain_t *, tls_domain_t *);
-#endif
+#endif /* KSR_SSL_ENGINE */
 
 /*
  * OpenSSL 1.1.1+: SSL_CTX is repeated in each worker
@@ -476,7 +477,7 @@ static int mod_child(int rank)
 		return run_thread4PP((_thread_proto4PP)mod_child_hook, &rank, NULL);
 	}
 
-#ifndef OPENSSL_NO_ENGINE
+#ifdef KSR_SSL_ENGINE
 	/*
 	 * after the child is fork()ed we go through the TLS domains
 	 * and fix up private keys from engine
@@ -492,7 +493,7 @@ static int mod_child(int rank)
 			return -1;
 		LM_INFO("OpenSSL Engine loaded private keys in child: %d\n", rank);
 	}
-#endif
+#endif /* KSR_SSL_ENGINE */
 	return 0;
 }
 
@@ -702,7 +703,7 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 }
 
 
-#ifndef OPENSSL_NO_ENGINE
+#ifdef KSR_SSL_ENGINE
 /*
  * initialize OpenSSL engine in child process
  * PKCS#11 libraries are not guaranteed to be fork() safe
@@ -796,4 +797,4 @@ EVP_PKEY *tls_engine_private_key(const char *key_id)
 {
 	return ENGINE_load_private_key(ksr_tls_engine, key_id, NULL, NULL);
 }
-#endif
+#endif /* KSR_SSL_ENGINE */
