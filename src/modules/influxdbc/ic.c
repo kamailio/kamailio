@@ -107,7 +107,7 @@ void ic_influx_database(char *host, long port,
 
 			he = gethostbyname(host);
 			if(he == NULL) {
-				sprintf(errorbuf,
+				snprintf(errorbuf, 1024,
 						"influx host=%s to ip address convertion failed "
 						"gethostbyname(), bailing out\n",
 						host);
@@ -115,22 +115,24 @@ void ic_influx_database(char *host, long port,
 			}
 			/* this could return multiple ip addresses but we assume its the first one */
 			if(he->h_addr_list[0] != NULL) {
-				strcpy(influx_ip,
-						inet_ntoa(*(struct in_addr *)(he->h_addr_list[0])));
+				strncpy(influx_ip,
+						inet_ntoa(*(struct in_addr *)(he->h_addr_list[0])), 16);
+				influx_ip[16] = '\0';
 				DEBUG fprintf(stderr,
 						"ic_influx_by_hostname hostname=%s converted to ip "
 						"address %s))\n",
 						host, influx_ip);
 			} else {
-				sprintf(errorbuf,
+				snprintf(errorbuf, 1024,
 						"influx host=%s to ip address convertion failed (empty "
 						"list), bailing out\n",
 						host);
 				error(errorbuf);
 			}
 		} else {
-			strcpy(influx_ip,
-					host); /* perhaps the hostname is actually an ip address */
+			strncpy(influx_ip, host,
+					16); /* perhaps the hostname is actually an ip address */
+			influx_ip[16] = '\0';
 		}
 	}
 }
@@ -338,7 +340,7 @@ void ic_push()
 			}
 			for(i = 0; i < 1024; i++) /* empty the buffer */
 				result[i] = 0;
-			if((ret = read(sockfd, result, sizeof(result))) > 0) {
+			if((ret = read(sockfd, result, sizeof(result) - 1)) > 0) {
 				result[ret] = 0;
 				DEBUG fprintf(
 						stderr, "received bytes=%d data=<%s>\n", ret, result);
