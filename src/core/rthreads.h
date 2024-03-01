@@ -38,7 +38,7 @@ static void *run_threadP(_thread_proto fn, void *arg)
 {
 #ifdef USE_TLS
 	pthread_t tid;
-	void *ret;
+	void *ret = NULL;
 
 	if(likely(ksr_tls_threads_mode == 0
 			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
@@ -75,7 +75,7 @@ static void *run_threadPI(_thread_protoPI fn, void *arg1, int arg2)
 {
 #ifdef USE_TLS
 	pthread_t tid;
-	void *ret;
+	void *ret = NULL;
 
 	if(likely(ksr_tls_threads_mode == 0
 			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
@@ -150,7 +150,7 @@ static int run_thread4PP(_thread_proto4PP fn, void *arg1, void *arg2)
 {
 #ifdef USE_TLS
 	pthread_t tid;
-	int ret;
+	int ret = 0;
 
 	if(likely(ksr_tls_threads_mode == 0
 			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
@@ -238,7 +238,7 @@ static int run_thread4P5I2P2(_thread_proto4P5I2P2 fn, void *arg1, void *arg2,
 {
 #ifdef USE_TLS
 	pthread_t tid;
-	int ret;
+	int ret = 0;
 
 	if(likely(ksr_tls_threads_mode == 0
 			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
@@ -276,7 +276,7 @@ static int run_thread4L(_thread_proto4L fn, long arg1)
 {
 #ifdef USE_TLS
 	pthread_t tid;
-	int ret;
+	int ret = 0;
 
 	if(likely(ksr_tls_threads_mode == 0
 			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
