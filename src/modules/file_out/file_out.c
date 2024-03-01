@@ -226,28 +226,31 @@ static void fo_log_writer_process(int rank)
 			LM_ERR("deque error\n");
 			return;
 		}
-		FILE *out = fo_get_file_handle(log_message.dest_file);
-		if(out == NULL) {
-			LM_ERR("file handle is NULL\n");
-			return;
-		}
+		if(log_message.message != NULL) {
+			FILE *out = fo_get_file_handle(log_message.dest_file);
+			if(out == NULL) {
+				LM_ERR("file handle is NULL\n");
+				return;
+			}
 
-		/* Get prefix for the file */
-		if(log_message.prefix != NULL && log_message.prefix->len > 0) {
-			if(fprintf(out, "%.*s", log_message.prefix->len,
-					   log_message.prefix->s)
+			/* Get prefix for the file */
+			if(log_message.prefix != NULL && log_message.prefix->len > 0) {
+				if(fprintf(out, "%.*s", log_message.prefix->len,
+						   log_message.prefix->s)
+						< 0) {
+					LM_ERR("Failed to write prefix to file with err {%s}\n",
+							strerror(errno));
+				}
+			}
+			if(fprintf(out, "%.*s\n", log_message.message->len,
+					   log_message.message->s)
 					< 0) {
-				LM_ERR("Failed to write prefix to file with err {%s}\n",
+				LM_ERR("Failed to write to file with err {%s}\n",
 						strerror(errno));
 			}
-		}
-		if(fprintf(out, "%.*s\n", log_message.message->len,
-				   log_message.message->s)
-				< 0) {
-			LM_ERR("Failed to write to file with err {%s}\n", strerror(errno));
-		}
-		if(fflush(out) < 0) {
-			LM_ERR("Failed to flush file with err {%s}\n", strerror(errno));
+			if(fflush(out) < 0) {
+				LM_ERR("Failed to flush file with err {%s}\n", strerror(errno));
+			}
 		}
 
 		if(log_message.prefix != NULL) {
@@ -337,7 +340,11 @@ static int fo_fixup_free_int_pvar(void **param, int param_no)
 
 static int fo_add_filename(modparam_t type, void *val)
 {
-	if(val != NULL && strlen((char *)val) == 0) {
+	if(val == NULL) {
+		LM_ERR("modparam value is null\n");
+		return -1;
+	}
+	if(strlen((char *)val) == 0) {
 		LM_ERR("modparam value is empty\n");
 		return -1;
 	}
