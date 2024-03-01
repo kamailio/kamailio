@@ -1387,7 +1387,7 @@ int select_ip_port(str *res, select_t *s, struct sip_msg *msg)
 		if(param & SEL_PROTO) {
 			switch(msg->rcv.proto) {
 				case PROTO_NONE:
-					proto_str.s = 0;
+					proto_str.s = "";
 					proto_str.len = 0;
 					break;
 
@@ -1409,6 +1409,16 @@ int select_ip_port(str *res, select_t *s, struct sip_msg *msg)
 				case PROTO_SCTP:
 					proto_str.s = "sctp";
 					proto_str.len = 4;
+					break;
+
+				case PROTO_WS:
+					proto_str.s = "ws";
+					proto_str.len = 2;
+					break;
+
+				case PROTO_WSS:
+					proto_str.s = "wss";
+					proto_str.len = 3;
 					break;
 
 				default:
