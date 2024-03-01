@@ -510,6 +510,8 @@ char *pp_defexp_eval(char *exval, int exlen, int qmode)
 		LM_DBG("expression string result: [%s]\n", result->param.stz.sval);
 		sval.s = result->param.stz.sval;
 		sval.len = strlen(result->param.stz.sval);
+	} else {
+		goto done;
 	}
 
 	if(qmode == 1) {
