@@ -128,11 +128,6 @@ int tls_run_event_routes(struct tcp_connection *c);
 #endif /* __SUNPRO_c */
 #endif /* TLS_RD_DEBUG */
 
-/* only OpenSSL <= 1.1.1 */
-#if !defined(OPENSSL_NO_ENGINE) && OPENSSL_VERSION_NUMBER < 0x030000000L
-#define KSR_SSL_ENGINE
-#endif
-
 extern str sr_tls_xavp_cfg;
 
 static str _ksr_tls_connect_server_id = STR_NULL;
