@@ -32,13 +32,21 @@
 
 /* only OpenSSL <= 1.1.1 */
 #if !defined(OPENSSL_NO_ENGINE) && OPENSSL_VERSION_NUMBER < 0x030000000L
+#define KSR_SSL_COMMON
 #define KSR_SSL_ENGINE
-#endif
-
-#ifdef KSR_SSL_ENGINE
+#define KEY_PREFIX "/engine:"
+#define KEY_PREFIX_LEN (strlen(KEY_PREFIX))
 #include <openssl/engine.h>
 extern EVP_PKEY *tls_engine_private_key(const char *key_id);
-#endif /* KSR_SSL_ENGINE */
+#endif
+
+#if !defined(OPENSSL_NO_PROVIDER) && OPENSSL_VERSION_NUMBER >= 0x030000000L
+#define KSR_SSL_COMMON
+#define KSR_SSL_PROVIDER
+#define KEY_PREFIX "/uri:"
+#define KEY_PREFIX_LEN (strlen(KEY_PREFIX))
+extern EVP_PKEY *tls_engine_private_key(const char *key_id);
+#endif
 
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 #include <openssl/ui.h>
@@ -1227,7 +1235,7 @@ err:
 #endif
 }
 
-#ifdef KSR_SSL_ENGINE
+#ifdef KSR_SSL_COMMON
 /**
  * @brief Load a private key from an OpenSSL engine
  * @param d TLS domain
@@ -1237,7 +1245,7 @@ err:
  * to be fork() safe
  *
  * private_key setting which starts with /engine: is assumed to be
- * an HSM key and not a file-based key
+ * an HSM key and not a file-based key (/uri: for OpenSSL 3 key URIs)
  *
  * We store the private key in a local memory hash table as
  * HSM keys must be process-local. We use the SSL_CTX* address
@@ -1253,13 +1261,13 @@ static int load_engine_private_key(tls_domain_t *d)
 		DBG("%s: No private key specified\n", tls_domain_str(d));
 		return 0;
 	}
-	if(strncmp(d->pkey_file.s, "/engine:", 8) != 0)
+	if(strncmp(d->pkey_file.s, KEY_PREFIX, KEY_PREFIX_LEN) != 0)
 		return 0;
 
 	do {
 		i = process_no;
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
-			pkey = tls_engine_private_key(d->pkey_file.s + 8);
+			pkey = tls_engine_private_key(d->pkey_file.s + KEY_PREFIX_LEN);
 			if(pkey) {
 				ret_pwd = SSL_CTX_use_PrivateKey(d->ctx[i], pkey);
 			} else {
@@ -1295,7 +1303,7 @@ static int load_engine_private_key(tls_domain_t *d)
 			d->pkey_file.s);
 	return 0;
 }
-#endif /* KSR_SSL_ENGINE */
+#endif /* KSR_SSL_COMMON */
 /**
  * @brief Load a private key from a file
  * @param d TLS domain
@@ -1319,10 +1327,10 @@ static int load_private_key(tls_domain_t *d)
 		SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d->pkey_file.s);
 
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
-#ifdef KSR_SSL_ENGINE
+#ifdef KSR_SSL_COMMON
 			// in PROC_INIT skip loading HSM keys due to
 			// fork() issues with PKCS#11 libraries
-			if(strncmp(d->pkey_file.s, "/engine:", 8) != 0) {
+			if(strncmp(d->pkey_file.s, KEY_PREFIX, KEY_PREFIX_LEN) != 0) {
 				ret_pwd = SSL_CTX_use_PrivateKey_file(
 						d->ctx[i], d->pkey_file.s, SSL_FILETYPE_PEM);
 			} else {
@@ -1331,7 +1339,7 @@ static int load_private_key(tls_domain_t *d)
 #else
 			ret_pwd = SSL_CTX_use_PrivateKey_file(
 					d->ctx[i], d->pkey_file.s, SSL_FILETYPE_PEM);
-#endif /* KSR_SSL_ENGINE */
+#endif /* KSR_SSL_COMMON */
 			if(ret_pwd) {
 				break;
 			} else {
@@ -1348,12 +1356,12 @@ static int load_private_key(tls_domain_t *d)
 			TLS_ERR("load_private_key:");
 			return -1;
 		}
-#ifdef KSR_SSL_ENGINE
-		if(strncmp(d->pkey_file.s, "/engine:", 8) == 0) {
+#ifdef KSR_SSL_COMMON
+		if(strncmp(d->pkey_file.s, KEY_PREFIX, KEY_PREFIX_LEN) == 0) {
 			// skip private key validity check for HSM keys
 			continue;
 		}
-#endif /* KSR_SSL_ENGINE */
+#endif /* KSR_SSL_COMMON */
 		if(!SSL_CTX_check_private_key(d->ctx[i])) {
 			ERR("%s: Key '%s' does not match the public key of the"
 				" certificate\n",
@@ -1369,7 +1377,7 @@ static int load_private_key(tls_domain_t *d)
 }
 
 
-#ifdef KSR_SSL_ENGINE
+#ifdef KSR_SSL_COMMON
 /**
  * @brief Initialize engine private keys
  *
@@ -1401,7 +1409,7 @@ int tls_fix_engine_keys(tls_domains_cfg_t *cfg, tls_domain_t *srv_defaults,
 
 	return 0;
 }
-#endif /* KSR_SSL_ENGINE */
+#endif /* KSR_SSL_COMMON */
 /**
  * @brief Initialize attributes of all domains from default domains if necessary
  *
