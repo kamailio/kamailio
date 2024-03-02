@@ -37,7 +37,6 @@
 
 #ifdef KSR_SSL_ENGINE
 #include <openssl/engine.h>
-#include "tls_map.h"
 extern EVP_PKEY *tls_engine_private_key(const char *key_id);
 #endif /* KSR_SSL_ENGINE */
 
@@ -1229,31 +1228,6 @@ err:
 }
 
 #ifdef KSR_SSL_ENGINE
-/*
- * Implement a hash map from SSL_CTX to private key
- * as HSM keys need to be process local
- */
-static map_void_t private_key_map;
-
-/**
- * @brief Return a private key from the lookup table
- * @param p SSL_CTX*
- * @return EVP_PKEY on success, NULL on error
- */
-EVP_PKEY *tls_lookup_private_key(SSL_CTX *ctx)
-{
-	void *pkey;
-	char ctx_str[64];
-	snprintf(ctx_str, 64, "SSL_CTX-%p", ctx);
-	pkey = map_get(&private_key_map, ctx_str);
-	LM_DBG("Private key lookup for %s: %p\n", ctx_str, pkey);
-	if(pkey)
-		return *(EVP_PKEY **)pkey;
-	else
-		return NULL;
-}
-
-
 /**
  * @brief Load a private key from an OpenSSL engine
  * @param d TLS domain
@@ -1274,8 +1248,6 @@ static int load_engine_private_key(tls_domain_t *d)
 {
 	int idx, ret_pwd, i;
 	EVP_PKEY *pkey = 0;
-	int procs_no;
-	char ctx_str[64];
 
 	if(!d->pkey_file.s || !d->pkey_file.len) {
 		DBG("%s: No private key specified\n", tls_domain_str(d));
@@ -1283,22 +1255,15 @@ static int load_engine_private_key(tls_domain_t *d)
 	}
 	if(strncmp(d->pkey_file.s, "/engine:", 8) != 0)
 		return 0;
-	procs_no = get_max_procs();
-	for(i = 0; i < procs_no; i++) {
-		snprintf(ctx_str, 64, "SSL_CTX-%p", d->ctx[i]);
+
+	do {
+		i = process_no;
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
-			if(i) {
-				map_set(&private_key_map, ctx_str, pkey);
-				ret_pwd = 1;
+			pkey = tls_engine_private_key(d->pkey_file.s + 8);
+			if(pkey) {
+				ret_pwd = SSL_CTX_use_PrivateKey(d->ctx[i], pkey);
 			} else {
-				pkey = tls_engine_private_key(d->pkey_file.s + 8);
-				if(pkey) {
-					map_set(&private_key_map, ctx_str, pkey);
-					// store the key for i = 0 to perform certificate sanity check
-					ret_pwd = SSL_CTX_use_PrivateKey(d->ctx[i], pkey);
-				} else {
-					ret_pwd = 0;
-				}
+				ret_pwd = 0;
 			}
 			if(ret_pwd) {
 				break;
@@ -1316,14 +1281,14 @@ static int load_engine_private_key(tls_domain_t *d)
 			TLS_ERR("load_private_key:");
 			return -1;
 		}
-		if(i == 0 && !SSL_CTX_check_private_key(d->ctx[i])) {
+		if(!SSL_CTX_check_private_key(d->ctx[i])) {
 			ERR("%s: Key '%s' does not match the public key of the"
 				" certificate\n",
 					tls_domain_str(d), d->pkey_file.s);
 			TLS_ERR("load_engine_private_key:");
 			return -1;
 		}
-	}
+	} while(0);
 
 
 	LM_INFO("%s: Key '%s' successfully loaded\n", tls_domain_str(d),
