@@ -444,20 +444,28 @@ int print_rr_body(
 		i = (nb_recs == NULL) ? 0 : *nb_recs;
 
 		while(i < n) {
-			memcpy(cp, route[i].s, route[i].len);
-			cp += route[i].len;
-			if(++i < n)
-				*(cp++) = ',';
+			if(route[i].s != NULL) {
+				memcpy(cp, route[i].s, route[i].len);
+				cp += route[i].len;
+				if(++i < n)
+					*(cp++) = ',';
+			} else {
+				i++;
+			}
 		}
 	} else {
 
 		i = (nb_recs == NULL) ? n - 1 : (n - *nb_recs - 1);
 
 		while(i >= 0) {
-			memcpy(cp, route[i].s, route[i].len);
-			cp += route[i].len;
-			if(i-- > 0)
-				*(cp++) = ',';
+			if(route[i].s != NULL) {
+				memcpy(cp, route[i].s, route[i].len);
+				cp += route[i].len;
+				if(i-- > 0)
+					*(cp++) = ',';
+			} else {
+				i--;
+			}
 		}
 	}
 	oroute->len = cp - start;
