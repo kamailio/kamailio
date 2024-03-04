@@ -26,6 +26,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/rpc.h" /* who & ls rpcs */
 #include "../../core/ut.h"
+#include "../../core/action.h"
 #include "../../core/cfg/cfg_struct.h"
 
 #include "ctrl_socks.h"
@@ -346,6 +347,7 @@ static int handle_ctrl_dgram(struct ctrl_socket *cs)
 	struct send_handle sh;
 	void *saved_state;
 
+	log_prefix_set(NULL);
 	saved_state = 0; /* we get always a new datagram */
 	sh.fd = cs->fd;
 	sh.type = S_DISCONNECTED;
@@ -486,6 +488,7 @@ static int handle_stream_read(struct stream_connection *s_c, int idx)
 	sh.from_len = 0;
 	r = &s_c->req;
 	bytes_free = STREAM_BUF_SIZE - (int)(r->end - r->buf);
+	log_prefix_set(NULL);
 	if(bytes_free == 0) {
 		LOG(L_ERR, "ERROR: handle_stream_read: buffer overrun\n");
 		goto close_connection;
