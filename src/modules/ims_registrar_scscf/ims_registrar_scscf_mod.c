@@ -145,7 +145,7 @@ static int w_lookup_path_to_contact(struct sip_msg *_m, char *contact_uri);
 static int domain_fixup(void **param, int param_no);
 static int assign_save_fixup3_async(void **param, int param_no);
 static int free_uint_fixup(void **param, int param_no);
-static int save_fixup3(void **param, int param_no);
+static int save_fixup4(void **param, int param_no);
 static int unreg_fixup(void **param, int param_no);
 static int fetchc_fixup(void **param, int param_no);
 /*! \brief Functions */
@@ -237,7 +237,7 @@ static cmd_export_t cmds[] = {
 				REQUEST_ROUTE | ONREPLY_ROUTE},
 		{"save", (cmd_function)w_save3, 3, assign_save_fixup3_async, 0,
 				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"save", (cmd_function)w_save4, 4, save_fixup3, free_uint_fixup,
+		{"save", (cmd_function)w_save4, 4, save_fixup4, free_uint_fixup,
 				REQUEST_ROUTE | ONREPLY_ROUTE},
 		{"lookup", (cmd_function)w_lookup, 1, domain_fixup, 0,
 				REQUEST_ROUTE | FAILURE_ROUTE},
@@ -821,27 +821,10 @@ static int free_uint_fixup(void **param, int param_no)
 	return 0;
 }
 
-static int save_fixup3(void **param, int param_no)
+static int save_fixup4(void **param, int param_no)
 {
-	if(strlen((char *)*param) <= 0) {
-		LM_ERR("empty parameter %d not allowed\n", param_no);
-		return -1;
-	}
-
-	if(param_no == 1) { //route name - static or dynamic string (config vars)
-		if(fixup_spve_null(param, param_no) < 0)
-			return -1;
-		return 0;
-	} else if(param_no == 2) {
-		udomain_t *d;
-
-		if(ul.register_udomain((char *)*param, &d) < 0) {
-			LM_ERR("Error doing fixup on save");
-			return -1;
-		}
-		*param = (void *)d;
-	} else if(param_no == 3) {
-		return 0;
+	if(param_no < 4) {
+		return assign_save_fixup3_async(param, param_no);
 	} else if(param_no == 4) {
 		return unit_fixup(param, param_no);
 	}
