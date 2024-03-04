@@ -786,7 +786,7 @@ static int assign_save_fixup3_async(void **param, int param_no)
 	return 0;
 }
 
-static int unit_fixup(void **param, int param_no)
+static int uint_fixup(void **param, int param_no)
 {
 	str s;
 	unsigned int *num;
@@ -826,7 +826,7 @@ static int save_fixup4(void **param, int param_no)
 	if(param_no < 4) {
 		return assign_save_fixup3_async(param, param_no);
 	} else if(param_no == 4) {
-		return unit_fixup(param, param_no);
+		return uint_fixup(param, param_no);
 	}
 
 	return 0;
