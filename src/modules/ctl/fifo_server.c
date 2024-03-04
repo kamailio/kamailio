@@ -736,6 +736,7 @@ int fifo_process(char *msg_buf, int size, int *bytes_needed, void *sh,
 	static rpc_ctx_t context;
 	unsigned int rdata;
 
+	log_prefix_set(NULL);
 	DBG("process_fifo: called with %d bytes, offset %d: %.*s\n", size,
 			(int)(long)*saved_state, size, msg_buf);
 	/* search for the end of the request (\n\r) */
