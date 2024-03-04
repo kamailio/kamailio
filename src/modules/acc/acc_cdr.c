@@ -113,10 +113,10 @@ int cdr_core2strar(struct dlg_cell *dlg, str *values, int *unused, char *types)
 				/* cleanup already allocated memory and
 				 * return that we didn't do anything */
 				for(i = i - 1; i >= 0; i--) {
-					if(NULL != values[i].s) {
+					if(NULL != values[i].s && types[i] != TYPE_NULL) {
 						pkg_free(values[i].s);
-						values[i].s = NULL;
 					}
+					values[i].s = NULL;
 				}
 				return 0;
 			}
