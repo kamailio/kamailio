@@ -2083,9 +2083,9 @@ int main(int argc, char **argv)
 	int c, r;
 	char *tmp;
 	int tmp_len;
-	int port;
-	int proto;
-	int aproto;
+	int port = 5060;
+	int proto = PROTO_NONE;
+	int aproto = PROTO_NONE;
 	char *ahost = NULL;
 	int aport = 0;
 	char *options;
