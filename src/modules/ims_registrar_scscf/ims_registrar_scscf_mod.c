@@ -814,7 +814,7 @@ static int uint_fixup(void **param, int param_no)
 
 static int free_uint_fixup(void **param, int param_no)
 {
-	if(*param && param_no == 2) {
+	if(*param && param_no == 4) {
 		pkg_free(*param);
 		*param = 0;
 	}
