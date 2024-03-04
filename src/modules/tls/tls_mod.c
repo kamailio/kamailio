@@ -337,6 +337,20 @@ static tls_domains_cfg_t* tls_use_modparams(void)
 }
 #endif
 
+/* global config tls_threads_mode = 2
+ *  - force all thread-locals to be 0x0 after fork()
+ *  - with OpenSSL loaded the largest value observed
+ *     is < 10
+ *
+ */
+static void fork_child(void)
+{
+	for(int k = 0; k < 16; k++) {
+		if(pthread_getspecific(k) != 0)
+			pthread_setspecific(k, 0x0);
+	}
+}
+
 static int mod_init(void)
 {
 	int method;
@@ -446,6 +460,9 @@ static int mod_init(void)
 		ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
 	}
 #endif
+	if(ksr_tls_threads_mode == 2) {
+		pthread_atfork(NULL, NULL, &fork_child);
+	}
 	return 0;
 error:
 	tls_h_mod_destroy_f();
