@@ -386,20 +386,20 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 										goto found;
 									}
 									break;
-								case PDB_CODE_NOT_NUMBER:
-									LM_NOTICE("Number %s has letters in it\n",
-											number.s);
-									carrierid = 0;
-									goto found;
 								case PDB_CODE_NOT_FOUND:
 									LM_NOTICE("Number %s pdb_id not found\n",
 											number.s);
-									carrierid = 0;
+									carrierid = -1;
+									goto found;
+								case PDB_CODE_NOT_NUMBER:
+									LM_NOTICE("Number %s has letters in it\n",
+											number.s);
+									carrierid = -2;
 									goto found;
 								default:
 									LM_NOTICE("Invalid code %d received\n",
 											msg.hdr.code);
-									carrierid = 0;
+									carrierid = -3;
 									goto found;
 							}
 
