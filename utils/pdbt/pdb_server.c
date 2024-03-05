@@ -151,7 +151,7 @@ int udp_server(int so)
 				carrierid = lookup_number(msg.bdy.payload);
 
 				/* check if not found pdb_id */
-				if(carrierid == 0) {
+				if(carrierid == -1) {
 					pdb_msg_format_send(&msg, PDB_VERSION_1, PDB_TYPE_REPLY_ID,
 							PDB_CODE_NOT_FOUND, htons(msg.hdr.id), NULL, 0);
 					goto msg_send;

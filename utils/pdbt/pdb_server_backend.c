@@ -44,8 +44,8 @@ carrier_t lookup_number(char *number)
 	carrier_t carrierid;
 	int nmatch = dtm_longest_match(mroot, number, strlen(number), &carrierid);
 	if(nmatch <= 0) {
-		/* nothing found - return id 0 */
-		carrierid = 0;
+		/* nothing found - return id -1 */
+		carrierid = -1;
 	}
 	LINFO("request='%s', nmatch=%ld, carrier=%ld\n", number, (long int)nmatch,
 			(long int)carrierid);
