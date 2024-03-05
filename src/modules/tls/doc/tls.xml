@@ -285,10 +285,6 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 			connection establishment and not after).
 		</para>
 		<para>
-			TLS specific config reloading is not safe, so for now better don't use it,
-			especially under heavy traffic.
-		</para>
-		<para>
 			This documentation is incomplete.
 			The provided selects are not documented in this file. A list with all the
 			ones implemented by the TLS module can be found in the Cookbook
@@ -364,4 +360,3 @@ event_route[tls:connection-out] {
 	</section>
 	</chapter>
 </book>
-
