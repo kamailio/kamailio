@@ -871,6 +871,8 @@ EVP_PKEY *tls_engine_private_key(const char *key_id)
 
 	while(!(OSSL_STORE_eof(ctx))) {
 		OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
+		if(info == NULL)
+			continue;
 
 		int type;
 		type = OSSL_STORE_INFO_get_type(info);
