@@ -71,6 +71,10 @@
 			will be used for new connections.
 		</para>
 		<para>
+		Reload is generally safe and usable in production environments. If possible should
+		be done in a time where the service has lower usage/connections.
+		</para>
+		<para>
 			This RPC command is exported with "RPC_EXEC_DELTA" flag, therefore its
 			execution rate can be restricted to specific time intervals by setting
 			the "rpc_exec_delta" core parameter.
