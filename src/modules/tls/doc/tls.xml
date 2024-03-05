@@ -93,7 +93,10 @@
 		</para>
 		<para>
 		When installing tls module of kamailio, a sample 'tls.cfg' file is deployed in the same
-		folder with 'kamailio.cfg', along with freshly generated self signed certificates.
+		folder with 'kamailio.cfg'. For freshly generated self signed certificates make must be called from tls folder
+		<programlisting>
+make install-tls-cert
+		</programlisting>
 		</para>
 		<para>
 		HINT: be sure you have <emphasis>enable_tls=yes</emphasis> to your kamailio.cfg.
