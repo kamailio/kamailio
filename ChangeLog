@@ -2,6 +2,25 @@
 
 ===================== Changes Since Version 5.7.0 ===========================
 
+commit 1fa3ba8ee48b6a68f2133544da56e0d68eae8609
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 7 12:29:02 2024 +0100
+
+    Makefile.defs: version set to 5.8.0
+
+    - first in the new 5.8.x series
+
+commit e6b67b13a75a49d9269c53443de7233888c0df00
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 7 12:23:09 2024 +0100
+
+    pkg/kamailio: version set 5.8.0 for rpms and alpine
+
+commit 50a0f82eab0a1f9dc5738f022231eba349a46a3a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Mar 7 11:41:19 2024 +0100
+
+    pkg/kamailio/deb: version set 5.8.0 [skip ci]
 
 commit ed99a5e2648c39e29fbbc7842c86425147c607c6
 Author: Kamailio Dev <kamailio.dev@kamailio.org>
