@@ -86,7 +86,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * libmicrohhtpd - libmicrohttpd library
+     * libmicrohttpd - libmicrohttpd library
 
 3. Parameters
 
@@ -163,6 +163,10 @@ event_route[microhttpd:request] {
 5.1.  microhttpd:request
 
    The event route is executed when a new HTTP request is received.
+
+   Inside it, the $mhttpd(...) group of variables is available, giving
+   access to several attributes of the HTTP request, such as method, URL,
+   data (body) or headers.
 ...
 ...
 loadmodule "microhttpd.so
