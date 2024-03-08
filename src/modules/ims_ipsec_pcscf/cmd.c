@@ -1126,6 +1126,10 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 			buf_len =
 					snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d;transport=tcp",
 							ci.via_host.len, ci.via_host.s, dst_port);
+		} else if((_cflags & IPSEC_SETDSTURI_FULL) && (dst_proto == PROTO_TLS)) {
+			buf_len =
+					snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d;transport=tls",
+							ci.via_host.len, ci.via_host.s, dst_port);
 		} else {
 			buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d",
 					ci.via_host.len, ci.via_host.s, dst_port);
