@@ -241,8 +241,9 @@ int tps_storage_fill_contact(
 	}
 
 	contact_len = sv.len;
-	if(_tps_contact_host.len)
+	if(_tps_contact_host.len) {
 		contact_len = sv.len - puri.host.len + _tps_contact_host.len;
+	}
 
 	if(ctmode == 1 || ctmode == 2) {
 		cparam_len = _tps_cparam_name.len;
@@ -282,8 +283,9 @@ int tps_storage_fill_contact(
 	for(i = 0; i < sv.len; i++) {
 		*td->cp = sv.s[i];
 		td->cp++;
-		if(sv.s[i] == ':')
+		if(sv.s[i] == ':') {
 			break;
+		}
 	}
 	if(ctmode == 1 || ctmode == 2) {
 		/* create new URI parameter for Contact header */
@@ -294,27 +296,24 @@ int tps_storage_fill_contact(
 						|| msg->contact == NULL) {
 					LM_WARN("bad sip message or missing Contact hdr\n");
 					return -1;
-				} else {
-					if(parse_contact(msg->contact) < 0
-							|| ((contact_body_t *)msg->contact->parsed)
-											   ->contacts
-									   == NULL
-							|| ((contact_body_t *)msg->contact->parsed)
-											   ->contacts->next
-									   != NULL) {
-						LM_ERR("bad Contact header\n");
-						return -1;
-					} else {
-						if(parse_uri(((contact_body_t *)msg->contact->parsed)
-											 ->contacts->uri.s,
-								   ((contact_body_t *)msg->contact->parsed)
-										   ->contacts->uri.len,
-								   &curi)
-								< 0) {
-							LM_ERR("failed to parse the contact uri\n");
-							return -1;
-						}
-					}
+				}
+				if(parse_contact(msg->contact) < 0
+						|| ((contact_body_t *)msg->contact->parsed)->contacts
+								   == NULL
+						|| ((contact_body_t *)msg->contact->parsed)
+										   ->contacts->next
+								   != NULL) {
+					LM_ERR("bad Contact header\n");
+					return -1;
+				}
+				if(parse_uri(((contact_body_t *)msg->contact->parsed)
+									 ->contacts->uri.s,
+						   ((contact_body_t *)msg->contact->parsed)
+								   ->contacts->uri.len,
+						   &curi)
+						< 0) {
+					LM_ERR("failed to parse the contact uri\n");
+					return -1;
 				}
 				memcpy(td->cp, curi.user.s, curi.user.len);
 				td->cp += curi.user.len;
