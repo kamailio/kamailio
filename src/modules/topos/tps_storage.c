@@ -223,6 +223,7 @@ int tps_storage_fill_contact(
 	int i;
 	int contact_len;
 	int cparam_len;
+	int cuser_len = 0;
 	sr_xavp_t *vavu = NULL;
 
 	if(dir == TPS_DIR_DOWNSTREAM) {
@@ -315,21 +316,27 @@ int tps_storage_fill_contact(
 					LM_ERR("failed to parse the contact uri\n");
 					return -1;
 				}
-				memcpy(td->cp, curi.user.s, curi.user.len);
-				td->cp += curi.user.len;
+				if(curi.user.len > 0) {
+					memcpy(td->cp, curi.user.s, curi.user.len);
+					td->cp += curi.user.len;
+					cuser_len = curi.user.len;
+				} else {
+					LM_DBG("no contact user - skipping it\n");
+				}
 			} else {
 				/* extract the ruri */
 				if(parse_sip_msg_uri(msg) < 0) {
 					LM_ERR("failed to parse r-uri\n");
 					return -1;
 				}
-				if(msg->parsed_uri.user.len == 0) {
-					LM_ERR("no r-uri user\n");
-					return -1;
+				if(msg->parsed_uri.user.len > 0) {
+					memcpy(td->cp, msg->parsed_uri.user.s,
+							msg->parsed_uri.user.len);
+					td->cp += msg->parsed_uri.user.len;
+					cuser_len = msg->parsed_uri.user.len;
+				} else {
+					LM_DBG("no r-uri user - skipping it\n");
 				}
-				memcpy(td->cp, msg->parsed_uri.user.s,
-						msg->parsed_uri.user.len);
-				td->cp += msg->parsed_uri.user.len;
 			}
 		} else if(ctmode == 2) {
 			if(dir == TPS_DIR_DOWNSTREAM) {
@@ -342,6 +349,7 @@ int tps_storage_fill_contact(
 				}
 				memcpy(td->cp, vavu->val.v.s.s, vavu->val.v.s.len);
 				td->cp += vavu->val.v.s.len;
+				cuser_len = vavu->val.v.s.len;
 			} else {
 				/* extract the b contact */
 				vavu = xavu_get_child_with_sval(
@@ -352,11 +360,11 @@ int tps_storage_fill_contact(
 				}
 				memcpy(td->cp, vavu->val.v.s.s, vavu->val.v.s.len);
 				td->cp += vavu->val.v.s.len;
+				cuser_len = vavu->val.v.s.len;
 			}
 		}
 
-		if(!((ctmode == 1) && (dir == TPS_DIR_DOWNSTREAM)
-				   && (curi.user.len <= 0))) {
+		if(cuser_len > 0) {
 			*td->cp = '@';
 			td->cp++;
 		}
