@@ -29,6 +29,7 @@
 %bcond_without sctp
 %bcond_without websocket
 %bcond_without xmlrpc
+%bcond_without wolfssl
 %endif
 
 %if 0%{?rhel} == 7
@@ -65,6 +66,7 @@
 %bcond_without sctp
 %bcond_without websocket
 %bcond_without xmlrpc
+%bcond_without wolfssl
 %endif
 
 %if 0%{?rhel} == 8
@@ -111,6 +113,7 @@
 %bcond_without sctp
 %bcond_without websocket
 %bcond_without xmlrpc
+%bcond_without wolfssl
 %endif
 
 %if 0%{?rhel} == 9
@@ -157,6 +160,7 @@
 %bcond_without sctp
 %bcond_without websocket
 %bcond_without xmlrpc
+%bcond_without wolfssl
 %endif
 
 %if 0%{?suse_version}
@@ -186,6 +190,7 @@
 %bcond_without sctp
 %bcond_without websocket
 %bcond_without xmlrpc
+%bcond_without wolfssl
 %endif
 
 # build with openssl 1.1.1 on RHEL 7 based dists
@@ -1037,6 +1042,7 @@ BuildRequires:  openssl-devel
 TLS transport for Kamailio.
 
 
+%if %{with wolfssl}
 %package    tls_wolfssl
 Summary:    TLS transport for Kamailio based on wolfSSL
 Group:      %{PKGGROUP}
@@ -1044,6 +1050,7 @@ BuildRequires: pkgconfig(wolfssl)
 
 %description    tls_wolfssl
 TLS transport for Kamailio based on wolfSSL
+%endif
 
 
 %package    tcpops
@@ -1291,7 +1298,11 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if "%{?_unitdir}" != ""
     ksystemd \
 %endif
-    ktls ktls_wolfssl kunixodbc kutils \
+    ktls \
+%if %{with wolfssl}
+    ktls_wolfssl \
+%endif
+    kunixodbc kutils \
 %if %{with websocket}
     kwebsocket \
 %endif
@@ -1400,7 +1411,11 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if "%{?_unitdir}" != ""
     ksystemd \
 %endif
-    ktls ktls_wolfssl kunixodbc kutils \
+    ktls \
+%if %{with wolfssl}
+    ktls_wolfssl \
+%endif
+    kunixodbc kutils \
 %if %{with websocket}
     kwebsocket \
 %endif
@@ -2337,10 +2352,12 @@ fi
 %{_libdir}/kamailio/modules/tls.so
 
 
+%if %{with wolfssl}
 %files      tls_wolfssl
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.tls_wolfssl
 %{_libdir}/kamailio/modules/tls_wolfssl.so
+%endif
 
 
 %files      tcpops
