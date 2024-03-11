@@ -966,7 +966,7 @@ switch ($rc) {
 		</section>
 		<section id="http_client.f.http_client_request">
 			<title>
-				<function moreinfo="none">http_client_request(url, met, body, hdrs, respv)</function>
+				<function moreinfo="none">http_client_request(met, url, body, hdrs, respv)</function>
 			</title>
 			<para>
 				Perform a HTTP request to "url", storing the response body
