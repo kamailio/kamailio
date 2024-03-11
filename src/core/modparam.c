@@ -152,6 +152,7 @@ int set_mod_param_regex(char *regex, char *name, modparam_t type, void *val)
 								return -1;
 							}
 							strncpy(*((char **)ptr), (char *)val2, len_param);
+							(*((char **)ptr))[len_param] = '\0';
 							break;
 
 						case PARAM_STR:
