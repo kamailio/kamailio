@@ -1805,9 +1805,12 @@ if(ds_list_exists("10")) {
 				If bit two is set, then protocol is ignored.
 				If bit three is set, then state must be active.
 				If bit four is set, then socket/sockname be matched.
-				If bit five is set, then try to find the most complete 
-				"address/protocol/port/local socket" combination for all dispatcher targets.	The parameter
-				can be an integer or a variable holding an integer value.
+				If bit five is set, then try to find the most closest target from all
+				dispatcher targets with the mandatory ip and combination of local socket, protocol, port,
+				the weighted search result is combined from bit flags of matched components:
+				ip - 1, port - 2, protocol - 4, local socket - 8,
+				the target with the maximum value of flags combination will be selected.
+				The parameter can be an integer or a variable holding an integer value.
 				It must be provided if the uri parameter is provided.
 			</para>
 		</listitem>
