@@ -964,6 +964,30 @@ switch ($rc) {
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.f.http_client_request">
+			<title>
+				<function moreinfo="none">http_client_request(url, met, body, hdrs, respv)</function>
+			</title>
+			<para>
+				Perform a HTTP request to "url", storing the response body
+				in the "respv" variable. The method of the request is set by "met".
+				The "body" and "hdrs" can be empty strings to skip setting them.
+				The first four parameters can contain variables that are evaluated
+				at runtime. The "respv" has to be the name of a writable variable.
+			</para>
+			<example>
+				<title><function>http_client_request()</function> usage</title>
+				<programlisting format="linespecific">
+...
+http_client_request("GET", "http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 	<section>
 	<title>Pseudovariables</title>
