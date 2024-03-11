@@ -74,6 +74,7 @@ Hugh Waite
               4.3. http_get_redirect(connection, result)
               4.4. http_client_query(url, [post-data], [hdrs], result)
               4.5. http_client_get(url, body, hdrs, respv)
+              4.6. http_client_request(url, met, body, hdrs, respv)
 
         5. Pseudovariables
 
@@ -132,6 +133,7 @@ Hugh Waite
    1.25. http_get_redirect() usage
    1.26. http_client_query() usage
    1.27. http_client_get() usage
+   1.28. http_client_request() usage
 
 Chapter 1. Admin Guide
 
@@ -175,6 +177,7 @@ Chapter 1. Admin Guide
         4.3. http_get_redirect(connection, result)
         4.4. http_client_query(url, [post-data], [hdrs], result)
         4.5. http_client_get(url, body, hdrs, respv)
+        4.6. http_client_request(url, met, body, hdrs, respv)
 
    5. Pseudovariables
 
@@ -702,6 +705,7 @@ modparam("http_client", "netinterface", "eth0")
    4.3. http_get_redirect(connection, result)
    4.4. http_client_query(url, [post-data], [hdrs], result)
    4.5. http_client_get(url, body, hdrs, respv)
+   4.6. http_client_request(url, met, body, hdrs, respv)
 
 4.1.  http_connect(connection, url, [content_type, data,] result)
 
@@ -866,6 +870,24 @@ http_client_query("http://api.com/index.php", "src=$si",
 ...
 http_client_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu
 {s.escape.param})",
+           "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+
+4.6.  http_client_request(url, met, body, hdrs, respv)
+
+   Perform a HTTP request to "url", storing the response body in the
+   "respv" variable. The method of the request is set by "met". The "body"
+   and "hdrs" can be empty strings to skip setting them. The first four
+   parameters can contain variables that are evaluated at runtime. The
+   "respv" has to be the name of a writable variable.
+
+   Example 1.28. http_client_request() usage
+...
+http_client_request("GET", "http://api.com/index.php?r_uri=$(ru{s.escape.param})
+&f_uri=$(fu{s.escape.param})",
            "", "X-Token: abc", "$var(result)");
 switch ($rc) {
     ...
