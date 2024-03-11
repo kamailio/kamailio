@@ -74,7 +74,7 @@ Hugh Waite
               4.3. http_get_redirect(connection, result)
               4.4. http_client_query(url, [post-data], [hdrs], result)
               4.5. http_client_get(url, body, hdrs, respv)
-              4.6. http_client_request(url, met, body, hdrs, respv)
+              4.6. http_client_request(met, url, body, hdrs, respv)
 
         5. Pseudovariables
 
@@ -177,7 +177,7 @@ Chapter 1. Admin Guide
         4.3. http_get_redirect(connection, result)
         4.4. http_client_query(url, [post-data], [hdrs], result)
         4.5. http_client_get(url, body, hdrs, respv)
-        4.6. http_client_request(url, met, body, hdrs, respv)
+        4.6. http_client_request(met, url, body, hdrs, respv)
 
    5. Pseudovariables
 
@@ -705,7 +705,7 @@ modparam("http_client", "netinterface", "eth0")
    4.3. http_get_redirect(connection, result)
    4.4. http_client_query(url, [post-data], [hdrs], result)
    4.5. http_client_get(url, body, hdrs, respv)
-   4.6. http_client_request(url, met, body, hdrs, respv)
+   4.6. http_client_request(met, url, body, hdrs, respv)
 
 4.1.  http_connect(connection, url, [content_type, data,] result)
 
@@ -876,7 +876,7 @@ switch ($rc) {
 }
 ...
 
-4.6.  http_client_request(url, met, body, hdrs, respv)
+4.6.  http_client_request(met, url, body, hdrs, respv)
 
    Perform a HTTP request to "url", storing the response body in the
    "respv" variable. The method of the request is set by "met". The "body"
