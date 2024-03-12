@@ -993,6 +993,7 @@ void qm_status(void *qmp)
 }
 
 
+#ifdef DBG_QM_MALLOC
 static void *qm_strnstr(const void *b1, int l1, const void *b2, int l2)
 {
 	char *sp = (char *)b1;
@@ -1012,6 +1013,7 @@ static void *qm_strnstr(const void *b1, int l1, const void *b2, int l2)
 
 	return NULL;
 }
+#endif
 
 void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
 {
