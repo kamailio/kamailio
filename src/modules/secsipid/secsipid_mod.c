@@ -56,6 +56,8 @@ static int w_secsipid_check_identity(
 static int w_secsipid_check(sip_msg_t *msg, char *pidentity, char *pkeypath);
 static int w_secsipid_check_identity_pubkey(
 		sip_msg_t *msg, char *pkeyval, char *str2);
+static int w_secsipid_verify(
+		sip_msg_t *msg, char *pidentity, char *pkeyval, char *popts);
 static int w_secsipid_add_identity(sip_msg_t *msg, char *porigtn, char *pdesttn,
 		char *pattest, char *porigid, char *px5u, char *pkeypath);
 static int w_secsipid_build_identity(sip_msg_t *msg, char *porigtn,
@@ -96,6 +98,8 @@ static cmd_export_t cmds[]={
 		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"secsipid_check", (cmd_function)w_secsipid_check, 2,
 		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"secsipid_verify", (cmd_function)w_secsipid_verify, 3,
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"secsipid_add_identity", (cmd_function)w_secsipid_add_identity, 6,
 		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"secsipid_build_identity", (cmd_function)w_secsipid_build_identity, 6,
@@ -403,6 +407,73 @@ static int w_secsipid_check(sip_msg_t *msg, char *pidentity, char *pkeypath)
 	}
 
 	return ki_secsipid_check(msg, &sidentity, &keypath);
+}
+
+/**
+ *
+ */
+static int ki_secsipid_verify(
+		sip_msg_t *msg, str *sidentity, str *keyval, str *opts)
+{
+	int ret = 1;
+
+	if(secsipid_cache_dir.len > 0) {
+		_secsipid_papi.SecSIPIDSetFileCacheOptions(
+				secsipid_cache_dir.s, secsipid_cache_expire);
+	}
+	if(secsipid_libopt_list_used == 0) {
+		str_list_t *sit;
+		for(sit = secsipid_libopt_list; sit != NULL; sit = sit->next) {
+			_secsipid_papi.SecSIPIDOptSetV(sit->s.s);
+		}
+		secsipid_libopt_list_used = 1;
+	}
+	if(opts != NULL && opts->s[0] == 'A') {
+		_secsipid_papi.SecSIPIDOptSetN("AttrsVerify", 0);
+	}
+
+	ret = _secsipid_papi.SecSIPIDCheckFullPubKey(sidentity->s, sidentity->len,
+			secsipid_expire, keyval->s, keyval->len);
+
+	if(opts != NULL && opts->s[0] == 'A') {
+		_secsipid_papi.SecSIPIDOptSetN("AttrsVerify", 1);
+	}
+
+	if(ret == 0) {
+		LM_DBG("identity verify: ok\n");
+		return 1;
+	}
+
+	LM_DBG("identity verify: failed\n");
+	return ret;
+}
+
+/**
+ *
+ */
+static int w_secsipid_verify(
+		sip_msg_t *msg, char *pidentity, char *pkeyval, char *popts)
+{
+	str sidentity = STR_NULL;
+	str keyval = STR_NULL;
+	str opts = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pidentity, &sidentity) < 0) {
+		LM_ERR("failed to get identity value parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t *)pkeyval, &keyval) < 0) {
+		LM_ERR("failed to get keyval parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t *)popts, &opts) < 0) {
+		LM_ERR("failed to get opts parameter\n");
+		return -1;
+	}
+
+	return ki_secsipid_verify(msg, &sidentity, &keyval, &opts);
 }
 
 #define SECSIPID_MODE_VALHDR (1 << 0)
@@ -1023,6 +1094,11 @@ static sr_kemi_t sr_kemi_secsipid_exports[] = {
 	{ str_init("secsipid"), str_init("secsipid_check"),
 		SR_KEMIP_INT, ki_secsipid_check,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("secsipid"), str_init("secsipid_verify"),
+		SR_KEMIP_INT, ki_secsipid_verify,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("secsipid"), str_init("secsipid_add_identity"),
