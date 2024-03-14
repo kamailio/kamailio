@@ -121,6 +121,41 @@ void fo_free_queue(fo_queue_t *q)
 	shm_free(q);
 }
 
+int fo_file_properties_init(fo_file_properties_t *fp)
+{
+	if(fp == NULL) {
+		return -1;
+	}
+
+	/* Malloc member for each element required */
+	fp->fo_base_filename.s = (char *)shm_malloc(FO_MAX_PATH_LEN * sizeof(char));
+	if(fp->fo_base_filename.s == NULL) {
+		LM_ERR("Failed to allocate memory for base filename\n");
+		return -1;
+	}
+	fp->fo_extension.s = (char *)shm_malloc(10 * sizeof(char));
+	if(fp->fo_extension.s == NULL) {
+		LM_ERR("Failed to allocate memory for extension\n");
+		return -1;
+	}
+
+	fp->fo_prefix.s = (char *)shm_malloc(4096 * sizeof(char));
+	if(fp->fo_prefix.s == NULL) {
+		LM_ERR("Failed to allocate memory for prefix\n");
+		return -1;
+	}
+	fp->fo_stored_timestamp = time(NULL);
+	fp->fo_interval_seconds = 0;
+
+	fp->fo_prefix_pvs = (pv_elem_t *)shm_malloc(sizeof(pv_elem_t));
+	if(fp->fo_prefix_pvs == NULL) {
+		LM_ERR("Failed to allocate memory for prefix pvs\n");
+		return -1;
+	}
+
+	return 1;
+}
+
 int fo_file_properties_destroy(fo_file_properties_t *fp)
 {
 	if(fp == NULL) {
