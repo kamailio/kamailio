@@ -552,7 +552,10 @@ static int fo_get_full_path(const int index, char *full_path)
 static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 {
 	int result, file_index;
-	str fo_prefix_str, fo_prefix_val;
+	str fo_prefix_str = str_init("");
+	str fo_prefix_val = str_init("");
+	str value = str_init("");
+	fo_log_message_t logMessage = {0, 0, 0};
 
 	if(index == NULL || log_message == NULL) {
 		LM_ERR("filename or log_messsage is NULL\n");
@@ -565,7 +568,6 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 		return -1;
 	}
 
-	str value = str_init("");
 	result = get_str_fparam(&value, msg, (fparam_t *)log_message);
 	if(result < 0) {
 		LM_ERR("Failed to get string from param 1: %d\n", result);
@@ -583,7 +585,6 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 	}
 
 	/* Add the logging string to the global gueue */
-	fo_log_message_t logMessage = {0, 0, 0};
 	logMessage.prefix = &fo_prefix_val;
 	logMessage.message = &value;
 	logMessage.dest_file = file_index;
