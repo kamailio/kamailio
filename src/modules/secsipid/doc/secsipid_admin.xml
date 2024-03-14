@@ -305,6 +305,52 @@ request_route {
 			together with jansson module.
 		</para>
 	</section>
+	<section id="secsipid.f.secsipid_verify">
+		<title>
+		<function moreinfo="none">secsipid_verify(sIdentity, keyVal, opts)</function>
+		</title>
+		<para>
+			Check the validity of the "sIdentity" parameter using the key value
+			given in the parameter "keyVal". The validity of the JWT
+			in the sIdentity value is also checked against the "expire"
+			parameter.
+		</para>
+		<para>
+			The "opts" parameter provides the verify options:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>A</emphasis> (uppercase) - skip verifying the attributes
+				in the JWT header.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>secsipid_verify</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    http_client_query("https://provider.com/stir-shaken/cert.pem", "$var(pubkey)");
+    if(secsipid_verify("$hdr(Identity)", "$var(pubkey)", "A")) { ... }
+    ...
+}
+...
+</programlisting>
+		</example>
+		<para>
+			Further checks can be done with config operations, decoding the JWT header
+			and payload using {s.select} and {s.decode.base64t} transformations
+			together with jansson module.
+		</para>
+	</section>
 	<section id="secsipid.f.secsipid_get_url">
 		<title>
 		<function moreinfo="none">secsipid_get_url(url, ovar)</function>
@@ -541,4 +587,3 @@ make install
 	</section>
 
 </chapter>
-
