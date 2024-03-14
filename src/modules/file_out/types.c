@@ -156,11 +156,15 @@ int fo_file_properties_init(fo_file_properties_t *fp)
 	return 1;
 }
 
+/* freeing the memory allocated for the members base_filename, extension, prefix
+	lead to BUG bad pointer 0x7f6b50d57095 (out of memory block!) called from file_out: types.c: fo_file_properties_destroy(167) - ignoring
+ */
 int fo_file_properties_destroy(fo_file_properties_t *fp)
 {
 	if(fp == NULL) {
 		return 1;
 	}
+
 	if(fp->fo_prefix_pvs != NULL) {
 		if(pv_elem_free_all(fp->fo_prefix_pvs) < 0) {
 			LM_ERR("Failed to free prefix pvs\n");
