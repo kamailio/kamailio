@@ -548,6 +548,7 @@ static int fo_init_file(const int index)
 		LM_ERR("Couldn't open file %s\n", strerror(errno));
 		return -1;
 	}
+
 	return 1;
 }
 
@@ -643,12 +644,8 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 		return -1;
 	}
 
-	fo_prefix_str.s = fo_prefix_buf;
-	fo_prefix_str.len = buf_size;
-	if(pv_printf(msg, fo_files[file_index].fo_prefix_pvs, fo_prefix_str.s,
-			   &fo_prefix_str.len)
-					== 0
-			&& fo_prefix_str.len > 0) {
+	if(pv_printf_s(msg, fo_files[file_index].fo_prefix_pvs, &fo_prefix_str)
+			== 0) {
 		fo_prefix_val.s = fo_prefix_str.s;
 		fo_prefix_val.len = fo_prefix_str.len;
 	}
