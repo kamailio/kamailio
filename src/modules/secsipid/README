@@ -38,18 +38,19 @@ Daniel-Constantin Mierla
               4.1. secsipid_check_identity(keyPath)
               4.2. secsipid_check_identity_pubkey(pubkeyVal)
               4.3. secsipid_check(sIdentity, keyPath)
-              4.4. secsipid_get_url(url, ovar)
-              4.5. secsipid_add_identity(origTN, destTN, attest, origID,
+              4.4. secsipid_verify(sIdentity, keyVal, opts)
+              4.5. secsipid_get_url(url, ovar)
+              4.6. secsipid_add_identity(origTN, destTN, attest, origID,
                       x5u, keyPath)
 
-              4.6. secsipid_build_identity(origTN, destTN, attest, origID,
+              4.7. secsipid_build_identity(origTN, destTN, attest, origID,
                       x5u, keyPath)
 
-              4.7. secsipid_build_identity_prvkey(origTN, destTN, attest,
+              4.8. secsipid_build_identity_prvkey(origTN, destTN, attest,
                       origID, x5u, keyData)
 
-              4.8. secsipid_sign(sheaders, spaypload, keyPath)
-              4.9. secsipid_sign_prvkey(sheaders, spaypload, keyData)
+              4.9. secsipid_sign(sheaders, spaypload, keyPath)
+              4.10. secsipid_sign_prvkey(sheaders, spaypload, keyData)
 
         5. Installation
 
@@ -64,13 +65,14 @@ Daniel-Constantin Mierla
    1.7. secsipid_check_identity usage
    1.8. secsipid_check_identity_pubkey usage
    1.9. secsipid_check usage
-   1.10. secsipid_get_url usage
-   1.11. secsipid_add_identity usage
-   1.12. secsipid_build_identity usage
-   1.13. secsipid_build_identity_prvkey usage
-   1.14. secsipid_sign usage
-   1.15. secsipid_sign_prvkey usage
-   1.16. Libsecsipid Usage
+   1.10. secsipid_verify usage
+   1.11. secsipid_get_url usage
+   1.12. secsipid_add_identity usage
+   1.13. secsipid_build_identity usage
+   1.14. secsipid_build_identity_prvkey usage
+   1.15. secsipid_sign usage
+   1.16. secsipid_sign_prvkey usage
+   1.17. Libsecsipid Usage
 
 Chapter 1. Admin Guide
 
@@ -96,18 +98,19 @@ Chapter 1. Admin Guide
         4.1. secsipid_check_identity(keyPath)
         4.2. secsipid_check_identity_pubkey(pubkeyVal)
         4.3. secsipid_check(sIdentity, keyPath)
-        4.4. secsipid_get_url(url, ovar)
-        4.5. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
+        4.4. secsipid_verify(sIdentity, keyVal, opts)
+        4.5. secsipid_get_url(url, ovar)
+        4.6. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
                 keyPath)
 
-        4.6. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
+        4.7. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
                 keyPath)
 
-        4.7. secsipid_build_identity_prvkey(origTN, destTN, attest,
+        4.8. secsipid_build_identity_prvkey(origTN, destTN, attest,
                 origID, x5u, keyData)
 
-        4.8. secsipid_sign(sheaders, spaypload, keyPath)
-        4.9. secsipid_sign_prvkey(sheaders, spaypload, keyData)
+        4.9. secsipid_sign(sheaders, spaypload, keyPath)
+        4.10. secsipid_sign_prvkey(sheaders, spaypload, keyData)
 
    5. Installation
 
@@ -235,18 +238,19 @@ modparam("secsipid", "libopt", "CacheExpires=0")
    4.1. secsipid_check_identity(keyPath)
    4.2. secsipid_check_identity_pubkey(pubkeyVal)
    4.3. secsipid_check(sIdentity, keyPath)
-   4.4. secsipid_get_url(url, ovar)
-   4.5. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
+   4.4. secsipid_verify(sIdentity, keyVal, opts)
+   4.5. secsipid_get_url(url, ovar)
+   4.6. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
           keyPath)
 
-   4.6. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
+   4.7. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
           keyPath)
 
-   4.7. secsipid_build_identity_prvkey(origTN, destTN, attest, origID,
+   4.8. secsipid_build_identity_prvkey(origTN, destTN, attest, origID,
           x5u, keyData)
 
-   4.8. secsipid_sign(sheaders, spaypload, keyPath)
-   4.9. secsipid_sign_prvkey(sheaders, spaypload, keyData)
+   4.9. secsipid_sign(sheaders, spaypload, keyPath)
+   4.10. secsipid_sign_prvkey(sheaders, spaypload, keyData)
 
 4.1.  secsipid_check_identity(keyPath)
 
@@ -325,7 +329,35 @@ request_route {
    header and payload using {s.select} and {s.decode.base64t}
    transformations together with jansson module.
 
-4.4.  secsipid_get_url(url, ovar)
+4.4.  secsipid_verify(sIdentity, keyVal, opts)
+
+   Check the validity of the "sIdentity" parameter using the key value
+   given in the parameter "keyVal". The validity of the JWT in the
+   sIdentity value is also checked against the "expire" parameter.
+
+   The "opts" parameter provides the verify options:
+     * A (uppercase) - skip verifying the attributes in the JWT header.
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.10. secsipid_verify usage
+...
+request_route {
+    ...
+    http_client_query("https://provider.com/stir-shaken/cert.pem", "$var(pubkey)
+");
+    if(secsipid_verify("$hdr(Identity)", "$var(pubkey)", "A")) { ... }
+    ...
+}
+...
+
+   Further checks can be done with config operations, decoding the JWT
+   header and payload using {s.select} and {s.decode.base64t}
+   transformations together with jansson module.
+
+4.5.  secsipid_get_url(url, ovar)
 
    Get the content of a URL and store the result in a variable.
 
@@ -334,7 +366,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.10. secsipid_get_url usage
+   Example 1.11. secsipid_get_url usage
 ...
 request_route {
   ...
@@ -344,7 +376,7 @@ request_route {
 }
 ...
 
-4.5.  secsipid_add_identity(origTN, destTN, attest, origID, x5u, keyPath)
+4.6.  secsipid_add_identity(origTN, destTN, attest, origID, x5u, keyPath)
 
    Add Identity header using the key specified by "keyPath" to sign the
    JWT body. If origID is empty, a UUID string is generated to fill the
@@ -358,7 +390,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.11. secsipid_add_identity usage
+   Example 1.12. secsipid_add_identity usage
 ...
 request_route {
     ...
@@ -368,7 +400,7 @@ request_route {
 }
 ...
 
-4.6.  secsipid_build_identity(origTN, destTN, attest, origID, x5u, keyPath)
+4.7.  secsipid_build_identity(origTN, destTN, attest, origID, x5u, keyPath)
 
    Build Identity value using the key specified by "keyPath" to sign the
    JWT body. If origID is empty, a UUID string is generated to fill the
@@ -384,7 +416,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. secsipid_build_identity usage
+   Example 1.13. secsipid_build_identity usage
 ...
 request_route {
     ...
@@ -397,7 +429,7 @@ request_route {
 }
 ...
 
-4.7.  secsipid_build_identity_prvkey(origTN, destTN, attest, origID, x5u,
+4.8.  secsipid_build_identity_prvkey(origTN, destTN, attest, origID, x5u,
 keyData)
 
    Similar to secsipid_build_identity(), but the private key data is
@@ -407,7 +439,7 @@ keyData)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.13. secsipid_build_identity_prvkey usage
+   Example 1.14. secsipid_build_identity_prvkey usage
 ...
 request_route {
     ...
@@ -419,7 +451,7 @@ request_route {
 }
 ...
 
-4.8.  secsipid_sign(sheaders, spaypload, keyPath)
+4.9.  secsipid_sign(sheaders, spaypload, keyPath)
 
    Build Identity value using the key specified by "keyPath" to sign the
    JWT body. The sheaders and spayload have to be string representation of
@@ -431,7 +463,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.14. secsipid_sign usage
+   Example 1.15. secsipid_sign usage
 ...
 request_route {
     ...
@@ -443,7 +475,7 @@ request_route {
 }
 ...
 
-4.9.  secsipid_sign_prvkey(sheaders, spaypload, keyData)
+4.10.  secsipid_sign_prvkey(sheaders, spaypload, keyData)
 
    Build Identity value using the private key given by "keyData" to sign
    the JWT body. The sheaders and spayload have to be string
@@ -455,7 +487,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.15. secsipid_sign_prvkey usage
+   Example 1.16. secsipid_sign_prvkey usage
 ...
 request_route {
     ...
@@ -481,7 +513,7 @@ request_route {
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.16. Libsecsipid Usage
+   Example 1.17. Libsecsipid Usage
 ...
 export GO111MODULE=off
 go get https://github.com/asipto/secsipidx
