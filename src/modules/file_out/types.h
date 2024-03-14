@@ -66,5 +66,6 @@ typedef struct fo_file_properties
 } fo_file_properties_t;
 
 int fo_file_properties_destroy(fo_file_properties_t *fp);
+int fo_file_properties_print(const fo_file_properties_t file_prop);
 
 #endif
