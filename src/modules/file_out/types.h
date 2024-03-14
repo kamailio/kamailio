@@ -61,6 +61,7 @@ typedef struct fo_file_properties
 	str fo_extension;
 	str fo_prefix;
 	int fo_interval_seconds;
+	int fo_requires_rotation;
 	pv_elem_t *fo_prefix_pvs;
 	time_t fo_stored_timestamp;
 	FILE *fo_file_output;
