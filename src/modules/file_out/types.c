@@ -140,3 +140,13 @@ int fo_file_properties_destroy(fo_file_properties_t *fp)
 	}
 	return 1;
 }
+
+int fo_file_properties_print(const fo_file_properties_t file_prop)
+{
+	LM_DBG("Base filename: %s\n", file_prop.fo_base_filename.s);
+	LM_DBG("Prefix: %s\n", file_prop.fo_prefix.s);
+	LM_DBG("Extension: %s\n", file_prop.fo_extension.s);
+	LM_DBG("Interval: %d\n", file_prop.fo_interval_seconds);
+	LM_DBG("Stored timestamp: %ld\n", file_prop.fo_stored_timestamp);
+	return 1;
+}
