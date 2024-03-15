@@ -719,10 +719,12 @@ inline static unsigned char *binrpc_read_record(struct binrpc_parse_ctx *ctx,
 		*err = E_BINRPC_MORE_DATA;
 		goto error;
 	}
-	if((v->type != type) && (v->type != BINRPC_T_ALL)) {
-		goto error_type;
+	if(!(v->type == BINRPC_T_DOUBLE && type == BINRPC_T_INT)) {
+		if((v->type != type) && (v->type != BINRPC_T_ALL)) {
+			goto error_type;
+		}
+		v->type = type;
 	}
-	v->type = type;
 	switch(type) {
 		case BINRPC_T_STRUCT:
 			if(ctx->in_struct) {
@@ -779,7 +781,12 @@ inline static unsigned char *binrpc_read_record(struct binrpc_parse_ctx *ctx,
 		case BINRPC_T_INT:
 			if(ctx->in_struct && smode == 0)
 				goto error_record;
-			p = binrpc_read_int(&v->u.intval, len, p, end, err);
+			if(v->type == BINRPC_T_DOUBLE) {
+				p = binrpc_read_int(&tmp, len, p, end, err);
+				v->u.fval = tmp;
+			} else {
+				p = binrpc_read_int(&v->u.intval, len, p, end, err);
+			}
 			break;
 		case BINRPC_T_STR:
 			if(ctx->in_struct && smode == 0)
