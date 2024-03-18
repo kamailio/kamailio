@@ -127,8 +127,10 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 		foo = s;
 		while(*s && !isspace((int)*s) && EQUAL != *s)
 			s++;
-		if(*s == 0)
+		if(*s == 0) {
+			LM_ERR("unexpected end of string\n");
 			goto parse_error;
+		}
 		if(*s == EQUAL) {
 			extra->name.len = (s++) - foo;
 		} else {
@@ -136,8 +138,10 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 			/* skip spaces */
 			while(*s && isspace((int)*s))
 				s++;
-			if(*s != EQUAL)
+			if(*s != EQUAL) {
+				LM_ERR("unexpected char '%c' instead of '='\n", *s);
 				goto parse_error;
+			}
 			s++;
 		}
 		extra->name.s = foo;
@@ -149,15 +153,19 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 		/* get value type */
 		stmp.s = s;
 		stmp.len = strlen(s);
-		if((foo = pv_parse_spec(&stmp, &extra->spec)) == 0)
+		if((foo = pv_parse_spec(&stmp, &extra->spec)) == 0) {
+			LM_ERR("failed to parse variable name\n");
 			goto parse_error;
+		}
 		s = foo;
 
 		/* skip spaces */
 		while(*s && isspace((int)*s))
 			s++;
-		if(*s && (*(s++) != SEPARATOR || *s == 0))
+		if(*s && (*(s++) != SEPARATOR || *s == 0)) {
+			LM_ERR("unexpected char at end of name=var group\n");
 			goto parse_error;
+		}
 	}
 
 	/* go throught all extras and make the names null terminated */
