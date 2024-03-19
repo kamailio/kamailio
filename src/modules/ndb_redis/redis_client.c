@@ -233,15 +233,15 @@ int redisc_init(void)
 		}
 
 #ifdef WITH_SSL
- 		if(enable_ssl) {
- 			/* Create SSL context*/
- 			redisInitOpenSSL();
- 			rsrv->sslCtxRedis = redisCreateSSLContext(
+		if(enable_ssl) {
+			/* Create SSL context*/
+			redisInitOpenSSL();
+			rsrv->sslCtxRedis = redisCreateSSLContext(
 					NULL, ndb_redis_ca_path, NULL, NULL, NULL, NULL);
- 			if(rsrv->sslCtxRedis == NULL) {
+			if(rsrv->sslCtxRedis == NULL) {
 				LM_ERR("Unable to create Redis TLS Context.\n");
- 			}
-  		}
+			}
+		}
 #endif
 
 		if(sock != 0) {
@@ -260,10 +260,10 @@ int redisc_init(void)
 		}
 
 #ifdef WITH_SSL
- 		if(enable_ssl) {
- 			/* Negotiate SSL/TLS handshake*/
- 			redisInitiateSSLWithContext(rsrv->ctxRedis, rsrv->sslCtxRedis);
- 		}
+		if(enable_ssl) {
+			/* Negotiate SSL/TLS handshake*/
+			redisInitiateSSLWithContext(rsrv->ctxRedis, rsrv->sslCtxRedis);
+		}
 #endif
 
 		LOG(ndb_redis_debug, "rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
@@ -498,10 +498,10 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 					pass, sizeof(pass) - 1, "%.*s", pit->body.len, pit->body.s);
 			haspass = 1;
 #ifdef WITH_SSL
- 		} else if(pit->name.len == 3 && strncmp(pit->name.s, "tls", 3) == 0) {
+		} else if(pit->name.len == 3 && strncmp(pit->name.s, "tls", 3) == 0) {
 			snprintf(
 					pass, sizeof(pass) - 1, "%.*s", pit->body.len, pit->body.s);
- 			if(str2int(&pit->body, &enable_ssl) < 0)
+			if(str2int(&pit->body, &enable_ssl) < 0)
 				enable_ssl = 0;
 #endif
 		} else if(pit->name.len == 14
