@@ -131,11 +131,11 @@ static void ka_options_callback(
 	// accepting 2XX return codes
 	if(ps->code >= 200 && ps->code <= 299) {
 		state = KA_STATE_UP;
-		ka_dest->last_down = time(NULL);
+		ka_dest->last_up = time(NULL);
 		ka_dest->counter = 0;
 	} else {
 		state = KA_STATE_DOWN;
-		ka_dest->last_up = time(NULL);
+		ka_dest->last_down = time(NULL);
 		ka_dest->counter++;
 	}
 
