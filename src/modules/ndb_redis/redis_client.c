@@ -533,6 +533,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 		for(i = 0; i < sentinels_count; i++) {
 			char *sentinelAddr = sentinels[i];
 			char *pos;
+			int srvfound = 0;
 			redisContext *redis;
 			redisReply *res, *res2;
 
@@ -555,6 +556,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 						port = atoi(res->element[1]->str);
 						LOG(ndb_redis_debug, "sentinel replied: %s:%d\n", addr,
 								port);
+						srvfound = 1;
 					}
 				} else {
 					res = redisCommand(
@@ -578,8 +580,12 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 						}
 						LOG(ndb_redis_debug, "slave for %s: %s:%d\n",
 								sentinel_group, addr, port);
+						srvfound = 1;
 					}
 				}
+			}
+			if(srvfound == 1) {
+				break;
 			}
 		}
 	}
