@@ -486,7 +486,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 			port = 6379;
 			if((pos = strchr(sentinelAddr, ':')) != NULL) {
 				port = atoi(pos + 1);
-				pos[i] = '\0';
+				pos[0] = '\0';
 			}
 
 			redis = redisConnectWithTimeout(sentinelAddr, port, tv_conn);
