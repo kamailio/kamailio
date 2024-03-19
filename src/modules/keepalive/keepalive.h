@@ -69,13 +69,15 @@ typedef struct _ka_initial_dest
 typedef struct _ka_dest
 {
 	str uri;
-	str owner; // name of destination "owner"
-			   // (module asking to monitor this destination
-	str uuid;  // Universal id for this record
+	str owner; /*!< Name of destination "owner" */
+			   /*!< Module asking to monitor this destination */
+	str uuid;  /*!< Universal id for this record */
 	int flags;
 	int state;
-	time_t last_checked, last_up, last_down;
-	int counter;		   // counts unreachable attempts
+	time_t last_checked;
+	time_t last_up;		   /*!< Time of last successful SIP reply */
+	time_t last_down;	   /*!< Time of last failure SIP reply */
+	int counter;		   /*!< Counts unreachable attempts */
 	ticks_t ping_interval; /*!< Actual interval between OPTIONS  */
 
 	void *user_attr;
