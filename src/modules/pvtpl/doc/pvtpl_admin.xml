@@ -120,11 +120,35 @@ modparam("pvtpl", "tpl", "name=tpl2;fpath=/etc/kamailio/tpl2.pvtpl;bsize=256;")
 		<title><function>pvtpl_render</function> usage</title>
 		<programlisting format="linespecific">
 ...
-pvtpl_render("t1", "$var(out)")
+pvtpl_render("t1", "$var(out)");
 ...
 </programlisting>
 	    </example>
 	</section>
 	</section>
 
+	<section>
+	<title>Template File</title>
+		<para>
+		The template file can contain text and config variables that are evaluate
+		when running pvtpl_render() functions.
+		</para>
+		<para>
+		The templates files are loaded at startup and prepared for runtime. It is
+		no option to reload the template files.
+		</para>
+		<example>
+		<title>Template file</title>
+		<programlisting format="linespecific">
+...
+{
+  "from": "$fu",
+  "to": "$tu",
+  "x" : $var(x)
+}
+...
+</programlisting>
+	    </example>
+
+	</section>
 </chapter>
