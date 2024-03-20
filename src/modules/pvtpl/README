@@ -30,12 +30,15 @@ Daniel-Constantin Mierla
 
         4. Functions
 
-              4.1. pvtpl_apply(tplname, res)
+              4.1. pvtpl_render(tplname, res)
+
+        5. Template File
 
    List of Examples
 
    1.1. Set tpl parameter
-   1.2. gcrypt_aes_encrypt usage
+   1.2. pvtpl_render usage
+   1.3. Template file
 
 Chapter 1. Admin Guide
 
@@ -53,7 +56,9 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. pvtpl_apply(tplname, res)
+        4.1. pvtpl_render(tplname, res)
+
+   5. Template File
 
 1. Overview
 
@@ -101,18 +106,33 @@ modparam("pvtpl", "tpl", "name=tpl2;fpath=/etc/kamailio/tpl2.pvtpl;bsize=256;")
 
 4. Functions
 
-   4.1. pvtpl_apply(tplname, res)
+   4.1. pvtpl_render(tplname, res)
 
-4.1.  pvtpl_apply(tplname, res)
+4.1.  pvtpl_render(tplname, res)
 
-   Encrypts the text with the key using AES256 ECB encryption algorithm.
-   The result is encoded in base64 format and stored in res. The parameter
-   res must be a read-write variables. The parameters text and key can be
-   static strings or strings with variables (dynamic strings).
+   Render the template 'tplname' using config variables, setting the
+   result in the variable specified by 'res'.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.2. gcrypt_aes_encrypt usage
+   Example 1.2. pvtpl_render usage
 ...
-gcrypt_aes_encrypt("$rb", "my-secret-key", "$var(encrypted)");
+pvtpl_render("t1", "$var(out)");
+...
+
+5. Template File
+
+   The template file can contain text and config variables that are
+   evaluate when running pvtpl_render() functions.
+
+   The templates files are loaded at startup and prepared for runtime. It
+   is no option to reload the template files.
+
+   Example 1.3. Template file
+...
+{
+  "from": "$fu",
+  "to": "$tu",
+  "x" : $var(x)
+}
 ...
