@@ -105,24 +105,22 @@ modparam("pvtpl", "tpl", "name=tpl2;fpath=/etc/kamailio/tpl2.pvtpl;bsize=256;")
 
 	<section>
 	<title>Functions</title>
-	<section id="pvtpl.f.pvtpl_apply">
+	<section id="pvtpl.f.pvtpl_render">
 	    <title>
-		<function moreinfo="none">pvtpl_apply(tplname, res)</function>
+		<function moreinfo="none">pvtpl_render(tplname, res)</function>
 	    </title>
 	    <para>
-		Encrypts the text with the key using AES256 ECB encryption algorithm.
-		The result is encoded in base64 format and stored in res. The parameter
-		res must be a read-write variables. The parameters text and key can
-		be static strings or strings with variables (dynamic strings).
+		Render the template 'tplname' using config variables, setting the result
+		in the variable specified by 'res'.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>gcrypt_aes_encrypt</function> usage</title>
+		<title><function>pvtpl_render</function> usage</title>
 		<programlisting format="linespecific">
 ...
-gcrypt_aes_encrypt("$rb", "my-secret-key", "$var(encrypted)");
+pvtpl_render("t1", "$var(out)")
 ...
 </programlisting>
 	    </example>

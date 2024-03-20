@@ -42,7 +42,7 @@ static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
 
-static int w_pvtpl_apply(sip_msg_t *msg, char *ptplname, char *popv);
+static int w_pvtpl_render(sip_msg_t *msg, char *ptplname, char *popv);
 
 /* clang-format off */
 typedef struct pvtpl_item {
@@ -61,7 +61,7 @@ static pvtpl_item_t *_pvtpl_list = NULL;
 
 /* clang-format off */
 static cmd_export_t cmds[]={
-	{"pvtpl_apply", (cmd_function)w_pvtpl_apply, 2, fixup_spve_pvar,
+	{"pvtpl_render", (cmd_function)w_pvtpl_render, 2, fixup_spve_pvar,
 		fixup_free_spve_pvar, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
@@ -278,7 +278,7 @@ static int pvtpl_tpl_param(modparam_t type, void *val)
 /**
  *
  */
-static int pvtpl_apply(sip_msg_t *msg, str *tplname, pv_spec_t *dst)
+static int pvtpl_render(sip_msg_t *msg, str *tplname, pv_spec_t *dst)
 {
 	pvtpl_item_t *it;
 	pv_value_t val;
@@ -313,7 +313,7 @@ static int pvtpl_apply(sip_msg_t *msg, str *tplname, pv_spec_t *dst)
 /**
  *
  */
-static int ki_pvtpl_apply(sip_msg_t *msg, str *tplname, str *opv)
+static int ki_pvtpl_render(sip_msg_t *msg, str *tplname, str *opv)
 {
 	pv_spec_t *dst;
 
@@ -324,13 +324,13 @@ static int ki_pvtpl_apply(sip_msg_t *msg, str *tplname, str *opv)
 		return -1;
 	}
 
-	return pvtpl_apply(msg, tplname, dst);
+	return pvtpl_render(msg, tplname, dst);
 }
 
 /**
  *
  */
-static int w_pvtpl_apply(sip_msg_t *msg, char *ptplname, char *popv)
+static int w_pvtpl_render(sip_msg_t *msg, char *ptplname, char *popv)
 {
 	str tplname;
 	pv_spec_t *dst;
@@ -341,7 +341,7 @@ static int w_pvtpl_apply(sip_msg_t *msg, char *ptplname, char *popv)
 	}
 	dst = (pv_spec_t *)popv;
 
-	return pvtpl_apply(msg, &tplname, dst);
+	return pvtpl_render(msg, &tplname, dst);
 }
 
 /**
@@ -349,8 +349,8 @@ static int w_pvtpl_apply(sip_msg_t *msg, char *ptplname, char *popv)
  */
 /* clang-format off */
 static sr_kemi_t sr_kemi_pvtpl_exports[] = {
-	{ str_init("pvtpl"), str_init("pvtpl_apply"),
-		SR_KEMIP_INT, ki_pvtpl_apply,
+	{ str_init("pvtpl"), str_init("pvtpl_render"),
+		SR_KEMIP_INT, ki_pvtpl_render,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
