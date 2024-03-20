@@ -127,7 +127,7 @@ modparam("gcrypt", "register_callid", 1)
 
 	<section>
 	<title>Functions</title>
-	<section id="async.f.gcrypt_aes_encrypt">
+	<section id="gcrypt.f.gcrypt_aes_encrypt">
 	    <title>
 		<function moreinfo="none">gcrypt_aes_encrypt(text, key, res)</function>
 	    </title>
@@ -150,7 +150,7 @@ gcrypt_aes_encrypt("$rb", "my-secret-key", "$var(encrypted)");
 	    </example>
 	</section>
 
-	<section id="async.f.gcrypt_aes_decrypt">
+	<section id="gcrypt.f.gcrypt_aes_decrypt">
 	    <title>
 		<function moreinfo="none">gcrypt_aes_decrypt(text, key, res)</function>
 	    </title>
