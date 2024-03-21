@@ -2885,13 +2885,13 @@ onreply_route[1]
 
 
 		<example>
-		<title><function>rtpengine_offer</function> usage</title>
+		<title><function>rtpengine_offer</function> usage of via-branch parameter</title>
 		<programlisting format="linespecific">
 route {
 ...
     if (is_method("INVITE")) {
         if (has_body("application/sdp")) {
-            if (rtpengine_offer("replace-origin replace-session-connection via-branch=auto-next strict-source label=callee OSRTP-accept transport-protocol=RTP/AVP address-family=IP4", "auto-next"))
+            if (rtpengine_offer("replace-origin replace-session-connection strict-source label=callee OSRTP-accept transport-protocol=RTP/AVP address-family=IP4", "auto-next"))
                 t_on_reply("1");
         }
     }
