@@ -276,7 +276,7 @@ Joey Golan
    1.87. set_rtpengine_set usage
    1.88. rtpengine_offer usage
    1.89. rtpengine_offer usage to force transcoding from opus to PCMU
-   1.90. rtpengine_offer usage
+   1.90. rtpengine_offer usage of via-branch parameter
    1.91. rtpengine_answer usage
    1.92. rtpengine_info usage
    1.93. rtpengine_delete usage
@@ -2540,14 +2540,14 @@ onreply_route[1]
 }
 ...
 
-   Example 1.90. rtpengine_offer usage
+   Example 1.90. rtpengine_offer usage of via-branch parameter
 route {
 ...
     if (is_method("INVITE")) {
         if (has_body("application/sdp")) {
-            if (rtpengine_offer("replace-origin replace-session-connection via-b
-ranch=auto-next strict-source label=callee OSRTP-accept transport-protocol=RTP/A
-VP address-family=IP4", "auto-next"))
+            if (rtpengine_offer("replace-origin replace-session-connection stric
+t-source label=callee OSRTP-accept transport-protocol=RTP/AVP address-family=IP4
+", "auto-next"))
                 t_on_reply("1");
         }
     }
