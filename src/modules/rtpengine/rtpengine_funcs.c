@@ -235,10 +235,9 @@ int extract_body(struct sip_msg *msg, str *body, str *cl_field)
 			if(hf.type == HDR_ERROR_T)
 				return -1;
 			if(hf.type == HDR_CONTENTLENGTH_T) {
-				if (cl_field)
+				if(cl_field)
 					*cl_field = hf.body;
-			}
-			else if(hf.type == HDR_CONTENTTYPE_T) {
+			} else if(hf.type == HDR_CONTENTTYPE_T) {
 				if(decode_mime_type(hf.body.s, hf.body.s + hf.body.len, &mime)
 						== NULL)
 					return -1;
