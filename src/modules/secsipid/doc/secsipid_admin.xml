@@ -338,7 +338,7 @@ request_route {
 ...
 request_route {
     ...
-    http_client_query("https://provider.com/stir-shaken/cert.pem", "$var(pubkey)");
+    secsipid_get_url("https://provider.com/stir-shaken/cert.pem", "$var(pubkey)");
     if(secsipid_verify("$hdr(Identity)", "$var(pubkey)", "A")) { ... }
     ...
 }
@@ -356,7 +356,8 @@ request_route {
 		<function moreinfo="none">secsipid_get_url(url, ovar)</function>
 		</title>
 		<para>
-			Get the content of a URL and store the result in a variable.
+		Get the content of a URL and store the result in a variable. The result
+		is cached by libsecsipid, if caching is enabled.
 		</para>
 		<para>
 		The url parameters can contain pseudo-variables and ovar has to be
