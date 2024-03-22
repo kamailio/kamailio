@@ -730,12 +730,21 @@ int fixup_free_spve_spve_igp(void **param, int param_no)
 /**
  *
  */
-int fixup_spve_n_pvar(void **param, int n, int param_no)
+int fixup_spve_n_pvar(void **param, int n, int param_no, int pvmode)
 {
+	int ret = 0;
 	if(param_no >= 1 && param_no <= n)
 		return fixup_spve_null(param, 1);
-	if(param_no == n + 1)
-		return fixup_pvar_null(param, 1);
+	if(param_no == n + 1) {
+		ret = fixup_pvar_null(param, 1);
+		if((ret == 0) && (pvmode == 1)) {
+			if(((pv_spec_t *)(*param))->setf == NULL) {
+				LM_ERR("pvar is not writeble\n");
+				return E_UNSPEC;
+			}
+		}
+		return ret;
+	}
 	return E_UNSPEC;
 }
 
@@ -756,7 +765,7 @@ int fixup_free_spve_n_pvar(void **param, int n, int param_no)
  */
 int fixup_spve_pvar(void **param, int param_no)
 {
-	return fixup_spve_n_pvar(param, 1, param_no);
+	return fixup_spve_n_pvar(param, 1, param_no, 0);
 }
 
 /**
@@ -772,7 +781,7 @@ int fixup_free_spve_pvar(void **param, int param_no)
  */
 int fixup_spve2_pvar(void **param, int param_no)
 {
-	return fixup_spve_n_pvar(param, 2, param_no);
+	return fixup_spve_n_pvar(param, 2, param_no, 1);
 }
 
 /**
@@ -788,7 +797,7 @@ int fixup_free_spve2_pvar(void **param, int param_no)
  */
 int fixup_spve3_pvar(void **param, int param_no)
 {
-	return fixup_spve_n_pvar(param, 3, param_no);
+	return fixup_spve_n_pvar(param, 3, param_no, 1);
 }
 
 /**
@@ -804,7 +813,7 @@ int fixup_free_spve3_pvar(void **param, int param_no)
  */
 int fixup_spve4_pvar(void **param, int param_no)
 {
-	return fixup_spve_n_pvar(param, 4, param_no);
+	return fixup_spve_n_pvar(param, 4, param_no, 1);
 }
 
 /**
