@@ -75,6 +75,7 @@ Hugh Waite
               4.4. http_client_query(url, [post-data], [hdrs], result)
               4.5. http_client_get(url, body, hdrs, respv)
               4.6. http_client_request(met, url, body, hdrs, respv)
+              4.7. http_client_request_v2pk(met, url, body, hdrs, respv)
 
         5. Pseudovariables
 
@@ -134,6 +135,7 @@ Hugh Waite
    1.26. http_client_query() usage
    1.27. http_client_get() usage
    1.28. http_client_request() usage
+   1.29. http_client_request_v2pk() usage
 
 Chapter 1. Admin Guide
 
@@ -178,6 +180,7 @@ Chapter 1. Admin Guide
         4.4. http_client_query(url, [post-data], [hdrs], result)
         4.5. http_client_get(url, body, hdrs, respv)
         4.6. http_client_request(met, url, body, hdrs, respv)
+        4.7. http_client_request_v2pk(met, url, body, hdrs, respv)
 
    5. Pseudovariables
 
@@ -706,6 +709,7 @@ modparam("http_client", "netinterface", "eth0")
    4.4. http_client_query(url, [post-data], [hdrs], result)
    4.5. http_client_get(url, body, hdrs, respv)
    4.6. http_client_request(met, url, body, hdrs, respv)
+   4.7. http_client_request_v2pk(met, url, body, hdrs, respv)
 
 4.1.  http_connect(connection, url, [content_type, data,] result)
 
@@ -888,6 +892,22 @@ switch ($rc) {
 ...
 http_client_request("GET", "http://api.com/index.php?r_uri=$(ru{s.escape.param})
 &f_uri=$(fu{s.escape.param})",
+           "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+
+4.7.  http_client_request_v2pk(met, url, body, hdrs, respv)
+
+   Similar to http_client_request(), but using HTTP/2 prior-knowledge that
+   the server does not need HTTP/1.1-Upgrade (direct HTTP/2 by seting
+   libcurl option CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE).
+
+   Example 1.29. http_client_request_v2pk() usage
+...
+http_client_request_v2pk("GET", "http://api.com/index.php?r_uri=$(ru{s.escape.pa
+ram})&f_uri=$(fu{s.escape.param})",
            "", "X-Token: abc", "$var(result)");
 switch ($rc) {
     ...
