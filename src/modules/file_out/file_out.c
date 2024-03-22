@@ -344,7 +344,7 @@ static int fo_add_filename(modparam_t type, void *val)
 		LM_ERR("modparam value is null\n");
 		return -1;
 	}
-	if(strlen((char *)val) == 0) {
+	if(strlen(((str *)val)->s) == 0) {
 		LM_ERR("modparam value is empty\n");
 		return -1;
 	}
