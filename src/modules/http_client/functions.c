@@ -272,10 +272,11 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 	 * - 1 (default) : timeout value is in seconds.
 	 * - 2 : timeout value is in milliseconds.
 	 */
-	if (timeout_mode == 1) { /* timeout is in seconds (default) */
+	if(timeout_mode == 1) { /* timeout is in seconds (default) */
 		res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)params->timeout);
-	} else if (timeout_mode == 2) { /* timeout is in milliseconds */
-		res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, (long)params->timeout);
+	} else if(timeout_mode == 2) { /* timeout is in milliseconds */
+		res |= curl_easy_setopt(
+				curl, CURLOPT_TIMEOUT_MS, (long)params->timeout);
 	}
 
 	res |= curl_easy_setopt(
@@ -734,7 +735,8 @@ int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
 int http_client_request(sip_msg_t *_m, char *_url, str *_dst, char *_body,
 		char *_hdrs, char *_met, unsigned int _httpver)
 {
-	return http_client_request_c(_m, _url, _dst, _body, NULL, _hdrs, _met, _httpver);
+	return http_client_request_c(
+			_m, _url, _dst, _body, NULL, _hdrs, _met, _httpver);
 }
 
 /*!

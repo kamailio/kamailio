@@ -1091,9 +1091,8 @@ static int w_http_query_post_hdr(
 /*!
  * helper for HTTP-Query function
  */
-static int ki_http_request_helper(
-		sip_msg_t *_m, str *met, str *url, str *body, str *hdrs,
-		unsigned int httpver, pv_spec_t *dst)
+static int ki_http_request_helper(sip_msg_t *_m, str *met, str *url, str *body,
+		str *hdrs, unsigned int httpver, pv_spec_t *dst)
 {
 	int ret = 0;
 	str result = {NULL, 0};
@@ -1199,8 +1198,8 @@ static int ki_http_query_request_v2pk(
 		return -1;
 	}
 
-	return ki_http_request_helper(_m, met, url, body, hdrs,
-			CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE, dst);
+	return ki_http_request_helper(
+			_m, met, url, body, hdrs, CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE, dst);
 }
 
 /*!
