@@ -988,6 +988,28 @@ switch ($rc) {
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.f.http_client_request_v2pk">
+			<title>
+				<function moreinfo="none">http_client_request_v2pk(met, url, body, hdrs, respv)</function>
+			</title>
+			<para>
+				Similar to http_client_request(), but using HTTP/2 prior-knowledge
+				that the server does not need HTTP/1.1-Upgrade (direct HTTP/2 by
+				seting libcurl option CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE).
+			</para>
+			<example>
+				<title><function>http_client_request_v2pk()</function> usage</title>
+				<programlisting format="linespecific">
+...
+http_client_request_v2pk("GET", "http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 	<section>
 	<title>Pseudovariables</title>
