@@ -338,6 +338,11 @@ static inline struct socket_info *new_sock_info(char *name,
 			p = si->useinfo.name.s + 1;
 			si->useinfo.af = AF_INET6;
 		} else {
+			ip_addr_t *ipv = NULL;
+			ipv = str2ipx(&si->useinfo.name);
+			if(ipv != NULL) {
+				si->useinfo.af = ipv->af;
+			}
 			si->useinfo.address_str.len = si->useinfo.name.len;
 			p = si->useinfo.name.s;
 		}
