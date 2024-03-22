@@ -60,6 +60,7 @@ typedef struct
 	char *useragent;
 	char *hdrs;
 	char *netinterface;
+	unsigned int httpversion;
 	unsigned int authmethod;
 	unsigned int http_proxy_port;
 	unsigned int tlsversion;
@@ -117,7 +118,6 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 		const char *_url, str *_dst, const curl_query_t *const params)
 {
 	CURL *curl = NULL;
-
 	CURLcode res;
 	char *at = NULL;
 	curl_res_stream_t stream;
@@ -153,6 +153,10 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 
 	LM_DBG("****** ##### CURL URL [%s] \n", _url);
 	res = curl_easy_setopt(curl, CURLOPT_URL, _url);
+
+	if(params->httpversion != 0) {
+		curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, params->httpversion);
+	}
 
 	/* Limit to HTTP and HTTPS protocols */
 #if LIBCURL_VERSION_NUM >= 0x075500
@@ -296,7 +300,6 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 		double totaltime, connecttime;
 
 		res = curl_easy_perform(curl);
-
 		curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &totaltime);
 		curl_easy_getinfo(curl, CURLINFO_APPCONNECT_TIME, &connecttime);
 		LM_DBG("HTTP Call performed in %f s (connect time %f) \n", totaltime,
@@ -671,7 +674,7 @@ int curl_con_query_url(struct sip_msg *_m, const str *connection,
  * Similar to http_client_request but supports setting a content type attribute.
  */
 int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
-		char *_ctype, char *_hdrs, char *_met)
+		char *_ctype, char *_hdrs, char *_met, unsigned int _httpver)
 {
 	int res;
 	curl_query_t query_params;
@@ -680,6 +683,7 @@ int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
 	query_params.username = NULL;
 	query_params.secret = NULL;
 	query_params.authmethod = default_authmethod;
+	query_params.httpversion = _httpver;
 	query_params.contenttype = _ctype;
 	query_params.hdrs = _hdrs;
 	query_params.post = _body;
@@ -728,9 +732,9 @@ int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
  * This is the same http_query as used to be in the utils module.
  */
 int http_client_request(sip_msg_t *_m, char *_url, str *_dst, char *_body,
-		char *_hdrs, char *_met)
+		char *_hdrs, char *_met, unsigned int _httpver)
 {
-	return http_client_request_c(_m, _url, _dst, _body, NULL, _hdrs, _met);
+	return http_client_request_c(_m, _url, _dst, _body, NULL, _hdrs, _met, _httpver);
 }
 
 /*!
@@ -741,7 +745,7 @@ int http_client_request(sip_msg_t *_m, char *_url, str *_dst, char *_body,
 int http_client_query(
 		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_hdrs)
 {
-	return http_client_request(_m, _url, _dst, _post, _hdrs, 0);
+	return http_client_request(_m, _url, _dst, _post, _hdrs, NULL, 0);
 }
 
 /*!
@@ -752,7 +756,7 @@ int http_client_query(
 int http_client_query_c(struct sip_msg *_m, char *_url, str *_dst, char *_post,
 		char *_ctype, char *_hdrs)
 {
-	return http_client_request_c(_m, _url, _dst, _post, _ctype, _hdrs, 0);
+	return http_client_request_c(_m, _url, _dst, _post, _ctype, _hdrs, NULL, 0);
 }
 
 char *http_get_content_type(const str *connection)

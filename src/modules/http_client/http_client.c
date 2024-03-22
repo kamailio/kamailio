@@ -163,6 +163,8 @@ static int w_curl_connect(
 		struct sip_msg *_m, char *_con, char *_url, char *_result);
 static int w_http_query_request(struct sip_msg *_m, char *_met, char *_url,
 		char *_body, char *_hdrs, char *_result);
+static int w_http_query_request_v2pk(struct sip_msg *_m, char *_met, char *_url,
+		char *_body, char *_hdrs, char *_result);
 
 /* forward function */
 static int curl_con_param(modparam_t type, void *val);
@@ -186,6 +188,9 @@ static cmd_export_t cmds[] = {
 		fixup_free_http_query_post_hdr,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"http_client_request", (cmd_function)w_http_query_request, 5, fixup_http_query_request,
+		fixup_free_http_query_request,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"http_client_request_v2pk", (cmd_function)w_http_query_request_v2pk, 5, fixup_http_query_request,
 		fixup_free_http_query_request,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"http_connect", (cmd_function)w_curl_connect, 3, fixup_curl_connect,
@@ -1087,7 +1092,8 @@ static int w_http_query_post_hdr(
  * helper for HTTP-Query function
  */
 static int ki_http_request_helper(
-		sip_msg_t *_m, str *met, str *url, str *body, str *hdrs, pv_spec_t *dst)
+		sip_msg_t *_m, str *met, str *url, str *body, str *hdrs,
+		unsigned int httpver, pv_spec_t *dst)
 {
 	int ret = 0;
 	str result = {NULL, 0};
@@ -1100,7 +1106,7 @@ static int ki_http_request_helper(
 	ret = http_client_request(_m, url->s, &result,
 			(body && body->s && body->len > 0) ? body->s : NULL,
 			(hdrs && hdrs->s && hdrs->len > 0) ? hdrs->s : NULL,
-			(met && met->s && met->len > 0) ? met->s : NULL);
+			(met && met->s && met->len > 0) ? met->s : NULL, httpver);
 
 	val.rs = result;
 	val.flags = PV_VAL_STR;
@@ -1135,7 +1141,7 @@ static int ki_http_get_hdrs(
 		return -1;
 	}
 
-	return ki_http_request_helper(_m, &met, url, body, hdrs, dst);
+	return ki_http_request_helper(_m, &met, url, body, hdrs, 0, dst);
 }
 
 /*!
@@ -1172,8 +1178,74 @@ static int w_http_get_script(
 	}
 	dst = (pv_spec_t *)_result;
 
-	return ki_http_request_helper(_m, &met, &url, &body, &hdrs, dst);
+	return ki_http_request_helper(_m, &met, &url, &body, &hdrs, 0, dst);
 }
+
+/*!
+ * KEMI function to perform request with headers and body
+ */
+static int ki_http_query_request_v2pk(
+		sip_msg_t *_m, str *met, str *url, str *body, str *hdrs, str *dpv)
+{
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+	if(dst == NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	if(dst->setf == NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+
+	return ki_http_request_helper(_m, met, url, body, hdrs,
+			CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE, dst);
+}
+
+/*!
+ * Wrapper for http query request  function for cfg script
+ */
+static int w_http_query_request_v2pk(sip_msg_t *_m, char *_met, char *_url,
+		char *_body, char *_hdrs, char *_result)
+{
+	str met = {NULL, 0};
+	str url = {NULL, 0};
+	str body = {NULL, 0};
+	str hdrs = {NULL, 0};
+	pv_spec_t *dst;
+
+	if(get_str_fparam(&met, _m, (gparam_p)_met) != 0 || met.len <= 0) {
+		LM_ERR("METHOD has no value\n");
+		return -1;
+	}
+	if(get_str_fparam(&url, _m, (gparam_p)_url) != 0 || url.len <= 0) {
+		LM_ERR("URL has no value\n");
+		return -1;
+	}
+	if(_body && get_str_fparam(&body, _m, (gparam_p)_body) != 0) {
+		LM_ERR("DATA has no value\n");
+		return -1;
+	} else {
+		if(body.len == 0) {
+			body.s = NULL;
+		}
+	}
+
+	if(_hdrs && get_str_fparam(&hdrs, _m, (gparam_p)_hdrs) != 0) {
+		LM_ERR("HDRS has no value\n");
+		return -1;
+	} else {
+		if(hdrs.len == 0) {
+			hdrs.s = NULL;
+		}
+	}
+	dst = (pv_spec_t *)_result;
+
+	return ki_http_request_helper(_m, &met, &url, &body, &hdrs,
+			CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE, dst);
+}
+
 
 /*!
  * Wrapper for HTTP-GET (HDRS-Variant)
@@ -1202,7 +1274,7 @@ static int ki_http_query_request(
 		return -1;
 	}
 
-	return ki_http_request_helper(_m, met, url, body, hdrs, dst);
+	return ki_http_request_helper(_m, met, url, body, hdrs, 0, dst);
 }
 
 /*!
@@ -1244,7 +1316,7 @@ static int w_http_query_request(sip_msg_t *_m, char *_met, char *_url,
 	}
 	dst = (pv_spec_t *)_result;
 
-	return ki_http_request_helper(_m, &met, &url, &body, &hdrs, dst);
+	return ki_http_request_helper(_m, &met, &url, &body, &hdrs, 0, dst);
 }
 
 /*!
@@ -1401,6 +1473,11 @@ static sr_kemi_t sr_kemi_http_client_exports[] = {
 	},
 	{ str_init("http_client"), str_init("query_request"),
 		SR_KEMIP_INT, ki_http_query_request,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("http_client"), str_init("query_request_v2pk"),
+		SR_KEMIP_INT, ki_http_query_request_v2pk,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
 	},
