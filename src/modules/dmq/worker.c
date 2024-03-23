@@ -83,6 +83,7 @@ void worker_loop(int id)
 					LM_ERR("running job failed\n");
 					goto nextjob;
 				}
+				LM_DBG("running job executed\n");
 				/* add the body to the reply */
 				if(peer_response.body.s) {
 					if(set_reply_body(current_job->msg, &peer_response.body,
@@ -106,6 +107,7 @@ void worker_loop(int id)
 					LM_WARN("no reply sent\n");
 				}
 				worker->jobs_processed++;
+				LM_DBG("jobs_processed:%d\n", worker->jobs_processed);
 
 			nextjob:
 				/* if body given, free the lumps and free the body */
@@ -184,6 +186,7 @@ int add_dmq_job(struct sip_msg *msg, dmq_peer_t *peer)
 	}
 	if(dmq_worker_usleep <= 0) {
 		lock_release(&worker->lock);
+		LM_DBG("dmq_worker [%d %d] lock released\n", i, worker->pid);
 	}
 	return 0;
 error:

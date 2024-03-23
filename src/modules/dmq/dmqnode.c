@@ -363,7 +363,9 @@ void pkg_free_node(dmq_node_t *node)
 int dmq_node_del_filter(dmq_node_list_t *list, dmq_node_t *node, int filter)
 {
 	dmq_node_t *cur, **prev;
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
 	lock_get(&list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
 	cur = list->nodes;
 	prev = &list->nodes;
 	while(cur) {
@@ -373,12 +375,14 @@ int dmq_node_del_filter(dmq_node_list_t *list, dmq_node_t *node, int filter)
 				destroy_dmq_node(cur, 1);
 			}
 			lock_release(&list->lock);
+			LM_DBG("released dmq_node_list->lock\n");
 			return 1;
 		}
 		prev = &cur->next;
 		cur = cur->next;
 	}
 	lock_release(&list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	return 0;
 }
 
@@ -419,11 +423,14 @@ dmq_node_t *add_dmq_node(dmq_node_list_t *list, str *uri)
 		goto error;
 	}
 	LM_DBG("dmq node successfully created\n");
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
 	lock_get(&list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
 	newnode->next = list->nodes;
 	list->nodes = newnode;
 	list->count++;
 	lock_release(&list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	return newnode;
 error:
 	return NULL;
@@ -435,17 +442,21 @@ error:
 int update_dmq_node_status(dmq_node_list_t *list, dmq_node_t *node, int status)
 {
 	dmq_node_t *cur;
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
 	lock_get(&list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
 	cur = list->nodes;
 	while(cur) {
 		if(cmp_dmq_node(cur, node)) {
 			cur->status = status;
 			lock_release(&list->lock);
+			LM_DBG("released dmq_node_list->lock\n");
 			return 1;
 		}
 		cur = cur->next;
 	}
 	lock_release(&list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	return 0;
 }
 

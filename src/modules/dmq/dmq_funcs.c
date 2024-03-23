@@ -140,8 +140,9 @@ int is_from_remote_node(sip_msg_t *msg)
 	int result = -1;
 
 	ip = &msg->rcv.src_ip;
-
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
 	lock_get(&dmq_node_list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
 	node = dmq_node_list->nodes;
 
 	while(node) {
@@ -153,6 +154,7 @@ int is_from_remote_node(sip_msg_t *msg)
 	}
 done:
 	lock_release(&dmq_node_list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	return result;
 }
 
@@ -169,8 +171,9 @@ int bcast_dmq_message1(dmq_peer_t *peer, str *body, dmq_node_t *except,
 		int incl_inactive)
 {
 	dmq_node_t *node;
-
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
 	lock_get(&dmq_node_list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
 	node = dmq_node_list->nodes;
 	while(node) {
 		/* we do not send the message to the following:
@@ -193,9 +196,11 @@ int bcast_dmq_message1(dmq_peer_t *peer, str *body, dmq_node_t *except,
 		node = node->next;
 	}
 	lock_release(&dmq_node_list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	return 0;
 error:
 	lock_release(&dmq_node_list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	return -1;
 }
 
@@ -443,8 +448,9 @@ int ki_dmq_t_replicate_mode(struct sip_msg *msg, int mode)
 	if(sock) {
 		set_force_socket(msg, sock);
 	}
-
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
 	lock_get(&dmq_node_list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
 	node = dmq_node_list->nodes;
 	while(node) {
 		/* we do not send the message to the following:
@@ -476,9 +482,11 @@ int ki_dmq_t_replicate_mode(struct sip_msg *msg, int mode)
 		node = node->next;
 	}
 	lock_release(&dmq_node_list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	return 0;
 error:
 	lock_release(&dmq_node_list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	return -1;
 }
 
