@@ -70,39 +70,45 @@ str ka_ping_from = str_init("sip:keepalive@kamailio.org");
 int ka_counter_del = 5;
 
 
-static cmd_export_t cmds[] = {{"ka_is_alive", (cmd_function)w_cmd_is_alive, 1,
-									  fixup_spve_null, 0, ANY_ROUTE},
-		// internal API
-		{"ka_add_destination", (cmd_function)w_add_destination, 2,
-				fixup_add_destination, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
-		{"ka_del_destination", (cmd_function)w_del_destination, 2,
-				fixup_add_destination, 0, ANY_ROUTE},
-		{"bind_keepalive", (cmd_function)bind_keepalive, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"ka_is_alive", (cmd_function)w_cmd_is_alive, 1,
+		fixup_spve_null, 0, ANY_ROUTE},
+	// internal API
+	{"ka_add_destination", (cmd_function)w_add_destination, 2,
+		fixup_add_destination, 0, REQUEST_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
+	{"ka_del_destination", (cmd_function)w_del_destination, 2,
+		fixup_add_destination, 0, ANY_ROUTE},
+	{"bind_keepalive", (cmd_function)bind_keepalive, 0, 0, 0, 0},
+
+	{0, 0, 0, 0, 0, 0}
+};
 
 
 static param_export_t params[] = {
-		{"ping_interval", PARAM_INT, &ka_ping_interval},
-		{"destination", PARAM_STRING | USE_FUNC_PARAM,
-				(void *)ka_mod_add_destination},
-		{"ping_from", PARAM_STR, &ka_ping_from},
-		{"delete_counter", PARAM_INT, &ka_counter_del}, {0, 0, 0}};
+	{"ping_interval", PARAM_INT, &ka_ping_interval},
+	{"destination", PARAM_STRING | USE_FUNC_PARAM,
+		(void *)ka_mod_add_destination},
+	{"ping_from", PARAM_STR, &ka_ping_from},
+	{"delete_counter", PARAM_INT, &ka_counter_del},
+	{0, 0, 0}
+};
 
 
 /** module exports */
 struct module_exports exports = {
-		"keepalive",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	"keepalive",	 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	params,			 /* param exports */
+	0,				 /* RPC method exports */
+	0,				 /* pseudo-variables exports */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	0,				 /* per-child init function */
+	mod_destroy		 /* module destroy function */
 };
+/* clang-format on */
 
 
 /**
