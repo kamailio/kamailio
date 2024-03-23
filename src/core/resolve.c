@@ -1526,8 +1526,8 @@ size_t create_srv_pref_list(char *proto, struct dns_srv_proto *list)
 			if(naptr_proto_supported(i) == 0) {
 				continue;
 			} else {
-				list[i - 1].proto_pref = tmp.proto_pref;
-				list[i - 1].proto = i;
+				list[list_len].proto_pref = tmp.proto_pref;
+				list[list_len].proto = i;
 				list_len++;
 			}
 		};
