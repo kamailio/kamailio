@@ -306,6 +306,17 @@ static tls_domains_cfg_t* tls_use_modparams(void)
 }
 #endif
 
+/* unconditionally perform thread-local clean-up
+ * especially needed with libssl3 uses
+ * (bookworm/jammy/noble/el9)
+ */
+static void fork_child(void)
+{
+    for(int k = 0; k < 16; k++) {
+        if(pthread_getspecific(k) != 0)
+            pthread_setspecific(k, 0x0);
+    }
+}
 
 static int mod_init(void)
 {
@@ -407,6 +418,9 @@ static int mod_init(void)
 	if(sr_tls_event_callback.s == NULL || sr_tls_event_callback.len <= 0) {
 		tls_lookup_event_routes();
 	}
+        /* minimal fix for libssl 1.1.1/3.x uses
+         */
+        pthread_atfork(NULL, NULL, &fork_child);
 	return 0;
 error:
 	tls_h_mod_destroy_f();
@@ -634,11 +648,6 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 		return -1;
 
 	register_tls_hooks(&tls_h);
-
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-	LM_DBG("setting cryptorand random engine\n");
-	RAND_set_rand_method(RAND_ksr_cryptorand_method());
-#endif
 
 	sr_kemi_modules_add(sr_kemi_tls_exports);
 
