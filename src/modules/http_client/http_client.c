@@ -1135,6 +1135,11 @@ static int w_http_get_script(
 	return ki_http_request_helper(_m, &met, &url, &body, &hdrs, 0, dst);
 }
 
+/* CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE added in libcurl 7.49.0 */
+#if LIBCURL_VERSION_NUM < 0x073100
+#define CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE 0
+#endif
+
 /*!
  * KEMI function to perform request with headers and body
  */
