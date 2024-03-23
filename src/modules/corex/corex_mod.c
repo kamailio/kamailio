@@ -444,7 +444,7 @@ static int corex_dns_cache_param_add(str *pval)
 			}
 		} else if(pit->name.len == 8
 				  && strncasecmp(pit->name.s, "priority", 8) == 0) {
-			if(dns_flags == 0) {
+			if(dns_priority == 0) {
 				if(str2sint(&pit->body, &dns_priority) < 0) {
 					LM_ERR("invalid priority: %.*s\n", pit->body.len,
 							pit->body.s);
@@ -453,7 +453,7 @@ static int corex_dns_cache_param_add(str *pval)
 			}
 		} else if(pit->name.len == 6
 				  && strncasecmp(pit->name.s, "weight", 6) == 0) {
-			if(dns_flags == 0) {
+			if(dns_weight == 0) {
 				if(str2sint(&pit->body, &dns_weight) < 0) {
 					LM_ERR("invalid weight: %.*s\n", pit->body.len,
 							pit->body.s);
@@ -462,7 +462,7 @@ static int corex_dns_cache_param_add(str *pval)
 			}
 		} else if(pit->name.len == 4
 				  && strncasecmp(pit->name.s, "port", 4) == 0) {
-			if(dns_flags == 0) {
+			if(dns_port == 0) {
 				if(str2sint(&pit->body, &dns_port) < 0) {
 					LM_ERR("invalid port: %.*s\n", pit->body.len, pit->body.s);
 					return -1;
