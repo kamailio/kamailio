@@ -163,66 +163,72 @@ enum http_time_name_t
 	E_HT_STARTTRANSFER
 };
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"http_async_query", (cmd_function)w_http_async_query, 2,
-				fixup_spve_spve, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"http_async_query", (cmd_function)w_http_async_query, 2,
+			fixup_spve_spve, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{"workers", INT_PARAM, &num_workers},
-		{"connection_timeout", INT_PARAM, &http_timeout},
-		{"hash_size", INT_PARAM, &hash_size},
-		{"tls_version", INT_PARAM, &tls_version},
-		{"tls_verify_host", INT_PARAM, &tls_verify_host},
-		{"tls_verify_peer", INT_PARAM, &tls_verify_peer},
-		{"curl_verbose", INT_PARAM, &curl_verbose},
-		{"curl_follow_redirect", INT_PARAM, &curl_follow_redirect},
-		{"tls_client_cert", PARAM_STRING, &tls_client_cert},
-		{"tls_client_key", PARAM_STRING, &tls_client_key},
-		{"tls_ca_path", PARAM_STRING, &tls_ca_path},
-		{"memory_manager", PARAM_STRING, &memory_manager},
-		{"authmethod", PARAM_INT, &default_authmethod},
-		{"tcp_keepalive", INT_PARAM, &tcp_keepalive},
-		{"tcp_ka_idle", INT_PARAM, &tcp_ka_idle},
-		{"tcp_ka_interval", INT_PARAM, &tcp_ka_interval}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"workers", INT_PARAM, &num_workers},
+	{"connection_timeout", INT_PARAM, &http_timeout},
+	{"hash_size", INT_PARAM, &hash_size},
+	{"tls_version", INT_PARAM, &tls_version},
+	{"tls_verify_host", INT_PARAM, &tls_verify_host},
+	{"tls_verify_peer", INT_PARAM, &tls_verify_peer},
+	{"curl_verbose", INT_PARAM, &curl_verbose},
+	{"curl_follow_redirect", INT_PARAM, &curl_follow_redirect},
+	{"tls_client_cert", PARAM_STRING, &tls_client_cert},
+	{"tls_client_key", PARAM_STRING, &tls_client_key},
+	{"tls_ca_path", PARAM_STRING, &tls_ca_path},
+	{"memory_manager", PARAM_STRING, &memory_manager},
+	{"authmethod", PARAM_INT, &default_authmethod},
+	{"tcp_keepalive", INT_PARAM, &tcp_keepalive},
+	{"tcp_ka_idle", INT_PARAM, &tcp_ka_idle},
+	{"tcp_ka_interval", INT_PARAM, &tcp_ka_interval},
+	{0, 0, 0}
+};
 
 /*! \brief We expose internal variables via the statistic framework below.*/
-stat_export_t mod_stats[] = {{"requests", STAT_NO_RESET, &requests},
-		{"replies", STAT_NO_RESET, &replies},
-		{"errors", STAT_NO_RESET, &errors},
-		{"timeouts", STAT_NO_RESET, &timeouts}, {0, 0, 0}};
+stat_export_t mod_stats[] = {
+	{"requests", STAT_NO_RESET, &requests},
+	{"replies", STAT_NO_RESET, &replies},
+	{"errors", STAT_NO_RESET, &errors},
+	{"timeouts", STAT_NO_RESET, &timeouts}, {0, 0, 0}};
 
 static pv_export_t pvs[] = {
-		{STR_STATIC_INIT("http_hdr"), PVT_HDR, ah_get_hdr, 0,
-				w_pv_parse_hdr_name, pv_parse_index, 0, 0},
-		{STR_STATIC_INIT("http_rr"), PVT_OTHER, ah_get_reason, 0, 0, 0, 0, 0},
-		{STR_STATIC_INIT("http_rs"), PVT_OTHER, ah_get_status, 0, 0, 0, 0, 0},
-		{STR_STATIC_INIT("http_rb"), PVT_MSG_BODY, ah_get_msg_body, 0, 0, 0, 0,
-				0},
-		{STR_STATIC_INIT("http_bs"), PVT_OTHER, ah_get_body_size, 0, 0, 0, 0,
-				0},
-		{STR_STATIC_INIT("http_mb"), PVT_OTHER, ah_get_msg_buf, 0, 0, 0, 0, 0},
-		{STR_STATIC_INIT("http_ml"), PVT_OTHER, ah_get_msg_len, 0, 0, 0, 0, 0},
-		{STR_STATIC_INIT("http_ok"), PVT_OTHER, ah_get_ok, 0, 0, 0, 0, 0},
-		{STR_STATIC_INIT("http_err"), PVT_OTHER, ah_get_err, 0, 0, 0, 0, 0},
-		{STR_STATIC_INIT("http_time"), PVT_OTHER, ah_get_time, 0,
-				ah_parse_time_name, 0, 0, 0},
-		{STR_STATIC_INIT("http_req"), PVT_OTHER, pv_get_null, ah_set_req,
-				ah_parse_req_name, 0, 0, 0},
-		{STR_STATIC_INIT("http_req_id"), PVT_OTHER, ah_get_id, 0, 0, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{STR_STATIC_INIT("http_hdr"), PVT_HDR, ah_get_hdr, 0,
+			w_pv_parse_hdr_name, pv_parse_index, 0, 0},
+	{STR_STATIC_INIT("http_rr"), PVT_OTHER, ah_get_reason, 0, 0, 0, 0, 0},
+	{STR_STATIC_INIT("http_rs"), PVT_OTHER, ah_get_status, 0, 0, 0, 0, 0},
+	{STR_STATIC_INIT("http_rb"), PVT_MSG_BODY, ah_get_msg_body, 0, 0, 0, 0, 0},
+	{STR_STATIC_INIT("http_bs"), PVT_OTHER, ah_get_body_size, 0, 0, 0, 0, 0},
+	{STR_STATIC_INIT("http_mb"), PVT_OTHER, ah_get_msg_buf, 0, 0, 0, 0, 0},
+	{STR_STATIC_INIT("http_ml"), PVT_OTHER, ah_get_msg_len, 0, 0, 0, 0, 0},
+	{STR_STATIC_INIT("http_ok"), PVT_OTHER, ah_get_ok, 0, 0, 0, 0, 0},
+	{STR_STATIC_INIT("http_err"), PVT_OTHER, ah_get_err, 0, 0, 0, 0, 0},
+	{STR_STATIC_INIT("http_time"), PVT_OTHER, ah_get_time, 0,
+			ah_parse_time_name, 0, 0, 0},
+	{STR_STATIC_INIT("http_req"), PVT_OTHER, pv_get_null, ah_set_req,
+			ah_parse_req_name, 0, 0, 0},
+	{STR_STATIC_INIT("http_req_id"), PVT_OTHER, ah_get_id, 0, 0, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 struct module_exports exports = {
-		"http_async_client", /* module name */
-		DEFAULT_DLFLAGS,	 /* dlopen flags */
-		cmds,				 /* exported functions */
-		params,				 /* exported parameters */
-		0,					 /* RPC method exports */
-		pvs,				 /* exported pseudo-variables */
-		0,					 /* response handling function */
-		mod_init,			 /* module initialization function */
-		child_init,			 /* per-child init function */
-		mod_destroy			 /* module destroy function */
+	"http_async_client", /* module name */
+	DEFAULT_DLFLAGS,	 /* dlopen flags */
+	cmds,				 /* exported functions */
+	params,				 /* exported parameters */
+	0,					 /* RPC method exports */
+	pvs,				 /* exported pseudo-variables */
+	0,					 /* response handling function */
+	mod_init,			 /* module initialization function */
+	child_init,			 /* per-child init function */
+	mod_destroy			 /* module destroy function */
 };
+/* clang-format on */
 
 
 /**
