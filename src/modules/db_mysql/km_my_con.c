@@ -43,6 +43,16 @@
 extern int db_mysql_opt_ssl_mode;
 extern char *db_mysql_opt_ssl_ca;
 
+#if MYSQL_VERSION_ID > 50012
+#ifdef MARIADB_VERSION_ID
+#define KSR_MYSQL_OPT_RECONNECT
+#else
+#if MYSQL_VERSION_ID < 80034
+#endif
+#define KSR_MYSQL_OPT_RECONNECT
+#endif
+#endif
+
 /*! \brief
  * Create a new connection structure,
  * open the MySQL connection and set reference count to 1
@@ -53,7 +63,7 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 	char *host, *grp, *egrp;
 	unsigned int connection_flag = 0;
 
-#if MYSQL_VERSION_ID > 50012
+#ifdef KSR_MYSQL_OPT_RECONNECT
 #if MYSQL_VERSION_ID > 80000 && !defined MARIADB_BASE_VERSION
 	bool rec;
 #else
@@ -172,7 +182,7 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 		mysql_options(
 				ptr->con, MYSQL_OPT_SSL_CA, (const void *)db_mysql_opt_ssl_ca);
 
-#if MYSQL_VERSION_ID > 50012
+#ifdef KSR_MYSQL_OPT_RECONNECT
 	/* set reconnect flag if enabled */
 	if(db_mysql_auto_reconnect) {
 		rec = 1;
