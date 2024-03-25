@@ -48,8 +48,8 @@ extern char *db_mysql_opt_ssl_ca;
 #define KSR_MYSQL_OPT_RECONNECT
 #else
 #if MYSQL_VERSION_ID < 80034
-#endif
 #define KSR_MYSQL_OPT_RECONNECT
+#endif
 #endif
 #endif
 
