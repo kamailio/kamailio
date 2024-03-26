@@ -26,8 +26,8 @@
 
 #include "../../core/str.h"
 
-typedef int (*cfgutils_lock_f)(str *lkey);
-typedef int (*cfgutils_unlock_f)(str *lkey);
+typedef int (*cfgutils_lock_f)(str *lkey, str *lkey2);
+typedef int (*cfgutils_unlock_f)(str *lkey, str *lkey2);
 
 /**
  * @brief CFGUTILS API structure

@@ -145,9 +145,14 @@ static cmd_export_t cmds[] = {
 				ANY_ROUTE},
 		{"is_gflag", (cmd_function)is_gflag, 1, fixup_gflags, 0, ANY_ROUTE},
 		{"lock", (cmd_function)w_cfg_lock, 1, fixup_spve_null, 0, ANY_ROUTE},
+		{"lock", (cmd_function)w_cfg_lock, 2, fixup_spve_spve, 0, ANY_ROUTE},
 		{"unlock", (cmd_function)w_cfg_unlock, 1, fixup_spve_null, 0,
 				ANY_ROUTE},
+		{"unlock", (cmd_function)w_cfg_unlock, 2, fixup_spve_spve, 0,
+				ANY_ROUTE},
 		{"trylock", (cmd_function)w_cfg_trylock, 1, fixup_spve_null, 0,
+				ANY_ROUTE},
+		{"trylock", (cmd_function)w_cfg_trylock, 2, fixup_spve_spve, 0,
 				ANY_ROUTE},
 		{"core_hash", (cmd_function)w_core_hash, 3, fixup_core_hash, 0,
 				ANY_ROUTE},
@@ -669,19 +674,34 @@ static int ki_shm_summary(sip_msg_t *msg)
 	return 1;
 }
 
-static int cfg_lock_helper(str *lkey, int mode)
+static int cfg_lock_helper(str *lkey, str *lkey2, int mode)
 {
 	unsigned int pos;
+	str *key2 = NULL;
+
+	if(lkey2 && lkey2->len > 0) {
+		key2 = lkey2;
+	}
 
 	if(_cfg_lock_set == NULL) {
-		LM_ERR("lock set not initialized (attempt to do op: %d on: %.*s) -"
-			   " see param lock_set_size\n",
-				mode, lkey->len, lkey->s);
+		if(key2) {
+			LM_ERR("lock set not initialized (attempt to do op: %d on:[%.*s "
+				   "%.*s]) - see param lock_set_size\n",
+					mode, STR_FMT(lkey), STR_FMT(lkey2));
+		} else {
+			LM_ERR("lock set not initialized (attempt to do op: %d on:[%.*s]) "
+				   "- see param lock_set_size\n",
+					mode, STR_FMT(lkey));
+		}
 		return -1;
 	}
-	pos = core_case_hash(lkey, 0, _cfg_lock_size);
-
-	LM_DBG("cfg_lock mode %d on %u (%.*s)\n", mode, pos, lkey->len, lkey->s);
+	pos = core_case_hash(lkey, key2, _cfg_lock_size);
+	if(key2) {
+		LM_DBG("cfg_lock mode %d on %u (%.*s %.*s)\n", mode, pos, STR_FMT(lkey),
+				STR_FMT(lkey2));
+	} else {
+		LM_DBG("cfg_lock mode %d on %u (%.*s)\n", mode, pos, STR_FMT(lkey));
+	}
 
 	if(mode == 0) {
 		/* Lock */
@@ -707,45 +727,65 @@ static int cfg_lock_helper(str *lkey, int mode)
 
 static int cfg_lock(sip_msg_t *msg, str *lkey)
 {
-	return cfg_lock_helper(lkey, 0);
+	return cfg_lock_helper(lkey, NULL, 0);
 }
 
 static int cfg_unlock(sip_msg_t *msg, str *lkey)
 {
-	return cfg_lock_helper(lkey, 1);
+	return cfg_lock_helper(lkey, NULL, 1);
 }
 
 static int cfg_trylock(sip_msg_t *msg, str *lkey)
 {
-	return cfg_lock_helper(lkey, 2);
+	return cfg_lock_helper(lkey, NULL, 2);
 }
 
-static int w_cfg_lock_wrapper(struct sip_msg *msg, gparam_p key, int mode)
+static int cfg_lock_key2(sip_msg_t *msg, str *lkey, str *lkey2)
 {
-	str s;
+	return cfg_lock_helper(lkey, lkey2, 0);
+}
+
+static int cfg_unlock_key2(sip_msg_t *msg, str *lkey, str *lkey2)
+{
+	return cfg_lock_helper(lkey, lkey2, 1);
+}
+
+static int cfg_trylock_key2(sip_msg_t *msg, str *lkey, str *lkey2)
+{
+	return cfg_lock_helper(lkey, lkey2, 2);
+}
+
+static int w_cfg_lock_wrapper(
+		struct sip_msg *msg, gparam_p key, gparam_p key2, int mode)
+{
+	str s1, s2;
 	if(key == NULL) {
 		return -1;
 	}
-	if(fixup_get_svalue(msg, key, &s) != 0) {
+	if(fixup_get_svalue(msg, key, &s1) != 0) {
 		LM_ERR("cannot get first parameter\n");
 		return -1;
 	}
-	return cfg_lock_helper(&s, mode);
+	if(key2 != NULL && fixup_get_svalue(msg, key2, &s2) != 0) {
+		LM_ERR("cannot get second parameter\n");
+		return -1;
+	}
+	return cfg_lock_helper(&s1, &s2, mode);
 }
 
-static int w_cfg_lock(struct sip_msg *msg, char *key, char *s2)
+static int w_cfg_lock(struct sip_msg *msg, char *key, char *key2)
 {
-	return w_cfg_lock_wrapper(msg, (gparam_p)key, 0);
+	return w_cfg_lock_wrapper(msg, (gparam_p)key, (gparam_p)key2, 0);
 }
 
-static int w_cfg_unlock(struct sip_msg *msg, char *key, char *s2)
+static int w_cfg_unlock(struct sip_msg *msg, char *key, char *key2)
 {
-	return w_cfg_lock_wrapper(msg, (gparam_p)key, 1);
+	return w_cfg_lock_wrapper(msg, (gparam_p)key, (gparam_p)key2, 1);
 }
 
-static int w_cfg_trylock(struct sip_msg *msg, char *key, char *s2)
+static int w_cfg_trylock(struct sip_msg *msg, char *key, char *key2)
 {
-	return w_cfg_lock_wrapper(msg, (gparam_p)key, 2);
+	return w_cfg_lock_wrapper(msg, (gparam_p)key, (gparam_p)key2, 2);
 }
 
 /*! Check if a route block exists - only request routes
@@ -903,17 +943,17 @@ static void mod_destroy(void)
 /**
  *
  */
-int cfgutils_lock(str *lkey)
+int cfgutils_lock(str *lkey, str *lkey2)
 {
-	return cfg_lock_helper(lkey, 0);
+	return cfg_lock_helper(lkey, lkey2, 0);
 }
 
 /**
  *
  */
-int cfgutils_unlock(str *lkey)
+int cfgutils_unlock(str *lkey, str *lkey2)
 {
-	return cfg_lock_helper(lkey, 1);
+	return cfg_lock_helper(lkey, lkey2, 1);
 }
 
 static int fixup_core_hash(void **param, int param_no)
@@ -995,14 +1035,29 @@ static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("cfgutils"), str_init("lock"),
+		SR_KEMIP_INT, cfg_lock_key2,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("cfgutils"), str_init("unlock"),
 		SR_KEMIP_INT, cfg_unlock,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("cfgutils"), str_init("unlock"),
+		SR_KEMIP_INT, cfg_unlock_key2,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("cfgutils"), str_init("trylock"),
 		SR_KEMIP_INT, cfg_trylock,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("trylock"),
+		SR_KEMIP_INT, cfg_trylock_key2,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("cfgutils"), str_init("rand_set_prob"),
