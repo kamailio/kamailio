@@ -2783,20 +2783,29 @@ static const luaL_Reg _sr_sanity_Map[] = {
 static int lua_sr_cfgutils_lock(lua_State *L)
 {
 	int ret;
-	str lkey;
+	str lkey, lkey2;
 
 	if(!(_sr_lua_exp_reg_mods & SR_LUA_EXP_MOD_CFGUTILS)) {
 		LM_WARN("weird: cfgutils function executed but module not "
 				"registered\n");
 		return app_lua_return_error(L);
 	}
-	if(lua_gettop(L) != 1) {
+	ret = lua_gettop(L);
+	if(ret < 1 || ret > 3) {
 		LM_WARN("invalid number of parameters from Lua\n");
 		return app_lua_return_error(L);
 	}
+	if(ret > 1) {
+		lkey2.s = (char *)lua_tostring(L, -1);
+		lkey2.len = strlen(lkey2.s);
+	}
 	lkey.s = (char *)lua_tostring(L, -1);
 	lkey.len = strlen(lkey.s);
-	ret = _lua_cfgutilsb.mlock(&lkey);
+	if(ret > 1) {
+		ret = _lua_cfgutilsb.mlock(&lkey, &lkey2);
+	} else {
+		ret = _lua_cfgutilsb.mlock(&lkey, NULL);
+	}
 
 	return app_lua_return_int(L, ret);
 }
@@ -2808,20 +2817,29 @@ static int lua_sr_cfgutils_lock(lua_State *L)
 static int lua_sr_cfgutils_unlock(lua_State *L)
 {
 	int ret;
-	str lkey;
+	str lkey, lkey2;
 
 	if(!(_sr_lua_exp_reg_mods & SR_LUA_EXP_MOD_CFGUTILS)) {
 		LM_WARN("weird: cfgutils function executed but module not "
 				"registered\n");
 		return app_lua_return_error(L);
 	}
-	if(lua_gettop(L) != 1) {
+	ret = lua_gettop(L);
+	if(ret < 1 || ret > 3) {
 		LM_WARN("invalid number of parameters from Lua\n");
 		return app_lua_return_error(L);
 	}
+	if(ret > 1) {
+		lkey2.s = (char *)lua_tostring(L, -1);
+		lkey2.len = strlen(lkey2.s);
+	}
 	lkey.s = (char *)lua_tostring(L, -1);
 	lkey.len = strlen(lkey.s);
-	ret = _lua_cfgutilsb.munlock(&lkey);
+	if(ret > 1) {
+		ret = _lua_cfgutilsb.munlock(&lkey, &lkey2);
+	} else {
+		ret = _lua_cfgutilsb.munlock(&lkey, NULL);
+	}
 
 	return app_lua_return_int(L, ret);
 }
