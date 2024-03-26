@@ -39,21 +39,7 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
-
-
-/**
- *
- */
-typedef struct pkg_proc_stats
-{
-	int rank;
-	unsigned int pid;
-	unsigned long used;
-	unsigned long available;
-	unsigned long real_used;
-	unsigned long total_frags;
-	unsigned long total_size;
-} pkg_proc_stats_t;
+#include "pkg_stats.h"
 
 /**
  *
@@ -63,7 +49,23 @@ static pkg_proc_stats_t *_pkg_proc_stats_list = NULL;
 /**
  *
  */
+pkg_proc_stats_t *get_pkg_proc_stats_list(void)
+{
+	return _pkg_proc_stats_list;
+}
+
+/**
+ *
+ */
 static int _pkg_proc_stats_no = 0;
+
+/**
+ *
+ */
+int get_pkg_proc_stats_no(void)
+{
+	return _pkg_proc_stats_no;
+}
 
 /**
  *

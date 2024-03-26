@@ -41,6 +41,7 @@
 #include "core_stats.h"
 #include "pkg_stats.h"
 #include "mod_stats.h"
+#include "api.h"
 
 
 MODULE_VERSION
@@ -105,6 +106,7 @@ static cmd_export_t cmds[] = {
 	{"setdebug", (cmd_function)w_setdebug, 1, fixup_igp_null,
 			fixup_free_igp_null, ANY_ROUTE},
 	{"resetdebug", (cmd_function)w_resetdebug, 0, 0, 0, ANY_ROUTE},
+	{"bind_kex", (cmd_function)bind_kex, 0, 0, 0, 0},
 
 	{0, 0, 0, 0, 0, 0}
 };
