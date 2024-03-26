@@ -35,6 +35,7 @@
 
 #include "../../core/counters.h"
 #include "../../core/ut.h"
+#include "../../core/pt.h"
 
 #include "prom.h"
 #include "prom_metric.h"
@@ -204,6 +205,74 @@ static int metric_generate(
 }
 
 /**
+ * @brief Generate a string suitable for Prometheus pkgmem metric.
+ *
+ * @return 0 on success.
+ */
+static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
+{
+	int i = 0;
+	uint64_t ts;
+
+	if(get_timestamp(&ts)) {
+		LM_ERR("Fail to get timestamp\n");
+		goto error;
+	}
+
+	for(; i < pkg_proc_stats_no; i++) {
+		if(prom_body_printf(ctx,
+				   "kamailio_pkgmem_used{pid=\"%u\", rank=\"%d\", desc=\"%s\"} "
+				   "%d %" PRIu64 "\n",
+				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
+				   pkg_proc_stats[i].used, ts)
+				== -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_printf(ctx,
+				   "kamailio_pkgmem_available{pid=\"%u\", rank=\"%d\", "
+				   "desc=\"%s\"} %d %" PRIu64 "\n",
+				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
+				   pkg_proc_stats[i].available, ts)
+				== -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_printf(ctx,
+				   "kamailio_pkgmem_real_used{pid=\"%u\", rank=\"%d\", "
+				   "desc=\"%s\"} %d %" PRIu64 "\n",
+				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
+				   pkg_proc_stats[i].real_used, ts)
+				== -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_printf(ctx,
+				   "kamailio_pkgmem_total_frags{pid=\"%u\", rank=\"%d\", "
+				   "desc=\"%s\"} %d %" PRIu64 "\n",
+				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
+				   pkg_proc_stats[i].total_frags, ts)
+				== -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_printf(ctx,
+				   "kamailio_pkgmem_total_size{pid=\"%u\", rank=\"%d\" "
+				   "desc=\"%s\"} %d %" PRIu64 "\n",
+				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
+				   pkg_proc_stats[i].total_size, ts)
+				== -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+	}
+	return 0;
+
+error:
+	return -1;
+}
+
+/**
  * @brief Statistic getter callback.
  */
 static void prom_get_grp_vars_cbk(void *p, str *g, str *n, counter_handle_t h)
@@ -239,6 +308,13 @@ int prom_stats_get(prom_ctx_t *ctx, str *stat)
 	if(prom_metric_list_print(ctx)) {
 		LM_ERR("Fail to print user defined metrics\n");
 		return -1;
+	}
+
+	if(pkgmem_stats_enabled) {
+		if(prom_metric_pkgmem_print(ctx)) {
+			LM_ERR("Fail to print pkgmem metrics\n");
+			return -1;
+		}
 	}
 
 	LM_DBG("Statistics for: %.*s\n", stat->len, stat->s);
