@@ -118,6 +118,7 @@ struct cfg_group_tm
 	int unmatched_cancel;
 	int default_code;
 	int reparse_invite;
+	int tm_dns_failover_branch_failure;
 	int tm_blst_503;
 	int tm_blst_503_default;
 	int tm_blst_503_min;

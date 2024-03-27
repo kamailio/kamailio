@@ -1663,4 +1663,24 @@ modparam("tm", "failover_reply_codes", "code=403;code=488;class=5")
 		</example>
 	</section>
 
+	<section id="tm.p.dns_failover_branch_failure">
+		<title><varname>dns_failover_branch_failure</varname> (int)</title>
+		<para>
+			if set to 1, branch_failure route will be executed in case 503 reply
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>dns_failover_branch_failure</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("tm", "dns_failover_branch_failure", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>
