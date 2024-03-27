@@ -553,8 +553,9 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token)
 	} else if(ret == -1) {
 		LM_INFO("failed to decode flow token\n");
 		return -1;
-	} else if(!ip_addr_cmp(&rcv->src_ip, &_m->rcv.src_ip)
-			  || rcv->src_port != _m->rcv.src_port) {
+	} else if(!_m->rcv.proto_reserved2
+			  && (!ip_addr_cmp(&rcv->src_ip, &_m->rcv.src_ip)
+					  || rcv->src_port != _m->rcv.src_port)) {
 		LM_DBG("\"incoming\" request found. Using flow-token for "
 			   "routing\n");
 

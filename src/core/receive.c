@@ -292,7 +292,8 @@ int ksr_evrt_pre_routing(sip_msg_t *msg)
  *  WARNING: buf must be 0 terminated (buf[len]=0) or some things might
  * break (e.g.: modules/textops)
  */
-int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
+int _receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info,
+		receive_info_t *haproxy_rcv_info)
 {
 	struct sip_msg *msg = NULL;
 	struct run_act_ctx ctx;
@@ -360,6 +361,10 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 	msg->pid = my_pid();
 	msg->set_global_address = default_global_address;
 	msg->set_global_port = default_global_port;
+
+	if(haproxy_rcv_info) {
+		msg->haproxy_rcv = *haproxy_rcv_info;
+	}
 
 	if(likely(sr_msg_time == 1))
 		msg_set_time(msg);

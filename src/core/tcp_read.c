@@ -1446,7 +1446,7 @@ int receive_tcp_msg(char *tcpbuf, unsigned int len,
 #endif
 	if(unlikely(con->req.flags & F_TCP_REQ_HEP3))
 		return hep3_process_msg(tcpbuf, len, rcv_info, con);
-	ret = receive_msg(buf, len, rcv_info);
+	ret = _receive_msg(buf, len, rcv_info, &con->haproxy_rcv);
 	if(ksr_tcp_script_mode & TCP_SCRIPT_MODE_CONTINUE) {
 		return 0;
 	}
