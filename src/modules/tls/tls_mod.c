@@ -345,7 +345,8 @@ static tls_domains_cfg_t* tls_use_modparams(void)
  */
 static void fork_child(void)
 {
-	for(int k = 0; k < 16; k++) {
+	int k = 0;
+	for(k = 0; k < 16; k++) {
 		if(pthread_getspecific(k) != 0)
 			pthread_setspecific(k, 0x0);
 	}
