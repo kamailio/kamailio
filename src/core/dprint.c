@@ -573,31 +573,31 @@ static int _ksr_slog_json_flags = 0;
 	".callid\": \"%.*s\"%s%s%.*s%s,"                                     \
 	" \"%smessage\": %s%.*s%s }%s"
 
-#define KSR_SLOG_STDERR_JSON_FMT                                         \
-	"{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\","                     \
-	" \"module\": \"%s\", \"file\": \"%s\","                             \
-	" \"line\": %d, \"function\": \"%s\"%.*s%s%s%.*s%s, \"%smessage\": " \
+#define KSR_SLOG_STDERR_JSON_FMT                                              \
+	"{ \"time\": \"%s.%09luZ\", \"idx\": %d, \"pid\": %d, \"level\": \"%s\"," \
+	" \"module\": \"%s\", \"file\": \"%s\","                                  \
+	" \"line\": %d, \"function\": \"%s\"%.*s%s%s%.*s%s, \"%smessage\": "      \
 	"%s%.*s%s }%s"
 
-#define KSR_SLOG_STDERR_JSON_CFMT                                           \
-	"{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\","                        \
-	" \"module\": \"%s\", \"file\": \"%s\","                                \
-	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\"%s%s%.*s%s, " \
+#define KSR_SLOG_STDERR_JSON_CFMT                                             \
+	"{ \"time\": \"%s.%09luZ\", \"idx\": %d, \"pid\": %d, \"level\": \"%s\"," \
+	" \"module\": \"%s\", \"file\": \"%s\","                                  \
+	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\"%s%s%.*s%s, "   \
 	"\"%smessage\": %s%.*s%s }%s"
 
-#define KSR_SLOG_STDERR_JSON_PFMT                              \
-	"{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME    \
-	".level\": \"%s\","                                        \
-	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
-	" \"" NAME ".line\": %d, \"" NAME                          \
+#define KSR_SLOG_STDERR_JSON_PFMT                                       \
+	"{ \"" NAME ".time\": \"%s.%09luZ\", \"" NAME ".idx\": %d, \"" NAME \
+	".pid\": %d, \"" NAME ".level\": \"%s\","                           \
+	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\","          \
+	" \"" NAME ".line\": %d, \"" NAME                                   \
 	".function\": \"%s\"%.*s\"%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
 
-#define KSR_SLOG_STDERR_JSON_CPFMT                                   \
-	"{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME          \
-	".level\": \"%s\","                                              \
-	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\","       \
-	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME \
-	".callid\": \"%.*s\"%s%s%.*s%s,"                                 \
+#define KSR_SLOG_STDERR_JSON_CPFMT                                      \
+	"{ \"" NAME ".time\": \"%s.%09luZ\", \"" NAME ".idx\": %d, \"" NAME \
+	".pid\": %d, \"" NAME ".level\": \"%s\","                           \
+	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\","          \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME    \
+	".callid\": \"%.*s\"%s%s%.*s%s,"                                    \
 	" \"%smessage\": %s%.*s%s }%s"
 
 #ifdef HAVE_PTHREAD
@@ -735,9 +735,9 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 		} else {
 			if(unlikely(log_color))
 				dprint_color(kld->v_level);
-			fprintf(stderr, efmt, process_no, my_pid(), kld->v_lname,
-					kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func,
-					LOGV_CALLID_LEN, LOGV_CALLID_STR, prname, pmb,
+			fprintf(stderr, efmt, iso8601buf, _tp.tv_nsec, process_no, my_pid(),
+					kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
+					kld->v_func, LOGV_CALLID_LEN, LOGV_CALLID_STR, prname, pmb,
 					LOGV_PREFIX_LEN, LOGV_PREFIX_STR, pme, prefmsg, smb,
 					s_out.len, s_out.s, sme,
 					(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL) ? ""
