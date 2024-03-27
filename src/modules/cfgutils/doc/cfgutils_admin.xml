@@ -485,16 +485,19 @@ if(is_gflag("4"))
 		</example>
 	</section>
 	<section id="cfgutils.f.lock">
-		<title><function moreinfo="none">lock(key)</function></title>
+		<title><function moreinfo="none">lock(key [, key2])</function></title>
 		<para>
 		Lock the key. Can be used to synchronize operations in config file,
-		a hash id is computed over the key and appropriate lock is set in the
+		a hash id is computed over the keys and appropriate lock is set in the
 		lock array controlled by parameter "lock_set_size". Do not use lock()
 		after another lock() unless you are sure the keys hit different array
 		entries.
 		</para>
 		<para>
 		<quote>key</quote> can be static string or string with PVs.
+		</para>
+		<para>
+		<quote>key2</quote> is optional and can be static string or string with PVs.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -510,13 +513,16 @@ lock("$rU");
 		</example>
 	</section>
 	<section id="cfgutils.f.trylock">
-		<title><function moreinfo="none">trylock(key)</function></title>
+		<title><function moreinfo="none">trylock(key [, key2])</function></title>
 		<para>
 		Try to lock the key. If the lock can not be obtained (possibly already locked),
 		the function returns an error and script execution continues.
 		</para>
 		<para>
 		<quote>key</quote> can be static string or string with PVs.
+		</para>
+		<para>
+		<quote>key2</quote> is optional and can be static string or string with PVs.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -535,12 +541,15 @@ if (trylock("$rU")) {
 		</example>
 	</section>
 	<section id="cfgutils.f.unlock">
-		<title><function moreinfo="none">unlock(key)</function></title>
+		<title><function moreinfo="none">unlock(key [, key2])</function></title>
 		<para>
 		Unlock the key.
 		</para>
 		<para>
 		<quote>key</quote> can be static string or string with PVs.
+		</para>
+		<para>
+		<quote>key2</quote> is optional and can be static string or string with PVs.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -854,4 +863,3 @@ if (rand_event()) {
 	</section>
 </section>
 </chapter>
-
