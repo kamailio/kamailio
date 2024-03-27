@@ -100,6 +100,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
+	int i = 0;
 	LM_DBG("initializing\n");
 	LM_DBG("base_folder = %.*s\n", fo_base_folder.len, fo_base_folder.s);
 
@@ -121,7 +122,7 @@ static int mod_init(void)
 	*fo_number_of_files = fo_count_assigned_files();
 
 	/* Fixup the prefix */
-	for(int i = 0; i < *fo_number_of_files; i++) {
+	for(i = 0; i < *fo_number_of_files; i++) {
 		str s;
 		s.s = fo_files[i].fo_prefix.s;
 		s.len = fo_files[i].fo_prefix.len;
@@ -139,7 +140,7 @@ static int mod_init(void)
 	}
 
 	/* Initialize per process vars */
-	for(int i = 0; i < *fo_number_of_files; i++) {
+	for(i = 0; i < *fo_number_of_files; i++) {
 		fo_files[i].fo_stored_timestamp = time(NULL);
 	}
 
@@ -156,6 +157,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	int pid;
+	int i = 0;
 	if(rank != PROC_MAIN) {
 		return 0;
 	}
@@ -172,7 +174,7 @@ static int child_init(int rank)
 			return -1;
 
 		/* Initialize and open files  */
-		for(int i = 0; i < *fo_number_of_files; i++) {
+		for(i = 0; i < *fo_number_of_files; i++) {
 			fo_init_file(i);
 		}
 
@@ -194,7 +196,8 @@ static int child_init(int rank)
 static void destroy(void)
 {
 	int result = 0;
-	for(int i = 0; i < *fo_number_of_files; i++) {
+	int i = 0;
+	for(i = 0; i < *fo_number_of_files; i++) {
 		result = fo_file_properties_destroy(&fo_files[i]);
 		if(result < 0) {
 			LM_ERR("Failed to destroy file properties\n");
