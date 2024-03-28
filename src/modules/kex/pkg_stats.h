@@ -25,14 +25,31 @@
  * \ingroup kex
  */
 
+#include "../../core/dprint.h"
 
 #ifndef _PKG_STATS_H_
 #define _PKG_STATS_H_
+
+/*
+ *
+ */
+typedef struct pkg_proc_stats
+{
+	int rank;
+	unsigned int pid;
+	unsigned long used;
+	unsigned long available;
+	unsigned long real_used;
+	unsigned long total_frags;
+	unsigned long total_size;
+} pkg_proc_stats_t;
 
 int pkg_proc_stats_init(void);
 int pkg_proc_stats_myinit(int rank);
 int pkg_proc_stats_destroy(void);
 int register_pkg_proc_stats(void);
 int pkg_proc_stats_init_rpc(void);
+pkg_proc_stats_t *get_pkg_proc_stats_list(void);
+int get_pkg_proc_stats_no(void);
 
 #endif /*_PKG_STATS_H_*/

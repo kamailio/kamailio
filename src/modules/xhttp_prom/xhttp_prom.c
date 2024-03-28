@@ -62,6 +62,7 @@ str XHTTP_PROM_CONTENT_TYPE_TEXT_HTML = str_init("text/plain; version=0.0.4");
 
 static rpc_export_t rpc_cmds[];
 static int mod_init(void);
+static int child_init(int rank);
 static void mod_destroy(void);
 static int w_prom_check_uri(sip_msg_t *msg);
 static int w_prom_dispatch(sip_msg_t *msg);
@@ -116,7 +117,25 @@ int prom_histogram_param(modparam_t type, void *val);
  */
 static prom_ctx_t _prom_ctx;
 
+/**
+ * @brief api interface for the xhttp module
+ */
 static xhttp_api_t xhttp_api;
+
+/**
+ * @brief api interface for the kex module
+ */
+static kex_api_t kex_api;
+
+/**
+ * @brief pointer to pkgmem statistics.
+ */
+pkg_proc_stats_t *pkg_proc_stats = NULL;
+
+/**
+ * @brief number of pkgmem statistics.
+ */
+int pkg_proc_stats_no = 0;
 
 /**
  * @brief String to indicate which statistics to display.
@@ -133,6 +152,8 @@ str xhttp_prom_beginning = str_init("kamailio_");
 int buf_size = 0; /**< size of buffer that contains the reply. */
 
 int timeout_minutes = 60; /**< timeout in minutes to delete old metrics. */
+
+int pkgmem_stats_enabled = 0; /**< enable or disable pkgmem statistics. */
 
 char error_buf[ERROR_REASON_BUF_LEN];
 
@@ -191,7 +212,8 @@ static param_export_t params[] = {{"xhttp_prom_buf_size", INT_PARAM, &buf_size},
 		{"prom_gauge", PARAM_STRING | USE_FUNC_PARAM, (void *)prom_gauge_param},
 		{"prom_histogram", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)prom_histogram_param},
-		{"xhttp_prom_timeout", INT_PARAM, &timeout_minutes}, {0, 0, 0}};
+		{"xhttp_prom_timeout", INT_PARAM, &timeout_minutes},
+		{"xhttp_prom_pkg_stats", INT_PARAM, &pkgmem_stats_enabled}, {0, 0, 0}};
 
 struct module_exports exports = {
 		"xhttp_prom", DEFAULT_DLFLAGS, /* dlopen flags */
@@ -199,7 +221,7 @@ struct module_exports exports = {
 		0,							   /* exported pseudo-variables */
 		0,							   /* response function */
 		mod_init,					   /* module initialization function */
-		0,							   /* per child init function */
+		child_init,					   /* per child init function */
 		mod_destroy					   /* destroy function */
 };
 
@@ -247,6 +269,14 @@ static int mod_init(void)
 		return -1;
 	}
 
+	/* bind the kex API */
+	if(pkgmem_stats_enabled) {
+		if(load_kex_api(&kex_api) < 0) {
+			LM_ERR("cannot bind to kex API - required for pkgmem stats\n");
+			return -1;
+		}
+	}
+
 	/* Check xhttp_prom_buf_size param */
 	if(buf_size == 0)
 		buf_size = pkg_mem_size / 3;
@@ -257,6 +287,15 @@ static int mod_init(void)
 	if(prom_metric_init()) {
 		LM_ERR("Cannot initialize Prometheus metrics\n");
 		return -1;
+	}
+
+	return 0;
+}
+
+static int child_init(int rank)
+{
+	if(pkgmem_stats_enabled) {
+		pkg_proc_stats_no = kex_api.get_pkmem_stats(&pkg_proc_stats);
 	}
 
 	return 0;

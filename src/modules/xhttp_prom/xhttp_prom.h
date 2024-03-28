@@ -33,6 +33,7 @@
 
 #include "../../core/str.h"
 #include "../../core/parser/msg_parser.h"
+#include "../../modules/kex/api.h"
 
 
 #define ERROR_REASON_BUF_LEN 1024
@@ -82,5 +83,20 @@ extern str xhttp_prom_beginning;
  * @brief timeout in minutes to delete old metrics.
  */
 extern int timeout_minutes;
+
+/**
+ * @brief enable or disable pkgmem statistics.
+ */
+extern int pkgmem_stats_enabled;
+
+/**
+ * @brief pointer to pkgmem statistics.
+ */
+extern pkg_proc_stats_t *pkg_proc_stats;
+
+/**
+ * @brief number of pkgmem statistics.
+ */
+extern int pkg_proc_stats_no;
 
 #endif /* _XHTTP_PROM_H */
