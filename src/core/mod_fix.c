@@ -728,7 +728,9 @@ int fixup_free_spve_spve_igp(void **param, int param_no)
 }
 
 /**
- *
+ * - first params are dynamic strings (spve)
+ * - n - how many params are spve; n+1 is name of pv
+ * - if pvmode==1, the last param pv has to be r/w
  */
 int fixup_spve_n_pvar(void **param, int n, int param_no, int pvmode)
 {
@@ -769,6 +771,15 @@ int fixup_spve_pvar(void **param, int param_no)
 }
 
 /**
+ * - first params are dynamic strings
+ * - last param pv has to be r/w
+ */
+int fixup_spve1_pvar(void **param, int param_no)
+{
+	return fixup_spve_n_pvar(param, 1, param_no, 1);
+}
+
+/**
  *
  */
 int fixup_free_spve_pvar(void **param, int param_no)
@@ -777,7 +788,8 @@ int fixup_free_spve_pvar(void **param, int param_no)
 }
 
 /**
- *
+ * - first params are dynamic strings
+ * - last param pv has to be r/w
  */
 int fixup_spve2_pvar(void **param, int param_no)
 {
@@ -793,7 +805,8 @@ int fixup_free_spve2_pvar(void **param, int param_no)
 }
 
 /**
- *
+ * - first params are dynamic strings
+ * - last param pv has to be r/w
  */
 int fixup_spve3_pvar(void **param, int param_no)
 {
@@ -809,7 +822,8 @@ int fixup_free_spve3_pvar(void **param, int param_no)
 }
 
 /**
- *
+ * - first params are dynamic strings
+ * - last param pv has to be r/w
  */
 int fixup_spve4_pvar(void **param, int param_no)
 {
