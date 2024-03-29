@@ -127,13 +127,6 @@ static int child_init(int);
 static void destroy(void);
 
 /* Fixup functions to be defined later */
-static int fixup_http_query_get(void **param, int param_no);
-static int fixup_free_http_query_get(void **param, int param_no);
-static int fixup_http_query_post(void **param, int param_no);
-static int fixup_free_http_query_post(void **param, int param_no);
-static int fixup_http_query_post_hdr(void **param, int param_no);
-static int fixup_free_http_query_post_hdr(void **param, int param_no);
-
 static int fixup_curl_connect(void **param, int param_no);
 static int fixup_free_curl_connect(void **param, int param_no);
 static int fixup_curl_connect_post(void **param, int param_no);
@@ -173,17 +166,17 @@ static int pv_get_curlerror(
 /* clang-format off */
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"http_client_query", (cmd_function)w_http_query, 2, fixup_http_query_get,
-	 	fixup_free_http_query_get,
+	{"http_client_query", (cmd_function)w_http_query, 2, fixup_spve1_pvar,
+	 	fixup_free_spve_pvar,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"http_client_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
-		fixup_free_http_query_post,
+	{"http_client_query", (cmd_function)w_http_query_post, 3, fixup_spve2_pvar,
+		fixup_free_spve2_pvar,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"http_client_query", (cmd_function)w_http_query_post_hdr, 4, fixup_http_query_post_hdr,
-		fixup_free_http_query_post_hdr,
+	{"http_client_query", (cmd_function)w_http_query_post_hdr, 4, fixup_spve3_pvar,
+		fixup_free_spve3_pvar,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"http_client_get", (cmd_function)w_http_query_get_hdr, 4, fixup_http_query_post_hdr,
-		fixup_free_http_query_post_hdr,
+	{"http_client_get", (cmd_function)w_http_query_get_hdr, 4, fixup_spve3_pvar,
+		fixup_free_spve3_pvar,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"http_client_request", (cmd_function)w_http_query_request, 5, fixup_spve4_pvar,
 		fixup_free_spve4_pvar,
@@ -434,50 +427,6 @@ error:
 }
 
 /* Fixup functions */
-
-/*
- * Fix http_query params: url (string that may contain pvars) and
- * result (writable pvar).
- */
-static int fixup_http_query_get(void **param, int param_no)
-{
-	if(param_no == 1) {
-		return fixup_spve_null(param, 1);
-	}
-
-	if(param_no == 2) {
-		if(fixup_pvar_null(param, 1) != 0) {
-			LM_ERR("http_query: failed to fixup result pvar\n");
-			return -1;
-		}
-		if(((pv_spec_t *)(*param))->setf == NULL) {
-			LM_ERR("http_query: result pvar is not writeble\n");
-			return -1;
-		}
-		return 0;
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-/*
- * Free http_query params.
- */
-static int fixup_free_http_query_get(void **param, int param_no)
-{
-	if(param_no == 1) {
-		return fixup_free_spve_null(param, 1);
-	}
-
-	if(param_no == 2) {
-		return fixup_free_pvar_null(param, 1);
-	}
-
-	LM_ERR("http_query: invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
 
 /*
  * Fix curl_connect params: connection(string/pvar) url (string that may contain pvars) and
@@ -835,91 +784,6 @@ static int w_curl_connect_post(struct sip_msg *_m, char *_con, char *_url,
 	return ki_curl_connect_post_helper(_m, &con, &url, &ctype, &data, dst);
 }
 
-/*!
- * Fix http_query params: url (string that may contain pvars) and
- * result (writable pvar).
- */
-static int fixup_http_query_post(void **param, int param_no)
-{
-	if((param_no == 1) || (param_no == 2)) {
-		return fixup_spve_null(param, 1);
-	}
-
-	if(param_no == 3) {
-		if(fixup_pvar_null(param, 1) != 0) {
-			LM_ERR("failed to fixup result pvar\n");
-			return -1;
-		}
-		if(((pv_spec_t *)(*param))->setf == NULL) {
-			LM_ERR("result pvar is not writeble\n");
-			return -1;
-		}
-		return 0;
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-/*!
- * Free http_query params.
- */
-static int fixup_free_http_query_post(void **param, int param_no)
-{
-	if((param_no == 1) || (param_no == 2)) {
-		return fixup_free_spve_null(param, 1);
-	}
-
-	if(param_no == 3) {
-		return fixup_free_pvar_null(param, 1);
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-/*
- * Fix http_query params: url (string that may contain pvars) and
- * result (writable pvar).
- */
-static int fixup_http_query_post_hdr(void **param, int param_no)
-{
-	if((param_no >= 1) && (param_no <= 3)) {
-		return fixup_spve_null(param, 1);
-	}
-
-	if(param_no == 4) {
-		if(fixup_pvar_null(param, 1) != 0) {
-			LM_ERR("failed to fixup result pvar\n");
-			return -1;
-		}
-		if(((pv_spec_t *)(*param))->setf == NULL) {
-			LM_ERR("result pvar is not writeble\n");
-			return -1;
-		}
-		return 0;
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-/*
- * Free http_query params.
- */
-static int fixup_free_http_query_post_hdr(void **param, int param_no)
-{
-	if((param_no >= 1) && (param_no <= 3)) {
-		return fixup_free_spve_null(param, 1);
-	}
-
-	if(param_no == 4) {
-		return fixup_free_pvar_null(param, 1);
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
 
 /*!
  * helper for HTTP-Query function
