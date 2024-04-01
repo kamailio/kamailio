@@ -2125,6 +2125,20 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 					}
 				}
 			}
+		case 4:
+			/* m0:rtp:port */
+			if(sdp->sessions == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams->port.s != NULL
+					&& sdp->sessions->streams->port.len > 0) {
+				return pv_get_strval(
+						msg, param, res, &sdp->sessions->streams->port);
+			}
+			return pv_get_null(msg, param, res);
 
 		default:
 			return pv_get_null(msg, param, res);
@@ -2175,6 +2189,12 @@ static int pv_parse_sdp_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else if(strncmp(in->s, "o:ip", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 3;
+			else
+				goto error;
+			break;
+		case 11:
+			if(strncmp(in->s, "m0:rtp:port", 11) == 0)
+				sp->pvp.pvn.u.isname.name.n = 4;
 			else
 				goto error;
 			break;
