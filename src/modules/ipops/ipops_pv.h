@@ -33,6 +33,7 @@ typedef struct _sr_dns_record
 	int type;
 	char addr[PV_DNS_ADDR];
 } sr_dns_record_t;
+
 typedef struct _sr_dns_item
 {
 	str name;
@@ -57,9 +58,13 @@ typedef struct _dns_pv
 int pv_parse_dns_name(pv_spec_t *sp, str *in);
 int pv_get_dns(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 
+int pv_parse_ptr_name(pv_spec_t *sp, str *in);
+int pv_get_ptr(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+
 int dns_init_pv(char *path);
 void dns_destroy_pv(void);
 int dns_update_pv(str *tomatch, str *name);
+int ptr_update_pv(str *tomatch, str *name);
 
 int pv_parse_hn_name(pv_spec_p sp, str *in);
 int pv_get_hn(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);

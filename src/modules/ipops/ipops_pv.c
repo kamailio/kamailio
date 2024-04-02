@@ -36,21 +36,23 @@
 #include "../../core/pvar.h"
 
 #include "ipops_pv.h"
+#include "ip_parser.h"
 
 
 static sr_dns_item_t *_sr_dns_list = NULL;
+static sr_dns_item_t *_sr_ptr_list = NULL;
 
 /**
  *
  */
-sr_dns_item_t *sr_dns_get_item(str *name)
+sr_dns_item_t *sr_get_item(sr_dns_item_t *list, str *name)
 {
 	sr_dns_item_t *it = NULL;
 	unsigned int hashid = 0;
 
 	hashid = get_hash1_raw(name->s, name->len);
 
-	it = _sr_dns_list;
+	it = list;
 	while(it != NULL) {
 		if(it->hashid == hashid && it->name.len == name->len
 				&& strncmp(it->name.s, name->s, name->len) == 0)
@@ -63,7 +65,7 @@ sr_dns_item_t *sr_dns_get_item(str *name)
 /**
  *
  */
-sr_dns_item_t *sr_dns_add_item(str *name)
+sr_dns_item_t *sr_add_item(sr_dns_item_t **list, str *name)
 {
 	sr_dns_item_t *it = NULL;
 	unsigned int hashid = 0;
@@ -71,7 +73,7 @@ sr_dns_item_t *sr_dns_add_item(str *name)
 
 	hashid = get_hash1_raw(name->s, name->len);
 
-	it = _sr_dns_list;
+	it = *list;
 	while(it != NULL) {
 		if(it->hashid == hashid && it->name.len == name->len
 				&& strncmp(it->name.s, name->s, name->len) == 0)
@@ -102,15 +104,15 @@ sr_dns_item_t *sr_dns_add_item(str *name)
 	it->name.s[name->len] = '\0';
 	it->name.len = name->len;
 	it->hashid = hashid;
-	it->next = _sr_dns_list;
-	_sr_dns_list = it;
+	it->next = *list;
+	*list = it;
 	return it;
 }
 
 /**
  *
  */
-int pv_parse_dns_name(pv_spec_t *sp, str *in)
+int _pv_parse_name(sr_dns_item_t **list, pv_spec_t *sp, str *in)
 {
 	dns_pv_t *dpv = NULL;
 	char *p;
@@ -119,7 +121,7 @@ int pv_parse_dns_name(pv_spec_t *sp, str *in)
 	str pvi;
 	int sign;
 
-	if(sp == NULL || in == NULL || in->len <= 0)
+	if(sp == NULL || in == NULL || in->len <= 0 || list == NULL)
 		return -1;
 
 	dpv = (dns_pv_t *)pkg_malloc(sizeof(dns_pv_t));
@@ -174,7 +176,7 @@ int pv_parse_dns_name(pv_spec_t *sp, str *in)
 	LM_DBG("dns [%.*s] - key [%.*s] index [%.*s]\n", pvc.len, pvc.s, pvs.len,
 			pvs.s, (pvi.len > 0) ? pvi.len : 0, (pvi.s != NULL) ? pvi.s : 0);
 
-	dpv->item = sr_dns_add_item(&pvc);
+	dpv->item = sr_add_item(list, &pvc);
 	if(dpv->item == NULL)
 		goto error;
 
@@ -194,6 +196,12 @@ int pv_parse_dns_name(pv_spec_t *sp, str *in)
 		case 5:
 			if(strncmp(pvs.s, "count", 5) == 0)
 				dpv->type = 4;
+			else
+				goto error;
+			break;
+		case 8:
+			if(strncmp(pvs.s, "hostname", 8) == 0)
+				dpv->type = 5;
 			else
 				goto error;
 			break;
@@ -237,6 +245,16 @@ error:
 	if(dpv)
 		pkg_free(dpv);
 	return -1;
+}
+
+int pv_parse_dns_name(pv_spec_t *sp, str *in)
+{
+	return _pv_parse_name(&_sr_dns_list, sp, in);
+}
+
+int pv_parse_ptr_name(pv_spec_t *sp, str *in)
+{
+	return _pv_parse_name(&_sr_ptr_list, sp, in);
 }
 
 /**
@@ -283,9 +301,16 @@ int pv_get_dns(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_sintval(msg, param, res, dpv->item->ipv6);
 		case 4: /* count */
 			return pv_get_sintval(msg, param, res, dpv->item->count);
+		case 5: /* hostname */
+			return pv_get_strzval(msg, param, res, dpv->item->hostname);
 		default: /* else */
 			return pv_get_null(msg, param, res);
 	}
+}
+
+int pv_get_ptr(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	return pv_get_dns(msg, param, res);
 }
 
 /**
@@ -330,7 +355,7 @@ int dns_update_pv(str *hostname, str *name)
 		return -2;
 	}
 
-	dr = sr_dns_add_item(name);
+	dr = sr_add_item(&_sr_dns_list, name);
 	if(dr == NULL) {
 		LM_DBG("container not found: %s\n", name->s);
 		return -3;
@@ -384,6 +409,93 @@ int dns_update_pv(str *hostname, str *name)
 	dr->count = i;
 
 	LM_DBG("dns PV updated for: %s (%d)\n", dr->hostname, i);
+
+	return 1;
+}
+
+/*
+*
+*/
+int ptr_update_pv(str *ip_address, str *name)
+{
+	sr_dns_item_t *dr = NULL;
+	struct sockaddr_in sa;
+	struct sockaddr_in6 sa6;
+	char hostname[256];
+	int result;
+	int ip_type;
+	if(ip_address->len > INET6_ADDRSTRLEN) {
+		LM_DBG("target IP address too long (max %d): %s\n", INET6_ADDRSTRLEN,
+				ip_address->s);
+		return -2;
+	}
+
+	dr = sr_add_item(&_sr_ptr_list, name);
+	if(dr == NULL) {
+		LM_DBG("container not found: %s\n", name->s);
+		return -3;
+	}
+
+	/* reset the counter */
+	dr->count = 0;
+
+	/* Get the ip type */
+	switch(ip_parser_execute(ip_address->s, ip_address->len)) {
+		case(ip_type_ipv4):
+			ip_type = 4;
+			LM_DBG("IP address is of type IPv4\n");
+			break;
+		case(ip_type_ipv6):
+			ip_type = 6;
+			LM_DBG("IP address is of type IPv6\n");
+			break;
+		case(ip_type_ipv6_reference):
+			ip_type = 6;
+			LM_DBG("IP address is of type IPv6 reference\n");
+			break;
+		default:
+			LM_ERR("invalid IP address: %s\n", ip_address->s);
+			return -4;
+			break;
+	}
+	/* Copy the ip to ptr record */
+	strncpy(dr->r[0].addr, ip_address->s, ip_address->len);
+	dr->r[0].addr[ip_address->len] = '\0';
+	dr->r[0].type = ip_type;
+	LM_DBG("attempting to reverse resolve: %s\n", dr->r[0].addr);
+
+
+	/* Try to convert the IP address to IPv4. */
+	if(inet_pton(AF_INET, dr->r[0].addr, &(sa.sin_addr)) == 1) {
+		/* Perform the reverse DNS lookup for IPv4. */
+		dr->ipv4 = 1;
+		sa.sin_family = AF_INET;
+		result = getnameinfo((struct sockaddr *)&sa, sizeof(sa), hostname,
+				sizeof(hostname), NULL, 0, NI_NAMEREQD);
+	} else if(inet_pton(AF_INET6, dr->r[0].addr, &(sa6.sin6_addr)) == 1) {
+		/* Perform the reverse DNS lookup for IPv6. */
+		dr->ipv6 = 1;
+		sa6.sin6_family = AF_INET6;
+		result = getnameinfo((struct sockaddr *)&sa6, sizeof(sa6), hostname,
+				sizeof(hostname), NULL, 0, NI_NAMEREQD);
+	} else {
+		LM_ERR("invalid IP address: %s\n", dr->hostname);
+		return -5;
+	}
+
+	/* If getnameinfo returns a non-zero value, there was an error. */
+	if(result != 0) {
+		LM_ERR("unable to reverse resolve %s - getnameinfo: %s\n",
+				dr->r[0].addr, gai_strerror(result));
+		return -6;
+	}
+
+	/* Store the hostname in the sr_dns_item_t structure. */
+	strncpy(dr->hostname, hostname, strlen(hostname));
+	dr->hostname[strlen(hostname)] = '\0';
+	dr->count = 1;
+
+	LM_DBG("reverse dns PV updated for: %s (%d)\n", dr->r[0].addr, dr->count);
 
 	return 1;
 }
