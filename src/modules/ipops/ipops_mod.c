@@ -1298,7 +1298,18 @@ static int ki_dns_query(sip_msg_t *msg, str *naptrname, str *pvid)
 }
 
 /**
+ *! \brief Return 1 (true) if the given `ip` IP address (string or pv)
+ * could successfully be resolved to a domain and saved into `pv_name` pv.
+ * Otherwise, return negative values depending on the error.
  *
+ * \param[in] msg SIP message structure.
+ * \param[in] ip IP address (string or pv) to resolve.
+ * \param[in] pv_name PV name to save the resolved domain.
+ * \returns 1 on success.
+ * \returns negative values depending on the error:
+ * \retval 1 success.
+ * \retval res -1 to -5 for bad input.
+ * \retval -6 for error in resolving the domain.
  */
 static int w_ptr_query(sip_msg_t *msg, char *ip, char *pv_name)
 {

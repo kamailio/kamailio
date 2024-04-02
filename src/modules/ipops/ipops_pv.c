@@ -413,8 +413,16 @@ int dns_update_pv(str *hostname, str *name)
 	return 1;
 }
 
-/*
-*
+/**
+ * \brief Updates the pointer (PTR) record for a given IP address and saves it into pv.
+ *
+ * \details This function updates the PTR record for a specified IP address, and saves it
+ * into `name` AVP encapsulated in $ptrquery pv.
+ * It performs a reverse DNS lookup to obtain the hostname corresponding to the IP address.
+ *
+ * @param ip_address The IP address to update the PTR record for.
+ * @param name The name of AVP to hold the information in $ptrquery pv.
+ * @return 1 on success, or a negative value on failure.
 */
 int ptr_update_pv(str *ip_address, str *name)
 {
