@@ -2067,6 +2067,9 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	sdp_info_t *sdp = NULL;
 	str sess_version = STR_NULL;
 	long sess_version_num = 0;
+	unsigned int uport = 0;
+	static char uport_buf[INT2STR_MAX_LEN];
+	str s = STR_NULL;
 
 	if(msg == NULL || param == NULL)
 		return -1;
@@ -2150,6 +2153,27 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 						msg, param, res, &sdp->sessions->streams->port);
 			}
 			return pv_get_null(msg, param, res);
+		case 5:
+			/* m0:rtcp:port */
+			if(sdp->sessions == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams->rtcp_port.s != NULL
+					&& sdp->sessions->streams->rtcp_port.len > 0) {
+				return pv_get_strval(
+						msg, param, res, &sdp->sessions->streams->rtcp_port);
+			}
+			if(sdp->sessions->streams->port.s != NULL
+					&& sdp->sessions->streams->port.len > 0) {
+				str2int(&sdp->sessions->streams->port, &uport);
+				uport++;
+				s.s = int2strbuf(uport, uport_buf, INT2STR_MAX_LEN, &s.len);
+				return pv_get_strval(msg, param, res, &s);
+			}
+			return pv_get_null(msg, param, res);
 
 		default:
 			return pv_get_null(msg, param, res);
@@ -2212,6 +2236,8 @@ static int pv_parse_sdp_name(pv_spec_p sp, str *in)
 		case 12:
 			if(strncmp(in->s, "sess_version", 12) == 0)
 				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "m0:rctp:port", 12) == 0)
+				sp->pvp.pvn.u.isname.name.n = 5;
 			else
 				goto error;
 			break;
