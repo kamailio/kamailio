@@ -883,6 +883,93 @@ if(dns_query("test.com", "xyz"))
 
     </section>
 
+    <section id="ipops.f.ptr_query">
+      <title>
+        <function moreinfo="none">ptr_query(ip, pvid)</function>
+      </title>
+
+      <para>
+		  Store the hostname that correspond to an IP address (IPv4 or IPv6)
+		  in a pseudo-variable variable $ptrquery(pvid=>hostname).
+      </para>
+
+      <para>
+      <emphasis>Note: Results will be in in $ptrquery(pvid=>key).</emphasis>
+      key can be:
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>addr</emphasis> - IP address
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>type</emphasis> - type of IP address
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>ipv4</emphasis> - 1 if IPv4 address
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>ipv6</emphasis> - 1 if IPv6 address
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>count</emphasis> - number of hostnames found
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>hostname</emphasis> - hostname
+          </para>
+        </listitem>
+      </itemizedlist>
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+			  <emphasis>ip</emphasis> - string or pseudo-variable containing the ip.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>pvid</emphasis> - AVP id for script variable.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from ANY_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>ptr_query</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if(ptr_query("8.8.8.8","ip4"))
+{
+		xlog(" number of names: $ptrquery(ip4=>count)\n");
+		$var(j) = 0;
+		while($var(j)&lt;$ptrquery(ip4=>count)) {
+			xlog(" #[$var(j)] name [ $ptrquery(ip4=>hostname) ]\n");
+			$var(j) = $var(j) + 1;
+		}
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+
     <section id="ipops.f.srv_query">
       <title>
         <function moreinfo="none">srv_query(srvcname, pvid)</function>
