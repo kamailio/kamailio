@@ -109,6 +109,7 @@ static int w_dns_int_match_ip(sip_msg_t *, char *, char *);
 static int fixup_detailed_ip_type(void **param, int param_no);
 static int fixup_free_detailed_ip_type(void **param, int param_no);
 static int w_dns_query(sip_msg_t *msg, char *str1, char *str2);
+static int w_ptr_query(sip_msg_t *msg, char *str1, char *str2);
 static int w_srv_query(sip_msg_t *msg, char *str1, char *str2);
 static int w_naptr_query(sip_msg_t *msg, char *str1, char *str2);
 static int w_dns_set_local_ttl(sip_msg_t *, char *, char *);
@@ -118,6 +119,8 @@ static int mod_init(void);
 static pv_export_t mod_pvs[] = {
 	{{"dns", sizeof("dns") - 1}, PVT_OTHER, pv_get_dns, 0,
 			pv_parse_dns_name, 0, 0, 0},
+	{{"ptrquery", sizeof("ptrquery") - 1}, PVT_OTHER, pv_get_ptr, 0,
+			pv_parse_ptr_name, 0, 0, 0},
 	{{"srvquery", sizeof("srvquery") - 1}, PVT_OTHER, pv_get_srv, 0,
 			pv_parse_srv_name, 0, 0, 0},
 	{{"naptrquery", sizeof("naptrquery") - 1}, PVT_OTHER, pv_get_naptr, 0,
@@ -162,6 +165,8 @@ static cmd_export_t cmds[] = {
 	{"dns_int_match_ip", (cmd_function)w_dns_int_match_ip, 2,
 			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"dns_query", (cmd_function)w_dns_query, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"ptr_query", (cmd_function)w_ptr_query, 2, fixup_spve_spve,
 			fixup_free_spve_spve, ANY_ROUTE},
 	{"srv_query", (cmd_function)w_srv_query, 2, fixup_spve_spve,
 			fixup_free_spve_spve, ANY_ROUTE},
@@ -1290,6 +1295,31 @@ static int w_dns_query(sip_msg_t *msg, char *str1, char *str2)
 static int ki_dns_query(sip_msg_t *msg, str *naptrname, str *pvid)
 {
 	return dns_update_pv(naptrname, pvid);
+}
+
+/**
+ *
+ */
+static int w_ptr_query(sip_msg_t *msg, char *ip, char *pv_name)
+{
+	str ip_address;
+	str name;
+
+	if(msg == NULL) {
+		LM_ERR("received null msg\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t *)ip, &ip_address) < 0) {
+		LM_ERR("cannot get the IP address\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pv_name, &name) < 0) {
+		LM_ERR("cannot get the pv container name\n");
+		return -1;
+	}
+
+	return ptr_update_pv(&ip_address, &name);
 }
 
 /**
