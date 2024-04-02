@@ -2098,7 +2098,7 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			}
 			return pv_get_null(msg, param, res);
 		case 2:
-			/* connection ip */
+			/* c:ip - connection ip */
 			if(sdp->sessions == NULL) {
 				return pv_get_null(msg, param, res);
 			}
@@ -2125,6 +2125,17 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 					}
 				}
 			}
+		case 3:
+			/* o:ip - origin ip */
+			if(sdp->sessions == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->o_ip_addr.s != NULL
+					&& sdp->sessions->o_ip_addr.len > 0) {
+				return pv_get_strval(
+						msg, param, res, &sdp->sessions->o_ip_addr);
+			}
+			return pv_get_null(msg, param, res);
 		case 4:
 			/* m0:rtp:port */
 			if(sdp->sessions == NULL) {
