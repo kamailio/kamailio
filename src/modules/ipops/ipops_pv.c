@@ -35,38 +35,8 @@
 #include "../../core/resolve.h"
 #include "../../core/pvar.h"
 
+#include "ipops_pv.h"
 
-#define PV_DNS_ADDR 64
-#define PV_DNS_RECS 32
-
-typedef struct _sr_dns_record
-{
-	int type;
-	char addr[PV_DNS_ADDR];
-} sr_dns_record_t;
-
-typedef struct _sr_dns_item
-{
-	str name;
-	unsigned int hashid;
-	char hostname[256];
-	int count;
-	int ipv4;
-	int ipv6;
-	sr_dns_record_t r[PV_DNS_RECS];
-	struct _sr_dns_item *next;
-} sr_dns_item_t;
-
-#define SR_DNS_PVIDX 1
-
-typedef struct _dns_pv
-{
-	sr_dns_item_t *item;
-	int type;
-	int flags;
-	pv_spec_t *pidx;
-	int nidx;
-} dns_pv_t;
 
 static sr_dns_item_t *_sr_dns_list = NULL;
 
