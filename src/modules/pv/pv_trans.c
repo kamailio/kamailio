@@ -566,6 +566,32 @@ int tr_eval_string(
 			val->rs.s = _tr_buffer;
 			val->rs.len = i;
 			break;
+		case TR_S_ESCAPECRLF:
+			if(!(val->flags & PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len > TR_BUFFER_SIZE / 2 - 1)
+				return -1;
+			st.s = _tr_buffer;
+			st.len = TR_BUFFER_SIZE;
+			if(escape_crlf(&val->rs, &st))
+				return -1;
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs = st;
+			break;
+		case TR_S_UNESCAPECRLF:
+			if(!(val->flags & PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len > TR_BUFFER_SIZE - 1)
+				return -1;
+			st.s = _tr_buffer;
+			st.len = TR_BUFFER_SIZE;
+			if(unescape_crlf(&val->rs, &st))
+				return -1;
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs = st;
+			break;
 		case TR_S_ESCAPEUSER:
 			if(!(val->flags & PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
@@ -2767,6 +2793,12 @@ char *tr_parse_string(str *in, trans_t *t)
 	} else if(name.len == 15
 			  && strncasecmp(name.s, "unescape.common", 15) == 0) {
 		t->subtype = TR_S_UNESCAPECOMMON;
+		goto done;
+	} else if(name.len == 11 && strncasecmp(name.s, "escape.crlf", 11) == 0) {
+		t->subtype = TR_S_ESCAPECRLF;
+		goto done;
+	} else if(name.len == 13 && strncasecmp(name.s, "unescape.crlf", 13) == 0) {
+		t->subtype = TR_S_UNESCAPECRLF;
 		goto done;
 	} else if(name.len == 11 && strncasecmp(name.s, "escape.user", 11) == 0) {
 		t->subtype = TR_S_ESCAPEUSER;
