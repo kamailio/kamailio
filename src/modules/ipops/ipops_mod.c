@@ -1334,6 +1334,14 @@ static int w_ptr_query(sip_msg_t *msg, char *ip, char *pv_name)
 }
 
 /**
+ * \brief KEMI wrapper for `ptr_query` function.
+ */
+static int ki_ptr_query(sip_msg_t *msg, str *ip, str *pvid)
+{
+	return ptr_update_pv(ip, pvid);
+}
+
+/**
  *
  */
 static int w_srv_query(sip_msg_t *msg, char *str1, char *str2)
@@ -1510,6 +1518,11 @@ static sr_kemi_t sr_kemi_ipops_exports[] = {
 	},
 	{ str_init("ipops"), str_init("dns_query"),
 		SR_KEMIP_INT, ki_dns_query,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("ptr_query"),
+		SR_KEMIP_INT, ki_ptr_query,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
