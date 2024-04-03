@@ -2265,7 +2265,7 @@ static int pv_parse_sdp_name(pv_spec_p sp, str *in)
 		case 12:
 			if(strncmp(in->s, "sess_version", 12) == 0)
 				sp->pvp.pvn.u.isname.name.n = 1;
-			else if(strncmp(in->s, "m0:rctp:port", 12) == 0)
+			else if(strncmp(in->s, "m0:rtcp:port", 12) == 0)
 				sp->pvp.pvn.u.isname.name.n = 5;
 			else
 				goto error;
