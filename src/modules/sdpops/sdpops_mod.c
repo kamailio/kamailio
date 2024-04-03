@@ -2259,6 +2259,12 @@ static int pv_parse_sdp_name(pv_spec_p sp, str *in)
 		return -1;
 
 	switch(in->len) {
+		case 3:
+			if(strncmp(in->s, "raw", 3) == 0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else
+				goto error;
+			break;
 		case 4:
 			if(strncmp(in->s, "body", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 0;
