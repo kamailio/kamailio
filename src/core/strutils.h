@@ -56,6 +56,8 @@ int escape_common(char *dst, char *src, int src_len);
 
 /* remove backslashes to special characters */
 int unescape_common(char *dst, char *src, int src_len);
+int escape_crlf(str *sin, str *sout);
+int unescape_crlf(str *sin, str *sout);
 int escape_user(str *sin, str *sout);
 int unescape_user(str *sin, str *sout);
 int escape_param(str *sin, str *sout);
