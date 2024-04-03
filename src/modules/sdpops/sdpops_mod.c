@@ -2174,6 +2174,33 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 				return pv_get_strval(msg, param, res, &s);
 			}
 			return pv_get_null(msg, param, res);
+		case 6:
+			/* c:af - connection address family */
+			if(sdp->sessions == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams == NULL) {
+				if(sdp->sessions->ip_addr.s != NULL
+						&& sdp->sessions->ip_addr.len > 0) {
+					return pv_get_sintval(msg, param, res, sdp->sessions->pf);
+				} else {
+					return pv_get_null(msg, param, res);
+				}
+			} else {
+				if(sdp->sessions->streams->ip_addr.s != NULL
+						&& sdp->sessions->streams->ip_addr.len > 0) {
+					return pv_get_sintval(
+							msg, param, res, sdp->sessions->streams->pf);
+				} else {
+					if(sdp->sessions->ip_addr.s != NULL
+							&& sdp->sessions->ip_addr.len > 0) {
+						return pv_get_sintval(
+								msg, param, res, sdp->sessions->pf);
+					} else {
+						return pv_get_null(msg, param, res);
+					}
+				}
+			}
 
 		default:
 			return pv_get_null(msg, param, res);
@@ -2222,6 +2249,8 @@ static int pv_parse_sdp_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else if(strncmp(in->s, "c:ip", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "c:af", 4) == 0)
+				sp->pvp.pvn.u.isname.name.n = 6;
 			else if(strncmp(in->s, "o:ip", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else
