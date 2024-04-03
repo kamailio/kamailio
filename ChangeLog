@@ -1,3 +1,343 @@
+===================== 2024-04-03 Version 5.8.1 Released =====================
+
+===================== Changes Since Version 5.8.0 ===========================
+
+commit e8aa98718d91d0e5af7d757176a180e0f2940417
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 3 12:23:42 2024 +0200
+
+    Makefile.defs: version set to 5.8.1
+
+commit 69f667fe9b95d09a642cb7edd7f16ce09bbac3f1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 3 12:18:47 2024 +0200
+
+    core: msg translator - duplicate reply via xavp params and handle errors
+    
+    (cherry picked from commit 5f83d4f9c447f5a7e3de8336dc0e076b10e43833)
+
+commit 1caec71aeddb7f65afb93bf05cb9e0aae2a2c0cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 3 12:16:18 2024 +0200
+
+    core: xavp - added missing closing parenthesis in log messages
+    
+    (cherry picked from commit 3b09fd343575c56d9658a61efebd4851662de338)
+
+commit 4708758f1c428cc94d1abdf9bb706c7c509efebe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 3 08:22:44 2024 +0200
+
+    pkg: deb specs updated for v5.8.1
+
+commit 3b00630c8a20cc0f2b2f458742d885ea7e28e05f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 3 08:20:49 2024 +0200
+
+    pkg/kamailio: version set 5.8.1 for rpms and alpine
+
+commit 4e4e935c45ccf32dab9bf5af693a0f52f54684ae
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Apr 1 08:31:34 2024 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit e394a05152b29d4009c9cb963bced72526c7651b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 28 08:30:17 2024 +0100
+
+    blst: reformat exported structures
+    
+    (cherry picked from commit e39557c96d2f419184c826d779f1a3309acc4269)
+
+commit c0c8ee05ab25256b9154d2056ee04b07f3f2290a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 27 08:19:03 2024 +0100
+
+    smsops: short reference section about variables
+    
+    (cherry picked from commit 9a94930ae1168d5df79e3dc1414841cdf23a2eba)
+
+commit b21a7aaa467f2b76a52308557657c65274e34087
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 26 19:17:23 2024 +0100
+
+    smsops: reformat module exports structures
+    
+    (cherry picked from commit 9848d43cb367d6901a0b8c727759feb8a8fad930)
+
+commit 3f3c1940788a4713705169f8d96ae9a13ee2bad1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 25 23:25:19 2024 +0100
+
+    db_mysql: right position for define KSR_MYSQL_OPT_RECONNECT
+    
+    - follow up of previous commit
+    
+    (cherry picked from commit 14dc277e29a170b9ac51e7dda07fa25cbd9be048)
+
+commit 557d7e83c01c930df608b9d96791553d8f2bf724
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 25 23:07:55 2024 +0100
+
+    db_mysql: MYSQL_OPT_RECONNECT is deprecated by MySQL 8.0.34
+    
+    - https://dev.mysql.com/doc/c-api/8.0/en/c-api-auto-reconnect.html
+    - MariaDB seems to still have it
+    
+    (cherry picked from commit da3d6e9a74b63fdb7b1c4063d6be017f1ce42bea)
+
+commit c9edb30ffa0c9544a10d0e72aabe84a1b3b2a103
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 23 21:38:00 2024 +0100
+
+    keepalive: reformat module exports structures
+    
+    (cherry picked from commit dd221a6e5162838b979fd38ffdfb750663aef869)
+
+commit 3f44cabcfc0abc83ae1971ac74fbb0bd36829ce4
+Author: Elena-Ramona Modroiu <ramona@asipto.com>
+Date:   Sat Mar 23 09:58:46 2024 +0100
+
+    corex: fix conditions for dns_cache modparam srv attributes
+    
+    (cherry picked from commit 8114b2016d032484edafe4edd04fb02d52cfd058)
+
+commit dbf9208f3a402844c9981fb7ed09493a1338dfdd
+Author: Elena-Ramona Modroiu <ramona@asipto.com>
+Date:   Sat Mar 23 09:51:47 2024 +0100
+
+    core: resolve/create_srv_pref_list() - insert at correct position in list
+    
+    (cherry picked from commit f35cf8904119dcf582ea2451648de5fef095466b)
+
+commit 0e00ae1db0242fc01e6f8c332e3920fd9465b3f9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 22 10:25:48 2024 +0100
+
+    core: socket info - parse advertise ip part to get address family
+    
+    (cherry picked from commit 5f901c3557f9f875545d82a7ab00f6d0c5c1fe52)
+
+commit c48fbea981c7b0bd281cd1fc2abedcda41d92c13
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 20 13:40:28 2024 +0100
+
+    gcrypt: docs - module name used for section ids
+    
+    (cherry picked from commit 68c69966c38b56775a3966d07c33ff94c2a8ba95)
+
+commit 613e2cdfc3ae9242d259bf8b67b6ed715c0c0ad8
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Wed Mar 27 15:48:50 2024 +0000
+
+    file_out: FIx âforâ loop initial declarations error
+    
+    (cherry picked from commit ae04ccac92225a1e7b573a28ded555789e8604cd)
+
+commit f4d44a9201a79acf0620a005008f2594ff8d26ee
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Wed Mar 27 15:48:25 2024 +0000
+
+    tls: Fix âforâ loop initial declarations error
+    
+    (cherry picked from commit 9f2abc69e27c4b3246628138ec81fced81d7bc7a)
+
+commit 3fac5afc42a606391d6a7c0337ef5e4e136d6b80
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Fri Mar 22 10:24:05 2024 +0000
+
+    file_out: Cast to correct type of str
+    
+    (cherry picked from commit 4ada818099b5b7cb7deff1b1ce93b5aacaa1b84e)
+
+commit 028ba8f9d6bc40dcd47e6a0e5b40e5b3e2ea7b17
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 1 11:42:45 2024 +0100
+
+    file_out: additional checks for silenting warnings
+    
+    (cherry picked from commit 19894425684504e2a19622ae5a9cdfc565f16fd3)
+
+commit 814f5bdc9ee5d4594ffb0fd72843bca7b5fa79ea
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Mar 23 00:00:44 2024 +0100
+
+    dmq: fix inter-lock on error
+    
+    triggered by intermittent DNS resolution error. dmq workers
+    were getting locked at dmq_notification_callback_f() due to
+    this missing lock_release()
+    
+    (cherry picked from commit 0d240e4e0dc3184ef37d338ba6872d295d6b16f2)
+
+commit 7bcef8ef487a713f5b6c6fadb7a3166ed41fb136
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Mar 20 13:31:25 2024 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 60fd6c2622c9c5edbe82908c0e461d646225c8a6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 19 17:39:19 2024 +0100
+
+    ndb_redis: break on finding a server via sentinel inside redisc_reconnect_server()
+    
+    (cherry picked from commit 951ab118bb7d9955f8e69b66bec1f0c107d474a2)
+
+commit 86df978bc9842687035d6673ee1b71e542dcbd71
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 19 14:29:11 2024 +0100
+
+    ndb_redis: fix index on parsing sentinel address inside redisc_reconnect_server()
+    
+    (cherry picked from commit c8f3b496a05ae5bf29341dc7e2630f951d4effc5)
+
+commit a0dfa0ac81ed4aec33863fc20cf5cb3ee077a90c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 19 14:26:27 2024 +0100
+
+    ndb_redis: clang-format for WITH_SSL code
+    
+    (cherry picked from commit e54051d698b059aa168229493dc2d6bf3cdd757c)
+
+commit a7d4ce95b383dc26c547ef9ee07b05d51abc50f9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 19 10:21:51 2024 +0100
+
+    keepalive: small formatting updates and comments to the ka dest structure
+    
+    (cherry picked from commit cee82c92b06a026b88fea654944f6146eb5cb4d8)
+
+commit 0b3aa00775a5c0b4b1dc4990f4c26bc637fc6de5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 19 09:51:28 2024 +0100
+
+    keepalive: proper storing of last up/down timestamps
+    
+    - GH #3790
+    
+    (cherry picked from commit 9e2a0ee545646bd4491ecdbe58d7fea770764b54)
+
+commit 91b0962679092f28abb5022d1505372356460f7d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 18 11:02:07 2024 +0100
+
+    acc: more log messages of failure arsing extra acc string
+    
+    (cherry picked from commit 04a73ace6572dd5c95a8f50b39b2ce712f7ebe84)
+
+commit 5daadecd248322e5f8eaf15555e46692f3d1c267
+Author: Axel Sommerfeldt <axel.sommerfeldt@fastmail.de>
+Date:   Fri Mar 8 12:32:07 2024 +0100
+
+    ims_ipsec_pcscf: TLS support in ipsec_forward() improved
+    
+    This patch was initially done by Herle Supreeth in his fork but isn't present upstream yet:
+    https://github.com/kamailio/kamailio/commit/8b9a2977e111d9adb8595d98ab59f8c8eb033120
+    
+    See also: https://github.com/kamailio/kamailio/issues/3772
+    
+    (cherry picked from commit 3154a0aba5543cab75153429bc8ec617c3484f71)
+
+commit 7df7508d7d2b7b9495dafab8b515a5721bd669ee
+Author: Dennis Yurasov <dennis-y@yandex-team.ru>
+Date:   Mon Mar 11 14:22:37 2024 +0300
+
+    dispatcher: refine documentation
+    - more clear documentation for the new ds_is_from_list flags
+    
+    (cherry picked from commit 761e963c0f7d9bf1b66c1ef18a409756b919ae2c)
+
+commit 90f8117f9669069b4dab7e9d747dfa06245ec8a0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 15 21:24:42 2024 +0100
+
+    ctl: handle int input for double storage
+    
+    (cherry picked from commit 1380a4a0d18159c7130b70c0216134a253ad83f7)
+
+commit 0af55b0eac8c3457db859a9c37fea211ece91b8a
+Author: Stefan-Cristian Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Tue Mar 5 16:30:01 2024 +0200
+
+    pdb server: Return negative carrierid for failures. Clang format
+    
+    (cherry-picked from commit 88b698e0f62c39ed60af9f0a4fb3ca2dc6867d8f)
+
+commit 6410f375cd6d1e357afeb9e100bd3a3c51321280
+Author: Stefan-Cristian Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Tue Mar 5 16:14:11 2024 +0200
+
+    pdb: Return negative carrierid for failures
+    
+    (cherry-picked from commit bf78b619ae28924361fb2c757a4d09eb1a39f5cd)
+
+commit d6cd0859158a8013e998ec779e956a550b493934
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Thu Mar 14 16:47:28 2024 +0000
+
+    file_out: Fix var position and initialize
+    
+    (cherry picked from commit e36b2232e9b097794845659f71543bc57ef58a35)
+
+commit f9b1cca33a45560f06b2708975c624da9728b6f5
+Author: Oded Arbel <oded@geek.co.il>
+Date:   Sun Mar 10 19:55:20 2024 +0200
+
+    pkg/kamailio/obs: Allow builders to disable wolfssl module [skip ci]
+    
+    Building the WolfSSL module should be optional, even if it is on by default, builders should be able to choose to not need to install 4th party repositories.
+    
+    fixes #3781
+    
+    (cherry picked from commit 5392dbf8070abf36734d9c857924df91186bc2dd)
+
+commit 45ee72fcf0ae8aeb135196ef8729fe0cea14048e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 9 20:11:07 2024 +0100
+
+    topos: properly handle cases of no user in contact for mode 1
+    
+    - contact mode 1 accepted cases with no-user in contact uri but not in
+      r-uri, however, requests within dialog can have one's contact in r-uri
+      and then processing failed
+    
+    (cherry picked from commit 24e410f9a20d004f55bcc79cd10fb35cb26e4570)
+
+commit 772b464552cff0b9ebb769e57fae718c0357ba11
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 8 19:43:49 2024 +0100
+
+    topos: small rearangement by removing else after return in the true block
+    
+    - reduce level of indentation
+    - a few wraps in curly braces for clearer view of the if block
+    
+    (cherry picked from commit b6fccea258e56b7d3195659245713a6d44acb013)
+
+commit 2122afae2a6604c0bc44a43ab37ee274a15a700a
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Tue Mar 12 22:16:23 2024 +0200
+
+    Avoid 'qm_strnstr' defined but not used warning
+
+commit 1928af8f90ebf02f610c0904bc3d24a00aaedb81
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Tue Mar 12 07:54:50 2024 +0200
+
+    core: set null-terminated char for modparam (backport from master)
+
+commit c229e11ba39da40cadaecd1b6aa3ae153e014bb1
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Mar 7 13:32:22 2024 +0200
+
+    pkg/kamailio/obs: packaged README.file_out
+    
+    (cherry picked from commit 20edb64247a20a5d6b4b8bfb264b6e31d283b039)
+
+
+
 ===================== 2024-03-07 Version 5.8.0 Released =====================
 
 ===================== Changes Since Version 5.7.0 ===========================
