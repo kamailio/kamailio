@@ -3894,6 +3894,10 @@ int pv_parse_K_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else if(strncmp(in->s, "WSS", 3) == 0)
 				sp->pvp.pvn.u.isname.name.n = 7;
+			else if(strncmp(in->s, "IP4", 3) == 0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "IP6", 3) == 0)
+				sp->pvp.pvn.u.isname.name.n = 1;
 			else
 				goto error;
 			break;
