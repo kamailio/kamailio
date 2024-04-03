@@ -2201,6 +2201,21 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 					}
 				}
 			}
+		case 7:
+			/* m0:raw - all (raw) lines for m0 stream */
+			if(sdp->sessions == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams->raw_stream.s != NULL
+					&& sdp->sessions->streams->raw_stream.len > 0) {
+				return pv_get_strval(
+						msg, param, res, &sdp->sessions->streams->raw_stream);
+			}
+			return pv_get_null(msg, param, res);
+			break;
 
 		default:
 			return pv_get_null(msg, param, res);
@@ -2253,6 +2268,12 @@ static int pv_parse_sdp_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 6;
 			else if(strncmp(in->s, "o:ip", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 3;
+			else
+				goto error;
+			break;
+		case 6:
+			if(strncmp(in->s, "m0:raw", 6) == 0)
+				sp->pvp.pvn.u.isname.name.n = 7;
 			else
 				goto error;
 			break;
