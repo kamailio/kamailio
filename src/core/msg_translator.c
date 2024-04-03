@@ -2362,6 +2362,7 @@ char *generate_res_buf_from_sip_res(
 	char *buf;
 	unsigned int len;
 	str xparams;
+	str sdup;
 	sr_lump_t *anchor;
 
 	buf = msg->buf;
@@ -2393,11 +2394,18 @@ char *generate_res_buf_from_sip_res(
 			anchor = anchor_lump(msg,
 					msg->via2->params.s + msg->via2->params.len - msg->buf, 0,
 					0);
-			if(anchor != NULL) {
-				if(insert_new_lump_after(anchor, xparams.s, xparams.len, 0)
-						== 0) {
-					LM_ERR("unable to add via reply xavp params\n");
-				}
+			if(anchor == NULL) {
+				LM_ERR("unable to get the anchor\n");
+				goto error;
+			}
+			if(pkg_str_dup(&sdup, &xparams) < 0) {
+				PKG_MEM_ERROR;
+				goto error;
+			}
+			if(insert_new_lump_after(anchor, sdup.s, sdup.len, 0) == 0) {
+				LM_ERR("unable to add via reply xavp params\n");
+				pkg_free(sdup.s);
+				goto error;
 			}
 		}
 	}
