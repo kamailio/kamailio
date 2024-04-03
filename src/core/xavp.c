@@ -1151,7 +1151,7 @@ int xavp_serialize_fields_style(str *rname, int mode, char *obuf, int olen)
 						avp->name.len, avp->name.s, (unsigned long)avp->val.v.l,
 						sf);
 				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
-					LM_ERR("failed to serialize long int value (%d/%d\n",
+					LM_ERR("failed to serialize long int value (%d/%d)\n",
 							ostr.len, olen - rlen);
 					return -1;
 				}
@@ -1162,7 +1162,7 @@ int xavp_serialize_fields_style(str *rname, int mode, char *obuf, int olen)
 						avp->name.len, avp->name.s,
 						(unsigned long long)avp->val.v.ll, sf);
 				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
-					LM_ERR("failed to serialize long long value (%d/%d\n",
+					LM_ERR("failed to serialize long long value (%d/%d)\n",
 							ostr.len, olen - rlen);
 					return -1;
 				}
@@ -1178,7 +1178,7 @@ int xavp_serialize_fields_style(str *rname, int mode, char *obuf, int olen)
 							qs, avp->val.v.s.len, avp->val.v.s.s, qs, sf);
 				}
 				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
-					LM_ERR("failed to serialize int value (%d/%d\n", ostr.len,
+					LM_ERR("failed to serialize str value (%d/%d)\n", ostr.len,
 							olen - rlen);
 					return -1;
 				}
