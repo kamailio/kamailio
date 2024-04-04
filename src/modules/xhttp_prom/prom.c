@@ -221,8 +221,9 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 
 	for(; i < pkg_proc_stats_no; i++) {
 		if(prom_body_printf(ctx,
-				   "kamailio_pkgmem_used{pid=\"%u\", rank=\"%d\", desc=\"%s\"} "
+				   "%.*spkgmem_used{pid=\"%u\", rank=\"%d\", desc=\"%s\"} "
 				   "%d %" PRIu64 "\n",
+				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
 				   pkg_proc_stats[i].used, ts)
 				== -1) {
@@ -230,8 +231,9 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 			goto error;
 		}
 		if(prom_body_printf(ctx,
-				   "kamailio_pkgmem_available{pid=\"%u\", rank=\"%d\", "
+				   "%.*spkgmem_available{pid=\"%u\", rank=\"%d\", "
 				   "desc=\"%s\"} %d %" PRIu64 "\n",
+				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
 				   pkg_proc_stats[i].available, ts)
 				== -1) {
@@ -239,8 +241,9 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 			goto error;
 		}
 		if(prom_body_printf(ctx,
-				   "kamailio_pkgmem_real_used{pid=\"%u\", rank=\"%d\", "
+				   "%.*spkgmem_real_used{pid=\"%u\", rank=\"%d\", "
 				   "desc=\"%s\"} %d %" PRIu64 "\n",
+				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
 				   pkg_proc_stats[i].real_used, ts)
 				== -1) {
@@ -248,8 +251,9 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 			goto error;
 		}
 		if(prom_body_printf(ctx,
-				   "kamailio_pkgmem_total_frags{pid=\"%u\", rank=\"%d\", "
+				   "%.*spkgmem_total_frags{pid=\"%u\", rank=\"%d\", "
 				   "desc=\"%s\"} %d %" PRIu64 "\n",
+				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
 				   pkg_proc_stats[i].total_frags, ts)
 				== -1) {
@@ -257,8 +261,9 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 			goto error;
 		}
 		if(prom_body_printf(ctx,
-				   "kamailio_pkgmem_total_size{pid=\"%u\", rank=\"%d\" "
+				   "%.*spkgmem_total_size{pid=\"%u\", rank=\"%d\" "
 				   "desc=\"%s\"} %d %" PRIu64 "\n",
+				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
 				   pkg_proc_stats[i].total_size, ts)
 				== -1) {
