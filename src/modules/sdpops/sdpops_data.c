@@ -91,19 +91,29 @@ Registration Procedures: Standards Action Process or expert approval
 
 */
 
-typedef struct _codecsmap
-{
+/* clang-format off */
+typedef struct _codecsmap {
 	str name;
 	str ids;
 } codecsmap_t;
 
-codecsmap_t sdpops_codecsmap_table[] = {{{"PCMU", 4}, {"0", 1}},
-		{{"GSM", 3}, {"3", 1}}, {{"G723", 4}, {"4", 1}},
-		{{"DVI4", 4}, {"5,6,16,17", 9}}, {{"LPC", 3}, {"7", 1}},
-		{{"PCMA", 4}, {"8", 1}}, {{"G722", 4}, {"9", 1}},
-		{{"L16", 3}, {"10,11", 5}}, {{"QCELP", 5}, {"12", 2}},
-		{{"CN", 2}, {"13", 5}}, {{"MPA", 3}, {"14", 2}},
-		{{"G728", 4}, {"15", 2}}, {{"G729", 4}, {"18", 2}}, {{0, 0}, {0, 0}}};
+codecsmap_t sdpops_codecsmap_table[] = {
+	{{"PCMU", 4}, {"0", 1}},
+	{{"GSM", 3}, {"3", 1}},
+	{{"G723", 4}, {"4", 1}},
+	{{"DVI4", 4}, {"5,6,16,17", 9}},
+	{{"LPC", 3}, {"7", 1}},
+	{{"PCMA", 4}, {"8", 1}},
+	{{"G722", 4}, {"9", 1}},
+	{{"L16", 3}, {"10,11", 5}},
+	{{"QCELP", 5}, {"12", 2}},
+	{{"CN", 2}, {"13", 5}},
+	{{"MPA", 3}, {"14", 2}},
+	{{"G728", 4}, {"15", 2}},
+	{{"G729", 4}, {"18", 2}},
+	{{0, 0}, {0, 0}}
+};
+/* clang-format on */
 
 /**
  * set the string with the IDs mapped to codec name
