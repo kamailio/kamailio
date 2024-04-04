@@ -2059,6 +2059,50 @@ int bind_sdpops(struct sdpops_binds *sob)
 	return 0;
 }
 
+int sdpops_attr_val(str *payload, str *attr, str *val)
+{
+	char *sline;
+	char *eline;
+
+	val->s = NULL;
+	val->len = 0;
+	sline = find_sdp_line(payload->s, payload->s + payload->len, attr->s[0]);
+	while(sline != NULL) {
+		/* check start of line */
+		if(sline > payload->s) {
+			if(eline[-1] != '\n' && eline[-1] != '\r') {
+				sline = find_next_sdp_line(
+						sline, payload->s + payload->len, attr->s[0], NULL);
+				continue;
+			}
+		}
+		/* find EoL or EoData */
+		eline = sline;
+		while(eline < payload->s + payload->len) {
+			if(*eline == '\r' || *eline == '\r') {
+				break;
+			}
+			eline++;
+		}
+		if(eline - sline > attr->len) {
+			if(strncmp(sline, attr->s, attr->len) == 0) {
+				if(attr->s[attr->len - 1] == ':') {
+					val->s = sline + attr->len;
+				} else if(sline[attr->len] == ':') {
+					val->s = sline + attr->len + 1;
+				}
+				if(val->s != NULL) {
+					val->len = eline - val->s;
+					return 0;
+				}
+			}
+		}
+		sline = find_next_sdp_line(
+				sline, payload->s + payload->len, attr->s[0], NULL);
+	}
+	return -1;
+}
+
 /**
  *
  */
@@ -2070,6 +2114,8 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	unsigned int uport = 0;
 	static char uport_buf[INT2STR_MAX_LEN];
 	str s = STR_NULL;
+	str sattr = STR_NULL;
+	str sval = STR_NULL;
 
 	if(msg == NULL || param == NULL)
 		return -1;
@@ -2215,7 +2261,66 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 						msg, param, res, &sdp->sessions->streams->raw_stream);
 			}
 			return pv_get_null(msg, param, res);
-			break;
+		case 8:
+			/* m0:b:AS */
+			if(sdp->sessions == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams->raw_stream.s != NULL
+					&& sdp->sessions->streams->raw_stream.len > 0) {
+				sattr.s = "b=AS:";
+				sattr.len = 5;
+				if(sdpops_attr_val(
+						   &sdp->sessions->streams->raw_stream, &sattr, &sval)
+						< 0) {
+					return pv_get_null(msg, param, res);
+				}
+				return pv_get_strval(msg, param, res, &sval);
+			}
+			return pv_get_null(msg, param, res);
+		case 9:
+			/* m0:b:RR */
+			if(sdp->sessions == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams->raw_stream.s != NULL
+					&& sdp->sessions->streams->raw_stream.len > 0) {
+				sattr.s = "b=RR:";
+				sattr.len = 5;
+				if(sdpops_attr_val(
+						   &sdp->sessions->streams->raw_stream, &sattr, &sval)
+						< 0) {
+					return pv_get_null(msg, param, res);
+				}
+				return pv_get_strval(msg, param, res, &sval);
+			}
+			return pv_get_null(msg, param, res);
+		case 10:
+			/* m0:b:RS */
+			if(sdp->sessions == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams == NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			if(sdp->sessions->streams->raw_stream.s != NULL
+					&& sdp->sessions->streams->raw_stream.len > 0) {
+				sattr.s = "b=RS:";
+				sattr.len = 5;
+				if(sdpops_attr_val(
+						   &sdp->sessions->streams->raw_stream, &sattr, &sval)
+						< 0) {
+					return pv_get_null(msg, param, res);
+				}
+				return pv_get_strval(msg, param, res, &sval);
+			}
+			return pv_get_null(msg, param, res);
 
 		default:
 			return pv_get_null(msg, param, res);
@@ -2280,6 +2385,16 @@ static int pv_parse_sdp_name(pv_spec_p sp, str *in)
 		case 6:
 			if(strncmp(in->s, "m0:raw", 6) == 0)
 				sp->pvp.pvn.u.isname.name.n = 7;
+			else
+				goto error;
+			break;
+		case 7:
+			if(strncmp(in->s, "m0:b:AS", 7) == 0)
+				sp->pvp.pvn.u.isname.name.n = 8;
+			else if(strncmp(in->s, "m0:b:RR", 7) == 0)
+				sp->pvp.pvn.u.isname.name.n = 9;
+			else if(strncmp(in->s, "m0:b:RS", 7) == 0)
+				sp->pvp.pvn.u.isname.name.n = 10;
 			else
 				goto error;
 			break;
