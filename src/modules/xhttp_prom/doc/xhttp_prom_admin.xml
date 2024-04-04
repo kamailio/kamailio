@@ -182,6 +182,29 @@ modparam("xhttp_prom", "xhttp_prom_stats", "")
 		</programlisting>
 	  </example>
 	</section>
+	<section id="xhttp_prom.p.xhttp_prom_pkg_stats">
+	  <title><varname>xhttp_prom_pkg_stats</varname> (str)</title>
+	  <para>
+		Enable or disable internal &kamailio; pkg memory statistics.
+	  </para>
+	  <para>
+		<emphasis>If not 0</emphasis>, pkg memory statistics will be displayed.
+	  </para>
+	  <para>
+		<emphasis>
+		  Default value is 0 (no pkg memory statistics).
+		</emphasis>
+	  </para>
+	  <example>
+		<title>Set <varname>xhttp_prom_pkg_stats</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# enable pkg stats
+modparam("xhttp_prom", "xhttp_prom_pkg_stats", 1)
+...
+		</programlisting>
+	  </example>
+	</section>
 	<section id="xhttp_prom.p.xhttp_prom_beginning">
 	  <title><varname>xhttp_prom_beginning</varname> (str)</title>
 	  <para>
