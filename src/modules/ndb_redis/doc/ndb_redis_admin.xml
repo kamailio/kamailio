@@ -76,6 +76,12 @@
 			server name when querying the REDIS instance.
 		</para>
 		<para>
+			If tls is enabled, the module will validate the REDIS server certificate against the
+			ca_path. There is currently no way to connect with a specified client certificate, the
+			<ulink url="https://redis.io/docs/management/security/encryption/#client-certificate-authentication">corresponding configuration</ulink>
+			to check client certificates in the REDIS server must therefore be turned off.
+		</para>
+		<para>
 		<emphasis>
 			Default value is NULL.
 		</emphasis>
@@ -330,9 +336,9 @@ modparam("ndb_redis", "debug", 1)
 		</example>
 	</section>
 	<section id="ndb_redis.p.ca_path">
-		<title><varname>ac_path</varname> (string)</title>
+		<title><varname>ca_path</varname> (string)</title>
 		<para>
-			Sets the path where Certificates Authorities certs are stored.
+			Sets the path where Certificates Authorities certs for the REDIS server certificate are stored.
 		</para>
 		<para>
 			Default value: "" (empty).
