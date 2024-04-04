@@ -55,7 +55,7 @@ Joel Centelles Martin
               3.8. flush_on_reconnect (integer)
               3.9. allow_dynamic_nodes (integer)
               3.10. debug (integer)
-              3.11. ac_path (string)
+              3.11. ca_path (string)
 
         4. Functions
 
@@ -103,7 +103,7 @@ Chapter 1. Admin Guide
         3.8. flush_on_reconnect (integer)
         3.9. allow_dynamic_nodes (integer)
         3.10. debug (integer)
-        3.11. ac_path (string)
+        3.11. ca_path (string)
 
    4. Functions
 
@@ -149,7 +149,7 @@ Chapter 1. Admin Guide
    3.8. flush_on_reconnect (integer)
    3.9. allow_dynamic_nodes (integer)
    3.10. debug (integer)
-   3.11. ac_path (string)
+   3.11. ca_path (string)
 
 3.1. server (str)
 
@@ -167,6 +167,12 @@ Chapter 1. Admin Guide
    You can set this parameter many times, in case you want to connect to
    many REDIS servers, just give different attributes and use the specific
    server name when querying the REDIS instance.
+
+   If tls is enabled, the module will validate the REDIS server
+   certificate against the ca_path. There is currently no way to connect
+   with a specified client certificate, the corresponding configuration to
+   check client certificates in the REDIS server must therefore be turned
+   off.
 
    Default value is NULL.
 
@@ -346,9 +352,10 @@ modparam("ndb_redis", "allow_dynamic_nodes", 1)
 modparam("ndb_redis", "debug", 1)
 ...
 
-3.11. ac_path (string)
+3.11. ca_path (string)
 
-   Sets the path where Certificates Authorities certs are stored.
+   Sets the path where Certificates Authorities certs for the REDIS server
+   certificate are stored.
 
    Default value: "" (empty).
 

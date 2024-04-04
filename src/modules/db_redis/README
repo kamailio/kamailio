@@ -39,7 +39,7 @@ Joel Centelles Martin
               4.3. verbosity (int)
               4.4. opt_tls (int)
               4.5. db_pass (string)
-              4.6. ac_path (string)
+              4.6. ca_path (string)
 
         5. Usage
         6. Module Specific Considerations
@@ -75,7 +75,7 @@ Chapter 1. Admin Guide
         4.3. verbosity (int)
         4.4. opt_tls (int)
         4.5. db_pass (string)
-        4.6. ac_path (string)
+        4.6. ca_path (string)
 
    5. Usage
    6. Module Specific Considerations
@@ -203,7 +203,7 @@ allid,time_hires&cid:callid
    4.3. verbosity (int)
    4.4. opt_tls (int)
    4.5. db_pass (string)
-   4.6. ac_path (string)
+   4.6. ca_path (string)
 
 4.1. schema_path (string)
 
@@ -247,6 +247,12 @@ modparam("db_redis", "verbosity", 0)
    Controls TLS usage while connecting to a remote DB. If set to 1, TLS is
    used to connect to the DB.
 
+   If TLS is enabled, the module will validate the Redis server
+   certificate against the ca_path. There is currently no way to connect
+   with a specified client certificate, the corresponding configuration to
+   check client certificates in the Redis server must therefore be turned
+   off.
+
    Default value: 0.
 
    Example 1.4. Enabling TLS connection
@@ -265,9 +271,10 @@ modparam("db_redis", "opt_tls", 1)
 modparam("db_redis", "db_pass", "r3d1sPass")
 ...
 
-4.6. ac_path (string)
+4.6. ca_path (string)
 
-   Sets the path where Certificates Authorities certs are stored.
+   Sets the path where Certificates Authorities certs for the Redis server
+   certificate are stored.
 
    Default value: "" (empty).
 
