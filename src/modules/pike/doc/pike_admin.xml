@@ -90,8 +90,7 @@ modparam("pike", "sampling_time_unit", 10)
 		<para>
 		How many requests should be allowed per <varname>sampling_time_unit</varname>
 		before blocking all the incoming request from that IP. Practically, the
-		blocking limit is between ( let's have x=reqs_density_per_unit) x
-		and 3*x for IPv4 addresses and between x and 8*x for IPv6 addresses.
+		blocking limit is reqs_density_per_unit/sampling_time_unit requests/second.
 		</para>
 		<para>
 		<emphasis>
