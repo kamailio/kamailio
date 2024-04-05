@@ -322,6 +322,7 @@ static int_str setid_avp;
 
 static str write_sdp_pvar_str = {NULL, 0};
 static pv_spec_t *write_sdp_pvar = NULL;
+static int write_sdp_pvar_mode = 0;
 
 static str read_sdp_pvar_str = {NULL, 0};
 static pv_spec_t *read_sdp_pvar = NULL;
@@ -504,6 +505,7 @@ static param_export_t params[] = {
 	{"force_send_interface", PARAM_STRING, &force_send_ip_str},
 	{"rtp_inst_pvar", PARAM_STR, &rtp_inst_pv_param},
 	{"write_sdp_pv", PARAM_STR, &write_sdp_pvar_str},
+	{"write_sdp_pv_mode", PARAM_INT, &write_sdp_pvar_mode},
 	{"read_sdp_pv", PARAM_STR, &read_sdp_pvar_str},
 	{"hash_table_tout", INT_PARAM, &hash_table_tout},
 	{"hash_table_size", INT_PARAM, &hash_table_size},
@@ -4708,9 +4710,11 @@ static int rtpengine_offer_answer(
 				goto error_free;
 			}
 
-			pkg_free(newbody.s);
-
-		} else {
+			if(write_sdp_pvar_mode == 0) {
+				pkg_free(newbody.s);
+			}
+		}
+		if(write_sdp_pvar == NULL || write_sdp_pvar_mode != 0) {
 			if(cl_field.len) {
 				anchor = del_lump(msg, cl_field.s - msg->buf, cl_field.len, 0);
 				cl_repl.s = pkg_malloc(10);
