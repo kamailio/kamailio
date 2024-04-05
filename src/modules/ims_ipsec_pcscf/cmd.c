@@ -1126,7 +1126,8 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 			buf_len =
 					snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d;transport=tcp",
 							ci.via_host.len, ci.via_host.s, dst_port);
-		} else if((_cflags & IPSEC_SETDSTURI_FULL) && (dst_proto == PROTO_TLS)) {
+		} else if((_cflags & IPSEC_SETDSTURI_FULL)
+				  && (dst_proto == PROTO_TLS)) {
 			buf_len =
 					snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d;transport=tls",
 							ci.via_host.len, ci.via_host.s, dst_port);
@@ -1143,7 +1144,7 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 		memcpy(m->dst_uri.s, buf, buf_len);
 		m->dst_uri.len = buf_len;
 		m->dst_uri.s[m->dst_uri.len] = '\0';
-		LM_ERR("new destination URI: %.*s\n", m->dst_uri.len, m->dst_uri.s);
+		LM_INFO("new destination URI: %.*s\n", m->dst_uri.len, m->dst_uri.s);
 	}
 
 	// Set send socket
