@@ -2059,6 +2059,9 @@ int bind_sdpops(struct sdpops_binds *sob)
 	return 0;
 }
 
+/**
+ *
+ */
 int sdpops_attr_val(str *payload, str *attr, str *val)
 {
 	char *sline;
@@ -2066,16 +2069,9 @@ int sdpops_attr_val(str *payload, str *attr, str *val)
 
 	val->s = NULL;
 	val->len = 0;
-	sline = find_sdp_line(payload->s, payload->s + payload->len, attr->s[0]);
+	sline = find_sdp_line_start(
+			payload->s, payload->s + payload->len, attr->s[0], 0);
 	while(sline != NULL) {
-		/* check start of line */
-		if(sline > payload->s) {
-			if(eline[-1] != '\n' && eline[-1] != '\r') {
-				sline = find_next_sdp_line(
-						sline, payload->s + payload->len, attr->s[0], NULL);
-				continue;
-			}
-		}
 		/* find EoL or EoData */
 		eline = sline;
 		while(eline < payload->s + payload->len) {
