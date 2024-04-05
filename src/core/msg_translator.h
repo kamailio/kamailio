@@ -174,6 +174,11 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 int sip_msg_update_buffer(sip_msg_t *msg, str *obuf);
 
 /**
+ * evaluate changes and set the output buffer
+ */
+int sip_msg_eval_changes(sip_msg_t *msg, str *obuf);
+
+/**
  * apply changes to sip msg buffer and reparse
  */
 int sip_msg_apply_changes(sip_msg_t *msg);

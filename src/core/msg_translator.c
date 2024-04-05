@@ -3486,6 +3486,33 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 }
 
 /**
+ * evaluate changes and set the output buffer
+ * - obuf->s has to be pkg freed
+ * - return: 1 on success, -1 on failure
+ */
+int sip_msg_eval_changes(sip_msg_t *msg, str *obuf)
+{
+	dest_info_t dst;
+
+	init_dest_info(&dst);
+	dst.proto = PROTO_UDP;
+	if(msg->first_line.type == SIP_REPLY) {
+		obuf->s = generate_res_buf_from_sip_res(
+				msg, (unsigned int *)&obuf->len, BUILD_NO_VIA1_UPDATE);
+	} else {
+		obuf->s = build_req_buf_from_sip_req(msg, (unsigned int *)&obuf->len,
+				&dst,
+				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE);
+	}
+	if(obuf->s == NULL) {
+		LM_ERR("couldn't update msg buffer content\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
  *
  */
 int sip_msg_apply_changes(sip_msg_t *msg)
