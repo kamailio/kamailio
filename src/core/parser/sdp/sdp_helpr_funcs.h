@@ -65,6 +65,7 @@ int extract_accept_wrapped_types(str *body, str *accept_wrapped_types);
 int extract_max_size(str *body, str *max_size);
 int extract_path(str *body, str *path);
 
+char *find_sdp_line_start(char *pstart, char *plimit, char linechar, int smode);
 char *find_sdp_line(char *p, char *plimit, char linechar);
 char *find_next_sdp_line(char *p, char *plimit, char linechar, char *defptr);
 
