@@ -182,8 +182,9 @@ modparam("xhttp_prom", "xhttp_prom_stats", "")
 		</programlisting>
 	  </example>
 	</section>
+
 	<section id="xhttp_prom.p.xhttp_prom_pkg_stats">
-	  <title><varname>xhttp_prom_pkg_stats</varname> (str)</title>
+	  <title><varname>xhttp_prom_pkg_stats</varname> (integer)</title>
 	  <para>
 		Enable or disable internal &kamailio; pkg memory statistics.
 	  </para>
@@ -201,6 +202,29 @@ modparam("xhttp_prom", "xhttp_prom_stats", "")
 ...
 # enable pkg stats
 modparam("xhttp_prom", "xhttp_prom_pkg_stats", 1)
+...
+		</programlisting>
+	  </example>
+	</section>
+	<section id="xhttp_prom.p.xhttp_prom_uptime_stat">
+	  <title><varname>xhttp_prom_uptime_stat</varname> (integer)</title>
+	  <para>
+		Enable or disable &kamailio; uptime statistic.
+	  </para>
+	  <para>
+		<emphasis>If not 0</emphasis>, uptime statistic will be displayed.
+	  </para>
+	  <para>
+		<emphasis>
+		  Default value is 0 (no uptime statistic).
+		</emphasis>
+	  </para>
+	  <example>
+		<title>Set <varname>xhttp_prom_uptime_stat</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# enable uptime statistic
+modparam("xhttp_prom", "xhttp_prom_uptime_stat", 1)
 ...
 		</programlisting>
 	  </example>
