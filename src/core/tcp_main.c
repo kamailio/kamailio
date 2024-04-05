@@ -1701,8 +1701,8 @@ void tcpconn_rm(struct tcp_connection *c)
  *   ip address and/or a 0 local port).
  * WARNING: unprotected (locks) use tcpconn_get unless you really
  * know what you are doing */
-struct tcp_connection *_tcpconn_find(
-		int id, struct ip_addr *ip, int port, struct ip_addr *l_ip, int l_port)
+struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
+		struct ip_addr *l_ip, int l_port, sip_protos_t proto)
 {
 
 	struct tcp_connection *c;
@@ -1741,7 +1741,8 @@ struct tcp_connection *_tcpconn_find(
 					&& (ip_addr_cmp(ip, &a->parent->rcv.src_ip))
 					&& (is_local_ip_any
 							|| ip_addr_cmp(l_ip, &a->parent->rcv.dst_ip)
-							|| ip_addr_cmp(l_ip, &a->parent->cinfo.dst_ip))) {
+							|| ip_addr_cmp(l_ip, &a->parent->cinfo.dst_ip))
+					&& (proto == PROTO_NONE || a->parent->rcv.proto == proto)) {
 				LM_DBG("found connection by peer address (id: %d)\n",
 						a->parent->id);
 				return a->parent;
@@ -1762,7 +1763,8 @@ int tcpconn_exists(int conn_id, ip_addr_t *peer_ip, int peer_port,
 	tcp_connection_t *c;
 
 	TCPCONN_LOCK;
-	c = _tcpconn_find(conn_id, peer_ip, peer_port, local_ip, local_port);
+	c = _tcpconn_find(
+			conn_id, peer_ip, peer_port, local_ip, local_port, PROTO_NONE);
 	TCPCONN_UNLOCK;
 	if(c) {
 		return 1;
@@ -1778,7 +1780,8 @@ int tcpconn_exists(int conn_id, ip_addr_t *peer_ip, int peer_port,
  * want to decrement it after use.
  */
 struct tcp_connection *tcpconn_lookup(int id, struct ip_addr *ip, int port,
-		union sockaddr_union *local_addr, int try_local_port, ticks_t timeout)
+		union sockaddr_union *local_addr, int try_local_port, ticks_t timeout,
+		sip_protos_t proto)
 {
 	struct tcp_connection *c;
 	struct ip_addr local_ip;
@@ -1797,10 +1800,10 @@ struct tcp_connection *tcpconn_lookup(int id, struct ip_addr *ip, int port,
 	}
 	TCPCONN_LOCK;
 	if(likely(try_local_port != 0) && likely(local_port == 0)) {
-		c = _tcpconn_find(id, ip, port, &local_ip, try_local_port);
+		c = _tcpconn_find(id, ip, port, &local_ip, try_local_port, proto);
 	}
 	if(unlikely(c == NULL)) {
-		c = _tcpconn_find(id, ip, port, &local_ip, local_port);
+		c = _tcpconn_find(id, ip, port, &local_ip, local_port, proto);
 	}
 	if(likely(c)) {
 		atomic_inc(&c->refcnt);
@@ -1825,7 +1828,7 @@ struct tcp_connection *tcpconn_lookup(int id, struct ip_addr *ip, int port,
 struct tcp_connection *tcpconn_get(int id, struct ip_addr *ip, int port,
 		union sockaddr_union *local_addr, ticks_t timeout)
 {
-	return tcpconn_lookup(id, ip, port, local_addr, 0, timeout);
+	return tcpconn_lookup(id, ip, port, local_addr, 0, timeout, PROTO_NONE);
 }
 
 
@@ -1951,7 +1954,7 @@ int tcpconn_add_alias(int id, int port, int proto)
 	port = port ? port : ((proto == PROTO_TLS) ? SIPS_PORT : SIP_PORT);
 	TCPCONN_LOCK;
 	/* check if alias already exists */
-	c = _tcpconn_find(id, 0, 0, 0, 0);
+	c = _tcpconn_find(id, 0, 0, 0, 0, PROTO_NONE);
 	if(likely(c)) {
 		ip_addr_mk_any(c->rcv.src_ip.af, &zero_ip);
 		alias_flags = cfg_get(tcp, tcp_cfg, alias_flags);
@@ -2092,8 +2095,8 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 	if(likely(port)) {
 		su2ip_addr(&ip, &dst->to);
 		if(tcp_connection_match == TCPCONN_MATCH_STRICT) {
-			c = tcpconn_lookup(
-					dst->id, &ip, port, from, try_local_port, con_lifetime);
+			c = tcpconn_lookup(dst->id, &ip, port, from, try_local_port,
+					con_lifetime, dst->proto);
 		} else {
 			c = tcpconn_get(dst->id, &ip, port, from, con_lifetime);
 		}
@@ -2109,8 +2112,8 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 			if(likely(port)) {
 				/* try again w/o id */
 				if(tcp_connection_match == TCPCONN_MATCH_STRICT) {
-					c = tcpconn_lookup(
-							0, &ip, port, from, try_local_port, con_lifetime);
+					c = tcpconn_lookup(0, &ip, port, from, try_local_port,
+							con_lifetime, dst->proto);
 				} else {
 					c = tcpconn_get(0, &ip, port, from, con_lifetime);
 				}
@@ -5430,7 +5433,8 @@ int wss_send(dest_info_t *dst, const char *buf, unsigned len)
 			su2ip_addr(&ip, &dst->to);
 			if(tcp_connection_match == TCPCONN_MATCH_STRICT) {
 				con = tcpconn_lookup(dst->id, &ip, port, from,
-						(dst->send_sock) ? dst->send_sock->port_no : 0, 0);
+						(dst->send_sock) ? dst->send_sock->port_no : 0, 0,
+						PROTO_NONE);
 			} else {
 				con = tcpconn_get(dst->id, &ip, port, from, 0);
 			}
