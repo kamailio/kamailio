@@ -50,6 +50,33 @@ if(msg_apply_changes())
 		</example>
 	</section>
 
+	<section id="textopsx.f.msg_changed_route">
+		<title>
+		<function moreinfo="none">msg_changed_route(rname)</function>
+		</title>
+		<para>
+			Execute a route block specified by rname, using a new SIP message
+			structure build using the current SIP message with applied changes.
+			The current SIP message does not get the changes applied.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msg_changed_route()</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_hf("My-Header: yes\r\n");
+msg_changed_route("UPDATEDMSG");
+...
+route[UPDATEDMSG] {
+   xinfo("My-Header-Value: $hdr(My-Header)\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textopsx.f.msg_set_buffer">
 		<title>
 			<function moreinfo="none">msg_set_buffer(data)</function>
