@@ -522,8 +522,6 @@ static str _ksr_pv_msg_buf_updated = STR_NULL;
 int pv_get_msg_buf_updated(
 		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	dest_info_t send_info;
-
 	if(msg == NULL)
 		return -1;
 
@@ -533,17 +531,7 @@ int pv_get_msg_buf_updated(
 		_ksr_pv_msg_buf_updated.len = 0;
 	}
 
-	init_dest_info(&send_info);
-	send_info.proto = PROTO_UDP;
-	if(msg->first_line.type == SIP_REPLY) {
-		_ksr_pv_msg_buf_updated.s = generate_res_buf_from_sip_res(msg,
-				(unsigned int *)&_ksr_pv_msg_buf_updated.len,
-				BUILD_NO_VIA1_UPDATE);
-	} else if(msg->first_line.type == SIP_REQUEST) {
-		_ksr_pv_msg_buf_updated.s = build_req_buf_from_sip_req(msg,
-				(unsigned int *)&_ksr_pv_msg_buf_updated.len, &send_info,
-				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE);
-	} else {
+	if(sip_msg_eval_changes(msg, &_ksr_pv_msg_buf_updated) < 0) {
 		return pv_get_null(msg, param, res);
 	}
 
