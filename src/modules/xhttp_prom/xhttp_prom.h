@@ -85,6 +85,11 @@ extern str xhttp_prom_beginning;
 extern int timeout_minutes;
 
 /**
+ * @brief enable or disable uptime statistic.
+ */
+extern int uptime_stat_enabled;
+
+/**
  * @brief enable or disable pkgmem statistics.
  */
 extern int pkgmem_stats_enabled;

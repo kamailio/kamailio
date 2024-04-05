@@ -153,6 +153,8 @@ int buf_size = 0; /**< size of buffer that contains the reply. */
 
 int timeout_minutes = 60; /**< timeout in minutes to delete old metrics. */
 
+int uptime_stat_enabled = 0; /**< enable or disable uptime statistic. */
+
 int pkgmem_stats_enabled = 0; /**< enable or disable pkgmem statistics. */
 
 char error_buf[ERROR_REASON_BUF_LEN];
@@ -213,6 +215,7 @@ static param_export_t params[] = {{"xhttp_prom_buf_size", INT_PARAM, &buf_size},
 		{"prom_histogram", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)prom_histogram_param},
 		{"xhttp_prom_timeout", INT_PARAM, &timeout_minutes},
+		{"xhttp_prom_uptime_stat", INT_PARAM, &uptime_stat_enabled},
 		{"xhttp_prom_pkg_stats", INT_PARAM, &pkgmem_stats_enabled}, {0, 0, 0}};
 
 struct module_exports exports = {
