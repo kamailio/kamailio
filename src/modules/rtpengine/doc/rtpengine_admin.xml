@@ -478,6 +478,32 @@ route {
 		</example>
 	</section>
 
+	<section id="rtpengine.p.write_sdp_pv_mode">
+		<title><varname>write_sdp_pv_mode</varname> (int)</title>
+		<para>
+			If this parameter is set to 1, the returned SDP is written to pv
+			and also set to message body.
+		</para>
+		<para>
+			Default value: 0 (write SDP only to pv).
+		</para>
+		<example>
+		<title>Set <varname>write_sdp_pv_mode</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "write_sdp_pv", "$avp(sdp)")
+modparam("rtpengine", "write_sdp_pv_mode", 1)
+...
+route {
+	...
+	rtpengine_manage();
+	xinfo("new sdp: $avp(sdp)\n");
+}
+</programlisting>
+		</example>
+	</section>
+
+
 	<section id="rtpengine.p.rtp_inst_pvar">
 		<title><varname>rtp_inst_pvar</varname> (string)</title>
 		<para>
