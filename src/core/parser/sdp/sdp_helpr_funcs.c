@@ -735,14 +735,13 @@ int extract_sess_version(str *oline, str *sess_version)
  * Auxiliary for some functions.
  * Returns pointer to first character of found line, or NULL if no such line.
  */
-
-char *find_sdp_line(char *p, char *plimit, char linechar)
+char *find_sdp_line(char *pstart, char *plimit, char linechar)
 {
 	static char linehead[3] = "x=";
 	char *cp, *cp1;
 	linehead[0] = linechar;
 	/* Iterate through body */
-	cp = p;
+	cp = pstart;
 	for(;;) {
 		if(cp >= plimit)
 			return NULL;
@@ -767,13 +766,14 @@ char *find_sdp_line(char *p, char *plimit, char linechar)
 }
 
 
-/* This function assumes p points to a line of requested type. */
-char *find_next_sdp_line(char *p, char *plimit, char linechar, char *defptr)
+/* This function assumes pstart points to a line of requested type. */
+char *find_next_sdp_line(
+		char *pstart, char *plimit, char linechar, char *defptr)
 {
 	char *t;
-	if(p >= plimit || plimit - p < 3)
+	if(pstart >= plimit || plimit - pstart < 3)
 		return defptr;
-	t = find_sdp_line(p + 2, plimit, linechar);
+	t = find_sdp_line(pstart + 2, plimit, linechar);
 	return t ? t : defptr;
 }
 
