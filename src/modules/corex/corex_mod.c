@@ -32,6 +32,7 @@
 #include "../../core/fmsg.h"
 #include "../../core/kemi.h"
 #include "../../core/str_list.h"
+#include "../../core/trim.h"
 #include "../../core/events.h"
 #include "../../core/onsend.h"
 #include "../../core/forward.h"
@@ -82,12 +83,15 @@ static int corex_evrt_reply_out_no = -1;
 
 int corex_alias_subdomains_param(modparam_t type, void *val);
 int corex_dns_cache_param(modparam_t type, void *val);
+int corex_dns_file_param(modparam_t type, void *val);
+int corex_dns_file_load(void);
 
 static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
 
 static str_list_t *corex_dns_cache_list = NULL;
+static str_list_t *corex_dns_file_list = NULL;
 
 static int corex_dns_cache_param_add(str *pval);
 
@@ -176,6 +180,8 @@ static param_export_t params[] = {
 				(void *)corex_alias_subdomains_param},
 	{"dns_cache", PARAM_STR | USE_FUNC_PARAM,
 				(void *)corex_dns_cache_param},
+	{"dns_file", PARAM_STR | USE_FUNC_PARAM,
+				(void *)corex_dns_file_param},
 	{"nio_intercept", INT_PARAM, &nio_intercept},
 	{"nio_min_msg_len", INT_PARAM, &nio_min_msg_len},
 	{"nio_msg_avp", PARAM_STR, &nio_msg_avp_param},
@@ -225,6 +231,9 @@ static int mod_init(void)
 			LM_ERR("failed to add record: %.*s\n", sit->s.len, sit->s.s);
 			return -1;
 		}
+	}
+	if(corex_dns_file_load() < 0) {
+		return -1;
 	}
 
 	if((nio_intercept > 0) && (nio_intercept_init() < 0)) {
@@ -381,6 +390,67 @@ int corex_dns_cache_param(modparam_t type, void *val)
 		sit->next = corex_dns_cache_list;
 	}
 	corex_dns_cache_list = sit;
+
+	return 0;
+}
+
+int corex_dns_file_param(modparam_t type, void *val)
+{
+	str_list_t *sit;
+
+	if(val == NULL || ((str *)val)->s == NULL || ((str *)val)->len == 0) {
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+
+	sit = (str_list_t *)pkg_mallocxz(sizeof(str_list_t));
+	if(sit == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	sit->s = *((str *)val);
+	if(corex_dns_file_list != NULL) {
+		sit->next = corex_dns_file_list;
+	}
+	corex_dns_file_list = sit;
+
+	return 0;
+}
+
+int corex_dns_file_load(void)
+{
+	str_list_t *sit;
+	str sline;
+	char lbuf[512];
+	FILE *FP;
+
+	for(sit = corex_dns_file_list; sit != NULL; sit = sit->next) {
+		FP = fopen(sit->s.s, "r");
+		if(FP == NULL) {
+			LM_ERR("failed to open file '%.*s'\n", sit->s.len, sit->s.s);
+			return -1;
+		}
+		while(fgets(lbuf, 512, FP)) {
+			sline.s = lbuf;
+			sline.len = strlen(sline.s);
+			trim(&sline);
+			if(sline.len <= 0) {
+				/* empty line */
+				continue;
+			}
+			if(sline.s[0] == '#') {
+				/* comment */
+				continue;
+			}
+			if(corex_dns_cache_param_add(&sline) < 0) {
+				LM_ERR("failed to add record: '%.*s' (%.*s)\n", sline.len,
+						sline.s, sit->s.len, sit->s.s);
+				fclose(FP);
+				return -1;
+			}
+		}
+		fclose(FP);
+	}
 
 	return 0;
 }
