@@ -165,6 +165,41 @@ modparam("corex", "dns_cache", "type=AAAA;name=kamailio.org;addr=2a00:d60:0:400:
 </programlisting>
 	    </example>
 	</section>
+	<section id="corex.p.dns_file">
+	    <title><varname>dns_file</varname> (string)</title>
+	    <para>
+		Path to the file from where to load dns_cache records. It can be set
+		many times to add more than one file.
+	    </para>
+	    <para>
+	    Inside the file, the dns_cache record has to be in a single line, with
+	    the format of the dns_cache module parameter (see above). Empty lines
+	    or lines with whitespaces only are ignored. Comment lines have to start
+	    with '#'. Comments are not accepted after dns_cache records, only on
+	    separate lines.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>dns_file</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# content of /etc/kamailio/kamailio-cache.dns
+
+# IPv4 record
+type=A;name=kamailio.org;addr=193.22.119.66;ttl=3600000;flags=0
+# IPv6 record
+type=AAAA;name=kamailio.org;addr=2a00:d60:0:400::2;ttl=3600000;flags=0
+...
+...
+modparam("corex", "dns_file", "/etc/kamailio/kamailio-cache.dns")
+...
+</programlisting>
+	    </example>
+	</section>
 	<section id="corex.p.evcb_reply_out">
 	    <title><varname>evcb_reply_out</varname> (string)</title>
 	    <para>
@@ -1291,4 +1326,3 @@ sub do_uncompress() {
         </example>
     </section>
 </chapter>
-
