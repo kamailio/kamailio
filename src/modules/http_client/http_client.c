@@ -117,6 +117,8 @@ unsigned int default_query_result = 1;
 /*!< Default download size for result of query function. 0=disabled (no limit) */
 unsigned int default_query_maxdatasize = 0;
 
+int http_client_response_headers_param = 0;
+
 str http_client_config_file = STR_NULL;
 
 static curl_version_info_data *curl_info;
@@ -224,6 +226,7 @@ static param_export_t params[] = {
 	{"query_result", PARAM_INT, &default_query_result },
 	{"query_maxdatasize", PARAM_INT, &default_query_maxdatasize },
 	{"netinterface", PARAM_STRING,  &default_netinterface },
+	{"response_headers", PARAM_INT, &http_client_response_headers_param },
 	{0, 0, 0}
 };
 

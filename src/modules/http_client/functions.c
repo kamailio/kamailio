@@ -75,6 +75,58 @@ typedef struct
 } curl_query_t;
 
 
+/**
+ *
+ */
+typedef struct httpc_hdr
+{
+	str hbuf;
+	str name;
+	str body;
+	struct httpc_hdr *next;
+} httpc_hdr_t;
+
+/**
+ *
+ */
+httpc_hdr_t *_http_client_response_headers = NULL;
+
+/**
+ *
+ */
+httpc_hdr_t *httpc_hdr_block_add(httpc_hdr_t **head, char *s, int len)
+{
+	httpc_hdr_t *nv;
+	nv = pkg_mallocxz(sizeof(httpc_hdr_t) + (len + 1) * sizeof(char));
+	if(!nv) {
+		PKG_MEM_ERROR;
+		return 0;
+	}
+	nv->hbuf.s = (char *)nv + sizeof(httpc_hdr_t);
+	memcpy(nv->hbuf.s, s, len);
+	nv->hbuf.len = len;
+	nv->next = *head;
+	*head = nv;
+
+	return nv;
+}
+
+/**
+ *
+ */
+void http_client_response_headers_reset(void)
+{
+	httpc_hdr_t *it0;
+	httpc_hdr_t *it1;
+	it0 = _http_client_response_headers;
+	while(it0 != NULL) {
+		it1 = it0->next;
+		pkg_free(it0);
+		it0 = it1;
+	}
+	_http_client_response_headers = NULL;
+}
+
 /*
  * curl write function that saves received data as zero terminated
  * to stream. Returns the amount of data taken care of.
@@ -111,6 +163,20 @@ size_t write_function(void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 	return size * nmemb;
 }
 
+
+size_t http_client_response_header_cb(
+		char *b, size_t size, size_t nitems, void *userdata)
+{
+	size_t numbytes;
+
+	numbytes = size * nitems;
+	LM_DBG("http response header [%.*s]\n", (int)numbytes, b);
+
+	httpc_hdr_block_add(&_http_client_response_headers, b, (int)numbytes);
+
+	return numbytes;
+	;
+}
 
 /*! Send query to server, optionally post data.
  */
@@ -286,6 +352,12 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 	}
 	if(params->netinterface != NULL) {
 		res |= curl_easy_setopt(curl, CURLOPT_INTERFACE, params->netinterface);
+	}
+
+	if(http_client_response_headers_param != 0) {
+		http_client_response_headers_reset();
+		res |= curl_easy_setopt(
+				curl, CURLOPT_HEADERFUNCTION, http_client_response_header_cb);
 	}
 
 	res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);

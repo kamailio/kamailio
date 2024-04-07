@@ -75,6 +75,8 @@ extern counter_handle_t connfail;	 /* Failed Connection attempts */
 
 extern char *default_netinterface;
 
+extern int http_client_response_headers_param; /* store http response headers */
+
 /* Curl  stream object  */
 typedef struct
 {
