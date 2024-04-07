@@ -713,6 +713,25 @@ modparam("http_client", "netinterface", "eth0")
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.p.response_headers">
+			<title><varname>response_headers</varname> (int)</title>
+			<para>
+			Set to 1 in order to store HTTP response headers.
+			</para>
+			<para>
+			<emphasis>
+				Default value is 0.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>response_headers</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "response_headers", 1)
+...
+				</programlisting>
+			</example>
+		</section>
 
 	</section>
 
