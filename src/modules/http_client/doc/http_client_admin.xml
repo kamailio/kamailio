@@ -1030,6 +1030,27 @@ switch ($rc) {
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.f.http_client_response_headers_set">
+			<title>
+				<function moreinfo="none">http_client_response_headers_set(mode)</function>
+			</title>
+			<para>
+				Set if the HTTP response header should be stored (when mode is 1)
+				or not (when mode is 0). If mode is 0, then it also clears previously
+				stored response headers.
+			</para>
+			<example>
+				<title><function>http_client_response_headers_set()</function> usage</title>
+				<programlisting format="linespecific">
+...
+http_client_response_headers_set("1");
+http_client_request_v2pk("GET", "http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "", "X-Token: abc", "$var(result)");
+xinfo("response header: $httprhdr(X-Header)\n");
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 	<section>
 	<title>Pseudo-Variables</title>
