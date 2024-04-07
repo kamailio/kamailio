@@ -716,7 +716,8 @@ modparam("http_client", "netinterface", "eth0")
 		<section id="http_client.p.response_headers">
 			<title><varname>response_headers</varname> (int)</title>
 			<para>
-			Set to 1 in order to store HTTP response headers.
+			Set to 1 in order to store HTTP response headers. A header value
+			can be retrieved with $httprhdr(name).
 			</para>
 			<para>
 			<emphasis>
@@ -1031,7 +1032,7 @@ switch ($rc) {
 		</section>
 	</section>
 	<section>
-	<title>Pseudovariables</title>
+	<title>Pseudo-Variables</title>
 		<section >
 			<title>
 				<function moreinfo="none">$curlerror(error)</function>
@@ -1042,6 +1043,15 @@ switch ($rc) {
 			The $curlerror pv returns a text string representing the error.
 			For more information on cURL error codes, please visit
 			http://curl.haxx.se/libcurl/c/libcurl-errors.html
+			</para>
+		</section>
+		<section >
+			<title>
+				<function moreinfo="none">$httprhdr(name)</function>
+			</title>
+			<para>
+			Return response header value. It requires response_headers parameter
+			to be set to 1.
 			</para>
 		</section>
 	</section>
