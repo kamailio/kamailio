@@ -78,4 +78,7 @@ int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
 
 char *http_get_content_type(const str *connection);
 
+int http_client_response_headers_get(str *hname, str *hbody);
+void http_client_response_headers_reset(void);
+
 #endif /* CURL_FUNCTIONS_H */

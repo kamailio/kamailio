@@ -39,6 +39,7 @@
 #include "../../core/pvar.h"
 #include "../../core/route_struct.h"
 #include "../../core/ut.h"
+#include "../../core/trim.h"
 #include "../../core/mem/mem.h"
 #include "../../core/parser/msg_parser.h"
 
@@ -125,6 +126,46 @@ void http_client_response_headers_reset(void)
 		it0 = it1;
 	}
 	_http_client_response_headers = NULL;
+}
+
+/**
+ *
+ */
+int http_client_response_headers_get(str *hname, str *hbody)
+{
+	httpc_hdr_t *it;
+	char *p;
+
+	if(_http_client_response_headers == NULL) {
+		return -1;
+	}
+	if(hname == NULL || hname->len <= 0 || hbody == NULL) {
+		return -1;
+	}
+	for(it = _http_client_response_headers; it != NULL; it = it->next) {
+		if(it->name.len == 0 && it->hbuf.s[0] != ' ' && it->hbuf.s[0] != '\t'
+				&& it->hbuf.s[0] != '\r' && it->hbuf.s[0] != '\n') {
+			/* parsing */
+			p = strchr(it->hbuf.s, ':');
+			if(p == NULL) {
+				continue;
+			}
+			it->name.s = it->hbuf.s;
+			it->name.len = p - it->name.s;
+			trim(&it->name);
+			p++;
+			it->body.s = p;
+			it->body.len = it->hbuf.s + it->hbuf.len - it->body.s;
+			trim(&it->body);
+		}
+		if(it->name.len == hname->len
+				&& strncasecmp(it->name.s, hname->s, hname->len) == 0) {
+			hbody->s = it->body.s;
+			hbody->len = it->body.len;
+			return 0;
+		}
+	}
+	return -1;
 }
 
 /*

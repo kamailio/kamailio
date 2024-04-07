@@ -164,6 +164,8 @@ static int curl_con_param(modparam_t type, void *val);
 static int pv_parse_curlerror(pv_spec_p sp, str *in);
 static int pv_get_curlerror(
 		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int pv_parse_httprhdr(pv_spec_p sp, str *in);
+static int pv_get_httprhdr(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 
 /* clang-format off */
 /* Exported functions */
@@ -237,6 +239,8 @@ static param_export_t params[] = {
 static pv_export_t mod_pvs[] = {
 	{{"curlerror", (sizeof("curlerror")-1)}, /* Curl error codes */
 		PVT_OTHER, pv_get_curlerror, 0, pv_parse_curlerror, 0, 0, 0},
+	{{"httprhdr", (sizeof("httprhdr")-1)}, /* HTTP response header */
+		PVT_OTHER, pv_get_httprhdr, 0, pv_parse_httprhdr, 0, 0, 0},
 
 	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
@@ -1193,6 +1197,35 @@ static int pv_get_curlerror(
 	return pv_get_strval(msg, param, res, &curlerr);
 }
 
+/**
+ *
+ */
+static int pv_parse_httprhdr(pv_spec_p sp, str *in)
+{
+	if(sp == NULL || in == NULL || in->len <= 0)
+		return -1;
+
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = AVP_VAL_STR;
+	sp->pvp.pvn.u.isname.name.s = *in;
+
+	return 0;
+}
+
+/**
+ *
+ */
+static int pv_get_httprhdr(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	str hbody = STR_NULL;
+
+	if(http_client_response_headers_get(&param->pvn.u.isname.name.s, &hbody)
+			< 0) {
+		return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_strval(msg, param, res, &hbody);
+}
 
 /*
  * Fix curl_get_redirect params: connection(string/pvar) url (string that may contain pvars) and
