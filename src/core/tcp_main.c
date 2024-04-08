@@ -1758,13 +1758,12 @@ struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
  * - return: 1 if found; 0 if not found
  */
 int tcpconn_exists(int conn_id, ip_addr_t *peer_ip, int peer_port,
-		ip_addr_t *local_ip, int local_port)
+		ip_addr_t *local_ip, int local_port, sip_protos_t proto)
 {
 	tcp_connection_t *c;
 
 	TCPCONN_LOCK;
-	c = _tcpconn_find(
-			conn_id, peer_ip, peer_port, local_ip, local_port, PROTO_NONE);
+	c = _tcpconn_find(conn_id, peer_ip, peer_port, local_ip, local_port, proto);
 	TCPCONN_UNLOCK;
 	if(c) {
 		return 1;
@@ -4497,7 +4496,8 @@ static inline int handle_new_connect(struct socket_info *si)
 	if(likely(tcpconn)) {
 		if(tcp_accept_unique) {
 			if(tcpconn_exists(0, &tcpconn->rcv.dst_ip, tcpconn->rcv.dst_port,
-					   &tcpconn->rcv.src_ip, tcpconn->rcv.src_port)) {
+					   &tcpconn->rcv.src_ip, tcpconn->rcv.src_port,
+					   si->proto)) {
 				LM_ERR("duplicated connection by local and remote addresses\n");
 				_tcpconn_free(tcpconn);
 				tcp_safe_close(new_sock);
