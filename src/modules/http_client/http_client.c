@@ -160,6 +160,8 @@ static int w_http_query_request_v2pk(struct sip_msg *_m, char *_met, char *_url,
 		char *_body, char *_hdrs, char *_result);
 static int w_http_client_response_headers_set(
 		sip_msg_t *_m, char *_pval, char *_p2);
+static int w_http_client_response_headers_clear(
+		sip_msg_t *_m, char *_p1, char *_p2);
 
 /* forward function */
 static int curl_con_param(modparam_t type, void *val);
@@ -205,6 +207,9 @@ static cmd_export_t cmds[] = {
 	{"http_client_response_headers_set",
 		(cmd_function)w_http_client_response_headers_set, 1, fixup_igp_null,
 	 	fixup_free_igp_null, ANY_ROUTE},
+	{"http_client_response_headers_clear",
+		(cmd_function)w_http_client_response_headers_clear, 1, 0,
+	 	0, ANY_ROUTE},
 	{"bind_http_client",  (cmd_function)bind_httpc_api,  0, 0, 0, 0},
 	{0,0,0,0,0,0}
 };
@@ -1182,6 +1187,16 @@ static int w_http_client_response_headers_set(
 		return -1;
 	}
 	return ki_http_client_response_headers_set(_m, ival);
+}
+
+/*!
+ *
+ */
+static int w_http_client_response_headers_clear(
+		sip_msg_t *_m, char *_pval, char *_p2)
+{
+	http_client_response_headers_reset();
+	return 1;
 }
 
 /*!
