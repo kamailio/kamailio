@@ -78,6 +78,7 @@ Hugh Waite
               4.6. http_client_request(met, url, body, hdrs, respv)
               4.7. http_client_request_v2pk(met, url, body, hdrs, respv)
               4.8. http_client_response_headers_set(mode)
+              4.9. http_client_response_headers_clear()
 
         5. Pseudo-Variables
 
@@ -141,6 +142,7 @@ Hugh Waite
    1.29. http_client_request() usage
    1.30. http_client_request_v2pk() usage
    1.31. http_client_response_headers_set() usage
+   1.32. http_client_response_headers_clear() usage
 
 Chapter 1. Admin Guide
 
@@ -188,6 +190,7 @@ Chapter 1. Admin Guide
         4.6. http_client_request(met, url, body, hdrs, respv)
         4.7. http_client_request_v2pk(met, url, body, hdrs, respv)
         4.8. http_client_response_headers_set(mode)
+        4.9. http_client_response_headers_clear()
 
    5. Pseudo-Variables
 
@@ -732,6 +735,7 @@ modparam("http_client", "response_headers", 1)
    4.6. http_client_request(met, url, body, hdrs, respv)
    4.7. http_client_request_v2pk(met, url, body, hdrs, respv)
    4.8. http_client_response_headers_set(mode)
+   4.9. http_client_response_headers_clear()
 
 4.1.  http_connect(connection, url, [content_type, data,] result)
 
@@ -949,6 +953,20 @@ http_client_request_v2pk("GET", "http://api.com/index.php?r_uri=$(ru{s.escape.pa
 ram})&f_uri=$(fu{s.escape.param})",
            "", "X-Token: abc", "$var(result)");
 xinfo("response header: $httprhdr(X-Header)\n");
+...
+
+4.9.  http_client_response_headers_clear()
+
+   Clear stored response headers, if not explicitely done, it happens when
+   the next HTTP request is performed.
+
+   Example 1.32. http_client_response_headers_clear() usage
+...
+http_client_request_v2pk("GET", "http://api.com/index.php?r_uri=$(ru{s.escape.pa
+ram})&f_uri=$(fu{s.escape.param})",
+           "", "X-Token: abc", "$var(result)");
+xinfo("response header: $httprhdr(X-Header)\n");
+http_client_response_headers_clear();
 ...
 
 5. Pseudo-Variables
