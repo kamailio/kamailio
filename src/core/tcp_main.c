@@ -1697,8 +1697,8 @@ void tcpconn_rm(struct tcp_connection *c)
 
 /* finds a connection, if id=0 uses the ip addr, port, local_ip and local port
  *  (host byte order) and tries to find the connection that matches all of
- *   them. Wild cards can be used for local_ip and local_port (a 0 filled
- *   ip address and/or a 0 local port).
+ *   them. Wild cards can be used for local_ip, local_port and proto (a 0 filled
+ *   ip address and/or a 0 local port and/or PROTO_NONE).
  * WARNING: unprotected (locks) use tcpconn_get unless you really
  * know what you are doing */
 struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
@@ -1754,7 +1754,7 @@ struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
 
 
 /**
- * find if a tcp connection exits by id or remote+local address/port
+ * find if a tcp connection exits by id or remote+local address/port and protocol
  * - return: 1 if found; 0 if not found
  */
 int tcpconn_exists(int conn_id, ip_addr_t *peer_ip, int peer_port,
@@ -1774,6 +1774,7 @@ int tcpconn_exists(int conn_id, ip_addr_t *peer_ip, int peer_port,
 /* TCP connection find with locks and timeout
  * - local_addr contains the desired local ip:port. If null any local address
  * will be used. IN*ADDR_ANY or 0 port are wild cards.
+ * - proto is the protocol to match (PROTO_NONE for any)
  * - try_local_port makes the search use it first, instead of port from local_addr
  * If found, the connection's reference counter will be incremented, you might
  * want to decrement it after use.
