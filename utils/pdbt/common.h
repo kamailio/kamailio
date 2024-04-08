@@ -32,7 +32,7 @@
  -1000..-1 used in dtm to indicate a carrier id and that no more nodes will follow (leaf node compression).
  -1001 used in dtm to mark a pointer to a child node as NULL.
 */
-#define MIN_PDB_CARRIERID 1
+#define MIN_PDB_CARRIERID 0
 #define MAX_PDB_CARRIERID 999
 #define OTHER_CARRIERID 1000
 #define MAX_CARRIERID 1000
