@@ -240,7 +240,7 @@ static void delete_http2_session_data(http2_session_data *session_data)
 {
 	http2_stream_data *stream_data;
 	SSL *ssl = bufferevent_openssl_get_ssl(session_data->bev);
-	fprintf(stderr, "%s disconnected\n", session_data->client_addr);
+	LM_ERR("%s disconnected\n", session_data->client_addr);
 	if(ssl) {
 		SSL_shutdown(ssl);
 	}
@@ -517,8 +517,7 @@ static int on_request_recv(nghttp2_session *session,
 		}
 		return 0;
 	}
-	fprintf(stderr, "%s GET %s\n", session_data->client_addr,
-			stream_data->request_path);
+	LM_DBG("%s GET %s\n", session_data->client_addr, stream_data->request_path);
 	if(!check_path(stream_data->request_path)) {
 		if(error_reply(session, stream_data) != 0) {
 			return NGHTTP2_ERR_CALLBACK_FAILURE;
@@ -676,7 +675,7 @@ static void eventcb(struct bufferevent *bev, short events, void *ptr)
 		SSL *ssl;
 		(void)bev;
 
-		fprintf(stderr, "%s connected\n", session_data->client_addr);
+		LM_DBG("%s connected\n", session_data->client_addr);
 
 		ssl = bufferevent_openssl_get_ssl(session_data->bev);
 
@@ -690,8 +689,7 @@ static void eventcb(struct bufferevent *bev, short events, void *ptr)
 #endif /* OPENSSL_VERSION_NUMBER >= 0x10002000L */
 
 		if(alpn == NULL || alpnlen != 2 || memcmp("h2", alpn, 2) != 0) {
-			fprintf(stderr, "%s h2 is not negotiated\n",
-					session_data->client_addr);
+			LM_DBG("%s h2 is not negotiated\n", session_data->client_addr);
 			delete_http2_session_data(session_data);
 			return;
 		}
@@ -707,11 +705,11 @@ static void eventcb(struct bufferevent *bev, short events, void *ptr)
 		return;
 	}
 	if(events & BEV_EVENT_EOF) {
-		fprintf(stderr, "%s EOF\n", session_data->client_addr);
+		LM_DBG("%s EOF\n", session_data->client_addr);
 	} else if(events & BEV_EVENT_ERROR) {
-		fprintf(stderr, "%s network error\n", session_data->client_addr);
+		LM_DBG("%s network error\n", session_data->client_addr);
 	} else if(events & BEV_EVENT_TIMEOUT) {
-		fprintf(stderr, "%s timeout\n", session_data->client_addr);
+		LM_DBG("%s timeout\n", session_data->client_addr);
 	}
 	delete_http2_session_data(session_data);
 }
