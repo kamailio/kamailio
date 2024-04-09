@@ -38,7 +38,55 @@ else
 	LEVENTLIBS = $(shell $(LEVENT_BUILDER) --libs)
 endif
 
-DEFS+=$(LNGHTTP2DEFS) $(LEVENTDEFS)
-LIBS=$(LNGHTTP2LIBS) $(LEVENTLIBS)
+
+ifeq ($(CROSS_COMPILE),)
+LEVENTSSL_BUILDER = $(shell \
+	if pkg-config --exists libevent_openssl; then \
+		echo 'pkg-config libevent_openssl'; \
+	fi)
+endif
+
+ifeq ($(LEVENTSSL_BUILDER),)
+	LEVENTSSLDEFS=-I$(LOCALBASE)/include -I$(SYSBASE)/include
+	LEVENTSSLLIBS=-L$(LOCALBASE)/lib -levent_openssl
+else
+	LEVENTSSLDEFS = $(shell $(LEVENTSSL_BUILDER) --cflags)
+	LEVENTSSLLIBS = $(shell $(LEVENTSSL_BUILDER) --libs)
+endif
+
+
+ifeq ($(CROSS_COMPILE),)
+LSSL_BUILDER=$(shell \
+	if pkg-config --exists libssl; then \
+		echo 'pkg-config libssl'; \
+	fi)
+LCRYPTO_BUILDER=$(shell \
+	if pkg-config --exists libcrypto; then \
+		echo 'pkg-config libcrypto'; \
+	fi)
+endif
+
+ifneq ($(LSSL_BUILDER),)
+	LSSLDEFS = $(shell $(LSSL_BUILDER) --cflags)
+	LSSLLIBS = $(shell $(LSSL_BUILDER) --libs)
+
+ifneq ($(CRYPTO_BUILDER),)
+	LCRYPTODEFS = $(shell $(LCRYPTO_BUILDER) --cflags)
+	LCRYPTOLIBS = $(shell $(LCRYPTO_BUILDER) --libs)
+endif
+
+else
+	LSSLDEFS = -I$(LOCALBASE)/ssl/include
+	LSSLLIBS = -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib \
+			-L$(LOCALBASE)/lib64 -L$(LOCALBASE)/ssl/lib64 \
+			-lssl -lcrypto
+	LCRYPTODEFS =
+	LCRYPTOLIBS =
+endif
+
+
+
+DEFS+=$(LNGHTTP2DEFS) $(LEVENTDEFS) $(LEVENTSSLDEFS) $(LSSLDEFS) $(LCRYPTODEFS)
+LIBS=$(LNGHTTP2LIBS) $(LEVENTLIBS) $(LEVENTSSLLIBS) $(LSSLLIBS) $(LCRYPTOLIBS)
 
 include ../../Makefile.modules
