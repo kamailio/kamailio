@@ -35,31 +35,6 @@
 				sizeof(VALUE) - 1, NGHTTP2_NV_FLAG_NONE      \
 	}
 
-struct app_context;
-typedef struct app_context app_context;
-
-typedef struct http2_stream_data
-{
-	struct http2_stream_data *prev, *next;
-	char *request_path;
-	int32_t stream_id;
-	int fd;
-} http2_stream_data;
-
-typedef struct http2_session_data
-{
-	struct http2_stream_data root;
-	struct bufferevent *bev;
-	app_context *app_ctx;
-	nghttp2_session *session;
-	char *client_addr;
-} http2_session_data;
-
-struct app_context
-{
-	SSL_CTX *ssl_ctx;
-	struct event_base *evbase;
-};
 
 static unsigned char next_proto_list[256];
 static size_t next_proto_list_len;
@@ -311,17 +286,6 @@ static ssize_t send_callback(nghttp2_session *session, const uint8_t *data,
 	return (ssize_t)length;
 }
 
-/* Returns nonzero if the string |s| ends with the substring |sub| */
-static int ends_with(const char *s, const char *sub)
-{
-	size_t slen = strlen(s);
-	size_t sublen = strlen(sub);
-	if(slen < sublen) {
-		return 0;
-	}
-	return memcmp(s + slen - sublen, sub, sublen) == 0;
-}
-
 /* Returns int value of hex string character |c| */
 static uint8_t hex_to_uint(uint8_t c)
 {
@@ -397,6 +361,25 @@ static int send_response(nghttp2_session *session, int32_t stream_id,
 	data_prd.read_callback = file_read_callback;
 
 	rv = nghttp2_submit_response(session, stream_id, nva, nvlen, &data_prd);
+	if(rv != 0) {
+		LM_ERR("Fatal error: %s", nghttp2_strerror(rv));
+		return -1;
+	}
+	return 0;
+}
+
+int ksr_nghttp2_send_response(nghttp2_session *session, int32_t stream_id,
+		nghttp2_nv *nva, size_t nvlen, int fd)
+{
+	return send_response(session, stream_id, nva, nvlen, fd);
+}
+
+static int send_response_204(nghttp2_session *session, int32_t stream_id)
+{
+	int rv;
+	nghttp2_nv hdrs[] = {MAKE_NV(":status", "204")};
+
+	rv = nghttp2_submit_response(session, stream_id, hdrs, ARRLEN(hdrs), NULL);
 	if(rv != 0) {
 		LM_ERR("Fatal error: %s", nghttp2_strerror(rv));
 		return -1;
@@ -494,23 +477,9 @@ static int on_begin_headers_callback(
 	return 0;
 }
 
-/* Minimum check for directory traversal. Returns nonzero if it is
-   safe. */
-static int check_path(const char *path)
-{
-	/* We don't like '\' in url. */
-	return path[0] && path[0] == '/' && strchr(path, '\\') == NULL
-		   && strstr(path, "/../") == NULL && strstr(path, "/./") == NULL
-		   && !ends_with(path, "/..") && !ends_with(path, "/.");
-}
-
 static int on_request_recv(nghttp2_session *session,
 		http2_session_data *session_data, http2_stream_data *stream_data)
 {
-	int fd;
-	nghttp2_nv hdrs[] = {MAKE_NV(":status", "200")};
-	char *rel_path;
-
 	if(!stream_data->request_path) {
 		if(error_reply(session, stream_data) != 0) {
 			return NGHTTP2_ERR_CALLBACK_FAILURE;
@@ -518,28 +487,25 @@ static int on_request_recv(nghttp2_session *session,
 		return 0;
 	}
 	LM_DBG("%s GET %s\n", session_data->client_addr, stream_data->request_path);
-	if(!check_path(stream_data->request_path)) {
-		if(error_reply(session, stream_data) != 0) {
-			return NGHTTP2_ERR_CALLBACK_FAILURE;
-		}
-		return 0;
-	}
-	for(rel_path = stream_data->request_path; *rel_path == '/'; ++rel_path)
-		;
-	fd = open(rel_path, O_RDONLY);
-	if(fd == -1) {
-		if(error_reply(session, stream_data) != 0) {
-			return NGHTTP2_ERR_CALLBACK_FAILURE;
-		}
-		return 0;
-	}
-	stream_data->fd = fd;
 
-	if(send_response(session, stream_data->stream_id, hdrs, ARRLEN(hdrs), fd)
-			!= 0) {
-		close(fd);
+	_ksr_nghttp2_ctx.rplhdrs_n = 0;
+
+	_ksr_nghttp2_ctx.session = session;
+	_ksr_nghttp2_ctx.session_data = session_data;
+	_ksr_nghttp2_ctx.stream_data = stream_data;
+
+	_ksr_nghttp2_ctx.url.s = stream_data->request_path;
+	_ksr_nghttp2_ctx.url.len = strlen(_ksr_nghttp2_ctx.url.s);
+
+	_ksr_nghttp2_ctx.srcip.s = session_data->client_addr;
+	_ksr_nghttp2_ctx.srcip.len = strlen(_ksr_nghttp2_ctx.srcip.s);
+
+	ksr_event_route();
+
+	if(send_response_204(session, stream_data->stream_id) != 0) {
 		return NGHTTP2_ERR_CALLBACK_FAILURE;
 	}
+
 	return 0;
 }
 

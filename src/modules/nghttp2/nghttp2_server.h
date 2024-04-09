@@ -62,18 +62,45 @@
 #include "../../core/str.h"
 #include "../../core/ip_addr.h"
 
-typedef ptrdiff_t nghttp2_ssize;
 
+struct app_context;
+typedef struct app_context app_context;
+
+typedef struct http2_stream_data
+{
+	struct http2_stream_data *prev, *next;
+	char *request_path;
+	int32_t stream_id;
+	int fd;
+} http2_stream_data;
+
+typedef struct http2_session_data
+{
+	struct http2_stream_data root;
+	struct bufferevent *bev;
+	app_context *app_ctx;
+	nghttp2_session *session;
+	char *client_addr;
+} http2_session_data;
+
+struct app_context
+{
+	SSL_CTX *ssl_ctx;
+	struct event_base *evbase;
+};
+
+#define KSR_NGHTTP2_RPLHDRS_SIZE 16
 typedef struct ksr_nghttp2_ctx
 {
-	//struct MHD_Connection *connection;
-	void *connection;
+	nghttp2_session *session;
+	http2_session_data *session_data;
+	http2_stream_data *stream_data;
+	nghttp2_nv rplhdrs_v[KSR_NGHTTP2_RPLHDRS_SIZE];
+	int rplhdrs_n;
 	str method;
 	str url;
 	str httpversion;
 	str data;
-	//const union MHD_ConnectionInfo *cinfo;
-	void *cinfo;
 	char srcipbuf[IP_ADDR_MAX_STR_SIZE];
 	str srcip;
 } ksr_nghttp2_ctx_t;
@@ -83,7 +110,11 @@ extern str _nghttp2_listen_addr;
 extern str _nghttp2_tls_public_key;
 extern str _nghttp2_tls_private_key;
 extern int _nghttp2_server_pid;
+extern ksr_nghttp2_ctx_t _ksr_nghttp2_ctx;
 
 int nghttp2_server_run(void);
+void ksr_event_route(void);
+int ksr_nghttp2_send_response(nghttp2_session *session, int32_t stream_id,
+		nghttp2_nv *nva, size_t nvlen, int fd);
 
 #endif

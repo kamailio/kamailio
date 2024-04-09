@@ -48,11 +48,8 @@ int _nghttp2_server_pid = -1;
 static int nghttp2_route_no = -1;
 static str nghttp2_event_callback = STR_NULL;
 
-static int w_nghttp2_send_reply(
-		sip_msg_t *msg, char *pcode, char *preason, char *pctype, char *pbody);
-
-static int fixup_nghttp2_send_reply(void **param, int param_no);
-
+static int w_nghttp2_send_reply(sip_msg_t *msg, char *pcode, char *pbody);
+static int w_nghttp2_reply_header(sip_msg_t *msg, char *pname, char *pbody);
 
 static int mod_init(void);
 static int child_init(int);
@@ -60,6 +57,8 @@ static void mod_destroy(void);
 
 int pv_get_nghttp2(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 int pv_parse_nghttp2_name(pv_spec_p sp, str *in);
+
+ksr_nghttp2_ctx_t _ksr_nghttp2_ctx = {0};
 
 /* clang-format off */
 static pv_export_t mod_pvs[] = {
@@ -71,7 +70,9 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[] = {
 	{"nghttp2_reply",    (cmd_function)w_nghttp2_send_reply,
-		4, fixup_nghttp2_send_reply,  0, REQUEST_ROUTE|EVENT_ROUTE},
+		2, fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE|EVENT_ROUTE},
+	{"nghttp2_reply_header",    (cmd_function)w_nghttp2_reply_header,
+		2, fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE|EVENT_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -177,8 +178,6 @@ static void mod_destroy(void)
 {
 }
 
-static ksr_nghttp2_ctx_t _ksr_nghttp2_ctx = {0};
-
 /**
  * parse the name of the $nghttp2(name)
  */
@@ -249,18 +248,15 @@ error:
  */
 int pv_get_nghttp2(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
-	struct sockaddr *srcaddr = NULL;
 	const char *hdrval = NULL;
 
 	if(param == NULL) {
 		return -1;
 	}
-	if(_ksr_nghttp2_ctx.connection == NULL) {
+	if(_ksr_nghttp2_ctx.session == NULL) {
 		return pv_get_null(msg, param, res);
 	}
 	if(param->pvn.u.isname.type == PVT_HDR) {
-		//hdrval = MHD_lookup_connection_value(_ksr_mhttpd_ctx.connection,
-		//		MHD_HEADER_KIND, param->pvn.u.isname.name.s.s + 2);
 		if(hdrval == NULL) {
 			return pv_get_null(msg, param, res);
 		}
@@ -283,35 +279,7 @@ int pv_get_nghttp2(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			if(_ksr_nghttp2_ctx.srcip.len > 0) {
 				return pv_get_strval(msg, param, res, &_ksr_nghttp2_ctx.srcip);
 			}
-			srcaddr = NULL;
-			//		(_ksr_nghttp2_ctx.cinfo ? _ksr_nghttp2_ctx.cinfo->client_addr
-			//							   : NULL);
-			if(srcaddr == NULL) {
-				return pv_get_null(msg, param, res);
-			}
-			switch(srcaddr->sa_family) {
-				case AF_INET:
-					if(!inet_ntop(AF_INET,
-							   &(((struct sockaddr_in *)srcaddr)->sin_addr),
-							   _ksr_nghttp2_ctx.srcipbuf,
-							   IP_ADDR_MAX_STR_SIZE)) {
-						return pv_get_null(msg, param, res);
-					}
-					break;
-				case AF_INET6:
-					if(!inet_ntop(AF_INET6,
-							   &(((struct sockaddr_in6 *)srcaddr)->sin6_addr),
-							   _ksr_nghttp2_ctx.srcipbuf,
-							   IP_ADDR_MAX_STR_SIZE)) {
-						return pv_get_null(msg, param, res);
-					}
-					break;
-				default:
-					return pv_get_null(msg, param, res);
-			}
-			_ksr_nghttp2_ctx.srcip.s = _ksr_nghttp2_ctx.srcipbuf;
-			_ksr_nghttp2_ctx.srcip.len = strlen(_ksr_nghttp2_ctx.srcipbuf);
-			return pv_get_strval(msg, param, res, &_ksr_nghttp2_ctx.srcip);
+			return pv_get_null(msg, param, res);
 		default:
 			return pv_get_null(msg, param, res);
 	}
@@ -320,86 +288,79 @@ int pv_get_nghttp2(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 /**
  *
  */
-static int ksr_nghttp2_send_reply(
-		sip_msg_t *msg, int rcode, str *sreason, str *sctype, str *sbody)
+static int ksr_nghttp2_send_reply(sip_msg_t *msg, str *rcode, str *sbody)
 {
-	//struct MHD_Response *response;
-	// int ret;
+	int rv;
+	ssize_t writelen;
+	int pipefd[2];
 
-	if(_ksr_nghttp2_ctx.connection == NULL) {
-		LM_ERR("no connection available\n");
-		return -1;
-	}
+	_ksr_nghttp2_ctx.rplhdrs_v[0].value = (uint8_t *)rcode->s;
+	_ksr_nghttp2_ctx.rplhdrs_v[0].valuelen = rcode->len;
 
-	if(rcode < 100 || rcode >= 700) {
-		LM_ERR("invalid code parameter\n");
-		return -1;
-	}
-	if(sreason->s == NULL || sreason->len == 0) {
-		LM_ERR("invalid reason parameter\n");
-		return -1;
-	}
-	if(sctype->s == NULL) {
-		LM_ERR("invalid content-type parameter\n");
-		return -1;
-	}
-	if(sbody->s == NULL) {
-		LM_ERR("invalid body parameter\n");
-		return -1;
+	if(_ksr_nghttp2_ctx.rplhdrs_n == 0) {
+		_ksr_nghttp2_ctx.rplhdrs_n++;
 	}
 
-#if 0
-	response = MHD_create_response_from_buffer(
-			sbody->len, sbody->s, MHD_RESPMEM_PERSISTENT);
-	if(response == NULL) {
-		LM_ERR("failed to create the response\n");
+	if(sbody == NULL || sbody->len <= 0) {
+		rv = nghttp2_submit_response(_ksr_nghttp2_ctx.session,
+				_ksr_nghttp2_ctx.stream_data->stream_id,
+				_ksr_nghttp2_ctx.rplhdrs_v, _ksr_nghttp2_ctx.rplhdrs_n, NULL);
+		if(rv != 0) {
+			LM_ERR("Fatal error: %s", nghttp2_strerror(rv));
+			return -1;
+		}
+		return 1;
+	}
+
+	rv = pipe(pipefd);
+	if(rv != 0) {
+		LM_ERR("Could not create pipe");
+		rv = nghttp2_submit_rst_stream(_ksr_nghttp2_ctx.session,
+				NGHTTP2_FLAG_NONE, _ksr_nghttp2_ctx.stream_data->stream_id,
+				NGHTTP2_INTERNAL_ERROR);
+		if(rv != 0) {
+			LM_ERR("Fatal error: %s", nghttp2_strerror(rv));
+			return -1;
+		}
+		return 0;
+	}
+
+	writelen = write(pipefd[1], sbody->s, sbody->len);
+	close(pipefd[1]);
+
+	if(writelen != sbody->len) {
+		close(pipefd[0]);
 		return -1;
 	}
-	if(sctype->len > 0) {
-		MHD_add_response_header(response, "Content-Type", sctype->s);
-	}
-	ret = MHD_queue_response(
-			_ksr_mhttpd_ctx.connection, (unsigned int)rcode, response);
-	MHD_destroy_response(response);
 
-	return (ret == MHD_YES) ? 1 : -1;
-#endif
-	return -1;
+	_ksr_nghttp2_ctx.stream_data->fd = pipefd[0];
+
+	if(ksr_nghttp2_send_response(_ksr_nghttp2_ctx.session,
+			   _ksr_nghttp2_ctx.stream_data->stream_id,
+			   _ksr_nghttp2_ctx.rplhdrs_v, _ksr_nghttp2_ctx.rplhdrs_n,
+			   pipefd[0])
+			!= 0) {
+		close(pipefd[0]);
+		return -1;
+	}
+	return 1;
 }
 
 /**
  *
  */
-static int w_nghttp2_send_reply(
-		sip_msg_t *msg, char *pcode, char *preason, char *pctype, char *pbody)
+static int w_nghttp2_send_reply(sip_msg_t *msg, char *pcode, char *pbody)
 {
+	str code = str_init("200");
 	str body = str_init("");
-	str reason = str_init("OK");
-	str ctype = str_init("text/plain");
-	int code = 200;
 
-	if(_ksr_nghttp2_ctx.connection == NULL) {
-		LM_ERR("no connection available\n");
-		return -1;
-	}
-
-	if(pcode == 0 || preason == 0 || pctype == 0 || pbody == 0) {
+	if(pcode == 0 || pbody == 0) {
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 
-	if(fixup_get_ivalue(msg, (gparam_p)pcode, &code) != 0) {
+	if(fixup_get_svalue(msg, (gparam_t *)pcode, &code) != 0) {
 		LM_ERR("no reply code value\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_p)preason, &reason) != 0) {
-		LM_ERR("unable to get reason\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_p)pctype, &ctype) != 0) {
-		LM_ERR("unable to get content type\n");
 		return -1;
 	}
 
@@ -408,134 +369,113 @@ static int w_nghttp2_send_reply(
 		return -1;
 	}
 
-	return ksr_nghttp2_send_reply(msg, code, &reason, &ctype, &body);
+	return ksr_nghttp2_send_reply(msg, &code, &body);
 }
 
-static int fixup_nghttp2_send_reply(void **param, int param_no)
+#define KSR_NGHTTP2_STATUS_NAME ":status"
+#define KSR_NGHTTP2_STATUS_CODE "204"
+
+
+/**
+ *
+ */
+static int ksr_nghttp2_reply_header(sip_msg_t *msg, str *sname, str *sbody)
 {
-	if(param_no == 1) {
-		return fixup_igp_null(param, 1);
-	} else if(param_no == 2) {
-		return fixup_spve_null(param, 1);
-	} else if(param_no == 3) {
-		return fixup_spve_null(param, 1);
-	} else if(param_no == 4) {
-		return fixup_spve_null(param, 1);
+	if(_ksr_nghttp2_ctx.rplhdrs_n >= KSR_NGHTTP2_RPLHDRS_SIZE) {
+		LM_ERR("too many headers\n");
+		return -1;
 	}
-	return 0;
+	if(_ksr_nghttp2_ctx.rplhdrs_n == 0) {
+		_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].name =
+				(uint8_t *)KSR_NGHTTP2_STATUS_NAME;
+		_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].namelen =
+				sizeof(KSR_NGHTTP2_STATUS_NAME) - 1;
+		_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].value =
+				(uint8_t *)KSR_NGHTTP2_STATUS_CODE;
+		_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].valuelen =
+				sizeof(KSR_NGHTTP2_STATUS_CODE) - 1;
+		_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].flags =
+				NGHTTP2_NV_FLAG_NONE;
+		_ksr_nghttp2_ctx.rplhdrs_n++;
+	}
+
+	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].name =
+			(uint8_t *)sname->s;
+	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].namelen = sname->len;
+	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].value =
+			(uint8_t *)sbody->s;
+	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].valuelen =
+			sbody->len;
+	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].flags =
+			NGHTTP2_NV_FLAG_NONE;
+	_ksr_nghttp2_ctx.rplhdrs_n++;
+
+	return -1;
 }
 
-#if 0
-static enum MHD_Result ksr_microhttpd_request(void *cls,
-		struct MHD_Connection *connection, const char *url, const char *method,
-		const char *version, const char *upload_data, size_t *upload_data_size,
-		void **ptr)
+/**
+ *
+ */
+static int w_nghttp2_reply_header(sip_msg_t *msg, char *pname, char *pbody)
 {
-	static int _first_callback;
+	str name = str_init("");
+	str body = str_init("");
+
+	if(pname == 0 || pbody == 0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t *)pname, &name) != 0) {
+		LM_ERR("unable to get name\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)pbody, &body) != 0) {
+		LM_ERR("unable to get body\n");
+		return -1;
+	}
+
+	return ksr_nghttp2_reply_header(msg, &name, &body);
+}
+
+void ksr_event_route(void)
+{
 	sr_kemi_eng_t *keng = NULL;
-	str evname = str_init("microhttpd:request");
+	str evname = str_init("nghttp2:request");
 	sip_msg_t *fmsg = NULL;
 	run_act_ctx_t ctx;
 	int rtb;
 
-	if(&_first_callback != *ptr) {
-		/* the first time only the headers are valid,
-		   do not respond in the first round... */
-		*ptr = &_first_callback;
-		return MHD_YES;
-	}
-	*ptr = NULL; /* clear context pointer */
-
-	_ksr_mhttpd_ctx.connection = connection;
-	_ksr_mhttpd_ctx.method.s = (char *)method;
-	_ksr_mhttpd_ctx.method.len = strlen(_ksr_mhttpd_ctx.method.s);
-	_ksr_mhttpd_ctx.url.s = (char *)url;
-	_ksr_mhttpd_ctx.url.len = strlen(_ksr_mhttpd_ctx.url.s);
-	_ksr_mhttpd_ctx.httpversion.s = (char *)version;
-	_ksr_mhttpd_ctx.httpversion.len = strlen(_ksr_mhttpd_ctx.httpversion.s);
-	if(*upload_data_size > 0) {
-		_ksr_mhttpd_ctx.data.s = (char *)upload_data;
-		_ksr_mhttpd_ctx.data.len = (int)(*upload_data_size);
-	} else {
-		_ksr_mhttpd_ctx.data.s = NULL;
-		_ksr_mhttpd_ctx.data.len = 0;
-	}
-	_ksr_mhttpd_ctx.cinfo = MHD_get_connection_info(
-			connection, MHD_CONNECTION_INFO_CLIENT_ADDRESS);
-	_ksr_mhttpd_ctx.srcip.s = NULL;
-	_ksr_mhttpd_ctx.srcip.len = 0;
-
-	LM_DBG("executing event_route[%s] (%d)\n", evname.s, microhttpd_route_no);
+	LM_DBG("executing event_route[%s] (%d)\n", evname.s, nghttp2_route_no);
 	if(faked_msg_init() < 0) {
-		return MHD_NO;
+		return;
 	}
 	fmsg = faked_msg_next();
 	rtb = get_route_type();
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
-	if(microhttpd_route_no >= 0) {
-		run_top_route(event_rt.rlist[microhttpd_route_no], fmsg, &ctx);
+	if(nghttp2_route_no >= 0) {
+		run_top_route(event_rt.rlist[nghttp2_route_no], fmsg, &ctx);
 	} else {
 		keng = sr_kemi_eng_get();
 		if(keng != NULL) {
 			if(sr_kemi_ctx_route(keng, &ctx, fmsg, EVENT_ROUTE,
-					   &microhttpd_event_callback, &evname)
+					   &nghttp2_event_callback, &evname)
 					< 0) {
 				LM_ERR("error running event route kemi callback\n");
-				return MHD_NO;
+				return;
 			}
 		}
 	}
 	set_route_type(rtb);
 	if(ctx.run_flags & DROP_R_F) {
 		LM_ERR("exit due to 'drop' in event route\n");
-		return MHD_NO;
+		return;
 	}
 
-	return MHD_YES;
+	return;
 }
-
-#define KSR_MICROHTTPD_PAGE               \
-	"<html><head><title>Kamailio</title>" \
-	"</head><body>Thanks for flying Kamailio!</body></html>"
-/**
- *
- */
-static int microhttpd_server_run(void)
-{
-
-	struct MHD_Daemon *d;
-	struct sockaddr_in address;
-
-	if(_microhttpd_listen_addr.len > 0) {
-		address.sin_family = AF_INET;
-		address.sin_port = htons(_microhttpd_listen_port);
-		if(inet_pton(AF_INET, _microhttpd_listen_addr.s, &address.sin_addr)
-				<= 0) {
-			LM_ERR("failed to convert listen address\n");
-			return -1;
-		}
-		LM_DBG("preparing to listen on %s :%d\n", _microhttpd_listen_addr.s,
-				_microhttpd_listen_port);
-		d = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, _microhttpd_listen_port,
-				NULL, NULL, &ksr_microhttpd_request, KSR_MICROHTTPD_PAGE,
-				MHD_OPTION_SOCK_ADDR, &address, MHD_OPTION_END);
-	} else {
-		LM_DBG("preparing to listen on port: %d\n", _microhttpd_listen_port);
-		d = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, _microhttpd_listen_port,
-				NULL, NULL, &ksr_microhttpd_request, KSR_MICROHTTPD_PAGE,
-				MHD_OPTION_END);
-	}
-
-	if(d == NULL) {
-		return -1;
-	}
-	while(1) {
-		sleep(10);
-	}
-	return 0;
-}
-#endif
 
 /**
  *
@@ -544,8 +484,13 @@ static int microhttpd_server_run(void)
 static sr_kemi_t sr_kemi_nghttp2_exports[] = {
 	{ str_init("nghttp2"), str_init("nghttp2_reply"),
 		SR_KEMIP_INT, ksr_nghttp2_send_reply,
-		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
-			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("nghttp2"), str_init("nghttp2_reply_header"),
+		SR_KEMIP_INT, ksr_nghttp2_reply_header,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
