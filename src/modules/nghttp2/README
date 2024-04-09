@@ -31,7 +31,8 @@ Daniel-Constantin Mierla
 
         4. Functions
 
-              4.1. nghttp2_reply(code, reason, ctype, body)
+              4.1. nghttp2_reply(code, body)
+              4.2. nghttp2_reply_header(name, value)
 
         5. Event Routes
 
@@ -43,6 +44,7 @@ Daniel-Constantin Mierla
    1.2. Set listen_port parameter
    1.3. Set event_callback parameter
    1.4. nghttp2_reply usage
+   1.5. nghttp2_reply usage
 
 Chapter 1. Admin Guide
 
@@ -62,7 +64,8 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. nghttp2_reply(code, reason, ctype, body)
+        4.1. nghttp2_reply(code, body)
+        4.2. nghttp2_reply_header(name, value)
 
    5. Event Routes
 
@@ -87,7 +90,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * libnghttp2 - libnghttpd library (v1.61.0+)
+     * libnghttp2 - libnghttpd library (v1.43.0+)
 
 3. Parameters
 
@@ -142,16 +145,32 @@ end
 
 4. Functions
 
-   4.1. nghttp2_reply(code, reason, ctype, body)
+   4.1. nghttp2_reply(code, body)
+   4.2. nghttp2_reply_header(name, value)
 
-4.1.  nghttp2_reply(code, reason, ctype, body)
+4.1.  nghttp2_reply(code, body)
 
-   Send back a reply with content-type and body.
+   Send back a reply with body. The body can be empty string. Both
+   parameters can contain variables.
 
    Example 1.4. nghttp2_reply usage
 ...
 event_route[nghttp2:request] {
-    nghttp2_reply("200", "OK", "text/html",
+    nghttp2_reply("200",
+        "<html><body>OK</body></html>");
+}
+...
+
+4.2.  nghttp2_reply_header(name, value)
+
+   Set a header to be added to reply. There can be up to 15 headers.
+
+   Example 1.5. nghttp2_reply usage
+...
+event_route[nghttp2:request] {
+    nghttp2_reply_header("Content-Type", "text/html");
+    nghttp2_reply_header("My-Header", "xyz");
+    nghttp2_reply("200",
         "<html><body>OK</body></html>");
 }
 ...
