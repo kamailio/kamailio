@@ -235,6 +235,9 @@ mod_list_ruxc=ruxc
 # - modules depending on microhttpd library
 mod_list_microhttpd=microhttpd
 
+# - modules depending on nghttp2 library
+mod_list_nghttp2=nghttp2
+
 # - modules depending on libgcrypt library
 mod_list_gcrypt=gcrypt
 
@@ -288,6 +291,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_tlsa) \
 			   $(mod_list_tls_wolfssl) \
 			   $(mod_list_microhttpd) \
+			   $(mod_list_nghttp2) \
 			   $(mod_list_gcrypt) \
 			   $(mod_list_rtp_media_server)
 
@@ -541,6 +545,9 @@ module_group_kruxc=$(mod_list_ruxc)
 
 # K microhttpd module
 module_group_kmicrohttpd=$(mod_list_microhttpd)
+
+# K nghttp2 module
+module_group_knghttp2=$(mod_list_nghttp2)
 
 # K gcrypt module
 module_group_kgcrypt=$(mod_list_gcrypt)
