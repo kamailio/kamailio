@@ -179,6 +179,7 @@ static void delete_http2_stream_data(http2_stream_data *stream_data)
 		close(stream_data->fd);
 	}
 	free(stream_data->request_path);
+	free(stream_data->request_method);
 	free(stream_data);
 }
 
@@ -436,6 +437,7 @@ static int on_header_callback(nghttp2_session *session,
 {
 	http2_stream_data *stream_data;
 	const char PATH[] = ":path";
+	const char METHOD[] = ":method";
 	(void)flags;
 	(void)user_data;
 
@@ -446,15 +448,25 @@ static int on_header_callback(nghttp2_session *session,
 			}
 			stream_data = nghttp2_session_get_stream_user_data(
 					session, frame->hd.stream_id);
-			if(!stream_data || stream_data->request_path) {
+			if(!stream_data) {
 				break;
 			}
 			if(namelen == sizeof(PATH) - 1
 					&& memcmp(PATH, name, namelen) == 0) {
 				size_t j;
+				if(stream_data->request_path) {
+					break;
+				}
 				for(j = 0; j < valuelen && value[j] != '?'; ++j)
 					;
 				stream_data->request_path = percent_decode(value, j);
+			} else if(namelen == sizeof(METHOD) - 1
+					  && memcmp(METHOD, name, namelen) == 0) {
+				if(stream_data->request_method) {
+					break;
+				}
+				stream_data->request_method =
+						strndup((const char *)value, valuelen);
 			}
 			break;
 	}
@@ -497,8 +509,15 @@ static int on_request_recv(nghttp2_session *session,
 	_ksr_nghttp2_ctx.path.s = stream_data->request_path;
 	_ksr_nghttp2_ctx.path.len = strlen(_ksr_nghttp2_ctx.path.s);
 
-	_ksr_nghttp2_ctx.srcip.s = session_data->client_addr;
-	_ksr_nghttp2_ctx.srcip.len = strlen(_ksr_nghttp2_ctx.srcip.s);
+	if(stream_data->request_method) {
+		_ksr_nghttp2_ctx.method.s = stream_data->request_method;
+		_ksr_nghttp2_ctx.method.len = strlen(_ksr_nghttp2_ctx.method.s);
+	}
+
+	if(session_data->client_addr) {
+		_ksr_nghttp2_ctx.srcip.s = session_data->client_addr;
+		_ksr_nghttp2_ctx.srcip.len = strlen(_ksr_nghttp2_ctx.srcip.s);
+	}
 
 	ksr_event_route();
 

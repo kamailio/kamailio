@@ -70,6 +70,7 @@ typedef struct http2_stream_data
 {
 	struct http2_stream_data *prev, *next;
 	char *request_path;
+	char *request_method;
 	int32_t stream_id;
 	int fd;
 } http2_stream_data;
