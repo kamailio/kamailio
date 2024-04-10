@@ -560,6 +560,27 @@ static int on_frame_recv_callback(
 	return 0;
 }
 
+/*
+ * The implementation of nghttp2_on_data_chunk_recv_callback type.
+ * - function to get the received body.
+ */
+static int on_data_chunk_recv_callback(nghttp2_session *session, uint8_t flags,
+		int32_t stream_id, const uint8_t *data, size_t len, void *user_data)
+{
+	struct Request *req;
+	(void)flags;
+	(void)user_data;
+
+	req = nghttp2_session_get_stream_user_data(session, stream_id);
+	if(req) {
+		LM_DBG("---------------------------- (DATA chunk) [%lu bytes]\n",
+				(unsigned long int)len);
+		LM_DBG("[[%.*s]]", (int)len, (char *)data);
+		LM_DBG("----------------------------\n");
+	}
+	return 0;
+}
+
 static int on_stream_close_callback(nghttp2_session *session, int32_t stream_id,
 		uint32_t error_code, void *user_data)
 {
@@ -586,6 +607,9 @@ static void initialize_nghttp2_session(http2_session_data *session_data)
 
 	nghttp2_session_callbacks_set_on_frame_recv_callback(
 			callbacks, on_frame_recv_callback);
+
+	nghttp2_session_callbacks_set_on_data_chunk_recv_callback(
+			callbacks, on_data_chunk_recv_callback);
 
 	nghttp2_session_callbacks_set_on_stream_close_callback(
 			callbacks, on_stream_close_callback);
