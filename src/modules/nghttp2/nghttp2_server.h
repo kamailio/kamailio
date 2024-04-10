@@ -98,7 +98,7 @@ typedef struct ksr_nghttp2_ctx
 	nghttp2_nv rplhdrs_v[KSR_NGHTTP2_RPLHDRS_SIZE];
 	int rplhdrs_n;
 	str method;
-	str url;
+	str path;
 	str httpversion;
 	str data;
 	char srcipbuf[IP_ADDR_MAX_STR_SIZE];

@@ -186,15 +186,10 @@ int pv_parse_nghttp2_name(pv_spec_p sp, str *in)
 	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
 	switch(in->len) {
-		case 3:
-			if(strncasecmp(in->s, "url", 3) == 0) {
-				sp->pvp.pvn.u.isname.name.n = 0;
-			} else {
-				goto error;
-			}
-			break;
 		case 4:
-			if(strncasecmp(in->s, "data", 4) == 0) {
+			if(strncasecmp(in->s, "path", 4) == 0) {
+				sp->pvp.pvn.u.isname.name.n = 0;
+			} else if(strncasecmp(in->s, "data", 4) == 0) {
 				sp->pvp.pvn.u.isname.name.n = 1;
 			} else if(strncasecmp(in->s, "size", 4) == 0) {
 				sp->pvp.pvn.u.isname.name.n = 2;
@@ -264,8 +259,8 @@ int pv_get_nghttp2(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	}
 
 	switch(param->pvn.u.isname.name.n) {
-		case 0: /* url */
-			return pv_get_strval(msg, param, res, &_ksr_nghttp2_ctx.url);
+		case 0: /* path */
+			return pv_get_strval(msg, param, res, &_ksr_nghttp2_ctx.path);
 		case 1: /* data */
 			return pv_get_strval(msg, param, res, &_ksr_nghttp2_ctx.data);
 		case 2: /* size */

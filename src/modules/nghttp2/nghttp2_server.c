@@ -494,8 +494,8 @@ static int on_request_recv(nghttp2_session *session,
 	_ksr_nghttp2_ctx.session_data = session_data;
 	_ksr_nghttp2_ctx.stream_data = stream_data;
 
-	_ksr_nghttp2_ctx.url.s = stream_data->request_path;
-	_ksr_nghttp2_ctx.url.len = strlen(_ksr_nghttp2_ctx.url.s);
+	_ksr_nghttp2_ctx.path.s = stream_data->request_path;
+	_ksr_nghttp2_ctx.path.len = strlen(_ksr_nghttp2_ctx.path.s);
 
 	_ksr_nghttp2_ctx.srcip.s = session_data->client_addr;
 	_ksr_nghttp2_ctx.srcip.len = strlen(_ksr_nghttp2_ctx.srcip.s);
