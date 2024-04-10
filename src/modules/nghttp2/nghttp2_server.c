@@ -179,7 +179,12 @@ static void delete_http2_stream_data(http2_stream_data *stream_data)
 		close(stream_data->fd);
 	}
 	free(stream_data->request_path);
-	free(stream_data->request_method);
+	if(stream_data->request_pathfull) {
+		free(stream_data->request_pathfull);
+	}
+	if(stream_data->request_method) {
+		free(stream_data->request_method);
+	}
 	free(stream_data);
 }
 
@@ -460,6 +465,7 @@ static int on_header_callback(nghttp2_session *session,
 				for(j = 0; j < valuelen && value[j] != '?'; ++j)
 					;
 				stream_data->request_path = percent_decode(value, j);
+				stream_data->request_pathfull = percent_decode(value, valuelen);
 			} else if(namelen == sizeof(METHOD) - 1
 					  && memcmp(METHOD, name, namelen) == 0) {
 				if(stream_data->request_method) {

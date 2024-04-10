@@ -70,6 +70,7 @@ typedef struct http2_stream_data
 {
 	struct http2_stream_data *prev, *next;
 	char *request_path;
+	char *request_pathfull;
 	char *request_method;
 	int32_t stream_id;
 	int fd;
@@ -100,6 +101,7 @@ typedef struct ksr_nghttp2_ctx
 	int rplhdrs_n;
 	str method;
 	str path;
+	str pathfull;
 	str httpversion;
 	str data;
 	char srcipbuf[IP_ADDR_MAX_STR_SIZE];

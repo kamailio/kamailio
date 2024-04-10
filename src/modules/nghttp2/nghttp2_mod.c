@@ -218,6 +218,14 @@ int pv_parse_nghttp2_name(pv_spec_p sp, str *in)
 				goto error;
 			}
 			break;
+		case 8:
+			if(strncasecmp(in->s, "pathfull", 8) == 0) {
+				sp->pvp.pvn.u.isname.name.n = 6;
+			} else {
+				goto error;
+			}
+			break;
+
 		default:
 			if(in->len > 2 && in->s[1] == ':'
 					&& (in->s[0] == 'h' || in->s[0] == 'H')) {
@@ -275,6 +283,9 @@ int pv_get_nghttp2(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 				return pv_get_strval(msg, param, res, &_ksr_nghttp2_ctx.srcip);
 			}
 			return pv_get_null(msg, param, res);
+		case 6: /* pathfull */
+			return pv_get_strval(msg, param, res, &_ksr_nghttp2_ctx.pathfull);
+
 		default:
 			return pv_get_null(msg, param, res);
 	}
