@@ -221,7 +221,7 @@ static void delete_http2_session_data(http2_session_data *session_data)
 {
 	http2_stream_data *stream_data;
 	SSL *ssl = bufferevent_openssl_get_ssl(session_data->bev);
-	LM_ERR("%s disconnected\n", session_data->client_addr);
+	LM_DBG("remote peer %s disconnected\n", session_data->client_addr);
 	if(ssl) {
 		SSL_shutdown(ssl);
 	}
