@@ -61,8 +61,8 @@ static void corex_rpc_list_sockets(rpc_t *rpc, void *ctx)
 				return;
 			}
 
-			if(rpc->struct_add(th, "sss{", "af", get_af_name(proto), "proto",
-					   get_valid_proto_name(proto), "name", si->name.s,
+			if(rpc->struct_add(th, "sss{", "af", get_af_name(si->address.af),
+					   "proto", get_valid_proto_name(proto), "name", si->name.s,
 					   "addrlist", &ih)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error address list structure");
