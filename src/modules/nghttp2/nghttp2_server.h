@@ -66,12 +66,20 @@
 struct app_context;
 typedef struct app_context app_context;
 
+typedef struct http2_msghdr
+{
+	str name;
+	str value;
+	struct http2_msghdr *next;
+} http2_msghdr_t;
+
 typedef struct http2_stream_data
 {
 	struct http2_stream_data *prev, *next;
 	char *request_path;
 	char *request_pathfull;
 	char *request_method;
+	ttp2_msghdr_t *hdrlist;
 	int32_t stream_id;
 	int fd;
 } http2_stream_data;
