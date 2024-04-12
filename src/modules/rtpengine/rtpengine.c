@@ -3131,6 +3131,7 @@ static char *send_rtpp_command(
 
 		len = _rtpe_lwscb.request(&node->rn_url, (str *)&rtpe_proto, &request,
 				&response, rtpengine_tout_ms * 1000);
+		pkg_free(request.s);
 
 		if(len < 0) {
 			LM_ERR("failed to do websocket request\n");
