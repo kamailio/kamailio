@@ -79,7 +79,7 @@ typedef struct http2_stream_data
 	char *request_path;
 	char *request_pathfull;
 	char *request_method;
-	ttp2_msghdr_t *hdrlist;
+	http2_msghdr_t *hdrlist;
 	int32_t stream_id;
 	int fd;
 } http2_stream_data;
