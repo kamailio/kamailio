@@ -381,23 +381,77 @@ static int w_nghttp2_send_reply(sip_msg_t *msg, char *pcode, char *pbody)
 #define KSR_NGHTTP2_STATUS_NAME ":status"
 #define KSR_NGHTTP2_STATUS_CODE "204"
 
+/**
+ *
+ */
+static int ksr_nghttp2_reply_header_clear(void)
+{
+	int i;
+	char *p;
+
+	if(_ksr_nghttp2_ctx.rplhdrs_v[0].value != NULL) {
+		free(_ksr_nghttp2_ctx.rplhdrs_v[0].value);
+		_ksr_nghttp2_ctx.rplhdrs_v[0].value = NULL;
+	}
+	for(i = 1; i < _ksr_nghttp2_ctx.rplhdrs_n; i++) {
+		if(_ksr_nghttp2_ctx.rplhdrs_v[i].name != NULL) {
+			free(_ksr_nghttp2_ctx.rplhdrs_v[i].name);
+			_ksr_nghttp2_ctx.rplhdrs_v[i].name = NULL;
+			_ksr_nghttp2_ctx.rplhdrs_v[i].namelen = 0;
+		}
+		if(_ksr_nghttp2_ctx.rplhdrs_v[i].value != NULL) {
+			free(_ksr_nghttp2_ctx.rplhdrs_v[i].value);
+			_ksr_nghttp2_ctx.rplhdrs_v[i].value = NULL;
+			_ksr_nghttp2_ctx.rplhdrs_v[i].valuelen = 0;
+		}
+		_ksr_nghttp2_ctx.rplhdrs_v[i].flags = 0;
+	}
+
+	_ksr_nghttp2_ctx.rplhdrs_n = 0;
+
+	/* first header position kept for ':status' (its name is not duplicated) */
+	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].name =
+			(uint8_t *)KSR_NGHTTP2_STATUS_NAME;
+	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].namelen =
+			sizeof(KSR_NGHTTP2_STATUS_NAME) - 1;
+	p = strdup(KSR_NGHTTP2_STATUS_CODE);
+	if(p == NULL) {
+		SYS_MEM_ERROR;
+		return -1;
+	}
+	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].value = (uint8_t *)p;
+	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].valuelen =
+			sizeof(KSR_NGHTTP2_STATUS_CODE) - 1;
+	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].flags =
+			NGHTTP2_NV_FLAG_NONE;
+	_ksr_nghttp2_ctx.rplhdrs_n++;
+
+	return 0;
+}
 
 /**
  *
  */
 static int ksr_nghttp2_reply_header(sip_msg_t *msg, str *sname, str *sbody)
 {
+	char *p;
 	if(_ksr_nghttp2_ctx.rplhdrs_n >= KSR_NGHTTP2_RPLHDRS_SIZE) {
 		LM_ERR("too many headers\n");
 		return -1;
 	}
 	if(_ksr_nghttp2_ctx.rplhdrs_n == 0) {
+		/* first header position kept for ':status' */
 		_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].name =
 				(uint8_t *)KSR_NGHTTP2_STATUS_NAME;
 		_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].namelen =
 				sizeof(KSR_NGHTTP2_STATUS_NAME) - 1;
+		p = strdup(KSR_NGHTTP2_STATUS_CODE);
+		if(p == NULL) {
+			SYS_MEM_ERROR;
+			return -1;
+		}
 		_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].value =
-				(uint8_t *)KSR_NGHTTP2_STATUS_CODE;
+				(uint8_t *)p;
 		_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].valuelen =
 				sizeof(KSR_NGHTTP2_STATUS_CODE) - 1;
 		_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].flags =
@@ -405,13 +459,25 @@ static int ksr_nghttp2_reply_header(sip_msg_t *msg, str *sname, str *sbody)
 		_ksr_nghttp2_ctx.rplhdrs_n++;
 	}
 
-	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].name =
-			(uint8_t *)sname->s;
+	p = strndup(sname->s, sname->len);
+	if(p == NULL) {
+		SYS_MEM_ERROR;
+		return -1;
+	}
+	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].name = (uint8_t *)p;
 	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].namelen = sname->len;
-	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].value =
-			(uint8_t *)sbody->s;
+
+	p = strndup(sbody->s, sbody->len);
+	if(p == NULL) {
+		free(_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].name);
+		_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].name = NULL;
+		SYS_MEM_ERROR;
+		return -1;
+	}
+	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].value = (uint8_t *)p;
 	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].valuelen =
 			sbody->len;
+
 	_ksr_nghttp2_ctx.rplhdrs_v[_ksr_nghttp2_ctx.rplhdrs_n].flags =
 			NGHTTP2_NV_FLAG_NONE;
 	_ksr_nghttp2_ctx.rplhdrs_n++;
@@ -454,6 +520,9 @@ void ksr_event_route(void)
 	int rtb;
 
 	LM_DBG("executing event_route[%s] (%d)\n", evname.s, nghttp2_route_no);
+
+	ksr_nghttp2_reply_header_clear();
+
 	if(faked_msg_init() < 0) {
 		return;
 	}
