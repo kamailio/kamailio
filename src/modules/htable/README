@@ -851,6 +851,7 @@ sht_rm_value_re("ha=>.*");
    The op parameter can be:
      * re - match the val parameter as regular expression.
      * sw - match the val parameter as 'starts with'.
+     * ew - match the val parameter as 'ends with'.
 
    All parameters can be static strings or contain variables.
 
@@ -869,6 +870,7 @@ sht_rm_name("ha", "re", ".*");
    The op parameter can be:
      * re - match the val parameter as regular expression.
      * sw - match the val parameter as 'starts with'.
+     * ew - match the val parameter as 'ends with'.
 
    All parameters can be static strings or contain variables.
 
