@@ -515,6 +515,18 @@ static int ht_rm_items(sip_msg_t *msg, str *hname, str *op, str *val, int mkey)
 					return -1;
 				}
 				return 1;
+			} else if(strncmp(op->s, "ew", 2) == 0) {
+				isval.s = *val;
+				if((ht->dmqreplicate > 0)
+						&& ht_dmq_replicate_action(HT_DMQ_RM_CELL_EW, &ht->name,
+								   NULL, AVP_VAL_STR, &isval, mkey)
+								   != 0) {
+					LM_ERR("dmq replication failed (op %d)\n", mkey);
+				}
+				if(ht_rm_cell_op(val, ht, mkey, HT_RM_OP_EW) < 0) {
+					return -1;
+				}
+				return 1;
 			}
 			LM_WARN("unsupported match operator: %.*s\n", op->len, op->s);
 			break;
