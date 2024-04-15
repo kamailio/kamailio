@@ -65,9 +65,9 @@ Daniel-Constantin Mierla
               4.12. set_gflag(flag)
               4.13. reset_gflag(flag)
               4.14. is_gflag(flag)
-              4.15. lock(key)
-              4.16. trylock(key)
-              4.17. unlock(key)
+              4.15. lock(key [, key2])
+              4.16. trylock(key [, key2])
+              4.17. unlock(key [, key2])
               4.18. check_route_exists(route)
               4.19. route_if_exists(route)
               4.20. core_hash(string1, string2, size)
@@ -154,9 +154,9 @@ Chapter 1. Admin Guide
         4.12. set_gflag(flag)
         4.13. reset_gflag(flag)
         4.14. is_gflag(flag)
-        4.15. lock(key)
-        4.16. trylock(key)
-        4.17. unlock(key)
+        4.15. lock(key [, key2])
+        4.16. trylock(key [, key2])
+        4.17. unlock(key [, key2])
         4.18. check_route_exists(route)
         4.19. route_if_exists(route)
         4.20. core_hash(string1, string2, size)
@@ -304,9 +304,9 @@ modparam("cfgutils", "lock_set_size", 4)
    4.12. set_gflag(flag)
    4.13. reset_gflag(flag)
    4.14. is_gflag(flag)
-   4.15. lock(key)
-   4.16. trylock(key)
-   4.17. unlock(key)
+   4.15. lock(key [, key2])
+   4.16. trylock(key [, key2])
+   4.17. unlock(key [, key2])
    4.18. check_route_exists(route)
    4.19. route_if_exists(route)
    4.20. core_hash(string1, string2, size)
@@ -506,15 +506,17 @@ if(is_gflag("4"))
 };
 ...
 
-4.15. lock(key)
+4.15. lock(key [, key2])
 
    Lock the key. Can be used to synchronize operations in config file, a
-   hash id is computed over the key and appropriate lock is set in the
+   hash id is computed over the keys and appropriate lock is set in the
    lock array controlled by parameter "lock_set_size". Do not use lock()
    after another lock() unless you are sure the keys hit different array
    entries.
 
    “key” can be static string or string with PVs.
+
+   “key2” is optional and can be static string or string with PVs.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
@@ -524,12 +526,14 @@ if(is_gflag("4"))
 lock("$rU");
 ...
 
-4.16. trylock(key)
+4.16. trylock(key [, key2])
 
    Try to lock the key. If the lock can not be obtained (possibly already
    locked), the function returns an error and script execution continues.
 
    “key” can be static string or string with PVs.
+
+   “key2” is optional and can be static string or string with PVs.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
@@ -542,11 +546,13 @@ if (trylock("$rU")) {
 }
 ...
 
-4.17. unlock(key)
+4.17. unlock(key [, key2])
 
    Unlock the key.
 
    “key” can be static string or string with PVs.
+
+   “key2” is optional and can be static string or string with PVs.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
