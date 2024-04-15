@@ -157,7 +157,7 @@ _mod_list_presence="presence presence_conference presence_dialoginfo \
 			rls xcap_client xcap_server"
 
 # - modules depending on lua library
-_mod_list_lua="app_lua app_lua_sr"
+_mod_list_lua="app_lua"
 
 # - modules depending on perl library
 _mod_list_perl="app_perl db_perlvdb"

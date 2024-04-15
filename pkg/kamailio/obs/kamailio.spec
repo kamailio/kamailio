@@ -2054,9 +2054,7 @@ fi
 %files      lua
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.app_lua
-%doc %{_docdir}/kamailio/modules/README.app_lua_sr
 %{_libdir}/kamailio/modules/app_lua.so
-%{_libdir}/kamailio/modules/app_lua_sr.so
 %endif
 
 
