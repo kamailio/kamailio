@@ -1150,7 +1150,7 @@ modparam("acc", "cdr_facility", "LOG_DAEMON")
 
    Example 1.35. cdr_extra example
 ...
-modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
+modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)")
 ...
 
 6.36. cdr_extra_nullable (integer)
