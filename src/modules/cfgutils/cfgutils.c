@@ -121,73 +121,85 @@ static gen_lock_t *gflags_lock = NULL;
 static gen_lock_set_t *_cfg_lock_set = NULL;
 static unsigned int _cfg_lock_size = 0;
 
-static cmd_export_t cmds[] = {
-		{"rand_set_prob",				/* action name as in scripts */
-				(cmd_function)set_prob, /* C function name */
-				1,						/* number of parameters */
-				fixup_prob, 0,			/* */
-				/* can be applied to original/failed requests and replies */
-				ANY_ROUTE},
-		{"rand_reset_prob", (cmd_function)reset_prob, 0, 0, 0, ANY_ROUTE},
-		{"rand_get_prob", (cmd_function)get_prob, 0, 0, 0, ANY_ROUTE},
-		{"rand_event", (cmd_function)rand_event, 0, 0, 0, ANY_ROUTE},
-		{"sleep", (cmd_function)m_sleep, 1, fixup_igp_null, fixup_free_igp_null,
-				ANY_ROUTE},
-		{"usleep", (cmd_function)m_usleep, 1, fixup_igp_null,
-				fixup_free_igp_null, ANY_ROUTE},
-		{"abort", (cmd_function)dbg_abort, 0, 0, 0, ANY_ROUTE},
-		{"pkg_status", (cmd_function)dbg_pkg_status, 0, 0, 0, ANY_ROUTE},
-		{"shm_status", (cmd_function)dbg_shm_status, 0, 0, 0, ANY_ROUTE},
-		{"pkg_summary", (cmd_function)dbg_pkg_summary, 0, 0, 0, ANY_ROUTE},
-		{"shm_summary", (cmd_function)dbg_shm_summary, 0, 0, 0, ANY_ROUTE},
-		{"set_gflag", (cmd_function)set_gflag, 1, fixup_gflags, 0, ANY_ROUTE},
-		{"reset_gflag", (cmd_function)reset_gflag, 1, fixup_gflags, 0,
-				ANY_ROUTE},
-		{"is_gflag", (cmd_function)is_gflag, 1, fixup_gflags, 0, ANY_ROUTE},
-		{"lock", (cmd_function)w_cfg_lock, 1, fixup_spve_null, 0, ANY_ROUTE},
-		{"lock", (cmd_function)w_cfg_lock, 2, fixup_spve_spve, 0, ANY_ROUTE},
-		{"unlock", (cmd_function)w_cfg_unlock, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"unlock", (cmd_function)w_cfg_unlock, 2, fixup_spve_spve, 0,
-				ANY_ROUTE},
-		{"trylock", (cmd_function)w_cfg_trylock, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{"trylock", (cmd_function)w_cfg_trylock, 2, fixup_spve_spve, 0,
-				ANY_ROUTE},
-		{"core_hash", (cmd_function)w_core_hash, 3, fixup_core_hash, 0,
-				ANY_ROUTE},
-		{"check_route_exists", (cmd_function)w_check_route_exists, 1,
-				fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
-		{"route_if_exists", (cmd_function)w_route_exists, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"bind_cfgutils", (cmd_function)bind_cfgutils, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cmd_export_t cmds[]={
+	{"rand_set_prob",      (cmd_function)set_prob, 1, fixup_prob, 0,
+		ANY_ROUTE},
+	{"rand_reset_prob",    (cmd_function)reset_prob, 0, 0, 0,
+		ANY_ROUTE},
+	{"rand_get_prob",      (cmd_function)get_prob, 0, 0, 0,
+		ANY_ROUTE},
+	{"rand_event",         (cmd_function)rand_event, 0, 0, 0,
+		ANY_ROUTE},
+	{"sleep",              (cmd_function)m_sleep, 1, fixup_igp_null, fixup_free_igp_null,
+		ANY_ROUTE},
+	{"usleep",             (cmd_function)m_usleep, 1, fixup_igp_null, fixup_free_igp_null,
+		ANY_ROUTE},
+	{"abort",              (cmd_function)dbg_abort, 0, 0, 0,
+		ANY_ROUTE},
+	{"pkg_status",         (cmd_function)dbg_pkg_status, 0, 0, 0,
+		ANY_ROUTE},
+	{"shm_status",         (cmd_function)dbg_shm_status, 0, 0, 0,
+		ANY_ROUTE},
+	{"pkg_summary",        (cmd_function)dbg_pkg_summary, 0, 0, 0,
+		ANY_ROUTE},
+	{"shm_summary",        (cmd_function)dbg_shm_summary, 0, 0, 0,
+		ANY_ROUTE},
+	{"set_gflag",          (cmd_function)set_gflag, 1, fixup_gflags, 0,
+		ANY_ROUTE},
+	{"reset_gflag",        (cmd_function)reset_gflag, 1, fixup_gflags, 0,
+		ANY_ROUTE},
+	{"is_gflag",           (cmd_function)is_gflag, 1, fixup_gflags, 0,
+		ANY_ROUTE},
+	{"lock",               (cmd_function)w_cfg_lock, 1, fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"lock",               (cmd_function)w_cfg_lock, 2, fixup_spve_spve, 0,
+		ANY_ROUTE},
+	{"unlock",             (cmd_function)w_cfg_unlock, 1, fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"unlock",             (cmd_function)w_cfg_unlock, 2, fixup_spve_spve, 0,
+		ANY_ROUTE},
+	{"trylock",            (cmd_function)w_cfg_trylock, 1, fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"trylock",            (cmd_function)w_cfg_trylock, 2, fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"core_hash",          (cmd_function)w_core_hash, 3, fixup_core_hash, 0,
+		ANY_ROUTE},
+	{"check_route_exists", (cmd_function)w_check_route_exists, 1, fixup_spve_null, fixup_free_spve_null,
+		ANY_ROUTE},
+	{"route_if_exists",    (cmd_function)w_route_exists, 1, fixup_spve_null, fixup_free_spve_null,
+		ANY_ROUTE},
+	{"bind_cfgutils",      (cmd_function)bind_cfgutils, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
+static param_export_t params[]={
+	{"initial_probability", INT_PARAM, &initial_prob   },
+	{"initial_gflags",      INT_PARAM, &initial_gflags },
+	{"hash_file",           PARAM_STRING, &hash_file   },
+	{"lock_set_size",       INT_PARAM, &_cfg_lock_size },
+	{0,0,0}
+};
 
-static param_export_t params[] = {
-		{"initial_probability", INT_PARAM, &initial_prob},
-		{"initial_gflags", INT_PARAM, &initial_gflags},
-		{"hash_file", PARAM_STRING, &hash_file},
-		{"lock_set_size", INT_PARAM, &_cfg_lock_size}, {0, 0, 0}};
-
-
-static pv_export_t mod_items[] = {{{"RANDOM", sizeof("RANDOM") - 1}, PVT_OTHER,
-										  pv_get_random_val, 0, 0, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
-
+static pv_export_t mod_items[] = {
+	{ {"RANDOM", sizeof("RANDOM")-1}, PVT_OTHER, pv_get_random_val, 0,
+		0, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
 
 struct module_exports exports = {
-		"cfgutils",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_items,		 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	"cfgutils",      /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_items,       /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
+/* clang-format on */
 
 /**************************** fixup functions ******************************/
 static int fixup_prob(void **param, int param_no)
