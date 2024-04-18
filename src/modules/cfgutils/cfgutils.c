@@ -691,7 +691,7 @@ static int cfg_lock_helper(str *lkey, str *lkey2, int mode)
 	unsigned int pos;
 	str *key2 = NULL;
 
-	if(lkey2 && lkey2->len > 0) {
+	if(lkey2 && lkey2->s && lkey2->len > 0) {
 		key2 = lkey2;
 	}
 
@@ -770,7 +770,8 @@ static int cfg_trylock_key2(sip_msg_t *msg, str *lkey, str *lkey2)
 static int w_cfg_lock_wrapper(
 		struct sip_msg *msg, gparam_p key, gparam_p key2, int mode)
 {
-	str s1, s2;
+	str s1;
+	str s2 = STR_NULL;
 	if(key == NULL) {
 		return -1;
 	}
