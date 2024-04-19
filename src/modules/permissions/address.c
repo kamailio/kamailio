@@ -192,41 +192,49 @@ int reload_address_db_table(address_tables_group_t *atg)
 					ROW_N(row + i));
 			goto dberror;
 		}
-		if((VAL_TYPE(val) != DB1_INT) || VAL_NULL(val) || (VAL_INT(val) <= 0)) {
+		if((VAL_TYPE(val) != DB1_INT && VAL_TYPE(val) != DB1_UINT)
+				|| VAL_NULL(val) || (VAL_INT(val) <= 0)) {
 			LM_DBG("failure during checks of database value 1 (group) in "
 				   "address table\n");
 			goto dberror;
 		}
-		if((VAL_TYPE(val + 1) != DB1_STRING)
-				&& (VAL_TYPE(val + 1) != DB1_STR)) {
+		if((VAL_TYPE(val + 1) != DB1_STRING && VAL_TYPE(val + 1) != DB1_STR)
+				|| VAL_NULL(val + 1)) {
 			LM_DBG("failure during checks of database value 2 (IP address) in "
-				   "address table - not a string value\n");
+				   "address table\n");
 			goto dberror;
 		}
-		if(VAL_NULL(val + 1)) {
-			LM_DBG("failure during checks of database value 2 (IP address) in "
-				   "address table - NULL value not permitted\n");
-			goto dberror;
-		}
-		if((VAL_TYPE(val + 2) != DB1_INT) || VAL_NULL(val + 2)) {
+		if((VAL_TYPE(val + 2) != DB1_INT && VAL_TYPE(val + 2) != DB1_UINT)
+				|| VAL_NULL(val + 2)) {
 			LM_DBG("failure during checks of database value 3 (subnet "
 				   "size/CIDR) in address table\n");
 			goto dberror;
 		}
-		if((VAL_TYPE(val + 3) != DB1_INT) || VAL_NULL(val + 3)) {
+		if((VAL_TYPE(val + 3) != DB1_INT && VAL_TYPE(val + 3) != DB1_UINT)
+				|| VAL_NULL(val + 3)) {
 			LM_DBG("failure during checks of database value 4 (port) in "
 				   "address table\n");
 			goto dberror;
 		}
+		if(VAL_TYPE(val + 4) != DB1_STRING && VAL_TYPE(val + 4) != DB1_STR) {
+			LM_DBG("failure during checks of database value 5 (tag) in address "
+				   "table\n");
+			goto dberror;
+		}
+
 		gid = VAL_UINT(val);
 		ips.s = (char *)VAL_STRING(val + 1);
 		ips.len = strlen(ips.s);
 		mask = VAL_UINT(val + 2);
 		port = VAL_UINT(val + 3);
-		tagv.s = VAL_NULL(val + 4) ? NULL : (char *)VAL_STRING(val + 4);
-		if(tagv.s != NULL) {
+		if(VAL_NULL(val + 4)) {
+			tagv.s = NULL;
+			tagv.len = 0;
+		} else {
+			tagv.s = (char *)VAL_STRING(val + 4);
 			tagv.len = strlen(tagv.s);
 		}
+
 		if(reload_address_insert(atg, gid, &ips, mask, port, &tagv) < 0) {
 			goto dberror;
 		}
