@@ -132,6 +132,8 @@ static int ht_pack_values(
 			len += RES_ROWS(db_res)[row].values[c].val.blob_val.len;
 		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_INT) {
 			len += 12;
+		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_UINT) {
+			len += 12;
 		} else {
 			LM_ERR("unsupported data type for column %d\n", c);
 			return -1;
@@ -163,6 +165,11 @@ static int ht_pack_values(
 		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_INT) {
 			iv.s = sint2str(
 					RES_ROWS(db_res)[row].values[c].val.int_val, &iv.len);
+			strncpy(p, iv.s, iv.len);
+			p += iv.len;
+		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_UINT) {
+			iv.s = int2str(
+					RES_ROWS(db_res)[row].values[c].val.uint_val, &iv.len);
 			strncpy(p, iv.s, iv.len);
 			p += iv.len;
 		}
