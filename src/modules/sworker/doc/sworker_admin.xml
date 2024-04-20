@@ -120,9 +120,9 @@ request_route {
 </programlisting>
 		</example>
 	</section>
-	<section id="sworker.f.swork_task">
+	<section id="sworker.f.sworker_task">
 		<title>
-		<function moreinfo="none">swork_task(gname)</function>
+		<function moreinfo="none">sworker_task(gname)</function>
 		</title>
 		<para>
 		Delegate the processing of SIP message to a group of async workers. The
