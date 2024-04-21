@@ -429,7 +429,7 @@ int ptr_update_pv(str *ip_address, str *name)
 	sr_dns_item_t *dr = NULL;
 	struct sockaddr_in sa;
 	struct sockaddr_in6 sa6;
-	char hostname[256];
+	char hostname[SR_DNS_HOSTNAME_SIZE];
 	int result;
 	int ip_type;
 	if(ip_address->len > INET6_ADDRSTRLEN) {
@@ -499,8 +499,7 @@ int ptr_update_pv(str *ip_address, str *name)
 	}
 
 	/* Store the hostname in the sr_dns_item_t structure. */
-	strncpy(dr->hostname, hostname, strlen(hostname));
-	dr->hostname[strlen(hostname)] = '\0';
+	strcpy(dr->hostname, hostname);
 	dr->count = 1;
 
 	LM_DBG("reverse dns PV updated for: %s (%d)\n", dr->r[0].addr, dr->count);

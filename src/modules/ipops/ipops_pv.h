@@ -27,7 +27,7 @@
 #define PV_DNS_ADDR 64
 #define PV_DNS_RECS 32
 #define SR_DNS_PVIDX 1
-
+#define SR_DNS_HOSTNAME_SIZE 256
 typedef struct _sr_dns_record
 {
 	int type;
@@ -38,7 +38,7 @@ typedef struct _sr_dns_item
 {
 	str name;
 	unsigned int hashid;
-	char hostname[256];
+	char hostname[SR_DNS_HOSTNAME_SIZE];
 	int count;
 	int ipv4;
 	int ipv6;
