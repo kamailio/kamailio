@@ -113,9 +113,25 @@ def printFunction(module_name, func, indent):
     else:
         print(prefix + "def " + func['name'] +"("+params+"):")
 
+    generate_function_doc(module_name, func, prefix)
+
     print(prefix + "\tprint(\"Calling " + log_format_params + "\" % "+log_params+")")
     printMocReturn(module_name, func, indent+1)
     print("")
+
+
+def generate_function_doc(module_name, func, prefix):
+    if documentation is not None and module_name in documentation:
+        function_parts = func['name'].split("_")
+        for i in range(len(function_parts), 0, -1):
+            function_prefix = "_".join(function_parts[:i])
+            if function_prefix in documentation[module_name]["functions"]:
+                print(prefix + "\t\"\"\"")
+                documentation_lines = documentation[module_name]["functions"][function_prefix].split("\n")
+                for line in documentation_lines:
+                    print(prefix + "\t" + line)
+                print(prefix + "\t\"\"\"")
+                break
 
 
 classes = defaultdict(list)
@@ -124,10 +140,14 @@ if len(sys.argv) < 2:
     print("Please specify the json file to parse")
     sys.exit(-1)
 
+documentation = None
 if len(sys.argv) > 2:
     for i in range(2,len(sys.argv)):
         if sys.argv[i] == "--no-union":
             noUnion = True
+        else:
+            with open(sys.argv[i]) as f:
+                documentation = json.load(f)
 
 if not noUnion:
     print("from typing import Union")
@@ -193,12 +213,23 @@ for func in classes['']:
     print("")
     printFunction('', func, 0)
 
+
+def document_module(module_name):
+    if documentation is not None and module_name in documentation:
+        print("\"\"\"")
+        documentation_lines = documentation[module_name]["overview"].split("\n")
+        for line in documentation_lines:
+            print("" + line)
+        print("\"\"\"")
+
+
 for module_name in classes.keys():
     if module_name != "":
         if module_name in reserved_keywords:
             print("setattr(sys.modules[__name__], '" + module_name + "', " + module_name.capitalize() + "())")
         else:
             print(module_name + " = "+module_name.capitalize()+"()")
+        document_module(module_name)
 
 print("")
 
