@@ -253,7 +253,7 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 	for(; i < pkg_proc_stats_no; i++) {
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_used{pid=\"%u\", rank=\"%d\", desc=\"%s\"} "
-				   "%d %" PRIu64 "\n",
+				   "%lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
 				   pkg_proc_stats[i].used, ts)
@@ -263,7 +263,7 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 		}
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_available{pid=\"%u\", rank=\"%d\", "
-				   "desc=\"%s\"} %d %" PRIu64 "\n",
+				   "desc=\"%s\"} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
 				   pkg_proc_stats[i].available, ts)
@@ -273,7 +273,7 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 		}
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_real_used{pid=\"%u\", rank=\"%d\", "
-				   "desc=\"%s\"} %d %" PRIu64 "\n",
+				   "desc=\"%s\"} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
 				   pkg_proc_stats[i].real_used, ts)
@@ -283,7 +283,7 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 		}
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_total_frags{pid=\"%u\", rank=\"%d\", "
-				   "desc=\"%s\"} %d %" PRIu64 "\n",
+				   "desc=\"%s\"} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
 				   pkg_proc_stats[i].total_frags, ts)
@@ -293,7 +293,7 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 		}
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_total_size{pid=\"%u\", rank=\"%d\" "
-				   "desc=\"%s\"} %d %" PRIu64 "\n",
+				   "desc=\"%s\"} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
 				   pkg_proc_stats[i].total_size, ts)
