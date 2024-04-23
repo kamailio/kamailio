@@ -68,7 +68,7 @@ gen_lock_t *reload_lock;
 /*
  * Module exported parameter variables
  */
-static char *file;
+static char *file = NULL;
 static int max_groups = MAX_GROUPS;
 static int group_max_size = GROUP_MAX_SIZE;
 static int pcre_caseless = 0;
@@ -83,9 +83,9 @@ static int pcre_extended = 0;
 static pcre2_general_context *pcres_gctx = NULL;
 static pcre2_match_context *pcres_mctx = NULL;
 static pcre2_compile_context *pcres_ctx = NULL;
-static pcre2_code **pcres;
-static pcre2_code ***pcres_addr;
-static int *num_pcres;
+static pcre2_code **pcres = NULL;
+static pcre2_code ***pcres_addr = NULL;
+static int *num_pcres = NULL;
 static int pcre_options = 0x00000000;
 
 
