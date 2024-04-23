@@ -248,6 +248,7 @@ static void tcpops_tcp_closed_run_route(tcp_closed_event_info_t *tev)
 	sip_msg_t *fmsg;
 	sr_kemi_eng_t *keng = NULL;
 	str *evname;
+	int bkconid = -1;
 
 	LM_DBG("event reason id: %d\n", tev->reason);
 	if(tcpops_event_callback.len > 0) {
