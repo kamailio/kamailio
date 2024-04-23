@@ -2717,6 +2717,13 @@ int pv_get_tcpconn_id(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	if(msg == NULL)
 		return -1;
 
+	/* use first the connection set for event_route[tcp:...] */
+	con = ksr_tcpcon_evcb_get();
+	if(con != NULL) {
+		return pv_get_sintval(msg, param, res, con->id);
+	}
+
+	/* find connection from sip message structure */
 	if((con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0)) == NULL)
 		return pv_get_null(msg, param, res);
 
