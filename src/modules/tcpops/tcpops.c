@@ -249,6 +249,7 @@ static void tcpops_tcp_closed_run_route(tcp_closed_event_info_t *tev)
 	sr_kemi_eng_t *keng = NULL;
 	str *evname;
 
+	LM_DBG("event reason id: %d\n", tev->reason);
 	if(tcpops_event_callback.len > 0) {
 		rt = -1;
 		keng = sr_kemi_eng_get();
@@ -258,9 +259,10 @@ static void tcpops_tcp_closed_run_route(tcp_closed_event_info_t *tev)
 		}
 	} else {
 		rt = tcp_closed_routes[tev->reason];
-		LM_DBG("event reason id: %d rt: %d\n", tev->reason, rt);
-		if(rt == -1)
+		if(rt == -1) {
+			LM_DBG("event reason id: %d - event route not set\n", tev->reason);
 			return;
+		}
 	}
 
 	if(faked_msg_init() < 0) {
