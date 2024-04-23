@@ -25,6 +25,7 @@
 #include "dprint.h"
 #include "globals.h"
 #include "dset.h"
+#include "resolve.h"
 
 #include "fmsg.h"
 
@@ -57,6 +58,8 @@ static void faked_msg_buf_init(void)
 
 static int faked_msg_init_new(sip_msg_t *fmsg)
 {
+	str loip = str_init("127.0.0.1");
+
 	faked_msg_buf_init();
 
 	/* init faked sip msg */
@@ -75,13 +78,9 @@ static int faked_msg_init_new(sip_msg_t *fmsg)
 
 	fmsg->rcv.proto = PROTO_UDP;
 	fmsg->rcv.src_port = 5060;
-	fmsg->rcv.src_ip.u.addr32[0] = 0x7f000001;
-	fmsg->rcv.src_ip.af = AF_INET;
-	fmsg->rcv.src_ip.len = 4;
+	str2ipbuf(&loip, &fmsg->rcv.src_ip);
 	fmsg->rcv.dst_port = 5060;
-	fmsg->rcv.dst_ip.u.addr32[0] = 0x7f000001;
-	fmsg->rcv.dst_ip.af = AF_INET;
-	fmsg->rcv.dst_ip.len = 4;
+	str2ipbuf(&loip, &fmsg->rcv.dst_ip);
 
 	return 0;
 }
