@@ -190,6 +190,8 @@ int pv_parse_phonenum_name(pv_spec_p sp, str *in)
 				gpv->type = 0;
 			else if(strncmp(pvs.s, "ccname", 6) == 0)
 				gpv->type = 7;
+			else if(strncmp(pvs.s, "natnum", 6) == 0)
+				gpv->type = 8;
 			else
 				goto error;
 			break;
@@ -268,6 +270,10 @@ int pv_get_phonenum(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			if(gpv->item->r.record->ccname == NULL)
 				return pv_get_null(msg, param, res);
 			return pv_get_strzval(msg, param, res, gpv->item->r.record->ccname);
+		case 8: /* natnum */
+			if(gpv->item->r.record->natnum == NULL)
+				return pv_get_null(msg, param, res);
+			return pv_get_strzval(msg, param, res, gpv->item->r.record->natnum);
 		default: /* number */
 			if(gpv->item->r.record->number == NULL)
 				return pv_get_null(msg, param, res);

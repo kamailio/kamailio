@@ -37,6 +37,7 @@ extern "C"
 		char *ltype;
 		char *ndesc;
 		char *ccname;
+		char *natnum;
 		char *error;
 		int cctel;
 		int valid;

@@ -128,9 +128,11 @@ telnum_t* telnum_parse(char* number, char* region)
 		return res;
 	}
 	res->valid = 1;
-	string formattedNumber;
-	_phoneUtil.Format(parsedNumber, PhoneNumberUtil::E164, &formattedNumber);
-	res->normalized = strdup(formattedNumber.c_str());
+	string formattedNumberE164, formattedNumberNational;
+	_phoneUtil.Format(parsedNumber, PhoneNumberUtil::E164, &formattedNumberE164);
+	_phoneUtil.Format(parsedNumber, PhoneNumberUtil::NATIONAL, &formattedNumberNational);
+	res->normalized = strdup(formattedNumberE164.c_str());
+	res->natnum = strdup(formattedNumberNational.c_str());
 	string descNumber = _phoneGeoCoder->GetDescriptionForNumber(parsedNumber, Locale("en"));
 	res->ndesc = strdup(descNumber.c_str());
 	res->ltype = strdup(telnum_linetype(_phoneUtil.GetNumberType(parsedNumber)));
@@ -156,6 +158,7 @@ telnum_t* telnum_new(char* number)
 	tn->ltype = NULL;
 	tn->ndesc = NULL;
 	tn->ccname = NULL;
+	tn->natnum = NULL;
 	tn->error = NULL;
 	return tn;
 }
@@ -182,6 +185,9 @@ void telnum_free(telnum_t* tn)
 	}
 	if (tn->ccname) {
 		free(tn->ccname);
+	}
+	if (tn->natnum) {
+		free(tn->natnum);
 	}
 	free(tn);
 }
