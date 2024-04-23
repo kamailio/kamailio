@@ -434,4 +434,6 @@ typedef struct ws_event_info
 	int id;
 } ws_event_info_t;
 
+tcp_connection_t *ksr_tcpcon_evcb_get(void);
+
 #endif
