@@ -3689,6 +3689,7 @@ static int tcp_emit_closed_event(struct tcp_connection *con)
 	if(likely(sr_event_enabled(SREV_TCP_CLOSED))) {
 		memset(&tev, 0, sizeof(tcp_closed_event_info_t));
 		tev.reason = reason;
+		tev.id = con->id;
 		tev.con = con;
 		evp.data = (void *)(&tev);
 		ret = sr_event_exec(SREV_TCP_CLOSED, &evp);
