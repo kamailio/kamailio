@@ -3670,6 +3670,12 @@ again:
 	return n;
 }
 
+static tcp_connection_t *_ksr_tcpcon_evcb = NULL;
+
+tcp_connection_t *ksr_tcpcon_evcb_get(void)
+{
+	return _ksr_tcpcon_evcb;
+}
 
 static int tcp_emit_closed_event(struct tcp_connection *con)
 {
@@ -3692,7 +3698,9 @@ static int tcp_emit_closed_event(struct tcp_connection *con)
 		tev.id = con->id;
 		tev.con = con;
 		evp.data = (void *)(&tev);
+		_ksr_tcpcon_evcb = con;
 		ret = sr_event_exec(SREV_TCP_CLOSED, &evp);
+		_ksr_tcpcon_evcb = NULL;
 	} else {
 		LM_DBG("no callback registering for handling TCP closed event\n");
 	}
