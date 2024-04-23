@@ -462,6 +462,15 @@ static int load_pcres(int action)
 		}
 		shm_free(pcres);
 	}
+
+	if(pcres == NULL) {
+		if((pcres = shm_malloc(sizeof(pcre2_code *) * num_pcres_tmp)) == 0) {
+			LM_ERR("no more memory for pcres\n");
+			goto err;
+		}
+		memset(pcres, 0, sizeof(pcre2_code *) * num_pcres_tmp);
+	}
+
 	*num_pcres = num_pcres_tmp;
 	*pcres = *pcres_tmp;
 	*pcres_addr = pcres;
