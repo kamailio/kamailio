@@ -422,6 +422,7 @@ typedef struct tcp_event_info
 typedef struct tcp_closed_event_info
 {
 	enum tcp_closed_reason reason;
+	int id;
 	struct tcp_connection *con;
 } tcp_closed_event_info_t;
 
