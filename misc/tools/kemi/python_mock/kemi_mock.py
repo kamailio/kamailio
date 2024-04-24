@@ -129,7 +129,7 @@ def generate_function_doc(module_name, func, prefix):
                 print(prefix + "\t\"\"\"")
                 documentation_lines = documentation[module_name]["functions"][function_prefix].split("\n")
                 for line in documentation_lines:
-                    print(prefix + "\t" + line)
+                    print(prefix + "\t" + line.replace("\\", "\\\\\\\\"))
                 print(prefix + "\t\"\"\"")
                 break
 
