@@ -852,6 +852,7 @@ sht_rm_value_re("ha=>.*");
      * re - match the val parameter as regular expression.
      * sw - match the val parameter as 'starts with'.
      * ew - match the val parameter as 'ends with'.
+     * in - match the val parameter as 'includes'.
 
    All parameters can be static strings or contain variables.
 
@@ -871,6 +872,7 @@ sht_rm_name("ha", "re", ".*");
      * re - match the val parameter as regular expression.
      * sw - match the val parameter as 'starts with'.
      * ew - match the val parameter as 'ends with'.
+     * in - match the val parameter as 'includes'.
 
    All parameters can be static strings or contain variables.
 
