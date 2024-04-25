@@ -502,6 +502,10 @@ int db_delete_urecord(urecord_t *_r)
 			vals[1].val.str_val.s = dom + 1;
 			vals[1].val.str_val.len = _r->aor.s + _r->aor.len - dom - 1;
 		}
+		uldb_delete_attrs(
+				_r->domain, &vals[0].val.str_val, &vals[1].val.str_val, NULL);
+	} else {
+		uldb_delete_attrs(_r->domain, &vals[0].val.str_val, NULL, NULL);
 	}
 
 	if(ul_dbf.use_table(ul_dbh, _r->domain) < 0) {

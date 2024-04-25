@@ -1784,9 +1784,11 @@ int uldb_delete_attrs(str *_dname, str *_user, str *_domain, str *_ruid)
 	str tname;
 	db_key_t keys[3];
 	db_val_t vals[3];
+	int n = 0;
 
-	if(ul_db_ops_ruid == 1)
+	if(ul_db_ops_ruid == 1 && _ruid) {
 		return uldb_delete_attrs_ruid(_dname, _ruid);
+	}
 
 	LM_DBG("trying to delete location attributes\n");
 
@@ -1805,22 +1807,26 @@ int uldb_delete_attrs(str *_dname, str *_user, str *_domain, str *_ruid)
 	tname.s = tname_buf;
 	tname.len = _dname->len + 6;
 
-	keys[0] = &ulattrs_user_col;
-	keys[1] = &ulattrs_ruid_col;
-	keys[2] = &ulattrs_domain_col;
+	keys[n] = &ulattrs_user_col;
+	vals[n].type = DB1_STR;
+	vals[n].nul = 0;
+	vals[n].val.str_val = *_user;
+	n++;
 
-	vals[0].type = DB1_STR;
-	vals[0].nul = 0;
-	vals[0].val.str_val = *_user;
-
-	vals[1].type = DB1_STR;
-	vals[1].nul = 0;
-	vals[1].val.str_val = *_ruid;
+	if(_ruid) {
+		keys[n] = &ulattrs_ruid_col;
+		vals[n].type = DB1_STR;
+		vals[n].nul = 0;
+		vals[n].val.str_val = *_ruid;
+		n++;
+	}
 
 	if(ul_use_domain) {
-		vals[2].type = DB1_STR;
-		vals[2].nul = 0;
-		vals[2].val.str_val = *_domain;
+		keys[n] = &ulattrs_domain_col;
+		vals[n].type = DB1_STR;
+		vals[n].nul = 0;
+		vals[n].val.str_val = *_domain;
+		n++;
 	}
 
 	if(ul_dbf.use_table(ul_dbh, &tname) < 0) {
@@ -1828,7 +1834,7 @@ int uldb_delete_attrs(str *_dname, str *_user, str *_domain, str *_ruid)
 		return -1;
 	}
 
-	if(ul_dbf.delete(ul_dbh, keys, 0, vals, (ul_use_domain) ? (3) : (2)) < 0) {
+	if(ul_dbf.delete(ul_dbh, keys, 0, vals, n) < 0) {
 		LM_ERR("deleting from database failed\n");
 		return -1;
 	}
