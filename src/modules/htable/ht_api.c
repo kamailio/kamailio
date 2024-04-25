@@ -1389,8 +1389,12 @@ int ht_rm_cell_op(str *sre, ht_t *ht, int mode, int op)
 									   == 0) {
 						match = 1;
 					}
+				} else if(op == HT_RM_OP_IN) {
+					if(sre->len <= it->name.len
+							&& str_search(&it->name, sre) != NULL) {
+						match = 1;
+					}
 				}
-
 			} else {
 				if(op == HT_RM_OP_SW) {
 					if(it->flags & AVP_VAL_STR) {
@@ -1407,6 +1411,13 @@ int ht_rm_cell_op(str *sre, ht_t *ht, int mode, int op)
 												   - sre->len,
 										   sre->s, sre->len)
 										   == 0) {
+							match = 1;
+						}
+					}
+				} else if(op == HT_RM_OP_IN) {
+					if(it->flags & AVP_VAL_STR) {
+						if(sre->len <= it->value.s.len
+								&& str_search(&it->value.s, sre) != NULL) {
 							match = 1;
 						}
 					}

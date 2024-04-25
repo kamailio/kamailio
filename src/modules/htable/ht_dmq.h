@@ -40,7 +40,8 @@ typedef enum
 	HT_DMQ_DEL_CELL,
 	HT_DMQ_RM_CELL_RE,
 	HT_DMQ_RM_CELL_SW,
-	HT_DMQ_RM_CELL_EW
+	HT_DMQ_RM_CELL_EW,
+	HT_DMQ_RM_CELL_IN
 } ht_dmq_action_t;
 
 int ht_dmq_initialize();
