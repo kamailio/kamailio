@@ -916,6 +916,11 @@ sht_rm_value_re("ha=>.*");
 			with'.
 		</para>
 		</listitem>
+		<listitem>
+		<para>
+			<emphasis>in</emphasis> - match the val parameter as 'includes'.
+		</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 			All parameters can be static strings or contain variables.
@@ -960,6 +965,11 @@ sht_rm_name("ha", "re", ".*");
 		<para>
 			<emphasis>ew</emphasis> - match the val parameter as 'ends
 			with'.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>in</emphasis> - match the val parameter as 'includes'.
 		</para>
 		</listitem>
 		</itemizedlist>
