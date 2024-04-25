@@ -20,6 +20,9 @@ DBROUSER=${DBROUSER:-kamailioro}
 # password for read-only user
 DBROPW=${DBROPW:-kamailioro}
 
+# address of database server for root connections
+DBROOTHOST=${DBROOTHOST:-$DBHOST}
+
 # user name column
 USERCOL=${USERCOL:-username}
 

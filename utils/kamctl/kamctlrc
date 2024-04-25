@@ -44,6 +44,14 @@
 ## database access host (from where is kamctl used)
 # DBACCESSHOST=192.168.0.1
 
+## database host for super user (useful for specifying a local socket or virtual hostname)
+# defaults to value of DBHOST when not set
+# DBROOTHOST="localhost"
+
+## database port for super user (on some DB specifying the port will force TCP connections)
+# default value will depend on client DB tool
+# DBROOTPORT=""
+
 ## database super user (for ORACLE this is 'scheme-creator' user)
 # DBROOTUSER="root"
 
