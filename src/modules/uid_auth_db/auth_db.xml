@@ -66,7 +66,7 @@
         the <serdoc:module>textops</serdoc:module> module.
       </para>
       <para>
-        The reason for the failure can be determined from the interger
+        The reason for the failure can be determined from the integer
         return value stored in the <varname>$?</varname> attribute.
         A value of <literal>-3</literal> indicates that it was impossible
         to retrieve credentials from the request. A 400 (Bad Request)
