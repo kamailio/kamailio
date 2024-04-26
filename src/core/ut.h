@@ -312,7 +312,7 @@ static inline char *int2strbuf(unsigned long l, char *r, int r_size, int *len)
 }
 
 extern char ut_buf_int2str[INT2STR_MAX_LEN];
-/** interger(long) to string conversion.
+/** integer(long) to string conversion.
  * This version uses a static buffer (shared with sint2str()).
  * WARNING: other function calls might overwrite the static buffer, so
  * either always save the result immediately or use int2strbuf(...).
