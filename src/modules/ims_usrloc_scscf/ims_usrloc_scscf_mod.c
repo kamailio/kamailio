@@ -143,55 +143,61 @@ delete_shtable_t pres_delete_shtable;
 destroy_shtable_t pres_destroy_shtable;
 extract_sdialog_info_t pres_extract_sdialog_info;
 
+/* clang-format off */
 /*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"ul_bind_usrloc", (cmd_function)bind_usrloc, 1, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
+	{"ul_bind_usrloc", (cmd_function)bind_usrloc, 1, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 
 /*! \brief
  * Exported parameters
  */
 static param_export_t params[] = {
-		{"timer_interval", INT_PARAM, &timer_interval},
-		{"desc_time_order", INT_PARAM, &desc_time_order},
-		{"matching_mode", INT_PARAM, &matching_mode},
-		{"cseq_delay", INT_PARAM, &cseq_delay},
-		{"fetch_rows", INT_PARAM, &ul_fetch_rows},
-		{"hash_size", INT_PARAM, &ul_hash_size},
-		{"subs_hash_size", INT_PARAM, &subs_hash_size},
-		{"contacts_hash_size", INT_PARAM, &contacts_hash_size},
-		{"nat_bflag", INT_PARAM, &nat_bflag},
-		{"contact_delete_delay", INT_PARAM, &contact_delete_delay},
-		{"usrloc_debug_file", PARAM_STR, &usrloc_debug_file},
-		{"enable_debug_file", INT_PARAM, &usrloc_debug},
-		{"user_data_dtd", PARAM_STRING, &scscf_user_data_dtd},
-		{"user_data_xsd", PARAM_STRING, &scscf_user_data_xsd},
-		{"support_wildcardPSI", INT_PARAM, &scscf_support_wildcardPSI},
-		{"unreg_validity", INT_PARAM, &unreg_validity},
-		{"maxcontact_behaviour", INT_PARAM, &maxcontact_behaviour},
-		{"maxcontact", INT_PARAM, &maxcontact},
-		{"maxcontact_3gpp", INT_PARAM, &maxcontact_3gpp},
-		{"max_subscribes", INT_PARAM, &max_subscribes},
-		{"sub_dialog_hash_size", INT_PARAM, &sub_dialog_hash_size},
-		{"db_mode", INT_PARAM, &db_mode}, {"db_url", PARAM_STR, &db_url},
-		{"timer_procs", INT_PARAM, &ul_timer_procs},
-		{"realm", PARAM_STRING, &cscf_realm},
-		{"skip_realm", INT_PARAM, &skip_cscf_realm}, {0, 0, 0}};
+	{"timer_interval", INT_PARAM, &timer_interval},
+	{"desc_time_order", INT_PARAM, &desc_time_order},
+	{"matching_mode", INT_PARAM, &matching_mode},
+	{"cseq_delay", INT_PARAM, &cseq_delay},
+	{"fetch_rows", INT_PARAM, &ul_fetch_rows},
+	{"hash_size", INT_PARAM, &ul_hash_size},
+	{"subs_hash_size", INT_PARAM, &subs_hash_size},
+	{"contacts_hash_size", INT_PARAM, &contacts_hash_size},
+	{"nat_bflag", INT_PARAM, &nat_bflag},
+	{"contact_delete_delay", INT_PARAM, &contact_delete_delay},
+	{"usrloc_debug_file", PARAM_STR, &usrloc_debug_file},
+	{"enable_debug_file", INT_PARAM, &usrloc_debug},
+	{"user_data_dtd", PARAM_STRING, &scscf_user_data_dtd},
+	{"user_data_xsd", PARAM_STRING, &scscf_user_data_xsd},
+	{"support_wildcardPSI", INT_PARAM, &scscf_support_wildcardPSI},
+	{"unreg_validity", INT_PARAM, &unreg_validity},
+	{"maxcontact_behaviour", INT_PARAM, &maxcontact_behaviour},
+	{"maxcontact", INT_PARAM, &maxcontact},
+	{"maxcontact_3gpp", INT_PARAM, &maxcontact_3gpp},
+	{"max_subscribes", INT_PARAM, &max_subscribes},
+	{"sub_dialog_hash_size", INT_PARAM, &sub_dialog_hash_size},
+	{"db_mode", INT_PARAM, &db_mode}, {"db_url", PARAM_STR, &db_url},
+	{"timer_procs", INT_PARAM, &ul_timer_procs},
+	{"realm", PARAM_STRING, &cscf_realm},
+	{"skip_realm", INT_PARAM, &skip_cscf_realm},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"ims_usrloc_scscf", DEFAULT_DLFLAGS, /*!< dlopen flags */
-		cmds,								 /*!< Exported functions */
-		params,								 /*!< Export parameters */
-		0,									 /*!< exported RPC methods */
-		0,									 /*!< exported pseudo-variables */
-		0,									 /*!< Response function */
-		mod_init,	/*!< Module initialization function */
-		child_init, /*!< Child initialization function */
-		destroy		/*!< Destroy function */
+	"ims_usrloc_scscf",
+	DEFAULT_DLFLAGS,	/*!< dlopen flags */
+	cmds,				/*!< Exported functions */
+	params,				/*!< Export parameters */
+	0,					/*!< exported RPC methods */
+	0,					/*!< exported pseudo-variables */
+	0,					/*!< Response function */
+	mod_init,			/*!< Module initialization function */
+	child_init,			/*!< Child initialization function */
+	destroy				/*!< Destroy function */
 };
+/* clang-format on */
 
 
 /*! \brief
