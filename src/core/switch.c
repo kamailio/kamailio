@@ -203,7 +203,7 @@ int fix_switch(struct action *t)
 				return E_BUG;
 			}
 			if(rval_expr_eval_long(0, 0, &c->label.match_int, c->ct_rve) < 0) {
-				LM_ERR("case expression (%d,%d) has non-interger type\n",
+				LM_ERR("case expression (%d,%d) has non-integer type\n",
 						c->ct_rve->fpos.s_line, c->ct_rve->fpos.s_col);
 				return E_BUG;
 			}
