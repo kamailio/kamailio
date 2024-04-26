@@ -115,6 +115,7 @@ static int child_init(int rank);
 extern int reg_timer_interval;
 extern int _uac_reg_gc_interval;
 extern int _uac_reg_use_domain;
+extern int _uac_reg_reload_delta;
 
 static pv_export_t mod_pvs[] = {
 		{{"uac_req", sizeof("uac_req") - 1}, PVT_OTHER, pv_get_uac_req,
@@ -187,7 +188,8 @@ static param_export_t params[] = {
 		{"reg_hash_size", INT_PARAM, &reg_htable_size},
 		{"reg_use_domain", PARAM_INT, &_uac_reg_use_domain},
 		{"default_socket", PARAM_STR, &uac_default_socket},
-		{"event_callback", PARAM_STR, &uac_event_callback}, {0, 0, 0}};
+		{"event_callback", PARAM_STR, &uac_event_callback},
+		{"reload_delta", INT_PARAM, &_uac_reg_reload_delta}, {0, 0, 0}};
 
 
 struct module_exports exports = {"uac", /* module name */

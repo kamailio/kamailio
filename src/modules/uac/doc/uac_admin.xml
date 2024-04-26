@@ -563,9 +563,7 @@ modparam("uac", "reg_active", 0)
 			Timer interval (in seconds) at which remote registrations are cleaned
 			up in case of failure or removed. When setting it take in consideration
 			the maximum value for retransmission timeout, this param should be greater
-			than it. This value also impacts how often the reload for remote
-			registrations table can be executed -- the RPC command will fail if
-			executed in less than reg_gc_interval value since the last reload.
+			than it.
 			</para>
 			<para>
 				<emphasis>
@@ -659,6 +657,35 @@ function ksr_uac_event(evname)
 end
  ...
  </programlisting>
+		</example>
+	</section>
+
+	<section id="uac.p.reload_delta">
+		<title><varname>reload_delta</varname> (int)</title>
+		<para>
+			The number of seconds that have to be waited before executing a new
+			RPC reload (uac.reg_reload). By default, RPC reloads are rate limited
+			to a maximum of one reload per the reload_delta interval.
+		</para>
+		<para>
+			If set to 0, no rate limit is configured. Note carefully: use this
+			configuration only in tests environments because executing two RPC
+			reloads of the same table at the same time can cause &kamailio;
+			to crash.
+		</para>
+		<para>
+			<emphasis>
+				The default value is 30 seconds.
+			</emphasis>
+		</para>
+
+		<example>
+			<title>Set <varname>reload_delta</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("uac", "reload_delta", 20)
+...
+			</programlisting>
 		</example>
 	</section>
 	</section>
@@ -1421,8 +1448,8 @@ event_route[uac:reply] {
 			</title>
 		<para>
 			Reload the records from database for remote registrations. There is
-			a limit of how often the reload command can be executed, by default
-			is 150 seconds between reloads -- see the reg_gc_interval parameter
+			a limit of how often the reload command can be executed. By default,
+			it is 30 seconds between reloads -- see the reload_delta parameter
 			for more details.
 		</para>
 		<example>
