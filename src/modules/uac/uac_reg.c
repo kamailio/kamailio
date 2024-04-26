@@ -63,6 +63,7 @@
 #define UAC_REG_DB_COLS_NUM 15
 
 int _uac_reg_gc_interval = 150;
+int _uac_reg_reload_delta = 30;
 
 typedef struct _reg_uac
 {
@@ -393,11 +394,11 @@ int uac_reg_ht_shift(void)
 	tn = time(NULL);
 
 	lock_get(_reg_htable_gc_lock);
-	if(_reg_htable_gc->stime > tn - _uac_reg_gc_interval) {
+	if(_reg_htable_gc->stime > tn - _uac_reg_reload_delta) {
 		lock_release(_reg_htable_gc_lock);
 		LM_ERR("shifting in-memory table is not possible in less than %d "
 			   "secs\n",
-				_uac_reg_gc_interval);
+				_uac_reg_reload_delta);
 		return -1;
 	}
 	uac_reg_reset_ht_gc();
