@@ -173,8 +173,10 @@ Chapter 1. Admin Guide
    database URL for storing impu/contacts records
 
    Example 1.1. Set db_url parameter
+...
         modparam("ims_usrloc_scscf", "db_url", "mysql//username:password@localho
 st/scscf")
+...
 
 3.2. db_mode (string)
 
@@ -191,6 +193,7 @@ st/scscf")
    Example 1.2. Set db_mode parameter
 ...
         modparam("ims_usrloc_scscf", "db_mode", 1)
+...
 
 3.3. maxcontact (int)
 
@@ -201,6 +204,7 @@ st/scscf")
    Example 1.3. Set maxcontact parameter
 ...
         modparam("ims_usrloc_scscf", "maxcontact", 10)
+...
 
 3.4. maxcontact_3gpp (int)
 
@@ -212,6 +216,7 @@ st/scscf")
    Example 1.4. Set maxcontact_3gpp parameter
 ...
         modparam("ims_usrloc_scscf", "maxcontact_3gpp", 0)
+...
 
 3.5. maxcontact_behaviour (int)
 
@@ -225,6 +230,7 @@ st/scscf")
    Example 1.5. Set maxcontact_behaviour parameter
 ...
         modparam("ims_usrloc_scscf", "maxcontact_behaviour", 2)
+...
 
 3.6. max_subscribes(int)
 
@@ -235,6 +241,7 @@ st/scscf")
    Example 1.6. Set max_subscribes parameter
 ...
         modparam("ims_usrloc_scscf", "max_subscribes", 2)
+...
 
 3.7. sub_dialog_hash_size(int)
 
@@ -245,6 +252,7 @@ st/scscf")
    Example 1.7. Set sub_dialog_hash_size parameter
 ...
         modparam("ims_usrloc_scscf", "sub_dialog_hash_size", 512)
+...
 
 3.8. timer_procs(int)
 
@@ -255,6 +263,7 @@ st/scscf")
    Example 1.8. Set timer_procs parameter
 ...
         modparam("ims_usrloc_scscf", "timer_procs", 5)
+...
 
 3.9. timer_interval (int)
 
@@ -267,6 +276,7 @@ st/scscf")
    Example 1.9. Set timer_interval parameter
 ...
         modparam("ims_usrloc_scscf", "timer_interval", 120)
+...
 
 3.10. desc_time_order (int)
 
@@ -278,6 +288,7 @@ st/scscf")
    Example 1.10. Set desc_time_order parameter
 ...
         modparam("ims_usrloc_scscf", "desc_time_order", 1)
+...
 
 3.11. matching_mode (int)
 
@@ -292,6 +303,7 @@ st/scscf")
    Example 1.11. Set matching_mode parameter
 ...
         modparam("ims_usrloc_scscf", "matching_mode", 0)
+...
 
 3.12. cseq_delay (int)
 
@@ -303,6 +315,7 @@ st/scscf")
    Example 1.12. Set cseq_delay parameter
 ...
         modparam("ims_usrloc_scscf", "cseq_delay", 20)
+...
 
 3.13. fetch_rows(int)
 
@@ -314,6 +327,7 @@ st/scscf")
    Example 1.13. Set fetch_rows parameter
 ...
         modparam("ims_usrloc_scscf", "fetch_rows", 3000)
+...
 
 3.14. hash_size (int)
 
@@ -324,6 +338,7 @@ st/scscf")
    Example 1.14. Set hash_size parameter
 ...
         modparam("ims_usrloc_scscf", "hash_size", 512)
+...
 
 3.15. subs_hash_size (int)
 
@@ -335,6 +350,7 @@ st/scscf")
    Example 1.15. Set subs_hash_size parameter
 ...
         modparam("ims_usrloc_scscf", "subs_hash_size", 512)
+...
 
 3.16. contacts_hash_size (integer)
 
@@ -346,6 +362,7 @@ st/scscf")
    Example 1.16. Set contacts_hash_size parameter
 ...
         modparam("ims_usrloc_scscf", "contacts_hash_size", 512)
+...
 
 3.17. nat_bflag (integer)
 
@@ -354,7 +371,9 @@ st/scscf")
    Default value is 0
 
    Example 1.17. Set nat_bflag parameter
+...
         modparam("ims_usrloc_scscf", "nat_bflag", 3)
+...
 
 3.18. contact_delete_delay (int)
 
@@ -364,7 +383,9 @@ st/scscf")
    Default value is 30
 
    Example 1.18. Set contact_delete_delayparameter
+...
         modparam("ims_usrloc_scscf", "contact_delete_delay", 32)
+...
 
 3.19. support_wildcardPSI (int)
 
@@ -383,22 +404,28 @@ st/scscf")
    Default value is 1800
 
    Example 1.20. Set unreg_validity parameter
+...
         modparam("ims_usrloc_scscf", "unreg_validity", 0)
+...
 
 3.21. user_data_xsd (string)
 
    Default value is 1800
 
    Example 1.21. Set unreg_validity parameter
+...
         modparam("ims_usrloc_scscf", "user_data_xsd", "/usr/local/etc/kamailio/C
 xDataType_Rel6.xsd")
+...
 
 3.22. realm (string)
 
    Default value is NULL
 
    Example 1.22. Set realm parameter
+...
         modparam("ims_usrloc_scscf", "realm", "kamailio-ims.org")
+...
 
 3.23. skip_realm (int)
 
@@ -408,7 +435,9 @@ xDataType_Rel6.xsd")
    Default value is 0
 
    Example 1.23. Set skip_realm parameter
+...
         modparam("ims_usrloc_scscf", "skip_realm", 1)
+...
 
 4. RPC Commands
 
