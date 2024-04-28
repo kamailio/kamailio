@@ -50,6 +50,7 @@ static int func_incr(struct sip_msg *msg, char *key);
 static int func_incr_with_labels(struct sip_msg *msg, char *key, char *labels);
 static int func_decr(struct sip_msg *msg, char *key);
 static int func_decr_with_labels(struct sip_msg *msg, char *key, char *labels);
+static int convert_result(bool result);
 static char *get_milliseconds(char *dst);
 
 typedef struct StatsdParams
@@ -115,7 +116,6 @@ static int mod_init(void)
 	rc = statsd_init(statsd_params.ip, statsd_params.port);
 	if(rc == false) {
 		LM_ERR("Statsd connection failed (ERROR_CODE: %i)\n", rc);
-		return -1;
 	} else {
 		LM_INFO("Statsd: success connection to statsd server\n");
 	}
@@ -133,69 +133,69 @@ void mod_destroy(void)
 
 static int func_gauge(struct sip_msg *msg, char *key, char *val)
 {
-	return statsd_gauge(key, val, NULL);
+	return convert_result(statsd_gauge(key, val, NULL));
 }
 
 static int func_gauge_with_labels(
 		struct sip_msg *msg, char *key, char *val, char *labels)
 {
-	return statsd_gauge(key, val, labels);
+	return convert_result(statsd_gauge(key, val, labels));
 }
 
 static int ki_statsd_gauge(sip_msg_t *msg, str *key, str *val)
 {
-	return statsd_gauge(key->s, val->s, NULL);
+	return convert_result(statsd_gauge(key->s, val->s, NULL));
 }
 
 static int ki_statsd_gauge_with_labels(
 		sip_msg_t *msg, str *key, str *val, str *labels)
 {
-	return statsd_gauge(key->s, val->s, labels->s);
+	return convert_result(statsd_gauge(key->s, val->s, labels->s));
 }
 
 static int func_histogram(struct sip_msg *msg, char *key, char *val)
 {
-	return statsd_histogram(key, val, NULL);
+	return convert_result(statsd_histogram(key, val, NULL));
 }
 
 static int func_histogram_with_labels(
 		struct sip_msg *msg, char *key, char *val, char *labels)
 {
-	return statsd_histogram(key, val, labels);
+	return convert_result(statsd_histogram(key, val, labels));
 }
 
 
 static int ki_statsd_histogram(sip_msg_t *msg, str *key, str *val)
 {
-	return statsd_histogram(key->s, val->s, NULL);
+	return convert_result(statsd_histogram(key->s, val->s, NULL));
 }
 
 static int ki_statsd_histogram_with_labels(
 		sip_msg_t *msg, str *key, str *val, str *labels)
 {
-	return statsd_histogram(key->s, val->s, labels->s);
+	return convert_result(statsd_histogram(key->s, val->s, labels->s));
 }
 
 static int func_set(struct sip_msg *msg, char *key, char *val)
 {
-	return statsd_set(key, val, NULL);
+	return convert_result(statsd_set(key, val, NULL));
 }
 
 static int func_set_with_labels(
 		struct sip_msg *msg, char *key, char *val, char *labels)
 {
-	return statsd_set(key, val, labels);
+	return convert_result(statsd_set(key, val, labels));
 }
 
 static int ki_statsd_set(sip_msg_t *msg, str *key, str *val)
 {
-	return statsd_set(key->s, val->s, NULL);
+	return convert_result(statsd_set(key->s, val->s, NULL));
 }
 
 static int ki_statsd_set_with_labels(
 		sip_msg_t *msg, str *key, str *val, str *labels)
 {
-	return statsd_set(key->s, val->s, labels->s);
+	return convert_result(statsd_set(key->s, val->s, labels->s));
 }
 
 static int func_time_start(struct sip_msg *msg, char *key)
@@ -278,42 +278,51 @@ static int ki_statsd_stop_with_labels(sip_msg_t *msg, str *key, str *labels)
 
 static int func_incr(struct sip_msg *msg, char *key)
 {
-	return statsd_count(key, "+1", NULL);
+	return convert_result(statsd_count(key, "+1", NULL));
 }
 
 static int func_incr_with_labels(struct sip_msg *msg, char *key, char *labels)
 {
-	return statsd_count(key, "+1", labels);
+	return convert_result(statsd_count(key, "+1", labels));
 }
 
 static int ki_statsd_incr(sip_msg_t *msg, str *key)
 {
-	return statsd_count(key->s, "+1", NULL);
+	return convert_result(statsd_count(key->s, "+1", NULL));
 }
 
 static int ki_statsd_incr_with_labels(sip_msg_t *msg, str *key, str *labels)
 {
-	return statsd_count(key->s, "+1", labels->s);
+	return convert_result(statsd_count(key->s, "+1", labels->s));
 }
 
 static int func_decr(struct sip_msg *msg, char *key)
 {
-	return statsd_count(key, "-1", NULL);
+	return convert_result(statsd_count(key, "-1", NULL));
 }
 
 static int func_decr_with_labels(struct sip_msg *msg, char *key, char *labels)
 {
-	return statsd_count(key, "-1", labels);
+	return convert_result(statsd_count(key, "-1", labels));
 }
 
 static int ki_statsd_decr(sip_msg_t *msg, str *key)
 {
-	return statsd_count(key->s, "-1", NULL);
+	return convert_result(statsd_count(key->s, "-1", NULL));
 }
 
 static int ki_statsd_decr_with_labels(sip_msg_t *msg, str *key, str *labels)
 {
-	return statsd_count(key->s, "-1", labels->s);
+	return convert_result(statsd_count(key->s, "-1", labels->s));
+}
+
+static int convert_result(bool result)
+{
+	if(result == false) {
+		return -1;
+	}
+
+	return 1;
 }
 
 char *get_milliseconds(char *dst)
