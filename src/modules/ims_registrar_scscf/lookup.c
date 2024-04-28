@@ -334,7 +334,7 @@ int term_impu_has_contact(struct sip_msg *_m, udomain_t *_d, char *_s)
 	str aor, uri;
 	ucontact_t *ptr = 0;
 	int res;
-	int ret;
+	int ret = -1;
 
 	impu_contact_t *impucontact;
 
