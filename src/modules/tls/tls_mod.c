@@ -343,9 +343,11 @@ static tls_domains_cfg_t* tls_use_modparams(void)
  *     is < 10
  *
  */
+static int tls_pthreads_key_mark;
 static void fork_child(void)
 {
-	for(int k = 0; k < 16; k++) {
+	int k;
+	for(k = 0; k < tls_pthreads_key_mark; k++) {
 		if(pthread_getspecific(k) != 0)
 			pthread_setspecific(k, 0x0);
 	}
@@ -355,6 +357,8 @@ static int mod_init(void)
 {
 	int method;
 	int verify_client;
+	unsigned char rand_buf[32];
+	int k;
 
 	if(tls_disable) {
 		LM_WARN("tls support is disabled "
@@ -463,6 +467,23 @@ static int mod_init(void)
 	if(ksr_tls_threads_mode == 2) {
 		pthread_atfork(NULL, NULL, &fork_child);
 	}
+
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+	/*
+	 * force creation of all thread-locals now so that other libraries
+	 * that use pthread_key_create(), e.g. python,
+	 * will have larger key values
+	 */
+	if(ksr_tls_threads_mode > 0) {
+		ERR_clear_error();
+		RAND_bytes(rand_buf, sizeof(rand_buf));
+		for(k = 0; k < 32; k++) {
+			if(pthread_getspecific(k))
+				tls_pthreads_key_mark = k + 1;
+		}
+		LM_WARN("set maximum pthreads key to %d\n", tls_pthreads_key_mark);
+	}
+#endif
 	return 0;
 error:
 	tls_h_mod_destroy_f();
@@ -499,6 +520,7 @@ static int mod_child_hook(int *rank, void *dummy)
 		if(tls_fix_domains_cfg(*tls_domains_cfg, &mod_params, &mod_params) < 0)
 			return -1;
 	}
+
 	return 0;
 }
 
@@ -508,6 +530,8 @@ static OSSL_LIB_CTX *new_ctx;
 #endif
 static int mod_child(int rank)
 {
+	int k;
+
 	if(tls_disable || (tls_domains_cfg == 0))
 		return 0;
 
@@ -517,6 +541,13 @@ static int mod_child(int rank)
 	 */
 	if(rank == PROC_INIT) {
 		return run_thread4PP((_thread_proto4PP)mod_child_hook, &rank, NULL);
+	}
+
+	if(ksr_tls_threads_mode == 1 && rank && rank != PROC_INIT
+			&& rank != PROC_POSTCHILDINIT) {
+		for(k = 0; k < tls_pthreads_key_mark; k++)
+			pthread_setspecific(k, 0x0);
+		LM_WARN("clean-up of thread-locals key < %d\n", tls_pthreads_key_mark);
 	}
 
 #ifdef KSR_SSL_COMMON
