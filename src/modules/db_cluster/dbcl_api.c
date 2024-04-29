@@ -72,9 +72,12 @@ extern int dbcl_max_query_length;
 								cls->usedcon = cls->rlist[i].clist[j];         \
 								return 0;                                      \
 							} else {                                           \
-								LM_DBG("serial operation - failure on cluster" \
-									   " [%.*s] (%d/%d)\n",                    \
-										cls->name.len, cls->name.s, i, j);     \
+								LM_WARN("serial operation - failure on "       \
+										"cluster"                              \
+										" [%.*s] (%d/%d) [%.*s]\n",            \
+										cls->name.len, cls->name.s, i, j,      \
+										cls->rlist[i].clist[j]->name.len,      \
+										cls->rlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->rlist[i].clist[j]); \
@@ -106,10 +109,12 @@ extern int dbcl_max_query_length;
 										(j + 1) % cls->rlist[i].clen;          \
 								return 0;                                      \
 							} else {                                           \
-								LM_DBG("round robin operation - failure on "   \
-									   "cluster"                               \
-									   " [%.*s] (%d/%d)\n",                    \
-										cls->name.len, cls->name.s, i, j);     \
+								LM_WARN("round robin operation - failure on "  \
+										"cluster"                              \
+										" [%.*s] (%d/%d) [%.*s]\n",            \
+										cls->name.len, cls->name.s, i, j,      \
+										cls->rlist[i].clist[j]->name.len,      \
+										cls->rlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->rlist[i].clist[j]); \
@@ -124,7 +129,7 @@ extern int dbcl_max_query_length;
 					return -1;                                                 \
 			}                                                                  \
 		}                                                                      \
-		LM_DBG("no successful read on cluster [%.*s]\n", cls->name.len,        \
+		LM_ERR("no successful read on cluster [%.*s]\n", cls->name.len,        \
 				cls->name.s);                                                  \
 		return ret;                                                            \
 	} while(0)
@@ -167,9 +172,12 @@ extern int dbcl_max_query_length;
 								cls->usedcon = cls->wlist[i].clist[j];         \
 								return 0;                                      \
 							} else {                                           \
-								LM_DBG("serial operation - failure on cluster" \
-									   " [%.*s] (%d/%d)\n",                    \
-										cls->name.len, cls->name.s, i, j);     \
+								LM_WARN("serial operation - failure on "       \
+										"cluster"                              \
+										" [%.*s] (%d/%d) [%.*s]\n",            \
+										cls->name.len, cls->name.s, i, j,      \
+										cls->rlist[i].clist[j]->name.len,      \
+										cls->rlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->wlist[i].clist[j]); \
@@ -201,10 +209,12 @@ extern int dbcl_max_query_length;
 										(j + 1) % cls->wlist[i].clen;          \
 								return 0;                                      \
 							} else {                                           \
-								LM_DBG("round robin operation - failure on "   \
-									   "cluster"                               \
-									   " [%.*s] (%d/%d)\n",                    \
-										cls->name.len, cls->name.s, i, j);     \
+								LM_WARN("round robin operation - failure on "  \
+										"cluster"                              \
+										" [%.*s] (%d/%d) [%.*s]\n",            \
+										cls->name.len, cls->name.s, i, j,      \
+										cls->rlist[i].clist[j]->name.len,      \
+										cls->rlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->wlist[i].clist[j]); \
@@ -232,10 +242,12 @@ extern int dbcl_max_query_length;
 								cls->usedcon = cls->wlist[i].clist[j];         \
 								rok = 1;                                       \
 							} else {                                           \
-								LM_DBG("parallel operation - failure on "      \
-									   "cluster"                               \
-									   " [%.*s] (%d/%d)\n",                    \
-										cls->name.len, cls->name.s, i, j);     \
+								LM_WARN("parallel operation - failure on "     \
+										"cluster"                              \
+										" [%.*s] (%d/%d) [%.*s]\n",            \
+										cls->name.len, cls->name.s, i, j,      \
+										cls->rlist[i].clist[j]->name.len,      \
+										cls->rlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->wlist[i].clist[j]); \
@@ -253,7 +265,7 @@ extern int dbcl_max_query_length;
 					return -1;                                                 \
 			}                                                                  \
 		}                                                                      \
-		LM_DBG("no successful write on cluster [%.*s]\n", cls->name.len,       \
+		LM_ERR("no successful write on cluster [%.*s]\n", cls->name.len,       \
 				cls->name.s);                                                  \
 		return ret;                                                            \
 	} while(0)
@@ -303,9 +315,12 @@ extern int dbcl_max_query_length;
 								cls->usedcon = cls->wlist[i].clist[j];         \
 								return 0;                                      \
 							} else {                                           \
-								LM_DBG("serial operation - failure on cluster" \
-									   " [%.*s] (%d/%d)\n",                    \
-										cls->name.len, cls->name.s, i, j);     \
+								LM_WARN("serial operation - failure on "       \
+										"cluster"                              \
+										" [%.*s] (%d/%d) [%.*s]\n",            \
+										cls->name.len, cls->name.s, i, j,      \
+										cls->rlist[i].clist[j]->name.len,      \
+										cls->rlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->wlist[i].clist[j]); \
@@ -343,10 +358,12 @@ extern int dbcl_max_query_length;
 										(j + 1) % cls->wlist[i].clen;          \
 								return 0;                                      \
 							} else {                                           \
-								LM_DBG("round robin operation - failure on "   \
-									   "cluster"                               \
-									   " [%.*s] (%d/%d)\n",                    \
-										cls->name.len, cls->name.s, i, j);     \
+								LM_WARN("round robin operation - failure on "  \
+										"cluster"                              \
+										" [%.*s] (%d/%d) [%.*s]\n",            \
+										cls->name.len, cls->name.s, i, j,      \
+										cls->rlist[i].clist[j]->name.len,      \
+										cls->rlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->wlist[i].clist[j]); \
@@ -380,10 +397,12 @@ extern int dbcl_max_query_length;
 								cls->usedcon = cls->wlist[i].clist[j];         \
 								rok = 1;                                       \
 							} else {                                           \
-								LM_DBG("parallel operation - failure on "      \
-									   "cluster"                               \
-									   " [%.*s] (%d/%d)\n",                    \
-										cls->name.len, cls->name.s, i, j);     \
+								LM_WARN("parallel operation - failure on "     \
+										"cluster"                              \
+										" [%.*s] (%d/%d) [%.*s]\n",            \
+										cls->name.len, cls->name.s, i, j,      \
+										cls->rlist[i].clist[j]->name.len,      \
+										cls->rlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->wlist[i].clist[j]); \
@@ -401,7 +420,7 @@ extern int dbcl_max_query_length;
 					return -1;                                                 \
 			}                                                                  \
 		}                                                                      \
-		LM_DBG("no successful write on cluster [%.*s]\n", cls->name.len,       \
+		LM_ERR("no successful write on cluster [%.*s]\n", cls->name.len,       \
 				cls->name.s);                                                  \
 		return ret;                                                            \
 	} while(0)
