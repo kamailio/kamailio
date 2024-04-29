@@ -88,11 +88,12 @@ extern struct tm_binds tmb;
 #define IPSEC_NOALIAS_SEARCH (1 << 4)
 /* if set - do not reset dst uri for IPsec forward */
 #define IPSEC_NODSTURI_RESET (1 << 5)
-/* if set - use user equipment client port as target for requests over TCP */
+/* if set - use user equipment client port as target for requests over TCP/TLS */
 #define IPSEC_TCPPORT_UEC (1 << 6)
-/* if set - build new dst uri with transport parameter for TCP */
+/* if set - build new dst uri with transport parameter for TCP/TLS */
 #define IPSEC_SETDSTURI_FULL (1 << 7)
-/* if set - use Via attributes for routing reply */
+/* if set - use Via attributes for routing reply
+ * and protocol from next hop address for request */
 #define IPSEC_FORWARD_USEVIA (1 << 8)
 /* if set - try TCP if corresponding UDP socket is not found */
 #define IPSEC_FORWARD_TRYTCP (1 << 9)
