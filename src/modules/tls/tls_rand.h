@@ -21,10 +21,10 @@
 #define _TLS_RAND_H_
 
 #include <openssl/ssl.h>
+#include <openssl/rand.h>
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L \
 		&& OPENSSL_VERSION_NUMBER < 0x030000000L
 
-#include <openssl/rand.h>
 
 const RAND_METHOD *RAND_ksr_krand_method(void);
 const RAND_METHOD *RAND_ksr_fastrand_method(void);
