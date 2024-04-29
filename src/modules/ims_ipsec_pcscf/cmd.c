@@ -1053,13 +1053,15 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	}
 
 	if(m->first_line.type == SIP_REPLY) {
+		/* reply handling */
 		if(_cflags & IPSEC_FORWARD_USEVIA) {
+			/* req - corresponding request from transaction */
 			dst_proto = vb ? vb->proto : req->rcv.proto;
 
 			// As per ETSI TS 133 203 V11.2.0, 7.1 Security association parameters
 			// https://tools.ietf.org/html/rfc3261#section-18
 			// From Reply and TCP send via the same ports Request was recevied.
-			if(dst_proto == PROTO_TCP) {
+			if(dst_proto == PROTO_TCP || dst_proto == PROTO_TLS) {
 				src_port = req->rcv.dst_port;
 				dst_port = req->rcv.src_port;
 			} else {
@@ -1073,25 +1075,34 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 				}
 			}
 		} else {
-			// for Reply get the dest proto from the received request
+			// dest proto from the corresponding request from transaction
 			dst_proto = req->rcv.proto;
-			// for Reply and TCP sends from P-CSCF server port, for Reply and UDP sends from P-CSCF client port
-			src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
+			if(dst_proto == PROTO_TCP || dst_proto == PROTO_TLS) {
+				// for TCP/TLS send from P-CSCF server port
+				src_port = s->port_ps;
 
-			// for Reply and TCP sends to UE client port, for Reply and UDP sends to UE server port
-			dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
+				// for TCP/TLS send to UE client port
+				dst_port = s->port_uc;
+			} else {
+				// for UDP send from P-CSCF client port
+				src_port = s->port_pc;
 
-			// Check send socket
+				// for UDP send to UE server port
+				dst_port = s->port_us;
+			}
+			// find send socket
 			client_sock =
 					grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr
 														  : &ipsec_listen_addr6,
 							src_port, dst_proto);
 			if(!client_sock) {
+				/* fallback: P-CSCF client port to UE server port */
 				src_port = s->port_pc;
 				dst_port = s->port_us;
 			}
 		}
 	} else {
+		/* request handling */
 		if(_cflags & IPSEC_FORWARD_USEVIA) {
 			dst_proto = ims_ipsec_get_forward_proto(m);
 		} else {
