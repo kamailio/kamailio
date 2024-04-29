@@ -942,6 +942,37 @@ cleanup:
 	return ret;
 }
 
+/**
+ *
+ */
+int ims_ipsec_get_forward_proto(sip_msg_t *msg)
+{
+	struct sip_uri parsed_uri;
+	str uri;
+
+	if(msg == NULL) {
+		LM_ERR("no message structure - fallback to UDP\n");
+		return PROTO_UDP;
+	}
+
+	if(msg->dst_uri.s != NULL && msg->dst_uri.len > 0) {
+		uri = msg->dst_uri;
+	} else {
+		if(msg->new_uri.s != NULL && msg->new_uri.len > 0) {
+			uri = msg->new_uri;
+		} else {
+			uri = msg->first_line.u.request.uri;
+		}
+	}
+	if(parse_uri(uri.s, uri.len, &parsed_uri) != 0) {
+		LM_ERR("failed to parse next hop uri [%.*s]\n", uri.len, uri.s);
+		return PROTO_UDP;
+	}
+	if(parsed_uri.proto == PROTO_NONE || parsed_uri.proto == PROTO_OTHER) {
+		return PROTO_UDP;
+	}
+	return parsed_uri.proto;
+}
 
 int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 {
@@ -1061,43 +1092,24 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 		}
 	} else {
 		if(_cflags & IPSEC_FORWARD_USEVIA) {
-			if(req->first_line.u.request.method_value == METHOD_REGISTER) {
-				// for Request get the dest proto from the saved contact
-				dst_proto = pcontact->received_proto;
-			} else {
-				if(m->dst_uri.s != NULL
-						&& strstr(m->dst_uri.s, ";transport=tcp") != NULL) {
-					dst_proto = PROTO_TCP;
-				} else if(m->dst_uri.s != NULL
-						  && strstr(m->dst_uri.s, ";transport=tls") != NULL) {
-					dst_proto = PROTO_TLS;
-				} else {
-					dst_proto = m->rcv.proto;
-				}
-			}
-
-			// for Request sends from P-CSCF client port
-			src_port = s->port_pc;
-			// for Request sends to UE server port
-			dst_port = s->port_us;
+			dst_proto = ims_ipsec_get_forward_proto(m);
 		} else {
-			// for Request get the dest proto from the saved contact
 			dst_proto = pcontact->received_proto;
+		}
+		if((_cflags & IPSEC_TCPPORT_UEC)
+				&& ((dst_proto == PROTO_TCP) || (dst_proto == PROTO_TLS))) {
+			// TCP/TLS send from P-CSCF server port, UDP sends from P-CSCF client port
+			src_port = s->port_ps;
 
-			if(_cflags & IPSEC_TCPPORT_UEC) {
-				// for Request and TCP sends from P-CSCF server port, for Request and UDP sends from P-CSCF client port
-				src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
+			// for TCP/TLS sends to UE client port, for UDP sends to UE server port
+			dst_port = s->port_uc;
 
-				// for Request and TCP sends to UE client port, for Request and UDP sends to UE server port
-				dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
+		} else {
+			// send from P-CSCF client port
+			src_port = s->port_pc;
 
-			} else {
-				// for Request sends from P-CSCF client port
-				src_port = s->port_pc;
-
-				// for Request sends to UE server port
-				dst_port = s->port_us;
-			}
+			// send to UE server port
+			dst_port = s->port_us;
 		}
 	}
 
