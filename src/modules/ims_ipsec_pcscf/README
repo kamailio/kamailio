@@ -308,7 +308,7 @@ ipsec_create("location", "1");
        then this must be name of the table which stores the contacts.
        flags - bitwise flag:
           + 0x01 (1) - set force socket for request messages. Useful for
-            ipsec and TCP.
+            ipsec and TCP/TLS.
           + 0x02 (2) - reverse search for a contact in the memory. Useful
             when contact alias is disabled.
           + 0x04 (4) - use destination URI for IPSec tunnel search. Useful
@@ -317,12 +317,13 @@ ipsec_create("location", "1");
           + 0x10 (16) - do not look for alias parameter to set received
             details.
           + 0x20 (32) - do not reset the destination URI.
-          + 0x40 (64) - use user equipment client port as target for TCP
-            requests.
+          + 0x40 (64) - use user equipment client port as target for
+            TCP/TLS requests (try to reuse the UE client connection).
           + 0x80 (128) - set transport parameter in the new dst uri for
-            TCP requests.
+            TCP/TLS requests.
           + 0x100 (256) - use Via attributes (port and protocol) for
-            routing UDP reply.
+            routing UDP reply, and protocol from next hop address for
+            request (otherwise it taken from saved contact).
           + 0x200 (512) - try TCP if corresponding UDP socket is not
             found.
        This is an optional parameter, default value - 0.
