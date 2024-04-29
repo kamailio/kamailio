@@ -284,7 +284,7 @@ ipsec_create("location", "1");
 		  <itemizedlist>
 			<listitem>
 			  <para>
-			  <emphasis>0x01</emphasis> (1) - set force socket for request messages. Useful for ipsec and TCP.
+				  <emphasis>0x01</emphasis> (1) - set force socket for request messages. Useful for ipsec and TCP/TLS.
 			  </para>
 			</listitem>
 			<listitem>
@@ -316,17 +316,19 @@ ipsec_create("location", "1");
 			</listitem>
 			<listitem>
 			  <para>
-				  <emphasis>0x40</emphasis> (64) - use user equipment client port as target for TCP requests.
+				  <emphasis>0x40</emphasis> (64) - use user equipment client port as target for TCP/TLS requests
+				  (try to reuse the UE client connection).
 			  </para>
 			</listitem>
 			<listitem>
 			  <para>
-				  <emphasis>0x80</emphasis> (128) - set transport parameter in the new dst uri for TCP requests.
+				  <emphasis>0x80</emphasis> (128) - set transport parameter in the new dst uri for TCP/TLS requests.
 			  </para>
 			</listitem>
 			<listitem>
 			  <para>
-				  <emphasis>0x100</emphasis> (256) - use Via attributes (port and protocol) for routing UDP reply.
+				  <emphasis>0x100</emphasis> (256) - use Via attributes (port and protocol) for routing UDP reply,
+				  and protocol from next hop address for request (otherwise it taken from saved contact).
 			  </para>
 			</listitem>
 			<listitem>
