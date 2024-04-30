@@ -89,7 +89,7 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is "".
+			Default value is <quote>DEFAULT_DB_URL</quote>.
 		</emphasis>
 		</para>
 		<example>
