@@ -187,7 +187,7 @@ static int fill_contact(
 	if(m->first_line.type == SIP_REQUEST) {
 		char *alias_start;
 		struct sip_uri uri;
-		str suri;
+		str suri = STR_NULL;
 
 		memset(&uri, 0, sizeof(struct sip_uri));
 
@@ -196,17 +196,20 @@ static int fill_contact(
 			suri.len = ruri->len;
 			LM_DBG("using param r-uri for contact filling: %.*s\n", suri.len,
 					suri.s);
-		} else if((sflags & IPSEC_DSTADDR_SEARCH) && m->dst_uri.s != NULL
-				  && m->dst_uri.len > 0) {
+		}
+		if((sflags & IPSEC_DSTADDR_SEARCH) && suri.s == NULL
+				&& m->dst_uri.s != NULL && m->dst_uri.len > 0) {
 			suri = m->dst_uri;
 			LM_DBG("using dst uri for contact filling: %.*s\n", suri.len,
 					suri.s);
-		} else if((sflags & IPSEC_RURIADDR_SEARCH) && m->new_uri.s != NULL
-				  && m->new_uri.len > 0) {
+		}
+		if((sflags & IPSEC_RURIADDR_SEARCH) && suri.s == NULL
+				&& m->new_uri.s != NULL && m->new_uri.len > 0) {
 			suri = m->new_uri;
 			LM_DBG("using new r-uri for contact filling: %.*s\n", suri.len,
 					suri.s);
-		} else {
+		}
+		if(suri.s == NULL) {
 			suri = m->first_line.u.request.uri;
 			LM_DBG("using original uri for contact filling: %.*s\n", suri.len,
 					suri.s);
