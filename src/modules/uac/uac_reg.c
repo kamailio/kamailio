@@ -974,6 +974,10 @@ void uac_reg_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 					ri->l_uuid.len, ri->l_uuid.s);
 			goto error;
 		}
+		if(uac_r.cb_flags & TMCB_LOCAL_REQUEST_DROP) {
+			shm_free(uuid);
+			*ps->param = NULL;
+		}
 
 		ri->flags |= UAC_REG_AUTHSENT;
 		lock_release(ri->lock);
@@ -1129,6 +1133,9 @@ int uac_reg_send(reg_uac_t *reg, time_t tn)
 		}
 		reg->flags &= ~UAC_REG_ONGOING;
 		return -1;
+	}
+	if(uac_r.cb_flags & TMCB_LOCAL_REQUEST_DROP) {
+		shm_free(uuid);
 	}
 	return 0;
 }
