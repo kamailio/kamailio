@@ -479,6 +479,8 @@ static inline char *tm_type_to_string(int type)
 			return "TMCB_ON_BRANCH_FAILURE";
 		case TMCB_ON_BRANCH_FAILURE_RO:
 			return "TMCB_ON_BRANCH_FAILURE_RO";
+		case TMCB_LOCAL_REQUEST_DROP:
+			return "TMCB_LOCAL_REQUEST_DROP";
 		case TMCB_MAX:
 			return "TMCB_MAX";
 	}
