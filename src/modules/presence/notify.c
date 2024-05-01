@@ -1736,6 +1736,10 @@ jump_over_body:
 			shm_free(cb_param);
 		goto error;
 	}
+	if(uac_r.cb_flags & TMCB_LOCAL_REQUEST_DROP) {
+		shm_free(cb_param);
+		goto done;
+	}
 
 	LM_GEN2(pres_local_log_facility, pres_local_log_level,
 			"NOTIFY %.*s via %.*s on behalf of %.*s for event %.*s : %.*s\n",
@@ -1744,6 +1748,7 @@ jump_over_body:
 			subs->event->name.len, subs->event->name.s, subs->callid.len,
 			subs->callid.s);
 
+done:
 	ps_free_tm_dlg(td);
 
 	if(str_hdr.s)
