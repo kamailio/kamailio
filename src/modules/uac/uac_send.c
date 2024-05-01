@@ -794,6 +794,11 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		LM_ERR("failed to send request with authentication\n");
 		goto error;
 	}
+	if(uac_r.cb_flags & TMCB_LOCAL_REQUEST_DROP) {
+		shm_free(tp);
+		*ps->param = NULL;
+		tp = NULL;
+	}
 
 	if(tp->evroute != 0) {
 		return;
@@ -870,6 +875,10 @@ int uac_req_send(void)
 		if(tp != NULL)
 			shm_free(tp);
 		return -1;
+	}
+	if(uac_r.cb_flags & TMCB_LOCAL_REQUEST_DROP) {
+		if(tp != NULL)
+			shm_free(tp);
 	}
 	return 1;
 }
