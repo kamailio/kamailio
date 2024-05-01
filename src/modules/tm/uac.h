@@ -47,7 +47,7 @@ typedef struct uac_req
 	str *ssock;
 	str *ssockname;
 	dlg_t *dialog;
-	int cb_flags;
+	unsigned int cb_flags;
 	transaction_cb *cb;
 	void *cbp;
 	str *callid;
