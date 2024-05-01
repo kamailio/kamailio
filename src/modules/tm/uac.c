@@ -680,6 +680,7 @@ send:
 	ret = t_uac_prepare(uac_r, dst_req, 0);
 
 	if(unlikely(ret < 0 && ret == E_DROP)) {
+		uac_r->cb_flags |= TMCB_LOCAL_REQUEST_DROP;
 		ret = 0;
 	}
 
@@ -775,6 +776,7 @@ int t_uac_with_ids(
 
 	if(ret < 0) {
 		if(unlikely(ret == E_DROP)) {
+			uac_r->cb_flags |= TMCB_LOCAL_REQUEST_DROP;
 			ret = 0;
 		}
 		return ret;
