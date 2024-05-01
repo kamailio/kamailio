@@ -559,6 +559,7 @@ static inline int t_uac_prepare(
 		refresh_shortcuts =
 				t_run_local_req(&buf, &buf_len, uac_r, new_cell, request);
 		if(unlikely(refresh_shortcuts == E_DROP)) {
+			shm_free(buf);
 			ret = E_DROP;
 			goto error1;
 		}
