@@ -624,6 +624,9 @@ send_publish:
 		LM_ERR("in t_request tm module function\n");
 		goto error;
 	}
+	if(uac_r.cb_flags & TMCB_LOCAL_REQUEST_DROP) {
+		shm_free(cb_param);
+	}
 
 done:
 	ret = 0;

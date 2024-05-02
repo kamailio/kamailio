@@ -700,6 +700,11 @@ int update_pua(ua_pres_t *p)
 			ret_code = -1;
 			goto done;
 		}
+		if(uac_r.cb_flags & TMCB_LOCAL_REQUEST_DROP) {
+			shm_free(cb_param);
+			ret_code = 0;
+			goto done;
+		}
 	} else {
 		str met = {"SUBSCRIBE", 9};
 		ua_pres_t *cb_param = NULL;
