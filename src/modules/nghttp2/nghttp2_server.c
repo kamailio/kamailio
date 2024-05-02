@@ -518,11 +518,25 @@ static int on_request_recv(nghttp2_session *session,
 	if(stream_data->request_method) {
 		_ksr_nghttp2_ctx.method.s = stream_data->request_method;
 		_ksr_nghttp2_ctx.method.len = strlen(_ksr_nghttp2_ctx.method.s);
+	} else {
+		_ksr_nghttp2_ctx.method.s = NULL;
+		_ksr_nghttp2_ctx.method.len = 0;
 	}
 
 	if(session_data->client_addr) {
 		_ksr_nghttp2_ctx.srcip.s = session_data->client_addr;
 		_ksr_nghttp2_ctx.srcip.len = strlen(_ksr_nghttp2_ctx.srcip.s);
+	} else {
+		_ksr_nghttp2_ctx.srcip.s = NULL;
+		_ksr_nghttp2_ctx.srcip.len = 0;
+	}
+
+	if(stream_data->request_data.len > 0) {
+		_ksr_nghttp2_ctx.data.s = stream_data->request_data.s;
+		_ksr_nghttp2_ctx.data.len = stream_data->request_data.len;
+	} else {
+		_ksr_nghttp2_ctx.data.s = NULL;
+		_ksr_nghttp2_ctx.data.len = 0;
 	}
 
 	ksr_event_route();
@@ -567,16 +581,26 @@ static int on_frame_recv_callback(
 static int on_data_chunk_recv_callback(nghttp2_session *session, uint8_t flags,
 		int32_t stream_id, const uint8_t *data, size_t len, void *user_data)
 {
-	struct Request *req;
+	http2_stream_data *stream_data;
 	(void)flags;
-	(void)user_data;
 
-	req = nghttp2_session_get_stream_user_data(session, stream_id);
-	if(req) {
+	stream_data = nghttp2_session_get_stream_user_data(session, stream_id);
+
+	if(stream_data) {
 		LM_DBG("---------------------------- (DATA chunk) [%lu bytes]\n",
 				(unsigned long int)len);
 		LM_DBG("[[%.*s]]", (int)len, (char *)data);
-		LM_DBG("----------------------------\n");
+		LM_DBG("\n----------------------------\n");
+		stream_data->request_data.s = realloc(stream_data->request_data.s,
+				len + stream_data->request_data.len + 1);
+		if(stream_data->request_data.s == NULL) {
+			LM_ERR("failed to allocate system memory\n");
+			return 0;
+		}
+		memcpy(stream_data->request_data.s + stream_data->request_data.len,
+				data, len);
+		stream_data->request_data.len += len;
+		stream_data->request_data.s[stream_data->request_data.len] = '\0';
 	}
 	return 0;
 }
