@@ -221,6 +221,8 @@ static inline void contact_append(contact_t **head, contact_t *node)
 	ptr->next = node;
 }
 
+#define KSR_MAX_CONTACTS 256
+
 /*
  * Parse contacts in a Contact HF
  */
@@ -229,9 +231,11 @@ int parse_contacts(str *_s, contact_t **_c)
 	contact_t *c;
 	param_hooks_t hooks;
 	str sv;
+	int n;
 
 	sv = *_s;
 
+	n = 0;
 	while(1) {
 		/* Allocate and clear contact structure */
 		c = (contact_t *)pkg_malloc(sizeof(contact_t));
@@ -273,7 +277,6 @@ int parse_contacts(str *_s, contact_t **_c)
 			LM_ERR("invalid contact uri\n");
 			goto error;
 		}
-
 		if(_s->len == 0)
 			goto ok;
 
@@ -312,7 +315,12 @@ int parse_contacts(str *_s, contact_t **_c)
 
 		contact_append(_c, c);
 		c = NULL;
+		n++;
 
+		if(n > KSR_MAX_CONTACTS) {
+			LM_ERR("too many contacts: %d\n", n);
+			return -1;
+		}
 		if(_s->len == 0) {
 			LM_ERR("text after comma missing\n");
 			goto error;
