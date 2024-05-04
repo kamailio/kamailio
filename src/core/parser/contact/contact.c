@@ -329,7 +329,7 @@ int parse_contacts(str *_s, contact_t **_c)
 
 		if(n > KSR_MAX_CONTACTS) {
 			LM_ERR("too many contacts: %d\n", n);
-			return -1;
+			goto error;
 		}
 		if(_s->len == 0) {
 			LM_ERR("text after comma missing\n");
