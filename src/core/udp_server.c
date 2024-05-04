@@ -39,6 +39,7 @@
 #include <linux/types.h>
 #include <linux/errqueue.h>
 #endif
+#include <pthread.h>
 
 
 #include "udp_server.h"
@@ -48,10 +49,13 @@
 #include "dprint.h"
 #include "receive.h"
 #include "mem/mem.h"
+#include "pt.h"
+#include "action.h"
 #include "ip_addr.h"
 #include "socket_info.h"
 #include "cfg/cfg_struct.h"
 #include "events.h"
+#include "async_task.h"
 #include "stun.h"
 #ifdef USE_RAW_SOCKS
 #include "raw_sock.h"
@@ -614,6 +618,12 @@ error:
 }
 
 
+#define UDP_RCV_PRINTBUF_SIZE 512
+#define UDP_RCV_PRINT_LEN 100
+
+/**
+ *
+ */
 int udp_rcv_loop()
 {
 	unsigned len;
@@ -623,8 +633,6 @@ int udp_rcv_loop()
 	unsigned int fromaddrlen;
 	receive_info_t rcvi;
 	sr_event_param_t evp = {0};
-#define UDP_RCV_PRINTBUF_SIZE 512
-#define UDP_RCV_PRINT_LEN 100
 	char printbuf[UDP_RCV_PRINTBUF_SIZE];
 	int i;
 	int j;
@@ -829,4 +837,303 @@ int udp_send(struct dest_info *dst, char *buf, unsigned len)
 	}
 #endif /* USE_RAW_SOCKS */
 	return n;
+}
+
+/**
+ *
+ */
+typedef struct udpworker_task
+{
+	char *buf;
+	int len;
+	receive_info_t rcv;
+} udpworker_task_t;
+
+/**
+ *
+ */
+void udpworker_task_exec(void *param)
+{
+	udpworker_task_t *utp;
+	static char buf[BUF_SIZE + 1];
+	receive_info_t rcvi;
+	int len;
+	sr_event_param_t evp = {0};
+	char printbuf[UDP_RCV_PRINTBUF_SIZE];
+	char *tmp;
+	int i;
+	int j;
+	int l;
+
+	utp = (udpworker_task_t *)param;
+
+	LM_DBG("received task [%p] - msg len [%d]\n", utp, utp->len);
+	if(utp->len > BUF_SIZE) {
+		LM_ERR("message is too large [%d]\n", utp->len);
+		return;
+	}
+
+	memcpy(buf, utp->buf, utp->len);
+	len = utp->len;
+	buf[len] = '\0';
+	memcpy(&rcvi, &utp->rcv, sizeof(receive_info_t));
+	rcvi.rflags |= RECV_F_INTERNAL;
+
+	if(is_printable(L_DBG) && len > 10) {
+		j = 0;
+		for(i = 0; i < len && i < UDP_RCV_PRINT_LEN
+				   && j + 8 < UDP_RCV_PRINTBUF_SIZE;
+				i++) {
+			if(isprint(buf[i])) {
+				printbuf[j++] = buf[i];
+			} else {
+				l = snprintf(printbuf + j, 6, " %02X ", (unsigned char)buf[i]);
+				if(l < 0 || l >= 6) {
+					LM_ERR("print buffer building failed (%d/%d/%d)\n", l, j,
+							i);
+					continue; /* skip it */
+				}
+				j += l;
+			}
+		}
+		LM_DBG("received on udp socket: (%d/%d/%d) [[%.*s]]\n", j, i, len, j,
+				printbuf);
+	}
+
+	if(unlikely(sr_event_enabled(SREV_NET_DGRAM_IN))) {
+		void *sredp[3];
+		sredp[0] = (void *)buf;
+		sredp[1] = (void *)(&len);
+		sredp[2] = (void *)(&rcvi);
+		evp.data = (void *)sredp;
+		if(sr_event_exec(SREV_NET_DGRAM_IN, &evp) < 0) {
+			/* data handled by callback - continue to next packet */
+			return;
+		}
+	}
+#ifndef NO_ZERO_CHECKS
+	if(!unlikely(sr_event_enabled(SREV_STUN_IN))
+			|| (unsigned char)*buf != 0x00) {
+		if(len < MIN_UDP_PACKET) {
+			tmp = ip_addr2a(&rcvi.src_ip);
+			LM_DBG("probing packet received from %s %d\n", tmp,
+					htons(rcvi.src_port));
+			return;
+		}
+	}
+#endif
+#ifdef DBG_MSG_QA
+	if(!dbg_msg_qa(buf, len)) {
+		LM_WARN("an incoming message didn't pass test,"
+				"  drop it: %.*s\n",
+				len, buf);
+		return;
+	}
+#endif
+	if(rcvi.src_port == 0) {
+		tmp = ip_addr2a(&rcvi.src_ip);
+		LM_INFO("dropping 0 port packet from %s\n", tmp);
+		return;
+	}
+
+	/* update the local config */
+	cfg_update();
+	if(unlikely(sr_event_enabled(SREV_STUN_IN))
+			&& (unsigned char)*buf == 0x00) {
+		/* stun_process_msg releases buf memory if necessary */
+		if((stun_process_msg(buf, len, &rcvi)) != 0) {
+			return; /* some error occurred */
+		}
+	} else {
+		receive_msg(buf, len, &rcvi);
+	}
+}
+
+/**
+ *
+ */
+int udpworker_task_send(char *buf, int len, receive_info_t *rcv)
+{
+	async_task_t *at = NULL;
+	udpworker_task_t *utp = NULL;
+	int dsize;
+	str gname = str_init("udp");
+
+	dsize = sizeof(async_task_t) + sizeof(udpworker_task_t)
+			+ (len + 1) * sizeof(char);
+	at = (async_task_t *)shm_malloc(dsize);
+	if(at == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	memset(at, 0, dsize);
+	at->exec = udpworker_task_exec;
+	at->param = (char *)at + sizeof(async_task_t);
+	utp = (udpworker_task_t *)at->param;
+	utp->buf = (char *)utp + sizeof(udpworker_task_t);
+	memcpy(utp->buf, buf, len);
+	utp->len = len;
+	memcpy(&utp->rcv, rcv, sizeof(receive_info_t));
+
+	return async_task_group_push(&gname, at);
+}
+
+/**
+ *
+ */
+void *ksr_udp_mtworker(void *si)
+{
+	socket_info_t *tsock;
+	unsigned len;
+	char *buf;
+	union sockaddr_union *fromaddr;
+	unsigned int fromaddrlen;
+	receive_info_t rcvi;
+
+	tsock = (socket_info_t *)si;
+
+	LM_DBG("initiating udp thread worker [%.*s]\n", tsock->sock_str.len,
+			tsock->sock_str.s);
+
+	buf = (char *)malloc((BUF_SIZE + 1) * sizeof(char));
+	if(buf == NULL) {
+		LM_ERR("failled to allocate thread message buffer\n");
+		exit(-1);
+	}
+
+	fromaddr = (union sockaddr_union *)malloc(sizeof(union sockaddr_union));
+	if(fromaddr == 0) {
+		LM_ERR("failled to allocate fromaddr buffer\n");
+		exit(-1);
+	}
+	memset(fromaddr, 0, sizeof(union sockaddr_union));
+	memset(&rcvi, 0, sizeof(receive_info_t));
+	/* these do not change, set only once */
+	rcvi.bind_address = tsock;
+	rcvi.dst_port = tsock->port_no;
+	rcvi.dst_ip = tsock->address;
+	rcvi.proto = PROTO_UDP;
+
+	while(1) {
+		fromaddrlen = sizeof(union sockaddr_union);
+		len = recvfrom(tsock->socket, buf, BUF_SIZE, 0,
+				(struct sockaddr *)fromaddr, &fromaddrlen);
+		if(len == -1) {
+			if(errno == EAGAIN) {
+				LM_DBG("packet with bad checksum received\n");
+				continue;
+			}
+			LM_ERR("recvfrom:[%d] %s\n", errno, strerror(errno));
+			if((errno == EINTR) || (errno == EWOULDBLOCK)
+					|| (errno == ECONNREFUSED)) {
+				continue; /* goto skip;*/
+			} else {
+				LM_ERR("unexpected recvfrom error: %d\n", errno);
+				exit(-1);
+			}
+		}
+		if(ksr_msg_recv_max_size <= len) {
+			LOG(cfg_get(core, core_cfg, corelog),
+					"read message too large: %d\n", len);
+			continue;
+		}
+		if(fromaddrlen != (unsigned int)sockaddru_len(tsock->su)) {
+			LM_ERR("ignoring data - unexpected from addr len: %u != %u\n",
+					fromaddrlen, (unsigned int)sockaddru_len(tsock->su));
+			continue;
+		}
+		/* it must 0-term the messages, receive_msg expects it */
+		buf[len] = 0; /* no need to save the previous char */
+
+		rcvi.src_su = *fromaddr;
+		su2ip_addr(&rcvi.src_ip, fromaddr);
+		rcvi.src_port = su_getport(fromaddr);
+
+		udpworker_task_send(buf, len, &rcvi);
+	}
+}
+
+/**
+ *
+ */
+int ksr_udp_start_mtreceiver(int child_rank, int *woneinit)
+{
+	socket_info_t *si;
+	pthread_t *udpthreads = NULL;
+	int nrthreads = 0;
+	int rc = 0;
+	int i = 0;
+	int pid;
+
+	if(udp_listen == NULL) {
+		return 0;
+	}
+
+	pid = fork_process(child_rank, "UDP MULTITREADED RECEIVER", 1);
+	if(pid < 0) {
+		LM_CRIT("cannot fork\n");
+		goto error;
+	} else if(pid == 0) {
+		/* child */
+
+		/* initialize the config framework */
+		if(cfg_child_init()) {
+			exit(-1);
+		}
+		if(*woneinit == 0) {
+			if(run_child_one_init_route() < 0) {
+				exit(-1);
+			}
+		}
+		if(ksr_wait_worker1_mode != 0) {
+			*ksr_wait_worker1_done = 1;
+			LM_DBG("child one finished initialization\n");
+		}
+		/* udp workers */
+		for(si = udp_listen; si; si = si->next) {
+			nrthreads++;
+		}
+		udpthreads = (pthread_t *)malloc(nrthreads * sizeof(pthread_t));
+		if(udpthreads == NULL) {
+			LM_ERR("failed to alloc threads array\n");
+			exit(-1);
+		}
+		memset(udpthreads, 0, nrthreads * sizeof(pthread_t));
+		i = 0;
+		for(si = udp_listen; si; si = si->next) {
+			LM_DBG("creating udp thread worker[%d] [%.*s]\n", i,
+					si->sock_str.len, si->sock_str.s);
+			rc = pthread_create(
+					&udpthreads[i], NULL, ksr_udp_mtworker, (void *)si);
+			if(rc) {
+				LM_ERR("failed to create thread %d\n", i);
+				exit(-1);
+			}
+			i++;
+		}
+		for(;;) {
+			pause();
+			cfg_update();
+		}
+	}
+	/* main process */
+	if(*woneinit == 0 && ksr_wait_worker1_mode != 0) {
+		int wcount = 0;
+		while(*ksr_wait_worker1_done == 0) {
+			sleep_us(ksr_wait_worker1_usleep);
+			wcount++;
+			if(ksr_wait_worker1_time <= wcount * ksr_wait_worker1_usleep) {
+				LM_ERR("waiting for child one too long - wait "
+					   "time: %d\n",
+						ksr_wait_worker1_time);
+				goto error;
+			}
+		}
+		LM_DBG("child one initialized after %d wait steps\n", wcount);
+	}
+	*woneinit = 1;
+
+	return 0;
+error:
+	return -1;
 }

@@ -500,6 +500,7 @@ int ser_kill_timeout = DEFAULT_SER_KILL_TIMEOUT;
 
 int ksr_verbose_startup = 0;
 int ksr_all_errors = 0;
+int ksr_udp_receiver_mode = 0;
 
 /* cfg parsing */
 int cfg_errors = 0;
@@ -1583,9 +1584,17 @@ int main_loop(void)
 			if(((sendipv6 == 0) || (sendipv6->flags & (SI_IS_LO | SI_IS_MCAST)))
 					&& (si->address.af == AF_INET6))
 				sendipv6 = si;
-			/* children_no per each socket */
-			cfg_register_child((si->workers > 0) ? si->workers : children_no);
+			if(ksr_udp_receiver_mode == 0) {
+				/* children_no per each socket */
+				cfg_register_child(
+						(si->workers > 0) ? si->workers : children_no);
+			}
 		}
+		if(udp_listen && (ksr_udp_receiver_mode == 1)) {
+			/* main udp multi-threaded worker */
+			cfg_register_child(1);
+		}
+
 #ifdef USE_RAW_SOCKS
 		/* always try to have a raw socket opened if we are using ipv4 */
 		if(sendipv4) {
@@ -1766,8 +1775,15 @@ int main_loop(void)
 			}
 			*ksr_wait_worker1_done = 0;
 		}
+		if(udp_listen && (ksr_udp_receiver_mode == 1)) {
+			child_rank++;
+			if(ksr_udp_start_mtreceiver(child_rank, &woneinit) < 0) {
+				goto error;
+			}
+		}
 		/* udp processes */
-		for(si = udp_listen; si; si = si->next) {
+		for(si = udp_listen; si && (ksr_udp_receiver_mode == 0);
+				si = si->next) {
 			nrprocs = (si->workers > 0) ? si->workers : children_no;
 			for(i = 0; i < nrprocs; i++) {
 				if(si->address.af == AF_INET6) {
@@ -2029,8 +2045,12 @@ static int calc_proc_no(void)
 	int sctp_listeners;
 #endif
 
-	for(si = udp_listen, udp_listeners = 0; si; si = si->next)
-		udp_listeners += (si->workers > 0) ? si->workers : children_no;
+	if(ksr_udp_receiver_mode == 1) {
+		udp_listeners = 1;
+	} else {
+		for(si = udp_listen, udp_listeners = 0; si; si = si->next)
+			udp_listeners += (si->workers > 0) ? si->workers : children_no;
+	}
 #ifdef USE_TCP
 	for(si = tcp_listen, tcp_listeners = 0, tcp_e_listeners = 0; si;
 			si = si->next) {
@@ -2905,6 +2925,10 @@ int main(int argc, char **argv)
 			default:
 				break;
 		}
+	}
+
+	if(ksr_udp_receiver_mode != 1) {
+		ksr_udp_receiver_mode = 0;
 	}
 
 	/* reinit if pv buffer size has been set in config */
