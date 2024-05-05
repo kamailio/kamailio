@@ -53,7 +53,9 @@ int async_task_set_usleep(int n);
 int async_task_workers_get(void);
 int async_task_workers_active(void);
 async_wgroup_t *async_task_workers_get_crt(void);
+async_wgroup_t *async_task_group_find(str *gname);
 
 int async_task_group_push(str *gname, async_task_t *task);
+int async_task_group_send(async_wgroup_t *awg, async_task_t *task);
 
 #endif

@@ -416,6 +416,26 @@ int async_task_push(async_task_t *task)
 /**
  *
  */
+async_wgroup_t *async_task_group_find(str *gname)
+{
+	async_wgroup_t *awg = NULL;
+
+	if(_async_wgroup_list == NULL) {
+		LM_WARN("no async group\n");
+		return NULL;
+	}
+	for(awg = _async_wgroup_list; awg != NULL; awg = awg->next) {
+		if(awg->name.len == gname->len
+				&& memcmp(awg->name.s, gname->s, gname->len) == 0) {
+			return awg;
+		}
+	}
+	return NULL;
+}
+
+/**
+ *
+ */
 int async_task_group_push(str *gname, async_task_t *task)
 {
 	int len;
@@ -442,6 +462,27 @@ int async_task_group_push(str *gname, async_task_t *task)
 		return -1;
 	}
 	LM_DBG("task [%p] sent to group [%.*s]\n", task, gname->len, gname->s);
+	return 0;
+}
+
+/**
+ *
+ */
+int async_task_group_send(async_wgroup_t *awg, async_task_t *task)
+{
+	int len;
+	if(awg == NULL) {
+		LM_WARN("group not provided\n");
+		return -1;
+	}
+	len = write(awg->sockets[1], &task, sizeof(async_task_t *));
+	if(len <= 0) {
+		LM_ERR("failed to pass the task [%p] to group [%.*s]\n", task,
+				awg->name.len, awg->name.s);
+		return -1;
+	}
+	LM_DBG("task [%p] sent to group [%.*s]\n", task, awg->name.len,
+			awg->name.s);
 	return 0;
 }
 
