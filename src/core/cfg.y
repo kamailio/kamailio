@@ -840,6 +840,19 @@ socket_lattr:
 			tmp_sa.bindaddr.len = strlen(tmp_sa.bindaddr.s);
 			tmp_sa.bindport = $5;
 		}
+	| BIND EQUAL proto COLON listen_id COLON port MINUS port	{
+			tmp_sa.bindproto = $3;
+			tmp_sa.bindaddr.s = $5;
+			tmp_sa.bindaddr.len = strlen(tmp_sa.bindaddr.s);
+			tmp_sa.bindport = $7;
+			tmp_sa.bindportend = $9;
+		}
+	| BIND EQUAL listen_id COLON port MINUS port	{
+			tmp_sa.bindaddr.s = $3;
+			tmp_sa.bindaddr.len = strlen(tmp_sa.bindaddr.s);
+			tmp_sa.bindport = $5;
+			tmp_sa.bindportend = $7;
+		}
 	| BIND EQUAL proto COLON listen_id	{
 			tmp_sa.bindproto = $3;
 			tmp_sa.bindaddr.s = $5;

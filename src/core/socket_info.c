@@ -1255,6 +1255,9 @@ int add_listen_socket(socket_attrs_t *sa)
 {
 	socket_info_t *newsi;
 	name_lst_t addr_l;
+	char sname[128];
+	char *psname = NULL;
+	int i;
 
 	if(sa->bindaddr.s == NULL) {
 		LM_ERR("no bind address provided\n");
@@ -1263,11 +1266,31 @@ int add_listen_socket(socket_attrs_t *sa)
 	memset(&addr_l, 0, sizeof(name_lst_t));
 	addr_l.name = sa->bindaddr.s;
 
-	newsi = add_listen_socket_info(sa->bindaddr.s, &addr_l, sa->bindport,
-			sa->bindproto, sa->useproto, sa->useaddr.s, sa->useport,
-			sa->sockname.s, sa->sflags);
+	/* binding on single port */
+	if(sa->bindportend <= sa->bindport) {
+		newsi = add_listen_socket_info(sa->bindaddr.s, &addr_l, sa->bindport,
+				sa->bindproto, sa->useproto, sa->useaddr.s, sa->useport,
+				sa->sockname.s, sa->sflags);
+		return (newsi != NULL) ? 0 : -1;
+	}
 
-	return (newsi != NULL) ? 0 : -1;
+	/* binding on a range of ports */
+	for(i = 0; sa->bindport + i <= sa->bindportend; i++) {
+		if(sa->sockname.s != NULL) {
+			/* socketname gets port appended */
+			snprintf(sname, 128, "%s%d", sa->sockname.s, sa->bindport + i);
+			psname = sname;
+		} else {
+			psname = NULL;
+		}
+		newsi = add_listen_socket_info(sa->bindaddr.s, &addr_l,
+				sa->bindport + i, sa->bindproto, sa->useproto, sa->useaddr.s,
+				sa->useport + i, psname, sa->sflags);
+		if(newsi == NULL) {
+			return -1;
+		}
+	}
+	return 0;
 }
 
 #ifdef __OS_linux

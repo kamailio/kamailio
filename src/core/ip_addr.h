@@ -163,6 +163,7 @@ typedef struct socket_attrs
 	int bindproto;
 	str bindaddr;
 	int bindport;
+	int bindportend;
 	int useproto;
 	str useaddr;
 	int useport;
