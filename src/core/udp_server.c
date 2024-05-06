@@ -952,12 +952,12 @@ void udpworker_task_exec(void *param)
 /**
  *
  */
-int udpworker_task_send(char *buf, int len, receive_info_t *rcv)
+int udpworker_task_send(
+		async_wgroup_t *awg, char *buf, int len, receive_info_t *rcv)
 {
 	async_task_t *at = NULL;
 	udpworker_task_t *utp = NULL;
 	int dsize;
-	str gname = str_init("udp");
 
 	dsize = sizeof(async_task_t) + sizeof(udpworker_task_t)
 			+ (len + 1) * sizeof(char);
@@ -975,7 +975,7 @@ int udpworker_task_send(char *buf, int len, receive_info_t *rcv)
 	utp->len = len;
 	memcpy(&utp->rcv, rcv, sizeof(receive_info_t));
 
-	return async_task_group_push(&gname, at);
+	return async_task_group_send(awg, at);
 }
 
 /**
@@ -989,6 +989,8 @@ void *ksr_udp_mtworker(void *si)
 	union sockaddr_union *fromaddr;
 	unsigned int fromaddrlen;
 	receive_info_t rcvi;
+	async_wgroup_t *awg = NULL;
+	str gname = str_init("udp");
 
 	tsock = (socket_info_t *)si;
 
@@ -1013,6 +1015,8 @@ void *ksr_udp_mtworker(void *si)
 	rcvi.dst_port = tsock->port_no;
 	rcvi.dst_ip = tsock->address;
 	rcvi.proto = PROTO_UDP;
+
+	awg = async_task_group_find(&gname);
 
 	while(1) {
 		fromaddrlen = sizeof(union sockaddr_union);
@@ -1049,7 +1053,12 @@ void *ksr_udp_mtworker(void *si)
 		su2ip_addr(&rcvi.src_ip, fromaddr);
 		rcvi.src_port = su_getport(fromaddr);
 
-		udpworker_task_send(buf, len, &rcvi);
+		if(awg == NULL) {
+			awg = async_task_group_find(&gname);
+		}
+		if(awg == NULL) {
+			udpworker_task_send(awg, buf, len, &rcvi);
+		}
 	}
 }
 
