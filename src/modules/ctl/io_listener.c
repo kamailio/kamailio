@@ -486,7 +486,11 @@ again:
 		} else if(errno == EINTR) {
 			goto again;
 		}
-		LOG(L_ERR, "error reading: %s [%d]\n", strerror(errno), errno);
+		if(errno == ECONNRESET) {
+			LOG(L_INFO, "error reading: %s [%d]\n", strerror(errno), errno);
+		} else {
+			LOG(L_ERR, "error reading: %s [%d]\n", strerror(errno), errno);
+		}
 		goto error_read;
 	} else if(bytes_read == 0) { /* eof */
 		DBG("handle_stream read: eof on %s\n", s_c->parent->name);
@@ -602,7 +606,11 @@ again:
 			goto no_read; /* nothing has been read */
 		} else if(errno == EINTR)
 			goto again;
-		LOG(L_ERR, "error reading: %s [%d]\n", strerror(errno), errno);
+		if(errno == ECONNRESET) {
+			LOG(L_INFO, "error reading: %s [%d]\n", strerror(errno), errno);
+		} else {
+			LOG(L_ERR, "error reading: %s [%d]\n", strerror(errno), errno);
+		}
 		goto error_read;
 	} else if(bytes_read == 0) { /* eof */
 		DBG("eof on %s\n", cs->name);
