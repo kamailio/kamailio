@@ -204,16 +204,14 @@ void io_listen_loop(int fd_no, struct ctrl_socket *cs_lst)
 	if(poll_err || (poll_method == 0)) {
 		poll_method = choose_poll_method();
 		if(poll_err) {
-			LOG(L_ERR, "ERROR: io_listen_loop: %s, using %s instead\n",
-					poll_err, poll_method_name(poll_method));
+			LOG(L_ERR, "%s, using %s instead\n", poll_err,
+					poll_method_name(poll_method));
 		} else {
-			LOG(L_INFO,
-					"io_listen_loop: using %s as the io watch method"
-					" (auto detected)\n",
+			LOG(L_INFO, "using %s as the io watch method (auto detected)\n",
 					poll_method_name(poll_method));
 		}
 	} else {
-		LOG(L_INFO, "io_listen_loop:  using %s io watch method (config)\n",
+		LOG(L_INFO, "using %s io watch method (config)\n",
 				poll_method_name(poll_method));
 	}
 
@@ -236,24 +234,20 @@ void io_listen_loop(int fd_no, struct ctrl_socket *cs_lst)
 				cs->data =
 						s_conn_new(cs->fd, cs, &cs->u); /* reuse stream conn */
 				if(cs->data == 0) {
-					LOG(L_ERR, "ERROR: io_listen_loop: out of memory\n");
+					LOG(L_ERR, "out of memory\n");
 					goto error;
 				}
 				break;
 #endif
 			case UNKNOWN_SOCK:
-				LOG(L_CRIT,
-						"BUG: io_listen_loop: bad control socket transport"
-						" %d\n",
+				LOG(L_CRIT, "BUG: bad control socket transport %d\n",
 						cs->transport);
 				goto error;
 		}
-		DBG("io_listen_loop: adding socket %d, type %d, transport"
-			" %d (%s)\n",
-				cs->fd, type, cs->transport, cs->name);
+		DBG("adding socket %d, type %d, transport %d (%s)\n", cs->fd, type,
+				cs->transport, cs->name);
 		if(io_watch_add(&ctl_io_h, cs->fd, POLLIN, type, cs) < 0) {
-			LOG(L_CRIT, "ERROR: io_listen_loop: init: failed to add"
-						"listen socket to the fd list\n");
+			LOG(L_CRIT, "init: failed to add listen socket to the fd list\n");
 			goto error;
 		}
 	}
@@ -310,16 +304,14 @@ void io_listen_loop(int fd_no, struct ctrl_socket *cs_lst)
 			break;
 #endif
 		default:
-			LOG(L_CRIT,
-					"BUG: io_listen_loop: no support for poll method "
-					" %s (%d)\n",
+			LOG(L_CRIT, "BUG: no support for poll method %s (%d)\n",
 					poll_method_name(ctl_io_h.poll_method),
 					ctl_io_h.poll_method);
 			goto error;
 	}
 /* should never reach this point under normal (non-error) circumstances */
 error:
-	LOG(L_CRIT, "ERROR: io_listen_loop exiting ...\n");
+	LOG(L_CRIT, "exiting ...\n");
 }
 
 
@@ -363,11 +355,11 @@ again:
 		} else if(errno == EINTR) {
 			goto again;
 		}
-		LOG(L_ERR, "ERROR; handle_ctrl_dgram: recvfrom on %s: [%d] %s\n",
-				cs->name, errno, strerror(errno));
+		LOG(L_ERR, "recvfrom on %s: [%d] %s\n", cs->name, errno,
+				strerror(errno));
 		goto error;
 	}
-	DBG("handle_ctrl_dgram: new packet  on %s\n", cs->name);
+	DBG("new packet  on %s\n", cs->name);
 	ret = 1;
 #ifdef USE_FIFO
 	if(cs->p_proto == P_FIFO)
@@ -416,24 +408,19 @@ again:
 		} else if(errno == EINTR) {
 			goto again;
 		}
-		LOG(L_ERR,
-				"ERROR: io_listen: handle_new_connect:"
-				" error while accepting connection on %s: [%d] %s\n",
+		LOG(L_ERR, " error while accepting connection on %s: [%d] %s\n",
 				cs->name, errno, strerror(errno));
 		goto error;
 	}
 	ret = 1;
 	if(io_read_connections >= MAX_IO_READ_CONNECTIONS) {
-		LOG(L_ERR,
-				"ERROR: io listen: maximum number of connections"
-				" exceeded: %d/%d\n",
+		LOG(L_ERR, "maximum number of connections exceeded: %d/%d\n",
 				io_read_connections, MAX_IO_READ_CONNECTIONS);
 		close(new_sock);
 		goto skip; /* success because accept was successful */
 	}
 	if(init_sock_opt(new_sock, cs->transport) < 0) {
-		LOG(L_ERR, "ERROR: io listen: handle_new_connect:"
-				   " init_sock_opt failed\n");
+		LOG(L_ERR, "init_sock_opt failed\n");
 		close(new_sock);
 		goto skip;
 	}
@@ -443,14 +430,12 @@ again:
 		s_conn_add(s_conn);
 		io_watch_add(&ctl_io_h, s_conn->fd, POLLIN, F_T_READ_STREAM, s_conn);
 	} else {
-		LOG(L_ERR, "ERROR: io listen: handle_new_connect:"
-				   " s_conn_new failed\n");
+		LOG(L_ERR, "s_conn_new failed\n");
 		close(new_sock);
 		goto skip;
 	}
 	io_read_connections++;
-	DBG("handle_stream read: new connection (%d) on %s\n", io_read_connections,
-			cs->name);
+	DBG("new connection (%d) on %s\n", io_read_connections, cs->name);
 skip:
 	return ret;
 error:
@@ -490,7 +475,7 @@ static int handle_stream_read(struct stream_connection *s_c, int idx)
 	bytes_free = STREAM_BUF_SIZE - (int)(r->end - r->buf);
 	log_prefix_set(NULL);
 	if(bytes_free == 0) {
-		LOG(L_ERR, "ERROR: handle_stream_read: buffer overrun\n");
+		LOG(L_ERR, "buffer overrun\n");
 		goto close_connection;
 	}
 again:
@@ -498,10 +483,10 @@ again:
 	if(bytes_read == -1) {
 		if((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
 			goto no_read; /* nothing has been read */
-		} else if(errno == EINTR)
+		} else if(errno == EINTR) {
 			goto again;
-		LOG(L_ERR, "ERROR: handle_stream_read: error reading: %s [%d]\n",
-				strerror(errno), errno);
+		}
+		LOG(L_ERR, "error reading: %s [%d]\n", strerror(errno), errno);
 		goto error_read;
 	} else if(bytes_read == 0) { /* eof */
 		DBG("handle_stream read: eof on %s\n", s_c->parent->name);
@@ -533,7 +518,7 @@ again:
 		r->bytes_to_go = bytes_needed;
 		if(bytes_needed > 0) {
 			if(bytes_read == 0) { /*want more bytes, but we have eof*/
-				LOG(L_ERR, "ERROR: handle_stream_read: unexpected EOF\n");
+				LOG(L_ERR, "unexpected EOF\n");
 				goto close_connection;
 			}
 			break; /* no more read bytes ready for processing */
@@ -607,7 +592,7 @@ static int handle_fifo_read(struct ctrl_socket *cs, int idx)
 	r = &(sc->req);
 	bytes_free = STREAM_BUF_SIZE - (int)(r->end - r->buf);
 	if(bytes_free == 0) {
-		LOG(L_ERR, "ERROR: handle_stream_read: buffer overrun\n");
+		LOG(L_ERR, "buffer overrun\n");
 		goto error;
 	}
 again:
@@ -617,11 +602,10 @@ again:
 			goto no_read; /* nothing has been read */
 		} else if(errno == EINTR)
 			goto again;
-		LOG(L_ERR, "ERROR: handle_fifo_read: error reading: %s [%d]\n",
-				strerror(errno), errno);
+		LOG(L_ERR, "error reading: %s [%d]\n", strerror(errno), errno);
 		goto error_read;
 	} else if(bytes_read == 0) { /* eof */
-		DBG("handle_fifo_read: eof on %s\n", cs->name);
+		DBG("eof on %s\n", cs->name);
 	}
 	r->end += bytes_read;
 	if(bytes_read && (bytes_read < r->bytes_to_go)) {
@@ -640,7 +624,7 @@ again:
 		r->bytes_to_go = bytes_needed;
 		if(bytes_needed > 0) {
 			if(bytes_read == 0) { /*want more bytes, but we have eof*/
-				LOG(L_ERR, "ERROR: handle_fifo_read: unexpected EOF\n");
+				LOG(L_ERR, "unexpected EOF\n");
 				goto discard; /* discard buffered contents */
 			}
 			break; /* no more read bytes ready for processing */
@@ -650,7 +634,7 @@ again:
 		if(bytes_processed == 0) {
 			/* nothing processed, nothing needed, no error - looks like
 			 * a bug */
-			LOG(L_ERR, "ERROR: handle_fifo_read: unexpected return\n");
+			LOG(L_ERR, "unexpected return\n");
 			goto discard;
 		}
 	} while(r->proc < r->end);
@@ -725,11 +709,10 @@ inline static int handle_io(struct fd_map *fm, short events, int idx)
 			break;
 #endif
 		case F_T_RESERVED:
-			LOG(L_CRIT, "BUG: io listen handle_io: empty fd map\n");
+			LOG(L_CRIT, "empty fd map\n");
 			goto error;
 		default:
-			LOG(L_CRIT, "BUG: io listen handle_io: unknown fd type %d\n",
-					fm->type);
+			LOG(L_CRIT, "unknown fd type %d\n", fm->type);
 			goto error;
 	}
 	return ret;
