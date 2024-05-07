@@ -437,6 +437,14 @@ event_route[tcp:closed] {
    Whether these routes are always called, never, or on a per socket basis
    is controlled by the closed_event parameter.
 
+   Note that the event routes can be executed by TCP main process, which
+   manages the TCP connections but does not hande the SIP traffic over
+   them. It is very important not do do any time consuming operations
+   inside the event routes. Also, many resources might not be available in
+   the TCP main process (e.g., database connections), consider using async
+   module with async_task_data(...) or async_task_group_data() functions
+   for delegating task execution to async workers.
+
 4.1.  tcp:closed
 
    Called for each "normal" TCP socket closure by the other side
