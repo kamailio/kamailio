@@ -219,7 +219,7 @@ int fix_switch(struct action *t)
 			c->is_default = 1;
 			def_a = c->actions;
 		}
-		if(c->actions && ((ret = fix_actions(c->actions)) < 0))
+		if(c->actions && ((ret = fix_actions(c->actions, 0)) < 0))
 			goto error;
 	}
 	LM_DBG("%d cases, %d default\n", n, default_found);
@@ -540,7 +540,7 @@ static int fix_match(struct action *t)
 			c->is_default = 1;
 			def_a = c->actions;
 		}
-		if(c->actions && ((ret = fix_actions(c->actions)) < 0))
+		if(c->actions && ((ret = fix_actions(c->actions, 0)) < 0))
 			goto error;
 	}
 	LM_DBG("%d cases, %d default\n", n, default_found);

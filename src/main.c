@@ -588,6 +588,8 @@ void cleanup(int show_status)
 		shm_global_unlock();
 	}
 #endif
+	/*Free fixed-up routing lists and params from main process */
+	free_rls();
 	destroy_rpcs();
 	destroy_modules();
 #ifdef USE_DNS_CACHE
@@ -897,6 +899,8 @@ void sig_usr(int signo)
 					  the safe part (values not requiring callbacks), to
 					  account for processes that might not have registered
 					  config support */
+				/*Free fixed routing lists and params from children process */
+				free_rls();
 				cfg_update_no_cbs();
 				memlog = cfg_get(core, core_cfg, memlog);
 				if(memlog <= cfg_get(core, core_cfg, debug)) {

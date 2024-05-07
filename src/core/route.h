@@ -103,12 +103,13 @@ void push(struct action *a, struct action **head);
 int add_actions(struct action *a, struct action **head);
 void print_rls(void);
 int fix_rls(void);
+int free_rls(void);
 
 int eval_expr(struct run_act_ctx *h, struct expr *e, struct sip_msg *msg);
 
 
 /* fixup functions*/
-int fix_actions(struct action *a);
+int fix_actions(struct action *a, int free_fixup);
 int fix_expr(struct expr *exp);
 
 

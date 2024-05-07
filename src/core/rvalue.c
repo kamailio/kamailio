@@ -2828,7 +2828,7 @@ static int fix_rval(struct rvalue *rv, struct rval_expr *rve)
 		case RV_BEXPR:
 			return fix_expr(rv->v.bexpr);
 		case RV_ACTION_ST:
-			return fix_actions(rv->v.action);
+			return fix_actions(rv->v.action, 0);
 		case RV_SEL:
 			if(resolve_select(&rv->v.sel) < 0) {
 				if(rve == NULL) {

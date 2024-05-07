@@ -261,10 +261,6 @@ int route_lookup(struct route_list *rt, char *name)
 	}
 }
 
-
-int fix_actions(struct action *a); /*fwd declaration*/
-
-
 /** optimize the left side of a struct expr.
  *  @return 1 if optimized, 0 if not and -1 on error
  */
@@ -568,7 +564,7 @@ int fix_expr(struct expr *exp)
 			}
 		}
 		if(exp->l_type == ACTION_O) {
-			ret = fix_actions((struct action *)exp->r.param);
+			ret = fix_actions((struct action *)exp->r.param, 0);
 			if(ret != 0) {
 				LM_CRIT("fix_actions error\n");
 				return ret;
@@ -599,7 +595,7 @@ int fix_expr(struct expr *exp)
 
 /* adds the proxies in the proxy list & resolves the hostnames */
 /* returns 0 if ok, <0 on error */
-int fix_actions(struct action *a)
+int fix_actions(struct action *a, int free)
 {
 	struct action *t;
 	struct proxy_l *p;
@@ -736,12 +732,12 @@ int fix_actions(struct action *a)
 						goto error;
 				}
 				if((t->val[1].type == ACTIONS_ST) && (t->val[1].u.data)) {
-					if((ret = fix_actions((struct action *)t->val[1].u.data))
+					if((ret = fix_actions((struct action *)t->val[1].u.data, 0))
 							< 0)
 						goto error;
 				}
 				if((t->val[2].type == ACTIONS_ST) && (t->val[2].u.data)) {
-					if((ret = fix_actions((struct action *)t->val[2].u.data))
+					if((ret = fix_actions((struct action *)t->val[2].u.data, 0))
 							< 0)
 						goto error;
 				}
@@ -819,7 +815,7 @@ int fix_actions(struct action *a)
 				}
 				if(t->val[1].u.data
 						&& ((ret = fix_actions(
-									 (struct action *)t->val[1].u.data))
+									 (struct action *)t->val[1].u.data, 0))
 								< 0)) {
 					goto error;
 				}
@@ -961,6 +957,14 @@ int fix_actions(struct action *a)
 								t->val[i + 2].type = MODFIXUP_ST;
 							if(ret < 0)
 								goto error;
+						} else if(t->val[i + 2].type == MODFIXUP_ST) {
+							/* already fixed up */
+							if(free) {
+								ret = call_fixup(cmd->free_fixup,
+										&t->val[i + 2].u.data, i + 1);
+								if(ret < 0)
+									goto error;
+							}
 						} else {
 							BUG("invalid module function param type %d\n",
 									t->val[i + 2].type);
@@ -2138,7 +2142,7 @@ int add_actions(struct action *a, struct action **head)
 	int ret;
 
 	LM_DBG("fixing actions...\n");
-	if((ret = fix_actions(a)) != 0)
+	if((ret = fix_actions(a, 0)) != 0)
 		goto error;
 	push(a, head);
 	return 0;
@@ -2155,7 +2159,22 @@ static int fix_rl(struct route_list *rt)
 
 	for(i = 0; i < rt->idx; i++) {
 		if(rt->rlist[i]) {
-			if((ret = fix_actions(rt->rlist[i])) != 0) {
+			if((ret = fix_actions(rt->rlist[i], 0)) != 0) {
+				return ret;
+			}
+		}
+	}
+	return 0;
+}
+
+static int free_rl(struct route_list *rt)
+{
+	int i;
+	int ret;
+
+	for(i = 0; i < rt->idx; i++) {
+		if(rt->rlist[i]) {
+			if((ret = fix_actions(rt->rlist[i], 1)) != 0) {
 				return ret;
 			}
 		}
@@ -2181,6 +2200,26 @@ int fix_rls()
 	if((ret = fix_rl(&onsend_rt)) != 0)
 		return ret;
 	if((ret = fix_rl(&event_rt)) != 0)
+		return ret;
+
+	return 0;
+}
+
+int free_rls()
+{
+	int ret = 0;
+
+	if((ret = free_rl(&main_rt) != 0))
+		return ret;
+	if((ret = free_rl(&onreply_rt) != 0))
+		return ret;
+	if((ret = free_rl(&failure_rt) != 0))
+		return ret;
+	if((ret = free_rl(&branch_rt) != 0))
+		return ret;
+	if((ret = free_rl(&onsend_rt) != 0))
+		return ret;
+	if((ret = free_rl(&event_rt) != 0))
 		return ret;
 
 	return 0;
