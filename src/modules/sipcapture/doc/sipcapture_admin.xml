@@ -89,14 +89,14 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>DEFAULT_DB_URL</quote>.
+			Default value is <quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
+modparam("sipcapture", "db_url", "&defaultdb;")
 ...
 </programlisting>
 		</example>
