@@ -1,3 +1,1079 @@
+===================== 2024-05-08 Version 5.7.5 Released =====================
+
+===================== Changes Since Version 5.7.4 ===========================
+
+commit b0caec0143187f487b24d37376e93b05340db1ad
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 8 07:58:49 2024 +0200
+
+    Makefile.defs: version set to 5.7.5
+
+commit 7590ff14e0c9bcab17a298f806f4da8a564c83a8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 8 07:57:26 2024 +0200
+
+    pkg: deb specs updated for v5.7.4
+
+commit aab0f988b6c69266b54dc2d92c6c9f739ef6805e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 8 07:56:41 2024 +0200
+
+    pkg: version set to 5.7.5 for rpms and alpine specs
+
+commit d88542f235af01d63c555673bebbc0c64ea825e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 8 06:59:08 2024 +0200
+
+    etc/kamailio.cfg: remove executable flag
+
+commit a49a4aefa7c72e113d354f0e71add874fb191ec9
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue May 7 21:16:27 2024 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 289ab7ddceaaf923edfe15b11361f0acb16c0dde
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Tue May 7 16:14:46 2024 +0000
+
+    sipcapture: fix default DB URL docs
+    
+    (cherry picked from commit aeeeb0c2f46c2575639dd725bef78fac64219a07)
+    (cherry picked from commit 29ef69b8807023e082d7c9880c63bee11d4f3b30)
+
+commit 278e29a5750401fe5d0e7482792dbb113362103b
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue May 7 17:46:25 2024 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 5566647a85f23e753774fa4c87e213c2fbb7b317
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 7 16:55:24 2024 +0200
+
+    ctl: info log on ECONNRESET (connection reset by peer)
+    
+    - not a type of error that can be controlled by kamailio
+    
+    (cherry picked from commit 446c75e0e2194b6e42d768d2e3c79b5f0222905f)
+    (cherry picked from commit b5eb4f5ca037239f2ec1d99a16a71af0383f737e)
+
+commit d9e63ac912c1f0b3ec71611516ea3e52206b6edf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 7 16:49:49 2024 +0200
+
+    ctl: removed level and function names from log messages
+    
+    (cherry picked from commit 65bafaffd6bcfebc508b774cfbb78120e68bb3f0)
+    (cherry picked from commit 24e43d27544bdfa1acfce7ebb8b6e3ba7841fc13)
+
+commit 64421e2d4ed48e4a77cd997e389ae4a5225b40ab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 4 20:18:18 2024 +0200
+
+    core: parse/contact: jump to error on too many contacts
+    
+    (cherry picked from commit f69b22d44cb5abc803c2b58790dd33f2310c1c59)
+    (cherry picked from commit 11f0cfec4d2fc6043d282cdb2258520559f0fcd1)
+
+commit 45fd99f53643b56bce65eb9d603a5b81059aa21d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 3 14:57:47 2024 +0200
+
+    core: parser/contact - basic validation tests for contact uri
+    
+    (cherry picked from commit fc52a54370c085d6fa951da876eee99580677922)
+    (cherry picked from commit d75dba611808322356fc8d1ebc9f8c30b4124a15)
+
+commit 49135f37d94aaf49a1c6b6a47bdc5a80bd3e5028
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 3 14:36:29 2024 +0200
+
+    core: parser/contact - add limit for max number of contacts
+    
+    - defined to 256
+    
+    (cherry picked from commit d6b0beb5a219ae57a62e9e7201a6ec1fe66e5a96)
+    (cherry picked from commit 5b97d29f1bbac2656eba506c7fd94b412dfb9b7f)
+
+commit 65c8761d9b04d01d0609b09c7ed75c9518f72d77
+Author: Jannik <40364587+volkland@users.noreply.github.com>
+Date:   Tue Apr 30 12:28:20 2024 +0200
+
+    sipcapture: docs - fix default value for parameter
+    
+    (cherry picked from commit 265c948286f2df5136179c95fbb1d7f1255e4c71)
+    (cherry picked from commit 3aac0c7379577480fb09902bfb31b9aed49e7f88)
+
+commit ac56db7fab9d1157e89a6daf81915e3058f7178c
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Fri Apr 26 05:54:27 2024 +0000
+
+    uid_auth_db: spelling fix in documentation
+    
+    (cherry picked from commit 9f28450312749dfbc021a8cbc23472c8a39d3fef)
+    (cherry picked from commit b2352bc1c6f3eff3aba85a087107f4ca29cedc22)
+
+commit ff5d1e73cd04ca84e423cd9efbec4014e9dbc2e4
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Fri Apr 26 05:53:30 2024 +0000
+
+    core: spelling fix in comment and log message
+    
+    (cherry picked from commit db176a4918c0b500f5f051cad16fd8d442450ab7)
+    (cherry picked from commit 0bf03aa1987b9cff2fc0d776605620e26c163609)
+
+commit d8907b6290d37965d07ceaf30e6c06956a59c90a
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Mon Apr 29 09:24:16 2024 +0200
+
+    tls: clear thread-local variables up to tls_pthreads_key_mark
+    
+    - other libraries may set thread-locals via pthread_setspecific
+    - assume that tls_pthreads_key_mark demarcates libssl's values
+    - only clean thread-local values up to tls_pthreads_key_mark
+    
+    Currently only used by app_python[s]
+    
+    (cherry picked from commit fe6f4fcde2fa06a3c00479cef169c27dc32ae490)
+
+commit bec4ad646f127a1f5bbf31604e6185b246867770
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 5 19:30:21 2023 +0100
+
+    phonenum: Makefile - option to set C standard version
+    
+    - can be set via option CSTDVER
+    - defaults now to c++17
+    - GH #3659
+    
+    (cherry picked from commit 6dd5598fc043fe3d2582e643d7d4ef675c9e6480)
+
+commit afd6189d65b06b80a433b6e4e321ac509af0c40c
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Apr 29 05:31:24 2024 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 9e270790302f075317d8b9eefce914180a26ce81
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 25 13:49:58 2024 +0200
+
+    tcpops: removed unused variable introduced recently
+    
+    (cherry picked from commit fe8f052c29528b656062927626f9784b32b7c8f6)
+    (cherry picked from commit e76d755de6482e51c9ddac5bba3834cb58ad79b2)
+
+commit 365bb5d7fd1534e467f8a2d1b120f2c03fc4caff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 11:19:30 2024 +0200
+
+    core: fmsg - parse loopback ip when initializing faked msg structure
+    
+    - GH #3817
+    
+    (cherry picked from commit 66b3c04a9653425b1602c82dd2456a7eb7cf59d1)
+    (cherry picked from commit 794c2edeaffe059bf8de6ab1d3df5db003ed4cb0)
+
+commit 50c1b5cfe1b765b98438ac071eaa47c1f2d239da
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 10:42:02 2024 +0200
+
+    pv: use global tcp connection callback for event route on $conid
+    
+    (cherry picked from commit f5c05a68ae72881ab0691bb8488112356fc67c79)
+    (cherry picked from commit 7e987d8937349246f2abfa041679f568344ff402)
+
+commit aeba79f5d9d5bf4fffdb64dd2c603fb0e5220652
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 10:36:35 2024 +0200
+
+    core: tcp - set a global shortcut to tcp connection for event route
+    
+    (cherry picked from commit d114d11724dc4157e7e5809504531d26da6bcc57)
+    (cherry picked from commit 069de99576b5f8bff002176331ed2f545afe8158)
+
+commit cc7c586fbd72fe132719f3cfdba4809a60668154
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 10:21:20 2024 +0200
+
+    tcpops: reworked some debug messages
+    
+    (cherry picked from commit 27e3b7f3f82957c6dc80f2ff89c40bdd87cecb81)
+    (cherry picked from commit c9fe59d6cd73179aa75e21b3b215bc0465b182aa)
+
+commit a794cef754fb3f2bc59d2d6a6d060e9b06367fa5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 10:19:29 2024 +0200
+
+    core: tcp - keep connection id on event route cb structure
+    
+    (cherry picked from commit 11e7d71e5c2ee9428298658ed3b9a0f625d40f00)
+    (cherry picked from commit db2e96ec2aacde1bd50b65ea6357388bad39e86f)
+
+commit 6ed99ae36fa16da2f0f59e3b5700abe752a95016
+Author: Rick Barenthin <rick@ng-voice.com>
+Date:   Wed Apr 17 13:02:02 2024 +0200
+
+    usrloc: check on db delete the return value of memchr
+    
+    When inserting into the database the AOR is split at the @ sign and
+    if there is no @ sign in the AOR only the domain part is filled and the
+    user part is left empty.
+    
+    But for deleting this is not done and the query failed to be executed
+    and the AOR is not deleted. This PR add this behaviour of only comparing against the
+    domain part if the AOR doesn't contain a @ sign.
+    
+    (cherry picked from commit 49276a1f43b1a3bf4a8d681888df964000360c79)
+    (cherry picked from commit 28bbcd5a50f45b8217125481706180a76323dc44)
+
+commit 09699ba5d4efab0cbe64869c1ed8db73d5dfad58
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Wed Apr 10 11:14:45 2024 +0000
+
+    tcp_main: Match wss protocol
+    
+    (cherry picked from commit 175d755c40bc50b78b2cf4f18ad22429289af90d)
+    (cherry picked from commit 3052565e3ce14d5d3c45d790877a562185085548)
+
+commit aff1797bb83a10868914e814702367f98ae53d94
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Wed Apr 10 11:13:32 2024 +0000
+
+    core/forward: Match protocol when forwarding
+    
+    (cherry picked from commit d81e5113884b933251499630d112ec5b1150b8a4)
+    (cherry picked from commit 7d103cf3887401fca32d95f7ea7ee10f28e9e127)
+
+commit 63120ef838cbcde1f40862a745b9d31db183a161
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Mon Apr 8 09:42:49 2024 +0000
+
+    tcp_main: Update comment docs
+    
+    (cherry picked from commit 0a28a93c6e060081267dc686e342d45ef03358e7)
+    (cherry picked from commit a19e6e0e49d9881ab990d23ad31a95773fe1a00b)
+
+commit 4ccf4c9b5134a0632f5ea5a653a6f5e82c70b6e4
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Mon Apr 8 09:29:57 2024 +0000
+
+    tcp_main: Add proto argument to tcpconn_exists function
+    
+    (cherry picked from commit 6779efd430178adff0ae438d178e38c003e4e05c)
+    (cherry picked from commit 0c070443b585c597d2d6249ac6ac32490d9c7f48)
+
+commit 550573b37b566aa46bd94a2a644e9328f87a1bb5
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Fri Apr 5 13:23:56 2024 +0000
+
+    tcp_main: Add protocol argument for searching tcp/tls connections
+    
+    (cherry picked from commit 4a40b16d4f9bef9bc75d3272c83878e6348aa0b8)
+    (cherry picked from commit 2661594bf7f31558e6ac7524f33ebb358aefce21)
+
+commit 96ff473191bb24be90e2dde82fccb5ce06698baf
+Author: vijay kumar <vijay.kumar@exotel.in>
+Date:   Sat Apr 13 01:26:13 2024 +0530
+
+    rtpengine: fix pkg mem leak in send_rtpp_command()
+    - freed request.s after sending request to websocket
+    
+    (cherry picked from commit b4753ae4216b0c960ac094f4be8232fb4d0147b0)
+    (cherry picked from commit d2cf78f5c70977639f3b7f66b852350b764e4b13)
+
+commit 8bb69fd5f5911098a3e567887ad2a3a2820ae5e6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 4 13:40:13 2024 +0200
+
+    sdpops: reformat the codecs map
+    
+    (cherry picked from commit 359a442e14a156b0bcf60dc5b2580cbc57924e34)
+    (cherry picked from commit 855c76780c4399d6d9881ce3c525a7df56e111c4)
+
+commit f1969ecaacd47eb03ef6b54d71c70370d9e39150
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 28 08:30:17 2024 +0100
+
+    blst: reformat exported structures
+    
+    (cherry picked from commit e39557c96d2f419184c826d779f1a3309acc4269)
+    (cherry picked from commit e394a05152b29d4009c9cb963bced72526c7651b)
+
+commit b3935051a8112b1a2152d8eb65da29b1941735df
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 27 08:19:03 2024 +0100
+
+    smsops: short reference section about variables
+    
+    (cherry picked from commit 9a94930ae1168d5df79e3dc1414841cdf23a2eba)
+    (cherry picked from commit c0c8ee05ab25256b9154d2056ee04b07f3f2290a)
+
+commit edbcfff018145372fd6fa5d1777912f0f84d8ea7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 26 19:17:23 2024 +0100
+
+    smsops: reformat module exports structures
+    
+    (cherry picked from commit 9848d43cb367d6901a0b8c727759feb8a8fad930)
+    (cherry picked from commit b21a7aaa467f2b76a52308557657c65274e34087)
+
+commit a82d1575d9ac7820e526741fc169033767a10ca5
+Author: Elena-Ramona Modroiu <ramona@asipto.com>
+Date:   Sat Mar 23 09:58:46 2024 +0100
+
+    corex: fix conditions for dns_cache modparam srv attributes
+    
+    (cherry picked from commit 8114b2016d032484edafe4edd04fb02d52cfd058)
+    (cherry picked from commit 3f44cabcfc0abc83ae1971ac74fbb0bd36829ce4)
+
+commit c90b736a098e1d76224c1e97c2a71423efa5cf98
+Author: Elena-Ramona Modroiu <ramona@asipto.com>
+Date:   Sat Mar 23 09:51:47 2024 +0100
+
+    core: resolve/create_srv_pref_list() - insert at correct position in list
+    
+    (cherry picked from commit f35cf8904119dcf582ea2451648de5fef095466b)
+    (cherry picked from commit dbf9208f3a402844c9981fb7ed09493a1338dfdd)
+
+commit f225edd2fdc87b0ebf72e15d8a11255ddd86b872
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 18 11:02:07 2024 +0100
+
+    acc: more log messages of failure arsing extra acc string
+    
+    (cherry picked from commit 04a73ace6572dd5c95a8f50b39b2ce712f7ebe84)
+    (cherry picked from commit 91b0962679092f28abb5022d1505372356460f7d)
+
+commit d12613c8e357a8dc882eefe2d84fedd1df97a415
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 4 13:58:35 2024 +0100
+
+    ctl: reset log prefix on reading ctl traffic
+    
+    - it may be previously set in process by some event route
+    
+    (cherry picked from commit 5b8b2717ee2f57da932132683b27eb33cea3fd59)
+    (cherry picked from commit d45c78eeeaea6a9fc9dcb927436f834392d9d7c9)
+
+commit 92d3b52ca4595a7e4d8ab003951191c387d32eee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 3 20:57:45 2024 +0100
+
+    core: parser rr - check for rr value before serializing
+    
+    (cherry picked from commit 6ee26a3ae3293aaeb4507d5d0b16ad31173cc39a)
+    (cherry picked from commit 4626cb7f0e0b273153ce0004900a92553783a893)
+
+commit cea618ede170bd02bb7ccd478a4f1a7a6c052cdf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 1 12:46:17 2024 +0100
+
+    core: select - handle ws and wss inside select_ip_port()
+    
+    (cherry picked from commit d8e0942c9e83c8cad7c182bf41c156ba35bf24d2)
+    (cherry picked from commit 089bf63178039b13cde0beccfacab1536af76179)
+
+commit 02b877493cd6ffc6cfdf7da114d255d1f4710917
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 1 12:41:13 2024 +0100
+
+    core: ppcfg - jump to end when defexp eval does not get a str val
+    
+    (cherry picked from commit daac0bdb88f6f732bda7c683af45b90f87fdb7c9)
+    (cherry picked from commit 4c78a564c5ad8662014cf686428a37238a6d8476)
+
+commit 4b88c5bf30054739f476388523e8d2b2ce84b040
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 1 09:37:59 2024 +0100
+
+    core: rthreads - init return variable
+    
+    (cherry picked from commit 181c602616e13323786335e8e28f182871aa5e9b)
+    (cherry picked from commit 0747c18d5c4db2e7e8408ad2c7efa120ec76523e)
+
+commit 2758754f2bb427bff06b2a6e82175870eced336d
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Feb 2 10:56:41 2024 +0100
+
+    core: properly handle drop() action for kemi engines
+    
+    - GH #3718
+    
+    (cherry picked from commit 82593a09f8ef6d53e7e88238c057bbcdd9ab287b)
+
+commit fb685a8bd5d5e34edde44614f313cbb5c27b3c25
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 19 09:44:33 2024 +0100
+
+    jansson: declare variables at the beginning of blocks
+    
+    (cherry picked from commit a2bff77c3f7bfee8dae90c3ef20522d480f2e14d)
+
+commit 46cf3559f4847b00790c043de41699b6c16f4920
+Author: Stefan-Cristian Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Mon Apr 8 11:35:38 2024 +0300
+
+    pdb server: allow carrier id 0
+    
+    (cherry-picked from commit 60ded00a3b574a08457a696334d11d668595cc0b)
+
+commit d03d5fdf2b6a29e783738a6ea98c35725826d9ed
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Mar 5 09:59:41 2024 +0800
+
+    tls: NULL safety check
+    
+    (cherry picked from commit f6f9d90ada963b53b6552e1a172b8f2fd021c33b)
+
+commit caa2412507586329b7b97685203fd8bd54cd2691
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Mar 5 06:47:24 2024 +0800
+
+    etc/kamailio.cfg: document tls_threads_mode = 2 to use atfork handler
+    
+    (cherry picked from commit 5b4926b04ba0fcd8f65f5709789abd83181a381a)
+
+commit cf764b499fbc3f28f7ed080b488e0e8111687cf8
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Mon Mar 4 22:00:14 2024 +0800
+
+    tls: new option tls_threads_mode = 2
+    
+    - use pthread_atfork to force all thread-locals
+      to 0x0 after fork()
+    
+    (cherry picked from commit 464299c202f3ba963aed821b777075397e843856)
+
+commit d20df6fb372ab4da0dd5e6f277b08345059c2be5
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Mon Mar 4 21:49:10 2024 +0800
+
+    core/rthreads.h: add new option tls_threads_mode = 2
+    
+    - add global handling of thread-locals with
+      tls_threads_mode = 2
+    - this will run a pthread_atfork handler to reset
+      all thread-locals to 0x0
+    - alternative solution to running functions
+      in thread executors
+    - requires tls.so to be loaded to be effective
+    
+    (cherry picked from commit e7f040f219b46592081a6053b4ed1ae0d0552b1a)
+
+commit 822960b0e869b5fce093f708daf65b9f4b4c47f8
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sat Mar 2 20:46:16 2024 +0800
+
+    tls: basic OpenSSL 3 support of provider keys (replaces ENGINE)
+    
+    - initial support for v3 provider keys (replaces ENGINE from v1.1.1)
+    - can be disabled behind build flag -DOPENSSL_NO_PROVIDER
+    - provider keys start with /uri: e.g
+      private_key = /uri:pkcs11:token=NSS%20Certificate%20DB;type=private;object=Fork-Test-c67cc0e0
+    - global config:
+      provider_quirks: 0 | 1
+      - 0 - default
+      - 1 - create a new OSS_LIB_CTX* in the child
+    
+    This integration does not load any providers itself and depends on
+    the usual
+    
+    export OPENSSL_CONF=my-openssl.cnf
+    
+    to configure providers.
+    
+    (cherry picked from commit 69883dd381368ca219cc52140e71d571775f95d5)
+
+commit 88429b9e3546864845fb1a3c2ce5263620b51c58
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sat Mar 2 21:41:11 2024 +0800
+
+    tls: remove unused ENGINE define
+
+commit af524f5b2b2fa3de4aa4e198bf3a9f0feff04e17
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 2 08:13:40 2024 +0100
+
+    tlsa: removed the map files used in the past for tls engine
+    
+    - sync with code of tls module
+
+commit 957c8005d2a97207debf1d3e782c1df5de70d487
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sat Mar 2 08:29:31 2024 +0800
+
+    tls: clean-up of ENGINE
+    
+    - remove tls_map.* - not needed anymore
+    - install an ENGINE in each worker SSL_CTX
+      no need to replicate to all processes
+
+commit 4b206bccc0ed46aac876921009d2884eb868075c
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Fri Mar 1 08:06:13 2024 +0800
+
+    tls: make explicit ENGINE deprecation in OpenSSL 3
+
+commit 0a96c9f4fb3bf179d417b0188d619afd7d9096ef
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Mar 23 00:00:44 2024 +0100
+
+    dmq: fix inter-lock on error
+    
+    triggered by intermittent DNS resolution error. dmq workers
+    were getting locked at dmq_notification_callback_f() due to
+    this missing lock_release()
+    
+    (cherry picked from commit 0d240e4e0dc3184ef37d338ba6872d295d6b16f2)
+    (cherry picked from commit 814f5bdc9ee5d4594ffb0fd72843bca7b5fa79ea)
+
+commit 29b6562d8ebe6277fda5524dda18b88cf2a4e1a9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 15 21:24:42 2024 +0100
+
+    ctl: handle int input for double storage
+    
+    (cherry picked from commit 1380a4a0d18159c7130b70c0216134a253ad83f7)
+    (cherry picked from commit 90f8117f9669069b4dab7e9d747dfa06245ec8a0)
+
+commit a7e9a26542010e1677fcb0e305e7d371e5467dba
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 19 17:39:19 2024 +0100
+
+    ndb_redis: break on finding a server via sentinel inside redisc_reconnect_server()
+    
+    (cherry picked from commit 951ab118bb7d9955f8e69b66bec1f0c107d474a2)
+    (cherry picked from commit 60fd6c2622c9c5edbe82908c0e461d646225c8a6)
+
+commit 4cc28e453d8e62b9f6e2725b9496600c662a8811
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 19 14:29:11 2024 +0100
+
+    ndb_redis: fix index on parsing sentinel address inside redisc_reconnect_server()
+    
+    (cherry picked from commit c8f3b496a05ae5bf29341dc7e2630f951d4effc5)
+    (cherry picked from commit 86df978bc9842687035d6673ee1b71e542dcbd71)
+
+commit f654b9c1943be6816827f9048627a7c8a7fe50f6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 19 10:21:51 2024 +0100
+
+    keepalive: small formatting updates and comments to the ka dest structure
+    
+    (cherry picked from commit cee82c92b06a026b88fea654944f6146eb5cb4d8)
+    (cherry picked from commit a7d4ce95b383dc26c547ef9ee07b05d51abc50f9)
+
+commit 6a9caa099352a31a2f14012d16c01d55c9250f02
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 19 09:51:28 2024 +0100
+
+    keepalive: proper storing of last up/down timestamps
+    
+    - GH #3790
+    
+    (cherry picked from commit 9e2a0ee545646bd4491ecdbe58d7fea770764b54)
+    (cherry picked from commit 0b3aa00775a5c0b4b1dc4990f4c26bc637fc6de5)
+
+commit c717c016b70a82566dfc58d8d9dee3d3f51ddb01
+Author: Stefan-Cristian Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Tue Mar 5 16:30:01 2024 +0200
+
+    pdb server: Return negative carrierid for failures. Clang format
+    
+    (cherry-picked from commit 88b698e0f62c39ed60af9f0a4fb3ca2dc6867d8f)
+
+commit e8150f78630f7991ea31a385c899c32c0e330a26
+Author: Stefan-Cristian Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Tue Mar 5 16:14:11 2024 +0200
+
+    pdb: Return negative carrierid for failures
+    
+    (cherry picked from commit bf78b619ae28924361fb2c757a4d09eb1a39f5cd)
+
+commit 1666d4bce924b8c0d44119491199a164c9642469
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 9 20:11:07 2024 +0100
+
+    topos: properly handle cases of no user in contact for mode 1
+    
+    - contact mode 1 accepted cases with no-user in contact uri but not in
+      r-uri, however, requests within dialog can have one's contact in r-uri
+      and then processing failed
+    
+    (cherry picked from commit 24e410f9a20d004f55bcc79cd10fb35cb26e4570)
+    (cherry picked from commit 45ee72fcf0ae8aeb135196ef8729fe0cea14048e)
+
+commit 0f31190eb15b1e1244f478cc9538bf071317cb35
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 8 19:43:49 2024 +0100
+
+    topos: small rearangement by removing else after return in the true block
+    
+    - reduce level of indentation
+    - a few wraps in curly braces for clearer view of the if block
+    
+    (cherry picked from commit b6fccea258e56b7d3195659245713a6d44acb013)
+    (cherry picked from commit 772b464552cff0b9ebb769e57fae718c0357ba11)
+
+commit 3eb545779876265f4587ff8ff627530b70c761dc
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Mar 7 10:17:45 2024 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit e66915b95fda66ab9d2981854894707813e331ee
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Feb 29 19:01:14 2024 +0800
+
+    tls: fix OpenSSL 1.1.1 engine keys
+    
+    Cherry-pick from e535cc5eb2
+
+commit 1d9ea67eb29b4fd45c00a00581e7b73a9b42c8ce
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 27 12:38:09 2024 +0800
+
+    http_async_client: libssl refactor thread executors for curl
+    
+    Cherry-pick from 6a0c86bba8
+
+commit 8098136ccbe2050b499d3d962c44d58203afc370
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 27 05:01:45 2024 +0800
+
+    xcap_client: libssl thread executor for curl_global_init()
+    
+    Cherry-pick from f5164b39c8
+
+commit d9285fc741c2a3c3995e037c23393df108e94bf1
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 27 05:01:31 2024 +0800
+
+    http_client: libssl thread executor for curl_global_init()
+    
+    Cherry-pick from f58225950c
+
+commit d01b6e22e083c6fab457f8fbe1c8ac2526a37d30
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 27 05:01:14 2024 +0800
+
+    http_async_client: libssl thread executor for curl_global_init()
+    
+    Cherry-pick from 514635dc3e
+
+commit 0f1d78a22aeefef7601d0cf646ec154f5e52c175
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 27 05:00:35 2024 +0800
+
+    core/rthreads.h: add thread executor for curl_global_init()
+    
+    Cherry-pick from db05449932
+
+commit f850f4eef66b6461bb93ede9bf67b52458e18856
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 27 05:07:27 2024 +0800
+
+    Revert ed9d7bc58b - split into per module commits
+
+commit ed9d7bc58b1896652f2526daa524531a0945b7b3
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Mon Feb 26 10:25:19 2024 +0800
+
+    OpenSSL integration: manage curl_global_init(...) used by modules
+    
+    - http_client, http_async_client, xcap_client use libcurl
+    - call curl_global_init in a thread executor as it invokes
+      OpenSSL functions on Debian 12
+    - clang-format
+    
+    Cherry-pick from ac4f1be039
+
+commit 88e1dce91b2db99bf24a01e910dc5f2d78e62e1a
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sun Feb 25 12:56:19 2024 +0800
+
+    tls: fix restore early init
+    
+    Cherry-pick from a02ca644e8
+
+commit 73b19da1e0dd512f9eb77ca0606092c545e8fb99
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sun Feb 25 08:03:17 2024 +0800
+
+    tls: restore early init for other modules that use TLS
+    
+    Client modules (e.g. dispatcher) that require outbound TLS
+    may race if tls init is too late.
+    
+    Restore tls init to PROC_INIT with a thread executor.
+    
+    Addresses GH #3765
+    
+    Cherry-pick from 706d7b7ff3
+
+commit 46c0db156ab12a94419324947b806176b6cc14a8
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Wed Feb 14 19:49:10 2024 +0800
+
+    db_mysql: libssl thread guard for db_mysql_query (and libmysqlclient)
+    
+    This function is observed to call SSL_read() when compiled with
+    libmysqlclient.so.21 (but not libmariadb.so.3).
+    
+    Apply a thread executor just in case.
+    
+    Cherry-pick from 1e42364451
+
+commit 2c082bd135203382855b297de736b22fbedee672
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Wed Feb 14 14:59:52 2024 +0800
+
+    db_mysql: update docs for opt_ssl_ca
+    
+    Cherry-pick from eafd93f057
+
+commit 29f848c9a658af33b6a9693d709edf3a340c95d0
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Wed Feb 14 14:15:10 2024 +0800
+
+    db_mysql: new module param opt_ssl_ca to configure CA certs
+    
+    ERROR: db_mysql [km_my_con.c:200]: db_mysql_new_connection():
+    driver error: SSL connection error: CA certificate is required
+    if ssl-mode is VERIFY_CA or VERIFY_IDENTITY
+    
+    When opt_ssl_mode = 4 | 5 libmysqlclient.so.21
+    requires that the trusted CAs be configured.
+    Fixed with:
+    mysql_options(ptr->con, MYSQL_OPT_SSL_CA, (void *)db_mysql_opt_ssl_ca)
+    
+    Note: libmariadb.so.3  doesn't require this setting
+    and uses the system trust store.
+    
+    Cherry-pick from ea81e6cb8b
+
+commit a0dfb8cbdf4282040351e9dc014d9ef13e0e77fd
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 13 19:10:34 2024 +0800
+
+    tls: raise logging level of early messages in mod_register
+
+commit 5d7d7ea54c908cae333ed3cafd4a2cc93cacd4db
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 13 17:23:31 2024 +0800
+
+    tls: add logging
+
+commit eb7aa57676f48f16cc66a16c511ed45ac9c8f62e
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 13 07:15:05 2024 +0800
+
+    tls: restore some function calls in non-threaded mode
+    
+    In the case that tls_threads_mode = 0 we restore the earlier
+    behaviour of 5.7.3.
+    - OpenSSL 1.1.1: restore early call to RAND_set_rand_method
+    - OpenSSL 3.x: restore enable locking on EVP_RAND_CTX
+
+commit 253f13f18ec6853764d950d58f467c331d03425a
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sun Feb 11 12:14:19 2024 +0800
+
+    tls: restore default to bypass thread guards
+    
+    - restore <= 5.7.3 behaviour
+    - require user to opt-in to libssl thread-guards
+      with tls_threads_mode = 1|2
+
+commit 2f0cca81bfc47783098e4c869b038229cd3e4ed0
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 6 11:09:04 2024 +0800
+
+    Sample etc/kamailio.cfg: global var tls_threads_mode
+    - load tls first if used
+    - global var tls_threads_mode
+
+commit bf40176e34e869b567a0f36eab28739508797080
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sun Feb 11 12:05:53 2024 +0800
+
+    core/rthreads.h: use global ksr_tls_threads_mode to constrain thread
+    wrapping
+    
+    - 0: run wrapped function directly
+    - 1: run wrapped function in thread for process#0 else run directly
+    - 2: always run wrapped function in thread
+
+commit 3697d763e340b7e88532a8b1920b0088c08fbc72
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 6 14:24:08 2024 +0100
+
+    core: added tls_threads_mode global parameter
+    
+    - control how to execute functions that may be using libssl3 behind
+
+commit f4edfd47aa18aecaf5650bb39a69c6e800c14f2d
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Feb 8 12:50:03 2024 +0800
+
+    db_mysql: libssl thread guard for db_mysql_close
+
+commit 5808226593fcf11d4713b2161809466568c51682
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Feb 8 07:41:45 2024 +0800
+
+    db_unixodbc: libssl thread guards for db_unixodbc_(close|free_result|query)
+
+commit 0936b6b70efe2e9d05766ce925ca10e4ff4bf7be
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Feb 8 07:18:16 2024 +0800
+
+    db_postgres: libssl thread guard for db_postgres_close
+
+commit 0d0c9910095e3e87a4d27be5af30f02cd5f26020
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Feb 8 07:30:48 2024 +0800
+
+    core/rthreads.h: thread wrapper for db_XXXX_query
+
+commit f028972588296858429e28f941a085131af8084c
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 6 19:31:49 2024 +0800
+
+    core/rthreads.h: use thread wrappers only for process#0
+    
+    - for process#0 use threads to avoid initializing libssl thread-locals in thread#1
+    - for process_no > 0 revert to standard behaviour and reduce
+      overhead of creating threads
+
+commit 63009ee559bb68a3fde0b7f479d3023b06a6c376
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 6 00:29:55 2024 +0800
+
+    db_postgres: handle SSL and submit query
+    
+    (cherry-pick from d638c774ed816eec800e72ba2546004215cfe097)
+
+commit 103c62ba675f8d306e1c0fb60ddfd4c4bca1e931
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 6 00:29:41 2024 +0800
+
+    db_mysql: handle SSL and submit query
+    
+    (cherry-pick from 51d9f92eca3ef1044052581c9438af6e643652a1)
+
+commit 579d39736b8f11d0e5c68715ba3a9aafc07cd7dc
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 6 00:23:16 2024 +0800
+
+    db_unixodbc: handle SSL and submit query
+    
+    (cherry-pick from 7d917e6649be7188bb9ab152ada75bc7199b2980)
+
+commit 6f037a48f706e6108a063883f9e9a324bea56da9
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Feb 6 00:22:52 2024 +0800
+
+    core/rthread.h: add prototype for db queries
+    
+    (cherry-pick from ba921b2112e87625fba5789d1b049161bb611073)
+
+commit 74636a9bf53524a6d60351c1569a033270677d6c
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sun Feb 4 10:11:45 2024 +0800
+
+    Revert "tls_wolfssl: enable building with external package"
+    
+    This reverts commit 53ce759091f78ffecc6b4047ff3e8885329d718f.
+    
+    < 5.8 does not have 16-byte memory alignment
+
+commit ede2af94386b99a87311351fcbdd15280dc11034
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Jan 30 16:49:32 2024 +0800
+
+    db_mysql: backport - no TLS with MariaDB Connector/C
+    
+    - GH #3735
+    - includes compilation and stretch fixes
+    - emulate SSL_MODE_XXX from MySQL
+    - opt_ssl_mode:
+      - 0|1(off)
+      - 2|3|4(MYSQL_OPT_SSL_ENFORCE)
+      - 5(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+
+commit d2cc8657b06c8ca33c59c82dbf739d67a5ce8fa0
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Feb 1 10:07:08 2024 +0800
+
+    db_unixodbc: init libssl in a thread
+    
+    From:
+    - 2611a4670c65dd32fc1daf6b67e37852936ba69c
+    - b71ce6e5733ab08b84ff09481ada91e5fca43a33
+
+commit 3644522e041920bf508d16c2992a216df656702b
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Feb 1 10:06:11 2024 +0800
+
+    db_postgres: init libssl in a thread
+    
+    From:
+    - 3426b153d02d9d8d3e909eff9d18cb14108072ca
+    - 8a1c383f6af5bc0547e32430a4469333160b93e6
+
+commit bfb7cbcaa16e5f392cc77d7e2e8ea2b75064ace0
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Feb 1 10:05:39 2024 +0800
+
+    db_mysql: init libssl in a thread
+    
+    From:
+    - 5dffb934a2f7f986fdc09e433833991c54612646
+    - 733a268114261d49ed11aec83fe39ea8c34a0b69
+
+commit 9a87d12d6e9e68cd8c0ff7ac5755e899cf81b703
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Jan 30 14:07:11 2024 +0800
+
+    outbound: init libssl in a thread
+    
+    - use core/rthreads.h
+    - Xenial(OpenSSL < 1.1.1) fixes
+    
+    From:
+    - 94f6df509bf77c19c745749716a9e075ec17f3c7
+    - 8bdd9ca4b3c3d4f9f2f201b0a9e0ad9a61eee41d
+
+commit 5132dcef7a067c1337256c93f8469cb07542d9c5
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Feb 1 10:03:47 2024 +0800
+
+    core: add infrastructure to run functions in threads
+    
+    (cherry-pick from f8909163c47c8776d23373fad688586f02d31e67)
+
+commit 53ce759091f78ffecc6b4047ff3e8885329d718f
+Author: SPChan <shihping.chan@gmail.com>
+Date:   Sat Nov 18 19:21:40 2023 +0800
+
+    tls_wolfssl: enable building with external package
+    
+    Re-enable this feature as backward compatibility has been restored for
+    Debian bookworm and Ubuntu jammy
+    
+    - build with git submodule: make ...WOLFSSL_INTERNAL=yes... - the default
+    - build with external package: make ...WOLFSSL_INTERNAL=no...
+    
+    Internal:
+    - v5.6.6-stable
+    
+    Debian:
+    - trixie: libwolfssl42
+    - bookworm / bullseye-backports: libwofssl35
+    
+    Ubuntu:
+    - noble: libwolfssl42
+    - jammy: libwolfssl32
+
+commit 41f9a92a9725a5ae6af473863bbd3a1cd0dccd38
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Jan 30 22:12:18 2024 +0800
+
+    tls_wolfssl: un-break jammy using libwolfssl32
+    
+    (cherry-pick from 1e87f96ad3a85b35935f14db36626036469cb6b0)
+
+commit d72637b8a76217dcd9b15504783279fd8800543a
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Mon Jan 29 20:02:42 2024 +0800
+
+    tls_wolfssl: fix possible uninitialised variable
+    
+    (cherry-pick from 9560e973807bc454dab84bdfd5ac0e300c847864)
+
+commit 07afe1b520961de0e5271f0921742d1465fa55e9
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Mon Jan 29 11:26:35 2024 +0800
+
+    tls_wolfssl: clang-format
+    
+    (cherry-pick from 0f963a7a1e2aca28611c2238f4c29180a0acd320)
+
+commit 2e6e879adc949b52cd2824fa233db901e5d045bc
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sat Jan 27 07:09:19 2024 +0800
+
+    tls_wolfssl: fix ring buffer write
+    
+    (cherry-pick from 04ca08d0da622519578c479664a85563ec6db483)
+
+commit dee31a1eaace4d4c40ee5ef9591379768d4fad75
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Jan 25 21:44:07 2024 +0800
+
+    tls_wolfssl: allow building with debian libwolfssl35
+    
+    - internal submodule is v5.6.6-stable
+    - libwolfssl35 is at v5.5.4-stable
+    
+    (cherry-pick from 43ec11a7e0a37dfdaead873d555b26cb65589bd1)
+
+commit 8e915d440293df2ba3b2700e5a4705123925be9a
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Wed Jan 24 16:30:48 2024 +0800
+
+    tls_wolfssl: clean-up; continue to remove OpenSSL-isms
+    
+    (cherry-pick from 5d3c11c5e0854ce74424a10a88b0cca4453cee75)
+
+commit 893e9ea4364f60c32a5477c5b75bdc24b619dd52
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Jan 23 23:13:08 2024 +0800
+
+    tls_wolfssl: clean-up; remove OpenSSL-isms
+    
+    (cherry-pick from 3d0e7521c6de4023b6595685fc306129ef57b8ac)
+
+commit 4240cbc1bdbf9eb5d8b3f7473fbf4ee9d4d90650
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sun Jan 21 18:17:37 2024 +0800
+
+    tls_wolfssl: refactor custom BIO
+    
+    - remove use of custom BIO at the expense of some memory copies
+    
+    (cherry-pick from 32089e134413200bf5d1a97f207378b7d10e65a2)
+
+commit 8e7df1345c828eeb6b999c30069e75ccdd440200
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Fri Jan 19 12:16:01 2024 +0800
+
+    tls_wolfssl: use shared WOLFSSL_CTX
+    
+    (cherry-pick from 88f27e2b89142652ea1b8f133df1ff403f9f61b2)
+
+commit 0a481501024b0e85bde8fa74cde1df2bebaa167b
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Jan 18 12:38:09 2024 +0800
+
+    tls_wolfssl: clean-up OpenSSL compatibility
+    
+    - remove unneeded OpenSSL-isms
+    
+    (cherry-pick from 255e563e94e9536f0e541c3baeec45cbc68fac5b)
+
+commit 306b4b09e3cb46a0fe8bc2d25344e5cfa52941e0
+Author: Stefan-Cristian Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Wed Jan 10 17:20:27 2024 +0200
+
+    xlog: add kemi xlog_facility function
+    
+    (cherry picked from commit e506b60c1045cfbd4485434165305fbc2fb57aa9)
+
+
 ===================== 2024-01-18 Version 5.7.4 Released =====================
 
 ===================== Changes Since Version 5.7.3 ===========================
