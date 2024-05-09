@@ -72,66 +72,71 @@ str tcpops_event_callback = STR_NULL;
 static int pv_get_tcp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_tcp_name(pv_spec_p sp, str *in);
 
+/* clang-format off */
 static pv_export_t mod_pvs[] = {
-		{{"tcp", (sizeof("tcp") - 1)}, PVT_CONTEXT, pv_get_tcp, 0,
-				pv_parse_tcp_name, 0, 0, 0},
+	{{"tcp", (sizeof("tcp") - 1)}, PVT_CONTEXT, pv_get_tcp, 0,
+			pv_parse_tcp_name, 0, 0, 0},
 
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 static cmd_export_t cmds[] = {
-		{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable4, 4,
-				fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
-		{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable3, 3,
-				fixup_igp_all, fixup_free_igp_all,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable1, 1,
-				fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
-		{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable0, 0, 0,
-				0, REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"tcp_set_connection_lifetime",
-				(cmd_function)w_tcpops_set_connection_lifetime2, 2,
-				fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
-		{"tcp_set_connection_lifetime",
-				(cmd_function)w_tcpops_set_connection_lifetime1, 1,
-				fixup_igp_all, fixup_free_igp_all,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"tcp_enable_closed_event", (cmd_function)w_tcpops_enable_closed_event1,
-				1, fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
-		{"tcp_enable_closed_event", (cmd_function)w_tcpops_enable_closed_event0,
-				0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"tcp_conid_state", (cmd_function)w_tcp_conid_state, 1, fixup_igp_all,
-				fixup_free_igp_all, ANY_ROUTE},
-		{"tcp_get_conid", (cmd_function)w_tcp_get_conid, 2, fixup_spve_pvar,
-				fixup_free_spve_pvar, ANY_ROUTE},
-		{"tcp_conid_alive", (cmd_function)w_tcp_conid_alive, 1, fixup_igp_all,
-				fixup_free_igp_all, ANY_ROUTE},
-		{"tcp_set_otcpid", (cmd_function)w_tcp_set_otcpid, 1, fixup_igp_all,
-				fixup_free_igp_all, ANY_ROUTE},
-		{"tcp_set_otcpid_flag", (cmd_function)w_tcp_set_otcpid_flag, 1,
-				fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
-		{"tcp_close_connection", (cmd_function)w_tcp_close_connection, 0, 0, 0,
-				ANY_ROUTE},
-		{"tcp_close_connection", (cmd_function)w_tcp_close_connection_id, 1,
-				fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable4, 4,
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
+	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable3, 3,
+			fixup_igp_all, fixup_free_igp_all,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable1, 1,
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
+	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable0, 0, 0,
+			0, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"tcp_set_connection_lifetime",
+			(cmd_function)w_tcpops_set_connection_lifetime2, 2,
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
+	{"tcp_set_connection_lifetime",
+			(cmd_function)w_tcpops_set_connection_lifetime1, 1,
+			fixup_igp_all, fixup_free_igp_all, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"tcp_enable_closed_event", (cmd_function)w_tcpops_enable_closed_event1,
+			1, fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
+	{"tcp_enable_closed_event", (cmd_function)w_tcpops_enable_closed_event0,
+			0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"tcp_conid_state", (cmd_function)w_tcp_conid_state, 1, fixup_igp_all,
+			fixup_free_igp_all, ANY_ROUTE},
+	{"tcp_get_conid", (cmd_function)w_tcp_get_conid, 2, fixup_spve_pvar,
+			fixup_free_spve_pvar, ANY_ROUTE},
+	{"tcp_conid_alive", (cmd_function)w_tcp_conid_alive, 1, fixup_igp_all,
+			fixup_free_igp_all, ANY_ROUTE},
+	{"tcp_set_otcpid", (cmd_function)w_tcp_set_otcpid, 1, fixup_igp_all,
+			fixup_free_igp_all, ANY_ROUTE},
+	{"tcp_set_otcpid_flag", (cmd_function)w_tcp_set_otcpid_flag, 1,
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
+	{"tcp_close_connection", (cmd_function)w_tcp_close_connection, 0, 0, 0,
+			ANY_ROUTE},
+	{"tcp_close_connection", (cmd_function)w_tcp_close_connection_id, 1,
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"closed_event", PARAM_INT, &tcp_closed_event},
-		{"event_callback", PARAM_STR, &tcpops_event_callback}, {0, 0, 0}};
+	{"closed_event", PARAM_INT, &tcp_closed_event},
+	{"event_callback", PARAM_STR, &tcpops_event_callback},
+	{0, 0, 0}
+};
 
 
 struct module_exports exports = {
-		"tcpops",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions to config */
-		params,			 /* exported parameters to config */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per child init function */
-		mod_destroy		 /* destroy function */
+	"tcpops",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions to config */
+	params,			 /* exported parameters to config */
+	0,				 /* RPC method exports */
+	mod_pvs,		 /* exported pseudo-variables */
+	0,				 /* response function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* per child init function */
+	mod_destroy		 /* destroy function */
 };
+/* clang-format on */
 
 
 /**
@@ -783,7 +788,7 @@ static int pv_get_tcp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			ival = con->cinfo.src_port;
 			tcpconn_put(con);
 			return pv_get_sintval(msg, param, res, ival);
-		case 3:  /* ac_si */
+		case 3: /* ac_si */
 			if(con == NULL) {
 				return pv_get_null(msg, param, res);
 			}
@@ -791,14 +796,14 @@ static int pv_get_tcp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			tcpconn_put(con);
 			sval.len = strlen(sval.s);
 			return pv_get_strval(msg, param, res, &sval);
-		case 4:  /* ac_sp */
+		case 4: /* ac_sp */
 			if(con == NULL) {
 				return pv_get_null(msg, param, res);
 			}
 			ival = con->cinfo.src_port;
 			tcpconn_put(con);
 			return pv_get_sintval(msg, param, res, ival);
-		case 5:  /* aconid */
+		case 5: /* aconid */
 			if(con == NULL) {
 				return pv_get_null(msg, param, res);
 			}
