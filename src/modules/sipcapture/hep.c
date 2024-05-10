@@ -264,6 +264,8 @@ int parsing_hepv3_message(char *buf, unsigned int len)
 	int totelem = 0;
 	int chunk_vendor = 0, chunk_type = 0, chunk_length = 0;
 	int total_length = 0;
+	static char ipbuf1[IP_ADDR_MAX_STR_SIZE];
+	static char portbuf1[INT2STR_MAX_LEN];
 
 
 	hg = (struct hep_generic_recv *)pkg_malloc(sizeof(struct hep_generic_recv));
@@ -484,13 +486,14 @@ int parsing_hepv3_message(char *buf, unsigned int len)
 	si->flags = 0;
 	si->addr_info_lst = 0;
 
-	si->address_str.s = ip_addr2a(&si->address);
+	si->address_str.len =
+			ip_addr2sbuf(&si->address, ipbuf1, sizeof(ipbuf1) - 1);
+	ipbuf1[si->address_str.len] = 0;
+	si->address_str.s = ipbuf1;
 
-	si->address_str.len = strlen(si->address_str.s);
-
-	si->port_no_str.s = int2str(si->port_no, &tmp_len);
+	si->port_no_str.s =
+			int2strbuf(si->port_no, portbuf1, INT2STR_MAX_LEN, &tmp_len);
 	si->port_no_str.len = tmp_len;
-	si->address_str.len = strlen(si->address_str.s);
 
 	si->name.len = si->address_str.len;
 	si->name.s = si->address_str.s;
