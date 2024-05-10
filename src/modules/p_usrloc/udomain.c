@@ -39,6 +39,47 @@
 #include "utime.h"
 #include "ul_db_layer.h"
 
+enum col_index
+{
+	CONTACT_COL,
+	EXPIRES_COL,
+	Q_COL,
+	CALLID_COL,
+	CSEQ_COL,
+	FLAGS_COL,
+	CFLAGS_COL,
+	USER_AGENT_COL,
+	RECEIVED_COL,
+	PATH_COL,
+	SOCK_COL,
+	METHODS_COL,
+	LAST_MOD_COL,
+	RUID_COL,
+	INSTANCE_COL,
+	REG_ID_COL,
+	USER_COL,
+	DOMAIN_COL,
+	NUM_COLS
+};
+
+static db_key_t p_usrloc_columns[NUM_COLS] = {[CONTACT_COL] = &contact_col,
+		[EXPIRES_COL] = &expires_col,
+		[Q_COL] = &q_col,
+		[CALLID_COL] = &callid_col,
+		[CSEQ_COL] = &cseq_col,
+		[FLAGS_COL] = &flags_col,
+		[CFLAGS_COL] = &cflags_col,
+		[USER_AGENT_COL] = &user_agent_col,
+		[RECEIVED_COL] = &received_col,
+		[PATH_COL] = &path_col,
+		[SOCK_COL] = &sock_col,
+		[METHODS_COL] = &methods_col,
+		[LAST_MOD_COL] = &last_mod_col,
+		[RUID_COL] = &ruid_col,
+		[INSTANCE_COL] = &instance_col,
+		[REG_ID_COL] = &reg_id_col,
+		[USER_COL] = &user_col,
+		[DOMAIN_COL] = &domain_col};
 
 #ifdef STATISTICS
 static char *build_stat_name(str *domain, char *var_name)
@@ -230,53 +271,53 @@ static inline ucontact_info_t *dbrow2info(db_val_t *vals, str *contact)
 
 	memset(&ci, 0, sizeof(ucontact_info_t));
 
-	contact->s = (char *)VAL_STRING(vals);
-	if(VAL_NULL(vals) || contact->s == 0 || contact->s[0] == 0) {
+	contact->s = (char *)VAL_STRING(vals + CONTACT_COL);
+	if(VAL_NULL(vals + CONTACT_COL) || contact->s == 0 || contact->s[0] == 0) {
 		LM_CRIT("bad contact\n");
 		return 0;
 	}
 	contact->len = strlen(contact->s);
 
-	if(VAL_NULL(vals + 1)) {
+	if(VAL_NULL(vals + EXPIRES_COL)) {
 		LM_CRIT("empty expire\n");
 		return 0;
 	}
-	ci.expires = ul_db_datetime_get(VAL_TIME(vals + 1));
+	ci.expires = ul_db_datetime_get(VAL_TIME(vals + EXPIRES_COL));
 
-	if(VAL_NULL(vals + 2)) {
+	if(VAL_NULL(vals + Q_COL)) {
 		LM_CRIT("empty q\n");
 		return 0;
 	}
-	ci.q = double2q(VAL_DOUBLE(vals + 2));
+	ci.q = double2q(VAL_DOUBLE(vals + Q_COL));
 
-	if(VAL_NULL(vals + 4)) {
+	if(VAL_NULL(vals + CSEQ_COL)) {
 		LM_CRIT("empty cseq_nr\n");
 		return 0;
 	}
-	ci.cseq = VAL_INT(vals + 4);
+	ci.cseq = VAL_INT(vals + CSEQ_COL);
 
-	callid.s = (char *)VAL_STRING(vals + 3);
-	if(VAL_NULL(vals + 3) || !callid.s || !callid.s[0]) {
+	callid.s = (char *)VAL_STRING(vals + CALLID_COL);
+	if(VAL_NULL(vals + CALLID_COL) || !callid.s || !callid.s[0]) {
 		LM_CRIT("bad callid\n");
 		return 0;
 	}
 	callid.len = strlen(callid.s);
 	ci.callid = &callid;
 
-	if(VAL_NULL(vals + 5)) {
+	if(VAL_NULL(vals + FLAGS_COL)) {
 		LM_CRIT("empty flag\n");
 		return 0;
 	}
-	ci.flags = VAL_BITMAP(vals + 5);
+	ci.flags = VAL_BITMAP(vals + FLAGS_COL);
 
-	if(VAL_NULL(vals + 6)) {
+	if(VAL_NULL(vals + CFLAGS_COL)) {
 		LM_CRIT("empty cflag\n");
 		return 0;
 	}
-	ci.cflags = VAL_BITMAP(vals + 6);
+	ci.cflags = VAL_BITMAP(vals + CFLAGS_COL);
 
-	ua.s = (char *)VAL_STRING(vals + 7);
-	if(VAL_NULL(vals + 7) || !ua.s || !ua.s[0]) {
+	ua.s = (char *)VAL_STRING(vals + USER_AGENT_COL);
+	if(VAL_NULL(vals + USER_AGENT_COL) || !ua.s || !ua.s[0]) {
 		ua.s = 0;
 		ua.len = 0;
 	} else {
@@ -284,8 +325,8 @@ static inline ucontact_info_t *dbrow2info(db_val_t *vals, str *contact)
 	}
 	ci.user_agent = &ua;
 
-	received.s = (char *)VAL_STRING(vals + 8);
-	if(VAL_NULL(vals + 8) || !received.s || !received.s[0]) {
+	received.s = (char *)VAL_STRING(vals + RECEIVED_COL);
+	if(VAL_NULL(vals + RECEIVED_COL) || !received.s || !received.s[0]) {
 		received.len = 0;
 		received.s = 0;
 	} else {
@@ -293,8 +334,8 @@ static inline ucontact_info_t *dbrow2info(db_val_t *vals, str *contact)
 	}
 	ci.received = received;
 
-	path.s = (char *)VAL_STRING(vals + 9);
-	if(VAL_NULL(vals + 9) || !path.s || !path.s[0]) {
+	path.s = (char *)VAL_STRING(vals + PATH_COL);
+	if(VAL_NULL(vals + PATH_COL) || !path.s || !path.s[0]) {
 		path.len = 0;
 		path.s = 0;
 	} else {
@@ -303,8 +344,8 @@ static inline ucontact_info_t *dbrow2info(db_val_t *vals, str *contact)
 	ci.path = &path;
 
 	/* socket name */
-	p = (char *)VAL_STRING(vals + 10);
-	if(VAL_NULL(vals + 10) || p == 0 || p[0] == 0) {
+	p = (char *)VAL_STRING(vals + SOCK_COL);
+	if(VAL_NULL(vals + SOCK_COL) || p == 0 || p[0] == 0) {
 		ci.sock = 0;
 	} else {
 		if(parse_phostport(p, &host.s, &host.len, &port, &proto) != 0) {
@@ -318,37 +359,36 @@ static inline ucontact_info_t *dbrow2info(db_val_t *vals, str *contact)
 	}
 
 	/* supported methods */
-	if(VAL_NULL(vals + 11)) {
+	if(VAL_NULL(vals + METHODS_COL)) {
 		ci.methods = ALL_METHODS;
 	} else {
-		ci.methods = VAL_BITMAP(vals + 11);
+		ci.methods = VAL_BITMAP(vals + METHODS_COL);
 	}
 
 	/* last modified time */
-	if(!VAL_NULL(vals + 12)) {
-		ci.last_modified = ul_db_datetime_get(VAL_TIME(vals + 12));
+	if(!VAL_NULL(vals + LAST_MOD_COL)) {
+		ci.last_modified = ul_db_datetime_get(VAL_TIME(vals + LAST_MOD_COL));
 	}
 
 	/* record internal uid */
-	if(!VAL_NULL(vals + 13)) {
-		ci.ruid.s = (char *)VAL_STRING(vals + 13);
+	if(!VAL_NULL(vals + RUID_COL)) {
+		ci.ruid.s = (char *)VAL_STRING(vals + RUID_COL);
 		ci.ruid.len = strlen(ci.ruid.s);
 	}
 
 	/* sip instance */
-	if(!VAL_NULL(vals + 14)) {
-		ci.instance.s = (char *)VAL_STRING(vals + 14);
+	if(!VAL_NULL(vals + INSTANCE_COL)) {
+		ci.instance.s = (char *)VAL_STRING(vals + INSTANCE_COL);
 		ci.instance.len = strlen(ci.instance.s);
 	}
 
 	/* reg-id */
-	if(!VAL_NULL(vals + 15)) {
-		ci.reg_id = VAL_UINT(vals + 15);
+	if(!VAL_NULL(vals + REG_ID_COL)) {
+		ci.reg_id = VAL_UINT(vals + REG_ID_COL);
 	}
 
 	return &ci;
 }
-
 
 /*!
  * \brief Loads from DB all contacts for an AOR
@@ -360,7 +400,6 @@ static inline ucontact_info_t *dbrow2info(db_val_t *vals, str *contact)
 urecord_t *db_load_urecord(udomain_t *_d, str *_aor)
 {
 	ucontact_info_t *ci;
-	db_key_t columns[16];
 	db_key_t keys[2];
 	db_key_t order;
 	db_val_t vals[2];
@@ -393,30 +432,14 @@ urecord_t *db_load_urecord(udomain_t *_d, str *_aor)
 		vals[0].val.str_val = *_aor;
 	}
 
-	columns[0] = &contact_col;
-	columns[1] = &expires_col;
-	columns[2] = &q_col;
-	columns[3] = &callid_col;
-	columns[4] = &cseq_col;
-	columns[5] = &flags_col;
-	columns[6] = &cflags_col;
-	columns[7] = &user_agent_col;
-	columns[8] = &received_col;
-	columns[9] = &path_col;
-	columns[10] = &sock_col;
-	columns[11] = &methods_col;
-	columns[12] = &last_mod_col;
-	columns[13] = &ruid_col;
-	columns[14] = &instance_col;
-	columns[15] = &reg_id_col;
-
 	if(desc_time_order)
 		order = &last_mod_col;
 	else
 		order = &q_col;
 
 	if(ul_db_layer_query(_d, &vals[0].val.str_val, &vals[1].val.str_val, keys,
-			   0, vals, columns, (use_domain) ? 2 : 1, 16, order, &res)
+			   0, vals, p_usrloc_columns, (use_domain) ? 2 : 1, NUM_COLS - 2,
+			   order, &res)
 			< 0) {
 		LM_ERR("db_query failed\n");
 		return 0;
@@ -469,7 +492,6 @@ urecord_t *db_load_urecord(udomain_t *_d, str *_aor)
 urecord_t *db_load_urecord_by_ruid(udomain_t *_d, str *_ruid)
 {
 	ucontact_info_t *ci;
-	db_key_t columns[18];
 	db_key_t keys[1];
 	db_key_t order;
 	db_val_t vals[1];
@@ -488,32 +510,13 @@ urecord_t *db_load_urecord_by_ruid(udomain_t *_d, str *_ruid)
 	vals[0].nul = 0;
 	vals[0].val.str_val = *_ruid;
 
-	columns[0] = &contact_col;
-	columns[1] = &expires_col;
-	columns[2] = &q_col;
-	columns[3] = &callid_col;
-	columns[4] = &cseq_col;
-	columns[5] = &flags_col;
-	columns[6] = &cflags_col;
-	columns[7] = &user_agent_col;
-	columns[8] = &received_col;
-	columns[9] = &path_col;
-	columns[10] = &sock_col;
-	columns[11] = &methods_col;
-	columns[12] = &last_mod_col;
-	columns[13] = &ruid_col;
-	columns[14] = &instance_col;
-	columns[15] = &reg_id_col;
-	columns[16] = &user_col;
-	columns[17] = &domain_col;
-
 	if(desc_time_order)
 		order = &last_mod_col;
 	else
 		order = &q_col;
 
-	if(ul_db_layer_query(_d, &vals[0].val.str_val, NULL, keys, 0, vals, columns,
-			   1, 18, order, &res)
+	if(ul_db_layer_query(_d, &vals[0].val.str_val, NULL, keys, 0, vals,
+			   p_usrloc_columns, 1, NUM_COLS, order, &res)
 			< 0) {
 		LM_ERR("db_query failed\n");
 		return 0;
@@ -538,12 +541,12 @@ urecord_t *db_load_urecord_by_ruid(udomain_t *_d, str *_ruid)
 		goto done;
 	}
 
-	aor.s = (char *)VAL_STRING(ROW_VALUES(row) + 15);
+	aor.s = (char *)VAL_STRING(ROW_VALUES(row) + USER_COL);
 	aor.len = strlen(aor.s);
 
 	if(use_domain) {
-		domain.s = (char *)VAL_STRING(ROW_VALUES(row) + 17);
-		if(VAL_NULL(ROW_VALUES(row) + 17) || domain.s == 0
+		domain.s = (char *)VAL_STRING(ROW_VALUES(row) + DOMAIN_COL);
+		if(VAL_NULL(ROW_VALUES(row) + DOMAIN_COL) || domain.s == 0
 				|| domain.s[0] == 0) {
 			LM_CRIT("empty domain record for user %.*s...skipping\n", aor.len,
 					aor.s);
