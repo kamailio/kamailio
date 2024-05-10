@@ -123,6 +123,10 @@ static int allow_routing_2(
 static int allow_register_1(struct sip_msg *msg, char *basename, char *s);
 static int allow_register_2(
 		struct sip_msg *msg, char *allow_file, char *deny_file);
+static int allow_register_include_port_1(
+		struct sip_msg *msg, char *basename, char *s);
+static int allow_register_include_port_2(
+		struct sip_msg *msg, char *allow_file, char *deny_file);
 static int allow_uri(struct sip_msg *msg, char *basename, char *uri);
 
 static int mod_init(void);
@@ -141,6 +145,12 @@ static cmd_export_t cmds[] = {
 		{"allow_register", (cmd_function)allow_register_1, 1, single_fixup, 0,
 				REQUEST_ROUTE | FAILURE_ROUTE},
 		{"allow_register", (cmd_function)allow_register_2, 2, load_fixup, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"allow_register_include_port",
+				(cmd_function)allow_register_include_port_1, 1, single_fixup, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"allow_register_include_port",
+				(cmd_function)allow_register_include_port_2, 2, load_fixup, 0,
 				REQUEST_ROUTE | FAILURE_ROUTE},
 		{"allow_trusted", (cmd_function)allow_trusted_0, 0, 0, 0, ANY_ROUTE},
 		{"allow_trusted", (cmd_function)allow_trusted_2, 2, fixup_spve_spve,
@@ -285,7 +295,7 @@ static int find_index(rule_file_t *array, char *pathname)
  * sip:username@domain, resulting buffer is statically allocated and
  * zero terminated
  */
-static char *get_plain_uri(const str *uri)
+static char *get_plain_uri(const str *uri, int check_port)
 {
 	static char buffer[EXPRESSION_LENGTH + 1];
 	struct sip_uri puri;
@@ -300,9 +310,14 @@ static char *get_plain_uri(const str *uri)
 	}
 
 	if(puri.user.len) {
-		len = puri.user.len + puri.host.len + 5;
+		len = puri.user.len + puri.host.len + 5; /* +5 is 'sip:' and '@' */
 	} else {
-		len = puri.host.len + 4;
+		len = puri.host.len + 4; /* +4 is 'sip:' */
+	}
+
+	if(check_port && puri.port.len) {
+		LM_DBG("Port number will also be used to check the Contact value\n");
+		len += (puri.port.len + 1); /* +1 is ':' */
 	}
 
 	if(len > EXPRESSION_LENGTH) {
@@ -312,11 +327,22 @@ static char *get_plain_uri(const str *uri)
 
 	strcpy(buffer, "sip:");
 	if(puri.user.len) {
-		memcpy(buffer + 4, puri.user.s, puri.user.len);
+		memcpy(buffer + 4, puri.user.s, puri.user.len); /* +4 is 'sip:' */
 		buffer[puri.user.len + 4] = '@';
-		memcpy(buffer + puri.user.len + 5, puri.host.s, puri.host.len);
+		memcpy(buffer + puri.user.len + 5, puri.host.s,
+				puri.host.len); /* +5 is 'sip:' and '@' */
+		if(check_port && puri.port.len) {
+			buffer[puri.user.len + puri.host.len + 5] = ':';
+			memcpy(buffer + puri.user.len + puri.host.len + 6, puri.port.s,
+					puri.port.len); /* +6 is 'sip:', '@' and ':' */
+		}
 	} else {
 		memcpy(buffer + 4, puri.host.s, puri.host.len);
+		if(check_port && puri.port.len) {
+			buffer[puri.host.len + 4] = ':';
+			memcpy(buffer + puri.host.len + 5, puri.port.s,
+					puri.port.len); /* +5 is 'sip:' and ':' */
+		}
 	}
 
 	buffer[len] = '\0';
@@ -416,7 +442,7 @@ check_branches:
 							 br_idx, &branch.len, &q, 0, 0, 0, 0, 0, 0, 0))
 					!= 0;
 			br_idx++) {
-		uri_str = get_plain_uri(&branch);
+		uri_str = get_plain_uri(&branch, 0);
 		if(!uri_str) {
 			LM_ERR("failed to extract plain URI\n");
 			return -1;
@@ -755,9 +781,11 @@ int allow_routing_2(struct sip_msg *msg, char *allow_file, char *deny_file)
  * against rules in allow and deny files passed as parameters. The function
  * iterates over all Contacts and creates a pair with To for each contact
  * found. That allows to restrict what IPs may be used in registrations, for
- * example
+ * example.
+ *
+ * If check_port is 0, then port isn't taken into account.
  */
-static int check_register(struct sip_msg *msg, int idx)
+static int check_register(struct sip_msg *msg, int idx, int check_port)
 {
 	int len;
 	static char to_str[EXPRESSION_LENGTH + 1];
@@ -821,7 +849,8 @@ static int check_register(struct sip_msg *msg, int idx)
 	}
 
 	while(c) {
-		contact_str = get_plain_uri(&c->uri);
+		/* if check_port = 1, then port is included into regex check */
+		contact_str = get_plain_uri(&c->uri, check_port);
 		if(!contact_str) {
 			LM_ERR("can't extract plain Contact URI\n");
 			return -1;
@@ -854,13 +883,23 @@ static int check_register(struct sip_msg *msg, int idx)
 
 int allow_register_1(struct sip_msg *msg, char *basename, char *s)
 {
-	return check_register(msg, (int)(long)basename);
+	return check_register(msg, (int)(long)basename, 0);
 }
-
 
 int allow_register_2(struct sip_msg *msg, char *allow_file, char *deny_file)
 {
-	return check_register(msg, (int)(long)allow_file);
+	return check_register(msg, (int)(long)allow_file, 0);
+}
+
+int allow_register_include_port_1(struct sip_msg *msg, char *basename, char *s)
+{
+	return check_register(msg, (int)(long)basename, 1);
+}
+
+int allow_register_include_port_2(
+		struct sip_msg *msg, char *allow_file, char *deny_file)
+{
+	return check_register(msg, (int)(long)allow_file, 1);
 }
 
 

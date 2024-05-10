@@ -121,6 +121,8 @@
 		similar to the algorithm described in
 		<xref linkend="sec-call-routing"/>. The only difference is in the way
 		how pairs are created.
+		Additionally one can use <function moreinfo="none">allow_register_include_port</function>
+		function in order to include the port value of the Contact into the check.
 		</para>
 		<para>
 		Instead of the From header field the function uses the To header field because
@@ -384,6 +386,7 @@ modparam("permissions", "check_all_branches", 0)
 		Suffix to be appended to basename to create filename of the allow
 		file when version with one parameter of either
 		<function moreinfo="none">allow_routing</function> or
+		<function moreinfo="none">allow_register_include_port</function> or
 		<function moreinfo="none">allow_register</function> is used.
 		</para>
 		<note>
@@ -411,6 +414,7 @@ modparam("permissions", "allow_suffix", ".allow")
 		Suffix to be appended to basename to create filename of the deny file
 		when version with one parameter of either
 		<function moreinfo="none">allow_routing</function> or
+		<function moreinfo="none">allow_register_include_port</function> or
 		<function moreinfo="none">allow_register</function> is used.
 		</para>
 		<note>
@@ -1097,6 +1101,98 @@ if (method=="REGISTER") {
 </programlisting>
 		</example>
 	</section>
+	<section id ="permissions.f.allow_register_include_port">
+		<title>
+		<function moreinfo="none">allow_register_include_port(basename)</function>
+		</title>
+		<para>
+		The function does exacty the same thing as <function>allow_register(basename)</function>
+		apart that it tells the module to include the port value of Contact into the check.
+		No additional function parameters required.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>basename</emphasis> - Basename from which allow
+			and deny filenames will be created by appending contents of
+			<varname>allow_suffix</varname> and <varname>deny_suffix</varname>
+			parameters.
+			</para>
+			<para>
+			If the parameter doesn't contain full pathname then the function
+			expects the file to be located in the same directory as the main
+			configuration file of the server.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>allow_register_include_port(basename)</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (method=="REGISTER") {
+	if (allow_register_include_port("register")) {
+		save("location");
+		exit;
+	} else {
+		sl_send_reply("403", "Forbidden");
+	};
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section id ="permissions.f.allow_register_include_port_fileargs">
+		<title>
+		<function moreinfo="none">allow_register_include_port(allow_file, deny_file)</function>
+		</title>
+		<para>
+		The function does exacty the same thing as <function>allow_register(allow_file, deny_file)</function>
+		apart that it tells the module to include the port value of Contact into the check.
+		No additional function parameters required.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>allow_file</emphasis> - File containing allow rules.
+			</para>
+			<para>
+			If the parameter doesn't contain full pathname then the function
+			expects the file to be located in the same directory as the main
+			configuration file of the server.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>deny_file</emphasis> - File containing deny rules.
+			</para>
+			<para>
+			If the parameter doesn't contain full pathname then the function
+			expects the file to be located in the same directory as the main
+			configuration file of the server.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>allow_register_include_port(allow_file, deny_file)</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (method=="REGISTER") {
+	if (allow_register_include_port("register.allow", "register.deny")) {
+		save("location");
+		exit;
+	} else {
+		sl_send_reply("403", "Forbidden");
+	};
+};
+...
+</programlisting>
+		</example>
+	</section>
 	<section id ="permissions.f.allow_uri">
 		<title>
 		<function moreinfo="none">allow_uri(basename, pvar)</function>
@@ -1491,5 +1587,51 @@ if (allow_trusted("$si", "any", "$ai")) {
 		</example>
 
 	</section> <!-- Address File Format -->
+
+	<section>
+		<title>Register File Format</title>
+		<para>
+		It is a text file with one record per line. Lines starting with '#' are
+		considered comments and ignored. Comments can be also at the end of
+		records, by using '#' to start the comment part of the line.
+		</para>
+		<para>
+		Each record line has the format:
+		</para>
+		<programlisting format="linespecific">
+...
+(from_list,str) (req_uri_list,str)
+...
+</programlisting>
+		<para>
+		The 'str' indicates that the value has to be a string compatible with
+		POSIX Extended Regular Expressions.
+		</para>
+		<example>
+		<title>Register File Sample</title>
+		<programlisting format="linespecific">
+...
+# Syntax:
+#	from_list [EXCEPT from_list] : req_uri_list [EXCEPT req_uri_list]
+#
+# 	from_list and req_uri_list are comma separated expressions
+# 	Expressions are treated as case insensitive POSIX Extended Regular Expressions.
+# 	Keyword ALL matches any expression.
+#
+# Examples (requires a usage of allow_register() function):
+#	ALL : "^sip:361[0-9]*@abc\.com$" EXCEPT "^sip:361[0-9]*3@abc\.com$", "^sip:361[0-9]*4@abc\.com$"
+#
+#	"^sip:3677[0-9]*@abc\.com$" :  "^sip:361[0-9]*@abc\.com$"
+#
+#	All : ALL
+#
+# Examples including port check (requires a usage of allow_register_include_port() function):
+#
+# ALL : "^sip:.*@192.168.0.1:5062"
+...
+</programlisting>
+		</example>
+
+	</section> <!-- Register File Format -->
 
 </chapter>
