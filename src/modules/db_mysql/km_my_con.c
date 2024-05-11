@@ -168,9 +168,16 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 	}
 #endif /* MYSQL_VERSION_ID */
 #endif /* MARIADB_BASE_VERSION */
+
+#ifdef MYSQL_OPT_SSL_CA
 	if(db_mysql_opt_ssl_ca)
 		mysql_options(
 				ptr->con, MYSQL_OPT_SSL_CA, (const void *)db_mysql_opt_ssl_ca);
+#else
+	LM_WARN("opt_ssl_ca option not supported by mysql version (value %s) - "
+			"ignoring\n",
+			db_mysql_opt_ssl_ca);
+#endif /* MYSQL_OPT_SSL_CA */
 
 #if MYSQL_VERSION_ID > 50012
 	/* set reconnect flag if enabled */
