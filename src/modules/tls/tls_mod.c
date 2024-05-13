@@ -250,6 +250,7 @@ int *ksr_tls_keylog_mode = NULL;
 str ksr_tls_keylog_file = STR_NULL;
 str ksr_tls_keylog_peer = STR_NULL;
 
+int ksr_tls_enable_shared_ctx = 0;
 /* clang-format off */
 /*
  * Exported functions
@@ -323,7 +324,7 @@ static param_export_t params[] = {
 	{"keylog_mode", PARAM_INT | PARAM_USE_SHM, &ksr_tls_keylog_mode},
 	{"keylog_file", PARAM_STR, &ksr_tls_keylog_file},
 	{"keylog_peer", PARAM_STR, &ksr_tls_keylog_peer},
-
+	{"enable_shared_ctx", PARAM_INT, &ksr_tls_enable_shared_ctx},
 	{0, 0, 0}
 };
 
