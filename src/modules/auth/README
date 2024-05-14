@@ -57,6 +57,7 @@ Daniel-Constantin Mierla
               4.7. pv_proxy_authenticate(realm, passwd, flags)
               4.8. pv_auth_check(realm, passwd, flags, checks)
               4.9. auth_get_www_authenticate(realm, flags, pvdest)
+              4.10. auth_algorithm(algorithm)
 
    List of Examples
 
@@ -86,6 +87,7 @@ Daniel-Constantin Mierla
    1.24. pv_proxy_authenticate usage
    1.25. pv_auth_check usage
    1.26. auth_get_www_authenticate
+   1.27. auth_algorithm example
 
 Chapter 1. Admin Guide
 
@@ -126,6 +128,7 @@ Chapter 1. Admin Guide
         4.7. pv_proxy_authenticate(realm, passwd, flags)
         4.8. pv_auth_check(realm, passwd, flags, checks)
         4.9. auth_get_www_authenticate(realm, flags, pvdest)
+        4.10. auth_algorithm(algorithm)
 
 1. Overview
 
@@ -686,6 +689,7 @@ modparam("auth", "add_authinfo_hdr", yes)
    4.7. pv_proxy_authenticate(realm, passwd, flags)
    4.8. pv_auth_check(realm, passwd, flags, checks)
    4.9. auth_get_www_authenticate(realm, flags, pvdest)
+   4.10. auth_algorithm(algorithm)
 
 4.1. consume_credentials()
 
@@ -925,4 +929,15 @@ if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
 if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
         xlog("www authenticate header is [$var(wauth)]\n");
 }
+...
+
+4.10. auth_algorithm(algorithm)
+
+   Set hash algorithm used for digest authentication thus overriding
+   algorithm parameter. Possible values are the same as those of algorithm
+   parameter. The parameter may be a pseudo variable.
+
+   Example 1.27. auth_algorithm example
+...
+auth_algorithm("$alg");
 ...
