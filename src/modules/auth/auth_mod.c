@@ -488,12 +488,9 @@ int w_has_credentials(sip_msg_t *msg, char *realm, char *s2)
 /**
  *
  */
-int w_auth_algorithm(sip_msg_t *msg, char *alg, char *s2)
+static int ki_auth_algorithm(sip_msg_t *msg, str *alg)
 {
-	if(fixup_get_svalue(msg, (gparam_t *)alg, &auth_algorithm) < 0) {
-		LM_ERR("failed to get algorithm value\n");
-		return -1;
-	}
+	auth_algorithm = *alg;
 
 	if(strcmp(auth_algorithm.s, "MD5") == 0) {
 		hash_hex_len = HASHHEXLEN;
@@ -510,6 +507,21 @@ int w_auth_algorithm(sip_msg_t *msg, char *alg, char *s2)
 	}
 
 	return 1;
+}
+
+/**
+ *
+ */
+int w_auth_algorithm(sip_msg_t *msg, char *alg, char *s2)
+{
+	str salg = str_init("");
+
+	if(fixup_get_svalue(msg, (gparam_t *)alg, &salg) < 0) {
+		LM_ERR("failed to get algorithm value\n");
+		return -1;
+	}
+
+	return ki_auth_algorithm(msg, &salg);
 }
 
 #ifdef USE_NC
@@ -1382,6 +1394,11 @@ static sr_kemi_t sr_kemi_auth_exports[] = {
 	{ str_init("auth"), str_init("auth_get_www_authenticate"),
 		SR_KEMIP_INT, ki_auth_get_www_authenticate,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth"), str_init("auth_algorithm"),
+		SR_KEMIP_INT, ki_auth_algorithm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
