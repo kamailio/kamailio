@@ -412,5 +412,21 @@ if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
 </programlisting>
 		</example>
 	</section>
+    <section id="auth.f.auth_algorithm">
+	<title><function>auth_algorithm(algorithm)</function></title>
+	<para>
+	  Set hash algorithm used for digest authentication thus overriding
+      algorithm parameter. Possible values are the same as those of
+      algorithm parameter.  The parameter may be a pseudo variable.
+	</para>
+	<example>
+	    <title>auth_algorithm  example</title>
+	    <programlisting>
+...
+auth_algorithm("$alg");
+...
+	    </programlisting>
+	</example>
+    </section>
 
 </section>

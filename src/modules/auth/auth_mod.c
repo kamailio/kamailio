@@ -70,10 +70,16 @@ static int mod_init(void);
  * Remove used credentials from a SIP message header
  */
 int w_consume_credentials(struct sip_msg *msg, char *s1, char *s2);
+
 /*
  * Check for credentials with given realm
  */
 int w_has_credentials(struct sip_msg *msg, char *s1, char *s2);
+
+/*
+ * Set authentication algorithm
+ */
+int w_auth_algorithm(struct sip_msg *msg, char *alg, char *s2);
 
 static int pv_proxy_authenticate(
 		struct sip_msg *msg, char *realm, char *passwd, char *flags);
@@ -170,6 +176,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE},
 	{"pv_auth_check", (cmd_function)w_pv_auth_check, 4, fixup_pv_auth_check,
 			0, REQUEST_ROUTE},
+	{"auth_algorithm", w_auth_algorithm, 1, fixup_spve_null, 0,
+			REQUEST_ROUTE},
 	{"bind_auth_s", (cmd_function)bind_auth_s, 0, 0, 0},
 
 	{0, 0, 0, 0, 0, 0}
@@ -475,6 +483,33 @@ int w_has_credentials(sip_msg_t *msg, char *realm, char *s2)
 		return -1;
 	}
 	return ki_has_credentials(msg, &srealm);
+}
+
+/**
+ *
+ */
+int w_auth_algorithm(sip_msg_t *msg, char *alg, char *s2)
+{
+	if(fixup_get_svalue(msg, (gparam_t *)alg, &auth_algorithm) < 0) {
+		LM_ERR("failed to get algorithm value\n");
+		return -1;
+	}
+
+	if(strcmp(auth_algorithm.s, "MD5") == 0) {
+		hash_hex_len = HASHHEXLEN;
+		calc_HA1 = calc_HA1_md5;
+		calc_response = calc_response_md5;
+	} else if(strcmp(auth_algorithm.s, "SHA-256") == 0) {
+		hash_hex_len = HASHHEXLEN_SHA256;
+		calc_HA1 = calc_HA1_sha256;
+		calc_response = calc_response_sha256;
+	} else {
+		LM_ERR("Invalid algorithm provided."
+			   " Possible values are \"\", \"MD5\" or \"SHA-256\"\n");
+		return -1;
+	}
+
+	return 1;
 }
 
 #ifdef USE_NC
