@@ -490,7 +490,7 @@ int w_has_credentials(sip_msg_t *msg, char *realm, char *s2)
  */
 int w_auth_algorithm(sip_msg_t *msg, char *alg, char *s2)
 {
-	if(fixup_get_svalue(msg, (gparam_t*)alg, &auth_algorithm) < 0) {
+	if(fixup_get_svalue(msg, (gparam_t *)alg, &auth_algorithm) < 0) {
 		LM_ERR("failed to get algorithm value\n");
 		return -1;
 	}
@@ -499,13 +499,13 @@ int w_auth_algorithm(sip_msg_t *msg, char *alg, char *s2)
 		hash_hex_len = HASHHEXLEN;
 		calc_HA1 = calc_HA1_md5;
 		calc_response = calc_response_md5;
-	} else if (strcmp(auth_algorithm.s, "SHA-256") == 0) {
+	} else if(strcmp(auth_algorithm.s, "SHA-256") == 0) {
 		hash_hex_len = HASHHEXLEN_SHA256;
 		calc_HA1 = calc_HA1_sha256;
 		calc_response = calc_response_sha256;
 	} else {
 		LM_ERR("Invalid algorithm provided."
-		           " Possible values are \"\", \"MD5\" or \"SHA-256\"\n");
+			   " Possible values are \"\", \"MD5\" or \"SHA-256\"\n");
 		return -1;
 	}
 
