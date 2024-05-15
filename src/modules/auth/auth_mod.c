@@ -135,6 +135,17 @@ static struct qp auth_qauthint = {STR_STATIC_INIT("auth-int"), QOP_AUTHINT};
 
 /* Hash algorithm used for digest authentication, MD5 if empty */
 str auth_algorithm = {"", 0};
+
+#define AUTH_ALG_MD5_IDX 0
+#define AUTH_ALG_SHA256_IDX 1
+/* clang-format off */
+static str auth_algorithm_list[] = {
+	{"MD5", 3},
+	{"SHA-256", 7},
+	{NULL, 0}
+};
+/* clang-format on */
+
 int hash_hex_len;
 int add_authinfo_hdr =
 		0; /* should an Authentication-Info header be added on 200 OK responses? */
@@ -373,10 +384,12 @@ static int mod_init(void)
 	}
 
 	if(auth_algorithm.len == 0 || strcmp(auth_algorithm.s, "MD5") == 0) {
+		auth_algorithm = auth_algorithm_list[AUTH_ALG_MD5_IDX];
 		hash_hex_len = HASHHEXLEN;
 		calc_HA1 = calc_HA1_md5;
 		calc_response = calc_response_md5;
 	} else if(strcmp(auth_algorithm.s, "SHA-256") == 0) {
+		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA256_IDX];
 		hash_hex_len = HASHHEXLEN_SHA256;
 		calc_HA1 = calc_HA1_sha256;
 		calc_response = calc_response_sha256;
@@ -493,10 +506,12 @@ static int ki_auth_algorithm(sip_msg_t *msg, str *alg)
 	auth_algorithm = *alg;
 
 	if(strcmp(auth_algorithm.s, "MD5") == 0) {
+		auth_algorithm = auth_algorithm_list[AUTH_ALG_MD5_IDX];
 		hash_hex_len = HASHHEXLEN;
 		calc_HA1 = calc_HA1_md5;
 		calc_response = calc_response_md5;
 	} else if(strcmp(auth_algorithm.s, "SHA-256") == 0) {
+		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA256_IDX];
 		hash_hex_len = HASHHEXLEN_SHA256;
 		calc_HA1 = calc_HA1_sha256;
 		calc_response = calc_response_sha256;
