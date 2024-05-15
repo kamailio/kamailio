@@ -39,11 +39,11 @@
 #include <errno.h>
 
 #include "common.h"
+#include "config.h"
 
 MODULE_VERSION
 
 static char *modp_server = NULL; /*!< format: \<host\>:\<port\>,... */
-static int timeout = 50;		 /*!< timeout for queries in milliseconds */
 static int timeoutlogs = -10;	 /*!< for aggregating timeout logs */
 static int *active = NULL;
 static uint16_t *global_id = NULL;
@@ -107,7 +107,7 @@ static cmd_export_t cmds[] = {
 /* clang-format off */
 static param_export_t params[] = {
 	{"server", PARAM_STRING, &modp_server},
-	{"timeout", PARAM_INT, &timeout},
+	{"timeout", PARAM_INT, &default_pdb_cfg.timeout},
 	{"ll_info", PARAM_INT, &_ksr_loglevels_pdb.ll_info},
 
 	{0, 0, 0}
@@ -281,8 +281,10 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 			td = (tnow.tv_usec - tstart.tv_usec
 						 + (tnow.tv_sec - tstart.tv_sec) * 1000000)
 				 / 1000;
-			if(td > timeout) {
-				LM_NOTICE("exceeded timeout while flushing recv buffer.\n");
+			if(td > cfg_get(pdb, pdb_cfg, timeout)) {
+				LM_ERR("exceeded %d ms timeout while flushing recv buffer. "
+					   "queried nr '%.*s'.\n",
+						cfg_get(pdb, pdb_cfg, timeout), number.len, number.s);
 				return -1;
 			}
 		}
@@ -354,20 +356,24 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 		td = (tnow.tv_usec - tstart.tv_usec
 					 + (tnow.tv_sec - tstart.tv_sec) * 1000000)
 			 / 1000;
-		if(td > timeout) {
+		if(td > cfg_get(pdb, pdb_cfg, timeout)) {
 			timeoutlogs++;
 			if(timeoutlogs < 0) {
-				LM_NOTICE("exceeded timeout while waiting for response.\n");
+				LM_ERR("exceeded %d ms timeout while waiting for response. "
+					   "queried nr '%.*s'.\n",
+						cfg_get(pdb, pdb_cfg, timeout), number.len, number.s);
 			} else if(timeoutlogs > 1000) {
-				LM_NOTICE("exceeded timeout %d times while waiting for "
-						  "response.\n",
-						timeoutlogs);
+				LM_ERR("exceeded %d ms timeout %d times while waiting for "
+					   "response. queried nr '%.*s'.\n",
+						cfg_get(pdb, pdb_cfg, timeout), timeoutlogs, number.len,
+						number.s);
 				timeoutlogs = 0;
 			}
 			return -1;
 		}
 
-		ret = poll(server_list->fds, server_list->nserver, timeout - td);
+		ret = poll(server_list->fds, server_list->nserver,
+				cfg_get(pdb, pdb_cfg, timeout) - td);
 		for(i = 0; i < server_list->nserver; i++) {
 			if(server_list->fds[i].revents & POLLIN) {
 				if((bytes_received = recv(server_list->fds[i].fd, buf,
@@ -430,9 +436,10 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 
 found:
 	if(timeoutlogs > 0) {
-		LM_NOTICE("exceeded timeout while waiting for response (buffered %d "
-				  "lines).\n",
-				timeoutlogs);
+		LM_ERR("exceeded %d timeout while waiting for response (buffered %d "
+			   "lines). queried nr '%.*s'.\n",
+				cfg_get(pdb, pdb_cfg, timeout), timeoutlogs, number.len,
+				number.s);
 		timeoutlogs = -10;
 	}
 	if(gettimeofday(&tnow, NULL) == 0) {
@@ -859,6 +866,13 @@ static int mod_init(void)
 		shm_free(active);
 		return -1;
 	}
+
+	if(cfg_declare("pdb", pdb_cfg_def, &default_pdb_cfg, cfg_sizeof(pdb),
+			   &pdb_cfg)) {
+		LM_ERR("Failed to declare the configuration\n");
+		return -1;
+	}
+
 	return 0;
 }
 
