@@ -65,6 +65,8 @@ int pv_get_errinfo_attr(
 
 int pv_get_contact(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
+int pv_get_contact_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+
 int pv_get_xto_attr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res,
 		struct to_body *xto, int type);
 
