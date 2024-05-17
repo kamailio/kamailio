@@ -404,6 +404,29 @@ int pv_get_contact_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	return pv_get_strval(msg, param, res, &cb->contacts->uri);
 }
 
+int pv_get_contact_star(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	contact_body_t *cb = NULL;
+
+	if(msg == NULL)
+		return -1;
+
+	if(msg->contact == NULL && parse_headers(msg, HDR_CONTACT_F, 0) == -1) {
+		LM_DBG("no contact header\n");
+		return pv_get_null(msg, param, res);
+	}
+	if(parse_contact_headers(msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+
+	cb = (contact_body_t *)msg->contact->parsed;
+
+	if(cb->star == 1) {
+		return pv_get_uintval(msg, param, res, 1);
+	}
+	return pv_get_uintval(msg, param, res, 0);
+}
+
 int pv_get_xto_attr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res,
 		struct to_body *xto, int type)
 {

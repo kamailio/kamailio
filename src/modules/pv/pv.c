@@ -163,6 +163,8 @@ static pv_export_t mod_pvs[] = {
 			PVT_OTHER, pv_get_cseq_body, 0, 0, 0, 0, 0},
 	{{"ct", (sizeof("ct") - 1)}, /* */
 			PVT_OTHER, pv_get_contact, 0, 0, 0, 0, 0},
+	{{"cts", (sizeof("cts") - 1)}, /* */
+			PVT_OTHER, pv_get_contact_star, 0, 0, 0, 0, 0},
 	{{"ctu", (sizeof("ctu") - 1)}, /* */
 			PVT_OTHER, pv_get_contact_uri, 0, 0, 0, 0, 0},
 	{{"cT", (sizeof("cT") - 1)}, /* */
