@@ -1246,7 +1246,8 @@ char *build_dlg_ack(struct sip_msg *rpl, struct cell *Trans,
 
 	/* headers */
 	*len += Trans->from_hdr.len + Trans->callid_hdr.len + to->len
-			+ Trans->cseq_hdr_n.len + 1 + ACK_LEN + CRLF_LEN;
+			+ Trans->cseq_hdr_n.len + 1 + ACK_LEN + +MAXFWD_HEADER_LEN
+			+ CRLF_LEN;
 
 	/* copy'n'paste Route headers */
 
@@ -1290,6 +1291,8 @@ char *build_dlg_ack(struct sip_msg *rpl, struct cell *Trans,
 	append_str(p, Trans->from_hdr.s, Trans->from_hdr.len);
 	append_str(p, Trans->callid_hdr.s, Trans->callid_hdr.len);
 	append_str(p, to->s, to->len);
+
+	append_str(p, MAXFWD_HEADER, MAXFWD_HEADER_LEN);
 
 	append_str(p, Trans->cseq_hdr_n.s, Trans->cseq_hdr_n.len);
 	append_str(p, " ", 1);
