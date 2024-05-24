@@ -1623,7 +1623,11 @@ struct hostent *no_naptr_srv_sip_resolvehost(
 			srv_name.s = tmp_srv;
 			srv_name.len = strlen(tmp_srv);
 #ifdef USE_DNS_CACHE
-			he = dns_srv_get_he(&srv_name, port, dns_flags);
+			if(dns_cache_init) {
+				he = dns_srv_get_he(&srv_name, port, dns_flags);
+			} else {
+				he = srv_sip_resolvehost(&srv_name, 0, port, proto, 1, 0);
+			}
 #else
 			he = srv_sip_resolvehost(&srv_name, 0, port, proto, 1, 0);
 #endif
@@ -1660,6 +1664,7 @@ struct hostent *naptr_sip_resolvehost(
 	struct rdata *naptr_head;
 	char n_proto;
 	str srv_name;
+	str *name_copy = 0;
 	naptr_bmp_t tried_bmp; /* tried bitmap */
 	char origproto = PROTO_NONE;
 
@@ -1704,7 +1709,15 @@ struct hostent *naptr_sip_resolvehost(
 	he = no_naptr_srv_sip_resolvehost(name, port, proto);
 	/* fallback all the way down to A/AAAA */
 	if(he == 0) {
-		he = dns_get_he(name, dns_flags);
+		if(dns_cache_init) {
+			he = dns_get_he(name, dns_flags);
+		} else {
+			/* We need a zero terminated char* */
+			name_copy = shm_malloc(name->len + 1);
+			shm_str_dup(name_copy, name);
+			he = resolvehost(name_copy->s);
+			shm_free(name_copy);
+		}
 	}
 end:
 	if(naptr_head)
@@ -1833,6 +1846,45 @@ ip_addr_t *str2ip(str *st)
 	return ipb;
 }
 
+/*
+* Resolve a host name to a hostent.
+* @param[in] name: the host name to resolve
+* @return the hostent structure or NULL on error
+*
+* @note
+* This function is a wrapper to choose between the DNS cache and the
+* system resolver. If the DNS cache is enabled, it will use the DNS cache
+* to resolve the host name. Otherwise, it will use the system resolver.
+*/
+struct hostent *__resolvehost(char *name)
+{
+	if(dns_cache_init) {
+		return dns_resolvehost(name);
+	} else {
+		return _resolvehost(name);
+	}
+}
+
+/*
+* Resolve a host name to a hostent.
+* @param[in] name: the host name to resolve
+* @param[in] port: the port number
+* @param[in] proto: the protocol
+* @return the hostent structure or NULL on error
+*
+* @note
+* This function is a wrapper to choose between the DNS cache and the
+* system resolver. If the DNS cache is enabled, it will use the DNS cache
+* to resolve the host name. Otherwise, it will use the system resolver.
+*/
+struct hostent *__sip_resolvehost(str *name, unsigned short *port, char *proto)
+{
+	if(dns_cache_init) {
+		return dns_sip_resolvehost(name, port, proto);
+	} else {
+		return _sip_resolvehost(name, port, proto);
+	}
+}
 /* converts a str to an ipv6 address struct stored in ipb
  * - ipb must be already allocated
  * - return 0 on success; <0 on failure */
