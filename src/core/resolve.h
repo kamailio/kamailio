@@ -329,14 +329,14 @@ int sip_hostport2su(
 		union sockaddr_union *su, str *host, unsigned short port, char *proto);
 
 
+/* Wrapper functions that check for dns_cache_init */
+struct hostent *__resolvehost(char *name);
+struct hostent *__sip_resolvehost(str *name, unsigned short *port, char *proto);
+
+
 /* wrappers */
-#ifdef USE_DNS_CACHE
-#define resolvehost dns_resolvehost
-#define sip_resolvehost dns_sip_resolvehost
-#else
-#define resolvehost _resolvehost
-#define sip_resolvehost _sip_resolvehost
-#endif
+#define resolvehost __resolvehost
+#define sip_resolvehost __sip_resolvehost
 
 
 #ifdef USE_NAPTR
