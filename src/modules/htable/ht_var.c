@@ -73,8 +73,11 @@ int pv_set_ht_cell(
 
 	if(hpv->ht == NULL)
 		hpv->ht = ht_get_table(&hpv->htname);
-	if(hpv->ht == NULL)
+	if(hpv->ht == NULL) {
+		LM_ERR("htable not found for setting $sht(%.*s=>%.*s)\n",
+				hpv->htname.len, hpv->htname.s, htname.len, htname.s);
 		return -1;
+	}
 
 	if(pv_printf_s(msg, hpv->pve, &htname) != 0) {
 		LM_ERR("cannot get $sht name\n");
