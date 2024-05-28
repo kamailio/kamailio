@@ -2206,8 +2206,10 @@ static int mod_init(void)
 			}
 		}
 
-		register_procs(1);
-		cfg_register_child(1);
+		if(rtpengine_dtmf_event_sock.len > 0) {
+			register_procs(1);
+			cfg_register_child(1);
+		}
 	}
 
 	return 0;
