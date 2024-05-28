@@ -37,8 +37,11 @@ int pv_get_ht_cell(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 	if(hpv->ht == NULL) {
 		hpv->ht = ht_get_table(&hpv->htname);
-		if(hpv->ht == NULL)
+		if(hpv->ht == NULL) {
+			LM_ERR("htable not found for getting $sht(%.*s=>%.*s)\n",
+					hpv->htname.len, hpv->htname.s, htname.len, htname.s);
 			return pv_get_null(msg, param, res);
+		}
 	}
 	if(pv_printf_s(msg, hpv->pve, &htname) != 0) {
 		LM_ERR("cannot get $sht name\n");
