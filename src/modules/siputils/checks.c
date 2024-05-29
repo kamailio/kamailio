@@ -1165,6 +1165,7 @@ int get_uri_param(struct sip_msg *_msg, char *_param, char *_value)
 	pv_value_t val;
 
 	param_hooks_t hooks;
+	param_t *list = NULL;
 	param_t *params;
 
 	param = (str *)_param;
@@ -1177,11 +1178,12 @@ int get_uri_param(struct sip_msg *_msg, char *_param, char *_value)
 
 	t = _msg->parsed_uri.params;
 
-	if(parse_params(&t, CLASS_ANY, &hooks, &params) < 0) {
+	if(parse_params(&t, CLASS_ANY, &hooks, &list) < 0) {
 		LM_ERR("ruri parameter parsing failed\n");
 		return -1;
 	}
 
+	params = list;
 	while(params) {
 		if((params->name.len == param->len)
 				&& (strncmp(params->name.s, param->s, param->len) == 0)) {
@@ -1196,11 +1198,11 @@ int get_uri_param(struct sip_msg *_msg, char *_param, char *_value)
 		}
 	}
 
-	free_params(params);
+	free_params(list);
 	return -1;
 
 found:
-	free_params(params);
+	free_params(list);
 	return 1;
 }
 
