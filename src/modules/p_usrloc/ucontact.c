@@ -1057,6 +1057,211 @@ int db_update_ucontact_addr(ucontact_t *_c)
 	return 0;
 }
 
+int db_update_ucontact_uniq(ucontact_t *_c)
+{
+	char *dom;
+
+	db_key_t keys1[4];
+	db_val_t vals1[4];
+	db_op_t op1[4];
+	int n1;
+
+	db_key_t keys2[15];
+	db_val_t vals2[15];
+	int n2;
+
+	str user, domain, uniq_c;
+
+	if(_c->flags & FL_MEM) {
+		return 0;
+	}
+
+	struct udomain *_d;
+	if(register_udomain(_c->domain->s, &_d) < 0) {
+		return -1;
+	}
+
+	if(_c->uniq.len > 0) {
+		LM_INFO("updating database uniq: %.*s\n", _c->uniq.len, _c->uniq.s);
+		n1 = 0;
+
+		keys1[n1] = &user_col;
+		op1[n1] = OP_EQ;
+		vals1[n1].type = DB1_STR;
+		vals1[n1].nul = 0;
+		vals1[n1].val.str_val = *_c->aor;
+		n1++;
+
+		user = *_c->aor;
+
+		if(use_domain) {
+			keys1[n1] = &domain_col;
+			op1[n1] = OP_EQ;
+			vals1[n1].type = DB1_STR;
+			vals1[n1].nul = 0;
+			dom = memchr(_c->aor->s, '@', _c->aor->len);
+			if(dom == 0) {
+				vals1[n1].val.str_val.len = 0;
+				vals1[n1].val.str_val.s = 0;
+			} else {
+				vals1[n1 - 1].val.str_val.len = dom - _c->aor->s;
+				user = vals1[n1 - 1].val.str_val;
+				vals1[n1].val.str_val.s = dom + 1;
+				vals1[n1].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+			}
+			domain = vals1[n1].val.str_val;
+			n1++;
+		}
+
+		keys1[n1] = &contact_col;
+		op1[n1] = " like ";
+		vals1[n1].type = DB1_STR;
+		vals1[n1].nul = 0;
+		vals1[n1].val.str_val.len = _c->uniq.len + 2;
+		vals1[n1].val.str_val.s = pkg_malloc(vals1[n1].val.str_val.len);
+		vals1[n1].val.str_val.s[0] = '%';
+		strncpy(vals1[n1].val.str_val.s + 1, _c->uniq.s, _c->uniq.len);
+		vals1[n1].val.str_val.s[vals1[n1].val.str_val.len - 1] = '%';
+		uniq_c = vals1[n1].val.str_val;
+		n1++;
+
+		keys1[n1] = &ruid_col;
+		op1[n1] = OP_EQ;
+		vals1[n1].type = DB1_STR;
+		vals1[n1].nul = 0;
+		vals1[n1].val.str_val = _c->ruid;
+		n1++;
+	} else {
+		LM_INFO("updating database uniq failed: NULL uniq; trying "
+				"db_insert_ucontact()\n");
+		return db_insert_ucontact(_c);
+	}
+
+	keys2[0] = &expires_col;
+	keys2[1] = &q_col;
+	keys2[2] = &cseq_col;
+	keys2[3] = &flags_col;
+	keys2[4] = &cflags_col;
+	keys2[5] = &user_agent_col;
+	keys2[6] = &received_col;
+	keys2[7] = &path_col;
+	keys2[8] = &sock_col;
+	keys2[9] = &methods_col;
+	keys2[10] = &last_mod_col;
+	keys2[11] = &instance_col;
+	keys2[12] = &reg_id_col;
+	keys2[13] = &contact_col;
+	keys2[14] = &callid_col;
+
+	vals2[0].type = DB1_DATETIME;
+	vals2[0].nul = 0;
+	vals2[0].val.time_val = ul_db_datetime_set(_c->expires);
+
+	vals2[1].type = DB1_DOUBLE;
+	vals2[1].nul = 0;
+	vals2[1].val.double_val = q2double(_c->q);
+
+	vals2[2].type = DB1_INT;
+	vals2[2].nul = 0;
+	vals2[2].val.int_val = _c->cseq;
+
+	vals2[3].type = DB1_INT;
+	vals2[3].nul = 0;
+	vals2[3].val.bitmap_val = _c->flags;
+
+	vals2[4].type = DB1_INT;
+	vals2[4].nul = 0;
+	vals2[4].val.bitmap_val = _c->cflags;
+
+	vals2[5].type = DB1_STR;
+	vals2[5].nul = 0;
+	vals2[5].val.str_val = _c->user_agent;
+
+	vals2[6].type = DB1_STR;
+	if(_c->received.s == 0) {
+		vals2[6].nul = 1;
+	} else {
+		vals2[6].nul = 0;
+		vals2[6].val.str_val = _c->received;
+	}
+
+	vals2[7].type = DB1_STR;
+	if(_c->path.s == 0) {
+		vals2[7].nul = 1;
+	} else {
+		vals2[7].nul = 0;
+		vals2[7].val.str_val = _c->path;
+	}
+
+	vals2[8].type = DB1_STR;
+	if(_c->sock) {
+		vals2[8].val.str_val = _c->sock->sock_str;
+		vals2[8].nul = 0;
+	} else {
+		vals2[8].nul = 1;
+	}
+
+	vals2[9].type = DB1_BITMAP;
+	if(_c->methods == 0xFFFFFFFF) {
+		vals2[9].nul = 1;
+	} else {
+		vals2[9].val.bitmap_val = _c->methods;
+		vals2[9].nul = 0;
+	}
+
+	vals2[10].type = DB1_DATETIME;
+	vals2[10].nul = 0;
+	vals2[10].val.time_val = ul_db_datetime_set(_c->last_modified);
+
+	n2 = 11;
+	if(_c->instance.len > 0) {
+		vals2[n2].type = DB1_STR;
+		vals2[n2].nul = 0;
+		vals2[n2].val.str_val = _c->instance;
+	} else {
+		vals2[n2].nul = 1;
+	}
+	n2++;
+
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.int_val = (int)_c->reg_id;
+	n2++;
+
+	vals2[n2].type = DB1_STR;
+	vals2[n2].nul = 0;
+	vals2[n2].val.str_val = _c->c;
+	n2++;
+
+	vals2[n2].type = DB1_STR;
+	vals2[n2].nul = 0;
+	vals2[n2].val.str_val = _c->callid;
+	n2++;
+
+	if(ul_db_layer_update(
+			   _d, &user, &domain, keys1, op1, vals1, keys2, vals2, n1, n2)
+			< 0) {
+		if(uniq_c.len > 0) {
+			pkg_free(uniq_c.s);
+			uniq_c.len = 0;
+		}
+
+		LM_ERR("updating database uniq failed: update error user:%.*s "
+			   "domain:%.*s contact:%.*s ruid:%.*s\n",
+				vals1[0].val.str_val.len, vals1[0].val.str_val.s,
+				vals1[1].val.str_val.len, vals1[1].val.str_val.s,
+				vals1[2].val.str_val.len, vals1[2].val.str_val.s,
+				vals1[3].val.str_val.len, vals1[3].val.str_val.s);
+		return -1;
+	}
+
+	if(uniq_c.len > 0) {
+		pkg_free(uniq_c.s);
+		uniq_c.len = 0;
+	}
+
+	return 0;
+}
 /*!
  * \brief Update contact in the database by ruid
  * \param _c updated contact
@@ -1248,6 +1453,8 @@ int db_update_ucontact(ucontact_t *_c)
 		return db_update_ucontact_ruid(_c);
 	else if(db_ops_ruid_cfg == 2)
 		return db_update_ucontact_addr_new(_c);
+	else if(db_ops_ruid_cfg == 3)
+		return db_update_ucontact_uniq(_c);
 
 	return -1;
 }
@@ -1315,6 +1522,104 @@ int db_delete_ucontact_addr(ucontact_t *_c)
 		return -1;
 	}
 
+	return 0;
+}
+
+/*!
+ * \brief Delete contact from the database by address
+ * \param _c deleted contact
+ * \return 0 on success, -1 on failure
+ */
+int db_delete_ucontact_uniq(ucontact_t *_c)
+{
+	char *dom;
+	db_key_t keys[4];
+	db_val_t vals[4];
+	db_op_t op[4];
+	int n;
+	struct udomain *_d;
+
+	str user, domain, uniq_c;
+
+	if(_c->flags & FL_MEM) {
+		return 0;
+	}
+	if(register_udomain(_c->domain->s, &_d) < 0) {
+		return -1;
+	}
+
+	if(_c->uniq.len > 0) {
+		LM_INFO("deleting database uniq: %.*s\n", _c->uniq.len, _c->uniq.s);
+		n = 0;
+
+		keys[n] = &user_col;
+		op[n] = OP_EQ;
+		vals[n].type = DB1_STR;
+		vals[n].nul = 0;
+		vals[n].val.str_val = *_c->aor;
+		n++;
+
+		user = *_c->aor;
+
+		if(use_domain) {
+			keys[n] = &domain_col;
+			op[n] = OP_EQ;
+			vals[n].type = DB1_STR;
+			vals[n].nul = 0;
+			dom = memchr(_c->aor->s, '@', _c->aor->len);
+			if(dom == 0) {
+				vals[n].val.str_val.len = 0;
+				vals[n].val.str_val.s = 0;
+			} else {
+				// user part
+				vals[n - 1].val.str_val.len = dom - _c->aor->s;
+				user = vals[n - 1].val.str_val;
+
+				// domain part
+				vals[n].val.str_val.s = dom + 1;
+				vals[n].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+			}
+			domain = vals[n].val.str_val;
+			n++;
+		}
+
+		keys[n] = &contact_col;
+		op[n] = " like ";
+		vals[n].type = DB1_STR;
+		vals[n].nul = 0;
+		vals[n].val.str_val.len = _c->uniq.len + 2;
+		vals[n].val.str_val.s = pkg_malloc(vals[n].val.str_val.len);
+		vals[n].val.str_val.s[0] = '%';
+		strncpy(vals[n].val.str_val.s + 1, _c->uniq.s, _c->uniq.len);
+		vals[n].val.str_val.s[vals[n].val.str_val.len - 1] = '%';
+		uniq_c = vals[n].val.str_val;
+		n++;
+
+		keys[n] = &ruid_col;
+		op[n] = OP_EQ;
+		vals[n].type = DB1_STR;
+		vals[n].nul = 0;
+		vals[n].val.str_val = _c->ruid;
+		n++;
+	} else {
+		LM_INFO("deleting database uniq failed: NULL uniq; trying "
+				"db_delete_ucontact_addr()\n");
+		return db_delete_ucontact_addr(_c);
+	}
+
+	if(ul_db_layer_delete(_d, &user, &domain, keys, op, vals, n) < 0) {
+		if(uniq_c.len > 0) {
+			pkg_free(uniq_c.s);
+			uniq_c.len = 0;
+		}
+		LM_ERR("deleting from database failed\n");
+		return -1;
+	}
+
+	if(uniq_c.len > 0) {
+		pkg_free(uniq_c.s);
+		uniq_c.len = 0;
+	}
 	return 0;
 }
 
@@ -1389,6 +1694,8 @@ int db_delete_ucontact(ucontact_t *_c)
 		return db_delete_ucontact_ruid(_c);
 	else if(db_ops_ruid_cfg == 2)
 		return db_delete_ucontact_addr(_c);
+	else if(db_ops_ruid_cfg == 3)
+		return db_delete_ucontact_uniq(_c);
 
 	return -1;
 }
