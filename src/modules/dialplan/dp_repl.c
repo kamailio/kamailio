@@ -648,7 +648,8 @@ search_rule:
 							LM_DBG("match check skipped: [%.*s] %d\n",
 									re_list->expr.len, re_list->expr.s, rez);
 						rt = re_list->next;
-						pcre2_match_data_free(pcre_md);
+						if(pcre_md)
+							pcre2_match_data_free(pcre_md);
 						pcre2_code_free(re_list->re);
 						pkg_free(re_list);
 						re_list = rt;
