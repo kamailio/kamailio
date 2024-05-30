@@ -427,7 +427,7 @@ static int load_pcres(int action)
 	}
 
 	/* Temporal pointer of pcres */
-	if((pcres_tmp = pkg_malloc(sizeof(pcre2_code *) * num_pcres_tmp)) == 0) {
+	if((pcres_tmp = shm_malloc(sizeof(pcre2_code *) * num_pcres_tmp)) == 0) {
 		LM_ERR("no more memory for pcres_tmp\n");
 		goto err;
 	}
@@ -469,19 +469,10 @@ static int load_pcres(int action)
 		shm_free(pcres);
 	}
 
-	if(pcres == NULL) {
-		if((pcres = shm_malloc(sizeof(pcre2_code *) * num_pcres_tmp)) == 0) {
-			LM_ERR("no more memory for pcres\n");
-			goto err;
-		}
-		memset(pcres, 0, sizeof(pcre2_code *) * num_pcres_tmp);
-	}
-
 	*num_pcres = num_pcres_tmp;
-	*pcres = *pcres_tmp;
+	pcres = pcres_tmp;
 	*pcres_addr = pcres;
 
-	pkg_free(pcres_tmp);
 	/* Free allocated slots for unused patterns */
 	for(i = num_pcres_tmp; i < max_groups; i++) {
 		pkg_free(patterns[i]);
