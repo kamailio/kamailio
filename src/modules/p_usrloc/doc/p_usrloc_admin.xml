@@ -643,6 +643,11 @@ modparam("p_usrloc", "default_db_type", "cluster")
 					<emphasis>2</emphasis> uses the new style using aor, contact and call-id
 				</para>
 			</listitem>
+			<listitem>
+				<para>
+					<emphasis>3</emphasis> uses contact uniq value + ruid value
+				</para>
+			</listitem>
 		</itemizedlist>
 	</para>
 	<para>
