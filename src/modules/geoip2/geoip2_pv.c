@@ -65,7 +65,7 @@ typedef struct _geoip2_pv
 	int type;
 } geoip2_pv_t;
 
-static MMDB_s *_handle_GeoIP;
+static MMDB_s *_handle_GeoIP = NULL;
 static gen_lock_t *lock = NULL;
 
 static sr_geoip2_item_t *_sr_geoip2_list = NULL;
@@ -518,8 +518,7 @@ static void destroy_shmlock(void)
 int geoip2_init_pv(char *path)
 {
 	int status;
-	_handle_GeoIP = shm_malloc(sizeof(struct MMDB_s));
-	memset(_handle_GeoIP, 0, sizeof(struct MMDB_s));
+	_handle_GeoIP = shm_mallocxz(sizeof(struct MMDB_s));
 
 	if(_handle_GeoIP == NULL) {
 		SHM_MEM_ERROR;
@@ -564,9 +563,11 @@ void geoip2_destroy_list(void)
 
 void geoip2_destroy_pv(void)
 {
-	MMDB_close(_handle_GeoIP);
-	shm_free(_handle_GeoIP);
-	_handle_GeoIP = NULL;
+	if(_handle_GeoIP != NULL) {
+		MMDB_close(_handle_GeoIP);
+		shm_free(_handle_GeoIP);
+		_handle_GeoIP = NULL;
+	}
 	destroy_shmlock();
 }
 
