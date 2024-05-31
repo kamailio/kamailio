@@ -4718,6 +4718,26 @@ static int rtpengine_offer_answer(
 			}
 		}
 		if(write_sdp_pvar == NULL || write_sdp_pvar_mode != 0) {
+			if(read_sdp_pvar_str.len > 0) {
+				/* get the body from the message as body ptr may have changed
+				 * when using read_sdp_pv */
+				if(extract_body(msg, &cur_body, &cl_field) == -1) {
+					LM_ERR("failed to extract body from message");
+					goto error_free;
+				}
+				anchor = del_lump(msg, cur_body.s - msg->buf, cur_body.len, 0);
+			} else {
+				anchor = del_lump(msg, body.s - msg->buf, body.len, 0);
+			}
+			if(!anchor) {
+				LM_ERR("del_lump failed\n");
+				goto error_free;
+			}
+			if(!insert_new_lump_after(anchor, newbody.s, newbody.len, 0)) {
+				LM_ERR("insert_new_lump_after failed\n");
+				goto error_free;
+			}
+
 			if(cl_field.len) {
 				anchor = del_lump(msg, cl_field.s - msg->buf, cl_field.len, 0);
 				cl_repl.s = pkg_malloc(10);
@@ -4731,26 +4751,6 @@ static int rtpengine_offer_answer(
 					goto error_free;
 				}
 				cl_repl.s = NULL;
-			}
-
-			if(read_sdp_pvar_str.len > 0) {
-				/* get the body from the message as body ptr may have changed
-				 * when using read_sdp_pv */
-				cur_body.len = 0;
-				cur_body.s = get_body(msg);
-				cur_body.len = msg->buf + msg->len - cur_body.s;
-
-				anchor = del_lump(msg, cur_body.s - msg->buf, cur_body.len, 0);
-			} else {
-				anchor = del_lump(msg, body.s - msg->buf, body.len, 0);
-			}
-			if(!anchor) {
-				LM_ERR("del_lump failed\n");
-				goto error_free;
-			}
-			if(!insert_new_lump_after(anchor, newbody.s, newbody.len, 0)) {
-				LM_ERR("insert_new_lump_after failed\n");
-				goto error_free;
 			}
 		}
 	}
