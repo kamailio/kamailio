@@ -564,7 +564,6 @@ void geoip2_destroy_list(void)
 void geoip2_destroy_pv(void)
 {
 	if(_handle_GeoIP != NULL) {
-		MMDB_close(_handle_GeoIP);
 		shm_free(_handle_GeoIP);
 		_handle_GeoIP = NULL;
 	}
