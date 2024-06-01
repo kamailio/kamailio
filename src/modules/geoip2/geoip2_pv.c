@@ -66,7 +66,7 @@ typedef struct _geoip2_pv
 } geoip2_pv_t;
 
 static MMDB_s *_handle_GeoIP = NULL;
-static gen_lock_t *lock = NULL;
+static gen_lock_t *_sr_geoip2_lock = NULL;
 
 static sr_geoip2_item_t *_sr_geoip2_list = NULL;
 
@@ -77,7 +77,7 @@ MMDB_s *get_geoip_handle(void)
 
 gen_lock_t *get_gen_lock(void)
 {
-	return lock;
+	return _sr_geoip2_lock;
 }
 
 sr_geoip2_record_t *sr_geoip2_get_record(str *name)
@@ -264,9 +264,9 @@ static int get_mmdb_value2(MMDB_entry_s *entry, MMDB_entry_data_s *data,
 {
 	int status = 0;
 
-	lock_get(lock);
+	lock_get(_sr_geoip2_lock);
 	status = MMDB_get_value(entry, data, first, second, NULL);
-	lock_release(lock);
+	lock_release(_sr_geoip2_lock);
 
 	return status;
 }
@@ -276,9 +276,9 @@ static int get_mmdb_value3(MMDB_entry_s *entry, MMDB_entry_data_s *data,
 {
 	int status = 0;
 
-	lock_get(lock);
+	lock_get(_sr_geoip2_lock);
 	status = MMDB_get_value(entry, data, first, second, third, NULL);
-	lock_release(lock);
+	lock_release(_sr_geoip2_lock);
 
 	return status;
 }
@@ -289,9 +289,9 @@ static int get_mmdb_value4(MMDB_entry_s *entry, MMDB_entry_data_s *data,
 {
 	int status = 0;
 
-	lock_get(lock);
+	lock_get(_sr_geoip2_lock);
 	status = MMDB_get_value(entry, data, first, second, third, fourth, NULL);
-	lock_release(lock);
+	lock_release(_sr_geoip2_lock);
 
 	return status;
 }
@@ -493,12 +493,12 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 static int init_shmlock(void)
 {
-	lock = lock_alloc();
-	if(!lock) {
+	_sr_geoip2_lock = lock_alloc();
+	if(!_sr_geoip2_lock) {
 		LM_CRIT("cannot allocate memory for lock\n");
 		return -1;
 	}
-	if(lock_init(lock) == 0) {
+	if(lock_init(_sr_geoip2_lock) == 0) {
 		LM_CRIT("cannot initialize lock\n");
 		return -1;
 	}
@@ -508,10 +508,10 @@ static int init_shmlock(void)
 
 static void destroy_shmlock(void)
 {
-	if(lock) {
-		lock_destroy(lock);
-		lock_dealloc((void *)lock);
-		lock = NULL;
+	if(_sr_geoip2_lock) {
+		lock_destroy(_sr_geoip2_lock);
+		lock_dealloc((void *)_sr_geoip2_lock);
+		_sr_geoip2_lock = NULL;
 	}
 }
 
@@ -543,7 +543,7 @@ int geoip2_reload_pv(char *path)
 {
 	int status = 0;
 
-	lock_get(lock);
+	lock_get(_sr_geoip2_lock);
 	MMDB_close(_handle_GeoIP);
 	status = MMDB_open(path, MMDB_MODE_MMAP, _handle_GeoIP);
 	if(MMDB_SUCCESS != status) {
@@ -552,7 +552,7 @@ int geoip2_reload_pv(char *path)
 	} else {
 		LM_INFO("reloaded GeoIP database file at: %s\n", path);
 	}
-	lock_release(lock);
+	lock_release(_sr_geoip2_lock);
 
 	return status;
 }
@@ -599,10 +599,10 @@ int geoip2_update_pv(str *tomatch, str *name)
 
 	strncpy(gr->tomatch, tomatch->s, tomatch->len);
 	tomatch->s[tomatch->len] = '\0';
-	lock_get(lock);
+	lock_get(_sr_geoip2_lock);
 	gr->record = MMDB_lookup_string(
 			_handle_GeoIP, (const char *)gr->tomatch, &gai_error, &mmdb_error);
-	lock_release(lock);
+	lock_release(_sr_geoip2_lock);
 	LM_DBG("attempt to match: %s\n", gr->tomatch);
 	if(gai_error || MMDB_SUCCESS != mmdb_error || !gr->record.found_entry) {
 		LM_DBG("no match for: %s\n", gr->tomatch);
