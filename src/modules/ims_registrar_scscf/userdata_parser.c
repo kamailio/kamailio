@@ -40,6 +40,11 @@
  *
  */
 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "../../core/parser/parse_uri.h"
 #include "userdata_parser.h"
 #include "../../core/parser/parse_hname2.h"
