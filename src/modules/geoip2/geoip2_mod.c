@@ -50,7 +50,8 @@ static int geoip2_rpc_init(void);
 static int w_geoip2_match(struct sip_msg *msg, char *str1, char *str2);
 static int geoip2_resid_param(modparam_t type, void *val);
 
-static int w_geoip2_distance(struct sip_msg *msg, char *str1, char *str2, char *str3);
+static int w_geoip2_distance(
+		struct sip_msg *msg, char *str1, char *str2, char *str3);
 
 /* clang-format off */
 static pv_export_t mod_pvs[] = {
@@ -164,7 +165,8 @@ static int w_geoip2_match(sip_msg_t *msg, char *target, char *pvname)
 	return ki_geoip2_match(msg, &tomatch, &pvclass);
 }
 
-static int geoip2_distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon)
+static int geoip2_distance(
+		sip_msg_t *msg, str *_ip_addr, double lat, double lon)
 {
 	char ip_addr[MAX_GEO_STR_SIZE] = {0};
 	double lat1, lon1, lat2, lon2, orig_lat2, orig_lon2;
@@ -253,7 +255,8 @@ static int geoip2_distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon
 	return dist;
 }
 
-static int ki_geoip2_distance(sip_msg_t *msg, str *_ipaddr, str *_lat, str *_lon)
+static int ki_geoip2_distance(
+		sip_msg_t *msg, str *_ipaddr, str *_lat, str *_lon)
 {
 	double lat = 0;
 	double lon = 0;
@@ -262,8 +265,7 @@ static int ki_geoip2_distance(sip_msg_t *msg, str *_ipaddr, str *_lat, str *_lon
 	strncpy(buf, _lat->s, _lat->len);
 	lat = atof(buf);
 	if(!lat && errno == ERANGE) {
-		LM_ERR("cannot convert string to double: %.*s\n", _lat->len,
-				_lat->s);
+		LM_ERR("cannot convert string to double: %.*s\n", _lat->len, _lat->s);
 		return -1;
 	}
 
@@ -271,17 +273,15 @@ static int ki_geoip2_distance(sip_msg_t *msg, str *_ipaddr, str *_lat, str *_lon
 	strncpy(buf, _lon->s, _lon->len);
 	lon = atof(buf);
 	if(!lon && errno == ERANGE) {
-		LM_ERR("cannot convert string to double: %.*s\n", _lon->len,
-				_lon->s);
+		LM_ERR("cannot convert string to double: %.*s\n", _lon->len, _lon->s);
 		return -1;
 	}
 
 	return geoip2_distance(msg, _ipaddr, lat, lon);
-
 }
 
-static int w_geoip2_distance(sip_msg_t *msg, char *ip_addr_param, char *lat_param,
-		char *lon_param)
+static int w_geoip2_distance(
+		sip_msg_t *msg, char *ip_addr_param, char *lat_param, char *lon_param)
 {
 	str ip_addr_str = STR_NULL;
 	str lat_str = STR_NULL;
@@ -304,7 +304,7 @@ static int w_geoip2_distance(sip_msg_t *msg, char *ip_addr_param, char *lat_para
 
 static void geoip2_rpc_reload(rpc_t *rpc, void *ctx)
 {
-	if(geoip2_reload_pv(geoip2_path) != 0) {
+	if(geoip2_reload_set() < 0) {
 		rpc->fault(ctx, 500, "Reload failed");
 		return;
 	}
