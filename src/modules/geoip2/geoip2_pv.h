@@ -37,5 +37,6 @@ int geoip2_update_pv(str *tomatch, str *pvclass);
 int sr_geoip2_add_resid(str *rname);
 MMDB_s *get_geoip_handle(void);
 gen_lock_t *get_gen_lock(void);
+int geoip2_reload_set(void);
 
 #endif

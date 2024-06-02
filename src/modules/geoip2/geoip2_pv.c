@@ -70,6 +70,9 @@ static gen_lock_t *_sr_geoip2_lock = NULL;
 
 static sr_geoip2_item_t *_sr_geoip2_list = NULL;
 
+static int *_sr_geoip2_reloadG = NULL;
+static int _sr_geoip2_reloadL = 0;
+
 MMDB_s *get_geoip_handle(void)
 {
 	return _handle_GeoIP;
@@ -493,6 +496,12 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 static int init_shmlock(void)
 {
+	_sr_geoip2_reloadG = (int *)shm_malloc(sizeof(int));
+	if(_sr_geoip2_reloadG == NULL) {
+		LM_CRIT("cannot allocate memory for reload step\n");
+		return -1;
+	}
+	*_sr_geoip2_reloadG = 1;
 	_sr_geoip2_lock = lock_alloc();
 	if(!_sr_geoip2_lock) {
 		LM_CRIT("cannot allocate memory for lock\n");
@@ -513,18 +522,23 @@ static void destroy_shmlock(void)
 		lock_dealloc((void *)_sr_geoip2_lock);
 		_sr_geoip2_lock = NULL;
 	}
+	if(_sr_geoip2_reloadG != NULL) {
+		shm_free(_sr_geoip2_reloadG);
+		_sr_geoip2_reloadG = NULL;
+	}
 }
 
 int geoip2_init_pv(char *path)
 {
 	int status;
-	_handle_GeoIP = shm_mallocxz(sizeof(struct MMDB_s));
 
+	_handle_GeoIP = (struct MMDB_s *)malloc(sizeof(struct MMDB_s));
 	if(_handle_GeoIP == NULL) {
-		SHM_MEM_ERROR;
+		SYS_MEM_ERROR;
 		return -1;
 	}
 
+	memset(_handle_GeoIP, 0, sizeof(struct MMDB_s));
 	status = MMDB_open(path, MMDB_MODE_MMAP, _handle_GeoIP);
 
 	if(MMDB_SUCCESS != status) {
@@ -539,18 +553,35 @@ int geoip2_init_pv(char *path)
 	return 0;
 }
 
+int geoip2_reload_set(void)
+{
+	if(_sr_geoip2_reloadG == NULL) {
+		LM_ERR("not initialized\n");
+		return -1;
+	}
+	lock_get(_sr_geoip2_lock);
+	*_sr_geoip2_reloadG = *_sr_geoip2_reloadG + 1;
+	lock_release(_sr_geoip2_lock);
+
+	return 0;
+}
+
 int geoip2_reload_pv(char *path)
 {
 	int status = 0;
 
 	lock_get(_sr_geoip2_lock);
+	if(*_sr_geoip2_reloadG == _sr_geoip2_reloadL) {
+		lock_release(_sr_geoip2_lock);
+		return MMDB_SUCCESS;
+	}
 	MMDB_close(_handle_GeoIP);
 	status = MMDB_open(path, MMDB_MODE_MMAP, _handle_GeoIP);
 	if(MMDB_SUCCESS != status) {
 		LM_ERR("cannot reload GeoIP database file at: %s\n", path);
-
 	} else {
 		LM_INFO("reloaded GeoIP database file at: %s\n", path);
+		_sr_geoip2_reloadL = *_sr_geoip2_reloadG;
 	}
 	lock_release(_sr_geoip2_lock);
 
@@ -563,10 +594,6 @@ void geoip2_destroy_list(void)
 
 void geoip2_destroy_pv(void)
 {
-	if(_handle_GeoIP != NULL) {
-		shm_free(_handle_GeoIP);
-		_handle_GeoIP = NULL;
-	}
 	destroy_shmlock();
 }
 
