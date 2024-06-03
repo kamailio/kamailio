@@ -117,91 +117,100 @@ extern int _uac_reg_gc_interval;
 extern int _uac_reg_use_domain;
 extern int _uac_reg_reload_delta;
 
+/* clang-format off */
 static pv_export_t mod_pvs[] = {
-		{{"uac_req", sizeof("uac_req") - 1}, PVT_OTHER, pv_get_uac_req,
-				pv_set_uac_req, pv_parse_uac_req_name, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"uac_req", sizeof("uac_req") - 1}, PVT_OTHER, pv_get_uac_req,
+			pv_set_uac_req, pv_parse_uac_req_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-		{"uac_replace_from", (cmd_function)w_replace_from, 2, fixup_spve_spve,
-				0, REQUEST_ROUTE | BRANCH_ROUTE},
-		{"uac_replace_from", (cmd_function)w_replace_from, 1, fixup_spve_spve,
-				0, REQUEST_ROUTE | BRANCH_ROUTE},
-		{"uac_restore_from", (cmd_function)w_restore_from, 0, 0, 0,
-				REQUEST_ROUTE},
-		{"uac_replace_to", (cmd_function)w_replace_to, 2, fixup_spve_spve, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE},
-		{"uac_replace_to", (cmd_function)w_replace_to, 1, fixup_spve_spve, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE},
-		{"uac_restore_to", (cmd_function)w_restore_to, 0, 0, 0, REQUEST_ROUTE},
-		{"uac_auth", (cmd_function)w_uac_auth, 0, 0, 0,
-				FAILURE_ROUTE | BRANCH_FAILURE_ROUTE | EVENT_ROUTE},
-		{"uac_auth", (cmd_function)w_uac_auth_mode, 1, fixup_igp_null,
-				fixup_free_igp_null,
-				FAILURE_ROUTE | BRANCH_FAILURE_ROUTE | EVENT_ROUTE},
-		{"uac_auth_mode", (cmd_function)w_uac_auth_mode, 1, fixup_igp_null,
-				fixup_free_igp_null,
-				FAILURE_ROUTE | BRANCH_FAILURE_ROUTE | EVENT_ROUTE},
-		{"uac_req_send", (cmd_function)w_uac_req_send, 0, 0, 0, ANY_ROUTE},
-		{"uac_reg_lookup", (cmd_function)w_uac_reg_lookup, 2, fixup_spve_pvar,
-				fixup_free_spve_pvar, ANY_ROUTE},
-		{"uac_reg_lookup_uri", (cmd_function)w_uac_reg_lookup_uri, 2,
-				fixup_spve_pvar, fixup_free_spve_pvar, ANY_ROUTE},
-		{"uac_reg_status", (cmd_function)w_uac_reg_status, 1, fixup_spve_null,
-				0, ANY_ROUTE},
-		{"uac_reg_request_to", (cmd_function)w_uac_reg_request_to, 2,
-				fixup_spve_igp, fixup_free_spve_igp,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"uac_reg_enable", (cmd_function)w_uac_reg_enable, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"uac_reg_disable", (cmd_function)w_uac_reg_disable, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"uac_reg_refresh", (cmd_function)w_uac_reg_refresh, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"bind_uac", (cmd_function)bind_uac, 1, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
+	{"uac_replace_from", (cmd_function)w_replace_from, 2, fixup_spve_spve,
+			0, REQUEST_ROUTE | BRANCH_ROUTE},
+	{"uac_replace_from", (cmd_function)w_replace_from, 1, fixup_spve_spve,
+			0, REQUEST_ROUTE | BRANCH_ROUTE},
+	{"uac_restore_from", (cmd_function)w_restore_from, 0, 0, 0,
+			REQUEST_ROUTE},
+	{"uac_replace_to", (cmd_function)w_replace_to, 2, fixup_spve_spve, 0,
+			REQUEST_ROUTE | BRANCH_ROUTE},
+	{"uac_replace_to", (cmd_function)w_replace_to, 1, fixup_spve_spve, 0,
+			REQUEST_ROUTE | BRANCH_ROUTE},
+	{"uac_restore_to", (cmd_function)w_restore_to, 0, 0, 0, REQUEST_ROUTE},
+	{"uac_auth", (cmd_function)w_uac_auth, 0, 0, 0,
+			FAILURE_ROUTE | BRANCH_FAILURE_ROUTE | EVENT_ROUTE},
+	{"uac_auth", (cmd_function)w_uac_auth_mode, 1, fixup_igp_null,
+			fixup_free_igp_null,
+			FAILURE_ROUTE | BRANCH_FAILURE_ROUTE | EVENT_ROUTE},
+	{"uac_auth_mode", (cmd_function)w_uac_auth_mode, 1, fixup_igp_null,
+			fixup_free_igp_null,
+			FAILURE_ROUTE | BRANCH_FAILURE_ROUTE | EVENT_ROUTE},
+	{"uac_req_send", (cmd_function)w_uac_req_send, 0, 0, 0, ANY_ROUTE},
+	{"uac_reg_lookup", (cmd_function)w_uac_reg_lookup, 2, fixup_spve_pvar,
+			fixup_free_spve_pvar, ANY_ROUTE},
+	{"uac_reg_lookup_uri", (cmd_function)w_uac_reg_lookup_uri, 2,
+			fixup_spve_pvar, fixup_free_spve_pvar, ANY_ROUTE},
+	{"uac_reg_status", (cmd_function)w_uac_reg_status, 1, fixup_spve_null,
+			0, ANY_ROUTE},
+	{"uac_reg_request_to", (cmd_function)w_uac_reg_request_to, 2,
+			fixup_spve_igp, fixup_free_spve_igp,
+			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"uac_reg_enable", (cmd_function)w_uac_reg_enable, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"uac_reg_disable", (cmd_function)w_uac_reg_disable, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"uac_reg_refresh", (cmd_function)w_uac_reg_refresh, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"bind_uac", (cmd_function)bind_uac, 1, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 
 /* Exported parameters */
 static param_export_t params[] = {
-		{"rr_from_store_param", PARAM_STR, &rr_from_param},
-		{"rr_to_store_param", PARAM_STR, &rr_to_param},
-		{"restore_mode", PARAM_STRING, &restore_mode_str},
-		{"restore_dlg", INT_PARAM, &uac_restore_dlg},
-		{"restore_passwd", PARAM_STR, &uac_passwd},
-		{"restore_from_avp", PARAM_STR, &restore_from_avp},
-		{"restore_to_avp", PARAM_STR, &restore_to_avp},
-		{"credential", PARAM_STRING | USE_FUNC_PARAM, (void *)&add_credential},
-		{"auth_username_avp", PARAM_STRING, &auth_username_avp},
-		{"auth_realm_avp", PARAM_STRING, &auth_realm_avp},
-		{"auth_password_avp", PARAM_STRING, &auth_password_avp},
-		{"reg_db_url", PARAM_STR, &reg_db_url},
-		{"reg_db_table", PARAM_STR, &reg_db_table},
-		{"reg_contact_addr", PARAM_STR, &reg_contact_addr},
-		{"reg_timer_interval", INT_PARAM, &reg_timer_interval},
-		{"reg_retry_interval", INT_PARAM, &reg_retry_interval},
-		{"reg_keep_callid", INT_PARAM, &reg_keep_callid},
-		{"reg_random_delay", INT_PARAM, &reg_random_delay},
-		{"reg_active", INT_PARAM, &reg_active_param},
-		{"reg_gc_interval", INT_PARAM, &_uac_reg_gc_interval},
-		{"reg_hash_size", INT_PARAM, &reg_htable_size},
-		{"reg_use_domain", PARAM_INT, &_uac_reg_use_domain},
-		{"default_socket", PARAM_STR, &uac_default_socket},
-		{"event_callback", PARAM_STR, &uac_event_callback},
-		{"reload_delta", INT_PARAM, &_uac_reg_reload_delta}, {0, 0, 0}};
+	{"rr_from_store_param", PARAM_STR, &rr_from_param},
+	{"rr_to_store_param", PARAM_STR, &rr_to_param},
+	{"restore_mode", PARAM_STRING, &restore_mode_str},
+	{"restore_dlg", INT_PARAM, &uac_restore_dlg},
+	{"restore_passwd", PARAM_STR, &uac_passwd},
+	{"restore_from_avp", PARAM_STR, &restore_from_avp},
+	{"restore_to_avp", PARAM_STR, &restore_to_avp},
+	{"credential", PARAM_STRING | USE_FUNC_PARAM, (void *)&add_credential},
+	{"auth_username_avp", PARAM_STRING, &auth_username_avp},
+	{"auth_realm_avp", PARAM_STRING, &auth_realm_avp},
+	{"auth_password_avp", PARAM_STRING, &auth_password_avp},
+	{"reg_db_url", PARAM_STR, &reg_db_url},
+	{"reg_db_table", PARAM_STR, &reg_db_table},
+	{"reg_contact_addr", PARAM_STR, &reg_contact_addr},
+	{"reg_timer_interval", INT_PARAM, &reg_timer_interval},
+	{"reg_retry_interval", INT_PARAM, &reg_retry_interval},
+	{"reg_keep_callid", INT_PARAM, &reg_keep_callid},
+	{"reg_random_delay", INT_PARAM, &reg_random_delay},
+	{"reg_active", INT_PARAM, &reg_active_param},
+	{"reg_gc_interval", INT_PARAM, &_uac_reg_gc_interval},
+	{"reg_hash_size", INT_PARAM, &reg_htable_size},
+	{"reg_use_domain", PARAM_INT, &_uac_reg_use_domain},
+	{"default_socket", PARAM_STR, &uac_default_socket},
+	{"event_callback", PARAM_STR, &uac_event_callback},
+	{"reload_delta", INT_PARAM, &_uac_reg_reload_delta},
+	{0, 0, 0}
+};
 
 
-struct module_exports exports = {"uac", /* module name */
-		DEFAULT_DLFLAGS,				/* dlopen flags */
-		cmds,							/* cmd exports */
-		params,							/* param exports */
-		0,								/* RPC method exports */
-		mod_pvs,						/* pseudo-variables exports */
-		0,								/* response handling function */
-		mod_init,						/* module initialization function */
-		child_init,						/* per-child init function */
-		mod_destroy};
+struct module_exports exports = {
+	"uac", /* module name */
+	DEFAULT_DLFLAGS,				/* dlopen flags */
+	cmds,							/* cmd exports */
+	params,							/* param exports */
+	0,								/* RPC method exports */
+	mod_pvs,						/* pseudo-variables exports */
+	0,								/* response handling function */
+	mod_init,						/* module initialization function */
+	child_init,						/* per-child init function */
+	mod_destroy
+};
+/* clang-format on */
 
 
 inline static int parse_auth_avp(char *avp_spec, pv_spec_t *avp, char *txt)
