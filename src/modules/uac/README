@@ -14,9 +14,15 @@ Ramona-Elena Modroiu
 
    <ramona@rosdev.ro>
 
+Tyler Moore
+
+   <tmoore@dopensource.com>
+
    Copyright © 2009-2010 asipto.com
 
    Copyright © 2005 Voice Sistem
+
+   Copyright © 2024 Tyler Moore, dOpenSource
      __________________________________________________________________
 
    Table of Contents
@@ -55,6 +61,7 @@ Ramona-Elena Modroiu
               3.22. reg_use_domain (int)
               3.23. default_socket (str)
               3.24. event_callback (str)
+              3.25. reload_delta (int)
 
         4. Functions
 
@@ -122,34 +129,35 @@ Ramona-Elena Modroiu
    1.22. Set reg_use_domain parameter
    1.23. Set the “default_socket” parameter
    1.24. Set event_callback parameter
-   1.25. uac_replace_from usage
+   1.25. Set reload_delta parameter
    1.26. uac_replace_from usage
-   1.27. uac_restore_from usage
-   1.28. uac_replace_to usage
+   1.27. uac_replace_from usage
+   1.28. uac_restore_from usage
    1.29. uac_replace_to usage
-   1.30. uac_restore_to usage
-   1.31. uac_auth usage
-   1.32. uac_auth_mode usage
-   1.33. uac_req_send usage
-   1.34. uac_reg_lookup usage
-   1.35. uac_reg_lookup_uri usage
-   1.36. uac_reg_status usage
-   1.37. uac_reg_request_to usage
-   1.38. uac_reg_enable usage
-   1.39. uac_reg_disable usage
-   1.40. uac_reg_refresh usage
-   1.41. event_route[uac:reply] usage
-   1.42. uac.reg_dump usage
-   1.43. uac.reg_info usage
-   1.44. uac.reg_enable usage
-   1.45. uac.reg_disable usage
-   1.46. uac.reg_unregister usage
-   1.47. uac.reg_reload usage
-   1.48. uac.reg_refresh usage
-   1.49. uac.reg_active usage
-   1.50. uac.reg_add usage
-   1.51. uac.reg_remove usage
-   1.52. lookup remote registrations usage
+   1.30. uac_replace_to usage
+   1.31. uac_restore_to usage
+   1.32. uac_auth usage
+   1.33. uac_auth_mode usage
+   1.34. uac_req_send usage
+   1.35. uac_reg_lookup usage
+   1.36. uac_reg_lookup_uri usage
+   1.37. uac_reg_status usage
+   1.38. uac_reg_request_to usage
+   1.39. uac_reg_enable usage
+   1.40. uac_reg_disable usage
+   1.41. uac_reg_refresh usage
+   1.42. event_route[uac:reply] usage
+   1.43. uac.reg_dump usage
+   1.44. uac.reg_info usage
+   1.45. uac.reg_enable usage
+   1.46. uac.reg_disable usage
+   1.47. uac.reg_unregister usage
+   1.48. uac.reg_reload usage
+   1.49. uac.reg_refresh usage
+   1.50. uac.reg_active usage
+   1.51. uac.reg_add usage
+   1.52. uac.reg_remove usage
+   1.53. lookup remote registrations usage
 
 Chapter 1. Admin Guide
 
@@ -187,6 +195,7 @@ Chapter 1. Admin Guide
         3.22. reg_use_domain (int)
         3.23. default_socket (str)
         3.24. event_callback (str)
+        3.25. reload_delta (int)
 
    4. Functions
 
@@ -308,6 +317,7 @@ Chapter 1. Admin Guide
    3.22. reg_use_domain (int)
    3.23. default_socket (str)
    3.24. event_callback (str)
+   3.25. reload_delta (int)
 
 3.1. rr_from_store_param (string)
 
@@ -595,9 +605,7 @@ modparam("uac", "reg_active", 0)
    Timer interval (in seconds) at which remote registrations are cleaned
    up in case of failure or removed. When setting it take in consideration
    the maximum value for retransmission timeout, this param should be
-   greater than it. This value also impacts how often the reload for
-   remote registrations table can be executed -- the RPC command will fail
-   if executed in less than reg_gc_interval value since the last reload.
+   greater than it.
 
    The default value is 150 seconds.
 
@@ -661,6 +669,23 @@ function ksr_uac_event(evname)
 end
  ...
 
+3.25. reload_delta (int)
+
+   The number of seconds that have to be waited before executing a new RPC
+   reload (uac.reg_reload). By default, RPC reloads are rate limited to a
+   maximum of one reload per the reload_delta interval.
+
+   If set to 0, no rate limit is configured. Note carefully: use this
+   configuration only in tests environments because executing two RPC
+   reloads of the same table at the same time can cause Kamailio to crash.
+
+   The default value is 30 seconds.
+
+   Example 1.25. Set reload_delta parameter
+...
+modparam("uac", "reload_delta", 20)
+...
+
 4. Functions
 
    4.1. uac_replace_from(display, uri)
@@ -710,7 +735,7 @@ end
    dialog variables and registering callbacks in dialog module for in
    dialog requests.
 
-   Example 1.25. uac_replace_from usage
+   Example 1.26. uac_replace_from usage
 ...
 # replace both display and uri
 uac_replace_from("$avp(s:display)","$avp(s:uri)");
@@ -731,7 +756,7 @@ uac_replace_from("","");
 
    This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
 
-   Example 1.26. uac_replace_from usage
+   Example 1.27. uac_replace_from usage
 ...
 uac_replace_from("sip:batman@gotham.org");
 ...
@@ -744,7 +769,7 @@ uac_replace_from("sip:batman@gotham.org");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.27. uac_restore_from usage
+   Example 1.28. uac_restore_from usage
 ...
 uac_restore_from();
 ...
@@ -761,7 +786,7 @@ uac_restore_from();
    automatically to display variable. That is no longer the case, if you
    expect that behavior, you will have to add the quotes by yourself.
 
-   Example 1.28. uac_replace_to usage
+   Example 1.29. uac_replace_to usage
 ...
 # replace both display and uri
 uac_replace_to("$avp(display)","$avp(uri)");
@@ -800,7 +825,7 @@ uac_replace_to("","");
    variables and registering callbacks in dialog module for in dialog
    requests.
 
-   Example 1.29. uac_replace_to usage
+   Example 1.30. uac_replace_to usage
 ...
 uac_replace_to("sip:batman@gotham.org");
 ...
@@ -813,7 +838,7 @@ uac_replace_to("sip:batman@gotham.org");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.30. uac_restore_to usage
+   Example 1.31. uac_restore_to usage
 ...
 uac_restore_to();
 ...
@@ -831,7 +856,7 @@ uac_restore_to();
    This function can be used from FAILURE_ROUTE and BRANCH_FAILURE_ROUTE
    event route.
 
-   Example 1.31. uac_auth usage
+   Example 1.32. uac_auth usage
 ...
 modparam("uac","auth_username_avp","$avp(auser)")
 modparam("uac","auth_password_avp","$avp(apass)")
@@ -876,7 +901,7 @@ failure_route[TRUNKAUTH] {
    This function can be used from FAILURE_ROUTE and BRANCH_FAILURE_ROUTE
    event route.
 
-   Example 1.32. uac_auth_mode usage
+   Example 1.33. uac_auth_mode usage
 ...
 modparam("uac","auth_username_avp","$avp(auser)")
 modparam("uac","auth_password_avp","$avp(apass)")
@@ -915,7 +940,7 @@ failure_route[TRUNKAUTH] {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE, LOCAL_ROUTE.
 
-   Example 1.33. uac_req_send usage
+   Example 1.34. uac_req_send usage
 ...
 $uac_req(method)="OPTIONS";
 $uac_req(ruri)="sip:kamailio.org";
@@ -932,7 +957,7 @@ uac_req_send();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.34. uac_reg_lookup usage
+   Example 1.35. uac_reg_lookup usage
 ...
 
 if(uac_reg_lookup("$rU", "$ru"))
@@ -949,7 +974,7 @@ if(uac_reg_lookup("$rU", "$ru"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.35. uac_reg_lookup_uri usage
+   Example 1.36. uac_reg_lookup_uri usage
 ...
 
 if(uac_reg_lookup("$var(uri)", "$ru"))
@@ -973,7 +998,7 @@ if(uac_reg_lookup("$var(uri)", "$ru"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.36. uac_reg_status usage
+   Example 1.37. uac_reg_status usage
 ...
 $var(status) = uac_reg_status("$rU");
 ...
@@ -998,7 +1023,7 @@ $var(status) = uac_reg_status("$rU");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.37. uac_reg_request_to usage
+   Example 1.38. uac_reg_request_to usage
 ...
 
 if(uac_reg_request_to("$fU", 0))
@@ -1026,7 +1051,7 @@ failure_route[REMOTE_AUTH] {
 
    The SIP processing is done on the next timer routine.
 
-   Example 1.38. uac_reg_enable usage
+   Example 1.39. uac_reg_enable usage
 ...
    uac_reg_enable("l_uuid", "account123");
 ...
@@ -1040,7 +1065,7 @@ failure_route[REMOTE_AUTH] {
 
    The SIP processing is done on the next timer routine.
 
-   Example 1.39. uac_reg_disable usage
+   Example 1.40. uac_reg_disable usage
 ...
    uac_reg_disable("l_uuid", "account123");
 ...
@@ -1051,7 +1076,7 @@ failure_route[REMOTE_AUTH] {
    record was already loaded, new values are taken from database,
    otherwise a new record is created.
 
-   Example 1.40. uac_reg_refresh usage
+   Example 1.41. uac_reg_refresh usage
 ...
    uac_reg_refresh("account123");
 ...
@@ -1081,7 +1106,7 @@ failure_route[REMOTE_AUTH] {
        timeout. In order for this to work, please also enable TM module
        "enable_uac_fr" modparam.
 
-   Example 1.41. event_route[uac:reply] usage
+   Example 1.42. event_route[uac:reply] usage
 ...
 $uac_req(method)="OPTIONS";
 $uac_req(ruri)="sip:kamailio.org";
@@ -1121,7 +1146,7 @@ event_route[uac:reply] {
 
    Dump the content of remote registration table from memory.
 
-   Example 1.42. uac.reg_dump usage
+   Example 1.43. uac.reg_dump usage
 ...
    kamcmd uac.reg_dump
 ...
@@ -1142,7 +1167,7 @@ event_route[uac:reply] {
      * 16 (2^4) - registration initialized (after loading from database,
        the registration process was initialized)
 
-   Example 1.43. uac.reg_info usage
+   Example 1.44. uac.reg_info usage
 ...
    kamcmd uac.reg_info l_uuid account123
    kamcmd uac.reg_info l_uuid s:12345678
@@ -1156,7 +1181,7 @@ event_route[uac:reply] {
    matched against the value of the attribute in the remote registration
    record.
 
-   Example 1.44. uac.reg_enable usage
+   Example 1.45. uac.reg_enable usage
 ...
    kamcmd uac.reg_enable l_uuid account123
    kamcmd uac.reg_enable l_uuid s:12345678
@@ -1170,7 +1195,7 @@ event_route[uac:reply] {
    matched against the value of the attribute in the remote registration
    record.
 
-   Example 1.45. uac.reg_disable usage
+   Example 1.46. uac.reg_disable usage
 ...
    kamcmd uac.reg_disable l_uuid account123
    kamcmd uac.reg_disable l_uuid s:12345678
@@ -1184,7 +1209,7 @@ event_route[uac:reply] {
    should be matched against the value of the attribute in the remote
    registration record.
 
-   Example 1.46. uac.reg_unregister usage
+   Example 1.47. uac.reg_unregister usage
 ...
    kamcmd uac.reg_unregister l_uuid account123
    kamcmd uac.reg_unregister l_uuid s:12345678
@@ -1193,11 +1218,11 @@ event_route[uac:reply] {
 8.6.  uac.reg_reload
 
    Reload the records from database for remote registrations. There is a
-   limit of how often the reload command can be executed, by default is
-   150 seconds between reloads -- see the reg_gc_interval parameter for
+   limit of how often the reload command can be executed. By default, it
+   is 30 seconds between reloads -- see the reload_delta parameter for
    more details.
 
-   Example 1.47. uac.reg_reload usage
+   Example 1.48. uac.reg_reload usage
 ...
    kamcmd uac.reg_reload
 ...
@@ -1208,7 +1233,7 @@ event_route[uac:reply] {
    the record exists in memory, it will be replaced with the new values
    loaded from database.
 
-   Example 1.48. uac.reg_refresh usage
+   Example 1.49. uac.reg_refresh usage
 ...
    kamcmd uac.reg_refresh account123
    kamcmd uac.reg_refresh s:12345678
@@ -1220,7 +1245,7 @@ event_route[uac:reply] {
    1 enables remote registrations for all records and 0 disables doing
    them.
 
-   Example 1.49. uac.reg_active usage
+   Example 1.50. uac.reg_active usage
 ...
    kamctl rpc uac.reg_active 0
    kamctl rpc uac.reg_active 1
@@ -1251,7 +1276,7 @@ event_route[uac:reply] {
    Use a dot (.) if no value should be set for realm, auth_password,
    auth_ha1, socket or contact_addr.
 
-   Example 1.50. uac.reg_add usage
+   Example 1.51. uac.reg_add usage
 ...
    kamcmd uac.reg_add ...
 ...
@@ -1260,7 +1285,7 @@ event_route[uac:reply] {
 
    Remove a UAC remote registration record by l_uuid.
 
-   Example 1.51. uac.reg_remove usage
+   Example 1.52. uac.reg_remove usage
 ...
    kamcmd uac.reg_remove my_l_uuid
 ...
@@ -1319,7 +1344,7 @@ event_route[uac:reply] {
    if the call is coming from a remote SIP provider and can change the
    R-URI to local username@domain. Afterwards you can run location lookup.
 
-   Example 1.52. lookup remote registrations usage
+   Example 1.53. lookup remote registrations usage
 ...
     if(uac_reg_lookup("$rU", "$ru")) {
         xlog("request from a remote SIP provider [$ou => $ru]\n");
