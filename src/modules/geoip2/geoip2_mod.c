@@ -139,6 +139,7 @@ static int geoip2_resid_param(modparam_t type, void *val)
 static int ki_geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass)
 {
 	geoip2_pv_reset(pvclass);
+	geoip2_reload_pv(geoip2_path);
 
 	return geoip2_update_pv(tomatch, pvclass);
 }
@@ -276,6 +277,8 @@ static int ki_geoip2_distance(
 		LM_ERR("cannot convert string to double: %.*s\n", _lon->len, _lon->s);
 		return -1;
 	}
+
+	geoip2_reload_pv(geoip2_path);
 
 	return geoip2_distance(msg, _ipaddr, lat, lon);
 }
