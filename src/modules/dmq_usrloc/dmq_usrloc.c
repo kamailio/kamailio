@@ -48,29 +48,33 @@ usrloc_api_t dmq_ul;
 
 MODULE_VERSION
 
-static param_export_t params[] = {{"enable", INT_PARAM, &dmq_usrloc_enable},
-		{"sync", INT_PARAM, &_dmq_usrloc_sync},
-		{"replicate_socket_info", INT_PARAM,
-				&_dmq_usrloc_replicate_socket_info},
-		{"batch_msg_contacts", INT_PARAM, &_dmq_usrloc_batch_msg_contacts},
-		{"batch_msg_size", INT_PARAM, &_dmq_usrloc_batch_msg_size},
-		{"batch_size", INT_PARAM, &_dmq_usrloc_batch_size},
-		{"batch_usleep", INT_PARAM, &_dmq_usrloc_batch_usleep},
-		{"usrloc_domain", PARAM_STR, &_dmq_usrloc_domain},
-		{"usrloc_delete", INT_PARAM, &_dmq_usrloc_delete}, {0, 0, 0}};
+/* clang-format off */
+static param_export_t params[] = {
+	{"enable", INT_PARAM, &dmq_usrloc_enable},
+	{"sync", INT_PARAM, &_dmq_usrloc_sync},
+	{"replicate_socket_info", INT_PARAM, &_dmq_usrloc_replicate_socket_info},
+	{"batch_msg_contacts", INT_PARAM, &_dmq_usrloc_batch_msg_contacts},
+	{"batch_msg_size", INT_PARAM, &_dmq_usrloc_batch_msg_size},
+	{"batch_size", INT_PARAM, &_dmq_usrloc_batch_size},
+	{"batch_usleep", INT_PARAM, &_dmq_usrloc_batch_usleep},
+	{"usrloc_domain", PARAM_STR, &_dmq_usrloc_domain},
+	{"usrloc_delete", INT_PARAM, &_dmq_usrloc_delete},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"dmq_usrloc",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		0,				 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* RPC method exports */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per-child init function */
-		0				 /* module destroy function */
+	"dmq_usrloc",	 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	0,				 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* RPC method exports */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* per-child init function */
+	0				 /* module destroy function */
 };
+/* clang-format on */
 
 
 static int mod_init(void)
