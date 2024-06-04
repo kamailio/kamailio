@@ -900,12 +900,10 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		goto cleanup;
 	}
 
-	if(ul.update_pcontact(d, &ci, pcontact) != 0) {
-		LM_ERR("Error updating contact\n");
-		goto cleanup;
-	}
-
 	if(ci.via_port == SIP_PORT) {
+		if(req_sec_params != NULL) {
+			pcontact->security_temp->data.ipsec = s;
+		}
 		// Update temp security parameters
 		if(ul.update_temp_security(d, pcontact->security_temp->type,
 				   pcontact->security_temp, pcontact)
@@ -914,6 +912,10 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		}
 	}
 
+	if(ul.update_pcontact(d, &ci, pcontact) != 0) {
+		LM_ERR("Error updating contact\n");
+		goto cleanup;
+	}
 
 	if(add_supported_secagree_header(m) != 0) {
 		goto cleanup;
