@@ -289,7 +289,7 @@ static inline int update_contacts(struct sip_msg *req, struct sip_msg *rpl,
 								LM_DBG("Error subscribing for contact\n");
 							}
 
-							// After successful registration try to unregister all callbacks for pending contacts ralated to this contact.
+							// After successful registration try to unregister all callbacks for pending contacts related to this contact.
 							ul.unreg_pending_contacts_cb(
 									_d, pcontact, PCSCF_CONTACT_EXPIRE);
 						}
