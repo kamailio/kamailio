@@ -101,6 +101,36 @@ int is_reply(struct sip_msg *msg)
 }
 
 
+/**
+ * return 1 (true) if it is a SIP message
+ */
+int w_is_sip(sip_msg_t *msg, char *foo, char *bar)
+{
+	if(msg == NULL)
+		return -1;
+
+	if(msg->first_line.flags & FLINE_FLAG_PROTO_SIP) {
+		return 1;
+	}
+
+	return -1;
+}
+
+/**
+ * return 1 (true) if it is a SIP message
+ */
+int is_sip(sip_msg_t *msg)
+{
+	if(msg == NULL)
+		return -1;
+
+	if(msg->first_line.flags & FLINE_FLAG_PROTO_SIP) {
+		return 1;
+	}
+
+	return -1;
+}
+
 /*
  * Checks if From includes a To-tag -- good to identify
  * if a request creates a new dialog
