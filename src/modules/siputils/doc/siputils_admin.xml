@@ -1134,6 +1134,27 @@ if (is_reply()) {
 </programlisting>
 		</example>
 	</section>
+	<section id="siputils.f.is_sip">
+		<title>
+		<function moreinfo="none">is_sip()</function>
+		</title>
+		<para>
+		Return true if it is a SIP message.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>is_sip</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_sip()) {
+	...
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="siputils.f.is_gruu">
 		<title>
 			<function moreinfo="none">is_gruu([uri])</function>
