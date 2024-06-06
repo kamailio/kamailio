@@ -79,6 +79,7 @@
 #define DS_ALG_RELWEIGHT 11
 #define DS_ALG_PARALLEL 12
 #define DS_ALG_LATENCY 13
+#define DS_ALG_OVERLOAD 14
 
 #define DS_HN_SIZE 256
 
@@ -376,8 +377,33 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 		} else if(pit->name.len == 7
 				  && strncasecmp(pit->name.s, "obproxy", 7) == 0) {
 			dest->attrs.obproxy = pit->body;
+		} else if(pit->name.len == 5
+				  && strncasecmp(pit->name.s, "ocmin", 5) == 0) {
+			str2int(&pit->body, &dest->attrs.ocmin);
+		} else if(pit->name.len == 5
+				  && strncasecmp(pit->name.s, "ocmax", 5) == 0) {
+			str2int(&pit->body, &dest->attrs.ocmax);
+		} else if(pit->name.len == 6
+				  && strncasecmp(pit->name.s, "ocrate", 6) == 0) {
+			str2int(&pit->body, &dest->attrs.ocmin);
 		}
 	}
+	if(dest->attrs.ocmax <= 0 || dest->attrs.ocmax > 100) {
+		dest->attrs.ocmax = 100;
+	}
+	if(dest->attrs.ocmin <= 0 || dest->attrs.ocmin > 100) {
+		dest->attrs.ocmin = 10;
+	}
+	if(dest->attrs.ocrate <= 0 || dest->attrs.ocrate > 100) {
+		dest->attrs.ocrate = 10;
+	}
+	if(dest->attrs.ocrate < dest->attrs.ocmin) {
+		dest->attrs.ocrate = dest->attrs.ocmin;
+	}
+	if(dest->attrs.ocrate > dest->attrs.ocmax) {
+		dest->attrs.ocrate = dest->attrs.ocmax;
+	}
+
 	if(params_list)
 		free_params(params_list);
 	return 0;

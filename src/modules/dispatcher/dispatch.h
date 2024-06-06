@@ -204,6 +204,9 @@ typedef struct _ds_attrs {
 	str ping_from;
 	str obproxy;
 	int rpriority;
+	uint32_t ocmin;
+	uint32_t ocmax;
+	uint32_t ocrate;
 } ds_attrs_t;
 
 typedef struct _ds_latency_stats {
@@ -236,6 +239,8 @@ typedef struct _ds_dest {
 	unsigned short int proto; 	/*!< protocol of the URI */
 	int message_count;
 	struct timeval dnstime;
+	uint32_t ocidx;
+	uint32_t ocdist[100];
 	struct _ds_dest *next;
 } ds_dest_t;
 
