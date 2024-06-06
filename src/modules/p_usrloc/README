@@ -631,6 +631,7 @@ modparam("p_usrloc", "default_db_type", "cluster")
      * 0 uses the old style using aor, contact and call-id
      * 1 uses ruid value
      * 2 uses the new style using aor, contact and call-id
+     * 3 uses contact uniq value + ruid value
 
    Default value is 0
 
