@@ -412,6 +412,18 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 /**
  *
  */
+void ds_oc_prepare(ds_dest_t *dp)
+{
+	int i;
+	for(i = 0; i < dp->attrs.ocrate; i++) {
+		dp->ocdist[i] = 1;
+	}
+	shuffle_uint100array(dp->ocdist);
+}
+
+/**
+ *
+ */
 ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 {
 	ds_dest_t *dp = NULL;
@@ -561,6 +573,8 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 			hostent2ip_addr(&dp->ip_address, he, 0);
 		}
 	}
+
+	ds_oc_prepare(dp);
 
 	return dp;
 err:
