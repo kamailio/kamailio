@@ -1644,7 +1644,7 @@ onreply_route {
      * setid - the set (group) id. The parameter can be an integer or a
        variable holding an integer value.
      * uri - the URI of the destination.
-     * val - the valie of the overload control rate (from 1 to 100) - how
+     * val - the value of the overload control rate (from 1 to 100) - how
        many times to skip using this destination in 100 selections.
 
    This function can be used from ANY_ROUTE.
