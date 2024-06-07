@@ -405,7 +405,7 @@ ipsec_destroy("location");
           </para>
         </listitem>
 		  </itemizedlist>
-		  <para>The last three parameters have to be string valies and can contain
+		  <para>The last three parameters have to be string values and can contain
 			variables.</para>
       <example>
         <title>ipsec_destroy_by_contact()</title>
