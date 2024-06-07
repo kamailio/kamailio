@@ -79,7 +79,7 @@
 #define DS_ALG_RELWEIGHT 11
 #define DS_ALG_PARALLEL 12
 #define DS_ALG_LATENCY 13
-#define DS_ALG_OVERLOAD 14
+#define DS_ALG_OVERLOAD 64 /* 2^6 - can be also used as a flag */
 
 #define DS_HN_SIZE 256
 
@@ -2618,7 +2618,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 				return -1;
 			xavp_filled = 1;
 			break;
-		case DS_ALG_OVERLOAD: /* 14 - round robin with overload control */
+		case DS_ALG_OVERLOAD: /* 64 - round robin with overload control */
 			lock_get(&idx->lock);
 			hash = idx->last;
 			idx->last = (idx->last + 1) % idx->nr;
