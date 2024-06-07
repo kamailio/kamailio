@@ -2032,7 +2032,7 @@ onreply_route {
 			<para><emphasis>uri</emphasis> - the URI of the destination.</para>
 		</listitem>
         <listitem>
-			<para><emphasis>val</emphasis> - the valie of the overload control
+			<para><emphasis>val</emphasis> - the value of the overload control
 			rate (from 1 to 100) - how many times to skip using this destination
 			in 100 selections.</para>
         </listitem>
