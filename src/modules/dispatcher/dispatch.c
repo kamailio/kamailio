@@ -424,6 +424,25 @@ void ds_oc_prepare(ds_dest_t *dp)
 /**
  *
  */
+static inline int ds_oc_skip(ds_set_t *dsg, int alg, int n)
+{
+	int ret = 0;
+
+	if(alg != DS_ALG_OVERLOAD) {
+		return 0;
+	}
+
+	if(dsg->dlist[n].ocdist[dsg->dlist[n].ocidx] == 1) {
+		ret = 0;
+	}
+	dsg->dlist[n].ocidx = (dsg->dlist[n].ocidx + 1) % 100;
+
+	return ret;
+}
+
+/**
+ *
+ */
 ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 {
 	ds_dest_t *dp = NULL;
@@ -2556,6 +2575,14 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 				return -1;
 			xavp_filled = 1;
 			break;
+		case DS_ALG_OVERLOAD: /* 14 - round robin with overload control */
+			lock_get(&idx->lock);
+			hash = idx->last;
+			idx->last = (idx->last + 1) % idx->nr;
+			vlast = idx->last;
+			lock_release(&idx->lock);
+			ulast = 1;
+			break;
 		default:
 			LM_WARN("algo %d not implemented - using first entry...\n",
 					rstate->alg);
@@ -2571,7 +2598,9 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 	i = hash;
 
 	/* if selected address is inactive, find next active */
-	while(!xavp_filled && ds_skip_dst(idx->dlist[i].flags)) {
+	while(!xavp_filled
+			&& (ds_skip_dst(idx->dlist[i].flags)
+					|| ds_oc_skip(idx, rstate->alg, i))) {
 		if(ds_use_default != 0 && idx->nr != 1)
 			i = (i + 1) % (idx->nr - 1);
 		else
@@ -2580,7 +2609,8 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 			/* back to start -- looks like no active dst */
 			if(ds_use_default != 0) {
 				i = idx->nr - 1;
-				if(ds_skip_dst(idx->dlist[i].flags))
+				if(ds_skip_dst(idx->dlist[i].flags)
+						|| ds_oc_skip(idx, rstate->alg, i))
 					return -1;
 				break;
 			} else {
