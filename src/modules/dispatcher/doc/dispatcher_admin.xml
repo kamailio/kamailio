@@ -2014,6 +2014,42 @@ onreply_route {
 </programlisting>
 		</example>
 	</section>
+	<section id="dispatcher.f.ds_oc_set_rate">
+		<title>
+		<function moreinfo="none">ds_oc_set_rate(setid, uri, val)</function>
+		</title>
+		<para>
+		Sets the overload control rate for the destination (setid, uri).
+		</para>
+		<para>Description of parameters:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>setid</emphasis> - the set (group) id. The parameter
+				can be an integer or a variable holding an integer value.
+			</para>
+		</listitem>
+        <listitem>
+			<para><emphasis>uri</emphasis> - the URI of the destination.</para>
+		</listitem>
+        <listitem>
+			<para><emphasis>val</emphasis> - the valie of the overload control
+			rate (from 1 to 100) - how many times to skip using this destination
+			in 100 selections.</para>
+        </listitem>
+		</itemizedlist>
+
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_oc_set_rate()</function> usage</title>
+		<programlisting format="linespecific">
+...
+    ds_oc_set_rate("1", "sip:127.0.0.1:5080", "30");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
