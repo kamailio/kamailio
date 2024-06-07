@@ -1420,6 +1420,13 @@ With congestion control the formula becomes :
 			</listitem>
 			<listitem>
 				<para>
+				<quote>64</quote> - round-robin (next destination) with over
+				load control (destination record is skipped based on over
+				load control rate).
+				</para>
+			</listitem>
+			<listitem>
+				<para>
 				<quote>X</quote> - if the algorithm is not implemented, the
 				first entry in set is chosen.
 				</para>
@@ -2387,6 +2394,14 @@ kamctl rpc dispatcher.hash 4 bob server.com
 						</listitem>
 						<listitem>
 							<para>'latency' - latency_stats initialization in ms.</para>
+						</listitem>
+						<listitem>
+							<para>'ocmin' - minimum limit for over load control rate
+							(value between 0 and 100, default 10).</para>
+						</listitem>
+						<listitem>
+							<para>'ocrate' - over load control rate
+							(value between 0 and 100, default 100).</para>
 						</listitem>
 					</itemizedlist>
 		</para>
