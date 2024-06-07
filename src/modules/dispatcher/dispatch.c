@@ -209,6 +209,26 @@ int ds_hash_load_destroy(void)
 }
 
 /**
+ *
+ */
+static inline int ds_get_index(int group, int ds_list_idx, ds_set_t **index)
+{
+	ds_set_t *si = NULL;
+
+	if(index == NULL || group < 0 || ds_lists[ds_list_idx] == NULL)
+		return -1;
+
+	/* get the index of the set */
+	si = ds_avl_find(ds_lists[ds_list_idx], group);
+
+	if(si == NULL)
+		return -1;
+
+	*index = si;
+	return 0;
+}
+
+/**
  * Recursivly iterate over ds_set and execute callback
  */
 void ds_iter_set(ds_set_t *node,
@@ -395,7 +415,7 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 		dest->attrs.ocmin = 10;
 	}
 	if(dest->attrs.ocrate <= 0 || dest->attrs.ocrate > 100) {
-		dest->attrs.ocrate = 10;
+		dest->attrs.ocrate = 100;
 	}
 	if(dest->attrs.ocrate < dest->attrs.ocmin) {
 		dest->attrs.ocrate = dest->attrs.ocmin;
@@ -418,7 +438,50 @@ void ds_oc_prepare(ds_dest_t *dp)
 	for(i = 0; i < dp->attrs.ocrate; i++) {
 		dp->ocdist[i] = 1;
 	}
+	for(i = dp->attrs.ocrate; i < 100; i++) {
+		dp->ocdist[i] = 0;
+	}
 	shuffle_uint100array(dp->ocdist);
+}
+
+/**
+ *
+ */
+int ds_oc_set(sip_msg_t *msg, int setid, str *duri, int ival)
+{
+	int i = 0;
+	int ret = -1;
+	ds_set_t *idx = NULL;
+
+	if(_ds_list == NULL || _ds_list_nr <= 0) {
+		LM_ERR("the list is null\n");
+		return -1;
+	}
+
+	/* get the index of the set */
+	if(ds_get_index(setid, *ds_crt_idx, &idx) != 0) {
+		LM_ERR("destination set [%d] not found\n", setid);
+		return -1;
+	}
+	LM_DBG("update oc rate for %.*s in group %d to %d\n", duri->len, duri->s,
+			setid, ival);
+
+	while(i < idx->nr) {
+		if(idx->dlist[i].uri.len == duri->len
+				&& strncasecmp(idx->dlist[i].uri.s, duri->s, duri->len) == 0) {
+			idx->dlist[i].attrs.ocrate = ival;
+			if(idx->dlist[i].attrs.ocrate < idx->dlist[i].attrs.ocmin) {
+				idx->dlist[i].attrs.ocrate = idx->dlist[i].attrs.ocmin;
+			}
+			if(idx->dlist[i].attrs.ocrate > idx->dlist[i].attrs.ocmax) {
+				idx->dlist[i].attrs.ocrate = idx->dlist[i].attrs.ocmax;
+			}
+			ds_oc_prepare(&idx->dlist[i]);
+			ret = 1;
+		}
+		i++;
+	}
+	return ret;
 }
 
 /**
@@ -1624,26 +1687,6 @@ int ds_hash_pvar(struct sip_msg *msg, unsigned int *hash)
 	LM_DBG("Hashing of '%.*s' resulted in %u !\n", hash_str.len, hash_str.s,
 			*hash);
 
-	return 0;
-}
-
-/**
- *
- */
-static inline int ds_get_index(int group, int ds_list_idx, ds_set_t **index)
-{
-	ds_set_t *si = NULL;
-
-	if(index == NULL || group < 0 || ds_lists[ds_list_idx] == NULL)
-		return -1;
-
-	/* get the index of the set */
-	si = ds_avl_find(ds_lists[ds_list_idx], group);
-
-	if(si == NULL)
-		return -1;
-
-	*index = si;
 	return 0;
 }
 
