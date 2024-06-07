@@ -122,6 +122,7 @@ Federico Cabiddu
               4.14. ds_load_unset()
               4.15. ds_reload()
               4.16. ds_dsg_fetch(setid)
+              4.17. ds_oc_set_rate(setid, uri, val)
 
         5. RPC Commands
 
@@ -211,8 +212,9 @@ Federico Cabiddu
    1.57. ds_load_unset usage
    1.58. ds_reload usage
    1.59. ds_dsg_fetch() usage
-   1.60. dispatcher list file
-   1.61. Kamailio config script - sample dispatcher usage
+   1.60. ds_oc_set_rate() usage
+   1.61. dispatcher list file
+   1.62. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -289,6 +291,7 @@ Chapter 1. Admin Guide
         4.14. ds_load_unset()
         4.15. ds_reload()
         4.16. ds_dsg_fetch(setid)
+        4.17. ds_oc_set_rate(setid, uri, val)
 
    5. RPC Commands
 
@@ -1115,6 +1118,7 @@ modparam("dispatcher", "ds_interval_mode", 7200)
    4.14. ds_load_unset()
    4.15. ds_reload()
    4.16. ds_dsg_fetch(setid)
+   4.17. ds_oc_set_rate(setid, uri, val)
 
 4.1.  ds_select_dst(set, alg[, limit])
 
@@ -1227,6 +1231,9 @@ GATEWAY | PRIORITY | ESTIMATED | ADJUSTED | LOAD
 With congestion control the formula becomes :
     CONGESTION_MS = CURRENT_LATENCY_MS - NORMAL_CONDITION_LATENCY_MS
     ADJUSTED_PRIORITY = PRIORITY - (CONGESTION_MS/PRIORITY)
+          + “64” - round-robin (next destination) with over load control
+            (destination record is skipped based on over load control
+            rate).
           + “X” - if the algorithm is not implemented, the first entry in
             set is chosen.
      * limit - the maximum number of items to be stored in XAVP list for
@@ -1629,6 +1636,24 @@ onreply_route {
     xinfo("set id: 1 - all: $dsg(count); active: $dsg(active)\n");
 ...
 
+4.17.  ds_oc_set_rate(setid, uri, val)
+
+   Sets the overload control rate for the destination (setid, uri).
+
+   Description of parameters:
+     * setid - the set (group) id. The parameter can be an integer or a
+       variable holding an integer value.
+     * uri - the URI of the destination.
+     * val - the valie of the overload control rate (from 1 to 100) - how
+       many times to skip using this destination in 100 selections.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.60. ds_oc_set_rate() usage
+...
+    ds_oc_set_rate("1", "sip:127.0.0.1:5080", "30");
+...
+
 5. RPC Commands
 
    5.1. dispatcher.set_state
@@ -1890,6 +1915,10 @@ kamctl rpc dispatcher.hash 4 bob server.com
      * 'obproxy' - SIP URI of outbound proxy to be used when sending
        pings. It overwrites the general ds_outbound_proxy parameter.
      * 'latency' - latency_stats initialization in ms.
+     * 'ocmin' - minimum limit for over load control rate (value between 0
+       and 100, default 10).
+     * 'ocrate' - over load control rate (value between 0 and 100, default
+       100).
 
 6.1.2. File Format
 
@@ -1907,7 +1936,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.60. dispatcher list file
+   Example 1.61. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -1932,7 +1961,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.61. Kamailio config script - sample dispatcher usage
+   Example 1.62. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
