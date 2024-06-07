@@ -838,6 +838,7 @@ struct dlginfo_cell *get_dialog_data(struct dlg_cell *dlg, int type,
 		}
 		memset(dlginfo->pubruris_caller, 0, sizeof(struct str_list));
 		dlginfo->pubruris_caller->s.s = shm_str2char_dup(&dlginfo->from_uri);
+		dlginfo->pubruris_caller->s.len = dlginfo->from_uri.len;
 		if(!dlginfo->pubruris_caller->s.s) {
 			free_dlginfo_cell(dlginfo);
 			return NULL;
