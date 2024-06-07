@@ -300,5 +300,5 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate);
 ds_rctx_t *ds_get_rctx(void);
 unsigned int ds_get_hash(str *x, str *y);
 
-int ds_oc_set(sip_msg_t *msg, int setid, str *uri, int ival);
+int ds_oc_set_rate(sip_msg_t *msg, int setid, str *uri, int ival);
 #endif

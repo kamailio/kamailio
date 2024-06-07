@@ -447,7 +447,7 @@ void ds_oc_prepare(ds_dest_t *dp)
 /**
  *
  */
-int ds_oc_set(sip_msg_t *msg, int setid, str *duri, int ival)
+int ds_oc_set_rate(sip_msg_t *msg, int setid, str *duri, int ival)
 {
 	int i = 0;
 	int ret = -1;
