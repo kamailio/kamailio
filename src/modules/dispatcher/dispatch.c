@@ -408,14 +408,14 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 			str2int(&pit->body, &dest->attrs.ocmin);
 		}
 	}
-	if(dest->attrs.ocmax <= 0 || dest->attrs.ocmax > 100) {
+	if(dest->attrs.ocmax < 0 || dest->attrs.ocmax > 100) {
 		dest->attrs.ocmax = 100;
 	}
-	if(dest->attrs.ocmin <= 0 || dest->attrs.ocmin > 100) {
+	if(dest->attrs.ocmin < 0 || dest->attrs.ocmin > 100) {
 		dest->attrs.ocmin = 10;
 	}
 	if(dest->attrs.ocrate <= 0 || dest->attrs.ocrate > 100) {
-		dest->attrs.ocrate = 100;
+		dest->attrs.ocrate = 0;
 	}
 	if(dest->attrs.ocrate < dest->attrs.ocmin) {
 		dest->attrs.ocrate = dest->attrs.ocmin;
@@ -435,10 +435,10 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 void ds_oc_prepare(ds_dest_t *dp)
 {
 	int i;
-	for(i = 0; i < dp->attrs.ocrate; i++) {
+	for(i = 0; i < 100 - dp->attrs.ocrate; i++) {
 		dp->ocdist[i] = 1;
 	}
-	for(i = dp->attrs.ocrate; i < 100; i++) {
+	for(i = 100 - dp->attrs.ocrate; i < 100; i++) {
 		dp->ocdist[i] = 0;
 	}
 	shuffle_uint100array(dp->ocdist);
