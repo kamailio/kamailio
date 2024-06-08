@@ -645,6 +645,93 @@ request_route {
 </programlisting>
 		</example>
 	</section>
+	
+	<section id="topos.f.get_callid_mask">
+	<title>
+		<function moreinfo="none">get_callid_mask(call-ID, outvar)</function>
+	</title>
+	<para>
+	The function will mask the given call-ID to the masked call-ID value. This is useful 
+	 in case of Refer-To header which may contain call-ID which need to be masked before sending.
+	</para>
+	
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	<listitem>
+		<para>
+		<emphasis>call-ID</emphasis> - Call-ID which needs to be masked.
+		</para>
+  	</listitem>
+	<listitem>
+		<para>
+ 		<emphasis>outvar</emphasis> - output variable name. The value resulted
+		after applying the call ID mask.
+ 		</para>
+    	</listitem>
+	
+	</itemizedlist>
+	<para>
+	This function can be used from ANY_ROUTE.
+	</para>
+	<example>
+	<title><function>get_callid_mask</function> usage</title>
+	<programlisting format="linespecific">
+		...
+		get_callid_mask("$var(refcallid)","$var(mcallid)");
+		if($var(mcallid)==""){
+     		
+     			xlog("Unable to mask CallID $var(refcallid)\n");
+     			return;
+     		}else{
+     		     xlog("Masked  CALLID is $var(mcallid) for callID $var(refcallid)\n");
+		...
+	</programlisting>
+	</example>
+	</section>
+	
+	<section id="topos.f.get_callid_unmask">
+	<title>
+		<function moreinfo="none">get_callid_unmask(call-ID, outvar)</function>
+	</title>
+	<para>
+	The function will unmask the given call-ID to the orginal call-ID value. This is useful 
+	 in case of Refer-To header which may contain call-ID which need to be unmasked before sending.
+	</para>
+	
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	<listitem>
+		<para>
+		<emphasis>call-ID</emphasis> - Call-ID which needs to be masked.
+		</para>
+  	</listitem>
+	<listitem>
+		<para>
+ 		<emphasis>outvar</emphasis> - output variable name. The value resulted
+		after applying the call ID unmask.
+ 		</para>
+    	</listitem>
+	
+	</itemizedlist>
+	<para>
+	This function can be used from ANY_ROUTE.
+	</para>
+	<example>
+	<title><function>get_callid_unmask</function> usage</title>
+	<programlisting format="linespecific">
+		...
+		get_callid_unmask("$var(refcallid)","$var(mcallid)");
+		if($var(mcallid)==""){
+     		
+     			xlog("Unable to unmask CallID $var(refcallid)\n");
+     			return;
+     		}else{
+     		     xlog("Unmasked  CALLID is $var(mcallid) for callID $var(refcallid)\n");
+		...
+	</programlisting>
+	</example>
+	</section>
+	
 	</section>
 
 	<section>
