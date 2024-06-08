@@ -361,7 +361,7 @@ ipsec_destroy("location");
        recv_host - received host to match the record.
        recv_port - received port to match the record.
 
-   The last three parameters have to be string valies and can contain
+   The last three parameters have to be string values and can contain
    variables.
 
    Example 1.14. ipsec_destroy_by_contact()
