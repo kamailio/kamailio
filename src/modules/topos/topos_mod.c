@@ -57,6 +57,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 #include "../../core/data_lump.h"
+#include "../../core/lvalue.h"
 
 #include "../../lib/srdb1/db.h"
 #include "../../core/utils/sruid.h"
@@ -152,12 +153,27 @@ static void destroy(void);
 
 static int w_tps_set_context(sip_msg_t *msg, char *pctx, char *p2);
 
+static int fixup_get_callid(void **param, int param_no);
+static int get_callid_mask_f(sip_msg_t *msg, char *ctype, char *ovar);
+static int get_callid_mask_helper(sip_msg_t *msg, char *ctype, char *ovar, int mode);
+static int ki_get_callid_mask(sip_msg_t *msg, str *ctype, str *pvname);
+static int ki_get_callid_mask_helper(sip_msg_t *msg, str *ctype, pv_spec_t *dst, int mode);
+
+static int get_callid_unmask_f(sip_msg_t *msg, char *ctype, char *ovar);
+static int get_callid_unmask_helper(sip_msg_t *msg, char *ctype, char *ovar, int mode);
+static int ki_get_callid_unmask(sip_msg_t *msg, str *ctype, str *pvname);
+static int ki_get_callid_unmask_helper(sip_msg_t *msg, str *ctype, pv_spec_t *dst, int mode);
+
 int bind_topos(topos_api_t *api);
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"tps_set_context", (cmd_function)w_tps_set_context, 1, fixup_spve_null,
 			fixup_free_spve_null, ANY_ROUTE},
+	{"get_callid_mask", (cmd_function)get_callid_mask_f, 2, fixup_get_callid,
+				0,ANY_ROUTE},
+	{"get_callid_unmask", (cmd_function)get_callid_unmask_f, 2, fixup_get_callid,
+				0,ANY_ROUTE},
 
 	{"bind_topos", (cmd_function)bind_topos, 0, 0, 0, 0},
 
@@ -770,6 +786,162 @@ int bind_topos(topos_api_t *api)
 	return 0;
 }
 
+
+/*
+ * Fix fixup_get_callid params: content type (string that may contain pvars) and
+ * result (writable pvar).
+ */
+static int fixup_get_callid(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_spve_null(param, 1);
+	}
+
+	if(param_no == 2) {
+		if(fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if(((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+static int get_callid_mask_f(sip_msg_t *msg, char *ctype, char *ovar)
+{
+	return get_callid_mask_helper(msg, ctype, ovar, 1);
+}
+
+static int get_callid_mask_helper(
+		sip_msg_t *msg, char *ctype, char *ovar, int mode)
+{
+	str content_type;
+
+	if(ctype == 0) {
+		LM_ERR("invalid Content-type parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t *)ctype, &content_type) != 0) {
+		LM_ERR("unable to get content type\n");
+		return -1;
+	}
+
+	return ki_get_callid_mask_helper(msg, &content_type, (pv_spec_t *)ovar, mode);
+}
+
+static int ki_get_callid_mask(sip_msg_t *msg, str *ctype, str *pvname)
+{
+	pv_spec_t *pvd = NULL;
+
+	pvd = pv_cache_get(pvname);
+	if(pvd == NULL) {
+		LM_ERR("failed to get pv spec\n");
+		return -1;
+	}
+
+	return ki_get_callid_mask_helper(msg, ctype, pvd, 1);
+}
+
+static int ki_get_callid_mask_helper(
+		sip_msg_t *msg, str *ctype, pv_spec_t *dst, int mode)
+{
+	str out;
+	pv_value_t val;
+	if(_tps_param_mask_callid == 0) {
+		memset(&val, 0, sizeof(pv_value_t));
+		val.flags = PV_VAL_STR;
+		val.rs.s = ctype->s;
+		val.rs.len = ctype->len;
+		dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+		LM_ERR("Call-ID Mask not enabled\n");
+		return 1;
+	}
+	if(thb.mask_callid(ctype, &out) != 0) {
+		LM_ERR("cannot encode callid\n");
+		return -1;
+	}
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags = PV_VAL_STR;
+	val.rs.s = out.s;
+	val.rs.len = out.len;
+	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+	return 1;
+}
+
+/**
+
+Unmask CallID
+*/
+
+static int get_callid_unmask_f(sip_msg_t *msg, char *ctype, char *ovar)
+{
+	return get_callid_unmask_helper(msg, ctype, ovar, 1);
+}
+
+static int get_callid_unmask_helper(
+		sip_msg_t *msg, char *ctype, char *ovar, int mode)
+{
+	str content_type;
+
+	if(ctype == 0) {
+		LM_ERR("invalid Content-type parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t *)ctype, &content_type) != 0) {
+		LM_ERR("unable to get content type\n");
+		return -1;
+	}
+
+	return ki_get_callid_unmask_helper(msg, &content_type, (pv_spec_t *)ovar, mode);
+}
+
+static int ki_get_callid_unmask(sip_msg_t *msg, str *ctype, str *pvname)
+{
+	pv_spec_t *pvd = NULL;
+
+	pvd = pv_cache_get(pvname);
+	if(pvd == NULL) {
+		LM_ERR("failed to get pv spec\n");
+		return -1;
+	}
+
+	return ki_get_callid_unmask_helper(msg, ctype, pvd, 1);
+}
+
+static int ki_get_callid_unmask_helper(
+		sip_msg_t *msg, str *ctype, pv_spec_t *dst, int mode)
+{
+	str out;
+	pv_value_t val;
+	if(_tps_param_mask_callid == 0) {
+		memset(&val, 0, sizeof(pv_value_t));
+		val.flags = PV_VAL_STR;
+		val.rs.s = ctype->s;
+		val.rs.len = ctype->len;
+		dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+		LM_ERR("Call-ID Mask not enabled\n");
+		return 1;
+	}
+	if(thb.unmask_callid(ctype, &out) != 0) {
+		LM_ERR("cannot encode callid\n");
+		return -1;
+	}
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags = PV_VAL_STR;
+	val.rs.s = out.s;
+	val.rs.len = out.len;
+	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+	return 1;
+}
+
 /**
  *
  */
@@ -780,9 +952,20 @@ static sr_kemi_t sr_kemi_topos_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("topos"), str_init("get_callid_mask"),
+		SR_KEMIP_INT, ki_get_callid_mask,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("topos"), str_init("get_callid_unmask"),
+		SR_KEMIP_INT, ki_get_callid_unmask,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+
 /* clang-format on */
 
 /**
