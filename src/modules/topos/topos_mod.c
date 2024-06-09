@@ -155,14 +155,18 @@ static int w_tps_set_context(sip_msg_t *msg, char *pctx, char *p2);
 
 static int fixup_get_callid(void **param, int param_no);
 static int get_callid_mask_f(sip_msg_t *msg, char *ctype, char *ovar);
-static int get_callid_mask_helper(sip_msg_t *msg, char *ctype, char *ovar, int mode);
+static int get_callid_mask_helper(
+		sip_msg_t *msg, char *ctype, char *ovar, int mode);
 static int ki_get_callid_mask(sip_msg_t *msg, str *ctype, str *pvname);
-static int ki_get_callid_mask_helper(sip_msg_t *msg, str *ctype, pv_spec_t *dst, int mode);
+static int ki_get_callid_mask_helper(
+		sip_msg_t *msg, str *ctype, pv_spec_t *dst, int mode);
 
 static int get_callid_unmask_f(sip_msg_t *msg, char *ctype, char *ovar);
-static int get_callid_unmask_helper(sip_msg_t *msg, char *ctype, char *ovar, int mode);
+static int get_callid_unmask_helper(
+		sip_msg_t *msg, char *ctype, char *ovar, int mode);
 static int ki_get_callid_unmask(sip_msg_t *msg, str *ctype, str *pvname);
-static int ki_get_callid_unmask_helper(sip_msg_t *msg, str *ctype, pv_spec_t *dst, int mode);
+static int ki_get_callid_unmask_helper(
+		sip_msg_t *msg, str *ctype, pv_spec_t *dst, int mode);
 
 int bind_topos(topos_api_t *api);
 
@@ -833,7 +837,8 @@ static int get_callid_mask_helper(
 		return -1;
 	}
 
-	return ki_get_callid_mask_helper(msg, &content_type, (pv_spec_t *)ovar, mode);
+	return ki_get_callid_mask_helper(
+		msg, &content_type, (pv_spec_t *)ovar, mode);
 }
 
 static int ki_get_callid_mask(sip_msg_t *msg, str *ctype, str *pvname)
@@ -900,7 +905,8 @@ static int get_callid_unmask_helper(
 		return -1;
 	}
 
-	return ki_get_callid_unmask_helper(msg, &content_type, (pv_spec_t *)ovar, mode);
+	return ki_get_callid_unmask_helper(
+		msg, &content_type, (pv_spec_t *)ovar, mode);
 }
 
 static int ki_get_callid_unmask(sip_msg_t *msg, str *ctype, str *pvname)
