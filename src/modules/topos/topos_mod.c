@@ -838,7 +838,7 @@ static int get_callid_mask_helper(
 	}
 
 	return ki_get_callid_mask_helper(
-		msg, &content_type, (pv_spec_t *)ovar, mode);
+			msg, &content_type, (pv_spec_t *)ovar, mode);
 }
 
 static int ki_get_callid_mask(sip_msg_t *msg, str *ctype, str *pvname)
@@ -906,7 +906,7 @@ static int get_callid_unmask_helper(
 	}
 
 	return ki_get_callid_unmask_helper(
-		msg, &content_type, (pv_spec_t *)ovar, mode);
+			msg, &content_type, (pv_spec_t *)ovar, mode);
 }
 
 static int ki_get_callid_unmask(sip_msg_t *msg, str *ctype, str *pvname)
