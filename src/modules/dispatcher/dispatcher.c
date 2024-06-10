@@ -185,7 +185,7 @@ static int w_ds_reload(struct sip_msg* msg, char*, char*);
 static int w_ds_is_active(sip_msg_t *msg, char *pset, char *p2);
 static int w_ds_is_active_uri(sip_msg_t *msg, char *pset, char *puri);
 static int w_ds_dsg_fetch(sip_msg_t *msg, char *pset, char *p2);
-static int w_ds_oc_set_rate(sip_msg_t*, char*, char*, char*);
+static int w_ds_oc_set_attrs(sip_msg_t*, char*, char*, char*, char*);
 
 static int fixup_ds_is_from_list(void** param, int param_no);
 static int fixup_ds_list_exist(void** param,int param_no);
@@ -262,8 +262,8 @@ static cmd_export_t cmds[]={
 		0, 0, 0},
 	{"ds_reload", (cmd_function)w_ds_reload, 0,
 		0, 0, ANY_ROUTE},
-	{"ds_oc_set_rate",  (cmd_function)w_ds_oc_set_rate, 3,
-		fixup_isi, fixup_free_isi, ANY_ROUTE},
+	{"ds_oc_set_attrs",  (cmd_function)w_ds_oc_set_attrs, 4,
+		fixup_isii, fixup_free_isii, ANY_ROUTE},
 	{"ds_dsg_fetch",  (cmd_function)w_ds_dsg_fetch, 1,
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{0,0,0,0,0,0}
@@ -1392,11 +1392,13 @@ static int w_ds_dsg_fetch(sip_msg_t *msg, char *pset, char *p2)
 /**
  *
  */
-static int w_ds_oc_set_rate(sip_msg_t *msg, char *pset, char *puri, char *pval)
+static int w_ds_oc_set_attrs(
+		sip_msg_t *msg, char *pset, char *puri, char *prval, char *ptval)
 {
 	int iset;
 	str suri;
-	int ival;
+	int irval;
+	int itval;
 
 	if(fixup_get_ivalue(msg, (gparam_t *)pset, &iset) != 0) {
 		LM_ERR("cannot get set id param value\n");
@@ -1406,12 +1408,16 @@ static int w_ds_oc_set_rate(sip_msg_t *msg, char *pset, char *puri, char *pval)
 		LM_ERR("cannot get uri value\n");
 		return -1;
 	}
-	if(fixup_get_ivalue(msg, (gparam_t *)pval, &ival) != 0) {
-		LM_ERR("cannot get param value\n");
+	if(fixup_get_ivalue(msg, (gparam_t *)prval, &irval) != 0) {
+		LM_ERR("cannot get rate param value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t *)ptval, &itval) != 0) {
+		LM_ERR("cannot get time interval param value\n");
 		return -1;
 	}
 
-	return ds_oc_set_rate(msg, iset, &suri, ival);
+	return ds_oc_set_attrs(msg, iset, &suri, irval, itval);
 }
 
 /**

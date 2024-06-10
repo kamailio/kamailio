@@ -447,11 +447,13 @@ void ds_oc_prepare(ds_dest_t *dp)
 /**
  *
  */
-int ds_oc_set_rate(sip_msg_t *msg, int setid, str *duri, int ival)
+int ds_oc_set_attrs(sip_msg_t *msg, int setid, str *duri, int irval, int itval)
 {
 	int i = 0;
 	int ret = -1;
 	ds_set_t *idx = NULL;
+	struct timeval tnow;
+	struct timeval tdiff;
 
 	if(_ds_list == NULL || _ds_list_nr <= 0) {
 		LM_ERR("the list is null\n");
@@ -464,12 +466,18 @@ int ds_oc_set_rate(sip_msg_t *msg, int setid, str *duri, int ival)
 		return -1;
 	}
 	LM_DBG("update oc rate for %.*s in group %d to %d\n", duri->len, duri->s,
-			setid, ival);
+			setid, irval);
+
+	gettimeofday(&tnow, NULL);
+	timerclear(&tdiff);
+
+	/* interval set to itval or to default 500 milliseconds */
+	tdiff.tv_usec = (itval > 0) ? itval : 500000;
 
 	while(i < idx->nr) {
 		if(idx->dlist[i].uri.len == duri->len
 				&& strncasecmp(idx->dlist[i].uri.s, duri->s, duri->len) == 0) {
-			idx->dlist[i].attrs.ocrate = ival;
+			idx->dlist[i].attrs.ocrate = irval;
 			if(idx->dlist[i].attrs.ocrate < idx->dlist[i].attrs.ocmin) {
 				idx->dlist[i].attrs.ocrate = idx->dlist[i].attrs.ocmin;
 			}
@@ -477,6 +485,7 @@ int ds_oc_set_rate(sip_msg_t *msg, int setid, str *duri, int ival)
 				idx->dlist[i].attrs.ocrate = idx->dlist[i].attrs.ocmax;
 			}
 			ds_oc_prepare(&idx->dlist[i]);
+			timeradd(&tnow, &tdiff, &idx->dlist[i].octime);
 			ret = 1;
 		}
 		i++;
