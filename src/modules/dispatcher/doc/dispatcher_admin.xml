@@ -2014,12 +2014,13 @@ onreply_route {
 </programlisting>
 		</example>
 	</section>
-	<section id="dispatcher.f.ds_oc_set_rate">
+	<section id="dispatcher.f.ds_oc_set_attrs">
 		<title>
-		<function moreinfo="none">ds_oc_set_rate(setid, uri, val)</function>
+		<function moreinfo="none">ds_oc_set_attrs(setid, uri, rval, tval)</function>
 		</title>
 		<para>
-		Sets the overload control rate for the destination (setid, uri).
+		Sets the overload control rate and time internval limit
+		for the destination (setid, uri).
 		</para>
 		<para>Description of parameters:</para>
 		<itemizedlist>
@@ -2032,9 +2033,14 @@ onreply_route {
 			<para><emphasis>uri</emphasis> - the URI of the destination.</para>
 		</listitem>
         <listitem>
-			<para><emphasis>val</emphasis> - the value of the overload control
+			<para><emphasis>rval</emphasis> - the value of the overload control
 			rate (from 1 to 100) - how many times to skip using this destination
 			in 100 selections.</para>
+		</listitem>
+        <listitem>
+			<para><emphasis>tval</emphasis> - time interval limit to apply the
+			overload control rate (in milliseconds). If the value is 0 or
+			negative, then the default value 500 is used.</para>
         </listitem>
 		</itemizedlist>
 
@@ -2042,10 +2048,10 @@ onreply_route {
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>ds_oc_set_rate()</function> usage</title>
+		<title><function>ds_oc_set_attrs()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-    ds_oc_set_rate("1", "sip:127.0.0.1:5080", "30");
+    ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "1000");
 ...
 </programlisting>
 		</example>
