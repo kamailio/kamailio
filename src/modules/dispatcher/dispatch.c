@@ -498,18 +498,26 @@ int ds_oc_set_attrs(sip_msg_t *msg, int setid, str *duri, int irval, int itval)
  */
 static inline int ds_oc_skip(ds_set_t *dsg, int alg, int n)
 {
-	int ret = 0;
+	struct timeval tnow;
 
 	if(alg != DS_ALG_OVERLOAD) {
 		return 0;
 	}
 
+	gettimeofday(&tnow, NULL);
+
+	if(timercmp(&dsg->dlist[n].octime, &tnow, <)) {
+		/* over the time interval validity - use it */
+		return 0;
+	}
 	if(dsg->dlist[n].ocdist[dsg->dlist[n].ocidx] == 1) {
-		ret = 0;
+		/* use it */
+		return 0;
 	}
 	dsg->dlist[n].ocidx = (dsg->dlist[n].ocidx + 1) % 100;
 
-	return ret;
+	/* skip it */
+	return 1;
 }
 
 /**
