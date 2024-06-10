@@ -1061,3 +1061,37 @@ int fixup_free_isi(void **param, int param_no)
 			return E_UNSPEC;
 	}
 }
+
+/**
+ *
+ */
+int fixup_isii(void **param, int param_no)
+{
+	switch(param_no) {
+		case 1:
+		case 3:
+		case 4:
+			return fixup_igp_null(param, 1);
+		case 2:
+			return fixup_spve_null(param, 1);
+		default:
+			return E_UNSPEC;
+	}
+}
+
+/**
+ *
+ */
+int fixup_free_isii(void **param, int param_no)
+{
+	switch(param_no) {
+		case 1:
+		case 3:
+		case 4:
+			return fixup_free_igp_null(param, 1);
+		case 2:
+			return fixup_free_spve_null(param, 1);
+		default:
+			return E_UNSPEC;
+	}
+}
