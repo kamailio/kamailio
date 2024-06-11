@@ -190,4 +190,7 @@ int fixup_free_isi(void **param, int param_no);
 int fixup_isii(void **param, int param_no);
 int fixup_free_isii(void **param, int param_no);
 
+int fixup_isiii(void **param, int param_no);
+int fixup_free_isiii(void **param, int param_no);
+
 #endif
