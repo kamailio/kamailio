@@ -122,7 +122,7 @@ Federico Cabiddu
               4.14. ds_load_unset()
               4.15. ds_reload()
               4.16. ds_dsg_fetch(setid)
-              4.17. ds_oc_set_attrs(setid, uri, rval, tval)
+              4.17. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
         5. RPC Commands
 
@@ -291,7 +291,7 @@ Chapter 1. Admin Guide
         4.14. ds_load_unset()
         4.15. ds_reload()
         4.16. ds_dsg_fetch(setid)
-        4.17. ds_oc_set_attrs(setid, uri, rval, tval)
+        4.17. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
    5. RPC Commands
 
@@ -1118,7 +1118,7 @@ modparam("dispatcher", "ds_interval_mode", 7200)
    4.14. ds_load_unset()
    4.15. ds_reload()
    4.16. ds_dsg_fetch(setid)
-   4.17. ds_oc_set_attrs(setid, uri, rval, tval)
+   4.17. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
 4.1.  ds_select_dst(set, alg[, limit])
 
@@ -1636,7 +1636,7 @@ onreply_route {
     xinfo("set id: 1 - all: $dsg(count); active: $dsg(active)\n");
 ...
 
-4.17.  ds_oc_set_attrs(setid, uri, rval, tval)
+4.17.  ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
    Sets the overload control rate and time internval limit for the
    destination (setid, uri).
@@ -1650,12 +1650,15 @@ onreply_route {
      * tval - time interval limit to apply the overload control rate (in
        milliseconds). If the value is 0 or negative, then the default
        value 500 is used.
+     * sval - the sequence number for overload control.
+
+   The parameters can include variables.
 
    This function can be used from ANY_ROUTE.
 
    Example 1.60. ds_oc_set_attrs() usage
 ...
-    ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "1000");
+    ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "1000", "1");
 ...
 
 5. RPC Commands
