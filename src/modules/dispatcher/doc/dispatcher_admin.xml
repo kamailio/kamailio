@@ -2016,7 +2016,7 @@ onreply_route {
 	</section>
 	<section id="dispatcher.f.ds_oc_set_attrs">
 		<title>
-		<function moreinfo="none">ds_oc_set_attrs(setid, uri, rval, tval)</function>
+		<function moreinfo="none">ds_oc_set_attrs(setid, uri, rval, tval, sval)</function>
 		</title>
 		<para>
 		Sets the overload control rate and time internval limit
@@ -2041,9 +2041,13 @@ onreply_route {
 			<para><emphasis>tval</emphasis> - time interval limit to apply the
 			overload control rate (in milliseconds). If the value is 0 or
 			negative, then the default value 500 is used.</para>
-        </listitem>
+		</listitem>
+        <listitem>
+			<para><emphasis>sval</emphasis> - the sequence number for overload
+			control.</para>
+		</listitem>
 		</itemizedlist>
-
+		<para>The parameters can include variables.</para>
 		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
@@ -2051,7 +2055,7 @@ onreply_route {
 		<title><function>ds_oc_set_attrs()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-    ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "1000");
+    ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "1000", "1");
 ...
 </programlisting>
 		</example>
