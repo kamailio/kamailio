@@ -112,6 +112,106 @@ modparam("ims_icscf","scscf_entry_expiry", 300)
     </section>
 
     <section>
+      <title><varname>db_url</varname> (string)</title>
+
+      <para>
+        &url; of the database to be used.
+      </para>
+
+      <para>
+          If the db_url string is empty, the default database URL
+          will be used.
+      </para>
+
+      <para>
+        <emphasis>
+            Default value is <quote>&defaultrodb;</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+        <title>Set <varname>db_url</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "db_url", "&exampledb;")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>
+        <varname>db_nds_table</varname> (string)</title>
+
+      <para>
+        NDS (Network Domain Security) table name in database to be used.
+      </para>
+
+      <para>
+        <emphasis>
+            Default value is <quote>nds_trusted_domains</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+        <title>Set <varname>db_nds_table</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "db_nds_table", "nds_trusted_domains")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>
+        <varname>db_scscf_table</varname> (string)</title>
+
+      <para>
+        S-CSCF table name in database to be used.
+      </para>
+
+      <para>
+        <emphasis>
+            Default value is <quote>s_cscf</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+        <title>Set <varname>db_scscf_table</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "db_scscf_table", "s_cscf")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>
+        <varname>db_capabilities_table</varname> (string)</title>
+
+      <para>
+        S-CSCF capabilities table name in database to be used.
+      </para>
+
+      <para>
+        <emphasis>
+            Default value is <quote>s_cscf_capabilities</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+        <title>Set <varname>db_capabilities_table</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "db_capabilities_table", "s_cscf_capabilities")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
       <title><varname>cxdx_forced_peer</varname> (string)</title>
 
       <para>FQDN of Diameter Peer (HSS) to use for communication (UAR, LIR).

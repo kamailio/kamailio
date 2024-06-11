@@ -71,7 +71,7 @@ stat_var *uar_replies_response_time = NULL;
 stat_var *lir_replies_response_time = NULL;
 
 //module parameters
-char *ims_icscf_db_url = "mysql://icscf:heslo@localhost/hssdata"; /**< DB URL */
+char *ims_icscf_db_url = DEFAULT_RODB_URL;			  /**< DB URL */
 char *ims_icscf_db_nds_table = "nds_trusted_domains"; /**< NDS table in DB */
 char *ims_icscf_db_scscf_table = "s_cscf";			  /**< S-CSCF table in db */
 char *ims_icscf_db_capabilities_table =
