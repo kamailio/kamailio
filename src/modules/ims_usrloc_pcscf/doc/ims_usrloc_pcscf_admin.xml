@@ -19,7 +19,8 @@
     module. A lot of the design has been borrowed from the std. usrloc module.
     For example. An IMS contact, in PCSCF, needs things like:</para>
 
-    <para><itemizedlist>
+    <para>
+      <itemizedlist>
         <listitem>
           <para>Diameter Rx session for signalling bearer status. i.e. this is
           effectively QoS from the network to make sure the signalling link
@@ -35,7 +36,8 @@
           <para>IMPU, each contact can have a number of associated public
           identities (IMPU).</para>
         </listitem>
-      </itemizedlist></para>
+      </itemizedlist>
+    </para>
   </section>
 
   <section>
@@ -45,11 +47,14 @@
       <title>&kamailio; Modules</title>
 
       <para>The following modules must be loaded before this module:
-      <itemizedlist>
+        <itemizedlist>
           <listitem>
-            <para><emphasis>None</emphasis>.</para>
+            <para>
+              <emphasis>None</emphasis>.
+            </para>
           </listitem>
-        </itemizedlist></para>
+        </itemizedlist>
+      </para>
     </section>
 
     <section>
@@ -57,94 +62,104 @@
 
       <para>The following libraries or applications must be installed before
       running &kamailio; with this module loaded: <itemizedlist>
-          <listitem>
-            <para><emphasis>None</emphasis>.</para>
-          </listitem>
-        </itemizedlist></para>
-    </section>
+        <listitem>
+          <para>
+            <emphasis>None</emphasis>.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </para>
   </section>
+</section>
+
+<section>
+  <title>Parameters</title>
 
   <section>
-    <title>Parameters</title>
+    <title>hash_size (int)</title>
 
-    <section>
-      <title>hash_size (int)</title>
-
-      <para>The number of entries of the hash table used by to store the
+    <para>The number of entries of the hash table used by to store the
       contact records is 2^hash_size. For hash_size=4, the number of entries
       of the hash table is 16.</para>
 
-      <para><emphasis> Default value is 9. </emphasis></para>
+    <para>
+      <emphasis> Default value is 9. </emphasis>
+    </para>
 
-      <example>
-        <title>Set <varname>hash_size</varname> parameter</title>
+    <example>
+      <title>Set <varname>hash_size</varname> parameter</title>
 
-        <programlisting format="linespecific">...
+      <programlisting format="linespecific">
+...
 modparam("ims_usrloc_pcscf", "hash_size", 10)
 ...
-</programlisting>
-      </example>
-    </section>
+      </programlisting>
+    </example>
+  </section>
 
-    <section>
-      <title>timer_interval (int)</title>
+  <section>
+    <title>timer_interval (int)</title>
 
-      <para>Number of seconds between two timer runs. The module uses timer to
+    <para>Number of seconds between two timer runs. The module uses timer to
       delete expired contacts.</para>
 
-      <para><emphasis> Default value is 60. </emphasis></para>
+    <para>
+      <emphasis> Default value is 60. </emphasis>
+    </para>
 
-      <example>
-        <title>Set timer_interval parameter</title>
+    <example>
+      <title>Set timer_interval parameter</title>
 
-        <programlisting format="linespecific">...
+      <programlisting format="linespecific">
+...
 modparam("ims_usrloc_pcscf", "timer_interval", 30)
 ...
-</programlisting>
-      </example>
-    </section>
+      </programlisting>
+    </example>
+  </section>
 
-    <section>
-      <title>db_url (int)</title>
+  <section>
+    <title><varname>db_url</varname> (string)</title>
 
-      <para>Database URL</para>
+    <para>Database URL.</para>
 
-      <para><emphasis>Default value is
-			  "&defaultdb;".</emphasis></para>
+    <para>
+      <emphasis>Default value is "&defaultdb;".</emphasis>
+    </para>
 
-      <example>
-        <title>Set db_url parameter</title>
+    <example>
+      <title>Set db_url parameter</title>
 
-        <programlisting format="linespecific">...
-modparam("ims_usrloc_pcscf", "db_url",
-       "&exampledb;")
+      <programlisting format="linespecific">
 ...
-</programlisting>
-      </example>
-    </section>
+modparam("ims_usrloc_pcscf", "db_url", "&exampledb;")
+...
+      </programlisting>
+    </example>
+  </section>
 
-    <section>
-      <title>db_mode (int)</title>
+  <section>
+    <title>db_mode (int)</title>
 
-      <para>This is the database mode to be used for the PCSCF usrloc data
+    <para>This is the database mode to be used for the PCSCF usrloc data
       persistent storage. Currently this module supports the Write-Through
       scheme only.</para>
 
-      <itemizedlist>
-        <listitem>
-          <para>0 - This disables DB mode. Only memory will be used for usrloc
+    <itemizedlist>
+      <listitem>
+        <para>0 - This disables DB mode. Only memory will be used for usrloc
           and data will not survive a restart.</para>
-        </listitem>
+      </listitem>
 
-        <listitem>
-          <para>1 - Write-Through Scheme. All changes to usrloc are
+      <listitem>
+        <para>1 - Write-Through Scheme. All changes to usrloc are
           immediately reflected in the database. This is slow but very
           reliable. This mode will ensure that no registration data is lost as
           a result of a restart or crash.</para>
-        </listitem>
+      </listitem>
 
-        <listitem>
-          <para>3 - DB_ONLY Scheme. All changes to usrloc are immediately
+      <listitem>
+        <para>3 - DB_ONLY Scheme. All changes to usrloc are immediately
           reflected in the database and additionally PCSCF usrloc data are downloaded
           from db and inserted into PCSCF usrloc cache if required - i.e. If
           contact data cannot be found in cache a db
@@ -154,72 +169,81 @@ modparam("ims_usrloc_pcscf", "db_url",
           in table location.
           This mode will ensure that no registration data is lost as a result of a
           restart or crash.</para>
-        </listitem>
+      </listitem>
 
-      </itemizedlist>
+    </itemizedlist>
 
-      <para><emphasis>Default value is 0.</emphasis></para>
+    <para>
+      <emphasis>Default value is 0.</emphasis>
+    </para>
 
-      <example>
-        <title>Set db_mode parameter</title>
+    <example>
+      <title>Set db_mode parameter</title>
 
-        <programlisting format="linespecific">...
+      <programlisting format="linespecific">
+...
 modparam("ims_usrloc_pcscf", "db_mode", 1)
 ...
-</programlisting>
-      </example>
-    </section>
+      </programlisting>
+    </example>
+  </section>
 
-    <section>
-      <title>match_contact_host_port (int)</title>
+  <section>
+    <title>match_contact_host_port (int)</title>
 
-      <para>If set to 1 (default), the contact is matched using only host
+    <para>If set to 1 (default), the contact is matched using only host
 	  and port in the contact URI.</para>
 
-      <itemizedlist>
-        <listitem>
-          <para>0 - When matching contact do full contact match procedure.</para>
-        </listitem>
+    <itemizedlist>
+      <listitem>
+        <para>0 - When matching contact do full contact match procedure.</para>
+      </listitem>
 
-        <listitem>
-          <para>1 - When matching contact compare only host and port of the contact URI.</para>
-        </listitem>
-      </itemizedlist>
+      <listitem>
+        <para>1 - When matching contact compare only host and port of the contact URI.</para>
+      </listitem>
+    </itemizedlist>
 
-      <para><emphasis>Default value is 1.</emphasis></para>
+    <para>
+      <emphasis>Default value is 1.</emphasis>
+    </para>
 
-      <example>
-        <title>Set match_contact_host_port parameter</title>
+    <example>
+      <title>Set match_contact_host_port parameter</title>
 
-        <programlisting format="linespecific">...
+      <programlisting format="linespecific">
+...
 modparam("ims_usrloc_pcscf", "match_contact_host_port", 0)
 ...
-</programlisting>
-      </example>
-    </section>
+      </programlisting>
+    </example>
+  </section>
 
-    <section>
-      <title>expires_grace (int)</title>
+  <section>
+    <title>expires_grace (int)</title>
 
-      <para>Specify a grace time for keeping the contacts until they are finally deleted.
+    <para>Specify a grace time for keeping the contacts until they are finally deleted.
           The value of the parameter is defined in seconds.</para>
 
-      <para><emphasis>Default value is 3600.</emphasis></para>
+    <para>
+      <emphasis>Default value is 3600.</emphasis>
+    </para>
 
-      <example>
-        <title>Set expires_grace parameter</title>
+    <example>
+      <title>Set expires_grace parameter</title>
 
-        <programlisting format="linespecific">...
+      <programlisting format="linespecific">
+...
 modparam("ims_usrloc_pcscf", "expires_grace", 1800)
 ...
-</programlisting>
-      </example>
-    </section>
+      </programlisting>
+    </example>
+  </section>
 
-    <section>
-      <title>audit_expired_pcontacts_interval (int)</title>
+  <section>
+    <title>audit_expired_pcontacts_interval (int)</title>
 
-      <para>Number of seconds between two audit runs.
+    <para>Number of seconds between two audit runs.
       Note: audit is used for db_mode DB_ONLY (3) only.
       The module uses this audit to
       delete expired contacts found in db table location which are expired
@@ -227,81 +251,86 @@ modparam("ims_usrloc_pcscf", "expires_grace", 1800)
       Such expired contacts in location  may appear when these contacts
       are not present in usrloc cache because PCSCF crashed before
       contact expiry.
-      </para>
+    </para>
 
-      <para><emphasis> Default value is 60. </emphasis></para>
+    <para>
+      <emphasis> Default value is 60. </emphasis>
+    </para>
 
-      <example>
-        <title>Set audit_expired_pcontacts_interval parameter</title>
+    <example>
+      <title>Set audit_expired_pcontacts_interval parameter</title>
 
-        <programlisting format="linespecific">...
+      <programlisting format="linespecific">
+...
 modparam("ims_usrloc_pcscf", "audit_expired_pcontacts_interval", 120)
 ...
-</programlisting>
-      </example>
-    </section>
+      </programlisting>
+    </example>
+  </section>
 
-    <section>
-      <title>audit_expired_pcontacts_timeout (int)</title>
+  <section>
+    <title>audit_expired_pcontacts_timeout (int)</title>
 
-      <para>Number of seconds the contacts must be already expired before the audit
+    <para>Number of seconds the contacts must be already expired before the audit
       starts working on them.
       It is recommended to set only values greater than the Default value 40.
       The module uses this audit to
       delete expired contacts found in db table location which are expired
       at least as many seconds as the sum of this timeout parameter value plus
       the value of the expires_grace parameter.
-      </para>
+    </para>
 
-      <para><emphasis> Default value is 40. </emphasis></para>
+    <para>
+      <emphasis> Default value is 40. </emphasis>
+    </para>
 
-      <example>
-        <title>Set audit_expired_pcontacts_timeout parameter</title>
+    <example>
+      <title>Set audit_expired_pcontacts_timeout parameter</title>
 
-        <programlisting format="linespecific">...
+      <programlisting format="linespecific">
+...
 modparam("ims_usrloc_pcscf", "audit_expired_pcontacts_timeout", 120)
 ...
-</programlisting>
-      </example>
-    </section>
-
+      </programlisting>
+    </example>
   </section>
 
+</section>
+
+<section>
+  <title>RPC Commands</title>
+
+  <para>exported RPC commands.</para>
+
   <section>
-    <title>RPC Commands</title>
+    <title>ulpcscf.status</title>
 
-    <para>exported RPC commands.</para>
-
-    <section>
-      <title>ulpcscf.status</title>
-
-      <para>Status of pcscf_usrloc, AORs, max slots, etc.</para>
-    </section>
+    <para>Status of pcscf_usrloc, AORs, max slots, etc.</para>
   </section>
+</section>
+
+<section>
+  <title>Statistics</title>
+
+  <para>Exported statistics are listed in the next sections.</para>
 
   <section>
-    <title>Statistics</title>
+    <title>registered contacts</title>
 
-    <para>Exported statistics are listed in the next sections.</para>
-
-    <section>
-      <title>registered contacts</title>
-
-      <para>Number of AOR contacts in registered state - cannot be
+    <para>Number of AOR contacts in registered state - cannot be
       reset.</para>
-    </section>
-
-    <section>
-      <title>impus</title>
-
-      <para>Number of IMPUs - cannot be reset.</para>
-    </section>
-
-    <section>
-      <title>expired contacts</title>
-
-      <para>Number of expired contacts - can be reset.</para>
-    </section>
   </section>
-</chapter>
 
+  <section>
+    <title>impus</title>
+
+    <para>Number of IMPUs - cannot be reset.</para>
+  </section>
+
+  <section>
+    <title>expired contacts</title>
+
+    <para>Number of expired contacts - can be reset.</para>
+  </section>
+</section>
+</chapter>
