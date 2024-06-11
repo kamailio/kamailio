@@ -1881,7 +1881,7 @@ int ds_rpc_print_set(
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
-			if(rpc->struct_add(wh, "SSdddSSS", "BODY",
+			if(rpc->struct_add(wh, "SSdddSSSujj", "BODY",
 					   &(node->dlist[j].attrs.body), "DUID",
 					   (node->dlist[j].attrs.duid.s)
 							   ? &(node->dlist[j].attrs.duid)
@@ -1899,7 +1899,11 @@ int ds_rpc_print_set(
 					   "OBPROXY",
 					   (node->dlist[j].attrs.obproxy.s)
 							   ? &(node->dlist[j].attrs.obproxy)
-							   : &data)
+							   : &data,
+					   "OCRATE", node->dlist[j].attrs.ocrate, "OCTIME_SEC",
+					   (unsigned long)node->dlist[j].octime.tv_sec,
+					   "OCTIME_USEC",
+					   (unsigned long)node->dlist[j].octime.tv_usec)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating attrs struct");
 				return -1;
