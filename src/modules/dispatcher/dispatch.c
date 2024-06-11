@@ -447,7 +447,8 @@ void ds_oc_prepare(ds_dest_t *dp)
 /**
  *
  */
-int ds_oc_set_attrs(sip_msg_t *msg, int setid, str *duri, int irval, int itval)
+int ds_oc_set_attrs(
+		sip_msg_t *msg, int setid, str *duri, int irval, int itval, int isval)
 {
 	int i = 0;
 	int ret = -1;
@@ -474,9 +475,12 @@ int ds_oc_set_attrs(sip_msg_t *msg, int setid, str *duri, int irval, int itval)
 	/* interval set to itval or to default 500 milliseconds */
 	tdiff.tv_usec = (itval > 0) ? itval : 500000;
 
-	while(i < idx->nr) {
+	for(i = 0; i < idx->nr; i++) {
 		if(idx->dlist[i].uri.len == duri->len
 				&& strncasecmp(idx->dlist[i].uri.s, duri->s, duri->len) == 0) {
+			if(idx->dlist[i].ocseq >= isval) {
+				continue;
+			}
 			idx->dlist[i].attrs.ocrate = irval;
 			if(idx->dlist[i].attrs.ocrate < idx->dlist[i].attrs.ocmin) {
 				idx->dlist[i].attrs.ocrate = idx->dlist[i].attrs.ocmin;
@@ -486,9 +490,9 @@ int ds_oc_set_attrs(sip_msg_t *msg, int setid, str *duri, int irval, int itval)
 			}
 			ds_oc_prepare(&idx->dlist[i]);
 			timeradd(&tnow, &tdiff, &idx->dlist[i].octime);
+			idx->dlist[i].ocseq = isval;
 			ret = 1;
 		}
-		i++;
 	}
 	return ret;
 }

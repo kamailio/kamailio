@@ -185,7 +185,7 @@ static int w_ds_reload(struct sip_msg* msg, char*, char*);
 static int w_ds_is_active(sip_msg_t *msg, char *pset, char *p2);
 static int w_ds_is_active_uri(sip_msg_t *msg, char *pset, char *puri);
 static int w_ds_dsg_fetch(sip_msg_t *msg, char *pset, char *p2);
-static int w_ds_oc_set_attrs(sip_msg_t*, char*, char*, char*, char*);
+static int w_ds_oc_set_attrs(sip_msg_t*, char*, char*, char*, char*, char*);
 
 static int fixup_ds_is_from_list(void** param, int param_no);
 static int fixup_ds_list_exist(void** param,int param_no);
@@ -262,8 +262,8 @@ static cmd_export_t cmds[]={
 		0, 0, 0},
 	{"ds_reload", (cmd_function)w_ds_reload, 0,
 		0, 0, ANY_ROUTE},
-	{"ds_oc_set_attrs",  (cmd_function)w_ds_oc_set_attrs, 4,
-		fixup_isii, fixup_free_isii, ANY_ROUTE},
+	{"ds_oc_set_attrs",  (cmd_function)w_ds_oc_set_attrs, 5,
+		fixup_isiii, fixup_free_isiii, ANY_ROUTE},
 	{"ds_dsg_fetch",  (cmd_function)w_ds_dsg_fetch, 1,
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{0,0,0,0,0,0}
@@ -1392,13 +1392,14 @@ static int w_ds_dsg_fetch(sip_msg_t *msg, char *pset, char *p2)
 /**
  *
  */
-static int w_ds_oc_set_attrs(
-		sip_msg_t *msg, char *pset, char *puri, char *prval, char *ptval)
+static int w_ds_oc_set_attrs(sip_msg_t *msg, char *pset, char *puri,
+		char *prval, char *ptval, char *psval)
 {
 	int iset;
 	str suri;
 	int irval;
 	int itval;
+	int isval;
 
 	if(fixup_get_ivalue(msg, (gparam_t *)pset, &iset) != 0) {
 		LM_ERR("cannot get set id param value\n");
@@ -1416,8 +1417,12 @@ static int w_ds_oc_set_attrs(
 		LM_ERR("cannot get time interval param value\n");
 		return -1;
 	}
+	if(fixup_get_ivalue(msg, (gparam_t *)psval, &isval) != 0) {
+		LM_ERR("cannot get seq param value\n");
+		return -1;
+	}
 
-	return ds_oc_set_attrs(msg, iset, &suri, irval, itval);
+	return ds_oc_set_attrs(msg, iset, &suri, irval, itval, isval);
 }
 
 /**
