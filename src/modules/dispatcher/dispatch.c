@@ -466,8 +466,8 @@ int ds_oc_set_attrs(
 		LM_ERR("destination set [%d] not found\n", setid);
 		return -1;
 	}
-	LM_DBG("update oc rate for %.*s in group %d to %d\n", duri->len, duri->s,
-			setid, irval);
+	LM_DBG("updating oc attrs for %d %.*s to rate %d validity %d seq %d\n",
+			setid, duri->len, duri->s, irval, itval, isval);
 
 	gettimeofday(&tnow, NULL);
 	timerclear(&tdiff);
@@ -479,6 +479,7 @@ int ds_oc_set_attrs(
 		if(idx->dlist[i].uri.len == duri->len
 				&& strncasecmp(idx->dlist[i].uri.s, duri->s, duri->len) == 0) {
 			if(idx->dlist[i].ocseq >= isval) {
+				LM_DBG("skipping entry %d due to seq condition\n", i);
 				continue;
 			}
 			idx->dlist[i].attrs.ocrate = irval;
@@ -492,6 +493,7 @@ int ds_oc_set_attrs(
 			timeradd(&tnow, &tdiff, &idx->dlist[i].octime);
 			idx->dlist[i].ocseq = isval;
 			ret = 1;
+			LM_DBG("updated entry %d\n", i);
 		}
 	}
 	return ret;
