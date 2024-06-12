@@ -29,7 +29,7 @@ ALL CHANGES DONE HERE WILL BE LOST IF THE FILE IS REGENERATED
       <title>Set <varname>db_url</varname> parameter</title>
       <programlisting format="linespecific">
 ...
-modparam("carrierroute", "db_url", "dbdriver://username:password@dbhost/dbname")
+modparam("carrierroute", "db_url", "&exampledb;")
 ...
 </programlisting>
     </example>
