@@ -412,7 +412,7 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 		dest->attrs.ocmax = 100;
 	}
 	if(dest->attrs.ocmin < 0 || dest->attrs.ocmin > 100) {
-		dest->attrs.ocmin = 10;
+		dest->attrs.ocmin = 0;
 	}
 	if(dest->attrs.ocrate <= 0 || dest->attrs.ocrate > 100) {
 		dest->attrs.ocrate = 0;
@@ -482,7 +482,7 @@ int ds_oc_set_attrs(
 				LM_DBG("skipping entry %d due to seq condition\n", i);
 				continue;
 			}
-			idx->dlist[i].attrs.ocrate = irval;
+			idx->dlist[i].attrs.ocrate = 100 - irval;
 			if(idx->dlist[i].attrs.ocrate < idx->dlist[i].attrs.ocmin) {
 				idx->dlist[i].attrs.ocrate = idx->dlist[i].attrs.ocmin;
 			}
