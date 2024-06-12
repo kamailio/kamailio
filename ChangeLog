@@ -1,3 +1,852 @@
+===================== 2024-06-12 Version 5.8.2 Released =====================
+
+===================== Changes Since Version 5.8.1 ===========================
+
+commit 5a090532b2e702ae758b384b54550fed5ddddfdb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 12 10:02:55 2024 +0200
+
+    Makefile.defs: version set to 5.8.2
+
+commit 2ce09cbd669753266bba8659073320af6f53664b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 12 09:40:58 2024 +0200
+
+    pkg: deb specs updated for v5.8.2
+
+commit f3daac3024c6a623fa9021d92f77daf2cf866c8d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 12 08:57:25 2024 +0200
+
+    pkg/kamailio: version set 5.8.2 for rpms and alpine
+
+commit 955c6e02ed0e31a4c7f148518bf44edb12c37a07
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sat Jun 8 20:31:20 2024 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 8ef8db05dbc3a4cf5246354ce31dff18180a8e12
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Fri Jun 7 14:00:43 2024 +0000
+
+    pua_dialoginfo: Fix ruri length
+    
+    (cherry picked from commit 2c7c2d215ec9277fa706053579a38f058f15ae85)
+
+commit ed0cdf3a3c85a8d05aacec8917fe35a24dcdd62e
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Fri Jun 7 13:24:17 2024 +0200
+
+    ims_ipsec_pcscf: Fix typo
+    
+    (cherry picked from commit 16e1b38fcc1593ad09eb03d86cd056ab8ff7f7f7)
+
+commit 5571ea0ff8877a8a19b3fb76030af19b59f141db
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 4 16:29:50 2024 +0200
+
+    dmq_usrloc: reformat exported structures
+    
+    (cherry picked from commit e94812149c6f2867a5b23f1218a9af139590bf51)
+
+commit e8dc8506dbc4d8964e02c3be175d7f18f5fe69a4
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Tue Jun 4 09:37:01 2024 +0000
+
+    nathelper: remove magic constant
+    
+    (cherry picked from commit 3d187336f22e30800acefd28e4d0f98e0f677a49)
+
+commit eb4ec6f9305e334d9749e1fd56ad195c383cef77
+Author: codenot <codenot@msn.com>
+Date:   Wed May 29 10:10:28 2024 +0800
+
+    nathelper: fixed handle_ruri_alias_mode(1) cannot proper handle multi alias
+    
+    (cherry picked from commit 8e0b2e4b6450fa50bd573fa013dc888aaaccd2bf)
+
+commit 5999529be9ac2187dad465518bea3dee1b06d0f7
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Fri May 24 08:03:49 2024 +0000
+
+    core/resolve: Check dns_cache_init and choose appropriate functions
+    
+    (cherry picked from commit 06d583e356351ae9d8a559c9f5de3e57fb128a38)
+
+commit eb4a8e326b10d0c3e922cc524d8f46d2ba7e6eff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jun 2 21:28:19 2024 +0200
+
+    iims_registrar_scscf: include header for common c functions
+    
+    - GH #3855
+    
+    (cherry picked from commit b508ef253cf996a5efd8bf13ded0c804f3557ada)
+
+commit 54f9adb03ebbacf35eb0785dc46b55ce5dd00deb
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Mon Jun 3 08:48:40 2024 +0200
+
+    geoip2: Reload database before accessing it
+    
+    Re-add reloading of database.
+    
+    GH #3861
+    
+    Fixes: 293193c55c ("geoip2: clang format module file")
+    (cherry picked from commit 51dcab019a42e5b1f3b81247ca71ffcaf46180de)
+
+commit c27094b8288b7a949fbfc766eb9223c0085340ef
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jun 2 04:58:23 2024 +0200
+
+    geoip2: clang format module file
+    
+    (cherry picked from commit 293193c55caaf5d0c39dc456babe92f574b58b3b)
+
+commit 45f2e2670a3eac768b97b58eeec228b06273050a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jun 2 04:51:33 2024 +0200
+
+    geoip2: keep global structure per process
+    
+    - parsing db file allocates private memory
+    - reworked reload to rely on a global counter
+    - GH #3861
+    
+    (cherry picked from commit baccbe0298f9fa46db285505bc4386f997de5a47)
+
+commit ae3be6af4ea8d50c29fe8e523c9548217956849a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jun 1 07:50:45 2024 +0200
+
+    geoip2: rename global lock variable
+    
+    (cherry picked from commit 4bd619d3517f129362de3ce50eed2620d5002b42)
+
+commit 2cc901e8be63791432a49f87d434eeb009e48d28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jun 1 07:39:54 2024 +0200
+
+    geoip2: do not close global MMDB_s on destroy
+    
+    - GH #3861
+    
+    (cherry picked from commit e066613cac308d1129baebc47d7c245b36eba4b0)
+
+commit 614b5601170578c2d0eb79e7e5c64e68d80d885b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 31 19:23:41 2024 +0200
+
+    geoip2: init MMDB_s global pointer and check on destroy
+    
+    (cherry picked from commit 8ba4ee4e00798ca015adc48542d0e4de8ed9daad)
+
+commit 5c9c13080be2b15252492dca388777d06915045c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu May 30 16:24:03 2024 +0200
+
+    regex: fix pcre2 migration
+    
+    instead of reserving an array in pkg_mem and later
+    copy the pointers to shm_mem just use shm_mem in
+    the first place.
+    
+    fixes #3812
+    
+    (cherry picked from commit d89333748662c0e7c72e3579d41fd14ef05c0fee)
+
+commit ebc8acef7617a69dcc06b163c47e88a99d835f9e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 29 10:18:44 2024 +0200
+
+    siputils: free head of params list for get_uri_param()
+    
+    - GH #3857
+    
+    (cherry picked from commit 8363208fff7c101a2779ff64783e5b7dbf8ffd7c)
+
+commit 833b93563f43fa95e4bfdd175b144670b66a11cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 29 10:15:21 2024 +0200
+
+    siputils: free head of params list for get_uri_param()
+    
+    - GH #3857
+    
+    (cherry picked from commit d72a3fbc903da02ae3b26f3aae2ea228c9f8b255)
+
+commit f4eea76a15b220b15337b60a77f7978b0694b0fd
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Tue May 28 14:17:58 2024 +0200
+
+    rtpengine: Fix extra process in pkg.stats
+    
+    When DTMF events socket is not configured, pkg.stats RPC method returns
+    an empty entry.
+    {
+            entry: 13
+            pid: 0
+            rank: -128
+            used: 0
+            free: 0
+            real_used: 0
+            total_size: 67108864
+            total_frags: 0
+            desc:
+    }
+    
+    Fixes: 26f6e57c8f ("Register a new worker process for dtmf event listener")
+    (cherry picked from commit e67f6048f4883d446df2d88fe7a7d7f2ff6daf8c)
+
+commit 7087ce6aa496de9b6015e5054d8fd70bf2e055b3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 28 11:45:37 2024 +0200
+
+    htable: error on not finding htable in pv get
+    
+    (cherry picked from commit 24b27214231166366cceb88fcb3724298cc53b32)
+
+commit 9a7e3e54f1c52ee69c68b1165de115894c2afc55
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 27 09:11:48 2024 +0200
+
+    htable: error on not finding htable in pv set
+    
+    (cherry picked from commit 82cfea317fd8d02a6c94347bc1be18c8a06e580f)
+
+commit deb11ee814e1591698d120a113630aa7a9791ad7
+Author: Rick Barenthin <rick@ng-voice.com>
+Date:   Thu Apr 25 19:16:58 2024 +0200
+
+    usrloc: delete location_attrs in db_only mode on delete_urecord
+    
+    When calling delete_urecord in DB_ONLY mode the location_attrs are not deleted.
+    This fix makes sure to delete location_attrs when calling db_delete_urecord is called.
+    
+    (cherry picked from commit 6b8f6d3b5d563d91234b8d4b7e155b7e74b9d313)
+
+commit d53843c75da9115a9c3cb6b1b909fd3827b6c437
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sat May 11 17:45:08 2024 +0300
+
+    db_mysql: fixed build on CentOS 7
+    
+    (cherry picked from commit 767b3faee3af450d6482b919c81431ea6d707807)
+
+commit 5c4f687d0ed06d6c7a5696917982b1cf03f9c8bd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 10 12:45:25 2024 +0200
+
+    sipcapture: use local static buffers for ip address and port
+    
+    - GH #3835
+    
+    (cherry picked from commit d1f377ff23f491bfd5162cb7bf510759440dd8e5)
+
+commit f9bd2c5a4341913ac3e887e0324a19d5cd071a12
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 9 08:17:15 2024 +0200
+
+    tcpops: reformat exported structures
+    
+    (cherry picked from commit 9b087fd618ab6c5cbd6a29c352b09c7198f1b594)
+
+commit c8e4fe87985a413dfe6871463c31375750d3a6f2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu May 30 14:59:05 2024 +0200
+
+    dialplan: don't call free on empty pcre pointer
+    
+    fixes #3851
+    
+    (cherry picked from commit 630a6f2c11c10c4f3be3570553d86486942d60fe)
+
+commit c1c8c066b29798189a50dd9b4f27c5af574d991d
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Mon Apr 29 13:37:24 2024 +0000
+
+    db_cluster: Update log levels
+    
+    (cherry picked from commit 467dbf3e1be16d5a760178d0801834ac67bad888)
+
+commit 3a34b468ad93904c507bd0fc7ef592b25321807f
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Mon May 20 11:41:42 2024 +0300
+
+    tm: add mandatory Max-Forwards header to local AC
+
+commit ba7a4901268493f5432d5efd59d6dbd7b422742f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 8 06:58:13 2024 +0200
+
+    etc/kamailio.cfg: remove executable flag
+
+commit 191aec6ef644024741c23776c35fc712aa82a6b5
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue May 7 21:16:19 2024 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 29ef69b8807023e082d7c9880c63bee11d4f3b30
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Tue May 7 16:14:46 2024 +0000
+
+    sipcapture: fix default DB URL docs
+    
+    (cherry picked from commit aeeeb0c2f46c2575639dd725bef78fac64219a07)
+
+commit c3f424bd6c0f8b9a2557cd58a3e3f5ac586d8c99
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue May 7 19:46:19 2024 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 383a81bb9d81e06ab9da99cdaa3def3b63028040
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 7 19:32:39 2024 +0200
+
+    tcpops: note about execution of event routes by TCP main process
+    
+    (cherry picked from commit be9af338e3afdab1045cdd7c30a72a9ecddcb680)
+
+commit 1ee553a6f406af5eb4838a8c46a992c4099dd30b
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue May 7 17:31:19 2024 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit b5eb4f5ca037239f2ec1d99a16a71af0383f737e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 7 16:55:24 2024 +0200
+
+    ctl: info log on ECONNRESET (connection reset by peer)
+    
+    - not a type of error that can be controlled by kamailio
+    
+    (cherry picked from commit 446c75e0e2194b6e42d768d2e3c79b5f0222905f)
+
+commit 24e43d27544bdfa1acfce7ebb8b6e3ba7841fc13
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 7 16:49:49 2024 +0200
+
+    ctl: removed level and function names from log messages
+    
+    (cherry picked from commit 65bafaffd6bcfebc508b774cfbb78120e68bb3f0)
+
+commit 11f0cfec4d2fc6043d282cdb2258520559f0fcd1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 4 20:18:18 2024 +0200
+
+    core: parse/contact: jump to error on too many contacts
+    
+    (cherry picked from commit f69b22d44cb5abc803c2b58790dd33f2310c1c59)
+
+commit d75dba611808322356fc8d1ebc9f8c30b4124a15
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 3 14:57:47 2024 +0200
+
+    core: parser/contact - basic validation tests for contact uri
+    
+    (cherry picked from commit fc52a54370c085d6fa951da876eee99580677922)
+
+commit 5b97d29f1bbac2656eba506c7fd94b412dfb9b7f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 3 14:36:29 2024 +0200
+
+    core: parser/contact - add limit for max number of contacts
+    
+    - defined to 256
+    
+    (cherry picked from commit d6b0beb5a219ae57a62e9e7201a6ec1fe66e5a96)
+
+commit 244319c67a191cf1f093b2220fa1a8579179d734
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 2 09:27:41 2024 +0200
+
+    pua: check if local requests are dropped and free the param
+    
+    (cherry picked from commit 53e1a29c265df1489c9bd91deddc0719f8ca2092)
+
+commit 46c8e1a5b0e11162eee2c0b201bb535529397a0a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 1 07:00:58 2024 +0200
+
+    uac: check if local requests are dropped and free the param
+    
+    (cherry picked from commit 00aac8d48370fac356eecff535835d918c631cc5)
+
+commit 965a02ba4aca9283e4f43f8153ebeb81721835f1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 1 06:20:43 2024 +0200
+
+    presence: check if the local notify was dropped in event route
+    
+    - free tm cb parameter on drop
+    - related to GH #3403
+    
+    (cherry picked from commit d12fc31056cb37aac347ec05f9ada7bafa5f52de)
+
+commit e54b03fc41bc55486430b09d9a4839bcd52278fa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 1 06:08:28 2024 +0200
+
+    pv_headers: print also the new TMCB_LOCAL_REQUEST_DROP in debug function
+    
+    (cherry picked from commit 68624c2da093ab789d4e8d35df65ef1bce024bca)
+
+commit a86d7d2bad119fc4cccf5c19719b4457ab066a04
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 1 06:07:26 2024 +0200
+
+    tm: cb_flags made unsigned for uac_req
+    
+    (cherry picked from commit ebd1c6c75a1b832ce85d576aad134b99d47b5738)
+
+commit f9ca6854d88e4fcc161e1083a953f47142fca90d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 1 05:57:46 2024 +0200
+
+    tm: cb flag to mark local uac on request drop
+    
+    (cherry picked from commit f5da773c5fa29edbf9d0e65a83a62f495928ddec)
+
+commit fc54fdcd67e244ad075c54b5f24bb6442998b4cb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 1 05:28:18 2024 +0200
+
+    tm: free new buffer on drop for local requests
+    
+    - GH #3403
+    
+    (cherry picked from commit ee06666c43d96029315dae7618e10d381265a85a)
+
+commit 3aac0c7379577480fb09902bfb31b9aed49e7f88
+Author: Jannik <40364587+volkland@users.noreply.github.com>
+Date:   Tue Apr 30 12:28:20 2024 +0200
+
+    sipcapture: docs - fix default value for parameter
+    
+    (cherry picked from commit 265c948286f2df5136179c95fbb1d7f1255e4c71)
+
+commit 4e98a4ae06ec0bbff408af211680c97e1f41ca11
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 30 10:19:35 2024 +0200
+
+    ims_ipsec_pcscf: cascade on options to get the uri for fill_contact()
+    
+    (cherry picked from commit 60d2ab6464657abf38136a771c297c6f5536e27a)
+
+commit 4b3620d0f0d7d636bf1d9e4c2b19bf50b8ac9da0
+Author: Alexander Couzens <lynxis@fe80.eu>
+Date:   Mon Mar 4 17:33:50 2024 +0100
+
+    ims_registrar_scscf: free_uint_fixup: fix memleak/freeing the wrong parameter
+    
+    The free_uint_fixup() freed the wrong parameter in the past.
+    
+    (cherry picked from commit c3e6c1edc7531406208efe2965243e6e81506127)
+
+commit 569662043b656063be97d0ea0e22dd8f6082320e
+Author: Alexander Couzens <lynxis@fe80.eu>
+Date:   Mon Mar 4 17:32:00 2024 +0100
+
+    ims_registrar_scscf: fix typo in function name uint_fixup
+    
+    (cherry picked from commit 6f908f05d4691abcb1b3a745048d3cc2a9996676)
+
+commit 8bb9f0601eb94597f3bfab4ede97971de83cc1e7
+Author: Alexander Couzens <lynxis@fe80.eu>
+Date:   Mon Mar 4 17:21:25 2024 +0100
+
+    ims_registrar_scscf: refactor save_fixup4
+    
+    Rename function to match argument number.
+    Use assign_save_fixup3_async instead of the code copy
+    
+    (cherry picked from commit 82a6d7ea6edbaca60879a38c5e74e40920e89342)
+
+commit 4aa0920b2e573661959d5c9149ee04177cae8264
+Author: Alexander Couzens <lynxis@fe80.eu>
+Date:   Fri Mar 1 17:38:21 2024 +0100
+
+    ims_registrar_scscf: fix uninitialized arguments in save()
+    
+    The script "save" command can be used with different arguments:
+    2, 3 and 4.
+    But internally for all save() calls the exact same function is use, w_save().
+    When calling save("PRE_REG_SAR_REPLY","location"); as given by the examples,
+    kamailio will call w_save().
+    Because the command code will cast the function pointer, the w_save() function
+    is called with 2 uninitialized arguments *mode, *c_flags.
+    mode is unused, seems a legacy argument. c_flags is referenced resulting in a crash
+    if not null.
+    
+    Use separate wrapper functions to handle different argument number.
+    
+    Fixes: a627c9a04a74 ("ims_registrar_scscf: Extend save() with optional flag")
+    (cherry picked from commit 20a75004d53a06da0f22b11804a4d83496ad8919)
+
+commit 00f51e28875c209cbf25a47c96e60c9f73add952
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 29 10:08:29 2024 +0200
+
+    ims_ipsec_pcscf: handle tls for replies
+    
+    (cherry picked from commit 48dab490965fa7f2f7200d95edd7dbb1407b2536)
+
+commit 9493dc0c895d1dde50239c903fd976c8c6e0325f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 29 06:49:47 2024 +0200
+
+    ims_ipsec_pcscf: updated comments for ipsec_forward() flags
+    
+    (cherry picked from commit f7f93828993b5975dfe5f26ad63ba6c489aa69f7)
+
+commit 7e202ec38593462559e81db7b0f97e46567f379d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 29 06:46:56 2024 +0200
+
+    ims_ipsec_pcscf: docs updated for ipsec_forward() flags
+    
+    (cherry picked from commit 575b17d23cd5fa060f775bc56b42c735048bc849)
+
+commit 1387c32dfa601496c38f9c10d554c490c867d4d7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 29 06:32:07 2024 +0200
+
+    ims_ipsec_pcscf: decouple IPSEC_FORWARD_USEVIA and IPSEC_TCPPORT_UEC for requests
+    
+    - both flags should be avaible for use at the same time in
+      ipsec_forward()
+    - for request IPSEC_FORWARD_USEVIA gets the protocol from the next hop
+      address
+    
+    (cherry picked from commit ab261540d656ed456bac8876f77f940457a9baf6)
+
+commit 8af0605ade36566597ff691a2adc1e524081a6fa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 28 23:28:38 2024 +0200
+
+    ims_registrar_scscf: init variable to fix analyzer warning
+    
+    (cherry picked from commit 8558947034f16b162c15eda39d18f5f5df4ef562)
+
+commit 89343b6031f186c59ecd6707109bd0269762075f
+Author: Ostap <ostap_mal@hotmail.com>
+Date:   Mon Apr 29 00:15:28 2024 +0300
+
+    modules/statsd: ensure statsd failures do not stop execution (#3819)
+    
+    * modules/statsd: avoid stopping flow when sending statsd metric fails
+    
+    Currently statsd functions return bool: `true` or `false` depending when
+    the function succeeds or fails respectively.
+    
+    This value gets implicitly converted to `int`: `true` -> `1`, `false` ->
+    `0`.
+    
+    For Kamailio `1` means succesfull execution, but `0` means to stop
+    processing messages, which is not what we want as statsd should not impact
+    flow execution. Instead we want to return `-1` which signifies error,
+    but the flow continues.
+    
+    * modules/statsd: do not fail module initilization when statsd init fails
+    
+    statsd_init executes `statsd_connect` which tries to connect to statd
+    server.
+    
+    If connection fails then kamailio fails to start.
+    This is not the desired behaviour as:
+    1. Kamailio should continue working even if statsd server is down,
+       metrics should not impact runtime.
+    2. `statsd_connect` is also re-executed each time we try to send the metric https://github.com/salemove/kamailio/blame/master/src/modules/statsd/lib_statsd.c#L76,
+    so it's initial result is not essential.
+    
+    Note, that before 5.8 the result of init was already ignored due to
+    implicit conversion of `false` to `0`
+    until after
+    https://github.com/kamailio/kamailio/commit/0186246fce8f0e4bb46b30c05174983cd957a3ba
+    was introduced (which could be considered a breaking change even if it
+    seemingly fixes a bug in conversion).
+    
+    (cherry picked from commit 5e66ba23851f115bcb88d7e3f71f78ab33fc1e30)
+
+commit 620aa3f2a0faf3a4d54908bac0aa3ffcd8376ab5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 26 14:35:22 2024 +0200
+
+    ims_usrloc_scscf: enclose examples in dotted lines for better visibility
+    
+    (cherry picked from commit 8506a6fe781e6e0b0b1418f4087db50480db6b57)
+
+commit 1dd7c4038eb9a0c7eec506994a58a56d04e6cee5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 26 14:24:16 2024 +0200
+
+    ims_usrloc_scscf: reformat exported structures
+    
+    (cherry picked from commit 15d859e1e96552fca2708cf56047021beae29711)
+
+commit b2352bc1c6f3eff3aba85a087107f4ca29cedc22
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Fri Apr 26 05:54:27 2024 +0000
+
+    uid_auth_db: spelling fix in documentation
+    
+    (cherry picked from commit 9f28450312749dfbc021a8cbc23472c8a39d3fef)
+
+commit 0bf03aa1987b9cff2fc0d776605620e26c163609
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Fri Apr 26 05:53:30 2024 +0000
+
+    core: spelling fix in comment and log message
+    
+    (cherry picked from commit db176a4918c0b500f5f051cad16fd8d442450ab7)
+
+commit cafe437dcb637b0e571a2d2ffd04d911584404d9
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Mon Apr 29 09:24:16 2024 +0200
+
+    tls: clear thread-local variables up to tls_pthreads_key_mark
+    
+    - other libraries may set thread-locals via pthread_setspecific
+    - assume that tls_pthreads_key_mark demarcates libssl's values
+    - only clean thread-local values up to tls_pthreads_key_mark
+    
+    Currently only used by app_python[s]
+    
+    (cherry picked from commit fe6f4fcde2fa06a3c00479cef169c27dc32ae490)
+
+commit 03ff5051b640d2478dd68ea89ad74d516752ab0f
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Apr 25 14:01:16 2024 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit e76d755de6482e51c9ddac5bba3834cb58ad79b2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 25 13:49:58 2024 +0200
+
+    tcpops: removed unused variable introduced recently
+    
+    (cherry picked from commit fe8f052c29528b656062927626f9784b32b7c8f6)
+
+commit 3ff024fd0057d3a9d045d3f20df5d1d7f7c9c7aa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 24 21:34:28 2024 +0200
+
+    regex: reformat exported structures
+    
+    (cherry picked from commit 0ebfddd20b43396d602b4c68a88f7c2bc58ed211)
+
+commit c8f685359c411ac43000dd77cbc2e4f95b6cb3f4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 12:08:30 2024 +0200
+
+    regex: allocate pcres array
+    
+    - GH #3812
+    
+    (cherry picked from commit 2cc62133db4f6875f55e73e044f37dafbb2274c2)
+
+commit eaacc171adbcd84fb2b95b4c182cd1e954624e2b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 11:49:23 2024 +0200
+
+    regex: init globals for safer shutdown on failure
+    
+    (cherry picked from commit 84517c14ca38a8371c67b858077a42019c2217a8)
+
+commit 794c2edeaffe059bf8de6ab1d3df5db003ed4cb0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 11:19:30 2024 +0200
+
+    core: fmsg - parse loopback ip when initializing faked msg structure
+    
+    - GH #3817
+    
+    (cherry picked from commit 66b3c04a9653425b1602c82dd2456a7eb7cf59d1)
+
+commit 7e987d8937349246f2abfa041679f568344ff402
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 10:42:02 2024 +0200
+
+    pv: use global tcp connection callback for event route on $conid
+    
+    (cherry picked from commit f5c05a68ae72881ab0691bb8488112356fc67c79)
+
+commit 069de99576b5f8bff002176331ed2f545afe8158
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 10:36:35 2024 +0200
+
+    core: tcp - set a global shortcut to tcp connection for event route
+    
+    (cherry picked from commit d114d11724dc4157e7e5809504531d26da6bcc57)
+
+commit c9fe59d6cd73179aa75e21b3b215bc0465b182aa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 10:21:20 2024 +0200
+
+    tcpops: reworked some debug messages
+    
+    (cherry picked from commit 27e3b7f3f82957c6dc80f2ff89c40bdd87cecb81)
+
+commit db2e96ec2aacde1bd50b65ea6357388bad39e86f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 23 10:19:29 2024 +0200
+
+    core: tcp - keep connection id on event route cb structure
+    
+    (cherry picked from commit 11e7d71e5c2ee9428298658ed3b9a0f625d40f00)
+
+commit 28bbcd5a50f45b8217125481706180a76323dc44
+Author: Rick Barenthin <rick@ng-voice.com>
+Date:   Wed Apr 17 13:02:02 2024 +0200
+
+    usrloc: check on db delete the return value of memchr
+    
+    When inserting into the database the AOR is split at the @ sign and
+    if there is no @ sign in the AOR only the domain part is filled and the
+    user part is left empty.
+    
+    But for deleting this is not done and the query failed to be executed
+    and the AOR is not deleted. This PR add this behaviour of only comparing against the
+    domain part if the AOR doesn't contain a @ sign.
+    
+    (cherry picked from commit 49276a1f43b1a3bf4a8d681888df964000360c79)
+
+commit 3052565e3ce14d5d3c45d790877a562185085548
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Wed Apr 10 11:14:45 2024 +0000
+
+    tcp_main: Match wss protocol
+    
+    (cherry picked from commit 175d755c40bc50b78b2cf4f18ad22429289af90d)
+
+commit 7d103cf3887401fca32d95f7ea7ee10f28e9e127
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Wed Apr 10 11:13:32 2024 +0000
+
+    core/forward: Match protocol when forwarding
+    
+    (cherry picked from commit d81e5113884b933251499630d112ec5b1150b8a4)
+
+commit a19e6e0e49d9881ab990d23ad31a95773fe1a00b
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Mon Apr 8 09:42:49 2024 +0000
+
+    tcp_main: Update comment docs
+    
+    (cherry picked from commit 0a28a93c6e060081267dc686e342d45ef03358e7)
+
+commit 0c070443b585c597d2d6249ac6ac32490d9c7f48
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Mon Apr 8 09:29:57 2024 +0000
+
+    tcp_main: Add proto argument to tcpconn_exists function
+    
+    (cherry picked from commit 6779efd430178adff0ae438d178e38c003e4e05c)
+
+commit 2661594bf7f31558e6ac7524f33ebb358aefce21
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Fri Apr 5 13:23:56 2024 +0000
+
+    tcp_main: Add protocol argument for searching tcp/tls connections
+    
+    (cherry picked from commit 4a40b16d4f9bef9bc75d3272c83878e6348aa0b8)
+
+commit d2cf78f5c70977639f3b7f66b852350b764e4b13
+Author: vijay kumar <vijay.kumar@exotel.in>
+Date:   Sat Apr 13 01:26:13 2024 +0530
+
+    rtpengine: fix pkg mem leak in send_rtpp_command()
+    - freed request.s after sending request to websocket
+    
+    (cherry picked from commit b4753ae4216b0c960ac094f4be8232fb4d0147b0)
+
+commit 595d3f472179402dce7a51672c2dbfbcf3b54bd5
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Thu Apr 11 10:47:11 2024 +0000
+
+    corex: Fix unknown af in list_sockets
+    
+    (cherry picked from commit 8bc64a9e6820243336387d9cd9acf81f24d89993)
+
+commit 800ed174b9402d1b253b2cb4ab04b5fb7030dc8d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 5 21:41:21 2024 +0200
+
+    ims_ipsec_pcscf: log error message made info
+    
+    (cherry picked from commit 92d3573b500374d100639484e5a84cb640dc6b1d)
+
+commit 8d312ded02559b325cdd691bde61c54148b077a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 5 16:19:42 2024 +0200
+
+    siputils: tel2sip2() - memset to 0 pkg allocs and recompute len of new uri
+    
+    (cherry picked from commit d1118064d04bb77c818540e68edf1766db1d560a)
+
+commit 7295607e680ad1dd5290b15dab7fed77c65bfb88
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 5 07:54:12 2024 +0200
+
+    core: parser/sdp - rename parameter to suggest better its role
+    
+    (cherry picked from commit b03ec73589c12e566b11ce2c653401daa915c805)
+
+commit 855c76780c4399d6d9881ce3c525a7df56e111c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 4 13:40:13 2024 +0200
+
+    sdpops: reformat the codecs map
+    
+    (cherry picked from commit 359a442e14a156b0bcf60dc5b2580cbc57924e34)
+
+commit f337f13cdbc7e8805c0130dbae3befaf4b684c7c
+Author: Jannik Volkland <volkland@sipgate.de>
+Date:   Thu Apr 4 11:06:10 2024 +0200
+
+    ndb_redis: docs - refine docs regarding client certificates [skip ci]
+    
+    The created ssl context does not use client certificates [1,2] which is against the default in current Redis configurations [3]. The used Redis server therefore needs to be configured to not use tls-auth-clients [3].
+    
+    There is also a small typo in "ac_path" which was fixed to "ca_path".
+    
+    [1]: https://github.com/kamailio/kamailio/blob/8047c958b42ea5af2e8f9ede0152f892ac0eea3a/src/modules/db_redis/redis_connection.c#L168
+    [2]: https://github.com/kamailio/kamailio/blob/8047c958b42ea5af2e8f9ede0152f892ac0eea3a/src/modules/db_redis/redis_connection.c#L212
+    [3]: https://redis.io/docs/management/security/encryption/#client-certificate-authentication
+    
+    (cherry picked from commit 6faa180661e799187eff3a498f8b13e96719fa92)
+
+commit bb48da13adfe36716c3d958ed1d9c410424f4d19
+Author: Jannik Volkland <volkland@sipgate.de>
+Date:   Thu Apr 4 11:03:32 2024 +0200
+
+    db_redis: docs - refine docs regarding client certificates [skip ci]
+    
+    The created ssl context does not use client certificates [1,2] which is against the default in current Redis configurations [3]. The used Redis server therefore needs to be configured to not use tls-auth-clients [3].
+    
+    There is also a small typo in "ac_path" which was fixed to "ca_path".
+    
+    [1]: https://github.com/kamailio/kamailio/blob/8047c958b42ea5af2e8f9ede0152f892ac0eea3a/src/modules/db_redis/redis_connection.c#L168
+    [2]: https://github.com/kamailio/kamailio/blob/8047c958b42ea5af2e8f9ede0152f892ac0eea3a/src/modules/db_redis/redis_connection.c#L212
+    [3]: https://redis.io/docs/management/security/encryption/#client-certificate-authentication
+    
+    (cherry picked from commit 40a50243f0bae782b7acd97cf0a9b1138185068b)
+
+commit 215af59832efc6e485563b55e3af9d209121d0c5
+Author: Stefan-Cristian Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Mon Apr 8 11:35:38 2024 +0300
+
+    pdb server: allow carrier id 0
+    
+    (cherry-picked from commit 60ded00a3b574a08457a696334d11d668595cc0b)
+
+
 ===================== 2024-04-03 Version 5.8.1 Released =====================
 
 ===================== Changes Since Version 5.8.0 ===========================
