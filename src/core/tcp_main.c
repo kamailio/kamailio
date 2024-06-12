@@ -1288,7 +1288,7 @@ inline static int find_listening_sock_info(
 			if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *)&optval,
 					   sizeof(optval))
 					== -1) {
-				LM_ERR("setsockopt SO_REUSEADDR %s\n", strerror(errno));
+				LM_NOTICE("setsockopt SO_REUSEADDR [%s]\n", strerror(errno));
 				/* continue, not critical */
 			}
 #endif
@@ -1297,19 +1297,19 @@ inline static int find_listening_sock_info(
 			if(setsockopt(s, SOL_SOCKET, SO_REUSEPORT, (void *)&optval,
 					   sizeof(optval))
 					== -1) {
-				LM_ERR("setsockopt SO_REUSEPORT %s\n", strerror(errno));
+				LM_NOTICE("setsockopt SO_REUSEPORT [%s]\n", strerror(errno));
 				/* continue, not critical */
 			}
 #endif
 			if(unlikely(bind(s, &si->su.s, sockaddru_len(si->su)) != 0)) {
-				LM_WARN("binding to source address %s failed: %s [%d]\n",
+				LM_DBG("binding to source address %s failed: [%s] [%d]\n",
 						su2a(&si->su, sizeof(si->su)), strerror(errno), errno);
 				return -1;
 			}
 		}
 	} else {
 		if(unlikely(bind(s, &(*from)->s, sockaddru_len(**from)) != 0)) {
-			LM_WARN("binding to source address %s failed: %s [%d]\n",
+			LM_DBG("binding to source address %s failed: [%s] [%d]\n",
 					su2a(&si->su, sizeof(si->su)), strerror(errno), errno);
 			return -1;
 		}
