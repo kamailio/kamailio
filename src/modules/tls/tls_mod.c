@@ -42,6 +42,8 @@
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
+#include "../../core/counters.h"
+#include "../../core/tcp_info.h"
 
 #define KSR_RTHREAD_SKIP_P
 #define KSR_RTHREAD_NEED_4PP
@@ -56,6 +58,7 @@
 #include "tls_mod.h"
 #include "tls_cfg.h"
 #include "tls_rand.h"
+#include "tls_ct_wrq.h"
 
 #ifndef TLS_HOOKS
 #error "TLS_HOOKS must be defined, or the tls module won't work"
@@ -107,6 +110,20 @@ MODULE_VERSION
 #define KEY_PREFIX_LEN (strlen(KEY_PREFIX))
 #endif
 
+#ifdef STATISTICS
+unsigned long tls_stats_connections_no(void);
+unsigned long tls_stats_max_connections(void);
+unsigned long tls_stats_ct_wq_total_bytes(void);
+
+static stat_export_t mod_stats[] = {
+		{"opened_connections", STAT_IS_FUNC,
+				(stat_var **)tls_stats_connections_no},
+		{"max_connections", STAT_IS_FUNC,
+				(stat_var **)tls_stats_max_connections},
+		{"clear_text_write_queued_bytes", STAT_IS_FUNC,
+				(stat_var **)tls_stats_ct_wq_total_bytes},
+		{0, 0, 0}};
+#endif
 
 extern str sr_tls_event_callback;
 str sr_tls_xavp_cfg = {0, 0};
@@ -359,6 +376,14 @@ static int mod_init(void)
 	int verify_client;
 	unsigned char rand_buf[32];
 	int k;
+
+#ifdef STATISTICS
+	/* register statistics */
+	if(register_module_stats("tls", mod_stats) != 0) {
+		LM_ERR("failed to register statistics\n");
+		return -1;
+	}
+#endif
 
 	if(tls_disable) {
 		LM_WARN("tls support is disabled "
@@ -927,5 +952,26 @@ error:
 	OSSL_STORE_close(ctx);
 
 	return pkey;
+}
+#endif
+
+#ifdef STATISTICS
+unsigned long tls_stats_connections_no(void)
+{
+	struct tcp_gen_info ti;
+	tcp_get_info(&ti);
+	return ti.tls_connections_no;
+}
+
+unsigned long tls_stats_max_connections(void)
+{
+	struct tcp_gen_info ti;
+	tcp_get_info(&ti);
+	return ti.tls_max_connections;
+}
+
+unsigned long tls_stats_ct_wq_total_bytes(void)
+{
+	return tls_ct_wq_total_bytes();
 }
 #endif
