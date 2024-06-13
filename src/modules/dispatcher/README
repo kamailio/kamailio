@@ -1638,8 +1638,9 @@ onreply_route {
 
 4.17.  ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
-   Sets the overload control rate and time internval limit for the
-   destination (setid, uri).
+   Sets the overload control rate, time internval limit and sequence
+   number for the destination record (setid, uri) following RFC7339
+   specifications.
 
    Description of parameters:
      * setid - the set (group) id. The parameter can be an integer or a
@@ -1658,7 +1659,7 @@ onreply_route {
 
    Example 1.60. ds_oc_set_attrs() usage
 ...
-    ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "1000", "1");
+    ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "180000", "1");
 ...
 
 5. RPC Commands
