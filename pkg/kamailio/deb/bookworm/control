@@ -620,7 +620,7 @@ Description: TLS support for the Kamailio SIP server (authentication, transport)
  This package provides TLS support for encrypted and authenticated
  SIP connections as well as generic TLS support for many Kamailio modules.
 
-Package: kamailio-wolftls-modules
+Package: kamailio-tls-wolfssl-modules
 Architecture: any
 Multi-Arch: same
 Pre-Depends:
