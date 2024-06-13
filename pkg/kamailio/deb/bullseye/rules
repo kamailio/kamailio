@@ -140,24 +140,27 @@ test_install_all-stamp: build
 	$(MAKE) install quiet=verbose LIBDIR=$(LIBDIR) group_include="kstandard"
 	touch test_install_all-stamp
 
+# tls_wolfssl => tls-wolfssl
+$(INSTALL_MODULES): module = $(subst _,-,$(subst install_,,$@))
+$(INSTALL_MODULES): grp = $(subst install_,,$@)
 $(INSTALL_MODULES): test_install_all-stamp
 	$(MAKE) install-modules-all \
 	  quiet=verbose \
 	  LIBDIR=$(LIBDIR) \
-	  BASEDIR=$(D)-$(subst install_,,$@)-modules \
-	  cfg_prefix=$(D)-$(subst install_,,$@)-modules \
-	  doc-dir=share/doc/$(DEB_SOURCE)-$(subst install_,,$@)-modules \
-	  group_include="k$(subst install_,,$@)"
+	  BASEDIR=$(D)-$(module)-modules \
+	  cfg_prefix=$(D)-$(module)-modules \
+	  doc-dir=share/doc/$(DEB_SOURCE)-$(module)-modules \
+	  group_include="k$(grp)"
 	# Eliminate duplicate libs.
 	for d in $(DUP_LIBS_DIRS); do \
-	  test "$$d" != "$(D)-$${module}-modules/usr/$(LIBDIR)/kamailio" && \
+	  test "$$d" != "$(D)-$(module)-modules/usr/$(LIBDIR)/kamailio" && \
 	  for r in `find $$d -name 'lib*' | xargs`; do \
-	    echo "removing $(subst install_,,$@) lib `basename $$r` present also in $$d"; \
-	    rm -f $(D)-$(subst install_,,$@)-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"`; \
+	    echo "removing $(module) lib `basename $$r` present also in $$d"; \
+	    rm -f $(D)-$(module)-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"`; \
 	  done ; \
 	done
 	# clean empty dirs
-	find $(D)-$(subst install_,,$@)-modules -depth -empty -type d -exec rmdir {} \;
+	find $(D)-$(module)-modules -depth -empty -type d -exec rmdir {} \;
 
 $(INSTALL_EXTRA): test_install_all-stamp
 	$(MAKE) install-modules-all \
