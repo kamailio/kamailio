@@ -473,8 +473,8 @@ int ds_oc_set_attrs(
 	timerclear(&tdiff);
 
 	/* interval set to itval or to default 500 milliseconds */
-	tdiff.tv_sec = ((itval > 0) ? itval : 500000) / 1000000;
-	tdiff.tv_usec = ((itval > 0) ? itval : 500000) % 1000000;
+	tdiff.tv_sec = (((itval > 0) ? itval : 500) * 1000) / 1000000;
+	tdiff.tv_usec = (((itval > 0) ? itval : 500) * 1000) % 1000000;
 
 	for(i = 0; i < idx->nr; i++) {
 		if(idx->dlist[i].uri.len == duri->len
