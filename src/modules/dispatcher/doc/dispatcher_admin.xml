@@ -2019,8 +2019,8 @@ onreply_route {
 		<function moreinfo="none">ds_oc_set_attrs(setid, uri, rval, tval, sval)</function>
 		</title>
 		<para>
-		Sets the overload control rate and time internval limit
-		for the destination (setid, uri).
+		Sets the overload control rate, time internval limit and sequence number
+		for the destination record (setid, uri) following RFC7339 specifications.
 		</para>
 		<para>Description of parameters:</para>
 		<itemizedlist>
@@ -2055,7 +2055,7 @@ onreply_route {
 		<title><function>ds_oc_set_attrs()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-    ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "1000", "1");
+    ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "180000", "1");
 ...
 </programlisting>
 		</example>
