@@ -405,7 +405,7 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 			str2int(&pit->body, &dest->attrs.ocmax);
 		} else if(pit->name.len == 6
 				  && strncasecmp(pit->name.s, "ocrate", 6) == 0) {
-			str2int(&pit->body, &dest->attrs.ocmin);
+			str2int(&pit->body, &dest->attrs.ocrate);
 		}
 	}
 	if(dest->attrs.ocmax < 0 || dest->attrs.ocmax > 100) {
@@ -435,11 +435,11 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 void ds_oc_prepare(ds_dest_t *dp)
 {
 	int i;
-	for(i = 0; i < 100 - dp->attrs.ocrate; i++) {
-		dp->ocdist[i] = 1;
-	}
-	for(i = 100 - dp->attrs.ocrate; i < 100; i++) {
+	for(i = 0; i < dp->attrs.ocrate; i++) {
 		dp->ocdist[i] = 0;
+	}
+	for(i = dp->attrs.ocrate; i < 100; i++) {
+		dp->ocdist[i] = 1;
 	}
 	shuffle_uint100array(dp->ocdist);
 }
@@ -473,7 +473,8 @@ int ds_oc_set_attrs(
 	timerclear(&tdiff);
 
 	/* interval set to itval or to default 500 milliseconds */
-	tdiff.tv_usec = (itval > 0) ? itval : 500000;
+	tdiff.tv_sec = ((itval > 0) ? itval : 500000) / 1000000;
+	tdiff.tv_usec = ((itval > 0) ? itval : 500000) % 1000000;
 
 	for(i = 0; i < idx->nr; i++) {
 		if(idx->dlist[i].uri.len == duri->len
@@ -482,7 +483,7 @@ int ds_oc_set_attrs(
 				LM_DBG("skipping entry %d due to seq condition\n", i);
 				continue;
 			}
-			idx->dlist[i].attrs.ocrate = 100 - irval;
+			idx->dlist[i].attrs.ocrate = irval;
 			if(idx->dlist[i].attrs.ocrate < idx->dlist[i].attrs.ocmin) {
 				idx->dlist[i].attrs.ocrate = idx->dlist[i].attrs.ocmin;
 			}
@@ -504,6 +505,7 @@ int ds_oc_set_attrs(
  */
 static inline int ds_oc_skip(ds_set_t *dsg, int alg, int n)
 {
+	int ret;
 	struct timeval tnow;
 
 	if(alg != DS_ALG_OVERLOAD) {
@@ -514,16 +516,19 @@ static inline int ds_oc_skip(ds_set_t *dsg, int alg, int n)
 
 	if(timercmp(&dsg->dlist[n].octime, &tnow, <)) {
 		/* over the time interval validity - use it */
+		LM_DBG("time validity not matching\n");
 		return 0;
 	}
 	if(dsg->dlist[n].ocdist[dsg->dlist[n].ocidx] == 1) {
 		/* use it */
-		return 0;
+		ret = 0;
+	} else {
+		/* skip it */
+		ret = 1;
 	}
 	dsg->dlist[n].ocidx = (dsg->dlist[n].ocidx + 1) % 100;
 
-	/* skip it */
-	return 1;
+	return ret;
 }
 
 /**
