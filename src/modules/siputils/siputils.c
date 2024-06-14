@@ -175,6 +175,7 @@ static cmd_export_t cmds[] = {
 	{"is_request", (cmd_function)w_is_request, 0, 0, 0, ANY_ROUTE},
 	{"is_reply", (cmd_function)w_is_reply, 0, 0, 0, ANY_ROUTE},
 	{"is_sip", (cmd_function)w_is_sip, 0, 0, 0, ANY_ROUTE},
+	{"is_http", (cmd_function)w_is_http, 0, 0, 0, ANY_ROUTE},
 	{"is_gruu", (cmd_function)w_is_gruu, 0, 0, 0, ANY_ROUTE},
 	{"is_gruu", (cmd_function)w_is_gruu, 1, fixup_spve_null, 0, ANY_ROUTE},
 	{"is_supported", (cmd_function)w_is_supported, 1, fixup_option, 0,
@@ -626,6 +627,11 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	},
 	{ str_init("siputils"), str_init("is_sip"),
 		SR_KEMIP_INT, ki_is_sip,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_http"),
+		SR_KEMIP_INT, ki_is_http,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

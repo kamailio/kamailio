@@ -122,6 +122,11 @@ int is_reply(struct sip_msg *msg);
 int w_is_sip(struct sip_msg *msg, char *foo, char *bar);
 int ki_is_sip(struct sip_msg *msg);
 
+/*
+ * Return true (1) if it is a HTTP message, otherwise false (-1)
+ */
+int w_is_http(sip_msg_t *msg, char *foo, char *bar);
+int ki_is_http(sip_msg_t *msg);
 
 /*
  * Find if Request URI has a given parameter with matching value

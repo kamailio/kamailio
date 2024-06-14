@@ -131,6 +131,36 @@ int ki_is_sip(sip_msg_t *msg)
 	return -1;
 }
 
+/**
+ * return 1 (true) if it is a HTTP message
+ */
+int w_is_http(sip_msg_t *msg, char *foo, char *bar)
+{
+	if(msg == NULL)
+		return -1;
+
+	if(msg->first_line.flags & FLINE_FLAG_PROTO_HTTP) {
+		return 1;
+	}
+
+	return -1;
+}
+
+/**
+ * return 1 (true) if it is a HTTP message
+ */
+int ki_is_http(sip_msg_t *msg)
+{
+	if(msg == NULL)
+		return -1;
+
+	if(msg->first_line.flags & FLINE_FLAG_PROTO_HTTP) {
+		return 1;
+	}
+
+	return -1;
+}
+
 /*
  * Checks if From includes a To-tag -- good to identify
  * if a request creates a new dialog
