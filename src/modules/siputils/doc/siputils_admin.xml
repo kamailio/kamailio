@@ -1155,6 +1155,27 @@ if (is_sip()) {
 </programlisting>
 		</example>
 	</section>
+	<section id="siputils.f.is_http">
+		<title>
+		<function moreinfo="none">is_http()</function>
+		</title>
+		<para>
+		Return true if it is a HTTP message.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>is_http</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_http()) {
+	...
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="siputils.f.is_gruu">
 		<title>
 			<function moreinfo="none">is_gruu([uri])</function>
