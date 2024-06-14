@@ -120,7 +120,7 @@ int is_reply(struct sip_msg *msg);
  * Return true (1) if it is a SIP message, otherwise false (-1)
  */
 int w_is_sip(struct sip_msg *msg, char *foo, char *bar);
-int is_sip(struct sip_msg *msg);
+int ki_is_sip(struct sip_msg *msg);
 
 
 /*

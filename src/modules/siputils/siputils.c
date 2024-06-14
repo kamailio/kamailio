@@ -625,7 +625,7 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("siputils"), str_init("is_sip"),
-		SR_KEMIP_INT, is_sip,
+		SR_KEMIP_INT, ki_is_sip,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

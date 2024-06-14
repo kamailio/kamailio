@@ -119,7 +119,7 @@ int w_is_sip(sip_msg_t *msg, char *foo, char *bar)
 /**
  * return 1 (true) if it is a SIP message
  */
-int is_sip(sip_msg_t *msg)
+int ki_is_sip(sip_msg_t *msg)
 {
 	if(msg == NULL)
 		return -1;
