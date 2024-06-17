@@ -164,6 +164,8 @@ int *trace_on_flag = NULL;
 int trace_sl_acks = 1;
 
 int trace_to_database = 1;
+int *trace_to_database_flag = NULL;
+
 int trace_db_delayed = 0;
 int trace_db_mode = 0;
 
@@ -353,13 +355,22 @@ static int mod_init(void)
 	}
 	*trace_on_flag = trace_on;
 
+	trace_to_database_flag = (int *)shm_malloc(sizeof(int));
+	if(trace_to_database_flag == NULL) {
+		LM_ERR("no more shm memory left\n");
+		return -1;
+	}
+	*trace_to_database_flag = trace_to_database;
+
 	/* find a database module if needed */
-	if((_siptrace_mode & SIPTRACE_MODE_DB) || (trace_to_database != 0)) {
+	if((_siptrace_mode & SIPTRACE_MODE_DB)
+			|| (trace_to_database_flag != NULL
+					&& *trace_to_database_flag != 0)) {
 		if(db_bind_mod(&db_url, &db_funcs)) {
 			LM_ERR("unable to bind database module\n");
 			return -1;
 		}
-		if(!DB_CAPABILITY(db_funcs, DB_CAP_INSERT)) {
+		if(trace_to_database_flag && !DB_CAPABILITY(db_funcs, DB_CAP_INSERT)) {
 			LM_ERR("database modules does not provide all functions needed"
 				   " by module\n");
 			return -1;
@@ -523,7 +534,9 @@ static int child_init(int rank)
 	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if((_siptrace_mode & SIPTRACE_MODE_DB) || (trace_to_database != 0)) {
+	if((_siptrace_mode & SIPTRACE_MODE_DB)
+			|| (trace_to_database_flag != NULL
+					&& *trace_to_database_flag != 0)) {
 		db_con = db_funcs.init(&db_url);
 		if(!db_con) {
 			LM_ERR("unable to connect to database. Please check "
@@ -548,6 +561,14 @@ static int child_init(int rank)
 
 static void destroy(void)
 {
+
+	if(trace_to_database_flag != NULL) {
+		if(db_con != NULL) {
+			db_funcs.close(db_con);
+		}
+		shm_free(trace_to_database_flag);
+	}
+
 	if(trace_on_flag) {
 		shm_free(trace_on_flag);
 	}
@@ -633,7 +654,8 @@ static int sip_trace_insert_db(
 
 static int sip_trace_store_db(siptrace_data_t *sto)
 {
-	if((trace_to_database == 0) && ((_siptrace_mode & SIPTRACE_MODE_DB) == 0)) {
+	if((trace_to_database_flag == NULL || *trace_to_database_flag == 0)
+			&& ((_siptrace_mode & SIPTRACE_MODE_DB) == 0)) {
 		goto done;
 	}
 
@@ -2620,8 +2642,89 @@ static void siptrace_rpc_status(rpc_t *rpc, void *c)
 static const char *siptrace_status_doc[2] = {
 		"Get status or turn on/off siptrace. Parameters: on, off or check.", 0};
 
+static void siptrace_database_rpc_status(rpc_t *rpc, void *c)
+{
+	str status = {0, 0};
+
+	if(rpc->scan(c, "S", &status) < 1) {
+		rpc->fault(c, 500, "Not enough parameters (on, off or check)");
+		return;
+	}
+
+	if(trace_to_database_flag == NULL) {
+		rpc->fault(c, 500, "Internal error");
+		return;
+	}
+
+	if(strncasecmp(status.s, "enable", strlen("enable")) == 0) {
+		if(trace_to_database_flag != NULL) {
+			if(*trace_to_database_flag == 1) {
+				rpc->rpl_printf(c, "Already Enabled");
+			} else {
+				if(db_bind_mod(&db_url, &db_funcs)) {
+					rpc->rpl_printf(c, "unable to bind database module");
+					return;
+				}
+				if(trace_to_database_flag
+						&& !DB_CAPABILITY(db_funcs, DB_CAP_INSERT)) {
+					rpc->rpl_printf(c, "database modules does not provide all "
+									   "functions needed by module");
+					return;
+				}
+				db_con = db_funcs.init(&db_url);
+				if(!db_con) {
+					rpc->rpl_printf(c, "unable to connect to database. Please "
+									   "check configuration");
+					return;
+				}
+				if(DB_CAPABILITY(db_funcs, DB_CAP_QUERY)) {
+					if(db_check_table_version(&db_funcs, db_con,
+							   &siptrace_table, SIP_TRACE_TABLE_VERSION)
+							< 0) {
+						DB_TABLE_VERSION_ERROR(siptrace_table);
+						db_funcs.close(db_con);
+						db_con = 0;
+						rpc->rpl_printf(c, "Error on database structure");
+						return;
+					}
+				}
+				*trace_to_database_flag = 1;
+				rpc->rpl_printf(c, "Enabled");
+			}
+			return;
+		}
+	}
+	if(strncasecmp(status.s, "disable", strlen("disable")) == 0) {
+		if(trace_to_database_flag != NULL) {
+			if(*trace_to_database_flag == 0) {
+				rpc->rpl_printf(c, "Already Disabled");
+			} else {
+				if(db_con != NULL) {
+					db_funcs.close(db_con);
+				}
+				*trace_to_database_flag = 0;
+				rpc->rpl_printf(c, "Disabled");
+			}
+			return;
+		}
+	}
+	if(strncasecmp(status.s, "check", strlen("check")) == 0) {
+		rpc->rpl_printf(c, *trace_to_database_flag ? "Enabled" : "Disabled");
+		return;
+	}
+	rpc->fault(c, 500, "Bad parameter (enable, disable or check)");
+	return;
+}
+
+static const char *siptrace_database_status_doc[2] = {
+		"Get status or enable/disable trace to database. Parameters: enable, "
+		"disable or check.",
+		0};
+
 rpc_export_t siptrace_rpc[] = {
 		{"siptrace.status", siptrace_rpc_status, siptrace_status_doc, 0},
+		{"siptrace.database", siptrace_database_rpc_status,
+				siptrace_database_status_doc, 0},
 		{0, 0, 0, 0}};
 
 static int siptrace_init_rpc(void)
