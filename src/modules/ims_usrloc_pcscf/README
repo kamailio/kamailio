@@ -31,7 +31,7 @@ Carsten Bock
 
               3.1. hash_size (int)
               3.2. timer_interval (int)
-              3.3. db_url (int)
+              3.3. db_url (string)
               3.4. db_mode (int)
               3.5. match_contact_host_port (int)
               3.6. expires_grace (int)
@@ -75,7 +75,7 @@ Chapter 1. Admin Guide
 
         3.1. hash_size (int)
         3.2. timer_interval (int)
-        3.3. db_url (int)
+        3.3. db_url (string)
         3.4. db_mode (int)
         3.5. match_contact_host_port (int)
         3.6. expires_grace (int)
@@ -100,6 +100,7 @@ Chapter 1. Admin Guide
    very different to that of std. SIP and as a result we have built this
    new module. A lot of the design has been borrowed from the std. usrloc
    module. For example. An IMS contact, in PCSCF, needs things like:
+
      * Diameter Rx session for signalling bearer status. i.e. this is
        effectively QoS from the network to make sure the signalling link
        can be 'trusted'
@@ -128,7 +129,7 @@ Chapter 1. Admin Guide
 
    3.1. hash_size (int)
    3.2. timer_interval (int)
-   3.3. db_url (int)
+   3.3. db_url (string)
    3.4. db_mode (int)
    3.5. match_contact_host_port (int)
    3.6. expires_grace (int)
@@ -160,16 +161,16 @@ modparam("ims_usrloc_pcscf", "hash_size", 10)
 modparam("ims_usrloc_pcscf", "timer_interval", 30)
 ...
 
-3.3. db_url (int)
+3.3. db_url (string)
 
-   Database URL
+   Database URL.
 
    Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
 
    Example 1.3. Set db_url parameter
 ...
-modparam("ims_usrloc_pcscf", "db_url",
-       "dbdriver://username:password@dbhost/dbname")
+modparam("ims_usrloc_pcscf", "db_url", "dbdriver://username:password@dbhost/dbna
+me")
 ...
 
 3.4. db_mode (int)
