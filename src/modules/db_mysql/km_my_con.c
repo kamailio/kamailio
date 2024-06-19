@@ -184,8 +184,8 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 		mysql_options(
 				ptr->con, MYSQL_OPT_SSL_CA, (const void *)db_mysql_opt_ssl_ca);
 #else
-	LM_WARN("opt_ssl_ca option not supported by mysql version (value %s) - "
-			"ignoring\n",
+	LM_DBG("opt_ssl_ca option not supported by mysql version (value %s) - "
+		   "ignoring\n",
 			db_mysql_opt_ssl_ca);
 #endif /* MYSQL_OPT_SSL_CA */
 
