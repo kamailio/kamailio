@@ -142,8 +142,8 @@
 %bcond_without cnxcc
 %bcond_with dnssec
 %bcond_without evapi
-%bcond_without geoip
-%bcond_with geoip2
+%bcond_with geoip
+%bcond_without geoip2
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
