@@ -9,6 +9,7 @@
 %bcond_with dnssec
 %bcond_without evapi
 %bcond_without geoip
+%bcond_without geoip1
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -46,6 +47,7 @@
 %bcond_with dnssec
 %bcond_without evapi
 %bcond_without geoip
+%bcond_without geoip1
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -93,6 +95,7 @@
 %bcond_with dnssec
 %bcond_without evapi
 %bcond_without geoip
+%bcond_without geoip1
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -139,7 +142,8 @@
 %bcond_without cnxcc
 %bcond_with dnssec
 %bcond_without evapi
-%bcond_without geoip
+%bcond_with geoip
+%bcond_with geoip1
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -170,6 +174,7 @@
 %bcond_with dnssec
 %bcond_with evapi
 %bcond_without geoip
+%bcond_without geoip1
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -470,8 +475,12 @@ suspended when sending the event, to be resumed at a later point, maybe triggere
 %package    geoip
 Summary:    MaxMind GeoIP support for Kamailio
 Group:      %{PKGGROUP}
-Requires:   GeoIP, libmaxminddb, kamailio = %ver
-BuildRequires:  GeoIP-devel, libmaxminddb-devel
+%if %{with geoip1}
+Requires:   GeoIP
+BuildRequires:  GeoIP-devel
+%endif
+Requires:   libmaxminddb, kamailio = %ver
+BuildRequires:  libmaxminddb-devel
 
 %description    geoip
 MaxMind GeoIP support for Kamailio.
@@ -1227,7 +1236,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     kev \
 %endif
 %if %{with geoip}
+%if %{with geoip1}
     kgeoip \
+%endif
     kgeoip2 \
 %endif
     kgzcompress \
@@ -1340,7 +1351,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kev \
 %endif
 %if %{with geoip}
+%if %{with geoip1}
     kgeoip \
+%endif
     kgeoip2 \
 %endif
     kgzcompress \
@@ -1938,9 +1951,11 @@ fi
 %if %{with geoip}
 %files      geoip
 %defattr(-,root,root)
+%if %{with geoip1}
 %doc %{_docdir}/kamailio/modules/README.geoip
-%doc %{_docdir}/kamailio/modules/README.geoip2
 %{_libdir}/kamailio/modules/geoip.so
+%endif
+%doc %{_docdir}/kamailio/modules/README.geoip2
 %{_libdir}/kamailio/modules/geoip2.so
 %endif
 
@@ -2421,6 +2436,9 @@ fi
 
 
 %changelog
+* Thu Sep 10 2024 Oded Arbel <oded@geek.co.il>
+  - Added option to disable building the geoip module that require the obsolete and unsupported GeoIP library
+    and default to not building it for distributions that no longer ship it.
 * Tue Sep 13 2022 Gustavo Almeida <galmeida@broadvoice.com>
   - added readline-devel build dependency
 * Sat Aug 31 2019 Sergey Safarov <s.safarov@gmail.com> 5.3.0-dev7
