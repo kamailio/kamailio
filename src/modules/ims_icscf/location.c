@@ -161,16 +161,14 @@ int I_perform_location_information_request(
 		free_saved_lir_transaction_data(saved_t);
 		cscf_reply_transactional(msg, 480, MSG_480_DIAMETER_ERROR);
 
+		// shm_malloc in cscf_get_public_identity_from_requri
 		if(public_identity.s && !orig)
-			shm_free(
-					public_identity
-							.s); // shm_malloc in cscf_get_public_identity_from_requri
+			shm_free(public_identity.s);
 		return CSCF_RETURN_BREAK;
 	}
+	// shm_malloc in cscf_get_public_identity_from_requri
 	if(public_identity.s && !orig)
-		shm_free(
-				public_identity
-						.s); // shm_malloc in cscf_get_public_identity_from_requri
+		shm_free(public_identity.s);
 
 	//we use async replies therefore we send break and not true when successful
 	return CSCF_RETURN_BREAK;

@@ -27,6 +27,7 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/data_lump.h"
 #include "../../lib/ims/ims_getters.h"
+#include "../ims_ipsec_pcscf/cmd.h"
 
 #define STR_APPEND(dst, src)                             \
 	{                                                    \
@@ -40,7 +41,9 @@ static unsigned int current_msg_id = 0;
 static pcontact_t *c = NULL;
 
 extern usrloc_api_t ul;
+extern ipsec_pcscf_api_t ipsec_pcscf;
 extern int ignore_contact_rxport_check;
+extern int trust_bottom_via;
 static str *asserted_identity;
 static str *registration_contact;
 
@@ -117,43 +120,81 @@ int checkcontact(struct sip_msg *_m, pcontact_t *c)
 {
 	int security_server_port = -1;
 	str received_host = {0, 0};
+	unsigned short received_port = 0;
+	char received_proto = 0;
 	char srcip[50];
+
+	if(trust_bottom_via) {
+		struct via_body *vb = cscf_get_last_via(_m);
+		if(vb == 0) {
+			LM_ERR("No via header in request\n");
+			return -1;
+		}
+		if(vb->received != NULL && vb->received->value.len > 0) {
+			received_host = vb->received->value;
+		} else {
+			received_host = vb->host;
+		}
+		if(vb->rport != NULL && vb->rport->value.len > 0) {
+			str2ushort(&vb->rport->value, &received_port);
+		} else {
+			received_port = vb->port;
+		}
+		// this probably doesn't matter, since IMS UEs register IPs for both
+		received_proto = vb->proto;
+	} else {
+		received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
+		received_host.s = srcip;
+		received_port = _m->rcv.src_port;
+		received_proto = _m->rcv.proto;
+	}
 
 	LM_DBG("Port %d (search %d), Proto %d (search %d), reg_state %s (search "
 		   "%s)\n",
-			c->received_port, _m->rcv.src_port, c->received_proto,
-			_m->rcv.proto, reg_state_to_string(c->reg_state),
+			c->received_port, received_port, c->received_proto, received_proto,
+			reg_state_to_string(c->reg_state),
 			reg_state_to_string(PCONTACT_REGISTERED));
 
-	if(c->security) {
-		switch(c->security->type) {
-			case SECURITY_IPSEC:
-				security_server_port = c->security->data.ipsec->port_uc;
-				break;
-			case SECURITY_TLS:
-			case SECURITY_NONE:
-				break;
+
+	if(ipsec_pcscf.ipsec_on_expire == NULL) {
+		LM_DBG("ims_ipsec_pcscf module not loaded - skipping port-uc checks\n");
+	} else {
+		if(c->security) {
+			switch(c->security->type) {
+				case SECURITY_IPSEC:
+					security_server_port = c->security->data.ipsec->port_uc;
+					break;
+				case SECURITY_TLS:
+				case SECURITY_NONE:
+					break;
+			}
+		} else if(c->security_temp) {
+			switch(c->security_temp->type) {
+				case SECURITY_IPSEC:
+					security_server_port =
+							c->security_temp->data.ipsec->port_uc;
+					break;
+				case SECURITY_TLS:
+				case SECURITY_NONE:
+					break;
+			}
 		}
-	} else if(c->security_temp) {
-		switch(c->security_temp->type) {
-			case SECURITY_IPSEC:
-				security_server_port = c->security_temp->data.ipsec->port_uc;
-				break;
-			case SECURITY_TLS:
-			case SECURITY_NONE:
-				break;
+
+		if(!ignore_contact_rxport_check && (c->received_port == received_port)
+				&& (security_server_port == received_port)) {
+			LM_DBG("check contact failed - port-uc %d is neither contact "
+				   "received_port %d, nor message received port %d\n",
+					security_server_port, c->received_port, _m->rcv.src_port);
+			return 1;
 		}
 	}
 
 	if((ignore_reg_state || (c->reg_state == PCONTACT_REGISTERED))
+			// Weird... this condition is for rxport, not rxproto. If it was intentional, a comment would be nice,
+			// otherwise I'm thinking it's an unintended effect.
 			&& (ignore_contact_rxport_check
-					|| (c->received_port == _m->rcv.src_port)
-					|| (security_server_port == _m->rcv.src_port))
-			&& (ignore_contact_rxport_check
-					|| (c->received_proto == _m->rcv.proto))) {
+					|| (c->received_proto == received_proto))) {
 
-		received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
-		received_host.s = srcip;
 		LM_DBG("Received host len %d (search %d)\n", c->received_host.len,
 				received_host.len);
 		// Then check the length:
@@ -199,7 +240,7 @@ pcontact_t *getContactP(struct sip_msg *_m, udomain_t *_d,
 	b = cscf_parse_contacts(_m);
 
 	if(_m->first_line.type == SIP_REPLY && _m->contact && _m->contact->parsed
-			&& b->contacts) {
+			&& b->contacts && !trust_bottom_via) {
 		mustRetryViaSearch = 1;
 		mustRetryReceivedSearch = 1;
 		LM_DBG("This is a reply - to look for contact we favour the contact "
@@ -224,7 +265,7 @@ pcontact_t *getContactP(struct sip_msg *_m, udomain_t *_d,
 		else
 			LM_DBG("This is a request - using first via to find contact\n");
 
-		vb = cscf_get_ue_via(_m);
+		vb = trust_bottom_via ? cscf_get_last_via(_m) : cscf_get_ue_via(_m);
 		host = vb->host;
 		port = vb->port ? vb->port : 5060;
 		proto = vb->proto;
@@ -234,8 +275,27 @@ pcontact_t *getContactP(struct sip_msg *_m, udomain_t *_d,
 		   "[%d://%.*s:%d]\n",
 			proto, host.len, host.s, port);
 
-	received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
-	received_host.s = srcip;
+	if(trust_bottom_via && vb->received && vb->received->value.len > 0) {
+		received_host = vb->received->value;
+	} else {
+		received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
+		received_host.s = srcip;
+	}
+	unsigned short received_port = 0;
+	if(trust_bottom_via && vb->rport && vb->rport->value.len > 0) {
+		received_port = atoi(vb->rport->value.s);
+	} else {
+		received_port = _m->rcv.src_port;
+	}
+	if(received_port == 0) {
+		received_port = 5060;
+	}
+	char received_proto = 0;
+	if(trust_bottom_via && vb->proto) {
+		received_proto = vb->proto;
+	} else {
+		received_proto = _m->rcv.proto;
+	}
 
 	//    if (_m->id != current_msg_id) {
 	current_msg_id = _m->id;
@@ -245,8 +305,8 @@ pcontact_t *getContactP(struct sip_msg *_m, udomain_t *_d,
 	search_ci.reg_state = reg_state;
 	search_ci.received_host.s = received_host.s;
 	search_ci.received_host.len = received_host.len;
-	search_ci.received_port = _m->rcv.src_port;
-	search_ci.received_proto = _m->rcv.proto;
+	search_ci.received_port = received_port;
+	search_ci.received_proto = received_proto;
 	search_ci.searchflag = SEARCH_RECEIVED;
 	search_ci.num_service_routes = 0;
 	if(is_registered_fallback2ip == 1) {
@@ -351,6 +411,7 @@ tryagain:
 	if(!c && mustRetryViaSearch) {
 		LM_DBG("This is a reply so we will search using the last via once "
 			   "more...\n");
+		// if trust_bottom_via was set, we wouldn't get here, hence this remains as is.
 		vb = cscf_get_ue_via(_m);
 		search_ci.via_host = vb->host;
 		search_ci.via_port = vb->port ? vb->port : 5060;
@@ -396,7 +457,7 @@ int check_service_routes(struct sip_msg *_m, udomain_t *_d)
 
 	//	LM_DBG("Got %i Route-Headers.\n", c->num_service_routes);
 
-	vb = cscf_get_ue_via(_m);
+	vb = trust_bottom_via ? cscf_get_last_via(_m) : cscf_get_ue_via(_m);
 	port = vb->port ? vb->port : 5060;
 	proto = vb->proto;
 
@@ -597,7 +658,7 @@ int force_service_routes(struct sip_msg *_m, udomain_t *_d)
 	/* we need to be sure we have seen all HFs */
 	parse_headers(_m, HDR_EOH_F, 0);
 
-	vb = cscf_get_ue_via(_m);
+	vb = trust_bottom_via ? cscf_get_last_via(_m) : cscf_get_ue_via(_m);
 	port = vb->port ? vb->port : 5060;
 	proto = vb->proto;
 

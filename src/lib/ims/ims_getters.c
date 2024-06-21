@@ -1638,7 +1638,7 @@ str *cscf_get_service_route(struct sip_msg *msg, int *size, int is_shm)
 			}
 			x = pkg_reallocxf(x, (*size + k) * sizeof(str));
 			if(!x) {
-				LM_ERR("Error our of pkg memory");
+				LM_ERR("Error out of pkg memory");
 				return 0;
 			}
 			r2 = r;
