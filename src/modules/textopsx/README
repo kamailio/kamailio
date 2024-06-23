@@ -753,8 +753,8 @@ bl_iterator_end("b1");
 
 3.1. @hf_value
 
-   Get value of required header-value or param. Note that functions called
-   'value2' works with Authorization-like headers where comma is not
+   Get value of required header-value or param. Note that selects called
+   'hf_value2' work with Authorization-like headers where comma is not
    treated as value delimiter.
 
    Formats:
@@ -805,7 +805,9 @@ $prt = @hf_value2.authorization.integrity_protected;
 
 3.2. @hf_value2
 
-   TBA.
+   Similar to selects called 'hf_value', but work with Authorization-like
+   headers where comma is treated as attribute delimiter instead of header
+   value delimiter.
 
 3.3. @hf_value_exists
 
