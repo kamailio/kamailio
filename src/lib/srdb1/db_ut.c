@@ -596,6 +596,10 @@ int db_val2pv_spec(struct sip_msg *msg, db_val_t *dbval, pv_spec_t *pvs)
 				pv.flags = PV_VAL_INT | PV_TYPE_INT;
 				pv.ri = (long)dbval->val.int_val;
 				break;
+			case DB1_UINT:
+				pv.flags = PV_VAL_INT | PV_TYPE_INT;
+				pv.ri = (long)dbval->val.uint_val;
+				break;
 			case DB1_DATETIME:
 				pv.flags = PV_VAL_INT | PV_TYPE_INT;
 				pv.ri = (long)dbval->val.time_val;
