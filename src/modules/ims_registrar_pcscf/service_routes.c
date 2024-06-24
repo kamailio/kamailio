@@ -158,7 +158,7 @@ int checkcontact(struct sip_msg *_m, pcontact_t *c)
 
 	if(ipsec_pcscf.ipsec_on_expire == NULL) {
 		LM_DBG("ims_ipsec_pcscf module not loaded - skipping port-uc checks\n");
-	} else {
+	} else if(!ignore_contact_rxport_check) {
 		if(c->security) {
 			switch(c->security->type) {
 				case SECURITY_IPSEC:
@@ -180,8 +180,8 @@ int checkcontact(struct sip_msg *_m, pcontact_t *c)
 			}
 		}
 
-		if(!ignore_contact_rxport_check && (c->received_port == received_port)
-				&& (security_server_port == received_port)) {
+		if(c->received_port != received_port
+				&& security_server_port != received_port) {
 			LM_DBG("check contact failed - port-uc %d is neither contact "
 				   "received_port %d, nor message received port %d\n",
 					security_server_port, c->received_port, _m->rcv.src_port);
@@ -190,8 +190,9 @@ int checkcontact(struct sip_msg *_m, pcontact_t *c)
 	}
 
 	if((ignore_reg_state || (c->reg_state == PCONTACT_REGISTERED))
-			// Weird... this condition is for rxport, not rxproto. If it was intentional, a comment would be nice,
-			// otherwise I'm thinking it's an unintended effect.
+			// Weird... this condition is for rxport, not rxproto. If it was
+			// intentional, a comment would be nice, otherwise I'm thinking
+			// it's an unintended effect.
 			&& (ignore_contact_rxport_check
 					|| (c->received_proto == received_proto))) {
 
