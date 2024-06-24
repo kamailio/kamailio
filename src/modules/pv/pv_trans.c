@@ -246,6 +246,34 @@ int tr_eval_string(
 			val->rs.s = _tr_buffer;
 			val->rs.len = j;
 			break;
+		case TR_S_RMHDWS:
+			if(!(val->flags & PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len >= TR_BUFFER_SIZE - 1)
+				return -1;
+			j = 0;
+			c = 0;
+			for(i = 0; i < val->rs.len; i++) {
+				if(val->rs.s[i] == '\r' || val->rs.s[i] == '\n') {
+					c = 1;
+				} else if(c != 0 && (val->rs.s[i] == ' ' || val->rs.s[i] == '\t')) {
+					if(c == 1) {
+						_tr_buffer[j] = ' ';
+						j++;
+						c = 2;
+					}
+				} else {
+					_tr_buffer[j] = val->rs.s[i];
+					j++;
+					c = 0;
+				}
+			}
+			_tr_buffer[j] = '\0';
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = j;
+			break;
 		case TR_S_MD5:
 			if(!(val->flags & PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
@@ -2720,6 +2748,9 @@ char *tr_parse_string(str *in, trans_t *t)
 		goto done;
 	} else if(name.len == 4 && strncasecmp(name.s, "rmws", 4) == 0) {
 		t->subtype = TR_S_RMWS;
+		goto done;
+	} else if(name.len == 6 && strncasecmp(name.s, "rmhdws", 6) == 0) {
+		t->subtype = TR_S_RMHDWS;
 		goto done;
 	} else if(name.len == 6 && strncasecmp(name.s, "sha256", 6) == 0) {
 		t->subtype = TR_S_SHA256;
