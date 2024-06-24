@@ -335,7 +335,6 @@ int resolve_select(select_t *s)
 			default:
 				BUG("Unable to resolve select at level %d\n", param_idx);
 				break;
-				break;
 		}
 		goto not_found;
 
