@@ -178,8 +178,7 @@ static int mod_child_init(int rank)
 
 	// routing process
 	if(rabbitmq_connect(&amqp_conn) != RABBITMQ_OK) {
-		LM_ERR("FAIL rabbitmq_connect()");
-		return -1;
+		LM_WARN("FAIL rabbitmq_connect()");
 	}
 	LM_DBG("SUCCESS initialization of rabbitmq module in child [%d]\n", rank);
 
