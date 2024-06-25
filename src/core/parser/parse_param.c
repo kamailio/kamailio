@@ -508,9 +508,9 @@ static inline int parse_param2(
 		t->len = t->name.len;
 	}
 
-	if(_s->s[0] == ',')
+	if(separator != ',' && _s->s[0] == ',')
 		goto ok; /* To be able to parse header parameters */
-	if(_s->s[0] == '>')
+	if(separator != '>' && _s->s[0] == '>')
 		goto ok; /* To be able to parse URI parameters */
 
 	if(_s->s[0] != separator) {
