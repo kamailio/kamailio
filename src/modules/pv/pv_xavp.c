@@ -644,7 +644,7 @@ int xavp_slist_explode(str *slist, str *sep, str *mode, str *xname)
 /**
  *
  */
-int xavp_params_explode(str *params, str *xname)
+int xavp_xparams_explode(str *params, str *sep, str *xname)
 {
 	param_t *params_list = NULL;
 	param_hooks_t phooks;
@@ -663,8 +663,9 @@ int xavp_params_explode(str *params, str *xname)
 	s.len = params->len;
 	if(s.s[s.len - 1] == ';')
 		s.len--;
-	if(parse_params(&s, CLASS_ANY, &phooks, &params_list) < 0) {
-		LM_DBG("invalid formatted values [%.*s]\n", params->len, params->s);
+	if(parse_params2(&s, CLASS_ANY, &phooks, &params_list, sep->s[0]) < 0) {
+		LM_DBG("invalid formatted values [%.*s] sep [%.*s]\n", params->len,
+				params->s, sep->len, sep->s);
 		return -1;
 	}
 
@@ -695,6 +696,16 @@ int xavp_params_explode(str *params, str *xname)
 	}
 
 	return 0;
+}
+
+/**
+ *
+ */
+int xavp_params_explode(str *params, str *xname)
+{
+	str sep = str_init(";");
+
+	return xavp_xparams_explode(params, &sep, xname);
 }
 
 /**
