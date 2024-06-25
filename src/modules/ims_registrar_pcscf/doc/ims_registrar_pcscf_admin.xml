@@ -212,6 +212,35 @@ modparam("ims_registrar_pcscf", "ignore_contact_rxport_check", 1)
     </section>
 
     <section>
+      <title><varname>ignore_contact_rxproto_check</varname> (int)</title>
+
+      <para>
+        Validate, if the protocol, from which the request was received, is the
+        same as used during registration.
+
+        Note: with IMS, the UE opens IPsec Security Associations between IPs
+        and ports with the P-CSCF. These are for both UDP and TCP, with a
+        single negotiation, which does not need to specify the protocol. Hence
+        why is this checked at all? Before it could be ignored if the parameter
+        ignore_contact_rxport_check was set (bug/typo maybe?).
+      </para>
+
+      <para>This Parameter is primarily used by the "is_registered" function.</para>
+
+      <para><emphasis>Default value is 1 (ignore protocol, for best compliance).</emphasis></para>
+
+      <example>
+        <title><varname>ignore_contact_rxproto_check</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "ignore_contact_rxproto_check", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
       <title><varname>ignore_reg_state</varname> (int)</title>
 
       <para>Validate, if the found contact is really and completely registered.</para>

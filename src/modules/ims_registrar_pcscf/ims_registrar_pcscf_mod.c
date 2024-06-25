@@ -83,9 +83,13 @@ int publish_reginfo = 0;
 int subscribe_to_reginfo = 0;
 int subscription_expires = 3600;
 int ignore_reg_state = 0;
-/**!< ignore port checks between received port on message and registration received port.
+/** ignore port checks between received port on message and registration received port.
  * this is useful for example if you register with UDP but possibly send invite over TCP (message too big) */
 int ignore_contact_rxport_check = 0;
+/** ignore proto checks between the one that the message was received over and registration one.
+ * Since in IMS is registering the IP:port of the UE with IPsec for any transport, why was this even needed? Hence
+ * setting to 1 as default.*/
+int ignore_contact_rxproto_check = 1;
 /** If set, this uses the bottom Via for identification of UE, always, on both requests and responses, over Contact. */
 int trust_bottom_via = 0;
 
@@ -188,6 +192,8 @@ static param_export_t params[] = {{"pcscf_uri", PARAM_STR, &pcscf_uri},
 		{"subscription_expires", INT_PARAM, &subscription_expires},
 		{"ignore_contact_rxport_check", INT_PARAM,
 				&ignore_contact_rxport_check},
+		{"ignore_contact_rxproto_check", INT_PARAM,
+				&ignore_contact_rxproto_check},
 		{"ignore_reg_state", INT_PARAM, &ignore_reg_state},
 		{"force_icscf_uri", PARAM_STR, &force_icscf_uri},
 		{"reginfo_queue_size_threshold", INT_PARAM,
