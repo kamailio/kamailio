@@ -391,6 +391,39 @@ xavp_params_explode("a=b;c=d;e=d", "x");
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.xavp_xparams_explode">
+			<title>
+				<function moreinfo="none">xavp_xparams_explode(sparams, sep, xname)</function>
+			</title>
+			<para>
+				Convert a parameters string in xavp attributes.
+			</para>
+			<para>
+				The first parameter has to be a string in similar format of SIP header
+				parameters (name1=value1;...;nameN=valueN), but the separator can
+				be other character than ';'. The second parameter is the separator
+				for the parameters list. The third parameter is the name of the
+				root xavp to hold the pairs (nameX,valueX).
+			</para>
+			<para>
+				The values are stored as string type.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_xparams_explode</function> usage</title>
+				<programlisting format="linespecific">
+...
+xavp_xparams_explode("a=b,c=d,e=d", ",", "x");
+# results in:
+#    $xavp(x=&gt;a) = "b";
+#    $xavp(x=&gt;c) = "d";
+#    $xavp(x=&gt;e) = "f";
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="pv.f.xavp_params_implode">
 			<title>
 				<function moreinfo="none">xavp_params_implode(xname, pvname)</function>
@@ -1132,4 +1165,3 @@ $ &kamcmd; pv.shvGet debug
 	</section>
 
 </chapter>
-
