@@ -256,7 +256,8 @@ int tr_eval_string(
 			for(i = 0; i < val->rs.len; i++) {
 				if(val->rs.s[i] == '\r' || val->rs.s[i] == '\n') {
 					c = 1;
-				} else if(c != 0 && (val->rs.s[i] == ' ' || val->rs.s[i] == '\t')) {
+				} else if(c != 0
+						  && (val->rs.s[i] == ' ' || val->rs.s[i] == '\t')) {
 					if(c == 1) {
 						_tr_buffer[j] = ' ';
 						j++;
@@ -284,7 +285,8 @@ int tr_eval_string(
 			for(i = 0; i < val->rs.len; i++) {
 				if(val->rs.s[i] == '\r' || val->rs.s[i] == '\n') {
 					c = 1;
-				} else if(c != 0 && (val->rs.s[i] == ' ' || val->rs.s[i] == '\t')) {
+				} else if(c != 0
+						  && (val->rs.s[i] == ' ' || val->rs.s[i] == '\t')) {
 					c = 2;
 				} else {
 					_tr_buffer[j] = val->rs.s[i];
@@ -816,6 +818,9 @@ int tr_eval_string(
 					case 't':
 						c = '\t';
 						break;
+					case 's':
+						c = ' ';
+						break;
 					default:
 						LM_ERR("invalid select escape char (cfg line: %d)\n",
 								get_cfg_crt_line());
@@ -832,7 +837,10 @@ int tr_eval_string(
 				i = -i;
 				i--;
 				while(p >= val->rs.s) {
-					if(*p == c) {
+					if(((c == 1)
+							   && (*p == ' ' || *p == '\t' || *p == '\n'
+									   || *p == '\r'))
+							|| (*p == c)) {
 						if(i == 0)
 							break;
 						s = p - 1;
@@ -850,7 +858,10 @@ int tr_eval_string(
 				s = val->rs.s;
 				p = s;
 				while(p < val->rs.s + val->rs.len) {
-					if(*p == c) {
+					if(((c == 1)
+							   && (*p == ' ' || *p == '\t' || *p == '\n'
+									   || *p == '\r'))
+							|| (*p == c)) {
 						if(i == 0)
 							break;
 						s = p + 1;
