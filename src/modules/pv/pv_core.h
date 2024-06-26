@@ -187,6 +187,8 @@ int pv_get_msg_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 int pv_get_body_size(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
+int pv_get_escstr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+
 int pv_get_authattr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 int pv_get_acc_user(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);

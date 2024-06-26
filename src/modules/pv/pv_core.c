@@ -1488,6 +1488,39 @@ int pv_get_body_size(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 }
 
 
+#define PV_ESCSTR_SIZE 16
+int pv_get_escstr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	static char _pv_escstr[PV_ESCSTR_SIZE];
+	int i;
+	str s;
+
+	if(param->pvn.u.isname.name.n < 0) {
+		return pv_get_null(msg, param, res);
+	}
+
+	i = (2 * param->pvn.u.isname.name.n) % PV_ESCSTR_SIZE;
+	switch(param->pvn.u.isname.name.n) {
+		case 2:
+			_pv_escstr[i] = '\r';
+			break;
+		case 3:
+			_pv_escstr[i] = '\t';
+			break;
+		case 4:
+			_pv_escstr[i] = ' ';
+			break;
+		default:
+			_pv_escstr[i] = '\n';
+			break;
+	}
+	_pv_escstr[i + 1] = '\0';
+	s.s = &_pv_escstr[i];
+	s.len = 1;
+	return pv_get_strval(msg, param, res, &s);
+}
+
+
 int pv_get_authattr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	struct hdr_field *hdr;
