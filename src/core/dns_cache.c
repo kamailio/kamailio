@@ -1697,7 +1697,7 @@ inline static struct dns_hash_entry *dns_get_related(
 	LM_DBG("(%p (%.*s, %d), %d, *%p) (%d)\n", e, e->name_len, e->name, e->type,
 			type, *records, cname_chain_len);
 	if(l->prev != NULL || l->next != NULL) {
-		LM_WARN("record not alone: %p - type: %d\n", l, (int)l->type);
+		LM_DBG("record not alone: %p - type: %d\n", l, (int)l->type);
 	}
 	clist_init(l, next, prev);
 	if(type == e->type) {
@@ -2044,7 +2044,7 @@ inline static struct dns_hash_entry *dns_cache_do_request(str *name, int type)
 #endif
 end:
 	if(e != NULL && e->prev == NULL && e->next == NULL) {
-		LM_WARN("record not linked: %p - type: %d\n", e, (int)e->type);
+		LM_DBG("record not linked: %p - type: %d\n", e, (int)e->type);
 	}
 	return e;
 }
