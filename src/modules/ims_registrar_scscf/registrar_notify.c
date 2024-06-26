@@ -1394,7 +1394,7 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2)
 		res = ul.get_impurecord(
 				domain, &presentity_uri, &presentity_impurecord);
 		if(res != 0) {
-			LM_DBG("usrloc does not have imprecord for presentity being "
+			LM_DBG("usrloc does not have impurecord for presentity being "
 				   "subscribed too, we should create one.... TODO\n");
 			ul.unlock_udomain(domain, &presentity_uri);
 			goto doneorerror;
@@ -1428,10 +1428,9 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2)
 
 doneorerror:
 	//free memory
+	// shm_malloc in cscf_get_public_identity_from_requri or get_presentity_from_subscriber_dialog
 	if(presentity_uri.s)
-		shm_free(
-				presentity_uri
-						.s); // shm_malloc in cscf_get_public_identity_from_requri or get_presentity_from_subscriber_dialog
+		shm_free(presentity_uri.s);
 	if(record_route.s)
 		pkg_free(record_route.s);
 	return ret;
@@ -2355,11 +2354,129 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type,
 }
 
 /**
+ * Used on NOTIFY failure.
+ */
+int drop_subscription(struct sip_msg *msg, str *watcher_contact)
+{
+	str callid = {0};
+	str ftag = {0};
+	str ttag = {0};
+	str presentity_uri = {0};
+	impurecord_t *presentity_impurecord = 0;
+	reg_subscriber *reg_subscriber = 0;
+	struct udomain *domain = 0;
+
+	if(msg == NULL) {
+		LM_ERR("msg is null\n");
+		goto error;
+	}
+
+	// TODO - initialize domain somehow from the transaction/dialog/etc state,
+	// such that this will work for different domains.
+	if(!domain) {
+		ul.register_udomain("location", &domain);
+	}
+
+	callid = cscf_get_call_id(msg, 0);
+	if(callid.len <= 0 || !callid.s) {
+		LM_ERR("unable to get callid\n");
+		goto error;
+	}
+	if(!cscf_get_from_tag(msg, &ftag)) {
+		LM_ERR("Unable to get ftag\n");
+		goto error;
+	}
+	if(!cscf_get_to_tag(msg, &ttag)) {
+		LM_ERR("Unable to get ttag\n");
+		goto error;
+	}
+	// ftag and totag are swapped, since NOTIFY goes in the other direction
+	presentity_uri =
+			ul.get_presentity_from_subscriber_dialog(&callid, &ftag, &ttag);
+	if(presentity_uri.len == 0) {
+		LM_ERR("Unable to get presentity uri from subscriber dialog with "
+			   "callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n",
+				callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
+		goto error;
+	}
+	ul.lock_udomain(domain, &presentity_uri);
+	int res =
+			ul.get_impurecord(domain, &presentity_uri, &presentity_impurecord);
+	if(res != 0) {
+		LM_INFO("usrloc does not have impurecord for presentity being "
+				"notified - inconsistent state or already dropped\n");
+		ul.unlock_udomain(domain, &presentity_uri);
+		goto error;
+	}
+	LM_INFO("Dropping subscription for impurecord [%.*s] on notification "
+			"failure\n",
+			presentity_impurecord->public_identity.len,
+			presentity_impurecord->public_identity.s);
+	res = ul.get_subscriber(presentity_impurecord, &presentity_uri,
+			watcher_contact, IMS_EVENT_REG, &reg_subscriber);
+	if(res != 0) {
+		LM_WARN("could not get subscriber\n");
+		ul.unlock_udomain(domain, &presentity_uri);
+		goto error;
+	}
+	ul.external_delete_subscriber(
+			reg_subscriber, domain, 0 /*domain is already locked*/);
+	ul.unlock_udomain(domain, &presentity_uri);
+
+	// shm_malloc in get_presentity_from_subscriber_dialog
+	if(presentity_uri.s)
+		shm_free(presentity_uri.s);
+	return 0;
+error:
+	// shm_malloc in get_presentity_from_subscriber_dialog
+	if(presentity_uri.s)
+		shm_free(presentity_uri.s);
+	return -1;
+}
+
+/**
  * Callback for the UAC response to NOTIFY
  */
 void uac_request_cb(struct cell *t, int type, struct tmcb_params *ps)
 {
+	str *watcher_contact = 0;
+	if(ps->param)
+		watcher_contact = (str *)(*(ps->param));
+
 	LM_DBG("received NOTIFY reply type [%d] and code [%d]\n", type, ps->code);
+	if(ps->code < 300) {
+		goto done;
+	}
+	// https://datatracker.ietf.org/doc/html/rfc3265#section-3.2.2
+	// Search fro Retry-After in ps->rpl
+	int has_retry_after = 0;
+	if(ps->rpl != NULL && ps->rpl->headers != NULL) {
+		struct hdr_field *hf = ps->rpl->headers;
+		while(hf) {
+			if(hf->name.len == 11
+					&& strncasecmp(hf->name.s, "Retry-After", 11) == 0) {
+				has_retry_after = 1;
+				break;
+			}
+			hf = hf->next;
+		}
+	}
+	if(has_retry_after) {
+		// TODO - save and obey Retry-After
+		goto done;
+	}
+	LM_INFO("NOTIFY failed with code [%d] and no Retry-After - the "
+			"subscription will be removed\n",
+			ps->code);
+	if(drop_subscription(ps->rpl, watcher_contact) != 0) {
+		LM_ERR("Error dropping subscription\n");
+	}
+done:
+	if(watcher_contact) {
+		str_free(*watcher_contact, shm);
+		shm_free(watcher_contact);
+		*(ps->param) = 0;
+	}
 }
 
 static int free_tm_dlg(dlg_t *td)
@@ -2386,6 +2503,7 @@ void send_notification(reg_notification *n)
 	dlg_t *td = NULL;
 	char bufc[MAX_REGINFO_SIZE];
 	str buf;
+	str *watcher_contact = 0;
 
 	struct udomain *domain = (struct udomain *)n->_d;
 	if(!domain) {
@@ -2455,16 +2573,16 @@ void send_notification(reg_notification *n)
 		STR_APPEND(h, n->content_type);
 		STR_APPEND(h, ctype_hdr2);
 	}
+	watcher_contact = shm_malloc(sizeof(str));
+	if(!watcher_contact)
+		goto out_of_memory;
+	STR_SHM_DUP(*watcher_contact, n->watcher_contact, "");
 
 	/* construct the dlg_t structure */
 	td = build_dlg_t_from_notification(n);
 	if(td == NULL) {
 		LM_ERR("while building dlg_t structure\n");
-		free_tm_dlg(td);
-		if(content.s) {
-			pkg_free(content.s);
-		}
-		return;
+		goto done;
 	}
 
 	if(buf.len) {
@@ -2477,7 +2595,7 @@ void send_notification(reg_notification *n)
 				n->watcher_uri.s);
 
 		set_uac_req(&uac_r, &method, &h, &buf, td, TMCB_LOCAL_COMPLETED,
-				uac_request_cb, 0);
+				uac_request_cb, watcher_contact);
 		tmb.t_request_within(&uac_r);
 	} else {
 		LM_DBG("o notification content - about to send notification with "
@@ -2489,15 +2607,18 @@ void send_notification(reg_notification *n)
 
 
 		set_uac_req(&uac_r, &method, &h, 0, td, TMCB_LOCAL_COMPLETED,
-				uac_request_cb, 0);
+				uac_request_cb, watcher_contact);
 		tmb.t_request_within(&uac_r);
 	}
-	if(h.s)
-		pkg_free(h.s);
-	if(content.s) {
-		pkg_free(content.s);
+	watcher_contact = 0;
+done:
+out_of_memory:
+	str_free(h, pkg);
+	str_free(content, pkg);
+	if(watcher_contact) {
+		str_free(*watcher_contact, shm);
+		shm_free(watcher_contact);
 	}
-
 	free_tm_dlg(td);
 }
 
