@@ -115,8 +115,9 @@ int lookup(struct sip_msg *_m, udomain_t *_d, char *ue_type_c)
 	// add user part
 	memcpy(aor.s + aor.len, _m->parsed_uri.user.s, _m->parsed_uri.user.len);
 	aor.len += _m->parsed_uri.user.len;
-	// add '@'
-	aor.s[aor.len++] = '@';
+	// add '@' - but only if there is a host part, else we make bad URIs like tel:+123@
+	if(_m->parsed_uri.host.len > 0)
+		aor.s[aor.len++] = '@';
 	// add host part
 	memcpy(aor.s + aor.len, _m->parsed_uri.host.s, _m->parsed_uri.host.len);
 	aor.len += _m->parsed_uri.host.len;
