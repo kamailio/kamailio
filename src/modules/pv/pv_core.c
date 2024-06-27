@@ -1510,6 +1510,27 @@ int pv_get_escstr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		case 4:
 			_pv_escstr[i] = ' ';
 			break;
+		case 5:
+			_pv_escstr[i] = ',';
+			break;
+		case 6:
+			_pv_escstr[i] = '"';
+			break;
+		case 7:
+			_pv_escstr[i] = '\'';
+			break;
+		case 8:
+			_pv_escstr[i] = ':';
+			break;
+		case 9:
+			_pv_escstr[i] = ';';
+			break;
+		case 10:
+			_pv_escstr[i] = '\\';
+			break;
+		case 11:
+			_pv_escstr[i] = '`';
+			break;
 		default:
 			_pv_escstr[i] = '\n';
 			break;
