@@ -62,6 +62,13 @@ void check_calls_by_money(unsigned int ticks, void *param)
 					if(!call->confirmed)
 						continue;
 
+					if(call->money_based.final_pulse == 0) {
+						LM_WARN("CID [%.*s] - final pulse is 0 - skipping\n",
+								call->sip_data.callid.len,
+								call->sip_data.callid.s);
+						continue;
+					}
+
 					consumed_time =
 							get_current_timestamp() - call->start_timestamp;
 
