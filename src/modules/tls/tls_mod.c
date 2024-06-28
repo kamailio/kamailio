@@ -308,6 +308,7 @@ static param_export_t params[] = {
 		{"rand_engine", PARAM_STR | USE_FUNC_PARAM,
 				(void *)ksr_rand_engine_param},
 		{"init_mode", PARAM_INT, &ksr_tls_init_mode},
+		{"key_password_mode", PARAM_INT, &ksr_tls_key_password_mode},
 
 		{0, 0, 0}};
 
