@@ -1223,12 +1223,12 @@ static int ksr_passwd_ui_cb(char *buf, int size, int rwflag, void *filename)
 	return strlen(buf);
 
 err:
-	ERR("passwd_cb: Error in passwd_cb\n");
+	ERR("failure in password callback\n");
 	return 0;
 
 #else
 	if(des_read_pw_string(buf, size - 1, "Enter Private Key password:", 0)) {
-		ERR("Error in passwd_cb\n");
+		ERR("failure in password callback\n");
 		return 0;
 	}
 	return strlen(buf);
