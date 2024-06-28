@@ -179,6 +179,43 @@ modparam("tls", "private_key", "/usr/local/etc/kamailio/my_pkey.pem")
 	</example>
 	</section>
 
+	<section id="tls.p.private_key_password">
+	<title><varname>private_key_password</varname> (string)</title>
+	<para>
+		The password for the private key.
+	</para>
+	<para>
+		The default value is empty.
+	</para>
+	<example>
+	    <title>Set <varname>private_key_password</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "private_key_password", "secret")
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="tls.p.key_password_mode">
+	<title><varname>key_password_mode</varname> (int)</title>
+	<para>
+		The mode to get the password for the private key. If 0, take it
+		from the config "private_key_password". If 1, promt for it at start up.
+	</para>
+	<para>
+		The default value is 0.
+	</para>
+	<example>
+	    <title>Set <varname>key_password_mode</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "key_password_mode", 0)
+...
+	    </programlisting>
+	</example>
+	</section>
+
 	<section id="tls.p.ca_list">
 	<title><varname>ca_list</varname> (string)</title>
 	<para>
