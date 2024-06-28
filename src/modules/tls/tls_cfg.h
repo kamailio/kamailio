@@ -49,6 +49,7 @@ struct cfg_group_tls
 	int require_cert;
 	str verify_client;
 	str private_key;
+	str private_key_password;
 	str ca_list;
 	str ca_path;
 	str crl;

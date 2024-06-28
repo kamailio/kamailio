@@ -164,6 +164,9 @@ static cfg_option_t options[] = {
 		{"require_cert", .f = cfg_parse_bool_opt},
 		{"private_key", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
 		{"pkey_file", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+		{"private_key_password", .f = cfg_parse_str_opt,
+				.flags = CFG_STR_SHMMEM},
+		{"pkey_password", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
 		{"calist_file", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
 		{"certificate", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
 		{"cert_file", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
@@ -181,29 +184,54 @@ static cfg_option_t options[] = {
 static void update_opt_variables(void)
 {
 	int i;
+	int n;
+
+	n = 1;
 	for(i = 0; methods[i].name; i++) {
 		methods[i].param = &_ksr_tls_domain->method;
 	}
-	options[2].param = &_ksr_tls_domain->verify_cert;
-	options[3].param = &_ksr_tls_domain->verify_cert;
-	options[4].param = &_ksr_tls_domain->verify_depth;
-	options[5].param = &_ksr_tls_domain->require_cert;
-	options[6].param = &_ksr_tls_domain->require_cert;
-	options[7].param = &_ksr_tls_domain->pkey_file;
-	options[8].param = &_ksr_tls_domain->pkey_file;
-	options[9].param = &_ksr_tls_domain->ca_file;
-	options[10].param = &_ksr_tls_domain->cert_file;
-	options[11].param = &_ksr_tls_domain->cert_file;
-	options[12].param = &_ksr_tls_domain->cipher_list;
-	options[13].param = &_ksr_tls_domain->ca_file;
-	options[14].param = &_ksr_tls_domain->crl_file;
-	options[15].param = &_ksr_tls_domain->server_name;
-	options[16].param = &_ksr_tls_domain->server_name_mode;
-	options[17].param = &_ksr_tls_domain->server_id;
+	n++;
+	options[n].param = &_ksr_tls_domain->verify_cert;
+	n++;
+	options[n].param = &_ksr_tls_domain->verify_cert;
+	n++;
+	options[n].param = &_ksr_tls_domain->verify_depth;
+	n++;
+	options[n].param = &_ksr_tls_domain->require_cert;
+	n++;
+	options[n].param = &_ksr_tls_domain->require_cert;
+	n++;
+	options[n].param = &_ksr_tls_domain->pkey_file;
+	n++;
+	options[n].param = &_ksr_tls_domain->pkey_file;
+	n++;
+	options[n].param = &_ksr_tls_domain->pkey_password;
+	n++;
+	options[n].param = &_ksr_tls_domain->pkey_password;
+	n++;
+	options[n].param = &_ksr_tls_domain->ca_file;
+	n++;
+	options[n].param = &_ksr_tls_domain->cert_file;
+	n++;
+	options[n].param = &_ksr_tls_domain->cert_file;
+	n++;
+	options[n].param = &_ksr_tls_domain->cipher_list;
+	n++;
+	options[n].param = &_ksr_tls_domain->ca_file;
+	n++;
+	options[n].param = &_ksr_tls_domain->crl_file;
+	n++;
+	options[n].param = &_ksr_tls_domain->server_name;
+	n++;
+	options[n].param = &_ksr_tls_domain->server_name_mode;
+	n++;
+	options[n].param = &_ksr_tls_domain->server_id;
+	n++;
 	for(i = 0; verify_client_params[i].name; i++) {
 		verify_client_params[i].param = &_ksr_tls_domain->verify_client;
 	}
-	options[19].param = &_ksr_tls_domain->ca_path;
+	n++;
+	options[n].param = &_ksr_tls_domain->ca_path;
 }
 
 

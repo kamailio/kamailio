@@ -65,6 +65,8 @@ extern EVP_PKEY *tls_engine_private_key(const char *key_id);
 #include "tls_cfg.h"
 #include "tls_verify.h"
 
+extern int ksr_tls_key_password_mode;
+
 /*
  * ECDHE is enabled only on OpenSSL 1.0.0e and later.
  * See http://www.openssl.org/news/secadv_20110906.txt
@@ -403,6 +405,14 @@ static int ksr_tls_fill_missing(tls_domain_t *d, tls_domain_t *parent)
 		d->pkey_file.len = parent->pkey_file.len;
 	}
 	LOG(L_INFO, "%s: private_key='%s'\n", tls_domain_str(d), d->pkey_file.s);
+
+	if(!d->pkey_password.s) {
+		if(shm_asciiz_dup(&d->pkey_password.s, parent->pkey_password.s) < 0)
+			return -1;
+		d->pkey_password.len = parent->pkey_password.len;
+	}
+	LOG(L_INFO, "%s: private_key_password='%s'\n", tls_domain_str(d),
+			d->pkey_password.s ? "..." : NULL);
 
 	if(d->verify_cert == -1)
 		d->verify_cert = parent->verify_cert;
@@ -1199,6 +1209,35 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 
 
 /**
+ * @brief Password callback to take it from tls domain structure
+ * @param buf buffer
+ * @param size buffer size
+ * @param rwflag not used
+ * @param tlsd tls domain
+ * @return length of password on success, 0 on error
+ */
+static int ksr_passwd_cfg_cb(char *buf, int size, int rwflag, void *tlsd)
+{
+	tls_domain_t *d;
+
+	d = (tls_domain_t *)tlsd;
+	if(d->pkey_password.s == NULL || d->pkey_password.len <= 0) {
+		return 0;
+	}
+	if(d->pkey_password.len >= size - 1) {
+		LM_WARN("key password is too long (%d / %d) - truncating\n",
+				d->pkey_password.len, size);
+		memcpy(buf, d->pkey_password.s, size - 1);
+		buf[size - 1] = '\0';
+	} else {
+		memcpy(buf, d->pkey_password.s, d->pkey_password.len);
+		buf[d->pkey_password.len] = '\0';
+	}
+	LM_DBG("returning password for private key\n");
+	return strlen(buf);
+}
+
+/**
  * @brief Password callback, ask for private key password on CLI
  * @param buf buffer
  * @param size buffer size
@@ -1323,8 +1362,13 @@ static int load_private_key(tls_domain_t *d)
 
 	procs_no = get_max_procs();
 	for(i = 0; i < procs_no; i++) {
-		SSL_CTX_set_default_passwd_cb(d->ctx[i], ksr_passwd_ui_cb);
-		SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d->pkey_file.s);
+		if(ksr_tls_key_password_mode == 1) {
+			SSL_CTX_set_default_passwd_cb(d->ctx[i], ksr_passwd_ui_cb);
+			SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d->pkey_file.s);
+		} else {
+			SSL_CTX_set_default_passwd_cb(d->ctx[i], ksr_passwd_cfg_cb);
+			SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d);
+		}
 
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
 #ifdef KSR_SSL_COMMON

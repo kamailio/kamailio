@@ -126,6 +126,7 @@ typedef struct tls_domain
 	SSL_CTX **ctx;
 	str cert_file;
 	str pkey_file;
+	str pkey_password;
 	int verify_cert;
 	int verify_depth;
 	str ca_file;

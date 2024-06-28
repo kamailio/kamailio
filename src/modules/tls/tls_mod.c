@@ -137,6 +137,7 @@ static tls_domain_t mod_params = {
 		0,								 /* SSL ctx */
 		STR_STATIC_INIT(TLS_CERT_FILE),	 /* Certificate file */
 		STR_STATIC_INIT(TLS_PKEY_FILE),	 /* Private key file */
+		{0, 0},							 /* Private key password */
 		0,								 /* Verify certificate */
 		9,								 /* Verify depth */
 		STR_STATIC_INIT(TLS_CA_FILE),	 /* CA file */
@@ -163,6 +164,7 @@ tls_domain_t srv_defaults = {
 		0,								 /* SSL ctx */
 		STR_STATIC_INIT(TLS_CERT_FILE),	 /* Certificate file */
 		STR_STATIC_INIT(TLS_PKEY_FILE),	 /* Private key file */
+		{0, 0},							 /* Private key password */
 		0,								 /* Verify certificate */
 		9,								 /* Verify depth */
 		STR_STATIC_INIT(TLS_CA_FILE),	 /* CA file */
@@ -212,6 +214,7 @@ tls_domain_t cli_defaults = {
 		0,								 /* SSL ctx */
 		{0, 0},							 /* Certificate file */
 		{0, 0},							 /* Private key file */
+		{0, 0},							 /* Private key password */
 		0,								 /* Verify certificate */
 		9,								 /* Verify depth */
 		STR_STATIC_INIT(TLS_CA_FILE),	 /* CA file */
@@ -237,6 +240,7 @@ gen_lock_t *tls_domains_cfg_lock = NULL;
 
 int sr_tls_renegotiation = 0;
 int ksr_tls_init_mode = 0;
+int ksr_tls_key_password_mode = 0;
 
 /*
  * Exported functions
@@ -260,6 +264,8 @@ static param_export_t params[] = {
 		{"require_certificate", PARAM_INT, &default_tls_cfg.require_cert},
 		{"verify_client", PARAM_STR, &default_tls_cfg.verify_client},
 		{"private_key", PARAM_STR, &default_tls_cfg.private_key},
+		{"private_key_password", PARAM_STR,
+				&default_tls_cfg.private_key_password},
 		{"ca_list", PARAM_STR, &default_tls_cfg.ca_list},
 		{"ca_path", PARAM_STR, &default_tls_cfg.ca_path},
 		{"certificate", PARAM_STR, &default_tls_cfg.certificate},
