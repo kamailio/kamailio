@@ -115,14 +115,17 @@ unsigned long tls_stats_connections_no(void);
 unsigned long tls_stats_max_connections(void);
 unsigned long tls_stats_ct_wq_total_bytes(void);
 
+/* clang-format off */
 static stat_export_t mod_stats[] = {
-		{"opened_connections", STAT_IS_FUNC,
-				(stat_var **)tls_stats_connections_no},
-		{"max_connections", STAT_IS_FUNC,
-				(stat_var **)tls_stats_max_connections},
-		{"clear_text_write_queued_bytes", STAT_IS_FUNC,
-				(stat_var **)tls_stats_ct_wq_total_bytes},
-		{0, 0, 0}};
+	{"opened_connections", STAT_IS_FUNC,
+			(stat_var **)tls_stats_connections_no},
+	{"max_connections", STAT_IS_FUNC,
+			(stat_var **)tls_stats_max_connections},
+	{"clear_text_write_queued_bytes", STAT_IS_FUNC,
+			(stat_var **)tls_stats_ct_wq_total_bytes},
+	{0, 0, 0}
+};
+/* clang-format on */
 #endif
 
 extern str sr_tls_event_callback;
@@ -130,27 +133,28 @@ str sr_tls_xavp_cfg = {0, 0};
 /*
  * Default settings when modparams are used
  */
+/* clang-format off */
 static tls_domain_t mod_params = {
-		TLS_DOMAIN_DEF | TLS_DOMAIN_SRV, /* Domain Type */
-		{},								 /* IP address */
-		0,								 /* Port number */
-		0,								 /* SSL ctx */
-		STR_STATIC_INIT(TLS_CERT_FILE),	 /* Certificate file */
-		STR_STATIC_INIT(TLS_PKEY_FILE),	 /* Private key file */
-		{0, 0},							 /* Private key password */
-		0,								 /* Verify certificate */
-		9,								 /* Verify depth */
-		STR_STATIC_INIT(TLS_CA_FILE),	 /* CA file */
-		STR_STATIC_INIT(TLS_CA_PATH),	 /* CA path */
-		0,								 /* Require certificate */
-		{0, 0},							 /* Cipher list */
-		TLS_USE_TLSv1_PLUS,				 /* TLS method */
-		STR_STATIC_INIT(TLS_CRL_FILE),	 /* Certificate revocation list */
-		{0, 0},							 /* Server name (SNI) */
-		0,								 /* Server name (SNI) mode */
-		{0, 0},							 /* Server id */
-		TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
-		0								 /* next */
+	TLS_DOMAIN_DEF | TLS_DOMAIN_SRV, /* Domain Type */
+	{},								 /* IP address */
+	0,								 /* Port number */
+	0,								 /* SSL ctx */
+	STR_STATIC_INIT(TLS_CERT_FILE),	 /* Certificate file */
+	STR_STATIC_INIT(TLS_PKEY_FILE),	 /* Private key file */
+	{0, 0},							 /* Private key password */
+	0,								 /* Verify certificate */
+	9,								 /* Verify depth */
+	STR_STATIC_INIT(TLS_CA_FILE),	 /* CA file */
+	STR_STATIC_INIT(TLS_CA_PATH),	 /* CA path */
+	0,								 /* Require certificate */
+	{0, 0},							 /* Cipher list */
+	TLS_USE_TLSv1_PLUS,				 /* TLS method */
+	STR_STATIC_INIT(TLS_CRL_FILE),	 /* Certificate revocation list */
+	{0, 0},							 /* Server name (SNI) */
+	0,								 /* Server name (SNI) mode */
+	{0, 0},							 /* Server id */
+	TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+	0								 /* next */
 };
 
 
@@ -158,41 +162,43 @@ static tls_domain_t mod_params = {
  * Default settings for server domains when using external config file
  */
 tls_domain_t srv_defaults = {
-		TLS_DOMAIN_DEF | TLS_DOMAIN_SRV, /* Domain Type */
-		{},								 /* IP address */
-		0,								 /* Port number */
-		0,								 /* SSL ctx */
-		STR_STATIC_INIT(TLS_CERT_FILE),	 /* Certificate file */
-		STR_STATIC_INIT(TLS_PKEY_FILE),	 /* Private key file */
-		{0, 0},							 /* Private key password */
-		0,								 /* Verify certificate */
-		9,								 /* Verify depth */
-		STR_STATIC_INIT(TLS_CA_FILE),	 /* CA file */
-		STR_STATIC_INIT(TLS_CA_PATH),	 /* CA path */
-		0,								 /* Require certificate */
-		{0, 0},							 /* Cipher list */
-		TLS_USE_TLSv1_PLUS,				 /* TLS method */
-		STR_STATIC_INIT(TLS_CRL_FILE),	 /* Certificate revocation list */
-		{0, 0},							 /* Server name (SNI) */
-		0,								 /* Server name (SNI) mode */
-		{0, 0},							 /* Server id */
-		TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
-		0								 /* next */
+	TLS_DOMAIN_DEF | TLS_DOMAIN_SRV, /* Domain Type */
+	{},								 /* IP address */
+	0,								 /* Port number */
+	0,								 /* SSL ctx */
+	STR_STATIC_INIT(TLS_CERT_FILE),	 /* Certificate file */
+	STR_STATIC_INIT(TLS_PKEY_FILE),	 /* Private key file */
+	{0, 0},							 /* Private key password */
+	0,								 /* Verify certificate */
+	9,								 /* Verify depth */
+	STR_STATIC_INIT(TLS_CA_FILE),	 /* CA file */
+	STR_STATIC_INIT(TLS_CA_PATH),	 /* CA path */
+	0,								 /* Require certificate */
+	{0, 0},							 /* Cipher list */
+	TLS_USE_TLSv1_PLUS,				 /* TLS method */
+	STR_STATIC_INIT(TLS_CRL_FILE),	 /* Certificate revocation list */
+	{0, 0},							 /* Server name (SNI) */
+	0,								 /* Server name (SNI) mode */
+	{0, 0},							 /* Server id */
+	TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+	0								 /* next */
 };
+/* clang-format on */
 
 
 #ifdef KSR_SSL_ENGINE
-typedef struct tls_engine
-{
+/* clang-format off */
+typedef struct tls_engine {
 	str engine;
 	str engine_config;
 	str engine_algorithms;
 } tls_engine_t;
 static tls_engine_t tls_engine_settings = {
-		STR_STATIC_INIT("NONE"),
-		STR_STATIC_INIT("NONE"),
-		STR_STATIC_INIT("ALL"),
+	STR_STATIC_INIT("NONE"),
+	STR_STATIC_INIT("NONE"),
+	STR_STATIC_INIT("ALL"),
 };
+/* clang-format on */
 
 #include <openssl/conf.h>
 #include <openssl/engine.h>
@@ -207,28 +213,30 @@ static int tls_provider_quirks;
 /*
  * Default settings for client domains when using external config file
  */
+/* clang-format off */
 tls_domain_t cli_defaults = {
-		TLS_DOMAIN_DEF | TLS_DOMAIN_CLI, /* Domain Type */
-		{},								 /* IP address */
-		0,								 /* Port number */
-		0,								 /* SSL ctx */
-		{0, 0},							 /* Certificate file */
-		{0, 0},							 /* Private key file */
-		{0, 0},							 /* Private key password */
-		0,								 /* Verify certificate */
-		9,								 /* Verify depth */
-		STR_STATIC_INIT(TLS_CA_FILE),	 /* CA file */
-		STR_STATIC_INIT(TLS_CA_PATH),	 /* CA path */
-		0,								 /* Require certificate */
-		{0, 0},							 /* Cipher list */
-		TLS_USE_TLSv1_PLUS,				 /* TLS method */
-		{0, 0},							 /* Certificate revocation list */
-		{0, 0},							 /* Server name (SNI) */
-		0,								 /* Server name (SNI) mode */
-		{0, 0},							 /* Server id */
-		TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
-		0								 /* next */
+	TLS_DOMAIN_DEF | TLS_DOMAIN_CLI, /* Domain Type */
+	{},								 /* IP address */
+	0,								 /* Port number */
+	0,								 /* SSL ctx */
+	{0, 0},							 /* Certificate file */
+	{0, 0},							 /* Private key file */
+	{0, 0},							 /* Private key password */
+	0,								 /* Verify certificate */
+	9,								 /* Verify depth */
+	STR_STATIC_INIT(TLS_CA_FILE),	 /* CA file */
+	STR_STATIC_INIT(TLS_CA_PATH),	 /* CA path */
+	0,								 /* Require certificate */
+	{0, 0},							 /* Cipher list */
+	TLS_USE_TLSv1_PLUS,				 /* TLS method */
+	{0, 0},							 /* Certificate revocation list */
+	{0, 0},							 /* Server name (SNI) */
+	0,								 /* Server name (SNI) mode */
+	{0, 0},							 /* Server id */
+	TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+	0								 /* next */
 };
+/* clang-format on */
 
 
 /* Current TLS configuration */
@@ -242,75 +250,79 @@ int sr_tls_renegotiation = 0;
 int ksr_tls_init_mode = 0;
 int ksr_tls_key_password_mode = 0;
 
+/* clang-format off */
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"is_peer_verified", (cmd_function)w_is_peer_verified, 0, 0, 0,
-				REQUEST_ROUTE},
-		{"tls_set_connect_server_id", (cmd_function)w_tls_set_connect_server_id,
-				1, fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"is_peer_verified", (cmd_function)w_is_peer_verified, 0, 0, 0,
+			REQUEST_ROUTE},
+	{"tls_set_connect_server_id", (cmd_function)w_tls_set_connect_server_id,
+			1, fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 
 /*
  * Exported parameters
  */
 static param_export_t params[] = {
-		{"tls_method", PARAM_STR, &default_tls_cfg.method},
-		{"server_name", PARAM_STR, &default_tls_cfg.server_name},
-		{"verify_certificate", PARAM_INT, &default_tls_cfg.verify_cert},
-		{"verify_depth", PARAM_INT, &default_tls_cfg.verify_depth},
-		{"require_certificate", PARAM_INT, &default_tls_cfg.require_cert},
-		{"verify_client", PARAM_STR, &default_tls_cfg.verify_client},
-		{"private_key", PARAM_STR, &default_tls_cfg.private_key},
-		{"private_key_password", PARAM_STR,
-				&default_tls_cfg.private_key_password},
-		{"ca_list", PARAM_STR, &default_tls_cfg.ca_list},
-		{"ca_path", PARAM_STR, &default_tls_cfg.ca_path},
-		{"certificate", PARAM_STR, &default_tls_cfg.certificate},
-		{"crl", PARAM_STR, &default_tls_cfg.crl},
-		{"cipher_list", PARAM_STR, &default_tls_cfg.cipher_list},
-		{"connection_timeout", PARAM_INT, &default_tls_cfg.con_lifetime},
+	{"tls_method", PARAM_STR, &default_tls_cfg.method},
+	{"server_name", PARAM_STR, &default_tls_cfg.server_name},
+	{"verify_certificate", PARAM_INT, &default_tls_cfg.verify_cert},
+	{"verify_depth", PARAM_INT, &default_tls_cfg.verify_depth},
+	{"require_certificate", PARAM_INT, &default_tls_cfg.require_cert},
+	{"verify_client", PARAM_STR, &default_tls_cfg.verify_client},
+	{"private_key", PARAM_STR, &default_tls_cfg.private_key},
+	{"private_key_password", PARAM_STR,
+			&default_tls_cfg.private_key_password},
+	{"ca_list", PARAM_STR, &default_tls_cfg.ca_list},
+	{"ca_path", PARAM_STR, &default_tls_cfg.ca_path},
+	{"certificate", PARAM_STR, &default_tls_cfg.certificate},
+	{"crl", PARAM_STR, &default_tls_cfg.crl},
+	{"cipher_list", PARAM_STR, &default_tls_cfg.cipher_list},
+	{"connection_timeout", PARAM_INT, &default_tls_cfg.con_lifetime},
 #ifdef KSR_SSL_ENGINE
-		{"engine", PARAM_STR, &tls_engine_settings.engine},
-		{"engine_config", PARAM_STR, &tls_engine_settings.engine_config},
-		{"engine_algorithms", PARAM_STR,
-				&tls_engine_settings.engine_algorithms},
+	{"engine", PARAM_STR, &tls_engine_settings.engine},
+	{"engine_config", PARAM_STR, &tls_engine_settings.engine_config},
+	{"engine_algorithms", PARAM_STR,
+			&tls_engine_settings.engine_algorithms},
 #endif /* KSR_SSL_ENGINE */
 #ifdef KSR_SSL_PROVIDER
-		{"provider_quirks", PARAM_INT,
-				&tls_provider_quirks}, /* OpenSSL 3 provider that needs new OSSL_LIB_CTX in child */
+	{"provider_quirks", PARAM_INT,
+			&tls_provider_quirks}, /* OpenSSL 3 provider that needs new
+									  OSSL_LIB_CTX in child */
 #endif								   /* KSR_SSL_PROVIDER */
-		{"tls_log", PARAM_INT, &default_tls_cfg.log},
-		{"tls_debug", PARAM_INT, &default_tls_cfg.debug},
-		{"session_cache", PARAM_INT, &default_tls_cfg.session_cache},
-		{"session_id", PARAM_STR, &default_tls_cfg.session_id},
-		{"config", PARAM_STR, &default_tls_cfg.config_file},
-		{"tls_disable_compression", PARAM_INT,
-				&default_tls_cfg.disable_compression},
-		{"ssl_release_buffers", PARAM_INT,
-				&default_tls_cfg.ssl_release_buffers},
-		{"ssl_freelist_max_len", PARAM_INT, &default_tls_cfg.ssl_freelist_max},
-		{"ssl_max_send_fragment", PARAM_INT,
-				&default_tls_cfg.ssl_max_send_fragment},
-		{"ssl_read_ahead", PARAM_INT, &default_tls_cfg.ssl_read_ahead},
-		{"send_close_notify", PARAM_INT, &default_tls_cfg.send_close_notify},
-		{"con_ct_wq_max", PARAM_INT, &default_tls_cfg.con_ct_wq_max},
-		{"ct_wq_max", PARAM_INT, &default_tls_cfg.ct_wq_max},
-		{"ct_wq_blk_size", PARAM_INT, &default_tls_cfg.ct_wq_blk_size},
-		{"tls_force_run", PARAM_INT, &default_tls_cfg.force_run},
-		{"low_mem_threshold1", PARAM_INT, &default_tls_cfg.low_mem_threshold1},
-		{"low_mem_threshold2", PARAM_INT, &default_tls_cfg.low_mem_threshold2},
-		{"renegotiation", PARAM_INT, &sr_tls_renegotiation},
-		{"xavp_cfg", PARAM_STR, &sr_tls_xavp_cfg},
-		{"event_callback", PARAM_STR, &sr_tls_event_callback},
-		{"rand_engine", PARAM_STR | USE_FUNC_PARAM,
-				(void *)ksr_rand_engine_param},
-		{"init_mode", PARAM_INT, &ksr_tls_init_mode},
-		{"key_password_mode", PARAM_INT, &ksr_tls_key_password_mode},
+	{"tls_log", PARAM_INT, &default_tls_cfg.log},
+	{"tls_debug", PARAM_INT, &default_tls_cfg.debug},
+	{"session_cache", PARAM_INT, &default_tls_cfg.session_cache},
+	{"session_id", PARAM_STR, &default_tls_cfg.session_id},
+	{"config", PARAM_STR, &default_tls_cfg.config_file},
+	{"tls_disable_compression", PARAM_INT,
+			&default_tls_cfg.disable_compression},
+	{"ssl_release_buffers", PARAM_INT,
+			&default_tls_cfg.ssl_release_buffers},
+	{"ssl_freelist_max_len", PARAM_INT, &default_tls_cfg.ssl_freelist_max},
+	{"ssl_max_send_fragment", PARAM_INT,
+			&default_tls_cfg.ssl_max_send_fragment},
+	{"ssl_read_ahead", PARAM_INT, &default_tls_cfg.ssl_read_ahead},
+	{"send_close_notify", PARAM_INT, &default_tls_cfg.send_close_notify},
+	{"con_ct_wq_max", PARAM_INT, &default_tls_cfg.con_ct_wq_max},
+	{"ct_wq_max", PARAM_INT, &default_tls_cfg.ct_wq_max},
+	{"ct_wq_blk_size", PARAM_INT, &default_tls_cfg.ct_wq_blk_size},
+	{"tls_force_run", PARAM_INT, &default_tls_cfg.force_run},
+	{"low_mem_threshold1", PARAM_INT, &default_tls_cfg.low_mem_threshold1},
+	{"low_mem_threshold2", PARAM_INT, &default_tls_cfg.low_mem_threshold2},
+	{"renegotiation", PARAM_INT, &sr_tls_renegotiation},
+	{"xavp_cfg", PARAM_STR, &sr_tls_xavp_cfg},
+	{"event_callback", PARAM_STR, &sr_tls_event_callback},
+	{"rand_engine", PARAM_STR | USE_FUNC_PARAM,
+			(void *)ksr_rand_engine_param},
+	{"init_mode", PARAM_INT, &ksr_tls_init_mode},
+	{"key_password_mode", PARAM_INT, &ksr_tls_key_password_mode},
 
-		{0, 0, 0}};
+	{0, 0, 0}
+};
 
 #ifndef MOD_NAME
 #define MOD_NAME "tls"
@@ -320,30 +332,31 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-		MOD_NAME,		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported rpc command */
-		tls_pv,			 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		mod_child,		 /* child initi function */
-		mod_destroy		 /* destroy function */
+	MOD_NAME,		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* exported rpc command */
+	tls_pv,			 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	mod_child,		 /* child initi function */
+	mod_destroy		 /* destroy function */
 };
 
 
 static struct tls_hooks tls_h = {
-		tls_h_read_f,
-		tls_h_encode_f,
-		tls_h_tcpconn_init_f,
-		tls_h_tcpconn_clean_f,
-		tls_h_tcpconn_close_f,
-		tls_h_init_si_f,
-		tls_h_mod_init_f,
-		tls_h_mod_destroy_f,
-		tls_h_mod_pre_init_f,
+	tls_h_read_f,
+	tls_h_encode_f,
+	tls_h_tcpconn_init_f,
+	tls_h_tcpconn_clean_f,
+	tls_h_tcpconn_close_f,
+	tls_h_init_si_f,
+	tls_h_mod_init_f,
+	tls_h_mod_destroy_f,
+	tls_h_mod_pre_init_f,
 };
+/* clang-format on */
 
 
 #if 0
