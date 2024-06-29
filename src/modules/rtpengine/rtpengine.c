@@ -830,7 +830,7 @@ static int bind_force_send_ip(int sock_idx)
 						sizeof(ip6addr)))
 					< 0) {
 				LM_ERR("can't bind socket to required ipv6 interface\n");
-				LM_ERR("ret=%d errno=%d\n", ret, errno);
+				LM_ERR("ret=%d (%s:%d)\n", ret, strerror(errno), errno);
 				return -1;
 			}
 
@@ -3598,7 +3598,7 @@ static char *send_rtpp_command(
 		struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 {
 	struct sockaddr_un addr;
-	int fd, len, i, vcnt;
+	int fd = -1, len, i, vcnt;
 	int rtpengine_retr, rtpengine_tout_ms = 1000;
 	char *cp;
 	static char buf[0x40000];
@@ -3632,8 +3632,8 @@ static char *send_rtpp_command(
 			goto badproxy;
 		}
 		if(connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-			close(fd);
-			LM_ERR("can't connect to RTPEngine <%s>\n", node->rn_url.s);
+			LM_ERR("can't connect to RTPEngine <%s> (%s:%d)\n", node->rn_url.s,
+					strerror(errno), errno);
 			goto badproxy;
 		}
 
@@ -3641,18 +3641,19 @@ static char *send_rtpp_command(
 			len = writev(fd, v + 1, vcnt);
 		} while(len == -1 && errno == EINTR);
 		if(len <= 0) {
-			close(fd);
-			LM_ERR("can't send command to RTPEngine <%s>\n", node->rn_url.s);
+			LM_ERR("can't send command to RTPEngine <%s> (%s:%d)\n",
+					node->rn_url.s, strerror(errno), errno);
 			goto badproxy;
 		}
 		do {
 			len = read(fd, buf, sizeof(buf) - 1);
 		} while(len == -1 && errno == EINTR);
-		close(fd);
 		if(len <= 0) {
-			LM_ERR("can't read reply from RTPEngine <%s>\n", node->rn_url.s);
+			LM_ERR("can't read reply from RTPEngine <%s> (%s:%d)\n",
+					node->rn_url.s, strerror(errno), errno);
 			goto badproxy;
 		}
+		close(fd);
 	} else if(node->rn_umode == RNU_WS || node->rn_umode == RNU_WSS) {
 		/* assemble full request string, flatten iovec */
 		v[0].iov_base = gencookie();
@@ -3721,8 +3722,9 @@ static char *send_rtpp_command(
 			} while(len == -1 && (errno == EINTR || errno == ENOBUFS));
 			if(len <= 0) {
 				bencode_get_str(bencode_dictionary_get(dict, "command"), &cmd);
-				LM_ERR("can't send command \"%.*s\" to RTPEngine <%s>\n",
-						cmd.len, cmd.s, node->rn_url.s);
+				LM_ERR("can't send command \"%.*s\" to RTPEngine <%s> "
+					   "(%s:%d)\n",
+						cmd.len, cmd.s, node->rn_url.s, strerror(errno), errno);
 				goto badproxy;
 			}
 			while((poll(fds, 1, rtpengine_tout_ms) == 1)
@@ -3734,8 +3736,9 @@ static char *send_rtpp_command(
 					bencode_get_str(
 							bencode_dictionary_get(dict, "command"), &cmd);
 					LM_ERR("can't read reply for command \"%.*s\" from "
-						   "RTPEngine <%s>\n",
-							cmd.len, cmd.s, node->rn_url.s);
+						   "RTPEngine <%s> (%s:%d)\n",
+							cmd.len, cmd.s, node->rn_url.s, strerror(errno),
+							errno);
 					goto badproxy;
 				}
 				if(len >= (v[0].iov_len - 1)
@@ -3767,6 +3770,7 @@ out:
 	return cp;
 
 badproxy:
+	close(fd);
 	return NULL;
 }
 
