@@ -1784,13 +1784,14 @@ static int add_rtpp_node_info(
 
 	if((1 == crt_rtpp->rn_disabled)
 			&& (crt_rtpp->rn_recheck_ticks == RTPENGINE_MAX_RECHECK_TICKS)) {
-		rpc->struct_add(vh, "s", "disabled", "1(permanent)");
+		rpc->struct_add(vh, "b", "disabled", 1);
 	} else {
-		rpc->struct_add(vh, "d", "disabled", crt_rtpp->rn_disabled);
+		rpc->struct_add(vh, "b", "disabled", 0);
 	}
+	rpc->struct_add(vh, "b", "active", crt_rtpp->rn_disabled == 0);
 
 	if(crt_rtpp->rn_recheck_ticks == RTPENGINE_MAX_RECHECK_TICKS) {
-		rpc->struct_add(vh, "s", "recheck_ticks", "N/A");
+		rpc->struct_add(vh, "d", "recheck_ticks", -1);
 	} else {
 		rtpp_ticks = crt_rtpp->rn_recheck_ticks - get_ticks();
 		rtpp_ticks = rtpp_ticks < 0 ? 0 : rtpp_ticks;
