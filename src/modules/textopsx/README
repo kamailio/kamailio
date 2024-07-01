@@ -731,27 +731,38 @@ bl_iterator_end("b1");
 
 3.1. @hf_value
 
-   Get value of required header-value or param. Note that functions called
-   'value2' works with Authorization-like headers where comma is not
-   treated as value delimiter. Formats: @hf_value.HFNAME[IDX] # idx value,
-   negative value counts from bottom @hf_value.HFNAME.PARAM_NAME
-   @hf_value.HFNAME[IDX].PARAM_NAME @hf_value.HFNAME.p.PARAM_NAME # or
-   .param., useful if required called "uri", "p", "param"
-   @hf_value.HFNAME[IDX].p.PARAM_NAME # dtto @hf_value.HFNAME[IDX].uri #
-   (< & > excluded) @hf_value.HFNAME[*] # return comma delimited list of
-   all values (combines headers) @hf_value.HFNAME # the same as above [*]
-   but may be parsed by cfg.y @hf_value.HFNAME[*].uri # return comma
-   delimited list of uris (< & > excluded) @hf_value.HFNAME.uri # the same
-   as above [*] but may be parsed by cfg.y @hf_value.HFNAME[IDX].name #
-   returns name part, quotes excluded @hf_value.HFNAME.name # returns name
-   part of the first value @hf_value2.HFNAME # returns value of first
-   header @hf_value2.HFNAME[IDX] # returns value of idx's header
-   @hf_value2.HFNAME.PARAM_NAME @hf_value2.HFNAME[IDX].PARAM_NAME
-   @hf_value.HFNAME[IDX].uri # return URI, quotes excluded
-   @hf_value.HFNAME.p.uri # returns param named uri, not URI itself
-   @hf_value.HFNAME.p.name # returns param named name, not name itself
-   @hf_value.HFNAME[IDX].uri.name # any sel_any_uri nested features may be
-   used @hf_value.HFNAME[IDX].nameaddr.name # select_any_nameaddr
+   Get value of required header-value or param. Note that selects called
+   'hf_value2' work with Authorization-like headers where comma is not
+   treated as value delimiter.
+
+   Formats:
+     * @hf_value.HFNAME[IDX] # idx value, negative value counts from
+       bottom
+     * @hf_value.HFNAME.PARAM_NAME
+     * @hf_value.HFNAME[IDX].PARAM_NAME
+     * @hf_value.HFNAME.p.PARAM_NAME # or .param., useful if required
+       called "uri", "p", "param"
+     * @hf_value.HFNAME[IDX].p.PARAM_NAME # dtto
+     * @hf_value.HFNAME[IDX].uri # (< & > excluded)
+     * @hf_value.HFNAME[*] # return comma delimited list of all values
+       (combines headers)
+     * @hf_value.HFNAME # the same as above [*] but may be parsed by cfg.y
+     * @hf_value.HFNAME[*].uri # return comma delimited list of uris (< &
+       > excluded)
+     * @hf_value.HFNAME.uri # the same as above [*] but may be parsed by
+       cfg.y
+     * @hf_value.HFNAME[IDX].name # returns name part, quotes excluded
+     * @hf_value.HFNAME.name # returns name part of the first value
+     * @hf_value2.HFNAME # returns value of first header
+     * @hf_value2.HFNAME[IDX] # returns value of idx's header
+     * @hf_value2.HFNAME.PARAM_NAME
+     * @hf_value2.HFNAME[IDX].PARAM_NAME
+     * @hf_value.HFNAME[IDX].uri # return URI, quotes excluded
+     * @hf_value.HFNAME.p.uri # returns param named uri, not URI itself
+     * @hf_value.HFNAME.p.name # returns param named name, not name itself
+     * @hf_value.HFNAME[IDX].uri.name # any sel_any_uri nested features
+       may be used
+     * @hf_value.HFNAME[IDX].nameaddr.name # select_any_nameaddr
 
    Meaning of the parameters is as follows:
      * HFNAME - Header field name. Underscores are treated as dashes.
@@ -772,7 +783,9 @@ $prt = @hf_value2.authorization.integrity_protected;
 
 3.2. @hf_value2
 
-   TBA.
+   Similar to selects called 'hf_value', but work with Authorization-like
+   headers where comma is treated as attribute delimiter instead of header
+   value delimiter.
 
 3.3. @hf_value_exists
 
