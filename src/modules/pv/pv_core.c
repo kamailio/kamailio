@@ -1488,7 +1488,7 @@ int pv_get_body_size(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 }
 
 
-#define PV_ESCSTR_SIZE 16
+#define PV_ESCSTR_SIZE 32
 int pv_get_escstr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	static char _pv_escstr[PV_ESCSTR_SIZE];
