@@ -30,7 +30,9 @@
 
 #include "ip_addr.h"
 
-int receive_msg(char *buf, unsigned int len, struct receive_info *ri);
+#define receive_msg(_buf, _len, _ri) _receive_msg(_buf, _len, _ri, NULL)
+int _receive_msg(char *buf, unsigned int len, struct receive_info *ri,
+		struct receive_info *haproxy_ri);
 int sip_check_fline(char *buf, unsigned int len);
 unsigned int inc_msg_no(void);
 void ksr_msg_env_reset(void);
