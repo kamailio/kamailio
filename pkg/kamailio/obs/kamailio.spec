@@ -9,6 +9,7 @@
 %bcond_with dnssec
 %bcond_without evapi
 %bcond_without geoip
+%bcond_with geoip2
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -46,6 +47,7 @@
 %bcond_with dnssec
 %bcond_without evapi
 %bcond_without geoip
+%bcond_with geoip2
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -93,6 +95,7 @@
 %bcond_with dnssec
 %bcond_without evapi
 %bcond_without geoip
+%bcond_with geoip2
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -139,7 +142,8 @@
 %bcond_without cnxcc
 %bcond_with dnssec
 %bcond_without evapi
-%bcond_without geoip
+%bcond_with geoip
+%bcond_without geoip2
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -170,6 +174,7 @@
 %bcond_with dnssec
 %bcond_with evapi
 %bcond_without geoip
+%bcond_with geoip2
 %bcond_without http_async_client
 %bcond_without ims
 %bcond_without jansson
@@ -466,12 +471,17 @@ suspended when sending the event, to be resumed at a later point, maybe triggere
 %endif
 
 
-%if %{with geoip}
+%if %{with geoip} || %{with geoip2}
 %package    geoip
 Summary:    MaxMind GeoIP support for Kamailio
 Group:      %{PKGGROUP}
+%if %{with geoip2}
+Requires:   libmaxminddb, kamailio = %ver
+BuildRequires:  libmaxminddb-devel
+%else
 Requires:   GeoIP, libmaxminddb, kamailio = %ver
 BuildRequires:  GeoIP-devel, libmaxminddb-devel
+%endif
 
 %description    geoip
 MaxMind GeoIP support for Kamailio.
@@ -1226,9 +1236,13 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with evapi}
     kev \
 %endif
-%if %{with geoip}
+%if %{with geoip} || %{with geoip2}
+%if %{with geoip2}
+    kgeoip2 \
+%else
     kgeoip \
     kgeoip2 \
+%endif
 %endif
     kgzcompress \
 %if %{with http_async_client}
@@ -1339,9 +1353,13 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with evapi}
     kev \
 %endif
-%if %{with geoip}
+%if %{with geoip} || %{with geoip2}
+%if %{with geoip2}
+    kgeoip2 \
+%else
     kgeoip \
     kgeoip2 \
+%endif
 %endif
     kgzcompress \
 %if %{with http_async_client}
@@ -1935,13 +1953,18 @@ fi
 %endif
 
 
-%if %{with geoip}
+%if %{with geoip} || %{with geoip2}
 %files      geoip
 %defattr(-,root,root)
+%if %{with geoip2}
+%doc %{_docdir}/kamailio/modules/README.geoip2
+%{_libdir}/kamailio/modules/geoip2.so
+%else
 %doc %{_docdir}/kamailio/modules/README.geoip
 %doc %{_docdir}/kamailio/modules/README.geoip2
 %{_libdir}/kamailio/modules/geoip.so
 %{_libdir}/kamailio/modules/geoip2.so
+%endif
 %endif
 
 
@@ -2421,6 +2444,9 @@ fi
 
 
 %changelog
+* Thu Jun 20 2024 Oded Arbel <oded@geek.co.il>
+  - Added option to build just the geoip2 module for distributions that no longer
+    ship the obsolete and unsupported GeoIP library
 * Tue Sep 13 2022 Gustavo Almeida <galmeida@broadvoice.com>
   - added readline-devel build dependency
 * Sat Aug 31 2019 Sergey Safarov <s.safarov@gmail.com> 5.3.0-dev7
