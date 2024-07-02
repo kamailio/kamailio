@@ -35,6 +35,12 @@
 #include "compiler_opt.h"
 #include "cfg_core.h"
 
+#ifndef CUSTOM_LOG_FMT
+#define CUSTOM_LOG_FMT 0
+#else
+#define CUSTOM_LOG_FMT 1
+#endif
+
 #define TIME_T_FMT "lld"
 #define TIME_T_CAST(x) ((long long)(x))
 
@@ -170,6 +176,13 @@ extern km_log_f _km_log_func;
 
 void km_log_func_set(km_log_f f);
 
+typedef void (*km_custom_log_f)(int, const char *, const char *, int, const char *, ...);
+extern km_custom_log_f _km_custom_log_func;
+void km_custom_log_func_set(km_custom_log_f f);
+
+void km_default_custom_log_func(int syslog_level, const char *mod_name, const char *file_name,
+							    int line, const char *fmt, ...);
+
 /** @brief maps log levels to their string name and corresponding syslog level */
 
 struct log_level_info
@@ -219,6 +232,7 @@ void log_prefix_init(void);
 
 #define LOGV_PREFIX_STR ((log_prefix_val) ? log_prefix_val->s : "")
 #define LOGV_PREFIX_LEN ((log_prefix_val) ? log_prefix_val->len : 0)
+#define LOGV_CUSTOM_LOG_FMT(fmt) ((log_prefix_val) ? "%s" fmt : fmt)
 
 #define LOGV_FUNCNAME_STR(vfuncname) \
 	(((void *)vfuncname != NULL) ? vfuncname : "")
@@ -288,7 +302,20 @@ void log_prefix_init(void);
 				if(unlikely(log_color))                                       \
 					dprint_color_reset();                                     \
 			} else {                                                          \
-				_km_log_func(LOG2SYSLOG_LEVEL(__llevel)                       \
+				if (CUSTOM_LOG_FMT) { 										  \
+					_km_custom_log_func(LOG2SYSLOG_LEVEL(__llevel) | 		  \
+									 | (((facility) != DEFAULT_FACILITY)      \
+													 ? (facility)             \
+													 : get_debug_facility(    \
+															 LOG_MNAME,       \
+															 LOG_MNAME_LEN)), \
+						LOG_MNAME, 										  	  \
+						__FILE__, 										  	  \
+						__LINE__, 										  	  \
+						LOGV_CUSTOM_LOG_FMT(fmt), 						  	  \
+						__VA_ARGS__); 									  	  \
+				} else { 													  \
+					_km_log_func(LOG2SYSLOG_LEVEL(__llevel)                   \
 									 | (((facility) != DEFAULT_FACILITY)      \
 													 ? (facility)             \
 													 : get_debug_facility(    \
@@ -299,6 +326,7 @@ void log_prefix_init(void);
 						LOGV_PREFIX_LEN, LOGV_PREFIX_STR, (prefix),           \
 						LOGV_FUNCNAME_STR(funcname),                          \
 						LOGV_FUNCSUFFIX_STR(funcname), __VA_ARGS__);          \
+				} 															  \
 			}                                                                 \
 			DPRINT_CRIT_EXIT;                                                 \
 		}                                                                     \
@@ -332,7 +360,7 @@ void log_prefix_init(void);
 							   : (((level) > L_DBG) ? L_DBG : level);         \
 			DPRINT_CRIT_ENTER;                                                \
 			if(_ksr_slog_func) { /* structured logging */                     \
-				ksr_logdata_t __kld = {0};                                    \
+				ksr_logdata_t __kld = {0,0,0,0,0,0,0,0,0,0};                  \
 				__kld.v_facility =                                            \
 						LOG2SYSLOG_LEVEL(__llevel)                            \
 						| (((facility) != DEFAULT_FACILITY)                   \
@@ -360,8 +388,18 @@ void log_prefix_init(void);
 					if(unlikely(log_color))                                   \
 						dprint_color_reset();                                 \
 				} else {                                                      \
-					_km_log_func(                                             \
-							LOG2SYSLOG_LEVEL(__llevel)                        \
+					if (CUSTOM_LOG_FMT) { 									  \
+						_km_custom_log_func(LOG2SYSLOG_LEVEL(__llevel) | 	  \
+							(((facility) != DEFAULT_FACILITY) ? 			  \
+							(facility) : 									  \
+							get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), 	  \
+							LOG_MNAME, 										  \
+							__FILE__, 										  \
+							__LINE__, 										  \
+							LOGV_CUSTOM_LOG_FMT(fmt), 						  \
+							##args); 										  \
+					} else { 												  \
+						_km_log_func(LOG2SYSLOG_LEVEL(__llevel)               \
 									| (((facility) != DEFAULT_FACILITY)       \
 													? (facility)              \
 													: get_debug_facility(     \
@@ -372,6 +410,7 @@ void log_prefix_init(void);
 							LOGV_PREFIX_LEN, LOGV_PREFIX_STR, (prefix),       \
 							LOGV_FUNCNAME_STR(funcname),                      \
 							LOGV_FUNCSUFFIX_STR(funcname), ##args);           \
+					}														  \
 				}                                                             \
 			}                                                                 \
 			DPRINT_CRIT_EXIT;                                                 \

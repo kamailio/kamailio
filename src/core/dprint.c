@@ -46,6 +46,7 @@ static void log_callid_set(sip_msg_t *msg);
 
 char *_km_log_engine_type = NULL;
 char *_km_log_engine_data = NULL;
+km_custom_log_f _km_custom_log_func = &km_default_custom_log_func;
 
 km_log_f _km_log_func = &syslog;
 
@@ -55,6 +56,24 @@ km_log_f _km_log_func = &syslog;
 void km_log_func_set(km_log_f f)
 {
 	_km_log_func = f;
+}
+
+void km_custom_log_func_set(km_custom_log_f f)
+{
+	_km_custom_log_func = f;
+}
+
+// default custom log format handler,
+// expected to be replaced via km_custom_log_func_set
+void km_default_custom_log_func(int syslog_level, const char *mod_name, const char *file_name,
+							    int line, const char *fmt, ...)
+{
+	char *custom_fmt;
+	asprintf(&custom_fmt, "%s %i:%s:%i %s", mod_name, my_pid(), file_name, line, fmt);
+	va_list args;
+    va_start (args, fmt);
+    vsyslog(syslog_level, custom_fmt, args);
+    va_end (args);
 }
 
 #ifndef NO_SIG_DEBUG
