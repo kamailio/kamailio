@@ -116,6 +116,9 @@ str regex_sdp_ip_prefix_to_maintain_in_fd = {0, 0};
 //If set this will include an additional filter for all existing filters using the next odd port up - as this is the RTCP port
 int include_rtcp_fd = 0;
 
+/** If set, this uses the bottom Via for identification of UE, always, on both requests and responses, over Contact. */
+int trust_bottom_via = 0;
+
 int cdp_event_list_size_threshold =
 		0; /**Threshold for size of cdp event list after which a warning is logged */
 
@@ -219,9 +222,11 @@ static cmd_export_t cmds[] = {
 		{"Rx_AAR", (cmd_function)cfg_rx_aar, 4, fixup_aar, 0, ONREPLY_ROUTE},
 		{"Rx_AAR_Register", (cmd_function)cfg_rx_aar_register, 2,
 				fixup_aar_register, 0, REQUEST_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+		{0, 0, 0, 0, 0, 0},
+};
 
-static param_export_t params[] = {{"rx_dest_realm", PARAM_STR, &rx_dest_realm},
+static param_export_t params[] = {
+		{"rx_dest_realm", PARAM_STR, &rx_dest_realm},
 		{"rx_forced_peer", PARAM_STR, &rx_forced_peer},
 		{"rx_auth_expiry", INT_PARAM, &rx_auth_expiry},
 		{"af_signaling_ip", PARAM_STR,
@@ -258,7 +263,9 @@ static param_export_t params[] = {{"rx_dest_realm", PARAM_STR, &rx_dest_realm},
 		{"suspend_transaction", INT_PARAM, &_ims_qos_suspend_transaction},
 		{"recv_mode", PARAM_INT, &_imsqos_params.recv_mode},
 		{"dialog_direction", PARAM_INT, &_imsqos_params.dlg_direction},
-		{0, 0, 0}};
+		{"trust_bottom_via", PARAM_INT, &trust_bottom_via},
+		{0, 0, 0},
+};
 
 
 /** module exports */
@@ -1412,7 +1419,7 @@ static int w_rx_aar_register(
 		}
 	}
 
-	vb = cscf_get_ue_via(msg);
+	vb = trust_bottom_via ? cscf_get_last_via(msg) : cscf_get_ue_via(msg);
 	via_port = vb->port ? vb->port : 5060;
 	via_proto = vb->proto;
 
@@ -1473,8 +1480,8 @@ static int w_rx_aar_register(
 	}
 
 	char buff[IP_ADDR_MAX_STR_SIZE];
-	if(_imsqos_params.recv_mode == 0) {
-		//we use the received IP address for the framed_ip_address
+	if(_imsqos_params.recv_mode == 0 && !trust_bottom_via) {
+		// we use the received IP address for the framed_ip_address
 		recv_ip.s = ip_addr2a(&msg->rcv.src_ip);
 		recv_ip.len = strlen(ip_addr2a(&msg->rcv.src_ip));
 
@@ -1659,14 +1666,14 @@ static int w_rx_aar_register(
 					if(!ret) {
 						LM_ERR("Failed to send AAR\n");
 						lock_release(saved_t_data->lock);
-						free_saved_transaction_data(
-								local_data); //free the local data becuase the CDP async request was not successful (we must free here)
+						//free the local data because the CDP async request was not successful (we must free here)
+						free_saved_transaction_data(local_data);
 						goto error;
 					} else {
 						aar_sent = 1;
 						//before we send - bump up the reply counter
-						saved_t_data
-								->answers_not_received++; //we don't need to lock as we already hold the lock above
+						//we don't need to lock as we already hold the lock above
+						saved_t_data->answers_not_received++;
 					}
 				} else {
 					//contact exists - this is a re-registration, for now we just ignore this

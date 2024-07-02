@@ -50,6 +50,8 @@
 #ifndef RX_AUTH_DATA_H
 #define RX_AUTH_DATA_H
 
+#include "../../modules/ims_dialog/dlg_load.h"
+
 extern struct tm_binds tmb;
 extern struct cdp_binds cdpb;
 extern ims_dlg_api_t dlgb;
