@@ -212,6 +212,37 @@ modparam("ims_registrar_pcscf", "ignore_contact_rxport_check", 1)
     </section>
 
     <section>
+      <title><varname>ignore_contact_rxproto_check</varname> (int)</title>
+
+      <para>
+        Validate, if the protocol, from which the request was received, is the
+        same as used during registration.
+
+        Note: with IMS, the UE opens IPsec Security Associations between IPs
+        and ports with the P-CSCF. These are for both UDP and TCP, with a
+        single negotiation, which does not need to specify the protocol. 
+      </para>
+      <para> 
+        (Before the introduction of this parameter, the similar one for port was
+        used to also ignore the protocol. But that might've been a type/mistake.)
+      </para>
+
+      <para>This Parameter is primarily used by the "is_registered" function.</para>
+
+      <para><emphasis>Default value is 1 (ignore protocol, for best compliance).</emphasis></para>
+
+      <example>
+        <title><varname>ignore_contact_rxproto_check</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "ignore_contact_rxproto_check", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
       <title><varname>ignore_reg_state</varname> (int)</title>
 
       <para>Validate, if the found contact is really and completely registered.</para>
@@ -284,6 +315,48 @@ modparam("ims_registrar_pcscf", "reginfo_queue_size_threshold", 42)
         <programlisting format="linespecific">
 ...
 modparam("ims_registrar_pcscf", "delete_delay", 10)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>trust_bottom_via</varname> (int)</title>
+      <para>
+        If set to 1 it will trust the bottom Via as the UE IP/port/transport when doing client identification.
+      </para>
+      <para>
+        Normally, the UE identification should be done on IPsec SPIs and source IP/port of the packets. 
+        In some cases the ims_* modules trust the top Via on requests and the bottom Via on responses. In some (better)
+        cases this module trusts the received-from IP (or the alias in the Contact header).
+      </para>
+      <para>
+        This parameter allows for an external-to-Kamailio IPsec functionality to be used. That will be in charge of
+        guaranteeing that the bottom Via header is always correct (on requests; on responses the P-CSCF itself should
+        guarantee unmodified Via headers stack). Then the code here will always use the bottom Via as the source of
+        truth for IMS UE identification.
+      </para>
+      <para>
+        <emphasis>Note:</emphasis> this will prefer the standard received and rport values, if present, over the actual
+        Via sent-by host and port.
+      </para>
+      <para>
+        <emphasis>Note:</emphasis> !! trusting the Via header has security drawbacks, as it might be easily spoofed by
+        an attacker. Hence, without extra security, the P-CSCF shouldn't trust the Via header for client identification
+        on and this module would require a fix or extension for this. Currently only pcscf_save() is safe from
+        this issue, while pcscf_save_pending() and pcscf_is_registered() seem to be using by default the top/first Via
+        on requests, or the bottom/last Via on responses !!
+      </para>
+      <para>
+        See also the same parameter in the ims_qos module.
+      </para>
+      <para><emphasis>Default value is 0 (trust received-from IP and alias in Contact, and, unfortunaly somewhat wrongly
+      top/bottom Via on requests/responses).</emphasis></para>
+      <example>
+        <title><varname>trust_bottom_via</varname> parameter usage</title>
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "trust_bottom_via", 1)
 ...
         </programlisting>
       </example>
