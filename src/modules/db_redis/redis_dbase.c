@@ -1827,13 +1827,13 @@ static int db_redis_perform_delete(const db1_con_t *_h, km_redis_con_t *con,
 					"performing delete\n",
 					CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 		else
-			LM_WARN("performing table scan on table '%.*s' while performing "
-					"delete using match key "
-					"'%.*s' at offset %llx\n",
+			LM_DBG("performing table scan on table '%.*s' while performing "
+				   "delete using match key "
+				   "'%.*s' at offset %llx\n",
 					CON_TABLE(_h)->len, CON_TABLE(_h)->s, ts_scan_key->len,
 					ts_scan_key->s, (unsigned long long)ts_scan_start);
 		for(i = 0; i < _n; ++i) {
-			LM_WARN("  scan key %d is '%.*s'\n", i, _k[i]->len, _k[i]->s);
+			LM_DBG("  scan key %d is '%.*s'\n", i, _k[i]->len, _k[i]->s);
 		}
 		if(db_redis_scan_query_keys(con, CON_TABLE(_h), _n, keys, keys_count,
 				   manual_keys, manual_keys_count, ts_scan_start, ts_scan_key,
