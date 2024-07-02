@@ -700,6 +700,14 @@ static inline int str2int(str *_s, unsigned int *_r)
 	str2unval(_s, _r, int, UINT_MAX);
 }
 
+/*
+ * Convert a str to unsigned short
+ */
+static inline int str2ushort(str *_s, unsigned short *_r)
+{
+	str2unval(_s, _r, short, USHRT_MAX);
+}
+
 
 #define str2snval(_s, _r, _vtype, _vmin, _vmax)                                \
 	do {                                                                       \

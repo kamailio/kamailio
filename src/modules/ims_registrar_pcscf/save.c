@@ -60,6 +60,7 @@ extern time_t time_now;
 extern unsigned int pending_reg_expires;
 extern int subscribe_to_reginfo;
 extern int subscription_expires;
+extern int trust_bottom_via;
 extern pua_api_t pua;
 extern ipsec_pcscf_api_t ipsec_pcscf;
 
@@ -176,10 +177,33 @@ static inline int update_contacts(struct sip_msg *req, struct sip_msg *rpl,
 				ci.searchflag =
 						SEARCH_NORMAL; /* this must be reset for each contact iteration */
 
-				if(puri.params.len > 6
-						&& (alias_start = _strnistr(
-									puri.params.s, "alias=", puri.params.len))
-								   != NULL) {
+				if(trust_bottom_via) {
+					struct via_body *vb = cscf_get_last_via(req);
+					if(vb == 0) {
+						LM_ERR("No via header in request\n");
+						return -1;
+					}
+					if(vb->received != NULL && vb->received->value.len > 0) {
+						ci.received_host = vb->received->value;
+					} else {
+						ci.received_host = vb->host;
+					}
+					if(vb->rport != NULL && vb->rport->value.len > 0) {
+						str2ushort(&vb->rport->value, &ci.received_port);
+					} else {
+						ci.received_port = vb->port;
+					}
+					// this probably doesn't matter, since IMS UEs register IPs for both
+					ci.received_proto = vb->proto;
+					ci.searchflag = SEARCH_RECEIVED;
+					LM_DBG("bottom Via from request: Via sent-by host [%.*s], "
+						   "port [%d], proto [%d]\n",
+							ci.received_host.len, ci.received_host.s,
+							ci.received_port, ci.received_proto);
+				} else if(puri.params.len > 6
+						  && (alias_start = _strnistr(
+									  puri.params.s, "alias=", puri.params.len))
+									 != NULL) {
 					LM_DBG("contact has an alias [%.*s] - we can use that as "
 						   "the received\n",
 							puri.params.len, puri.params.s);
@@ -281,11 +305,13 @@ static inline int update_contacts(struct sip_msg *req, struct sip_msg *rpl,
 							LM_DBG("ul.register_ulcb(pcontact, "
 								   "PCSCF_CONTACT_EXPIRE|PCSCF_CONTACT_DELETE.."
 								   ".)\n");
-							if(ul.register_ulcb(pcontact,
-									   PCSCF_CONTACT_EXPIRE
-											   | PCSCF_CONTACT_DELETE,
-									   ipsec_pcscf.ipsec_on_expire, NULL)
-									!= 1) {
+							if(ipsec_pcscf.ipsec_on_expire != NULL
+									&& ul.register_ulcb(pcontact,
+											   PCSCF_CONTACT_EXPIRE
+													   | PCSCF_CONTACT_DELETE,
+											   ipsec_pcscf.ipsec_on_expire,
+											   NULL)
+											   != 1) {
 								LM_DBG("Error subscribing for contact\n");
 							}
 
@@ -322,7 +348,7 @@ int save_pending(struct sip_msg *_m, udomain_t *_d)
 	char srcip[50];
 	memset(&ci, 0, sizeof(struct pcontact_info));
 
-	vb = cscf_get_ue_via(_m);
+	vb = trust_bottom_via ? cscf_get_last_via(_m) : cscf_get_ue_via(_m);
 	port = vb->port ? vb->port : 5060;
 	proto = vb->proto;
 
@@ -369,14 +395,25 @@ int save_pending(struct sip_msg *_m, udomain_t *_d)
 	ci.num_service_routes = 0;
 	ci.expires = local_time_now + pending_reg_expires;
 	ci.reg_state = PCONTACT_ANY;
-	ci.searchflag =
-			SEARCH_RECEIVED; //we want to make sure we are very specific with this search to make sure we get the correct contact to put into reg_pending.
+	// we want to make sure we are very specific with this search to make
+	// sure we get the correct contact to put into reg_pending.
+	ci.searchflag = SEARCH_RECEIVED;
 
-	// Received Info: First try AVP, otherwise simply take the source of the request:
+	// Received Info: First see trust_bottom_via exception, then try AVP,
+	// otherwise simply take the source of the request:
 	memset(&val, 0, sizeof(int_str));
-	if(rcv_avp_name.n != 0
-			&& search_first_avp(rcv_avp_type, rcv_avp_name, &val, 0)
-			&& val.s.len > 0) {
+	if(trust_bottom_via && vb->received && vb->received->value.len > 0) {
+		ci.received_host = vb->received->value;
+		if(vb->rport && vb->rport->value.len > 0) {
+			str2ushort(&vb->rport->value, &ci.received_port);
+		}
+		if(ci.received_port == 0) {
+			ci.received_port = 5060;
+		}
+		ci.received_proto = vb->proto;
+	} else if(rcv_avp_name.n != 0
+			  && search_first_avp(rcv_avp_type, rcv_avp_name, &val, 0)
+			  && val.s.len > 0) {
 		if(val.s.len > RECEIVED_MAX_SIZE) {
 			LM_ERR("received too long\n");
 			goto error;
@@ -436,8 +473,9 @@ int save_pending(struct sip_msg *_m, udomain_t *_d)
 	ul.lock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 	if(ul.get_pcontact(_d, &ci, &pcontact, 0)
 			!= 0) { //need to insert new contact
-		ipsec_pcscf
-				.ipsec_reconfig(); // try to clean all ipsec SAs/Policies if there is no registered contacts
+		// try to clean all ipsec SAs/Policies if there is no registered contacts
+		if(ipsec_pcscf.ipsec_reconfig != NULL)
+			ipsec_pcscf.ipsec_reconfig();
 
 		LM_DBG("Adding pending pcontact: <%.*s>\n", c->uri.len, c->uri.s);
 		ci.reg_state = PCONTACT_REG_PENDING;
@@ -620,8 +658,8 @@ int save(struct sip_msg *_m, udomain_t *_d, int _cflags)
 				   "received");
 			goto done;
 		}
-		reginfo_subscribe_real(
-				_m, presentity_uri_pv, service_routes, subscription_expires);
+		reginfo_subscribe_real(_m, presentity_uri_pv, service_routes,
+				num_service_routes, subscription_expires);
 		pv_elem_free_all(presentity_uri_pv);
 	}
 

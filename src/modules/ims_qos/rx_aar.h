@@ -63,8 +63,8 @@ typedef struct saved_transaction
 	gen_lock_t *lock;
 	unsigned int ignore_replies;
 	unsigned int answers_not_received;
-	unsigned int
-			failed; //will start at 0 - if 1 fails we can set the flag up (1)
+	// will start at 0 - if 1 fails we can set the flag up (1)
+	unsigned int failed;
 	unsigned int tindex;
 	unsigned int tlabel;
 	unsigned int ticks;
