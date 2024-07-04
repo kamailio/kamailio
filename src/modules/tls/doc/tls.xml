@@ -65,6 +65,10 @@
 			loaded first (be in the first "loadmodule" in &kamailio;.cfg).
 		</para>
 		<para>
+			IMPORTANT: For libssl v3.x, the core parameter "tls_threads_mode"
+			has to be set, see the Core Cookbook for possible values.
+		</para>
+		<para>
 			IMPORTANT: using this module compiled with newer versions of libssl
 			(e.g., v1.1+) may require &kamailio; to be started with
 			<emphasis>--atexit=no</emphasis> command line parameters to avoid
