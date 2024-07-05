@@ -886,11 +886,11 @@ srv_disabled:
 int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv)
 {
 	redisc_server_t *rsrv_new;
-	char buffername[100];
+	char buffername[512];
 	unsigned int port;
 	str addr = {0, 0}, tmpstr = {0, 0}, name = {0, 0};
 	int server_len = 0;
-	char spec_new[100];
+	char spec_new[512];
 
 	if(redis_cluster_param) {
 		LM_DBG("Redis replied: \"%.*s\"\n", (int)reply->len, reply->str);
