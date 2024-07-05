@@ -944,12 +944,13 @@ int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv)
 						addr.len, addr.s, port);
 
 				if(server_len < 0 || server_len > sizeof(spec_new) - 1) {
-					LM_ERR("failed to print server spec string\n");
+					LM_ERR("failed to print server spec string (%d)\n",
+							server_len);
 					return 0;
 				}
 				server_new = (char *)pkg_malloc(server_len + 1);
 				if(server_new == NULL) {
-					LM_ERR("Error allocating pkg mem\n");
+					PKG_MEM_ERROR;
 					return 0;
 				}
 
@@ -969,7 +970,7 @@ int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv)
 									name.len, name.s);
 							return 1;
 						} else {
-							LM_ERR("ERROR connecting to the new server with "
+							LM_ERR("failed connecting to the new server with "
 								   "name: %.*s\n",
 									name.len, name.s);
 							return 0;
