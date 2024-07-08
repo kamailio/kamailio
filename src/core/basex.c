@@ -412,7 +412,7 @@ char *b58_decode(char *outb, int *outbszp, char *b58, int b58sz)
 			break;
 		--*outbszp;
 	}
-	*outbszp += zerocount;
+	*outbszp = strlen(outb + i);
 
 	return outb + i;
 }
