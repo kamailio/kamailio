@@ -50,7 +50,7 @@
 			<listitem>
 			<para>
 				<emphasis>hiredis</emphasis> - available at
-				https://github.com/antirez/hiredis .
+				<ulink url="https://github.com/redis/hiredis">https://github.com/redis/hiredis</ulink>.
 			</para>
 			</listitem>
 			</itemizedlist>
