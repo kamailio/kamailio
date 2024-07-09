@@ -262,22 +262,6 @@ static struct tls_hooks tls_h = {
 };
 
 
-#if 0
-/*
- * Create TLS configuration from modparams
- */
-static tls_domains_cfg_t* tls_use_modparams(void)
-{
-	tls_domains_cfg_t* ret;
-
-	ret = tls_new_cfg();
-	if (!ret) return;
-
-
-}
-#endif
-
-
 static int mod_init(void)
 {
 	int method;
