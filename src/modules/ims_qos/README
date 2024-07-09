@@ -20,6 +20,10 @@ Carsten Bock
    ng-voice GmbH
    <carsten@ng-voice.com>
 
+Dragos Vingarzan
+
+   <vingarzan -at- gmail dot com>
+
    Copyright © 2007 FhG FOKUS
 
    Copyright © 2012 Smile Communications
@@ -67,6 +71,7 @@ Carsten Bock
               3.24. suspend_transaction integer
               3.25. recv_mode integer
               3.26. dialog_direction integer
+              3.27. trust_bottom_via (int)
 
         4. Functions
 
@@ -107,8 +112,9 @@ Carsten Bock
    1.24. suspend_transaction parameter usage
    1.25. recv_mode parameter usage
    1.26. dialog_direction parameter usage
-   1.27. Rx_AAR_Register
-   1.28. Rx_AAR
+   1.27. trust_bottom_via parameter usage
+   1.28. Rx_AAR_Register
+   1.29. Rx_AAR
 
 Chapter 1. Admin Guide
 
@@ -148,6 +154,7 @@ Chapter 1. Admin Guide
         3.24. suspend_transaction integer
         3.25. recv_mode integer
         3.26. dialog_direction integer
+        3.27. trust_bottom_via (int)
 
    4. Functions
 
@@ -214,6 +221,7 @@ Chapter 1. Admin Guide
    3.24. suspend_transaction integer
    3.25. recv_mode integer
    3.26. dialog_direction integer
+   3.27. trust_bottom_via (int)
 
 3.1. rx_dest_realm (string)
 
@@ -541,6 +549,42 @@ modparam("ims_qos", "recv_mode", 1)
 modparam("ims_qos", "dialog_direction", 1)
 ...
 
+3.27. trust_bottom_via (int)
+
+   If set to 1 it will trust the bottom Via as the UE IP/port/transport
+   when doing client identification.
+
+   Normally, the UE identification should be done on IPsec SPIs and source
+   IP/port of the packets. In some cases the ims_* modules trust the top
+   Via on requests and the bottom Via on responses. In some (better) cases
+   this trusts the received-from IP (or the alias in the Contact header).
+
+   This parameter allows for an external-to-Kamailio IPsec functionality
+   to be used. That will be in charge of guaranteeing that the bottom Via
+   header is always correct (on requests; on responses the P-CSCF itself
+   should guarantee unmodified Via headers stack). Then the code here will
+   always use the bottom Via as the source of truth for IMS UE
+   identification.
+
+   Note: this will prefer the standard received and rport values, if
+   present, over the actual Via sent-by host and port.
+
+   Note: !! trusting the Via header has security drawbacks, as it might be
+   easily spoofed by an attacker. Hence, without extra security, the
+   P-CSCF shouldn't trust the Via header for client identification on
+   requests and the ims_registrar_pcscf module would require a fix or
+   extension for that. !!
+
+   See also the same parameter in the ims_registrar_pcscf module.
+
+   Default value is 0 (trust received-from IP and alias in Contact, and,
+   unfortunaly somewhat wrongly top/bottom Via on requests/responses).
+
+   Example 1.27. trust_bottom_via parameter usage
+...
+modparam("ims_qos", "trust_bottom_via", 1)
+...
+
 4. Functions
 
    4.1. Rx_AAR_Register(route_block, domain)
@@ -571,7 +615,7 @@ modparam("ims_qos", "dialog_direction", 1)
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.27. Rx_AAR_Register
+   Example 1.28. Rx_AAR_Register
 ...
 if(Rx_AAR_Register("REG_AAR_REPLY","location")==0){
     exit;
@@ -615,7 +659,7 @@ route[REG_AAR_REPLY]
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.28. Rx_AAR
+   Example 1.29. Rx_AAR
 ...
 if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig","",-1)==0){
     exit;
