@@ -111,17 +111,24 @@ int nio_msg_received(sr_event_param_t *evp)
 		avp = NULL;
 		avp = search_first_avp(
 				nio_msg_avp_type, nio_msg_avp_name, &avp_value, 0);
-		if(avp != NULL && is_avp_str_val(avp)) {
-			msg.buf = avp_value.s.s;
-			msg.len = avp_value.s.len;
-			nbuf = nio_msg_update(&msg, (unsigned int *)&obuf->len);
-			if(obuf->len >= BUF_SIZE) {
-				LM_ERR("new buffer overflow (%d)\n", obuf->len);
-				pkg_free(nbuf);
-				return -1;
+		if(avp != NULL) {
+			if(is_avp_str_val(avp)) {
+				msg.buf = avp_value.s.s;
+				msg.len = avp_value.s.len;
+				nbuf = nio_msg_update(&msg, (unsigned int *)&obuf->len);
+				if(obuf->len >= BUF_SIZE) {
+					LM_ERR("new buffer overflow (%d)\n", obuf->len);
+					pkg_free(nbuf);
+					return -1;
+				}
+				memcpy(obuf->s, nbuf, obuf->len);
+				obuf->s[obuf->len] = '\0';
+			} else {
+				LM_WARN("invalid value tyoe for AVP %.*s, using unmodified "
+						"message\n",
+						nio_msg_avp_param.len, nio_msg_avp_param.s);
 			}
-			memcpy(obuf->s, nbuf, obuf->len);
-			obuf->s[obuf->len] = '\0';
+			destroy_avp(avp);
 		} else {
 			LM_WARN("no value set for AVP %.*s, using unmodified message\n",
 					nio_msg_avp_param.len, nio_msg_avp_param.s);
@@ -164,18 +171,25 @@ int nio_msg_sent(sr_event_param_t *evp)
 		avp = NULL;
 		avp = search_first_avp(
 				nio_msg_avp_type, nio_msg_avp_name, &avp_value, 0);
-		if(avp != NULL && is_avp_str_val(avp)) {
-			msg.buf = avp_value.s.s;
-			msg.len = avp_value.s.len;
-			nbuf.s = nio_msg_update(&msg, (unsigned int *)&nbuf.len);
-			if(nbuf.s != NULL) {
-				LM_DBG("new outbound buffer generated\n");
-				pkg_free(obuf->s);
-				obuf->s = nbuf.s;
-				obuf->len = nbuf.len;
+		if(avp != NULL) {
+			if(is_avp_str_val(avp)) {
+				msg.buf = avp_value.s.s;
+				msg.len = avp_value.s.len;
+				nbuf.s = nio_msg_update(&msg, (unsigned int *)&nbuf.len);
+				if(nbuf.s != NULL) {
+					LM_DBG("new outbound buffer generated\n");
+					pkg_free(obuf->s);
+					obuf->s = nbuf.s;
+					obuf->len = nbuf.len;
+				} else {
+					LM_ERR("failed to generate new outbound buffer\n");
+				}
 			} else {
-				LM_ERR("failed to generate new outbound buffer\n");
+				LM_WARN("invalid value type for AVP %.*s, using unmodified "
+						"message\n",
+						nio_msg_avp_param.len, nio_msg_avp_param.s);
 			}
+			destroy_avp(avp);
 		} else {
 			LM_WARN("no value set for AVP %.*s, using unmodified message\n",
 					nio_msg_avp_param.len, nio_msg_avp_param.s);
