@@ -281,6 +281,7 @@ void pp_ifdef_level_error(void)
 				   " %d more #!endif as #!if[n]def\n",
 					(_pp_ifdef_level) * -1);
 		}
+		LM_ERR("note: #!endif requires EoL after it, even before EoF\n");
 	}
 }
 
