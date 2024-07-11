@@ -124,9 +124,9 @@ int ht_reset_content(ht_t *ht);
 #define HT_RM_OP_EQ 1
 #define HT_RM_OP_NE 2
 #define HT_RM_OP_SW 3
-#define HT_RM_OP_EW 3
-#define HT_RM_OP_RE 4
-#define HT_RM_OP_IN 5
+#define HT_RM_OP_EW 4
+#define HT_RM_OP_RE 5
+#define HT_RM_OP_IN 6
 
 int ht_rm_cell_op(str *sre, ht_t *ht, int mode, int op);
 int ht_match_cell_op_str(str *sre, ht_t *ht, int mode, int op);
