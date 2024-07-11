@@ -70,22 +70,22 @@ struct grp_record
 /** hash table mapping a counter name to an id */
 static struct str_hash_table cnts_hash_table;
 /** array mapping id 2 record */
-struct counter_record **cnt_id2record;
-static int cnt_id2record_size;
+struct counter_record **cnt_id2record = NULL;
+static int cnt_id2record_size = 0;
 /** hash table for groups (maps a group name to a counter list) */
 static struct str_hash_table grp_hash_table;
 /** array of groups, sorted */
-static struct grp_record **grp_sorted;
-static int grp_sorted_max_size;
-static int grp_sorted_crt_size;
-static int grp_no; /* number of groups */
+static struct grp_record **grp_sorted = NULL;
+static int grp_sorted_max_size = 0;
+static int grp_sorted_crt_size = 0;
+static int grp_no = 0; /* number of groups */
 
 /** counters array. a[proc_no][counter_id] =>
   _cnst_vals[proc_no*cnts_no+counter_id] */
 counter_array_t *_cnts_vals = 0;
-int _cnts_row_len;		  /* number of elements per row */
-static int cnts_no;		  /* number of registered counters */
-static int cnts_max_rows; /* set to 0 if not yet fully init */
+int _cnts_row_len = 0;		  /* number of elements per row */
+static int cnts_no = 0;		  /* number of registered counters */
+static int cnts_max_rows = 0; /* set to 0 if not yet fully init */
 char *ksr_stats_namesep = KSR_STATS_NAMESEP;
 
 
