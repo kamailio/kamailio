@@ -511,8 +511,8 @@ int do_action(struct run_act_ctx *h, struct action *a, struct sip_msg *msg)
 			}
 			break;
 		case LOG_T:
-			if((a->val[0].type != NUMBER_ST) | (a->val[1].type != STRING_ST)) {
-				LM_CRIT("bad log() types %d, %d\n", a->val[0].type,
+			if((a->val[0].type != NUMBER_ST) || (a->val[1].type != STRING_ST)) {
+				LM_CRIT("bad log() parameter types %d, %d\n", a->val[0].type,
 						a->val[1].type);
 				ret = E_BUG;
 				goto error;
