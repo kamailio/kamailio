@@ -921,7 +921,7 @@ static int t_precheck_trans(sip_msg_t *msg)
 	ret = tmx_check_pretran(msg);
 	if(ret > 0)
 		return 1;
-	return (ret - 1);
+	return (ret == 0) ? -1 : ret;
 }
 
 /**
