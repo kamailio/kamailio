@@ -83,9 +83,9 @@ static int grp_no = 0; /* number of groups */
 /** counters array. a[proc_no][counter_id] =>
   _cnst_vals[proc_no*cnts_no+counter_id] */
 counter_array_t *_cnts_vals = 0;
-int _cnts_row_len = 0;		  /* number of elements per row */
-static int cnts_no = 0;		  /* number of registered counters */
-static int cnts_max_rows = 0; /* set to 0 if not yet fully init */
+int _cnts_row_len = 0;			   /* number of elements per row */
+static unsigned short cnts_no = 0; /* number of registered counters */
+static int cnts_max_rows = 0;	   /* set to 0 if not yet fully init */
 char *ksr_stats_namesep = KSR_STATS_NAMESEP;
 
 
