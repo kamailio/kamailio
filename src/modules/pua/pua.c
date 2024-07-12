@@ -1121,9 +1121,10 @@ static ua_pres_t *build_uppubl_cbparam(ua_pres_t *p)
 	publ.pres_uri = p->pres_uri;
 	publ.content_type = p->content_type;
 	publ.id = p->id;
-	publ.expires = (p->desired_expires == 0)
-						   ? -1
-						   : p->desired_expires - (int)time(NULL);
+	publ.expires =
+			(int)((p->desired_expires == 0)
+							? -1
+							: ((long)p->desired_expires - (long)time(NULL)));
 	publ.flag = UPDATE_TYPE;
 	publ.source_flag = p->flag;
 	publ.event = p->event;
