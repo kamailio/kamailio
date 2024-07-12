@@ -2075,7 +2075,7 @@ int sdpops_attr_val(str *payload, str *attr, str *val)
 		/* find EoL or EoData */
 		eline = sline;
 		while(eline < payload->s + payload->len) {
-			if(*eline == '\r' || *eline == '\r') {
+			if(*eline == '\r' || *eline == '\n') {
 				break;
 			}
 			eline++;
