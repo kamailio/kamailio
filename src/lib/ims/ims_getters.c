@@ -539,6 +539,21 @@ done:
 	return pu;
 }
 
+/** 
+ * Get the host from the Request URI of the message.
+ * Useful for example on MT, to get the destination from the Request URI, if P-Called-Party-ID is not present.
+ */
+str cscf_get_host_from_requri(struct sip_msg *msg)
+{
+	if(msg->first_line.type != SIP_REQUEST || parse_sip_msg_uri(msg) < 0
+			|| msg->parsed_uri.type == TEL_URI_T) {
+		str empty = {0};
+		return empty;
+	}
+	return msg->parsed_uri.host;
+}
+
+
 /**
  * Finds if the message contains the orig parameter in the first Route header
  * @param msg - the SIP message
