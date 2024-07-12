@@ -512,6 +512,10 @@ static int stun_create_response(struct stun_msg *req, struct stun_msg *res,
 		}
 	}
 
+	if(res->msg.buf.len < sizeof(struct stun_hdr)) {
+		LM_ERR("invalid message\n");
+		return FATAL_ERROR;
+	}
 	res->hdr.len = htons(res->msg.buf.len - sizeof(struct stun_hdr));
 	memcpy(&res->msg.buf.s[sizeof(USHORT_T)], (void *)&res->hdr.len,
 			sizeof(USHORT_T));
