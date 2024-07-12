@@ -179,8 +179,8 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col,
 	str bstr = {0, 0};
 	subs_t *dialog = NULL;
 	int len_est = 0;
-	int resource_added =
-			0; /* Flag to indicate that we have added at least one resource */
+	/* Flag to indicate that we have added at least one resource */
+	int resource_added = 0;
 
 	/* generate the boundary string */
 	boundary_string = generate_string(BOUNDARY_STRING_LEN);
@@ -245,7 +245,6 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col,
 			len_est += 2 * strlen(boundary_string) + 4 + 102 + 2 + 50
 					   + strlen(resource_uri) + 20;
 			buf_len = 0;
-			resource_added = 0;
 
 			/* !!!! for now I will include the auth state without checking if
 			 * it has changed - > in future check if it works */
