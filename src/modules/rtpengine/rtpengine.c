@@ -3770,7 +3770,8 @@ out:
 	return cp;
 
 badproxy:
-	close(fd);
+	if(fd >= 0)
+		close(fd);
 	return NULL;
 }
 
