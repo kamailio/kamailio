@@ -206,6 +206,12 @@ str cscf_get_public_identity_from_requri(struct sip_msg *msg);
  */
 str cscf_get_contact_from_requri(struct sip_msg *msg);
 
+/** 
+ * Get the host from the Request URI of the message.
+ * Useful for example on MT, to get the destination from the Request URI, if P-Called-Party-ID is not present.
+ */
+str cscf_get_host_from_requri(struct sip_msg *msg);
+
 /**
  * Looks for the Call-ID header
  * @param msg - the sip message
