@@ -408,13 +408,13 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 			str2int(&pit->body, &dest->attrs.ocrate);
 		}
 	}
-	if(dest->attrs.ocmax < 0 || dest->attrs.ocmax > 100) {
+	if(dest->attrs.ocmax > 100) {
 		dest->attrs.ocmax = 100;
 	}
-	if(dest->attrs.ocmin < 0 || dest->attrs.ocmin > 100) {
+	if(dest->attrs.ocmin > 100) {
 		dest->attrs.ocmin = 0;
 	}
-	if(dest->attrs.ocrate <= 0 || dest->attrs.ocrate > 100) {
+	if(dest->attrs.ocrate > 100) {
 		dest->attrs.ocrate = 0;
 	}
 	if(dest->attrs.ocrate < dest->attrs.ocmin) {
