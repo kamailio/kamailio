@@ -325,10 +325,6 @@ void evrexec_process_socket(evrexec_task_t *it, int idx)
 		}
 		memset(&_evrexec_info, 0, sizeof(evrexec_info_t));
 	}
-	/* avoid exiting the process */
-	while(1) {
-		sleep(3600);
-	}
 }
 
 /**
