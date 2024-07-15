@@ -36,6 +36,7 @@
 #include "sql_api.h"
 
 extern int sqlops_results_maxsize;
+extern int sqlops_log_buf_size;
 
 sql_con_t *_sql_con_root = NULL;
 sql_result_t *_sql_result_root = NULL;
@@ -276,7 +277,9 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 	}
 	if(con->dbf.raw_query(con->dbh, query, &db_res) != 0) {
 		LM_ERR("cannot do the query [%.*s]\n",
-				(query->len > 64) ? 64 : query->len, query->s);
+				(query->len > sqlops_log_buf_size) ? sqlops_log_buf_size
+												   : query->len,
+				query->s);
 		return -1;
 	}
 
