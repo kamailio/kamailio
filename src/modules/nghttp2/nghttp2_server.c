@@ -793,11 +793,11 @@ static void start_listen(struct event_base *evbase, app_context *app_ctx)
 				(int)rp->ai_addrlen);
 		if(listener) {
 			freeaddrinfo(res);
-
 			return;
 		}
 	}
 	LM_ERR("Could not start listener");
+	freeaddrinfo(res);
 }
 
 static void initialize_app_context(
