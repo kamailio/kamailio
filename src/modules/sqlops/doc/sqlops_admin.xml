@@ -194,6 +194,28 @@ modparam("sqlops", "tr_buf_size", 4096)
 </programlisting>
 		</example>
 	</section>
+	<section id="sqlops.p.log_buf_size">
+		<title><varname>log_buf_size</varname> (int)</title>
+		<para>
+		The size of the buffer (characters) when logging raw SQL operations.
+		</para>
+		<para>
+		Note: When the buffer is smaller than the SQL operation, the operation is logged truncated up to log_buf_size.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 128.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>log_buf_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops", "log_buf_size", 4096)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="sqlops.p.connect_mode">
 		<title><varname>connect_mode</varname> (int)</title>
 		<para>
@@ -607,4 +629,3 @@ xlog("Affected rows: $sqlrows(ca)\n");
 		</section>
 	</section>
 </chapter>
-
