@@ -46,7 +46,8 @@
 #define DS_DISABLED_DST		4  /*!< admin disabled destination */
 #define DS_PROBING_DST		8  /*!< checking destination */
 #define DS_NODNSARES_DST	16 /*!< no DNS A/AAAA resolve for host in uri */
-#define DS_STATES_ALL		31 /*!< all bits for the states of destination */
+#define DS_NOPING_DST		32 /*!< no ping to destination */
+#define DS_STATES_ALL		63 /*!< all bits for the states of destination */
 
 #define ds_skip_dst(flags)	((flags) & (DS_INACTIVE_DST|DS_DISABLED_DST))
 
