@@ -121,8 +121,8 @@ typedef struct _pv_name
 	{
 		struct
 		{
-			int type;	  /*!< type of int_str name - compatibility with AVPs */
-			int_str name; /*!< the value of the name */
+			avp_flags_t type; /*!< type of avp name - compatibility with AVPs */
+			avp_name_t name;  /*!< the value of the name */
 		} isname;
 		void *dname; /*!< PV value - dynamic name */
 	} u;
