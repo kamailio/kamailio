@@ -736,7 +736,8 @@ avp_list_t *set_avp_list(avp_flags_t flags, avp_list_t *list)
 
 /********* global aliases functions ********/
 
-static inline int check_avp_galias(str *alias, int type, numstr_ut avp_name)
+static inline int check_avp_galias(
+		str *alias, avp_flags_t type, avp_name_t avp_name)
 {
 	struct avp_galias *ga;
 
@@ -765,7 +766,7 @@ static inline int check_avp_galias(str *alias, int type, numstr_ut avp_name)
 }
 
 
-int add_avp_galias(str *alias, int type, numstr_ut avp_name)
+int add_avp_galias(str *alias, avp_flags_t type, avp_name_t avp_name)
 {
 	struct avp_galias *ga;
 
@@ -826,7 +827,7 @@ error:
 }
 
 
-int lookup_avp_galias(str *alias, int *type, numstr_ut *avp_name)
+int lookup_avp_galias(str *alias, avp_flags_t *type, avp_name_t *avp_name)
 {
 	struct avp_galias *ga;
 
@@ -849,7 +850,8 @@ int lookup_avp_galias(str *alias, int *type, numstr_ut *avp_name)
 		goto error;                                                     \
 	}
 
-int parse_avp_name(str *name, int *type, numstr_ut *avp_name, int *index)
+int parse_avp_name(
+		str *name, avp_flags_t *type, avp_name_t *avp_name, int *index)
 {
 	int ret;
 	avp_ident_t attr;
@@ -1070,7 +1072,7 @@ void free_avp_ident(avp_ident_t *attr)
 	}
 }
 
-int km_parse_avp_spec(str *name, int *type, numstr_ut *avp_name)
+int km_parse_avp_spec(str *name, avp_flags_t *type, avp_name_t *avp_name)
 {
 	char *p;
 	int index = 0;
@@ -1088,7 +1090,8 @@ int km_parse_avp_spec(str *name, int *type, numstr_ut *avp_name)
 }
 
 
-int parse_avp_spec(str *name, int *type, numstr_ut *avp_name, int *index)
+int parse_avp_spec(
+		str *name, avp_flags_t *type, avp_name_t *avp_name, int *index)
 {
 	str alias;
 
@@ -1109,7 +1112,7 @@ int parse_avp_spec(str *name, int *type, numstr_ut *avp_name, int *index)
 	}
 }
 
-void free_avp_name(avp_flags_t *type, numstr_ut *avp_name)
+void free_avp_name(avp_flags_t *type, avp_name_t *avp_name)
 {
 	if((*type & AVP_NAME_RE) && (avp_name->re)) {
 		regfree(avp_name->re);
@@ -1120,11 +1123,11 @@ void free_avp_name(avp_flags_t *type, numstr_ut *avp_name)
 
 int add_avp_galias_str(char *alias_definition)
 {
-	numstr_ut avp_name;
+	avp_name_t avp_name;
 	char *s;
 	str name;
 	str alias;
-	int type;
+	avp_flags_t type;
 	int index;
 
 	s = alias_definition;

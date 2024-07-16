@@ -225,13 +225,15 @@ avp_list_t *set_avp_list(avp_flags_t flags, avp_list_t *list);
 
 /* global alias functions (manipulation and parsing)*/
 int add_avp_galias_str(char *alias_definition);
-int lookup_avp_galias(str *alias, int *type, numstr_ut *avp_name);
-int add_avp_galias(str *alias, int type, numstr_ut avp_name);
+int lookup_avp_galias(str *alias, avp_flags_t *type, avp_name_t *avp_name);
+int add_avp_galias(str *alias, avp_flags_t type, avp_name_t avp_name);
 int parse_avp_ident(str *name, avp_ident_t *attr);
-int parse_avp_name(str *name, int *type, numstr_ut *avp_name, int *index);
-int parse_avp_spec(str *name, int *type, numstr_ut *avp_name, int *index);
-int km_parse_avp_spec(str *name, int *type, numstr_ut *avp_name);
-void free_avp_name(avp_flags_t *type, numstr_ut *avp_name);
+int parse_avp_name(
+		str *name, avp_flags_t *type, avp_name_t *avp_name, int *index);
+int parse_avp_spec(
+		str *name, avp_flags_t *type, avp_name_t *avp_name, int *index);
+int km_parse_avp_spec(str *name, avp_flags_t *type, avp_name_t *avp_name);
+void free_avp_name(avp_flags_t *type, avp_name_t *avp_name);
 /* Free an ident obtained with parse_avp_ident() */
 void free_avp_ident(avp_ident_t *attr);
 
