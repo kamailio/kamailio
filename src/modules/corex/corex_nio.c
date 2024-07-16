@@ -128,7 +128,7 @@ int nio_msg_received(sr_event_param_t *evp)
 						"message\n",
 						nio_msg_avp_param.len, nio_msg_avp_param.s);
 			}
-			destroy_avp(avp);
+			destroy_avps(nio_msg_avp_type, nio_msg_avp_name, 1);
 		} else {
 			LM_WARN("no value set for AVP %.*s, using unmodified message\n",
 					nio_msg_avp_param.len, nio_msg_avp_param.s);
@@ -189,7 +189,7 @@ int nio_msg_sent(sr_event_param_t *evp)
 						"message\n",
 						nio_msg_avp_param.len, nio_msg_avp_param.s);
 			}
-			destroy_avp(avp);
+			destroy_avps(nio_msg_avp_type, nio_msg_avp_name, 1);
 		} else {
 			LM_WARN("no value set for AVP %.*s, using unmodified message\n",
 					nio_msg_avp_param.len, nio_msg_avp_param.s);
