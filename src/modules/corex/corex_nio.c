@@ -23,8 +23,8 @@ int nio_min_msg_len;
 int nio_is_incoming;
 
 str nio_msg_avp_param;
-int_str nio_msg_avp_name;
-unsigned short nio_msg_avp_type;
+avp_name_t nio_msg_avp_name;
+avp_flags_t nio_msg_avp_type;
 
 /**
  * init nio function

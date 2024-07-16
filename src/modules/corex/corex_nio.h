@@ -37,8 +37,6 @@ extern int nio_min_msg_len;
 extern int nio_is_incoming;
 
 extern str nio_msg_avp_param;
-extern int_str nio_msg_avp_name;
-extern unsigned short nio_msg_avp_type;
 
 int nio_msg_received(sr_event_param_t *evp);
 int nio_msg_sent(sr_event_param_t *evp);
