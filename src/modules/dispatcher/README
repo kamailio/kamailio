@@ -1883,6 +1883,7 @@ kamctl rpc dispatcher.hash 4 bob server.com
             startup, useful when the hostname of the destination address
             is a NAPTR or SRV record only. Such addresses cannot be
             matched anymore with ds_is_from_list(...).
+          + 32 (bit at index 5 - 1 <<5) - no ping to destination
      * priority: sets the priority in destination list (based on it is
        done the initial ordering inside the set)
      * attributes: extra fields in form of name1=value1;...;nameN=valueN.
