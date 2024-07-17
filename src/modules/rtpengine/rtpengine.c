@@ -317,8 +317,8 @@ static gen_lock_t *rtpp_no_lock = 0;
 static int *rtpp_socks = 0;
 static unsigned int rtpp_socks_size = 0;
 
-static int setid_avp_type;
-static int_str setid_avp;
+static avp_flags_t setid_avp_type;
+static avp_name_t setid_avp;
 
 static str write_sdp_pvar_str = {NULL, 0};
 static pv_spec_t *write_sdp_pvar = NULL;
@@ -1969,7 +1969,7 @@ static int mod_init(void)
 {
 	int i;
 	pv_spec_t *avp_spec;
-	unsigned short avp_flags;
+	avp_flags_t avp_flags;
 	str s;
 
 	_rtpe_list_version =
@@ -4091,7 +4091,7 @@ static int get_extra_id(struct sip_msg *msg, str *id_str)
 static int set_rtpengine_set_from_avp(struct sip_msg *msg, int direction)
 {
 	struct usr_avp *avp;
-	int_str setid_val;
+	avp_value_t setid_val;
 
 	if((setid_avp_param == NULL)
 			|| (avp = search_first_avp(
