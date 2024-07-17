@@ -32,9 +32,9 @@ int _cfgt_get_array_avp_vals(struct sip_msg *msg, pv_param_t *param,
 		srjson_doc_t *jdoc, srjson_t **jobj, str *item_name)
 {
 	struct usr_avp *avp;
-	unsigned short name_type;
-	int_str avp_name;
-	int_str avp_value;
+	avp_flags_t name_type;
+	avp_name_t avp_name;
+	avp_value_t avp_value;
 	struct search_state state;
 	srjson_t *jobjt;
 	memset(&state, 0, sizeof(struct search_state));
