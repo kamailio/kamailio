@@ -138,12 +138,12 @@ int ms_max_messages = 0;
 int ms_use_mode = 0;
 
 static str ms_snd_time_avp_param = {NULL, 0};
-int_str ms_snd_time_avp_name;
-unsigned short ms_snd_time_avp_type;
+avp_name_t ms_snd_time_avp_name;
+avp_flags_t ms_snd_time_avp_type;
 
 static str ms_extra_hdrs_avp_param = {NULL, 0};
-int_str ms_extra_hdrs_avp_name;
-unsigned short ms_extra_hdrs_avp_type;
+avp_name_t ms_extra_hdrs_avp_name;
+avp_flags_t ms_extra_hdrs_avp_type;
 
 str msg_type = str_init("MESSAGE");
 static int ms_skip_notification_flag = -1;
