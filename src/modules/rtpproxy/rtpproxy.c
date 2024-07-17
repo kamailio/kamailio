@@ -164,8 +164,8 @@ struct rtpp_set_head *rtpp_set_list = 0;
 struct rtpp_set *selected_rtpp_set = 0;
 struct rtpp_set *default_rtpp_set = 0;
 static char *ice_candidate_priority_avp_param = NULL;
-static int ice_candidate_priority_avp_type;
-static int_str ice_candidate_priority_avp;
+static avp_flags_t ice_candidate_priority_avp_type;
+static avp_name_t ice_candidate_priority_avp;
 static str rtp_inst_pv_param = {NULL, 0};
 static pv_spec_t *rtp_inst_pvar = NULL;
 
@@ -653,7 +653,7 @@ static int mod_init(void)
 	int i;
 	pv_spec_t avp_spec;
 	str s;
-	unsigned short avp_flags;
+	avp_flags_t avp_flags;
 
 	if(rtpproxy_rpc_init() < 0) {
 		LM_ERR("failed to register RPC commands\n");
