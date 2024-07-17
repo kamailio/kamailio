@@ -100,8 +100,9 @@ int h350_auth_lookup(struct sip_msg *_msg, pv_elem_t *_digest_username,
 			username_avp_name_buf[AVP_NAME_STR_BUF_LEN],
 			password_avp_name_buf[AVP_NAME_STR_BUF_LEN];
 	struct berval **attr_vals = NULL;
-	int_str username_avp_name, password_avp_name, avp_val;
-	unsigned short username_avp_type, password_avp_type;
+	avp_name_t username_avp_name, password_avp_name;
+	avp_value_t avp_val;
+	avp_flags_t username_avp_type, password_avp_type;
 	int rc, ld_result_count;
 
 	/*
