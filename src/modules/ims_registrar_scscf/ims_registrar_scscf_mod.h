@@ -89,12 +89,12 @@ extern int error_reply_code;
 extern int tcp_persistent_flag;
 extern int received_avp;
 
-extern unsigned short aor_avp_type;
-extern int_str aor_avp_name;
-extern unsigned short rcv_avp_type;
-extern int_str rcv_avp_name;
-extern unsigned short reg_callid_avp_type;
-extern int_str reg_callid_avp_name;
+extern avp_flags_t aor_avp_type;
+extern avp_name_t aor_avp_name;
+extern avp_flags_t rcv_avp_type;
+extern avp_name_t rcv_avp_name;
+extern avp_flags_t reg_callid_avp_type;
+extern avp_name_t reg_callid_avp_name;
 
 extern str rcv_param;
 extern int method_filtering;

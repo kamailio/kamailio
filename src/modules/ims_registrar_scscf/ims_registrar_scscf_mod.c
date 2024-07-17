@@ -170,17 +170,17 @@ int path_use_params =
 char *aor_avp_param =
 		0; /*!< if instead of extacting the AOR from the request, it should be
  						 * fetched via this AVP ID */
-unsigned short aor_avp_type = 0;
-int_str aor_avp_name;
+avp_flags_t aor_avp_type = 0;
+avp_name_t aor_avp_name;
 
 /* Populate this AVP if testing for specific registration instance. */
 char *reg_callid_avp_param = 0;
-unsigned short reg_callid_avp_type = 0;
-int_str reg_callid_avp_name;
+avp_flags_t reg_callid_avp_type = 0;
+avp_name_t reg_callid_avp_name;
 
 char *rcv_avp_param = 0;
-unsigned short rcv_avp_type = 0;
-int_str rcv_avp_name;
+avp_flags_t rcv_avp_type = 0;
+avp_name_t rcv_avp_name;
 
 int sock_flag = -1;
 str sock_hdr_name = {0, 0};
