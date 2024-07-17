@@ -85,8 +85,8 @@ typedef int Bool;
 typedef struct AVP_Param
 {
 	str spec;
-	int_str name;
-	unsigned short type;
+	avp_name_t name;
+	avp_flags_t type;
 } AVP_Param;
 
 typedef struct AVP_List
@@ -406,7 +406,7 @@ static Bool has_to_tag(struct sip_msg *msg)
 // Get canonical request URI
 static str get_canonical_request_uri(struct sip_msg *msg)
 {
-	int_str value;
+	avp_value_t value;
 
 	if(!search_first_avp(canonical_uri_avp.type | AVP_VAL_STR,
 			   canonical_uri_avp.name, &value, NULL)
@@ -422,7 +422,7 @@ static str get_canonical_request_uri(struct sip_msg *msg)
 // Get caller signaling IP
 static str get_signaling_ip(struct sip_msg *msg)
 {
-	int_str value;
+	avp_value_t value;
 
 	if(!search_first_avp(signaling_ip_avp.type | AVP_VAL_STR,
 			   signaling_ip_avp.name, &value, NULL)
@@ -438,7 +438,7 @@ static str get_signaling_ip(struct sip_msg *msg)
 // Get SIP application type
 static str get_sip_application(struct sip_msg *msg)
 {
-	int_str value;
+	avp_value_t value;
 
 	if(!search_first_avp(sip_application_avp.type | AVP_VAL_STR,
 			   sip_application_avp.name, &value, NULL)
@@ -455,7 +455,8 @@ static str get_diverter(struct sip_msg *msg)
 {
 	struct hdr_field *header;
 	dig_cred_t *credentials;
-	int_str avpname, avpvalue;
+	avp_name_t avpname;
+	avp_value_t avpvalue;
 	static str diverter;
 
 	diverter.s = "None";
