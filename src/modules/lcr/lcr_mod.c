@@ -212,22 +212,22 @@ static pcre2_compile_context *lcr_ctx = NULL;
  * Other module types and variables
  */
 /* clang-format off */
-static int     gw_uri_avp_type;
-static int_str gw_uri_avp;
-static int     ruri_user_avp_type;
-static int_str ruri_user_avp;
-static int     tag_avp_type;
-static int_str tag_avp;
-static int     flags_avp_type;
-static int_str flags_avp;
-static int     rule_id_avp_type;
-static int_str rule_id_avp;
-static int     defunct_gw_avp_type;
-static int_str defunct_gw_avp;
-static int     lcr_id_avp_type;
-static int_str lcr_id_avp;
-static int     mt_pv_values_avp_type;
-static int_str mt_pv_values_avp;
+static avp_flags_t gw_uri_avp_type;
+static avp_name_t  gw_uri_avp;
+static avp_flags_t ruri_user_avp_type;
+static avp_name_t  ruri_user_avp;
+static avp_flags_t tag_avp_type;
+static avp_name_t  tag_avp;
+static avp_flags_t flags_avp_type;
+static avp_name_t  flags_avp;
+static avp_flags_t rule_id_avp_type;
+static avp_name_t  rule_id_avp;
+static avp_flags_t defunct_gw_avp_type;
+static avp_name_t  defunct_gw_avp;
+static avp_flags_t lcr_id_avp_type;
+static avp_name_t  lcr_id_avp;
+static avp_flags_t mt_pv_values_avp_type;
+static avp_name_t  mt_pv_values_avp;
 /* clang-format on */
 
 /* Pointer to rule hash table pointer table */
@@ -444,7 +444,7 @@ static int mod_init(void)
 {
 	pv_spec_t *avp_spec;
 	str s;
-	unsigned short avp_flags;
+	avp_flags_t avp_flags;
 	unsigned int i;
 	char *at, *past, *sep;
 
