@@ -61,8 +61,8 @@ struct multiparam_t
 		str s;
 		struct
 		{
-			unsigned short flags;
-			int_str name;
+			avp_flags_t flags;
+			avp_name_t name;
 		} a;
 		pv_elem_t *p;
 	} u;
