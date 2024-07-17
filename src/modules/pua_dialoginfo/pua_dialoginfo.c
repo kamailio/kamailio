@@ -77,10 +77,10 @@ pua_api_t pua;
 
 struct dlg_binds dlg_api;
 
-unsigned short pubruri_caller_avp_type;
-int_str pubruri_caller_avp_name;
-unsigned short pubruri_callee_avp_type;
-int_str pubruri_callee_avp_name;
+avp_flags_t pubruri_caller_avp_type;
+avp_name_t pubruri_caller_avp_name;
+avp_flags_t pubruri_callee_avp_type;
+avp_name_t pubruri_callee_avp_name;
 sruid_t _puadi_sruid;
 
 static char *DLG_VAR_SEP = ",";
