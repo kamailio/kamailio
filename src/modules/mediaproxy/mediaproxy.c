@@ -168,8 +168,8 @@ typedef struct SessionInfo
 typedef struct AVP_Param
 {
 	str spec;
-	int_str name;
-	unsigned short type;
+	avp_name_t name;
+	avp_flags_t type;
 } AVP_Param;
 
 typedef struct ice_candidate_data
@@ -611,7 +611,7 @@ static str get_user_agent(struct sip_msg *msg)
 // Get caller signaling IP
 static str get_signaling_ip(struct sip_msg *msg)
 {
-	int_str value;
+	avp_value_t value;
 
 	if(!search_first_avp(signaling_ip_avp.type | AVP_VAL_STR,
 			   signaling_ip_avp.name, &value, NULL)
@@ -628,7 +628,7 @@ static str get_signaling_ip(struct sip_msg *msg)
 static str get_media_relay(struct sip_msg *msg)
 {
 	static str undefined = str_init("");
-	int_str value;
+	avp_value_t value;
 
 	if(!search_first_avp(media_relay_avp.type | AVP_VAL_STR,
 			   media_relay_avp.name, &value, NULL)
@@ -978,7 +978,7 @@ static Bool has_ice_candidate_component(str *block, int id)
 // for the candidate(s) inserted
 static str get_ice_candidate(void)
 {
-	int_str value;
+	avp_value_t value;
 
 	if(!search_first_avp(ice_candidate_avp.type | AVP_VAL_STR,
 			   ice_candidate_avp.name, &value, NULL)
