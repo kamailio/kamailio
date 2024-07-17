@@ -1023,8 +1023,9 @@ static int _xl_parse_format(
 	xl_elog_p e, e0;
 	struct hdr_field hdr;
 	str name;
-	int avp_flags, avp_index;
-	int_str avp_name;
+	int avp_index;
+	avp_flags_t avp_flags;
+	avp_name_t avp_name;
 	select_t *sel;
 	int *range;
 
