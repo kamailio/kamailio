@@ -55,8 +55,8 @@ extern int tm_error; /* delayed tm error */
 extern struct msgid_var user_cell_set_flags;
 extern struct msgid_var user_cell_reset_flags;
 
-extern int fr_inv_timer_avp_type;
-extern int_str fr_inv_timer_avp;
+extern avp_flags_t fr_inv_timer_avp_type;
+extern avp_name_t fr_inv_timer_avp;
 extern str contacts_avp;
 extern str contact_flows_avp;
 
