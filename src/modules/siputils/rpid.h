@@ -47,7 +47,7 @@ int init_rpid_avp(char *rpid_avp_param);
  * \param rpid_avp_p AVP name
  * \param rpid_avp_type_p AVP type
  */
-void get_rpid_avp(int_str *rpid_avp_p, int *rpid_avp_type_p);
+void get_rpid_avp(avp_name_t *rpid_avp_p, avp_flags_t *rpid_avp_type_p);
 
 
 /*!

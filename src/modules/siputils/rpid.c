@@ -48,8 +48,8 @@ extern str rpid_prefix; /*!< Remote-Party-ID prefix */
 extern str rpid_suffix; /*!< Remote-Party-ID suffix */
 
 /* rpid AVP specs */
-static unsigned short rpid_avp_type;
-static int_str rpid_avp_name;
+static avp_flags_t rpid_avp_type;
+static avp_name_t rpid_avp_name;
 
 
 /*!
@@ -88,7 +88,7 @@ int init_rpid_avp(char *rpid_avp_param)
  * \param rpid_avp_p AVP name
  * \param rpid_avp_type_p AVP type
  */
-void get_rpid_avp(int_str *rpid_avp_p, int *rpid_avp_type_p)
+void get_rpid_avp(avp_name_t *rpid_avp_p, avp_flags_t *rpid_avp_type_p)
 {
 	*rpid_avp_p = rpid_avp_name;
 	*rpid_avp_type_p = rpid_avp_type;

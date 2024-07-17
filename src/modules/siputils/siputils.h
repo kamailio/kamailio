@@ -29,8 +29,8 @@ typedef int (*siputils_is_uri_user_e164_t)(str *);
 /*! Siputils module API */
 typedef struct siputils_api
 {
-	int_str rpid_avp;  /*!< Name of AVP containing Remote-Party-ID */
-	int rpid_avp_type; /*!< type of the RPID AVP */
+	avp_name_t rpid_avp;	   /*!< Name of AVP containing Remote-Party-ID */
+	avp_flags_t rpid_avp_type; /*!< type of the RPID AVP */
 	siputils_has_totag_t has_totag;
 	siputils_is_uri_user_e164_t is_uri_user_e164;
 } siputils_api_t;
