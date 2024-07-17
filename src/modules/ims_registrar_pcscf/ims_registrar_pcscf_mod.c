@@ -108,8 +108,8 @@ int reginfo_queue_size_threshold =
 
 
 char *rcv_avp_param = 0;
-unsigned short rcv_avp_type = 0;
-int_str rcv_avp_name;
+avp_flags_t rcv_avp_type = 0;
+avp_name_t rcv_avp_name;
 
 ims_registrar_pcscf_params_t _imsregp_params = {
 		.delete_delay = 0,
