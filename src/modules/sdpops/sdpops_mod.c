@@ -1201,9 +1201,9 @@ static int sdp_with_transport(sip_msg_t *msg, str *transport, int like)
  */
 static int sdp_transport_helper(sip_msg_t *msg, char *avp)
 {
-	int_str avp_val;
-	int_str avp_name;
-	static unsigned short avp_type = 0;
+	avp_value_t avp_val;
+	avp_name_t avp_name;
+	static avp_flags_t avp_type = 0;
 	str s;
 	pv_spec_t *avp_spec = NULL;
 	int sdp_session_num;
@@ -1633,9 +1633,9 @@ static int w_sdp_print(sip_msg_t *msg, char *level, char *bar)
 static int sdp_get_helper(sip_msg_t *msg, char *avp)
 {
 	sdp_info_t *sdp = NULL;
-	int_str avp_val;
-	int_str avp_name;
-	static unsigned short avp_type = 0;
+	avp_value_t avp_val;
+	avp_name_t avp_name;
+	static avp_flags_t avp_type = 0;
 	str s;
 	pv_spec_t *avp_spec = NULL;
 	int sdp_missing = 1;
@@ -1814,10 +1814,10 @@ static int ki_sdp_get_line_startswith(sip_msg_t *msg, str *aname, str *sline)
 	str body = {NULL, 0};
 	str line = {NULL, 0};
 	char *p = NULL;
-	int_str avp_val;
-	int_str avp_name;
+	avp_value_t avp_val;
+	avp_name_t avp_name;
 	pv_spec_t *avp_spec = NULL;
-	static unsigned short avp_type = 0;
+	static avp_flags_t avp_type = 0;
 	int sdp_missing = 1;
 
 	if(sline == NULL || sline->len <= 0) {
