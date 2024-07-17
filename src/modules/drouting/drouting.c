@@ -85,16 +85,16 @@ static rt_data_t **rdata = 0;
 /* AVP used to store serial RURIs */
 static struct _ruri_avp
 {
-	unsigned short type; /* AVP ID */
-	int_str name;		 /* AVP name*/
+	avp_flags_t type; /* AVP ID */
+	avp_name_t name;  /* AVP name*/
 } ruri_avp = {0, {.n = (int)0xad346b2f}};
 static str ruri_avp_spec = {0, 0};
 
 /* AVP used to store serial ATTRs */
 static struct _attrs_avp
 {
-	unsigned short type; /* AVP ID */
-	int_str name;		 /* AVP name*/
+	avp_flags_t type; /* AVP ID */
+	avp_name_t name;  /* AVP name*/
 } attrs_avp = {0, {.n = (int)0xad346b30}};
 static str attrs_avp_spec = {0, 0};
 
@@ -672,7 +672,7 @@ static int do_routing_1(struct sip_msg *msg, char *str1, char *str2)
 static int ki_next_routing(sip_msg_t *msg)
 {
 	struct usr_avp *avp;
-	int_str val;
+	avp_value_t val;
 
 	/* search for the first RURI AVP containing a string */
 	do {
@@ -731,7 +731,7 @@ static int do_routing(struct sip_msg *msg, int grp_id)
 	int i, j, l, t;
 	struct sip_uri uri;
 	str *ruri;
-	int_str val;
+	avp_value_t val;
 #define DR_MAX_GWLIST 32
 	static int active_gwlist[DR_MAX_GWLIST];
 	static int local_gwlist[DR_MAX_GWLIST];
