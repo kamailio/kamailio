@@ -119,8 +119,9 @@ int dpl_get_avp_values(sip_msg_t *msg, const pv_elem_p elem,
 		const pv_elem_p avp_elem, struct str_list **out)
 {
 	struct usr_avp *avp = NULL;
-	unsigned short name_type;
-	int_str avp_name, avp_value;
+	avp_flags_t name_type;
+	avp_name_t avp_name;
+	avp_value_t avp_value;
 	struct search_state state;
 	int sum = 0;
 	str s = STR_NULL;
