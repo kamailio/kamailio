@@ -381,8 +381,9 @@ int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 {
 	int l, n;
 	mt_node_t *itn;
-	int_str val, values_avp_name;
-	unsigned short values_name_type;
+	avp_value_t val;
+	avp_name_t values_avp_name;
+	avp_flags_t values_name_type;
 	mt_is_t *tvalues;
 
 	if(pt == NULL || tomatch == NULL || tomatch->s == NULL) {
@@ -444,11 +445,11 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it, str *tomatch, int mode)
 	int i, j, k = 0;
 	mt_node_t *itn;
 	is_t *tvalue;
-	int_str dstid_avp_name;
-	unsigned short dstid_name_type;
-	int_str weight_avp_name;
-	unsigned short weight_name_type;
-	int_str avp_value;
+	avp_name_t dstid_avp_name;
+	avp_flags_t dstid_name_type;
+	avp_name_t weight_avp_name;
+	avp_flags_t weight_name_type;
+	avp_value_t avp_value;
 	mt_dw_t *dw;
 	pv_value_t val;
 
