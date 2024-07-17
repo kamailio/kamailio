@@ -206,7 +206,7 @@ static int cpl_init(void)
 	char *ptr;
 	int val;
 	pv_spec_t avp_spec;
-	unsigned short avp_type;
+	avp_flags_t avp_type;
 
 	if(cpl_rpc_init() < 0) {
 		LM_ERR("failed to register RPC commands\n");
