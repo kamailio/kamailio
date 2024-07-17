@@ -93,15 +93,15 @@ void init_store_avps(str **db_columns)
  * value 1 - attr name
  * value 2 - attr type
  */
-static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
-		int attr_type, int just_val_flags)
+static int dbrow2avp(struct db_row *row, struct db_param *dbp, avp_name_t attr,
+		avp_flags_t attr_type, int just_val_flags)
 {
 	unsigned int uint;
 	int db_flags;
 	str atmp;
 	str vtmp;
-	int_str avp_attr;
-	int_str avp_val;
+	avp_name_t avp_attr;
+	avp_value_t avp_val;
 	int flags;
 
 	flags = dbp->a.opd;
@@ -221,7 +221,7 @@ static inline void int_str2db_val(int_str is_val, str *val, int is_s)
 }
 
 static int avpops_get_aname(struct sip_msg *msg, struct fis_param *ap,
-		int_str *avp_name, unsigned short *name_type)
+		avp_name_t *avp_name, avp_flags_t *name_type)
 {
 	if(ap == NULL || avp_name == NULL || name_type == NULL) {
 		LM_ERR("bad parameters\n");
@@ -242,8 +242,8 @@ int ops_dbload_avps(struct sip_msg *msg, struct fis_param *sp,
 	str uuid;
 	int i, n, sh_flg;
 	str *s0, *s1, *s2;
-	int_str avp_name;
-	int avp_type = 0;
+	avp_name_t avp_name;
+	avp_flags_t avp_type = 0;
 	pv_value_t xvalue;
 
 	s0 = s1 = s2 = NULL;
@@ -673,8 +673,8 @@ int ops_delete_avp(struct sip_msg *msg, struct fis_param *ap)
 	avp_list_t avp_list;
 	avp_t *avp;
 	struct usr_avp *avp_next;
-	unsigned short name_type;
-	int_str avp_name;
+	avp_flags_t name_type;
+	avp_name_t avp_name;
 	int n;
 
 	n = 0;
@@ -721,12 +721,12 @@ int ops_copy_avp(
 	struct search_state st;
 	struct usr_avp *avp;
 	struct usr_avp *prev_avp;
-	int_str avp_val;
-	int_str avp_val2;
-	unsigned short name_type1;
-	unsigned short name_type2;
-	int_str avp_name1;
-	int_str avp_name2;
+	avp_value_t avp_val;
+	avp_value_t avp_val2;
+	avp_flags_t name_type1;
+	avp_flags_t name_type2;
+	avp_name_t avp_name1;
+	avp_name_t avp_name2;
 	int n;
 
 	n = 0;
@@ -814,9 +814,9 @@ int ops_pushto_avp(
 	struct search_state st;
 	struct action act;
 	struct usr_avp *avp;
-	unsigned short name_type;
-	int_str avp_val;
-	int_str avp_name;
+	avp_flags_t name_type;
+	avp_value_t avp_val;
+	avp_name_t avp_name;
 	str val;
 	int act_type;
 	int n;
@@ -1030,15 +1030,15 @@ int ops_check_avp(
 		struct sip_msg *msg, struct fis_param *src, struct fis_param *val)
 {
 	struct search_state st1, st2;
-	unsigned short name_type1;
-	unsigned short name_type2;
+	avp_flags_t name_type1;
+	avp_flags_t name_type2;
 	struct usr_avp *avp1 = NULL;
 	struct usr_avp *avp2 = NULL;
 	regmatch_t pmatch;
-	int_str avp_name1;
-	int_str avp_name2;
-	int_str avp_val;
-	int_str check_val;
+	avp_name_t avp_name1;
+	avp_name_t avp_name2;
+	avp_value_t avp_val;
+	avp_value_t check_val;
 	int check_flags;
 	int n, rt;
 	int flags;
@@ -1356,11 +1356,11 @@ int ops_subst(
 	struct search_state st;
 	struct usr_avp *avp;
 	struct usr_avp *prev_avp;
-	int_str avp_val;
-	unsigned short name_type1;
-	unsigned short name_type2;
-	int_str avp_name1;
-	int_str avp_name2;
+	avp_value_t avp_val;
+	avp_flags_t name_type1;
+	avp_flags_t name_type2;
+	avp_name_t avp_name1;
+	avp_name_t avp_name2;
 	int n;
 	int nmatches;
 	str *result;
@@ -1451,18 +1451,18 @@ int ops_op_avp(
 		struct sip_msg *msg, struct fis_param **av, struct fis_param *val)
 {
 	struct search_state st1, st2;
-	unsigned short name_type1;
-	unsigned short name_type2;
-	unsigned short name_type3;
+	avp_flags_t name_type1;
+	avp_flags_t name_type2;
+	avp_flags_t name_type3;
 	struct fis_param *src;
 	struct usr_avp *avp1;
 	struct usr_avp *avp2;
 	struct usr_avp *prev_avp;
-	int_str avp_name1;
-	int_str avp_name2;
-	int_str avp_name3;
-	int_str avp_val;
-	int_str op_val;
+	avp_name_t avp_name1;
+	avp_name_t avp_name2;
+	avp_name_t avp_name3;
+	avp_value_t avp_val;
+	avp_value_t op_val;
 	int result;
 	pv_value_t xvalue;
 
@@ -1622,9 +1622,9 @@ int ops_is_avp_set(struct sip_msg *msg, struct fis_param *ap)
 {
 	struct search_state st;
 	struct usr_avp *avp;
-	unsigned short name_type;
-	int_str avp_name;
-	int_str avp_value;
+	avp_flags_t name_type;
+	avp_name_t avp_name;
+	avp_value_t avp_value;
 	int index;
 	int findex;
 

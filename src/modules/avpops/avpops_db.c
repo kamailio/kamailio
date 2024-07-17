@@ -294,9 +294,9 @@ int db_delete_avp(
 
 int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t *dest)
 {
-	int_str avp_val;
-	int_str avp_name;
-	unsigned short avp_type;
+	avp_value_t avp_val;
+	avp_name_t avp_name;
+	avp_flags_t avp_type;
 	db1_res_t *db_res = NULL;
 	int i, j;
 	pvname_list_t *crt;
