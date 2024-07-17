@@ -1816,11 +1816,11 @@ int pv_get_branches(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 int pv_get_avp(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	unsigned short name_type;
-	int_str avp_name;
-	int_str avp_value;
+	avp_flags_t name_type;
+	avp_name_t avp_name;
+	avp_value_t avp_value;
 	struct usr_avp *avp;
-	int_str avp_value0;
+	avp_value_t avp_value0;
 	struct usr_avp *avp0;
 	int idx;
 	int idxf;
@@ -2818,8 +2818,8 @@ int pv_get_server_id(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 int pv_get_cnt(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	int_str avp_name;
-	unsigned short avp_type = 0;
+	avp_name_t avp_name;
+	avp_flags_t avp_type = 0;
 	avp_search_state_t state;
 	pv_spec_t *pv = NULL;
 	unsigned int n = 0;
@@ -3049,10 +3049,10 @@ int pv_get_tcpconn_id(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 /********* start PV set functions *********/
 int pv_set_avp(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 {
-	int_str avp_name;
-	int_str avp_val;
+	avp_name_t avp_name;
+	avp_value_t avp_val;
 	int flags;
-	unsigned short name_type;
+	avp_flags_t name_type;
 	int idxf;
 	int idx;
 
