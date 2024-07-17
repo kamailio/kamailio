@@ -60,7 +60,7 @@ char _osp_PRIVATE_KEY[OSP_KEYBUF_SIZE];
 char _osp_LOCAL_CERTIFICATE[OSP_KEYBUF_SIZE];
 char _osp_CA_CERTIFICATE[OSP_KEYBUF_SIZE];
 char *_osp_snid_avp = OSP_DEF_SNIDAVP;
-int_str _osp_snid_avpname;
-unsigned short _osp_snid_avptype;
+avp_name_t _osp_snid_avpname;
+avp_flags_t _osp_snid_avptype;
 
 OSPTPROVHANDLE _osp_provider = -1;

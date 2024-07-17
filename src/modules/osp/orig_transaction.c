@@ -44,8 +44,8 @@ extern char *_osp_device_ip;
 extern char *_osp_device_port;
 extern int _osp_max_dests;
 extern int _osp_redir_uri;
-extern int_str _osp_snid_avpname;
-extern unsigned short _osp_snid_avptype;
+extern avp_name_t _osp_snid_avpname;
+extern avp_flags_t _osp_snid_avptype;
 extern OSPTPROVHANDLE _osp_provider;
 extern siputils_api_t osp_siputils;
 
@@ -215,7 +215,7 @@ int ospRequestRouting(struct sip_msg *msg, char *ignore1, char *ignore2)
 	char sourcedev[OSP_STRBUF_SIZE];
 	char deviceinfo[OSP_STRBUF_SIZE];
 	struct usr_avp *snidavp = NULL;
-	int_str snidval;
+	avp_value_t snidval;
 	char snid[OSP_STRBUF_SIZE];
 	unsigned int callidnumber = 1;
 	OSPTCALLID *callids[callidnumber];
@@ -386,7 +386,7 @@ static int ospSetRpid(struct sip_msg *msg, osp_dest *dest)
 		rpid.s = buffer;
 		rpid.len = strlen(buffer);
 		add_avp(osp_siputils.rpid_avp_type | AVP_VAL_STR,
-				(int_str)osp_siputils.rpid_avp, (int_str)rpid);
+				(avp_name_t)osp_siputils.rpid_avp, (avp_value_t)rpid);
 
 		result = 0;
 	}
@@ -404,10 +404,11 @@ static int ospSetRpid(struct sip_msg *msg, osp_dest *dest)
  */
 int ospCheckTranslation(struct sip_msg *msg, char *ignore1, char *ignore2)
 {
-	int_str callingval;
+	avp_value_t callingval;
 	int result = MODULE_RETURNCODE_FALSE;
 
-	if(search_first_avp(AVP_NAME_STR, (int_str)OSP_CALLING_NAME, &callingval, 0)
+	if(search_first_avp(
+			   AVP_NAME_STR, (avp_name_t)OSP_CALLING_NAME, &callingval, 0)
 			!= NULL) {
 		if(callingval.n == 0) {
 			LM_DBG("the calling number has not been translated\n");
@@ -433,7 +434,7 @@ int ospCheckTranslation(struct sip_msg *msg, char *ignore1, char *ignore2)
 static int ospPrepareDestination(
 		struct sip_msg *msg, int isfirst, int type, int format)
 {
-	int_str val;
+	avp_value_t val;
 	int res;
 	str newuri = {NULL, 0};
 	int result = MODULE_RETURNCODE_FALSE;
@@ -478,7 +479,7 @@ static int ospPrepareDestination(
 				case 0:
 					/* Calling number is translated */
 					val.n = 1;
-					add_avp(AVP_NAME_STR, (int_str)OSP_CALLING_NAME, val);
+					add_avp(AVP_NAME_STR, (avp_name_t)OSP_CALLING_NAME, val);
 					break;
 				default:
 					LM_DBG("cannot set rpid avp\n");
@@ -486,7 +487,7 @@ static int ospPrepareDestination(
 				case 1:
 					/* Calling number does not been translated */
 					val.n = 0;
-					add_avp(AVP_NAME_STR, (int_str)OSP_CALLING_NAME, val);
+					add_avp(AVP_NAME_STR, (avp_name_t)OSP_CALLING_NAME, val);
 					break;
 			}
 

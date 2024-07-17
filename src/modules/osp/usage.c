@@ -484,7 +484,7 @@ void ospReportOrigSetupUsage(void)
 	osp_dest *dest = NULL;
 	osp_dest *lastused = NULL;
 	struct usr_avp *destavp = NULL;
-	int_str destval;
+	avp_value_t destval;
 	OSPTTRANHANDLE transaction = -1;
 	int lastcode = 0;
 	int errorcode;
@@ -493,7 +493,7 @@ void ospReportOrigSetupUsage(void)
 	errorcode = OSPPTransactionNew(_osp_provider, &transaction);
 
 	for(destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR,
-				(int_str)OSP_ORIGDEST_NAME, NULL, &st);
+				(avp_name_t)OSP_ORIGDEST_NAME, NULL, &st);
 			destavp != NULL; destavp = search_next_avp(&st, 0)) {
 		get_avp_val(destavp, &destval);
 

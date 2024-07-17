@@ -67,8 +67,8 @@ extern char _osp_PRIVATE_KEY[];
 extern char _osp_LOCAL_CERTIFICATE[];
 extern char _osp_CA_CERTIFICATE[];
 extern char *_osp_snid_avp;
-extern int_str _osp_snid_avpname;
-extern unsigned short _osp_snid_avptype;
+extern avp_name_t _osp_snid_avpname;
+extern avp_flags_t _osp_snid_avptype;
 extern OSPTPROVHANDLE _osp_provider;
 
 struct rr_binds osp_rr;
