@@ -321,8 +321,8 @@ int tr_json_get_keys(struct sip_msg *msg, char *json, char *field, char *dst)
 {
 	str json_s;
 	str field_s;
-	int_str keys_avp_name;
-	unsigned short keys_avp_type;
+	avp_name_t keys_avp_name;
+	avp_flags_t keys_avp_type;
 	pv_spec_t *avp_spec;
 
 	if(fixup_get_svalue(msg, (gparam_p)json, &json_s) != 0) {
