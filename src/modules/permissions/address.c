@@ -192,7 +192,7 @@ int reload_address_db_table(address_tables_group_t *atg)
 					ROW_N(row + i));
 			goto dberror;
 		}
-		if((VAL_TYPE(val) != DB1_INT) || VAL_NULL(val) || (VAL_INT(val) <= 0)) {
+		if(((VAL_TYPE(val) != DB1_INT) && (VAL_TYPE(val) != DB1_BIGINT)) || VAL_NULL(val) || (VAL_INT(val) <= 0)) {
 			LM_DBG("failure during checks of database value 1 (group) in "
 				   "address table\n");
 			goto dberror;
@@ -208,12 +208,12 @@ int reload_address_db_table(address_tables_group_t *atg)
 				   "address table - NULL value not permitted\n");
 			goto dberror;
 		}
-		if((VAL_TYPE(val + 2) != DB1_INT) || VAL_NULL(val + 2)) {
+		if(((VAL_TYPE(val + 2) != DB1_INT) && (VAL_TYPE(val + 2) != DB1_BIGINT)) || VAL_NULL(val + 2) || (VAL_INT(val) <= 0)) {
 			LM_DBG("failure during checks of database value 3 (subnet "
 				   "size/CIDR) in address table\n");
 			goto dberror;
 		}
-		if((VAL_TYPE(val + 3) != DB1_INT) || VAL_NULL(val + 3)) {
+		if(((VAL_TYPE(val + 3) != DB1_INT) && (VAL_TYPE(val + 3) != DB1_BIGINT)) || VAL_NULL(val + 3) || (VAL_INT(val) <= 0)) {
 			LM_DBG("failure during checks of database value 4 (port) in "
 				   "address table\n");
 			goto dberror;
