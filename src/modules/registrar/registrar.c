@@ -126,8 +126,8 @@ str match_received_name = str_init("match_received");
 str match_contact_name = str_init("match_contact");
 
 char *rcv_avp_param = 0;
-unsigned short rcv_avp_type = 0;
-int_str rcv_avp_name;
+avp_flags_t rcv_avp_type = 0;
+avp_name_t rcv_avp_name;
 
 str reg_xavp_cfg = {0};
 str reg_xavp_rcd = {0};
