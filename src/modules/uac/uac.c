@@ -71,10 +71,10 @@ static char *restore_mode_str = NULL;
 static char *auth_username_avp = NULL;
 static char *auth_realm_avp = NULL;
 static char *auth_password_avp = NULL;
-unsigned short restore_from_avp_type;
-int_str restore_from_avp_name;
-unsigned short restore_to_avp_type;
-int_str restore_to_avp_name;
+avp_flags_t restore_from_avp_type;
+avp_name_t restore_from_avp_name;
+avp_flags_t restore_to_avp_type;
+avp_name_t restore_to_avp_name;
 static int uac_restore_dlg = 0;
 static int reg_active_param = 1;
 
