@@ -3193,7 +3193,8 @@ attr_id_any_str:
 	| STRING {
 		avp_spec_t *avp_spec;
 		str s;
-		int type, idx;
+		avp_flags_t type;
+		int  idx;
 		avp_spec = pkg_malloc(sizeof(*avp_spec));
 		if (!avp_spec) {
 			yyerror("Not enough memory");
