@@ -184,8 +184,8 @@ static int natping_processes = 1;
 static str nortpproxy_str = str_init("a=nortpproxy:yes");
 
 static char *rcv_avp_param = NULL;
-static unsigned short rcv_avp_type = 0;
-static int_str rcv_avp_name;
+static avp_flags_t rcv_avp_type = 0;
+static avp_name_t rcv_avp_name;
 
 static char *natping_socket = NULL;
 static int udpping_from_path = 0;
