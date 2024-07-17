@@ -187,12 +187,12 @@ sip_uri_t *trace_dup_uri = 0;
 static str _siptrace_evcb_msg = STR_NULL;
 static int _siptrace_evrt_msg_idx = -1;
 
-static unsigned short traced_user_avp_type = 0;
-static int_str traced_user_avp;
+static avp_flags_t traced_user_avp_type = 0;
+static avp_name_t traced_user_avp;
 static str traced_user_avp_str = {NULL, 0};
 
-static unsigned short trace_table_avp_type = 0;
-static int_str trace_table_avp;
+static avp_flags_t trace_table_avp_type = 0;
+static avp_name_t trace_table_avp;
 static str trace_table_avp_str = {NULL, 0};
 
 static str trace_local_ip = {NULL, 0};
