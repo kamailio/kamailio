@@ -157,8 +157,8 @@ int ldap_result_toavp(sip_msg_t *_msg, str *attrname, struct subst_expr *_se,
 int ldap_write_result(struct sip_msg *_msg, struct ldap_result_params *_lrp,
 		struct subst_expr *_se)
 {
-	int_str dst_avp_name;
-	unsigned short dst_avp_type;
+	avp_name_t dst_avp_name;
+	avp_flags_t dst_avp_type;
 
 	/*
 	* get dst AVP name (dst_avp_name)
@@ -270,8 +270,8 @@ int ldap_filter_url_encode(struct sip_msg *_msg, pv_elem_t *_filter_component,
 		pv_spec_t *_dst_avp_spec)
 {
 	str filter_component_str, esc_str;
-	int_str dst_avp_name;
-	unsigned short dst_avp_type;
+	avp_name_t dst_avp_name;
+	avp_flags_t dst_avp_type;
 
 	/*
 	* variable substitution for _filter_component
