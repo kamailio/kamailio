@@ -41,8 +41,11 @@ inline static int char_msg_val(struct sip_msg *msg, char *cv)
 	str sempty = str_init("");
 
 	if(unlikely(!check_transaction_quadruple(msg))) {
-		LM_ERR("can't calculate char_value due to a parsing error\n");
-		memset(cv, '0', MD5_LEN);
+		int i;
+		for(i = 0; i < MD5_LEN; i++) {
+			cv[i] = '0';
+		}
+		LM_ERR("cannot calculate char_value due to a parsing error\n");
 		return 0;
 	}
 	/* to body is automatically parsed (via check_transactionquadruple /
