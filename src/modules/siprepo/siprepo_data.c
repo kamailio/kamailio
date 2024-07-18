@@ -496,15 +496,15 @@ int siprepo_msg_async_pull(str *callid, str *msgid, str *gname, str *rname,
 		return -1;
 	}
 	stp->callid.s = (char*)stp + ROUND_POINTER(sizeof(siprepo_task_param_t));
-	memcpy(callid->s, stp->callid.s, callid->len);
+	memcpy(stp->callid.s, callid->s, callid->len);
 	stp->callid.len = callid->len;
 
 	stp->msgid.s = stp->callid.s + ROUND_POINTER(callid->len + 1);
-	memcpy(msgid->s, stp->msgid.s, msgid->len);
+	memcpy(stp->msgid.s, msgid->s, msgid->len);
 	stp->msgid.len = msgid->len;
 
 	stp->rname.s = stp->msgid.s + ROUND_POINTER(msgid->len + 1);
-	memcpy(rname->s, stp->rname.s, rname->len);
+	memcpy(stp->rname.s, rname->s, rname->len);
 	stp->rname.len = rname->len;
 
 	stp->rmode = rmode;
