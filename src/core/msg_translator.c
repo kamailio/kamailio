@@ -2384,7 +2384,7 @@ char *generate_res_buf_from_sip_res(
 	}
 
 	/* test and add xavp via reply params */
-	if(msg && msg->via2 && (msg->msg_flags & FL_ADD_XAVP_VIA_REPLY_PARAMS)
+	if(msg->via2 && (msg->msg_flags & FL_ADD_XAVP_VIA_REPLY_PARAMS)
 			&& _ksr_xavp_via_reply_params.len > 0) {
 		xparams.s = pv_get_buffer();
 		xparams.len = xavp_serialize_fields_style(&_ksr_xavp_via_reply_params,
