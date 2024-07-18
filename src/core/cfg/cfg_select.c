@@ -147,6 +147,9 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 	int i;
 	static char buf[INT2STR_MAX_LEN];
 
+	res->s = 0;
+	res->len = 0;
+
 	if(msg == NULL) {
 		/* fixup call */
 
@@ -228,12 +231,7 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 			break;
 
 		case CFG_VAR_STR:
-			if(p) {
-				memcpy(res, p, sizeof(str));
-			} else {
-				res->s = 0;
-				res->len = 0;
-			}
+			memcpy(res, p, sizeof(str));
 			break;
 
 		default:
