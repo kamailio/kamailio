@@ -811,6 +811,9 @@ static int pv_get_tcp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			tcpconn_put(con);
 			return pv_get_sintval(msg, param, res, ival);
 		default: /* conid */
+			if(con) {
+				tcpconn_put(con);
+			}
 			return pv_get_sintval(msg, param, res, msg->rcv.proto_reserved1);
 	}
 }
