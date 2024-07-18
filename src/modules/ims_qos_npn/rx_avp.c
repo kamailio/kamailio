@@ -1402,7 +1402,7 @@ int rx_mcc_mnc_to_sip_visited(str *dst, str src)
 	}
 	mcc = (100 * (src.s[0] - '0') + (10 * (src.s[1] - '0'))
 			+ ((src.s[2] - '0')));
-	if(mcc < 0 || mcc >= 999) {
+	if(mcc >= 999) {
 		LOG(L_ERR, "Invalid MCC value\n");
 		return 0;
 	}
@@ -1699,6 +1699,7 @@ int rx_avp_process_3gpp_user_location_information(AAAMessage *rar, str *dst)
 				p += 7;
 				length -= 7;
 			}
+			break;
 		case 1:
 			// SAI
 			if(length >= 7) {
@@ -1707,6 +1708,7 @@ int rx_avp_process_3gpp_user_location_information(AAAMessage *rar, str *dst)
 				p += 7;
 				length -= 7;
 			}
+			break;
 		case 2:
 			// RAI
 			if(length >= 7) {
@@ -1715,6 +1717,7 @@ int rx_avp_process_3gpp_user_location_information(AAAMessage *rar, str *dst)
 				p += 7;
 				length -= 7;
 			}
+			break;
 		case 3 ... 127:
 			// spare for future use
 			break;

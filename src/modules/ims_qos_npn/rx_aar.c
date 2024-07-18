@@ -615,7 +615,7 @@ int add_media_components(AAAMessage *aar, struct sip_msg *req,
 
 				//check if the src or dst port is 0 and if so then don't add to rx
 				intportA = atoi(req_sdp_stream->port.s);
-				if(rpl) {
+				if(rpl_sdp_stream) {
 					intportB = atoi(rpl_sdp_stream->port.s);
 				}
 				if(intportA != 0 && (rpl && intportB != 0)) {
@@ -719,18 +719,20 @@ int add_media_components(AAAMessage *aar, struct sip_msg *req,
 													 auth->u.auth.generic_data,
 								sdp_stream_num + 1, &req_sdp_stream->media,
 								&ipA, &portA, &ipB, &portB,
-								rpl ? &rpl_sdp_stream->transport : 0,
+								rpl_sdp_stream ? &rpl_sdp_stream->transport : 0,
 								&req_sdp_stream->raw_stream,
-								rpl ? &rpl_sdp_stream->raw_stream : 0,
+								rpl_sdp_stream ? &rpl_sdp_stream->raw_stream
+											   : 0,
 								direction,
 								0 /*This is a new mcd, we are not setting it as active*/);
 
 						rx_add_media_component_description_avp(aar,
 								sdp_stream_num + 1, &req_sdp_stream->media,
 								&ipA, &portA, &ipB, &portB,
-								rpl ? &rpl_sdp_stream->transport : 0,
+								rpl_sdp_stream ? &rpl_sdp_stream->transport : 0,
 								&req_sdp_stream->raw_stream,
-								rpl ? &rpl_sdp_stream->raw_stream : 0,
+								rpl_sdp_stream ? &rpl_sdp_stream->raw_stream
+											   : 0,
 								direction, AVP_EPC_Flow_Usage_No_Information);
 					}
 					add_flow = 1;
