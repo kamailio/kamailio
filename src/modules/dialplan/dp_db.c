@@ -203,8 +203,10 @@ static void *pcre2_malloc(size_t size, void *ext)
 
 static void pcre2_free(void *ptr, void *ext)
 {
-	shm_free(ptr);
-	ptr = NULL;
+	if(ptr) {
+		shm_free(ptr);
+		ptr = NULL;
+	}
 }
 
 int init_data(void)
