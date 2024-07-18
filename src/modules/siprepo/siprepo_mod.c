@@ -58,6 +58,8 @@ static int w_sr_msg_check(sip_msg_t *msg, char *p1, char *p2);
 
 static void siprepo_timer_exec(unsigned int ticks, int worker, void *param);
 
+static int fixup_sr_msg_async_pull(void **param, int param_no);
+
 /* clang-format off */
 typedef struct sworker_task_param {
 	char *buf;
@@ -69,10 +71,10 @@ typedef struct sworker_task_param {
 static cmd_export_t cmds[]={
 	{"sr_msg_push", (cmd_function)w_sr_msg_push, 2, fixup_spve_igp,
 		fixup_free_spve_null, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
-	{"sr_msg_pull", (cmd_function)w_sr_msg_pull, 3, fixup_spve_all,
-		fixup_free_spve_all, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
-	{"sr_msg_async_pull", (cmd_function)w_sr_msg_async_pull, 5, fixup_spve_all,
-		fixup_free_spve_all, ANY_ROUTE},
+	{"sr_msg_pull", (cmd_function)w_sr_msg_pull, 4, fixup_sssi,
+		fixup_free_sssi, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
+	{"sr_msg_async_pull", (cmd_function)w_sr_msg_async_pull, 5, fixup_sr_msg_async_pull,
+		0, ANY_ROUTE},
 	{"sr_msg_rm", (cmd_function)w_sr_msg_rm, 2, fixup_spve_spve,
 		fixup_free_spve_spve, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
 	{"sr_msg_check", (cmd_function)w_sr_msg_check, 0, 0,
@@ -281,6 +283,15 @@ static int w_sr_msg_async_pull(sip_msg_t *msg, char *pcallid, char *pmsgid,
 	return ki_sr_msg_async_pull(msg, &callid, &msgid, &gname, &rname, rmode);
 }
 
+
+static int fixup_sr_msg_async_pull(void **param, int param_no)
+{
+	if(param_no >= 1 && param_no <= 4)
+		return fixup_spve_null(param, 1);
+	if(param_no == 5)
+		return fixup_igp_null(param, 1);
+	return 0;
+}
 
 /**
  *
