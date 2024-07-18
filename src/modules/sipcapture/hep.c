@@ -21,6 +21,8 @@
  *
  */
 
+#include <arpa/inet.h>
+
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/events.h"
