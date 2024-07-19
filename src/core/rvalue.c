@@ -1085,8 +1085,6 @@ error_cache:
 	LM_BUG("invalid cached value:cache type %d, value type %d\n",
 			cache ? cache->cache_type : 0, cache ? cache->val_type : 0);
 error:
-	if(destroy_pval)
-		pv_value_destroy(&pval);
 	*i = 0;
 	return -1;
 }
