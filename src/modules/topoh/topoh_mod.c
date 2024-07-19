@@ -321,12 +321,12 @@ int th_build_socket_strings(socket_info_t *socket)
 			!= 0)
 		return 0;
 
-	socket_strings = pkg_malloc(sizeof(struct th_socket_strings));
+	socket_strings = pkg_mallocxz(sizeof(struct th_socket_strings));
 	if(socket_strings == NULL) {
 		PKG_MEM_ERROR_FMT("socket_strings\n");
 		goto error;
 	}
-	table_entry = pkg_malloc(sizeof(struct str_hash_entry));
+	table_entry = pkg_mallocxz(sizeof(struct str_hash_entry));
 	if(table_entry == NULL) {
 		PKG_MEM_ERROR_FMT("table_entry\n");
 		goto error;
