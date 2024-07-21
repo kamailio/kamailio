@@ -1187,14 +1187,9 @@ static int pv_comp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 int pv_parse_alt_name(pv_spec_p sp, str *in)
 {
-	pv_elem_t *fmt = NULL;
-
 	if(in->s == NULL || in->len <= 0)
 		return -1;
-	if(pv_parse_format(in, &fmt) < 0 || fmt == NULL) {
-		LM_ERR("wrong format[%.*s]\n", in->len, in->s);
-		return -1;
-	}
+
 	if(strncmp(in->s, "DNS", 3) == 0) {
 		sp->pvp.pvn.u.isname.name.n = PV_COMP_HOST;
 	} else if(strncmp(in->s, "URI", 3) == 0) {
