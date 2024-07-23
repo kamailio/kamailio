@@ -172,9 +172,6 @@ mod_list_ims=cdp cdp_avp ims_dialog ims_auth ims_isc ims_icscf ims_qos ims_qos_n
 			   ims_usrloc_scscf ims_charging ims_ocs ims_diameter_server \
 			   ims_ipsec_pcscf
 
-# - modules depending on osp toolkit library
-mod_list_osp=osp
-
 # - modules depending on java library
 mod_list_java=app_java
 
@@ -268,7 +265,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_redis) \
 			   $(mod_list_mono) $(mod_list_ims) \
 			   $(mod_list_cassandra) $(mod_list_oracle) \
-			   $(mod_list_outbound) $(mod_list_osp) \
+			   $(mod_list_outbound) \
 			   $(mod_list_java) $(mod_list_dnssec) \
 			   $(mod_list_sctp) $(mod_list_autheph) \
 			   $(mod_list_gzcompress) $(mod_list_uuid) \
