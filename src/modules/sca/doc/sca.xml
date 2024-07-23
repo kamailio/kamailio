@@ -9,28 +9,42 @@
 ]>
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
-    <bookinfo>
-    <title>sca Module</title>
-    <productname class="trade">&kamailioname;</productname>
-    <authorgroup>
-	<author>
-	<firstname>Andrew</firstname>
-	<surname>Mortensen</surname>
-	<affiliation>
-	    <orgname>University of Pennsylvania</orgname>
-	</affiliation>
-	<address>
-	    <email>admorten@isc.upenn.edu</email>
-	</address>
-	</author>
-    </authorgroup>
-    <copyright>
-	<year>2012</year>
-	<holder>Andrew Mortensen, admorten@isc.upenn.edu</holder>
-    </copyright>
-    </bookinfo>
+	<bookinfo>
+	<title>sca Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+			<firstname>Andrew</firstname>
+			<surname>Mortensen</surname>
+			<affiliation>
+				<orgname>University of Pennsylvania</orgname>
+			</affiliation>
+			<address>
+				<email>admorten@isc.upenn.edu</email>
+			</address>
+		</author>
+		<author>
+			<firstname>Victor</firstname>
+			<surname>Seva</surname>
+			<affiliation>
+				<orgname>Sipwise GmbH</orgname>
+			</affiliation>
+			<address>
+				<email>vseva@sipwise.com</email>
+			</address>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2012</year>
+		<holder>Andrew Mortensen, admorten@isc.upenn.edu</holder>
+	</copyright>
+	<copyright>
+		<year>2024</year>
+		<holder>Sipwise GmbH</holder>
+	</copyright>
+	</bookinfo>
 
-    <toc></toc>
+	<toc></toc>
 
-    <xi:include href="sca_admin.xml" />
+	<xi:include href="sca_admin.xml" />
 </book>
