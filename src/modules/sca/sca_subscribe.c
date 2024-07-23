@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Andrew Mortensen
+ * Copyright (C) 2024 Sipwise GmbH, https://www.sipwise.com
  *
  * This file is part of the sca module for Kamailio, a free SIP server.
  *
@@ -997,17 +998,19 @@ int sca_subscription_delete_subscriber_for_event(
 int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 		sca_subscription *req_sub)
 {
-	struct to_body tmp_to = {0};
-	struct to_body *to, *from;
+	sca_to_body_t to, from;
 	str contact_uri;
 	str to_tag = STR_NULL;
 	unsigned int expires = 0, max_expires;
 	unsigned int cseq;
 	str *ruri = NULL;
+	int rc = 1;
 
 	assert(req_sub != NULL);
 
 	memset(req_sub, 0, sizeof(sca_subscription));
+	memset(&from, 0, sizeof(from));
+	memset(&to, 0, sizeof(to));
 
 	// parse required info first
 	if(!SCA_HEADER_EMPTY(msg->expires)) {
@@ -1034,10 +1037,6 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 		expires = max_expires;
 	}
 
-	if(SCA_HEADER_EMPTY(msg->to)) {
-		LM_ERR("Empty To header\n");
-		goto error;
-	}
 	if(SCA_HEADER_EMPTY(msg->callid)) {
 		LM_ERR("Empty Call-ID header\n");
 		goto error;
@@ -1059,30 +1058,18 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 		goto error;
 	}
 
-	if(SCA_HEADER_EMPTY(msg->from)) {
-		LM_ERR("Empty From header\n");
-		goto error;
-	}
-	if(parse_from_header(msg) < 0) {
+	if(sca_get_msg_from_header(msg, &from) < 0) {
 		LM_ERR("Bad From header\n");
 		goto error;
 	}
-	from = (struct to_body *)msg->from->parsed;
-	if(SCA_STR_EMPTY(&from->tag_value)) {
+	if(SCA_STR_EMPTY(&from.hdr->tag_value)) {
 		LM_ERR("No from-tag in From header\n");
 		goto error;
 	}
 
-	if((to = (struct to_body *)msg->to->parsed) == NULL) {
-		parse_to(msg->to->body.s,
-				msg->to->body.s + msg->to->body.len + 1, // end of buffer
-				&tmp_to);
-
-		if(tmp_to.error != PARSE_OK) {
-			LM_ERR("Bad To header\n");
-			goto error;
-		}
-		to = &tmp_to;
+	if(sca_get_msg_to_header(msg, &to) < 0) {
+		LM_ERR("Bad To header");
+		goto error;
 	}
 
 	if(parse_sip_msg_uri(msg) < 0) {
@@ -1091,7 +1078,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 	}
 	ruri = GET_RURI(msg);
 
-	to_tag = to->tag_value;
+	to_tag = to.hdr->tag_value;
 	if(to_tag.s == NULL) {
 		// XXX need hook to detect when we have a subscription and the
 		// subscriber sends an out-of-dialog SUBSCRIBE, which indicates the
@@ -1117,7 +1104,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 		}
 	} else {
 		/* we are in-dialog */
-		req_sub->target_aor = to->uri;
+		req_sub->target_aor = to.hdr->uri;
 	}
 
 	req_sub->subscriber = contact_uri;
@@ -1135,7 +1122,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 	req_sub->dialog.id.s = NULL;
 	req_sub->dialog.id.len = 0;
 	req_sub->dialog.call_id = msg->callid->body;
-	req_sub->dialog.from_tag = from->tag_value;
+	req_sub->dialog.from_tag = from.hdr->tag_value;
 
 	req_sub->dialog.to_tag.s = pkg_malloc(to_tag.len);
 	if(req_sub->dialog.to_tag.s == NULL) {
@@ -1149,22 +1136,26 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 	req_sub->dialog.notify_cseq = 0;
 	req_sub->server_id = server_id;
 
-	free_to_params(&tmp_to);
-
-	return (1);
+	goto done;
 
 error:
-	free_to_params(&tmp_to);
-
+	rc = -1;
 	if(!SCA_STR_EMPTY(&req_sub->rr)) {
 		pkg_free(req_sub->rr.s);
 		req_sub->rr.s = NULL;
 	}
+done:
+	if(from.flags & SCA_UTIL_FLAG_TO_BODY_ALLOC) {
+		free_to(from.hdr);
+	}
+	if(to.flags & SCA_UTIL_FLAG_TO_BODY_ALLOC) {
+		free_to(to.hdr);
+	}
 
-	return (-1);
+	return rc;
 }
 
-int ki_sca_handle_subscribe(sip_msg_t *msg)
+int ki_sca_handle_subscribe(sip_msg_t *msg, str *uri_to, str *uri_from)
 {
 	sca_subscription req_sub;
 	sca_subscription *sub = NULL;
@@ -1179,7 +1170,10 @@ int ki_sca_handle_subscribe(sip_msg_t *msg)
 	int idx = -1;
 	int rc = -1;
 	int released = 0;
+	int_str val;
+	sca_to_body_t tmp_to;
 
+	memset(&tmp_to, 0, sizeof(tmp_to));
 	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("header parsing failed: bad request\n");
 		SCA_SUB_REPLY_ERROR(sca, 400, "Bad Request", msg);
@@ -1203,6 +1197,24 @@ int ki_sca_handle_subscribe(sip_msg_t *msg)
 		return (-1);
 	}
 
+	delete_avp(
+			sca->cfg->from_uri_avp_type | AVP_VAL_STR, sca->cfg->from_uri_avp);
+	delete_avp(sca->cfg->to_uri_avp_type | AVP_VAL_STR, sca->cfg->to_uri_avp);
+	if(uri_from != NULL) {
+		val.s.s = uri_from->s;
+		val.s.len = uri_from->len;
+		add_avp(sca->cfg->from_uri_avp_type | AVP_VAL_STR,
+				sca->cfg->from_uri_avp, val);
+		LM_DBG("from[%.*s] param\n", STR_FMT(uri_from));
+	}
+	if(uri_to != NULL) {
+		val.s.s = uri_to->s;
+		val.s.len = uri_to->len;
+		add_avp(sca->cfg->to_uri_avp_type | AVP_VAL_STR, sca->cfg->to_uri_avp,
+				val);
+		LM_DBG("to[%.*s] param\n", STR_FMT(uri_to));
+	}
+
 	if(sca_subscription_from_request(sca, msg, event_type, &req_sub) < 0) {
 		SCA_SUB_REPLY_ERROR(
 				sca, 400, "Bad Shared Call Appearance Request", msg);
@@ -1218,7 +1230,15 @@ int ki_sca_handle_subscribe(sip_msg_t *msg)
 	sca_subscription_print(&req_sub);
 
 	// check to see if the message has a to-tag
-	to_tag = &(get_to(msg)->tag_value);
+	if(uri_to != NULL) {
+		if(sca_get_msg_to_header(msg, &tmp_to) < 0) {
+			LM_ERR("Bad To header");
+			return (-1);
+		}
+		to_tag = &(tmp_to.hdr->tag_value);
+	} else {
+		to_tag = &(get_to(msg)->tag_value);
+	}
 
 	// XXX should lock starting here and use unsafe methods below?
 
@@ -1398,13 +1418,15 @@ done:
 	if(req_sub.rr.s != NULL) {
 		pkg_free(req_sub.rr.s);
 	}
-
+	if(tmp_to.flags & SCA_UTIL_FLAG_TO_BODY_ALLOC) {
+		free_to(tmp_to.hdr);
+	}
 	return (rc);
 }
 
-int sca_handle_subscribe(sip_msg_t *msg, char *p1, char *p2)
+int sca_handle_subscribe(sip_msg_t *msg, str *uri_to, str *uri_from)
 {
-	return ki_sca_handle_subscribe(msg);
+	return ki_sca_handle_subscribe(msg, uri_to, uri_from);
 }
 
 int sca_subscription_reply(sca_mod *scam, int status_code, char *status_msg,
