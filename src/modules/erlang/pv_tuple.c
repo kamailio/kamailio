@@ -56,8 +56,8 @@ int pv_tuple_set(
 	sr_xavp_t *tuples_root;
 	sr_xavp_t *tuple;
 	sr_xavp_t *th, *new, *old, *prv = NULL;
-	sr_xavp_t *tuple_xavp;
-	sr_xavp_t *elem_xavp;
+	sr_xavp_t *tuple_xavp = NULL;
+	sr_xavp_t *elem_xavp = NULL;
 	sr_xval_t tuple_val;
 	pv_param_t p;
 	pv_value_t empty;
