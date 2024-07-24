@@ -256,10 +256,11 @@ int cdp_trans_timer(time_t now, void *ptr)
 	/* do all queued callbacks */
 	x = cb_queue->head;
 	while(x) {
+		n = x->next;
 		(x->cb)(1, *(x->ptr), 0, (now - x->expires));
 		if(x->auto_drop)
 			cdp_free_trans(x);
-		x = x->next;
+		x = n;
 	}
 	pkg_free(cb_queue);
 
