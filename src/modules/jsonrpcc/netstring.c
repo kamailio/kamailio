@@ -77,12 +77,16 @@ int netstring_read_fd(int fd, char **netstring)
 	bytes = recv(fd, buffer2, read_len, 0);
 
 	/* Make sure we got the whole netstring */
-	if(read_len > bytes)
+	if(read_len > bytes) {
+		pkg_free(buffer2);
 		return NETSTRING_ERROR_TOO_SHORT;
+	}
 
 	/* Test for the trailing comma */
-	if(buffer2[read_len - 1] != ',')
+	if(buffer2[read_len - 1] != ',') {
+		pkg_free(buffer2);
 		return NETSTRING_ERROR_NO_COMMA;
+	}
 
 	buffer2[read_len - 1] = '\0';
 
