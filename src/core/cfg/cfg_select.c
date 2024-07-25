@@ -147,8 +147,10 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 	int i;
 	static char buf[INT2STR_MAX_LEN];
 
-	res->s = 0;
-	res->len = 0;
+	if(res != NULL) {
+		res->s = 0;
+		res->len = 0;
+	}
 
 	if(msg == NULL) {
 		/* fixup call */
