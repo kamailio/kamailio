@@ -90,6 +90,7 @@ int refresh_srv(jsonrpc_srv_t *srv_obj)
 		srv_record = (struct srv_rdata *)l->rdata;
 		if(srv_record == NULL) {
 			free_rdata_list(head);
+			free_server_list(new_servers);
 			ERR("BUG: null rdata\n");
 			return -1;
 		}
