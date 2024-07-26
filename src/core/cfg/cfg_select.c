@@ -212,7 +212,7 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 	group = (cfg_group_t *)s->params[1].v.p;
 	var = (cfg_mapping_t *)s->params[2].v.p;
 
-	if(!group || !var)
+	if(!group || !var || !res)
 		return -1;
 
 	/* use the module's handle to access the variable, so the variables
