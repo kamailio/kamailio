@@ -1898,6 +1898,7 @@ int xl_mod_init()
 								s = NULL;
 								str_ipaddr.len = 0;
 								PKG_MEM_ERROR_FMT("for str_ipaddr\n");
+								return -1;
 							}
 						} else if(strncmp(str_ipaddr.s, s, str_ipaddr.len)
 								  != 0) {
