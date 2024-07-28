@@ -449,9 +449,9 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 		if(bytes <= 0)
 			return bytes;
 		gettimeofday(&tvnow, NULL);
-		tvdiff = 1000000 * (tvnow.tv_sec - r->tvrstart.tv_sec)
+		tvdiff = 1000000LL * (tvnow.tv_sec - r->tvrstart.tv_sec)
 				 + (tvnow.tv_usec - r->tvrstart.tv_usec);
-		if(tvdiff >= ksr_tcp_msg_read_timeout * 1000000) {
+		if(tvdiff >= 1000000LL * ksr_tcp_msg_read_timeout) {
 			LM_ERR("message reading timeout after %lld usec\n", tvdiff);
 			r->parsed = r->buf;
 			r->content_len = 0;
