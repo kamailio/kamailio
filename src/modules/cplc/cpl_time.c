@@ -264,8 +264,9 @@ int cpl_ac_print(cpl_ac_tm_p _atp)
 		return -1;
 	}
 
-	printf("\nSys time: %llu\nTime: %02d:%02d:%02d\n", (unsigned long long)_atp->time,
-			_atp->t.tm_hour, _atp->t.tm_min, _atp->t.tm_sec);
+	printf("\nSys time: %llu\nTime: %02d:%02d:%02d\n",
+			(unsigned long long)_atp->time, _atp->t.tm_hour, _atp->t.tm_min,
+			_atp->t.tm_sec);
 	printf("Date: %s, %04d-%02d-%02d\n", _wdays[_atp->t.tm_wday],
 			_atp->t.tm_year + 1900, _atp->t.tm_mon + 1, _atp->t.tm_mday);
 	printf("Year day: %d\nYear week-day: %d\nYear week: %d\n", _atp->t.tm_yday,
@@ -994,8 +995,8 @@ int cpl_check_freq_interval(cpl_tmrec_p _trp, cpl_ac_tm_p _atp)
 							   ? REC_MATCH
 							   : REC_NOMATCH;
 #ifdef USE_YWEEK_U
-			_t0 -= _trp->ts.tm_wday * 24 * 3600;
-			_t1 -= _atp->t.tm_wday * 24 * 3600;
+			_t0 -= 24ULL * _trp->ts.tm_wday * 3600;
+			_t1 -= 24ULL * _atp->t.tm_wday * 3600;
 #else
 			_t0 -= ((_trp->ts.tm_wday + 6) % 7) * 24 * 3600;
 			_t1 -= ((_atp->t.tm_wday + 6) % 7) * 24 * 3600;
@@ -1004,7 +1005,7 @@ int cpl_check_freq_interval(cpl_tmrec_p _trp, cpl_ac_tm_p _atp)
 						   ? REC_MATCH
 						   : REC_NOMATCH;
 		case FREQ_MONTHLY:
-			_t0 = (_atp->t.tm_year - _trp->ts.tm_year) * 12 + _atp->t.tm_mon
+			_t0 = 12ULL * (_atp->t.tm_year - _trp->ts.tm_year) + _atp->t.tm_mon
 				  - _trp->ts.tm_mon;
 			return (_t0 % _trp->interval == 0) ? REC_MATCH : REC_NOMATCH;
 		case FREQ_YEARLY:
