@@ -1,0 +1,26 @@
+[Unit]
+Description=Kamailio - the Open Source SIP Server (instance %i)
+Documentation=man:kamailio(8)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=forking
+User=kamailio
+Group=kamailio
+Environment='CFGFILE=/etc/kamailio/kamailio-%i.cfg'
+Environment='SHM_MEMORY=64'
+Environment='PKG_MEMORY=8'
+EnvironmentFile=-/etc/default/kamailio-%i
+EnvironmentFile=-/etc/default/kamailio-%i.d/*
+# PIDFile requires a full absolute path
+PIDFile=/run/kamailio-%i/kamailio.pid
+# ExecStart requires a full absolute path
+ExecStart=/usr/sbin/kamailio -P /run/kamailio-%i/kamailio.pid -Y /run/kamailio-%i -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY
+Restart=on-failure
+# /run/kamailio in tmpfs
+RuntimeDirectory=kamailio-%i
+RuntimeDirectoryMode=0770
+
+[Install]
+WantedBy=multi-user.target
