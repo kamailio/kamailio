@@ -20,8 +20,8 @@
  */
 
 
-#ifndef _SDPOPS_DATA_H_
-#define _SDPOPS_DATA_H_
+#ifndef _SDPOPS_PATH_H_
+#define _SDPOPS_PATH_H_
 
 #include "../../core/str.h"
 #include "../../core/parser/sdp/sdp.h"
