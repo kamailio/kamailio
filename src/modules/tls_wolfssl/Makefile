@@ -62,4 +62,4 @@ clean-all: clean-wolfssl clean-module
 .PHONY: clean-wolfssl clean-module clean-all
 
 # debugging for dependency on lib/wolfssl
-$(warning sources = $(sources), auto_gen = $(auto_gen), objs = $(objs))
+$(info sources = $(sources), auto_gen = $(auto_gen), objs = $(objs))
