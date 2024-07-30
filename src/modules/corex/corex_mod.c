@@ -504,7 +504,7 @@ static msg_iflag_name_t _msg_iflag_list[] = {
 /**
  *
  */
-static int msg_lookup_flag(str *fname)
+static unsigned long long msg_lookup_flag(str *fname)
 {
 	int i;
 	for(i = 0; _msg_iflag_list[i].name.len > 0; i++) {
@@ -514,21 +514,22 @@ static int msg_lookup_flag(str *fname)
 			return _msg_iflag_list[i].value;
 		}
 	}
-	return -1;
+	return 0;
 }
+
 /**
  *
  */
 static int w_msg_iflag_set(sip_msg_t *msg, char *pflag, char *p2)
 {
-	int fv;
+	unsigned long long fv;
 	str fname;
 	if(fixup_get_svalue(msg, (gparam_t *)pflag, &fname)) {
 		LM_ERR("cannot get the msg flag name parameter\n");
 		return -1;
 	}
 	fv = msg_lookup_flag(&fname);
-	if(fv == -1) {
+	if(fv == 0) {
 		LM_ERR("unsupported flag name [%.*s]\n", fname.len, fname.s);
 		return -1;
 	}
@@ -541,14 +542,14 @@ static int w_msg_iflag_set(sip_msg_t *msg, char *pflag, char *p2)
  */
 static int w_msg_iflag_reset(sip_msg_t *msg, char *pflag, char *p2)
 {
-	int fv;
+	unsigned long long fv;
 	str fname;
 	if(fixup_get_svalue(msg, (gparam_t *)pflag, &fname)) {
 		LM_ERR("cannot get the msg flag name parameter\n");
 		return -1;
 	}
 	fv = msg_lookup_flag(&fname);
-	if(fv == -1) {
+	if(fv == 0) {
 		LM_ERR("unsupported flag name [%.*s]\n", fname.len, fname.s);
 		return -1;
 	}
@@ -561,14 +562,14 @@ static int w_msg_iflag_reset(sip_msg_t *msg, char *pflag, char *p2)
  */
 static int w_msg_iflag_is_set(sip_msg_t *msg, char *pflag, char *p2)
 {
-	int fv;
+	unsigned long long fv;
 	str fname;
 	if(fixup_get_svalue(msg, (gparam_t *)pflag, &fname)) {
 		LM_ERR("cannot get the msg flag name parameter\n");
 		return -1;
 	}
 	fv = msg_lookup_flag(&fname);
-	if(fv == -1) {
+	if(fv == 0) {
 		LM_ERR("unsupported flag name [%.*s]\n", fname.len, fname.s);
 		return -1;
 	}
