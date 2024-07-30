@@ -27,7 +27,7 @@
 
 #include "msrp_parser.h"
 
-int msrp_forward_frame(msrp_frame_t *mf, int flags);
+int msrp_forward(msrp_frame_t *mf, str *tpath, str *fpath);
 int msrp_send_buffer(str *buf, str *addr, int flags);
 
 int msrp_relay(msrp_frame_t *mf);
