@@ -538,7 +538,7 @@ static int w_msg_iflag_set(sip_msg_t *msg, char *pflag, char *p2)
 		return -1;
 	}
 	fv = msg_lookup_flag(&fname);
-	if(fv == 1) {
+	if(fv == -1) {
 		LM_ERR("unsupported flag name [%.*s]\n", fname.len, fname.s);
 		return -1;
 	}
@@ -558,7 +558,7 @@ static int w_msg_iflag_reset(sip_msg_t *msg, char *pflag, char *p2)
 		return -1;
 	}
 	fv = msg_lookup_flag(&fname);
-	if(fv < 0) {
+	if(fv == -1) {
 		LM_ERR("unsupported flag name [%.*s]\n", fname.len, fname.s);
 		return -1;
 	}
@@ -578,7 +578,7 @@ static int w_msg_iflag_is_set(sip_msg_t *msg, char *pflag, char *p2)
 		return -1;
 	}
 	fv = msg_lookup_flag(&fname);
-	if(fv < 0) {
+	if(fv == -1) {
 		LM_ERR("unsupported flag name [%.*s]\n", fname.len, fname.s);
 		return -1;
 	}
