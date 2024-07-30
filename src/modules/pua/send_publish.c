@@ -309,7 +309,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		if(pua_dbf.affected_rows != NULL || dbmode != PUA_DB_ONLY) {
 			if(find_and_update_record(hentity, hash_code, lexpire, &etag) > 0)
 				goto done;
-		} else if((db_presentity = get_record_puadb(
+		} else if((db_presentity = get_record_puadb(hentity->pres_uri,
 						   hentity->id, &hentity->etag, &dbpres, &res))
 				  != NULL) {
 			update_record_puadb(hentity, lexpire, &etag);
@@ -468,7 +468,8 @@ int send_publish(publ_info_t *publ)
 		dbpres.pres_uri = &pres_uri;
 		dbpres.watcher_uri = &watcher_uri;
 		dbpres.extra_headers = &extra_headers;
-		presentity = get_record_puadb(publ->id, publ->etag, &dbpres, &res);
+		presentity = get_record_puadb(
+				publ->pres_uri, publ->id, publ->etag, &dbpres, &res);
 	} else {
 		ua_pres_t pres;
 
