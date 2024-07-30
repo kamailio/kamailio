@@ -491,10 +491,14 @@ typedef struct _msg_iflag_name
 	int value;
 } msg_iflag_name_t;
 
+/* clang-format off */
 static msg_iflag_name_t _msg_iflag_list[] = {
-		{str_init("USE_UAC_FROM"), FL_USE_UAC_FROM},
-		{str_init("USE_UAC_TO"), FL_USE_UAC_TO},
-		{str_init("UAC_AUTH"), FL_UAC_AUTH}, {{0, 0}, 0}};
+	{str_init("USE_UAC_FROM"), FL_USE_UAC_FROM},
+	{str_init("USE_UAC_TO"), FL_USE_UAC_TO},
+	{str_init("UAC_AUTH"), FL_UAC_AUTH},
+	{{0, 0}, 0}
+};
+/* clang-format on */
 
 
 /**
