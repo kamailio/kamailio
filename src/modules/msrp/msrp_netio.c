@@ -37,16 +37,131 @@
 /**
  *
  */
-int msrp_forward_frame(msrp_frame_t *mf, int flags)
+int msrp_forward(msrp_frame_t *mf, str *tpath, str *fpath)
 {
-#if 0
-	if ((msrp_uri_to_dstinfo(0, &dst, uac_r->dialog->send_sock, snd_flags,
-						uac_r->dialog->hooks.next_hop, PROTO_NONE)==0) ||
-				(dst.send_sock==0)){
-			LM_ERR("no send socket found\n");
+	char fwdbuff[MSRP_MAX_FRAME_SIZE];
+	msrp_env_t *env = msrp_get_env();
+	char *buf;
+	int len;
+
+	if(tpath) {
+		msrp_hdr_t *hdr;
+		int maxlen;
+		char *p;
+
+		maxlen = mf->buf.len;
+
+		if(fpath) {
+			hdr = msrp_get_hdr_by_id(mf, MSRP_HDR_FROM_PATH);
+			if(!hdr) {
+				LM_ERR("From-Path header not found\n");
+				return -1;
+			}
+
+			maxlen -= hdr->body.len;
+			maxlen += fpath->len;
+		}
+
+		/* hdr must hold To-Path until we copy it bellow */
+		hdr = msrp_get_hdr_by_id(mf, MSRP_HDR_TO_PATH);
+		if(!hdr) {
+			LM_ERR("To-Path header not found\n");
 			return -1;
 		}
-#endif
+		maxlen -= hdr->body.len;
+		maxlen += tpath->len;
+
+		if(maxlen >= MSRP_MAX_FRAME_SIZE - 1)
+			return -1;
+
+		p = fwdbuff;
+
+		memcpy(p, mf->fline.buf.s, mf->fline.buf.len);
+		p += mf->fline.buf.len;
+
+		memcpy(p, "To-Path: ", 9);
+		p += 9;
+		memcpy(p, tpath->s, tpath->len);
+		p += tpath->len;
+		memcpy(p, "\r\n", 2);
+		p += 2;
+
+		memcpy(p, "From-Path: ", 11);
+		p += 11;
+
+		if(fpath) {
+			memcpy(p, fpath->s, fpath->len);
+			p += fpath->len;
+			memcpy(p, "\r\n", 2);
+			p += 2;
+		} else {
+			/* hdr must hold To-Path from above */
+			memcpy(p, hdr->buf.s, hdr->buf.len);
+			p += hdr->buf.len;
+		}
+
+		for(hdr = mf->headers; hdr; hdr = hdr->next) {
+			if(hdr->htype == MSRP_HDR_TO_PATH
+					|| hdr->htype == MSRP_HDR_FROM_PATH) {
+				continue;
+			}
+
+			memcpy(p, hdr->buf.s, hdr->buf.len);
+			p += hdr->buf.len;
+		}
+
+		if(mf->mbody.len > 0) {
+			memcpy(p, "\r\n", 2);
+			p += 2;
+
+			memcpy(p, mf->mbody.s, mf->mbody.len);
+			p += mf->mbody.len;
+		}
+
+		memcpy(p, mf->endline.s, mf->endline.len);
+		p += mf->endline.len;
+
+		buf = fwdbuff;
+		len = p - fwdbuff;
+	} else {
+		buf = mf->buf.s;
+		len = mf->buf.len;
+	}
+
+	if(!(env->envflags & MSRP_ENV_DSTINFO)
+			&& (!tpath || msrp_env_set_dstinfo(mf, tpath, NULL, 0) < 0)) {
+		LM_ERR("unable to set destination address\n");
+		return -1;
+	}
+
+	if(unlikely((env->dstinfo.proto == PROTO_WS
+						|| env->dstinfo.proto == PROTO_WSS)
+				&& sr_event_enabled(SREV_TCP_WS_FRAME_OUT))) {
+		struct tcp_connection *con = tcpconn_get(env->dstinfo.id, 0, 0, 0, 0);
+		sr_event_param_t evp = {0};
+		ws_event_info_t wsev;
+		int ret;
+
+		if(con == NULL) {
+			LM_WARN("TCP/TLS connection for WebSocket could not be"
+					"found\n");
+			return -1;
+		}
+
+		memset(&wsev, 0, sizeof(ws_event_info_t));
+		wsev.type = SREV_TCP_WS_FRAME_OUT;
+		wsev.buf = buf;
+		wsev.len = len;
+		wsev.id = con->id;
+		evp.data = (void *)&wsev;
+		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
+		tcpconn_put(con);
+		return ret;
+	} else if(tcp_send(&env->dstinfo, 0, buf, len) < 0) {
+		LM_ERR("forwarding frame failed\n");
+		return -1;
+	}
+
 	return 0;
 }
 

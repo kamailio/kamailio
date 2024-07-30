@@ -248,6 +248,44 @@ end
 
 	<section>
 	<title>Functions</title>
+	<section id="msrp.f.msrp_forward">
+	    <title>
+		<function moreinfo="none">msrp_forward([tpath [, fpath]])</function>
+	    </title>
+	    <para>
+			Forward MSRP frame to target destination. If tpath is provided then
+			the original To-Path is replaced by it and the From-Path is replaced
+			by fpath or the original To-Path. If the target destination is not
+			set then tpath will be used to set it.
+
+		</para>
+
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msrp_forward</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[msrp:frame-in] {
+	...
+	msrp_set_dst("msrp://127.0.0.1:8000", "tcp:127.0.0.1:5060");
+	msrp_forward();
+	...
+
+	...
+	msrp_forward("msrp://127.0.0.1:8000/jshA7weztas;tcp");
+	...
+
+	...
+	msrp_forward("msrp://127.0.0.1:8000/jshA7weztas;tcp", "msrp://127.0.0.1:8000/kjhd37s2s20w2a;tcp");
+	...
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
 	<section id="msrp.f.msrp_relay">
 	    <title>
 		<function moreinfo="none">msrp_relay()</function>
