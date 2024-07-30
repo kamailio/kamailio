@@ -2,6 +2,7 @@
  * pua db - presence user agent database support
  *
  * Copyright (C) 2011 Crocodile RCS Ltd
+ * Copyright (C) 2024 Victor Seva (Sipwise)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -790,16 +791,25 @@ int insert_record_puadb(ua_pres_t *pres)
 
 /******************************************************************************/
 
-ua_pres_t *get_record_puadb(
-		str pres_id, str *etag, ua_pres_t *result, db1_res_t **dbres)
+ua_pres_t *get_record_puadb(str *pres_uri, str pres_id, str *etag,
+		ua_pres_t *result, db1_res_t **dbres)
 {
-	db_key_t q_cols[2];
-	db_val_t q_vals[2], *values;
+	db_key_t q_cols[3];
+	db_val_t q_vals[3], *values;
 	db_row_t *rows;
 	db1_res_t *res;
 	int n_query_cols = 0, nr_rows;
 	db_query_f query_fn =
 			pua_dbf.query_lock ? pua_dbf.query_lock : pua_dbf.query;
+
+	if(pres_uri != NULL) {
+		q_cols[n_query_cols] = &str_pres_uri_col;
+		q_vals[n_query_cols].type = DB1_STR;
+		q_vals[n_query_cols].nul = 0;
+		q_vals[n_query_cols].val.str_val.s = pres_uri->s;
+		q_vals[n_query_cols].val.str_val.len = pres_uri->len;
+		n_query_cols++;
+	}
 
 	q_cols[n_query_cols] = &str_pres_id_col;
 	q_vals[n_query_cols].type = DB1_STR;
