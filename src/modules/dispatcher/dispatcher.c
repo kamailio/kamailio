@@ -1886,7 +1886,8 @@ int ds_rpc_print_set(
 			}
 		}
 
-		if(mode != DS_RPC_PRINT_SHORT && node->dlist[j].attrs.body.s != NULL) {
+		if((mode != DS_RPC_PRINT_SHORT && node->dlist[j].attrs.body.s != NULL)
+				|| (mode == DS_RPC_PRINT_FULL)) {
 			if(rpc->struct_add(vh, "{", "ATTRS", &wh) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
