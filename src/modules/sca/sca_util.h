@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Andrew Mortensen
+ * Copyright (C) 2024 Sipwise GmbH, https://www.sipwise.com
  *
  * This file is part of the sca module for Kamailio, a free SIP server.
  *
@@ -29,6 +30,18 @@ enum
 	SCA_AOR_TYPE_UAS = (1 << 2),
 };
 
+enum
+{
+	SCA_UTIL_FLAG_TO_BODY_MSG = (1 << 0),
+	SCA_UTIL_FLAG_TO_BODY_ALLOC = (1 << 1),
+};
+
+typedef struct sca_to_body
+{
+	struct to_body *hdr;
+	unsigned int flags;
+} sca_to_body_t;
+
 // get method, regardless of whether message is a request or response
 int sca_get_msg_method(sip_msg_t *);
 
@@ -42,12 +55,10 @@ int sca_get_msg_cseq_number(sip_msg_t *);
 int sca_get_msg_cseq_method(sip_msg_t *);
 
 // convenient From header parsing and extraction
-int sca_get_msg_from_header(sip_msg_t *, struct to_body **);
+int sca_get_msg_from_header(sip_msg_t *, sca_to_body_t *);
 
 // convenient To header parsing and extraction
-int sca_get_msg_to_header(sip_msg_t *, struct to_body **);
-
-int sca_build_to_body_from_uri(sip_msg_t *, struct to_body **, str *);
+int sca_get_msg_to_header(sip_msg_t *, sca_to_body_t *);
 
 // count number of characters requiring escape as defined by escape_common
 int sca_uri_display_escapes_count(str *);
