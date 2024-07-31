@@ -1869,14 +1869,15 @@ int ds_rpc_print_set(
 			ipbuf[0] = '\0';
 			ip_addr2sbufz(
 					&node->dlist[j].ip_address, ipbuf, IP_ADDR_MAX_STRZ_SIZE);
-			if(rpc->struct_add(vh, "Ssddjjujjj", "HOST", &node->dlist[j].host,
+			if(rpc->struct_add(vh, "Ssddjjujjjj", "HOST", &node->dlist[j].host,
 					   "IPADDR", ipbuf, "PORT", (int)node->dlist[j].port,
 					   "PROTOID", (int)node->dlist[j].proto, "DNSTIME_SEC",
 					   (unsigned long)node->dlist[j].dnstime.tv_sec,
 					   "DNSTIME_USEC",
 					   (unsigned long)node->dlist[j].dnstime.tv_usec, "OCRATE",
 					   node->dlist[j].attrs.ocrate, "OCIDX",
-					   (unsigned long)node->dlist[j].ocidx, "OCTIME_SEC",
+					   (unsigned long)node->dlist[j].ocidx, "OCSEQ",
+					   (unsigned long)node->dlist[j].ocseq, "OCTIME_SEC",
 					   (unsigned long)node->dlist[j].octime.tv_sec,
 					   "OCTIME_USEC",
 					   (unsigned long)node->dlist[j].octime.tv_usec)
@@ -1892,7 +1893,7 @@ int ds_rpc_print_set(
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
-			if(rpc->struct_add(wh, "SSdddSSS", "BODY",
+			if(rpc->struct_add(wh, "SSdddSSSjj", "BODY",
 					   &(node->dlist[j].attrs.body), "DUID",
 					   (node->dlist[j].attrs.duid.s)
 							   ? &(node->dlist[j].attrs.duid)
@@ -1910,7 +1911,9 @@ int ds_rpc_print_set(
 					   "OBPROXY",
 					   (node->dlist[j].attrs.obproxy.s)
 							   ? &(node->dlist[j].attrs.obproxy)
-							   : &data)
+							   : &data,
+					   "OCMIN", node->dlist[j].attrs.ocmin, "OCMAX",
+					   node->dlist[j].attrs.ocmax)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating attrs struct");
 				return -1;
