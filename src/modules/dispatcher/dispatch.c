@@ -603,6 +603,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 	dp->flags = flags;
 	dp->priority = priority;
 	dp->dload = dload;
+	dp->attrs.ocmax = 100;
 
 	if(ds_set_attrs(dp, attrs) < 0) {
 		LM_ERR("cannot set attributes!\n");
