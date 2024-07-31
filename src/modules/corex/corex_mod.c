@@ -587,6 +587,7 @@ static msg_iflag_name_t _msg_iflag_list[] = {
 static unsigned long long msg_lookup_flag(str *fname)
 {
 	int i;
+
 	for(i = 0; _msg_iflag_list[i].name.len > 0; i++) {
 		if(fname->len == _msg_iflag_list[i].name.len
 				&& strncasecmp(_msg_iflag_list[i].name.s, fname->s, fname->len)
@@ -594,7 +595,22 @@ static unsigned long long msg_lookup_flag(str *fname)
 			return _msg_iflag_list[i].value;
 		}
 	}
-	return 0;
+	if(fname->len < 1 || fname->len > 2) {
+		return 0;
+	}
+	if(!(fname->s[0] >= '0' && fname->s[0] <= '9')) {
+		return 0;
+	}
+	if(fname->len == 1) {
+		return 1ULL << (fname->s[0] - '0');
+	}
+	if(!(fname->s[1] >= '0' && fname->s[1] <= '9')) {
+		return 0;
+	}
+	if((10 * (fname->s[0] - '0') - (fname->s[1] - '0')) > 63) {
+		return 0;
+	}
+	return 1ULL << (10 * (fname->s[0] - '0') - (fname->s[1] - '0'));
 }
 
 /**
