@@ -192,8 +192,13 @@ int reload_address_db_table(address_tables_group_t *atg)
 					ROW_N(row + i));
 			goto dberror;
 		}
-		if((VAL_TYPE(val) != DB1_INT && VAL_TYPE(val) != DB1_UINT)
-				|| VAL_NULL(val) || (VAL_INT(val) <= 0)) {
+		if(VAL_NULL(val)) {
+			LM_DBG("failure during checks of database value 1 (group) in "
+				   "address table\n");
+			goto dberror;
+		}
+		if(!((VAL_TYPE(val) == DB1_INT && VAL_INT(val) > 0)
+				   || (VAL_TYPE(val) == DB1_UINT && VAL_UINT(val) > 0))) {
 			LM_DBG("failure during checks of database value 1 (group) in "
 				   "address table\n");
 			goto dberror;
