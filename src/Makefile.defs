@@ -220,8 +220,8 @@ LIBDL="-ldl"
 endif
 
 ifeq ($(LIBSSL_SET_MUTEX_SHARED), 1)
-CC_PMUTEX_OPTS = -pthread -DKSR_PTHREAD_MUTEX_SHARED
-LD_PMUTEX_OPTS = -pthread -rdynamic $(LIBDL) -Wl,-Bsymbolic-functions
+CC_PMUTEX_OPTS = -DKSR_PTHREAD_MUTEX_SHARED
+LD_PMUTEX_OPTS = -rdynamic $(LIBDL) -Wl,-Bsymbolic-functions
 else
 CC_PMUTEX_OPTS =
 LD_PMUTEX_OPTS =
@@ -922,8 +922,8 @@ ifeq ($(use_fast_lock), yes)
 	found_lock_method=yes
 endif
 
-CFLAGS=-g
-LDFLAGS=-g
+CFLAGS=-g -pthread
+LDFLAGS=-g -pthread
 C_INCLUDES=
 # setting CFLAGS
 ifeq ($(mode), release)
@@ -1995,7 +1995,6 @@ ifeq ($(OS), freebsd)
 	ifneq ($(found_lock_method), yes)
 		C_DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
-		LIBS+= -pthread
 	endif
 	# check for ver >= 4.1
 	ifeq ($(shell [ $(OSREL_N) -gt 4001 ] && echo has_kqueue), has_kqueue)
@@ -2017,7 +2016,6 @@ ifeq ($(OS), dragonfly)
 	ifneq ($(found_lock_method), yes)
 		C_DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
-		LIBS+= -pthread   #dlopen is in libc
 	else
 		LIBS=   #dlopen is in libc
 	endif
