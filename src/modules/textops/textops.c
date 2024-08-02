@@ -100,6 +100,7 @@ static int subst_uri_f(struct sip_msg *, char *, char *);
 static int subst_user_f(struct sip_msg *, char *, char *);
 static int subst_body_f(struct sip_msg *, char *, char *);
 static int subst_hf_f(struct sip_msg *, char *, char *, char *);
+static int subst_v_f(struct sip_msg *, char *, char *, char *);
 static int filter_body_f(struct sip_msg *, char *, char *);
 static int is_present_hf_f(struct sip_msg *msg, char *str_hf, char *foo);
 static int search_append_body_f(struct sip_msg *, char *, char *);
@@ -252,6 +253,8 @@ static cmd_export_t cmds[] = {
 		{"subst_body", (cmd_function)subst_body_f, 1, fixup_substre, 0,
 				ANY_ROUTE},
 		{"subst_hf", (cmd_function)subst_hf_f, 3, fixup_subst_hf, 0, ANY_ROUTE},
+		{"subst_v", (cmd_function)subst_v_f, 3, fixup_spve2_pvar,
+				fixup_free_spve2_pvar, ANY_ROUTE},
 		{"filter_body", (cmd_function)filter_body_f, 1, fixup_str_null, 0,
 				ANY_ROUTE},
 		{"append_time", (cmd_function)append_time_f, 0, 0, 0,
@@ -1526,6 +1529,76 @@ static int subst_body_f(struct sip_msg *msg, char *subst, char *ignored)
 {
 	return subst_body_helper_f(msg, (struct subst_expr *)subst);
 }
+
+/* sed-perl style re: s/regular expression/replacement/flags, like
+ *  subst but with variables */
+static int subst_v_helper_f(
+		sip_msg_t *msg, str *itext, str *subex, pv_spec_t *pvd)
+{
+	str *result;
+	int nmatches;
+	struct subst_expr *se;
+	pv_value_t val;
+
+	if(pvd->setf == NULL) {
+		LM_ERR("the variable is read only\n");
+		return -1;
+	}
+	se = subst_parser(subex);
+	if(se == 0) {
+		LM_ERR("bad subst re: %.*s\n", subex->len, subex->s);
+		return -1;
+	}
+	/* pkg malloc'ed result */
+	result = subst_str(itext->s, msg, se, &nmatches);
+	if(result == NULL) {
+		if(nmatches < 0) {
+			LM_ERR("substitution failed\n");
+		}
+		return -1;
+	}
+	memset(&val, 0, sizeof(pv_value_t));
+	val.rs.s = result->s;
+	val.rs.len = result->len;
+	val.flags = PV_VAL_STR;
+	pvd->setf(msg, &pvd->pvp, (int)EQ_T, &val);
+
+	pkg_free(result->s);
+	pkg_free(result);
+	return 1;
+}
+
+/* sed-perl style re: s/regular expression/replacement/flags, like
+ *  subst but with variables */
+static int ki_subst_v(sip_msg_t *msg, str *itext, str *subex, str *opv)
+{
+	pv_spec_t *pvd = NULL;
+
+	pvd = pv_cache_get(opv);
+	if(pvd == NULL) {
+		LM_ERR("failed to get pv spec\n");
+		return -1;
+	}
+	return subst_v_helper_f(msg, itext, subex, pvd);
+}
+
+static int subst_v_f(sip_msg_t *msg, char *pitext, char *psubex, char *popv)
+{
+	str itext = STR_NULL;
+	str subex = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pitext, &itext) < 0) {
+		LM_ERR("failed to get header name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)psubex, &subex) < 0) {
+		LM_ERR("failed to get header name\n");
+		return -1;
+	}
+
+	return subst_v_helper_f(msg, &itext, &subex, (pv_spec_t *)popv);
+}
+
 
 static inline int find_line_start(
 		char *text, unsigned int text_len, char **buf, unsigned int *buf_len)
@@ -5279,6 +5352,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("subst_hf"),
 		SR_KEMIP_INT, ki_subst_hf,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("subst_v"),
+		SR_KEMIP_INT, ki_subst_v,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
