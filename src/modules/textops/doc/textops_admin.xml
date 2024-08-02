@@ -811,7 +811,7 @@ if ( subst_hf("From", "/:test@/:best@/", "a") ) { /*....*/ };
 
 	<section id="textops.f.subst_v">
 		<title>
-		<function moreinfo="none">subst_hf(itext, subexp, ovp)</function>
+		<function moreinfo="none">subst_v(itext, subexp, ovp)</function>
 		</title>
 		<para>
 		Sed-like substitution subexp applied to itext, with result stored in opv.
