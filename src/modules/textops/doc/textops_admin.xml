@@ -809,6 +809,44 @@ if ( subst_hf("From", "/:test@/:best@/", "a") ) { /*....*/ };
 		</example>
 	</section>
 
+	<section id="textops.f.subst_v">
+		<title>
+		<function moreinfo="none">subst_hf(itext, subexp, ovp)</function>
+		</title>
+		<para>
+		Sed-like substitution subexp applied to itext, with result stored in opv.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>itext</emphasis> - input text, it can contain variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>subexp</emphasis> - substitution expression
+			in the same format as of the 'subst' function parameter, it can
+			contain variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>opv</emphasis> - variable name where to store the
+			result.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>subst_v</function> usage</title>
+		<programlisting format="linespecific">
+...
+subst_v("$var(x)", "/:test@/:best@/", "$var(r)");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.set_body">
 		<title>
 		<function moreinfo="none">set_body(txt, content_type)</function>
