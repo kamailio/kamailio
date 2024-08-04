@@ -89,6 +89,7 @@ int _tps_sanity_checks = 0;
 int _tps_rr_update = 0;
 int _tps_header_mode = 0;
 str _tps_storage = str_init("db");
+int _tps_enable_register_publish = 0;
 
 extern int _tps_branch_expire;
 extern int _tps_dialog_expire;
@@ -187,6 +188,7 @@ static param_export_t params[] = {
 	{"methods_nocontact", PARAM_STR, &_tps_methods_nocontact_list},
 	{"methods_noinitial", PARAM_STR, &_tps_methods_noinitial_list},
 	{"version_table", INT_PARAM, &_tps_version_table_check},
+	{"enable_register_publish", PARAM_INT, &_tps_enable_register_publish},
 
 	{0, 0, 0}
 };
