@@ -605,7 +605,7 @@ static inline int do_receive(serviced_peer_t *sp)
 			version = (unsigned char)(sp->buf[0]);
 			if(version != 1) {
 				LM_ERR("do_receive(): [%.*s] Received Unknown version [%d]\n",
-						sp->p->fqdn.len, sp->p->fqdn.s,
+						sp->p ? sp->p->fqdn.len : 0, sp->p ? sp->p->fqdn.s : 0,
 						(unsigned char)sp->buf[0]);
 				goto error_and_reset;
 			} else {
