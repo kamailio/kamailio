@@ -1855,6 +1855,8 @@ int ds_rpc_print_set(
 
 		if(node->dlist[j].flags & DS_PROBING_DST)
 			c[1] = 'P';
+		else if(node->dlist[j].flags & DS_NOPING_DST)
+			c[1] = 'N';
 		else
 			c[1] = 'X';
 
