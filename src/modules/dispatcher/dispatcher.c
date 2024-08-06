@@ -1962,6 +1962,8 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 	int n;
 	str smode;
 	int vmode = DS_RPC_PRINT_NORMAL;
+	ds_set_t *dslist = NULL;
+	int dslistnr = 0;
 
 	n = rpc->scan(ctx, "*S", &smode);
 	if(n == 1) {
@@ -1972,8 +1974,8 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 		}
 	}
 
-	ds_set_t *dslist = ds_get_list();
-	int dslistnr = ds_get_list_nr();
+	dslist = ds_get_list();
+	dslistnr = ds_get_list_nr();
 
 	if(dslist == NULL || dslistnr <= 0) {
 		LM_DBG("no destination sets\n");
