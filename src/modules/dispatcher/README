@@ -134,6 +134,7 @@ Federico Cabiddu
               5.6. dispatcher.add
               5.7. dispatcher.remove
               5.8. dispatcher.hash
+              5.9. dispatcher.oclist
 
         6. Installation and Running
 
@@ -303,6 +304,7 @@ Chapter 1. Admin Guide
         5.6. dispatcher.add
         5.7. dispatcher.remove
         5.8. dispatcher.hash
+        5.9. dispatcher.oclist
 
    6. Installation and Running
 
@@ -1672,6 +1674,7 @@ onreply_route {
    5.6. dispatcher.add
    5.7. dispatcher.remove
    5.8. dispatcher.hash
+   5.9. dispatcher.oclist
 
 5.1.  dispatcher.set_state
 
@@ -1850,6 +1853,22 @@ kamcmd dispatcher.remove 3 sip:127.0.0.1:5075;transport=udp
 # prototype: kamctl rpc dispatcher.hash _nslots_ _val1_ [_val2_]
 kamctl rpc dispatcher.hash 0 alice server.com
 kamctl rpc dispatcher.hash 4 bob server.com
+...
+
+5.9.  dispatcher.oclist
+
+   List the overload control attributes for the records in a specific
+   group.
+
+   Name: dispatcher.oclist
+
+   Parameters:
+     * _group_: destination group id
+
+   Example:
+...
+# prototype: kamcli dispatcher.oclist _group_
+kamcli dispatcher.oclist 1
 ...
 
 6. Installation and Running
