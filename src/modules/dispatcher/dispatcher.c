@@ -2253,6 +2253,53 @@ static void dispatcher_rpc_hash(rpc_t *rpc, void *ctx)
 	return;
 }
 
+static const char *dispatcher_rpc_oclist_doc[2] = {
+		"List overload control details for a group", 0};
+
+/*
+ * RPC command to set the state of a destination address
+ */
+static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
+{
+	int group = 0;
+	int i = 0;
+	ds_set_t *node = NULL;
+	void *th = NULL;
+
+	if(rpc->scan(ctx, "d", &group) != 1) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	/* get the index of the set */
+	node = ds_list_lookup(group);
+	if(node == NULL) {
+		LM_ERR("destination set [%d] not found\n", group);
+		rpc->fault(ctx, 404, "Destination Group Not Found");
+		return;
+	}
+
+	for(i = 0; i < node->nr; i++) {
+		/* add entry node */
+		if(rpc->add(ctx, "{", &th) < 0) {
+			rpc->fault(ctx, 500, "Internal error root reply");
+			return;
+		}
+		if(rpc->struct_add(th, "dSduuujjuu", "group", group, "uri",
+				   &node->dlist[i].uri, "flags", node->dlist[i].flags, "ocrate",
+				   node->dlist[i].attrs.ocrate, "ocidx", node->dlist[i].ocidx,
+				   "ocseq", node->dlist[i].ocseq, "octime_sec",
+				   (unsigned long)node->dlist[i].octime.tv_sec, "octime_usec",
+				   (unsigned long)node->dlist[i].octime.tv_usec, "ocmin",
+				   node->dlist[i].attrs.ocmin, "ocmax",
+				   node->dlist[i].attrs.ocmax)
+				< 0) {
+			rpc->fault(ctx, 500, "Internal error main structure");
+			return;
+		}
+	}
+}
+
 /* clang-format off */
 rpc_export_t dispatcher_rpc_cmds[] = {
 	{"dispatcher.reload", dispatcher_rpc_reload,
@@ -2271,6 +2318,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_remove_doc, 0},
 	{"dispatcher.hash",   dispatcher_rpc_hash,
 		dispatcher_rpc_hash_doc, 0},
+	{"dispatcher.oclist", dispatcher_rpc_oclist,
+		dispatcher_rpc_oclist_doc, RPC_RET_ARRAY},
 	{0, 0, 0, 0}
 };
 /* clang-format on */
