@@ -2336,6 +2336,30 @@ kamctl rpc dispatcher.hash 4 bob server.com
 ...
 </programlisting>
     </section>
+	<section id="dispatcher.r.oclist">
+		<title>
+		<function moreinfo="none">dispatcher.oclist</function>
+		</title>
+		<para>
+		List the overload control attributes for the records in a specific group.
+		</para>
+		<para>
+		Name: <emphasis>dispatcher.oclist</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+		</itemizedlist>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+# prototype: kamcli dispatcher.oclist _group_
+kamcli dispatcher.oclist 1
+...
+</programlisting>
+    </section>
 
    </section>
 
