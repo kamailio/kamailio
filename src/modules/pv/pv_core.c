@@ -76,6 +76,8 @@ int _pv_pid = 0;
 #define PV_HDR_DELIM ","
 #define PV_HDR_DELIM_LEN (sizeof(PV_HDR_DELIM) - 1)
 
+static int is_uri_enclosed(struct sip_msg *msg, struct to_body *tb);
+
 int pv_get_msgid(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	if(msg == NULL)
@@ -3519,9 +3521,13 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 		pv_value_t *val, struct to_body *tb, int type)
 {
 	str buf = {0, 0};
+	str buf_uri = {0, 0};
 	struct lump *l = NULL;
 	int loffset = 0;
+	int loffset_uri = 0;
 	int llen = 0;
+	int llen_uri = 0;
+	int is_enclosed = 0;
 
 	if(msg == NULL || param == NULL) {
 		LM_ERR("bad parameters\n");
@@ -3595,7 +3601,7 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 			}
 			buf.s = pkg_malloc(val->rs.len);
 			if(buf.s == 0) {
-				LM_ERR("no more pkg mem\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			buf.len = val->rs.len;
@@ -3627,6 +3633,29 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 			}
 			buf.len = val->rs.len;
 			memcpy(buf.s, val->rs.s, val->rs.len);
+
+			/* Check if the URI is enclosed in angle brackets */
+			is_enclosed = is_uri_enclosed(msg, tb);
+			/* If uri is not enclosed, we need to enclose it in < >
+				before adding display name */
+			if(!is_enclosed) {
+				LM_DBG("URI is not enclosed in angle brackets\n");
+				/* Enclose URI in angle brackets */
+				loffset_uri = tb->uri.s - msg->buf;
+				llen_uri = tb->uri.len;
+				/* Add angle brackets */
+				buf_uri.s = pkg_malloc(tb->uri.len + 2);
+				if(buf_uri.s == 0) {
+					LM_ERR("no more pkg mem\n");
+					goto error;
+				}
+				buf_uri.len = tb->uri.len + 2;
+				buf_uri.s[0] = '<';
+				memcpy(buf_uri.s + 1, tb->uri.s, tb->uri.len);
+				buf_uri.s[buf_uri.len - 1] = '>';
+				LM_DBG("URI after enclosing: %.*s\n", buf_uri.len, buf_uri.s);
+			}
+
 			if(tb->display.len == 0) {
 				l = anchor_lump(msg, tb->body.s - msg->buf, 0, 0);
 				buf.s[buf.len] = ' ';
@@ -3656,12 +3685,50 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 		if(buf.s != 0)
 			pkg_free(buf.s);
 	}
+
+	if(llen_uri > 0) {
+		if((l = del_lump(msg, loffset_uri, llen_uri, 0)) == 0) {
+			LM_ERR("failed to delete xto attribute %d\n", type);
+			goto error;
+		}
+	}
+	/* set new value when given */
+	if(l != NULL && buf_uri.len > 0) {
+		if(insert_new_lump_after(l, buf_uri.s, buf_uri.len, 0) == 0) {
+			LM_ERR("failed to set xto attribute %d\n", type);
+			goto error;
+		}
+	} else {
+		if(buf_uri.s != 0)
+			pkg_free(buf_uri.s);
+	}
+
 	return 0;
 
 error:
 	if(buf.s != 0)
 		pkg_free(buf.s);
 	return -1;
+}
+
+int is_uri_enclosed(struct sip_msg *msg, struct to_body *tb)
+{
+	/* Check for the presence of display name */
+	if(tb->display.len == 0) {
+		/* 	Display name not found */
+		char *uri_body = tb->body.s;
+
+		/* Assuming a valid sip message (true otherwise parser fails way before)
+		 if it starts with '<' there is a respective '>'.
+		 Also, parser trims any leading white space if no DisplayName is found
+		*/
+		if(uri_body[0] == '<') {
+			return 1;
+		}
+		return 0;
+	}
+	/* Display name found, URI should/must be enclosed */
+	return 1;
 }
 
 int pv_set_to_attr(struct sip_msg *msg, pv_param_t *param, int op,
