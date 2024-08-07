@@ -399,35 +399,35 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 			dest->attrs.obproxy = pit->body;
 		} else if(pit->name.len == 5
 				  && strncasecmp(pit->name.s, "ocmin", 5) == 0) {
-			str2int(&pit->body, &dest->attrs.ocmin);
+			str2int(&pit->body, &dest->ocdata.ocmin);
 		} else if(pit->name.len == 5
 				  && strncasecmp(pit->name.s, "ocmax", 5) == 0) {
-			str2int(&pit->body, &dest->attrs.ocmax);
+			str2int(&pit->body, &dest->ocdata.ocmax);
 		} else if(pit->name.len == 6
 				  && strncasecmp(pit->name.s, "ocrate", 6) == 0) {
-			str2int(&pit->body, &dest->attrs.ocrate);
+			str2int(&pit->body, &dest->ocdata.ocrate);
 		}
 	}
-	if(dest->attrs.ocmax > 100) {
-		dest->attrs.ocmax = 100;
+	if(dest->ocdata.ocmax > 100) {
+		dest->ocdata.ocmax = 100;
 	}
-	if(dest->attrs.ocmax <= 0) {
-		dest->attrs.ocmax = 100;
+	if(dest->ocdata.ocmax <= 0) {
+		dest->ocdata.ocmax = 100;
 	}
-	if(dest->attrs.ocmin > 100) {
-		dest->attrs.ocmin = 0;
+	if(dest->ocdata.ocmin > 100) {
+		dest->ocdata.ocmin = 0;
 	}
-	if(dest->attrs.ocmin < 0) {
-		dest->attrs.ocmin = 0;
+	if(dest->ocdata.ocmin < 0) {
+		dest->ocdata.ocmin = 0;
 	}
-	if(dest->attrs.ocrate > 100) {
-		dest->attrs.ocrate = 0;
+	if(dest->ocdata.ocrate > 100) {
+		dest->ocdata.ocrate = 0;
 	}
-	if(dest->attrs.ocrate < dest->attrs.ocmin) {
-		dest->attrs.ocrate = dest->attrs.ocmin;
+	if(dest->ocdata.ocrate < dest->ocdata.ocmin) {
+		dest->ocdata.ocrate = dest->ocdata.ocmin;
 	}
-	if(dest->attrs.ocrate > dest->attrs.ocmax) {
-		dest->attrs.ocrate = dest->attrs.ocmax;
+	if(dest->ocdata.ocrate > dest->ocdata.ocmax) {
+		dest->ocdata.ocrate = dest->ocdata.ocmax;
 	}
 
 	if(params_list)
@@ -441,13 +441,13 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 void ds_oc_prepare(ds_dest_t *dp)
 {
 	int i;
-	for(i = 0; i < dp->attrs.ocrate; i++) {
-		dp->ocdist[i] = 0;
+	for(i = 0; i < dp->ocdata.ocrate; i++) {
+		dp->ocdata.ocdist[i] = 0;
 	}
-	for(i = dp->attrs.ocrate; i < 100; i++) {
-		dp->ocdist[i] = 1;
+	for(i = dp->ocdata.ocrate; i < 100; i++) {
+		dp->ocdata.ocdist[i] = 1;
 	}
-	shuffle_uint100array(dp->ocdist);
+	shuffle_uint100array(dp->ocdata.ocdist);
 }
 
 /**
@@ -485,20 +485,20 @@ int ds_oc_set_attrs(
 	for(i = 0; i < idx->nr; i++) {
 		if(idx->dlist[i].uri.len == duri->len
 				&& strncasecmp(idx->dlist[i].uri.s, duri->s, duri->len) == 0) {
-			if(idx->dlist[i].ocseq >= isval) {
+			if(idx->dlist[i].ocdata.ocseq >= isval) {
 				LM_DBG("skipping entry %d due to seq condition\n", i);
 				continue;
 			}
-			idx->dlist[i].attrs.ocrate = irval;
-			if(idx->dlist[i].attrs.ocrate < idx->dlist[i].attrs.ocmin) {
-				idx->dlist[i].attrs.ocrate = idx->dlist[i].attrs.ocmin;
+			idx->dlist[i].ocdata.ocrate = irval;
+			if(idx->dlist[i].ocdata.ocrate < idx->dlist[i].ocdata.ocmin) {
+				idx->dlist[i].ocdata.ocrate = idx->dlist[i].ocdata.ocmin;
 			}
-			if(idx->dlist[i].attrs.ocrate > idx->dlist[i].attrs.ocmax) {
-				idx->dlist[i].attrs.ocrate = idx->dlist[i].attrs.ocmax;
+			if(idx->dlist[i].ocdata.ocrate > idx->dlist[i].ocdata.ocmax) {
+				idx->dlist[i].ocdata.ocrate = idx->dlist[i].ocdata.ocmax;
 			}
 			ds_oc_prepare(&idx->dlist[i]);
-			timeradd(&tnow, &tdiff, &idx->dlist[i].octime);
-			idx->dlist[i].ocseq = isval;
+			timeradd(&tnow, &tdiff, &idx->dlist[i].ocdata.octime);
+			idx->dlist[i].ocdata.ocseq = isval;
 			ret = 1;
 			LM_DBG("updated entry %d\n", i);
 		}
@@ -520,19 +520,19 @@ static inline int ds_oc_skip(ds_set_t *dsg, int alg, int n)
 
 	gettimeofday(&tnow, NULL);
 
-	if(timercmp(&dsg->dlist[n].octime, &tnow, <)) {
+	if(timercmp(&dsg->dlist[n].ocdata.octime, &tnow, <)) {
 		/* over the time interval validity - use it */
 		LM_DBG("time validity not matching\n");
 		return 0;
 	}
-	if(dsg->dlist[n].ocdist[dsg->dlist[n].ocidx] == 1) {
+	if(dsg->dlist[n].ocdata.ocdist[dsg->dlist[n].ocdata.ocidx] == 1) {
 		/* use it */
 		ret = 0;
 	} else {
 		/* skip it */
 		ret = 1;
 	}
-	dsg->dlist[n].ocidx = (dsg->dlist[n].ocidx + 1) % 100;
+	dsg->dlist[n].ocdata.ocidx = (dsg->dlist[n].ocdata.ocidx + 1) % 100;
 
 	return ret;
 }
@@ -609,7 +609,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 	dp->flags = flags;
 	dp->priority = priority;
 	dp->dload = dload;
-	dp->attrs.ocmax = 100;
+	dp->ocdata.ocmax = 100;
 
 	if(ds_set_attrs(dp, attrs) < 0) {
 		LM_ERR("cannot set attributes!\n");

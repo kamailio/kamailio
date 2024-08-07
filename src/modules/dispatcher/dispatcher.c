@@ -1877,12 +1877,12 @@ int ds_rpc_print_set(
 					   (unsigned long)node->dlist[j].dnstime.tv_sec,
 					   "DNSTIME_USEC",
 					   (unsigned long)node->dlist[j].dnstime.tv_usec, "OCRATE",
-					   node->dlist[j].attrs.ocrate, "OCIDX",
-					   (unsigned long)node->dlist[j].ocidx, "OCSEQ",
-					   (unsigned long)node->dlist[j].ocseq, "OCTIME_SEC",
-					   (unsigned long)node->dlist[j].octime.tv_sec,
+					   node->dlist[j].ocdata.ocrate, "OCIDX",
+					   (unsigned long)node->dlist[j].ocdata.ocidx, "OCSEQ",
+					   (unsigned long)node->dlist[j].ocdata.ocseq, "OCTIME_SEC",
+					   (unsigned long)node->dlist[j].ocdata.octime.tv_sec,
 					   "OCTIME_USEC",
-					   (unsigned long)node->dlist[j].octime.tv_usec)
+					   (unsigned long)node->dlist[j].ocdata.octime.tv_usec)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
@@ -1914,8 +1914,8 @@ int ds_rpc_print_set(
 					   (node->dlist[j].attrs.obproxy.s)
 							   ? &(node->dlist[j].attrs.obproxy)
 							   : &data,
-					   "OCMIN", node->dlist[j].attrs.ocmin, "OCMAX",
-					   node->dlist[j].attrs.ocmax)
+					   "OCMIN", node->dlist[j].ocdata.ocmin, "OCMAX",
+					   node->dlist[j].ocdata.ocmax)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating attrs struct");
 				return -1;
@@ -2289,12 +2289,14 @@ static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
 		}
 		if(rpc->struct_add(th, "dSduuujjuu", "group", group, "uri",
 				   &node->dlist[i].uri, "flags", node->dlist[i].flags, "ocrate",
-				   node->dlist[i].attrs.ocrate, "ocidx", node->dlist[i].ocidx,
-				   "ocseq", node->dlist[i].ocseq, "octime_sec",
-				   (unsigned long)node->dlist[i].octime.tv_sec, "octime_usec",
-				   (unsigned long)node->dlist[i].octime.tv_usec, "ocmin",
-				   node->dlist[i].attrs.ocmin, "ocmax",
-				   node->dlist[i].attrs.ocmax)
+				   node->dlist[i].ocdata.ocrate, "ocidx",
+				   node->dlist[i].ocdata.ocidx, "ocseq",
+				   node->dlist[i].ocdata.ocseq, "octime_sec",
+				   (unsigned long)node->dlist[i].ocdata.octime.tv_sec,
+				   "octime_usec",
+				   (unsigned long)node->dlist[i].ocdata.octime.tv_usec, "ocmin",
+				   node->dlist[i].ocdata.ocmin, "ocmax",
+				   node->dlist[i].ocdata.ocmax)
 				< 0) {
 			rpc->fault(ctx, 500, "Internal error main structure");
 			return;

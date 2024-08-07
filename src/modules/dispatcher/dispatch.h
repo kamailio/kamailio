@@ -205,9 +205,6 @@ typedef struct _ds_attrs {
 	str ping_from;
 	str obproxy;
 	int rpriority;
-	uint32_t ocmin;
-	uint32_t ocmax;
-	uint32_t ocrate;
 } ds_attrs_t;
 
 typedef struct _ds_latency_stats {
@@ -225,6 +222,16 @@ typedef struct _ds_latency_stats {
 void latency_stats_init(ds_latency_stats_t *latency_stats, int latency, int count);
 ds_latency_stats_t *latency_stats_find(int group, str *address);
 
+typedef struct _ds_ocdata {
+	uint32_t ocrate;
+	uint32_t ocidx;
+	uint32_t ocdist[100];
+	struct timeval octime;
+	uint32_t ocseq;
+	uint32_t ocmin;
+	uint32_t ocmax;
+} ds_ocdata_t;
+
 typedef struct _ds_dest {
 	str uri;          /*!< address/uri */
 	str host;         /*!< shortcut to host part */
@@ -240,10 +247,7 @@ typedef struct _ds_dest {
 	unsigned short int proto; 	/*!< protocol of the URI */
 	int message_count;
 	struct timeval dnstime;
-	uint32_t ocidx;
-	uint32_t ocdist[100];
-	struct timeval octime;
-	uint32_t ocseq;
+	ds_ocdata_t ocdata;	/*!< overload control attributes */
 	struct _ds_dest *next;
 } ds_dest_t;
 
