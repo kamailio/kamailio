@@ -1592,6 +1592,8 @@ char *rx_avp_get_access_class(int32_t ip_can_type, int32_t rat_type)
 			return "3GPP-NR-OTHERSAT";
 		case 1039:
 			return "3GPP-NR-REDCAP";
+		case 1040:
+			return "3GPP-NR-EREDCAP";
 		case 2000:
 			return "3GPP2-1X";
 		case 2001:
@@ -1605,7 +1607,7 @@ char *rx_avp_get_access_class(int32_t ip_can_type, int32_t rat_type)
 	switch(ip_can_type) {
 		case -1:
 		default:
-			snprintf(unknown, 64, "UNKNOWN-IP-CAN-Type-%d/RAT-Type-%d",
+			snprintf(unknown, 64, "UNKNOWN-IP-CAN-Type-%d-RAT-Type-%d",
 					ip_can_type, rat_type);
 			return unknown;
 		case 1:
@@ -2026,6 +2028,9 @@ int rx_avp_process_3gpp_user_location_information(AAAMessage *rar, str *dst)
 		// Fallback to IP-CAN-Type and RAT-Type
 		dst->len += snprintf(dst->s + dst->len, MAX_PANI_LEN - dst->len,
 				"%s;network-provided", c_access_class);
+	} else {
+		dst->len += snprintf(dst->s + dst->len, MAX_PANI_LEN - dst->len,
+				";network-provided");
 	}
 
 	LOG(L_INFO, "P-Access-Network-Info from Diameter is [%.*s]\n", dst->len,
