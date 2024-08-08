@@ -2287,8 +2287,9 @@ static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
 			rpc->fault(ctx, 500, "Internal error root reply");
 			return;
 		}
-		if(rpc->struct_add(th, "dSduuujjuu", "group", group, "uri",
-				   &node->dlist[i].uri, "flags", node->dlist[i].flags, "ocrate",
+		if(rpc->struct_add(th, "dSdduuujjuu", "group", group, "uri",
+				   &node->dlist[i].uri, "flags", node->dlist[i].flags,
+				   "priority", node->dlist[i].priority, "ocrate",
 				   node->dlist[i].ocdata.ocrate, "ocidx",
 				   node->dlist[i].ocdata.ocidx, "ocseq",
 				   node->dlist[i].ocdata.ocseq, "octime_sec",
