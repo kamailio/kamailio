@@ -143,6 +143,7 @@ static void ds_run_route(
 		struct sip_msg *msg, str *uri, char *route, ds_rctx_t *rctx);
 
 void shuffle_uint100array(unsigned int *arr);
+void shuffle_char100array(char *arr);
 int ds_reinit_rweight_on_state_change(
 		int old_state, int new_state, ds_set_t *dset);
 
@@ -442,12 +443,12 @@ void ds_oc_prepare(ds_dest_t *dp)
 {
 	int i;
 	for(i = 0; i < dp->ocdata.ocrate; i++) {
-		dp->ocdata.ocdist[i] = 0;
+		dp->ocdata.ocdist[i] = '0';
 	}
 	for(i = dp->ocdata.ocrate; i < 100; i++) {
-		dp->ocdata.ocdist[i] = 1;
+		dp->ocdata.ocdist[i] = '1';
 	}
-	shuffle_uint100array(dp->ocdata.ocdist);
+	shuffle_char100array(dp->ocdata.ocdist);
 }
 
 /**
@@ -525,7 +526,7 @@ static inline int ds_oc_skip(ds_set_t *dsg, int alg, int n)
 		LM_DBG("time validity not matching\n");
 		return 0;
 	}
-	if(dsg->dlist[n].ocdata.ocdist[dsg->dlist[n].ocdata.ocidx] == 1) {
+	if(dsg->dlist[n].ocdata.ocdist[dsg->dlist[n].ocdata.ocidx] == '1') {
 		/* use it */
 		ret = 0;
 	} else {
@@ -782,6 +783,23 @@ void shuffle_uint100array(unsigned int *arr)
 	int k;
 	int j;
 	unsigned int t;
+	if(arr == NULL)
+		return;
+	for(j = 0; j < 100; j++) {
+		k = j + (kam_rand() % (100 - j));
+		t = arr[j];
+		arr[j] = arr[k];
+		arr[k] = t;
+	}
+}
+
+
+/* for internal usage; arr must be arr[100] */
+void shuffle_char100array(char *arr)
+{
+	int k;
+	int j;
+	char t;
 	if(arr == NULL)
 		return;
 	for(j = 0; j < 100; j++) {

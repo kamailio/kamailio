@@ -222,10 +222,11 @@ typedef struct _ds_latency_stats {
 void latency_stats_init(ds_latency_stats_t *latency_stats, int latency, int count);
 ds_latency_stats_t *latency_stats_find(int group, str *address);
 
+#define DS_OCDIST_SIZE 104
 typedef struct _ds_ocdata {
 	uint32_t ocrate;
 	uint32_t ocidx;
-	uint32_t ocdist[100];
+	char ocdist[DS_OCDIST_SIZE];
 	struct timeval octime;
 	uint32_t ocseq;
 	uint32_t ocmin;
