@@ -57,6 +57,7 @@
 #include "cdp_functions.h"
 #include "cdp_tls.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 
 MODULE_VERSION
 
@@ -301,7 +302,10 @@ int w_cdp_check_peer(sip_msg_t *msg, char *peer, char *p2)
 	}
 	return -1;
 }
-
+int ki_cdp_check_peer(sip_msg *msg, str *peer, str *p2)
+{
+	return w_cdp_check_peer(msg, peer->s, p2->s);
+}
 static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param)
 {
 	unsigned int app_flags;
@@ -358,4 +362,18 @@ static int w_cdp_has_app2(sip_msg_t *msg, char *vendor, char *appid)
 		return -1;
 	}
 	return check_application(v, a);
+}
+
+static sr_kemi_t sr_kemi_cdp_exports[] = {
+		{str_init("cdp"), str_init("cdp_check_peer"),
+		SR_KEMIP_INT, ki_cdp_check_peer,
+		{SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE, 
+		SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}},
+		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}
+
+};
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_cdp_exports);
+	return 0;
 }
