@@ -31,6 +31,7 @@
 #include "../../core/dprint.h"
 #include "../../core/locking.h"
 #include "secfilter.h"
+#include "../../core/kemi.h"
 
 MODULE_VERSION
 
@@ -255,6 +256,10 @@ static int w_check_sqli_all(struct sip_msg *msg)
 end_sqli:
 	return retval;
 }
+static int ki_check_sqli_all(struct sip_msg *msg)
+{
+	return w_check_sqli_all(msg);
+}
 
 
 /* External function to search for illegal characters in some header */
@@ -266,7 +271,10 @@ static int w_check_sqli_hdr(struct sip_msg *msg, char *cval)
 
 	return w_check_sqli(val);
 }
-
+static int ki_check_sqli_hdr(struct sip_msg *msg, str *cval)
+{
+	return w_check_sqli_hdr(msg, cval->s);
+}
 
 /* Search for illegal characters */
 static int w_check_sqli(str val)
@@ -343,7 +351,10 @@ static int w_check_dst(struct sip_msg *msg, char *val)
 	return 1;
 }
 
-
+static int ki_check_dst(struct sip_msg *msg, str *val)
+{
+	return w_check_dst(msg, val->s);
+}
 /* Check if the current user-agent is allowed
 Return codes:
  2 = user-agent whitelisted
@@ -397,6 +408,10 @@ static int w_check_ua(struct sip_msg *msg)
 
 	return 1;
 }
+static int ki_check_ua(struct sip_msg *msg)
+{
+	return w_check_ua(msg);
+}
 
 
 /* Check if the current from user is allowed */
@@ -405,11 +420,20 @@ static int w_check_from_hdr(struct sip_msg *msg)
 	return check_user(msg, 1);
 }
 
+static int ki_check_from_hdr(struct sip_msg *msg)
+{
+	return w_check_from_hdr(msg);
+}
 
 /* Check if the current to user is allowed */
 static int w_check_to_hdr(struct sip_msg *msg)
 {
 	return check_user(msg, 2);
+}
+
+static int ki_check_to_hdr(struct sip_msg *msg)
+{
+	return w_check_to_hdr(msg);
 }
 
 
@@ -418,7 +442,10 @@ static int w_check_contact_hdr(struct sip_msg *msg)
 {
 	return check_user(msg, 3);
 }
-
+static int ki_check_contact_hdr(struct sip_msg *msg)
+{
+	return w_check_contact_hdr(msg);
+}
 
 /*
 Check if the current user is allowed
@@ -672,7 +699,10 @@ static int w_check_ip(struct sip_msg *msg)
 
 	return 1;
 }
-
+static int ki_check_ip(struct sip_msg *msg)
+{
+	return w_check_ip(msg);
+}
 
 /* Check if the current country is allowed
 
@@ -726,7 +756,10 @@ static int w_check_country(struct sip_msg *msg, char *val)
 	return 1;
 }
 
-
+static int ki_check_country(struct sip_msg *msg, str *val)
+{
+	return w_check_country(msg, val->s);
+}
 void secf_reset_stats(void)
 {
 	lock_get(secf_lock);
@@ -955,4 +988,49 @@ void secf_free_data(secf_data_p secf_fdata)
 	LM_DBG("so, ua[%p] should be NULL\n", secf_fdata->bl.ua);
 
 	lock_release(&secf_fdata->lock);
+}
+static sr_kemi_t sr_kemi_secfilter_exports[] = {
+		{str_init("secfilter"), str_init("secf_check_dst"), SR_KEMIP_INT,
+				ki_check_dst,
+				{SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+		{str_init("secfilter"), str_init("secf_check_ip"), SR_KEMIP_INT,
+				ki_check_ip,
+				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+		{str_init("secfilter"), str_init("secf_check_ua"), SR_KEMIP_INT,
+				ki_check_ua,
+				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+		{str_init("secfilter"), str_init("secf_check_country"), SR_KEMIP_INT,
+				ki_check_country,
+				{SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+		{str_init("secfilter"), str_init("secf_check_from_hdr"), SR_KEMIP_INT,
+				ki_check_from_hdr,
+				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+		{str_init("secfilter"), str_init("secf_check_to_hdr"), SR_KEMIP_INT,
+				ki_check_to_hdr,
+				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+		{str_init("secfilter"), str_init("secf_check_contact_hdr"),
+				SR_KEMIP_INT, ki_check_contact_hdr,
+				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+		{str_init("secfilter"), str_init("secf_sqli_hdr"), SR_KEMIP_INT,
+				ki_check_sqli_hdr,
+				{SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+		{str_init("secfilter"), str_init("secf_check_sqli_all"), SR_KEMIP_INT,
+				ki_check_sqli_all,
+				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}
+
+};
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_secfilter_exports);
+	return 0;
 }
