@@ -989,46 +989,56 @@ void secf_free_data(secf_data_p secf_fdata)
 
 	lock_release(&secf_fdata->lock);
 }
+
+/**
+ * KEMI exports
+ */
+/* clang-format off */
 static sr_kemi_t sr_kemi_secfilter_exports[] = {
-		{str_init("secfilter"), str_init("secf_check_dst"), SR_KEMIP_INT,
-				ki_check_dst,
-				{SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("secfilter"), str_init("secf_check_ip"), SR_KEMIP_INT,
-				ki_check_ip,
-				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("secfilter"), str_init("secf_check_ua"), SR_KEMIP_INT,
-				ki_check_ua,
-				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("secfilter"), str_init("secf_check_country"), SR_KEMIP_INT,
-				ki_check_country,
-				{SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("secfilter"), str_init("secf_check_from_hdr"), SR_KEMIP_INT,
-				ki_check_from_hdr,
-				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("secfilter"), str_init("secf_check_to_hdr"), SR_KEMIP_INT,
-				ki_check_to_hdr,
-				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("secfilter"), str_init("secf_check_contact_hdr"),
-				SR_KEMIP_INT, ki_check_contact_hdr,
-				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("secfilter"), str_init("secf_sqli_hdr"), SR_KEMIP_INT,
-				ki_check_sqli_hdr,
-				{SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("secfilter"), str_init("secf_check_sqli_all"), SR_KEMIP_INT,
-				ki_check_sqli_all,
-				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}
+	{str_init("secfilter"), str_init("secf_check_dst"), SR_KEMIP_INT,
+			ki_check_dst,
+			{SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+					SR_KEMIP_NONE, SR_KEMIP_NONE}},
+	{str_init("secfilter"), str_init("secf_check_ip"), SR_KEMIP_INT,
+			ki_check_ip,
+			{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+					SR_KEMIP_NONE, SR_KEMIP_NONE}},
+	{str_init("secfilter"), str_init("secf_check_ua"), SR_KEMIP_INT,
+			ki_check_ua,
+			{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+					SR_KEMIP_NONE, SR_KEMIP_NONE}},
+	{str_init("secfilter"), str_init("secf_check_country"), SR_KEMIP_INT,
+			ki_check_country,
+			{SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+					SR_KEMIP_NONE, SR_KEMIP_NONE}},
+	{str_init("secfilter"), str_init("secf_check_from_hdr"), SR_KEMIP_INT,
+			ki_check_from_hdr,
+			{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+					SR_KEMIP_NONE, SR_KEMIP_NONE}},
+	{str_init("secfilter"), str_init("secf_check_to_hdr"), SR_KEMIP_INT,
+			ki_check_to_hdr,
+			{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+					SR_KEMIP_NONE, SR_KEMIP_NONE}},
+	{str_init("secfilter"), str_init("secf_check_contact_hdr"),
+			SR_KEMIP_INT, ki_check_contact_hdr,
+			{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+					SR_KEMIP_NONE, SR_KEMIP_NONE}},
+	{str_init("secfilter"), str_init("secf_sqli_hdr"), SR_KEMIP_INT,
+			ki_check_sqli_hdr,
+			{SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+					SR_KEMIP_NONE, SR_KEMIP_NONE}},
+	{str_init("secfilter"), str_init("secf_check_sqli_all"), SR_KEMIP_INT,
+			ki_check_sqli_all,
+			{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+					SR_KEMIP_NONE, SR_KEMIP_NONE}},
+	{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}
 
 };
+/* clang-format on */
+
+/**
+ *
+ */
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
 	sr_kemi_modules_add(sr_kemi_secfilter_exports);
