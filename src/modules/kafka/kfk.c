@@ -39,6 +39,7 @@
 extern int child_init_ok;
 extern int init_without_kafka;
 extern int log_without_overflow;
+extern int metadata_timeout;
 
 /**
  * \brief data type for a configuration property.
@@ -730,11 +731,6 @@ static int kfk_topic_list_configure()
 	return 0;
 }
 
-/* -1 means RD_POLL_INFINITE */
-/* 100000 means 100 seconds */
-#define METADATA_TIMEOUT \
-	100000 /**< Timeout when asking for metadata in milliseconds. */
-
 /**
  * \brief check that a topic exists in cluster.
  *
@@ -756,7 +752,7 @@ static int kfk_topic_exist(str *topic_name)
 
 	/* Get metadata for all topics. */
 	rd_kafka_resp_err_t res;
-	res = rd_kafka_metadata(rk, 1, NULL, &metadatap, METADATA_TIMEOUT);
+	res = rd_kafka_metadata(rk, 1, NULL, &metadatap, metadata_timeout);
 	if(res != RD_KAFKA_RESP_ERR_NO_ERROR) {
 		LM_ERR("Failed to get metadata: %s\n", rd_kafka_err2str(res));
 		goto error;
