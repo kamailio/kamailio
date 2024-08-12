@@ -64,6 +64,8 @@ static int w_kafka_send_key(
 /*
  * Variables and functions to deal with module parameters.
  */
+int child_init_ok = 0;
+int init_without_kafka = 0;
 char *brokers_param = NULL; /**< List of brokers. */
 static int kafka_conf_param(modparam_t type, void *val);
 static int kafka_topic_param(modparam_t type, void *val);
@@ -84,7 +86,7 @@ static param_export_t params[] = {{"brokers", PARAM_STRING, &brokers_param},
 		{"configuration", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)kafka_conf_param},
 		{"topic", PARAM_STRING | USE_FUNC_PARAM, (void *)kafka_topic_param},
-		{0, 0, 0}};
+		{"init_without_kafka", PARAM_INT, &init_without_kafka}, {0, 0, 0}};
 
 /**
  * \brief Kafka :: Module interface
@@ -125,9 +127,15 @@ static int child_init(int rank)
 	if(rank == PROC_INIT || rank == PROC_TCP_MAIN)
 		return 0;
 
+	child_init_ok = 1;
 	if(kfk_init(brokers_param)) {
-		LM_ERR("Failed to initialize Kafka\n");
-		return -1;
+		child_init_ok = 0;
+		if(init_without_kafka) {
+			LM_ERR("Failed to initialize Kafka - continue\n");
+		} else {
+			LM_ERR("Failed to initialize Kafka\n");
+			return -1;
+		}
 	}
 	return 0;
 }
