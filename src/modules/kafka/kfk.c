@@ -38,6 +38,7 @@
 
 extern int child_init_ok;
 extern int init_without_kafka;
+extern int log_without_overflow;
 
 /**
  * \brief data type for a configuration property.
@@ -124,6 +125,12 @@ static void kfk_logger(
 		const rd_kafka_t *rk, int level, const char *fac, const char *buf)
 {
 
+	if(log_without_overflow && strstr(buf, "Connection refused") != NULL) {
+		// libkafka will keep retrying to connect if kafka server is down
+		// FIX: ignore these types of errors not to get overflowed
+		return;
+	}
+
 	switch(level) {
 		case LOG_EMERG:
 			LM_NPRL("RDKAFKA fac: %s : %s : %s\n", fac,
@@ -190,8 +197,14 @@ static void kfk_msg_delivered(
 	kfk_stats_add(topic_name, rkmessage->err);
 
 	if(rkmessage->err) {
-		LM_ERR("RDKAFKA Message delivery failed: %s\n",
-				rd_kafka_err2str(rkmessage->err));
+		if(log_without_overflow) {
+			// libkafka will log all undelivered msgs as ERR
+			// FIX: ignore these types of errors not to get overflowed; check stats instead
+			;
+		} else {
+			LM_ERR("RDKAFKA Message delivery failed: %s\n",
+					rd_kafka_err2str(rkmessage->err));
+		}
 	} else {
 		LM_DBG("RDKAFKA Message delivered (%zd bytes, offset %" PRId64 ", "
 			   "partition %" PRId32 "): %.*s\n",
@@ -865,7 +878,11 @@ int kfk_message_send(str *topic_name, str *message, str *key)
 			   NULL)
 			== -1) {
 		rd_kafka_resp_err_t err = rd_kafka_last_error();
-		LM_ERR("Error sending message: %s\n", rd_kafka_err2str(err));
+		if(!log_without_overflow) {
+			LM_ERR("Error sending message: %s\n", rd_kafka_err2str(err));
+		} else {
+			return 0;
+		}
 
 		return -1;
 	}
