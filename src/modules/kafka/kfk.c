@@ -36,6 +36,9 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/locking.h"
 
+extern int child_init_ok;
+extern int init_without_kafka;
+
 /**
  * \brief data type for a configuration property.
  */
@@ -587,7 +590,9 @@ static int kfk_topic_configure(kfk_topic_t *ktopic)
 	}
 
 	int topic_found = kfk_topic_exist(ktopic->topic_name);
-	if(topic_found == -1) {
+	if(init_without_kafka) {
+		;
+	} else if(topic_found == -1) {
 		LM_ERR("Failed to search for topic %.*s in cluster\n",
 				ktopic->topic_name->len, ktopic->topic_name->s);
 		goto error;
@@ -827,6 +832,12 @@ int kfk_message_send(str *topic_name, str *message, str *key)
 {
 	/* Get topic from name. */
 	rd_kafka_topic_t *rkt = kfk_topic_get(topic_name);
+
+	if(!child_init_ok) {
+		LM_ERR("kafka module is unusable: child init NOT ok! Skip sending "
+			   "message, message lost!");
+		return -1;
+	}
 
 	if(!rkt) {
 		LM_ERR("Topic not found: %.*s\n", topic_name->len, topic_name->s);
