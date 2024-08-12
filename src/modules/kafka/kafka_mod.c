@@ -45,6 +45,7 @@
 #include "../../core/kemi.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/counters.h"
 
 #include "kfk.h"
 
@@ -64,6 +65,8 @@ static int w_kafka_send_key(
 /*
  * Variables and functions to deal with module parameters.
  */
+stat_var *total_messages;
+stat_var *total_messages_err;
 int child_init_ok = 0;
 int init_without_kafka = 0;
 int log_without_overflow = 0;
@@ -105,6 +108,10 @@ struct module_exports exports = {
 		mod_destroy				  /* destroy function */
 };
 
+/*! \brief We expose internal variables via the statistic framework below.*/
+stat_export_t mod_stats[] = {{"total_messages", 0, &total_messages},
+		{"total_messages_err", 0, &total_messages_err}, {0, 0, 0}};
+
 static int mod_init(void)
 {
 	/* Register RPC commands. */
@@ -118,6 +125,14 @@ static int mod_init(void)
 		LM_ERR("Failed to initialize statistics\n");
 		return -1;
 	}
+
+#ifdef STATISTICS
+	/* register statistics */
+	if(register_module_stats("kafka", mod_stats) != 0) {
+		LM_ERR("Failed to register core statistics\n");
+		return -1;
+	}
+#endif
 
 	return 0;
 }

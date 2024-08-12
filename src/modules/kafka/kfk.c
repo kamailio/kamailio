@@ -35,7 +35,10 @@
 #include "../../core/mem/pkg.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/locking.h"
+#include "../../core/counters.h"
 
+extern stat_var *total_messages;
+extern stat_var *total_messages_err;
 extern int child_init_ok;
 extern int init_without_kafka;
 extern int log_without_overflow;
@@ -1045,9 +1048,11 @@ static int kfk_stats_add(const char *topic, rd_kafka_resp_err_t err)
 	lock_get(stats_lock);
 
 	stats_general->total++;
+	update_stat(total_messages, 1);
 
 	if(err) {
 		stats_general->error++;
+		update_stat(total_messages_err, 1);
 	}
 
 	LM_DBG("General stats: total = %" PRIu64 "  error = %" PRIu64 "\n",
