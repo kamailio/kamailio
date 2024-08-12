@@ -67,6 +67,7 @@ static int w_kafka_send_key(
 int child_init_ok = 0;
 int init_without_kafka = 0;
 int log_without_overflow = 0;
+int metadata_timeout = 2000;
 char *brokers_param = NULL; /**< List of brokers. */
 static int kafka_conf_param(modparam_t type, void *val);
 static int kafka_topic_param(modparam_t type, void *val);
@@ -88,7 +89,8 @@ static param_export_t params[] = {{"brokers", PARAM_STRING, &brokers_param},
 				(void *)kafka_conf_param},
 		{"topic", PARAM_STRING | USE_FUNC_PARAM, (void *)kafka_topic_param},
 		{"init_without_kafka", PARAM_INT, &init_without_kafka},
-		{"log_without_overflow", PARAM_INT, &log_without_overflow}, {0, 0, 0}};
+		{"log_without_overflow", PARAM_INT, &log_without_overflow},
+		{"metadata_timeout", PARAM_INT, &metadata_timeout}, {0, 0, 0}};
 
 /**
  * \brief Kafka :: Module interface
