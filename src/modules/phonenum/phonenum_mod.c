@@ -58,9 +58,9 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[]={
 	{"phonenum_match", (cmd_function)w_phonenum_match, 2, fixup_spve_spve,
-		0, ANY_ROUTE},
+		fixup_free_spve_spve, ANY_ROUTE},
 	{"phonenum_match_cn", (cmd_function)w_phonenum_match_cn, 3, fixup_spve_all,
-		0, ANY_ROUTE},
+		fixup_free_spve_all, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
