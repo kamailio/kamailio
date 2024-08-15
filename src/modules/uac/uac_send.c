@@ -79,6 +79,7 @@ typedef struct _uac_send_info
 	str s_apasswd;
 	char b_evparam[MAX_UACD_SIZE];
 	str s_evparam;
+	unsigned int cseqno;
 	unsigned int evroute;
 	unsigned int evcode;
 	unsigned int evtype;
@@ -180,6 +181,10 @@ int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_uintval(msg, param, res, _uac_req.evcode);
 		case 16:
 			return pv_get_uintval(msg, param, res, _uac_req.evtype);
+		case 17:
+			return pv_get_uintval(msg, param, res, _uac_req.flags);
+		case 18:
+			return pv_get_uintval(msg, param, res, _uac_req.cseqno);
 		default:
 			return pv_get_uintval(msg, param, res, _uac_req.flags);
 	}
@@ -214,6 +219,7 @@ int pv_set_uac_req(
 				_uac_req.evroute = 0;
 				_uac_req.evtype = 0;
 				_uac_req.evcode = 0;
+				_uac_req.cseqno = 0;
 				_uac_req.s_evparam.len = 0;
 			}
 			break;
@@ -465,6 +471,17 @@ int pv_set_uac_req(
 			}
 			_uac_req.flags = tval->ri;
 			break;
+		case 18:
+			if(tval == NULL) {
+				_uac_req.cseqno = 0;
+				return 0;
+			}
+			if(!(tval->flags & PV_VAL_INT)) {
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			_uac_req.cseqno = tval->ri;
+			break;
 	}
 	return 0;
 }
@@ -516,6 +533,8 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 15;
 			else if(strncmp(in->s, "evtype", 6) == 0)
 				sp->pvp.pvn.u.isname.name.n = 16;
+			else if(strncmp(in->s, "cseqno", 6) == 0)
+				sp->pvp.pvn.u.isname.name.n = 18;
 			else
 				goto error;
 			break;
@@ -861,6 +880,7 @@ int uac_req_send(void)
 		uac_r.cbp = (void *)tp;
 	}
 	uac_r.callid = (_uac_req.s_callid.len <= 0) ? NULL : &_uac_req.s_callid;
+	uac_r.cseqno = _uac_req.cseqno;
 	ret = _uac_send_tmb.t_request(&uac_r, /* UAC Req */
 			&_uac_req.s_ruri,			  /* Request-URI */
 			(_uac_req.s_turi.len <= 0) ? &_uac_req.s_ruri
