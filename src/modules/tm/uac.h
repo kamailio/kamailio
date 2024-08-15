@@ -51,6 +51,7 @@ typedef struct uac_req
 	transaction_cb *cb;
 	void *cbp;
 	str *callid;
+	unsigned int cseqno;
 } uac_req_t;
 
 /* macro for setting the values of uac_req_t struct */

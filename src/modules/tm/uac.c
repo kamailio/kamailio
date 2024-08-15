@@ -1086,6 +1086,7 @@ int request(uac_req_t *uac_r, str *ruri, str *to, str *from, str *next_hop)
 	str callid, fromtag;
 	dlg_t *dialog;
 	int res;
+	unsigned int cseqno;
 
 	if(check_params(uac_r, to, from) < 0)
 		goto err;
@@ -1094,9 +1095,10 @@ int request(uac_req_t *uac_r, str *ruri, str *to, str *from, str *next_hop)
 		generate_callid(&callid);
 	else
 		callid = *uac_r->callid;
+	cseqno = (uac_r->cseqno > 0) ? uac_r->cseqno : DEFAULT_CSEQ;
 	generate_fromtag(&fromtag, &callid, ruri);
 
-	if(new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, &dialog) < 0) {
+	if(new_dlg_uac(&callid, &fromtag, cseqno, from, to, &dialog) < 0) {
 		LM_ERR("Error while creating temporary dialog\n");
 		goto err;
 	}
