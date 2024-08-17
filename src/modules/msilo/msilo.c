@@ -185,7 +185,6 @@ static cmd_export_t cmds[] = {
 	{"m_store_addrs", (cmd_function)m_store3, 3, fixup_spve_all,
 			fixup_free_spve_all, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"m_dump", (cmd_function)m_dump_2, 0, 0, 0, REQUEST_ROUTE},
-	{"m_dump", (cmd_function)m_dump_2, 0, 0, 0, REQUEST_ROUTE},
 	{"m_dump", (cmd_function)m_dump_2, 1, fixup_spve_null,
 			fixup_free_spve_null, REQUEST_ROUTE},
 	{"bind_msilo", (cmd_function)bind_msilo, 1, 0, 0, ANY_ROUTE},
