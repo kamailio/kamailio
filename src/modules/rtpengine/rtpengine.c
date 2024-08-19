@@ -89,6 +89,7 @@
 #include "rtpengine_hash.h"
 #include "bencode.h"
 #include "config.h"
+#include "api.h"
 
 MODULE_VERSION
 
@@ -240,6 +241,8 @@ static int parse_viabranch(struct ng_flags_parse *ng_flags, struct sip_msg *msg,
 		str *viabranch, char *branch_buf);
 static int parse_from_to_tags(struct ng_flags_parse *ng_flags,
 		enum rtpe_operation op, struct sip_msg *msg);
+
+static int bind_rtpengine(rtpengine_api_t *api);
 
 static int rtpengine_offer_answer(
 		struct sip_msg *msg, void *d, enum rtpe_operation op, int more);
@@ -468,6 +471,7 @@ static cmd_export_t cmds[] = {
 	{"rtpengine_query_v", (cmd_function)w_rtpengine_query_v, 2,
 			fixup_rtpengine_query_v, fixup_free_rtpengine_query_v,
 			ANY_ROUTE},
+	{"bind_rtpengine", (cmd_function)bind_rtpengine, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -5777,5 +5781,23 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
 	sr_kemi_modules_add(sr_kemi_rtpengine_exports);
+	return 0;
+}
+
+
+/**
+ * load rtpengine module API
+ */
+static int bind_rtpengine(rtpengine_api_t *api)
+{
+	if(!api) {
+		LM_ERR("Invalid parameter value\n");
+		return -1;
+	}
+	api->start_recording = start_recording_f;
+	api->answer = rtpengine_answer1_f;
+	api->offer = rtpengine_offer1_f;
+	api->delete = rtpengine_delete1_f;
+
 	return 0;
 }
