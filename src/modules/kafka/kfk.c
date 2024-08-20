@@ -119,7 +119,7 @@ static int kfk_conf_configure();
 static int kfk_topic_list_configure();
 static int kfk_topic_exist(str *topic_name);
 static rd_kafka_topic_t *kfk_topic_get(str *topic_name);
-static int kfk_stats_add(const char *topic, rd_kafka_resp_err_t err);
+static int kfk_stats_add(str *topic, rd_kafka_resp_err_t err);
 static void kfk_stats_topic_free(kfk_stats_t *st_topic);
 
 /**
@@ -192,13 +192,16 @@ static void kfk_msg_delivered(
 	LM_DBG("Message delivered callback\n");
 
 	const char *topic_name = NULL;
+	str topic_name_str;
 	topic_name = rd_kafka_topic_name(rkmessage->rkt);
 	if(!topic_name) {
 		LM_ERR("Cannot get topic name for delivered message\n");
 		return;
 	}
 
-	kfk_stats_add(topic_name, rkmessage->err);
+	topic_name_str.s = (char *)topic_name;
+	topic_name_str.len = strlen(topic_name);
+	kfk_stats_add(&topic_name_str, rkmessage->err);
 
 	if(rkmessage->err) {
 		if(log_without_overflow) {
@@ -842,17 +845,26 @@ clean:
  */
 int kfk_message_send(str *topic_name, str *message, str *key)
 {
+	/* Poll to handle delivery reports */
+	rd_kafka_poll(rk, 0);
+	LM_DBG("Message polled\n");
+
 	/* Get topic from name. */
+	rd_kafka_resp_err_t err = RD_KAFKA_RESP_ERR__STATE;
 	rd_kafka_topic_t *rkt = kfk_topic_get(topic_name);
 
 	if(!child_init_ok) {
 		LM_ERR("kafka module is unusable: child init NOT ok! Skip sending "
 			   "message, message lost!");
+
+		kfk_stats_add(topic_name, err);
 		return -1;
 	}
 
 	if(!rkt) {
 		LM_ERR("Topic not found: %.*s\n", topic_name->len, topic_name->s);
+
+		kfk_stats_add(topic_name, err);
 		return -1;
 	}
 
@@ -876,7 +888,9 @@ int kfk_message_send(str *topic_name, str *message, str *key)
 			 * msg_opaque. */
 			   NULL)
 			== -1) {
-		rd_kafka_resp_err_t err = rd_kafka_last_error();
+		err = rd_kafka_last_error();
+		kfk_stats_add(topic_name, err);
+
 		if(!log_without_overflow) {
 			LM_ERR("Error sending message: %s\n", rd_kafka_err2str(err));
 		} else {
@@ -887,10 +901,6 @@ int kfk_message_send(str *topic_name, str *message, str *key)
 	}
 
 	LM_DBG("Message sent\n");
-
-	/* Poll to handle delivery reports */
-	rd_kafka_poll(rk, 0);
-	LM_DBG("Message polled\n");
 
 	return 0;
 }
@@ -976,18 +986,12 @@ static void kfk_stats_topic_free(kfk_stats_t *st_topic)
  * \return the new kfk_stats_t on success.
  * \return NULL on error.
  */
-static kfk_stats_t *kfk_stats_topic_new(
-		const char *topic, rd_kafka_resp_err_t err)
+static kfk_stats_t *kfk_stats_topic_new(str *topic, rd_kafka_resp_err_t err)
 {
 	kfk_stats_t *st = NULL;
 
-	if(!topic) {
+	if(!topic || topic->len == 0) {
 		LM_ERR("No topic\n");
-		goto error;
-	}
-	int topic_len = strlen(topic);
-	if(topic_len == 0) {
-		LM_ERR("Void topic\n");
 		goto error;
 	}
 
@@ -1005,14 +1009,12 @@ static kfk_stats_t *kfk_stats_topic_new(
 	}
 	memset(st->topic_name, 0, sizeof(str));
 
-	st->topic_name->s = shm_malloc(topic_len + 1);
+	st->topic_name->s = shm_malloc(topic->len + 1);
 	if(!st->topic_name->s) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
-	memcpy(st->topic_name->s, topic, topic_len);
-	st->topic_name->s[topic_len] = '\0';
-	st->topic_name->len = topic_len;
+	memcpy(st->topic_name->s, topic->s, topic->len);
 
 	st->total++;
 	if(err) {
@@ -1035,15 +1037,14 @@ error:
  *
  * \return 0 on success.
  */
-static int kfk_stats_add(const char *topic, rd_kafka_resp_err_t err)
+static int kfk_stats_add(str *topic, rd_kafka_resp_err_t err)
 {
-	LM_DBG("Adding stats: (topic: %s) (error: %d)\n", topic, err);
-
-	if(topic == NULL || *topic == '\0') {
+	if(topic == NULL || topic->len == 0) {
 		LM_ERR("No topic to add to statistics\n");
 		return -1;
 	}
-	int topic_len = strlen(topic);
+	LM_DBG("Adding stats: (topic: %.*s) (error: %d)\n", topic->len, topic->s,
+			err);
 
 	lock_get(stats_lock);
 
@@ -1062,8 +1063,8 @@ static int kfk_stats_add(const char *topic, rd_kafka_resp_err_t err)
 	while(*stats_pre != NULL) {
 		LM_DBG("Topic search: %.*s\n", (*stats_pre)->topic_name->len,
 				(*stats_pre)->topic_name->s);
-		if((*stats_pre)->topic_name->len == topic_len
-				&& strncmp(topic, (*stats_pre)->topic_name->s,
+		if((*stats_pre)->topic_name->len == topic->len
+				&& strncmp(topic->s, (*stats_pre)->topic_name->s,
 						   (*stats_pre)->topic_name->len)
 						   == 0) {
 			/* Topic match. */
@@ -1077,20 +1078,21 @@ static int kfk_stats_add(const char *topic, rd_kafka_resp_err_t err)
 
 	if(*stats_pre == NULL) {
 		/* Topic not found. */
-		LM_DBG("Topic: %s not found\n", topic);
+		LM_DBG("Topic: %.*s not found\n", topic->len, topic->s);
 
 		/* Add a new stats topic. */
 		kfk_stats_t *new_topic = NULL;
 		new_topic = kfk_stats_topic_new(topic, err);
 		if(!new_topic) {
-			LM_ERR("Failed to create stats for topic: %s\n", topic);
+			LM_ERR("Failed to create stats for topic: %.*s\n", topic->len,
+					topic->s);
 			goto error;
 		}
 
 		*stats_pre = new_topic;
-		LM_DBG("Created Topic stats (%s): total = %" PRIu64 "  error = %" PRIu64
-			   "\n",
-				topic, new_topic->total, new_topic->error);
+		LM_DBG("Created Topic stats (%.*s): total = %" PRIu64
+			   "  error = %" PRIu64 "\n",
+				topic->len, topic->s, new_topic->total, new_topic->error);
 
 		goto clean;
 	}
@@ -1102,8 +1104,8 @@ static int kfk_stats_add(const char *topic, rd_kafka_resp_err_t err)
 		current->error++;
 	}
 
-	LM_DBG("Topic stats (%s): total = %" PRIu64 "  error = %" PRIu64 "\n",
-			topic, current->total, current->error);
+	LM_DBG("Topic stats (%.*s): total = %" PRIu64 "  error = %" PRIu64 "\n",
+			topic->len, topic->s, current->total, current->error);
 
 clean:
 	lock_release(stats_lock);
