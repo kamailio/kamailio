@@ -212,6 +212,24 @@ static int check_via_address(
 	return -1;
 }
 
+/* check if rport has to be added or updated in Via
+ * - return 1 on true; 0 on false */
+int rport_test(struct sip_msg *msg)
+{
+	if(msg->msg_flags & FL_VIA_NORECEIVED) {
+		return 0;
+	}
+	/* check if rport needs to be updated:
+	 *  - if FL_FORCE_RPORT is set add it (and del. any previous version)
+	 *  - if via already contains an rport add it and overwrite the previous
+	 *  rport value if present (if you don't want to overwrite the previous
+	 *  version remove the comments) */
+	if(((msg->msg_flags | global_req_flags) & FL_FORCE_RPORT)
+			|| (msg->via1->rport /*&& msg->via1->rport->value.s==0*/)) {
+		return 1;
+	}
+	return 0;
+}
 
 /* check if IP address in Via != source IP address of signaling,
  * or the sender requires adding rport or received values */
@@ -219,6 +237,9 @@ int received_test(struct sip_msg *msg)
 {
 	int rcvd;
 
+	if(msg->msg_flags & FL_VIA_NORECEIVED) {
+		return 0;
+	}
 	rcvd = msg->via1->received || msg->via1->rport
 		   || check_via_address(&msg->rcv.src_ip, &msg->via1->host,
 				   msg->via1->port, received_dns);
@@ -230,6 +251,9 @@ int received_via_test(struct sip_msg *msg)
 {
 	int rcvd;
 
+	if(msg->msg_flags & FL_VIA_NORECEIVED) {
+		return 0;
+	}
 	rcvd = (check_via_address(&msg->rcv.src_ip, &msg->via1->host,
 					msg->via1->port, received_dns)
 			!= 0);
@@ -2039,7 +2063,7 @@ char *build_req_buf_from_sip_req(struct sip_msg *msg,
 	struct lump *path_anchor;
 	struct lump *path_lump;
 	str branch;
-	unsigned int flags;
+	msg_flags_t flags;
 	unsigned int udp_mtu;
 	struct dest_info di;
 	int ret;
@@ -2108,13 +2132,8 @@ after_local_via:
 		}
 	}
 
-	/* check if rport needs to be updated:
-	 *  - if FL_FORCE_RPORT is set add it (and del. any previous version)
-	 *  - if via already contains an rport add it and overwrite the previous
-	 *  rport value if present (if you don't want to overwrite the previous
-	 *  version remove the comments) */
-	if((flags & FL_FORCE_RPORT)
-			|| (msg->via1->rport /*&& msg->via1->rport->value.s==0*/)) {
+	/* check if rport needs to be updated */
+	if(rport_test(msg)) {
 		if((rport_buf = rport_builder(msg, &rport_len)) == 0) {
 			LM_ERR("rport_builder failed\n");
 			goto error00; /* free everything */
@@ -2518,8 +2537,7 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 		}
 	}
 	/* check if rport needs to be updated */
-	if(((msg->msg_flags | global_req_flags) & FL_FORCE_RPORT)
-			|| (msg->via1->rport /*&& msg->via1->rport->value.s==0*/)) {
+	if(rport_test(msg)) {
 		if((rport_buf = rport_builder(msg, &rport_len)) == 0) {
 			LM_ERR("rport_builder failed\n");
 			goto error01; /* free everything */
