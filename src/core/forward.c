@@ -482,14 +482,15 @@ int check_self_port(unsigned short port, unsigned short proto)
  *                 - send_info->send_flags is filled from the message
  *                 - if the send_socket member is null, a send_socket will be
  *                   chosen automatically
+ *   mbmode    - message build mode (for build_req_buf_from_sip_req())
  * WARNING: don't forget to zero-fill all the  unused members (a non-zero
  * random id along with proto==PROTO_TCP can have bad consequences, same for
  *   a bogus send_socket value)
  *
  * return: 0 (E_OK) on success; negative (E_*) on failure
  */
-int forward_request(struct sip_msg *msg, str *dst, unsigned short port,
-		struct dest_info *send_info)
+int forward_request_mode(struct sip_msg *msg, str *dst, unsigned short port,
+		struct dest_info *send_info, unsigned int mbmode)
 {
 	unsigned int len;
 	char *buf;
@@ -582,7 +583,7 @@ int forward_request(struct sip_msg *msg, str *dst, unsigned short port,
 			if(buf)
 				pkg_free(buf);
 			send_info->proto = proto;
-			buf = build_req_buf_from_sip_req(msg, &len, send_info, 0);
+			buf = build_req_buf_from_sip_req(msg, &len, send_info, mbmode);
 			if(!buf) {
 				LM_ERR("building failed\n");
 				ret = E_OUT_OF_MEM; /* most probable */
@@ -683,6 +684,13 @@ end:
 		STATS_REQ_FWD_DROP();
 #endif /* STATS_REQ_FWD_* */
 	return ret;
+}
+
+
+int forward_request(struct sip_msg *msg, str *dst, unsigned short port,
+		struct dest_info *send_info)
+{
+	return forward_request_mode(msg, dst, port, send_info, 0);
 }
 
 

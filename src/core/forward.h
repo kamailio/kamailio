@@ -80,6 +80,8 @@ int check_self(str *host, unsigned short port, unsigned short proto);
 int check_self_port(unsigned short port, unsigned short proto);
 int forward_request(struct sip_msg *msg, str *dst, unsigned short port,
 		struct dest_info *send_info);
+int forward_request_mode(struct sip_msg *msg, str *dst, unsigned short port,
+		struct dest_info *send_info, unsigned int mbmode);
 int update_sock_struct_from_via(
 		union sockaddr_union *to, struct sip_msg *msg, struct via_body *via);
 
