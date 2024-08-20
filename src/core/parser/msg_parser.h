@@ -82,44 +82,46 @@ typedef enum request_method
 	METHOD_OTHER = 524288	/*!< 524288 - 2^19 */
 } request_method_t;
 
-#define FL_FORCE_RPORT (1 << 0)	 /*!< force rport */
-#define FL_FORCE_ACTIVE (1 << 1) /*!< force active SDP */
-#define FL_SDP_IP_AFS (1 << 2)	 /*!< SDP IP rewritten */
-#define FL_SDP_PORT_AFS (1 << 3) /*!< SDP port rewritten */
-#define FL_SHM_CLONE (1 << 4)	 /*!< msg cloned in SHM as a single chunk */
+#define FL_FORCE_RPORT (1ULL << 0)	/*!< force rport */
+#define FL_FORCE_ACTIVE (1ULL << 1) /*!< force active SDP */
+#define FL_SDP_IP_AFS (1ULL << 2)	/*!< SDP IP rewritten */
+#define FL_SDP_PORT_AFS (1ULL << 3) /*!< SDP port rewritten */
+#define FL_SHM_CLONE (1ULL << 4)	/*!< msg cloned in SHM as a single chunk */
 #define FL_TIMEOUT \
-	(1 << 5) /*!< message belongs to an "expired" branch
+	(1ULL << 5) /*!< message belongs to an "expired" branch
 									(for failure route use) */
 #define FL_REPLIED \
-	(1 << 6) /*!< message branch received at least one reply
+	(1ULL << 6) /*!< message branch received at least one reply
 									(for failure route use) */
 #define FL_HASH_INDEX \
-	(1 << 7) /*!< msg->hash_index contains a valid value (tm use)*/
+	(1ULL << 7) /*!< msg->hash_index contains a valid value (tm use)*/
 
-#define FL_MTU_TCP_FB (1 << 8)
-#define FL_MTU_TLS_FB (1 << 9)
-#define FL_MTU_SCTP_FB (1 << 10)
-#define FL_ADD_LOCAL_RPORT (1 << 11) /*!< add 'rport' to local via hdr */
-#define FL_SDP_BODY (1 << 12)		 /*!< msg has SDP in body */
-#define FL_USE_UAC_FROM (1 << 13)	 /* take FROM hdr from UAC instead of UAS*/
-#define FL_USE_UAC_TO (1 << 14)		 /* take TO hdr from UAC instead of UAS */
-#define FL_TM_RPL_MATCHED (1 << 15)	 /* tm matched reply already */
-#define FL_RPL_SUSPENDED (1 << 16)	 /* for async reply processing */
-#define FL_BODY_MULTIPART (1 << 17)	 /* body modified is multipart */
-#define FL_RR_ADDED (1 << 18)		 /* Record-Route header was added */
-#define FL_UAC_AUTH (1 << 19)		 /* Proxy UAC-like authentication */
-#define FL_ADD_SRVID (1 << 20)		 /*!< add 'srvid' to local via hdr */
+#define FL_MTU_TCP_FB (1ULL << 8)
+#define FL_MTU_TLS_FB (1ULL << 9)
+#define FL_MTU_SCTP_FB (1ULL << 10)
+#define FL_ADD_LOCAL_RPORT (1ULL << 11) /*!< add 'rport' to local via hdr */
+#define FL_SDP_BODY (1ULL << 12)		/*!< msg has SDP in body */
+#define FL_USE_UAC_FROM (1ULL << 13) /* take FROM hdr from UAC instead of UAS*/
+#define FL_USE_UAC_TO (1ULL << 14)	 /* take TO hdr from UAC instead of UAS */
+#define FL_TM_RPL_MATCHED (1ULL << 15) /* tm matched reply already */
+#define FL_RPL_SUSPENDED (1ULL << 16)  /* for async reply processing */
+#define FL_BODY_MULTIPART (1ULL << 17) /* body modified is multipart */
+#define FL_RR_ADDED (1ULL << 18)	   /* Record-Route header was added */
+#define FL_UAC_AUTH (1ULL << 19)	   /* Proxy UAC-like authentication */
+#define FL_ADD_SRVID (1ULL << 20)	   /*!< add 'srvid' to local via hdr */
 #define FL_ADD_XAVP_VIA_PARAMS \
-	(1 << 21) /*!< add xavp fields to local via params */
+	(1ULL << 21) /*!< add xavp fields to local via params */
 #define FL_USE_XAVP_VIA_FIELDS \
-	(1 << 22)					 /*!< use xavp fields for local via attrs */
-#define FL_MSG_NOREPLY (1 << 23) /*!< do not send sip reply for request */
-#define FL_SIPTRACE (1 << 24) /*!< message to be traced in stateless replies */
-#define FL_ROUTE_ADDR (1 << 25) /*!< request has Route address for next hop */
+	(1ULL << 22)					/*!< use xavp fields for local via attrs */
+#define FL_MSG_NOREPLY (1ULL << 23) /*!< do not send sip reply for request */
+#define FL_SIPTRACE \
+	(1ULL << 24) /*!< message to be traced in stateless replies */
+#define FL_ROUTE_ADDR \
+	(1ULL << 25) /*!< request has Route address for next hop */
 #define FL_USE_OTCPID \
-	(1 << 26) /*!< request to be routed using outbound tcp con id */
+	(1ULL << 26) /*!< request to be routed using outbound tcp con id */
 #define FL_ADD_XAVP_VIA_REPLY_PARAMS \
-	(1 << 27) /*!< add xavp fields to first (previous sip node) via params */
+	(1ULL << 27) /*!< add xavp fields to first (previous sip node) via params */
 
 /* WARNING: Value (1 << 28) is reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */
