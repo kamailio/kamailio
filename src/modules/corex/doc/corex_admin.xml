@@ -980,6 +980,34 @@ event_route[dispatcher:dst-down] {
 </programlisting>
         </example>
     </section>
+	<section id="corex.f.forward_uac">
+		<title>
+			<function moreinfo="none">forward_uac()</function>
+		</title>
+        <para>
+			Forward received request with a single Via header, the one added
+			by &kamailio;, the other ones being removed. Useful in cases when
+			its reply should not be sent back (e.g., the reply was already sent
+			out from &kamailio;).
+        </para>
+        <para>
+        This function can be used in REQUEST_ROUTE.
+        </para>
+        <example>
+        <title><function>forward_uac</function> usage</title>
+        <programlisting format="linespecific">
+...
+request_route {
+    ...
+    sl_send_reply("200", "OK");
+    $du = "sip:mirror.com:5080";
+    forward_uac();
+    ...
+}
+...
+</programlisting>
+        </example>
+    </section>
 	<section id="corex.f.forward_reply">
 		<title>
 			<function moreinfo="none">forward_reply()</function>
