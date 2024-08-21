@@ -2107,6 +2107,7 @@ int main(int argc, char **argv)
 	int proto = PROTO_NONE;
 	int aproto = PROTO_NONE;
 	char *ahost = NULL;
+	char *socket_name = NULL;
 	int aport = 0;
 	char *options;
 	int ret;
@@ -2753,51 +2754,80 @@ int main(int argc, char **argv)
 					fprintf(stderr, "bad -l parameter\n");
 					goto error;
 				}
-				p = strrchr(optarg, '/');
-				if(p == NULL) {
-					p = optarg;
-				} else {
+
+				/* As many fields (address,advertise,name) as possible are separated by '/' */
+				int max_fields = 3;
+				char *fields[3];
+				int field_count = 0;
+
+				tmp = strdup(optarg);
+				char *token = strsep(&tmp, "/");
+				while(token != NULL && field_count < 3) {
+					fields[field_count++] = token;
+					token = strsep(&tmp, "/");
+					LM_ERR("token: %s\n", token);
+				}
+
+				/* Sanity check:
+				If only 1 provided, it is the address.
+				else all 3 fields must be provided.
+				 */
+				if(field_count == 1) {
+					fields[1] = "";
+					fields[2] = "";
+				} else if(field_count == 2) {
+					fields[2] = "";
+				} else if(field_count != max_fields) {
+					fprintf(stderr,
+							"wrong number of params "
+							"(did you forget empty params?): %s\n",
+							optarg);
+					goto error;
+				}
+
+				char *address = fields[0];
+				char *advertise_addr = strlen(fields[1]) > 0 ? fields[1] : NULL;
+				socket_name = strlen(fields[2]) > 0 ? fields[2] : NULL;
+
+				ahost = NULL;
+				aport = 0;
+				aproto = PROTO_NONE;
+				tmp_len = 0;
+				if(advertise_addr != NULL) {
 					if(strlen(optarg) >= KSR_TBUF_SIZE - 1) {
 						fprintf(stderr, "listen value too long: %s\n", optarg);
 						goto error;
 					}
-					strcpy(tbuf, optarg);
-					p = strrchr(tbuf, '/');
-					if(p == NULL) {
-						fprintf(stderr, "unexpected bug for listen: %s\n",
-								optarg);
-						goto error;
-					}
-					*p = '\0';
-					p++;
+
 					tmp_len = 0;
-					if(parse_phostport(p, &ahost, &tmp_len, &aport, &aproto)
+					if(parse_phostport(advertise_addr, &ahost, &tmp_len, &aport,
+							   &aproto)
 							< 0) {
 						fprintf(stderr,
 								"listen value with invalid advertise: %s\n",
-								optarg);
+								tmp);
 						goto error;
 					}
 					if(ahost) {
 						ahost[tmp_len] = '\0';
 					}
-					p = tbuf;
 				}
 				if((n_lst = parse_phostport_mh(
-							p, &tmp, &tmp_len, &port, &proto))
+							address, &tmp, &tmp_len, &port, &proto))
 						== 0) {
 					fprintf(stderr,
 							"bad -l address specifier: %s\n"
 							"Check disabled protocols\n",
-							optarg);
+							tmp);
 					goto error;
 				}
 				/* add a new addr. to our address list */
-				if(add_listen_advertise_iface(n_lst->name, n_lst->next, port,
-						   proto, aproto, ahost, aport, n_lst->flags)
+				if(add_listen_advertise_iface_name(n_lst->name, n_lst->next,
+						   port, proto, aproto, ahost, aport, socket_name,
+						   n_lst->flags)
 						!= 0) {
 					fprintf(stderr, "failed to add new listen address: %s\n",
-							optarg);
+							tmp);
 					free_name_lst(n_lst);
 					goto error;
 				}
