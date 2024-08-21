@@ -154,6 +154,70 @@ modparam("kafka", "topic", "name=third_topic")
 		  </programlisting>
 		</example>
 	  </section>
+
+	  <section id="kafka.p.init_without_kafka">
+		<title><varname>init_without_kafka</varname> (string)</title>
+		<para>
+		  Set to anything but 0, specifies if kamailio starts even when kafka brokers are not available at startup time.
+		</para>
+		<para>
+		  Default value is <emphasis>0</emphasis> (disabled).
+		</para>
+		<example>
+		  <title>Set <varname>init_without_kafka</varname> parameter</title>
+		  <programlisting format="linespecific">
+...
+modparam("kafka", "init_without_kafka", 1)
+...
+		  </programlisting>
+		</example>
+	  </section>
+
+	  <section id="kafka.p.metadata_timeout">
+		<title><varname>metadata_timeout</varname> (string)</title>
+		<para>
+		  Specifies, in milliseconds, how much time kamailio waits to get topic metadata info at startup time.
+		</para>
+		<para>
+		  Default value is <emphasis>2000 milliseconds</emphasis> (2 seconds).
+		</para>
+		<example>
+		  <title>Set <varname>metadata_timeout</varname> parameter</title>
+		  <programlisting format="linespecific">
+...
+modparam("kafka", "metadata_timeout", 1000)
+...
+		  </programlisting>
+		</example>
+	  </section>
+
+	  <section id="kafka.p.log_without_overflow">
+		<title><varname>log_without_overflow</varname> (string)</title>
+		<para>
+		  Set to anything but 0, will skip logging most of the error messages that may happen to each kafka message sent to the broker.
+		  This is useful when e.g. kafka broker goes down, not to overflow syslog with error messages.
+		</para>
+		<para>
+		  One can alwyas check this module's stats e.g. via RPC commands and see that errors happened or not.
+		  Those errors can have 2 causes:
+		  <itemizedlist>
+			<listitem>Some errors happened with the config functions kafka_send()/kafka_send_key(). This means that the message wasn't even enqueued by librdkafka.</listitem>
+			<listitem>Some errors happened on delivery callback, managed by librdkafka. This means that the message was enqueued by librdkafka, but not managed to be delivered to the broker.</listitem>
+		  </itemizedlist>
+		</para>
+		<para>
+		  Default value is <emphasis>0</emphasis> (disabled).
+		</para>
+		<example>
+		  <title>Set <varname>log_without_overflow</varname> parameter</title>
+		  <programlisting format="linespecific">
+...
+modparam("kafka", "log_without_overflow", 1)
+...
+		  </programlisting>
+		</example>
+	  </section>
+
 	</section>
 	<section>
 	  <title>Functions</title>
