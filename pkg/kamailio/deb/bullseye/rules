@@ -88,6 +88,7 @@ PACKAGE_GROUPS += mqtt
 PACKAGE_GROUPS += secsipid
 PACKAGE_GROUPS += lwsc
 PACKAGE_GROUPS += microhttpd
+PACKAGE_GROUPS += kafka
 
 # Module groups to be packaged onto kamailio-extra-modules.
 EXTRA_GROUPS += ev

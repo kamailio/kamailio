@@ -48,6 +48,7 @@ Build-Depends:
  libunistring-dev,
  libwebsockets-dev,
  libxml2-dev,
+ librdkafka-dev,
  openssl,
  pkg-config,
  python,
@@ -940,3 +941,19 @@ Depends:
 Description: Kamailio SIP server - package for "nice to have" utilities
  This is a metapackage for easy installation various useful tools that may be
  handy on server with Kamailio installed.
+
+Package: kamailio-kafka-modules
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Kafka module for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides an embedded kafka producer using librdkafka.
