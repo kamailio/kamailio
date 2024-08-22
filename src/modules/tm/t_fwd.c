@@ -1348,9 +1348,9 @@ void e2e_cancel(struct sip_msg *cancel_msg, struct cell *t_cancel,
 		for(i = 0; i < t_invite->nr_of_outgoings; i++) {
 			if(cancel_bm & (1 << i)) {
 				/* it's safe to get the reply lock since e2e_cancel is
-			 * called with the cancel as the "current" transaction so
-			 * at most t_cancel REPLY_LOCK is held in this process =>
-			 * no deadlock possibility */
+				 * called with the cancel as the "current" transaction so
+				 * at most t_cancel REPLY_LOCK is held in this process =>
+				 * no deadlock possibility */
 				ret = cancel_branch(t_invite, i, reason,
 						cfg_get(tm, tm_cfg, cancel_b_flags)
 								| ((t_invite->uac[i].request.buffer == NULL)
@@ -1391,8 +1391,8 @@ void e2e_cancel(struct sip_msg *cancel_msg, struct cell *t_cancel,
 				if(t_invite->uac[i].last_received >= 100) {
 					/* Provisional reply received on this branch, send CANCEL */
 					/* we do need to stop the retr. timers if the request is not
-				 * an invite and since the stop_rb_retr() cost is lower than
-				 * the invite check we do it always --andrei */
+					 * an invite and since the stop_rb_retr() cost is lower than
+					 * the invite check we do it always --andrei */
 					stop_rb_retr(&t_invite->uac[i].request);
 					if(SEND_BUFFER(&t_cancel->uac[i].request) == -1) {
 						LM_ERR("e2e cancel - send failed\n");
@@ -1409,12 +1409,12 @@ void e2e_cancel(struct sip_msg *cancel_msg, struct cell *t_cancel,
 								&t_cancel->uac[i].request);
 				} else {
 					/* No provisional response received, stop
-				 * retransmission timers */
+					 * retransmission timers */
 					if(!(cfg_get(tm, tm_cfg, cancel_b_flags)
 							   & F_CANCEL_B_FORCE_RETR))
 						stop_rb_retr(&t_invite->uac[i].request);
 					/* no need to stop fr, it will be stopped by relay_reply
-				 * put_on_wait -- andrei */
+					 * put_on_wait -- andrei */
 					/* Generate faked reply */
 					if(cfg_get(tm, tm_cfg, cancel_b_flags)
 							& F_CANCEL_B_FAKE_REPLY) {
