@@ -240,6 +240,16 @@ int kfk_init(char *brokers)
 	 */
 	rk_conf = rd_kafka_conf_new();
 
+	/* Add brokers */
+	LM_DBG("Adding brokers: %s\n", brokers);
+	if(rd_kafka_conf_set(
+			   rk_conf, "bootstrap.servers", brokers, errstr, sizeof(errstr))
+			!= RD_KAFKA_CONF_OK) {
+		LM_ERR("No valid brokers specified: %s\n", brokers);
+		return -1;
+	}
+	LM_DBG("Added brokers: %s\n", brokers);
+
 	/* Set logger */
 	rd_kafka_conf_set_log_cb(rk_conf, kfk_logger);
 
@@ -266,14 +276,6 @@ int kfk_init(char *brokers)
 	}
 	rk_conf = NULL; /* Now owned by producer. */
 	LM_DBG("Producer handle created\n");
-
-	LM_DBG("Adding broker: %s\n", brokers);
-	/* Add brokers */
-	if(rd_kafka_brokers_add(rk, brokers) == 0) {
-		LM_ERR("No valid brokers specified: %s\n", brokers);
-		return -1;
-	}
-	LM_DBG("Added broker: %s\n", brokers);
 
 	/* Topic creation and configuration. */
 	if(kfk_topic_list_configure()) {
