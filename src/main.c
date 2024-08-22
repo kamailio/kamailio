@@ -2759,14 +2759,22 @@ int main(int argc, char **argv)
 				}
 
 				/* As many fields (address,advertise,name) as possible are separated by '/' */
-				int max_fields = 3;
-				char *fields[3];
-				int field_count = 0;
+				char *listen_fields[3];
+				int listen_field_count = 0;
+				char *token = 0;
+				char *tempsd = 0;
 
-				tmp = strdup(optarg);
-				char *token = strsep(&tmp, "/");
-				while(token != NULL && field_count < 3) {
-					fields[field_count++] = token;
+				tmp = shm_char_dup(optarg);
+				tempsd = tmp;
+
+				LM_ERR("tmp: %s\n", tmp);
+
+				token = strsep(&tmp, "/");
+
+				LM_ERR("token: %s\n", token);
+
+				while(token != NULL && listen_field_count < 3) {
+					listen_fields[listen_field_count++] = token;
 					token = strsep(&tmp, "/");
 					LM_ERR("token: %s\n", token);
 				}
@@ -2775,12 +2783,12 @@ int main(int argc, char **argv)
 				If only 1 provided, it is the address.
 				else all 3 fields must be provided.
 				 */
-				if(field_count == 1) {
-					fields[1] = "";
-					fields[2] = "";
-				} else if(field_count == 2) {
-					fields[2] = "";
-				} else if(field_count != max_fields) {
+				if(listen_field_count == 1) {
+					listen_fields[1] = "";
+					listen_fields[2] = "";
+				} else if(listen_field_count == 2) {
+					listen_fields[2] = "";
+				} else if(listen_field_count != 3) {
 					fprintf(stderr,
 							"wrong number of params "
 							"(did you forget empty params?): %s\n",
@@ -2788,9 +2796,14 @@ int main(int argc, char **argv)
 					goto error;
 				}
 
-				char *address = fields[0];
-				char *advertise_addr = strlen(fields[1]) > 0 ? fields[1] : NULL;
-				socket_name = strlen(fields[2]) > 0 ? fields[2] : NULL;
+				char *address = listen_fields[0];
+				char *advertise_addr =
+						strlen(listen_fields[1]) > 0 ? listen_fields[1] : NULL;
+				socket_name =
+						strlen(listen_fields[2]) > 0 ? listen_fields[2] : NULL;
+
+				LM_ERR("add [%s] adv [%s] name [%s]\n", address, advertise_addr,
+						socket_name);
 
 				ahost = NULL;
 				aport = 0;
@@ -2808,7 +2821,7 @@ int main(int argc, char **argv)
 							< 0) {
 						fprintf(stderr,
 								"listen value with invalid advertise: %s\n",
-								tmp);
+								optarg);
 						goto error;
 					}
 					if(ahost) {
@@ -2821,7 +2834,7 @@ int main(int argc, char **argv)
 					fprintf(stderr,
 							"bad -l address specifier: %s\n"
 							"Check disabled protocols\n",
-							tmp);
+							optarg);
 					goto error;
 				}
 				/* add a new addr. to our address list */
@@ -2830,11 +2843,12 @@ int main(int argc, char **argv)
 						   n_lst->flags)
 						!= 0) {
 					fprintf(stderr, "failed to add new listen address: %s\n",
-							tmp);
+							optarg);
 					free_name_lst(n_lst);
 					goto error;
 				}
 				free_name_lst(n_lst);
+				shm_free(tempsd);
 				break;
 			case 'n':
 				if(optarg == NULL) {
