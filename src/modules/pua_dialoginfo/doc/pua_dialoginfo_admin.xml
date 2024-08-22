@@ -233,7 +233,7 @@
 	<section>
 		<title>Parameters</title>
 
-		<section>
+		<section id="pua_dialoginfo.p.include_callid">
 		<title><varname>include_callid</varname> (int)</title>
 		<para>
 			If this parameter is set, the optional call-id will be put into the
@@ -252,7 +252,7 @@ modparam("pua_dialoginfo", "include_callid", 0)
 		</example>
 		</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.include_tags">
 		<title><varname>include_tags</varname> (int)</title>
 		<para>
 			If this parameter is set, the local and remote tag will be put
@@ -271,7 +271,7 @@ modparam("pua_dialoginfo", "include_tags", 0)
 		</example>
 		</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.include_localremote">
 		<title><varname>include_localremote</varname> (int)</title>
 		<para>
 			If this parameter is set, the optional local and remote elements
@@ -291,7 +291,7 @@ modparam("pua_dialoginfo", "include_localremote", 0)
 		</example>
 		</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.override_lifetime">
 		<title><varname>override_lifetime</varname> (int)</title>
 		<para>
 			The PUBLISH requests used to send the dialog-info contain an Expires header.
@@ -314,7 +314,7 @@ modparam("pua_dialoginfo", "override_lifetime", 300)
 		</example>
 		</section>
 
-	<section>
+	<section id="pua_dialoginfo.p.include_req_uri">
 		<title><varname>include_req_uri</varname> (int)</title>
 		<para>
 			controls if R-URI is going to be used instead of To header value in
@@ -333,7 +333,7 @@ modparam("pua_dialoginfo", "include_req_uri", 1)
 		</example>
 	</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.caller_confirmed">
 		<title><varname>caller_confirmed</varname> (int)</title>
 		<para>
 			Usually the dialog-info of the caller will be
@@ -359,7 +359,7 @@ modparam("pua_dialoginfo", "caller_confirmed", 1)
 		</example>
 		</section>
 
-	<section>
+	<section id="pua_dialoginfo.p.send_publish_flag">
 		<title><varname>send_publish_flag</varname> (int)</title>
 		<para>
 			This message flag indicates whether to send PUBLISH requests or not.
@@ -378,7 +378,7 @@ modparam("pua_dialoginfo", "send_publish_flag", 8)
 		</example>
 		</section>
 
-	<section>
+	<section id="pua_dialoginfo.p.disable_caller_publish_flag">
 		<title><varname>disable_caller_publish_flag</varname> (int)</title>
 		<para>
 			This message flag indicates whether to send caller (initiator) PUBLISH requests or not.
@@ -397,7 +397,7 @@ modparam("pua_dialoginfo", "disable_caller_publish_flag", 9)
 		</example>
 		</section>
 
-	<section>
+	<section id="pua_dialoginfo.p.disable_callee_publish_flag">
 		<title><varname>disable_callee_publish_flag</varname> (int)</title>
 		<para>
 			This message flag indicates whether to send callee (recipient) PUBLISH requests or not.
@@ -416,7 +416,7 @@ modparam("pua_dialoginfo", "disable_callee_publish_flag", 10)
 		</example>
 		</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.use_pubruri_avps">
 		<title><varname>use_pubruri_avps</varname> (int)</title>
 		<para>
 			Get Publish R-Uri from avps (see corresponding avp params), not from request to/from uri.
@@ -452,7 +452,7 @@ modparam("pua_dialoginfo", "refresh_pubruri_avps_flag", 11)
 		</example>
 		</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.pubruri_caller_avp">
 		<title><varname>pubruri_caller_avp</varname> (str)</title>
 		<para>
 			If use_pubruri_avps is enabled, PUBLISH-requests reporting dialog-information about the caller (entity=caller) are sent using the value of the specified avp as R-Uri.
@@ -472,7 +472,7 @@ modparam("pua_dialoginfo", "pubruri_caller_avp", "$avp(s:puburis_caller)")
 		</example>
 		</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.pubruri_callee_avp">
 		<title><varname>pubruri_callee_avp</varname> (str)</title>
 		<para>
 			If use_pubruri_avps is enabled, PUBLISH-requests reporting dialog-information about the callee (entity=callee) are sent using the value of the specified avp as R-Uri.
@@ -536,7 +536,7 @@ modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
 		</example>
 		</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.callee_trying">
 		<title><varname>callee_trying</varname> (int)</title>
 		<para>
 			If this parameter is set, a "Trying" state will be sent for both the
@@ -555,70 +555,70 @@ modparam("pua_dialoginfo", "callee_trying", 1)
 		</example>
 		</section>
 
-                <section>
-                <title><varname>caller_entity_when_publish_disabled</varname> (int)</title>
-                <para>
-                        Must be a valid sip uri.
-                        If this parameter is set, this uri is used as caller entity in
-                        publish xml body if associated dialog has the flag
-                        disable_caller_publish_flag set.
-                        Note only the flag received on dialog creation is used to activate
-                        this feature.
-                </para>
-                <para>
-                        <emphasis>Default value is <quote>NULL</quote>.</emphasis>
-                </para>
-                <example>
-                        <title>Set <varname>caller_entity_when_publish_disabled</varname> parameter</title>
-                        <programlisting format="linespecific">
+		<section id="pua_dialoginfo.p.caller_entity_when_publish_disabled">
+		<title><varname>caller_entity_when_publish_disabled</varname> (int)</title>
+		<para>
+			Must be a valid sip uri.
+			If this parameter is set, this uri is used as caller entity in
+			publish xml body if associated dialog has the flag
+			disable_caller_publish_flag set.
+			Note only the flag received on dialog creation is used to activate
+			this feature.
+		</para>
+		<para>
+			<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>caller_entity_when_publish_disabled</varname> parameter</title>
+			<programlisting format="linespecific">
 ...
 modparam("pua_dialoginfo", "caller_entity_when_publish_disabled", "sip:caller@publish.disabled.com")
 ...
-			</programlisting>
-                </example>
-                </section>
+</programlisting>
+		</example>
+		</section>
 
-                <section>
-                <title><varname>callee_entity_when_publish_disabled</varname> (int)</title>
-                <para>
-                        Must be a valid sip uri.
-                        If this parameter is set, this uri is used as callee entity in
-                        publish xml body if associated dialog has the flag
-                        disable_callee_publish_flag set.
-                        Note only the flag received on dialog creation is used to activate
-                        this feature.
-                </para>
-                <para>
-                        <emphasis>Default value is <quote>NULL</quote>.</emphasis>
-                </para>
-                <example>
-                        <title>Set <varname>callee_entity_when_publish_disabled</varname> parameter</title>
-                        <programlisting format="linespecific">
+		<section id="pua_dialoginfo.p.callee_entity_when_publish_disabled">
+		<title><varname>callee_entity_when_publish_disabled</varname> (int)</title>
+		<para>
+			Must be a valid sip uri.
+			If this parameter is set, this uri is used as callee entity in
+			publish xml body if associated dialog has the flag
+			disable_callee_publish_flag set.
+			Note only the flag received on dialog creation is used to activate
+			this feature.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>callee_entity_when_publish_disabled</varname> parameter</title>
+			<programlisting format="linespecific">
 ...
 modparam("pua_dialoginfo", "callee_entity_when_publish_disabled", "sip:callee@publish.disabled.com")
 ...
-			</programlisting>
-                </example>
-                </section>
+</programlisting>
+		</example>
+		</section>
 
-                <section>
-                <title><varname>publish_dialog_req_within</varname> (int)</title>
-                <para>
-                        If this parameter is set to 1, subsequents requests received in dialog generate
-                        corresponding publish request.
-                </para>
-                <para>
-                        <emphasis>Default value is <quote>1</quote>.</emphasis>
-                </para>
-                <example>
-                        <title>Set <varname>publish_dialog_req_within</varname> parameter</title>
-                        <programlisting format="linespecific">
+		<section id="pua_dialoginfo.p.publish_dialog_req_within">
+		<title><varname>publish_dialog_req_within</varname> (int)</title>
+		<para>
+			If this parameter is set to 1, subsequents requests received in dialog generate
+			corresponding publish request.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>publish_dialog_req_within</varname> parameter</title>
+			<programlisting format="linespecific">
 ...
 modparam("pua_dialoginfo", "publish_dialog_req_within", 0)
 ...
-			</programlisting>
-                </example>
-                </section>
+</programlisting>
+		</example>
+		</section>
 
 		<section id="pua_dialoginfo.p.local_identity_dlg_var">
 		<title><varname>local_identity_dlg_var</varname> (str)</title>
@@ -639,24 +639,24 @@ modparam("pua_dialoginfo", "local_identity_dlg_var", "local_identity")
 		</example>
 		</section>
 
-        <section id="pua_dialoginfo.p.attribute_display">
-            <title><varname>attribute_display</varname> (int)</title>
-            <para>
-            If set to 1, the display name attribute is added with user part of the
-            URI for local and remote targets.
-            </para>
-            <para>
-                <emphasis>Default value is <quote>0</quote>.</emphasis>
-            </para>
-            <example>
-                <title>Set <varname>attribute_display</varname> parameter</title>
-                <programlisting format="linespecific">
+		<section id="pua_dialoginfo.p.attribute_display">
+		<title><varname>attribute_display</varname> (int)</title>
+		<para>
+			If set to 1, the display name attribute is added with user part of the
+			URI for local and remote targets.
+		</para>
+		<para>
+				<emphasis>Default value is <quote>0</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>attribute_display</varname> parameter</title>
+			<programlisting format="linespecific">
 ...
 modparam("pua_dialoginfo", "attribute_display", 1)
 ...
 </programlisting>
-            </example>
-        </section>
+		</example>
+		</section>
 
     </section>
 
@@ -665,4 +665,3 @@ modparam("pua_dialoginfo", "attribute_display", 1)
 	</section>
 
 </chapter>
-
