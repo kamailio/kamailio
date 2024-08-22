@@ -1008,6 +1008,32 @@ request_route {
 </programlisting>
         </example>
     </section>
+	<section id="corex.f.forward_uac_uri">
+		<title>
+			<function moreinfo="none">forward_uac_uri(vuri)</function>
+		</title>
+        <para>
+			Similar to forward_uac() with the posibility to provide the target
+			address as a SIP URI via the parameter vuri. The parameter vuri can
+			contain variables.
+        </para>
+        <para>
+        This function can be used in REQUEST_ROUTE.
+        </para>
+        <example>
+        <title><function>forward_uac</function> usage</title>
+        <programlisting format="linespecific">
+...
+request_route {
+    ...
+    sl_send_reply("200", "OK");
+    forward_uac_uri("sip:mirror.com:5080");
+    ...
+}
+...
+</programlisting>
+        </example>
+    </section>
 	<section id="corex.f.forward_reply">
 		<title>
 			<function moreinfo="none">forward_reply()</function>
