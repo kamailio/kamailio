@@ -2129,10 +2129,11 @@ int t_lookup_ident_filter(struct cell **trans, unsigned int hash_index,
 
 	LOCK_HASH(hash_index);
 
-#ifndef E2E_CANCEL_HOP_BY_HOP
-#warning "t_lookup_ident() can only reliably match INVITE transactions in " \
-	"E2E_CANCEL_HOP_BY_HOP mode"
-#endif
+	/* ! E2E_CANCEL_HOP_BY_HOP */
+	if(!tm_e2e_cancel_hop_by_hop) {
+		LM_WARN("can only reliably match INVITE transactions in "
+				"E2E_CANCEL_HOP_BY_HOP mode\n");
+	}
 	hash_bucket = &(get_tm_table()->entries[hash_index]);
 	/* all the transactions from the entry are compared */
 	clist_foreach(hash_bucket, p_cell, next_c)

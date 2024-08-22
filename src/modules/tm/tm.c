@@ -504,6 +504,7 @@ static param_export_t params[] = {
 	{"dns_reuse_rcv_socket", PARAM_INT, &tm_dns_reuse_rcv_socket},
 	{"local_cancel_reason", PARAM_INT, &default_tm_cfg.local_cancel_reason},
 	{"e2e_cancel_reason", PARAM_INT, &default_tm_cfg.e2e_cancel_reason},
+	{"e2e_cancel_hop_by_hop", PARAM_INT, &tm_e2e_cancel_hop_by_hop},
 	{"xavp_contact", PARAM_STR, &ulattrs_xavp_name},
 	{"event_callback", PARAM_STR, &tm_event_callback},
 	{"relay_100", PARAM_INT, &default_tm_cfg.relay_100},

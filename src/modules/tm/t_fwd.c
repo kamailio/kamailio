@@ -61,8 +61,10 @@
 
 extern int tm_failure_exec_mode;
 extern int tm_dns_reuse_rcv_socket;
-
 static int goto_on_branch = 0, branch_route = 0;
+
+/* E2E_CANCEL_HOP_BY_HOP - cancel hop by hop */
+int tm_e2e_cancel_hop_by_hop = 1;
 
 void t_on_branch(unsigned int go_to)
 {
@@ -1269,10 +1271,8 @@ void e2e_cancel(struct sip_msg *cancel_msg, struct cell *t_cancel,
 		struct cell *t_invite)
 {
 	branch_bm_t cancel_bm;
-#ifndef E2E_CANCEL_HOP_BY_HOP
-	branch_bm_t tmp_bm;
+	struct cancel_info cancel_data;
 	int reply_status;
-#endif /* E2E_CANCEL_HOP_BY_HOP */
 	struct cancel_reason *reason;
 	int free_reason;
 	int i;
@@ -1316,117 +1316,121 @@ void e2e_cancel(struct sip_msg *cancel_msg, struct cell *t_cancel,
 		return;
 	}
 
-#ifdef E2E_CANCEL_HOP_BY_HOP
-	/* we don't need to set t_cancel label to be the same as t_invite if
-	 * we do hop by hop cancel. The cancel transaction will have a different
-	 * label, but this is not a problem since this transaction is only used to
-	 * send a reply back. The cancels sent upstream will be part of the invite
-	 * transaction (local_cancel retr. bufs) and they will be generated with
-	 * the same via as the invite.
-	 * Note however that setting t_cancel label the same as t_invite will work
-	 * too (the upstream cancel replies will properly match the t_invite
-	 * transaction and will not match the t_cancel because t_cancel will always
-	 * have 0 branches and we check for the branch number in
-	 * t_reply_matching() ).
-	 */
-	free_reason = 0;
-	reason = 0;
-	if(likely(t_invite->uas.cancel_reas == 0)) {
-		reason = cancel_reason_pack(
-				CANCEL_REAS_RCVD_CANCEL, cancel_msg, t_invite);
-		/* set if not already set */
-		if(unlikely(reason
-					&& atomic_cmpxchg_long((void *)&t_invite->uas.cancel_reas,
-							   0, (long)reason)
-							   != 0)) {
-			/* already set, failed to re-set it */
-			free_reason = 1;
+	/* E2E_CANCEL_HOP_BY_HOP */
+	if(tm_e2e_cancel_hop_by_hop) {
+		/* we don't need to set t_cancel label to be the same as t_invite if
+		 * we do hop by hop cancel. The cancel transaction will have a different
+		 * label, but this is not a problem since this transaction is only used to
+		 * send a reply back. The cancels sent upstream will be part of the invite
+		 * transaction (local_cancel retr. bufs) and they will be generated with
+		 * the same via as the invite.
+		 * Note however that setting t_cancel label the same as t_invite will work
+		 * too (the upstream cancel replies will properly match the t_invite
+		 * transaction and will not match the t_cancel because t_cancel will always
+		 * have 0 branches and we check for the branch number in
+		 * t_reply_matching() ).
+		 */
+		free_reason = 0;
+		reason = 0;
+		if(likely(t_invite->uas.cancel_reas == 0)) {
+			reason = cancel_reason_pack(
+					CANCEL_REAS_RCVD_CANCEL, cancel_msg, t_invite);
+			/* set if not already set */
+			if(unlikely(reason
+						&& atomic_cmpxchg_long(
+								   (void *)&t_invite->uas.cancel_reas, 0,
+								   (long)reason)
+								   != 0)) {
+				/* already set, failed to re-set it */
+				free_reason = 1;
+			}
 		}
-	}
-	for(i = 0; i < t_invite->nr_of_outgoings; i++) {
-		if(cancel_bm & (1 << i)) {
-			/* it's safe to get the reply lock since e2e_cancel is
+		for(i = 0; i < t_invite->nr_of_outgoings; i++) {
+			if(cancel_bm & (1 << i)) {
+				/* it's safe to get the reply lock since e2e_cancel is
 			 * called with the cancel as the "current" transaction so
 			 * at most t_cancel REPLY_LOCK is held in this process =>
 			 * no deadlock possibility */
-			ret = cancel_branch(t_invite, i, reason,
-					cfg_get(tm, tm_cfg, cancel_b_flags)
-							| ((t_invite->uac[i].request.buffer == NULL)
-											? F_CANCEL_B_FAKE_REPLY
-											: 0) /* blind UAC? */
-			);
-			if(ret < 0)
-				cancel_bm &= ~(1 << i);
-			if(ret < lowest_error)
-				lowest_error = ret;
+				ret = cancel_branch(t_invite, i, reason,
+						cfg_get(tm, tm_cfg, cancel_b_flags)
+								| ((t_invite->uac[i].request.buffer == NULL)
+												? F_CANCEL_B_FAKE_REPLY
+												: 0) /* blind UAC? */
+				);
+				if(ret < 0)
+					cancel_bm &= ~(1 << i);
+				if(ret < lowest_error)
+					lowest_error = ret;
+			}
 		}
-	}
-	if(unlikely(free_reason)) {
-		/* reason was not set as the global reason => free it */
-		shm_free(reason);
-	}
-#else  /* ! E2E_CANCEL_HOP_BY_HOP */
-	/* fix label -- it must be same for reply matching (the label is part of
-	 * the generated via branch for the cancels sent upstream and if it
-	 * would be different form the one in the INVITE the transactions would not
-	 * match */
-	t_cancel->label = t_invite->label;
-	t_cancel->nr_of_outgoings = t_invite->nr_of_outgoings;
-	/* ... and install CANCEL UACs */
-	for(i = 0; i < t_invite->nr_of_outgoings; i++)
-		if((cancel_bm & (1 << i)) && (t_invite->uac[i].last_received >= 100)) {
-			ret = e2e_cancel_branch(cancel_msg, t_cancel, t_invite, i);
-			if(ret < 0)
-				cancel_bm &= ~(1 << i);
-			if(ret < lowest_error)
-				lowest_error = ret;
+		if(unlikely(free_reason)) {
+			/* reason was not set as the global reason => free it */
+			shm_free(reason);
 		}
+	} else { /* ! E2E_CANCEL_HOP_BY_HOP */
+		/* fix label -- it must be same for reply matching (the label is part of
+		 * the generated via branch for the cancels sent upstream and if it
+		 * would be different form the one in the INVITE the transactions would not
+		 * match */
+		t_cancel->label = t_invite->label;
+		t_cancel->nr_of_outgoings = t_invite->nr_of_outgoings;
+		/* ... and install CANCEL UACs */
+		for(i = 0; i < t_invite->nr_of_outgoings; i++)
+			if((cancel_bm & (1 << i))
+					&& (t_invite->uac[i].last_received >= 100)) {
+				ret = e2e_cancel_branch(cancel_msg, t_cancel, t_invite, i);
+				if(ret < 0)
+					cancel_bm &= ~(1 << i);
+				if(ret < lowest_error)
+					lowest_error = ret;
+			}
 
-	/* send them out */
-	for(i = 0; i < t_cancel->nr_of_outgoings; i++) {
-		if(cancel_bm & (1 << i)) {
-			if(t_invite->uac[i].last_received >= 100) {
-				/* Provisional reply received on this branch, send CANCEL */
-				/* we do need to stop the retr. timers if the request is not
+		/* send them out */
+		for(i = 0; i < t_cancel->nr_of_outgoings; i++) {
+			if(cancel_bm & (1 << i)) {
+				if(t_invite->uac[i].last_received >= 100) {
+					/* Provisional reply received on this branch, send CANCEL */
+					/* we do need to stop the retr. timers if the request is not
 				 * an invite and since the stop_rb_retr() cost is lower than
 				 * the invite check we do it always --andrei */
-				stop_rb_retr(&t_invite->uac[i].request);
-				if(SEND_BUFFER(&t_cancel->uac[i].request) == -1) {
-					LM_ERR("e2e cancel - send failed\n");
-				} else {
-					if(unlikely(has_tran_tmcbs(t_cancel, TMCB_REQUEST_SENT)))
-						run_trans_callbacks_with_buf(TMCB_REQUEST_SENT,
-								&t_cancel->uac[i].request, cancel_msg, 0,
-								TMCB_LOCAL_F);
-				}
-				if(start_retr(&t_cancel->uac[i].request) != 0)
-					LM_CRIT("BUG: failed to start retr."
-							" for %p\n",
-							&t_cancel->uac[i].request);
-			} else {
-				/* No provisional response received, stop
-				 * retransmission timers */
-				if(!(cfg_get(tm, tm_cfg, cancel_b_flags)
-						   & F_CANCEL_B_FORCE_RETR))
 					stop_rb_retr(&t_invite->uac[i].request);
-				/* no need to stop fr, it will be stopped by relay_reply
+					if(SEND_BUFFER(&t_cancel->uac[i].request) == -1) {
+						LM_ERR("e2e cancel - send failed\n");
+					} else {
+						if(unlikely(
+								   has_tran_tmcbs(t_cancel, TMCB_REQUEST_SENT)))
+							run_trans_callbacks_with_buf(TMCB_REQUEST_SENT,
+									&t_cancel->uac[i].request, cancel_msg, 0,
+									TMCB_LOCAL_F);
+					}
+					if(start_retr(&t_cancel->uac[i].request) != 0)
+						LM_CRIT("BUG: failed to start retr."
+								" for %p\n",
+								&t_cancel->uac[i].request);
+				} else {
+					/* No provisional response received, stop
+				 * retransmission timers */
+					if(!(cfg_get(tm, tm_cfg, cancel_b_flags)
+							   & F_CANCEL_B_FORCE_RETR))
+						stop_rb_retr(&t_invite->uac[i].request);
+					/* no need to stop fr, it will be stopped by relay_reply
 				 * put_on_wait -- andrei */
-				/* Generate faked reply */
-				if(cfg_get(tm, tm_cfg, cancel_b_flags)
-						& F_CANCEL_B_FAKE_REPLY) {
-					LOCK_REPLIES(t_invite);
-					reply_status = relay_reply(
-							t_invite, FAKED_REPLY, i, 487, &tmp_bm, 1);
-					if(reply_status == RPS_ERROR) {
-						lowest_error = -1;
-					} else if(reply_status == RPS_TGONE) {
-						break;
+					/* Generate faked reply */
+					if(cfg_get(tm, tm_cfg, cancel_b_flags)
+							& F_CANCEL_B_FAKE_REPLY) {
+						LOCK_REPLIES(t_invite);
+						reply_status = relay_reply(
+								t_invite, FAKED_REPLY, i, 487, &cancel_data, 1);
+						if(reply_status == RPS_ERROR) {
+							lowest_error = -1;
+						} else if(reply_status == RPS_TGONE) {
+							break;
+						}
 					}
 				}
 			}
 		}
-	}
-#endif /*E2E_CANCEL_HOP_BY_HOP */
+	} /* E2E_CANCEL_HOP_BY_HOP */
 
 	/* if error occurred, let it know upstream (final reply
 	 * will also move the transaction on wait state
