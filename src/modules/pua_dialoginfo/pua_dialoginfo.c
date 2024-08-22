@@ -51,6 +51,7 @@
 MODULE_VERSION
 
 /* Default module parameter values */
+#define DEF_USE_UUID 0
 #define DEF_INCLUDE_CALLID 1
 #define DEF_INCLUDE_LOCALREMOTE 1
 #define DEF_INCLUDE_TAGS 1
@@ -91,6 +92,7 @@ static str callee_entity_when_publish_disabled = {0, 0}; /* pubruri_callee */
 static str local_identity_dlg_var = STR_NULL;
 
 /* Module parameter variables */
+int use_uuid = DEF_USE_UUID;
 int include_callid = DEF_INCLUDE_CALLID;
 int include_localremote = DEF_INCLUDE_LOCALREMOTE;
 int include_tags = DEF_INCLUDE_TAGS;
@@ -123,6 +125,7 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
+	{"use_uuid", INT_PARAM, &use_uuid},
 	{"include_callid", INT_PARAM, &include_callid},
 	{"include_localremote", INT_PARAM, &include_localremote},
 	{"include_tags", INT_PARAM, &include_tags},
@@ -733,8 +736,16 @@ struct dlginfo_cell *get_dialog_data(struct dlg_cell *dlg, int type,
 	int len;
 
 	// generate new random uuid
-	if(sruid_next_safe(&_puadi_sruid) < 0) {
-		return NULL;
+	if(use_uuid) {
+		_puadi_sruid.uid.len = SRUID_SIZE;
+		if(sruid_uuid_generate(_puadi_sruid.uid.s, &_puadi_sruid.uid.len) < 0) {
+			LM_ERR("uuid not generated\n");
+			return NULL;
+		}
+	} else {
+		if(sruid_next_safe(&_puadi_sruid) < 0) {
+			return NULL;
+		}
 	}
 	LM_DBG("uuid generated: '%.*s'\n", _puadi_sruid.uid.len,
 			_puadi_sruid.uid.s);
