@@ -1355,6 +1355,23 @@ modparam("tm", "e2e_cancel_reason", 0)
 			</programlisting>
 		</example>
 	</section>
+	<section id="e2e_cancel_hop_by_hop">
+		<title><varname>e2e_cancel_hop_by_hop</varname> (int)</title>
+		<para>
+			Enable/disable sending CANCEL in hop-by-hop mode.
+		</para>
+		<para>
+			Default value: 1 ( hop-by-hop mode).
+		</para>
+		<example>
+			<title>Set <varname>e2e_cancel_hop_by_hop</varname> parameter</title>
+			<programlisting>
+...
+modparam("tm", "e2e_cancel_hop_by_hop", 0)
+...
+			</programlisting>
+		</example>
+	</section>
 
 	<section id="remap_503_500">
 		<title><varname>remap_503_500</varname> (boolean)</title>
