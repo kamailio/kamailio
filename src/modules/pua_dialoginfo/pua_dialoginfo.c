@@ -117,48 +117,49 @@ send_publish_t pua_send_publish;
 static int mod_init(void);
 static int child_init(int rank);
 
-static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"include_callid", INT_PARAM, &include_callid},
-		{"include_localremote", INT_PARAM, &include_localremote},
-		{"include_tags", INT_PARAM, &include_tags},
-		{"override_lifetime", INT_PARAM, &override_lifetime},
-		{"caller_confirmed", INT_PARAM, &caller_confirmed},
-		{"include_req_uri", INT_PARAM, &include_req_uri},
-		{"send_publish_flag", INT_PARAM, &send_publish_flag},
-		{"use_pubruri_avps", INT_PARAM, &use_pubruri_avps},
-		{"refresh_pubruri_avps_flag", INT_PARAM, &refresh_pubruri_avps_flag},
-		{"pubruri_caller_avp", PARAM_STRING, &pubruri_caller_avp},
-		{"pubruri_callee_avp", PARAM_STRING, &pubruri_callee_avp},
-		{"pubruri_caller_dlg_var", PARAM_STR, &caller_dlg_var},
-		{"pubruri_callee_dlg_var", PARAM_STR, &callee_dlg_var},
-		{"local_identity_dlg_var", PARAM_STR, &local_identity_dlg_var},
-		{"callee_trying", INT_PARAM, &callee_trying},
-		{"disable_caller_publish_flag", INT_PARAM,
-				&disable_caller_publish_flag},
-		{"disable_callee_publish_flag", INT_PARAM,
-				&disable_callee_publish_flag},
-		{"caller_entity_when_publish_disabled", PARAM_STR,
-				&caller_entity_when_publish_disabled},
-		{"callee_entity_when_publish_disabled", PARAM_STR,
-				&callee_entity_when_publish_disabled},
-		{"publish_dialog_req_within", INT_PARAM, &publish_dialog_req_within},
-		{"attribute_display", PARAM_INT, &puadinfo_attribute_display},
-		{0, 0, 0}};
+	{"include_callid", INT_PARAM, &include_callid},
+	{"include_localremote", INT_PARAM, &include_localremote},
+	{"include_tags", INT_PARAM, &include_tags},
+	{"override_lifetime", INT_PARAM, &override_lifetime},
+	{"caller_confirmed", INT_PARAM, &caller_confirmed},
+	{"include_req_uri", INT_PARAM, &include_req_uri},
+	{"send_publish_flag", INT_PARAM, &send_publish_flag},
+	{"use_pubruri_avps", INT_PARAM, &use_pubruri_avps},
+	{"refresh_pubruri_avps_flag", INT_PARAM, &refresh_pubruri_avps_flag},
+	{"pubruri_caller_avp", PARAM_STRING, &pubruri_caller_avp},
+	{"pubruri_callee_avp", PARAM_STRING, &pubruri_callee_avp},
+	{"pubruri_caller_dlg_var", PARAM_STR, &caller_dlg_var},
+	{"pubruri_callee_dlg_var", PARAM_STR, &callee_dlg_var},
+	{"local_identity_dlg_var", PARAM_STR, &local_identity_dlg_var},
+	{"callee_trying", INT_PARAM, &callee_trying},
+	{"disable_caller_publish_flag", INT_PARAM, &disable_caller_publish_flag},
+	{"disable_callee_publish_flag", INT_PARAM, &disable_callee_publish_flag},
+	{"caller_entity_when_publish_disabled", PARAM_STR, &caller_entity_when_publish_disabled},
+	{"callee_entity_when_publish_disabled", PARAM_STR, &callee_entity_when_publish_disabled},
+	{"publish_dialog_req_within", INT_PARAM, &publish_dialog_req_within},
+	{"attribute_display", PARAM_INT, &puadinfo_attribute_display},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"pua_dialoginfo", /* module name */
-		DEFAULT_DLFLAGS,  /* dlopen flags */
-		cmds,			  /* exported functions */
-		params,			  /* exported parameters */
-		0,				  /* RPC method exports */
-		0,				  /* exported pseudo-variables */
-		0,				  /* response handling function */
-		mod_init,		  /* module initialization function */
-		child_init,		  /* per-child init function */
-		0				  /* module destroy function */
+	"pua_dialoginfo", /* module name */
+	DEFAULT_DLFLAGS,  /* dlopen flags */
+	cmds,			  /* exported functions */
+	params,			  /* exported parameters */
+	0,				  /* RPC method exports */
+	0,				  /* exported pseudo-variables */
+	0,				  /* response handling function */
+	mod_init,		  /* module initialization function */
+	child_init,		  /* per-child init function */
+	0				  /* module destroy function */
 };
+/* clang-format on */
 
 
 #ifdef PUA_DIALOGINFO_DEBUG
