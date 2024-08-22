@@ -220,6 +220,31 @@ static void kfk_msg_delivered(
 	}
 }
 
+#if RD_KAFKA_VERSION >= 0x020000ff
+static rd_kafka_resp_err_t ic_broker_state_change(rd_kafka_t *rk,
+		int32_t broker_id, const char *secproto, const char *name, int port,
+		const char *state, void *ic_opaque)
+{
+	if(strcmp(state, "UP") == 0) {
+		LM_NOTICE("Connected broker: id: %d, proto: %s, name: %s, port: %d",
+				broker_id, secproto, name, port);
+	}
+	return RD_KAFKA_RESP_ERR_NO_ERROR;
+}
+#endif
+
+static rd_kafka_resp_err_t ic_on_new(rd_kafka_t *rk,
+		const rd_kafka_conf_t *conf, void *ic_opaque, char *errstr,
+		size_t errstr_size)
+{
+
+#if RD_KAFKA_VERSION >= 0x020000ff
+	rd_kafka_interceptor_add_on_broker_state_change(
+			rk, "ic_broker_state_change", ic_broker_state_change, NULL);
+#endif
+	return RD_KAFKA_RESP_ERR_NO_ERROR;
+}
+
 /**
  * \brief Initialize kafka functionality.
  *
@@ -255,6 +280,9 @@ int kfk_init(char *brokers)
 
 	/* Set message delivery callback. */
 	rd_kafka_conf_set_dr_msg_cb(rk_conf, kfk_msg_delivered);
+
+	/* Set interceptors init function. */
+	rd_kafka_conf_interceptor_add_on_new(rk_conf, "ic_on_new", ic_on_new, NULL);
 
 	/* Configure properties: */
 	if(kfk_conf_configure()) {
