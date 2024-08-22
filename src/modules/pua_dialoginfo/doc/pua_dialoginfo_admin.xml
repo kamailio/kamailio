@@ -211,6 +211,11 @@
 				<emphasis>pua</emphasis>.
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>uuid</emphasis> if <varname>use_uuid</varname> is enabled.
+			</para>
+			</listitem>
 			</itemizedlist>
 		</para>
 	</section>
@@ -232,6 +237,25 @@
 
 	<section>
 		<title>Parameters</title>
+
+	<section id="pua_dialoginfo.p.use_uuid">
+		<title><varname>use_uuid</varname> (int)</title>
+		<para>
+			If this parameter is set, the pres_id will be generated using libuuid via uuid module.
+			uuid module has to be loaded before pua_dialoginfo in this case.
+		</para>
+		<para>
+			<emphasis>Default value is <quote>0</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>use_uuid</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "use_uuid", 1)
+...
+</programlisting>
+		</example>
+		</section>
 
 		<section id="pua_dialoginfo.p.include_callid">
 		<title><varname>include_callid</varname> (int)</title>
