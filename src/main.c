@@ -195,13 +195,16 @@ Options:\n\
     -K           Turn on \"via:\" host checking when forwarding replies\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
                   mean listening on more addresses). The address format is\n\
-                  [proto:]addr_lst[:port][/advaddr], \n\
+                  [proto:]addr_lst[:port][/advaddr][/socket_name], \n\
                   where proto=udp|tcp|tls|sctp, \n\
                   addr_lst= addr|(addr, addr_lst), \n\
-                  addr=host|ip_address|interface_name and \n\
-                  advaddr=addr[:port] (advertised address). \n\
+                  addr=host|ip_address|interface_name \n\
+                  advaddr=addr[:port] (advertised address) and \n\
+                  socket_name=identifying name.\n\
                   E.g: -l localhost, -l udp:127.0.0.1:5080, -l eth0:5062,\n\
                   -l udp:127.0.0.1:5080/1.2.3.4:5060,\n\
+                  -l udp:127.0.0.1:5080//sip_server\n\
+                  -l udp:127.0.0.1:5080/1.2.3.4:5060/sip_server2\n\
                   -l \"sctp:(eth0)\", -l \"(eth0, eth1, 127.0.0.1):5065\".\n\
                   The default behaviour is to listen on all the interfaces.\n\
     --loadmodule=name load the module specified by name\n\
