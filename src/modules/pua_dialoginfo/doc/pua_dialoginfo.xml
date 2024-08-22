@@ -50,6 +50,11 @@
 			<surname>Gaisnon</surname>
 			<email>frederic.gaisnon@gmail.com</email>
 		</editor>
+		<editor>
+			<firstname>Victor</firstname>
+			<surname>Seva</surname>
+			<email>vseva@sipwise.com</email>
+		</editor>
 	</authorgroup>
 	<copyright>
 	    <year>2006</year>
@@ -63,6 +68,10 @@
 		<year>2021</year>
 		<holder>MomentTech</holder>
 	</copyright>
+	<copyright>
+		<year>2024</year>
+		<holder>Sipwise</holder>
+	</copyright>
   </bookinfo>
     <toc></toc>
 
@@ -70,5 +79,3 @@
 
 
 </book>
-
-
