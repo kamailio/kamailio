@@ -51,6 +51,7 @@ MODULE_VERSION
 
 static int nio_intercept = 0;
 static int w_forward_uac(sip_msg_t *msg, char *p1, char *p2);
+static int w_forward_uac_uri(sip_msg_t *msg, char *puri, char *p2);
 static int w_forward_reply(sip_msg_t *msg, char *p1, char *p2);
 static int w_append_branch(sip_msg_t *msg, char *su, char *sq);
 static int w_send_udp(sip_msg_t *msg, char *su, char *sq);
@@ -117,6 +118,8 @@ static tr_export_t mod_trans[] = {
 static cmd_export_t cmds[] = {
 	{"forward_uac", (cmd_function)w_forward_uac, 0,
 		0, 0, REQUEST_ROUTE},
+	{"forward_uac_uri", (cmd_function)w_forward_uac_uri, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
 	{"forward_reply", (cmd_function)w_forward_reply, 0,
 		0, 0, CORE_ONREPLY_ROUTE},
 	{"append_branch", (cmd_function)w_append_branch, 0,
@@ -274,7 +277,7 @@ static void mod_destroy(void)
 /**
  * forward request like initial uac sender, with only one via
  */
-static int w_forward_uac(sip_msg_t *msg, char *p1, char *p2)
+static int ki_forward_uac_uri(sip_msg_t *msg, str *vuri)
 {
 	int ret;
 	dest_info_t dst;
@@ -305,12 +308,17 @@ static int w_forward_uac(sip_msg_t *msg, char *p1, char *p2)
 	}
 
 	init_dest_info(&dst);
-	if(msg->dst_uri.len) {
-		ret = parse_uri(msg->dst_uri.s, msg->dst_uri.len, &next_hop);
-		u = &next_hop;
+	if(vuri == NULL || vuri->s == NULL || vuri->len <= 0) {
+		if(msg->dst_uri.len) {
+			ret = parse_uri(msg->dst_uri.s, msg->dst_uri.len, &next_hop);
+			u = &next_hop;
+		} else {
+			ret = parse_sip_msg_uri(msg);
+			u = &msg->parsed_uri;
+		}
 	} else {
-		ret = parse_sip_msg_uri(msg);
-		u = &msg->parsed_uri;
+		ret = parse_uri(vuri->s, vuri->len, &next_hop);
+		u = &next_hop;
 	}
 	if(ret < 0) {
 		LM_ERR("forward - bad uri dropping packet\n");
@@ -324,6 +332,29 @@ static int w_forward_uac(sip_msg_t *msg, char *p1, char *p2)
 	}
 
 	return -1;
+}
+
+/**
+ * forward request like initial uac sender, with only one via
+ */
+static int w_forward_uac(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ki_forward_uac_uri(msg, NULL);
+}
+
+/**
+ * forward request to uri like initial uac sender, with only one via
+ */
+static int w_forward_uac_uri(sip_msg_t *msg, char *puri, char *p2)
+{
+	str vuri = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)puri, &vuri)) {
+		LM_ERR("cannot get the destination parameter\n");
+		return -1;
+	}
+
+	return ki_forward_uac_uri(msg, &vuri);
 }
 
 /**
