@@ -2765,7 +2765,7 @@ int main(int argc, char **argv)
 					fprintf(stderr, "error during processing -l parameter\n");
 				}
 				tbuf_tmp = tbuf;
-				while ((p = strsep(&tbuf, "/")) != NULL) {
+				while ((p = strsep(&tbuf, "/")) != NULL && listen_field_count < 3) {
 					listen_fields[listen_field_count++] = p;
 				}
 				/* empty advertise only allowed with a name field */
