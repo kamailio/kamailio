@@ -1355,19 +1355,39 @@ modparam("tm", "e2e_cancel_reason", 0)
 			</programlisting>
 		</example>
 	</section>
+
 	<section id="e2e_cancel_hop_by_hop">
 		<title><varname>e2e_cancel_hop_by_hop</varname> (int)</title>
 		<para>
 			Enable/disable sending CANCEL in hop-by-hop mode.
 		</para>
 		<para>
-			Default value: 1 ( hop-by-hop mode).
+			Default value: 1 (hop-by-hop mode).
 		</para>
 		<example>
 			<title>Set <varname>e2e_cancel_hop_by_hop</varname> parameter</title>
 			<programlisting>
 ...
 modparam("tm", "e2e_cancel_hop_by_hop", 0)
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="headers_mode">
+		<title><varname>headers_mode</varname> (int)</title>
+		<para>
+			Control if headers from incoming CANCEL should be propagated to
+			hop-by-hop generated CANCEL.
+		</para>
+		<para>
+			Default value: 0 (do not propagate).
+		</para>
+		<example>
+			<title>Set <varname>headers_mode</varname> parameter</title>
+			<programlisting>
+...
+modparam("tm", "headers_mode", 1)
 ...
 			</programlisting>
 		</example>
