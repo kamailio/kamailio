@@ -242,6 +242,8 @@ int tm_failure_exec_mode = 0;
 
 int tm_dns_reuse_rcv_socket = 0;
 
+int tm_headers_mode = 0;
+
 static rpc_export_t tm_rpc[];
 
 str tm_event_callback = STR_NULL;
@@ -505,6 +507,7 @@ static param_export_t params[] = {
 	{"local_cancel_reason", PARAM_INT, &default_tm_cfg.local_cancel_reason},
 	{"e2e_cancel_reason", PARAM_INT, &default_tm_cfg.e2e_cancel_reason},
 	{"e2e_cancel_hop_by_hop", PARAM_INT, &tm_e2e_cancel_hop_by_hop},
+	{"headers_mode", PARAM_INT, &tm_headers_mode},
 	{"xavp_contact", PARAM_STR, &ulattrs_xavp_name},
 	{"event_callback", PARAM_STR, &tm_event_callback},
 	{"relay_100", PARAM_INT, &default_tm_cfg.relay_100},

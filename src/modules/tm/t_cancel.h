@@ -67,8 +67,8 @@
 void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm, branch_bm_t s);
 int cancel_uacs(struct cell *t, struct cancel_info *cancel_data, int flags);
 int cancel_all_uacs(struct cell *trans, int how);
-int cancel_branch(
-		struct cell *t, int branch, struct cancel_reason *reason, int flags);
+int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,
+		struct cancel_reason *reason, int flags);
 
 typedef int (*cancel_uacs_f)(
 		struct cell *t, struct cancel_info *cancel_data, int flags);

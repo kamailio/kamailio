@@ -361,10 +361,10 @@ static char *build_ack(struct sip_msg *rpl, struct cell *trans, int branch,
 	if(cfg_get(tm, tm_cfg, reparse_invite)) {
 		/* build the ACK from the INVITE which was sent out */
 		return build_local_reparse(
-				trans, branch, ret_len, ACK, ACK_LEN, &to, 0);
+				trans, branch, ret_len, ACK, ACK_LEN, &to, NULL, 0);
 	} else {
 		/* build the ACK from the reveived INVITE */
-		return build_local(trans, branch, ret_len, ACK, ACK_LEN, &to, 0);
+		return build_local(trans, branch, ret_len, ACK, ACK_LEN, &to, NULL, 0);
 	}
 }
 
@@ -2488,8 +2488,8 @@ int reply_received(struct sip_msg *p_msg)
 				LM_DBG("branch CANCEL created\n");
 				if(t->uas.cancel_reas) {
 					/* cancel reason was saved, use it */
-					cancel_branch(
-							t, branch, t->uas.cancel_reas, F_CANCEL_B_FORCE_C);
+					cancel_branch(t, branch, NULL, t->uas.cancel_reas,
+							F_CANCEL_B_FORCE_C);
 				} else {
 					/* note that in this case we do not know the reason,
 					 * we only know it's a final reply (either locally
@@ -2498,8 +2498,8 @@ int reply_received(struct sip_msg *p_msg)
 					cancel_data.reason.cause = (t->uas.status >= 200)
 													   ? t->uas.status
 													   : CANCEL_REAS_UNKNOWN;
-					cancel_branch(
-							t, branch, &cancel_data.reason, F_CANCEL_B_FORCE_C);
+					cancel_branch(t, branch, NULL, &cancel_data.reason,
+							F_CANCEL_B_FORCE_C);
 				}
 			}
 			goto done; /* nothing to do */

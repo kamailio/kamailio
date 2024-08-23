@@ -1123,7 +1123,7 @@ int e2e_cancel_branch(struct sip_msg *cancel_msg, struct cell *t_cancel,
 					" thus lumps are not applied to the message!\n");
 		}
 		shbuf = build_local_reparse(t_invite, branch, &len, CANCEL, CANCEL_LEN,
-				&t_invite->to_hdr, 0);
+				&t_invite->to_hdr, cancel_msg, 0);
 		if(unlikely(!shbuf) || len <= 0) {
 			if(shbuf) {
 				shm_free(shbuf);
@@ -1351,7 +1351,7 @@ void e2e_cancel(struct sip_msg *cancel_msg, struct cell *t_cancel,
 				 * called with the cancel as the "current" transaction so
 				 * at most t_cancel REPLY_LOCK is held in this process =>
 				 * no deadlock possibility */
-				ret = cancel_branch(t_invite, i, reason,
+				ret = cancel_branch(t_invite, i, cancel_msg, reason,
 						cfg_get(tm, tm_cfg, cancel_b_flags)
 								| ((t_invite->uac[i].request.buffer == NULL)
 												? F_CANCEL_B_FAKE_REPLY

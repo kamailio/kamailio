@@ -29,11 +29,12 @@
 #include "t_reply.h"
 
 char *build_local(struct cell *Trans, unsigned int branch, unsigned int *len,
-		char *method, int method_len, str *to, struct cancel_reason *reason);
+		char *method, int method_len, str *to, sip_msg_t *imsg,
+		struct cancel_reason *reason);
 
 char *build_local_reparse(struct cell *Trans, unsigned int branch,
 		unsigned int *len, char *method, int method_len, str *to,
-		struct cancel_reason *reason);
+		sip_msg_t *imsg, struct cancel_reason *reason);
 
 char *build_uac_request(str msg_type, str dst, str from, str fromtag, int cseq,
 		str callid, str headers, str body, int branch, struct cell *t,
