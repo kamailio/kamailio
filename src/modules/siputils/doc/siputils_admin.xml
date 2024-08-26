@@ -1477,6 +1477,27 @@ if (!hdr_date_check("10")) {
 </programlisting>
 		</example>
 	</section>
+	<section id="siputils.f.sip_parse_headers">
+		<title>
+		<function moreinfo="none">sip_parse_headers()</function>
+		</title>
+		<para>
+		Return true if parsing (fast mode) all SIP headers is successful.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sip_parse_headers</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (sip_parse_headers()) {
+	...
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
