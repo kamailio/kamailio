@@ -1045,6 +1045,8 @@ static kfk_stats_t *kfk_stats_topic_new(str *topic, rd_kafka_resp_err_t err)
 		goto error;
 	}
 	memcpy(st->topic_name->s, topic->s, topic->len);
+	st->topic_name->s[topic->len] = '\0';
+	st->topic_name->len = topic->len;
 
 	st->total++;
 	if(err) {
