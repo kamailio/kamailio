@@ -111,6 +111,8 @@ static int w_contact_param_check(sip_msg_t *msg, char *pnparam, char *p2);
 
 static int w_hdr_date_check(sip_msg_t *msg, char *ptdiff, char *p2);
 
+static int w_sip_parse_headers(sip_msg_t *msg, char *p1, char *p2);
+
 /* Fixup functions to be defined later */
 static int fixup_set_uri(void **param, int param_no);
 static int fixup_free_set_uri(void **param, int param_no);
@@ -208,6 +210,7 @@ static cmd_export_t cmds[] = {
 			fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"hdr_date_check", (cmd_function)w_hdr_date_check, 1, fixup_igp_null,
 			fixup_free_igp_null, ANY_ROUTE},
+	{"sip_parse_headers", (cmd_function)w_sip_parse_headers, 0, 0, 0, ANY_ROUTE},
 
 	{"bind_siputils", (cmd_function)bind_siputils, 1, 0, 0, 0},
 
@@ -603,6 +606,17 @@ static int w_hdr_date_check(sip_msg_t *msg, char *ptdiff, char *p2)
 		return -1;
 	}
 	return ki_hdr_date_check(msg, tdiff);
+}
+
+/**
+ *
+ */
+static int w_sip_parse_headers(sip_msg_t *msg, char *p1, char *p2)
+{
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
+		return -1;
+	}
+	return 1;
 }
 
 /**
