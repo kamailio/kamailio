@@ -107,6 +107,7 @@ Gabriel Vasile
               4.41. contact_param_rm(pname)
               4.42. contact_param_check(pname)
               4.43. hdr_date_check(tdiff)
+              4.44. sip_parse_headers()
 
         5. Exported pseudo-variables
 
@@ -170,6 +171,7 @@ Gabriel Vasile
    1.50. contact_param_rm usage
    1.51. contact_param_check usage
    1.52. hdr_date_check usage
+   1.53. sip_parse_headers usage
 
 Chapter 1. Admin Guide
 
@@ -238,6 +240,7 @@ Chapter 1. Admin Guide
         4.41. contact_param_rm(pname)
         4.42. contact_param_check(pname)
         4.43. hdr_date_check(tdiff)
+        4.44. sip_parse_headers()
 
    5. Exported pseudo-variables
 
@@ -455,6 +458,7 @@ modparam("siputils", "e164_max_len", 20)
    4.41. contact_param_rm(pname)
    4.42. contact_param_check(pname)
    4.43. hdr_date_check(tdiff)
+   4.44. sip_parse_headers()
 
 4.1.  options_reply()
 
@@ -1200,6 +1204,19 @@ if (contact_param_check("myparam")) {
 if (!hdr_date_check("10")) {
     sl_send_reply("403", "Outdated date");
     exit;
+}
+...
+
+4.44.  sip_parse_headers()
+
+   Return true if parsing (fast mode) all SIP headers is successful.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.53. sip_parse_headers usage
+...
+if (sip_parse_headers()) {
+        ...
 }
 ...
 
