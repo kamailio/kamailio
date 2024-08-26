@@ -325,6 +325,7 @@ static int ki_forward_uac_uri(sip_msg_t *msg, str *vuri)
 		return -1;
 	}
 	dst.proto = u->proto;
+	msg->msg_flags |= FL_VIA_NORECEIVED;
 	ret = forward_request_mode(
 			msg, &u->host, u->port_no, &dst, BUILD_NO_VIA1_UPDATE);
 	if(ret >= 0) {
