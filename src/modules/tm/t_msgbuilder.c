@@ -70,7 +70,6 @@
 		(_d) += (_len);             \
 	} while(0)
 
-#define TM_CANCEL_HEADERS_COPY 1
 extern int tm_headers_mode;
 
 /* Build a local request based on a previous request; main

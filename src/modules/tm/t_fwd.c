@@ -61,6 +61,7 @@
 
 extern int tm_failure_exec_mode;
 extern int tm_dns_reuse_rcv_socket;
+extern int tm_headers_mode;
 static int goto_on_branch = 0, branch_route = 0;
 
 /* E2E_CANCEL_HOP_BY_HOP - cancel hop by hop */
@@ -1902,7 +1903,11 @@ int t_forward_cancel(struct sip_msg *p_msg, struct proxy_l *proxy, int proto,
 #endif
 				/* dst->send_sock not set, but forward_request
 				 * will take care of it */
-				ret = forward_request(p_msg, &host, port, &dst);
+				if(tm_headers_mode & TM_CANCEL_FORWARD_UAC) {
+					ret = forward_request_uac(p_msg, &host, port, &dst);
+				} else {
+					ret = forward_request(p_msg, &host, port, &dst);
+				}
 				goto end;
 			} else {
 				init_dest_info(&dst);
@@ -1910,7 +1915,11 @@ int t_forward_cancel(struct sip_msg *p_msg, struct proxy_l *proxy, int proto,
 				proxy2su(&dst.to, proxy);
 				/* dst->send_sock not set, but forward_request
 				 * will take care of it */
-				ret = forward_request(p_msg, 0, 0, &dst);
+				if(tm_headers_mode & TM_CANCEL_FORWARD_UAC) {
+					ret = forward_request_uac(p_msg, &host, port, &dst);
+				} else {
+					ret = forward_request(p_msg, 0, 0, &dst);
+				}
 				goto end;
 			}
 		}

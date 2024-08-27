@@ -28,6 +28,9 @@
 #include "h_table.h"
 #include "t_reply.h"
 
+#define TM_CANCEL_HEADERS_COPY (1)
+#define TM_CANCEL_FORWARD_UAC (1 << 1)
+
 char *build_local(struct cell *Trans, unsigned int branch, unsigned int *len,
 		char *method, int method_len, str *to, sip_msg_t *imsg,
 		struct cancel_reason *reason);
