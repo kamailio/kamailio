@@ -688,6 +688,9 @@ end:
 }
 
 
+/**
+ * forward request in stateless mode
+ */
 int forward_request(struct sip_msg *msg, str *dst, unsigned short port,
 		struct dest_info *send_info)
 {
@@ -695,6 +698,9 @@ int forward_request(struct sip_msg *msg, str *dst, unsigned short port,
 }
 
 
+/**
+ * forward request like initial uac sender, with only one via
+ */
 int forward_request_uac(struct sip_msg *msg, str *dst, unsigned short port,
 		struct dest_info *send_info)
 {
@@ -723,11 +729,8 @@ int forward_request_uac(struct sip_msg *msg, str *dst, unsigned short port,
 	msg->msg_flags |= FL_VIA_NORECEIVED;
 	ret = forward_request_mode(msg, dst, port, send_info, BUILD_NO_VIA1_UPDATE);
 	msg->msg_flags = msg_flags_bk;
-	if(ret >= 0) {
-		return 1;
-	}
 
-	return -1;
+	return ret;
 }
 
 /**
@@ -787,11 +790,8 @@ int forward_uac_uri(sip_msg_t *msg, str *vuri)
 	ret = forward_request_mode(
 			msg, &u->host, u->port_no, &dst, BUILD_NO_VIA1_UPDATE);
 	msg->msg_flags = msg_flags_bk;
-	if(ret >= 0) {
-		return 1;
-	}
 
-	return -1;
+	return ret;
 }
 
 int update_sock_struct_from_via(
