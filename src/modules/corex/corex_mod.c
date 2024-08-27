@@ -277,6 +277,14 @@ static void mod_destroy(void)
 /**
  * forward request like initial uac sender, with only one via
  */
+static int ki_forward_uac(sip_msg_t *msg, str *vuri)
+{
+	return forward_uac_uri(msg, NULL);
+}
+
+/**
+ * forward request like initial uac sender, with only one via
+ */
 static int ki_forward_uac_uri(sip_msg_t *msg, str *vuri)
 {
 	return forward_uac_uri(msg, vuri);
@@ -1525,6 +1533,16 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 	},
 	{ str_init("corex"), str_init("is_socket_name"),
 		SR_KEMIP_INT, ki_is_socket_name,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("forward_uac"),
+		SR_KEMIP_INT, ki_forward_uac,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("forward_uac_uri"),
+		SR_KEMIP_INT, ki_forward_uac_uri,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
