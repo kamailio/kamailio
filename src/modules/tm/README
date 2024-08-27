@@ -1631,8 +1631,12 @@ modparam("tm", "e2e_cancel_hop_by_hop", 0)
 
 3.44. headers_mode (int)
 
-   Control if headers from incoming CANCEL should be propagated to
-   hop-by-hop generated CANCEL.
+   Control how headers from incoming CANCEL should be propagated to
+   hop-by-hop generated CANCEL. If bit (flag) 1 is set (value 1),
+   propagate the headers that are not branch specific (e.g., From, To). If
+   bit (flag) 2 is set, in case processing ends in stateless forwarding by
+   tm, forward CANCEL with a single Via header (the one added by
+   Kamailio).
 
    Default value: 0 (do not propagate).
 
