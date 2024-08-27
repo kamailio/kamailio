@@ -695,6 +695,41 @@ int forward_request(struct sip_msg *msg, str *dst, unsigned short port,
 }
 
 
+int forward_request_uac(struct sip_msg *msg, str *dst, unsigned short port,
+		struct dest_info *send_info)
+{
+	int ret;
+	sr_lump_t *anchor;
+	hdr_field_t *hf;
+	msg_flags_t msg_flags_bk;
+
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
+		return -1;
+	}
+	/* remove incoming Via headers */
+	for(hf = msg->headers; hf; hf = hf->next) {
+		if(hf->type != HDR_VIA_T) {
+			continue;
+		}
+		anchor = del_lump(msg, hf->name.s - msg->buf, hf->len, 0);
+		if(anchor == 0) {
+			LM_ERR("cannot remove Via header\n");
+			return -1;
+		}
+	}
+
+	msg_flags_bk = msg->msg_flags;
+	msg->msg_flags |= FL_VIA_NORECEIVED;
+	ret = forward_request_mode(msg, dst, port, send_info, BUILD_NO_VIA1_UPDATE);
+	msg->msg_flags = msg_flags_bk;
+	if(ret >= 0) {
+		return 1;
+	}
+
+	return -1;
+}
+
 /**
  * forward request like initial uac sender, with only one via
  */
