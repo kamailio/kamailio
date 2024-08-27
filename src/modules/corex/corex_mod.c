@@ -279,7 +279,13 @@ static void mod_destroy(void)
  */
 static int ki_forward_uac(sip_msg_t *msg, str *vuri)
 {
-	return forward_uac_uri(msg, NULL);
+	int ret;
+
+	ret = forward_uac_uri(msg, NULL);
+	if(ret >= 0) {
+		return 1;
+	}
+	return -1;
 }
 
 /**
@@ -287,7 +293,13 @@ static int ki_forward_uac(sip_msg_t *msg, str *vuri)
  */
 static int ki_forward_uac_uri(sip_msg_t *msg, str *vuri)
 {
-	return forward_uac_uri(msg, vuri);
+	int ret;
+
+	ret = forward_uac_uri(msg, vuri);
+	if(ret >= 0) {
+		return 1;
+	}
+	return -1;
 }
 
 /**
@@ -295,7 +307,13 @@ static int ki_forward_uac_uri(sip_msg_t *msg, str *vuri)
  */
 static int w_forward_uac(sip_msg_t *msg, char *p1, char *p2)
 {
-	return forward_uac_uri(msg, NULL);
+	int ret;
+
+	ret = forward_uac_uri(msg, NULL);
+	if(ret >= 0) {
+		return 1;
+	}
+	return -1;
 }
 
 /**
@@ -303,6 +321,7 @@ static int w_forward_uac(sip_msg_t *msg, char *p1, char *p2)
  */
 static int w_forward_uac_uri(sip_msg_t *msg, char *puri, char *p2)
 {
+	int ret;
 	str vuri = STR_NULL;
 
 	if(fixup_get_svalue(msg, (gparam_t *)puri, &vuri)) {
@@ -310,7 +329,11 @@ static int w_forward_uac_uri(sip_msg_t *msg, char *puri, char *p2)
 		return -1;
 	}
 
-	return forward_uac_uri(msg, &vuri);
+	ret = forward_uac_uri(msg, &vuri);
+	if(ret >= 0) {
+		return 1;
+	}
+	return -1;
 }
 
 /**
