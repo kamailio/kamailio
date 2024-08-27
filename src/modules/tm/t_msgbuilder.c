@@ -187,6 +187,28 @@ char *build_local(struct cell *Trans, unsigned int branch, unsigned int *len,
 			LM_BUG("unhandled reason cause %d\n", reason->cause);
 	}
 	*len += reason_len;
+	if(imsg != NULL && (tm_headers_mode & TM_CANCEL_HEADERS_COPY)) {
+		for(hdr = imsg->headers; hdr; hdr = hdr->next) {
+			switch(hdr->type) {
+				case HDR_CALLID_T:
+				case HDR_CSEQ_T:
+				case HDR_VIA_T:
+				case HDR_TO_T:
+				case HDR_FROM_T:
+				case HDR_ROUTE_T:
+				case HDR_MAXFORWARDS_T:
+				case HDR_REQUIRE_T:
+				case HDR_PROXYREQUIRE_T:
+				case HDR_CONTENTLENGTH_T:
+				case HDR_REASON_T:
+				case HDR_EOH_T:
+					/* skip these headers - they were added already */
+					break;
+				default:
+					*len += hdr->len;
+			}
+		}
+	}
 	*len += CRLF_LEN; /* end of msg. */
 
 	cancel_buf = shm_malloc(*len + 1);
@@ -258,6 +280,29 @@ char *build_local(struct cell *Trans, unsigned int branch, unsigned int *len,
 			}
 		}
 	}
+	if(imsg != NULL && (tm_headers_mode & TM_CANCEL_HEADERS_COPY)) {
+		for(hdr = imsg->headers; hdr; hdr = hdr->next) {
+			switch(hdr->type) {
+				case HDR_CALLID_T:
+				case HDR_CSEQ_T:
+				case HDR_VIA_T:
+				case HDR_TO_T:
+				case HDR_FROM_T:
+				case HDR_ROUTE_T:
+				case HDR_MAXFORWARDS_T:
+				case HDR_REQUIRE_T:
+				case HDR_PROXYREQUIRE_T:
+				case HDR_CONTENTLENGTH_T:
+				case HDR_REASON_T:
+				case HDR_EOH_T:
+					/* skip these headers - they were added already */
+					break;
+				default:
+					append_str(p, hdr->name.s, hdr->len);
+			}
+		}
+	}
+
 	append_str(p, CRLF, CRLF_LEN); /* msg. end */
 	*p = 0;
 
