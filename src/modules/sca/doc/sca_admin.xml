@@ -306,6 +306,26 @@ modparam("sca", "server_address", "sip:10.10.10.10:5060")
 		</example>
 	</section>
 
+	<section id="sca.p.contact_fallback">
+		<title><varname>contact_fallback</varname> (string)</title>
+		<para>
+		contact used if defined when no contact is found in processed message.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "" (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>contact_fallback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sca", "contact_fallback", "sip:127.0.0.1:5085;transport=udp")
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="sca.p.from_uri_avp">
 		<title><varname>from_uri_avp</varname> (string)</title>
 		<para>
