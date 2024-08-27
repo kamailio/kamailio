@@ -2039,7 +2039,7 @@ char *build_req_buf_from_sip_req(struct sip_msg *msg,
 	struct lump *path_anchor;
 	struct lump *path_lump;
 	str branch;
-	unsigned int flags;
+	msg_flags_t flags;
 	unsigned int udp_mtu;
 	struct dest_info di;
 	int ret;
