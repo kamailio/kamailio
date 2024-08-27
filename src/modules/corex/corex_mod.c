@@ -279,63 +279,7 @@ static void mod_destroy(void)
  */
 static int ki_forward_uac_uri(sip_msg_t *msg, str *vuri)
 {
-	int ret;
-	dest_info_t dst;
-	sip_uri_t *u;
-	sip_uri_t next_hop;
-	sr_lump_t *anchor;
-	hdr_field_t *hf;
-	msg_flags_t msg_flags_bk;
-
-	if(msg == NULL) {
-		LM_WARN("invalid msg parameter\n");
-		return -1;
-	}
-
-	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
-		LM_ERR("error while parsing message\n");
-		return -1;
-	}
-	/* remove incoming Via headers */
-	for(hf = msg->headers; hf; hf = hf->next) {
-		if(hf->type != HDR_VIA_T) {
-			continue;
-		}
-		anchor = del_lump(msg, hf->name.s - msg->buf, hf->len, 0);
-		if(anchor == 0) {
-			LM_ERR("cannot remove Via header\n");
-			return -1;
-		}
-	}
-
-	init_dest_info(&dst);
-	if(vuri == NULL || vuri->s == NULL || vuri->len <= 0) {
-		if(msg->dst_uri.len) {
-			ret = parse_uri(msg->dst_uri.s, msg->dst_uri.len, &next_hop);
-			u = &next_hop;
-		} else {
-			ret = parse_sip_msg_uri(msg);
-			u = &msg->parsed_uri;
-		}
-	} else {
-		ret = parse_uri(vuri->s, vuri->len, &next_hop);
-		u = &next_hop;
-	}
-	if(ret < 0) {
-		LM_ERR("forward - bad uri dropping packet\n");
-		return -1;
-	}
-	dst.proto = u->proto;
-	msg_flags_bk = msg->msg_flags;
-	msg->msg_flags |= FL_VIA_NORECEIVED;
-	ret = forward_request_mode(
-			msg, &u->host, u->port_no, &dst, BUILD_NO_VIA1_UPDATE);
-	msg->msg_flags = msg_flags_bk;
-	if(ret >= 0) {
-		return 1;
-	}
-
-	return -1;
+	return forward_uac_uri(msg, vuri);
 }
 
 /**
@@ -343,7 +287,7 @@ static int ki_forward_uac_uri(sip_msg_t *msg, str *vuri)
  */
 static int w_forward_uac(sip_msg_t *msg, char *p1, char *p2)
 {
-	return ki_forward_uac_uri(msg, NULL);
+	return forward_uac_uri(msg, NULL);
 }
 
 /**
@@ -358,7 +302,7 @@ static int w_forward_uac_uri(sip_msg_t *msg, char *puri, char *p2)
 		return -1;
 	}
 
-	return ki_forward_uac_uri(msg, &vuri);
+	return forward_uac_uri(msg, &vuri);
 }
 
 /**
