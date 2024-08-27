@@ -285,6 +285,7 @@ static int ki_forward_uac_uri(sip_msg_t *msg, str *vuri)
 	sip_uri_t next_hop;
 	sr_lump_t *anchor;
 	hdr_field_t *hf;
+	msg_flags_t msg_flags_bk;
 
 	if(msg == NULL) {
 		LM_WARN("invalid msg parameter\n");
@@ -325,9 +326,11 @@ static int ki_forward_uac_uri(sip_msg_t *msg, str *vuri)
 		return -1;
 	}
 	dst.proto = u->proto;
+	msg_flags_bk = msg->msg_flags;
 	msg->msg_flags |= FL_VIA_NORECEIVED;
 	ret = forward_request_mode(
 			msg, &u->host, u->port_no, &dst, BUILD_NO_VIA1_UPDATE);
+	msg->msg_flags = msg_flags_bk;
 	if(ret >= 0) {
 		return 1;
 	}
