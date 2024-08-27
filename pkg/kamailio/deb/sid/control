@@ -38,6 +38,7 @@ Build-Depends:
  libpq-dev,
  librabbitmq-dev,
  libradcli-dev,
+ librdkafka-dev,
  libreadline-dev,
  libsasl2-dev,
  libsctp-dev [any],
@@ -896,6 +897,22 @@ Description: Microhttpd module for the Kamailio SIP server
  per second even on low-budget hardware.
  .
  This package provides an embedded HTTP server using libmicrohttpd.
+
+Package: kamailio-kafka-modules
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Kafka module for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides an embedded kafka producer using librdkafka.
 
 Package: kamailio-extra-modules
 Architecture: any

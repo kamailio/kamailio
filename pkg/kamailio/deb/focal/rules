@@ -88,6 +88,7 @@ PACKAGE_GROUPS += rabbitmq
 PACKAGE_GROUPS += python3
 PACKAGE_GROUPS += mqtt
 PACKAGE_GROUPS += lwsc
+PACKAGE_GROUPS += kafka
 
 # Module groups to be packaged onto kamailio-extra-modules.
 EXTRA_GROUPS += ev

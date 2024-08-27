@@ -134,6 +134,13 @@ sed -i -e '/^ libwolfssl-dev,/d' \
 sed -i -e '/^PACKAGE_GROUPS += tls_wolfssl/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += tls_wolfssl' ${DIST}/rules
 
+# librdkafka-dev < 1.1.0
+sed -i -e '/^ librdkafka-dev,/d' \
+  -e '/^Package: kamailio-kafka-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^PACKAGE_GROUPS += kafka/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += kafka' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
