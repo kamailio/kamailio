@@ -379,8 +379,8 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					" took too long [%u ms] (file:%s func:%s line:%d)\n",
 					(ket->mname.len > 0) ? ket->mname.s : "",
 					(ket->mname.len > 0) ? "." : "", ket->fname.s, tdiff,
-					(pcode) ? PyBytes_AsString(pcode->co_filename) : "",
-					(pcode) ? PyBytes_AsString(pcode->co_name) : "",
+					(pcode) ? PyUnicode_AsUTF8(pcode->co_filename) : "",
+					(pcode) ? PyUnicode_AsUTF8(pcode->co_name) : "",
 					(pframe) ? PyFrame_GetLineNumber(pframe) : 0);
 #else
 			LOG(cfg_get(core, core_cfg, latency_log),
