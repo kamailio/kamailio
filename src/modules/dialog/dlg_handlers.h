@@ -48,12 +48,11 @@
 /*!
  * \brief Initialize the dialog handlers
  * \param rr_param_p added record-route parameter
- * \param dlg_flag_p dialog flag
  * \param timeout_avp_p AVP for timeout setting
  * \param default_timeout_p default timeout
  * \param seq_match_mode_p matching mode
  */
-void init_dlg_handlers(char *rr_param, int dlg_flag, pv_spec_t *timeout_avp,
+void init_dlg_handlers(char *rr_param, pv_spec_t *timeout_avp,
 		int default_timeout, int seq_match_mode, int keep_proxy_rr);
 
 
