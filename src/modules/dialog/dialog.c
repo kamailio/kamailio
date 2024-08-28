@@ -94,7 +94,6 @@ static void mod_destroy(void);
 /* module parameter */
 static int dlg_hash_size = 4096;
 static char *rr_param = "did";
-static int dlg_flag = -1;
 static str timeout_spec = {NULL, 0};
 static int default_timeout = 60 * 60 * 12; /* 12 hours */
 static int seq_match_mode = SEQ_MATCH_STRICT_ID;
@@ -303,7 +302,6 @@ static param_export_t mod_params[]={
 	{ "enable_stats",          INT_PARAM, &dlg_enable_stats         },
 	{ "hash_size",             INT_PARAM, &dlg_hash_size            },
 	{ "rr_param",              PARAM_STRING, &rr_param                 },
-	{ "dlg_flag",              INT_PARAM, &dlg_flag                 },
 	{ "timeout_avp",           PARAM_STR, &timeout_spec           },
 	{ "default_timeout",       INT_PARAM, &default_timeout          },
 	{ "dlg_extra_hdrs",        PARAM_STR, &dlg_extra_hdrs         },
@@ -550,8 +548,7 @@ static int mod_init(void)
 
 #ifdef STATISTICS
 	/* register statistics */
-	if(dlg_enable_stats
-			&& (register_module_stats("dialog", mod_stats) != 0)) {
+	if(dlg_enable_stats && (register_module_stats("dialog", mod_stats) != 0)) {
 		LM_ERR("failed to register statistics\n");
 		return -1;
 	}
@@ -567,12 +564,6 @@ static int mod_init(void)
 
 	if(dlg_bridge_init_hdrs() < 0)
 		return -1;
-
-	/* param checkings */
-	if(dlg_flag != -1 && dlg_flag > MAX_FLAG) {
-		LM_ERR("invalid dlg flag %d!!\n", dlg_flag);
-		return -1;
-	}
 
 	if(rr_param == 0 || rr_param[0] == 0) {
 		LM_ERR("empty rr_param!!\n");
@@ -715,7 +706,7 @@ static int mod_init(void)
 	}
 
 	/* init handlers */
-	init_dlg_handlers(rr_param, dlg_flag, timeout_spec.s ? &timeout_avp : 0,
+	init_dlg_handlers(rr_param, timeout_spec.s ? &timeout_avp : 0,
 			default_timeout, seq_match_mode, dlg_keep_proxy_rr);
 
 	/* init timer */

@@ -57,7 +57,6 @@
 #include "dlg_dmq.h"
 
 static str rr_param;		   /*!< record-route parameter for matching */
-static int dlg_flag_mask = 0;  /*!< flag for dialog tracking */
 static pv_spec_t *timeout_avp; /*!< AVP for timeout setting */
 static int default_timeout;	   /*!< default dialog timeout */
 static int seq_match_mode;	   /*!< dlg_match mode */
@@ -107,15 +106,11 @@ int dlg_set_tm_waitack(tm_cell_t *t, dlg_cell_t *dlg);
  * \param default_timeout_p default timeout
  * \param seq_match_mode_p matching mode
  */
-void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
-		pv_spec_t *timeout_avp_p, int default_timeout_p, int seq_match_mode_p,
-		int keep_proxy_rr_p)
+void init_dlg_handlers(char *rr_param_p, pv_spec_t *timeout_avp_p,
+		int default_timeout_p, int seq_match_mode_p, int keep_proxy_rr_p)
 {
 	rr_param.s = rr_param_p;
 	rr_param.len = strlen(rr_param.s);
-
-	if(dlg_flag_p >= 0)
-		dlg_flag_mask = 1 << dlg_flag_p;
 
 	timeout_avp = timeout_avp_p;
 	default_timeout = default_timeout_p;
@@ -804,18 +799,7 @@ void dlg_onreq(struct cell *t, int type, struct tmcb_params *param)
 			else if(spiral_detected == 0)
 				run_create_callbacks(dlg, req);
 		}
-	}
-	if(dlg == NULL) {
-		if((dlg_flag_mask == 0)
-				|| (req->flags & dlg_flag_mask) != dlg_flag_mask) {
-			LM_DBG("flag not set for creating a new dialog\n");
-			return;
-		}
-		LM_DBG("dialog creation on config flag\n");
-		dlg_new_dialog(req, t, 1);
-		dlg = dlg_get_ctx_dialog();
-	}
-	if(dlg != NULL) {
+
 		LM_DBG("dialog added to tm callbacks\n");
 		dlg_set_tm_callbacks(t, req, dlg, spiral_detected);
 		_dlg_ctx.t = 1;
