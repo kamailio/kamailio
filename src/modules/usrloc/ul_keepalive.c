@@ -148,7 +148,8 @@ int ul_ka_urecord(urecord_t *ur)
 			}
 		}
 
-		if(ul_keepalive_timeout > 0 && uc->last_keepalive > 0) {
+		if(ul_keepalive_timeout > 0 && uc->last_keepalive > 0
+				&& (uc->flags & FL_KASENT)) {
 			if(uc->last_keepalive + ul_keepalive_timeout < tnow) {
 				/* set contact as expired in 10s */
 				LM_DBG("set expired contact on keepalive (%u + %u < %u)"
@@ -257,7 +258,9 @@ int ul_ka_urecord(urecord_t *ur)
 					kabuf_len, kabuf);
 			kamsg.s = kabuf;
 			kamsg.len = kabuf_len;
-			ul_ka_send(&kamsg, &idst);
+			if(ul_ka_send(&kamsg, &idst) >= 0) {
+				uc->flags |= FL_KASENT;
+			}
 		}
 	}
 	return 0;
