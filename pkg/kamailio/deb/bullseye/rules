@@ -26,6 +26,7 @@ export LIBSSL_STATIC_SRCPATH=/usr/$(LIBDIR)
 
 # Modules not in the "main" kamailio package:
 EXCLUDED_MODULES =
+EXCLUDED_MODULES += mono
 
 # Extra modules to skip, because they are not compilable now:
 # - regardless if they go to the main kamailio package or to some module
@@ -68,7 +69,6 @@ PACKAGE_GROUPS += geoip
 PACKAGE_GROUPS += geoip2
 PACKAGE_GROUPS += sqlite
 PACKAGE_GROUPS += json
-PACKAGE_GROUPS += mono
 PACKAGE_GROUPS += ruby
 PACKAGE_GROUPS += ims
 PACKAGE_GROUPS += sctp

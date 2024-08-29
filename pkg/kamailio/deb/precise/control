@@ -26,7 +26,6 @@ Build-Depends:
  libmemcached-dev,
  libmicrohttpd-dev,
  libmnl-dev,
- libmono-2.0-dev [amd64 armel armhf i386 mipsel kfreebsd-amd64 kfreebsd-i386 ppc64 ppc64el s390x],
  libmysqlclient-dev,
  libncurses5-dev,
  libpcre3-dev,
@@ -97,8 +96,7 @@ Description: very fast, dynamic and configurable SIP server
  A C Shell like scripting language provides full control over the server's
  behaviour. It's easy to integrate Kamailio with 3rd party API's and applications
  using HTTP, AMQP, database drivers, LDAP, Radius and many other solutions.
- In addition there is support for scripting using Lua, Python, Perl, Java and
- a set of other languages using Mono.
+ In addition there is support for scripting using Lua, Python, Perl, Java.
  .
  Kamailio's modular architecture allows only required functionality to be loaded.
  There are over 100 modules available: WebSockets for WebRTC, authentication,
@@ -218,23 +216,6 @@ Description: The app_lua module for Kamailio Lua support
  This package provides the app_lua module, an extension allowing to
  execute embedded Lua applications within the configuration file as
  well as writing the entire configuration file in Lua.
-
-Package: kamailio-mono-modules
-Architecture: any
-Multi-Arch: same
-Pre-Depends:
- ${misc:Pre-Depends},
-Depends:
- kamailio (= ${binary:Version}),
- ${misc:Depends},
- ${shlibs:Depends},
-Description: The app_mono module for the Kamailio SIP server
- Kamailio is a very fast and flexible SIP (RFC3261)
- server. Written entirely in C, Kamailio can handle thousands calls
- per second even on low-budget hardware.
- .
- This package provides the app_mono module, an extension allowing to
- execute embedded Mono applications within the Kamailio SIP routing script.
 
 Package: kamailio-python-modules
 Architecture: any

@@ -96,8 +96,7 @@ Description: very fast, dynamic and configurable SIP server
  A C Shell like scripting language provides full control over the server's
  behaviour. It's easy to integrate Kamailio with 3rd party API's and applications
  using HTTP, AMQP, database drivers, LDAP, Radius and many other solutions.
- In addition there is support for scripting using Lua, Python, Perl, Java and
- a set of other languages using Mono.
+ In addition there is support for scripting using Lua, Python, Perl, Java.
  .
  Kamailio's modular architecture allows only required functionality to be loaded.
  There are over 100 modules available: WebSockets for WebRTC, authentication,
