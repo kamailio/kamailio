@@ -163,9 +163,6 @@ mod_list_jansson_event=janssonrpcc
 # - modules depending on redis library
 mod_list_redis=db_redis ndb_redis topos_redis
 
-# - modules depending on mono library
-mod_list_mono=app_mono
-
 # - modules related to IMS extensions
 mod_list_ims=cdp cdp_avp ims_dialog ims_auth ims_isc ims_icscf ims_qos ims_qos_npn \
 			   ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf \
@@ -263,7 +260,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_geoip) $(mod_list_sqlite) \
 			   $(mod_list_json) $(mod_list_json_event) \
 			   $(mod_list_redis) \
-			   $(mod_list_mono) $(mod_list_ims) \
+			   $(mod_list_ims) \
 			   $(mod_list_cassandra) $(mod_list_oracle) \
 			   $(mod_list_outbound) \
 			   $(mod_list_java) $(mod_list_dnssec) \
@@ -464,9 +461,6 @@ module_group_kjansson=$(mod_list_jansson) $(mod_list_jansson_event)
 
 # pkg redis module
 module_group_kredis=$(mod_list_redis)
-
-# pkg mono module
-module_group_kmono=$(mod_list_mono)
 
 # pkg IMS modules
 module_group_kims=$(mod_list_ims)
