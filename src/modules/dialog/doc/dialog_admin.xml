@@ -46,9 +46,8 @@
 	<title>How it works</title>
 	<para>
 	To create the dialog associated with an initial INVITE request, execute
-	the function <quote>dlg_manage()</quote> or set the flag specified by
-	parameter <quote>dlg_flag</quote> (<xref linkend="dialog.p.flag"/>)
-	before creating the corresponding transaction.
+	the function <quote>dlg_manage()</quote> before creating the
+	corresponding transaction.
 	</para>
 	<para>
 	The dialog is automatically destroyed when a <quote>BYE</quote> is
@@ -253,28 +252,17 @@ modparam("dialog", "rr_param", "xyz")
 	<section id="dialog.p.flag">
 		<title><varname>dlg_flag</varname> (integer)</title>
 		<para>
-		Flag to be used for marking if a dialog should be constructed for the
-		current request (this makes sense only for initial requests).
-		</para>
-		<para>
-		Note: it is not needed to set this parameter and its corresponding flag
+		Note: This flag has beed deprecated and not used anyymore.
+		it is not needed to set this parameter and its corresponding flag
 		for initial request in case the <quote>dlg_manage()</quote> function
-		is used. In other words, using <quote>dlg_manage()</quote> alone is
-		enough.
+		is used.
+		In other words, use <quote>dlg_manage()</quote>.
 		</para>
 		<para>
 		<emphasis>
 			Default value is <quote>none</quote>.
 		</emphasis>
 		</para>
-		<example>
-		<title>Set <varname>dlg_flag</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("dialog", "dlg_flag", 4)
-...
-</programlisting>
-		</example>
 	</section>
 
 	<section id="dialog.p.timeout_avp">
