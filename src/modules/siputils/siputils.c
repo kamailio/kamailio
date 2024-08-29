@@ -611,6 +611,17 @@ static int w_hdr_date_check(sip_msg_t *msg, char *ptdiff, char *p2)
 /**
  *
  */
+static int ki_sip_parse_headers(sip_msg_t *msg)
+{
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
 static int w_sip_parse_headers(sip_msg_t *msg, char *p1, char *p2)
 {
 	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
@@ -782,6 +793,11 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	{ str_init("siputils"), str_init("add_uri_param"),
 		SR_KEMIP_INT, ki_add_uri_param,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("sip_parse_headers"),
+		SR_KEMIP_INT, ki_sip_parse_headers,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
