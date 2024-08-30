@@ -1155,7 +1155,7 @@ done:
 	return rc;
 }
 
-int ki_sca_handle_subscribe(sip_msg_t *msg, str *uri_to, str *uri_from)
+int ki_sca_handle_subscribe_uris(sip_msg_t *msg, str *uri_to, str *uri_from)
 {
 	sca_subscription req_sub;
 	sca_subscription *sub = NULL;
@@ -1423,9 +1423,13 @@ done:
 	return (rc);
 }
 
+int ki_sca_handle_subscribe(sip_msg_t *msg)
+{
+	return ki_sca_handle_subscribe_uris(msg, NULL, NULL);
+}
 int sca_handle_subscribe(sip_msg_t *msg, str *uri_to, str *uri_from)
 {
-	return ki_sca_handle_subscribe(msg, uri_to, uri_from);
+	return ki_sca_handle_subscribe_uris(msg, uri_to, uri_from);
 }
 
 int sca_subscription_reply(sca_mod *scam, int status_code, char *status_msg,

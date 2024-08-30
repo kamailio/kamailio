@@ -94,6 +94,7 @@ int sca_subscription_aor_has_subscribers(int, str *);
 int sca_subscription_delete_subscriber_for_event(
 		sca_mod *, str *, str *, str *);
 int sca_subscription_terminate(sca_mod *, str *, int, str *, int, int);
-int ki_sca_handle_subscribe(sip_msg_t *msg, str *, str *);
+int ki_sca_handle_subscribe(sip_msg_t *msg);
+int ki_sca_handle_subscribe_uris(sip_msg_t *msg, str *, str *);
 
 #endif // SCA_SUBSCRIBE_H
