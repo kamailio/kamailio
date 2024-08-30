@@ -277,7 +277,7 @@ static void mod_destroy(void)
 /**
  * forward request like initial uac sender, with only one via
  */
-static int ki_forward_uac(sip_msg_t *msg, str *vuri)
+static int ki_forward_uac(sip_msg_t *msg)
 {
 	int ret;
 
