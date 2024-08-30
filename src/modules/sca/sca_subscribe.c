@@ -1326,8 +1326,7 @@ int ki_sca_handle_subscribe(sip_msg_t *msg, str *uri_to, str *uri_from)
 				released = sca_appearance_owner_release_all(
 						&req_sub.target_aor, &req_sub.subscriber);
 				if(released) {
-					LM_INFO("sca_handle_subscribe: released %d appearances "
-							"for subscriber %.*s\n",
+					LM_INFO("released %d appearances for subscriber %.*s\n",
 							released, STR_FMT(&req_sub.subscriber));
 				}
 			}
