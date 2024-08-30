@@ -50,12 +50,15 @@
 	request the use of session timers if the UAC does not request
 	it.</para>
 
-	<para>All of this happens with a properly configured dialog
-	and sst module and setting the dialog flag and the sst flag at
-	the time any INVITE sip message is seen. There is no
-	&kamailioconfig; script function call required to set the dialog
-	expire timeout value. See the <quote>dialog module</quote> users guide for
-	more information.</para>
+	<para>
+	All of this happens with a properly configured dialog and sst
+	module. You need to call the dlg_manage() function and set the
+	sst flag at the time any INVITE sip message is seen.
+	There is no	&kamailioconfig; script function call required to
+	set the dialog expire timeout value.
+	See the <quote>dialog module</quote> users guide for
+	more information.
+	</para>
 
 	<para>The <quote>sstCheckMin()</quote> script function can be used to verify
 	that the Session-expires / MIN-SE header field values are not too
@@ -287,9 +290,9 @@ modparam("sst", "reject_to_small", 0)
 		need to tell the sst module which flag value you are
 		assigning to sst.</para>
 
-		<para>In most cases whenever you set the dialog flag
-		you will want to set the sst flag. If the dialog flag
-		is not set and the sst flag is set, it will not have
+		<para>In most cases whenever you call dlg_manage() function
+		you will want to set the sst flag. If the dialog is not tracked
+		and the sst flag is set, it will not have
 		any effect.</para>
 
 		<para><emphasis>This parameter must be set or the module will
@@ -304,13 +307,12 @@ modparam("sst", "reject_to_small", 0)
 		<title>Set <varname>sst_flag</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "dlg_flag", 5)
 modparam("sst", "sst_flag", 6)
 ...
 route {
   ...
   if (method=="INVITE") {
-    setflag(5); # set the dialog flag
+	dlg_manage(); # Track the dialog
     setflag(6); # set the sst flag
   }
   ...
@@ -353,7 +355,6 @@ route {
 
 ...
 modparam("dialog", "timeout_avp", "$avp(i:4242)")
-modparam("dialog", "dlg_flag", 5)
 ...
 modparam("sst", "sst_flag", 6)
 modparam("sst", "timeout_avp", "$avp(i:4242)")
@@ -367,7 +368,7 @@ route {
 		exit;
 	}
 	# track the session timers via the dialog module
-	setflag(5);
+	dlg_manage();
 	setflag(6);
   }
 }
@@ -381,7 +382,7 @@ route {
 		exit;
 	}
 	# track the session timers via the dialog module
-	setflag(5);
+	dlg_manage();
 	setflag(6);
   }
 }
@@ -407,4 +408,3 @@ route {
 	<para>Just load the module and remember to set the timeout_avp and sst_flag values.</para>
 	</section>
 </chapter>
-
