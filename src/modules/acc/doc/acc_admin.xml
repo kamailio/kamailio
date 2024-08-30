@@ -327,7 +327,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
                 <para>
                 The dialog module needs to be engaged on the dialogs that should be accounted, that
                 they will be tracked by the server. This is usally done by calling the function
-                <emphasis>dlg_manage()</emphasis> or setting the <emphasis>dlg_flag</emphasis>.
+                <emphasis>dlg_manage()</emphasis>.
                 Refer to the documentation of the dialog module for more information.
                 </para>
 
@@ -1611,4 +1611,3 @@ acc_db_request("$var(code) $avp(reason)", "acc");
 	</section>
 	</section>
 </chapter>
-
