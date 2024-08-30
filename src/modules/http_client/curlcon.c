@@ -861,17 +861,16 @@ void curl_conn_list_fixup(void)
 {
 	curl_con_t *cc;
 	cc = _curl_con_root;
-	while (cc) {
-		if (!(timeout_mode == 1 || timeout_mode == 2)) {
+	while(cc) {
+		if(!(timeout_mode == 1 || timeout_mode == 2)) {
 			/* Timeout is disabled globally. Set timeout to 0 for all connections to reflect this. */
-			if (cc->timeout > 0) {
+			if(cc->timeout > 0) {
 				LM_WARN("curl connection [%.*s]: configured timeout is ignored "
-				"because timeouts are disabled (timeout_mode)\n",
-					cc->name.len, cc->name.s);
+						"because timeouts are disabled (timeout_mode)\n",
+						cc->name.len, cc->name.s);
 				cc->timeout = 0;
 			}
-		}
-		else if (cc->timeout == 0) {
+		} else if(cc->timeout == 0) {
 			/* Timeout is not configured for that connection.
 			 * Use as default global connection_timeout (which can be seconds or milliseconds).
 			 */
