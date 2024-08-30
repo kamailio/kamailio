@@ -32,12 +32,10 @@
 	</para>
 
 	<para>
-	All of this happens with a properly configured dialog
-	and qos module and setting the dialog flag and the qos flag at
-	the time any INVITE SIP message is seen.  There is no
-	config script function call required to set the SDP session
-	tracking mechanism.  See the dialog module users guide for
-	more information.
+	All of this happens with a properly configured dialog and qos
+	module. You need to call the dlg_manage() function and set the
+	qos flag at the time any INVITE sip message is seen.
+	See the <quote>dialog module</quote> users guide for information.
 	</para>
 
 	<para>
@@ -126,9 +124,9 @@
 		before you can do that, you need to tell the qos module which
 		flag value you are assigning to qos.</para>
 
-		<para>In most cases when ever you set the dialog flag
-		you will want to set the qos flag. If the dialog flag
-		is not set and the qos flag is set, it will not have
+		<para>In most cases when ever you call dlg_manage() function
+		you will want to set the qos flag. If the dialog is not tracked
+		and the qos flag is set, it will not have
 		any effect.</para>
 
 		<para><emphasis>This parameter must be set or the module will
@@ -143,13 +141,12 @@
 		<title>Set <varname>qos_flag</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "dlg_flag", 5)
 modparam("qos", "qos_flag", 7)
 ...
 route {
   ...
   if (method=="INVITE") {
-    setflag(5); # set the dialog flag
+	dlg_manage(); # Track the dialog
     setflag(7); # Set the qos flag
   }
   ...
@@ -182,4 +179,3 @@ route {
 	</para>
 	</section>
 </chapter>
-
