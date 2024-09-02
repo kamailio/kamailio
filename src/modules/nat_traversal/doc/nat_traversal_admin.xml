@@ -633,6 +633,10 @@ if (client_nat_test("3")) {
         details about this function, see the <emphasis>Implementation</emphasis>
         subsection from the <emphasis>Keepalive functionality</emphasis> section.
       </para>
+      <note>
+        The <emphasis>dlg_manage()</emphasis> function must be called
+        in the configuration file to have the dialog tracked.
+      </note>
       <para>
         This function can be used from REQUEST_ROUTE.
       </para>
@@ -643,6 +647,9 @@ if (client_nat_test("3")) {
 if ((method=="REGISTER" || method=="SUBSCRIBE" ||
     (method=="INVITE" &amp;&amp; !has_totag())) &amp;&amp; client_nat_test("3"))
 {
+  if (method=="INVITE"){
+    dlg_manage();
+  }
     nat_keepalive();
 }
 ...
@@ -917,4 +924,3 @@ if (method=="REGISTER") {
   </section>
 
 </chapter>
-
