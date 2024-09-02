@@ -131,11 +131,6 @@ typedef struct data
 	 */
 	int cs_route_number;
 
-	/*
-	 * Dialog flag used to track the call
-	 */
-	flag_t ctrl_flag;
-
 	int check_period;
 
 	str redis_cnn_str;

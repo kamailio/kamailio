@@ -24,8 +24,8 @@
 			to this identifier are automatically shutdown.
 		</para>
 		<para>
-			Cnxcc is dialog-aware so there's no need to explicitly allocate/deallocate the monitoring. Only a single function
-			call inside the script is needed upon reception of the INVITE.
+			Cnxcc is dialog-aware so there's no need to explicitly allocate/deallocate the monitoring.
+			The <emphasis>dlg_manage()</emphasis> function must be called in the configuration file for the dialog to be tracked.
 		</para>
 		<para>
 			The credit discount rate is proportional to the number of calls grouped inside an identifier. Once the setup
@@ -125,6 +125,10 @@ modparam("cnxcc", "credit_check_period", 1)
 			<title>
 				<function moreinfo="none">cnxcc_set_max_credit(customer, maxcredit, connect, cps, ipulse, fpulse)</function>
 			</title>
+			<note>
+				The <emphasis>dlg_manage()</emphasis> function must be called in the configuration file to ensure
+				dialog is tracked.
+			</note>
 			<para>
 				Associates the call with a customer id and sets the max credit,
 				connect cost, cost per second, initial pulse and final pulse. The discount
@@ -208,6 +212,10 @@ cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(connect)",
 			<title>
 				<function moreinfo="none">cnxcc_set_max_time(customer, maxtime)</function>
 			</title>
+			<note>
+				The <emphasis>dlg_manage()</emphasis> function must be called in the configuration file to ensure
+				dialog is tracked.
+			</note>
 			<para>
 				Specifies the amount of time the call should last at most.
 			</para>
@@ -256,6 +264,10 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
 			<title>
 				<function moreinfo="none">cnxcc_update_max_time(customer, maxtime)</function>
 			</title>
+			<note>
+				The <emphasis>dlg_manage()</emphasis> function must be called in the configuration file to ensure
+				dialog is tracked.
+			</note>
 			<para>
 				Updates max-time of an established and monitored call. This can
 				be used to grant minimum values and to update them every short
@@ -308,6 +320,10 @@ if (!cnxcc_update_max_time("$var(client)", "$var(update_time)")) {
 			<title>
 				<function moreinfo="none">cnxcc_set_max_channel(customer, maxchan)</function>
 			</title>
+			<note>
+				The <emphasis>dlg_manage()</emphasis> function must be called in the configuration file to ensure
+				dialog is tracked.
+			</note>
 			<para>
 				Specifies a limit for the number of simultaneous calls.
 			</para>
