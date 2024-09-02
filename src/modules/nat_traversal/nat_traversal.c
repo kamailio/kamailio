@@ -221,8 +221,7 @@ static bool test_private_via(struct sip_msg *msg);
 static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy(void);
-static int preprocess_request(
-		struct sip_msg *msg, unsigned int flags, void *param);
+
 static int reply_filter(struct sip_msg *reply);
 
 static int pv_parse_nat_contact_name(pv_spec_p sp, str *in);
@@ -248,7 +247,6 @@ struct tm_binds tm_api;
 struct dlg_binds dlg_api;
 bool have_dlg_api = false;
 
-static int dialog_flag = -1;
 static unsigned dialog_default_timeout = 12 * 3600; // 12 hours
 static int natt_contact_match = 0;
 
@@ -1415,8 +1413,6 @@ static int NAT_Keepalive(struct sip_msg *msg)
 				return -1;
 			}
 			msg->msg_flags |= FL_DO_KEEPALIVE;
-			setflag(msg,
-					dialog_flag); // have the dialog module trace this dialog
 			return 1;
 
 		default:
@@ -1813,36 +1809,24 @@ static int mod_init(void)
 
 	// bind to the dialog API
 	if(load_dlg_api(&dlg_api) == 0) {
-		// load dlg_flag and default_timeout parameters from the dialog module
-		param = find_param_export(
-				find_module_by_name("dialog"), "dlg_flag", INT_PARAM, &type);
-		if(param) {
+		// load default_timeout parameters from the dialog module
+		param = find_param_export(find_module_by_name("dialog"),
+				"default_timeout", INT_PARAM, &type);
+		if(!param) {
+			LM_ERR("cannot find default_timeout parameter in the dialog "
+				   "module\n");
+			return -1;
+		} else {
 			have_dlg_api = true;
 
-			dialog_flag = *param;
-
-			param = find_param_export(find_module_by_name("dialog"),
-					"default_timeout", INT_PARAM, &type);
-			if(!param) {
-				LM_ERR("cannot find default_timeout parameter in the dialog "
-					   "module\n");
-				return -1;
-			}
 			dialog_default_timeout = *param;
+
 
 			// register dialog creation callback
 			if(dlg_api.register_dlgcb(
 					   NULL, DLGCB_CREATED, __dialog_created, NULL, NULL)
 					!= 0) {
 				LM_ERR("cannot register callback for dialog creation\n");
-				return -1;
-			}
-
-			// register a pre-script callback to automatically enable dialog tracing
-			if(register_script_cb(
-					   preprocess_request, PRE_SCRIPT_CB | REQUEST_CB, 0)
-					!= 0) {
-				LM_ERR("could not register request preprocessing callback\n");
 				return -1;
 			}
 		}
@@ -1911,41 +1895,6 @@ static void mod_destroy(void)
 		nat_table = NULL;
 	}
 }
-
-
-// Preprocess a request before it is processed in the main script route
-//
-// Here we enable dialog tracing to be able to automatically extend an
-// existing registration keepalive to a destination, for the duration of
-// the dialog, even if the dialog source is not kept alive by explicitly
-// calling nat_keepalive(). This is needed to still be able to forward
-// messages to the callee, even if the registration keepalive expires
-// during the dialog and it is not renewed.
-//
-static int preprocess_request(
-		struct sip_msg *msg, unsigned int flags, void *_param)
-{
-	str totag;
-
-	if(msg->first_line.u.request.method_value != METHOD_INVITE)
-		return 1;
-
-	if(parse_headers(msg, HDR_TO_F, 0) == -1) {
-		LM_ERR("failed to parse To header\n");
-		return -1;
-	}
-	if(!msg->to) {
-		LM_ERR("missing To header\n");
-		return -1;
-	}
-	totag = get_to(msg)->tag_value;
-	if(totag.s == 0 || totag.len == 0) {
-		setflag(msg, dialog_flag);
-	}
-
-	return 1;
-}
-
 
 // Filter out replies to keepalive messages
 //
