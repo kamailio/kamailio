@@ -26,18 +26,17 @@
 
 #include "../../core/parser/msg_parser.h"
 
-typedef int (*rtpengine_start_recording_f)(
-		struct sip_msg *msg, char *str1, char *str2);
-typedef int (*rtpengine_answer_f)(struct sip_msg *msg, char *str1, char *str2);
-typedef int (*rtpengine_offer_f)(struct sip_msg *msg, char *str1, char *str2);
-typedef int (*rtpengine_delete_f)(struct sip_msg *msg, char *str1, char *str2);
+typedef int (*rtpengine_start_recording_f)(struct sip_msg *msg);
+typedef int (*rtpengine_answer_f)(struct sip_msg *msg, str *str);
+typedef int (*rtpengine_offer_f)(struct sip_msg *msg, str *str);
+typedef int (*rtpengine_delete_f)(struct sip_msg *msg, str *str);
 
 typedef struct rtpengine_api
 {
-	rtpengine_start_recording_f start_recording;
-	rtpengine_answer_f answer;
-	rtpengine_offer_f offer;
-	rtpengine_delete_f delete;
+	rtpengine_start_recording_f rtpengine_start_recording;
+	rtpengine_answer_f rtpengine_answer;
+	rtpengine_offer_f rtpengine_offer;
+	rtpengine_delete_f rtpengine_delete;
 } rtpengine_api_t;
 
 typedef int (*bind_rtpengine_f)(rtpengine_api_t *api);

@@ -5794,10 +5794,10 @@ static int bind_rtpengine(rtpengine_api_t *api)
 		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
-	api->start_recording = start_recording_f;
-	api->answer = rtpengine_answer1_f;
-	api->offer = rtpengine_offer1_f;
-	api->delete = rtpengine_delete1_f;
+	api->rtpengine_start_recording = ki_start_recording;
+	api->rtpengine_answer = ki_rtpengine_answer;
+	api->rtpengine_offer = ki_rtpengine_offer;
+	api->rtpengine_delete = ki_rtpengine_delete;
 
 	return 0;
 }
