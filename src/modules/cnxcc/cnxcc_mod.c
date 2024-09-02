@@ -167,7 +167,6 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"dlg_flag", INT_PARAM,	&_data.ctrl_flag },
 	{"credit_check_period", INT_PARAM,	&_data.check_period },
 	{"redis", PARAM_STR, &_data.redis_cnn_str },
 	{ 0, 0, 0 }
@@ -442,11 +441,6 @@ static void __dialog_created_callback(
 
 	if(msg == NULL) {
 		LM_ERR("Error getting direction of SIP msg\n");
-		return;
-	}
-
-	if(isflagset(msg, _data.ctrl_flag) == -1) {
-		LM_DBG("Flag is not set for this message. Ignoring\n");
 		return;
 	}
 
@@ -1464,14 +1458,6 @@ static int __add_call_by_cid(str *cid, call_t *call, credit_type_t type)
 	return 0;
 }
 
-static inline void set_ctrl_flag(struct sip_msg *msg)
-{
-	if(_data.ctrl_flag != -1) {
-		LM_DBG("Flag set!\n");
-		setflag(msg, _data.ctrl_flag);
-	}
-}
-
 static inline int get_pv_value(
 		struct sip_msg *msg, pv_spec_t *spec, pv_value_t *value)
 {
@@ -1541,8 +1527,6 @@ static int ki_set_max_credit(sip_msg_t *msg, str *sclient, str *scredit,
 		   "final-pulse [%d], call-id[%.*s]\n",
 			sclient->len, sclient->s, credit, connect_cost, cost_per_second,
 			initp, finishp, msg->callid->body.len, msg->callid->body.s);
-
-	set_ctrl_flag(msg);
 
 	if((credit_data = __get_or_create_credit_data_entry(sclient, CREDIT_MONEY))
 			== NULL) {
@@ -1730,8 +1714,6 @@ static int ki_set_max_channels(sip_msg_t *msg, str *sclient, int max_chan)
 		return -1;
 	}
 
-	set_ctrl_flag(msg);
-
 	if(max_chan <= 0) {
 		LM_ERR("[%.*s] MAX_CHAN cannot be less than or equal to zero: %d\n",
 				msg->callid->body.len, msg->callid->body.s, max_chan);
@@ -1824,8 +1806,6 @@ static int ki_set_max_time(sip_msg_t *msg, str *sclient, int max_secs)
 		return -1;
 	}
 
-	set_ctrl_flag(msg);
-
 	if(max_secs <= 0) {
 		LM_ERR("[%.*s] MAXSECS cannot be less than or equal to zero: %d\n",
 				msg->callid->body.len, msg->callid->body.s, max_secs);
@@ -1896,8 +1876,6 @@ static int ki_update_max_time(sip_msg_t *msg, str *sclient, int secs)
 	struct str_hash_entry *e = NULL;
 	double update_fraction = secs;
 	call_t *call = NULL, *tmp_call = NULL;
-
-	set_ctrl_flag(msg);
 
 	if(parse_headers(msg, HDR_CALLID_F, 0) != 0) {
 		LM_ERR("Error parsing Call-ID");
