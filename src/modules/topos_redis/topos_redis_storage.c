@@ -677,6 +677,9 @@ int tps_redis_load_initial_method_branch(
 
 	if(rrpl->type != REDIS_REPLY_ARRAY) {
 		LM_WARN("invalid redis result type: %d\n", rrpl->type);
+		if(rrpl->type == REDIS_REPLY_ERROR) {
+			LM_ERR("Redis error:%s\n", rrpl->str);
+		}
 		freeReplyObject(rrpl);
 		return -1;
 	}
@@ -832,6 +835,9 @@ int tps_redis_load_branch(
 
 	if(rrpl->type != REDIS_REPLY_ARRAY) {
 		LM_WARN("invalid redis result type: %d\n", rrpl->type);
+		if(rrpl->type == REDIS_REPLY_ERROR) {
+			LM_ERR("Redis error:%s\n", rrpl->str);
+		}
 		freeReplyObject(rrpl);
 		return -1;
 	}
@@ -1037,6 +1043,9 @@ int tps_redis_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 
 	if(rrpl->type != REDIS_REPLY_ARRAY) {
 		LM_WARN("invalid redis result type: %d\n", rrpl->type);
+		if(rrpl->type == REDIS_REPLY_ERROR) {
+			LM_ERR("Redis error:%s\n", rrpl->str);
+		}
 		freeReplyObject(rrpl);
 		return -1;
 	}
