@@ -349,7 +349,6 @@ modparam("mediaproxy", "ice_candidate_avp", "$avp(ice_candidate)")
         called internally on dialog callbacks, so for this function to
         work, the dialog module must be loaded and configured.
       </para>
-
       <para>
         This function is an advanced mechanism to use a media relay
         without having to manually call a function on each message that
@@ -371,6 +370,11 @@ modparam("mediaproxy", "ice_candidate_avp", "$avp(ice_candidate)")
         This function can be used from REQUEST_ROUTE.
       </para>
 
+      <note>
+        The <emphasis>dlg_manage()</emphasis> function must be called
+        in the configuration file before using this function.
+      </note>
+
       <example>
       <title>Using the <function>engage_media_proxy</function> function</title>
         <programlisting format="linespecific">
@@ -378,6 +382,7 @@ modparam("mediaproxy", "ice_candidate_avp", "$avp(ice_candidate)")
 if (method==INVITE &amp;&amp; !has_totag()) {
     # We can also use a specific media relay if we need to
     #$avp(media_relay) = "1.2.3.4";
+    dlg_manage()
     engage_media_proxy();
 }
 ...
@@ -466,4 +471,3 @@ if (method==BYE) {
   </section>
 
 </chapter>
-
