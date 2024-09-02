@@ -53,7 +53,7 @@ static void free_str_list(struct str_list *l);
 static void free_sec_info(secf_info_p info);
 void secf_free_data(secf_data_p secf_fdata);
 static void mod_destroy(void);
-static int w_check_sqli(str val);
+static int sf_check_sqli(str *val);
 static int check_user(struct sip_msg *msg, int type);
 void secf_reset_stats(void);
 void secf_ht_timer(unsigned int ticks, void *);
@@ -148,7 +148,7 @@ PREVENT SQL INJECTION
 ***/
 
 /* External function to search for illegal characters in several headers */
-static int w_check_sqli_all(struct sip_msg *msg)
+static int ki_check_sqli_all(struct sip_msg *msg)
 {
 	str ua = STR_NULL;
 	str name = STR_NULL;
@@ -160,7 +160,7 @@ static int w_check_sqli_all(struct sip_msg *msg)
 	/* Find SQLi in user-agent header */
 	res = secf_get_ua(msg, &ua);
 	if(res == 0) {
-		if(w_check_sqli(ua) != 1) {
+		if(sf_check_sqli(&ua) != 1) {
 			LM_INFO("Possible SQL injection found in User-agent (%.*s)\n",
 					ua.len, ua.s);
 			retval = 0;
@@ -172,7 +172,7 @@ static int w_check_sqli_all(struct sip_msg *msg)
 	res = secf_get_from(msg, &name, &user, &domain);
 	if(res == 0) {
 		if(name.len > 0) {
-			if(w_check_sqli(name) != 1) {
+			if(sf_check_sqli(&name) != 1) {
 				LM_INFO("Possible SQL injection found in From name (%.*s)\n",
 						name.len, name.s);
 				retval = 0;
@@ -181,7 +181,7 @@ static int w_check_sqli_all(struct sip_msg *msg)
 		}
 
 		if(user.len > 0) {
-			if(w_check_sqli(user) != 1) {
+			if(sf_check_sqli(&user) != 1) {
 				LM_INFO("Possible SQL injection found in From user (%.*s)\n",
 						user.len, user.s);
 				retval = 0;
@@ -190,7 +190,7 @@ static int w_check_sqli_all(struct sip_msg *msg)
 		}
 
 		if(domain.len > 0) {
-			if(w_check_sqli(domain) != 1) {
+			if(sf_check_sqli(&domain) != 1) {
 				LM_INFO("Possible SQL injection found in From domain (%.*s)\n",
 						domain.len, domain.s);
 				retval = 0;
@@ -203,7 +203,7 @@ static int w_check_sqli_all(struct sip_msg *msg)
 	res = secf_get_to(msg, &name, &user, &domain);
 	if(res == 0) {
 		if(name.len > 0) {
-			if(w_check_sqli(name) != 1) {
+			if(sf_check_sqli(&name) != 1) {
 				LM_INFO("Possible SQL injection found in To name (%.*s)\n",
 						name.len, name.s);
 				retval = 0;
@@ -212,7 +212,7 @@ static int w_check_sqli_all(struct sip_msg *msg)
 		}
 
 		if(user.len > 0) {
-			if(w_check_sqli(user) != 1) {
+			if(sf_check_sqli(&user) != 1) {
 				LM_INFO("Possible SQL injection found in To user (%.*s)\n",
 						user.len, user.s);
 				retval = 0;
@@ -221,7 +221,7 @@ static int w_check_sqli_all(struct sip_msg *msg)
 		}
 
 		if(domain.len > 0) {
-			if(w_check_sqli(domain) != 1) {
+			if(sf_check_sqli(&domain) != 1) {
 				LM_INFO("Possible SQL injection found in To domain (%.*s)\n",
 						domain.len, domain.s);
 				retval = 0;
@@ -234,7 +234,7 @@ static int w_check_sqli_all(struct sip_msg *msg)
 	res = secf_get_contact(msg, &user, &domain);
 	if(res == 0) {
 		if(user.len > 0) {
-			if(w_check_sqli(user) != 1) {
+			if(sf_check_sqli(&user) != 1) {
 				LM_INFO("Possible SQL injection found in Contact user (%.*s)\n",
 						user.len, user.s);
 				retval = 0;
@@ -243,7 +243,7 @@ static int w_check_sqli_all(struct sip_msg *msg)
 		}
 
 		if(domain.len > 0) {
-			if(w_check_sqli(domain) != 1) {
+			if(sf_check_sqli(&domain) != 1) {
 				LM_INFO("Possible SQL injection found in Contact domain "
 						"(%.*s)\n",
 						domain.len, domain.s);
@@ -256,39 +256,42 @@ static int w_check_sqli_all(struct sip_msg *msg)
 end_sqli:
 	return retval;
 }
-static int ki_check_sqli_all(struct sip_msg *msg)
+
+static int w_check_sqli_all(struct sip_msg *msg)
 {
-	return w_check_sqli_all(msg);
+	return ki_check_sqli_all(msg);
 }
 
 
 /* External function to search for illegal characters in some header */
+static int ki_check_sqli_hdr(struct sip_msg *msg, str *cval)
+{
+	return sf_check_sqli(cval);
+}
+
 static int w_check_sqli_hdr(struct sip_msg *msg, char *cval)
 {
 	str val;
+
 	val.s = cval;
 	val.len = strlen(cval);
 
-	return w_check_sqli(val);
-}
-static int ki_check_sqli_hdr(struct sip_msg *msg, str *cval)
-{
-	return w_check_sqli_hdr(msg, cval->s);
+	return sf_check_sqli(&val);
 }
 
 /* Search for illegal characters */
-static int w_check_sqli(str val)
+static int sf_check_sqli(str *val)
 {
-	char *cval;
+	char *cval = NULL;
 	int res = 1;
 
-	cval = (char *)pkg_malloc(val.len + 1);
+	cval = (char *)pkg_malloc(val->len + 1);
 	if(cval == NULL) {
 		PKG_MEM_CRITICAL;
 		return -2;
 	}
-	memset(cval, 0, val.len + 1);
-	memcpy(cval, val.s, val.len);
+	memset(cval, 0, val->len + 1);
+	memcpy(cval, val->s, val->len);
 
 	if(strstr(cval, "'") || strstr(cval, "\"") || strstr(cval, "--")
 			|| strstr(cval, "%27") || strstr(cval, "%22")
@@ -314,13 +317,13 @@ BLACKLIST AND WHITELIST
 ***/
 
 /* Check if the current destination is allowed */
-static int w_check_dst(struct sip_msg *msg, char *val)
+static int ki_check_dst(struct sip_msg *msg, str *val)
 {
 	str dst;
 	struct str_list *list;
 
-	dst.s = val;
-	dst.len = strlen(val);
+	dst.s = val->s;
+	dst.len = val->len;
 
 	list = (*secf_data)->bl.dst;
 	while(list) {
@@ -351,10 +354,14 @@ static int w_check_dst(struct sip_msg *msg, char *val)
 	return 1;
 }
 
-static int ki_check_dst(struct sip_msg *msg, str *val)
+static int w_check_dst(struct sip_msg *msg, char *val)
 {
-	return w_check_dst(msg, val->s);
+	str dst;
+	dst.s = val;
+	dst.len = strlen(val);
+	return ki_check_dst(msg, &dst);
 }
+
 /* Check if the current user-agent is allowed
 Return codes:
  2 = user-agent whitelisted
@@ -362,7 +369,7 @@ Return codes:
 -1 = error
 -2 = user-agent blacklisted
 */
-static int w_check_ua(struct sip_msg *msg)
+static int ki_check_ua(struct sip_msg *msg)
 {
 	int res, len;
 	str ua;
@@ -408,11 +415,17 @@ static int w_check_ua(struct sip_msg *msg)
 
 	return 1;
 }
-static int ki_check_ua(struct sip_msg *msg)
+
+static int w_check_ua(struct sip_msg *msg)
 {
-	return w_check_ua(msg);
+	return ki_check_ua(msg);
 }
 
+
+static int ki_check_from_hdr(struct sip_msg *msg)
+{
+	return check_user(msg, 1);
+}
 
 /* Check if the current from user is allowed */
 static int w_check_from_hdr(struct sip_msg *msg)
@@ -420,9 +433,9 @@ static int w_check_from_hdr(struct sip_msg *msg)
 	return check_user(msg, 1);
 }
 
-static int ki_check_from_hdr(struct sip_msg *msg)
+static int ki_check_to_hdr(struct sip_msg *msg)
 {
-	return w_check_from_hdr(msg);
+	return check_user(msg, 2);
 }
 
 /* Check if the current to user is allowed */
@@ -431,20 +444,15 @@ static int w_check_to_hdr(struct sip_msg *msg)
 	return check_user(msg, 2);
 }
 
-static int ki_check_to_hdr(struct sip_msg *msg)
+static int ki_check_contact_hdr(struct sip_msg *msg)
 {
-	return w_check_to_hdr(msg);
+	return check_user(msg, 3);
 }
-
 
 /* Check if the current contact user is allowed */
 static int w_check_contact_hdr(struct sip_msg *msg)
 {
 	return check_user(msg, 3);
-}
-static int ki_check_contact_hdr(struct sip_msg *msg)
-{
-	return w_check_contact_hdr(msg);
 }
 
 /*
@@ -652,7 +660,7 @@ Return codes:
 -1 = error
 -2 = IP address blacklisted
 */
-static int w_check_ip(struct sip_msg *msg)
+static int ki_check_ip(struct sip_msg *msg)
 {
 	int res, len;
 	str ip;
@@ -699,9 +707,10 @@ static int w_check_ip(struct sip_msg *msg)
 
 	return 1;
 }
-static int ki_check_ip(struct sip_msg *msg)
+
+static int w_check_ip(struct sip_msg *msg)
 {
-	return w_check_ip(msg);
+	return ki_check_ip(msg);
 }
 
 /* Check if the current country is allowed
@@ -711,14 +720,14 @@ Return codes:
  1 = not found
 -2 = Country blacklisted
 */
-static int w_check_country(struct sip_msg *msg, char *val)
+static int ki_check_country(struct sip_msg *msg, str *val)
 {
 	int res, len;
 	str country;
 	struct str_list *list;
 
-	country.s = val;
-	country.len = strlen(val);
+	country.s = val->s;
+	country.len = val->len;
 
 	len = country.len;
 
@@ -756,10 +765,16 @@ static int w_check_country(struct sip_msg *msg, char *val)
 	return 1;
 }
 
-static int ki_check_country(struct sip_msg *msg, str *val)
+static int w_check_country(struct sip_msg *msg, char *val)
 {
-	return w_check_country(msg, val->s);
+	str country;
+
+	country.s = val;
+	country.len = strlen(val);
+
+	return ki_check_country(msg, &country);
 }
+
 void secf_reset_stats(void)
 {
 	lock_get(secf_lock);
@@ -999,11 +1014,11 @@ static sr_kemi_t sr_kemi_secfilter_exports[] = {
 		SR_KEMIP_INT, ki_check_dst,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE}},
-	{ str_init("secfilter"), str_init("secf_check_ip"), 
+	{ str_init("secfilter"), str_init("secf_check_ip"),
 		SR_KEMIP_INT, ki_check_ip,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE}},
-	{ str_init("secfilter"), str_init("secf_check_ua"), 
+	{ str_init("secfilter"), str_init("secf_check_ua"),
 		SR_KEMIP_INT, ki_check_ua,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE}},
@@ -1012,12 +1027,12 @@ static sr_kemi_t sr_kemi_secfilter_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE}
 	},
-	{ str_init("secfilter"), str_init("secf_check_from_hdr"), 
+	{ str_init("secfilter"), str_init("secf_check_from_hdr"),
 		SR_KEMIP_INT, ki_check_from_hdr,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE}
 	},
-	{ str_init("secfilter"), str_init("secf_check_to_hdr"), 
+	{ str_init("secfilter"), str_init("secf_check_to_hdr"),
 		SR_KEMIP_INT, ki_check_to_hdr,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE}
@@ -1027,13 +1042,13 @@ static sr_kemi_t sr_kemi_secfilter_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE}
 	},
-	{ str_init("secfilter"), str_init("secf_sqli_hdr"), 
+	{ str_init("secfilter"), str_init("secf_sqli_hdr"),
 		SR_KEMIP_INT, ki_check_sqli_hdr,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE}
 	},
-	{ str_init("secfilter"), str_init("secf_check_sqli_all"), 
-	SR_KEMIP_INT, ki_check_sqli_all,
+	{ str_init("secfilter"), str_init("secf_check_sqli_all"),
+		SR_KEMIP_INT, ki_check_sqli_all,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE}
 	},
