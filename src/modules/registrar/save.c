@@ -1094,22 +1094,29 @@ int unregister(struct sip_msg *_m, udomain_t *_d, str *_uri, str *_ruid)
 {
 	str aor = {0, 0};
 	sip_uri_t *u;
+	sip_uri_t turi;
 	urecord_t *r;
 	ucontact_t *c;
 	int res;
 
-	if(_ruid == NULL) {
+	if(_ruid == NULL || _ruid->len <= 0) {
 		/* No ruid provided - remove all contacts for aor */
-
-		if(extract_aor(_uri, &aor, NULL) < 0) {
-			LM_ERR("failed to extract Address Of Record\n");
-			return -1;
-		}
-
-		u = parse_to_uri(_m);
-		if(u == NULL) {
-			LM_ERR("failed to extract Address Of Record\n");
-			return -1;
+		if(_uri->len > 0) {
+			if(extract_aor(_uri, &aor, &turi) < 0) {
+				LM_ERR("failed to extract Address Of Record\n");
+				return -1;
+			}
+			u = &turi;
+		} else {
+			u = parse_to_uri(_m);
+			if(u == NULL) {
+				LM_ERR("failed to extract Address Of Record\n");
+				return -1;
+			}
+			if(extract_aor(&(get_to(_m)->uri), &aor, NULL) < 0) {
+				LM_ERR("failed to extract Address Of Record\n");
+				return -1;
+			}
 		}
 
 		if(star(_m, _d, &aor, &u->host) < 0) {
