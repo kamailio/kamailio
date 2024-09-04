@@ -998,6 +998,8 @@ static int add_contact_alias_3(
 	struct lump *anchor;
 	struct sip_uri uri;
 	char *bracket, *lt, *param, *at, *start;
+	int is_ipv6 = 0;
+	int i;
 
 	/* Do nothing if Contact header does not exist */
 	if(!msg->contact) {
@@ -1058,8 +1060,8 @@ static int add_contact_alias_3(
 	}
 
 	/* Create  ;alias param */
-	param_len = _ksr_contact_salias.len + IP6_MAX_STR_SIZE
-				+ 1 /* ~ */ + 5 /* port */
+	param_len = _ksr_contact_salias.len + 1 /* [ */ + IP6_MAX_STR_SIZE
+				+ 1 /* ] */ + 1 /* ~ */ + 5 /* port */
 				+ 1 /* ~ */ + 1 /* proto */ + 1 /* closing > */;
 	param = (char *)pkg_malloc(param_len);
 	if(!param) {
@@ -1068,8 +1070,20 @@ static int add_contact_alias_3(
 	}
 	at = param;
 	/* ip address */
+	for(i = 0; i < ip_str->len; i++) {
+		if(ip_str->s[i] == ':') {
+			is_ipv6 = 1;
+			break;
+		}
+	}
+	if(is_ipv6 && ip_str->s[0] != '[') {
+		append_chr(at, '[');
+	}
 	append_str(at, _ksr_contact_salias.s, _ksr_contact_salias.len);
 	append_str(at, ip_str->s, ip_str->len);
+	if(is_ipv6 && ip_str->s[0] != '[') {
+		append_chr(at, ']');
+	}
 	/* port */
 	append_chr(at, '~');
 	append_str(at, port_str->s, port_str->len);
