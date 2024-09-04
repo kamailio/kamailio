@@ -490,7 +490,20 @@ static int mod_init(void)
 	if(tls_check_sockets(*tls_domains_cfg) < 0)
 		goto error;
 
-	LM_INFO("use OpenSSL version: %08x\n", (uint32_t)(OPENSSL_VERSION_NUMBER));
+
+#if OPENSSL_VERSION_NUMBER < 0x030000000L
+	LM_INFO("compiled with OpenSSL version: %08x\n", (uint32_t)(OPENSSL_VERSION_NUMBER));
+#elif OPENSSL_VERSION_NUMBER >= 0x030000000L
+	LM_INFO("compiled with OpenSSL: %s\n", OPENSSL_VERSION_TEXT);
+	LM_INFO("run-time OpenSSL library: %s\n", OpenSSL_version(OPENSSL_VERSION));
+
+	if(EVP_default_properties_is_fips_enabled(NULL) == 1) {
+		LM_INFO("FIPS mode enabled in OpenSSL library\n");
+	} else  {
+		LM_INFO("FIPS mode not enabled in OpenSSL library\n");
+	}
+#endif
+
 #ifndef OPENSSL_NO_ECDH
 	LM_INFO("With ECDH-Support!\n");
 #endif
