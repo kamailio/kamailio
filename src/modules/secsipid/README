@@ -472,12 +472,9 @@ request_route {
    The module needs "secsipdi_proc.so" module that depends on
    "libsecsipid", which is a component of "sipsecidx" project from
    https://github.com/asipto/secsipidx/. The library is implemented in Go
-   language, with generated C API and library. Until the libsecsipid is
-   going to be packaged in OS distributions, the secsipid_proc module can
-   be compiled by copying secsipid.h libsecsipid.h and libsecsipid.a files
-   in the folder of the module.
+   language, with generated C API and library.
 
-   To generate the libsecsipid.a file, it requires to have Go language
+   To generate the libsecsipid files, it requires to have Go language
    installed and its environment configured, then run the following
    commands:
 
@@ -486,9 +483,8 @@ request_route {
 export GO111MODULE=off
 go get https://github.com/asipto/secsipidx
 cd $GOPATH/src/github.com/asipto/secsipidx/csecsipid/
-make liba
-cp secsipid.h libsecsipid.h libsecsipid.a \
-    /path/to/kamailio/src/modules/secsipid_proc/
+make all
+make install
 
 cd /path/to/kamailio/
 make include_modules="secsipid secsipid_proc ..." cfg
