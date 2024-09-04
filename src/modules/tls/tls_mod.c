@@ -504,11 +504,11 @@ static int mod_init(void)
 	}
 #endif
 
-#ifndef OPENSSL_NO_ECDH
-	LM_INFO("With ECDH-Support!\n");
-#endif
 #ifndef OPENSSL_NO_DH
-	LM_INFO("With Diffie Hellman\n");
+	LM_INFO("OpenSSL supports Diffie-Hellman\n");
+#endif
+#ifndef OPENSSL_NO_ECDH
+	LM_INFO("OpenSSL supports Elliptic-curve Diffie–Hellman\n");
 #endif
 	if(sr_tls_event_callback.s == NULL || sr_tls_event_callback.len <= 0) {
 		tls_lookup_event_routes();
