@@ -926,6 +926,7 @@ int save(struct sip_msg *_m, udomain_t *_d, int _cflags, str *_uri)
 	str aor;
 	int ret;
 	sip_uri_t *u;
+	sip_uri_t turi;
 	rr_t *route;
 	struct sip_uri puri;
 	param_hooks_t hooks;
@@ -935,7 +936,23 @@ int save(struct sip_msg *_m, udomain_t *_d, int _cflags, str *_uri)
 	int novariation = 0;
 
 
-	u = parse_to_uri(_m);
+	if(_uri->len > 0) {
+		if(extract_aor(_uri, &aor, &turi) < 0) {
+			LM_ERR("failed to extract Address Of Record\n");
+			return -1;
+		}
+		u = &turi;
+	} else {
+		u = parse_to_uri(_m);
+		if(u == NULL) {
+			LM_ERR("failed to extract Address Of Record\n");
+			return -1;
+		}
+		if(extract_aor(&(get_to(_m)->uri), &aor, NULL) < 0) {
+			LM_ERR("failed to extract Address Of Record\n");
+			return -1;
+		}
+	}
 	if(u == NULL)
 		goto error;
 
