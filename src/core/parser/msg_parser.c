@@ -95,7 +95,7 @@ char *get_hdr_field(
 
 	tmp = parse_hname(buf, end, hdr);
 	if(hdr->type == HDR_ERROR_T) {
-		ERR("bad header\n");
+		LOG(cfg_get(core, core_cfg, sip_parser_log), "bad header\n");
 		goto error;
 	}
 
@@ -336,7 +336,8 @@ int parse_headers(
 		rest = get_hdr_field(tmp, end, hf);
 		switch(hf->type) {
 			case HDR_ERROR_T:
-				ERR("bad header field [%.*s]\n",
+				LOG(cfg_get(core, core_cfg, sip_parser_log),
+						"bad header field [%.*s]\n",
 						(end - tmp > 100) ? 100 : (int)(end - tmp), tmp);
 				goto error;
 			case HDR_EOH_T:
