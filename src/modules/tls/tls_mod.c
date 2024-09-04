@@ -508,7 +508,7 @@ static int mod_init(void)
 	LM_INFO("OpenSSL supports Diffie-Hellman\n");
 #endif
 #ifndef OPENSSL_NO_ECDH
-	LM_INFO("OpenSSL supports Elliptic-curve Diffie–Hellman\n");
+	LM_INFO("OpenSSL supports Elliptic-curve Diffie-Hellman\n");
 #endif
 	if(sr_tls_event_callback.s == NULL || sr_tls_event_callback.len <= 0) {
 		tls_lookup_event_routes();
