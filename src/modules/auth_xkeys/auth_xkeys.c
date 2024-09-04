@@ -250,10 +250,10 @@ int auth_xkeys_add(sip_msg_t *msg, str *hdr, str *key, str *alg, str *data)
 		return -1;
 	}
 
-	strncpy(xdata.s, hdr->s, hdr->len);
+	memcpy(xdata.s, hdr->s, hdr->len);
 	xdata.s[hdr->len] = ':';
 	xdata.s[hdr->len + 1] = ' ';
-	strncpy(xdata.s + hdr->len + 2, xout, xdata.len);
+	memcpy(xdata.s + hdr->len + 2, xout, xdata.len);
 	xdata.len += hdr->len + 2;
 	xdata.s[xdata.len] = '\r';
 	xdata.s[xdata.len + 1] = '\n';
