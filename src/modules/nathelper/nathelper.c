@@ -1140,6 +1140,7 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 			*trans, *start;
 	unsigned int len, rest_len, val_len, alias_len, proto_type, cur_uri_len,
 			ip_len, ip_port_len, port_len, i;
+	int is_ipv6 = 0;
 
 	if(parse_sip_msg_uri(msg) < 0) {
 		LM_ERR("while parsing Request-URI\n");
@@ -1188,7 +1189,6 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 	// IPv6 needs some [] added when composing a SIP URI, which further
 	// complicates this code.
 	ip_len = port - val;
-	int is_ipv6 = 0;
 	for(i = 0; i < ip_len; i++) {
 		if(val[i] == ':') {
 			is_ipv6 = 1;
@@ -1206,7 +1206,7 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 	append_str(at, "sip:", 4);
 	ip_port_len = trans - val;
 	alias_len = _ksr_contact_salias.len + ip_port_len + 2 /* ~n */;
-	if(is_ipv6) {
+	if(is_ipv6 && val[0] != '[') {
 		// IPv6 - add '[' ']' around IP
 		// then append ':' and copy the port
 		append_chr(at, '[');
