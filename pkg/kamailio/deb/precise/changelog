@@ -1,3 +1,9 @@
+kamailio (5.8.3) unstable; urgency=medium
+
+  * version set 5.8.3
+
+ -- Victor Seva <vseva@debian.org>  Wed, 04 Sep 2024 09:29:45 +0200
+
 kamailio (5.8.2) unstable; urgency=medium
 
   * version set 5.8.2
