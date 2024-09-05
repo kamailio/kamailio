@@ -936,7 +936,7 @@ int save(struct sip_msg *_m, udomain_t *_d, int _cflags, str *_uri)
 	int novariation = 0;
 
 
-	if(_uri->len > 0) {
+	if(_uri != NULL && _uri->len > 0) {
 		if(extract_aor(_uri, &aor, &turi) < 0) {
 			LM_ERR("failed to extract Address Of Record\n");
 			return -1;
@@ -1043,11 +1043,6 @@ int save(struct sip_msg *_m, udomain_t *_d, int _cflags, str *_uri)
 	get_act_time();
 	c = get_first_contact(_m);
 
-	if(extract_aor((_uri) ? _uri : &get_to(_m)->uri, &aor, NULL) < 0) {
-		LM_ERR("failed to extract Address Of Record\n");
-		goto error;
-	}
-
 	mem_only = is_cflag_set(REG_SAVE_MEM_FL) ? FL_MEM : FL_NONE;
 	novariation = is_cflag_set(REG_SAVE_NOVARIATION_FL) ? 1 : 0;
 
@@ -1118,7 +1113,7 @@ int unregister(struct sip_msg *_m, udomain_t *_d, str *_uri, str *_ruid)
 
 	if(_ruid == NULL || _ruid->len <= 0) {
 		/* No ruid provided - remove all contacts for aor */
-		if(_uri->len > 0) {
+		if(_uri != NULL && _uri->len > 0) {
 			if(extract_aor(_uri, &aor, &turi) < 0) {
 				LM_ERR("failed to extract Address Of Record\n");
 				return -1;
@@ -1142,9 +1137,7 @@ int unregister(struct sip_msg *_m, udomain_t *_d, str *_uri, str *_ruid)
 		}
 	} else {
 		/* ruid provided - remove a specific contact */
-
-		if(_uri->len > 0) {
-
+		if(_uri != NULL && _uri->len > 0) {
 			if(extract_aor(_uri, &aor, NULL) < 0) {
 				LM_ERR("failed to extract Address Of Record\n");
 				return -1;
@@ -1162,9 +1155,7 @@ int unregister(struct sip_msg *_m, udomain_t *_d, str *_uri, str *_ruid)
 				return -2;
 			}
 			_reg_ul.unlock_udomain(_d, &aor);
-
 		} else {
-
 			res = _reg_ul.delete_urecord_by_ruid(_d, _ruid);
 			switch(res) {
 				case -1:
