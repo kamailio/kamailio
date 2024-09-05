@@ -132,6 +132,7 @@ static inline int msg_send_buffer(
 	union sockaddr_union local_addr;
 	struct tcp_connection *con = NULL;
 	struct ws_event_info wsev;
+	int dproto;
 	int ret;
 #endif
 
@@ -187,9 +188,21 @@ static inline int msg_send_buffer(
 		if(likely(port)) {
 			su2ip_addr(&ip, &dst->to);
 			if(tcp_connection_match == TCPCONN_MATCH_STRICT) {
+				/* lookup first for WSS, because transport=ws is in URI,
+				 * but WS is less likely */
+				if(dst->proto == PROTO_WSS || dst->proto == PROTO_WS) {
+					dproto = PROTO_WSS;
+				} else {
+					dproto = dst->proto;
+				}
 				con = tcpconn_lookup(dst->id, &ip, port, from,
 						(dst->send_sock) ? dst->send_sock->port_no : 0, 0,
-						dst->proto);
+						dproto);
+				if(con == NULL && dst->proto == PROTO_WS) {
+					con = tcpconn_lookup(dst->id, &ip, port, from,
+							(dst->send_sock) ? dst->send_sock->port_no : 0, 0,
+							PROTO_WS);
+				}
 			} else {
 				con = tcpconn_get(dst->id, &ip, port, from, 0);
 			}
