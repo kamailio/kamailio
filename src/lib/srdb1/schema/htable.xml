@@ -36,7 +36,7 @@
     <column id="key_name">
         <name>key_name</name>
         <type>string</type>
-        <size>64</size>
+        <size>256</size>
         <default/>
         <description>Name of the hash key</description>
     </column>
@@ -58,7 +58,7 @@
     <column id="attribute">
         <name>key_value</name>
         <type>string</type>
-        <size>128</size>
+        <size>512</size>
         <default/>
         <description>The value of the key</description>
     </column>
