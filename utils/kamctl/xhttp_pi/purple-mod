@@ -1,4 +1,4 @@
-	<!-- purplemap provisionning -->
+	<!-- purplemap provisioning -->
 	<mod><mod_name>purplemap</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>purplemap</db_table_id>

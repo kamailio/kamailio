@@ -1,4 +1,4 @@
-	<!-- userblocklist provisionning -->
+	<!-- userblocklist provisioning -->
 	<mod><mod_name>userblocklist</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>userblocklist</db_table_id>
@@ -42,7 +42,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- globalblocklist provisionning -->
+	<!-- globalblocklist provisioning -->
 	<mod><mod_name>globalblocklist</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>globalblocklist</db_table_id>

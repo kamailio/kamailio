@@ -1,4 +1,4 @@
-	<!-- sip_trace provisionning -->
+	<!-- sip_trace provisioning -->
 	<mod><mod_name>sip_trace</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>sip_trace</db_table_id>

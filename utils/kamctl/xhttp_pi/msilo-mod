@@ -1,4 +1,4 @@
-	<!-- silo provisionning -->
+	<!-- silo provisioning -->
 	<mod><mod_name>silo</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>silo</db_table_id>

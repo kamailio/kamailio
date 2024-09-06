@@ -1,4 +1,4 @@
-	<!-- secfilter provisionning -->
+	<!-- secfilter provisioning -->
 	<mod><mod_name>secfilter</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>secfilter</db_table_id>
