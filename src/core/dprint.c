@@ -828,6 +828,14 @@ void ksr_slog_init(char *ename)
 	}
 }
 
+/**
+ *
+ */
+void km_slog_func_set(ksr_slog_f f)
+{
+	_ksr_slog_func = f;
+}
+
 static void log_callid_set(sip_msg_t *msg)
 {
 	if(!(_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID)) {
