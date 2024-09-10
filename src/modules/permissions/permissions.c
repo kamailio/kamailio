@@ -1036,44 +1036,58 @@ int allow_test(char *file, char *uri, char *contact)
 	return 1;
 }
 
+/* clang-format off */
 static const char *rpc_trusted_reload_doc[2] = {
-		"Reload permissions trusted table", 0};
+	"Reload permissions trusted table",
+	0
+};
 
 static const char *rpc_address_reload_doc[2] = {
-		"Reload permissions address table", 0};
+	"Reload permissions address table",
+	0
+};
 
 static const char *rpc_trusted_dump_doc[2] = {
-		"Dump permissions trusted table", 0};
+	"Dump permissions trusted table",
+	0
+};
 
 static const char *rpc_address_dump_doc[2] = {
-		"Dump permissions address table", 0};
+	"Dump permissions address table",
+	0
+};
 
 static const char *rpc_subnet_dump_doc[2] = {
-		"Dump permissions subnet table", 0};
+	"Dump permissions subnet table",
+	0
+};
 
 static const char *rpc_domain_name_dump_doc[2] = {
-		"Dump permissions domain name table", 0};
-
+	"Dump permissions domain name table",
+	0
+};
 
 static const char *rpc_test_uri_doc[2] = {
-		"Tests if (URI, Contact) pair is allowed according to allow/deny files",
-		0};
+	"Tests if (URI, Contact) pair is allowed according to allow/deny files",
+	0
+};
 
 rpc_export_t permissions_rpc[] = {
-		{"permissions.trustedReload", rpc_trusted_reload,
-				rpc_trusted_reload_doc, RPC_EXEC_DELTA},
-		{"permissions.addressReload", rpc_address_reload,
-				rpc_address_reload_doc, RPC_EXEC_DELTA},
-		{"permissions.trustedDump", rpc_trusted_dump, rpc_trusted_dump_doc, 0},
-		{"permissions.addressDump", rpc_address_dump, rpc_address_dump_doc,
-				RET_ARRAY},
-		{"permissions.subnetDump", rpc_subnet_dump, rpc_subnet_dump_doc,
-				RET_ARRAY},
-		{"permissions.domainDump", rpc_domain_name_dump,
-				rpc_domain_name_dump_doc, 0},
-		{"permissions.testUri", rpc_test_uri, rpc_test_uri_doc, 0},
-		{"permissions.allowUri", rpc_test_uri, rpc_test_uri_doc, 0},
-		{0, 0, 0, 0}};
+	{"permissions.trustedReload", rpc_trusted_reload, rpc_trusted_reload_doc,
+			RPC_EXEC_DELTA},
+	{"permissions.addressReload", rpc_address_reload, rpc_address_reload_doc,
+			RPC_EXEC_DELTA},
+	{"permissions.trustedDump", rpc_trusted_dump, rpc_trusted_dump_doc, 0},
+	{"permissions.addressDump", rpc_address_dump, rpc_address_dump_doc,
+			RET_ARRAY},
+	{"permissions.subnetDump", rpc_subnet_dump, rpc_subnet_dump_doc, RET_ARRAY},
+	{"permissions.domainDump", rpc_domain_name_dump,
+			rpc_domain_name_dump_doc, 0},
+	{"permissions.testUri", rpc_test_uri, rpc_test_uri_doc, 0},
+	{"permissions.allowUri", rpc_test_uri, rpc_test_uri_doc, 0},
+	{0, 0, 0, 0}
+};
+/* clang-format on */
 
 static int permissions_init_rpc(void)
 {
