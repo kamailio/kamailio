@@ -44,6 +44,9 @@
 /* Maximum length for advertise string of listen socket */
 #define MAX_SOCKET_ADVERTISE_STR 511
 
+#define KSR_IPV6_LINK_LOCAL_BIND (1)
+#define KSR_IPV6_LINK_LOCAL_SKIP (1 << 1)
+
 int socket2str(char *s, int *len, struct socket_info *si);
 int socketinfo2str(char *s, int *len, struct socket_info *si, int mode);
 
