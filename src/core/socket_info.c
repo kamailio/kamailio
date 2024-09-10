@@ -1581,7 +1581,12 @@ static int build_iface_list(void)
 				}
 			}
 			if(is_link_local) {
-				if(sr_bind_ipv6_link_local == 0) {
+				if(sr_bind_ipv6_link_local & KSR_IPV6_LINK_LOCAL_SKIP) {
+					/* skip - config option */
+					pkg_free(entry);
+					continue;
+				}
+				if(!(sr_bind_ipv6_link_local & KSR_IPV6_LINK_LOCAL_BIND)) {
 					/* skip - link local addresses are not bindable without scope */
 					pkg_free(entry);
 					continue;

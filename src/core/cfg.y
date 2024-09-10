@@ -986,7 +986,7 @@ assign_stm:
 	}
 	| IPV6_HEX_STYLE error { yyerror("string value expected"); }
 	| BIND_IPV6_LINK_LOCAL EQUAL NUMBER {sr_bind_ipv6_link_local = $3;}
-	| BIND_IPV6_LINK_LOCAL error { yyerror("boolean value expected"); }
+	| BIND_IPV6_LINK_LOCAL error { yyerror("number expected"); }
 	| DST_BLST_INIT EQUAL NUMBER   { IF_DST_BLOCKLIST(dst_blocklist_init=$3); }
 	| DST_BLST_INIT error { yyerror("boolean value expected"); }
 	| USE_DST_BLST EQUAL NUMBER {

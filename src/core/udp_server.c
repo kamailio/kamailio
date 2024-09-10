@@ -411,6 +411,13 @@ int udp_init(struct socket_info *sock_info)
 	unsigned char m_ttl, m_loop;
 #endif
 	addr = &sock_info->su;
+	if((addr->s.sa_family == AF_INET6)
+			&& (sr_bind_ipv6_link_local & KSR_IPV6_LINK_LOCAL_SKIP)
+			&& IN6_IS_ADDR_LINKLOCAL(&addr->sin6.sin6_addr)) {
+		LM_DBG("skip binding on %s\n", sock_info->address_str.s);
+		return 0;
+	}
+
 	/*
 	addr=(union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
 	if (addr==0){
@@ -453,7 +460,7 @@ int udp_init(struct socket_info *sock_info)
 			LM_WARN("setsockopt v6 tos: %s\n", strerror(errno));
 			/* continue since this is not critical */
 		}
-		if(sr_bind_ipv6_link_local != 0) {
+		if(sr_bind_ipv6_link_local & KSR_IPV6_LINK_LOCAL_BIND) {
 			LM_INFO("setting scope of %s\n", sock_info->address_str.s);
 			addr->sin6.sin6_scope_id =
 					ipv6_get_netif_scope(sock_info->address_str.s);
