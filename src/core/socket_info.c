@@ -1574,24 +1574,24 @@ static int build_iface_list(void)
 			for(; RTA_OK(rtap, rtl); rtap = RTA_NEXT(rtap, rtl)) {
 				switch(rtap->rta_type) {
 					case IFA_ADDRESS:
-						if((*(int *)RTA_DATA(rtap)) == htons(0xfe80)) {
-							LM_DBG("Link Local Address, ignoring ...\n");
-							is_link_local = 1;
-							break;
-						}
 						inet_ntop(families[i], RTA_DATA(rtap), entry->addr,
 								MAX_IF_LEN);
-						LM_DBG("iface <IFA_ADDRESS> addr is  %s\n",
+						if((*(int *)RTA_DATA(rtap)) == htons(0xfe80)) {
+							LM_DBG("Link Local Address is '%s'\n", entry->addr);
+							is_link_local = 1;
+						}
+						LM_DBG("iface <IFA_ADDRESS> address is '%s'\n",
 								entry->addr);
 						break;
 					case IFA_LOCAL:
-						if((*(int *)RTA_DATA(rtap)) == htons(0xfe80)) {
-							LM_DBG("Link Local Address, ignoring ...\n");
-							is_link_local = 1;
-						}
 						inet_ntop(families[i], RTA_DATA(rtap), entry->addr,
 								MAX_IF_LEN);
-						LM_DBG("iface <IFA_LOCAL> addr is %s\n", entry->addr);
+						if((*(int *)RTA_DATA(rtap)) == htons(0xfe80)) {
+							LM_DBG("Link Local Address is '%s'\n", entry->addr);
+							is_link_local = 1;
+						}
+						LM_DBG("iface <IFA_LOCAL> address is '%s'\n",
+								entry->addr);
 						break;
 					case IFA_LABEL:
 						LM_DBG("iface name is %s\n", (char *)RTA_DATA(rtap));
@@ -1691,7 +1691,7 @@ int add_interfaces_via_netlink(char *if_name, int family, unsigned short port,
 				if(family && family == tmp->family) {
 					/* check if loopback */
 					if(ifaces[i].flags & IFF_LOOPBACK) {
-						LM_DBG("INTERFACE '%s' is loopback", ifaces[i].name);
+						LM_DBG("INTERFACE '%s' is loopback\n", ifaces[i].name);
 						flags |= SI_IS_LO;
 					}
 					/* save the info */
