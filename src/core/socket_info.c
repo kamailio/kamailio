@@ -1420,7 +1420,7 @@ static int get_flags(int family)
 		if(nlp->nlmsg_len < NLMSG_LENGTH(sizeof(ifi)))
 			goto error;
 
-		LM_ERR("Interface with index %d has flags %d\n", ifi->ifi_index,
+		LM_INFO("Interface with index %d has flags %d\n", ifi->ifi_index,
 				ifi->ifi_flags);
 		if(ifaces == NULL) {
 			LM_ERR("get_flags must not be called on empty interface list");
@@ -1746,7 +1746,7 @@ static int fix_hostname(str *name, struct ip_addr *address, str *address_str,
 	/* get "official hostnames", all the aliases etc. */
 	he = resolvehost(name->s);
 	if(he == 0) {
-		LM_ERR("could not resolve %s\n", name->s);
+		LM_ERR("could not resolve '%s'\n", name->s);
 		goto error;
 	}
 	/* check if we got the official name */
