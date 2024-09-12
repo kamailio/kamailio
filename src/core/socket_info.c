@@ -207,6 +207,10 @@ static int init_addr_info(struct addr_info *a, char *name, enum si_flags flags)
 
 	memset(a, 0, sizeof(*a));
 	a->name.len = strlen(name);
+	if(a->name.len <= 0) {
+		LM_ERR("invalid or empty name value\n");
+		return -1;
+	}
 	a->name.s = pkg_malloc(a->name.len + 1); /* include \0 */
 	if(a->name.s == 0)
 		goto error;
@@ -224,16 +228,15 @@ static inline struct addr_info *new_addr_info(char *name, enum si_flags gf)
 {
 	struct addr_info *al;
 
-	al = pkg_malloc(sizeof(*al));
-	if(al == 0)
+	al = pkg_mallocxz(sizeof(*al));
+	if(al == 0) {
+		PKG_MEM_ERROR;
 		goto error;
-	al->next = 0;
-	al->prev = 0;
+	}
 	if(init_addr_info(al, name, gf) != 0)
 		goto error;
 	return al;
 error:
-	PKG_MEM_ERROR;
 	if(al) {
 		if(al->name.s)
 			pkg_free(al->name.s);
@@ -1677,13 +1680,18 @@ int add_interfaces_via_netlink(char *if_name, int family, unsigned short port,
 			//if(! (ifaces[i].flags & IFF_UP) ) continue;
 
 			for(tmp = ifaces[i].addresses; tmp; tmp = tmp->next) {
-				LM_DBG("in add_iface_via_netlink Name %s Address %s\n",
+				LM_DBG("in add_iface_via_netlink Name '%s' Address '%s'\n",
 						ifaces[i].name, tmp->addr);
+				if(strlen(tmp->addr) == 0) {
+					LM_DBG("interface '%s' - skip item with empty address\n",
+							ifaces[i].name);
+					continue;
+				}
 				/* match family */
 				if(family && family == tmp->family) {
 					/* check if loopback */
 					if(ifaces[i].flags & IFF_LOOPBACK) {
-						LM_DBG("INTERFACE %s is loopback", ifaces[i].name);
+						LM_DBG("INTERFACE '%s' is loopback", ifaces[i].name);
 						flags |= SI_IS_LO;
 					}
 					/* save the info */
