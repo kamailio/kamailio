@@ -414,7 +414,8 @@ int udp_init(struct socket_info *sock_info)
 	if((addr->s.sa_family == AF_INET6)
 			&& (sr_bind_ipv6_link_local & KSR_IPV6_LINK_LOCAL_SKIP)
 			&& IN6_IS_ADDR_LINKLOCAL(&addr->sin6.sin6_addr)) {
-		LM_DBG("skip binding on %s\n", sock_info->address_str.s);
+		LM_DBG("skip binding on %s (mode: %d)\n", sock_info->address_str.s,
+				sr_bind_ipv6_link_local);
 		return 0;
 	}
 
@@ -461,7 +462,8 @@ int udp_init(struct socket_info *sock_info)
 			/* continue since this is not critical */
 		}
 		if(sr_bind_ipv6_link_local & KSR_IPV6_LINK_LOCAL_BIND) {
-			LM_INFO("setting scope of %s\n", sock_info->address_str.s);
+			LM_INFO("setting scope of %s (bind mode: %d)\n",
+					sock_info->address_str.s, sr_bind_ipv6_link_local);
 			addr->sin6.sin6_scope_id =
 					ipv6_get_netif_scope(sock_info->address_str.s);
 		}
