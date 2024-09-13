@@ -1609,11 +1609,15 @@ static int build_iface_list(void)
 			if(is_link_local) {
 				if(sr_bind_ipv6_link_local & KSR_IPV6_LINK_LOCAL_SKIP) {
 					/* skip - config option */
+					LM_DBG("skip binding on '%s' (bind mode: %d)\n",
+							entry->addr, sr_bind_ipv6_link_local);
 					pkg_free(entry);
 					continue;
 				}
 				if(!(sr_bind_ipv6_link_local & KSR_IPV6_LINK_LOCAL_BIND)) {
 					/* skip - link local addresses are not bindable without scope */
+					LM_DBG("not set to on '%s' (bind mode: %d)\n", entry->addr,
+							sr_bind_ipv6_link_local);
 					pkg_free(entry);
 					continue;
 				}
