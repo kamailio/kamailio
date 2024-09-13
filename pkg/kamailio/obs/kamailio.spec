@@ -1325,7 +1325,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     FREERADIUS=1 \
 %endif
 %if 0%{?rhel} >= 8
-    PYTHON3=python3.9 \
+    PYTHON3=python3.12 \
 %endif
     WOLFSSL_INTERNAL=no \
     group_include="kstandard kautheph kberkeley kcarrierroute \
