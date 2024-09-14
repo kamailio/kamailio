@@ -1493,6 +1493,7 @@ static int build_iface_list(void)
 	int families[] = {AF_INET, AF_INET6};
 	char name[MAX_IF_LEN];
 	int is_link_local = 0;
+	int num = 0;
 
 	if(ifaces == NULL) {
 		if((ifaces = (struct idxlist *)pkg_malloc(
@@ -1554,9 +1555,11 @@ static int build_iface_list(void)
 			rtl = IFA_PAYLOAD(nlp);
 
 			index = ifi->ifa_index;
+			num++;
 			if(index >= MAX_IFACE_NO) {
-				LM_ERR("Invalid interface index returned: %d\n", index);
-				goto error;
+				LM_ERR("Invalid interface index returned: %d (n: %d) - skip\n",
+						index, num);
+				continue;
 			}
 
 			entry = (struct idx *)pkg_malloc(sizeof(struct idx));
@@ -1564,6 +1567,7 @@ static int build_iface_list(void)
 				PKG_MEM_ERROR;
 				goto error;
 			}
+			LM_DBG("trying network interface index: %d (n: %d)\n", index, num);
 
 			entry->next = 0;
 			entry->family = families[i];
