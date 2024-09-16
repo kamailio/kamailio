@@ -304,6 +304,11 @@
 #endif
 #endif /* __riscv */
 
+/* LOONGARCH64, https://loongson.github.io/LoongArch-Documentation/LoongArch-ELF-ABI-EN.html */
+#if defined(__loongarch64)
+#define DUK_F_LOONGARCH64
+#endif
+
 /* SuperH */
 #if defined(__sh__) || defined(__sh1__) || defined(__SH1__)         \
 		|| defined(__sh2__) || defined(__SH2__) || defined(__sh3__) \
@@ -977,6 +982,11 @@
 /* --- SPARC 64-bit --- */
 #define DUK_USE_ARCH_STRING "sparc64"
 /* SPARC byte order varies so rely on autodetection. */
+#undef DUK_USE_PACKED_TVAL
+#define DUK_F_PACKED_TVAL_PROVIDED
+#elif defined(DUK_F_LOONGARCH64)
+#define DUK_USE_ARCH_STRING "loongarch64"
+#define DUK_USE_BYTEORDER 1
 #undef DUK_USE_PACKED_TVAL
 #define DUK_F_PACKED_TVAL_PROVIDED
 #elif defined(DUK_F_RISCV32)
