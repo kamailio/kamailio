@@ -101,10 +101,10 @@ int dlg_set_tm_waitack(tm_cell_t *t, dlg_cell_t *dlg);
 /*!
  * \brief Initialize the dialog handlers
  * \param rr_param_p added record-route parameter
- * \param dlg_flag_p dialog flag
  * \param timeout_avp_p AVP for timeout setting
  * \param default_timeout_p default timeout
  * \param seq_match_mode_p matching mode
+ * \param seq_match_mode_p keep proxy's record-route mode
  */
 void init_dlg_handlers(char *rr_param_p, pv_spec_t *timeout_avp_p,
 		int default_timeout_p, int seq_match_mode_p, int keep_proxy_rr_p)
