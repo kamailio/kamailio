@@ -54,7 +54,7 @@
 	All of this happens with a properly configured dialog and sst
 	module. You need to call the dlg_manage() function and set the
 	sst flag at the time any INVITE sip message is seen.
-	There is no	&kamailioconfig; script function call required to
+	There is no &kamailioconfig; script function call required to
 	set the dialog expire timeout value.
 	See the <quote>dialog module</quote> users guide for
 	more information.
@@ -312,7 +312,7 @@ modparam("sst", "sst_flag", 6)
 route {
   ...
   if (method=="INVITE") {
-	dlg_manage(); # Track the dialog
+    dlg_manage(); # Track the dialog
     setflag(6); # set the sst flag
   }
   ...
