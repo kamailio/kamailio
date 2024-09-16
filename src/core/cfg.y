@@ -1001,7 +1001,7 @@ assign_stm:
 	| IPV6_HEX_STYLE error { yyerror("string value expected"); }
 	| BIND_IPV6_LINK_LOCAL EQUAL NUMBER {
 		sr_bind_ipv6_link_local = $3;
-		if(sr_bind_ipv6_link_local && (KSR_IPV6_LINK_LOCAL_BIND|KSR_IPV6_LINK_LOCAL_SKIP)) {
+		if(!(sr_bind_ipv6_link_local && (KSR_IPV6_LINK_LOCAL_BIND|KSR_IPV6_LINK_LOCAL_SKIP))) {
 			yyerror("incompatible modes set");
 		}
 	}
