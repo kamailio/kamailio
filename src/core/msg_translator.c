@@ -704,7 +704,7 @@ static inline int lumps_len(
 			};                                                               \
 			break;                                                           \
 		case SUBST_SND_PORT:                                                 \
-			if(send_port_str != NULL) {                                      \
+			if(STR_WITHVAL(send_port_str)) {                                 \
 				new_len += send_port_str->len;                               \
 			} else {                                                         \
 				LM_CRIT("null send sock port\n");                            \
@@ -748,7 +748,7 @@ static inline int lumps_len(
 									send_address_str->len)                   \
 								!= NULL))                                    \
 					new_len += 2;                                            \
-				if(send_port_str != NULL) {                                  \
+				if(STR_WITHVAL(send_port_str)) {                             \
 					/* add :port_no */                                       \
 					new_len += 1 + send_port_str->len;                       \
 				}                                                            \
@@ -1151,7 +1151,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 			};                                                                 \
 			break;                                                             \
 		case SUBST_SND_PORT:                                                   \
-			if(send_port_str != NULL) {                                        \
+			if(STR_WITHVAL(send_port_str)) {                                   \
 				memcpy(new_buf + offset, send_port_str->s,                     \
 						send_port_str->len);                                   \
 				offset += send_port_str->len;                                  \
@@ -1181,7 +1181,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 					offset++;                                                  \
 				}                                                              \
 				/* :port */                                                    \
-				if(send_port_str != NULL) {                                    \
+				if(STR_WITHVAL(send_port_str)) {                               \
 					new_buf[offset] = ':';                                     \
 					offset++;                                                  \
 					memcpy(new_buf + offset, send_port_str->s,                 \
