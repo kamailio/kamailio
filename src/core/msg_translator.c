@@ -607,7 +607,7 @@ static inline int lumps_len(
 			};                                                               \
 			break;                                                           \
 		case SUBST_RCV_PORT:                                                 \
-			if(msg->rcv.bind_address && STR_WITHVAL(recv_port_str)) {        \
+			if(STR_WITHVAL(recv_port_str)) {                                 \
 				new_len += recv_port_str->len;                               \
 			} else {                                                         \
 				LM_CRIT(" rcv port - null bind_address\n");                  \
@@ -840,9 +840,11 @@ static inline int lumps_len(
 			recv_address_str = &(msg->rcv.bind_address->address_str);
 			recv_af = msg->rcv.bind_address->address.af;
 		}
-		if(msg->rcv.bind_address->useinfo.port_no > 0) {
-			recv_port_str = &(msg->rcv.bind_address->useinfo.port_no_str);
-			recv_port_no = msg->rcv.bind_address->useinfo.port_no;
+		if(msg->rcv.bind_address->useinfo.name.len > 0) {
+			if(msg->rcv.bind_address->useinfo.port_no > 0) {
+				recv_port_str = &(msg->rcv.bind_address->useinfo.port_no_str);
+				recv_port_no = msg->rcv.bind_address->useinfo.port_no;
+			}
 		} else {
 			recv_port_str = &(msg->rcv.bind_address->port_no_str);
 			recv_port_no = msg->rcv.bind_address->port_no;
@@ -1031,7 +1033,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 			};                                                                 \
 			break;                                                             \
 		case SUBST_RCV_PORT:                                                   \
-			if(msg->rcv.bind_address && STR_WITHVAL(recv_port_str)) {          \
+			if(STR_WITHVAL(recv_port_str)) {                                   \
 				memcpy(new_buf + offset, recv_port_str->s,                     \
 						recv_port_str->len);                                   \
 				offset += recv_port_str->len;                                  \
@@ -1372,9 +1374,11 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 			recv_address_str = &(msg->rcv.bind_address->address_str);
 			recv_af = msg->rcv.bind_address->address.af;
 		}
-		if(msg->rcv.bind_address->useinfo.port_no > 0) {
-			recv_port_str = &(msg->rcv.bind_address->useinfo.port_no_str);
-			recv_port_no = msg->rcv.bind_address->useinfo.port_no;
+		if(msg->rcv.bind_address->useinfo.name.len > 0) {
+			if(msg->rcv.bind_address->useinfo.port_no > 0) {
+				recv_port_str = &(msg->rcv.bind_address->useinfo.port_no_str);
+				recv_port_no = msg->rcv.bind_address->useinfo.port_no;
+			}
 		} else {
 			recv_port_str = &(msg->rcv.bind_address->port_no_str);
 			recv_port_no = msg->rcv.bind_address->port_no;
