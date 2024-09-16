@@ -204,94 +204,93 @@ Julien Klingenmeyer
    1.1. Set enable_stats parameter
    1.2. Set hash_size parameter
    1.3. Set rr_param parameter
-   1.4. Set dlg_flag parameter
-   1.5. Set timeout_avp parameter
-   1.6. Set default_timeout parameter
-   1.7. Set early_timeout parameter
-   1.8. Set noack_timeout parameter
-   1.9. Set end_timeout parameter
-   1.10. Set dlf_extra_hdrs parameter
-   1.11. Set dlg_match_mode parameter
-   1.12. Set detect_spirals parameter
-   1.13. Set db_url parameter
-   1.14. Set db_mode parameter
-   1.15. Set db_update_period parameter
-   1.16. Set db_fetch_rows parameter
-   1.17. Set db_skip_load parameter
-   1.18. Set table_name parameter
-   1.19. Set call_id_column parameter
-   1.20. Set from_uri_column parameter
-   1.21. Set from_tag_column parameter
-   1.22. Set to_uri_column parameter
-   1.23. Set to_tag_column parameter
-   1.24. Set from_cseq_column parameter
-   1.25. Set to_cseq_column parameter
-   1.26. Set from_route_column parameter
-   1.27. Set to_route_column parameter
-   1.28. Set from_contact_column parameter
-   1.29. Set to_contact_column parameter
-   1.30. Set from_sock_column parameter
-   1.31. Set to_sock_column parameter
-   1.32. Set h_id_column parameter
-   1.33. Set h_entry_column parameter
-   1.34. Set state_column parameter
-   1.35. Set start_time_column parameter
-   1.36. Set timeout_column parameter
-   1.37. Set sflags_column parameter
-   1.38. Set toroute_name_column parameter
-   1.39. Set vars_table_name parameter
-   1.40. Set vars_h_id_column parameter
-   1.41. Set vars_h_entry_column parameter
-   1.42. Set vars_key_column parameter
-   1.43. Set vars_value_column parameter
-   1.44. Set profiles_with_value parameter
-   1.45. Set profiles_no_value parameter
-   1.46. Set bridge_controller parameter
-   1.47. Set bridge_contact parameter
-   1.48. Set initial_cbs_inscript parameter
-   1.49. Set send_bye parameter
-   1.50. Set dlg_filter_mode parameter
-   1.51. Set wait_ack parameter
-   1.52. Set ka_timer parameter
-   1.53. Set ka_interval parameter
-   1.54. Set ka_failed_limit parameter
-   1.55. Set timeout_noreset parameter
-   1.56. Set timer_procs parameter
-   1.57. Set enable_dmq parameter
-   1.58. Set track_cseq_updates parameter
-   1.59. Set lreq_callee_headers parameter
-   1.60. Set event_callback parameter
-   1.61. Set h_id_start parameter
-   1.62. Set h_id_step parameter
-   1.63. Set dlg_keep_proxy_rr parameter
-   1.64. Set bye_early_code parameter
-   1.65. Set bye_early_reason parameter
-   1.66. Set dlg_ctxiuid_mode parameter
-   1.67. Set debug_variables parameter
-   1.68. set_dlg_profile usage
-   1.69. unset_dlg_profile usage
-   1.70. is_in_profile usage
-   1.71. get_profile_size usage
-   1.72. dlg_isflagset usage
-   1.73. dlg_setflag usage
-   1.74. dlg_resetflag usage
-   1.75. dlg_bye usage
-   1.76. dlg_refer usage
-   1.77. dlg_manage usage
-   1.78. dlg_bridge usage
-   1.79. dlg_get usage
-   1.80. dlg_get_var usage
-   1.81. dlg_set_var usage
-   1.82. is_known_dlg() usage
-   1.83. dlg_set_timeout usage
-   1.84. dlg_set_timeout_by_profile usage
-   1.85. dlg_set_property usage
-   1.86. dlg_remote_profile usage
-   1.87. dlg_set_ruri() usage
-   1.88. dlg_db_load_callid() usage
-   1.89. dlg_db_load_extra() usage
-   1.90. dlg_reset_property usage
-   1.91. dlg_req_within usage
+   1.4. Set timeout_avp parameter
+   1.5. Set default_timeout parameter
+   1.6. Set early_timeout parameter
+   1.7. Set noack_timeout parameter
+   1.8. Set end_timeout parameter
+   1.9. Set dlf_extra_hdrs parameter
+   1.10. Set dlg_match_mode parameter
+   1.11. Set detect_spirals parameter
+   1.12. Set db_url parameter
+   1.13. Set db_mode parameter
+   1.14. Set db_update_period parameter
+   1.15. Set db_fetch_rows parameter
+   1.16. Set db_skip_load parameter
+   1.17. Set table_name parameter
+   1.18. Set call_id_column parameter
+   1.19. Set from_uri_column parameter
+   1.20. Set from_tag_column parameter
+   1.21. Set to_uri_column parameter
+   1.22. Set to_tag_column parameter
+   1.23. Set from_cseq_column parameter
+   1.24. Set to_cseq_column parameter
+   1.25. Set from_route_column parameter
+   1.26. Set to_route_column parameter
+   1.27. Set from_contact_column parameter
+   1.28. Set to_contact_column parameter
+   1.29. Set from_sock_column parameter
+   1.30. Set to_sock_column parameter
+   1.31. Set h_id_column parameter
+   1.32. Set h_entry_column parameter
+   1.33. Set state_column parameter
+   1.34. Set start_time_column parameter
+   1.35. Set timeout_column parameter
+   1.36. Set sflags_column parameter
+   1.37. Set toroute_name_column parameter
+   1.38. Set vars_table_name parameter
+   1.39. Set vars_h_id_column parameter
+   1.40. Set vars_h_entry_column parameter
+   1.41. Set vars_key_column parameter
+   1.42. Set vars_value_column parameter
+   1.43. Set profiles_with_value parameter
+   1.44. Set profiles_no_value parameter
+   1.45. Set bridge_controller parameter
+   1.46. Set bridge_contact parameter
+   1.47. Set initial_cbs_inscript parameter
+   1.48. Set send_bye parameter
+   1.49. Set dlg_filter_mode parameter
+   1.50. Set wait_ack parameter
+   1.51. Set ka_timer parameter
+   1.52. Set ka_interval parameter
+   1.53. Set ka_failed_limit parameter
+   1.54. Set timeout_noreset parameter
+   1.55. Set timer_procs parameter
+   1.56. Set enable_dmq parameter
+   1.57. Set track_cseq_updates parameter
+   1.58. Set lreq_callee_headers parameter
+   1.59. Set event_callback parameter
+   1.60. Set h_id_start parameter
+   1.61. Set h_id_step parameter
+   1.62. Set dlg_keep_proxy_rr parameter
+   1.63. Set bye_early_code parameter
+   1.64. Set bye_early_reason parameter
+   1.65. Set dlg_ctxiuid_mode parameter
+   1.66. Set debug_variables parameter
+   1.67. set_dlg_profile usage
+   1.68. unset_dlg_profile usage
+   1.69. is_in_profile usage
+   1.70. get_profile_size usage
+   1.71. dlg_isflagset usage
+   1.72. dlg_setflag usage
+   1.73. dlg_resetflag usage
+   1.74. dlg_bye usage
+   1.75. dlg_refer usage
+   1.76. dlg_manage usage
+   1.77. dlg_bridge usage
+   1.78. dlg_get usage
+   1.79. dlg_get_var usage
+   1.80. dlg_set_var usage
+   1.81. is_known_dlg() usage
+   1.82. dlg_set_timeout usage
+   1.83. dlg_set_timeout_by_profile usage
+   1.84. dlg_set_property usage
+   1.85. dlg_remote_profile usage
+   1.86. dlg_set_ruri() usage
+   1.87. dlg_db_load_callid() usage
+   1.88. dlg_db_load_extra() usage
+   1.89. dlg_reset_property usage
+   1.90. dlg_req_within usage
 
 Chapter 1. Admin Guide
 
@@ -474,9 +473,8 @@ Chapter 1. Admin Guide
 2. How it works
 
    To create the dialog associated with an initial INVITE request, execute
-   the function “dlg_manage()” or set the flag specified by parameter
-   “dlg_flag” (Section 6.4, “dlg_flag (integer)”) before creating the
-   corresponding transaction.
+   the function “dlg_manage()” before creating the corresponding
+   transaction.
 
    The dialog is automatically destroyed when a “BYE” is received. In case
    of no “BYE”, the dialog lifetime is controlled via the default timeout
@@ -662,19 +660,12 @@ modparam("dialog", "rr_param", "xyz")
 
 6.4. dlg_flag (integer)
 
-   Flag to be used for marking if a dialog should be constructed for the
-   current request (this makes sense only for initial requests).
-
-   Note: it is not needed to set this parameter and its corresponding flag
-   for initial request in case the “dlg_manage()” function is used. In
-   other words, using “dlg_manage()” alone is enough.
+   Note: This flag has beed deprecated and not used anyymore. it is not
+   needed to set this parameter and its corresponding flag for initial
+   request in case the “dlg_manage()” function is used. In other words,
+   use “dlg_manage()”.
 
    Default value is “none”.
-
-   Example 1.4. Set dlg_flag parameter
-...
-modparam("dialog", "dlg_flag", 4)
-...
 
 6.5. timeout_avp (string)
 
@@ -684,7 +675,7 @@ modparam("dialog", "dlg_flag", 4)
 
    Default value is “none”.
 
-   Example 1.5. Set timeout_avp parameter
+   Example 1.4. Set timeout_avp parameter
 ...
 modparam("dialog", "timeout_avp", "$avp(i:10)")
 ...
@@ -696,7 +687,7 @@ modparam("dialog", "timeout_avp", "$avp(i:10)")
 
    Default value is “43200 (12 hours)”.
 
-   Example 1.6. Set default_timeout parameter
+   Example 1.5. Set default_timeout parameter
 ...
 modparam("dialog", "default_timeout", 21600)
 ...
@@ -708,7 +699,7 @@ modparam("dialog", "default_timeout", 21600)
 
    Default value is “300 (5 minutes)”.
 
-   Example 1.7. Set early_timeout parameter
+   Example 1.6. Set early_timeout parameter
 ...
 modparam("dialog", "early_timeout", 180)
 ...
@@ -721,7 +712,7 @@ modparam("dialog", "early_timeout", 180)
 
    Default value is “60 (1 minute)”.
 
-   Example 1.8. Set noack_timeout parameter
+   Example 1.7. Set noack_timeout parameter
 ...
 modparam("dialog", "noack_timeout", 90)
 ...
@@ -733,7 +724,7 @@ modparam("dialog", "noack_timeout", 90)
 
    Default value is “300 (5 minutes)”.
 
-   Example 1.9. Set end_timeout parameter
+   Example 1.8. Set end_timeout parameter
 ...
 modparam("dialog", "end_timeout", 180)
 ...
@@ -745,7 +736,7 @@ modparam("dialog", "end_timeout", 180)
 
    Default value is “NULL”.
 
-   Example 1.10. Set dlf_extra_hdrs parameter
+   Example 1.9. Set dlf_extra_hdrs parameter
 ...
 modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 ...
@@ -776,7 +767,7 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 
    Default value is “0 (DID_ONLY)”.
 
-   Example 1.11. Set dlg_match_mode parameter
+   Example 1.10. Set dlg_match_mode parameter
 ...
 modparam("dialog", "dlg_match_mode", 1)
 ...
@@ -793,7 +784,7 @@ modparam("dialog", "dlg_match_mode", 1)
 
    Default value is 1.
 
-   Example 1.12. Set detect_spirals parameter
+   Example 1.11. Set detect_spirals parameter
 ...
 modparam("dialog", "detect_spirals", 1)
 ...
@@ -805,7 +796,7 @@ modparam("dialog", "detect_spirals", 1)
 
    Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
 
-   Example 1.13. Set db_url parameter
+   Example 1.12. Set db_url parameter
 ...
 modparam("dialog", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
@@ -826,7 +817,7 @@ modparam("dialog", "db_url", "dbdriver://username:password@dbhost/dbname")
 
    Default value is “0”.
 
-   Example 1.14. Set db_mode parameter
+   Example 1.13. Set db_mode parameter
 ...
 modparam("dialog", "db_mode", 1)
 ...
@@ -841,7 +832,7 @@ modparam("dialog", "db_mode", 1)
 
    Default value is “60” seconds.
 
-   Example 1.15. Set db_update_period parameter
+   Example 1.14. Set db_update_period parameter
 ...
 modparam("dialog", "db_update_period", 120)
 ...
@@ -857,7 +848,7 @@ modparam("dialog", "db_update_period", 120)
 
    Default value is “200”.
 
-   Example 1.16. Set db_fetch_rows parameter
+   Example 1.15. Set db_fetch_rows parameter
 ...
 modparam("dialog", "db_fetch_rows", 500)
 ...
@@ -869,7 +860,7 @@ modparam("dialog", "db_fetch_rows", 500)
 
    Default value is “0” ( not skipped ).
 
-   Example 1.17. Set db_skip_load parameter
+   Example 1.16. Set db_skip_load parameter
 ...
 modparam("dialog", "db_skip_load", 1)
 ...
@@ -880,7 +871,7 @@ modparam("dialog", "db_skip_load", 1)
 
    Default value is “dialog”.
 
-   Example 1.18. Set table_name parameter
+   Example 1.17. Set table_name parameter
 ...
 modparam("dialog", "table_name", "my_dialog")
 ...
@@ -891,7 +882,7 @@ modparam("dialog", "table_name", "my_dialog")
 
    Default value is “callid”.
 
-   Example 1.19. Set call_id_column parameter
+   Example 1.18. Set call_id_column parameter
 ...
 modparam("dialog", "call_id_column", "callid_c_name")
 ...
@@ -903,7 +894,7 @@ modparam("dialog", "call_id_column", "callid_c_name")
 
    Default value is “from_uri”.
 
-   Example 1.20. Set from_uri_column parameter
+   Example 1.19. Set from_uri_column parameter
 ...
 modparam("dialog", "from_uri_column", "from_uri_c_name")
 ...
@@ -915,7 +906,7 @@ modparam("dialog", "from_uri_column", "from_uri_c_name")
 
    Default value is “from_tag”.
 
-   Example 1.21. Set from_tag_column parameter
+   Example 1.20. Set from_tag_column parameter
 ...
 modparam("dialog", "from_tag_column", "from_tag_c_name")
 ...
@@ -927,7 +918,7 @@ modparam("dialog", "from_tag_column", "from_tag_c_name")
 
    Default value is “to_uri”.
 
-   Example 1.22. Set to_uri_column parameter
+   Example 1.21. Set to_uri_column parameter
 ...
 modparam("dialog", "to_uri_column", "to_uri_c_name")
 ...
@@ -939,7 +930,7 @@ modparam("dialog", "to_uri_column", "to_uri_c_name")
 
    Default value is “to_tag”.
 
-   Example 1.23. Set to_tag_column parameter
+   Example 1.22. Set to_tag_column parameter
 ...
 modparam("dialog", "to_tag_column", "to_tag_c_name")
 ...
@@ -950,7 +941,7 @@ modparam("dialog", "to_tag_column", "to_tag_c_name")
 
    Default value is “caller_cseq”.
 
-   Example 1.24. Set from_cseq_column parameter
+   Example 1.23. Set from_cseq_column parameter
 ...
 modparam("dialog", "from_cseq_column", "from_cseq")
 ...
@@ -961,7 +952,7 @@ modparam("dialog", "from_cseq_column", "from_cseq")
 
    Default value is “callee_cseq”.
 
-   Example 1.25. Set to_cseq_column parameter
+   Example 1.24. Set to_cseq_column parameter
 ...
 modparam("dialog", "to_cseq_column", "to_cseq")
 ...
@@ -973,7 +964,7 @@ modparam("dialog", "to_cseq_column", "to_cseq")
 
    Default value is “caller_route_set”.
 
-   Example 1.26. Set from_route_column parameter
+   Example 1.25. Set from_route_column parameter
 ...
 modparam("dialog", "from_route_column", "rroute_from")
 ...
@@ -985,7 +976,7 @@ modparam("dialog", "from_route_column", "rroute_from")
 
    Default value is “callee_route_set”.
 
-   Example 1.27. Set to_route_column parameter
+   Example 1.26. Set to_route_column parameter
 ...
 modparam("dialog", "to_route_column", "rroute_to")
 ...
@@ -996,7 +987,7 @@ modparam("dialog", "to_route_column", "rroute_to")
 
    Default value is “caller_contact”.
 
-   Example 1.28. Set from_contact_column parameter
+   Example 1.27. Set from_contact_column parameter
 ...
 modparam("dialog", "from_contact_column", "from_contact_uri")
 ...
@@ -1007,7 +998,7 @@ modparam("dialog", "from_contact_column", "from_contact_uri")
 
    Default value is “callee_contact”.
 
-   Example 1.29. Set to_contact_column parameter
+   Example 1.28. Set to_contact_column parameter
 ...
 modparam("dialog", "to_contact_column", "to_contact_uri")
 ...
@@ -1019,7 +1010,7 @@ modparam("dialog", "to_contact_column", "to_contact_uri")
 
    Default value is “caller_sock”.
 
-   Example 1.30. Set from_sock_column parameter
+   Example 1.29. Set from_sock_column parameter
 ...
 modparam("dialog", "from_sock_column", "socket_from")
 ...
@@ -1031,7 +1022,7 @@ modparam("dialog", "from_sock_column", "socket_from")
 
    Default value is “callee_sock”.
 
-   Example 1.31. Set to_sock_column parameter
+   Example 1.30. Set to_sock_column parameter
 ...
 modparam("dialog", "to_sock_column", "socket_to")
 ...
@@ -1043,7 +1034,7 @@ modparam("dialog", "to_sock_column", "socket_to")
 
    Default value is “hash_id”.
 
-   Example 1.32. Set h_id_column parameter
+   Example 1.31. Set h_id_column parameter
 ...
 modparam("dialog", "h_id_column", "hash_id_c_name")
 ...
@@ -1055,7 +1046,7 @@ modparam("dialog", "h_id_column", "hash_id_c_name")
 
    Default value is “hash_entry”.
 
-   Example 1.33. Set h_entry_column parameter
+   Example 1.32. Set h_entry_column parameter
 ...
 modparam("dialog", "h_entry_column", "h_entry_c_name")
 ...
@@ -1067,7 +1058,7 @@ modparam("dialog", "h_entry_column", "h_entry_c_name")
 
    Default value is “state”.
 
-   Example 1.34. Set state_column parameter
+   Example 1.33. Set state_column parameter
 ...
 modparam("dialog", "state_column", "state_c_name")
 ...
@@ -1079,7 +1070,7 @@ modparam("dialog", "state_column", "state_c_name")
 
    Default value is “start_time”.
 
-   Example 1.35. Set start_time_column parameter
+   Example 1.34. Set start_time_column parameter
 ...
 modparam("dialog", "start_time_column", "start_time_c_name")
 ...
@@ -1090,7 +1081,7 @@ modparam("dialog", "start_time_column", "start_time_c_name")
 
    Default value is “timeout”.
 
-   Example 1.36. Set timeout_column parameter
+   Example 1.35. Set timeout_column parameter
 ...
 modparam("dialog", "timeout_column", "timeout_c_name")
 ...
@@ -1101,7 +1092,7 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 
    Default value is “sflags”.
 
-   Example 1.37. Set sflags_column parameter
+   Example 1.36. Set sflags_column parameter
 ...
 modparam("dialog", "sflags_column", "s_flags")
 ...
@@ -1113,7 +1104,7 @@ modparam("dialog", "sflags_column", "s_flags")
 
    Default value is “toroute_name”.
 
-   Example 1.38. Set toroute_name_column parameter
+   Example 1.37. Set toroute_name_column parameter
 ...
 modparam("dialog", "toroute_name_column", "timeout_route")
 ...
@@ -1125,7 +1116,7 @@ modparam("dialog", "toroute_name_column", "timeout_route")
 
    Default value is “dialog_vars”.
 
-   Example 1.39. Set vars_table_name parameter
+   Example 1.38. Set vars_table_name parameter
 ...
 modparam("dialog", "vars_table_name", "my_dialog_vars")
 ...
@@ -1137,7 +1128,7 @@ modparam("dialog", "vars_table_name", "my_dialog_vars")
 
    Default value is “hash_id”.
 
-   Example 1.40. Set vars_h_id_column parameter
+   Example 1.39. Set vars_h_id_column parameter
 ...
 modparam("dialog", "vars_h_id_column", "vars_h_id_name")
 ...
@@ -1149,7 +1140,7 @@ modparam("dialog", "vars_h_id_column", "vars_h_id_name")
 
    Default value is “hash_entry”.
 
-   Example 1.41. Set vars_h_entry_column parameter
+   Example 1.40. Set vars_h_entry_column parameter
 ...
 modparam("dialog", "vars_h_entry_column", "vars_h_entry_name")
 ...
@@ -1161,7 +1152,7 @@ modparam("dialog", "vars_h_entry_column", "vars_h_entry_name")
 
    Default value is “dialog_key”.
 
-   Example 1.42. Set vars_key_column parameter
+   Example 1.41. Set vars_key_column parameter
 ...
 modparam("dialog", "vars_key_column", "vars_key_name")
 ...
@@ -1173,7 +1164,7 @@ modparam("dialog", "vars_key_column", "vars_key_name")
 
    Default value is “dialog_value”.
 
-   Example 1.43. Set vars_value_column parameter
+   Example 1.42. Set vars_value_column parameter
 ...
 modparam("dialog", "vars_value_column", "vars_value_name")
 ...
@@ -1184,7 +1175,7 @@ modparam("dialog", "vars_value_column", "vars_value_name")
 
    Default value is “empty”.
 
-   Example 1.44. Set profiles_with_value parameter
+   Example 1.43. Set profiles_with_value parameter
 ...
 modparam("dialog", "profiles_with_value", "caller ; my_profile")
 ...
@@ -1196,7 +1187,7 @@ modparam("dialog", "profiles_with_value", "caller ; my_profile")
 
    Default value is “empty”.
 
-   Example 1.45. Set profiles_no_value parameter
+   Example 1.44. Set profiles_no_value parameter
 ...
 modparam("dialog", "profiles_no_value", "inbound ; outbound")
 ...
@@ -1207,7 +1198,7 @@ modparam("dialog", "profiles_no_value", "inbound ; outbound")
 
    Default value is “sip:controller@kamailio.org”.
 
-   Example 1.46. Set bridge_controller parameter
+   Example 1.45. Set bridge_controller parameter
 ...
 modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
 ...
@@ -1218,7 +1209,7 @@ modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
 
    Default value is “sip:controller@kamailio.org:5060”.
 
-   Example 1.47. Set bridge_contact parameter
+   Example 1.46. Set bridge_contact parameter
 ...
 modparam("dialog", "bridge_contact", "sip:ctd@127.0.0.1:5060")
 ...
@@ -1241,7 +1232,7 @@ modparam("dialog", "bridge_contact", "sip:ctd@127.0.0.1:5060")
 
    Default value is “1”.
 
-   Example 1.48. Set initial_cbs_inscript parameter
+   Example 1.47. Set initial_cbs_inscript parameter
 ...
 modparam("dialog", "initial_cbs_inscript", 0)
 ...
@@ -1253,7 +1244,7 @@ modparam("dialog", "initial_cbs_inscript", 0)
 
    Default value is “0”.
 
-   Example 1.49. Set send_bye parameter
+   Example 1.48. Set send_bye parameter
 ...
 modparam("dialog", "send_bye", 1)
 ...
@@ -1268,7 +1259,7 @@ modparam("dialog", "send_bye", 1)
 
    Default value is “0”.
 
-   Example 1.50. Set dlg_filter_mode parameter
+   Example 1.49. Set dlg_filter_mode parameter
 ...
 modparam("dialog", "dlg_filter_mode", 1)
 ...
@@ -1282,7 +1273,7 @@ modparam("dialog", "dlg_filter_mode", 1)
 
    Default value is “1”.
 
-   Example 1.51. Set wait_ack parameter
+   Example 1.50. Set wait_ack parameter
 ...
 modparam("dialog", "wait_ack", 0)
 ...
@@ -1295,7 +1286,7 @@ modparam("dialog", "wait_ack", 0)
 
    Default value is “0” (no keep alive).
 
-   Example 1.52. Set ka_timer parameter
+   Example 1.51. Set ka_timer parameter
 ...
 modparam("dialog", "ka_timer", 10)
 ...
@@ -1316,7 +1307,7 @@ modparam("dialog", "ka_timer", 10)
    Default value is “0” (no keep alive). The lowest settable interval is
    30 seconds.
 
-   Example 1.53. Set ka_interval parameter
+   Example 1.52. Set ka_interval parameter
 ...
 modparam("dialog", "ka_interval", 300)
 ...
@@ -1328,7 +1319,7 @@ modparam("dialog", "ka_interval", 300)
 
    Default value is “1”.
 
-   Example 1.54. Set ka_failed_limit parameter
+   Example 1.53. Set ka_failed_limit parameter
 ...
 modparam("dialog", "ka_failed_limit", 5)
 ...
@@ -1341,7 +1332,7 @@ modparam("dialog", "ka_failed_limit", 5)
 
    Default value is “0”.
 
-   Example 1.55. Set timeout_noreset parameter
+   Example 1.54. Set timeout_noreset parameter
 ...
 modparam("dialog", "timeout_noreset", 1)
 ...
@@ -1354,7 +1345,7 @@ modparam("dialog", "timeout_noreset", 1)
 
    Default value is “0” (use core timer process).
 
-   Example 1.56. Set timer_procs parameter
+   Example 1.55. Set timer_procs parameter
 ...
 modparam("dialog", "timer_procs", 1)
 ...
@@ -1368,7 +1359,7 @@ modparam("dialog", "timer_procs", 1)
 
    Default value is “0”.
 
-   Example 1.57. Set enable_dmq parameter
+   Example 1.56. Set enable_dmq parameter
 ...
 modparam("dialog", "enable_dmq", 1)
 ...
@@ -1385,7 +1376,7 @@ modparam("dialog", "enable_dmq", 1)
 
    Default value is “0” (disabled).
 
-   Example 1.58. Set track_cseq_updates parameter
+   Example 1.57. Set track_cseq_updates parameter
 ...
 modparam("dialog", "track_cseq_updates", 1)
 ...
@@ -1398,7 +1389,7 @@ modparam("dialog", "track_cseq_updates", 1)
 
    Default value is “null”.
 
-   Example 1.59. Set lreq_callee_headers parameter
+   Example 1.58. Set lreq_callee_headers parameter
 ...
 modparam("dialog", "lreq_callee_headers", "TH: dlh\r\n")
 ...
@@ -1416,7 +1407,7 @@ modparam("dialog", "lreq_callee_headers", "TH: dlh\r\n")
 
    Default value is 'empty' (no function is executed for events).
 
-   Example 1.60. Set event_callback parameter
+   Example 1.59. Set event_callback parameter
 ...
 modparam("dialog", "event_callback", "ksr_dialog_event")
 ...
@@ -1435,7 +1426,7 @@ end
 
    Default value is “0”.
 
-   Example 1.61. Set h_id_start parameter
+   Example 1.60. Set h_id_start parameter
 ...
 modparam("dialog", "h_id_start", 5)
 ...
@@ -1457,7 +1448,7 @@ modparam("dialog", "h_id_start", 5)
 
    Default value is “1”.
 
-   Example 1.62. Set h_id_step parameter
+   Example 1.61. Set h_id_step parameter
 ...
 modparam("dialog", "h_id_step", 10)
 ...
@@ -1477,7 +1468,7 @@ modparam("dialog", "h_id_step", 10)
 
    Default value is “0”.
 
-   Example 1.63. Set dlg_keep_proxy_rr parameter
+   Example 1.62. Set dlg_keep_proxy_rr parameter
 ...
 modparam("dialog", "keep_proxy_rr", 1)
 ...
@@ -1488,7 +1479,7 @@ modparam("dialog", "keep_proxy_rr", 1)
    terminated in early stage (e.g. before 200 OK/ACK).
    Default value is “480”.
 
-   Example 1.64. Set bye_early_code parameter
+   Example 1.63. Set bye_early_code parameter
 ...
 modparam("dialog", "bye_early_code", 503)
 ...
@@ -1499,7 +1490,7 @@ modparam("dialog", "bye_early_code", 503)
    terminated in early stage (e.g. before 200 OK/ACK).
    Default value is “Temporarily Unavailable”.
 
-   Example 1.65. Set bye_early_reason parameter
+   Example 1.64. Set bye_early_reason parameter
 ...
 modparam("dialog", "bye_early_reason", "Call terminated")
 ...
@@ -1512,7 +1503,7 @@ modparam("dialog", "bye_early_reason", "Call terminated")
 
    Default value is “0”.
 
-   Example 1.66. Set dlg_ctxiuid_mode parameter
+   Example 1.65. Set dlg_ctxiuid_mode parameter
 ...
 modparam("dialog", "dlg_ctxiuid_mode", 1)
 ...
@@ -1525,7 +1516,7 @@ modparam("dialog", "dlg_ctxiuid_mode", 1)
 
    Default value is “0”.
 
-   Example 1.67. Set debug_variables parameter
+   Example 1.66. Set debug_variables parameter
 ...
 modparam("dialog", "debug_variables", 1)
 ...
@@ -1573,7 +1564,7 @@ modparam("dialog", "debug_variables", 1)
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.68. set_dlg_profile usage
+   Example 1.67. set_dlg_profile usage
 ...
 set_dlg_profile("inbound_call");
 set_dlg_profile("caller","$fu");
@@ -1592,7 +1583,7 @@ set_dlg_profile("caller","$fu");
    This function can be used from BRANCH_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.69. unset_dlg_profile usage
+   Example 1.68. unset_dlg_profile usage
 ...
 unset_dlg_profile("inbound_call");
 unset_dlg_profile("caller","$fu");
@@ -1615,7 +1606,7 @@ unset_dlg_profile("caller","$fu");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.70. is_in_profile usage
+   Example 1.69. is_in_profile usage
 ...
 if (is_in_profile("inbound_call")) {
         log("this request belongs to an inbound call\n");
@@ -1645,7 +1636,7 @@ if (is_in_profile("caller","XX")) {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.71. get_profile_size usage
+   Example 1.70. get_profile_size usage
 ...
 if(get_profile_size("inbound_call","$avp(size)"))
     xlog("currently there are $avp(size) inbound calls\n");
@@ -1664,7 +1655,7 @@ if(get_profile_size("caller","$fu","$avp(size)"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.72. dlg_isflagset usage
+   Example 1.71. dlg_isflagset usage
 ...
 if(dlg_isflagset("1"))
 {
@@ -1682,7 +1673,7 @@ if(dlg_isflagset("1"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.73. dlg_setflag usage
+   Example 1.72. dlg_setflag usage
 ...
 dlg_setflag("1");
 ...
@@ -1697,7 +1688,7 @@ dlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.74. dlg_resetflag usage
+   Example 1.73. dlg_resetflag usage
 ...
 dlg_resetflag("1");
 ...
@@ -1714,7 +1705,7 @@ dlg_resetflag("1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.75. dlg_bye usage
+   Example 1.74. dlg_bye usage
 ...
 dlg_bye("all");
 ...
@@ -1731,7 +1722,7 @@ dlg_bye("all");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.76. dlg_refer usage
+   Example 1.75. dlg_refer usage
 ...
 dlg_refer("caller", "sip:announcement@kamailio.org");
 ...
@@ -1744,7 +1735,7 @@ dlg_refer("caller", "sip:announcement@kamailio.org");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.77. dlg_manage usage
+   Example 1.76. dlg_manage usage
 ...
 modparam("dialog", "default_timeout", 100)
 ...
@@ -1772,7 +1763,7 @@ request_route {
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.78. dlg_bridge usage
+   Example 1.77. dlg_bridge usage
 ...
 dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    "sip:kamailio.org:5080");
@@ -1792,7 +1783,7 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.79. dlg_get usage
+   Example 1.78. dlg_get usage
 ...
 if(dlg_get("abcdef", "123", "456"))
 {
@@ -1815,7 +1806,7 @@ if(dlg_get("abcdef", "123", "456"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.80. dlg_get_var usage
+   Example 1.79. dlg_get_var usage
 ...
 if(dlg_get_var("$var(ci)", "$var(ft)", "456", "test", "$var(tmp)"))
 {
@@ -1838,7 +1829,7 @@ if(dlg_get_var("$var(ci)", "$var(ft)", "456", "test", "$var(tmp)"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.81. dlg_set_var usage
+   Example 1.80. dlg_set_var usage
 ...
 if(dlg_set_var("$var(ci)", "$var(ft)", "456", "test", "$var(tmp)"))
 {
@@ -1867,7 +1858,7 @@ if(dlg_set_var("$var(ci)", "$var(ft)", "", "test", "$var(tmp)"))
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.82. is_known_dlg() usage
+   Example 1.81. is_known_dlg() usage
 ...
 if(!uri == myself) {
         if(is_known_dlg()) {
@@ -1891,7 +1882,7 @@ if(!uri == myself) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.83. dlg_set_timeout usage
+   Example 1.82. dlg_set_timeout usage
 ...
 if(dlg_set_timeout("180", "123", "456"))
 {
@@ -1913,7 +1904,7 @@ if(dlg_set_timeout("180", "123", "456"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.84. dlg_set_timeout_by_profile usage
+   Example 1.83. dlg_set_timeout_by_profile usage
 ...
 # All dialogs belonging to user abc123 (tracked via set_dlg_profile())
 # will be timed out in 3 seconds.
@@ -1945,7 +1936,7 @@ dlg_set_timeout_by_profile("users", "abc123", "3");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.85. dlg_set_property usage
+   Example 1.84. dlg_set_property usage
 ...
 dlg_set_property("ka-src");
 dlg_set_property("ka-dst");
@@ -1973,7 +1964,7 @@ dlg_set_property("timeout-noreset");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.86. dlg_remote_profile usage
+   Example 1.85. dlg_remote_profile usage
 ...
 $var(exp) = 3600 + $Ts;
 dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
@@ -1986,7 +1977,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.87. dlg_set_ruri() usage
+   Example 1.86. dlg_set_ruri() usage
 ...
 if(has_totag() and is_present_hf("Route") and uri==myself ) {
         if(dlg_set_ruri()) {
@@ -2002,7 +1993,7 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.88. dlg_db_load_callid() usage
+   Example 1.87. dlg_db_load_callid() usage
 ...
 if(has_totag()) {
     if(!is_known_dlg()) {
@@ -2021,7 +2012,7 @@ if(has_totag()) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.89. dlg_db_load_extra() usage
+   Example 1.88. dlg_db_load_extra() usage
 ...
 if(has_totag()) {
     if(!is_known_dlg()) {
@@ -2047,7 +2038,7 @@ if(has_totag()) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.90. dlg_reset_property usage
+   Example 1.89. dlg_reset_property usage
 ...
 dlg_reset_property("ka-src");
 dlg_reset_property("ka-dst");
@@ -2070,7 +2061,7 @@ dlg_reset_property("timeout-noreset");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.91. dlg_req_within usage
+   Example 1.90. dlg_req_within usage
 ...
         # Send a simple request:
         dlg_req_within("all", "OPTIONS");

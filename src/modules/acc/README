@@ -530,8 +530,8 @@ Note
 
    The dialog module needs to be engaged on the dialogs that should be
    accounted, that they will be tracked by the server. This is usally done
-   by calling the function dlg_manage() or setting the dlg_flag. Refer to
-   the documentation of the dialog module for more information.
+   by calling the function dlg_manage(). Refer to the documentation of the
+   dialog module for more information.
 
    Sometimes, dialogs expire because the UA has a problem and a final
    message is never transmitted. You can toggle on/off the generation of

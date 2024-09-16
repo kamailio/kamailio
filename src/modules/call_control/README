@@ -316,6 +316,11 @@ route {
 
    This function can be used from REQUEST_ROUTE.
 
+Note
+
+   The dlg_manage() (dialog module) function must be called in the
+   configuration file before using this function.
+
    Example 1.7. Using the call_control function
 ...
 if (is_avp_set("$avp(i:805)")) {
@@ -327,6 +332,7 @@ if (is_avp_set("$avp(i:805)")) {
 
 if (method==INVITE && !has_totag() &&
     is_domain_local("$avp(s:billing_party_domain)")) {
+    dlg_manage();
     call_control();
     switch ($retcode) {
     case 2:

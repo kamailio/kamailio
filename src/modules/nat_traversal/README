@@ -591,6 +591,11 @@ if (client_nat_test("3")) {
    agent). For more details about this function, see the Implementation
    subsection from the Keepalive functionality section.
 
+Note
+
+   The dlg_manage() function must be called in the configuration file to
+   have the dialog tracked.
+
    This function can be used from REQUEST_ROUTE.
 
    Example 1.9. Using the nat_keepalive function
@@ -598,6 +603,9 @@ if (client_nat_test("3")) {
 if ((method=="REGISTER" || method=="SUBSCRIBE" ||
     (method=="INVITE" && !has_totag())) && client_nat_test("3"))
 {
+  if (method=="INVITE"){
+    dlg_manage();
+  }
     nat_keepalive();
 }
 ...

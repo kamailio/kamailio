@@ -264,8 +264,8 @@ Chapter 1. Admin Guide
    module is loaded, it is automatically active for all calls tracked by
    the dialog module. Thus, make sure that you activate the dialog module
    for a certain call if you want dialog-state to be PUBLISHED. This
-   means, the dlg_flag of the dialog module must be configured and the
-   respective flag must be set during call processing.
+   means, use the dlg_manage() function of the dialog module to have it
+   tracked.
 
 3. Known issues
 

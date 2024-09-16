@@ -105,8 +105,8 @@ Chapter 1. Admin Guide
    automatically shutdown.
 
    Cnxcc is dialog-aware so there's no need to explicitly
-   allocate/deallocate the monitoring. Only a single function call inside
-   the script is needed upon reception of the INVITE.
+   allocate/deallocate the monitoring. The dlg_manage() function must be
+   called in the configuration file for the dialog to be tracked.
 
    The credit discount rate is proportional to the number of calls grouped
    inside an identifier. Once the setup of the first call is done, the
@@ -177,6 +177,11 @@ modparam("cnxcc", "credit_check_period", 1)
 
 4.1.  cnxcc_set_max_credit(customer, maxcredit, connect, cps, ipulse, fpulse)
 
+Note
+
+   The dlg_manage() function must be called in the configuration file to
+   ensure dialog is tracked.
+
    Associates the call with a customer id and sets the max credit, connect
    cost, cost per second, initial pulse and final pulse. The discount is
    calculated in pulses (1/1, 60/1, etc) and subtracted from the pool of
@@ -230,6 +235,11 @@ cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(connect)",
 
 4.2.  cnxcc_set_max_time(customer, maxtime)
 
+Note
+
+   The dlg_manage() function must be called in the configuration file to
+   ensure dialog is tracked.
+
    Specifies the amount of time the call should last at most.
 
    The customer value can be provided as a string or a variable holding a
@@ -251,6 +261,11 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
 ...
 
 4.3.  cnxcc_update_max_time(customer, maxtime)
+
+Note
+
+   The dlg_manage() function must be called in the configuration file to
+   ensure dialog is tracked.
 
    Updates max-time of an established and monitored call. This can be used
    to grant minimum values and to update them every short periods on time
@@ -279,6 +294,11 @@ if (!cnxcc_update_max_time("$var(client)", "$var(update_time)")) {
 ...
 
 4.4.  cnxcc_set_max_channel(customer, maxchan)
+
+Note
+
+   The dlg_manage() function must be called in the configuration file to
+   ensure dialog is tracked.
 
    Specifies a limit for the number of simultaneous calls.
 
