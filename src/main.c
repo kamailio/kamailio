@@ -2761,17 +2761,17 @@ int main(int argc, char **argv)
 				listen_field_count = 0;
 				/* split listen arguments */
 				tbuf = pkg_char_dup(optarg);
-				if (tbuf == NULL) {
+				if(tbuf == NULL) {
 					fprintf(stderr, "error during processing -l parameter\n");
 				}
 				tbuf_tmp = tbuf;
-				while ((p = strsep(&tbuf, "/")) != NULL && listen_field_count < 3) {
+				while((p = strsep(&tbuf, "/")) != NULL
+						&& listen_field_count < 3) {
 					listen_fields[listen_field_count++] = p;
 				}
 				/* empty advertise only allowed with a name field */
-				if (listen_field_count == 2 && strlen(listen_fields[1]) <= 0) {
-					fprintf(stderr,
-							"listen value with invalid advertise: %s\n",
+				if(listen_field_count == 2 && strlen(listen_fields[1]) <= 0) {
+					fprintf(stderr, "listen value with invalid advertise: %s\n",
 							optarg);
 					pkg_free(tbuf_tmp);
 					goto error;
@@ -2779,9 +2779,10 @@ int main(int argc, char **argv)
 				ahost = NULL;
 				aport = 0;
 				aproto = PROTO_NONE;
-				if (listen_field_count > 1 && strlen(listen_fields[1]) > 0) {
+				if(listen_field_count > 1 && strlen(listen_fields[1]) > 0) {
 					/* advertise not empty */
-					if(parse_phostport(listen_fields[1], &ahost, &tmp_len, &aport, &aproto)
+					if(parse_phostport(listen_fields[1], &ahost, &tmp_len,
+							   &aport, &aproto)
 							< 0) {
 						fprintf(stderr,
 								"listen value with invalid advertise: %s\n",
@@ -2794,9 +2795,9 @@ int main(int argc, char **argv)
 					}
 				}
 				/* socket name */
-				if (listen_field_count == 3 && listen_fields[2] != NULL) {
-					if (strlen(listen_fields[2]) > 0) {
-						socket_name=listen_fields[2];
+				if(listen_field_count == 3 && listen_fields[2] != NULL) {
+					if(strlen(listen_fields[2]) > 0) {
+						socket_name = listen_fields[2];
 					} else {
 						fprintf(stderr,
 								"listen value with invalid socket name: %s\n",
@@ -2817,8 +2818,8 @@ int main(int argc, char **argv)
 					goto error;
 				}
 				/* add a new addr. to our address list */
-				if(add_listen_advertise_iface_name(n_lst->name, n_lst->next, port,
-						   proto, aproto, ahost, aport, socket_name,
+				if(add_listen_advertise_iface_name(n_lst->name, n_lst->next,
+						   port, proto, aproto, ahost, aport, socket_name,
 						   n_lst->flags)
 						!= 0) {
 					fprintf(stderr, "failed to add new listen address: %s\n",
@@ -2961,14 +2962,6 @@ int main(int argc, char **argv)
 	/* reinit if pv buffer size has been set in config */
 	if(pv_reinit_buffer() < 0)
 		goto error;
-
-	if(register_core_rpcs() != 0)
-		goto error;
-
-	if(ksr_route_locks_set_init() < 0)
-		goto error;
-
-	ksr_shutdown_phase_init();
 
 	/* init lookup for core event routes */
 	sr_core_ert_init();
@@ -3127,6 +3120,15 @@ int main(int argc, char **argv)
 		goto error;
 	pkg_print_manager();
 	shm_print_manager();
+
+	if(register_core_rpcs() != 0)
+		goto error;
+
+	if(ksr_route_locks_set_init() < 0)
+		goto error;
+
+	ksr_shutdown_phase_init();
+
 	if(init_atomic_ops() == -1)
 		goto error;
 	if(init_basex() != 0) {
