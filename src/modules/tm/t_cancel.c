@@ -89,11 +89,6 @@ void prepare_to_cancel(
 	int i;
 	int branches_no;
 	branch_bm_t mask;
-	int rt, backup_rt;
-	struct run_act_ctx ctx;
-	sip_msg_t msg;
-	sr_kemi_eng_t *keng = NULL;
-	str evname = str_init("tm:local-request");
 
 	*cancel_bm = 0;
 	branches_no = t->nr_of_outgoings;
@@ -103,49 +98,6 @@ void prepare_to_cancel(
 		*cancel_bm |= ((mask & (1 << i)) && prepare_cancel_branch(t, i, 1))
 					  << i;
 	}
-
-	rt = -1;
-	if(tm_event_callback.s == NULL || tm_event_callback.len <= 0) {
-		rt = route_lookup(&event_rt, "tm:local-request");
-		if(rt < 0 || event_rt.rlist[rt] == NULL) {
-			LM_DBG("tm:local-request not found\n");
-			return;
-		}
-	} else {
-		keng = sr_kemi_eng_get();
-		if(keng == NULL) {
-			LM_DBG("event callback (%s) set, but no cfg engine\n",
-					tm_event_callback.s);
-			return;
-		}
-	}
-
-	/* Check if msg is null */
-	if(build_sip_msg_from_buf(
-			   &msg, t->uac->request.buffer, t->uac->request.buffer_len, 0)
-			< 0) {
-		LM_ERR("fail to parse msg\n");
-		return;
-	}
-
-	/* Call event */
-	backup_rt = get_route_type();
-	set_route_type(REQUEST_ROUTE);
-	init_run_actions_ctx(&ctx);
-	if(rt >= 0) {
-		run_top_route(event_rt.rlist[rt], &msg, 0);
-	} else {
-		if(keng != NULL) {
-
-			if(sr_kemi_route(
-					   keng, &msg, EVENT_ROUTE, &tm_event_callback, &evname)
-					< 0) {
-				LM_ERR("error running event route kemi callback\n");
-			}
-		}
-	}
-	set_route_type(backup_rt);
-	free_sip_msg(&msg);
 }
 
 
@@ -261,6 +213,11 @@ int cancel_branch(
 	struct cancel_info tmp_cd;
 	void *pcbuf;
 	int reply_status;
+	int rt, backup_rt;
+	struct run_act_ctx ctx;
+	sip_msg_t msg;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("tm:local-request");
 
 	crb = &t->uac[branch].local_cancel;
 	irb = &t->uac[branch].request;
@@ -377,6 +334,46 @@ int cancel_branch(
 	crb->buffer_len = len;
 
 	LM_DBG("sending cancel...\n");
+
+	rt = -1;
+	if(tm_event_callback.s == NULL || tm_event_callback.len <= 0) {
+		rt = route_lookup(&event_rt, evname.s);
+		if(rt < 0 || event_rt.rlist[rt] == NULL) {
+			LM_DBG("tm:local-request not found\n");
+		}
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng == NULL) {
+			LM_DBG("event callback (%s) set, but no cfg engine\n",
+					tm_event_callback.s);
+		}
+	}
+
+	// /* Check if msg is null */
+	if(build_sip_msg_from_buf(&msg, crb->buffer, crb->buffer_len, 0) < 0) {
+		LM_ERR("fail to parse msg\n");
+	}
+
+	/* Call event */
+	backup_rt = get_route_type();
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	if(rt >= 0) {
+		LM_ALERT("tm:local-request found [%d]\n", rt);
+		run_top_route(event_rt.rlist[rt], &msg, 0);
+	} else {
+		if(keng != NULL) {
+
+			if(sr_kemi_route(
+					   keng, &msg, EVENT_ROUTE, &tm_event_callback, &evname)
+					< 0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
+	}
+	set_route_type(backup_rt);
+	free_sip_msg(&msg);
+
 	if(SEND_BUFFER(crb) >= 0) {
 		if(unlikely(has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
 			run_trans_callbacks_with_buf(
