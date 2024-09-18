@@ -31,6 +31,9 @@ Javier Gallart
                     2.3.1. brokers (string)
                     2.3.2. configuration (string)
                     2.3.3. topic (string)
+                    2.3.4. init_without_kafka (string)
+                    2.3.5. metadata_timeout (string)
+                    2.3.6. log_without_overflow (string)
 
               2.4. Functions
 
@@ -47,10 +50,13 @@ Javier Gallart
    1.1. Set brokers parameter
    1.2. Set configuration parameter
    1.3. Set topic parameter
-   1.4. kafka_send usage
-   1.5. kafka_send_key usage
-   1.6. kafka.stats usage
-   1.7. kafka.stats usage
+   1.4. Set init_without_kafka parameter
+   1.5. Set metadata_timeout parameter
+   1.6. Set log_without_overflow parameter
+   1.7. kafka_send usage
+   1.8. kafka_send_key usage
+   1.9. kafka.stats usage
+   1.10. kafka.stats usage
 
 Chapter 1. Admin Guide
 
@@ -66,6 +72,9 @@ Chapter 1. Admin Guide
               2.3.1. brokers (string)
               2.3.2. configuration (string)
               2.3.3. topic (string)
+              2.3.4. init_without_kafka (string)
+              2.3.5. metadata_timeout (string)
+              2.3.6. log_without_overflow (string)
 
         2.4. Functions
 
@@ -90,6 +99,9 @@ Chapter 1. Admin Guide
         2.3.1. brokers (string)
         2.3.2. configuration (string)
         2.3.3. topic (string)
+        2.3.4. init_without_kafka (string)
+        2.3.5. metadata_timeout (string)
+        2.3.6. log_without_overflow (string)
 
    2.4. Functions
 
@@ -189,6 +201,53 @@ meout.ms=10000")
 modparam("kafka", "topic", "name=third_topic")
 ...
 
+2.3.4. init_without_kafka (string)
+
+   Set to anything but 0, specifies if kamailio starts even when kafka
+   brokers are not available at startup time.
+
+   Default value is 0 (disabled).
+
+   Example 1.4. Set init_without_kafka parameter
+...
+modparam("kafka", "init_without_kafka", 1)
+...
+
+2.3.5. metadata_timeout (string)
+
+   Specifies, in milliseconds, how much time kamailio waits to get topic
+   metadata info at startup time.
+
+   Default value is 2000 milliseconds (2 seconds).
+
+   Example 1.5. Set metadata_timeout parameter
+...
+modparam("kafka", "metadata_timeout", 1000)
+...
+
+2.3.6. log_without_overflow (string)
+
+   Set to anything but 0, will skip logging most of the error messages
+   that may happen to each kafka message sent to the broker. This is
+   useful when e.g. kafka broker goes down, not to overflow syslog with
+   error messages.
+
+   One can alwyas check this module's stats e.g. via RPC commands and see
+   that errors happened or not. Those errors can have 2 causes:
+     * Some errors happened with the config functions
+       kafka_send()/kafka_send_key(). This means that the message wasn't
+       even enqueued by librdkafka.
+     * Some errors happened on delivery callback, managed by librdkafka.
+       This means that the message was enqueued by librdkafka, but not
+       managed to be delivered to the broker.
+
+   Default value is 0 (disabled).
+
+   Example 1.6. Set log_without_overflow parameter
+...
+modparam("kafka", "log_without_overflow", 1)
+...
+
 2.4. Functions
 
 2.4.1.  kafka_send(topic, msg)
@@ -204,7 +263,7 @@ modparam("kafka", "topic", "name=third_topic")
 
    Available via KEMI framework as kafka.send.
 
-   Example 1.4. kafka_send usage
+   Example 1.7. kafka_send usage
 ...
 # Send "test message" to topic "my_topic"
 kafka_send("my_topic", "test message");
@@ -225,7 +284,7 @@ kafka_send("my_topic", "test message");
 
    Available via KEMI framework as kafka.send_key.
 
-   Example 1.5. kafka_send_key usage
+   Example 1.8. kafka_send_key usage
 ...
 # Send "test message" to topic "my_topic" with key "my_key"
 kafka_send_key("my_topic", "test message", "my_key");
@@ -237,7 +296,7 @@ kafka_send_key("my_topic", "test message", "my_key");
 
    Show statistics about total sent messages and failed to deliver ones.
 
-   Example 1.6. kafka.stats usage
+   Example 1.9. kafka.stats usage
 ...
 kamcmd kafka.stats
 Total messages: 26  Errors: 0
@@ -250,7 +309,7 @@ Total messages: 26  Errors: 0
 
    Parameter: topic (string) name of the topic. Required.
 
-   Example 1.7. kafka.stats usage
+   Example 1.10. kafka.stats usage
 ...
 # Show statistics for my_topic.
 kamcmd kafka.stats_topic "my_topic"

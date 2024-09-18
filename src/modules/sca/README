@@ -33,8 +33,9 @@ Victor Seva
               3.7. db_update_interval (integer)
               3.8. onhold_bflag (integer)
               3.9. server_address (string)
-              3.10. from_uri_avp (string)
-              3.11. to_uri_avp (string)
+              3.10. contact_fallback (string)
+              3.11. from_uri_avp (string)
+              3.12. to_uri_avp (string)
 
         4. Functions
 
@@ -62,11 +63,12 @@ Victor Seva
    1.7. Set db_update_interval:
    1.8. Set onhold_bflag parameter
    1.9. Set server_address parameter
-   1.10. Set from_uri_avp parameter
-   1.11. Set to_uri_avp parameter
-   1.12. sca_handle_subscribe usage:
-   1.13. sca_call_info_update usage:
-   1.14. kamailio.cfg
+   1.10. Set contact_fallback parameter
+   1.11. Set from_uri_avp parameter
+   1.12. Set to_uri_avp parameter
+   1.13. sca_handle_subscribe usage:
+   1.14. sca_call_info_update usage:
+   1.15. kamailio.cfg
 
 Chapter 1. Admin Guide
 
@@ -88,8 +90,9 @@ Chapter 1. Admin Guide
         3.7. db_update_interval (integer)
         3.8. onhold_bflag (integer)
         3.9. server_address (string)
-        3.10. from_uri_avp (string)
-        3.11. to_uri_avp (string)
+        3.10. contact_fallback (string)
+        3.11. from_uri_avp (string)
+        3.12. to_uri_avp (string)
 
    4. Functions
 
@@ -176,8 +179,9 @@ Chapter 1. Admin Guide
    3.7. db_update_interval (integer)
    3.8. onhold_bflag (integer)
    3.9. server_address (string)
-   3.10. from_uri_avp (string)
-   3.11. to_uri_avp (string)
+   3.10. contact_fallback (string)
+   3.11. from_uri_avp (string)
+   3.12. to_uri_avp (string)
 
 3.1. hash_table_size (integer)
 
@@ -298,24 +302,35 @@ modparam("sca", "onhold_bflag", 15)
 modparam("sca", "server_address", "sip:10.10.10.10:5060")
 ...
 
-3.10. from_uri_avp (string)
+3.10. contact_fallback (string)
+
+   contact used if defined when no contact is found in processed message.
+
+   Default value is "" (disabled).
+
+   Example 1.10. Set contact_fallback parameter
+...
+modparam("sca", "contact_fallback", "sip:127.0.0.1:5085;transport=udp")
+...
+
+3.11. from_uri_avp (string)
 
    avp that will store the From URI used.
 
    Default value is "" (disabled).
 
-   Example 1.10. Set from_uri_avp parameter
+   Example 1.11. Set from_uri_avp parameter
 ...
 modparam("sca", "from_uri_avp", "$avp(sca_from)")
 ...
 
-3.11. to_uri_avp (string)
+3.12. to_uri_avp (string)
 
    avp that will store the To URI used.
 
    Default value is "" (disabled).
 
-   Example 1.11. Set to_uri_avp parameter
+   Example 1.12. Set to_uri_avp parameter
 ...
 modparam("sca", "to_uri_avp", "$avp(sca_to)")
 ...
@@ -347,7 +362,7 @@ modparam("sca", "to_uri_avp", "$avp(sca_to)")
      * 1 - successful
      * -1 - failed, error logged
 
-   Example 1.12. sca_handle_subscribe usage:
+   Example 1.13. sca_handle_subscribe usage:
 ...
 if ( is_method( "SUBSCRIBE" )) {
         if ( $hdr(Event) == "call-info" || $hdr(Event) == "line-seize" ) {
@@ -395,7 +410,7 @@ if ( is_method( "SUBSCRIBE" )) {
      * 1 - successful
      * -1 - failed, error logged
 
-   Example 1.13. sca_call_info_update usage:
+   Example 1.14. sca_call_info_update usage:
 ...
 route
 {
@@ -516,7 +531,7 @@ p:215@10.0.1.2
    The following is a basic kamailio.cfg providing Shared Call Appearances
    to local subscribers. It has been tested with Polycom handsets.
 
-   Example 1.14. kamailio.cfg
+   Example 1.15. kamailio.cfg
 ##
 #!KAMAILIO
 #
