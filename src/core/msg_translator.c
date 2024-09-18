@@ -2940,12 +2940,17 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 		}
 	}
 	if(port_str == NULL) {
-		if(hp && hp->port->len)
+		if(hp && hp->port->len) {
 			port_str = hp->port;
-		else if(send_sock->useinfo.port_no > 0)
-			port_str = &(send_sock->useinfo.port_no_str);
-		else
-			port_str = &(send_sock->port_no_str);
+		} else if(send_sock->useinfo.name.len > 0) {
+			if(send_sock->useinfo.port_no > 0) {
+				port_str = &(send_sock->useinfo.port_no_str);
+			}
+		} else {
+			if(send_sock->port_no != SIP_PORT) {
+				port_str = &(send_sock->port_no_str);
+			}
+		}
 	}
 	proto = PROTO_NONE;
 	if(msg && (msg->msg_flags & FL_USE_XAVP_VIA_FIELDS)
@@ -2989,7 +2994,7 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 	via_prefix_len = MY_VIA_LEN + (proto == PROTO_SCTP);
 	max_len = via_prefix_len + address_str->len /* space in MY_VIA */
 			  + 2 /* just in case it is a v6 address ... [ ] */
-			  + 1 /*':'*/ + port_str->len
+			  + 1 /*':'*/ + (port_str ? port_str->len : 0)
 			  + (branch ? (MY_BRANCH_LEN + branch->len) : 0)
 			  + (extra_params ? extra_params->len : 0) + comp_len
 			  + comp_name_len + CRLF_LEN + 1;
@@ -3074,8 +3079,7 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 	}
 	memcpy(line_buf + via_prefix_len + extra_len, address_str->s,
 			address_str->len);
-	if((send_sock->port_no != SIP_PORT)
-			|| (port_str != &send_sock->port_no_str)) {
+	if(port_str != NULL && port_str->len > 0) {
 		line_buf[via_len] = ':';
 		via_len++;
 		memcpy(line_buf + via_len, port_str->s, port_str->len);
