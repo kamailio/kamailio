@@ -18,7 +18,6 @@ Build-Depends:
  libev-dev,
  libevent-dev,
  libexpat1-dev,
- libgeoip-dev (>= 1.4.5),
  libhiredis-dev (>= 0.10.0),
  libjansson-dev,
  libjson-c-dev,
@@ -136,23 +135,6 @@ Description: very fast and configurable SIP server [debug symbols]
  .
  This package contains the debugging symbols for the Kamailio binaries and
  modules. You only need to install it if you need to debug Kamailio.
-
-Package: kamailio-geoip-modules
-Architecture: any
-Multi-Arch: same
-Pre-Depends:
- ${misc:Pre-Depends},
-Depends:
- kamailio (= ${binary:Version}),
- ${misc:Depends},
- ${shlibs:Depends},
-Description: The geoip module for the Kamailio SIP Server
- Kamailio is a very fast and flexible SIP (RFC3261)
- server. Written entirely in C, Kamailio can handle thousands calls
- per second even on low-budget hardware.
- .
- This package provides the geoip module, an extension enabling
- usage of the GeoIP API within the Kamailio configuration file.
 
 Package: kamailio-geoip2-modules
 Architecture: any
