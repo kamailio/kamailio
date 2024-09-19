@@ -1246,7 +1246,7 @@ char *build_dlg_ack(struct sip_msg *rpl, struct cell *Trans,
 
 	/* headers */
 	*len += Trans->from_hdr.len + Trans->callid_hdr.len + to->len
-			+ Trans->cseq_hdr_n.len + 1 + ACK_LEN + +MAXFWD_HEADER_LEN
+			+ Trans->cseq_hdr_n.len + 1 + ACK_LEN + MAXFWD_HEADER_LEN
 			+ CRLF_LEN;
 
 	/* copy'n'paste Route headers */
