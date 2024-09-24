@@ -27,11 +27,22 @@
 #define _RTPENGINE_API_H_
 
 #include "../../core/parser/msg_parser.h"
+#include "./rtpengine.h"
 
 typedef int (*rtpengine_start_recording_f)(struct sip_msg *msg);
-typedef int (*rtpengine_answer_f)(struct sip_msg *msg, str *str);
-typedef int (*rtpengine_offer_f)(struct sip_msg *msg, str *str);
-typedef int (*rtpengine_delete_f)(struct sip_msg *msg, str *str);
+typedef int (*rtpengine_answer_f)(
+		struct sip_msg *msg, str *flags, str *viabranch);
+typedef int (*rtpengine_offer_f)(
+		struct sip_msg *msg, str *flags, str *viabranch);
+typedef int (*rtpengine_delete_f)(
+		struct sip_msg *msg, str *flags, str *viabranch);
+typedef int (*rtpengine_subscribe_request_f)(struct rtpengine_session *sess,
+		str **to_tag, str *flags, unsigned int subscribe_flags, str *ret_body,
+		struct rtpengine_streams *ret_streams);
+typedef int (*rtpengine_subscribe_answer_f)(
+		struct rtpengine_session *sess, str *to_tag, str *flags, str *body);
+typedef int (*rtpengine_unsubscribe_f)(
+		struct rtpengine_session *sess, str *to_tag, str *flags);
 
 typedef struct rtpengine_api
 {
@@ -39,6 +50,9 @@ typedef struct rtpengine_api
 	rtpengine_answer_f rtpengine_answer;
 	rtpengine_offer_f rtpengine_offer;
 	rtpengine_delete_f rtpengine_delete;
+	rtpengine_subscribe_request_f rtpengine_subscribe_request;
+	rtpengine_subscribe_answer_f rtpengine_subscribe_answer;
+	rtpengine_unsubscribe_f rtpengine_unsubscribe;
 } rtpengine_api_t;
 
 typedef int (*bind_rtpengine_f)(rtpengine_api_t *api);
