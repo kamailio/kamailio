@@ -28,9 +28,11 @@
 #include "bencode.h"
 #include "../../core/str.h"
 #include "../../core/locking.h"
+#include "rtpengine_common.h"
 
 #define RTPENGINE_MIN_RECHECK_TICKS 0
 #define RTPENGINE_MAX_RECHECK_TICKS ((unsigned int)-1)
+#define RTPENGINE_ALL_BRANCHES -1
 
 enum rtpe_operation
 {
@@ -52,6 +54,9 @@ enum rtpe_operation
 	OP_PLAY_MEDIA,
 	OP_STOP_MEDIA,
 	OP_PLAY_DTMF,
+	OP_SUBSCRIBE_REQUEST,
+	OP_SUBSCRIBE_ANSWER,
+	OP_UNSUBSCRIBE,
 
 	OP_ANY,
 };
@@ -124,6 +129,16 @@ enum hash_algo_t
 	RTP_HASH_CALLID,
 	RTP_HASH_SHA1_CALLID,
 	RTP_HASH_CRC32_CALLID
+};
+
+struct rtpengine_session
+{
+	struct sip_msg *msg;
+	int branch;
+	str *callid;
+	str *from_tag;
+	str *to_tag;
+	str *body;
 };
 
 #endif
