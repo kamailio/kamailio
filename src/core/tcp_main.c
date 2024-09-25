@@ -3284,12 +3284,14 @@ int tcp_init(struct socket_info *sock_info)
 	}
 #endif
 	if(bind(sock_info->socket, &addr->s, sockaddru_len(*addr)) == -1) {
-		LM_ERR("bind(%x, %p, %d) on %s:%d : %s\n", sock_info->socket, &addr->s,
-				(unsigned)sockaddru_len(*addr), sock_info->address_str.s,
-				sock_info->port_no, strerror(errno));
+		LM_ERR("bind(%x, %p, %d) on [%s]:%d : (%d / %s)\n", sock_info->socket,
+				&addr->s, (unsigned)sockaddru_len(*addr),
+				sock_info->address_str.s, sock_info->port_no, errno,
+				strerror(errno));
 		if(addr->s.sa_family == AF_INET6) {
 			LM_ERR("might be caused by using a link local address, is "
-				   "'bind_ipv6_link_local' set?\n");
+				   "'bind_ipv6_link_local' set (now: %d)?\n",
+					sr_bind_ipv6_link_local);
 		}
 		goto error;
 	}
