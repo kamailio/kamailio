@@ -1471,6 +1471,7 @@ static int build_iface_list(void)
 	char name[MAX_IF_LEN];
 	int is_link_local = 0;
 	int num = 0;
+	int ifidx = 0;
 
 	if(ifaces == NULL) {
 		if((ifaces = (struct idxlist *)pkg_malloc(
@@ -1598,31 +1599,42 @@ static int build_iface_list(void)
 				}
 			}
 
-			if(index >= MAX_IFACE_NO) {
-				LM_ERR("Invalid interface index returned: %d (n: %d) - skip\n",
-						index, num);
-				pkg_free(entry);
-				continue;
+			for(ifidx = 0; ifidx < MAX_IFACE_NO; ifidx++) {
+				if(ifaces[ifidx].index == index) {
+					/* interface with same index already found */
+					break;
+				}
 			}
-			num++;
-
-			if(strlen(ifaces[index].name) == 0 && strlen(name) > 0) {
-				memcpy(ifaces[index].name, name, MAX_IF_LEN - 1);
-				ifaces[index].name[MAX_IF_LEN - 1] = '\0';
+			if(ifidx == MAX_IFACE_NO) {
+				if(num == MAX_IFACE_NO) {
+					LM_ERR("too many interfaces: %d (n: %d) - skipping\n",
+							index, num);
+					pkg_free(entry);
+					goto done;
+				}
+				ifidx = num;
+				num++;
 			}
 
-			ifaces[index].index = index;
+			if(strlen(ifaces[ifidx].name) == 0 && strlen(name) > 0) {
+				memcpy(ifaces[ifidx].name, name, MAX_IF_LEN - 1);
+				ifaces[ifidx].name[MAX_IF_LEN - 1] = '\0';
+			}
 
-			if(ifaces[index].addresses == 0)
-				ifaces[index].addresses = entry;
+			ifaces[ifidx].index = index;
+
+			if(ifaces[ifidx].addresses == 0)
+				ifaces[ifidx].addresses = entry;
 			else {
-				for(tmp = ifaces[index].addresses; tmp->next;
+				for(tmp = ifaces[ifidx].addresses; tmp->next;
 						tmp = tmp->next) /*empty*/
 					;
 				tmp->next = entry;
 			}
 		}
 	}
+
+done:
 	if(nl_sock > 0)
 		close(nl_sock);
 	/* the socket should be closed so we can bind again */
