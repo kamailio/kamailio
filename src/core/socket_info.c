@@ -1532,12 +1532,6 @@ static int build_iface_list(void)
 			rtl = IFA_PAYLOAD(nlp);
 
 			index = ifi->ifa_index;
-			num++;
-			if(index >= MAX_IFACE_NO) {
-				LM_ERR("Invalid interface index returned: %d (n: %d) - skip\n",
-						index, num);
-				continue;
-			}
 
 			entry = (struct idx *)pkg_malloc(sizeof(struct idx));
 			if(entry == 0) {
@@ -1603,6 +1597,14 @@ static int build_iface_list(void)
 					continue;
 				}
 			}
+
+			if(index >= MAX_IFACE_NO) {
+				LM_ERR("Invalid interface index returned: %d (n: %d) - skip\n",
+						index, num);
+				pkg_free(entry);
+				continue;
+			}
+			num++;
 
 			if(strlen(ifaces[index].name) == 0 && strlen(name) > 0) {
 				memcpy(ifaces[index].name, name, MAX_IF_LEN - 1);
