@@ -29,15 +29,9 @@
 #include "../../core/cfg/cfg_struct.h"
 
 #include "python_exec.h"
-#include "python_iface.h"
 #include "python_msgobj.h"
 #include "python_support.h"
 #include "app_python3_mod.h"
-
-#include "mod_Router.h"
-#include "mod_Core.h"
-#include "mod_Ranks.h"
-#include "mod_Logger.h"
 
 #include "apy_kemi.h"
 
@@ -228,11 +222,6 @@ static void mod_destroy(void)
 		free(dname); // dname was strdup'ed
 	if(bname)
 		free(bname); // bname was strdup'ed
-
-	destroy_mod_Core();
-	destroy_mod_Ranks();
-	destroy_mod_Logger();
-	destroy_mod_Router();
 }
 
 
@@ -372,7 +361,7 @@ int apy_load_script(void)
 	PyGILState_STATE gstate;
 	int rc, rval = -1;
 
-	if(ap_init_modules() != 0) {
+	if(sr_apy_init_ksr() != 0) {
 		return -1;
 	}
 
@@ -386,15 +375,10 @@ int apy_load_script(void)
 
 	// Py3 does not create a package-like hierarchy of modules
 	// make legacy modules importable using Py2 syntax
-	// import Router.Logger
 
 	rc = PyRun_SimpleString("import sys\n"
-							"import Router\n"
 							"import KSR\n"
 							"KSR.__version__ = " INTERNAL_VERSION
-							"sys.modules['Router.Core'] = Router.Core\n"
-							"sys.modules['Router.Logger'] = Router.Logger\n"
-							"sys.modules['Router.Ranks'] = Router.Ranks\n"
 							"sys.modules['KSR.pv'] = KSR.pv\n"
 							"sys.modules['KSR.x'] = KSR.x\n");
 	if(rc) {
