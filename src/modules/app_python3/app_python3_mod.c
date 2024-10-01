@@ -353,7 +353,7 @@ err:
 	return rval;
 }
 
-#define INTERNAL_VERSION "1002\n"
+#define INTERNAL_VERSION "1003\n"
 
 int apy_load_script(void)
 {
@@ -376,11 +376,7 @@ int apy_load_script(void)
 	// Py3 does not create a package-like hierarchy of modules
 	// make legacy modules importable using Py2 syntax
 
-	rc = PyRun_SimpleString("import sys\n"
-							"import KSR\n"
-							"KSR.__version__ = " INTERNAL_VERSION
-							"sys.modules['KSR.pv'] = KSR.pv\n"
-							"sys.modules['KSR.x'] = KSR.x\n");
+	rc = PyRun_SimpleString("import KSR\nKSR.__version__ = " INTERNAL_VERSION);
 	if(rc) {
 		LM_ERR("Early imports of modules failed\n");
 		goto err;
