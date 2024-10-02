@@ -64,6 +64,8 @@ sr_apy_env_t *sr_apy_env_get()
 /**
  *
  */
+extern __thread PyThreadState *_save;
+
 int apy3s_exec_func(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 {
 	PyObject *pFunc, *pArgs, *pValue;
@@ -77,7 +79,10 @@ int apy3s_exec_func(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	}
 
 	/* clear error state */
+	/* clang-format off */
+	Py_BLOCK_THREADS
 	PyErr_Clear();
+	/* clang-format on */
 
 	if(lock_try(_sr_python_reload_lock) == 0) {
 		if(_sr_python_reload_version
@@ -164,7 +169,10 @@ error:
 	}
 	/* clear error state */
 	PyErr_Clear();
+	/* clang-format off */
+	Py_UNBLOCK_THREADS
 	return rval;
+	/* clang-format on */
 }
 
 
