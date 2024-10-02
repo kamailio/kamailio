@@ -34,6 +34,8 @@
 #include "app_python3_mod.h"
 
 #include "apy_kemi.h"
+static int apy_load_script(void);
+static int apy_init_script(int rank);
 
 MODULE_VERSION
 
@@ -52,8 +54,6 @@ PyObject *format_exc_obj = NULL;
 char *dname = NULL, *bname = NULL;
 
 int _apy_process_rank = 0;
-
-PyThreadState *myThreadState;
 
 /* clang-format off */
 /** module parameters */
@@ -175,32 +175,46 @@ static int mod_init(void)
 /**
  *
  */
+__thread PyThreadState *_save;
+
 static int child_init(int rank)
 {
+	int ret = -1;
 	if(rank == PROC_INIT) {
 		/*
 		 * this is called before any process is forked
 		 * so the Python internal state handler
 		 * should be called now.
 		 */
+		/* clang-format off */
 #if PY_VERSION_HEX >= 0x03070000
+		Py_BLOCK_THREADS
 		PyOS_BeforeFork();
+		Py_UNBLOCK_THREADS
 #endif
 		return 0;
+		/* clang-format on */
 	}
 	if(rank == PROC_POSTCHILDINIT) {
 		/*
 		 * this is called after forking of all child
 		 * processes
 		 */
+		/* clang-format off */
 #if PY_VERSION_HEX >= 0x03070000
+		Py_BLOCK_THREADS
 		PyOS_AfterFork_Parent();
+		Py_UNBLOCK_THREADS
 #endif
 		return 0;
+		/* clang-format on */
 	}
 	_apy_process_rank = rank;
-
-	if(!_ksr_is_main) {
+	/* clang-format off */
+	Py_BLOCK_THREADS
+	if(!_ksr_is_main)
+	/* clang-format on */
+	{
 #if PY_VERSION_HEX >= 0x03070000
 		PyOS_AfterFork_Child();
 #else
@@ -208,9 +222,16 @@ static int child_init(int rank)
 #endif
 	}
 	if(cfg_child_init()) {
-		return -1;
+		ret = -1;
+		goto finish;
 	}
-	return apy_init_script(rank);
+	ret = apy_init_script(rank);
+
+finish:
+	/* clang-format off */
+	Py_UNBLOCK_THREADS
+	return ret;
+	/* clang-format on */
 }
 
 /**
@@ -224,20 +245,18 @@ static void mod_destroy(void)
 		free(bname); // bname was strdup'ed
 }
 
-
-#define PY_GIL_ENSURE gstate = PyGILState_Ensure()
-#define PY_GIL_RELEASE PyGILState_Release(gstate)
-int apy_mod_init(PyObject *pModule)
+/* Python module utility function
+ * - must be called with GIL held
+ */
+static int apy_mod_init(PyObject *pModule)
 {
 
 	/*
 	 * pModule: managed by caller, no need to Py_DECREF
 	 */
 	PyObject *pFunc, *pArgs, *pHandler;
-	PyGILState_STATE gstate;
 	int rval = -1;
 
-	PY_GIL_ENSURE;
 	pFunc = PyObject_GetAttrString(pModule, mod_init_fname.s);
 
 	/* pFunc is a new reference */
@@ -311,7 +330,6 @@ int apy_mod_init(PyObject *pModule)
 	_sr_apy_handler_obj = pHandler;
 	rval = 0;
 err:
-	PY_GIL_RELEASE;
 	return rval;
 }
 
@@ -323,11 +341,12 @@ static PyObject *_sr_apy_module;
 
 int apy_reload_script(void)
 {
-	PyGILState_STATE gstate;
 	int rval = -1;
 
-	PY_GIL_ENSURE;
+	/* clang-format off */
+	Py_BLOCK_THREADS
 	PyObject *pModule = PyImport_ReloadModule(_sr_apy_module);
+	/* clang-format on */
 	if(!pModule) {
 		if(!PyErr_Occurred())
 			PyErr_Format(PyExc_ImportError, "Reload module '%s'", bname);
@@ -349,16 +368,22 @@ int apy_reload_script(void)
 	}
 	rval = 0;
 err:
-	PY_GIL_RELEASE;
+	/* clang-format off */
+	Py_UNBLOCK_THREADS
 	return rval;
+	/* clang-format on */
 }
 
 #define INTERNAL_VERSION "1003\n"
 
-int apy_load_script(void)
+/* Entry point for the embedded interpreter
+ * - releases the GIL so Python threading
+ *   will run
+ */
+
+static int apy_load_script(void)
 {
 	PyObject *sys_path, *pDir, *pModule;
-	PyGILState_STATE gstate;
 	int rc, rval = -1;
 
 	if(sr_apy_init_ksr() != 0) {
@@ -366,12 +391,10 @@ int apy_load_script(void)
 	}
 
 	Py_Initialize();
+
 #if PY_VERSION_HEX < 0x03070000
 	PyEval_InitThreads();
 #endif
-	myThreadState = PyThreadState_Get();
-
-	PY_GIL_ENSURE;
 
 	// Py3 does not create a package-like hierarchy of modules
 	// make legacy modules importable using Py2 syntax
@@ -439,11 +462,17 @@ int apy_load_script(void)
 
 	rval = 0;
 err:
-	PY_GIL_RELEASE;
+	/* clang-format off */
+	Py_UNBLOCK_THREADS
 	return rval;
+	/* clang-format on */
 }
 
-int apy_init_script(int rank)
+/*
+ * Python script utility function
+ * - must be called with GIL held
+ */
+static int apy_init_script(int rank)
 {
 	PyObject *pFunc, *pArgs, *pValue, *pResult;
 	int rval = -1;
@@ -452,11 +481,6 @@ int apy_init_script(int rank)
 #else
 	char *classname;
 #endif
-	PyGILState_STATE gstate;
-
-
-	PY_GIL_ENSURE;
-
 	// get instance class name
 	classname = get_instance_class_name(_sr_apy_handler_obj);
 	if(classname == NULL) {
@@ -537,7 +561,6 @@ int apy_init_script(int rank)
 	rval = PyLong_AsLong(pResult);
 	Py_DECREF(pResult);
 err:
-	PY_GIL_RELEASE;
 	return rval;
 }
 /**
