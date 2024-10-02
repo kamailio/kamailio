@@ -284,7 +284,7 @@ static param_export_t params[] = {
 		{"max_expires", INT_PARAM, &default_registrar_cfg.max_expires},
 		{"em_default_expires", INT_PARAM,
 				&default_registrar_cfg.em_default_expires},
-		{"em_min_expires", INT_PARAM, &default_registrar_cfg.em_max_expires},
+		{"em_max_expires", INT_PARAM, &default_registrar_cfg.em_max_expires},
 		{"em_min_expires", INT_PARAM, &default_registrar_cfg.em_min_expires},
 
 		{"default_q", INT_PARAM, &default_registrar_cfg.default_q},
