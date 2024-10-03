@@ -42,7 +42,7 @@ EXTRA_TABLES=${EXTRA_TABLES:-'imc_members imc_rooms cpl sip_trace domainpolicy
 		carrierroute carrier_name domain_name carrierfailureroute userblocklist
 		globalblocklist htable purplemap uacreg pl_pipes mtree mtrees
 		sca_subscriptions mohqcalls mohqueues rtpproxy rtpengine
-		dr_gateways dr_rules dr_gw_lists dr_groups secfilter'}
+		dr_gateways dr_rules dr_gw_lists dr_groups secfilter nds_trusted_domains s_cscf s_cscf_capabilities'}
 PRESENCE_TABLES=${PRESENCE_TABLES:-'presentity active_watchers watchers xcap
 		pua rls_presentity rls_watchers'}
 DBUID_TABLES=${UID_TABLES:-'uid_credentials uid_domain uid_domain_attrs
@@ -77,7 +77,7 @@ PRESENCE_MODULES=${PRESENCE_MODULES:-'presence rls'}
 
 EXTRA_MODULES=${EXTRA_MODULES:-'imc cpl siptrace domainpolicy carrierroute
 		drouting userblocklist htable purple uac pipelimit mtree sca mohqueue
-		rtpproxy rtpengine secfilter'}
+		rtpproxy rtpengine secfilter ims_icscf'}
 
 DBUID_MODULES=${UID_MODULES:-'uid_auth_db uid_avp_db uid_domain uid_gflags
 		uid_uri_db'}

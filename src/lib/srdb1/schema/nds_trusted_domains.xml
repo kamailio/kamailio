@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+
+]>
+
+<table id="nds_trusted_domains" xmlns:db="http://docbook.org/ns/docbook">
+    <name>nds_trusted_domains</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Table for trusted domains in IMS. More information at:
+            <itemizedlist>
+                <listitem>
+                    <ulink url="&KAMAILIO_MOD_DOC;ims_icscf.html">&KAMAILIO_MOD_DOC;ims_icscf.html</ulink>.
+                </listitem>
+            </itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID for the trusted domain</description>
+    </column>
+
+    <column id="trusted_domain">
+        <name>trusted_domain</name>
+        <type>string</type>
+        <size>83</size>
+        <default/>
+        <description>Trusted domain name</description>
+    </column>
+</table>
