@@ -92,6 +92,7 @@
 #include "../../core/script_cb.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
+#include "../../core/daemonize.h"
 
 #include "snmpSIPRegUserTable.h"
 #include "snmpSIPContactTable.h"
@@ -561,14 +562,14 @@ static int spawn_sysUpTime_child(void)
 			   "kamailioSIPServiceStartTime is defaulting to zero\n");
 		close(snmpget_fd);
 		free(full_path_to_snmpget);
-		exit(-1);
+		ksr_exit(-1);
 	}
 
 	/* We should never be able to get here, because execve() is never
 	 * supposed to return. */
 	close(snmpget_fd);
 	free(full_path_to_snmpget);
-	exit(-1);
+	ksr_exit(-1);
 }
 
 
