@@ -1279,6 +1279,8 @@ if(is_first_hop("1")) { ... }
 		<para>
 			Manage the P-Charging-Vector header (RFC7315). The flags can be:
 			'r' - remove; 'g' - generate; 'f' - force (remove + generate).
+			The icid-generated-at parameter of a generated PCV will be set to
+			the sending interface.IP address.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
