@@ -101,12 +101,7 @@ static int pdu2ascii(char *pdu, char *ascii)
 			bitposition++;
 			c = (c >> 1) & 127; /* The shift fills with 1, but I want 0 */
 		}
-		if(/*cs_convert*/ 1)
-			ascii[charcounter] = sms2ascii(c);
-		else if(c == 0)
-			ascii[charcounter] = 183;
-		else
-			ascii[charcounter] = c;
+		ascii[charcounter] = sms2ascii(c);
 	}
 	ascii[count] = 0;
 	return count;
