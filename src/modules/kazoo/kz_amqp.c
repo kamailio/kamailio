@@ -846,17 +846,17 @@ void kz_amqp_channel_close(kz_amqp_conn_ptr rmq, amqp_channel_t channel)
 	kz_amqp_error("closing channel",
 			amqp_channel_close(rmq->conn, channel, AMQP_REPLY_SUCCESS));
 }
-
+#if AMQP_VERSION_MAJOR == 0 && AMQP_VERSION_MINOR < 13
 int kz_ssl_initialized = 0;
-
+#endif
 int kz_amqp_connection_open_ssl(kz_amqp_conn_ptr rmq)
 {
-
+#if AMQP_VERSION_MAJOR == 0 && AMQP_VERSION_MINOR < 13
 	if(!kz_ssl_initialized) {
 		kz_ssl_initialized = 1;
 		amqp_set_initialize_ssl_library(1);
 	}
-
+#endif
 	if(!(rmq->conn = amqp_new_connection())) {
 		LM_ERR("Failed to create new AMQP connection\n");
 		goto error;
