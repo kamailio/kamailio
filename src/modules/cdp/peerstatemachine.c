@@ -117,7 +117,7 @@ int sm_process(
 						R_Disc(p);
 						p->state = Closed;
 					}
-					log_peer_list(L_INFO);
+					log_peer_list();
 					break;
 				case Stop:
 					/* just ignore this state */
@@ -134,7 +134,7 @@ int sm_process(
 				case I_Rcv_Conn_Ack:
 					p->state = Wait_I_CEA;
 					I_Snd_CER(p);
-					if (p->state == Closed)
+					if(p->state == Closed)
 						sm_process(p, Start, 0, 1, 0);
 					break;
 				case I_Rcv_Conn_NAck:
@@ -179,7 +179,7 @@ int sm_process(
 						Cleanup(p, p->I_sock);
 						p->state = Closed;
 					}
-					log_peer_list(L_INFO);
+					log_peer_list();
 					break;
 				case R_Conn_CER:
 					if(p->r_cer)
@@ -392,12 +392,12 @@ int sm_process(
 					Snd_DPA(p, msg, AAA_SUCCESS, p->R_sock);
 					R_Disc(p);
 					p->state = Closed;
-					log_peer_list(L_INFO);
+					log_peer_list();
 					break;
 				case R_Peer_Disc:
 					R_Disc(p);
 					p->state = Closed;
-					log_peer_list(L_INFO);
+					log_peer_list();
 					break;
 				case R_Rcv_CER:
 					result_code = Process_CER(p, msg);
@@ -417,7 +417,7 @@ int sm_process(
 						/*R_Disc(p);p.state = Closed;*/
 						p->state = R_Open; /* Or maybe I should disconnect it?*/
 					}
-					log_peer_list(L_INFO);
+					log_peer_list();
 					break;
 				default:
 					LM_ERR("sm_process(): In state %s invalid event %s\n",
@@ -459,12 +459,12 @@ int sm_process(
 					Snd_DPA(p, msg, 2001, p->I_sock);
 					I_Disc(p);
 					p->state = Closed;
-					log_peer_list(L_INFO);
+					log_peer_list();
 					break;
 				case I_Peer_Disc:
 					I_Disc(p);
 					p->state = Closed;
-					log_peer_list(L_INFO);
+					log_peer_list();
 					break;
 				case I_Rcv_CER:
 					result_code = Process_CER(p, msg);
@@ -669,13 +669,13 @@ void I_Snd_CER(peer *p)
 	if((ret = getsockname(p->I_sock, &(addr_u.addr), &addrlen)) == -1) {
 		LM_ERR("I_Snd_CER(): Error on finding local host address > %s\n",
 				strerror(errno));
-		Cleanup(p,p->I_sock);
+		Cleanup(p, p->I_sock);
 		p->state = Closed;
 		AAAFreeMessage(&cer);
 		return;
 	}
 
-	if (ret != -1) {
+	if(ret != -1) {
 		switch(addr_u.addr.sa_family) {
 			case AF_INET:
 				set_2bytes(x, 1);
