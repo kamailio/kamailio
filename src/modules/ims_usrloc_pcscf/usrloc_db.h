@@ -128,7 +128,7 @@ typedef struct reusable_buffer
 	int data_len;
 } t_reusable_buffer;
 
-int use_location_pcscf_table();
+int use_location_pcscf_table(str *domain);
 void destroy_db();
 int init_db(const str *db_url, int db_update_period, int fetch_num_rows);
 int connect_db(const str *db_url);
