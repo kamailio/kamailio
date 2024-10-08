@@ -35,7 +35,7 @@ dmq_api_t pres_dmqb;
 dmq_peer_t *pres_dmq_peer = NULL;
 dmq_resp_cback_t pres_dmq_resp_callback = {&pres_dmq_resp_callback_f, 0};
 
-int pres_dmq_send_all_presentities();
+int pres_dmq_send_all_presentities(dmq_node_t *dmq_node);
 int pres_dmq_request_sync();
 
 /**
