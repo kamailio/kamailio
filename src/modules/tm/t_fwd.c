@@ -1835,7 +1835,7 @@ int t_forward_cancel(struct sip_msg *p_msg, struct proxy_l *proxy, int proto,
 	int new_tran;
 	struct dest_info dst;
 	str host;
-	unsigned short port;
+	unsigned short port = 0;
 	short comp;
 
 	t = 0;
