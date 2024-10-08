@@ -61,7 +61,7 @@ extern int curl_verbose;
 extern int curl_follow_redirect;
 
 void set_curl_mem_callbacks(void);
-int init_http_multi();
+int init_http_multi(struct event_base *evbase, struct http_m_global *wg);
 int multi_timer_cb(CURLM *multi, long timeout_ms, struct http_m_global *g);
 void timer_cb(int fd, short kind, void *userp);
 int sock_cb(CURL *e, curl_socket_t s, int what, void *cbp, void *sockp);
