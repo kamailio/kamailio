@@ -60,8 +60,8 @@ void insert_ppublic(struct pcontact *_c, ppublic_t *_p);
 int new_ppublic(str *public_identity, int is_default, ppublic_t **_p);
 void free_ppublic(ppublic_t *_p);
 
-int new_pcontact(
-		/*str* _dom, str* public_identity, int reg_state, int barring, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, impurecord_t** _r*/);
+int new_pcontact(struct udomain *_d, str *_contact, struct pcontact_info *_ci,
+		struct pcontact **_c);
 void free_pcontact(pcontact_t *_c);
 void print_pcontact(FILE *_f, pcontact_t *_r);
 ppublic_t *mem_insert_ppublic(

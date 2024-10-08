@@ -229,7 +229,7 @@ int mem_insert_pcontact(struct udomain *_d, str *_contact,
 {
 	int sl;
 
-	if(new_pcontact(_d->name, _contact, _ci, _c) < 0) {
+	if(new_pcontact(_d, _contact, _ci, _c) < 0) {
 		LM_ERR("creating pcontact failed\n");
 		return -1;
 	}
