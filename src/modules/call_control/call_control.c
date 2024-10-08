@@ -1095,9 +1095,6 @@ static int CallControl(struct sip_msg *msg, char *str1, char *str2)
 static int mod_init(void)
 {
 	pv_spec_t avp_spec;
-	int *param;
-	modparam_t type;
-
 
 	// initialize the canonical_uri_avp structure
 	if(canonical_uri_avp.spec.s == NULL || canonical_uri_avp.spec.len <= 0) {
