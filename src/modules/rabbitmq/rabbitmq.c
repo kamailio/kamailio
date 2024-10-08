@@ -87,7 +87,9 @@ static int max_reconnect_attempts = 1;
 static int timeout_sec = 1;
 static int timeout_usec = 0;
 static int direct_reply_to = 0;
+#if AMQP_VERSION_MAJOR == 0 && AMQP_VERSION_MINOR < 13
 static int amqp_ssl_init_called = 0;
+#endif
 
 /* module helper functions */
 static int rabbitmq_connect(amqp_connection_state_t *conn);
@@ -570,12 +572,14 @@ static int rabbitmq_connect(amqp_connection_state_t *conn)
 	int log_ret;
 	//	amqp_rpc_reply_t reply;
 
+#if AMQP_VERSION_MAJOR == 0 && AMQP_VERSION_MINOR < 13
 	// amqp_ssl_init_called should only be called once
 	if(amqp_info.ssl && !amqp_ssl_init_called) {
 		amqp_set_initialize_ssl_library(1);
 		amqp_ssl_init_called = 1;
 		LM_DBG("AMQP SSL library initialized\n");
 	}
+#endif
 
 	// establish a new connection to RabbitMQ server
 	*conn = amqp_new_connection();
