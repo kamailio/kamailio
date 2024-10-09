@@ -838,6 +838,7 @@ static int db_mongodb_store_result(const db1_con_t *_h, db1_res_t **_r)
 			|| !mongoc_cursor_next(mgres->cursor, &itdoc) || !itdoc) {
 		if(mongoc_cursor_error(mgres->cursor, &error)) {
 			LM_DBG("An error occurred: %s\n", error.message);
+			goto error;
 		} else {
 			LM_DBG("no result from mongodb\n");
 		}
