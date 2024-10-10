@@ -249,7 +249,7 @@ gen_lock_t *tls_domains_cfg_lock = NULL;
 int sr_tls_renegotiation = 0;
 int ksr_tls_init_mode = 0;
 int ksr_tls_key_password_mode = 0;
-
+int ksr_tls_enable_shared_ctx = 0;
 /* clang-format off */
 /*
  * Exported functions
@@ -320,6 +320,7 @@ static param_export_t params[] = {
 			(void *)ksr_rand_engine_param},
 	{"init_mode", PARAM_INT, &ksr_tls_init_mode},
 	{"key_password_mode", PARAM_INT, &ksr_tls_key_password_mode},
+	{"enable_shared_ctx", PARAM_INT, &ksr_tls_enable_shared_ctx},
 
 	{0, 0, 0}
 };
@@ -492,15 +493,17 @@ static int mod_init(void)
 
 
 #if OPENSSL_VERSION_NUMBER < 0x030000000L
-	LM_INFO("compiled with OpenSSL version: %08x\n", (uint32_t)(OPENSSL_VERSION_NUMBER));
+	LM_INFO("compiled with OpenSSL version: %08x\n",
+			(uint32_t)(OPENSSL_VERSION_NUMBER));
 #elif OPENSSL_VERSION_NUMBER >= 0x030000000L
-	LM_INFO("compiled with OpenSSL version: %08x\n", (uint32_t)(OPENSSL_VERSION_NUMBER));
+	LM_INFO("compiled with OpenSSL version: %08x\n",
+			(uint32_t)(OPENSSL_VERSION_NUMBER));
 	LM_INFO("compile-time OpenSSL library: %s\n", OPENSSL_VERSION_TEXT);
 	LM_INFO("run-time OpenSSL library: %s\n", OpenSSL_version(OPENSSL_VERSION));
 
 	if(EVP_default_properties_is_fips_enabled(NULL) == 1) {
 		LM_INFO("FIPS mode enabled in OpenSSL library\n");
-	} else  {
+	} else {
 		LM_DBG("FIPS mode not enabled in OpenSSL library\n");
 	}
 #endif
