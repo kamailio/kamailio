@@ -125,20 +125,24 @@ static inline int calc_contact_expires(
 						  : default_registrar_cfg.default_expires;
 		goto end;
 	}
-	if(!sos_reg && r < default_registrar_cfg.min_expires) {
+	if(!sos_reg && r < default_registrar_cfg.min_expires
+			&& default_registrar_cfg.min_expires != 0) {
 		r = default_registrar_cfg.min_expires;
 		goto end;
 	}
-	if(sos_reg && r < default_registrar_cfg.em_min_expires) {
+	if(sos_reg && r < default_registrar_cfg.em_min_expires
+			&& default_registrar_cfg.em_min_expires != 0) {
 		r = default_registrar_cfg.em_min_expires;
 		goto end;
 	}
-	if(!sos_reg && r > default_registrar_cfg.max_expires) {
+	if(!sos_reg && r > default_registrar_cfg.max_expires
+			&& default_registrar_cfg.max_expires != 0) {
 		r = default_registrar_cfg.max_expires;
 		goto end;
 	}
-	if(sos_reg && r > default_registrar_cfg.em_max_expires) {
-		r = default_registrar_cfg.em_min_expires;
+	if(sos_reg && r > default_registrar_cfg.em_max_expires
+			&& default_registrar_cfg.em_max_expires != 0) {
+		r = default_registrar_cfg.em_max_expires;
 		goto end;
 	}
 end:

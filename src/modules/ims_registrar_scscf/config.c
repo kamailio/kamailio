@@ -31,19 +31,19 @@
 #include "config.h"
 
 struct cfg_group_registrar default_registrar_cfg = {
-		3600,		   /* default_expires */
-		0,			   /* default_expires_range */
-		60,			   /* min_expires */
-		0,			   /* max_expires */
-		3600,		   /* emergency contact default expires */
-		60,			   /* emergency contact max expires */
-		0,			   /* emergency contact min expires */
-		0,			   /* max_contacts */
-		0,			   /* retry_after */
-		0,			   /* case_sensitive */
-		Q_UNSPECIFIED, /* default_q */
-		1,			   /* append_branches */
-		""			   /* realm_pref */
+		.default_expires = 3600,	/* default_expires */
+		.default_expires_range = 0, /* default_expires_range */
+		.min_expires = 60,			/* min_expires */
+		.max_expires = 600000,		/* max_expires */
+		.em_default_expires = 1800, /* emergency contact default expires */
+		.em_max_expires = 3600,		/* emergency contact max expires */
+		.em_min_expires = 0,		/* emergency contact min expires */
+		.max_contacts = 0,			/* max_contacts */
+		.retry_after = 0,			/* retry_after */
+		.case_sensitive = 0,		/* case_sensitive */
+		.default_q = Q_UNSPECIFIED, /* default_q */
+		.append_branches = 1,		/* append_branches */
+		.realm_pref = ""			/* realm_pref */
 };
 
 void *registrar_cfg = &default_registrar_cfg;
