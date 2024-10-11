@@ -447,6 +447,9 @@ int extract_sendrecv_mode(str *body, str *sendrecv_mode, int *is_on_hold)
 {
 	char *cp1;
 
+	if(body->len < 10) {
+		return -1;
+	}
 	cp1 = body->s;
 	if(!((strncasecmp(cp1, "a=sendrecv", 10) == 0)
 			   || (strncasecmp(cp1, "a=recvonly", 10) == 0))) {
