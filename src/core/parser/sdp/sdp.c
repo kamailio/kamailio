@@ -810,9 +810,11 @@ static int parse_mixed_content(str *mixed_body, str delimiter, sdp_info_t *_sdp)
 		} /* end of while */
 		/* and now we need to parse the content */
 		if(start_parsing) {
-			while(('\n' == *rest) || ('\r' == *rest) || ('\t' == *rest)
-					|| (' ' == *rest))
+			while((rest < bodylimit)
+					&& (('\n' == *rest) || ('\r' == *rest) || ('\t' == *rest)
+							|| (' ' == *rest))) {
 				rest++; /* Skip any whitespace */
+			}
 			_sdp->raw_sdp.s = rest;
 			_sdp->raw_sdp.len = d2p - rest;
 			/* LM_DBG("we need to check session %d: <%.*s>\n", session_num, _sdp.raw_sdp.len, _sdp.raw_sdp.s); */
