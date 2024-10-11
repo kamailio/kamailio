@@ -346,13 +346,16 @@ int extract_candidate(str *body, sdp_stream_cell_t *stream)
 }
 
 
-/* generic method for attribute extraction
+/* generic method for attribute value extraction
  * field must has format "a=attrname:" */
 int extract_field(str *body, str *value, str field)
 {
-	if(strncmp(body->s, field.s, field.len < body->len ? field.len : body->len)
-			!= 0) {
-		/*LM_DBG("We are not pointing to an %.* attribute =>`%.*s'\n", field.len, field.s, body->len, body->s); */
+	if(body->len < field.len) {
+		return -1;
+	}
+	if(strncmp(body->s, field.s, field.len) != 0) {
+		/* LM_DBG("We are not pointing to an %.* attribute =>`%.*s'\n",
+				field.len, field.s, body->len, body->s); */
 		return -1;
 	}
 
