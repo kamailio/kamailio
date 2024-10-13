@@ -1274,6 +1274,7 @@ inline static int find_listening_sock_info(
 {
 	struct ip_addr ip;
 	struct socket_info *si = NULL;
+	socklen_t from_len;
 	su2ip_addr(&ip, *from);
 
 	si = find_si(&ip, 0, type);
@@ -1283,7 +1284,7 @@ inline static int find_listening_sock_info(
 		if(si) {
 			int optval = 1;
 			su2ip_addr(&ip, &si->su);
-			*from = &si->su;
+			memcpy(*from, &si->su, sockaddru_len(si->su));
 #if !defined(TCP_DONT_REUSEADDR)
 			if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *)&optval,
 					   sizeof(optval))
@@ -1301,16 +1302,29 @@ inline static int find_listening_sock_info(
 				/* continue, not critical */
 			}
 #endif
-			if(unlikely(bind(s, &si->su.s, sockaddru_len(si->su)) != 0)) {
-				LM_DBG("binding to source address %s failed: [%s] [%d]\n",
-						su2a(&si->su, sizeof(si->su)), strerror(errno), errno);
+			if(!cfg_get(tcp, tcp_cfg, reuse_port)) {
+				su_setport(*from, 0);
+			}
+
+			if(unlikely(bind(s, &(*from)->s, sockaddru_len(**from)) != 0)) {
+				LM_ERR("binding to source address %s failed: [%s] [%d]\n",
+						su2a(*from, sockaddru_len(**from)), strerror(errno),
+						errno);
 				return -1;
+			}
+
+			if(!cfg_get(tcp, tcp_cfg, reuse_port)) {
+				from_len = sockaddru_len(**from);
+				if(unlikely(getsockname(s, &(*from)->s, &from_len) != 0)) {
+					LM_ERR("getsockname failed: %s(%d)\n", strerror(errno),
+							errno);
+				}
 			}
 		}
 	} else {
 		if(unlikely(bind(s, &(*from)->s, sockaddru_len(**from)) != 0)) {
-			LM_DBG("binding to source address %s failed: [%s] [%d]\n",
-					su2a(&si->su, sizeof(si->su)), strerror(errno), errno);
+			LM_ERR("binding to source address %s failed: [%s] [%d]\n",
+					su2a(*from, sockaddru_len(**from)), strerror(errno), errno);
 			return -1;
 		}
 	}
