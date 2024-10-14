@@ -40,5 +40,6 @@ extern tls_domain_t srv_defaults;
 extern str tls_domains_cfg_file;
 
 extern int sr_tls_renegotiation;
+extern int ksr_tls_enable_shared_ctx;
 
 #endif /* _TLS_MOD_H */
