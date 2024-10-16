@@ -1740,6 +1740,16 @@ int add_interfaces(char *if_name, int family, unsigned short port,
 			continue;
 		if(family && family != ifa->ifa_addr->sa_family)
 			continue;
+		if(ifa->ifa_addr->sa_family == AF_INET6) {
+			struct sockaddr_in6 *caddr = (struct sockaddr_in6 *)ifa->ifa_addr;
+			if((sr_bind_ipv6_link_local & KSR_IPV6_LINK_LOCAL_SKIP)
+					&& IN6_IS_ADDR_LINKLOCAL(&(caddr->sin6_addr))) {
+				LM_DBG("skipping iface [%s] fam: [%x] flg: [%lx] addr: [%s]\n",
+						ifa->ifa_name, ifa->ifa_addr->sa_family,
+						(unsigned long)ifa->ifa_flags, tmp);
+				continue;
+			}
+		}
 		sockaddr2ip_addr(&addr, (struct sockaddr *)ifa->ifa_addr);
 		tmp = ip_addr2a(&addr);
 		if(ifa->ifa_flags & IFF_LOOPBACK)
