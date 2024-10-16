@@ -241,24 +241,9 @@ Chapter 1. Admin Guide
    this module must be loaded and enable_tls=yes core setting must be
    added to the Kamailio config file.
 
-   IMPORTANT: the tls module must be loaded before any other Kamailio
-   module that uses libssl (OpenSSL library). A safe option is to have the
-   tls module loaded first (be in the first "loadmodule" in Kamailio.cfg).
-
-   IMPORTANT: For libssl v3.x, the core parameter "tls_threads_mode" has
-   to be set, see the Core Cookbook for possible values.
-
-   IMPORTANT: using this module compiled with newer versions of libssl
-   (e.g., v1.1+) may require Kamailio to be started with --atexit=no
-   command line parameters to avoid calling C atexit callbacks inside the
-   process ending during daemonize procedure as well as during shut down,
-   which can lead to crashes because it destroys and then accesses shared
-   memory. For example, such case has been reported for Ubuntu 20.04 or
-   RedHat 8.
-
-   Note: with some particular combination of OS, openssl and mysql-client
-   libraries, there were reports of random crashes, in such case try to
-   set the db_mysql module parameter opt_ssl_mode to 1.
+   Read the "Important Notes" section because it has relevant information
+   about configuring properly the module for various libssl versions,
+   components and operating systems.
 
 2. Quick Start
 
@@ -300,7 +285,7 @@ request_route {
 3. Important Notes
 
    The TLS module needs some special options enabled when compiling
-   Kamailio. These options are enabled by default, however in case you're
+   Kamailio. These options are enabled by default, however in case you are
    using a modified Kamailio version or Makefile, make sure that you
    enable -DUSE_TLS and -DTLS_HOOKS (or compile with make TLS_HOOKS=1
    which will take care of both options).
@@ -344,6 +329,25 @@ request_route {
        very high risk of openssl crashing or leaking memory).
 
    The bug reports can be viewed at http://rt.openssl.org/.
+
+   Note 1: the tls module must be loaded before any other Kamailio module
+   that uses libssl (OpenSSL library). A safe option is to have the tls
+   module loaded first (be in the first "loadmodule" in Kamailio.cfg).
+
+   Note 2: for libssl v3.x, the core parameter "tls_threads_mode" has to
+   be set, see the Core Cookbook for possible values.
+
+   Note 3: using this module compiled with newer versions of libssl (e.g.,
+   v1.1+) may require Kamailio to be started with --atexit=no command line
+   parameters to avoid calling C atexit callbacks inside the process
+   ending during daemonize procedure as well as during shut down, which
+   can lead to crashes because it destroys and then accesses shared
+   memory. For example, such case has been reported for Ubuntu 20.04 or
+   RedHat 8.
+
+   Note 4: with some particular combination of OS, openssl and
+   mysql-client libraries, there were reports of random crashes, in such
+   case try to set the db_mysql module parameter opt_ssl_mode to 1.
 
 4. Compiling the TLS Module
 

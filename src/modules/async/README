@@ -241,12 +241,18 @@ route[RESUME] {
 4.3.  async_sleep(seconds)
 
    Simulate a sleep of 'seconds' and then continue the processing of SIP
-   request with the next action. In case of internal errors, the function
-   returns false.
+   request with the next action. Note that the processing continues till
+   the last action in the current route block. Consider using
+   async_route() instead if you want to control better what is executed
+   after the wait time. Beacuse the execution is resumed in another
+   process, do not use private memory variables before and after the async
+   sleep.
 
    The sleep parameter represent the number of seconds to suspend the
    processing of SIP request. Maximum value is 100. The parameter can be a
    static integer or a variable holding an integer.
+
+   In case of internal errors, the function returns false.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -259,10 +265,9 @@ exit;
 
 4.4.  async_ms_sleep(milliseconds)
 
-   Simulate a sleep of 'milliseconds' and then continue the processing of
-   SIP request with the next action. In case of internal errors, the
-   function returns false. This function works only if the ms_timer
-   parameter has a value greater than 0.
+   Similar to async_sleep(), but with a 'milliseconds' parameter. This
+   function works only if the ms_timer parameter has a value greater than
+   0.
 
    The sleep parameter represent the number of milliseconds to suspend the
    processing of SIP request. Maximum value is 30000 (30 sec). The
