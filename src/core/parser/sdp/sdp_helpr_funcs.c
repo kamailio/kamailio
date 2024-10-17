@@ -152,7 +152,8 @@ int extract_rtpmap(str *body, str *rtpmap_payload, str *rtpmap_encoding,
 	int len;
 
 	if(strncasecmp(body->s, "a=rtpmap:", 9) != 0) {
-		/*LM_DBG("We are not pointing to an a=rtpmap: attribute =>`%.*s'\n", body->len, body->s); */
+		/*LM_DBG("We are not pointing to an a=rtpmap: attribute =>`%.*s'\n",
+		 * body->len, body->s); */
 		return -1;
 	}
 
