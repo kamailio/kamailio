@@ -219,20 +219,20 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>1</quote> (enabled).
+			Default value is <quote>0</quote> (disabled).
 		</emphasis>
 		</para>
 		<para>
 			Can be set at runtime, e.g.:
 			<programlisting>
-			$ &sercmd; cfg.set_now_int rtpengine aggressive_redetection 0
+			$ &sercmd; cfg.set_now_int rtpengine aggressive_redetection 1
 			</programlisting>
 		</para>
 		<example>
 		<title>Set <varname>aggressive_redetection</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("rtpengine", "aggressive_redetection", 0)
+modparam("rtpengine", "aggressive_redetection", 1)
 ...
 </programlisting>
 		</example>

@@ -32,7 +32,7 @@
 
 struct cfg_group_rtpengine default_rtpengine_cfg = {
 		60,						 /* default disable timeout in seconds */
-		1,						 /* default aggressive_redetection enabled */
+		0,						 /* default aggressive_redetection disabled */
 		1000,					 /* default wait timeout in milliseconds */
 		MAX_RTPP_TRIED_NODES, 5, /* rtprengine retries */
 };
