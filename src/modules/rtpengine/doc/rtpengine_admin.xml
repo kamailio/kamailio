@@ -793,7 +793,7 @@ modparam("rtpengine", "media_duration", "$avp(MEDIA_DURATION)")
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -915,7 +915,7 @@ modparam("rtpengine", "mos_min_roundtrip_pv", "$avp(mos_min_roundtrip)")
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking< quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -1036,7 +1036,7 @@ modparam("rtpengine", "mos_max_roundtrip_pv", "$avp(mos_max_roundtrip)")
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -1157,7 +1157,10 @@ modparam("rtpengine", "mos_average_samples_pv", "$avp(mos_average_samples)")
 			If set, all the statistics pseudovariables with the <quote>_A</quote> suffix will
 			be filled in
 			with statistics only from the call legs that match the label given in this
-			variable.
+			variable. You need to fill this variable before invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote>. Variable value should match the
+			<emphasis>label=</emphasis> flag on <quote>rtpengine_offer</quote>,
+			<quote>rtpengine_answer</quote>, or <quote>rtpengine_manage</quote>.
 		</para>
 		<para>
 			There is no default value.
@@ -1183,7 +1186,7 @@ modparam("rtpengine", "mos_A_label_pv", "$avp(mos_A_label)")
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -1352,7 +1355,7 @@ modparam("rtpengine", "mos_min_roundtrip_leg_A_pv", "$avp(mos_min_roundtrip_leg_
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -1521,7 +1524,7 @@ modparam("rtpengine", "mos_max_roundtrip_leg_A_pv", "$avp(mos_max_roundtrip_leg_
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -1689,7 +1692,10 @@ modparam("rtpengine", "mos_average_samples_A_pv", "$avp(mos_average_samples_A)")
 			If set, all the statistics pseudovariables with the <quote>_B</quote> suffix will
 			be filled in
 			with statistics only from the call legs that match the label given in this
-			variable.
+			variable. You need to fill this variable before invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote>. Variable value should match the
+			<emphasis>label=</emphasis> flag on <quote>rtpengine_offer</quote>,
+			<quote>rtpengine_answer</quote>, or <quote>rtpengine_manage</quote>.
 		</para>
 		<para>
 			There is no default value.
@@ -1715,7 +1721,7 @@ modparam("rtpengine", "mos_B_label_pv", "$avp(mos_B_label)")
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -1885,7 +1891,7 @@ modparam("rtpengine", "mos_min_roundtrip_leg_B_pv", "$avp(mos_min_roundtrip_leg_
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -2054,7 +2060,7 @@ modparam("rtpengine", "mos_max_roundtrip_leg_B_pv", "$avp(mos_max_roundtrip_leg_
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -2781,13 +2787,13 @@ rtpengine_offer();
 				</para></listitem>
 
 				<listitem><para>
-				<emphasis>codec-mask=...</emphasis> - Similar to strip except that codecs listed here will still be accepted
+				<emphasis>codec-mask=...</emphasis> - similar to strip except that codecs listed here will still be accepted
 				and used for transcoding on the offering side. Useful only in combination with codec-transcode. <emphasis>all</emphasis> keyword
 				can be used to mask all offered codecs
 				</para></listitem>
 
 				<listitem><para>
-				<emphasis>codec-accept=...</emphasis> - Similar to `mask` and `consume` but doesn't remove the codec from the list of
+				<emphasis>codec-accept=...</emphasis> - similar to `mask` and `consume` but doesn't remove the codec from the list of
 				offered codecs. This means that a codec listed under `accept` will still be offered
 				to the remote peer, but if the remote peer rejects it, it will still be accepted
 				towards the original offerer and then used for transcoding. It is a more selective
@@ -2795,26 +2801,34 @@ rtpengine_offer();
 				</para></listitem>
 
 				<listitem><para>
-				<emphasis>codec-consume=...</emphasis> - Identical to mask but enables the transcoding engine even if no other transcoding
+				<emphasis>codec-consume=...</emphasis> - identical to mask but enables the transcoding engine even if no other transcoding
 				related options are given.
 				</para></listitem>
 
 				<listitem><para>
-				<emphasis>T.38=decode</emphasis> - If the offered &sdp; contains a media section
+				<emphasis>T.38=decode</emphasis> - if the offered &sdp; contains a media section
 				advertising T.38 over UDPTL, translate it to a regular audio media section
 				over RTP. By default, PCMU and PCMA will be used as audio codecs, but that can
 				be overridden using the codec options described above. Other transport protocols
 				(e.g. SRTP) can also be selected in the same way. If the offered &sdp; does not
 				contain a T.38 section, then this flag has no effect.
 				</para></listitem>
+
 				<listitem><para>
-				<emphasis>T.38=force</emphasis> - Any audio media section (over RTP) in the
+				<emphasis>T.38=force</emphasis> - any audio media section (over RTP) in the
 				offered &sdp; will be translated into a T.38 section over UDPTL.
 				</para></listitem>
+
 				<listitem><para>
-				<emphasis>T.38=stop</emphasis> - Stops a previously established T.38 to audio
+				<emphasis>T.38=stop</emphasis> - stops a previously established T.38 to audio
 				gateway and reverts the session back to media passthrough. This is useful when
 				handling a rejected T.38 offer.
+				</para></listitem>
+
+				<listitem><para>
+				<emphasis>label=...</emphasis> - adds a label to a current stream, that later
+				can be used to get call quality stats, see <quote>mos_A_label_pv</quote>
+				and <quote>mos_B_label_pv</quote> parameters.
 				</para></listitem>
 			</itemizedlist>
 			<para>
