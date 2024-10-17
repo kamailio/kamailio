@@ -65,6 +65,7 @@
 
 #include "../../core/dprint.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/daemonize.h"
 
 static int keep_running;
 
@@ -72,7 +73,7 @@ static int keep_running;
 static void sigterm_handler(int signal)
 {
 	/* Just exit.  The master agent will clean everything up for us */
-	exit(0);
+	ksr_exit(0);
 }
 
 /*! This function:
@@ -125,7 +126,7 @@ static int initialize_agentx(void)
 	LM_DBG("Shutting down Kamailio SNMPD MasterX sub agent.\n");
 	snmp_shutdown(AGENT_PROCESS_NAME);
 	SOCK_CLEANUP;
-	exit(0);
+	ksr_exit(0);
 
 	return 0;
 }
