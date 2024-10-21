@@ -674,15 +674,15 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
    to all rtpengines, else no rtpengine will be queried until its
    rtpengine_disable_tout timeout passes.
 
-   Default value is “1” (enabled).
+   Default value is “0” (disabled).
 
    Can be set at runtime, e.g.:
                         $ kamcmd cfg.set_now_int rtpengine aggressive_redetectio
-n 0
+n 1
 
    Example 1.3. Set aggressive_redetection parameter
 ...
-modparam("rtpengine", "aggressive_redetection", 0)
+modparam("rtpengine", "aggressive_redetection", 1)
 ...
 
 4.4. rtpengine_tout_ms (integer)
