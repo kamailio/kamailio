@@ -498,7 +498,7 @@ static int ki_jwt_verify_key(
 	ret = jwt_decode(
 			&jwt, jwtval->s, (unsigned char *)kdata.s, (size_t)kdata.len);
 	if(ret != 0 || jwt == NULL) {
-		LM_ERR("failed to decode jwt value\n");
+		LM_ERR("failed to decode jwt value (ret: %d jwt: %p)\n", ret, jwt);
 		goto error;
 	}
 	if(jwt_validate(jwt, jwt_valid) != 0) {
