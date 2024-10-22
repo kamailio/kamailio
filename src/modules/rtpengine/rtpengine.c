@@ -859,11 +859,6 @@ static int bind_force_send_ip(int sock_idx)
 	return 0;
 }
 
-static inline int str_cmp(const str *a, const str *b)
-{
-	return !(a->len == b->len && !strncmp(a->s, b->s, a->len));
-}
-
 static inline int str_eq(const str *p, const char *q)
 {
 	int l = strlen(q);
@@ -963,7 +958,7 @@ struct rtpp_node *get_rtpp_node(struct rtpp_set *rtpp_list, str *url)
 	lock_get(rtpp_list->rset_lock);
 	rtpp_node = rtpp_list->rn_first;
 	while(rtpp_node) {
-		if(str_cmp(&rtpp_node->rn_url, url) == 0) {
+		if(str_strcmp(&rtpp_node->rn_url, url) == 0) {
 			lock_release(rtpp_list->rset_lock);
 			return rtpp_node;
 		}
@@ -4247,7 +4242,7 @@ static void parse_call_stats_1(struct minmax_mos_label_stats *mmls,
 		if(!bencode_dictionary_get_str(tag_dict, "label", &check))
 			continue;
 		LM_DBG("rtpengine: XXX got label %.*s\n", check.len, check.s);
-		if(str_cmp(&check, &label))
+		if(str_strcmp(&check, &label))
 			continue;
 		LM_DBG("rtpengine: XXX label match\n");
 		medias =
