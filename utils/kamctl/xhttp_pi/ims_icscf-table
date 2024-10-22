@@ -1,0 +1,23 @@
+	<!-- Declaration of nds_trusted_domains table-->
+	<db_table id="nds_trusted_domains">
+		<table_name>nds_trusted_domains</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>trusted_domain</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of s_cscf table-->
+	<db_table id="s_cscf">
+		<table_name>s_cscf</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>s_cscf_uri</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of s_cscf_capabilities table-->
+	<db_table id="s_cscf_capabilities">
+		<table_name>s_cscf_capabilities</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>id_s_cscf</field><type>DB1_INT</type></column>
+		<column><field>capability</field><type>DB1_INT</type></column>
+	</db_table>

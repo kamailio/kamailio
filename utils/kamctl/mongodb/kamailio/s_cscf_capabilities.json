@@ -1,0 +1,21 @@
+{
+  "name": "s_cscf_capabilities",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "id_s_cscf": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "capability": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    }
+  ]
+}
