@@ -12,24 +12,6 @@ static void rtpengine_hash_table_free_row_lock(gen_lock_t *row_lock);
 static struct rtpengine_hash_table *rtpengine_hash_table;
 
 /* from sipwise rtpengine */
-static int str_cmp_str(const str a, const str b)
-{
-	if(a.len < b.len)
-		return -1;
-	if(a.len > b.len)
-		return 1;
-	if(a.len == 0 && b.len == 0)
-		return 0;
-	return memcmp(a.s, b.s, a.len);
-}
-
-/* from sipwise rtpengine */
-static int str_equal(str a, str b)
-{
-	return (str_cmp_str(a, b) == 0);
-}
-
-/* from sipwise rtpengine */
 static unsigned int str_hash(str s)
 {
 	unsigned int ret = 5381;
@@ -254,8 +236,8 @@ int rtpengine_hash_table_insert(
 
 	while(entry) {
 		// if found, don't add new entry
-		if(str_equal(entry->callid, new_entry->callid)
-				&& str_equal(entry->viabranch, new_entry->viabranch)) {
+		if(STR_EQ(entry->callid, new_entry->callid)
+				&& STR_EQ(entry->viabranch, new_entry->viabranch)) {
 			// unlock
 			lock_release(rtpengine_hash_table->row_locks[hash_index]);
 			LM_NOTICE("callid=%.*s, viabranch=%.*s already in hashtable, "
@@ -324,9 +306,9 @@ int rtpengine_hash_table_remove(
 
 	while(entry) {
 		// if callid found, delete entry
-		if((str_equal(entry->callid, callid)
-				   && str_equal(entry->viabranch, viabranch))
-				|| (str_equal(entry->callid, callid) && viabranch.len == 0
+		if((STR_EQ(entry->callid, callid)
+				   && STR_EQ(entry->viabranch, viabranch))
+				|| (STR_EQ(entry->callid, callid) && viabranch.len == 0
 						&& op == OP_DELETE)) {
 			// set pointers; exclude entry
 			last_entry->next = entry->next;
@@ -407,9 +389,9 @@ struct rtpp_node *rtpengine_hash_table_lookup(
 
 	while(entry) {
 		// if callid found, return entry
-		if((str_equal(entry->callid, callid)
-				   && str_equal(entry->viabranch, viabranch))
-				|| (str_equal(entry->callid, callid) && viabranch.len == 0
+		if((STR_EQ(entry->callid, callid)
+				   && STR_EQ(entry->viabranch, viabranch))
+				|| (STR_EQ(entry->callid, callid) && viabranch.len == 0
 						&& op == OP_DELETE)) {
 			node = entry->node;
 
