@@ -60,9 +60,6 @@ MODULE_VERSION
 #define RXL(m, str, i) (int)((m)[i].rm_eo - (m)[i].rm_so)
 #define RXS(m, str, i) (str) + (m)[i].rm_so
 
-static inline int str_cmp(const str *a, const str *b);
-static inline int str_i_cmp(const str *a, const str *b);
-
 typedef struct str_map
 {
 	str str;
@@ -256,7 +253,7 @@ struct module_exports exports = {
 static int str_map_str(const str_map_t *map, const str *key, int *ret)
 {
 	for(; map->str.s; map++)
-		if(!str_cmp(&map->str, key)) {
+		if(!str_strcmp(&map->str, key)) {
 			*ret = map->id;
 			return 0;
 		}
@@ -704,16 +701,6 @@ static void destroy(void)
 }
 
 
-static inline int str_cmp(const str *a, const str *b)
-{
-	return !(a->len == b->len && !strncmp(a->s, b->s, a->len));
-}
-
-static inline int str_i_cmp(const str *a, const str *b)
-{
-	return !(a->len == b->len && !strncasecmp(a->s, b->s, a->len));
-}
-
 str queue_other = str_init("*");
 
 /**
@@ -727,10 +714,10 @@ static int find_queue(struct sip_msg *msg, str *method, int *queue)
 
 	*queue = -1;
 	for(i = 0; i < *nqueues; i++)
-		if(!str_i_cmp(queues[i].method, method)) {
+		if(!str_strcasecmp(queues[i].method, method)) {
 			*queue = i;
 			return 0;
-		} else if(!str_i_cmp(queues[i].method, &queue_other)) {
+		} else if(!str_strcasecmp(queues[i].method, &queue_other)) {
 			*queue = i;
 		}
 
