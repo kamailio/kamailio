@@ -38,6 +38,7 @@ id(int,auto) table_name(string) table_version(int)
 0:mohqueues:1
 0:mtree:1
 0:mtrees:2
+0:nds_trusted_domains:1
 0:pdt:1
 0:pl_pipes:1
 0:presentity:5
@@ -48,6 +49,8 @@ id(int,auto) table_name(string) table_version(int)
 0:rls_watchers:3
 0:rtpengine:1
 0:rtpproxy:1
+0:s_cscf:1
+0:s_cscf_capabilities:1
 0:sca_subscriptions:2
 0:secfilter:1
 0:silo:8
