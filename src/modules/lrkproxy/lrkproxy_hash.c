@@ -35,24 +35,6 @@ static void lrkproxy_hash_table_free_row_lock(gen_lock_t *row_lock);
 static struct lrkproxy_hash_table *lrkproxy_hash_table;
 
 /* get from sipwise rtpengine */
-static int str_cmp_str(const str a, const str b)
-{
-	if(a.len < b.len)
-		return -1;
-	if(a.len > b.len)
-		return 1;
-	if(a.len == 0 && b.len == 0)
-		return 0;
-	return memcmp(a.s, b.s, a.len);
-}
-
-/* get from sipwise rtpengine */
-static int str_equal(str a, str b)
-{
-	return (str_cmp_str(a, b) == 0);
-}
-
-/* get from sipwise rtpengine */
 static unsigned int str_hash(str s)
 {
 	unsigned int ret = 5381;
@@ -321,8 +303,8 @@ int lrkproxy_hash_table_insert(
 
 	while(entry) {
 		// if found, don't add new entry
-		if(str_equal(entry->callid, new_entry->callid)
-				&& str_equal(entry->viabranch, new_entry->viabranch)) {
+		if(STR_EQ(entry->callid, new_entry->callid)
+				&& STR_EQ(entry->viabranch, new_entry->viabranch)) {
 			// unlock
 			lock_release(lrkproxy_hash_table->row_locks[hash_index]);
 			LM_NOTICE("callid=%.*s, viabranch=%.*s already in hashtable, "
@@ -403,13 +385,13 @@ int lrkproxy_hash_table_remove(str callid, str viabranch, enum lrk_operation op)
 				viabranch.len, viabranch.s, entry->viabranch.len,
 				entry->viabranch.s);
 		// if callid found, delete entry
-		if((str_equal(entry->callid, callid)
-				   && str_equal(entry->viabranch, viabranch))
-				|| (str_equal(entry->callid, callid) && viabranch.len == 0
+		if((STR_EQ(entry->callid, callid)
+				   && STR_EQ(entry->viabranch, viabranch))
+				|| (STR_EQ(entry->callid, callid) && viabranch.len == 0
 						&& op == OP_DELETE)
-				|| str_equal(entry->callid, callid)) {
-			//            if ((str_equal(entry->callid, callid) && str_equal(entry->viabranch, viabranch)) ||
-			//                (str_equal(entry->callid, callid) && viabranch.len == 0 && op == OP_DELETE)) {
+				|| STR_EQ(entry->callid, callid)) {
+			//            if ((STR_EQ(entry->callid, callid) && STR_EQ(entry->viabranch, viabranch)) ||
+			//                (STR_EQ(entry->callid, callid) && viabranch.len == 0 && op == OP_DELETE)) {
 			// set pointers; exclude entry
 
 			// set pointers; exclude entry
@@ -496,10 +478,10 @@ struct lrkproxy_hash_entry *lrkproxy_hash_table_lookup(
 	while(entry) {
 
 		// if callid found, return entry
-		if((str_equal(entry->callid, callid)
-				   && str_equal(entry->viabranch, viabranch))
-				|| (str_equal(entry->callid, callid) && viabranch.len == 0)
-				|| str_equal(entry->callid, callid)) {
+		if((STR_EQ(entry->callid, callid)
+				   && STR_EQ(entry->viabranch, viabranch))
+				|| (STR_EQ(entry->callid, callid) && viabranch.len == 0)
+				|| STR_EQ(entry->callid, callid)) {
 			//            node = entry->node;
 			// unlock
 
