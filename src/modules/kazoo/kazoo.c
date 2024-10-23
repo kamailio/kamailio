@@ -150,12 +150,14 @@ static cmd_export_t cmds[] = {
 				fixup_kz_amqp_free, ANY_ROUTE},
 		{"kazoo_publish", (cmd_function)kz_amqp_publish_ex, 4, fixup_kz_amqp,
 				fixup_kz_amqp_free, ANY_ROUTE},
-		{"kazoo_query", (cmd_function)kz_amqp_query, 4, fixup_kz_amqp,
+
+		{"kazoo_query", (cmd_function)kz_amqp_query_3, 3, fixup_kz_amqp,
 				fixup_kz_amqp_free, ANY_ROUTE},
-		{"kazoo_query", (cmd_function)kz_amqp_query, 5, fixup_kz_amqp,
+		{"kazoo_query", (cmd_function)kz_amqp_query_4, 4, fixup_kz_amqp,
 				fixup_kz_amqp_free, ANY_ROUTE},
-		{"kazoo_query", (cmd_function)kz_amqp_query_ex, 3, fixup_kz_amqp,
+		{"kazoo_query", (cmd_function)kz_amqp_query_5, 5, fixup_kz_amqp,
 				fixup_kz_amqp_free, ANY_ROUTE},
+
 		{"kazoo_pua_publish", (cmd_function)kz_pua_publish, 1, 0, 0, ANY_ROUTE},
 		{"kazoo_pua_publish_mwi", (cmd_function)kz_pua_publish_mwi, 1, 0, 0,
 				ANY_ROUTE},
@@ -168,8 +170,6 @@ static cmd_export_t cmds[] = {
 				fixup_kz_amqp4_free, ANY_ROUTE},
 		{"kazoo_subscribe", (cmd_function)kz_amqp_subscribe_simple, 4,
 				fixup_kz_amqp4, fixup_kz_amqp4_free, ANY_ROUTE},
-
-
 		{"kazoo_json", (cmd_function)kz_json_get_field, 3, fixup_kz_json,
 				fixup_kz_json_free, ANY_ROUTE},
 		{"kazoo_json_keys", (cmd_function)kz_json_get_keys, 3, fixup_kz_json,
@@ -368,7 +368,7 @@ static int mod_init(void)
 	}
 
 	kz_worker_pipes_fds =
-			(int *)shm_malloc(sizeof(int) * (dbk_consumer_workers)*2);
+			(int *)shm_malloc(sizeof(int) * (dbk_consumer_workers) * 2);
 	kz_worker_pipes = (int *)shm_malloc(sizeof(int) * dbk_consumer_workers);
 	for(i = 0; i < dbk_consumer_workers; i++) {
 		kz_worker_pipes_fds[i * 2] = kz_worker_pipes_fds[i * 2 + 1] = -1;

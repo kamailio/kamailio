@@ -1246,6 +1246,7 @@ int kz_amqp_pipe_send_receive(str *str_exchange, str *str_routing_key,
 		cmd->headers = kz_amqp_str_dup(str_headers);
 	}
 
+
 	cmd->timeout = *kz_timeout;
 
 	if(cmd->payload == NULL || cmd->routing_key == NULL
@@ -1637,18 +1638,60 @@ int kz_amqp_query_ex(struct sip_msg *msg, char *exchange, char *routing_key,
 	return 1;
 };
 
-int kz_amqp_query(struct sip_msg *msg, char *exchange, char *routing_key,
-		char *payload, char *dst, char *headers)
+int kz_amqp_query_3(
+		struct sip_msg *msg, char *exchange, char *routing_key, char *payload)
 {
+	/* This is a wrapper around the executer function, just for the sake of clarity*/
+	int result = kz_amqp_query_ex(msg, exchange, routing_key, payload, NULL);
+	return result;
+};
 
-	pv_spec_t *dst_pv;
-	pv_value_t dst_val;
+int kz_amqp_query_4(struct sip_msg *msg, char *exchange, char *routing_key,
+		char *payload, str *dst)
+{
+	int result = kz_amqp_query_ex(msg, exchange, routing_key, payload, NULL);
+	if(result == -1)
+		return result;
+	kz_set_pseudo_var(msg, dst);
+	return 1;
+};
 
+int kz_amqp_query_5(struct sip_msg *msg, char *exchange, char *routing_key,
+		char *payload, str *dst, char *headers)
+{
 	int result = kz_amqp_query_ex(msg, exchange, routing_key, payload, headers);
 	if(result == -1)
 		return result;
 
-	dst_pv = (pv_spec_t *)dst;
+	kz_set_pseudo_var(msg, dst);
+	return 1;
+};
+
+void kz_set_pseudo_var(struct sip_msg *msg, str *dst)
+{
+	pv_spec_t *pvresult = NULL;
+	pv_value_t dst_val;
+
+	if(dst == NULL || dst->s == NULL || dst->len <= 0) {
+		LM_ERR("Destination pseudo-variable is empty \n");
+		return;
+	}
+
+	pvresult = pv_cache_get(dst);
+
+	if(pvresult == NULL) {
+		LM_ERR("Failed to malloc destination pseudo-variable \n");
+		return;
+	}
+
+	if(pvresult->setf == NULL) {
+		LM_ERR("destination pseudo-variable is not writable: %.*s \n", dst->len,
+				dst->s);
+		return;
+	}
+
+	memset(&dst_val, 0, sizeof(pv_value_t));
+
 	if(last_payload_result != NULL) {
 		dst_val.rs.s = last_payload_result;
 		dst_val.rs.len = strlen(last_payload_result);
@@ -1659,10 +1702,8 @@ int kz_amqp_query(struct sip_msg *msg, char *exchange, char *routing_key,
 		dst_val.ri = 0;
 		dst_val.flags = PV_VAL_NULL;
 	}
-	dst_pv->setf(msg, &dst_pv->pvp, (int)EQ_T, &dst_val);
-
-	return 1;
-};
+	pvresult->setf(msg, &pvresult->pvp, (int)EQ_T, &dst_val);
+}
 
 void kz_amqp_queue_free(kz_amqp_queue_ptr queue)
 {
