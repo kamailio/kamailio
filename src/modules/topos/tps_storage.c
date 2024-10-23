@@ -594,6 +594,12 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog, int dir)
 	str suid;
 	str *sx = NULL;
 
+	if(get_cseq(msg)->method_id == METHOD_ACK) {
+		if(parse_headers(msg, HDR_CONTACT_F, 0) < 0 || msg->contact == NULL) {
+			/* ACK with no Contact - nothing to store */
+			return 0;
+		}
+	}
 	if(_tps_context_value.len > 0) {
 		sx = &_tps_context_value;
 	} else if(_tps_context_param.len > 0) {
