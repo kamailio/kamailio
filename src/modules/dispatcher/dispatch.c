@@ -3779,11 +3779,15 @@ int ds_is_active_uri(sip_msg_t *msg, int group, str *uri)
 		for(j = 0; j < list->nr; j++) {
 			if(!ds_skip_dst(list->dlist[j].flags)) {
 				if(uri == NULL || uri->s == NULL || uri->len <= 0) {
+					LM_DBG("one destination active: %d %.*s\n", group,
+							list->dlist[j].uri.len, list->dlist[j].uri.s);
 					return 1;
 				}
 				if((list->dlist[j].uri.len == uri->len)
 						&& (memcmp(list->dlist[j].uri.s, uri->s, uri->len)
 								== 0)) {
+					LM_DBG("destination active: %d %.*s\n", group,
+							list->dlist[j].uri.len, list->dlist[j].uri.s);
 					return 1;
 				}
 			}
