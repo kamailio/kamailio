@@ -218,8 +218,12 @@ int extract_fmtp(str *body, str *fmtp_payload, str *fmtp_string)
 	char *cp, *cp1;
 	int len;
 
+	if(body->len <= 7) {
+		return -1;
+	}
 	if(strncasecmp(body->s, "a=fmtp:", 7) != 0) {
-		/*LM_DBG("We are not pointing to an a=fmtp: attribute =>`%.*s'\n", body->len, body->s); */
+		/*LM_DBG("We are not pointing to an a=fmtp: attribute =>`%.*s'\n",
+		 * body->len, body->s); */
 		return -1;
 	}
 
