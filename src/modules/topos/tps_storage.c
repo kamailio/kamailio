@@ -297,33 +297,40 @@ int tps_storage_fill_contact(
 				/* extract the contact address */
 				if(parse_headers(msg, HDR_CONTACT_F, 0) < 0
 						|| msg->contact == NULL) {
-					LM_WARN("bad sip message or missing Contact hdr\n");
-					return -1;
+					if(get_cseq(msg)->method_id != METHOD_BYE) {
+						LM_WARN("bad sip message or missing Contact header\n");
+						return -1;
+					} else {
+						LM_DBG("BYE with no contact - skipping it\n");
+					}
 				}
-				if(parse_contact(msg->contact) < 0
-						|| ((contact_body_t *)msg->contact->parsed)->contacts
-								   == NULL
-						|| ((contact_body_t *)msg->contact->parsed)
-										   ->contacts->next
-								   != NULL) {
-					LM_ERR("bad Contact header\n");
-					return -1;
-				}
-				if(parse_uri(((contact_body_t *)msg->contact->parsed)
-									 ->contacts->uri.s,
-						   ((contact_body_t *)msg->contact->parsed)
-								   ->contacts->uri.len,
-						   &curi)
-						< 0) {
-					LM_ERR("failed to parse the contact uri\n");
-					return -1;
-				}
-				if(curi.user.len > 0) {
-					memcpy(td->cp, curi.user.s, curi.user.len);
-					td->cp += curi.user.len;
-					cuser_len = curi.user.len;
-				} else {
-					LM_DBG("no contact user - skipping it\n");
+				if(msg->contact != NULL) {
+					if(parse_contact(msg->contact) < 0
+							|| ((contact_body_t *)msg->contact->parsed)
+											   ->contacts
+									   == NULL
+							|| ((contact_body_t *)msg->contact->parsed)
+											   ->contacts->next
+									   != NULL) {
+						LM_ERR("bad Contact header\n");
+						return -1;
+					}
+					if(parse_uri(((contact_body_t *)msg->contact->parsed)
+										 ->contacts->uri.s,
+							   ((contact_body_t *)msg->contact->parsed)
+									   ->contacts->uri.len,
+							   &curi)
+							< 0) {
+						LM_ERR("failed to parse the contact uri\n");
+						return -1;
+					}
+					if(curi.user.len > 0) {
+						memcpy(td->cp, curi.user.s, curi.user.len);
+						td->cp += curi.user.len;
+						cuser_len = curi.user.len;
+					} else {
+						LM_DBG("no contact user - skipping it\n");
+					}
 				}
 			} else {
 				/* extract the ruri */
