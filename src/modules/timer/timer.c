@@ -144,15 +144,18 @@ static int sel_executed(str *res, select_t *s, sip_msg_t *msg)
 	return 0;
 }
 
+/* clang-format off */
 select_row_t sel_declaration[] = {
-		{NULL, SEL_PARAM_STR, STR_STATIC_INIT(MODULE_NAME), sel_root,
+	{NULL, SEL_PARAM_STR, STR_STATIC_INIT(MODULE_NAME), sel_root,
 				SEL_PARAM_EXPECTED},
-		{sel_root, SEL_PARAM_STR, STR_STATIC_INIT("timer"), sel_timer,
+	{sel_root, SEL_PARAM_STR, STR_STATIC_INIT("timer"), sel_timer,
 				SEL_PARAM_EXPECTED | CONSUME_NEXT_STR | FIXUP_CALL},
-		{sel_timer, SEL_PARAM_STR, STR_STATIC_INIT("enabled"), sel_enabled, 0},
-		{sel_root, SEL_PARAM_STR, STR_STATIC_INIT("executed"), sel_executed, 0},
+	{sel_timer, SEL_PARAM_STR, STR_STATIC_INIT("enabled"), sel_enabled, 0},
+	{sel_root, SEL_PARAM_STR, STR_STATIC_INIT("executed"), sel_executed, 0},
 
-		{NULL, SEL_PARAM_STR, STR_NULL, NULL, 0}};
+	{NULL, SEL_PARAM_STR, STR_NULL, NULL, 0}
+};
+/* clang-format on */
 
 static unsigned int timer_msg_no = 0;
 
@@ -485,30 +488,37 @@ static void destroy_mod(void)
 	}
 }
 
+/* clang-format off */
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] = {{MODULE_NAME "_enable", timer_enable_func, 2,
-									  timer_enable_fixup, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+static cmd_export_t cmds[] = {
+	{MODULE_NAME "_enable", timer_enable_func, 2, timer_enable_fixup,
+		0, ANY_ROUTE},
+
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
 static param_export_t params[] = {
-		{"declare_timer", PARAM_STRING | PARAM_USE_FUNC, (void *)declare_timer},
-		{0, 0, 0}};
+	{"declare_timer", PARAM_STRING | PARAM_USE_FUNC, (void *)declare_timer},
+
+	{0, 0, 0 }
+};
 
 
 struct module_exports exports = {
-		MODULE_NAME,	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* Exported commands */
-		params,			 /* Exported parameters */
-		0,				 /* Exported RPC functions */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per-child init function */
-		destroy_mod		 /* destroy function */
+	MODULE_NAME,	 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* Exported commands */
+	params,			 /* Exported parameters */
+	0,				 /* Exported RPC functions */
+	0,				 /* pseudo-variables exports */
+	0,				 /* response function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* per-child init function */
+	destroy_mod		 /* destroy function */
 };
+/* clang-format on */
