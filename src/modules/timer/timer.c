@@ -306,6 +306,19 @@ static int timer_enable_func(sip_msg_t *m, char *timer_act, char *enable)
 	return timer_enable_helper(m, a, en);
 }
 
+static int ki_timer_enable(sip_msg_t *m, str *timerid, int enable)
+{
+	timer_action_t *a;
+
+	a = find_action_by_name(timer_actions, timerid->s, -1);
+	if(!a) {
+		LM_ERR("timer '%s' not declared\n", timerid->s);
+		return -1;
+	}
+
+	return timer_enable_helper(m, a, enable);
+}
+
 static int get_next_part(char **s, str *part, char delim)
 {
 	char *c, *c2;
@@ -522,3 +535,27 @@ struct module_exports exports = {
 	destroy_mod		 /* destroy function */
 };
 /* clang-format on */
+
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_timer_exports[] = {
+	{ str_init("timer"), str_init("timer_enable"),
+		SR_KEMIP_INT, ki_timer_enable,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_timer_exports);
+	return 0;
+}
