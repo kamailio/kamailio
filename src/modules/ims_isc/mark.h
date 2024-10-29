@@ -72,6 +72,7 @@ typedef struct _isc_mark
 
 
 int isc_mark_get_from_msg(struct sip_msg *msg, isc_mark *mark);
+int isc_mark_get_from_lumps(struct sip_msg *msg, isc_mark *mark);
 void isc_mark_get(str x, isc_mark *mark);
 int base16_to_bin(char *from, int len, char *to);
 int isc_mark_drop_route(struct sip_msg *msg);
