@@ -379,22 +379,24 @@ int extract_ice_option(str *body, sdp_stream_cell_t *stream)
 	sdp_ice_opt_t *ice_opt;
 
 	char *ptr_src;
+	char *end;
 	int max_options =
 			10;		/* protection - max options can be listed in one line */
 	int length = 0; /* each option length */
 
 	/* a=ice-options: */
-	if((body->len < 14) || (strncasecmp(body->s, ICE_OPTIONS, 14) != 0))
+	if((body->len <= 14) || (strncasecmp(body->s, ICE_OPTIONS, 14) != 0))
 		return -1;
 
+	end = body->s + body->len;
 	ptr_src = body->s + 14;
 	if(*ptr_src == 32)
 		ptr_src++; /* if starts with a space, skip it */
 
 	/* identify all existing ICE options, if they are listed in one row */
-	while(*ptr_src && *ptr_src != '\r' && *ptr_src != '\n'
+	while(ptr_src < end && *ptr_src && *ptr_src != '\r' && *ptr_src != '\n'
 			&& max_options-- > 0) {
-		while(*ptr_src != 32 && *ptr_src && *ptr_src != '\r'
+		while(ptr_src < end && *ptr_src && *ptr_src != 32 && *ptr_src != '\r'
 				&& *ptr_src != '\n') {
 			length++;
 			ptr_src++;
