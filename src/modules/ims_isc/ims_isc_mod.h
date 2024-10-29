@@ -77,6 +77,29 @@ enum dialog_direction
 	/** Unknown 	*/
 };
 
+/* Method of obtaining isc_mark
+First bit -> 0=REQUEST_ROUTE/1=FAILURE_ROUTE 
+Second bit -> 0=Found/1=Missing
+*/
+enum isc_mark_status
+{
+	ISCMARK_FOUND_ROUTE_HEADER =
+			0, /*Request has been received from AS, old ISCMARK found in Route header field*/
+	ISCMARK_FOUND_LUMPS =
+			1, /*Request to AS has been rejected or timed out, old ISCMARK found in lumps*/
+	ISCMARK_MISSING_START_TRIGGERING =
+			2, /*Request has been received without old ISCMARK in Route header field*/
+	ISCMARK_MISSING_START_TRIGGERING_SAR =
+			3 /*SAR/SAA has happened with HSS, due to terminating request (no old ISCMARK)*/
+};
+
+/* ISCMARK Status bits*/
+
+/* ISCMARK is obtained in failure route*/
+#define ISCMARK_FAILURE (1 << 0)
+/* ISCMARK could not be found */
+#define ISCMARK_MISSING (1 << 1)
+
 /* Various constants */
 /** User Not Registered */
 #define IMS_USER_NOT_REGISTERED 0
