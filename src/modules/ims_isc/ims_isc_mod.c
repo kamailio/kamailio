@@ -244,12 +244,10 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 
 	//sometimes s is populated by an ims_getter method cscf_get_terminating_user that alloc memory that must be free-ed at the end
 	int free_s = 0;
-
-	//the callback from the Cx interface in case of unreg terminating initial message is a FAILURE_ROUTE. Hence we need an addl. flag
-	int firstflag = 0;
+	enum isc_mark_status status = 0;
 
 	int ret = ISC_RETURN_FALSE;
-	isc_mark new_mark, old_mark;
+	isc_mark new_mark, old_mark, dummy_mark;
 
 	enum dialog_direction dir = get_dialog_direction(str1);
 
@@ -264,16 +262,27 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 	/* starting or resuming? */
 	memset(&old_mark, 0, sizeof(isc_mark));
 	memset(&new_mark, 0, sizeof(isc_mark));
+	memset(&dummy_mark, 0, sizeof(isc_mark));
+
+	if(is_route_type(FAILURE_ROUTE)) {
+		status |= ISCMARK_FAILURE;
+	}
+
 	if(isc_mark_get_from_msg(msg, &old_mark)) {
 		LM_DBG("Message returned s=%d;h=%d;d=%d;a=%.*s\n", old_mark.skip,
 				old_mark.handling, old_mark.direction, old_mark.aor.len,
 				old_mark.aor.s);
+	} else if(is_route_type(FAILURE_ROUTE)
+			  && isc_mark_get_from_lumps(msg, &dummy_mark)) {
+		LM_DBG("Message lumps returned s=%d;h=%d;d=%d;a=%.*s\n",
+				dummy_mark.skip, dummy_mark.handling, dummy_mark.direction,
+				dummy_mark.aor.len, dummy_mark.aor.s);
 	} else {
 		LM_DBG("Starting triggering\n");
-		firstflag = 1;
+		status |= ISCMARK_MISSING;
 	}
 
-	if(is_route_type(FAILURE_ROUTE) && !firstflag) {
+	if(status == ISCMARK_FOUND_LUMPS) {
 		/* need to find the handling for the failed trigger */
 		if(dir == DLG_MOBILE_ORIGINATING) {
 			k = cscf_get_originating_user(msg, &s);
@@ -307,7 +316,7 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 			}
 		}
 		struct cell *t = isc_tmb.t_gett();
-		LM_CRIT("SKIP: %d\n", old_mark.skip);
+		LM_CRIT("SKIP after AS failure: %d\n", old_mark.skip);
 		int index = old_mark.skip;
 		for(k = 0; k < t->nr_of_outgoings; k++) {
 			m = isc_checker_find(s, new_mark.direction, index, msg,
@@ -376,7 +385,7 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 				new_mark.skip = m->index + 1;
 				new_mark.handling = m->default_handling;
 				new_mark.aor = s;
-				ret = isc_forward(msg, m, &new_mark, firstflag);
+				ret = isc_forward(msg, m, &new_mark, status);
 				isc_free_match(m);
 				goto done;
 			}
@@ -417,7 +426,7 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 				new_mark.skip = m->index + 1;
 				new_mark.handling = m->default_handling;
 				new_mark.aor = s;
-				ret = isc_forward(msg, m, &new_mark, firstflag);
+				ret = isc_forward(msg, m, &new_mark, status);
 				isc_free_match(m);
 				goto done;
 			}
@@ -432,6 +441,10 @@ done:
 
 	if(old_mark.aor.s)
 		pkg_free(old_mark.aor.s);
+
+	if(dummy_mark.aor.s)
+		pkg_free(dummy_mark.aor.s);
+
 	return ret;
 }
 
@@ -543,7 +556,8 @@ int isc_from_as(struct sip_msg *msg, char *str1, char *str2)
 			cscf_get_terminating_user(msg, &s);
 			//sometimes s is populated by an ims_getter method cscf_get_terminating_user that alloc memory that must be free-ed at the end
 			free_s = 1;
-			if(memcmp(old_mark.aor.s, s.s, s.len) != 0) {
+			if(!old_mark.aor.s || !s.len
+					|| memcmp(old_mark.aor.s, s.s, s.len) != 0) {
 				LM_DBG("This is a new call....... RURI has been retargeted\n");
 				return ISC_RETURN_RETARGET;
 			}

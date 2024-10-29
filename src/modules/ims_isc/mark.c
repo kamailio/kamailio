@@ -131,6 +131,45 @@ int isc_mark_get_from_msg(struct sip_msg *msg, isc_mark *mark)
 }
 
 /**
+ *	Retrieves the mark from the lumps of a message (failure route).
+ *  	- the marking should be in a header like described before
+ *  @param msg - SIP mesage to mark
+ *  @param mark - mark to load into
+ *  @returns 1 if found, 0 if not
+ */
+int isc_mark_get_from_lumps(struct sip_msg *msg, isc_mark *mark)
+{
+	struct lump *lmp, *tmp;
+	str found = {0, 0};
+
+	LM_DBG("isc_mark_get_from_lumps: Trying to get the mark from the add_rm "
+		   "lumps \n");
+
+	memset(mark, 0, sizeof(isc_mark));
+
+	parse_headers(msg, HDR_EOH_F, 0);
+
+	anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
+
+	lmp = msg->add_rm;
+	while(lmp) {
+		tmp = lmp->before;
+		if(tmp && tmp->op == LUMP_ADD && tmp->u.value
+				&& (found.s = strstr(tmp->u.value, ISC_MARK_USERNAME))) {
+			LM_DBG("ifc_get_from_lumps: Found lump %s\n", tmp->u.value);
+			found.len = tmp->len - (found.s - tmp->u.value);
+			LM_DBG("ifc_get_from_lumps: take fraction of lump ...%.*s\n",
+					found.len, found.s);
+			isc_mark_get(found, mark);
+			return 1;
+		}
+		lmp = lmp->next;
+	}
+
+	return 0;
+}
+
+/**
  * Load the mark from a string.
  * @param x - string with the mark, as found in the Route header
  * @param mark - mark to load into
@@ -142,12 +181,12 @@ void isc_mark_get(str x, isc_mark *mark)
 	if(mark->aor.s)
 		pkg_free(mark->aor.s);
 	mark->aor = aor_hex;
-	for(i = 0; i < x.len && x.s[i] != ';'; i++)
+	for(i = 0; i < x.len && x.s[i] != ';' && x.s[i] != '>'; i++)
 		;
-	while(i < x.len) {
+	while(i < x.len && x.s[i] != '>') {
 		if(x.s[i + 1] == '=') {
 			k = 0;
-			for(j = i + 2; j < x.len && x.s[j] != ';'; j++)
+			for(j = i + 2; j < x.len && x.s[j] != ';' && x.s[j] != '>'; j++)
 				k = k * 10 + (x.s[j] - '0');
 			switch(x.s[i]) {
 				case 's':
@@ -162,7 +201,8 @@ void isc_mark_get(str x, isc_mark *mark)
 				case 'a':
 					aor_hex.s = x.s + i + 2;
 					aor_hex.len = 0;
-					for(j = i + 2; j < x.len && x.s[j] != ';'; j++)
+					for(j = i + 2; j < x.len && x.s[j] != ';' && x.s[j] != '>';
+							j++)
 						aor_hex.len++;
 					mark->aor.len = aor_hex.len / 2;
 					mark->aor.s = pkg_malloc(mark->aor.len);
@@ -179,6 +219,9 @@ void isc_mark_get(str x, isc_mark *mark)
 					LM_ERR("isc_mark_get: unknown parameter found: %c !\n",
 							x.s[i]);
 			}
+
+			if(x.s[j] == '>')
+				break;
 			i = j + 1;
 		} else
 			i++;
