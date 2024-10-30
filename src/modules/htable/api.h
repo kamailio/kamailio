@@ -25,6 +25,8 @@
 #include "../../core/sr_module.h"
 #include "../../core/usr_avp.h"
 
+typedef int (*ht_api_table_spec_f)(char *spec);
+typedef int (*ht_api_init_tables_f)(void);
 typedef int (*ht_api_set_cell_f)(
 		str *hname, str *name, int type, int_str *val, int mode);
 typedef ht_cell_t *(*ht_api_get_cell_clone_f)(str *hname, str *name);
@@ -40,6 +42,8 @@ typedef int (*ht_api_count_cells_re_f)(str *hname, str *sre, int mode);
 
 typedef struct htable_api
 {
+	ht_api_table_spec_f table_spec;
+	ht_api_init_tables_f init_tables;
 	ht_api_set_cell_f set;
 	ht_api_get_cell_clone_f get_clone;
 	ht_api_del_cell_f rm;

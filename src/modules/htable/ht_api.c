@@ -359,6 +359,11 @@ int ht_init_tables(void)
 	ht = _ht_root;
 
 	while(ht) {
+		if(ht->entries != NULL) {
+			ht = ht->next;
+			continue;
+		}
+
 		LM_DBG("initializing htable [%.*s] with nr. of slots: %d\n",
 				ht->name.len, ht->name.s, ht->htsize);
 		if(ht->name.len + sizeof("htable:expired:") < HT_EVEX_NAME_SIZE) {
@@ -860,8 +865,14 @@ ht_cell_t *ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 				}
 			}
 			cell = (ht_cell_t *)pkg_malloc(it->msize);
-			if(cell != NULL)
+			if(cell != NULL) {
 				memcpy(cell, it, it->msize);
+
+				cell->name.s = (char *)cell + sizeof(ht_cell_t);
+				if(cell->flags & AVP_VAL_STR) {
+					cell->value.s.s = (char *)cell->name.s + cell->name.len + 1;
+				}
+			}
 			ht_slot_unlock(ht, idx);
 			return cell;
 		}
