@@ -273,3 +273,51 @@ done:
 	}
 	return ret;
 }
+
+/**
+ *
+ */
+int t_cell_append_branches(int tindex, int tlabel)
+{
+	tm_cell_t *t = NULL;
+	/* a pointer to an existing transaction or 0 if lookup fails */
+	tm_cell_t *orig_t = NULL;
+	int ret;
+	int orig_branch;
+	str contact = STR_NULL;
+
+	orig_t = get_t();
+	orig_branch = get_t_branch();
+
+	/* lookup a transaction based on its identifier (hash_index:label) */
+	if(t_lookup_ident(&t, tindex, tlabel) < 0) {
+		LM_ERR("transaction [%u:%u] not found\n", tindex, tlabel);
+		ret = -1;
+		goto done;
+	}
+
+	/* check if the dialog is still in the early stage */
+	if(t->flags & T_CANCELED) {
+		LM_DBG("transaction [%u:%u] was cancelled\n", tindex, tlabel);
+		ret = -2;
+		goto done;
+	}
+
+	if(t->uas.status >= 200) {
+		LM_DBG("transaction [%u:%u] sent out a final response already - %d\n",
+				tindex, tlabel, t->uas.status);
+		ret = -3;
+		goto done;
+	}
+
+	ret = t_append_branches(&contact);
+
+done:
+	/* unref the transaction which had been referred by t_lookup_ident() call.
+	 * - restore the original transaction (if any) */
+	if(t)
+		unref_cell(t);
+	set_t(orig_t, orig_branch);
+
+	return ret;
+}
