@@ -1960,4 +1960,23 @@ reply_route {
 	</example>
 	</section>
 
+	<section id="tm.f.t_cell_append_branches">
+	<title>
+	    <function>t_cell_append_branches(tindex, tlabel)</function>
+	</title>
+	<para>
+		Append destination set branches to the transaction identified by
+		(tindex, tlabel). The parameters can also be variables.
+	</para>
+	<example>
+	    <title><function>t_cell_append_branches</function> usage</title>
+	    <programlisting>
+...
+    append_branch("sip:1.2.3.4:5060");
+    t_cell_append_branches("1234", "$var(tlabel)");
+...
+	    </programlisting>
+	</example>
+	</section>
+
   </section>
