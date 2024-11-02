@@ -145,6 +145,7 @@ Daniel-Constantin Mierla
               4.55. t_get_status_code()
               4.56. t_clean()
               4.57. t_exists()
+              4.58. t_cell_append_branches(tindex, tlabel)
 
         5. RPC Commands
 
@@ -292,9 +293,10 @@ Daniel-Constantin Mierla
    1.105. t_get_status_code usage
    1.106. t_clean usage
    1.107. t_exists usage
-   1.108. event_route[tm:branch-failure:id] usage
-   1.109. event_route[tm:local-request] usage
-   1.110. event_route[tm:local-response] usage
+   1.108. t_cell_append_branches usage
+   1.109. event_route[tm:branch-failure:id] usage
+   1.110. event_route[tm:local-request] usage
+   1.111. event_route[tm:local-response] usage
 
 Chapter 1. Admin Guide
 
@@ -420,6 +422,7 @@ Chapter 1. Admin Guide
         4.55. t_get_status_code()
         4.56. t_clean()
         4.57. t_exists()
+        4.58. t_cell_append_branches(tindex, tlabel)
 
    5. RPC Commands
 
@@ -1900,6 +1903,7 @@ modparam("tm", "failover_reply_codes", "code=403;code=488;class=5")
    4.55. t_get_status_code()
    4.56. t_clean()
    4.57. t_exists()
+   4.58. t_cell_append_branches(tindex, tlabel)
 
 4.1.  t_relay([host, port])
 
@@ -3113,6 +3117,17 @@ reply_route {
 }
 ...
 
+4.58.  t_cell_append_branches(tindex, tlabel)
+
+   Append destination set branches to the transaction identified by
+   (tindex, tlabel). The parameters can also be variables.
+
+   Example 1.108. t_cell_append_branches usage
+...
+    append_branch("sip:1.2.3.4:5060");
+    t_cell_append_branches("1234", "$var(tlabel)");
+...
+
 5. RPC Commands
 
    5.1. tm.list
@@ -3234,7 +3249,7 @@ reply_route {
    enabled with the t_on_branch_failure function. This event_route uses
    the BRANCH_FAILURE_ROUTE route type.
 
-   Example 1.108. event_route[tm:branch-failure:id] usage
+   Example 1.109. event_route[tm:branch-failure:id] usage
 ...
 request_route {
     ...
@@ -3260,7 +3275,7 @@ event_route[tm:branch-failure:myroute] {
    The request can still be updated, i.e., changes are possible to R-URI
    ($ru), destination URI ($du) or the send socket ($fs).
 
-   Example 1.109. event_route[tm:local-request] usage
+   Example 1.110. event_route[tm:local-request] usage
 ...
 event_route [tm:local-request] {
     xlog("L_INFO", "Routing locally generated $rm to $ru\n");
@@ -3273,7 +3288,7 @@ event_route [tm:local-request] {
    Executed after the tm module sent a local generated, transaction
    stateful response.
 
-   Example 1.110. event_route[tm:local-response] usage
+   Example 1.111. event_route[tm:local-response] usage
 ...
 event_route[tm:local-response] {
     xlog("tm:local-response replied locally\n");
