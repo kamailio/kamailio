@@ -1020,8 +1020,11 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 #endif
 
 #ifdef WITH_HIREDIS_CLUSTER
+	return 0;
+	err : if(reply) db_redis_free_reply(&reply);
+	return -1;
 }
-#endif
+#else
 
 // for full table scans, we have to manually match all given keys
 // but only do this once for repeated invocations
@@ -1057,6 +1060,7 @@ if(*manual_keys) {
 }
 return -1;
 }
+#endif
 
 static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
 		const int _n, redis_key_t **query_keys, int *query_keys_count,
