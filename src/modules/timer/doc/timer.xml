@@ -224,14 +224,14 @@ if (@timer.executed != "") {
 			<title>Common example using timer module</title>
 			<programlisting>
 ...
-loadmodule "modules/xprint/xprint.so"
-loadmodule "modules/timer/timer.so"
+loadmodule "xlog.so"
+loadmodule "timer.so"
 
 modparam("timer", "declare_timer", "tmr1=ONTIMER,1000");
 modparam("timer", "declare_timer", "tmr2=ONTIMER2,2000,slow,enable");
 
 route["print"] {
-	xplog("L_INFO", "fired: %@timer.executed\n");
+	xlog("fired: $sel(@timer.executed)\n");
 }
 
 route["ONTIMER"] {
@@ -276,22 +276,22 @@ end
 			<programlisting>
 ...
 loadmodule "timer";
-loadmodule "xprint";
+loadmodule "xlog";
 
 modparam("timer", "declare_timer", "TIMER_TEST=TEST,100,,enable");
 
 request_route {
-	xplog("L_E","main route");
+	xlog("main route");
 }
 
 route[TEST] {
 	timer_enable("TIMER_TEST", "0");
-	xplog("L_E","test start\n");
+	xlog("test start\n");
 
 	# add here tested functionality
 
-	xplog("L_E","test end\n");
-	}
+	xlog("test end\n");
+}
 ...
 			</programlisting>
 
@@ -299,4 +299,3 @@ route[TEST] {
 	</section>
     </chapter>
 </book>
-
