@@ -157,9 +157,11 @@ void event_cb(int fd, short kind, void *userp)
 /* CURLMOPT_SOCKETFUNCTION */
 int sock_cb(CURL *e, curl_socket_t s, int what, void *cbp, void *sockp)
 {
+	struct http_m_cell *cell;
 	struct http_m_global *g = (struct http_m_global *)cbp;
-	struct http_m_cell *cell = (struct http_m_cell *)sockp;
 	const char *whatstr[] = {"none", "IN", "OUT", "INOUT", "REMOVE"};
+
+	cell = http_m_cell_lookup(e);
 
 	LM_DBG("socket callback: s=%d e=%p what=%s\n", s, e, whatstr[what]);
 	if(what == CURL_POLL_REMOVE) {
