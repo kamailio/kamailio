@@ -227,6 +227,7 @@ static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
 static int rtpengine_manage1_f(struct sip_msg *, char *, char *);
 static int rtpengine_query1_f(struct sip_msg *, char *, char *);
 static int rtpengine_info1_f(struct sip_msg *, char *, char *);
+static void rtpengine_ping_check_timer(unsigned int ticks, void *);
 
 static int w_rtpengine_query_v(sip_msg_t *msg, char *pfmt, char *pvar);
 static int fixup_rtpengine_query_v(void **param, int param_no);
@@ -365,6 +366,7 @@ static str rtpengine_dtmf_event_sock;
 static int rtpengine_dtmf_event_fd;
 int dtmf_event_rt = -1; /* default disabled */
 static int rtpengine_ping_mode = 1;
+static int rtpengine_ping_interval = 60;
 
 /* clang-format off */
 typedef struct rtpp_set_link {
@@ -489,6 +491,7 @@ static param_export_t params[] = {
 	{"rtpengine_allow_op", PARAM_INT, &rtpengine_allow_op},
 	{"control_cmd_tos", PARAM_INT, &control_cmd_tos},
 	{"ping_mode", PARAM_INT, &rtpengine_ping_mode},
+	{"ping_interval", PARAM_INT, &rtpengine_ping_interval},
 	{"db_url", PARAM_STR, &rtpp_db_url},
 	{"table_name", PARAM_STR, &rtpp_table_name},
 	{"setid_col", PARAM_STR, &rtpp_setid_col},
@@ -1895,7 +1898,6 @@ static int rtpengine_iter_cb_ping(
 		*found_rtpp_disabled = 1;
 		crt_rtpp->rn_disabled = 1;
 	}
-
 	return 0;
 }
 
@@ -2171,6 +2173,11 @@ static int mod_init(void)
 			LM_ERR("Crypto module required in order to have SHA1 hashing!\n");
 			return -1;
 		}
+	}
+
+	/* Enable ping timer if interval is positive */
+	if(rtpengine_ping_interval > 0) {
+		register_timer(rtpengine_ping_check_timer, 0, rtpengine_ping_interval);
 	}
 
 	dtmf_event_rt = route_lookup(&event_rt, "rtpengine:dtmf-event");
@@ -3533,7 +3540,62 @@ static bencode_item_t *rtpp_function_call_ok(bencode_buffer_t *bencbuf,
 	return ret;
 }
 
+/*
+* \brief Timer function to check the status of rtpengine nodes.
+* Check every node in the set and if it is not responding,
+* mark it as disabled.
+ */
+static void rtpengine_ping_check_timer(unsigned int ticks, void *param)
+{
+	struct rtpp_set *rtpp_list;
+	struct rtpp_node *crt_rtpp;
+	int err = 0;
+	int ret;
+	int rtpp_disabled = 0;
 
+	/* No need to test them while building */
+	if(build_rtpp_socks(1, 0)) {
+		return;
+	}
+	/* Most of this is from rtpengine_rpc_iterate functions maybe split? */
+	LM_DBG("Pinging all enabled rtpengines...\n");
+	lock_get(rtpp_set_list->rset_head_lock);
+	for(rtpp_list = rtpp_set_list->rset_first; rtpp_list != NULL;
+			rtpp_list = rtpp_list->rset_next) {
+
+		lock_get(rtpp_list->rset_lock);
+		for(crt_rtpp = rtpp_list->rn_first; crt_rtpp != NULL;
+				crt_rtpp = crt_rtpp->rn_next) {
+
+			if(!crt_rtpp->rn_displayed) {
+				continue;
+			}
+
+			/* Ping all available nodes */
+			ret = rtpengine_iter_cb_ping(crt_rtpp, rtpp_list, &rtpp_disabled);
+			if(ret) {
+				err = 1;
+				break;
+			}
+		}
+		lock_release(rtpp_list->rset_lock);
+
+		if(err)
+			break;
+	}
+	lock_release(rtpp_set_list->rset_head_lock);
+}
+
+/**
+ * Tests the RTP engine node by sending a ping command and checking the response.
+ * This function is similar to rtpp_test_ping but provides additional logic for
+ * handling disabled nodes, ping intervals, and recheck ticks.
+ *
+ * @param node The RTP engine node to test.
+ * @param isdisabled Flag indicating if the node is currently disabled.
+ * @param force Flag to force the test even if the node is disabled or ping_interval is set.
+ * @return Returns 0 if the node is NOT disabled, 1 otherwise.
+ */
 static int rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 {
 	bencode_buffer_t bencbuf;
@@ -3545,9 +3607,16 @@ static int rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 		LM_DBG("rtpp %s disabled for ever\n", node->rn_url.s);
 		return 1;
 	}
+
 	if(force == 0) {
 		if(isdisabled == 0)
 			return 0;
+		/* If ping_interval is set, the timer will ping and test
+		the rtps. No need to do something during routing.
+		Return the current status.
+		*/
+		if(rtpengine_ping_interval > 0)
+			return isdisabled;
 		if(node->rn_recheck_ticks > get_ticks())
 			return 1;
 	}
