@@ -316,6 +316,24 @@ if (is_method("REGISTER")) {
 </programlisting>
 		</example>
 	</section>
+	<section id="tsilo.f.ts_append_branches">
+		<title><function moreinfo="none">ts_append_branches(uri)</function></title>
+		<para>
+		Append the current internal branches to the transaction stored for the
+		uri.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>ts_append_branches</function> usage</title>
+		<programlisting format="linespecific">
+...
+    ts_append_branches("sip:alice@$td");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
