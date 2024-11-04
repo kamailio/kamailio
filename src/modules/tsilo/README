@@ -38,6 +38,7 @@ Donat Zenichev
               4.2. ts_append(domain, ruri)
               4.3. ts_append_by_contact(domain, ruri [, contact])
               4.4. ts_append_to(tindex, tlabel, domain, [uri])
+              4.5. ts_append_branches(uri)
 
         5. RPC Commands
 
@@ -60,6 +61,7 @@ Donat Zenichev
    1.4. ts_append usage
    1.5. ts_append_by_contact usage
    1.6. ts_append_to usage
+   1.7. ts_append_branches usage
 
 Chapter 1. Admin Guide
 
@@ -82,6 +84,7 @@ Chapter 1. Admin Guide
         4.2. ts_append(domain, ruri)
         4.3. ts_append_by_contact(domain, ruri [, contact])
         4.4. ts_append_to(tindex, tlabel, domain, [uri])
+        4.5. ts_append_branches(uri)
 
    5. RPC Commands
 
@@ -166,6 +169,7 @@ modparam("tsilo", "use_domain", 1)
    4.2. ts_append(domain, ruri)
    4.3. ts_append_by_contact(domain, ruri [, contact])
    4.4. ts_append_to(tindex, tlabel, domain, [uri])
+   4.5. ts_append_branches(uri)
 
 4.1. ts_store([uri])
 
@@ -276,6 +280,18 @@ if (is_method("REGISTER")) {
         $var(tlabel) = ...
         ts_append_to("$var(tindex)", "$var(tlabel)", "location");
 }
+...
+
+4.5. ts_append_branches(uri)
+
+   Append the current internal branches to the transaction stored for the
+   uri.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.7. ts_append_branches usage
+...
+    ts_append_branches("sip:alice@$td");
 ...
 
 5. RPC Commands
