@@ -68,6 +68,7 @@ static int w_ts_append_by_contact2(
 		struct sip_msg *_msg, char *_table, char *_ruri);
 static int w_ts_append_by_contact3(
 		struct sip_msg *_msg, char *_table, char *_ruri, char *_contact);
+static int w_ts_append_branches(struct sip_msg *_msg, char *_ruri, char *_p2);
 static int fixup_ts_append_by_contact(void **param, int param_no);
 static int w_ts_store(struct sip_msg *msg, char *p1, char *p2);
 static int w_ts_store1(struct sip_msg *msg, char *_ruri, char *p2);
@@ -91,6 +92,9 @@ static cmd_export_t cmds[] = {
 		{"ts_append_by_contact", (cmd_function)w_ts_append_by_contact3,
 				3, /* for three parameters */
 				fixup_ts_append_by_contact, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+		{"ts_append_branches", (cmd_function)w_ts_append_branches, 1,
+				fixup_spve_null, fixup_free_spve_null,
+				REQUEST_ROUTE | FAILURE_ROUTE},
 		{"ts_store", (cmd_function)w_ts_store, 0, 0, 0,
 				REQUEST_ROUTE | FAILURE_ROUTE},
 		{"ts_store", (cmd_function)w_ts_store1, 1, fixup_spve_null, 0,
@@ -662,6 +666,34 @@ static int ki_ts_append_by_contact_uri(
 
 	pkg_free(ruri.s);
 	pkg_free(contact.s);
+
+	return rc;
+}
+
+/**
+ *
+ */
+static int w_ts_append_branches(struct sip_msg *_msg, char *_ruri, char *_p2)
+{
+	str turi = STR_NULL;
+	str ruri = STR_NULL;
+	int rc;
+
+	if(_ruri == NULL
+			|| (fixup_get_svalue(_msg, (gparam_p)_ruri, &turi) != 0
+					|| turi.len <= 0)) {
+		LM_ERR("invalid ruri parameter\n");
+		return -1;
+	}
+	if(ts_check_uri(&turi) < 0)
+		return -1;
+
+	if(pkg_str_dup(&ruri, &turi) < 0)
+		return -1;
+
+	rc = ts_append_branches(_msg, &ruri);
+
+	pkg_free(ruri.s);
 
 	return rc;
 }

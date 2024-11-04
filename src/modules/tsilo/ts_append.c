@@ -168,3 +168,91 @@ done:
 
 	return ret;
 }
+
+
+/**
+ *
+ */
+int ts_append_branches(sip_msg_t *msg, str *ruri)
+{
+	ts_transaction_t *ptr = NULL;
+	ts_urecord_t *_r;
+	tm_cell_t *t = NULL;
+	tm_cell_t *orig_t = NULL;
+	sip_uri_t p_uri;
+	str *t_uri = NULL;
+	str contact = STR_NULL;
+	int orig_branch;
+	int res;
+
+	/* parse R-URI */
+	if(use_domain) {
+		t_uri = ruri;
+	} else {
+		if(parse_uri(ruri->s, ruri->len, &p_uri) < 0) {
+			LM_ERR("failed to parse uri %.*s\n", ruri->len, ruri->s);
+			return -1;
+		}
+		t_uri = &p_uri.user;
+	}
+
+	/* find urecord in TSILO cache */
+	lock_entry_by_ruri(t_uri);
+
+	res = get_ts_urecord(t_uri, &_r);
+
+	if(res != 0) {
+		LM_DBG("no record for %.*s\n", t_uri->len, t_uri->s);
+		unlock_entry_by_ruri(t_uri);
+		return -2;
+	}
+
+	/* cycle through existing transactions */
+	ptr = _r->transactions;
+
+	for(ptr = _r->transactions; ptr != NULL; ptr = ptr->next) {
+		LM_DBG("transaction %u:%u found for %.*s, going to append branches\n",
+				ptr->tindex, ptr->tlabel, t_uri->len, t_uri->s);
+
+		orig_t = _tmb.t_gett();
+		orig_branch = _tmb.t_gett_branch();
+
+		/* lookup a transaction based on its identifier (hash_index:label) */
+		if(_tmb.t_lookup_ident(&t, ptr->tindex, ptr->tlabel) < 0 || t == NULL) {
+			LM_ERR("transaction [%u:%u] not found\n", ptr->tindex, ptr->tlabel);
+			continue;
+		}
+
+		/* check if the dialog is still in the early stage */
+		if(t->flags & T_CANCELED) {
+			LM_DBG("transaction [%u:%u] was cancelled\n", ptr->tindex,
+					ptr->tlabel);
+			goto done;
+		}
+
+		if(t->uas.status >= 200) {
+			LM_DBG("transaction [%u:%u] sent out a final response already - "
+				   "%d\n",
+					ptr->tindex, ptr->tlabel, t->uas.status);
+			goto done;
+		}
+
+		/* if the contact has been given previously
+			then do a new append only for the desired location */
+		res = _tmb.t_append_branches(&contact);
+
+		if(res > 0) {
+			update_stat(added_branches, res);
+		}
+
+	done:
+		/* unref the transaction which had been referred by t_lookup_ident() call.
+		 * Restore the original transaction (if any) */
+		_tmb.unref_cell(t);
+		_tmb.t_sett(orig_t, orig_branch);
+	}
+
+	unlock_entry_by_ruri(t_uri);
+
+	return 1;
+}

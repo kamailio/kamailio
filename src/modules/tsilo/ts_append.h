@@ -25,5 +25,6 @@
 int ts_append(struct sip_msg *msg, str *ruri, str *contact, char *table);
 int ts_append_to(struct sip_msg *msg, int tindex, int tlabel, char *table,
 		str *uri, str *contact);
+int ts_append_branches(sip_msg_t *msg, str *ruri);
 
 #endif
