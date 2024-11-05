@@ -1898,6 +1898,12 @@ static int rtpengine_iter_cb_ping(
 		*found_rtpp_disabled = 1;
 		crt_rtpp->rn_disabled = 1;
 	}
+	/* if ping success, enable the rtpp and reset ticks, ONLY IF was not disabled manually */
+	else if(crt_rtpp->rn_recheck_ticks != RTPENGINE_MAX_RECHECK_TICKS) {
+		crt_rtpp->rn_recheck_ticks = RTPENGINE_MIN_RECHECK_TICKS;
+		crt_rtpp->rn_disabled = 0;
+		*found_rtpp_disabled = 0;
+	}
 	return 0;
 }
 
