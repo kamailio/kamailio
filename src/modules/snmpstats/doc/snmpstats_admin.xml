@@ -215,7 +215,7 @@
 
 		<listitem>
 		<para>
-		<emphasis>dialog or dialog-ng</emphasis> - all scalars relating to the number of dialogs are
+		<emphasis>dialog or ims_dialog</emphasis> - all scalars relating to the number of dialogs are
 		dependent on the presence of a dialog module.  Furthermore, if the module is
 		not loaded, then the kamailioDialogLimitMinorEvent, and kamailioDialogLimitMajorEvent
 		alarm will be disabled.
