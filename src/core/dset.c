@@ -60,7 +60,7 @@
  * Where we store URIs of additional transaction branches
  * (sr_dst_max_branches - 1 : because of the default branch for r-uri, #0 in tm)
  */
-static struct branch *branches = NULL;
+static branch_t *_ksr_branches = NULL;
 
 /* how many of them we have */
 unsigned int nr_branches = 0;
@@ -82,6 +82,9 @@ static flag_t ruri_bflags;
 str _ksr_contact_alias = str_init("alias=");
 str _ksr_contact_salias = str_init(";alias=");
 
+/**
+ *
+ */
 int init_dst_set(void)
 {
 	if(sr_dst_max_branches <= 0 || sr_dst_max_branches >= MAX_BRANCHES_LIMIT) {
@@ -91,13 +94,13 @@ int init_dst_set(void)
 		return -1;
 	}
 	/* sr_dst_max_branches - 1 : because of the default branch for r-uri, #0 in tm */
-	branches = (branch_t *)pkg_malloc(
+	_ksr_branches = (branch_t *)pkg_malloc(
 			(sr_dst_max_branches - 1) * sizeof(branch_t));
-	if(branches == NULL) {
+	if(_ksr_branches == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	memset(branches, 0, (sr_dst_max_branches - 1) * sizeof(branch_t));
+	memset(_ksr_branches, 0, (sr_dst_max_branches - 1) * sizeof(branch_t));
 	return 0;
 }
 
@@ -113,11 +116,11 @@ branch_t *get_sip_branch(int idx)
 		return NULL;
 	if(idx < 0) {
 		if((int)nr_branches + idx >= 0)
-			return &branches[nr_branches + idx];
+			return &_ksr_branches[nr_branches + idx];
 		return NULL;
 	}
 	if(idx < nr_branches)
-		return &branches[idx];
+		return &_ksr_branches[idx];
 	return 0;
 }
 
@@ -142,7 +145,7 @@ int drop_sip_branch(int idx)
 	}
 	/* shift back one position */
 	for(; idx < nr_branches - 1; idx++)
-		memcpy(&branches[idx], &branches[idx + 1], sizeof(branch_t));
+		memcpy(&_ksr_branches[idx], &_ksr_branches[idx + 1], sizeof(branch_t));
 	nr_branches--;
 	return 0;
 }
@@ -152,7 +155,7 @@ static inline flag_t *get_bflags_ptr(unsigned int branch)
 	if(branch == 0)
 		return &ruri_bflags;
 	if(branch - 1 < nr_branches)
-		return &branches[branch - 1].flags;
+		return &_ksr_branches[branch - 1].flags;
 	return NULL;
 }
 
@@ -248,33 +251,34 @@ char *get_branch(unsigned int i, int *len, qvalue_t *q, str *dst_uri, str *path,
 		str *instance, str *location_ua)
 {
 	if(i < nr_branches) {
-		*len = branches[i].len;
-		*q = branches[i].q;
+		*len = _ksr_branches[i].len;
+		*q = _ksr_branches[i].q;
 		if(dst_uri) {
-			dst_uri->len = branches[i].dst_uri_len;
-			dst_uri->s = (dst_uri->len) ? branches[i].dst_uri : 0;
+			dst_uri->len = _ksr_branches[i].dst_uri_len;
+			dst_uri->s = (dst_uri->len) ? _ksr_branches[i].dst_uri : 0;
 		}
 		if(path) {
-			path->len = branches[i].path_len;
-			path->s = (path->len) ? branches[i].path : 0;
+			path->len = _ksr_branches[i].path_len;
+			path->s = (path->len) ? _ksr_branches[i].path : 0;
 		}
 		if(force_socket)
-			*force_socket = branches[i].force_send_socket;
+			*force_socket = _ksr_branches[i].force_send_socket;
 		if(flags)
-			*flags = branches[i].flags;
+			*flags = _ksr_branches[i].flags;
 		if(ruid) {
-			ruid->len = branches[i].ruid_len;
-			ruid->s = (ruid->len) ? branches[i].ruid : 0;
+			ruid->len = _ksr_branches[i].ruid_len;
+			ruid->s = (ruid->len) ? _ksr_branches[i].ruid : 0;
 		}
 		if(instance) {
-			instance->len = branches[i].instance_len;
-			instance->s = (instance->len) ? branches[i].instance : 0;
+			instance->len = _ksr_branches[i].instance_len;
+			instance->s = (instance->len) ? _ksr_branches[i].instance : 0;
 		}
 		if(location_ua) {
-			location_ua->len = branches[i].location_ua_len;
-			location_ua->s = (location_ua->len) ? branches[i].location_ua : 0;
+			location_ua->len = _ksr_branches[i].location_ua_len;
+			location_ua->s =
+					(location_ua->len) ? _ksr_branches[i].location_ua : 0;
 		}
-		return branches[i].uri;
+		return _ksr_branches[i].uri;
 	} else {
 		*len = 0;
 		*q = Q_UNSPECIFIED;
@@ -335,32 +339,32 @@ int get_branch_data(unsigned int i, branch_data_t *vbranch)
 	memset(vbranch, 0, sizeof(branch_data_t));
 
 	if(i < nr_branches) {
-		vbranch->uri.s = branches[i].uri;
-		vbranch->uri.len = branches[i].len;
-		vbranch->q = branches[i].q;
-		if(branches[i].dst_uri_len > 0) {
-			vbranch->dst_uri.len = branches[i].dst_uri_len;
-			vbranch->dst_uri.s = branches[i].dst_uri;
+		vbranch->uri.s = _ksr_branches[i].uri;
+		vbranch->uri.len = _ksr_branches[i].len;
+		vbranch->q = _ksr_branches[i].q;
+		if(_ksr_branches[i].dst_uri_len > 0) {
+			vbranch->dst_uri.len = _ksr_branches[i].dst_uri_len;
+			vbranch->dst_uri.s = _ksr_branches[i].dst_uri;
 		}
-		if(branches[i].path_len > 0) {
-			vbranch->path.len = branches[i].path_len;
-			vbranch->path.s = branches[i].path;
+		if(_ksr_branches[i].path_len > 0) {
+			vbranch->path.len = _ksr_branches[i].path_len;
+			vbranch->path.s = _ksr_branches[i].path;
 		}
-		vbranch->force_socket = branches[i].force_send_socket;
-		vbranch->flags = branches[i].flags;
-		if(branches[i].ruid_len > 0) {
-			vbranch->ruid.len = branches[i].ruid_len;
-			vbranch->ruid.s = branches[i].ruid;
+		vbranch->force_socket = _ksr_branches[i].force_send_socket;
+		vbranch->flags = _ksr_branches[i].flags;
+		if(_ksr_branches[i].ruid_len > 0) {
+			vbranch->ruid.len = _ksr_branches[i].ruid_len;
+			vbranch->ruid.s = _ksr_branches[i].ruid;
 		}
-		if(branches[i].instance_len > 0) {
-			vbranch->instance.len = branches[i].instance_len;
-			vbranch->instance.s = branches[i].instance;
+		if(_ksr_branches[i].instance_len > 0) {
+			vbranch->instance.len = _ksr_branches[i].instance_len;
+			vbranch->instance.s = _ksr_branches[i].instance;
 		}
-		if(branches[i].location_ua_len > 0) {
-			vbranch->location_ua.len = branches[i].location_ua_len;
-			vbranch->location_ua.s = branches[i].location_ua;
+		if(_ksr_branches[i].location_ua_len > 0) {
+			vbranch->location_ua.len = _ksr_branches[i].location_ua_len;
+			vbranch->location_ua.s = _ksr_branches[i].location_ua;
 		}
-		vbranch->otcpid = branches[i].otcpid;
+		vbranch->otcpid = _ksr_branches[i].otcpid;
 		return 1;
 	} else {
 		vbranch->q = Q_UNSPECIFIED;
@@ -452,12 +456,12 @@ int append_branch(struct sip_msg *msg, str *uri, str *dst_uri, str *path,
 			LM_ERR("too long dst_uri: %.*s\n", dst_uri->len, dst_uri->s);
 			return -1;
 		}
-		memcpy(branches[nr_branches].dst_uri, dst_uri->s, dst_uri->len);
-		branches[nr_branches].dst_uri[dst_uri->len] = 0;
-		branches[nr_branches].dst_uri_len = dst_uri->len;
+		memcpy(_ksr_branches[nr_branches].dst_uri, dst_uri->s, dst_uri->len);
+		_ksr_branches[nr_branches].dst_uri[dst_uri->len] = 0;
+		_ksr_branches[nr_branches].dst_uri_len = dst_uri->len;
 	} else {
-		branches[nr_branches].dst_uri[0] = '\0';
-		branches[nr_branches].dst_uri_len = 0;
+		_ksr_branches[nr_branches].dst_uri[0] = '\0';
+		_ksr_branches[nr_branches].dst_uri_len = 0;
 	}
 
 	/* copy the path string */
@@ -466,22 +470,22 @@ int append_branch(struct sip_msg *msg, str *uri, str *dst_uri, str *path,
 			LM_ERR("too long path: %.*s\n", path->len, path->s);
 			return -1;
 		}
-		memcpy(branches[nr_branches].path, path->s, path->len);
-		branches[nr_branches].path[path->len] = 0;
-		branches[nr_branches].path_len = path->len;
+		memcpy(_ksr_branches[nr_branches].path, path->s, path->len);
+		_ksr_branches[nr_branches].path[path->len] = 0;
+		_ksr_branches[nr_branches].path_len = path->len;
 	} else {
-		branches[nr_branches].path[0] = '\0';
-		branches[nr_branches].path_len = 0;
+		_ksr_branches[nr_branches].path[0] = '\0';
+		_ksr_branches[nr_branches].path_len = 0;
 	}
 
 	/* copy the ruri */
-	memcpy(branches[nr_branches].uri, luri.s, luri.len);
-	branches[nr_branches].uri[luri.len] = 0;
-	branches[nr_branches].len = luri.len;
-	branches[nr_branches].q = q;
+	memcpy(_ksr_branches[nr_branches].uri, luri.s, luri.len);
+	_ksr_branches[nr_branches].uri[luri.len] = 0;
+	_ksr_branches[nr_branches].len = luri.len;
+	_ksr_branches[nr_branches].q = q;
 
-	branches[nr_branches].force_send_socket = force_socket;
-	branches[nr_branches].flags = flags;
+	_ksr_branches[nr_branches].force_send_socket = force_socket;
+	_ksr_branches[nr_branches].flags = flags;
 
 	/* copy instance string */
 	if(unlikely(instance && instance->len && instance->s)) {
@@ -489,16 +493,16 @@ int append_branch(struct sip_msg *msg, str *uri, str *dst_uri, str *path,
 			LM_ERR("too long instance: %.*s\n", instance->len, instance->s);
 			return -1;
 		}
-		memcpy(branches[nr_branches].instance, instance->s, instance->len);
-		branches[nr_branches].instance[instance->len] = 0;
-		branches[nr_branches].instance_len = instance->len;
+		memcpy(_ksr_branches[nr_branches].instance, instance->s, instance->len);
+		_ksr_branches[nr_branches].instance[instance->len] = 0;
+		_ksr_branches[nr_branches].instance_len = instance->len;
 	} else {
-		branches[nr_branches].instance[0] = '\0';
-		branches[nr_branches].instance_len = 0;
+		_ksr_branches[nr_branches].instance[0] = '\0';
+		_ksr_branches[nr_branches].instance_len = 0;
 	}
 
 	/* copy reg_id */
-	branches[nr_branches].reg_id = reg_id;
+	_ksr_branches[nr_branches].reg_id = reg_id;
 
 	/* copy ruid string */
 	if(unlikely(ruid && ruid->len && ruid->s)) {
@@ -506,12 +510,12 @@ int append_branch(struct sip_msg *msg, str *uri, str *dst_uri, str *path,
 			LM_ERR("too long ruid: %.*s\n", ruid->len, ruid->s);
 			return -1;
 		}
-		memcpy(branches[nr_branches].ruid, ruid->s, ruid->len);
-		branches[nr_branches].ruid[ruid->len] = 0;
-		branches[nr_branches].ruid_len = ruid->len;
+		memcpy(_ksr_branches[nr_branches].ruid, ruid->s, ruid->len);
+		_ksr_branches[nr_branches].ruid[ruid->len] = 0;
+		_ksr_branches[nr_branches].ruid_len = ruid->len;
 	} else {
-		branches[nr_branches].ruid[0] = '\0';
-		branches[nr_branches].ruid_len = 0;
+		_ksr_branches[nr_branches].ruid[0] = '\0';
+		_ksr_branches[nr_branches].ruid_len = 0;
 	}
 
 	if(unlikely(location_ua && location_ua->len && location_ua->s)) {
@@ -520,13 +524,13 @@ int append_branch(struct sip_msg *msg, str *uri, str *dst_uri, str *path,
 					location_ua->s);
 			return -1;
 		}
-		memcpy(branches[nr_branches].location_ua, location_ua->s,
+		memcpy(_ksr_branches[nr_branches].location_ua, location_ua->s,
 				location_ua->len);
-		branches[nr_branches].location_ua[location_ua->len] = 0;
-		branches[nr_branches].location_ua_len = location_ua->len;
+		_ksr_branches[nr_branches].location_ua[location_ua->len] = 0;
+		_ksr_branches[nr_branches].location_ua_len = location_ua->len;
 	} else {
-		branches[nr_branches].location_ua[0] = '\0';
-		branches[nr_branches].location_ua_len = 0;
+		_ksr_branches[nr_branches].location_ua[0] = '\0';
+		_ksr_branches[nr_branches].location_ua_len = 0;
 	}
 
 	nr_branches++;
@@ -559,7 +563,7 @@ branch_t *ksr_push_branch(struct sip_msg *msg, str *uri, str *dst_uri,
 			< 0) {
 		return NULL;
 	}
-	return &branches[nr_branches - 1];
+	return &_ksr_branches[nr_branches - 1];
 }
 
 /*! \brief
