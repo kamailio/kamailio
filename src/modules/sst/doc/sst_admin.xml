@@ -123,7 +123,7 @@
 		<itemizedlist>
 		<listitem>
 		<para>
-		<emphasis>dialog</emphasis> or <emphasis>dialog-ng</emphasis>
+		<emphasis>dialog</emphasis> or <emphasis>ims_dialog</emphasis>
 		- dialog module and its dependencies. (tm)
 		</para>
 		</listitem>
