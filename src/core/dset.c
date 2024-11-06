@@ -104,6 +104,14 @@ int init_dst_set(void)
 	return 0;
 }
 
+/**
+ *
+ */
+unsigned int get_nr_branches(void)
+{
+	return nr_branches;
+}
+
 /*! \brief
  * Return pointer to branch[idx] structure
  * @param idx - branch index

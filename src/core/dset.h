@@ -98,6 +98,8 @@ typedef struct branch_data
 	int otcpid;
 } branch_data_t;
 
+unsigned int get_nr_branches(void);
+
 /*! \brief
  * Return pointer to branch[idx] structure
  */
