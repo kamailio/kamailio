@@ -282,10 +282,11 @@ Chapter 1. Admin Guide
      * usrloc - all scalars and tables relating to users and contacts are
        dependent on the usrloc module. If the module is not loaded, the
        respective tables will be empty.
-     * dialog or dialog-ng - all scalars relating to the number of dialogs
-       are dependent on the presence of a dialog module. Furthermore, if
-       the module is not loaded, then the kamailioDialogLimitMinorEvent,
-       and kamailioDialogLimitMajorEvent alarm will be disabled.
+     * dialog or ims_dialog - all scalars relating to the number of
+       dialogs are dependent on the presence of a dialog module.
+       Furthermore, if the module is not loaded, then the
+       kamailioDialogLimitMinorEvent, and kamailioDialogLimitMajorEvent
+       alarm will be disabled.
 
    The contents of the kamailioSIPMethodSupportedTable change depending on
    which modules are loaded.
