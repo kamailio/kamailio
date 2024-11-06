@@ -120,6 +120,7 @@ static call_t *__alloc_new_call_by_money(credit_data_t *credit_data,
 		struct sip_msg *msg, double credit, double connect_cost,
 		double cost_per_second, int initial_pulse, int final_pulse);
 static void __notify_call_termination(sip_msg_t *msg);
+static void __free_call_t(call_t *call);
 static void __free_call(call_t *call);
 static void __delete_call(call_t *call, credit_data_t *credit_data);
 static int __has_to_tag(struct sip_msg *msg);
@@ -903,7 +904,8 @@ static void __free_credit_data(credit_data_t *credit_data, hash_tables_t *hts,
 
 	// Free client_id in list's root
 	shm_free(credit_data->call_list->client_id.s);
-	shm_free(credit_data->call_list);
+	__free_call_t(credit_data->call_list);
+	credit_data->call_list = NULL;
 
 	// Release the lock since we are going to free the entry down below
 	cnxcc_unlock(credit_data->lock);
@@ -981,6 +983,17 @@ void terminate_all_calls(credit_data_t *credit_data)
 	}
 }
 
+static void __free_call_t(call_t *call)
+{
+	str_shm_free_if_not_null(call->sip_data.callid);
+	str_shm_free_if_not_null(call->sip_data.to_uri);
+	str_shm_free_if_not_null(call->sip_data.to_tag);
+	str_shm_free_if_not_null(call->sip_data.from_uri);
+	str_shm_free_if_not_null(call->sip_data.from_tag);
+
+	shm_free(call);
+}
+
 /*
  * WARNING: When calling this function, the proper lock should have been acquired
  */
@@ -1018,13 +1031,7 @@ static void __free_call(call_t *call)
 	shm_free(e->key.s);
 	shm_free(e);
 
-	str_shm_free_if_not_null(call->sip_data.callid);
-	str_shm_free_if_not_null(call->sip_data.to_uri);
-	str_shm_free_if_not_null(call->sip_data.to_tag);
-	str_shm_free_if_not_null(call->sip_data.from_uri);
-	str_shm_free_if_not_null(call->sip_data.from_tag);
-
-	shm_free(call);
+	__free_call_t(call);
 }
 
 /*
@@ -1132,14 +1139,18 @@ static credit_data_t *__get_or_create_credit_data_entry(
 		if(e == NULL)
 			goto no_memory;
 
-		if(shm_str_dup(&e->key, client_id) != 0)
+		if(shm_str_dup(&e->key, client_id) != 0) {
+			shm_free(e);
 			goto no_memory;
+		}
 
 		e->u.p = credit_data = __alloc_new_credit_data(client_id, type);
 		e->flags = 0;
 
-		if(credit_data == NULL)
+		if(credit_data == NULL) {
+			shm_free(e);
 			goto no_memory;
+		}
 
 		cnxcc_lock(ht->lock);
 		str_hash_add(sht, e);
@@ -1168,7 +1179,7 @@ static credit_data_t *__alloc_new_credit_data(
 	credit_data->call_list = shm_malloc(sizeof(call_t));
 	if(credit_data->call_list == NULL)
 		goto no_memory;
-
+	memset(credit_data->call_list, 0, sizeof(data_t));
 	clist_init(credit_data->call_list, next, prev);
 
 	/*
@@ -1201,6 +1212,13 @@ static credit_data_t *__alloc_new_credit_data(
 no_memory:
 	SHM_MEM_ERROR;
 error:
+	if(credit_data) {
+		if(credit_data->call_list) {
+			str_shm_free_if_not_null(credit_data->call_list->client_id);
+			__free_call_t(credit_data->call_list);
+		}
+		shm_free(credit_data);
+	}
 	return NULL;
 }
 
@@ -1269,6 +1287,8 @@ static call_t *__alloc_new_call_by_money(credit_data_t *credit_data,
 
 error:
 	cnxcc_unlock(credit_data->lock);
+	if(call)
+		__free_call_t(call);
 	return NULL;
 }
 
@@ -1330,6 +1350,8 @@ static call_t *__alloc_new_call_by_time(
 
 error:
 	cnxcc_unlock(credit_data->lock);
+	if(call)
+		__free_call_t(call);
 	return NULL;
 }
 
@@ -1392,6 +1414,8 @@ static call_t *alloc_new_call_by_channel(
 
 error:
 	cnxcc_unlock(credit_data->lock);
+	if(call)
+		__free_call_t(call);
 	return NULL;
 }
 
@@ -1449,9 +1473,10 @@ static int __add_call_by_cid(str *cid, call_t *call, credit_type_t type)
 		SHM_MEM_ERROR;
 		return -1;
 	}
-
+	memset(e, 0, sizeof(struct str_hash_entry));
 	if(shm_str_dup(&e->key, cid) != 0) {
 		SHM_MEM_ERROR;
+		shm_free(e);
 		return -1;
 	}
 
