@@ -132,6 +132,44 @@ branch_t *get_sip_branch(int idx)
 	return 0;
 }
 
+/**
+ *
+ */
+int get_all_sip_branches(branch_t **vbranches, unsigned int *nbranches)
+{
+	if(nr_branches == 0) {
+		*vbranches = NULL;
+		*nbranches = 0;
+		return 0;
+	}
+
+	*vbranches = (branch_t *)pkg_malloc(nr_branches * sizeof(branch_t));
+	if(*vbranches == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	memcpy(*vbranches, _ksr_branches, nr_branches * sizeof(branch_t));
+	*nbranches = nr_branches;
+
+	return 0;
+}
+
+/**
+ *
+ */
+int set_all_sip_branches(branch_t *vbranches, unsigned int nbranches)
+{
+	if(nbranches == 0) {
+		nr_branches = 0;
+		return 0;
+	}
+
+	memcpy(_ksr_branches, vbranches, nbranches * sizeof(branch_t));
+	nr_branches = nbranches;
+
+	return 0;
+}
+
 /*! \brief
  * Drop branch[idx]
  * @param idx - branch index

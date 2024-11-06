@@ -105,6 +105,9 @@ unsigned int get_nr_branches(void);
  */
 branch_t *get_sip_branch(int idx);
 
+int get_all_sip_branches(branch_t **vbranches, unsigned int *nbranches);
+int set_all_sip_branches(branch_t *vbranches, unsigned int nbranches);
+
 /*! \brief
  * Drop branch[idx]
  */
