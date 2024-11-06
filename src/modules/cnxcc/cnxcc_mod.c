@@ -870,8 +870,10 @@ static void __delete_call(call_t *call, credit_data_t *credit_data)
 				credit_data->number_of_calls);
 	}
 
-	// Remove (and free) the call from the list of calls of the current credit_data
-	clist_rm(call, next, prev);
+	if(call->prev && call->next) {
+		// Remove (and free) the call from the list of calls of the current credit_data
+		clist_rm(call, next, prev);
+	}
 	__free_call(call);
 }
 
