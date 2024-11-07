@@ -58,6 +58,9 @@ extern int faked_reply_prio;
 
 extern int tm_rich_redirect;
 
+extern int _tm_reply_408_code;
+extern str _tm_reply_408_reason;
+
 /* has this to-tag been never seen in previous 200/INVs? */
 int unmatched_totag(struct cell *t, struct sip_msg *ack);
 

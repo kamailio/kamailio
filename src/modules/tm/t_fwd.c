@@ -1502,7 +1502,7 @@ int t_send_branch(struct cell *t, int branch, struct sip_msg *p_msg,
 		 *  a higly unlikely, perfectly timed fake reply (to a message
 		 *   we never sent).
 		 * (code=final reply && reply==0 => t_pick_branch won't ever pick it)*/
-		uac->last_received = 408;
+		uac->last_received = _tm_reply_408_code;
 		su2ip_addr(&ip, &uac->request.dst.to);
 		LM_DBG("onsend_route dropped msg. to %s:%d (%d)\n", ip_addr2a(&ip),
 				su_getport(&uac->request.dst.to), uac->request.dst.proto);
@@ -1538,7 +1538,7 @@ int t_send_branch(struct cell *t, int branch, struct sip_msg *p_msg,
 			 *  a higly unlikely, perfectly timed fake reply (to a message
 			 *   we never sent).  (code=final reply && reply==0 =>
 			 *   t_pick_branch won't ever pick it)*/
-			uac->last_received = 408;
+			uac->last_received = _tm_reply_408_code;
 #ifdef USE_DNS_FAILOVER
 			/* if the destination resolves to more ips, add another
 			 *  branch/uac */
@@ -1566,7 +1566,7 @@ int t_send_branch(struct cell *t, int branch, struct sip_msg *p_msg,
 		 *  a highly unlikely, perfectly timed fake reply (to a message
 		 *  we never sent).
 		 * (code=final reply && reply==0 => t_pick_branch won't ever pick it)*/
-		uac->last_received = 408;
+		uac->last_received = _tm_reply_408_code;
 		su2ip_addr(&ip, &uac->request.dst.to);
 		LM_DBG("send to %s:%d (%d) failed\n", ip_addr2a(&ip),
 				su_getport(&uac->request.dst.to), uac->request.dst.proto);

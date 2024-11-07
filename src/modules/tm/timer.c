@@ -460,7 +460,7 @@ inline static void final_response_handler(
 		}
 #endif
 	}
-	fake_reply(t, r_buf->branch, 408);
+	fake_reply(t, r_buf->branch, _tm_reply_408_code);
 }
 
 

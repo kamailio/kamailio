@@ -225,6 +225,8 @@ str ulattrs_xavp_name = {NULL, 0};
 str on_sl_reply_name = {NULL, 0};
 int tm_remap_503_500 = 1;
 str _tm_event_callback_lres_sent = {NULL, 0};
+int _tm_reply_408_code = 408;
+str _tm_reply_408_reason = str_init("Request Timeout");
 
 #ifdef USE_DNS_FAILOVER
 str failover_reply_codes_str = {NULL, 0};
@@ -522,6 +524,8 @@ static param_export_t params[] = {
 #ifdef USE_DNS_FAILOVER
 	{"failover_reply_codes", PARAM_STR, &failover_reply_codes_str},
 #endif
+	{"reply_408_code", PARAM_INT, &_tm_reply_408_code},
+	{"reply_408_reason", PARAM_STR, &_tm_reply_408_reason},
 	{0, 0, 0}
 };
 

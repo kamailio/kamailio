@@ -1401,7 +1401,7 @@ static enum rps t_should_relay_response(struct cell *Trans, int new_code,
 		 *  faked a CANCEL on a non-replied branch don't
 		 * report on it either */
 		if((Trans->uac[branch].last_received == 487)
-				|| (Trans->uac[branch].last_received == 408
+				|| (Trans->uac[branch].last_received == _tm_reply_408_code
 						&& new_code == 487)) {
 			LM_DBG("%d came for a %d branch (ignored)\n", new_code,
 					Trans->uac[branch].last_received);
@@ -1999,8 +1999,12 @@ enum rps relay_reply(struct cell *t, struct sip_msg *p_msg, int branch,
 				/* revert the temporary "store" reply above */
 				t->uac[branch].reply = reply_bak;
 			} else {
-				reason.s = error_text(relayed_code);
-				reason.len = strlen(reason.s);
+				if(relayed_code == _tm_reply_408_code) {
+					reason = _tm_reply_408_reason;
+				} else {
+					reason.s = error_text(relayed_code);
+					reason.len = strlen(reason.s);
+				}
 				buf = build_res_buf_from_sip_req(relayed_code, &reason, to_tag,
 						t->uas.request, &res_len, &bm);
 			}
