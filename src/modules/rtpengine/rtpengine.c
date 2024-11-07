@@ -662,6 +662,16 @@ int rtpengine_delete_node(struct rtpp_node *rtpp_node)
 }
 
 
+/**
+ * @brief Deletes all nodes in a given RTP engine set.
+ *
+ * @details Iterates over all nodes in the specified RTP engine set,
+ * calling rtpengine_delete_node on each node to remove it. It ensures thread
+ * safety by acquiring and releasing the set's lock.
+ *
+ * @param rtpp_list The RTP engine set from which to delete nodes.
+ * @return 1 on success.
+ */
 int rtpengine_delete_node_set(struct rtpp_set *rtpp_list)
 {
 	struct rtpp_node *rtpp_node;
@@ -677,6 +687,16 @@ int rtpengine_delete_node_set(struct rtpp_set *rtpp_list)
 }
 
 
+/**
+ * @brief Deletes all nodes across all RTP engine sets.
+ *
+ * @details Iterates over all RTP engine sets, acquiring and releasing the
+ * set's lock for each set. It then calls rtpengine_delete_node_set to delete all
+ * nodes within each set. This ensures thread safety and complete removal of all
+ * nodes.
+ *
+ * @return 1 on success.
+ */
 int rtpengine_delete_node_all()
 {
 	struct rtpp_set *rtpp_list;
@@ -696,6 +716,17 @@ int rtpengine_delete_node_all()
 }
 
 
+/**
+ * @brief Determines the type of IP address from a given string.
+ *
+ * @details Attempts to resolve the given string as an IP address and
+ * determines its type (IPv4 or IPv6). It uses getaddrinfo to perform the
+ * resolution and checks the family of the returned address information.
+ *
+ * @param str_addr The string representation of the IP address to check.
+ * @return The family of the IP address (AF_INET for IPv4, AF_INET6 for IPv6),
+ *         or -1 if the address is invalid or of an unknown format.
+ */
 static int get_ip_type(char *str_addr)
 {
 	struct addrinfo hint, *info = NULL;
@@ -730,6 +761,17 @@ static int get_ip_type(char *str_addr)
 }
 
 
+/**
+ * @brief Determines the scope of a given IPv6 address.
+ *
+ * @details Iterates through all network interfaces to find the scope of a given IPv6 address.
+ * It uses getifaddrs to get a list of all network interfaces and their addresses, then iterates
+ * through the list to find the interface that matches the given address. It uses getnameinfo to
+ * convert the binary address to a string representation for comparison.
+ *
+ * @param str_addr The string representation of the IPv6 address to find the scope for.
+ * @return The scope ID of the IPv6 address if found, -1 otherwise.
+ */
 static int get_ip_scope(char *str_addr)
 {
 	struct ifaddrs *ifaddr, *ifa;
@@ -863,6 +905,18 @@ static inline int str_eq(const str *p, const char *q)
 	return 1;
 }
 
+/**
+ * @brief Checks if a string starts with a given prefix and updates the string to
+ * 	remove the prefix if it matches.
+ *
+ * @details Checks if the string pointed to by 'p' starts with the string 'q'.
+ * If it does, it updates the string 'out' to be a copy of 'p' with 'q' removed from the beginning.
+ *
+ * @param p The string to check for the prefix.
+ * @param q The prefix to check for.
+ * @param out The string that will be updated if 'p' starts with 'q'.
+ * @return 1 if 'p' starts with 'q', 0 otherwise.
+ */
 static inline int str_prefix(const str *p, const char *q, str *out)
 {
 	int l = strlen(q);
@@ -875,7 +929,21 @@ static inline int str_prefix(const str *p, const char *q, str *out)
 	out->len -= l;
 	return 1;
 }
-/* handle either "foo-bar" or "foo=bar" from flags */
+
+/**
+ * @brief Checks if a string starts with a given prefix and updates the string
+ * to remove the prefix if it matches.
+ *
+ * @details If the string is exactly equal to the prefix, it sets the output to a provided value.
+ *
+ * handle either "foo-bar" or "foo=bar" from flags
+ *
+ * @param p The string to check for the prefix.
+ * @param q The prefix to check for.
+ * @param v The value to set the output to if p is exactly equal to q.
+ * @param out The string that will be updated if p starts with q.
+ * @return 1 if p starts with q or is exactly equal to q (and valid conditions are met), 0 otherwise.
+ */
 static inline int str_key_val_prefix(
 		const str *p, const char *q, const str *v, str *out)
 {
@@ -897,7 +965,17 @@ static inline int str_key_val_prefix(
 	return 1;
 }
 
-
+/**
+ * @brief Stores a new RTP engine set URL from cfg modparam.
+ *
+ * @details Dynamically allocates memory to store a new RTP engine set URL.
+ * It checks if the input URL is valid and if there is enough memory available.
+ * If successful, it increments the counter of stored RTP engine sets.
+ *
+ * @param type The type of the module parameter.
+ * @param val The value of the module parameter, expected to be a string.
+ * @return 0 on success, -1 on failure.
+ */
 static int rtpengine_set_store(modparam_t type, void *val)
 {
 
@@ -941,6 +1019,17 @@ static int rtpengine_set_store(modparam_t type, void *val)
 	return 0;
 }
 
+/**
+ * @brief Searches for a specific RTP engine node within a given RTP engine set based on its URL.
+ *
+ * @details This function iterates through the linked list of RTP engine nodes within the specified
+ * RTP engine set, comparing each node's URL with the provided URL. If a match is found, the function
+ * returns the matched node.
+ *
+ * @param rtpp_list The RTP engine set to search within.
+ * @param url The URL to match against the RTP engine nodes.
+ * @return The RTP engine node with the matching URL, or NULL if no match is found.
+ */
 struct rtpp_node *get_rtpp_node(struct rtpp_set *rtpp_list, str *url)
 {
 	struct rtpp_node *rtpp_node;
@@ -963,6 +1052,16 @@ struct rtpp_node *get_rtpp_node(struct rtpp_set *rtpp_list, str *url)
 	return NULL;
 }
 
+/**
+ * @brief Retrieves or creates an RTP engine set based on the provided set ID.
+ *
+ * @details Search for an RTP engine set with the specified ID within the list of RTP engine sets.
+ * If the set is found, it is returned. If not, a new RTP engine set is created with the specified
+ * ID and added to the list.
+ *
+ * @param set_id The ID of the RTP engine set to retrieve or create.
+ * @return The RTP engine set with the specified ID, or NULL if creation fails due to memory issues.
+ */
 struct rtpp_set *get_rtpp_set(unsigned int set_id)
 {
 	struct rtpp_set *rtpp_list;
@@ -1028,7 +1127,21 @@ struct rtpp_set *get_rtpp_set(unsigned int set_id)
 	return rtpp_list;
 }
 
-
+/**
+ * @brief Adds a new RTP engine instance to the given RTP engine set.
+ *
+ * @details Parse the given RTP engine string, which can include a weight and/or a disabled flag.
+ * It then adds a new RTP engine instance to the specified RTP engine set with the parsed properties.
+ *
+ * @param rtpp_list The RTP engine set to which the new instance will be added.
+ * @param rtpengine The string representation of the RTP engine instance, including its URL and optional weight and disabled flag.
+ * @param weight The weight of the RTP engine instance, used for load balancing.
+ * @param disabled A flag indicating if the RTP engine instance is disabled.
+ * @param ticks The number of ticks until the RTP engine instance is rechecked.
+ * @param isDB A flag indicating if the RTP engine instance is being added from the database.
+ *
+ * @return Returns 0 on success, -1 on failure.
+ */
 int add_rtpengine_socks(struct rtpp_set *rtpp_list, char *rtpengine,
 		unsigned int weight, int disabled, unsigned int ticks, int isDB)
 {
@@ -1599,6 +1712,16 @@ static int fixup_free_set_id(void **param, int param_no)
 	return 0;
 }
 
+/**
+ * @brief Sends a ping command to an RTP engine node and checks the response.
+ *
+ * @details Initialize a bencode buffer, construct a ping command dictionary,
+ * send the command to the specified RTP engine node, and then decodes the response.
+ * It checks if the response is a dictionary and if it contains the expected "pong" result.
+ *
+ * @param node The RTP engine node to send the ping command to.
+ * @return Returns 0 on success (pong received), -1 on failure.
+ */
 static int rtpp_test_ping(struct rtpp_node *node)
 {
 	bencode_buffer_t bencbuf;
@@ -1684,6 +1807,21 @@ static void rtpengine_rpc_reload(rpc_t *rpc, void *ctx)
 	rpc->rpl_printf(ctx, "Ok. Reload successful.");
 }
 
+/**
+ * @brief Iterates over the RTP engine nodes and filter them based on the provided URL.
+ *
+ * @details Iterate over the RTP engine nodes in the system, filtering them based on the provided URL.
+ * If the @p rtpp_url is "all", it iterates over all RTP engine nodes. Otherwise, it iterates
+ * over the nodes that match the provided URL. For each matching node, it calls the provided
+ * callback function @p cb.
+ *
+ * @param rpc The RPC instance.
+ * @param ctx The context.
+ * @param rtpp_url The RTP proxy URL to filter by.
+ * @param cb The callback function to call for each matching node.
+ * @param data The data to pass to the callback function.
+ * @return 0 on success, -1 on error.
+ */
 static int rtpengine_rpc_iterate(rpc_t *rpc, void *ctx, const str *rtpp_url,
 		int (*cb)(struct rtpp_node *, struct rtpp_set *, void *), void *data)
 {
@@ -1760,6 +1898,19 @@ static int rtpengine_rpc_iterate(rpc_t *rpc, void *ctx, const str *rtpp_url,
 	return found;
 }
 
+/**
+ * @brief Adds information about an RTP engine node to the RPC response.
+ *
+ * @details Constructs and adds a structured data block to the RPC response,
+ * containing details about the specified RTP engine node, such as its URL, set ID,
+ * index, weight, disabled status, and recheck ticks.
+ *
+ * @param ptrsp A pointer to an array of pointers containing the RPC context and other necessary data.
+ * @param crt_rtpp The RTP engine node for which to add information.
+ * @param rtpp_list The RTP engine set to which the node belongs.
+ *
+ * @return Returns 0 on success, -1 on failure.
+ */
 static int add_rtpp_node_info(
 		void *ptrsp, struct rtpp_node *crt_rtpp, struct rtpp_set *rtpp_list)
 {
@@ -1800,6 +1951,18 @@ static int add_rtpp_node_info(
 	return 0;
 }
 
+/**
+ * @brief Callback to enable or disable an RTP engine node.
+ *
+ * @details Called for each RTP engine node during an iteration process.
+ * It enables or disables the node based on the @p flagp provided and updates its status accordingly.
+ *
+ * @param crt_rtpp The RTP engine node to be enabled or disabled.
+ * @param rtpp_list The RTP engine set to which the node belongs. (not used in this function)
+ * @param flagp A pointer to a flag indicating whether to enable (1) or disable (0) the node.
+ *
+ * @return Returns 0 on success, -1 on failure.
+ */
 static int rtpengine_iter_cb_enable(
 		struct rtpp_node *crt_rtpp, struct rtpp_set *rtpp_list, void *flagp)
 {
@@ -2266,9 +2429,17 @@ static int mod_init(void)
 	} while(0)
 
 /**
- * build rtp enigne sockets
- * - lmode: locking mode (1 - lock if needed; 0 - no locking)
- * - rtest: rtpengine testing (1 - test if active; 0 - no test done)
+ * @brief Builds RTP engine sockets based on the current RTP engine list.
+ *
+ * @details Iterate through the list of RTP engines, closes any existing sockets,
+ * and attempts to create new sockets for each RTP engine instance. It handles both
+ * IPv4 and IPv6 connections, sets up socket options for MTU discovery and TOS,
+ * and binds the socket to a specific address if necessary. If a socket cannot be
+ * created or connected, it retries later.
+ *
+ * @param lmode Locking mode (1 - lock if needed; 0 - no locking)
+ * @param rtest RTP engine testing (1 - test if active; 0 - no test done)
+ * @return 0 on success, -1 on failure
  */
 static int build_rtpp_socks(int lmode, int rtest)
 {
@@ -3546,8 +3717,8 @@ static bencode_item_t *rtpp_function_call_ok(bencode_buffer_t *bencbuf,
 	return ret;
 }
 
-/*
-* \brief Timer function to check the status of rtpengine nodes.
+/**
+* @brief Timer function to check the status of rtpengine nodes.
 * Check every node in the set and if it is not responding,
 * mark it as disabled.
  */
@@ -3593,9 +3764,11 @@ static void rtpengine_ping_check_timer(unsigned int ticks, void *param)
 }
 
 /**
- * Tests the RTP engine node by sending a ping command and checking the response.
- * This function is similar to rtpp_test_ping but provides additional logic for
- * handling disabled nodes, ping intervals, and recheck ticks.
+ * @brief Tests the RTP engine node by sending a ping command with some additional logic
+ * to skip it.
+ *
+ * @details Similar to rtpp_test_ping but provides additional logic for handling disabled
+ * nodes, ping intervals, and recheck ticks.
  *
  * @param node The RTP engine node to test.
  * @param isdisabled Flag indicating if the node is currently disabled.
