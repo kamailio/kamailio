@@ -1704,4 +1704,41 @@ modparam("tm", "failover_reply_codes", "code=403;code=488;class=5")
 		</example>
 	</section>
 
+	<section id="tm.p.reply_408_code">
+		<title><varname>reply_408_code</varname> (int)</title>
+		<para>
+			Status code for internally generated timeout responses.
+		</para>
+		<emphasis>
+			Default value is <quote>408</quote>.
+		</emphasis>
+		<example>
+			<title>reply_408_code example</title>
+			<programlisting>
+...
+modparam("tm", "reply_408_code", 410)
+....
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="tm.p.reply_408_reason">
+		<title><varname>reply_408_reason</varname> (str)</title>
+		<para>
+			Reason phrase for internally generated timeout responses.
+		</para>
+		<emphasis>
+			Default value is <quote>Request Timeout</quote>.
+		</emphasis>
+		<example>
+			<title>reply_408_reason example</title>
+			<programlisting>
+...
+modparam("tm", "reply_408_reason", "Gone")
+....
+			</programlisting>
+		</example>
+	</section>
+
+
 </section>
