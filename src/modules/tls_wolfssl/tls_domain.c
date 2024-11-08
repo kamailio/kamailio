@@ -973,7 +973,8 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 		return -1;
 	if(load_crl(d) < 0)
 		return -1;
-	// if (set_cipher_list(d) < 0) return -1;
+	if(set_cipher_list(d) < 0)
+		return -1;
 	if(set_verification(d) < 0)
 		return -1;
 	if(set_ssl_options(d) < 0)
