@@ -208,8 +208,6 @@ int ts_append_branches(sip_msg_t *msg, str *ruri)
 	}
 
 	/* cycle through existing transactions */
-	ptr = _r->transactions;
-
 	for(ptr = _r->transactions; ptr != NULL; ptr = ptr->next) {
 		LM_DBG("transaction %u:%u found for %.*s, going to append branches\n",
 				ptr->tindex, ptr->tlabel, t_uri->len, t_uri->s);
