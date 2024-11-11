@@ -288,6 +288,9 @@ static int mod_init(void)
 			_tpsdbf.close(topos_db_con);
 			topos_db_con = NULL;
 		}
+	} else if(_tps_storage.len == 6
+			  && strncmp(_tps_storage.s, "htable", 6) == 0) {
+		// use htable module api
 	} else {
 		if(_tps_storage.len != 7 && strncmp(_tps_storage.s, "redis", 5) != 0) {
 			LM_ERR("unknown storage type: %.*s\n", _tps_storage.len,
