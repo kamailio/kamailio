@@ -334,6 +334,7 @@ extern char *default_routename;
 %token ADVERTISE
 %token VIRTUAL
 %token STRNAME
+%token AGNAME
 %token ALIAS
 %token SR_AUTO_ALIASES
 %token DOMAIN
@@ -879,6 +880,11 @@ socket_lattr:
 			tmp_sa.useaddr.len = strlen(tmp_sa.useaddr.s);
 			tmp_sa.useport = $7;
 		}
+	| AGNAME EQUAL STRING {
+			tmp_sa.agname.s = $3;
+			tmp_sa.agname.len = strlen(tmp_sa.agname.s);
+		}
+	| AGNAME EQUAL error { yyerror("string value expected"); }
 	| WORKERS EQUAL NUMBER { tmp_sa.workers=$3; }
 	| WORKERS EQUAL error { yyerror("number expected"); }
 	| VIRTUAL EQUAL NUMBER { if($3!=0) { tmp_sa.sflags |= SI_IS_VIRTUAL; } }

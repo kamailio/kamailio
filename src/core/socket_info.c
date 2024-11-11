@@ -1274,7 +1274,19 @@ int add_listen_socket(socket_attrs_t *sa)
 		newsi = add_listen_socket_info(sa->bindaddr.s, &addr_l, sa->bindport,
 				sa->bindproto, sa->useproto, sa->useaddr.s, sa->useport,
 				sa->sockname.s, sa->sflags);
-		return (newsi != NULL) ? 0 : -1;
+		if(newsi == NULL) {
+			return -1;
+		}
+		if(sa->agname.len > 0) {
+			if(sa->agname.len >= KSR_AGROUP_NAME_SIZE - 1) {
+				LM_ERR("action group too long (%.*s / %d)\n", sa->agname.len,
+						sa->agname.s, sa->agname.len);
+				return -1;
+			}
+			memcpy(newsi->agroup.agname, sa->agname.s, sa->agname.len);
+			newsi->agroup.agname[sa->agname.len] = '\0';
+		}
+		return 0;
 	}
 
 	/* binding on a range of ports */
@@ -1291,6 +1303,15 @@ int add_listen_socket(socket_attrs_t *sa)
 				sa->useport + i, psname, sa->sflags);
 		if(newsi == NULL) {
 			return -1;
+		}
+		if(sa->agname.len > 0) {
+			if(sa->agname.len >= KSR_AGROUP_NAME_SIZE - 1) {
+				LM_ERR("action group too long (%.*s / %d)\n", sa->agname.len,
+						sa->agname.s, sa->agname.len);
+				return -1;
+			}
+			memcpy(newsi->agroup.agname, sa->agname.s, sa->agname.len);
+			newsi->agroup.agname[sa->agname.len] = '\0';
 		}
 	}
 	return 0;

@@ -310,6 +310,7 @@ LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
 VIRTUAL		virtual
 STRNAME		name|NAME
+AGNAME		agname|AGNAME
 ALIAS		alias
 DOMAIN		domain
 SR_AUTO_ALIASES	auto_aliases
@@ -770,6 +771,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
 <INITIAL>{VIRTUAL}	{ count(); yylval.strval=yytext; return VIRTUAL; }
 <INITIAL>{STRNAME}	{ count(); yylval.strval=yytext; return STRNAME; }
+<INITIAL>{AGNAME}	{ count(); yylval.strval=yytext; return AGNAME; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
 <INITIAL>{DOMAIN}	{ count(); yylval.strval=yytext; return DOMAIN; }
 <INITIAL>{SR_AUTO_ALIASES}	{ count(); yylval.strval=yytext;
