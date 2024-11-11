@@ -504,6 +504,7 @@ int ser_kill_timeout = DEFAULT_SER_KILL_TIMEOUT;
 int ksr_verbose_startup = 0;
 int ksr_all_errors = 0;
 int ksr_udp_receiver_mode = 0;
+int ksr_udp_mtreceivers = 0;
 
 /* cfg parsing */
 int cfg_errors = 0;
@@ -1374,12 +1375,14 @@ int main_loop(void)
 	int i;
 	pid_t pid;
 	struct socket_info *si;
+	struct socket_info *sx;
 	char si_desc[MAX_PT_DESC];
 #ifdef EXTRA_DEBUG
 	int r;
 #endif
 	int nrprocs;
 	int woneinit;
+	int agfound = 0;
 
 	if(_sr_instance_started == NULL) {
 		_sr_instance_started = shm_malloc(sizeof(int));
@@ -1591,11 +1594,34 @@ int main_loop(void)
 				/* children_no per each socket */
 				cfg_register_child(
 						(si->workers > 0) ? si->workers : children_no);
+			} else if(ksr_udp_receiver_mode == 2) {
+				if(si->agroup.agname[0] != '\0') {
+					agfound = 0;
+					for(sx = udp_listen; sx != si; sx = sx->next) {
+						if(sx->agroup.agname[0] != '\0') {
+							if(strcmp(sx->agroup.agname, si->agroup.agname)
+									== 0) {
+								agfound = 1;
+								break;
+							}
+						}
+					}
+					if(agfound == 0) {
+						/* one udp multi-threaded worker */
+						cfg_register_child(1);
+						ksr_udp_mtreceivers++;
+					}
+				} else {
+					/* children_no per each socket */
+					cfg_register_child(
+							(si->workers > 0) ? si->workers : children_no);
+				}
 			}
 		}
 		if(udp_listen && (ksr_udp_receiver_mode == 1)) {
 			/* main udp multi-threaded worker */
 			cfg_register_child(1);
+			ksr_udp_mtreceivers++;
 		}
 
 #ifdef USE_RAW_SOCKS
@@ -1780,13 +1806,44 @@ int main_loop(void)
 		}
 		if(udp_listen && (ksr_udp_receiver_mode == 1)) {
 			child_rank++;
-			if(ksr_udp_start_mtreceiver(child_rank, &woneinit) < 0) {
+			if(ksr_udp_start_mtreceiver(child_rank, NULL, &woneinit) < 0) {
 				goto error;
 			}
 		}
+		if(udp_listen && (ksr_udp_receiver_mode == 2)) {
+			for(si = udp_listen; si; si = si->next) {
+				if(si->agroup.agname[0] == '\0') {
+					continue;
+				}
+				agfound = 0;
+				for(sx = udp_listen; sx != si; sx = sx->next) {
+					if(sx->agroup.agname[0] != '\0') {
+						if(strcmp(sx->agroup.agname, si->agroup.agname) == 0) {
+							agfound = 1;
+							break;
+						}
+					}
+				}
+				if(agfound == 0) {
+					child_rank++;
+					if(ksr_udp_start_mtreceiver(
+							   child_rank, si->agroup.agname, &woneinit)
+							< 0) {
+						goto error;
+					}
+				}
+			}
+		}
 		/* udp processes */
-		for(si = udp_listen; si && (ksr_udp_receiver_mode == 0);
-				si = si->next) {
+		if(ksr_udp_receiver_mode == 0 || ksr_udp_receiver_mode == 2) {
+			agfound = 1;
+		} else {
+			agfound = 0;
+		}
+		for(si = udp_listen; si && (agfound == 1); si = si->next) {
+			if((ksr_udp_receiver_mode == 2) && (si->agroup.agname[0] != '\0')) {
+				continue;
+			}
 			nrprocs = (si->workers > 0) ? si->workers : children_no;
 			for(i = 0; i < nrprocs; i++) {
 				if(si->address.af == AF_INET6) {
@@ -2038,8 +2095,10 @@ error:
  */
 static int calc_proc_no(void)
 {
-	int udp_listeners;
+	int udp_listeners = 0;
 	struct socket_info *si;
+	struct socket_info *sx;
+	int agfound;
 #ifdef USE_TCP
 	int tcp_listeners;
 	int tcp_e_listeners;
@@ -2050,9 +2109,30 @@ static int calc_proc_no(void)
 
 	if(ksr_udp_receiver_mode == 1) {
 		udp_listeners = 1;
+	} else if(ksr_udp_receiver_mode == 2) {
+		for(si = udp_listen; si; si = si->next) {
+			if(si->agroup.agname[0] == '\0') {
+				udp_listeners += (si->workers > 0) ? si->workers : children_no;
+			} else {
+				agfound = 0;
+				for(sx = udp_listen; sx != si; sx = sx->next) {
+					if(sx->agroup.agname[0] != '\0') {
+						if(strcmp(sx->agroup.agname, si->agroup.agname) == 0) {
+							agfound = 1;
+							break;
+						}
+					}
+				}
+				if(agfound == 0) {
+					udp_listeners += 1;
+				}
+			}
+		}
+		udp_listeners += ksr_udp_mtreceivers;
 	} else {
-		for(si = udp_listen, udp_listeners = 0; si; si = si->next)
+		for(si = udp_listen; si; si = si->next) {
 			udp_listeners += (si->workers > 0) ? si->workers : children_no;
+		}
 	}
 #ifdef USE_TCP
 	for(si = tcp_listen, tcp_listeners = 0, tcp_e_listeners = 0; si;
@@ -2955,7 +3035,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if(ksr_udp_receiver_mode != 1) {
+	if(ksr_udp_receiver_mode != 1 && ksr_udp_receiver_mode != 2) {
 		ksr_udp_receiver_mode = 0;
 	}
 

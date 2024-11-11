@@ -1025,6 +1025,10 @@ void *ksr_udp_mtworker(void *si)
 	rcvi.dst_ip = tsock->address;
 	rcvi.proto = PROTO_UDP;
 
+	if(tsock->agroup.agname[0] != '\0') {
+		gname.s = tsock->agroup.agname;
+		gname.len = strlen(gname.s);
+	}
 	awg = async_task_group_find(&gname);
 
 	while(1) {
@@ -1063,10 +1067,16 @@ void *ksr_udp_mtworker(void *si)
 		rcvi.src_port = su_getport(fromaddr);
 
 		if(awg == NULL) {
+			if(tsock->agroup.agname[0] != '\0') {
+				gname.s = tsock->agroup.agname;
+				gname.len = strlen(gname.s);
+			}
 			awg = async_task_group_find(&gname);
 		}
-		if(awg == NULL) {
+		if(awg != NULL) {
 			udpworker_task_send(awg, buf, len, &rcvi);
+		} else {
+			LM_WARN("workers group [%s] not found\n", gname.s);
 		}
 	}
 }
@@ -1074,7 +1084,7 @@ void *ksr_udp_mtworker(void *si)
 /**
  *
  */
-int ksr_udp_start_mtreceiver(int child_rank, int *woneinit)
+int ksr_udp_start_mtreceiver(int child_rank, char *agname, int *woneinit)
 {
 	socket_info_t *si;
 	pthread_t *udpthreads = NULL;
@@ -1082,12 +1092,16 @@ int ksr_udp_start_mtreceiver(int child_rank, int *woneinit)
 	int rc = 0;
 	int i = 0;
 	int pid;
+	char si_desc[MAX_PT_DESC];
 
 	if(udp_listen == NULL) {
 		return 0;
 	}
 
-	pid = fork_process(child_rank, "UDP MULTITREADED RECEIVER", 1);
+	snprintf(si_desc, MAX_PT_DESC, "udp multithreaded receiver (%s)",
+			(agname) ? agname : "udp");
+
+	pid = fork_process(child_rank, si_desc, 1);
 	if(pid < 0) {
 		LM_CRIT("cannot fork\n");
 		goto error;
@@ -1109,7 +1123,12 @@ int ksr_udp_start_mtreceiver(int child_rank, int *woneinit)
 		}
 		/* udp workers */
 		for(si = udp_listen; si; si = si->next) {
-			nrthreads++;
+			if(agname == NULL) {
+				nrthreads++;
+			} else if((si->agroup.agname[0] != '\0')
+					  && (strcmp(agname, si->agroup.agname) == 0)) {
+				nrthreads++;
+			}
 		}
 		udpthreads = (pthread_t *)malloc(nrthreads * sizeof(pthread_t));
 		if(udpthreads == NULL) {
@@ -1119,6 +1138,11 @@ int ksr_udp_start_mtreceiver(int child_rank, int *woneinit)
 		memset(udpthreads, 0, nrthreads * sizeof(pthread_t));
 		i = 0;
 		for(si = udp_listen; si; si = si->next) {
+			if(!((agname == NULL)
+					   || ((si->agroup.agname[0] != '\0')
+							   && (strcmp(agname, si->agroup.agname) == 0)))) {
+				continue;
+			}
 			LM_DBG("creating udp thread worker[%d] [%.*s]\n", i,
 					si->sock_str.len, si->sock_str.s);
 			rc = pthread_create(

@@ -40,6 +40,6 @@ int udp_init(struct socket_info *si);
 int udp_send(struct dest_info *dst, char *buf, unsigned len);
 int udp_rcv_loop(void);
 
-int ksr_udp_start_mtreceiver(int child_rank, int *woneinit);
+int ksr_udp_start_mtreceiver(int child_rank, char *agname, int *woneinit);
 
 #endif
