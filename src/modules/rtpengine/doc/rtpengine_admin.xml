@@ -2404,6 +2404,25 @@ modparam("rtpengine", "ping_mode", 0)
 
 	</section>
 
+<section id="rtpengine.p.ping_interval">
+	<title><varname>ping_interval</varname> (integer)</title>
+	<para>
+		Specify the interval in seconds between pings to all rtpengines registered.
+	</para>
+	<para>
+		<emphasis>
+			Default value is <quote>60</quote>.
+		</emphasis>
+	</para>
+	<example>
+	<title>Set <varname>ping_interval</varname> parameter</title>
+	<programlisting format="linespecific">
+...
+modparam("rtpengine", "ping_interval", 10)
+...
+	</programlisting>
+	</example>
+</section>
 
 	<section>
 	<title>Functions</title>
