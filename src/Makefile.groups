@@ -28,7 +28,7 @@ mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp \
 # - common modules depending on database
 mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \
 			  db_cluster dialog dispatcher domain drouting group \
-			  htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
+			  htable topos_htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
 			  pipelimit prefix_route registrar sipcapture siptrace speeddial \
 			  sqlops uac uri_db userblocklist usrloc secfilter
 
