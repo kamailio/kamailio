@@ -1,3 +1,785 @@
+===================== 2024-11-12 Version 5.8.4 Released =====================
+
+===================== Changes Since Version 5.8.3 ===========================
+
+
+commit 7d216c69fa226a06f6163a2dd006ec798d57cd95
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 12 10:57:22 2024 +0100
+
+    Makefile.defs: version set to 5.8.4
+
+commit f1b73eab3f6ab5221b65a260a9069a09535a6d86
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 12 10:55:41 2024 +0100
+
+    pkg/kamailio: version set 5.8.4 for rpms and alpine
+
+commit b0c5f1340fdedde605aafe57d2a6568b4f170249
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 12 10:54:41 2024 +0100
+
+    pkg/kamailio/deb: set version to 5.8.4
+
+commit 7c3b8823ce7ba1395e5b6c59c7e0c2aa0bbeb900
+Author: anmartan <a.martin@zaleos.net>
+Date:   Thu Jul 4 09:30:02 2024 +0200
+
+    core: Improved URN parsing according to RFC8141
+    
+    - Improved URN parsing to allow consuming URNs that contain 3 or more colons. Previosly URI parser treated some of the colons as separator between host and port causing the URN parsing to fail.
+    
+    (cherry picked from commit 6cdd56bb85e1a10ebbb29c2633fb47bf7b56585e)
+
+commit 4d7baba092a0b84ed91171af90ceaee71d0e1e05
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Nov 6 10:31:18 2024 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit bf038a0a84bdecd69d749464880826f8c4b894e6
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Tue Nov 5 16:46:11 2024 +0000
+
+    sst: use proper name for ims dialog module in docs
+    
+    (cherry picked from commit 3b3c60f94dd93e460d5bda40c73b2052a4f1bf33)
+
+commit b292837507dd60f45ebc1cca8317b6c0d8c3d369
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Tue Nov 5 16:45:50 2024 +0000
+
+    snmpstats: use proper name for ims module in docs
+    
+    (cherry picked from commit 6c408ff8c7b558a725d67898d5f1a8dc3d717c61)
+
+commit a52fe973b064e288d9f150a6c36cb35eecb4a161
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 3 19:38:46 2024 +0100
+
+    timer: docs - updates to examples
+    
+    (cherry picked from commit 21c7066842a034d8674e5fac2b7c6fd38b0073e8)
+
+commit 351157cad257986a014dc659231ae0ee48a8d538
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 29 08:20:44 2024 +0100
+
+    core: parser sdp - check body end for extract_ice_option()
+    
+    (cherry picked from commit 79d7fae0f26f577356f017cfff5e00c348cf259c)
+
+commit e233bc60092242e886a0336104435cd412c6ddd9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 28 20:52:19 2024 +0100
+
+    timer: export timer_enable(...) to kemi
+    
+    - GH #4008
+    
+    (cherry picked from commit ad919796b24d0c38af136cbad2563e6f98df4b74)
+
+commit 08b4a6d280f851389252f4016e9032533a82e12d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 27 19:45:07 2024 +0100
+
+    timer: formatted exported structures
+    
+    (cherry picked from commit 8e2541ec6126b5665e92cde5eaf17f5a4970cb8d)
+
+commit 72f08c6fff97d3a2498498eb01ce6c11a8e9f41c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Oct 26 19:33:26 2024 +0200
+
+    topos: deal with BYE without contact header for mode 1
+    
+    (cherry picked from commit a4f0ee5da93ad64d449c7a95ecad2f3d70aeb975)
+
+commit 18dad74a091e693a0bf939dddf144348409e6402
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 25 20:45:59 2024 +0200
+
+    core: parser sdp - check len gor extracting fmtp
+    
+    (cherry picked from commit d10257fbfdbb3e3e73c0fe60a224585822bdd7b3)
+
+commit fa9965d33cec01fd503bb89f2076b93aa173fd18
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 24 17:40:04 2024 +0200
+
+    dispatcher: debug messages for checking active destinations
+    
+    (cherry picked from commit 3e5f8deced0cb05710e631601e9098505f1d230a)
+
+commit 19729e29b24915b84079831a37e9ade5b3a9d473
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 23 08:21:16 2024 +0200
+
+    topos: extended error log message
+    
+    - ensure headers are parsed for storage record
+    
+    (cherry picked from commit a6b924be7fd7d4ce6a92ad5a0247077b09a29474)
+
+commit 61d3cc66f97f283c78bec77244bc61610a191ee2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 23 07:48:34 2024 +0200
+
+    topos: catch ACK without contact that needs no storage updates
+    
+    (cherry picked from commit 824e81319b60054feb81c37b3a8be80523f8c95d)
+
+commit ac908d6a4cee146c35c28210fa937aa55f1cda70
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 16:29:58 2024 +0200
+
+    lrkproxy: use core str comparison functions and macros
+    
+    (cherry picked from commit c67d8fa0b1015d73b34430f6f8a6afe22ca10cbe)
+
+commit 466c5419634a7cb9c9f3cf38b15f36d603bdc1da
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 16:17:35 2024 +0200
+
+    pipelimit: use core str comparison functions
+    
+    (cherry picked from commit 9ee189883549faffb21d3ae113dafd7ad95757af)
+
+commit af963c81775b9c93d37428fe86264cb96b357f05
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 22 16:12:42 2024 +0200
+
+    ratelimit: use core str comparison functions
+    
+    (cherry picked from commit c44a349964081d397ab9efa3504737bf369f8cf5)
+
+commit cfb143196d0b727f16add51590bc007badde41cf
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Thu Oct 3 08:28:50 2024 +0000
+
+    db_schema: Add ims_icscf db schema
+    
+    (cherry picked from commit e2ea727988828a9683ef112637e25ee4d58032f7)
+
+commit a97199e0114b9cfc0804c3d8f73471f58aec3432
+Author: Dragos Vingarzan <vingarzan@gmail.com>
+Date:   Wed Oct 2 14:47:43 2024 +0200
+
+     ims_registrar_scscf: fixing em_max_expires
+    
+    (cherry picked from commit 3f38206d88af0fae4c64ee3072eb78ea68f813cb)
+
+commit 0408c2cb412f0df0a17b70aa4d15026a9ef3a9a7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 22 07:41:08 2024 +0200
+
+    core: parser sdp - check length for rtpmap extract
+    
+    (cherry picked from commit c823f41350ab9186a323707e9be32e31922bec17)
+
+commit 255db278f078c8868f28e6451d92b808fc3b6687
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 22 07:34:29 2024 +0200
+
+    jwt: print decode result in error log message
+    
+    (cherry picked from commit 0cbb2eb035c7d2a29ae707cde94a2c0573e0ffd5)
+
+commit a688b24ac777cb93306a1a777e687de625d6e4d0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 17 08:21:43 2024 +0200
+
+    core: parser sdp - check if body is enough for rtpmap
+    
+    (cherry picked from commit c7f89e81504c425a83f3423bc4b4d9d1a8a48909)
+
+commit ba194c482f72618a896864d5a9738def33813050
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 16 11:46:37 2024 +0200
+
+    async: docs updates for async_sleep()
+    
+    (cherry picked from commit cce29af41120cf30c4c22979e772d1ca666408c6)
+
+commit 98032a98eaf764140825c4a2c0eb64a927a55c3d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 16 10:49:16 2024 +0200
+
+    core: socket info - skip ipv6 link local on interface discovery
+    
+    (cherry picked from commit a5b1099c9061551a0b31db8ef88efb2e376b290c)
+
+commit 8c3eb992e07bbb0f0f9a123c124b23d510250c9b
+Author: Eik Rentzow <rentzow@gmx.de>
+Date:   Tue Oct 8 09:11:53 2024 +0200
+
+    siputils: bug fix for sip_p_charging_vector
+    
+    - Bug fix for #3929 and further improvements.
+    - New buffer usage for P-Charging-Vector handling.
+    - Added $pcv(status) pseudo-var.
+    - Added return values for sip_p_charging_vector().
+    - Much improved error case handling.
+    - Use send interface for icid-genearted-at:
+      The icid-generated-at parameter should carry the ip adress of the
+      egress interface and not of the interface where the message was received.
+      This is in accordance with other SBC solutions.
+    
+    (cherry picked from commit d7c8bc5c58f672004894733d0e6d2a7cb00efe7a)
+
+commit 13579e6d39898afbe6064c645d5a0f8ec7a69b62
+Author: Eik Rentzow <rentzow@gmx.de>
+Date:   Tue Oct 8 07:16:55 2024 +0000
+
+    siputils/doc: updated pcv documentation [skip ci]
+    
+    - Updated documentation to reflect the changes to the $pcv pseudo-var
+      and the sip_p_charging_vector() function.
+    
+    (cherry picked from commit 05a30ed53fc5657a2d86e1c1bdb9277571a8d17e)
+
+commit e650ace5948c76ea2d8eb7eaeebb5c349970447d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 11 12:37:08 2024 +0200
+
+    core: parser sdp - check field length when extracting the value
+    
+    (cherry picked from commit e802f9187383feb7fdd96c4ded44fda403da4535)
+
+commit eb058dba967bb772c8413356163ec6c13533ab6b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 11 12:00:53 2024 +0200
+
+    core: parse sdp - check for body limit on mixed content
+    
+    (cherry picked from commit d4bbde619bbf808edebb31e131b3783ba2a4b34d)
+
+commit 0ba1666fec15ed292e7fe1764bfa985ef282d84e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 11 11:41:02 2024 +0200
+
+    core: parser sdp - check for length of sendrecv attribute
+    
+    (cherry picked from commit fc4817064f81ef9a82b1b1468b1b8a4ae352c1f2)
+
+commit a1e79755f4d2827a68f092dea1f138d02ff51f0b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 11 11:02:35 2024 +0200
+
+    siptrace: docs for data_mode param
+    
+    (cherry picked from commit 337c06b6b43606536f1d37ebfd6e4240aab9cf5a)
+
+commit 9a24032160de4205585a890c2195c3f587247c2f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 11 10:57:05 2024 +0200
+
+    siptrace: added parameter data_mode
+    
+    - control if bind address of advertised address are used
+    
+    (cherry picked from commit 9d8432f3ffb1f9d07874452e23140be21e75c530)
+
+commit faf27cef7118a35bfab4aed5185148df6b16769b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 9 19:50:48 2024 +0200
+
+    siptrace: use advertise address if set for trace mode 1 callbacks
+    
+    (cherry picked from commit 9fb15e2ef93a0d606fa4c6d695a2f13a4b0a8031)
+
+commit fab08023dc425919c77dc960b0944eb876650092
+Author: aelezovic <adnan.elezovic@infobip.com>
+Date:   Wed Oct 9 12:17:54 2024 +0200
+
+    mongodb: fix cursor error resulting empty result set
+    
+    (cherry picked from commit afebe6b2e597755ae37fd37bdf011fbb2fbbf8fe)
+
+commit 66243e19149d3f4324089f4f54bf86089b8b72b9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 8 15:03:55 2024 +0200
+
+    http_async_client: fix warning deprecated-non-prototype
+    
+    > Warning: ./http_multi.h:64:5: warning: a function declaration without a prototype is deprecated in all versions of C and is treated as a zero-parameter prototype in C23, conflicting with a subsequent definition [-Wdeprecated-non-prototype]
+    >    64 | int init_http_multi();
+    >       |     ^
+    > http_multi.c:403:5: note: conflicting prototype is here
+    >   403 | int init_http_multi(struct event_base *evbase, struct http_m_global *wg)
+    >       |     ^
+    > 1 warning generated.
+    
+    (cherry picked from commit 2737bb19a363be7c0d67749b75f11c7e9d2d09f3)
+
+commit 844a7a072abf5fad466a20bcae33e1d85844d1f4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 8 14:58:40 2024 +0200
+
+    sms: fix warning and remove old logic
+    
+    > Warning: libsms_getsms.c:107:25: warning: implicit conversion from 'int' to 'char' changes value from 183 to -73 [-Wconstant-conversion]
+    >   107 |                         ascii[charcounter] = 183;
+    >       |                                            ~ ^~~
+    > 1 warning generated.
+    
+    (cherry picked from commit ee052fd0a7e7dc703a186a01926a8e64c635d636)
+
+commit 8db46badd40606e910350e4ea3c28f816d3c02b6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 8 14:27:03 2024 +0200
+
+    kazoo: fix deprecation warning
+    
+    fixes #3466
+    
+    From https://github.com/alanxz/rabbitmq-c/blob/c3e4176659aac7d0e497da90a46c08c63b98282a/include/rabbitmq-c/ssl_socket.h#L250
+    > * \deprecated Since v0.13.0 this is a no-op. OpenSSL automatically manages
+    > *    library initialization and uninitialization.
+    
+    > Warning: kz_amqp.c:857:3: warning: 'amqp_set_initialize_ssl_library' is deprecated [-Wdeprecated-declarations]
+    >                 amqp_set_initialize_ssl_library(1);
+    >                 ^
+    > /usr/include/rabbitmq-c/ssl_socket.h:249:1: note: 'amqp_set_initialize_ssl_library' has been explicitly marked deprecated here
+    > AMQP_DEPRECATED_EXPORT
+    > ^
+    > /usr/include/rabbitmq-c/export.h:29:46: note: expanded from macro 'AMQP_DEPRECATED_EXPORT'
+    > #  define AMQP_DEPRECATED_EXPORT AMQP_EXPORT AMQP_DEPRECATED
+    >                                              ^
+    > /usr/include/rabbitmq-c/export.h:25:43: note: expanded from macro 'AMQP_DEPRECATED'
+    > #  define AMQP_DEPRECATED __attribute__ ((__deprecated__))
+    >                                           ^
+    > 1 warning generated.
+    
+    (cherry picked from commit eeb17678d77548073a59b54c0a08ebdb48b25fa2)
+
+commit 02efd2aad688b2eec0bff7b743ce4b97128f0db1
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 8 14:17:34 2024 +0200
+
+    rabbitmq: remove deprecation warning
+    
+    From https://github.com/alanxz/rabbitmq-c/blob/c3e4176659aac7d0e497da90a46c08c63b98282a/include/rabbitmq-c/ssl_socket.h#L250
+    > * \deprecated Since v0.13.0 this is a no-op. OpenSSL automatically manages
+    > *    library initialization and uninitialization.
+    
+    > Warning: rabbitmq.c:574:3: warning: 'amqp_set_initialize_ssl_library' is deprecated [-Wdeprecated-declarations]
+    >                 amqp_set_initialize_ssl_library(1);
+    >                 ^
+    > /usr/include/rabbitmq-c/ssl_socket.h:249:1: note: 'amqp_set_initialize_ssl_library' has been explicitly marked deprecated here
+    > AMQP_DEPRECATED_EXPORT
+    > ^
+    > /usr/include/rabbitmq-c/export.h:29:46: note: expanded from macro 'AMQP_DEPRECATED_EXPORT'
+    > #  define AMQP_DEPRECATED_EXPORT AMQP_EXPORT AMQP_DEPRECATED
+    >                                              ^
+    > /usr/include/rabbitmq-c/export.h:25:43: note: expanded from macro 'AMQP_DEPRECATED'
+    > #  define AMQP_DEPRECATED __attribute__ ((__deprecated__))
+    >                                           ^
+    > 1 warning generated.
+    
+    (cherry picked from commit a2f7147dded679d025a902aa12beb048ee714c32)
+
+commit 2ad5b019f6c2a2afee8f0d575f92a02d375c0b54
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 8 13:26:32 2024 +0200
+
+    ims_usrloc_pcscf: fix warning deprecated-non-prototype
+    
+    > In file included from usrloc_db.c:12:
+    > Warning: ./usrloc_db.h:131:5: warning: a function declaration without a prototype is deprecated in all versions of C and is treated as a zero-parameter prototype in C2x, conflicting with a subsequent definition [-Wdeprecated-non-prototype]
+    > int use_location_pcscf_table();
+    >     ^
+    > usrloc_db.c:113:5: note: conflicting prototype is here
+    > int use_location_pcscf_table(str *domain)
+    >     ^
+    > 1 warning generated.
+    
+    (cherry picked from commit 35a87c98f4e84b65f82376dfb57050f43d0f355f)
+
+commit b55acf4ce764da70f7bd78e05598b681ef92775c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 8 13:20:18 2024 +0200
+
+    ims_usrloc_pcscf: fix warnings deprecated-non-prototype
+    
+    > In file included from pcontact.c:46:
+    > Warning: ./pcontact.h:63:5: warning: a function declaration without a prototype is deprecated in all versions of C and is treated as a zero-parameter prototype in C2x, conflicting with a subsequent definition [-Wdeprecated-non-prototype]
+    > int new_pcontact(
+    >     ^
+    > pcontact.c:166:5: note: conflicting prototype is here
+    > int new_pcontact(struct udomain *_d, str *_contact, struct pcontact_info *_ci,
+    >     ^
+    > 1 warning generated.
+    
+    > Warning: udomain.c:232:17: warning: passing arguments to 'new_pcontact' without a prototype is deprecated in all versions of C and is not supported in C2x [-Wdeprecated-non-prototype]
+    >         if(new_pcontact(_d->name, _contact, _ci, _c) < 0) {
+    >                        ^
+    > 1 warning generated.
+    
+    (cherry picked from commit 7dcc8405ccec19132d27516426137e35e464d4ad)
+
+commit 6bec8ed087c308c504da7ad217b55e1b5d81a090
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 8 13:10:57 2024 +0200
+
+    cdp: fix warning deprecated-non-prototype
+    
+    > Warning: peerstatemachine.c:120:19: warning: passing arguments to 'log_peer_list' without a prototype is deprecated in all versions of C and is not supported in C2x [-Wdeprecated-non-prototype]
+    >                                         log_peer_list(L_INFO);
+    >                                                      ^
+    > Warning: peerstatemachine.c:182:19: warning: passing arguments to 'log_peer_list' without a prototype is deprecated in all versions of C and is not supported in C2x [-Wdeprecated-non-prototype]
+    >                                         log_peer_list(L_INFO);
+    >                                                      ^
+    > Warning: peerstatemachine.c:395:19: warning: passing arguments to 'log_peer_list' without a prototype is deprecated in all versions of C and is not supported in C2x [-Wdeprecated-non-prototype]
+    >                                         log_peer_list(L_INFO);
+    >                                                      ^
+    > Warning: peerstatemachine.c:400:19: warning: passing arguments to 'log_peer_list' without a prototype is deprecated in all versions of C and is not supported in C2x [-Wdeprecated-non-prototype]
+    >                                         log_peer_list(L_INFO);
+    >                                                      ^
+    > Warning: peerstatemachine.c:420:19: warning: passing arguments to 'log_peer_list' without a prototype is deprecated in all versions of C and is not supported in C2x [-Wdeprecated-non-prototype]
+    >                                         log_peer_list(L_INFO);
+    >                                                      ^
+    > Warning: peerstatemachine.c:462:19: warning: passing arguments to 'log_peer_list' without a prototype is deprecated in all versions of C and is not supported in C2x [-Wdeprecated-non-prototype]
+    >                                         log_peer_list(L_INFO);
+    >                                                      ^
+    > Warning: peerstatemachine.c:467:19: warning: passing arguments to 'log_peer_list' without a prototype is deprecated in all versions of C and is not supported in C2x [-Wdeprecated-non-prototype]
+    >                                         log_peer_list(L_INFO);
+    >                                                      ^
+    > 7 warnings generated.
+    
+    (cherry picked from commit f49012d15a06b27875cf6bca211ad953968b5217)
+
+commit fa959e8cfda491612b7a13d1a18772400ddb8b96
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 8 13:07:37 2024 +0200
+
+    presence: fix warning conflicting prototype
+    
+    > Warning: presence_dmq.c:38:5: warning: a function declaration without a prototype is deprecated in all versions of C and is treated as a zero-parameter prototype in C2x, conflicting with a subsequent definition [-Wdeprecated-non-prototype]
+    > int pres_dmq_send_all_presentities();
+    >     ^
+    > presence_dmq.c:487:5: note: conflicting prototype is here
+    > int pres_dmq_send_all_presentities(dmq_node_t *dmq_node)
+    >     ^
+    > 1 warning generated.
+    
+    (cherry picked from commit 03e49d4e1d806f39ee6aadaedd183a6578108d96)
+
+commit 170d35f1f14f71f69bdfa6586997def8ddbdfd11
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 8 13:01:03 2024 +0200
+
+    tm: fix warning uninitialized variable
+    
+    > Warning: t_fwd.c:1919:46: warning: variable 'port' is uninitialized when used here [-Wuninitialized]
+    >                                         ret = forward_request_uac(p_msg, &host, port, &dst);
+    >                                                                                 ^~~~
+    > t_fwd.c:1843:21: note: initialize the variable 'port' to silence this warning
+    >         unsigned short port;
+    >                            ^
+    >                             = 0
+    > 1 warning generated.
+    
+    (cherry picked from commit ce4107a6f654a4bc4462efb90f3cc5e8c73bf9ed)
+
+commit b553882d8d87d3891f387832fe2d56223ef03624
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 8 10:59:16 2024 +0200
+
+    core/rand: fix -Wdeprecated-non-prototype
+    
+    > Warning: core/rand/isaac/rand.c:28:6: warning: a function definition without a prototype is deprecated in all versions of C and is not supported in C2x [-Wdeprecated-non-prototype]
+    > void isaac(ctx) randctx *ctx;
+    >      ^
+    > Warning: core/rand/isaac/rand.c:81:6: warning: a function definition without a prototype is deprecated in all versions of C and is not supported in C2x [-Wdeprecated-non-prototype]
+    > void randinit(ctx, flag) randctx *ctx;
+    
+    (cherry picked from commit 9475837b209c91366e8bb40416552b02c13aaf3a)
+
+commit 1d216f8764ebb0e8f78764e3778f34ab1cb3fa23
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 30 15:40:47 2024 +0200
+
+    core: socket info - do not use interface index as internal array index
+    
+    - there are cases when the interface number is high, even if there are
+      only a few real network interfaces, which can result in inability to
+      listen on them
+    
+    (cherry picked from commit 7acfe7723b4772ca45ce31ae98bf3d0b6948f50a)
+
+commit f3d510f6f1f59bb33ff6e3df08863f6a81d67d5d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 30 12:54:11 2024 +0200
+
+    core: socket info - relocate check for index to get more debugging details
+    
+    (cherry picked from commit b7dcbc37aceaefecf9a0f7367526a331d42269ea)
+
+commit 004e0e056178dfbaa1aca6e8d7364417dd115bb4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 25 10:07:44 2024 +0200
+
+    core: print errno on tcp bind failure
+    
+    - log message with value of sr_bind_ipv6_link_local
+    
+    (cherry picked from commit 621f3132708405939d3a40fb98ae57b793cd246e)
+
+commit 95371808084c547e01daf3ecdc7124c70dde78f5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 18 19:22:53 2024 +0200
+
+    core: reqorked check for incompatible modes of bind_ipv6_link_local
+    
+    (cherry picked from commit f7045d1c08d37e91ee7e96e415c06b218aee98fd)
+
+commit 8331cb1f87b31f66f87a90e7fbaa2553ea3f2728
+Author: Thomas <1258170+ThomasSevestre@users.noreply.github.com>
+Date:   Mon Sep 2 20:27:26 2024 +0200
+
+    topos_redis : show redis error for post mortem analysis
+    
+    (cherry picked from commit 72889e945041b6475a43c371aa4e20e99f5d1240)
+
+commit 24651787d54746647614be111ee5cb583e3da430
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 18 09:52:32 2024 +0200
+
+    core: use advertise port only when set for via header
+    
+    (cherry picked from commit abaf42a735b00af8cbfec90888d2ef3397e5040d)
+
+commit 96ebad5d1a3650961ca6e3cd22d4da0dec0929a6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Sep 16 19:37:03 2024 +0200
+
+    app_jsdt: add support for loong64
+    
+    From: liuxiang <liuxiang@loongson.cn>
+    > https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1060901
+    
+    fixes #3976
+    
+    (cherry picked from commit 5746db1c5a99eaeaf7f97d520232f014548c912d)
+
+commit 1cd3b749e699f2b83752a5b6c1b29f16084820d0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 16 15:27:42 2024 +0200
+
+    core: proper condition for bind_ipv6_link_local modes
+    
+    (cherry picked from commit 99710daa8b05a0a37ef3bb35e2ffd723908037f4)
+
+commit c62a1b6efd10f5c46cf87a9ea33ee4fff2bfdabb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 16 12:18:54 2024 +0200
+
+    core: use macro to check send_port_str value
+    
+    (cherry picked from commit 15d81a0151aa46a20f95fb8c6dc2665d03e741aa)
+
+commit af0ec5445393939288c86e976eba8f530a4100b1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 16 10:42:19 2024 +0200
+
+    core: use advertised port for recv socket only when set
+    
+    (cherry picked from commit c09a29369f03f6c5e621a94b5b853047490568aa)
+
+commit e3969c489b24490c667eb4680ee452f191da9577
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 16 09:15:40 2024 +0200
+
+    core: use advertised port only when explicitely set
+    
+    - do not fallback to socket port
+    
+    (cherry picked from commit 0f423f97607416edcff8d0f1612fad7af29b6064)
+
+commit 240b66b8d9ea9bf58e897bf9b35c4d91beb5c5ca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 14 22:07:35 2024 +0200
+
+    core: skip interfaces with index over max iface limit
+    
+    (cherry picked from commit fa17af660dc754cd46c747ec8c3216ef52fd4fcc)
+
+commit 499be2dcbefe30be2ed616064a04bc0b6ee42b29
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Sep 13 22:07:26 2024 +0200
+
+    ldap: remove unused variable in child_init
+    
+    fixes #3974
+    
+    > ldap_mod.c: In function âchild_initâ:
+    > ldap_mod.c:156:13: warning: unused variable âretâ [-Wunused-variable]
+    >   156 |         int ret = 0;
+    
+    (cherry picked from commit a078f14050b6d31bfbcd3562306923c0c4ad73e3)
+
+commit 54c6ac01e98866905c8654a42873f023c4e1ec7a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 13 08:50:35 2024 +0200
+
+    core: check for incompatible modes for bind_ipv6_link_local
+    
+    - a few more debug messages
+    
+    (cherry picked from commit 86770d203bde6859284ec8862be66d78efd2715a)
+
+commit 9947b5a548ff1802de70acccc1d8306d1b6ed76d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 12 16:23:02 2024 +0200
+
+    core: socket info - set address also for link local items
+    
+    - updates to log messages
+    
+    (cherry picked from commit fd95b95035a7da088a94888132326d463191da83)
+
+commit 4647ecd9c20a79967a8beed14262ad74dfdba661
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 12 10:34:55 2024 +0200
+
+    core: check for items with emtpy address when discovering the network interfaces
+    
+    - it may be returned on some OSes, preventing to start
+    
+    (cherry picked from commit bd4c068ee9c8e18dc76f8154d3fa4c438972b79c)
+
+commit 081e17b925a019c9971bf1296bc9a70d8df9d8ae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 12 10:10:33 2024 +0200
+
+    core: log message about interface flags made info
+    
+    - small updates to a couple of error messages
+    
+    (cherry picked from commit 15823c3eda3a332d22d9132a873d755aa024892f)
+
+commit 62a76d2fe3547ef6701e8b86f195396158f15660
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 10 18:01:57 2024 +0200
+
+    core: option to skip auto-bind on ipv6 local link
+    
+    - set bind_ipv6_link_local=2
+    
+    (cherry picked from commit 2bcd29a7a2981670baea0b7fb2e8454b5ad9f4d7)
+
+commit 4cb602385b4bb7b9df5cff9aac60ea0fa4f02f8f
+Author: Lucian Balaceanu <lucian.balaceanu@1and1.ro>
+Date:   Wed Sep 4 11:55:57 2024 +0300
+
+    core: parser - use sip_parser_log
+    
+    Silencing messages that tend to appear when processing HEP.
+    
+    (cherry picked from commit e6a3b3554af01e5141ba063df408a06b28261927)
+
+commit f6b6aeb9297b6782655199de9bcb82cc79de50a8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 5 11:28:08 2024 +0200
+
+    registrar: safety check for uri and remove duplicated aor extract
+    
+    - follow up of changes from previous commit
+    
+    (cherry picked from commit 60165196ad3144597c24eb9f7bb7fb0cd56f8c25)
+
+commit 32987e68f85500e2b37134c7a542ab7cefce5384
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 5 09:01:52 2024 +0200
+
+    core: try to lookup connection for WSS when TCPCONN_MATCH_STRICT is set
+    
+    - URIs have always transport ws, but most likely the connection is wss
+    - GH #3969
+    
+    (cherry picked from commit aa794581ecf105b5313d2f5b8bcfe516ab337936)
+
+commit 065e0514144f4e4f160ae15b515948c83711ff57
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 4 13:02:19 2024 +0200
+
+    registrar: use parsed uri parameter when provided for save()
+    
+    - instead of to-uri, aor being built from uri parameter
+    
+    (cherry picked from commit 21e2d96672ccbe65eebdf64f839a1ce465a11b7c)
+
+commit 6c88ef7c6abc45f72571aaa713f1d0dfb2d626e6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 4 12:43:59 2024 +0200
+
+    auth_xkey: use memcpy() instead of strncpy()
+    
+    (cherry picked from commit 29686758e1ce51abb8d8dd5bebb0d7fa1a019dc6)
+
+commit d5f13655909632a4f6e58ebb6ea2a13655511270
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 3 23:24:49 2024 +0200
+
+    registrar: when provided, use host part from uri parameter
+    
+    - instread of the To URI, which can be different
+    
+    (cherry picked from commit 1c2cb9980082a6a1a8e3986330d9b80c49ef7801)
+
+commit 113ff4b080546a7cd7c06f1ebc1ba303e329b309
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Sep 23 08:59:47 2024 +0200
+
+    pkg/kamailio/deb: support Ubuntu 24.04 (Noble Numbat) [skip ci]
+
+commit 672c3e75c4679681c1ddfb42f852682d93e42c31
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 19 08:54:32 2024 +0200
+
+    tm: remove extra + used before MAXFWD_HEADER_LEN
+    
+    (cherry picked from commit 307d6db88c218ffd5dc9d6e7de6425ac4ef24748)
+
+commit ab3530e753dece24e7b2851b0943fa23154d62ef
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Sep 13 22:08:17 2024 +0300
+
+    pkg/kamailio: fixed python module build on RHEL based dists
+    
+    (cherry picked from commit b1c9dac2c382a98997d5771921af5aa3235876c0)
+
+commit 98e094331d09b573985e98a54ff442166bc86594
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Aug 29 16:11:22 2024 +0800
+
+    app_python3: bump to 3.12 for el8/el9
+    
+    (cherry picked from commit 4d87f29248d36d873784827204f272116050343d)
+
+commit be1fe948b188ba84ec542e5622377d3772463e5b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 4 19:36:34 2024 +0200
+
+    nathelper: add_contact_alias() with parameters to enclose ipv6 in square brackets
+    
+    - the add_contact_alias() without parameters was doing it already
+    - discovered while investigating GH #3968
+    
+    (cherry picked from commit 744e5ac9678c0c9ef07bfb0de44c7c478a2debdc)
+
+commit 3c89405ed74152fd59365ad7dacb144092f5516a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 4 18:54:22 2024 +0200
+
+    nathelper: check if alias ipv6 has already square brackets
+    
+    - GH #3968
+    
+    (cherry picked from commit 6e01172a138d395fa3f7c3f25238647934137dba)
+
+
 ===================== 2024-09-04 Version 5.8.3 Released =====================
 
 ===================== Changes Since Version 5.8.2 ===========================
