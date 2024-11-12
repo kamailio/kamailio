@@ -133,86 +133,89 @@ static int child_init(int rank);
 static int permissions_init_rpc(void);
 
 
+/* clang-format off */
 /* Exported functions */
 static cmd_export_t cmds[] = {
-		{"allow_routing", (cmd_function)allow_routing_0, 0, 0, 0, ANY_ROUTE},
-		{"allow_routing", (cmd_function)allow_routing_1, 1, single_fixup, 0,
-				ANY_ROUTE},
-		{"allow_routing", (cmd_function)allow_routing_2, 2, load_fixup, 0,
-				ANY_ROUTE},
-		{"allow_register", (cmd_function)allow_register_1, 1, single_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"allow_register", (cmd_function)allow_register_2, 2, load_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"allow_register_include_port",
-				(cmd_function)allow_register_include_port_1, 1, single_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"allow_register_include_port",
-				(cmd_function)allow_register_include_port_2, 2, load_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"allow_trusted", (cmd_function)allow_trusted_0, 0, 0, 0, ANY_ROUTE},
-		{"allow_trusted", (cmd_function)allow_trusted_2, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"allow_trusted", (cmd_function)allow_trusted_3, 3, fixup_spve_all,
-				fixup_free_spve_all, ANY_ROUTE},
-		{"allow_uri", (cmd_function)allow_uri, 2, double_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"allow_address", (cmd_function)w_allow_address, 3, fixup_isi,
-				fixup_free_isi, ANY_ROUTE},
-		{"allow_source_address", (cmd_function)w_allow_source_address, 1,
-				fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
-		{"allow_source_address", (cmd_function)w_allow_source_address, 0, 0, 0,
-				ANY_ROUTE},
-		{"allow_source_address_group", (cmd_function)allow_source_address_group,
-				0, 0, 0, ANY_ROUTE},
-		{"allow_address_group", (cmd_function)allow_address_group, 2,
-				fixup_spve_igp, fixup_free_spve_igp, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"allow_routing", (cmd_function)allow_routing_0, 0, 0, 0, ANY_ROUTE},
+	{"allow_routing", (cmd_function)allow_routing_1, 1, single_fixup, 0,
+			ANY_ROUTE},
+	{"allow_routing", (cmd_function)allow_routing_2, 2, load_fixup, 0,
+			ANY_ROUTE},
+	{"allow_register", (cmd_function)allow_register_1, 1, single_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_register", (cmd_function)allow_register_2, 2, load_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_register_include_port",
+			(cmd_function)allow_register_include_port_1, 1, single_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_register_include_port",
+			(cmd_function)allow_register_include_port_2, 2, load_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_trusted", (cmd_function)allow_trusted_0, 0, 0, 0, ANY_ROUTE},
+	{"allow_trusted", (cmd_function)allow_trusted_2, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"allow_trusted", (cmd_function)allow_trusted_3, 3, fixup_spve_all,
+			fixup_free_spve_all, ANY_ROUTE},
+	{"allow_uri", (cmd_function)allow_uri, 2, double_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_address", (cmd_function)w_allow_address, 3, fixup_isi,
+			fixup_free_isi, ANY_ROUTE},
+	{"allow_source_address", (cmd_function)w_allow_source_address, 1,
+			fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"allow_source_address", (cmd_function)w_allow_source_address, 0, 0, 0,
+			ANY_ROUTE},
+	{"allow_source_address_group", (cmd_function)allow_source_address_group,
+			0, 0, 0, ANY_ROUTE},
+	{"allow_address_group", (cmd_function)allow_address_group, 2,
+			fixup_spve_igp, fixup_free_spve_igp, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /* Exported parameters */
 static param_export_t params[] = {
-		{"default_allow_file", PARAM_STRING, &perm_default_allow_file},
-		{"default_deny_file", PARAM_STRING, &perm_default_deny_file},
-		{"check_all_branches", INT_PARAM, &perm_check_all_branches},
-		{"allow_suffix", PARAM_STRING, &perm_allow_suffix},
-		{"deny_suffix", PARAM_STRING, &perm_deny_suffix},
-		{"db_url", PARAM_STR, &perm_db_url},
-		{"db_mode", INT_PARAM, &perm_db_mode},
-		{"trusted_table", PARAM_STR, &perm_trusted_table},
-		{"source_col", PARAM_STR, &perm_source_col},
-		{"proto_col", PARAM_STR, &perm_proto_col},
-		{"from_col", PARAM_STR, &perm_from_col},
-		{"ruri_col", PARAM_STR, &perm_ruri_col},
-		{"tag_col", PARAM_STR, &perm_tag_col},
-		{"priority_col", PARAM_STR, &perm_priority_col},
-		{"peer_tag_avp", PARAM_STR, &perm_tag_avp_param},
-		{"peer_tag_mode", INT_PARAM, &perm_peer_tag_mode},
-		{"address_table", PARAM_STR, &perm_address_table},
-		{"address_file", PARAM_STR, &perm_address_file_param},
-		{"grp_col", PARAM_STR, &perm_grp_col},
-		{"ip_addr_col", PARAM_STR, &perm_ip_addr_col},
-		{"mask_col", PARAM_STR, &perm_mask_col},
-		{"port_col", PARAM_STR, &perm_port_col},
-		{"max_subnets", PARAM_INT, &_perm_max_subnets},
-		{"load_backends", PARAM_INT, &_perm_load_backends},
-		{"reload_delta", PARAM_INT, &perm_reload_delta},
-		{"trusted_cleanup_interval", PARAM_INT, &perm_trusted_table_interval},
-		{0, 0, 0}};
-
+	{"default_allow_file", PARAM_STRING, &perm_default_allow_file},
+	{"default_deny_file", PARAM_STRING, &perm_default_deny_file},
+	{"check_all_branches", INT_PARAM, &perm_check_all_branches},
+	{"allow_suffix", PARAM_STRING, &perm_allow_suffix},
+	{"deny_suffix", PARAM_STRING, &perm_deny_suffix},
+	{"db_url", PARAM_STR, &perm_db_url},
+	{"db_mode", INT_PARAM, &perm_db_mode},
+	{"trusted_table", PARAM_STR, &perm_trusted_table},
+	{"source_col", PARAM_STR, &perm_source_col},
+	{"proto_col", PARAM_STR, &perm_proto_col},
+	{"from_col", PARAM_STR, &perm_from_col},
+	{"ruri_col", PARAM_STR, &perm_ruri_col},
+	{"tag_col", PARAM_STR, &perm_tag_col},
+	{"priority_col", PARAM_STR, &perm_priority_col},
+	{"peer_tag_avp", PARAM_STR, &perm_tag_avp_param},
+	{"peer_tag_mode", INT_PARAM, &perm_peer_tag_mode},
+	{"address_table", PARAM_STR, &perm_address_table},
+	{"address_file", PARAM_STR, &perm_address_file_param},
+	{"grp_col", PARAM_STR, &perm_grp_col},
+	{"ip_addr_col", PARAM_STR, &perm_ip_addr_col},
+	{"mask_col", PARAM_STR, &perm_mask_col},
+	{"port_col", PARAM_STR, &perm_port_col},
+	{"max_subnets", PARAM_INT, &_perm_max_subnets},
+	{"load_backends", PARAM_INT, &_perm_load_backends},
+	{"reload_delta", PARAM_INT, &perm_reload_delta},
+	{"trusted_cleanup_interval", PARAM_INT, &perm_trusted_table_interval},
+	{0, 0, 0}
+};
 
 /* Module interface */
 struct module_exports exports = {
-		"permissions",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* Exported functions */
-		params,			 /* Exported parameters */
-		0,				 /* RPC method exports */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* child initialization function */
-		mod_exit		 /* destroy function */
+	"permissions",	 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* Exported functions */
+	params,			 /* Exported parameters */
+	0,				 /* RPC method exports */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* child initialization function */
+	mod_exit		 /* destroy function */
 };
+/* clang-format on */
 
 
 /*
