@@ -156,7 +156,7 @@ def ksr_script_child_init():
 
     <section>
 	<title>Functions</title>
- 	<section id="app_python3.f.app_python3s_exec">
+ 	<section id="app_python3s.f.app_python3s_exec">
 	    <title>
 		<function moreinfo="none">app_python3s_exec(method [, param])</function>
 	    </title>
@@ -281,4 +281,3 @@ cfgengine "python"
 	</section>
 
 </chapter>
-
