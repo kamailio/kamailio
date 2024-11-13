@@ -316,10 +316,19 @@ int th_build_socket_strings(socket_info_t *socket)
 	struct str_hash_entry *table_entry = NULL;
 	str *socket_ip = NULL;
 
+	if(socket->sockname.s == NULL || socket->sockname.len <= 0) {
+		LM_ERR("the socket [%.*s] has no name - it must be set\n",
+				socket->address_str.len, socket->address_str.s);
+		return -1;
+	}
+
 	if(str_hash_get(
 			   th_socket_hash_table, socket->sockname.s, socket->sockname.len)
-			!= 0)
+			!= 0) {
+		LM_DBG("entry found for socket name [%.*s]\n", socket->sockname.len,
+				socket->sockname.s);
 		return 0;
+	}
 
 	socket_strings = pkg_mallocxz(sizeof(struct th_socket_strings));
 	if(socket_strings == NULL) {
