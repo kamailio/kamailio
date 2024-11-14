@@ -237,6 +237,7 @@ Conflicts:  kamailio-dialplan < %ver, kamailio-dnssec < %ver
 Conflicts:  kamailio-geoip < %ver, kamailio-gzcompress < %ver
 Conflicts:  kamailio-http_client < %ver
 Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
+Conflicts:  kamailio-jwt < %ver
 Conflicts:  kamailio-kazoo < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lost < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-nats < %ver
@@ -588,6 +589,17 @@ BuildRequires:  json-c-devel
 %description    json
 JSON string handling and RPC modules for Kamailio.
 %endif
+
+
+%package    jwt
+Summary:    JWT (JSON Web Token) functions module for Kamailio
+Group:      %{PKGGROUP}
+Requires:   libjwt, kamailio = %ver
+BuildRequires:  libjwt-devel
+
+%description    jwt
+This module provides JWT (JSON Web Token) functions to be used in Kamailio configuration file.
+It relies on libjwt (at least v1.12.0) library (https://github.com/benmcollins/libjwt).
 
 
 %if %{with kazoo}
@@ -1245,6 +1257,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     kjson \
 %endif
     kjsonrpcs \
+    kjwt \
 %if %{with kazoo}
     kkazoo \
 %endif
@@ -1358,6 +1371,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kjson \
 %endif
     kjsonrpcs \
+    kjwt \
 %if %{with kazoo}
     kkazoo \
 %endif
@@ -2018,6 +2032,12 @@ fi
 %{_libdir}/kamailio/modules/json.so
 %{_libdir}/kamailio/modules/jsonrpcc.so
 %endif
+
+
+%files      jwt
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.jwt
+%{_libdir}/kamailio/modules/jwt.so
 
 
 %if %{with kazoo}
