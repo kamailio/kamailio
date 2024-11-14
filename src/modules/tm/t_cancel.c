@@ -360,7 +360,7 @@ int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
 	if(rt >= 0) {
-		LM_ALERT("tm:local-request found [%d]\n", rt);
+		LM_DBG("tm:local-request found [%d]\n", rt);
 		run_top_route(event_rt.rlist[rt], &msg, 0);
 	} else {
 		if(keng != NULL) {
