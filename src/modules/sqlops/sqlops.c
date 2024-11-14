@@ -140,12 +140,15 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	int ret;
+
 	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0;
 
-	ret = sql_connect((sqlops_connect_mode == 1) ? 1 : 0);
+	ret = sql_connect((sqlops_connect_mode == 1 || sqlops_connect_mode == 2)
+							  ? sqlops_connect_mode
+							  : 0);
 
-	LM_DBG("SQL result: %d \n", ret);
+	LM_DBG("SQL result[%d] process rank[%d]\n", ret, rank);
 
 	if(ret != 0 && sqlops_connect_mode == 1) {
 		LM_INFO("SQL result: %d but start_without_db_connection enabled - "
@@ -211,8 +214,9 @@ static int sql_check_connection(sql_con_t *dbl)
 		return 0;
 	}
 
-	if(sqlops_connect_mode != 1) {
-		LM_CRIT("no database handle with reconnect disabled\n");
+	if(sqlops_connect_mode != 1 && sqlops_connect_mode != 2) {
+		LM_CRIT("no database handle with reconnect disabled [%d]\n",
+				sqlops_connect_mode);
 		return -1;
 	}
 
@@ -231,7 +235,7 @@ static int sql_query(struct sip_msg *msg, char *dbl, char *query, char *res)
 {
 	str sq;
 	if(sql_check_connection((sql_con_t *)dbl) < 0) {
-		LM_ERR("invalid connection to database");
+		LM_ERR("invalid connection to database\n");
 		return -2;
 	}
 	if(pv_printf_s(msg, (pv_elem_t *)query, &sq) != 0) {
@@ -250,7 +254,7 @@ static int sql_query_async(struct sip_msg *msg, char *dbl, char *query)
 {
 	str sq;
 	if(sql_check_connection((sql_con_t *)dbl) < 0) {
-		LM_ERR("invalid connection to database");
+		LM_ERR("invalid connection to database\n");
 		return -2;
 	}
 	if(pv_printf_s(msg, (pv_elem_t *)query, &sq) != 0) {
@@ -267,7 +271,7 @@ static int sql_query_async(struct sip_msg *msg, char *dbl, char *query)
 static int sql_xquery(struct sip_msg *msg, char *dbl, char *query, char *res)
 {
 	if(sql_check_connection((sql_con_t *)dbl) < 0) {
-		LM_ERR("invalid connection to database");
+		LM_ERR("invalid connection to database\n");
 		return -2;
 	}
 	return sql_do_xquery(
@@ -280,7 +284,7 @@ static int sql_xquery(struct sip_msg *msg, char *dbl, char *query, char *res)
 static int sql_pvquery(struct sip_msg *msg, char *dbl, char *query, char *res)
 {
 	if(sql_check_connection((sql_con_t *)dbl) < 0) {
-		LM_ERR("invalid connection to database");
+		LM_ERR("invalid connection to database\n");
 		return -2;
 	}
 	return sql_do_pvquery(
