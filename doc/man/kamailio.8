@@ -8,13 +8,15 @@ kamailio \- a very fast and configurable SIP server
 .SH SYNOPSIS
 .B kamailio
 [
-.B \-hfcmMdVIhEeblLnvKrRDTNWwtugPGSQOaAxXY
+.B \-hfcmMdVIhEebBlLnvKrRDTNWwtugPGSQOaAxXY
 ] [
 .BI \-a " auto\-aliases\-mode"
 ] [
 .BI \-A " pre\-processor\-define"
 ] [
 .BI \-b " max_rcv_buf_size"
+] [
+.BI \-B " max_snd_buf_size"
 ] [
 .BI \-f " config\-file"
 ] [
@@ -68,7 +70,10 @@ default is yes.
 Add config pre-processor define (e.g., -A WITH_AUTH, -A N=1, -A X='"Y"')
 .TP
 .BI \-b " max_rcv_buf_size"
-Maximum receive buffer size which will not be exceeded by the auto-probing procedure even if the OS allows.
+Maximum OS UDP receive buffer size which will not be exceeded by auto-probing-and-increase procedure even if OS allows.
+.TP
+.BI \-B " max_snd_buf_size"
+Maximum OS UDP send buffer size which will not be exceeded by auto-probing-and-increase procedure even if OS allows.
 .TP
 .BI \-c
 Checks the config file and displays the aliases and listen interface list.
@@ -132,10 +137,18 @@ Turns on via host checking when forwarding replies.
 Listens on the specified address/interface. Multiple
 .B \-l
 mean listening on multiple addresses. The address format is
-[proto:]address[:port], where proto = udp|tcp and
-address = host|ip_address|interface_name. Example: -l localhost,
--l udp:127.0.0.1:5080, -l eth0:5062.
-The default behaviour is to listen on all the ipv4 interfaces.
+[proto:]addr_lst[:port][/advaddr][/socket_name],
+where proto=udp|tcp|tls|sctp,
+addr_list = addr|(addr, addrress),
+addr=host|ip_address|interface_name,
+advaddr=addr[:port] (advertised address) and
+socket_name=identifying name.
+E.g: -l localhost, -l udp:127.0.0.1:5080, -l eth0:5062,
+-l udp:127.0.0.1:5080/1.2.3.4:5060,
+-l udp:127.0.0.1:5080//local,
+-l udp:127.0.0.1:5080/1.2.3.4:5060/local,
+-l \"sctp:(eth0)\", -l \"(eth0, eth1, 127.0.0.1):5065\".
+The default behaviour is to listen on all the interfaces.
 .TP
 .BI \-\-loadmodule\fR=\fIname
 load the module specified by name
