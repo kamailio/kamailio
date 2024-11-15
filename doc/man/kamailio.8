@@ -8,13 +8,15 @@ kamailio \- a very fast and configurable SIP server
 .SH SYNOPSIS
 .B kamailio
 [
-.B \-hfcmMdVIhEeblLnvKrRDTNWwtugPGSQOaAxXY
+.B \-hfcmMdVIhEebBlLnvKrRDTNWwtugPGSQOaAxXY
 ] [
 .BI \-a " auto\-aliases\-mode"
 ] [
 .BI \-A " pre\-processor\-define"
 ] [
 .BI \-b " max_rcv_buf_size"
+] [
+.BI \-B " max_snd_buf_size"
 ] [
 .BI \-f " config\-file"
 ] [
@@ -68,7 +70,10 @@ default is yes.
 Add config pre-processor define (e.g., -A WITH_AUTH, -A N=1, -A X='"Y"')
 .TP
 .BI \-b " max_rcv_buf_size"
-Maximum receive buffer size which will not be exceeded by the auto-probing procedure even if the OS allows.
+Maximum OS UDP receive buffer size which will not be exceeded by auto-probing-and-increase procedure even if OS allows.
+.TP
+.BI \-B " max_snd_buf_size"
+Maximum OS UDP send buffer size which will not be exceeded by auto-probing-and-increase procedure even if OS allows.
 .TP
 .BI \-c
 Checks the config file and displays the aliases and listen interface list.
