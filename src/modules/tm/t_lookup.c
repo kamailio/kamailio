@@ -150,6 +150,18 @@ int get_t_branch()
 	return T_branch;
 }
 
+void tm_get_tb(struct cell **t, int *branch)
+{
+	*t = T;
+	*branch = T_branch;
+}
+
+void tm_set_tb(struct cell *t, int branch)
+{
+	T = t;
+	T_branch = branch;
+}
+
 /**
  * return the transaction by combining get() and t_check_msg()
  * - if T is not set, checks the transactions table for msg, and if found,
