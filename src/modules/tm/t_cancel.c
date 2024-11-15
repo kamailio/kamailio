@@ -417,8 +417,7 @@ void rpc_cancel(rpc_t *rpc, void *c)
 		return;
 	}
 
-	orig_t = get_t();
-	orig_branch = get_t_branch();
+	tm_get_tb(&orig_t, &orig_branch);
 	if(t_lookup_callid(&trans, callid_s, cseq_s) < 0) {
 		LM_DBG("Lookup failed\n");
 		rpc->fault(c, 400, "Transaction not found");
@@ -433,7 +432,7 @@ void rpc_cancel(rpc_t *rpc, void *c)
 
 	/* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
 	UNREF(trans);
-	set_t(orig_t, orig_branch);
+	tm_set_tb(orig_t, orig_branch);
 	j = 0;
 	while(i) {
 		j++;
