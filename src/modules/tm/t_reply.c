@@ -2990,6 +2990,8 @@ void rpc_reply(rpc_t *rpc, void *c)
 {
 	int ret;
 	struct cell *trans;
+	tm_cell_t *orig_t = NULL;
+	int orig_branch;
 	unsigned int hash_index, label, code;
 	str ti, body, headers, tag, reason;
 
@@ -3025,6 +3027,7 @@ void rpc_reply(rpc_t *rpc, void *c)
 	}
 	LM_DBG("hash_index=%u label=%u\n", hash_index, label);
 
+	tm_get_tb(&orig_t, &orig_branch);
 	if(t_lookup_ident(&trans, hash_index, label) < 0) {
 		ERR("Lookup failed\n");
 		rpc->fault(c, 481, "No such transaction");
@@ -3034,6 +3037,7 @@ void rpc_reply(rpc_t *rpc, void *c)
 	/* it's refcounted now, t_reply_with body unrefs for me -- I can
 	 * continue but may not use T anymore  */
 	ret = t_reply_with_body(trans, code, &reason, &body, &headers, &tag);
+	tm_set_tb(orig_t, orig_branch);
 
 	if(ret < 0) {
 		LM_ERR("Reply failed\n");
@@ -3056,6 +3060,8 @@ void rpc_reply_callid(rpc_t *rpc, void *c)
 {
 	int code;
 	tm_cell_t *trans;
+	tm_cell_t *orig_t = NULL;
+	int orig_branch;
 	str reason = {0, 0};
 	str totag = {0, 0};
 	str hdrs = {0, 0};
@@ -3098,6 +3104,7 @@ void rpc_reply_callid(rpc_t *rpc, void *c)
 		return;
 	}
 
+	tm_get_tb(&orig_t, &orig_branch);
 	if(t_lookup_callid(&trans, callid, cseq) < 0) {
 		rpc->fault(c, 404, "Transaction not found");
 		return;
@@ -3106,6 +3113,7 @@ void rpc_reply_callid(rpc_t *rpc, void *c)
 	/* it's refcounted now, t_reply_with body unrefs for me -- I can
 	 * continue but may not use T anymore  */
 	n = t_reply_with_body(trans, code, &reason, &body, &hdrs, &totag);
+	tm_set_tb(orig_t, orig_branch);
 
 	if(n < 0) {
 		rpc->fault(c, 500, "Reply failed");
