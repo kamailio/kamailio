@@ -144,6 +144,8 @@ int load_tm(struct tm_binds *tmb)
 	tmb->t_release_transaction = t_release_transaction;
 	tmb->t_uas_request_clean_parsed = t_uas_request_clean_parsed;
 	tmb->t_reply_error = ki_t_reply_error;
+	tmb->get_tb = tm_get_tb;
+	tmb->set_tb = tm_set_tb;
 	return 1;
 }
 
