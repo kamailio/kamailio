@@ -79,7 +79,9 @@ int get_t_branch(void);
 typedef void (*tsett_f)(struct cell *t, int branch);
 void set_t(struct cell *t, int branch);
 
+typedef void (*tm_get_tb_f)(struct cell **t, int *branch);
 void tm_get_tb(struct cell **t, int *branch);
+typedef void (*tm_set_tb_f)(struct cell *t, int branch);
 void tm_set_tb(struct cell *t, int branch);
 
 #define T_GET_TI "t_get_trans_ident"

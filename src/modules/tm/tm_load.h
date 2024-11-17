@@ -131,6 +131,8 @@ struct tm_binds
 	trelease_t t_release_transaction;
 	t_uas_request_clean_parsed_f t_uas_request_clean_parsed;
 	t_no_param_f t_reply_error;
+	tm_get_tb_f get_tb;
+	tm_set_tb_f set_tb;
 };
 
 typedef struct tm_binds tm_api_t;
