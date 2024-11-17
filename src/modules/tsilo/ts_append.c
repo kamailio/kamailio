@@ -113,8 +113,7 @@ int ts_append_to(struct sip_msg *msg, int tindex, int tlabel, char *table,
 				contact->len, contact->s);
 	}
 
-	orig_t = _tmb.t_gett();
-	orig_branch = _tmb.t_gett_branch();
+	_tmb.get_tb(&orig_t, &orig_branch);
 
 	/* lookup a transaction based on its identifier (hash_index:label) */
 	if(_tmb.t_lookup_ident(&t, tindex, tlabel) < 0) {
@@ -164,7 +163,7 @@ done:
 	 * Restore the original transaction (if any) */
 	if(t)
 		_tmb.unref_cell(t);
-	_tmb.t_sett(orig_t, orig_branch);
+	_tmb.set_tb(orig_t, orig_branch);
 
 	return ret;
 }
@@ -212,8 +211,7 @@ int ts_append_branches(sip_msg_t *msg, str *ruri)
 		LM_DBG("transaction %u:%u found for %.*s, going to append branches\n",
 				ptr->tindex, ptr->tlabel, t_uri->len, t_uri->s);
 
-		orig_t = _tmb.t_gett();
-		orig_branch = _tmb.t_gett_branch();
+		_tmb.get_tb(&orig_t, &orig_branch);
 
 		/* lookup a transaction based on its identifier (hash_index:label) */
 		if(_tmb.t_lookup_ident(&t, ptr->tindex, ptr->tlabel) < 0 || t == NULL) {
@@ -247,7 +245,7 @@ int ts_append_branches(sip_msg_t *msg, str *ruri)
 		/* unref the transaction which had been referred by t_lookup_ident() call.
 		 * Restore the original transaction (if any) */
 		_tmb.unref_cell(t);
-		_tmb.t_sett(orig_t, orig_branch);
+		_tmb.set_tb(orig_t, orig_branch);
 	}
 
 	unlock_entry_by_ruri(t_uri);
