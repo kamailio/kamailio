@@ -1784,6 +1784,8 @@ int add_interfaces(char *if_name, int family, unsigned short port,
 			continue;
 		if(family && family != ifa->ifa_addr->sa_family)
 			continue;
+		sockaddr2ip_addr(&addr, (struct sockaddr *)ifa->ifa_addr);
+		tmp = ip_addr2a(&addr);
 		if(ifa->ifa_addr->sa_family == AF_INET6) {
 			struct sockaddr_in6 *caddr = (struct sockaddr_in6 *)ifa->ifa_addr;
 			if((sr_bind_ipv6_link_local & KSR_IPV6_LINK_LOCAL_SKIP)
@@ -1794,8 +1796,6 @@ int add_interfaces(char *if_name, int family, unsigned short port,
 				continue;
 			}
 		}
-		sockaddr2ip_addr(&addr, (struct sockaddr *)ifa->ifa_addr);
-		tmp = ip_addr2a(&addr);
 		if(ifa->ifa_flags & IFF_LOOPBACK)
 			flags = SI_IS_LO;
 		else
