@@ -41,7 +41,7 @@ static param_export_t params[] = {
 		{"lookupd_port", PARAM_INT, &lookupd_port},
 		{"consumer_use_nsqd", PARAM_INT,
 				&consumer_use_nsqd}, // consume messages from nsqd instead of lookupd
-		{"topic_channel", PARAM_STRING | USE_FUNC_PARAM,
+		{"topic_channel", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)nsq_add_topic_channel},
 		{"nsqd_address", PARAM_STR, &nsqd_address},
 		{"nsqd_port", PARAM_INT, &nsqd_port},
