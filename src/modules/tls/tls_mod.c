@@ -316,7 +316,7 @@ static param_export_t params[] = {
 	{"renegotiation", PARAM_INT, &sr_tls_renegotiation},
 	{"xavp_cfg", PARAM_STR, &sr_tls_xavp_cfg},
 	{"event_callback", PARAM_STR, &sr_tls_event_callback},
-	{"rand_engine", PARAM_STR | USE_FUNC_PARAM,
+	{"rand_engine", PARAM_STR | PARAM_USE_FUNC,
 			(void *)ksr_rand_engine_param},
 	{"init_mode", PARAM_INT, &ksr_tls_init_mode},
 	{"key_password_mode", PARAM_INT, &ksr_tls_key_password_mode},
