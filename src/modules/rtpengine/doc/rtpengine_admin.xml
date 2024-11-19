@@ -889,7 +889,7 @@ modparam("rtpengine", "mos_min_roundtrip_pv", "$avp(mos_min_roundtrip)")
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking< quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
