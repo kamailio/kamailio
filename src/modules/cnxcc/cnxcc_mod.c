@@ -74,6 +74,7 @@ data_t _data;
 struct dlg_binds _dlgbinds;
 
 static int cnxcc_set_max_credit_fixup(void **param, int param_no);
+static int cnxcc_set_max_credit_fixup_free(void **param, int param_no);
 
 /*
  *  module core functions
@@ -153,7 +154,7 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[] = {
 	{"cnxcc_set_max_credit", (cmd_function) __set_max_credit, 6,
-		cnxcc_set_max_credit_fixup, NULL, ANY_ROUTE},
+		cnxcc_set_max_credit_fixup, cnxcc_set_max_credit_fixup_free, ANY_ROUTE},
 	{"cnxcc_set_max_time", (cmd_function) __set_max_time, 2,
 		fixup_spve_igp, fixup_free_spve_igp, ANY_ROUTE},
 	{"cnxcc_update_max_time", (cmd_function) __update_max_time, 2,
@@ -232,6 +233,23 @@ static int cnxcc_set_max_credit_fixup(void **param, int param_no)
 		case 5:
 		case 6:
 			return fixup_igp_all(param, param_no);
+		default:
+			LM_ERR("unexpected parameter number: %d\n", param_no);
+			return E_CFG;
+	}
+}
+
+static int cnxcc_set_max_credit_fixup_free(void **param, int param_no)
+{
+	switch(param_no) {
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+			return fixup_free_spve_all(param, param_no);
+		case 5:
+		case 6:
+			return fixup_free_igp_all(param, param_no);
 		default:
 			LM_ERR("unexpected parameter number: %d\n", param_no);
 			return E_CFG;
