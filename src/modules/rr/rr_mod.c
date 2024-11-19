@@ -131,14 +131,14 @@ static cmd_export_t cmds[] = {
  * \brief Exported parameters
  */
 static param_export_t params[] = {
-		{"append_fromtag", INT_PARAM, &append_fromtag},
-		{"enable_double_rr", INT_PARAM, &enable_double_rr},
-		{"enable_full_lr", INT_PARAM, &enable_full_lr},
+		{"append_fromtag", PARAM_INT, &append_fromtag},
+		{"enable_double_rr", PARAM_INT, &enable_double_rr},
+		{"enable_full_lr", PARAM_INT, &enable_full_lr},
 #ifdef ENABLE_USER_CHECK
 		{"ignore_user", PARAM_STR, &i_user},
 #endif
-		{"add_username", INT_PARAM, &add_username},
-		{"enable_socket_mismatch_warning", INT_PARAM,
+		{"add_username", PARAM_INT, &add_username},
+		{"enable_socket_mismatch_warning", PARAM_INT,
 				&enable_socket_mismatch_warning},
 		{"custom_user_avp", PARAM_STR, &custom_user_spec},
 		{"force_send_socket", PARAM_INT, &rr_force_send_socket},
