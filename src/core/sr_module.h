@@ -113,11 +113,6 @@ typedef int (*child_init_function)(int rank);
 #define PARAM_USE_FUNC (1U << (8 * sizeof(int) - 1))
 #define PARAM_TYPE_MASK(_x) ((_x) & (~PARAM_USE_FUNC))
 
-/* temporary, for backward compatibility only until all modules adjust it */
-#define STR_PARAM PARAM_STRING
-#define INT_PARAM PARAM_INT
-#define USE_FUNC_PARAM PARAM_USE_FUNC
-
 typedef unsigned int modparam_t;
 
 typedef int (*param_func_t)(modparam_t type, void *val);
