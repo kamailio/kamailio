@@ -190,7 +190,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 		{"node_hostname", PARAM_STR, &dbk_node_hostname},
-		{"amqp_connection", PARAM_STRING | USE_FUNC_PARAM,
+		{"amqp_connection", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)kz_amqp_add_connection},
 		{"amqp_max_channels", PARAM_INT, &dbk_channels},
 		{"amqp_timer_process_interval", PARAM_INT, &kz_timer_ms},
