@@ -58,7 +58,7 @@ static cmd_export_t cmds[] = {
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-		{"track", PARAM_STRING | USE_FUNC_PARAM, (void *)statsc_track_param},
+		{"track", PARAM_STRING | PARAM_USE_FUNC, (void *)statsc_track_param},
 		{"interval", PARAM_INT, &statsc_interval},
 		{"items", PARAM_INT, &statsc_items}, {0, 0, 0}};
 
