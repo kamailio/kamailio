@@ -48,7 +48,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t mod_params[] = {
-		{"slack_url", PARAM_STRING | USE_FUNC_PARAM, (void *)_slack_url_param},
+		{"slack_url", PARAM_STRING | PARAM_USE_FUNC, (void *)_slack_url_param},
 		{"channel", PARAM_STRING, &slack_channel}, // channel starts with #
 		{"username", PARAM_STRING, &slack_username},
 		{"icon_emoji", PARAM_STRING, &slack_icon}, {0, 0, 0}};
