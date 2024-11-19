@@ -50,15 +50,15 @@ MODULE_VERSION
 
 /* clang-format off */
 static param_export_t params[] = {
-	{"enable", INT_PARAM, &dmq_usrloc_enable},
-	{"sync", INT_PARAM, &_dmq_usrloc_sync},
-	{"replicate_socket_info", INT_PARAM, &_dmq_usrloc_replicate_socket_info},
-	{"batch_msg_contacts", INT_PARAM, &_dmq_usrloc_batch_msg_contacts},
-	{"batch_msg_size", INT_PARAM, &_dmq_usrloc_batch_msg_size},
-	{"batch_size", INT_PARAM, &_dmq_usrloc_batch_size},
-	{"batch_usleep", INT_PARAM, &_dmq_usrloc_batch_usleep},
+	{"enable", PARAM_INT, &dmq_usrloc_enable},
+	{"sync", PARAM_INT, &_dmq_usrloc_sync},
+	{"replicate_socket_info", PARAM_INT, &_dmq_usrloc_replicate_socket_info},
+	{"batch_msg_contacts", PARAM_INT, &_dmq_usrloc_batch_msg_contacts},
+	{"batch_msg_size", PARAM_INT, &_dmq_usrloc_batch_msg_size},
+	{"batch_size", PARAM_INT, &_dmq_usrloc_batch_size},
+	{"batch_usleep", PARAM_INT, &_dmq_usrloc_batch_usleep},
 	{"usrloc_domain", PARAM_STR, &_dmq_usrloc_domain},
-	{"usrloc_delete", INT_PARAM, &_dmq_usrloc_delete},
+	{"usrloc_delete", PARAM_INT, &_dmq_usrloc_delete},
 	{0, 0, 0}
 };
 
