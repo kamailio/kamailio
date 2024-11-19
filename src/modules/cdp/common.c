@@ -20,7 +20,7 @@ int get_accounting_record_type(AAAMessage *msg)
 
 int get_result_code(AAAMessage *msg)
 {
-	AAA_AVP *avp;
+	AAA_AVP *avp, *avp2;
 	AAA_AVP_LIST list;
 	list.head = 0;
 	list.tail = 0;
@@ -36,9 +36,9 @@ int get_result_code(AAAMessage *msg)
 			goto finish;
 		} else if(avp->code == AVP_Experimental_Result) {
 			list = AAAUngroupAVPS(avp->data);
-			for(avp = list.head; avp; avp = avp->next) {
-				if(avp->code == AVP_IMS_Experimental_Result_Code) {
-					rc = get_4bytes(avp->data.s);
+			for(avp2 = list.head; avp2; avp2 = avp2->next) {
+				if(avp2->code == AVP_IMS_Experimental_Result_Code) {
+					rc = get_4bytes(avp2->data.s);
 					AAAFreeAVPList(&list);
 					goto finish;
 				}

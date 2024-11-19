@@ -830,7 +830,7 @@ int receive_loop(peer *original_peer)
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
 							if(enable_tls) {
 								to_ssl(&sp2->tls_ctx, &sp2->tls_conn,
-										sp->tcp_socket, method);
+										sp2->tcp_socket, method);
 							}
 #endif
 						} else {
@@ -843,7 +843,7 @@ int receive_loop(peer *original_peer)
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
 							if(enable_tls) {
 								to_ssl(&sp2->tls_ctx, &sp2->tls_conn,
-										sp->tcp_socket, method);
+										sp2->tcp_socket, method);
 							}
 #endif
 						}
