@@ -80,8 +80,9 @@
 		<title>Set <varname>db_set_readonly</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("db_sqlite","db_set_readonly","/var/mydb.sqlite")
-modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using the sqlops module
+# Don't use trailing slashes for db_sqlite params
+modparam("db_sqlite","db_set_readonly","var/mydb.sqlite")
+modparam("sqlops","sqlcon","lrn=>sqlite:///var/mydb.sqlite") # Example if using the sqlops module
 ...
 		</programlisting>
 		</example>
@@ -94,6 +95,10 @@ modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using
 
 		Other journal mode are : DELETE | TRUNCATE | PERSIST | MEMORY | WAL | OFF
 
+		When setting this option, you must also set db_set_busy_timeout, because all kamailio sub-processes
+		will set this option individually and simultaneously, causing "database locked" errors on startup
+		if no busy timeout is set.
+
 		This parameter may be set multiple times to set many DB connections to readonly in the same configuration file.
 		</para>
 		<para>
@@ -105,11 +110,46 @@ modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using
 		<title>Set <varname>db_set_journal_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-# In this example we are using Write-Ahead Logging in order to update the database from another process(external to Kamailio) without facing any locking.
+# In this example we are using Write-Ahead Logging in order to update the database
+# from another process(external to Kamailio) without facing any locking.
 
-#!subst "!DB_FILE!/var/mydb.sqlite!"
+# Don't use trailing slashes for db_sqlite params
+#!subst "!DB_FILE!var/mydb.sqlite!"
 modparam("db_sqlite","db_set_readonly","DB_FILE")   # We are also opening the database in readonly
 modparam("db_sqlite","db_set_journal_mode","DB_FILE=WAL;")
+modparam("db_sqlite","db_set_busy_timeout","DB_FILE=300;") # wait 300ms max for locks to release
+modparam("sqlops","sqlcon","lrn=>sqlite:///DB_FILE")
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="db_sqlite.p.db_set_busy_timeout">
+		<title><varname>db_set_busy_timeout</varname> (int)</title>
+		<para>
+		This will set the db connection busy timeout to let it wait for the given milliseconds for
+		database locks to be released by other processes before giving up. Use this with the WAL
+		journaling mode if you run into "database locked" errors.
+		The value is the full path to the sqlite file used for example in any db_url or sqlops/sqlcon
+
+		This parameter may be set multiple times to set the busy-timeout for different DB connections
+		in the same configuration file.
+		</para>
+		<para>
+		<emphasis>
+			By default all the db connections are NOT using any busy timeout, causing them to immediately
+			give up and return a "databased locked" error if another process is locking it at the same time.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_set_busy_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# In this example we are using Write-Ahead Logging in combination with a busy-timeout to prevent
+"database locked" errors. Note that you have to leave out the leading slash in the DB file!
+
+#!subst "!DB_FILE!var/mydb.sqlite!"
+modparam("db_sqlite","db_set_journal_mode","DB_FILE=WAL;")
+modparam("db_sqlite","db_set_busy_timeout","DB_FILE=300;") # wait 300ms max for locks to release
 modparam("sqlops","sqlcon","lrn=>sqlite:///DB_FILE")
 ...
 		</programlisting>
@@ -164,4 +204,3 @@ modparam("auth_db", "db_url", "sqlite:///etc/kamailio/kamailio.db")
 		</example>
 	</section>
 </chapter>
-
