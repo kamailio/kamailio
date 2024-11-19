@@ -79,6 +79,7 @@ static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2);
 static int w_is_socket_name(sip_msg_t *msg, char *psockname, char *p2);
 
 static int fixup_file_op(void **param, int param_no);
+static int fixup_free_file_op(void **param, int param_no);
 
 static sr_kemi_xval_t _sr_kemi_corex_xval = {0};
 static str corex_evcb_reply_out = STR_NULL;
@@ -148,7 +149,7 @@ static cmd_export_t cmds[] = {
 	{"msg_iflag_is_set", (cmd_function)w_msg_iflag_is_set, 1,
 		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"file_read", (cmd_function)w_file_read, 2,
-		fixup_file_op, 0, ANY_ROUTE},
+		fixup_file_op, fixup_free_file_op, ANY_ROUTE},
 	{"file_write", (cmd_function)w_file_write, 2,
 		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"setxflag", (cmd_function)w_setxflag, 1,
@@ -905,6 +906,23 @@ static int fixup_file_op(void **param, int param_no)
 			return -1;
 		}
 		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+/**
+ *
+ */
+static int fixup_free_file_op(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	}
+
+	if(param_no == 2) {
+		return fixup_free_pvar_null(param, 1);
 	}
 
 	LM_ERR("invalid parameter number <%d>\n", param_no);
