@@ -115,14 +115,14 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"num_workers", INT_PARAM, &dmq_num_workers},
-	{"ping_interval", INT_PARAM, &dmq_ping_interval},
+	{"num_workers", PARAM_INT, &dmq_num_workers},
+	{"ping_interval", PARAM_INT, &dmq_ping_interval},
 	{"server_address", PARAM_STR, &dmq_server_address},
 	{"server_socket", PARAM_STR, &dmq_server_socket},
 	{"notification_address", PARAM_STR|USE_FUNC_PARAM, dmq_add_notification_address},
 	{"notification_channel", PARAM_STR, &dmq_notification_channel},
-	{"multi_notify", INT_PARAM, &dmq_multi_notify},
-	{"worker_usleep", INT_PARAM, &dmq_worker_usleep},
+	{"multi_notify", PARAM_INT, &dmq_multi_notify},
+	{"worker_usleep", PARAM_INT, &dmq_worker_usleep},
 	{0, 0, 0}
 };
 
