@@ -131,15 +131,15 @@ static param_export_t params[] = {
 		{"tprefix_column", PARAM_STR, &tprefix_column},
 		{"tvalue_column", PARAM_STR, &tvalue_column},
 		{"char_list", PARAM_STR, &mt_char_list},
-		{"fetch_rows", INT_PARAM, &mt_fetch_rows},
+		{"fetch_rows", PARAM_INT, &mt_fetch_rows},
 		{"pv_value", PARAM_STR, &value_param},
 		{"pv_values", PARAM_STR, &values_param},
 		{"pv_dstid", PARAM_STR, &dstid_param},
 		{"pv_weight", PARAM_STR, &weight_param},
 		{"pv_count", PARAM_STR, &count_param},
-		{"mt_tree_type", INT_PARAM, &_mt_tree_type},
-		{"mt_ignore_duplicates", INT_PARAM, &_mt_ignore_duplicates},
-		{"mt_allow_duplicates", INT_PARAM, &_mt_allow_duplicates}, {0, 0, 0}};
+		{"mt_tree_type", PARAM_INT, &_mt_tree_type},
+		{"mt_ignore_duplicates", PARAM_INT, &_mt_ignore_duplicates},
+		{"mt_allow_duplicates", PARAM_INT, &_mt_allow_duplicates}, {0, 0, 0}};
 
 struct module_exports exports = {
 		"mtree", DEFAULT_DLFLAGS, /* dlopen flags */
