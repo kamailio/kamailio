@@ -101,8 +101,8 @@ static cmd_export_t cmds[] = {
 				REQUEST_ROUTE | FAILURE_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[] = {{"hash_size", INT_PARAM, &hash_size},
-		{"use_domain", INT_PARAM, &use_domain}, {0, 0, 0}};
+static param_export_t params[] = {{"hash_size", PARAM_INT, &hash_size},
+		{"use_domain", PARAM_INT, &use_domain}, {0, 0, 0}};
 
 #ifdef STATISTICS
 /*! \brief We expose internal variables via the statistic framework below.*/
