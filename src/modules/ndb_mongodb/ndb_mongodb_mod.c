@@ -80,7 +80,7 @@ static cmd_export_t cmds[] = {{"mongodb_find", (cmd_function)w_mongodb_find, 5,
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-		{"server", PARAM_STRING | USE_FUNC_PARAM, (void *)mongodb_srv_param},
+		{"server", PARAM_STRING | PARAM_USE_FUNC, (void *)mongodb_srv_param},
 		{0, 0, 0}};
 
 struct module_exports exports = {
