@@ -35,16 +35,16 @@ static pv_export_t nsq_mod_pvs[] = {
 		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-		{"consumer_workers", INT_PARAM, &nsq_consumer_workers},
-		{"max_in_flight", INT_PARAM, &nsq_max_in_flight},
+		{"consumer_workers", PARAM_INT, &nsq_consumer_workers},
+		{"max_in_flight", PARAM_INT, &nsq_max_in_flight},
 		{"lookupd_address", PARAM_STR, &nsq_lookupd_address},
-		{"lookupd_port", INT_PARAM, &lookupd_port},
-		{"consumer_use_nsqd", INT_PARAM,
+		{"lookupd_port", PARAM_INT, &lookupd_port},
+		{"consumer_use_nsqd", PARAM_INT,
 				&consumer_use_nsqd}, // consume messages from nsqd instead of lookupd
 		{"topic_channel", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)nsq_add_topic_channel},
 		{"nsqd_address", PARAM_STR, &nsqd_address},
-		{"nsqd_port", INT_PARAM, &nsqd_port},
+		{"nsqd_port", PARAM_INT, &nsqd_port},
 		{"consumer_event_key", PARAM_STR, &nsq_event_key},
 		{"consumer_event_subkey", PARAM_STR, &nsq_event_sub_key}, {0, 0, 0}};
 
