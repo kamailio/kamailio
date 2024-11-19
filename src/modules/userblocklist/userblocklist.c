@@ -137,8 +137,8 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 		userblocklist_DB_URL userblocklist_DB_TABLE globalblocklist_DB_TABLE
 				userblocklist_DB_COLS globalblocklist_DB_COLS{
-						"use_domain", INT_PARAM, &use_domain},
-		{"match_mode", INT_PARAM, &match_mode}, {0, 0, 0}};
+						"use_domain", PARAM_INT, &use_domain},
+		{"match_mode", PARAM_INT, &match_mode}, {0, 0, 0}};
 
 
 #ifdef MI_REMOVED
