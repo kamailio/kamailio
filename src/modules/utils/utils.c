@@ -99,7 +99,7 @@ static cmd_export_t cmds[] = {
 /* Exported parameters */
 static param_export_t params[] = {{"pres_db_url", PARAM_STR, &pres_db_url},
 		{"xcap_table", PARAM_STR, &xcap_table},
-		{"forward_active", INT_PARAM, &forward_active}, {0, 0, 0}};
+		{"forward_active", PARAM_INT, &forward_active}, {0, 0, 0}};
 
 #ifdef MI_REMOVED
 static mi_export_t mi_cmds[] = {
