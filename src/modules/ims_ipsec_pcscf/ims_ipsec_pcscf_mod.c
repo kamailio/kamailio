@@ -103,12 +103,12 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"ipsec_listen_addr",		PARAM_STR, &ipsec_listen_addr		},
 	{"ipsec_listen_addr6",  	PARAM_STR, &ipsec_listen_addr6		},
-	{"ipsec_client_port",		INT_PARAM, &ipsec_client_port		},
-	{"ipsec_server_port",		INT_PARAM, &ipsec_server_port		},
-	{"ipsec_reuse_server_port",	INT_PARAM, &ipsec_reuse_server_port	},
-	{"ipsec_max_connections",	INT_PARAM, &ipsec_max_connections	},
-	{"ipsec_spi_id_start",		INT_PARAM, &spi_id_start			},
-	{"ipsec_spi_id_range",		INT_PARAM, &spi_id_range			},
+	{"ipsec_client_port",		PARAM_INT, &ipsec_client_port		},
+	{"ipsec_server_port",		PARAM_INT, &ipsec_server_port		},
+	{"ipsec_reuse_server_port",	PARAM_INT, &ipsec_reuse_server_port	},
+	{"ipsec_max_connections",	PARAM_INT, &ipsec_max_connections	},
+	{"ipsec_spi_id_start",		PARAM_INT, &spi_id_start			},
+	{"ipsec_spi_id_range",		PARAM_INT, &spi_id_range			},
 	{"ipsec_preferred_alg",		PARAM_STR, &ipsec_preferred_alg		},
 	{"ipsec_preferred_ealg",	PARAM_STR, &ipsec_preferred_ealg	},
 	{0, 0, 0}
