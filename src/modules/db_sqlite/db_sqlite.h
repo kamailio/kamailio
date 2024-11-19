@@ -32,6 +32,7 @@ typedef struct db_param_list
 	str database;
 	int readonly;
 	str journal_mode;
+	int busy_timeout;
 } db_param_list_t;
 
 db_param_list_t *db_param_list_search(str db_filename);
