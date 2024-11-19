@@ -95,12 +95,12 @@ static cmd_export_t cmds[] = {
  * Script Parameters
  */
 static param_export_t mod_params[] = {
-		{"server", STR_PARAM | USE_FUNC_PARAM, (void *)parse_server_param},
-		{"retry_codes", STR_PARAM | USE_FUNC_PARAM,
+		{"server", PARAM_STRING | USE_FUNC_PARAM, (void *)parse_server_param},
+		{"retry_codes", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)parse_retry_codes_param},
 		{"min_srv_ttl", INT_PARAM | USE_FUNC_PARAM,
 				(void *)parse_min_ttl_param},
-		{"result_pv", STR_PARAM, &result_pv_str.s},
+		{"result_pv", PARAM_STRING, &result_pv_str.s},
 		{"keep_alive", INT_PARAM | USE_FUNC_PARAM,
 				(void *)parse_keep_alive_param},
 		{0, 0, 0}};
@@ -266,7 +266,7 @@ int parse_retry_codes_param(modparam_t type, void *val)
 		return -1;
 	}
 
-	if(PARAM_TYPE_MASK(type) != STR_PARAM) {
+	if(PARAM_TYPE_MASK(type) != PARAM_STRING) {
 		ERR("retry_codes must be a string\n");
 		return -1;
 	}
