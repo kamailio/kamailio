@@ -95,13 +95,13 @@ static cmd_export_t cmds[] = {
  * Script Parameters
  */
 static param_export_t mod_params[] = {
-		{"server", PARAM_STRING | USE_FUNC_PARAM, (void *)parse_server_param},
-		{"retry_codes", PARAM_STRING | USE_FUNC_PARAM,
+		{"server", PARAM_STRING | PARAM_USE_FUNC, (void *)parse_server_param},
+		{"retry_codes", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)parse_retry_codes_param},
-		{"min_srv_ttl", PARAM_INT | USE_FUNC_PARAM,
+		{"min_srv_ttl", PARAM_INT | PARAM_USE_FUNC,
 				(void *)parse_min_ttl_param},
 		{"result_pv", PARAM_STRING, &result_pv_str.s},
-		{"keep_alive", PARAM_INT | USE_FUNC_PARAM,
+		{"keep_alive", PARAM_INT | PARAM_USE_FUNC,
 				(void *)parse_keep_alive_param},
 		{0, 0, 0}};
 
