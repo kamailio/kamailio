@@ -94,7 +94,7 @@ static param_export_t params[] = {{"retries", PARAM_INT, &pg_retries},
 		{"timeout", PARAM_INT, &pg_timeout},
 		{"tcp_keepalive", PARAM_INT, &pg_keepalive},
 		{"bytea_output_escape", PARAM_INT, &pg_bytea_output_escape},
-		{"con_param", PARAM_STRING | USE_FUNC_PARAM, (void *)pg_con_param},
+		{"con_param", PARAM_STRING | PARAM_USE_FUNC, (void *)pg_con_param},
 		{0, 0, 0}};
 
 
