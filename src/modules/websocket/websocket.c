@@ -101,20 +101,20 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	/* ws_frame.c */
-	{ "keepalive_mechanism",	INT_PARAM, &ws_keepalive_mechanism },
-	{ "keepalive_timeout",		INT_PARAM, &ws_keepalive_timeout },
+	{ "keepalive_mechanism",	PARAM_INT, &ws_keepalive_mechanism },
+	{ "keepalive_timeout",		PARAM_INT, &ws_keepalive_timeout },
 	{ "ping_application_data",	PARAM_STR, &ws_ping_application_data },
 
 	/* ws_handshake.c */
-	{ "sub_protocols",		INT_PARAM, &ws_sub_protocols },
-	{ "cors_mode",			INT_PARAM, &ws_cors_mode },
+	{ "sub_protocols",		PARAM_INT, &ws_sub_protocols },
+	{ "cors_mode",			PARAM_INT, &ws_cors_mode },
 
 	/* ws_mod.c */
-	{ "keepalive_interval",		INT_PARAM, &ws_keepalive_interval },
-	{ "keepalive_processes",	INT_PARAM, &ws_keepalive_processes },
+	{ "keepalive_interval",		PARAM_INT, &ws_keepalive_interval },
+	{ "keepalive_processes",	PARAM_INT, &ws_keepalive_processes },
 
-	{ "timer_interval",		INT_PARAM, &ws_timer_interval },
-	{ "rm_delay_interval",	INT_PARAM, &ws_rm_delay_interval },
+	{ "timer_interval",		PARAM_INT, &ws_timer_interval },
+	{ "rm_delay_interval",	PARAM_INT, &ws_rm_delay_interval },
 
 	{ "verbose_list",		PARAM_INT, &ws_verbose_list },
 	{ "event_callback",		PARAM_STR, &ws_event_callback},
