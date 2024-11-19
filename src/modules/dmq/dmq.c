@@ -119,7 +119,7 @@ static param_export_t params[] = {
 	{"ping_interval", PARAM_INT, &dmq_ping_interval},
 	{"server_address", PARAM_STR, &dmq_server_address},
 	{"server_socket", PARAM_STR, &dmq_server_socket},
-	{"notification_address", PARAM_STR|USE_FUNC_PARAM, dmq_add_notification_address},
+	{"notification_address", PARAM_STR|PARAM_USE_FUNC, dmq_add_notification_address},
 	{"notification_channel", PARAM_STR, &dmq_notification_channel},
 	{"multi_notify", PARAM_INT, &dmq_multi_notify},
 	{"worker_usleep", PARAM_INT, &dmq_worker_usleep},
