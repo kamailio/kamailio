@@ -232,7 +232,7 @@ static param_export_t params[] = {
 	{"useragent", PARAM_STR,  &default_useragent },
 	{"maxdatasize", PARAM_INT,  &default_maxdatasize },
 	{"config_file", PARAM_STR,  &http_client_config_file },
-	{"httpcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
+	{"httpcon",  PARAM_STRING|PARAM_USE_FUNC, (void*)curl_con_param},
 	{"authmethod", PARAM_INT, &default_authmethod },
 	{"keep_connections", PARAM_INT, &default_keep_connections },
 	{"query_result", PARAM_INT, &default_query_result },
