@@ -123,7 +123,7 @@ static param_export_t params[] = {
 	{"name_col",       PARAM_STR, &name_col  },
 	{"type_col",       PARAM_STR, &type_col  },
 	{"value_col",      PARAM_STR, &value_col  },
-	{"register_myself",INT_PARAM, &domain_reg_myself},
+	{"register_myself",PARAM_INT, &domain_reg_myself},
 	{0, 0, 0}
 };
 /* clang-format on */
