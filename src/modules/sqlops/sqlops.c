@@ -104,8 +104,8 @@ static cmd_export_t cmds[] = {{"sql_query", (cmd_function)sql_query, 3,
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-		{"sqlcon", PARAM_STRING | USE_FUNC_PARAM, (void *)sql_con_param},
-		{"sqlres", PARAM_STRING | USE_FUNC_PARAM, (void *)sql_res_param},
+		{"sqlcon", PARAM_STRING | PARAM_USE_FUNC, (void *)sql_con_param},
+		{"sqlres", PARAM_STRING | PARAM_USE_FUNC, (void *)sql_res_param},
 		{"tr_buf_size", PARAM_INT, &sqlops_tr_buf_size},
 		{"log_buf_size", PARAM_INT, &sqlops_log_buf_size},
 		{"connect_mode", PARAM_INT, &sqlops_connect_mode},
