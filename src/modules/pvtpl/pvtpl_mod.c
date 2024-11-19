@@ -68,7 +68,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"tpl", PARAM_STRING | USE_FUNC_PARAM, (void *)pvtpl_tpl_param},
+	{"tpl", PARAM_STRING | PARAM_USE_FUNC, (void *)pvtpl_tpl_param},
 
 	{0, 0, 0}
 };
