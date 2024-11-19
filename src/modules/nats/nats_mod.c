@@ -51,7 +51,7 @@ static pv_export_t nats_mod_pvs[] = {
 
 static param_export_t params[] = {
 	{"nats_url", PARAM_STRING|USE_FUNC_PARAM, (void*)_init_nats_server_url_add},
-	{"num_publish_workers", INT_PARAM, &nats_pub_workers_num},
+	{"num_publish_workers", PARAM_INT, &nats_pub_workers_num},
 	{"subject_queue_group", PARAM_STRING|USE_FUNC_PARAM, (void*)_init_nats_sub_add},
 	{"event_callback", PARAM_STR,   &nats_event_callback},
 	{0, 0, 0}
