@@ -1555,6 +1555,7 @@ static int subst_v_helper_f(
 		if(nmatches < 0) {
 			LM_ERR("substitution failed\n");
 		}
+		subst_expr_free(se);
 		return -1;
 	}
 	memset(&val, 0, sizeof(pv_value_t));
@@ -1565,6 +1566,7 @@ static int subst_v_helper_f(
 
 	pkg_free(result->s);
 	pkg_free(result);
+	subst_expr_free(se);
 	return 1;
 }
 
