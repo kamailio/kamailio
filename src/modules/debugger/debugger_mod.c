@@ -101,24 +101,24 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"cfgtrace",          INT_PARAM, &_dbg_cfgtrace},
-	{"cfgtrace_format",   INT_PARAM, &_dbg_cfgtrace_format},
-	{"breakpoint",        INT_PARAM, &_dbg_breakpoint},
-	{"log_level",         INT_PARAM, &_dbg_cfgtrace_level},
+	{"cfgtrace",          PARAM_INT, &_dbg_cfgtrace},
+	{"cfgtrace_format",   PARAM_INT, &_dbg_cfgtrace_format},
+	{"breakpoint",        PARAM_INT, &_dbg_breakpoint},
+	{"log_level",         PARAM_INT, &_dbg_cfgtrace_level},
 	{"log_facility",      PARAM_STRING, &_dbg_cfgtrace_facility_str},
 	{"log_prefix",        PARAM_STRING, &_dbg_cfgtrace_prefix},
 	{"log_level_name",    PARAM_STRING, &_dbg_cfgtrace_lname},
-	{"log_assign",        INT_PARAM, &_dbg_log_assign},
-	{"step_usleep",       INT_PARAM, &_dbg_step_usleep},
-	{"step_loops",        INT_PARAM, &_dbg_step_loops},
-	{"mod_hash_size",     INT_PARAM, &default_dbg_cfg.mod_hash_size},
-	{"mod_level_mode",    INT_PARAM, &default_dbg_cfg.mod_level_mode},
+	{"log_assign",        PARAM_INT, &_dbg_log_assign},
+	{"step_usleep",       PARAM_INT, &_dbg_step_usleep},
+	{"step_loops",        PARAM_INT, &_dbg_step_loops},
+	{"mod_hash_size",     PARAM_INT, &default_dbg_cfg.mod_hash_size},
+	{"mod_level_mode",    PARAM_INT, &default_dbg_cfg.mod_level_mode},
 	{"mod_level",         PARAM_STRING|USE_FUNC_PARAM, (void*)dbg_mod_level_param},
-	{"mod_facility_mode", INT_PARAM, &default_dbg_cfg.mod_facility_mode},
+	{"mod_facility_mode", PARAM_INT, &default_dbg_cfg.mod_facility_mode},
 	{"mod_facility",      PARAM_STRING|USE_FUNC_PARAM, (void*)dbg_mod_facility_param},
-	{"reset_msgid",       INT_PARAM, &_dbg_reset_msgid},
-	{"cfgpkgcheck",       INT_PARAM, &_dbg_cfgpkgcheck},
-	{"cfgtest",           INT_PARAM, &_dbg_cfgtest},
+	{"reset_msgid",       PARAM_INT, &_dbg_reset_msgid},
+	{"cfgpkgcheck",       PARAM_INT, &_dbg_cfgpkgcheck},
+	{"cfgtest",           PARAM_INT, &_dbg_cfgtest},
 	{0, 0, 0}
 };
 
