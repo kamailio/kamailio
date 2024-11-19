@@ -156,9 +156,9 @@ static cmd_export_t commands[] = {
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t parameters[] = {
-		{"init", PARAM_STRING | USE_FUNC_PARAM, parse_param_init},
-		{"start", PARAM_STRING | USE_FUNC_PARAM, parse_param_start},
-		{"stop", PARAM_STRING | USE_FUNC_PARAM, parse_param_stop},
+		{"init", PARAM_STRING | PARAM_USE_FUNC, parse_param_init},
+		{"start", PARAM_STRING | PARAM_USE_FUNC, parse_param_start},
+		{"stop", PARAM_STRING | PARAM_USE_FUNC, parse_param_stop},
 		{"disable", PARAM_INT, &disable},
 		{"socket_name", PARAM_STRING, &(callcontrol_socket.name)},
 		{"socket_timeout", PARAM_INT, &(callcontrol_socket.timeout)},
