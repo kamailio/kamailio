@@ -176,7 +176,7 @@ static param_export_t params[] = {
 	{"restore_passwd", PARAM_STR, &uac_passwd},
 	{"restore_from_avp", PARAM_STR, &restore_from_avp},
 	{"restore_to_avp", PARAM_STR, &restore_to_avp},
-	{"credential", PARAM_STRING | USE_FUNC_PARAM, (void *)&add_credential},
+	{"credential", PARAM_STRING | PARAM_USE_FUNC, (void *)&add_credential},
 	{"auth_username_avp", PARAM_STRING, &auth_username_avp},
 	{"auth_realm_avp", PARAM_STRING, &auth_realm_avp},
 	{"auth_password_avp", PARAM_STRING, &auth_password_avp},
