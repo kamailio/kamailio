@@ -516,7 +516,7 @@ static param_export_t params[] = {
 	{"setid_default", INT_PARAM, &setid_default},
 	{"media_duration", PARAM_STR, &media_duration_pvar_str},
 	{"hash_algo", INT_PARAM, &hash_algo},
-	{"dtmf_events_sock", STR_PARAM | USE_FUNC_PARAM,
+	{"dtmf_events_sock", PARAM_STRING | USE_FUNC_PARAM,
 			(void *)rtpengine_set_dtmf_events_sock},
 	{"dtmf_event_callid", PARAM_STR, &dtmf_event_callid_pvar_str},
 	{"dtmf_event_source_tag", PARAM_STR, &dtmf_event_source_tag_pvar_str},
