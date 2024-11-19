@@ -412,13 +412,13 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 	if(dest->ocdata.ocmax > 100) {
 		dest->ocdata.ocmax = 100;
 	}
-	if(dest->ocdata.ocmax <= 0) {
+	if(dest->ocdata.ocmax == 0) {
 		dest->ocdata.ocmax = 100;
 	}
 	if(dest->ocdata.ocmin > 100) {
 		dest->ocdata.ocmin = 0;
 	}
-	if(dest->ocdata.ocmin < 0) {
+	if(dest->ocdata.ocmin > dest->ocdata.ocmax) {
 		dest->ocdata.ocmin = 0;
 	}
 	if(dest->ocdata.ocrate > 100) {
