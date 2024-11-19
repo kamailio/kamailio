@@ -76,7 +76,7 @@ static int pv_parse_evr_name(pv_spec_p sp, str *in);
 
 /* clang-format off */
 static param_export_t params[] = {
-	{"exec", PARAM_STRING | USE_FUNC_PARAM, (void *)evrexec_param},
+	{"exec", PARAM_STRING | PARAM_USE_FUNC, (void *)evrexec_param},
 	{0, 0, 0}
 };
 
