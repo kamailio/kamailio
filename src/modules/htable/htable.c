@@ -165,7 +165,7 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"htable", PARAM_STRING | USE_FUNC_PARAM, (void *)ht_param},
+	{"htable", PARAM_STRING | PARAM_USE_FUNC, (void *)ht_param},
 	{"db_url", PARAM_STR, &ht_db_url},
 	{"key_name_column", PARAM_STR, &ht_db_name_column},
 	{"key_type_column", PARAM_STR, &ht_db_ktype_column},
