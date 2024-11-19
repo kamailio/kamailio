@@ -132,21 +132,21 @@ static void mod_destroy(void);
  * through the kamailio.cfg configuration file.
  */
 static param_export_t mod_params[] = {
-		{"sipEntityType", PARAM_STRING | USE_FUNC_PARAM,
+		{"sipEntityType", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)handleSipEntityType},
-		{"MsgQueueMinorThreshold", PARAM_INT | USE_FUNC_PARAM,
+		{"MsgQueueMinorThreshold", PARAM_INT | PARAM_USE_FUNC,
 				(void *)set_queue_minor_threshold},
-		{"MsgQueueMajorThreshold", PARAM_INT | USE_FUNC_PARAM,
+		{"MsgQueueMajorThreshold", PARAM_INT | PARAM_USE_FUNC,
 				(void *)set_queue_major_threshold},
-		{"dlg_minor_threshold", PARAM_INT | USE_FUNC_PARAM,
+		{"dlg_minor_threshold", PARAM_INT | PARAM_USE_FUNC,
 				(void *)set_dlg_minor_threshold},
-		{"dlg_major_threshold", PARAM_INT | USE_FUNC_PARAM,
+		{"dlg_major_threshold", PARAM_INT | PARAM_USE_FUNC,
 				(void *)set_dlg_major_threshold},
-		{"snmpgetPath", PARAM_STRING | USE_FUNC_PARAM,
+		{"snmpgetPath", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)set_snmpget_path},
-		{"snmpCommunity", PARAM_STRING | USE_FUNC_PARAM,
+		{"snmpCommunity", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)set_snmp_community},
-		{"snmpVersion", PARAM_STRING | USE_FUNC_PARAM,
+		{"snmpVersion", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)set_snmp_version},
 		{"export_registrar", PARAM_INT, &snmp_export_registrar}, {0, 0, 0}};
 
