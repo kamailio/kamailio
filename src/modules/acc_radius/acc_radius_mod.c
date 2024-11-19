@@ -94,11 +94,11 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"radius_config",        PARAM_STRING, &radius_config     },
-	{"radius_flag",          INT_PARAM, &radius_flag          },
-	{"radius_missed_flag",   INT_PARAM, &radius_missed_flag   },
-	{"service_type",         INT_PARAM, &service_type         },
+	{"radius_flag",          PARAM_INT, &radius_flag          },
+	{"radius_missed_flag",   PARAM_INT, &radius_missed_flag   },
+	{"service_type",         PARAM_INT, &service_type         },
 	{"radius_extra",         PARAM_STRING, &rad_extra_str     },
-	{"rad_time_mode",          INT_PARAM, &rad_time_mode      },
+	{"rad_time_mode",          PARAM_INT, &rad_time_mode      },
 	{0,0,0}
 };
 
