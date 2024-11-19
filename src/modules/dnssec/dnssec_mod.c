@@ -57,7 +57,7 @@ struct list_link *timer = 0;
 
 
 static param_export_t params[] = {
-		{"general_query_flags", INT_PARAM, &flags}, {0, 0, 0}};
+		{"general_query_flags", PARAM_INT, &flags}, {0, 0, 0}};
 
 
 struct module_exports exports = {
