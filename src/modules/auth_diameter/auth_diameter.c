@@ -83,8 +83,8 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 		{"diameter_client_host", PARAM_STRING, &diameter_client_host},
-		{"diameter_client_port", INT_PARAM, &diameter_client_port},
-		{"use_domain", INT_PARAM, &use_domain}, {0, 0, 0}};
+		{"diameter_client_port", PARAM_INT, &diameter_client_port},
+		{"use_domain", PARAM_INT, &use_domain}, {0, 0, 0}};
 
 
 /*
