@@ -89,8 +89,8 @@ static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
 		{"user_column", PARAM_STR, &uridb_user_col},
 		{"domain_column", PARAM_STR, &uridb_domain_col},
 		{"uriuser_column", PARAM_STR, &uridb_uriuser_col},
-		{"use_uri_table", INT_PARAM, &use_uri_table},
-		{"use_domain", INT_PARAM, &use_domain}, {0, 0, 0}};
+		{"use_uri_table", PARAM_INT, &use_uri_table},
+		{"use_domain", PARAM_INT, &use_domain}, {0, 0, 0}};
 
 
 /*
