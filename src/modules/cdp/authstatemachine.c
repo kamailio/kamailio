@@ -114,7 +114,7 @@ void update_auth_session_timers(cdp_auth_session_t *x, AAAMessage *msg)
 	} else {
 		if(!avp) {
 			LM_DBG("using timers from our request as there is nothing in the "
-				   "response (lifetime) - last requested lifetime was [%d]\n",
+				   "response (lifetime) - last requested lifetime was [%ld]\n",
 					x->last_requested_lifetime);
 			if(x->last_requested_lifetime > 0) {
 				update_lifetime = 1;
