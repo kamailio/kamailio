@@ -183,11 +183,11 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"alias_subdomains", PARAM_STRING | USE_FUNC_PARAM,
+	{"alias_subdomains", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)corex_alias_subdomains_param},
-	{"dns_cache", PARAM_STR | USE_FUNC_PARAM,
+	{"dns_cache", PARAM_STR | PARAM_USE_FUNC,
 				(void *)corex_dns_cache_param},
-	{"dns_file", PARAM_STR | USE_FUNC_PARAM,
+	{"dns_file", PARAM_STR | PARAM_USE_FUNC,
 				(void *)corex_dns_file_param},
 	{"nio_intercept", PARAM_INT, &nio_intercept},
 	{"nio_min_msg_len", PARAM_INT, &nio_min_msg_len},
