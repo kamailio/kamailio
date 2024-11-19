@@ -129,7 +129,7 @@ static param_export_t params[]={
 	{ "xcap_table",		PARAM_STR, &pxml_xcap_table},
 	{ "force_active",	PARAM_INT, &pxml_force_active },
 	{ "integrated_xcap_server", PARAM_INT, &pxml_integrated_xcap_server},
-	{ "xcap_server",     	PARAM_STRING|USE_FUNC_PARAM,(void*)pxml_add_xcap_server},
+	{ "xcap_server",     	PARAM_STRING|PARAM_USE_FUNC,(void*)pxml_add_xcap_server},
 	{ "disable_presence",	PARAM_INT, &pxml_disable_presence },
 	{ "disable_winfo",		PARAM_INT, &pxml_disable_winfo },
 	{ "disable_bla",		PARAM_INT, &pxml_disable_bla },
