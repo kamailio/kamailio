@@ -221,7 +221,7 @@ static cmd_export_t cmds[] = {
 				fixup_igp_null, 0, ANY_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 static param_export_t params[] = {
-		{"timer_interval", INT_PARAM, &timer_interval},
+		{"timer_interval", PARAM_INT, &timer_interval},
 		{"queue", PARAM_STRING | USE_FUNC_PARAM, (void *)add_queue_params},
 		{"pipe", PARAM_STRING | USE_FUNC_PARAM, (void *)add_pipe_params},
 		/* RESERVED for future use
