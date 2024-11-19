@@ -284,7 +284,7 @@ static param_export_t params[] = {
 	{"handle_lost_tcp", PARAM_INT, &ul_handle_lost_tcp},
 	{"close_expired_tcp", PARAM_INT, &ul_close_expired_tcp},
 	{"skip_remote_socket", PARAM_INT, &ul_skip_remote_socket},
-	{"preload", PARAM_STRING | USE_FUNC_PARAM, (void *)ul_preload_param},
+	{"preload", PARAM_STRING | PARAM_USE_FUNC, (void *)ul_preload_param},
 	{"db_update_as_insert", PARAM_INT, &ul_db_update_as_insert},
 	{"timer_procs", PARAM_INT, &ul_timer_procs},
 	{"db_check_update", PARAM_INT, &ul_db_check_update},
