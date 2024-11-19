@@ -184,23 +184,23 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {{"pcscf_uri", PARAM_STR, &pcscf_uri},
-		{"pending_reg_expires", INT_PARAM, &pending_reg_expires},
+		{"pending_reg_expires", PARAM_INT, &pending_reg_expires},
 		{"received_avp", PARAM_STR, &rcv_avp_param},
-		{"is_registered_fallback2ip", INT_PARAM, &is_registered_fallback2ip},
-		{"publish_reginfo", INT_PARAM, &publish_reginfo},
-		{"subscribe_to_reginfo", INT_PARAM, &subscribe_to_reginfo},
-		{"subscription_expires", INT_PARAM, &subscription_expires},
-		{"ignore_contact_rxport_check", INT_PARAM,
+		{"is_registered_fallback2ip", PARAM_INT, &is_registered_fallback2ip},
+		{"publish_reginfo", PARAM_INT, &publish_reginfo},
+		{"subscribe_to_reginfo", PARAM_INT, &subscribe_to_reginfo},
+		{"subscription_expires", PARAM_INT, &subscription_expires},
+		{"ignore_contact_rxport_check", PARAM_INT,
 				&ignore_contact_rxport_check},
-		{"ignore_contact_rxproto_check", INT_PARAM,
+		{"ignore_contact_rxproto_check", PARAM_INT,
 				&ignore_contact_rxproto_check},
-		{"ignore_reg_state", INT_PARAM, &ignore_reg_state},
+		{"ignore_reg_state", PARAM_INT, &ignore_reg_state},
 		{"force_icscf_uri", PARAM_STR, &force_icscf_uri},
-		{"reginfo_queue_size_threshold", INT_PARAM,
+		{"reginfo_queue_size_threshold", PARAM_INT,
 				&reginfo_queue_size_threshold},
 		{"delete_delay", PARAM_INT, &_imsregp_params.delete_delay},
 		{"trust_bottom_via", PARAM_INT, &trust_bottom_via},
-		//	{"store_profile_dereg",	INT_PARAM, &store_data_on_dereg},
+		//	{"store_profile_dereg",	PARAM_INT, &store_data_on_dereg},
 		{0, 0, 0}};
 
 
