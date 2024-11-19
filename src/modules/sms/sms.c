@@ -76,10 +76,10 @@ static param_export_t params[] = {{"networks", PARAM_STRING, &networks_config},
 		{"modems", PARAM_STRING, &modems_config},
 		{"links", PARAM_STRING, &links_config},
 		{"default_net", PARAM_STRING, &default_net_str},
-		{"max_sms_parts", INT_PARAM, &max_sms_parts},
+		{"max_sms_parts", PARAM_INT, &max_sms_parts},
 		{"domain", PARAM_STR, &_sms_domain},
-		{"use_contact", INT_PARAM, &use_contact},
-		{"sms_report_type", INT_PARAM, &sms_report_type}, {0, 0, 0}};
+		{"use_contact", PARAM_INT, &use_contact},
+		{"sms_report_type", PARAM_INT, &sms_report_type}, {0, 0, 0}};
 
 
 struct module_exports exports = {
