@@ -206,7 +206,7 @@ static cmd_export_t cmds[] = {{"prom_check_uri", (cmd_function)w_prom_check_uri,
 				fixup_metric_reset, 0, ANY_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[] = {{"xhttp_prom_buf_size", INT_PARAM, &buf_size},
+static param_export_t params[] = {{"xhttp_prom_buf_size", PARAM_INT, &buf_size},
 		{"xhttp_prom_stats", PARAM_STR, &xhttp_prom_stats},
 		{"xhttp_prom_beginning", PARAM_STR, &xhttp_prom_beginning},
 		{"prom_counter", PARAM_STRING | USE_FUNC_PARAM,
@@ -214,9 +214,9 @@ static param_export_t params[] = {{"xhttp_prom_buf_size", INT_PARAM, &buf_size},
 		{"prom_gauge", PARAM_STRING | USE_FUNC_PARAM, (void *)prom_gauge_param},
 		{"prom_histogram", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)prom_histogram_param},
-		{"xhttp_prom_timeout", INT_PARAM, &timeout_minutes},
-		{"xhttp_prom_uptime_stat", INT_PARAM, &uptime_stat_enabled},
-		{"xhttp_prom_pkg_stats", INT_PARAM, &pkgmem_stats_enabled}, {0, 0, 0}};
+		{"xhttp_prom_timeout", PARAM_INT, &timeout_minutes},
+		{"xhttp_prom_uptime_stat", PARAM_INT, &uptime_stat_enabled},
+		{"xhttp_prom_pkg_stats", PARAM_INT, &pkgmem_stats_enabled}, {0, 0, 0}};
 
 struct module_exports exports = {
 		"xhttp_prom", DEFAULT_DLFLAGS, /* dlopen flags */
