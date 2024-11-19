@@ -61,10 +61,10 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"basedir", PARAM_STR, &_cfgt_params.basedir},
-	{"mask", INT_PARAM, &_cfgt_params.mask},
+	{"mask", PARAM_INT, &_cfgt_params.mask},
 	{"callid_prefix", PARAM_STR, &_cfgt_params.hdr_prefix},
-	{"skip_unknown", INT_PARAM, &_cfgt_params.skip_unknown},
-	{"route_log", INT_PARAM, &_cfgt_params.route_log},
+	{"skip_unknown", PARAM_INT, &_cfgt_params.skip_unknown},
+	{"route_log", PARAM_INT, &_cfgt_params.route_log},
 	{0, 0, 0}
 };
 
