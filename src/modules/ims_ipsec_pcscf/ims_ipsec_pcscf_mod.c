@@ -336,6 +336,7 @@ static int ipsec_add_listen_ifaces()
 static int mod_init(void)
 {
 	bind_usrloc_t bind_usrloc;
+	int ret;
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_ims_usrloc_pcscf", 1, 0);
 	if(!bind_usrloc) {
@@ -343,7 +344,9 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(bind_usrloc(&ul) < 0) {
+	ret = bind_usrloc(&ul);
+	if(ret < 0) {
+		LM_ERR("bind_userloc() has failed with code %d", ret);
 		return -1;
 	}
 	LM_INFO("Successfully bound to PCSCF Usrloc module\n");
@@ -355,7 +358,9 @@ static int mod_init(void)
 	}
 	LM_INFO("Successfully bound to TM module\n");
 
-	if(ipsec_add_listen_ifaces() != 0) {
+	ret = ipsec_add_listen_ifaces();
+	if(ret != 0) {
+		LM_ERR("Failed to add ipsec listen interface. Code: %d", ret);
 		return -1;
 	}
 
