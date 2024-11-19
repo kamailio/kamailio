@@ -55,7 +55,7 @@ static cmd_export_t cmds[] = {
  * Script parameters
  */
 static param_export_t mod_params[] = {
-		{"qos_flag", INT_PARAM, &qos_flag}, {0, 0, 0}};
+		{"qos_flag", PARAM_INT, &qos_flag}, {0, 0, 0}};
 
 
 struct module_exports exports = {
