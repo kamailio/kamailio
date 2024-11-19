@@ -167,7 +167,7 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"credit_check_period", INT_PARAM,	&_data.check_period },
+	{"credit_check_period", PARAM_INT,	&_data.check_period },
 	{"redis", PARAM_STR, &_data.redis_cnn_str },
 	{ 0, 0, 0 }
 };
