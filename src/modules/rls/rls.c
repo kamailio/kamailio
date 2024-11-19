@@ -239,7 +239,7 @@ static param_export_t params[] = {
 		{"integrated_xcap_server", PARAM_INT, &rls_integrated_xcap_server},
 		{"to_presence_code", PARAM_INT, &to_presence_code},
 		{"xcap_root", PARAM_STRING, &xcap_root},
-		{"rls_event", PARAM_STRING | USE_FUNC_PARAM, (void *)add_rls_event},
+		{"rls_event", PARAM_STRING | PARAM_USE_FUNC, (void *)add_rls_event},
 		{"outbound_proxy", PARAM_STR, &rls_outbound_proxy},
 		{"reload_db_subs", PARAM_INT, &rls_reload_db_subs},
 		{"max_notify_body_length", PARAM_INT, &rls_max_notify_body_len},
