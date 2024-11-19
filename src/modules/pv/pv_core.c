@@ -76,8 +76,6 @@ int _pv_pid = 0;
 #define PV_HDR_DELIM ","
 #define PV_HDR_DELIM_LEN (sizeof(PV_HDR_DELIM) - 1)
 
-static int is_uri_enclosed(struct sip_msg *msg, struct to_body *tb);
-
 int pv_get_msgid(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	if(msg == NULL)
@@ -3605,6 +3603,26 @@ int pv_set_bflag(
 	return 0;
 }
 
+static inline int is_uri_enclosed(struct sip_msg *msg, struct to_body *tb)
+{
+	/* Check for the presence of display name */
+	if(tb->display.len == 0) {
+		/* 	Display name not found */
+		char *uri_body = tb->body.s;
+
+		/* Assuming a valid sip message (true otherwise parser fails way before)
+		 if it starts with '<' there is a respective '>'.
+		 Also, parser trims any leading white space if no DisplayName is found
+		*/
+		if(uri_body[0] == '<') {
+			return 1;
+		}
+		return 0;
+	}
+	/* Display name found, URI should/must be enclosed */
+	return 1;
+}
+
 int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 		pv_value_t *val, struct to_body *tb, int type)
 {
@@ -3797,26 +3815,6 @@ error:
 	if(buf.s != 0)
 		pkg_free(buf.s);
 	return -1;
-}
-
-int is_uri_enclosed(struct sip_msg *msg, struct to_body *tb)
-{
-	/* Check for the presence of display name */
-	if(tb->display.len == 0) {
-		/* 	Display name not found */
-		char *uri_body = tb->body.s;
-
-		/* Assuming a valid sip message (true otherwise parser fails way before)
-		 if it starts with '<' there is a respective '>'.
-		 Also, parser trims any leading white space if no DisplayName is found
-		*/
-		if(uri_body[0] == '<') {
-			return 1;
-		}
-		return 0;
-	}
-	/* Display name found, URI should/must be enclosed */
-	return 1;
 }
 
 int pv_set_to_attr(struct sip_msg *msg, pv_param_t *param, int op,
