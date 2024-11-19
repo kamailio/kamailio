@@ -79,8 +79,8 @@ static cmd_export_t cmds[] = {{"autheph_check", (cmd_function)autheph_check, 1,
 
 static param_export_t params[] = {
 		{"secret", PARAM_STRING | USE_FUNC_PARAM, (void *)secret_param},
-		{"username_format", INT_PARAM, &autheph_username_format},
-		{"sha_algorithm", INT_PARAM, &autheph_sha_alg}, {0, 0, 0}};
+		{"username_format", PARAM_INT, &autheph_username_format},
+		{"sha_algorithm", PARAM_INT, &autheph_sha_alg}, {0, 0, 0}};
 
 struct module_exports exports = {
 		"auth_ephemeral", DEFAULT_DLFLAGS, /* dlopen flags */
