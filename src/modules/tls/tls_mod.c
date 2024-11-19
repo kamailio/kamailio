@@ -492,15 +492,17 @@ static int mod_init(void)
 
 
 #if OPENSSL_VERSION_NUMBER < 0x030000000L
-	LM_INFO("compiled with OpenSSL version: %08x\n", (uint32_t)(OPENSSL_VERSION_NUMBER));
+	LM_INFO("compiled with OpenSSL version: %08x\n",
+			(uint32_t)(OPENSSL_VERSION_NUMBER));
 #elif OPENSSL_VERSION_NUMBER >= 0x030000000L
-	LM_INFO("compiled with OpenSSL version: %08x\n", (uint32_t)(OPENSSL_VERSION_NUMBER));
+	LM_INFO("compiled with OpenSSL version: %08x\n",
+			(uint32_t)(OPENSSL_VERSION_NUMBER));
 	LM_INFO("compile-time OpenSSL library: %s\n", OPENSSL_VERSION_TEXT);
 	LM_INFO("run-time OpenSSL library: %s\n", OpenSSL_version(OPENSSL_VERSION));
 
 	if(EVP_default_properties_is_fips_enabled(NULL) == 1) {
 		LM_INFO("FIPS mode enabled in OpenSSL library\n");
-	} else  {
+	} else {
 		LM_DBG("FIPS mode not enabled in OpenSSL library\n");
 	}
 #endif
