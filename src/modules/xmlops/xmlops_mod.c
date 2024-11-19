@@ -51,7 +51,7 @@ static pv_export_t mod_pvs[] = {
 };
 
 static param_export_t params[]={
-	{ "buf_size",  INT_PARAM, &pv_xml_buf_size },
+	{ "buf_size",  PARAM_INT, &pv_xml_buf_size },
 	{ "xml_ns",    PARAM_STRING|USE_FUNC_PARAM, (void*)pv_xml_ns_param },
 	{ 0, 0, 0}
 };
