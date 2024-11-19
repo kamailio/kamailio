@@ -105,10 +105,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-		{"use_received", INT_PARAM, &path_use_received},
-		{"received_format", INT_PARAM, &path_received_format},
-		{"enable_r2", INT_PARAM, &path_enable_r2},
-		{"sockname_mode", INT_PARAM, &path_sockname_mode},
+		{"use_received", PARAM_INT, &path_use_received},
+		{"received_format", PARAM_INT, &path_received_format},
+		{"enable_r2", PARAM_INT, &path_enable_r2},
+		{"sockname_mode", PARAM_INT, &path_sockname_mode},
 		{"received_name", PARAM_STR, &path_received_name}, {0, 0, 0}};
 
 
