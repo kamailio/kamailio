@@ -115,15 +115,15 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"db_url", PARAM_STR, &db_url},
-	{"db_mode", INT_PARAM, &db_mode},
-	{"hash_size", INT_PARAM, &imc_hash_size},
+	{"db_mode", PARAM_INT, &db_mode},
+	{"hash_size", PARAM_INT, &imc_hash_size},
 	{"imc_cmd_start_char", PARAM_STR, &imc_cmd_start_str},
 	{"rooms_table", PARAM_STR, &rooms_table},
 	{"members_table", PARAM_STR, &members_table},
 	{"outbound_proxy", PARAM_STR, &outbound_proxy},
 	{"extra_hdrs", PARAM_STR, &extra_hdrs},
-	{"create_on_join", INT_PARAM, &imc_create_on_join},
-	{"check_on_create", INT_PARAM, &imc_check_on_create},
+	{"create_on_join", PARAM_INT, &imc_create_on_join},
+	{"check_on_create", PARAM_INT, &imc_check_on_create},
 	{0, 0, 0}
 };
 
