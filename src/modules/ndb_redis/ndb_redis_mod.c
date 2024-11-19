@@ -130,7 +130,7 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"server", PARAM_STRING | USE_FUNC_PARAM, (void *)redis_srv_param},
+	{"server", PARAM_STRING | PARAM_USE_FUNC, (void *)redis_srv_param},
 	{"init_without_redis", PARAM_INT, &init_without_redis},
 	{"connect_timeout", PARAM_INT, &redis_connect_timeout_param},
 	{"cmd_timeout", PARAM_INT, &redis_cmd_timeout_param},
