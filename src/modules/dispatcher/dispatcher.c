@@ -188,7 +188,7 @@ static int w_ds_dsg_fetch(sip_msg_t *msg, char *pset, char *p2);
 static int w_ds_oc_set_attrs(sip_msg_t*, char*, char*, char*, char*, char*);
 
 static int fixup_ds_is_from_list(void** param, int param_no);
-static int fixup_ds_list_exist(void** param,int param_no);
+static int fixup_free_ds_is_from_list(void** param, int param_no);
 
 static void destroy(void);
 
@@ -211,21 +211,21 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[]={
 	{"ds_select",    (cmd_function)w_ds_select,            2,
-		fixup_igp_igp, 0, ANY_ROUTE},
+		fixup_igp_igp, fixup_free_igp_igp, ANY_ROUTE},
 	{"ds_select",    (cmd_function)w_ds_select_limit,      3,
-		fixup_igp_all, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_igp_all, fixup_free_igp_all, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_dst",    (cmd_function)w_ds_select_dst,    2,
-		fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_igp_igp, fixup_free_igp_igp, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_dst",    (cmd_function)w_ds_select_dst_limit,    3,
-		fixup_igp_all, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_igp_all, fixup_free_igp_all, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_domain", (cmd_function)w_ds_select_domain, 2,
-		fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_igp_igp, fixup_free_igp_igp, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_domain", (cmd_function)w_ds_select_domain_limit, 3,
-		fixup_igp_all, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_igp_all, fixup_free_igp_all, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_routes", (cmd_function)w_ds_select_routes, 2,
-		fixup_spve_spve, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_routes", (cmd_function)w_ds_select_routes_limit, 3,
-		fixup_spve_spve_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_spve_spve_igp, fixup_free_spve_spve_igp, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_dst",      (cmd_function)w_ds_next_dst,      0,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_domain",   (cmd_function)w_ds_next_domain,   0,
@@ -241,15 +241,15 @@ static cmd_export_t cmds[]={
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list0, 0,
 		0, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list1, 1,
-		fixup_igp_null, 0, ANY_ROUTE},
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list2, 2,
-		fixup_ds_is_from_list, 0, ANY_ROUTE},
+		fixup_ds_is_from_list, fixup_free_ds_is_from_list, ANY_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list3, 3,
-		fixup_ds_is_from_list, 0, ANY_ROUTE},
+		fixup_ds_is_from_list, fixup_free_ds_is_from_list, ANY_ROUTE},
 	{"ds_list_exist",  (cmd_function)w_ds_list_exist, 1,
-		fixup_ds_list_exist, 0, ANY_ROUTE},
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"ds_list_exists",  (cmd_function)w_ds_list_exist, 1,
-		fixup_ds_list_exist, 0, ANY_ROUTE},
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"ds_load_unset",    (cmd_function)w_ds_load_unset,   0,
 		0, 0, ANY_ROUTE},
 	{"ds_load_update",   (cmd_function)w_ds_load_update,  0,
@@ -1110,6 +1110,15 @@ static int fixup_ds_is_from_list(void **param, int param_no)
 	return 0;
 }
 
+static int fixup_free_ds_is_from_list(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2)
+		return fixup_free_igp_null(param, 1);
+	if(param_no == 3)
+		return fixup_free_spve_null(param, 1);
+	return 0;
+}
+
 /* Check if a given set exist in memory */
 static int w_ds_list_exist(struct sip_msg *msg, char *param, char *p2)
 {
@@ -1125,11 +1134,6 @@ static int w_ds_list_exist(struct sip_msg *msg, char *param, char *p2)
 static int ki_ds_list_exists(struct sip_msg *msg, int set)
 {
 	return ds_list_exist(set);
-}
-
-static int fixup_ds_list_exist(void **param, int param_no)
-{
-	return fixup_igp_null(param, param_no);
 }
 
 static int ki_ds_is_active(sip_msg_t *msg, int set)
