@@ -69,6 +69,7 @@ static int w_crypto_nio_decrypt(sip_msg_t *msg, char *p1, char *p2);
 static int w_crypto_hmac_sha256(
 		sip_msg_t *msg, char *inb, char *keyb, char *outb);
 static int fixup_crypto_hmac(void **param, int param_no);
+static int fixup_free_crypto_hmac(void **param, int param_no);
 
 static char *_crypto_salt_param = "k8hTm4aZ";
 
@@ -95,7 +96,7 @@ static cmd_export_t cmds[] = {
 		{"crypto_netio_decrypt", (cmd_function)w_crypto_nio_decrypt, 0, 0, 0,
 				ANY_ROUTE},
 		{"crypto_hmac_sha256", (cmd_function)w_crypto_hmac_sha256, 3,
-				fixup_crypto_hmac, 0, ANY_ROUTE},
+				fixup_crypto_hmac, fixup_free_crypto_hmac, ANY_ROUTE},
 		{"load_crypto", (cmd_function)load_crypto, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0}};
 
@@ -447,6 +448,19 @@ static int fixup_crypto_hmac(void **param, int param_no)
 			LM_ERR("result pvar is not writeble\n");
 			return -1;
 		}
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int fixup_free_crypto_hmac(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2) {
+		fixup_free_spve_null(param, 1);
+	} else if(param_no == 3) {
+		fixup_free_pvar_null(param, 1);
 	}
 	return 0;
 }
