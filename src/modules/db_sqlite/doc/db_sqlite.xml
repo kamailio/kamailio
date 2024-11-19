@@ -48,6 +48,22 @@
 	<copyright>
 	    <year>2017</year>
 	</copyright>
+	<authorgroup>
+	    <editor>
+		<firstname>Andreas</firstname>
+		<surname>Granig</surname>
+		<affiliation><orgname>sipfront.com</orgname></affiliation>
+		<email>agranig@sipfront.com</email>
+		<address>
+		<otheraddr>
+		<ulink></ulink>
+		</otheraddr>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2024</year>
+	</copyright>
     </bookinfo>
     <toc></toc>
 

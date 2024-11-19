@@ -83,9 +83,25 @@ static struct sqlite_connection *db_sqlite_new_connection(
 		return NULL;
 	}
 
+	// set the timeout before the journal, because when forking many children,
+	// all will do the journal query below approx at the same time, and
+	// without a dedicated busy-timeout set, most will fail and makes kamailio
+	// fail to start!
+	if(db_param && db_param->busy_timeout >= 0) {
+		LM_DBG("setting sqlite busy_timeout to %d\n", db_param->busy_timeout);
+		int rc = sqlite3_busy_timeout(con->conn, db_param->busy_timeout);
+		if(rc != SQLITE_OK) {
+			LM_ERR("error setting busy timeout [%s]\n",
+					sqlite3_errmsg(con->conn));
+			pkg_free(con);
+			return NULL;
+		}
+	}
 	if(db_param && db_param->journal_mode.s) {
 		sqlite3_stmt *stmt;
 		char query[32];
+		LM_DBG("setting sqlite journal mode to '%s'\n",
+				db_param->journal_mode.s);
 		snprintf(query, 32, "PRAGMA journal_mode=%s", db_param->journal_mode.s);
 		int rc = sqlite3_prepare_v2(
 				con->conn, query, strlen(query), &stmt, NULL);
