@@ -52,10 +52,10 @@ static cmd_export_t cmds[] = {
 /*
  * Exported parameters
  */
-static param_export_t params[] = {{"ping_interval", INT_PARAM, &ping_interval},
-		{"auto_reconnect", INT_PARAM, &auto_reconnect},
-		{"use_escape_common", INT_PARAM, &use_escape_common},
-		{"replace_query", INT_PARAM, &replace_query},
+static param_export_t params[] = {{"ping_interval", PARAM_INT, &ping_interval},
+		{"auto_reconnect", PARAM_INT, &auto_reconnect},
+		{"use_escape_common", PARAM_INT, &use_escape_common},
+		{"replace_query", PARAM_INT, &replace_query},
 		{"quote_char", PARAM_STRING, &db_unixodbc_tquote}, {0, 0, 0}};
 
 
