@@ -239,7 +239,7 @@ static pv_export_t mod_pvs[] = {
 
 static param_export_t params[] = {
 		{"nortpproxy_str", PARAM_STR, &nortpproxy_str},
-		{"rtpproxy_sock", PARAM_STRING | USE_FUNC_PARAM,
+		{"rtpproxy_sock", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)rtpproxy_set_store},
 		{"rtpproxy_disable_tout", PARAM_INT, &rtpproxy_disable_tout},
 		{"rtpproxy_retr", PARAM_INT, &rtpproxy_retr},
