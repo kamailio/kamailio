@@ -125,7 +125,7 @@ static cmd_export_t cmds[] = {
 		{"bind_mtree", (cmd_function)bind_mtree, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-		{"mtree", PARAM_STRING | USE_FUNC_PARAM, (void *)mt_param},
+		{"mtree", PARAM_STRING | PARAM_USE_FUNC, (void *)mt_param},
 		{"db_url", PARAM_STR, &db_url}, {"db_table", PARAM_STR, &db_table},
 		{"tname_column", PARAM_STR, &tname_column},
 		{"tprefix_column", PARAM_STR, &tprefix_column},
