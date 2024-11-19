@@ -179,7 +179,7 @@ static param_export_t params[] = {{"backend", PARAM_STRING, &backend},
 		{"xmpp_port", PARAM_INT, &xmpp_port},
 		{"xmpp_password", PARAM_STRING, &xmpp_password},
 		{"outbound_proxy", PARAM_STR, &outbound_proxy},
-		{"gwmap", PARAM_STRING | USE_FUNC_PARAM, (void *)xmpp_gwmap_param},
+		{"gwmap", PARAM_STRING | PARAM_USE_FUNC, (void *)xmpp_gwmap_param},
 		{0, 0, 0}};
 
 /*
