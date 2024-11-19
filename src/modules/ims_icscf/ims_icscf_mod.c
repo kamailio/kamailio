@@ -132,7 +132,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 		{"route_lir_user_unknown", PARAM_STRING, &route_lir_user_unknown},
 		{"route_uar_user_unknown", PARAM_STRING, &route_uar_user_unknown},
-		{"scscf_entry_expiry", INT_PARAM, &scscf_entry_expiry},
+		{"scscf_entry_expiry", PARAM_INT, &scscf_entry_expiry},
 		{"db_url", PARAM_STRING, &ims_icscf_db_url},
 		{"db_nds_table", PARAM_STRING, &ims_icscf_db_nds_table},
 		{"db_scscf_table", PARAM_STRING, &ims_icscf_db_scscf_table},
@@ -141,7 +141,7 @@ static param_export_t params[] = {
 		{"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
 		{"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
 		{"preferred_scscf_uri", PARAM_STR, &preferred_scscf_uri},
-		{"use_preferred_scscf_uri", INT_PARAM, &use_preferred_scscf_uri},
+		{"use_preferred_scscf_uri", PARAM_INT, &use_preferred_scscf_uri},
 		{0, 0, 0}};
 
 stat_export_t mod_stats[] = {{"uar_avg_response_time", STAT_IS_FUNC,
@@ -227,7 +227,7 @@ static int mod_init(void)
 
 	if(!i_hash_table_init(ims_icscf_hash_size)) {
 		LOG(L_ERR, "ERR" M_NAME ":mod_init: Error initializing the Hash Table "
-								"for stored S-CSCF lists\n");
+				   "for stored S-CSCF lists\n");
 		goto error;
 	}
 
