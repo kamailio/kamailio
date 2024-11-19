@@ -92,7 +92,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 		{"xhttp_rpc_root", PARAM_STR, &xhttp_rpc_root},
-		{"xhttp_rpc_buf_size", INT_PARAM, &buf_size}, {0, 0, 0}};
+		{"xhttp_rpc_buf_size", PARAM_INT, &buf_size}, {0, 0, 0}};
 
 /** module exports */
 struct module_exports exports = {
