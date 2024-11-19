@@ -60,7 +60,7 @@ sip_msg_t *_aj_msg = NULL;
 static param_export_t params[] = {{"class_name", PARAM_STRING, &class_name},
 		{"child_init_method", PARAM_STRING, &child_init_mname}, /* unused? */
 		{"java_options", PARAM_STRING, &java_options_str},
-		{"force_cmd_exec", INT_PARAM, &force_cmd_exec}, {0, 0, 0}};
+		{"force_cmd_exec", PARAM_INT, &force_cmd_exec}, {0, 0, 0}};
 
 
 /*
