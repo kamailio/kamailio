@@ -169,7 +169,7 @@ static param_export_t params[] = {{"buf_size", PARAM_INT, &buf_size},
 		{"long_format", PARAM_INT, &long_format},
 		{"prefix", PARAM_STRING, &_xlog_prefix},
 		{"log_facility", PARAM_STRING, &xlog_facility_name},
-		{"log_colors", PARAM_STRING | USE_FUNC_PARAM,
+		{"log_colors", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)xlog_log_colors_param},
 		{"methods_filter", PARAM_INT, &xlog_default_cfg.methods_filter},
 		{"prefix_mode", PARAM_INT, &_xlog_prefix_mode}, {0, 0, 0}};
