@@ -98,10 +98,10 @@ static param_export_t mod_params[] = {
 		{"server", PARAM_STRING | USE_FUNC_PARAM, (void *)parse_server_param},
 		{"retry_codes", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)parse_retry_codes_param},
-		{"min_srv_ttl", INT_PARAM | USE_FUNC_PARAM,
+		{"min_srv_ttl", PARAM_INT | USE_FUNC_PARAM,
 				(void *)parse_min_ttl_param},
 		{"result_pv", PARAM_STRING, &result_pv_str.s},
-		{"keep_alive", INT_PARAM | USE_FUNC_PARAM,
+		{"keep_alive", PARAM_INT | USE_FUNC_PARAM,
 				(void *)parse_keep_alive_param},
 		{0, 0, 0}};
 
@@ -326,8 +326,8 @@ int parse_min_ttl_param(modparam_t type, void *val)
 		return -1;
 	}
 
-	if(PARAM_TYPE_MASK(type) != INT_PARAM) {
-		ERR("min_srv_ttl must be of type %d, not %d!\n", INT_PARAM, type);
+	if(PARAM_TYPE_MASK(type) != PARAM_INT) {
+		ERR("min_srv_ttl must be of type %d, not %d!\n", PARAM_INT, type);
 		return -1;
 	}
 
@@ -344,8 +344,8 @@ int parse_min_ttl_param(modparam_t type, void *val)
 
 int parse_keep_alive_param(modparam_t type, void *val)
 {
-	if(PARAM_TYPE_MASK(type) != INT_PARAM) {
-		ERR("keep_alive must be of type %d, not %d!\n", INT_PARAM, type);
+	if(PARAM_TYPE_MASK(type) != PARAM_INT) {
+		ERR("keep_alive must be of type %d, not %d!\n", PARAM_INT, type);
 		return -1;
 	}
 	jsonrpc_keep_alive = (int)(long)val;
