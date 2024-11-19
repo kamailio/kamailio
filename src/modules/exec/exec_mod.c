@@ -82,9 +82,9 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"time_to_kill", INT_PARAM, &time_to_kill},
-	{"setvars",      INT_PARAM, &setvars     },
-	{"bash_safety",  INT_PARAM, &exec_bash_safety     },
+	{"time_to_kill", PARAM_INT, &time_to_kill},
+	{"setvars",      PARAM_INT, &setvars     },
+	{"bash_safety",  PARAM_INT, &exec_bash_safety     },
 	{0, 0, 0}
 };
 
