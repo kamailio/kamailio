@@ -96,10 +96,10 @@ static param_export_t params[] = {
 		{"retries", PARAM_INT, &my_retries},
 		{"server_timezone", PARAM_INT, &my_server_timezone},
 
-		{"timeout_interval", INT_PARAM, &db_mysql_timeout_interval},
-		{"auto_reconnect", INT_PARAM, &db_mysql_auto_reconnect},
-		{"insert_delayed", INT_PARAM, &db_mysql_insert_all_delayed},
-		{"update_affected_found", INT_PARAM, &db_mysql_update_affected_found},
+		{"timeout_interval", PARAM_INT, &db_mysql_timeout_interval},
+		{"auto_reconnect", PARAM_INT, &db_mysql_auto_reconnect},
+		{"insert_delayed", PARAM_INT, &db_mysql_insert_all_delayed},
+		{"update_affected_found", PARAM_INT, &db_mysql_update_affected_found},
 		{"unsigned_type", PARAM_INT, &db_mysql_unsigned_type},
 		{"opt_ssl_ca", PARAM_STRING, &db_mysql_opt_ssl_ca},
 		{"opt_ssl_mode", PARAM_INT, &db_mysql_opt_ssl_mode}, {0, 0, 0}};

@@ -58,9 +58,9 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-		/*	{"ping_interval",    INT_PARAM, &db_mysql_ping_interval}, */
-		{"timeout_interval", INT_PARAM, &db_mysql_timeout_interval},
-		{"auto_reconnect", INT_PARAM, &db_mysql_auto_reconnect}, {0, 0, 0}};
+		/*	{"ping_interval",    PARAM_INT, &db_mysql_ping_interval}, */
+		{"timeout_interval", PARAM_INT, &db_mysql_timeout_interval},
+		{"auto_reconnect", PARAM_INT, &db_mysql_auto_reconnect}, {0, 0, 0}};
 
 struct module_exports kam_exports = {
 		"db_mysql",			/* module name */
