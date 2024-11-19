@@ -428,7 +428,7 @@ void cdp_sessions_log()
 								x->u.auth.generic_data, x->u.auth.class);
 						break;
 					case ACCT_CC_CLIENT:
-						LM_DBG("CCAcct State [%d] Charging Active [%c (%d)s] "
+						LM_DBG("CCAcct State [%d] Charging Active [%c (%ld)s] "
 							   "Reserved Units(valid=%ds) [%d] Generic [%p]\n",
 								x->u.cc_acc.state,
 								(x->u.cc_acc.charging_start_time
@@ -436,11 +436,11 @@ void cdp_sessions_log()
 												   != ACC_CC_ST_DISCON)
 										? 'Y'
 										: 'N',
-								x->u.cc_acc.charging_start_time
-										? (int)((int)time(0)
-												- (int)x->u.cc_acc
+								x->u.cc_acc.charging_start_time ? (
+										time_t)(time(0)
+												- (time_t)x->u.cc_acc
 														  .charging_start_time)
-										: -1,
+																: -1,
 								x->u.cc_acc.reserved_units
 										? (int)((int)x->u.cc_acc
 														  .last_reservation_request_time
@@ -482,7 +482,7 @@ int cdp_sessions_timer(time_t now, void *ptr)
 									x, ACC_CC_EV_SESSION_STALE, 0);
 						}
 						//check reservation timers - again here we are assuming CC-Time applications
-						int last_res_timestamp =
+						time_t last_res_timestamp =
 								x->u.cc_acc.last_reservation_request_time;
 						int res_valid_for =
 								x->u.cc_acc.reserved_units_validity_time;
