@@ -93,7 +93,7 @@ static cmd_export_t cmds[] = {
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {{"xhttp_pi_root", PARAM_STR, &xhttp_pi_root},
-		{"xhttp_pi_buf_size", INT_PARAM, &buf_size},
+		{"xhttp_pi_buf_size", PARAM_INT, &buf_size},
 		{"framework", PARAM_STR, &filename}, {0, 0, 0}};
 
 static rpc_export_t rpc_methods[];
