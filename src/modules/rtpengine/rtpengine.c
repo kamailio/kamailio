@@ -484,7 +484,7 @@ static pv_export_t mod_pvs[] = {
 };
 
 static param_export_t params[] = {
-	{"rtpengine_sock", PARAM_STRING | USE_FUNC_PARAM,
+	{"rtpengine_sock", PARAM_STRING | PARAM_USE_FUNC,
 			(void *)rtpengine_set_store},
 	{"rtpengine_disable_tout", PARAM_INT,
 			&default_rtpengine_cfg.rtpengine_disable_tout},
@@ -516,7 +516,7 @@ static param_export_t params[] = {
 	{"setid_default", PARAM_INT, &setid_default},
 	{"media_duration", PARAM_STR, &media_duration_pvar_str},
 	{"hash_algo", PARAM_INT, &hash_algo},
-	{"dtmf_events_sock", PARAM_STRING | USE_FUNC_PARAM,
+	{"dtmf_events_sock", PARAM_STRING | PARAM_USE_FUNC,
 			(void *)rtpengine_set_dtmf_events_sock},
 	{"dtmf_event_callid", PARAM_STR, &dtmf_event_callid_pvar_str},
 	{"dtmf_event_source_tag", PARAM_STR, &dtmf_event_source_tag_pvar_str},
