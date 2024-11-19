@@ -115,7 +115,7 @@ static param_export_t params[] = {{"db_url", PARAM_STR, &xcaps_db_url},
 		{"xcap_table", PARAM_STR, &xcaps_db_table},
 		{"xcap_root", PARAM_STR, &xcaps_root},
 		{"buf_size", PARAM_INT, &xcaps_buf.len},
-		{"xml_ns", PARAM_STRING | USE_FUNC_PARAM, (void *)xcaps_xpath_ns_param},
+		{"xml_ns", PARAM_STRING | PARAM_USE_FUNC, (void *)xcaps_xpath_ns_param},
 		{"directory_scheme", PARAM_INT, &xcaps_directory_scheme},
 		{"directory_hostname", PARAM_STR, &xcaps_directory_hostname},
 		{0, 0, 0}};
