@@ -234,7 +234,7 @@ static cmd_export_t cmds[] = {
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-		{"lrkproxy_sock", PARAM_STRING | USE_FUNC_PARAM,
+		{"lrkproxy_sock", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)lrkproxy_set_store},
 		{"lrkproxy_disable_tout", PARAM_INT, &lrkproxy_disable_tout},
 		{"lrkproxy_retr", PARAM_INT, &lrkproxy_retr},
