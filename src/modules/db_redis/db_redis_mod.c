@@ -55,7 +55,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-		{"keys", PARAM_STRING | USE_FUNC_PARAM, (void *)keys_param},
+		{"keys", PARAM_STRING | PARAM_USE_FUNC, (void *)keys_param},
 		{"schema_path", PARAM_STR, &redis_schema_path},
 		{"verbosity", PARAM_INT, &db_redis_verbosity},
 #ifdef WITH_SSL
