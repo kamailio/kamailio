@@ -52,8 +52,8 @@ unsigned int pres_reginfo_default_expires = 3600;
 
 /* module exported parameters */
 static param_export_t params[] = {
-		{"default_expires", INT_PARAM, &pres_reginfo_default_expires},
-		{"aggregate_presentities", INT_PARAM,
+		{"default_expires", PARAM_INT, &pres_reginfo_default_expires},
+		{"aggregate_presentities", PARAM_INT,
 				&pres_reginfo_aggregate_presentities},
 		{0, 0, 0}};
 
