@@ -132,7 +132,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {{"enable", PARAM_INT, &bm_enable_global},
 		{"granularity", PARAM_INT, &bm_granularity},
 		{"loglevel", PARAM_INT, &bm_loglevel},
-		{"register", PARAM_STRING | USE_FUNC_PARAM,
+		{"register", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)bm_register_timer_param},
 
 		{0, 0, 0}};
