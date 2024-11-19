@@ -68,10 +68,10 @@ static cmd_export_t cmds[] = {{"pike_check_req", (cmd_function)w_pike_check_req,
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-		{"sampling_time_unit", INT_PARAM, &pike_time_unit},
-		{"reqs_density_per_unit", INT_PARAM, &pike_max_reqs},
-		{"remove_latency", INT_PARAM, &pike_timeout},
-		{"pike_log_level", INT_PARAM, &pike_log_level}, {0, 0, 0}};
+		{"sampling_time_unit", PARAM_INT, &pike_time_unit},
+		{"reqs_density_per_unit", PARAM_INT, &pike_max_reqs},
+		{"remove_latency", PARAM_INT, &pike_timeout},
+		{"pike_log_level", PARAM_INT, &pike_log_level}, {0, 0, 0}};
 
 
 struct module_exports exports = {
