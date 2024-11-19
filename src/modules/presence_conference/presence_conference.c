@@ -56,8 +56,8 @@ static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 
 /* module exported parameters */
 static param_export_t params[] = {
-		{"use_partial_states", INT_PARAM, &use_partial_states},
-		{"default_expires", INT_PARAM, &pres_conf_default_expires}, {0, 0, 0}};
+		{"use_partial_states", PARAM_INT, &use_partial_states},
+		{"default_expires", PARAM_INT, &pres_conf_default_expires}, {0, 0, 0}};
 
 /* presence api bind structure */
 presence_api_t pres;
