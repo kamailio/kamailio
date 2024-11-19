@@ -51,8 +51,8 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 		{"connection", PARAM_STRING | USE_FUNC_PARAM, (void *)dbcl_con_param},
 		{"cluster", PARAM_STRING | USE_FUNC_PARAM, (void *)dbcl_cls_param},
-		{"inactive_interval", INT_PARAM, &dbcl_inactive_interval},
-		{"max_query_length", INT_PARAM, &dbcl_max_query_length}, {0, 0, 0}};
+		{"inactive_interval", PARAM_INT, &dbcl_inactive_interval},
+		{"max_query_length", PARAM_INT, &dbcl_max_query_length}, {0, 0, 0}};
 
 static rpc_export_t rpc_methods[];
 
