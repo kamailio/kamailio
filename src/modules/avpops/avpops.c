@@ -146,7 +146,7 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
 		{"avp_table", PARAM_STR, &db_table},
-		{"use_domain", INT_PARAM, &use_domain},
+		{"use_domain", PARAM_INT, &use_domain},
 		{"uuid_column", PARAM_STR, &uuid_col},
 		{"attribute_column", PARAM_STR, &attribute_col},
 		{"value_column", PARAM_STR, &value_col},
