@@ -228,39 +228,39 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 		{"rx_dest_realm", PARAM_STR, &rx_dest_realm},
 		{"rx_forced_peer", PARAM_STR, &rx_forced_peer},
-		{"rx_auth_expiry", INT_PARAM, &rx_auth_expiry},
+		{"rx_auth_expiry", PARAM_INT, &rx_auth_expiry},
 		{"af_signaling_ip", PARAM_STR,
 				&af_signaling_ip}, /* IP of this P-CSCF, to be used in the flow for the AF-signaling */
 		{"af_signaling_ip6", PARAM_STR,
 				&af_signaling_ip6}, /* IPv6 of this P-CSCF, to be used in the flow for the AF-signaling */
 		{"media_type", PARAM_STR, &component_media_type},			/*  */
 		{"flow_protocol", PARAM_STR, &flow_protocol},				/*  */
-		{"omit_flow_ports", INT_PARAM, &omit_flow_ports},			/*  */
-		{"rs_default_bandwidth", INT_PARAM, &rs_default_bandwidth}, /*  */
-		{"rr_default_bandwidth", INT_PARAM, &rr_default_bandwidth}, /*  */
-		{"cdp_event_latency", INT_PARAM,
+		{"omit_flow_ports", PARAM_INT, &omit_flow_ports},			/*  */
+		{"rs_default_bandwidth", PARAM_INT, &rs_default_bandwidth}, /*  */
+		{"rr_default_bandwidth", PARAM_INT, &rr_default_bandwidth}, /*  */
+		{"cdp_event_latency", PARAM_INT,
 				&cdp_event_latency}, /*flag: report slow processing of CDP callback events or not */
-		{"cdp_event_threshold", INT_PARAM,
+		{"cdp_event_threshold", PARAM_INT,
 				&cdp_event_threshold}, /*time in ms above which we should report slow processing of CDP callback event*/
-		{"cdp_event_latency_log", INT_PARAM,
+		{"cdp_event_latency_log", PARAM_INT,
 				&cdp_event_latency_loglevel}, /*log-level to use to report slow processing of CDP callback event*/
-		{"authorize_video_flow", INT_PARAM,
+		{"authorize_video_flow", PARAM_INT,
 				&authorize_video_flow}, /*whether or not we authorize resources for video flows*/
-		{"cdp_event_list_size_threshold", INT_PARAM,
+		{"cdp_event_list_size_threshold", PARAM_INT,
 				&cdp_event_list_size_threshold}, /**Threshold for size of cdp event list after which a warning is logged */
-		{"audio_default_bandwidth", INT_PARAM, &audio_default_bandwidth},
-		{"video_default_bandwidth", INT_PARAM, &video_default_bandwidth},
+		{"audio_default_bandwidth", PARAM_INT, &audio_default_bandwidth},
+		{"video_default_bandwidth", PARAM_INT, &video_default_bandwidth},
 		{"early_qosrelease_reason", PARAM_STR, &early_qosrelease_reason},
 		{"confirmed_qosrelease_headers", PARAM_STR,
 				&confirmed_qosrelease_headers},
-		{"terminate_dialog_on_rx_failure", INT_PARAM,
+		{"terminate_dialog_on_rx_failure", PARAM_INT,
 				&terminate_dialog_on_rx_failure},
-		{"delete_contact_on_rx_failure", INT_PARAM,
+		{"delete_contact_on_rx_failure", PARAM_INT,
 				&delete_contact_on_rx_failure},
 		{"regex_sdp_ip_prefix_to_maintain_in_fd", PARAM_STR,
 				&regex_sdp_ip_prefix_to_maintain_in_fd},
-		{"include_rtcp_fd", INT_PARAM, &include_rtcp_fd},
-		{"suspend_transaction", INT_PARAM, &_ims_qos_suspend_transaction},
+		{"include_rtcp_fd", PARAM_INT, &include_rtcp_fd},
+		{"suspend_transaction", PARAM_INT, &_ims_qos_suspend_transaction},
 		{"recv_mode", PARAM_INT, &_imsqos_params.recv_mode},
 		{"dialog_direction", PARAM_INT, &_imsqos_params.dlg_direction},
 		{"trust_bottom_via", PARAM_INT, &trust_bottom_via},
