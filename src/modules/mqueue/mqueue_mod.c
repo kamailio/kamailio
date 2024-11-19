@@ -80,8 +80,8 @@ static cmd_export_t cmds[] = {{"mq_fetch", (cmd_function)w_mq_fetch, 1,
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {{"db_url", PARAM_STR, &mqueue_db_url},
-		{"mqueue", PARAM_STRING | USE_FUNC_PARAM, (void *)mq_param},
-		{"mqueue_name", PARAM_STRING | USE_FUNC_PARAM, (void *)mq_param_name},
+		{"mqueue", PARAM_STRING | PARAM_USE_FUNC, (void *)mq_param},
+		{"mqueue_name", PARAM_STRING | PARAM_USE_FUNC, (void *)mq_param_name},
 		{"mqueue_size", PARAM_INT, &mqueue_size},
 		{"mqueue_addmode", PARAM_INT, &mqueue_addmode}, {0, 0, 0}};
 
