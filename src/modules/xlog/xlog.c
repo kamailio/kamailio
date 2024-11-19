@@ -164,15 +164,15 @@ static cmd_export_t cmds[] = {
 		{0, 0, 0, 0, 0, 0}};
 
 
-static param_export_t params[] = {{"buf_size", INT_PARAM, &buf_size},
-		{"force_color", INT_PARAM, &force_color},
-		{"long_format", INT_PARAM, &long_format},
+static param_export_t params[] = {{"buf_size", PARAM_INT, &buf_size},
+		{"force_color", PARAM_INT, &force_color},
+		{"long_format", PARAM_INT, &long_format},
 		{"prefix", PARAM_STRING, &_xlog_prefix},
 		{"log_facility", PARAM_STRING, &xlog_facility_name},
 		{"log_colors", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)xlog_log_colors_param},
 		{"methods_filter", PARAM_INT, &xlog_default_cfg.methods_filter},
-		{"prefix_mode", INT_PARAM, &_xlog_prefix_mode}, {0, 0, 0}};
+		{"prefix_mode", PARAM_INT, &_xlog_prefix_mode}, {0, 0, 0}};
 
 
 /** module exports */
