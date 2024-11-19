@@ -79,7 +79,7 @@ static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
 		{"sd_user_column", PARAM_STR, &sd_user_column},
 		{"sd_domain_column", PARAM_STR, &sd_domain_column},
 		{"new_uri_column", PARAM_STR, &new_uri_column},
-		{"use_domain", INT_PARAM, &use_domain},
+		{"use_domain", PARAM_INT, &use_domain},
 		{"domain_prefix", PARAM_STR, &domain_prefix}, {0, 0, 0}};
 
 
