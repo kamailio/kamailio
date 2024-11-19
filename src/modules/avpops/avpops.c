@@ -153,7 +153,7 @@ static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
 		{"type_column", PARAM_STR, &type_col},
 		{"username_column", PARAM_STR, &username_col},
 		{"domain_column", PARAM_STR, &domain_col},
-		{"db_scheme", PARAM_STRING | USE_FUNC_PARAM, (void *)avp_add_db_scheme},
+		{"db_scheme", PARAM_STRING | PARAM_USE_FUNC, (void *)avp_add_db_scheme},
 		{0, 0, 0}};
 
 
