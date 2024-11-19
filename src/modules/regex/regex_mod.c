@@ -135,12 +135,12 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"file", PARAM_STRING, &file},
-	{"max_groups", INT_PARAM, &max_groups},
-	{"group_max_size", INT_PARAM, &group_max_size},
-	{"pcre_caseless", INT_PARAM, &pcre_caseless},
-	{"pcre_multiline", INT_PARAM, &pcre_multiline},
-	{"pcre_dotall", INT_PARAM, &pcre_dotall},
-	{"pcre_extended", INT_PARAM, &pcre_extended},
+	{"max_groups", PARAM_INT, &max_groups},
+	{"group_max_size", PARAM_INT, &group_max_size},
+	{"pcre_caseless", PARAM_INT, &pcre_caseless},
+	{"pcre_multiline", PARAM_INT, &pcre_multiline},
+	{"pcre_dotall", PARAM_INT, &pcre_dotall},
+	{"pcre_extended", PARAM_INT, &pcre_extended},
 	{0, 0, 0}
 };
 
