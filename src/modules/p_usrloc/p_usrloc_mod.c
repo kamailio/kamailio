@@ -274,7 +274,7 @@ static param_export_t params[] = {{"ruid_column", PARAM_STR, &ruid_col},
 		{"db_update_as_insert", PARAM_INT,
 				&default_p_usrloc_cfg.db_update_as_insert},
 		{"mdb_availability_control", PARAM_INT, &mdb_availability_control},
-		{"preload", PARAM_STRING | USE_FUNC_PARAM, (void *)ul_preload_param},
+		{"preload", PARAM_STRING | PARAM_USE_FUNC, (void *)ul_preload_param},
 		{0, 0, 0}};
 
 
