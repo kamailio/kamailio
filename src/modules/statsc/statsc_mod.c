@@ -59,8 +59,8 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 		{"track", PARAM_STRING | USE_FUNC_PARAM, (void *)statsc_track_param},
-		{"interval", INT_PARAM, &statsc_interval},
-		{"items", INT_PARAM, &statsc_items}, {0, 0, 0}};
+		{"interval", PARAM_INT, &statsc_interval},
+		{"items", PARAM_INT, &statsc_items}, {0, 0, 0}};
 
 struct module_exports exports = {
 		"statsc",		 /* module name */
