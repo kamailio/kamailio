@@ -49,8 +49,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-		{"connection", PARAM_STRING | USE_FUNC_PARAM, (void *)dbcl_con_param},
-		{"cluster", PARAM_STRING | USE_FUNC_PARAM, (void *)dbcl_cls_param},
+		{"connection", PARAM_STRING | PARAM_USE_FUNC, (void *)dbcl_con_param},
+		{"cluster", PARAM_STRING | PARAM_USE_FUNC, (void *)dbcl_cls_param},
 		{"inactive_interval", PARAM_INT, &dbcl_inactive_interval},
 		{"max_query_length", PARAM_INT, &dbcl_max_query_length}, {0, 0, 0}};
 
