@@ -68,7 +68,7 @@ static param_export_t params[] = {
 		{"default_domain", PARAM_STR, &default_domain},
 		{"outbound_proxy", PARAM_STR, &outbound_proxy},
 		{"server_address", PARAM_STR, &server_address},
-		{"publish_reginfo", INT_PARAM, &publish_reginfo}, {0, 0, 0}};
+		{"publish_reginfo", PARAM_INT, &publish_reginfo}, {0, 0, 0}};
 
 struct module_exports exports = {
 		"pua_reginfo",	 /* module name */
