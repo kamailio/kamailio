@@ -335,7 +335,7 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {{"db_url", PARAM_STRING, &db_url},
 		{"db_table", PARAM_STRING, &db_table},
-		{"exit", INT_PARAM, &prefix_route_exit}, {0, 0, 0}};
+		{"exit", PARAM_INT, &prefix_route_exit}, {0, 0, 0}};
 
 /*
  * Module description
