@@ -561,9 +561,9 @@ static int set_if_valid_threshold(
 		return -1;
 	}
 
-	if(PARAM_TYPE_MASK(type) != INT_PARAM) {
+	if(PARAM_TYPE_MASK(type) != PARAM_INT) {
 		LM_ERR("%s called with type %d instead of %d!\n", varStr, type,
-				INT_PARAM);
+				PARAM_INT);
 		return -1;
 	}
 

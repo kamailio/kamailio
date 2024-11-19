@@ -134,13 +134,13 @@ static void mod_destroy(void);
 static param_export_t mod_params[] = {
 		{"sipEntityType", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)handleSipEntityType},
-		{"MsgQueueMinorThreshold", INT_PARAM | USE_FUNC_PARAM,
+		{"MsgQueueMinorThreshold", PARAM_INT | USE_FUNC_PARAM,
 				(void *)set_queue_minor_threshold},
-		{"MsgQueueMajorThreshold", INT_PARAM | USE_FUNC_PARAM,
+		{"MsgQueueMajorThreshold", PARAM_INT | USE_FUNC_PARAM,
 				(void *)set_queue_major_threshold},
-		{"dlg_minor_threshold", INT_PARAM | USE_FUNC_PARAM,
+		{"dlg_minor_threshold", PARAM_INT | USE_FUNC_PARAM,
 				(void *)set_dlg_minor_threshold},
-		{"dlg_major_threshold", INT_PARAM | USE_FUNC_PARAM,
+		{"dlg_major_threshold", PARAM_INT | USE_FUNC_PARAM,
 				(void *)set_dlg_major_threshold},
 		{"snmpgetPath", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)set_snmpget_path},
@@ -148,7 +148,7 @@ static param_export_t mod_params[] = {
 				(void *)set_snmp_community},
 		{"snmpVersion", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)set_snmp_version},
-		{"export_registrar", INT_PARAM, &snmp_export_registrar}, {0, 0, 0}};
+		{"export_registrar", PARAM_INT, &snmp_export_registrar}, {0, 0, 0}};
 
 
 struct module_exports exports = {
