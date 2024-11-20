@@ -55,7 +55,7 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[] = {
 	{"geoip_match", (cmd_function)w_geoip_match, 2,
-		fixup_spve_spve, 0, ANY_ROUTE},
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
