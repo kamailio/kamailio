@@ -296,21 +296,13 @@ static int child_init(int rank)
 
 static void destroy(void)
 {
-	if(puacb_list)
-		destroy_puacb_list();
-
 	/* if dbmode is PUA_DB_ONLY, then HashT will be NULL
 	 * so db_update and destroy_htable won't get called */
 	if(pua_db && HashT)
 		db_update(0, 0);
 
-	if(HashT)
-		destroy_htable();
-
 	if(pua_db)
 		pua_dbf.close(pua_db);
-	if(pua_evlist)
-		destroy_pua_evlist();
 
 	return;
 }
