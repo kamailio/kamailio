@@ -56,6 +56,7 @@ static int lookup_domain(struct sip_msg *msg, char *s1, char *s2);
 static int get_did(str *did, str *domain);
 
 static int lookup_domain_fixup(void **param, int param_no);
+static int lookup_domain_fixup_free(void **param, int param_no);
 
 MODULE_VERSION
 
@@ -121,8 +122,8 @@ static domain_t dom_buf[2];
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_local", is_local, 1, fixup_var_str_1, 0, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{"lookup_domain", lookup_domain, 2, lookup_domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"is_local", is_local, 1, fixup_var_str_1, fixup_free_fparam_1, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"lookup_domain", lookup_domain, 2, lookup_domain_fixup, lookup_domain_fixup_free, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"get_did", (cmd_function)get_did, 0, 0, 0, 0},
 	{"bind_domain", (cmd_function)bind_domain, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -567,5 +568,13 @@ static int lookup_domain_fixup(void **param, int param_no)
 		return fixup_var_str_12(param, 2);
 	}
 
+	return 0;
+}
+
+static int lookup_domain_fixup_free(void **param, int param_no)
+{
+	if(param_no == 2) {
+		return fixup_free_fparam_all(param, 2);
+	}
 	return 0;
 }
