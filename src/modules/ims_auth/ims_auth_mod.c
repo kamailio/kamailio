@@ -70,7 +70,9 @@ static void destroy(void);
 static int mod_init(void);
 
 static int auth_fixup(void **param, int param_no);
+static int auth_fixup_free(void **param, int param_no);
 static int challenge_fixup_async(void **param, int param_no);
+static int challenge_fixup_async_free(void **param, int param_no);
 
 struct cdp_binds cdpb;
 
@@ -129,65 +131,69 @@ str scscf_name_str = str_init(
 /* used mainly in testing - load balancing with SIPP where we don't want to worry about auth */
 int ignore_failed_auth = 0;
 
+/* clang-format off */
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"ims_www_authenticate", (cmd_function)www_authenticate, 1, auth_fixup,
-				0, REQUEST_ROUTE},
-		{"ims_www_challenge", (cmd_function)www_challenge2, 2,
-				challenge_fixup_async, 0, REQUEST_ROUTE},
-		{"ims_www_challenge", (cmd_function)www_challenge3, 3,
-				challenge_fixup_async, 0, REQUEST_ROUTE},
-		{"ims_www_resync_auth", (cmd_function)www_resync_auth, 2,
-				challenge_fixup_async, 0, REQUEST_ROUTE},
-		{"ims_proxy_authenticate", (cmd_function)proxy_authenticate, 1,
-				auth_fixup, 0, REQUEST_ROUTE},
-		{"ims_proxy_challenge", (cmd_function)proxy_challenge, 3,
-				challenge_fixup_async, 0, REQUEST_ROUTE},
-		{"bind_ims_auth", (cmd_function)bind_ims_auth, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
+	{"ims_www_authenticate", (cmd_function)www_authenticate, 1,
+			auth_fixup, auth_fixup_free, REQUEST_ROUTE},
+	{"ims_www_challenge", (cmd_function)www_challenge2, 2,
+			challenge_fixup_async, challenge_fixup_async_free, REQUEST_ROUTE},
+	{"ims_www_challenge", (cmd_function)www_challenge3, 3,
+			challenge_fixup_async, challenge_fixup_async_free, REQUEST_ROUTE},
+	{"ims_www_resync_auth", (cmd_function)www_resync_auth, 2,
+			challenge_fixup_async, challenge_fixup_async_free, REQUEST_ROUTE},
+	{"ims_proxy_authenticate", (cmd_function)proxy_authenticate, 1,
+			auth_fixup, auth_fixup_free, REQUEST_ROUTE},
+	{"ims_proxy_challenge", (cmd_function)proxy_challenge, 3,
+			challenge_fixup_async, challenge_fixup_async_free, REQUEST_ROUTE},
+	{"bind_ims_auth", (cmd_function)bind_ims_auth, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
 static param_export_t params[] = {{"name", PARAM_STR, &scscf_name_str},
-		{"auth_data_hash_size", PARAM_INT, &auth_data_hash_size},
-		{"auth_vector_timeout", PARAM_INT, &auth_vector_timeout},
-		{"auth_used_vector_timeout", PARAM_INT, &auth_used_vector_timeout},
-		{"auth_data_timeout", PARAM_INT, &auth_data_timeout},
-		{"max_nonce_reuse", PARAM_INT, &max_nonce_reuse},
-		{"add_authinfo_hdr", PARAM_INT, &add_authinfo_hdr},
-		{"av_request_at_once", PARAM_INT, &av_request_at_once},
-		{"av_request_at_sync", PARAM_INT, &av_request_at_sync},
-		{"registration_default_algorithm", PARAM_STR,
-				&registration_default_algorithm},
-		{"registration_qop", PARAM_STR, &registration_qop},
-		{"invite_qop", PARAM_STR, &invite_qop},
-		{"ignore_failed_auth", PARAM_INT, &ignore_failed_auth},
-		{"av_check_only_impu", PARAM_INT, &av_check_only_impu},
-		{"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
-		{"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
-		{"cxdx_dest_host", PARAM_STR, &cxdx_dest_host}, {0, 0, 0}};
+	{"auth_data_hash_size", PARAM_INT, &auth_data_hash_size},
+	{"auth_vector_timeout", PARAM_INT, &auth_vector_timeout},
+	{"auth_used_vector_timeout", PARAM_INT, &auth_used_vector_timeout},
+	{"auth_data_timeout", PARAM_INT, &auth_data_timeout},
+	{"max_nonce_reuse", PARAM_INT, &max_nonce_reuse},
+	{"add_authinfo_hdr", PARAM_INT, &add_authinfo_hdr},
+	{"av_request_at_once", PARAM_INT, &av_request_at_once},
+	{"av_request_at_sync", PARAM_INT, &av_request_at_sync},
+	{"registration_default_algorithm", PARAM_STR, &registration_default_algorithm},
+	{"registration_qop", PARAM_STR, &registration_qop},
+	{"invite_qop", PARAM_STR, &invite_qop},
+	{"ignore_failed_auth", PARAM_INT, &ignore_failed_auth},
+	{"av_check_only_impu", PARAM_INT, &av_check_only_impu},
+	{"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
+	{"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
+	{"cxdx_dest_host", PARAM_STR, &cxdx_dest_host}, {0, 0, 0}
+};
 
-stat_export_t mod_stats[] = {{"mar_avg_response_time", STAT_IS_FUNC,
-									 (stat_var **)get_avg_mar_response_time},
-		{"mar_timeouts", 0, (stat_var **)&stat_mar_timeouts}, {0, 0, 0}};
+stat_export_t mod_stats[] = {
+	{"mar_avg_response_time", STAT_IS_FUNC, (stat_var **)get_avg_mar_response_time},
+	{"mar_timeouts", 0, (stat_var **)&stat_mar_timeouts}, {0, 0, 0}
+};
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-		"ims_auth", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,						 /* Exported functions */
-		params,						 /* Exported parameters */
-		0,							 /* exported RPC methods */
-		0,							 /* exported pseudo-variables */
-		0,							 /* response function */
-		mod_init,					 /* module initialization function */
-		0,							 /* child initialization function */
-		destroy						 /* destroy function */
+	"ims_auth", DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,						 /* Exported functions */
+	params,						 /* Exported parameters */
+	0,							 /* exported RPC methods */
+	0,							 /* exported pseudo-variables */
+	0,							 /* response function */
+	mod_init,					 /* module initialization function */
+	0,							 /* child initialization function */
+	destroy						 /* destroy function */
 };
+/* clang-format on */
 
 static int mod_init(void)
 {
@@ -326,6 +332,18 @@ static int challenge_fixup_async(void **param, int param_no)
 	return 0;
 }
 
+static int challenge_fixup_async_free(void **param, int param_no)
+{
+
+	if(param_no == 1) {
+		fixup_free_spve_null(param, param_no);
+	} else {
+		fixup_free_fparam_all(param, 1);
+	}
+
+	return 0;
+}
+
 /*
  * Convert the char* parameters
  */
@@ -341,6 +359,15 @@ static int auth_fixup(void **param, int param_no)
 			LM_ERR("Erroring doing fixup on auth");
 			return -1;
 		}
+	}
+
+	return 0;
+}
+
+static int auth_fixup_free(void **param, int param_no)
+{
+	if(param_no == 1) {
+		fixup_free_fparam_all(param, param_no);
 	}
 
 	return 0;
