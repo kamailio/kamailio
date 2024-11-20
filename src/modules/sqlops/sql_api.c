@@ -150,16 +150,21 @@ int sql_connect(int mode)
 					sc->name.len, sc->name.s);
 			return -1;
 		}
-		sc->dbh = sc->dbf.init(&sc->db_url);
-		if(sc->dbh == NULL) {
-			if(!mode) {
-				LM_ERR("failed to connect to the database [%.*s]\n",
-						sc->name.len, sc->name.s);
-				return -1;
-			} else {
-				LM_INFO("failed to connect to the database [%.*s] - trying "
-						"next\n",
-						sc->name.len, sc->name.s);
+		if(mode == 2) {
+			LM_DBG("database initialized but not connecting[%.*s]mode[%d]\n",
+					sc->name.len, sc->name.s, mode);
+		} else {
+			sc->dbh = sc->dbf.init(&sc->db_url);
+			if(sc->dbh == NULL) {
+				if(!mode) {
+					LM_ERR("failed to connect to the database [%.*s]\n",
+							sc->name.len, sc->name.s);
+					return -1;
+				} else {
+					LM_INFO("failed to connect to the database [%.*s] - trying "
+							"next\n",
+							sc->name.len, sc->name.s);
+				}
 			}
 		}
 		sc = sc->next;
