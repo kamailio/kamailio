@@ -89,9 +89,9 @@ static param_export_t params[] = {{"deny_filter", PARAM_STRING, &deny_filter_s},
 		{"default_filter", PARAM_STRING, &def_filter_s},
 		{"acc_function", PARAM_STR, &uacred_acc_fct_s},
 		{"acc_db_table", PARAM_STR, &uacred_acc_db_table},
-		{"bflags", INT_PARAM, &bflags},
-		{"flags_hdr_mode", INT_PARAM, &flags_hdr_mode},
-		{"q_value", INT_PARAM, &_redirect_q_value}, {0, 0, 0}};
+		{"bflags", PARAM_INT, &bflags},
+		{"flags_hdr_mode", PARAM_INT, &flags_hdr_mode},
+		{"q_value", PARAM_INT, &_redirect_q_value}, {0, 0, 0}};
 
 
 struct module_exports exports = {

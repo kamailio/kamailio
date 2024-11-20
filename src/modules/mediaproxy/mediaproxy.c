@@ -226,9 +226,9 @@ static cmd_export_t commands[] = {
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t parameters[] = {
-		{"disable", INT_PARAM, &mediaproxy_disabled},
+		{"disable", PARAM_INT, &mediaproxy_disabled},
 		{"mediaproxy_socket", PARAM_STRING, &(mediaproxy_socket.name)},
-		{"mediaproxy_timeout", INT_PARAM, &(mediaproxy_socket.timeout)},
+		{"mediaproxy_timeout", PARAM_INT, &(mediaproxy_socket.timeout)},
 		{"signaling_ip_avp", PARAM_STR, &(signaling_ip_avp.spec)},
 		{"media_relay_avp", PARAM_STR, &(media_relay_avp.spec)},
 		{"ice_candidate", PARAM_STR, &(ice_candidate)},

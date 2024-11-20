@@ -96,10 +96,10 @@ static cmd_export_t cmds[] = {
 		{0, 0, 0, 0, 0, 0}};
 
 
-static param_export_t params[] = {{"diameter_flag", INT_PARAM, &diameter_flag},
-		{"diameter_missed_flag", INT_PARAM, &diameter_missed_flag},
+static param_export_t params[] = {{"diameter_flag", PARAM_INT, &diameter_flag},
+		{"diameter_missed_flag", PARAM_INT, &diameter_missed_flag},
 		{"diameter_client_host", PARAM_STRING, &diameter_client_host},
-		{"diameter_client_port", INT_PARAM, &diameter_client_port},
+		{"diameter_client_port", PARAM_INT, &diameter_client_port},
 		{"diameter_extra", PARAM_STRING, &diameter_extra_str}, {0, 0, 0}};
 
 

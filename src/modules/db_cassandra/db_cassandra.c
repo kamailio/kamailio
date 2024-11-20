@@ -63,7 +63,7 @@ static param_export_t params[] = {
 		{"send_timeout", PARAM_INT, &cassa_send_timeout},
 		{"receive_timeout", PARAM_INT, &cassa_recv_timeout},
 		{"retries", PARAM_INT, &cassa_retries},
-		{"auto_reconnect", INT_PARAM, &cassa_auto_reconnect}, {0, 0, 0}};
+		{"auto_reconnect", PARAM_INT, &cassa_auto_reconnect}, {0, 0, 0}};
 
 
 struct module_exports exports = {

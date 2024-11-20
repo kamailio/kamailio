@@ -280,7 +280,7 @@ static cmd_export_t commands[] = {
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t parameters[] = {
-		{"keepalive_interval", INT_PARAM, &keepalive_interval},
+		{"keepalive_interval", PARAM_INT, &keepalive_interval},
 		{"keepalive_method", PARAM_STRING, &keepalive_params.method},
 		{"keepalive_from", PARAM_STRING, &keepalive_params.from},
 		{"keepalive_extra_headers", PARAM_STRING,
@@ -1811,7 +1811,7 @@ static int mod_init(void)
 	if(load_dlg_api(&dlg_api) == 0) {
 		// load default_timeout parameters from the dialog module
 		param = find_param_export(find_module_by_name("dialog"),
-				"default_timeout", INT_PARAM, &type);
+				"default_timeout", PARAM_INT, &type);
 		if(!param) {
 			LM_ERR("cannot find default_timeout parameter in the dialog "
 				   "module\n");

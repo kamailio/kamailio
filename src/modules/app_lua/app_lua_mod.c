@@ -64,8 +64,8 @@ int _ksr_app_lua_log_mode = 0;
 
 /* clang-format off */
 static param_export_t params[] = {
-	{"load", PARAM_STRING | USE_FUNC_PARAM, (void *)app_lua_load_param},
-	{"reload", INT_PARAM | USE_FUNC_PARAM, (void *)app_lua_reload_param},
+	{"load", PARAM_STRING | PARAM_USE_FUNC, (void *)app_lua_load_param},
+	{"reload", PARAM_INT | PARAM_USE_FUNC, (void *)app_lua_reload_param},
 	{"log_mode", PARAM_INT, &_ksr_app_lua_log_mode},
 	{0, 0, 0}
 };

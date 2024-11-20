@@ -75,9 +75,9 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 		{"radius_config", PARAM_STRING, &radius_config},
-		{"verify_destination_service_type", INT_PARAM,
+		{"verify_destination_service_type", PARAM_INT,
 				&verify_destination_service_type},
-		{"verify_source_service_type", INT_PARAM, &verify_source_service_type},
+		{"verify_source_service_type", PARAM_INT, &verify_source_service_type},
 		{0, 0, 0}};
 
 

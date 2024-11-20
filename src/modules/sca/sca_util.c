@@ -215,22 +215,11 @@ int sca_get_msg_to_header(sip_msg_t *msg, sca_to_body_t *to)
 			return (-1);
 		}
 		to->flags = SCA_UTIL_FLAG_TO_BODY_MSG;
-		to->hdr = get_to(msg);
-		if(to->hdr == NULL) {
-			parse_to(msg->to->body.s,
-					msg->to->body.s + msg->to->body.len + 1, // end of buffer
-					to->hdr);
-			if(to->hdr->error != PARSE_OK) {
-				LM_ERR("Bad To header\n");
-				return (-1);
-			}
-		}
-
-		// ensure the URI is parsed for future use
-		if(parse_uri(to->hdr->uri.s, to->hdr->uri.len, GET_TO_PURI(msg)) < 0) {
-			LM_ERR("Failed to parse To URI %.*s\n", STR_FMT(&to->hdr->uri));
+		if(parse_to_uri(msg) == NULL) {
+			LM_ERR("Bad To header\n");
 			return (-1);
 		}
+		to->hdr = get_to(msg);
 	} else {
 		LM_DBG("using $avp(%.*s)[%.*s] as to uri\n",
 				STR_FMT(&sca->cfg->to_uri_avp.s), STR_FMT(&uri));

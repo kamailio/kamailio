@@ -59,8 +59,8 @@ static pv_export_t mod_pvs[] = {{{"nosip", (sizeof("nosip") - 1)}, /* */
 
 		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[] = {{"msg_match", STR_PARAM, &nosip_msg_match},
-		{"msg_skip", STR_PARAM, &nosip_msg_skip}, {0, 0, 0}};
+static param_export_t params[] = {{"msg_match", PARAM_STRING, &nosip_msg_match},
+		{"msg_skip", PARAM_STRING, &nosip_msg_skip}, {0, 0, 0}};
 
 /** module exports */
 struct module_exports exports = {

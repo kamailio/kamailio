@@ -260,22 +260,22 @@ static pv_export_t mod_pvs[] = {
 };
 
 static param_export_t params[] = {
-	{"natping_interval",      INT_PARAM, &natping_interval      },
-	{"ping_nated_only",       INT_PARAM, &ping_nated_only       },
+	{"natping_interval",      PARAM_INT, &natping_interval      },
+	{"ping_nated_only",       PARAM_INT, &ping_nated_only       },
 	{"nortpproxy_str",        PARAM_STR, &nortpproxy_str      },
 	{"received_avp",          PARAM_STRING, &rcv_avp_param         },
 	{"force_socket",          PARAM_STR, &force_socket_str      },
 	{"sipping_from",          PARAM_STR, &sipping_from        },
 	{"sipping_method",        PARAM_STR, &sipping_method      },
-	{"sipping_bflag",         INT_PARAM, &sipping_flag          },
-	{"natping_disable_bflag", INT_PARAM, &natping_disable_flag  },
-	{"natping_processes",     INT_PARAM, &natping_processes     },
+	{"sipping_bflag",         PARAM_INT, &sipping_flag          },
+	{"natping_disable_bflag", PARAM_INT, &natping_disable_flag  },
+	{"natping_processes",     PARAM_INT, &natping_processes     },
 	{"natping_socket",        PARAM_STRING, &natping_socket        },
-	{"keepalive_timeout",     INT_PARAM, &nh_keepalive_timeout  },
-	{"udpping_from_path",     INT_PARAM, &udpping_from_path     },
-	{"append_sdp_oldmediaip", INT_PARAM, &sdp_oldmediaip        },
-	{"filter_server_id",      INT_PARAM, &nh_filter_srvid },
-	{"nat_addr_mode",         INT_PARAM, &nh_nat_addr_mode },
+	{"keepalive_timeout",     PARAM_INT, &nh_keepalive_timeout  },
+	{"udpping_from_path",     PARAM_INT, &udpping_from_path     },
+	{"append_sdp_oldmediaip", PARAM_INT, &sdp_oldmediaip        },
+	{"filter_server_id",      PARAM_INT, &nh_filter_srvid },
+	{"nat_addr_mode",         PARAM_INT, &nh_nat_addr_mode },
 	{"alias_name",            PARAM_STR, &nh_alias_name    },
 
 	{0, 0, 0}

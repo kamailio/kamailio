@@ -79,8 +79,8 @@ static cmd_export_t commands[] = {
 };
 
 static param_export_t parameters[] = {
-    {"ip", STR_PARAM, &(statsd_params.ip)},
-    {"port", STR_PARAM, &(statsd_params.port)},
+    {"ip", PARAM_STRING, &(statsd_params.ip)},
+    {"port", PARAM_STRING, &(statsd_params.port)},
     {0, 0, 0}
 };
 

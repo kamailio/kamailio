@@ -76,7 +76,7 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-		{"host", PARAM_STR, &host}, {"port", INT_PARAM, &port}, {0, 0, 0}};
+		{"host", PARAM_STR, &host}, {"port", PARAM_INT, &port}, {0, 0, 0}};
 
 /* Module interface */
 struct module_exports exports = {

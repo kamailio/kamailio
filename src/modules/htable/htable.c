@@ -165,7 +165,7 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"htable", PARAM_STRING | USE_FUNC_PARAM, (void *)ht_param},
+	{"htable", PARAM_STRING | PARAM_USE_FUNC, (void *)ht_param},
 	{"db_url", PARAM_STR, &ht_db_url},
 	{"key_name_column", PARAM_STR, &ht_db_name_column},
 	{"key_type_column", PARAM_STR, &ht_db_ktype_column},
@@ -173,11 +173,11 @@ static param_export_t params[] = {
 	{"key_value_column", PARAM_STR, &ht_db_value_column},
 	{"expires_column", PARAM_STR, &ht_db_expires_column},
 	{"array_size_suffix", PARAM_STR, &ht_array_size_suffix},
-	{"fetch_rows", INT_PARAM, &ht_fetch_rows},
-	{"timer_interval", INT_PARAM, &ht_timer_interval},
-	{"db_expires", INT_PARAM, &ht_db_expires_flag},
-	{"enable_dmq", INT_PARAM, &ht_enable_dmq},
-	{"dmq_init_sync", INT_PARAM, &ht_dmq_init_sync},
+	{"fetch_rows", PARAM_INT, &ht_fetch_rows},
+	{"timer_interval", PARAM_INT, &ht_timer_interval},
+	{"db_expires", PARAM_INT, &ht_db_expires_flag},
+	{"enable_dmq", PARAM_INT, &ht_enable_dmq},
+	{"dmq_init_sync", PARAM_INT, &ht_dmq_init_sync},
 	{"timer_procs", PARAM_INT, &ht_timer_procs},
 	{"event_callback", PARAM_STR, &ht_event_callback},
 	{"event_callback_mode", PARAM_INT, &ht_event_callback_mode},

@@ -94,9 +94,9 @@ static cmd_export_t cmds[] = {{"evapi_relay", (cmd_function)w_evapi_relay, 1,
 				ANY_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[] = {{"workers", INT_PARAM, &_evapi_workers},
+static param_export_t params[] = {{"workers", PARAM_INT, &_evapi_workers},
 		{"bind_addr", PARAM_STRING, &_evapi_bind_param},
-		{"netstring_format", INT_PARAM, &_evapi_netstring_format_param},
+		{"netstring_format", PARAM_INT, &_evapi_netstring_format_param},
 		{"event_callback", PARAM_STR, &_evapi_event_callback},
 		{"max_clients", PARAM_INT, &_evapi_max_clients},
 		{"wait_idle", PARAM_INT, &_evapi_wait_idle},

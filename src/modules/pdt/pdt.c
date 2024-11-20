@@ -117,8 +117,8 @@ static param_export_t params[] = {
 	{"domain_column", PARAM_STR, &domain_column},
 	{"prefix", PARAM_STR, &pdt_prefix},
 	{"char_list", PARAM_STR, &pdt_char_list},
-	{"fetch_rows", INT_PARAM, &pdt_fetch_rows},
-	{"check_domain", INT_PARAM, &pdt_check_domain},
+	{"fetch_rows", PARAM_INT, &pdt_fetch_rows},
+	{"check_domain", PARAM_INT, &pdt_check_domain},
 	{"mode", PARAM_INT, &_pdt_mode},
 	{0, 0, 0}
 };

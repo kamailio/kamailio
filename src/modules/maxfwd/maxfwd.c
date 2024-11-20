@@ -81,7 +81,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"max_limit",    INT_PARAM,  &default_maxfwd_cfg.max_limit},
+	{"max_limit",    PARAM_INT,  &default_maxfwd_cfg.max_limit},
 	{0,0,0}
 };
 

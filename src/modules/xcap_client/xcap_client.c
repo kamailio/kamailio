@@ -83,8 +83,8 @@ void query_xcap_update(unsigned int ticks, void *param);
 
 static param_export_t params[] = {{"db_url", PARAM_STR, &xcap_db_url},
 		{"xcap_table", PARAM_STR, &xcap_db_table},
-		{"periodical_query", INT_PARAM, &periodical_query},
-		{"query_period", INT_PARAM, &query_period}, {0, 0, 0}};
+		{"periodical_query", PARAM_INT, &periodical_query},
+		{"query_period", PARAM_INT, &query_period}, {0, 0, 0}};
 
 
 static cmd_export_t cmds[] = {

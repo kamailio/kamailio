@@ -174,10 +174,10 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"initial_probability", INT_PARAM, &initial_prob   },
-	{"initial_gflags",      INT_PARAM, &initial_gflags },
+	{"initial_probability", PARAM_INT, &initial_prob   },
+	{"initial_gflags",      PARAM_INT, &initial_gflags },
 	{"hash_file",           PARAM_STRING, &hash_file   },
-	{"lock_set_size",       INT_PARAM, &_cfg_lock_size },
+	{"lock_set_size",       PARAM_INT, &_cfg_lock_size },
 	{0,0,0}
 };
 

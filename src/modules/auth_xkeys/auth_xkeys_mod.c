@@ -63,7 +63,7 @@ static cmd_export_t cmds[] = {{"auth_xkeys_add", (cmd_function)w_auth_xkeys_add,
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-		{"xkey", PARAM_STRING | USE_FUNC_PARAM, (void *)authx_xkey_param},
+		{"xkey", PARAM_STRING | PARAM_USE_FUNC, (void *)authx_xkey_param},
 		/* {"timer_mode",     PARAM_INT,   &auth_xkeys_timer_mode}, */
 		{0, 0, 0}};
 

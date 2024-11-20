@@ -159,16 +159,16 @@ static param_export_t params[] = {
 	{"drr_table", PARAM_STR, &drr_table},
 	{"drg_table", PARAM_STR, &drg_table},
 	{"drl_table", PARAM_STR, &drl_table},
-	{"use_domain", INT_PARAM, &use_domain},
+	{"use_domain", PARAM_INT, &use_domain},
 	{"drg_user_col", PARAM_STR, &drg_user_col},
 	{"drg_domain_col", PARAM_STR, &drg_domain_col},
 	{"drg_grpid_col", PARAM_STR, &drg_grpid_col},
 	{"ruri_avp", PARAM_STR, &ruri_avp_spec},
 	{"attrs_avp", PARAM_STR, &attrs_avp_spec},
-	{"sort_order", INT_PARAM, &sort_order},
-	{"fetch_rows", INT_PARAM, &dr_fetch_rows},
-	{"force_dns", INT_PARAM, &dr_force_dns},
-	{"enable_keepalive", INT_PARAM, &dr_enable_keepalive},
+	{"sort_order", PARAM_INT, &sort_order},
+	{"fetch_rows", PARAM_INT, &dr_fetch_rows},
+	{"force_dns", PARAM_INT, &dr_force_dns},
+	{"enable_keepalive", PARAM_INT, &dr_enable_keepalive},
 	{0, 0, 0}
 };
 

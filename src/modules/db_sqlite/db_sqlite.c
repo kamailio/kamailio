@@ -255,11 +255,11 @@ error:
 }
 
 static param_export_t params[] = {
-		{"db_set_readonly", PARAM_STRING | USE_FUNC_PARAM,
+		{"db_set_readonly", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)db_set_readonly},
-		{"db_set_journal_mode", PARAM_STRING | USE_FUNC_PARAM,
+		{"db_set_journal_mode", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)db_set_journal_mode},
-		{"db_set_busy_timeout", PARAM_STRING | USE_FUNC_PARAM,
+		{"db_set_busy_timeout", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)db_set_busy_timeout},
 		{0, 0, 0}};
 

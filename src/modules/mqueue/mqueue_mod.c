@@ -80,10 +80,10 @@ static cmd_export_t cmds[] = {{"mq_fetch", (cmd_function)w_mq_fetch, 1,
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {{"db_url", PARAM_STR, &mqueue_db_url},
-		{"mqueue", PARAM_STRING | USE_FUNC_PARAM, (void *)mq_param},
-		{"mqueue_name", PARAM_STRING | USE_FUNC_PARAM, (void *)mq_param_name},
-		{"mqueue_size", INT_PARAM, &mqueue_size},
-		{"mqueue_addmode", INT_PARAM, &mqueue_addmode}, {0, 0, 0}};
+		{"mqueue", PARAM_STRING | PARAM_USE_FUNC, (void *)mq_param},
+		{"mqueue_name", PARAM_STRING | PARAM_USE_FUNC, (void *)mq_param_name},
+		{"mqueue_size", PARAM_INT, &mqueue_size},
+		{"mqueue_addmode", PARAM_INT, &mqueue_addmode}, {0, 0, 0}};
 
 struct module_exports exports = {
 		"mqueue", DEFAULT_DLFLAGS, /* dlopen flags */
@@ -112,10 +112,10 @@ static int mod_init(void)
 	}
 
 	while(mh != NULL) {
-		if (mh->dbmode == 1 || mh->dbmode == 2) {
+		if(mh->dbmode == 1 || mh->dbmode == 2) {
 			if(mqueue_db_load_queue(&(mh->name)) < 0) {
-				LM_ERR("error loading mqueue: %.*s from DB\n",
-					mh->name.len, mh->name.s);
+				LM_ERR("error loading mqueue: %.*s from DB\n", mh->name.len,
+						mh->name.s);
 				return 1;
 			}
 		}

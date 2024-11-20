@@ -74,11 +74,34 @@ stat_var *rcv_rpls_18x;
 stat_var *rcv_rpls_2xx;
 stat_var *rcv_rpls_3xx;
 stat_var *rcv_rpls_4xx;
+stat_var *rcv_rpls_400;
 stat_var *rcv_rpls_401;
+stat_var *rcv_rpls_402;
+stat_var *rcv_rpls_403;
 stat_var *rcv_rpls_404;
+stat_var *rcv_rpls_405;
+stat_var *rcv_rpls_406;
 stat_var *rcv_rpls_407;
+stat_var *rcv_rpls_408;
+stat_var *rcv_rpls_409;
+stat_var *rcv_rpls_410;
+stat_var *rcv_rpls_411;
+stat_var *rcv_rpls_413;
+stat_var *rcv_rpls_414;
+stat_var *rcv_rpls_415;
+stat_var *rcv_rpls_420;
 stat_var *rcv_rpls_480;
+stat_var *rcv_rpls_481;
+stat_var *rcv_rpls_482;
+stat_var *rcv_rpls_483;
+stat_var *rcv_rpls_484;
+stat_var *rcv_rpls_485;
 stat_var *rcv_rpls_486;
+stat_var *rcv_rpls_487;
+stat_var *rcv_rpls_488;
+stat_var *rcv_rpls_489;
+stat_var *rcv_rpls_491;
+stat_var *rcv_rpls_493;
 stat_var *rcv_rpls_5xx;
 stat_var *rcv_rpls_6xx;
 
@@ -128,11 +151,34 @@ stat_export_t core_stats[] = {{"rcv_requests", 0, &rcv_reqs},
 		{"rcv_replies_2xx", 0, &rcv_rpls_2xx},
 		{"rcv_replies_3xx", 0, &rcv_rpls_3xx},
 		{"rcv_replies_4xx", 0, &rcv_rpls_4xx},
+		{"rcv_replies_400", 0, &rcv_rpls_400},
 		{"rcv_replies_401", 0, &rcv_rpls_401},
+		{"rcv_replies_402", 0, &rcv_rpls_402},
+		{"rcv_replies_403", 0, &rcv_rpls_403},
 		{"rcv_replies_404", 0, &rcv_rpls_404},
+		{"rcv_replies_405", 0, &rcv_rpls_405},
+		{"rcv_replies_406", 0, &rcv_rpls_406},
 		{"rcv_replies_407", 0, &rcv_rpls_407},
+		{"rcv_replies_408", 0, &rcv_rpls_408},
+		{"rcv_replies_409", 0, &rcv_rpls_409},
+		{"rcv_replies_410", 0, &rcv_rpls_410},
+		{"rcv_replies_411", 0, &rcv_rpls_411},
+		{"rcv_replies_413", 0, &rcv_rpls_413},
+		{"rcv_replies_414", 0, &rcv_rpls_414},
+		{"rcv_replies_415", 0, &rcv_rpls_415},
+		{"rcv_replies_420", 0, &rcv_rpls_420},
 		{"rcv_replies_480", 0, &rcv_rpls_480},
+		{"rcv_replies_481", 0, &rcv_rpls_481},
+		{"rcv_replies_482", 0, &rcv_rpls_482},
+		{"rcv_replies_483", 0, &rcv_rpls_483},
+		{"rcv_replies_484", 0, &rcv_rpls_484},
+		{"rcv_replies_485", 0, &rcv_rpls_485},
 		{"rcv_replies_486", 0, &rcv_rpls_486},
+		{"rcv_replies_487", 0, &rcv_rpls_487},
+		{"rcv_replies_488", 0, &rcv_rpls_488},
+		{"rcv_replies_489", 0, &rcv_rpls_489},
+		{"rcv_replies_491", 0, &rcv_rpls_491},
+		{"rcv_replies_493", 0, &rcv_rpls_493},
 		{"rcv_replies_5xx", 0, &rcv_rpls_5xx},
 		{"rcv_replies_6xx", 0, &rcv_rpls_6xx}, {"fwd_requests", 0, &fwd_reqs},
 		{"fwd_replies", 0, &fwd_rpls}, {"drop_requests", 0, &drp_reqs},
@@ -285,20 +331,89 @@ static int km_cb_rpl_stats(struct sip_msg *msg, unsigned int flags, void *param)
 			  && msg->first_line.u.reply.statuscode < 500) {
 		update_stat(rcv_rpls_4xx, 1);
 		switch(msg->first_line.u.reply.statuscode) {
+			case 400:
+				update_stat(rcv_rpls_400, 1);
+				break;
 			case 401:
 				update_stat(rcv_rpls_401, 1);
+				break;
+			case 402:
+				update_stat(rcv_rpls_402, 1);
+				break;
+			case 403:
+				update_stat(rcv_rpls_403, 1);
 				break;
 			case 404:
 				update_stat(rcv_rpls_404, 1);
 				break;
+			case 405:
+				update_stat(rcv_rpls_405, 1);
+				break;
+			case 406:
+				update_stat(rcv_rpls_406, 1);
+				break;
 			case 407:
 				update_stat(rcv_rpls_407, 1);
+				break;
+			case 408:
+				update_stat(rcv_rpls_408, 1);
+				break;
+			case 409:
+				update_stat(rcv_rpls_409, 1);
+				break;
+			case 410:
+				update_stat(rcv_rpls_410, 1);
+				break;
+			case 411:
+				update_stat(rcv_rpls_411, 1);
+				break;
+			case 413:
+				update_stat(rcv_rpls_413, 1);
+				break;
+			case 414:
+				update_stat(rcv_rpls_414, 1);
+				break;
+			case 415:
+				update_stat(rcv_rpls_415, 1);
+				break;
+			case 420:
+				update_stat(rcv_rpls_420, 1);
 				break;
 			case 480:
 				update_stat(rcv_rpls_480, 1);
 				break;
+			case 481:
+				update_stat(rcv_rpls_481, 1);
+				break;
+			case 482:
+				update_stat(rcv_rpls_482, 1);
+				break;
+			case 483:
+				update_stat(rcv_rpls_483, 1);
+				break;
+			case 484:
+				update_stat(rcv_rpls_484, 1);
+				break;
+			case 485:
+				update_stat(rcv_rpls_485, 1);
+				break;
 			case 486:
 				update_stat(rcv_rpls_486, 1);
+				break;
+			case 487:
+				update_stat(rcv_rpls_487, 1);
+				break;
+			case 488:
+				update_stat(rcv_rpls_488, 1);
+				break;
+			case 489:
+				update_stat(rcv_rpls_489, 1);
+				break;
+			case 491:
+				update_stat(rcv_rpls_491, 1);
+				break;
+			case 493:
+				update_stat(rcv_rpls_493, 1);
 				break;
 		}
 	} else if(msg->first_line.u.reply.statuscode > 499

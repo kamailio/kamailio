@@ -80,9 +80,9 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"auto_reload",        INT_PARAM, &auto_reload },
-	{"log_enable",         INT_PARAM, &log_enable  },
-	{"journal_roll_interval", INT_PARAM, &journal_roll_interval  },
+	{"auto_reload",        PARAM_INT, &auto_reload },
+	{"log_enable",         PARAM_INT, &log_enable  },
+	{"journal_roll_interval", PARAM_INT, &journal_roll_interval  },
 	{0, 0, 0}
 };
 

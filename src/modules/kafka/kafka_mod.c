@@ -88,9 +88,9 @@ static cmd_export_t cmds[] = {{"kafka_send", (cmd_function)w_kafka_send, 2,
  * \brief Structure for module parameters.
  */
 static param_export_t params[] = {{"brokers", PARAM_STRING, &brokers_param},
-		{"configuration", PARAM_STRING | USE_FUNC_PARAM,
+		{"configuration", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)kafka_conf_param},
-		{"topic", PARAM_STRING | USE_FUNC_PARAM, (void *)kafka_topic_param},
+		{"topic", PARAM_STRING | PARAM_USE_FUNC, (void *)kafka_topic_param},
 		{"init_without_kafka", PARAM_INT, &init_without_kafka},
 		{"log_without_overflow", PARAM_INT, &log_without_overflow},
 		{"metadata_timeout", PARAM_INT, &metadata_timeout}, {0, 0, 0}};

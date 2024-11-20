@@ -103,12 +103,12 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"ipsec_listen_addr",		PARAM_STR, &ipsec_listen_addr		},
 	{"ipsec_listen_addr6",  	PARAM_STR, &ipsec_listen_addr6		},
-	{"ipsec_client_port",		INT_PARAM, &ipsec_client_port		},
-	{"ipsec_server_port",		INT_PARAM, &ipsec_server_port		},
-	{"ipsec_reuse_server_port",	INT_PARAM, &ipsec_reuse_server_port	},
-	{"ipsec_max_connections",	INT_PARAM, &ipsec_max_connections	},
-	{"ipsec_spi_id_start",		INT_PARAM, &spi_id_start			},
-	{"ipsec_spi_id_range",		INT_PARAM, &spi_id_range			},
+	{"ipsec_client_port",		PARAM_INT, &ipsec_client_port		},
+	{"ipsec_server_port",		PARAM_INT, &ipsec_server_port		},
+	{"ipsec_reuse_server_port",	PARAM_INT, &ipsec_reuse_server_port	},
+	{"ipsec_max_connections",	PARAM_INT, &ipsec_max_connections	},
+	{"ipsec_spi_id_start",		PARAM_INT, &spi_id_start			},
+	{"ipsec_spi_id_range",		PARAM_INT, &spi_id_range			},
 	{"ipsec_preferred_alg",		PARAM_STR, &ipsec_preferred_alg		},
 	{"ipsec_preferred_ealg",	PARAM_STR, &ipsec_preferred_ealg	},
 	{0, 0, 0}
@@ -210,11 +210,9 @@ static void ipsec_print_all_socket_lists()
 
 static int ipsec_add_listen_ifaces()
 {
-	char addr4[128];
-	char addr6[128];
-	int i;
+	socket_attrs_t sa;
 
-	if(ipsec_listen_addr.len) {
+	if(ipsec_listen_addr.len > 0) {
 		if(str2ipbuf(&ipsec_listen_addr, &ipsec_listen_ip_addr) < 0) {
 			LM_ERR("Unable to convert ipsec addr4 [%.*s]\n",
 					ipsec_listen_addr.len, ipsec_listen_addr.s);
@@ -222,7 +220,7 @@ static int ipsec_add_listen_ifaces()
 		}
 	}
 
-	if(ipsec_listen_addr6.len) {
+	if(ipsec_listen_addr6.len > 0) {
 		if(str2ip6buf(&ipsec_listen_addr6, &ipsec_listen_ip_addr6) < 0) {
 			LM_ERR("Unable to convert ipsec addr6 [%.*s]\n",
 					ipsec_listen_addr6.len, ipsec_listen_addr6.s);
@@ -230,93 +228,67 @@ static int ipsec_add_listen_ifaces()
 		}
 	}
 
-	for(i = 0; i < ipsec_max_connections; ++i) {
-		if(ipsec_listen_addr.len) {
-			if(ipsec_listen_addr.len > sizeof(addr4) - 1) {
-				LM_ERR("Bad value for ipsec listen address IPv4: %.*s\n",
-						ipsec_listen_addr.len, ipsec_listen_addr.s);
-				return -1;
-			}
-
-			memset(addr4, 0, sizeof(addr4));
-			memcpy(addr4, ipsec_listen_addr.s, ipsec_listen_addr.len);
-
-			//add listen interfaces for IPv4
-			if(add_listen_iface(
-					   addr4, NULL, ipsec_client_port + i, PROTO_TCP, 0)
-					!= 0) {
-				LM_ERR("Error adding listen ipsec client TCP interface for "
-					   "IPv4\n");
-				return -1;
-			}
-
-			if(add_listen_iface(
-					   addr4, NULL, ipsec_server_port + i, PROTO_TCP, 0)
-					!= 0) {
-				LM_ERR("Error adding listen ipsec server TCP interface for "
-					   "IPv4\n");
-				return -1;
-			}
-
-			if(add_listen_iface(
-					   addr4, NULL, ipsec_client_port + i, PROTO_UDP, 0)
-					!= 0) {
-				LM_ERR("Error adding listen ipsec client UDP interface for "
-					   "IPv4\n");
-				return -1;
-			}
-
-			if(add_listen_iface(
-					   addr4, NULL, ipsec_server_port + i, PROTO_UDP, 0)
-					!= 0) {
-				LM_ERR("Error adding listen ipsec server UDP interface for "
-					   "IPv4\n");
-				return -1;
-			}
+	if(ipsec_listen_addr.len > 0) {
+		// add listen interfaces for IPv4
+		memset(&sa, 0, sizeof(socket_attrs_t));
+		sa.bindaddr = ipsec_listen_addr;
+		sa.bindproto = PROTO_TCP;
+		sa.bindport = ipsec_client_port;
+		sa.bindportend = ipsec_client_port + ipsec_max_connections - 1;
+		if(add_listen_socket(&sa) < 0) {
+			LM_ERR("Error adding listen ipsec client TCP interface for IPv4\n");
+			return -1;
 		}
+		sa.bindport = ipsec_server_port;
+		sa.bindportend = ipsec_server_port + ipsec_max_connections - 1;
+		if(add_listen_socket(&sa) < 0) {
+			LM_ERR("Error adding listen ipsec server TCP interface for IPv4\n");
+			return -1;
+		}
+		sa.bindproto = PROTO_UDP;
+		sa.bindport = ipsec_client_port;
+		sa.bindportend = ipsec_client_port + ipsec_max_connections - 1;
+		if(add_listen_socket(&sa) < 0) {
+			LM_ERR("Error adding listen ipsec client UDP interface for IPv4\n");
+			return -1;
+		}
+		sa.bindport = ipsec_server_port;
+		sa.bindportend = ipsec_server_port + ipsec_max_connections - 1;
+		if(add_listen_socket(&sa) < 0) {
+			LM_ERR("Error adding listen ipsec server UDP interface for IPv4\n");
+			return -1;
+		}
+	}
 
-		if(ipsec_listen_addr6.len) {
-			if(ipsec_listen_addr6.len > sizeof(addr6) - 1) {
-				LM_ERR("Bad value for ipsec listen address IPv6: %.*s\n",
-						ipsec_listen_addr6.len, ipsec_listen_addr6.s);
-				return -1;
-			}
-
-			memset(addr6, 0, sizeof(addr6));
-			memcpy(addr6, ipsec_listen_addr6.s, ipsec_listen_addr6.len);
-
-			//add listen interfaces for IPv6
-			if(add_listen_iface(
-					   addr6, NULL, ipsec_client_port + i, PROTO_TCP, 0)
-					!= 0) {
-				LM_ERR("Error adding listen ipsec client TCP interface for "
-					   "IPv6\n");
-				return -1;
-			}
-
-			if(add_listen_iface(
-					   addr6, NULL, ipsec_server_port + i, PROTO_TCP, 0)
-					!= 0) {
-				LM_ERR("Error adding listen ipsec server TCP interface for "
-					   "IPv6\n");
-				return -1;
-			}
-
-			if(add_listen_iface(
-					   addr6, NULL, ipsec_client_port + i, PROTO_UDP, 0)
-					!= 0) {
-				LM_ERR("Error adding listen ipsec client UDP interface for "
-					   "IPv6\n");
-				return -1;
-			}
-
-			if(add_listen_iface(
-					   addr6, NULL, ipsec_server_port + i, PROTO_UDP, 0)
-					!= 0) {
-				LM_ERR("Error adding listen ipsec server UDP interface for "
-					   "IPv6\n");
-				return -1;
-			}
+	if(ipsec_listen_addr6.len > 0) {
+		// add listen interfaces for IPv6
+		memset(&sa, 0, sizeof(socket_attrs_t));
+		sa.bindaddr = ipsec_listen_addr6;
+		sa.bindproto = PROTO_TCP;
+		sa.bindport = ipsec_client_port;
+		sa.bindportend = ipsec_client_port + ipsec_max_connections - 1;
+		if(add_listen_socket(&sa) < 0) {
+			LM_ERR("Error adding listen ipsec client TCP interface for IPv6\n");
+			return -1;
+		}
+		sa.bindport = ipsec_server_port;
+		sa.bindportend = ipsec_server_port + ipsec_max_connections - 1;
+		if(add_listen_socket(&sa) < 0) {
+			LM_ERR("Error adding listen ipsec server TCP interface for IPv6\n");
+			return -1;
+		}
+		sa.bindproto = PROTO_UDP;
+		sa.bindport = ipsec_client_port;
+		sa.bindportend = ipsec_client_port + ipsec_max_connections - 1;
+		if(add_listen_socket(&sa) < 0) {
+			LM_ERR("Error adding listen ipsec client UDP interface for IPv6\n");
+			return -1;
+		}
+		sa.bindport = ipsec_server_port;
+		sa.bindportend = ipsec_server_port + ipsec_max_connections - 1;
+		if(add_listen_socket(&sa) < 0) {
+			LM_ERR("Error adding listen ipsec server UDP interface for IPv6\n");
+			return -1;
 		}
 	}
 

@@ -90,19 +90,19 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 		{"my_uri", PARAM_STR,
 				&isc_my_uri}, /**< SIP Uri of myself for getting the messages back */
-		{"expires_grace", INT_PARAM,
+		{"expires_grace", PARAM_INT,
 				&isc_expires_grace}, /**< expires value to add to the expires in the 3rd party register to prevent expiration in AS */
-		{"isc_fr_timeout", INT_PARAM,
+		{"isc_fr_timeout", PARAM_INT,
 				&isc_fr_timeout}, /**< Time in ms that we are waiting for a AS response until we
  	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 consider it dead. Has to be lower than SIP transaction timeout
  	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 to prevent downstream timeouts. Not too small though because
  	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 AS are usually slow as hell... */
-		{"isc_fr_inv_timeout", INT_PARAM,
+		{"isc_fr_inv_timeout", PARAM_INT,
 				&isc_fr_inv_timeout}, /**< Time in ms that we are waiting for a AS INVITE response until we
  	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 consider it dead. Has to be lower than SIP transaction timeout
  	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 to prevent downstream timeouts. Not too small though because
  	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 AS are usually slow as hell... */
-		{"add_p_served_user", INT_PARAM,
+		{"add_p_served_user", PARAM_INT,
 				&add_p_served_user}, /**< boolean indicating if the P-Served-User (RFC5502) should be added on the ISC interface or not */
 		{0, 0, 0}};
 

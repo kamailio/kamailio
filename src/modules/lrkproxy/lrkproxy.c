@@ -234,18 +234,18 @@ static cmd_export_t cmds[] = {
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-		{"lrkproxy_sock", PARAM_STRING | USE_FUNC_PARAM,
+		{"lrkproxy_sock", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)lrkproxy_set_store},
-		{"lrkproxy_disable_tout", INT_PARAM, &lrkproxy_disable_tout},
-		{"lrkproxy_retr", INT_PARAM, &lrkproxy_retr},
-		{"lrkproxy_tout", INT_PARAM, &lrkproxy_tout},
-		{"lrkp_alg", INT_PARAM, &lrkp_algorithm},
-		{"hash_table_tout", INT_PARAM, &hash_table_tout},
-		{"hash_table_size", INT_PARAM, &hash_table_size},
+		{"lrkproxy_disable_tout", PARAM_INT, &lrkproxy_disable_tout},
+		{"lrkproxy_retr", PARAM_INT, &lrkproxy_retr},
+		{"lrkproxy_tout", PARAM_INT, &lrkproxy_tout},
+		{"lrkp_alg", PARAM_INT, &lrkp_algorithm},
+		{"hash_table_tout", PARAM_INT, &hash_table_tout},
+		{"hash_table_size", PARAM_INT, &hash_table_size},
 		{"custom_sdp_ip_avp", PARAM_STR, &custom_sdp_ip_spec},
-		{"gt", INT_PARAM, &gt}, {"behind_nat", INT_PARAM, &behind_nat},
-		{"start_port", INT_PARAM, &startport},
-		{"end_port", INT_PARAM, &endport},
+		{"gt", PARAM_INT, &gt}, {"behind_nat", PARAM_INT, &behind_nat},
+		{"start_port", PARAM_INT, &startport},
+		{"end_port", PARAM_INT, &endport},
 
 		{0, 0, 0}};
 

@@ -187,8 +187,8 @@ static param_export_t params[] = {
 	{"context", PARAM_STR, &_tps_context_param},
 	{"methods_nocontact", PARAM_STR, &_tps_methods_nocontact_list},
 	{"methods_noinitial", PARAM_STR, &_tps_methods_noinitial_list},
-	{"version_table", INT_PARAM, &_tps_version_table_check},
-	{"enable_register_publish", PARAM_INT, &_tps_enable_register_publish},
+  {"enable_register_publish", PARAM_INT, &_tps_enable_register_publish},
+	{"version_table", PARAM_INT, &_tps_version_table_check},
 
 	{0, 0, 0}
 };

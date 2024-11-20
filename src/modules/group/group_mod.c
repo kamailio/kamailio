@@ -124,11 +124,11 @@ static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
 		{"table", PARAM_STR, &table}, {"user_column", PARAM_STR, &user_column},
 		{"domain_column", PARAM_STR, &domain_column},
 		{"group_column", PARAM_STR, &group_column},
-		{"use_domain", INT_PARAM, &use_domain},
+		{"use_domain", PARAM_INT, &use_domain},
 		{"re_table", PARAM_STR, &re_table},
 		{"re_exp_column", PARAM_STR, &re_exp_column},
 		{"re_gid_column", PARAM_STR, &re_gid_column},
-		{"multiple_gid", INT_PARAM, &multiple_gid}, {0, 0, 0}};
+		{"multiple_gid", PARAM_INT, &multiple_gid}, {0, 0, 0}};
 
 
 /*!

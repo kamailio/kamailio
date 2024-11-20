@@ -73,7 +73,7 @@ static cmd_export_t cmds[] = {{"update_stat", (cmd_function)w_update_stat, 2,
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t mod_params[] = {
-		{"variable", PARAM_STRING | USE_FUNC_PARAM, (void *)reg_param_stat},
+		{"variable", PARAM_STRING | PARAM_USE_FUNC, (void *)reg_param_stat},
 		{0, 0, 0}};
 
 

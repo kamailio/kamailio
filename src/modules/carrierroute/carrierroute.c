@@ -115,13 +115,13 @@ static param_export_t params[] = {
 		{"config_source", PARAM_STRING, &config_source},
 		{"default_tree", PARAM_STR, &default_tree},
 		{"config_file", PARAM_STRING, &config_file},
-		{"use_domain", INT_PARAM, &default_carrierroute_cfg.use_domain},
-		{"fallback_default", INT_PARAM,
+		{"use_domain", PARAM_INT, &default_carrierroute_cfg.use_domain},
+		{"fallback_default", PARAM_INT,
 				&default_carrierroute_cfg.fallback_default},
-		{"fetch_rows", INT_PARAM, &default_carrierroute_cfg.fetch_rows},
-		{"db_load_description", INT_PARAM, &cr_load_comments},
-		{"match_mode", INT_PARAM, &cr_match_mode},
-		{"avoid_failed_destinations", INT_PARAM, &cr_avoid_failed_dests},
+		{"fetch_rows", PARAM_INT, &default_carrierroute_cfg.fetch_rows},
+		{"db_load_description", PARAM_INT, &cr_load_comments},
+		{"match_mode", PARAM_INT, &cr_match_mode},
+		{"avoid_failed_destinations", PARAM_INT, &cr_avoid_failed_dests},
 		{0, 0, 0}};
 
 

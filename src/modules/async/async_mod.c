@@ -89,9 +89,9 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"workers",     INT_PARAM,   &async_workers},
-	{"ms_timer",    INT_PARAM,   &async_ms_timer},
-	{"return",      INT_PARAM,   &async_return},
+	{"workers",     PARAM_INT,   &async_workers},
+	{"ms_timer",    PARAM_INT,   &async_ms_timer},
+	{"return",      PARAM_INT,   &async_return},
 	{0, 0, 0}
 };
 

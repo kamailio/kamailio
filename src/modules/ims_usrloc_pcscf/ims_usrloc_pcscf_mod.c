@@ -109,21 +109,21 @@ static cmd_export_t cmds[] = {
 /*! \brief
  * Exported parameters
  */
-static param_export_t params[] = {{"hash_size", INT_PARAM, &ul_hash_size},
-		{"timer_interval", INT_PARAM, &timer_interval},
+static param_export_t params[] = {{"hash_size", PARAM_INT, &ul_hash_size},
+		{"timer_interval", PARAM_INT, &timer_interval},
 		{"usrloc_debug_file", PARAM_STR, &usrloc_debug_file},
-		{"enable_debug_file", INT_PARAM, &usrloc_debug},
+		{"enable_debug_file", PARAM_INT, &usrloc_debug},
 
 		{"db_url", PARAM_STR, &db_url},
-		{"timer_interval", INT_PARAM, &timer_interval},
-		{"db_mode", INT_PARAM, &db_mode},
+		{"timer_interval", PARAM_INT, &timer_interval},
+		{"db_mode", PARAM_INT, &db_mode},
 
-		{"match_contact_host_port", INT_PARAM, &match_contact_host_port},
-		{"audit_expired_pcontacts_timeout", INT_PARAM,
+		{"match_contact_host_port", PARAM_INT, &match_contact_host_port},
+		{"audit_expired_pcontacts_timeout", PARAM_INT,
 				&audit_expired_pcontacts_timeout},
-		{"audit_expired_pcontacts_interval", INT_PARAM,
+		{"audit_expired_pcontacts_interval", PARAM_INT,
 				&audit_expired_pcontacts_interval},
-		{"expires_grace", INT_PARAM, &expires_grace},
+		{"expires_grace", PARAM_INT, &expires_grace},
 
 		{0, 0, 0}};
 

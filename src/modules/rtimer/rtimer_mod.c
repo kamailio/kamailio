@@ -87,9 +87,9 @@ static pv_export_t rtimer_pvs[] = {
 		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-		{"default_interval", INT_PARAM, &default_interval},
-		{"timer", PARAM_STRING | USE_FUNC_PARAM, (void *)stm_t_param},
-		{"exec", PARAM_STRING | USE_FUNC_PARAM, (void *)stm_e_param},
+		{"default_interval", PARAM_INT, &default_interval},
+		{"timer", PARAM_STRING | PARAM_USE_FUNC, (void *)stm_t_param},
+		{"exec", PARAM_STRING | PARAM_USE_FUNC, (void *)stm_e_param},
 		{0, 0, 0}};
 
 

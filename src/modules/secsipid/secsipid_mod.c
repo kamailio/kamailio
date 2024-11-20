@@ -121,7 +121,7 @@ static param_export_t params[]={
 	{"cache_expire",  PARAM_INT,   &secsipid_cache_expire},
 	{"cache_dir",     PARAM_STR,   &secsipid_cache_dir},
 	{"modproc",       PARAM_STR,   &secsipid_modproc},
-	{"libopt",        PARAM_STR|USE_FUNC_PARAM,
+	{"libopt",        PARAM_STR|PARAM_USE_FUNC,
 		(void*)secsipid_libopt_param},
 
 	{0, 0, 0}

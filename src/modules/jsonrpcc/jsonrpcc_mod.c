@@ -70,7 +70,7 @@ static cmd_export_t cmds[] = {
  * Script Parameters
  */
 static param_export_t mod_params[] = {{"servers", PARAM_STRING, &servers_param},
-		{"max_conn_attempts", INT_PARAM, &_jsonrpcc_max_conn_retry}, {0, 0, 0}};
+		{"max_conn_attempts", PARAM_INT, &_jsonrpcc_max_conn_retry}, {0, 0, 0}};
 
 
 /*

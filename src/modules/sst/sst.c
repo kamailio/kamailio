@@ -108,11 +108,11 @@ static cmd_export_t cmds[] = {{"sstCheckMin", (cmd_function)sst_check_min, 1, 0,
  * Script parameters
  */
 static param_export_t mod_params[] = {
-		{"enable_stats", INT_PARAM, &sst_enable_stats},
-		{"min_se", INT_PARAM, &sst_minSE},
+		{"enable_stats", PARAM_INT, &sst_enable_stats},
+		{"min_se", PARAM_INT, &sst_minSE},
 		{"timeout_avp", PARAM_STRING, &timeout_spec},
-		{"reject_to_small", INT_PARAM, &sst_reject},
-		{"sst_flag", INT_PARAM, &sst_flag}, {0, 0, 0}};
+		{"reject_to_small", PARAM_INT, &sst_reject},
+		{"sst_flag", PARAM_INT, &sst_flag}, {0, 0, 0}};
 
 #ifdef STATISTICS
 /*

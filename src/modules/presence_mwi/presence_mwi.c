@@ -67,7 +67,7 @@ static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 
 /* module exported parameters */
 static param_export_t params[] = {
-		{"default_expires", INT_PARAM, &pres_mwi_default_expires}, {0, 0, 0}};
+		{"default_expires", PARAM_INT, &pres_mwi_default_expires}, {0, 0, 0}};
 
 /* module exports */
 struct module_exports exports = {

@@ -148,18 +148,18 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"timer_interval", INT_PARAM, &pl_timer_interval},
-	{"timer_mode", INT_PARAM, &pl_timer_mode},
-	{"reply_code", INT_PARAM, &pl_drop_code},
+	{"timer_interval", PARAM_INT, &pl_timer_interval},
+	{"timer_mode", PARAM_INT, &pl_timer_mode},
+	{"reply_code", PARAM_INT, &pl_drop_code},
 	{"reply_reason", PARAM_STR, &pl_drop_reason},
 	{"db_url", PARAM_STR, &pl_db_url},
 	{"plp_table_name", PARAM_STR, &rlp_table_name},
 	{"plp_pipeid_column", PARAM_STR, &rlp_pipeid_col},
 	{"plp_limit_column", PARAM_STR, &rlp_limit_col},
 	{"plp_algorithm_column", PARAM_STR, &rlp_algorithm_col},
-	{"hash_size", INT_PARAM, &pl_hash_size},
-	{"load_fetch", INT_PARAM, &pl_load_fetch},
-	{"clean_unused", INT_PARAM, &pl_clean_unused},
+	{"hash_size", PARAM_INT, &pl_hash_size},
+	{"load_fetch", PARAM_INT, &pl_load_fetch},
+	{"clean_unused", PARAM_INT, &pl_clean_unused},
 
 	{0, 0, 0}
 };

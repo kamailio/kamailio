@@ -56,9 +56,9 @@ static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 
 /* module exported parameters */
 static param_export_t params[] = {
-		{"force_single_dialog", INT_PARAM, &force_single_dialog},
-		{"force_dummy_dialog", INT_PARAM, &force_dummy_dialog},
-		{"default_expires", INT_PARAM, &pres_dlginfo_default_expires},
+		{"force_single_dialog", PARAM_INT, &force_single_dialog},
+		{"force_dummy_dialog", PARAM_INT, &force_dummy_dialog},
+		{"default_expires", PARAM_INT, &pres_dlginfo_default_expires},
 		{0, 0, 0}};
 
 /* module exports */

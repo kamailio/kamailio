@@ -75,12 +75,12 @@ static cmd_export_t cmds[] = {{"mqtt_publish", (cmd_function)cmd_mqtt_publish,
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {{"host", PARAM_STRING, &_mqtt_host},
-		{"port", INT_PARAM, &_mqtt_port}, {"id", PARAM_STRING, &_mqtt_id},
+		{"port", PARAM_INT, &_mqtt_port}, {"id", PARAM_STRING, &_mqtt_id},
 		{"username", PARAM_STRING, &_mqtt_username},
 		{"password", PARAM_STRING, &_mqtt_password},
 		{"will_topic", PARAM_STRING, &_mqtt_willtopic},
 		{"will", PARAM_STRING, &_mqtt_will},
-		{"keepalive", INT_PARAM, &_mqtt_keepalive},
+		{"keepalive", PARAM_INT, &_mqtt_keepalive},
 		{"event_callback", PARAM_STR, &_mqtt_event_callback},
 		{"tls_method", PARAM_STRING, &_mqtt_tls_method},
 		{"tls_alpn", PARAM_STRING, &_mqtt_tls_alpn},
@@ -88,7 +88,7 @@ static param_export_t params[] = {{"host", PARAM_STRING, &_mqtt_host},
 		{"ca_path", PARAM_STRING, &_mqtt_ca_path},
 		{"certificate", PARAM_STRING, &_mqtt_certificate},
 		{"private_key", PARAM_STRING, &_mqtt_private_key},
-		{"verify_certificate", INT_PARAM, &_mqtt_verify_certificate},
+		{"verify_certificate", PARAM_INT, &_mqtt_verify_certificate},
 		{"cipher_list", PARAM_STRING, &_mqtt_cipher_list}, {0, 0, 0}};
 
 static pv_export_t mod_pvs[] = {

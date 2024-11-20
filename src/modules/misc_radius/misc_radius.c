@@ -102,16 +102,16 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"radius_config",       PARAM_STRING, &radius_config      },
-	{"caller_service_type", INT_PARAM, &caller_service_type},
-	{"callee_service_type", INT_PARAM, &callee_service_type},
-	{"group_service_type",  INT_PARAM, &group_service_type },
-	{"uri_service_type",    INT_PARAM, &uri_service_type   },
+	{"caller_service_type", PARAM_INT, &caller_service_type},
+	{"callee_service_type", PARAM_INT, &callee_service_type},
+	{"group_service_type",  PARAM_INT, &group_service_type },
+	{"uri_service_type",    PARAM_INT, &uri_service_type   },
 	{"caller_extra",        PARAM_STRING, &caller_extra_str   },
 	{"callee_extra",        PARAM_STRING, &callee_extra_str   },
 	{"group_extra",         PARAM_STRING, &group_extra_str    },
 	{"uri_extra",           PARAM_STRING, &uri_extra_str      },
-	{"use_sip_uri_host",    INT_PARAM, &use_sip_uri_host   },
-	{"common_response",     INT_PARAM, &common_response    },
+	{"use_sip_uri_host",    PARAM_INT, &use_sip_uri_host   },
+	{"common_response",     PARAM_INT, &common_response    },
 	{0, 0, 0}
 };
 

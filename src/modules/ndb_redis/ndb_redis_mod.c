@@ -130,15 +130,15 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"server", PARAM_STRING | USE_FUNC_PARAM, (void *)redis_srv_param},
-	{"init_without_redis", INT_PARAM, &init_without_redis},
-	{"connect_timeout", INT_PARAM, &redis_connect_timeout_param},
-	{"cmd_timeout", INT_PARAM, &redis_cmd_timeout_param},
-	{"cluster", INT_PARAM, &redis_cluster_param},
-	{"disable_time", INT_PARAM, &redis_disable_time_param},
-	{"allowed_timeouts", INT_PARAM, &redis_allowed_timeouts_param},
-	{"flush_on_reconnect", INT_PARAM, &redis_flush_on_reconnect_param},
-	{"allow_dynamic_nodes", INT_PARAM, &redis_allow_dynamic_nodes_param},
+	{"server", PARAM_STRING | PARAM_USE_FUNC, (void *)redis_srv_param},
+	{"init_without_redis", PARAM_INT, &init_without_redis},
+	{"connect_timeout", PARAM_INT, &redis_connect_timeout_param},
+	{"cmd_timeout", PARAM_INT, &redis_cmd_timeout_param},
+	{"cluster", PARAM_INT, &redis_cluster_param},
+	{"disable_time", PARAM_INT, &redis_disable_time_param},
+	{"allowed_timeouts", PARAM_INT, &redis_allowed_timeouts_param},
+	{"flush_on_reconnect", PARAM_INT, &redis_flush_on_reconnect_param},
+	{"allow_dynamic_nodes", PARAM_INT, &redis_allow_dynamic_nodes_param},
 	{"debug", PARAM_INT, &ndb_redis_debug},
 #ifdef WITH_SSL
 	{"ca_path", PARAM_STRING, &ndb_redis_ca_path},

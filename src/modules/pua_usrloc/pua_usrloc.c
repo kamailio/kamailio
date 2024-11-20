@@ -79,7 +79,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 		{"default_domain", PARAM_STR, &default_domain},
 		{"entity_prefix", PARAM_STR, &pres_prefix},
-		{"branch_flag", INT_PARAM, &pua_ul_bflag}, {0, 0, 0}};
+		{"branch_flag", PARAM_INT, &pua_ul_bflag}, {0, 0, 0}};
 
 struct module_exports exports = {
 		"pua_usrloc",	 /* module name */

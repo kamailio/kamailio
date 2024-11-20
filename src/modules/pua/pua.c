@@ -119,18 +119,18 @@ static cmd_export_t cmds[] = {
 		{"bind_libxml_api", (cmd_function)bind_libxml_api, 1, 0, 0, 0},
 		{"bind_pua", (cmd_function)bind_pua, 1, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[] = {{"hash_size", INT_PARAM, &HASH_SIZE},
+static param_export_t params[] = {{"hash_size", PARAM_INT, &HASH_SIZE},
 		{"db_url", PARAM_STR, &db_url}, {"db_table", PARAM_STR, &db_table},
-		{"min_expires", INT_PARAM, &min_expires},
-		{"default_expires", INT_PARAM, &pua_default_expires},
-		{"update_period", INT_PARAM, &update_period},
+		{"min_expires", PARAM_INT, &min_expires},
+		{"default_expires", PARAM_INT, &pua_default_expires},
+		{"update_period", PARAM_INT, &update_period},
 		{"outbound_proxy", PARAM_STR, &outbound_proxy},
-		{"dlginfo_increase_version", INT_PARAM, &dlginfo_increase_version},
-		{"reginfo_increase_version", INT_PARAM, &reginfo_increase_version},
-		{"check_remote_contact", INT_PARAM, &check_remote_contact},
-		{"db_mode", INT_PARAM, &dbmode},
-		{"fetch_rows", INT_PARAM, &pua_fetch_rows},
-		{"db_table_lock_write", INT_PARAM, &db_table_lock_write}, {0, 0, 0}};
+		{"dlginfo_increase_version", PARAM_INT, &dlginfo_increase_version},
+		{"reginfo_increase_version", PARAM_INT, &reginfo_increase_version},
+		{"check_remote_contact", PARAM_INT, &check_remote_contact},
+		{"db_mode", PARAM_INT, &dbmode},
+		{"fetch_rows", PARAM_INT, &pua_fetch_rows},
+		{"db_table_lock_write", PARAM_INT, &db_table_lock_write}, {0, 0, 0}};
 
 /** module exports */
 struct module_exports exports = {

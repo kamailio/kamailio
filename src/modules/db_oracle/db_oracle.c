@@ -53,8 +53,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-		{"timeout", PARAM_STRING | USE_FUNC_PARAM, (void *)&set_timeout},
-		{"reconnect", PARAM_STRING | USE_FUNC_PARAM, (void *)&set_reconnect},
+		{"timeout", PARAM_STRING | PARAM_USE_FUNC, (void *)&set_timeout},
+		{"reconnect", PARAM_STRING | PARAM_USE_FUNC, (void *)&set_reconnect},
 		{0, 0, 0}};
 
 

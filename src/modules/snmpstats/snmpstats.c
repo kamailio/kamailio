@@ -92,6 +92,7 @@
 #include "../../core/script_cb.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
+#include "../../core/daemonize.h"
 
 #include "snmpSIPRegUserTable.h"
 #include "snmpSIPContactTable.h"
@@ -131,23 +132,23 @@ static void mod_destroy(void);
  * through the kamailio.cfg configuration file.
  */
 static param_export_t mod_params[] = {
-		{"sipEntityType", PARAM_STRING | USE_FUNC_PARAM,
+		{"sipEntityType", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)handleSipEntityType},
-		{"MsgQueueMinorThreshold", INT_PARAM | USE_FUNC_PARAM,
+		{"MsgQueueMinorThreshold", PARAM_INT | PARAM_USE_FUNC,
 				(void *)set_queue_minor_threshold},
-		{"MsgQueueMajorThreshold", INT_PARAM | USE_FUNC_PARAM,
+		{"MsgQueueMajorThreshold", PARAM_INT | PARAM_USE_FUNC,
 				(void *)set_queue_major_threshold},
-		{"dlg_minor_threshold", INT_PARAM | USE_FUNC_PARAM,
+		{"dlg_minor_threshold", PARAM_INT | PARAM_USE_FUNC,
 				(void *)set_dlg_minor_threshold},
-		{"dlg_major_threshold", INT_PARAM | USE_FUNC_PARAM,
+		{"dlg_major_threshold", PARAM_INT | PARAM_USE_FUNC,
 				(void *)set_dlg_major_threshold},
-		{"snmpgetPath", PARAM_STRING | USE_FUNC_PARAM,
+		{"snmpgetPath", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)set_snmpget_path},
-		{"snmpCommunity", PARAM_STRING | USE_FUNC_PARAM,
+		{"snmpCommunity", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)set_snmp_community},
-		{"snmpVersion", PARAM_STRING | USE_FUNC_PARAM,
+		{"snmpVersion", PARAM_STRING | PARAM_USE_FUNC,
 				(void *)set_snmp_version},
-		{"export_registrar", INT_PARAM, &snmp_export_registrar}, {0, 0, 0}};
+		{"export_registrar", PARAM_INT, &snmp_export_registrar}, {0, 0, 0}};
 
 
 struct module_exports exports = {
@@ -561,14 +562,14 @@ static int spawn_sysUpTime_child(void)
 			   "kamailioSIPServiceStartTime is defaulting to zero\n");
 		close(snmpget_fd);
 		free(full_path_to_snmpget);
-		exit(-1);
+		ksr_exit(-1);
 	}
 
 	/* We should never be able to get here, because execve() is never
 	 * supposed to return. */
 	close(snmpget_fd);
 	free(full_path_to_snmpget);
-	exit(-1);
+	ksr_exit(-1);
 }
 
 

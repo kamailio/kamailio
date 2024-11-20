@@ -64,9 +64,9 @@ ifneq ($(HIREDIS_CLUSTER_BUILDER),)
 	HIREDISCLUSTERDEFS = $(shell $(HIREDIS_CLUSTER_BUILDER) --cflags)
 	HIREDISCLUSTERLIBS = $(shell $(HIREDIS_CLUSTER_BUILDER) --libs)
 	HIREDISCLUSTERLIBSPATH = $(shell $(HIREDIS_CLUSTER_BUILDER) --libs-only-L | cut -c 3-)
-	ifneq ($(shell ls $(HIREDISCLUSTERLIBSPATH) | grep libhiredis_ssl.so),)
+	ifneq ($(shell ls $(HIREDISCLUSTERLIBSPATH) | grep libhiredis_cluster_ssl.so),)
 		HIREDISCLUSTERDEFS += -DWITH_SSL
-		HIREDISCLUSTERLIBS += -lhiredis_ssl
+		HIREDISCLUSTERLIBS += -lhiredis_cluster_ssl
 	endif
 	DEFS+=-DWITH_HIREDIS_CLUSTER
 	DEFS+=$(HIREDISCLUSTERDEFS)

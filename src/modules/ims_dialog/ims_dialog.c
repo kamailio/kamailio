@@ -127,20 +127,20 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t mod_params[] = {
-	{"hash_size", INT_PARAM, &dlg_hash_size},
+	{"hash_size", PARAM_INT, &dlg_hash_size},
 	{"rr_param", PARAM_STRING, &rr_param},
-	{"dlg_flag", INT_PARAM, &dlg_flag},
+	{"dlg_flag", PARAM_INT, &dlg_flag},
 	{"timeout_avp", PARAM_STR, &timeout_spec},
-	{"default_timeout", INT_PARAM, &default_timeout},
+	{"default_timeout", PARAM_INT, &default_timeout},
 	{"dlg_extra_hdrs", PARAM_STR, &dlg_extra_hdrs},
 	//In this new dialog module we always match using DID
-	{"dlg_match_mode", INT_PARAM, &seq_match_mode},
+	{"dlg_match_mode", PARAM_INT, &seq_match_mode},
 
 	{"db_url", PARAM_STR, &db_url},
-	{"db_mode", INT_PARAM, &dlg_db_mode_param},
-	{"db_update_period", INT_PARAM, &db_update_period},
-	{"db_fetch_rows", INT_PARAM, &db_fetch_rows},
-	{"detect_spirals", INT_PARAM, &detect_spirals},
+	{"db_mode", PARAM_INT, &dlg_db_mode_param},
+	{"db_update_period", PARAM_INT, &db_update_period},
+	{"db_fetch_rows", PARAM_INT, &db_fetch_rows},
+	{"detect_spirals", PARAM_INT, &detect_spirals},
 	{"profiles_with_value", PARAM_STRING, &profiles_wv_s},
 	{"profiles_no_value", PARAM_STRING, &profiles_nv_s},
 	{"bridge_controller", PARAM_STR, &dlg_bridge_controller},

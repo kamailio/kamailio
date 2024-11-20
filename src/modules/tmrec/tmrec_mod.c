@@ -74,7 +74,7 @@ static cmd_export_t cmds[] = {{"tmrec_match", (cmd_function)w_tmrec_match, 1,
 				fixup_time_period_match, 0, ANY_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[] = {{"wday", INT_PARAM, &tmrec_wday},
+static param_export_t params[] = {{"wday", PARAM_INT, &tmrec_wday},
 		{"separator", PARAM_STRING, &tmrec_separator_param}, {0, 0, 0}};
 
 struct module_exports exports = {
