@@ -312,15 +312,6 @@ static int child_init(int rank)
 static void mod_destroy(void)
 {
 	LM_DBG("cleaning up\n");
-	mt_destroy_trees();
-	if(db_con != NULL && mt_dbf.close != NULL)
-		mt_dbf.close(db_con);
-	/* destroy lock */
-	if(mt_lock) {
-		lock_destroy(mt_lock);
-		lock_dealloc(mt_lock);
-		mt_lock = 0;
-	}
 }
 
 static int fixup_mt_match(void **param, int param_no)
