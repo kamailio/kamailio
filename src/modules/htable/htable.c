@@ -341,7 +341,6 @@ static void destroy(void)
 			}
 		}
 	}
-	ht_destroy();
 }
 
 /**
