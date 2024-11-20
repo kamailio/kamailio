@@ -106,42 +106,45 @@ db_func_t xcaps_dbf;
 /** SL API structure */
 sl_api_t slb;
 
+/* clang-format off */
 static pv_export_t mod_pvs[] = {
-		{{"xcapuri", sizeof("xcapuri") - 1}, PVT_OTHER, pv_get_xcap_uri,
-				pv_set_xcap_uri, pv_parse_xcap_uri_name, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"xcapuri", sizeof("xcapuri") - 1}, PVT_OTHER, pv_get_xcap_uri,
+			pv_set_xcap_uri, pv_parse_xcap_uri_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{"db_url", PARAM_STR, &xcaps_db_url},
-		{"xcap_table", PARAM_STR, &xcaps_db_table},
-		{"xcap_root", PARAM_STR, &xcaps_root},
-		{"buf_size", PARAM_INT, &xcaps_buf.len},
-		{"xml_ns", PARAM_STRING | PARAM_USE_FUNC, (void *)xcaps_xpath_ns_param},
-		{"directory_scheme", PARAM_INT, &xcaps_directory_scheme},
-		{"directory_hostname", PARAM_STR, &xcaps_directory_hostname},
-		{0, 0, 0}};
+static param_export_t params[] = {
+	{"db_url", PARAM_STR, &xcaps_db_url},
+	{"xcap_table", PARAM_STR, &xcaps_db_table},
+	{"xcap_root", PARAM_STR, &xcaps_root},
+	{"buf_size", PARAM_INT, &xcaps_buf.len},
+	{"xml_ns", PARAM_STRING | PARAM_USE_FUNC, (void *)xcaps_xpath_ns_param},
+	{"directory_scheme", PARAM_INT, &xcaps_directory_scheme},
+	{"directory_hostname", PARAM_STR, &xcaps_directory_hostname},
+	{0, 0, 0}
+};
 
-static cmd_export_t cmds[] = {{"xcaps_put", (cmd_function)w_xcaps_put, 3,
-									  fixup_xcaps_put, 0, REQUEST_ROUTE},
-		{"xcaps_get", (cmd_function)w_xcaps_get, 2, fixup_xcaps_put, 0,
-				REQUEST_ROUTE},
-		{"xcaps_del", (cmd_function)w_xcaps_del, 2, fixup_xcaps_put, 0,
-				REQUEST_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+static cmd_export_t cmds[] = {
+	{"xcaps_put", (cmd_function)w_xcaps_put, 3, fixup_xcaps_put, 0, REQUEST_ROUTE},
+	{"xcaps_get", (cmd_function)w_xcaps_get, 2, fixup_xcaps_put, 0, REQUEST_ROUTE},
+	{"xcaps_del", (cmd_function)w_xcaps_del, 2, fixup_xcaps_put, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /** module exports */
 struct module_exports exports = {
-		"xcap_server",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported rpc functions */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per-child init function */
-		destroy			 /* destroy function */
+	"xcap_server",   /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
+	mod_pvs,         /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	destroy          /* destroy function */
 };
+/* clang-format on */
 
 /**
  * init module function
