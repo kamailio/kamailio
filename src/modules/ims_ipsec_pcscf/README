@@ -47,12 +47,13 @@ Tsvetomir Dimitrov
               3.2. ipsec_listen_addr6 (string)
               3.3. ipsec_client_port (int)
               3.4. ipsec_server_port (int)
-              3.5. ipsec_max_connections (int)
-              3.6. ipsec_reuse_server_port (int)
-              3.7. ipsec_spi_id_start (int)
-              3.8. ipsec_spi_id_range (int)
-              3.9. ipsec_preferred_alg (string)
-              3.10. ipsec_preferred_ealg (string)
+              3.5. ipsec_listen_agname (string)
+              3.6. ipsec_max_connections (int)
+              3.7. ipsec_reuse_server_port (int)
+              3.8. ipsec_spi_id_start (int)
+              3.9. ipsec_spi_id_range (int)
+              3.10. ipsec_preferred_alg (string)
+              3.11. ipsec_preferred_ealg (string)
 
         4. Functions
 
@@ -68,16 +69,17 @@ Tsvetomir Dimitrov
    1.2. ipsec_listen_addr6 parameter usage
    1.3. ipsec_client_port parameter usage
    1.4. ipsec_server_port parameter usage
-   1.5. ipsec_max_connections parameter usage
-   1.6. ipsec_reuse_server_port parameter usage
-   1.7. ipsec_spi_id_start parameter usage
-   1.8. ipsec_spi_id_range parameter usage
-   1.9. ipsec_preferred_alg parameter usage
-   1.10. ipsec_preferred_ealg parameter usage
-   1.11. ipsec_create
-   1.12. ipsec_forward
-   1.13. ipsec_destroy
-   1.14. ipsec_destroy_by_contact()
+   1.5. ipsec_listen_agname parameter usage
+   1.6. ipsec_max_connections parameter usage
+   1.7. ipsec_reuse_server_port parameter usage
+   1.8. ipsec_spi_id_start parameter usage
+   1.9. ipsec_spi_id_range parameter usage
+   1.10. ipsec_preferred_alg parameter usage
+   1.11. ipsec_preferred_ealg parameter usage
+   1.12. ipsec_create
+   1.13. ipsec_forward
+   1.14. ipsec_destroy
+   1.15. ipsec_destroy_by_contact()
 
 Chapter 1. Admin Guide
 
@@ -95,12 +97,13 @@ Chapter 1. Admin Guide
         3.2. ipsec_listen_addr6 (string)
         3.3. ipsec_client_port (int)
         3.4. ipsec_server_port (int)
-        3.5. ipsec_max_connections (int)
-        3.6. ipsec_reuse_server_port (int)
-        3.7. ipsec_spi_id_start (int)
-        3.8. ipsec_spi_id_range (int)
-        3.9. ipsec_preferred_alg (string)
-        3.10. ipsec_preferred_ealg (string)
+        3.5. ipsec_listen_agname (string)
+        3.6. ipsec_max_connections (int)
+        3.7. ipsec_reuse_server_port (int)
+        3.8. ipsec_spi_id_start (int)
+        3.9. ipsec_spi_id_range (int)
+        3.10. ipsec_preferred_alg (string)
+        3.11. ipsec_preferred_ealg (string)
 
    4. Functions
 
@@ -136,12 +139,13 @@ Chapter 1. Admin Guide
    3.2. ipsec_listen_addr6 (string)
    3.3. ipsec_client_port (int)
    3.4. ipsec_server_port (int)
-   3.5. ipsec_max_connections (int)
-   3.6. ipsec_reuse_server_port (int)
-   3.7. ipsec_spi_id_start (int)
-   3.8. ipsec_spi_id_range (int)
-   3.9. ipsec_preferred_alg (string)
-   3.10. ipsec_preferred_ealg (string)
+   3.5. ipsec_listen_agname (string)
+   3.6. ipsec_max_connections (int)
+   3.7. ipsec_reuse_server_port (int)
+   3.8. ipsec_spi_id_start (int)
+   3.9. ipsec_spi_id_range (int)
+   3.10. ipsec_preferred_alg (string)
+   3.11. ipsec_preferred_ealg (string)
 
 3.1. ipsec_listen_addr (string)
 
@@ -191,18 +195,28 @@ modparam("ims_ipsec_pcscf", "ipsec_client_port", 5062)
 modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
 ...
 
-3.5. ipsec_max_connections (int)
+3.5. ipsec_listen_agname (string)
+
+   Set async (action) workers group name for udp sockets for
+   multi-threaded reading. Default value: not set.
+
+   Example 1.5. ipsec_listen_agname parameter usage
+...
+modparam("ims_ipsec_pcscf", "ipsec_listen_agname", "imsudp")
+...
+
+3.6. ipsec_max_connections (int)
 
    Maximum simultaneous IPSec connections
 
    Default value is 2.
 
-   Example 1.5. ipsec_max_connections parameter usage
+   Example 1.6. ipsec_max_connections parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_max_connections", 10)
 ...
 
-3.6. ipsec_reuse_server_port (int)
+3.7. ipsec_reuse_server_port (int)
 
    Reuse (1) or not (0) the P-CSCF IPSec information for Re-registration
    for one UA. When set to 0 - During Re-registration P-CSCF will create
@@ -211,12 +225,12 @@ modparam("ims_ipsec_pcscf", "ipsec_max_connections", 10)
 
    Default value is 1.
 
-   Example 1.6. ipsec_reuse_server_port parameter usage
+   Example 1.7. ipsec_reuse_server_port parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_reuse_server_port", 1)
 ...
 
-3.7. ipsec_spi_id_start (int)
+3.8. ipsec_spi_id_start (int)
 
    Each IPSec tunnel has a unique system-wide identifier. This and the
    following option allows to tune the SPIs used by Kamailio in order to
@@ -225,12 +239,12 @@ modparam("ims_ipsec_pcscf", "ipsec_reuse_server_port", 1)
 
    Default value is 100.
 
-   Example 1.7. ipsec_spi_id_start parameter usage
+   Example 1.8. ipsec_spi_id_start parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_spi_id_start", 100)
 ...
 
-3.8. ipsec_spi_id_range (int)
+3.9. ipsec_spi_id_range (int)
 
    How many SPIs to be allocated for the process. E.g. if
    ipsec_spi_id_start = 100 and ipsec_spi_id_range = 1000, SPIs between
@@ -238,12 +252,12 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_start", 100)
 
    Default value is 1000.
 
-   Example 1.8. ipsec_spi_id_range parameter usage
+   Example 1.9. ipsec_spi_id_range parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
 ...
 
-3.9. ipsec_preferred_alg (string)
+3.10. ipsec_preferred_alg (string)
 
    A name of an authentication algorithm which the Proxy-CSCF will prefer
    when creating IPSec tunnels.
@@ -251,12 +265,12 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
    Default value is empty string (null) - the last algorithm in the
    Sec-Agree header will be used.
 
-   Example 1.9. ipsec_preferred_alg parameter usage
+   Example 1.10. ipsec_preferred_alg parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_preferred_alg", "hmac-sha-1-96")
 ...
 
-3.10. ipsec_preferred_ealg (string)
+3.11. ipsec_preferred_ealg (string)
 
    A name of an encrytion algorithm which the Proxy-CSCF will prefer when
    creating IPSec tunnels.
@@ -265,7 +279,7 @@ modparam("ims_ipsec_pcscf", "ipsec_preferred_alg", "hmac-sha-1-96")
    Sec-Agree header will be used. Note that the possibility of it being
    the "null" algorithm is not insignificant.
 
-   Example 1.10. ipsec_preferred_ealg parameter usage
+   Example 1.11. ipsec_preferred_ealg parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_preferred_ealg", "aes-cbc")
 ...
@@ -291,7 +305,7 @@ modparam("ims_ipsec_pcscf", "ipsec_preferred_ealg", "aes-cbc")
        every registration. This is an optional parameter, default value -
        0.
 
-   Example 1.11. ipsec_create
+   Example 1.12. ipsec_create
 ...
 ipsec_create("location");
 # or
@@ -328,7 +342,7 @@ ipsec_create("location", "1");
             found.
        This is an optional parameter, default value - 0.
 
-   Example 1.12. ipsec_forward
+   Example 1.13. ipsec_forward
 ...
 ipsec_forward("location");
 # or
@@ -345,7 +359,7 @@ ipsec_forward("location", "1");
        aor - SIP URI to match the record. If not provided, then R-URI is
        used.
 
-   Example 1.13. ipsec_destroy
+   Example 1.14. ipsec_destroy
 ...
 ipsec_destroy("location");
 ...
@@ -364,7 +378,7 @@ ipsec_destroy("location");
    The last three parameters have to be string values and can contain
    variables.
 
-   Example 1.14. ipsec_destroy_by_contact()
+   Example 1.15. ipsec_destroy_by_contact()
 ...
 ipsec_destroy_by_contact("location", "...", "...", "...");
 ...
