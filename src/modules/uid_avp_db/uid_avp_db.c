@@ -68,60 +68,61 @@ static int attrs_fixup(void **param, int param_no);
 
 static domain_get_did_t dm_get_did = NULL;
 
+/* clang-format off */
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] = {{"load_attrs", load_attrs, 2, attrs_fixup, 0,
-									  REQUEST_ROUTE | FAILURE_ROUTE},
-		/* functions for loading/storing flagged attributes into DB */
-		{"load_extra_attrs", load_extra_attrs, 2, extra_attrs_fixup, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-		{"save_extra_attrs", save_extra_attrs, 2, extra_attrs_fixup, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-		{"remove_extra_attrs", remove_extra_attrs, 2, extra_attrs_fixup, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-
-		/* locking attrs - needed for proper work! */
-		{"lock_extra_attrs", lock_extra_attrs, 2, extra_attrs_fixup, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-		{"unlock_extra_attrs", unlock_extra_attrs, 2, extra_attrs_fixup, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-
-		{0, 0, 0, 0, 0, 0}};
-
+static cmd_export_t cmds[] = {
+	{"load_attrs", load_attrs, 2, attrs_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	/* functions for loading/storing flagged attributes into DB */
+	{"load_extra_attrs", load_extra_attrs, 2, extra_attrs_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"save_extra_attrs", save_extra_attrs, 2, extra_attrs_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"remove_extra_attrs", remove_extra_attrs, 2, extra_attrs_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	/* locking attrs - needed for proper work! */
+	{"lock_extra_attrs", lock_extra_attrs, 2, extra_attrs_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"unlock_extra_attrs", unlock_extra_attrs, 2, extra_attrs_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {{"db_url", PARAM_STRING, &db_url},
-		{"user_attrs_table", PARAM_STRING, &user_attrs_table},
-		{"uri_attrs_table", PARAM_STRING, &uri_attrs_table},
-		{"uid_column", PARAM_STRING, &uid_column},
-		{"username_column", PARAM_STRING, &username_column},
-		{"did_column", PARAM_STRING, &did_column},
-		{"name_column", PARAM_STRING, &name_column},
-		{"type_column", PARAM_STRING, &type_column},
-		{"value_column", PARAM_STRING, &val_column},
-		{"flags_column", PARAM_STRING, &flags_column},
-		{"scheme_column", PARAM_STRING, &scheme_column},
-
-		{"attr_group", PARAM_STR | PARAM_USE_FUNC, (void *)declare_attr_group},
-		{"auto_unlock_extra_attrs", PARAM_INT, &auto_unlock}, {0, 0, 0}};
-
-
-struct module_exports exports = {
-		"uid_avp_db",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported commands */
-		params,			 /* exported parameters */
-		0,				 /* exported RPC methods */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response function*/
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		0				 /* destroy function */
+static param_export_t params[] = {
+	{"db_url", PARAM_STRING, &db_url},
+	{"user_attrs_table", PARAM_STRING, &user_attrs_table},
+	{"uri_attrs_table", PARAM_STRING, &uri_attrs_table},
+	{"uid_column", PARAM_STRING, &uid_column},
+	{"username_column", PARAM_STRING, &username_column},
+	{"did_column", PARAM_STRING, &did_column},
+	{"name_column", PARAM_STRING, &name_column},
+	{"type_column", PARAM_STRING, &type_column},
+	{"value_column", PARAM_STRING, &val_column},
+	{"flags_column", PARAM_STRING, &flags_column},
+	{"scheme_column", PARAM_STRING, &scheme_column},
+	{"attr_group", PARAM_STR | PARAM_USE_FUNC, (void *)declare_attr_group},
+	{"auto_unlock_extra_attrs", PARAM_INT, &auto_unlock},
+	{0, 0, 0}
 };
 
+struct module_exports exports = {
+	"uid_avp_db",    /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported commands */
+	params,          /* exported parameters */
+	0,               /* exported RPC methods */
+	0,               /* exported pseudo-variables */
+	0,               /* response function*/
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	0                /* destroy function */
+};
+/* clang-format off */
 
 static int mod_init(void)
 {
