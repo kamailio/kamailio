@@ -52,29 +52,33 @@ static char _k_uuid_str[KSR_UUID_BSIZE];
 int pv_get_uuid(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 int pv_parse_uuid_name(pv_spec_p sp, str *in);
 
+/* clang-format off */
 static pv_export_t mod_pvs[] = {
-		{{"uuid", (sizeof("uuid") - 1)}, PVT_OTHER, pv_get_uuid, 0,
-				pv_parse_uuid_name, 0, 0, 0},
-
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
-
-static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
-
-static param_export_t params[] = {{0, 0, 0}};
-
-struct module_exports exports = {
-		"uuid",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported rpc functions */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per child init function */
-		mod_destroy		 /* destroy function */
+	{{"uuid", (sizeof("uuid") - 1)}, PVT_OTHER, pv_get_uuid, 0, pv_parse_uuid_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
+static cmd_export_t cmds[] = {
+	{0, 0, 0, 0, 0, 0}
+};
+
+static param_export_t params[] = {
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"uuid",          /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
+	mod_pvs,         /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per child init function */
+	mod_destroy      /* destroy function */
+};
+/* clang-format on */
 
 /**
  * init module function
