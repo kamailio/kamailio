@@ -56,6 +56,7 @@ static int w_exec_avp(struct sip_msg *msg, char *cmd, char *avpl);
 static int w_exec_cmd(struct sip_msg *msg, char *cmd, char *foo);
 
 static int exec_avp_fixup(void **param, int param_no);
+static int exec_avp_fixup_free(void **param, int param_no);
 
 inline static void exec_shutdown(void);
 
@@ -64,16 +65,11 @@ inline static void exec_shutdown(void);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"exec_dset", (cmd_function)w_exec_dset, 1, fixup_spve_null,  0,
-		REQUEST_ROUTE|FAILURE_ROUTE},
-	{"exec_msg",  (cmd_function)w_exec_msg,  1, fixup_spve_null,  0,
-		REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
-	{"exec_avp",  (cmd_function)w_exec_avp,  1, fixup_spve_null,  0,
-		REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
-	{"exec_avp",  (cmd_function)w_exec_avp,  2, exec_avp_fixup,   0,
-		REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
-	{"exec_cmd",  (cmd_function)w_exec_cmd,  1, fixup_spve_null,  0,
-		ANY_ROUTE},
+	{"exec_dset", (cmd_function)w_exec_dset, 1, fixup_spve_null,  fixup_free_spve_null, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"exec_msg",  (cmd_function)w_exec_msg,  1, fixup_spve_null,  fixup_free_spve_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
+	{"exec_avp",  (cmd_function)w_exec_avp,  1, fixup_spve_null,  fixup_free_spve_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
+	{"exec_avp",  (cmd_function)w_exec_avp,  2, exec_avp_fixup,   exec_avp_fixup_free, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
+	{"exec_cmd",  (cmd_function)w_exec_cmd,  1, fixup_spve_null,  fixup_free_spve_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -265,6 +261,16 @@ static int exec_avp_fixup(void **param, int param_no)
 		return 0;
 	}
 
+	return 0;
+}
+
+static int exec_avp_fixup_free(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 2) {
+		free_pvname_list((pvname_list_t *)param);
+	}
 	return 0;
 }
 
