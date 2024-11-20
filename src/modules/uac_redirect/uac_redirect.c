@@ -71,14 +71,15 @@ static int w_get_redirect1(struct sip_msg *msg, char *dir, char *foo);
 static int w_get_redirect2(struct sip_msg *msg, char *dir, char *foo);
 static int regexp_compile(char *re_s, regex_t **re);
 static int get_redirect_fixup(void **param, int param_no);
+static int get_redirect_fixup_free(void **param, int param_no);
 static int setf_fixup(void **param, int param_no);
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"set_deny_filter", (cmd_function)w_set_deny, 2, setf_fixup, 0, FAILURE_ROUTE},
 	{"set_accept_filter", (cmd_function)w_set_accept, 2, setf_fixup, 0, FAILURE_ROUTE},
-	{"get_redirects", (cmd_function)w_get_redirect2, 2, get_redirect_fixup,	0, FAILURE_ROUTE},
-	{"get_redirects", (cmd_function)w_get_redirect1, 1, get_redirect_fixup,	0, FAILURE_ROUTE},
+	{"get_redirects", (cmd_function)w_get_redirect2, 2, get_redirect_fixup,	get_redirect_fixup_free, FAILURE_ROUTE},
+	{"get_redirects", (cmd_function)w_get_redirect1, 1, get_redirect_fixup,	get_redirect_fixup_free, FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -177,6 +178,13 @@ static int get_redirect_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int get_redirect_fixup_free(void **param, int param_no)
+{
+	if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
+	}
+	return 0;
+}
 
 static int setf_fixup(void **param, int param_no)
 {
