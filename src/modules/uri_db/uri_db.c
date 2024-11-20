@@ -66,49 +66,49 @@ static int fixup_exist(void **param, int param_no);
 
 static int w_check_uri1(struct sip_msg *_m, char *_uri, char *_s);
 
+/* clang-format off */
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"check_to", (cmd_function)check_to, 0, 0, 0, REQUEST_ROUTE},
-		{"check_from", (cmd_function)check_from, 0, 0, 0, REQUEST_ROUTE},
-		{"check_uri", (cmd_function)w_check_uri1, 1, fixup_spve_null, 0,
-				REQUEST_ROUTE},
-		{"check_uri", (cmd_function)check_uri, 3, fixup_spve_all, 0,
-				REQUEST_ROUTE},
-		{"does_uri_exist", (cmd_function)does_uri_exist, 0, 0, fixup_exist,
-				REQUEST_ROUTE | LOCAL_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+	{"check_to", (cmd_function)check_to, 0, 0, 0, REQUEST_ROUTE},
+	{"check_from", (cmd_function)check_from, 0, 0, 0, REQUEST_ROUTE},
+	{"check_uri", (cmd_function)w_check_uri1, 1, fixup_spve_null, 0, REQUEST_ROUTE},
+	{"check_uri", (cmd_function)check_uri, 3, fixup_spve_all, 0, REQUEST_ROUTE},
+	{"does_uri_exist", (cmd_function)does_uri_exist, 0, 0, fixup_exist, REQUEST_ROUTE | LOCAL_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
-		{"db_table", PARAM_STR, &db_table},
-		{"user_column", PARAM_STR, &uridb_user_col},
-		{"domain_column", PARAM_STR, &uridb_domain_col},
-		{"uriuser_column", PARAM_STR, &uridb_uriuser_col},
-		{"use_uri_table", PARAM_INT, &use_uri_table},
-		{"use_domain", PARAM_INT, &use_domain}, {0, 0, 0}};
-
+static param_export_t params[] = {
+	{"db_url", PARAM_STR, &db_url},
+	{"db_table", PARAM_STR, &db_table},
+	{"user_column", PARAM_STR, &uridb_user_col},
+	{"domain_column", PARAM_STR, &uridb_domain_col},
+	{"uriuser_column", PARAM_STR, &uridb_uriuser_col},
+	{"use_uri_table", PARAM_INT, &use_uri_table},
+	{"use_domain", PARAM_INT, &use_domain},
+	{0, 0, 0}
+};
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-		"uri_db",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported rpc functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* child init function */
-		destroy			 /* module destroy function */
+	"uri_db",        /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* child init function */
+	destroy          /* module destroy function */
 };
-
+/* clang-format on */
 
 /**
  * Module initialization function callee in each child separately
