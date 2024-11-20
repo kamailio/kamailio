@@ -116,52 +116,54 @@ domain_t **domains_2 = 0; /* List of domains 2 */
  */
 static domain_t dom_buf[2];
 
+/* clang-format off */
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"is_local", is_local, 1, fixup_var_str_1, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"lookup_domain", lookup_domain, 2, lookup_domain_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"get_did", (cmd_function)get_did, 0, 0, 0, 0},
-		{"bind_domain", (cmd_function)bind_domain, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
-
+	{"is_local", is_local, 1, fixup_var_str_1, 0, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"lookup_domain", lookup_domain, 2, lookup_domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"get_did", (cmd_function)get_did, 0, 0, 0, 0},
+	{"bind_domain", (cmd_function)bind_domain, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
-		{"db_mode", PARAM_INT, &db_mode},
-		{"domain_table", PARAM_STR, &domain_table},
-		{"domain_col", PARAM_STR, &domain_col},
-		{"did_col", PARAM_STR, &did_col}, {"flags_col", PARAM_STR, &flags_col},
-		{"domattr_table", PARAM_STR, &domattr_table},
-		{"domattr_did", PARAM_STR, &domattr_did},
-		{"domattr_name", PARAM_STR, &domattr_name},
-		{"domattr_type", PARAM_STR, &domattr_type},
-		{"domattr_value", PARAM_STR, &domattr_value},
-		{"domattr_flags", PARAM_STR, &domattr_flags},
-		{"load_domain_attrs", PARAM_INT, &load_domain_attrs}, {0, 0, 0}};
-
+static param_export_t params[] = {
+	{"db_url", PARAM_STR, &db_url},
+	{"db_mode", PARAM_INT, &db_mode},
+	{"domain_table", PARAM_STR, &domain_table},
+	{"domain_col", PARAM_STR, &domain_col},
+	{"did_col", PARAM_STR, &did_col},
+	{"flags_col", PARAM_STR, &flags_col},
+	{"domattr_table", PARAM_STR, &domattr_table},
+	{"domattr_did", PARAM_STR, &domattr_did},
+	{"domattr_name", PARAM_STR, &domattr_name},
+	{"domattr_type", PARAM_STR, &domattr_type},
+	{"domattr_value", PARAM_STR, &domattr_value},
+	{"domattr_flags", PARAM_STR, &domattr_flags},
+	{"load_domain_attrs", PARAM_INT, &load_domain_attrs},
+	{0, 0, 0}
+};
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-		"uid_domain",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		domain_rpc,		 /* exported RPC methods */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		destroy			 /* module destroy function */
+	"uid_domain",    /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	domain_rpc,      /* exported RPC methods */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	destroy          /* module destroy function */
 };
-
+/* clang-format off */
 
 static int init_db(void)
 {
