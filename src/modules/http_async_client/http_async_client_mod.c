@@ -166,7 +166,7 @@ enum http_time_name_t
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"http_async_query", (cmd_function)w_http_async_query, 2,
-			fixup_spve_spve, 0, ANY_ROUTE},
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
