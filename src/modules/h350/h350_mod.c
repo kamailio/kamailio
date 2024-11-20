@@ -42,6 +42,7 @@ static int child_init(int rank);
  * fixup functions
  */
 static int one_str_pv_elem_fixup(void **param, int param_no);
+static int one_str_pv_elem_fixup_free(void **param, int param_no);
 static int h350_auth_lookup_fixup(void **param, int param_no);
 
 /*
@@ -70,53 +71,48 @@ int h350_search_scope_int = -1;
  */
 ldap_api_t ldap_api;
 
+/* clang-format off */
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"h350_sipuri_lookup", (cmd_function)w_h350_sipuri_lookup, 1,
-				one_str_pv_elem_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE
-						| LOCAL_ROUTE},
-		{"h350_auth_lookup", (cmd_function)w_h350_auth_lookup, 2,
-				h350_auth_lookup_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE
-						| LOCAL_ROUTE},
-		{"h350_result_call_preferences", (cmd_function)w_h350_call_preferences,
-				1, one_str_pv_elem_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE
-						| LOCAL_ROUTE},
-		{"h350_result_service_level", (cmd_function)w_h350_service_level, 1,
-				one_str_pv_elem_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE
-						| LOCAL_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+	{"h350_sipuri_lookup", (cmd_function)w_h350_sipuri_lookup, 1, one_str_pv_elem_fixup, one_str_pv_elem_fixup_free,
+		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE | LOCAL_ROUTE},
+	{"h350_auth_lookup", (cmd_function)w_h350_auth_lookup, 2, h350_auth_lookup_fixup, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE | LOCAL_ROUTE},
+	{"h350_result_call_preferences", (cmd_function)w_h350_call_preferences, 1, one_str_pv_elem_fixup, one_str_pv_elem_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE | LOCAL_ROUTE},
+	{"h350_result_service_level", (cmd_function)w_h350_service_level, 1, one_str_pv_elem_fixup, one_str_pv_elem_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE | LOCAL_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
 static param_export_t params[] = {
-		{"ldap_session", PARAM_STRING, &h350_ldap_session},
-		{"base_dn", PARAM_STRING, &h350_base_dn},
-		{"search_scope", PARAM_STRING, &h350_search_scope}, {0, 0, 0}};
+	{"ldap_session", PARAM_STRING, &h350_ldap_session},
+	{"base_dn", PARAM_STRING, &h350_base_dn},
+	{"search_scope", PARAM_STRING, &h350_search_scope}, {0, 0, 0}
+};
 
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-		"h350",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* Exported parameters */
-		0,				 /* RPC method exports */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* child initialization function */
-		0				 /* destroy function */
+	"h350",			 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	params,			 /* Exported parameters */
+	0,				 /* RPC method exports */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* child initialization function */
+	0				 /* destroy function */
 };
+/* clang-format on */
 
 static int child_init(int rank)
 {
@@ -203,6 +199,22 @@ static int one_str_pv_elem_fixup(void **param, int param_no)
 			}
 		}
 		*param = (void *)model;
+	}
+
+	return 0;
+}
+
+static int one_str_pv_elem_fixup_free(void **param, int param_no)
+{
+	str s;
+
+	if(param_no == 1) {
+		s.s = (char *)*param;
+		if(s.s == 0 || s.s[0] == 0) {
+			return 0;
+		} else {
+			pv_elem_free_all(*param);
+		}
 	}
 
 	return 0;
