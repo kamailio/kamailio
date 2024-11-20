@@ -635,26 +635,6 @@ static void destroy(void)
 		} else
 			timer_db_update(0, 0);
 	}
-
-	if(subs_htable) {
-		destroy_shtable(subs_htable, shtable_size);
-	}
-
-	if(pres_htable) {
-		destroy_phtable();
-	}
-
-	if(pa_db && pa_dbf.close) {
-		pa_dbf.close(pa_db);
-	}
-
-	if(pres_notifier_id != NULL) {
-		shm_free(pres_notifier_id);
-	}
-
-	destroy_evlist();
-
-	ps_ptable_destroy();
 }
 
 static int fixup_presence(void **param, int param_no)
