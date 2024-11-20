@@ -67,6 +67,7 @@ static int child_init(int rank);
 static void destroy(void);
 
 static int fixup_ht_key(void **param, int param_no);
+static int fixup_free_ht_key(void **param, int param_no);
 static int w_ht_rm(sip_msg_t *msg, char *htname, char *itname);
 static int ht_rm_name_re(struct sip_msg *msg, char *key, char *foo);
 static int ht_rm_value_re(struct sip_msg *msg, char *key, char *foo);
@@ -119,36 +120,36 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[] = {
 	{"sht_print", (cmd_function)ht_print, 0, 0, 0, ANY_ROUTE},
-	{"sht_rm", (cmd_function)w_ht_rm, 2, fixup_spve_spve, 0, ANY_ROUTE},
-	{"sht_rm_name_re", (cmd_function)ht_rm_name_re, 1, fixup_ht_key, 0,
+	{"sht_rm", (cmd_function)w_ht_rm, 2, fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"sht_rm_name_re", (cmd_function)ht_rm_name_re, 1, fixup_ht_key, fixup_free_ht_key,
 			ANY_ROUTE},
-	{"sht_rm_value_re", (cmd_function)ht_rm_value_re, 1, fixup_ht_key, 0,
+	{"sht_rm_value_re", (cmd_function)ht_rm_value_re, 1, fixup_ht_key, fixup_free_ht_key,
 			ANY_ROUTE},
-	{"sht_rm_name", (cmd_function)w_ht_rm_name, 3, fixup_spve_all, 0,
+	{"sht_rm_name", (cmd_function)w_ht_rm_name, 3, fixup_spve_all, fixup_free_spve_all,
 			ANY_ROUTE},
-	{"sht_rm_value", (cmd_function)w_ht_rm_value, 3, fixup_spve_all, 0,
+	{"sht_rm_value", (cmd_function)w_ht_rm_value, 3, fixup_spve_all, fixup_free_spve_all,
 			ANY_ROUTE},
-	{"sht_match_name", (cmd_function)w_ht_match_name, 3, fixup_spve_all, 0,
+	{"sht_match_name", (cmd_function)w_ht_match_name, 3, fixup_spve_all, fixup_free_spve_all,
 			ANY_ROUTE},
-	{"sht_has_name", (cmd_function)w_ht_match_name, 3, fixup_spve_all, 0,
+	{"sht_has_name", (cmd_function)w_ht_match_name, 3, fixup_spve_all, fixup_free_spve_all,
 			ANY_ROUTE},
 	{"sht_match_str_value", (cmd_function)w_ht_match_str_value, 3,
-			fixup_spve_all, 0, ANY_ROUTE},
+			fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"sht_has_str_value", (cmd_function)w_ht_match_str_value, 3,
-			fixup_spve_all, 0, ANY_ROUTE},
-	{"sht_lock", (cmd_function)w_ht_slot_lock, 1, fixup_ht_key, 0,
+			fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"sht_lock", (cmd_function)w_ht_slot_lock, 1, fixup_ht_key, fixup_free_ht_key,
 			ANY_ROUTE},
-	{"sht_unlock", (cmd_function)w_ht_slot_unlock, 1, fixup_ht_key, 0,
+	{"sht_unlock", (cmd_function)w_ht_slot_unlock, 1, fixup_ht_key, fixup_free_ht_key,
 			ANY_ROUTE},
-	{"sht_reset", (cmd_function)ht_reset, 1, fixup_spve_null, 0, ANY_ROUTE},
+	{"sht_reset", (cmd_function)ht_reset, 1, fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"sht_iterator_start", (cmd_function)w_ht_iterator_start, 2,
-			fixup_spve_spve, 0, ANY_ROUTE},
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"sht_iterator_next", (cmd_function)w_ht_iterator_next, 1,
-			fixup_spve_null, 0, ANY_ROUTE},
+			fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"sht_iterator_end", (cmd_function)w_ht_iterator_end, 1,
-			fixup_spve_null, 0, ANY_ROUTE},
+			fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"sht_iterator_rm", (cmd_function)w_ht_iterator_rm, 1, fixup_spve_null,
-			0, ANY_ROUTE},
+			fixup_free_spve_null, ANY_ROUTE},
 	{"sht_iterator_sets", (cmd_function)w_ht_iterator_sets, 2,
 			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"sht_iterator_seti", (cmd_function)w_ht_iterator_seti, 2,
@@ -376,6 +377,12 @@ static int fixup_ht_key(void **param, int param_no)
 		return -1;
 	}
 	*param = (void *)sp;
+	return 0;
+}
+
+static int fixup_free_ht_key(void **param, int param_no)
+{
+	pkg_free(*param);
 	return 0;
 }
 
