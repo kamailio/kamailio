@@ -433,45 +433,7 @@ static int mod_init(void)
 
 static void destroy(void)
 {
-	pl_destroy_htable();
-
-	if(network_load_value) {
-		shm_free(network_load_value);
-		network_load_value = NULL;
-	}
-	if(load_value) {
-		shm_free(load_value);
-		load_value = NULL;
-	}
-	if(load_source) {
-		shm_free(load_source);
-		load_source = NULL;
-	}
-	if(pid_kp) {
-		shm_free(pid_kp);
-		pid_kp = NULL;
-	}
-	if(pid_ki) {
-		shm_free(pid_ki);
-		pid_ki = NULL;
-	}
-	if(pid_kd) {
-		shm_free(pid_kd);
-		pid_kd = NULL;
-	}
-	if(_pl_pid_setpoint) {
-		shm_free(_pl_pid_setpoint);
-		_pl_pid_setpoint = NULL;
-	}
-	if(drop_rate) {
-		shm_free(drop_rate);
-		drop_rate = NULL;
-	}
-
-	if(pl_timer) {
-		timer_free(pl_timer);
-		pl_timer = NULL;
-	}
+	LM_DBG("done");
 }
 
 
