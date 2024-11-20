@@ -80,10 +80,6 @@ static struct cfg_group_xlog xlog_default_cfg = {
 		-1 /* methods filter */
 };
 static void *xlog_cfg = &xlog_default_cfg;
-static cfg_def_t xlog_cfg_def[] = {
-		{"methods_filter", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0,
-				"Methods filter value for xlogm(...)."},
-		{0, 0, 0, 0, 0, 0}};
 
 /** module functions */
 static int mod_init(void);
@@ -138,56 +134,63 @@ typedef struct _xl_msg
 	struct action *a;
 } xl_msg_t;
 
-static pv_export_t mod_items[] = {
-		{{"C", sizeof("C") - 1}, PVT_OTHER, pv_get_color, 0,
-				pv_parse_color_name, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cfg_def_t xlog_cfg_def[] = {
+	{"methods_filter", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0, "Methods filter value for xlogm(...)."},
+	{0, 0, 0, 0, 0, 0
+}};
 
+static pv_export_t mod_items[] = {
+	{{"C", sizeof("C") - 1}, PVT_OTHER, pv_get_color, 0, pv_parse_color_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 static cmd_export_t cmds[] = {
-		{"xlog", (cmd_function)xlog_1, 1, xdbg_fixup, 0, ANY_ROUTE},
-		{"xlog", (cmd_function)xlog_2, 2, xlog_fixup, 0, ANY_ROUTE},
-		{"xlog", (cmd_function)xlog_3, 3, xlog3_fixup, 0, ANY_ROUTE},
-		{"xdbg", (cmd_function)xdbg, 1, xdbg_fixup, 0, ANY_ROUTE},
-		{"xinfo", (cmd_function)xinfo, 1, xdbg_fixup, 0, ANY_ROUTE},
-		{"xnotice", (cmd_function)xnotice, 1, xdbg_fixup, 0, ANY_ROUTE},
-		{"xwarn", (cmd_function)xwarn, 1, xdbg_fixup, 0, ANY_ROUTE},
-		{"xerr", (cmd_function)xerr, 1, xdbg_fixup, 0, ANY_ROUTE},
-		{"xbug", (cmd_function)xbug, 1, xdbg_fixup, 0, ANY_ROUTE},
-		{"xcrit", (cmd_function)xcrit, 1, xdbg_fixup, 0, ANY_ROUTE},
-		{"xalert", (cmd_function)xalert, 1, xdbg_fixup, 0, ANY_ROUTE},
-		{"xlogl", (cmd_function)xlogl_1, 1, xdbgl_fixup, 0, ANY_ROUTE},
-		{"xlogl", (cmd_function)xlogl_2, 2, xlogl_fixup, 0, ANY_ROUTE},
-		{"xlogl", (cmd_function)xlogl_3, 3, xlogl3_fixup, 0, ANY_ROUTE},
-		{"xdbgl", (cmd_function)xdbgl, 1, xdbgl_fixup, 0, ANY_ROUTE},
-		{"xlogm", (cmd_function)xlogm_2, 2, xlog_fixup, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"xlog", (cmd_function)xlog_1, 1, xdbg_fixup, 0, ANY_ROUTE},
+	{"xlog", (cmd_function)xlog_2, 2, xlog_fixup, 0, ANY_ROUTE},
+	{"xlog", (cmd_function)xlog_3, 3, xlog3_fixup, 0, ANY_ROUTE},
+	{"xdbg", (cmd_function)xdbg, 1, xdbg_fixup, 0, ANY_ROUTE},
+	{"xinfo", (cmd_function)xinfo, 1, xdbg_fixup, 0, ANY_ROUTE},
+	{"xnotice", (cmd_function)xnotice, 1, xdbg_fixup, 0, ANY_ROUTE},
+	{"xwarn", (cmd_function)xwarn, 1, xdbg_fixup, 0, ANY_ROUTE},
+	{"xerr", (cmd_function)xerr, 1, xdbg_fixup, 0, ANY_ROUTE},
+	{"xbug", (cmd_function)xbug, 1, xdbg_fixup, 0, ANY_ROUTE},
+	{"xcrit", (cmd_function)xcrit, 1, xdbg_fixup, 0, ANY_ROUTE},
+	{"xalert", (cmd_function)xalert, 1, xdbg_fixup, 0, ANY_ROUTE},
+	{"xlogl", (cmd_function)xlogl_1, 1, xdbgl_fixup, 0, ANY_ROUTE},
+	{"xlogl", (cmd_function)xlogl_2, 2, xlogl_fixup, 0, ANY_ROUTE},
+	{"xlogl", (cmd_function)xlogl_3, 3, xlogl3_fixup, 0, ANY_ROUTE},
+	{"xdbgl", (cmd_function)xdbgl, 1, xdbgl_fixup, 0, ANY_ROUTE},
+	{"xlogm", (cmd_function)xlogm_2, 2, xlog_fixup, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
-
-static param_export_t params[] = {{"buf_size", PARAM_INT, &buf_size},
-		{"force_color", PARAM_INT, &force_color},
-		{"long_format", PARAM_INT, &long_format},
-		{"prefix", PARAM_STRING, &_xlog_prefix},
-		{"log_facility", PARAM_STRING, &xlog_facility_name},
-		{"log_colors", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)xlog_log_colors_param},
-		{"methods_filter", PARAM_INT, &xlog_default_cfg.methods_filter},
-		{"prefix_mode", PARAM_INT, &_xlog_prefix_mode}, {0, 0, 0}};
-
+static param_export_t params[] = {
+	{"buf_size", PARAM_INT, &buf_size},
+	{"force_color", PARAM_INT, &force_color},
+	{"long_format", PARAM_INT, &long_format},
+	{"prefix", PARAM_STRING, &_xlog_prefix},
+	{"log_facility", PARAM_STRING, &xlog_facility_name},
+	{"log_colors", PARAM_STRING | PARAM_USE_FUNC, (void *)xlog_log_colors_param},
+	{"methods_filter", PARAM_INT, &xlog_default_cfg.methods_filter},
+	{"prefix_mode", PARAM_INT, &_xlog_prefix_mode},
+	{0, 0, 0}
+};
 
 /** module exports */
 struct module_exports exports = {
-		"xlog",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_items,		 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		destroy			 /* module destroy function */
+	"xlog",          /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_items,       /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	destroy          /* module destroy function */
 };
+/* clang-format on */
 
 /**
  * init module function
