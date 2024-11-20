@@ -25,6 +25,9 @@
 
 #ifdef WITH_HIREDIS_CLUSTER
 #include <hircluster.h>
+#ifdef WITH_SSL
+#include <hircluster_ssl.h>
+#endif
 #else
 #ifdef WITH_HIREDIS_PATH
 #include <hiredis/hiredis.h>
