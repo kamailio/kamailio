@@ -76,16 +76,16 @@ static cmd_export_t cmds[] = {
 	{"load_attrs", load_attrs, 2, attrs_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE},
 	/* functions for loading/storing flagged attributes into DB */
-	{"load_extra_attrs", load_extra_attrs, 2, extra_attrs_fixup, 0,
+	{"load_extra_attrs", load_extra_attrs, 2, extra_attrs_fixup, extra_attrs_fixup_free,
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"save_extra_attrs", save_extra_attrs, 2, extra_attrs_fixup, 0,
+	{"save_extra_attrs", save_extra_attrs, 2, extra_attrs_fixup, extra_attrs_fixup_free,
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"remove_extra_attrs", remove_extra_attrs, 2, extra_attrs_fixup, 0,
+	{"remove_extra_attrs", remove_extra_attrs, 2, extra_attrs_fixup, extra_attrs_fixup_free,
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 	/* locking attrs - needed for proper work! */
-	{"lock_extra_attrs", lock_extra_attrs, 2, extra_attrs_fixup, 0,
+	{"lock_extra_attrs", lock_extra_attrs, 2, extra_attrs_fixup, extra_attrs_fixup_free,
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"unlock_extra_attrs", unlock_extra_attrs, 2, extra_attrs_fixup, 0,
+	{"unlock_extra_attrs", unlock_extra_attrs, 2, extra_attrs_fixup, extra_attrs_fixup_free,
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };

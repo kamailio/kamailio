@@ -16,6 +16,7 @@ int save_extra_attrs(struct sip_msg *msg, char *_table, char *_id);
 int remove_extra_attrs(struct sip_msg *msg, char *_table, char *_id);
 
 int extra_attrs_fixup(void **param, int param_no);
+int extra_attrs_fixup_free(void **param, int param_no);
 
 int lock_extra_attrs(struct sip_msg *msg, char *_table, char *_id);
 int unlock_extra_attrs(struct sip_msg *msg, char *_table, char *_id);

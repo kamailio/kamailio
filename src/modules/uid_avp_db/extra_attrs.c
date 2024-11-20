@@ -459,6 +459,14 @@ int extra_attrs_fixup(void **param, int param_no)
 	return 0;
 }
 
+int extra_attrs_fixup_free(void **param, int param_no)
+{
+	if(param_no == 2) {
+		return fixup_free_fparam_2(param, param_no);
+	}
+	return 0;
+}
+
 /******* locking *******/
 
 #define LOCK_CNT 32
