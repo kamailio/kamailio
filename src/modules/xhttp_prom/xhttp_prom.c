@@ -102,7 +102,9 @@ static int w_prom_histogram_observe_l2(
 static int w_prom_histogram_observe_l3(struct sip_msg *msg, char *pname,
 		char *pnumber, char *l1, char *l2, char *l3);
 static int fixup_metric_reset(void **param, int param_no);
+static int fixup_free_metric_reset(void **param, int param_no);
 static int fixup_counter_inc(void **param, int param_no);
+static int fixup_free_counter_inc(void **param, int param_no);
 
 int prom_counter_param(modparam_t type, void *val);
 int prom_gauge_param(modparam_t type, void *val);
@@ -164,26 +166,26 @@ char error_buf[ERROR_REASON_BUF_LEN];
 static cmd_export_t cmds[] = {
 	{"prom_check_uri", (cmd_function)w_prom_check_uri, 0, 0, 0, REQUEST_ROUTE | EVENT_ROUTE},
 	{"prom_dispatch", (cmd_function)w_prom_dispatch, 0, 0, 0, REQUEST_ROUTE | EVENT_ROUTE},
-	{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l0, 1, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l1, 2, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l2, 3, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l3, 4, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l0, 1, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l1, 2, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l2, 3, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l3, 4, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l0, 2, fixup_counter_inc, 0, ANY_ROUTE},
-	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l1, 3, fixup_counter_inc, 0, ANY_ROUTE},
-	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l2, 4, fixup_counter_inc, 0, ANY_ROUTE},
-	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l3, 5, fixup_counter_inc, 0, ANY_ROUTE},
-	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l0, 2, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l1, 3, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l2, 4, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l3, 5, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l0, 2, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l1, 3, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l2, 4, fixup_metric_reset, 0, ANY_ROUTE},
-	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l3, 5, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l0, 1, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l1, 2, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l2, 3, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l3, 4, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l0, 1, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l1, 2, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l2, 3, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l3, 4, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l0, 2, fixup_counter_inc, fixup_free_counter_inc, ANY_ROUTE},
+	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l1, 3, fixup_counter_inc, fixup_free_counter_inc, ANY_ROUTE},
+	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l2, 4, fixup_counter_inc, fixup_free_counter_inc, ANY_ROUTE},
+	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l3, 5, fixup_counter_inc, fixup_free_counter_inc, ANY_ROUTE},
+	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l0, 2, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l1, 3, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l2, 4, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l3, 5, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l0, 2, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l1, 3, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l2, 4, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l3, 5, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -504,10 +506,10 @@ static int fixup_metric_reset(void **param, int param_no)
 	return fixup_spve_null(param, 1);
 }
 
-/* static int fixup_free_metric_reset(void** param, int param_no) */
-/* { */
-/* 	return fixup_free_spve_null(param, 1); */
-/* } */
+static int fixup_free_metric_reset(void **param, int param_no)
+{
+	return fixup_free_spve_null(param, 1);
+}
 
 /**
  * @brief Reset a counter (No labels)
@@ -967,14 +969,14 @@ static int fixup_counter_inc(void **param, int param_no)
 	}
 }
 
-/* static int fixup_free_counter_inc(void** param, int param_no) */
-/* { */
-/* 	if (param_no == 1 || param_no == 2) { */
-/* 		return fixup_free_spve_igp(param, param_no); */
-/* 	} else { */
-/* 		return fixup_free_spve_null(param, 1); */
-/* 	} */
-/* } */
+static int fixup_free_counter_inc(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2) {
+		return fixup_free_spve_igp(param, param_no);
+	} else {
+		return fixup_free_spve_null(param, 1);
+	}
+}
 
 /**
  * @brief Add an integer to a counter (No labels).
