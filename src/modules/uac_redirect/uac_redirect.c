@@ -73,40 +73,40 @@ static int regexp_compile(char *re_s, regex_t **re);
 static int get_redirect_fixup(void **param, int param_no);
 static int setf_fixup(void **param, int param_no);
 
-
-static cmd_export_t cmds[] = {{"set_deny_filter", (cmd_function)w_set_deny, 2,
-									  setf_fixup, 0, FAILURE_ROUTE},
-		{"set_accept_filter", (cmd_function)w_set_accept, 2, setf_fixup, 0,
-				FAILURE_ROUTE},
-		{"get_redirects", (cmd_function)w_get_redirect2, 2, get_redirect_fixup,
-				0, FAILURE_ROUTE},
-		{"get_redirects", (cmd_function)w_get_redirect1, 1, get_redirect_fixup,
-				0, FAILURE_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-static param_export_t params[] = {{"deny_filter", PARAM_STRING, &deny_filter_s},
-		{"accept_filter", PARAM_STRING, &accept_filter_s},
-		{"default_filter", PARAM_STRING, &def_filter_s},
-		{"acc_function", PARAM_STR, &uacred_acc_fct_s},
-		{"acc_db_table", PARAM_STR, &uacred_acc_db_table},
-		{"bflags", PARAM_INT, &bflags},
-		{"flags_hdr_mode", PARAM_INT, &flags_hdr_mode},
-		{"q_value", PARAM_INT, &_redirect_q_value}, {0, 0, 0}};
-
-
-struct module_exports exports = {
-		"uac_redirect",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported RPC functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		redirect_init,	 /* module initialization function */
-		child_init,		 /* per-child init function */
-		0				 /* module destroy function */
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"set_deny_filter", (cmd_function)w_set_deny, 2, setf_fixup, 0, FAILURE_ROUTE},
+	{"set_accept_filter", (cmd_function)w_set_accept, 2, setf_fixup, 0, FAILURE_ROUTE},
+	{"get_redirects", (cmd_function)w_get_redirect2, 2, get_redirect_fixup,	0, FAILURE_ROUTE},
+	{"get_redirects", (cmd_function)w_get_redirect1, 1, get_redirect_fixup,	0, FAILURE_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
+static param_export_t params[] = {
+	{"deny_filter", PARAM_STRING, &deny_filter_s},
+	{"accept_filter", PARAM_STRING, &accept_filter_s},
+	{"default_filter", PARAM_STRING, &def_filter_s},
+	{"acc_function", PARAM_STR, &uacred_acc_fct_s},
+	{"acc_db_table", PARAM_STR, &uacred_acc_db_table},
+	{"bflags", PARAM_INT, &bflags},
+	{"flags_hdr_mode", PARAM_INT, &flags_hdr_mode},
+	{"q_value", PARAM_INT, &_redirect_q_value},
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"uac_redirect",  /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported RPC functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	redirect_init,   /* module initialization function */
+	child_init,      /* per-child init function */
+	0                /* module destroy function */
+};
+/* clang-format on */
 
 int get_nr_max(char *s, unsigned char *max)
 {
