@@ -561,13 +561,7 @@ static void destroy(void)
 		if(synchronize_all_udomains(0, 1) != 0) {
 			LM_ERR("flushing cache failed\n");
 		}
-		ul_dbf.close(ul_dbh);
 	}
-
-	free_all_udomains();
-
-	/* free callbacks list */
-	destroy_ulcb_list();
 }
 
 /*! \brief
