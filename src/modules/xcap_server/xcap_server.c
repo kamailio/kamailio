@@ -64,6 +64,7 @@ static int w_xcaps_put(sip_msg_t *msg, char *puri, char *ppath, char *pbody);
 static int w_xcaps_get(sip_msg_t *msg, char *puri, char *ppath);
 static int w_xcaps_del(sip_msg_t *msg, char *puri, char *ppath);
 static int fixup_xcaps_put(void **param, int param_no);
+static int fixup_free_xcaps_put(void **param, int param_no);
 static int check_preconditions(sip_msg_t *msg, str etag_hdr);
 static int check_match_header(str body, str *etag);
 
@@ -125,9 +126,9 @@ static param_export_t params[] = {
 };
 
 static cmd_export_t cmds[] = {
-	{"xcaps_put", (cmd_function)w_xcaps_put, 3, fixup_xcaps_put, 0, REQUEST_ROUTE},
-	{"xcaps_get", (cmd_function)w_xcaps_get, 2, fixup_xcaps_put, 0, REQUEST_ROUTE},
-	{"xcaps_del", (cmd_function)w_xcaps_del, 2, fixup_xcaps_put, 0, REQUEST_ROUTE},
+	{"xcaps_put", (cmd_function)w_xcaps_put, 3, fixup_xcaps_put, fixup_free_xcaps_put, REQUEST_ROUTE},
+	{"xcaps_get", (cmd_function)w_xcaps_get, 2, fixup_xcaps_put, fixup_free_xcaps_put, REQUEST_ROUTE},
+	{"xcaps_del", (cmd_function)w_xcaps_del, 2, fixup_xcaps_put, fixup_free_xcaps_put, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -1491,6 +1492,21 @@ static int fixup_xcaps_put(void **param, int param_no)
 		}
 		*param = (void *)xm;
 		return 0;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int fixup_free_xcaps_put(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 3) {
+		pv_elem_free_all((pv_elem_t *)*param);
 	}
 	return 0;
 }
