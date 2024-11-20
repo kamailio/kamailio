@@ -79,53 +79,62 @@ stat_var *total_ruris;
 stat_var *total_transactions;
 stat_var *added_branches;
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"ts_append_to", (cmd_function)w_ts_append_to, 3, fixup_ts_append_to, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"ts_append_to", (cmd_function)w_ts_append_to2, 4, fixup_ts_append_to,
-				0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"ts_append", (cmd_function)w_ts_append, 2, fixup_ts_append, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"ts_append_by_contact", (cmd_function)w_ts_append_by_contact2,
-				2, /* for two parameters */
-				fixup_ts_append_by_contact, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"ts_append_by_contact", (cmd_function)w_ts_append_by_contact3,
-				3, /* for three parameters */
-				fixup_ts_append_by_contact, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"ts_append_branches", (cmd_function)w_ts_append_branches, 1,
-				fixup_spve_null, fixup_free_spve_null,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"ts_store", (cmd_function)w_ts_store, 0, 0, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"ts_store", (cmd_function)w_ts_store1, 1, fixup_spve_null, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"ts_append_to", (cmd_function)w_ts_append_to, 3, fixup_ts_append_to, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"ts_append_to", (cmd_function)w_ts_append_to2, 4, fixup_ts_append_to,
+			0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"ts_append", (cmd_function)w_ts_append, 2, fixup_ts_append, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"ts_append_by_contact", (cmd_function)w_ts_append_by_contact2,
+			2, /* for two parameters */
+			fixup_ts_append_by_contact, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"ts_append_by_contact", (cmd_function)w_ts_append_by_contact3,
+			3, /* for three parameters */
+			fixup_ts_append_by_contact, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"ts_append_branches", (cmd_function)w_ts_append_branches, 1,
+			fixup_spve_null, fixup_free_spve_null,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"ts_store", (cmd_function)w_ts_store, 0, 0, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"ts_store", (cmd_function)w_ts_store1, 1, fixup_spve_null, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{"hash_size", PARAM_INT, &hash_size},
-		{"use_domain", PARAM_INT, &use_domain}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"hash_size", PARAM_INT, &hash_size},
+	{"use_domain", PARAM_INT, &use_domain},
+	{0, 0, 0}
+};
 
 #ifdef STATISTICS
 /*! \brief We expose internal variables via the statistic framework below.*/
-stat_export_t mod_stats[] = {{"stored_ruris", STAT_NO_RESET, &stored_ruris},
-		{"stored_transactions", STAT_NO_RESET, &stored_transactions},
-		{"total_ruris", STAT_NO_RESET, &total_ruris},
-		{"total_transactions", STAT_NO_RESET, &total_transactions},
-		{"added_branches", STAT_NO_RESET, &added_branches}, {0, 0, 0}};
+stat_export_t mod_stats[] = {
+	{"stored_ruris", STAT_NO_RESET, &stored_ruris},
+	{"stored_transactions", STAT_NO_RESET, &stored_transactions},
+	{"total_ruris", STAT_NO_RESET, &total_ruris},
+	{"total_transactions", STAT_NO_RESET, &total_transactions},
+	{"added_branches", STAT_NO_RESET, &added_branches},
+	{0, 0, 0}
+};
 #endif
 
 /** module exports */
 struct module_exports exports = {
-		"tsilo",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported RPC methods */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		0,				 /* per-child init function */
-		destroy			 /* destroy function */
+	"tsilo",         /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported RPC methods */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	destroy          /* destroy function */
 };
+/* clang-format on */
 
 /**
  * init module function
