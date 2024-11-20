@@ -103,10 +103,10 @@ int credentials_n; /* Number of credentials in the list */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"www_authenticate", www_authenticate, 2, authdb_fixup, 0, REQUEST_ROUTE},
-	{"www_authorize", www_authenticate, 2, authdb_fixup, 0, REQUEST_ROUTE},
-	{"proxy_authenticate", proxy_authenticate, 2, authdb_fixup, 0, REQUEST_ROUTE},
-	{"proxy_authorize", proxy_authenticate, 2, authdb_fixup, 0, REQUEST_ROUTE},
+	{"www_authenticate", www_authenticate, 2, authdb_fixup, fixup_free_fparam_all, REQUEST_ROUTE},
+	{"www_authorize", www_authenticate, 2, authdb_fixup, fixup_free_fparam_all, REQUEST_ROUTE},
+	{"proxy_authenticate", proxy_authenticate, 2, authdb_fixup, fixup_free_fparam_all, REQUEST_ROUTE},
+	{"proxy_authorize", proxy_authenticate, 2, authdb_fixup, fixup_free_fparam_all, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
