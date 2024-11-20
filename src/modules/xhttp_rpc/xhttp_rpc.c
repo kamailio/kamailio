@@ -85,29 +85,32 @@ str xhttp_rpc_root = str_init("rpc");
 int buf_size = 0;
 char error_buf[ERROR_REASON_BUF_LEN];
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"dispatch_xhttp_rpc", (cmd_function)xhttp_rpc_dispatch, 0, 0, 0,
-				REQUEST_ROUTE | EVENT_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"dispatch_xhttp_rpc", (cmd_function)xhttp_rpc_dispatch, 0, 0, 0, REQUEST_ROUTE | EVENT_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"xhttp_rpc_root", PARAM_STR, &xhttp_rpc_root},
-		{"xhttp_rpc_buf_size", PARAM_INT, &buf_size}, {0, 0, 0}};
+	{"xhttp_rpc_root", PARAM_STR, &xhttp_rpc_root},
+	{"xhttp_rpc_buf_size", PARAM_INT, &buf_size},
+	{0, 0, 0}
+};
 
 /** module exports */
 struct module_exports exports = {
-		"xhttp_rpc",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pv exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		0				 /* module destroy function */
+	"xhttp_rpc",     /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pv exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	0                /* module destroy function */
 };
-
+/* clang-format on */
 
 /** Implementation of rpc_fault function required by the management API.
  *
