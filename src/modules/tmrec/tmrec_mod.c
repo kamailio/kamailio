@@ -60,35 +60,39 @@ int tmrec_wday = 0;
 char tmrec_separator = '|';
 char *tmrec_separator_param = NULL;
 
-static cmd_export_t cmds[] = {{"tmrec_match", (cmd_function)w_tmrec_match, 1,
-									  fixup_tmrec_match, 0, ANY_ROUTE},
-		{"tmrec_match", (cmd_function)w_tmrec_match, 2, fixup_tmrec_match, 0,
-				ANY_ROUTE},
-		{"is_leap_year", (cmd_function)w_is_leap_year, 0, fixup_is_leap_year, 0,
-				ANY_ROUTE},
-		{"is_leap_year", (cmd_function)w_is_leap_year, 1, fixup_is_leap_year, 0,
-				ANY_ROUTE},
-		{"time_period_match", (cmd_function)w_time_period_match, 1,
-				fixup_time_period_match, 0, ANY_ROUTE},
-		{"time_period_match", (cmd_function)w_time_period_match, 2,
-				fixup_time_period_match, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-static param_export_t params[] = {{"wday", PARAM_INT, &tmrec_wday},
-		{"separator", PARAM_STRING, &tmrec_separator_param}, {0, 0, 0}};
-
-struct module_exports exports = {
-		"tmrec", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,					  /* exported functions */
-		params,					  /* exported parameters */
-		0,						  /* exported rpc functions */
-		0,						  /* exported pseudo-variables */
-		0,						  /* response function */
-		mod_init,				  /* module init function */
-		child_init,				  /* per child init function */
-		mod_destroy				  /* destroy function */
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"tmrec_match", (cmd_function)w_tmrec_match, 1,
+			fixup_tmrec_match, 0, ANY_ROUTE},
+	{"tmrec_match", (cmd_function)w_tmrec_match, 2, fixup_tmrec_match, 0, ANY_ROUTE},
+	{"is_leap_year", (cmd_function)w_is_leap_year, 0, fixup_is_leap_year, 0, ANY_ROUTE},
+	{"is_leap_year", (cmd_function)w_is_leap_year, 1, fixup_is_leap_year, 0, ANY_ROUTE},
+	{"time_period_match", (cmd_function)w_time_period_match, 1,
+			fixup_time_period_match, 0, ANY_ROUTE},
+	{"time_period_match", (cmd_function)w_time_period_match, 2,
+			fixup_time_period_match, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
+static param_export_t params[] = {
+	{"wday", PARAM_INT, &tmrec_wday},
+	{"separator", PARAM_STRING, &tmrec_separator_param},
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"tmrec",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response function */
+	mod_init,        /* module init function */
+	child_init,      /* per child init function */
+	mod_destroy      /* destroy function */
+};
+/* clang-format on */
 
 /**
  * init module function
