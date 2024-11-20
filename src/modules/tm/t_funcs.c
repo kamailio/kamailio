@@ -87,23 +87,6 @@ int send_pr_buffer(struct retr_buf *rb, void *buf, int len
 
 void tm_shutdown()
 {
-
-	LM_DBG("start\n");
-
-#ifdef USE_DNS_FAILOVER
-	if(failover_reply_codes)
-		shm_free(failover_reply_codes);
-	if(failover_reply_codes_cnt)
-		shm_free(failover_reply_codes_cnt);
-#endif
-	/* destroy the hash table */
-	LM_DBG("emptying hash table\n");
-	free_hash_table();
-	LM_DBG("removing semaphores\n");
-	lock_cleanup();
-	LM_DBG("destroying tmcb lists\n");
-	destroy_tmcb_lists();
-	free_tm_stats();
 	LM_DBG("done\n");
 }
 
