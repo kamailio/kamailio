@@ -3788,8 +3788,10 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 			goto error;
 		}
 	} else {
-		if(buf.s != 0)
+		if(buf.s != 0) {
 			pkg_free(buf.s);
+			buf.s = NULL;
+		}
 	}
 
 	if(llen_uri > 0) {
@@ -3805,8 +3807,9 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 			goto error;
 		}
 	} else {
-		if(buf_uri.s != 0)
+		if(buf_uri.s != 0) {
 			pkg_free(buf_uri.s);
+		}
 	}
 
 	return 0;
