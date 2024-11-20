@@ -159,74 +159,60 @@ int pkgmem_stats_enabled = 0; /**< enable or disable pkgmem statistics. */
 
 char error_buf[ERROR_REASON_BUF_LEN];
 
+/* clang-format off */
 /* module commands */
-static cmd_export_t cmds[] = {{"prom_check_uri", (cmd_function)w_prom_check_uri,
-									  0, 0, 0, REQUEST_ROUTE | EVENT_ROUTE},
-		{"prom_dispatch", (cmd_function)w_prom_dispatch, 0, 0, 0,
-				REQUEST_ROUTE | EVENT_ROUTE},
-		{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l0, 1,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l1, 2,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l2, 3,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l3, 4,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l0, 1,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l1, 2,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l2, 3,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l3, 4,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l0, 2,
-				fixup_counter_inc, 0, ANY_ROUTE},
-		{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l1, 3,
-				fixup_counter_inc, 0, ANY_ROUTE},
-		{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l2, 4,
-				fixup_counter_inc, 0, ANY_ROUTE},
-		{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l3, 5,
-				fixup_counter_inc, 0, ANY_ROUTE},
-		{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l0, 2,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l1, 3,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l2, 4,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l3, 5,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l0, 2,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l1, 3,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l2, 4,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l3, 5,
-				fixup_metric_reset, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+static cmd_export_t cmds[] = {
+	{"prom_check_uri", (cmd_function)w_prom_check_uri, 0, 0, 0, REQUEST_ROUTE | EVENT_ROUTE},
+	{"prom_dispatch", (cmd_function)w_prom_dispatch, 0, 0, 0, REQUEST_ROUTE | EVENT_ROUTE},
+	{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l0, 1, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l1, 2, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l2, 3, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_counter_reset", (cmd_function)w_prom_counter_reset_l3, 4, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l0, 1, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l1, 2, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l2, 3, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_gauge_reset", (cmd_function)w_prom_gauge_reset_l3, 4, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l0, 2, fixup_counter_inc, 0, ANY_ROUTE},
+	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l1, 3, fixup_counter_inc, 0, ANY_ROUTE},
+	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l2, 4, fixup_counter_inc, 0, ANY_ROUTE},
+	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l3, 5, fixup_counter_inc, 0, ANY_ROUTE},
+	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l0, 2, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l1, 3, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l2, 4, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l3, 5, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l0, 2, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l1, 3, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l2, 4, fixup_metric_reset, 0, ANY_ROUTE},
+	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l3, 5, fixup_metric_reset, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{"xhttp_prom_buf_size", PARAM_INT, &buf_size},
-		{"xhttp_prom_stats", PARAM_STR, &xhttp_prom_stats},
-		{"xhttp_prom_beginning", PARAM_STR, &xhttp_prom_beginning},
-		{"prom_counter", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)prom_counter_param},
-		{"prom_gauge", PARAM_STRING | PARAM_USE_FUNC, (void *)prom_gauge_param},
-		{"prom_histogram", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)prom_histogram_param},
-		{"xhttp_prom_timeout", PARAM_INT, &timeout_minutes},
-		{"xhttp_prom_uptime_stat", PARAM_INT, &uptime_stat_enabled},
-		{"xhttp_prom_pkg_stats", PARAM_INT, &pkgmem_stats_enabled}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"xhttp_prom_buf_size", PARAM_INT, &buf_size},
+	{"xhttp_prom_stats", PARAM_STR, &xhttp_prom_stats},
+	{"xhttp_prom_beginning", PARAM_STR, &xhttp_prom_beginning},
+	{"prom_counter", PARAM_STRING | PARAM_USE_FUNC, (void *)prom_counter_param},
+	{"prom_gauge", PARAM_STRING | PARAM_USE_FUNC, (void *)prom_gauge_param},
+	{"prom_histogram", PARAM_STRING | PARAM_USE_FUNC, (void *)prom_histogram_param},
+	{"xhttp_prom_timeout", PARAM_INT, &timeout_minutes},
+	{"xhttp_prom_uptime_stat", PARAM_INT, &uptime_stat_enabled},
+	{"xhttp_prom_pkg_stats", PARAM_INT, &pkgmem_stats_enabled},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"xhttp_prom", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds, params, 0,			   /* exported RPC methods */
-		0,							   /* exported pseudo-variables */
-		0,							   /* response function */
-		mod_init,					   /* module initialization function */
-		child_init,					   /* per child init function */
-		mod_destroy					   /* destroy function */
+	"xhttp_prom",    /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pv exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
+/* clang-format on */
 
 /**
  * @brief Implementation of prom_fault function required by the management API.
