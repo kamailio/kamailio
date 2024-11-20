@@ -71,9 +71,11 @@ static int mod_init(void);
 
 /*! Header field fixup */
 static int hf_fixup(void **param, int param_no);
+static int hf_fixup_free(void **param, int param_no);
 
 /*! get user group ID fixup */
 static int get_gid_fixup(void **param, int param_no);
+static int get_gid_fixup_free(void **param, int param_no);
 
 
 #define TABLE "grp"
@@ -106,47 +108,49 @@ db_func_t group_dbf;
 db1_con_t *group_dbh = 0;
 
 
+/* clang-format off */
 /*!
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"is_user_in", (cmd_function)is_user_in, 2, hf_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
-		{"get_user_group", (cmd_function)get_user_group, 2, get_gid_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"is_user_in", (cmd_function)is_user_in, 2, hf_fixup, hf_fixup_free,
+			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+	{"get_user_group", (cmd_function)get_user_group, 2, get_gid_fixup, get_gid_fixup_free,
+			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+	{0, 0, 0, 0, 0, 0}};
 
 
 /*!
  * Exported parameters
  */
 static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
-		{"table", PARAM_STR, &table}, {"user_column", PARAM_STR, &user_column},
-		{"domain_column", PARAM_STR, &domain_column},
-		{"group_column", PARAM_STR, &group_column},
-		{"use_domain", PARAM_INT, &use_domain},
-		{"re_table", PARAM_STR, &re_table},
-		{"re_exp_column", PARAM_STR, &re_exp_column},
-		{"re_gid_column", PARAM_STR, &re_gid_column},
-		{"multiple_gid", PARAM_INT, &multiple_gid}, {0, 0, 0}};
+	{"table", PARAM_STR, &table}, {"user_column", PARAM_STR, &user_column},
+	{"domain_column", PARAM_STR, &domain_column},
+	{"group_column", PARAM_STR, &group_column},
+	{"use_domain", PARAM_INT, &use_domain},
+	{"re_table", PARAM_STR, &re_table},
+	{"re_exp_column", PARAM_STR, &re_exp_column},
+	{"re_gid_column", PARAM_STR, &re_gid_column},
+	{"multiple_gid", PARAM_INT, &multiple_gid}, {0, 0, 0}};
 
 
 /*!
  * Module interface
  */
 struct module_exports exports = {
-		"group",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* RPC method exports */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per-child init function */
-		destroy			 /* module destroy function */
+	"group",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* RPC method exports */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* per-child init function */
+	destroy			 /* module destroy function */
 };
 
+/* clang-format on */
 
 static int child_init(int rank)
 {
@@ -281,6 +285,14 @@ static int hf_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int hf_fixup_free(void **param, int param_no)
+{
+	if(param_no == 2) {
+		pkg_free(*param);
+	}
+	return 0;
+}
+
 
 /*!
  * \brief Group ID fixup
@@ -313,6 +325,15 @@ static int get_gid_fixup(void **param, int param_no)
 		}
 
 		*param = sp;
+	}
+
+	return 0;
+}
+
+static int get_gid_fixup_free(void **param, int param_no)
+{
+	if(param_no == 2) {
+		pv_spec_free(*param);
 	}
 
 	return 0;
