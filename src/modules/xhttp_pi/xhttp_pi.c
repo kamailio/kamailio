@@ -87,31 +87,34 @@ str filename = STR_NULL;
 int buf_size = 0;
 char error_buf[ERROR_REASON_BUF_LEN];
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"dispatch_xhttp_pi", (cmd_function)xhttp_pi_dispatch, 0, 0, 0,
-				REQUEST_ROUTE | EVENT_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"dispatch_xhttp_pi", (cmd_function)xhttp_pi_dispatch, 0, 0, 0, REQUEST_ROUTE | EVENT_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{"xhttp_pi_root", PARAM_STR, &xhttp_pi_root},
-		{"xhttp_pi_buf_size", PARAM_INT, &buf_size},
-		{"framework", PARAM_STR, &filename}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"xhttp_pi_root", PARAM_STR, &xhttp_pi_root},
+	{"xhttp_pi_buf_size", PARAM_INT, &buf_size},
+	{"framework", PARAM_STR, &filename}, {0, 0, 0}
+};
 
 static rpc_export_t rpc_methods[];
 
 /** module exports */
 struct module_exports exports = {
-		"xhttp_pi",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pv exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		destroy			 /* module destroy function */
+	"xhttp_pi",      /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pv exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	destroy      /* module destroy function */
 };
-
+/* clang-format on */
 
 /** Implementation of pi_fault function required by the management API.
  *
