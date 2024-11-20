@@ -96,46 +96,47 @@ static domain_get_did_t dm_get_did = NULL;
 /* default did value */
 str default_did = STR_STATIC_INIT("_default");
 
+/* clang-format off */
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] = {{"lookup_user", lookup_user, 1, header_fixup, 0,
-									  REQUEST_ROUTE | FAILURE_ROUTE},
-		{"lookup_user", lookup_user_2, 2, lookup_user_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"check_uri", check_uri, 1, header_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+static cmd_export_t cmds[] = {
+	{"lookup_user", lookup_user, 1, header_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup_user", lookup_user_2, 2, lookup_user_fixup, 0,	REQUEST_ROUTE | FAILURE_ROUTE},
+	{"check_uri", check_uri, 1, header_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
-		{"uri_table", PARAM_STR, &uri_table},
-		{"uid_column", PARAM_STR, &uid_col},
-		{"did_column", PARAM_STR, &did_col},
-		{"username_column", PARAM_STR, &username_col},
-		{"flags_column", PARAM_STR, &flags_col},
-		{"scheme_column", PARAM_STR, &scheme_col}, {0, 0, 0}};
-
+static param_export_t params[] = {
+	{"db_url", PARAM_STR, &db_url},
+	{"uri_table", PARAM_STR, &uri_table},
+	{"uid_column", PARAM_STR, &uid_col},
+	{"did_column", PARAM_STR, &did_col},
+	{"username_column", PARAM_STR, &username_col},
+	{"flags_column", PARAM_STR, &flags_col},
+	{"scheme_column", PARAM_STR, &scheme_col},
+	{0, 0, 0}
+};
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-		"uid_uri_db",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported RPC methods */
-		0,				 /* exported pseudo-variables */
-		0,				 /* module init function */
-		0,				 /* response handling function */
-		child_init,		 /* child init function */
-		destroy			 /* destroy function */
+	"uid_uri_db",    /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported RPC methods */
+	0,               /* exported pseudo-variables */
+	0,               /* module init function */
+	0,               /* response handling function */
+	child_init,      /* child init function */
+	destroy          /* destroy function */
 };
-
+/* clang-format on */
 
 /*
  * Module initialization function callee in each child separately
