@@ -87,6 +87,7 @@ static struct dtrie_node_t *gnode = NULL;
 
 /* ---- fixup functions: */
 static int check_blocklist_fixup(void **param, int param_no);
+static int check_blocklist_fixup_free(void **arg, int arg_no);
 static int check_user_blocklist_fixup(void **param, int param_no);
 static int check_globalblocklist_fixup(void **param, int param_no);
 
@@ -115,21 +116,21 @@ static void mod_destroy(void);
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"check_user_blocklist", (cmd_function)check_user_blocklist2, 2,
-			check_user_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+			check_user_blocklist_fixup, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"check_user_allowlist", (cmd_function)check_user_allowlist2, 2,
-			check_user_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+			check_user_blocklist_fixup, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"check_user_blocklist", (cmd_function)check_user_blocklist3, 3,
-			check_user_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+			check_user_blocklist_fixup, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"check_user_allowlist", (cmd_function)check_user_allowlist3, 3,
-			check_user_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+			check_user_blocklist_fixup, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"check_user_blocklist", (cmd_function)check_user_blocklist, 4,
-			check_user_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+			check_user_blocklist_fixup, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"check_user_allowlist", (cmd_function)check_user_allowlist, 4,
-			check_user_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+			check_user_blocklist_fixup, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"check_blocklist", (cmd_function)check_blocklist, 1,
-			check_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+			check_blocklist_fixup, check_blocklist_fixup_free, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"check_allowlist", (cmd_function)check_allowlist, 1,
-			check_blocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+			check_blocklist_fixup, check_blocklist_fixup_free, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"check_blocklist", (cmd_function)check_globalblocklist, 0,
 			check_globalblocklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
@@ -611,6 +612,12 @@ static int check_blocklist_fixup(void **arg, int arg_no)
 	new_arg->dtrie_root = node;
 	*arg = (void *)new_arg;
 
+	return 0;
+}
+
+static int check_blocklist_fixup_free(void **arg, int arg_no)
+{
+	pkg_free(*arg);
 	return 0;
 }
 
