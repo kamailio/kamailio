@@ -408,41 +408,44 @@ static regex_t xmlrpc_url_skip_regexp;
 
 static str xmlrpc_event_callback = STR_NULL;
 
+/* clang-format off */
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"dispatch_rpc", w_dispatch_rpc, 0, 0, 0, REQUEST_ROUTE},
-		{"xmlrpc_reply", w_xmlrpc_reply, 2, fixup_xmlrpc_reply, 0,
-				REQUEST_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+	{"dispatch_rpc", w_dispatch_rpc, 0, 0, 0, REQUEST_ROUTE},
+	{"xmlrpc_reply", w_xmlrpc_reply, 2, fixup_xmlrpc_reply, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {{"route", PARAM_STRING, &xmlrpc_route},
-		{"autoconversion", PARAM_INT, &autoconvert},
-		{"escape_cr", PARAM_INT, &escape_cr},
-		{"double_lf_to_crlf", PARAM_INT, &lflf2crlf},
-		{"mode", PARAM_INT, &xmlrpc_mode},
-		{"url_match", PARAM_STRING, &xmlrpc_url_match},
-		{"url_skip", PARAM_STRING, &xmlrpc_url_skip},
-		{"event_callback", PARAM_STR, &xmlrpc_event_callback}, {0, 0, 0}};
-
+static param_export_t params[] = {
+	{"route", PARAM_STRING, &xmlrpc_route},
+	{"autoconversion", PARAM_INT, &autoconvert},
+	{"escape_cr", PARAM_INT, &escape_cr},
+	{"double_lf_to_crlf", PARAM_INT, &lflf2crlf},
+	{"mode", PARAM_INT, &xmlrpc_mode},
+	{"url_match", PARAM_STRING, &xmlrpc_url_match},
+	{"url_skip", PARAM_STRING, &xmlrpc_url_skip},
+	{"event_callback", PARAM_STR, &xmlrpc_event_callback},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"xmlrpc",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pv exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		0				 /* module destroy function */
+	"xmlrpc",        /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pv exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
+/* clang-format on */
 
 /* XML-RPC reply helper functions */
 
