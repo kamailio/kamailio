@@ -98,51 +98,53 @@ str *credentials;  /* Parsed list of credentials to load */
 int credentials_n; /* Number of credentials in the list */
 
 
+/* clang-format off */
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] = {{"www_authenticate", www_authenticate, 2,
-									  authdb_fixup, 0, REQUEST_ROUTE},
-		{"www_authorize", www_authenticate, 2, authdb_fixup, 0, REQUEST_ROUTE},
-		{"proxy_authenticate", proxy_authenticate, 2, authdb_fixup, 0,
-				REQUEST_ROUTE},
-		{"proxy_authorize", proxy_authenticate, 2, authdb_fixup, 0,
-				REQUEST_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+static cmd_export_t cmds[] = {
+	{"www_authenticate", www_authenticate, 2, authdb_fixup, 0, REQUEST_ROUTE},
+	{"www_authorize", www_authenticate, 2, authdb_fixup, 0, REQUEST_ROUTE},
+	{"proxy_authenticate", proxy_authenticate, 2, authdb_fixup, 0, REQUEST_ROUTE},
+	{"proxy_authorize", proxy_authenticate, 2, authdb_fixup, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {{"db_url", PARAM_STRING, &db_url},
-		{"username_column", PARAM_STR, &username_column},
-		{"did_column", PARAM_STR, &did_column},
-		{"realm_column", PARAM_STR, &realm_column},
-		{"password_column", PARAM_STR, &pass_column},
-		{"password_column_2", PARAM_STR, &pass_column_2},
-		{"plain_password_column", PARAM_STR, &plain_password_column},
-		{"flags_column", PARAM_STR, &flags_column},
-		{"calculate_ha1", PARAM_INT, &calc_ha1},
-		{"load_credentials", PARAM_STR, &credentials_list},
-		{"use_did", PARAM_INT, &use_did},
-		{"check_all_ha1", PARAM_INT, &check_all}, {0, 0, 0}};
-
+static param_export_t params[] = {
+	{"db_url", PARAM_STRING, &db_url},
+	{"username_column", PARAM_STR, &username_column},
+	{"did_column", PARAM_STR, &did_column},
+	{"realm_column", PARAM_STR, &realm_column},
+	{"password_column", PARAM_STR, &pass_column},
+	{"password_column_2", PARAM_STR, &pass_column_2},
+	{"plain_password_column", PARAM_STR, &plain_password_column},
+	{"flags_column", PARAM_STR, &flags_column},
+	{"calculate_ha1", PARAM_INT, &calc_ha1},
+	{"load_credentials", PARAM_STR, &credentials_list},
+	{"use_did", PARAM_INT, &use_did},
+	{"check_all_ha1", PARAM_INT, &check_all},
+	{0, 0, 0}
+};
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-		"uid_auth_db",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported RPC methods */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response function */
-		mod_init,		 /* module init function */
-		child_init,		 /* child init function */
-		destroy			 /* destroy function */
+	"uid_auth_db",   /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,						 /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported RPC methods */
+	0,               /* exported pseudo-variables */
+	0,               /* response function */
+	mod_init,        /* module init function */
+	child_init,      /* child init function */
+	destroy          /* destroy function */
 };
+/* clang-format on */
 
 static authdb_table_info_t *registered_tables = NULL;
 
