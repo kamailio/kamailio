@@ -73,8 +73,8 @@ static int w_check_uri1(struct sip_msg *_m, char *_uri, char *_s);
 static cmd_export_t cmds[] = {
 	{"check_to", (cmd_function)check_to, 0, 0, 0, REQUEST_ROUTE},
 	{"check_from", (cmd_function)check_from, 0, 0, 0, REQUEST_ROUTE},
-	{"check_uri", (cmd_function)w_check_uri1, 1, fixup_spve_null, 0, REQUEST_ROUTE},
-	{"check_uri", (cmd_function)check_uri, 3, fixup_spve_all, 0, REQUEST_ROUTE},
+	{"check_uri", (cmd_function)w_check_uri1, 1, fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
+	{"check_uri", (cmd_function)check_uri, 3, fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE},
 	{"does_uri_exist", (cmd_function)does_uri_exist, 0, 0, fixup_exist, REQUEST_ROUTE | LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
