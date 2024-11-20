@@ -81,28 +81,34 @@ db_func_t xcap_dbf;
 
 void query_xcap_update(unsigned int ticks, void *param);
 
-static param_export_t params[] = {{"db_url", PARAM_STR, &xcap_db_url},
-		{"xcap_table", PARAM_STR, &xcap_db_table},
-		{"periodical_query", PARAM_INT, &periodical_query},
-		{"query_period", PARAM_INT, &query_period}, {0, 0, 0}};
-
+/* clang-format off */
+static param_export_t params[] = {
+	{"db_url", PARAM_STR, &xcap_db_url},
+	{"xcap_table", PARAM_STR, &xcap_db_table},
+	{"periodical_query", PARAM_INT, &periodical_query},
+	{"query_period", PARAM_INT, &query_period},
+	{0, 0, 0}
+};
 
 static cmd_export_t cmds[] = {
-		{"bind_xcap", (cmd_function)bind_xcap, 1, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
+	{"bind_xcap", (cmd_function)bind_xcap, 1, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /** module exports */
 struct module_exports exports = {
-		"xcap_client",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported rpc functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* child init function */
-		destroy			 /* module destroy function */
+	"xcap_client",   /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* child init function */
+	destroy          /* module destroy function */
 };
+/* clang-format on */
 
 /**
  * init module function
