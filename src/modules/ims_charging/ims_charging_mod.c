@@ -107,6 +107,8 @@ static int w_ro_set_session_id_avp(struct sip_msg *msg, char *str1, char *str2);
 
 static int ro_fixup(void **param, int param_no);
 static int ro_fixup_stop(void **param, int param_no);
+static int ro_fixup_free(void **param, int param_no);
+static int ro_fixup_stop_free(void **param, int param_no);
 
 static int ki_ro_set_session_id_avp(sip_msg_t *msg);
 static int ki_ro_ccr_stop(
@@ -115,78 +117,79 @@ static int ki_ro_ccr(sip_msg_t *msg, str *s_route_name, str *s_direction,
 		int reservation_units, str *s_incoming_trunk_id,
 		str *s_outgoing_trunk_id);
 
-
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"Ro_CCR", (cmd_function)w_ro_ccr, 5, ro_fixup, 0, REQUEST_ROUTE},
-		{"Ro_CCR_Stop", (cmd_function)w_ro_ccr_stop, 3, ro_fixup_stop, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-		{"Ro_set_session_id_avp", (cmd_function)w_ro_set_session_id_avp, 0, 0,
-				0, REQUEST_ROUTE | ONREPLY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"Ro_CCR", (cmd_function)w_ro_ccr, 5, ro_fixup, ro_fixup_free, REQUEST_ROUTE},
+	{"Ro_CCR_Stop", (cmd_function)w_ro_ccr_stop, 3, ro_fixup_stop, ro_fixup_stop_free, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+	{"Ro_set_session_id_avp", (cmd_function)w_ro_set_session_id_avp, 0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"hash_size", PARAM_INT, &ro_session_hash_size},
-		{"interim_update_credits", PARAM_INT, &interim_request_credits},
-		{"timer_buffer", PARAM_INT, &ro_timer_buffer},
-		{"ro_forced_peer", PARAM_STR, &ro_forced_peer},
-		{"ro_auth_expiry", PARAM_INT, &ro_auth_expiry},
-		{"cdp_event_latency", PARAM_INT,
-				&cdp_event_latency}, /*flag: report slow processing of CDP
-                                                                                        callback events or not */
-		{"cdp_event_threshold", PARAM_INT,
-				&cdp_event_threshold}, /*time in ms above which we should
-                                                                                        report slow processing of CDP callback event*/
-		{"cdp_event_latency_log", PARAM_INT,
-				&cdp_event_latency_loglevel}, /*log-level to use to report
-                                                                                        slow processing of CDP callback event*/
-		{"single_ro_session_per_dialog", PARAM_INT,
-				&single_ro_session_per_dialog},
-		{"origin_host", PARAM_STR, &cfg.origin_host},
-		{"origin_realm", PARAM_STR, &cfg.origin_realm},
-		{"destination_realm", PARAM_STR, &cfg.destination_realm},
-		{"destination_host", PARAM_STR, &cfg.destination_host},
-		{"service_context_id_root", PARAM_STRING,
-				&ro_service_context_id_root_s},
-		{"service_context_id_ext", PARAM_STRING, &ro_service_context_id_ext_s},
-		{"service_context_id_mnc", PARAM_STRING, &ro_service_context_id_mnc_s},
-		{"service_context_id_mcc", PARAM_STRING, &ro_service_context_id_mcc_s},
-		{"service_context_id_release", PARAM_STRING,
-				&ro_service_context_id_release_s},
-		{"voice_service_identifier", PARAM_INT,
-				&voice_service_identifier}, /*service id for voice*/
-		{"voice_rating_group", PARAM_INT,
-				&voice_rating_group}, /*rating group for voice*/
-		{"video_service_identifier", PARAM_INT,
-				&video_service_identifier}, /*service id for voice*/
-		{"video_rating_group", PARAM_INT,
-				&video_rating_group}, /*rating group for voice*/
-		{"db_mode", PARAM_INT, &ro_db_mode_param},
-		{"db_url", PARAM_STR, &db_url},
-		{"db_update_period", PARAM_INT, &db_update_period},
-		{"vendor_specific_chargeinfo", PARAM_INT,
-				&vendor_specific_chargeinfo}, /* VSI for extra charing info in Ro */
-		{"vendor_specific_id", PARAM_INT,
-				&vendor_specific_id}, /* VSI for extra charing info in Ro */
-		{"custom_user_avp", PARAM_STR, &custom_user_spec},
-		{"app_provided_party_avp", PARAM_STR, &app_provided_party_spec},
-		{"strip_plus_from_e164", PARAM_INT,
-				&cfg.strip_plus_from_e164}, /*wheter to strip or keep + sign from E164 numbers (tel: uris), according to diameter spec*/
-		{"use_pani_from_term_invite", PARAM_INT,
-				&cfg.use_pani_from_term_invite}, /*wheter to read and use P-Access-Network-Info header from INVITE on term scenario*/
-		{"node_func", PARAM_INT, &cfg.node_func}, /* node functionality */
-		{0, 0, 0}};
+	{"hash_size", PARAM_INT, &ro_session_hash_size},
+	{"interim_update_credits", PARAM_INT, &interim_request_credits},
+	{"timer_buffer", PARAM_INT, &ro_timer_buffer},
+	{"ro_forced_peer", PARAM_STR, &ro_forced_peer},
+	{"ro_auth_expiry", PARAM_INT, &ro_auth_expiry},
+	{"cdp_event_latency", PARAM_INT,
+			&cdp_event_latency}, /*flag: report slow processing of CDP
+                                                                                    callback events or not */
+	{"cdp_event_threshold", PARAM_INT,
+			&cdp_event_threshold}, /*time in ms above which we should
+                                                                                    report slow processing of CDP callback event*/
+	{"cdp_event_latency_log", PARAM_INT,
+			&cdp_event_latency_loglevel}, /*log-level to use to report
+                                                                                    slow processing of CDP callback event*/
+	{"single_ro_session_per_dialog", PARAM_INT,
+			&single_ro_session_per_dialog},
+	{"origin_host", PARAM_STR, &cfg.origin_host},
+	{"origin_realm", PARAM_STR, &cfg.origin_realm},
+	{"destination_realm", PARAM_STR, &cfg.destination_realm},
+	{"destination_host", PARAM_STR, &cfg.destination_host},
+	{"service_context_id_root", PARAM_STRING,
+			&ro_service_context_id_root_s},
+	{"service_context_id_ext", PARAM_STRING, &ro_service_context_id_ext_s},
+	{"service_context_id_mnc", PARAM_STRING, &ro_service_context_id_mnc_s},
+	{"service_context_id_mcc", PARAM_STRING, &ro_service_context_id_mcc_s},
+	{"service_context_id_release", PARAM_STRING,
+			&ro_service_context_id_release_s},
+	{"voice_service_identifier", PARAM_INT,
+			&voice_service_identifier}, /*service id for voice*/
+	{"voice_rating_group", PARAM_INT,
+			&voice_rating_group}, /*rating group for voice*/
+	{"video_service_identifier", PARAM_INT,
+			&video_service_identifier}, /*service id for voice*/
+	{"video_rating_group", PARAM_INT,
+			&video_rating_group}, /*rating group for voice*/
+	{"db_mode", PARAM_INT, &ro_db_mode_param},
+	{"db_url", PARAM_STR, &db_url},
+	{"db_update_period", PARAM_INT, &db_update_period},
+	{"vendor_specific_chargeinfo", PARAM_INT,
+			&vendor_specific_chargeinfo}, /* VSI for extra charing info in Ro */
+	{"vendor_specific_id", PARAM_INT,
+			&vendor_specific_id}, /* VSI for extra charing info in Ro */
+	{"custom_user_avp", PARAM_STR, &custom_user_spec},
+	{"app_provided_party_avp", PARAM_STR, &app_provided_party_spec},
+	{"strip_plus_from_e164", PARAM_INT,
+			&cfg.strip_plus_from_e164}, /*wheter to strip or keep + sign from E164 numbers (tel: uris), according to diameter spec*/
+	{"use_pani_from_term_invite", PARAM_INT,
+			&cfg.use_pani_from_term_invite}, /*wheter to read and use P-Access-Network-Info header from INVITE on term scenario*/
+	{"node_func", PARAM_INT, &cfg.node_func}, /* node functionality */
+	{0, 0, 0}
+};
 
 /** module exports */
 struct module_exports exports = {
-		MOD_NAME, DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,					   /* Exported functions */
-		params,					   /* Exported params */
-		0,						   /* exported RPC methods */
-		0,						   /* exported pseudo-variables */
-		0, mod_init,			   /* module initialization function */
-		mod_child_init,			   /* per-child init function */
-		mod_destroy				   /* module destroy function */
+	MOD_NAME, DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,					   /* Exported functions */
+	params,					   /* Exported params */
+	0,						   /* exported RPC methods */
+	0,						   /* exported pseudo-variables */
+	0, mod_init,			   /* module initialization function */
+	mod_child_init,			   /* per-child init function */
+	mod_destroy				   /* module destroy function */
 };
+/* clang-format on */
 
 int fix_parameters()
 {
@@ -778,6 +781,15 @@ static int ro_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int ro_fixup_free(void **param, int param_no)
+{
+	if((param_no > 0 && param_no <= 2) || (param_no >= 4 && param_no <= 6)) {
+		fixup_free_fparam_all(param, 1);
+	}
+
+	return 0;
+}
+
 static int ki_ro_set_session_id_avp(sip_msg_t *msg)
 {
 	struct ro_session *ro_session = 0;
@@ -811,6 +823,14 @@ static int ro_fixup_stop(void **param, int param_no)
 {
 	if(param_no == 2 || param_no == 3) {
 		return fixup_var_pve_12(param, param_no);
+	}
+	return 0;
+}
+
+static int ro_fixup_stop_free(void **param, int param_no)
+{
+	if(param_no == 2 || param_no == 3) {
+		fixup_free_fparam_all(param, 1);
 	}
 	return 0;
 }
