@@ -160,43 +160,48 @@ param_t *_xmpp_gwmap_list = NULL;
 #define DEFAULT_COMPONENT_PORT 5347
 #define DEFAULT_SERVER_PORT 5269
 
+/* clang-format off */
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"xmpp_send_message", (cmd_function)cmd_send_message, 0, 0, 0,
-				REQUEST_ROUTE},
-		{"bind_xmpp", (cmd_function)bind_xmpp, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
+	{"xmpp_send_message", (cmd_function)cmd_send_message, 0, 0, 0, REQUEST_ROUTE},
+	{"bind_xmpp", (cmd_function)bind_xmpp, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {{"backend", PARAM_STRING, &backend},
-		{"domain_separator", PARAM_STRING, &domain_sep_str},
-		{"gateway_domain", PARAM_STRING, &gateway_domain},
-		{"xmpp_domain", PARAM_STRING, &xmpp_domain},
-		{"xmpp_host", PARAM_STRING, &xmpp_host},
-		{"xmpp_port", PARAM_INT, &xmpp_port},
-		{"xmpp_password", PARAM_STRING, &xmpp_password},
-		{"outbound_proxy", PARAM_STR, &outbound_proxy},
-		{"gwmap", PARAM_STRING | PARAM_USE_FUNC, (void *)xmpp_gwmap_param},
-		{0, 0, 0}};
+static param_export_t params[] = {
+	{"backend", PARAM_STRING, &backend},
+	{"domain_separator", PARAM_STRING, &domain_sep_str},
+	{"gateway_domain", PARAM_STRING, &gateway_domain},
+	{"xmpp_domain", PARAM_STRING, &xmpp_domain},
+	{"xmpp_host", PARAM_STRING, &xmpp_host},
+	{"xmpp_port", PARAM_INT, &xmpp_port},
+	{"xmpp_password", PARAM_STRING, &xmpp_password},
+	{"outbound_proxy", PARAM_STR, &outbound_proxy},
+	{"gwmap", PARAM_STRING | PARAM_USE_FUNC, (void *)xmpp_gwmap_param},
+	{0, 0, 0}
+};
 
 /*
  * Module description
  */
 struct module_exports exports = {
-		"xmpp",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported rpc functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* child init function */
-		0				 /* module destroy function */
+	"xmpp",			 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* exported rpc functions */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	child_init,		 /* child init function */
+	0				 /* module destroy function */
 };
+/* clang-format on */
 
 /*
  * initialize module
