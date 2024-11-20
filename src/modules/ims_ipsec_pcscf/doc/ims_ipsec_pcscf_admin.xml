@@ -116,6 +116,23 @@ modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
     </section>
 
     <section>
+      <title><varname>ipsec_listen_name</varname> (string)</title>
+
+	  <para>Set a common prefix to build listen socket names.
+	  Default value: not set.</para>
+
+      <example>
+        <title><varname>ipsec_listen_name</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_listen_name", "ims")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
       <title><varname>ipsec_listen_agname</varname> (string)</title>
 
       <para>Set async (action) workers group name for udp sockets for
