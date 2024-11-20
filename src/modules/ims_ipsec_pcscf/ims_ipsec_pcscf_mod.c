@@ -40,6 +40,7 @@ str ipsec_listen_addr = STR_NULL;
 str ipsec_listen_addr6 = STR_NULL;
 int ipsec_client_port = 5062;
 int ipsec_server_port = 5063;
+str ipsec_listen_agname = STR_NULL;
 int ipsec_reuse_server_port = 1;
 int ipsec_max_connections = 2;
 int spi_id_start = 100;
@@ -105,6 +106,7 @@ static param_export_t params[] = {
 	{"ipsec_listen_addr6",  	PARAM_STR, &ipsec_listen_addr6		},
 	{"ipsec_client_port",		PARAM_INT, &ipsec_client_port		},
 	{"ipsec_server_port",		PARAM_INT, &ipsec_server_port		},
+	{"ipsec_listen_agname",		PARAM_STR, &ipsec_listen_agname		},
 	{"ipsec_reuse_server_port",	PARAM_INT, &ipsec_reuse_server_port	},
 	{"ipsec_max_connections",	PARAM_INT, &ipsec_max_connections	},
 	{"ipsec_spi_id_start",		PARAM_INT, &spi_id_start			},
@@ -232,6 +234,7 @@ static int ipsec_add_listen_ifaces()
 		// add listen interfaces for IPv4
 		memset(&sa, 0, sizeof(socket_attrs_t));
 		sa.bindaddr = ipsec_listen_addr;
+		sa.agname = ipsec_listen_agname;
 		sa.bindproto = PROTO_TCP;
 		sa.bindport = ipsec_client_port;
 		sa.bindportend = ipsec_client_port + ipsec_max_connections - 1;
@@ -264,6 +267,7 @@ static int ipsec_add_listen_ifaces()
 		// add listen interfaces for IPv6
 		memset(&sa, 0, sizeof(socket_attrs_t));
 		sa.bindaddr = ipsec_listen_addr6;
+		sa.agname = ipsec_listen_agname;
 		sa.bindproto = PROTO_TCP;
 		sa.bindport = ipsec_client_port;
 		sa.bindportend = ipsec_client_port + ipsec_max_connections - 1;
