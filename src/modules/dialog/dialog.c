@@ -856,14 +856,6 @@ static void mod_destroy(void)
 		dialog_update_db(0, 0);
 		destroy_dlg_db();
 	}
-	dlg_bridge_destroy_hdrs();
-	/* no DB interaction from now on */
-	dlg_db_mode = DB_MODE_NONE;
-	destroy_dlg_table();
-	destroy_dlg_timer();
-	destroy_dlg_callbacks(DLGCB_CREATED | DLGCB_LOADED);
-	destroy_dlg_handlers();
-	destroy_dlg_profiles();
 }
 
 
