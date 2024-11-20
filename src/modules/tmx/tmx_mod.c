@@ -118,100 +118,99 @@ unsigned long tmx_stats_rld_rcv_rpls(void);
 unsigned long tmx_stats_rld_loc_rpls(void);
 unsigned long tmx_stats_rld_tot_rpls(void);
 
+/* clang-format off */
 static stat_export_t mod_stats[] = {
-		{"UAS_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_uas_trans},
-		{"UAC_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_uac_trans},
-		{"2xx_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_trans_2xx},
-		{"3xx_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_trans_3xx},
-		{"4xx_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_trans_4xx},
-		{"5xx_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_trans_5xx},
-		{"6xx_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_trans_6xx},
-		{"inuse_transactions", STAT_IS_FUNC,
-				(stat_var **)tmx_stats_trans_inuse},
-		{"active_transactions", STAT_IS_FUNC,
-				(stat_var **)tmx_stats_trans_active},
-		{"rpl_received", STAT_IS_FUNC, (stat_var **)tmx_stats_rcv_rpls},
-		{"rpl_absorbed", STAT_IS_FUNC, (stat_var **)tmx_stats_abs_rpls},
-		{"rpl_generated", STAT_IS_FUNC, (stat_var **)tmx_stats_rld_loc_rpls},
-		{"rpl_relayed", STAT_IS_FUNC, (stat_var **)tmx_stats_rld_rcv_rpls},
-		{"rpl_sent", STAT_IS_FUNC, (stat_var **)tmx_stats_rld_tot_rpls},
-		{0, 0, 0}};
+	{"UAS_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_uas_trans},
+	{"UAC_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_uac_trans},
+	{"2xx_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_trans_2xx},
+	{"3xx_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_trans_3xx},
+	{"4xx_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_trans_4xx},
+	{"5xx_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_trans_5xx},
+	{"6xx_transactions", STAT_IS_FUNC, (stat_var **)tmx_stats_trans_6xx},
+	{"inuse_transactions", STAT_IS_FUNC,
+			(stat_var **)tmx_stats_trans_inuse},
+	{"active_transactions", STAT_IS_FUNC,
+			(stat_var **)tmx_stats_trans_active},
+	{"rpl_received", STAT_IS_FUNC, (stat_var **)tmx_stats_rcv_rpls},
+	{"rpl_absorbed", STAT_IS_FUNC, (stat_var **)tmx_stats_abs_rpls},
+	{"rpl_generated", STAT_IS_FUNC, (stat_var **)tmx_stats_rld_loc_rpls},
+	{"rpl_relayed", STAT_IS_FUNC, (stat_var **)tmx_stats_rld_rcv_rpls},
+	{"rpl_sent", STAT_IS_FUNC, (stat_var **)tmx_stats_rld_tot_rpls},
+	{0, 0, 0}
+};
 #endif
 
 /**
  * pseudo-variables exported by TM module
  */
 static pv_export_t mod_pvs[] = {
-		{{"T_branch_idx", sizeof("T_branch_idx") - 1}, PVT_OTHER,
-				pv_get_tm_branch_idx, 0, 0, 0, 0, 0},
-		{{"T_reply_ruid", sizeof("T_reply_ruid") - 1}, PVT_OTHER,
-				pv_get_tm_reply_ruid, 0, 0, 0, 0, 0},
-		{{"T_reply_code", sizeof("T_reply_code") - 1}, PVT_OTHER,
-				pv_get_tm_reply_code, 0, 0, 0, 0, 0},
-		{{"T_reply_reason", sizeof("T_reply_reason") - 1}, PVT_OTHER,
-				pv_get_tm_reply_reason, 0, 0, 0, 0, 0},
-		{{"T_reply_last", sizeof("T_reply_last") - 1}, PVT_OTHER,
-				pv_get_tm_reply_last_received, 0, 0, 0, 0, 0},
-		{{"T_inv", sizeof("T_inv") - 1}, PVT_OTHER, pv_get_t_var_inv, 0,
-				pv_parse_t_var_name, 0, 0, 0},
-		{{"T_req", sizeof("T_req") - 1}, PVT_OTHER, pv_get_t_var_req, 0,
-				pv_parse_t_var_name, 0, 0, 0},
-		{{"T_rpl", sizeof("T_rpl") - 1}, PVT_OTHER, pv_get_t_var_rpl, 0,
-				pv_parse_t_var_name, 0, 0, 0},
-		{{"T", sizeof("T") - 1}, PVT_OTHER, pv_get_t, 0, pv_parse_t_name, 0, 0,
-				0},
-		{{"T_branch", sizeof("T_branch") - 1}, PVT_OTHER, pv_get_t_branch, 0,
-				pv_parse_t_name, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"T_branch_idx", sizeof("T_branch_idx") - 1}, PVT_OTHER,
+			pv_get_tm_branch_idx, 0, 0, 0, 0, 0},
+	{{"T_reply_ruid", sizeof("T_reply_ruid") - 1}, PVT_OTHER,
+			pv_get_tm_reply_ruid, 0, 0, 0, 0, 0},
+	{{"T_reply_code", sizeof("T_reply_code") - 1}, PVT_OTHER,
+			pv_get_tm_reply_code, 0, 0, 0, 0, 0},
+	{{"T_reply_reason", sizeof("T_reply_reason") - 1}, PVT_OTHER,
+			pv_get_tm_reply_reason, 0, 0, 0, 0, 0},
+	{{"T_reply_last", sizeof("T_reply_last") - 1}, PVT_OTHER,
+			pv_get_tm_reply_last_received, 0, 0, 0, 0, 0},
+	{{"T_inv", sizeof("T_inv") - 1}, PVT_OTHER, pv_get_t_var_inv, 0,
+			pv_parse_t_var_name, 0, 0, 0},
+	{{"T_req", sizeof("T_req") - 1}, PVT_OTHER, pv_get_t_var_req, 0,
+			pv_parse_t_var_name, 0, 0, 0},
+	{{"T_rpl", sizeof("T_rpl") - 1}, PVT_OTHER, pv_get_t_var_rpl, 0,
+			pv_parse_t_var_name, 0, 0, 0},
+	{{"T", sizeof("T") - 1}, PVT_OTHER, pv_get_t, 0, pv_parse_t_name, 0, 0, 0},
+	{{"T_branch", sizeof("T_branch") - 1}, PVT_OTHER, pv_get_t_branch, 0,
+			pv_parse_t_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 static cmd_export_t cmds[] = {
-		{"t_cancel_branches", (cmd_function)t_cancel_branches, 1,
-				fixup_cancel_branches, 0, ONREPLY_ROUTE},
-		{"t_cancel_callid", (cmd_function)w_t_cancel_callid_3, 3,
-				fixup_cancel_callid, 0, ANY_ROUTE},
-		{"t_cancel_callid", (cmd_function)w_t_cancel_callid_4, 4,
-				fixup_cancel_callid, 0, ANY_ROUTE},
-		{"t_reply_callid", (cmd_function)t_reply_callid, 4, fixup_reply_callid,
-				0, ANY_ROUTE},
-		{"t_flush_flags", (cmd_function)t_flush_flags, 0, 0, 0, ANY_ROUTE},
-		{"t_flush_xflags", (cmd_function)t_flush_xflags, 0, 0, 0, ANY_ROUTE},
-		{"t_is_failure_route", (cmd_function)w_t_is_failure_route, 0, 0, 0,
-				ANY_ROUTE},
-		{"t_is_branch_route", (cmd_function)w_t_is_branch_route, 0, 0, 0,
-				ANY_ROUTE},
-		{"t_is_reply_route", (cmd_function)w_t_is_reply_route, 0, 0, 0,
-				ANY_ROUTE},
-		{"t_is_request_route", (cmd_function)w_t_is_request_route, 0, 0, 0,
-				ANY_ROUTE},
-		{"t_suspend", (cmd_function)w_t_suspend, 0, 0, 0, ANY_ROUTE},
-		{"t_continue", (cmd_function)w_t_continue, 3, fixup_t_continue, 0,
-				ANY_ROUTE},
-		{"t_reuse_branch", (cmd_function)w_t_reuse_branch, 0, 0, 0,
-				EVENT_ROUTE},
-		{"t_precheck_trans", (cmd_function)w_t_precheck_trans, 0, 0, 0,
-				REQUEST_ROUTE},
-		{"bind_tmx", (cmd_function)bind_tmx, 1, 0, 0, ANY_ROUTE},
-		{"t_drop", (cmd_function)w_t_drop0, 0, 0, 0, ANY_ROUTE},
-		{"t_drop", (cmd_function)w_t_drop1, 1, fixup_igp_null, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"t_cancel_branches", (cmd_function)t_cancel_branches, 1,
+			fixup_cancel_branches, 0, ONREPLY_ROUTE},
+	{"t_cancel_callid", (cmd_function)w_t_cancel_callid_3, 3,
+			fixup_cancel_callid, 0, ANY_ROUTE},
+	{"t_cancel_callid", (cmd_function)w_t_cancel_callid_4, 4,
+			fixup_cancel_callid, 0, ANY_ROUTE},
+	{"t_reply_callid", (cmd_function)t_reply_callid, 4,
+			fixup_reply_callid,	0, ANY_ROUTE},
+	{"t_flush_flags", (cmd_function)t_flush_flags, 0, 0, 0, ANY_ROUTE},
+	{"t_flush_xflags", (cmd_function)t_flush_xflags, 0, 0, 0, ANY_ROUTE},
+	{"t_is_failure_route", (cmd_function)w_t_is_failure_route, 0, 0, 0,	ANY_ROUTE},
+	{"t_is_branch_route", (cmd_function)w_t_is_branch_route, 0, 0, 0, ANY_ROUTE},
+	{"t_is_reply_route", (cmd_function)w_t_is_reply_route, 0, 0, 0, ANY_ROUTE},
+	{"t_is_request_route", (cmd_function)w_t_is_request_route, 0, 0, 0, ANY_ROUTE},
+	{"t_suspend", (cmd_function)w_t_suspend, 0, 0, 0, ANY_ROUTE},
+	{"t_continue", (cmd_function)w_t_continue, 3, fixup_t_continue, 0, ANY_ROUTE},
+	{"t_reuse_branch", (cmd_function)w_t_reuse_branch, 0, 0, 0, EVENT_ROUTE},
+	{"t_precheck_trans", (cmd_function)w_t_precheck_trans, 0, 0, 0, REQUEST_ROUTE},
+	{"bind_tmx", (cmd_function)bind_tmx, 1, 0, 0, ANY_ROUTE},
+	{"t_drop", (cmd_function)w_t_drop0, 0, 0, 0, ANY_ROUTE},
+	{"t_drop", (cmd_function)w_t_drop1, 1, fixup_igp_null, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"precheck_trans", PARAM_INT, &_tmx_precheck_trans}, {0, 0, 0}};
+	{"precheck_trans", PARAM_INT, &_tmx_precheck_trans},
+	{0, 0, 0}
+};
 
 
 /** module exports */
 struct module_exports exports = {
-		"tmx",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* pv exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		destroy			 /* module destroy function */
+	"tmx",           /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* pv exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	destroy          /* module destroy function */
 };
+/* clang-format on */
 
 /**
  * init module function
