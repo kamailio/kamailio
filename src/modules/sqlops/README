@@ -209,10 +209,12 @@ modparam("sqlops", "log_buf_size", 4096)
 
 3.5. connect_mode (int)
 
-   Control how the module will connect to database. Values: 0 - connect at
-   start up or fail 1 - connect at start up but continue even if
-   connecting to database server fails 2 - do not connect until needed
-   (this will limit the amount of idle connections)
+   Control how the module will connect to database. Values:
+     * 0 connect at start up or fail
+     * 1 connect at start up but continue even if connecting to database
+       server fails
+     * 2 do not connect until needed (this will limit the amount of idle
+       connections)
 
    Default value is 0.
 
