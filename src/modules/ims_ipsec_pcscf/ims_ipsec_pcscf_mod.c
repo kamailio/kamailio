@@ -68,7 +68,7 @@ static int domain_fixup(void **param, int param_no);
 static int save_fixup2(void **param, int param_no);
 static int free_uint_fixup(void **param, int param_no);
 static int unregister_fixup(void **param, int param_no);
-static int unregister2_fixup(void **param, int param_no);
+static int unregister_fixup_free(void **param, int param_no);
 
 extern int bind_ipsec_pcscf(usrloc_api_t *api);
 
@@ -91,9 +91,9 @@ static cmd_export_t cmds[] = {
 	{"ipsec_destroy", (cmd_function)w_destroy, 1, save_fixup2,
 		0, REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"ipsec_destroy", (cmd_function)w_destroy, 2, unregister_fixup,
-		0, ANY_ROUTE },
-	{"ipsec_destroy_by_contact", (cmd_function)w_destroy_by_contact, 4,
-		unregister2_fixup, 0, ANY_ROUTE},
+		unregister_fixup_free, ANY_ROUTE },
+	{"ipsec_destroy_by_contact", (cmd_function)w_destroy_by_contact, 4, unregister_fixup,
+        unregister_fixup_free, ANY_ROUTE},
 	{"bind_ims_ipsec_pcscf", (cmd_function)bind_ipsec_pcscf, 1, 0,
 		0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -495,15 +495,14 @@ static int unregister_fixup(void **param, int param_no)
 	} else {
 		return fixup_spve_all(param, param_no);
 	}
-	return E_CFG;
 }
 
-static int unregister2_fixup(void **param, int param_no)
+static int unregister_fixup_free(void **param, int param_no)
 {
 	if(param_no == 1) {
-		return domain_fixup(param, param_no);
+		return 0;
 	} else {
-		return fixup_spve_all(param, param_no);
+		return fixup_free_spve_all(param, param_no);
 	}
 }
 
