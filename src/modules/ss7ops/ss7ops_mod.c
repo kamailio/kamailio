@@ -67,15 +67,6 @@ static int w_isup_to_json(struct sip_msg *_m, char *param1, char *param2);
 static int pv_get_isup(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_isup_name(pv_spec_p sp, str *in);
 
-static cmd_export_t cmds[] = {
-		{"isup_to_json", (cmd_function)w_isup_to_json, 1, 0, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-static pv_export_t mod_pvs[] = {
-		{{"isup", sizeof("isup") - 1}, PVT_OTHER, pv_get_isup, 0,
-				pv_parse_isup_name, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
-
 static int mod_init(void)
 {
 	LM_DBG("ss7 module\n");
@@ -87,18 +78,30 @@ static void destroy(void)
 	LM_DBG("Destroying ss7 module\n");
 }
 
-struct module_exports exports = {
-		"ss7",			 /*!< module name */
-		DEFAULT_DLFLAGS, /*!< dlopen flags */
-		cmds,			 /*!< exported functions */
-		0,				 /*!< exported parameters */
-		0,				 /*!< exported rpc functions */
-		mod_pvs,		 /*!< exported pseudo-variables */
-		0,				 /*!< response handling function */
-		mod_init,		 /*!< module init function */
-		0,				 /*!< child init function */
-		destroy			 /*!< module destroy function */
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"isup_to_json", (cmd_function)w_isup_to_json, 1, 0, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
+
+static pv_export_t mod_pvs[] = {
+	{{"isup", sizeof("isup") - 1}, PVT_OTHER, pv_get_isup, 0, pv_parse_isup_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
+
+struct module_exports exports = {
+	"ss7",           /*!< module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	0,               /* exported parameters */
+	0,               /* exported rpc functions */
+	mod_pvs,         /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	destroy          /* module destroy function */
+};
+/* clang-format on */
 
 static const uint8_t *extract_from_m2ua(const uint8_t *data, size_t *len)
 {
