@@ -71,41 +71,46 @@ static int ki_diameter_request_peer(struct sip_msg *msg, str *peer, int appid,
 static int ki_diameter_request_peer_async(struct sip_msg *msg, str *peer,
 		int appid, int commandcode, str *message);
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"diameter_request", (cmd_function)w_diameter_request, 3,
-				fixup_var_pve_str_12, 0, ANY_ROUTE},
-		{"diameter_request", (cmd_function)w_diameter_request_peer, 4,
-				fixup_var_pve_str_12, 0, ANY_ROUTE},
-		{"diameter_request_async", (cmd_function)w_diameter_request_async, 3,
-				fixup_var_pve_str_12, 0, ANY_ROUTE},
-		{"diameter_request_async", (cmd_function)w_diameter_request_peer_async,
-				4, fixup_var_pve_str_12, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"diameter_request", (cmd_function)w_diameter_request, 3,
+			fixup_var_pve_str_12, fixup_free_fparam_all, ANY_ROUTE},
+	{"diameter_request", (cmd_function)w_diameter_request_peer, 4,
+			fixup_var_pve_str_12, fixup_free_fparam_all, ANY_ROUTE},
+	{"diameter_request_async", (cmd_function)w_diameter_request_async, 3,
+			fixup_var_pve_str_12, fixup_free_fparam_all, ANY_ROUTE},
+	{"diameter_request_async", (cmd_function)w_diameter_request_peer_async,
+			4, fixup_var_pve_str_12, fixup_free_fparam_all, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {{0, 0, 0}};
 
 static pv_export_t mod_pvs[] = {
-		{{"diameter_command", sizeof("diameter_command") - 1}, PVT_OTHER,
-				pv_get_command, 0, 0, 0, 0, 0},
-		{{"diameter_application", sizeof("diameter_application") - 1},
-				PVT_OTHER, pv_get_application, 0, 0, 0, 0, 0},
-		{{"diameter_request", sizeof("diameter_request") - 1}, PVT_OTHER,
-				pv_get_request, 0, 0, 0, 0, 0},
-		{{"diameter_response", sizeof("diameter_response") - 1}, PVT_OTHER,
-				pv_get_response, pv_set_response, 0, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"diameter_command", sizeof("diameter_command") - 1}, PVT_OTHER,
+			pv_get_command, 0, 0, 0, 0, 0},
+	{{"diameter_application", sizeof("diameter_application") - 1},
+			PVT_OTHER, pv_get_application, 0, 0, 0, 0, 0},
+	{{"diameter_request", sizeof("diameter_request") - 1}, PVT_OTHER,
+			pv_get_request, 0, 0, 0, 0, 0},
+	{{"diameter_response", sizeof("diameter_response") - 1}, PVT_OTHER,
+			pv_get_response, pv_set_response, 0, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 /** module exports */
 struct module_exports exports = {"ims_diameter_server",
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* Exported functions */
-		params,			 /* exported statistics */
-		0,				 /* exported RPC methods */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		mod_child_init,	 /* per-child init function */
-		mod_destroy};
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* Exported functions */
+	params,			 /* exported statistics */
+	0,				 /* exported RPC methods */
+	mod_pvs,		 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	mod_child_init,	 /* per-child init function */
+	mod_destroy
+};
+/* clang-format on */
 
 /**
  * init module function
