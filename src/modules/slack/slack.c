@@ -36,38 +36,42 @@ static char *slack_channel = SLACK_DEFAULT_CHANNEL;
 static char *slack_username = SLACK_DEFAULT_USERNAME;
 static char *slack_icon = SLACK_DEFAULT_ICON;
 
+/* clang-format off */
 /**
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"slack_send", (cmd_function)slack_send1, 1, slack_fixup, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+	{"slack_send", (cmd_function)slack_send1, 1, slack_fixup, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /**
  * Exported parameters
  */
 static param_export_t mod_params[] = {
-		{"slack_url", PARAM_STRING | PARAM_USE_FUNC, (void *)_slack_url_param},
-		{"channel", PARAM_STRING, &slack_channel}, // channel starts with #
-		{"username", PARAM_STRING, &slack_username},
-		{"icon_emoji", PARAM_STRING, &slack_icon}, {0, 0, 0}};
+	{"slack_url", PARAM_STRING | PARAM_USE_FUNC, (void *)_slack_url_param},
+	{"channel", PARAM_STRING, &slack_channel}, // channel starts with #
+	{"username", PARAM_STRING, &slack_username},
+	{"icon_emoji", PARAM_STRING, &slack_icon},
+	{0, 0, 0}
+};
 
 /**
  * Module description
  */
 struct module_exports exports = {
-		"slack",		 /* 1 module name */
-		DEFAULT_DLFLAGS, /* 2 dlopen flags */
-		cmds,			 /* 3 exported functions */
-		mod_params,		 /* 4 exported parameters */
-		0,				 /* 5 exported RPC functions */
-		0,				 /* 6 exported pseudo-variables */
-		0,				 /* 7 response function */
-		mod_init,		 /* 8 module initialization function */
-		0,				 /* 9 per-child init function */
-		mod_destroy		 /* 0 destroy function */
+	"slack",         /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	mod_params,      /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
+/* clang-format on */
 
 /**
  * Module init
