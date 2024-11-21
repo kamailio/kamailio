@@ -84,6 +84,7 @@ static int child_init(int rank);
 static void mod_destroy();
 static int fixup_sl_reply(void **param, int param_no);
 static int fixup_sl_reply_mode(void **param, int param_no);
+static int fixup_free_sl_reply_mode(void **param, int param_no);
 
 static int pv_get_ltt(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_ltt_name(pv_spec_p sp, str *in);
@@ -98,21 +99,18 @@ static pv_export_t mod_pvs[] = {
 };
 
 static cmd_export_t cmds[] = {
-	{"sl_send_reply", w_sl_send_reply, 2, fixup_sl_reply, 0, REQUEST_ROUTE},
-	{"sl_reply", w_sl_send_reply, 2, fixup_sl_reply, 0, REQUEST_ROUTE},
-	{"send_reply", w_send_reply, 2, fixup_sl_reply, 0,
+	{"sl_send_reply", w_sl_send_reply, 2, fixup_sl_reply, fixup_free_fparam_all, REQUEST_ROUTE},
+	{"sl_reply", w_sl_send_reply, 2, fixup_sl_reply, fixup_free_fparam_all, REQUEST_ROUTE},
+	{"send_reply", w_send_reply, 2, fixup_sl_reply, fixup_free_fparam_all,
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"send_reply_mode", (cmd_function)w_send_reply_mode, 3,
-			fixup_sl_reply_mode, 0,
+	{"send_reply_mode", (cmd_function)w_send_reply_mode, 3,	fixup_sl_reply_mode, fixup_free_sl_reply_mode,
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 	{"send_reply_error", w_send_reply_error, 0, 0, 0,
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
 	{"sl_reply_error", w_sl_reply_error, 0, 0, 0, REQUEST_ROUTE},
 	{"sl_forward_reply", w_sl_forward_reply0, 0, 0, 0, ONREPLY_ROUTE},
-	{"sl_forward_reply", w_sl_forward_reply1, 1, fixup_spve_all, 0,
-			ONREPLY_ROUTE},
-	{"sl_forward_reply", w_sl_forward_reply2, 2, fixup_spve_all, 0,
-			ONREPLY_ROUTE},
+	{"sl_forward_reply", w_sl_forward_reply1, 1, fixup_spve_all, fixup_free_spve_all, ONREPLY_ROUTE},
+	{"sl_forward_reply", w_sl_forward_reply2, 2, fixup_spve_all, fixup_free_spve_all, ONREPLY_ROUTE},
 	{"bind_sl", (cmd_function)bind_sl, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -465,6 +463,16 @@ static int fixup_sl_reply_mode(void **param, int param_no)
 		return fixup_var_pve_str_12(param, 2);
 	} else if(param_no == 3) {
 		return fixup_var_int_12(param, 1);
+	}
+	return 0;
+}
+
+static int fixup_free_sl_reply_mode(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 3) {
+		fixup_free_fparam_all(param, 1);
+	} else {
+		fixup_free_fparam_all(param, param_no);
 	}
 	return 0;
 }
