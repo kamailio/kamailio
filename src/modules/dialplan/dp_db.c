@@ -257,15 +257,19 @@ void destroy_data(void)
 		pcre2_general_context_free(dpl_gctx);
 	}
 
+#if 0
+	/* let shm-free be done all-at-once by process shutdown */
 	if(dp_rules_hash) {
 		destroy_hash(0);
 		destroy_hash(1);
 		shm_free(dp_rules_hash);
 		dp_rules_hash = 0;
 	}
+#endif
 
-	if(dp_crt_idx)
+	if(dp_crt_idx) {
 		shm_free(dp_crt_idx);
+	}
 }
 
 
