@@ -64,32 +64,32 @@ struct long_or_pv
 	pv_spec_t *pv;
 };
 
-
-static cmd_export_t cmds[] = {{"update_stat", (cmd_function)w_update_stat, 2,
-									  fixup_stat, 0, ANY_ROUTE},
-		{"reset_stat", (cmd_function)w_reset_stat, 1, fixup_stat, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE
-						| LOCAL_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-static param_export_t mod_params[] = {
-		{"variable", PARAM_STRING | PARAM_USE_FUNC, (void *)reg_param_stat},
-		{0, 0, 0}};
-
-
-struct module_exports exports = {
-		"statistics",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		mod_params,		 /* exported parameters */
-		0,				 /* exported rpc functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* reply processing function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		0				 /* module destroy function */
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"update_stat", (cmd_function)w_update_stat, 2, fixup_stat, 0, ANY_ROUTE},
+	{"reset_stat", (cmd_function)w_reset_stat, 1, fixup_stat, 0,
+			REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | LOCAL_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
+static param_export_t mod_params[] = {
+	{"variable", PARAM_STRING | PARAM_USE_FUNC, (void *)reg_param_stat},
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"statistics",    /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	mod_params,      /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
+};
+/* clang-format on */
 
 static int reg_param_stat(modparam_t type, void *val)
 {
