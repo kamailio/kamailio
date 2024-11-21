@@ -63,40 +63,41 @@ str dstrip_s = {NULL, 0};
 db_func_t db_funcs;		  /* Database functions */
 db1_con_t *db_handle = 0; /* Database connection handle */
 
-
+/* clang-format off */
 /* Exported functions */
-static cmd_export_t cmds[] = {{"sd_lookup", (cmd_function)w_sd_lookup, 1,
-									  fixup_spve_null, 0, REQUEST_ROUTE},
-		{"sd_lookup", (cmd_function)w_sd_lookup, 2, fixup_spve_spve, 0,
-				REQUEST_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+static cmd_export_t cmds[] = {
+	{"sd_lookup", (cmd_function)w_sd_lookup, 1, fixup_spve_null, 0, REQUEST_ROUTE},
+	{"sd_lookup", (cmd_function)w_sd_lookup, 2, fixup_spve_spve, 0,	REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /* Exported parameters */
-static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
-		{"user_column", PARAM_STR, &user_column},
-		{"domain_column", PARAM_STR, &domain_column},
-		{"sd_user_column", PARAM_STR, &sd_user_column},
-		{"sd_domain_column", PARAM_STR, &sd_domain_column},
-		{"new_uri_column", PARAM_STR, &new_uri_column},
-		{"use_domain", PARAM_INT, &use_domain},
-		{"domain_prefix", PARAM_STR, &domain_prefix}, {0, 0, 0}};
-
+static param_export_t params[] = {
+	{"db_url", PARAM_STR, &db_url},
+	{"user_column", PARAM_STR, &user_column},
+	{"domain_column", PARAM_STR, &domain_column},
+	{"sd_user_column", PARAM_STR, &sd_user_column},
+	{"sd_domain_column", PARAM_STR, &sd_domain_column},
+	{"new_uri_column", PARAM_STR, &new_uri_column},
+	{"use_domain", PARAM_INT, &use_domain},
+	{"domain_prefix", PARAM_STR, &domain_prefix},
+	{0, 0, 0}
+};
 
 /* Module interface */
 struct module_exports exports = {
-		"speeddial",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported RPC functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* child initialization function */
-		destroy			 /* destroy function */
+	"speeddial",     /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	destroy          /* module destroy function */
 };
-
+/* clang-format on */
 
 /**
  *
