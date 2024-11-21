@@ -41,7 +41,7 @@ static char *slack_icon = SLACK_DEFAULT_ICON;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"slack_send", (cmd_function)slack_send1, 1, slack_fixup, 0, ANY_ROUTE},
+	{"slack_send", (cmd_function)slack_send1, 1, slack_fixup, slack_fixup_free, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -239,6 +239,20 @@ static int slack_fixup(void **param, int param_no)
 		return E_UNSPEC;
 	}
 	return slack_fixup_helper(param, param_no);
+}
+
+static int slack_fixup_free(void **param, int param_no)
+{
+	sl_msg_t *sm;
+	if(param_no != 1 || param == NULL || *param == NULL) {
+		LM_ERR("invalid parameter number %d\n", param_no);
+		return E_UNSPEC;
+	}
+
+	sm = *param;
+	pv_elem_free_all(sm->m);
+	pkg_free(sm);
+	return 0;
 }
 
 /**
