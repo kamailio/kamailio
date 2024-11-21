@@ -97,43 +97,50 @@ static int sst_flag = -1;
 struct dlg_binds dialog_st;
 struct dlg_binds *dlg_binds = &dialog_st;
 
+/* clang-format off */
 /*
  * Script commands we export.
  */
-static cmd_export_t cmds[] = {{"sstCheckMin", (cmd_function)sst_check_min, 1, 0,
-									  0, REQUEST_ROUTE | ONREPLY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+static cmd_export_t cmds[] = {
+	{"sstCheckMin", (cmd_function)sst_check_min, 1, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Script parameters
  */
 static param_export_t mod_params[] = {
-		{"enable_stats", PARAM_INT, &sst_enable_stats},
-		{"min_se", PARAM_INT, &sst_minSE},
-		{"timeout_avp", PARAM_STRING, &timeout_spec},
-		{"reject_to_small", PARAM_INT, &sst_reject},
-		{"sst_flag", PARAM_INT, &sst_flag}, {0, 0, 0}};
+	{"enable_stats", PARAM_INT, &sst_enable_stats},
+	{"min_se", PARAM_INT, &sst_minSE},
+	{"timeout_avp", PARAM_STRING, &timeout_spec},
+	{"reject_to_small", PARAM_INT, &sst_reject},
+	{"sst_flag", PARAM_INT, &sst_flag},
+	{0, 0, 0}
+};
 
 #ifdef STATISTICS
 /*
  * Export the statistics we have
  */
 static stat_export_t mod_stats[] = {
-		{"expired_sst", 0, &expired_sst}, {0, 0, 0}};
+	{"expired_sst", 0, &expired_sst},
+	{0, 0, 0}
+};
 #endif /* STATISTICS */
 
 struct module_exports exports = {
-		"sst",			 /* module's name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		mod_params,		 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* exported pseudo-variables */
-		0,				 /* reply processing function */
-		mod_init,		 /* module initialization function */
-		0,				 /* per-child init function */
-		0				 /* Destroy function */
+	"sst",           /* module's name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	mod_params,      /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
+/* clang-format on */
 
 /**
  * The initialization function, called when the module is loaded by
