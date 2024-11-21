@@ -66,8 +66,8 @@ db1_con_t *db_handle = 0; /* Database connection handle */
 /* clang-format off */
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"sd_lookup", (cmd_function)w_sd_lookup, 1, fixup_spve_null, 0, REQUEST_ROUTE},
-	{"sd_lookup", (cmd_function)w_sd_lookup, 2, fixup_spve_spve, 0,	REQUEST_ROUTE},
+	{"sd_lookup", (cmd_function)w_sd_lookup, 1, fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
+	{"sd_lookup", (cmd_function)w_sd_lookup, 2, fixup_spve_spve, fixup_free_spve_spve,	REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
