@@ -338,9 +338,10 @@ int tcp_disable = 0;	 /* 1 if tcp is disabled */
 int tls_disable = 0; /* tls enabled by default */
 #else
 int tls_disable = 1; /* tls disabled by default */
-#endif						  /* CORE_TLS */
-int ksr_tls_threads_mode = 0; /* threads execution mode for tls with libssl */
-#endif						  /* USE_TLS */
+#endif /* CORE_TLS */
+/* threads execution mode for tls with libssl */
+int ksr_tls_threads_mode = KSR_TLS_THREADS_MNONE;
+#endif /* USE_TLS */
 #ifdef USE_SCTP
 int sctp_children_no = 0;
 int sctp_disable = 2; /* 1 if sctp is disabled, 2 if auto mode, 0 enabled */

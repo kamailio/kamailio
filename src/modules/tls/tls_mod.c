@@ -337,7 +337,7 @@ static tls_domains_cfg_t* tls_use_modparams(void)
 }
 #endif
 
-/* global config tls_threads_mode = 2
+/* global config tls_threads_mode = 2 (KSR_TLS_THREADS_MFORK)
  *  - force all thread-locals to be 0x0 after fork()
  *  - with OpenSSL loaded the largest value observed
  *     is < 10
@@ -464,7 +464,7 @@ static int mod_init(void)
 		ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
 	}
 #endif
-	if(ksr_tls_threads_mode == 2) {
+	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK) {
 		pthread_atfork(NULL, NULL, &fork_child);
 	}
 
@@ -474,7 +474,7 @@ static int mod_init(void)
 	 * that use pthread_key_create(), e.g. python,
 	 * will have larger key values
 	 */
-	if(ksr_tls_threads_mode > 0) {
+	if(ksr_tls_threads_mode > KSR_TLS_THREADS_MNONE) {
 		ERR_clear_error();
 		RAND_bytes(rand_buf, sizeof(rand_buf));
 		for(k = 0; k < 32; k++) {
@@ -537,14 +537,15 @@ static int mod_child(int rank)
 
 	/*
 	 * OpenSSL 3.x/1.1.1: create shared SSL_CTX* in thread executor
-	 * to avoid init of libssl in thread#1: ksr_tls_threads_mode = 1
+	 * to avoid init of libssl in thread#1:
+	 *   - ksr_tls_threads_mode = 1 (KSR_TLS_THREADS_MTEMP)
 	 */
 	if(rank == PROC_INIT) {
 		return run_thread4PP((_thread_proto4PP)mod_child_hook, &rank, NULL);
 	}
 
-	if(ksr_tls_threads_mode == 1 && rank && rank != PROC_INIT
-			&& rank != PROC_POSTCHILDINIT) {
+	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP && rank
+			&& rank != PROC_INIT && rank != PROC_POSTCHILDINIT) {
 		for(k = 0; k < tls_pthreads_key_mark; k++)
 			pthread_setspecific(k, 0x0);
 		LM_WARN("clean-up of thread-locals key < %d\n", tls_pthreads_key_mark);
@@ -773,7 +774,7 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
          */
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L \
 		&& OPENSSL_VERSION_NUMBER < 0x030000000L
-	if(ksr_tls_threads_mode == 0) {
+	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MNONE) {
 		LM_WARN("OpenSSL 1.1.1 setting cryptorand random engine\n");
 		RAND_set_rand_method(RAND_ksr_cryptorand_method());
 	}
