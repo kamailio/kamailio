@@ -64,37 +64,38 @@ int *queued_msgs = 0;
 int use_contact = 0;
 int sms_report_type = NO_REPORT;
 
-
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"sms_send_msg_to_net", w_sms_send_msg_to_net, 1,
-				fixup_sms_send_msg_to_net, 0, REQUEST_ROUTE},
-		{"sms_send_msg", w_sms_send_msg, 0, 0, 0, REQUEST_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-
-static param_export_t params[] = {{"networks", PARAM_STRING, &networks_config},
-		{"modems", PARAM_STRING, &modems_config},
-		{"links", PARAM_STRING, &links_config},
-		{"default_net", PARAM_STRING, &default_net_str},
-		{"max_sms_parts", PARAM_INT, &max_sms_parts},
-		{"domain", PARAM_STR, &_sms_domain},
-		{"use_contact", PARAM_INT, &use_contact},
-		{"sms_report_type", PARAM_INT, &sms_report_type}, {0, 0, 0}};
-
-
-struct module_exports exports = {
-		"sms",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported RPC methods */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function*/
-		sms_init,		 /* module init function */
-		sms_child_init,	 /* per-child init function */
-		sms_exit		 /* module destroy function */
+	{"sms_send_msg_to_net", w_sms_send_msg_to_net, 1, fixup_sms_send_msg_to_net, 0, REQUEST_ROUTE},
+	{"sms_send_msg", w_sms_send_msg, 0, 0, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
+static param_export_t params[] = {
+	{"networks", PARAM_STRING, &networks_config},
+	{"modems", PARAM_STRING, &modems_config},
+	{"links", PARAM_STRING, &links_config},
+	{"default_net", PARAM_STRING, &default_net_str},
+	{"max_sms_parts", PARAM_INT, &max_sms_parts},
+	{"domain", PARAM_STR, &_sms_domain},
+	{"use_contact", PARAM_INT, &use_contact},
+	{"sms_report_type", PARAM_INT, &sms_report_type},
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"sms",           /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	sms_init,        /* module init function */
+	sms_child_init,  /* per-child init function */
+	sms_exit         /* module destroy function */
+};
+/* clang-format on */
 
 static int fixup_sms_send_msg_to_net(void **param, int param_no)
 {
