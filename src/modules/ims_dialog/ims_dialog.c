@@ -71,10 +71,14 @@ static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
 
 /* commands wrappers and fixups */
 static int fixup_profile(void **param, int param_no);
+static int fixup_free_profile(void **param, int param_no);
 static int fixup_get_profile2(void **param, int param_no);
+static int fixup_free_get_profile2(void **param, int param_no);
 static int fixup_get_profile3(void **param, int param_no);
+static int fixup_free_get_profile3(void **param, int param_no);
 static int fixup_dlg_bridge(void **param, int param_no);
 static int fixup_dlg_terminate(void **param, int param_no);
+static int fixup_free_dlg_terminate(void **param, int param_no);
 static int w_set_dlg_profile(struct sip_msg *, char *, char *);
 static int w_unset_dlg_profile(struct sip_msg *, char *, char *);
 static int w_is_in_profile(struct sip_msg *, char *, char *);
@@ -91,35 +95,33 @@ static int pv_get_dlg_count(
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
-	{"set_dlg_profile", (cmd_function)w_set_dlg_profile, 1, fixup_profile, 0,
+	{"set_dlg_profile", (cmd_function)w_set_dlg_profile, 1, fixup_profile, fixup_free_profile,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"set_dlg_profile", (cmd_function)w_set_dlg_profile, 2, fixup_profile, 0,
+	{"set_dlg_profile", (cmd_function)w_set_dlg_profile, 2, fixup_profile, fixup_free_profile,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"unset_dlg_profile", (cmd_function)w_unset_dlg_profile, 1,
-		fixup_profile, 0, FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"unset_dlg_profile", (cmd_function)w_unset_dlg_profile, 2,
-		fixup_profile, 0, FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"is_in_profile", (cmd_function)w_is_in_profile, 1, fixup_profile, 0,
+	{"unset_dlg_profile", (cmd_function)w_unset_dlg_profile, 1, fixup_profile, fixup_free_profile,
+		FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
+	{"unset_dlg_profile", (cmd_function)w_unset_dlg_profile, 2, fixup_profile, fixup_free_profile,
+		FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
+	{"is_in_profile", (cmd_function)w_is_in_profile, 1, fixup_profile, fixup_free_profile,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"is_in_profile", (cmd_function)w_is_in_profile, 2, fixup_profile, 0,
+	{"is_in_profile", (cmd_function)w_is_in_profile, 2, fixup_profile, fixup_free_profile,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"get_profile_size", (cmd_function)w_get_profile_size2, 2,
-		fixup_get_profile2, 0,
+	{"get_profile_size", (cmd_function)w_get_profile_size2, 2, fixup_get_profile2, fixup_free_get_profile2,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"get_profile_size", (cmd_function)w_get_profile_size3, 3,
-		fixup_get_profile3, 0,
+	{"get_profile_size", (cmd_function)w_get_profile_size3, 3, fixup_get_profile3, fixup_free_get_profile3,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"dlg_setflag", (cmd_function)w_dlg_setflag, 1, fixup_igp_null, 0,
+	{"dlg_setflag", (cmd_function)w_dlg_setflag, 1, fixup_igp_null, fixup_free_igp_null,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"dlg_resetflag", (cmd_function)w_dlg_resetflag, 1, fixup_igp_null, 0,
+	{"dlg_resetflag", (cmd_function)w_dlg_resetflag, 1, fixup_igp_null, fixup_free_igp_null,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"dlg_isflagset", (cmd_function)w_dlg_isflagset, 1, fixup_igp_null, 0,
+	{"dlg_isflagset", (cmd_function)w_dlg_isflagset, 1, fixup_igp_null, fixup_free_igp_null,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"dlg_terminate", (cmd_function)w_dlg_terminate, 1, fixup_dlg_terminate, 0,
+	{"dlg_terminate", (cmd_function)w_dlg_terminate, 1, fixup_dlg_terminate, fixup_free_dlg_terminate,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"dlg_terminate", (cmd_function)w_dlg_terminate, 2, fixup_dlg_terminate, 0,
+	{"dlg_terminate", (cmd_function)w_dlg_terminate, 2, fixup_dlg_terminate, fixup_free_dlg_terminate,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"dlg_get", (cmd_function)w_dlg_get, 3, fixup_dlg_bridge, 0, ANY_ROUTE},
+	{"dlg_get", (cmd_function)w_dlg_get, 3, fixup_dlg_bridge, fixup_free_spve_null, ANY_ROUTE},
 	{"is_known_dlg", (cmd_function)w_is_known_dlg, 0, NULL, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
 	{"load_ims_dlg", (cmd_function)load_ims_dlg, 0, 0, 0, 0},
@@ -221,6 +223,14 @@ static int fixup_profile(void **param, int param_no)
 	return 0;
 }
 
+static int fixup_free_profile(void **param, int param_no)
+{
+	if(param_no == 2) {
+		pv_elem_free_all(*param);
+	}
+	return 0;
+}
+
 static int fixup_get_profile2(void **param, int param_no)
 {
 	pv_spec_t *sp;
@@ -241,6 +251,16 @@ static int fixup_get_profile2(void **param, int param_no)
 	return 0;
 }
 
+static int fixup_free_get_profile2(void **param, int param_no)
+{
+	if(param_no == 1) {
+		fixup_free_profile(param, 2);
+	} else if(param_no == 2) {
+		fixup_free_pvar_null(param, 1);
+	}
+	return 0;
+}
+
 static int fixup_get_profile3(void **param, int param_no)
 {
 	if(param_no == 1) {
@@ -249,6 +269,16 @@ static int fixup_get_profile3(void **param, int param_no)
 		return fixup_profile(param, 2);
 	} else if(param_no == 3) {
 		return fixup_get_profile2(param, 2);
+	}
+	return 0;
+}
+
+static int fixup_free_get_profile3(void **param, int param_no)
+{
+	if(param_no == 2) {
+		fixup_free_profile(param, 2);
+	} else if(param_no == 3) {
+		fixup_free_get_profile2(param, 2);
 	}
 	return 0;
 }
@@ -278,6 +308,14 @@ static int fixup_dlg_terminate(void **param, int param_no)
 	} else {
 		LM_ERR("called with parameter != 1\n");
 		return E_BUG;
+	}
+	return 0;
+}
+
+static int fixup_free_dlg_terminate(void **param, int param_no)
+{
+	if(param_no == 2) {
+		fixup_free_fparam_all(param, 1);
 	}
 	return 0;
 }
