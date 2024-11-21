@@ -746,9 +746,11 @@ static void mod_exit(void)
 			pkg_free(perm_deny[i].filename);
 	}
 
+#if 0
 	clean_trusted();
 
 	clean_addresses();
+#endif
 }
 
 
