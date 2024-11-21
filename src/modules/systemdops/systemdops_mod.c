@@ -34,18 +34,20 @@
 
 MODULE_VERSION
 
+/* clang-format off */
 struct module_exports exports = {
-		"systemdops",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		0,				 /* cmd (cfg function) exports */
-		0,				 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		0,				 /* module init function */
-		0,				 /* per-child init function */
-		0				 /* module destroy function */
+	"systemdops",	 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	0,               /* exported functions */
+	0,               /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	0,               /* module init function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
+/* clang-format on */
 
 /**
  *
