@@ -221,10 +221,24 @@ modparam("sqlops", "log_buf_size", 4096)
 		<para>
 		Control how the module will connect to database.
 		Values:
-			0 - connect at start up or fail
-			1 - connect at start up but continue even if connecting to database server fails
-			2 - do not connect until needed (this will limit the amount of idle connections)
 		</para>
+	<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>0</emphasis> connect at start up or fail
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>1</emphasis> connect at start up but continue even if connecting to database server fails
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>2</emphasis> do not connect until needed (this will limit the amount of idle connections)
+		</para>
+		</listitem>
+	</itemizedlist>
 		<para>
 		<emphasis>
 			Default value is 0.
