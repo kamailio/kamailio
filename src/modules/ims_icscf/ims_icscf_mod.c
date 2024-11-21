@@ -119,9 +119,9 @@ static int fixup_free_uar_lir(void **param, int param_no);
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"I_perform_user_authorization_request", (cmd_function)I_perform_user_authorization_request, 2,
-		fixup_uar_lir, fixup_fee_uar_lir, REQUEST_ROUTE},
+		fixup_uar_lir, fixup_free_uar_lir, REQUEST_ROUTE},
 	{"I_perform_location_information_request",(cmd_function)I_perform_location_information_request, 2,
-		fixup_uar_lir, fixup_fee_uar_lir, REQUEST_ROUTE},
+		fixup_uar_lir, fixup_free_uar_lir, REQUEST_ROUTE},
 	{"I_scscf_select", (cmd_function)I_scscf_select, 1,
 		0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"I_scscf_drop", (cmd_function)I_scscf_drop, 0,
