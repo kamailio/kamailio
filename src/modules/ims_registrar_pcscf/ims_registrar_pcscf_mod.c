@@ -156,79 +156,68 @@ inline void pcscf_act_time()
 	time_now = time(0);
 }
 
+/* clang-format off */
 /*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
 		{"pcscf_save", (cmd_function)w_save, 1, save_fixup2, 0, ONREPLY_ROUTE},
-		{"pcscf_save_pending", (cmd_function)w_save_pending, 1, save_fixup2, 0,
-				REQUEST_ROUTE},
-		{"pcscf_follows_service_routes", (cmd_function)w_follows_service_routes,
-				1, save_fixup2, 0, REQUEST_ROUTE},
-		{"pcscf_force_service_routes", (cmd_function)w_force_service_routes, 1,
-				save_fixup2, 0, REQUEST_ROUTE},
-		{"pcscf_is_registered", (cmd_function)w_is_registered, 1, save_fixup2,
-				0, REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"pcscf_assert_identity", (cmd_function)w_assert_identity, 2,
-				assert_identity_fixup, 0, REQUEST_ROUTE},
-		{"pcscf_assert_called_identity", (cmd_function)w_assert_called_identity,
-				1, assert_identity_fixup, 0, ONREPLY_ROUTE},
-		{"reginfo_handle_notify", (cmd_function)w_reginfo_handle_notify, 1,
-				domain_fixup, 0, REQUEST_ROUTE},
-		{"pcscf_unregister", (cmd_function)w_unregister, 4, unregister_fixup, 0,
-				ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+		{"pcscf_save_pending", (cmd_function)w_save_pending, 1, save_fixup2, 0, REQUEST_ROUTE},
+		{"pcscf_follows_service_routes", (cmd_function)w_follows_service_routes, 1, save_fixup2, 0, REQUEST_ROUTE},
+		{"pcscf_force_service_routes", (cmd_function)w_force_service_routes, 1, save_fixup2, 0, REQUEST_ROUTE},
+		{"pcscf_is_registered", (cmd_function)w_is_registered, 1, save_fixup2, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+		{"pcscf_assert_identity", (cmd_function)w_assert_identity, 2, assert_identity_fixup, 0, REQUEST_ROUTE},
+		{"pcscf_assert_called_identity", (cmd_function)w_assert_called_identity, 1, assert_identity_fixup, 0, ONREPLY_ROUTE},
+		{"reginfo_handle_notify", (cmd_function)w_reginfo_handle_notify, 1, domain_fixup, 0, REQUEST_ROUTE},
+		{"pcscf_unregister", (cmd_function)w_unregister, 4, unregister_fixup, 0, ANY_ROUTE},
+		{0, 0, 0, 0, 0, 0}
+};
 
 /*! \brief
  * Exported parameters
  */
 static param_export_t params[] = {{"pcscf_uri", PARAM_STR, &pcscf_uri},
-		{"pending_reg_expires", PARAM_INT, &pending_reg_expires},
-		{"received_avp", PARAM_STR, &rcv_avp_param},
-		{"is_registered_fallback2ip", PARAM_INT, &is_registered_fallback2ip},
-		{"publish_reginfo", PARAM_INT, &publish_reginfo},
-		{"subscribe_to_reginfo", PARAM_INT, &subscribe_to_reginfo},
-		{"subscription_expires", PARAM_INT, &subscription_expires},
-		{"ignore_contact_rxport_check", PARAM_INT,
-				&ignore_contact_rxport_check},
-		{"ignore_contact_rxproto_check", PARAM_INT,
-				&ignore_contact_rxproto_check},
-		{"ignore_reg_state", PARAM_INT, &ignore_reg_state},
-		{"force_icscf_uri", PARAM_STR, &force_icscf_uri},
-		{"reginfo_queue_size_threshold", PARAM_INT,
-				&reginfo_queue_size_threshold},
-		{"delete_delay", PARAM_INT, &_imsregp_params.delete_delay},
-		{"trust_bottom_via", PARAM_INT, &trust_bottom_via},
-		//	{"store_profile_dereg",	PARAM_INT, &store_data_on_dereg},
-		{0, 0, 0}};
+	{"pending_reg_expires", PARAM_INT, &pending_reg_expires},
+	{"received_avp", PARAM_STR, &rcv_avp_param},
+	{"is_registered_fallback2ip", PARAM_INT, &is_registered_fallback2ip},
+	{"publish_reginfo", PARAM_INT, &publish_reginfo},
+	{"subscribe_to_reginfo", PARAM_INT, &subscribe_to_reginfo},
+	{"subscription_expires", PARAM_INT, &subscription_expires},
+	{"ignore_contact_rxport_check", PARAM_INT, &ignore_contact_rxport_check},
+	{"ignore_contact_rxproto_check", PARAM_INT, &ignore_contact_rxproto_check},
+	{"ignore_reg_state", PARAM_INT, &ignore_reg_state},
+	{"force_icscf_uri", PARAM_STR, &force_icscf_uri},
+	{"reginfo_queue_size_threshold", PARAM_INT, &reginfo_queue_size_threshold},
+	{"delete_delay", PARAM_INT, &_imsregp_params.delete_delay},
+	{"trust_bottom_via", PARAM_INT, &trust_bottom_via},
+	//	{"store_profile_dereg",	PARAM_INT, &store_data_on_dereg},
+	{0, 0, 0}
+};
 
 
 static pv_export_t mod_pvs[] = {
-		{{"pcscf_asserted_identity",
-				 (sizeof("pcscf_asserted_identity")
-						 - 1)}, /* The first identity of the contact. */
-				PVT_OTHER, pv_get_asserted_identity_f, 0, 0, 0, 0, 0},
-		{{"pcscf_registration_contact",
-				 (sizeof("pcscf_registration_contact")
-						 - 1)}, /* The contact used during REGISTER */
-				PVT_OTHER, pv_get_registration_contact_f, 0, 0, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"pcscf_asserted_identity", (sizeof("pcscf_asserted_identity") - 1)}, /* The first identity of the contact. */
+			PVT_OTHER, pv_get_asserted_identity_f, 0, 0, 0, 0, 0},
+	{{"pcscf_registration_contact", (sizeof("pcscf_registration_contact") - 1)}, /* The contact used during REGISTER */
+			PVT_OTHER, pv_get_registration_contact_f, 0, 0, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 /*! \brief
  * Module exports structure
  */
 struct module_exports exports = {
-		"ims_registrar_pcscf", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,									/* Exported functions */
-		params,									/* Exported parameters */
-		0,										/* exported RPC methods */
-		mod_pvs,								/* exported pseudo-variables */
-		0,										/* response handling function */
-		mod_init,	/* module initialization function */
-		child_init, /* Per-child init function */
-		mod_destroy /* destroy function */
+	"ims_registrar_pcscf", DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,									/* Exported functions */
+	params,									/* Exported parameters */
+	0,										/* exported RPC methods */
+	mod_pvs,								/* exported pseudo-variables */
+	0,										/* response handling function */
+	mod_init,	/* module initialization function */
+	child_init, /* Per-child init function */
+	mod_destroy /* destroy function */
 };
+/* clang-format on */
 
 int fix_parameters()
 {
