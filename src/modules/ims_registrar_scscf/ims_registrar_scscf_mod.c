@@ -144,10 +144,13 @@ static int w_lookup_path_to_contact(struct sip_msg *_m, char *contact_uri);
 /*! \brief Fixup functions */
 static int domain_fixup(void **param, int param_no);
 static int assign_save_fixup3_async(void **param, int param_no);
+static int assign_save_fixup_free(void **param, int param_no);
 static int free_uint_fixup(void **param, int param_no);
 static int save_fixup4(void **param, int param_no);
 static int unreg_fixup(void **param, int param_no);
+static int unreg_fixup_free(void **param, int param_no);
 static int fetchc_fixup(void **param, int param_no);
+static int fetchc_fixup_free(void **param, int param_no);
 /*! \brief Functions */
 static int add_sock_hdr(struct sip_msg *msg, char *str, char *foo);
 
@@ -220,145 +223,139 @@ stat_var *default_expire_range_stat;
 /** SL API structure */
 sl_api_t slb;
 
+/* clang-format off */
 /*! \brief
  * Exported PV
  */
 static pv_export_t mod_pvs[] = {
-		{{"ulc", sizeof("ulc") - 1}, PVT_OTHER, pv_get_ulc, pv_set_ulc,
-				pv_parse_ulc_name, pv_parse_index, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"ulc", sizeof("ulc") - 1}, PVT_OTHER, pv_get_ulc, pv_set_ulc, pv_parse_ulc_name, pv_parse_index, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 
 /*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"save", (cmd_function)w_save2, 2, assign_save_fixup3_async, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"save", (cmd_function)w_save3, 3, assign_save_fixup3_async, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"save", (cmd_function)w_save4, 4, save_fixup4, free_uint_fixup,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"lookup", (cmd_function)w_lookup, 1, domain_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"lookup", (cmd_function)w_lookup_ue_type, 2, domain_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"lookup_path_to_contact", (cmd_function)w_lookup_path_to_contact, 1,
-				fixup_var_str_12, 0, REQUEST_ROUTE},
-		{"term_impu_registered", (cmd_function)term_impu_registered, 1,
-				domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"term_impu_has_contact", (cmd_function)term_impu_has_contact, 1,
-				domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"impu_registered", (cmd_function)impu_registered, 1, domain_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"assign_server_unreg", (cmd_function)w_assign_server_unreg, 3,
-				assign_save_fixup3_async, 0, REQUEST_ROUTE},
-		{"add_sock_hdr", (cmd_function)add_sock_hdr, 1, fixup_str_null, 0,
-				REQUEST_ROUTE},
-		{"unregister", (cmd_function)unregister, 2, unreg_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"reg_fetch_contacts", (cmd_function)pv_fetch_contacts, 3, fetchc_fixup,
-				0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"reg_free_contacts", (cmd_function)pv_free_contacts, 1, fixup_str_null,
-				0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"can_subscribe_to_reg", (cmd_function)can_subscribe_to_reg, 1,
-				domain_fixup, 0, REQUEST_ROUTE},
-		{"subscribe_to_reg", (cmd_function)subscribe_to_reg, 1, domain_fixup, 0,
-				REQUEST_ROUTE},
-		{"can_publish_reg", (cmd_function)can_publish_reg, 1, domain_fixup, 0,
-				REQUEST_ROUTE},
-		{"publish_reg", (cmd_function)publish_reg, 1, domain_fixup, 0,
-				REQUEST_ROUTE},
-		//{"bind_registrar", (cmd_function) bind_registrar, 0, 0, 0, 0},  TODO put this back in !
-		{0, 0, 0, 0, 0, 0}};
+	{"save", (cmd_function)w_save2, 2, assign_save_fixup3_async, assign_save_fixup_free,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"save", (cmd_function)w_save3, 3, assign_save_fixup3_async, assign_save_fixup_free,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"save", (cmd_function)w_save4, 4, save_fixup4, free_uint_fixup,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"lookup", (cmd_function)w_lookup, 1, domain_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup", (cmd_function)w_lookup_ue_type, 2, domain_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup_path_to_contact", (cmd_function)w_lookup_path_to_contact, 1, fixup_var_str_12, fixup_free_fparam_all,
+			REQUEST_ROUTE},
+	{"term_impu_registered", (cmd_function)term_impu_registered, 1, domain_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"term_impu_has_contact", (cmd_function)term_impu_has_contact, 1, domain_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"impu_registered", (cmd_function)impu_registered, 1, domain_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"assign_server_unreg", (cmd_function)w_assign_server_unreg, 3, assign_save_fixup3_async, assign_save_fixup_free,
+			REQUEST_ROUTE},
+	{"add_sock_hdr", (cmd_function)add_sock_hdr, 1, fixup_str_null, fixup_free_str_null,
+			REQUEST_ROUTE},
+	{"unregister", (cmd_function)unregister, 2, unreg_fixup, unreg_fixup_free,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"reg_fetch_contacts", (cmd_function)pv_fetch_contacts, 3, fetchc_fixup,
+			0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"reg_free_contacts", (cmd_function)pv_free_contacts, 1, fixup_str_null, fixup_free_str_null,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"can_subscribe_to_reg", (cmd_function)can_subscribe_to_reg, 1, domain_fixup, 0, REQUEST_ROUTE},
+	{"subscribe_to_reg", (cmd_function)subscribe_to_reg, 1, domain_fixup, 0,
+			REQUEST_ROUTE},
+	{"can_publish_reg", (cmd_function)can_publish_reg, 1, domain_fixup, 0,
+			REQUEST_ROUTE},
+	{"publish_reg", (cmd_function)publish_reg, 1, domain_fixup, 0,
+			REQUEST_ROUTE},
+	//{"bind_registrar", (cmd_function) bind_registrar, 0, 0, 0, 0},  TODO put this back in !
+	{0, 0, 0, 0, 0, 0}
+};
 
 
 /*! \brief
  * Exported parameters
  */
 static param_export_t params[] = {
-		{"default_expires", PARAM_INT, &default_registrar_cfg.default_expires},
-		{"default_expires_range", PARAM_INT,
-				&default_registrar_cfg.default_expires_range},
-		{"min_expires", PARAM_INT, &default_registrar_cfg.min_expires},
-		{"max_expires", PARAM_INT, &default_registrar_cfg.max_expires},
-		{"em_default_expires", PARAM_INT,
-				&default_registrar_cfg.em_default_expires},
-		{"em_max_expires", PARAM_INT, &default_registrar_cfg.em_max_expires},
-		{"em_min_expires", PARAM_INT, &default_registrar_cfg.em_min_expires},
-
-		{"default_q", PARAM_INT, &default_registrar_cfg.default_q},
-		{"append_branches", PARAM_INT, &default_registrar_cfg.append_branches},
-		{"case_sensitive", PARAM_INT, &default_registrar_cfg.case_sensitive},
-		{"realm_prefix", PARAM_STRING, &default_registrar_cfg.realm_pref},
-
-		{"received_param", PARAM_STR, &rcv_param},
-		{"received_avp", PARAM_STRING, &rcv_avp_param},
-		{"aor_avp", PARAM_STRING, &aor_avp_param},
-		{"reg_callid_avp", PARAM_STRING, &reg_callid_avp_param},
-		{"max_contacts", PARAM_INT, &default_registrar_cfg.max_contacts},
-		{"retry_after", PARAM_INT, &default_registrar_cfg.retry_after},
-		{"sock_flag", PARAM_INT, &sock_flag},
-		{"sock_hdr_name", PARAM_STR, &sock_hdr_name},
-		{"method_filtering", PARAM_INT, &method_filtering},
-		{"use_path", PARAM_INT, &path_enabled},
-		{"path_mode", PARAM_INT, &path_mode},
-		{"path_use_received", PARAM_INT, &path_use_params},
-		{"user_data_dtd", PARAM_STRING, &scscf_user_data_dtd},
-		{"user_data_xsd", PARAM_STRING, &scscf_user_data_xsd},
-		{"support_wildcardPSI", PARAM_INT, &scscf_support_wildcardPSI},
-		{"scscf_name", PARAM_STR,
-				&scscf_name_str}, //TODO: need to set this to default
-		{"store_profile_dereg", PARAM_INT, &store_data_on_dereg},
-		{"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
-		{"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
-		{"subscription_default_expires", PARAM_INT,
-				&subscription_default_expires},
-		{"subscription_min_expires", PARAM_INT, &subscription_min_expires},
-		{"subscription_max_expires", PARAM_INT, &subscription_max_expires},
-		{"expires_buffer_percent", PARAM_INT,
-				&contact_expires_buffer_percentage},
-		{"ue_unsubscribe_on_dereg", PARAM_INT, &ue_unsubscribe_on_dereg},
-		{"subscription_expires_range", PARAM_INT, &subscription_expires_range},
-		{"user_data_always", PARAM_INT, &user_data_always},
-		{"error_reply_code", PARAM_INT, &error_reply_code},
-		{"notification_list_size_threshold", PARAM_INT,
-				&notification_list_size_threshold},
-		{"max_notification_list_size", PARAM_INT, &max_notification_list_size},
-		{"notification_processes", PARAM_INT, &notification_processes},
-		{"send_vs_callid_avp", PARAM_INT, &send_vs_callid_avp},
-		{"skip_multiple_bindings_on_reg_resp", PARAM_INT,
-				&skip_multiple_bindings_on_reg_resp},
-		{0, 0, 0}};
+	{"default_expires", PARAM_INT, &default_registrar_cfg.default_expires},
+	{"default_expires_range", PARAM_INT, &default_registrar_cfg.default_expires_range},
+	{"min_expires", PARAM_INT, &default_registrar_cfg.min_expires},
+	{"max_expires", PARAM_INT, &default_registrar_cfg.max_expires},
+	{"em_default_expires", PARAM_INT, &default_registrar_cfg.em_default_expires},
+	{"em_max_expires", PARAM_INT, &default_registrar_cfg.em_max_expires},
+	{"em_min_expires", PARAM_INT, &default_registrar_cfg.em_min_expires},
+	{"default_q", PARAM_INT, &default_registrar_cfg.default_q},
+	{"append_branches", PARAM_INT, &default_registrar_cfg.append_branches},
+	{"case_sensitive", PARAM_INT, &default_registrar_cfg.case_sensitive},
+	{"realm_prefix", PARAM_STRING, &default_registrar_cfg.realm_pref},
+	{"received_param", PARAM_STR, &rcv_param},
+	{"received_avp", PARAM_STRING, &rcv_avp_param},
+	{"aor_avp", PARAM_STRING, &aor_avp_param},
+	{"reg_callid_avp", PARAM_STRING, &reg_callid_avp_param},
+	{"max_contacts", PARAM_INT, &default_registrar_cfg.max_contacts},
+	{"retry_after", PARAM_INT, &default_registrar_cfg.retry_after},
+	{"sock_flag", PARAM_INT, &sock_flag},
+	{"sock_hdr_name", PARAM_STR, &sock_hdr_name},
+	{"method_filtering", PARAM_INT, &method_filtering},
+	{"use_path", PARAM_INT, &path_enabled},
+	{"path_mode", PARAM_INT, &path_mode},
+	{"path_use_received", PARAM_INT, &path_use_params},
+	{"user_data_dtd", PARAM_STRING, &scscf_user_data_dtd},
+	{"user_data_xsd", PARAM_STRING, &scscf_user_data_xsd},
+	{"support_wildcardPSI", PARAM_INT, &scscf_support_wildcardPSI},
+	{"scscf_name", PARAM_STR, &scscf_name_str}, //TODO: need to set this to default
+	{"store_profile_dereg", PARAM_INT, &store_data_on_dereg},
+	{"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
+	{"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
+	{"subscription_default_expires", PARAM_INT, &subscription_default_expires},
+	{"subscription_min_expires", PARAM_INT, &subscription_min_expires},
+	{"subscription_max_expires", PARAM_INT, &subscription_max_expires},
+	{"expires_buffer_percent", PARAM_INT, &contact_expires_buffer_percentage},
+	{"ue_unsubscribe_on_dereg", PARAM_INT, &ue_unsubscribe_on_dereg},
+	{"subscription_expires_range", PARAM_INT, &subscription_expires_range},
+	{"user_data_always", PARAM_INT, &user_data_always},
+	{"error_reply_code", PARAM_INT, &error_reply_code},
+	{"notification_list_size_threshold", PARAM_INT, &notification_list_size_threshold},
+	{"max_notification_list_size", PARAM_INT, &max_notification_list_size},
+	{"notification_processes", PARAM_INT, &notification_processes},
+	{"send_vs_callid_avp", PARAM_INT, &send_vs_callid_avp},
+	{"skip_multiple_bindings_on_reg_resp", PARAM_INT, &skip_multiple_bindings_on_reg_resp},
+	{0, 0, 0}
+};
 
 /*! \brief We expose internal variables via the statistic framework below.*/
-stat_export_t mod_stats[] = {{"max_expires", STAT_NO_RESET, &max_expires_stat},
-		{"max_contacts", STAT_NO_RESET, &max_contacts_stat},
-		{"default_expire", STAT_NO_RESET, &default_expire_stat},
-		{"default_expires_range", STAT_NO_RESET, &default_expire_range_stat},
-		{"accepted_regs", 0, &accepted_registrations},
-		{"rejected_regs", 0, &rejected_registrations},
-		{"sar_avg_response_time", STAT_IS_FUNC,
-				(stat_var **)get_avg_sar_response_time},
-		{"notifies_in_q", STAT_IS_FUNC,
-				(stat_var **)get_notification_list_size},
-		{"sar_timeouts", 0, (stat_var **)&stat_sar_timeouts}, {0, 0, 0}};
+stat_export_t mod_stats[] = {
+	{"max_expires", STAT_NO_RESET, &max_expires_stat},
+	{"max_contacts", STAT_NO_RESET, &max_contacts_stat},
+	{"default_expire", STAT_NO_RESET, &default_expire_stat},
+	{"default_expires_range", STAT_NO_RESET, &default_expire_range_stat},
+	{"accepted_regs", 0, &accepted_registrations},
+	{"rejected_regs", 0, &rejected_registrations},
+	{"sar_avg_response_time", STAT_IS_FUNC, (stat_var **)get_avg_sar_response_time},
+	{"notifies_in_q", STAT_IS_FUNC, (stat_var **)get_notification_list_size},
+	{"sar_timeouts", 0, (stat_var **)&stat_sar_timeouts}, {0, 0, 0}
+};
 
 /*! \brief
  * Module exports structure
  */
 struct module_exports exports = {
-		"ims_registrar_scscf", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,									/* Exported functions */
-		params,									/* Exported parameters */
-		0,										/* exported RPC methods */
-		mod_pvs,								/* exported pseudo-variables */
-		0,										/* response handling function */
-		mod_init,	/* module initialization function */
-		child_init, /* Per-child init function */
-		mod_destroy /* destroy function */
+	"ims_registrar_scscf",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			/* Exported functions */
+	params,			/* Exported parameters */
+	0,				/* exported RPC methods */
+	mod_pvs,		/* exported pseudo-variables */
+	0,				/* response handling function */
+	mod_init,	/* module initialization function */
+	child_init, /* Per-child init function */
+	mod_destroy /* destroy function */
 };
-
+/* clang-format on */
 static str orig_prefix = {"sip:orig@", 9};
 
 /*! \brief
@@ -758,6 +755,14 @@ static int unreg_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int unreg_fixup_free(void **param, int param_no)
+{
+	if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
+	}
+	return 0;
+}
+
 /*
  * Convert the char* parameters
  */
@@ -785,6 +790,14 @@ static int assign_save_fixup3_async(void **param, int param_no)
 
 	return 0;
 }
+static int assign_save_fixup_free(void **param, int param_no)
+{
+	if(param_no == 1) { //route name - static or dynamic string (config vars)
+		fixup_free_spve_null(param, param_no);
+	}
+	return 0;
+}
+
 
 static int uint_fixup(void **param, int param_no)
 {
@@ -845,6 +858,16 @@ static int fetchc_fixup(void **param, int param_no)
 		return fixup_spve_null(param, 1);
 	} else if(param_no == 3) {
 		return fixup_str_null(param, 1);
+	}
+	return 0;
+}
+
+static int fetchc_fixup_free(void **param, int param_no)
+{
+	if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 3) {
+		return fixup_free_str_null(param, 1);
 	}
 	return 0;
 }
