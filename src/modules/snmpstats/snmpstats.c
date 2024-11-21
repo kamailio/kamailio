@@ -127,42 +127,37 @@ static int mod_child_init(int rank);
  * log a useful message and kill the AgentX Sub-Agent child process */
 static void mod_destroy(void);
 
+/* clang-format off */
 /*!
  * This structure defines the SNMPStats parameters that can be configured
  * through the kamailio.cfg configuration file.
  */
 static param_export_t mod_params[] = {
-		{"sipEntityType", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)handleSipEntityType},
-		{"MsgQueueMinorThreshold", PARAM_INT | PARAM_USE_FUNC,
-				(void *)set_queue_minor_threshold},
-		{"MsgQueueMajorThreshold", PARAM_INT | PARAM_USE_FUNC,
-				(void *)set_queue_major_threshold},
-		{"dlg_minor_threshold", PARAM_INT | PARAM_USE_FUNC,
-				(void *)set_dlg_minor_threshold},
-		{"dlg_major_threshold", PARAM_INT | PARAM_USE_FUNC,
-				(void *)set_dlg_major_threshold},
-		{"snmpgetPath", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)set_snmpget_path},
-		{"snmpCommunity", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)set_snmp_community},
-		{"snmpVersion", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)set_snmp_version},
-		{"export_registrar", PARAM_INT, &snmp_export_registrar}, {0, 0, 0}};
-
+	{"sipEntityType", PARAM_STRING | PARAM_USE_FUNC, (void *)handleSipEntityType},
+	{"MsgQueueMinorThreshold", PARAM_INT | PARAM_USE_FUNC, (void *)set_queue_minor_threshold},
+	{"MsgQueueMajorThreshold", PARAM_INT | PARAM_USE_FUNC, (void *)set_queue_major_threshold},
+	{"dlg_minor_threshold", PARAM_INT | PARAM_USE_FUNC, (void *)set_dlg_minor_threshold},
+	{"dlg_major_threshold", PARAM_INT | PARAM_USE_FUNC, (void *)set_dlg_major_threshold},
+	{"snmpgetPath", PARAM_STRING | PARAM_USE_FUNC, (void *)set_snmpget_path},
+	{"snmpCommunity", PARAM_STRING | PARAM_USE_FUNC, (void *)set_snmp_community},
+	{"snmpVersion", PARAM_STRING | PARAM_USE_FUNC, (void *)set_snmp_version},
+	{"export_registrar", PARAM_INT, &snmp_export_registrar},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		SNMPSTATS_MODULE_NAME, /* module name */
-		DEFAULT_DLFLAGS,	   /* dlopen flags */
-		0,					   /* exported functions */
-		mod_params,			   /* exported parameters */
-		0,					   /* exported rpc functions */
-		0,					   /* exported pseudo-variables */
-		0,					   /* reply processing function */
-		mod_init,			   /* module init function */
-		mod_child_init,		   /* per-child init function */
-		mod_destroy			   /* module destroy function */
+	SNMPSTATS_MODULE_NAME, /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	0,               /* exported functions */
+	mod_params,      /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	mod_child_init,  /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
+/* clang-format on */
 
 /*!
  * The module will fork off a child process to run an snmp command via execve().
