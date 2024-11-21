@@ -40,8 +40,10 @@ static void *run_threadP(_thread_proto fn, void *arg)
 	pthread_t tid;
 	void *ret = NULL;
 
-	if(likely(ksr_tls_threads_mode == 0 || ksr_tls_threads_mode == 2
-			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+	if(likely(ksr_tls_threads_mode == KSR_TLS_THREADS_MNONE
+			   || ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK
+			   || (ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP
+					   && process_no > 0))) {
 		return fn(arg);
 	}
 
@@ -77,8 +79,10 @@ static void *run_threadPI(_thread_protoPI fn, void *arg1, int arg2)
 	pthread_t tid;
 	void *ret = NULL;
 
-	if(likely(ksr_tls_threads_mode == 0 || ksr_tls_threads_mode == 2
-			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+	if(likely(ksr_tls_threads_mode == KSR_TLS_THREADS_MNONE
+			   || ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK
+			   || (ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP
+					   && process_no > 0))) {
 		return fn(arg1, arg2);
 	}
 
@@ -113,8 +117,10 @@ static void run_threadV(_thread_protoV fn)
 #ifdef USE_TLS
 	pthread_t tid;
 
-	if(likely(ksr_tls_threads_mode == 0 || ksr_tls_threads_mode == 2
-			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+	if(likely(ksr_tls_threads_mode == KSR_TLS_THREADS_MNONE
+			   || ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK
+			   || (ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP
+					   && process_no > 0))) {
 		fn();
 		return;
 	}
@@ -152,8 +158,10 @@ static int run_thread4PP(_thread_proto4PP fn, void *arg1, void *arg2)
 	pthread_t tid;
 	int ret = 0;
 
-	if(likely(ksr_tls_threads_mode == 0 || ksr_tls_threads_mode == 2
-			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+	if(likely(ksr_tls_threads_mode == KSR_TLS_THREADS_MNONE
+			   || ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK
+			   || (ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP
+					   && process_no > 0))) {
 		return fn(arg1, arg2);
 	}
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap4PP,
@@ -188,8 +196,10 @@ static void run_thread0P(_thread_proto0P fn, void *arg1)
 #ifdef USE_TLS
 	pthread_t tid;
 
-	if(likely(ksr_tls_threads_mode == 0 || ksr_tls_threads_mode == 2
-			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+	if(likely(ksr_tls_threads_mode == KSR_TLS_THREADS_MNONE
+			   || ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK
+			   || (ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP
+					   && process_no > 0))) {
 		fn(arg1);
 		return;
 	}
@@ -240,8 +250,10 @@ static int run_thread4P5I2P2(_thread_proto4P5I2P2 fn, void *arg1, void *arg2,
 	pthread_t tid;
 	int ret = 0;
 
-	if(likely(ksr_tls_threads_mode == 0 || ksr_tls_threads_mode == 2
-			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+	if(likely(ksr_tls_threads_mode == KSR_TLS_THREADS_MNONE
+			   || ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK
+			   || (ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP
+					   && process_no > 0))) {
 		return fn(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
 	}
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap4P5I2P2,
@@ -278,8 +290,10 @@ static int run_thread4L(_thread_proto4L fn, long arg1)
 	pthread_t tid;
 	int ret = 0;
 
-	if(likely(ksr_tls_threads_mode == 0 || ksr_tls_threads_mode == 2
-			   || (ksr_tls_threads_mode == 1 && process_no > 0))) {
+	if(likely(ksr_tls_threads_mode == KSR_TLS_THREADS_MNONE
+			   || ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK
+			   || (ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP
+					   && process_no > 0))) {
 		return fn(arg1);
 	}
 	pthread_create(&tid, NULL, (_thread_proto)run_thread_wrap4L,

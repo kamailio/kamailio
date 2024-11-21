@@ -109,6 +109,9 @@ extern int ksr_tcp_script_mode;
 #ifdef USE_TLS
 extern int tls_disable;
 extern unsigned short tls_port_no;
+#define KSR_TLS_THREADS_MNONE 0 /* no set of set thread-local variables */
+#define KSR_TLS_THREADS_MTEMP 1 /* set thread-local variables in temp thread */
+#define KSR_TLS_THREADS_MFORK 2 /* set thread-local variables in at-fork */
 extern int ksr_tls_threads_mode;
 #endif
 #ifdef USE_SCTP
