@@ -145,10 +145,12 @@ error1:
 
 void pike_exit(void)
 {
+#if 0
 	/* destroy semaphore */
 	if(pike_timer_lock) {
 		lock_destroy(pike_timer_lock);
 		lock_dealloc(pike_timer_lock);
+		pike_timer_lock = 0;
 	}
 
 	/* empty the timer list head */
@@ -159,6 +161,9 @@ void pike_exit(void)
 
 	/* destroy the IP tree */
 	destroy_ip_tree();
+#endif
+
+	LM_DBG("done\n");
 
 	return;
 }
