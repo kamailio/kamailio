@@ -52,29 +52,32 @@ static int child_init(int);
 static void mod_destroy(void);
 
 static int w_statsc_reset(sip_msg_t *msg, char *p1, char *p2);
-
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"statsc_reset", (cmd_function)w_statsc_reset, 0, 0, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-static param_export_t params[] = {
-		{"track", PARAM_STRING | PARAM_USE_FUNC, (void *)statsc_track_param},
-		{"interval", PARAM_INT, &statsc_interval},
-		{"items", PARAM_INT, &statsc_items}, {0, 0, 0}};
-
-struct module_exports exports = {
-		"statsc",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd exports */
-		params,			 /* param exports */
-		0,				 /* exported RPC methods */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per child init function */
-		mod_destroy		 /* destroy function */
+	{"statsc_reset", (cmd_function)w_statsc_reset, 0, 0, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
+static param_export_t params[] = {
+	{"track", PARAM_STRING | PARAM_USE_FUNC, (void *)statsc_track_param},
+	{"interval", PARAM_INT, &statsc_interval},
+	{"items", PARAM_INT, &statsc_items},
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"statsc",        /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
+};
+/* clang-format on */
 
 typedef struct statsc_nmap
 {
