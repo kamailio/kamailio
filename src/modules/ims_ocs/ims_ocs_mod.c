@@ -53,22 +53,25 @@ int event_route_ccr_term = 0;
 static int w_ccr_result(
 		struct sip_msg *msg, char *result, char *grantedunits, char *final);
 
-static cmd_export_t cmds[] = {{"ccr_result", (cmd_function)w_ccr_result, 3,
-									  fixup_var_pve_str_12, 0, REQUEST_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cmd_export_t cmds[] = {{"ccr_result", (cmd_function)w_ccr_result, 3, fixup_var_pve_str_12, fixup_free_fparam_all, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {{0, 0, 0}};
 
 
 /** module exports */
 struct module_exports exports = {"ims_ocs", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			/* Exported functions */
-		params, 0,		/* exported RPC methods */
-		0,				/* exported pseudo-variables */
-		0,				/* response handling function */
-		mod_init,		/* module initialization function */
-		mod_child_init, /* per-child init function */
-		mod_destroy};
+	cmds,			/* Exported functions */
+	params, 0,		/* exported RPC methods */
+	0,				/* exported pseudo-variables */
+	0,				/* response handling function */
+	mod_init,		/* module initialization function */
+	mod_child_init, /* per-child init function */
+	mod_destroy
+};
+/* clang-format on */
 
 /**
  * init module function
