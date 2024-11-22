@@ -115,20 +115,17 @@ static int w_pcre_match_group(struct sip_msg *_msg, char *_s1, char *_s2);
  */
 /* clang-format off */
 static cmd_export_t cmds[] = {
-	{"pcre_match", (cmd_function)w_pcre_match, 2, fixup_spve_spve, 0,
-			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE
-					| LOCAL_ROUTE},
+	{"pcre_match", (cmd_function)w_pcre_match, 2,
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
 	{"pcre_match_group", (cmd_function)w_pcre_match_group, 2,
-			fixup_spve_spve, 0,
-			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE
-					| LOCAL_ROUTE},
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
 	{"pcre_match_group", (cmd_function)w_pcre_match_group, 1,
-			fixup_spve_null, 0,
-			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE
-					| LOCAL_ROUTE},
+		fixup_spve_null, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
-
 
 /*
  * Exported parameters
@@ -144,21 +141,20 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-
 /*
  * Module interface
  */
 struct module_exports exports = {
-	"regex",		 /*!< module name */
-	DEFAULT_DLFLAGS, /*!< dlopen flags */
-	cmds,			 /*!< exported functions */
-	params,			 /*!< exported parameters */
-	0,				 /*!< exported RPC functions */
-	0,				 /*!< exported pseudo-variables */
-	0,				 /*!< response handling function */
-	mod_init,		 /*!< module initialization function */
-	0,				 /*!< per-child init function */
-	destroy			 /*!< destroy function */
+	"regex",         /*!< module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	destroy          /* module destroy function */
 };
 /* clang-format on */
 
