@@ -85,59 +85,6 @@ int fixup_ciu(void **, int);
 int fixup_free_ciu(void **param, int param_no);
 
 /*
- * EXPORTED COMMANDS
- */
-static cmd_export_t cmds[] = {
-		{"sca_handle_subscribe", (cmd_function)sca_handle_subscribe_0_f, 0,
-				NULL, NULL, REQUEST_ROUTE},
-		{"sca_handle_subscribe", (cmd_function)sca_handle_subscribe_1_f, 1,
-				fixup_hs, fixup_free_hs, REQUEST_ROUTE},
-		{"sca_handle_subscribe", (cmd_function)sca_handle_subscribe_2_f, 2,
-				fixup_hs, fixup_free_hs, REQUEST_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update_0_f, 0,
-				NULL, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update_1_f, 1,
-				fixup_ciu, fixup_free_ciu,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update_2_f, 2,
-				fixup_ciu, fixup_free_ciu,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update_3_f, 3,
-				fixup_ciu, fixup_free_ciu,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-/*
- * EXPORTED RPC INTERFACE
- */
-static rpc_export_t sca_rpc[] = {
-		{"sca.all_subscriptions", sca_rpc_show_all_subscriptions,
-				sca_rpc_show_all_subscriptions_doc, 0},
-		{"sca.subscription_count", sca_rpc_subscription_count,
-				sca_rpc_subscription_count_doc, 0},
-		{"sca.show_subscription", sca_rpc_show_subscription,
-				sca_rpc_show_subscription_doc, 0},
-		{"sca.subscribers", sca_rpc_show_subscribers,
-				sca_rpc_show_subscribers_doc, 0},
-		{"sca.deactivate_all_subscriptions",
-				sca_rpc_deactivate_all_subscriptions,
-				sca_rpc_deactivate_all_subscriptions_doc, 0},
-		{"sca.deactivate_subscription", sca_rpc_deactivate_subscription,
-				sca_rpc_deactivate_subscription_doc, 0},
-		{"sca.all_appearances", sca_rpc_show_all_appearances,
-				sca_rpc_show_all_appearances_doc, 0},
-		{"sca.show_appearance", sca_rpc_show_appearance,
-				sca_rpc_show_appearance_doc, 0},
-		{"sca.seize_appearance", sca_rpc_seize_appearance,
-				sca_rpc_seize_appearance_doc, 0},
-		{"sca.update_appearance", sca_rpc_update_appearance,
-				sca_rpc_update_appearance_doc, 0},
-		{"sca.release_appearance", sca_rpc_release_appearance,
-				sca_rpc_release_appearance_doc, 0},
-		{NULL, NULL, NULL, 0},
-};
-
-/*
  * EXPORTED PARAMETERS
  */
 str outbound_proxy = STR_NULL;
@@ -155,28 +102,79 @@ str contact_fallback = STR_NULL;
 str from_uri_avp_param = STR_NULL;
 str to_uri_avp_param = STR_NULL;
 
+/* clang-format off */
+/*
+ * EXPORTED COMMANDS
+ */
+static cmd_export_t cmds[] = {
+	{"sca_handle_subscribe", (cmd_function)sca_handle_subscribe_0_f, 0,
+			0, 0, REQUEST_ROUTE},
+	{"sca_handle_subscribe", (cmd_function)sca_handle_subscribe_1_f, 1,
+			fixup_hs, fixup_free_hs, REQUEST_ROUTE},
+	{"sca_handle_subscribe", (cmd_function)sca_handle_subscribe_2_f, 2,
+			fixup_hs, fixup_free_hs, REQUEST_ROUTE},
+	{"sca_call_info_update", (cmd_function)sca_call_info_update_0_f, 0,
+			0, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"sca_call_info_update", (cmd_function)sca_call_info_update_1_f, 1,
+			fixup_ciu, fixup_free_ciu, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"sca_call_info_update", (cmd_function)sca_call_info_update_2_f, 2,
+			fixup_ciu, fixup_free_ciu, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"sca_call_info_update", (cmd_function)sca_call_info_update_3_f, 3,
+			fixup_ciu, fixup_free_ciu, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
+
+/*
+ * EXPORTED RPC INTERFACE
+ */
+static rpc_export_t sca_rpc[] = {
+	{"sca.all_subscriptions", sca_rpc_show_all_subscriptions,
+			sca_rpc_show_all_subscriptions_doc, 0},
+	{"sca.subscription_count", sca_rpc_subscription_count,
+			sca_rpc_subscription_count_doc, 0},
+	{"sca.show_subscription", sca_rpc_show_subscription,
+			sca_rpc_show_subscription_doc, 0},
+	{"sca.subscribers", sca_rpc_show_subscribers,
+			sca_rpc_show_subscribers_doc, 0},
+	{"sca.deactivate_all_subscriptions",
+			sca_rpc_deactivate_all_subscriptions,
+			sca_rpc_deactivate_all_subscriptions_doc, 0},
+	{"sca.deactivate_subscription", sca_rpc_deactivate_subscription,
+			sca_rpc_deactivate_subscription_doc, 0},
+	{"sca.all_appearances", sca_rpc_show_all_appearances,
+			sca_rpc_show_all_appearances_doc, 0},
+	{"sca.show_appearance", sca_rpc_show_appearance,
+			sca_rpc_show_appearance_doc, 0},
+	{"sca.seize_appearance", sca_rpc_seize_appearance,
+			sca_rpc_seize_appearance_doc, 0},
+	{"sca.update_appearance", sca_rpc_update_appearance,
+			sca_rpc_update_appearance_doc, 0},
+	{"sca.release_appearance", sca_rpc_release_appearance,
+			sca_rpc_release_appearance_doc, 0},
+	{NULL, NULL, NULL, 0},
+};
+
 static param_export_t params[] = {
-		{"outbound_proxy", PARAM_STR, &outbound_proxy},
-		{"db_url", PARAM_STR, &db_url},
-		{"subs_table", PARAM_STR, &db_subs_table},
-		{"state_table", PARAM_STR, &db_state_table},
-		{"db_update_interval", PARAM_INT, &db_update_interval},
-		{"hash_table_size", PARAM_INT, &hash_table_size},
-		{"call_info_max_expires", PARAM_INT, &call_info_max_expires},
-		{"line_seize_max_expires", PARAM_INT, &line_seize_max_expires},
-		{"purge_expired_interval", PARAM_INT, &purge_expired_interval},
-		{"onhold_bflag", PARAM_INT, &onhold_bflag},
-		{"contact_fallback", PARAM_STR, &contact_fallback},
-		{"server_address", PARAM_STR, &server_address},
-		{"from_uri_avp", PARAM_STR, &from_uri_avp_param},
-		{"to_uri_avp", PARAM_STR, &to_uri_avp_param},
-		{NULL, 0, NULL},
+	{"outbound_proxy", PARAM_STR, &outbound_proxy},
+	{"db_url", PARAM_STR, &db_url},
+	{"subs_table", PARAM_STR, &db_subs_table},
+	{"state_table", PARAM_STR, &db_state_table},
+	{"db_update_interval", PARAM_INT, &db_update_interval},
+	{"hash_table_size", PARAM_INT, &hash_table_size},
+	{"call_info_max_expires", PARAM_INT, &call_info_max_expires},
+	{"line_seize_max_expires", PARAM_INT, &line_seize_max_expires},
+	{"purge_expired_interval", PARAM_INT, &purge_expired_interval},
+	{"onhold_bflag", PARAM_INT, &onhold_bflag},
+	{"contact_fallback", PARAM_STR, &contact_fallback},
+	{"server_address", PARAM_STR, &server_address},
+	{"from_uri_avp", PARAM_STR, &from_uri_avp_param},
+	{"to_uri_avp", PARAM_STR, &to_uri_avp_param},
+	{NULL, 0, NULL},
 };
 
 /*
  * MODULE EXPORTS
  */
-/* clang-format off */
 struct module_exports exports= {
 	"sca",           /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
