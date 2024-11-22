@@ -65,8 +65,9 @@ typedef struct async_tkv_param
 	str sval;
 } async_tkv_param_t;
 
-#define KSR_ASYNC_TKV_SIZE 512
+#define KSR_ASYNC_TKV_SIZE 1024
 void async_tkv_init(void);
 int async_tkv_emit(int dtype, char *pkey, char *fmt, ...);
+async_tkv_param_t *ksr_async_tkv_param_get(void);
 
 #endif

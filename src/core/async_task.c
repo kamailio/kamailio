@@ -541,6 +541,14 @@ static int _ksr_async_tkv_ridx = -1;
 /**
  *
  */
+async_tkv_param_t *ksr_async_tkv_param_get(void)
+{
+	return _ksr_async_tkv_param;
+}
+
+/**
+ *
+ */
 void async_tkv_init(void)
 {
 	str gname = str_init("tkv");
