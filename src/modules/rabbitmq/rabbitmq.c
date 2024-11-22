@@ -127,34 +127,40 @@ static int rbmq_fixup_free_params(void **param, int param_no)
 	return -1;
 }
 
+/* clang-format off */
 /* module commands */
 static cmd_export_t cmds[] = {
-		{"rabbitmq_publish", (cmd_function)rabbitmq_publish, 4, fixup_spve_all,
-				fixup_free_spve_all, ANY_ROUTE},
-		{"rabbitmq_publish_consume", (cmd_function)rabbitmq_publish_consume, 5,
-				rbmq_fixup_params, rbmq_fixup_free_params, REQUEST_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"rabbitmq_publish", (cmd_function)rabbitmq_publish, 4,
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"rabbitmq_publish_consume", (cmd_function)rabbitmq_publish_consume, 5,
+		rbmq_fixup_params, rbmq_fixup_free_params, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /* module parameters */
-static param_export_t params[] = {{"url", PARAM_STRING, &amqp_url},
-		{"amqps_ca_file", PARAM_STRING, &rmq_amqps_ca_file},
-		{"timeout_sec", PARAM_INT, &timeout_sec},
-		{"timeout_usec", PARAM_INT, &timeout_usec},
-		{"direct_reply_to", PARAM_INT, &direct_reply_to}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"url", PARAM_STRING, &amqp_url},
+	{"amqps_ca_file", PARAM_STRING, &rmq_amqps_ca_file},
+	{"timeout_sec", PARAM_INT, &timeout_sec},
+	{"timeout_usec", PARAM_INT, &timeout_usec},
+	{"direct_reply_to", PARAM_INT, &direct_reply_to},
+	{0, 0, 0}
+};
 
 /* module exports */
 struct module_exports exports = {
-		"rabbitmq",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* RPC method exports */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		mod_child_init,	 /* per-child init function */
-		0				 /* module destroy function */
+	"rabbitmq",      /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	mod_child_init,  /* per-child init function */
+	0                /* module destroy function */
 };
+/* clang-format on */
 
 /* module init */
 static int mod_init(void)
