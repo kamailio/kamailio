@@ -141,34 +141,38 @@ static rpc_t func_param;
 
 char jsonrpc_error_buf[JSONRPC_ERROR_REASON_BUF_LEN];
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"jsonrpc_dispatch", (cmd_function)jsonrpc_dispatch, 0, 0, 0,
-				REQUEST_ROUTE},
-		{"jsonrpc_exec", (cmd_function)jsonrpc_exec, 1, fixup_spve_null, 0,
-				ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"jsonrpc_dispatch", (cmd_function)jsonrpc_dispatch, 0, 0, 0,
+			REQUEST_ROUTE},
+	{"jsonrpc_exec", (cmd_function)jsonrpc_exec, 1, fixup_spve_null, fixup_free_spve_null,
+			ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"pretty_format", PARAM_INT, &jsonrpc_pretty_format},
-		{"transport", PARAM_INT, &jsonrpc_transport},
-		{"fifo_name", PARAM_STRING, &jsonrpc_fifo},
-		{"fifo_mode", PARAM_INT, &jsonrpc_fifo_mode},
-		{"fifo_group", PARAM_STRING, &jsonrpc_fifo_gid_s},
-		{"fifo_group", PARAM_INT, &jsonrpc_fifo_gid},
-		{"fifo_user", PARAM_STRING, &jsonrpc_fifo_uid_s},
-		{"fifo_user", PARAM_INT, &jsonrpc_fifo_uid},
-		{"fifo_reply_dir", PARAM_STRING, &jsonrpc_fifo_reply_dir},
-		{"dgram_socket", PARAM_STRING, &jsonrpc_dgram_socket},
-		{"dgram_workers", PARAM_INT, &jsonrpc_dgram_workers},
-		{"dgram_timeout", PARAM_INT, &jsonrpc_dgram_timeout},
-		{"dgram_mode", PARAM_INT, &jsonrpc_dgram_unix_socket_mode},
-		{"dgram_group", PARAM_STRING, &jsonrpc_dgram_unix_socket_gid_s},
-		{"dgram_group", PARAM_INT, &jsonrpc_dgram_unix_socket_gid},
-		{"dgram_user", PARAM_STRING, &jsonrpc_dgram_unix_socket_uid_s},
-		{"dgram_user", PARAM_INT, &jsonrpc_dgram_unix_socket_uid},
-		{"tcp_socket", PARAM_STRING, &jsonrpc_tcp_socket},
+	{"pretty_format", PARAM_INT, &jsonrpc_pretty_format},
+	{"transport", PARAM_INT, &jsonrpc_transport},
+	{"fifo_name", PARAM_STRING, &jsonrpc_fifo},
+	{"fifo_mode", PARAM_INT, &jsonrpc_fifo_mode},
+	{"fifo_group", PARAM_STRING, &jsonrpc_fifo_gid_s},
+	{"fifo_group", PARAM_INT, &jsonrpc_fifo_gid},
+	{"fifo_user", PARAM_STRING, &jsonrpc_fifo_uid_s},
+	{"fifo_user", PARAM_INT, &jsonrpc_fifo_uid},
+	{"fifo_reply_dir", PARAM_STRING, &jsonrpc_fifo_reply_dir},
+	{"dgram_socket", PARAM_STRING, &jsonrpc_dgram_socket},
+	{"dgram_workers", PARAM_INT, &jsonrpc_dgram_workers},
+	{"dgram_timeout", PARAM_INT, &jsonrpc_dgram_timeout},
+	{"dgram_mode", PARAM_INT, &jsonrpc_dgram_unix_socket_mode},
+	{"dgram_group", PARAM_STRING, &jsonrpc_dgram_unix_socket_gid_s},
+	{"dgram_group", PARAM_INT, &jsonrpc_dgram_unix_socket_gid},
+	{"dgram_user", PARAM_STRING, &jsonrpc_dgram_unix_socket_uid_s},
+	{"dgram_user", PARAM_INT, &jsonrpc_dgram_unix_socket_uid},
+	{"tcp_socket", PARAM_STRING, &jsonrpc_tcp_socket},
 
-		{0, 0, 0}};
+	{0, 0, 0}
+};
+/* clang-format on */
 
 static int jsonrpc_pv_get_jrpl(
 		sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
