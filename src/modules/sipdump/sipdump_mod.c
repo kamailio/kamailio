@@ -74,7 +74,7 @@ int pv_get_sipdump(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 /* clang-format off */
 static cmd_export_t cmds[]={
 	{"sipdump_send", (cmd_function)w_sipdump_send, 1, fixup_spve_null,
-		0, ANY_ROUTE},
+		fixup_free_spve_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
