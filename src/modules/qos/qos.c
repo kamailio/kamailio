@@ -47,29 +47,33 @@ static int qos_flag = -1;
 struct dlg_binds dialog_st;
 struct dlg_binds *dlg_binds = &dialog_st;
 
-
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"load_qos", (cmd_function)load_qos, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
+	{"load_qos", (cmd_function)load_qos, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Script parameters
  */
 static param_export_t mod_params[] = {
-		{"qos_flag", PARAM_INT, &qos_flag}, {0, 0, 0}};
-
+	{"qos_flag", PARAM_INT, &qos_flag},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"qos",			 /* module's name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		mod_params,		 /* param exports */
-		0,				 /* exported RPC functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* reply processing function */
-		mod_init,		 /* module initialization function */
-		0,				 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	"qos",           /* module's name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	mod_params,      /* exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
+/* clang-format on */
 
 int load_qos(struct qos_binds *qosb)
 {
