@@ -343,7 +343,7 @@ int tls_disable = 0; /* tls enabled by default */
 int tls_disable = 1; /* tls disabled by default */
 #endif /* CORE_TLS */
 /* threads execution mode for tls with libssl */
-int ksr_tls_threads_mode = KSR_TLS_THREADS_MNONE;
+int ksr_tls_threads_mode = KSR_TLS_THREADS_MFORK;
 #endif /* USE_TLS */
 #ifdef USE_SCTP
 int sctp_children_no = 0;
