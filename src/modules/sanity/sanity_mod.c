@@ -50,45 +50,51 @@ static int w_sanity_check(sip_msg_t *_msg, char *_msg_check, char *_uri_check);
 static int w_sanity_reply(sip_msg_t *_msg, char *_p1, char *_p2);
 static int bind_sanity(sanity_api_t *api);
 
+/* clang-format off */
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] = {{"sanity_check", (cmd_function)w_sanity_check, 0,
-									  0, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"sanity_check", (cmd_function)w_sanity_check, 1, fixup_igp_null, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"sanity_check", (cmd_function)w_sanity_check, 2, fixup_igp_igp, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"sanity_reply", (cmd_function)w_sanity_reply, 0, 0, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"bind_sanity", (cmd_function)bind_sanity, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
+static cmd_export_t cmds[] = {
+	{"sanity_check", (cmd_function)w_sanity_check, 0,
+		0, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"sanity_check", (cmd_function)w_sanity_check, 1,
+		fixup_igp_null, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"sanity_check", (cmd_function)w_sanity_check, 2,
+		fixup_igp_igp, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"sanity_reply", (cmd_function)w_sanity_reply, 0,
+		0, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"bind_sanity", (cmd_function)bind_sanity, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
 static param_export_t params[] = {
-		{"default_checks", PARAM_INT, &default_msg_checks},
-		{"uri_checks", PARAM_INT, &default_uri_checks},
-		{"proxy_require", PARAM_STR, &_sanity_prval},
-		{"autodrop", PARAM_INT, &_sanity_drop},
-		{"noreply", PARAM_INT, &ksr_sanity_noreply}, {0, 0, 0}};
+	{"default_checks", PARAM_INT, &default_msg_checks},
+	{"uri_checks", PARAM_INT, &default_uri_checks},
+	{"proxy_require", PARAM_STR, &_sanity_prval},
+	{"autodrop", PARAM_INT, &_sanity_drop},
+	{"noreply", PARAM_INT, &ksr_sanity_noreply},
+	{0, 0, 0}
+};
 
 /*
  * Module description
  */
 struct module_exports exports = {
-		"sanity",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd exports */
-		params,			 /* exported parameters */
-		0,				 /* RPC methods */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		0,				 /* per-child init function */
-		0				 /* module destroy function */
+	"sanity",        /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
+/* clang-format on */
 
 /*
  * initialize module
