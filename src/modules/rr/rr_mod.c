@@ -73,6 +73,7 @@ static void mod_destroy(void);
 /* fixup functions */
 static int direction_fixup(void **param, int param_no);
 static int it_list_fixup(void **param, int param_no);
+static int it_list_fixup_free(void **param, int param_no);
 /* wrapper functions */
 static int w_loose_route(struct sip_msg *, char *, char *);
 static int w_loose_route_preloaded(struct sip_msg *, char *, char *);
@@ -106,15 +107,15 @@ static cmd_export_t cmds[] = {
 	{"record_route", (cmd_function)w_record_route, 0,
 		0, 0,	REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
 	{"record_route", (cmd_function)w_record_route, 1,
-		it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+		it_list_fixup, it_list_fixup_free, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
 	{"record_route_preset", (cmd_function)w_record_route_preset, 1,
-		it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+		it_list_fixup, it_list_fixup_free, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
 	{"record_route_preset", (cmd_function)w_record_route_preset, 2,
-		it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+		it_list_fixup, it_list_fixup_free, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
 	{"record_route_advertised_address",	(cmd_function)w_record_route_advertised_address, 1,
-		it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+		it_list_fixup, it_list_fixup_free, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
 	{"add_rr_param", (cmd_function)w_add_rr_param, 1,
-		it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+		it_list_fixup, it_list_fixup_free, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
 	{"check_route_param", (cmd_function)w_check_route_param, 1,
 		fixup_regexp_null, fixup_free_regexp_null, REQUEST_ROUTE},
 	{"is_direction", (cmd_function)w_is_direction, 1,
@@ -233,6 +234,11 @@ static int it_list_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int it_list_fixup_free(void **param, int param_no)
+{
+	pv_elem_free_all(*param);
+	return 0;
+}
 
 static int direction_fixup(void **param, int param_no)
 {
