@@ -218,7 +218,7 @@ static cmd_export_t cmds[] = {
 	{"rl_check", (cmd_function)w_rl_check_forced, 1,
 		fixup_igp_null,	fixup_free_pvar_null, REQUEST_ROUTE | LOCAL_ROUTE},
 	{"rl_check_pipe", (cmd_function)w_rl_check_forced_pipe, 1,
-		fixup_igp_null, 0, ANY_ROUTE},
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
