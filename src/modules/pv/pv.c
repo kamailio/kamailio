@@ -535,9 +535,9 @@ int pv_register_api(pv_api_t *);
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"pv_isset", (cmd_function)pv_isset, 1,
-		fixup_pvar_null, 0, ANY_ROUTE},
+		fixup_pvar_null, fixup_free_pvar_null, ANY_ROUTE},
 	{"pv_unset", (cmd_function)pv_unset, 1,
-		fixup_pvar_null, 0, ANY_ROUTE},
+		fixup_pvar_null, fixup_free_pvar_null, ANY_ROUTE},
 	{"pv_xavp_print", (cmd_function)pv_xavp_print, 0, 0, 0, ANY_ROUTE},
 	{"pv_xavu_print", (cmd_function)pv_xavu_print, 0, 0, 0, ANY_ROUTE},
 	{"pv_xavi_print", (cmd_function)pv_xavi_print, 0, 0, 0, ANY_ROUTE},
@@ -552,9 +552,9 @@ static cmd_export_t cmds[] = {
 	{"not_empty", (cmd_function)pv_not_empty, 1,
 		fixup_pvar_null, fixup_free_pvar_null, ANY_ROUTE},
 	{"xavp_copy", (cmd_function)w_xavp_copy, 3,
-		pv_xavp_copy_fixup, 0, ANY_ROUTE},
+		pv_xavp_copy_fixup, fixup_free_fparam_all, ANY_ROUTE},
 	{"xavp_copy", (cmd_function)w_xavp_copy_dst, 4,
-		pv_xavp_copy_fixup, 0, ANY_ROUTE},
+		pv_xavp_copy_fixup, fixup_free_fparam_all, ANY_ROUTE},
 	{"xavp_slist_explode", (cmd_function)w_xavp_slist_explode, 4,
 		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"xavp_params_explode", (cmd_function)w_xavp_params_explode, 2,
