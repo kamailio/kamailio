@@ -1051,6 +1051,16 @@ int fixup_update_subs(void **param, int param_no)
 	return 0;
 }
 
+int fixup_free_update_subs(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
+	}
+	return 0;
+}
+
 void update_a_sub(subs_t *subs_copy)
 {
 	xmlDocPtr doc = NULL;

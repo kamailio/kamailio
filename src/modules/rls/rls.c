@@ -209,15 +209,16 @@ void rlsubs_table_update(unsigned int ticks, void *param);
 int add_rls_event(modparam_t type, void *val);
 int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent);
 int fixup_update_subs(void **param, int param_no);
+int fixup_free_update_subs(void **param, int param_no);
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"rls_handle_subscribe", (cmd_function)w_rls_handle_subscribe0, 0, 0, 0, REQUEST_ROUTE},
 	{"rls_handle_subscribe", (cmd_function)w_rls_handle_subscribe1, 1,
-		fixup_spve_null, 0, REQUEST_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
 	{"rls_handle_notify", (cmd_function)w_rls_handle_notify, 0, 0, 0, REQUEST_ROUTE},
 	{"rls_update_subs", (cmd_function)w_rls_update_subs, 2,
-		fixup_update_subs, 0, ANY_ROUTE},
+		fixup_update_subs, fixup_free_update_subs, ANY_ROUTE},
 	{"bind_rls", (cmd_function)bind_rls, 1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
