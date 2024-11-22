@@ -3187,7 +3187,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf,
 	 */
 
 	/* affects to-tag parsing */
-	ng_flags.to = (op == OP_DELETE) ? 0 : 1;
+	ng_flags.to = (!parse_by_module || op != OP_DELETE) ? 1 : 0;
 
 	/* module specific parsing */
 	if(parse_by_module && flags && parse_flags(&ng_flags, msg, &op, flags->s))
