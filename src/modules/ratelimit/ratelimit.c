@@ -212,39 +212,42 @@ static int ki_rl_check_pipe(struct sip_msg *msg, int pipe);
 static int set_load_source(modparam_t, void *);
 */
 static void destroy(void);
-
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"rl_check", (cmd_function)w_rl_check_default, 0, 0, 0, ANY_ROUTE},
-		{"rl_check", (cmd_function)w_rl_check_forced, 1, fixup_igp_null,
-				fixup_free_pvar_null, REQUEST_ROUTE | LOCAL_ROUTE},
-		{"rl_check_pipe", (cmd_function)w_rl_check_forced_pipe, 1,
-				fixup_igp_null, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"rl_check", (cmd_function)w_rl_check_default, 0, 0, 0, ANY_ROUTE},
+	{"rl_check", (cmd_function)w_rl_check_forced, 1,
+		fixup_igp_null,	fixup_free_pvar_null, REQUEST_ROUTE | LOCAL_ROUTE},
+	{"rl_check_pipe", (cmd_function)w_rl_check_forced_pipe, 1,
+		fixup_igp_null, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
+
 static param_export_t params[] = {
-		{"timer_interval", PARAM_INT, &timer_interval},
-		{"queue", PARAM_STRING | PARAM_USE_FUNC, (void *)add_queue_params},
-		{"pipe", PARAM_STRING | PARAM_USE_FUNC, (void *)add_pipe_params},
-		/* RESERVED for future use
+	{"timer_interval", PARAM_INT, &timer_interval},
+	{"queue", PARAM_STRING | PARAM_USE_FUNC, (void *)add_queue_params},
+	{"pipe", PARAM_STRING | PARAM_USE_FUNC, (void *)add_pipe_params},
+	/* RESERVED for future use
 	{"load_source",    PARAM_STRING|PARAM_USE_FUNC, (void *)set_load_source},
 	*/
-		{0, 0, 0}};
+	{0, 0, 0}
+};
 
 static rpc_export_t rpc_methods[];
 
 /** module exports */
 struct module_exports exports = {
-		"ratelimit",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* exported RPC functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		0,				 /* per-child init function */
-		destroy			 /* module exit function */
+	"ratelimit",     /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	destroy          /* module destroy function */
 };
-
+/* clang-format on */
 
 /**
  * converts a mapped str to an int
