@@ -49,7 +49,7 @@ static int w_rtjson_update_branch(sip_msg_t *msg, char *p1, char *p2);
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"rtjson_init_routes", (cmd_function)w_rtjson_init_routes, 1,
-		fixup_spve_null, 0, REQUEST_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
 	{"rtjson_push_routes", (cmd_function)w_rtjson_push_routes, 0, 0, 0, REQUEST_ROUTE},
 	{"rtjson_next_route", (cmd_function)w_rtjson_next_route, 0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"rtjson_update_branch", (cmd_function)w_rtjson_update_branch, 0, 0, 0, BRANCH_ROUTE},
