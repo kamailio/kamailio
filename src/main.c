@@ -3333,6 +3333,7 @@ int main(int argc, char **argv)
 #endif /* USE_TLS */
 #endif /* USE_TCP */
 
+	async_tkv_init();
 	sr_core_ert_run_xname("core:modinit-before");
 
 	if(init_modules() != 0) {
