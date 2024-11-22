@@ -82,45 +82,43 @@ int secf_reload_delta = 5;
 /* clang-format off */
 /* Exported commands */
 static cmd_export_t cmds[] = {
-		{"secf_check_ua", (cmd_function)w_check_ua, 0, 0, 0, ANY_ROUTE},
-		{"secf_check_from_hdr", (cmd_function)w_check_from_hdr, 0, 0, 0,
-				ANY_ROUTE},
-		{"secf_check_to_hdr", (cmd_function)w_check_to_hdr, 0, 0, 0, ANY_ROUTE},
-		{"secf_check_contact_hdr", (cmd_function)w_check_contact_hdr, 0, 0, 0,
-				ANY_ROUTE},
-		{"secf_check_ip", (cmd_function)w_check_ip, 0, 0, 0, ANY_ROUTE},
-		{"secf_check_country", (cmd_function)w_check_country, 1, 0, 0,
-				ANY_ROUTE},
-		{"secf_check_dst", (cmd_function)w_check_dst, 1, 0, 0, ANY_ROUTE},
-		{"secf_check_sqli_all", (cmd_function)w_check_sqli_all, 0, 0, 0,
-				ANY_ROUTE},
-		{"secf_check_sqli_hdr", (cmd_function)w_check_sqli_hdr, 1, 0, 0,
-				ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"secf_check_ua", (cmd_function)w_check_ua, 0, 0, 0, ANY_ROUTE},
+	{"secf_check_from_hdr", (cmd_function)w_check_from_hdr, 0, 0, 0, ANY_ROUTE},
+	{"secf_check_to_hdr", (cmd_function)w_check_to_hdr, 0, 0, 0, ANY_ROUTE},
+	{"secf_check_contact_hdr", (cmd_function)w_check_contact_hdr, 0, 0, 0, ANY_ROUTE},
+	{"secf_check_ip", (cmd_function)w_check_ip, 0, 0, 0, ANY_ROUTE},
+	{"secf_check_country", (cmd_function)w_check_country, 1, 0, 0, ANY_ROUTE},
+	{"secf_check_dst", (cmd_function)w_check_dst, 1, 0, 0, ANY_ROUTE},
+	{"secf_check_sqli_all", (cmd_function)w_check_sqli_all, 0, 0, 0, ANY_ROUTE},
+	{"secf_check_sqli_hdr", (cmd_function)w_check_sqli_hdr, 1, 0, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /* Exported module parameters */
-static param_export_t params[] = {{"db_url", PARAM_STRING, &secf_db_url},
-		{"table_name", PARAM_STR, &secf_table_name},
-		{"action_col", PARAM_STR, &secf_action_col},
-		{"type_col", PARAM_STR, &secf_type_col},
-		{"data_col", PARAM_STR, &secf_data_col},
-		{"dst_exact_match", PARAM_INT, &secf_dst_exact_match},
-		{"reload_delta", PARAM_INT, &secf_reload_delta},
-		{"cleanup_interval", PARAM_INT, &secf_reload_interval},
-		{0, 0, 0}};
+static param_export_t params[] = {
+	{"db_url", PARAM_STRING, &secf_db_url},
+	{"table_name", PARAM_STR, &secf_table_name},
+	{"action_col", PARAM_STR, &secf_action_col},
+	{"type_col", PARAM_STR, &secf_type_col},
+	{"data_col", PARAM_STR, &secf_data_col},
+	{"dst_exact_match", PARAM_INT, &secf_dst_exact_match},
+	{"reload_delta", PARAM_INT, &secf_reload_delta},
+	{"cleanup_interval", PARAM_INT, &secf_reload_interval},
+	{0, 0, 0}
+};
 
 /* Module exports definition */
 struct module_exports exports = {
-		"secfilter",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,		 /* exported functions */
-		params,		 /* exported parameters */
-		0,		 /* RPC method exports */
-		0,		 /* exported pseudo-variables */
-		0,		 /* response handling function */
-		mod_init,	 /* module initialization function */
-		child_init,	 /* per-child init function */
-		mod_destroy	 /* module destroy function */
+	"secfilter",     /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 
 /* RPC exported commands */
@@ -134,13 +132,15 @@ static const char *rpc_add_bl_doc[2] = {"Add new values to blacklist", NULL};
 static const char *rpc_add_wl_doc[2] = {"Add new values to whitelist", NULL};
 
 rpc_export_t secfilter_rpc[] = {
-		{"secfilter.reload", secf_rpc_reload, rpc_reload_doc, 0},
-		{"secfilter.print", secf_rpc_print, rpc_print_doc, 0},
-		{"secfilter.stats", secf_rpc_stats, rpc_stats_doc, 0},
-		{"secfilter.stats_reset", secf_rpc_stats_reset, rpc_stats_reset_doc, 0},
-		{"secfilter.add_dst", secf_rpc_add_dst, rpc_add_dst_doc, 0},
-		{"secfilter.add_bl", secf_rpc_add_bl, rpc_add_bl_doc, 0},
-		{"secfilter.add_wl", secf_rpc_add_wl, rpc_add_wl_doc, 0}, {0, 0, 0, 0}};
+	{"secfilter.reload", secf_rpc_reload, rpc_reload_doc, 0},
+	{"secfilter.print", secf_rpc_print, rpc_print_doc, 0},
+	{"secfilter.stats", secf_rpc_stats, rpc_stats_doc, 0},
+	{"secfilter.stats_reset", secf_rpc_stats_reset, rpc_stats_reset_doc, 0},
+	{"secfilter.add_dst", secf_rpc_add_dst, rpc_add_dst_doc, 0},
+	{"secfilter.add_bl", secf_rpc_add_bl, rpc_add_bl_doc, 0},
+	{"secfilter.add_wl", secf_rpc_add_wl, rpc_add_wl_doc, 0},
+	{0, 0, 0, 0}
+};
 /* clang-format on */
 
 /***
