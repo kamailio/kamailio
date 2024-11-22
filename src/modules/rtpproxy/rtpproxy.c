@@ -191,81 +191,78 @@ static str timeout_tag_pv_str = {0, 0};
 static pv_elem_t *timeout_tag_pv = NULL;
 static pv_elem_t *extra_id_pv = NULL;
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"set_rtp_proxy_set", (cmd_function)set_rtp_proxy_set_f, 1,
-				fixup_set_id, 0, ANY_ROUTE},
-		{"unforce_rtp_proxy", (cmd_function)unforce_rtp_proxy1_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"rtpproxy_destroy", (cmd_function)unforce_rtp_proxy1_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"unforce_rtp_proxy", (cmd_function)unforce_rtp_proxy1_f, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"rtpproxy_destroy", (cmd_function)unforce_rtp_proxy1_f, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"start_recording", (cmd_function)start_recording_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"rtpproxy_offer", (cmd_function)rtpproxy_offer1_f, 0, 0, 0, ANY_ROUTE},
-		{"rtpproxy_offer", (cmd_function)rtpproxy_offer1_f, 1, fixup_spve_null,
-				0, ANY_ROUTE},
-		{"rtpproxy_offer", (cmd_function)rtpproxy_offer2_f, 2, fixup_spve_spve,
-				0, ANY_ROUTE},
-		{"rtpproxy_answer", (cmd_function)rtpproxy_answer1_f, 0, 0, 0,
-				ANY_ROUTE},
-		{"rtpproxy_answer", (cmd_function)rtpproxy_answer1_f, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{"rtpproxy_answer", (cmd_function)rtpproxy_answer2_f, 2,
-				fixup_spve_spve, 0, ANY_ROUTE},
-		{"rtpproxy_stream2uac", (cmd_function)rtpproxy_stream2uac2_f, 2,
-				fixup_var_str_int, 0, ANY_ROUTE},
-		{"rtpproxy_stream2uas", (cmd_function)rtpproxy_stream2uas2_f, 2,
-				fixup_var_str_int, 0, ANY_ROUTE},
-		{"rtpproxy_stop_stream2uac", (cmd_function)rtpproxy_stop_stream2uac2_f,
-				0, NULL, 0, ANY_ROUTE},
-		{"rtpproxy_stop_stream2uas", (cmd_function)rtpproxy_stop_stream2uas2_f,
-				0, NULL, 0, ANY_ROUTE},
-		{"rtpproxy_manage", (cmd_function)rtpproxy_manage0, 0, 0, 0, ANY_ROUTE},
-		{"rtpproxy_manage", (cmd_function)rtpproxy_manage1, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"rtpproxy_manage", (cmd_function)rtpproxy_manage2, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-static pv_export_t mod_pvs[] = {
-		{{"rtpstat", (sizeof("rtpstat") - 1)}, /* RTP-Statistics */
-				PVT_OTHER, pv_get_rtppstat_f, 0, 0, 0, 0, 0},
-		{{"rtppstat", (sizeof("rtppstat") - 1)}, /* RTP-Statistics */
-				PVT_OTHER, pv_get_rtppstat_f, 0, 0, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
-
-static param_export_t params[] = {
-		{"nortpproxy_str", PARAM_STR, &nortpproxy_str},
-		{"rtpproxy_sock", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)rtpproxy_set_store},
-		{"rtpproxy_disable_tout", PARAM_INT, &rtpproxy_disable_tout},
-		{"rtpproxy_retr", PARAM_INT, &rtpproxy_retr},
-		{"rtpproxy_tout", PARAM_INT, &rtpproxy_tout},
-		{"timeout_socket", PARAM_STR, &timeout_socket_str},
-		{"timeout_tag_pv", PARAM_STR, &timeout_tag_pv_str},
-		{"ice_candidate_priority_avp", PARAM_STRING,
-				&ice_candidate_priority_avp_param},
-		{"extra_id_pv", PARAM_STR, &extra_id_pv_param},
-		{"db_url", PARAM_STR, &rtpp_db_url},
-		{"table_name", PARAM_STR, &rtpp_table_name},
-		{"rtp_inst_pvar", PARAM_STR, &rtp_inst_pv_param}, {0, 0, 0}};
-
-struct module_exports exports = {
-		"rtpproxy",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* reply processing */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		mod_destroy,	 /* destroy function */
+	{"set_rtp_proxy_set", (cmd_function)set_rtp_proxy_set_f, 1,
+		fixup_set_id, 0, ANY_ROUTE},
+	{"unforce_rtp_proxy", (cmd_function)unforce_rtp_proxy1_f, 0, 0, 0,	ANY_ROUTE},
+	{"rtpproxy_destroy", (cmd_function)unforce_rtp_proxy1_f, 0,	0, 0, ANY_ROUTE},
+	{"unforce_rtp_proxy", (cmd_function)unforce_rtp_proxy1_f, 1,
+		fixup_spve_null, 0, ANY_ROUTE},
+	{"rtpproxy_destroy", (cmd_function)unforce_rtp_proxy1_f, 1,
+		fixup_spve_null, 0, ANY_ROUTE},
+	{"start_recording", (cmd_function)start_recording_f, 0, 0, 0, ANY_ROUTE},
+	{"rtpproxy_offer", (cmd_function)rtpproxy_offer1_f, 0, 0, 0, ANY_ROUTE},
+	{"rtpproxy_offer", (cmd_function)rtpproxy_offer1_f, 1,
+		fixup_spve_null, 0, ANY_ROUTE},
+	{"rtpproxy_offer", (cmd_function)rtpproxy_offer2_f, 2,
+		fixup_spve_spve, 0, ANY_ROUTE},
+	{"rtpproxy_answer", (cmd_function)rtpproxy_answer1_f, 0, 0, 0, ANY_ROUTE},
+	{"rtpproxy_answer", (cmd_function)rtpproxy_answer1_f, 1,
+		fixup_spve_null, 0, ANY_ROUTE},
+	{"rtpproxy_answer", (cmd_function)rtpproxy_answer2_f, 2,
+		fixup_spve_spve, 0, ANY_ROUTE},
+	{"rtpproxy_stream2uac", (cmd_function)rtpproxy_stream2uac2_f, 2,
+		fixup_var_str_int, 0, ANY_ROUTE},
+	{"rtpproxy_stream2uas", (cmd_function)rtpproxy_stream2uas2_f, 2,
+		fixup_var_str_int, 0, ANY_ROUTE},
+	{"rtpproxy_stop_stream2uac", (cmd_function)rtpproxy_stop_stream2uac2_f, 0, 0, 0, ANY_ROUTE},
+	{"rtpproxy_stop_stream2uas", (cmd_function)rtpproxy_stop_stream2uas2_f, 0, 0, 0, ANY_ROUTE},
+	{"rtpproxy_manage", (cmd_function)rtpproxy_manage0, 0, 0, 0, ANY_ROUTE},
+	{"rtpproxy_manage", (cmd_function)rtpproxy_manage1, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"rtpproxy_manage", (cmd_function)rtpproxy_manage2, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
+static pv_export_t mod_pvs[] = {
+	{{"rtpstat", (sizeof("rtpstat") - 1)}, /* RTP-Statistics */
+			PVT_OTHER, pv_get_rtppstat_f, 0, 0, 0, 0, 0},
+	{{"rtppstat", (sizeof("rtppstat") - 1)}, /* RTP-Statistics */
+			PVT_OTHER, pv_get_rtppstat_f, 0, 0, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
+
+static param_export_t params[] = {
+	{"nortpproxy_str", PARAM_STR, &nortpproxy_str},
+	{"rtpproxy_sock", PARAM_STRING | PARAM_USE_FUNC, (void *)rtpproxy_set_store},
+	{"rtpproxy_disable_tout", PARAM_INT, &rtpproxy_disable_tout},
+	{"rtpproxy_retr", PARAM_INT, &rtpproxy_retr},
+	{"rtpproxy_tout", PARAM_INT, &rtpproxy_tout},
+	{"timeout_socket", PARAM_STR, &timeout_socket_str},
+	{"timeout_tag_pv", PARAM_STR, &timeout_tag_pv_str},
+	{"ice_candidate_priority_avp", PARAM_STRING, &ice_candidate_priority_avp_param},
+	{"extra_id_pv", PARAM_STR, &extra_id_pv_param},
+	{"db_url", PARAM_STR, &rtpp_db_url},
+	{"table_name", PARAM_STR, &rtpp_table_name},
+	{"rtp_inst_pvar", PARAM_STR, &rtp_inst_pv_param},
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"rtpproxy",      /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	mod_pvs,         /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
+};
+/* clang-format on */
 
 static int rtpproxy_set_store(modparam_t type, void *val)
 {
