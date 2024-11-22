@@ -55,15 +55,16 @@ extern int _jsonrpcc_max_conn_retry; /* max retries to connect */
 
 struct tm_binds tmb;
 
+/* clang-format off */
 /*
  * Exported Functions
  */
 static cmd_export_t cmds[] = {
-		{"jsonrpc_request", (cmd_function)jsonrpc_request, 5, fixup_request,
-				fixup_request_free, ANY_ROUTE},
-		{"jsonrpc_notification", (cmd_function)jsonrpc_notification, 2,
-				fixup_notification, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"jsonrpc_request", (cmd_function)jsonrpc_request, 5, fixup_request,
+			fixup_request_free, ANY_ROUTE},
+	{"jsonrpc_notification", (cmd_function)jsonrpc_notification, 2, fixup_notification,
+            fixup_free_spve_null, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}};
 
 
 /*
@@ -77,17 +78,18 @@ static param_export_t mod_params[] = {{"servers", PARAM_STRING, &servers_param},
  * Exports
  */
 struct module_exports exports = {
-		"jsonrpcc",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		mod_params,		 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		0				 /* module destroy function */
+	"jsonrpcc",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	mod_params,		 /* param exports */
+	0,				 /* RPC method exports */
+	0,				 /* pseudo-variables exports */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	child_init,		 /* per-child init function */
+	0				 /* module destroy function */
 };
+/* clang-format off */
 
 
 static int mod_init(void)
