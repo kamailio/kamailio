@@ -70,6 +70,14 @@ int fixup_var_str_int(void **param, int param_no)
 	return 0;
 }
 
+int fixup_free_var_str_int(void **param, int param_no)
+{
+	if(param_no == 1) {
+		pv_elem_free_all(*param);
+	}
+	return 0;
+}
+
 int rtpproxy_stream(struct sip_msg *msg, str *pname, int count, int stream2uac)
 {
 	int nitems;

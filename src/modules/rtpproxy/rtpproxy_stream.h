@@ -29,6 +29,7 @@
 #define _RTPPROXY_STREAM_H
 
 int fixup_var_str_int(void **, int);
+int fixup_free_var_str_int(void **, int);
 int rtpproxy_stream(struct sip_msg *msg, str *pname, int count, int stream2uac);
 int rtpproxy_stream2uac2_f(struct sip_msg *, char *, char *);
 int rtpproxy_stream2uas2_f(struct sip_msg *, char *, char *);

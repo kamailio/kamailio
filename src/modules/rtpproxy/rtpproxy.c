@@ -134,6 +134,7 @@ static int rtpproxy_manage2(struct sip_msg *msg, char *flags, char *ip);
 
 static int add_rtpproxy_socks(struct rtpp_set *rtpp_list, char *rtpproxy);
 static int fixup_set_id(void **param, int param_no);
+static int fixup_free_set_id(void **param, int param_no);
 static int set_rtp_proxy_set_f(struct sip_msg *msg, char *str1, char *str2);
 static struct rtpp_set *select_rtpp_set(int id_set);
 
@@ -194,28 +195,28 @@ static pv_elem_t *extra_id_pv = NULL;
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"set_rtp_proxy_set", (cmd_function)set_rtp_proxy_set_f, 1,
-		fixup_set_id, 0, ANY_ROUTE},
+		fixup_set_id, fixup_free_set_id, ANY_ROUTE},
 	{"unforce_rtp_proxy", (cmd_function)unforce_rtp_proxy1_f, 0, 0, 0,	ANY_ROUTE},
 	{"rtpproxy_destroy", (cmd_function)unforce_rtp_proxy1_f, 0,	0, 0, ANY_ROUTE},
 	{"unforce_rtp_proxy", (cmd_function)unforce_rtp_proxy1_f, 1,
-		fixup_spve_null, 0, ANY_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"rtpproxy_destroy", (cmd_function)unforce_rtp_proxy1_f, 1,
-		fixup_spve_null, 0, ANY_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"start_recording", (cmd_function)start_recording_f, 0, 0, 0, ANY_ROUTE},
 	{"rtpproxy_offer", (cmd_function)rtpproxy_offer1_f, 0, 0, 0, ANY_ROUTE},
 	{"rtpproxy_offer", (cmd_function)rtpproxy_offer1_f, 1,
-		fixup_spve_null, 0, ANY_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"rtpproxy_offer", (cmd_function)rtpproxy_offer2_f, 2,
-		fixup_spve_spve, 0, ANY_ROUTE},
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"rtpproxy_answer", (cmd_function)rtpproxy_answer1_f, 0, 0, 0, ANY_ROUTE},
 	{"rtpproxy_answer", (cmd_function)rtpproxy_answer1_f, 1,
-		fixup_spve_null, 0, ANY_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"rtpproxy_answer", (cmd_function)rtpproxy_answer2_f, 2,
-		fixup_spve_spve, 0, ANY_ROUTE},
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"rtpproxy_stream2uac", (cmd_function)rtpproxy_stream2uac2_f, 2,
-		fixup_var_str_int, 0, ANY_ROUTE},
+		fixup_var_str_int, fixup_free_var_str_int, ANY_ROUTE},
 	{"rtpproxy_stream2uas", (cmd_function)rtpproxy_stream2uas2_f, 2,
-		fixup_var_str_int, 0, ANY_ROUTE},
+		fixup_var_str_int, fixup_free_var_str_int, ANY_ROUTE},
 	{"rtpproxy_stop_stream2uac", (cmd_function)rtpproxy_stop_stream2uac2_f, 0, 0, 0, ANY_ROUTE},
 	{"rtpproxy_stop_stream2uas", (cmd_function)rtpproxy_stop_stream2uas2_f, 0, 0, 0, ANY_ROUTE},
 	{"rtpproxy_manage", (cmd_function)rtpproxy_manage0, 0, 0, 0, ANY_ROUTE},
@@ -550,6 +551,12 @@ static int fixup_set_id(void **param, int param_no)
 		}
 	}
 	*param = (void *)rtpl;
+	return 0;
+}
+
+static int fixup_free_set_id(void **param, int param_no)
+{
+	pkg_free(*param);
 	return 0;
 }
 
