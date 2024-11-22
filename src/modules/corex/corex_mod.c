@@ -38,6 +38,7 @@
 #include "../../core/forward.h"
 #include "../../core/dns_cache.h"
 #include "../../core/data_lump.h"
+#include "../../core/async_task.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_param.h"
 
@@ -101,12 +102,17 @@ static int corex_dns_cache_param_add(str *pval);
 
 static int corex_sip_reply_out(sr_event_param_t *evp);
 
+static int pv_get_atkv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+static int pv_parse_atkv_name(pv_spec_t *sp, str *in);
+
 /* clang-format off */
 static pv_export_t mod_pvs[] = {
 	{{"cfg", (sizeof("cfg") - 1)}, PVT_OTHER, pv_get_cfg, 0,
 		pv_parse_cfg_name, 0, 0, 0},
 	{{"lsock", (sizeof("lsock") - 1)}, PVT_OTHER, pv_get_lsock, 0,
 		pv_parse_lsock_name, 0, 0, 0},
+	{{"atkv", (sizeof("atkv") - 1)}, PVT_OTHER, pv_get_atkv, 0,
+		pv_parse_atkv_name, 0, 0, 0},
 	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -1454,6 +1460,81 @@ static int corex_sip_reply_out(sr_event_param_t *evp)
 	}
 
 	return 0;
+}
+
+/**
+ *
+ */
+static int pv_get_atkv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	async_tkv_param_t *atkvp = NULL;
+	async_wgroup_t *awg = NULL;
+
+	atkvp = ksr_async_tkv_param_get();
+
+	if(atkvp == NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0:
+			return pv_get_sintval(msg, param, res, (long)atkvp->dtype);
+		case 1:
+			if(atkvp->skey.s == NULL || atkvp->skey.len < 0) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &atkvp->skey);
+		case 2:
+			if(atkvp->sval.s == NULL || atkvp->sval.len < 0) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &atkvp->sval);
+		case 3:
+			awg = async_task_workers_get_crt();
+			if(awg == NULL || awg->name.s == NULL || awg->name.len < 0) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &awg->name);
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
+/**
+ *
+ */
+static int pv_parse_atkv_name(pv_spec_t *sp, str *in)
+{
+	if(sp == NULL || in == NULL || in->len <= 0)
+		return -1;
+
+	switch(in->len) {
+		case 3:
+			if(strncmp(in->s, "key", 3) == 0) {
+				sp->pvp.pvn.u.isname.name.n = 1;
+			} else if(strncmp(in->s, "val", 3) == 0) {
+				sp->pvp.pvn.u.isname.name.n = 2;
+			}
+			break;
+		case 4:
+			if(strncmp(in->s, "type", 4) == 0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			break;
+		case 5:
+			if(strncmp(in->s, "gname", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV time name %.*s\n", in->len, in->s);
+	return -1;
 }
 
 
