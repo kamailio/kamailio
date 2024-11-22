@@ -46,29 +46,34 @@ static int w_rtjson_push_routes(sip_msg_t *msg, char *p1, char *p2);
 static int w_rtjson_next_route(sip_msg_t *msg, char *p1, char *p2);
 static int w_rtjson_update_branch(sip_msg_t *msg, char *p1, char *p2);
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"rtjson_init_routes", (cmd_function)w_rtjson_init_routes, 1,
-				fixup_spve_null, 0, REQUEST_ROUTE},
-		{"rtjson_push_routes", (cmd_function)w_rtjson_push_routes, 0, 0, 0,
-				REQUEST_ROUTE},
-		{"rtjson_next_route", (cmd_function)w_rtjson_next_route, 0, 0, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"rtjson_update_branch", (cmd_function)w_rtjson_update_branch, 0, 0, 0,
-				BRANCH_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"rtjson_init_routes", (cmd_function)w_rtjson_init_routes, 1,
+		fixup_spve_null, 0, REQUEST_ROUTE},
+	{"rtjson_push_routes", (cmd_function)w_rtjson_push_routes, 0, 0, 0, REQUEST_ROUTE},
+	{"rtjson_next_route", (cmd_function)w_rtjson_next_route, 0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"rtjson_update_branch", (cmd_function)w_rtjson_update_branch, 0, 0, 0, BRANCH_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"xavp_cfg", PARAM_STR, &_rtjson_xavp_name}, {0, 0, 0}};
+	{"xavp_cfg", PARAM_STR, &_rtjson_xavp_name},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"rtjson", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds, params, 0,		   /* exported RPC methods */
-		0,						   /* exported pseudo-variables */
-		0,						   /* response function */
-		mod_init,				   /* module initialization function */
-		child_init,				   /* per child init function */
-		mod_destroy				   /* destroy function */
+	"rtjson",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
+/* clang-format on */
 
 /**
  * init module function
