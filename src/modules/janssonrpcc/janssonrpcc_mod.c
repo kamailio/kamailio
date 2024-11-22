@@ -71,56 +71,57 @@ jansson_to_val_f jsontoval;
 pv_spec_t jsonrpc_result_pv;
 #endif
 
+
+/* clang-format off */
 /*
  * Exported Functions
  */
-int jsonrpc_request_no_options(
-		struct sip_msg *msg, char *conn, char *method, char *params)
-{
+int jsonrpc_request_no_options(struct sip_msg *msg, char *conn, char *method, char *params) {
 	return jsonrpc_request(msg, conn, method, params, NULL);
 }
 
 static cmd_export_t cmds[] = {
-		{"janssonrpc_request", (cmd_function)jsonrpc_request, 4, fixup_req,
-				fixup_req_free, ANY_ROUTE},
-		{"jsansonrpc_request", (cmd_function)jsonrpc_request_no_options, 3,
-				fixup_req, fixup_req_free, ANY_ROUTE},
-		{"janssonrpc_notification", (cmd_function)jsonrpc_notification, 3,
-				fixup_notify, fixup_notify_free, ANY_ROUTE},
-		{"mod_janssonrpc_request", (cmd_function)mod_jsonrpc_request, 0, 0, 0,
-				0},
-		{0, 0, 0, 0, 0, 0}};
+	{"janssonrpc_request", (cmd_function)jsonrpc_request, 4, fixup_req,
+			fixup_req_free, ANY_ROUTE},
+	{"jsansonrpc_request", (cmd_function)jsonrpc_request_no_options, 3,
+			fixup_req, fixup_req_free, ANY_ROUTE},
+	{"janssonrpc_notification", (cmd_function)jsonrpc_notification, 3,
+			fixup_notify, fixup_notify_free, ANY_ROUTE},
+	{"mod_janssonrpc_request", (cmd_function)mod_jsonrpc_request, 0, 0, 0,
+			0},
+	{0, 0, 0, 0, 0, 0}};
 
 /*
  * Script Parameters
  */
 static param_export_t mod_params[] = {
-		{"server", PARAM_STRING | PARAM_USE_FUNC, (void *)parse_server_param},
-		{"retry_codes", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)parse_retry_codes_param},
-		{"min_srv_ttl", PARAM_INT | PARAM_USE_FUNC,
-				(void *)parse_min_ttl_param},
-		{"result_pv", PARAM_STRING, &result_pv_str.s},
-		{"keep_alive", PARAM_INT | PARAM_USE_FUNC,
-				(void *)parse_keep_alive_param},
-		{0, 0, 0}};
+	{"server", PARAM_STRING | PARAM_USE_FUNC, (void *)parse_server_param},
+	{"retry_codes", PARAM_STRING | PARAM_USE_FUNC,
+			(void *)parse_retry_codes_param},
+	{"min_srv_ttl", PARAM_INT | PARAM_USE_FUNC,
+			(void *)parse_min_ttl_param},
+	{"result_pv", PARAM_STRING, &result_pv_str.s},
+	{"keep_alive", PARAM_INT | PARAM_USE_FUNC,
+			(void *)parse_keep_alive_param},
+	{0, 0, 0}};
 
 /*
  * Exports
  */
 struct module_exports exports = {
-		"janssonrpcc",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		mod_params,		 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	"janssonrpcc",	 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	mod_params,		 /* param exports */
+	0,				 /* RPC method exports */
+	0,				 /* pseudo-variables exports */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	child_init,		 /* per-child init function */
+	mod_destroy		 /* module destroy function */
 };
 
+/* clang-format on */
 
 static int mod_init(void)
 {
