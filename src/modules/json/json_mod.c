@@ -38,33 +38,35 @@ static int fixup_get_field_free(void **param, int param_no);
 str tr_json_escape_str = str_init("%");
 char tr_json_escape_char = '%';
 
+/* clang-format off */
 /* Exported functions */
 static tr_export_t mod_trans[] = {
-		{{"json", sizeof("json") - 1}, json_tr_parse}, {{0, 0}, 0}};
+	{{"json", sizeof("json") - 1}, json_tr_parse}, {{0, 0}, 0}};
 
 static cmd_export_t cmds[] = {
-		{"json_get_field", (cmd_function)json_get_field, 3, fixup_get_field,
-				fixup_get_field_free, ANY_ROUTE},
-		{"json_get_string", (cmd_function)json_get_string, 3, fixup_get_field,
-				fixup_get_field_free, ANY_ROUTE},
-		{"bind_json", (cmd_function)bind_json, 0, 0, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"json_get_field", (cmd_function)json_get_field, 3, fixup_get_field,
+			fixup_get_field_free, ANY_ROUTE},
+	{"json_get_string", (cmd_function)json_get_string, 3, fixup_get_field,
+			fixup_get_field_free, ANY_ROUTE},
+	{"bind_json", (cmd_function)bind_json, 0, 0, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
 		{"json_escape_char", PARAM_STR, &tr_json_escape_str}, {0, 0, 0}};
 
 struct module_exports exports = {
-		"json",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		0,				 /* module init function */
-		0,				 /* per-child init function */
-		0				 /* module destroy function */
+	"json",			 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	params,			 /* param exports */
+	0,				 /* RPC method exports */
+	0,				 /* pseudo-variables exports */
+	0,				 /* response handling function */
+	0,				 /* module init function */
+	0,				 /* per-child init function */
+	0				 /* module destroy function */
 };
+/* clang-format on */
 
 int _json_extract_field(struct json_object *json_obj, char *json_name, str *val)
 {
