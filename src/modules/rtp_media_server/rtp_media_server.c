@@ -59,20 +59,21 @@ static int rms_bridge_f(struct sip_msg *, char *, char *);
 static int rms_update_media_sockets(
 		struct sip_msg *msg, rms_dialog_info_t *di, rms_sdp_info_t *sdp_info);
 
-static cmd_export_t cmds[] = {{"rms_answer", (cmd_function)rms_answer_f, 1,
-									  fixup_rms_answer, 0, EVENT_ROUTE},
-		{"rms_sip_request", (cmd_function)rms_sip_request_f, 0, 0, 0,
-				EVENT_ROUTE},
-		{"rms_play", (cmd_function)rms_action_play_f, 2, fixup_rms_action_play,
-				0, ANY_ROUTE},
-		{"rms_dialog_check", (cmd_function)rms_dialog_check_f, 0, 0, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"rms_hangup", (cmd_function)rms_hangup_f, 0, 0, 0, EVENT_ROUTE},
-		{"rms_bridge", (cmd_function)rms_bridge_f, 2, fixup_rms_bridge, 0,
-				ANY_ROUTE},
-		{"rms_dialogs_dump", (cmd_function)rms_dialogs_dump_f, 0, 0, 0,
-				ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"rms_answer", (cmd_function)rms_answer_f, 1,
+		fixup_rms_answer, 0, EVENT_ROUTE},
+	{"rms_sip_request", (cmd_function)rms_sip_request_f, 0, 0, 0, EVENT_ROUTE},
+	{"rms_play", (cmd_function)rms_action_play_f, 2,
+		fixup_rms_action_play, 0, ANY_ROUTE},
+	{"rms_dialog_check", (cmd_function)rms_dialog_check_f, 0,
+		0, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"rms_hangup", (cmd_function)rms_hangup_f, 0, 0, 0, EVENT_ROUTE},
+	{"rms_bridge", (cmd_function)rms_bridge_f, 2,
+		fixup_rms_bridge, 0, ANY_ROUTE},
+	{"rms_dialogs_dump", (cmd_function)rms_dialogs_dump_f, 0, 0, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t mod_params[] = {
 		{"log_file_name", PARAM_STR, &log_fn}, {0, 0, 0}};
@@ -89,6 +90,7 @@ struct module_exports exports = {
 		child_init,
 		mod_destroy,
 };
+/* clang-format on */
 
 static void run_action_route(rms_dialog_info_t *di, char *route)
 {
