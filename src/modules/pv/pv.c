@@ -534,69 +534,69 @@ int pv_register_api(pv_api_t *);
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
-	{"pv_isset", (cmd_function)pv_isset, 1, fixup_pvar_null, 0, ANY_ROUTE},
-	{"pv_unset", (cmd_function)pv_unset, 1, fixup_pvar_null, 0, ANY_ROUTE},
+	{"pv_isset", (cmd_function)pv_isset, 1,
+		fixup_pvar_null, 0, ANY_ROUTE},
+	{"pv_unset", (cmd_function)pv_unset, 1,
+		fixup_pvar_null, 0, ANY_ROUTE},
 	{"pv_xavp_print", (cmd_function)pv_xavp_print, 0, 0, 0, ANY_ROUTE},
 	{"pv_xavu_print", (cmd_function)pv_xavu_print, 0, 0, 0, ANY_ROUTE},
 	{"pv_xavi_print", (cmd_function)pv_xavi_print, 0, 0, 0, ANY_ROUTE},
-	{"pv_var_to_xavp", (cmd_function)w_var_to_xavp, 2, fixup_spve_spve,
-			fixup_free_spve_spve, ANY_ROUTE},
-	{"pv_xavp_to_var", (cmd_function)w_xavp_to_var, 1, fixup_spve_null,
-			fixup_free_spve_null, ANY_ROUTE},
-	{"is_int", (cmd_function)is_int, 1, fixup_pvar_null,
-			fixup_free_pvar_null, ANY_ROUTE},
-	{"typeof", (cmd_function)pv_typeof, 2, fixup_pvar_none,
-			fixup_free_pvar_none, ANY_ROUTE},
-	{"not_empty", (cmd_function)pv_not_empty, 1, fixup_pvar_null,
-			fixup_free_pvar_null, ANY_ROUTE},
-	{"xavp_copy", (cmd_function)w_xavp_copy, 3, pv_xavp_copy_fixup, 0,
-			ANY_ROUTE},
-	{"xavp_copy", (cmd_function)w_xavp_copy_dst, 4, pv_xavp_copy_fixup, 0,
-			ANY_ROUTE},
+	{"pv_var_to_xavp", (cmd_function)w_var_to_xavp, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"pv_xavp_to_var", (cmd_function)w_xavp_to_var, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"is_int", (cmd_function)is_int, 1,
+		fixup_pvar_null, fixup_free_pvar_null, ANY_ROUTE},
+	{"typeof", (cmd_function)pv_typeof, 2,
+		fixup_pvar_none, fixup_free_pvar_none, ANY_ROUTE},
+	{"not_empty", (cmd_function)pv_not_empty, 1,
+		fixup_pvar_null, fixup_free_pvar_null, ANY_ROUTE},
+	{"xavp_copy", (cmd_function)w_xavp_copy, 3,
+		pv_xavp_copy_fixup, 0, ANY_ROUTE},
+	{"xavp_copy", (cmd_function)w_xavp_copy_dst, 4,
+		pv_xavp_copy_fixup, 0, ANY_ROUTE},
 	{"xavp_slist_explode", (cmd_function)w_xavp_slist_explode, 4,
-			fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"xavp_params_explode", (cmd_function)w_xavp_params_explode, 2,
-			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"xavp_xparams_explode", (cmd_function)w_xavp_xparams_explode, 3,
-			fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"xavp_params_implode", (cmd_function)w_xavp_params_implode, 2,
-			fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
-	{"xavp_params_implode_qval", (cmd_function)w_xavp_params_implode_qval,
-			2, fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
+		fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
+	{"xavp_params_implode_qval", (cmd_function)w_xavp_params_implode_qval, 2,
+		fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
 	{"xavu_params_explode", (cmd_function)w_xavu_params_explode, 2,
-			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"xavu_params_implode", (cmd_function)w_xavu_params_implode, 2,
-			fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
+		fixup_spve_str, fixup_free_spve_str, ANY_ROUTE},
 	{"xavp_child_seti", (cmd_function)w_xavp_child_seti, 3,
-			fixup_xavp_child_seti, fixup_free_xavp_child_seti, ANY_ROUTE},
-	{"xavp_child_sets", (cmd_function)w_xavp_child_sets, 3, fixup_spve_all,
-			fixup_free_spve_all, ANY_ROUTE},
-	{"xavp_rm", (cmd_function)w_xavp_rm, 1, fixup_spve_null,
-			fixup_free_spve_null, ANY_ROUTE},
-	{"xavp_child_rm", (cmd_function)w_xavp_child_rm, 2, fixup_spve_spve,
-			fixup_free_spve_spve, ANY_ROUTE},
+		fixup_xavp_child_seti, fixup_free_xavp_child_seti, ANY_ROUTE},
+	{"xavp_child_sets", (cmd_function)w_xavp_child_sets, 3,
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"xavp_rm", (cmd_function)w_xavp_rm, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"xavp_child_rm", (cmd_function)w_xavp_child_rm, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"xavi_child_seti", (cmd_function)w_xavi_child_seti, 3,
-			fixup_xavp_child_seti, fixup_free_xavp_child_seti, ANY_ROUTE},
-	{"xavi_child_sets", (cmd_function)w_xavi_child_sets, 3, fixup_spve_all,
-			fixup_free_spve_all, ANY_ROUTE},
-	{"xavi_rm", (cmd_function)w_xavi_rm, 1, fixup_spve_null,
-			fixup_free_spve_null, ANY_ROUTE},
-	{"xavi_child_rm", (cmd_function)w_xavi_child_rm, 2, fixup_spve_spve,
-			fixup_free_spve_spve, ANY_ROUTE},
-	{"xavp_lshift", (cmd_function)w_xavp_lshift, 2, fixup_spve_igp,
-			fixup_free_spve_igp, ANY_ROUTE},
-	{"xavp_push_dst", (cmd_function)w_xavp_push_dst, 1, fixup_spve_null,
-			fixup_free_spve_null,
-			REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-	{"sbranch_set_ruri", (cmd_function)w_sbranch_set_ruri, 0, 0, 0,
-			ANY_ROUTE},
+		fixup_xavp_child_seti, fixup_free_xavp_child_seti, ANY_ROUTE},
+	{"xavi_child_sets", (cmd_function)w_xavi_child_sets, 3,
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"xavi_rm", (cmd_function)w_xavi_rm, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"xavi_child_rm", (cmd_function)w_xavi_child_rm, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"xavp_lshift", (cmd_function)w_xavp_lshift, 2,
+		fixup_spve_igp, fixup_free_spve_igp, ANY_ROUTE},
+	{"xavp_push_dst", (cmd_function)w_xavp_push_dst, 1,
+		fixup_spve_null, fixup_free_spve_null,
+		REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"sbranch_set_ruri", (cmd_function)w_sbranch_set_ruri, 0, 0, 0, ANY_ROUTE},
 	{"sbranch_append", (cmd_function)w_sbranch_append, 0, 0, 0, ANY_ROUTE},
 	{"sbranch_reset", (cmd_function)w_sbranch_reset, 0, 0, 0, ANY_ROUTE},
-	{"pv_evalx", (cmd_function)w_pv_evalx, 2, pv_evalx_fixup, 0, ANY_ROUTE},
-
+	{"pv_evalx", (cmd_function)w_pv_evalx, 2,
+		pv_evalx_fixup, 0, ANY_ROUTE},
 	/* API exports */
 	{"pv_register_api", (cmd_function)pv_register_api, NO_SCRIPT, 0, 0},
-
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -605,14 +605,14 @@ static cmd_export_t cmds[] = {
 struct module_exports exports = {
 	"pv",			 /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,			 /* cmd (cfg function) exports */
-	params,			 /* param exports */
-	0,				 /* RPC method exports */
-	mod_pvs,		 /* pv exports */
-	0,				 /* response handling function */
-	mod_init,		 /* module init function */
-	0,				 /* per-child init function */
-	mod_destroy		 /* module destroy function */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	mod_pvs,         /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
 /* clang-format on */
 
