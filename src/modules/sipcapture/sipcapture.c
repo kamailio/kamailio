@@ -173,7 +173,7 @@ int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip);
 static int nosip_hep_msg(sr_event_param_t *evp);
 
 static int hep_version(struct sip_msg *msg);
-
+int capture_mode_param(modparam_t type, void *val);
 
 static str db_url = str_init(DEFAULT_DB_URL);
 static str _sipcap_table_name = str_init("sip_capture");
@@ -305,110 +305,104 @@ enum hash_source source = hs_error;
 
 struct hep_timeinfo *heptime = NULL;
 
+/* clang-format off */
 /*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"sip_capture", (cmd_function)w_sip_capture0, 0, 0, 0, ANY_ROUTE},
-		{"sip_capture", (cmd_function)w_sip_capture1, 1, sipcapture_fixup, 0,
-				ANY_ROUTE},
-		{"sip_capture", (cmd_function)w_sip_capture2, 2, sipcapture_fixup, 0,
-				ANY_ROUTE},
-		{"report_capture", (cmd_function)w_report_capture1, 1,
-				reportcapture_fixup, 0, ANY_ROUTE},
-		{"report_capture", (cmd_function)w_report_capture2, 2,
-				reportcapture_fixup, 0, ANY_ROUTE},
-		{"report_capture", (cmd_function)w_report_capture3, 3,
-				reportcapture_fixup, 0, ANY_ROUTE},
-		{"float2int", (cmd_function)w_float2int, 2, float2int_fixup, 0,
-				ANY_ROUTE},
-		{"sip_capture_forward", (cmd_function)w_sip_capture_forward, 1,
-				fixup_spve_null, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+	{"sip_capture", (cmd_function)w_sip_capture0, 0, 0, 0, ANY_ROUTE},
+	{"sip_capture", (cmd_function)w_sip_capture1, 1, sipcapture_fixup, 0, ANY_ROUTE},
+	{"sip_capture", (cmd_function)w_sip_capture2, 2, sipcapture_fixup, 0, ANY_ROUTE},
+	{"report_capture", (cmd_function)w_report_capture1, 1, reportcapture_fixup, 0, ANY_ROUTE},
+	{"report_capture", (cmd_function)w_report_capture2, 2, reportcapture_fixup, 0, ANY_ROUTE},
+	{"report_capture", (cmd_function)w_report_capture3, 3, reportcapture_fixup, 0, ANY_ROUTE},
+	{"float2int", (cmd_function)w_float2int, 2, float2int_fixup, 0, ANY_ROUTE},
+	{"sip_capture_forward", (cmd_function)w_sip_capture_forward, 1, fixup_spve_null, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static pv_export_t mod_pvs[] = {
-		{{"hep", sizeof("hep") - 1}, PVT_OTHER, pv_get_hep, 0,
-				pv_parse_hep_name, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
-
-int capture_mode_param(modparam_t type, void *val);
+	{{"hep", sizeof("hep") - 1}, PVT_OTHER, pv_get_hep, 0,
+			pv_parse_hep_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 /*! \brief
  * Exported parameters
  */
-static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
-		{"table_name", PARAM_STR, &_sipcap_table_name},
-		{"hash_source", PARAM_STR, &hash_source},
-		{"mt_mode", PARAM_STR, &mt_mode},
-		{"date_column", PARAM_STR, &date_column},
-		{"micro_ts_column", PARAM_STR, &micro_ts_column},
-		{"method_column", PARAM_STR, &method_column},
-		{"correlation_column", PARAM_STR, &correlation_column.s},
-		{"reply_reason_column", PARAM_STR, &reply_reason_column},
-		{"ruri_column", PARAM_STR, &ruri_column},
-		{"ruri_user_column", PARAM_STR, &ruri_user_column},
-		{"ruri_domain_column", PARAM_STR, &ruri_domain_column},
-		{"from_user_column", PARAM_STR, &from_user_column},
-		{"from_domain_column", PARAM_STR, &from_domain_column},
-		{"from_tag_column", PARAM_STR, &from_tag_column},
-		{"to_user_column", PARAM_STR, &to_user_column},
-		{"to_domain_column", PARAM_STR, &to_domain_column},
-		{"to_tag_column", PARAM_STR, &to_tag_column},
-		{"pid_user_column", PARAM_STR, &pid_user_column},
-		{"contact_user_column", PARAM_STR, &contact_user_column},
-		{"auth_user_column", PARAM_STR, &auth_user_column},
-		{"callid_column", PARAM_STR, &callid_column},
-		{"callid_aleg_column", PARAM_STR, &callid_aleg_column},
-		{"via_1_column", PARAM_STR, &via_1_column},
-		{"via_1_branch_column", PARAM_STR, &via_1_branch_column},
-		{"cseq_column", PARAM_STR, &cseq_column},
-		{"diversion_column", PARAM_STR, &diversion_column},
-		{"reason_column", PARAM_STR, &reason_column},
-		{"content_type_column", PARAM_STR, &content_type_column},
-		{"authorization_column", PARAM_STR, &authorization_column},
-		{"user_agent_column", PARAM_STR, &user_agent_column},
-		{"source_ip_column", PARAM_STR, &source_ip_column},
-		{"source_port_column", PARAM_STR, &source_port_column},
-		{"destination_ip_column", PARAM_STR, &dest_ip_column},
-		{"destination_port_column", PARAM_STR, &dest_port_column},
-		{"contact_ip_column", PARAM_STR, &contact_ip_column},
-		{"contact_port_column", PARAM_STR, &contact_port_column},
-		{"originator_ip_column", PARAM_STR, &orig_ip_column},
-		{"originator_port_column", PARAM_STR, &orig_port_column},
-		{"proto_column", PARAM_STR, &proto_column},
-		{"family_column", PARAM_STR, &family_column},
-		{"rtp_stat_column", PARAM_STR, &rtp_stat_column},
-		{"type_column", PARAM_STR, &type_column},
-		{"node_column", PARAM_STR, &node_column},
-		{"msg_column", PARAM_STR, &msg_column},
-		{"custom_field1_column", PARAM_STR, &custom_field1_column},
-		{"custom_field2_column", PARAM_STR, &custom_field2_column},
-		{"custom_field3_column", PARAM_STR, &custom_field3_column},
-		{"capture_on", PARAM_INT, &capture_on},
-		{"capture_node", PARAM_STR, &capture_node},
-		{"raw_sock_children", PARAM_INT, &raw_sock_children},
-		{"hep_capture_on", PARAM_INT, &hep_capture_on},
-		{"raw_socket_listen", PARAM_STR, &raw_socket_listen},
-		{"raw_ipip_capture_on", PARAM_INT, &ipip_capture_on},
-		{"raw_moni_capture_on", PARAM_INT, &moni_capture_on},
-		{"db_insert_mode", PARAM_INT, &db_insert_mode},
-		{"raw_interface", PARAM_STR, &raw_interface},
-		{"promiscuous_on", PARAM_INT, &promisc_on},
-		{"raw_moni_bpf_on", PARAM_INT, &bpf_on},
-		{"callid_aleg_header", PARAM_STR, &callid_aleg_header},
-		{"custom_field1_header", PARAM_STR, &custom_field1_header},
-		{"custom_field2_header", PARAM_STR, &custom_field2_header},
-		{"custom_field3_header", PARAM_STR, &custom_field3_header},
-		{"capture_mode", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)capture_mode_param},
-		{"capture_bad_msgs", PARAM_INT, &parse_bad_msgs},
-		{"insert_retries", PARAM_INT, &insert_retries},
-		{"insert_retry_timeout", PARAM_INT, &insert_retry_timeout},
-		{"topoh_unmask", PARAM_INT, &sc_topoh_unmask},
-		{"nonsip_hook", PARAM_INT, &nonsip_hook},
-		{"event_callback", PARAM_STR, &sc_event_callback}, {0, 0, 0}};
-
+static param_export_t params[] = {
+	{"db_url", PARAM_STR, &db_url},
+	{"table_name", PARAM_STR, &_sipcap_table_name},
+	{"hash_source", PARAM_STR, &hash_source},
+	{"mt_mode", PARAM_STR, &mt_mode},
+	{"date_column", PARAM_STR, &date_column},
+	{"micro_ts_column", PARAM_STR, &micro_ts_column},
+	{"method_column", PARAM_STR, &method_column},
+	{"correlation_column", PARAM_STR, &correlation_column.s},
+	{"reply_reason_column", PARAM_STR, &reply_reason_column},
+	{"ruri_column", PARAM_STR, &ruri_column},
+	{"ruri_user_column", PARAM_STR, &ruri_user_column},
+	{"ruri_domain_column", PARAM_STR, &ruri_domain_column},
+	{"from_user_column", PARAM_STR, &from_user_column},
+	{"from_domain_column", PARAM_STR, &from_domain_column},
+	{"from_tag_column", PARAM_STR, &from_tag_column},
+	{"to_user_column", PARAM_STR, &to_user_column},
+	{"to_domain_column", PARAM_STR, &to_domain_column},
+	{"to_tag_column", PARAM_STR, &to_tag_column},
+	{"pid_user_column", PARAM_STR, &pid_user_column},
+	{"contact_user_column", PARAM_STR, &contact_user_column},
+	{"auth_user_column", PARAM_STR, &auth_user_column},
+	{"callid_column", PARAM_STR, &callid_column},
+	{"callid_aleg_column", PARAM_STR, &callid_aleg_column},
+	{"via_1_column", PARAM_STR, &via_1_column},
+	{"via_1_branch_column", PARAM_STR, &via_1_branch_column},
+	{"cseq_column", PARAM_STR, &cseq_column},
+	{"diversion_column", PARAM_STR, &diversion_column},
+	{"reason_column", PARAM_STR, &reason_column},
+	{"content_type_column", PARAM_STR, &content_type_column},
+	{"authorization_column", PARAM_STR, &authorization_column},
+	{"user_agent_column", PARAM_STR, &user_agent_column},
+	{"source_ip_column", PARAM_STR, &source_ip_column},
+	{"source_port_column", PARAM_STR, &source_port_column},
+	{"destination_ip_column", PARAM_STR, &dest_ip_column},
+	{"destination_port_column", PARAM_STR, &dest_port_column},
+	{"contact_ip_column", PARAM_STR, &contact_ip_column},
+	{"contact_port_column", PARAM_STR, &contact_port_column},
+	{"originator_ip_column", PARAM_STR, &orig_ip_column},
+	{"originator_port_column", PARAM_STR, &orig_port_column},
+	{"proto_column", PARAM_STR, &proto_column},
+	{"family_column", PARAM_STR, &family_column},
+	{"rtp_stat_column", PARAM_STR, &rtp_stat_column},
+	{"type_column", PARAM_STR, &type_column},
+	{"node_column", PARAM_STR, &node_column},
+	{"msg_column", PARAM_STR, &msg_column},
+	{"custom_field1_column", PARAM_STR, &custom_field1_column},
+	{"custom_field2_column", PARAM_STR, &custom_field2_column},
+	{"custom_field3_column", PARAM_STR, &custom_field3_column},
+	{"capture_on", PARAM_INT, &capture_on},
+	{"capture_node", PARAM_STR, &capture_node},
+	{"raw_sock_children", PARAM_INT, &raw_sock_children},
+	{"hep_capture_on", PARAM_INT, &hep_capture_on},
+	{"raw_socket_listen", PARAM_STR, &raw_socket_listen},
+	{"raw_ipip_capture_on", PARAM_INT, &ipip_capture_on},
+	{"raw_moni_capture_on", PARAM_INT, &moni_capture_on},
+	{"db_insert_mode", PARAM_INT, &db_insert_mode},
+	{"raw_interface", PARAM_STR, &raw_interface},
+	{"promiscuous_on", PARAM_INT, &promisc_on},
+	{"raw_moni_bpf_on", PARAM_INT, &bpf_on},
+	{"callid_aleg_header", PARAM_STR, &callid_aleg_header},
+	{"custom_field1_header", PARAM_STR, &custom_field1_header},
+	{"custom_field2_header", PARAM_STR, &custom_field2_header},
+	{"custom_field3_header", PARAM_STR, &custom_field3_header},
+	{"capture_mode", PARAM_STRING | PARAM_USE_FUNC, (void *)capture_mode_param},
+	{"capture_bad_msgs", PARAM_INT, &parse_bad_msgs},
+	{"insert_retries", PARAM_INT, &insert_retries},
+	{"insert_retry_timeout", PARAM_INT, &insert_retry_timeout},
+	{"topoh_unmask", PARAM_INT, &sc_topoh_unmask},
+	{"nonsip_hook", PARAM_INT, &nonsip_hook},
+	{"event_callback", PARAM_STR, &sc_event_callback},
+	{0, 0, 0}
+};
 
 #ifdef STATISTICS
 /*
@@ -426,17 +420,18 @@ stat_export_t *sipcapture_stats = NULL;
 
 /*! \brief module exports */
 struct module_exports exports = {
-		"sipcapture",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		destroy			 /* module destroy function */
+	"sipcapture",    /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
+	mod_pvs,         /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	destroy          /* module destroy function */
 };
+/* clang-format on */
 
 int force_capture_callid(struct sip_msg *msg, struct _sipcapture_object *sco)
 {
