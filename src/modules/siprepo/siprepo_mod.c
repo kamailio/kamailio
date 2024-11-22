@@ -59,6 +59,7 @@ static int w_sr_msg_check(sip_msg_t *msg, char *p1, char *p2);
 static void siprepo_timer_exec(unsigned int ticks, int worker, void *param);
 
 static int fixup_sr_msg_async_pull(void **param, int param_no);
+static int fixup_free_sr_msg_async_pull(void **param, int param_no);
 
 /* clang-format off */
 typedef struct sworker_task_param {
@@ -290,6 +291,15 @@ static int fixup_sr_msg_async_pull(void **param, int param_no)
 		return fixup_spve_null(param, 1);
 	if(param_no == 5)
 		return fixup_igp_null(param, 1);
+	return 0;
+}
+
+static int fixup_free_sr_msg_async_pull(void **param, int param_no)
+{
+	if(param_no >= 1 && param_no <= 4)
+		return fixup_free_spve_null(param, 1);
+	if(param_no == 5)
+		return fixup_free_igp_null(param, 1);
 	return 0;
 }
 
