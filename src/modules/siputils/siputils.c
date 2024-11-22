@@ -117,6 +117,7 @@ static int w_sip_parse_headers(sip_msg_t *msg, char *p1, char *p2);
 static int fixup_set_uri(void **param, int param_no);
 static int fixup_free_set_uri(void **param, int param_no);
 static int fixup_tel2sip(void **param, int param_no);
+static int fixup_free_tel2sip(void **param, int param_no);
 static int fixup_get_uri_param(void **param, int param_no);
 static int free_fixup_get_uri_param(void **param, int param_no);
 static int fixup_option(void **param, int param_no);
@@ -143,9 +144,9 @@ static cmd_export_t cmds[] = {
 			free_fixup_get_uri_param, REQUEST_ROUTE | LOCAL_ROUTE},
 	{"uri_param_rm", (cmd_function)w_uri_param_rm, 1, fixup_spve_null, fixup_free_spve_null,
 			REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-	{"tel2sip", (cmd_function)tel2sip, 3, fixup_tel2sip, 0,
+	{"tel2sip", (cmd_function)tel2sip, 3, fixup_tel2sip, fixup_free_tel2sip,
 			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
-	{"tel2sip2", (cmd_function)tel2sip2, 3, fixup_tel2sip, 0,
+	{"tel2sip2", (cmd_function)tel2sip2, 3, fixup_tel2sip, fixup_free_tel2sip,
 			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
 	{"is_uri", (cmd_function)is_uri, 1, fixup_spve_null,
 			fixup_free_spve_null, ANY_ROUTE},
@@ -362,6 +363,17 @@ static int fixup_tel2sip(void **param, int param_no)
 
 	LM_ERR("invalid parameter number <%d>\n", param_no);
 	return -1;
+}
+
+static int fixup_free_tel2sip(void **param, int param_no)
+{
+	if((param_no == 1) || (param_no == 2)) {
+		fixup_free_fparam_all(param, 1);
+	}
+	if(param_no == 3) {
+		fixup_free_pvar_null(param, 1);
+	}
+	return 0;
 }
 
 /* */
