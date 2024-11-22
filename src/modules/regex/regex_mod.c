@@ -116,13 +116,13 @@ static int w_pcre_match_group(struct sip_msg *_msg, char *_s1, char *_s2);
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"pcre_match", (cmd_function)w_pcre_match, 2,
-		fixup_spve_spve, 0,
+		fixup_spve_spve, fixup_free_spve_spve,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
 	{"pcre_match_group", (cmd_function)w_pcre_match_group, 2,
-		fixup_spve_spve, 0,
+		fixup_spve_spve, fixup_free_spve_spve,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
 	{"pcre_match_group", (cmd_function)w_pcre_match_group, 1,
-		fixup_spve_null, 0,
+		fixup_spve_null, fixup_free_spve_null,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
