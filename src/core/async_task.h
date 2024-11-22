@@ -58,4 +58,15 @@ async_wgroup_t *async_task_group_find(str *gname);
 int async_task_group_push(str *gname, async_task_t *task);
 int async_task_group_send(async_wgroup_t *awg, async_task_t *task);
 
+typedef struct async_tkv_param
+{
+	int dtype;
+	str skey;
+	str sval;
+} async_tkv_param_t;
+
+#define KSR_ASYNC_TKV_SIZE 512
+void async_tkv_init(void);
+int async_tkv_emit(int dtype, char *pkey, char *fmt, ...);
+
 #endif
