@@ -94,88 +94,85 @@ static int pv_get_to_tag_initial(
 static int pv_get_rdir(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_rdir_name(pv_spec_p sp, str *in);
 
+/* clang-format off */
 /*!
  * \brief Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"loose_route", (cmd_function)w_loose_route, 0, 0, 0, REQUEST_ROUTE},
-		{"loose_route_preloaded", (cmd_function)w_loose_route_preloaded, 0, 0,
-				0, REQUEST_ROUTE},
-		{"loose_route_mode", (cmd_function)w_loose_route_mode, 1,
-				fixup_igp_null, fixup_free_igp_null, REQUEST_ROUTE},
-		{"record_route", (cmd_function)w_record_route, 0, 0, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"record_route", (cmd_function)w_record_route, 1, it_list_fixup, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"record_route_preset", (cmd_function)w_record_route_preset, 1,
-				it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"record_route_preset", (cmd_function)w_record_route_preset, 2,
-				it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"record_route_advertised_address",
-				(cmd_function)w_record_route_advertised_address, 1,
-				it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"add_rr_param", (cmd_function)w_add_rr_param, 1, it_list_fixup, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"check_route_param", (cmd_function)w_check_route_param, 1,
-				fixup_regexp_null, fixup_free_regexp_null, REQUEST_ROUTE},
-		{"is_direction", (cmd_function)w_is_direction, 1, direction_fixup, 0,
-				REQUEST_ROUTE},
-		{"remove_record_route", w_remove_record_route, 0, 0, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"rr_next_hop_route", (cmd_function)w_rr_next_hop_route, 0, 0, 0,
-				ANY_ROUTE},
-		{"load_rr", (cmd_function)load_rr, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
-
+	{"loose_route", (cmd_function)w_loose_route, 0, 0, 0, REQUEST_ROUTE},
+	{"loose_route_preloaded", (cmd_function)w_loose_route_preloaded, 0, 0, 0, REQUEST_ROUTE},
+	{"loose_route_mode", (cmd_function)w_loose_route_mode, 1,
+		fixup_igp_null, fixup_free_igp_null, REQUEST_ROUTE},
+	{"record_route", (cmd_function)w_record_route, 0,
+		0, 0,	REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"record_route", (cmd_function)w_record_route, 1,
+		it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"record_route_preset", (cmd_function)w_record_route_preset, 1,
+		it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"record_route_preset", (cmd_function)w_record_route_preset, 2,
+		it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"record_route_advertised_address",	(cmd_function)w_record_route_advertised_address, 1,
+		it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"add_rr_param", (cmd_function)w_add_rr_param, 1,
+		it_list_fixup, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"check_route_param", (cmd_function)w_check_route_param, 1,
+		fixup_regexp_null, fixup_free_regexp_null, REQUEST_ROUTE},
+	{"is_direction", (cmd_function)w_is_direction, 1,
+		direction_fixup, 0, REQUEST_ROUTE},
+	{"remove_record_route", w_remove_record_route, 0, 0, 0,	REQUEST_ROUTE | FAILURE_ROUTE},
+	{"rr_next_hop_route", (cmd_function)w_rr_next_hop_route, 0, 0, 0, ANY_ROUTE},
+	{"load_rr", (cmd_function)load_rr, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*!
  * \brief Exported parameters
  */
 static param_export_t params[] = {
-		{"append_fromtag", PARAM_INT, &append_fromtag},
-		{"enable_double_rr", PARAM_INT, &enable_double_rr},
-		{"enable_full_lr", PARAM_INT, &enable_full_lr},
+	{"append_fromtag", PARAM_INT, &append_fromtag},
+	{"enable_double_rr", PARAM_INT, &enable_double_rr},
+	{"enable_full_lr", PARAM_INT, &enable_full_lr},
 #ifdef ENABLE_USER_CHECK
-		{"ignore_user", PARAM_STR, &i_user},
+	{"ignore_user", PARAM_STR, &i_user},
 #endif
-		{"add_username", PARAM_INT, &add_username},
-		{"enable_socket_mismatch_warning", PARAM_INT,
-				&enable_socket_mismatch_warning},
-		{"custom_user_avp", PARAM_STR, &custom_user_spec},
-		{"force_send_socket", PARAM_INT, &rr_force_send_socket},
-		{"ignore_sips", PARAM_INT, &rr_ignore_sips},
-		{"sockname_mode", PARAM_INT, &rr_sockname_mode}, {0, 0, 0}};
+	{"add_username", PARAM_INT, &add_username},
+	{"enable_socket_mismatch_warning", PARAM_INT,
+			&enable_socket_mismatch_warning},
+	{"custom_user_avp", PARAM_STR, &custom_user_spec},
+	{"force_send_socket", PARAM_INT, &rr_force_send_socket},
+	{"ignore_sips", PARAM_INT, &rr_ignore_sips},
+	{"sockname_mode", PARAM_INT, &rr_sockname_mode},
+	{0, 0, 0}
+};
 
 /*!
  * \brief Exported Pseudo variables
  */
 static pv_export_t mod_pvs[] = {
-		{{"route_uri",
-				 (sizeof("route_uri") - 1)}, /* URI of the first Route-Header */
-				PVT_OTHER, pv_get_route_uri_f, 0, 0, 0, 0, 0},
-		{{"fti", (sizeof("fti") - 1)}, /* From-Tag as for initial request */
-				PVT_OTHER, pv_get_from_tag_initial, 0, 0, 0, 0, 0},
-		{{"tti", (sizeof("tti")
-						 - 1)}, /* To-Tag as for response to initial request */
-				PVT_OTHER, pv_get_to_tag_initial, 0, 0, 0, 0, 0},
-		{{"rdir", (sizeof("rdir") - 1)}, PVT_OTHER, pv_get_rdir, 0,
-				pv_parse_rdir_name, 0, 0, 0},
-
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
-
-
-struct module_exports exports = {
-		"rr",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	{{"route_uri", (sizeof("route_uri") - 1)}, /* URI of the first Route-Header */
+		PVT_OTHER, pv_get_route_uri_f, 0, 0, 0, 0, 0},
+	{{"fti", (sizeof("fti") - 1)}, /* From-Tag as for initial request */
+		PVT_OTHER, pv_get_from_tag_initial, 0, 0, 0, 0, 0},
+	{{"tti", (sizeof("tti")	- 1)}, /* To-Tag as for response to initial request */
+		PVT_OTHER, pv_get_to_tag_initial, 0, 0, 0, 0, 0},
+	{{"rdir", (sizeof("rdir") - 1)},
+		PVT_OTHER, pv_get_rdir, 0,	pv_parse_rdir_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
+struct module_exports exports = {
+	"rr",            /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	mod_pvs,         /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	mod_destroy      /* module destroy function */
+};
+/* clang-format on */
 
 static int mod_init(void)
 {
