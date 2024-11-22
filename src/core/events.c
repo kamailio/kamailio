@@ -26,6 +26,7 @@
 #include "dprint.h"
 #include "mem/mem.h"
 #include "route.h"
+#include "fmsg.h"
 #include "events.h"
 
 static sr_event_cb_t _sr_events_list;
@@ -75,6 +76,36 @@ void sr_core_ert_run(sip_msg_t *msg, int e)
 			set_route_type(rtb);
 			break;
 	}
+}
+
+/**
+ *
+ */
+int sr_core_ert_run_xname(char *evname)
+{
+	struct run_act_ctx ctx;
+	int rtb;
+	int ridx;
+	sip_msg_t *fmsg;
+
+	fmsg = faked_msg_get_next_clear();
+	if(fmsg == NULL) {
+		LM_ERR("cannot create a fake message\n");
+		return -1;
+	}
+	ridx = route_lookup(&event_rt, evname);
+	if(ridx <= 0 || event_rt.rlist[ridx] == NULL) {
+		LM_DBG("event_route[%s] not defined - skipping\n", evname);
+		return 0;
+	}
+
+	rtb = get_route_type();
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	run_top_route(event_rt.rlist[ridx], fmsg, &ctx);
+	set_route_type(rtb);
+
+	return 0;
 }
 
 /**

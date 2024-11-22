@@ -89,6 +89,7 @@ int sr_event_enabled(int type);
 
 void sr_core_ert_init(void);
 void sr_core_ert_run(sip_msg_t *msg, int e);
+int sr_core_ert_run_xname(char *evname);
 
 typedef void (*sr_corecb_void_f)(void);
 typedef struct sr_corecb

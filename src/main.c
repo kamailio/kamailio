@@ -3333,6 +3333,8 @@ int main(int argc, char **argv)
 #endif /* USE_TLS */
 #endif /* USE_TCP */
 
+	sr_core_ert_run_xname("core:modinit-before");
+
 	if(init_modules() != 0) {
 		fprintf(stderr, "ERROR: error while initializing modules\n");
 		goto error;
