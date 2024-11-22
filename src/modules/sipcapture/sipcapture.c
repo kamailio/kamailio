@@ -140,8 +140,11 @@ static int sipcapture_init_rpc(void);
 static int child_init(int rank);
 static void destroy(void);
 static int sipcapture_fixup(void **param, int param_no);
+static int sipcapture_fixup_free(void **param, int param_no);
 static int reportcapture_fixup(void **param, int param_no);
+static int reportcapture_fixup_free(void **param, int param_no);
 static int float2int_fixup(void **param, int param_no);
+static int float2int_fixup_free(void **param, int param_no);
 
 static int pv_get_hep(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_hep_name(pv_spec_p sp, str *in);
@@ -310,14 +313,22 @@ struct hep_timeinfo *heptime = NULL;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"sip_capture", (cmd_function)w_sip_capture0, 0, 0, 0, ANY_ROUTE},
-	{"sip_capture", (cmd_function)w_sip_capture1, 1, sipcapture_fixup, 0, ANY_ROUTE},
-	{"sip_capture", (cmd_function)w_sip_capture2, 2, sipcapture_fixup, 0, ANY_ROUTE},
-	{"report_capture", (cmd_function)w_report_capture1, 1, reportcapture_fixup, 0, ANY_ROUTE},
-	{"report_capture", (cmd_function)w_report_capture2, 2, reportcapture_fixup, 0, ANY_ROUTE},
-	{"report_capture", (cmd_function)w_report_capture3, 3, reportcapture_fixup, 0, ANY_ROUTE},
-	{"float2int", (cmd_function)w_float2int, 2, float2int_fixup, 0, ANY_ROUTE},
-	{"sip_capture_forward", (cmd_function)w_sip_capture_forward, 1, fixup_spve_null, 0, ANY_ROUTE},
+	{"sip_capture", (cmd_function)w_sip_capture0, 0,
+		0, 0, ANY_ROUTE},
+	{"sip_capture", (cmd_function)w_sip_capture1, 1,
+		sipcapture_fixup, sipcapture_fixup_free, ANY_ROUTE},
+	{"sip_capture", (cmd_function)w_sip_capture2, 2,
+		sipcapture_fixup, sipcapture_fixup_free, ANY_ROUTE},
+	{"report_capture", (cmd_function)w_report_capture1, 1,
+		reportcapture_fixup, reportcapture_fixup_free, ANY_ROUTE},
+	{"report_capture", (cmd_function)w_report_capture2, 2,
+		reportcapture_fixup, reportcapture_fixup_free, ANY_ROUTE},
+	{"report_capture", (cmd_function)w_report_capture3, 3,
+		reportcapture_fixup, reportcapture_fixup_free, ANY_ROUTE},
+	{"float2int", (cmd_function)w_float2int, 2,
+		float2int_fixup, float2int_fixup_free, ANY_ROUTE},
+	{"sip_capture_forward", (cmd_function)w_sip_capture_forward, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -1108,6 +1119,15 @@ static int sipcapture_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int sipcapture_fixup_free(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_fparam_all(param, 1);
+	}
+
+	return 0;
+}
+
 static int reportcapture_fixup(void **param, int param_no)
 {
 
@@ -1119,6 +1139,16 @@ static int reportcapture_fixup(void **param, int param_no)
 	}
 	if(param_no == 3) {
 		return fixup_var_pve_str_12(param, 1);
+	}
+
+	return 0;
+}
+
+static int reportcapture_fixup_free(void **param, int param_no)
+{
+
+	if(param_no >= 1 && param_no <= 3) {
+		return fixup_free_fparam_all(param, 1);
 	}
 
 	return 0;
@@ -1137,6 +1167,14 @@ static int float2int_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int float2int_fixup_free(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2) {
+		return fixup_free_fparam_all(param, 1);
+	}
+
+	return 0;
+}
 
 static int w_float2int(sip_msg_t *_m, char *_val, char *_coof)
 {
