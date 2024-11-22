@@ -577,7 +577,7 @@ int ki_async_task_group_data(sip_msg_t *msg, str *rn, str *gn, str *sdata)
 		}
 	}
 
-	if(async_send_data(msg, act, rn, gn, sdata) < 0)
+	if(async_send_data(act, rn, gn, sdata) < 0)
 		return -1;
 	/* ok */
 	return 1;

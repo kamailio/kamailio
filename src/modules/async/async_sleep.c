@@ -603,8 +603,7 @@ void async_exec_data(void *param)
 /**
  *
  */
-int async_send_data(
-		sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname, str *sdata)
+int async_send_data(cfg_action_t *act, str *cbname, str *gname, str *sdata)
 {
 	async_task_t *at;
 	int dsize;
