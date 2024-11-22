@@ -75,7 +75,7 @@ static cmd_export_t cmds[]={
 	{"sr_msg_pull", (cmd_function)w_sr_msg_pull, 4, fixup_sssi,
 		fixup_free_sssi, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
 	{"sr_msg_async_pull", (cmd_function)w_sr_msg_async_pull, 5, fixup_sr_msg_async_pull,
-		0, ANY_ROUTE},
+		fixup_free_sr_msg_async_pull, ANY_ROUTE},
 	{"sr_msg_rm", (cmd_function)w_sr_msg_rm, 2, fixup_spve_spve,
 		fixup_free_spve_spve, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
 	{"sr_msg_check", (cmd_function)w_sr_msg_check, 0, 0,

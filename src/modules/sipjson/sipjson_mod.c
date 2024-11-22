@@ -41,26 +41,30 @@ static int sj_serialize_data(sip_msg_t *msg, srjson_doc_t *jdoc, str *smode);
 
 static int w_sj_serialize(sip_msg_t *msg, char *mode, char *vout);
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"sj_serialize", (cmd_function)w_sj_serialize, 2, fixup_spve_pvar,
-				fixup_free_spve_pvar, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"sj_serialize", (cmd_function)w_sj_serialize, 2, fixup_spve_pvar,
+			fixup_free_spve_pvar, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{0, 0, 0}};
-
+static param_export_t params[] = {
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"sipjson",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported rpc functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* module init function */
-		0,				 /* response function */
-		0,				 /* per child init function */
-		0				 /* destroy function */
+	"sipjson",       /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	0,               /* module init function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
+/* clang-format on */
 
 /**
  *
