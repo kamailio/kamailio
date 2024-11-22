@@ -161,132 +161,135 @@ stat_var *expire_range_stat;
 /** SL API structure */
 sl_api_t _reg_slb;
 
+/* clang-format off */
 /*! \brief
  * Exported PV
  */
 static pv_export_t mod_pvs[] = {
-		{{"ulc", sizeof("ulc") - 1}, PVT_OTHER, pv_get_ulc, pv_set_ulc,
-				pv_parse_ulc_name, pv_parse_index, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
-
+	{{"ulc", sizeof("ulc") - 1}, PVT_OTHER, pv_get_ulc, pv_set_ulc,
+		pv_parse_ulc_name, pv_parse_index, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 /*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"save", (cmd_function)w_save2, 1, save_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"save", (cmd_function)w_save2, 2, save_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"save", (cmd_function)w_save3, 3, save_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"lookup", (cmd_function)w_lookup, 1, domain_uri_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"lookup", (cmd_function)w_lookup, 2, domain_uri_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"lookup_to_dset", (cmd_function)w_lookup_to_dset, 1, domain_uri_fixup,
-				0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"lookup_to_dset", (cmd_function)w_lookup_to_dset, 2, domain_uri_fixup,
-				0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"registered", (cmd_function)w_registered, 1, domain_uri_fixup, 0,
-				ANY_ROUTE},
-		{"registered", (cmd_function)w_registered, 2, domain_uri_fixup, 0,
-				ANY_ROUTE},
-		{"registered", (cmd_function)w_registered3, 3, registered_fixup, 0,
-				ANY_ROUTE},
-		{"registered", (cmd_function)w_registered4, 4, registered_fixup, 0,
-				ANY_ROUTE},
-		{"add_sock_hdr", (cmd_function)w_add_sock_hdr, 1, fixup_spve_null, 0,
-				REQUEST_ROUTE},
-		{"unregister", (cmd_function)w_unregister, 2, unreg_fixup, 0,
-				ANY_ROUTE},
-		{"unregister", (cmd_function)w_unregister2, 3, unreg_fixup, 0,
-				ANY_ROUTE},
-		{"reg_fetch_contacts", (cmd_function)pv_fetch_contacts, 3, fetchc_fixup,
-				0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"reg_free_contacts", (cmd_function)pv_free_contacts, 1, fixup_str_null,
-				0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"lookup_branches", (cmd_function)w_lookup_branches, 1,
-				domain_uri_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-		{"lookup_xavp", (cmd_function)w_lookup_xavp, 4, fixup_spve_all,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"reg_from_user", (cmd_function)w_reg_from_user, 3, fixup_ssi,
-				fixup_free_ssi, ANY_ROUTE},
-		{"reg_send_reply", (cmd_function)w_reg_send_reply, 0, 0, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"bind_registrar", (cmd_function)bind_registrar, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
-
+	{"save", (cmd_function)w_save2, 1,
+		save_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"save", (cmd_function)w_save2, 2,
+		save_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"save", (cmd_function)w_save3, 3,
+		save_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"lookup", (cmd_function)w_lookup, 1,
+		domain_uri_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup", (cmd_function)w_lookup, 2,
+		domain_uri_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup_to_dset", (cmd_function)w_lookup_to_dset, 1,
+		domain_uri_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup_to_dset", (cmd_function)w_lookup_to_dset, 2,
+		domain_uri_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"registered", (cmd_function)w_registered, 1,
+		domain_uri_fixup, 0, ANY_ROUTE},
+	{"registered", (cmd_function)w_registered, 2,
+		domain_uri_fixup, 0, ANY_ROUTE},
+	{"registered", (cmd_function)w_registered3, 3,
+		registered_fixup, 0, ANY_ROUTE},
+	{"registered", (cmd_function)w_registered4, 4,
+		registered_fixup, 0, ANY_ROUTE},
+	{"add_sock_hdr", (cmd_function)w_add_sock_hdr, 1,
+		fixup_spve_null, 0, REQUEST_ROUTE},
+	{"unregister", (cmd_function)w_unregister, 2,
+		unreg_fixup, 0, ANY_ROUTE},
+	{"unregister", (cmd_function)w_unregister2, 3,
+		unreg_fixup, 0, ANY_ROUTE},
+	{"reg_fetch_contacts", (cmd_function)pv_fetch_contacts, 3,
+		fetchc_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"reg_free_contacts", (cmd_function)pv_free_contacts, 1,
+		fixup_str_null, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup_branches", (cmd_function)w_lookup_branches, 1,
+		domain_uri_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"lookup_xavp", (cmd_function)w_lookup_xavp, 4,
+		fixup_spve_all, fixup_free_spve_null, ANY_ROUTE},
+	{"reg_from_user", (cmd_function)w_reg_from_user, 3,
+		fixup_ssi, fixup_free_ssi, ANY_ROUTE},
+	{"reg_send_reply", (cmd_function)w_reg_send_reply, 0,
+		0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"bind_registrar", (cmd_function)bind_registrar, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*! \brief
  * Exported parameters
  */
 static param_export_t params[] = {
-		{"default_expires", PARAM_INT, &default_registrar_cfg.default_expires},
-		{"default_expires_range", PARAM_INT,
-				&default_registrar_cfg.default_expires_range},
-		{"expires_range", PARAM_INT, &default_registrar_cfg.expires_range},
-		{"default_q", PARAM_INT, &default_registrar_cfg.default_q},
-		{"append_branches", PARAM_INT, &default_registrar_cfg.append_branches},
-		{"case_sensitive", PARAM_INT, &default_registrar_cfg.case_sensitive},
-		/*	{"tcp_persistent_flag",PARAM_INT, &tcp_persistent_flag }, */
-		{"realm_prefix", PARAM_STR, &default_registrar_cfg.realm_pref},
-		{"min_expires", PARAM_INT, &default_registrar_cfg.min_expires},
-		{"max_expires", PARAM_INT, &default_registrar_cfg.max_expires},
-		{"received_param", PARAM_STR, &rcv_param},
-		{"received_avp", PARAM_STRING, &rcv_avp_param},
-		{"max_contacts", PARAM_INT, &default_registrar_cfg.max_contacts},
-		{"retry_after", PARAM_INT, &default_registrar_cfg.retry_after},
-		{"sock_mode", PARAM_INT, &reg_sock_mode},
-		{"sock_flag", PARAM_INT, &sock_flag},
-		{"sock_hdr_name", PARAM_STR, &sock_hdr_name},
-		{"method_filtering", PARAM_INT, &method_filtering},
-		{"use_path", PARAM_INT, &path_enabled},
-		{"path_mode", PARAM_INT, &path_mode},
-		{"path_use_received", PARAM_INT, &path_use_params},
-		{"path_check_local", PARAM_INT, &path_check_local},
-		{"xavp_cfg", PARAM_STR, &reg_xavp_cfg},
-		{"xavp_rcd", PARAM_STR, &reg_xavp_rcd},
-		{"xavp_rcd_mask", PARAM_INT, &reg_xavp_rcd_mask},
-		{"gruu_enabled", PARAM_INT, &reg_gruu_enabled},
-		{"outbound_mode", PARAM_INT, &reg_outbound_mode},
-		{"regid_mode", PARAM_INT, &reg_regid_mode},
-		{"flow_timer", PARAM_INT, &reg_flow_timer},
-		{"contact_max_size", PARAM_INT, &contact_max_size},
-		{"event_callback", PARAM_STR, &reg_event_callback},
-		{"lookup_filter_mode", PARAM_INT, &reg_lookup_filter_mode},
-		{"min_expires_mode", PARAM_INT, &reg_min_expires_mode},
-		{"use_expired_contacts", PARAM_INT,
-				&default_registrar_cfg.use_expired_contacts},
-		{0, 0, 0}};
-
+	{"default_expires", PARAM_INT, &default_registrar_cfg.default_expires},
+	{"default_expires_range", PARAM_INT,
+			&default_registrar_cfg.default_expires_range},
+	{"expires_range", PARAM_INT, &default_registrar_cfg.expires_range},
+	{"default_q", PARAM_INT, &default_registrar_cfg.default_q},
+	{"append_branches", PARAM_INT, &default_registrar_cfg.append_branches},
+	{"case_sensitive", PARAM_INT, &default_registrar_cfg.case_sensitive},
+	/*	{"tcp_persistent_flag",PARAM_INT, &tcp_persistent_flag }, */
+	{"realm_prefix", PARAM_STR, &default_registrar_cfg.realm_pref},
+	{"min_expires", PARAM_INT, &default_registrar_cfg.min_expires},
+	{"max_expires", PARAM_INT, &default_registrar_cfg.max_expires},
+	{"received_param", PARAM_STR, &rcv_param},
+	{"received_avp", PARAM_STRING, &rcv_avp_param},
+	{"max_contacts", PARAM_INT, &default_registrar_cfg.max_contacts},
+	{"retry_after", PARAM_INT, &default_registrar_cfg.retry_after},
+	{"sock_mode", PARAM_INT, &reg_sock_mode},
+	{"sock_flag", PARAM_INT, &sock_flag},
+	{"sock_hdr_name", PARAM_STR, &sock_hdr_name},
+	{"method_filtering", PARAM_INT, &method_filtering},
+	{"use_path", PARAM_INT, &path_enabled},
+	{"path_mode", PARAM_INT, &path_mode},
+	{"path_use_received", PARAM_INT, &path_use_params},
+	{"path_check_local", PARAM_INT, &path_check_local},
+	{"xavp_cfg", PARAM_STR, &reg_xavp_cfg},
+	{"xavp_rcd", PARAM_STR, &reg_xavp_rcd},
+	{"xavp_rcd_mask", PARAM_INT, &reg_xavp_rcd_mask},
+	{"gruu_enabled", PARAM_INT, &reg_gruu_enabled},
+	{"outbound_mode", PARAM_INT, &reg_outbound_mode},
+	{"regid_mode", PARAM_INT, &reg_regid_mode},
+	{"flow_timer", PARAM_INT, &reg_flow_timer},
+	{"contact_max_size", PARAM_INT, &contact_max_size},
+	{"event_callback", PARAM_STR, &reg_event_callback},
+	{"lookup_filter_mode", PARAM_INT, &reg_lookup_filter_mode},
+	{"min_expires_mode", PARAM_INT, &reg_min_expires_mode},
+	{"use_expired_contacts", PARAM_INT,
+			&default_registrar_cfg.use_expired_contacts},
+	{0, 0, 0}
+};
 
 /*! \brief We expose internal variables via the statistic framework below.*/
-stat_export_t mod_stats[] = {{"max_expires", STAT_NO_RESET, &max_expires_stat},
-		{"max_contacts", STAT_NO_RESET, &max_contacts_stat},
-		{"default_expire", STAT_NO_RESET, &default_expire_stat},
-		{"default_expires_range", STAT_NO_RESET, &default_expire_range_stat},
-		{"expires_range", STAT_NO_RESET, &expire_range_stat},
-		{"accepted_regs", 0, &accepted_registrations},
-		{"rejected_regs", 0, &rejected_registrations}, {0, 0, 0}};
-
+stat_export_t mod_stats[] = {
+	{"max_expires", STAT_NO_RESET, &max_expires_stat},
+	{"max_contacts", STAT_NO_RESET, &max_contacts_stat},
+	{"default_expire", STAT_NO_RESET, &default_expire_stat},
+	{"default_expires_range", STAT_NO_RESET, &default_expire_range_stat},
+	{"expires_range", STAT_NO_RESET, &expire_range_stat},
+	{"accepted_regs", 0, &accepted_registrations},
+	{"rejected_regs", 0, &rejected_registrations},
+	{0, 0, 0}
+};
 
 /*! \brief
  * Module exports structure
  */
 struct module_exports exports = {
-		"registrar",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported rpc functions */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per-child init function */
-		mod_destroy		 /* destroy function */
+	"registrar",     /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	mod_pvs,         /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
 };
-
+/* clang-format on */
 
 /*! \brief
  * Initialize parent
