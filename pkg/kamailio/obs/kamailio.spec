@@ -113,21 +113,21 @@
 %bcond_without wolfssl
 %endif
 
-%if 0%{?rhel} == 9
+%if 0%{?rhel} == 9 || 0%{?rhel} == 10
 %if 0%{?centos_ver}
 %define dist_name centos
 %define dist_version %{?centos}
-%define dist .el9.centos
+%define dist .el%{?centos_ver}.centos
 %endif
 %if 0%{?almalinux_ver}
 %define dist_name centos
 %define dist_version %{?almalinux}
-%define dist .el9.almalinux
+%define dist .el%{?almalinux_ver}.almalinux
 %endif
 %if 0%{?rocky_ver}
 %define dist_name centos
 %define dist_version %{?rocky}
-%define dist .el9.rocky
+%define dist .el%{?rocky_ver}.rocky
 %endif
 %if 0%{?centos_ver} == 0 && 0%{?almalinux_ver} == 0 && 0%{?rocky_ver} == 0
 %define dist_name rhel
