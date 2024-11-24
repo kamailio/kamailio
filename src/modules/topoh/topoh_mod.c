@@ -317,8 +317,8 @@ int th_build_socket_strings(socket_info_t *socket)
 	str *socket_ip = NULL;
 
 	if(socket->sockname.s == NULL || socket->sockname.len <= 0) {
-		LM_ERR("the socket [%.*s] has no name - it must be set\n",
-				socket->address_str.len, socket->address_str.s);
+		LM_ERR("the socket %s has no name - it must be set\n",
+				socket->sock_str.s);
 		return -1;
 	}
 
