@@ -1533,7 +1533,7 @@ static int pv_parse_atkv_name(pv_spec_t *sp, str *in)
 	return 0;
 
 error:
-	LM_ERR("unknown PV time name %.*s\n", in->len, in->s);
+	LM_ERR("unknown PV atkv name %.*s\n", in->len, in->s);
 	return -1;
 }
 
