@@ -614,14 +614,18 @@ int ip_addr2sbufz(struct ip_addr *ip, char *buff, int len);
 #define IP_ADDR_MAX_STR_SIZE (IP6_MAX_STR_SIZE + 1)	 /* ip62ascii +  \0*/
 #define IP_ADDR_MAX_STRZ_SIZE (IP6_MAX_STR_SIZE + 3) /* ip62ascii + [ + ] + \0*/
 
-/* fast ip_addr -> string converter;
- * it uses an internal buffer
- */
+/* ip addr to string converter; it uses an internal static buffer */
 char *ip_addr2a(struct ip_addr *ip);
+/* ip addr to string converter; it uses a pool of internal static buffers */
+char *ip_addr2xa(struct ip_addr *ip);
 
 
-/* full address in text representation, including [] for ipv6 */
+/* full address in text representation, including [] for ipv6
+ * - it uses an internal static buffer */
 char *ip_addr2strz(struct ip_addr *ip);
+/* full address in text representation, including [] for ipv6
+ * - it uses a pool of internal static buffers */
+char *ip_addr2xstrz(struct ip_addr *ip);
 
 
 #define SU2A_MAX_STR_SIZE                                            \
