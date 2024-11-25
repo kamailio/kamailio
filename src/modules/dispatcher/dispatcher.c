@@ -185,6 +185,7 @@ static int w_ds_reload(struct sip_msg* msg, char*, char*);
 static int w_ds_is_active(sip_msg_t *msg, char *pset, char *p2);
 static int w_ds_is_active_uri(sip_msg_t *msg, char *pset, char *puri);
 static int w_ds_dsg_fetch(sip_msg_t *msg, char *pset, char *p2);
+static int w_ds_dsg_fetch_uri(sip_msg_t *msg, char *pset, char *puri);
 static int w_ds_oc_set_attrs(sip_msg_t*, char*, char*, char*, char*, char*);
 
 static int fixup_ds_is_from_list(void** param, int param_no);
@@ -199,6 +200,7 @@ static int pv_parse_dsv(pv_spec_p sp, str *in);
 static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_dsg(pv_spec_p sp, str *in);
 static void ds_dsg_fetch(int dg);
+static void ds_dsg_fetch_uri(int dg, str *uri);
 
 static pv_export_t mod_pvs[] = {
 	{ {"dsv", (sizeof("dsv")-1)}, PVT_OTHER, pv_get_dsv, 0,
@@ -266,6 +268,8 @@ static cmd_export_t cmds[]={
 		fixup_isiii, fixup_free_isiii, ANY_ROUTE},
 	{"ds_dsg_fetch",  (cmd_function)w_ds_dsg_fetch, 1,
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"ds_dsg_fetch_uri",  (cmd_function)w_ds_dsg_fetch_uri, 2,
+		fixup_igp_spve, fixup_free_igp_spve, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -1367,14 +1371,32 @@ error:
 /**
  *
  */
-static int _pv_dsg_fetch = 1;
+static int _pv_dsg_fetch_dg = 1;
+static str _pv_dsg_fetch_uri = STR_NULL;
 
 /**
  *
  */
 static void ds_dsg_fetch(int dg)
 {
-	_pv_dsg_fetch = dg;
+	_pv_dsg_fetch_dg = dg;
+	if(_pv_dsg_fetch_uri.s != NULL) {
+		pkg_free(_pv_dsg_fetch_uri.s);
+	}
+	_pv_dsg_fetch_uri.s = NULL;
+	_pv_dsg_fetch_uri.len = 0;
+}
+
+/**
+ *
+ */
+static void ds_dsg_fetch_uri(int dg, str *uri)
+{
+	_pv_dsg_fetch_dg = dg;
+	if(_pv_dsg_fetch_uri.s != NULL) {
+		pkg_free(_pv_dsg_fetch_uri.s);
+	}
+	pkg_str_dup(&_pv_dsg_fetch_uri, uri);
 }
 
 /**
@@ -1389,6 +1411,28 @@ static int w_ds_dsg_fetch(sip_msg_t *msg, char *pset, char *p2)
 		return -1;
 	}
 	ds_dsg_fetch(set);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_ds_dsg_fetch_uri(sip_msg_t *msg, char *pset, char *puri)
+{
+	int set;
+	str suri = STR_NULL;
+
+	if(fixup_get_ivalue(msg, (gparam_p)pset, &set) != 0) {
+		LM_ERR("cannot get set id param value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)puri, &suri) != 0) {
+		LM_ERR("cannot get uri param value\n");
+		return -1;
+	}
+
+	ds_dsg_fetch_uri(set, &suri);
 
 	return 1;
 }
@@ -1439,15 +1483,18 @@ static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	int active = 0;
 	int inactive = 0;
 	int j = 0;
+	ds_ocdata_t ocdata;
 
 	if(param == NULL) {
 		return -1;
 	}
-	dsg = ds_list_lookup(_pv_dsg_fetch);
+	dsg = ds_list_lookup(_pv_dsg_fetch_dg);
 
 	if(dsg == NULL) {
 		return pv_get_null(msg, param, res);
 	}
+
+	memset(&ocdata, 0, sizeof(ds_ocdata_t));
 
 	lock_get(&dsg->lock);
 	count = dsg->nr;
@@ -1456,6 +1503,14 @@ static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			inactive++;
 		} else {
 			active++;
+		}
+		if(_pv_dsg_fetch_uri.s != NULL && _pv_dsg_fetch_uri.len > 0) {
+			if((_pv_dsg_fetch_uri.len == dsg->dlist[j].uri.len)
+					&& (strncmp(dsg->dlist[j].uri.s, _pv_dsg_fetch_uri.s,
+								_pv_dsg_fetch_uri.len)
+							== 0)) {
+				memcpy(&ocdata, &dsg->dlist[j].ocdata, sizeof(ds_ocdata_t));
+			}
 		}
 	}
 	lock_release(&dsg->lock);
