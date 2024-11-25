@@ -47,25 +47,28 @@ static int w_log_udp(struct sip_msg *msg, char *txt, char *p2);
 
 void _lc_core_log_udp(int lpriority, const char *format, ...);
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"log_udp", (cmd_function)w_log_udp, 1, fixup_spve_null, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"log_udp", (cmd_function)w_log_udp, 1, fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {{0, 0, 0}};
 
 struct module_exports exports = {
-		"log_custom",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* exported RPC functions */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per child init function */
-		mod_destroy		 /* destroy function */
+	"log_custom",	 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* exported RPC functions */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* per child init function */
+	mod_destroy		 /* destroy function */
 };
 
+/* clang-format on */
 /**
  * init module function
  */
