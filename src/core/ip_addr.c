@@ -298,6 +298,52 @@ char *ip_addr2strz(struct ip_addr *ip)
 	return buff;
 }
 
+#define IP_ADDR_BUF_NR 8
+static char _ksr_addr2x_buff[IP_ADDR_BUF_NR][IP_ADDR_MAX_STR_SIZE];
+static int _ksr_addr2x_idx = 0;
+
+/* fast ip_addr -> string converter;
+ * it uses an internal buffer
+ */
+char *ip_addr2xa(struct ip_addr *ip)
+{
+	int len;
+	char *buff;
+
+	buff = _ksr_addr2x_buff[_ksr_addr2x_idx];
+	_ksr_addr2x_idx = (_ksr_addr2x_idx + 1) % IP_ADDR_BUF_NR;
+
+	len = ip_addr2sbuf(ip, buff, sizeof(buff) - 1);
+	buff[len] = 0;
+
+	return buff;
+}
+
+
+/* full address in text representation, including [] for ipv6 */
+char *ip_addr2xstrz(struct ip_addr *ip)
+{
+	char *p;
+	int len;
+	char *buff;
+
+	buff = _ksr_addr2x_buff[_ksr_addr2x_idx];
+	_ksr_addr2x_idx = (_ksr_addr2x_idx + 1) % IP_ADDR_BUF_NR;
+
+	p = buff;
+	if(ip->af == AF_INET6) {
+		*p++ = '[';
+	}
+	len = ip_addr2sbuf(ip, p, sizeof(buff) - 3);
+	p += len;
+	if(ip->af == AF_INET6) {
+		*p++ = ']';
+	}
+	*p = 0;
+
+	return buff;
+}
+
 
 /* returns an asciiz string containing the ip and the port
  *  (<ip_addr>:port or [<ipv6_addr>]:port)
