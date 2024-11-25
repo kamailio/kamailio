@@ -52,6 +52,7 @@
 #include "ut.h"
 #include "trim.h"
 #include "pt.h"
+#include "async_task.h"
 #include "daemonize.h"
 #include "cfg/cfg_struct.h"
 #ifdef CORE_TLS
@@ -269,6 +270,9 @@ again:
 						strerror(errno), errno, ip_addr2xa(&c->rcv.src_ip),
 						c->rcv.src_port, ip_addr2xa(&c->rcv.dst_ip),
 						c->rcv.dst_port);
+				async_tkv_emit(1200, "tcp-read-error",
+						"erno=%d;srcip=%s;dstip=%s", errno,
+						ip_addr2xa(&c->rcv.src_ip), ip_addr2xa(&c->rcv.dst_ip));
 				if(errno == ETIMEDOUT) {
 					c->event = TCP_CLOSED_TIMEOUT;
 				} else if(errno == ECONNRESET) {
