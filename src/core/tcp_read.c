@@ -265,10 +265,10 @@ again:
 					}
 				}
 				LOG(cfg_get(core, core_cfg, corelog),
-						"error reading: %s (%d) ([%s]:%u ->", strerror(errno),
-						errno, ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
-				LOG(cfg_get(core, core_cfg, corelog), "-> [%s]:%u)\n",
-						ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+						"error reading: %s (%d) ([%s]:%u -> [%s]:%u)\n",
+						strerror(errno), errno, ip_addr2xa(&c->rcv.src_ip),
+						c->rcv.src_port, ip_addr2xa(&c->rcv.dst_ip),
+						c->rcv.dst_port);
 				if(errno == ETIMEDOUT) {
 					c->event = TCP_CLOSED_TIMEOUT;
 				} else if(errno == ECONNRESET) {
@@ -280,8 +280,8 @@ again:
 			LM_DBG("EOF on connection %p (state: %u, flags: %x) - FD %d,"
 				   " bytes %d, rd-flags %x ([%s]:%u -> [%s]:%u)",
 					c, c->state, c->flags, fd, bytes_read, *flags,
-					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
-					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+					ip_addr2xa(&c->rcv.src_ip), c->rcv.src_port,
+					ip_addr2xa(&c->rcv.dst_ip), c->rcv.dst_port);
 			c->state = S_CONN_EOF;
 			*flags |= RD_CONN_EOF;
 			c->event = TCP_CLOSED_EOF;
