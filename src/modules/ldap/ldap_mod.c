@@ -59,6 +59,8 @@ static int child_init(int rank);
 static int ldap_result_fixup(void **param, int param_no);
 static int ldap_filter_url_encode_fixup(void **param, int param_no);
 static int ldap_result_check_fixup(void **param, int param_no);
+static int ldap_fixup_free(void **param, int param_no);
+static int ldap_filter_url_encode_fixup_free(void **param, int param_no);
 
 /*
 * exported functions
@@ -94,25 +96,25 @@ static dictionary *config_vals = NULL;
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"ldap_search",            (cmd_function)w_ldap_search,            1,
-		fixup_spve_null, 0,
+		fixup_spve_null, fixup_free_spve_null,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_result",            (cmd_function)w_ldap_result1,           1,
-		ldap_result_fixup, 0,
+		ldap_result_fixup, ldap_fixup_free,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_result",            (cmd_function)w_ldap_result2,           2,
-		ldap_result_fixup, 0,
+		ldap_result_fixup, ldap_fixup_free,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_result_next",       (cmd_function)w_ldap_result_next,       0,
 		0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_result_check",      (cmd_function)w_ldap_result_check_1,    1,
-		ldap_result_check_fixup, 0,
+		ldap_result_check_fixup, ldap_fixup_free,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_result_check",      (cmd_function)w_ldap_result_check_2,    2,
-		ldap_result_check_fixup, 0,
+		ldap_result_check_fixup, ldap_fixup_free,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_filter_url_encode", (cmd_function)w_ldap_filter_url_encode, 2,
-		ldap_filter_url_encode_fixup, 0,
+		ldap_filter_url_encode_fixup, ldap_filter_url_encode_fixup_free,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"load_ldap",              (cmd_function)load_ldap,  0,
 		0, 0, 0},
@@ -374,6 +376,14 @@ static int ldap_result_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int ldap_fixup_free(void **param, int param_no)
+{
+	if(param_no == 1) {
+		pkg_free(*param);
+	}
+	return 0;
+}
+
 static int ldap_result_check_fixup(void **param, int param_no)
 {
 	struct ldap_result_check_params *lp;
@@ -472,6 +482,14 @@ static int ldap_filter_url_encode_fixup(void **param, int param_no)
 		*param = (void *)spec_p;
 	}
 
+	return 0;
+}
+
+static int ldap_filter_url_encode_fixup_free(void **param, int param_no)
+{
+	if(param_no == 2) {
+		pkg_free(*param);
+	}
 	return 0;
 }
 
