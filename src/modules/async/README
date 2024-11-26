@@ -39,6 +39,7 @@ Daniel-Constantin Mierla
               4.6. async_task_group_route(routename, groupname)
               4.7. async_task_data(routename, data)
               4.8. async_task_group_data(routename, groupname, data)
+              4.9. async_tkv_emit(type, key, value)
 
    List of Examples
 
@@ -54,6 +55,7 @@ Daniel-Constantin Mierla
    1.10. async_task_group_route usage
    1.11. async_task_data usage
    1.12. async_task_group_data usage
+   1.13. async_tkv_emit usage
 
 Chapter 1. Admin Guide
 
@@ -81,6 +83,7 @@ Chapter 1. Admin Guide
         4.6. async_task_group_route(routename, groupname)
         4.7. async_task_data(routename, data)
         4.8. async_task_group_data(routename, groupname, data)
+        4.9. async_tkv_emit(type, key, value)
 
 1. Overview
 
@@ -168,6 +171,7 @@ modparam("async", "return", 1)
    4.6. async_task_group_route(routename, groupname)
    4.7. async_task_data(routename, data)
    4.8. async_task_group_data(routename, groupname, data)
+   4.9. async_tkv_emit(type, key, value)
 
 4.1.  async_route(routename, seconds)
 
@@ -414,5 +418,26 @@ request_route {
 route[RESUME] {
    xinfo("$async(data)\n");
    exit;
+}
+...
+
+4.9.  async_tkv_emit(type, key, value)
+
+   Emit a type-key-value event.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. async_tkv_emit usage
+...
+async_workers_group="name=tkv;workers=1;nonblock=0;usleep=0"
+...
+request_route {
+    ...
+    async_tkv_emit("8000", "call", "caller='$fU';callee='$tU'");
+    ...
+}
+event_route[core:tkv] {
+    xinfo("$atkv(type) / $atkv(key) / $atkv(val)\n");
+    exit;
 }
 ...
