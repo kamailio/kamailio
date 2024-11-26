@@ -187,6 +187,9 @@ int fixup_free_ssii(void **param, int param_no);
 int fixup_isi(void **param, int param_no);
 int fixup_free_isi(void **param, int param_no);
 
+int fixup_iss(void **param, int param_no);
+int fixup_free_iss(void **param, int param_no);
+
 int fixup_isii(void **param, int param_no);
 int fixup_free_isii(void **param, int param_no);
 
