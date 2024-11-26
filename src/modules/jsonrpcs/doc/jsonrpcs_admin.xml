@@ -495,6 +495,7 @@ event_route[xhttp:request] {
 ...
 jsonrpc_exec('{"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
 xlog("jsonrpc response code: $jsonrpl(code) - the body is: $jsonrpl(body)\n");
+jsonrpc_exec('{"jsonrpc": "2.0", "method": "corex.debug", "params": [ 2 ], "id": 1}');
 ...
 </programlisting>
 	    </example>
