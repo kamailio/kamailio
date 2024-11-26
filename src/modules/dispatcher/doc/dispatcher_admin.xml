@@ -2014,6 +2014,31 @@ onreply_route {
 </programlisting>
 		</example>
 	</section>
+	<section id="dispatcher.f.ds_dsg_fetch_uri">
+		<title>
+		<function moreinfo="none">ds_dsg_fetch_uri(setid, uri)</function>
+		</title>
+		<para>
+		Sets the destination group id to setid for fetching $dsg(key) attributes
+		and the overload-control attributes to the corresponding uri record from
+		that group.
+		</para>
+		<para>Parameters: <emphasis>setid</emphasis> - integer or variable
+		holding the set id value; <emphasis>uri</emphasis> - string or variables
+		holding the SIP URI value.</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_dsg_fetch_uri()</function> usage</title>
+		<programlisting format="linespecific">
+...
+    ds_dsg_fetch_uri("1", "sip:127.0.0.1:5080");
+    xinfo("set id: 1 - all: $dsg(count); active: $dsg(active); $dsg(ocrate)\n");
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="dispatcher.f.ds_oc_set_attrs">
 		<title>
 		<function moreinfo="none">ds_oc_set_attrs(setid, uri, rval, tval, sval)</function>
