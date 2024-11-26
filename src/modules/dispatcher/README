@@ -1678,6 +1678,11 @@ onreply_route {
 
    The parameters can include variables.
 
+   The returns 1 (cfg-true) when the oc attrbutes are udpated for a
+   destination record; -1 (cfg-false) when there is an internal error; -2
+   (cfg-false) when no destination is updated (e.g., not found or the
+   ocseq condition fails).
+
    This function can be used from ANY_ROUTE.
 
    Example 1.61. ds_oc_set_attrs() usage
