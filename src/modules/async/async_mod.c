@@ -63,6 +63,9 @@ static int w_async_task_group_data(
 		sip_msg_t *msg, char *rt, char *gr, char *pdata);
 static int fixup_async_task_route(void **param, int param_no);
 
+static int w_async_tkv_emit(
+		sip_msg_t *msg, char *ptype, char *pkey, char *pval);
+
 /* tm */
 struct tm_binds tmb;
 
@@ -84,6 +87,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"async_task_group_data", (cmd_function)w_async_task_group_data, 3, fixup_async_task_route,
 		0, ANY_ROUTE},
+	{"async_tkv_emit", (cmd_function)w_async_tkv_emit, 3, fixup_iss,
+		fixup_free_iss, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -642,6 +647,34 @@ static int w_async_task_group_data(
 	}
 
 	return ki_async_task_group_data(msg, &rn, &gn, &sdata);
+}
+
+/**
+ *
+ */
+static int w_async_tkv_emit(sip_msg_t *msg, char *ptype, char *pkey, char *pval)
+{
+	int ret = -1;
+	int vtype = 0;
+	str skey = STR_NULL;
+	str sval = STR_NULL;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)ptype, &vtype) != 0) {
+		LM_ERR("failed getting type parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pkey, &skey) != 0) {
+		LM_ERR("failed getting key parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pval, &sval) != 0) {
+		LM_ERR("failed getting value parameter\n");
+		return -1;
+	}
+
+	ret = async_tkv_emit(vtype, skey.s, "%s", sval.s);
+
+	return (ret == 0) ? 1 : ret;
 }
 
 /**
