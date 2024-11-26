@@ -1528,6 +1528,14 @@ static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		case 4: /* pinactive */
 			return pv_get_sintval(
 					msg, param, res, (int)((inactive * 100) / count));
+		case 5: /* octime_sec */
+			return pv_get_sintval(msg, param, res, (long)ocdata.octime.tv_sec);
+		case 6: /* octime_usec */
+			return pv_get_sintval(msg, param, res, (long)ocdata.octime.tv_usec);
+		case 7: /* ocseq */
+			return pv_get_sintval(msg, param, res, ocdata.ocseq);
+		case 8: /* ocrate */
+			return pv_get_sintval(msg, param, res, ocdata.ocrate);
 		default:
 			return pv_get_null(msg, param, res);
 	}
@@ -1545,12 +1553,16 @@ static int pv_parse_dsg(pv_spec_p sp, str *in)
 		case 5:
 			if(strncmp(in->s, "count", 5) == 0)
 				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "ocseq", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 7;
 			else
 				goto error;
 			break;
 		case 6:
 			if(strncmp(in->s, "active", 6) == 0)
 				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "ocrate", 6) == 0)
+				sp->pvp.pvn.u.isname.name.n = 8;
 			else
 				goto error;
 			break;
@@ -1569,6 +1581,18 @@ static int pv_parse_dsg(pv_spec_p sp, str *in)
 		case 9:
 			if(strncmp(in->s, "pinactive", 9) == 0)
 				sp->pvp.pvn.u.isname.name.n = 4;
+			else
+				goto error;
+			break;
+		case 10:
+			if(strncmp(in->s, "octime_sec", 10) == 0)
+				sp->pvp.pvn.u.isname.name.n = 5;
+			else
+				goto error;
+			break;
+		case 11:
+			if(strncmp(in->s, "octime_usec", 11) == 0)
+				sp->pvp.pvn.u.isname.name.n = 6;
 			else
 				goto error;
 			break;
