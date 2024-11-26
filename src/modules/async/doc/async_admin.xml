@@ -466,5 +466,34 @@ route[RESUME] {
 </programlisting>
 	</example>
 	</section>
+	<section id="async.f.async_tkv_emit">
+		<title>
+			<function moreinfo="none">async_tkv_emit(type, key, value)</function>
+		</title>
+		<para>
+		Emit a type-key-value event.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>async_tkv_emit</function> usage</title>
+		<programlisting format="linespecific">
+...
+async_workers_group="name=tkv;workers=1;nonblock=0;usleep=0"
+...
+request_route {
+    ...
+    async_tkv_emit("8000", "call", "caller='$fU';callee='$tU'");
+    ...
+}
+event_route[core:tkv] {
+    xinfo("$atkv(type) / $atkv(key) / $atkv(val)\n");
+    exit;
+}
+...
+</programlisting>
+	</example>
+	</section>
 	</section>
 </chapter>
