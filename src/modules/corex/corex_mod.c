@@ -1453,6 +1453,16 @@ static int corex_sip_reply_out(sr_event_param_t *evp)
 	str evname = str_init("corex:reply-out");
 
 	memset(&sndinfo, 0, sizeof(onsend_info_t));
+	sndinfo.dst = evp->dst;
+	if(evp->rpl != NULL) {
+		sndinfo.msg = evp->rpl;
+		sndinfo.buf = evp->rpl->buf;
+		sndinfo.len = evp->rpl->len;
+	} else {
+		sndinfo.msg = evp->req;
+		sndinfo.buf = evp->req->buf;
+		sndinfo.len = evp->req->len;
+	}
 
 	if(corex_evrt_reply_out_no >= 0 || corex_evcb_reply_out.len > 0) {
 		run_onsend_evroute(&sndinfo, corex_evrt_reply_out_no,
