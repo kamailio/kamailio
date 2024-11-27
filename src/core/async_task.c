@@ -537,7 +537,10 @@ int async_task_run(async_wgroup_t *awg, int idx)
 static async_wgroup_t *_async_tkv_awg = NULL;
 static async_tkv_param_t *_ksr_async_tkv_param = NULL;
 static int _ksr_async_tkv_ridx = -1;
-static str async_tkv_gname = str_init("tkv");
+/* async group name: eg., 'tkv' */
+static str async_tkv_gname = str_init("");
+/* event route callback name: eg., 'core:tkv' */
+static str async_tkv_evcb = str_init("");
 
 /**
  *
@@ -546,6 +549,15 @@ void async_tkv_gname_set(char *gname)
 {
 	async_tkv_gname.s = gname;
 	async_tkv_gname.len = strlen(async_tkv_gname.s);
+}
+
+/**
+ *
+ */
+void async_tkv_evcb_set(char *gname)
+{
+	async_tkv_evcb.s = gname;
+	async_tkv_evcb.len = strlen(async_tkv_evcb.s);
 }
 
 /**
@@ -561,17 +573,18 @@ async_tkv_param_t *ksr_async_tkv_param_get(void)
  */
 void async_tkv_init(void)
 {
-	str evname = str_init("core:tkv");
-
 	if(async_tkv_gname.len <= 0) {
+		return;
+	}
+	if(async_tkv_evcb.len <= 0) {
 		return;
 	}
 	_async_tkv_awg = async_task_group_find(&async_tkv_gname);
 
-	_ksr_async_tkv_ridx = route_lookup(&event_rt, evname.s);
+	_ksr_async_tkv_ridx = route_lookup(&event_rt, async_tkv_evcb.s);
 	if(_ksr_async_tkv_ridx <= 0
 			|| event_rt.rlist[_ksr_async_tkv_ridx] == NULL) {
-		LM_DBG("event_route[%s] not defined - skipping\n", evname.s);
+		LM_DBG("event_route[%s] not defined - skipping\n", async_tkv_evcb.s);
 		_ksr_async_tkv_ridx = -2;
 		return;
 	}
@@ -586,7 +599,6 @@ void async_exec_tkv(void *param)
 	sr_kemi_eng_t *keng = NULL;
 	sip_msg_t *fmsg = NULL;
 	str evname = str_init("core:tkv");
-	str cbname = str_init("ksr_core_tkv");
 	int rtype = 0;
 
 	adp = (async_tkv_param_t *)param;
@@ -596,9 +608,10 @@ void async_exec_tkv(void *param)
 	set_route_type(REQUEST_ROUTE);
 	keng = sr_kemi_eng_get();
 	if(keng != NULL) {
-		if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &cbname, &evname) < 0) {
+		if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &async_tkv_evcb, &evname)
+				< 0) {
 			LM_ERR("error running event route kemi callback [%.*s]\n",
-					cbname.len, cbname.s);
+					async_tkv_evcb.len, async_tkv_evcb.s);
 		}
 	} else {
 		if(_ksr_async_tkv_ridx >= 0) {

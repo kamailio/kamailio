@@ -382,6 +382,7 @@ ASYNC_USLEEP async_usleep
 ASYNC_NONBLOCK async_nonblock
 ASYNC_WORKERS_GROUP async_workers_group
 ASYNC_TKV_GNAME async_tkv_gname
+ASYNC_TKV_EVCB async_tkv_evcb
 CHECK_VIA	check_via
 PHONE2TEL	phone2tel
 MEMLOG		"memlog"|"mem_log"
@@ -876,6 +877,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{ASYNC_NONBLOCK}	{ count(); yylval.strval=yytext; return ASYNC_NONBLOCK; }
 <INITIAL>{ASYNC_WORKERS_GROUP}	{ count(); yylval.strval=yytext; return ASYNC_WORKERS_GROUP; }
 <INITIAL>{ASYNC_TKV_GNAME}	{ count(); yylval.strval=yytext; return ASYNC_TKV_GNAME; }
+<INITIAL>{ASYNC_TKV_EVCB}	{ count(); yylval.strval=yytext; return ASYNC_TKV_EVCB; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
 <INITIAL>{PHONE2TEL}	{ count(); yylval.strval=yytext; return PHONE2TEL; }
 <INITIAL>{MEMLOG}	{ count(); yylval.strval=yytext; return MEMLOG; }
