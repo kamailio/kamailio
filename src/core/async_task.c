@@ -537,6 +537,16 @@ int async_task_run(async_wgroup_t *awg, int idx)
 static async_wgroup_t *_async_tkv_awg = NULL;
 static async_tkv_param_t *_ksr_async_tkv_param = NULL;
 static int _ksr_async_tkv_ridx = -1;
+static str async_tkv_gname = str_init("tkv");
+
+/**
+ *
+ */
+void async_tkv_gname_set(char *gname)
+{
+	async_tkv_gname.s = gname;
+	async_tkv_gname.len = strlen(async_tkv_gname.s);
+}
 
 /**
  *
@@ -551,10 +561,12 @@ async_tkv_param_t *ksr_async_tkv_param_get(void)
  */
 void async_tkv_init(void)
 {
-	str gname = str_init("tkv");
 	str evname = str_init("core:tkv");
 
-	_async_tkv_awg = async_task_group_find(&gname);
+	if(async_tkv_gname.len <= 0) {
+		return;
+	}
+	_async_tkv_awg = async_task_group_find(&async_tkv_gname);
 
 	_ksr_async_tkv_ridx = route_lookup(&event_rt, evname.s);
 	if(_ksr_async_tkv_ridx <= 0

@@ -69,5 +69,6 @@ typedef struct async_tkv_param
 void async_tkv_init(void);
 int async_tkv_emit(int dtype, char *pkey, char *fmt, ...);
 async_tkv_param_t *ksr_async_tkv_param_get(void);
+void async_tkv_gname_set(char *gname);
 
 #endif
