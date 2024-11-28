@@ -228,7 +228,7 @@ pcontact_t *getContactP(struct sip_msg *_m, udomain_t *_d,
 	pcontact_info_t search_ci;
 	str received_host = {0, 0};
 	char srcip[50];
-	struct via_body *vb;
+	struct via_body *vb = NULL;
 	unsigned short port, proto;
 	str host;
 	sip_uri_t contact_uri;
@@ -274,7 +274,7 @@ pcontact_t *getContactP(struct sip_msg *_m, udomain_t *_d,
 		   "[%d://%.*s:%d]\n",
 			proto, host.len, host.s, port);
 
-	if(trust_bottom_via) {
+	if(trust_bottom_via && vb) {
 		if(vb->received != NULL && vb->received->value.len > 0) {
 			received_host = vb->received->value;
 		} else {
@@ -285,7 +285,7 @@ pcontact_t *getContactP(struct sip_msg *_m, udomain_t *_d,
 		received_host.s = srcip;
 	}
 	unsigned short received_port = 0;
-	if(trust_bottom_via) {
+	if(trust_bottom_via && vb) {
 		if(vb->rport != NULL && vb->rport->value.len > 0) {
 			received_port = atoi(vb->rport->value.s);
 		} else {
@@ -298,7 +298,7 @@ pcontact_t *getContactP(struct sip_msg *_m, udomain_t *_d,
 		received_port = 5060;
 	}
 	char received_proto = 0;
-	if(trust_bottom_via && vb->proto) {
+	if(trust_bottom_via && vb && vb->proto) {
 		received_proto = vb->proto;
 	} else {
 		received_proto = _m->rcv.proto;
