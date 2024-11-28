@@ -151,7 +151,7 @@ int set_mod_param_regex(char *regex, char *name, modparam_t type, void *val)
 								pkg_free(reg);
 								return -1;
 							}
-							strncpy(*((char **)ptr), (char *)val2, len_param);
+							memcpy(*((char **)ptr), (char *)val2, len_param);
 							(*((char **)ptr))[len_param] = '\0';
 							break;
 
