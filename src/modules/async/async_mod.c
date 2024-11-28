@@ -43,6 +43,7 @@ MODULE_VERSION
 static int async_workers = 1;
 static int async_ms_timer = 0;
 static int async_return = 0;
+static int async_mode = 0;
 
 static int mod_init(void);
 static int child_init(int);
@@ -97,6 +98,7 @@ static param_export_t params[]={
 	{"workers",     PARAM_INT,   &async_workers},
 	{"ms_timer",    PARAM_INT,   &async_ms_timer},
 	{"return",      PARAM_INT,   &async_return},
+	{"mode",        PARAM_INT,   &async_mode},
 	{0, 0, 0}
 };
 
@@ -132,13 +134,18 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(load_tm_api(&tmb) == -1) {
-		LM_ERR("cannot load the TM-functions. Missing TM module?\n");
-		return -1;
+	if(async_mode == 0) {
+		if(load_tm_api(&tmb) == -1) {
+			LM_ERR("cannot load the TM-functions. Missing TM module?\n");
+			return -1;
+		}
+	} else {
+		memset(&tmb, 0, sizeof(struct tm_binds));
 	}
 
-	if(async_workers <= 0)
+	if(async_workers <= 0) {
 		return 0;
+	}
 
 	if(async_init_timer_list() < 0) {
 		LM_ERR("cannot initialize internal structure\n");
@@ -173,8 +180,9 @@ static int child_init(int rank)
 	if(rank != PROC_MAIN)
 		return 0;
 
-	if(async_workers <= 0)
+	if(async_workers <= 0) {
 		return 0;
+	}
 
 	for(i = 0; i < async_workers; i++) {
 		if(fork_basic_timer(PROC_TIMER, "ASYNC MOD TIMER", 1 /*socks flag*/,
