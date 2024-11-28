@@ -522,7 +522,7 @@ int async_send_query(sip_msg_t *msg, str *query, str *cbname)
 
 	q_idx++;
 	snprintf(q_id, MAX_ID_LEN + 1, "%u-%u", (unsigned int)getpid(), q_idx);
-	strncpy(aq->id, q_id, strlen(q_id));
+	strcpy(aq->id, q_id);
 
 	aq->query_params.tls_client_cert = NULL;
 	if(ah_params.tls_client_cert) {
