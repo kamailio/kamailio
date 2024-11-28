@@ -100,7 +100,7 @@ void event_cb(int fd, short kind, void *userp)
 		update_stat(timeouts, 1);
 		const char *error = "TIMEOUT";
 
-		strncpy(cell->error, error, strlen(error) + 1);
+		strcpy(cell->error, error);
 
 		reply_error(cell);
 
@@ -218,7 +218,7 @@ int check_mcode(CURLMcode code, char *error)
 				break;
 		}
 		LM_ERR("ERROR: %s\n", s);
-		strncpy(error, s, strlen(s) + 1);
+		strcpy(error, s);
 		return -1;
 	}
 	return 0;
