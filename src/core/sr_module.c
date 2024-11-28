@@ -512,7 +512,7 @@ int ksr_locate_module(char *mod_path, char **new_path)
 						len++;
 					}
 					path[len] = 0;
-					strncat(path, mod_path, strlen(mod_path));
+					strcat(path, mod_path);
 
 					if(stat(path, &stat_buf) == -1) {
 						LM_DBG("module file not found <%s>\n", path);
