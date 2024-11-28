@@ -262,7 +262,7 @@ static cmd_export_t cmds[] = {
 	{"unregister", (cmd_function)unregister, 2, unreg_fixup, unreg_fixup_free,
 			REQUEST_ROUTE | FAILURE_ROUTE},
 	{"reg_fetch_contacts", (cmd_function)pv_fetch_contacts, 3, fetchc_fixup,
-			0, REQUEST_ROUTE | FAILURE_ROUTE},
+			fetchc_fixup_free, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"reg_free_contacts", (cmd_function)pv_free_contacts, 1, fixup_str_null, fixup_free_str_null,
 			REQUEST_ROUTE | FAILURE_ROUTE},
 	{"can_subscribe_to_reg", (cmd_function)can_subscribe_to_reg, 1, domain_fixup, 0, REQUEST_ROUTE},
