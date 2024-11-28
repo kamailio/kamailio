@@ -210,9 +210,10 @@ int ka_str_copy(str *src, str *dest, char *prefix)
 		return -1;
 	}
 
-	if(prefix)
-		strncpy(dest->s, prefix, lp);
-	strncpy(dest->s + lp, src->s, src->len);
+	if(prefix) {
+		memcpy(dest->s, prefix, lp);
+	}
+	memcpy(dest->s + lp, src->s, src->len);
 	dest->s[src->len + lp] = '\0';
 	dest->len = src->len + lp;
 
