@@ -123,7 +123,7 @@ static int mod_init(void)
 {
 	/* init faked sip msg */
 	if(faked_msg_init() < 0) {
-		LM_ERR("failed to iit local sip msg\n");
+		LM_ERR("failed to init local sip msg\n");
 		return -1;
 	}
 
