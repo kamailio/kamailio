@@ -132,6 +132,27 @@ modparam("async", "return", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="async.p.mode">
+		<title><varname>mode</varname> (int)</title>
+		<para>
+			Control if the module should bind (0) to tm or not (1). It may not
+			be needed to use tm functions (e.g., when needing async_tkv_emit()
+			only).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (bind to tm module).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async", "mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
