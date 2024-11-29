@@ -29,6 +29,12 @@
 
 #define DB_MONGODB_ROWS_STEP 1000
 
+#if MONGOC_CHECK_VERSION(1, 29, 0)
+#define _ksr_bson_as_json bson_as_legacy_extended_json
+#else
+#define _ksr_bson_as_json bson_as_json
+#endif
+
 typedef struct db_mongodb_result
 {
 	mongoc_collection_t *collection; /*!< Collection link */
@@ -773,7 +779,7 @@ static int db_mongodb_convert_result(const db1_con_t *_h, db1_res_t *_r)
 			mgres->maxrows = RES_ROW_N(_r);
 		}
 		if(is_printable(L_DBG)) {
-			jstr = bson_as_json(itdoc, NULL);
+			jstr = _ksr_bson_as_json(itdoc, NULL);
 			LM_DBG("selected document: %s\n", jstr);
 			bson_free(jstr);
 		}
@@ -1000,7 +1006,7 @@ int db_mongodb_query(const db1_con_t *_h, const db_key_t *_k,
 	}
 
 	if(is_printable(L_DBG)) {
-		jstr = bson_as_json(seldoc, NULL);
+		jstr = _ksr_bson_as_json(seldoc, NULL);
 		LM_DBG("query filter: %s\n", jstr);
 		bson_free(jstr);
 	}
@@ -1036,7 +1042,7 @@ int db_mongodb_query(const db1_con_t *_h, const db_key_t *_k,
 		}
 #endif
 		if(is_printable(L_DBG)) {
-			jstr = bson_as_json(mgcon->colsdoc, NULL);
+			jstr = _ksr_bson_as_json(mgcon->colsdoc, NULL);
 			LM_DBG("columns filter: %s\n", jstr);
 			bson_free(jstr);
 		}
@@ -1174,7 +1180,7 @@ int db_mongodb_insert(const db1_con_t *_h, const db_key_t *_k,
 			goto error;
 	}
 	if(is_printable(L_DBG)) {
-		jstr = bson_as_json(doc, NULL);
+		jstr = _ksr_bson_as_json(doc, NULL);
 		LM_DBG("insert document: %s\n", jstr);
 		bson_free(jstr);
 	}
@@ -1268,7 +1274,7 @@ int db_mongodb_delete(const db1_con_t *_h, const db_key_t *_k,
 	}
 
 	if(is_printable(L_DBG)) {
-		jstr = bson_as_json(doc, NULL);
+		jstr = _ksr_bson_as_json(doc, NULL);
 		LM_DBG("delete filter document: %s\n", jstr);
 		bson_free(jstr);
 	}
