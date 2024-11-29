@@ -1047,7 +1047,7 @@ int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
 	if(loc->latitude == NULL)
 		goto err;
 
-	snprintf(loc->latitude, len, "%s", (char *)bufLat);
+	snprintf(loc->latitude, len + 1, "%s", (char *)bufLat);
 
 	/* logitude */
 	len = strlen((char *)bufLon);
@@ -1057,7 +1057,7 @@ int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
 		goto err;
 	}
 
-	snprintf(loc->longitude, len, "%s", (char *)bufLon);
+	snprintf(loc->longitude, len + 1, "%s", (char *)bufLon);
 
 	/* altitude */
 	if(scan == 3) {
@@ -1071,13 +1071,13 @@ int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
 			goto err;
 		}
 		
-		snprintf(loc->altitude, len, "%s", (char *)bufAlt);
+		snprintf(loc->altitude, len + 1, "%s", (char *)bufAlt);
 	}
 
 	/* geolocation */
 	len = strlen((char *)bufLat) + strlen((char *)bufLon) + 1;
 	if((scan == 3) && (lost_geoloc_3d == 1)) {
-		len += strlen((char *)bufAlt);
+		len += strlen((char *)bufAlt) + 1;
 	}
 	loc->geodetic = (char *)pkg_malloc(len + 1);
 	if(loc->geodetic == NULL) {
@@ -1089,9 +1089,9 @@ int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
 	}
 	if((scan == 3) && (lost_geoloc_3d == 1)) {
 		s_profile = LOST_PRO_GEO3D;
-		snprintf(loc->geodetic, len, "%s %s %s", (char *)bufLat, (char *)bufLon, (char *)bufAlt);
+		snprintf(loc->geodetic, len + 1, "%s %s %s", (char *)bufLat, (char *)bufLon, (char *)bufAlt);
 	} else {
-		snprintf(loc->geodetic, len, "%s %s", (char *)bufLat, (char *)bufLon);
+		snprintf(loc->geodetic, len + 1, "%s %s", (char *)bufLat, (char *)bufLon);
 	}
 
 	/* find <radius> element */
