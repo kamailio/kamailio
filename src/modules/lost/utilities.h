@@ -97,7 +97,7 @@ typedef struct lost_loc
 	char *geodetic;	 /* geodetic location (findServiceRequest) */
 	char *longitude; /* geo longitude */
 	char *latitude;	 /* geo latitude */
-	char *altitude;  /* geo altitude */
+	char *altitude;	 /* geo altitude */
 	char *profile;	 /* location profile (findServiceRequest) */
 	int radius;		 /* geo radius (findServiceRequest) */
 	int recursive;	 /* recursion true|false (findServiceRequest)*/
