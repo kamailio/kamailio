@@ -281,7 +281,7 @@ PyObject *sr_apy_kemi_exec_func_ex(
 		if(pobj == NULL) {
 			LM_ERR("null parameter - func: %.*s idx: %d argc: %d\n", fname.len,
 					fname.s, i, (int)alen);
-			return sr_kemi_apy_return_false();
+			return NULL;
 		}
 		if(ket->ptypes[i] == SR_KEMIP_STR) {
 			if(!PyUnicode_Check(pobj)) {
@@ -293,7 +293,7 @@ PyObject *sr_apy_kemi_exec_func_ex(
 			if(vps[i].v.s.s == NULL) {
 				LM_ERR("null-string parameter - func: %.*s idx: %d argc: %d\n",
 						fname.len, fname.s, i, (int)alen);
-				return sr_kemi_apy_return_false();
+				return NULL;
 			}
 			vps[i].v.s.len = (int)slen;
 			vps[i].vtype = SR_KEMIP_STR;
