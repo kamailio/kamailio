@@ -382,8 +382,8 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	if(doc == NULL) {
 		LM_WARN("invalid xml document: [%.*s]\n", res.len, res.s);
 		doc = xmlReadMemory(res.s, res.len, 0, NULL,
-				XML_PARSE_NOBLANKS | XML_PARSE_NONET |
-				XML_PARSE_NOCDATA | XML_PARSE_RECOVER);
+				XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA
+						| XML_PARSE_RECOVER);
 		if(doc == NULL) {
 			LM_ERR("xml document recovery failed on: [%.*s]\n", res.len, res.s);
 			goto err;
@@ -705,8 +705,8 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 	if(doc == NULL) {
 		LM_WARN("invalid xml document: [%.*s]\n", res.len, res.s);
 		doc = xmlReadMemory(res.s, res.len, 0, NULL,
-				XML_PARSE_NOBLANKS | XML_PARSE_NONET |
-				XML_PARSE_NOCDATA | XML_PARSE_RECOVER);
+				XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA
+						| XML_PARSE_RECOVER);
 		if(doc == NULL) {
 			LM_ERR("xml document recovery failed on: [%.*s]\n", res.len, res.s);
 			goto err;
