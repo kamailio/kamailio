@@ -1419,7 +1419,6 @@ char *lost_held_post_request(int *lgth, long rtime, char *type)
 	xmlNodePtr ptrLocationRequest = NULL;
 	xmlNodePtr ptrLocationType = NULL;
 
-	xmlKeepBlanksDefault(1);
 	*lgth = 0;
 
 	/*
@@ -1517,7 +1516,6 @@ char *lost_held_location_request(p_lost_held_t held, int *lgth)
 	xmlNodePtr ptrLocationType = NULL;
 	xmlNodePtr ptrDevice = NULL;
 
-	xmlKeepBlanksDefault(1);
 	*lgth = 0;
 
 	/*
@@ -1669,8 +1667,6 @@ char *lost_find_service_request(p_lost_loc_t loc, p_lost_list_t path, int *lgth)
 	xmlNodePtr ptrRadius = NULL;
 	xmlNodePtr ptrNode = NULL;
 	xmlNodePtr ptrPath = NULL;
-
-	xmlKeepBlanksDefault(1);
 
 	*lgth = 0;
 
