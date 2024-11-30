@@ -274,8 +274,24 @@ int mongodbc_exec_cmd(
 		bson_destroy(&reply);
 	} else {
 		if(emode == 1) {
+#if MONGOC_CHECK_VERSION(1, 29, 0)
+			opts = bson_new();
+			ret = mongoc_collection_command_with_opts(
+					rpl->collection, &command, NULL, opts, &reply, &error);
+			bson_free(opts);
+			if(!ret) {
+				LM_ERR("Failed to run command: %s\n", error.message);
+				bson_destroy(&command);
+				goto error_exec;
+			}
+			rpl->jsonrpl.s = _ksr_bson_as_json(&reply, NULL);
+			rpl->jsonrpl.len = (rpl->jsonrpl.s) ? strlen(rpl->jsonrpl.s) : 0;
+			bson_destroy(&reply);
+			goto done;
+#else
 			rpl->cursor = mongoc_collection_command(rpl->collection,
 					MONGOC_QUERY_NONE, 0, 0, 0, &command, NULL, 0);
+#endif
 		} else {
 #if MONGOC_CHECK_VERSION(1, 5, 0)
 			if(emode == 3)
@@ -312,6 +328,10 @@ int mongodbc_exec_cmd(
 		rpl->jsonrpl.s = _ksr_bson_as_json(cdoc, NULL);
 		rpl->jsonrpl.len = (rpl->jsonrpl.s) ? strlen(rpl->jsonrpl.s) : 0;
 	}
+
+#if MONGOC_CHECK_VERSION(1, 29, 0)
+done:
+#endif
 
 	LM_DBG("command result: [[%s]]\n",
 			(rpl->jsonrpl.s) ? rpl->jsonrpl.s : "<null>");
