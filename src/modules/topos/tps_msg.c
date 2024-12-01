@@ -53,6 +53,7 @@ extern int _tps_contact_mode;
 extern str _tps_cparam_name;
 extern int _tps_rr_update;
 extern int _tps_header_mode;
+extern int _tps_enable_register_publish;
 
 extern str _tps_context_param;
 extern str _tps_context_value;
@@ -267,9 +268,11 @@ int tps_skip_msg(sip_msg_t *msg)
 		return 1;
 	}
 
-	if((get_cseq(msg)->method_id) & (METHOD_REGISTER | METHOD_PUBLISH))
-		return 1;
-
+	if((get_cseq(msg)->method_id) & (METHOD_REGISTER | METHOD_PUBLISH)) {
+		if(_tps_enable_register_publish == 0) {
+			return 1;
+		}
+	}
 	if(_tps_methods_noinitial != 0 && msg->first_line.type == SIP_REQUEST
 			&& get_to(msg)->tag_value.len <= 0) {
 		if((get_cseq(msg)->method_id) & _tps_methods_noinitial) {
@@ -879,6 +882,11 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 
 	LM_DBG("handling incoming request\n");
 
+	if((get_cseq(msg)->method_id) & (METHOD_REGISTER | METHOD_PUBLISH)) {
+		/* nothing to do for REGISTER PUBLISH when received */
+		return 0;
+	}
+
 	if(dialog == 0) {
 		/* nothing to do for initial request */
 		return 0;
@@ -1035,6 +1043,10 @@ int tps_response_received(sip_msg_t *msg)
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 
 	LM_DBG("handling incoming response\n");
+	if(_tps_enable_register_publish == 1) {
+		if((get_cseq(msg)->method_id) & (METHOD_REGISTER | METHOD_PUBLISH))
+			return tps_reg_response_received(msg);
+	}
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
@@ -1087,7 +1099,52 @@ error:
 	tps_storage_lock_release(&lkey);
 	return -1;
 }
+/**
+ *
+ */
 
+int tps_reg_response_received(sip_msg_t *msg)
+{
+	tps_data_t mtsd;
+	tps_data_t stsd;
+	tps_data_t btsd;
+	str lkey;
+	uint32_t direction = TPS_DIR_UPSTREAM;
+
+	LM_DBG("handling incoming Register response\n");
+
+	memset(&mtsd, 0, sizeof(tps_data_t));
+	memset(&stsd, 0, sizeof(tps_data_t));
+	memset(&btsd, 0, sizeof(tps_data_t));
+
+	tps_unmask_callid(msg);
+
+	if(tps_pack_message(msg, &mtsd) < 0) {
+		LM_ERR("failed to extract and pack the headers\n");
+		return -1;
+	}
+	lkey = msg->callid->body;
+
+	tps_storage_lock_get(&lkey);
+	if(tps_storage_load_branch(msg, &mtsd, &btsd, 0) < 0) {
+		goto error;
+	}
+	LM_DBG("loaded dialog a_uuid [%.*s]\n", btsd.a_uuid.len,
+			ZSW(btsd.a_uuid.s));
+	if(tps_storage_load_dialog(msg, &btsd, &stsd) < 0) {
+		goto error;
+	}
+
+	mtsd.direction = direction;
+	tps_storage_lock_release(&lkey);
+	tps_reappend_via(msg, &btsd, &btsd.x_via);
+
+	return 0;
+
+error:
+	tps_storage_lock_release(&lkey);
+	return -1;
+}
 /**
  *
  */
@@ -1102,6 +1159,16 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 
 	LM_DBG("handling outgoing request (%d, %d)\n", dialog, local);
+
+
+	if((get_cseq(msg)->method_id) & (METHOD_REGISTER | METHOD_PUBLISH)) {
+		if(_tps_enable_register_publish == 1) {
+			LM_DBG("_tps_enable_register_publish==1\n");
+			return tps_reg_request_sent(msg);
+		} else {
+			return 0;
+		}
+	}
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&btsd, 0, sizeof(tps_data_t));
@@ -1206,6 +1273,56 @@ error:
 	tps_storage_lock_release(&lkey);
 	return -1;
 }
+/**
+ *
+ */
+int tps_reg_request_sent(sip_msg_t *msg)
+{
+	tps_data_t mtsd;
+	tps_data_t btsd;
+	tps_data_t stsd;
+	tps_data_t *ptsd;
+	str lkey;
+	uint32_t direction = TPS_DIR_DOWNSTREAM;
+
+
+	LM_DBG("Reg Req sent\n");
+	memset(&mtsd, 0, sizeof(tps_data_t));
+	memset(&btsd, 0, sizeof(tps_data_t));
+	memset(&stsd, 0, sizeof(tps_data_t));
+	ptsd = NULL;
+
+	if(tps_pack_message(msg, &mtsd) < 0) {
+		LM_ERR("failed to extract and pack the headers\n");
+		return -1;
+	}
+
+	lkey = msg->callid->body;
+	tps_storage_lock_get(&lkey);
+	tps_append_xuuid(msg, &stsd.a_uuid);
+	if(tps_storage_load_branch(msg, &mtsd, &btsd, 0) != 0) {
+		if(tps_storage_record(msg, &mtsd, 0, direction) < 0) {
+			goto error;
+		}
+	} else {
+		if(ptsd == NULL)
+			ptsd = &btsd;
+	}
+
+	if(ptsd == NULL)
+		ptsd = &mtsd;
+
+	tps_remove_headers(msg, HDR_VIA_T);
+	tps_reinsert_via(msg, &mtsd, &mtsd.x_via1);
+	tps_storage_lock_release(&lkey);
+	tps_mask_callid(msg);
+
+	return 0;
+
+error:
+	tps_storage_lock_release(&lkey);
+	return -1;
+}
 
 /**
  *
@@ -1221,7 +1338,10 @@ int tps_response_sent(sip_msg_t *msg)
 	int contact_keep = 0;
 
 	LM_DBG("handling outgoing response\n");
-
+	if((get_cseq(msg)->method_id) & (METHOD_REGISTER | METHOD_PUBLISH)) {
+		/* nothing to do for REGISTER PUBLISH response sent*/
+		return 0;
+	}
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
 	memset(&btsd, 0, sizeof(tps_data_t));
@@ -1237,7 +1357,6 @@ int tps_response_sent(sip_msg_t *msg)
 	}
 	mtsd.x_vbranch1 = xvbranch;
 	tps_remove_xbranch(msg);
-
 	if(get_cseq(msg)->method_id == METHOD_MESSAGE) {
 		tps_remove_headers(msg, HDR_RECORDROUTE_T);
 		tps_remove_headers(msg, HDR_CONTACT_T);
