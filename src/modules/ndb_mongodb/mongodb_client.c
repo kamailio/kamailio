@@ -252,14 +252,13 @@ int mongodbc_exec_cmd(
 			mongoc_client_get_collection(rsrv->client, dname->s, cname->s);
 
 	LM_DBG("trying to execute: [[%.*s]]\n", cmd->len, cmd->s);
-	c = cmd->s[cmd->len];
-	cmd->s[cmd->len] = '\0';
+	STR_VTOZ(cmd->s[cmd->len], c);
 	if(!bson_init_from_json(&command, cmd->s, cmd->len, &error)) {
 		cmd->s[cmd->len] = c;
 		LM_ERR("Failed to run command: %s\n", error.message);
 		goto error_exec;
 	}
-	cmd->s[cmd->len] = c;
+	STR_ZTOV(cmd->s[cmd->len], c);
 	if(emode == 0) {
 		ret = mongoc_collection_command_simple(
 				rpl->collection, &command, NULL, &reply, &error);
