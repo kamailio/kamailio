@@ -70,6 +70,7 @@ function(add_module_group GROUP_MODULES)
         target_link_libraries(${MODULE_NAME} PRIVATE common_modules)
         target_compile_definitions(
           ${MODULE_NAME} PRIVATE MOD_NAMEID=${MODULE_NAME}
+                                 MOD_NAME=\"${MODULE_NAME}\"
         )
         set_target_properties(
           ${MODULE_NAME}
