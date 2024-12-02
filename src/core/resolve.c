@@ -1859,11 +1859,15 @@ ip_addr_t *str2ip(str *st)
 */
 struct hostent *__resolvehost(char *name)
 {
+#ifdef USE_DNS_CACHE
 	if(dns_cache_init) {
 		return dns_resolvehost(name);
 	} else {
+#endif
 		return _resolvehost(name);
+#ifdef USE_DNS_CACHE
 	}
+#endif
 }
 
 /*
@@ -1880,11 +1884,15 @@ struct hostent *__resolvehost(char *name)
 */
 struct hostent *__sip_resolvehost(str *name, unsigned short *port, char *proto)
 {
+#ifdef USE_DNS_CACHE
 	if(dns_cache_init) {
 		return dns_sip_resolvehost(name, port, proto);
 	} else {
+#endif
 		return _sip_resolvehost(name, port, proto);
+#ifdef USE_DNS_CACHE
 	}
+#endif
 }
 /* converts a str to an ipv6 address struct stored in ipb
  * - ipb must be already allocated
