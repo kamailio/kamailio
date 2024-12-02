@@ -64,7 +64,7 @@ option(USE_DNS_CACHE "Use DNS cache" ON)
 # Not strictly required to build
 option(USE_SCTP "Use SCTP" ON)
 option(DISABLE_NAGLE "Disable Nagle algorithm" ON)
-option(USE_MCAST "Use  " ON)
+option(USE_MCAST "Use Multicast" ON)
 option(DNS_IP_HACK "Use DNS IP hack" ON)
 option(SHM_MMAP "Use mmap for shared memory" ON)
 
@@ -90,7 +90,6 @@ option(STATISTICS "Statistics" ON)
 # -----------------------
 # TLS support
 # -----------------------
-# TLS support
 option(TLS_HOOKS "TLS hooks support" ON)
 option(CORE_TLS "CORE_TLS" OFF)
 # set(CORE_TLS "" CACHE STRING "CORE_TLS") set(TLS_HOOKS ON CACHE BOOL "TLS
@@ -300,6 +299,8 @@ target_compile_definitions(
     VERSIONVAL=${VERSIONVAL}
     CFG_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${CFG_NAME}/"
     SHARE_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}/"
+    # Absolute path this run is always /var/run/kamailio either for local or
+    # system installs
     RUN_DIR="/${CMAKE_INSTALL_LOCALSTATEDIR}/run/${MAIN_NAME}"
     ${LOCK_METHOD}
     # Module stuff?
