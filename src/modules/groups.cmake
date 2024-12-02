@@ -468,6 +468,8 @@ list(SORT MOD_LIST_ALL)
 
 # Modules in this group are the default compiled modules due to no external
 # compile or link dependencies
+set(MODULE_GROUP_ALL ${MOD_LIST_ALL})
+
 set(MODULE_GROUP_DEFAULT ${MOD_LIST_BASIC} ${MOD_LIST_EXTRA} ${MOD_LIST_DB}
                          ${MOD_LIST_DBUID} ${MOD_LIST_DEVEL} ${MOD_LIST_JSDT}
 )
@@ -523,6 +525,21 @@ set(MODULE_GROUP_SQLITE ${MODULE_GROUP_SQLITE_DRIVER} ${MODULE_GROUP_DB})
 # For all modules not compiled by default module_group_ignore= $(sort
 # $(filter-out $(module_group_default), $(mod_list_all)))
 
+set(AVAILABLE_GROUPS 
+    MODULE_GROUP_ALL
+    MODULE_GROUP_DEFAULT
+    MODULE_GROUP_STANDARD
+    MODULE_GROUP_COMMON
+    MODULE_GROUP_DB
+    MODULE_GROUP_MYSQL_DRIVER
+    MODULE_GROUP_MYSQL
+    MODULE_GROUP_POSTGRES_DRIVER
+    MODULE_GROUP_POSTGRES
+    MODULE_GROUP_SQLITE_DRIVER
+    MODULE_GROUP_SQLITE
+    # MODULE_GROUP_RADIUS
+    # module_group_presence
+)
 # --- Groups defined for pacKaging ###
 
 # Standard modules in main pkg module_group_kstandard=$(mod_list_basic)
