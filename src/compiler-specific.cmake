@@ -27,7 +27,10 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
                          -ftree-vectorize -fno-strict-overflow -mtune=generic
       )
     endif()
-
+  elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    target_compile_definitions(common INTERFACE CC_GCC_LIKE_ASM)
+    target_compile_options(common INTERFACE -m64)
+    target_link_options(common INTERFACE -m64)
   endif()
 
 elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
