@@ -36,3 +36,19 @@ error: ‘SREV_PKG_UPDATE_STATS’ undeclared (first use in this function)
 ```
 
 ==================
+
+REQUIRES #ifdef STATISTICS
+
+pv_stats.c:49:2: error: unknown type name ‘stat_var’
+   49 |  stat_var *stat;
+
+tmx_mod.c:92:1: error: unknown type name ‘stat_var’; did you mean ‘start_retr’?
+
+registrar.h:117:8: error: unknown type name ‘stat_var’
+
+usrloc/udomain.h:53:2: error: unknown type name ‘stat_var’
+   53 |  stat_var *users;
+
+==================
+
+presence requires libxml
