@@ -4,7 +4,7 @@ project(lcr)
 
 find_package(pcre2 QUIET)
 if(NOT pcre2_FOUND)
-  message(WARNING "PCRE2 library not found... looking with pkg-config")
+  message(STATUS "PCRE2 library not found... looking with pkg-config")
   find_package(PkgConfig REQUIRED)
   #   TODO: verify we want 8-bit libpcre2
   pkg_check_modules(pcre2 REQUIRED IMPORTED_TARGET libpcre2-8)

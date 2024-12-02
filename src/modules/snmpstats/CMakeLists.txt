@@ -10,14 +10,4 @@ file(GLOB SRC_FILES "*.c")
 add_library(snmpstats SHARED ${SRC_FILES})
 
 # TODO: Compiles fines but need to do some more verifcation
-
-# target_include_directories(
-#   snmpstats
-#   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-#   PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
-# )
-
-set_target_properties(snmpstats PROPERTIES COMPILE_FLAGS ${NETSNMP_CFLAGS})
-
-target_link_libraries(snmpstats PRIVATE ${NETSNMP_LIBS})
-target_link_libraries(snmpstats PRIVATE kamailio)
+target_link_libraries(snmpstats PRIVATE kamailio NETSNMP::NETSNMP)

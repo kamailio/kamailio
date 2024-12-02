@@ -7,7 +7,10 @@ find_package(libphonenumber CONFIG QUIET)
 if(libphonenumber_FOUND)
   #   message(STATUS "Found libphonenumber: ${libphonenumber_INCLUDE_DIRS}")
 else()
-  message(WARNING "libphonenumber not found")
+  message(
+    STATUS
+      "libphonenumber not found with find_package()... looking with other methods"
+  )
   # add additional logic here to handle the missing dependency
   find_library(libphonenumber_LIBRARY NAMES phonenumber)
   find_library(libgeocoding_LIBRARY NAMES geocoding)
