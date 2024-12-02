@@ -14,12 +14,11 @@ message(STATUS "OS: ${OS}")
 
 set(OSREL ${CMAKE_SYSTEM_VERSION})
 message(STATUS "OS version: ${OSREL}")
-# Find the architecture and from in the format __CPU_arch
-set(HOST_ARCH "__CPU_${CMAKE_HOST_SYSTEM_PROCESSOR}")
+# set(HOST_ARCH "__CPU_${CMAKE_HOST_SYSTEM_PROCESSOR}")
 set(TARGET_ARCH "__CPU_${CMAKE_SYSTEM_PROCESSOR}")
 
 message(STATUS "Host Processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
-message(STATUS "Processor compile definition: ${HOST_ARCH}")
+# message(STATUS "Processor compile definition: ${HOST_ARCH}")
 message(STATUS "Target Processor: ${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "Target Processor compile definition: ${TARGET_ARCH}")
 
