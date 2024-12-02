@@ -8,6 +8,7 @@ makecfg.lst
 config.mak
 modules.lst
 # ignore dependency files
+build/*
 *.d
 # ignore binary files and objects
 /ser
