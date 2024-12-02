@@ -39,6 +39,9 @@ function(add_module_group GROUP_MODULES)
         # Remove the 'lib' prefix from the module name
         set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
         target_compile_definitions(${MODULE_NAME} PRIVATE MOD_NAMEID=${MODULE_NAME})
+        set_target_properties(
+          ${MODULE_NAME} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
+        )
         # Install the module to the appropriate directory under the installation
         # prefix
         install(
