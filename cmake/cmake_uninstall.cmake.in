@@ -6,6 +6,9 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/install_manifest.txt")
 endif()
 
 file(READ "@CMAKE_BINARY_DIR@/install_manifest.txt" files)
+list(APPEND files "@CMAKE_INSTALL_PREFIX@/etc/kamailio/kamailio.cfg")
+list(APPEND files "@CMAKE_INSTALL_PREFIX@/etc/kamailio/kamctlrc")
+
 string(REGEX REPLACE "\n" ";" files "${files}")
 foreach(file ${files})
   message(STATUS "Uninstalling $ENV{DESTDIR}${file}")
