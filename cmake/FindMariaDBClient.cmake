@@ -52,7 +52,6 @@ find_package_handle_standard_args(
 )
 
 if(MariaDBClient_FOUND)
-  message(STATUS "Found MariaDB/Mysql Client: ${MariaDBClient_LIBRARY}")
   if(NOT TARGET MariaDBClient::MariaDBClient)
     add_library(MariaDBClient::MariaDBClient UNKNOWN IMPORTED)
     set_target_properties(
