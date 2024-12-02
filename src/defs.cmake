@@ -4,7 +4,6 @@
 # libraries and executables
 cmake_minimum_required(VERSION 3.10)
 
-add_library(common_modules INTERFACE)
 add_library(common INTERFACE)
 
 message(STATUS "CMAKE_C_COMPILER_VERSION: ${CMAKE_C_COMPILER_VERSION}")
@@ -310,4 +309,10 @@ target_compile_definitions(
     $<$<BOOL:${USE_SCTP}>:USE_SCTP>
     $<$<BOOL:${STATISTICS}>:STATISTICS>
 )
+
+# -----------------------
+add_library(common_modules INTERFACE)
 target_compile_options(common_modules INTERFACE -fPIC)
+
+# TODO: Do we need all the option from common as well?
+target_link_libraries(common_modules INTERFACE common)

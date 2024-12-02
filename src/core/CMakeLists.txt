@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
+# This is just for Debugging and print the compile definitions and options
+# for the common target
 get_target_property(
   MY_INTERFACE_DEFINITIONS common INTERFACE_COMPILE_DEFINITIONS
 )
