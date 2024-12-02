@@ -38,6 +38,7 @@ function(add_module_group GROUP_MODULES)
         add_subdirectory(${MODULE_PATH})
         # Remove the 'lib' prefix from the module name
         set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+        target_compile_definitions(${MODULE_NAME} PRIVATE MOD_NAMEID=${MODULE_NAME})
         # Install the module to the appropriate directory under the installation
         # prefix
         install(
