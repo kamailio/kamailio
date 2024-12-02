@@ -11,7 +11,7 @@ include(groups.cmake)
 # TODO: Allow the selection of a group of modules defined in groups.cmake
 set(MODULE_GROUP_NAMES ${AVAILABLE_GROUPS})
 set(MODULE_GROUP_NAME
-    MODULE_GROUP_DEFAULT
+    "DEFAULT"
     CACHE STRING "Group of modules to build (all, or a custom group)"
 )
 
@@ -24,12 +24,13 @@ if(GROUP_INDEX EQUAL -1)
   )
 endif()
 
-if(MODULE_GROUP_NAME STREQUAL "MODULE_GROUP_ALL")
+if(MODULE_GROUP_NAME STREQUAL "ALL")
+  list(SORT MODULE_GROUP_ALL)
   set(MODULE_GROUP ${MODULE_GROUP_ALL})
-elseif(MODULE_GROUP_NAME STREQUAL "MODULE_GROUP_DEFAULT")
+elseif(MODULE_GROUP_NAME STREQUAL "DEFAULT")
+  list(SORT MODULE_GROUP_DEFAULT)
   set(MODULE_GROUP ${MODULE_GROUP_DEFAULT})
 endif()
-message(STATUS "Building modules in ${MODULE_GROUP_NAME}: ${MODULE_GROUP}")
 
 # list(SORT MODULE_GROUP_DEFAULT)
 # message(STATUS "MODULE_GROUP_DEFAULT: ${MODULE_GROUP_DEFAULT}")
@@ -54,6 +55,7 @@ function(add_module_group GROUP_MODULES)
     else()
       # Construct the path to the module
       set(MODULE_PATH "${MODULES_DIR}/${MODULE_NAME}")
+      # message(STATUS "Adding module: ${MODULE_NAME} (${MODULE_PATH})")
       # Check if the directory exists before adding
       if(IS_DIRECTORY ${MODULE_PATH} AND EXISTS ${MODULE_PATH}/CMakeLists.txt)
         add_subdirectory(${MODULE_PATH})
@@ -89,7 +91,7 @@ function(add_module_group GROUP_MODULES)
 endfunction()
 
 # Add each group of modules
-add_module_group(${MODULE_GROUP})
+add_module_group("${MODULE_GROUP}")
 
 # Add a kamailio_docs target that depends on all module documentation targets
 get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
@@ -113,5 +115,5 @@ add_custom_target(
 
 # Parse and add extra modules specified by the user
 separate_arguments(INCLUDE_MODULES_LIST UNIX_COMMAND "${INCLUDE_MODULES}")
-add_module_group("${INCLUDE_MODULES_LIST}")
 message(STATUS "Extra modules: ${INCLUDE_MODULES_LIST}")
+add_module_group("${INCLUDE_MODULES_LIST}")
