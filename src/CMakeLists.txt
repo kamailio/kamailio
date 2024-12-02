@@ -10,34 +10,17 @@ include(GNUInstallDirs)
 message(STATUS "Cross compile: ${CMAKE_CROSSCOMPILING}")
 
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
-message(
-  STATUS "CMAKE_INSTALL_LIBDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
-)
-message(
-  STATUS "CMAKE_INSTALL_BINDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
-)
-message(
-  STATUS
-    "CMAKE_INSTALL_SBINDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SBINDIR}"
-)
-message(
-  STATUS
-    "CMAKE_INSTALL_SYSCONFDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}"
-)
+message(STATUS "CMAKE_INSTALL_LIBDIR: ${CMAKE_INSTALL_FULL_LIBDIR}")
+message(STATUS "CMAKE_INSTALL_BINDIR: ${CMAKE_INSTALL_FULL_BINDIR}")
+message(STATUS "CMAKE_INSTALL_SBINDIR: ${CMAKE_INSTALL_FULL_SBINDIR}")
+message(STATUS "CMAKE_INSTALL_SYSCONFDIR: ${CMAKE_INSTALL_FULL_SYSCONFDIR}")
 message(
   STATUS
     "CMAKE_INSTALL_LOCALSTATEDIR: /${CMAKE_INSTALL_LOCALSTATEDIR}/run/${MAIN_NAME}"
 )
-message(
-  STATUS
-    "CMAKE_INSTALL_DATADIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}"
-)
-message(
-  STATUS "CMAKE_INSTALL_DOCDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DOCDIR}"
-)
-message(
-  STATUS "CMAKE_INSTALL_MANDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_MANDIR}"
-)
+message(STATUS "CMAKE_INSTALL_DATADIR: ${CMAKE_INSTALL_FULL_DATADIR}")
+message(STATUS "CMAKE_INSTALL_DOCDIR: ${CMAKE_INSTALL_FULL_DOCDIR}")
+message(STATUS "CMAKE_INSTALL_MANDIR: ${CMAKE_INSTALL_FULL_MANDIR}")
 
 find_package(Threads REQUIRED)
 
@@ -88,10 +71,9 @@ add_subdirectory(modules)
 
 # -----------------------
 
-# We add the expicitly generated files as SRC files to ensure custom commands
-# are run and the files are generated before building kamailio. We also set the
-# GENERATED property to 1 because before CMake 3.20, the GENERATED property was
-# not set for files generated in other CMakeLists.txt files.
+# We also set the GENERATED property to 1 because before CMake 3.20,
+# the GENERATED property was not set for files generated in other
+# CMakeLists.txt files.
 if(CMAKE_VERSION VERSION_LESS 3.20)
   set_property(
     SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c PROPERTY GENERATED 1
