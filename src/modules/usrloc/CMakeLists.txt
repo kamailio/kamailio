@@ -11,3 +11,5 @@ target_link_libraries(usrloc PRIVATE srdb1)
 set_target_properties(
   usrloc PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
 )
+
+set_target_properties(usrloc PROPERTIES BUILD_RPATH "${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}" )
