@@ -33,6 +33,11 @@ jobs:
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
+          - os: ubuntu-latest
+            c_compiler: aarch64-linux-gnu-gcc
+            cpp_compiler: aarch64-linux-gnu-g++
+            target_arch: aarch64
+            build_type: Release
 
     steps:
     - uses: actions/checkout@v4
@@ -43,14 +48,26 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        if [ "${{ matrix.target_arch }}" == "aarch64" ]; then
+          echo "cmake-toolchain-file=${{ github.workspace }}/cmake/arm-toolchain.cmake" >> "$GITHUB_OUTPUT"
+        else
+          echo "cmake-toolchain-file=" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Install cross-compiler
+      if: matrix.target_arch == 'aarch64'
+      run: |
+        sudo apt update
+        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        ${{ steps.strings.outputs.cmake-toolchain-file != '' && format('-DCMAKE_TOOLCHAIN_FILE={0}', steps.strings.outputs.cmake-toolchain-file) }}
+        ${{ steps.strings.outputs.cmake-toolchain-file == '' && format('-DCMAKE_CXX_COMPILER={0}', matrix.cpp_compiler) || '' }}
+        ${{ steps.strings.outputs.cmake-toolchain-file == '' && format('-DCMAKE_C_COMPILER={0}', matrix.c_compiler) || '' }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
 
