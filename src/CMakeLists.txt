@@ -113,3 +113,13 @@ target_link_libraries(kamailio PUBLIC kamailio_core)
 #  Compile it with debug info
 target_compile_options(kamailio PRIVATE -g)
 
+# Add the install targets
+# Specify the directory on disk to which a file will be installed. <dir> should be a relative path. An absolute path is allowed, but not recommended.
+# When a relative path is given it is interpreted relative to the value of the CMAKE_INSTALL_PREFIX variable.
+install(TARGETS kamailio DESTINATION ${CMAKE_INSTALL_SBINDIR})
+install(FILES "${PROJECT_SOURCE_DIR}/utils/kamctl/kamctl" DESTINATION  ${CMAKE_INSTALL_SBINDIR}/)
+install(FILES "${PROJECT_SOURCE_DIR}/utils/kamctl/kamdbctl" DESTINATION  ${CMAKE_INSTALL_SBINDIR}/)
+
+# TODO: Install as .sample if already there so that it does not overwrite existing config
+install(FILES "${PROJECT_SOURCE_DIR}/etc/kamailio.cfg" DESTINATION  ${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME})
+install(FILES "${PROJECT_SOURCE_DIR}/utils/kamctl/kamctlrc" DESTINATION  ${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME})
