@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.10)
+
+project(siptrace)
+
+file(GLOB SRC_FILES "*.c")
+
+add_library(siptrace SHARED ${SRC_FILES})
+target_link_libraries(siptrace PRIVATE common_modules kamailio)
+
+target_link_libraries(siptrace PRIVATE srdb1)
+set_target_properties(
+  siptrace PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
+)

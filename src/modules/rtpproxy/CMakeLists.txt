@@ -5,6 +5,9 @@ project(rtpproxy)
 file(GLOB SRC_FILES "*.c")
 
 add_library(rtpproxy SHARED ${SRC_FILES})
-target_link_libraries(rtpproxy PRIVATE common common_modules kamailio)
+target_link_libraries(rtpproxy PRIVATE common_modules kamailio)
 
-# TODO: link with srdb1
+target_link_libraries(rtpproxy PRIVATE srdb1)
+set_target_properties(
+  rtpproxy PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
+)
