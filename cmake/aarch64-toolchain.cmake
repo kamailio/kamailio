@@ -5,11 +5,11 @@ find_program(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
 find_program(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
 
 if(NOT CMAKE_C_COMPILER)
-  message(FATAL_ERROR "arm-none-eabi-gcc not found")
+  message(FATAL_ERROR "aarch64-linux-gnu-g++")
 endif()
 
 if(NOT CMAKE_CXX_COMPILER)
-  message(FATAL_ERROR "arm-none-eabi-g++ not found")
+  message(FATAL_ERROR "aarch64-linux-gnu-g++")
 endif()
 
 # Where to look for the target environment. (More paths can be added here)

@@ -49,7 +49,7 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
         if [ "${{ matrix.target_arch }}" == "aarch64" ]; then
-          echo "cmake-toolchain-file=${{ github.workspace }}/cmake/arm-toolchain.cmake" >> "$GITHUB_OUTPUT"
+          echo "cmake-toolchain-file=${{ github.workspace }}/cmake/aarch64-toolchain.cmake" >> "$GITHUB_OUTPUT"
         else
           echo "cmake-toolchain-file=" >> "$GITHUB_OUTPUT"
         fi
