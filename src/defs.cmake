@@ -4,6 +4,7 @@
 # The flags are then used by the other libraries and executables
 cmake_minimum_required(VERSION 3.10)
 
+add_library(common_modules INTERFACE)
 add_library(common INTERFACE)
 
 message(STATUS "CMAKE_C_COMPILER_VERSION: ${CMAKE_C_COMPILER_VERSION}")
@@ -76,7 +77,7 @@ option(HAVE_RESOLV_RES "Have resolv_res" ON)
 
 option(KSR_PTHREAD_MUTEX_SHARED "Use shared mutex for TLS" ON)
 option(FMSTATS "Fast memory statistics" ON)
-
+option(STATISTICS "Statistics" ON)
 # if(${MEMPKG})
 #   target_compile_definitions(common INTERFACE PKG_MALLOC)
 # else()
@@ -271,7 +272,6 @@ include(os-specific.cmake)
 
 
 string(TOLOWER ${OS} OS_LOWER)
-
 target_compile_definitions(common INTERFACE 
     NAME="${MAIN_NAME}"
     VERSION="${RELEASE}"
@@ -283,10 +283,15 @@ target_compile_definitions(common INTERFACE
     __OS_${OS_LOWER}
     VERSIONVAL=${VERSIONVAL}
     CFG_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${CFG_NAME}/"
-    MODS_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${NAME}modules}"
+    SHARE_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}/"
     RUN_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LOCALSTATEDIR}/run/${MAIN_NAME}"
     ${LOCK_METHOD}
 
+    # Module stuff?
+    PIC
+
     # TODO: We can use the generator expression to define extra flags instead of checking the options each time
     $<$<BOOL:${USE_SCTP}>:USE_SCTP>
+    $<$<BOOL:${STATISTICS}>:STATISTICS>
 )
+target_compile_options(common_modules INTERFACE -fPIC )
