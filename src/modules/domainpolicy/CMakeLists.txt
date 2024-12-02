@@ -8,6 +8,3 @@ add_library(domainpolicy SHARED ${SRC_FILES})
 target_link_libraries(domainpolicy PRIVATE common_modules kamailio)
 
 target_link_libraries(domainpolicy PRIVATE srdb1)
-set_target_properties(
-  domainpolicy PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
-)

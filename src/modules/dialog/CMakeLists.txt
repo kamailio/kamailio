@@ -8,6 +8,3 @@ add_library(dialog SHARED ${SRC_FILES})
 target_link_libraries(dialog PRIVATE common_modules kamailio)
 
 target_link_libraries(dialog PRIVATE srdb1)
-set_target_properties(
-  dialog PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
-)

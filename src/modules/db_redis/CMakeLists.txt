@@ -8,6 +8,3 @@ add_library(db_redis SHARED ${SRC_FILES})
 target_link_libraries(db_redis PRIVATE common_modules kamailio)
 
 target_link_libraries(db_redis PRIVATE srdb1)
-set_target_properties(
-  db_redis PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
-)

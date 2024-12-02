@@ -8,6 +8,3 @@ add_library(lcr SHARED ${SRC_FILES})
 target_link_libraries(lcr PRIVATE common_modules kamailio)
 
 target_link_libraries(lcr PRIVATE srdb1)
-set_target_properties(
-  lcr PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
-)

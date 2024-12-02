@@ -8,6 +8,3 @@ add_library(drouting SHARED ${SRC_FILES})
 target_link_libraries(drouting PRIVATE common_modules kamailio)
 
 target_link_libraries(drouting PRIVATE srdb1)
-set_target_properties(
-  drouting PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
-)

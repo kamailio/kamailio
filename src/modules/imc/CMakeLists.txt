@@ -8,6 +8,3 @@ add_library(imc SHARED ${SRC_FILES})
 target_link_libraries(imc PRIVATE common_modules kamailio)
 
 target_link_libraries(imc PRIVATE srdb1)
-set_target_properties(
-  imc PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
-)

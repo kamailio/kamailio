@@ -8,6 +8,3 @@ add_library(matrix SHARED ${SRC_FILES})
 target_link_libraries(matrix PRIVATE common_modules kamailio)
 
 target_link_libraries(matrix PRIVATE srdb1)
-set_target_properties(
-  matrix PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
-)

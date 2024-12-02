@@ -8,6 +8,3 @@ add_library(acc SHARED ${acc_SRC})
 target_link_libraries(acc PRIVATE common_modules kamailio)
 
 target_link_libraries(acc PRIVATE srdb1)
-set_target_properties(
-  acc PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
-)
