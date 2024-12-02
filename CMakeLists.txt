@@ -39,6 +39,14 @@ add_subdirectory(src)
 # Add utils
 add_subdirectory(utils/kamctl)
 
+# TODO: Packaging stuuf. These should be on different file propably
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_NAME kamailio)
+set(CPACK_GENERATOR DEB)
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "test")
+
+include(CPack)
+
 # Add uninstall target
 if(NOT TARGET uninstall)
   configure_file(
