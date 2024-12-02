@@ -5,6 +5,6 @@ project(secfilter)
 file(GLOB SRC_FILES "*.c")
 
 add_library(secfilter SHARED ${SRC_FILES})
-target_link_libraries(secfilter PRIVATE common_modules kamailio)
 
+target_link_libraries(secfilter PRIVATE kamailio)
 target_link_libraries(secfilter PRIVATE srdb1)

@@ -5,4 +5,4 @@ project(maxfwd)
 file(GLOB SRC_FILES "*.c")
 
 add_library(maxfwd SHARED ${SRC_FILES})
-target_link_libraries(maxfwd PRIVATE common_modules kamailio)
+target_link_libraries(maxfwd PRIVATE kamailio)

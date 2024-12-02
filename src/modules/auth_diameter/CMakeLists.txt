@@ -5,4 +5,4 @@ project(auth_diameter)
 file(GLOB SRC_FILES "*.c")
 
 add_library(auth_diameter SHARED ${SRC_FILES})
-target_link_libraries(auth_diameter PRIVATE common_modules kamailio)
+target_link_libraries(auth_diameter PRIVATE kamailio)

@@ -5,4 +5,4 @@ project(topoh)
 file(GLOB SRC_FILES "*.c")
 
 add_library(topoh SHARED ${SRC_FILES})
-target_link_libraries(topoh PRIVATE common_modules kamailio)
+target_link_libraries(topoh PRIVATE kamailio)

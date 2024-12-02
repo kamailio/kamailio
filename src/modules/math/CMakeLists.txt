@@ -5,4 +5,4 @@ project(math)
 file(GLOB SRC_FILES "*.c")
 
 add_library(math SHARED ${SRC_FILES})
-target_link_libraries(math PRIVATE common_modules kamailio)
+target_link_libraries(math PRIVATE kamailio)

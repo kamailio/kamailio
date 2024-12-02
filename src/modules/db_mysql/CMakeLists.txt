@@ -12,7 +12,8 @@ endif()
 file(GLOB mySQL_SRC "*.c")
 
 add_library(db_mysql SHARED ${mySQL_SRC})
+
 target_include_directories(db_mysql PRIVATE ${MariaDBClient_INCLUDE_DIRS})
-target_link_libraries(db_mysql PRIVATE ${MariaDBClient_LIBRARIES} common)
+target_link_libraries(db_mysql PRIVATE kamailio ${MariaDBClient_LIBRARIES})
 
 # TODO Install script files for kamctl

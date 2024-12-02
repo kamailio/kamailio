@@ -68,7 +68,7 @@ function(add_module_group GROUP_MODULES)
         set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
         # Add this policy to new so we can use target_link_libraries(... PRIVATE ...)
-        # to link against targets defined in childer directories
+        # to link against targets defined in children directories
         if(POLICY CMP0079)
           cmake_policy(SET CMP0079 NEW)
         endif()

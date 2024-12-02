@@ -5,4 +5,4 @@ project(siprepo)
 file(GLOB SRC_FILES "*.c")
 
 add_library(siprepo SHARED ${SRC_FILES})
-target_link_libraries(siprepo PRIVATE common_modules kamailio)
+target_link_libraries(siprepo PRIVATE kamailio)

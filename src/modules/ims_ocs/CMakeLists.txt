@@ -5,4 +5,6 @@ project(ims_ocs)
 file(GLOB SRC_FILES "*.c")
 
 add_library(ims_ocs SHARED ${SRC_FILES})
-target_link_libraries(ims_ocs PRIVATE common_modules kamailio)
+
+target_link_libraries(ims_ocs PRIVATE kamailio)
+target_link_libraries(ims_ocs PRIVATE kamailio_ims)

@@ -12,31 +12,35 @@ set(LIBSSL_STATIC_SRCPATH
 )
 
 # Find packages
-find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(Threads REQUIRED)
 
 file(GLOB SRC_FILES "*.c")
-# Include directories and link libraries based on options
+
+add_library(tls SHARED ${SRC_FILES})
+
+# TODO: Probably all thesse are not need because if OpenSSL can't be found
+# it will fail and ask to set variables like OPENSSL_ROOT_DIR, OPENSSL_INCLUDE_DIR and LIBRARIES
 if(LIBSSL_STATIC)
+  target_compile_definitions(tls KSR_LIBSSL_STATIC)
   if(LIBSSL_STATIC_SRCLIB)
-    include_directories(${LIBSSL_STATIC_SRCPATH}/include)
-    link_directories(${LIBSSL_STATIC_SRCPATH})
-    target_compile_definitions(tls KSR_LIBSSL_STATIC)
+    target_include_directories(tls PRIVATE ${LIBSSL_STATIC_SRCPATH}/include)
+    target_link_directories(tls PRIVATE ${LIBSSL_STATIC_SRCPATH})
   else()
     # Static linking with system libraries
     # Note: This assumes the static libraries are installed in a standard location
-    target_link_libraries(
-      tls -Wl,-Bstatic OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB -Wl,-Bdynamic
-    )
+    set(OPENSSL_USE_STATIC_LIBS TRUE)
+    find_package(OpenSSL REQUIRED)
+    # TODO: Check if this is needed: -Wl,-Bstatic
+    target_link_libraries(tls PRIVATE OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB)
   endif()
 else()
-  include_directories(${OPENSSL_INCLUDE_DIR})
-  link_libraries(OpenSSL::SSL OpenSSL::Crypto)
+  find_package(OpenSSL REQUIRED)
+  target_link_libraries(
+    tls PRIVATE OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB Threads::Threads
+  )
 endif()
 
-# Define the target
-add_library(tls SHARED ${SRC_FILES})
-target_link_libraries(tls PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+# target_link_libraries(tls PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
 #  TODO: Install files such as cfg and modify it with sed and certs

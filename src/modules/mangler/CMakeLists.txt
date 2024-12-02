@@ -5,4 +5,4 @@ project(mangler)
 file(GLOB SRC_FILES "*.c")
 
 add_library(mangler SHARED ${SRC_FILES})
-target_link_libraries(mangler PRIVATE common_modules kamailio)
+target_link_libraries(mangler PRIVATE kamailio)

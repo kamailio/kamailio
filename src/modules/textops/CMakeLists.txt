@@ -5,4 +5,4 @@ project(textops)
 file(GLOB SRC_FILES "*.c")
 
 add_library(textops SHARED ${SRC_FILES})
-target_link_libraries(textops PRIVATE common_modules kamailio)
+target_link_libraries(textops PRIVATE kamailio)

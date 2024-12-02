@@ -5,6 +5,6 @@ project(permissions)
 file(GLOB SRC_FILES "*.c")
 
 add_library(permissions SHARED ${SRC_FILES})
-target_link_libraries(permissions PRIVATE common_modules kamailio)
 
+target_link_libraries(permissions PRIVATE kamailio)
 target_link_libraries(permissions PRIVATE srdb1)

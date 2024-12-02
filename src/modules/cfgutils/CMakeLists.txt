@@ -5,4 +5,4 @@ project(cfgutils)
 file(GLOB SRC_FILES "*.c")
 
 add_library(cfgutils SHARED ${SRC_FILES})
-target_link_libraries(cfgutils PRIVATE common_modules kamailio)
+target_link_libraries(cfgutils PRIVATE kamailio)

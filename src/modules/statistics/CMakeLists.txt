@@ -5,4 +5,4 @@ project(statistics)
 file(GLOB SRC_FILES "*.c")
 
 add_library(statistics SHARED ${SRC_FILES})
-target_link_libraries(statistics PRIVATE common_modules kamailio)
+target_link_libraries(statistics PRIVATE kamailio)

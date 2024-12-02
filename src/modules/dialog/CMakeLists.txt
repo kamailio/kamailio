@@ -5,6 +5,6 @@ project(dialog)
 file(GLOB SRC_FILES "*.c")
 
 add_library(dialog SHARED ${SRC_FILES})
-target_link_libraries(dialog PRIVATE common_modules kamailio)
 
+target_link_libraries(dialog PRIVATE kamailio)
 target_link_libraries(dialog PRIVATE srdb1)

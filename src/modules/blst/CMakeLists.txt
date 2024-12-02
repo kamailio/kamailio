@@ -5,4 +5,4 @@ project(blst)
 file(GLOB SRC_FILES "*.c")
 
 add_library(blst SHARED ${SRC_FILES})
-target_link_libraries(blst PRIVATE common_modules kamailio)
+target_link_libraries(blst PRIVATE kamailio)

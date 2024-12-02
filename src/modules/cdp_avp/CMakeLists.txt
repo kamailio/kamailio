@@ -5,4 +5,4 @@ project(cdp_avp)
 file(GLOB SRC_FILES "*.c")
 
 add_library(cdp_avp SHARED ${SRC_FILES})
-target_link_libraries(cdp_avp PRIVATE common_modules kamailio)
+target_link_libraries(cdp_avp PRIVATE kamailio)

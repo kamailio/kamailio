@@ -5,4 +5,4 @@ project(kemix)
 file(GLOB SRC_FILES "*.c")
 
 add_library(kemix SHARED ${SRC_FILES})
-target_link_libraries(kemix PRIVATE common_modules kamailio)
+target_link_libraries(kemix PRIVATE kamailio)

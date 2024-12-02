@@ -5,4 +5,4 @@ project(xhttp)
 file(GLOB xhttp_SRC *.c)
 
 add_library(xhttp SHARED ${xhttp_SRC})
-target_link_libraries(xhttp PRIVATE common)
+target_link_libraries(xhttp PRIVATE)
