@@ -20,8 +20,9 @@ foreach(child ${children})
      AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${child}/CMakeLists.txt
   )
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${child})
+
     install(
-      TARGETS ${child}
+      TARGETS lib_${child}
       DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}
       COMPONENT kamailio_libs
     )
