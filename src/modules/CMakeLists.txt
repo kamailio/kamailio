@@ -9,28 +9,25 @@ include(groups.cmake)
 
 # TODO: Add proper search for all or find better way
 # TODO: Allow the selection of a group of modules defined in groups.cmake
+set(MODULE_GROUP_NAMES ${AVAILABLE_GROUPS})
 set(MODULE_GROUP_NAME
-    ""
+    MODULE_GROUP_DEFAULT
     CACHE STRING "Group of modules to build (all, or a custom group)"
 )
-# If no group is specified, use the default group and print the available groups
-if(NOT MODULE_GROUP_NAME)
-  message(STATUS "Available groups: ${AVAILABLE_GROUPS}")
-  message(STATUS "No module group specified. Using default group.")
-  set(MODULE_GROUP_NAME "MODULE_GROUP_DEFAULT")
-  set(MODULE_GROUP ${MODULE_GROUP_DEFAULT})
-endif()
 
 # Check if the specified group exists
 list(FIND AVAILABLE_GROUPS "${MODULE_GROUP_NAME}" GROUP_INDEX)
 if(GROUP_INDEX EQUAL -1)
   message(
-    FATAL_ERROR "Invalid module group specified: ${MODULE_GROUP_NAME}. Available groups: ${AVAILABLE_GROUPS}"
+    FATAL_ERROR
+      "Invalid module group specified: ${MODULE_GROUP_NAME}. Available groups: ${AVAILABLE_GROUPS}"
   )
 endif()
 
-if (MODULE_GROUP_NAME STREQUAL "MODULE_GROUP_ALL")
+if(MODULE_GROUP_NAME STREQUAL "MODULE_GROUP_ALL")
   set(MODULE_GROUP ${MODULE_GROUP_ALL})
+elseif(MODULE_GROUP_NAME STREQUAL "MODULE_GROUP_DEFAULT")
+  set(MODULE_GROUP ${MODULE_GROUP_DEFAULT})
 endif()
 message(STATUS "Building modules in ${MODULE_GROUP_NAME}: ${MODULE_GROUP}")
 
