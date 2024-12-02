@@ -44,8 +44,9 @@ if(NETSNMP_CONFIG_BIN)
   execute_process(
     COMMAND ${NETSNMP_CONFIG_BIN} --libs OUTPUT_VARIABLE _NETSNMP_LIBS
   )
-  string(REGEX REPLACE "[\"\r\n]" "" _NETSNMP_CFLAGS "${_NETSNMP_CFLAGS}")
-  string(REGEX REPLACE "[\"\r\n]" "" _NETSNMP_LIBS "${_NETSNMP_LIBS}")
+  # Strip trailing and leading whitespaces
+  string(STRIP "${_NETSNMP_CFLAGS}" _NETSNMP_CFLAGS)
+  string(STRIP "${_NETSNMP_LIBS}" _NETSNMP_LIBS)
 
   set(NETSNMP_CFLAGS
       ${_NETSNMP_CFLAGS}
@@ -55,20 +56,27 @@ if(NETSNMP_CONFIG_BIN)
       ${_NETSNMP_LIBS}
       CACHE STRING "linker options for net-snmp lib"
   )
-  set(NETSNMP_FOUND
-      TRUE
-      CACHE BOOL "net-snmp is found"
+  set(NETSNMP_FOUND TRUE BOOL "net-snmp is found")
+
+  add_library(NETSNMP::NETSNMP INTERFACE IMPORTED)
+  set_target_properties(
+    NETSNMP::NETSNMP PROPERTIES COMPILE_FLAGS "${NETSNMP_CFLAGS}"
+                                INTERFACE_LINK_LIBRARIES "${NETSNMP_LIBS}"
   )
+
+  if(NOT TARGET NETSNMP::NETSNMP)
+    message(
+      FATAL_ERROR
+        "Failed to create NETSNMP::NETSNMP target, check the output of net-snmp-config"
+    )
+  endif()
 else()
-  set(NETSNMP_FOUND
-      FALSE
-      CACHE BOOL "net-snmp is not found"
-  )
+  set(NETSNMP_FOUND FALSE /BOOL "net-snmp is not found")
 endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-  NETSNMP DEFAULT_MSG NETSNMP_LIBS NETSNMP_CFLAGS NETSNMP_FOUND
+  NETSNMP DEFAULT_MSG NETSNMP_CONFIG_BIN NETSNMP_LIBS NETSNMP_CFLAGS
 )
 
-mark_as_advanced(NETSNMP_LIBS)
+mark_as_advanced(NETSNMP_LIBS NETSNMP_CFLAGS)
