@@ -36,7 +36,7 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
 
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    target_compile_definitions(common INTERFACE CC_GCC_LIKE_ASM NOSMP)
+    target_compile_definitions(common INTERFACE CC_GCC_LIKE_ASM)
 
     # target_compile_options(common INTERFACE -O0 # <$<$<BOOL:${PROFILE}>:-pg> )
 
