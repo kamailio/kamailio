@@ -121,17 +121,17 @@ if(CMAKE_VERSION VERSION_LESS 3.20)
   )
 endif()
 
-add_executable(
-  kamailio
-  ${CMAKE_CURRENT_SOURCE_DIR}/main.c ${kamailio_SRC}
-  ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.c
-)
+add_executable(kamailio ${CMAKE_CURRENT_SOURCE_DIR}/main.c ${kamailio_SRC})
 target_link_libraries(
   kamailio
-  PUBLIC common m Threads::Threads # Pthread library
-         dl # dlopen and more
-         resolv # resolv
+  PUBLIC
+    common
+    m
+    Threads::Threads # Pthread library
+    # Use of ${CMAKE_DL_LIBS}
+    # https://stackoverflow.com/questions/73263834/cmake-how-to-set-rpath-in-a-shared-library-with-only-target-link-directories-w
+    ${CMAKE_DL_LIBS} # dl -- dlopen and more
+    resolv # resolv
 )
 # Make sure the cfg.tab.c and lex.yy.c are generated before building kamailio
 add_dependencies(kamailio GenerateParser)

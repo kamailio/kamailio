@@ -40,13 +40,12 @@ add_custom_command(
   COMMENT "Generating cfg.tab.c and cfg.tab.h from cfg.y"
 )
 
-# Custom target to ensure the above commands run
-add_custom_target(
-  GenerateParser ALL
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
-          ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
-          ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.h
+# Add library target to ensure the above commands run
+add_library(
+  GenerateParser ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
+                 ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
 )
+target_link_libraries(GenerateParser PUBLIC common)
 
 # -----------------------
 
