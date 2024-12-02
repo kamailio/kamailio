@@ -32,12 +32,10 @@ message(STATUS "CMAKE_INSTALL_LOCALSTATEDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INS
 message(STATUS "CMAKE_INSTALL_DATADIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}")
 message(STATUS "CMAKE_INSTALL_DOCDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DOCDIR}")
 message(STATUS "CMAKE_INSTALL_MANDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_MANDIR}")
-message(STATUS "LOCALBASE: ${LOCALBASE}")
 
 find_package(Threads REQUIRED)
 
 include(defs.cmake)
-
 
 # -----------------------
 # The following produces core/autover.h
@@ -74,7 +72,10 @@ configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/core/autover.h.in"
     "${CMAKE_CURRENT_SOURCE_DIR}/core/autover.h"
 )
-#  -----------------------
+# -----------------------
+
+# -----------------------
+# The following produces core/lex.yy.c and core/cfg.tab.c and core/cfg.tab.h files
 
 # Find Flex
 find_package(FLEX REQUIRED)
@@ -105,11 +106,10 @@ add_custom_target(GenerateParser ALL
 
 # -----------------------
 
-
-
 add_subdirectory(core)
 
-add_executable(kamailio_main main.c)
-target_link_libraries(kamailio_main PUBLIC kamailio_core)
-#  Compile it wtih debug info
-target_compile_options(kamailio_main PRIVATE -g)
+add_executable(kamailio main.c)
+target_link_libraries(kamailio PUBLIC kamailio_core)
+#  Compile it with debug info
+target_compile_options(kamailio PRIVATE -g)
+

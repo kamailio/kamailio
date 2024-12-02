@@ -45,20 +45,6 @@ file(GLOB kamailio_rand_SRC
 add_library(rand ${kamailio_rand_SRC})
 target_link_libraries(rand PUBLIC common logging memory crypto)
 
-file(GLOB kamailio_core_SRC 
-    "*.c"
-    )
-# exclude some files files found above
-# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*mem.*")
-# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*rand.*")
-# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*crypto.*")
-# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*pt.*")
-# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*parser.*")
-# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*tcp_main.*")
-# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*dprint.*")
-# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*error.*")
-
-message(STATUS "kamailio_core_SRC: ${kamailio_core_SRC}")
 set(kamailio_logging_SRC 
         "dprint.c"
         "error.c"
@@ -76,8 +62,6 @@ file(GLOB kamailio_parser_SRC
 add_library(parser ${kamailio_parser_SRC})
 target_link_libraries(parser PUBLIC common logging memory kamailio_core)
 
-
-
 file(GLOB kamailio_tcp_main_SRC 
     "tcp_main.c"
     # "tcp_main.h"
@@ -87,12 +71,19 @@ add_library(tcp_main ${kamailio_tcp_main_SRC})
 target_link_libraries(tcp_main PUBLIC common logging memory)
 
 # Set sources found on this folder
-
-# file(GLOB kamailio_core_SRC "**/*.c")
-
-# set(kamailio_core_SRC 
-#     cfg/cfg.c    
-# )
+# TODO: Exlude already compiled files that are part of other targets?
+file(GLOB kamailio_core_SRC 
+    "*.c"
+    )
+# exclude some files files found above
+# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*mem.*")
+# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*rand.*")
+# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*crypto.*")
+# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*pt.*")
+# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*parser.*")
+# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*tcp_main.*")
+# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*dprint.*")
+# list(FILTER kamailio_core_SRC EXCLUDE REGEX ".*error.*")
 
 # message(STATUS "kamailio_core_SRC: ${kamailio_core_SRC}")
 
@@ -106,10 +97,3 @@ target_link_libraries(kamailio_core PUBLIC common cfg tcp_main logging memory pa
                                         dl      # dlopen and more
                                         resolv  # resolv
                                         )
-
-# get_target_property(KAMAILIO_CORE_DEFINITIONS kamailio_core COMPILE_DEFINITIONS)
-# message(STATUS "Compile definitions for kamailio_core: ${KAMAILIO_CORE_DEFINITIONS}")
-
-# string(TOUPPER ${locking_method} LOCKING_METHOD_UPPER)
-# Set some definitions for the target
-# target_compile_definitions(kamailio_core PUBLIC USE_FUTEX FAST_LOCK ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024)

@@ -21,29 +21,3 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 
 # Add the source directory
 add_subdirectory(src)
-
-
-
-# Add the executable
-# add_executable(kamailio ${PROJECT_SOURCE_DIR}/src/main.c)
-# target_link_libraries(kamailio PRIVATE core)
-# target_link_libraries(kamailio full_path_to_generated_library)
-# add_dependencies(kamailio kamailio_core)
-
-# Link the libraries
-# target_link_libraries(kamailio PRIVATE my_library)
-
-# Add the install targets
-# install(TARGETS kamailio DESTINATION bin)
-# install(FILES "${PROJECT_BINARY_DIR}/TutorialConfig.h" DESTINATION include)
-
-# # Add custom target for tags
-# add_custom_target(tags
-#   COMMAND ctags -R --exclude="misc/*" --exclude="test/*" .
-#   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-# )
-
-# # Add custom target for clean
-# add_custom_target(distclean
-#    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/clean.cmake
-# )

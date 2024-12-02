@@ -245,9 +245,9 @@ if(NO_DEV_POLL)
   target_compile_definitions(common INTERFACE NO_DEV_POLL)
 endif()
 
-if(USE_SCTP)
-  target_compile_definitions(common INTERFACE USE_SCTP)
-endif()
+# if(USE_SCTP)
+#   target_compile_definitions(common INTERFACE USE_SCTP)
+# endif()
 
 if(RAW_SOCKS)
   target_compile_definitions(common INTERFACE RAW_SOCKS)
@@ -272,17 +272,6 @@ include(os-specific.cmake)
 
 string(TOLOWER ${OS} OS_LOWER)
 
-
-# Option to toggle the use of temporary paths
-option(USE_TEMP_PATHS "Use temporary paths for development" ON)
-
-# Base directory to use for paths
-if(USE_TEMP_PATHS)
-    set(BASE_DIR "${CMAKE_BINARY_DIR}")
-else()
-    set(BASE_DIR "${CMAKE_INSTALL_PREFIX}")
-endif()
-
 target_compile_definitions(common INTERFACE 
     NAME="${MAIN_NAME}"
     VERSION="${RELEASE}"
@@ -293,8 +282,11 @@ target_compile_definitions(common INTERFACE
     ${HOST_ARCH}
     __OS_${OS_LOWER}
     VERSIONVAL=${VERSIONVAL}
-    CFG_DIR="${BASE_DIR}/${CMAKE_INSTALL_SYSCONFDIR}/${CFG_NAME}/"
-    MODS_DIR="${BASE_DIR}/${CMAKE_INSTALL_LIBDIR}/${NAME}modules}"
-    RUN_DIR="${BASE_DIR}/${CMAKE_INSTALL_LOCALSTATEDIR}/run/${MAIN_NAME}"
+    CFG_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${CFG_NAME}/"
+    MODS_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${NAME}modules}"
+    RUN_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LOCALSTATEDIR}/run/${MAIN_NAME}"
     ${LOCK_METHOD}
+
+    # TODO: We can use the generator expression to define extra flags instead of checking the options each time
+    $<$<BOOL:${USE_SCTP}>:USE_SCTP>
 )
