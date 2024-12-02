@@ -15,7 +15,8 @@ set(OSREL ${CMAKE_SYSTEM_VERSION})
 message(STATUS "OS version: ${OSREL}")
 # Find the architecture and from in the format __CPU_arch
 set(HOST_ARCH "__CPU_${CMAKE_HOST_SYSTEM_PROCESSOR}")
-message(STATUS "Processor: ${HOST_ARCH}")
+message(STATUS "Processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+message(STATUS "Processor compile definition: ${HOST_ARCH}")
 
 # Flavor of the project
 # flavour: sip-router, ser or kamailio
@@ -43,10 +44,37 @@ option(SCTP "SCTP support" ON)
 option(RAW_SOCKS "Raw sockets support" ON)
 option(MEMPKG "Package memory or sys " ON)
 
+option(NO_KQUEUE "No kqueue support" OFF)
+option(NO_SELECT "No select support" OFF)
+option(NO_EPOLL "No epoll support" OFF)
+option(NO_SIGIO_RT "No poll support" OFF)
+option(NO_DEV_POLL "No /dev/poll support" OFF)
 
-set(memory_manager_switcher f_malloc q_malloc tlsf_malloc)
-set(MEMMNG f_malloc CACHE STRING "Memory manager")
-set_property(CACHE MEMMNG PROPERTY STRINGS ${memory_manager_switcher})
+option(USE_TCP "Use TCP" ON)
+option(USE_TLS "Use TLS" ON)
+option(USE_NAPTR "Use NAPTR" ON)
+option(USE_DNS_CACHE "Use DNS cache" ON)
+
+# Not strictly required to build
+option(USE_SCTP "Use SCTP" ON)
+option(DISABLE_NAGLE "Disable Nagle algorithm" ON)
+option(USE_MCAST "Use  " ON)
+option(DNS_IP_HACK "Use DNS IP hack" ON)
+option(SHM_MMAP "Use mmap for shared memory" ON)
+
+option(PKG_MALLOC "Use package memory" ON) 
+option(F_MALLOC "Use f_malloc" ON)
+option(Q_MALLOC "Use q_malloc" ON)
+option(TLSF_MALLOC "Use tlsf_malloc" ON)
+option(MALLOC_STATS "Use malloc stats" ON)
+option(DBS_SR_MEMORY "Use memory debugging system" ON)
+
+option(USE_DNS_FAILOVER "Use DNS failover" ON)
+option(USE_DST_BLOCKLIST "Use destination blacklist" ON)
+option(HAVE_RESOLV_RES "Have resolv_res" ON)
+
+option(KSR_PTHREAD_MUTEX_SHARED "Use shared mutex for TLS" ON)
+option(FMSTATS "Fast memory statistics" ON)
 
 # if(${MEMPKG})
 #   target_compile_definitions(common INTERFACE PKG_MALLOC)
@@ -61,23 +89,22 @@ set_property(CACHE MEMMNG PROPERTY STRINGS ${memory_manager_switcher})
 #  TLS support
 # -----------------------
 # TLS support
-set(CORE_TLS "" CACHE STRING "CORE_TLS")
-set(TLS_HOOKS ON CACHE BOOL "TLS hooks support")
+option(TLS_HOOKS "TLS hooks support" ON)
+option(CORE_TLS "CORE_TLS" OFF)
+# set(CORE_TLS "" CACHE STRING "CORE_TLS")
+# set(TLS_HOOKS ON CACHE BOOL "TLS hooks support")
 
 if(${CORE_TLS})
   set(RELEASE "${RELEASE}-tls")
-  set(TLS_HOOKS 0)
-endif()
-
-if(${TLS_HOOKS} )
-  # set(RELEASE "${RELEASE}-tls")
+  set(TLS_HOOKS OFF)
+else()
+  set(TLS_HOOKS ON)
 endif()
 
 set(LIBSSL_SET_MUTEX_SHARED ON CACHE BOOL "enable workaround for libssl 1.1+ to set shared mutex attribute")
 if(NOT ${LIBSSL_SET_MUTEX_SHARED})
     message(STATUS "Checking if can enable workaround for libssl 1.1+ to set shared mutex attribute")
-    message(STATUS "Cross compile: ${CROSS_COMPILE}")
-    if(NOT DEFINED CROSS_COMPILE OR NOT ${CROSS_COMPILE} )
+    if(NOT DEFINED CMAKE_CROSSCOMPILING  OR NOT ${CMAKE_CROSSCOMPILING} )
         message(STATUS "Checking for OpenSSL 1.1.0")
         find_package(OpenSSL 1.1.0)
         if(OPENSSL_FOUND)
@@ -106,29 +133,154 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips")
   set(USE_FAST_LOCK NO)
   target_compile_definitions(common INTERFACE MIPS_HAS_LLSC) # likely
-  target_compile_definitions(common INTERFACE DNOSMP) # very likely
+  target_compile_definitions(common INTERFACE NOSMP) # very likely
 endif()
 
 # Add definitions if USE_FAST_LOCK is YES
 if(USE_FAST_LOCK)
   target_compile_definitions(common INTERFACE FAST_LOCK ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024)
 endif()
-
+message(STATUS "Fast lock: ${USE_FAST_LOCK}")
 
 # List of locking methods in option
-set(locking_methods FAST_LOCK USE_FUTEX USE_PTHREAD_MUTEX USE_POSIX_SEM USE_SYSV_SEM)
+set(locking_methods USE_FUTEX USE_PTHREAD_MUTEX USE_POSIX_SEM USE_SYSV_SEM)
 set(LOCK_METHOD USE_FUTEX CACHE STRING "Locking method to use")
 set_property(CACHE LOCK_METHOD PROPERTY STRINGS ${locking_methods})
 
 # set(LOCKING_DEFINITION "${locking_method}")
 message(STATUS "Locking method: ${LOCK_METHOD}")
 
-if(${CMAKE_VERBOSE_MAKEFILE})
-  message(STATUS "normal Makefile.defs exec")
+# -----------------------
+# Setting all the flags from options
+if(USE_TCP)
+  target_compile_definitions(common INTERFACE USE_TCP)
 endif()
+
+if(USE_TLS)
+  target_compile_definitions(common INTERFACE USE_TLS)
+endif()
+
+if(TLS_HOOKS)
+  target_compile_definitions(common INTERFACE TLS_HOOKS)
+endif()
+
+if(USE_NAPTR)
+  target_compile_definitions(common INTERFACE USE_NAPTR)
+endif()
+
+if(USE_DNS_CACHE)
+  target_compile_definitions(common INTERFACE USE_DNS_CACHE)
+endif()
+
+if(F_MALLOC)
+  target_compile_definitions(common INTERFACE F_MALLOC)
+endif()
+
+if(Q_MALLOC)
+  target_compile_definitions(common INTERFACE Q_MALLOC)
+endif()
+
+if(TLSF_MALLOC)
+  target_compile_definitions(common INTERFACE TLSF_MALLOC) 
+endif()
+
+if(MALLOC_STATS)
+  target_compile_definitions(common INTERFACE MALLOC_STATS)  
+endif()
+
+if(DBS_SR_MEMORY)
+  target_compile_definitions(common INTERFACE DBS_SR_MEMORY)
+endif()
+
+if(USE_DNS_FAILOVER)
+  target_compile_definitions(common INTERFACE USE_DNS_FAILOVER)
+endif()
+
+if(USE_DST_BLOCKLIST)
+  target_compile_definitions(common INTERFACE USE_DST_BLOCKLIST)
+endif()
+
+if(HAVE_RESOLV_RES)
+  target_compile_definitions(common INTERFACE HAVE_RESOLV_RES)
+endif()
+
+if(USE_MCAST)
+  target_compile_definitions(common INTERFACE USE_MCAST)
+endif()
+
+if(DISABLE_NAGLE)
+  target_compile_definitions(common INTERFACE DISABLE_NAGLE)
+endif()
+
+if(DNS_IP_HACK)
+  target_compile_definitions(common INTERFACE DNS_IP_HACK)
+endif()
+
+if(SHM_MMAP)
+  target_compile_definitions(common INTERFACE SHM_MMAP)
+endif()
+
+if(PKG_MALLOC)
+  target_compile_definitions(common INTERFACE PKG_MALLOC)
+endif()
+
+if(NO_KQUEUE)
+  target_compile_definitions(common INTERFACE NO_KQUEUE)
+endif()
+
+if(NO_SELECT)
+  target_compile_definitions(common INTERFACE NO_SELECT)
+endif()
+
+if(NO_EPOLL)
+  target_compile_definitions(common INTERFACE NO_EPOLL)
+endif()
+
+if(NO_SIGIO_RT)
+  target_compile_definitions(common INTERFACE NO_SIGIO_RT)
+endif()
+
+if(NO_DEV_POLL)
+  target_compile_definitions(common INTERFACE NO_DEV_POLL)
+endif()
+
+if(USE_SCTP)
+  target_compile_definitions(common INTERFACE USE_SCTP)
+endif()
+
+if(RAW_SOCKS)
+  target_compile_definitions(common INTERFACE RAW_SOCKS)
+endif()
+
+if(KSR_PTHREAD_MUTEX_SHARED)
+  target_compile_definitions(common INTERFACE KSR_PTHREAD_MUTEX_SHARED)
+endif()
+
+if(FMSTATS)
+  target_compile_definitions(common INTERFACE FMSTATS)
+endif()
+
+if(KMSTATS)
+  target_compile_definitions(common INTERFACE KMSTATS)
+endif()
+
 
 include(compiler-specific.cmake)
 include(os-specific.cmake)
+
+
+string(TOLOWER ${OS} OS_LOWER)
+
+
+# Option to toggle the use of temporary paths
+option(USE_TEMP_PATHS "Use temporary paths for development" ON)
+
+# Base directory to use for paths
+if(USE_TEMP_PATHS)
+    set(BASE_DIR "${CMAKE_BINARY_DIR}")
+else()
+    set(BASE_DIR "${CMAKE_INSTALL_PREFIX}")
+endif()
 
 target_compile_definitions(common INTERFACE 
     NAME="${MAIN_NAME}"
@@ -138,12 +290,10 @@ target_compile_definitions(common INTERFACE
     OS_QUOTED="${OS}"
     COMPILER="${CMAKE_C_COMPILER_VERSION}"
     ${HOST_ARCH}
+    __OS_${OS_LOWER}
     VERSIONVAL=${VERSIONVAL}
-    CFG_DIR=${CFG_NAME}
-    FAST_LOCK 
+    CFG_DIR="${BASE_DIR}/${CMAKE_INSTALL_SYSCONFDIR}/${CFG_NAME}/"
+    MODS_DIR="${BASE_DIR}/${CMAKE_INSTALL_LIBDIR}/${NAME}modules}"
+    RUN_DIR="${BASE_DIR}/${CMAKE_INSTALL_LOCALSTATEDIR}/run/${MAIN_NAME}"
     ${LOCK_METHOD}
-    USE_TCP
-    # CC_GCC_LIKE_ASM
-    # $<$<CXX_COMPILER_ID:MSVC>:/Wall>
-    # $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra>
 )

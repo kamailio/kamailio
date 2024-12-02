@@ -8,6 +8,34 @@ set(MAIN_NAME "kamailio")
 # use kamailio config
 set(CFG_NAME "kamailio")
 
+include(GNUInstallDirs)
+
+# # Check if LIBDIR is not defined
+# if(NOT DEFINED LIBDIR)
+#     # Get the system architecture
+#     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+#         set(LIBDIR "lib64")
+#     else()
+#         set(LIBDIR "lib")
+#     endif()
+# endif()
+
+# Set the installation paths
+message(STATUS "Cross compile: ${CMAKE_CROSSCOMPILING}")
+
+message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "CMAKE_INSTALL_LIBDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+message(STATUS "CMAKE_INSTALL_BINDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
+message(STATUS "CMAKE_INSTALL_SBINDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SBINDIR}")
+message(STATUS "CMAKE_INSTALL_SYSCONFDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}")
+message(STATUS "CMAKE_INSTALL_LOCALSTATEDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LOCALSTATEDIR}/run/${MAIN_NAME}")
+message(STATUS "CMAKE_INSTALL_DATADIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}")
+message(STATUS "CMAKE_INSTALL_DOCDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DOCDIR}")
+message(STATUS "CMAKE_INSTALL_MANDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_MANDIR}")
+message(STATUS "LOCALBASE: ${LOCALBASE}")
+
+find_package(Threads REQUIRED)
+
 include(defs.cmake)
 
 
@@ -47,4 +75,41 @@ configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/core/autover.h"
 )
 #  -----------------------
+
+# Find Flex
+find_package(FLEX REQUIRED)
+
+# Find Bison
+find_package(BISON REQUIRED)
+
+# Generate lex.yy.c from cfg.lex
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c
+  COMMAND ${FLEX_EXECUTABLE} -o ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.lex
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.lex ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.h
+  COMMENT "Generating lex.yy.c from cfg.lex"
+)
+
+# Generate cfg.tab.c and cfg.tab.h from cfg.y
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.c ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.h
+  COMMAND ${BISON_EXECUTABLE} -d -b core/cfg -o ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.c ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.y
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.y
+  COMMENT "Generating cfg.tab.c and cfg.tab.h from cfg.y"
+)
+
+# Custom target to ensure the above commands run
+add_custom_target(GenerateParser ALL
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.c ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.h
+)
+
+# -----------------------
+
+
+
 add_subdirectory(core)
+
+add_executable(kamailio_main main.c)
+target_link_libraries(kamailio_main PUBLIC kamailio_core)
+#  Compile it wtih debug info
+target_compile_options(kamailio_main PRIVATE -g)
