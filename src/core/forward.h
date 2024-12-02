@@ -129,6 +129,7 @@ static inline int msg_send_buffer(
 	str outb;
 	sr_net_info_t netinfo;
 	sr_event_param_t evp = {0};
+	int ret;
 
 #ifdef USE_TCP
 	int port;
@@ -138,7 +139,6 @@ static inline int msg_send_buffer(
 	struct tcp_connection *con = NULL;
 	struct ws_event_info wsev;
 	int dproto;
-	int ret;
 #endif
 
 	outb.s = buf;
@@ -184,7 +184,7 @@ static inline int msg_send_buffer(
 			} else
 				su_setport(&local_addr, 0); /* any local port will do */
 #else
-			su_setport(&local_addr, 0);		/* any local port will do */
+			su_setport(&local_addr, 0); /* any local port will do */
 #endif
 			from = &local_addr;
 		}
