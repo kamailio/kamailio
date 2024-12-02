@@ -41,7 +41,7 @@ message(
 
 find_package(Threads REQUIRED)
 
-include(defs.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/defs.cmake)
 
 # -----------------------
 # The following produces core/autover.h Find Git

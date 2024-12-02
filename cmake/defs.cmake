@@ -279,8 +279,8 @@ if(KMSTATS)
   target_compile_definitions(common INTERFACE KMSTATS)
 endif()
 
-include(compiler-specific.cmake)
-include(os-specific.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/compiler-specific.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/os-specific.cmake)
 
 string(TOLOWER ${OS} OS_LOWER)
 target_compile_definitions(

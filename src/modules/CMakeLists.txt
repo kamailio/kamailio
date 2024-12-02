@@ -5,7 +5,7 @@ set(MODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set_property(GLOBAL PROPERTY ADDED_MODULES_LIST "")
 set_property(GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS "")
 
-include(groups.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/groups.cmake)
 
 # TODO: Add proper search for all or find better way
 # TODO: Allow the selection of a group of modules defined in groups.cmake
