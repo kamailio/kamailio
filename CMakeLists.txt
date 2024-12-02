@@ -19,5 +19,16 @@ message(STATUS "VERSIONVAL: ${VERSIONVAL}")
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED True)
 
+# -----------------------
+#  Main project name
+# -----------------------
+# main binary name
+set(MAIN_NAME "kamailio")
+# use kamailio config
+set(CFG_NAME "kamailio")
+
 # Add the source directory
 add_subdirectory(src)
+
+# Add utils
+add_subdirectory(utils/kamctl)
