@@ -1,0 +1,38 @@
+USE_TCP is required 
+---
+error: invalid use of undefined type ‘struct tcp_connection’
+==================
+
+USE_DANGLE is required
+----
+warning: ‘tcp_proto_no’ defined but not used [-Wunused-variable]
+==================
+
+USE_TLS requires TLS_HOOKS support
+
+#ifdef CORE_TLS
+#include "core/tls/tls_init.h" THIS FOLDER DOES not exist
+#define tls_has_init_si() 1
+#define tls_loaded() 1
+#else
+#include "core/tls_hooks_init.h"
+
+CORE_TLS obsolete?
+==================
+
+USE_NAPTR is required also requires USE_DNS_CACHE
+
+create_srv_name is not defined
+
+==================
+
+F_MALLOC and Q_MALLOC and TSLF_MALLOC are required
+undefined reference to `fm_malloc_init_shm_manager' same for others
+
+This also requires MALLOC_STATS to compile or else it will give 
+```
+error: ‘SREV_PKG_UPDATE_STATS’ undeclared (first use in this function)
+  820 |   sr_event_exec(SREV_PKG_UPDATE_STATS, 0);
+```
+
+==================
