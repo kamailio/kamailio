@@ -66,51 +66,19 @@ configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/core/autover.h.in"
     "${CMAKE_CURRENT_SOURCE_DIR}/core/autover.h"
 )
-# -----------------------
-
-# -----------------------
-# The following produces core/lex.yy.c and core/cfg.tab.c and core/cfg.tab.h files
-
-# Find Flex
-find_package(FLEX REQUIRED)
-
-# Find Bison
-find_package(BISON REQUIRED)
-
-# Generate lex.yy.c from cfg.lex
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c
-  COMMAND ${FLEX_EXECUTABLE} -o ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.lex
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.lex ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.h
-  COMMENT "Generating lex.yy.c from cfg.lex"
-)
-
-# Generate cfg.tab.c and cfg.tab.h from cfg.y
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.c ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.h
-  COMMAND ${BISON_EXECUTABLE} -d -b core/cfg -o ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.c ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.y
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.y
-  COMMENT "Generating cfg.tab.c and cfg.tab.h from cfg.y"
-)
-
-# Custom target to ensure the above commands run
-add_custom_target(GenerateParser ALL
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.c ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.h
-)
 
 # -----------------------
 
 add_subdirectory(core)
 
-add_executable(kamailio main.c)
-target_link_libraries(kamailio PUBLIC kamailio_core)
-#  Compile it with debug info
-target_compile_options(kamailio PRIVATE -g)
+# -----------------------
 
 # Add the install targets
 # Specify the directory on disk to which a file will be installed. <dir> should be a relative path. An absolute path is allowed, but not recommended.
 # When a relative path is given it is interpreted relative to the value of the CMAKE_INSTALL_PREFIX variable.
-install(TARGETS kamailio DESTINATION ${CMAKE_INSTALL_SBINDIR})
+install(TARGETS kamailio 
+        DESTINATION ${CMAKE_INSTALL_SBINDIR}
+        COMPONENT kamailio-core)
 
 # Install the configuration file (kamailio.cfg) using a CODE block to check
 # existence at install time instead of configure time
