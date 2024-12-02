@@ -31,6 +31,9 @@ set(MAIN_NAME "kamailio")
 # use kamailio config
 set(CFG_NAME "kamailio")
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+# include(cmake/FindMySQL.cmake)
 # Add the source directory
 add_subdirectory(src)
 
