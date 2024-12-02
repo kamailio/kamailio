@@ -61,6 +61,13 @@ function(add_module_group GROUP_MODULES)
         add_subdirectory(${MODULE_PATH})
         # Remove the 'lib' prefix from the module name
         set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+
+        # Add this policy to new so we can use target_link_libraries(... PRIVATE ...)
+        # to link against targets defined in childer directories
+        if(POLICY CMP0079)
+          cmake_policy(SET CMP0079 NEW)
+        endif()
+        target_link_libraries(${MODULE_NAME} PRIVATE common_modules)
         target_compile_definitions(
           ${MODULE_NAME} PRIVATE MOD_NAMEID=${MODULE_NAME}
         )
