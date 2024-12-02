@@ -41,6 +41,11 @@ set(INCLUDE_MODULES
     CACHE STRING "List of extra modules to build (space-separated)"
 )
 
+set(EXCLUDE_MODULES
+    ""
+    CACHE STRING "List of modules to exclude from building (space-separated)"
+)
+
 include(${CMAKE_SOURCE_DIR}/cmake/modules_docs.cmake)
 
 # Function to add modules from a list
@@ -98,8 +103,26 @@ function(add_module_group GROUP_MODULES)
   endforeach()
 endfunction()
 
+list(APPEND FINAL_MODULES_LIST ${MODULE_GROUP})
+
+# Parse and add extra modules specified by the user
+separate_arguments(INCLUDE_MODULES_LIST UNIX_COMMAND "${INCLUDE_MODULES}")
+message(STATUS "Extra modules: ${INCLUDE_MODULES_LIST}")
+list(APPEND FINAL_MODULES_LIST ${INCLUDE_MODULES_LIST})
+
+# Exclude modules that were explicitly excluded by the user
+separate_arguments(EXCLUDE_MODULES_LIST UNIX_COMMAND "${EXCLUDE_MODULES}")
+message(STATUS "Excluded modules: ${EXCLUDE_MODULES_LIST}")
+foreach(MODULE_NAME IN LISTS EXCLUDE_MODULES_LIST)
+  # if in list remove it and print a message
+  if(";${FINAL_MODULES_LIST};" MATCHES ";${MODULE_NAME};")
+    list(REMOVE_ITEM FINAL_MODULES_LIST ${MODULE_NAME})
+    message(STATUS "Removed module: ${MODULE_NAME}")
+  endif()
+endforeach()
+
 # Add each group of modules
-add_module_group("${MODULE_GROUP}")
+add_module_group("${FINAL_MODULES_LIST}")
 
 # Add a kamailio_docs target that depends on all module documentation targets
 get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
@@ -118,10 +141,3 @@ add_custom_target(
           kamailio_docs
   DEPENDS kamailio_docs
 )
-
-# add_module_group("${ACCOUNTING_MODULES}") add_module_group("${MORE_MODULES}")
-
-# Parse and add extra modules specified by the user
-separate_arguments(INCLUDE_MODULES_LIST UNIX_COMMAND "${INCLUDE_MODULES}")
-message(STATUS "Extra modules: ${INCLUDE_MODULES_LIST}")
-add_module_group("${INCLUDE_MODULES_LIST}")
