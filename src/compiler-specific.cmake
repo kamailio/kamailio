@@ -18,7 +18,11 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
                        # <$<$<BOOL:${PROFILE}>:-pg>
     )
 
-    target_compile_options(common INTERFACE -Wall -funroll-loops -Wcast-align)
+    target_compile_options(
+      common
+      INTERFACE -Wall -funroll-loops -Wcast-align
+                -Werror=implicit-function-declaration -Werror=implicit-int
+    )
 
     # If GCC version is greater than 4.2.0, enable the following flags
     if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2.0)
