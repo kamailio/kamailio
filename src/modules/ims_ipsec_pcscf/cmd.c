@@ -809,7 +809,7 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 	pcontact_t *pcontact = NULL;
 	struct pcontact_info ci;
 	int ret = IPSEC_CMD_FAIL; // FAIL by default
-	int fun_ret_c; // Used to store return codes of some functions
+	int fun_ret_c;			  // Used to store return codes of some functions
 	tm_cell_t *t = NULL;
 	sip_msg_t *req = NULL;
 	security_t *req_sec_params = NULL;
@@ -923,7 +923,8 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 
 	fun_ret_c = add_supported_secagree_header(m);
 	if(fun_ret_c != 0) {
-		LM_ERR("Could not add secagree header. Failed with code: %d\n", fun_ret_c);
+		LM_ERR("Could not add secagree header. Failed with code: %d\n",
+				fun_ret_c);
 		goto cleanup;
 	}
 
