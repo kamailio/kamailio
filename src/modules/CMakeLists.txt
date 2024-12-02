@@ -7,10 +7,34 @@ set_property(GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS "")
 
 include(groups.cmake)
 
-# Define lists of modules for each group message(STATUS "MODULE_GROUP_DEFAULT:
-# ${MODULE_GROUP_DEFAULT}")
+# TODO: Add proper search for all or find better way
+# TODO: Allow the selection of a group of modules defined in groups.cmake
+set(MODULE_GROUP_NAME
+    ""
+    CACHE STRING "Group of modules to build (all, or a custom group)"
+)
+# If no group is specified, use the default group and print the available groups
+if(NOT MODULE_GROUP_NAME)
+  message(STATUS "Available groups: ${AVAILABLE_GROUPS}")
+  message(STATUS "No module group specified. Using default group.")
+  set(MODULE_GROUP_NAME "MODULE_GROUP_DEFAULT")
+  set(MODULE_GROUP ${MODULE_GROUP_DEFAULT})
+endif()
 
-list(SORT MODULE_GROUP_DEFAULT)
+# Check if the specified group exists
+list(FIND AVAILABLE_GROUPS "${MODULE_GROUP_NAME}" GROUP_INDEX)
+if(GROUP_INDEX EQUAL -1)
+  message(
+    FATAL_ERROR "Invalid module group specified: ${MODULE_GROUP_NAME}. Available groups: ${AVAILABLE_GROUPS}"
+  )
+endif()
+
+if (MODULE_GROUP_NAME STREQUAL "MODULE_GROUP_ALL")
+  set(MODULE_GROUP ${MODULE_GROUP_ALL})
+endif()
+message(STATUS "Building modules in ${MODULE_GROUP_NAME}: ${MODULE_GROUP}")
+
+# list(SORT MODULE_GROUP_DEFAULT)
 # message(STATUS "MODULE_GROUP_DEFAULT: ${MODULE_GROUP_DEFAULT}")
 
 # Allow users to specify extra modules to build
@@ -38,9 +62,14 @@ function(add_module_group GROUP_MODULES)
         add_subdirectory(${MODULE_PATH})
         # Remove the 'lib' prefix from the module name
         set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
-        target_compile_definitions(${MODULE_NAME} PRIVATE MOD_NAMEID=${MODULE_NAME})
+        target_compile_definitions(
+          ${MODULE_NAME} PRIVATE MOD_NAMEID=${MODULE_NAME}
+        )
         set_target_properties(
-          ${MODULE_NAME} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
+          ${MODULE_NAME}
+          PROPERTIES
+            INSTALL_RPATH
+            "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}"
         )
         # Install the module to the appropriate directory under the installation
         # prefix
@@ -63,7 +92,7 @@ function(add_module_group GROUP_MODULES)
 endfunction()
 
 # Add each group of modules
-add_module_group("${MODULE_GROUP_DEFAULT}")
+add_module_group(${MODULE_GROUP})
 
 # Add a kamailio_docs target that depends on all module documentation targets
 get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
