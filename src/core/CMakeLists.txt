@@ -54,32 +54,4 @@ set(kamailio_SRC
     ${kamailio_SRC}
     PARENT_SCOPE
 )
-
 # message(STATUS "kamailio_SRC: ${kamailio_SRC}")
-
-# # We add the expicitly generated files as SRC files to ensure custom # commands
-# # are run and the files are generated before building kamailio
-# add_executable(
-#   kamailio
-#   ${CMAKE_SOURCE_DIR}/src/main.c ${kamailio_SRC}
-#   ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
-# )
-# target_link_libraries(
-#   kamailio
-#   PUBLIC common m Threads::Threads # Pthread library
-#          dl # dlopen and more
-#          resolv # resolv
-# )
-# # Make sure the cfg.tab.c and lex.yy.c are generated before building kamailio
-# add_dependencies(kamailio GenerateParser)
-
-# # Enable ENABLE_EXPORTS property so modules can link from symbols found in
-# # main.c and core/*.
-# set_target_properties(kamailio PROPERTIES ENABLE_EXPORTS TRUE)
-
-# # Add the MODS_DIR definition required by main.c ---
-# target_compile_definitions(
-#   kamailio
-#   PUBLIC
-#     MODS_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/modules"
-# )

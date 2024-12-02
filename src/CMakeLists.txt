@@ -45,7 +45,7 @@ include(defs.cmake)
 
 # -----------------------
 # The following produces core/autover.h Find Git
-find_package(Git QUIET)
+find_package(Git REQUIRED)
 
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
   execute_process(
@@ -81,32 +81,12 @@ configure_file(
 )
 
 # -----------------------
-# Generate lex.yy.c from cfg.lex
-# add_custom_command(
-#   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c
-#   COMMAND ${FLEX_EXECUTABLE} -o ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
-#           ${CMAKE_CURRENT_SOURCE_DIR}/cfg.lex
-#   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cfg.lex
-#           ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.h
-#   COMMENT "Generating lex.yy.c from cfg.lex"
-# )
-
-# # Generate cfg.tab.c and cfg.tab.h from cfg.y
-# add_custom_command(
-#   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.c
-#          ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.h
-#   COMMAND ${BISON_EXECUTABLE} -d -b cfg -o ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
-#           ${CMAKE_CURRENT_SOURCE_DIR}/cfg.y
-#   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cfg.y
-#   COMMENT "Generating cfg.tab.c and cfg.tab.h from cfg.y"
-# )
 
 add_subdirectory(core)
 add_subdirectory(lib)
 add_subdirectory(modules)
 
 # -----------------------
-# message(STATUS "kamailio_SRC: ${kamailio_SRC}")
 
 # We add the expicitly generated files as SRC files to ensure custom commands
 # are run and the files are generated before building kamailio. We also set the
@@ -144,7 +124,10 @@ set_target_properties(kamailio PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_definitions(
   kamailio
   PUBLIC
-    MODS_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/modules"
+  # this work  
+  # MODS_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/modules"
+  # this currently tested
+  MODS_DIR="${CMAKE_INSTALL_FULL_LIBDIR}/kamailio/modules"
 )
 
 # Add the install targets Specify the directory on disk to which a file will be
