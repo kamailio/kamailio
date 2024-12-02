@@ -122,12 +122,7 @@ set_target_properties(kamailio PROPERTIES ENABLE_EXPORTS TRUE)
 
 # Add the MODS_DIR definition required by main.c ---
 target_compile_definitions(
-  kamailio
-  PUBLIC
-  # this work  
-  # MODS_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/modules"
-  # this currently tested
-  MODS_DIR="${CMAKE_INSTALL_FULL_LIBDIR}/kamailio/modules"
+  kamailio PUBLIC MODS_DIR="${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/modules"
 )
 
 # Add the install targets Specify the directory on disk to which a file will be
