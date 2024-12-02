@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(db_mysql)
 
-# find_package(MySQL QUIET)
-find_package(MariaDBClient QUIET)
+find_package(MariaDBClient REQUIRED)
 
 if(NOT MariaDBClient_FOUND)
   message(FATAL_ERROR "MySQL or MariaDBClient not found")
