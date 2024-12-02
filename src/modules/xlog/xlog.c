@@ -924,10 +924,12 @@ int ki_xlog_get_level(str *slevel)
 		llevel = L_ALERT;
 	} else if(slevel->len == 5 && strncasecmp(slevel->s, "l_bug", 5) == 0) {
 		llevel = L_BUG;
+	} else if(slevel->len == 7 && strncasecmp(slevel->s, "l_crit0", 7) == 0) {
+		llevel = L_CRIT;
 	} else if(slevel->len == 7 && strncasecmp(slevel->s, "l_crit2", 7) == 0) {
 		llevel = L_CRIT2;
 	} else if(slevel->len == 6 && strncasecmp(slevel->s, "l_crit", 6) == 0) {
-		llevel = L_CRIT;
+		llevel = L_CRIT2;
 	} else if(slevel->len == 5 && strncasecmp(slevel->s, "l_err", 5) == 0) {
 		llevel = L_ERR;
 	} else if(slevel->len == 6 && strncasecmp(slevel->s, "l_warn", 6) == 0) {
@@ -989,7 +991,7 @@ int ki_xalert(sip_msg_t *msg, str *lmsg)
 
 int ki_xcrit(sip_msg_t *msg, str *lmsg)
 {
-	return ki_xlog_ex(msg, NULL, L_CRIT, lmsg);
+	return ki_xlog_ex(msg, NULL, L_CRIT2, lmsg);
 }
 
 /**
