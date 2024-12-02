@@ -118,9 +118,6 @@ add_custom_target(kamdbctl
 				 "${KAMCTL_TMP_DIR}/kamdbctl.base"
 				 )
 
-
-
-
 # Install the configuration file (kamctlrc) using a CODE block to check
 # existence at install time instead of configure time
 install(CODE "

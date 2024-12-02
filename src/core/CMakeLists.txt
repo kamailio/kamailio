@@ -44,7 +44,7 @@ file(GLOB_RECURSE kamailio_SRC
 "*.c"
 )
 
-message(STATUS "kamailio_SRC: ${kamailio_SRC}" )
+# message(STATUS "kamailio_SRC: ${kamailio_SRC}" )
 add_executable(kamailio ${kamailio_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c)
 target_link_libraries(kamailio PUBLIC common m
                                 Threads::Threads # Pthread library
