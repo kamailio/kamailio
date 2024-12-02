@@ -70,6 +70,7 @@ configure_file(
 # -----------------------
 
 add_subdirectory(core)
+add_subdirectory(lib)
 
 # -----------------------
 
