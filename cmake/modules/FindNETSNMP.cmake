@@ -1,3 +1,4 @@
+# https://fossies.org/linux/syslog-ng/cmake/Modules/FindNETSNMP.cmake
 #############################################################################
 # Copyright (c) 2019 Balabit
 #
@@ -37,18 +38,15 @@ endif(NETSNMP_LIBS)
 find_program(NETSNMP_CONFIG_BIN net-snmp-config)
 
 if(NETSNMP_CONFIG_BIN)
-  exec_program(
-    ${NETSNMP_CONFIG_BIN} ARGS
-    --cflags
-    OUTPUT_VARIABLE _NETSNMP_CFLAGS
+  execute_process(
+    COMMAND ${NETSNMP_CONFIG_BIN} --cflags OUTPUT_VARIABLE _NETSNMP_CFLAGS
   )
-  exec_program(
-    ${NETSNMP_CONFIG_BIN} ARGS
-    --libs
-    OUTPUT_VARIABLE _NETSNMP_LIBS
+  execute_process(
+    COMMAND ${NETSNMP_CONFIG_BIN} --libs OUTPUT_VARIABLE _NETSNMP_LIBS
   )
-  string(REGEX REPLACE "[\"\r\n]" " " _NETSNMP_CFLAGS "${_NETSNMP_CFLAGS}")
-  string(REGEX REPLACE "[\"\r\n]" " " _NETSNMP_LIBS "${_NETSNMP_LIBS}")
+  string(REGEX REPLACE "[\"\r\n]" "" _NETSNMP_CFLAGS "${_NETSNMP_CFLAGS}")
+  string(REGEX REPLACE "[\"\r\n]" "" _NETSNMP_LIBS "${_NETSNMP_LIBS}")
+
   set(NETSNMP_CFLAGS
       ${_NETSNMP_CFLAGS}
       CACHE STRING "CFLAGS for net-snmp lib"
