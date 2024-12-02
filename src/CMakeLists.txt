@@ -81,12 +81,71 @@ configure_file(
 )
 
 # -----------------------
+# Generate lex.yy.c from cfg.lex
+# add_custom_command(
+#   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c
+#   COMMAND ${FLEX_EXECUTABLE} -o ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
+#           ${CMAKE_CURRENT_SOURCE_DIR}/cfg.lex
+#   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cfg.lex
+#           ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.h
+#   COMMENT "Generating lex.yy.c from cfg.lex"
+# )
+
+# # Generate cfg.tab.c and cfg.tab.h from cfg.y
+# add_custom_command(
+#   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.c
+#          ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.h
+#   COMMAND ${BISON_EXECUTABLE} -d -b cfg -o ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
+#           ${CMAKE_CURRENT_SOURCE_DIR}/cfg.y
+#   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cfg.y
+#   COMMENT "Generating cfg.tab.c and cfg.tab.h from cfg.y"
+# )
 
 add_subdirectory(core)
 add_subdirectory(lib)
 add_subdirectory(modules)
 
 # -----------------------
+# message(STATUS "kamailio_SRC: ${kamailio_SRC}")
+
+# We add the expicitly generated files as SRC files to ensure custom commands
+# are run and the files are generated before building kamailio. We also set the
+# GENERATED property to 1 because before CMake 3.20, the GENERATED property was
+# not set for files generated in other CMakeLists.txt files.
+if(CMAKE_VERSION VERSION_LESS 3.20)
+  set_property(
+    SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c PROPERTY GENERATED 1
+  )
+  set_property(
+    SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.c PROPERTY GENERATED 1
+  )
+endif()
+
+add_executable(
+  kamailio
+  ${CMAKE_CURRENT_SOURCE_DIR}/main.c ${kamailio_SRC}
+  ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.c
+)
+target_link_libraries(
+  kamailio
+  PUBLIC common m Threads::Threads # Pthread library
+         dl # dlopen and more
+         resolv # resolv
+)
+# Make sure the cfg.tab.c and lex.yy.c are generated before building kamailio
+add_dependencies(kamailio GenerateParser)
+
+# Enable ENABLE_EXPORTS property so modules can link from symbols found in
+# main.c and core/*.
+set_target_properties(kamailio PROPERTIES ENABLE_EXPORTS TRUE)
+
+# Add the MODS_DIR definition required by main.c ---
+target_compile_definitions(
+  kamailio
+  PUBLIC
+    MODS_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/modules"
+)
 
 # Add the install targets Specify the directory on disk to which a file will be
 # installed. <dir> should be a relative path. An absolute path is allowed, but
@@ -100,20 +159,23 @@ install(
 
 # Install the configuration file (kamailio.cfg) using a CODE block to check
 # existence at install time instead of configure time
+# If(EXISTS ..) require full path
 install(
   CODE "
     if(EXISTS \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}/kamailio.cfg\")
-        message(STATUS \"kamailio.cfg already exists in \${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}/kamailio.cfg. Installing as kamailio.cfg.sample\")
-		file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
-		DESTINATION \"\$${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}\"
-		RENAME \"kamailio.cfg.sample\"
-		PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-		)
+        message(STATUS \"kamailio.cfg already exists in  \${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}/kamailio.cfg. Installing as kamailio.cfg.sample\")
+      file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
+        DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}\"
+        RENAME \"kamailio.cfg.sample\"
+        PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+      )
     else()
         file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
-		DESTINATION \"\$${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}\"
-		PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+          DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}\"
+          PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+        )
     endif()
+
 "
   COMPONENT kamailio-cfg
 )

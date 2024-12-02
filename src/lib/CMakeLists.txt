@@ -14,7 +14,6 @@ file(
   LIST_DIRECTORIES true
   *
 )
-message(STATUS "Found subdirectories: ${children}")
 
 foreach(child ${children})
   if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${child}
