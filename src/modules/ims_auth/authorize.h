@@ -116,9 +116,9 @@ int proxy_challenge(struct sip_msg *msg, char *route, char *_realm, char *str2);
  * Authorize using WWW-Authorization header field
  */
 int www_authenticate(struct sip_msg *_msg, char *_realm, char *_table);
-int www_challenge2(struct sip_msg *msg, char *route, char *_realm, char *str2);
-int www_challenge3(struct sip_msg *msg, char *route, char *_realm, char *str2);
-int www_resync_auth(struct sip_msg *msg, char *_route, char *str1, char *str2);
+int www_challenge2(struct sip_msg *msg, char *route, char *_realm);
+int www_challenge3(struct sip_msg *msg, char *route, char *_realm, char *_alg);
+int www_resync_auth(struct sip_msg *msg, char *_route, char *_realm);
 
 
 /*
