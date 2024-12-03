@@ -5,10 +5,10 @@ name: CMake on multiple platforms
 on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  # push:
-  #   branches: [ cmake ]
+  push:
+    branches: [ master ]
   pull_request:
-    branches: [ cmake ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -18,67 +18,53 @@ jobs:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
       fail-fast: false
 
-      # Set up a matrix to run the following 3 configurations:
-      # 1. <Windows, Release, latest MSVC compiler toolchain on the default runner image, default generator>
-      # 2. <Linux, Release, latest GCC compiler toolchain on the default runner image, default generator>
-      # 3. <Linux, Release, latest Clang compiler toolchain on the default runner image, default generator>
-      #
-      # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
+      # Set up a matrix to run the following 6 configurations:
+      # 1. <Linux, Release, latest GCC compiler toolchain on the default runner image, default generator>
+      # 2. <Linux, Release, latest Clang compiler toolchain on the default runner image, default generator>
+      # 3. <Linux, Release, latest GCC compiler toolchain on the default runner image, cross-compiled for aarch64>
+      # 4. <Linux, Release, latest Clang compiler toolchain on the default runner image, cross-compiled for aarch64>
+      # 5. <MacOS, Release, latest GCC compiler toolchain on the default runner image, default generator>
+      # 6. <MacOS, Release, latest Clang compiler toolchain on the default runner image, default generator>
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
+        # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
         build_type: [Release]
-        c_compiler: [gcc, clang] #, cl]
-        include:
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-          - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
-          - os: ubuntu-latest
-            c_compiler: aarch64-linux-gnu-gcc
-            cpp_compiler: aarch64-linux-gnu-g++
-            target_arch: aarch64
-            build_type: Release
+        c_compiler: [gcc, clang] 
+        kamailio_groups: [DEFAULT]
+        target_arch: [aarch64, x86_64]
+        exclude:
+          # Exclude combinations that are not supported
+          - os: macos-latest
+            target_arch: x86_64
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    - name: Set reusable strings
-      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
-      id: strings
-      shell: bash
-      run: |
-        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-        if [ "${{ matrix.target_arch }}" == "aarch64" ]; then
-          echo "cmake-toolchain-file=${{ github.workspace }}/cmake/aarch64-toolchain.cmake" >> "$GITHUB_OUTPUT"
-        else
-          echo "cmake-toolchain-file=" >> "$GITHUB_OUTPUT"
-        fi
 
     - name: Install cross-compiler
-      if: matrix.target_arch == 'aarch64'
+      if: matrix.os == 'ubuntu-latest' && matrix.target_arch == 'aarch64'
       run: |
         sudo apt update
         sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        ${{ steps.strings.outputs.cmake-toolchain-file != '' && format('-DCMAKE_TOOLCHAIN_FILE={0}', steps.strings.outputs.cmake-toolchain-file) }}
-        ${{ steps.strings.outputs.cmake-toolchain-file == '' && format('-DCMAKE_CXX_COMPILER={0}', matrix.cpp_compiler) || '' }}
-        ${{ steps.strings.outputs.cmake-toolchain-file == '' && format('-DCMAKE_C_COMPILER={0}', matrix.c_compiler) || '' }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -S ${{ github.workspace }}
-
-    - name: Build
-      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
-
-    - name: Test
-      working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest --build-config ${{ matrix.build_type }}
+    - name: Build Project natively
+      uses: threeal/cmake-action@v2.0.0
+      with:
+        build-dir: ${{github.workspace}}/build
+        build-args: -j8
+        options: |
+          CMAKE_BUILD_TYPE=${{matrix.build_type}}
+          MODULE_GROUP_NAME=${{matrix.kamailio_groups}}
+          CMAKE_C_COMPILER=${{matrix.c_compiler}}
+      
+    - name: Build Project with cross-compiler
+      if: matrix.os == 'ubuntu-latest' && matrix.target_arch == 'aarch64'
+      uses: threeal/cmake-action@v2.0.0
+      with:
+        build-dir: ${{github.workspace}}/build
+        build-args: -j8
+        options: |
+          CMAKE_BUILD_TYPE=${{matrix.build_type}}
+          MODULE_GROUP_NAME=${{matrix.kamailio_groups}}
+          CMAKE_TOOLCHAIN_FILE=${{github.workspace}}/cmake/aarch64-toolchain.cmake
