@@ -93,6 +93,7 @@ extern int max_nonce_reuse;
 extern str scscf_name_str;
 extern int ignore_failed_auth;
 extern int av_check_only_impu;
+extern int ims_auth_av_mode;
 
 auth_hash_slot_t *auth_data; /**< Authentication vector hash table */
 static int act_auth_data_hash_size =

@@ -131,6 +131,9 @@ str scscf_name_str = str_init(
 /* used mainly in testing - load balancing with SIPP where we don't want to worry about auth */
 int ignore_failed_auth = 0;
 
+/* authentication vectors mode: 0 - diameter/hss; 1 - local */
+int ims_auth_av_mode = 0;
+
 /* clang-format off */
 /*
  * Exported functions
@@ -164,6 +167,7 @@ static param_export_t params[] = {{"name", PARAM_STR, &scscf_name_str},
 	{"add_authinfo_hdr", PARAM_INT, &add_authinfo_hdr},
 	{"av_request_at_once", PARAM_INT, &av_request_at_once},
 	{"av_request_at_sync", PARAM_INT, &av_request_at_sync},
+	{"av_mode", PARAM_INT, &ims_auth_av_mode},
 	{"registration_default_algorithm", PARAM_STR, &registration_default_algorithm},
 	{"registration_qop", PARAM_STR, &registration_qop},
 	{"invite_qop", PARAM_STR, &invite_qop},
