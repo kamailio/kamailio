@@ -10,6 +10,7 @@ target_compile_definitions(
             HAVE_UNION_SEMUN
             HAVE_SCHED_YIELD
             USE_ANON_MMAP
+            HAVE_MSGHDR_MSG_CONTROL
             NDEBUG # NDEBUG used to turn off assert (assert wants to call
             # eprintf which doesn't seem to be defined in any shared lib
             HAVE_CONNECT_ECONNRESET_BUG
