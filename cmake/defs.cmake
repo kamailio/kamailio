@@ -136,8 +136,12 @@ option(USE_FAST_LOCK "Use fast locking if available" ON)
 #
 if(USE_FAST_LOCK)
   if(CMAKE_SYSTEM_PROCESSOR MATCHES
-     "i386|x86_64|sparc64|sparc|arm6|arm7|ppc|ppc64|alpha|mips2|mips64"
+     "i386|x86_64|sparc64|sparc|ppc|ppc64|alpha|mips2|mips64"
   )
+    set(USE_FAST_LOCK YES)
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+    set(USE_FAST_LOCK NO)
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm6|arm7")
     set(USE_FAST_LOCK YES)
   elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64")
     set(USE_FAST_LOCK YES)
