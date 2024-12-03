@@ -132,29 +132,39 @@ endif()
 # Locking mechanism macro
 # -----------------------
 
-option(FAST_LOCK "Use fast locking" ON)
+option(USE_FAST_LOCK "Use fast locking if available" ON)
 # Fast-lock not available for all platforms like mips Check the system processor
-if(CMAKE_SYSTEM_PROCESSOR MATCHES
-   "i386|x86_64|sparc64|sparc|arm6|arm7|ppc|ppc64|alpha|mips2|mips64"
-)
-  set(USE_FAST_LOCK YES)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64")
-  set(USE_FAST_LOCK YES)
-  target_compile_definitions(common INTERFACE NOSMP) # memory barriers not
-                                                     # implemented for arm
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips")
-  set(USE_FAST_LOCK NO)
-  target_compile_definitions(common INTERFACE MIPS_HAS_LLSC) # likely
-  target_compile_definitions(common INTERFACE NOSMP) # very likely
+# type and set USE_FAST_LOCK accordingly
+#
+if(USE_FAST_LOCK)
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES
+     "i386|x86_64|sparc64|sparc|arm6|arm7|ppc|ppc64|alpha|mips2|mips64"
+  )
+    set(USE_FAST_LOCK YES)
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64")
+    set(USE_FAST_LOCK YES)
+    target_compile_definitions(common INTERFACE NOSMP) # memory barriers not
+                                                       # implemented for arm
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips")
+    set(USE_FAST_LOCK NO)
+    target_compile_definitions(common INTERFACE MIPS_HAS_LLSC) # likely
+    target_compile_definitions(common INTERFACE NOSMP) # very likely
+  elseif()
+    message(
+      STATUS
+        "Fast locking not available for this platform, disabling USE_FAST_LOCK"
+    )
+    set(USE_FAST_LOCK NO)
+  endif()
 endif()
 
 # Add definitions if USE_FAST_LOCK is YES
+message(STATUS "Fast lock available: ${USE_FAST_LOCK}")
 if(USE_FAST_LOCK)
   target_compile_definitions(
     common INTERFACE FAST_LOCK ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024
   )
 endif()
-message(STATUS "Fast lock: ${USE_FAST_LOCK}")
 
 # List of locking methods in option
 set(locking_methods USE_FUTEX USE_PTHREAD_MUTEX USE_POSIX_SEM USE_SYSV_SEM)
