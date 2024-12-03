@@ -172,4 +172,7 @@ void reg_await_timer(unsigned int ticks, void *param);
 
 unsigned char get_algorithm_type(str algorithm);
 
+int ims_auth_data_set(str *pk, str *pop, str *pop_c, str *pamf);
+void ims_auth_data_reset(void);
+
 #endif /* AUTHORIZE_H */
