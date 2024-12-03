@@ -27,9 +27,15 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 # Main project name
 # -----------------------
 # main binary name
-set(MAIN_NAME "kamailio")
+set(MAIN_NAME
+    "kamailio"
+    CACHE STRING "Main binary name"
+)
 # use kamailio config
-set(CFG_NAME "kamailio")
+set(CFG_NAME
+    "kamailio"
+    CACHE STRING "Config name"
+)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 

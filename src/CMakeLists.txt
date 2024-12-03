@@ -100,7 +100,9 @@ add_dependencies(kamailio GenerateParser)
 
 # Enable ENABLE_EXPORTS property so modules can link from symbols found in
 # main.c and core/*.
-set_target_properties(kamailio PROPERTIES ENABLE_EXPORTS TRUE)
+set_target_properties(
+  kamailio PROPERTIES ENABLE_EXPORTS TRUE OUTPUT_NAME ${MAIN_NAME}
+)
 
 # Add the MODS_DIR definition required by main.c ---
 target_compile_definitions(
@@ -117,25 +119,26 @@ install(
   COMPONENT kamailio-core
 )
 
-# Install the configuration file (kamailio.cfg) using a CODE block to check
+# Install the configuration file (kamailio.cfg) ${CFG_NAME} using a CODE block to check
 # existence at install time instead of configure time
 # If(EXISTS ..) require full path
 install(
   CODE "
-    if(EXISTS \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}/kamailio.cfg\")
-        message(STATUS \"kamailio.cfg already exists in  \${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}/kamailio.cfg. Installing as kamailio.cfg.sample\")
+    if(EXISTS \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}/${CFG_NAME}.cfg\")
+        message(STATUS \"${CFG_NAME} already exists in  \${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}/${CFG_NAME}. Installing as ${CFG_NAME}.sample\")
       file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
         DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}\"
-        RENAME \"kamailio.cfg.sample\"
+        RENAME \"${CFG_NAME}.cfg.sample\"
         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
       )
     else()
         file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
           DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}\"
           PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+          RENAME \"${CFG_NAME}.cfg\"
         )
     endif()
 
 "
-  COMPONENT kamailio-cfg
+  COMPONENT kamailio-utils-cfg
 )

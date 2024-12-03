@@ -6,9 +6,7 @@ project(kamailio_utils)
 # "${basedir}") endif()
 
 set(KAMCTL_TMP_DIR "${CMAKE_BINARY_DIR}/kamctltmp")
-message(
-  STATUS "kamctltmpdir: ${KAMCTL_TMP_DIR} BINARY_DIR: ${CMAKE_BINARY_DIR}"
-)
+message(STATUS "Temporary kamctl.{db} files in : ${KAMCTL_TMP_DIR}")
 
 file(MAKE_DIRECTORY ${KAMCTL_TMP_DIR})
 
@@ -17,9 +15,8 @@ set(BIN_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SBINDIR}")
 set(LIB_DIR
     "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl"
 )
-set(CFG_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/kamailio")
+set(CFG_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}")
 set(SHARE_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}")
-message(STATUS "BIN_DIR: ${BIN_DIR} LIB_DIR: ${LIB_DIR} CFG_DIR: ${CFG_DIR}")
 
 # Install kamctl
 add_custom_command(
