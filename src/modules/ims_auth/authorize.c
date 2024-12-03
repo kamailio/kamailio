@@ -273,8 +273,8 @@ int proxy_authenticate(struct sip_msg* _m, char* _realm, char* _table) {
     return digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T);
 }
  */
-int challenge(struct sip_msg *msg, char *str1, char *alg, int is_proxy_auth,
-		char *route)
+int ims_challenge(struct sip_msg *msg, str *prealm, str *palg,
+		int is_proxy_auth, str *proute_name)
 {
 
 	str realm = {0, 0}, algo = {0, 0};
@@ -288,19 +288,9 @@ int challenge(struct sip_msg *msg, char *str1, char *alg, int is_proxy_auth,
 	tm_cell_t *t = 0;
 	cfg_action_t *cfg_action;
 
-	if(fixup_get_svalue(msg, (gparam_t *)route, &route_name) != 0) {
-		LM_ERR("no async route block for assign_server_unreg\n");
-		return -1;
-	}
-
-	if(!alg) {
-		LM_DBG("no algorithm specified in cfg... using default\n");
-	} else {
-		if(get_str_fparam(&algo, msg, (fparam_t *)alg) < 0) {
-			LM_ERR("failed to get auth algorithm\n");
-			return -1;
-		}
-	}
+	realm = *prealm;
+	algo = *palg;
+	route_name = *proute_name;
 
 	LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
 	int ri = route_get(&main_rt, route_name.s);
@@ -314,16 +304,6 @@ int challenge(struct sip_msg *msg, char *str1, char *alg, int is_proxy_auth,
 		LM_ERR("empty action lists in route block [%.*s]\n", route_name.len,
 				route_name.s);
 		return -1;
-	}
-
-	if(get_str_fparam(&realm, msg, (fparam_t *)str1) < 0) {
-		LM_ERR("failed to get realm value\n");
-		return CSCF_RETURN_ERROR;
-	}
-
-	if(realm.len == 0) {
-		LM_ERR("invalid realm value - empty content\n");
-		return CSCF_RETURN_ERROR;
 	}
 
 	create_return_code(CSCF_RETURN_ERROR);
@@ -496,17 +476,49 @@ int challenge(struct sip_msg *msg, char *str1, char *alg, int is_proxy_auth,
 	}
 	return CSCF_RETURN_BREAK;
 }
-int www_challenge2(struct sip_msg *msg, char *_route, char *str1, char *str2)
+
+int w_ims_challenge(struct sip_msg *msg, char *_realm, char *_alg,
+		int is_proxy_auth, char *_route)
 {
-	return challenge(msg, str1, 0, 0, _route);
+	str realm = STR_NULL;
+	str alg = STR_NULL;
+	str route_name = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)_route, &route_name) != 0) {
+		LM_ERR("no async route block for assign_server_unreg\n");
+		return -1;
+	}
+	if(!_alg) {
+		LM_DBG("no algorithm specified in cfg... using default\n");
+	} else {
+		if(get_str_fparam(&alg, msg, (fparam_t *)_alg) < 0) {
+			LM_ERR("failed to get auth algorithm\n");
+			return -1;
+		}
+	}
+	if(get_str_fparam(&realm, msg, (fparam_t *)_realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return CSCF_RETURN_ERROR;
+	}
+	if(realm.len == 0) {
+		LM_ERR("invalid realm value - empty content\n");
+		return CSCF_RETURN_ERROR;
+	}
+
+	return ims_challenge(msg, &realm, &alg, is_proxy_auth, &route_name);
 }
 
-int www_challenge3(struct sip_msg *msg, char *_route, char *str1, char *str2)
+int www_challenge2(struct sip_msg *msg, char *_route, char *_realm)
 {
-	return challenge(msg, str1, str2, 0, _route);
+	return w_ims_challenge(msg, _realm, 0, 0, _route);
 }
 
-int www_resync_auth(struct sip_msg *msg, char *_route, char *str1, char *str2)
+int www_challenge3(struct sip_msg *msg, char *_route, char *_realm, char *_alg)
+{
+	return w_ims_challenge(msg, _realm, _alg, 0, _route);
+}
+
+int ims_resync_auth(struct sip_msg *msg, str *proute_name, str *prealm)
 {
 
 	str realm = {0, 0};
@@ -521,10 +533,8 @@ int www_resync_auth(struct sip_msg *msg, char *_route, char *str1, char *str2)
 	tm_cell_t *t = 0;
 	cfg_action_t *cfg_action;
 
-	if(fixup_get_svalue(msg, (gparam_t *)_route, &route_name) != 0) {
-		LM_ERR("no async route block for assign_server_unreg\n");
-		return -1;
-	}
+	route_name = *proute_name;
+	realm = *prealm;
 
 	LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
 	int ri = route_get(&main_rt, route_name.s);
@@ -538,16 +548,6 @@ int www_resync_auth(struct sip_msg *msg, char *_route, char *str1, char *str2)
 		LM_ERR("empty action lists in route block [%.*s]\n", route_name.len,
 				route_name.s);
 		return -1;
-	}
-
-	if(get_str_fparam(&realm, msg, (fparam_t *)str1) < 0) {
-		LM_ERR("failed to get realm value\n");
-		return CSCF_RETURN_ERROR;
-	}
-
-	if(realm.len == 0) {
-		LM_ERR("invalid realm value - empty content\n");
-		return CSCF_RETURN_ERROR;
 	}
 
 	create_return_code(CSCF_RETURN_ERROR);
@@ -663,9 +663,30 @@ int www_resync_auth(struct sip_msg *msg, char *_route, char *str1, char *str2)
 	return CSCF_RETURN_BREAK;
 }
 
-int proxy_challenge(struct sip_msg *msg, char *_route, char *str1, char *str2)
+int www_resync_auth(struct sip_msg *msg, char *_route, char *_realm)
 {
-	return challenge(msg, str1, str2, 1, _route);
+	str realm = STR_NULL;
+	str route_name = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)_route, &route_name) != 0) {
+		LM_ERR("no async route block for assign_server_unreg\n");
+		return -1;
+	}
+	if(get_str_fparam(&realm, msg, (fparam_t *)_realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return CSCF_RETURN_ERROR;
+	}
+	if(realm.len == 0) {
+		LM_ERR("invalid realm value - empty content\n");
+		return CSCF_RETURN_ERROR;
+	}
+
+	return ims_resync_auth(msg, &route_name, &realm);
+}
+
+int proxy_challenge(struct sip_msg *msg, char *_route, char *_realm, char *_alg)
+{
+	return w_ims_challenge(msg, _realm, _alg, 1, _route);
 }
 
 /**
@@ -738,8 +759,7 @@ int stateful_request_reply_async(
 	return tmb.t_reply_trans(t_cell, msg, code, text);
 }
 
-int authenticate(
-		struct sip_msg *msg, char *_realm, char *str2, int is_proxy_auth)
+int ims_authenticate(struct sip_msg *msg, str *prealm, int is_proxy_auth)
 {
 	int ret = -1; //CSCF_RETURN_FALSE;
 	unsigned int aud_hash = 0;
@@ -759,21 +779,12 @@ int authenticate(
 
 	ret = AUTH_ERROR;
 
-	if(get_str_fparam(&realm, msg, (fparam_t *)_realm) < 0) {
-		LM_ERR("failed to get realm value\n");
-		return AUTH_NO_CREDENTIALS;
-	}
-
-	if(realm.len == 0) {
-		LM_ERR("invalid realm value - empty content\n");
-		return AUTH_NO_CREDENTIALS;
-	}
-
 	if(msg->first_line.type != SIP_REQUEST) {
 		LM_ERR("This message is not a request\n");
 		ret = AUTH_ERROR;
 		goto end;
 	}
+	realm = *prealm;
 	if(!is_proxy_auth) {
 		LM_DBG("Checking if REGISTER is authorized for realm [%.*s]...\n",
 				realm.len, realm.s);
@@ -1056,12 +1067,26 @@ end:
 	return ret;
 }
 
+int w_ims_authenticate(struct sip_msg *msg, char *_realm, int is_proxy_auth)
+{
+	str realm;
+	if(get_str_fparam(&realm, msg, (fparam_t *)_realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return AUTH_NO_CREDENTIALS;
+	}
+	if(realm.len == 0) {
+		LM_ERR("invalid realm value - empty content\n");
+		return AUTH_NO_CREDENTIALS;
+	}
+	return ims_authenticate(msg, &realm, is_proxy_auth);
+}
+
 /*
  * Authenticate using WWW-Authorize header field
  */
 int www_authenticate(struct sip_msg *msg, char *_realm, char *str2)
 {
-	return authenticate(msg, _realm, str2, 0);
+	return w_ims_authenticate(msg, _realm, 0);
 }
 
 /*
@@ -1069,7 +1094,7 @@ int www_authenticate(struct sip_msg *msg, char *_realm, char *str2)
  */
 int proxy_authenticate(struct sip_msg *msg, char *_realm, char *str2)
 {
-	return authenticate(msg, _realm, str2, 1);
+	return w_ims_authenticate(msg, _realm, 1);
 }
 
 /**
