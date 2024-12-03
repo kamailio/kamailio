@@ -134,6 +134,10 @@ int ignore_failed_auth = 0;
 /* authentication vectors mode: 0 - diameter/hss; 1 - local */
 int ims_auth_av_mode = 0;
 
+static int w_ims_auth_data_set(
+		sip_msg_t *msg, char *_k, char *_op, char *_op_c, char *_amf);
+static int w_ims_auth_data_reset(sip_msg_t *msg, char *_p1, char *_p2);
+
 /* clang-format off */
 /*
  * Exported functions
@@ -151,6 +155,10 @@ static cmd_export_t cmds[] = {
 			auth_fixup, auth_fixup_free, REQUEST_ROUTE},
 	{"ims_proxy_challenge", (cmd_function)proxy_challenge, 3,
 			challenge_fixup_async, challenge_fixup_async_free, REQUEST_ROUTE},
+	{"ims_auth_data_set", (cmd_function)w_ims_auth_data_set, 4,
+			fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE},
+	{"ims_auth_data_reset", (cmd_function)w_ims_auth_data_reset, 0,
+			0, 0, REQUEST_ROUTE},
 	{"bind_ims_auth", (cmd_function)bind_ims_auth, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -375,4 +383,39 @@ static int auth_fixup_free(void **param, int param_no)
 	}
 
 	return 0;
+}
+
+static int w_ims_auth_data_set(
+		sip_msg_t *msg, char *_k, char *_op, char *_op_c, char *_amf)
+{
+	str k = STR_NULL;
+	str op = STR_NULL;
+	str op_c = STR_NULL;
+	str amf = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)_k, &k) != 0) {
+		LM_ERR("failed to get k parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)_op, &op) != 0) {
+		LM_ERR("failed to get op parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)_op_c, &op_c) != 0) {
+		LM_ERR("failed to get op_c parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)_amf, &amf) != 0) {
+		LM_ERR("failed to get amf parameter\n");
+		return -1;
+	}
+
+
+	return ims_auth_data_set(&k, &op, &op_c, &amf);
+}
+
+static int w_ims_auth_data_reset(sip_msg_t *msg, char *_p1, char *_p2)
+{
+	ims_auth_data_reset();
+	return 1;
 }

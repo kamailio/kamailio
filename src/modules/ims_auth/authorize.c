@@ -42,6 +42,7 @@
  */
 
 #include <string.h>
+#include <stdint.h>
 #include "../../core/ut.h"
 #include "../../core/str.h"
 #include "../../core/basex.h"
@@ -70,6 +71,18 @@
 #include "authorize.h"
 #include "utils.h"
 #include "../../core/action.h" /* run_actions */
+
+
+typedef struct ims_auth_data
+{
+	uint8_t k[16];
+	uint8_t op[16];
+	uint8_t op_c[16];
+	uint8_t amf[2];
+	uint16_t flags;
+} ims_auth_data_t;
+
+#define IMS_AUTH_FLAG_DATA_SET 1
 
 extern unsigned char
 		registration_default_algorithm_type; /**< fixed default algorithm for registration (if none present)	*/
@@ -120,6 +133,79 @@ str auth_scheme_types[] = {{"unknown", 7}, {"Digest-AKAv1-MD5", 16},
 		{"Digest-AKAv2-MD5", 16}, {"Early-IMS-Security", 18},
 		{"Digest-MD5", 10}, {"Digest", 6}, {"SIP Digest", 10},
 		{"HTTP_DIGEST_MD5", 15}, {"NASS-Bundled", 12}, {0, 0}};
+
+/**
+ *
+ */
+static ims_auth_data_t _ims_auth_data = {0};
+
+void ims_auth_data_reset(void)
+{
+	memset(&_ims_auth_data, 0, sizeof(ims_auth_data_t));
+}
+
+static inline int ims_auth_hexbin(
+		str *ihex, uint8_t *obin, int isize, char *fname)
+{
+	uint8_t r;
+	int i;
+	int j;
+	char c;
+
+	if(ihex == NULL || ihex->len <= 0) {
+		LM_DBG("hex value not provided - ignoring (%s)\n", fname);
+		return 0;
+	}
+	if(ihex->len != isize) {
+		LM_ERR("invalid hex value len (%s)\n", fname);
+		return -1;
+	}
+	r = 0;
+	j = 0;
+	for(i = 0; i < ihex->len; i++) {
+		r <<= 4;
+		c = ihex->s[i];
+		if(c >= '0' && c <= '9') {
+			r += c - '0';
+		} else if(c >= 'a' && c <= 'f') {
+			r += c - 'a' + 10;
+		} else if(c >= 'A' && c <= 'F') {
+			r += c - 'A' + 10;
+		} else {
+			LM_ERR("invalid char in hex value (%s)\n", fname);
+			return -1;
+		}
+		if((r % 2) == 1) {
+			obin[j] = r;
+			r = 0;
+			j++;
+		}
+	}
+	return 0;
+}
+
+int ims_auth_data_set(str *pk, str *pop, str *pop_c, str *pamf)
+{
+
+	memset(&_ims_auth_data, 0, sizeof(ims_auth_data_t));
+
+	if(ims_auth_hexbin(pk, _ims_auth_data.k, 32, "k") != 0) {
+		return -1;
+	}
+	if(ims_auth_hexbin(pop, _ims_auth_data.op, 32, "op") != 0) {
+		return -1;
+	}
+	if(ims_auth_hexbin(pop_c, _ims_auth_data.op_c, 32, "op_c") != 0) {
+		return -1;
+	}
+	if(ims_auth_hexbin(pamf, _ims_auth_data.amf, 4, "amf") != 0) {
+		return -1;
+	}
+
+	_ims_auth_data.flags = IMS_AUTH_FLAG_DATA_SET;
+
+	return 0;
+}
 
 /**
  * Convert the SIP Algorithm to its type
