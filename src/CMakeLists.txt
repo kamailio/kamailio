@@ -87,6 +87,7 @@ add_executable(kamailio ${CMAKE_CURRENT_SOURCE_DIR}/main.c ${kamailio_SRC})
 target_link_libraries(
   kamailio
   PUBLIC
+    GenerateParser
     common
     m
     Threads::Threads # Pthread library

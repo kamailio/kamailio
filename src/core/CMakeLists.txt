@@ -45,7 +45,8 @@ add_library(
   GenerateParser ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
                  ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
 )
-target_link_libraries(GenerateParser PUBLIC common)
+# common_modules required so -fPIC is added to the compile options
+target_link_libraries(GenerateParser PUBLIC common common_modules)
 
 # -----------------------
 
