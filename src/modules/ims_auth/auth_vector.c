@@ -26,8 +26,8 @@
 
 
 // SQN should be incremented after each new vector generation.
-int auth_vector_make(auth_vector *av, uint8_t k[16], uint8_t op[16],
-		int opIsOPc, uint8_t amf[2], uint8_t sqn[6])
+auth_vector *auth_vector_make_local(uint8_t k[16], uint8_t op[16], int opIsOPc,
+		uint8_t amf[2], uint8_t sqn[6])
 {
 	uint8_t rand[16];
 	uint8_t op_c[16];
@@ -60,41 +60,25 @@ int auth_vector_make(auth_vector *av, uint8_t k[16], uint8_t op[16],
 		authenticate[16 + i] = sqn[i] ^ ak[i];
 	memcpy(authenticate + 22, amf, 2);
 	memcpy(authenticate + 24, mac_a, 8);
-	av->authenticate.s = shm_malloc(16 + 6 + 2 + 8);
-	if(!av->authenticate.s)
-		return -1;
-	memcpy(av->authenticate.s, authenticate, 16 + 6 + 2 + 8);
-	av->authenticate.len = 16 + 6 + 2 + 8;
 
-	// Authorization = XRES
-	av->authorization.s = shm_malloc(8);
-	if(!av->authorization.s)
-		return -1;
-	memcpy(av->authorization.s, res, 8);
-	av->authorization.len = 8;
+	str s_auth_scheme = {.s = "Digest-AKAv1-MD5", .len = 16};
+	str s_authenticate = {.s = (char *)authenticate, .len = 16 + 6 + 2 + 8};
+	str s_authorization = {.s = (char *)res, .len = 8};
+	str s_ck = {.s = (char *)ck, .len = 16};
+	str s_ik = {.s = (char *)ik, .len = 16};
 
-	// CK
-	av->ck.s = shm_malloc(16);
-	if(!av->ck.s)
-		return -1;
-	memcpy(av->ck.s, ck, 16);
-	av->ck.len = 16;
-
-	// IK
-	av->ik.s = shm_malloc(16);
-	if(!av->ik.s)
-		return -1;
-	memcpy(av->ik.s, ik, 16);
-	av->ik.len = 16;
-
+	auth_vector *av = new_auth_vector(
+			1, s_auth_scheme, s_authenticate, s_authorization, s_ck, s_ik);
+	if(av == NULL) {
+		return NULL;
+	}
 	av->is_locally_generated = 1;
-
-	return 0;
+	return av;
 }
 
 
-int auth_vector_resync(uint8_t sqnMSout[6], auth_vector *av, uint8_t auts[14],
-		uint8_t k[16], uint8_t op[16], int opIsOPc)
+int auth_vector_resync_local(uint8_t sqnMSout[6], auth_vector *av,
+		uint8_t auts[14], uint8_t k[16], uint8_t op[16], int opIsOPc)
 {
 	uint8_t rand[16];
 	uint8_t op_c[16];
@@ -145,4 +129,16 @@ int auth_vector_resync(uint8_t sqnMSout[6], auth_vector *av, uint8_t auts[14],
 	memcpy(sqnMSout, sqnMS, 6);
 
 	return 0;
+}
+
+void sqn_increment(uint8_t sqn[6])
+{
+	for(int i = 5; i >= 0; i--) {
+		if(sqn[i] == 0xFF) {
+			sqn[i] = 0;
+		} else {
+			sqn[i]++;
+			return 0;
+		}
+	}
 }

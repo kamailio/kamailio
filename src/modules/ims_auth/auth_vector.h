@@ -53,7 +53,10 @@ typedef struct _auth_vector
 	struct _auth_vector *prev;		/**< previous av in the list	*/
 } auth_vector;
 
-int auth_vector_make(auth_vector *av, uint8_t k[16], uint8_t opOrOPc[16],
-		int opIsOPc, uint8_t amf[2], uint8_t sqn[6]);
+auth_vector *auth_vector_make_local(uint8_t k[16], uint8_t op[16], int opIsOPc,
+		uint8_t amf[2], uint8_t sqn[6]);
+int auth_vector_resync_local(uint8_t sqnMSout[6], auth_vector *av,
+		uint8_t auts[14], uint8_t k[16], uint8_t op[16], int opIsOPc);
+void sqn_increment(uint8_t sqn[6])
 
 #endif
