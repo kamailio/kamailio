@@ -179,7 +179,9 @@ int add_auth_vector(str private_identity, str public_identity, auth_vector *av);
 auth_vector *get_auth_vector(str private_identity, str public_identity,
 		int status, str *nonce, unsigned int *hash, auth_userdata **out_aud);
 
-int drop_auth_userdata(str private_identity, str public_identity);
+int drop_auth_vectors(str private_identity, str public_identity);
+void drop_auth_vectors_for_userdata(auth_userdata *aud);
+
 auth_userdata *get_auth_userdata(str private_identity, str public_identity);
 
 int stateful_request_reply(struct sip_msg *msg, int code, char *text);

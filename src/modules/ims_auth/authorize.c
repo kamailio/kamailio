@@ -718,8 +718,10 @@ int ims_resync_auth(struct sip_msg *msg, str *proute_name, str *prealm)
 				}
 				LM_DBG("auth vector resync successful\n");
 
-				av->status = AUTH_VECTOR_USELESS;
+				// Old vectors are useless on resync
+				drop_auth_vectors_for_userdata(aud);
 				auth_data_unlock(aud_hash);
+				aud = 0;
 				av = 0;
 
 				// TODO - here we don't need to suspend anymore, but we can already
@@ -730,6 +732,7 @@ int ims_resync_auth(struct sip_msg *msg, str *proute_name, str *prealm)
 			av->status = AUTH_VECTOR_USELESS;
 			auth_data_unlock(aud_hash);
 			av = 0;
+			aud = 0;
 		}
 	}
 
@@ -1786,7 +1789,7 @@ int multimedia_auth_request(struct sip_msg *msg, str public_identity,
 	}
 
 	if(is_sync) {
-		drop_auth_userdata(private_identity, public_identity);
+		drop_auth_vectors(private_identity, public_identity);
 	}
 
 
@@ -1978,25 +1981,19 @@ error:
 }
 
 /**
- * Declares all auth vectors as useless when we do a synchronization
+ * Declares all auth vectors as useless when we do a synchronization - but keeps the auth_userdata.
  * @param private_identity - the private identity
  * @param public_identity - the public identity
  * @returns 1 on success, 0 on error
  */
-int drop_auth_userdata(str private_identity, str public_identity)
+int drop_auth_vectors(str private_identity, str public_identity)
 {
 	auth_userdata *aud;
-	auth_vector *av;
 	aud = get_auth_userdata(private_identity, public_identity);
 	if(!aud)
 		goto error;
 
-	av = aud->head;
-	while(av) {
-		LM_DBG("dropping auth vector that was in status %d\n", av->status);
-		av->status = AUTH_VECTOR_USELESS;
-		av = av->next;
-	}
+	drop_auth_vectors_for_userdata(aud);
 	auth_data_unlock(aud->hash);
 	return 1;
 error:
@@ -2004,4 +2001,18 @@ error:
 	if(aud)
 		auth_data_unlock(aud->hash);
 	return 0;
+}
+
+void drop_auth_vectors_for_userdata(auth_userdata *aud)
+{
+	auth_vector *av;
+	if(!aud)
+		return;
+
+	av = aud->head;
+	while(av) {
+		LM_DBG("dropping auth vector that was in status %d\n", av->status);
+		av->status = AUTH_VECTOR_USELESS;
+		av = av->next;
+	}
 }
