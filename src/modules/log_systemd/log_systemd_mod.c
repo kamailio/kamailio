@@ -47,27 +47,30 @@ static int w_sd_journal_print(struct sip_msg *msg, char *lev, char *txt);
 static int w_sd_journal_send_xavp(struct sip_msg *msg, char *xname, char *);
 
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"sd_journal_print", (cmd_function)w_sd_journal_print, 2,
-				fixup_spve_spve, 0, ANY_ROUTE},
-		{"sd_journal_send_xavp", (cmd_function)w_sd_journal_send_xavp, 1,
-				fixup_spve_spve, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"sd_journal_print", (cmd_function)w_sd_journal_print, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"sd_journal_send_xavp", (cmd_function)w_sd_journal_send_xavp, 1,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {{0, 0, 0}};
 
 struct module_exports exports = {
-		"log_systemd",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	"log_systemd",	 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	params,			 /* param exports */
+	0,				 /* RPC method exports */
+	0,				 /* pseudo-variables exports */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	child_init,		 /* per-child init function */
+	mod_destroy		 /* module destroy function */
 };
+/* clang-format on */
 
 /**
  * init module function
