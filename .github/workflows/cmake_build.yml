@@ -50,6 +50,8 @@ jobs:
 
     - name: Build Project natively
       uses: threeal/cmake-action@v2.0.0
+      # Step runs for all except this combination
+      if: matrix.os != 'ubuntu-latest' || matrix.target_arch != 'aarch64'  
       with:
         build-dir: ${{github.workspace}}/build
         build-args: -j8
