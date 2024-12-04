@@ -6,7 +6,11 @@ Uploaders:
  Victor Seva <vseva@debian.org>,
 Build-Depends:
  bison,
- debhelper (>= 9),
+ cmake (>= 3.10),
+ debhelper-compat (= 13),
+ dh-cmake,
+ dh-cmake-compat (= 1),
+ dh-sequence-cmake,
  docbook-xml,
  dpkg-dev (>= 1.16.1.1),
  erlang-dev,
