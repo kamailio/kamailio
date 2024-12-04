@@ -138,7 +138,7 @@ void sqn_increment(uint8_t sqn[6])
 			sqn[i] = 0;
 		} else {
 			sqn[i]++;
-			return 0;
+			return;
 		}
 	}
 }

@@ -47,6 +47,8 @@
 
 #include "../../core/mod_fix.h"
 
+#include "../cdp/diameter.h"
+
 struct sip_msg;
 struct parsed_maa;
 

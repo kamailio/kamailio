@@ -71,7 +71,7 @@
 #include "authorize.h"
 #include "utils.h"
 #include "../../core/action.h" /* run_actions */
-
+#include "auth_vector.h"
 
 typedef struct ims_auth_data
 {
