@@ -76,38 +76,41 @@ static param_export_t params[] = {
 		{0, 0, 0}}; /*no params exported,perhaps I should add pre-compiled expressions */
 
 
+/* clang-format off */
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"sdp_mangle_ip", sdp_mangle_ip, 2, 0, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE}, // fixup_char2str?
-		{"sdp_mangle_port", sdp_mangle_port, 1, 0, 0,
-				REQUEST_ROUTE
-						| ONREPLY_ROUTE}, // fixup_char2int if I use an int as offset
-		{"encode_contact", encode_contact, 2, 0, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE}, //fixup_char2str
-		{"decode_contact", decode_contact, 0, 0, 0, REQUEST_ROUTE},
-		{"decode_contact_header", decode_contact_header, 0, 0, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"sdp_mangle_ip", sdp_mangle_ip, 2, 0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE}, // fixup_char2str?
+	{"sdp_mangle_port", sdp_mangle_port, 1, 0, 0,
+			REQUEST_ROUTE
+					| ONREPLY_ROUTE}, // fixup_char2int if I use an int as offset
+	{"encode_contact", encode_contact, 2, 0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE}, //fixup_char2str
+	{"decode_contact", decode_contact, 0, 0, 0, REQUEST_ROUTE},
+	{"decode_contact_header", decode_contact_header, 0, 0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-		"mangler",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		destroy			 /* module destroy function */
+	"mangler",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	params,			 /* param exports */
+	0,				 /* RPC method exports */
+	0,				 /* pseudo-variables exports */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	0,				 /* per-child init function */
+	destroy			 /* module destroy function */
 };
+/* clang-format on */
 
 
 #ifdef DEMO
