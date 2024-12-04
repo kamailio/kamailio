@@ -59,46 +59,51 @@ static int _lwsc_timeout_init = 2000000;
 static str _lwsc_protocol = str_init("kmsg");
 static int _lwsc_verbosity = 0;
 
+/* clang-format off */
 static cmd_export_t cmds[] = {{"lwsc_request", (cmd_function)w_lwsc_request, 2,
-									  fixup_spve_all, 0, ANY_ROUTE},
-		{"lwsc_request_proto", (cmd_function)w_lwsc_request_proto, 3,
-				fixup_spve_all, 0, ANY_ROUTE},
-		{"lwsc_notify", (cmd_function)w_lwsc_notify, 2, fixup_spve_all, 0,
-				ANY_ROUTE},
-		{"lwsc_notify_proto", (cmd_function)w_lwsc_notify_proto, 3,
-				fixup_spve_all, 0, ANY_ROUTE},
-		{"bind_lwsc", (cmd_function)bind_lwsc, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
+								  fixup_spve_all, 0, ANY_ROUTE},
+	{"lwsc_request_proto", (cmd_function)w_lwsc_request_proto, 3,
+			fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"lwsc_notify", (cmd_function)w_lwsc_notify, 2, fixup_spve_all, fixup_free_spve_all,
+			ANY_ROUTE},
+	{"lwsc_notify_proto", (cmd_function)w_lwsc_notify_proto, 3,
+			fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"bind_lwsc", (cmd_function)bind_lwsc, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"timeout_connect", PARAM_INT, &_lwsc_timeout_connect},
-		{"timeout_send", PARAM_INT, &_lwsc_timeout_send},
-		{"timeout_read", PARAM_INT, &_lwsc_timeout_read},
-		{"timeout_init", PARAM_INT, &_lwsc_timeout_init},
-		{"protocol", PARAM_STR, &_lwsc_protocol},
-		{"verbosity", PARAM_INT, &_lwsc_verbosity},
-
-		{0, 0, 0}};
+	{"timeout_connect", PARAM_INT, &_lwsc_timeout_connect},
+	{"timeout_send", PARAM_INT, &_lwsc_timeout_send},
+	{"timeout_read", PARAM_INT, &_lwsc_timeout_read},
+	{"timeout_init", PARAM_INT, &_lwsc_timeout_init},
+	{"protocol", PARAM_STR, &_lwsc_protocol},
+	{"verbosity", PARAM_INT, &_lwsc_verbosity},
+	{0, 0, 0}
+};
 
 static int lwsc_pv_get(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int lwsc_pv_parse_name(pv_spec_t *sp, str *in);
 
 static pv_export_t mod_pvs[] = {
-		{{"lwsc", sizeof("lwsc") - 1}, PVT_OTHER, lwsc_pv_get, 0,
-				lwsc_pv_parse_name, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"lwsc", sizeof("lwsc") - 1}, PVT_OTHER, lwsc_pv_get, 0,
+			lwsc_pv_parse_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 struct module_exports exports = {
-		"lwsc",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	"lwsc",			 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	params,			 /* param exports */
+	0,				 /* RPC method exports */
+	mod_pvs,		 /* pseudo-variables exports */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	child_init,		 /* per-child init function */
+	mod_destroy		 /* module destroy function */
 };
+/* clang-format on */
 
 
 /**
