@@ -1529,9 +1529,11 @@ static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_sintval(
 					msg, param, res, (int)((inactive * 100) / count));
 		case 5: /* octime_sec */
-			return pv_get_sintval(msg, param, res, (long)ocdata.octime.tv_sec);
+			return pv_get_uintval(
+					msg, param, res, (unsigned long)ocdata.octime.tv_sec);
 		case 6: /* octime_usec */
-			return pv_get_sintval(msg, param, res, (long)ocdata.octime.tv_usec);
+			return pv_get_uintval(
+					msg, param, res, (unsigned long)ocdata.octime.tv_usec);
 		case 7: /* ocseq */
 			return pv_get_sintval(msg, param, res, ocdata.ocseq);
 		case 8: /* ocrate */
