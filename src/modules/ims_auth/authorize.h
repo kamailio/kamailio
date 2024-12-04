@@ -155,8 +155,6 @@ int www_resync_auth(struct sip_msg *msg, char *_route, char *_realm);
  */
 int bind_ims_auth(ims_auth_api_t *api);
 
-auth_vector *get_auth_vector(str private_identity, str public_identity,
-		int status, str *nonce, unsigned int *hash);
 /*
  * Storage of authentication vectors
  */
@@ -179,7 +177,7 @@ unsigned int get_hash_auth(str private_identity, str public_identity);
 
 int add_auth_vector(str private_identity, str public_identity, auth_vector *av);
 auth_vector *get_auth_vector(str private_identity, str public_identity,
-		int status, str *nonce, unsigned int *hash);
+		int status, str *nonce, unsigned int *hash, auth_userdata **out_aud);
 
 int drop_auth_userdata(str private_identity, str public_identity);
 auth_userdata *get_auth_userdata(str private_identity, str public_identity);

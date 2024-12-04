@@ -488,7 +488,7 @@ int ims_challenge(struct sip_msg *msg, str *prealm, str *palg,
 	//while (!(av = get_auth_vector(private_identity, public_identity, AUTH_VECTOR_UNUSED, 0, &aud_hash))) {
 
 	av = get_auth_vector(private_identity, public_identity, AUTH_VECTOR_UNUSED,
-			0, &aud_hash);
+			0, &aud_hash, NULL);
 	if(av == NULL && ims_auth_av_mode == 1) {
 
 		LM_ERR("Error retrieving an auth vector\n");
@@ -618,6 +618,7 @@ int ims_resync_auth(struct sip_msg *msg, str *proute_name, str *prealm)
 	unsigned int aud_hash;
 	str private_identity, public_identity, auts = {0, 0}, nonce = {0, 0};
 	auth_vector *av = 0;
+	auth_userdata *aud = 0;
 	int algo_type;
 	int is_proxy_auth = 0;
 	str route_name;
@@ -680,24 +681,56 @@ int ims_resync_auth(struct sip_msg *msg, str *proute_name, str *prealm)
 			return CSCF_RETURN_BREAK;
 		}
 		av = get_auth_vector(private_identity, public_identity,
-				AUTH_VECTOR_USED, &nonce, &aud_hash);
+				AUTH_VECTOR_USED, &nonce, &aud_hash, &aud);
 		if(!av)
 			av = get_auth_vector(private_identity, public_identity,
-					AUTH_VECTOR_SENT, &nonce, &aud_hash);
+					AUTH_VECTOR_SENT, &nonce, &aud_hash, &aud);
 
 		if(!av) {
 			LM_ERR("nonce not recognized as sent, no sync!\n");
 			auts.len = 0;
 			auts.s = 0;
 		} else {
+			if(av->is_locally_generated && ims_auth_av_mode == 1) {
+				// Locally generated AV --> do local resync
+				// auts is 14 bytes, or 112 bits --> in base64 it will be >18.(6) bytes, so 20 bytes
+				if(auts.len != 20) {
+					LM_ERR("Invalid auts length %d expected 20\n", auts.len);
+					return CSCF_RETURN_ERROR;
+				}
+				uint8_t auts_bin[14];
+				if(base64_to_bin(auts.s, auts.len, (char *)auts_bin) != 14) {
+					LM_ERR("Invalid auts length\n");
+					return CSCF_RETURN_ERROR;
+				}
+				int resync_result = 0;
+				if(_ims_auth_data.flags & IMS_AUTH_FLAG_OPC_SET) {
+					resync_result = auth_vector_resync_local(aud->sqn, av,
+							auts_bin, _ims_auth_data.k, _ims_auth_data.op_c, 1);
+				} else {
+					resync_result = auth_vector_resync_local(aud->sqn, av,
+							auts_bin, _ims_auth_data.k, _ims_auth_data.op, 0);
+				}
+
+				if(resync_result != 0) {
+					LM_ERR("Error resync-ing auth vector\n");
+					return CSCF_RETURN_ERROR;
+				}
+				LM_DBG("auth vector resync successful\n");
+
+				av->status = AUTH_VECTOR_USELESS;
+				auth_data_unlock(aud_hash);
+				av = 0;
+
+				// TODO - here we don't need to suspend anymore, but we can already
+				// generate a new AV and send it - is this enough?
+				return CSCF_RETURN_TRUE;
+			}
+
 			av->status = AUTH_VECTOR_USELESS;
 			auth_data_unlock(aud_hash);
 			av = 0;
 		}
-	}
-	if(ims_auth_av_mode == 1) {
-		LM_ERR("Error resync-ing auth vector\n");
-		return CSCF_RETURN_ERROR;
 	}
 
 	//before we send lets suspend the transaction
@@ -940,7 +973,7 @@ int ims_authenticate(struct sip_msg *msg, str *prealm, int is_proxy_auth)
 		LM_DBG("look for an already used vector for %.*s\n",
 				private_identity.len, private_identity.s);
 		av = get_auth_vector(private_identity, public_identity,
-				AUTH_VECTOR_USED, &nonce, &aud_hash);
+				AUTH_VECTOR_USED, &nonce, &aud_hash, NULL);
 	}
 
 	if(!av) {
@@ -969,7 +1002,7 @@ int ims_authenticate(struct sip_msg *msg, str *prealm, int is_proxy_auth)
 		LM_DBG("look for a fresh vector for %.*s\n", private_identity.len,
 				private_identity.s);
 		av = get_auth_vector(private_identity, public_identity,
-				AUTH_VECTOR_SENT, &nonce, &aud_hash);
+				AUTH_VECTOR_SENT, &nonce, &aud_hash, NULL);
 	}
 
 	LM_INFO("uri=%.*s nonce=%.*s response=%.*s qop=%.*s nc=%.*s cnonce=%.*s "
@@ -1219,7 +1252,7 @@ int bind_ims_auth(ims_auth_api_t *api)
  * @returns the auth_vector* if found or NULL if not
  */
 auth_vector *get_auth_vector(str private_identity, str public_identity,
-		int status, str *nonce, unsigned int *hash)
+		int status, str *nonce, unsigned int *hash, auth_userdata **out_aud)
 {
 	auth_userdata *aud;
 	auth_vector *av;
@@ -1228,6 +1261,10 @@ auth_vector *get_auth_vector(str private_identity, str public_identity,
 	if(!aud) {
 		LM_ERR("no auth userdata\n");
 		goto error;
+	}
+
+	if(out_aud) {
+		*out_aud = aud;
 	}
 
 	av = aud->head;
