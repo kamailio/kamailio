@@ -83,6 +83,7 @@ typedef struct ims_auth_data
 } ims_auth_data_t;
 
 #define IMS_AUTH_FLAG_DATA_SET 1
+#define IMS_AUTH_FLAG_OPC_SET 2
 
 extern unsigned char
 		registration_default_algorithm_type; /**< fixed default algorithm for registration (if none present)	*/
@@ -154,7 +155,7 @@ static inline int ims_auth_hexbin(
 
 	if(ihex == NULL || ihex->len <= 0) {
 		LM_DBG("hex value not provided - ignoring (%s)\n", fname);
-		return 0;
+		return 1;
 	}
 	if(ihex->len != isize) {
 		LM_ERR("invalid hex value len (%s)\n", fname);
@@ -186,23 +187,29 @@ static inline int ims_auth_hexbin(
 
 int ims_auth_data_set(str *pk, str *pop, str *pop_c, str *pamf)
 {
+	int ret;
 
 	memset(&_ims_auth_data, 0, sizeof(ims_auth_data_t));
 
-	if(ims_auth_hexbin(pk, _ims_auth_data.k, 32, "k") != 0) {
+	if(ims_auth_hexbin(pk, _ims_auth_data.k, 32, "k") < 0) {
 		return -1;
 	}
-	if(ims_auth_hexbin(pop, _ims_auth_data.op, 32, "op") != 0) {
+	if(ims_auth_hexbin(pop, _ims_auth_data.op, 32, "op") < 0) {
 		return -1;
 	}
-	if(ims_auth_hexbin(pop_c, _ims_auth_data.op_c, 32, "op_c") != 0) {
+	ret = ims_auth_hexbin(pop_c, _ims_auth_data.op_c, 32, "op_c");
+	if(ret < 0) {
 		return -1;
 	}
-	if(ims_auth_hexbin(pamf, _ims_auth_data.amf, 4, "amf") != 0) {
+	if(ret == 1) {
+		_ims_auth_data.flags |= IMS_AUTH_FLAG_OPC_SET;
+	}
+
+	if(ims_auth_hexbin(pamf, _ims_auth_data.amf, 4, "amf") < 0) {
 		return -1;
 	}
 
-	_ims_auth_data.flags = IMS_AUTH_FLAG_DATA_SET;
+	_ims_auth_data.flags |= IMS_AUTH_FLAG_DATA_SET;
 
 	return 0;
 }
@@ -480,13 +487,14 @@ int ims_challenge(struct sip_msg *msg, str *prealm, str *palg,
 	/* loop because some other process might steal the auth_vector that we just retrieved */
 	//while (!(av = get_auth_vector(private_identity, public_identity, AUTH_VECTOR_UNUSED, 0, &aud_hash))) {
 
-	if((av = get_auth_vector(private_identity, public_identity,
-				AUTH_VECTOR_UNUSED, 0, &aud_hash))) {
-		if(!av) {
-			LM_ERR("Error retrieving an auth vector\n");
-			return CSCF_RETURN_ERROR;
-		}
+	av = get_auth_vector(private_identity, public_identity, AUTH_VECTOR_UNUSED,
+			0, &aud_hash);
+	if(av == NULL && ims_auth_av_mode == 1) {
 
+		LM_ERR("Error retrieving an auth vector\n");
+		return CSCF_RETURN_ERROR;
+	}
+	if(av != NULL) {
 		if(!pack_challenge(msg, realm, av, is_proxy_auth)) {
 			stateful_request_reply(msg, 500, MSG_500_PACK_AV);
 			auth_data_unlock(aud_hash);
@@ -606,7 +614,6 @@ int www_challenge3(struct sip_msg *msg, char *_route, char *_realm, char *_alg)
 
 int ims_resync_auth(struct sip_msg *msg, str *proute_name, str *prealm)
 {
-
 	str realm = {0, 0};
 	unsigned int aud_hash;
 	str private_identity, public_identity, auts = {0, 0}, nonce = {0, 0};
@@ -687,6 +694,10 @@ int ims_resync_auth(struct sip_msg *msg, str *proute_name, str *prealm)
 			auth_data_unlock(aud_hash);
 			av = 0;
 		}
+	}
+	if(ims_auth_av_mode == 1) {
+		LM_ERR("Error resync-ing auth vector\n");
+		return CSCF_RETURN_ERROR;
 	}
 
 	//before we send lets suspend the transaction
@@ -1212,6 +1223,7 @@ auth_vector *get_auth_vector(str private_identity, str public_identity,
 {
 	auth_userdata *aud;
 	auth_vector *av;
+
 	aud = get_auth_userdata(private_identity, public_identity);
 	if(!aud) {
 		LM_ERR("no auth userdata\n");
@@ -1233,6 +1245,24 @@ auth_vector *get_auth_vector(str private_identity, str public_identity,
 			return av;
 		}
 		av = av->next;
+	}
+	if(ims_auth_av_mode == 1 && status == AUTH_VECTOR_UNUSED) {
+		if(_ims_auth_data.flags & IMS_AUTH_FLAG_OPC_SET) {
+			av = auth_vector_make_local(_ims_auth_data.k, _ims_auth_data.op_c,
+					1, _ims_auth_data.amf, aud->sqn);
+		} else {
+			av = auth_vector_make_local(_ims_auth_data.k, _ims_auth_data.op, 0,
+					_ims_auth_data.amf, aud->sqn);
+		}
+		if(av) {
+			sqn_increment(aud->sqn);
+			av->next = aud->head;
+			if(aud->head) {
+				aud->head->prev = av;
+				aud->head = av;
+			}
+			return av;
+		}
 	}
 
 error:

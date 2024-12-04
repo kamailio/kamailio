@@ -85,6 +85,8 @@ typedef struct _auth_userdata
 	str private_identity; /**< authorization username		*/
 	str public_identity;  /**< public identity linked to	*/
 	time_t expires;		  /**< expires in					*/
+	uint8_t sqn[6];		  /**< sqn							*/
+	uint8_t _pad[2];	  /**< padding						*/
 
 	auth_vector *head; /**< first auth vector in list	*/
 	auth_vector *tail; /**< last auth vector in list	*/
