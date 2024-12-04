@@ -35,6 +35,10 @@ sed -i -e '/lsb-base/d' ${DIST}/control
 # libncurses
 sed -i -e 's/libncurses5-dev/libncurses-dev/g' ${DIST}/control
 
+# debhelper 13
+sed -i -e 's/debhelper (>= 9)/debhelper-compat (= 13)/g' ${DIST}/control
+rm -rf ${DIST}/compat
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
