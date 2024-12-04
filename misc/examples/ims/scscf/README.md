@@ -12,6 +12,6 @@ The following tables (or files) are required:
 
   * ims_charging_create.sql
   * ims_dialog-create.sql
-  * ms_usrloc_scscf-create.sql
+  * ims_usrloc_scscf-create.sql
   * presence-create.sql
   * standard-create.sql
