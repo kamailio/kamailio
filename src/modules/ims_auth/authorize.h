@@ -52,7 +52,7 @@
 #include "rfc2617.h"
 #include "sip_messages.h"
 #include "cxdx_mar.h"
-#include "auth_vector.h"
+#include "../tm/h_table.h"
 
 
 #define NONCE_LEN 16
@@ -77,6 +77,33 @@ enum authorization_types
 	AUTH_NASS_BUNDLED = 8
 };
 
+/** Enumeration for the Authorization Vector status */
+enum auth_vector_status
+{
+	AUTH_VECTOR_UNUSED = 0,
+	AUTH_VECTOR_SENT = 1,
+	AUTH_VECTOR_USELESS = 2, /**< invalidated, marked for deletion 		*/
+	AUTH_VECTOR_USED = 3	 /**< the vector has been successfully used	*/
+};
+
+/** Authorization Vector storage structure */
+typedef struct _auth_vector
+{
+	int item_number;	/**< index of the auth vector		*/
+	unsigned char type; /**< type of authentication vector 	*/
+	str authenticate;	/**< challenge (rand|autn in AKA)	*/
+	str authorization;	/**< expected response				*/
+	str ck;				/**< Cypher Key						*/
+	str ik;				/**< Integrity Key					*/
+	time_t expires;		/**< expires in (after it is sent)	*/
+	uint32_t use_nb;	/**< number of use (nonce count) */
+
+	int is_locally_generated; /**< flag to indicate if the vector was generated locally, not on the HSS */
+
+	enum auth_vector_status status; /**< current status		*/
+	struct _auth_vector *next;		/**< next av in the list		*/
+	struct _auth_vector *prev;		/**< previous av in the list	*/
+} auth_vector;
 
 /** Set of auth_vectors used by a private id */
 typedef struct _auth_userdata
