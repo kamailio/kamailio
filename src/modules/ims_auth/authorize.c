@@ -736,6 +736,11 @@ int ims_resync_auth(struct sip_msg *msg, str *proute_name, str *prealm)
 		}
 	}
 
+	if(ims_auth_av_mode == 1) {
+		LM_ERR("failed to resync locally generated av\n");
+		return CSCF_RETURN_ERROR;
+	}
+
 	//before we send lets suspend the transaction
 	t = tmb.t_gett();
 	if(t == NULL || t == T_UNDEFINED) {

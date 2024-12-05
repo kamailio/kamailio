@@ -75,10 +75,11 @@ static int auth_fixup_free(void **param, int param_no);
 static int challenge_fixup_async(void **param, int param_no);
 static int challenge_fixup_async_free(void **param, int param_no);
 
-struct cdp_binds cdpb;
+struct cdp_binds cdpb = {0};
 
 /*! API structures */
-struct tm_binds tmb; /**< Structure with pointers to tm funcs 				*/
+struct tm_binds tmb = {
+		0}; /**< Structure with pointers to tm funcs 				*/
 
 gcrypt_api_t gcryptapi = {0};
 
@@ -245,10 +246,12 @@ static int mod_init(void)
 		max_nonce_reuse = 0;
 	}
 
-	/* load the CDP API */
-	if(load_cdp_api(&cdpb) != 0) {
-		LM_ERR("can't load CDP API\n");
-		return -1;
+	if(ims_auth_av_mode == 0) {
+		/* load the CDP API */
+		if(load_cdp_api(&cdpb) != 0) {
+			LM_ERR("can't load CDP API\n");
+			return -1;
+		}
 	}
 
 	/* load the TM API */
