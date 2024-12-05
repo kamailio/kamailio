@@ -65,55 +65,6 @@
 int _uac_reg_gc_interval = 150;
 int _uac_reg_reload_delta = 30;
 
-typedef struct _reg_uac
-{
-	unsigned int h_uuid;
-	unsigned int h_user;
-	str l_uuid;
-	str l_username;
-	str l_domain;
-	str r_username;
-	str r_domain;
-	str realm;
-	str auth_proxy;
-	str auth_username;
-	str auth_password;
-	str auth_ha1;
-	str callid;
-	str contact_addr;
-	str socket;
-	unsigned int cseq;
-	unsigned int flags;
-	unsigned int expires;
-	time_t timer_expires;
-	unsigned int reg_delay;
-	time_t reg_init;
-	gen_lock_t *lock;
-} reg_uac_t;
-
-typedef struct _reg_item
-{
-	reg_uac_t *r;
-	struct _reg_item *next;
-} reg_item_t;
-
-
-typedef struct _reg_entry
-{
-	unsigned int isize;
-	unsigned int usize;
-	reg_item_t *byuser;
-	reg_item_t *byuuid;
-	gen_lock_t lock;
-} reg_entry_t;
-
-typedef struct _reg_ht
-{
-	unsigned int htsize;
-	time_t stime;
-	reg_entry_t *entries;
-} reg_ht_t;
-
 static reg_ht_t *_reg_htable = NULL;
 static reg_ht_t *_reg_htable_gc = NULL;
 static gen_lock_t *_reg_htable_gc_lock = NULL;
@@ -2102,9 +2053,48 @@ static void rpc_uac_reg_active(rpc_t *rpc, void *ctx)
 	}
 }
 
+static const char *rpc_uac_reg_register_doc[2] = {
+		"Send a register request.", 0};
+
+static void rpc_uac_reg_register(rpc_t *rpc, void *ctx)
+{
+	reg_uac_t *reg = NULL;
+	str attr = {0};
+	str val = {0};
+	int ret;
+
+	if(_reg_htable == NULL) {
+		rpc->fault(ctx, 500, "Not enabled");
+		return;
+	}
+
+	if(rpc->scan(ctx, "S.S", &attr, &val) < 2) {
+		rpc->fault(ctx, 400, "Invalid Parameters");
+		return;
+	}
+	if(attr.len <= 0 || attr.s == NULL || val.len <= 0 || val.s == NULL) {
+		LM_ERR("bad parameter values\n");
+		rpc->fault(ctx, 400, "Invalid Parameter Values");
+		return;
+	}
+
+	ret = reg_ht_get_byfilter(&reg, &attr, &val);
+	if(ret == 0) {
+		rpc->fault(ctx, 404, "Record not found");
+		return;
+	} else if(ret < 0) {
+		rpc->fault(ctx, 400, "Unsupported filter attribute");
+		return;
+	}
+
+	uac_reg_send(reg, time(NULL));
+
+	lock_release(reg->lock);
+	return;
+}
+
 static const char *rpc_uac_reg_unregister_doc[2] = {
 		"Send a register request with expires 0.", 0};
-
 
 static void rpc_uac_reg_unregister(rpc_t *rpc, void *ctx)
 {
@@ -2154,6 +2144,7 @@ rpc_export_t uac_reg_rpc[] = {
 		{"uac.reg_remove", rpc_uac_reg_remove, rpc_uac_reg_remove_doc, 0},
 		{"uac.reg_add", rpc_uac_reg_add, rpc_uac_reg_add_doc, 0},
 		{"uac.reg_active", rpc_uac_reg_active, rpc_uac_reg_active_doc, 0},
+		{"uac.reg_register", rpc_uac_reg_register, rpc_uac_reg_register_doc, 0},
 		{"uac.reg_unregister", rpc_uac_reg_unregister,
 				rpc_uac_reg_unregister_doc, 0},
 		{0, 0, 0, 0}};
