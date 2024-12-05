@@ -33,11 +33,15 @@
         </listitem>
 
         <listitem>
-          <para>CDP - C Diameter Peer</para>
+          <para>CDP - C Diameter Peer (for av_mode=0)</para>
         </listitem>
 
         <listitem>
-          <para>CDP_AVP - CDP AVP Applications</para>
+          <para>CDP_AVP - CDP AVP Applications (for av_mode=0)</para>
+        </listitem>
+
+        <listitem>
+          <para>GCRYPT - GNU Crypto functions (for av_mode=1)</para>
         </listitem>
       </itemizedlist>
     </section>
