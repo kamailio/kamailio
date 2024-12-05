@@ -1582,8 +1582,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.pipelimit
 %doc %{_docdir}/kamailio/modules/README.posops
 %doc %{_docdir}/kamailio/modules/README.prefix_route
-%doc %{_docdir}/kamailio/modules/README.print
-%doc %{_docdir}/kamailio/modules/README.print_lib
 %doc %{_docdir}/kamailio/modules/README.pv
 %doc %{_docdir}/kamailio/modules/README.pv_headers
 %doc %{_docdir}/kamailio/modules/README.pvtpl
@@ -1672,8 +1670,6 @@ fi
 %endif
 
 %dir %{_libdir}/kamailio
-%{_libdir}/kamailio/libprint.so.1
-%{_libdir}/kamailio/libprint.so.1.2
 %{_libdir}/kamailio/libsrdb1.so.1
 %{_libdir}/kamailio/libsrdb1.so.1.0
 %{_libdir}/kamailio/libsrdb2.so.1
@@ -1747,8 +1743,6 @@ fi
 %{_libdir}/kamailio/modules/pipelimit.so
 %{_libdir}/kamailio/modules/posops.so
 %{_libdir}/kamailio/modules/prefix_route.so
-%{_libdir}/kamailio/modules/print.so
-%{_libdir}/kamailio/modules/print_lib.so
 %{_libdir}/kamailio/modules/pua_rpc.so
 %{_libdir}/kamailio/modules/pv.so
 %{_libdir}/kamailio/modules/pv_headers.so
