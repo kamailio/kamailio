@@ -362,6 +362,20 @@ modparam("ims_auth", "av_check_only_impu", 1)
 </programlisting>
       </example>
     </section>
+
+    <section>
+      <title><varname>av_mode</varname> (integer)</title>
+	  <para>Control how authentication vector is generated: 0 - get it from HSS
+      via DIAMETER; 1 - generate it locally. Default is 0.</para>
+      <example>
+        <title><varname>av_mode</varname> parameter usage</title>
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "av_mode", 1)
+...
+</programlisting>
+      </example>
+    </section>
   </section>
 
   <section>
