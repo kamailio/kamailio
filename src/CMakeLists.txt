@@ -28,7 +28,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/defs.cmake)
 
 # -----------------------
 # The following produces core/autover.h Find Git
-find_package(Git REQUIRED)
+find_package(Git QUIET)
 
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
   execute_process(
