@@ -24,6 +24,8 @@
 
 #include <stdint.h>
 
+#include "../../core/sr_module.h"
+
 typedef void *(*gcrypt_aes128_context_init_f)(uint8_t key[16]);
 typedef void (*gcrypt_aes128_context_destroy_f)(void **context);
 typedef int (*gcrypt_aes128_encrypt_f)(
