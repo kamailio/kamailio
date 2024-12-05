@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "aes128.h"
+#include "gcrypt_aes128.h"
 
 #include "../../core/dprint.h"
 
