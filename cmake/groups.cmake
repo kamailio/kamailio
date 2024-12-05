@@ -149,7 +149,7 @@ set(MOD_LIST_DBUID db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags
 )
 
 # * modules for devel purposes
-set(MOD_LIST_DEVEL misctest print print_lib)
+set(MOD_LIST_DEVEL misctest)
 
 # * modules depending on pcre3 library
 set(MOD_LIST_PCRE dialplan lcr regex)
