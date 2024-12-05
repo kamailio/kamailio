@@ -36,6 +36,8 @@
 #include "../../core/kemi.h"
 
 #include "gcrypt_uuid.h"
+#include "gcrypt_aes128.h"
+#include "api.h"
 
 MODULE_VERSION
 
@@ -54,12 +56,15 @@ static int _gcrypt_register_callid = 0;
 static int _gcrypt_aes_mode_param = 0;
 static int _gcrypt_aes_mode = GCRY_CIPHER_MODE_ECB;
 
+int bind_gcrypt(gcrypt_api_t *api);
+
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"gcrypt_aes_encrypt", (cmd_function)w_gcrypt_aes_encrypt, 3,
 			fixup_spve2_pvar, fixup_free_spve2_pvar, ANY_ROUTE},
 	{"gcrypt_aes_decrypt", (cmd_function)w_gcrypt_aes_decrypt, 3,
 			fixup_spve2_pvar, fixup_free_spve2_pvar, ANY_ROUTE},
+	{"bind_gcrypt", (cmd_function)bind_gcrypt, 0, 0, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -398,6 +403,22 @@ static int w_gcrypt_aes_decrypt(
 	return ki_gcrypt_aes_decrypt_helper(msg, &ins, &keys, dst);
 }
 
+/**
+ *
+ */
+int bind_gcrypt(gcrypt_api_t *api)
+{
+	if(!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+	api->aes128_context_init = aes128_context_init;
+	api->aes128_context_destroy = aes128_context_destroy;
+	api->aes128_encrypt = aes128_encrypt;
+	api->aes128_decrypt = aes128_decrypt;
+
+	return 0;
+}
 
 /**
  *
