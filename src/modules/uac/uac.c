@@ -107,6 +107,10 @@ static int w_uac_reg_status(struct sip_msg *msg, char *src, char *dst);
 static int w_uac_reg_request_to(struct sip_msg *msg, char *src, char *mode_s);
 static int w_uac_reg_enable(struct sip_msg *msg, char *pfilter, char *pval);
 static int w_uac_reg_disable(struct sip_msg *msg, char *pfilter, char *pval);
+static int w_uac_reg_send_register(
+		struct sip_msg *msg, char *pfilter, char *pval);
+static int w_uac_reg_send_unregister(
+		struct sip_msg *msg, char *pfilter, char *pval);
 static int w_uac_reg_refresh(struct sip_msg *msg, char *pluuid, char *p2);
 static int mod_init(void);
 static void mod_destroy(void);
@@ -162,6 +166,10 @@ static cmd_export_t cmds[] = {
 			fixup_free_spve_spve, ANY_ROUTE},
 	{"uac_reg_refresh", (cmd_function)w_uac_reg_refresh, 1, fixup_spve_null,
 			fixup_free_spve_null, ANY_ROUTE},
+	{"uac_reg_send_register", (cmd_function)w_uac_reg_send_register, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"uac_reg_send_unregister", (cmd_function)w_uac_reg_send_unregister, 2, fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+
 	{"bind_uac", (cmd_function)bind_uac, 1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -767,6 +775,73 @@ static int w_uac_reg_disable(struct sip_msg *msg, char *pfilter, char *pval)
 		return -1;
 	}
 	return uac_reg_disable(msg, &sfilter, &sval);
+}
+
+static int w_uac_reg_send_register(
+		struct sip_msg *msg, char *pfilter, char *pval)
+{
+	reg_uac_t *reg = NULL;
+	str sfilter;
+	str sval;
+	int ret;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pfilter, &sfilter) < 0) {
+		LM_ERR("cannot get the filter parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pval, &sval) < 0) {
+		LM_ERR("cannot get the value parameter\n");
+		return -1;
+	}
+
+	ret = reg_ht_get_byfilter(&reg, &sfilter, &sval);
+	if(ret == 0) {
+		LM_ERR("Record not found");
+		return -1;
+	} else if(ret < 0) {
+		LM_ERR("Unsupported filter attribute");
+		return -1;
+	}
+
+	uac_reg_send(reg, time(NULL));
+
+	/* Where is it getting locked? */
+	lock_release(reg->lock);
+	return 1;
+}
+
+static int w_uac_reg_send_unregister(
+		struct sip_msg *msg, char *pfilter, char *pval)
+{
+	reg_uac_t *reg = NULL;
+	str sfilter;
+	str sval;
+	int ret;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pfilter, &sfilter) < 0) {
+		LM_ERR("cannot get the filter parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pval, &sval) < 0) {
+		LM_ERR("cannot get the value parameter\n");
+		return -1;
+	}
+
+	ret = reg_ht_get_byfilter(&reg, &sfilter, &sval);
+	if(ret == 0) {
+		LM_ERR("Record not found");
+		return -1;
+	} else if(ret < 0) {
+		LM_ERR("Unsupported filter attribute");
+		return -1;
+	}
+
+	reg->expires = 0;
+	uac_reg_send(reg, time(NULL));
+
+	/* Where is it getting locked? */
+	lock_release(reg->lock);
+	return 1;
 }
 
 static int w_uac_reg_refresh(struct sip_msg *msg, char *pluuid, char *p2)
