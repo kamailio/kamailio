@@ -159,18 +159,24 @@ int sock_cb(CURL *e, curl_socket_t s, int what, void *cbp, void *sockp)
 {
 	struct http_m_global *g = (struct http_m_global *)cbp;
 	struct http_m_cell *cell = (struct http_m_cell *)sockp;
+	struct http_m_cell *cell_cmp = NULL;
 	const char *whatstr[] = {"none", "IN", "OUT", "INOUT", "REMOVE"};
 
 	LM_DBG("socket callback: s=%d e=%p what=%s\n", s, e, whatstr[what]);
 	if(what == CURL_POLL_REMOVE) {
 		/* if cell is NULL the handle has been removed by the event callback for timeout */
 		if(cell) {
-			if(cell->evset && cell->ev) {
-				LM_DBG("freeing event %p\n", cell->ev);
-				event_del(cell->ev);
-				event_free(cell->ev);
-				cell->ev = NULL;
-				cell->evset = 0;
+			cell_cmp = http_m_cell_lookup(e);
+			if(cell_cmp == cell) {
+				if(cell->evset && cell->ev) {
+					LM_DBG("freeing event %p\n", cell->ev);
+					event_del(cell->ev);
+					event_free(cell->ev);
+					cell->ev = NULL;
+					cell->evset = 0;
+				}
+			} else {
+				LM_DBG("REMOVE action without cell, handler timed out.\n");
 			}
 		} else {
 			LM_DBG("REMOVE action without cell, handler timed out.\n");
