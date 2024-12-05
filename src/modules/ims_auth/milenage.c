@@ -19,20 +19,20 @@
 
 #include <stdint.h>
 
-#include "aes128.h"
-
 #include "../../core/dprint.h"
 #include "../../core/rand/cryptorand.h"
+#include "../gcrypt/api.h"
 
+extern gcrypt_api_t gcryptapi;
 
 void RijndaelEncrypt(uint8_t out[16], uint8_t key[16], uint8_t in[16])
 {
-	void *context = aes128_context_init(key);
+	void *context = gcryptapi.aes128_context_init(key);
 	if(context == NULL) {
 		return;
 	}
-	aes128_encrypt(context, in, out);
-	aes128_context_destroy(&context);
+	gcryptapi.aes128_encrypt(context, in, out);
+	gcryptapi.aes128_context_destroy(&context);
 }
 
 

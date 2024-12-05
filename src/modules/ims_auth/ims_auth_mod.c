@@ -54,6 +54,7 @@
 #include "../../modules/sl/sl.h"
 #include "../cdp/cdp_load.h"
 #include "../tm/tm_load.h"
+#include "../gcrypt/api.h"
 #include "authorize.h"
 #include "ims_auth_mod.h"
 #include "cxdx_mar.h"
@@ -78,6 +79,8 @@ struct cdp_binds cdpb;
 
 /*! API structures */
 struct tm_binds tmb; /**< Structure with pointers to tm funcs 				*/
+
+gcrypt_api_t gcryptapi = {0};
 
 extern auth_hash_slot_t
 		*auth_data; /**< authentication vectors hast table 					*/
@@ -252,6 +255,14 @@ static int mod_init(void)
 	if(load_tm_api(&tmb) != 0) {
 		LM_ERR("can't load TM API\n");
 		return -1;
+	}
+
+	if(ims_auth_av_mode == 1) {
+		/* load the GCrypt API */
+		if(gcrypt_load_api(&gcryptapi) != 0) {
+			LM_ERR("can't load GCrypt API\n");
+			return -1;
+		}
 	}
 
 	/* Init the authorization data storage */
