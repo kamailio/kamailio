@@ -8,7 +8,7 @@ file(GLOB SRC_FILES "*.c")
 # Original target to be named as folder, so when included from lib/CMakeLists.txt
 # it will be named as lib/ims.so
 add_library(lib_ims SHARED ${SRC_FILES})
-target_link_libraries(lib_ims common kamailio)
+target_link_libraries(lib_ims common)
 
 # TODO: do we need version control?
 set_target_properties(

@@ -5,7 +5,7 @@ project(kamailio_lib_trie VERSION 1.0.0)
 file(GLOB SRC_FILES "*.c")
 
 add_library(lib_trie SHARED ${SRC_FILES})
-target_link_libraries(lib_trie common kamailio)
+target_link_libraries(lib_trie common)
 
 # TODO: do we need version control?
 set_target_properties(

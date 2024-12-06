@@ -5,7 +5,7 @@ project(kamailio_lib_srdb2 VERSION 1.0.0)
 file(GLOB SRC_FILES "*.c")
 
 add_library(lib_srdb2 SHARED ${SRC_FILES})
-target_link_libraries(lib_srdb2 common kamailio)
+target_link_libraries(lib_srdb2 common)
 
 set_target_properties(
   lib_srdb2 PROPERTIES VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}

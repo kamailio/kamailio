@@ -13,4 +13,3 @@ file(GLOB SRC_FILES "*.c")
 add_library(db_redis SHARED ${SRC_FILES})
 
 target_link_libraries(db_redis PRIVATE kamailio redis::redis)
-target_link_libraries(db_redis PRIVATE srdb1 srdb2)

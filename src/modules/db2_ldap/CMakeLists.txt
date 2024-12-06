@@ -19,4 +19,3 @@ target_include_directories(db2_ldap PRIVATE ${Ldap_INCLUDE_DIRS})
 target_link_libraries(
   db2_ldap PRIVATE kamailio ${LDAP_LIBRARIES} libsasl2::libsasl2
 )
-target_link_libraries(db2_ldap PRIVATE srdb2)

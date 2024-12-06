@@ -7,4 +7,3 @@ file(GLOB SRC_FILES "*.c")
 add_library(ims_charging SHARED ${SRC_FILES})
 
 target_link_libraries(ims_charging PRIVATE kamailio)
-target_link_libraries(ims_charging PRIVATE srdb1 kamailio_ims)

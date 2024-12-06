@@ -7,4 +7,3 @@ file(GLOB SRC_FILES "*.c")
 add_library(userblocklist SHARED ${SRC_FILES})
 
 target_link_libraries(userblocklist PRIVATE kamailio)
-target_link_libraries(userblocklist PRIVATE srdb1 trie)

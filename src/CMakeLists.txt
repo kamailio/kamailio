@@ -95,6 +95,10 @@ target_link_libraries(
     # https://stackoverflow.com/questions/73263834/cmake-how-to-set-rpath-in-a-shared-library-with-only-target-link-directories-w
     ${CMAKE_DL_LIBS} # dl -- dlopen and more
     resolv # resolv
+    lib_ims
+    lib_srdb1
+    lib_srdb2
+    lib_trie
 )
 # Make sure the cfg.tab.c and lex.yy.c are generated before building kamailio
 add_dependencies(kamailio GenerateParser)
