@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
 include(GNUInstallDirs)
 
 # # Check if LIBDIR is not defined if(NOT DEFINED LIBDIR) # Get the system
@@ -64,30 +62,54 @@ configure_file(
 )
 
 # -----------------------
+# Policy to enable the Generated property for files required before 3.20.
+# This policy allow for not checking if these files exist during the
+# configure process since they will be generated when building.
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.20)
+  # cmake_policy(VERSION 3.20)
+  # https://cmake.org/cmake/help/latest/policy/CMP0118.html#policy:CMP0118
+  # CMP0118
+  cmake_policy(SET CMP0118 NEW)
+else()
+  set_source_files_properties(
+    ${CMAKE_SOURCE_DIR}/src/core/lex.yy.c ${CMAKE_SOURCE_DIR}/src/core/cfg.tab.c
+    ${CMAKE_SOURCE_DIR}/src/core/cfg.tab.h PROPERTIES GENERATED TRUE
+  )
+endif()
+# -----------------------
+
+# -----------------------
+add_executable(kamailio ${CMAKE_CURRENT_SOURCE_DIR}/main.c)
+# Enable ENABLE_EXPORTS property so modules can link from symbols
+# found in kamailio executable.
+set_target_properties(
+  kamailio PROPERTIES ENABLE_EXPORTS TRUE OUTPUT_NAME ${MAIN_NAME}
+)
 
 add_subdirectory(core)
 add_subdirectory(lib)
 add_subdirectory(modules)
 
-# -----------------------
+# These sources are coming from core subdirectory.
+# Lib subdirecotry add it sources to kamailio target using target_sources
+# from their own CMakeLists.txt
+# Module subdiretory does not contribute to the Kamailio executable.
+target_sources(
+  kamailio PRIVATE ${kamailio_SRC_FILES} ${CMAKE_SOURCE_DIR}/src/core/lex.yy.c
+                   ${CMAKE_SOURCE_DIR}/src/core/cfg.tab.c
+)
 
-# We also set the GENERATED property to 1 because before CMake 3.20,
-# the GENERATED property was not set for files generated in other
-# CMakeLists.txt files.
-if(CMAKE_VERSION VERSION_LESS 3.20)
-  set_property(
-    SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/core/lex.yy.c PROPERTY GENERATED 1
-  )
-  set_property(
-    SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/core/cfg.tab.c PROPERTY GENERATED 1
-  )
-endif()
+# Debuggng the sources of kamailio executable.
+# get_property(
+#   kamailio_SRC_PROPERTY
+#   TARGET kamailio
+#   PROPERTY SOURCES
+# )
+# message(STATUS "kamailio target sources are: ${kamailio_SRC_PROPERTY}")
 
-add_executable(kamailio ${CMAKE_CURRENT_SOURCE_DIR}/main.c ${kamailio_SRC})
 target_link_libraries(
   kamailio
   PUBLIC
-    GenerateParser
     common
     m
     Threads::Threads # Pthread library
@@ -95,14 +117,6 @@ target_link_libraries(
     # https://stackoverflow.com/questions/73263834/cmake-how-to-set-rpath-in-a-shared-library-with-only-target-link-directories-w
     ${CMAKE_DL_LIBS} # dl -- dlopen and more
     resolv # resolv
-)
-# Make sure the cfg.tab.c and lex.yy.c are generated before building kamailio
-add_dependencies(kamailio GenerateParser)
-
-# Enable ENABLE_EXPORTS property so modules can link from symbols found in
-# main.c and core/*.
-set_target_properties(
-  kamailio PROPERTIES ENABLE_EXPORTS TRUE OUTPUT_NAME ${MAIN_NAME}
 )
 
 # Add the MODS_DIR definition required by main.c ---

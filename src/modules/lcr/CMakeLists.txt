@@ -16,4 +16,3 @@ file(GLOB SRC_FILES "*.c")
 add_library(lcr SHARED ${SRC_FILES})
 
 target_link_libraries(lcr PRIVATE kamailio PCRE2::8BIT)
-target_link_libraries(lcr PRIVATE srdb1)

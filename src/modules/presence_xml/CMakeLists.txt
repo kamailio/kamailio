@@ -10,4 +10,3 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(presence_xml SHARED ${SRC_FILES})
 target_link_libraries(presence_xml PRIVATE kamailio LibXml2::LibXml2 ICU::uc)
-target_link_libraries(presence_xml PRIVATE srdb1)

@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
 # This is just for Debugging and print the compile definitions and options
 # for the common target
 get_target_property(
@@ -22,7 +20,7 @@ find_package(BISON REQUIRED)
 
 # Generate lex.yy.c from cfg.lex
 add_custom_command(
-  OUTPUT ${CMAKE_SOURCE_DIR}/src/core/lex.yy.c
+  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
   COMMAND ${FLEX_EXECUTABLE} -o ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
           ${CMAKE_CURRENT_SOURCE_DIR}/cfg.lex
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cfg.lex
@@ -40,19 +38,21 @@ add_custom_command(
   COMMENT "Generating cfg.tab.c and cfg.tab.h from cfg.y"
 )
 
-# Add library target to ensure the above commands run
-add_library(
-  GenerateParser ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
-                 ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
+# Add custom target for generating the 3 source files mentioned above
+add_custom_target(
+  GenerateParser ALL
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
+          ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
+          ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.h
+  COMMENT "Generating parser source files"
 )
-# common_modules required so -fPIC is added to the compile options
-target_link_libraries(GenerateParser PUBLIC common common_modules)
 
 # -----------------------
 
 file(GLOB_RECURSE kamailio_SRC "*.c")
-set(kamailio_SRC
+set(kamailio_SRC_FILES
     ${kamailio_SRC}
     PARENT_SCOPE
 )
+# target_include_directories(kamailio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # message(STATUS "kamailio_SRC: ${kamailio_SRC}")

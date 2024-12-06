@@ -9,4 +9,3 @@ file(GLOB SRC_FILES "*.c")
 add_library(xcap_server SHARED ${SRC_FILES})
 
 target_link_libraries(xcap_server PRIVATE kamailio LibXml2::LibXml2)
-target_link_libraries(xcap_server PRIVATE srdb1)

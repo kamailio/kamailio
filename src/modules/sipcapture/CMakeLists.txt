@@ -7,4 +7,3 @@ file(GLOB SRC_FILES "*.c")
 add_library(sipcapture SHARED ${SRC_FILES})
 
 target_link_libraries(sipcapture PRIVATE kamailio)
-target_link_libraries(sipcapture PRIVATE srdb1)

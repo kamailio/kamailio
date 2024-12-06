@@ -9,4 +9,3 @@ file(GLOB SRC_FILES "*.c")
 add_library(ims_icscf SHARED ${SRC_FILES})
 
 target_link_libraries(ims_icscf PRIVATE kamailio LibXml2::LibXml2)
-target_link_libraries(ims_icscf PRIVATE srdb1 kamailio_ims)
