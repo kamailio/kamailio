@@ -26,8 +26,6 @@ else
 	LIBS += -L$(LOCALBASE)/lib -lxml2
 endif
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules
 
 install-cfg:
@@ -53,4 +51,3 @@ install-cfg:
 		mv -f $(cfg_prefix)/$(cfg_dir)/pi_framework.xml.sample \
 			$(cfg_prefix)/$(cfg_dir)/pi_framework.xml; \
 	fi
-
