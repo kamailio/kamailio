@@ -47,6 +47,4 @@ endif
 DEFS+=$(HIREDISDEFS) $(LEVENTDEFS)
 LIBS=$(HIREDISLIBS) $(LEVENTLIBS)
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules
