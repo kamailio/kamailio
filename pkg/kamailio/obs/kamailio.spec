@@ -1673,12 +1673,6 @@ fi
 %endif
 
 %dir %{_libdir}/kamailio
-%{_libdir}/kamailio/libsrdb1.so.1
-%{_libdir}/kamailio/libsrdb1.so.1.0
-%{_libdir}/kamailio/libsrdb2.so.1
-%{_libdir}/kamailio/libsrdb2.so.1.0
-%{_libdir}/kamailio/libtrie.so.1
-%{_libdir}/kamailio/libtrie.so.1.0
 
 %dir %{_libdir}/kamailio/modules
 %{_libdir}/kamailio/modules/acc.so
@@ -1960,9 +1954,6 @@ fi
 %if %{with ims}
 %files      ims
 %defattr(-,root,root)
-%{_libdir}/kamailio/libkamailio_ims.so.0
-%{_libdir}/kamailio/libkamailio_ims.so.0.1
-
 %doc %{_docdir}/kamailio/modules/README.cdp
 %doc %{_docdir}/kamailio/modules/README.cdp_avp
 %doc %{_docdir}/kamailio/modules/README.ims_auth
