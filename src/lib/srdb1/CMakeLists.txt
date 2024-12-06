@@ -5,7 +5,7 @@ project(kamailio_lib_srdb1 VERSION 1.0.0)
 file(GLOB SRC_FILES "*.c")
 
 add_library(lib_srdb1 SHARED ${SRC_FILES})
-target_link_libraries(lib_srdb1 common kamailio)
+target_link_libraries(lib_srdb1 common)
 
 # TODO: do we need version control?
 set_target_properties(

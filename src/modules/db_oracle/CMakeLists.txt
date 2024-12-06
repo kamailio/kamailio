@@ -13,4 +13,3 @@ target_include_directories(db_oracle PRIVATE ${Oracle_INCLUDE_DIRS}
 target_link_libraries(db_oracle PRIVATE occi clntsh)
 
 target_link_libraries(db_oracle PRIVATE kamailio)
-target_link_libraries(db_oracle PRIVATE srdb1)
