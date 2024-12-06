@@ -12,8 +12,6 @@ auto_gen=
 NAME=db_text.so
 LIBS=
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules
 
 ifeq ($(INSTALL_FLAVOUR),kamailio)
