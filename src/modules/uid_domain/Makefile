@@ -8,6 +8,4 @@ auto_gen=
 NAME=uid_domain.so
 LIBS=
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb2/srdb2
 include ../../Makefile.modules
