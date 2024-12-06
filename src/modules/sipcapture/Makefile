@@ -9,6 +9,4 @@ auto_gen=
 NAME=sipcapture.so
 LIBS=
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules
