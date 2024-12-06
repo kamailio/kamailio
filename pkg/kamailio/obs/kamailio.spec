@@ -1200,6 +1200,7 @@ sed -i -e 's/python3/python2/' utils/kamctl/dbtextdb/dbtextdb.py
 # on latest dist need to add --atexit=no for Kamailio options. More details GH #2616
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
 sed -i -e 's|/usr/sbin/kamailio|/usr/sbin/kamailio --atexit=no|' pkg/kamailio/obs/kamailio.service
+sed -i -e 's|/usr/sbin/kamailio|/usr/sbin/kamailio --atexit=no|' pkg/kamailio/obs/kamailio@.service
 %endif
 
 
@@ -1449,6 +1450,7 @@ install -m755 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.init \
 # systemd
 install -d %{buildroot}%{_unitdir}
 install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.service %{buildroot}%{_unitdir}/kamailio.service
+install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio@.service %{buildroot}%{_unitdir}/kamailio@.service
 install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.service %{buildroot}%{_unitdir}/sipcapture.service
 install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.tmpfiles %{buildroot}%{_tmpfilesdir}/kamailio.conf
 install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.tmpfiles %{buildroot}%{_tmpfilesdir}/sipcapture.conf
@@ -1680,6 +1682,7 @@ fi
 %dir %attr(-,kamailio,kamailio) %{_var}/run/kamailio
 %else
 %{_unitdir}/kamailio.service
+%{_unitdir}/kamailio@.service
 %{_tmpfilesdir}/kamailio.conf
 %endif
 
