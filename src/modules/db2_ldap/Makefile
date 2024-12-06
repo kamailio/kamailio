@@ -15,6 +15,4 @@ DEFS += -Wall -DOPENLDAP23 -DLDAP_DEPRECATED
 
 LIBS=-L$(LOCALBASE)/lib -L /usr/lib -lldap
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb2/srdb2
 include ../../Makefile.modules
