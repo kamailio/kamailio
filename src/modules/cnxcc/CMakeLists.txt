@@ -14,5 +14,3 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(cnxcc SHARED ${SRC_FILES})
 target_link_libraries(cnxcc PRIVATE kamailio redis::redis event::event)
-
-target_link_libraries(cnxcc PRIVATE srdb1)

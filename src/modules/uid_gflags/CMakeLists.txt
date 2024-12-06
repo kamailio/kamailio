@@ -7,4 +7,3 @@ file(GLOB SRC_FILES "*.c")
 add_library(uid_gflags SHARED ${SRC_FILES})
 
 target_link_libraries(uid_gflags PRIVATE kamailio)
-target_link_libraries(uid_gflags PRIVATE srdb2)

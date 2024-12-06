@@ -14,4 +14,3 @@ file(GLOB SRC_FILES "*.c")
 add_library(db_mongodb SHARED ${SRC_FILES})
 
 target_link_libraries(db_mongodb PRIVATE kamailio mongoc::mongoc)
-target_link_libraries(db_mongodb PRIVATE srdb1)

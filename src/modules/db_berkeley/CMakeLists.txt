@@ -9,4 +9,3 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(db_berkeley SHARED ${SRC_FILES})
 target_link_libraries(db_berkeley PRIVATE kamailio BerkeleyDB::BerkeleyDB)
-target_link_libraries(db_berkeley PRIVATE srdb1)

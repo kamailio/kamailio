@@ -30,4 +30,3 @@ add_library(kazoo SHARED ${SRC_FILES})
 target_link_libraries(
   kazoo PRIVATE kamailio json-c::json-c rabbitmq::rabbitmq uuid::uuid
 )
-target_link_libraries(kazoo PRIVATE srdb1)

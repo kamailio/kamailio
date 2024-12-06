@@ -11,4 +11,3 @@ file(GLOB SRC_FILES "*.c")
 add_library(ims_ipsec_pcscf SHARED ${SRC_FILES})
 
 target_link_libraries(ims_ipsec_pcscf PRIVATE kamailio libmnl::libmnl)
-target_link_libraries(ims_ipsec_pcscf PRIVATE kamailio_ims)
