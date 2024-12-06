@@ -15,10 +15,6 @@ DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/BerkeleyDB.4.6/include \
 
 LIBS=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -L$(LOCALBASE)/BerkeleyDB.4.6/lib -ldb
 
-SERLIBPATH=../../lib
-SER_LIBS=$(SERLIBPATH)/srdb2/srdb1
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb2
-
 include ../../Makefile.modules
 
 ifeq ($(INSTALL_FLAVOUR),kamailio)
