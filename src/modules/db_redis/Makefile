@@ -73,9 +73,6 @@ ifneq ($(HIREDIS_CLUSTER_BUILDER),)
 	LIBS+=$(HIREDISCLUSTERLIBS)
 endif
 
-SERLIBPATH=../../lib
-SER_LIBS=$(SERLIBPATH)/srdb2/srdb2 $(SERLIBPATH)/srdb1/srdb1
-
 include ../../Makefile.modules
 
 install-redis-scripts: $(bin_prefix)/$(bin_dir)
