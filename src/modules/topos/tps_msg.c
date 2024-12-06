@@ -1081,6 +1081,14 @@ int tps_response_received(sip_msg_t *msg)
 	tps_reappend_rr(msg, &btsd, &btsd.x_rr);
 	tps_append_xbranch(msg, &mtsd.x_vbranch1);
 
+	if(msg->first_line.u.reply.statuscode > 299
+			&& (get_cseq(msg)->method_id
+					& (METHOD_INVITE | METHOD_SUBSCRIBE))) {
+		LM_DBG("%d reply end dialog storage\n",
+				msg->first_line.u.reply.statuscode);
+		tps_storage_end_dialog(msg, &mtsd, &stsd);
+	}
+
 	return 0;
 
 error:
