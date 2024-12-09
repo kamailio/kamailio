@@ -270,7 +270,7 @@ error:
  * Initialize database module
  * \note No function should be called before this
  */
-db1_con_t *db_do_init(const str *url, void *(*new_connection)())
+db1_con_t *db_do_init(const str *url, void *(*new_connection)(struct db_id *))
 {
 	return db_do_init2(url, *new_connection, DB_POOLING_PERMITTED);
 }
@@ -280,8 +280,8 @@ db1_con_t *db_do_init(const str *url, void *(*new_connection)())
  * Initialize database module
  * \note No function should be called before this
  */
-db1_con_t *db_do_init2(
-		const str *url, void *(*new_connection)(), db_pooling_t pooling)
+db1_con_t *db_do_init2(const str *url, void *(*new_connection)(struct db_id *),
+		db_pooling_t pooling)
 {
 	struct db_id *id;
 	void *con;
@@ -347,7 +347,7 @@ err:
  * Shut down database module
  * \note No function should be called after this
  */
-void db_do_close(db1_con_t *_h, void (*free_connection)())
+void db_do_close(db1_con_t *_h, void (*free_connection)(struct pool_con *))
 {
 	struct pool_con *con;
 
