@@ -23,6 +23,9 @@ message(STATUS "VERSIONVAL: ${VERSIONVAL}")
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED True)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
+
+include(${CMAKE_SOURCE_DIR}/cmake/BuildType.cmake)
 # -----------------------
 # Main project name
 # -----------------------
@@ -36,8 +39,6 @@ set(CFG_NAME
     "kamailio"
     CACHE STRING "Config name"
 )
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 # Add the source directory
 add_subdirectory(src)
