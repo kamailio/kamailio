@@ -1,13 +1,9 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(websocket)
-
 find_package(OpenSSL REQUIRED)
 
 file(GLOB SRC_FILES "*.c")
 
 add_library(websocket SHARED ${SRC_FILES})
-target_link_libraries(websocket PRIVATE kamailio OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(websocket PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 
 # TODO: Verify if correct
 if(EMBEDDED_UTF8_DECODE EQUAL 0)

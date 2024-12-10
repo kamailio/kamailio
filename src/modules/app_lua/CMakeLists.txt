@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(app_lua)
-
 file(GLOB SRC_FILES "*.c")
 
 option(LUAJIT "Enable LuaJIT (for app_lua modules)" OFF)
@@ -19,4 +15,4 @@ add_library(app_lua SHARED ${SRC_FILES})
 # the LUA_COMPAT_MODULE fixes this error: implicit declaration of function ‘luaL_openlib
 target_compile_definitions(app_lua PRIVATE LUA_COMPAT_MODULE)
 target_include_directories(app_lua PRIVATE ${LUA_INCLUDE_DIRS})
-target_link_libraries(app_lua PRIVATE kamailio ${LUA_LIBRARIES})
+target_link_libraries(app_lua PRIVATE ${LUA_LIBRARIES})

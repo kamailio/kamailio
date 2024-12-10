@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(nsq)
-
 find_package(Libev REQUIRED)
 
 find_package(json-c QUIET)
@@ -24,6 +20,5 @@ add_library(nsq SHARED ${SRC_FILES})
 
 # TODO: verify -l is required to avoid linking to itself?
 target_link_libraries(
-  nsq PRIVATE kamailio json-c::json-c CURL::libcurl Libev::Libev -lnsq
-              evbuffsock
+  nsq PRIVATE json-c::json-c CURL::libcurl Libev::Libev -lnsq evbuffsock
 )

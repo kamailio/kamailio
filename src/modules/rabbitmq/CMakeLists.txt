@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(rabbitmq)
-
 find_package(rabbitmq-c 0.13 QUIET)
 if(NOT rabbitmq-c_FOUND)
   message(STATUS "rabbitmq-c not found. looking with pkg-config")
@@ -22,4 +18,4 @@ if(rabbitmq-c_VERSION VERSION_GREATER_EQUAL "0.13")
   target_compile_definitions(rabbitmq PRIVATE RABBITMQ_DEPRECATION)
 endif()
 
-target_link_libraries(rabbitmq PRIVATE kamailio rabbitmq::rabbitmq uuid::uuid)
+target_link_libraries(rabbitmq PRIVATE rabbitmq::rabbitmq uuid::uuid)

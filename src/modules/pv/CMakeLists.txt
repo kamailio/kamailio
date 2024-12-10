@@ -1,9 +1,5 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(pv)
-
 file(GLOB SRC_FILES "*.c")
 
 add_library(pv SHARED ${SRC_FILES})
-target_link_libraries(pv PRIVATE kamailio)
+# target_link_libraries(.*PRIVATE)
 # target_compile_definitions(pv PRIVATE STATISTICS)

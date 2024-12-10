@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(ruxc)
-
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(libruxc REQUIRED IMPORTED_TARGET libruxc)
 add_library(libruxc::libruxc ALIAS PkgConfig::libruxc)
@@ -15,4 +11,4 @@ if(APPLE)
     ruxc PRIVATE "-framework CoreFoundation" "-framework Security"
   )
 endif()
-target_link_libraries(ruxc PRIVATE kamailio libruxc::libruxc)
+target_link_libraries(ruxc PRIVATE libruxc::libruxc)

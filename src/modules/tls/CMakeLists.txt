@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-project(tls)
-
 # Options
 option(LIBSSL_STATIC "Link with static libraries" OFF)
 option(LIBSSL_STATIC_SRCLIB "Link with static libraries compiled from source"

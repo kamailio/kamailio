@@ -1,9 +1,5 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(domain)
-
 file(GLOB SRC_FILES "*.c")
 
 add_library(domain SHARED ${SRC_FILES})
 
-target_link_libraries(domain PRIVATE kamailio)
+# target_link_libraries(.*PRIVATE)

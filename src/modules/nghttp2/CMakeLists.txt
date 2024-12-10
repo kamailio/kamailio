@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(nghttp2)
-
 find_package(OpenSSL REQUIRED)
 find_package(PkgConfig REQUIRED)
 
@@ -15,6 +11,5 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(nghttp2 SHARED ${SRC_FILES})
 target_link_libraries(
-  nghttp2 PRIVATE kamailio nghttp2::nghttp2 event::event OpenSSL::SSL
-                  OpenSSL::Crypto
+  nghttp2 PRIVATE nghttp2::nghttp2 event::event OpenSSL::SSL OpenSSL::Crypto
 )

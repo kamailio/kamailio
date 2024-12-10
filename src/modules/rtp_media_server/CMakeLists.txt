@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(rtp_media_server)
-
 find_package(ortp QUIET)
 if(NOT ortp_FOUND)
   find_package(PkgConfig REQUIRED)
@@ -21,4 +17,4 @@ file(GLOB SRC_FILES "*.c")
 add_library(rtp_media_server SHARED ${SRC_FILES})
 
 target_link_libraries(rtp_media_server PRIVATE ortp mediastreamer2)
-target_link_libraries(rtp_media_server PRIVATE kamailio)
+# target_link_libraries(.*PRIVATE)

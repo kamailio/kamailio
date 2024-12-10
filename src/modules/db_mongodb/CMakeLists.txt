@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(db_mongodb)
-
 # libmongoc-1.0 is required for this module
 # Missing dependency on Ubuntu 20.04 of libzstd-dev
 # find_package(zstd REQUIRED)
@@ -13,4 +9,4 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(db_mongodb SHARED ${SRC_FILES})
 
-target_link_libraries(db_mongodb PRIVATE kamailio mongoc::mongoc)
+target_link_libraries(db_mongodb PRIVATE mongoc::mongoc)

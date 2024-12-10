@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(secsipid_proc)
-
 find_package(Threads REQUIRED)
 
 find_package(PkgConfig REQUIRED)
@@ -18,4 +14,4 @@ if(APPLE)
   )
 endif()
 
-target_link_libraries(secsipid_proc PRIVATE kamailio secsipid Threads::Threads)
+target_link_libraries(secsipid_proc PRIVATE secsipid Threads::Threads)

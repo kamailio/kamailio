@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(kafka)
-
 file(GLOB SRC_FILES "*.c")
 
 find_package(RdKafka QUIET)
@@ -13,4 +9,4 @@ if(NOT RdKafka_FOUND)
 endif()
 
 add_library(kafka SHARED ${SRC_FILES})
-target_link_libraries(kafka PRIVATE kamailio rdkafka++)
+target_link_libraries(kafka PRIVATE rdkafka++)

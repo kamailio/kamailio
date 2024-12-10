@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(jwt)
-
 file(GLOB SRC_FILES "*.c")
 
 find_package(libjwt 1.12 QUIET)
@@ -13,4 +9,4 @@ if(NOT libjwt_FOUND)
 endif()
 
 add_library(jwt SHARED ${SRC_FILES})
-target_link_libraries(jwt PRIVATE kamailio jwt::libjwt)
+target_link_libraries(jwt PRIVATE jwt::libjwt)

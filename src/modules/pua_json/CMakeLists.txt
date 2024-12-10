@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(pua_json)
-
 find_package(json-c QUIET)
 if(NOT json-c_FOUND)
   message(STATUS "json-c not found. looking with pkg-config")
@@ -13,4 +9,4 @@ endif()
 file(GLOB SRC_FILES "*.c")
 
 add_library(pua_json SHARED ${SRC_FILES})
-target_link_libraries(pua_json PRIVATE kamailio json-c::json-c)
+target_link_libraries(pua_json PRIVATE json-c::json-c)

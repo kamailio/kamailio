@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(json)
-
 file(GLOB SRC_FILES "*.c")
 
 find_package(json-c QUIET)
@@ -13,4 +9,4 @@ if(NOT json-c_FOUND)
 endif()
 
 add_library(json SHARED ${SRC_FILES})
-target_link_libraries(json PRIVATE kamailio json-c::json-c)
+target_link_libraries(json PRIVATE json-c::json-c)

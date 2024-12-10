@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(tlsa)
-
 # Find packages
 find_package(ZLIB REQUIRED)
 find_package(Threads REQUIRED)
@@ -32,4 +28,4 @@ else()
   )
 endif()
 
-target_link_libraries(tlsa PRIVATE kamailio)
+# target_link_libraries(.*PRIVATE)

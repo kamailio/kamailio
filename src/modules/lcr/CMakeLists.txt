@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(lcr)
-
 find_package(pcre2 QUIET)
 if(NOT pcre2_FOUND)
   message(STATUS "PCRE2 library not found... looking with pkg-config")
@@ -15,4 +11,4 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(lcr SHARED ${SRC_FILES})
 
-target_link_libraries(lcr PRIVATE kamailio PCRE2::8BIT)
+target_link_libraries(lcr PRIVATE PCRE2::8BIT)

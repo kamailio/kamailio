@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(phonenum)
-
 # TODO: Support for find_package added after version 8.13.4
 find_package(libphonenumber CONFIG QUIET)
 if(libphonenumber_FOUND)
@@ -49,4 +45,4 @@ target_compile_options(
 )
 
 target_include_directories(phonenum PRIVATE ${libphonenumber_INCLUDE_DIRS})
-target_link_libraries(phonenum PRIVATE kamailio ${libphonenum_LIBRARY})
+target_link_libraries(phonenum PRIVATE ${libphonenum_LIBRARY})
