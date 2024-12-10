@@ -33,7 +33,7 @@ set(SCHEME ${ROOTDIR}/utils/kamctl)
 set(CATALOG ${ROOTDIR}/doc/stylesheets/dbschema_k/catalog.xml)
 # List of XML files
 file(GLOB TABLES "${CMAKE_CURRENT_SOURCE_DIR}/schema/kamailio-*.xml")
-message(WARNING "TABLES : ${TABLES}")
+# message(WARNING "TABLES : ${TABLES}")
 set(EXTRACTED_TABLES "")
 foreach(TABLE ${TABLES})
   get_filename_component(TABLE_NAME "${TABLE}" NAME)
@@ -61,9 +61,9 @@ function(add_db_target db_name xsl_file)
     add_custom_command(
       TARGET dbschema_${db_name}
       COMMAND
-        ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS} --stringparam dir
-        "${SCHEME}/${db_name}" --stringparam prefix "${TABLE}-" --stringparam db
-        "${db_name}" "${xsl_file}"
+        XML_CATALOG_FILES=${CATALOG} ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS}
+        --stringparam dir "${SCHEME}/${db_name}" --stringparam prefix
+        "${TABLE}-" --stringparam db "${db_name}" "${xsl_file}"
         "${CMAKE_CURRENT_SOURCE_DIR}/schema/kamailio-${TABLE}.xml"
       WORKING_DIRECTORY "${SCHEME}/${db_name}"
       COMMENT "Processing ${TABLE} for ${db_name}"
@@ -99,4 +99,16 @@ add_custom_target(
           dbschema_db_sqlite
           dbschema_mongodb
           dbschema_db_redis
+)
+
+add_custom_target(
+  dbschema_clean
+  DEPENDS dbschema_mysql_clean
+          dbschema_postgres_clean
+          dbschema_oracle_clean
+          dbschema_dbtext_clean
+          dbschema_db_berkeley_clean
+          dbschema_db_sqlite_clean
+          dbschema_mongodb_clean
+          dbschema_db_redis_clean
 )
