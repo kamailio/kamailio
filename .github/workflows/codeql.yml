@@ -19,18 +19,19 @@ jobs:
       matrix:
         language: [ javascript, cpp, python ]
 
+    container:
+      image: ghcr.io/kamailio/pkg-kamailio-docker:${{ github.ref_name }}-bookworm
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      volumes:
+        - ${{ github.workspace }}:/code
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Install Packages (cpp)
-        if: ${{ matrix.language == 'cpp' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes bison default-libmysqlclient-dev flex libcurl4-openssl-dev libjansson-dev libhiredis-dev libevent-dev liblua5.1-0-dev libpcre3-dev libncurses5-dev libpq-dev libreadline-dev libssl-dev libunistring-dev libmicrohttpd-dev libxml2-dev pkg-config python3 python3-dev uuid-dev zlib1g-dev
-          sudo apt-get clean
 
       - name: Configure (cpp)
         if: ${{ matrix.language == 'cpp' }}
