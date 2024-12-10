@@ -28,6 +28,55 @@
 #define UACREG_REQTO_MASK_USER 1
 #define UACREG_REQTO_MASK_AUTH 2
 
+typedef struct _reg_uac
+{
+	unsigned int h_uuid;
+	unsigned int h_user;
+	str l_uuid;
+	str l_username;
+	str l_domain;
+	str r_username;
+	str r_domain;
+	str realm;
+	str auth_proxy;
+	str auth_username;
+	str auth_password;
+	str auth_ha1;
+	str callid;
+	str contact_addr;
+	str socket;
+	unsigned int cseq;
+	unsigned int flags;
+	unsigned int expires;
+	time_t timer_expires;
+	unsigned int reg_delay;
+	time_t reg_init;
+	gen_lock_t *lock;
+} reg_uac_t;
+
+typedef struct _reg_item
+{
+	reg_uac_t *r;
+	struct _reg_item *next;
+} reg_item_t;
+
+
+typedef struct _reg_entry
+{
+	unsigned int isize;
+	unsigned int usize;
+	reg_item_t *byuser;
+	reg_item_t *byuuid;
+	gen_lock_t lock;
+} reg_entry_t;
+
+typedef struct _reg_ht
+{
+	unsigned int htsize;
+	time_t stime;
+	reg_entry_t *entries;
+} reg_ht_t;
+
 extern int reg_timer_interval;
 extern int reg_retry_interval;
 extern int reg_htable_size;
@@ -60,6 +109,7 @@ int uac_reg_free_ht(void);
 void uac_reg_timer(unsigned int ticks);
 int uac_reg_init_rpc(void);
 
+int uac_reg_send(reg_uac_t *reg, time_t tn);
 int uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode);
 int uac_reg_status(struct sip_msg *msg, str *src, int mode);
 int uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode);
@@ -69,5 +119,6 @@ int uac_reg_disable(sip_msg_t *msg, str *attr, str *val);
 int uac_reg_refresh(sip_msg_t *msg, str *l_uuid);
 
 int reg_active_init(int mode);
+int reg_ht_get_byfilter(reg_uac_t **reg, str *attr, str *val);
 
 #endif

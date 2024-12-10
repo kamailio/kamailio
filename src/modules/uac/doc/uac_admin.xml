@@ -1024,6 +1024,55 @@ uac_req_send();
 				</programlisting>
 			</example>
 		</section>
+
+		<section id="uac.f.uac_reg_send_register">
+			<title>
+				<function moreinfo="none">uac_reg_send_register(atttr,value)</function>
+			</title>
+			<para>
+			This function sends a REGISTER request for the registration
+			based on a filter specified by attribute and value. The attribute can be: l_uuid, l_username,
+			r_username or auth_username. The value is what should be matched
+			against the value of the attribute in the remote registration record.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, ONREPLY_ROUTE, LOCAL_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_reg_send_register</function> usage</title>
+				<programlisting format="linespecific">
+...
+uac_reg_send_register("l_uuid", "account123");
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="uac.f.uac_reg_send_unregister">
+			<title>
+				<function moreinfo="none">uac_reg_send_unregister(atttr,value)</function>
+			</title>
+			<para>
+			This function sends a REGISTER request with expires 0 for the registration
+			based on a filter specified by attribute and value. The attribute can be: l_uuid, l_username,
+			r_username or auth_username. The value is what should be matched
+			against the value of the attribute in the remote registration record.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			BRANCH_ROUTE, ONREPLY_ROUTE, LOCAL_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_reg_send_unregister</function> usage</title>
+				<programlisting format="linespecific">
+...
+uac_reg_send_unregister("l_uuid", "account123");
+...
+				</programlisting>
+			</example>
+		</section>
+
 		<section id="uac.f.uac_reg_lookup">
 			<title>
 				<function moreinfo="none">uac_reg_lookup(uuid, dst)</function>
@@ -1420,6 +1469,28 @@ event_route[uac:reply] {
 		</example>
 		</section>
 
+		<section id="uac.r.uac.reg_register">
+			<title>
+				<function moreinfo="none">uac.reg_register</function>
+			</title>
+		<para>
+			Send a REGISTER for the matching record based on a filter.
+			The command has two parameters: attribute and value.
+			The attribute can be: l_uuid, l_username, r_username or auth_username.
+			The value is what should be matched against the value of the attribute
+			in the remote registration record.
+		</para>
+		<example>
+		<title><function>uac.reg_register</function> usage</title>
+			<programlisting format="linespecific">
+...
+   kamcmd uac.reg_register l_uuid account123
+   kamcmd uac.reg_register l_uuid s:12345678
+...
+			</programlisting>
+		</example>
+		</section>
+
 		<section id="uac.r.uac.reg_unregister">
 			<title>
 				<function moreinfo="none">uac.reg_unregister</function>
@@ -1686,4 +1757,3 @@ event_route[uac:reply] {
 		</example>
 	</section>
 </chapter>
-
