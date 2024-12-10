@@ -80,6 +80,7 @@ endif()
 
 # -----------------------
 add_executable(kamailio ${CMAKE_CURRENT_SOURCE_DIR}/main.c)
+add_dependencies(kamailio GenerateParser)
 # Enable ENABLE_EXPORTS property so modules can link from symbols
 # found in kamailio executable.
 set_target_properties(
