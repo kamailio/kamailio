@@ -15,27 +15,38 @@ env:
   DOCKER_REPO: ghcr.io/kamailio/kamailio-ci
 
 jobs:
-  x86_64:
+  # is required nightly build?
+  # More info at https://stackoverflow.com/questions/63014786/how-to-schedule-a-github-actions-nightly-build-but-run-it-only-when-there-where
+  check:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write 
+    steps:
+      - uses: octokit/request-action@v2.x
+        id: check_last_run
+        with:
+          route: GET /repos/{owner}/{repo}/actions/workflows/alpine.yml/runs?per_page=1&status=completed
+          owner: ${{ github.repository_owner }}
+          repo: kamailio
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: "echo Last daily build: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}"
+    outputs:
+      last_sha: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}
+  x86_64:
+    needs: [check]
+    if: needs.check.outputs.last_sha != github.sha
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
     - uses: actions/checkout@v4
 
     - name: print latest_commit
       run: echo ${{ github.sha }}
 
-    # is required nightly build?
-    # More info at https://stackoverflow.com/questions/63014786/how-to-schedule-a-github-actions-nightly-build-but-run-it-only-when-there-where
-    - id: should_run
-      continue-on-error: true
-      name: check latest commit is less than a day
-      if: ${{ github.event_name == 'schedule' }}
-      run: test -z "$(git rev-list --after='24 hours' ${{ github.sha }})" && echo "should_run=false" >> $GITHUB_OUTPUT || echo "should_run=true" >> $GITHUB_OUTPUT
-
     - name: Login to GitHub Container Registry
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
@@ -43,7 +54,6 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Compile Kamailio source
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
       run: |
         git submodule init
         git submodule update
@@ -51,7 +61,6 @@ jobs:
         ./hooks/pre_build || true
 
     - name: Docker meta
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
       id: meta
       uses: docker/metadata-action@v5
       with:
@@ -69,7 +78,6 @@ jobs:
           latest=auto
 
     - name: Docker meta "-alpine"
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
       id: meta-alpine
       uses: docker/metadata-action@v5
       with:
@@ -87,7 +95,6 @@ jobs:
           latest=false
 
     - name: Docker meta "-debug"
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
       id: meta-debug
       uses: docker/metadata-action@v5
       with:
@@ -105,7 +112,6 @@ jobs:
           latest=false
 
     - name: temporal workarround for "-alpine" and "-debug" builds
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
       run: |
         sudo chown -R ${USER}:${USER} ${{ github.workspace }}/pkg/docker/alpine
         cd pkg/docker/alpine
@@ -115,7 +121,6 @@ jobs:
         tar cz --directory=repackage -f kamailio_min-without_os_files.tar.gz $(ls -A repackage)
 
     - name: Prepare local repo for "-debug" build
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
       run: |
         docker network create kamailio-build
         docker run \
@@ -130,7 +135,6 @@ jobs:
         sed -i -e "s/local-repo/${LOCAL_REPO_IP}/" pkg/docker/alpine/Dockerfile.debug
 
     - name: Create custom builder for "-debug" build
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
       id: local-repo
       uses: docker/setup-buildx-action@v3
       with:
@@ -138,7 +142,6 @@ jobs:
           network=kamailio-build
 
     - name: Build and push "-debug" build
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
       uses: docker/build-push-action@v6
       with:
         context: pkg/docker/alpine
@@ -149,7 +152,6 @@ jobs:
         labels: ${{ steps.meta-debug.outputs.labels }}
 
     - name: Cleanup after "-debug" build
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
       run: |
         docker buildx stop ${{ steps.local-repo.outputs.name }}
         docker buildx rm ${{ steps.local-repo.outputs.name }}
@@ -157,7 +159,6 @@ jobs:
         docker network rm kamailio-build
 
     - name: Build and push "-alpine" build
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
       uses: docker/build-push-action@v6
       with:
         context: pkg/docker/alpine
@@ -167,7 +168,6 @@ jobs:
         labels: ${{ steps.meta-alpine.outputs.labels }}
 
     - name: Build and push
-      if: ${{ steps.should_run.outputs.should_run != 'false' }}
       uses: docker/build-push-action@v6
       with:
         context: pkg/docker/alpine
