@@ -99,6 +99,11 @@
 			<emphasis>redis</emphasis> - Redis Backend
 		</para>
 		</listitem>
+		<listitem>
+		<para>
+			<emphasis>htable</emphasis> - htable module Backend
+		</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 		<emphasis>
