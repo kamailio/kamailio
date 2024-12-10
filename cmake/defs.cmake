@@ -6,8 +6,6 @@ cmake_minimum_required(VERSION 3.10)
 
 add_library(common INTERFACE)
 
-message(STATUS "CMAKE_C_COMPILER_VERSION: ${CMAKE_C_COMPILER_VERSION}")
-
 set(OS ${CMAKE_SYSTEM_NAME})
 message(STATUS "OS: ${OS}")
 
@@ -109,6 +107,10 @@ if(NOT ${LIBSSL_SET_MUTEX_SHARED})
     STATUS
       "Checking if can enable workaround for libssl 1.1+ to set shared mutex attribute"
   )
+
+  # TODO: This can probably be reduced to a just a find_package(OpenSSL) call
+  # and then check the version
+  # If we are cross-compiling, cmake should search for library on the target or both target/host
   if(NOT DEFINED CMAKE_CROSSCOMPILING OR NOT ${CMAKE_CROSSCOMPILING})
     message(STATUS "Checking for OpenSSL 1.1.0")
     find_package(OpenSSL 1.1.0)
@@ -306,11 +308,11 @@ target_compile_definitions(
     ${TARGET_ARCH}
     __OS_${OS_LOWER}
     VERSIONVAL=${VERSIONVAL}
-    CFG_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${CFG_NAME}/"
-    SHARE_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}/"
+    CFG_DIR="${CMAKE_INSTALL_FULL_SYSCONFDIR}/${CFG_NAME}/"
+    SHARE_DIR="${CMAKE_INSTALL_FULL_DATADIR}/${MAIN_NAME}/"
     # Absolute path this run is always /var/run/kamailio either for local or
     # system installs
-    RUN_DIR="/${CMAKE_INSTALL_LOCALSTATEDIR}/run/${MAIN_NAME}"
+    RUN_DIR="${CMAKE_INSTALL_FULL_LOCALSTATEDIR}/run/${MAIN_NAME}"
     ${LOCK_METHOD}
     # Module stuff?
     PIC
