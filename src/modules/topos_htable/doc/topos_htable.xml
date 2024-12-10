@@ -10,36 +10,22 @@
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
-	<title>TOPOS_REDIS Module</title>
+	<title>TOPOS_HTABLE Module</title>
 	<productname class="trade">kamailio.org</productname>
 	<authorgroup>
-	    <author>
-		<firstname>Daniel-Constantin</firstname>
-		<surname>Mierla</surname>
-		<email>miconda@gmail.com</email>
-	    </author>
 	    <editor>
-		<firstname>Daniel-Constantin</firstname>
-		<surname>Mierla</surname>
-		<email>miconda@gmail.com</email>
-	    </editor>
-	    <editor>
-		<firstname>Frederic</firstname>
-		<surname>Gaisnon</surname>
-		<email>frederic.gaisnon@gmail.com</email>
+		<firstname>Stefan</firstname>
+		<surname>Mititelu</surname>
+		<email>stefan.mititelu@net2phone.com</email>
 	    </editor>
 	</authorgroup>
 	<copyright>
-	    <year>2017</year>
+	    <year>2024</year>
 	    <holder>kamailio.org</holder>
 	</copyright>
 	<copyright>
-	    <year>2017</year>
-	    <holder>flowroute.com</holder>
-	</copyright>
-	<copyright>
-	    <year>2021</year>
-	    <holder>MomentTech</holder>
+	    <year>2024</year>
+	    <holder>net2phone.com</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>
