@@ -224,6 +224,7 @@ set(MOD_LIST_AUTHEPH auth_ephemeral)
 set(MOD_LIST_PRESENCE
     presence
     presence_conference
+    presence_dfks
     presence_dialoginfo
     presence_mwi
     presence_profile
