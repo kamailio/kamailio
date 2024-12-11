@@ -13,3 +13,5 @@ target_link_libraries(
 )
 
 # target_link_libraries(.*PRIVATE)
+
+target_compile_options(dnssec PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/dnssec/=")

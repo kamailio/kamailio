@@ -15,3 +15,5 @@ if(APPLE)
 endif()
 
 target_link_libraries(secsipid_proc PRIVATE secsipid Threads::Threads)
+
+target_compile_options(secsipid_proc PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/secsipid_proc/=")

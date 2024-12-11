@@ -16,3 +16,5 @@ add_library(app_lua SHARED ${SRC_FILES})
 target_compile_definitions(app_lua PRIVATE LUA_COMPAT_MODULE)
 target_include_directories(app_lua PRIVATE ${LUA_INCLUDE_DIRS})
 target_link_libraries(app_lua PRIVATE ${LUA_LIBRARIES})
+
+target_compile_options(app_lua PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/app_lua/=")

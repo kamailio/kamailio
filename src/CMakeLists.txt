@@ -87,6 +87,8 @@ set_target_properties(
   kamailio PROPERTIES ENABLE_EXPORTS TRUE OUTPUT_NAME ${MAIN_NAME}
 )
 
+target_compile_options(kamailio PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/=")
+
 add_subdirectory(core)
 add_subdirectory(lib)
 add_subdirectory(modules)

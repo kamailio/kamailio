@@ -7,3 +7,5 @@ add_library(snmpstats SHARED ${SRC_FILES})
 
 # TODO: Compiles fines but need to do some more verifcation
 target_link_libraries(snmpstats PRIVATE NETSNMP::NETSNMP)
+
+target_compile_options(snmpstats PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/snmpstats/=")

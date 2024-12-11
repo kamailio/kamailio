@@ -46,3 +46,5 @@ target_compile_options(
 
 target_include_directories(phonenum PRIVATE ${libphonenumber_INCLUDE_DIRS})
 target_link_libraries(phonenum PRIVATE ${libphonenum_LIBRARY})
+
+target_compile_options(phonenum PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/phonenum/=")

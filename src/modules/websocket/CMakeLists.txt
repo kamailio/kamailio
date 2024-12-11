@@ -11,3 +11,5 @@ if(EMBEDDED_UTF8_DECODE EQUAL 0)
 else()
   target_compile_definitions(websocket PRIVATE EMBEDDED_UTF8_DECODE)
 endif()
+
+target_compile_options(websocket PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/websocket/=")

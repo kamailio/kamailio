@@ -12,3 +12,5 @@ if(APPLE)
   )
 endif()
 target_link_libraries(ruxc PRIVATE libruxc::libruxc)
+
+target_compile_options(ruxc PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/ruxc/=")

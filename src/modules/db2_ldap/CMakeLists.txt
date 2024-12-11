@@ -13,3 +13,5 @@ add_library(db2_ldap SHARED ${SRC_FILES})
 target_compile_definitions(db2_ldap PRIVATE LDAP_DEPRECATED)
 target_include_directories(db2_ldap PRIVATE ${Ldap_INCLUDE_DIRS})
 target_link_libraries(db2_ldap PRIVATE ${LDAP_LIBRARIES} libsasl2::libsasl2)
+
+target_compile_options(db2_ldap PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/db2_ldap/=")

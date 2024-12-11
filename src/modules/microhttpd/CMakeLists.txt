@@ -7,3 +7,5 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(microhttpd SHARED ${SRC_FILES})
 target_link_libraries(microhttpd PRIVATE microhttpd::microhttpd)
+
+target_compile_options(microhttpd PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/microhttpd/=")

@@ -11,3 +11,5 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(regex SHARED ${SRC_FILES})
 target_link_libraries(regex PRIVATE PCRE2::8BIT)
+
+target_compile_options(regex PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/regex/=")

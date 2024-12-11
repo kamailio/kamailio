@@ -6,3 +6,5 @@ add_library(zlib::zlib ALIAS PkgConfig::zlib)
 
 add_library(gzcompress SHARED ${SRC_FILES})
 target_link_libraries(gzcompress PRIVATE zlib::zlib)
+
+target_compile_options(gzcompress PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/gzcompress/=")

@@ -26,3 +26,5 @@ add_library(kazoo SHARED ${SRC_FILES})
 target_link_libraries(
   kazoo PRIVATE json-c::json-c rabbitmq::rabbitmq uuid::uuid
 )
+
+target_compile_options(kazoo PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/kazoo/=")

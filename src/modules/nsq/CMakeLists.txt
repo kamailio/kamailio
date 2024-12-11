@@ -22,3 +22,5 @@ add_library(nsq SHARED ${SRC_FILES})
 target_link_libraries(
   nsq PRIVATE json-c::json-c CURL::libcurl Libev::Libev -lnsq evbuffsock
 )
+
+target_compile_options(nsq PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/nsq/=")

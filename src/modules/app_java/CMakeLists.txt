@@ -8,3 +8,5 @@ add_library(app_java SHARED ${SRC_FILES})
 target_compile_options(app_java PRIVATE -O0 -g)
 target_include_directories(app_java PRIVATE JNI_INCLUDE_DIRS)
 target_link_libraries(app_java PRIVATE JNI::JNI)
+
+target_compile_options(app_java PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/app_java/=")

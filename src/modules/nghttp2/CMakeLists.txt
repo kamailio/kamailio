@@ -13,3 +13,5 @@ add_library(nghttp2 SHARED ${SRC_FILES})
 target_link_libraries(
   nghttp2 PRIVATE nghttp2::nghttp2 event::event OpenSSL::SSL OpenSSL::Crypto
 )
+
+target_compile_options(nghttp2 PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/nghttp2/=")

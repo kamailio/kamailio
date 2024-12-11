@@ -12,3 +12,5 @@ file(GLOB SRC_FILES "*.c")
 add_library(lcr SHARED ${SRC_FILES})
 
 target_link_libraries(lcr PRIVATE PCRE2::8BIT)
+
+target_compile_options(lcr PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/lcr/=")

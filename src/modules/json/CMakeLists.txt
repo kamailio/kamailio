@@ -10,3 +10,5 @@ endif()
 
 add_library(json SHARED ${SRC_FILES})
 target_link_libraries(json PRIVATE json-c::json-c)
+
+target_compile_options(json PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/json/=")

@@ -10,3 +10,5 @@ add_library(event::event ALIAS PkgConfig::EVENT)
 
 add_library(janssonrpcc SHARED ${SRC_FILES})
 target_link_libraries(janssonrpcc PRIVATE jansson::jansson event::event)
+
+target_compile_options(janssonrpcc PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/janssonrpcc/=")

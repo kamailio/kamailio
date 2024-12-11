@@ -41,3 +41,5 @@ endif()
 # target_link_libraries(tls PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
 #  TODO: Install files such as cfg and modify it with sed and certs
+
+target_compile_options(tls PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/tls/=")

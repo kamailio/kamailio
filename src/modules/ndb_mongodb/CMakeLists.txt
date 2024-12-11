@@ -6,3 +6,5 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(ndb_mongodb SHARED ${SRC_FILES})
 target_link_libraries(ndb_mongodb PRIVATE mongoc::mongoc)
+
+target_compile_options(ndb_mongodb PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/ndb_mongodb/=")

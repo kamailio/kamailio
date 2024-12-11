@@ -18,3 +18,5 @@ add_library(rtp_media_server SHARED ${SRC_FILES})
 
 target_link_libraries(rtp_media_server PRIVATE ortp mediastreamer2)
 # target_link_libraries(.*PRIVATE)
+
+target_compile_options(rtp_media_server PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/rtp_media_server/=")

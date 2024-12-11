@@ -10,3 +10,5 @@ endif()
 
 add_library(jsonrpcc SHARED ${SRC_FILES})
 target_link_libraries(jsonrpcc PRIVATE json-c::json-c)
+
+target_compile_options(jsonrpcc PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/jsonrpcc/=")
