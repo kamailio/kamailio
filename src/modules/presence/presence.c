@@ -122,7 +122,9 @@ static int child_init(int);
 static void destroy(void);
 int stored_pres_info(struct sip_msg *msg, char *pres_uri, char *s);
 static int fixup_presence(void **param, int param_no);
+static int fixup_free_presence(void **param, int param_no);
 static int fixup_subscribe(void **param, int param_no);
+static int fixup_free_subscribe(void **param, int param_no);
 static int update_pw_dialogs(
 		subs_t *subs, unsigned int hash_code, subs_t **subs_array);
 static int w_pres_auth_status(struct sip_msg *_msg, char *_sp1, char *_sp2);
@@ -133,7 +135,9 @@ static int w_pres_refresh_watchers5(struct sip_msg *msg, char *puri,
 static int w_pres_update_watchers(
 		struct sip_msg *msg, char *puri, char *pevent);
 static int fixup_refresh_watchers(void **param, int param_no);
+static int fixup_free_refresh_watchers(void **param, int param_no);
 static int fixup_update_watchers(void **param, int param_no);
+static int fixup_free_update_watchers(void **param, int param_no);
 static int presence_init_rpc(void);
 
 static int w_pres_has_subscribers(struct sip_msg *_msg, char *_sp1, char *_sp2);
@@ -182,23 +186,23 @@ sruid_t pres_sruid;
 static cmd_export_t cmds[]=
 {
 	{"handle_publish",        (cmd_function)w_handle_publish,        0,
-		fixup_presence, 0, REQUEST_ROUTE},
+		fixup_presence, fixup_free_presence, REQUEST_ROUTE},
 	{"handle_publish",        (cmd_function)w_handle_publish,        1,
-		fixup_presence, 0, REQUEST_ROUTE},
+		fixup_presence, fixup_free_presence, REQUEST_ROUTE},
 	{"handle_subscribe",      (cmd_function)handle_subscribe0,       0,
-		fixup_subscribe, 0, REQUEST_ROUTE},
+		fixup_subscribe, fixup_free_subscribe, REQUEST_ROUTE},
 	{"handle_subscribe",      (cmd_function)w_handle_subscribe,      1,
-		fixup_subscribe, 0, REQUEST_ROUTE},
+		fixup_subscribe, fixup_free_subscribe, REQUEST_ROUTE},
 	{"pres_auth_status",      (cmd_function)w_pres_auth_status,      2,
 		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
 	{"pres_refresh_watchers", (cmd_function)w_pres_refresh_watchers, 3,
-		fixup_refresh_watchers, 0, ANY_ROUTE},
+		fixup_refresh_watchers, fixup_free_refresh_watchers, ANY_ROUTE},
 	{"pres_refresh_watchers", (cmd_function)w_pres_refresh_watchers5,5,
-		fixup_refresh_watchers, 0, ANY_ROUTE},
+		fixup_refresh_watchers, fixup_free_refresh_watchers, ANY_ROUTE},
 	{"pres_update_watchers",  (cmd_function)w_pres_update_watchers,  2,
-		fixup_update_watchers, 0, ANY_ROUTE},
+		fixup_update_watchers, fixup_free_update_watchers, ANY_ROUTE},
 	{"pres_has_subscribers",  (cmd_function)w_pres_has_subscribers,  2,
-                fixup_has_subscribers, 0, ANY_ROUTE},
+		fixup_has_subscribers, fixup_free_update_watchers, ANY_ROUTE},
  	{"bind_presence",         (cmd_function)bind_presence,           1,
 		0, 0, 0},
 	{ 0, 0, 0, 0, 0, 0}
@@ -650,6 +654,14 @@ static int fixup_presence(void **param, int param_no)
 	return fixup_spve_null(param, 1);
 }
 
+static int fixup_free_presence(void **param, int param_no)
+{
+	if(param_no == 0)
+		return 0;
+
+	return fixup_free_spve_null(param, 1);
+}
+
 static int fixup_subscribe(void **param, int param_no)
 {
 
@@ -660,6 +672,14 @@ static int fixup_subscribe(void **param, int param_no)
 	}
 	if(param_no == 1) {
 		return fixup_spve_null(param, 1);
+	}
+	return 0;
+}
+
+static int fixup_free_subscribe(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
 	}
 	return 0;
 }
@@ -1630,6 +1650,22 @@ static int fixup_refresh_watchers(void **param, int param_no)
 	return 0;
 }
 
+static int fixup_free_refresh_watchers(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 3) {
+		return fixup_free_igp_null(param, 1);
+	} else if(param_no == 4) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 5) {
+		return fixup_free_spve_null(param, 1);
+	}
+
+	return 0;
+}
 
 /**
  * wrapper for update_watchers_status to use via kemi
@@ -1705,6 +1741,16 @@ static int fixup_update_watchers(void **param, int param_no)
 		return fixup_spve_null(param, 1);
 	} else if(param_no == 2) {
 		return fixup_spve_null(param, 1);
+	}
+	return 0;
+}
+
+static int fixup_free_update_watchers(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
 	}
 	return 0;
 }
