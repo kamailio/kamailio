@@ -12,12 +12,17 @@ message(STATUS "OS: ${OS}")
 set(OSREL ${CMAKE_SYSTEM_VERSION})
 message(STATUS "OS version: ${OSREL}")
 # set(HOST_ARCH "__CPU_${CMAKE_HOST_SYSTEM_PROCESSOR}")
-set(TARGET_ARCH "__CPU_${CMAKE_SYSTEM_PROCESSOR}")
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i486|i586|i686")
+    set(TARGET_ARCH "i386")
+else()
+    set(TARGET_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+endif()
 
 message(STATUS "Host Processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 # message(STATUS "Processor compile definition: ${HOST_ARCH}")
 message(STATUS "Target Processor: ${CMAKE_SYSTEM_PROCESSOR}")
-message(STATUS "Target Processor compile definition: ${TARGET_ARCH}")
+message(STATUS "Target Processor Alias: ${TARGET_ARCH}")
 
 # TODO Check if target arch is supported if(NOT TARGET_ARCH IN_LIST
 # supported_archs) message(FATAL_ERROR "Target architecture not supported")
@@ -138,7 +143,7 @@ option(USE_FAST_LOCK "Use fast locking if available" ON)
 #
 if(USE_FAST_LOCK)
   if(CMAKE_SYSTEM_PROCESSOR MATCHES
-     "i386|x86_64|sparc64|sparc|ppc|ppc64|alpha|mips2|mips64"
+     "i386|i486|i586|i686|x86_64|sparc64|sparc|ppc|ppc64|alpha|mips2|mips64"
   )
     set(USE_FAST_LOCK YES)
   elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
@@ -296,9 +301,9 @@ include(${CMAKE_SOURCE_DIR}/cmake/os-specific.cmake)
 
 set(COMPILER_NAME ${CMAKE_C_COMPILER_ID})
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-	set(COMPILER_NAME "gcc")
+  set(COMPILER_NAME "gcc")
 elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
-	set(COMPILER_NAME "clang")
+  set(COMPILER_NAME "clang")
 endif()
 
 string(TOLOWER ${OS} OS_LOWER)
@@ -307,12 +312,12 @@ target_compile_definitions(
   INTERFACE
     NAME="${MAIN_NAME}"
     VERSION="${RELEASE}"
-    ARCH="${CMAKE_HOST_SYSTEM_PROCESSOR}"
+    ARCH="${TARGET_ARCH}"
     OS=${OS}
     OS_QUOTED="${OS}"
     COMPILER="${COMPILER_NAME} ${CMAKE_C_COMPILER_VERSION}"
     # ${HOST_ARCH}
-    ${TARGET_ARCH}
+    __CPU_${TARGET_ARCH}
     __OS_${OS_LOWER}
     VERSIONVAL=${VERSIONVAL}
     CFG_DIR="${CMAKE_INSTALL_FULL_SYSCONFDIR}/${CFG_NAME}/"
