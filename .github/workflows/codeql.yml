@@ -6,7 +6,27 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 jobs:
+  # is required nightly build?
+  # More info at https://stackoverflow.com/questions/63014786/how-to-schedule-a-github-actions-nightly-build-but-run-it-only-when-there-where
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: octokit/request-action@v2.x
+        id: check_last_run
+        with:
+          route: GET /repos/{owner}/{repo}/actions/workflows/alpine.yml/runs?per_page=1&status=completed
+          owner: ${{ github.repository_owner }}
+          repo: kamailio
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: "echo Last daily build: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}"
+    outputs:
+      last_sha: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}
   analyze:
+    needs: [check]
+    if: needs.check.outputs.last_sha != github.sha
     name: Analyze
     runs-on: [self-hosted, linux, x64, codeql]
     permissions:
