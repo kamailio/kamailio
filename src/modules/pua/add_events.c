@@ -107,6 +107,13 @@ int pua_add_events(void)
 		return -1;
 	}
 
+	if(add_pua_event(DFKS_EVENT, "as-feature-event",
+			   "application/x-as-feature-event+xml", dfks_process_body)
+			< 0) {
+		LM_ERR("while adding event as-feature-event\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -376,6 +383,12 @@ int mwi_process_body(publ_info_t *publ, str **fin_body, int ver, str **tuple)
 }
 
 int dlg_process_body(publ_info_t *publ, str **fin_body, int ver, str **tuple)
+{
+	*fin_body = publ->body;
+	return 0;
+}
+
+int dfks_process_body(publ_info_t *publ, str **fin_body, int ver, str **tuple)
 {
 	*fin_body = publ->body;
 	return 0;
