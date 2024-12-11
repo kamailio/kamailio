@@ -28,7 +28,9 @@
         "ms-vscode.cpptools-extension-pack",
         "GitHub.vscode-github-actions",
         "eamodio.gitlens",
-        "xaver.clang-format"
+        "xaver.clang-format",
+        "cheshirekow.cmake-format",
+        "brobeson.vscode-cmake-lint"
       ]
     }
   },
