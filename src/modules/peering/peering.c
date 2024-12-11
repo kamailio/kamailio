@@ -59,44 +59,44 @@ static char *radius_config = DEFAULT_RADIUSCLIENT_CONF;
 int verify_destination_service_type = -1;
 int verify_source_service_type = -1;
 
+/* clang-format off */
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"verify_destination", (cmd_function)verify_destination, 0, 0, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
-		{"verify_source", (cmd_function)verify_source, 0, 0, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+	{"verify_destination", (cmd_function)verify_destination, 0,
+		0, 0, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+	{"verify_source", (cmd_function)verify_source, 0,
+		0, 0, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
 static param_export_t params[] = {
-		{"radius_config", PARAM_STRING, &radius_config},
-		{"verify_destination_service_type", PARAM_INT,
-				&verify_destination_service_type},
-		{"verify_source_service_type", PARAM_INT, &verify_source_service_type},
-		{0, 0, 0}};
-
+	{"radius_config", PARAM_STRING, &radius_config},
+	{"verify_destination_service_type", PARAM_INT, &verify_destination_service_type},
+	{"verify_source_service_type", PARAM_INT, &verify_source_service_type},
+	{0, 0, 0}
+};
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-		"peering",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		0				 /* module destroy function */
+	"peering",          /* module name */
+	DEFAULT_DLFLAGS,    /* dlopen flags */
+	cmds,               /* exported functions */
+	params,             /* exported parameters */
+	0,                  /* RPC method exports */
+	0,                  /* exported pseudo-variables */
+	0,                  /* response handling function */
+	mod_init,           /* module initialization function */
+	0,                  /* per-child init function */
+	0                   /* module destroy function */
 };
-
+/* clang-format on */
 
 /*
  * Module initialization function
