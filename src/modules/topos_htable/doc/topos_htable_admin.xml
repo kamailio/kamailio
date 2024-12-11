@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module offers storage support for topos module using htable module.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>topos module</emphasis> - to bind to as a storage
+				engine.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>htable module</emphasis> - to bind to as a shm storage
+				engine.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		No libraries or applications must be installed before running &kamailio; with this module loaded.
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="topos_htable.p.topos_htable_dialog">
+		<title><varname>topos_htable_dialog</varname> (string)</title>
+		<para>
+			Definition of dialog htable, with all parameters.
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>topos_dialog=>size=4;autoexpire=7200;dmqreplicate=1</quote>.
+			</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>topos_htable_dialog</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("topos_htable", "topos_htable_dialog", "my_dialogs=>size=4;autoexpire=7200;dmqreplicate=1")
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="topos_htable.p.topos_htable_transaction">
+		<title><varname>topos_htable_transaction</varname> (string)</title>
+		<para>
+			Definition of transaction htable, with all parameters.
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>topos_transaction=>size=4;autoexpire=7200</quote>.
+			</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>topos_htable_transaction</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("topos_htable", "topos_htable_transaction", "my_transactions=>size=4;autoexpire=7200")
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="topos_htable.p.topos_htable_base64">
+		<title><varname>topos_htable_base64</varname> (int)</title>
+		<para>
+			Enable or disable base64 encoding of htable values.
+			Useful when individual values stored in htable contain delimiter value "|".
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>0</quote>.
+			</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>topos_htable_base64</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("topos_htable", "topos_htable_base64", 1)
+...
+			</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>
+
