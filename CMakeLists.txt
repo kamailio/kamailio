@@ -40,6 +40,8 @@ set(CFG_NAME
     CACHE STRING "Config name"
 )
 
+include(GNUInstallDirs)
+
 # Add the source directory
 add_subdirectory(src)
 

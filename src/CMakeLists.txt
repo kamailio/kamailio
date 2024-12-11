@@ -1,9 +1,3 @@
-include(GNUInstallDirs)
-
-# # Check if LIBDIR is not defined if(NOT DEFINED LIBDIR) # Get the system
-# architecture if(CMAKE_SIZEOF_VOID_P EQUAL 8) set(LIBDIR "lib64") else()
-# set(LIBDIR "lib") endif() endif()
-
 # Set the installation paths
 message(STATUS "Cross compile: ${CMAKE_CROSSCOMPILING}")
 
@@ -14,13 +8,13 @@ message(STATUS "CMAKE_INSTALL_SBINDIR: ${CMAKE_INSTALL_FULL_SBINDIR}")
 message(STATUS "CMAKE_INSTALL_SYSCONFDIR: ${CMAKE_INSTALL_FULL_SYSCONFDIR}")
 message(
   STATUS
-    "CMAKE_INSTALL_LOCALSTATEDIR: /${CMAKE_INSTALL_LOCALSTATEDIR}/run/${MAIN_NAME}"
+    "CMAKE_INSTALL_LOCALSTATEDIR: ${CMAKE_INSTALL_FULL_LOCALSTATEDIR}/run/${MAIN_NAME}"
 )
 message(STATUS "CMAKE_INSTALL_DATADIR: ${CMAKE_INSTALL_FULL_DATADIR}")
 message(STATUS "CMAKE_INSTALL_DOCDIR: ${CMAKE_INSTALL_FULL_DOCDIR}")
 message(STATUS "CMAKE_INSTALL_MANDIR: ${CMAKE_INSTALL_FULL_MANDIR}")
 
-message(STATUS "CMAKE_C_COMPILER: " ${CMAKE_C_COMPILER} )
+message(STATUS "CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_C_COMPILER_ID: ${CMAKE_C_COMPILER_ID}")
 message(STATUS "CMAKE_C_COMPILER_VERSION: ${CMAKE_C_COMPILER_VERSION}")
 
@@ -91,7 +85,9 @@ set_target_properties(
   kamailio PROPERTIES ENABLE_EXPORTS TRUE OUTPUT_NAME ${MAIN_NAME}
 )
 
-target_compile_options(kamailio PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/=")
+target_compile_options(
+  kamailio PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/="
+)
 
 add_subdirectory(core)
 add_subdirectory(lib)
@@ -146,16 +142,16 @@ install(
 # If(EXISTS ..) require full path
 install(
   CODE "
-    if(EXISTS \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}/${CFG_NAME}.cfg\")
-        message(STATUS \"${CFG_NAME} already exists in  \${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}/${CFG_NAME}. Installing as ${CFG_NAME}.sample\")
+    if(EXISTS \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${CFG_NAME}.cfg\")
+        message(STATUS \"${CFG_NAME}.cfg already exists in \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${CFG_NAME}.cfg Installing as ${CFG_NAME}.sample\")
       file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
-        DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}\"
+        DESTINATION \"${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
         RENAME \"${CFG_NAME}.cfg.sample\"
         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
       )
     else()
         file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
-          DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR}/${MAIN_NAME}\"
+          DESTINATION \"${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
           PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
           RENAME \"${CFG_NAME}.cfg\"
         )
