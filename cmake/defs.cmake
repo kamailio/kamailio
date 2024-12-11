@@ -294,6 +294,13 @@ endif()
 include(${CMAKE_SOURCE_DIR}/cmake/compiler-specific.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/os-specific.cmake)
 
+set(COMPILER_NAME ${CMAKE_C_COMPILER_ID})
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+	set(COMPILER_NAME "gcc")
+elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+	set(COMPILER_NAME "clang")
+endif()
+
 string(TOLOWER ${OS} OS_LOWER)
 target_compile_definitions(
   common
@@ -303,7 +310,7 @@ target_compile_definitions(
     ARCH="${CMAKE_HOST_SYSTEM_PROCESSOR}"
     OS=${OS}
     OS_QUOTED="${OS}"
-    COMPILER="${CMAKE_C_COMPILER_VERSION}"
+    COMPILER="${COMPILER_NAME} ${CMAKE_C_COMPILER_VERSION}"
     # ${HOST_ARCH}
     ${TARGET_ARCH}
     __OS_${OS_LOWER}
