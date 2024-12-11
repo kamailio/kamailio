@@ -83,28 +83,32 @@ static int child_init(int);
 
 static int fixup_pua_xmpp(void **param, int param_no);
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"pua_xmpp_notify", (cmd_function)Notify2Xmpp, 0, 0, 0, REQUEST_ROUTE},
-		{"pua_xmpp_req_winfo", (cmd_function)request_winfo, 2, fixup_pua_xmpp,
-				0, REQUEST_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"pua_xmpp_notify", (cmd_function)Notify2Xmpp, 0, 0, 0, REQUEST_ROUTE},
+	{"pua_xmpp_req_winfo", (cmd_function)request_winfo, 2, fixup_pua_xmpp, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"server_address", PARAM_STR, &server_address}, {0, 0, 0}};
+	{"server_address", PARAM_STR, &server_address},
+	{0, 0, 0}
+};
 
 /*! \brief module exports */
 struct module_exports exports = {
-		"pua_xmpp",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* RPC method exports */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per-child init function */
-		0				 /* module destroy function */
+	"pua_xmpp",      /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	0                /* module destroy function */
 };
+/* clang-format on */
 
 /*! \brief
  * init module function
