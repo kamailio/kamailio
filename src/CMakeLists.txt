@@ -70,8 +70,9 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.20)
   cmake_policy(SET CMP0118 NEW)
 else()
   set_source_files_properties(
-    ${CMAKE_SOURCE_DIR}/src/core/lex.yy.c ${CMAKE_SOURCE_DIR}/src/core/cfg.tab.c
-    ${CMAKE_SOURCE_DIR}/src/core/cfg.tab.h PROPERTIES GENERATED TRUE
+    ${CMAKE_CURRENT_BINARY_DIR}/core/lex.yy.c
+    ${CMAKE_CURRENT_BINARY_DIR}/core/cfg.tab.c
+    ${CMAKE_CURRENT_BINARY_DIR}/core/cfg.tab.h PROPERTIES GENERATED TRUE
   )
 endif()
 # -----------------------
@@ -98,9 +99,11 @@ add_subdirectory(modules)
 # from their own CMakeLists.txt
 # Module subdiretory does not contribute to the Kamailio executable.
 target_sources(
-  kamailio PRIVATE ${kamailio_SRC_FILES} ${CMAKE_SOURCE_DIR}/src/core/lex.yy.c
-                   ${CMAKE_SOURCE_DIR}/src/core/cfg.tab.c
+  kamailio
+  PRIVATE ${kamailio_SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/core/lex.yy.c
+          ${CMAKE_CURRENT_BINARY_DIR}/core/cfg.tab.c
 )
+target_include_directories(kamailio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)
 
 # Debuggng the sources of kamailio executable.
 # get_property(

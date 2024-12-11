@@ -20,19 +20,19 @@ find_package(BISON REQUIRED)
 
 # Generate lex.yy.c from cfg.lex
 add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
-  COMMAND ${FLEX_EXECUTABLE} -o ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c
+  COMMAND ${FLEX_EXECUTABLE} -o ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c
           ${CMAKE_CURRENT_SOURCE_DIR}/cfg.lex
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cfg.lex
-          ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.h
+          ${CMAKE_CURRENT_BINARY_DIR}/cfg.tab.h
   COMMENT "Generating lex.yy.c from cfg.lex"
 )
 
 # Generate cfg.tab.c and cfg.tab.h from cfg.y
 add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
-         ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.h
-  COMMAND ${BISON_EXECUTABLE} -d -b cfg -o ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/cfg.tab.c
+         ${CMAKE_CURRENT_BINARY_DIR}/cfg.tab.h
+  COMMAND ${BISON_EXECUTABLE} -d -b cfg -o ${CMAKE_CURRENT_BINARY_DIR}/cfg.tab.c
           ${CMAKE_CURRENT_SOURCE_DIR}/cfg.y
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cfg.y
   COMMENT "Generating cfg.tab.c and cfg.tab.h from cfg.y"
@@ -41,9 +41,9 @@ add_custom_command(
 # Add custom target for generating the 3 source files mentioned above
 add_custom_target(
   GenerateParser ALL
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
-          ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
-          ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.h
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c
+          ${CMAKE_CURRENT_BINARY_DIR}/cfg.tab.c
+          ${CMAKE_CURRENT_BINARY_DIR}/cfg.tab.h
   COMMENT "Generating parser source files"
 )
 
