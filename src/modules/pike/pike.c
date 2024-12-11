@@ -60,33 +60,36 @@ int pike_log_level = L_WARN;
 gen_lock_t *pike_timer_lock = 0;
 pike_list_link_t *pike_timer = 0;
 
-
-static cmd_export_t cmds[] = {{"pike_check_req", (cmd_function)w_pike_check_req,
-									  0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
-		{"pike_check_ip", (cmd_function)w_pike_check_ip, 1, fixup_spve_null,
-				fixup_free_spve_null, REQUEST_ROUTE | ONREPLY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-static param_export_t params[] = {
-		{"sampling_time_unit", PARAM_INT, &pike_time_unit},
-		{"reqs_density_per_unit", PARAM_INT, &pike_max_reqs},
-		{"remove_latency", PARAM_INT, &pike_timeout},
-		{"pike_log_level", PARAM_INT, &pike_log_level}, {0, 0, 0}};
-
-
-struct module_exports exports = {
-		"pike",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		pike_init,		 /* module initialization function */
-		0,				 /* per-child init function */
-		pike_exit		 /* module exit function */
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"pike_check_req", (cmd_function)w_pike_check_req, 0,
+		0, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"pike_check_ip", (cmd_function)w_pike_check_ip, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
+static param_export_t params[] = {
+	{"sampling_time_unit", PARAM_INT, &pike_time_unit},
+	{"reqs_density_per_unit", PARAM_INT, &pike_max_reqs},
+	{"remove_latency", PARAM_INT, &pike_timeout},
+	{"pike_log_level", PARAM_INT, &pike_log_level},
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"pike",          /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	pike_init,       /* module initialization function */
+	0,               /* per-child init function */
+	pike_exit        /* module destroy function */
+};
+/* clang-format on */
 
 static int pike_init(void)
 {
