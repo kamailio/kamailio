@@ -72,6 +72,7 @@ static void free_xs_list(xcap_serv_t *xs_list, int mem_type);
 static int xcap_doc_updated(int doc_type, str xid, char *doc);
 
 static int fixup_presxml_check(void **param, int param_no);
+static int fixup_free_presxml_check(void **param, int param_no);
 static int w_presxml_check_basic(
 		sip_msg_t *msg, char *presentity_uri, char *status);
 static int w_presxml_check_activities(
@@ -114,9 +115,9 @@ xcapGetNewDoc_t xcap_GetNewDoc;
 /* clang-format off */
 static cmd_export_t cmds[]={
 	{ "pres_check_basic",		(cmd_function)w_presxml_check_basic, 2,
-		fixup_presxml_check, 0, ANY_ROUTE},
+		fixup_presxml_check, fixup_free_presxml_check, ANY_ROUTE},
 	{ "pres_check_activities",	(cmd_function)w_presxml_check_activities, 2,
-		fixup_presxml_check, 0, ANY_ROUTE},
+		fixup_presxml_check, fixup_free_presxml_check, ANY_ROUTE},
 	{ "bind_presence_xml",		(cmd_function)bind_presence_xml, 1,
 		0, 0, 0},
 	{ 0, 0, 0, 0, 0, 0}
@@ -461,6 +462,16 @@ static int fixup_presxml_check(void **param, int param_no)
 		return fixup_spve_null(param, 1);
 	} else if(param_no == 2) {
 		return fixup_spve_null(param, 1);
+	}
+	return 0;
+}
+
+static int fixup_free_presxml_check(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
 	}
 	return 0;
 }
