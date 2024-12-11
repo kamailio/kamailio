@@ -70,29 +70,33 @@ usrloc_api_t ul;
 
 static int mod_init(void);
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"pua_set_publish", (cmd_function)w_pua_set_publish, 0, 0, 0,
-				REQUEST_ROUTE},
-		{"bind_pua_usrloc", (cmd_function)bind_pua_usrloc, 1, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
+	{"pua_set_publish", (cmd_function)w_pua_set_publish, 0, 0, 0, REQUEST_ROUTE},
+	{"bind_pua_usrloc", (cmd_function)bind_pua_usrloc, 1, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"default_domain", PARAM_STR, &default_domain},
-		{"entity_prefix", PARAM_STR, &pres_prefix},
-		{"branch_flag", PARAM_INT, &pua_ul_bflag}, {0, 0, 0}};
+	{"default_domain", PARAM_STR, &default_domain},
+	{"entity_prefix", PARAM_STR, &pres_prefix},
+	{"branch_flag", PARAM_INT, &pua_ul_bflag},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"pua_usrloc",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* RPC method exports */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		0,				 /* per-child init function */
-		0				 /* module destroy function */
+	"pua_usrloc",	   /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
+/* clang-format on */
 
 /*! \brief
  * init module function
