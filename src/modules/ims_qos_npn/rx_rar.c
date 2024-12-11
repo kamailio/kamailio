@@ -2,8 +2,10 @@
  * $Id$
  *
  * Copyright (C) 2024 Neat Path Networks GmbH, alberto@neatpath.net
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,10 +17,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  *
  *
  * History:
@@ -45,7 +47,7 @@ extern cdp_avp_bind_t *cdp_avp;
 #define ACCESS_NETWORK_INFO_REPORT 12
 
 
-/** 
+/**
  * This function is called when receiving a RAR, it checks the Session-Id to
  * find the status of the registration / call of the UE, parses the relevant information
  * of the event being reported, creates the Response and calls the corresponding event-route in the config
@@ -53,7 +55,7 @@ extern cdp_avp_bind_t *cdp_avp;
  * Events supported are Access-Network-Information
  * TODO: LOSS_OF_BEARER, RECOVERY_OF_BEARER
  * @param request - the AAAMessage with the RAR
- * @returns an RAA to be sent to the PCRF by the cdp stack 
+ * @returns an RAA to be sent to the PCRF by the cdp stack
 */
 AAAMessage *rx_process_rar(AAAMessage *request)
 {

@@ -29,6 +29,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -1378,7 +1380,7 @@ inline int rx_add_specific_action_avp(AAAMessage *msg, unsigned int data)
  * Decode the 3GPP-SGSN-MCC-MNC which has a specific format
  * @param dst - pointer to string where to store result in PKG memory that must be freed after use
  * @param src - pointer to string where to extract the content of the Diameter data buffer without type and length
- * @returns 1 on success and 0 on failure 
+ * @returns 1 on success and 0 on failure
  */
 /* Format of the 3GPP-SGSN-MCC-MNC
      *		Bits
@@ -1454,49 +1456,49 @@ int rx_avp_process_3gpp_sgsn_mcc_mnc(AAAMessage *aaa, str *dst)
  * According to the standard this AVP only comes in the RAR
  * The result includes the cell-id P-Access-Network-Info: 3GPP-E-UTRAN-FDD;utran-cell-id-3gpp=214076FCC4497716;network-provided
  * Tokens are  3GPP-GERAN, 3GPP-UTRAN-FDD, 3GPP-E-UTRAN-FDD, 3GPP-NR-FDD or 3GPP-NR-U-FDD (also TDD versions for everything)
- * for 2G   cgi-3gpp parameter MCC MNC LAC (4 hex dig) CI    (whole thing as ASCII)  
+ * for 2G   cgi-3gpp parameter MCC MNC LAC (4 hex dig) CI    (whole thing as ASCII)
  * for 3G utran-cell-id-3gpp with MCC MNC LAC (4 hex dig) CGI (7 hex digits)  (whole thing as ASCII)
  * for 4G utran-cell-id-3gpp with MCC MNC TAC (4 hex dig in EPC 6 hex dig in 5GC)  and ECI (7 hex digits)  (whole thing as ASCII)
  * for 5G utran-cell-id-3gpp with MCC MNC TAC (6 hex digit) NCI (9 hex digits) (whole thing as ascii)
- * 
-		Bits	
-	Octets	8	7	6	5	4	3	2	1	
-	1	Type = 86 (decimal)	
-	2 to 3	Length = n	
-	4	Spare	Instance	
-	5	Extended Macro eNodeB ID	Macro eNodeB ID	LAI	ECGI	TAI	RAI	SAI	CGI	
-	a to a+6	CGI	
-	b to b+6	SAI	
-	c to c+6	RAI	
-	d to d+4	TAI	
-	 e to e+6	ECGI	
-	f to f+4	LAI	
-	g to g+5	Macro eNodeB ID	
-	g to g+5	Extended Macro eNodeB ID	
-	h to (n+4)	These octet(s) is/are present only if explicitly specified	
+ *
+		Bits
+	Octets	8	7	6	5	4	3	2	1
+	1	Type = 86 (decimal)
+	2 to 3	Length = n
+	4	Spare	Instance
+	5	Extended Macro eNodeB ID	Macro eNodeB ID	LAI	ECGI	TAI	RAI	SAI	CGI
+	a to a+6	CGI
+	b to b+6	SAI
+	c to c+6	RAI
+	d to d+4	TAI
+	 e to e+6	ECGI
+	f to f+4	LAI
+	g to g+5	Macro eNodeB ID
+	g to g+5	Extended Macro eNodeB ID
+	h to (n+4)	These octet(s) is/are present only if explicitly specified
 
-		Bits	
-	Octets	8	7	6	5	4	3	2	1	
-	d	MCC digit 2	MCC digit 1	
-	d+1	MNC digit 3	MCC digit 3	
-	d+2	MNC digit 2	MNC digit 1	
-	d+3 to d+4	Tracking Area Code (TAC)	
+		Bits
+	Octets	8	7	6	5	4	3	2	1
+	d	MCC digit 2	MCC digit 1
+	d+1	MNC digit 3	MCC digit 3
+	d+2	MNC digit 2	MNC digit 1
+	d+3 to d+4	Tracking Area Code (TAC)
 
-		Bits	
-	Octets	8	7	6	5	4	3	2	1	
-	e	MCC digit 2	MCC digit 1	
-	e+1	MNC digit 3	MCC digit 3	
-	e+2	MNC digit 2	MNC digit 1	
-	e+3	Spare	ECI	
-	e+4 to e+6	ECI (E-UTRAN Cell Identifier)	
+		Bits
+	Octets	8	7	6	5	4	3	2	1
+	e	MCC digit 2	MCC digit 1
+	e+1	MNC digit 3	MCC digit 3
+	e+2	MNC digit 2	MNC digit 1
+	e+3	Spare	ECI
+	e+4 to e+6	ECI (E-UTRAN Cell Identifier)
 
-		Bits	
-	Octets	8	7	6	5	4	3	2	1	
-	a	MCC digit 2	MCC digit 1	
-	a+1	MNC digit 3	MCC digit 3	
-	a+2	MNC digit 2	MNC digit 1	
-	a+3 to a+4	Location Area Code (LAC)	
-	a+5 to a+6	Cell Identity (CI)	
+		Bits
+	Octets	8	7	6	5	4	3	2	1
+	a	MCC digit 2	MCC digit 1
+	a+1	MNC digit 3	MCC digit 3
+	a+2	MNC digit 2	MNC digit 1
+	a+3 to a+4	Location Area Code (LAC)
+	a+5 to a+6	Cell Identity (CI)
 
 BOTH are full hex
  */
@@ -2041,7 +2043,7 @@ int rx_avp_process_3gpp_user_location_information(AAAMessage *rar, str *dst)
 	return (dst->len > 1);
 }
 
-/** 
+/**
  * This adds a feature list with its vendor-id and its list id to the provided list
  * @msglist - pointer to the list of AVPs where to add the Supported Features AVP
  */
