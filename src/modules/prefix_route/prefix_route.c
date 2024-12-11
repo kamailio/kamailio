@@ -326,7 +326,7 @@ static int prefix_route(struct sip_msg *msg, char *p1, char *p2)
 static cmd_export_t cmds[] = {
 	{"prefix_route", prefix_route, 0, 0, 0,
 		REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-	{"prefix_route", prefix_route, 1, fixup_spve_null, 0, ANY_ROUTE},
+	{"prefix_route", prefix_route, 1, fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
