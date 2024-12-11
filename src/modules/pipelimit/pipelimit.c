@@ -132,18 +132,22 @@ static int w_pl_drop_forced(struct sip_msg *, char *, char *);
 static int w_pl_drop(struct sip_msg *, char *, char *);
 static void destroy(void);
 static int fixup_pl_check3(void **param, int param_no);
+static int fixup_free_pl_check3(void **param, int param_no);
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
-	{"pl_check", (cmd_function)w_pl_check, 1, fixup_spve_null, 0, ANY_ROUTE},
-	{"pl_check", (cmd_function)w_pl_check3, 3, fixup_pl_check3, 0, ANY_ROUTE},
-	{"pl_active", (cmd_function)w_pl_active, 1, fixup_spve_null, 0, ANY_ROUTE},
-	{"pl_drop", (cmd_function)w_pl_drop_default, 0, 0, 0,
-		REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
-	{"pl_drop", (cmd_function)w_pl_drop_forced, 1, fixup_uint_null, 0,
-		REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
-	{"pl_drop", (cmd_function)w_pl_drop, 2, fixup_uint_uint, 0,
-		REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
+	{"pl_check", (cmd_function)w_pl_check, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"pl_check", (cmd_function)w_pl_check3, 3,
+		fixup_pl_check3, fixup_free_pl_check3, ANY_ROUTE},
+	{"pl_active", (cmd_function)w_pl_active, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"pl_drop", (cmd_function)w_pl_drop_default, 0,
+		0, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
+	{"pl_drop", (cmd_function)w_pl_drop_forced, 1,
+		fixup_uint_null, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
+	{"pl_drop", (cmd_function)w_pl_drop, 2,
+		fixup_uint_uint, 0, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -686,6 +690,17 @@ static int fixup_pl_check3(void **param, int param_no)
 		return fixup_spve_null(param, 1);
 	if(param_no == 3)
 		return fixup_igp_null(param, 1);
+	return 0;
+}
+
+static int fixup_free_pl_check3(void **param, int param_no)
+{
+	if(param_no == 1)
+		return fixup_free_spve_null(param, 1);
+	if(param_no == 2)
+		return fixup_free_spve_null(param, 1);
+	if(param_no == 3)
+		return fixup_free_igp_null(param, 1);
 	return 0;
 }
 
