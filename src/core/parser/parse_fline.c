@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -261,7 +263,7 @@ error:
 			if(*(buffer + t))
 				*(prn + t) = *(buffer + t);
 			else
-				*(prn + t) = (char)176; /* '°' */
+				*(prn + t) = (char)176; /* 'ï¿½' */
 		LM_DBG("parsed so far: %.*s\n", offset, ZSW(prn));
 		pkg_free(prn);
 	} else {
