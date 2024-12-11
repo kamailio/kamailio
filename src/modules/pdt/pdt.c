@@ -92,6 +92,7 @@ static int pd_translate(sip_msg_t *msg, str *sdomain, int rmode, int fmode);
 
 static int w_pd_translate(struct sip_msg *msg, char *str1, char *str2);
 static int fixup_translate(void **param, int param_no);
+static int fixup_free_translate(void **param, int param_no);
 
 static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
 static int pdt_init_rpc(void);
@@ -100,12 +101,12 @@ static int pdt_init_rpc(void);
 static cmd_export_t cmds[] = {
 	{"prefix2domain", (cmd_function)w_prefix2domain,
 		0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"prefix2domain", (cmd_function)w_prefix2domain_1, 1, fixup_igp_null, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"prefix2domain", (cmd_function)w_prefix2domain_2, 2, fixup_igp_igp, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"pd_translate", (cmd_function)w_pd_translate, 2, fixup_translate, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"prefix2domain", (cmd_function)w_prefix2domain_1, 1,
+		fixup_igp_null, fixup_free_igp_null, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"prefix2domain", (cmd_function)w_prefix2domain_2, 2,
+		fixup_igp_igp, fixup_free_igp_igp, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"pd_translate", (cmd_function)w_pd_translate, 2,
+		fixup_translate, fixup_free_translate, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -122,7 +123,6 @@ static param_export_t params[] = {
 	{"mode", PARAM_INT, &_pdt_mode},
 	{0, 0, 0}
 };
-
 
 struct module_exports exports = {
 	"pdt",			 /* module name */
@@ -426,6 +426,15 @@ static int fixup_translate(void **param, int param_no)
 		return fixup_spve_null(param, 1);
 	if(param_no == 2)
 		return fixup_igp_null(param, 1);
+	return 0;
+}
+
+static int fixup_free_translate(void **param, int param_no)
+{
+	if(param_no == 1)
+		return fixup_free_spve_null(param, 1);
+	if(param_no == 2)
+		return fixup_free_igp_null(param, 1);
 	return 0;
 }
 
