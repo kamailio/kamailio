@@ -51,29 +51,34 @@ int force_single_dialog = 0;
 int force_dummy_dialog = 0;
 unsigned int pres_dlginfo_default_expires = 3600;
 
+/* clang-format off */
 /* module exported commands */
-static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
+static cmd_export_t cmds[] = {
+	{0, 0, 0, 0, 0, 0}
+};
 
 /* module exported parameters */
 static param_export_t params[] = {
-		{"force_single_dialog", PARAM_INT, &force_single_dialog},
-		{"force_dummy_dialog", PARAM_INT, &force_dummy_dialog},
-		{"default_expires", PARAM_INT, &pres_dlginfo_default_expires},
-		{0, 0, 0}};
+	{"force_single_dialog", PARAM_INT, &force_single_dialog},
+	{"force_dummy_dialog", PARAM_INT, &force_dummy_dialog},
+	{"default_expires", PARAM_INT, &pres_dlginfo_default_expires},
+	{0, 0, 0}
+};
 
 /* module exports */
 struct module_exports exports = {
-		"presence_dialoginfo", /* module name */
-		DEFAULT_DLFLAGS,	   /* dlopen flags */
-		cmds,				   /* exported functions */
-		params,				   /* exported parameters */
-		0,					   /* RPC method exports */
-		0,					   /* exported pseudo-variables */
-		0,					   /* response handling function */
-		mod_init,			   /* module initialization function */
-		0,					   /* per-child init function */
-		0					   /* module destroy function */
+	"presence_dialoginfo", /* module name */
+	DEFAULT_DLFLAGS,    /* dlopen flags */
+	cmds,               /* exported functions */
+	params,             /* exported parameters */
+	0,                  /* RPC method exports */
+	0,                  /* exported pseudo-variables */
+	0,                  /* response handling function */
+	mod_init,           /* module initialization function */
+	0,                  /* per-child init function */
+	0                   /* module destroy function */
 };
+/* clang-format on */
 
 /*
  * init module function
