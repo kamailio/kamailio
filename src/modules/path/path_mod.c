@@ -88,17 +88,18 @@ ob_api_t path_obb;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"add_path", (cmd_function)add_path, 0, 0, 0, REQUEST_ROUTE},
-	{"add_path", (cmd_function)add_path_usr, 1, fixup_spve_null, 0,
-			REQUEST_ROUTE},
-	{"add_path", (cmd_function)add_path_usr, 2, fixup_spve_spve, 0,
-			REQUEST_ROUTE},
-	{"add_path_received", (cmd_function)add_path_received, 0, 0, 0,
-			REQUEST_ROUTE},
+	{"add_path", (cmd_function)add_path, 0,
+		0, 0, REQUEST_ROUTE},
+	{"add_path", (cmd_function)add_path_usr, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
+	{"add_path", (cmd_function)add_path_usr, 2,
+		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
+	{"add_path_received", (cmd_function)add_path_received, 0,
+		0, 0, REQUEST_ROUTE},
 	{"add_path_received", (cmd_function)add_path_received_usr, 1,
-			fixup_spve_null, 0, REQUEST_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
 	{"add_path_received", (cmd_function)add_path_received_usr, 2,
-			fixup_spve_spve, 0, REQUEST_ROUTE},
+		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
