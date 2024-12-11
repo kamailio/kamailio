@@ -321,41 +321,36 @@ static int prefix_route(struct sip_msg *msg, char *p1, char *p2)
 
 	return ki_prefix_route(msg, &user);
 }
-/*
- * Exported functions
- */
+
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"prefix_route", prefix_route, 0, 0, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
-		{"prefix_route", prefix_route, 1, fixup_spve_null, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-/*
- * Exported parameters
- */
-static param_export_t params[] = {{"db_url", PARAM_STRING, &db_url},
-		{"db_table", PARAM_STRING, &db_table},
-		{"exit", PARAM_INT, &prefix_route_exit}, {0, 0, 0}};
-
-/*
- * Module description
- */
-struct module_exports exports = {
-		"prefix_route",	 /* Module name              */
-		DEFAULT_DLFLAGS, /* dlopen flags             */
-		cmds,			 /* exported functions       */
-		params,			 /* exported parameters      */
-		pr_rpc,			 /* RPC methods              */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response function        */
-		mod_init,		 /* initialization function  */
-		0,				 /* per-child init function  */
-		mod_destroy		 /* module destroy function  */
+	{"prefix_route", prefix_route, 0, 0, 0,
+		REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"prefix_route", prefix_route, 1, fixup_spve_null, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
-/**
- *
- */
+static param_export_t params[] = {
+	{"db_url", PARAM_STRING, &db_url},
+	{"db_table", PARAM_STRING, &db_table},
+	{"exit", PARAM_INT, &prefix_route_exit},
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"prefix_route",	 /* Module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	pr_rpc,          /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	mod_destroy      /* module destroy function */
+};
+/* clang-format on */
+
 /* clang-format off */
 static sr_kemi_t sr_kemi_prefix_route_exports[] = {
 	{ str_init("prefix_route"), str_init("prefix_route"),
