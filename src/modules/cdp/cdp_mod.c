@@ -25,6 +25,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -377,17 +379,17 @@ static int ki_cdp_has_app2(sip_msg_t *msg, str *vendor, str *appid)
  */
 /* clang-format off */
 static sr_kemi_t sr_kemi_cdp_exports[] = {
-	{ str_init("cdp"), str_init("cdp_check_peer"), 
+	{ str_init("cdp"), str_init("cdp_check_peer"),
 		SR_KEMIP_INT, ki_cdp_check_peer,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("cdp"), str_init("cdp_has_app"), 
+	{ str_init("cdp"), str_init("cdp_has_app"),
 		SR_KEMIP_INT, ki_cdp_has_app,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("cdp"), str_init("cdp_has_app2"), 
+	{ str_init("cdp"), str_init("cdp_has_app2"),
 		SR_KEMIP_INT, ki_cdp_has_app2,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
