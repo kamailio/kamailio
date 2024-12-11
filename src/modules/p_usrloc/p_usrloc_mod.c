@@ -209,106 +209,95 @@ int default_dbt = 0;
 int expire = 0;
 int *mdb_w_available;
 
+/* clang-format off */
 /*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"ul_bind_usrloc", (cmd_function)bind_usrloc, 1, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0}};
-
+	{"ul_bind_usrloc", (cmd_function)bind_usrloc, 1, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*! \brief
  * Exported parameters
  */
-static param_export_t params[] = {{"ruid_column", PARAM_STR, &ruid_col},
-		{"user_column", PARAM_STR, &user_col},
-		{"domain_column", PARAM_STR, &domain_col},
-		{"contact_column", PARAM_STR, &contact_col},
-		{"expires_column", PARAM_STR, &expires_col},
-		{"q_column", PARAM_STR, &q_col},
-		{"callid_column", PARAM_STR, &callid_col},
-		{"cseq_column", PARAM_STR, &cseq_col},
-		{"flags_column", PARAM_STR, &flags_col},
-		{"cflags_column", PARAM_STR, &cflags_col},
-		{"db_mode", PARAM_INT, &db_mode},
-		{"use_domain", PARAM_INT, &use_domain},
-		{"use_domain_crc32", PARAM_INT, &use_domain_crc32},
-		{"desc_time_order", PARAM_INT, &desc_time_order},
-		{"user_agent_column", PARAM_STR, &user_agent_col},
-		{"received_column", PARAM_STR, &received_col},
-		{"path_column", PARAM_STR, &path_col},
-		{"socket_column", PARAM_STR, &sock_col},
-		{"methods_column", PARAM_STR, &methods_col},
-		{"matching_mode", PARAM_INT, &default_p_usrloc_cfg.matching_mode},
-		{"cseq_delay", PARAM_INT, &cseq_delay},
-		{"fetch_rows", PARAM_INT, &ul_fetch_rows},
-		{"hash_size", PARAM_INT, &ul_hash_size},
-		{"nat_bflag", PARAM_INT, &nat_bflag},
-		{"default_db_url", PARAM_STR, &default_db_url},
-		{"default_db_type", PARAM_STR, &default_db_type},
-		{"domain_db", PARAM_STR, &domain_db},
-		{"instance_column", PARAM_STR, &instance_col},
-		{"reg_id_column", PARAM_STR, &reg_id_col},
-		{"write_db_url", PARAM_STR, &write_db_url},
-		{"read_db_url", PARAM_STR, &read_db_url},
-		{"reg_db_table", PARAM_STR, &reg_table},
-		{"id_column", PARAM_STR, &id_col}, {"num_column", PARAM_STR, &num_col},
-		{"url_column", PARAM_STR, &url_col},
-		{"status_column", PARAM_STR, &status_col},
-		{"failover_time_column", PARAM_STR, &failover_time_col},
-		{"spare_flag_column", PARAM_STR, &spare_col},
-		{"error_column", PARAM_STR, &error_col},
-		{"risk_group_column", PARAM_STR, &risk_group_col},
-		{"expire_time", PARAM_INT, &default_p_usrloc_cfg.expire_time},
-		{"UTC_timestamps", PARAM_INT, &default_p_usrloc_cfg.utc_timestamps},
-		{"db_err_threshold", PARAM_INT, &default_p_usrloc_cfg.db_err_threshold},
-		{"failover_level", PARAM_INT, &default_p_usrloc_cfg.failover_level},
-		{"db_retry_interval", PARAM_INT, &retry_interval},
-		{"db_use_transactions", PARAM_INT, &db_use_transactions},
-		{"db_transaction_level", PARAM_INT, &db_transaction_level},
-		{"write_on_db", PARAM_INT, &db_write},
-		{"write_on_master_db", PARAM_INT, &db_master_write},
-		{"connection_expires", PARAM_INT, &connection_expires},
-		{"alg_location", PARAM_INT, &alg_location},
-		{"db_ops_ruid", PARAM_INT, &default_p_usrloc_cfg.db_ops_ruid},
-		{"db_update_as_insert", PARAM_INT,
-				&default_p_usrloc_cfg.db_update_as_insert},
-		{"mdb_availability_control", PARAM_INT, &mdb_availability_control},
-		{"preload", PARAM_STRING | PARAM_USE_FUNC, (void *)ul_preload_param},
-		{0, 0, 0}};
-
+static param_export_t params[] = {
+	{"ruid_column", PARAM_STR, &ruid_col},
+	{"user_column", PARAM_STR, &user_col},
+	{"domain_column", PARAM_STR, &domain_col},
+	{"contact_column", PARAM_STR, &contact_col},
+	{"expires_column", PARAM_STR, &expires_col},
+	{"q_column", PARAM_STR, &q_col},
+	{"callid_column", PARAM_STR, &callid_col},
+	{"cseq_column", PARAM_STR, &cseq_col},
+	{"flags_column", PARAM_STR, &flags_col},
+	{"cflags_column", PARAM_STR, &cflags_col},
+	{"db_mode", PARAM_INT, &db_mode},
+	{"use_domain", PARAM_INT, &use_domain},
+	{"use_domain_crc32", PARAM_INT, &use_domain_crc32},
+	{"desc_time_order", PARAM_INT, &desc_time_order},
+	{"user_agent_column", PARAM_STR, &user_agent_col},
+	{"received_column", PARAM_STR, &received_col},
+	{"path_column", PARAM_STR, &path_col},
+	{"socket_column", PARAM_STR, &sock_col},
+	{"methods_column", PARAM_STR, &methods_col},
+	{"matching_mode", PARAM_INT, &default_p_usrloc_cfg.matching_mode},
+	{"cseq_delay", PARAM_INT, &cseq_delay},
+	{"fetch_rows", PARAM_INT, &ul_fetch_rows},
+	{"hash_size", PARAM_INT, &ul_hash_size},
+	{"nat_bflag", PARAM_INT, &nat_bflag},
+	{"default_db_url", PARAM_STR, &default_db_url},
+	{"default_db_type", PARAM_STR, &default_db_type},
+	{"domain_db", PARAM_STR, &domain_db},
+	{"instance_column", PARAM_STR, &instance_col},
+	{"reg_id_column", PARAM_STR, &reg_id_col},
+	{"write_db_url", PARAM_STR, &write_db_url},
+	{"read_db_url", PARAM_STR, &read_db_url},
+	{"reg_db_table", PARAM_STR, &reg_table},
+	{"id_column", PARAM_STR, &id_col},
+	{"num_column", PARAM_STR, &num_col},
+	{"url_column", PARAM_STR, &url_col},
+	{"status_column", PARAM_STR, &status_col},
+	{"failover_time_column", PARAM_STR, &failover_time_col},
+	{"spare_flag_column", PARAM_STR, &spare_col},
+	{"error_column", PARAM_STR, &error_col},
+	{"risk_group_column", PARAM_STR, &risk_group_col},
+	{"expire_time", PARAM_INT, &default_p_usrloc_cfg.expire_time},
+	{"UTC_timestamps", PARAM_INT, &default_p_usrloc_cfg.utc_timestamps},
+	{"db_err_threshold", PARAM_INT, &default_p_usrloc_cfg.db_err_threshold},
+	{"failover_level", PARAM_INT, &default_p_usrloc_cfg.failover_level},
+	{"db_retry_interval", PARAM_INT, &retry_interval},
+	{"db_use_transactions", PARAM_INT, &db_use_transactions},
+	{"db_transaction_level", PARAM_INT, &db_transaction_level},
+	{"write_on_db", PARAM_INT, &db_write},
+	{"write_on_master_db", PARAM_INT, &db_master_write},
+	{"connection_expires", PARAM_INT, &connection_expires},
+	{"alg_location", PARAM_INT, &alg_location},
+	{"db_ops_ruid", PARAM_INT, &default_p_usrloc_cfg.db_ops_ruid},
+	{"db_update_as_insert", PARAM_INT, &default_p_usrloc_cfg.db_update_as_insert},
+	{"mdb_availability_control", PARAM_INT, &mdb_availability_control},
+	{"preload", PARAM_STRING | PARAM_USE_FUNC, (void *)ul_preload_param},
+	{0, 0, 0}
+};
 
 stat_export_t mod_stats[] = {
-		{"registered_users", STAT_IS_FUNC, (stat_var **)get_number_of_users},
-		{0, 0, 0}};
-
-#ifdef MI_REMOVED
-static mi_export_t mi_cmds[] = {
-		{MI_USRLOC_RM, mi_usrloc_rm_aor, 0, 0, mi_child_init},
-		{MI_USRLOC_RM_CONTACT, mi_usrloc_rm_contact, 0, 0, mi_child_init},
-		{MI_USRLOC_DUMP, mi_usrloc_dump, 0, 0, 0},
-		{MI_USRLOC_FLUSH, mi_usrloc_flush, MI_NO_INPUT_FLAG, 0, mi_child_init},
-		{MI_USRLOC_ADD, mi_usrloc_add, 0, 0, mi_child_init},
-		{MI_USRLOC_SHOW_CONTACT, mi_usrloc_show_contact, 0, 0, mi_child_init},
-		{"loc_refresh", mi_ul_db_refresh, MI_NO_INPUT_FLAG, 0, mi_child_init},
-		{"loc_nr_refresh", mi_loc_nr_refresh, MI_NO_INPUT_FLAG, 0,
-				mi_child_loc_nr_init},
-		{0, 0, 0, 0, 0}};
-#endif
-
+	{"registered_users", STAT_IS_FUNC, (stat_var **)get_number_of_users},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"p_usrloc",		 /*!< module name  */
-		DEFAULT_DLFLAGS, /*!< dlopen flags */
-		cmds,			 /*!< exported functions */
-		params,			 /*!< export parameters */
-		0,				 /*!< exported rpc functions */
-		0,				 /*!< exported pseudo-variables */
-		0,				 /*!< response handling function */
-		mod_init,		 /*!< module init function */
-		child_init,		 /*!< child init function */
-		destroy			 /*!< module destroy function */
+	"p_usrloc",      /*!< module name  */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	destroy          /* module destroy function */
 };
+/* clang-format on */
 
 
 /*! \brief
