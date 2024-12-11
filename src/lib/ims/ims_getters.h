@@ -26,6 +26,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -206,7 +208,7 @@ str cscf_get_public_identity_from_requri(struct sip_msg *msg);
  */
 str cscf_get_contact_from_requri(struct sip_msg *msg);
 
-/** 
+/**
  * Get the host from the Request URI of the message.
  * Useful for example on MT, to get the destination from the Request URI, if P-Called-Party-ID is not present.
  */
