@@ -44,5 +44,7 @@ int dlg_process_body(
 		struct publ_info *publ, str **fin_body, int ver, str **tuple);
 int reginfo_process_body(
 		struct publ_info *publ, str **fin_body, int ver, str **tuple);
+int dfks_process_body(
+		struct publ_info *publ, str **fin_body, int ver, str **tuple);
 
 #endif

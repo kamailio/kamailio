@@ -43,6 +43,7 @@
 #define DIALOG_EVENT 1 << 5
 #define REGINFO_EVENT 1 << 6
 #define XCAPDIFF_EVENT 1 << 7
+#define DFKS_EVENT 1 << 8
 
 #define UL_PUBLISH 1 << 0
 #define BLA_PUBLISH 1 << 1
@@ -60,6 +61,8 @@
 #define REGINFO_SUBSCRIBE 1 << 13
 #define XCAPDIFF_PUBLISH 1 << 14
 #define XCAPDIFF_SUBSCRIBE 1 << 15
+#define DFKS_PUBLISH 1 << 16
+#define DFKS_SUBSCRIBE 1 << 17
 
 #define NO_UPDATEDB_FLAG 1 << 0
 #define UPDATEDB_FLAG 1 << 1
@@ -175,6 +178,9 @@ static inline int get_event_flag(str *event)
 		case 15:
 			if(strncmp(event->s, "message-summary", 15) == 0)
 				return MSGSUM_EVENT;
+		case 16:
+			if(strncmp(event->s, "as-feature-event", 16) == 0)
+				return DFKS_EVENT;
 	}
 
 	LM_ERR("Unknown event string\n");
