@@ -158,6 +158,7 @@ int dlg_ka_timer = 0;
 int dlg_ka_interval = 0;
 int dlg_clean_timer = 90;
 int dlg_ctxiuid_mode = 0;
+int dlg_process_mode = 0;
 
 str dlg_lreq_callee_headers = {0};
 
@@ -371,6 +372,7 @@ static param_export_t mod_params[]={
 	{ "bye_early_reason",      PARAM_STR, &bye_early_reason         },
 	{ "dlg_ctxiuid_mode",      PARAM_INT, &dlg_ctxiuid_mode         },
 	{ "debug_variables",       PARAM_INT, &debug_variables_list     },
+	{ "dlg_mode",              PARAM_INT, &dlg_process_mode         },
 
 	{ 0,0,0 }
 };
@@ -653,9 +655,11 @@ static int mod_init(void)
 
 	/* register callbacks*/
 	/* listen for all incoming requests  */
-	if(d_tmb.register_tmcb(0, 0, TMCB_REQUEST_IN, dlg_onreq, 0, 0) <= 0) {
-		LM_ERR("cannot register TMCB_REQUEST_IN callback\n");
-		return -1;
+	if(dlg_process_mode == 0) {
+		if(d_tmb.register_tmcb(0, 0, TMCB_REQUEST_IN, dlg_onreq, 0, 0) <= 0) {
+			LM_ERR("cannot register TMCB_REQUEST_IN callback\n");
+			return -1;
+		}
 	}
 
 	/* listen for all routed requests  */
