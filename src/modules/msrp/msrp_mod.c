@@ -78,64 +78,75 @@ str msrp_event_callback = STR_NULL;
 static int msrp_frame_received(sr_event_param_t *evp);
 sip_msg_t *msrp_fake_sipmsg(msrp_frame_t *mf);
 
+/* clang-format off */
 static tr_export_t mod_trans[] = {
-		{{"msrpuri", sizeof("msrpuri") - 1}, /* string class */
-				tr_parse_msrpuri},
+	{{"msrpuri", sizeof("msrpuri") - 1}, /* string class */ tr_parse_msrpuri},
 
-		{{0, 0}, 0}};
-
-static pv_export_t mod_pvs[] = {
-		{{"msrp", (sizeof("msrp") - 1)}, PVT_OTHER, pv_get_msrp, pv_set_msrp,
-				pv_parse_msrp_name, 0, 0, 0},
-
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
-
-static cmd_export_t cmds[] = {
-		{"msrp_forward", (cmd_function)w_msrp_forward, 0, 0, 0, ANY_ROUTE},
-		{"msrp_forward", (cmd_function)w_msrp_forward1, 1, fixup_spve_all, 0,
-				ANY_ROUTE},
-		{"msrp_forward", (cmd_function)w_msrp_forward2, 2, fixup_spve_all, 0,
-				ANY_ROUTE},
-		{"msrp_relay", (cmd_function)w_msrp_relay, 0, 0, 0, ANY_ROUTE},
-		{"msrp_reply", (cmd_function)w_msrp_reply2, 2, fixup_spve_spve, 0,
-				ANY_ROUTE},
-		{"msrp_reply", (cmd_function)w_msrp_reply3, 3, fixup_spve_all, 0,
-				ANY_ROUTE},
-		{"msrp_is_request", (cmd_function)w_msrp_is_request, 0, 0, 0,
-				ANY_ROUTE},
-		{"msrp_is_reply", (cmd_function)w_msrp_is_reply, 0, 0, 0, ANY_ROUTE},
-		{"msrp_set_dst", (cmd_function)w_msrp_set_dst, 2, fixup_spve_all, 0,
-				ANY_ROUTE},
-		{"msrp_relay_flags", (cmd_function)w_msrp_relay_flags, 1,
-				fixup_igp_null, 0, ANY_ROUTE},
-		{"msrp_reply_flags", (cmd_function)w_msrp_reply_flags, 1,
-				fixup_igp_null, 0, ANY_ROUTE},
-		{"msrp_cmap_save", (cmd_function)w_msrp_cmap_save, 0, 0, 0, ANY_ROUTE},
-		{"msrp_cmap_lookup", (cmd_function)w_msrp_cmap_lookup, 0, 0, 0,
-				ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-static param_export_t params[] = {{"sipmsg", PARAM_INT, &msrp_param_sipmsg},
-		{"cmap_size", PARAM_INT, &msrp_cmap_size},
-		{"auth_min_expires", PARAM_INT, &msrp_auth_min_expires},
-		{"auth_max_expires", PARAM_INT, &msrp_auth_max_expires},
-		{"timer_interval", PARAM_INT, &msrp_timer_interval},
-		{"use_path_addr", PARAM_STR, &msrp_use_path_addr},
-		{"event_callback", PARAM_STR, &msrp_event_callback}, {0, 0, 0}};
-
-struct module_exports exports = {
-		"msrp",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	{{0, 0}, 0}
 };
 
+static pv_export_t mod_pvs[] = {
+	{{"msrp", (sizeof("msrp") - 1)}, PVT_OTHER, pv_get_msrp, pv_set_msrp,
+		pv_parse_msrp_name, 0, 0, 0},
+
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
+
+static cmd_export_t cmds[] = {
+	{"msrp_forward", (cmd_function)w_msrp_forward, 0,
+		0, 0, ANY_ROUTE},
+	{"msrp_forward", (cmd_function)w_msrp_forward1, 1,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"msrp_forward", (cmd_function)w_msrp_forward2, 2,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"msrp_relay", (cmd_function)w_msrp_relay, 0,
+		0, 0, ANY_ROUTE},
+	{"msrp_reply", (cmd_function)w_msrp_reply2, 2,
+		fixup_spve_spve, 0, ANY_ROUTE},
+	{"msrp_reply", (cmd_function)w_msrp_reply3, 3,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"msrp_is_request", (cmd_function)w_msrp_is_request, 0,
+		0, 0, ANY_ROUTE},
+	{"msrp_is_reply", (cmd_function)w_msrp_is_reply, 0,
+		0, 0, ANY_ROUTE},
+	{"msrp_set_dst", (cmd_function)w_msrp_set_dst, 2,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"msrp_relay_flags", (cmd_function)w_msrp_relay_flags, 1,
+		fixup_igp_null, 0, ANY_ROUTE},
+	{"msrp_reply_flags", (cmd_function)w_msrp_reply_flags, 1,
+		fixup_igp_null, 0, ANY_ROUTE},
+	{"msrp_cmap_save", (cmd_function)w_msrp_cmap_save, 0,
+		0, 0, ANY_ROUTE},
+	{"msrp_cmap_lookup", (cmd_function)w_msrp_cmap_lookup, 0,
+		0, 0, ANY_ROUTE},
+
+	{0, 0, 0, 0, 0, 0}
+};
+
+static param_export_t params[] = {
+	{"sipmsg", PARAM_INT, &msrp_param_sipmsg},
+	{"cmap_size", PARAM_INT, &msrp_cmap_size},
+	{"auth_min_expires", PARAM_INT, &msrp_auth_min_expires},
+	{"auth_max_expires", PARAM_INT, &msrp_auth_max_expires},
+	{"timer_interval", PARAM_INT, &msrp_timer_interval},
+	{"use_path_addr", PARAM_STR, &msrp_use_path_addr},
+	{"event_callback", PARAM_STR, &msrp_event_callback},
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"msrp",          /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* RPC method exports */
+	mod_pvs,         /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	mod_destroy      /* module destroy function */
+};
+/* clang-format on */
 
 /**
  * init module function
