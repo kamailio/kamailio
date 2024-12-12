@@ -219,35 +219,42 @@ static AVP_Param media_relay_avp = {str_init(MEDIA_RELAY_AVP_SPEC), {0}, 0};
 // The AVP where the ICE candidate priority is stored (if defined)
 static AVP_Param ice_candidate_avp = {str_init(ICE_CANDIDATE_AVP_SPEC), {0}, 0};
 
-static cmd_export_t commands[] = {
-		{"engage_media_proxy", (cmd_function)w_EngageMediaProxy, 0, 0, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE},
-		{"use_media_proxy", (cmd_function)w_UseMediaProxy, 0, 0, 0, ANY_ROUTE},
-		{"end_media_session", (cmd_function)w_EndMediaSession, 0, 0, 0,
-				ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"engage_media_proxy", (cmd_function)w_EngageMediaProxy, 0,
+		0, 0, REQUEST_ROUTE | BRANCH_ROUTE},
+	{"use_media_proxy", (cmd_function)w_UseMediaProxy, 0,
+		0, 0, ANY_ROUTE},
+	{"end_media_session", (cmd_function)w_EndMediaSession, 0,
+		0, 0, ANY_ROUTE},
 
-static param_export_t parameters[] = {
-		{"disable", PARAM_INT, &mediaproxy_disabled},
-		{"mediaproxy_socket", PARAM_STRING, &(mediaproxy_socket.name)},
-		{"mediaproxy_timeout", PARAM_INT, &(mediaproxy_socket.timeout)},
-		{"signaling_ip_avp", PARAM_STR, &(signaling_ip_avp.spec)},
-		{"media_relay_avp", PARAM_STR, &(media_relay_avp.spec)},
-		{"ice_candidate", PARAM_STR, &(ice_candidate)},
-		{"ice_candidate_avp", PARAM_STR, &(ice_candidate_avp.spec)}, {0, 0, 0}};
+	{0, 0, 0, 0, 0, 0}
+};
+
+static param_export_t params[] = {
+	{"disable", PARAM_INT, &mediaproxy_disabled},
+	{"mediaproxy_socket", PARAM_STRING, &(mediaproxy_socket.name)},
+	{"mediaproxy_timeout", PARAM_INT, &(mediaproxy_socket.timeout)},
+	{"signaling_ip_avp", PARAM_STR, &(signaling_ip_avp.spec)},
+	{"media_relay_avp", PARAM_STR, &(media_relay_avp.spec)},
+	{"ice_candidate", PARAM_STR, &(ice_candidate)},
+	{"ice_candidate_avp", PARAM_STR, &(ice_candidate_avp.spec)},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"mediaproxy",	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		commands,		 /* cmd (cfg function) exports */
-		parameters,		 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		0				 /* module destroy function */
+	"mediaproxy",	      /* module name */
+	DEFAULT_DLFLAGS,    /* dlopen flags */
+	cmds,               /* exported functions */
+	params,             /* exported parameters */
+	0,                  /* RPC method exports */
+	0,                  /* exported pseudo-variables */
+	0,                  /* response handling function */
+	mod_init,           /* module initialization function */
+	child_init,         /* per-child init function */
+	0                   /* module destroy function */
 };
+/* clang-format on */
 
 
 // String processing functions
