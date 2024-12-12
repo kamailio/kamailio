@@ -79,25 +79,22 @@ struct val uri_vals[UV_STATIC_MAX];
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"radius_load_caller_avps", (cmd_function)radius_load_caller_avps, 1,
-		fixup_spve_null, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"radius_load_callee_avps", (cmd_function)radius_load_callee_avps, 1,
-		fixup_spve_null, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"radius_is_user_in", (cmd_function)radius_is_user_in, 2,
-		fixup_spve_spve, 0,
+		fixup_spve_spve, fixup_free_spve_spve,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
-	{"radius_does_uri_exist", (cmd_function)radius_does_uri_exist_0,
-		0, 0, 0, REQUEST_ROUTE|LOCAL_ROUTE},
-	{"radius_does_uri_exist", (cmd_function)radius_does_uri_exist_1,
-		1, fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|LOCAL_ROUTE},
-	{"radius_does_uri_user_exist",
-		(cmd_function)radius_does_uri_user_exist_0,
-		0, 0, 0, REQUEST_ROUTE|LOCAL_ROUTE},
-	{"radius_does_uri_user_exist",
-		(cmd_function)radius_does_uri_user_exist_1,
-		1, fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"radius_does_uri_exist", (cmd_function)radius_does_uri_exist_0, 0,
+		0, 0, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"radius_does_uri_exist", (cmd_function)radius_does_uri_exist_1, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"radius_does_uri_user_exist", (cmd_function)radius_does_uri_user_exist_0, 0,
+		0, 0, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"radius_does_uri_user_exist", (cmd_function)radius_does_uri_user_exist_1, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
-
 
 /*
  * Exported parameters
@@ -116,7 +113,6 @@ static param_export_t params[] = {
 	{"common_response",     PARAM_INT, &common_response    },
 	{0, 0, 0}
 };
-
 
 struct module_exports exports = {
 	"misc_radius",   /* module name */
