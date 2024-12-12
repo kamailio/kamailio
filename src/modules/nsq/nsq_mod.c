@@ -30,25 +30,40 @@
 #include "nsq_mod.h"
 
 MODULE_VERSION
-
+/* clang-format off */
 static pv_export_t nsq_mod_pvs[] = {
-		{{"nsqE", (sizeof("nsqE") - 1)}, PVT_OTHER, nsq_pv_get_event_payload, 0,
-				0, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"nsqE", (sizeof("nsqE") - 1)}, PVT_OTHER, nsq_pv_get_event_payload, 0,
+		0, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"consumer_workers", PARAM_INT, &nsq_consumer_workers},
-		{"max_in_flight", PARAM_INT, &nsq_max_in_flight},
-		{"lookupd_address", PARAM_STR, &nsq_lookupd_address},
-		{"lookupd_port", PARAM_INT, &lookupd_port},
-		{"consumer_use_nsqd", PARAM_INT,
-				&consumer_use_nsqd}, // consume messages from nsqd instead of lookupd
-		{"topic_channel", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)nsq_add_topic_channel},
-		{"nsqd_address", PARAM_STR, &nsqd_address},
-		{"nsqd_port", PARAM_INT, &nsqd_port},
-		{"consumer_event_key", PARAM_STR, &nsq_event_key},
-		{"consumer_event_subkey", PARAM_STR, &nsq_event_sub_key}, {0, 0, 0}};
+	{"consumer_workers", PARAM_INT, &nsq_consumer_workers},
+	{"max_in_flight", PARAM_INT, &nsq_max_in_flight},
+	{"lookupd_address", PARAM_STR, &nsq_lookupd_address},
+	{"lookupd_port", PARAM_INT, &lookupd_port},
+	{"consumer_use_nsqd", PARAM_INT, &consumer_use_nsqd},
+	{"topic_channel", PARAM_STRING | PARAM_USE_FUNC, (void *)nsq_add_topic_channel},
+	{"nsqd_address", PARAM_STR, &nsqd_address},
+	{"nsqd_port", PARAM_INT, &nsqd_port},
+	{"consumer_event_key", PARAM_STR, &nsq_event_key},
+	{"consumer_event_subkey", PARAM_STR, &nsq_event_sub_key},
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"nsq",
+	DEFAULT_DLFLAGS,    /* dlopen flags */
+	0,                  /* exported functions */
+	params,             /* exported parameters */
+	0,                  /* RPC method exports */
+	nsq_mod_pvs,        /* exported pseudo-variables */
+	0,                  /* response handling function */
+	mod_init,           /* module initialization function */
+	mod_child_init,     /* per-child init function */
+	mod_destroy         /* module destroy function */
+};
+/* clang-format on */
 
 static void free_tc_list(nsq_topic_channel_t *tcl)
 {
@@ -99,18 +114,6 @@ static int nsq_add_topic_channel(modparam_t type, void *val)
 
 	return 0;
 }
-
-struct module_exports exports = {
-		"nsq", DEFAULT_DLFLAGS, /* dlopen flags */
-		0,						/* Exported functions */
-		params,					/* Exported parameters */
-		0,						/* exported MI functions */
-		nsq_mod_pvs,			/* exported pseudo-variables */
-		0,						/* response function*/
-		mod_init,				/* module initialization function */
-		mod_child_init,			/* per-child init function */
-		mod_destroy				/* destroy function */
-};
 
 static int fire_init_event(int rank)
 {
