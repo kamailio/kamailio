@@ -3,6 +3,7 @@ option(BUILD_DOC "Build documentation" ON)
 # Readme file and man page
 find_program(XSLTPROC_EXECUTABLE xsltproc QUIET)
 find_program(PANDOC_EXECUTABLE pandoc QUIET)
+find_program(LYNX_EXECUTABLE lynx QUIET)
 
 # Function to add a module docs entry
 function(docs_add_module MODULE_NAME)
@@ -12,37 +13,60 @@ function(docs_add_module MODULE_NAME)
   # Check if the module has a 'doc' directory and if it contains a file named
   # MODULE_NAME.xml
 
-  if(XSLTPROC_EXECUTABLE)
-
-    add_custom_command(
-      OUTPUT # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.md
-             # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
-             ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/README
-      # ${MODULE_NAME}_doc The following command is used to generate the
-      # documentation in html format from the xml file
-      COMMAND
-        ${XSLTPROC_EXECUTABLE} --novalid --xinclude
-        # -o ${CMAKE_CURRENT_BINARY_DIR}/xprint2.xml
-        ${CMAKE_SOURCE_DIR}/doc/docbook/html.xsl
-        ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc/${MODULE_NAME}.xml
-      COMMAND
-        ${PANDOC_EXECUTABLE} -s -f html -t markdown_strict --output
-        ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.md
-        ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/index.html
-      COMMAND
-        ${PANDOC_EXECUTABLE} -s -f html -t plain --output
-        # ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
-        ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
-        ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/index.html
-      # COMMAND
-      #   ${CMAKE_COMMAND} -E copy
-      #   ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
-      #   ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc/${MODULE_NAME}.xml
-              ${CMAKE_SOURCE_DIR}/doc/docbook/html.xsl
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}
-      COMMENT "Generating documentation with xsltproc for ${MODULE_NAME}"
-    )
+  if(NOT (XSLTPROC_EXECUTABLE MATCHES "NOTFOUND"))
+    if(NOT (LYNX_EXECUTABLE MATCHES "NOTFOUND"))
+      add_custom_command(
+        OUTPUT # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.md
+               # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
+               ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/README
+        # ${MODULE_NAME}_doc The following command is used to generate the
+        # documentation in html format from the xml file
+        COMMAND
+          ${XSLTPROC_EXECUTABLE} --novalid --xinclude
+          ${CMAKE_SOURCE_DIR}/doc/docbook/txt.xsl
+          ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc/${MODULE_NAME}.xml |
+          ${LYNX_EXECUTABLE} -nolist -stdin -dump >
+          ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
+        DEPENDS
+          ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc/${MODULE_NAME}.xml
+          ${CMAKE_SOURCE_DIR}/doc/docbook/html.xsl
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}
+        COMMENT
+          "Generating documentation with xsltproc and lynx for ${MODULE_NAME}"
+      )
+    else()
+      add_custom_command(
+        OUTPUT # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.md
+               # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
+               ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/README
+        # ${MODULE_NAME}_doc The following command is used to generate the
+        # documentation in html format from the xml file
+        COMMAND
+          ${XSLTPROC_EXECUTABLE} --novalid --xinclude
+          # -o ${CMAKE_CURRENT_BINARY_DIR}/xprint2.xml
+          ${CMAKE_SOURCE_DIR}/doc/docbook/html.xsl
+          ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc/${MODULE_NAME}.xml
+        COMMAND
+          ${PANDOC_EXECUTABLE} -s -f html -t markdown_strict --output
+          ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.md
+          ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/index.html
+        COMMAND
+          ${PANDOC_EXECUTABLE} -s -f html -t plain --output
+          # ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
+          ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
+          ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/index.html
+          # COMMAND
+          #   ${CMAKE_COMMAND} -E copy
+          #   ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
+          #   ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
+        DEPENDS
+          ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc/${MODULE_NAME}.xml
+          ${CMAKE_SOURCE_DIR}/doc/docbook/html.xsl
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}
+        COMMENT
+          "Generating documentation with xsltproc and pandoc for ${MODULE_NAME}"
+      )
+    endif()
 
     add_custom_target(
       ${MODULE_NAME}_doc
