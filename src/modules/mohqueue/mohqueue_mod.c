@@ -47,19 +47,6 @@ pv_spec_t *prtp_pv;
 /**********
 * module exports
 **********/
-
-/* COMMANDS */
-static cmd_export_t mod_cmds[] = {
-		{"mohq_count", (cmd_function)mohq_count, 2, fixup_count, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"mohq_process", (cmd_function)mohq_process, 0, NULL, 0, REQUEST_ROUTE},
-		{"mohq_retrieve", (cmd_function)mohq_retrieve, 2, fixup_spve_spve, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"mohq_send", (cmd_function)mohq_send, 1, fixup_spve_spve, 0,
-				REQUEST_ROUTE},
-		{NULL, NULL, -1, 0, 0},
-};
-
 /* PARAMETERS */
 str db_url = str_init(DEFAULT_DB_URL);
 str db_ctable = str_init("mohqcalls");
@@ -67,43 +54,63 @@ str db_qtable = str_init("mohqueues");
 char *mohdir = "";
 int moh_maxcalls = 50;
 
+/* clang-format off */
+/* COMMANDS */
+static cmd_export_t mod_cmds[] = {
+	{"mohq_count", (cmd_function)mohq_count, 2,
+		fixup_count, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"mohq_process", (cmd_function)mohq_process, 0,
+		0, 0, REQUEST_ROUTE},
+	{"mohq_retrieve", (cmd_function)mohq_retrieve, 2,
+		fixup_spve_spve, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"mohq_send", (cmd_function)mohq_send, 1,
+		fixup_spve_spve, 0, REQUEST_ROUTE},
+	{NULL, NULL, -1, 0, 0},
+};
+
 static param_export_t mod_parms[] = {
-		{"db_url", PARAM_STR, &db_url},
-		{"db_ctable", PARAM_STR, &db_ctable},
-		{"db_qtable", PARAM_STR, &db_qtable},
-		{"mohdir", PARAM_STRING, &mohdir},
-		{"moh_maxcalls", PARAM_INT, &moh_maxcalls},
-		{NULL, 0, NULL},
+	{"db_url", PARAM_STR, &db_url},
+	{"db_ctable", PARAM_STR, &db_ctable},
+	{"db_qtable", PARAM_STR, &db_qtable},
+	{"mohdir", PARAM_STRING, &mohdir},
+	{"moh_maxcalls", PARAM_INT, &moh_maxcalls},
+	{NULL, 0, NULL},
 };
 
 static const char *mohqueue_rpc_debug_doc[] = {
-		"Toggle mohqueue debug mode. Parameters: queue name, state (0=off, "
-		"<>0=on)",
-		0};
+	"Toggle mohqueue debug mode. Parameters: queue name, state (0=off, <>0=on)",
+	0
+};
 
 static const char *mohqueue_rpc_drop_call_doc[] = {
-		"Drop a mohqueue call. Parameters: queue name, callID (*=all)", 0};
+	"Drop a mohqueue call. Parameters: queue name, callID (*=all)",
+	0
+};
 
 /* RPC COMMANDS */
 rpc_export_t mohqueue_rpc[] = {
-		{"mohqueue.debug", mohqueue_rpc_debug, mohqueue_rpc_debug_doc, 0},
-		{"mohqueue.drop_call", mohqueue_rpc_drop_call,
-				mohqueue_rpc_drop_call_doc, 0},
-		{0, 0, 0, 0}};
+	{"mohqueue.debug", mohqueue_rpc_debug, mohqueue_rpc_debug_doc, 0},
+	{"mohqueue.drop_call", mohqueue_rpc_drop_call,
+			mohqueue_rpc_drop_call_doc, 0},
+	{0, 0, 0, 0}
+};
 
 /* MODULE EXPORTS */
 struct module_exports exports = {
-		"mohqueue",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		mod_cmds,		 /* exported functions */
-		mod_parms,		 /* exported parameters */
-		0,				 /* RPC methods */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		mod_child_init,	 /* per-child initialization function */
-		mod_destroy		 /* destructor function */
+	"mohqueue",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	mod_cmds,		 /* exported functions */
+	mod_parms,		 /* exported parameters */
+	0,				 /* RPC methods */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	mod_child_init,	 /* per-child initialization function */
+	mod_destroy		 /* destructor function */
 };
+/* clang-format on */
 
 /**********
 * local constants
