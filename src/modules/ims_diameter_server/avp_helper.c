@@ -46,7 +46,6 @@
 
 // ID of current message
 static unsigned int current_msg_id = 0;
-static unsigned int current_msg_id_repl = 0;
 
 cJSON *avp2json(AAA_AVP *avp_t)
 {
@@ -486,7 +485,7 @@ int pv_get_application(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 int pv_get_response(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	if((msg->id != current_msg_id_repl) || (responsejson.len < 0)) {
+	if(responsejson.len < 0) {
 		return pv_get_null(msg, param, res);
 	}
 	return pv_get_strval(msg, param, res, &responsejson);
@@ -502,7 +501,6 @@ int pv_set_response(
 				val->rs.s);
 		responsejson.s = val->rs.s;
 		responsejson.len = val->rs.len;
-		current_msg_id_repl = msg->id;
 		return 0;
 	}
 	return 0;
