@@ -73,7 +73,7 @@ MODULE_VERSION
  */
 /* #define PUA_DIALOGINFO_DEBUG 1 */
 
-pua_api_t pua;
+pua_api_t _pua_api;
 
 struct dlg_binds dlg_api;
 
@@ -1050,15 +1050,15 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(bind_pua(&pua) < 0) {
+	if(bind_pua(&_pua_api) < 0) {
 		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
-	if(pua.send_publish == NULL) {
+	if(_pua_api.send_publish == NULL) {
 		LM_ERR("Could not import send_publish\n");
 		return -1;
 	}
-	pua_send_publish = pua.send_publish;
+	pua_send_publish = _pua_api.send_publish;
 
 	/* bind to the dialog API */
 	if(load_dlg_api(&dlg_api) != 0) {
