@@ -50,6 +50,7 @@ static int w_mongodb_cmd_simple(sip_msg_t *msg, char *ssrv, char *sdname,
 static int w_mongodb_cmd(sip_msg_t *msg, char *ssrv, char *sdname, char *scname,
 		char *scmd, char *sres);
 static int fixup_mongodb_cmd(void **param, int param_no);
+static int fixup_free_mongodb_cmd(void **param, int param_no);
 static int w_mongodb_free_reply(struct sip_msg *msg, char *res);
 static int w_mongodb_next_reply(struct sip_msg *msg, char *res);
 
@@ -69,17 +70,17 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[] = {
 	{"mongodb_find", (cmd_function)w_mongodb_find, 5,
-		fixup_mongodb_cmd, 0, ANY_ROUTE},
+		fixup_mongodb_cmd, fixup_free_mongodb_cmd, ANY_ROUTE},
 	{"mongodb_find_one", (cmd_function)w_mongodb_find_one, 5,
-		fixup_mongodb_cmd, 0, ANY_ROUTE},
+		fixup_mongodb_cmd, fixup_free_mongodb_cmd, ANY_ROUTE},
 	{"mongodb_cmd_simple", (cmd_function)w_mongodb_cmd_simple, 5,
-		fixup_mongodb_cmd, 0, ANY_ROUTE},
+		fixup_mongodb_cmd, fixup_free_mongodb_cmd, ANY_ROUTE},
 	{"mongodb_cmd", (cmd_function)w_mongodb_cmd, 5,
-		fixup_mongodb_cmd, 0, ANY_ROUTE},
+		fixup_mongodb_cmd, fixup_free_mongodb_cmd, ANY_ROUTE},
 	{"mongodb_free", (cmd_function)w_mongodb_free_reply, 1,
-		fixup_spve_null, 0, ANY_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"mongodb_next", (cmd_function)w_mongodb_next_reply, 1,
-		fixup_spve_null, 0, ANY_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"bind_ndb_mongodb", (cmd_function)bind_ndb_mongodb, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -248,6 +249,11 @@ static int w_mongodb_find_one(sip_msg_t *msg, char *ssrv, char *sdname,
 static int fixup_mongodb_cmd(void **param, int param_no)
 {
 	return fixup_spve_null(param, 1);
+}
+
+static int fixup_free_mongodb_cmd(void **param, int param_no)
+{
+	return fixup_free_spve_null(param, 1);
 }
 
 /**
