@@ -52,6 +52,7 @@ static int w_mq_pv_free(struct sip_msg *msg, char *mq, char *str2);
 int mq_param(modparam_t type, void *val);
 int mq_param_name(modparam_t type, void *val);
 static int fixup_mq_add(void **param, int param_no);
+static int fixup_free_mq_add(void **param, int param_no);
 static int bind_mq(mq_api_t *api);
 
 static int mqueue_rpc_init(void);
@@ -72,13 +73,13 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[] = {
 	{"mq_fetch", (cmd_function)w_mq_fetch, 1,
-		fixup_spve_null, 0, ANY_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"mq_add", (cmd_function)w_mq_add, 3,
-		fixup_mq_add, 0, ANY_ROUTE},
+		fixup_mq_add, fixup_free_mq_add, ANY_ROUTE},
 	{"mq_pv_free", (cmd_function)w_mq_pv_free, 1,
-		fixup_spve_null, 0, ANY_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"mq_size", (cmd_function)w_mq_size, 1,
-		fixup_spve_null, 0, ANY_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"bind_mq", (cmd_function)bind_mq, 1, 0, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -306,6 +307,16 @@ static int fixup_mq_add(void **param, int param_no)
 {
 	if(param_no == 1 || param_no == 2 || param_no == 3) {
 		return fixup_spve_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number %d\n", param_no);
+	return E_UNSPEC;
+}
+
+static int fixup_free_mq_add(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2 || param_no == 3) {
+		return fixup_free_spve_null(param, 1);
 	}
 
 	LM_ERR("invalid parameter number %d\n", param_no);
