@@ -121,40 +121,48 @@ static int mt_match(sip_msg_t *msg, str *tname, str *tomatch, int mval);
 static int mt_load_db(m_tree_t *pt);
 static int mt_load_db_trees();
 
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"mt_match", (cmd_function)w_mt_match, 3, fixup_mt_match, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
-		{"bind_mtree", (cmd_function)bind_mtree, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
-
-static param_export_t params[] = {
-		{"mtree", PARAM_STRING | PARAM_USE_FUNC, (void *)mt_param},
-		{"db_url", PARAM_STR, &db_url}, {"db_table", PARAM_STR, &db_table},
-		{"tname_column", PARAM_STR, &tname_column},
-		{"tprefix_column", PARAM_STR, &tprefix_column},
-		{"tvalue_column", PARAM_STR, &tvalue_column},
-		{"char_list", PARAM_STR, &mt_char_list},
-		{"fetch_rows", PARAM_INT, &mt_fetch_rows},
-		{"pv_value", PARAM_STR, &value_param},
-		{"pv_values", PARAM_STR, &values_param},
-		{"pv_dstid", PARAM_STR, &dstid_param},
-		{"pv_weight", PARAM_STR, &weight_param},
-		{"pv_count", PARAM_STR, &count_param},
-		{"mt_tree_type", PARAM_INT, &_mt_tree_type},
-		{"mt_ignore_duplicates", PARAM_INT, &_mt_ignore_duplicates},
-		{"mt_allow_duplicates", PARAM_INT, &_mt_allow_duplicates}, {0, 0, 0}};
-
-struct module_exports exports = {
-		"mtree", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,					  /*·exported·functions·*/
-		params,					  /*·exported·functions·*/
-		0,						  /*·exported·RPC·methods·*/
-		0,						  /* exported pseudo-variables */
-		0,						  /* response·function */
-		mod_init,				  /* module initialization function */
-		child_init,				  /* per child init function */
-		mod_destroy				  /* destroy function */
+	{"mt_match", (cmd_function)w_mt_match, 3,
+		fixup_mt_match, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
+	{"bind_mtree", (cmd_function)bind_mtree, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
 };
 
+static param_export_t params[] = {
+	{"mtree", PARAM_STRING | PARAM_USE_FUNC, (void *)mt_param},
+	{"db_url", PARAM_STR, &db_url},
+	{"db_table", PARAM_STR, &db_table},
+	{"tname_column", PARAM_STR, &tname_column},
+	{"tprefix_column", PARAM_STR, &tprefix_column},
+	{"tvalue_column", PARAM_STR, &tvalue_column},
+	{"char_list", PARAM_STR, &mt_char_list},
+	{"fetch_rows", PARAM_INT, &mt_fetch_rows},
+	{"pv_value", PARAM_STR, &value_param},
+	{"pv_values", PARAM_STR, &values_param},
+	{"pv_dstid", PARAM_STR, &dstid_param},
+	{"pv_weight", PARAM_STR, &weight_param},
+	{"pv_count", PARAM_STR, &count_param},
+	{"mt_tree_type", PARAM_INT, &_mt_tree_type},
+	{"mt_ignore_duplicates", PARAM_INT, &_mt_ignore_duplicates},
+	{"mt_allow_duplicates", PARAM_INT, &_mt_allow_duplicates},
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"mtree",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /*·exported·functions·*/
+	params,          /*·exported·functions·*/
+	0,               /*·exported·RPC·methods·*/
+	0,               /* exported pseudo-variables */
+	0,               /* response·function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per child init function */
+	mod_destroy      /* destroy function */
+};
+/* clang-format on */
 
 /**
  * init module function
