@@ -285,7 +285,7 @@ static cmd_export_t commands[] = {
 	{"fix_contact", (cmd_function)w_FixContact, 0,
 		0, 0, ANY_ROUTE},
 	{"client_nat_test", (cmd_function)w_ClientNatTest, 1,
-		fixup_igp_null, 0, ANY_ROUTE},
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
