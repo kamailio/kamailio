@@ -66,49 +66,58 @@ static int ki_mqtt_subscribe(sip_msg_t *msg, str *topic, int qos);
 static int cmd_mqtt_unsubscribe(sip_msg_t *msg, char *topic);
 static int ki_mqtt_unsubscribe(sip_msg_t *msg, str *topic);
 
-static cmd_export_t cmds[] = {{"mqtt_publish", (cmd_function)cmd_mqtt_publish,
-									  3, fixup_mqtt_publish, 0, ANY_ROUTE},
-		{"mqtt_subscribe", (cmd_function)cmd_mqtt_subscribe, 2,
-				fixup_mqtt_subscribe, 0, ANY_ROUTE},
-		{"mqtt_unsubscribe", (cmd_function)cmd_mqtt_unsubscribe, 1,
-				fixup_spve_all, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"mqtt_publish", (cmd_function)cmd_mqtt_publish, 3,
+		fixup_mqtt_publish, 0, ANY_ROUTE},
+	{"mqtt_subscribe", (cmd_function)cmd_mqtt_subscribe, 2,
+		fixup_mqtt_subscribe, 0, ANY_ROUTE},
+	{"mqtt_unsubscribe", (cmd_function)cmd_mqtt_unsubscribe, 1,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
-static param_export_t params[] = {{"host", PARAM_STRING, &_mqtt_host},
-		{"port", PARAM_INT, &_mqtt_port}, {"id", PARAM_STRING, &_mqtt_id},
-		{"username", PARAM_STRING, &_mqtt_username},
-		{"password", PARAM_STRING, &_mqtt_password},
-		{"will_topic", PARAM_STRING, &_mqtt_willtopic},
-		{"will", PARAM_STRING, &_mqtt_will},
-		{"keepalive", PARAM_INT, &_mqtt_keepalive},
-		{"event_callback", PARAM_STR, &_mqtt_event_callback},
-		{"tls_method", PARAM_STRING, &_mqtt_tls_method},
-		{"tls_alpn", PARAM_STRING, &_mqtt_tls_alpn},
-		{"ca_file", PARAM_STRING, &_mqtt_ca_file},
-		{"ca_path", PARAM_STRING, &_mqtt_ca_path},
-		{"certificate", PARAM_STRING, &_mqtt_certificate},
-		{"private_key", PARAM_STRING, &_mqtt_private_key},
-		{"verify_certificate", PARAM_INT, &_mqtt_verify_certificate},
-		{"cipher_list", PARAM_STRING, &_mqtt_cipher_list}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"host", PARAM_STRING, &_mqtt_host},
+	{"port", PARAM_INT, &_mqtt_port},
+	{"id", PARAM_STRING, &_mqtt_id},
+	{"username", PARAM_STRING, &_mqtt_username},
+	{"password", PARAM_STRING, &_mqtt_password},
+	{"will_topic", PARAM_STRING, &_mqtt_willtopic},
+	{"will", PARAM_STRING, &_mqtt_will},
+	{"keepalive", PARAM_INT, &_mqtt_keepalive},
+	{"event_callback", PARAM_STR, &_mqtt_event_callback},
+	{"tls_method", PARAM_STRING, &_mqtt_tls_method},
+	{"tls_alpn", PARAM_STRING, &_mqtt_tls_alpn},
+	{"ca_file", PARAM_STRING, &_mqtt_ca_file},
+	{"ca_path", PARAM_STRING, &_mqtt_ca_path},
+	{"certificate", PARAM_STRING, &_mqtt_certificate},
+	{"private_key", PARAM_STRING, &_mqtt_private_key},
+	{"verify_certificate", PARAM_INT, &_mqtt_verify_certificate},
+	{"cipher_list", PARAM_STRING, &_mqtt_cipher_list},
+	{0, 0, 0}
+};
 
 static pv_export_t mod_pvs[] = {
-		{{"mqtt", (sizeof("mqtt") - 1)}, PVT_OTHER, pv_get_mqtt, pv_set_mqtt,
-				pv_parse_mqtt_name, 0, 0, 0},
+	{{"mqtt", (sizeof("mqtt") - 1)}, PVT_OTHER, pv_get_mqtt, pv_set_mqtt,
+			pv_parse_mqtt_name, 0, 0, 0},
 
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 struct module_exports exports = {
-		"mqtt",			 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per-child init function */
-		0				 /* module destroy function */
+	"mqtt",			 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* RPC method exports */
+	mod_pvs,		 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* per-child init function */
+	0				 /* module destroy function */
 };
+/* clang-format on */
 
 /*!
  * \brief Module initialization function
