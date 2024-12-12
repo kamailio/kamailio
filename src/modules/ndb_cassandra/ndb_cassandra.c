@@ -65,31 +65,39 @@ static int cass_insert_f(struct sip_msg *msg, char *keyspace,
 static int cass_retrieve_f(struct sip_msg *msg, char *keyspace,
 		char *column_family, char *key, char *column, char *value);
 
+/* clang-format off */
 /* Exported functions */
 static cmd_export_t cmds[] = {
-		{"cass_insert", (cmd_function)cass_insert_f, 5, fixup_cass_insert, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"cass_retrieve", (cmd_function)cass_retrieve_f, 5, fixup_cass_retrieve,
-				free_fixup_cass_retrieve,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"cass_insert", (cmd_function)cass_insert_f, 5,
+		fixup_cass_insert, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"cass_retrieve", (cmd_function)cass_retrieve_f, 5,
+		fixup_cass_retrieve, free_fixup_cass_retrieve,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /* Exported parameters */
 static param_export_t params[] = {
-		{"host", PARAM_STR, &host}, {"port", PARAM_INT, &port}, {0, 0, 0}};
+	{"host", PARAM_STR, &host},
+	{"port", PARAM_INT, &port},
+	{0, 0, 0}
+};
 
 /* Module interface */
 struct module_exports exports = {
-		"ndb_cassandra", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,							  /* Exported functions */
-		params,							  /* Exported parameters */
-		0,								  /* exported RPC methods */
-		0,								  /* exported pseudo-variables */
-		0,								  /* response function*/
-		mod_init,						  /* module initialization function */
-		child_init,						  /* per-child init function */
-		destroy							  /* destroy function */
+	"ndb_cassandra",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,            /* Exported functions */
+	params,          /* Exported parameters */
+	0,               /* exported RPC methods */
+	0,               /* exported pseudo-variables */
+	0,               /* response function*/
+	mod_init,        /* module initialization function */
+	child_init,      /* per-child init function */
+	destroy          /* destroy function */
 };
+/* clang-format on */
 
 /* Module initialization function */
 static int mod_init(void)
