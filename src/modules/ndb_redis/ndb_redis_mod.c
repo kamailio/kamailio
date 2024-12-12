@@ -77,6 +77,7 @@ static int w_redis_pipe_cmd5(struct sip_msg *msg, char *ssrv, char *scmd,
 static int w_redis_pipe_cmd6(struct sip_msg *msg, char *ssrv, char *scmd,
 		char *sargv1, char *sargv2, char *sargv3, char *sres);
 static int fixup_redis_cmd6(void **param, int param_no);
+static int fixup_free_redis_cmd6(void **param, int param_no);
 static int w_redis_execute(struct sip_msg *msg, char *ssrv);
 
 static int w_redis_free_reply(struct sip_msg *msg, char *res);
@@ -103,28 +104,27 @@ static pv_export_t mod_pvs[] = {
 	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
-
 static cmd_export_t cmds[] = {
 	{"redis_cmd", (cmd_function)w_redis_cmd3, 3,
-			fixup_redis_cmd6, 0, ANY_ROUTE},
-	{"redis_cmd", (cmd_function)w_redis_cmd4, 4, fixup_redis_cmd6, 0,
-			ANY_ROUTE},
-	{"redis_cmd", (cmd_function)w_redis_cmd5, 5, fixup_redis_cmd6, 0,
-			ANY_ROUTE},
-	{"redis_cmd", (cmd_function)w_redis_cmd6, 6, fixup_redis_cmd6, 0,
-			ANY_ROUTE},
-	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd3, 3, fixup_redis_cmd6,
-			0, ANY_ROUTE},
-	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd4, 4, fixup_redis_cmd6,
-			0, ANY_ROUTE},
-	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd5, 5, fixup_redis_cmd6,
-			0, ANY_ROUTE},
-	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd6, 6, fixup_redis_cmd6,
-			0, ANY_ROUTE},
+			fixup_redis_cmd6, fixup_free_redis_cmd6, ANY_ROUTE},
+	{"redis_cmd", (cmd_function)w_redis_cmd4, 4,
+		fixup_redis_cmd6, fixup_free_redis_cmd6, ANY_ROUTE},
+	{"redis_cmd", (cmd_function)w_redis_cmd5, 5,
+		fixup_redis_cmd6, fixup_free_redis_cmd6, ANY_ROUTE},
+	{"redis_cmd", (cmd_function)w_redis_cmd6, 6,
+		fixup_redis_cmd6, fixup_free_redis_cmd6, ANY_ROUTE},
+	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd3, 3,
+		fixup_redis_cmd6, fixup_free_redis_cmd6, ANY_ROUTE},
+	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd4, 4,
+		fixup_redis_cmd6, fixup_free_redis_cmd6, ANY_ROUTE},
+	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd5, 5,
+		fixup_redis_cmd6, fixup_free_redis_cmd6, ANY_ROUTE},
+	{"redis_pipe_cmd", (cmd_function)w_redis_pipe_cmd6, 6,
+		fixup_redis_cmd6, fixup_free_redis_cmd6, ANY_ROUTE},
 	{"redis_execute", (cmd_function)w_redis_execute, 1, fixup_redis_cmd6, 0,
 			ANY_ROUTE},
-	{"redis_free", (cmd_function)w_redis_free_reply, 1, fixup_spve_null, 0,
-			ANY_ROUTE},
+	{"redis_free", (cmd_function)w_redis_free_reply, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 
 	{"bind_ndb_redis", (cmd_function)bind_ndb_redis, 0, 0, 0, 0},
 
@@ -562,6 +562,10 @@ static int fixup_redis_cmd6(void **param, int param_no)
 	return fixup_spve_null(param, 1);
 }
 
+static int fixup_free_redis_cmd6(void **param, int param_no)
+{
+	return fixup_free_spve_null(param, 1);
+}
 
 /**
  *
