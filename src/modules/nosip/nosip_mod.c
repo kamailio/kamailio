@@ -53,30 +53,36 @@ static regex_t nosip_msg_match_regexp;
 static char *nosip_msg_skip = NULL;
 static regex_t nosip_msg_skip_regexp;
 
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{0, 0, 0, 0, 0}
+};
 
-static cmd_export_t cmds[] = {{0, 0, 0, 0, 0}};
+static pv_export_t mod_pvs[] = {
+	{{"nosip", (sizeof("nosip") - 1)},
+		PVT_OTHER, pv_get_nosip, 0, 0, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
-static pv_export_t mod_pvs[] = {{{"nosip", (sizeof("nosip") - 1)}, /* */
-										PVT_OTHER, pv_get_nosip, 0, 0, 0, 0, 0},
-
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
-
-static param_export_t params[] = {{"msg_match", PARAM_STRING, &nosip_msg_match},
-		{"msg_skip", PARAM_STRING, &nosip_msg_skip}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"msg_match", PARAM_STRING, &nosip_msg_match},
+	{"msg_skip", PARAM_STRING, &nosip_msg_skip},
+	{0, 0, 0}
+};
 
 /** module exports */
 struct module_exports exports = {
-		"nosip",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		0				 /* module destroy function */
+	"nosip",		 /* module name */
+	DEFAULT_DLFLAGS,    /* dlopen flags */
+	cmds,               /* exported functions */
+	params,             /* exported parameters */
+	0,                  /* RPC method exports */
+	mod_pvs,            /* exported pseudo-variables */
+	0,                  /* response handling function */
+	mod_init,           /* module initialization function */
+	0,                  /* per-child init function */
+	0                   /* module destroy function */
 };
+/* clang-format on */
 
 /**
  *
