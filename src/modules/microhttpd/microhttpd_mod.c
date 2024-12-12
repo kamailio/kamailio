@@ -52,7 +52,7 @@ static int w_mhttpd_send_reply(
 		sip_msg_t *msg, char *pcode, char *preason, char *pctype, char *pbody);
 
 static int fixup_mhttpd_send_reply(void **param, int param_no);
-
+static int fixup_free_mhttpd_send_reply(void **param, int param_no);
 
 static int mod_init(void);
 static int child_init(int);
@@ -70,8 +70,9 @@ static pv_export_t mod_pvs[] = {
 };
 
 static cmd_export_t cmds[] = {
-	{"mhttpd_reply",    (cmd_function)w_mhttpd_send_reply,
-		4, fixup_mhttpd_send_reply,  0, REQUEST_ROUTE|EVENT_ROUTE},
+	{"mhttpd_reply",    (cmd_function)w_mhttpd_send_reply, 4,
+		fixup_mhttpd_send_reply, fixup_free_mhttpd_send_reply,
+		REQUEST_ROUTE|EVENT_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -432,6 +433,19 @@ static int fixup_mhttpd_send_reply(void **param, int param_no)
 	return 0;
 }
 
+static int fixup_free_mhttpd_send_reply(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_igp_null(param, 1);
+	} else if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 3) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 4) {
+		return fixup_free_spve_null(param, 1);
+	}
+	return 0;
+}
 
 static enum MHD_Result ksr_microhttpd_request(void *cls,
 		struct MHD_Connection *connection, const char *url, const char *method,
