@@ -57,10 +57,12 @@ static int child_init(int);
 static int cmd_mqtt_publish(
 		sip_msg_t *msg, char *topic, char *payload, char *qos);
 static int fixup_mqtt_publish(void **param, int param_no);
+static int fixup_free_mqtt_publish(void **param, int param_no);
 static int ki_mqtt_publish(sip_msg_t *msg, str *topic, str *payload, int qos);
 
 static int cmd_mqtt_subscribe(sip_msg_t *msg, char *topic, char *qos);
 static int fixup_mqtt_subscribe(void **param, int param_no);
+static int fixup_free_mqtt_subscribe(void **param, int param_no);
 static int ki_mqtt_subscribe(sip_msg_t *msg, str *topic, int qos);
 
 static int cmd_mqtt_unsubscribe(sip_msg_t *msg, char *topic);
@@ -69,11 +71,11 @@ static int ki_mqtt_unsubscribe(sip_msg_t *msg, str *topic);
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"mqtt_publish", (cmd_function)cmd_mqtt_publish, 3,
-		fixup_mqtt_publish, 0, ANY_ROUTE},
+		fixup_mqtt_publish, fixup_free_mqtt_publish, ANY_ROUTE},
 	{"mqtt_subscribe", (cmd_function)cmd_mqtt_subscribe, 2,
-		fixup_mqtt_subscribe, 0, ANY_ROUTE},
+		fixup_mqtt_subscribe, fixup_free_mqtt_subscribe, ANY_ROUTE},
 	{"mqtt_unsubscribe", (cmd_function)cmd_mqtt_unsubscribe, 1,
-		fixup_spve_all, 0, ANY_ROUTE},
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -289,6 +291,20 @@ static int fixup_mqtt_publish(void **param, int param_no)
 	}
 }
 
+static int fixup_free_mqtt_publish(void **param, int param_no)
+{
+	switch(param_no) {
+		case 1:
+			return fixup_free_spve_spve(param, param_no);
+		case 2:
+			return fixup_free_spve_spve(param, param_no);
+		case 3:
+			return 0;
+		default:
+			return -1;
+	}
+}
+
 /**
  * Subscribe to the given topic.
  * Mqtt qos levels 0, 1 and 2 can be used.
@@ -348,6 +364,18 @@ static int fixup_mqtt_subscribe(void **param, int param_no)
 			return fixup_spve_spve(param, param_no);
 		case 2:
 			return fixup_uint_uint(param, param_no);
+		default:
+			return -1;
+	}
+}
+
+static int fixup_free_mqtt_subscribe(void **param, int param_no)
+{
+	switch(param_no) {
+		case 1:
+			return fixup_free_spve_spve(param, param_no);
+		case 2:
+			return 0;
 		default:
 			return -1;
 	}
