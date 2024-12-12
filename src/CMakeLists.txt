@@ -24,9 +24,13 @@ include(${CMAKE_SOURCE_DIR}/cmake/defs.cmake)
 
 # -----------------------
 # The following produces core/autover.h Find Git
+option(USE_GIT "Use git to get commit information" ON)
 find_package(Git QUIET)
 
-if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+if(USE_GIT
+   AND GIT_FOUND
+   AND EXISTS "${PROJECT_SOURCE_DIR}/.git"
+)
   execute_process(
     COMMAND ${GIT_EXECUTABLE} rev-parse --verify --short=6 HEAD
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
