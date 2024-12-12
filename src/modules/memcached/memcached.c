@@ -64,34 +64,48 @@ static void mod_destroy(void);
 /*!
  * Exported pseudo-variables
  */
+/* clang-format off */
 static pv_export_t mod_pvs[] = {
-		{{"mct", sizeof("mct") - 1}, PVT_OTHER, pv_get_mcd_value,
-				pv_set_mcd_value, pv_parse_mcd_name, 0, 0, 0},
-		{{"mcinc", sizeof("mcinc") - 1}, PVT_OTHER, pv_get_mcd_value,
-				pv_inc_mcd_value, pv_parse_mcd_name, 0, 0, 0},
-		{{"mcdec", sizeof("mcdec") - 1}, PVT_OTHER, pv_get_mcd_value,
-				pv_dec_mcd_value, pv_parse_mcd_name, 0, 0, 0},
-		{{"mctex", sizeof("mctex") - 1}, PVT_OTHER, pv_get_null,
-				pv_set_mcd_expire, pv_parse_mcd_name, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
-
+	{{"mct", sizeof("mct") - 1}, PVT_OTHER, pv_get_mcd_value,
+		pv_set_mcd_value, pv_parse_mcd_name, 0, 0, 0},
+	{{"mcinc", sizeof("mcinc") - 1}, PVT_OTHER, pv_get_mcd_value,
+		pv_inc_mcd_value, pv_parse_mcd_name, 0, 0, 0},
+	{{"mcdec", sizeof("mcdec") - 1}, PVT_OTHER, pv_get_mcd_value,
+		pv_dec_mcd_value, pv_parse_mcd_name, 0, 0, 0},
+	{{"mctex", sizeof("mctex") - 1}, PVT_OTHER, pv_get_null,
+		pv_set_mcd_expire, pv_parse_mcd_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 /*!
  * Exported parameters
  */
-static param_export_t params[] = {{"servers", PARAM_STRING, &mcd_srv_str},
-		{"expire", PARAM_INT, &mcd_expire},
-		{"timeout", PARAM_INT, &mcd_timeout}, {"mode", PARAM_INT, &mcd_mode},
-		{"memory", PARAM_INT, &mcd_memory},
-		{"stringify", PARAM_INT, &mcd_stringify}, {0, 0, 0}};
-
+static param_export_t params[] = {
+	{"servers", PARAM_STRING, &mcd_srv_str},
+	{"expire", PARAM_INT, &mcd_expire},
+	{"timeout", PARAM_INT, &mcd_timeout},
+	{"mode", PARAM_INT, &mcd_mode},
+	{"memory", PARAM_INT, &mcd_memory},
+	{"stringify", PARAM_INT, &mcd_stringify},
+	{0, 0, 0}
+};
 
 /*!
  * Module interface
  */
-struct module_exports exports = {"memcached", DEFAULT_DLFLAGS, 0, params, 0,
-		mod_pvs, 0, mod_init, 0, mod_destroy};
-
+struct module_exports exports = {
+	"memcached",
+	DEFAULT_DLFLAGS,    /* dlopen flags */
+	0,                  /* exported functions */
+	params,             /* exported parameters */
+	0,                  /* RPC method exports */
+	mod_pvs,            /* exported pseudo-variables */
+	0,                  /* response handling function */
+	mod_init,           /* module initialization function */
+	0,                  /* per-child init function */
+	mod_destroy         /* module destroy function */
+};
+/* clang-format on */
 
 /*!
  * \brief Wrapper functions around our internal memory management for libmemcached (version >= 0.38) callback
