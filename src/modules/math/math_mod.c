@@ -41,21 +41,23 @@ static int w_math_log2(sip_msg_t *msg, char *v1, char *r);
 static int w_math_log10(sip_msg_t *msg, char *v1, char *r);
 static int w_math_sqrt(sip_msg_t *msg, char *v1, char *r);
 static int fixup_math_p2(void **param, int param_no);
+static int fixup_free_math_p2(void **param, int param_no);
 static int fixup_math_p3(void **param, int param_no);
+static int fixup_free_math_p3(void **param, int param_no);
 
 
 /* clang-format off */
 static cmd_export_t cmds[]={
-	{"math_pow", (cmd_function)w_math_pow, 3, fixup_math_p3,
-		0, ANY_ROUTE},
-	{"math_logN", (cmd_function)w_math_logN, 2, fixup_math_p2,
-		0, ANY_ROUTE},
-	{"math_log2", (cmd_function)w_math_log2, 2, fixup_math_p2,
-		0, ANY_ROUTE},
-	{"math_log10", (cmd_function)w_math_log10, 2, fixup_math_p2,
-		0, ANY_ROUTE},
-	{"math_sqrt", (cmd_function)w_math_sqrt, 2, fixup_math_p2,
-		0, ANY_ROUTE},
+	{"math_pow", (cmd_function)w_math_pow, 3,
+		fixup_math_p3, fixup_free_math_p3, ANY_ROUTE},
+	{"math_logN", (cmd_function)w_math_logN, 2,
+		fixup_math_p2, fixup_free_math_p2, ANY_ROUTE},
+	{"math_log2", (cmd_function)w_math_log2, 2,
+		fixup_math_p2, fixup_math_p2, ANY_ROUTE},
+	{"math_log10", (cmd_function)w_math_log10, 2,
+		fixup_math_p2, fixup_math_p2, ANY_ROUTE},
+	{"math_sqrt", (cmd_function)w_math_sqrt, 2,
+		fixup_math_p2, fixup_math_p2, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -233,6 +235,16 @@ static int fixup_math_p2(void **param, int param_no)
 	return 0;
 }
 
+static int fixup_free_math_p2(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_igp_igp(param, param_no);
+	} else if(param_no == 2) {
+		return fixup_free_pvar_null(param, 1);
+	}
+	return 0;
+}
+
 /**
  *
  */
@@ -242,6 +254,16 @@ static int fixup_math_p3(void **param, int param_no)
 		return fixup_igp_igp(param, param_no);
 	} else if(param_no == 3) {
 		return fixup_pvar_null(param, 1);
+	}
+	return 0;
+}
+
+static int fixup_free_math_p3(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2) {
+		return fixup_free_igp_igp(param, param_no);
+	} else if(param_no == 3) {
+		return fixup_free_pvar_null(param, 1);
 	}
 	return 0;
 }
