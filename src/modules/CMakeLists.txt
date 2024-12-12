@@ -92,10 +92,12 @@ function(add_module_group GROUP_MODULES)
         )
         # Add the module to the list of added modules
         set_property(GLOBAL APPEND PROPERTY ADDED_MODULES_LIST ${MODULE_NAME})
-        docs_add_module(${MODULE_NAME})
-        set_property(
-          GLOBAL APPEND PROPERTY ALL_MODULE_DOC_TARGETS ${MODULE_NAME}_doc
-        )
+        if(BUILD_DOC)
+          docs_add_module(${MODULE_NAME})
+          set_property(
+            GLOBAL APPEND PROPERTY ALL_MODULE_DOC_TARGETS ${MODULE_NAME}_doc
+          )
+        endif()
       else()
         message(WARNING "Module directory ${MODULE_PATH} does not exist.")
       endif()
@@ -125,19 +127,21 @@ endforeach()
 add_module_group("${FINAL_MODULES_LIST}")
 
 # Add a kamailio_docs target that depends on all module documentation targets
-get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
-# message(STATUS "ALL_MODULE_DOC_TARGETS: ${ALL_MODULE_DOC_TARGETS}")
+if(BUILD_DOC)
+  get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
+  # message(STATUS "ALL_MODULE_DOC_TARGETS: ${ALL_MODULE_DOC_TARGETS}")
 
-add_custom_target(
-  kamailio_docs
-  DEPENDS ${ALL_MODULE_DOC_TARGETS}
-  COMMENT "Generating Kamailio documentation"
-)
-# add_dependencies(kamailio-docs kamailio_docs)
+  add_custom_target(
+    kamailio_docs ALL
+    DEPENDS ${ALL_MODULE_DOC_TARGETS}
+    COMMENT "Generating Kamailio documentation"
+  )
+  # add_dependencies(kamailio-docs kamailio_docs)
 
-add_custom_target(
-  install_kamailio_docs
-  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
-          kamailio_docs
-  DEPENDS kamailio_docs
-)
+  add_custom_target(
+    install_kamailio_docs
+    COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
+            kamailio_docs
+    DEPENDS kamailio_docs
+  )
+endif()
