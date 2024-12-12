@@ -108,6 +108,7 @@ static volatile int mt_reload_flag = 0;
 
 int mt_param(modparam_t type, void *val);
 static int fixup_mt_match(void **param, int param_no);
+static int fixup_free_mt_match(void **param, int param_no);
 static int w_mt_match(struct sip_msg *msg, char *str1, char *str2, char *str3);
 
 static int mod_init(void);
@@ -124,7 +125,7 @@ static int mt_load_db_trees();
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"mt_match", (cmd_function)w_mt_match, 3,
-		fixup_mt_match, 0,
+		fixup_mt_match, fixup_free_mt_match,
 		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
 	{"bind_mtree", (cmd_function)bind_mtree, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -336,6 +337,17 @@ static int fixup_mt_match(void **param, int param_no)
 	return fixup_igp_null(param, 1);
 }
 
+static int fixup_free_mt_match(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2) {
+		return fixup_free_spve_null(param, 1);
+	}
+	if(param_no != 3) {
+		LM_ERR("invalid parameter number %d\n", param_no);
+		return E_UNSPEC;
+	}
+	return fixup_free_igp_null(param, 1);
+}
 
 /* use tree tn, match var, by mode, output in avp params */
 static int mt_match(sip_msg_t *msg, str *tname, str *tomatch, int mval)
