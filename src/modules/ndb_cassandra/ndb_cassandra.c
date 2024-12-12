@@ -55,7 +55,7 @@ static void destroy(void);
 
 /* Fixups functions */
 static int fixup_cass_insert(void **param, int param_no);
-
+static int fixup_free_cass_insert(void **param, int param_no);
 static int fixup_cass_retrieve(void **param, int param_no);
 static int free_fixup_cass_retrieve(void **param, int param_no);
 
@@ -69,7 +69,7 @@ static int cass_retrieve_f(struct sip_msg *msg, char *keyspace,
 /* Exported functions */
 static cmd_export_t cmds[] = {
 	{"cass_insert", (cmd_function)cass_insert_f, 5,
-		fixup_cass_insert, 0,
+		fixup_cass_insert, fixup_free_cass_insert,
 		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 	{"cass_retrieve", (cmd_function)cass_retrieve_f, 5,
 		fixup_cass_retrieve, free_fixup_cass_retrieve,
@@ -137,6 +137,28 @@ static int fixup_cass_insert(void **param, int param_no)
 	LM_ERR("invalid parameter number <%d>\n", param_no);
 	return -1;
 }
+
+static int fixup_free_cass_insert(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	}
+	if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
+	}
+	if(param_no == 3) {
+		return fixup_free_spve_null(param, 1);
+	}
+	if(param_no == 4) {
+		return fixup_free_spve_null(param, 1);
+	}
+	if(param_no == 5) {
+		return fixup_free_spve_null(param, 1);
+	}
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
 /**/
 static int fixup_cass_retrieve(void **param, int param_no)
 {
@@ -171,20 +193,16 @@ static int fixup_cass_retrieve(void **param, int param_no)
 static int free_fixup_cass_retrieve(void **param, int param_no)
 {
 	if(param_no == 1) {
-		LM_WARN("free function has not been defined for spve\n");
-		return 0;
+		return fixup_free_spve_null(param, 1);
 	}
 	if(param_no == 2) {
-		LM_WARN("free function has not been defined for spve\n");
-		return 0;
+		return fixup_free_spve_null(param, 1);
 	}
 	if(param_no == 3) {
-		LM_WARN("free function has not been defined for spve\n");
-		return 0;
+		return fixup_free_spve_null(param, 1);
 	}
 	if(param_no == 4) {
-		LM_WARN("free function has not been defined for spve\n");
-		return 0;
+		return fixup_free_spve_null(param, 1);
 	}
 	if(param_no == 5) {
 		return fixup_free_pvar_null(param, 1);
