@@ -257,69 +257,81 @@ stat_var *registered_endpoints = 0;
 stat_var *subscribed_endpoints = 0;
 stat_var *dialog_endpoints = 0;
 
-static NetInfo rfc1918nets[] = {{"10.0.0.0", 0x0a000000UL, 0xff000000UL},
-		{"172.16.0.0", 0xac100000UL, 0xfff00000UL},
-		{"192.168.0.0", 0xc0a80000UL, 0xffff0000UL},
-		{"100.64.0.0", 0x64400000UL,
-				0xffc00000UL}, // include rfc6598 shared address space as technically the same for our purpose
-		{"192.0.0.0", 0xc0000000UL,
-				0xfffffff8UL}, // include rfc7335 IPv4 Service Continuity Prefix
-		{NULL, 0UL, 0UL}};
-
-static NatTest NAT_Tests[] = {{NTPrivateContact, test_private_contact},
-		{NTSourceAddress, test_source_address},
-		{NTPrivateVia, test_private_via}, {NTNone, NULL}};
-
 /** SL API structure */
 sl_api_t slb;
 
+/* clang-format off */
+static NetInfo rfc1918nets[] = {
+	{"10.0.0.0", 0x0a000000UL, 0xff000000UL},
+	{"172.16.0.0", 0xac100000UL, 0xfff00000UL},
+	{"192.168.0.0", 0xc0a80000UL, 0xffff0000UL},
+	// include rfc6598 shared address space as technically the same for our purpose
+	{"100.64.0.0", 0x64400000UL, 0xffc00000UL},
+	// include rfc7335 IPv4 Service Continuity Prefix
+	{"192.0.0.0", 0xc0000000UL, 0xfffffff8UL},
+	{NULL, 0UL, 0UL}
+};
+
+static NatTest NAT_Tests[] = {
+	{NTPrivateContact, test_private_contact},
+	{NTSourceAddress, test_source_address},
+	{NTPrivateVia, test_private_via},
+	{NTNone, NULL}
+};
+
 static cmd_export_t commands[] = {
-		{"nat_keepalive", (cmd_function)w_NAT_Keepalive, 0, NULL, 0,
-				REQUEST_ROUTE},
-		{"fix_contact", (cmd_function)w_FixContact, 0, NULL, 0, ANY_ROUTE},
-		{"client_nat_test", (cmd_function)w_ClientNatTest, 1, fixup_igp_null, 0,
-				ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"nat_keepalive", (cmd_function)w_NAT_Keepalive, 0,
+		0, 0, REQUEST_ROUTE},
+	{"fix_contact", (cmd_function)w_FixContact, 0,
+		0, 0, ANY_ROUTE},
+	{"client_nat_test", (cmd_function)w_ClientNatTest, 1,
+		fixup_igp_null, 0, ANY_ROUTE},
+
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t parameters[] = {
-		{"keepalive_interval", PARAM_INT, &keepalive_interval},
-		{"keepalive_method", PARAM_STRING, &keepalive_params.method},
-		{"keepalive_from", PARAM_STRING, &keepalive_params.from},
-		{"keepalive_extra_headers", PARAM_STRING,
-				&keepalive_params.extra_headers},
-		{"keepalive_state_file", PARAM_STRING, &keepalive_state_file},
-		{"contact_match", PARAM_INT, &natt_contact_match},
+	{"keepalive_interval", PARAM_INT, &keepalive_interval},
+	{"keepalive_method", PARAM_STRING, &keepalive_params.method},
+	{"keepalive_from", PARAM_STRING, &keepalive_params.from},
+	{"keepalive_extra_headers", PARAM_STRING, &keepalive_params.extra_headers},
+	{"keepalive_state_file", PARAM_STRING, &keepalive_state_file},
+	{"contact_match", PARAM_INT, &natt_contact_match},
 
-		{0, 0, 0}};
+	{0, 0, 0}
+};
 
 static pv_export_t pvars[] = {
-		{str_init("keepalive.socket"), PVT_OTHER, pv_get_keepalive_socket, NULL,
-				pv_parse_nat_contact_name, NULL, NULL, 0},
-		{str_init("source_uri"), PVT_OTHER, pv_get_source_uri, NULL, NULL, NULL,
-				NULL, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{str_init("keepalive.socket"), PVT_OTHER, pv_get_keepalive_socket, NULL,
+		pv_parse_nat_contact_name, NULL, NULL, 0},
+	{str_init("source_uri"), PVT_OTHER, pv_get_source_uri, NULL, NULL, NULL,
+		NULL, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 #ifdef STATISTICS
 static stat_export_t statistics[] = {
-		{"keepalive_endpoints", STAT_NO_RESET, &keepalive_endpoints},
-		{"registered_endpoints", STAT_NO_RESET, &registered_endpoints},
-		{"subscribed_endpoints", STAT_NO_RESET, &subscribed_endpoints},
-		{"dialog_endpoints", STAT_NO_RESET, &dialog_endpoints}, {0, 0, 0}};
+	{"keepalive_endpoints", STAT_NO_RESET, &keepalive_endpoints},
+	{"registered_endpoints", STAT_NO_RESET, &registered_endpoints},
+	{"subscribed_endpoints", STAT_NO_RESET, &subscribed_endpoints},
+	{"dialog_endpoints", STAT_NO_RESET, &dialog_endpoints},
+	{0, 0, 0}
+};
 #endif
 
 struct module_exports exports = {
-		"nat_traversal", // module name
-		DEFAULT_DLFLAGS, // dlopen flags
-		commands,		 // exported functions
-		parameters,		 // exported parameters
-		0,				 // exported RPC methods
-		pvars,			 // exported pseudo-variables
-		reply_filter,	 // reply processing function
-		mod_init,	// module init function (before fork. kids will inherit)
-		child_init, // child init function
-		mod_destroy // destroy function
+	"nat_traversal", // module name
+	DEFAULT_DLFLAGS, // dlopen flags
+	commands,		 // exported functions
+	parameters,		 // exported parameters
+	0,				 // exported RPC methods
+	pvars,			 // exported pseudo-variables
+	reply_filter,	 // reply processing function
+	mod_init,	// module init function (before fork. kids will inherit)
+	child_init, // child init function
+	mod_destroy // destroy function
 };
-
+/* clang-format on */
 
 // SIP_Dialog structure handling functions
 //
