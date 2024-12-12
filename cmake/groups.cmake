@@ -515,172 +515,305 @@ set(MODULE_GROUP_POSTGRES ${MODULE_GROUP_POSTGRES_DRIVER} ${MODULE_GROUP_DB})
 set(MODULE_GROUP_SQLITE_DRIVER ${MOD_LIST_SQLITE})
 set(MODULE_GROUP_SQLITE ${MODULE_GROUP_SQLITE_DRIVER} ${MODULE_GROUP_DB})
 
-# For radius module_group_radius=$(mod_list_radius)
+# For radius
+set(MODULE_GROUP_RADIUS ${MODULE_LIST_RADIUS})
 
-# For presence kamailio modules module_group_presence=$(mod_list_presence)
+# For presence kamailio modules
+set(MODULE_GROUP_PRESENCE ${MOD_LIST_PRESENCE})
 
-# For cassandra module_group_cassandra_driver=$(mod_list_cassandra)
-# module_group_cassandra=$(module_group_cassandra_driver) $(module_group_db)
+# For cassandra
+set(MODULE_GROUP_CASSANDRA_DRIVER ${MODULE_LIST_CASSANDRA})
+set(MODULE_GROUP_CASSANDRA ${MODULE_GROUP_CASSANDRA_DRIVER} ${MODULE_GROUP_DB})
 
-# For all modules not compiled by default module_group_ignore= $(sort
-# $(filter-out $(module_group_default), $(mod_list_all)))
+# For all modules not compiled by default
+# list(FILTER MOD_LIST_ALL EXCLUDE REGEX "${MODULE_GROUP_DEFAULT}")
 
-set(AVAILABLE_GROUPS
-    ALL
-    DEFAULT
-    STANDARD
-    COMMON
-    # MODULE_GROUP_DB
-    # MODULE_GROUP_MYSQL_DRIVER
-    # MODULE_GROUP_MYSQL
-    # MODULE_GROUP_POSTGRES_DRIVER
-    # MODULE_GROUP_POSTGRES
-    # MODULE_GROUP_SQLITE_DRIVER
-    # MODULE_GROUP_SQLITE
-    # MODULE_GROUP_RADIUS
-    # module_group_presence
-)
+# for all protocols (excl. local ones such as unix, tcp, etc.)
+set(AVAILABLE_GROUPS ALL DEFAULT STANDARD COMMON)
+
 # --- Groups defined for pacKaging ###
-
-# Standard modules in main pkg module_group_kstandard=$(mod_list_basic)
-# $(mod_list_extra) \ $(mod_list_db) $(mod_list_dbuid) \ $(mod_list_pcre)
-# $(mod_list_jsdt)
+# Standard modules in main pkg
+set(MODULE_GROUP_KSTANDARD ${MOD_LIST_BASIC} ${MOD_LIST_EXTRA} ${MOD_LIST_DB}
+                           ${MOD_LIST_DBUID} ${MOD_LIST_PCRE} ${MOD_LIST_JSDT}
+)
 
 # Standard modules without any dependencies (such as pcre)
-# module_group_kmini=$(mod_list_basic) $(mod_list_extra) \ $(mod_list_db)
-# $(mod_list_dbuid) \ $(mod_list_jsdt)
+set(MODULE_GROUP_KMINI ${MOD_LIST_BASIC} ${MOD_LIST_EXTRA} ${MOD_LIST_DB}
+                       ${MOD_LIST_DBUID} ${MOD_LIST_JSDT}
+)
+# pkg pcre module
+set(MODULE_GROUP_KPCRE ${MOD_LIST_PCRE})
 
-# pkg pcre module module_group_kpcre=$(mod_list_pcre)
+# pkg mysql module
+set(MODULE_GROUP_KMYSQL ${MOD_LIST_MYSQL})
 
-# pkg mysql module module_group_kmysql=$(mod_list_mysql)
+# pkg postgress module
+set(MODULE_GROUP_KPOSTGRES ${MOD_LIST_POSTGRES})
 
-# pkg postgress module module_group_kpostgres=$(mod_list_postgres)
+# pkg cpl module
+set(MODULE_GROUP_KCPL ${MOD_LIST_CPL})
 
-# pkg cpl module module_group_kcpl=$(mod_list_cpl)
+# pkg xml modules
+set(MODULE_GROUP_KXML ${MOD_LIST_XMLDEPS})
 
-# pkg xml modules module_group_kxml=$(mod_list_xmldeps)
+# pkg radius modules
+set(MODULE_GROUP_KRADIUS ${MOD_LIST_RADIUS})
 
-# pkg radius modules module_group_kradius=$(mod_list_radius)
+# pkg unixodbc module
+set(MODULE_GROUP_KUNIXODBC ${MOD_LIST_UNIXODBC})
 
-# pkg unixodbc module module_group_kunixodbc=$(mod_list_unixodbc)
+# pkg perl module
+set(MODULE_GROUP_KPERL ${MOD_LIST_PERLDEPS})
 
-# pkg perl module module_group_kperl=$(mod_list_perldeps)
+# pkg snmpstats module
+set(MODULE_GROUP_KSNMPSTATS ${MOD_LIST_SNMPSTATS})
 
-# pkg snmpstats module module_group_ksnmpstats=$(mod_list_snmpstats)
+# pkg xmpp module
+set(MODULE_GROUP_KXMPP ${MOD_LIST_XMPP})
 
-# pkg xmpp module module_group_kxmpp=$(mod_list_xmpp)
+# pkg berkeley module
+set(MODULE_GROUP_KBERKELEY ${MOD_LIST_BERKELEY})
 
-# pkg berkeley module module_group_kberkeley=$(mod_list_berkeley)
+# pkg ldap modules
+set(MODULE_GROUP_KLDAP ${MOD_LIST_LDAP})
 
-# pkg ldap modules module_group_kldap=$(mod_list_ldap)
+# pkg utils module
+set(MODULE_GROUP_KUTILS ${MOD_LIST_UTILS})
 
-# pkg utils module module_group_kutils=$(mod_list_utils)
+# pkg https_async module
+set(MODULE_GROUP_KHTTP_ASYNC ${MOD_LIST_HTTP_ASYNC})
 
-# pkg https_async module module_group_khttp_async=$(mod_list_http_async)
+# pkg memcached module
+set(MODULE_GROUP_KMEMCACHED ${MOD_LIST_MEMCACHED})
 
-# pkg memcached module module_group_kmemcached=$(mod_list_memcached)
+# pkg tls module
+set(MODULE_GROUP_KTLS_BASIC ${MOD_LIST_TLSDEPS})
 
-# pkg tls module module_group_ktls_basic=$(mod_list_tlsdeps)
+# pkg tls module with curl
+if(KTLS_INCLUDE_TLSA)
+  set(MODULE_GROUP_KTLS ${MOD_LIST_TLSDEPS} ${MOD_LIST_TLSA})
+else()
+  set(MODULE_GROUP_KTLS ${MOD_LIST_TLSDEPS})
+  set(MODULE_GROUP_KTLSA ${MOD_LIST_TLSA})
+endif()
 
-# ifeq ($(KTLS_INCLUDE_TLSA),yes) pkg tls module with curl
-# module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsa) else pkg tls module
-# with curl module_group_ktls=$(mod_list_tlsdeps)
+# pkg tls_wolfssl module
+set(MODULE_GROUP_KTLS_WOLFSSL ${MOD_LIST_TLS_WOLFSSL})
 
-# pkg tlsa module module_group_ktlsa=$(mod_list_tlsa) endif
+# pkg websocket module
+set(MODULE_GROUP_KWEBSOCKET ${MOD_LIST_WEBSOCKET})
 
-# pkg tls_wolfssl module module_group_ktls_wolfssl=$(mod_list_tls_wolfssl)
+# pkg presence modules
+set(MODULE_GROUP_KPRESENCE ${MOD_LIST_PRESENCE})
 
-# pkg websocket module module_group_kwebsocket=$(mod_list_websocket)
+# pkg lua module
+set(MODULE_GROUP_KLUA ${MOD_LIST_LUA})
 
-# pkg presence modules module_group_kpresence=$(mod_list_presence)
+# pkg python module
+set(MODULE_GROUP_KPYTHON ${MOD_LIST_PYTHON})
 
-# pkg lua module module_group_klua=$(mod_list_lua)
+# pkg python3 module
+set(MODULE_GROUP_KPYTHON3 ${MOD_LIST_PYTHON3})
 
-# pkg python module module_group_kpython=$(mod_list_python)
+# pkg ruby module
+set(MODULE_GROUP_KRUBY ${MOD_LIST_RUBY})
 
-# pkg python3 module module_group_kpython3=$(mod_list_python3)
+# pkg geoip module
+set(MODULE_GROUP_KGEOIP ${MOD_LIST_GEOIP})
 
-# pkg ruby module module_group_kruby=$(mod_list_ruby)
+# pkg geoip2 module
+set(MODULE_GROUP_KGEOIP2 ${MOD_LIST_GEOIP2})
 
-# pkg geoip module module_group_kgeoip=$(mod_list_geoip)
+# pkg sqlite module
+set(MODULE_GROUP_KSQLITE ${MOD_LIST_SQLITE})
 
-# pkg geoip2 module module_group_kgeoip2=$(mod_list_geoip2)
+# K json modules
+set(MODULE_GROUP_KJSON_BASIC ${MOD_LIST_JSON})
 
-# pkg sqlite module module_group_ksqlite=$(mod_list_sqlite)
+# K json modules with libevent
+set(MODULE_GROUP_KJSON ${MOD_LIST_JSON} ${MOD_LIST_JSON_EVENT})
 
-# K json modules module_group_kjson_basic=$(mod_list_json)
+# K jansson modules
+set(MODULE_GROUP_KJANSSON_BASIC ${MOD_LIST_JANSSON})
 
-# K json modules with libevent module_group_kjson=$(mod_list_json)
-# $(mod_list_json_event)
+# K jansson modules with libevent
+set(MODULE_GROUP_KJANSSON ${MOD_LIST_JANSSON} ${MOD_LIST_JANSSON_EVENT})
 
-# K jansson modules module_group_kjansson_basic=$(mod_list_jansson)
+# pkg redis module
+set(MODULE_GROUP_KREDIS ${MOD_LIST_REDIS})
 
-# K jansson modules with libevent module_group_kjansson=$(mod_list_jansson)
-# $(mod_list_jansson_event)
+# pkg IMS modules
+set(MODULE_GROUP_KIMS ${MOD_LIST_IMS})
 
-# pkg redis module module_group_kredis=$(mod_list_redis)
+# pkg outbound module
+set(MODULE_GROUP_KOUTBOUND ${MOD_LIST_OUTBOUND})
 
-# pkg mono module module_group_kmono=$(mod_list_mono)
+# pkg java module
+set(MODULE_GROUP_KJAVA ${MOD_LIST_JAVA})
 
-# pkg IMS modules module_group_kims=$(mod_list_ims)
+# pkg dnssec module
+set(MODULE_GROUP_KDNSSEC ${MOD_LIST_DNSSEC})
 
-# pkg outbound module module_group_koutbound=$(mod_list_outbound)
+# pkg sctp module
+set(MODULE_GROUP_KSCTP ${MOD_LIST_SCTP})
 
-# pkg java module module_group_kjava=$(mod_list_java)
+# pkg auth_ephemeral module
+set(MODULE_GROUP_KAUTHEPH ${MOD_LIST_AUTHEPH})
 
-# pkg dnssec module module_group_kdnssec=$(mod_list_dnssec)
+# pkg gzcompress module
+set(MODULE_GROUP_KGZCOMPRESS ${MOD_LIST_GZCOMPRESS})
 
-# pkg sctp module module_group_ksctp=$(mod_list_sctp)
+# pkg uuid module
+set(MODULE_GROUP_KUUID ${MOD_LIST_UUID})
 
-# pkg auth_ephemeral module module_group_kautheph=$(mod_list_autheph)
+# pkg libev modules
+set(MODULE_GROUP_KEV ${MOD_LIST_EV})
 
-# pkg gzcompress module module_group_kgzcompress=$(mod_list_gzcompress)
+# pkg jwt module
+set(MODULE_GROUP_KJWT ${MOD_LIST_JWT})
 
-# pkg uuid module module_group_kuuid=$(mod_list_uuid)
+# pkg lwsc module
+set(MODULE_GROUP_KLWSC ${MOD_LIST_LWSC})
 
-# pkg libev modules module_group_kev=$(mod_list_ev)
+# pkg stirshaken module
+set(MODULE_GROUP_KSTIRSHAKEN ${MOD_LIST_STIRSHAKEN})
 
-# pkg jwt module module_group_kjwt=$(mod_list_jwt)
+# pkg kazoo module
+set(MODULE_GROUP_KKAZOO ${MOD_LIST_KAZOO})
 
-# pkg lwsc module module_group_klwsc=$(mod_list_lwsc)
+# pkg mongodb modules
+set(MODULE_GROUP_KMONGODB ${MOD_LIST_MONGODB})
 
-# pkg stirshaken module module_group_kstirshaken=$(mod_list_stirshaken)
+# pkg cnxcc module
+set(MODULE_GROUP_KCNXCC ${MOD_LIST_CNXCC})
 
-# pkg kazoo module module_group_kkazoo=$(mod_list_kazoo)
+# pkg erlang module
+set(MODULE_GROUP_KERLANG ${MOD_LIST_ERLANG})
 
-# pkg mongodb modules module_group_kmongodb=$(mod_list_mongodb)
+# pkg systemd module
+set(MODULE_GROUP_KSYSTEMD ${MOD_LIST_SYSTEMD})
 
-# pkg cnxcc module module_group_kcnxcc=$(mod_list_cnxcc)
+# K nsq modules
+set(MODULE_GROUP_KNSQ ${MOD_LIST_NSQ})
 
-# pkg erlang module module_group_kerlang=$(mod_list_erlang)
+# K rabbitmq modules
+set(MODULE_GROUP_KRABBITMQ ${MOD_LIST_RABBITMQ})
 
-# pkg systemd module module_group_ksystemd=$(mod_list_systemd)
+# K phonenumber modules
+set(MODULE_GROUP_KPHONENUM ${MOD_LIST_PHONENUM})
 
-# K nsq modules module_group_knsq=$(mod_list_nsq)
+# K kafka modules
+set(MODULE_GROUP_KKAFKA ${MOD_LIST_KAFKA})
 
-# K rabbitmq modules module_group_krabbitmq=$(mod_list_rabbitmq)
+# K mqtt modules
+set(MODULE_GROUP_KMQTT ${MOD_LIST_MQTT})
 
-# K phonenumber modules module_group_kphonenum=$(mod_list_phonenum)
+# K nats modules
+set(MODULE_GROUP_KNATS ${MOD_LIST_NATS})
 
-# K kafka modules module_group_kkafka=$(mod_list_kafka)
+# K ruxc modules
+set(MODULE_GROUP_KRUXC ${MOD_LIST_RUXC})
 
-# K mqtt modules module_group_kmqtt=$(mod_list_mqtt)
+# K microhttpd module
+set(MODULE_GROUP_KMICROHTTPD ${MOD_LIST_MICROHTTPD})
 
-# K nats modules module_group_knats=$(mod_list_nats)
+# K nghttp2 module
+set(MODULE_GROUP_KNGHTTP2 ${MOD_LIST_NGHTTP2})
 
-# K ruxc modules module_group_kruxc=$(mod_list_ruxc)
+# K gcrypt module
+set(MODULE_GROUP_KGCRYPT ${MOD_LIST_GCRYPT})
 
-# K microhttpd module module_group_kmicrohttpd=$(mod_list_microhttpd)
-
-# K nghttp2 module module_group_knghttp2=$(mod_list_nghttp2)
-
-# K gcrypt module module_group_kgcrypt=$(mod_list_gcrypt)
-
-# K secsipid modules module_group_ksecsipid=$(mod_list_secsipid)
+# K secsipid modules
+set(MODULE_GROUP_KSECSIPID ${MOD_LIST_SECSIPID})
 
 # K rtp_media_server modules
-# module_group_krtp_media_server=$(mod_list_rtp_media_server)
+set(MODULE_GROUP_KRTP_MEDIA_SERVER ${MOD_LIST_RTP_MEDIA_SERVER})
 
 # list of static modules
-#
-# static_modules:=
+set(STATIC_MODULES "")
+
+list(
+  APPEND
+  AVAILABLE_GROUPS
+  KSTANDARD
+  KMINI
+  KPCRE
+  KMYSQL
+  KPOSTGRES
+  KCPL
+  KXML
+  KRAIDUS
+  KUNIXODBC
+  KPERL
+  KSNMPSTATS
+  KXMPP
+  KBERKELEY
+  KLDAP
+  KUTILS
+  KHTTP_ASYNC
+  KMEMCACHED
+  KTLS_BASIC
+  KTLS
+  KTLS_WOLFSSL
+  KWEBSOCKET
+  KPRESENCE
+  KLUA
+  KPYTHON
+  KPYTHON3
+  KRUBY
+  KGEOIP
+  KGEOIP2
+  KSQLITE
+  KJSON_BASIC
+  KJSON
+  KJANSSON_BASIC
+  KJANSSON
+  KREDIS
+  KIMS
+  KOUTBOUND
+  KJAVA
+  KDNSSEC
+  KSCTP
+  KAUTHEPH
+  KGZCOMPRESS
+  KUUID
+  KEV
+  KJWT
+  KLWSC
+  KSTIRSHAKEN
+  KKAZOO
+  KMONGODB
+  KCNXCC
+  KERLANG
+  KSYSTEMD
+  KNSQ
+  KRABBITMQ
+  KPHONENUM
+  KKAFKA
+  KMQTT
+  KNATS
+  KRUXC
+  KMICROHTTPD
+  KNGHTTP2
+  KGCRYPT
+  KSECSIPID
+  KRT_MEDIA_SERVER
+)
+
+# # Option to allow the user to define which group to build
+# set(SELECTED_PACKAGE_GROUP
+#     ""
+#     CACHE STRING "Select the package group to build from"
+#     PARENT_SCOPE
+# )
+# set_property(CACHE SELECTED_PACKAGE_GROUP PROPERTY STRINGS ${PACKAGE_GROUPS})
+
+# # Ensure the selected group is valid
+# if(NOT SELECTED_PACKAGE_GROUP IN_LIST PACKAGE_GROUPS)
+#   message(
+#     FATAL_ERROR
+#       "Invalid package group selected: ${SELECTED_PACKAGE_GROUP}. Please choose from: ${PACKAGE_GROUPS}."
+#   )
+# endif()
+
+# message(STATUS "Building package group: ${SELECTED_PACKAGE_GROUP}")

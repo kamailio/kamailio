@@ -14,6 +14,7 @@ set(MODULE_GROUP_NAME
     "DEFAULT"
     CACHE STRING "Group of modules to build (all, or a custom group)"
 )
+set_property(CACHE MODULE_GROUP_NAME PROPERTY STRINGS ${MODULE_GROUP_NAMES})
 
 # Check if the specified group exists
 list(FIND AVAILABLE_GROUPS "${MODULE_GROUP_NAME}" GROUP_INDEX)
@@ -24,16 +25,11 @@ if(GROUP_INDEX EQUAL -1)
   )
 endif()
 
-if(MODULE_GROUP_NAME STREQUAL "ALL")
-  list(SORT MODULE_GROUP_ALL)
-  set(MODULE_GROUP ${MODULE_GROUP_ALL})
-elseif(MODULE_GROUP_NAME STREQUAL "DEFAULT")
-  list(SORT MODULE_GROUP_DEFAULT)
-  set(MODULE_GROUP ${MODULE_GROUP_DEFAULT})
-endif()
-
-# list(SORT MODULE_GROUP_DEFAULT)
-# message(STATUS "MODULE_GROUP_DEFAULT: ${MODULE_GROUP_DEFAULT}")
+# Construct the full module group name
+set(FULL_MODULE_GROUP_NAME "MODULE_GROUP_${MODULE_GROUP_NAME}")
+get_property(MODULE_GROUP VARIABLE PROPERTY ${FULL_MODULE_GROUP_NAME})
+message(STATUS "Building module group: ${FULL_MODULE_GROUP_NAME}")
+message(STATUS "Modules: ${MODULE_GROUP}")
 
 # Allow users to specify extra modules to build
 set(INCLUDE_MODULES
@@ -109,12 +105,18 @@ list(APPEND FINAL_MODULES_LIST ${MODULE_GROUP})
 
 # Parse and add extra modules specified by the user
 separate_arguments(INCLUDE_MODULES_LIST UNIX_COMMAND "${INCLUDE_MODULES}")
-message(STATUS "Extra modules: ${INCLUDE_MODULES_LIST}")
+message(
+  STATUS
+    "Extra modules (if module already included already from group is ignored):
+    ${INCLUDE_MODULES_LIST}"
+)
 list(APPEND FINAL_MODULES_LIST ${INCLUDE_MODULES_LIST})
 
 # Exclude modules that were explicitly excluded by the user
 separate_arguments(EXCLUDE_MODULES_LIST UNIX_COMMAND "${EXCLUDE_MODULES}")
-message(STATUS "Excluded modules: ${EXCLUDE_MODULES_LIST}")
+message(STATUS "Excluded modules (exlcude even if in included modules):
+    ${EXCLUDE_MODULES_LIST}"
+)
 foreach(MODULE_NAME IN LISTS EXCLUDE_MODULES_LIST)
   # if in list remove it and print a message
   if(";${FINAL_MODULES_LIST};" MATCHES ";${MODULE_NAME};")
@@ -136,7 +138,6 @@ if(BUILD_DOC)
     DEPENDS ${ALL_MODULE_DOC_TARGETS}
     COMMENT "Generating Kamailio documentation"
   )
-  # add_dependencies(kamailio-docs kamailio_docs)
 
   add_custom_target(
     install_kamailio_docs
