@@ -32,7 +32,8 @@ MODULE_VERSION
 * local function declarations
 **********/
 
-int fixup_count(void **, int);
+static int fixup_count(void **, int);
+static int fixup_free_count(void **param, int param_no);
 static int mod_child_init(int);
 static void mod_destroy(void);
 static int mod_init(void);
@@ -63,10 +64,10 @@ static cmd_export_t mod_cmds[] = {
 	{"mohq_process", (cmd_function)mohq_process, 0,
 		0, 0, REQUEST_ROUTE},
 	{"mohq_retrieve", (cmd_function)mohq_retrieve, 2,
-		fixup_spve_spve, 0,
+		fixup_spve_spve, fixup_free_spve_spve,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"mohq_send", (cmd_function)mohq_send, 1,
-		fixup_spve_spve, 0, REQUEST_ROUTE},
+		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
 	{NULL, NULL, -1, 0, 0},
 };
 
@@ -131,7 +132,7 @@ str prtpstat[1] = {STR_STATIC_INIT("$rtpstat")};
 * OUTPUT: -1 if failed; 0 if saved as pv_elem_t
 **********/
 
-int fixup_count(void **param, int param_no)
+static int fixup_count(void **param, int param_no)
 
 {
 	if(param_no == 1) {
@@ -139,6 +140,18 @@ int fixup_count(void **param, int param_no)
 	}
 	if(param_no == 2) {
 		return fixup_pvar_null(param, 1);
+	}
+	return 0;
+}
+
+static int fixup_free_count(void **param, int param_no)
+
+{
+	if(param_no == 1) {
+		return fixup_free_spve_spve(param, 1);
+	}
+	if(param_no == 2) {
+		return fixup_free_pvar_null(param, 1);
 	}
 	return 0;
 }
