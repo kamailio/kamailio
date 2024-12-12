@@ -40,6 +40,12 @@
 
 MODULE_VERSION
 
+static int w_process_maxfwd_header(struct sip_msg *msg, char *str, char *str2);
+static int is_maxfwd_lt(struct sip_msg *msg, char *slimit, char *foo);
+static int mod_init(void);
+
+int bind_maxfwd(maxfwd_api_t *api);
+
 /* clang-format off */
 struct cfg_group_maxfwd {
 	int max_limit;
@@ -52,15 +58,9 @@ static struct cfg_group_maxfwd default_maxfwd_cfg = {
 static void *maxfwd_cfg = &default_maxfwd_cfg;
 
 static cfg_def_t maxfwd_cfg_def[] = {
-        {"max_limit", CFG_VAR_INT, 0, 255, 0, 0, "Max. maxfwd limit"},
-        {0, 0, 0, 0, 0, 0}
+	{"max_limit", CFG_VAR_INT, 0, 255, 0, 0, "Max. maxfwd limit"},
+	{0, 0, 0, 0, 0, 0}
 };
-
-static int w_process_maxfwd_header(struct sip_msg* msg,char* str,char* str2);
-static int is_maxfwd_lt(struct sip_msg *msg, char *slimit, char *foo);
-static int mod_init(void);
-
-int bind_maxfwd(maxfwd_api_t *api);
 
 static cmd_export_t cmds[]={
 	{"maxfwd_process", (cmd_function)w_process_maxfwd_header, 1,
@@ -69,7 +69,6 @@ static cmd_export_t cmds[]={
 		fixup_var_int_1, 0, REQUEST_ROUTE},
 	{"process_maxfwd", (cmd_function)w_process_maxfwd_header, 1,
 		fixup_var_int_1, 0, REQUEST_ROUTE},
-
 	{"is_maxfwd_lt", (cmd_function)is_maxfwd_lt, 1,
 		fixup_var_int_1, 0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"maxfwd_at_least", (cmd_function)is_maxfwd_lt, 1,
@@ -77,17 +76,14 @@ static cmd_export_t cmds[]={
 	{"mf_lowlimit", (cmd_function)is_maxfwd_lt, 1,
 		fixup_var_int_1, 0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 
-	{"bind_maxfwd",  (cmd_function)bind_maxfwd,  0,
-		0, 0, 0},
+	{"bind_maxfwd",  (cmd_function)bind_maxfwd, 0, 0, 0, 0},
 	{0,0,0,0,0,0}
 };
 
 static param_export_t params[]={
-	{"max_limit",    PARAM_INT,  &default_maxfwd_cfg.max_limit},
+	{"max_limit", PARAM_INT, &default_maxfwd_cfg.max_limit},
 	{0,0,0}
 };
-
-
 
 struct module_exports exports= {
 	"maxfwd",
