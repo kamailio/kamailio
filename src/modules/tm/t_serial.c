@@ -643,6 +643,11 @@ int ki_t_next_contacts(struct sip_msg *msg)
 		LM_DBG("no contacts in contacts_avp - we are done!\n");
 		return -2;
 	}
+	if(xavp_list->val.type != SR_XTYPE_XAVP) {
+		LM_ERR("invalid value type (%d) for contacts xavp\n",
+				xavp_list->val.type);
+		return -3;
+	}
 
 	xavp = xavp_list;
 
