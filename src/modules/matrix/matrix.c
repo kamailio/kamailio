@@ -85,29 +85,33 @@ static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy(void);
 
-
+/* clang-format off */
 static cmd_export_t cmds[] = {
-		{"matrix", (cmd_function)lookup_matrix, 3, matrix_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+		{"matrix", (cmd_function)lookup_matrix, 3,
+			matrix_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+		{0, 0, 0, 0, 0, 0}
+	};
 
 static param_export_t params[] = {
-		matrix_DB_URL matrix_DB_TABLE matrix_DB_COLS{0, 0, 0}};
-
+	matrix_DB_URL
+	matrix_DB_TABLE
+	matrix_DB_COLS
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"matrix",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		mod_destroy		 /* module destroy function */
+	"matrix",           /* module name */
+	DEFAULT_DLFLAGS,    /* dlopen flags */
+	cmds,               /* exported functions */
+	params,             /* exported parameters */
+	0,                  /* RPC method exports */
+	0,                  /* exported pseudo-variables */
+	0,                  /* response handling function */
+	mod_init,           /* module initialization function */
+	child_init,         /* per-child init function */
+	mod_destroy         /* module destroy function */
 };
+/* clang-format on */
 
 
 struct first_t
