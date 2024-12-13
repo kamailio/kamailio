@@ -2708,6 +2708,50 @@ dlg_reset_property("timeout-noreset");
 		</example>
 	</section>
 
+	<section id="dialog.f.dlg_set_state">
+		<title>
+		<function moreinfo="none">dlg_set_state(newstate)</function>
+		</title>
+		<para>
+			Set the state for dialog matching current message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>newstate</emphasis> - the new state. It can be:
+				<itemizedlist>
+					<listitem>
+						'unconfirmed'
+					</listitem>
+					<listitem>
+						'early'
+					</listitem>
+					<listitem>
+						'answered'
+					</listitem>
+					<listitem>
+						'confirmed'
+					</listitem>
+					<listitem>
+						'deleted'
+					</listitem>
+				</itemizedlist>
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_set_state</function> usage</title>
+		<programlisting format="linespecific">
+...
+dlg_set_state("early");
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
