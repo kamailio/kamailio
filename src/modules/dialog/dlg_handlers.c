@@ -1888,7 +1888,7 @@ int dlg_set_state(sip_msg_t *msg, int istate)
 	str st = STR_NULL;
 	dlg_cell_t *dlg = NULL;
 	unsigned int dir = 0;
-	int oldstate = 0;
+	int ostate = 0;
 
 	if(msg->callid == NULL
 			&& ((parse_headers(msg, HDR_CALLID_F, 0) == -1)
@@ -1918,16 +1918,24 @@ int dlg_set_state(sip_msg_t *msg, int istate)
 		LM_DBG("dialog not found\n");
 		return -1;
 	}
-	oldstate = dlg->state;
+	ostate = dlg->state;
 	dlg->state = istate;
+	/* updates for terminated dialogs */
+	if(ostate == DLG_STATE_CONFIRMED && istate == DLG_STATE_DELETED) {
+		/* updating timestamps, flags, dialog stats */
+		dlg->init_ts = (unsigned int)(time(0));
+		dlg->end_ts = (unsigned int)(time(0));
+	}
+	dlg->dflags |= DLG_FLAG_CHANGED;
 	if(msg->first_line.type == SIP_REQUEST) {
-		LM_DBG("handling request - oldstate: %d newstate: %d\n", oldstate,
+		LM_DBG("handling request - oldstate: %d newstate: %d\n", ostate,
 				istate);
 	} else {
-		LM_DBG("handling response - oldstate: %d newstate: %d\n", oldstate,
+		LM_DBG("handling response - oldstate: %d newstate: %d\n", ostate,
 				istate);
 	}
 	dlg_release(dlg);
+
 	return 0;
 }
 
