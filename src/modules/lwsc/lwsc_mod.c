@@ -51,6 +51,8 @@ static int w_lwsc_request_proto(
 static int w_lwsc_notify(sip_msg_t *msg, char *pwsurl, char *pdata);
 static int w_lwsc_notify_proto(
 		sip_msg_t *msg, char *pwsurl, char *pwsproto, char *pdata);
+static int lwsc_pv_get(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+static int lwsc_pv_parse_name(pv_spec_t *sp, str *in);
 
 static int _lwsc_timeout_connect = 0;
 static int _lwsc_timeout_send = 0;
@@ -60,16 +62,17 @@ static str _lwsc_protocol = str_init("kmsg");
 static int _lwsc_verbosity = 0;
 
 /* clang-format off */
-static cmd_export_t cmds[] = {{"lwsc_request", (cmd_function)w_lwsc_request, 2,
-								  fixup_spve_all, 0, ANY_ROUTE},
+static cmd_export_t cmds[] = {
+	{"lwsc_request", (cmd_function)w_lwsc_request, 2,
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"lwsc_request_proto", (cmd_function)w_lwsc_request_proto, 3,
-			fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
-	{"lwsc_notify", (cmd_function)w_lwsc_notify, 2, fixup_spve_all, fixup_free_spve_all,
-			ANY_ROUTE},
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"lwsc_notify", (cmd_function)w_lwsc_notify, 2,
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"lwsc_notify_proto", (cmd_function)w_lwsc_notify_proto, 3,
-			fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"bind_lwsc", (cmd_function)bind_lwsc, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0}
+  {0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[] = {
@@ -81,9 +84,6 @@ static param_export_t params[] = {
 	{"verbosity", PARAM_INT, &_lwsc_verbosity},
 	{0, 0, 0}
 };
-
-static int lwsc_pv_get(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
-static int lwsc_pv_parse_name(pv_spec_t *sp, str *in);
 
 static pv_export_t mod_pvs[] = {
 	{{"lwsc", sizeof("lwsc") - 1}, PVT_OTHER, lwsc_pv_get, 0,
