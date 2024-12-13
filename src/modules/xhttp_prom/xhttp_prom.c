@@ -153,6 +153,21 @@ str xhttp_prom_stats = str_init("");
  */
 str xhttp_prom_beginning = str_init("kamailio_");
 
+/**
+ * @brief string for metrics tags.
+ */
+str xhttp_prom_tags = str_init("");
+
+/**
+ * @brief helper string for metrics tags. Used for appending tag lists
+ */
+char *xhttp_prom_tags_comma="";
+
+/**
+ * @brief helper string for metrics tags. Used for appending to metric
+ */
+char *xhttp_prom_tags_braces="";
+
 int buf_size = 0; /**< size of buffer that contains the reply. */
 
 int timeout_minutes = 60; /**< timeout in minutes to delete old metrics. */
@@ -195,6 +210,7 @@ static param_export_t params[] = {
 	{"xhttp_prom_buf_size", PARAM_INT, &buf_size},
 	{"xhttp_prom_stats", PARAM_STR, &xhttp_prom_stats},
 	{"xhttp_prom_beginning", PARAM_STR, &xhttp_prom_beginning},
+	{"xhttp_prom_tags", PARAM_STR, &xhttp_prom_tags},
 	{"prom_counter", PARAM_STRING | PARAM_USE_FUNC, (void *)prom_counter_param},
 	{"prom_gauge", PARAM_STRING | PARAM_USE_FUNC, (void *)prom_gauge_param},
 	{"prom_histogram", PARAM_STRING | PARAM_USE_FUNC, (void *)prom_histogram_param},
@@ -282,6 +298,29 @@ static int mod_init(void)
 		return -1;
 	}
 
+	/* Write helper variables used to make handling additional metrics easier*/
+	if (xhttp_prom_tags.len>0) {
+		/* 4 characters more for comma, space and terminating null */
+		size_t len_comma=xhttp_prom_tags.len+4;
+		xhttp_prom_tags_comma=shm_malloc(len_comma);
+		if (xhttp_prom_tags_comma==NULL) {
+			LM_ERR("cannot allocate memory for helper variable\n");
+			return -1;
+		}
+		memset(xhttp_prom_tags_comma, 0, len_comma);
+		snprintf(xhttp_prom_tags_comma,len_comma-1, ", %.*s", xhttp_prom_tags.len, xhttp_prom_tags.s);
+		/* 4 characters more for curly braces and  terminating null */
+		size_t len_braces=xhttp_prom_tags.len+4;
+		xhttp_prom_tags_braces=shm_malloc(len_braces);
+		if (xhttp_prom_tags_braces==NULL) {
+			LM_ERR("cannot allocate memory for helper variable\n");
+			return -1;
+		}
+		memset(xhttp_prom_tags_braces, 0, len_braces);
+		snprintf(xhttp_prom_tags_braces,len_braces-1, "{%.*s}", xhttp_prom_tags.len, xhttp_prom_tags.s);
+		LM_DBG("mod_init initalized helper variables to '%s' and '%s'\n", xhttp_prom_tags_comma, xhttp_prom_tags_braces);
+	}
+
 	return 0;
 }
 
@@ -297,6 +336,12 @@ static int child_init(int rank)
 static void mod_destroy(void)
 {
 	LM_DBG("cleaning up\n");
+
+	/* Remove helper variables for tags */
+	if (xhttp_prom_tags.len>0) {
+		if (xhttp_prom_tags_comma!=NULL) shm_free(xhttp_prom_tags_comma);
+		if (xhttp_prom_tags_braces!=NULL) shm_free(xhttp_prom_tags_braces);
+	}
 
 	prom_metric_close();
 }

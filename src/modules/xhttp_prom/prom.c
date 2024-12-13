@@ -191,8 +191,9 @@ static int metric_generate(
 			(uint64_t)ts);
 
 	/* Print metric name. */
-	if(prom_body_name_printf(ctx, "%.*s%.*s_%.*s", xhttp_prom_beginning.len,
-			   xhttp_prom_beginning.s, group->len, group->s, name->len, name->s)
+	if(prom_body_name_printf(ctx, "%.*s%.*s_%.*s%s", xhttp_prom_beginning.len,
+			   xhttp_prom_beginning.s, group->len, group->s, name->len, name->s,
+			   xhttp_prom_tags_braces)
 			== -1) {
 		LM_ERR("Fail to print\n");
 		return -1;
@@ -225,8 +226,9 @@ static int prom_metric_uptime_print(prom_ctx_t *ctx)
 
 	time(&now);
 	uptime = (int)(now - up_since);
-	if(prom_body_printf(ctx, "%.*suptime %d %" PRIu64 "\n",
-			   xhttp_prom_beginning.len, xhttp_prom_beginning.s, uptime, ts)
+	if(prom_body_printf(ctx, "%.*suptime%s %d %" PRIu64 "\n",
+			   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
+			   xhttp_prom_tags_braces, uptime, ts)
 			== -1) {
 		LM_ERR("Fail to print\n");
 		goto error;
@@ -254,10 +256,11 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 
 	for(; i < pkg_proc_stats_no; i++) {
 		if(prom_body_printf(ctx,
-				   "%.*spkgmem_used{pid=\"%u\", rank=\"%d\", desc=\"%s\"} "
+				   "%.*spkgmem_used{pid=\"%u\", rank=\"%d\", desc=\"%s\"%s} "
 				   "%lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
+				   xhttp_prom_tags_comma,
 				   pkg_proc_stats[i].used, ts)
 				== -1) {
 			LM_ERR("Fail to print\n");
@@ -265,9 +268,10 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 		}
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_available{pid=\"%u\", rank=\"%d\", "
-				   "desc=\"%s\"} %lu %" PRIu64 "\n",
+				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
+				   xhttp_prom_tags_comma,
 				   pkg_proc_stats[i].available, ts)
 				== -1) {
 			LM_ERR("Fail to print\n");
@@ -275,9 +279,10 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 		}
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_real_used{pid=\"%u\", rank=\"%d\", "
-				   "desc=\"%s\"} %lu %" PRIu64 "\n",
+				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
+				   xhttp_prom_tags_comma,
 				   pkg_proc_stats[i].real_used, ts)
 				== -1) {
 			LM_ERR("Fail to print\n");
@@ -285,9 +290,10 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 		}
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_total_frags{pid=\"%u\", rank=\"%d\", "
-				   "desc=\"%s\"} %lu %" PRIu64 "\n",
+				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
+				   xhttp_prom_tags_comma,
 				   pkg_proc_stats[i].total_frags, ts)
 				== -1) {
 			LM_ERR("Fail to print\n");
@@ -295,9 +301,10 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 		}
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_total_size{pid=\"%u\", rank=\"%d\" "
-				   "desc=\"%s\"} %lu %" PRIu64 "\n",
+				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
+				   xhttp_prom_tags_comma,
 				   pkg_proc_stats[i].total_size, ts)
 				== -1) {
 			LM_ERR("Fail to print\n");
