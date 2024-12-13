@@ -130,11 +130,15 @@ add_module_group("${FINAL_MODULES_LIST}")
 
 # Add a kamailio_docs target that depends on all module documentation targets
 if(BUILD_DOC)
+  message(
+    STATUS
+      "Enabled documentation generation for: ${FINAL_MODULES_LIST}. To override, use '-DBUILD_DOC=OFF'"
+  )
   get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
   # message(STATUS "ALL_MODULE_DOC_TARGETS: ${ALL_MODULE_DOC_TARGETS}")
 
   add_custom_target(
-    kamailio_docs ALL
+    kamailio_docs
     DEPENDS ${ALL_MODULE_DOC_TARGETS}
     COMMENT "Generating Kamailio documentation"
   )
