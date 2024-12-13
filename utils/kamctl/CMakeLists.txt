@@ -217,6 +217,7 @@ else()
   endif()
 
   # Set the root directories
+  set(ROOTDIR ${CMAKE_SOURCE_DIR})
   set(STYLESHEETS ${ROOTDIR}/doc/stylesheets/dbschema_k/xsl)
   set(CATALOG ${ROOTDIR}/doc/stylesheets/dbschema_k/catalog.xml)
 
