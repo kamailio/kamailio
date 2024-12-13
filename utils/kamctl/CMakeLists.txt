@@ -198,127 +198,130 @@ add_custom_target(
 # New CMakelists.txt
 # Declare the target in srdb1 CMakeLists.txt file.
 
-find_program(XSLTPROC_EXECUTABLE xsltproc REQUIRED)
+find_program(XSLTPROC_EXECUTABLE xsltproc QUIET)
 
-option(XSLT_VALIDATE, "Enable schema validation during XSL transformations" ON)
-option(XSLT_VERBOSE, "Enable verbose output for XSL transformations" OFF)
-
-set(XSLTPROC_FLAGS --xinclude)
-if(NOT ${XSLT_VALIDATE})
-  set(XSLTPROC_FLAGS ${XSLTPROC_FLAGS} --novalid)
-endif()
-if(${XSLT_VERBOSE})
-  set(XSLTPROC_FLAGS ${XSLTPROC_FLAGS} --verbose)
-endif()
-
-# Set the root directories
-set(ROOTDIR ${CMAKE_SOURCE_DIR})
-set(ROOTDOC ${CMAKE_SOURCE_DIR}/src)
-set(STYLESHEETS ${ROOTDIR}/doc/stylesheets/dbschema_k/xsl)
-set(SCHEME ${ROOTDIR}/utils/kamctl)
-
-set(CATALOG ${ROOTDIR}/doc/stylesheets/dbschema_k/catalog.xml)
-# List of XML files
-file(GLOB TABLES "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema/kamailio-*.xml")
-# message(WARNING "TABLES : ${TABLES}")
-set(EXTRACTED_TABLES "")
-foreach(TABLE ${TABLES})
-  get_filename_component(TABLE_NAME "${TABLE}" NAME)
-  string(REPLACE "kamailio-" "" TABLE_NAME "${TABLE_NAME}")
-  string(REPLACE ".xml" "" TABLE_NAME "${TABLE_NAME}")
-  list(APPEND EXTRACTED_TABLES "${TABLE_NAME}")
-endforeach()
-# Output the extracted table names
-message(STATUS "Extracted Tables: ${EXTRACTED_TABLES}")
-
-# Function to add a target for each database type prefix with dbschema
-# ie db_name = redis -> target = dbschema_redis
-function(add_db_target db_name xsl_file)
-  # Change name for the folder
-  if(db_name STREQUAL "pi_framework_table" OR db_name STREQUAL
-                                              "pi_framework_mod"
+if(NOT XSLTPROC_EXECUTABLE)
+  message(STATUS "xsltproc is not found. Skip dbschema target.")
+else()
+  option(XSLT_VALIDATE, "Enable schema validation during XSL transformations"
+         ON
   )
-    set(db_name_folder xhttpi_pi)
-  else()
-    set(db_name_folder ${db_name})
+  option(XSLT_VERBOSE, "Enable verbose output for XSL transformations" OFF)
+
+  set(XSLTPROC_FLAGS --xinclude)
+  if(NOT ${XSLT_VALIDATE})
+    set(XSLTPROC_FLAGS ${XSLTPROC_FLAGS} --novalid)
+  endif()
+  if(${XSLT_VERBOSE})
+    set(XSLTPROC_FLAGS ${XSLTPROC_FLAGS} --verbose)
   endif()
 
-  add_custom_target(
-    dbschema_${db_name}
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${db_name_folder}"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
+  # Set the root directories
+  set(STYLESHEETS ${ROOTDIR}/doc/stylesheets/dbschema_k/xsl)
+  set(CATALOG ${ROOTDIR}/doc/stylesheets/dbschema_k/catalog.xml)
 
-  # Loop through each table and add a command for xsltproc
-  foreach(TABLE ${EXTRACTED_TABLES})
-    # Determine the prefix based on db_name
-    if(db_name STREQUAL "db_berkeley"
-       OR db_name STREQUAL "db_redis"
-       OR db_name STREQUAL "dbtext"
-       OR db_name STREQUAL "mongodb"
+  # List of XML files
+  file(GLOB TABLES "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema/kamailio-*.xml")
+  # message(WARNING "TABLES : ${TABLES}")
+  set(EXTRACTED_TABLES "")
+  foreach(TABLE ${TABLES})
+    get_filename_component(TABLE_NAME "${TABLE}" NAME)
+    string(REPLACE "kamailio-" "" TABLE_NAME "${TABLE_NAME}")
+    string(REPLACE ".xml" "" TABLE_NAME "${TABLE_NAME}")
+    list(APPEND EXTRACTED_TABLES "${TABLE_NAME}")
+  endforeach()
+  # Output the extracted table names
+  message(STATUS "Extracted Tables: ${EXTRACTED_TABLES}")
+
+  # Function to add a target for each database type prefix with dbschema
+  # ie db_name = redis -> target = dbschema_redis
+  function(add_db_target db_name xsl_file)
+    # Change name for the folder
+    if(db_name STREQUAL "pi_framework_table" OR db_name STREQUAL
+                                                "pi_framework_mod"
     )
-      set(PREFIX '')
+      set(db_name_folder xhttpi_pi)
     else()
-      set(PREFIX "${TABLE}-")
+      set(db_name_folder ${db_name})
     endif()
 
-    add_custom_command(
-      TARGET dbschema_${db_name}
-      PRE_BUILD
-      COMMAND
-        XML_CATALOG_FILES=${CATALOG} ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS}
-        --stringparam dir ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}
-        --stringparam prefix ${PREFIX} --stringparam db ${db_name} ${xsl_file}
-        "kamailio-${TABLE}.xml"
-      WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema"
-      COMMENT "Processing ${TABLE} for ${db_name}"
+    add_custom_target(
+      dbschema_${db_name}
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${db_name_folder}"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
-  endforeach()
+
+    # Loop through each table and add a command for xsltproc
+    foreach(TABLE ${EXTRACTED_TABLES})
+      # Determine the prefix based on db_name
+      if(db_name STREQUAL "db_berkeley"
+         OR db_name STREQUAL "db_redis"
+         OR db_name STREQUAL "dbtext"
+         OR db_name STREQUAL "mongodb"
+      )
+        set(PREFIX '')
+      else()
+        set(PREFIX "${TABLE}-")
+      endif()
+
+      add_custom_command(
+        TARGET dbschema_${db_name}
+        PRE_BUILD
+        COMMAND
+          XML_CATALOG_FILES=${CATALOG} ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS}
+          --stringparam dir ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}
+          --stringparam prefix ${PREFIX} --stringparam db ${db_name} ${xsl_file}
+          "kamailio-${TABLE}.xml"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema"
+        COMMENT "Processing ${TABLE} for ${db_name}"
+      )
+    endforeach()
+
+    add_custom_target(
+      dbschema_${db_name}_clean
+      COMMAND ${CMAKE_COMMAND} -E remove_directory
+              "${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}"
+    )
+  endfunction()
+
+  # Add targets for each database type
+  # Pi framework targets should combined into one
+  add_db_target(pi_framework_table "${STYLESHEETS}/pi_framework_table.xsl")
+  add_db_target(pi_framework_mod "${STYLESHEETS}/pi_framework_mod.xsl")
+  add_db_target(mysql "${STYLESHEETS}/mysql.xsl")
+  add_db_target(postgres "${STYLESHEETS}/postgres.xsl")
+  add_db_target(oracle "${STYLESHEETS}/oracle.xsl")
+  add_db_target(dbtext "${STYLESHEETS}/dbtext.xsl")
+  add_db_target(db_berkeley "${STYLESHEETS}/db_berkeley.xsl")
+  add_db_target(db_sqlite "${STYLESHEETS}/db_sqlite.xsl")
+  add_db_target(mongodb "${STYLESHEETS}/mongodb.xsl")
+  add_db_target(db_redis "${STYLESHEETS}/db_redis.xsl")
 
   add_custom_target(
-    dbschema_${db_name}_clean
-    COMMAND ${CMAKE_COMMAND} -E remove_directory
-            "${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}"
+    dbschema
+    DEPENDS dbschema_mysql
+            dbschema_postgres
+            dbschema_oracle
+            dbschema_dbtext
+            dbschema_db_berkeley
+            dbschema_db_sqlite
+            dbschema_mongodb
+            dbschema_db_redis
+            dbschema_pi_framework_mod
+            dbschema_pi_framework_table
   )
-endfunction()
 
-# Add targets for each database type
-# Pi framework targets should combined into one
-add_db_target(pi_framework_table "${STYLESHEETS}/pi_framework_table.xsl")
-add_db_target(pi_framework_mod "${STYLESHEETS}/pi_framework_mod.xsl")
-add_db_target(mysql "${STYLESHEETS}/mysql.xsl")
-add_db_target(postgres "${STYLESHEETS}/postgres.xsl")
-add_db_target(oracle "${STYLESHEETS}/oracle.xsl")
-add_db_target(dbtext "${STYLESHEETS}/dbtext.xsl")
-add_db_target(db_berkeley "${STYLESHEETS}/db_berkeley.xsl")
-add_db_target(db_sqlite "${STYLESHEETS}/db_sqlite.xsl")
-add_db_target(mongodb "${STYLESHEETS}/mongodb.xsl")
-add_db_target(db_redis "${STYLESHEETS}/db_redis.xsl")
-
-add_custom_target(
-  dbschema
-  DEPENDS dbschema_mysql
-          dbschema_postgres
-          dbschema_oracle
-          dbschema_dbtext
-          dbschema_db_berkeley
-          dbschema_db_sqlite
-          dbschema_mongodb
-          dbschema_db_redis
-          dbschema_pi_framework_mod
-          dbschema_pi_framework_table
-)
-
-add_custom_target(
-  dbschema_clean
-  DEPENDS dbschema_mysql_clean
-          dbschema_postgres_clean
-          dbschema_oracle_clean
-          dbschema_dbtext_clean
-          dbschema_db_berkeley_clean
-          dbschema_db_sqlite_clean
-          dbschema_mongodb_clean
-          dbschema_db_redis_clean
-          dbschema_pi_framework_mod_clean
-          dbschema_pi_framework_table_clean
-)
+  add_custom_target(
+    dbschema_clean
+    DEPENDS dbschema_mysql_clean
+            dbschema_postgres_clean
+            dbschema_oracle_clean
+            dbschema_dbtext_clean
+            dbschema_db_berkeley_clean
+            dbschema_db_sqlite_clean
+            dbschema_mongodb_clean
+            dbschema_db_redis_clean
+            dbschema_pi_framework_mod_clean
+            dbschema_pi_framework_table_clean
+  )
+endif()
