@@ -220,6 +220,7 @@ static int w_dlg_req_with_content(
 		struct sip_msg *, char *, char *, char *, char *);
 static int w_dlg_req_with_headers(struct sip_msg *, char *, char *, char *);
 static int w_dlg_req_within(struct sip_msg *, char *, char *);
+static int w_dlg_set_state(sip_msg_t *, char *, char *);
 
 static int fixup_dlg_dlg_req_within(void **, int);
 static int fixup_dlg_req_with_headers(void **, int);
@@ -230,6 +231,8 @@ static int fixup_dlg_req_with_headers_and_content(void **, int);
 static cmd_export_t cmds[]={
 	{"dlg_manage", (cmd_function)w_dlg_manage,            0,0,
 			0, REQUEST_ROUTE },
+	{"dlg_set_state", (cmd_function)w_dlg_set_state,      1,fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE },
 	{"set_dlg_profile", (cmd_function)w_set_dlg_profile,  1,fixup_profile,
 			0, ANY_ROUTE },
 	{"set_dlg_profile", (cmd_function)w_set_dlg_profile,  2,fixup_profile,
@@ -1141,6 +1144,62 @@ static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
 static int w_dlg_manage(struct sip_msg *msg, char *s1, char *s2)
 {
 	return dlg_manage(msg);
+}
+
+/**
+ *
+ */
+static int ki_dlg_set_state(sip_msg_t *msg, str *state)
+{
+	int istate = 0;
+
+	if(state == NULL || state->s == NULL || state->len <= 0) {
+		LM_ERR("invalid state value\n");
+		return -1;
+	}
+	switch(state->s[0]) {
+		case 'u':
+		case 'U':
+			istate = DLG_STATE_UNCONFIRMED;
+			break;
+		case 'e':
+		case 'E':
+			istate = DLG_STATE_EARLY;
+			break;
+		case 'a':
+		case 'A':
+			istate = DLG_STATE_CONFIRMED_NA;
+			break;
+		case 'c':
+		case 'C':
+			istate = DLG_STATE_CONFIRMED;
+			break;
+		case 'd':
+		case 'D':
+			istate = DLG_STATE_DELETED;
+			break;
+		default:
+			LM_ERR("unknown state value: %.*s\n", state->len, state->s);
+			return -1;
+	}
+	if(dlg_set_state(msg, istate) < 0) {
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_dlg_set_state(sip_msg_t *msg, char *pstate, char *p2)
+{
+	str state = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pstate, &state) != 0) {
+		LM_ERR("unable to get Method\n");
+		return -1;
+	}
+	return ki_dlg_set_state(msg, &state);
 }
 
 static int fixup_dlg_dlg_req_within(void **param, int param_no)

@@ -181,4 +181,9 @@ void dlg_iuid_sfree(void *iuid);
  */
 int dlg_manage(sip_msg_t *msg);
 
+/*!
+ *
+ */
+int dlg_set_state(sip_msg_t *msg, int istate);
+
 #endif

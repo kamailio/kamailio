@@ -1878,6 +1878,62 @@ int dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate)
 	return 0;
 }
 
+/*!
+ *
+ */
+int dlg_set_state(sip_msg_t *msg, int istate)
+{
+	str sc = STR_NULL;
+	str sf = STR_NULL;
+	str st = STR_NULL;
+	dlg_cell_t *dlg = NULL;
+	unsigned int dir = 0;
+	int oldstate = 0;
+
+	if(msg->callid == NULL
+			&& ((parse_headers(msg, HDR_CALLID_F, 0) == -1)
+					|| (msg->callid == NULL))) {
+		LM_ERR("cannot parse Call-Id header\n");
+		return -1;
+	}
+	if(parse_from_header(msg) < 0) {
+		LM_ERR("cannot parse From header\n");
+		return -1;
+	}
+	if(parse_to_header(msg) < 0) {
+		LM_ERR("cannot parse To header\n");
+		return -1;
+	}
+	if(msg->first_line.type != SIP_REQUEST
+			&& msg->first_line.type != SIP_REPLY) {
+		LM_ERR("unknown message type\n");
+		return -1;
+	}
+	sc = msg->callid->body;
+	sf = get_from(msg)->tag_value;
+	st = get_to(msg)->tag_value;
+
+	dlg = get_dlg(&sc, &sf, &st, &dir);
+	if(dlg == NULL) {
+		LM_DBG("dialog not found\n");
+		return -1;
+	}
+	oldstate = dlg->state;
+	dlg->state = istate;
+	if(msg->first_line.type == SIP_REQUEST) {
+		LM_DBG("handling request - oldstate: %d newstate: %d\n", oldstate,
+				istate);
+	} else {
+		LM_DBG("handling response - oldstate: %d newstate: %d\n", oldstate,
+				istate);
+	}
+	dlg_release(dlg);
+	return 0;
+}
+
+/*!
+ *
+ */
 int dlg_manage(sip_msg_t *msg)
 {
 	str tag;
