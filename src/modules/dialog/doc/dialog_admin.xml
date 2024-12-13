@@ -1743,6 +1743,28 @@ modparam("dialog", "debug_variables", 1)
 		</example>
 	</section>
 
+	<section id="dialog.p.dlg_mode">
+		<title><varname>dlg_mode</varname> (int)</title>
+		<para>
+			Control how dialog state management is done. If set to 0, the
+			the management is done with tm module callbacks; if set to 1,
+			tm callbacks are not used, states have to be set from config.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dlg_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "dlg_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
