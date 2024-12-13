@@ -21,7 +21,10 @@ jobs:
           repo: kamailio
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: "echo Last daily build: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}"
+      - run: |
+          echo Last daily build: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}
+          echo display_title: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].display_title }}
+          echo conclusion: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].conclusion }}
     outputs:
       last_sha: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}
   analyze:
