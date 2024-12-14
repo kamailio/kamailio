@@ -212,6 +212,7 @@ Chapter 1. Admin Guide
    Type of storage, valid types are:
      * db - Database Backend
      * redis - Redis Backend
+     * htable - htable module Backend
 
    Default value is “db”.
 
