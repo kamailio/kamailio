@@ -2,93 +2,137 @@ option(BUILD_DOC "Build documentation" ON)
 
 # Readme file and man page
 find_program(XSLTPROC_EXECUTABLE xsltproc QUIET)
-find_program(PANDOC_EXECUTABLE pandoc QUIET)
 find_program(LYNX_EXECUTABLE lynx QUIET)
 
-# Function to add a module docs entry
-function(docs_add_module MODULE_NAME)
-  # message(STATUS "Adding documentation for module ${MODULE_NAME}")
-  set(MODULE_PATH "${MODULES_DIR}/${MODULE_NAME}")
-  set(MODULE_DOC_PATH "${MODULE_PATH}/doc")
-  # Check if the module has a 'doc' directory and if it contains a file named
-  # MODULE_NAME.xml
+if(BUILD_DOC
+   AND NOT XSLTPROC_EXECUTABLE
+   AND NOT LYNX_EXECUTABLE
+)
+  message(
+    STATUS
+      "xsltproc or lynx not found but required for doc generation. Disabling documentation build."
+  )
+  set(BUILD_DOC OFF)
+else()
+  option(DOCS_XSL_VAIDATION "Docbook document validation" OFF)
+  option(DOCS_NOCATALAOG
+         "ON: Use standard catalog from OS/ OFF: USE custom catalog " ON
+  )
+  set(DOCS_SOURCES
+      "index.html"
+      CACHE STRING "Documentation files list"
+  )
+  set(DOCS_README
+      ${DOCS_SOURCES}
+      CACHE STRING "Readme Documentation files list"
+  )
+  set(DOCS_HTML
+      ${DOCS_SOURCES}
+      CACHE STRING "HTML Documentation files list"
+  )
+  set(DOCS_TXT
+      ${DOCS_SOURCES}
+      CACHE STRING "TXT Documentation files list"
+  )
 
-  if(NOT (XSLTPROC_EXECUTABLE MATCHES "NOTFOUND"))
-    if(NOT (LYNX_EXECUTABLE MATCHES "NOTFOUND"))
-      add_custom_command(
-        OUTPUT # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.md
-               # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
-               ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/README
-        # ${MODULE_NAME}_doc The following command is used to generate the
-        # documentation in html format from the xml file
-        COMMAND
-          ${XSLTPROC_EXECUTABLE} --novalid --xinclude
-          ${CMAKE_SOURCE_DIR}/doc/docbook/txt.xsl
-          ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc/${MODULE_NAME}.xml |
-          ${LYNX_EXECUTABLE} -nolist -stdin -dump >
-          ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
-        DEPENDS
-          ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc/${MODULE_NAME}.xml
-          ${CMAKE_SOURCE_DIR}/doc/docbook/html.xsl
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}
-        COMMENT
-          "Generating documentation with xsltproc and lynx for ${MODULE_NAME}"
-      )
-    else()
-      add_custom_command(
-        OUTPUT # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.md
-               # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
-               ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/README
-        # ${MODULE_NAME}_doc The following command is used to generate the
-        # documentation in html format from the xml file
-        COMMAND
-          ${XSLTPROC_EXECUTABLE} --novalid --xinclude
-          # -o ${CMAKE_CURRENT_BINARY_DIR}/xprint2.xml
-          ${CMAKE_SOURCE_DIR}/doc/docbook/html.xsl
-          ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc/${MODULE_NAME}.xml
-        COMMAND
-          ${PANDOC_EXECUTABLE} -s -f html -t markdown_strict --output
-          ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.md
-          ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/index.html
-        COMMAND
-          ${PANDOC_EXECUTABLE} -s -f html -t plain --output
-          # ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
-          ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
-          ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/index.html
-          # COMMAND
-          #   ${CMAKE_COMMAND} -E copy
-          #   ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
-          #   ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
-        DEPENDS
-          ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc/${MODULE_NAME}.xml
-          ${CMAKE_SOURCE_DIR}/doc/docbook/html.xsl
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}
-        COMMENT
-          "Generating documentation with xsltproc and pandoc for ${MODULE_NAME}"
-      )
-    endif()
+  set(DOCS_OUTPUT_DIR
+      ${CMAKE_BINARY_DIR}/doc/docbook
+      CACHE STRING "Path to build HTML docs"
+  )
+
+  set(DOCBOOK_DIR ${CMAKE_SOURCE_DIR}/doc/docbook)
+  set(DEPS_XSL ${DOCBOOK_DIR}/dep.xsl)
+  set(SINGLE_HTML_XSL ${DOCBOOK_DIR}/html.xsl)
+  set(CHUNKED_HTML_XSL ${DOCBOOK_DIR}/html.chunked.xsl)
+  set(TXT_XSL ${DOCBOOK_DIR}/txt.xsl)
+  set(README_XSL ${DOCBOOK_DIR}/readme.xsl)
+
+  set(DOCS_HTML_CSS
+      "/css/sr-doc.css"
+      CACHE STRING "Path to the CSS file"
+  )
+
+  set(CATALOG ${DOCBOOK_DIR}/catalog.xml)
+
+  if(DOCS_NOCATALAOG)
+    set(XMLCATATLOGX "")
+  else()
+    set(XMLCATATLOGX XML_CATALOG_FILES=${CATALOG})
+  endif()
+
+  # Set flags for xtproc for generating documentation and allow user defined
+  set(DOCS_XSLTPROC_FLAGS
+      ""
+      CACHE STRING "Xsltransform processor flags"
+  )
+  if(NOT DOCS_XSL_VAIDATION)
+    message(STATUS "Disabling validation when generating documentation")
+    list(APPEND DOCS_XSLTPROC_FLAGS --novalid)
+  endif()
+
+  # Set lynx flags for generating readmes and allow user defined
+  set(DOCS_LYNX_FLAGS
+      "-nolist"
+      CACHE STRING "Lynx readme generator flags"
+  )
+
+  # Function to add a module docs entry
+  function(docs_add_module MODULE_NAME)
+    # message(STATUS "Adding documentation for module ${MODULE_NAME}")
+    set(MODULE_PATH "${MODULES_DIR}/${MODULE_NAME}")
+    set(MODULE_DOC_PATH "${MODULE_PATH}/doc")
 
     add_custom_target(
       ${MODULE_NAME}_doc
-      DEPENDS # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.md
-              # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
-              ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/README
+      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
+              ${DOCS_OUTPUT_DIR}/${MODULE_NAME}.html
     )
 
-    install(
-      FILES ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
-      RENAME README.${MODULE_NAME}
-      DESTINATION ${CMAKE_INSTALL_DOCDIR}/modules
-      COMPONENT kamailio_docs
-      # OPTIONAL
-    )
+    # Each version has seperate custon coommands for not recompiling all if 1
+    # gets changed.
+    if(XSLTPROC_EXECUTABLE)
+      if(LYNX_EXECUTABLE)
+        add_custom_command(
+          OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
+          COMMAND
+            # TXT version - just plain text
+            ${XMLCATATLOGX} ${XSLTPROC_EXECUTABLE} ${DOCS_XSLTPROC_FLAGS}
+            --xinclude ${TXT_XSL} ${MODULE_NAME}.xml | ${LYNX_EXECUTABLE}
+            ${DOCS_LYNX_FLAGS} -stdin -dump >
+            ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
+          DEPENDS
+            ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc/${MODULE_NAME}.xml
+            ${TXT_XSL}
+            # ${SINGLE_HTML_XSL}
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc
+          COMMENT
+            "Generating documentation with xsltproc and lynx for ${MODULE_NAME}"
+        )
 
-    # if(IS_DIRECTORY ${MODULE_DOC_PATH} AND EXISTS
-    # ${MODULE_DOC_PATH}/${MODULE_NAME}.xml ) install( FILES
-    # ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.md DESTINATION
-    # ${CMAKE_INSTALL_DOCDIR}/modules COMPONENT kamailio-docs OPTIONAL ) #
-    # endif()
+        add_custom_command(
+          OUTPUT ${DOCS_OUTPUT_DIR}/${MODULE_NAME}.html
+          COMMAND
+            # HTML version
+            ${XMLCATATLOGX} ${XSLTPROC_EXECUTABLE} ${DOCS_XSLTPROC_FLAGS}
+            --xinclude --stringparam base.dir ${DOCS_OUTPUT_DIR} --stringparam
+            root.filename ${MODULE_NAME} --stringparam html.stylesheet
+            ${DOCS_HTML_CSS} --stringparam html.ext ".html" ${SINGLE_HTML_XSL}
+            ${MODULE_NAME}.xml
+          DEPENDS
+            ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc/${MODULE_NAME}.xml
+            ${SINGLE_HTML_XSL}
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc
+          COMMENT
+            "Generating documentation with xsltproc and lynx for ${MODULE_NAME}"
+        )
+      endif()
 
-    # endif()
-  endif()
-endfunction()
+      install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
+        RENAME README.${MODULE_NAME}
+        DESTINATION ${CMAKE_INSTALL_DOCDIR}/modules
+        COMPONENT kamailio_docs
+      )
+    endif()
+  endfunction()
+endif()
