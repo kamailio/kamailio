@@ -221,6 +221,7 @@ static int w_dlg_req_with_content(
 static int w_dlg_req_with_headers(struct sip_msg *, char *, char *, char *);
 static int w_dlg_req_within(struct sip_msg *, char *, char *);
 static int w_dlg_set_state(sip_msg_t *, char *, char *);
+static int w_dlg_update_state(sip_msg_t *, char *, char *);
 
 static int fixup_dlg_dlg_req_within(void **, int);
 static int fixup_dlg_req_with_headers(void **, int);
@@ -233,6 +234,8 @@ static cmd_export_t cmds[]={
 			0, REQUEST_ROUTE },
 	{"dlg_set_state", (cmd_function)w_dlg_set_state,      1,fixup_spve_null,
 			fixup_free_spve_null, ANY_ROUTE },
+	{"dlg_update_state", (cmd_function)w_dlg_update_state, 0,0,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"set_dlg_profile", (cmd_function)w_set_dlg_profile,  1,fixup_profile,
 			0, ANY_ROUTE },
 	{"set_dlg_profile", (cmd_function)w_set_dlg_profile,  2,fixup_profile,
@@ -1200,6 +1203,22 @@ static int w_dlg_set_state(sip_msg_t *msg, char *pstate, char *p2)
 		return -1;
 	}
 	return ki_dlg_set_state(msg, &state);
+}
+
+/**
+ *
+ */
+static int ki_dlg_update_state(sip_msg_t *msg, str *state)
+{
+	return dlg_update_state(msg);
+}
+
+/**
+ *
+ */
+static int w_dlg_update_state(sip_msg_t *msg, char *pstate, char *p2)
+{
+	return dlg_update_state(msg);
 }
 
 static int fixup_dlg_dlg_req_within(void **param, int param_no)

@@ -186,4 +186,9 @@ int dlg_manage(sip_msg_t *msg);
  */
 int dlg_set_state(sip_msg_t *msg, int istate);
 
+/*!
+ *
+ */
+int dlg_update_state(sip_msg_t *msg);
+
 #endif
