@@ -70,6 +70,7 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/srapi.h"
+#include "../../core/events.h"
 #include "../rr/api.h"
 #include "dlg_hash.h"
 #include "dlg_timer.h"
@@ -227,6 +228,8 @@ static int fixup_dlg_dlg_req_within(void **, int);
 static int fixup_dlg_req_with_headers(void **, int);
 static int fixup_dlg_req_with_content(void **, int);
 static int fixup_dlg_req_with_headers_and_content(void **, int);
+
+static int dlg_sip_reply_out(sr_event_param_t *evp);
 
 /* clang-format off */
 static cmd_export_t cmds[]={
@@ -796,6 +799,9 @@ static int mod_init(void)
 		ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
 	}
 
+	if(dlg_process_mode != 0) {
+		sr_event_register_cb(SREV_SIP_REPLY_OUT, dlg_sip_reply_out);
+	}
 	return 0;
 }
 
@@ -868,6 +874,17 @@ static void mod_destroy(void)
 		dialog_update_db(0, 0);
 		destroy_dlg_db();
 	}
+}
+
+
+/**
+ *
+ */
+static int dlg_sip_reply_out(sr_event_param_t *evp)
+{
+	LM_DBG("handling sip response\n");
+	dlg_update_state(evp->rpl);
+	return 0;
 }
 
 
