@@ -260,8 +260,7 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 				   "%lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
-				   xhttp_prom_tags_comma,
-				   pkg_proc_stats[i].used, ts)
+				   xhttp_prom_tags_comma, pkg_proc_stats[i].used, ts)
 				== -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
@@ -271,8 +270,7 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
-				   xhttp_prom_tags_comma,
-				   pkg_proc_stats[i].available, ts)
+				   xhttp_prom_tags_comma, pkg_proc_stats[i].available, ts)
 				== -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
@@ -282,8 +280,7 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
-				   xhttp_prom_tags_comma,
-				   pkg_proc_stats[i].real_used, ts)
+				   xhttp_prom_tags_comma, pkg_proc_stats[i].real_used, ts)
 				== -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
@@ -293,8 +290,7 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
-				   xhttp_prom_tags_comma,
-				   pkg_proc_stats[i].total_frags, ts)
+				   xhttp_prom_tags_comma, pkg_proc_stats[i].total_frags, ts)
 				== -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
@@ -304,8 +300,7 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
-				   xhttp_prom_tags_comma,
-				   pkg_proc_stats[i].total_size, ts)
+				   xhttp_prom_tags_comma, pkg_proc_stats[i].total_size, ts)
 				== -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
