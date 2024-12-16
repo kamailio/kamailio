@@ -2605,6 +2605,16 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("dialog"), str_init("dlg_set_state"),
+		SR_KEMIP_INT, ki_dlg_set_state,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_update_state"),
+		SR_KEMIP_INT, ki_dlg_update_state,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("dialog"), str_init("dlg_bye"),
 		SR_KEMIP_INT, ki_dlg_bye,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
