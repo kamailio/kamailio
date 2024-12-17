@@ -88,6 +88,11 @@ else()
     )
 
     add_custom_target(
+      ${MODULE_NAME}_readme
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
+    )
+
+    add_custom_target(
       ${MODULE_NAME}_doc_html DEPENDS ${DOCS_OUTPUT_DIR}/${MODULE_NAME}.html
     )
 
@@ -118,6 +123,16 @@ else()
         )
 
         add_custom_command(
+          OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
+          COMMAND
+            ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
+            ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
+          DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
+          COMMENT "Generating README file for module ${MODULE_NAME}"
+        )
+
+        add_custom_command(
           OUTPUT ${DOCS_OUTPUT_DIR}/${MODULE_NAME}.html
           COMMAND
             # HTML version
@@ -145,6 +160,5 @@ else()
         OPTIONAL
       )
     endif()
-
   endfunction()
 endif()
