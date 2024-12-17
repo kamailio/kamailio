@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.10)
 project(kamailio VERSION 6.0.0)
 
 # Set the version number
-set(EXTRAVERSION "-dev2")
+set(EXTRAVERSION "-dev4")
 set(RELEASE "${PROJECT_VERSION}${EXTRAVERSION}")
 
 message(STATUS "PROJECT_VERSION: ${PROJECT_VERSION}")
