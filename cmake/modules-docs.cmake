@@ -83,9 +83,17 @@ else()
     set(MODULE_DOC_PATH "${MODULE_PATH}/doc")
 
     add_custom_target(
-      ${MODULE_NAME}_doc
+      ${MODULE_NAME}_doc_text
       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
-              ${DOCS_OUTPUT_DIR}/${MODULE_NAME}.html
+    )
+
+    add_custom_target(
+      ${MODULE_NAME}_doc_html DEPENDS ${DOCS_OUTPUT_DIR}/${MODULE_NAME}.html
+    )
+
+    add_custom_target(
+      ${MODULE_NAME}_doc DEPENDS ${MODULE_NAME}_doc_text
+                                 ${MODULE_NAME}_doc_html
     )
 
     # Each version has seperate custon coommands for not recompiling all if 1
@@ -106,7 +114,7 @@ else()
             # ${SINGLE_HTML_XSL}
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc
           COMMENT
-            "Generating documentation with xsltproc and lynx for ${MODULE_NAME}"
+            "Generating text documentation with xsltproc and lynx for ${MODULE_NAME}"
         )
 
         add_custom_command(
@@ -123,7 +131,7 @@ else()
             ${SINGLE_HTML_XSL}
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc
           COMMENT
-            "Generating documentation with xsltproc and lynx for ${MODULE_NAME}"
+            "Generating html documentation with xsltproc and lynx for ${MODULE_NAME}"
         )
       endif()
 
@@ -134,5 +142,6 @@ else()
         COMPONENT kamailio_docs
       )
     endif()
+
   endfunction()
 endif()
