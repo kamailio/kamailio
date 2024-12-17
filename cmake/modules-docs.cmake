@@ -85,20 +85,25 @@ else()
     add_custom_target(
       ${MODULE_NAME}_doc_text
       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
+      COMMENT "Processing target ${MODULE_NAME}_doc_text"
     )
 
     add_custom_target(
       ${MODULE_NAME}_readme
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
+      COMMENT "Processing target ${MODULE_NAME}_readme"
     )
 
     add_custom_target(
-      ${MODULE_NAME}_doc_html DEPENDS ${DOCS_OUTPUT_DIR}/${MODULE_NAME}.html
+      ${MODULE_NAME}_doc_html
+      DEPENDS ${DOCS_OUTPUT_DIR}/${MODULE_NAME}.html
+      COMMENT "Processing target ${MODULE_NAME}_doc_html"
     )
 
     add_custom_target(
-      ${MODULE_NAME}_doc DEPENDS ${MODULE_NAME}_doc_text
-                                 ${MODULE_NAME}_doc_html
+      ${MODULE_NAME}_doc
+      DEPENDS ${MODULE_NAME}_doc_text ${MODULE_NAME}_doc_html
+      COMMENT "Processing target ${MODULE_NAME}_doc"
     )
 
     # Each version has seperate custon coommands for not recompiling all if 1
