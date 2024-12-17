@@ -140,6 +140,9 @@ else()
         RENAME README.${MODULE_NAME}
         DESTINATION ${CMAKE_INSTALL_DOCDIR}/modules
         COMPONENT kamailio_docs
+        # Since the depepndencies might not have been build as they are not in the default target
+        # and required to build explicitly using `make kamailio_docs`, allow them to be optional.
+        OPTIONAL
       )
     endif()
 
