@@ -32,13 +32,11 @@ include(${CMAKE_SOURCE_DIR}/cmake/BuildType.cmake)
 # main binary name
 set(MAIN_NAME
     "kamailio"
-    CACHE STRING "Main binary name"
-)
+    CACHE STRING "Main binary name")
 # use kamailio config
 set(CFG_NAME
     "kamailio"
-    CACHE STRING "Config name"
-)
+    CACHE STRING "Config name")
 
 include(GNUInstallDirs)
 
@@ -59,12 +57,10 @@ include(CPack)
 # Add uninstall target
 if(NOT TARGET uninstall)
   configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake" IMMEDIATE @ONLY
-  )
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake-uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake-uninstall.cmake" IMMEDIATE @ONLY)
 
   add_custom_target(
     uninstall COMMAND ${CMAKE_COMMAND} -P
-                      ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake
-  )
+                      ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake-uninstall.cmake)
 endif()
