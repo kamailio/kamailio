@@ -738,6 +738,10 @@ ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 			if(now > 0 && it->expire != 0 && it->expire < now) {
 				/* entry has expired */
 
+				it->expire = ht->htexpire;
+				if(it->expire) {
+					it->expire += now;
+				}
 				if(ht->flags == PV_VAL_INT) {
 					/* initval is integer, use it to create a fresh entry */
 					it->flags &= ~AVP_VAL_STR;
