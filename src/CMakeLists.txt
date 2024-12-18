@@ -104,7 +104,8 @@ add_subdirectory(modules)
 # Module subdiretory does not contribute to the Kamailio executable.
 target_sources(
   kamailio
-  PRIVATE ${kamailio_SRC_FILES}
+  PRIVATE ${kamailio_SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/core/lex.yy.c
+          ${CMAKE_CURRENT_BINARY_DIR}/core/cfg.tab.c
 )
 target_include_directories(kamailio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)
 
