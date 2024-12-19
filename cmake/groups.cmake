@@ -57,6 +57,7 @@ set(MOD_LIST_BASIC
     cfgt
     statsc
     topos
+    topos_htable
     sipdump
     pv_headers
     kemix
