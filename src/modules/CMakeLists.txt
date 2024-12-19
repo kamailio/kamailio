@@ -75,6 +75,13 @@ function(add_module_group group_modules)
         target_compile_definitions(
           ${module_name} PRIVATE MOD_NAMEID=${module_name}
                                  MOD_NAME=\"${module_name}\")
+
+        target_compile_options(
+          ${module_name}
+          PRIVATE
+            "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/${module_name}/="
+        )
+
         set_target_properties(
           ${module_name} PROPERTIES INSTALL_RPATH
                                     "${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}")
