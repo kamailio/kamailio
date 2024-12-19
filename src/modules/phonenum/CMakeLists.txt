@@ -1,7 +1,7 @@
 # TODO: Support for find_package added after version 8.13.4
 find_package(libphonenumber CONFIG QUIET)
 if(libphonenumber_FOUND)
-  #   message(STATUS "Found libphonenumber: ${libphonenumber_INCLUDE_DIRS}")
+  # message(STATUS "Found libphonenumber: ${libphonenumber_INCLUDE_DIRS}")
 else()
   message(
     STATUS
@@ -15,12 +15,10 @@ else()
     set(libphonenum_LIBRARY ${libphonenumber_LIBRARY} ${libgeocoding_LIBRARY})
     find_path(libphonenumber_INCLUDE_DIR
               phonenumbers/geocoding/phonenumber_offline_geocoder.h
-              phonenumbers/phonenumberutil.h
-    )
+              phonenumbers/phonenumberutil.h)
     message(
       STATUS
-        "Found libphonenumber include directory: ${libphonenumber_INCLUDE_DIR}"
-    )
+        "Found libphonenumber include directory: ${libphonenumber_INCLUDE_DIR}")
     message(STATUS "Found libphonenumber library: ${libphonenum_LIBRARY}")
   else()
     message(FATAL_ERROR "libphonenumber library not found")
@@ -34,17 +32,20 @@ add_library(phonenum SHARED ${SRC_FILES})
 
 target_compile_features(phonenum PRIVATE cxx_std_17)
 
-# Apply compiler flags  only when the build configuration is not DEBUG (Release or RelWithDebInfo ...)
+# Apply compiler flags  only when the build configuration is not DEBUG (Release
+# or RelWithDebInfo ...)
 target_compile_options(
   phonenum
   PRIVATE $<$<NOT:$<CONFIG:DEBUG>>:-Wno-write-strings>
           $<$<NOT:$<CONFIG:DEBUG>>:-Wno-deprecated>
           $<$<NOT:$<CONFIG:DEBUG>>:-Wno-unused-function>
           $<$<NOT:$<CONFIG:DEBUG>>:-Wno-sign-compare>
-          $<$<NOT:$<CONFIG:DEBUG>>:-Wno-strict-aliasing>
-)
+          $<$<NOT:$<CONFIG:DEBUG>>:-Wno-strict-aliasing>)
 
 target_include_directories(phonenum PRIVATE ${libphonenumber_INCLUDE_DIRS})
 target_link_libraries(phonenum PRIVATE ${libphonenum_LIBRARY})
 
-target_compile_options(phonenum PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/phonenum/=")
+target_compile_options(
+  phonenum
+  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/phonenum/=")
+set_target_properties(phonenum PROPERTIES SUFFIX ".so")

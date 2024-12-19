@@ -11,4 +11,7 @@ file(GLOB SRC_FILES "*.c")
 add_library(pua_json SHARED ${SRC_FILES})
 target_link_libraries(pua_json PRIVATE json-c::json-c)
 
-target_compile_options(pua_json PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/pua_json/=")
+target_compile_options(
+  pua_json
+  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/pua_json/=")
+set_target_properties(pua_json PROPERTIES SUFFIX ".so")

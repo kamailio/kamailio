@@ -4,4 +4,6 @@ add_library(ims_ocs SHARED ${SRC_FILES})
 
 # target_link_libraries(.*PRIVATE)
 
-target_compile_options(ims_ocs PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/ims_ocs/=")
+target_compile_options(
+  ims_ocs PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/ims_ocs/=")
+set_target_properties(ims_ocs PROPERTIES SUFFIX ".so")

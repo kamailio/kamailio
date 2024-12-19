@@ -1,6 +1,5 @@
-# libmongoc-1.0 is required for this module
-# Missing dependency on Ubuntu 20.04 of libzstd-dev
-# find_package(zstd REQUIRED)
+# libmongoc-1.0 is required for this module Missing dependency on Ubuntu 20.04
+# of libzstd-dev find_package(zstd REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(mongoc REQUIRED IMPORTED_TARGET libmongoc-1.0>=1.7)
 add_library(mongoc::mongoc ALIAS PkgConfig::mongoc)
@@ -11,4 +10,7 @@ add_library(db_mongodb SHARED ${SRC_FILES})
 
 target_link_libraries(db_mongodb PRIVATE mongoc::mongoc)
 
-target_compile_options(db_mongodb PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/db_mongodb/=")
+target_compile_options(
+  db_mongodb
+  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/db_mongodb/=")
+set_target_properties(db_mongodb PROPERTIES SUFFIX ".so")

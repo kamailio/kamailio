@@ -8,4 +8,7 @@ file(GLOB SRC_FILES "*.c")
 add_library(microhttpd SHARED ${SRC_FILES})
 target_link_libraries(microhttpd PRIVATE microhttpd::microhttpd)
 
-target_compile_options(microhttpd PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/microhttpd/=")
+target_compile_options(
+  microhttpd
+  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/microhttpd/=")
+set_target_properties(microhttpd PROPERTIES SUFFIX ".so")

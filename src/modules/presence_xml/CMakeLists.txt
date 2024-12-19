@@ -9,4 +9,7 @@ file(GLOB SRC_FILES "*.c")
 add_library(presence_xml SHARED ${SRC_FILES})
 target_link_libraries(presence_xml PRIVATE LibXml2::LibXml2 ICU::uc)
 
-target_compile_options(presence_xml PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/presence_xml/=")
+target_compile_options(
+  presence_xml
+  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/presence_xml/=")
+set_target_properties(presence_xml PROPERTIES SUFFIX ".so")

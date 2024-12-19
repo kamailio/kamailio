@@ -6,4 +6,6 @@ target_compile_definitions(peering PRIVATE ${RADIUSCLIENT_LIB})
 
 # target_link_libraries(.*PRIVATE)
 
-target_compile_options(peering PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/peering/=")
+target_compile_options(
+  peering PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/peering/=")
+set_target_properties(peering PROPERTIES SUFFIX ".so")

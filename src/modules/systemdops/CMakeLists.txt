@@ -7,4 +7,7 @@ file(GLOB SRC_FILES "*.c")
 add_library(systemdops SHARED ${SRC_FILES})
 target_link_libraries(systemdops PRIVATE systemd::systemd)
 
-target_compile_options(systemdops PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/systemdops/=")
+target_compile_options(
+  systemdops
+  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/systemdops/=")
+set_target_properties(systemdops PROPERTIES SUFFIX ".so")

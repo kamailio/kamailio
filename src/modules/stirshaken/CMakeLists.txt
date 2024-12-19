@@ -7,4 +7,7 @@ file(GLOB SRC_FILES "*.c")
 add_library(stirshaken SHARED ${SRC_FILES})
 target_link_libraries(stirshaken PRIVATE stirshaken::stirshaken)
 
-target_compile_options(stirshaken PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/stirshaken/=")
+target_compile_options(
+  stirshaken
+  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/stirshaken/=")
+set_target_properties(stirshaken PROPERTIES SUFFIX ".so")

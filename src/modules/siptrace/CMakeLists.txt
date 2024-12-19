@@ -4,4 +4,7 @@ add_library(siptrace SHARED ${SRC_FILES})
 
 # target_link_libraries(.*PRIVATE)
 
-target_compile_options(siptrace PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/siptrace/=")
+target_compile_options(
+  siptrace
+  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/siptrace/=")
+set_target_properties(siptrace PROPERTIES SUFFIX ".so")

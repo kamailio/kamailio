@@ -9,4 +9,7 @@ target_include_directories(app_perl PRIVATE ${PERL_INCLUDE_PATH})
 target_compile_definitions(app_perl PRIVATE ${PERL_EXTRA_C_FLAGS})
 target_link_libraries(app_perl PRIVATE ${PERL_LIBRARY})
 
-target_compile_options(app_perl PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/app_perl/=")
+target_compile_options(
+  app_perl
+  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/app_perl/=")
+set_target_properties(app_perl PROPERTIES SUFFIX ".so")

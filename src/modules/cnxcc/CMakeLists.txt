@@ -11,4 +11,6 @@ file(GLOB SRC_FILES "*.c")
 add_library(cnxcc SHARED ${SRC_FILES})
 target_link_libraries(cnxcc PRIVATE redis::redis event::event)
 
-target_compile_options(cnxcc PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/cnxcc/=")
+target_compile_options(
+  cnxcc PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/cnxcc/=")
+set_target_properties(cnxcc PROPERTIES SUFFIX ".so")

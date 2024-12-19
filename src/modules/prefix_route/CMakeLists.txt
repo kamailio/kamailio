@@ -4,4 +4,7 @@ add_library(prefix_route SHARED ${SRC_FILES})
 
 # target_link_libraries(.*PRIVATE)
 
-target_compile_options(prefix_route PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/prefix_route/=")
+target_compile_options(
+  prefix_route
+  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/prefix_route/=")
+set_target_properties(prefix_route PROPERTIES SUFFIX ".so")

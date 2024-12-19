@@ -7,4 +7,7 @@ file(GLOB SRC_FILES "*.c")
 add_library(memcached SHARED ${SRC_FILES})
 target_link_libraries(memcached PRIVATE memcached::memcached)
 
-target_compile_options(memcached PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/memcached/=")
+target_compile_options(
+  memcached
+  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/memcached/=")
+set_target_properties(memcached PROPERTIES SUFFIX ".so")

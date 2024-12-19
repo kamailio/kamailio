@@ -11,4 +11,6 @@ endif()
 add_library(kafka SHARED ${SRC_FILES})
 target_link_libraries(kafka PRIVATE rdkafka++)
 
-target_compile_options(kafka PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/kafka/=")
+target_compile_options(
+  kafka PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/kafka/=")
+set_target_properties(kafka PROPERTIES SUFFIX ".so")
