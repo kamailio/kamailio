@@ -19,5 +19,3 @@ if(rabbitmq-c_VERSION VERSION_GREATER_EQUAL "0.13")
 endif()
 
 target_link_libraries(rabbitmq PRIVATE rabbitmq::rabbitmq uuid::uuid)
-
-target_compile_options(rabbitmq PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/rabbitmq/=")

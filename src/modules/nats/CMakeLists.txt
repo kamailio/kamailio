@@ -8,5 +8,3 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(nats SHARED ${SRC_FILES})
 target_link_libraries(nats PRIVATE nats::libnats uv::libuv)
-
-target_compile_options(nats PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/nats/=")

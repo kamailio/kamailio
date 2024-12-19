@@ -9,5 +9,3 @@ target_include_directories(db_oracle PRIVATE ${Oracle_INCLUDE_DIRS}
 target_link_libraries(db_oracle PRIVATE occi clntsh)
 
 # target_link_libraries(.*PRIVATE)
-
-target_compile_options(db_oracle PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/db_oracle/=")

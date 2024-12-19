@@ -13,5 +13,3 @@ target_include_directories(db_mysql PRIVATE ${MariaDBClient_INCLUDE_DIRS})
 target_link_libraries(db_mysql PRIVATE ${MariaDBClient_LIBRARIES})
 
 # TODO Install script files for kamctl
-
-target_compile_options(db_mysql PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/db_mysql/=")

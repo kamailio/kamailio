@@ -6,5 +6,3 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(ndb_cassandra SHARED ${SRC_FILES})
 target_link_libraries(ndb_cassandra PRIVATE thrift::thrift)
-
-target_compile_options(ndb_cassandra PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/ndb_cassandra/=")

@@ -1,4 +1,5 @@
-# TODO: Create its own FindJsonC.cmake module since it;s used by multiple modules throughout the project
+# TODO: Create its own FindJsonC.cmake module since it;s used by multiple
+# modules throughout the project
 find_package(json-c QUIET)
 if(NOT json-c_FOUND)
   message(STATUS "json-c not found. looking with pkg-config")
@@ -23,8 +24,5 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(kazoo SHARED ${SRC_FILES})
 
-target_link_libraries(
-  kazoo PRIVATE json-c::json-c rabbitmq::rabbitmq uuid::uuid
-)
-
-target_compile_options(kazoo PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/kazoo/=")
+target_link_libraries(kazoo PRIVATE json-c::json-c rabbitmq::rabbitmq
+                                    uuid::uuid)

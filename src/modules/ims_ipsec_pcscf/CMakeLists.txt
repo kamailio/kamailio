@@ -7,5 +7,3 @@ file(GLOB SRC_FILES "*.c")
 add_library(ims_ipsec_pcscf SHARED ${SRC_FILES})
 
 target_link_libraries(ims_ipsec_pcscf PRIVATE libmnl::libmnl)
-
-target_compile_options(ims_ipsec_pcscf PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/ims_ipsec_pcscf/=")

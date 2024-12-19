@@ -5,5 +5,3 @@ if(UNIX)
   target_link_libraries(sctp PRIVATE -lsctp)
 endif()
 # target_link_libraries(.*PRIVATE)
-
-target_compile_options(sctp PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/sctp/=")

@@ -8,5 +8,3 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(mqtt SHARED ${SRC_FILES})
 target_link_libraries(mqtt PRIVATE mosquitto::mosquitto Libev::Libev)
-
-target_compile_options(mqtt PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/mqtt/=")

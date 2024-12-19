@@ -7,10 +7,7 @@ file(GLOB SRC_FILES "*.c")
 add_library(ruxc SHARED ${SRC_FILES})
 
 if(APPLE)
-  target_link_libraries(
-    ruxc PRIVATE "-framework CoreFoundation" "-framework Security"
-  )
+  target_link_libraries(ruxc PRIVATE "-framework CoreFoundation"
+                                     "-framework Security")
 endif()
 target_link_libraries(ruxc PRIVATE libruxc::libruxc)
-
-target_compile_options(ruxc PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/ruxc/=")

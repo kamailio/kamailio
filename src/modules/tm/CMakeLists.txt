@@ -6,5 +6,3 @@ add_library(tm SHARED ${SRC_FILES})
 if(${FLAVOUR} STREQUAL "kamailio")
   target_compile_definitions(tm PRIVATE WITH_EVENT_LOCAL_REQUEST)
 endif()
-
-target_compile_options(tm PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/tm/=")

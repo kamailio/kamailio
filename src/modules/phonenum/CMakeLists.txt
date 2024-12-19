@@ -1,13 +1,14 @@
 # TODO: Support for find_package added after version 8.13.4
 find_package(libphonenumber CONFIG QUIET)
 if(libphonenumber_FOUND)
-  #   message(STATUS "Found libphonenumber: ${libphonenumber_INCLUDE_DIRS}")
+  # message(STATUS "Found libphonenumber: ${libphonenumber_INCLUDE_DIRS}")
 else()
   message(
     STATUS
       "libphonenumber not found with find_package()... looking with other methods"
   )
   # add additional logic here to handle the missing dependency
+  # TODO: Fix lint issue
   find_library(libphonenumber_LIBRARY NAMES phonenumber)
   find_library(libgeocoding_LIBRARY NAMES geocoding)
 
@@ -34,7 +35,8 @@ add_library(phonenum SHARED ${SRC_FILES})
 
 target_compile_features(phonenum PRIVATE cxx_std_17)
 
-# Apply compiler flags  only when the build configuration is not DEBUG (Release or RelWithDebInfo ...)
+# Apply compiler flags  only when the build configuration is not DEBUG (Release
+# or RelWithDebInfo ...)
 target_compile_options(
   phonenum
   PRIVATE $<$<NOT:$<CONFIG:DEBUG>>:-Wno-write-strings>
@@ -46,5 +48,3 @@ target_compile_options(
 
 target_include_directories(phonenum PRIVATE ${libphonenumber_INCLUDE_DIRS})
 target_link_libraries(phonenum PRIVATE ${libphonenum_LIBRARY})
-
-target_compile_options(phonenum PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/phonenum/=")

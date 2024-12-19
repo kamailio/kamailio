@@ -6,5 +6,3 @@ file(GLOB SRC_FILES "*.c")
 
 add_library(acc_json SHARED ${SRC_FILES})
 target_link_libraries(acc_json PRIVATE jansson::jansson)
-
-target_compile_options(acc_json PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/acc_json/=")

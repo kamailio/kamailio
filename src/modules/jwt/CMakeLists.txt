@@ -10,5 +10,3 @@ endif()
 
 add_library(jwt SHARED ${SRC_FILES})
 target_link_libraries(jwt PRIVATE jwt::libjwt)
-
-target_compile_options(jwt PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/jwt/=")

@@ -9,11 +9,8 @@ file(GLOB SRC_FILES "*.c")
 add_library(secsipid_proc SHARED ${SRC_FILES})
 
 if(APPLE)
-  target_link_libraries(
-    secsipid_proc PRIVATE "-framework CoreFoundation" "-framework Security"
-  )
+  target_link_libraries(secsipid_proc PRIVATE "-framework CoreFoundation"
+                                              "-framework Security")
 endif()
 
 target_link_libraries(secsipid_proc PRIVATE secsipid Threads::Threads)
-
-target_compile_options(secsipid_proc PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/secsipid_proc/=")

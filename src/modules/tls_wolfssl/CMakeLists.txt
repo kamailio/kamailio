@@ -9,5 +9,3 @@ add_library(tls_wolfssl SHARED ${SRC_FILES})
 
 # TODO: Compile error about DH
 target_link_libraries(tls_wolfssl PRIVATE wolfssl::wolfssl)
-
-target_compile_options(tls_wolfssl PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/tls_wolfssl/=")
