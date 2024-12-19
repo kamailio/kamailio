@@ -687,8 +687,8 @@ char *print_dset(struct sip_msg *msg, int *len, int options)
 	}
 
 	if(cnt == 0) {
-		LM_WARN("no r-uri or branches\n");
-		goto error;
+		LM_INFO("no new r-uri or branches\n");
+		goto notfound;
 	}
 
 	if(p + CRLF_LEN + 1 > end) {
@@ -701,7 +701,7 @@ char *print_dset(struct sip_msg *msg, int *len, int options)
 
 memfail:
 	LM_ERR("redirection buffer length exceed\n");
-error:
+notfound:
 	*len = 0;
 	set_branch_iterator(crt_branch);
 	return 0;
