@@ -40,3 +40,7 @@ endif()
 if(NOT DEFINED ${NO_KQUEUE})
   target_compile_definitions(common INTERFACE HAVE_KQUEUE)
 endif()
+
+if(NOT DEFINED RUN_PREFIX)
+  set(RUN_PREFIX "/var")
+endif()

@@ -14,9 +14,9 @@ message(STATUS "OS version: ${OSREL}")
 # set(HOST_ARCH "__CPU_${CMAKE_HOST_SYSTEM_PROCESSOR}")
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i486|i586|i686")
-    set(TARGET_ARCH "i386")
+  set(TARGET_ARCH "i386")
 else()
-    set(TARGET_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+  set(TARGET_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
 message(STATUS "Host Processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
@@ -305,7 +305,9 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
 elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   set(COMPILER_NAME "clang")
 endif()
-
+if(NOT DEFINED RUN_DIR)
+  set(RUN_DIR "run/${MAIN_NAME}")
+endif()
 string(TOLOWER ${OS} OS_LOWER)
 target_compile_definitions(
   common
@@ -324,7 +326,7 @@ target_compile_definitions(
     SHARE_DIR="${CMAKE_INSTALL_FULL_DATADIR}/${MAIN_NAME}/"
     # Absolute path this run is always /var/run/kamailio either for local or
     # system installs
-    RUN_DIR="${CMAKE_INSTALL_FULL_LOCALSTATEDIR}/run/${MAIN_NAME}"
+    RUN_DIR="${RUN_PREFIX}/${RUN_DIR}"
     ${LOCK_METHOD}
     # Module stuff?
     PIC
