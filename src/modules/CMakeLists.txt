@@ -65,6 +65,8 @@ function(add_module_group group_modules)
         add_subdirectory(${module_path})
         # Remove the 'lib' prefix from the module name
         set_target_properties(${module_name} PROPERTIES PREFIX "")
+        # Set suffix to .so always
+        set_target_properties(${module_name} PROPERTIES SUFFIX ".so")
 
         # Add this policy to new so we can use target_link_libraries(... PRIVATE
         # ...) to link against targets defined in children directories
