@@ -6,7 +6,4 @@ add_library(ims_icscf SHARED ${SRC_FILES})
 
 target_link_libraries(ims_icscf PRIVATE LibXml2::LibXml2)
 
-target_compile_options(
-  ims_icscf
-  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/ims_icscf/=")
-set_target_properties(ims_icscf PROPERTIES SUFFIX ".so")
+target_compile_options(ims_icscf PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/ims_icscf/=")

@@ -7,6 +7,4 @@ file(GLOB SRC_FILES "*.c")
 add_library(uuid SHARED ${SRC_FILES})
 target_link_libraries(uuid PRIVATE uuid::uuid)
 
-target_compile_options(
-  uuid PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/uuid/=")
-set_target_properties(uuid PROPERTIES SUFFIX ".so")
+target_compile_options(uuid PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/uuid/=")

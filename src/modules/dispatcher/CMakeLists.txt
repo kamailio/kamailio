@@ -4,7 +4,4 @@ add_library(dispatcher SHARED ${SRC_FILES})
 
 # target_link_libraries(.*PRIVATE)
 
-target_compile_options(
-  dispatcher
-  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/dispatcher/=")
-set_target_properties(dispatcher PROPERTIES SUFFIX ".so")
+target_compile_options(dispatcher PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/dispatcher/=")

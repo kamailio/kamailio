@@ -10,7 +10,4 @@ target_link_libraries(db_oracle PRIVATE occi clntsh)
 
 # target_link_libraries(.*PRIVATE)
 
-target_compile_options(
-  db_oracle
-  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/db_oracle/=")
-set_target_properties(db_oracle PROPERTIES SUFFIX ".so")
+target_compile_options(db_oracle PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/db_oracle/=")

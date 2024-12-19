@@ -14,14 +14,13 @@ find_package(CURL REQUIRED)
 
 file(GLOB SRC_FILES "*.c")
 
-# TODO: These libraries seems to be not maintaned anymore. Deprecate? -lnsq
-# -levbuffsock
+# TODO: These libraries seems to be not maintaned anymore. Deprecate?
+# -lnsq -levbuffsock
 add_library(nsq SHARED ${SRC_FILES})
 
 # TODO: verify -l is required to avoid linking to itself?
-target_link_libraries(nsq PRIVATE json-c::json-c CURL::libcurl Libev::Libev
-                                  -lnsq evbuffsock)
+target_link_libraries(
+  nsq PRIVATE json-c::json-c CURL::libcurl Libev::Libev -lnsq evbuffsock
+)
 
-target_compile_options(
-  nsq PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/nsq/=")
-set_target_properties(nsq PROPERTIES SUFFIX ".so")
+target_compile_options(nsq PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/nsq/=")

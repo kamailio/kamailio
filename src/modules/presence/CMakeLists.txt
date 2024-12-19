@@ -10,7 +10,4 @@ add_library(presence SHARED ${SRC_FILES})
 
 target_link_libraries(presence PRIVATE LibXml2::LibXml2 ICU::uc)
 
-target_compile_options(
-  presence
-  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/presence/=")
-set_target_properties(presence PROPERTIES SUFFIX ".so")
+target_compile_options(presence PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/presence/=")

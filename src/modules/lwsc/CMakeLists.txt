@@ -7,6 +7,4 @@ add_library(libws::libwebsockets ALIAS PkgConfig::LIB_WEBSOCKETS)
 add_library(lwsc SHARED ${SRC_FILES})
 target_link_libraries(lwsc PRIVATE libws::libwebsockets)
 
-target_compile_options(
-  lwsc PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/lwsc/=")
-set_target_properties(lwsc PROPERTIES SUFFIX ".so")
+target_compile_options(lwsc PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/lwsc/=")

@@ -7,6 +7,4 @@ target_compile_definitions(ctl PRIVATE USE_FIFO CTL_SYSTEM_MALLOC)
 
 # TODO: Also install kamcmd binary
 
-target_compile_options(
-  ctl PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/ctl/=")
-set_target_properties(ctl PROPERTIES SUFFIX ".so")
+target_compile_options(ctl PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/ctl/=")

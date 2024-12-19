@@ -4,6 +4,4 @@ add_library(pdt SHARED ${SRC_FILES})
 
 # target_link_libraries(.*PRIVATE)
 
-target_compile_options(
-  pdt PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/pdt/=")
-set_target_properties(pdt PROPERTIES SUFFIX ".so")
+target_compile_options(pdt PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/pdt/=")

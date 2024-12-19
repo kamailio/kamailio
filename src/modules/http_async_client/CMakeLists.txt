@@ -9,8 +9,4 @@ add_library(event::event ALIAS PkgConfig::EVENT)
 add_library(http_async_client SHARED ${SRC_FILES})
 target_link_libraries(http_async_client PRIVATE CURL::libcurl event::event)
 
-target_compile_options(
-  http_async_client
-  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/http_async_client/="
-)
-set_target_properties(http_async_client PROPERTIES SUFFIX ".so")
+target_compile_options(http_async_client PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/http_async_client/=")

@@ -5,6 +5,4 @@ add_library(cfg_rpc SHARED ${SRC_FILES})
 
 # TODO: Also install kamcmd binary
 
-target_compile_options(
-  cfg_rpc PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/cfg_rpc/=")
-set_target_properties(cfg_rpc PROPERTIES SUFFIX ".so")
+target_compile_options(cfg_rpc PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/cfg_rpc/=")

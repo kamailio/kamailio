@@ -20,7 +20,4 @@ endif()
 
 target_link_libraries(rabbitmq PRIVATE rabbitmq::rabbitmq uuid::uuid)
 
-target_compile_options(
-  rabbitmq
-  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/rabbitmq/=")
-set_target_properties(rabbitmq PROPERTIES SUFFIX ".so")
+target_compile_options(rabbitmq PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/rabbitmq/=")

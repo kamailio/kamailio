@@ -5,7 +5,4 @@ add_library(counters SHARED ${SRC_FILES})
 
 # TODO: Also install kamcmd binary
 
-target_compile_options(
-  counters
-  PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/counters/=")
-set_target_properties(counters PROPERTIES SUFFIX ".so")
+target_compile_options(counters PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/counters/=")

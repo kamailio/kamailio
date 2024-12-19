@@ -4,6 +4,4 @@ add_library(topos SHARED ${SRC_FILES})
 
 # target_link_libraries(.*PRIVATE)
 
-target_compile_options(
-  topos PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/topos/=")
-set_target_properties(topos PROPERTIES SUFFIX ".so")
+target_compile_options(topos PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/topos/=")

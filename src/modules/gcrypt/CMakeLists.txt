@@ -7,6 +7,4 @@ file(GLOB SRC_FILES "*.c")
 add_library(gcrypt SHARED ${SRC_FILES})
 target_link_libraries(gcrypt PRIVATE gcrypt::gcrypt)
 
-target_compile_options(
-  gcrypt PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/gcrypt/=")
-set_target_properties(gcrypt PROPERTIES SUFFIX ".so")
+target_compile_options(gcrypt PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/gcrypt/=")
