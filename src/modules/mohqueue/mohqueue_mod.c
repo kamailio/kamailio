@@ -59,7 +59,7 @@ int moh_maxcalls = 50;
 /* COMMANDS */
 static cmd_export_t mod_cmds[] = {
 	{"mohq_count", (cmd_function)mohq_count, 2,
-		fixup_count, 0,
+		fixup_count, fixup_free_count,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"mohq_process", (cmd_function)mohq_process, 0,
 		0, 0, REQUEST_ROUTE},
