@@ -45,10 +45,6 @@
 #include "../../core/locking.h"
 #include "../../core/hashes.h"
 #include "../../core/clist.h"
-#define KSR_RTHREAD_NEED_PI
-#define KSR_RTHREAD_NEED_4PP
-#define KSR_RTHREAD_NEED_0P
-#include "../../core/rthreads.h"
 #include "km_dbase.h"
 #include "km_pg_con.h"
 #include "km_val.h"
@@ -115,17 +111,12 @@ static void db_postgres_free_query(const db1_con_t *_con);
  * \return database connection on success, NULL on error
  * \note this function must be called prior to any database functions
  *
- * Init libssl in a thread
  */
-static db1_con_t *db_postgres_init0(const str *_url)
+db1_con_t *db_postgres_init(const str *_url)
 {
 	return db_do_init(_url, (void *)db_postgres_new_connection);
 }
 
-db1_con_t *db_postgres_init(const str *_url)
-{
-	return run_threadP((_thread_proto)db_postgres_init0, (void *)_url);
-}
 /*!
  * \brief Initialize database for future queries, specify pooling
  * \param _url URL of the database that should be opened
@@ -135,31 +126,20 @@ db1_con_t *db_postgres_init(const str *_url)
  *
  * Init libssl in thread
  */
-static db1_con_t *db_postgres_init2_impl(const str *_url, db_pooling_t pooling)
+db1_con_t *db_postgres_init2(const str *_url, db_pooling_t pooling)
 {
 	return db_do_init2(_url, (void *)db_postgres_new_connection, pooling);
 }
 
-db1_con_t *db_postgres_init2(const str *_url, db_pooling_t pooling)
-{
-	return run_threadPI(
-			(_thread_protoPI)db_postgres_init2_impl, (void *)_url, pooling);
-}
 /*!
  * \brief Close database when the database is no longer needed
  * \param _h closed connection, as returned from db_postgres_init
  * \note free all memory and resources
  */
-static void db_postgres_close_impl(db1_con_t *_h)
+void db_postgres_close(db1_con_t *_h)
 {
 	db_do_close(_h, db_postgres_free_connection);
 }
-
-void db_postgres_close(db1_con_t *_h)
-{
-	run_thread0P((_thread_proto0P)db_postgres_close_impl, _h);
-}
-
 
 /*!
  * \brief Submit_query, run a query
@@ -167,7 +147,7 @@ void db_postgres_close(db1_con_t *_h)
  * \param _s query string
  * \return 0 on success, negative on failure
  */
-static int db_postgres_submit_query_impl(const db1_con_t *_con, const str *_s)
+static int db_postgres_submit_query(const db1_con_t *_con, const str *_s)
 {
 	char *s = NULL;
 	int i, retries;
@@ -293,12 +273,6 @@ static int db_postgres_submit_query_impl(const db1_con_t *_con, const str *_s)
 			PQerrorMessage(CON_CONNECTION(_con)), _s->len, _s->s);
 	pkg_free(s);
 	return -1;
-}
-
-static int db_postgres_submit_query(const db1_con_t *_con, const str *_s)
-{
-	return run_thread4PP((_thread_proto4PP)db_postgres_submit_query_impl,
-			(void *)_con, (void *)_s);
 }
 
 void db_postgres_async_exec_task(void *param)
