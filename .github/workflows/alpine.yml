@@ -30,7 +30,8 @@ jobs:
           repo: kamailio
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
+      - name: Show last execution info
+        run: |
           echo "Last daily build: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}"
           echo "commit_message: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_commit.message }}"
           echo "display_title: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].display_title }}"
