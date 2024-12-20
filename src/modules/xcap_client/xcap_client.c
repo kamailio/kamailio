@@ -43,9 +43,6 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
-#define KSR_RTHREAD_NEED_4L
-#define KSR_RTHREAD_SKIP_P
-#include "../../core/rthreads.h"
 #include "../presence/utils_func.h"
 #include "xcap_functions.h"
 #include "xcap_client.h"
@@ -151,7 +148,7 @@ static int mod_init(void)
 	xcap_dbf.close(xcap_db);
 	xcap_db = NULL;
 
-	run_thread4L((_thread_proto4L)curl_global_init, CURL_GLOBAL_ALL);
+	curl_global_init(CURL_GLOBAL_ALL);
 
 	if(periodical_query) {
 		register_timer(query_xcap_update, 0, query_period);
