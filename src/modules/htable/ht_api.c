@@ -1660,6 +1660,11 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
 		while(it) {
+			if(ht->htexpire > 0 && it->expire != 0 && it->expire < time(NULL)) {
+				/* entry has expired, continue */
+				it = it->next;
+				continue;
+			}
 			it0 = it->next;
 			if(op == 5) {
 				if(!(it->flags & AVP_VAL_STR))
