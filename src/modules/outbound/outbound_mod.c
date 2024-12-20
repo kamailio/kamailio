@@ -42,10 +42,6 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_supported.h"
 
-#define KSR_RTHREAD_SKIP_P
-#define KSR_RTHREAD_NEED_V
-#include "../../core/rthreads.h"
-
 #include "api.h"
 #include "config.h"
 
@@ -127,11 +123,7 @@ static int mod_init(void)
 	}
 	ob_key.len = OB_KEY_LEN;
 
-#if OPENSSL_VERSION_NUMBER < 0x010101000L
 	mod_init_openssl();
-#else
-	run_threadV(mod_init_openssl);
-#endif
 
 	if(cfg_declare("outbound", outbound_cfg_def, &default_outbound_cfg,
 			   cfg_sizeof(outbound), &outbound_cfg)) {
