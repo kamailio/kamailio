@@ -45,9 +45,6 @@
 #include "../../core/counters.h"
 #include "../../core/tcp_info.h"
 
-#define KSR_RTHREAD_SKIP_P
-#define KSR_RTHREAD_NEED_4PP
-#include "../../core/rthreads.h"
 #include "tls_init.h"
 #include "tls_server.h"
 #include "tls_domain.h"
@@ -596,20 +593,8 @@ static int mod_child(int rank)
 	if(tls_disable || (tls_domains_cfg == 0))
 		return 0;
 
-	/*
-	 * OpenSSL 3.x/1.1.1: create shared SSL_CTX* in thread executor
-	 * to avoid init of libssl in thread#1:
-	 *   - ksr_tls_threads_mode = 1 (KSR_TLS_THREADS_MTEMP)
-	 */
 	if(rank == PROC_INIT) {
-		return run_thread4PP((_thread_proto4PP)mod_child_hook, &rank, NULL);
-	}
-
-	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP && rank
-			&& rank != PROC_INIT && rank != PROC_POSTCHILDINIT) {
-		for(k = 0; k < tls_pthreads_key_mark; k++)
-			pthread_setspecific(k, 0x0);
-		LM_WARN("clean-up of thread-locals key < %d\n", tls_pthreads_key_mark);
+		return mod_child_hook(&rank, NULL);
 	}
 
 #ifdef KSR_SSL_COMMON
