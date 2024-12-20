@@ -401,6 +401,14 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+	for(k = 0; k < 32; k++) {
+		if(pthread_getspecific(k) != 0) {
+			LM_WARN("detected initialized thread-locals created before tls.so; "
+					"tls.so must be the first module loaded\n");
+		}
+	}
+#endif /*  OPENSSL_VERSION_NUMBER*/
 
 	if(tls_disable) {
 		LM_WARN("tls support is disabled "
