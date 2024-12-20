@@ -50,9 +50,6 @@
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/fmsg.h"
 #include "../../core/kemi.h"
-#define KSR_RTHREAD_NEED_V
-#define KSR_RTHREAD_SKIP_P
-#include "../../core/rthreads.h"
 
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/pv/pv_api.h"
@@ -294,7 +291,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	run_threadV((_thread_protoV)&set_curl_mem_callbacks);
+	set_curl_mem_callbacks();
 
 	/* init faked sip msg */
 	if(faked_msg_init() < 0) {
