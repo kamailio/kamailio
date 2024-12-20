@@ -408,6 +408,12 @@ static int mod_init(void)
 					"tls.so must be the first module loaded\n");
 		}
 	}
+
+	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP) {
+		LM_WARN("tls_threads_mode=1 is invalid on kamailio version >= 6; "
+				"forcing tls_threads_mode=2\n");
+		ksr_tls_threads_mode = KSR_TLS_THREADS_MFORK;
+	}
 #endif /*  OPENSSL_VERSION_NUMBER*/
 
 	if(tls_disable) {
