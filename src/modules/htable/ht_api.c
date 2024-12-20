@@ -1576,6 +1576,7 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 	str sval;
 	str tval;
 	int ival = 0;
+	time_t tnow = 0;
 
 	if(sre == NULL || sre->len <= 0 || ht == NULL)
 		return 0;
@@ -1655,12 +1656,13 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 		}
 	}
 
+	tnow = time(NULL);
 	for(i = 0; i < ht->htsize; i++) {
 		/* free entries */
 		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
 		while(it) {
-			if(ht->htexpire > 0 && it->expire != 0 && it->expire < time(NULL)) {
+			if(ht->htexpire > 0 && it->expire != 0 && it->expire < tnow) {
 				/* entry has expired, continue */
 				it = it->next;
 				continue;
