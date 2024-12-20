@@ -41,10 +41,6 @@
 #include "../../core/dprint.h"
 #include "../../core/async_task.h"
 
-#define KSR_RTHREAD_NEED_4PP
-#define KSR_RTHREAD_NEED_0P
-#define KSR_RTHREAD_NEED_4P5I2P2
-#include "../../core/rthreads.h"
 #include "../../lib/srdb1/db_query.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "db_mysql.h"
@@ -73,7 +69,7 @@ static char *mysql_sql_buf;
  * \param _s executed query
  * \return zero on success, negative value on failure
  */
-static int db_mysql_submit_query_impl(const db1_con_t *_h, const str *_s)
+static int db_mysql_submit_query(const db1_con_t *_h, const str *_s)
 {
 	time_t t;
 	int i, code;
@@ -133,12 +129,6 @@ static int db_mysql_submit_query_impl(const db1_con_t *_h, const str *_s)
 	return -2;
 }
 
-
-static int db_mysql_submit_query(const db1_con_t *_h, const str *_s)
-{
-	return run_thread4PP((_thread_proto4PP)db_mysql_submit_query_impl,
-			(void *)_h, (void *)_s);
-}
 /**
  *
  */
@@ -210,9 +200,8 @@ static char *db_mysql_tquote = "`";
  * \param _url URL used for initialization
  * \return zero on success, negative value on failure
  *
- * Init libssl in a thread
  */
-static db1_con_t *db_mysql_init0(const str *_url)
+db1_con_t *db_mysql_init(const str *_url)
 {
 	db1_con_t *c;
 	c = db_do_init(_url, (void *)db_mysql_new_connection);
@@ -221,27 +210,16 @@ static db1_con_t *db_mysql_init0(const str *_url)
 	return c;
 }
 
-
-db1_con_t *db_mysql_init(const str *_url)
-{
-	return run_threadP((_thread_proto)db_mysql_init0, (void *)_url);
-}
 /**
  * Shut down the database module.
  * No function should be called after this
  * \param _h handle to the closed connection
  * \return zero on success, negative value on failure
  */
-static void db_mysql_close_impl(db1_con_t *_h)
+void db_mysql_close(db1_con_t *_h)
 {
 	db_do_close(_h, db_mysql_free_connection);
 }
-
-void db_mysql_close(db1_con_t *_h)
-{
-	run_thread0P((_thread_proto0P)db_mysql_close_impl, _h);
-}
-
 
 /**
  * Retrieve a result set
@@ -290,7 +268,7 @@ static int db_mysql_store_result(const db1_con_t *_h, db1_res_t **_r)
 		 * and *_r */
 		db_mysql_free_result(_h, *_r);
 		*_r = 0;
-#if(MYSQL_VERSION_ID >= 40100)
+#if (MYSQL_VERSION_ID >= 40100)
 		while(mysql_more_results(CON_CONNECTION(_h))
 				&& mysql_next_result(CON_CONNECTION(_h)) == 0) {
 			MYSQL_RES *res = mysql_store_result(CON_CONNECTION(_h));
@@ -301,7 +279,7 @@ static int db_mysql_store_result(const db1_con_t *_h, db1_res_t **_r)
 	}
 
 done:
-#if(MYSQL_VERSION_ID >= 40100)
+#if (MYSQL_VERSION_ID >= 40100)
 	while(mysql_more_results(CON_CONNECTION(_h))
 			&& mysql_next_result(CON_CONNECTION(_h)) == 0) {
 		MYSQL_RES *res = mysql_store_result(CON_CONNECTION(_h));
@@ -356,21 +334,12 @@ int db_mysql_free_result(const db1_con_t *_h, db1_res_t *_r)
  * this function observed to invoke SSL_read() under libmysqlclient.so.21
  * but not libmariadb.so.3; apply libssl guard
  */
-static int db_mysql_query_impl(const db1_con_t *_h, const db_key_t *_k,
+int db_mysql_query(const db1_con_t *_h, const db_key_t *_k,
 		const db_op_t *_op, const db_val_t *_v, const db_key_t *_c,
 		const int _n, const int _nc, const db_key_t _o, db1_res_t **_r)
 {
 	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r, db_mysql_val2str,
 			db_mysql_submit_query, db_mysql_store_result);
-}
-
-int db_mysql_query(const db1_con_t *_h, const db_key_t *_k, const db_op_t *_op,
-		const db_val_t *_v, const db_key_t *_c, const int _n, const int _nc,
-		const db_key_t _o, db1_res_t **_r)
-{
-	return run_thread4P5I2P2((_thread_proto4P5I2P2)&db_mysql_query_impl,
-			(void *)_h, (void *)_k, (void *)_op, (void *)_v, (void *)_c, _n,
-			_nc, (void *)_o, (void *)_r);
 }
 
 /**
