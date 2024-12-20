@@ -245,7 +245,7 @@ request_route {
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>sr_msg_checkj()</function> usage</title>
+		<title><function>sr_msg_check()</function> usage</title>
 		<programlisting format="linespecific">
 ...
 request_route {
