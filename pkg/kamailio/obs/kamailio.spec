@@ -1801,6 +1801,7 @@ fi
 %{_libdir}/kamailio/modules/log_custom.so
 %{_libdir}/kamailio/modules/statsc.so
 %{_libdir}/kamailio/modules/topos.so
+%{_libdir}/kamailio/modules/topos_htable.so
 %{_libdir}/kamailio/modules/cfgt.so
 %if "%{?_unitdir}" != ""
 %{_libdir}/kamailio/modules/log_systemd.so
@@ -2177,6 +2178,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.xcap_server
 %{_libdir}/kamailio/modules/presence.so
 %{_libdir}/kamailio/modules/presence_conference.so
+%{_libdir}/kamailio/modules/presence_dfks.so
 %{_libdir}/kamailio/modules/presence_dialoginfo.so
 %{_libdir}/kamailio/modules/presence_mwi.so
 %{_libdir}/kamailio/modules/presence_profile.so
