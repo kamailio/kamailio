@@ -29,6 +29,7 @@ ifneq ($(OS),darwin)
 	LIBS += -lssl
 	LIBS += -lcrypto
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules
 
