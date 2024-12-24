@@ -1,6 +1,3 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
 
-find_package(Ruby REQUIRED)
-
-add_library(app_ruby SHARED ${SRC_FILES})
-# target_link_libraries(.*PRIVATE)
+add_library(${module_name} SHARED ${MODULE_SOURCES})

@@ -1,8 +1,9 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(geoip REQUIRED IMPORTED_TARGET geoip)
 
-add_library(geoip SHARED ${SRC_FILES})
-target_include_directories(geoip PRIVATE ${geoip_INCLUDE_DIRS})
-target_link_libraries(geoip PRIVATE ${geoip_LIBRARIES})
+target_include_directories(${module_name} PRIVATE ${geoip_INCLUDE_DIRS})
+target_link_libraries(${module_name} PRIVATE ${geoip_LIBRARIES})

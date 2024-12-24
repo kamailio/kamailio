@@ -1,8 +1,7 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
 
-add_library(tm SHARED ${SRC_FILES})
+add_library(${module_name} SHARED ${MODULE_SOURCES})
 
-# target_link_libraries(.*PRIVATE)
 if(${FLAVOUR} STREQUAL "kamailio")
-  target_compile_definitions(tm PRIVATE WITH_EVENT_LOCAL_REQUEST)
+  target_compile_definitions(${module_name} PRIVATE WITH_EVENT_LOCAL_REQUEST)
 endif()

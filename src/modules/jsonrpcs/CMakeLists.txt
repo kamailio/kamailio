@@ -1,4 +1,3 @@
-file(GLOB jsonrpcs_SRC "*.c")
+file(GLOB MODULE_SOURCES "*.c")
 
-add_library(jsonrpcs SHARED ${jsonrpcs_SRC})
-# target_link_libraries(.*PRIVATE)
+add_library(${module_name} SHARED ${MODULE_SOURCES})

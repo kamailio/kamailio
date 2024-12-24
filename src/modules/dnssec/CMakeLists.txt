@@ -1,13 +1,11 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 find_package(Threads REQUIRED)
 
-add_library(dnssec SHARED ${SRC_FILES})
-
 # TODO: library libval not foud on recent distributions: whichi library is sres?
 # Consider depreciating this module?
-target_link_libraries(dnssec PRIVATE val-threads sres Threads::Threads
-                                     OpenSSL::SSL OpenSSL::Crypto)
-
-# target_link_libraries(.*PRIVATE)
+target_link_libraries(${module_name} PRIVATE val-threads sres Threads::Threads
+                                             OpenSSL::SSL OpenSSL::Crypto)

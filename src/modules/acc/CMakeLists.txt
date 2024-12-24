@@ -1,3 +1,3 @@
-file(GLOB acc_SRC "*.c")
+file(GLOB MODULE_SOURCES "*.c")
 
-add_library(acc SHARED ${acc_SRC})
+add_library(${module_name} SHARED ${MODULE_SOURCES})

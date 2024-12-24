@@ -1,4 +1,6 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 find_package(libjwt 1.12 QUIET)
 if(NOT libjwt_FOUND)
@@ -8,5 +10,4 @@ if(NOT libjwt_FOUND)
   add_library(jwt::libjwt ALIAS PkgConfig::jwt)
 endif()
 
-add_library(jwt SHARED ${SRC_FILES})
-target_link_libraries(jwt PRIVATE jwt::libjwt)
+target_link_libraries(${module_name} PRIVATE jwt::libjwt)

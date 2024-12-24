@@ -1,7 +1,8 @@
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
+
 find_package(ODBC REQUIRED)
 
-file(GLOB SRC_FILES "*.c")
-
-add_library(db_unixodbc SHARED ${SRC_FILES})
-target_include_directories(db_unixodbc PRIVATE ${ODBC_INCLUDE_DIRS})
-target_link_libraries(db_unixodbc PRIVATE ${ODBC_LIBRARIES})
+target_include_directories(${module_name} PRIVATE ${ODBC_INCLUDE_DIRS})
+target_link_libraries(${module_name} PRIVATE ${ODBC_LIBRARIES})

@@ -1,4 +1,6 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JANSSON REQUIRED IMPORTED_TARGET jansson)
@@ -8,5 +10,4 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(EVENT REQUIRED IMPORTED_TARGET libevent)
 add_library(event::event ALIAS PkgConfig::EVENT)
 
-add_library(janssonrpcc SHARED ${SRC_FILES})
-target_link_libraries(janssonrpcc PRIVATE jansson::jansson event::event)
+target_link_libraries(${module_name} PRIVATE jansson::jansson event::event)

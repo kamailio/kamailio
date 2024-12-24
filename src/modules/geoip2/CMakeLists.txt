@@ -1,9 +1,9 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(geoip2 REQUIRED IMPORTED_TARGET libmaxminddb)
 
-add_library(geoip2 SHARED ${SRC_FILES})
-
-target_include_directories(geoip2 PRIVATE ${geoip2_INCLUDE_DIRS})
-target_link_libraries(geoip2 PRIVATE ${geip2_LIBRARIES})
+target_include_directories(${module_name} PRIVATE ${geoip2_INCLUDE_DIRS})
+target_link_libraries(${module_name} PRIVATE ${geip2_LIBRARIES})

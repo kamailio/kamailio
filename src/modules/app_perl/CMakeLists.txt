@@ -1,10 +1,11 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 # libperl-dev
 find_package(PerlLibs REQUIRED)
 
-add_library(app_perl SHARED ${SRC_FILES})
-target_include_directories(app_perl PRIVATE ${PERL_INCLUDE_PATH})
+target_include_directories(${module_name} PRIVATE ${PERL_INCLUDE_PATH})
 # message(STATUS "PERL_EXTRA_C_FLAGS: ${PERL_EXTRA_C_FLAGS}")
-target_compile_definitions(app_perl PRIVATE ${PERL_EXTRA_C_FLAGS})
-target_link_libraries(app_perl PRIVATE ${PERL_LIBRARY})
+target_compile_definitions(${module_name} PRIVATE ${PERL_EXTRA_C_FLAGS})
+target_link_libraries(${module_name} PRIVATE ${PERL_LIBRARY})

@@ -1,3 +1,7 @@
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
+
 find_package(Libev REQUIRED)
 
 find_package(json-c QUIET)
@@ -10,14 +14,9 @@ endif()
 
 find_package(CURL REQUIRED)
 
-# find_library(libnsq nsq)
+# TODO: find_library(libnsq nsq) TODO: * these libraries seems to be not
+# maintaned anymore - eprecate? -lnsq -levbuffsock
 
-file(GLOB SRC_FILES "*.c")
-
-# TODO: These libraries seems to be not maintaned anymore. Deprecate? -lnsq
-# -levbuffsock
-add_library(nsq SHARED ${SRC_FILES})
-
-# TODO: verify -l is required to avoid linking to itself?
-target_link_libraries(nsq PRIVATE json-c::json-c CURL::libcurl Libev::Libev
-                                  -lnsq evbuffsock)
+# TODO: verify if -l is required to avoid linking to itself
+target_link_libraries(${module_name} PRIVATE json-c::json-c CURL::libcurl
+                                             Libev::Libev -lnsq evbuffsock)

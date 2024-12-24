@@ -1,7 +1,8 @@
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
+
 # erlang-dev
 find_package(Erlang REQUIRED)
 
-file(GLOB SRC_FILES "*.c")
-
-add_library(erlang SHARED ${SRC_FILES})
-target_link_libraries(erlang PRIVATE Erlang::EI)
+target_link_libraries(${module_name} PRIVATE Erlang::EI)
