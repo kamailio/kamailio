@@ -23,5 +23,6 @@ else
 		-I$(LOCALBASE)/include  # iconv.h
 	LIBS += -L$(LOCALBASE)/lib -lxml2
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules
