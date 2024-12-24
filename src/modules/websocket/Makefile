@@ -44,6 +44,7 @@ ifeq ($(EMBEDDED_UTF8_DECODE),0)
 else
 	DEFS += -DEMBEDDED_UTF8_DECODE
 endif
+${eval LIBS=$(LIBS)}
 
 # Static linking, if you'd like to use TLS and WEBSOCKET at the same time
 #
