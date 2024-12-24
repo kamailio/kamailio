@@ -1,8 +1,7 @@
-# Quite analogous to the Makefile.defs file
-# This file is used to define the common flags and options for the project
-# The flags are defined as INTERFACE properties of the common library
-# The flags are then used by the other libraries and executables
-cmake_minimum_required(VERSION 3.10)
+# Quite analogous to the Makefile.defs file This file is used to define the
+# common flags and options for the project The flags are defined as INTERFACE
+# properties of the common library The flags are then used by the other
+# libraries and executables
 
 set(OS_SPECIFIC_DIR "${CMAKE_SOURCE_DIR}/cmake/os-specific")
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")

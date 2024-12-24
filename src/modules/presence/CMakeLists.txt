@@ -1,6 +1,3 @@
-# 3.12 For libxml2 target
-cmake_minimum_required(VERSION 3.12)
-
 file(GLOB MODULE_SOURCES "*.c")
 
 add_library(${module_name} SHARED ${MODULE_SOURCES})

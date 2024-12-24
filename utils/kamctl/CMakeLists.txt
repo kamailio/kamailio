@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
 project(kamailio_utils)
 
 # if(NOT basedir) set(KAMCTL_TMP_DIR "/tmp") else() set(KAMCTL_TMP_DIR

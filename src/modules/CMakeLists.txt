@@ -73,6 +73,7 @@ function(add_module_group group_modules)
         if(POLICY CMP0079)
           cmake_policy(SET CMP0079 NEW)
         endif()
+
         target_link_libraries(${module_name} PRIVATE common_modules)
         target_compile_definitions(
           ${module_name} PRIVATE MOD_NAMEID=${module_name}

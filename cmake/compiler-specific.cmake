@@ -2,7 +2,6 @@
 # common flags and options for the project The flags are defined as INTERFACE
 # properties of the common library The flags are then used by the other
 # libraries and executables
-cmake_minimum_required(VERSION 3.10)
 
 # Define the common flags and options for GCC
 option(PROFILE "Enable profiling" OFF)
