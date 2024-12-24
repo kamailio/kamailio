@@ -30,6 +30,7 @@ else
 			-L$(LOCALBASE)/lib64 -L$(LOCALBASE)/ssl/lib64 \
 			-lssl -lcrypto
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules
 
