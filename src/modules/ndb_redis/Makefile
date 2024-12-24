@@ -52,6 +52,6 @@ endif
 endif
 
 DEFS+=$(HIREDISDEFS)
-LIBS=$(HIREDISLIBS)
+${eval LIBS=$(HIREDISLIBS)}
 
 include ../../Makefile.modules

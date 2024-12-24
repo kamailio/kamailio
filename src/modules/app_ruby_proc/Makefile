@@ -35,5 +35,6 @@ else
 	LIBS = -L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lruby -lpthread -ldl
 endif
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules

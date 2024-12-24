@@ -35,5 +35,6 @@ ifneq ($(ICU_BUILDER),)
 	DEFS += $(shell $(ICU_BUILDER) --cflags )
 	LIBS += $(shell $(ICU_BUILDER) --libs)
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules

@@ -24,5 +24,6 @@ else
 	DEFS+=-I$(LOCALBASE)/include
 	LIBS+=-L$(LOCALBASE)/lib -lcurl
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules

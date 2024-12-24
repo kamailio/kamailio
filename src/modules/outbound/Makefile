@@ -43,6 +43,7 @@ else
 endif
 
 LIBS+= $(TLS_EXTRA_LIBS)
+${eval LIBS=$(LIBS)}
 
 # Static linking, if you'd like to use TLS and OUTBOUND at the same time
 #
