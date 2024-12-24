@@ -17,6 +17,6 @@ else
 endif
 
 DEFS+=$(PCREDEFS)
-LIBS+=$(PCRELIBS)
+${eval LIBS+=$(PCRELIBS)}
 
 include ../../Makefile.modules
