@@ -22,6 +22,7 @@ else
 	DEFS+=-I$(LOCALBASE)/include
 	LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib -ljansson
 endif
+${eval LIBS=$(LIBS)}
 
 SERLIBPATH=../../lib
 include ../../Makefile.modules
