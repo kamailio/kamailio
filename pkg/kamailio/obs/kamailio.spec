@@ -20,7 +20,7 @@
 %bcond_without nats
 %bcond_without perl
 %bcond_without phonenum
-%bcond_without python2
+%bcond_with python2
 %bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
