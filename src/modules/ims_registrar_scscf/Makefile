@@ -31,5 +31,6 @@ ifneq ($(OS),darwin)
 	LIBS += -lrt
 	LIBS += -lpthread
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules
