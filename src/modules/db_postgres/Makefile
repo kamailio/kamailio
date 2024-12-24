@@ -19,6 +19,7 @@ ifneq ($(LIBPQ_BUILDER),)
 	LIBS += $(shell $(LIBPQ_BUILDER) --libs)
 endif
 endif
+${eval LIBS=$(LIBS)}
 
 ifeq ($(LIBPQ_BUILDER),)
 
