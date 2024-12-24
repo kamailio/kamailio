@@ -24,10 +24,10 @@ PYTHON3CONFIG=${PYTHON3}-config
 endif
 endif
 
-LIBS=${shell \
+${eval LIBS=${shell \
 	tmp_py3_libs=$$(${PYTHON3CONFIG} --ldflags --embed 2>/dev/null) || \
 	tmp_py3_libs=$$(${PYTHON3CONFIG} --ldflags); \
-	echo $$tmp_py3_libs}
+	echo $$tmp_py3_libs}}
 
 ifeq ($(OS), freebsd)
 LIBS+=-pthread
