@@ -30,5 +30,6 @@ endif
 ifneq ($(OS),darwin)
 	LIBS += -lrt
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules
