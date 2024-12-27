@@ -6,9 +6,8 @@ message(STATUS "CMAKE_INSTALL_LIBDIR: ${CMAKE_INSTALL_FULL_LIBDIR}")
 message(STATUS "CMAKE_INSTALL_BINDIR: ${CMAKE_INSTALL_FULL_BINDIR}")
 message(STATUS "CMAKE_INSTALL_SBINDIR: ${CMAKE_INSTALL_FULL_SBINDIR}")
 message(STATUS "CMAKE_INSTALL_SYSCONFDIR: ${CMAKE_INSTALL_FULL_SYSCONFDIR}")
-message(
-  STATUS
-    "CMAKE_INSTALL_LOCALSTATEDIR: ${CMAKE_INSTALL_FULL_LOCALSTATEDIR}/run/${MAIN_NAME}"
+message(STATUS "CMAKE_INSTALL_LOCALSTATEDIR:"
+               "${CMAKE_INSTALL_FULL_LOCALSTATEDIR}/run/${MAIN_NAME}"
 )
 message(STATUS "CMAKE_INSTALL_DATADIR: ${CMAKE_INSTALL_FULL_DATADIR}")
 message(STATUS "CMAKE_INSTALL_DOCDIR: ${CMAKE_INSTALL_FULL_DOCDIR}")
@@ -39,9 +38,8 @@ if(USE_GIT
   )
 
   execute_process(
-    COMMAND
-      bash -c
-      "${GIT_EXECUTABLE} diff-index --name-only HEAD | grep -vE 'Makefile|CMakeLists.txt'"
+    COMMAND bash -c "${GIT_EXECUTABLE} diff-index --name-only HEAD"
+            " | grep -vE 'Makefile|CMakeLists.txt'"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE GIT_DIFF_OUTPUT
   )
@@ -84,8 +82,8 @@ endif()
 # -----------------------
 add_executable(kamailio ${CMAKE_CURRENT_SOURCE_DIR}/main.c)
 add_dependencies(kamailio GenerateParser)
-# Enable ENABLE_EXPORTS property so modules can link from symbols
-# found in kamailio executable.
+# Enable ENABLE_EXPORTS property so modules can link from symbols found in
+# kamailio executable.
 set_target_properties(
   kamailio PROPERTIES ENABLE_EXPORTS TRUE OUTPUT_NAME ${MAIN_NAME}
 )
@@ -109,7 +107,7 @@ target_sources(
 )
 target_include_directories(kamailio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)
 
-# Debuggng the sources of kamailio executable.
+# Debugging the sources of kamailio executable.
 # get_property(
 #   kamailio_SRC_PROPERTY
 #   TARGET kamailio
@@ -119,14 +117,12 @@ target_include_directories(kamailio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)
 
 target_link_libraries(
   kamailio
-  PUBLIC
-    common
-    m
-    Threads::Threads # Pthread library
-    # Use of ${CMAKE_DL_LIBS}
-    # https://stackoverflow.com/questions/73263834/cmake-how-to-set-rpath-in-a-shared-library-with-only-target-link-directories-w
-    ${CMAKE_DL_LIBS} # dl -- dlopen and more
-    resolv # resolv
+  PUBLIC common
+         m
+         Threads::Threads # Pthread library
+         # Use of ${CMAKE_DL_LIBS}
+         ${CMAKE_DL_LIBS} # dl -- dlopen and more
+         resolv # resolv
 )
 
 # Add the MODS_DIR definition required by main.c ---
@@ -156,8 +152,11 @@ install(
 # If(EXISTS ..) require full path
 install(
   CODE "
-    if(EXISTS \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${CFG_NAME}.cfg\")
-        message(STATUS \"${CFG_NAME}.cfg already exists in \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${CFG_NAME}.cfg Installing as ${CFG_NAME}.sample\")
+    set(dir \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\")
+
+    if(EXISTS \"\${dir}/${CFG_NAME}.cfg\")
+        message(STATUS \"${CFG_NAME}.cfg already exists in \"
+        \"\${dir}/${CFG_NAME}.cfg. Installing as ${CFG_NAME}.cfg.sample\")
       file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
         DESTINATION \"${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
         RENAME \"${CFG_NAME}.cfg.sample\"

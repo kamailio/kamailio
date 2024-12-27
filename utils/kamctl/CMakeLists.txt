@@ -44,22 +44,25 @@ install(
 set(KAMCTL_DEPENDENCIES "${KAMCTL_TMP_DIR}/kamctl")
 
 # Install kamctl.base and the rest
-foreach(FILE ${KAMCTL_BASE_FILES})
+foreach(file ${KAMCTL_BASE_FILES})
   # Append to the depependencies list for the target kamctl
-  list(APPEND KAMCTL_DEPENDENCIES "${KAMCTL_TMP_DIR}/${FILE}")
+  list(APPEND KAMCTL_DEPENDENCIES "${KAMCTL_TMP_DIR}/${file}")
   add_custom_command(
-    OUTPUT "${KAMCTL_TMP_DIR}/${FILE}"
+    OUTPUT "${KAMCTL_TMP_DIR}/${file}"
     COMMAND sed -e "s#/usr/local/sbin#${BIN_DIR}#g" <
-            ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} > ${KAMCTL_TMP_DIR}/${FILE}
-    COMMENT "Processed ${FILE} with sed")
+            ${CMAKE_CURRENT_SOURCE_DIR}/${file} > ${KAMCTL_TMP_DIR}/${file}
+    COMMENT "Processed ${file} with sed")
   install(
-    PROGRAMS ${KAMCTL_TMP_DIR}/${FILE}
+    PROGRAMS ${KAMCTL_TMP_DIR}/${file}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl
     COMPONENT kamailio-utils-bin)
 endforeach()
 
 # Kamctl target to depend on all kamctl files
-add_custom_target(kamctl ALL DEPENDS ${KAMCTL_DEPENDENCIES})
+add_custom_target(
+  kamctl ALL
+  DEPENDS ${KAMCTL_DEPENDENCIES}
+  COMMENT "Build kamctl and its dependencies")
 
 # Setup and install kamdbctl stuff
 set(KAMDB_BASE_FILES
@@ -88,31 +91,37 @@ install(
 
 set(KAMDB_DEPENDENCIES "${KAMCTL_TMP_DIR}/kamdbctl")
 
-foreach(FILE ${KAMDB_BASE_FILES})
-  list(APPEND KAMDB_DEPENDENCIES "${KAMCTL_TMP_DIR}/${FILE}")
+foreach(file ${KAMDB_BASE_FILES})
+  list(APPEND KAMDB_DEPENDENCIES "${KAMCTL_TMP_DIR}/${file}")
   # Install db setup base script
   add_custom_command(
-    OUTPUT "${KAMCTL_TMP_DIR}/${FILE}"
+    OUTPUT "${KAMCTL_TMP_DIR}/${file}"
     COMMAND
       sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e
       "s#/usr/local/etc/kamailio#${CFG_DIR}#g" -e
       "s#/usr/local/share/kamailio#${SHARE_DIR}#g" <
-      ${CMAKE_CURRENT_SOURCE_DIR}/${FILE} > ${KAMCTL_TMP_DIR}/${FILE}
-    COMMENT "Processed ${FILE}")
+      ${CMAKE_CURRENT_SOURCE_DIR}/${file} > ${KAMCTL_TMP_DIR}/${file}
+    COMMENT "Processed ${file}")
   install(
-    PROGRAMS ${KAMCTL_TMP_DIR}/${FILE}
+    PROGRAMS ${KAMCTL_TMP_DIR}/${file}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl
     COMPONENT kamailio-utils-bin)
 endforeach()
 
-add_custom_target(kamdbctl ALL DEPENDS ${KAMDB_DEPENDENCIES})
+add_custom_target(
+  kamdbctl ALL
+  DEPENDS ${KAMDB_DEPENDENCIES}
+  COMMENT "Build kamdbctl and its dependencies")
 
 # Install the configuration file (kamctlrc) using a CODE block to check
 # existence at install time instead of configure time
 install(
   CODE "
-    if(EXISTS \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/kamctlrc\")
-        message(STATUS \"kamctlrc already exists in \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/kamctlrc. Installing as kamctlrc.sample\")
+    set(dir \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\")
+
+    if(EXISTS \"\${dir}/kamctlrc\")
+        message(STATUS \"kamctlrc already exists in\${dir}/kamctlrc.
+          Installing as kamctlrc.sample\")
         file(INSTALL \"${CMAKE_CURRENT_SOURCE_DIR}/kamctlrc\"
           DESTINATION \"${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
           RENAME \"kamctlrc.sample\"
@@ -183,8 +192,8 @@ else()
   file(GLOB TABLES "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema/kamailio-*.xml")
   # message(WARNING "TABLES : ${TABLES}")
   set(EXTRACTED_TABLES "")
-  foreach(TABLE ${TABLES})
-    get_filename_component(TABLE_NAME "${TABLE}" NAME)
+  foreach(table ${TABLES})
+    get_filename_component(TABLE_NAME "${table}" NAME)
     string(REPLACE "kamailio-" "" TABLE_NAME "${TABLE_NAME}")
     string(REPLACE ".xml" "" TABLE_NAME "${TABLE_NAME}")
     list(APPEND EXTRACTED_TABLES "${TABLE_NAME}")
@@ -209,18 +218,19 @@ else()
     add_custom_target(
       dbschema_${db_name}
       COMMAND ${CMAKE_COMMAND} -E make_directory "${db_name_folder}"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMENT "Creating scehmas for ${db_name}")
 
     # Loop through each table and add a command for xsltproc
-    foreach(TABLE ${EXTRACTED_TABLES})
+    foreach(table ${EXTRACTED_TABLES})
       # Determine the prefix based on db_name
       if(db_name STREQUAL "db_berkeley"
          OR db_name STREQUAL "db_redis"
          OR db_name STREQUAL "dbtext"
          OR db_name STREQUAL "mongodb")
-        set(PREFIX '')
+        set(prefix '')
       else()
-        set(PREFIX "${TABLE}-")
+        set(prefix "${table}-")
       endif()
 
       add_custom_command(
@@ -229,16 +239,17 @@ else()
         COMMAND
           XML_CATALOG_FILES=${CATALOG} ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS}
           --stringparam dir ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}
-          --stringparam prefix ${PREFIX} --stringparam db ${db_name} ${xsl_file}
-          "kamailio-${TABLE}.xml"
+          --stringparam prefix ${prefix} --stringparam db ${db_name} ${xsl_file}
+          "kamailio-${table}.xml"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema"
-        COMMENT "Processing ${TABLE} for ${db_name}")
+        COMMENT "Processing ${table} for ${db_name}")
     endforeach()
 
     add_custom_target(
       dbschema_${db_name}_clean
       COMMAND ${CMAKE_COMMAND} -E remove_directory
-              "${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}")
+              "${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}"
+      COMMENT "Cleaning ${db_name} schema files")
   endfunction()
 
   # Add targets for each database type Pi framework targets should combined into
@@ -265,7 +276,8 @@ else()
             dbschema_mongodb
             dbschema_db_redis
             dbschema_pi_framework_mod
-            dbschema_pi_framework_table)
+            dbschema_pi_framework_table
+    COMMENT "Generating schemas for all dbs...")
 
   add_custom_target(
     dbschema_clean
@@ -278,5 +290,6 @@ else()
             dbschema_mongodb_clean
             dbschema_db_redis_clean
             dbschema_pi_framework_mod_clean
-            dbschema_pi_framework_table_clean)
+            dbschema_pi_framework_table_clean
+    COMMENT "Cleaning schemas for all dbs...")
 endif()
