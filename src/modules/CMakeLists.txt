@@ -141,6 +141,12 @@ foreach(group IN LISTS FULL_MODULE_GROUP_NAMES)
   add_module_group("${MODULES_IN_GROUP}")
 endforeach()
 
+get_property(ADDED_MODULES_LIST GLOBAL PROPERTY ADDED_MODULES_LIST)
+message(STATUS "Modules to be built: ${ADDED_MODULES_LIST}")
+# TODO: Comment is not showing. probably a bug in CMAKE
+add_custom_target(modules COMMENT "Building modules")
+add_dependencies(modules ${ADDED_MODULES_LIST})
+
 # Add a kamailio_docs target that depends on all module documentation targets
 if(BUILD_DOC)
   get_property(ADDED_MODULES_LIST GLOBAL PROPERTY ADDED_MODULES_LIST)
