@@ -12,16 +12,21 @@ set(RELEASE "${PROJECT_VERSION}${EXTRAVERSION}")
 message(STATUS "PROJECT_VERSION: ${PROJECT_VERSION}")
 message(STATUS "RELEASE:  ${RELEASE}")
 
-math(
-  EXPR
-  VERSIONVAL
-  "${PROJECT_VERSION_MAJOR}*1000000 + ${PROJECT_VERSION_MINOR}*1000 + ${PROJECT_VERSION_PATCH}"
+# cmake-format: off
+# Set the version number as a single integer
+math(EXPR VERSIONVAL
+  "${PROJECT_VERSION_MAJOR}*1000000
+    + ${PROJECT_VERSION_MINOR}*1000
+    + ${PROJECT_VERSION_PATCH}"
 )
 message(STATUS "VERSIONVAL: ${VERSIONVAL}")
+# cmake-format: on
 
-# Specify the C standard
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED True)
+# Specify the C standard if non provided by user
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 11)
+  set(CMAKE_C_STANDARD_REQUIRED True)
+endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
@@ -33,6 +38,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/BuildType.cmake)
 set(MAIN_NAME
     "kamailio"
     CACHE STRING "Main binary name")
+
 # use kamailio config
 set(CFG_NAME
     "kamailio"
@@ -61,6 +67,8 @@ if(NOT TARGET uninstall)
     "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake-uninstall.cmake" IMMEDIATE @ONLY)
 
   add_custom_target(
-    uninstall COMMAND ${CMAKE_COMMAND} -P
-                      ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake-uninstall.cmake)
+    uninstall
+    COMMAND ${CMAKE_COMMAND} -P
+            ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake-uninstall.cmake
+    COMMENT "Uninstalling")
 endif()
