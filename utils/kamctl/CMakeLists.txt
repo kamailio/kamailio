@@ -126,24 +126,29 @@ install(
 "
   COMPONENT kamailio-utils-cfg)
 
+# Install targets
+
 # Custom target for installing the kamailio-cfg component
 add_custom_target(
   install-kamailio-utils-cfg
-  COMMAND ${CMAKE_COMMAND} --install . --component kamailio-utils-cfg
+  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
+          kamailio-utils-cfg
   COMMENT "Installing kamailio-utils-cfg component")
 
 # Custom target for installing the kamailio-utils-bin component
 add_custom_target(
   install-kamailio-utils-bin
-  COMMAND ${CMAKE_COMMAND} --install . --component kamailio-utils-bin
+  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
+          kamailio-utils-bin
   COMMENT "Installing kamailio-utils-bin component"
   DEPENDS kamctl kamdbctl)
 
 # Custom target for installing the kamailio-utils component
-add_custom_target(
-  install-kamailio-utils # COMMENT "Installing kamailio-utils-cfg and
-                         # kamailio-utils-bin components"
-  DEPENDS install-kamailio-utils-cfg install-kamailio-utils-bin)
+add_custom_target(install-kamailio-utils COMMENT "Installing utils components")
+add_dependencies(install-kamailio-utils install-kamailio-utils-cfg
+                 install-kamailio-utils-bin)
+
+# ----------
 
 # ----------
 # dbschema target: Old Makefiles: make dbschema declared in src/ Makefile This
