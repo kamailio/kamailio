@@ -98,14 +98,14 @@ static cmd_export_t cmds[] = {
 
 /* Exported module parameters */
 static param_export_t params[] = {
-	{"db_url", PARAM_STRING, &secf_db_url},
-	{"table_name", PARAM_STR, &secf_table_name},
-	{"action_col", PARAM_STR, &secf_action_col},
-	{"type_col", PARAM_STR, &secf_type_col},
-	{"data_col", PARAM_STR, &secf_data_col},
-	{"dst_exact_match", PARAM_INT, &secf_dst_exact_match},
-	{"reload_delta", PARAM_INT, &secf_reload_delta},
-	{"cleanup_interval", PARAM_INT, &secf_reload_interval},
+		{"db_url", PARAM_STRING, &secf_db_url},
+		{"table_name", PARAM_STR, &secf_table_name},
+		{"action_col", PARAM_STR, &secf_action_col},
+		{"type_col", PARAM_STR, &secf_type_col},
+		{"data_col", PARAM_STR, &secf_data_col},
+		{"dst_exact_match", PARAM_INT, &secf_dst_exact_match},
+		{"reload_delta", PARAM_INT, &secf_reload_delta},
+		{"cleanup_interval", PARAM_INT, &secf_reload_interval},
 	{0, 0, 0}
 };
 
@@ -128,20 +128,24 @@ static const char *rpc_reload_doc[2] = {"Reload values from database", NULL};
 static const char *rpc_print_doc[2] = {"Print values from database", NULL};
 static const char *rpc_stats_doc[2] = {"Print statistics of blocked and allowed messages", NULL};
 static const char *rpc_stats_reset_doc[2] = {"Reset statistics", NULL};
-static const char *rpc_add_dst_doc[2] = {
-		"Add new values to destination blacklist", NULL};
+static const char *rpc_add_dst_doc[2] = {"Add new values to destination blacklist", NULL};
+static const char *rpc_del_dst_doc[2] = {"Delete a value from destination blacklist", NULL};
 static const char *rpc_add_bl_doc[2] = {"Add new values to blacklist", NULL};
+static const char *rpc_del_bl_doc[2] = {"Delete a value from blacklist", NULL};
 static const char *rpc_add_wl_doc[2] = {"Add new values to whitelist", NULL};
+static const char *rpc_del_wl_doc[2] = {"Delete a value from whitelist", NULL};
 
 rpc_export_t secfilter_rpc[] = {
-	{"secfilter.reload", secf_rpc_reload, rpc_reload_doc, 0},
-	{"secfilter.print", secf_rpc_print, rpc_print_doc, 0},
-	{"secfilter.stats", secf_rpc_stats, rpc_stats_doc, 0},
-	{"secfilter.stats_reset", secf_rpc_stats_reset, rpc_stats_reset_doc, 0},
-	{"secfilter.add_dst", secf_rpc_add_dst, rpc_add_dst_doc, 0},
-	{"secfilter.add_bl", secf_rpc_add_bl, rpc_add_bl_doc, 0},
-	{"secfilter.add_wl", secf_rpc_add_wl, rpc_add_wl_doc, 0},
-	{0, 0, 0, 0}
+		{"secfilter.reload", secf_rpc_reload, rpc_reload_doc, 0},
+		{"secfilter.print", secf_rpc_print, rpc_print_doc, 0},
+		{"secfilter.stats", secf_rpc_stats, rpc_stats_doc, 0},
+		{"secfilter.stats_reset", secf_rpc_stats_reset, rpc_stats_reset_doc, 0},
+		{"secfilter.add_dst", secf_rpc_add_dst, rpc_add_dst_doc, 0},
+		{"secfilter.del_dst", secf_rpc_del_dst, rpc_del_dst_doc, 0},
+		{"secfilter.add_bl", secf_rpc_add_bl, rpc_add_bl_doc, 0},
+		{"secfilter.del_bl", secf_rpc_del_bl, rpc_del_bl_doc, 0},
+		{"secfilter.add_wl", secf_rpc_add_wl, rpc_add_wl_doc, 0},
+		{0, 0, 0, 0}
 };
 /* clang-format on */
 
