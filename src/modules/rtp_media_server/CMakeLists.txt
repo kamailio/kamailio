@@ -1,3 +1,7 @@
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
+
 find_package(ortp QUIET)
 if(NOT ortp_FOUND)
   find_package(PkgConfig REQUIRED)
@@ -12,9 +16,4 @@ if(NOT mediastreamer2_FOUND)
   add_library(mediastreamer2 ALIAS PkgConfig::mediastreamer2)
 endif()
 
-file(GLOB SRC_FILES "*.c")
-
-add_library(rtp_media_server SHARED ${SRC_FILES})
-
-target_link_libraries(rtp_media_server PRIVATE ortp mediastreamer2)
-# target_link_libraries(.*PRIVATE)
+target_link_libraries(${module_name} PRIVATE ortp mediastreamer2)

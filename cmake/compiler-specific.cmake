@@ -14,11 +14,6 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
     target_compile_definitions(common INTERFACE CC_GCC_LIKE_ASM)
 
     target_compile_options(
-      common INTERFACE -O0
-                       # <$<$<BOOL:${PROFILE}>:-pg>
-    )
-
-    target_compile_options(
       common
       INTERFACE -Wall -funroll-loops -Wcast-align
                 -Werror=implicit-function-declaration -Werror=implicit-int
@@ -41,11 +36,6 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i486|i586|i686")
 
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_definitions(common INTERFACE CC_GCC_LIKE_ASM)
-
-    target_compile_options(
-      common INTERFACE -O0
-                       # <$<$<BOOL:${PROFILE}>:-pg>
-    )
 
     target_compile_options(
       common

@@ -1,8 +1,9 @@
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
+
 find_package(PerlLibs REQUIRED)
 
-file(GLOB SRC_FILES "*.c")
-
-add_library(db_perlvdb SHARED ${SRC_FILES})
-target_include_directories(db_perlvdb PRIVATE ${PERL_INCLUDE_PATH})
-target_compile_definitions(db_perlvdb PRIVATE ${PERL_EXTRA_C_FLAGS})
-target_link_libraries(db_perlvdb PRIVATE ${PERL_LIBRARY})
+target_include_directories(${module_name} PRIVATE ${PERL_INCLUDE_PATH})
+target_compile_definitions(${module_name} PRIVATE ${PERL_EXTRA_C_FLAGS})
+target_link_libraries(${module_name} PRIVATE ${PERL_LIBRARY})

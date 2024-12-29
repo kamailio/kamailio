@@ -1,7 +1,7 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
 
-add_library(sctp SHARED ${SRC_FILES})
+add_library(${module_name} SHARED ${MODULE_SOURCES})
+
 if(UNIX)
-  target_link_libraries(sctp PRIVATE -lsctp)
+  target_link_libraries(${module_name} PRIVATE -lsctp)
 endif()
-# target_link_libraries(.*PRIVATE)

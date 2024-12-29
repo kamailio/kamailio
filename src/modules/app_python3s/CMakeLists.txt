@@ -1,6 +1,7 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 find_package(Python3 REQUIRED COMPONENTS Development)
 
-add_library(app_python3s STATIC ${SRC_FILES})
-target_link_libraries(app_python3s PRIVATE Python3::Module)
+target_link_libraries(${module_name} PRIVATE Python3::Module)

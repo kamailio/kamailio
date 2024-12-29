@@ -1225,7 +1225,7 @@ static int w_dlg_set_state(sip_msg_t *msg, char *pstate, char *p2)
 /**
  *
  */
-static int ki_dlg_update_state(sip_msg_t *msg, str *state)
+static int ki_dlg_update_state(sip_msg_t *msg)
 {
 	return dlg_update_state(msg);
 }

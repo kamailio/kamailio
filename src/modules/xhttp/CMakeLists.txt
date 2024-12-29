@@ -1,5 +1,3 @@
-# Set the source files
-file(GLOB xhttp_SRC *.c)
+file(GLOB MODULE_SOURCES "*.c")
 
-add_library(xhttp SHARED ${xhttp_SRC})
-# target_link_libraries(.*PRIVATE)
+add_library(${module_name} SHARED ${MODULE_SOURCES})

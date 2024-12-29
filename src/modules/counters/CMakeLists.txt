@@ -1,6 +1,3 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
 
-add_library(counters SHARED ${SRC_FILES})
-# target_link_libraries(.*PRIVATE)
-
-# TODO: Also install kamcmd binary
+add_library(${module_name} SHARED ${MODULE_SOURCES})

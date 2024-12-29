@@ -1,3 +1,7 @@
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
+
 find_package(pcre2 QUIET)
 if(NOT pcre2_FOUND)
   message(STATUS "PCRE2 library not found... looking with pkg-config")
@@ -7,8 +11,4 @@ if(NOT pcre2_FOUND)
   add_library(PCRE2::8BIT ALIAS PkgConfig::pcre2)
 endif()
 
-file(GLOB SRC_FILES "*.c")
-
-add_library(lcr SHARED ${SRC_FILES})
-
-target_link_libraries(lcr PRIVATE PCRE2::8BIT)
+target_link_libraries(${module_name} PRIVATE PCRE2::8BIT)

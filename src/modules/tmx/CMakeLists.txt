@@ -1,5 +1,3 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
 
-add_library(tmx SHARED ${SRC_FILES})
-# target_link_libraries(.*PRIVATE) target_compile_definitions(tmx PRIVATE
-# STATISTICS)
+add_library(${module_name} SHARED ${MODULE_SOURCES})

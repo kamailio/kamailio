@@ -85,28 +85,27 @@ else()
     add_custom_target(
       ${MODULE_NAME}_doc_text
       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
-      COMMENT "Processing target ${MODULE_NAME}_doc_text"
-    )
+      COMMENT "Processing target ${MODULE_NAME}_doc_text")
 
+    # This is essentialy an alias of doc_text target but with extra copy
+    # command to copy the text file to the source tree directory.
     add_custom_target(
       ${MODULE_NAME}_readme
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
-      COMMENT "Processing target ${MODULE_NAME}_readme"
-    )
+      DEPENDS ${MODULE_NAME}_doc_text
+      COMMENT "Processing target ${MODULE_NAME}_readme")
 
     add_custom_target(
       ${MODULE_NAME}_doc_html
       DEPENDS ${DOCS_OUTPUT_DIR}/${MODULE_NAME}.html
-      COMMENT "Processing target ${MODULE_NAME}_doc_html"
-    )
+      COMMENT "Processing target ${MODULE_NAME}_doc_html")
 
     add_custom_target(
       ${MODULE_NAME}_doc
       DEPENDS ${MODULE_NAME}_doc_text ${MODULE_NAME}_doc_html
-      COMMENT "Processing target ${MODULE_NAME}_doc"
-    )
+              ${MODULE_NAME}_readme
+      COMMENT "Processing target ${MODULE_NAME}_doc")
 
-    # Each version has seperate custon coommands for not recompiling all if 1
+    # Each version has seperate custon commands for not recompiling all if 1
     # gets changed.
     if(XSLTPROC_EXECUTABLE)
       if(LYNX_EXECUTABLE)
@@ -127,15 +126,16 @@ else()
             "Generating text documentation with xsltproc and lynx for ${MODULE_NAME}"
         )
 
+        # Add custom command to copy the README file after the readme target is built.
+        # The readme target depends on doc_text so it will regenerate if it's input changed.
         add_custom_command(
-          OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
+          TARGET ${MODULE_NAME}_readme
+          POST_BUILD
           COMMAND
             ${CMAKE_COMMAND} -E copy
             ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
             ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/README
-          DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}/${MODULE_NAME}.txt
-          COMMENT "Generating README file for module ${MODULE_NAME}"
-        )
+          COMMENT "Copying README file to source tree for ${MODULE_NAME}")
 
         add_custom_command(
           OUTPUT ${DOCS_OUTPUT_DIR}/${MODULE_NAME}.html

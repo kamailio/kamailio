@@ -1,3 +1,7 @@
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
+
 # TODO: Create its own FindJsonC.cmake module since it;s used by multiple
 # modules throughout the project
 find_package(json-c QUIET)
@@ -20,9 +24,5 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(UUID REQUIRED IMPORTED_TARGET uuid)
 add_library(uuid::uuid ALIAS PkgConfig::UUID)
 
-file(GLOB SRC_FILES "*.c")
-
-add_library(kazoo SHARED ${SRC_FILES})
-
-target_link_libraries(kazoo PRIVATE json-c::json-c rabbitmq::rabbitmq
-                                    uuid::uuid)
+target_link_libraries(${module_name} PRIVATE json-c::json-c rabbitmq::rabbitmq
+                                             uuid::uuid)

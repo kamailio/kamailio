@@ -1,8 +1,6 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
 
-add_library(ctl SHARED ${SRC_FILES})
+add_library(${module_name} SHARED ${MODULE_SOURCES})
+
 # TODO: Should this be picked by user defined or hardcoded?
-target_compile_definitions(ctl PRIVATE USE_FIFO CTL_SYSTEM_MALLOC)
-# target_link_libraries(.*PRIVATE)
-
-# TODO: Also install kamcmd binary
+target_compile_definitions(${module_name} PRIVATE USE_FIFO CTL_SYSTEM_MALLOC)

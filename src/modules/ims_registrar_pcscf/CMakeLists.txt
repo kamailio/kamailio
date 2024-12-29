@@ -1,6 +1,7 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 find_package(LibXml2 REQUIRED)
 
-add_library(ims_registrar_pcscf SHARED ${SRC_FILES})
-target_link_libraries(ims_registrar_pcscf PRIVATE LibXml2::LibXml2)
+target_link_libraries(${module_name} PRIVATE LibXml2::LibXml2)

@@ -1,4 +1,6 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 find_package(RdKafka QUIET)
 if(NOT RdKafka_FOUND)
@@ -8,5 +10,4 @@ if(NOT RdKafka_FOUND)
   add_library(rdkafka++ ALIAS PkgConfig::RDKAFKA)
 endif()
 
-add_library(kafka SHARED ${SRC_FILES})
-target_link_libraries(kafka PRIVATE rdkafka++)
+target_link_libraries(${module_name} PRIVATE rdkafka++)

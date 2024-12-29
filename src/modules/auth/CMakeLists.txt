@@ -1,5 +1,5 @@
-file(GLOB auth_SRC "*.c")
+file(GLOB MODULE_SOURCES "*.c")
 
-add_library(auth SHARED ${auth_SRC})
-# target_link_libraries(.*PRIVATE)
-target_compile_definitions(auth PRIVATE USE_NC USE_OT_NONCE)
+add_library(${module_name} SHARED ${MODULE_SOURCES})
+
+target_compile_definitions(${module_name} PRIVATE USE_NC USE_OT_NONCE)

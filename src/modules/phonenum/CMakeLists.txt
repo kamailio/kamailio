@@ -1,3 +1,7 @@
+file(GLOB MODULE_SOURCES "*.c")
+
+add_library(${module_name} SHARED ${MODULE_SOURCES})
+
 # TODO: Support for find_package added after version 8.13.4
 find_package(libphonenumber CONFIG QUIET)
 if(libphonenumber_FOUND)
@@ -7,8 +11,8 @@ else()
     STATUS
       "libphonenumber not found with find_package()... looking with other methods"
   )
-  # add additional logic here to handle the missing dependency
-  # TODO: Fix lint issue
+  # add additional logic here to handle the missing dependency TODO: Fix lint
+  # issue
   find_library(libphonenumber_LIBRARY NAMES phonenumber)
   find_library(libgeocoding_LIBRARY NAMES geocoding)
 
@@ -16,12 +20,10 @@ else()
     set(libphonenum_LIBRARY ${libphonenumber_LIBRARY} ${libgeocoding_LIBRARY})
     find_path(libphonenumber_INCLUDE_DIR
               phonenumbers/geocoding/phonenumber_offline_geocoder.h
-              phonenumbers/phonenumberutil.h
-    )
+              phonenumbers/phonenumberutil.h)
     message(
       STATUS
-        "Found libphonenumber include directory: ${libphonenumber_INCLUDE_DIR}"
-    )
+        "Found libphonenumber include directory: ${libphonenumber_INCLUDE_DIR}")
     message(STATUS "Found libphonenumber library: ${libphonenum_LIBRARY}")
   else()
     message(FATAL_ERROR "libphonenumber library not found")
@@ -29,22 +31,18 @@ else()
 
 endif()
 
-file(GLOB SRC_FILES "*.c")
-
-add_library(phonenum SHARED ${SRC_FILES})
-
-target_compile_features(phonenum PRIVATE cxx_std_17)
+target_compile_features(${module_name} PRIVATE cxx_std_17)
 
 # Apply compiler flags  only when the build configuration is not DEBUG (Release
 # or RelWithDebInfo ...)
 target_compile_options(
-  phonenum
+  ${module_name}
   PRIVATE $<$<NOT:$<CONFIG:DEBUG>>:-Wno-write-strings>
           $<$<NOT:$<CONFIG:DEBUG>>:-Wno-deprecated>
           $<$<NOT:$<CONFIG:DEBUG>>:-Wno-unused-function>
           $<$<NOT:$<CONFIG:DEBUG>>:-Wno-sign-compare>
-          $<$<NOT:$<CONFIG:DEBUG>>:-Wno-strict-aliasing>
-)
+          $<$<NOT:$<CONFIG:DEBUG>>:-Wno-strict-aliasing>)
 
-target_include_directories(phonenum PRIVATE ${libphonenumber_INCLUDE_DIRS})
-target_link_libraries(phonenum PRIVATE ${libphonenum_LIBRARY})
+target_include_directories(${module_name}
+                           PRIVATE ${libphonenumber_INCLUDE_DIRS})
+target_link_libraries(${module_name} PRIVATE ${libphonenum_LIBRARY})

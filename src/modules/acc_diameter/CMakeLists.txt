@@ -1,3 +1,3 @@
-file(GLOB SRC_FILES "*.c")
+file(GLOB MODULE_SOURCES "*.c")
 
-add_library(acc_diameter SHARED ${SRC_FILES})
+add_library(${module_name} SHARED ${MODULE_SOURCES})
