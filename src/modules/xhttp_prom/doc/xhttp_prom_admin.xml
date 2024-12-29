@@ -255,6 +255,31 @@ modparam("xhttp_prom", "xhttp_prom_beginning", "");
 		</programlisting>
 	  </example>
 	</section>
+	<section id="xhttp_prom.p.xhttp_prom_tags">
+	  <title><varname>xhttp_prom_tags</varname> (str)</title>
+	  <para>
+		Specifies additional tags for the metrics. These can be useful for evaluating
+		  the metrics afterwards.
+	  </para>
+	  <para>
+		It defaults to an empty string which means that no metric tags will be added.
+	  </para>
+	  <para>
+		A comma separated list of key-value pairs connected by equal signs.
+	  </para>
+	  <example>
+		<title>Set <varname>xhttp_prom_tags</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# Add one tag to every metric
+modparam("xhttp_prom", "xhttp_prom_tags", "host_job=foo")
+
+# Add multiple tags to every metric
+modparam("xhttp_prom", "xhttp_prom_tags", "tag_bar=foo,host_job=wurst");
+...
+		</programlisting>
+	  </example>
+	</section>
 	<section id="xhttp_prom.p.prom_counter">
 	  <title><varname>prom_counter</varname> (str)</title>
 	  <para>

@@ -82,6 +82,21 @@ typedef struct prom_ctx
 extern str xhttp_prom_beginning;
 
 /**
+ * @brief string for metrics tags.
+ */
+extern str xhttp_prom_tags;
+
+/**
+ * @brief helper string for metrics tags. Used for appending tag lists
+ */
+extern char *xhttp_prom_tags_comma;
+
+/**
+ * @brief helper string for metrics tags. Used for appending to metric
+ */
+extern char *xhttp_prom_tags_braces;
+
+/**
  * @brief timeout in minutes to delete old metrics.
  */
 extern int timeout_minutes;
