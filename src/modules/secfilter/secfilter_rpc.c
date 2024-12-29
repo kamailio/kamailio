@@ -143,7 +143,7 @@ void secf_rpc_add_bl(rpc_t *rpc, void *ctx)
 	data.len = strlen(data.s);
 	ctype.len = strlen(ctype.s);
 	type = get_type(ctype);
-	
+
 	lock_get(&(*secf_data)->lock);
 	if(secf_append_rule(0, type, &data) == 0) {
 		rpc->rpl_printf(ctx, "Values (%.*s, %.*s) inserted into blacklist",
