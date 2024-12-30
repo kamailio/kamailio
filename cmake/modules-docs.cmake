@@ -95,7 +95,6 @@ function(docs_add_module module_name)
   add_custom_target(
     ${module_name}_doc
     DEPENDS ${module_name}_doc_text ${module_name}_doc_html
-            ${module_name}_readme
     COMMENT "Processing target ${module_name}_doc")
 
   # Each version has seperate custon commands for not recompiling all if 1 gets
@@ -146,13 +145,9 @@ function(docs_add_module module_name)
     endif()
 
     install(
-      FILES ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.txt
+      FILES ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/README
       RENAME README.${module_name}
       DESTINATION ${CMAKE_INSTALL_DOCDIR}/modules
-      COMPONENT kamailio_docs
-      # Since the depepndencies might not have been build as they are not in the
-      # default target and required to build explicitly using `make
-      # kamailio_docs`, allow them to be optional.
-      OPTIONAL)
+      COMPONENT kamailio_docs)
   endif()
 endfunction()
