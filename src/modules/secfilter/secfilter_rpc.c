@@ -114,14 +114,15 @@ void secf_rpc_del_dst(rpc_t *rpc, void *ctx)
 		return;
 	}
 	memcpy(data.s, text, data.len);
-    lock_get(&(*secf_data)->lock);
-    if(secf_remove_rule(2, 0, &data) == 0) {
-        rpc->rpl_printf(
+	lock_get(&(*secf_data)->lock);
+	if(secf_remove_rule(2, 0, &data) == 0) {
+		rpc->rpl_printf(
 				ctx, "Values (%s) removed into blacklist destinations", data);
-    } else {
-        rpc->fault(ctx, 500, "Error removing value from blacklist destinations");
-    }
-    lock_release(&(*secf_data)->lock);
+	} else {
+		rpc->fault(
+				ctx, 500, "Error removing value from blacklist destinations");
+	}
+	lock_release(&(*secf_data)->lock);
 	if(data.s)
 		pkg_free(data.s);
 }
@@ -157,32 +158,32 @@ void secf_rpc_add_bl(rpc_t *rpc, void *ctx)
 /* Delete blacklist value */
 void secf_rpc_del_bl(rpc_t *rpc, void *ctx)
 {
-    str ctype = STR_NULL;
-    str data = STR_NULL;
-    int type;
+	str ctype = STR_NULL;
+	str data = STR_NULL;
+	int type;
 
-    if(rpc->scan(ctx, "ss", &ctype, &data) < 2) {
-        rpc->fault(ctx, 0,
-            "Invalid Parameters. Usage: secfilter.del_bl type value\n"
-            "Example: secfilter.del_bl user sipvicious");
-        return;
-    }
-    ctype.len = strlen(ctype.s);
-    data.len = strlen(data.s);
-    type = get_type(ctype);
-    if(type == -1) {
-        rpc->fault(ctx, 500, "Invalid type");
-        return;
-    }
+	if(rpc->scan(ctx, "ss", &ctype, &data) < 2) {
+		rpc->fault(ctx, 0,
+				"Invalid Parameters. Usage: secfilter.del_bl type value\n"
+				"Example: secfilter.del_bl user sipvicious");
+		return;
+	}
+	ctype.len = strlen(ctype.s);
+	data.len = strlen(data.s);
+	type = get_type(ctype);
+	if(type == -1) {
+		rpc->fault(ctx, 500, "Invalid type");
+		return;
+	}
 
-    lock_get(&(*secf_data)->lock);
-    if(secf_remove_rule(0, type, &data) == 0) {
-        rpc->rpl_printf(ctx, "Value (%.*s, %.*s) removed from blacklist",
-                ctype.len, ctype.s, data.len, data.s);
-    } else {
-        rpc->fault(ctx, 500, "Error removing value from blacklist");
-    }
-    lock_release(&(*secf_data)->lock);
+	lock_get(&(*secf_data)->lock);
+	if(secf_remove_rule(0, type, &data) == 0) {
+		rpc->rpl_printf(ctx, "Value (%.*s, %.*s) removed from blacklist",
+				ctype.len, ctype.s, data.len, data.s);
+	} else {
+		rpc->fault(ctx, 500, "Error removing value from blacklist");
+	}
+	lock_release(&(*secf_data)->lock);
 }
 
 /* Add whitelist value */
@@ -216,32 +217,32 @@ void secf_rpc_add_wl(rpc_t *rpc, void *ctx)
 /* Delete whitelist value */
 void secf_rpc_del_wl(rpc_t *rpc, void *ctx)
 {
-    str ctype = STR_NULL;
-    str data = STR_NULL;
-    int type;
+	str ctype = STR_NULL;
+	str data = STR_NULL;
+	int type;
 
-    if(rpc->scan(ctx, "ss", &ctype, &data) < 2) {
-        rpc->fault(ctx, 0,
-            "Invalid Parameters. Usage: secfilter.del_wl type value\n"
-            "Example: secfilter.del_wl user sipvicious");
-        return;
-    }
-    ctype.len = strlen(ctype.s);
-    data.len = strlen(data.s);
-    type = get_type(ctype);
-    if(type == -1) {
-        rpc->fault(ctx, 500, "Invalid type");
-        return;
-    }
+	if(rpc->scan(ctx, "ss", &ctype, &data) < 2) {
+		rpc->fault(ctx, 0,
+				"Invalid Parameters. Usage: secfilter.del_wl type value\n"
+				"Example: secfilter.del_wl user sipvicious");
+		return;
+	}
+	ctype.len = strlen(ctype.s);
+	data.len = strlen(data.s);
+	type = get_type(ctype);
+	if(type == -1) {
+		rpc->fault(ctx, 500, "Invalid type");
+		return;
+	}
 
-    lock_get(&(*secf_data)->lock);
-    if(secf_remove_rule(1, type, &data) == 0) {
-        rpc->rpl_printf(ctx, "Value (%.*s, %.*s) removed from whitelist",
-                ctype.len, ctype.s, data.len, data.s);
-    } else {
-        rpc->fault(ctx, 500, "Error removing value from whitelist");
-    }
-    lock_release(&(*secf_data)->lock);
+	lock_get(&(*secf_data)->lock);
+	if(secf_remove_rule(1, type, &data) == 0) {
+		rpc->rpl_printf(ctx, "Value (%.*s, %.*s) removed from whitelist",
+				ctype.len, ctype.s, data.len, data.s);
+	} else {
+		rpc->fault(ctx, 500, "Error removing value from whitelist");
+	}
+	lock_release(&(*secf_data)->lock);
 }
 
 /* Reload arrays */
