@@ -85,6 +85,7 @@ function(add_module_group group_modules)
             "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/${module_name}/="
         )
 
+        # Set the RPATH of the module to include the installation directory of
         set_target_properties(
           ${module_name} PROPERTIES INSTALL_RPATH
                                     "${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}")
@@ -97,11 +98,9 @@ function(add_module_group group_modules)
           COMPONENT kamailio_modules)
         # Add the module to the list of added modules
         set_property(GLOBAL APPEND PROPERTY ADDED_MODULES_LIST ${module_name})
-        if(BUILD_DOC)
-          docs_add_module(${module_name})
-          set_property(GLOBAL APPEND PROPERTY ALL_MODULE_DOC_TARGETS
-                                              ${module_name}_doc)
-        endif()
+        docs_add_module(${module_name})
+        set_property(GLOBAL APPEND PROPERTY ALL_MODULE_DOC_TARGETS
+                                            ${module_name}_doc)
       else()
         message(FATAL_ERROR "Module directory ${module_path} does not exist.")
       endif()
@@ -147,26 +146,18 @@ message(STATUS "Modules to be built: ${ADDED_MODULES_LIST}")
 add_custom_target(modules COMMENT "Building modules")
 add_dependencies(modules ${ADDED_MODULES_LIST})
 
+get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
+# message(STATUS "ALL_MODULE_DOC_TARGETS: ${ALL_MODULE_DOC_TARGETS}")
+
 # Add a kamailio_docs target that depends on all module documentation targets
-if(BUILD_DOC)
-  get_property(ADDED_MODULES_LIST GLOBAL PROPERTY ADDED_MODULES_LIST)
-  if(VERBOSE)
-    message(STATUS "Enabled documentation generation for: ${ADDED_MODULES_LIST}.
-        To override, use '-DBUILD_DOC=OFF'")
-  endif()
+add_custom_target(
+  kamailio_docs
+  DEPENDS ${ALL_MODULE_DOC_TARGETS}
+  COMMENT "Generating Kamailio documentation")
 
-  get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
-  # message(STATUS "ALL_MODULE_DOC_TARGETS: ${ALL_MODULE_DOC_TARGETS}")
-
-  add_custom_target(
-    kamailio_docs
-    DEPENDS ${ALL_MODULE_DOC_TARGETS}
-    COMMENT "Generating Kamailio documentation")
-
-  add_custom_target(
-    install_kamailio_docs
-    COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
-            kamailio_docs
-    DEPENDS kamailio_docs
-    COMMENT "Installing Kamailio documentation")
-endif()
+add_custom_target(
+  install_kamailio_docs
+  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
+          kamailio_docs
+  DEPENDS kamailio_docs
+  COMMENT "Installing Kamailio documentation")
