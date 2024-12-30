@@ -88,7 +88,10 @@ void secf_rpc_print(rpc_t *rpc, void *ctx);
 void secf_rpc_stats(rpc_t *rpc, void *ctx);
 void secf_rpc_stats_reset(rpc_t *rpc, void *ctx);
 void secf_rpc_add_dst(rpc_t *rpc, void *ctx);
+void secf_rpc_del_dst(rpc_t *rpc, void *ctx);
 void secf_rpc_add_bl(rpc_t *rpc, void *ctx);
+void secf_rpc_del_bl(rpc_t *rpc, void *ctx);
 void secf_rpc_add_wl(rpc_t *rpc, void *ctx);
+void secf_rpc_del_wl(rpc_t *rpc, void *ctx);
 
 #endif
