@@ -58,6 +58,7 @@ extern int *secf_stats;
 void secf_reset_stats(void);
 
 int secf_append_rule(int action, int type, str *value);
+int secf_remove_rule(int action, int type, str *value);
 
 /* Get header values from message */
 int secf_get_ua(struct sip_msg *msg, str *ua);
