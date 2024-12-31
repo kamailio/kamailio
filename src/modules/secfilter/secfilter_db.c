@@ -284,7 +284,7 @@ int secf_remove_rule(int action, int type, str *value)
 		LM_DBG("Total matches removed: %d", total);
 		return 0; // Return the total number of removed items
 	} else {
-		LM_DGB("No matching values found in the list.");
+		LM_DBG("No matching values found in the list.");
 		return -1; // Return -1 on no matches
 	}
 }
