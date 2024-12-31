@@ -90,8 +90,9 @@ set_target_properties(
   kamailio PROPERTIES ENABLE_EXPORTS TRUE OUTPUT_NAME ${MAIN_NAME}
 )
 
-target_compile_options(kamailio
-                       PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/=")
+target_compile_options(
+  kamailio PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/="
+)
 
 add_subdirectory(core)
 add_subdirectory(lib)
@@ -143,8 +144,15 @@ install(
   COMPONENT kamailio-core
 )
 
-# Install the configuration file (kamailio.cfg) ${CFG_NAME} using a CODE block to check
-# existence at install time instead of configure time
+# Install the docs of core
+install(
+  FILES ${CMAKE_SOURCE_DIR}/README ${CMAKE_SOURCE_DIR}/INSTALL
+  DESTINATION ${CMAKE_INSTALL_DOCDIR}
+  COMPONENT kamailio-docs
+)
+
+# Install the configuration file (kamailio.cfg) ${CFG_NAME} using a CODE block
+# to check  existence at install time instead of configure time
 # If(EXISTS ..) require full path
 install(
   CODE "
