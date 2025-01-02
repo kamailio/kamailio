@@ -1275,7 +1275,7 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 			uri->sip_params = uri->params;
 			if((phone2tel) && (uri->user_param_val.len == 5)
 					&& (strncmp(uri->user_param_val.s, "phone", 5) == 0)) {
-				uri->type = TEL_URI_T;
+				uri->type = uri->type == SIPS_URI_T ? TELS_URI_T : TEL_URI_T;
 				uri->flags |= URI_SIP_USER_PHONE;
 				/* move params from user into uri->params */
 				p = q_memchr(uri->user.s, ';', uri->user.len);
