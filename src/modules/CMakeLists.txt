@@ -130,6 +130,16 @@ foreach(module_name IN LISTS EXCLUDE_MODULES_LIST)
   endif()
 endforeach()
 
+# Define targets before adding the groups and modules, so that we can add
+# dependencies to them.
+add_custom_target(
+  kamailio_docs_readme
+  COMMENT
+    "Generating modules readme. Note: This will overwrite REAMDEs found in source tree"
+)
+
+add_custom_target(kamailio_docs_man COMMENT "Generating man pages")
+
 # Add each group of modules
 add_module_group("${FINAL_MODULES_LIST}")
 foreach(group IN LISTS FULL_MODULE_GROUP_NAMES)

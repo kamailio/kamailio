@@ -3,9 +3,15 @@ option(BUILD_DOC "Build documentation" ON)
 # Readme file and man page
 find_program(XSLTPROC_EXECUTABLE xsltproc QUIET)
 find_program(LYNX_EXECUTABLE lynx QUIET)
+find_program(DOCBOOK2X_EXECUTABLE docbook2x-man QUIET)
 
 if(BUILD_DOC AND (NOT XSLTPROC_EXECUTABLE OR NOT LYNX_EXECUTABLE))
   message(WARNING "xsltproc or lynx not found but required for doc generation.")
+  set(BUILD_DOC OFF)
+endif()
+
+if(BUILD_DOC AND (NOT DOCBOOK2X_EXECUTABLE))
+  message(WARNING "docbook2x-man not found but required for man generation.")
   set(BUILD_DOC OFF)
 endif()
 
@@ -34,6 +40,7 @@ set(DOCS_OUTPUT_DIR
     CACHE STRING "Path to build HTML docs")
 
 set(DOCBOOK_DIR ${CMAKE_SOURCE_DIR}/doc/docbook)
+set(STYLESHEET_DIR ${CMAKE_SOURCE_DIR}/doc/stylesheets)
 set(DEPS_XSL ${DOCBOOK_DIR}/dep.xsl)
 set(SINGLE_HTML_XSL ${DOCBOOK_DIR}/html.xsl)
 set(CHUNKED_HTML_XSL ${DOCBOOK_DIR}/html.chunked.xsl)
@@ -82,20 +89,29 @@ function(docs_add_module module_name)
 
   # This is essentialy an alias of doc_text target but with extra copy command
   # to copy the text file to the source tree directory.
-  add_custom_target(
-    ${module_name}_readme
-    DEPENDS ${module_name}_doc_text
-    COMMENT "Processing target ${module_name}_readme")
+  add_custom_target(${module_name}_readme
+                    COMMENT "Processing target ${module_name}_readme")
+  add_dependencies(${module_name}_readme ${module_name}_doc_text)
+  add_dependencies(kamailio_docs_readme ${module_name}_readme)
 
   add_custom_target(
     ${module_name}_doc_html
     DEPENDS ${DOCS_OUTPUT_DIR}/${module_name}.html
     COMMENT "Processing target ${module_name}_doc_html")
 
-  add_custom_target(
-    ${module_name}_doc
-    DEPENDS ${module_name}_doc_text ${module_name}_doc_html
-    COMMENT "Processing target ${module_name}_doc")
+  add_custom_target(${module_name}_doc
+                    COMMENT "Processing target ${module_name}_doc")
+  add_dependencies(${module_name}_doc ${module_name}_doc_text
+                   ${module_name}_doc_html)
+
+  # Man docs only if author of module provided xml for man.
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/${module_name}.xml)
+    add_custom_target(
+      ${module_name}_man
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/${module_name}.xml
+      COMMENT "Processing target ${module_name}_man")
+    add_dependencies(kamailio_docs_man ${module_name}_man)
+  endif()
 
   # Each version has seperate custon commands for not recompiling all if 1 gets
   # changed.
@@ -144,10 +160,26 @@ function(docs_add_module module_name)
         COMMENT "Generating html documentation for ${module_name}")
     endif()
 
+    add_custom_command(
+      # man version
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.7
+      COMMAND ${DOCBOOK2X_EXECUTABLE} -s ${STYLESHEET_DIR}/serdoc2man.xsl
+              ${module_name}.xml
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc/${module_name}.xml
+              ${STYLESHEET_DIR}/serdoc2man.xsl
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}
+      COMMENT "Processing target ${module_name}_man")
+
     install(
       FILES ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/README
       RENAME README.${module_name}
       DESTINATION ${CMAKE_INSTALL_DOCDIR}/modules
       COMPONENT kamailio_docs)
+
+    install(
+      FILES ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/${module_name}.7
+      DESTINATION ${CMAKE_INSTALL_DOCDIR}/modules
+      COMPONENT kamailio_docs
+      OPTIONAL)
   endif()
 endfunction()
