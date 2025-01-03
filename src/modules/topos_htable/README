@@ -1,0 +1,113 @@
+TOPOS_HTABLE Module
+
+Edited by
+
+Stefan Mititelu
+
+   <stefan.mititelu@net2phone.com>
+
+   Copyright © 2024 kamailio.org
+
+   Copyright © 2024 net2phone.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. topos_htable_dialog (string)
+              3.2. topos_htable_transaction (string)
+              3.3. topos_htable_base64 (int)
+
+   List of Examples
+
+   1.1. Set topos_htable_dialog parameter
+   1.2. Set topos_htable_transaction parameter
+   1.3. Set topos_htable_base64 parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. topos_htable_dialog (string)
+        3.2. topos_htable_transaction (string)
+        3.3. topos_htable_base64 (int)
+
+1. Overview
+
+   This module offers storage support for topos module using htable
+   module.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * topos module - to bind to as a storage engine.
+     * htable module - to bind to as a shm storage engine.
+
+2.2. External Libraries or Applications
+
+   No libraries or applications must be installed before running Kamailio
+   with this module loaded.
+
+3. Parameters
+
+   3.1. topos_htable_dialog (string)
+   3.2. topos_htable_transaction (string)
+   3.3. topos_htable_base64 (int)
+
+3.1. topos_htable_dialog (string)
+
+   Definition of dialog htable, with all parameters.
+
+   Default value is “topos_dialog=>size=4;autoexpire=7200;dmqreplicate=1”.
+
+   Example 1.1. Set topos_htable_dialog parameter
+...
+modparam("topos_htable", "topos_htable_dialog", "my_dialogs=>size=4;autoexpire=7
+200;dmqreplicate=1")
+...
+
+3.2. topos_htable_transaction (string)
+
+   Definition of transaction htable, with all parameters.
+
+   Default value is “topos_transaction=>size=4;autoexpire=7200”.
+
+   Example 1.2. Set topos_htable_transaction parameter
+...
+modparam("topos_htable", "topos_htable_transaction", "my_transactions=>size=4;au
+toexpire=7200")
+...
+
+3.3. topos_htable_base64 (int)
+
+   Enable or disable base64 encoding of htable values. Useful when
+   individual values stored in htable contain delimiter value "|".
+
+   Default value is “0”.
+
+   Example 1.3. Set topos_htable_base64 parameter
+...
+modparam("topos_htable", "topos_htable_base64", 1)
+...
