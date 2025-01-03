@@ -1,0 +1,78 @@
+presence_dfks Module
+
+Maja Stanislawska
+
+   <maja.stanislawska@yahoo.com>
+
+Victor Seva
+
+   Sipwise GmbH
+   <vseva@sipwise.com>
+
+Edited by
+
+Victor Seva
+
+   Sipwise GmbH
+   <vseva@sipwise.com>
+
+   Copyright © 2014 Maja Stanislawska
+
+   Copyright © 2024 Victor Seva
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+1. Overview
+
+   This module for handling as-feature-event presence messages Provides
+   support for 'Device FeatureKey Synchronization', as described in
+   http://community.polycom.com/polycom/attachments/polycom/VoIP/2233/1/De
+   viceFeatureKeySynchronizationFD.pdf This 'protocol' was developed at
+   Broadsoft, and is used in Linksys/Cisco and Polycom phones and probably
+   some other too. It allows to set up features like dnd (No Not Disturb)
+   and call forwarding using phone interface and have that status updated
+   on aplication server/ proxy or otherway, set those features on
+   aplication server using some gui, and have this data provisioned on
+   phone. For Shared Line Appreance application this let You share status
+   on all phones.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * sl. presence. pua.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libxml2 - xml handling library.
+
+3. Parameters
