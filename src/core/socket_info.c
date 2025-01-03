@@ -1343,7 +1343,7 @@ static int nl_bound_sock(void)
 	bzero(&la, sizeof(la));
 	la.nl_family = AF_NETLINK;
 	la.nl_pad = 0;
-	la.nl_pid = getpid();
+	la.nl_pid = 0;
 	la.nl_groups = 0;
 	if(bind(sock, (struct sockaddr *)&la, sizeof(la)) < 0) {
 		LM_ERR("could not bind NETLINK sock to sockaddr_nl\n");
