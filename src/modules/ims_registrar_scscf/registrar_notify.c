@@ -497,13 +497,15 @@ int event_reg(udomain_t *_d, impurecord_t *r_passed, ucontact_t *c_passed,
 		case IMS_REGISTRAR_NONE:
 			return 0;
 		case IMS_REGISTRAR_SUBSCRIBE:
+		case IMS_REGISTRAR_SUBSEQUENT_SUBSCRIBE:
 			if(r_passed || !presentity_uri || !watcher_contact || !_d) {
 				LM_ERR("this is a subscribe called from cfg file: r_passed be "
 					   "zero and presentity_uri, watcher_contact and _d should "
 					   "be valid for a subscribe");
 				return 0;
 			}
-			LM_DBG("Event type is IMS REGISTRAR SUBSCRIBE about to get "
+			LM_DBG("Event type is IMS REGISTRAR SUBSCRIBE/RE-SUBSCRIBE about "
+				   "to get "
 				   "reginfo_full\n");
 			//lets get IMPU list for presentity as well as register for callbacks (IFF it is a new SUBSCRIBE)
 
@@ -1376,8 +1378,8 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2)
 		subscribe_reply(
 				msg, 200, MSG_REG_SUBSCRIBE_OK, &expires, &scscf_name_str);
 
-		if(event_type == IMS_REGISTRAR_SUBSCRIBE) {
-			//do reg event only for the initial subscribe
+		if(event_type == IMS_REGISTRAR_SUBSCRIBE
+				|| event_type == IMS_REGISTRAR_SUBSEQUENT_SUBSCRIBE) {
 			if(event_reg(domain, 0, 0, event_type, &presentity_uri,
 					   &watcher_contact, 0, 0, 0)
 					!= 0) {
@@ -1723,7 +1725,8 @@ void create_notifications(udomain_t *_t, impurecord_t *r_passed,
 		}
 
 		//This is a fix to ensure that when a user subscribes a full reg info is only sent to that UE
-		if(event_type == IMS_REGISTRAR_SUBSCRIBE) {
+		if(event_type == IMS_REGISTRAR_SUBSCRIBE
+				|| event_type == IMS_REGISTRAR_SUBSEQUENT_SUBSCRIBE) {
 			if(contact_match(watcher_contact, &s->watcher_contact)
 					&& (presentity_uri->len == s->presentity_uri.len)
 					&& (memcmp(s->presentity_uri.s, presentity_uri->s,
