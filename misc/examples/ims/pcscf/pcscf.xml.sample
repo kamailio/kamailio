@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <DiameterPeer 
-	FQDN="pcscf.mnc001.mcc001.3gppnetwork.org"
+	FQDN="pcscf.ims.mnc001.mcc001.3gppnetwork.org"
 	Realm="ims.mnc001.mcc001.3gppnetwork.org"
 	Vendor_Id="10415"
 	Product_Name="CDiameterPeer"
@@ -14,13 +14,13 @@
 	DefaultAuthSessionTimeout="3600"
 	MaxAuthSessionTimeout="3600"
 >
-	<Peer FQDN="pcrf.mnc001.mcc001.3gppnetwork.org" Realm="ims.mnc001.mcc001.3gppnetwork.org" port="3868"/> 
+	<Peer FQDN="pcrf.epc.mnc001.mcc001.3gppnetwork.org" Realm="epc.mnc001.mcc001.3gppnetwork.org" port="3868"/> 
 
 	<Acceptor port="3871" bind="11.22.33.44"/>
 
 	<Auth id="16777236" vendor="10415"/> <!-- 3GPP Rx -->
 	<Auth id="16777236" vendor="0"/> <!-- 3GPP Rx -->
 
-	<DefaultRoute FQDN="pcrf.mnc001.mcc001.3gppnetwork.org" metric="10"/>
+	<DefaultRoute FQDN="pcrf.epc.mnc001.mcc001.3gppnetwork.org" metric="10"/>
 
 </DiameterPeer>
