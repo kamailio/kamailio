@@ -35,5 +35,6 @@ else
 	DEFS += $(shell $(BUILDER) --cflags libevent)
 	LIBS += $(shell $(BUILDER) --libs libevent)
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules

@@ -68,6 +68,7 @@ else # ifneq ($(SSL_BUILDER),)
 endif # ifneq ($(SSL_BUILDER),)
 
 LIBS+= $(TLS_EXTRA_LIBS) -lpthread
+${eval LIBS=$(LIBS)}
 
 # dcm: tls.cfg installed via local 'install-cfg' to update paths
 #MOD_INSTALL_CFGS=tls.cfg
