@@ -1621,6 +1621,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.tmrec
 %doc %{_docdir}/kamailio/modules/README.tmx
 %doc %{_docdir}/kamailio/modules/README.topoh
+%doc %{_docdir}/kamailio/modules/README.topos_htable
 %doc %{_docdir}/kamailio/modules/README.uac
 %doc %{_docdir}/kamailio/modules/README.uac_redirect
 %doc %{_docdir}/kamailio/modules/README.uid_auth_db
@@ -2159,6 +2160,7 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.presence
 %doc %{_docdir}/kamailio/modules/README.presence_conference
+%doc %{_docdir}/kamailio/modules/README.presence_dfks
 %doc %{_docdir}/kamailio/modules/README.presence_dialoginfo
 %doc %{_docdir}/kamailio/modules/README.presence_mwi
 %doc %{_docdir}/kamailio/modules/README.presence_profile
