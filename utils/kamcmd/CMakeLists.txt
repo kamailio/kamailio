@@ -19,6 +19,7 @@ pkg_check_modules(READLINE IMPORTED_TARGET readline)
 add_library(readline::readline ALIAS PkgConfig::READLINE)
 
 if(READLINE_FOUND)
+  add_library(readline::readline ALIAS PkgConfig::READLINE)
   target_compile_definitions(${NAME} PRIVATE USE_READLINE)
 endif()
 
