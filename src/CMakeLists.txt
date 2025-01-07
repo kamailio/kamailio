@@ -19,8 +19,6 @@ message(STATUS "CMAKE_C_COMPILER_VERSION: ${CMAKE_C_COMPILER_VERSION}")
 
 find_package(Threads REQUIRED)
 
-include(${CMAKE_SOURCE_DIR}/cmake/defs.cmake)
-
 # -----------------------
 # The following produces core/autover.h Find Git
 option(USE_GIT "Use git to get commit information" ON)
