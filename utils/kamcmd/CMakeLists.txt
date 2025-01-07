@@ -16,11 +16,11 @@ add_executable(${NAME})
 # detect libreadline
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(READLINE IMPORTED_TARGET readline)
-add_library(readline::readline ALIAS PkgConfig::READLINE)
 
 if(READLINE_FOUND)
   add_library(readline::readline ALIAS PkgConfig::READLINE)
   target_compile_definitions(${NAME} PRIVATE USE_READLINE)
+  target_link_libraries(${NAME} PRIVATE readline::readline)
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/utils.cmake)
@@ -29,7 +29,7 @@ target_sources(${NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/kamcmd.c
                                ${CMAKE_CURRENT_SOURCE_DIR}/parse_listen_id.c)
 # target_include_directories(${NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 # target_link_libraries(${NAME} PRIVATE common)
-target_link_libraries(${NAME} PRIVATE readline::readline resolv)
+target_link_libraries(${NAME} PRIVATE resolv)
 target_link_libraries(${NAME} PRIVATE common_utils)
 
 target_compile_definitions(
