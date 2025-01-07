@@ -32,8 +32,7 @@ message(STATUS "Target Processor Alias: ${TARGET_ARCH}")
 set(flavours kamailio)
 set(FLAVOUR
     "kamailio"
-    CACHE STRING "Flavour of the project"
-)
+    CACHE STRING "Flavour of the project")
 set_property(CACHE FLAVOUR PROPERTY STRINGS ${flavours})
 
 # Verbose option (for debugging purposes) (was quiet in Makefile.defs) Probably
@@ -104,8 +103,7 @@ endif()
 set(LIBSSL_SET_MUTEX_SHARED
     ON
     CACHE BOOL
-          "enable workaround for libssl 1.1+ to set shared mutex attribute"
-)
+          "enable workaround for libssl 1.1+ to set shared mutex attribute")
 if(NOT ${LIBSSL_SET_MUTEX_SHARED})
   message(
     STATUS
@@ -114,7 +112,8 @@ if(NOT ${LIBSSL_SET_MUTEX_SHARED})
 
   # TODO: This can probably be reduced to a just a find_package(OpenSSL) call
   # and then check the version
-  # If we are cross-compiling, cmake should search for library on the target or both target/host
+  # If we are cross-compiling, cmake should search for library on the target
+  # or both target/host
   if(NOT DEFINED CMAKE_CROSSCOMPILING OR NOT ${CMAKE_CROSSCOMPILING})
     message(STATUS "Checking for OpenSSL 1.1.0")
     find_package(OpenSSL 1.1.0)
@@ -123,8 +122,7 @@ if(NOT ${LIBSSL_SET_MUTEX_SHARED})
       if(${OPENSSL_VERSION} VERSION_GREATER_EQUAL "1.1.0")
         message(
           STATUS
-            "Enabling workaround for libssl 1.1+ to set shared mutex attribute"
-        )
+            "Enabling workaround for libssl 1.1+ to set shared mutex attribute")
         set(LIBSSL_SET_MUTEX_SHARED ON)
       endif()
     endif()
@@ -137,13 +135,11 @@ endif()
 # -----------------------
 
 option(USE_FAST_LOCK "Use fast locking if available" ON)
-# Fast-lock not available for all platforms like mips Check the system processor
-# type and set USE_FAST_LOCK accordingly
-#
+# Fast-lock not available for all platforms like mips
+# Check the system processor type and set USE_FAST_LOCK accordingly
 if(USE_FAST_LOCK)
   if(CMAKE_SYSTEM_PROCESSOR MATCHES
-     "i386|i486|i586|i686|x86_64|sparc64|sparc|ppc|ppc64|alpha|mips2|mips64"
-  )
+     "i386|i486|i586|i686|x86_64|sparc64|sparc|ppc|ppc64|alpha|mips2|mips64")
     set(USE_FAST_LOCK YES)
   elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
     set(USE_FAST_LOCK NO)
@@ -160,8 +156,7 @@ if(USE_FAST_LOCK)
   elseif()
     message(
       STATUS
-        "Fast locking not available for this platform, disabling USE_FAST_LOCK"
-    )
+        "Fast locking not available for this platform, disabling USE_FAST_LOCK")
     set(USE_FAST_LOCK NO)
   endif()
 endif()
@@ -169,17 +164,15 @@ endif()
 # Add definitions if USE_FAST_LOCK is YES
 message(STATUS "Fast lock available: ${USE_FAST_LOCK}")
 if(USE_FAST_LOCK)
-  target_compile_definitions(
-    common INTERFACE FAST_LOCK ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024
-  )
+  target_compile_definitions(common INTERFACE FAST_LOCK ADAPTIVE_WAIT
+                                              ADAPTIVE_WAIT_LOOPS=1024)
 endif()
 
 # List of locking methods in option
 set(locking_methods USE_FUTEX USE_PTHREAD_MUTEX USE_POSIX_SEM USE_SYSV_SEM)
 set(LOCK_METHOD
     USE_FUTEX
-    CACHE STRING "Locking method to use"
-)
+    CACHE STRING "Locking method to use")
 set_property(CACHE LOCK_METHOD PROPERTY STRINGS ${locking_methods})
 
 # set(LOCKING_DEFINITION "${locking_method}")
@@ -310,30 +303,29 @@ endif()
 string(TOLOWER ${OS} OS_LOWER)
 target_compile_definitions(
   common
-  INTERFACE
-    NAME="${MAIN_NAME}"
-    VERSION="${RELEASE}"
-    ARCH="${TARGET_ARCH}"
-    OS=${OS}
-    OS_QUOTED="${OS}"
-    COMPILER="${COMPILER_NAME} ${CMAKE_C_COMPILER_VERSION}"
-    # ${HOST_ARCH}
-    __CPU_${TARGET_ARCH}
-    __OS_${OS_LOWER}
-    VERSIONVAL=${VERSIONVAL}
-    CFG_DIR="${CMAKE_INSTALL_FULL_SYSCONFDIR}/${CFG_NAME}/"
-    SHARE_DIR="${CMAKE_INSTALL_FULL_DATADIR}/${MAIN_NAME}/"
-    # Absolute path this run is always /var/run/kamailio either for local or
-    # system installs
-    RUN_DIR="${RUN_PREFIX}/${RUN_DIR}"
-    ${LOCK_METHOD}
-    # Module stuff?
-    PIC
-    # TODO: We can use the generator expression to define extra flags instead of
-    # checking the options each time
-    $<$<BOOL:${USE_SCTP}>:USE_SCTP>
-    $<$<BOOL:${STATISTICS}>:STATISTICS>
-)
+  INTERFACE NAME="${MAIN_NAME}"
+            VERSION="${RELEASE}"
+            ARCH="${TARGET_ARCH}"
+            OS=${OS}
+            OS_QUOTED="${OS}"
+            COMPILER="${COMPILER_NAME} ${CMAKE_C_COMPILER_VERSION}"
+            # ${HOST_ARCH}
+            __CPU_${TARGET_ARCH}
+            __OS_${OS_LOWER}
+            VERSIONVAL=${VERSIONVAL}
+            CFG_DIR="${CMAKE_INSTALL_FULL_SYSCONFDIR}/${CFG_NAME}/"
+            SHARE_DIR="${CMAKE_INSTALL_FULL_DATADIR}/${MAIN_NAME}/"
+            # Absolute path this run is always /var/run/kamailio either for
+            # local or system installs
+            RUN_DIR="${RUN_PREFIX}/${RUN_DIR}"
+            ${LOCK_METHOD}
+            # Module stuff?
+            # PIC
+            # TODO: We can use the generator expression to define extra flags
+            # instead of checking the options each time
+            $<$<BOOL:${USE_SCTP}>:USE_SCTP>
+            $<$<BOOL:${STATISTICS}>:STATISTICS>)
+target_link_libraries(common INTERFACE common_compiler_flags)
 
 # -----------------------
 add_library(common_modules INTERFACE)
@@ -341,3 +333,6 @@ target_compile_options(common_modules INTERFACE -fPIC)
 
 # TODO: Do we need all the option from common as well?
 target_link_libraries(common_modules INTERFACE common)
+
+add_library(common_utils INTERFACE)
+target_link_libraries(common_utils INTERFACE common_compiler_flags)

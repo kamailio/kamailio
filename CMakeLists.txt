@@ -45,12 +45,13 @@ set(CFG_NAME
     CACHE STRING "Config name")
 
 include(GNUInstallDirs)
+include(${CMAKE_SOURCE_DIR}/cmake/defs.cmake)
 
 # Add the source directory
 add_subdirectory(src)
 
 # Add utils
-add_subdirectory(utils/kamctl)
+add_subdirectory(utils)
 
 # TODO: Packaging stuuf. These should be on different file propably
 set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
