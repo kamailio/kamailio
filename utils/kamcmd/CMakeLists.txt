@@ -15,7 +15,7 @@ add_executable(${NAME})
 
 # detect libreadline
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(READLINE REQUIRED IMPORTED_TARGET readline)
+pkg_check_modules(READLINE IMPORTED_TARGET readline)
 add_library(readline::readline ALIAS PkgConfig::READLINE)
 
 if(READLINE_FOUND)
