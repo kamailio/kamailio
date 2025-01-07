@@ -178,7 +178,7 @@ function(docs_add_module module_name)
 
     install(
       FILES ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/${module_name}.7
-      DESTINATION ${CMAKE_INSTALL_DOCDIR}/modules
+      DESTINATION ${CMAKE_INSTALL_DATADIR}/man/man7
       COMPONENT kamailio_docs
       OPTIONAL)
   endif()
