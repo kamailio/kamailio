@@ -794,6 +794,7 @@ static int db_redis_build_query_keys(km_redis_con_t *con, const str *table_name,
 							type->type.s);
 				}
 				keyname.s = NULL;
+				break;
 			} else if(keyname.s) {
 				pkg_free(keyname.s);
 				keyname.s = NULL;
