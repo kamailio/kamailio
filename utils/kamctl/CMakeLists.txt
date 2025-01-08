@@ -135,8 +135,40 @@ install(
 "
   COMPONENT kamailio-utils-cfg)
 
-# Install targets
+# Man pages generation and installation
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8
+  COMMAND
+    sed -e
+    "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
+    -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
+    "s#/usr/lib/${CFG_NAME}/modules/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g"
+    -e "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" <
+    ${CMAKE_CURRENT_SOURCE_DIR}/kamctl.8 > ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/kamctl.8)
 
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
+  COMMAND
+    sed -e
+    "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
+    -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
+    "s#/usr/lib/${CFG_NAME}/modules/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g"
+    -e "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" <
+    ${CMAKE_CURRENT_SOURCE_DIR}/kamdbctl.8 >
+    ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/kamdbctl.8)
+
+add_custom_target(kamctl_man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8
+                                     ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8)
+
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8 ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
+  DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
+  COMPONENT kamailio_man
+  OPTIONAL)
+
+# Install targets
 # Custom target for installing the kamailio-cfg component
 add_custom_target(
   install-kamailio-utils-cfg

@@ -142,8 +142,51 @@ install(
 install(
   FILES ${CMAKE_SOURCE_DIR}/README ${CMAKE_SOURCE_DIR}/INSTALL
   DESTINATION ${CMAKE_INSTALL_DOCDIR}
-  COMPONENT kamailio-docs
-)
+  COMPONENT kamailio-docs)
+
+# ----------
+# Create and install the man pages for kamailio
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
+  COMMAND
+    sed -e
+    "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
+    -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
+    "s#/usr/lib/${CFG_NAME}/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
+    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
+    "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8 >
+    ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
+  DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8)
+
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
+  COMMAND
+    sed -e
+    "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
+    -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
+    "s#/usr/lib/${CFG_NAME}/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
+    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
+    "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5
+    > ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
+  DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5)
+
+add_custom_target(man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
+                              ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5)
+add_dependencies(man kamctl_man)
+add_dependencies(man kamcmd_man)
+
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
+  DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
+  COMPONENT kamailio_man
+  OPTIONAL)
+
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
+  DESTINATION ${CMAKE_INSTALL_MANDIR}/man5
+  COMPONENT kamailio_man
+  OPTIONAL)
+# ----------
 
 # Install the configuration file (kamailio.cfg) ${CFG_NAME} using a CODE block
 # to check  existence at install time instead of configure time
