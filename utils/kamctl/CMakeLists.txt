@@ -1,59 +1,64 @@
 project(kamailio_utils)
 
-# if(NOT basedir) set(KAMCTL_TMP_DIR "/tmp") else() set(KAMCTL_TMP_DIR
-# "${basedir}") endif()
-
-set(KAMCTL_TMP_DIR "${CMAKE_BINARY_DIR}/kamctltmp")
-message(STATUS "Temporary kamctl.{db} files in : ${KAMCTL_TMP_DIR}")
-
-file(MAKE_DIRECTORY ${KAMCTL_TMP_DIR})
+get_property(FINAL_MODULES_LIST GLOBAL PROPERTY ADDED_MODULES_LIST)
 
 set(BIN_DIR "${CMAKE_INSTALL_FULL_SBINDIR}")
 set(LIB_DIR "${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}")
 set(CFG_DIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}")
 set(SHARE_DIR "${CMAKE_INSTALL_FULL_DATADIR}/${MAIN_NAME}")
 
-set(KAMCTL_BASE_FILES
-    kamctl.base
-    kamctl.ctlbase
-    kamctl.db_berkeley
-    kamctl.dbtext
-    kamctl.mysql
-    kamctl.oracle
-    kamctl.pgsql
-    kamctl.rpcfifo
-    kamctl.ser
-    kamctl.sqlbase
-    kamctl.sqlite)
+set(KAMCTL_BASE_FILES kamctl.base kamctl.ctlbase kamctl.rpcfifo kamctl.ser
+                      kamctl.sqlbase)
+
+if("db_berkeley" IN_LIST FINAL_MODULES_LIST)
+  set(KAMCTL_DB_FILES ${KAMCTL_DB_FILES} kamctl.db_berkeley)
+endif()
+if("db_text" IN_LIST FINAL_MODULES_LIST)
+  set(KAMCTL_DB_FILES ${KAMCTL_DB_FILES} kamctl.dbtext)
+endif()
+if("db_mysql" IN_LIST FINAL_MODULES_LIST)
+  set(KAMCTL_DB_FILES ${KAMCTL_DB_FILES} kamctl.mysql)
+endif()
+if("db_oracle" IN_LIST FINAL_MODULES_LIST)
+  set(KAMCTL_DB_FILES ${KAMCTL_DB_FILES} kamctl.oracle)
+endif()
+if("db_postgres" IN_LIST FINAL_MODULES_LIST)
+  set(KAMCTL_DB_FILES ${KAMCTL_DB_FILES} kamctl.pgsql)
+endif()
+if("db_sqlite" IN_LIST FINAL_MODULES_LIST)
+  set(KAMCTL_DB_FILES ${KAMCTL_DB_FILES} kamctl.sqlite)
+endif()
 
 # Install kamctl and it's database files
 add_custom_command(
-  OUTPUT "${KAMCTL_TMP_DIR}/kamctl"
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/kamctl"
   COMMAND
     sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e
     "s#/usr/local/lib/kamailio#${LIB_DIR}#g" -e
     "s#/usr/local/etc/kamailio#${CFG_DIR}#g" <
-    ${CMAKE_CURRENT_SOURCE_DIR}/kamctl > ${KAMCTL_TMP_DIR}/kamctl
+    ${CMAKE_CURRENT_SOURCE_DIR}/kamctl > ${CMAKE_CURRENT_BINARY_DIR}/kamctl
   COMMENT "Processed kamctl with sed")
 install(
-  PROGRAMS ${KAMCTL_TMP_DIR}/kamctl
+  PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/kamctl
   DESTINATION ${CMAKE_INSTALL_SBINDIR}
   COMPONENT kamailio-utils-bin)
 
 # Create the depependencies list for the target kamctl
-set(KAMCTL_DEPENDENCIES "${KAMCTL_TMP_DIR}/kamctl")
+set(KAMCTL_DEPENDENCIES "${CMAKE_CURRENT_BINARY_DIR}/kamctl")
 
 # Install kamctl.base and the rest
-foreach(file ${KAMCTL_BASE_FILES})
+foreach(file IN LISTS KAMCTL_BASE_FILES KAMCTL_DB_FILES)
   # Append to the depependencies list for the target kamctl
-  list(APPEND KAMCTL_DEPENDENCIES "${KAMCTL_TMP_DIR}/${file}")
+  list(APPEND KAMCTL_DEPENDENCIES "${CMAKE_CURRENT_BINARY_DIR}/${file}")
+  # Process the file with sed and install it
   add_custom_command(
-    OUTPUT "${KAMCTL_TMP_DIR}/${file}"
-    COMMAND sed -e "s#/usr/local/sbin#${BIN_DIR}#g" <
-            ${CMAKE_CURRENT_SOURCE_DIR}/${file} > ${KAMCTL_TMP_DIR}/${file}
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${file}"
+    COMMAND
+      sed -e "s#/usr/local/sbin#${BIN_DIR}#g" <
+      ${CMAKE_CURRENT_SOURCE_DIR}/${file} > ${CMAKE_CURRENT_BINARY_DIR}/${file}
     COMMENT "Processed ${file} with sed")
   install(
-    PROGRAMS ${KAMCTL_TMP_DIR}/${file}
+    PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${file}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl
     COMPONENT kamailio-utils-bin)
 endforeach()
@@ -65,45 +70,56 @@ add_custom_target(
   COMMENT "Build kamctl and its dependencies")
 
 # Setup and install kamdbctl stuff
-set(KAMDB_BASE_FILES
-    kamdbctl.base
-    kamdbctl.db_berkeley
-    kamdbctl.dbtext
-    kamdbctl.mysql
-    kamdbctl.oracle
-    kamdbctl.pgsql
-    kamdbctl.sqlite
-    kamdbfunc.oracle)
+set(KAMDBCTL_BASE_FILES kamdbctl.base)
+
+if("db_berkeley" IN_LIST FINAL_MODULES_LIST)
+  set(KAMDBCTL_DB_FILES ${KAMDBCTL_DB_FILES} kamdbctl.db_berkeley)
+endif()
+if("db_text" IN_LIST FINAL_MODULES_LIST)
+  set(KAMDBCTL_DB_FILES ${KAMDBCTL_DB_FILES} kamdbctl.dbtext)
+endif()
+if("db_mysql" IN_LIST FINAL_MODULES_LIST)
+  set(KAMDBCTL_DB_FILES ${KAMDBCTL_DB_FILES} kamdbctl.mysql)
+endif()
+if("db_oracle" IN_LIST FINAL_MODULES_LIST)
+  set(KAMDBCTL_DB_FILES ${KAMDBCTL_DB_FILES} kamdbctl.oracle kamdbfunc.oracle)
+endif()
+if("db_postgres" IN_LIST FINAL_MODULES_LIST)
+  set(KAMDBCTL_DB_FILES ${KAMDBCTL_DB_FILES} kamdbctl.pgsql)
+endif()
+if("db_sqlite" IN_LIST FINAL_MODULES_LIST)
+  set(KAMDBCTL_DB_FILES ${KAMDBCTL_DB_FILES} kamdbctl.sqlite)
+endif()
 
 # Install kamdbctl
 add_custom_command(
-  OUTPUT "${KAMCTL_TMP_DIR}/kamdbctl"
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/kamdbctl"
   COMMAND
     sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e
     "s#/usr/local/lib/kamailio#${LIB_DIR}#g" -e
     "s#/usr/local/etc/kamailio#${CFG_DIR}#g" <
-    ${CMAKE_CURRENT_SOURCE_DIR}/kamdbctl > ${KAMCTL_TMP_DIR}/kamdbctl
+    ${CMAKE_CURRENT_SOURCE_DIR}/kamdbctl > ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl
   COMMENT "Processed kamdbctl with sed")
 install(
-  PROGRAMS ${KAMCTL_TMP_DIR}/kamdbctl
+  PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl
   DESTINATION ${CMAKE_INSTALL_SBINDIR}
   COMPONENT kamailio-utils-bin)
 
-set(KAMDB_DEPENDENCIES "${KAMCTL_TMP_DIR}/kamdbctl")
+set(KAMDB_DEPENDENCIES "${CMAKE_CURRENT_BINARY_DIR}/kamdbctl")
 
-foreach(file ${KAMDB_BASE_FILES})
-  list(APPEND KAMDB_DEPENDENCIES "${KAMCTL_TMP_DIR}/${file}")
+foreach(file IN LISTS KAMDBCTL_BASE_FILES KAMDBCTL_DB_FILES)
+  list(APPEND KAMDB_DEPENDENCIES "${CMAKE_CURRENT_BINARY_DIR}/${file}")
   # Install db setup base script
   add_custom_command(
-    OUTPUT "${KAMCTL_TMP_DIR}/${file}"
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${file}"
     COMMAND
       sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e
       "s#/usr/local/etc/kamailio#${CFG_DIR}#g" -e
       "s#/usr/local/share/kamailio#${SHARE_DIR}#g" <
-      ${CMAKE_CURRENT_SOURCE_DIR}/${file} > ${KAMCTL_TMP_DIR}/${file}
+      ${CMAKE_CURRENT_SOURCE_DIR}/${file} > ${CMAKE_CURRENT_BINARY_DIR}/${file}
     COMMENT "Processed ${file}")
   install(
-    PROGRAMS ${KAMCTL_TMP_DIR}/${file}
+    PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${file}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl
     COMPONENT kamailio-utils-bin)
 endforeach()
@@ -163,7 +179,8 @@ add_custom_target(kamctl_man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8
                                      ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8)
 
 install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8 ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8
+        ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
   COMPONENT kamailio_man
   OPTIONAL)
@@ -242,7 +259,7 @@ else()
     # Change name for the folder
     if(db_name STREQUAL "pi_framework_table" OR db_name STREQUAL
                                                 "pi_framework_mod")
-      set(db_name_folder xhttpi_pi)
+      set(db_name_folder xhttp_pi)
     else()
       set(db_name_folder ${db_name})
     endif()
@@ -277,6 +294,12 @@ else()
         COMMENT "Processing ${table} for ${db_name}")
     endforeach()
 
+    # Before installing, ensure the target is built `dbschema_${db_name}`
+    install(
+      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}
+      DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}
+      OPTIONAL)
+
     add_custom_target(
       dbschema_${db_name}_clean
       COMMAND ${CMAKE_COMMAND} -E remove_directory
@@ -286,42 +309,55 @@ else()
 
   # Add targets for each database type Pi framework targets should combined into
   # one
-  add_db_target(pi_framework_table "${STYLESHEETS}/pi_framework_table.xsl")
-  add_db_target(pi_framework_mod "${STYLESHEETS}/pi_framework_mod.xsl")
-  add_db_target(mysql "${STYLESHEETS}/mysql.xsl")
-  add_db_target(postgres "${STYLESHEETS}/postgres.xsl")
-  add_db_target(oracle "${STYLESHEETS}/oracle.xsl")
-  add_db_target(dbtext "${STYLESHEETS}/dbtext.xsl")
-  add_db_target(db_berkeley "${STYLESHEETS}/db_berkeley.xsl")
-  add_db_target(db_sqlite "${STYLESHEETS}/db_sqlite.xsl")
-  add_db_target(mongodb "${STYLESHEETS}/mongodb.xsl")
-  add_db_target(db_redis "${STYLESHEETS}/db_redis.xsl")
+  add_custom_target(dbschema COMMENT "Generating schemas for all dbs...")
+  add_custom_target(dbschema_clean COMMENT "Cleaning schemas for all dbs...")
 
-  add_custom_target(
-    dbschema
-    DEPENDS dbschema_mysql
-            dbschema_postgres
-            dbschema_oracle
-            dbschema_dbtext
-            dbschema_db_berkeley
-            dbschema_db_sqlite
-            dbschema_mongodb
-            dbschema_db_redis
-            dbschema_pi_framework_mod
-            dbschema_pi_framework_table
-    COMMENT "Generating schemas for all dbs...")
-
-  add_custom_target(
-    dbschema_clean
-    DEPENDS dbschema_mysql_clean
-            dbschema_postgres_clean
-            dbschema_oracle_clean
-            dbschema_dbtext_clean
-            dbschema_db_berkeley_clean
-            dbschema_db_sqlite_clean
-            dbschema_mongodb_clean
-            dbschema_db_redis_clean
-            dbschema_pi_framework_mod_clean
-            dbschema_pi_framework_table_clean
-    COMMENT "Cleaning schemas for all dbs...")
+  if("xhttp_pi" IN_LIST FINAL_MODULES_LIST)
+    add_db_target(pi_framework_table "${STYLESHEETS}/pi_framework_table.xsl")
+    add_db_target(pi_framework_mod "${STYLESHEETS}/pi_framework_mod.xsl")
+    add_dependencies(dbschema dbschema_pi_framework_table
+                     dbschema_pi_framework_mod)
+    add_dependencies(dbschema_clean dbschema_pi_framework_table_clean
+                     dbschema_pi_framework_mod_clean)
+  endif()
+  if("db_mysql" IN_LIST FINAL_MODULES_LIST)
+    add_db_target(mysql "${STYLESHEETS}/mysql.xsl")
+    add_dependencies(dbschema dbschema_mysql)
+    add_dependencies(dbschema_clean dbschema_mysql_clean)
+  endif()
+  if("db_postgres" IN_LIST FINAL_MODULES_LIST)
+    add_db_target(postgres "${STYLESHEETS}/postgres.xsl")
+    add_dependencies(dbschema dbschema_postgres)
+    add_dependencies(dbschema_clean dbschema_postgres_clean)
+  endif()
+  if("db_oracle" IN_LIST FINAL_MODULES_LIST)
+    add_db_target(oracle "${STYLESHEETS}/oracle.xsl")
+    add_dependencies(dbschema dbschema_oracle)
+    add_dependencies(dbschema_clean dbschema_oracle_clean)
+  endif()
+  if("db_text" IN_LIST FINAL_MODULES_LIST)
+    add_db_target(dbtext "${STYLESHEETS}/dbtext.xsl")
+    add_dependencies(dbschema dbschema_dbtext)
+    add_dependencies(dbschema_clean dbschema_dbtext_clean)
+  endif()
+  if("db_berkeley" IN_LIST FINAL_MODULES_LIST)
+    add_db_target(db_berkeley "${STYLESHEETS}/db_berkeley.xsl")
+    add_dependencies(dbschema dbschema_db_berkeley)
+    add_dependencies(dbschema_clean dbschema_db_berkeley_clean)
+  endif()
+  if("db_sqlite" IN_LIST FINAL_MODULES_LIST)
+    add_db_target(db_sqlite "${STYLESHEETS}/db_sqlite.xsl")
+    add_dependencies(dbschema dbschema_db_sqlite)
+    add_dependencies(dbschema_clean dbschema_db_sqlite_clean)
+  endif()
+  if("db_mongodb" IN_LIST FINAL_MODULES_LIST)
+    add_db_target(mongodb "${STYLESHEETS}/mongodb.xsl")
+    add_dependencies(dbschema dbschema_mongodb)
+    add_dependencies(dbschema_clean dbschema_mongodb_clean)
+  endif()
+  if("db_redis" IN_LIST FINAL_MODULES_LIST)
+    add_db_target(db_redis "${STYLESHEETS}/db_redis.xsl")
+    add_dependencies(dbschema dbschema_db_redis)
+    add_dependencies(dbschema_clean dbschema_db_redis_clean)
+  endif()
 endif()
