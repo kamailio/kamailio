@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 id(int) table_name(str) table_version(int)
 METADATA_KEY
-1 
+1
 METADATA_READONLY
 0
 METADATA_LOGFLAGS
@@ -32,6 +32,10 @@ dbaliases|
 dbaliases|1
 dialog|
 dialog|7
+dialog_in|
+dialog_in|7
+dialog_out|
+dialog_out|7
 dialog_vars|
 dialog_vars|1
 dialplan|
