@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="dialog_in" xmlns:db="http://docbook.org/ns/docbook">
+	<name>dialog_in</name>
+	<version>7</version>
+	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
+	<description>
+		<db:para>Persistent dialog location information for the ims_dialog module.
+		More information can be found at:
+		<itemizedlist>
+		<listitem>
+		<ulink url="&KAMAILIO_MOD_DOC;ims_dialog.html">&KAMAILIO_MOD_DOC;ims_dialog.html</ulink>.
+		</listitem>
+		</itemizedlist>
+			</db:para>
+	</description>
+
+	<column id="id">
+		<name>id</name>
+		<type>unsigned int</type>
+		<size>&table_id_len;</size>
+		<autoincrement/>
+		<primary/>
+		<type db="dbtext">int,auto</type>
+		<description>unique ID</description>
+  </column>
+
+	<column id="hash_entry">
+		<name>hash_entry</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>Number of the hash entry in the dialog hash table
+		</description>
+		<natural/>
+	</column>
+
+	<column id="hash_id">
+		<name>hash_id</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>The ID on the hash entry</description>
+		<natural/>
+	</column>
+
+	<column>
+		<name>did</name>
+		<type>string</type>
+		<size>45</size>
+		<description></description>
+	</column>
+
+	<column>
+		<name>callid</name>
+		<type>string</type>
+		<size>&callid_len;</size>
+		<description>Call-ID of the dialog</description>
+	</column>
+
+	<column>
+		<name>from_uri</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+		<description>The URI of the FROM header (as per INVITE)</description>
+	</column>
+
+	<column>
+		<name>from_tag</name>
+		<type>string</type>
+		<size>&from_tag_len;</size>
+		<description>The tag parameter serves as a general mechanism to
+		identify a dialog, which is the combination of the Call-ID along
+		with two tags, one from participant in the dialog.</description>
+	</column>
+
+	<column>
+		<name>caller_original_cseq</name>
+		<type>string</type>
+		<size>20</size>
+		<description>Last Cseq number on the caller side.</description>
+	</column>
+
+	<column>
+		<name>req_uri</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+		<description>The URI of initial request in dialog</description>
+	</column>
+
+	<column>
+		<name>caller_route_set</name>
+		<type>string</type>
+		<size>&long_hf_len;</size>
+		<null/>
+		<description>Route set on the caller side.</description>
+	</column>
+
+	<column>
+		<name>caller_contact</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+		<description>Caller's contact uri.</description>
+	</column>
+
+	<column>
+		<name>caller_sock</name>
+		<type>string</type>
+		<size>&domain_len;</size>
+		<description>Local socket used to communicate with caller</description>
+	</column>
+
+	<column>
+		<name>timeout</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<default>0</default>
+		<description>The timestamp (unix time) when the dialog will expire.
+		</description>
+	</column>
+
+	<column>
+		<name>state</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>The state of the dialog.</description>
+	</column>
+
+	<column>
+		<name>start_time</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description>The timestamp (unix time) when the dialog was confirmed.
+		</description>
+	</column>
+
+	<column>
+		<name>sflags</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<default>0</default>
+		<description>The flags to set for dialog and accessible from config file.
+		</description>
+	</column>
+
+	<column>
+		<name>toroute_name</name>
+		<type>string</type>
+		<size>32</size>
+		<null/>
+		<description>The name of route to be executed at dialog timeout.
+		</description>
+	</column>
+
+  <column>
+		<name>toroute_index</name>
+		<type>unsigned int</type>
+		<size>10</size>
+		<description></description>
+		<natural/>
+	</column>
+
+	<index>
+		<name>hash_idx</name>
+		<colref linkend="hash_entry"/>
+		<colref linkend="hash_id"/>
+	</index>
+</table>
