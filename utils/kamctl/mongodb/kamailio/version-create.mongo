@@ -11,6 +11,8 @@ db.getCollection("version").insert({ table_name: "carrierroute", table_version: 
 db.getCollection("version").insert({ table_name: "cpl", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "dbaliases", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "dialog", table_version: NumberInt(7) });
+db.getCollection("version").insert({ table_name: "dialog_in", table_version: NumberInt(7) });
+db.getCollection("version").insert({ table_name: "dialog_out", table_version: NumberInt(7) });
 db.getCollection("version").insert({ table_name: "dialog_vars", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "dialplan", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "dispatcher", table_version: NumberInt(4) });
