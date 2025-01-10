@@ -45,7 +45,7 @@ endif()
 
 find_path(
   BerkeleyDB_INCLUDE_DIR
-  NAMES db_cxx.h
+  NAMES db.h
   HINTS ${_BerkeleyDB_homebrew_prefix}/include
   PATH_SUFFIXES
     4.8
