@@ -304,7 +304,7 @@ static int mod_init(void)
 		size_t len_comma = xhttp_prom_tags.len + 4;
 		xhttp_prom_tags_comma = shm_malloc(len_comma);
 		if(xhttp_prom_tags_comma == NULL) {
-			LM_ERR("cannot allocate memory for helper variable\n");
+			SHM_MEM_ERROR;
 			return -1;
 		}
 		memset(xhttp_prom_tags_comma, 0, len_comma);
@@ -314,7 +314,8 @@ static int mod_init(void)
 		size_t len_braces = xhttp_prom_tags.len + 4;
 		xhttp_prom_tags_braces = shm_malloc(len_braces);
 		if(xhttp_prom_tags_braces == NULL) {
-			LM_ERR("cannot allocate memory for helper variable\n");
+			SHM_MEM_ERROR;
+			shm_free(xhttp_prom_tags_comma);
 			return -1;
 		}
 		memset(xhttp_prom_tags_braces, 0, len_braces);
