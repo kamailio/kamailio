@@ -77,6 +77,8 @@ if("db_berkeley" IN_LIST FINAL_MODULES_LIST)
 endif()
 if("db_text" IN_LIST FINAL_MODULES_LIST)
   set(KAMDBCTL_DB_FILES ${KAMDBCTL_DB_FILES} kamdbctl.dbtext)
+  install(PROGRAMS dbtextdb/dbtextdb.py
+          DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl/dbtextdb)
 endif()
 if("db_mysql" IN_LIST FINAL_MODULES_LIST)
   set(KAMDBCTL_DB_FILES ${KAMDBCTL_DB_FILES} kamdbctl.mysql)
