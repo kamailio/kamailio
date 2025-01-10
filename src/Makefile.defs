@@ -492,7 +492,7 @@ endif
 
 ifeq ($(OS), freebsd)
 	doc_dir = share/doc/$(MAIN_NAME)/
-	man_dir = man/
+	man_dir = share/man/
 	data_dir = share/$(MAIN_NAME)/
 	LOCALBASE ?= /usr/local
 endif
