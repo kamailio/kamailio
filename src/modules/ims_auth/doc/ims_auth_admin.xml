@@ -690,6 +690,59 @@ route[REG_MAR_REPLY]
       is kept for backward compatibility, since it was named this way first
       time but it actually does user authentication.</para>
     </section>
+
+    <section>
+      <title><function moreinfo="none">ims_auth_data_set(key, op, op_c, amf)</function></title>
+
+	  <para>Set the key, op, op_c and amf to be used for AKAv1-MD5 authentication
+	  when av_mode parameter is set to 1 (authentication vector generated
+	  locally). It has to be used before the function for doing authentication.
+      </para>
+      <para>
+	  The parameters can be variables, their values can be retrieved from a backend
+	  (e.g., from database using sqlops module or from a REST API server using
+	  http_client module).
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>key</emphasis> - the SIM key</para>
+          <para><emphasis>op</emphasis> - the operator key (can be empty if op_c is set)</para>
+          <para><emphasis>op_c</emphasis> - the derived operator key (can be empty if op is set)</para>
+          <para><emphasis>amf</emphasis> - the amf code</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <example>
+        <title>ims_auth_data_set</title>
+
+        <programlisting format="linespecific">
+...
+ims_auth_data_set("...", "...", "...", "...");
+...
+</programlisting>
+      </example>
+    </section>
+
+	<section>
+      <title><function moreinfo="none">ims_auth_data_reset()</function></title>
+
+	  <para>Reset the authentication attributes when av_mode parameter is set to 1.</para>
+      <para>This function can be used from REQUEST_ROUTE.</para>
+
+      <example>
+        <title>ims_auth_data_reset</title>
+
+        <programlisting format="linespecific">
+...
+ims_auth_data_reset();
+...
+</programlisting>
+      </example>
+    </section>
+
   </section>
 
   <section>
