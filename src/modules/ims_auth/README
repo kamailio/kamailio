@@ -65,6 +65,8 @@ Carsten Bock
               4.4. ims_www_challenge(route_block, realm, algorithm)
               4.5. ims_proxy_challenge(route_block, realm, table)
               4.6. ims_proxy_authenticate(realm, table)
+              4.7. ims_auth_data_set(key, op, op_c, amf)
+              4.8. ims_auth_data_reset()
 
         5. Statistics
 
@@ -93,6 +95,8 @@ Carsten Bock
    1.18. ims_www_challenge usage
    1.19. ims_www_challenge usage
    1.20. proxy_authorize usage
+   1.21. ims_auth_data_set
+   1.22. ims_auth_data_reset
 
 Chapter 1. Admin Guide
 
@@ -131,6 +135,8 @@ Chapter 1. Admin Guide
         4.4. ims_www_challenge(route_block, realm, algorithm)
         4.5. ims_proxy_challenge(route_block, realm, table)
         4.6. ims_proxy_authenticate(realm, table)
+        4.7. ims_auth_data_set(key, op, op_c, amf)
+        4.8. ims_auth_data_reset()
 
    5. Statistics
 
@@ -386,6 +392,8 @@ modparam("ims_auth", "av_mode", 1)
    4.4. ims_www_challenge(route_block, realm, algorithm)
    4.5. ims_proxy_challenge(route_block, realm, table)
    4.6. ims_proxy_authenticate(realm, table)
+   4.7. ims_auth_data_set(key, op, op_c, amf)
+   4.8. ims_auth_data_reset()
 
 4.1. ims_www_authorize(realm, table)
 
@@ -590,6 +598,39 @@ e\n");
    It is same function as proxy_authenticate(realm, table). This name is
    kept for backward compatibility, since it was named this way first time
    but it actually does user authentication.
+
+4.7. ims_auth_data_set(key, op, op_c, amf)
+
+   Set the key, op, op_c and amf to be used for AKAv1-MD5 authentication
+   when av_mode parameter is set to 1 (authentication vector generated
+   locally). It has to be used before the function for doing
+   authentication.
+
+   The parameters can be variables, their values can be retrieved from a
+   backend (e.g., from database using sqlops module or from a REST API
+   server using http_client module).
+     * key - the SIM key
+       op - the operator key (can be empty if op_c is set)
+       op_c - the derived operator key (can be empty if op is set)
+       amf - the amf code
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.21. ims_auth_data_set
+...
+ims_auth_data_set("...", "...", "...", "...");
+...
+
+4.8. ims_auth_data_reset()
+
+   Reset the authentication attributes when av_mode parameter is set to 1.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.22. ims_auth_data_reset
+...
+ims_auth_data_reset();
+...
 
 5. Statistics
 
