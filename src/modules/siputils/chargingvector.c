@@ -86,6 +86,9 @@ static void sip_generate_charging_vector(char *pcv, const unsigned int maxsize)
 	static struct in_addr ip = {0};
 	unsigned char newConferenceIdentifier[SIZE_CONF_ID] = {0};
 	int len = SIZE_CONF_ID;
+	int i;
+	char *ptr = NULL;
+	char *endptr = NULL;
 
 	/* if supplied buffer cannot carry 16 (SIZE_CONF_ID) hex characters and a null
 		terminator (=33 bytes), then reduce length of generated icid-value */
@@ -143,10 +146,10 @@ static void sip_generate_charging_vector(char *pcv, const unsigned int maxsize)
 		idx++;
 	}
 	LM_DBG("PCV generate\n");
-	char *ptr = pcv;
-	const char *endptr = ptr + maxsize - 1;
+	ptr = pcv;
+	endptr = ptr + maxsize - 1;
 
-	for(int i = 0; i < len && ptr < endptr; i++) {
+	for(i = 0; i < len && ptr < endptr; i++) {
 		ptr += snprintf(ptr, 3, "%02X", newConferenceIdentifier[i]);
 	}
 }
