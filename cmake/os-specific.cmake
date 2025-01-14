@@ -12,6 +12,9 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "DragonFly")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # Mac OS X specific flags
   include(${OS_SPECIFIC_DIR}/darwin.cmake)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+  # FreeBSD specific flags
+  include(${OS_SPECIFIC_DIR}/freebsd.cmake)
 elseif()
   message(FATAL_ERROR "Unsupported system: ${CMAKE_SYSTEM_NAME}")
 endif()
