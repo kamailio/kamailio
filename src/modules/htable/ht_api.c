@@ -496,9 +496,7 @@ int ht_set_cell_ex(
 						it->value.s.s[it->value.s.len] = '\0';
 
 						if(exv <= 0) {
-							if(ht->updateexpire) {
-								it->expire = now + ht->htexpire;
-							}
+							HT_UPDATE_EXPIRE(ht, it, now);
 						} else {
 							it->expire = now + exv;
 						}
@@ -514,11 +512,7 @@ int ht_set_cell_ex(
 						cell->next = it->next;
 						cell->prev = it->prev;
 						if(exv <= 0) {
-							if(ht->updateexpire) {
-								cell->expire = now + ht->htexpire;
-							} else {
-								cell->expire = it->expire;
-							}
+							HT_COPY_EXPIRE(ht, cell, now, it);
 						} else {
 							it->expire = now + exv;
 						}
@@ -535,9 +529,7 @@ int ht_set_cell_ex(
 					it->value.n = val->n;
 
 					if(exv <= 0) {
-						if(ht->updateexpire) {
-							it->expire = now + ht->htexpire;
-						}
+						HT_UPDATE_EXPIRE(ht, it, now);
 					} else {
 						it->expire = now + exv;
 					}
@@ -556,11 +548,7 @@ int ht_set_cell_ex(
 						return -1;
 					}
 					if(exv <= 0) {
-						if(ht->updateexpire) {
-							cell->expire = now + ht->htexpire;
-						} else {
-							cell->expire = it->expire;
-						}
+						HT_COPY_EXPIRE(ht, cell, now, it);
 					} else {
 						it->expire = now + exv;
 					}
@@ -578,9 +566,7 @@ int ht_set_cell_ex(
 					it->value.n = val->n;
 
 					if(exv <= 0) {
-						if(ht->updateexpire) {
-							it->expire = now + ht->htexpire;
-						}
+						HT_UPDATE_EXPIRE(ht, it, now);
 					} else {
 						it->expire = now + exv;
 					}
