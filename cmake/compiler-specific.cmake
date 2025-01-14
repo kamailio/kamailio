@@ -8,7 +8,7 @@ option(PROFILE "Enable profiling" OFF)
 add_library(common_compiler_flags INTERFACE)
 
 # Define the flags for the C compiler
-if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
 
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
