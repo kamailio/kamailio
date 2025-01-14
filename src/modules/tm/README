@@ -1275,16 +1275,17 @@ Note
 
    See also: t_set_fr(), fr_timer.
 
-   In Kamailio compatibility mode (defined by #!KAMAILIO), the value of
-   the parameter must be the name of an AVP in pseudo-variable format:
-   $avp(name). In SER compatibility mode it must be just AVP name.
+   In Kamailio compatibility mode (defined by #!KAMAILIO, which is
+   default), the value of the parameter must be the name of an AVP in
+   pseudo-variable format: $avp(name). In SER compatibility mode (defined
+   by #!SER) it must be just AVP name.
 
    Example 1.28. Set fr_timer_avp parameter
 ...
-# Kamailio mode
-modparam("tm", "fr_timer_avp", "$avp(i:708)")
-# Old SER mode
-modparam("tm", "fr_timer_avp", "i:708")
+# default Kamailio compatibility mode
+modparam("tm", "fr_timer_avp", "$avp(frtimer)")
+# old SER compatibility mode
+modparam("tm", "fr_timer_avp", "frtimer")
 ...
 
 3.28. fr_inv_timer_avp (string)
@@ -1309,15 +1310,16 @@ Note
 
    See also: t_set_fr(), fr_inv_timer.
 
-   In Kamailio compatibility mode (defined by #!KAMAILIO), the value of
-   the parameter must be the name of an AVP in pseudo-variable format:
-   $avp(name). In SER compatibility mode it must by just AVP name.
+   In Kamailio compatibility mode (defined by #!KAMAILIO, which is
+   default), the value of the parameter must be the name of an AVP in
+   pseudo-variable format: $avp(name). In SER compatibility mode (defined
+   by #!SER) it must by just AVP name.
 
    Example 1.29. Set fr_inv_timer_avp parameter
 ...
-# Kamailio mode
+# Kamailio compatibility mode
 modparam("tm", "fr_inv_timer_avp", "$avp(my_fr_inv_timer)")
-# Old SER mode
+# old SER compatibility mode
 modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
 ...
 
