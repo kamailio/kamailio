@@ -14,6 +14,8 @@ message(STATUS "OS version: ${OSREL}")
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i486|i586|i686")
   set(TARGET_ARCH "i386")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
+  set(TARGET_ARCH "x86_64")
 else()
   set(TARGET_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
 endif()
@@ -139,7 +141,7 @@ option(USE_FAST_LOCK "Use fast locking if available" ON)
 # Check the system processor type and set USE_FAST_LOCK accordingly
 if(USE_FAST_LOCK)
   if(CMAKE_SYSTEM_PROCESSOR MATCHES
-     "i386|i486|i586|i686|x86_64|sparc64|sparc|ppc|ppc64|alpha|mips2|mips64")
+     "i386|i486|i586|i686|x86_64|amd64|sparc64|sparc|ppc|ppc64|alpha|mips2|mips64")
     set(USE_FAST_LOCK YES)
   elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
     set(USE_FAST_LOCK NO)
