@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+
+]>
+
+<table id="subscriber_scscf" xmlns:db="http://docbook.org/ns/docbook">
+    <name>subscriber_scscf</name>
+    <version>6</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Table for storage engine for SCSCF contacts. More information at:
+            <itemizedlist>
+                <listitem>
+                    <ulink url="&KAMAILIO_MOD_DOC;ims_usrloc_scscf.html">&KAMAILIO_MOD_DOC;ims_usrloc_scscf.html</ulink>.
+                </listitem>
+            </itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+      <name>id</name>
+      <type>int</type>
+      <size>&table_id_len;</size>
+      <autoincrement/>
+      <primary/>
+      <type db="dbtext">int,auto</type>
+      <description>Unique ID</description>
+    </column>
+
+    <column id="watcher_uri">
+      <name>watcher_uri</name>
+      <type>string</type>
+      <size>100</size>
+      <description>Watcher URI</description>
+    </column>
+
+    <column id="watcher_contact">
+      <name>watcher_contact</name>
+      <type>string</type>
+      <size>100</size>
+      <description>Watcher Contact</description>
+    </column>
+
+    <column id="presentity_uri">
+      <name>presentity_uri</name>
+      <type>string</type>
+      <size>100</size>
+    </column>
+
+    <column id="event">
+      <name>event</name>
+      <type>int</type>
+      <size>11</size>
+      <description>Event</description>
+    </column>
+
+    <column id="expires">
+        <name>expires</name>
+        <type>datetime</type>
+        <type db="db_redis">time</type>
+        <description>Date and time when this entry expires.</description>
+    </column>
+
+    <column id="version">
+      <name>version</name>
+      <type>int</type>
+      <size>11</size>
+      <description>Version</description>
+    </column>
+
+    <column id="local_cseq">
+      <name>local_cseq</name>
+      <type>int</type>
+      <size>11</size>
+      <description>CSeq</description>
+    </column>
+
+    <column id="call_id">
+      <name>call_id</name>
+      <type>string</type>
+      <size>50</size>
+      <description>Call-ID</description>
+    </column>
+
+    <column id="from_tag">
+      <name>from_tag</name>
+      <type>string</type>
+      <size>50</size>
+      <description>From TAG</description>
+    </column>
+
+    <column id="to_tag">
+      <name>to_tag</name>
+      <type>string</type>
+      <size>50</size>
+      <description>To TAG</description>
+    </column>
+
+    <column id="record_route">
+      <name>record_route</name>
+      <type>text</type>
+      <description>record_route</description>
+    </column>
+
+    <column id="sockinfo_str">
+      <name>sockinfo_str</name>
+      <type>string</type>
+      <size>50</size>
+      <description>sockinfo</description>
+    </column>
+
+    <index>
+      <name>contact</name>
+      <colref linkend="event"/>
+      <colref linkend="watcher_contact"/>
+      <colref linkend="presentity_uri"/>
+      <unique/>
+    </index>
+</table>
