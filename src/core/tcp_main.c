@@ -1739,7 +1739,8 @@ struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
 			print_ip("ip=", &a->parent->rcv.src_ip, "\n");
 #endif
 			if((a->parent->state != S_CONN_BAD) && (port == a->port)
-					&& ((l_port == 0) || (l_port == a->parent->rcv.dst_port))
+					&& ((l_port == 0) || (l_port == a->parent->rcv.dst_port)
+							|| (l_port == a->parent->cinfo.dst_port))
 					&& (ip_addr_cmp(ip, &a->parent->rcv.src_ip))
 					&& (is_local_ip_any
 							|| ip_addr_cmp(l_ip, &a->parent->rcv.dst_ip)
