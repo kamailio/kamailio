@@ -627,7 +627,11 @@ int check_cl(sip_msg_t *msg)
 		}
 		LM_DBG("check_cl passed\n");
 	} else {
-		LM_WARN("content length header missing in request\n");
+		if(msg->rcv.proto != PROTO_UDP && msg->rcv.proto != PROTO_SCTP) {
+			LM_WARN("content length header missing in request\n");
+		} else {
+			LM_DBG("content length header missing in request\n");
+		}
 	}
 
 	return SANITY_CHECK_PASSED;
