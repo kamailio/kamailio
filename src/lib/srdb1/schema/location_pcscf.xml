@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="location" xmlns:db="http://docbook.org/ns/docbook">
+    <name>location</name>
+    <version>7</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>Persistent user location information for the ims_usrloc_pcscf module.
+			More information can be found at:
+			<itemizedlist>
+			<listitem>
+			<ulink url="&KAMAILIO_MOD_DOC;ims_usrloc_pcscf.html">&KAMAILIO_MOD_DOC;ims_usrloc_pcscf.html</ulink>.
+			</listitem>
+			</itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+      <name>id</name>
+      <type>unsigned int</type>
+      <size>&table_id_len;</size>
+      <autoincrement/>
+      <primary/>
+      <type db="dbtext">int,auto</type>
+      <description>unique ID</description>
+    </column>
+
+    <column id="domain">
+      <name>domain</name>
+      <type>string</type>
+      <size>&domain_len;</size>
+      <description>Domain name</description>
+    </column>
+
+    <column id="aor">
+      <name>aor</name>
+      <type>string</type>
+      <size>255</size>
+      <description>Address-of-Record</description>
+    </column>
+
+    <column id="host">
+      <name>host</name>
+      <type>string</type>
+      <size>100</size>
+      <description>Hostn</description>
+    </column>
+
+    <column id="port">
+      <name>port</name>
+      <type>int</type>
+      <size>10</size>
+      <description>Port</description>
+    </column>
+
+    <column id="received">
+      <name>received</name>
+      <type>string</type>
+      <size>&socket_len;</size>
+      <null/>
+      <default><null/></default>
+      <description>Received IP:PORT in the format SIP:IP:PORT</description>
+    </column>
+
+    <column id="received_port">
+      <name>received_port</name>
+      <type>unsigned int</type>
+      <size>10</size>
+      <null/>
+      <default><null/></default>
+      <description>Port</description>
+    </column>
+
+    <column id="received_proto">
+      <name>received_proto</name>
+      <type>unsigned int</type>
+      <size>10</size>
+      <null/>
+      <default><null/></default>
+      <description>Received protocol</description>
+    </column>
+
+    <column id="path">
+      <name>path</name>
+      <type>string</type>
+      <size>&long_hf_len;</size>
+      <null/>
+      <default><null/></default>
+      <description>Path Header(s) per RFC 3327</description>
+    </column>
+
+    <column id="rinstance">
+      <name>rinstance</name>
+      <type>string</type>
+      <size>&hf_len;</size>
+      <null/>
+      <default><null/></default>
+      <description>rinstance</description>
+    </column>
+
+    <column id="rx_session_id">
+      <name>rx_session_id</name>
+      <type>string</type>
+      <size>256</size>
+      <null/>
+      <default><null/></default>
+      <description>rx_session_id</description>
+    </column>
+
+    <column id="reg_state">
+      <name>reg_state</name>
+      <type>char</type>
+      <size>4</size>
+      <null/>
+      <default><null/></default>
+      <description>public identity Registration State</description>
+    </column>
+
+    <column id="expires">
+      <name>expires</name>
+      <type>datetime</type>
+      <type db="db_redis">time</type>
+      <null/>
+      <default>&DEFAULT_LOCATION_EXPIRES;</default>
+      <default db="oracle">to_date('&DEFAULT_LOCATION_EXPIRES;','yyyy-mm-dd hh24:mi:ss')</default>
+      <description>Date and time when this entry expires.</description>
+    </column>
+
+    <column id="service_routes">
+      <name>service_routes</name>
+      <type>string</type>
+      <size>2048</size>
+      <null/>
+      <default><null/></default>
+      <description>service_routes</description>
+    </column>
+
+    <column id="socket">
+      <name>socket</name>
+      <type>string</type>
+      <size>64</size>
+      <null/>
+      <default><null/></default>
+      <description>socket</description>
+    </column>
+
+    <column id="public_ids">
+      <name>public_ids</name>
+      <type>string</type>
+      <size>2048</size>
+      <null/>
+      <default><null/></default>
+      <description>public_ids</description>
+    </column>
+
+    <column id="security_type">
+      <name>security_type</name>
+      <type>int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>security_type</description>
+    </column>
+
+    <column id="protocol">
+      <name>protocol</name>
+      <type>string</type>
+      <size>5</size>
+      <null/>
+      <default><null/></default>
+      <description>protocol</description>
+    </column>
+
+    <column id="mode">
+      <name>mode</name>
+      <type>string</type>
+      <size>10</size>
+      <null/>
+      <default><null/></default>
+      <description>mode</description>
+    </column>
+
+    <column id="ck">
+      <name>ck</name>
+      <type>string</type>
+      <size>100</size>
+      <null/>
+      <default><null/></default>
+      <description>ck</description>
+    </column>
+
+    <column id="ik">
+      <name>ik</name>
+      <type>string</type>
+      <size>100</size>
+      <null/>
+      <default><null/></default>
+      <description>ik</description>
+    </column>
+
+    <column id="ealg">
+      <name>ealg</name>
+      <type>string</type>
+      <size>20</size>
+      <null/>
+      <default><null/></default>
+      <description>ealg</description>
+    </column>
+
+    <column id="ialg">
+      <name>ialg</name>
+      <type>string</type>
+      <size>20</size>
+      <null/>
+      <default><null/></default>
+      <description>ialg</description>
+    </column>
+
+    <column id="port_pc">
+      <name>port_pc</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>port_pc</description>
+    </column>
+
+    <column id="port_ps">
+      <name>port_ps</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>port_ps</description>
+    </column>
+
+    <column id="port_uc">
+      <name>port_uc</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>port_uc</description>
+    </column>
+
+    <column id="port_us">
+      <name>port_us</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>port_us</description>
+    </column>
+
+    <column id="spi_pc">
+      <name>spi_pc</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>spi_pc</description>
+    </column>
+
+    <column id="spi_ps">
+      <name>spi_ps</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>spi_ps</description>
+    </column>
+
+    <column id="spi_uc">
+      <name>spi_uc</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>spi_uc</description>
+    </column>
+
+    <column id="spi_us">
+      <name>spi_us</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>spi_us</description>
+    </column>
+
+    <column id="t_security_type">
+      <name>t_security_type</name>
+      <type>int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>t_security_type</description>
+    </column>
+
+    <column id="t_protocol">
+      <name>t_protocol</name>
+      <type>string</type>
+      <size>5</size>
+      <null/>
+      <default><null/></default>
+      <description>t_protocol</description>
+    </column>
+
+    <column id="t_mode">
+      <name>t_mode</name>
+      <type>string</type>
+      <size>10</size>
+      <null/>
+      <default><null/></default>
+      <description>t_mode</description>
+    </column>
+
+    <column id="t_ck">
+      <name>t_ck</name>
+      <type>string</type>
+      <size>100</size>
+      <null/>
+      <default><null/></default>
+      <description>t_ck</description>
+    </column>
+
+    <column id="t_ik">
+      <name>t_ik</name>
+      <type>string</type>
+      <size>100</size>
+      <null/>
+      <default><null/></default>
+      <description>t_ik</description>
+    </column>
+
+    <column id="t_ealg">
+      <name>t_ealg</name>
+      <type>string</type>
+      <size>20</size>
+      <null/>
+      <default><null/></default>
+      <description>t_ealg</description>
+    </column>
+
+    <column id="t_ialg">
+      <name>t_ialg</name>
+      <type>string</type>
+      <size>20</size>
+      <null/>
+      <default><null/></default>
+      <description>t_ialg</description>
+    </column>
+
+    <column id="t_port_pc">
+      <name>t_port_pc</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>t_port_pc</description>
+    </column>
+
+    <column id="t_port_ps">
+      <name>t_port_ps</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>t_port_ps</description>
+    </column>
+
+    <column id="t_port_uc">
+      <name>t_port_uc</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>t_port_uc</description>
+    </column>
+
+    <column id="t_port_us">
+      <name>t_port_us</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>t_port_us</description>
+    </column>
+
+    <column id="t_spi_pc">
+      <name>t_spi_pc</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>t_spi_pc</description>
+    </column>
+
+    <column id="t_spi_ps">
+      <name>t_spi_ps</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>t_spi_ps</description>
+    </column>
+
+    <column id="t_spi_uc">
+      <name>t_spi_uc</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>t_spi_uc</description>
+    </column>
+
+    <column id="t_spi_us">
+      <name>t_spi_us</name>
+      <type>unsigned int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+      <description>t_spi_us</description>
+    </column>
+
+    <index>
+      <name>aor_idx</name>
+      <colref linkend="aor"/>
+    </index>
+</table>
