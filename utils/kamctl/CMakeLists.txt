@@ -29,22 +29,8 @@ if("db_sqlite" IN_LIST FINAL_MODULES_LIST)
   set(KAMCTL_DB_FILES ${KAMCTL_DB_FILES} kamctl.sqlite)
 endif()
 
-# Install kamctl and it's database files
-add_custom_command(
-  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/kamctl"
-  COMMAND
-    sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e
-    "s#/usr/local/lib/kamailio#${LIB_DIR}#g" -e
-    "s#/usr/local/etc/kamailio#${CFG_DIR}#g" <
-    ${CMAKE_CURRENT_SOURCE_DIR}/kamctl > ${CMAKE_CURRENT_BINARY_DIR}/kamctl
-  COMMENT "Processed kamctl with sed")
-install(
-  PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/kamctl
-  DESTINATION ${CMAKE_INSTALL_SBINDIR}
-  COMPONENT kamailio-utils-bin)
-
 # Create the depependencies list for the target kamctl
-set(KAMCTL_DEPENDENCIES "${CMAKE_CURRENT_BINARY_DIR}/kamctl")
+set(KAMCTL_DEPENDENCIES "")
 
 # Install kamctl.base and the rest
 foreach(file IN LISTS KAMCTL_BASE_FILES KAMCTL_DB_FILES)
@@ -64,10 +50,21 @@ foreach(file IN LISTS KAMCTL_BASE_FILES KAMCTL_DB_FILES)
 endforeach()
 
 # Kamctl target to depend on all kamctl files
+# Install kamctl and it's database files
 add_custom_target(
   kamctl ALL
+  COMMAND
+    sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e
+    "s#/usr/local/lib/kamailio#${LIB_DIR}#g" -e
+    "s#/usr/local/etc/kamailio#${CFG_DIR}#g" <
+    ${CMAKE_CURRENT_SOURCE_DIR}/kamctl > ${CMAKE_CURRENT_BINARY_DIR}/kamctl
   DEPENDS ${KAMCTL_DEPENDENCIES}
   COMMENT "Build kamctl and its dependencies")
+
+install(
+  PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/kamctl
+  DESTINATION ${CMAKE_INSTALL_SBINDIR}
+  COMPONENT kamailio-utils-bin)
 
 # Setup and install kamdbctl stuff
 set(KAMDBCTL_BASE_FILES kamdbctl.base)
@@ -94,20 +91,7 @@ if("db_sqlite" IN_LIST FINAL_MODULES_LIST)
 endif()
 
 # Install kamdbctl
-add_custom_command(
-  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/kamdbctl"
-  COMMAND
-    sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e
-    "s#/usr/local/lib/kamailio#${LIB_DIR}#g" -e
-    "s#/usr/local/etc/kamailio#${CFG_DIR}#g" <
-    ${CMAKE_CURRENT_SOURCE_DIR}/kamdbctl > ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl
-  COMMENT "Processed kamdbctl with sed")
-install(
-  PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl
-  DESTINATION ${CMAKE_INSTALL_SBINDIR}
-  COMPONENT kamailio-utils-bin)
-
-set(KAMDB_DEPENDENCIES "${CMAKE_CURRENT_BINARY_DIR}/kamdbctl")
+set(KAMDB_DEPENDENCIES "")
 
 foreach(file IN LISTS KAMDBCTL_BASE_FILES KAMDBCTL_DB_FILES)
   list(APPEND KAMDB_DEPENDENCIES "${CMAKE_CURRENT_BINARY_DIR}/${file}")
@@ -128,8 +112,18 @@ endforeach()
 
 add_custom_target(
   kamdbctl ALL
+  COMMAND
+    sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e
+    "s#/usr/local/lib/kamailio#${LIB_DIR}#g" -e
+    "s#/usr/local/etc/kamailio#${CFG_DIR}#g" <
+    ${CMAKE_CURRENT_SOURCE_DIR}/kamdbctl > ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl
   DEPENDS ${KAMDB_DEPENDENCIES}
   COMMENT "Build kamdbctl and its dependencies")
+
+install(
+  PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl
+  DESTINATION ${CMAKE_INSTALL_SBINDIR}
+  COMPONENT kamailio-utils-bin)
 
 # Install the configuration file (kamctlrc) using a CODE block to check
 # existence at install time instead of configure time
