@@ -3,7 +3,11 @@ cmake_minimum_required(VERSION 3.10)
 # Use cmake -DCMAKE_SYSTEM_NAME .. for cross-compiling (inside build directory)
 
 # Set the project name
-project(kamailio VERSION 6.0.0)
+project(
+  kamailio
+  VERSION 6.0.0
+  DESCRIPTION "Kamailio SIP Server"
+  HOMEPAGE_URL "https://www.kamailio.org")
 
 # Set the version number
 set(EXTRAVERSION "-pre0")
