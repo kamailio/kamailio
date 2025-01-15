@@ -274,8 +274,10 @@ else()
          OR db_name STREQUAL "dbtext"
          OR db_name STREQUAL "mongodb")
         set(prefix '')
+        set(folder_suffix "${MAIN_NAME}")
       else()
         set(prefix "${table}-")
+        set(folder_suffix '')
       endif()
 
       add_custom_command(
@@ -283,7 +285,8 @@ else()
         PRE_BUILD
         COMMAND
           XML_CATALOG_FILES=${CATALOG} ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS}
-          --stringparam dir ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}
+          --stringparam dir
+          ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}/${folder_suffix}
           --stringparam prefix ${prefix} --stringparam db ${db_name} ${xsl_file}
           "kamailio-${table}.xml"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema"
