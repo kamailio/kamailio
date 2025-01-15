@@ -20,6 +20,7 @@ else
 	DEFS += -I$(LOCALBASE)/include
 	LIBS += -L$(LOCALBASE)/lib -lwebsockets
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules
 

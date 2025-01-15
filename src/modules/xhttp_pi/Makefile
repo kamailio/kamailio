@@ -25,6 +25,7 @@ else
 		-I$(LOCALBASE)/include
 	LIBS += -L$(LOCALBASE)/lib -lxml2
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules
 

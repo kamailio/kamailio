@@ -16,6 +16,6 @@ else
 	DEFS +=-I$(LOCALBASE)/include -I$(SYSBASE)/include
 	LIBS+=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lmemcached
 endif
-
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules
