@@ -137,6 +137,19 @@ endif()
 # -----------------------
 
 option(USE_FAST_LOCK "Use fast locking if available" ON)
+
+# TODO: Discuss if we need to expose this to the user to choose between
+# different locking methods
+
+# set(locking_methods FAST_LOCK USE_FUTEX USE_PTHREAD_MUTEX USE_POSIX_SEM
+#                     USE_SYSV_SEM)
+# set(LOCK_METHOD
+#     ""
+#     CACHE STRING "Locking method to use. Fast-lock if available is default")
+# # List of locking methods in option
+# set_property(CACHE LOCK_METHOD PROPERTY STRINGS ${locking_methods})
+# mark_as_advanced(LOCK_METHOD)
+
 # Fast-lock not available for all platforms like mips
 # Check the system processor type and set USE_FAST_LOCK accordingly
 if(USE_FAST_LOCK)
@@ -166,19 +179,14 @@ endif()
 # Add definitions if USE_FAST_LOCK is YES
 message(STATUS "Fast lock available: ${USE_FAST_LOCK}")
 if(USE_FAST_LOCK)
+  # If fast lock is available, add the definitions for it, else each OS will
+  # have its own locking method
   target_compile_definitions(common INTERFACE FAST_LOCK ADAPTIVE_WAIT
                                               ADAPTIVE_WAIT_LOOPS=1024)
 endif()
 
-# List of locking methods in option
-set(locking_methods USE_FUTEX USE_PTHREAD_MUTEX USE_POSIX_SEM USE_SYSV_SEM)
-set(LOCK_METHOD
-    USE_FUTEX
-    CACHE STRING "Locking method to use")
-set_property(CACHE LOCK_METHOD PROPERTY STRINGS ${locking_methods})
-
 # set(LOCKING_DEFINITION "${locking_method}")
-message(STATUS "Locking method: ${LOCK_METHOD}")
+# message(STATUS "Locking method: ${LOCK_METHOD}")
 
 # -----------------------
 # Setting all the flags from options
@@ -320,7 +328,6 @@ target_compile_definitions(
             # Absolute path this run is always /var/run/kamailio either for
             # local or system installs
             RUN_DIR="${RUN_PREFIX}/${RUN_DIR}"
-            ${LOCK_METHOD}
             # Module stuff?
             # PIC
             # TODO: We can use the generator expression to define extra flags
@@ -332,7 +339,6 @@ target_link_libraries(common INTERFACE common_compiler_flags)
 # -----------------------
 add_library(common_modules INTERFACE)
 target_compile_options(common_modules INTERFACE -fPIC)
-
 # TODO: Do we need all the option from common as well?
 target_link_libraries(common_modules INTERFACE common)
 

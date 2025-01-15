@@ -1,7 +1,4 @@
-message(
-  STATUS
-    "Configuring for FreeBSD"
-)
+message(STATUS "Configuring for FreeBSD")
 
 target_compile_definitions(
   common
@@ -12,23 +9,21 @@ target_compile_definitions(
             HAVE_MSGHDR_MSG_CONTROL
             HAVE_CONNECT_ECONNRESET_BUG
             HAVE_TIMEGM
-            HAVE_IP_MREQN
-)
+            HAVE_IP_MREQN)
 
 if(${RAW_SOCKS})
   target_compile_definitions(common INTERFACE USE_RAW_SOCKS)
 endif()
 
-message(STATUS "USE_FAST_LOCK = ${USE_FAST_LOCK}")
 if(NOT ${USE_FAST_LOCK})
   target_compile_definitions(common INTERFACE USE_PTHREAD_MUTEX)
 endif()
 
-if(NOT DEFINED ${NO_SELECT})
+if(NOT ${NO_SELECT})
   target_compile_definitions(common INTERFACE HAVE_SELECT)
 endif()
 
-if(NOT DEFINED ${NO_KQUEUE})
+if(NOT ${NO_KQUEUE})
   target_compile_definitions(common INTERFACE HAVE_KQUEUE)
 endif()
 

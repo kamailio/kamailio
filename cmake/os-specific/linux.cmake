@@ -10,44 +10,42 @@ target_compile_definitions(
             HAVE_ALLOCA_H
             HAVE_TIMEGM
             HAVE_SCHED_SETSCHEDULER
-            HAVE_IP_MREQN
-)
+            HAVE_IP_MREQN)
+
 if(${RAW_SOCKS})
   target_compile_definitions(common INTERFACE USE_RAW_SOCKS)
 endif()
 
-message(STATUS "USE_FAST_LOCK = ${USE_FAST_LOCK}")
 if(NOT ${USE_FAST_LOCK})
   target_compile_definitions(common INTERFACE USE_PTHREAD_MUTEX)
   target_link_libraries(common INTERFACE pthread)
+  message(
+    STATUS "FAST_LOCK not available on this platform, using: USE_PTHREAD_MUTEX")
 else()
+  # TODO: Check if this can be reached. Right now it is not possible to set
+  # LOCK_METHOD, only USE_FAST_LOCK. This branch is reached when USE_FAST_LOCK
+  # is set to true (meaning it is available on platform).
   # Check if lock_method is posix or pthread
-  if(LOCK_METHOD STREQUAL "USE_POSIX_SEM" OR LOCK_METHOD STREQUAL
-                                             "USE_PTHREAD_MUTEX"
-  )
-    message(STATUS "Using ${LOCK_METHOD} for locks")
-    target_link_libraries(common INTERFACE pthread)
-  endif()
-
+  # if(LOCK_METHOD STREQUAL "USE_POSIX_SEM" OR LOCK_METHOD STREQUAL
+  #                                            "USE_PTHREAD_MUTEX")
+  #   message(STATUS "Using ${LOCK_METHOD} for locks")
+  #   target_link_libraries(common INTERFACE pthread)
+  # endif()
 endif()
 
-if(NOT DEFINED ${NO_SELECT})
+if(NOT NO_SELECT)
   target_compile_definitions(common INTERFACE HAVE_SELECT)
 endif()
 
 # TODO introduce check for epoll
-if(NOT DEFINED ${NO_EPOLL})
+if(NOT NO_EPOLL)
   target_compile_definitions(common INTERFACE HAVE_EPOLL)
 endif()
 
 # TODO introduce check for sigio
-if(NOT DEFINED ${NO_SIGIO})
-  target_compile_definitions(
-    common INTERFACE HAVE_SIGIO_RT SIGINFO64_WORKAROUND
-  )
+if(NOT NO_SIGIO_RT)
+  target_compile_definitions(common INTERFACE HAVE_SIGIO_RT
+                                              SIGINFO64_WORKAROUND)
 endif()
 
 # TODO introduce check for futex
-if(NOT DEFINED ${USE_FUTEX})
-  target_compile_definitions(common INTERFACE USE_FUTEX)
-endif()

@@ -16,31 +16,29 @@ target_compile_definitions(
             HAVE_CONNECT_ECONNRESET_BUG
             HAVE_TIMEGM
             USE_SIGWAIT
-            HAVE_IP_MREQN
-)
+            HAVE_IP_MREQN)
 
 target_link_libraries(common INTERFACE resolv)
 
-message(STATUS "USE_FAST_LOCK = ${USE_FAST_LOCK}")
 if(NOT ${USE_FAST_LOCK})
   target_compile_definitions(common INTERFACE USE_PTHREAD_MUTEX USE_SYSV_SEM)
 endif()
 
 set(CMAKE_MODULE_LINKER_FLAGS
-    "${CMAKE_MODULE_LINKER_FLAGS} -bundle -flat_namespace -undefined suppress"
-)
+    "${CMAKE_MODULE_LINKER_FLAGS} -bundle -flat_namespace -undefined suppress")
 set(CMAKE_SHARED_LINKER_FLAGS
     "${CMAKE_SHARED_LINKER_FLAGS} -dynamiclib -flat_namespace -undefined suppress"
 )
 
-if(NOT DEFINED ${NO_SELECT})
+if(NOT NO_SELECT)
   target_compile_definitions(common INTERFACE HAVE_SELECT)
 endif()
 
-if(NOT DEFINED ${NO_KQUEUE})
+if(NOT NO_KQUEUE)
   target_compile_definitions(common INTERFACE HAVE_KQUEUE)
 endif()
 
+# TODO: Chek if we need this in favor of GnuInstallDir alternative
 if(NOT DEFINED RUN_PREFIX)
   set(RUN_PREFIX "/var")
 endif()
