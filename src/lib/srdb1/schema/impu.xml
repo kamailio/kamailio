@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+
+]>
+
+<table id="impu" xmlns:db="http://docbook.org/ns/docbook">
+    <name>impu</name>
+    <version>6</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Table for Session Control Function (SCF) in IMS. More information at:
+            <itemizedlist>
+                <listitem>
+                    <ulink url="&KAMAILIO_MOD_DOC;ims_usrloc_scscf.html">&KAMAILIO_MOD_DOC;ims_usrloc_scscf.html</ulink>.
+                </listitem>
+            </itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+      <name>id</name>
+      <type>int</type>
+      <size>&table_id_len;</size>
+      <autoincrement/>
+      <primary/>
+      <type db="dbtext">int,auto</type>
+      <description>Unique ID</description>
+    </column>
+
+    <column id="impu_field">
+      <name>impu</name>
+      <type>string</type>
+      <size>64</size>
+    </column>
+
+    <column id="barring">
+      <name>barring</name>
+      <type>int</type>
+      <size>1</size>
+      <null/>
+      <default>0</default>
+    </column>
+
+    <column id="reg_state">
+      <name>reg_state</name>
+      <type>int</type>
+      <size>11</size>
+      <null/>
+      <default>0</default>
+    </column>
+
+    <column id="ccf1">
+      <name>ccf1</name>
+      <type>string</type>
+      <size>64</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="ccf2">
+      <name>ccf2</name>
+      <type>string</type>
+      <size>64</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="ecf1">
+      <name>ecf1</name>
+      <type>string</type>
+      <size>64</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="ecf2">
+      <name>ecf2</name>
+      <type>string</type>
+      <size>64</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="ims_subscription_data">
+      <name>ims_subscription_data</name>
+      <type>binary</type>
+      <null/>
+    </column>
+
+    <index>
+      <name>impu</name>
+      <colref linkend="impu_field"/>
+      <unique/>
+	  </index>
+</table>
