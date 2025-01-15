@@ -1,0 +1,30 @@
+	<!-- Declaration of ro_session table-->
+	<db_table id="ro_session">
+		<table_name>ro_session</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>hash_entry</field><type>DB1_INT</type></column>
+		<column><field>hash_id</field><type>DB1_INT</type></column>
+		<column><field>session_id</field><type>DB1_STR</type></column>
+		<column><field>dlg_hash_entry</field><type>DB1_INT</type></column>
+		<column><field>dlg_hash_id</field><type>DB1_INT</type></column>
+		<column><field>direction</field><type>DB1_INT</type></column>
+		<column><field>asserted_identity</field><type>DB1_STR</type></column>
+		<column><field>callee</field><type>DB1_STR</type></column>
+		<column><field>start_time</field><type>DB1_DATETIME</type></column>
+		<column><field>last_event_timestamp</field><type>DB1_DATETIME</type></column>
+		<column><field>reserved_secs</field><type>DB1_INT</type></column>
+		<column><field>valid_for</field><type>DB1_INT</type></column>
+		<column><field>state</field><type>DB1_INT</type></column>
+		<column><field>incoming_trunk_id</field><type>DB1_STR</type></column>
+		<column><field>outgoing_trunk_id</field><type>DB1_STR</type></column>
+		<column><field>rating_group</field><type>DB1_INT</type></column>
+		<column><field>service_identifier</field><type>DB1_INT</type></column>
+		<column><field>auth_app_id</field><type>DB1_INT</type></column>
+		<column><field>auth_session_type</field><type>DB1_INT</type></column>
+		<column><field>pani</field><type>DB1_STR</type></column>
+		<column><field>mac</field><type>DB1_STR</type></column>
+		<column><field>app_provided_party</field><type>DB1_STR</type></column>
+		<column><field>is_final_allocation</field><type>DB1_INT</type></column>
+		<column><field>origin_host</field><type>DB1_STR</type></column>
+	</db_table>
