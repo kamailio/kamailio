@@ -19,6 +19,7 @@ target_compile_definitions(
             HAVE_IP_MREQN)
 
 target_link_libraries(common INTERFACE resolv)
+target_link_libraries(common_utils INTERFACE resolv)
 
 if(NOT ${USE_FAST_LOCK})
   target_compile_definitions(common INTERFACE USE_PTHREAD_MUTEX USE_SYSV_SEM)

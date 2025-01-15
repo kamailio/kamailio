@@ -5,6 +5,15 @@
 
 add_library(common INTERFACE)
 
+# This interface is populated by common and some extra module specific flags
+# See end of file
+add_library(common_modules INTERFACE)
+
+# This interface is populated by common compiler flags and some os specific
+# flags. See each os specific file for more details.
+add_library(common_utils INTERFACE)
+
+#
 set(OS ${CMAKE_SYSTEM_NAME})
 message(STATUS "OS: ${OS}")
 
@@ -336,11 +345,14 @@ target_compile_definitions(
             $<$<BOOL:${STATISTICS}>:STATISTICS>)
 target_link_libraries(common INTERFACE common_compiler_flags)
 
-# -----------------------
-add_library(common_modules INTERFACE)
+# ----------------------
+# Common modules
+# ---------------------
 target_compile_options(common_modules INTERFACE -fPIC)
 # TODO: Do we need all the option from common as well?
 target_link_libraries(common_modules INTERFACE common)
 
-add_library(common_utils INTERFACE)
+# ----------------------
+# Common utils
+# ---------------------
 target_link_libraries(common_utils INTERFACE common_compiler_flags)

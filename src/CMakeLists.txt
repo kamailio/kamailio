@@ -113,15 +113,7 @@ target_include_directories(kamailio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)
 # )
 # message(STATUS "kamailio target sources are: ${kamailio_SRC_PROPERTY}")
 
-target_link_libraries(
-  kamailio
-  PUBLIC common
-         m
-         Threads::Threads # Pthread library
-         # Use of ${CMAKE_DL_LIBS}
-         ${CMAKE_DL_LIBS} # dl -- dlopen and more
-         resolv # resolv
-)
+target_link_libraries(kamailio PUBLIC common m Threads::Threads)
 
 # Add the MODS_DIR definition required by main.c ---
 target_compile_definitions(

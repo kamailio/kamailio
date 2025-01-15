@@ -27,9 +27,6 @@ include(${CMAKE_SOURCE_DIR}/cmake/utils.cmake)
 
 target_sources(${NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/kamcmd.c
                                ${CMAKE_CURRENT_SOURCE_DIR}/parse_listen_id.c)
-# target_include_directories(${NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-# target_link_libraries(${NAME} PRIVATE common)
-target_link_libraries(${NAME} PRIVATE resolv)
 target_link_libraries(${NAME} PRIVATE common_utils)
 
 target_compile_definitions(
