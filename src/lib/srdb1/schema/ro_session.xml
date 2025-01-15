@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="ro_session" xmlns:db="http://docbook.org/ns/docbook">
+    <name>ro_session</name>
+    <version>3</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+    <db:para>More information about the domain module can be found at:
+      <itemizedlist>
+      <listitem>
+      <ulink url="&KAMAILIO_MOD_DOC;ims_charging.html">&KAMAILIO_MOD_DOC;ims_charging.html</ulink>.
+      </listitem>
+      </itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+      <name>id</name>
+      <type>unsigned int</type>
+      <size>&table_id_len;</size>
+      <autoincrement/>
+      <primary/>
+      <type db="dbtext">int,auto</type>
+      <description>unique ID</description>
+    </column>
+
+    <column id="hash_entry">
+      <name>hash_entry</name>
+      <type>unsigned int</type>
+      <size>10</size>
+    </column>
+
+    <column id="hash_id">
+      <name>hash_id</name>
+      <type>unsigned int</type>
+      <size>10</size>
+    </column>
+
+    <column id="session_id">
+      <name>session_id</name>
+      <type>string</type>
+      <size>100</size>
+    </column>
+
+    <column id="dlg_hash_entry">
+      <name>dlg_hash_entry</name>
+      <type>unsigned int</type>
+      <size>10</size>
+    </column>
+
+    <column id="dlg_hash_id">
+      <name>dlg_hash_id</name>
+      <type>unsigned int</type>
+      <size>10</size>
+    </column>
+
+    <column id="direction">
+      <name>direction</name>
+      <type>unsigned int</type>
+      <size>1</size>
+    </column>
+
+    <column id="asserted_identity">
+      <name>asserted_identity</name>
+      <type>string</type>
+      <size>100</size>
+    </column>
+
+    <column id="callee">
+      <name>callee</name>
+      <type>string</type>
+      <size>100</size>
+    </column>
+
+    <column id="start_time">
+      <name>start_time</name>
+      <type>datetime</type>
+      <type db="db_redis">time</type>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="last_event_timestamp">
+      <name>last_event_timestamp</name>
+      <type>datetime</type>
+      <type db="db_redis">time</type>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="reserved_secs">
+      <name>reserved_secs</name>
+      <type>int</type>
+      <size>10</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="valid_for">
+      <name>valid_for</name>
+      <type>int</type>
+      <size>10</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="state">
+      <name>state</name>
+      <type>int</type>
+      <size>1</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="incoming_trunk_id">
+      <name>incoming_trunk_id</name>
+      <type>string</type>
+      <size>20</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="outgoing_trunk_id">
+      <name>outgoing_trunk_id</name>
+      <type>string</type>
+      <size>20</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="rating_group">
+      <name>rating_group</name>
+      <type>int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="service_identifier">
+      <name>service_identifier</name>
+      <type>int</type>
+      <size>11</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="auth_app_id">
+      <name>auth_app_id</name>
+      <type>int</type>
+      <size>11</size>
+    </column>
+
+    <column id="auth_session_type">
+      <name>auth_session_type</name>
+      <type>int</type>
+      <size>11</size>
+    </column>
+
+    <column id="pani">
+      <name>pani</name>
+      <type>string</type>
+      <size>100</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="mac">
+      <name>mac</name>
+      <type>string</type>
+      <size>17</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="app_provided_party">
+      <name>app_provided_party</name>
+      <type>string</type>
+      <size>100</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <column id="is_final_allocation">
+      <name>is_final_allocation</name>
+      <type>unsigned int</type>
+      <size>1</size>
+    </column>
+
+    <column id="origin_host">
+      <name>origin_host</name>
+      <type>string</type>
+      <size>150</size>
+      <null/>
+      <default><null/></default>
+    </column>
+
+    <index>
+      <name>hash_idx</name>
+      <colref linkend="hash_entry"/>
+      <colref linkend="hash_id"/>
+    </index>
+</table>
