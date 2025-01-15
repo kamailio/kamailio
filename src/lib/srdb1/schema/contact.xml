@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+
+]>
+
+<table id="contact" xmlns:db="http://docbook.org/ns/docbook">
+    <name>contact</name>
+    <version>6</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Table for storage engine for SCSCF contacts. More information at:
+            <itemizedlist>
+                <listitem>
+                    <ulink url="&KAMAILIO_MOD_DOC;ims_usrloc_scscf.html">&KAMAILIO_MOD_DOC;ims_usrloc_scscf.html</ulink>.
+                </listitem>
+            </itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+      <name>id</name>
+      <type>int</type>
+      <size>&table_id_len;</size>
+      <autoincrement/>
+      <primary/>
+      <type db="dbtext">int,auto</type>
+      <description>Unique ID</description>
+    </column>
+
+    <column id="contact_field">
+      <name>contact</name>
+      <type>string</type>
+      <size>&contact_addr_len;</size>
+      <description>Contact</description>
+    </column>
+
+    <column id="params">
+      <name>params</name>
+      <type>string</type>
+      <size>&hf_len;</size>
+      <null/>
+      <default><null/></default>
+      <description>params</description>
+    </column>
+
+    <column id="path">
+        <name>path</name>
+        <type>string</type>
+        <size>&hf_len;</size>
+        <null/>
+        <default><null/></default>
+        <description>Path Header(s) per RFC 3327</description>
+    </column>
+
+    <column id="received">
+      <name>received</name>
+      <type>string</type>
+      <size>&hf_len;</size>
+      <null/>
+      <default><null/></default>
+      <description>Received IP:PORT in the format SIP:IP:PORT</description>
+    </column>
+
+    <column id="user_agent">
+      <name>user_agent</name>
+      <type>string</type>
+      <size>&hf_len;</size>
+      <null/>
+      <default><null/></default>
+      <description>user_agent</description>
+    </column>
+
+    <column id="expires">
+        <name>expires</name>
+        <type>datetime</type>
+        <type db="db_redis">time</type>
+        <null/>
+        <default><null/></default>
+        <description>Date and time when this entry expires.</description>
+    </column>
+
+    <column id="callid">
+      <name>callid</name>
+      <type>string</type>
+      <size>&callid_len;</size>
+      <null/>
+      <default><null/></default>
+      <description>Call-ID</description>
+    </column>
+
+    <index>
+      <name>contact</name>
+      <colref linkend="contact_field"/>
+      <unique/>
+    </index>
+</table>
