@@ -2925,12 +2925,20 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 		}
 	}
 	if(address_str == NULL) {
-		if(hp && hp->host->len)
+		if(hp && hp->host->len) {
 			address_str = hp->host;
-		else if(send_sock->useinfo.name.len > 0)
-			address_str = &(send_sock->useinfo.name);
-		else
-			address_str = &(send_sock->address_str);
+		} else if(send_sock != NULL) {
+			if(send_sock->useinfo.name.len > 0) {
+				address_str = &(send_sock->useinfo.name);
+			} else {
+				address_str = &(send_sock->address_str);
+			}
+		}
+	}
+	if(address_str == NULL || address_str->len <= 0) {
+		LM_ERR("unable to get address value\n");
+		ser_error = E_BAD_ADDRESS;
+		return 0;
 	}
 	if(msg && (msg->msg_flags & FL_USE_XAVP_VIA_FIELDS)
 			&& _ksr_xavp_via_fields.len > 0) {
@@ -2944,13 +2952,15 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 	if(port_str == NULL) {
 		if(hp && hp->port->len) {
 			port_str = hp->port;
-		} else if(send_sock->useinfo.name.len > 0) {
-			if(send_sock->useinfo.port_no > 0) {
-				port_str = &(send_sock->useinfo.port_no_str);
-			}
-		} else {
-			if(send_sock->port_no != SIP_PORT) {
-				port_str = &(send_sock->port_no_str);
+		} else if(send_sock != NULL) {
+			if(send_sock->useinfo.name.len > 0) {
+				if(send_sock->useinfo.port_no > 0) {
+					port_str = &(send_sock->useinfo.port_no_str);
+				}
+			} else {
+				if(send_sock->port_no != SIP_PORT) {
+					port_str = &(send_sock->port_no_str);
+				}
 			}
 		}
 	}
@@ -2965,7 +2975,7 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 		}
 	}
 	if(proto == PROTO_NONE) {
-		if(send_sock->useinfo.proto != PROTO_NONE) {
+		if(send_sock != NULL && send_sock->useinfo.proto != PROTO_NONE) {
 			proto = send_sock->useinfo.proto;
 		} else {
 			proto = send_info->proto;
@@ -3068,7 +3078,7 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 	}
 	/* add [] only if ipv6 address is used;
 	 * if using pre-set no check is made */
-	if(send_sock->address.af == AF_INET6) {
+	if(send_sock != NULL && send_sock->address.af == AF_INET6) {
 		/* lightweight safety checks if brackets set
 		 * or non-ipv6 (e.g., advertised hostname) */
 		if(address_str->s[0] != '['
