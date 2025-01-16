@@ -53,7 +53,7 @@
 #include <sys/stat.h>
 #include <regex.h>
 #include <dlfcn.h>
-#include <strings.h>
+#include <string.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h> /* for offsetof */

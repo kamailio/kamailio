@@ -36,7 +36,6 @@
 #include <stddef.h>
 #include <ctype.h>
 #include <string.h>
-#include <strings.h>
 
 #include "compiler_opt.h"
 #include "config.h"

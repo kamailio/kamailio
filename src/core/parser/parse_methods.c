@@ -26,7 +26,7 @@
  * \ingroup parser
  */
 
-#include <strings.h>
+#include <string.h>
 #include "../dprint.h"
 #include "../trim.h"
 #include "parse_methods.h"
