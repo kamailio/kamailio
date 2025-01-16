@@ -63,8 +63,10 @@ add_subdirectory(src)
 
 # Add utils
 # add_subdirectory(utils)
-add_subdirectory(utils/kamctl)
-add_subdirectory(utils/kamcmd)
+if(NOT WIN32)
+  add_subdirectory(utils/kamctl)
+  add_subdirectory(utils/kamcmd)
+endif()
 
 # TODO: Packaging stuuf. These should be on different file propably
 set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})

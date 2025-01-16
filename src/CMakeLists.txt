@@ -95,13 +95,18 @@ set_target_properties(
   kamailio PROPERTIES ENABLE_EXPORTS TRUE OUTPUT_NAME ${MAIN_NAME}
 )
 
-target_compile_options(
-  kamailio PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/="
-)
+# TODO: Use /Fd and /Fo and pdbstr.exe
+if(NOT WIN32)
+  target_compile_options(
+    kamailio PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/="
+  )
+endif()
 
 add_subdirectory(core)
-add_subdirectory(lib)
-add_subdirectory(modules)
+if(NOT WIN32)
+  add_subdirectory(lib)
+  add_subdirectory(modules)
+endif()
 
 # These sources are coming from core subdirectory.
 # Lib subdirecotry add it sources to kamailio target using target_sources
