@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "compiler_opt.h"
 #include "config.h"
