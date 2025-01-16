@@ -314,6 +314,14 @@ else()
   if("xhttp_pi" IN_LIST FINAL_MODULES_LIST)
     add_db_target(pi_framework_table "${STYLESHEETS}/pi_framework_table.xsl")
     add_db_target(pi_framework_mod "${STYLESHEETS}/pi_framework_mod.xsl")
+    add_custom_target(dbschema_xhttp_pi)
+    add_dependencies(dbschema_xhttp_pi dbschema_pi_framework_table
+                     dbschema_pi_framework_mod)
+
+    add_custom_target(dbschema_xhttp_pi_clean)
+    add_dependencies(dbschema_xhttp_pi dbschema_pi_framework_table_clean
+                     dbschema_pi_framework_mod_clean)
+
     add_dependencies(dbschema dbschema_pi_framework_table
                      dbschema_pi_framework_mod)
     add_dependencies(dbschema_clean dbschema_pi_framework_table_clean
