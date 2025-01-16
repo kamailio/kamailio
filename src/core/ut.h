@@ -36,7 +36,6 @@
 #include <stddef.h>
 #include <ctype.h>
 #include <string.h>
-#include <strings.h>
 
 #include "compiler_opt.h"
 #include "config.h"
@@ -44,6 +43,7 @@
 #include "str.h"
 #include "mem/mem.h"
 #include "mem/shm_mem.h"
+#include "cross_strings.h"
 
 
 /* zero-string wrapper */
