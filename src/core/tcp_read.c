@@ -1522,8 +1522,7 @@ again:
 
 		if(unlikely(bytes < 0)) {
 			LOG(cfg_get(core, core_cfg, corelog),
-					"ERROR: tcp_read_req: error reading - c: %p r: %p (%d)\n",
-					con, req, bytes);
+					"error reading - c: %p r: %p (%d)\n", con, req, bytes);
 			resp = CONN_ERROR;
 			goto end_req;
 		}
