@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 BSVN Co.
+ * Copyright (C) 2024-2025 Resaa Co.
  *
  * This file is part of Kamailio, a free SIP server.
  *
