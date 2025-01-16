@@ -35,12 +35,21 @@ if(USE_GIT
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
 
-  execute_process(
-    COMMAND bash -c "${GIT_EXECUTABLE} diff-index --name-only HEAD"
-            " | grep -vE 'Makefile|CMakeLists.txt'"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_DIFF_OUTPUT
-  )
+  if(WIN32)
+    execute_process(
+      COMMAND pwsh -NoProfile -Command "&\"${GIT_EXECUTABLE}\" diff-index --name-only HEAD"
+              " | Select-String -Pattern 'Makefile', 'CMakeLists.txt' -NotMatch"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE GIT_DIFF_OUTPUT
+    )
+  else()
+    execute_process(
+      COMMAND bash -c "${GIT_EXECUTABLE} diff-index --name-only HEAD"
+              " | grep -vE 'Makefile|CMakeLists.txt'"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE GIT_DIFF_OUTPUT
+    )
+  endif()
   set(REPO_HASH ${REPO_VER})
 
   if(NOT "${GIT_DIFF_OUTPUT}" STREQUAL "")
@@ -138,48 +147,50 @@ install(
 
 # ----------
 # Create and install the man pages for kamailio
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
-  COMMAND
-    sed -e
-    "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
-    -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
-    "s#/usr/lib/${CFG_NAME}/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
-    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
-    "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8 >
-    ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
-  DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8)
+if(NOT WIN32)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
+    COMMAND
+      sed -e
+      "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
+      -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
+      "s#/usr/lib/${CFG_NAME}/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
+      "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
+      "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8 >
+      ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
+    DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8)
 
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
-  COMMAND
-    sed -e
-    "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
-    -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
-    "s#/usr/lib/${CFG_NAME}/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
-    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
-    "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5
-    > ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
-  DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
+    COMMAND
+      sed -e
+      "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
+      -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
+      "s#/usr/lib/${CFG_NAME}/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
+      "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
+      "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5
+      > ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
+    DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5)
 
-add_custom_target(man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
-                              ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5)
-add_dependencies(man kamctl_man)
-add_dependencies(man kamcmd_man)
-# These are the modules man pages if any exist
-add_dependencies(man kamailio_docs_man)
+  add_custom_target(man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
+                                ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5)
+  add_dependencies(man kamctl_man)
+  add_dependencies(man kamcmd_man)
+  # These are the modules man pages if any exist
+  add_dependencies(man kamailio_docs_man)
 
-install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
-  DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
-  COMPONENT kamailio_man
-  OPTIONAL)
+  install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
+    DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
+    COMPONENT kamailio_man
+    OPTIONAL)
 
-install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
-  DESTINATION ${CMAKE_INSTALL_MANDIR}/man5
-  COMPONENT kamailio_man
-  OPTIONAL)
+  install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
+    DESTINATION ${CMAKE_INSTALL_MANDIR}/man5
+    COMPONENT kamailio_man
+    OPTIONAL)
+endif()
 # ----------
 
 # Install the configuration file (kamailio.cfg) ${CFG_NAME} using a CODE block

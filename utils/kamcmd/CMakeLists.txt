@@ -38,22 +38,24 @@ target_compile_definitions(
 install(TARGETS ${NAME} DESTINATION ${CMAKE_INSTALL_SBINDIR})
 
 # Man page generation
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8
-  COMMAND
-    sed -e
-    "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
-    -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
-    "s#/usr/lib/${CFG_NAME}/modules/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g"
-    -e "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
-    "s#$(SRC_NAME)#$(MAIN_NAME)#g" < ${CMAKE_CURRENT_SOURCE_DIR}/kamcmd.8 >
-    ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/kamcmd.8)
+if(NOT WIN32)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8
+    COMMAND
+      sed -e
+      "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
+      -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
+      "s#/usr/lib/${CFG_NAME}/modules/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g"
+      -e "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
+      "s#$(SRC_NAME)#$(MAIN_NAME)#g" < ${CMAKE_CURRENT_SOURCE_DIR}/kamcmd.8 >
+      ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/kamcmd.8)
 
-add_custom_target(kamcmd_man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8)
+  add_custom_target(kamcmd_man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8)
 
-install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8
-  DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
-  COMPONENT kamailio_man
-  OPTIONAL)
+  install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8
+    DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
+    COMPONENT kamailio_man
+    OPTIONAL)
+endif()

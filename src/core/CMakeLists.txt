@@ -18,6 +18,10 @@ find_package(FLEX REQUIRED)
 # Find Bison
 find_package(BISON REQUIRED)
 
+if(WIN32)
+  cmake_policy(SET CMP0074 OLD)
+endif()
+
 # Generate lex.yy.c from cfg.lex
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c

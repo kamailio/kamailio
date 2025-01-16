@@ -1,0 +1,6 @@
+{
+    "dependencies": [
+        "libxml2",
+        "pkgconf"
+    ]
+}

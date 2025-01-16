@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 3.10)
 
 # Use cmake -DCMAKE_SYSTEM_NAME .. for cross-compiling (inside build directory)
 
+# cmake_policy must be before project for working with toolchain together
+if(WIN32)
+  cmake_policy(SET CMP0074 NEW)
+  cmake_policy(SET CMP0156 OLD)
+  cmake_policy(SET CMP0082 OLD)
+endif()
+
 # Set the project name
 project(
   kamailio
@@ -62,8 +69,10 @@ add_subdirectory(utils/kamcmd)
 # TODO: Packaging stuuf. These should be on different file propably
 set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(CPACK_PACKAGE_NAME kamailio)
-set(CPACK_GENERATOR DEB)
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "test")
+if(NOT WIN32)
+  set(CPACK_GENERATOR DEB)
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "test")
+endif()
 
 include(CPack)
 
