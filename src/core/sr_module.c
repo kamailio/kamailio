@@ -49,13 +49,13 @@
 #include "shm_init.h"
 #include "str_list.h"
 #include "daemonize.h"
+#include "cross_strings.h"
 
 #include <sys/stat.h>
 #include <regex.h>
 #include <dlfcn.h>
 #include <string.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stddef.h> /* for offsetof */
 
 

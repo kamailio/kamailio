@@ -36,13 +36,13 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdint.h>
 
 #include "globals.h"
 #include "dprint.h"
 #include "pvar.h"
 #include "strutils.h"
+#include "cross_strings.h"
 
 static void log_callid_set(sip_msg_t *msg);
 
