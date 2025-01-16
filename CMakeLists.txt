@@ -28,7 +28,7 @@ message(STATUS "VERSIONVAL: ${VERSIONVAL}")
 
 # Specify the C standard if non provided by user
 if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 23)
+  set(CMAKE_C_STANDARD 11)
   set(CMAKE_C_STANDARD_REQUIRED True)
 endif()
 
