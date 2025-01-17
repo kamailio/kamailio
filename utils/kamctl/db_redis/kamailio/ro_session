@@ -1,0 +1,2 @@
+id/int,hash_entry/int,hash_id/int,session_id/string,dlg_hash_entry/int,dlg_hash_id/int,direction/int,asserted_identity/string,callee/string,start_time/time,last_event_timestamp/time,reserved_secs/int,valid_for/int,state/int,incoming_trunk_id/string,outgoing_trunk_id/string,rating_group/int,service_identifier/int,auth_app_id/int,auth_session_type/int,pani/string,mac/string,app_provided_party/string,is_final_allocation/int,origin_host/string,
+3

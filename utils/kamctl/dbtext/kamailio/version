@@ -49,6 +49,7 @@ id(int,auto) table_name(string) table_version(int)
 0:re_grp:1
 0:rls_presentity:1
 0:rls_watchers:3
+0:ro_session:3
 0:rtpengine:1
 0:rtpproxy:1
 0:s_cscf:1
