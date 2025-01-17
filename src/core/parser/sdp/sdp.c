@@ -233,7 +233,13 @@ void set_sdp_payload_attr(sdp_payload_attr_t *payload_attr, str *rtp_enc,
 void set_sdp_payload_fmtp(sdp_payload_attr_t *payload_attr, str *fmtp_string)
 {
 	if(payload_attr == NULL) {
-		LM_ERR("Invalid payload location\n");
+		if(fmtp_string != NULL && fmtp_string->s != NULL
+				&& fmtp_string->len > 0) {
+			LM_ERR("Invalid payload location - fmtp: %.*s\n", fmtp_string->len,
+					fmtp_string->s);
+		} else {
+			LM_ERR("Invalid payload location\n");
+		}
 		return;
 	}
 	payload_attr->fmtp_string.s = fmtp_string->s;
@@ -353,6 +359,8 @@ sdp_payload_attr_t *get_sdp_payload4payload(
 			return payload;
 		}
 	}
+
+	LM_DBG("payload not found: %.*s\n", rtp_payload->len, rtp_payload->s);
 
 	return NULL;
 }
