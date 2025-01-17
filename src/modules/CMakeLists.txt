@@ -4,6 +4,7 @@ set(MODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 # Initialize a global property to track added modules
 set_property(GLOBAL PROPERTY ADDED_MODULES_LIST "")
 set_property(GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS "")
+set_property(GLOBAL PROPERTY EXCLUDED_MODULES_LIST "")
 
 include(${CMAKE_SOURCE_DIR}/cmake/groups.cmake)
 
@@ -52,9 +53,12 @@ function(add_module_group group_modules)
   foreach(module_name IN LISTS group_modules)
     # Check if the module has already been added
     get_property(ALREADY_ADDED GLOBAL PROPERTY ADDED_MODULES_LIST)
-    if(";${ALREADY_ADDED};" MATCHES ";${module_name};")
+    if("${module_name}" IN_LIST ALREADY_ADDED)
       message(
         STATUS "Module ${module_name} has already been added. Skipping...")
+    elseif("${module_name}" IN_LIST EXCLUDED_MODULES_LIST)
+      message(STATUS "Module ${module_name} is excluded. Skipping...")
+      list(REMOVE_ITEM ADDED_MODULES_LIST ${module_name})
     else()
       # Construct the path to the module
       set(module_path "${MODULES_DIR}/${module_name}")
@@ -108,28 +112,6 @@ function(add_module_group group_modules)
   endforeach()
 endfunction()
 
-list(APPEND FINAL_MODULES_LIST "")
-
-# Parse and add extra modules specified by the user
-separate_arguments(INCLUDE_MODULES_LIST UNIX_COMMAND "${INCLUDE_MODULES}")
-message(
-  STATUS
-    "Extra modules (if module already included already from group is ignored):
-    ${INCLUDE_MODULES_LIST}")
-list(APPEND FINAL_MODULES_LIST ${INCLUDE_MODULES_LIST})
-
-# Exclude modules that were explicitly excluded by the user
-separate_arguments(EXCLUDE_MODULES_LIST UNIX_COMMAND "${EXCLUDE_MODULES}")
-message(STATUS "Excluded modules (exlcude even if in included modules):
-    ${EXCLUDE_MODULES_LIST}")
-foreach(module_name IN LISTS EXCLUDE_MODULES_LIST)
-  # if in list remove it and print a message
-  if(";${FINAL_MODULES_LIST};" MATCHES ";${module_name};")
-    list(REMOVE_ITEM FINAL_MODULES_LIST ${module_name})
-    message(STATUS "Removed module: ${module_name}")
-  endif()
-endforeach()
-
 # Define targets before adding the groups and modules, so that we can add
 # dependencies to them.
 add_custom_target(
@@ -140,8 +122,19 @@ add_custom_target(
 
 add_custom_target(kamailio_docs_man COMMENT "Generating man pages")
 
+# Parse and add extra modules specified by the user
+separate_arguments(INCLUDE_MODULES_LIST UNIX_COMMAND "${INCLUDE_MODULES}")
+message(
+  STATUS
+    "Extra modules (if module already included already from group is ignored):
+    ${INCLUDE_MODULES_LIST}")
+list(APPEND USER_MODULES_LIST ${INCLUDE_MODULES_LIST})
+
+separate_arguments(EXCLUDED_MODULES_LIST UNIX_COMMAND "${EXCLUDE_MODULES}")
+message(STATUS "Excluded modules (exlcude even if in included modules):
+    ${EXCLUDED_MODULES_LIST}")
+
 # Add each group of modules
-add_module_group("${FINAL_MODULES_LIST}")
 foreach(group IN LISTS FULL_MODULE_GROUP_NAMES)
   get_property(MODULES_IN_GROUP VARIABLE PROPERTY "${group}")
   if(VERBOSE)
@@ -149,10 +142,12 @@ foreach(group IN LISTS FULL_MODULE_GROUP_NAMES)
   endif()
   add_module_group("${MODULES_IN_GROUP}")
 endforeach()
+add_module_group("${USER_MODULES_LIST}")
 
 get_property(ADDED_MODULES_LIST GLOBAL PROPERTY ADDED_MODULES_LIST)
 message(STATUS "Modules to be built: ${ADDED_MODULES_LIST}")
 # TODO: Comment is not showing. probably a bug in CMAKE
+# https://gitlab.kitware.com/cmake/cmake/-/issues/26571
 add_custom_target(modules COMMENT "Building modules")
 add_dependencies(modules ${ADDED_MODULES_LIST})
 
