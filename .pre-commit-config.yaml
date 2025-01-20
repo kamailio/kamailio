@@ -16,4 +16,10 @@ repos:
     rev: v0.6.13
     hooks:
       - id: cmake-format
+        verbose: true
+        args:
+          - -c cmake/cmake-format.py
       - id: cmake-lint
+        verbose: true
+        args:
+          - -c cmake/cmake-format.py
