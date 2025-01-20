@@ -6,12 +6,12 @@ find_program(LYNX_EXECUTABLE lynx QUIET)
 find_program(DOCBOOK2X_EXECUTABLE docbook2x-man QUIET)
 
 if(BUILD_DOC AND (NOT XSLTPROC_EXECUTABLE OR NOT LYNX_EXECUTABLE))
-  message(WARNING "xsltproc or lynx not found but required for doc generation.")
+  message(STATUS "xsltproc or lynx not found but required for doc generation.")
   set(BUILD_DOC OFF)
 endif()
 
 if(BUILD_DOC AND (NOT DOCBOOK2X_EXECUTABLE))
-  message(WARNING "docbook2x-man not found but required for man generation.")
+  message(STATUS "docbook2x-man not found but required for man generation.")
   set(BUILD_DOC OFF)
 endif()
 
