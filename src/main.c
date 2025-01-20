@@ -59,6 +59,7 @@
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/resource.h> /* getrlimit */
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -2209,6 +2210,7 @@ int main(int argc, char **argv)
 	char *tbuf_tmp;
 	struct stat st = {0};
 	long l1 = 0;
+	struct rlimit lim;
 
 	int option_index = 0;
 
@@ -3310,7 +3312,16 @@ int main(int argc, char **argv)
 			fprintf(stderr, "ERROR: error could not increase file limits\n");
 			goto error;
 		}
+	} else {
+		if(getrlimit(RLIMIT_NOFILE, &lim) < 0) {
+			LM_CRIT("cannot get the maximum number of file descriptors: %s\n",
+					strerror(errno));
+			goto error;
+		}
+		LM_INFO("current open file limits [soft/hard]: [%lu/%lu]\n",
+				(unsigned long)lim.rlim_cur, (unsigned long)lim.rlim_max);
 	}
+
 	if(mlock_pages)
 		mem_lock_pages();
 
