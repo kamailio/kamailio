@@ -1332,6 +1332,7 @@ static int nl_bound_sock(void)
 {
 	int sock = -1;
 	struct sockaddr_nl la;
+	struct timeval recvtimeout;
 
 	sock = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
 	if(sock < 0) {
@@ -1347,6 +1348,15 @@ static int nl_bound_sock(void)
 	la.nl_groups = 0;
 	if(bind(sock, (struct sockaddr *)&la, sizeof(la)) < 0) {
 		LM_ERR("could not bind NETLINK sock to sockaddr_nl\n");
+		goto error;
+	}
+
+	recvtimeout.tv_sec = 4;
+	recvtimeout.tv_usec = 0;
+	if(setsockopt(
+			   sock, SOL_SOCKET, SO_RCVTIMEO, &recvtimeout, sizeof(recvtimeout))
+			< 0) {
+		LM_ERR("failed to set receive timeout\n");
 		goto error;
 	}
 
@@ -1402,6 +1412,10 @@ static int get_flags(int family)
 			goto error;
 		}
 		rtn = recv(nl_sock, p, sizeof(buf) - nll, 0);
+		if(rtn <= 0) {
+			LM_ERR("failed to receive data (%d/%d)\n", rtn, errno);
+			goto error;
+		}
 		nlp = (struct nlmsghdr *)p;
 		if(nlp->nlmsg_type == NLMSG_DONE) {
 			LM_DBG("done\n");
@@ -1504,6 +1518,10 @@ static int build_iface_list(void)
 				goto error;
 			}
 			rtn = recv(nl_sock, p, sizeof(buf) - nll, 0);
+			if(rtn <= 0) {
+				LM_ERR("failed to receive data (%d/%d)\n", rtn, errno);
+				goto error;
+			}
 			LM_DBG("received %d byles \n", rtn);
 			nlp = (struct nlmsghdr *)p;
 			if(nlp->nlmsg_type == NLMSG_DONE) {
