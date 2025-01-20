@@ -105,7 +105,7 @@ int create_socket(
 	if(bind_to.len) {
 		error = getaddrinfo(bind_to.s, buf, &hints, &res);
 		if(error != 0) {
-			LM_WARN("create_socket(): Error opening %.*s port %d while doing "
+			LM_WARN("Error opening %.*s port %d while doing "
 					"gethostbyname >%s\n",
 					bind_to.len, bind_to.s, listen_port, gai_strerror(error));
 			goto error;
@@ -113,7 +113,7 @@ int create_socket(
 	} else {
 		error = getaddrinfo(NULL, buf, &hints, &res);
 		if(error != 0) {
-			LM_WARN("create_socket(): Error opening ANY port %d while doing "
+			LM_WARN("Error opening ANY port %d while doing "
 					"gethostbyname >%s\n",
 					listen_port, gai_strerror(error));
 			goto error;
@@ -126,7 +126,7 @@ int create_socket(
 		if(getnameinfo(ainfo->ai_addr, ainfo->ai_addrlen, host, 256, serv, 256,
 				   NI_NUMERICHOST | NI_NUMERICSERV)
 				== 0) {
-			LM_WARN("create_socket(): Trying to open/bind/listen on %s port "
+			LM_WARN("Trying to open/bind/listen on %s port "
 					"%s\n",
 					host, serv);
 		}
@@ -134,7 +134,7 @@ int create_socket(
 		if((server_sock = socket(
 					ainfo->ai_family, ainfo->ai_socktype, ainfo->ai_protocol))
 				== -1) {
-			LM_ERR("create_socket(): error creating server socket on %s port "
+			LM_ERR("error creating server socket on %s port "
 				   "%s >"
 				   " %s\n",
 					host, serv, strerror(errno));
@@ -148,21 +148,21 @@ int create_socket(
 		}
 
 		if(bind(server_sock, ainfo->ai_addr, ainfo->ai_addrlen) == -1) {
-			LM_ERR("create_socket(): error binding on %s port %s >"
+			LM_ERR("error binding on %s port %s >"
 				   " %s\n",
 					host, serv, strerror(errno));
 			goto error;
 		}
 
 		if(listen(server_sock, 5) == -1) {
-			LM_ERR("create_socket(): error listening on %s port %s > %s\n",
-					host, serv, strerror(errno));
+			LM_ERR("error listening on %s port %s > %s\n", host, serv,
+					strerror(errno));
 			goto error;
 		}
 
 		*sock = server_sock;
 
-		LM_WARN("create_socket(): Successful socket open/bind/listen on %s "
+		LM_WARN("Successful socket open/bind/listen on %s "
 				"port %s\n",
 				host, serv);
 	}
@@ -193,10 +193,10 @@ inline static int accept_connection(int server_sock, int *new_sock)
 	*new_sock = accept(server_sock, (struct sockaddr *)&remote, &length);
 
 	if(*new_sock == -1) {
-		LM_ERR("accept_connection(): accept failed!\n");
+		LM_ERR("accept failed!\n");
 		goto error;
 	} else {
-		LM_INFO("accept_connection(): new tcp connection accepted!\n");
+		LM_INFO("new tcp connection accepted!\n");
 	}
 
 	receiver_send_socket(*new_sock, 0);
@@ -243,14 +243,14 @@ void accept_loop()
 		nready = select(max_sock + 1, &listen_set, 0, 0, &timeout);
 		if(nready == 0) {
 			if(debug_heavy)
-				LM_DBG("accept_loop(): No connection attempts\n");
+				LM_DBG("No connection attempts\n");
 			continue;
 		}
 		if(nready == -1) {
 			if(errno == EINTR) {
 				continue;
 			} else {
-				LM_ERR("accept_loop(): select fails: %s\n", strerror(errno));
+				LM_ERR("select fails: %s\n", strerror(errno));
 				sleep(2);
 				continue;
 			}

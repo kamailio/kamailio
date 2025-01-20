@@ -200,7 +200,7 @@ peer *get_routing_peer_by_app_id(cdp_session_t *cdp_session,
 	routing_realm *rr = 0;
 
 	if(!config->r_table) {
-		LM_ERR("get_routing_peer(): Empty routing table.\n");
+		LM_ERR("Empty routing table.\n");
 		return 0;
 	}
 
@@ -219,7 +219,7 @@ peer *get_routing_peer_by_app_id(cdp_session_t *cdp_session,
 			if(p)
 				return p;
 			else
-				LM_WARN("get_routing_peer_by_app_id(): No connected Route peer "
+				LM_WARN("No connected Route peer "
 						"found for Realm <%.*s>. Trying DefaultRoutes "
 						"next...\n",
 						destination_realm.len, destination_realm.s);
@@ -231,7 +231,7 @@ peer *get_routing_peer_by_app_id(cdp_session_t *cdp_session,
 	p = get_first_connected_route(
 			cdp_session, config->r_table->routes, app_id, vendor_id);
 	if(!p) {
-		LM_WARN("get_routing_peer_by_app_id(): No connected DefaultRoute peer "
+		LM_WARN("No connected DefaultRoute peer "
 				"found for app_id %d and vendor_id %d.\n",
 				app_id, vendor_id);
 	}
@@ -272,7 +272,7 @@ peer *get_routing_peer(cdp_session_t *cdp_session, AAAMessage *m)
 	}
 
 	if(!config->r_table) {
-		LM_ERR("get_routing_peer(): Empty routing table.\n");
+		LM_ERR("Empty routing table.\n");
 		return 0;
 	}
 

@@ -59,7 +59,7 @@ inline dp_config *new_dp_config()
 	memset(x, 0, sizeof(dp_config));
 	return x;
 error:
-	LM_ERR("%s(): failed to create new dp_config.\n", __FUNCTION__);
+	LM_ERR("failed to create new dp_config.\n");
 	return 0;
 }
 
@@ -77,7 +77,7 @@ inline routing_realm *new_routing_realm()
 	memset(x, 0, sizeof(routing_realm));
 	return x;
 error:
-	LM_ERR("%s(): failed to create new routing_realm.\n", __FUNCTION__);
+	LM_ERR("failed to create new routing_realm.\n");
 	return 0;
 }
 
@@ -95,7 +95,7 @@ inline routing_entry *new_routing_entry()
 	memset(x, 0, sizeof(routing_entry));
 	return x;
 error:
-	LM_ERR("%s(): failed to create new routing_entry.\n", __FUNCTION__);
+	LM_ERR("failed to create new routing_entry.\n");
 	return 0;
 }
 

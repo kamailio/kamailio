@@ -128,8 +128,8 @@ AAA_AVP *AAACreateAVP(AAA_AVPCode code, AAA_AVPFlag flags, AAAVendorId vendorId,
 
 	/* first check the params */
 	if(data == 0 || length == 0) {
-		LM_ERR("AAACreateAVP: NULL value received for"
-			   " param data/length (AVP Code %d, VendorId %d)!!\n",
+		LM_ERR("NULL value received for param data/length (AVP Code %d, "
+			   "VendorId %d)!!\n",
 				code, vendorId);
 		return 0;
 	}
@@ -164,7 +164,7 @@ AAA_AVP *AAACreateAVP(AAA_AVPCode code, AAA_AVPFlag flags, AAAVendorId vendorId,
 
 	return avp;
 error:
-	LM_ERR("AAACreateAVP: no more free memory!\n");
+	LM_ERR("no more free memory!\n");
 	return 0;
 }
 
@@ -183,8 +183,8 @@ AAAReturnCode AAAAddAVPToMessage(
 	AAA_AVP *avp_t;
 
 	if(!msg || !avp) {
-		LM_ERR("AAAAddAVPToMessage: param msg or avp passed null"
-			   " or *avpList=NULL and position!=NULL !!\n");
+		LM_ERR("param msg or avp passed null or *avpList=NULL and "
+			   "position!=NULL !!\n");
 		return AAA_ERR_PARAMETER;
 	}
 
@@ -203,8 +203,7 @@ AAAReturnCode AAAAddAVPToMessage(
 				avp_t = avp_t->next)
 			;
 		if(!avp_t) {
-			LM_ERR("AAAAddAVPToMessage: the \"position\" avp is not in"
-				   "\"msg\" message!!\n");
+			LM_ERR("the \"position\" avp is not in \"msg\" message!!\n");
 			return AAA_ERR_PARAMETER;
 		}
 		/* insert after position */
@@ -274,8 +273,7 @@ AAA_AVP *AAAFindMatchingAVP(AAAMessage *msg, AAA_AVP *startAvp,
 				avp_t = avp_t->next)
 			;
 		if(!avp_t) {
-			LM_ERR("AAAFindMatchingAVP: the \"position\" avp is not "
-				   "in \"avpList\" list!!\n");
+			LM_ERR("the \"position\" avp is not in \"avpList\" list!!\n");
 			goto error;
 		}
 		avp_t = startAvp;
@@ -311,8 +309,7 @@ AAAReturnCode AAARemoveAVPFromMessage(AAAMessage *msg, AAA_AVP *avp)
 
 	/* param check */
 	if(!msg || !avp) {
-		LM_ERR("AAARemoveAVPFromMessage: param AVP_LIST \"avpList\" or AVP "
-			   "\"avp\" passed null !!\n");
+		LM_ERR("param AVP_LIST \"avpList\" or AVP \"avp\" passed null !!\n");
 		return AAA_ERR_PARAMETER;
 	}
 
@@ -320,8 +317,7 @@ AAAReturnCode AAARemoveAVPFromMessage(AAAMessage *msg, AAA_AVP *avp)
 	for(avp_t = msg->avpList.head; avp_t && avp_t != avp; avp_t = avp_t->next)
 		;
 	if(!avp_t) {
-		LM_ERR("AAARemoveAVPFromMessage: the \"avp\" avp is not in "
-			   "\"avpList\" avp list!!\n");
+		LM_ERR("the \"avp\" avp is not in \"avpList\" avp list!!\n");
 		return AAA_ERR_PARAMETER;
 	}
 
@@ -373,7 +369,7 @@ AAAReturnCode AAAFreeAVP(AAA_AVP **avp)
 {
 	/* some checks */
 	if(!avp || !(*avp)) {
-		LM_ERR("AAAFreeAVP: param avp cannot be null!!\n");
+		LM_ERR("param avp cannot be null!!\n");
 		return AAA_ERR_PARAMETER;
 	}
 
@@ -449,8 +445,7 @@ char *AAAConvertAVPToString(AAA_AVP *avp, char *dest, unsigned int destLen)
 	int i;
 
 	if(!avp || !dest || !destLen) {
-		LM_ERR("AAAConvertAVPToString: param AVP, DEST or DESTLEN "
-			   "passed as null!!!\n");
+		LM_ERR("param AVP, DEST or DESTLEN passed as null!!!\n");
 		return 0;
 	}
 	l = snprintf(dest, destLen,
@@ -535,7 +530,7 @@ AAA_AVP *AAACloneAVP(AAA_AVP *avp, unsigned char clone_data)
 	/* clone the avp structure */
 	n_avp = (AAA_AVP *)shm_malloc(sizeof(AAA_AVP));
 	if(!n_avp) {
-		LM_ERR("clone_avp: cannot get free memory!!\n");
+		LM_ERR("cannot get free memory!!\n");
 		goto error;
 	}
 	memcpy(n_avp, avp, sizeof(AAA_AVP));
@@ -545,7 +540,7 @@ AAA_AVP *AAACloneAVP(AAA_AVP *avp, unsigned char clone_data)
 		/* clone the avp data */
 		n_avp->data.s = (char *)shm_malloc(avp->data.len);
 		if(!(n_avp->data.s)) {
-			LM_ERR("clone_avp: cannot get free memory!!\n");
+			LM_ERR("cannot get free memory!!\n");
 			shm_free(n_avp);
 			goto error;
 		}
@@ -607,7 +602,7 @@ str AAAGroupAVPS(AAA_AVP_LIST avps)
 	/* allocate some memory */
 	buf.s = (char *)shm_malloc(buf.len);
 	if(!buf.s) {
-		LM_ERR("hss3g_group_avps: no more free memory!\n");
+		LM_ERR("no more free memory!\n");
 		buf.len = 0;
 		return buf;
 	}
@@ -634,7 +629,7 @@ str AAAGroupAVPS(AAA_AVP_LIST avps)
 		p += to_32x_len(avp->data.len);
 	}
 	if((char *)p - buf.s != buf.len) {
-		LM_ERR("BUG:hss3g_group_avps: mismatch between len and buf!\n");
+		LM_ERR("BUG:mismatch between len and buf!\n");
 		shm_free(buf.s);
 		buf.s = 0;
 		buf.len = 0;
@@ -666,7 +661,7 @@ AAA_AVP_LIST AAAUngroupAVPS(str buf)
 	/* start decoding the AVPS */
 	while(ptr < buf.s + buf.len) {
 		if(ptr + AVP_HDR_SIZE(0x80) > buf.s + buf.len) {
-			LM_ERR("hss3g_ungroup_avps: source buffer to short!! "
+			LM_ERR("source buffer to short!! "
 				   "Cannot read the whole AVP header!\n");
 			goto error;
 		}
@@ -680,7 +675,7 @@ AAA_AVP_LIST AAAUngroupAVPS(str buf)
 		avp_len = get_3bytes(ptr);
 		ptr += AVP_LENGTH_SIZE;
 		if(avp_len < 1) {
-			LM_ERR("hss3g_ungroup_avps: invalid AVP len [%d]\n", avp_len);
+			LM_ERR("invalid AVP len [%d]\n", avp_len);
 			goto error;
 		}
 		/* avp vendor-ID */
@@ -693,7 +688,7 @@ AAA_AVP_LIST AAAUngroupAVPS(str buf)
 		avp_data_len = avp_len - AVP_HDR_SIZE(avp_flags);
 		/*check the data length */
 		if(buf.s + buf.len < ptr + avp_data_len) {
-			LM_ERR("hss3g_ungroup_avps: source buffer to short!! "
+			LM_ERR("source buffer to short!! "
 				   "Cannot read a whole data for AVP!\n");
 			goto error;
 		}
@@ -702,7 +697,7 @@ AAA_AVP_LIST AAAUngroupAVPS(str buf)
 		avp = AAACreateAVP(avp_code, avp_flags, avp_vendorID, ptr, avp_data_len,
 				AVP_DONT_FREE_DATA);
 		if(!avp) {
-			LM_ERR("hss3g_ungroup_avps: can't create avp for member of list\n");
+			LM_ERR("can't create avp for member of list\n");
 			goto error;
 		}
 
@@ -749,8 +744,7 @@ AAA_AVP *AAAFindMatchingAVPList(AAA_AVP_LIST avpList, AAA_AVP *startAvp,
 				avp_t = avp_t->next)
 			;
 		if(!avp_t) {
-			LM_ERR("ndMatchingAVP: the \"position\" avp is not "
-				   "in \"avpList\" list!!\n");
+			LM_ERR("the \"position\" avp is not in \"avpList\" list!!\n");
 			goto error;
 		}
 		avp_t = startAvp;

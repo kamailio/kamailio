@@ -74,7 +74,7 @@ int peer_manager_init(dp_config *config)
 {
 	int i;
 	peer *p;
-	LM_DBG("peer_manager_init(): Peer Manager initialization...\n");
+	LM_DBG("Peer Manager initialization...\n");
 	peer_list = shm_malloc(sizeof(peer_list_t));
 	peer_list->head = 0;
 	peer_list->tail = 0;
@@ -132,7 +132,7 @@ void peer_manager_destroy()
 	shm_free(peer_list);
 	lock_destroy(peer_list_lock);
 	lock_dealloc((void *)peer_list_lock);
-	LM_DBG("peer_manager_init(): ...Peer Manager destroyed\n");
+	LM_DBG("Peer Manager destroyed\n");
 }
 
 /**
@@ -281,7 +281,7 @@ int peer_timer(time_t now, void *ptr)
 {
 	peer *p, *n;
 	int i;
-	LM_DBG("peer_timer(): taking care of peers...\n");
+	LM_DBG("taking care of peers...\n");
 	lock_get(peer_list_lock);
 	p = peer_list->head;
 	while(p) {
@@ -302,8 +302,7 @@ int peer_timer(time_t now, void *ptr)
 		}
 
 		if(p->activity + config->tc <= now) {
-			LM_DBG("peer_timer(): Peer %.*s State %d \n", p->fqdn.len,
-					p->fqdn.s, p->state);
+			LM_DBG("Peer %.*s State %d \n", p->fqdn.len, p->fqdn.s, p->state);
 			switch(p->state) {
 				/* initiating connection */
 				case Closed:
@@ -353,8 +352,8 @@ int peer_timer(time_t now, void *ptr)
 					/* ignored states */
 					/* unknown states */
 				default:
-					LM_ERR("peer_timer(): Peer %.*s inactive  in state %d\n",
-							p->fqdn.len, p->fqdn.s, p->state);
+					LM_ERR("Peer %.*s inactive  in state %d\n", p->fqdn.len,
+							p->fqdn.s, p->state);
 			}
 		}
 		lock_release(p->lock);

@@ -49,6 +49,6 @@ int get_result_code(AAAMessage *msg)
 finish:
 	return rc;
 error:
-	LM_ERR("get_result_code(): no AAAMessage or Result Code not found\n");
+	LM_ERR("no AAAMessage or Result Code not found\n");
 	return -1;
 }

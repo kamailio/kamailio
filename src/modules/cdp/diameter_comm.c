@@ -70,7 +70,7 @@ int AAAAddRequestHandler(AAARequestHandler_f *f, void *param)
 {
 	handler *h = shm_malloc(sizeof(handler));
 	if(!h) {
-		LM_ERR("AAAAddRequestHandler: error allocating %ld bytes in shm\n",
+		LM_ERR("error allocating %ld bytes in shm\n",
 				(long int)sizeof(handler));
 		return 0;
 	}
@@ -99,7 +99,7 @@ int AAAAddResponseHandler(AAAResponseHandler_f *f, void *param)
 {
 	handler *h = shm_malloc(sizeof(handler));
 	if(!h) {
-		LM_ERR("AAAAddResponseHandler: error allocating %ld bytes in shm\n",
+		LM_ERR("error allocating %ld bytes in shm\n",
 				(long int)sizeof(handler));
 		return 0;
 	}
@@ -143,15 +143,13 @@ AAAReturnCode AAASendMessage(AAAMessage *message,
 		AAASessionsUnlock(cdp_session->hash);
 	}
 	if(!p) {
-		LM_ERR("AAASendMessage(): Can't find a suitable connected peer in the "
-			   "routing table.\n");
+		LM_ERR("Can't find a suitable connected peer in the routing table.\n");
 		goto error;
 	}
 	LM_DBG("Found diameter peer [%.*s] from routing table\n", p->fqdn.len,
 			p->fqdn.s);
 	if(p->state != I_Open && p->state != R_Open) {
-		LM_ERR("AAASendMessage(): Peer not connected to %.*s\n", p->fqdn.len,
-				p->fqdn.s);
+		LM_ERR("Peer not connected to %.*s\n", p->fqdn.len, p->fqdn.s);
 		goto error;
 	}
 	/* only add transaction following when required */
@@ -160,8 +158,7 @@ AAAReturnCode AAASendMessage(AAAMessage *message,
 			cdp_add_trans(message, callback_f, callback_param,
 					config->transaction_timeout, 1);
 		else
-			LM_ERR("AAASendMessage(): can't add transaction callback for "
-				   "answer.\n");
+			LM_ERR("can't add transaction callback for answer.\n");
 	}
 
 	//	if (!peer_send_msg(p,message))
@@ -190,13 +187,11 @@ AAAReturnCode AAASendMessageToPeer(AAAMessage *message, str *peer_id,
 	peer *p;
 	p = get_peer_by_fqdn(peer_id);
 	if(!p) {
-		LM_ERR("AAASendMessageToPeer(): Peer unknown %.*s\n", peer_id->len,
-				peer_id->s);
+		LM_ERR("Peer unknown %.*s\n", peer_id->len, peer_id->s);
 		goto error;
 	}
 	if(p->state != I_Open && p->state != R_Open) {
-		LM_ERR("AAASendMessageToPeer(): Peer not connected to %.*s\n",
-				peer_id->len, peer_id->s);
+		LM_ERR("Peer not connected to %.*s\n", peer_id->len, peer_id->s);
 		goto error;
 	}
 	/* only add transaction following when required */
@@ -205,8 +200,7 @@ AAAReturnCode AAASendMessageToPeer(AAAMessage *message, str *peer_id,
 			cdp_add_trans(message, callback_f, callback_param,
 					config->transaction_timeout, 1);
 		else
-			LM_ERR("AAASendMessageToPeer(): can't add transaction callback for "
-				   "answer.\n");
+			LM_ERR("can't add transaction callback for answer.\n");
 	}
 
 	p->last_selected = time(NULL);
@@ -235,8 +229,7 @@ void sendrecv_cb(
 		int is_timeout, void *param, AAAMessage *ans, long elapsed_msecs)
 {
 	if(sem_release((gen_sem_t *)param) < 0)
-		LM_ERR("sendrecv_cb(): Failed to unlock a transactional sendrecv! > "
-			   "%s\n",
+		LM_ERR("Failed to unlock a transactional sendrecv! > %s\n",
 				strerror(errno));
 }
 
@@ -266,13 +259,11 @@ AAAMessage *AAASendRecvMessage(AAAMessage *message)
 		AAASessionsUnlock(cdp_session->hash);
 	}
 	if(!p) {
-		LM_ERR("AAASendRecvMessage(): Can't find a suitable connected peer in "
-			   "the routing table.\n");
+		LM_ERR("Can't find a suitable connected peer in the routing table.\n");
 		goto error;
 	}
 	if(p->state != I_Open && p->state != R_Open) {
-		LM_ERR("AAASendRecvMessage(): Peer not connected to %.*s\n",
-				p->fqdn.len, p->fqdn.s);
+		LM_ERR("Peer not connected to %.*s\n", p->fqdn.len, p->fqdn.s);
 		goto error;
 	}
 
@@ -291,8 +282,7 @@ AAAMessage *AAASendRecvMessage(AAAMessage *message)
 		while(sem_get(sem) < 0) {
 			if(shutdownx && (*shutdownx))
 				goto error;
-			LM_WARN("AAASendRecvMessage(): interrupted by signal or something "
-					"> %s\n",
+			LM_WARN("interrupted by signal or something > %s\n",
 					strerror(errno));
 		}
 		sem_free(sem);
@@ -309,7 +299,7 @@ AAAMessage *AAASendRecvMessage(AAAMessage *message)
 		cdp_free_trans(t);
 		return ans;
 	} else {
-		LM_ERR("AAASendRecvMessage(): can't add wait for answer to answer.\n");
+		LM_ERR("can't add wait for answer to answer.\n");
 		goto error;
 	}
 
@@ -342,13 +332,11 @@ AAAMessage *AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
 
 	p = get_peer_by_fqdn(peer_id);
 	if(!p) {
-		LM_ERR("AAASendRecvMessageToPeer(): Peer unknown %.*s\n", peer_id->len,
-				peer_id->s);
+		LM_ERR("Peer unknown %.*s\n", peer_id->len, peer_id->s);
 		goto error;
 	}
 	if(p->state != I_Open && p->state != R_Open) {
-		LM_ERR("AAASendRecvMessageToPeer(): Peer not connected to %.*s\n",
-				peer_id->len, peer_id->s);
+		LM_ERR("Peer not connected to %.*s\n", peer_id->len, peer_id->s);
 		goto error;
 	}
 
@@ -366,8 +354,7 @@ AAAMessage *AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
 		while(sem_get(sem) < 0) {
 			if(shutdownx && (*shutdownx))
 				goto error;
-			LM_WARN("AAASendRecvMessageToPeer(): interrupted by signal or "
-					"something > %s\n",
+			LM_WARN("interrupted by signal or something > %s\n",
 					strerror(errno));
 		}
 
@@ -386,8 +373,7 @@ AAAMessage *AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
 		cdp_free_trans(t);
 		return ans;
 	} else {
-		LM_ERR("AAASendRecvMessageToPeer(): can't add wait for answer to "
-			   "answer.\n");
+		LM_ERR("can't add wait for answer to answer.\n");
 		goto error;
 	}
 

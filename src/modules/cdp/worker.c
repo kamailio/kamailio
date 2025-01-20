@@ -373,8 +373,7 @@ void worker_process(int id)
 					tasks->end);
 			continue;
 		}
-		LM_DBG("worker_process(): [%d] got task Q(%d/%d)\n", id, tasks->start,
-				tasks->end);
+		LM_DBG("[%d] got task Q(%d/%d)\n", id, tasks->start, tasks->end);
 		r = is_req(t.msg);
 		for(cb = callbacks->head; cb; cb = cb->next)
 			(*(cb->cb))(t.p, t.msg, *(cb->ptr));

@@ -81,11 +81,11 @@ AAAReturnCode AAABuildMsgBuffer(AAAMessage *msg)
 		//LM_DBG("AVP code: %d, data %.*s\n", avp->code, avp->data.len, avp->data.s);
 	}
 
-	LM_DBG("AAABuildMsgBuffer(): len=%d\n", msg->buf.len);
+	LM_DBG("len=%d\n", msg->buf.len);
 	/* allocate some memory */
 	msg->buf.s = (char *)shm_malloc(msg->buf.len);
 	if(!msg->buf.s) {
-		LM_ERR("AAABuildMsgBuffer: no more free memory!\n");
+		LM_ERR("no more free memory!\n");
 		goto error;
 	}
 	memset(msg->buf.s, 0, msg->buf.len);
@@ -180,8 +180,7 @@ AAAMessage *AAANewMessage(AAACommandCode commandCode,
 				sessionId = &(request->sessionId->data);
 		} else {
 			if(commandCode != Code_DW)
-				LM_DBG("AAANewMessage: param session received null and it's a "
-					   "request!!\n");
+				LM_DBG("param session received null and it's a request!!\n");
 		}
 	} else {
 		sessionId = &(session->id);
@@ -190,7 +189,7 @@ AAAMessage *AAANewMessage(AAACommandCode commandCode,
 	/* allocated a new AAAMessage structure and set it to 0 */
 	msg = (AAAMessage *)shm_malloc(sizeof(AAAMessage));
 	if(!msg) {
-		LM_ERR("AAANewMessage: no more free memory!!\n");
+		LM_ERR("no more free memory!!\n");
 		goto error;
 	}
 	memset(msg, 0, sizeof(AAAMessage));
@@ -205,7 +204,7 @@ AAAMessage *AAANewMessage(AAACommandCode commandCode,
 		avp = AAACreateAVP(
 				263, 0, 0, sessionId->s, sessionId->len, AVP_DUPLICATE_DATA);
 		if(!avp || AAAAddAVPToMessage(msg, avp, 0) != AAA_ERR_SUCCESS) {
-			LM_ERR("AAANewMessage: cannot create/add Session-Id avp\n");
+			LM_ERR("cannot create/add Session-Id avp\n");
 			if(avp)
 				AAAFreeAVP(&avp);
 			goto error;
@@ -224,7 +223,7 @@ AAAMessage *AAANewMessage(AAACommandCode commandCode,
 	if(!avp
 			|| AAAAddAVPToMessage(msg, avp, msg->avpList.tail)
 					   != AAA_ERR_SUCCESS) {
-		LM_ERR("AAANewMessage: cannot create/add Origin-Host avp\n");
+		LM_ERR("cannot create/add Origin-Host avp\n");
 		if(avp)
 			AAAFreeAVP(&avp);
 		goto error;
@@ -236,7 +235,7 @@ AAAMessage *AAANewMessage(AAACommandCode commandCode,
 	if(!avp
 			|| AAAAddAVPToMessage(msg, avp, msg->avpList.tail)
 					   != AAA_ERR_SUCCESS) {
-		LM_ERR("AAANewMessage: cannot create/add Origin-Realm avp\n");
+		LM_ERR("cannot create/add Origin-Realm avp\n");
 		if(avp)
 			AAAFreeAVP(&avp);
 		goto error;
@@ -272,11 +271,11 @@ AAAMessage *AAANewMessage(AAACommandCode commandCode,
 			//avp = AAACreateAVP(AVP_Destination_Host,AAA_AVP_FLAG_MANDATORY,0,
 			//	dest_host.s,dest_host.len,AVP_DUPLICATE_DATA);
 			//if (!avp) {
-			//		LM_ERR("ERR:AAANewMessage: Failed creating Destination Host avp\n");
+			//		LM_ERR("Failed creating Destination Host avp\n");
 			//		goto error;
 			//	}
 			//	if (AAAAddAVPToMessage(msg,avp,msg->avpList.tail)!=AAA_ERR_SUCCESS) {
-			//		LM_ERR("ERR:AAANewMessage: Failed adding Destination Host avp to message\n");
+			//		LM_ERR("Failed adding Destination Host avp to message\n");
 			//		AAAFreeAVP(&avp);
 			//		goto error;
 			//	}
@@ -287,14 +286,12 @@ AAAMessage *AAANewMessage(AAACommandCode commandCode,
 			avp = AAACreateAVP(AVP_Destination_Realm, AAA_AVP_FLAG_MANDATORY, 0,
 					dest_realm.s, dest_realm.len, AVP_DUPLICATE_DATA);
 			if(!avp) {
-				LM_ERR("ERR:AAANewMessage: Failed creating Destination Realm "
-					   "avp\n");
+				LM_ERR("Failed creating Destination Realm avp\n");
 				goto error;
 			}
 			if(AAAAddAVPToMessage(msg, avp, msg->avpList.tail)
 					!= AAA_ERR_SUCCESS) {
-				LM_ERR("ERR:AAANewMessage: Failed adding Destination Realm avp "
-					   "to message\n");
+				LM_ERR("Failed adding Destination Realm avp to message\n");
 				AAAFreeAVP(&avp);
 				goto error;
 			}
@@ -315,7 +312,7 @@ AAAMessage *AAANewMessage(AAACommandCode commandCode,
 
 	return msg;
 error:
-	LM_ERR("AAANewMessage: failed to create a new AAA message!\n");
+	LM_ERR("failed to create a new AAA message!\n");
 	AAAFreeMessage(&msg);
 	return 0;
 }
@@ -347,11 +344,11 @@ AAAMessage *AAACreateRequest(AAAApplicationId app_id,
 			avp = AAACreateAVP(AVP_Destination_Host,AAA_AVP_FLAG_MANDATORY,0,
 			session->dest_host.s,session->dest_host.len,AVP_DUPLICATE_DATA);
 			if (!avp) {
-				LM_ERR("ERR:AAACreateRequest: Failed creating Destination Host avp\n");
+				LM_ERR("Failed creating Destination Host avp\n");
 				goto error;
 			}
 			if (AAAAddAVPToMessage(msg,avp,msg->avpList.tail)!=AAA_ERR_SUCCESS) {
-				LM_ERR("ERR:AAACreateRequest: Failed adding Destination Host avp to message\n");
+				LM_ERR("Failed adding Destination Host avp to message\n");
 				AAAFreeAVP(&avp);
 				goto error;
 			}
@@ -362,14 +359,12 @@ AAAMessage *AAACreateRequest(AAAApplicationId app_id,
 					session->dest_realm.s, session->dest_realm.len,
 					AVP_DUPLICATE_DATA);
 			if(!avp) {
-				LM_ERR("ERR:AAACreateRequest: Failed creating Destination "
-					   "Realm avp\n");
+				LM_ERR("Failed creating Destination Realm avp\n");
 				goto error;
 			}
 			if(AAAAddAVPToMessage(msg, avp, msg->avpList.tail)
 					!= AAA_ERR_SUCCESS) {
-				LM_ERR("ERR:AAACreateRequest: Failed adding Destination Realm "
-					   "avp to message\n");
+				LM_ERR("Failed adding Destination Realm avp to message\n");
 				AAAFreeAVP(&avp);
 				goto error;
 			}
@@ -426,8 +421,7 @@ AAAReturnCode AAAFreeAVPList(AAA_AVP_LIST *avpList)
  */
 AAAReturnCode AAAFreeMessage(AAAMessage **msg)
 {
-	LM_DBG("AAAFreeMessage: Freeing message (%p) %d\n", *msg,
-			(*msg)->commandCode);
+	LM_DBG("Freeing message (%p) %d\n", *msg, (*msg)->commandCode);
 	/* param check */
 	if(!msg || !(*msg))
 		goto done;
@@ -489,7 +483,7 @@ AAAMessage *AAATranslateMessage(
 
 	/* check the params */
 	if(!source || !sourceLen || sourceLen < AAA_MSG_HDR_SIZE) {
-		LM_ERR("AAATranslateMessage: invalid buffered received!\n");
+		LM_ERR("invalid buffered received!\n");
 		goto error;
 	}
 
@@ -501,7 +495,7 @@ AAAMessage *AAATranslateMessage(
 	/* alloc a new message structure */
 	msg = (AAAMessage *)shm_malloc(sizeof(AAAMessage));
 	if(!msg) {
-		LM_ERR("AAATranslateMessage: no more free memory!!\n");
+		LM_ERR("no more free memory!!\n");
 		goto error;
 	}
 	memset(msg, 0, sizeof(AAAMessage));
@@ -510,9 +504,7 @@ AAAMessage *AAATranslateMessage(
 	version = (unsigned char)*ptr;
 	ptr += VER_SIZE;
 	if(version != 1) {
-		LM_ERR("AAATranslateMessage: invalid version [%d]in "
-			   "AAA msg\n",
-				version);
+		LM_ERR("invalid version [%d]in AAA msg\n", version);
 		goto error;
 	}
 
@@ -520,9 +512,8 @@ AAAMessage *AAATranslateMessage(
 	msg_len = get_3bytes(ptr);
 	ptr += MESSAGE_LENGTH_SIZE;
 	if(msg_len > sourceLen) {
-		LM_ERR("AAATranslateMessage: AAA message len [%d] bigger than"
-			   " buffer len [%d]\n",
-				msg_len, sourceLen);
+		LM_ERR("AAA message len [%d] bigger than buffer len [%d]\n", msg_len,
+				sourceLen);
 		goto error;
 	}
 
@@ -549,7 +540,7 @@ AAAMessage *AAATranslateMessage(
 	/* start decoding the AVPS */
 	while(ptr < source + msg_len) {
 		if(ptr + AVP_HDR_SIZE(0x80) > source + msg_len) {
-			LM_ERR("AAATranslateMessage: source buffer to short!! "
+			LM_ERR("source buffer to short!! "
 				   "Cannot read the whole AVP header!\n");
 			goto error;
 		}
@@ -563,7 +554,7 @@ AAAMessage *AAATranslateMessage(
 		avp_len = get_3bytes(ptr);
 		ptr += AVP_LENGTH_SIZE;
 		if(avp_len < 1) {
-			LM_ERR("AAATranslateMessage: invalid AVP len [%d]\n", avp_len);
+			LM_ERR("invalid AVP len [%d]\n", avp_len);
 			goto error;
 		}
 		/* avp vendor-ID */
@@ -576,7 +567,7 @@ AAAMessage *AAATranslateMessage(
 		avp_data_len = avp_len - AVP_HDR_SIZE(avp_flags);
 		/*check the data length */
 		if(source + msg_len < ptr + avp_data_len) {
-			LM_ERR("AAATranslateMessage: source buffer to short!! "
+			LM_ERR("source buffer to short!! "
 				   "Cannot read a whole data for AVP!\n");
 			goto error;
 		}
@@ -604,7 +595,7 @@ AAAMessage *AAATranslateMessage(
 	//AAAPrintMessage( msg );
 	return msg;
 error:
-	LM_ERR("AAATranslateMessage: message conversion dropped!!\n");
+	LM_ERR("message conversion dropped!!\n");
 	AAAFreeMessage(&msg);
 	return 0;
 }

@@ -118,13 +118,12 @@ xmlDocPtr parse_dp_config_file(char *filename)
 	parser_init();
 
 	if(!filename) {
-		LM_ERR("ERROR:parse_dp_config_file(): filename parameter is null\n");
+		LM_ERR("filename parameter is null\n");
 		goto error;
 	}
 	f = fopen(filename, "r");
 	if(!f) {
-		LM_ERR("ERROR:parse_dp_config_file(): Error opening <%s> file > %s\n",
-				filename, strerror(errno));
+		LM_ERR("Error opening <%s> file > %s\n", filename, strerror(errno));
 		goto error;
 	}
 	fclose(f);
@@ -152,7 +151,7 @@ xmlDocPtr parse_dp_config_str(str config_str)
 
 	char c = config_str.s[config_str.len];
 	if(!config_str.len) {
-		LM_ERR("ERROR:parse_dp_config_str(): empty string\n");
+		LM_ERR("empty string\n");
 		goto error;
 	}
 	parser_init();
@@ -162,9 +161,8 @@ xmlDocPtr parse_dp_config_str(str config_str)
 	config_str.s[config_str.len] = c;
 
 	if(!doc) {
-		LM_ERR("parse_dp_config_file():  This is not a valid XML string "
-			   "<%.*s>\n",
-				config_str.len, config_str.s);
+		LM_ERR("This is not a valid XML string <%.*s>\n", config_str.len,
+				config_str.s);
 		goto error;
 	}
 
@@ -194,7 +192,7 @@ dp_config *parse_dp_config(xmlDocPtr doc)
 
 	root = xmlDocGetRootElement(doc);
 	if(!root) {
-		LM_ERR("parse_dp_config():  Empty XML \n");
+		LM_ERR("Empty XML \n");
 		goto error;
 	}
 
@@ -202,7 +200,7 @@ dp_config *parse_dp_config(xmlDocPtr doc)
 	if(k > 12)
 		k = 12;
 	if(strncasecmp((char *)root->name, "DiameterPeer", k) != 0) {
-		LM_ERR("parse_dp_config(): XML Root is not <DiameterPeer>\n");
+		LM_ERR("XML Root is not <DiameterPeer>\n");
 		goto error;
 	}
 
