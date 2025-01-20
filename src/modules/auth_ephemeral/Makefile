@@ -35,6 +35,7 @@ else
 endif
 
 LIBS+= $(TLS_EXTRA_LIBS)
+${eval LIBS=$(LIBS)}
 
 # Static linking, if you'd like to use TLS and AUTH_EPHEMERAL at the same time
 #

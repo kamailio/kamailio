@@ -19,5 +19,6 @@ else
 	DEFS += -I$(LOCALBASE)/include
 	LIBS= -L$(LOCALBASE)/lib -lsystemd
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules
