@@ -413,7 +413,7 @@ int extract_ice_option(str *body, sdp_stream_cell_t *stream)
 		trim_len(ice_opt->option.len, ice_opt->option.s, ice_opt->option);
 
 		length = 0;
-		if(*ptr_src == 32)
+		if(ptr_src < end && *ptr_src == 32)
 			ptr_src++; /* skip space */
 	}
 
