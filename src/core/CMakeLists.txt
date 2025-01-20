@@ -18,10 +18,14 @@ find_package(FLEX REQUIRED)
 # Find Bison
 find_package(BISON REQUIRED)
 
+if(WIN32)
+  cmake_policy(SET CMP0074 OLD)
+endif()
+
 # Generate lex.yy.c from cfg.lex
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c
-  COMMAND ${FLEX_EXECUTABLE} -o ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c
+  COMMAND ${FLEX_EXECUTABLE} -o${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c # https://www.cs.virginia.edu/~cr4bd/flex-manual/Options-for-Specifying-Filenames.html
           ${CMAKE_CURRENT_SOURCE_DIR}/cfg.lex
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cfg.lex
           ${CMAKE_CURRENT_BINARY_DIR}/cfg.tab.h
