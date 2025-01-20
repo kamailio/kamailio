@@ -25,11 +25,20 @@ if(NOT ${USE_FAST_LOCK})
   target_compile_definitions(common INTERFACE USE_PTHREAD_MUTEX USE_SYSV_SEM)
 endif()
 
+if (CMAKE_HOST_SYSTEM_VERSION VERSION_LESS 24)
+    message(STATUS "Running on Big Sur")
 set(CMAKE_MODULE_LINKER_FLAGS
     "${CMAKE_MODULE_LINKER_FLAGS} -bundle -flat_namespace -undefined suppress")
 set(CMAKE_SHARED_LINKER_FLAGS
     "${CMAKE_SHARED_LINKER_FLAGS} -dynamiclib -flat_namespace -undefined suppress"
 )
+else ()
+set(CMAKE_MODULE_LINKER_FLAGS
+    "${CMAKE_MODULE_LINKER_FLAGS} -bundle -flat_namespace -undefined dynamic_lookup")
+set(CMAKE_SHARED_LINKER_FLAGS
+    "${CMAKE_SHARED_LINKER_FLAGS} -dynamiclib -flat_namespace -undefined dynamic_lookup"
+)
+endif ()
 
 if(NOT NO_SELECT)
   target_compile_definitions(common INTERFACE HAVE_SELECT)
