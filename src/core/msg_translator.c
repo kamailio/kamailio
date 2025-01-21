@@ -2692,15 +2692,16 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 								(hdr->body.s + hdr->body.len) - hdr->name.s,
 								msg);
 					}
-					if(received_buf)
+					if(received_buf) {
 						append_str(p, received_buf, received_len);
+					}
+					if(xparams.len > 0) {
+						append_str(p, xparams.s, xparams.len);
+					}
 				} else {
 					/* normal whole via copy */
 					append_str_trans(p, hdr->name.s,
 							(hdr->body.s + hdr->body.len) - hdr->name.s, msg);
-				}
-				if(xparams.len > 0) {
-					append_str(p, xparams.s, xparams.len);
 				}
 				append_str(p, CRLF, CRLF_LEN);
 				/* if is HTTP, replace Via with Sia
