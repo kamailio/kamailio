@@ -2663,6 +2663,22 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 											- msg->via1->rport->start
 											- msg->via1->rport->size,
 									msg);
+						} else if(msg->via1->branch) { /* add after branch */
+							/* copy until after branch */
+							append_str_trans(p, hdr->name.s,
+									msg->via1->branch->start - hdr->name.s
+											+ msg->via1->branch->size,
+									msg);
+							/* copy new rport */
+							append_str(p, rport_buf, rport_len);
+							/* copy the rest of the via */
+							append_str_trans(p,
+									msg->via1->branch->start
+											+ msg->via1->branch->size,
+									hdr->body.s + hdr->body.len
+											- msg->via1->branch->start
+											- msg->via1->branch->size,
+									msg);
 						} else { /* just append the new one */
 							/* normal whole via copy */
 							append_str_trans(p, hdr->name.s,
