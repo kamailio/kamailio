@@ -108,6 +108,6 @@
 
   <toc/>
 
-  <xi:include href="ims_qos_admin.xml"
+  <xi:include href="ims_qos_npn_admin.xml"
               xmlns:xi="http://www.w3.org/2001/XInclude"/>
 </book>
