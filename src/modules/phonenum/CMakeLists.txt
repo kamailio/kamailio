@@ -3,14 +3,14 @@ file(GLOB MODULE_SOURCES "*.c")
 add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 # TODO: Support for find_package added after version 8.13.4
-find_package(libphonenumber CONFIG QUIET)
+# TODO: Debian and Ubuntu are missing static installation of libphonenumber
+# and find_package() does not work for them.
+# find_package(libphonenumber CONFIG QUIET)
 if(libphonenumber_FOUND)
-  # message(STATUS "Found libphonenumber: ${libphonenumber_INCLUDE_DIRS}")
+  message(STATUS "Found libphonenumber: ${libphonenumber_INCLUDE_DIRS}")
+  message(STATUS "Found libphonenumber: ${libphonenumber_LIBRARY}")
 else()
-  message(
-    STATUS
-      "libphonenumber not found with find_package()... looking with other methods"
-  )
+  message(STATUS "Looking for libphonenumber...")
   # add additional logic here to handle the missing dependency TODO: Fix lint
   # issue
   find_library(libphonenumber_LIBRARY NAMES phonenumber)
