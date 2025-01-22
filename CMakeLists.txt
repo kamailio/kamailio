@@ -5,12 +5,12 @@ cmake_minimum_required(VERSION 3.10)
 # Set the project name
 project(
   kamailio
-  VERSION 6.0.0
+  VERSION 6.1.0
   DESCRIPTION "Kamailio SIP Server"
   HOMEPAGE_URL "https://www.kamailio.org")
 
 # Set the version number
-set(EXTRAVERSION "-pre1")
+set(EXTRAVERSION "-dev0")
 set(RELEASE "${PROJECT_VERSION}${EXTRAVERSION}")
 
 message(STATUS "PROJECT_VERSION: ${PROJECT_VERSION}")
