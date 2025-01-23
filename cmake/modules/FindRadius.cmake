@@ -36,8 +36,9 @@ endif()
 if(${RADIUSCLIENT} STREQUAL "FREERADIUS")
   # - freeradius-client library
   set(RADIUSCLIENT_LIB USE_FREERADIUS)
-  find_package(Libfreeradius REQUIRED)
-  add_library(RadiusClient::RadiusClient ALIAS Libfreeradius::LIBFREERADIUS)
+  find_package(LibfreeradiusClient REQUIRED)
+  add_library(RadiusClient::RadiusClient ALIAS
+              LibfreeradiusClient::LIBFREERADIUS)
 elseif(${RADIUSCLIENT} STREQUAL "RADCLI")
   # - radcli library
   set(RADIUSCLIENT_LIB USE_RADCLI)
