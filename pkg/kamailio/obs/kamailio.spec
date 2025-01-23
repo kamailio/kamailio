@@ -1198,7 +1198,6 @@ sed -i -e 's|/usr/sbin/kamailio|/usr/sbin/kamailio --atexit=no|' pkg/kamailio/ob
 
 
 %build
-ln -s ../obs pkg/kamailio/%{dist_name}/%{dist_version}
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
 export FREERADIUS=1
 %endif
@@ -1431,29 +1430,29 @@ install -d %{buildroot}%{_sharedstatedir}/kamailio
 # On RedHat 6 like
 install -d %{buildroot}%{_var}/run/kamailio
 install -d %{buildroot}%{_sysconfdir}/rc.d/init.d
-install -m755 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.init \
+install -m755 pkg/kamailio/obs/kamailio.init \
         %{buildroot}%{_sysconfdir}/rc.d/init.d/kamailio
 %else
 # systemd
 install -d %{buildroot}%{_unitdir}
-install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.service %{buildroot}%{_unitdir}/kamailio.service
-install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio@.service %{buildroot}%{_unitdir}/kamailio@.service
-install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.service %{buildroot}%{_unitdir}/sipcapture.service
-install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.tmpfiles %{buildroot}%{_tmpfilesdir}/kamailio.conf
-install -Dpm 0644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.tmpfiles %{buildroot}%{_tmpfilesdir}/sipcapture.conf
+install -Dpm 0644 pkg/kamailio/obs/kamailio.service %{buildroot}%{_unitdir}/kamailio.service
+install -Dpm 0644 pkg/kamailio/obs/kamailio@.service %{buildroot}%{_unitdir}/kamailio@.service
+install -Dpm 0644 pkg/kamailio/obs/sipcapture.service %{buildroot}%{_unitdir}/sipcapture.service
+install -Dpm 0644 pkg/kamailio/obs/kamailio.tmpfiles %{buildroot}%{_tmpfilesdir}/kamailio.conf
+install -Dpm 0644 pkg/kamailio/obs/sipcapture.tmpfiles %{buildroot}%{_tmpfilesdir}/sipcapture.conf
 %endif
 
 %if 0%{?suse_version}
 install -d %{buildroot}%{_fillupdir}
-install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
+install -m644 pkg/kamailio/obs/kamailio.sysconfig \
         %{buildroot}%{_fillupdir}/sysconfig.kamailio
-install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
+install -m644 pkg/kamailio/obs/sipcapture.sysconfig \
         %{buildroot}%{_fillupdir}/sysconfig.sipcapture
 %else
 install -d %{buildroot}%{_sysconfdir}/sysconfig
-install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/kamailio.sysconfig \
+install -m644 pkg/kamailio/obs/kamailio.sysconfig \
         %{buildroot}%{_sysconfdir}/sysconfig/kamailio
-install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
+install -m644 pkg/kamailio/obs/sipcapture.sysconfig \
         %{buildroot}%{_sysconfdir}/sysconfig/sipcapture
 %endif
 
