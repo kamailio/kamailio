@@ -264,7 +264,7 @@ else()
       dbschema_${db_name}
       COMMAND ${CMAKE_COMMAND} -E make_directory "${db_name_folder}"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMENT "Creating scehmas for ${db_name}")
+      COMMENT "Creating schemas for ${db_name}")
 
     # Loop through each table and add a command for xsltproc
     foreach(table ${EXTRACTED_TABLES})
