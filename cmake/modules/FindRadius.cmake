@@ -14,8 +14,7 @@ find_package(PkgConfig)
 set(RADIUSCLIENTS FREERADIUS RADCLI RADIUSCLIENT_NG)
 set(RADIUSCLIENT
     RADCLI
-    CACHE STRING "Locking method to use"
-)
+    CACHE STRING "Radius Client to use")
 set_property(CACHE RADIUSCLIENT PROPERTY STRINGS ${RADIUSCLIENTS})
 
 # option(FREERADIUS "Use freeradius-client library" OFF)
@@ -36,12 +35,14 @@ endif()
 
 if(${RADIUSCLIENT} STREQUAL "FREERADIUS")
   # - freeradius-client library
-  set(RADIUSCLIENT_LIB "freeradius-client")
-  pkg_check_modules(RADIUS REQUIRED IMPORTED_TARGET freeradius)
+  set(RADIUSCLIENT_LIB USE_FREERADIUS)
+  find_package(Libfreeradius REQUIRED)
+  add_library(RadiusClient::RadiusClient ALIAS Libfreeradius::LIBFREERADIUS)
 elseif(${RADIUSCLIENT} STREQUAL "RADCLI")
   # - radcli library
   set(RADIUSCLIENT_LIB USE_RADCLI)
   pkg_check_modules(RADIUS REQUIRED IMPORTED_TARGET radcli)
+  add_library(RadiusClient::RadiusClient ALIAS PkgConfig::RADIUS)
   # Check for radiusclient-ng version
   # elseif(NOT radiusclient_ng STREQUAL "4")
   #   # - radiusclient-ng v5 or v4 library
