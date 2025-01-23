@@ -6,9 +6,7 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    branches: [ 6.0 ]
 
 jobs:
   build:
@@ -29,7 +27,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
         # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
         build_type: [Release]
-        c_compiler: [gcc, clang] 
+        c_compiler: [gcc, clang]
         kamailio_groups: [DEFAULT]
         target_arch: [aarch64, x86_64]
         exclude:
@@ -51,7 +49,7 @@ jobs:
     - name: Build Project natively
       uses: threeal/cmake-action@v2.1.0
       # Step runs for all except this combination
-      if: matrix.os != 'ubuntu-latest' || matrix.target_arch != 'aarch64'  
+      if: matrix.os != 'ubuntu-latest' || matrix.target_arch != 'aarch64'
       with:
         build-dir: ${{github.workspace}}/build
         build-args: -j8
@@ -59,7 +57,7 @@ jobs:
           CMAKE_BUILD_TYPE=${{matrix.build_type}}
           MODULE_GROUP_NAME=${{matrix.kamailio_groups}}
           CMAKE_C_COMPILER=${{matrix.c_compiler}}
-      
+
     - name: Build Project with cross-compiler
       if: matrix.os == 'ubuntu-latest' && matrix.target_arch == 'aarch64'
       uses: threeal/cmake-action@v2.1.0
