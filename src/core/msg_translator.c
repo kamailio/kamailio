@@ -1055,7 +1055,8 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 					offset++;                                                  \
 				}                                                              \
 			} else {                                                           \
-				LM_CRIT("null bind_address\n");                                \
+				LM_CRIT("null bind_address (SUBST_RCV_IP/%p/%p)\n",            \
+						msg->rcv.bind_address, recv_address_str);              \
 			};                                                                 \
 			break;                                                             \
 		case SUBST_RCV_PORT:                                                   \
@@ -1064,7 +1065,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 						recv_port_str->len);                                   \
 				offset += recv_port_str->len;                                  \
 			} else {                                                           \
-				LM_CRIT("null bind_address\n");                                \
+				LM_CRIT("null recv port str (SUBST_RCV_PORT)\n");              \
 			};                                                                 \
 			break;                                                             \
 		case SUBST_RCV_ALL:                                                    \
@@ -1156,7 +1157,8 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 				}                                                              \
 				RCVCOMP_PARAM_ADD                                              \
 			} else {                                                           \
-				LM_CRIT("null bind_address\n");                                \
+				LM_CRIT("null bind_address (SUBST_RCV_ALL/%p/%p)\n",           \
+						msg->rcv.bind_address, recv_address_str);              \
 			};                                                                 \
 			break;                                                             \
 		case SUBST_SND_IP:                                                     \
@@ -1173,7 +1175,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 					offset++;                                                  \
 				}                                                              \
 			} else {                                                           \
-				LM_CRIT("null send_sock\n");                                   \
+				LM_CRIT("null send_sock (SUBST_SND_IP)\n");                    \
 			};                                                                 \
 			break;                                                             \
 		case SUBST_SND_PORT:                                                   \
@@ -1182,7 +1184,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 						send_port_str->len);                                   \
 				offset += send_port_str->len;                                  \
 			} else {                                                           \
-				LM_CRIT("null send sock port\n");                              \
+				LM_CRIT("null send sock port (SUBST_SND_PORT)\n");             \
 			};                                                                 \
 			break;                                                             \
 		case SUBST_SND_ALL:                                                    \
@@ -1272,7 +1274,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 				}                                                              \
 				SENDCOMP_PARAM_ADD                                             \
 			} else {                                                           \
-				LM_CRIT("null bind_address\n");                                \
+				LM_CRIT("null send_sock (SUBST_SND_ALL)\n");                   \
 			};                                                                 \
 			break;                                                             \
 		case SUBST_RCV_PROTO:                                                  \
@@ -1311,7 +1313,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 								msg->rcv.bind_address->proto);                 \
 				}                                                              \
 			} else {                                                           \
-				LM_CRIT("null send_sock\n");                                   \
+				LM_CRIT("null bind address (SUBST_RCV_PROTO)\n");              \
 			};                                                                 \
 			break;                                                             \
 		case SUBST_SND_PROTO:                                                  \
@@ -1349,7 +1351,7 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 						LM_CRIT("unknown proto %d\n", send_sock->proto);       \
 				}                                                              \
 			} else {                                                           \
-				LM_CRIT("null send_sock\n");                                   \
+				LM_CRIT("null send_sock (SUBST_SND_PROTO)\n");                 \
 			};                                                                 \
 			break;                                                             \
 		default:                                                               \
