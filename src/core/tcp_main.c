@@ -1330,6 +1330,7 @@ inline static int tcp_do_connect(union sockaddr_union *server,
 	union sockaddr_union my_name;
 	socklen_t my_name_len;
 	struct ip_addr ip;
+	unsigned short port;
 #ifdef TCP_ASYNC
 	int n;
 #endif /* TCP_ASYNC */
@@ -1435,14 +1436,19 @@ inline static int tcp_do_connect(union sockaddr_union *server,
 	from = &my_name; /* update from with the real "from" address */
 	su2ip_addr(&ip, &my_name);
 find_socket:
+#ifdef SO_REUSEPORT
+	port = cfg_get(tcp, tcp_cfg, reuse_port) ? su_getport(from) : 0;
+#else
+	port = 0;
+#endif
 #ifdef USE_TLS
 	if(unlikely(type == PROTO_TLS)) {
-		*res_si = find_si(&ip, 0, PROTO_TLS);
+		*res_si = find_si(&ip, port, PROTO_TLS);
 	} else {
-		*res_si = find_si(&ip, 0, PROTO_TCP);
+		*res_si = find_si(&ip, port, PROTO_TCP);
 	}
 #else
-	*res_si = find_si(&ip, 0, PROTO_TCP);
+	*res_si = find_si(&ip, port, PROTO_TCP);
 #endif
 
 	if(unlikely(*res_si == 0)) {
