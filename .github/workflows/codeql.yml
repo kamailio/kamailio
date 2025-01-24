@@ -75,7 +75,7 @@ jobs:
 
       - name: Build cpp
         if: ${{ matrix.language == 'cpp' }}
-        run: make all
+        run: make -j$(nproc) all
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
