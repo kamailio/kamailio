@@ -1555,6 +1555,8 @@ int query_db_notify(str *pres_uri, pres_ev_t *event, subs_t *watcher_subs)
 	subs_t *subs_array = NULL, *s = NULL;
 	str *notify_body = NULL, *aux_body = NULL;
 	int ret_code = -1;
+	int retOK = 0;
+	int retErr = 0;
 
 	subs_array = get_subs_dialog(pres_uri, event, NULL);
 	if(subs_array == NULL) {
@@ -1584,7 +1586,9 @@ int query_db_notify(str *pres_uri, pres_ev_t *event, subs_t *watcher_subs)
 					< 0) {
 				LM_ERR("Could not send notify for [event]=%.*s\n",
 						event->name.len, event->name.s);
-				goto done;
+				retErr++;
+			} else {
+				retOK++;
 			}
 
 			if(aux_body != NULL) {
@@ -1597,7 +1601,10 @@ int query_db_notify(str *pres_uri, pres_ev_t *event, subs_t *watcher_subs)
 		}
 	}
 
-	ret_code = 1;
+	LM_DBG("sent ok: %d - err: %d\n", retOK, retErr);
+	if(retOK > 0) {
+		ret_code = 1;
+	}
 
 done:
 	free_subs_list(subs_array, PKG_MEM_TYPE, 0);
