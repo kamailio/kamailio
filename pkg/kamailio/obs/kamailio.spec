@@ -251,11 +251,17 @@ Conflicts:  kamailio-utils < %ver, kamailio-websocket < %ver
 Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
 Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
-BuildRequires:  bison, flex, which, make, gcc, gcc-c++, pkgconfig, readline-devel
-%if 0%{?rhel} != 6
 Requires:  systemd
 BuildRequires:  systemd-devel
-%endif
+BuildRequires: bison
+BuildRequires: flex
+BuildRequires: which
+BuildRequires: make
+BuildRequires: gcc
+BuildRequires: gcc-c++
+BuildRequires: pkgconfig
+BuildRequires: readline-devel
+BuildRequires: libxslt
 
 %if 0%{?suse_version} == 1315 || 0%{?suse_version} == 1330
 Requires:  filesystem
@@ -1115,260 +1121,202 @@ UUID module for Kamailio.
 
 %prep
 %setup -n %{name}-%{ver}
-# python3 does not exist in RHEL 6 and similar dist.
-%if 0%{?rhel} == 6
-sed -i -e 's/python3/python2/' utils/kamctl/dbtextdb/dbtextdb.py
-%endif
-
 # on latest dist need to add --atexit=no for Kamailio options. More details GH #2616
-%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
 sed -i -e 's|/usr/sbin/kamailio|/usr/sbin/kamailio --atexit=no|' pkg/kamailio/obs/kamailio.service
 sed -i -e 's|/usr/sbin/kamailio|/usr/sbin/kamailio --atexit=no|' pkg/kamailio/obs/kamailio@.service
-%endif
-
 
 %build
-%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
-export FREERADIUS=1
-%endif
-make cfg prefix=/usr \
-    basedir=%{buildroot} \
-    cfg_prefix=%{buildroot} \
-    doc_prefix=%{buildroot} \
-    doc_dir=%{_docdir}/kamailio/ \
-    cfg_target=%{_sysconfdir}/kamailio/ modules_dirs="modules"
-make
-make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
-    jabber ndb_cassandra osp" \
-%if %{with openssl11}
-    SSL_BUILDER="pkg-config libssl11" \
-%endif
-%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
-    FREERADIUS=1 \
-%endif
-%if 0%{?rhel} >= 8
-    PYTHON3=python3.12 \
-%endif
-    WOLFSSL_INTERNAL=no \
-    group_include="kstandard kautheph kberkeley kcarrierroute \
-%if %{with cnxcc}
-    kcnxcc \
-%endif
-    kcpl \
-%if %{with dnssec}
-    kdnssec \
-%endif
-%if %{with evapi}
-    kev \
-%endif
-    kgeoip2 \
-    kgzcompress \
-%if %{with http_async_client}
-    khttp_async \
-%endif
-    kxhttp_prom \
-%if %{with ims}
-    kims \
-%endif
-%if %{with jansson}
-    kjansson \
-%endif
-%if %{with json}
-    kjson \
-%endif
-    kjsonrpcs \
-    kjwt \
-%if %{with kazoo}
-    kkazoo \
-%endif
-    kldap \
+MODULES="\
+acc_json \
+acc_radius \
 %if %{with lua}
-    klua \
-%endif
-%if %{with lwsc}
-    klwsc \
-%endif
-%if %{with memcached}
-    kmemcached \
-%endif
-%if %{with xmlrpc}
-    kmi_xmlrpc \
-%endif
-%if %{with mongodb}
-    kmongodb \
-%endif
-    kmysql koutbound \
-%if %{with nats}
-    knats \
+app_lua \
 %endif
 %if %{with perl}
-    kperl \
+app_perl \
 %endif
-%if %{with phonenum}
-    kphonenum \
-%endif
-    kpostgres kpresence \
 %if %{with python2}
-    kpython \
+app_python \
 %endif
 %if %{with python3}
-    kpython3 \
-%endif
-%if %{with rabbitmq}
-    krabbitmq \
-%endif
-    kradius \
-%if %{with redis}
-    kredis \
+app_python3 \
+app_python3s \
 %endif
 %if %{with ruby}
-    kruby \
+app_ruby \
+app_ruby_proc \
 %endif
-%if %{with sctp}
-    ksctp \
+auth_ephemeral \
+auth_radius \
+cdp \
+cdp_avp \
+%if %{with cnxcc}
+cnxcc \
 %endif
-    ksnmpstats ksqlite \
+cplc \
+crypto \
+db2_ldap \
+%if %{with mongodb}
+db_mongodb \
+%endif
+db_mysql \
+%if %{with perl}
+db_perlvdb
+%endif
+db_postgres \
+%if %{with redis}
+db_redis \
+%endif
+db_sqlite \
+db_text \
+db_text \
+db_unixodbc \
+dialplan \
+%if %{with dnssec}
+dnssec \
+%endif
+%if %{with evapi}
+evapi \
+%endif
+geoip2 \
+gzcompress \
+h350 \
+%if %{with http_async_client}
+http_async_client \
+%endif
+http_client \
+%if %{with ims}
+ims_auth \
+ims_charging \
+ims_dialog \
+ims_diameter_server \
+ims_icscf \
+ims_ipsec_pcscf \
+ims_isc \
+ims_ocs \
+ims_qos \
+ims_qos_npn \
+ims_registrar_pcscf \
+ims_registrar_scscf \
+ims_usrloc_pcscf \
+ims_usrloc_scscf \
+%endif
+%if %{with jansson}
+jansson db_berkeley \
+janssonrpcc \
+%endif
+%if %{with json}
+json \
+%endif
+jsonrpcc \
+jwt \
+%if %{with kazoo}
+kazoo \
+%endif
+lcr \
+ldap \
 %if "%{?_unitdir}" != ""
-    ksystemd \
+log_systemd \
 %endif
-    ktls \
+lost \
+%if %{with lwsc}
+lwsc \
+%endif
+%if %{with memcached}
+memcached \
+%endif
+misc_radius \
+%if %{with nats}
+nats \
+%endif
+%if %{with mongodb}
+ndb_mongodb \
+%endif
+%if %{with redis}
+ndb_redis \
+%endif
+outbound \
+peering \
+%if %{with phonenum}
+phonenum \
+%endif
+presence \
+presence_conference \
+presence_dfks \
+presence_dialoginfo \
+presence_mwi \
+presence_profile \
+presence_reginfo \
+presence_xml \
+pua \
+pua_bla \
+pua_dialoginfo \
+pua_json \
+pua_reginfo \
+pua_rpc \
+pua_rpc \
+pua_usrloc \
+pua_xmpp \
+pvtpl \
+%if %{with rabbitmq}
+rabbitmq \
+%endif
+regex \
+rls \
+%if %{with sctp}
+sctp \
+%endif
+siprepo \
+slack \
+snmpstats \
+%if "%{?_unitdir}" != ""
+systemdops \
+%endif
+tls \
 %if %{with wolfssl}
-    ktls_wolfssl \
+tls_wolfssl \
 %endif
-    kunixodbc kutils \
+%if %{with redis}
+topos_redis \
+%endif
+utils \
+uuid \
 %if %{with websocket}
-    kwebsocket \
+websocket \
 %endif
-    kxml kxmpp kuuid"
+xcap_client \
+xcap_server \
+xhttp_pi \
+xmlops \
+%if %{with xmlrpc}
+xmlrpc \
+%endif
+xmpp \
+"
 
-make utils
+%{cmake} \
+  -DBUILD_DOC=ON \
+  -DUSE_TLS=ON \
+  -DRADIUSCLIENT="FREERADIUS" \
+  -DINCLUDE_MODULES="${MODULES}"
 
-
+%{cmake_build}
+%{cmake_build} --target dbschema
+%{cmake_build} --target man
 
 %install
-rm -rf %{buildroot}
-
-make install
-make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
-    iptrtpproxy jabber osp" \
-%if %{with openssl11}
-    SSL_BUILDER="pkg-config libssl11" \
-%endif
-%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
-    FREERADIUS=1 \
-%endif
-%if 0%{?rhel} >= 8
-    PYTHON3=python3.12 \
-%endif
-    WOLFSSL_INTERNAL=no \
-    group_include="kstandard kautheph kberkeley kcarrierroute \
-%if %{with cnxcc}
-    kcnxcc \
-%endif
-    kcpl \
-%if %{with dnssec}
-    kdnssec \
-%endif
-%if %{with evapi}
-    kev \
-%endif
-    kgeoip2 \
-    kgzcompress \
-%if %{with http_async_client}
-    khttp_async \
-%endif
-    kxhttp_prom \
-%if %{with ims}
-    kims \
-%endif
-%if %{with jansson}
-    kjansson \
-%endif
-%if %{with json}
-    kjson \
-%endif
-    kjsonrpcs \
-    kjwt \
-%if %{with kazoo}
-    kkazoo \
-%endif
-    kldap \
-%if %{with lua}
-    klua \
-%endif
-%if %{with lwsc}
-    klwsc \
-%endif
-%if %{with memcached}
-    kmemcached \
-%endif
-%if %{with xmlrpc}
-    kmi_xmlrpc \
-%endif
-%if %{with mongodb}
-    kmongodb \
-%endif
-    kmysql koutbound \
-%if %{with nats}
-    knats \
-%endif
-%if %{with perl}
-    kperl \
-%endif
-%if %{with phonenum}
-    kphonenum \
-%endif
-    kpostgres kpresence \
-%if %{with python2}
-    kpython \
-%endif
-%if %{with python3}
-    kpython3 \
-%endif
-%if %{with rabbitmq}
-    krabbitmq \
-%endif
-    kradius \
-%if %{with redis}
-    kredis \
-%endif
-%if %{with ruby}
-    kruby \
-%endif
-%if %{with sctp}
-    ksctp \
-%endif
-    ksnmpstats ksqlite \
-%if "%{?_unitdir}" != ""
-    ksystemd \
-%endif
-    ktls \
-%if %{with wolfssl}
-    ktls_wolfssl \
-%endif
-    kunixodbc kutils \
-%if %{with websocket}
-    kwebsocket \
-%endif
-    kxml kxmpp kuuid"
-
-make install-cfg-pkg
+%{cmake_install}
+%{cmake_install} --component tls-cfg
+rm -f %{buildroot}%{_sysconfdir}/kamailio/tls.cfg.sample
+%{cmake_install} --component xhttp_pi-cfg
+rm -f %{buildroot}%{_sysconfdir}/kamailio/pi_framework.xml.sample
 
 install -d %{buildroot}%{_sharedstatedir}/kamailio
 
-%if "%{?_unitdir}" == ""
-# On RedHat 6 like
-install -d %{buildroot}%{_var}/run/kamailio
-install -d %{buildroot}%{_sysconfdir}/rc.d/init.d
-install -m755 pkg/kamailio/obs/kamailio.init \
-        %{buildroot}%{_sysconfdir}/rc.d/init.d/kamailio
-%else
-# systemd
 install -d %{buildroot}%{_unitdir}
 install -Dpm 0644 pkg/kamailio/obs/kamailio.service %{buildroot}%{_unitdir}/kamailio.service
 install -Dpm 0644 pkg/kamailio/obs/kamailio@.service %{buildroot}%{_unitdir}/kamailio@.service
 install -Dpm 0644 pkg/kamailio/obs/kamailio.tmpfiles %{buildroot}%{_tmpfilesdir}/kamailio.conf
-%endif
 
 %if 0%{?suse_version}
 install -d %{buildroot}%{_fillupdir}
@@ -1383,12 +1331,12 @@ install -m644 pkg/kamailio/obs/kamailio.sysconfig \
 %if 0%{?suse_version}
 %py_compile -O %{buildroot}%{_libdir}/kamailio/kamctl/dbtextdb
 %endif
-%if 0%{?fedora} || 0%{?rhel} >= 8
+
 %py_byte_compile %{__python3} %{buildroot}%{_libdir}/kamailio/kamctl/dbtextdb
-%endif
 
 # Removing devel files
 rm -f %{buildroot}%{_libdir}/kamailio/lib*.so
+
 
 %pre
 if ! /usr/bin/id kamailio &>/dev/null; then
@@ -1399,6 +1347,7 @@ if ! /usr/bin/id kamailio &>/dev/null; then
                          --home-dir %{_rundir}/kamailio kamailio || \
                 %logmsg "Unexpected error adding user \"kamailio\". Aborting installation."
 fi
+
 
 %clean
 rm -rf %{buildroot}
@@ -1783,7 +1732,7 @@ fi
 %files      bdb
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.db_berkeley
-%{_sbindir}/kambdb_recover
+%{_sbindir}/kamdb_recover
 %{_libdir}/kamailio/modules/db_berkeley.so
 %{_libdir}/kamailio/kamctl/kamctl.db_berkeley
 %{_libdir}/kamailio/kamctl/kamdbctl.db_berkeley
@@ -1991,6 +1940,90 @@ fi
 %doc %{_docdir}/kamailio/modules/README.ndb_mongodb
 %{_libdir}/kamailio/modules/db_mongodb.so
 %{_libdir}/kamailio/modules/ndb_mongodb.so
+%{_datadir}/kamailio/mongodb/kamailio/acc_cdrs.json
+%{_datadir}/kamailio/mongodb/kamailio/acc.json
+%{_datadir}/kamailio/mongodb/kamailio/active_watchers.json
+%{_datadir}/kamailio/mongodb/kamailio/address.json
+%{_datadir}/kamailio/mongodb/kamailio/aliases.json
+%{_datadir}/kamailio/mongodb/kamailio/carrierfailureroute.json
+%{_datadir}/kamailio/mongodb/kamailio/carrier_name.json
+%{_datadir}/kamailio/mongodb/kamailio/carrierroute.json
+%{_datadir}/kamailio/mongodb/kamailio/contact.json
+%{_datadir}/kamailio/mongodb/kamailio/cpl.json
+%{_datadir}/kamailio/mongodb/kamailio/dbaliases.json
+%{_datadir}/kamailio/mongodb/kamailio/dialog_in.json
+%{_datadir}/kamailio/mongodb/kamailio/dialog.json
+%{_datadir}/kamailio/mongodb/kamailio/dialog_out.json
+%{_datadir}/kamailio/mongodb/kamailio/dialog_vars.json
+%{_datadir}/kamailio/mongodb/kamailio/dialplan.json
+%{_datadir}/kamailio/mongodb/kamailio/dispatcher.json
+%{_datadir}/kamailio/mongodb/kamailio/domain_attrs.json
+%{_datadir}/kamailio/mongodb/kamailio/domain.json
+%{_datadir}/kamailio/mongodb/kamailio/domain_name.json
+%{_datadir}/kamailio/mongodb/kamailio/domainpolicy.json
+%{_datadir}/kamailio/mongodb/kamailio/dr_gateways.json
+%{_datadir}/kamailio/mongodb/kamailio/dr_groups.json
+%{_datadir}/kamailio/mongodb/kamailio/dr_gw_lists.json
+%{_datadir}/kamailio/mongodb/kamailio/dr_rules.json
+%{_datadir}/kamailio/mongodb/kamailio/globalblocklist.json
+%{_datadir}/kamailio/mongodb/kamailio/grp.json
+%{_datadir}/kamailio/mongodb/kamailio/htable.json
+%{_datadir}/kamailio/mongodb/kamailio/imc_members.json
+%{_datadir}/kamailio/mongodb/kamailio/imc_rooms.json
+%{_datadir}/kamailio/mongodb/kamailio/impu_contact.json
+%{_datadir}/kamailio/mongodb/kamailio/impu.json
+%{_datadir}/kamailio/mongodb/kamailio/impu_subscriber.json
+%{_datadir}/kamailio/mongodb/kamailio/lcr_gw.json
+%{_datadir}/kamailio/mongodb/kamailio/lcr_rule.json
+%{_datadir}/kamailio/mongodb/kamailio/lcr_rule_target.json
+%{_datadir}/kamailio/mongodb/kamailio/location_attrs.json
+%{_datadir}/kamailio/mongodb/kamailio/location.json
+%{_datadir}/kamailio/mongodb/kamailio/matrix.json
+%{_datadir}/kamailio/mongodb/kamailio/missed_calls.json
+%{_datadir}/kamailio/mongodb/kamailio/mohqcalls.json
+%{_datadir}/kamailio/mongodb/kamailio/mohqueues.json
+%{_datadir}/kamailio/mongodb/kamailio/mtree.json
+%{_datadir}/kamailio/mongodb/kamailio/mtrees.json
+%{_datadir}/kamailio/mongodb/kamailio/nds_trusted_domains.json
+%{_datadir}/kamailio/mongodb/kamailio/pcscf_location.json
+%{_datadir}/kamailio/mongodb/kamailio/pdt.json
+%{_datadir}/kamailio/mongodb/kamailio/pl_pipes.json
+%{_datadir}/kamailio/mongodb/kamailio/presentity.json
+%{_datadir}/kamailio/mongodb/kamailio/pua.json
+%{_datadir}/kamailio/mongodb/kamailio/purplemap.json
+%{_datadir}/kamailio/mongodb/kamailio/re_grp.json
+%{_datadir}/kamailio/mongodb/kamailio/rls_presentity.json
+%{_datadir}/kamailio/mongodb/kamailio/rls_watchers.json
+%{_datadir}/kamailio/mongodb/kamailio/ro_session.json
+%{_datadir}/kamailio/mongodb/kamailio/rtpengine.json
+%{_datadir}/kamailio/mongodb/kamailio/rtpproxy.json
+%{_datadir}/kamailio/mongodb/kamailio/sca_subscriptions.json
+%{_datadir}/kamailio/mongodb/kamailio/s_cscf_capabilities.json
+%{_datadir}/kamailio/mongodb/kamailio/s_cscf.json
+%{_datadir}/kamailio/mongodb/kamailio/secfilter.json
+%{_datadir}/kamailio/mongodb/kamailio/silo.json
+%{_datadir}/kamailio/mongodb/kamailio/sip_trace.json
+%{_datadir}/kamailio/mongodb/kamailio/speed_dial.json
+%{_datadir}/kamailio/mongodb/kamailio/subscriber.json
+%{_datadir}/kamailio/mongodb/kamailio/subscriber_scscf.json
+%{_datadir}/kamailio/mongodb/kamailio/topos_d.json
+%{_datadir}/kamailio/mongodb/kamailio/topos_t.json
+%{_datadir}/kamailio/mongodb/kamailio/trusted.json
+%{_datadir}/kamailio/mongodb/kamailio/uacreg.json
+%{_datadir}/kamailio/mongodb/kamailio/uid_credentials.json
+%{_datadir}/kamailio/mongodb/kamailio/uid_domain_attrs.json
+%{_datadir}/kamailio/mongodb/kamailio/uid_domain.json
+%{_datadir}/kamailio/mongodb/kamailio/uid_global_attrs.json
+%{_datadir}/kamailio/mongodb/kamailio/uid_uri_attrs.json
+%{_datadir}/kamailio/mongodb/kamailio/uid_uri.json
+%{_datadir}/kamailio/mongodb/kamailio/uid_user_attrs.json
+%{_datadir}/kamailio/mongodb/kamailio/uri.json
+%{_datadir}/kamailio/mongodb/kamailio/userblocklist.json
+%{_datadir}/kamailio/mongodb/kamailio/usr_preferences.json
+%{_datadir}/kamailio/mongodb/kamailio/version.json
+%{_datadir}/kamailio/mongodb/kamailio/version-create.mongo
+%{_datadir}/kamailio/mongodb/kamailio/watchers.json
+%{_datadir}/kamailio/mongodb/kamailio/xcap.json
 %endif
 
 
