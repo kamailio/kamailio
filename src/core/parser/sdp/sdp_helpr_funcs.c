@@ -561,7 +561,7 @@ int extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 	 * - for length, at least 6: ' IP[4|6] x...'
 	 * - white space after
 	 */
-	if(cp + 6 > mediaip->s + mediaip->len && cp[4] != ' ') {
+	if(cp + 6 > mediaip->s + mediaip->len || cp[4] != ' ') {
 		LM_ERR("invalid content for `%s' line\n", line);
 		return -1;
 	}
