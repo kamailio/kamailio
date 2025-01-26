@@ -180,15 +180,25 @@ int encode_flow_token(str *flow_token, struct receive_info *rcv)
 		return -1;
 	}
 
+	/* By encoding the bind address into the flow token as the destination
+	   address, we make sure that we'll still be able to find the socket when
+	   decoding it even if there's an haproxy in front */
+	struct ip_addr dst_ip = rcv->dst_ip;
+	unsigned short dst_port = rcv->dst_port;
+	if(rcv->bind_address) {
+		dst_ip = rcv->bind_address->address;
+		dst_port = rcv->bind_address->port_no;
+	}
+
 	/* Encode protocol information */
 	unenc_flow_token[pos++] =
-			(rcv->dst_ip.af == AF_INET6 ? 0x80 : 0x00) | rcv->proto;
+			(dst_ip.af == AF_INET6 ? 0x80 : 0x00) | rcv->proto;
 
 	/* Encode destination address */
-	for(i = 0; i < (rcv->dst_ip.af == AF_INET6 ? 16 : 4); i++)
-		unenc_flow_token[pos++] = rcv->dst_ip.u.addr[i];
-	unenc_flow_token[pos++] = (rcv->dst_port >> 8) & 0xff;
-	unenc_flow_token[pos++] = rcv->dst_port & 0xff;
+	for(i = 0; i < (dst_ip.af == AF_INET6 ? 16 : 4); i++)
+		unenc_flow_token[pos++] = dst_ip.u.addr[i];
+	unenc_flow_token[pos++] = (dst_port >> 8) & 0xff;
+	unenc_flow_token[pos++] = dst_port & 0xff;
 
 	/* Encode source address */
 	for(i = 0; i < (rcv->src_ip.af == AF_INET6 ? 16 : 4); i++)
