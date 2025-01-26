@@ -922,18 +922,6 @@ Requires:   kamailio = %ver
 Additional layer of security over our communications.
 
 
-%package    sipcapture-daemon-config
-Summary:    Reference config for sipcapture daemon
-Group:      %{PKGGROUP}
-Requires:   kamailio = %ver
-%if 0%{?suse_version}
-Requires:  filesystem
-%endif
-
-%description    sipcapture-daemon-config
-reference config for sipcapture daemon.
-
-
 %package    sipdump
 Summary:    This module writes SIP traffic and some associated details into local files
 Group:      %{PKGGROUP}
@@ -1437,23 +1425,17 @@ install -m755 pkg/kamailio/obs/kamailio.init \
 install -d %{buildroot}%{_unitdir}
 install -Dpm 0644 pkg/kamailio/obs/kamailio.service %{buildroot}%{_unitdir}/kamailio.service
 install -Dpm 0644 pkg/kamailio/obs/kamailio@.service %{buildroot}%{_unitdir}/kamailio@.service
-install -Dpm 0644 pkg/kamailio/obs/sipcapture.service %{buildroot}%{_unitdir}/sipcapture.service
 install -Dpm 0644 pkg/kamailio/obs/kamailio.tmpfiles %{buildroot}%{_tmpfilesdir}/kamailio.conf
-install -Dpm 0644 pkg/kamailio/obs/sipcapture.tmpfiles %{buildroot}%{_tmpfilesdir}/sipcapture.conf
 %endif
 
 %if 0%{?suse_version}
 install -d %{buildroot}%{_fillupdir}
 install -m644 pkg/kamailio/obs/kamailio.sysconfig \
         %{buildroot}%{_fillupdir}/sysconfig.kamailio
-install -m644 pkg/kamailio/obs/sipcapture.sysconfig \
-        %{buildroot}%{_fillupdir}/sysconfig.sipcapture
 %else
 install -d %{buildroot}%{_sysconfdir}/sysconfig
 install -m644 pkg/kamailio/obs/kamailio.sysconfig \
         %{buildroot}%{_sysconfdir}/sysconfig/kamailio
-install -m644 pkg/kamailio/obs/sipcapture.sysconfig \
-        %{buildroot}%{_sysconfdir}/sysconfig/sipcapture
 %endif
 
 %if 0%{?suse_version}
@@ -1486,13 +1468,6 @@ rm -rf %{buildroot}
 %else
 %tmpfiles_create kamailio.conf
 /usr/bin/systemctl -q enable kamailio.service
-%endif
-
-
-%if "%{?_unitdir}" != ""
-%post sipcapture-daemon-config
-%tmpfiles_create sipcapture.conf
-/usr/bin/systemctl -q enable sipcapture.service
 %endif
 
 
@@ -2257,20 +2232,6 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.rtjson
 %{_libdir}/kamailio/modules/rtjson.so
-
-
-%files      sipcapture-daemon-config
-%defattr(-,root,root)
-%config(noreplace) %{_sysconfdir}/kamailio/kamailio-sipcapture.cfg
-%if 0%{?suse_version}
-%{_fillupdir}/sysconfig.sipcapture
-%else
-%config(noreplace) %{_sysconfdir}/sysconfig/sipcapture
-%endif
-%if "%{?_unitdir}" != ""
-%{_unitdir}/sipcapture.service
-%{_tmpfilesdir}/sipcapture.conf
-%endif
 
 
 %if %{with ruby}
