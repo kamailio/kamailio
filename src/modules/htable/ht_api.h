@@ -144,10 +144,19 @@ ht_cell_t *ht_iterator_get_current(str *iname);
 void ht_slot_lock(ht_t *ht, int idx);
 void ht_slot_unlock(ht_t *ht, int idx);
 
-#define HT_UPDATE_EXPIRE(ht, it, now)                               \
-	if(ht->updateexpire || (now && it->expire && it->expire < now)) \
-	it->expire = now + ht->htexpire
-#define HT_COPY_EXPIRE(ht, it, now, src) \
-	HT_UPDATE_EXPIRE(ht, it, now);       \
-	else it->expire = src->expire
+#define HT_UPDATE_EXPIRE(ht, it, now)                                     \
+	do {                                                                  \
+		if(ht->updateexpire || (now && it->expire && it->expire < now)) { \
+			it->expire = now + ht->htexpire;                              \
+		}                                                                 \
+	} while(0)
+#define HT_COPY_EXPIRE(ht, it, now, src)                                  \
+	do {                                                                  \
+		if(ht->updateexpire || (now && it->expire && it->expire < now)) { \
+			it->expire = now + ht->htexpire;                              \
+		} else {                                                          \
+			it->expire = src->expire;                                     \
+		}                                                                 \
+	} while(0)
+
 #endif
