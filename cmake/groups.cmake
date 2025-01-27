@@ -167,7 +167,7 @@ set(MOD_LIST_POSTGRES db_postgres)
 set(MOD_LIST_UNIXODBC db_unixodbc)
 
 # * modules depending on xml2 library
-set(MOD_LIST_CPLC cplc)
+set(MOD_LIST_CPL cplc)
 
 # * modules depending on xml2 library
 set(MOD_LIST_XMLDEPS xhttp_pi xmlrpc xmlops)
@@ -385,7 +385,7 @@ set(MOD_LIST_ALL
     ${MOD_LIST_UNIXODBC}
     ${MOD_LIST_XMLDEPS}
     ${MOD_LIST_PERLDEPS}
-    ${MOD_LIST_CPLC}
+    ${MOD_LIST_CPL}
     ${MOD_LIST_XMPP}
     ${MOD_LIST_BERKELEY}
     ${MOD_LIST_UTILS}
