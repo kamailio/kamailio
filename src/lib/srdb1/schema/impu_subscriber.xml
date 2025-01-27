@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+
+]>
+
+<table id="impu_subscriber" xmlns:db="http://docbook.org/ns/docbook">
+    <name>impu_subscriber</name>
+    <version>6</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Table for storage engine for SCSCF contacts. More information at:
+            <itemizedlist>
+                <listitem>
+                    <ulink url="&KAMAILIO_MOD_DOC;ims_usrloc_scscf.html">&KAMAILIO_MOD_DOC;ims_usrloc_scscf.html</ulink>.
+                </listitem>
+            </itemizedlist>
+        </db:para>
+    </description>
+
+    <column id="id">
+      <name>id</name>
+      <type>int</type>
+      <size>&table_id_len;</size>
+      <autoincrement/>
+      <primary/>
+      <type db="dbtext">int,auto</type>
+      <description>Unique ID</description>
+    </column>
+
+    <column id="impu_id">
+      <name>impu_id</name>
+      <type>int</type>
+      <size>&table_id_len;</size>
+    </column>
+
+    <column id="subscriber_id">
+      <name>subscriber_id</name>
+      <type>int</type>
+      <size>&table_id_len;</size>
+    </column>
+
+    <index>
+      <name>impu_id</name>
+      <colref linkend="impu_id"/>
+      <colref linkend="subscriber_id"/>
+      <unique/>
+	  </index>
+</table>
