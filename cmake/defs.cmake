@@ -90,7 +90,10 @@ option(USE_DNS_FAILOVER "Use DNS failover" ON)
 option(USE_DST_BLOCKLIST "Use destination blacklist" ON)
 option(HAVE_RESOLV_RES "Have resolv_res" ON)
 
-option(KSR_PTHREAD_MUTEX_SHARED "Use shared mutex for TLS" ON)
+if(NOT WIN32)
+  option(KSR_PTHREAD_MUTEX_SHARED "Use shared mutex for TLS" ON)
+endif()
+
 option(STATISTICS "Statistics" ON)
 # if(${MEMPKG}) target_compile_definitions(common INTERFACE PKG_MALLOC) else()
 # if(${MEMDBGSYS}) target_compile_definitions(common INTERFACE DDBG_SYS_MEMORY)
@@ -295,7 +298,7 @@ if(RAW_SOCKS)
   target_compile_definitions(common INTERFACE RAW_SOCKS)
 endif()
 
-if(KSR_PTHREAD_MUTEX_SHARED)
+if(KSR_PTHREAD_MUTEX_SHARED AND NOT WIN32)
   target_compile_definitions(common INTERFACE KSR_PTHREAD_MUTEX_SHARED)
 endif()
 
