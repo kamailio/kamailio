@@ -604,7 +604,7 @@ void check_multi_info(struct http_m_global *g)
 	CURL *easy;
 	CURLcode res;
 
-	struct http_m_cell *cell;
+	struct http_m_cell *cell = NULL;
 	double tmp_time;
 
 	LM_DBG("REMAINING: %d\n", g->still_running);
@@ -616,9 +616,15 @@ void check_multi_info(struct http_m_global *g)
 			curl_easy_getinfo(easy, CURLINFO_EFFECTIVE_URL, &eff_url);
 
 
-			LM_DBG("DONE: %s => (%d) %s\n", eff_url, res, cell->error);
+			LM_DBG("DONE: %s => (%d)\n", eff_url, res);
 
 			cell = http_m_cell_lookup(easy);
+			if(cell == NULL) {
+				LM_ERR("failed to get the cell\n");
+				curl_multi_remove_handle(g->multi, easy);
+				curl_easy_cleanup(easy);
+				continue;
+			}
 			if(msg->data.result != 0) {
 				LM_ERR("handle %p returned error %d: %s\n", easy, res,
 						cell->error);
