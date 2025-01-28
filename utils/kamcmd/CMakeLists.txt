@@ -55,5 +55,5 @@ add_custom_target(kamcmd_man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8)
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
-  COMPONENT kamailio_man
+  COMPONENT kamailio-core
   OPTIONAL)

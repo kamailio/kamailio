@@ -77,7 +77,7 @@ set(DOCS_LYNX_FLAGS
     CACHE STRING "Lynx readme generator flags")
 
 # Function to add a module docs entry
-function(docs_add_module module_name)
+function(docs_add_module group_name module_name)
   # message(STATUS "Adding documentation for module ${MODULE_NAME}")
   set(module_path "${MODULES_DIR}/${module_name}")
   set(module_doc_path "${module_path}/doc")
@@ -174,12 +174,12 @@ function(docs_add_module module_name)
       FILES ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/README
       RENAME README.${module_name}
       DESTINATION ${CMAKE_INSTALL_DOCDIR}/modules
-      COMPONENT kamailio_docs)
+      COMPONENT ${group_name})
 
     install(
       FILES ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/${module_name}.7
       DESTINATION ${CMAKE_INSTALL_DATADIR}/man/man7
-      COMPONENT kamailio_docs
+      COMPONENT ${group_name}
       OPTIONAL)
   endif()
 endfunction()

@@ -49,7 +49,10 @@ set(EXCLUDE_MODULES
 include(${CMAKE_SOURCE_DIR}/cmake/modules-docs.cmake)
 
 # Function to add modules from a list
-function(add_module_group group_modules)
+function(add_module_group group_name group_modules)
+  # message(STATUS "Adding modules for group: ${group_name}")
+  # message(STATUS "Modules: ${group_modules}")
+
   foreach(module_name IN LISTS group_modules)
     # Check if the module has already been added
     get_property(ALREADY_ADDED GLOBAL PROPERTY ADDED_MODULES_LIST)
@@ -99,10 +102,10 @@ function(add_module_group group_modules)
         install(
           TARGETS ${module_name}
           DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/modules
-          COMPONENT kamailio_modules)
+          COMPONENT ${group_name})
         # Add the module to the list of added modules
         set_property(GLOBAL APPEND PROPERTY ADDED_MODULES_LIST ${module_name})
-        docs_add_module(${module_name})
+        docs_add_module(${group_name} ${module_name})
         set_property(GLOBAL APPEND PROPERTY ALL_MODULE_DOC_TARGETS
                                             ${module_name}_doc)
       else()
@@ -140,9 +143,14 @@ foreach(group IN LISTS FULL_MODULE_GROUP_NAMES)
   if(VERBOSE)
     message(STATUS "Modules in ${group}: ${MODULES_IN_GROUP}")
   endif()
-  add_module_group("${MODULES_IN_GROUP}")
+  # remove module_group_prefix.
+  # TODO: This feels like a hack since user already provided
+  # the group name. Move the check above in these for maybe?
+  string(REPLACE "MODULE_GROUP_" "" group_name "${group}")
+  # message(WARNING "Adding module group: ${group_name}")
+  add_module_group("${group_name}" "${MODULES_IN_GROUP}")
 endforeach()
-add_module_group("${USER_MODULES_LIST}")
+add_module_group(" " "${USER_MODULES_LIST}")
 
 get_property(ADDED_MODULES_LIST GLOBAL PROPERTY ADDED_MODULES_LIST)
 message(STATUS "Modules to be built: ${ADDED_MODULES_LIST}")

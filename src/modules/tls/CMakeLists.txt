@@ -58,7 +58,7 @@ install(
             PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
     endif()
 "
-  COMPONENT tls-cfg)
+  COMPONENT ${group_name})
 
 add_custom_command(
   OUTPUT tls.cfg.sample

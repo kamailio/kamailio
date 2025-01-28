@@ -46,7 +46,7 @@ foreach(file IN LISTS KAMCTL_BASE_FILES KAMCTL_DB_FILES)
   install(
     PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${file}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl
-    COMPONENT kamailio-utils-bin)
+    COMPONENT kamailio-core)
 endforeach()
 
 # Kamctl target to depend on all kamctl files
@@ -64,7 +64,7 @@ add_custom_target(
 install(
   PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/kamctl
   DESTINATION ${CMAKE_INSTALL_SBINDIR}
-  COMPONENT kamailio-utils-bin)
+  COMPONENT kamailio-core)
 
 # Setup and install kamdbctl stuff
 set(KAMDBCTL_BASE_FILES kamdbctl.base)
@@ -107,7 +107,7 @@ foreach(file IN LISTS KAMDBCTL_BASE_FILES KAMDBCTL_DB_FILES)
   install(
     PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${file}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl
-    COMPONENT kamailio-utils-bin)
+    COMPONENT kamailio-core)
 endforeach()
 
 add_custom_target(
@@ -123,7 +123,7 @@ add_custom_target(
 install(
   PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl
   DESTINATION ${CMAKE_INSTALL_SBINDIR}
-  COMPONENT kamailio-utils-bin)
+  COMPONENT kamailio-core)
 
 # Install the configuration file (kamctlrc) using a CODE block to check
 # existence at install time instead of configure time
@@ -145,7 +145,7 @@ install(
             PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
     endif()
 "
-  COMPONENT kamailio-utils-cfg)
+  COMPONENT kamailio-core)
 
 # Man pages generation and installation
 add_custom_command(
@@ -178,7 +178,7 @@ install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8
         ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
-  COMPONENT kamailio_man
+  COMPONENT kamailio-core
   OPTIONAL)
 
 # Install targets
@@ -297,7 +297,8 @@ else()
     install(
       DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}
       DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}
-      OPTIONAL)
+      OPTIONAL
+      COMPONENT kamailio-core)
 
     add_custom_target(
       dbschema_${db_name}_clean
