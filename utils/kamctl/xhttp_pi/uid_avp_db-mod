@@ -1,4 +1,4 @@
-	<!-- uid_user_attrs provisionning -->
+	<!-- uid_user_attrs provisioning -->
 	<mod><mod_name>uid_user_attrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uid_user_attrs</db_table_id>

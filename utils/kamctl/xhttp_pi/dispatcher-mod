@@ -1,4 +1,4 @@
-	<!-- dispatcher provisionning -->
+	<!-- dispatcher provisioning -->
 	<mod><mod_name>dispatcher</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dispatcher</db_table_id>

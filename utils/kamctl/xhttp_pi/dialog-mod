@@ -1,4 +1,4 @@
-	<!-- dialog provisionning -->
+	<!-- dialog provisioning -->
 	<mod><mod_name>dialog</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dialog</db_table_id>
@@ -99,7 +99,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dialog_vars provisionning -->
+	<!-- dialog_vars provisioning -->
 	<mod><mod_name>dialog_vars</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dialog_vars</db_table_id>

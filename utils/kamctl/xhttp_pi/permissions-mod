@@ -1,4 +1,4 @@
-	<!-- trusted provisionning -->
+	<!-- trusted provisioning -->
 	<mod><mod_name>trusted</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>trusted</db_table_id>
@@ -48,7 +48,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- address provisionning -->
+	<!-- address provisioning -->
 	<mod><mod_name>address</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>address</db_table_id>

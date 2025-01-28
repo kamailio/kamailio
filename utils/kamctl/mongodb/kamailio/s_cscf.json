@@ -1,0 +1,21 @@
+{
+  "name": "s_cscf",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "name": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "s_cscf_uri": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

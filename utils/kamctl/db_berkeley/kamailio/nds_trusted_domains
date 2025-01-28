@@ -1,0 +1,12 @@
+METADATA_COLUMNS
+id(int) trusted_domain(str)
+METADATA_KEY
+
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
+METADATA_DEFAULTS
+NIL|''
+nds_trusted_domains|
+nds_trusted_domains|1

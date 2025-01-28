@@ -1,0 +1,2 @@
+id(int,auto) trusted_domain(string)
+0:nds_trusted_domains:1

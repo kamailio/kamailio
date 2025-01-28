@@ -1,4 +1,4 @@
-	<!-- usr_preferences provisionning -->
+	<!-- usr_preferences provisioning -->
 	<mod><mod_name>usr_preferences</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>usr_preferences</db_table_id>

@@ -1,4 +1,4 @@
-	<!-- uri provisionning -->
+	<!-- uri provisioning -->
 	<mod><mod_name>uri</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uri</db_table_id>
