@@ -115,6 +115,8 @@ add_custom_command(
 add_custom_target(${module_name}_pod.sgml DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/app_perl_pod.sgml)
 
 # Install nessecary files
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/perl
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}
+install(
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/perl
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}
+  COMPONENT ${group_name}
 )
