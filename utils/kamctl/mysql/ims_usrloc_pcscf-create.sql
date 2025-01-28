@@ -1,4 +1,4 @@
-CREATE TABLE `location` (
+CREATE TABLE `pcscf_location` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `domain` VARCHAR(64) NOT NULL,
     `aor` VARCHAR(255) NOT NULL,
@@ -47,6 +47,6 @@ CREATE TABLE `location` (
     `t_spi_us` INT(11) UNSIGNED DEFAULT NULL
 );
 
-CREATE INDEX aor_idx ON location (`aor`);
+CREATE INDEX aor_idx ON pcscf_location (`aor`);
 
-INSERT INTO version (table_name, table_version) values ('location','7');
+INSERT INTO version (table_name, table_version) values ('pcscf_location','7');

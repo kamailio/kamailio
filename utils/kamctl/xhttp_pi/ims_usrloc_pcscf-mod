@@ -1,7 +1,7 @@
-	<!-- location provisioning -->
-	<mod><mod_name>location</mod_name>
+	<!-- pcscf_location provisioning -->
+	<mod><mod_name>pcscf_location</mod_name>
 		<cmd><cmd_name>show</cmd_name>
-			<db_table_id>location</db_table_id>
+			<db_table_id>pcscf_location</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
 				<col><field>id</field><link_cmd>update</link_cmd></col>
@@ -53,7 +53,7 @@
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
-			<db_table_id>location</db_table_id>
+			<db_table_id>pcscf_location</db_table_id>
 			<cmd_type>DB1_INSERT</cmd_type>
 			<query_cols>
 				<col><field>domain</field></col>
@@ -104,7 +104,7 @@
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
-			<db_table_id>location</db_table_id>
+			<db_table_id>pcscf_location</db_table_id>
 			<cmd_type>DB1_UPDATE</cmd_type>
 			<clause_cols>
 				<col><field>id</field><operator>=</operator></col>
@@ -158,7 +158,7 @@
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
-			<db_table_id>location</db_table_id>
+			<db_table_id>pcscf_location</db_table_id>
 			<cmd_type>DB1_DELETE</cmd_type>
 			<clause_cols>
 				<col><field>id</field><operator>=</operator></col>

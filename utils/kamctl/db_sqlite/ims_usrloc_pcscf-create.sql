@@ -1,4 +1,4 @@
-CREATE TABLE location (
+CREATE TABLE pcscf_location (
     id INTEGER PRIMARY KEY NOT NULL,
     domain VARCHAR(64) NOT NULL,
     aor VARCHAR(255) NOT NULL,
@@ -47,6 +47,6 @@ CREATE TABLE location (
     t_spi_us INTEGER DEFAULT NULL
 );
 
-CREATE INDEX location_aor_idx ON location (aor);
+CREATE INDEX pcscf_location_aor_idx ON pcscf_location (aor);
 
-INSERT INTO version (table_name, table_version) values ('location','7');
+INSERT INTO version (table_name, table_version) values ('pcscf_location','7');

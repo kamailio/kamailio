@@ -1,4 +1,4 @@
-CREATE TABLE location (
+CREATE TABLE pcscf_location (
     id NUMBER(10) PRIMARY KEY,
     domain VARCHAR2(64),
     aor VARCHAR2(255),
@@ -47,14 +47,14 @@ CREATE TABLE location (
     t_spi_us NUMBER(10) DEFAULT NULL
 );
 
-CREATE OR REPLACE TRIGGER location_tr
-before insert on location FOR EACH ROW
+CREATE OR REPLACE TRIGGER pcscf_location_tr
+before insert on pcscf_location FOR EACH ROW
 BEGIN
   auto_id(:NEW.id);
-END location_tr;
+END pcscf_location_tr;
 /
-BEGIN map2users('location'); END;
+BEGIN map2users('pcscf_location'); END;
 /
-CREATE INDEX location_aor_idx  ON location (aor);
+CREATE INDEX pcscf_location_aor_idx  ON pcscf_location (aor);
 
-INSERT INTO version (table_name, table_version) values ('location','7');
+INSERT INTO version (table_name, table_version) values ('pcscf_location','7');
