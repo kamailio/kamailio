@@ -185,7 +185,7 @@ static int tps_htable_insert_initial_method_branch(
 	}
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_VAL) {
-		LM_ERR("failed to build htable value\n");
+		LM_ERR("failed to build htable val\n");
 		return -1;
 	}
 
@@ -277,8 +277,8 @@ static int tps_htable_load_initial_method_branch(tps_data_t *md, tps_data_t *sd)
 				TPS_BASE64_SIZE - 1);
 		base64url_enc(md->a_callid.s, md->a_callid.len, _tps_base64_buf[1],
 				TPS_BASE64_SIZE - 1);
-		base64url_enc(md->b_tag.s, md->b_tag.len, _tps_base64_buf[2],
-				TPS_BASE64_SIZE - 1);
+		base64url_enc(
+				xtag.s, xtag.len, _tps_base64_buf[2], TPS_BASE64_SIZE - 1);
 		base64url_enc(
 				xuuid.s, xuuid.len, _tps_base64_buf[3], TPS_BASE64_SIZE - 1);
 
@@ -758,7 +758,7 @@ static int tps_htable_insert_dialog_helper(tps_data_t *td, int set_expire)
 				  td->a_uuid.len, td->a_uuid.s)
 							   : snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
 									   td->b_uuid.len, td->b_uuid.s);
-	if(ret < 0) {
+	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
 		return -1;
 	}
@@ -769,6 +769,11 @@ static int tps_htable_insert_dialog_helper(tps_data_t *td, int set_expire)
 		base64url_enc(_tps_htable_key_buf, strlen(_tps_htable_key_buf),
 				_tps_base64_buf[0], TPS_BASE64_SIZE - 1);
 		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
+	}
+
+	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
+		LM_ERR("failed to build htable key\n");
+		return -1;
 	}
 
 
@@ -849,7 +854,7 @@ static int tps_htable_insert_dialog_helper(tps_data_t *td, int set_expire)
 				td->x_context.s);
 	}
 
-	if(ret < 0) {
+	if(ret < 0 || ret >= TPS_HTABLE_SIZE_VAL) {
 		LM_ERR("failed to build htable val\n");
 		return -1;
 	}
@@ -919,7 +924,7 @@ int tps_htable_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 				  md->a_uuid.len, md->a_uuid.s)
 							   : snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
 									   md->b_uuid.len, md->b_uuid.s);
-	if(ret < 0) {
+	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
 		return -1;
 	}
@@ -930,6 +935,10 @@ int tps_htable_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		base64url_enc(_tps_htable_key_buf, strlen(_tps_htable_key_buf),
 				_tps_base64_buf[0], TPS_BASE64_SIZE - 1);
 		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
+	}
+	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
+		LM_ERR("failed to build htable key\n");
+		return -1;
 	}
 
 	hkey.s = _tps_htable_key_buf;
@@ -1190,7 +1199,7 @@ int tps_htable_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 				  sd->a_uuid.len, sd->a_uuid.s)
 							   : snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
 									   sd->b_uuid.len, sd->b_uuid.s);
-	if(ret < 0) {
+	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
 		return -1;
 	}
@@ -1201,6 +1210,10 @@ int tps_htable_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		base64url_enc(_tps_htable_key_buf, strlen(_tps_htable_key_buf),
 				_tps_base64_buf[0], TPS_BASE64_SIZE - 1);
 		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
+	}
+	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
+		LM_ERR("failed to build htable key\n");
+		return -1;
 	}
 
 
