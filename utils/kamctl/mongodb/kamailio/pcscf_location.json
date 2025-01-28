@@ -1,0 +1,236 @@
+{
+  "name": "pcscf_location",
+  "version": 7,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "aor": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "host": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "port": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "received": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "received_port": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "received_proto": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "path": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "rinstance": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "rx_session_id": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "reg_state": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "expires": {
+      "type": "datetime",
+      "default": "2030-05-28 21:32:15",
+      "null": true
+    },
+    "service_routes": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "socket": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "public_ids": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "security_type": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "protocol": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "mode": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "ck": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "ik": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "ealg": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "ialg": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "port_pc": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "port_ps": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "port_uc": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "port_us": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "spi_pc": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "spi_ps": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "spi_uc": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "spi_us": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "t_security_type": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "t_protocol": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "t_mode": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "t_ck": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "t_ik": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "t_ealg": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "t_ialg": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "t_port_pc": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "t_port_ps": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "t_port_uc": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "t_port_us": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "t_spi_pc": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "t_spi_ps": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "t_spi_uc": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "t_spi_us": {
+      "type": "int",
+      "default": null,
+      "null": true
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+METADATA_COLUMNS
+id(int) domain(str) aor(str) host(str) port(int) received(str) received_port(int) received_proto(int) path(str) rinstance(str) rx_session_id(str) reg_state(int) expires(datetime) service_routes(str) socket(str) public_ids(str) security_type(int) protocol(str) mode(str) ck(str) ik(str) ealg(str) ialg(str) port_pc(int) port_ps(int) port_uc(int) port_us(int) spi_pc(int) spi_ps(int) spi_uc(int) spi_us(int) t_security_type(int) t_protocol(str) t_mode(str) t_ck(str) t_ik(str) t_ealg(str) t_ialg(str) t_port_pc(int) t_port_ps(int) t_port_uc(int) t_port_us(int) t_spi_pc(int) t_spi_ps(int) t_spi_uc(int) t_spi_us(int)
+METADATA_KEY
+
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
+METADATA_DEFAULTS
+NIL|NIL|NIL|NIL|NIL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|'2030-05-28 21:32:15'|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL
+pcscf_location|
+pcscf_location|7

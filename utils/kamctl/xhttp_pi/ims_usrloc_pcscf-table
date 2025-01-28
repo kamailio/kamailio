@@ -1,6 +1,6 @@
-	<!-- Declaration of location table-->
-	<db_table id="location">
-		<table_name>location</table_name>
+	<!-- Declaration of pcscf_location table-->
+	<db_table id="pcscf_location">
+		<table_name>pcscf_location</table_name>
 		<db_url_id>mysql</db_url_id>
 		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>domain</field><type>DB1_STR</type></column>

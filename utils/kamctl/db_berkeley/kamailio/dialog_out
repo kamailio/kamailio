@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 id(int) hash_entry(int) hash_id(int) did(str) to_uri(str) to_tag(str) caller_cseq(str) callee_cseq(str) callee_contact(str) callee_route_set(str) callee_sock(str)
 METADATA_KEY
-1 2
+1 2 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

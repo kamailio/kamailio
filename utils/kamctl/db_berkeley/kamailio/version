@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 id(int) table_name(str) table_version(int)
 METADATA_KEY
-1
+1 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS
