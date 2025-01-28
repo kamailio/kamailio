@@ -103,18 +103,19 @@ Chapter 1. Admin Guide
 
    Absolute path to the folder where log files should be saved.
 
-   Default value is “/var/log/kamailio/file_out/”.
+   Default value is “/var/log/kamailio/file_out”.
 
    Example 1.1. Set base_folder parameter
 ...
-modparam("file_out", "base_folder", "/tmp/file_out/")
+modparam("file_out", "base_folder", "/tmp/file_out") # trailing slash will be ad
+ded.
 ...
 
 3.2.  file (string)
 
    The definition of a file and its properties. The value of the parameter
    may have the following format:
-     * "name=accounting;extension=.out;interval=20"
+     * "name=accounting;extension=.out;interval=20;prefix=accounting:"
 
    The parameter can be set multiple times to define more files in same
    configuration file.
@@ -124,6 +125,8 @@ modparam("file_out", "base_folder", "/tmp/file_out/")
        Default value is “.out”.
      * interval (Optional) - the interval in seconds of the file rotation
        Default value is “600” (10min).
+     * prefix (Optional) - the prefix for log messages
+       Default value is “""” (empty string).
 
    Example 1.2. Set file parameter
 ...
