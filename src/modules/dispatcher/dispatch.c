@@ -2866,14 +2866,16 @@ next_dst:
 void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 {
 	int setn;
+	ds_dest_t *ndst = NULL;
 
-	if(add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
-			   node->dlist[i].priority, &node->dlist[i].attrs.body,
-			   *ds_next_idx, &setn, node->dlist[i].dload,
-			   &node->dlist[i].latency_stats)
-			== NULL) {
+	ndst = add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
+			node->dlist[i].priority, &node->dlist[i].attrs.body, *ds_next_idx,
+			&setn, node->dlist[i].dload, &node->dlist[i].latency_stats);
+	if(ndst == NULL) {
 		LM_WARN("failed to add destination in group %d - %.*s\n", node->id,
 				node->dlist[i].uri.len, node->dlist[i].uri.s);
+	} else {
+		memcpy(&ndst->ocdata, &node->dlist[i].ocdata, sizeof(ds_ocdata_t));
 	}
 	return;
 }
@@ -2922,7 +2924,10 @@ error:
 /* callback for removing nodes based on setid & address */
 void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 {
-	struct ds_filter_dest_cb_arg *filter_arg = (typeof(filter_arg))arg;
+	ds_dest_t *ndst = NULL;
+	struct ds_filter_dest_cb_arg *filter_arg;
+
+	filter_arg = (typeof(filter_arg))arg;
 
 	if(node->id == filter_arg->setid
 			&& node->dlist[i].uri.len == filter_arg->dest->uri.len
@@ -2931,13 +2936,16 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 					   == 0)
 		return;
 
-	if(add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
-			   node->dlist[i].priority, &node->dlist[i].attrs.body,
-			   *ds_next_idx, filter_arg->setn, node->dlist[i].dload,
-			   &node->dlist[i].latency_stats)
-			== NULL) {
+	ndst = add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
+			node->dlist[i].priority, &node->dlist[i].attrs.body, *ds_next_idx,
+			filter_arg->setn, node->dlist[i].dload,
+			&node->dlist[i].latency_stats);
+
+	if(ndst == NULL) {
 		LM_WARN("failed to add destination in group %d - %.*s\n", node->id,
 				node->dlist[i].uri.len, node->dlist[i].uri.s);
+	} else {
+		memcpy(&ndst->ocdata, &node->dlist[i].ocdata, sizeof(ds_ocdata_t));
 	}
 	return;
 }
