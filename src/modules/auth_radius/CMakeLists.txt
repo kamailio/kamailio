@@ -27,8 +27,9 @@ install(
             PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
     endif()
 "
-  COMPONENT ${module_name}-cfg)
+  COMPONENT ${group_name})
 
+# Custom target to install only the specific config file
 add_custom_target(
   ${module_name}-install-cfg
   COMMENT "Installing auth_radius dictionary.${CFG_NAME} configuration file"

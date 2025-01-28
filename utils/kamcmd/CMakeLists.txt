@@ -35,7 +35,10 @@ target_compile_definitions(
           RUN_DIR="/${CMAKE_INSTALL_LOCALSTATEDIR}/run/${MAIN_NAME}"
           __OS_${OS_LOWER})
 
-install(TARGETS ${NAME} DESTINATION ${CMAKE_INSTALL_SBINDIR})
+install(
+  TARGETS ${NAME}
+  DESTINATION ${CMAKE_INSTALL_SBINDIR}
+  COMPONENT kamailio-core)
 
 # Man page generation
 add_custom_command(
@@ -55,5 +58,5 @@ add_custom_target(kamcmd_man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8)
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
-  COMPONENT kamailio_man
+  COMPONENT kamailio-core
   OPTIONAL)
