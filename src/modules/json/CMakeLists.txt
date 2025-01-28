@@ -2,7 +2,8 @@ file(GLOB MODULE_SOURCES "*.c")
 
 add_library(${module_name} SHARED ${MODULE_SOURCES})
 
-find_package(json-c QUIET)
+find_package(json-c CONFIG)
+
 if(NOT json-c_FOUND)
   message(STATUS "json-c not found. looking with pkg-config")
   find_package(PkgConfig REQUIRED)
