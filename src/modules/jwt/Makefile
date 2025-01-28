@@ -20,6 +20,7 @@ else
 	DEFS += -I$(LOCALBASE)/include
 	LIBS += -L$(LOCALBASE)/lib -ljwt
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules
 

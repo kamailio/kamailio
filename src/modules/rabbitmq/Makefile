@@ -23,5 +23,6 @@ else
 	DEFS+=-I$(LOCALBASE)/include
 	LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib -lrabbitmq -luuid
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules

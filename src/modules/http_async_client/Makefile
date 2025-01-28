@@ -39,6 +39,6 @@ else
 endif
 
 DEFS+=$(CURLDEFS) $(LEVENTDEFS)
-LIBS=$(CURLLIBS) $(LEVENTLIBS)
+${eval LIBS=$(CURLLIBS) $(LEVENTLIBS)}
 
 include ../../Makefile.modules
