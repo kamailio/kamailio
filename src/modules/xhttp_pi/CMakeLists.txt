@@ -26,7 +26,7 @@ install(
             PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
     endif()
 "
-  COMPONENT xhttp_pi-cfg
+  COMPONENT ${group_name}
 )
 
 add_custom_target(
@@ -34,3 +34,19 @@ add_custom_target(
   COMMENT "Installing pi_framework.xml"
   COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component xhttp_pi-cfg
 )
+
+include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
+add_db_target("${group_name}" pi_framework_table "${STYLESHEETS}/pi_framework_table.xsl")
+add_db_target("${group_name}" pi_framework_mod "${STYLESHEETS}/pi_framework_mod.xsl")
+
+# Add targets that match the dbschema
+add_custom_target(dbschema_xhttp_pi)
+add_dependencies(dbschema_xhttp_pi dbschema_pi_framework_table dbschema_pi_framework_mod)
+
+add_custom_target(dbschema_xhttp_pi_clean)
+add_dependencies(
+  dbschema_xhttp_pi dbschema_pi_framework_table_clean dbschema_pi_framework_mod_clean
+)
+
+add_dependencies(dbschema dbschema_pi_framework_table dbschema_pi_framework_mod)
+add_dependencies(dbschema_clean dbschema_pi_framework_table_clean dbschema_pi_framework_mod_clean)
