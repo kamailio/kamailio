@@ -66,7 +66,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"force_outbound_flag", PARAM_INT, &ob_force_flag},
 	{"force_no_outbound_flag", PARAM_INT, &ob_force_no_flag},
-	{"flow_token_secret", PARAM_STRING, &flow_token_secret},
+	{"flow_token_secret", PARAM_STR, &flow_token_secret},
 	{0, 0, 0}
 };
 
@@ -86,7 +86,7 @@ struct module_exports exports = {
 
 static void mod_init_openssl(void)
 {
-	if(flow_token_secret.s) {
+	if(flow_token_secret.s && flow_token_secret.len > 0) {
 		assert(ob_key.len == SHA_DIGEST_LENGTH);
 		LM_DBG("flow_token_secret mod param set. use persistent ob_key");
 #if OPENSSL_VERSION_NUMBER < 0x030000000L
