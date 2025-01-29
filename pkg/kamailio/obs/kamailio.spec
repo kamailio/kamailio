@@ -281,13 +281,8 @@ like Asterisk™, FreeSWITCH™ or SEMS.
 Summary:    Account transaction information in a JSON dictionary
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
 Requires:   libevent
 BuildRequires:  libevent-devel
-%endif
 %if 0%{?suse_version}
 Requires:   libjansson
 BuildRequires:  libjansson-devel
@@ -303,14 +298,8 @@ Account transaction information in a JSON dictionary.
 
 %package    auth-ephemeral
 Summary:    Functions for authentication using ephemeral credentials
-Group:      %{PKGGROUP}
-%if 0%{?rhel} == 7 && %{with openssl11}
-Requires:   openssl11, kamailio = %ver
-BuildRequires:  openssl11-devel
-%else
 Requires:   openssl, kamailio = %ver
 BuildRequires:  openssl-devel
-%endif
 
 %description    auth-ephemeral
 Functions for authentication using ephemeral credentials.
@@ -390,20 +379,7 @@ CPL (Call Processing Language) interpreter for Kamailio.
 Summary:    Module to support cryptographic extensions
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   openssl
-BuildRequires:  openssl-devel
-%endif
-%if 0%{?rhel} == 7
-%if %{with openssl11}
-Requires:   openssl11-libs
-BuildRequires:  openssl11-devel
-%else
-Requires:   openssl-libs
-BuildRequires:  openssl-devel
-%endif
-%endif
-%if 0%{?fedora}
+%if 0%{?rhel} || 0%{?fedora}
 Requires:   openssl-libs
 BuildRequires:  openssl-devel
 %endif
@@ -487,13 +463,8 @@ Compressed body (SIP and HTTP) handling for kamailio.
 Summary:    Async HTTP client module for Kamailio
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
 Requires:   libevent
 BuildRequires:  libevent-devel
-%endif
 %if 0%{?suse_version}
 Requires:   libcurl4
 BuildRequires:  libcurl-devel
@@ -539,13 +510,8 @@ IMS modules and extensions module for Kamailio.
 Summary:    JSON string handling and RPC modules for Kamailio using JANSSON library
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
 Requires:   libevent
 BuildRequires:  libevent-devel
-%endif
 %if 0%{?suse_version}
 Requires:   libjson-c2
 BuildRequires:  libjansson-devel
@@ -564,13 +530,8 @@ JSON string handling and RPC modules for Kamailio using JANSSON library.
 Summary:    JSON string handling and RPC modules for Kamailio
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
 Requires:   libevent
 BuildRequires:  libevent-devel
-%endif
 %if 0%{?suse_version}
 Requires:   libjson-c2
 BuildRequires:  libjson-c-devel
@@ -601,13 +562,8 @@ Summary:    Kazoo middle layer connector support for Kamailio
 Group:      %{PKGGROUP}
 Requires:   libuuid, librabbitmq, json-c, kamailio = %ver
 BuildRequires:  libuuid-devel, librabbitmq-devel, json-c-devel
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
 Requires:   libevent
 BuildRequires:  libevent-devel
-%endif
 
 %description    kazoo
 Kazoo module for Kamailio.
@@ -706,11 +662,7 @@ BuildRequires:  zlib-devel
 Requires:   libmysqlclient18
 BuildRequires:  libmysqlclient-devel
 %else
-%if 0%{?rhel} == 6
-BuildRequires:  mysql-devel
-%else
 BuildRequires:  mariadb-devel
-%endif
 %endif
 
 %description    mysql
@@ -732,13 +684,8 @@ The module provides an NATS consumer for Kamailio. NATS is a real time distribut
 %package    outbound
 Summary:    Outbound (RFC 5626) support for Kamailio
 Group:      %{PKGGROUP}
-%if 0%{?rhel} == 7 && %{with openssl11}
-Requires:   openssl11, kamailio = %ver
-BuildRequires:  openssl11-devel
-%else
 Requires:   openssl, kamailio = %ver
 BuildRequires:  openssl-devel
-%endif
 
 %description    outbound
 RFC 5626, "Managing Client-Initiated Connections in the Session Initiation
@@ -846,7 +793,7 @@ RabbitMQ module for Kamailio.
 Summary:    RADIUS modules for Kamailio
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel}
 Requires:   freeradius-client
 BuildRequires:  freeradius-client-devel
 %else
@@ -1095,13 +1042,8 @@ Non-SIP utitility functions for Kamailio.
 %package    websocket
 Summary:    WebSocket transport for Kamailio
 Group:      %{PKGGROUP}
-%if 0%{?rhel} == 7 && %{with openssl11}
-Requires:   libunistring, openssl11, kamailio = %ver
-BuildRequires:  libunistring-devel, openssl11-devel
-%else
 Requires:   libunistring, openssl, kamailio = %ver
 BuildRequires:  libunistring-devel, openssl-devel
-%endif
 
 %description    websocket
 WebSocket transport for Kamailio.
