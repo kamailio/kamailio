@@ -16,7 +16,7 @@
     charging control functions performed by an Application Function (e.g.
     P-CSCF) over the Rx interface. This module is dependent on the CDP (C
     Diameter Peer) modules for communicating with PCRF as specified in 3GPP
-    specification TS 29.214.</para>
+    specification TS 29.214. It is an enhaced variant of ims_qos.</para>
   </section>
 
   <section>
@@ -548,7 +548,7 @@ modparam("ims_qos", "dialog_direction", 1)
         If set to 1 it will trust the bottom Via as the UE IP/port/transport when doing client identification.
       </para>
       <para>
-        Normally, the UE identification should be done on IPsec SPIs and source IP/port of the packets. 
+        Normally, the UE identification should be done on IPsec SPIs and source IP/port of the packets.
         In some cases the ims_* modules trust the top Via on requests and the bottom Via on responses. In some (better)
         cases this trusts the received-from IP (or the alias in the Contact header).
       </para>
@@ -707,7 +707,7 @@ modparam("ims_qos", "af_signaling_port_ps", "5063")
       <para><emphasis>Note:</emphasis> this is executed asynchronously. See example on how to
       retrieve return value</para>
 
-      <para><emphasis>Note:</emphasis> this authorization session triggers 
+      <para><emphasis>Note:</emphasis> this authorization session triggers
       event_route[qos:asr_registration], event_route[qos:rar_access_network] and event_route[qos:terminate_dialog].</para>
 
       <example>
@@ -785,7 +785,7 @@ route[REGISTER_AAR_REPLY]
       <para><emphasis>Note:</emphasis> this is executed asynchronously. See example on how to
       retrieve return value</para>
 
-      <para><emphasis>Note:</emphasis> this authorization session triggers 
+      <para><emphasis>Note:</emphasis> this authorization session triggers
       event_route[qos:asr_call], event_route[qos:rar_access_network] and event_route[qos:terminate_dialog].</para>
 
 
