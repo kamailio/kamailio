@@ -176,7 +176,7 @@ db1_con_t *db_oracle_init(const str *_url)
  */
 void db_oracle_close(db1_con_t *_h)
 {
-	db_do_close(_h, db_oracle_free_connection);
+	db_do_close(_h, (void *)db_oracle_free_connection);
 }
 
 
