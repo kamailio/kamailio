@@ -31,42 +31,6 @@
 %bcond_without wolfssl
 %endif
 
-%if 0%{?rhel} == 7
-%if 0%{?centos_ver}
-%define dist_name centos
-%define dist_version %{?centos}
-%define dist .el7.centos
-%endif
-%if 0%{?centos_ver} == 0
-%define dist_name rhel
-%define dist_version %{?rhel}
-%endif
-%bcond_without cnxcc
-%bcond_with dnssec
-%bcond_without evapi
-%bcond_without http_async_client
-%bcond_without ims
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_without lwsc
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_without mongodb
-%bcond_with nats
-%bcond_without perl
-%bcond_without phonenum
-%bcond_without python2
-%bcond_without python3
-%bcond_without rabbitmq
-%bcond_without redis
-%bcond_without ruby
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%bcond_without wolfssl
-%endif
-
 %if 0%{?rhel} == 8
 %if 0%{?centos_ver}
 %define dist_name centos
@@ -188,11 +152,6 @@
 %bcond_without wolfssl
 %endif
 
-# build with openssl 1.1.1 on RHEL 7 based dists
-%if 0%{?rhel} == 7
-%bcond_with openssl11
-%endif
-
 # redefine buggy openSUSE Leap _sharedstatedir macro. More info at https://bugzilla.redhat.com/show_bug.cgi?id=183370
 %if 0%{?suse_version} == 1315
 %define _sharedstatedir /var/lib
@@ -252,10 +211,8 @@ Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
 Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
 BuildRequires:  bison, flex, which, make, gcc, gcc-c++, pkgconfig, readline-devel
-%if 0%{?rhel} != 6
 Requires:  systemd
 BuildRequires:  systemd-devel
-%endif
 
 %if 0%{?suse_version} == 1315 || 0%{?suse_version} == 1330
 Requires:  filesystem
@@ -281,13 +238,8 @@ like Asterisk™, FreeSWITCH™ or SEMS.
 Summary:    Account transaction information in a JSON dictionary
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
 Requires:   libevent
 BuildRequires:  libevent-devel
-%endif
 %if 0%{?suse_version}
 Requires:   libjansson
 BuildRequires:  libjansson-devel
@@ -303,14 +255,8 @@ Account transaction information in a JSON dictionary.
 
 %package    auth-ephemeral
 Summary:    Functions for authentication using ephemeral credentials
-Group:      %{PKGGROUP}
-%if 0%{?rhel} == 7 && %{with openssl11}
-Requires:   openssl11, kamailio = %ver
-BuildRequires:  openssl11-devel
-%else
 Requires:   openssl, kamailio = %ver
 BuildRequires:  openssl-devel
-%endif
 
 %description    auth-ephemeral
 Functions for authentication using ephemeral credentials.
@@ -333,13 +279,8 @@ Requires:   kamailio = %ver
 Requires:   libdb-4_8
 BuildRequires:  libdb-4_8-devel
 %else
-%if 0%{?rhel} == 6
-Requires:   db4
-BuildRequires:  db4-devel
-%else
 Requires:   libdb
 BuildRequires:  libdb-devel
-%endif
 %endif
 
 %description    bdb
@@ -390,20 +331,7 @@ CPL (Call Processing Language) interpreter for Kamailio.
 Summary:    Module to support cryptographic extensions
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   openssl
-BuildRequires:  openssl-devel
-%endif
-%if 0%{?rhel} == 7
-%if %{with openssl11}
-Requires:   openssl11-libs
-BuildRequires:  openssl11-devel
-%else
-Requires:   openssl-libs
-BuildRequires:  openssl-devel
-%endif
-%endif
-%if 0%{?fedora}
+%if 0%{?rhel} || 0%{?fedora}
 Requires:   openssl-libs
 BuildRequires:  openssl-devel
 %endif
@@ -487,13 +415,8 @@ Compressed body (SIP and HTTP) handling for kamailio.
 Summary:    Async HTTP client module for Kamailio
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
 Requires:   libevent
 BuildRequires:  libevent-devel
-%endif
 %if 0%{?suse_version}
 Requires:   libcurl4
 BuildRequires:  libcurl-devel
@@ -539,13 +462,8 @@ IMS modules and extensions module for Kamailio.
 Summary:    JSON string handling and RPC modules for Kamailio using JANSSON library
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
 Requires:   libevent
 BuildRequires:  libevent-devel
-%endif
 %if 0%{?suse_version}
 Requires:   libjson-c2
 BuildRequires:  libjansson-devel
@@ -564,13 +482,8 @@ JSON string handling and RPC modules for Kamailio using JANSSON library.
 Summary:    JSON string handling and RPC modules for Kamailio
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
 Requires:   libevent
 BuildRequires:  libevent-devel
-%endif
 %if 0%{?suse_version}
 Requires:   libjson-c2
 BuildRequires:  libjson-c-devel
@@ -601,13 +514,8 @@ Summary:    Kazoo middle layer connector support for Kamailio
 Group:      %{PKGGROUP}
 Requires:   libuuid, librabbitmq, json-c, kamailio = %ver
 BuildRequires:  libuuid-devel, librabbitmq-devel, json-c-devel
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
 Requires:   libevent
 BuildRequires:  libevent-devel
-%endif
 
 %description    kazoo
 Kazoo module for Kamailio.
@@ -706,11 +614,7 @@ BuildRequires:  zlib-devel
 Requires:   libmysqlclient18
 BuildRequires:  libmysqlclient-devel
 %else
-%if 0%{?rhel} == 6
-BuildRequires:  mysql-devel
-%else
 BuildRequires:  mariadb-devel
-%endif
 %endif
 
 %description    mysql
@@ -732,13 +636,8 @@ The module provides an NATS consumer for Kamailio. NATS is a real time distribut
 %package    outbound
 Summary:    Outbound (RFC 5626) support for Kamailio
 Group:      %{PKGGROUP}
-%if 0%{?rhel} == 7 && %{with openssl11}
-Requires:   openssl11, kamailio = %ver
-BuildRequires:  openssl11-devel
-%else
 Requires:   openssl, kamailio = %ver
 BuildRequires:  openssl-devel
-%endif
 
 %description    outbound
 RFC 5626, "Managing Client-Initiated Connections in the Session Initiation
@@ -846,7 +745,7 @@ RabbitMQ module for Kamailio.
 Summary:    RADIUS modules for Kamailio
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel}
 Requires:   freeradius-client
 BuildRequires:  freeradius-client-devel
 %else
@@ -1023,13 +922,8 @@ SQLite database connectivity for Kamailio.
 %package    tls
 Summary:    TLS transport for Kamailio
 Group:      %{PKGGROUP}
-%if 0%{?rhel} == 7 && %{with openssl11}
-Requires:   openssl11, kamailio = %ver
-BuildRequires:  openssl11-devel
-%else
 Requires:   openssl, kamailio = %ver
 BuildRequires:  openssl-devel
-%endif
 
 %description    tls
 TLS transport for Kamailio.
@@ -1095,13 +989,8 @@ Non-SIP utitility functions for Kamailio.
 %package    websocket
 Summary:    WebSocket transport for Kamailio
 Group:      %{PKGGROUP}
-%if 0%{?rhel} == 7 && %{with openssl11}
-Requires:   libunistring, openssl11, kamailio = %ver
-BuildRequires:  libunistring-devel, openssl11-devel
-%else
 Requires:   libunistring, openssl, kamailio = %ver
 BuildRequires:  libunistring-devel, openssl-devel
-%endif
 
 %description    websocket
 WebSocket transport for Kamailio.
@@ -1173,16 +1062,10 @@ UUID module for Kamailio.
 
 %prep
 %setup -n %{name}-%{ver}
-# python3 does not exist in RHEL 6 and similar dist.
-%if 0%{?rhel} == 6
-sed -i -e 's/python3/python2/' utils/kamctl/dbtextdb/dbtextdb.py
-%endif
 
 # on latest dist need to add --atexit=no for Kamailio options. More details GH #2616
-%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
 sed -i -e 's|/usr/sbin/kamailio|/usr/sbin/kamailio --atexit=no|' pkg/kamailio/obs/kamailio.service
 sed -i -e 's|/usr/sbin/kamailio|/usr/sbin/kamailio --atexit=no|' pkg/kamailio/obs/kamailio@.service
-%endif
 
 rm -f misc/examples/pkg/sipcapture.cfg
 
@@ -1200,9 +1083,6 @@ make cfg prefix=/usr \
 make
 make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     jabber ndb_cassandra osp" \
-%if %{with openssl11}
-    SSL_BUILDER="pkg-config libssl11" \
-%endif
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
     FREERADIUS=1 \
 %endif
@@ -1311,9 +1191,6 @@ rm -rf %{buildroot}
 make install
 make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     iptrtpproxy jabber osp" \
-%if %{with openssl11}
-    SSL_BUILDER="pkg-config libssl11" \
-%endif
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
     FREERADIUS=1 \
 %endif
@@ -1416,19 +1293,10 @@ make install-cfg-pkg
 
 install -d %{buildroot}%{_sharedstatedir}/kamailio
 
-%if "%{?_unitdir}" == ""
-# On RedHat 6 like
-install -d %{buildroot}%{_var}/run/kamailio
-install -d %{buildroot}%{_sysconfdir}/rc.d/init.d
-install -m755 pkg/kamailio/obs/kamailio.init \
-        %{buildroot}%{_sysconfdir}/rc.d/init.d/kamailio
-%else
-# systemd
 install -d %{buildroot}%{_unitdir}
 install -Dpm 0644 pkg/kamailio/obs/kamailio.service %{buildroot}%{_unitdir}/kamailio.service
 install -Dpm 0644 pkg/kamailio/obs/kamailio@.service %{buildroot}%{_unitdir}/kamailio@.service
 install -Dpm 0644 pkg/kamailio/obs/kamailio.tmpfiles %{buildroot}%{_tmpfilesdir}/kamailio.conf
-%endif
 
 %if 0%{?suse_version}
 install -d %{buildroot}%{_fillupdir}
@@ -1805,10 +1673,6 @@ fi
 %if 0%{?rhel} >= 8 || 0%{?fedora}
 %dir %{_libdir}/kamailio/kamctl/dbtextdb/__pycache__
 %{_libdir}/kamailio/kamctl/dbtextdb/__pycache__/*.pyc
-%endif
-%if 0%{?rhel} == 6 || 0%{?rhel} == 7
-%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyc
-%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyo
 %endif
 
 %{_mandir}/man5/*
