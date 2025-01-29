@@ -1,4 +1,4 @@
-The IMS QoS Module - Neat Path Networks "branch"
+The IMS QoS NPN Module
 
 Dragos Vingarzan
 
@@ -192,7 +192,7 @@ Chapter 1. Admin Guide
    control functions performed by an Application Function (e.g. P-CSCF)
    over the Rx interface. This module is dependent on the CDP (C Diameter
    Peer) modules for communicating with PCRF as specified in 3GPP
-   specification TS 29.214.
+   specification TS 29.214. It is an enhaced variant of ims_qos.
 
 2. Dependencies
 
