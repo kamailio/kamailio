@@ -1,0 +1,10 @@
+METADATA_COLUMNS
+id(int) hash_entry(int) hash_id(int) session_id(str) dlg_hash_entry(int) dlg_hash_id(int) direction(int) asserted_identity(str) callee(str) start_time(datetime) last_event_timestamp(datetime) reserved_secs(int) valid_for(int) state(int) incoming_trunk_id(str) outgoing_trunk_id(str) rating_group(int) service_identifier(int) auth_app_id(int) auth_session_type(int) pani(str) mac(str) app_provided_party(str) is_final_allocation(int) origin_host(str)
+METADATA_KEY
+
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
+METADATA_DEFAULTS
+NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NIL|NIL|NULL|NULL|NULL|NIL|NULL

@@ -26,6 +26,8 @@ carrierfailureroute|
 carrierfailureroute|2
 carrierroute|
 carrierroute|3
+contact|
+contact|6
 cpl|
 cpl|1
 dbaliases|
@@ -68,6 +70,12 @@ imc_members|
 imc_members|1
 imc_rooms|
 imc_rooms|1
+impu|
+impu|6
+impu_contact|
+impu_contact|6
+impu_subscriber|
+impu_subscriber|6
 lcr_gw|
 lcr_gw|3
 lcr_rule|
@@ -92,6 +100,8 @@ mtrees|
 mtrees|2
 nds_trusted_domains|
 nds_trusted_domains|1
+pcscf_location|
+pcscf_location|7
 pdt|
 pdt|1
 pl_pipes|
@@ -108,6 +118,8 @@ rls_presentity|
 rls_presentity|1
 rls_watchers|
 rls_watchers|3
+ro_session|
+ro_session|3
 rtpengine|
 rtpengine|1
 rtpproxy|
@@ -128,6 +140,8 @@ speed_dial|
 speed_dial|2
 subscriber|
 subscriber|7
+subscriber_scscf|
+subscriber_scscf|6
 topos_d|
 topos_d|2
 topos_t|

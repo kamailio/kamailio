@@ -8,6 +8,7 @@ db.getCollection("version").insert({ table_name: "aliases", table_version: Numbe
 db.getCollection("version").insert({ table_name: "carrier_name", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "carrierfailureroute", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "carrierroute", table_version: NumberInt(3) });
+db.getCollection("version").insert({ table_name: "contact", table_version: NumberInt(6) });
 db.getCollection("version").insert({ table_name: "cpl", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "dbaliases", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "dialog", table_version: NumberInt(7) });
@@ -29,6 +30,9 @@ db.getCollection("version").insert({ table_name: "grp", table_version: NumberInt
 db.getCollection("version").insert({ table_name: "htable", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "imc_members", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "imc_rooms", table_version: NumberInt(1) });
+db.getCollection("version").insert({ table_name: "impu", table_version: NumberInt(6) });
+db.getCollection("version").insert({ table_name: "impu_contact", table_version: NumberInt(6) });
+db.getCollection("version").insert({ table_name: "impu_subscriber", table_version: NumberInt(6) });
 db.getCollection("version").insert({ table_name: "lcr_gw", table_version: NumberInt(3) });
 db.getCollection("version").insert({ table_name: "lcr_rule", table_version: NumberInt(3) });
 db.getCollection("version").insert({ table_name: "lcr_rule_target", table_version: NumberInt(1) });
@@ -41,6 +45,7 @@ db.getCollection("version").insert({ table_name: "mohqueues", table_version: Num
 db.getCollection("version").insert({ table_name: "mtree", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "mtrees", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "nds_trusted_domains", table_version: NumberInt(1) });
+db.getCollection("version").insert({ table_name: "pcscf_location", table_version: NumberInt(7) });
 db.getCollection("version").insert({ table_name: "pdt", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "pl_pipes", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "presentity", table_version: NumberInt(5) });
@@ -49,6 +54,7 @@ db.getCollection("version").insert({ table_name: "purplemap", table_version: Num
 db.getCollection("version").insert({ table_name: "re_grp", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "rls_presentity", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "rls_watchers", table_version: NumberInt(3) });
+db.getCollection("version").insert({ table_name: "ro_session", table_version: NumberInt(3) });
 db.getCollection("version").insert({ table_name: "rtpengine", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "rtpproxy", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "s_cscf", table_version: NumberInt(1) });
@@ -59,6 +65,7 @@ db.getCollection("version").insert({ table_name: "silo", table_version: NumberIn
 db.getCollection("version").insert({ table_name: "sip_trace", table_version: NumberInt(4) });
 db.getCollection("version").insert({ table_name: "speed_dial", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "subscriber", table_version: NumberInt(7) });
+db.getCollection("version").insert({ table_name: "subscriber_scscf", table_version: NumberInt(6) });
 db.getCollection("version").insert({ table_name: "topos_d", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "topos_t", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "trusted", table_version: NumberInt(6) });
