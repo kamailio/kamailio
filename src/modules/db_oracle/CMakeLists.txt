@@ -6,5 +6,5 @@ add_library(${module_name} SHARED ${MODULE_SOURCES})
 find_package(Oracle REQUIRED)
 
 # /usr/include/oracle/18.3/client64)
-target_include_directories(${module_name} PRIVATE ${Oracle_INCLUDE_DIRS})
-target_link_libraries(${module_name} PRIVATE occi clntsh)
+target_include_directories(${module_name} PRIVATE ${ORACLE_INCLUDE_DIR})
+target_link_libraries(${module_name} PRIVATE ${ORACLE_LIBRARIES})
