@@ -1,0 +1,12 @@
+METADATA_COLUMNS
+id(int) impu(str) barring(int) reg_state(int) ccf1(str) ccf2(str) ecf1(str) ecf2(str) ims_subscription_data(str)
+METADATA_KEY
+
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
+METADATA_DEFAULTS
+NIL|NIL|0|0|NULL|NULL|NULL|NULL|NIL
+impu|
+impu|6

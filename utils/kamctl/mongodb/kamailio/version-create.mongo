@@ -41,6 +41,7 @@ db.getCollection("version").insert({ table_name: "mohqueues", table_version: Num
 db.getCollection("version").insert({ table_name: "mtree", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "mtrees", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "nds_trusted_domains", table_version: NumberInt(1) });
+db.getCollection("version").insert({ table_name: "pcscf_location", table_version: NumberInt(7) });
 db.getCollection("version").insert({ table_name: "pdt", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "pl_pipes", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "presentity", table_version: NumberInt(5) });

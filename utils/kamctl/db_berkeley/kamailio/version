@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 id(int) table_name(str) table_version(int)
 METADATA_KEY
-1 
+1
 METADATA_READONLY
 0
 METADATA_LOGFLAGS
@@ -92,6 +92,8 @@ mtrees|
 mtrees|2
 nds_trusted_domains|
 nds_trusted_domains|1
+pcscf_location|
+pcscf_location|7
 pdt|
 pdt|1
 pl_pipes|

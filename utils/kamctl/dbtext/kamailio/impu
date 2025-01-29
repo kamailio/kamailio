@@ -1,0 +1,2 @@
+id(int,auto) impu(string) barring(int,null) reg_state(int,null) ccf1(string,null) ccf2(string,null) ecf1(string,null) ecf2(string,null) ims_subscription_data(string,null)
+0:impu:6

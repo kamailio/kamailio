@@ -1,0 +1,12 @@
+METADATA_COLUMNS
+id(int) contact(str) params(str) path(str) received(str) user_agent(str) expires(datetime) callid(str)
+METADATA_KEY
+
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
+METADATA_DEFAULTS
+NIL|NIL|NULL|NULL|NULL|NULL|NULL|NULL
+contact|
+contact|6

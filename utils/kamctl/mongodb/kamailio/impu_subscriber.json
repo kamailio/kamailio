@@ -1,0 +1,21 @@
+{
+  "name": "impu_subscriber",
+  "version": 6,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "impu_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "subscriber_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    }
+  ]
+}

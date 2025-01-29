@@ -1,4 +1,4 @@
-id(int,auto) table_name(string) table_version(int) 
+id(int,auto) table_name(string) table_version(int)
 0:version:1
 0:acc:5
 0:acc_cdrs:2
@@ -41,6 +41,7 @@ id(int,auto) table_name(string) table_version(int)
 0:mtree:1
 0:mtrees:2
 0:nds_trusted_domains:1
+0:pcscf_location:7
 0:pdt:1
 0:pl_pipes:1
 0:presentity:5
