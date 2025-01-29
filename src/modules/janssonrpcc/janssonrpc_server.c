@@ -130,6 +130,7 @@ int jsonrpc_parse_server(char *server_s, jsonrpc_server_group_t **group_ptr)
 	param_t *pit = NULL;
 	param_t *freeme = NULL;
 	str conn;
+	conn.s = NULL;
 	str addr;
 	addr.s = NULL;
 	str srv;
