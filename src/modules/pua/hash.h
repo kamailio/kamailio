@@ -178,9 +178,11 @@ static inline int get_event_flag(str *event)
 		case 15:
 			if(strncmp(event->s, "message-summary", 15) == 0)
 				return MSGSUM_EVENT;
+			break;
 		case 16:
 			if(strncmp(event->s, "as-feature-event", 16) == 0)
 				return DFKS_EVENT;
+			break;
 	}
 
 	LM_ERR("Unknown event string\n");
