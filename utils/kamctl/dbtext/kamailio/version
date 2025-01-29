@@ -1,4 +1,4 @@
-id(int,auto) table_name(string) table_version(int)
+id(int,auto) table_name(string) table_version(int) 
 0:version:1
 0:acc:5
 0:acc_cdrs:2
@@ -8,6 +8,7 @@ id(int,auto) table_name(string) table_version(int)
 0:carrier_name:1
 0:carrierfailureroute:2
 0:carrierroute:3
+0:contact:6
 0:cpl:1
 0:dbaliases:1
 0:dialog:7
@@ -29,6 +30,9 @@ id(int,auto) table_name(string) table_version(int)
 0:htable:2
 0:imc_members:1
 0:imc_rooms:1
+0:impu:6
+0:impu_contact:6
+0:impu_subscriber:6
 0:lcr_gw:3
 0:lcr_rule:3
 0:lcr_rule_target:1
@@ -50,6 +54,7 @@ id(int,auto) table_name(string) table_version(int)
 0:re_grp:1
 0:rls_presentity:1
 0:rls_watchers:3
+0:ro_session:3
 0:rtpengine:1
 0:rtpproxy:1
 0:s_cscf:1
@@ -60,6 +65,7 @@ id(int,auto) table_name(string) table_version(int)
 0:sip_trace:4
 0:speed_dial:2
 0:subscriber:7
+0:subscriber_scscf:6
 0:topos_d:2
 0:topos_t:2
 0:trusted:6

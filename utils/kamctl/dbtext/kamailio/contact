@@ -1,2 +1,1 @@
-id(int,auto) contact(string) params(string,null) path(string,null) received(string,null) user_agent(string,null) expires(int,null) callid(string,null)
-0:contact:6
+id(int,auto) contact(string) params(string,null) path(string,null) received(string,null) user_agent(string,null) expires(int,null) callid(string,null) 

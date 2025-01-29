@@ -29,3 +29,4 @@ CREATE TABLE ro_session (
 CREATE INDEX ro_session_hash_idx ON ro_session (hash_entry, hash_id);
 
 INSERT INTO version (table_name, table_version) values ('ro_session','3');
+

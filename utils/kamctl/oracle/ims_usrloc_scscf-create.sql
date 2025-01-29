@@ -103,3 +103,4 @@ END impu_subscriber_tr;
 BEGIN map2users('impu_subscriber'); END;
 /
 INSERT INTO version (table_name, table_version) values ('impu_subscriber','6');
+
