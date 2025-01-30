@@ -35,7 +35,10 @@ target_compile_definitions(
           RUN_DIR="/${CMAKE_INSTALL_LOCALSTATEDIR}/run/${MAIN_NAME}"
           __OS_${OS_LOWER})
 
-install(TARGETS ${NAME} DESTINATION ${CMAKE_INSTALL_SBINDIR})
+install(
+  TARGETS ${NAME}
+  DESTINATION ${CMAKE_INSTALL_SBINDIR}
+  COMPONENT kamailio-core)
 
 # Man page generation
 add_custom_command(
