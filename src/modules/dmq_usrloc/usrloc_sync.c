@@ -38,6 +38,7 @@ static str dmq_400_rpl = str_init("Bad Request");
 static str dmq_500_rpl = str_init("Server Internal Error");
 
 static int *usrloc_dmq_recv = 0;
+static struct socket_info *dmq_server_socket_local = 0;
 
 dmq_api_t usrloc_dmqb;
 dmq_peer_t *usrloc_dmq_peer = NULL;
@@ -287,6 +288,7 @@ done:
 int usrloc_dmq_initialize()
 {
 	dmq_peer_t not_peer;
+	str dmq_server_socket;
 
 	/* load the DMQ API */
 	if(dmq_load_api(&usrloc_dmqb) != 0) {
@@ -308,6 +310,15 @@ int usrloc_dmq_initialize()
 	} else {
 		LM_DBG("dmq peer registered\n");
 	}
+
+	/* get local socket from DMQ API */
+	dmq_server_socket = usrloc_dmqb.get_dmq_server_socket();
+	dmq_server_socket_local = lookup_local_socket(&dmq_server_socket);
+	if(dmq_server_socket_local == 0) {
+		LM_DBG("dmq local server socket <%.*s> not found ...ignoring\n",
+				dmq_server_socket.len, dmq_server_socket.s);
+	}
+
 	return 0;
 error:
 	return -1;
@@ -430,8 +441,10 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t *node)
 	ci.ruid = ruid;
 	ci.c = &c;
 	ci.received = received;
-	if(_dmq_usrloc_replicate_socket_info
-			& (DMQ_USRLOC_REPLICATE_SOCKET | DMQ_USRLOC_REPLICATE_SOCKNAME))
+	if(_dmq_usrloc_replicate_socket_info == DMQ_USRLOC_REPLICATE_SOCKET_LOCAL) {
+		sock = dmq_server_socket_local;
+	}
+	if(_dmq_usrloc_replicate_socket_info != 0)
 		ci.sock = sock;
 	ci.path = &path;
 	ci.expires = expires;

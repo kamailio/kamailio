@@ -271,6 +271,11 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
 				2 - enabled, replicate socket by socket name
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				3 - enabled, use local socket from dmq server_socket modparam
+			</para>
+			</listitem>
 			</itemizedlist>
 		</para>
 		<para>
