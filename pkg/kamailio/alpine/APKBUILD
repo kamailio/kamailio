@@ -4,7 +4,7 @@
 # Maintainer: Nathan Angelacos <nangel@alpinelinux.org>
 
 pkgname=kamailio
-pkgver=5.1.0
+pkgver=6.0.0
 pkgrel=0
 
 # If building from a git snapshot, specify the gitcommit
@@ -31,7 +31,8 @@ makedepends="bison db-dev flex freeradius-client-dev expat-dev
 	confuse-dev ncurses-dev sqlite-dev lua-dev openldap-dev openssl-dev
 	net-snmp-dev libuuid libev-dev jansson-dev json-c-dev libevent-dev
 	linux-headers libmemcached-dev rabbitmq-c-dev hiredis-dev
-	ruby-dev libmaxminddb-dev libunistring-dev mongo-c-driver-dev libwebsockets-dev"
+	ruby-dev libmaxminddb-dev libunistring-dev mongo-c-driver-dev
+    libwebsockets-dev mosquitto-dev librdkafka-dev nghttp2-dev"
 
 install="$pkgname.pre-install $pkgname.pre-upgrade"
 
@@ -52,25 +53,27 @@ install="$pkgname.pre-install $pkgname.pre-upgrade"
 # Remove db_text from _mod_list_db because we create a separate dbtext package
 #
 # - basic used modules, with no extra dependency (widespread usage)
-_mod_list_basic="avp async auth benchmark blst cfg_rpc cfgt cfgutils corex counters \
-		ctl debugger diversion enum exec gzcompress ipops kex mangler \
-		maxfwd mediaproxy mqueue \
-		nat_traversal nathelper path pike pv ratelimit rr rtimer \
+_mod_list_basic="avp async auth benchmark blst cfg_rpc cfgt cfgutils corex \
+        counters ctl debugger diversion dlgs enum exec gzcompress ipops kex \
+        keepalive mangler math maxfwd mediaproxy mqueue nat_traversal \
+        nathelper path pike posops pv pv_headers pvtpl ratelimit rr rtimer \
 		rtpproxy sanity sdpops siputils sl smsops statsc statistics \
-		textops textopsx tm tmx topoh topos xlog rtpengine stun sipt"
+		sworker textops textopsx tm tmx topoh topos xlog rtpengine stun sipt"
 
 # - extra used modules, with no extra dependency
-_mod_list_extras="auth_diameter call_control cnxcc dmq domainpolicy log_custom \
-		msrp pdb qos sca seas sms sst timer tmrec tsilo uac_redirect \
-		xhttp xhttp_rpc xprint nosip dmq_usrloc statsd rtjson tcpops \
-		auth_xkeys"
+_mod_list_extras="auth_diameter call_control call_obj cnxcc dmq domainpolicy \
+        log_custom msrp pdb qos sca seas sms ss7ops sst timer tmrec tsilo \
+        uac_redirect xhttp xhttp_rpc xprint nosip dmq_usrloc statsd rtjson \
+        tcpops auth_xkeys"
 
+# Add tops_htable here, because htable is here.
+#
 # - common modules depending on database
 _mod_list_db="acc alias_db auth_db avpops cfg_db db_berkeley db_flatstore \
-		db_cluster dialog dispatcher domain drouting group \
-		htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
-		pipelimit prefix_route registrar sipcapture siptrace speeddial \
-		sqlops uac uri_db userblocklist usrloc"
+		db_cluster dialog dispatcher domain drouting group htable imc matrix \
+        mohqueue msilo mtree p_usrloc pdt permissions pipelimit prefix_route \
+        registrar secfilter sipcapture siptrace speeddial sqlops topos_htable \
+        uac uri_db userblocklist usrloc"
 
 # - common modules depending on database, using UID db schema
 _mod_list_dbuid="db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags \
@@ -78,6 +81,17 @@ _mod_list_dbuid="db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags \
 
 # - modules for devel purposes
 _mod_list_devel="misctest"
+
+# - kemix module
+_mod_list_kemix="kemix"
+
+# _mod_list_secsipid="secsipid secsipid_proc"
+
+# - LOST
+_mod_list_lost="lost"
+
+# - JWT
+_mod_list_jwt="jwt"
 
 # - modules depending on pcre2 library
 _mod_list_pcre="dialplan lcr regex"
@@ -150,11 +164,9 @@ _mod_list_authephemeral="auth_ephemeral"
 
 # - modules related to SIMPLE presence extensions
 _mod_list_presence="presence presence_conference presence_dialoginfo \
-			presence_mwi presence_profile presence_reginfo \
-			presence_xml \
-			pua pua_bla pua_dialoginfo pua_reginfo \
-			pua_rpc pua_usrloc pua_xmpp \
-			rls xcap_client xcap_server"
+			presence_mwi presence_profile presence_reginfo presence_xml \
+            presence_dfks pua pua_bla pua_dialoginfo pua_reginfo pua_rpc \
+            pua_usrloc pua_xmpp rls xcap_client xcap_server"
 
 # - modules depending on lua library
 _mod_list_lua="app_lua"
@@ -166,10 +178,10 @@ _mod_list_perl="app_perl db_perlvdb"
 _mod_list_ruby="app_ruby"
 
 # - modules depending on python3 library
-_mod_list_python3="app_python3"
+_mod_list_python3="app_python3 app_python3s"
 
 # - modules depending on ruby library
-_mod_list_ruby="app_ruby"
+_mod_list_ruby="app_ruby app_ruby_proc"
 
 # - modules depending on rabbitmq
 _mod_list_rabbitmq="rabbitmq"
@@ -193,9 +205,9 @@ _mod_list_redis="db_redis ndb_redis topos_redis"
 _mod_list_mono="app_mono"
 
 # - modules related to IMS extensions
-_mod_list_ims="cdp cdp_avp ims_dialog ims_diameter_server ims_auth ims_isc ims_icscf ims_qos \
-		ims_ocs ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf \
-		ims_usrloc_scscf ims_charging"
+_mod_list_ims="cdp cdp_avp ims_dialog ims_diameter_server ims_auth ims_isc \
+        ims_icscf ims_qos ims_ocs ims_registrar_pcscf ims_registrar_scscf \
+        ims_usrloc_pcscf ims_usrloc_scscf ims_charging ims_qos_npn"
 
 # - modules depending on osp toolkit library
 _mod_list_osp="osp"
@@ -233,9 +245,25 @@ _mod_list_rabbitmq="rabbitmq"
 # - modules depending on sipdump
 _mod_list_sipdump="sipdump"
 
+# - modules depending on xhttp_prom
+_mod_list_xhttp_prom="xhttp_prom"
+
+# - modules depending on slack
+_mod_list_slack="slack"
+
+# - modules depending on lrkproxy
+_mod_list_slack="lrkproxy"
+
+# mqtt
+_mod_list_mqtt="mqtt"
+
+# Kafka
+_mod_list_kafka="kafka"
 
 # Alpine Specific
 _mod_list_debugger="$_mod_list_devel benchmark debugger"
+
+_mod_list_nghttp2="nghttp2"
 
 # Standard modules in main pkg
 _module_group_kstandard="$_mod_list_basic $_mod_list_dbuid $_mod_list_pcre"
@@ -244,13 +272,11 @@ _module_group_kstandard="$_mod_list_basic $_mod_list_dbuid $_mod_list_pcre"
 
 subpackages="$pkgname-doc $pkgname-dbg $pkgname-openrc"
 _modules="$_module_group_kstandard"
-for _i in db postgres sqlite dbtext mysql \
-	cpl xml unixodbc snmpstats xmpp carrierroute \
-	ldap utils tls presence lua ims outbound debugger \
-	extras json websocket authephemeral mongodb\
-	uuid ev memcached redis geoip2 jansson sipdump \
-	jsdt http_async kazoo rabbitmq sctp radius perl \
-	python3 ruby; do
+for _i in mqtt kafka lost jwt kemix db postgres sqlite dbtext mysql cpl xml \
+    unixodbc snmpstats xmpp carrierroute ldap utils tls presence lua ims \
+    outbound debugger extras json websocket authephemeral mongodb uuid ev \
+    memcached redis geoip2 jansson sipdump jsdt http_async kazoo rabbitmq sctp \
+    radius perl python3 ruby xhttp_prom slack lrkproxy; do
 
    subpackages="$subpackages $pkgname-$_i"
    eval "_modules=\"\$_modules \$_mod_list_$_i\""
@@ -408,6 +434,42 @@ carrierroute() {
 		"$_mod_list_carrierroute"
 }
 
+kemix() {
+	_generic_pkg "extensions and functions to be used with KEMI SIP routing scripting" \
+		"$_mod_list_kemix"
+}
+
+#secsipid() {
+#    _generic_pkg "Secure SIP/Telephony Identity (STIR/SHAKEN) extensions" \
+#		"$_mod_list_secsipid"
+#}
+
+lost() {
+    _generic_pkg "HELD (RFC6155) and LOST (RFC5222) location-based routing" \
+		"$_mod_list_lost"
+}
+
+jwt() {
+    _generic_pkg "JSON Web Token generation and validation" \
+		"$_mod_list_jwt"
+}
+
+mqtt() {
+	_generic_pkg "MQTT connector for bi-directional publish-subscribe communication" \
+		"$_mod_list_mqtt"
+}
+
+kafka() {
+	_generic_pkg "Produces and sends messages to a Kafka server" \
+		"$_mod_list_kafka"
+}
+
+## doesn't compile
+# tls_wolfssl() {
+# 	_generic_pkg "TLS operations module using wolfssl" \
+# 		"$_mod_list_tls_wolfssl"
+# }
+
 ldap() {
 	_generic_pkg "LDAP search functions" \
 		"$_mod_list_ldap"
@@ -562,6 +624,26 @@ rabbitmq() {
 sipdump() {
 	_generic_pkg "This module writes SIP traffic and some associated details into local files" \
 		"$_mod_list_sipdump"
+}
+
+xhttp_prom() {
+	_generic_pkg "Metrics for Prometheus monitoring." \
+		"$_mod_list_xhttp_prom"
+}
+
+slack() {
+	_generic_pkg "Send messages to Slack channels" \
+		"$_mod_list_slack"
+}
+
+lrkproxy() {
+	_generic_pkg "RTP packets relay with kernel based forwarding" \
+		"$_mod_list_lrkproxy"
+}
+
+nghttp2() {
+	_generic_pkg "Implements an embedded HTTP/2 server using nghttpd2 library" \
+		"$_mod_list_nghttp2"
 }
 
 sha512sums="51ea5fccd27a9d3d1783cfc5596eb28ab27e34faeec3268600363f43c48a3634c3c584c479ba874fdb53b85766a0ce8fe7df0e20954c9c6514b1d9d41d9237e6  kamailio-5.1.0.20171125-991fe9b.tar.gz
