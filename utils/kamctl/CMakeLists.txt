@@ -306,11 +306,11 @@ else()
       COMMENT "Cleaning ${db_name} schema files")
   endfunction()
 
-  # Add targets for each database type Pi framework targets should combined into
-  # one
+  # Add targets for each database type
   add_custom_target(dbschema COMMENT "Generating schemas for all dbs...")
   add_custom_target(dbschema_clean COMMENT "Cleaning schemas for all dbs...")
 
+  # Pi framework targets should combined into one
   if("xhttp_pi" IN_LIST FINAL_MODULES_LIST)
     add_db_target(pi_framework_table "${STYLESHEETS}/pi_framework_table.xsl")
     add_db_target(pi_framework_mod "${STYLESHEETS}/pi_framework_mod.xsl")
@@ -361,6 +361,24 @@ else()
     add_db_target(mongodb "${STYLESHEETS}/mongodb.xsl")
     add_dependencies(dbschema dbschema_mongodb)
     add_dependencies(dbschema_clean dbschema_mongodb_clean)
+    # Create the version-create.mongo script
+    # After processing the JSON files, create the version-create.mongo script
+    # Usage of generate_version_create_mongo.sh:
+    # 1. The first argument is the path to create the version-create.mongo script
+    # 2. The second argument is the path to the directory containing the JSON files
+    add_custom_command(
+      TARGET dbschema_mongodb
+      POST_BUILD
+      COMMAND
+        bash ${CMAKE_CURRENT_SOURCE_DIR}/generate_version_create_mongo.sh
+        "${CMAKE_CURRENT_BINARY_DIR}/mongodb/kamailio/version-create.mongo"
+        "${CMAKE_CURRENT_BINARY_DIR}/mongodb/kamailio"
+      COMMENT "Creating version-create.mongo from JSON files")
+
+    install(
+      FILES ${CMAKE_CURRENT_BINARY_DIR}/mongodb/kamailio/version-create.mongo
+      DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}/mongodb/${MAIN_NAME}
+      COMPONENT KMONGODB)
   endif()
   if("db_redis" IN_LIST FINAL_MODULES_LIST)
     add_db_target(db_redis "${STYLESHEETS}/db_redis.xsl")
