@@ -10,6 +10,17 @@ project(
   HOMEPAGE_URL "https://www.kamailio.org"
 )
 
+# ---- Include guards ----
+
+if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+  message(
+    FATAL_ERROR
+      "In-source builds not allowed. Please make a new directory (called a build directory) \
+and run CMake again accordingly.")
+endif()
+
+# ---- Project settings ----
+
 # Set the version number
 set(EXTRAVERSION "-dev1")
 set(RELEASE "${PROJECT_VERSION}${EXTRAVERSION}")
