@@ -303,10 +303,29 @@ modparam("dmq_usrloc", "replicate_socket_info", 1)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>usrloc_domain</varname> parameter</title>
+		<title>Set <varname>usrloc_delete</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("dmq_usrloc", "usrloc_delete", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="usrloc_dmq.p.usrloc_delete_expired">
+		<title><varname>usrloc_delete_expired</varname> (int)</title>
+		<para>
+			Enable (1) or disable (0) synchronizing usrloc expire actions using delete actions. In other words, sync delete of (UL_CONTACT_EXPIRE) expired contacts.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>usrloc_delete_expired</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "usrloc_delete_expired", 1)
 ...
 </programlisting>
 		</example>
