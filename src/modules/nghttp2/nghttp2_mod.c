@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <nghttp2/nghttp2.h>
 
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
