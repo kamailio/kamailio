@@ -37,5 +37,6 @@ int bind_dmq(dmq_api_t *api)
 	api->send_message = dmq_send_message;
 	api->bcast_message = bcast_dmq_message;
 	api->find_dmq_node_uri = find_dmq_node_uri2;
+	api->get_dmq_server_socket = get_dmq_server_socket;
 	return 0;
 }

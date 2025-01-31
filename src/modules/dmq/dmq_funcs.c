@@ -566,3 +566,8 @@ void ping_servers(unsigned int ticks, void *param)
 		LM_ERR("error broadcasting message\n");
 	}
 }
+
+str get_dmq_server_socket()
+{
+	return dmq_server_socket;
+}

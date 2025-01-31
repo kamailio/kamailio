@@ -70,5 +70,6 @@ int ki_dmq_bcast_message(
 int is_from_remote_node(sip_msg_t *msg);
 int ki_dmq_t_replicate(struct sip_msg *msg);
 int ki_dmq_t_replicate_mode(struct sip_msg *msg, int mode);
+str get_dmq_server_socket();
 
 #endif

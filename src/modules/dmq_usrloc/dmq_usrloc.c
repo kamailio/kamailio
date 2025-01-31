@@ -43,6 +43,7 @@ int _dmq_usrloc_batch_msg_size = 60000;
 int _dmq_usrloc_batch_usleep = 0;
 str _dmq_usrloc_domain = str_init("location");
 int _dmq_usrloc_delete = 1;
+int _dmq_usrloc_delete_expired = 0;
 
 usrloc_api_t dmq_ul;
 
@@ -59,6 +60,7 @@ static param_export_t params[] = {
 	{"batch_usleep", PARAM_INT, &_dmq_usrloc_batch_usleep},
 	{"usrloc_domain", PARAM_STR, &_dmq_usrloc_domain},
 	{"usrloc_delete", PARAM_INT, &_dmq_usrloc_delete},
+	{"usrloc_delete_expired", PARAM_INT, &_dmq_usrloc_delete_expired},
 	{0, 0, 0}
 };
 
@@ -116,6 +118,7 @@ static int mod_init(void)
 			LM_ERR("Error in dmq_usrloc_initialize()\n");
 		}
 	}
+
 	return 0;
 }
 
