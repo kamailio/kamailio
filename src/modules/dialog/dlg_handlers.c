@@ -494,7 +494,7 @@ static void dlg_onreply(struct cell *t, int type, struct tmcb_params *param)
 	next_state_dlg(dlg, event, &old_state, &new_state, &unref);
 	if(new_state == DLG_STATE_DELETED && old_state != DLG_STATE_DELETED) {
 		/* set end time */
-		dlg->end_ts = (unsigned int)(time(0));
+		dlg->end_ts = ksr_time_uint(NULL, NULL);
 	}
 	if(dlg_run_event_route(
 			   dlg, (rpl == FAKED_REPLY) ? NULL : rpl, old_state, new_state)
@@ -540,7 +540,7 @@ static void dlg_onreply(struct cell *t, int type, struct tmcb_params *param)
 		}
 
 		/* set start time */
-		dlg->start_ts = (unsigned int)(time(0));
+		dlg->start_ts = ksr_time_uint(NULL, NULL);
 
 		/* save the settings to the database,
 		 * if realtime saving mode configured- save dialog now
@@ -1431,7 +1431,7 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 	next_state_dlg(dlg, event, &old_state, &new_state, &unref);
 
 	CURR_DLG_ID = req->id;
-	CURR_DLG_LIFETIME = (unsigned int)(time(0)) - dlg->start_ts;
+	CURR_DLG_LIFETIME = ksr_time_uint(NULL, NULL) - dlg->start_ts;
 	CURR_DLG_STATUS = new_state;
 
 	if(dlg_run_event_route(dlg, req, old_state, new_state) < 0) {
@@ -1443,7 +1443,7 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 	 * to absorb in-air messages */
 	if(new_state == DLG_STATE_DELETED && old_state != DLG_STATE_DELETED) {
 		/* set end time */
-		dlg->end_ts = (unsigned int)(time(0));
+		dlg->end_ts = ksr_time_uint(NULL, NULL);
 		iuid = dlg_get_iuid_shm_clone(dlg);
 		if(iuid != NULL) {
 			if(d_tmb.register_tmcb(req, NULL, TMCB_DESTROY, unref_dlg_from_cb,
@@ -1681,7 +1681,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 				dlg->tag[DLG_CALLEE_LEG].s, old_state);
 
 		/* set end time */
-		dlg->end_ts = (unsigned int)(time(0));
+		dlg->end_ts = ksr_time_uint(NULL, NULL);
 
 		/* dialog timeout */
 		run_dlg_callbacks(
@@ -1923,8 +1923,8 @@ int dlg_set_state(sip_msg_t *msg, int istate)
 	/* updates for terminated dialogs */
 	if(ostate == DLG_STATE_CONFIRMED && istate == DLG_STATE_DELETED) {
 		/* updating timestamps, flags, dialog stats */
-		dlg->init_ts = (unsigned int)(time(0));
-		dlg->end_ts = (unsigned int)(time(0));
+		dlg->init_ts = ksr_time_uint(NULL, NULL);
+		dlg->end_ts = ksr_time_uint(NULL, NULL);
 	}
 	dlg->dflags |= DLG_FLAG_CHANGED;
 	dlg_release(dlg);
