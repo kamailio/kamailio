@@ -3654,7 +3654,7 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 			}
 
 			buf.s = pkg_malloc(val->rs.len);
-			if(buf.s == 0) {
+			if(buf.s == NULL) {
 				LM_ERR("no more pkg mem\n");
 				goto error;
 			}
@@ -3681,7 +3681,7 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 				return -1;
 			}
 			buf.s = pkg_malloc(val->rs.len + 1);
-			if(buf.s == 0) {
+			if(buf.s == NULL) {
 				LM_ERR("no more pkg mem\n");
 				goto error;
 			}
@@ -3708,7 +3708,7 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 				return -1;
 			}
 			buf.s = pkg_malloc(val->rs.len);
-			if(buf.s == 0) {
+			if(buf.s == NULL) {
 				PKG_MEM_ERROR;
 				goto error;
 			}
@@ -3735,7 +3735,7 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 				return -1;
 			}
 			buf.s = pkg_malloc(val->rs.len + 1);
-			if(buf.s == 0) {
+			if(buf.s == NULL) {
 				LM_ERR("no more pkg mem\n");
 				goto error;
 			}
@@ -3790,7 +3790,7 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 			goto error;
 		}
 	} else {
-		if(buf.s != 0) {
+		if(buf.s != NULL) {
 			pkg_free(buf.s);
 			buf.s = NULL;
 		}
@@ -3817,8 +3817,9 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 	return 0;
 
 error:
-	if(buf.s != 0)
+	if(buf.s != NULL) {
 		pkg_free(buf.s);
+	}
 	return -1;
 }
 
