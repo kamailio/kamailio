@@ -1155,6 +1155,27 @@ static inline int strno2int(str *val, unsigned int *mask)
 	}
 }
 
+static inline unsigned int ksr_time_uint(time_t *tv, unsigned int *tu)
+{
+	unsigned int tl; /* lower 4 bytes */
+	unsigned long long v64;
+	time_t t;
+
+	if(tv != NULL) {
+		t = *tv;
+	} else {
+		t = time(NULL);
+	}
+	v64 = (unsigned long long)t;
+	tl = (unsigned int)(v64 & 0xFFFFFFFFULL);
+	if(tu != NULL) {
+		/* upper 4 bytes */
+		*tu = (unsigned int)((v64 >> 32) & 0xFFFFFFFFULL);
+	}
+
+	return tl;
+}
+
 /* converts a username into uid:gid,
  * returns -1 on error & 0 on success */
 int user2uid(int *uid, int *gid, char *user);
