@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <nghttp2/nghttp2.h>
 #include "nghttp2_server.h"
 
 #define OUTPUT_WOULDBLOCK_THRESHOLD (1 << 16)
