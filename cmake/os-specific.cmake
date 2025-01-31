@@ -15,6 +15,9 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
   # FreeBSD specific flags
   include(${OS_SPECIFIC_DIR}/freebsd.cmake)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  # Windows specific flags
+  include(${OS_SPECIFIC_DIR}/windows.cmake)
 elseif()
   message(FATAL_ERROR "Unsupported system: ${CMAKE_SYSTEM_NAME}")
 endif()
