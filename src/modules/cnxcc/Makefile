@@ -45,6 +45,6 @@ else
 endif
 
 DEFS+=$(HIREDISDEFS) $(LEVENTDEFS)
-LIBS=$(HIREDISLIBS) $(LEVENTLIBS)
+${eval LIBS=$(HIREDISLIBS) $(LEVENTLIBS)}
 
 include ../../Makefile.modules

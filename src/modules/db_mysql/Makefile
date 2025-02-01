@@ -44,6 +44,7 @@ MOD_INSTALL_SHARE= ../../scripts/mysql/my_create.sql \
 else ifeq ($(INSTALL_FLAVOUR),kamailio)
 #TODO
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules
 

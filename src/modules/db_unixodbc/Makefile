@@ -23,5 +23,6 @@ else
 	# (Debian does the right thing and puts it in /usr/lib)
 	LIBS= -L$(LOCALBASE)/lib -lodbc
 endif
+${eval LIBS=$(LIBS)}
 
 include ../../Makefile.modules
