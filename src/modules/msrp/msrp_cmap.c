@@ -156,6 +156,7 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	char sbuf[MSRP_SBUF_SIZE];
 	str srcaddr;
 	str srcsock;
+	str xhdrs;
 	int msize;
 	int expires;
 	msrp_citem_t *it;
@@ -172,16 +173,18 @@ int msrp_cmap_save(msrp_frame_t *mf)
 		expires = msrp_auth_max_expires;
 	if(expires < msrp_auth_min_expires) {
 		LM_DBG("expires is lower than min value\n");
-		srcaddr.len = snprintf(sbuf, MSRP_SBUF_SIZE, "Min-Expires: %d\r\n",
+		xhdrs.len = snprintf(sbuf, MSRP_SBUF_SIZE, "Min-Expires: %d\r\n",
 				msrp_auth_min_expires);
-		msrp_reply(mf, &msrp_reply_423_code, &msrp_reply_423_text, &srcaddr);
+		xhdrs.s = sbuf;
+		msrp_reply(mf, &msrp_reply_423_code, &msrp_reply_423_text, &xhdrs);
 		return -3;
 	}
 	if(expires > msrp_auth_max_expires) {
 		LM_DBG("expires is greater than max value\n");
-		srcaddr.len = snprintf(sbuf, MSRP_SBUF_SIZE, "Max-Expires: %d\r\n",
+		xhdrs.len = snprintf(sbuf, MSRP_SBUF_SIZE, "Max-Expires: %d\r\n",
 				msrp_auth_max_expires);
-		msrp_reply(mf, &msrp_reply_423_code, &msrp_reply_423_text, &srcaddr);
+		msrp_reply(mf, &msrp_reply_423_code, &msrp_reply_423_text, &xhdrs);
+		xhdrs.s = sbuf;
 		return -4;
 	}
 	if(msrp_frame_get_first_from_path(mf, &fpeer) < 0) {
