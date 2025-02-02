@@ -437,13 +437,13 @@ int load_dialog_info_from_db(
 
 			dlg->tl.timeout = (unsigned int)(VAL_INT(values + 9));
 			LM_DBG("db dialog timeout is %u (%u/%u)\n", dlg->tl.timeout,
-					get_ticks(), (unsigned int)time(0));
-			if(dlg->tl.timeout <= (unsigned int)time(0)) {
+					get_ticks(), ksr_time_uint(NULL, NULL));
+			if(dlg->tl.timeout <= ksr_time_uint(NULL, NULL)) {
 				dlg->tl.timeout = 0;
 				dlg->lifetime = 0;
 			} else {
 				dlg->lifetime = dlg->tl.timeout - dlg->start_ts;
-				dlg->tl.timeout -= (unsigned int)time(0);
+				dlg->tl.timeout -= ksr_time_uint(NULL, NULL);
 			}
 
 			GET_STR_VALUE(cseq1, values, 10, 1, 1);
@@ -492,7 +492,7 @@ int load_dialog_info_from_db(
 
 			if(dlg->state == DLG_STATE_DELETED) {
 				/* end_ts used for force clean up not stored - set it to now */
-				dlg->end_ts = (unsigned int)time(0);
+				dlg->end_ts = ksr_time_uint(NULL, NULL);
 			}
 			/*restore the timer values */
 			if(0 != insert_dlg_timer(&(dlg->tl), (int)dlg->tl.timeout)) {
@@ -898,7 +898,7 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell *cell)
 		VAL_INT(values + 1) = cell->h_id;
 		VAL_INT(values + 9) = cell->start_ts;
 		VAL_INT(values + 10) = cell->state;
-		VAL_INT(values + 11) = (unsigned int)((unsigned int)time(0)
+		VAL_INT(values + 11) = (unsigned int)(ksr_time_uint(NULL, NULL)
 											  + cell->tl.timeout - get_ticks());
 
 		SET_STR_VALUE(values + 2, cell->callid);
@@ -980,7 +980,7 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell *cell)
 		VAL_INT(values) = cell->h_entry;
 		VAL_INT(values + 1) = cell->h_id;
 		VAL_INT(values + 10) = cell->state;
-		VAL_INT(values + 11) = (unsigned int)((unsigned int)time(0)
+		VAL_INT(values + 11) = (unsigned int)(ksr_time_uint(NULL, NULL)
 											  + cell->tl.timeout - get_ticks());
 
 		SET_STR_VALUE(values + 12, cell->cseq[DLG_CALLER_LEG]);

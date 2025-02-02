@@ -225,7 +225,7 @@ int dlg_clean_run(ticks_t ti)
 	dlg_cell_t *dlg;
 	dlg_cell_t *tdlg;
 
-	tm = (unsigned int)time(NULL);
+	tm = ksr_time_uint(NULL, NULL);
 	for(i = 0; i < d_table->size; i++) {
 		dlg_lock(d_table, &d_table->entries[i]);
 		dlg = d_table->entries[i].first;
@@ -474,7 +474,7 @@ struct dlg_cell *build_new_dlg(
 
 	memset(dlg, 0, len);
 	dlg->state = DLG_STATE_UNCONFIRMED;
-	dlg->init_ts = (unsigned int)time(NULL);
+	dlg->init_ts = ksr_time_uint(NULL, NULL);
 
 	dlg->h_entry = core_hash(callid, 0, d_table->size);
 	LM_DBG("new dialog on hash %u\n", dlg->h_entry);

@@ -349,7 +349,7 @@ int dlg_dmq_handle_msg(
 					dlg->dflags |= DLG_FLAG_NEW;
 					/* keep dialog around for a bit, to prevent out-of-order
 					 * syncs to reestablish the dlg */
-					dlg->init_ts = time(NULL);
+					dlg->init_ts = ksr_time_uint(NULL, NULL);
 					break;
 				default:
 					LM_ERR("unhandled state update to state %u\n", state);

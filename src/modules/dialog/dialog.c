@@ -3323,8 +3323,8 @@ static void rpc_dlg_set_state(rpc_t *rpc, void *c)
 	/* updates for terminated dialogs */
 	if(ostate == DLG_STATE_CONFIRMED && sval == DLG_STATE_DELETED) {
 		/* updating timestamps, flags, dialog stats */
-		dlg->init_ts = (unsigned int)(time(0));
-		dlg->end_ts = (unsigned int)(time(0));
+		dlg->init_ts = ksr_time_uint(NULL, NULL);
+		dlg->end_ts = ksr_time_uint(NULL, NULL);
 	}
 	dlg->dflags |= DLG_FLAG_CHANGED;
 
