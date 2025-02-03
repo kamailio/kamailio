@@ -496,13 +496,17 @@ void *fm_malloc(void *qmp, size_t size)
 		 * The free hash bitmap is used to jump directly to non-empty
 		 * hash buckets.
 		 */
-		do {
-			for(f = qm->free_hash[hash].first; f; f = f->next_free)
-				if(f->size >= size)
-					goto found;
-			hash++; /* try in next hash cell */
-		} while((hash < F_HASH_SIZE)
-				&& ((hash = fm_bmp_first_set(qm, hash)) >= 0));
+		if(likely(hash < F_HASH_SIZE)) {
+			do {
+				for(f = qm->free_hash[hash].first; f; f = f->next_free) {
+					if(f->size >= size) {
+						goto found;
+					}
+				}
+				hash++; /* try in next hash cell */
+			} while((hash < F_HASH_SIZE)
+					&& ((hash = fm_bmp_first_set(qm, hash)) >= 0));
+		}
 	}
 #else  /* F_MALLOC_HASH_BITMAP */
 	for(hash = GET_HASH(size); hash < F_HASH_SIZE; hash++) {
