@@ -277,8 +277,8 @@ static int tps_htable_load_initial_method_branch(tps_data_t *md, tps_data_t *sd)
 				TPS_BASE64_SIZE - 1);
 		base64url_enc(md->a_callid.s, md->a_callid.len, _tps_base64_buf[1],
 				TPS_BASE64_SIZE - 1);
-		base64url_enc(md->b_tag.s, md->b_tag.len, _tps_base64_buf[2],
-				TPS_BASE64_SIZE - 1);
+		base64url_enc(
+				xtag.s, xtag.len, _tps_base64_buf[2], TPS_BASE64_SIZE - 1);
 		base64url_enc(
 				xuuid.s, xuuid.len, _tps_base64_buf[3], TPS_BASE64_SIZE - 1);
 
