@@ -46,6 +46,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ifaddrs.h>
+#include <stdatomic.h>
 
 #include "../../core/flags.h"
 #include "../../core/sr_module.h"
@@ -292,7 +293,7 @@ static int control_cmd_tos = -1;
 static int rtpengine_allow_op = 0;
 static struct rtpp_node **queried_nodes_ptr = NULL;
 static pid_t mypid;
-static unsigned int myseqn = 0;
+static atomic_uint myseqn = 0;
 static str extra_id_pv_param = {NULL, 0};
 static char *setid_avp_param = NULL;
 static int hash_table_tout = 3600;
