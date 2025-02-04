@@ -183,8 +183,8 @@ int msrp_cmap_save(msrp_frame_t *mf)
 		LM_DBG("expires is greater than max value\n");
 		xhdrs.len = snprintf(sbuf, MSRP_SBUF_SIZE, "Max-Expires: %d\r\n",
 				msrp_auth_max_expires);
-		msrp_reply(mf, &msrp_reply_423_code, &msrp_reply_423_text, &xhdrs);
 		xhdrs.s = sbuf;
+		msrp_reply(mf, &msrp_reply_423_code, &msrp_reply_423_text, &xhdrs);
 		return -4;
 	}
 	if(msrp_frame_get_first_from_path(mf, &fpeer) < 0) {
