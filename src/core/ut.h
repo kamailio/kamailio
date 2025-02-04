@@ -1155,6 +1155,12 @@ static inline int strno2int(str *val, unsigned int *mask)
 	}
 }
 
+/**
+ * split time value in two (upper and lower 4-bytes) unsigned int values
+ * - time value representation on 8 bytes: UUUULLLL
+ * - lower 4 bytes are returned (LLLL)
+ * - upper 4 bytes can be stored in second paramter (UUUU)
+ */
 static inline unsigned int ksr_time_uint(time_t *tv, unsigned int *tu)
 {
 	unsigned int tl; /* lower 4 bytes */
@@ -1171,6 +1177,33 @@ static inline unsigned int ksr_time_uint(time_t *tv, unsigned int *tu)
 	if(tu != NULL) {
 		/* upper 4 bytes */
 		*tu = (unsigned int)((v64 >> 32) & 0xFFFFFFFFULL);
+	}
+
+	return tl;
+}
+
+/**
+ * split time value in two (upper and lower 4-bytes) signed int values
+ * - time value representation on 8 bytes: UUUULLLL
+ * - lower 4 bytes are returned (LLLL)
+ * - upper 4 bytes can be stored in second paramter (UUUU)
+ */
+static inline int ksr_time_sint(time_t *tv, int *tu)
+{
+	int tl; /* lower 4 bytes */
+	long long v64;
+	time_t t;
+
+	if(tv != NULL) {
+		t = *tv;
+	} else {
+		t = time(NULL);
+	}
+	v64 = (long long)t;
+	tl = (int)(v64 & 0xFFFFFFFFLL);
+	if(tu != NULL) {
+		/* upper 4 bytes */
+		*tu = (int)((v64 >> 32) & 0xFFFFFFFFLL);
 	}
 
 	return tl;
