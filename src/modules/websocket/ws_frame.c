@@ -37,6 +37,7 @@
 #include "../../core/events.h"
 #include "../../core/receive.h"
 #include "../../core/str.h"
+#include "../../core/ut.h"
 #include "../../core/tcp_conn.h"
 #include "../../core/tcp_read.h"
 #include "../../core/tcp_server.h"
@@ -796,8 +797,8 @@ static int ws_send_crlf(ws_connection_t *wsc, int opcode)
 
 void ws_keepalive(unsigned int ticks, void *param)
 {
-	int check_time =
-			(int)time(NULL) - cfg_get(websocket, ws_cfg, keepalive_timeout);
+	int check_time = ksr_time_sint(NULL, NULL)
+					 - cfg_get(websocket, ws_cfg, keepalive_timeout);
 
 	ws_connection_id_t *list_head = NULL;
 	ws_connection_t *wsc = NULL;

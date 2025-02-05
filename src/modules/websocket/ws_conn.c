@@ -28,6 +28,7 @@
 
 #include "../../core/locking.h"
 #include "../../core/str.h"
+#include "../../core/ut.h"
 #include "../../core/tcp_conn.h"
 #include "../../core/fmsg.h"
 #include "../../core/counters.h"
@@ -219,7 +220,7 @@ int wsconn_add(struct receive_info *rcv, unsigned int sub_protocol)
 	wsconn_listadd(wsconn_id_hash[wsc->id_hash], wsc, id_next, id_prev);
 
 	/* Add to the end of the WebSocket used list */
-	wsc->last_used = (int)time(NULL);
+	wsc->last_used = ksr_time_sint(NULL, NULL);
 	if(wsconn_used_list->head == NULL)
 		wsconn_used_list->head = wsconn_used_list->tail = wsc;
 	else {
@@ -358,7 +359,7 @@ int wsconn_update(ws_connection_t *wsc)
 	}
 
 	WSCONN_LOCK;
-	wsc->last_used = (int)time(NULL);
+	wsc->last_used = ksr_time_sint(NULL, NULL);
 	if(wsconn_used_list->tail == wsc)
 		/* Already at the end of the list */
 		goto end;
@@ -742,7 +743,7 @@ static int ws_rpc_add_node(
 
 		pong = wsc->awaiting_pong ? "awaiting Pong, " : "";
 
-		interval = (int)time(NULL) - wsc->last_used;
+		interval = ksr_time_sint(NULL, NULL) - wsc->last_used;
 		if(wsc->sub_protocol == SUB_PROTOCOL_SIP)
 			sub_protocol = "sip";
 		else if(wsc->sub_protocol == SUB_PROTOCOL_MSRP)
