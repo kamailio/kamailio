@@ -147,9 +147,15 @@ int isc_mark_get_from_lumps(struct sip_msg *msg, isc_mark *mark)
 
 	memset(mark, 0, sizeof(isc_mark));
 
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
+		LM_ERR("failed to parse headers\n");
+		return 0;
+	}
 
-	anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
+	if(anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0) == NULL) {
+		LM_ERR("failed to create the anchor lump\n");
+		return 0;
+	}
 
 	lmp = msg->add_rm;
 	while(lmp) {
