@@ -282,6 +282,7 @@ error:
 int ms_extract_time(str *time_str, int *time_val)
 {
 	struct tm stm;
+	time_t ttime;
 	int i;
 
 	if(time_str == NULL || time_str->s == NULL || time_str->len <= 0
@@ -394,7 +395,8 @@ int ms_extract_time(str *time_str, int *time_val)
 				return -1;
 		}
 	}
-	*time_val = (int)mktime(&stm);
+	ttime = mktime(&stm);
+	*time_val = ksr_time_sint(&ttime, NULL);
 
 	return 0;
 }
