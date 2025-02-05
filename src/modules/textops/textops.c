@@ -4947,11 +4947,7 @@ static int ki_via_param_rm(sip_msg_t *msg, str *name, int idx)
 								LM_ERR("no memory for delete operation\n");
 								return -1;
 							}
-							if(ret < 0) {
-								ret = 1;
-							} else {
-								ret++;
-							}
+							ret++;
 						}
 					}
 					if(ret > 0) {
@@ -4962,7 +4958,7 @@ static int ki_via_param_rm(sip_msg_t *msg, str *name, int idx)
 			}
 		}
 	}
-	return ret;
+	return (ret == 0) ? -1 : ret;
 }
 
 /**
