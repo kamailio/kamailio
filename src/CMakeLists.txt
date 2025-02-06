@@ -73,6 +73,12 @@ else()
     ${CMAKE_CURRENT_BINARY_DIR}/core/cfg.tab.h PROPERTIES GENERATED TRUE
   )
 endif()
+
+if(BUILD_DOC)
+  set(docs_in_all_target ALL)
+else()
+  set(docs_in_all_target "")
+endif()
 # -----------------------
 
 # -----------------------
@@ -159,8 +165,9 @@ add_custom_command(
 )
 
 add_custom_target(
-  man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
-              ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
+  man
+  ${docs_in_all_target}
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8 ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
 )
 add_dependencies(man kamctl_man)
 add_dependencies(man kamcmd_man)
