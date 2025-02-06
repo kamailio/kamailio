@@ -149,8 +149,14 @@ message(STATUS "Modules to be built: ${ADDED_MODULES_LIST}")
 # TODO: Comment is not showing. probably a bug in CMAKE
 # https://gitlab.kitware.com/cmake/cmake/-/issues/26571
 add_custom_target(modules COMMENT "Building modules")
-add_dependencies(modules ${ADDED_MODULES_LIST})
-
+if(NOT ADDED_MODULES_LIST)
+  message(
+    WARNING
+      "No modules to build. Did you forget to add a module group or include module?"
+  )
+else()
+  add_dependencies(modules ${ADDED_MODULES_LIST})
+endif()
 get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
 # message(STATUS "ALL_MODULE_DOC_TARGETS: ${ALL_MODULE_DOC_TARGETS}")
 
