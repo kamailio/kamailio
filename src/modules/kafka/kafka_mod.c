@@ -141,11 +141,9 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	/* skip child init for non-worker process ranks */
-	/* if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN) */
-	/* We execute kfk_init in PROC_MAIN so it cleans messages, etc right
-	   when destroying the module. */
-	if(rank == PROC_INIT || rank == PROC_TCP_MAIN)
+	/* call kfk_init() only for timer processes and routing processes */
+	/* Note that only these processes will be able to send kafka messages */
+	if(rank != PROC_TIMER && rank <= PROC_MAIN)
 		return 0;
 
 	child_init_ok = 1;
@@ -158,6 +156,7 @@ static int child_init(int rank)
 			return -1;
 		}
 	}
+
 	return 0;
 }
 
