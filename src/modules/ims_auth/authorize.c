@@ -708,10 +708,12 @@ int ims_resync_auth(struct sip_msg *msg, str *proute_name, str *prealm)
 				int resync_result = 0;
 				if(_ims_auth_data.flags & IMS_AUTH_FLAG_OPC_SET) {
 					resync_result = auth_vector_resync_local(aud->sqn, av,
-							auts_bin, _ims_auth_data.k, _ims_auth_data.op_c, 1);
+							auts_bin, _ims_auth_data.k, _ims_auth_data.op_c, 1,
+							_ims_auth_data.amf);
 				} else {
 					resync_result = auth_vector_resync_local(aud->sqn, av,
-							auts_bin, _ims_auth_data.k, _ims_auth_data.op, 0);
+							auts_bin, _ims_auth_data.k, _ims_auth_data.op, 0,
+							_ims_auth_data.amf);
 				}
 
 				if(resync_result != 0) {
