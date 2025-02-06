@@ -80,12 +80,12 @@ auth_vector *auth_vector_make_local(uint8_t k[16], uint8_t op[16], int opIsOPc,
 
 
 int auth_vector_resync_local(uint8_t sqnMSout[6], auth_vector *av,
-		uint8_t auts[14], uint8_t k[16], uint8_t op[16], int opIsOPc)
+		uint8_t auts[14], uint8_t k[16], uint8_t op[16], int opIsOPc,
+		uint8_t amf[2])
 {
 	uint8_t rand[16];
 	uint8_t op_c[16];
 	uint8_t ak[6];
-	uint8_t amf[2];
 	uint8_t sqnMS[6];
 	uint8_t mac_s[8];
 	uint8_t xmac_s[8];
