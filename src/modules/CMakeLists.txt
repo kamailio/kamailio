@@ -163,6 +163,7 @@ get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
 # Add a kamailio_docs target that depends on all module documentation targets
 add_custom_target(
   kamailio_docs
+  ${docs_in_all_target}
   DEPENDS ${ALL_MODULE_DOC_TARGETS}
   COMMENT "Generating Kamailio documentation"
 )
