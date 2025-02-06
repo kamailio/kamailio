@@ -1439,7 +1439,7 @@ static int get_flags(int family)
 	struct ifinfomsg *ifi;
 	char buf[NETLINK_BUFFER_SIZE];
 	char *p = buf;
-	int nll = 0;
+	unsigned int nll = 0;
 	int nl_sock = -1;
 
 	fill_nl_req(req, RTM_GETLINK, family);
@@ -1453,7 +1453,7 @@ static int get_flags(int family)
 	}
 
 	while(1) {
-		if((sizeof(buf) - nll) == 0) {
+		if(sizeof(buf) <= nll) {
 			LM_ERR("netlink buffer overflow in get_flags");
 			goto error;
 		}
