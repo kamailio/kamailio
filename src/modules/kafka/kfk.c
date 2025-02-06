@@ -109,7 +109,7 @@ gen_lock_t *stats_lock = NULL;	/**< Lock to protect shared statistics data. */
  *
  * First node (mandatory) is the general one with NULL topic.
  * Next nodes are topic dependant ones and are optional.
- * This way because general node is created in kfk_stats_init in mod_init is
+ * This way because general node is created in kfk_stats_init in child_init is
  * shared among every Kamailio process.
  */
 static kfk_stats_t *stats_general;
@@ -262,50 +262,53 @@ int kfk_init(char *brokers)
 		return -1;
 	}
 
-	/*
+	if(!rk) {
+		/*
 	 * Create Kafka client configuration place-holder
 	 */
-	rk_conf = rd_kafka_conf_new();
+		rk_conf = rd_kafka_conf_new();
 
-	/* Add brokers */
-	LM_DBG("Adding brokers: %s\n", brokers);
-	if(rd_kafka_conf_set(
-			   rk_conf, "bootstrap.servers", brokers, errstr, sizeof(errstr))
-			!= RD_KAFKA_CONF_OK) {
-		LM_ERR("No valid brokers specified: %s\n", brokers);
-		return -1;
-	}
-	LM_DBG("Added brokers: %s\n", brokers);
+		/* Add brokers */
+		LM_DBG("Adding brokers: %s\n", brokers);
+		if(rd_kafka_conf_set(rk_conf, "bootstrap.servers", brokers, errstr,
+				   sizeof(errstr))
+				!= RD_KAFKA_CONF_OK) {
+			LM_ERR("No valid brokers specified: %s\n", brokers);
+			return -1;
+		}
+		LM_DBG("Added brokers: %s\n", brokers);
 
-	/* Set logger */
-	rd_kafka_conf_set_log_cb(rk_conf, kfk_logger);
+		/* Set logger */
+		rd_kafka_conf_set_log_cb(rk_conf, kfk_logger);
 
-	/* Set message delivery callback. */
-	rd_kafka_conf_set_dr_msg_cb(rk_conf, kfk_msg_delivered);
+		/* Set message delivery callback. */
+		rd_kafka_conf_set_dr_msg_cb(rk_conf, kfk_msg_delivered);
 
-	/* Set interceptors init function. */
-	rd_kafka_conf_interceptor_add_on_new(rk_conf, "ic_on_new", ic_on_new, NULL);
+		/* Set interceptors init function. */
+		rd_kafka_conf_interceptor_add_on_new(
+				rk_conf, "ic_on_new", ic_on_new, NULL);
 
-	/* Configure properties: */
-	if(kfk_conf_configure()) {
-		LM_ERR("Failed to configure general properties\n");
-		return -1;
-	}
+		/* Configure properties: */
+		if(kfk_conf_configure()) {
+			LM_ERR("Failed to configure general properties\n");
+			return -1;
+		}
 
-	/*
+		/*
 	 * Create producer instance.
 	 *
 	 * NOTE: rd_kafka_new() takes ownership of the conf object
 	 *       and the application must not reference it again after
 	 *       this call.
 	 */
-	rk = rd_kafka_new(RD_KAFKA_PRODUCER, rk_conf, errstr, sizeof(errstr));
-	if(!rk) {
-		LM_ERR("Failed to create new producer: %s\n", errstr);
-		return -1;
+		rk = rd_kafka_new(RD_KAFKA_PRODUCER, rk_conf, errstr, sizeof(errstr));
+		if(!rk) {
+			LM_ERR("Failed to create new producer: %s\n", errstr);
+			return -1;
+		}
+		rk_conf = NULL; /* Now owned by producer. */
+		LM_DBG("Producer handle created\n");
 	}
-	rk_conf = NULL; /* Now owned by producer. */
-	LM_DBG("Producer handle created\n");
 
 	/* Topic creation and configuration. */
 	if(kfk_topic_list_configure()) {
@@ -325,24 +328,13 @@ void kfk_close()
 
 	LM_DBG("Closing Kafka\n");
 
-	/* Destroy the producer instance */
+	/* Flushing messages. */
 	if(rk) {
-		/* Flushing messages. */
 		LM_DBG("Flushing messages\n");
 		err = rd_kafka_flush(rk, 0);
 		if(err) {
 			LM_ERR("Failed to flush messages: %s\n", rd_kafka_err2str(err));
 		}
-
-		/* Destroy producer. */
-		LM_DBG("Destroying instance of Kafka producer\n");
-		rd_kafka_destroy(rk);
-	}
-
-	/* Destroy configuration if not freed by rd_kafka_destroy. */
-	if(rk_conf) {
-		LM_DBG("Destroying instance of Kafka configuration\n");
-		rd_kafka_conf_destroy(rk_conf);
 	}
 
 	/* Free list of configuration properties. */
@@ -355,6 +347,12 @@ void kfk_close()
 		kfk_topic_t *next = kfk_topic->next;
 		kfk_topic_free(kfk_topic);
 		kfk_topic = next;
+	}
+
+	/* Destroy the producer instance. */
+	if(rk) {
+		LM_DBG("Destroying instance of Kafka producer\n");
+		rd_kafka_destroy(rk);
 	}
 }
 
@@ -432,7 +430,7 @@ int kfk_conf_parse(char *spec)
 		/* Place node at beginning of knode list. */
 		knode->next = kconf->property;
 		kconf->property = knode;
-	} /* for pit */
+	}
 
 	kfk_conf = kconf;
 	return 0;
@@ -595,7 +593,7 @@ int kfk_topic_parse(char *spec)
 			knode->next = ktopic->property;
 			ktopic->property = knode;
 		} /* if pit->name.len == 4 */
-	}	  /* for pit */
+	}
 
 	/* Topic name is mandatory. */
 	if(ktopic->topic_name == NULL) {
@@ -878,8 +876,13 @@ clean:
 int kfk_message_send(str *topic_name, str *message, str *key)
 {
 	/* Poll to handle delivery reports */
-	rd_kafka_poll(rk, 0);
-	LM_DBG("Message polled\n");
+	if(rk) {
+		rd_kafka_poll(rk, 0);
+		LM_DBG("Message polled\n");
+	} else {
+		LM_ERR("kafka module is unusable: no kafka object! Skip sending "
+			   "message, message lost!");
+	}
 
 	/* Get topic from name. */
 	rd_kafka_resp_err_t err = RD_KAFKA_RESP_ERR__STATE;
