@@ -341,6 +341,7 @@ static int ki_check_dst(struct sip_msg *msg, str *val)
 			}
 		} else {
 			/* Any match */
+			dst.len = val->len;
 			if(dst.len > list->s.len)
 				dst.len = list->s.len;
 			if(cmpi_str(&list->s, &dst) == 0) {
