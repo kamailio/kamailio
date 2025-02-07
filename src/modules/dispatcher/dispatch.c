@@ -57,6 +57,7 @@
 #include "../../core/script_cb.h"
 #include "../../core/kemi.h"
 #include "../../core/fmsg.h"
+#include "../../core/rand/ksrxrand.h"
 
 #include "ds_ht.h"
 #include "api.h"
@@ -790,7 +791,7 @@ void shuffle_uint100array(unsigned int *arr)
 	if(arr == NULL)
 		return;
 	for(j = 0; j < 100; j++) {
-		k = j + (kam_rand() % (100 - j));
+		k = j + (ksr_xrand() % (100 - j));
 		t = arr[j];
 		arr[j] = arr[k];
 		arr[k] = t;
@@ -807,7 +808,7 @@ void shuffle_char100array(char *arr)
 	if(arr == NULL)
 		return;
 	for(j = 0; j < 100; j++) {
-		k = j + (kam_rand() % (100 - j));
+		k = j + (ksr_xrand() % (100 - j));
 		t = arr[j];
 		arr[j] = arr[k];
 		arr[k] = t;
@@ -2614,7 +2615,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 			}
 			break;
 		case DS_ALG_RANDOM: /* 6 - random selection */
-			hash = kam_rand();
+			hash = ksr_xrand();
 			break;
 		case DS_ALG_HASHPV: /* 7 - hash on PV value */
 			if(ds_hash_pvar(msg, &hash) != 0) {

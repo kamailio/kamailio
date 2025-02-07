@@ -35,7 +35,6 @@
 #include "../../core/pvar.h"
 #include "../../core/xavp.h"
 #include "../../core/parser/msg_parser.h"
-#include "../../core/rand/kam_rand.h"
 #include "../../modules/tm/tm_load.h"
 
 
