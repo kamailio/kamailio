@@ -262,6 +262,8 @@ BuildRequires: gcc-c++
 BuildRequires: pkgconfig
 BuildRequires: readline-devel
 BuildRequires: libxslt
+BuildRequires: lynx
+BuildRequires: docbook-style-xsl
 
 %if 0%{?suse_version} == 1315 || 0%{?suse_version} == 1330
 Requires:  filesystem
