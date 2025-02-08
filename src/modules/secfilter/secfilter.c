@@ -332,7 +332,7 @@ static int ki_check_dst(struct sip_msg *msg, str *val)
 		if(secf_dst_exact_match == 1) {
 			/* Exact match */
 			if(list->s.len == dst.len) {
-				if(cmp_hdrname_strzn(&list->s, dst.s, dst.len > list->s.len ? list->s.len : dst.len) == 0) {
+				if(cmpi_str(&list->s, &dst) == 0) {
 					lock_get(secf_lock);
 					secf_stats[BL_DST]++;
 					lock_release(secf_lock);
@@ -341,7 +341,7 @@ static int ki_check_dst(struct sip_msg *msg, str *val)
 			}
 		} else {
 			/* Any match */
-			if(cmpi_str(&list->s, &dst) == 0) {
+			if(cmp_hdrname_strzn(&list->s, dst.s, dst.len > list->s.len ? list->s.len : dst.len) == 0) {
 				lock_get(secf_lock);
 				secf_stats[BL_DST]++;
 				lock_release(secf_lock);
