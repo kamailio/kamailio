@@ -43,5 +43,6 @@ extern ksr_xrand_t _ksr_xrand_api;
 #define ksr_xsrand(s) _ksr_xrand_api.xsrand(s)
 
 int ksr_xrand_set(char *name);
+int ksr_xrand_use(ksr_xrand_t *xrand);
 
 #endif

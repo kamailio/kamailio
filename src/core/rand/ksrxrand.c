@@ -77,3 +77,12 @@ int ksr_xrand_set(char *name)
 	LM_WARN("unknown rand engine: %s\n", name);
 	return -1;
 }
+
+/**
+ *
+ */
+int ksr_xrand_use(ksr_xrand_t *xrand)
+{
+	memcpy(&_ksr_xrand_api, xrand, sizeof(ksr_xrand_t));
+	return 0;
+}
