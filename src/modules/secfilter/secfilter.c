@@ -341,8 +341,6 @@ static int ki_check_dst(struct sip_msg *msg, str *val)
 			}
 		} else {
 			/* Any match */
-			if(dst.len > list->s.len)
-				dst.len = list->s.len;
 			if(cmpi_str(&list->s, &dst) == 0) {
 				lock_get(secf_lock);
 				secf_stats[BL_DST]++;
