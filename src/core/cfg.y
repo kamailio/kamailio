@@ -72,6 +72,7 @@
 #include "pvapi.h"
 #include "config.h"
 #include "daemonize.h"
+#include "coreparam.h"
 #include "cfg_core.h"
 #include "cfg/cfg.h"
 #ifdef CORE_TLS
@@ -414,6 +415,7 @@ extern char *default_routename;
 %token SIP_PARSER_LOG
 %token SIP_PARSER_MODE
 %token CORELOG
+%token COREPARAM
 %token SIP_WARNING
 %token SERVER_SIGNATURE
 %token SERVER_HEADER
@@ -2137,6 +2139,32 @@ assign_stm:
 		IF_RAW_SOCKS(default_core_cfg.udp4_raw_ttl=$3);
 	}
 	| UDP4_RAW_TTL EQUAL error { yyerror("number expected"); }
+	| COREPARAM LBRACK ID RBRACK EQUAL NUMBER {
+		if(ksr_coreparam_set_nval($3, $6) < 0) {
+			yyerror("failed to set core parameter");
+		}
+	}
+	| COREPARAM LBRACK ID RBRACK EQUAL STRING {
+		if(ksr_coreparam_set_sval($3, $6) < 0) {
+			yyerror("failed to set core parameter");
+		}
+	}
+	| COREPARAM LBRACK ID RBRACK EQUAL error {
+		yyerror("string or number value expected");
+	}
+	| COREPARAM LBRACK STRING RBRACK EQUAL NUMBER {
+		if(ksr_coreparam_set_nval($3, $6) < 0) {
+			yyerror("failed to set core parameter");
+		}
+	}
+	| COREPARAM LBRACK STRING RBRACK EQUAL STRING {
+		if(ksr_coreparam_set_sval($3, $6) < 0) {
+			yyerror("failed to set core parameter");
+		}
+	}
+	| COREPARAM LBRACK STRING RBRACK EQUAL error {
+		yyerror("string or number value expected");
+	}
 	| cfg_var
 	| error EQUAL { yyerror("unknown config variable"); }
 	;
