@@ -86,3 +86,11 @@ int ksr_xrand_use(ksr_xrand_t *xrand)
 	memcpy(&_ksr_xrand_api, xrand, sizeof(ksr_xrand_t));
 	return 0;
 }
+
+/**
+ *
+ */
+int ksr_xrand_cp(str *pname, ksr_cpval_t *pval, void *eparam)
+{
+	return ksr_xrand_set(pval->v.sval);
+}

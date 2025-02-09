@@ -22,6 +22,8 @@
 #include <limits.h>
 #include <stdlib.h>
 
+#include "../coreparam.h"
+
 #if RAND_MAX < INT_MAX
 #define KSR_XRAND_MAX ((int)(0x7FFFFFFF)) /* (1<<31) - 1 */
 #else
@@ -44,5 +46,7 @@ extern ksr_xrand_t _ksr_xrand_api;
 
 int ksr_xrand_set(char *name);
 int ksr_xrand_use(ksr_xrand_t *xrand);
+
+int ksr_xrand_cp(str *pname, ksr_cpval_t *pval, void *eparam);
 
 #endif

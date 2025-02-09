@@ -16,13 +16,34 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "dprint.h"
+#include "rand/ksrxrand.h"
+#include "coreparam.h"
+
+/* clang-format off */
+static ksr_cpexport_t _ksr_cpexports[] = {
+	{ str_init("random_engine"), KSR_CPTYPE_STR,
+		ksr_xrand_cp, NULL },
+
+	{ {0, 0}, 0, NULL, NULL }
+};
+/* clang-format on */
 
 /**
  *
  */
 int ksr_coreparam_set_nval(char *name, long nval)
 {
-	return 0;
+	ksr_cpval_t xval = {0};
+
+	xval.vtype = KSR_CPTYPE_NUM;
+	xval.v.nval = nval;
+
+	return ksr_coreparam_set_xval(name, &xval);
 }
 
 /**
@@ -30,5 +51,32 @@ int ksr_coreparam_set_nval(char *name, long nval)
  */
 int ksr_coreparam_set_sval(char *name, char *sval)
 {
-	return 0;
+	ksr_cpval_t xval = {0};
+
+	xval.vtype = KSR_CPTYPE_STR;
+	xval.v.sval = sval;
+
+	return ksr_coreparam_set_xval(name, &xval);
+}
+
+/**
+ *
+ */
+int ksr_coreparam_set_xval(char *name, ksr_cpval_t *xval)
+{
+	int i;
+	str sname;
+
+	sname.s = name;
+	sname.len = strlen(sname.s);
+
+	for(i = 0; _ksr_cpexports[i].name.s != NULL; i++) {
+		if((_ksr_cpexports[i].name.len == sname.len)
+				&& (strncmp(_ksr_cpexports[i].name.s, sname.s, sname.len)
+						== 0)) {
+			return _ksr_cpexports[i].setf(&sname, xval, _ksr_cpexports[i].ep);
+		}
+	}
+	LM_ERR("core parameter [%.*s] not found\n", sname.len, sname.s);
+	return -1;
 }
