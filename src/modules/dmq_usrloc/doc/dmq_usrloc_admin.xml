@@ -292,6 +292,44 @@ modparam("dmq_usrloc", "replicate_socket_info", 1)
 </programlisting>
 	</example>
 	</section>
+	<section id="usrloc_dmq.p.replicate_cflags">
+		<title><varname>replicate_cflags</varname> (int)</title>
+		<para>
+			The parameter controls whether the cflags replication is active or not.
+			This is important for anycast scenarios.
+			The value can be:
+			<itemizedlist>
+			<listitem>
+			<para>
+				0 - disabled
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				1 - enabled, replicate cflags
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				> 1 - enabled, set cflags corresponding to this value, on replicated peers
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>replicate_cflags</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "replicate_cflags", 97) # will set cflags corresponding to 1 + 32 + 64
+...
+		</programlisting>
+		</example>
+	</section>
 	<section id="usrloc_dmq.p.usrloc_delete">
 		<title><varname>usrloc_delete</varname> (int)</title>
 		<para>
