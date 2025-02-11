@@ -98,7 +98,7 @@ ims_information_t *new_ims_information(event_type_t *event_type,
 
 	if(calling_party && calling_party->s) {
 		mem_new(sl, sizeof(str_list_slot_t), pkg);
-		str_dup(sl->data, *calling_party, pkg);
+		ims_str_dup(sl->data, *calling_party, pkg);
 		WL_APPEND(&(x->calling_party_address), sl);
 	}
 
@@ -180,18 +180,18 @@ Ro_CCR_t *new_Ro_CCR(int32_t acc_record_type, str *user_name,
 	mem_new(x, sizeof(Ro_CCR_t), pkg);
 
 	if(cfg.origin_host.s && cfg.origin_host.len > 0)
-		str_dup(x->origin_host, cfg.origin_host, pkg);
+		ims_str_dup(x->origin_host, cfg.origin_host, pkg);
 
 	if(cfg.origin_realm.s && cfg.origin_realm.len > 0)
-		str_dup(x->origin_realm, cfg.origin_realm, pkg);
+		ims_str_dup(x->origin_realm, cfg.origin_realm, pkg);
 
 	if(destination_host && destination_host->len > 0)
-		str_dup(x->destination_host, *destination_host, pkg);
+		ims_str_dup(x->destination_host, *destination_host, pkg);
 	else if(cfg.destination_host.s && cfg.destination_host.len > 0)
-		str_dup(x->destination_host, cfg.destination_host, pkg);
+		ims_str_dup(x->destination_host, cfg.destination_host, pkg);
 
 	if(cfg.destination_realm.s && cfg.destination_realm.len > 0)
-		str_dup(x->destination_realm, cfg.destination_realm, pkg);
+		ims_str_dup(x->destination_realm, cfg.destination_realm, pkg);
 
 	x->acct_record_type = acc_record_type;
 
@@ -296,10 +296,10 @@ void Ro_free_CCR(Ro_CCR_t *x)
 	if(!x)
 		return;
 
-	str_free(x->origin_host, pkg);
-	str_free(x->origin_realm, pkg);
-	str_free(x->destination_host, pkg);
-	str_free(x->destination_realm, pkg);
+	ims_str_free(x->origin_host, pkg);
+	ims_str_free(x->origin_realm, pkg);
+	ims_str_free(x->destination_host, pkg);
+	ims_str_free(x->destination_realm, pkg);
 
 	str_free_ptr(x->user_name, pkg);
 	mem_free(x->acct_interim_interval, pkg);
@@ -333,6 +333,6 @@ void Ro_free_CCA(Ro_CCA_t *x)
 	}
 	mem_free(x->mscc->granted_service_unit, pkg);
 	mem_free(x->mscc, pkg);
-	str_free(x->origin_host, pkg);
+	ims_str_free(x->origin_host, pkg);
 	mem_free(x, pkg);
 }
