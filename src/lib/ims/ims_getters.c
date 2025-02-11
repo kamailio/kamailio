@@ -1303,20 +1303,21 @@ int cscf_get_p_charging_vector(
 	if(!header->body.s || !header->body.len)
 		return 0;
 
-	str_dup(header_body, header->body, pkg);
+	ims_str_dup(header_body, header->body, pkg);
 
 	LM_DBG("p_charging_vector body is %.*s\n", header_body.len, header_body.s);
 
 	p = strtok(header_body.s, " ;:\r\t\n\"=");
 loop:
-	if(p == NULL || p > (header_body.s + header_body.len))
+	if(p == NULL || p > (header_body.s + header_body.len)) {
 		return 1;
+	}
 
 	if(strncmp(p, "icid-value", 10) == 0) {
 		p = strtok(NULL, " ;:\r\t\n\"=");
 		if(p == NULL || p > (header_body.s + header_body.len)) {
 			LM_ERR("cscf_get_p_charging_vector: no value for icid\n");
-			return 0;
+			goto error;
 		}
 		temp.s = p;
 		temp.len = 0;
@@ -1332,11 +1333,10 @@ loop:
 		p = strtok(NULL, " ;:\r\t\n\"=");
 		goto loop;
 	} else if(strncmp(p, "orig-ioi", 8) == 0) {
-
 		p = strtok(NULL, " ;:\r\t\n\"=");
 		if(p == NULL || p > (header_body.s + header_body.len)) {
 			LM_ERR("cscf_get_p_charging_vector: no value for icid\n");
-			return 0;
+			goto error;
 		}
 		temp.s = p;
 		temp.len = 0;
@@ -1352,11 +1352,10 @@ loop:
 		p = strtok(NULL, " ;:\r\t\n\"=");
 		goto loop;
 	} else if(strncmp(p, "term-ioi", 8) == 0) {
-
 		p = strtok(NULL, " ;:\r\t\n\"=");
 		if(p == NULL || p > (header_body.s + header_body.len)) {
 			LM_ERR("cscf_get_p_charging_vector: no value for icid\n");
-			return 0;
+			goto error;
 		}
 		temp.s = p;
 		temp.len = 0;
@@ -1374,10 +1373,12 @@ loop:
 	}
 
 	LM_DBG("end\n");
-	str_free(header_body, pkg);
+	ims_str_free(header_body, pkg);
 	return 1;
 out_of_memory:
 	PKG_MEM_ERROR;
+error:
+	ims_str_free(header_body, pkg);
 	return 0;
 }
 

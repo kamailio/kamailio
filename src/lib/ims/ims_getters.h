@@ -80,7 +80,7 @@ enum cscf_dialog_direction
  * @param src - source src
  * @param mem - type of mem to duplicate into (shm/pkg)
  */
-#define str_dup(dst, src, mem)                                                 \
+#define ims_str_dup(dst, src, mem)                                             \
 	do {                                                                       \
 		if((src).len) {                                                        \
 			(dst).s = mem##_malloc((src).len);                                 \
@@ -102,7 +102,7 @@ enum cscf_dialog_direction
  * @param x - the str to free
  * @param mem - type of memory that the content is using (shm/pkg)
  */
-#define str_free(x, mem)       \
+#define ims_str_free(x, mem)   \
 	do {                       \
 		if((x).s)              \
 			mem##_free((x).s); \
