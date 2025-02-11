@@ -2478,7 +2478,7 @@ void uac_request_cb(struct cell *t, int type, struct tmcb_params *ps)
 	}
 done:
 	if(watcher_contact) {
-		str_free(*watcher_contact, shm);
+		ims_str_free(*watcher_contact, shm);
 		shm_free(watcher_contact);
 		*(ps->param) = 0;
 	}
@@ -2618,10 +2618,10 @@ void send_notification(reg_notification *n)
 	watcher_contact = 0;
 done:
 out_of_memory:
-	str_free(h, pkg);
-	str_free(content, pkg);
+	ims_str_free(h, pkg);
+	ims_str_free(content, pkg);
 	if(watcher_contact) {
-		str_free(*watcher_contact, shm);
+		ims_str_free(*watcher_contact, shm);
 		shm_free(watcher_contact);
 	}
 	free_tm_dlg(td);
