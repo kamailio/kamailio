@@ -369,7 +369,7 @@ static int type_to_dbtype(int type)
 	}
 }
 
-static str *str_dup(const char *_s)
+static str *sqlt_str_dup(const char *_s)
 {
 	str *s;
 	int len = strlen(_s);
@@ -432,7 +432,8 @@ int db_sqlite_store_result(const db1_con_t *_h, db1_res_t **_r)
 				const char *decltype;
 				int dbtype;
 
-				RES_NAMES(res)[i] = str_dup(sqlite3_column_name(conn->stmt, i));
+				RES_NAMES(res)
+				[i] = sqlt_str_dup(sqlite3_column_name(conn->stmt, i));
 				if(RES_NAMES(res)[i] == NULL)
 					goto no_mem;
 				decltype = sqlite3_column_decltype(conn->stmt, i);
