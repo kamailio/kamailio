@@ -442,19 +442,19 @@ static int w_ts_append_by_contact2(
 
 	if(ts_check_uri(&ruri) < 0) {
 		LM_ERR("failed to parse R-URI.\n");
-		return -1;
+		goto error;
 	}
 
 	/* parse Contact header */
 	if((!_msg->contact && parse_headers(_msg, HDR_CONTACT_F, 0) != 0)
 			|| !_msg->contact) {
 		LM_WARN("missing contact header or the value is empty/malformed.\n");
-		return -1;
+		goto error;
 	}
 	if(_msg->contact) {
 		if(parse_contact(_msg->contact) < 0) {
 			LM_WARN("failed to parse Contact header.\n");
-			return -1;
+			goto error;
 		}
 		if(parse_uri(((struct contact_body *)_msg->contact->parsed)
 							 ->contacts->uri.s,
@@ -464,7 +464,7 @@ static int w_ts_append_by_contact2(
 				!= 0) {
 			if(ts_check_uri(&_msg->contact->body) < 0) { /* one more attempt */
 				LM_WARN("failed to parse Contact header.\n");
-				return -1;
+				goto error;
 			}
 		}
 
@@ -473,7 +473,7 @@ static int w_ts_append_by_contact2(
 		tmp_contact.s = (char *)pkg_malloc(tmp_contact.len + 1);
 		if(tmp_contact.s == NULL) {
 			PKG_MEM_ERROR;
-			return -1;
+			goto error;
 		}
 		memcpy(tmp_contact.s,
 				((struct contact_body *)_msg->contact->parsed)->contacts->uri.s,
@@ -485,7 +485,7 @@ static int w_ts_append_by_contact2(
 					< 0) { /* one more attempt */
 				LM_ERR("problems when calling ts_append_contact(), cannot copy "
 					   "Contact parameter.\n");
-				return -1;
+				goto error;
 			}
 		}
 	}
@@ -499,6 +499,18 @@ static int w_ts_append_by_contact2(
 	pkg_free(tmp_contact.s);
 
 	return rc;
+
+error:
+	if(ruri.s != NULL) {
+		pkg_free(ruri.s);
+	}
+	if(contact.s != NULL) {
+		pkg_free(contact.s);
+	}
+	if(tmp_contact.s != NULL) {
+		pkg_free(tmp_contact.s);
+	}
+	return -1;
 }
 
 /**
@@ -521,11 +533,11 @@ static int ki_ts_append_by_contact(sip_msg_t *_msg, str *_table, str *_ruri)
 	/* parse Contact header */
 	if((!_msg->contact && parse_headers(_msg, HDR_CONTACT_F, 0) != 0)
 			|| !_msg->contact)
-		return -1;
+		goto error;
 
 	if(_msg->contact) {
 		if(parse_contact(_msg->contact) < 0)
-			return -1;
+			goto error;
 		if(parse_uri(((struct contact_body *)_msg->contact->parsed)
 							 ->contacts->uri.s,
 				   ((struct contact_body *)_msg->contact->parsed)
@@ -533,7 +545,7 @@ static int ki_ts_append_by_contact(sip_msg_t *_msg, str *_table, str *_ruri)
 				   &curi)
 				!= 0) {
 			if(ts_check_uri(&_msg->contact->body) < 0) /* one more attempt */
-				return -1;
+				goto error;
 		}
 
 		tmp_contact.len = ((struct contact_body *)_msg->contact->parsed)
@@ -541,7 +553,7 @@ static int ki_ts_append_by_contact(sip_msg_t *_msg, str *_table, str *_ruri)
 		tmp_contact.s = (char *)pkg_malloc(tmp_contact.len + 1);
 		if(tmp_contact.s == NULL) {
 			PKG_MEM_ERROR;
-			return -1;
+			goto error;
 		}
 		memcpy(tmp_contact.s,
 				((struct contact_body *)_msg->contact->parsed)->contacts->uri.s,
@@ -551,7 +563,7 @@ static int ki_ts_append_by_contact(sip_msg_t *_msg, str *_table, str *_ruri)
 		if(pkg_str_dup(&contact, &tmp_contact) < 0) {
 			if(pkg_str_dup(&contact, &_msg->contact->body)
 					< 0) /* one more attempt */
-				return -1;
+				goto error;
 		}
 	}
 
@@ -563,6 +575,18 @@ static int ki_ts_append_by_contact(sip_msg_t *_msg, str *_table, str *_ruri)
 	pkg_free(tmp_contact.s);
 
 	return rc;
+
+error:
+	if(ruri.s != NULL) {
+		pkg_free(ruri.s);
+	}
+	if(contact.s != NULL) {
+		pkg_free(contact.s);
+	}
+	if(tmp_contact.s != NULL) {
+		pkg_free(tmp_contact.s);
+	}
+	return -1;
 }
 
 /**
