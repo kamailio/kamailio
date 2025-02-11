@@ -2038,7 +2038,7 @@ int rx_avp_process_3gpp_user_location_information(AAAMessage *rar, str *dst)
 	LOG(L_INFO, "P-Access-Network-Info from Diameter is [%.*s]\n", dst->len,
 			dst->s);
 	if(!dst->len) {
-		str_free(*dst, pkg);
+		ims_str_free(*dst, pkg);
 	}
 	return (dst->len > 1);
 }
