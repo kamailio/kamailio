@@ -35,6 +35,7 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <stdlib.h> /* for NULL definition on openbsd */
+#include <limits.h>
 #include <errno.h>
 #include <string.h>
 #ifdef NO_MSG_WAITALL
@@ -289,9 +290,14 @@ again:
 		/* blocking recv_all */
 		n = recv_all(
 				unix_socket, (char *)data + ret, data_len - ret, MSG_WAITALL);
-		if(n >= 0)
+		if(n >= 0) {
+			if(ret >= INT_MAX - n) {
+				LM_ERR("int size overflowing: %d + %d\n", ret, n);
+				ret = -1;
+				goto error;
+			}
 			ret += n;
-		else {
+		} else {
 			ret = n;
 			goto error;
 		}
