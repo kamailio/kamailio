@@ -60,6 +60,7 @@ static void srjson_to_xavp(srjson_t *json, sr_xavp_t **xavp);
 
 extern int _dmq_usrloc_sync;
 extern int _dmq_usrloc_replicate_socket_info;
+extern int _dmq_usrloc_replicate_cflags;
 extern int _dmq_usrloc_batch_msg_contacts;
 extern int _dmq_usrloc_batch_msg_size;
 extern int _dmq_usrloc_batch_size;
@@ -421,7 +422,12 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t *node)
 		} else if(strcmp(it->string, "flags") == 0) {
 			flags = SRJSON_GET_UINT(it);
 		} else if(strcmp(it->string, "cflags") == 0) {
-			cflags = SRJSON_GET_UINT(it);
+			if(_dmq_usrloc_replicate_cflags == 1) {
+				cflags = SRJSON_GET_UINT(it);
+			} else if(_dmq_usrloc_replicate_cflags > 1) {
+				cflags = _dmq_usrloc_replicate_cflags;
+			}
+			// else don't replicate cflags
 		} else if(strcmp(it->string, "q") == 0) {
 			q = SRJSON_GET_UINT(it);
 		} else if(strcmp(it->string, "last_modified") == 0) {
