@@ -546,7 +546,8 @@ inline static int pathmax(void)
 #endif
 	if(pathmax == 0) { /* init */
 		pathmax = pathconf("/", _PC_PATH_MAX);
-		pathmax = (pathmax <= 0) ? PATH_MAX_GUESS : pathmax + 1;
+		pathmax = (pathmax <= 0 || pathmax >= INT_MAX - 1) ? PATH_MAX_GUESS
+														   : pathmax + 1;
 	}
 	return pathmax;
 }
