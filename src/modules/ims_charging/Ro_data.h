@@ -145,17 +145,18 @@ typedef struct str_htlist
 	str_list_slot_t *head, *tail;
 } str_htlist_t;
 
-#define str_list_t_free(x, mem)       \
-	do {                              \
-		if(x) {                       \
-			str_free((x)->data, mem); \
-			mem##_free(x);            \
-			(x) = 0;                  \
-		}                             \
+#define str_list_t_free(x, mem)           \
+	do {                                  \
+		if(x) {                           \
+			ims_str_free((x)->data, mem); \
+			mem##_free(x);                \
+			(x) = 0;                      \
+		}                                 \
 	} while(0)
 
 
-#define str_list_t_copy(dst, src, mem) str_dup((dst)->data, (src)->data, mem)
+#define str_list_t_copy(dst, src, mem) \
+	ims_str_dup((dst)->data, (src)->data, mem)
 
 typedef struct
 {
@@ -198,7 +199,7 @@ typedef struct
 			for(y = (x)->info.application_provided_called_party_address.head; \
 					y; y = z) {                                               \
 				z = y->next;                                                  \
-				str_free(y->data, mem);                                       \
+				ims_str_free(y->data, mem);                                   \
 				mem_free(y, mem);                                             \
 			}                                                                 \
 			mem##_free(x);                                                    \
@@ -350,7 +351,7 @@ typedef struct
 #define subscription_id_list_t_free(x, mem) \
 	do {                                    \
 		if(x) {                             \
-			str_free((x)->s.id, mem);       \
+			ims_str_free((x)->s.id, mem);   \
 			mem##_free(x);                  \
 			(x) = 0;                        \
 		}                                   \
@@ -359,7 +360,7 @@ typedef struct
 #define subscription_id_list_t_copy(dst, src, mem) \
 	do {                                           \
 		(dst)->type = (src)->type;                 \
-		str_dup((dst)->id, (src)->id, mem);        \
+		ims_str_dup((dst)->id, (src)->id, mem);    \
 	} while(0)
 
 typedef struct

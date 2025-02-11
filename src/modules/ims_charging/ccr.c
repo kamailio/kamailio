@@ -484,7 +484,7 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca)
 				ro_cca_data->resultcode = x;
 				break;
 			case AVP_Origin_Host:
-				str_dup(ro_cca_data->origin_host, avp->data, pkg);
+				ims_str_dup(ro_cca_data->origin_host, avp->data, pkg);
 				break;
 		}
 		avp = avp->next;

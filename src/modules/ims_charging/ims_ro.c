@@ -1745,7 +1745,7 @@ static void resume_on_initial_ccr(
 	if(sr_kemi_eng_get()) {
 		str cb_param = str_init("ccr:continue");
 		tmb.t_continue_cb(ssd->tindex, ssd->tlabel, ssd->action, &cb_param);
-		str_free(*((str *)ssd->action), shm);
+		ims_str_free(*((str *)ssd->action), shm);
 		shm_free(ssd->action);
 	} else {
 		tmb.t_continue(ssd->tindex, ssd->tlabel, ssd->action);
