@@ -56,12 +56,13 @@ int reginfo_subscribe_real(struct sip_msg *msg, pv_elem_t *uri,
 	str extra_headers = {0};
 	reginfo_event_t *new_event;
 	str *subs_outbound_proxy = 0;
+	int i = 0;
 
 	int len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX) + pcscf_uri.len + 1
 			  + CRLF_LEN;
 	if(service_routes != NULL) {
 		len += strlen(ROUTE_HDR_PREFIX) + strlen(ROUTE_HDR_END);
-		for(int i = 0; i < num_service_routes; i++) {
+		for(i = 0; i < num_service_routes; i++) {
 			len += service_routes[i].len + strlen(ROUTE_HDR_SEPARATOR);
 		}
 	}
@@ -87,7 +88,7 @@ int reginfo_subscribe_real(struct sip_msg *msg, pv_elem_t *uri,
 		memcpy(extra_headers.s + extra_headers.len, ROUTE_HDR_PREFIX,
 				strlen(ROUTE_HDR_PREFIX));
 		extra_headers.len += strlen(ROUTE_HDR_PREFIX);
-		for(int i = 0; i < num_service_routes; i++) {
+		for(i = 0; i < num_service_routes; i++) {
 			memcpy(extra_headers.s + extra_headers.len, service_routes[i].s,
 					service_routes[i].len);
 			extra_headers.len += service_routes[i].len;
