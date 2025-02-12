@@ -114,7 +114,8 @@ int auth_vector_resync_local(uint8_t sqnMSout[6], auth_vector *av,
 	f5star(ak, k, op_c, rand);
 
 	// Unpack the AUTS = (SQN_MS ^ AK) || MAC-S
-	for(int i = 0; i < 6; i++)
+	int i = 0;
+	for(i = 0; i < 6; i++)
 		sqnMS[i] = auts[i] ^ ak[i];
 	memcpy(mac_s, auts + 6, 8);
 
@@ -135,7 +136,8 @@ int auth_vector_resync_local(uint8_t sqnMSout[6], auth_vector *av,
 
 void sqn_increment(uint8_t sqn[6])
 {
-	for(int i = 5; i >= 0; i--) {
+	int i = 0;
+	for(i = 5; i >= 0; i--) {
 		if(sqn[i] == 0xFF) {
 			sqn[i] = 0;
 		} else {
