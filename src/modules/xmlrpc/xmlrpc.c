@@ -2019,7 +2019,7 @@ static int rpc_struct_printf(
 		struct rpc_struct *s, char *member_name, char *fmt, ...)
 {
 	int n, buf_size;
-	char *buf;
+	char *buf = NULL;
 	va_list ap;
 	str st, name;
 	struct xmlrpc_reply *reply;
@@ -2071,6 +2071,7 @@ static int rpc_struct_printf(
 			if(add_xmlrpc_reply(out, &member_suffix) < 0)
 				goto err;
 
+			mxr_free(buf);
 			return 0;
 		}
 		/* Else try again with more space. */
@@ -2085,6 +2086,8 @@ static int rpc_struct_printf(
 			goto err;
 		}
 	}
+	if(buf)
+		mxr_free(buf);
 	return 0;
 err:
 	if(buf)
@@ -2740,7 +2743,7 @@ static int ki_xmlrpc_reply(sip_msg_t *msg, int rcode, str *reason)
 		if(add_xmlrpc_reply(&reply, &int_suffix) < 0)
 			goto error;
 		if(add_xmlrpc_reply(&reply, &success_suffix) < 0)
-			return -1;
+			goto error;
 	}
 	if(send_reply(msg, &reply.body) < 0)
 		goto error;
