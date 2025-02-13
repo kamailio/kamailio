@@ -1261,7 +1261,7 @@ err:
 static int rpc_struct_printf(struct text_chunk *c, char *name, char *fmt, ...)
 {
 	int n, buf_size;
-	char *buf;
+	char *buf = NULL;
 	char *buf0;
 	va_list ap;
 	str s, nm;
@@ -1314,6 +1314,7 @@ static int rpc_struct_printf(struct text_chunk *c, char *name, char *fmt, ...)
 			c->next = m;
 			if(c == ctx->last)
 				ctx->last = m;
+			ctl_free(buf);
 			return 0;
 		}
 		/* Else try again with more space. */
@@ -1329,6 +1330,7 @@ static int rpc_struct_printf(struct text_chunk *c, char *name, char *fmt, ...)
 		}
 		buf = buf0;
 	}
+	ctl_free(buf);
 	return 0;
 err:
 	if(buf)
