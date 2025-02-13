@@ -177,10 +177,8 @@ int th_mask_via(sip_msg_t *msg, str *via_prefix)
 			vlen = th_skip_rw(via->name.s, via->bsize);
 			LM_DBG("body: %d: [%.*s]\n", vlen, vlen, via->name.s);
 			if(i != 1) {
-				out.s = th_mask_encode(
-				        via->name.s, vlen, via_prefix, &out.len);
-				if(out.s == NULL)
-				{
+				out.s = th_mask_encode(via->name.s, vlen, via_prefix, &out.len);
+				if(out.s == NULL) {
 					LM_ERR("cannot encode via %d\n", i);
 					return -1;
 				}
@@ -372,11 +370,11 @@ int th_unmask_via(sip_msg_t *msg, str *ip, str *cookie)
 			LM_DBG("body: %d: [%.*s]\n", vlen, vlen, via->name.s);
 			if(i != 1) {
 				/* Skip if via is not encoded */
-				if (th_uri_prefix_checks 
-				        && (via->host.len != ip->len
-	   					        || strncasecmp(via->host.s, ip->s, ip->len)
-								           != 0)) {
-					LM_DBG("via %d is not encoded - skip\n",i);
+				if(th_uri_prefix_checks
+						&& (via->host.len != ip->len
+								|| strncasecmp(via->host.s, ip->s, ip->len)
+										   != 0)) {
+					LM_DBG("via %d is not encoded - skip\n", i);
 					continue;
 				}
 
@@ -404,7 +402,7 @@ int th_unmask_via(sip_msg_t *msg, str *ip, str *cookie)
 					out.s = th_mask_decode(vp->value.s, vp->value.len,
 							&th_vparam_prefix, 0, &out.len);
 				}
-				if(out.s == NULL || out.len <= 0) {
+				if(out.s == NULL) {
 					LM_ERR("cannot decode via %d\n", i);
 					return -1;
 				}
@@ -599,7 +597,7 @@ int th_flip_record_route(sip_msg_t *msg, str *uri_prefix, str *ip, int mode)
 				case 1: /* encode */
 					if(act != 0 && mode == 1) {
 						out.s = th_mask_encode(rr->nameaddr.uri.s,
-							rr->nameaddr.uri.len, uri_prefix, &out.len);
+								rr->nameaddr.uri.len, uri_prefix, &out.len);
 						if(out.s == NULL) {
 							LM_ERR("cannot encode r-r %d\n", i);
 							return -1;
@@ -665,10 +663,10 @@ int th_unmask_route(sip_msg_t *msg, str *uri_prefix)
 			i++;
 			if(i != 1) {
 				/* Skip if route is not encoded */
-				if (th_uri_prefix_checks
-						&& ((rr->nameaddr.uri.len<uri_prefix->len) 
-						        || (strncasecmp(rr->nameaddr.uri.s,
-								            uri_prefix->s, uri_prefix->len)
+				if(th_uri_prefix_checks
+						&& ((rr->nameaddr.uri.len < uri_prefix->len)
+								|| (strncasecmp(rr->nameaddr.uri.s,
+											uri_prefix->s, uri_prefix->len)
 										!= 0))) {
 					LM_DBG("rr %d is not encoded: [%.*s] - missing prefix\n", i,
 							rr->nameaddr.uri.len, rr->nameaddr.uri.s);
@@ -721,12 +719,12 @@ int th_unmask_ruri(sip_msg_t *msg, str *uri_prefix)
 	str out;
 
 	/* Do nothing if ruri is not encoded */
-	if (th_uri_prefix_checks
-			&& ((REQ_LINE(msg).uri.len<uri_prefix->len)
+	if(th_uri_prefix_checks
+			&& ((REQ_LINE(msg).uri.len < uri_prefix->len)
 					|| (strncasecmp(REQ_LINE(msg).uri.s, uri_prefix->s,
 								uri_prefix->len)
 							!= 0))) {
-		LM_DBG("ruri [%.*s] is not encoded",REQ_LINE(msg).uri.len,
+		LM_DBG("ruri [%.*s] is not encoded", REQ_LINE(msg).uri.len,
 				REQ_LINE(msg).uri.s);
 		return 0;
 	}
@@ -784,11 +782,11 @@ int th_unmask_refer_to(sip_msg_t *msg, str *uri_prefix)
 	uri = &(get_refer_to(msg)->uri);
 
 	/* Do nothing if refer_to is not encoded */
-	if (th_uri_prefix_checks
-			&& ((uri->len<uri_prefix->len)
+	if(th_uri_prefix_checks
+			&& ((uri->len < uri_prefix->len)
 					|| (strncasecmp(uri->s, uri_prefix->s, uri_prefix->len)
 							!= 0))) {
-		LM_DBG("refer-to [%.*s] is not encoded",uri->len,uri->s);
+		LM_DBG("refer-to [%.*s] is not encoded", uri->len, uri->s);
 		return 0;
 	}
 
