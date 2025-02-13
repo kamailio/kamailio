@@ -1751,7 +1751,8 @@ char *build_uac_cancel(str *headers, str *body, struct cell *cancelledT,
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
 	str branch_str;
 	struct hostport hp;
-	str content_length, via;
+	str content_length;
+	str via = STR_NULL;
 
 	LM_DBG("sing FROM=<%.*s>, TO=<%.*s>, CSEQ_N=<%.*s>\n",
 			cancelledT->from_hdr.len, cancelledT->from_hdr.s,
@@ -1790,7 +1791,7 @@ char *build_uac_cancel(str *headers, str *body, struct cell *cancelledT,
 	/* Content Length  */
 	if(print_content_length(&content_length, body) < 0) {
 		LM_ERR("failed to print content-length\n");
-		return 0;
+		goto error01;
 	}
 	/* Content-Length */
 	*len += (body ? (CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN) : 0);
