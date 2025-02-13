@@ -3817,6 +3817,9 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 	return 0;
 
 error:
+	if(buf_uri.s != 0) {
+		pkg_free(buf_uri.s);
+	}
 	if(buf.s != NULL) {
 		pkg_free(buf.s);
 	}
