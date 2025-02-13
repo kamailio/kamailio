@@ -1888,6 +1888,7 @@ int xl_mod_init()
 							if(str_ipaddr.s) {
 								memcpy(str_ipaddr.s, s, str_ipaddr.len);
 								str_ipaddr.s[str_ipaddr.len] = '\0';
+								break;
 							} else {
 								pkg_free(s);
 								s = NULL;
