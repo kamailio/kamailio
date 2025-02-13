@@ -778,7 +778,7 @@ static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait)
 		dctx = rpc->delayed_ctx_new(c);
 		if(dctx == 0) {
 			rpc->fault(c, 500, "internal error: failed to create context");
-			return;
+			goto error01;
 		}
 		uac_req.cb = rpc_uac_callback;
 		uac_req.cbp = dctx;
