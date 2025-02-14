@@ -582,21 +582,29 @@ int curl_parse_conn(void *param, cfg_parser_t *parser, unsigned int flags)
 				t.start.line, t.start.col);
 		return -1;
 	}
-	pkg_str_dup(&name, &t.val);
-	ret = cfg_get_token(&t, parser, 0);
-	if(ret < 0)
+	if(pkg_str_dup(&name, &t.val) < 0) {
 		return -1;
+	}
+	ret = cfg_get_token(&t, parser, 0);
+	if(ret < 0) {
+		pkg_free(name.s);
+		return -1;
+	}
 	if((ret > 0) || (t.type != ']')) {
 		LM_ERR("%s:%d:%d: Syntax error, ']' expected\n", parser->file,
 				t.start.line, t.start.col);
+		pkg_free(name.s);
 		return -1;
 	}
 
-	if(cfg_eat_eol(parser, flags))
+	if(cfg_eat_eol(parser, flags)) {
+		pkg_free(name.s);
 		return -1;
+	}
 
 	raw_cc = pkg_malloc(sizeof(raw_http_client_conn_t));
 	if(raw_cc == NULL) {
+		pkg_free(name.s);
 		return -1;
 	}
 	memset(raw_cc, 0, sizeof(raw_http_client_conn_t));
