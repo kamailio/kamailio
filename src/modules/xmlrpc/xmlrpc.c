@@ -2091,9 +2091,7 @@ static int rpc_struct_printf(
 			goto err;
 		}
 	}
-	if(buf)
-		mxr_free(buf);
-	return 0;
+
 err:
 	if(buf)
 		mxr_free(buf);
