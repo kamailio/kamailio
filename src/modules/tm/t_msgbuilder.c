@@ -751,6 +751,26 @@ static inline int get_contact_uri(struct sip_msg *msg, str *uri)
 }
 
 /**
+ * reverse rte list
+ */
+static inline rte_t *tm_reverse_rte_list(rte_t *head)
+{
+	rte_t *prev = NULL;
+	rte_t *current = NULL;
+	rte_t *next = NULL;
+
+	current = head;
+	while(current != NULL) {
+		next = current->next;
+		current->next = prev;
+		prev = current;
+		current = next;
+	}
+
+	return prev;
+}
+
+/**
  * Extract route set from the message (out of Record-Route, if reply, OR
  * Route, if request).
  * The route set is returned into the "UAC-format" (keep order for Rs, reverse
@@ -760,7 +780,7 @@ static inline int get_uac_rs(sip_msg_t *msg, int is_req, struct rte **rtset)
 {
 	struct hdr_field *ptr;
 	rr_t *p, *new_p;
-	struct rte *t, *head, *old_head;
+	struct rte *t, *head;
 
 	head = 0;
 	for(ptr = is_req ? msg->route : msg->record_route; ptr; ptr = ptr->next) {
@@ -810,14 +830,7 @@ static inline int get_uac_rs(sip_msg_t *msg, int is_req, struct rte **rtset)
 	if(is_req) {
 		/* harvesting the R/RR HF above inserts at head, which suites RRs (as
 		 * they must be reversed, anyway), but not Rs => reverse once more */
-		old_head = head;
-		head = 0;
-		while(old_head) {
-			t = old_head;
-			old_head = old_head->next;
-			t->next = head;
-			head = t;
-		}
+		head = tm_reverse_rte_list(head);
 	}
 
 	*rtset = head;
@@ -826,7 +839,6 @@ err:
 	free_rte_list(head);
 	return -1;
 }
-
 
 static inline unsigned short uri2port(const struct sip_uri *puri)
 {
@@ -1815,7 +1827,8 @@ char *build_uac_cancel(str *headers, str *body, struct cell *cancelledT,
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
 	str branch_str;
 	struct hostport hp;
-	str content_length, via;
+	str content_length;
+	str via = STR_NULL;
 
 	LM_DBG("sing FROM=<%.*s>, TO=<%.*s>, CSEQ_N=<%.*s>\n",
 			cancelledT->from_hdr.len, cancelledT->from_hdr.s,
@@ -1854,7 +1867,7 @@ char *build_uac_cancel(str *headers, str *body, struct cell *cancelledT,
 	/* Content Length  */
 	if(print_content_length(&content_length, body) < 0) {
 		LM_ERR("failed to print content-length\n");
-		return 0;
+		goto error01;
 	}
 	/* Content-Length */
 	*len += (body ? (CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN) : 0);

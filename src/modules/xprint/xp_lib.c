@@ -56,7 +56,10 @@
 static str str_null = STR_STATIC_INIT("<null>");
 static str str_empty = STR_STATIC_INIT("");
 static str str_per = STR_STATIC_INIT("%");
-static str str_hostname, str_domainname, str_fullname, str_ipaddr;
+static str str_hostname = STR_NULL;
+static str str_domainname = STR_NULL;
+static str str_fullname = STR_NULL;
+static str str_ipaddr = STR_NULL;
 
 enum xl_host_t
 {
@@ -1835,14 +1838,7 @@ int xl_mod_init()
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	if(gethostname(s, HOSTNAME_MAX) < 0) {
-		str_fullname.len = 0;
-		str_fullname.s = NULL;
-		str_hostname.len = 0;
-		str_hostname.s = NULL;
-		str_domainname.len = 0;
-		str_domainname.s = NULL;
-	} else {
+	if(gethostname(s, HOSTNAME_MAX) >= 0) {
 		str_fullname.len = strlen(s);
 		s = pkg_reallocxf(
 				s, str_fullname.len + 1); /* this will leave the ending \0 */
@@ -1870,8 +1866,6 @@ int xl_mod_init()
 		}
 	}
 
-	str_ipaddr.len = 0;
-	str_ipaddr.s = NULL;
 	if(str_fullname.len) {
 		he = resolvehost(str_fullname.s);
 		if(he) {
@@ -1894,6 +1888,7 @@ int xl_mod_init()
 							if(str_ipaddr.s) {
 								memcpy(str_ipaddr.s, s, str_ipaddr.len);
 								str_ipaddr.s[str_ipaddr.len] = '\0';
+								break;
 							} else {
 								pkg_free(s);
 								s = NULL;

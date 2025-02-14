@@ -516,6 +516,10 @@ done:
 
 error:
 	if(xname != NULL) {
+		if(xname->next != NULL) {
+			pkg_free(xname->next);
+			xname->next = NULL;
+		}
 		pv_xavp_name_destroy(xname);
 		pkg_free(xname);
 	}
@@ -964,6 +968,10 @@ done:
 
 error:
 	if(xname != NULL) {
+		if(xname->next != NULL) {
+			pkg_free(xname->next);
+			xname->next = NULL;
+		}
 		pv_xavu_name_destroy(xname);
 		pkg_free(xname);
 	}
@@ -1111,6 +1119,10 @@ done:
 
 error:
 	if(xname != NULL) {
+		if(xname->next != NULL) {
+			pkg_free(xname->next);
+			xname->next = NULL;
+		}
 		pv_xavi_name_destroy(xname);
 		pkg_free(xname);
 	}
