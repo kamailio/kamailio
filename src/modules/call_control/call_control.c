@@ -290,6 +290,9 @@ int cc_parse_param(void *val, AVP_List **avps)
 		if(!(mp->next)) {
 			PKG_MEM_ERROR;
 			pkg_free(p0);
+			if(mp->pv) {
+				pkg_free(mp->pv);
+			}
 			pkg_free(mp);
 			return -1;
 		}
