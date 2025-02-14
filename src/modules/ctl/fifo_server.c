@@ -1288,7 +1288,7 @@ static int rpc_struct_printf(struct text_chunk *c, char *name, char *fmt, ...)
 					&nm, 1); /* Escape all characters, including : and , */
 			if(!m) {
 				rpc_fault(ctx, 500, "Internal Server Error");
-				goto err;
+				goto error;
 			}
 
 			s.s = buf;
@@ -1298,7 +1298,7 @@ static int rpc_struct_printf(struct text_chunk *c, char *name, char *fmt, ...)
 				rpc_fault(ctx, 500, "Internal Server Error");
 				free_chunk(m);
 				ERR("Error while creating text_chunk structure");
-				goto err;
+				goto error;
 			}
 
 			l->flags |= CHUNK_MEMBER_VALUE;
@@ -1324,13 +1324,12 @@ static int rpc_struct_printf(struct text_chunk *c, char *name, char *fmt, ...)
 		if((buf0 = ctl_realloc(buf, buf_size)) == 0) {
 			rpc_fault(ctx, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
-			goto err;
+			goto error;
 		}
 		buf = buf0;
 	}
-	ctl_free(buf);
-	return 0;
-err:
+
+error:
 	if(buf)
 		ctl_free(buf);
 	return -1;
