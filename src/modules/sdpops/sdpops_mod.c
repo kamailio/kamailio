@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
@@ -2212,7 +2213,10 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			}
 			if(sdp->sessions->streams->port.s != NULL
 					&& sdp->sessions->streams->port.len > 0) {
-				str2int(&sdp->sessions->streams->port, &uport);
+				if(str2int(&sdp->sessions->streams->port, &uport) < 0
+						|| uport >= USHRT_MAX) {
+					return pv_get_null(msg, param, res);
+				}
 				uport++;
 				s.s = int2strbuf(uport, uport_buf, INT2STR_MAX_LEN, &s.len);
 				return pv_get_strval(msg, param, res, &s);
