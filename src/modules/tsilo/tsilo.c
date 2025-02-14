@@ -642,27 +642,33 @@ static int w_ts_append_by_contact3(
 
 	if(ts_check_uri(&ruri) < 0) {
 		LM_ERR("failed to parse R-URI.\n");
+		pkg_free(ruri.s);
 		return -1;
 	}
 
 	/* parse Contact header */
 	if(fixup_get_svalue(_msg, (gparam_t *)_contact, &contact_fixed) != 0) {
 		LM_ERR("failed to convert contact parameter\n");
+		pkg_free(ruri.s);
 		return -1;
 	}
 
 	if(contact_fixed.s == NULL || contact_fixed.len <= 0) {
 		LM_ERR("invalid contact parameter value\n");
+		pkg_free(ruri.s);
 		return -1;
 	}
 
 	if(pkg_str_dup(&contact, &contact_fixed) < 0) {
 		LM_ERR("failed to copy r-uri parameter\n");
+		pkg_free(ruri.s);
 		return -1;
 	}
 
 	if(ts_check_uri(&contact) < 0) {
 		LM_ERR("failed to parse Contact parameter.\n");
+		pkg_free(ruri.s);
+		pkg_free(contact.s);
 		return -1;
 	}
 
@@ -687,16 +693,22 @@ static int ki_ts_append_by_contact_uri(
 	int rc;
 
 	/* parse R-URI */
-	if(ts_check_uri(_ruri) < 0)
+	if(ts_check_uri(_ruri) < 0) {
 		return -1;
-	if(pkg_str_dup(&ruri, _ruri) < 0)
+	}
+	if(pkg_str_dup(&ruri, _ruri) < 0) {
 		return -1;
+	}
 
 	/* parse Contact header */
-	if(ts_check_uri(_contact) < 0)
+	if(ts_check_uri(_contact) < 0) {
+		pkg_free(ruri.s);
 		return -1;
-	if(pkg_str_dup(&contact, _contact) < 0)
+	}
+	if(pkg_str_dup(&contact, _contact) < 0) {
+		pkg_free(ruri.s);
 		return -1;
+	}
 
 	/* contact must be of syntax: sip:<user>@<host>:<port> with no parameters list */
 	rc = ts_append(_msg, &ruri, &contact, _table->s);
