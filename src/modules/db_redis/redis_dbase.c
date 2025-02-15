@@ -616,7 +616,10 @@ static int db_redis_build_type_keys(km_redis_con_t *con, const str *table_name,
 			if(set_keys) {
 				// add key for parent set
 				// <version>:<table>::index::<type>
-				pkg_free(keyname.s);
+				if(keyname.s) {
+					pkg_free(keyname.s);
+					keyname.s = NULL;
+				}
 				keyname.len = table->version_code.len + table_name->len + 9
 							  + type->type.len;
 				keyname.s = pkg_malloc(keyname.len + 1);
@@ -630,12 +633,16 @@ static int db_redis_build_type_keys(km_redis_con_t *con, const str *table_name,
 						type->type.s);
 				if(db_redis_key_add_str(set_keys, &keyname) != 0) {
 					LM_ERR("Failed to add query key to set key list\n");
+					pkg_free(keyname.s);
+					keyname.s = NULL;
 					goto err;
 				}
 			}
 		}
-		if(keyname.s)
+		if(keyname.s) {
 			pkg_free(keyname.s);
+			keyname.s = NULL;
+		}
 	}
 
 	return 0;
