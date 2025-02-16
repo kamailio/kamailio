@@ -787,7 +787,7 @@ int dlg_send_ka(dlg_cell_t *dlg, int dir)
 	if(di->loc_seq.value > 1)
 		di->loc_seq.value -= 2;
 	else
-		di->loc_seq.value -= 1;
+		di->loc_seq.value = 0;
 
 	LM_DBG("sending OPTIONS to %s\n",
 			(dir == DLG_CALLER_LEG) ? "caller" : "callee");
