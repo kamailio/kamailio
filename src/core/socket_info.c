@@ -1407,13 +1407,13 @@ static int get_flags(int family)
 	}
 
 	while(1) {
-		if(sizeof(buf) <= nll) {
-			LM_ERR("netlink buffer overflow in get_flags");
-			goto error;
-		}
 		rtn = recv(nl_sock, p, sizeof(buf) - nll, 0);
 		if(rtn <= 0) {
 			LM_ERR("failed to receive data (%d/%d)\n", rtn, errno);
+			goto error;
+		}
+		if(nll >= sizeof(buf) - rtn) {
+			LM_ERR("netlink buffer overflow [%u/%d]\n", nll, rtn);
 			goto error;
 		}
 		nlp = (struct nlmsghdr *)p;
@@ -1422,7 +1422,7 @@ static int get_flags(int family)
 			break;
 		}
 		if(nlp->nlmsg_type == NLMSG_ERROR) {
-			LM_DBG("Error on message to netlink");
+			LM_DBG("error on message to netlink");
 			break;
 		}
 		p += rtn;
