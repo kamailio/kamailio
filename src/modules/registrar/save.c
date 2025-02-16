@@ -955,8 +955,6 @@ int save(struct sip_msg *_m, udomain_t *_d, int _cflags, str *_uri)
 			return -1;
 		}
 	}
-	if(u == NULL)
-		goto error;
 
 	rerrno = R_FINE;
 	ret = 1;
