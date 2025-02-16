@@ -1999,17 +1999,14 @@ int drop_auth_vectors(str private_identity, str public_identity)
 {
 	auth_userdata *aud;
 	aud = get_auth_userdata(private_identity, public_identity);
-	if(!aud)
-		goto error;
+	if(!aud) {
+		LM_DBG("no authdata to drop any auth vectors\n");
+		return 0;
+	}
 
 	drop_auth_vectors_for_userdata(aud);
 	auth_data_unlock(aud->hash);
 	return 1;
-error:
-	LM_DBG("no authdata to drop any auth vectors\n");
-	if(aud)
-		auth_data_unlock(aud->hash);
-	return 0;
 }
 
 void drop_auth_vectors_for_userdata(auth_userdata *aud)
