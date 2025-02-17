@@ -50,6 +50,7 @@ extern str dmq_server_socket;
 extern sip_uri_t dmq_server_uri;
 extern str_list_t *dmq_notification_address_list;
 extern int dmq_multi_notify;
+extern int dmq_remove_inactive;
 /* sl and tm */
 extern struct tm_binds _dmq_tmb;
 extern sl_api_t _dmq_slb;

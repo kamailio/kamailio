@@ -68,6 +68,7 @@ str dmq_notification_channel = str_init("notification_peer");
 int dmq_multi_notify = 0;
 static sip_uri_t dmq_notification_uri = {0};
 int dmq_ping_interval = 60;
+int dmq_remove_inactive = 1;
 
 /* TM bind */
 struct tm_binds _dmq_tmb = {0};
@@ -125,6 +126,7 @@ static param_export_t params[] = {
 	{"notification_channel", PARAM_STR, &dmq_notification_channel},
 	{"multi_notify", PARAM_INT, &dmq_multi_notify},
 	{"worker_usleep", PARAM_INT, &dmq_worker_usleep},
+	{"remove_inactive", PARAM_INT, &dmq_remove_inactive},
 	{0, 0, 0}
 };
 

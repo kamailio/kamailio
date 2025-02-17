@@ -297,6 +297,26 @@ modparam("dmq", "ping_interval", 90)
 </programlisting>
                 </example>
         </section>
+	<section id="dmq.p.remove_inactive">
+		<title><varname>remove_inactive</varname>(int)</title>
+		<para>
+		A value of zero disable removing dmq nodes. Node status will be changed to pending.
+		A non-zero value (default is 1) enable removing nodes.
+		For node that is defined as notification address status will be changed to pending.
+		Otherwise it will be marked as disabled and then will be removed.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>remove_inactive</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "remove_inactive", 0)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
