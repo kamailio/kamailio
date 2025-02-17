@@ -628,6 +628,11 @@ int notification_resp_callback_f(
 			run_init_callbacks();
 		}
 	} else if(code == 408) {
+		if(!dmq_remove_inactive) {
+			/* put the node in pending state */
+			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_PENDING);
+			return 0;
+		}
 		/* TODO this probably do not work for dmq_multi_notify */
 		slp = dmq_notification_address_list;
 		while(slp != NULL) {
