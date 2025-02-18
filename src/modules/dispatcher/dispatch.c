@@ -4114,6 +4114,9 @@ void ds_ping_set(ds_set_t *node)
 		/* skip addresses with no-ping flag */
 		if((node->dlist[j].flags & DS_NOPING_DST) != 0)
 			continue;
+		/* skip addresses with no-DNS-A flag */
+		if((node->dlist[j].flags & DS_NODNSARES_DST) != 0)
+			continue;
 		/* If the Flag of the entry has "Probing set, send a probe:	*/
 		if(ds_ping_result_helper(node, j)) {
 			LM_DBG("probing set #%d, URI %.*s\n", node->id,
