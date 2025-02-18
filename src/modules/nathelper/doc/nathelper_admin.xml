@@ -428,6 +428,26 @@ modparam("nathelper", "udpping_from_path", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="nathelper.p.ignore_path">
+		<title><varname>ignore_path</varname> (int)</title>
+		<para>
+		Enable ignore of Path header address when sending UDP pings (keepalives).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (feature disabled).
+			UDP pings are sent to Path header if header is present.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ignore_path</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "ignore_path", 1)
+...
+		</programlisting>
+		</example>
+	</section>
 	<section id="nathelper.p.append_sdp_oldmediaip">
 		<title><varname>append_sdp_oldmediaip</varname> (int)</title>
 		<para>
