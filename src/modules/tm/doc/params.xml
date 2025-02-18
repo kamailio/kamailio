@@ -1740,5 +1740,26 @@ modparam("tm", "reply_408_reason", "Gone")
 		</example>
 	</section>
 
+	<section id="tm.p.rdelayed_reply">
+		<title><varname>delayed_reply</varname> (int)</title>
+		<para>
+			If set to 1, the reply generation in case of request
+			processing/forwarding error is delayed till the config script
+			execution ends. This allows the script writer to send its
+			own error reply. If set to 0, the transaction is replied and killed
+			immediately.
+		</para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		<example>
+			<title>delayed_reply example</title>
+			<programlisting>
+...
+modparam("tm", "delayed_reply", 0)
+....
+			</programlisting>
+		</example>
+	</section>
 
 </section>
