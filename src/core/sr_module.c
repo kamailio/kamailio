@@ -567,6 +567,7 @@ int ksr_load_module(char *mod_path, char *opts)
 	module_exports_t *exp;
 	struct sr_module *t;
 	int dlflags;
+	int ldopt;
 	int new_dlflags;
 	int retries;
 	char *path = NULL;
@@ -592,11 +593,14 @@ int ksr_load_module(char *mod_path, char *opts)
 
 	retries = 2;
 	dlflags = RTLD_NOW;
+	ldopt = 0;
 
 	if(opts != NULL) {
 		for(p = opts; *p != '\0'; p++) {
 			if(*p == 'G' || *p == 'g') {
 				dlflags |= RTLD_GLOBAL;
+			} else if(*p == 'O' || *p == 'o') {
+				ldopt = 1;
 			} else {
 				LM_INFO("unknown option: %c\n", *p);
 			}
@@ -612,6 +616,13 @@ reload:
 
 	for(t = modules; t; t = t->next) {
 		if(t->handle == handle) {
+			if(ldopt == 1) {
+				if(path && path != mod_path) {
+					pkg_free(path);
+				}
+				LM_DBG("skip loading optional module twice (%s)\n", path);
+				return 0;
+			}
 			LM_WARN("attempting to load the same module twice (%s)\n", path);
 			goto skip;
 		}
