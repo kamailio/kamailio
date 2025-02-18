@@ -43,7 +43,7 @@
 
 /* if defined t_relay* error reply generation will be delayed till script
  * end (this allows the script writer to send its own error reply) */
-#define TM_DELAYED_REPLY
+extern int _tm_delayed_reply;
 
 #ifdef USE_DNS_FAILOVER
 extern int **failover_reply_codes;
@@ -232,9 +232,7 @@ int t_relay_to(
 	unsigned short port;
 	str host;
 	short comp;
-#ifndef TM_DELAYED_REPLY
 	int reply_ret;
-#endif
 
 	ret = 0;
 
@@ -354,26 +352,25 @@ handle_ret:
 				ret = -4;
 				goto done;
 			}
-#ifdef TM_DELAYED_REPLY
-			/* current error in tm_error */
-			tm_error = ser_error;
-			set_kr(REQ_ERR_DELAYED);
-			LM_DBG("%d error reply generation delayed \n", ser_error);
-#else
-
-			reply_ret = kill_transaction(t, ser_error);
-			if(reply_ret > 0) {
-				/* we have taken care of all -- do nothing in
-			  	script */
-				LM_DBG("generation of a stateful reply "
-					   "on error succeeded\n");
-				/*ret=0; -- we don't want to stop the script */
+			if(_tm_delayed_reply != 0) {
+				/* current error in tm_error */
+				tm_error = ser_error;
+				set_kr(REQ_ERR_DELAYED);
+				LM_DBG("%d error reply generation delayed \n", ser_error);
 			} else {
-				LM_DBG("generation of a stateful reply "
-					   "on error failed\n");
-				t_release_transaction(t);
+				reply_ret = kill_transaction(t, ser_error);
+				if(reply_ret > 0) {
+					/* we have taken care of all -- do nothing in
+					   script */
+					LM_DBG("generation of a stateful reply "
+						   "on error succeeded\n");
+					/*ret=0; -- we don't want to stop the script */
+				} else {
+					LM_DBG("generation of a stateful reply "
+						   "on error failed\n");
+					t_release_transaction(t);
+				}
 			}
-#endif /* TM_DELAYED_REPLY */
 		} else {
 			t_release_transaction(t); /* kill it  silently */
 		}
