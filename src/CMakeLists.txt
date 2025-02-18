@@ -74,6 +74,30 @@ else()
   )
 endif()
 
+option(BUILD_DOC "Build documentation" ON)
+# Readme file and man page
+find_program(XSLTPROC_EXECUTABLE xsltproc QUIET)
+find_program(LYNX_EXECUTABLE lynx QUIET)
+find_program(DOCBOOK2X_EXECUTABLE docbook2x-man QUIET)
+
+if(BUILD_DOC AND (NOT XSLTPROC_EXECUTABLE OR NOT LYNX_EXECUTABLE))
+  message(
+    WARNING "BUILD_DOC set to ON but xsltproc or lynx not found and are required for doc generation.
+      Disabling documentation and man page generation.
+      You can safely ignore this warning."
+  )
+  set(BUILD_DOC OFF)
+endif()
+
+if(BUILD_DOC AND (NOT DOCBOOK2X_EXECUTABLE))
+  message(
+    WARNING "BUILD_DOC set to ON but docbook2x-man not found and is required for man generation.
+                 Disabling documentation and man page generation.
+                 You can safely ignore this warning"
+  )
+  set(BUILD_DOC OFF)
+endif()
+
 if(BUILD_DOC)
   set(docs_in_all_target ALL)
 else()
