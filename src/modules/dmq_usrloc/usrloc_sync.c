@@ -38,6 +38,7 @@ static str dmq_400_rpl = str_init("Bad Request");
 static str dmq_500_rpl = str_init("Server Internal Error");
 
 static int *usrloc_dmq_recv = 0;
+static struct socket_info *dmq_server_socket_local = 0;
 
 dmq_api_t usrloc_dmqb;
 dmq_peer_t *usrloc_dmq_peer = NULL;
@@ -59,12 +60,14 @@ static void srjson_to_xavp(srjson_t *json, sr_xavp_t **xavp);
 
 extern int _dmq_usrloc_sync;
 extern int _dmq_usrloc_replicate_socket_info;
+extern int _dmq_usrloc_replicate_cflags;
 extern int _dmq_usrloc_batch_msg_contacts;
 extern int _dmq_usrloc_batch_msg_size;
 extern int _dmq_usrloc_batch_size;
 extern int _dmq_usrloc_batch_usleep;
 extern str _dmq_usrloc_domain;
 extern int _dmq_usrloc_delete;
+extern int _dmq_usrloc_delete_expired;
 
 static int add_contact(str aor, ucontact_info_t *ci)
 {
@@ -287,6 +290,7 @@ done:
 int usrloc_dmq_initialize()
 {
 	dmq_peer_t not_peer;
+	str dmq_server_socket;
 
 	/* load the DMQ API */
 	if(dmq_load_api(&usrloc_dmqb) != 0) {
@@ -308,6 +312,15 @@ int usrloc_dmq_initialize()
 	} else {
 		LM_DBG("dmq peer registered\n");
 	}
+
+	/* get local socket from DMQ API */
+	dmq_server_socket = usrloc_dmqb.get_dmq_server_socket();
+	dmq_server_socket_local = lookup_local_socket(&dmq_server_socket);
+	if(dmq_server_socket_local == 0) {
+		LM_DBG("dmq local server socket <%.*s> not found ...ignoring\n",
+				dmq_server_socket.len, dmq_server_socket.s);
+	}
+
 	return 0;
 error:
 	return -1;
@@ -409,7 +422,12 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t *node)
 		} else if(strcmp(it->string, "flags") == 0) {
 			flags = SRJSON_GET_UINT(it);
 		} else if(strcmp(it->string, "cflags") == 0) {
-			cflags = SRJSON_GET_UINT(it);
+			if(_dmq_usrloc_replicate_cflags == 1) {
+				cflags = SRJSON_GET_UINT(it);
+			} else if(_dmq_usrloc_replicate_cflags > 1) {
+				cflags = _dmq_usrloc_replicate_cflags;
+			}
+			// else don't replicate cflags
 		} else if(strcmp(it->string, "q") == 0) {
 			q = SRJSON_GET_UINT(it);
 		} else if(strcmp(it->string, "last_modified") == 0) {
@@ -430,8 +448,10 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t *node)
 	ci.ruid = ruid;
 	ci.c = &c;
 	ci.received = received;
-	if(_dmq_usrloc_replicate_socket_info
-			& (DMQ_USRLOC_REPLICATE_SOCKET | DMQ_USRLOC_REPLICATE_SOCKNAME))
+	if(_dmq_usrloc_replicate_socket_info == DMQ_USRLOC_REPLICATE_SOCKET_LOCAL) {
+		sock = dmq_server_socket_local;
+	}
+	if(_dmq_usrloc_replicate_socket_info != 0)
 		ci.sock = sock;
 	ci.path = &path;
 	ci.expires = expires;
@@ -1030,7 +1050,9 @@ void dmq_ul_cb_contact(ucontact_t *ptr, int type, void *param)
 				}
 				break;
 			case UL_CONTACT_EXPIRE:
-				//usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE);
+				if(_dmq_usrloc_delete_expired >= 1) {
+					usrloc_dmq_send_contact(ptr, aor, DMQ_RM, 0);
+				}
 				LM_DBG("Contact <%.*s> expired\n", aor.len, aor.s);
 				break;
 		}

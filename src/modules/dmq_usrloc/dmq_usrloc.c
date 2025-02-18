@@ -37,12 +37,14 @@ static int child_init(int);
 int dmq_usrloc_enable = 0;
 int _dmq_usrloc_sync = 1;
 int _dmq_usrloc_replicate_socket_info = 0;
+int _dmq_usrloc_replicate_cflags = 1;
 int _dmq_usrloc_batch_size = 0;
 int _dmq_usrloc_batch_msg_contacts = 1;
 int _dmq_usrloc_batch_msg_size = 60000;
 int _dmq_usrloc_batch_usleep = 0;
 str _dmq_usrloc_domain = str_init("location");
 int _dmq_usrloc_delete = 1;
+int _dmq_usrloc_delete_expired = 0;
 
 usrloc_api_t dmq_ul;
 
@@ -53,12 +55,14 @@ static param_export_t params[] = {
 	{"enable", PARAM_INT, &dmq_usrloc_enable},
 	{"sync", PARAM_INT, &_dmq_usrloc_sync},
 	{"replicate_socket_info", PARAM_INT, &_dmq_usrloc_replicate_socket_info},
+	{"replicate_cflags", PARAM_INT, &_dmq_usrloc_replicate_cflags},
 	{"batch_msg_contacts", PARAM_INT, &_dmq_usrloc_batch_msg_contacts},
 	{"batch_msg_size", PARAM_INT, &_dmq_usrloc_batch_msg_size},
 	{"batch_size", PARAM_INT, &_dmq_usrloc_batch_size},
 	{"batch_usleep", PARAM_INT, &_dmq_usrloc_batch_usleep},
 	{"usrloc_domain", PARAM_STR, &_dmq_usrloc_domain},
 	{"usrloc_delete", PARAM_INT, &_dmq_usrloc_delete},
+	{"usrloc_delete_expired", PARAM_INT, &_dmq_usrloc_delete_expired},
 	{0, 0, 0}
 };
 
@@ -116,6 +120,7 @@ static int mod_init(void)
 			LM_ERR("Error in dmq_usrloc_initialize()\n");
 		}
 	}
+
 	return 0;
 }
 
