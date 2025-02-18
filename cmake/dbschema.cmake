@@ -85,7 +85,7 @@ else()
         TARGET dbschema_${db_name}
         PRE_BUILD
         COMMAND
-          XML_CATALOG_FILES=${CATALOG} ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS} --stringparam dir
+          "XML_CATALOG_FILES=${CATALOG}" ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS} --stringparam dir
           ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}/${folder_suffix} --stringparam prefix
           ${prefix} --stringparam db ${db_name} ${xsl_file} "kamailio-${table}.xml"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema"
