@@ -1,20 +1,3 @@
-option(BUILD_DOC "Build documentation" ON)
-
-# Readme file and man page
-find_program(XSLTPROC_EXECUTABLE xsltproc QUIET)
-find_program(LYNX_EXECUTABLE lynx QUIET)
-find_program(DOCBOOK2X_EXECUTABLE docbook2x-man QUIET)
-
-if(BUILD_DOC AND (NOT XSLTPROC_EXECUTABLE OR NOT LYNX_EXECUTABLE))
-  message(STATUS "xsltproc or lynx not found but required for doc generation.")
-  set(BUILD_DOC OFF)
-endif()
-
-if(BUILD_DOC AND (NOT DOCBOOK2X_EXECUTABLE))
-  message(STATUS "docbook2x-man not found but required for man generation.")
-  set(BUILD_DOC OFF)
-endif()
-
 option(DOCS_XSL_VAIDATION "Docbook document validation" OFF)
 option(DOCS_NOCATALOG "ON: Use standard catalog from OS | OFF: Use custom catalog " OFF)
 
@@ -123,69 +106,68 @@ function(docs_add_module group_name module_name)
 
   # Each version has seperate custon commands for not recompiling all if 1 gets
   # changed.
-  if(XSLTPROC_EXECUTABLE)
-    if(LYNX_EXECUTABLE)
-      add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.txt
-        COMMAND
-          # TXT version - just plain text
-          ${XMLCATATLOGX} ${XSLTPROC_EXECUTABLE} ${DOCS_XSLTPROC_FLAGS} --xinclude ${TXT_XSL}
-          ${module_name}.xml | ${LYNX_EXECUTABLE} ${DOCS_LYNX_FLAGS} -stdin -dump >
-          ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.txt
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc/${module_name}.xml ${TXT_XSL}
-                # ${SINGLE_HTML_XSL}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc
-        COMMENT "Generating text documentation with for ${module_name}"
-      )
+  # if(XSLTPROC_EXECUTABLE)
+  #   if(LYNX_EXECUTABLE)
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.txt
+    COMMAND
+      # TXT version - just plain text
+      ${XMLCATATLOGX} ${XSLTPROC_EXECUTABLE} ${DOCS_XSLTPROC_FLAGS} --xinclude ${TXT_XSL}
+      ${module_name}.xml | ${LYNX_EXECUTABLE} ${DOCS_LYNX_FLAGS} -stdin -dump >
+      ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.txt
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc/${module_name}.xml ${TXT_XSL}
+            # ${SINGLE_HTML_XSL}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc
+    COMMENT "Generating text documentation with for ${module_name}"
+  )
 
-      # Add custom command to copy the README file after the readme target is
-      # built. The readme target depends on doc_text so it will regenerate if
-      # it's input changed.
-      add_custom_command(
-        TARGET ${module_name}_readme
-        POST_BUILD
-        COMMAND
-          ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.txt
-          ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/README
-        COMMENT "Copying README file to source tree for ${module_name}"
-      )
+  # Add custom command to copy the README file after the readme target is
+  # built. The readme target depends on doc_text so it will regenerate if
+  # it's input changed.
+  add_custom_command(
+    TARGET ${module_name}_readme
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.txt
+            ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/README
+    COMMENT "Copying README file to source tree for ${module_name}"
+  )
 
-      add_custom_command(
-        OUTPUT ${DOCS_OUTPUT_DIR}/${module_name}.html
-        COMMAND
-          # HTML version
-          ${XMLCATATLOGX} ${XSLTPROC_EXECUTABLE} ${DOCS_XSLTPROC_FLAGS} --xinclude --stringparam
-          base.dir ${DOCS_OUTPUT_DIR} --stringparam root.filename ${module_name} --stringparam
-          html.stylesheet ${DOCS_HTML_CSS} --stringparam html.ext ".html" ${SINGLE_HTML_XSL}
-          ${module_name}.xml
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc/${module_name}.xml ${SINGLE_HTML_XSL}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc
-        COMMENT "Generating html documentation for ${module_name}"
-      )
-    endif()
+  add_custom_command(
+    OUTPUT ${DOCS_OUTPUT_DIR}/${module_name}.html
+    COMMAND
+      # HTML version
+      ${XMLCATATLOGX} ${XSLTPROC_EXECUTABLE} ${DOCS_XSLTPROC_FLAGS} --xinclude --stringparam
+      base.dir ${DOCS_OUTPUT_DIR} --stringparam root.filename ${module_name} --stringparam
+      html.stylesheet ${DOCS_HTML_CSS} --stringparam html.ext ".html" ${SINGLE_HTML_XSL}
+      ${module_name}.xml
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc/${module_name}.xml ${SINGLE_HTML_XSL}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc
+    COMMENT "Generating html documentation for ${module_name}"
+  )
+  # endif()
 
-    add_custom_command(
-      # man version
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.7
-      COMMAND ${DOCBOOK2X_EXECUTABLE} -s ${STYLESHEET_DIR}/serdoc2man.xsl ${module_name}.xml
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc/${module_name}.xml
-              ${STYLESHEET_DIR}/serdoc2man.xsl
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}
-      COMMENT "Processing target ${module_name}_man"
-    )
+  add_custom_command(
+    # man version
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.7
+    COMMAND ${DOCBOOK2X_EXECUTABLE} -s ${STYLESHEET_DIR}/serdoc2man.xsl ${module_name}.xml
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc/${module_name}.xml
+            ${STYLESHEET_DIR}/serdoc2man.xsl
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}
+    COMMENT "Processing target ${module_name}_man"
+  )
 
-    install(
-      FILES ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/README
-      RENAME README.${module_name}
-      DESTINATION ${CMAKE_INSTALL_DOCDIR}/modules
-      COMPONENT ${group_name}
-    )
+  install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/README
+    RENAME README.${module_name}
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}/modules
+    COMPONENT ${group_name}
+  )
 
-    install(
-      FILES ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/${module_name}.7
-      DESTINATION ${CMAKE_INSTALL_DATADIR}/man/man7
-      COMPONENT ${group_name}
-      OPTIONAL
-    )
-  endif()
+  install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/${module_name}.7
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/man/man7
+    COMPONENT ${group_name}
+    OPTIONAL
+  )
+  # endif()
 endfunction()
