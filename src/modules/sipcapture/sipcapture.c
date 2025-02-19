@@ -314,7 +314,7 @@ struct hep_timeinfo *heptime = NULL;
 /*! \brief
  * Exported functions
  */
-static cmd_export_t cmds[] = {
+static cmd_export_t mod_cmds[] = {
 	{"sip_capture", (cmd_function)w_sip_capture0, 0,
 		0, 0, ANY_ROUTE},
 	{"sip_capture", (cmd_function)w_sip_capture1, 1,
@@ -343,7 +343,7 @@ static pv_export_t mod_pvs[] = {
 /*! \brief
  * Exported parameters
  */
-static param_export_t params[] = {
+static param_export_t mod_params[] = {
 	{"db_url", PARAM_STR, &db_url},
 	{"table_name", PARAM_STR, &_sipcap_table_name},
 	{"hash_source", PARAM_STR, &hash_source},
@@ -435,8 +435,8 @@ stat_export_t *sipcapture_stats = NULL;
 struct module_exports exports = {
 	"sipcapture",    /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* exported functions */
-	params,          /* exported parameters */
+	mod_cmds,        /* exported functions */
+	mod_params,      /* exported parameters */
 	0,               /* exported rpc functions */
 	mod_pvs,         /* exported pseudo-variables */
 	0,               /* response handling function */
