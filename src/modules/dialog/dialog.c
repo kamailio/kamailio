@@ -1857,27 +1857,29 @@ static str *ki_dlg_get_var_helper(
 {
 	dlg_cell_t *dlg = NULL;
 	unsigned int dir = 0;
-	str *val = NULL;
+	static str val;
 
 	if(sc == NULL || sc->s == NULL || sc->len == 0) {
 		LM_ERR("invalid Call-ID parameter\n");
-		return val;
+		return NULL;
 	}
 	if(sf == NULL || sf->s == NULL || sf->len == 0) {
 		LM_ERR("invalid From tag parameter\n");
-		return val;
+		return NULL;
 	}
 	if(st == NULL) {
 		LM_ERR("invalid To tag parameter\n");
-		return val;
+		return NULL;
 	}
 
 	dlg = get_dlg(sc, sf, st, &dir);
 	if(dlg == NULL)
-		return val;
-	val = get_dlg_varref(dlg, key);
+		return NULL;
+	if(get_dlg_varval(dlg, key, &val) != 0) {
+		return NULL;
+	}
 	dlg_release(dlg);
-	return val;
+	return &val;
 }
 
 /**
@@ -2504,8 +2506,13 @@ static int ki_dlg_var_sets(sip_msg_t *msg, str *name, str *val)
 	int ret;
 
 	dlg = dlg_get_msg_dialog(msg);
+	if(dlg) {
+		dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+	}
+
 	ret = set_dlg_variable_unsafe(dlg, name, val);
 	if(dlg) {
+		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 		dlg_release(dlg);
 	}
 
@@ -2518,7 +2525,7 @@ static int ki_dlg_var_sets(sip_msg_t *msg, str *name, str *val)
 static sr_kemi_xval_t *ki_dlg_var_get_mode(sip_msg_t *msg, str *name, int rmode)
 {
 	dlg_cell_t *dlg;
-	str *pval;
+	str pval;
 
 	memset(&_sr_kemi_dialog_xval, 0, sizeof(sr_kemi_xval_t));
 
@@ -2527,14 +2534,14 @@ static sr_kemi_xval_t *ki_dlg_var_get_mode(sip_msg_t *msg, str *name, int rmode)
 		sr_kemi_xval_null(&_sr_kemi_dialog_xval, rmode);
 		return &_sr_kemi_dialog_xval;
 	}
-	pval = get_dlg_varref(dlg, name);
-	if(pval == NULL || pval->s == NULL) {
+
+	if(get_dlg_varval(dlg, name, &pval) != 0) {
 		sr_kemi_xval_null(&_sr_kemi_dialog_xval, rmode);
 		goto done;
 	}
 
 	_sr_kemi_dialog_xval.vtype = SR_KEMIP_STR;
-	_sr_kemi_dialog_xval.v.s = *pval;
+	_sr_kemi_dialog_xval.v.s = pval;
 
 done:
 	dlg_release(dlg);
@@ -2572,7 +2579,12 @@ static int ki_dlg_var_rm(sip_msg_t *msg, str *name)
 	dlg_cell_t *dlg;
 
 	dlg = dlg_get_msg_dialog(msg);
-	set_dlg_variable_unsafe(dlg, name, NULL);
+	if(dlg) {
+		dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+		set_dlg_variable_unsafe(dlg, name, NULL);
+		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+		dlg_release(dlg);
+	}
 	return 1;
 }
 
