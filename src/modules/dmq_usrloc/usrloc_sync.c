@@ -317,7 +317,7 @@ int usrloc_dmq_initialize()
 	dmq_server_socket = usrloc_dmqb.get_dmq_server_socket();
 	dmq_server_socket_local = lookup_local_socket(&dmq_server_socket);
 	if(dmq_server_socket_local == 0) {
-		LM_DBG("dmq local server socket <%.*s> not found ...ignoring\n",
+		LM_WARN("dmq local server socket <%.*s> not found ...ignoring\n",
 				dmq_server_socket.len, dmq_server_socket.s);
 	}
 
