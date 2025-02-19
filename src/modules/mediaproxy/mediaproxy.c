@@ -220,7 +220,7 @@ static AVP_Param media_relay_avp = {str_init(MEDIA_RELAY_AVP_SPEC), {0}, 0};
 static AVP_Param ice_candidate_avp = {str_init(ICE_CANDIDATE_AVP_SPEC), {0}, 0};
 
 /* clang-format off */
-static cmd_export_t cmds[] = {
+static cmd_export_t mod_cmds[] = {
 	{"engage_media_proxy", (cmd_function)w_EngageMediaProxy, 0,
 		0, 0, REQUEST_ROUTE | BRANCH_ROUTE},
 	{"use_media_proxy", (cmd_function)w_UseMediaProxy, 0,
@@ -231,7 +231,7 @@ static cmd_export_t cmds[] = {
 	{0, 0, 0, 0, 0, 0}
 };
 
-static param_export_t params[] = {
+static param_export_t mod_params[] = {
 	{"disable", PARAM_INT, &mediaproxy_disabled},
 	{"mediaproxy_socket", PARAM_STRING, &(mediaproxy_socket.name)},
 	{"mediaproxy_timeout", PARAM_INT, &(mediaproxy_socket.timeout)},
@@ -245,8 +245,8 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"mediaproxy",	      /* module name */
 	DEFAULT_DLFLAGS,    /* dlopen flags */
-	cmds,               /* exported functions */
-	params,             /* exported parameters */
+	mod_cmds,           /* exported functions */
+	mod_params,         /* exported parameters */
 	0,                  /* RPC method exports */
 	0,                  /* exported pseudo-variables */
 	0,                  /* response handling function */
