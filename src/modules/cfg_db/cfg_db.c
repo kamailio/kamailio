@@ -405,30 +405,35 @@ static int mod_init(void)
 	return 0;
 }
 
+/* clang-format off */
 /*
  * Exported parameters
  */
-static param_export_t params[] = {{"db_url", PARAM_STRING, &db_url},
-		{"transl_tbl", PARAM_STRING, &transl_tbl},
-		/*	{"transl_group_name_fld", PARAM_STRING, &transl_group_name_fld},
+static param_export_t mod_params[] = {
+	{"db_url", PARAM_STRING, &db_url},
+	{"transl_tbl", PARAM_STRING, &transl_tbl},
+/*
+	{"transl_group_name_fld", PARAM_STRING, &transl_group_name_fld},
 	{"transl_cfg_table_fld", PARAM_STRING, &transl_cfg_table_fld},
 	{"transl_cfg_table_group_name_field_fld", PARAM_STRING, &transl_cfg_table_group_name_field_fld},
 	{"transl_cfg_table_name_field_fld", PARAM_STRING, &transl_cfg_table_name_field_fld},
 	{"transl_cfg_table_value_field_fld", PARAM_STRING, &transl_cfg_table_value_field_fld},
 */
-		{"custom_tbl", PARAM_STRING, &custom_tbl},
-
-		{0, 0, 0}};
+	{"custom_tbl", PARAM_STRING, &custom_tbl},
+	{0, 0, 0}
+};
 
 /* Module interface */
 struct module_exports exports = {
-		MODULE_NAME, DEFAULT_DLFLAGS, /* dlopen flags */
-		0,							  /* Exported functions */
-		params,						  /* Exported parameters */
-		0,							  /* RPC methods */
-		0,							  /* exported pseudo-variables */
-		0,							  /* response function */
-		mod_init,					  /* module initialization function */
-		0,							  /* child initialization function */
-		0							  /* destroy function */
+	MODULE_NAME,
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	0,               /* Exported functions */
+	mod_params,      /* Exported parameters */
+	0,               /* RPC methods */
+	0,               /* exported pseudo-variables */
+	0,               /* response function */
+	mod_init,        /* module initialization function */
+	0,               /* child initialization function */
+	0                /* destroy function */
 };
+/* clang-format on */
