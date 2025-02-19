@@ -88,12 +88,12 @@ int buf_size = 0;
 char error_buf[ERROR_REASON_BUF_LEN];
 
 /* clang-format off */
-static cmd_export_t cmds[] = {
+static cmd_export_t mod_cmds[] = {
 	{"dispatch_xhttp_rpc", (cmd_function)xhttp_rpc_dispatch, 0, 0, 0, REQUEST_ROUTE | EVENT_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
-static param_export_t params[] = {
+static param_export_t mod_params[] = {
 	{"xhttp_rpc_root", PARAM_STR, &xhttp_rpc_root},
 	{"xhttp_rpc_buf_size", PARAM_INT, &buf_size},
 	{0, 0, 0}
@@ -103,8 +103,8 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"xhttp_rpc",     /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* cmd (cfg function) exports */
-	params,          /* param exports */
+	mod_cmds,        /* cmd (cfg function) exports */
+	mod_params,      /* param exports */
 	0,               /* RPC method exports */
 	0,               /* pv exports */
 	0,               /* response handling function */
