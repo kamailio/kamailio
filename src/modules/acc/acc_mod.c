@@ -335,7 +335,7 @@ static int free_acc_fixup(void **param, int param_no)
 /************************** INTERFACE functions ****************************/
 
 
-static int parse_failed_filter(char *s, unsigned short *failed_filter)
+static int parse_failed_filter(char *s, unsigned short *_failed_filter)
 {
 	unsigned int n;
 	char *at;
@@ -354,16 +354,16 @@ static int parse_failed_filter(char *s, unsigned short *failed_filter)
 			LM_ERR("response code in failed_filter must have 3 digits\n");
 			return 0;
 		}
-		failed_filter[n] =
+		_failed_filter[n] =
 				(*s - '0') * 100 + (*(s + 1) - '0') * 10 + (*(s + 2) - '0');
-		if(failed_filter[n] < 300) {
+		if(_failed_filter[n] < 300) {
 			LM_ERR("invalid response code %u in failed_filter\n",
-					failed_filter[n]);
+					_failed_filter[n]);
 			return 0;
 		}
-		LM_DBG("failed_filter %u = %u\n", n, failed_filter[n]);
+		LM_DBG("failed_filter %u = %u\n", n, _failed_filter[n]);
 		n++;
-		failed_filter[n] = 0;
+		_failed_filter[n] = 0;
 		s = at;
 		if(*s == 0)
 			return 1;
