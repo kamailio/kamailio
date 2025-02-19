@@ -1752,55 +1752,51 @@ static int dbops_proper_func(struct sip_msg *m, char *dummy1, char *dummy2)
 	return 1;
 }
 
+/* clang-format off */
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] = {
-		{MODULE_NAME2 "_query", dbops_query_func, 1, dbops_query_fixup, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE
-						| ONSEND_ROUTE},
-		{MODULE_NAME2 "_query", dbops_query_func, 2, dbops_query_fixup, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE
-						| ONSEND_ROUTE},
-		{MODULE_NAME2 "_first", dbops_first_func, 1, dbops_close_query_fixup, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE
-						| ONSEND_ROUTE},
-		{MODULE_NAME2 "_next", dbops_next_func, 1, dbops_close_query_fixup, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE
-						| ONSEND_ROUTE},
-		{MODULE_NAME2 "_seek", dbops_seek_func, 2, dbops_seek_fixup, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE
-						| ONSEND_ROUTE},
-		{MODULE_NAME2 "_close", dbops_close_query_func, 1,
-				dbops_close_query_fixup, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE
-						| ONSEND_ROUTE},
-		{MODULE_NAME2 "_foreach", dbops_foreach_func, 2, dbops_foreach_fixup, 0,
-				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE
-						| ONSEND_ROUTE},
-		{MODULE_NAME2 "_proper", dbops_proper_func, 0, 0, 0, FAILURE_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
+static cmd_export_t mod_cmds[] = {
+	{MODULE_NAME2 "_query", dbops_query_func, 1, dbops_query_fixup, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME2 "_query", dbops_query_func, 2, dbops_query_fixup, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME2 "_first", dbops_first_func, 1, dbops_close_query_fixup, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME2 "_next", dbops_next_func, 1, dbops_close_query_fixup, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME2 "_seek", dbops_seek_func, 2, dbops_seek_fixup, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME2 "_close", dbops_close_query_func, 1, dbops_close_query_fixup, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME2 "_foreach", dbops_foreach_func, 2, dbops_foreach_fixup, 0,
+		REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME2 "_proper", dbops_proper_func, 0, 0, 0,
+		FAILURE_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {{"db_url", PARAM_STRING, &db_url},
-		{"declare_query", PARAM_STRING | PARAM_USE_FUNC, (void *)declare_query},
-		{"declare_handle", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)declare_handle},
-		{"xlbuf_size", PARAM_INT, &xlbuf_size}, {0, 0, 0}};
-
+static param_export_t mod_params[] = {
+	{"db_url", PARAM_STRING, &db_url},
+	{"declare_query", PARAM_STRING | PARAM_USE_FUNC, (void *)declare_query},
+	{"declare_handle", PARAM_STRING | PARAM_USE_FUNC, (void *)declare_handle},
+	{"xlbuf_size", PARAM_INT, &xlbuf_size},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		MODULE_NAME,	 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		params,			 /* param exports */
-		0,				 /* RPC method exports */
-		0,				 /* pseudo-variables exports */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		child_init,		 /* per-child init function */
-		0				 /* module destroy function */
+	MODULE_NAME,     /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	mod_cmds,        /* cmd (cfg function) exports */
+	mod_params,      /* param exports */
+	0,               /* RPC method exports */
+	0,               /* pseudo-variables exports */
+	0,               /* response handling function */
+	mod_init,        /* module init function */
+	child_init,      /* per-child init function */
+	0                /* module destroy function */
 };
+/* clang-format on */
