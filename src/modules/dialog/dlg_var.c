@@ -197,8 +197,8 @@ int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val)
 					it_prev->next = it->next;
 				else
 					*var_list = it->next;
-				/* Set the delete-flag for the current var: */
-				it->vflags &= DLG_FLAG_DEL;
+				/* set the delete-flag for the current var */
+				it->vflags |= DLG_FLAG_DEL;
 			} else {
 				/* replace the current it with var and free the it */
 				var->next = it->next;

@@ -70,7 +70,7 @@
 
 #define DLG_FLAG_TM (1 << 9)			 /*!< dialog is set in transaction */
 #define DLG_FLAG_EXPIRED (1 << 10)		 /*!< dialog is expired */
-#define DLG_FLAG_CHANGED_PROF (1 << 10)	 /*!< dialog-profiles changed DMQ*/
+#define DLG_FLAG_CHANGED_PROF (1 << 11)	 /*!< dialog-profiles changed - DMQ */
 #define DLG_FLAG_DB_LOAD_EXTRA (1 << 12) /*!< dialog loaded extra from db */
 
 /* internal flags stored in db */
