@@ -1852,32 +1852,36 @@ static int fixup_dlg_bridge(void **param, int param_no)
 	return 0;
 }
 
-static str *ki_dlg_get_var_helper(
-		sip_msg_t *msg, str *sc, str *sf, str *st, str *key)
+static int ki_dlg_get_var_helper(
+		sip_msg_t *msg, str *sc, str *sf, str *st, str *key, str *val)
 {
 	dlg_cell_t *dlg = NULL;
 	unsigned int dir = 0;
-	str *val = NULL;
 
 	if(sc == NULL || sc->s == NULL || sc->len == 0) {
 		LM_ERR("invalid Call-ID parameter\n");
-		return val;
+		return -1;
 	}
 	if(sf == NULL || sf->s == NULL || sf->len == 0) {
 		LM_ERR("invalid From tag parameter\n");
-		return val;
+		return -1;
 	}
 	if(st == NULL) {
 		LM_ERR("invalid To tag parameter\n");
-		return val;
+		return -1;
 	}
 
 	dlg = get_dlg(sc, sf, st, &dir);
-	if(dlg == NULL)
-		return val;
-	val = get_dlg_varref(dlg, key);
+	if(dlg == NULL) {
+		LM_DBG("dialog not found for call-id: %.*s\n", sc->len, sc->s);
+		return -1;
+	}
+	if(get_dlg_varval(dlg, key, val) != 0) {
+		dlg_release(dlg);
+		return -1;
+	}
 	dlg_release(dlg);
-	return val;
+	return 0;
 }
 
 /**
@@ -1888,18 +1892,15 @@ static sr_kemi_xval_t _sr_kemi_dialog_xval = {0};
 static sr_kemi_xval_t *ki_dlg_get_var(
 		sip_msg_t *msg, str *sc, str *sf, str *st, str *key)
 {
-	str *val = NULL;
-
 	memset(&_sr_kemi_dialog_xval, 0, sizeof(sr_kemi_xval_t));
 
-	val = ki_dlg_get_var_helper(msg, sc, sf, st, key);
-	if(!val) {
+	if(ki_dlg_get_var_helper(msg, sc, sf, st, key, &_sr_kemi_dialog_xval.v.s)
+			< 0) {
 		sr_kemi_xval_null(&_sr_kemi_dialog_xval, SR_KEMI_XVAL_NULL_NONE);
 		return &_sr_kemi_dialog_xval;
 	}
 
 	_sr_kemi_dialog_xval.vtype = SR_KEMIP_STR;
-	_sr_kemi_dialog_xval.v.s = *val;
 
 	return &_sr_kemi_dialog_xval;
 }
@@ -2504,8 +2505,12 @@ static int ki_dlg_var_sets(sip_msg_t *msg, str *name, str *val)
 	int ret;
 
 	dlg = dlg_get_msg_dialog(msg);
+	if(dlg) {
+		dlg_cell_lock(dlg);
+	}
 	ret = set_dlg_variable_unsafe(dlg, name, val);
 	if(dlg) {
+		dlg_cell_unlock(dlg);
 		dlg_release(dlg);
 	}
 
@@ -2518,7 +2523,6 @@ static int ki_dlg_var_sets(sip_msg_t *msg, str *name, str *val)
 static sr_kemi_xval_t *ki_dlg_var_get_mode(sip_msg_t *msg, str *name, int rmode)
 {
 	dlg_cell_t *dlg;
-	str *pval;
 
 	memset(&_sr_kemi_dialog_xval, 0, sizeof(sr_kemi_xval_t));
 
@@ -2527,14 +2531,12 @@ static sr_kemi_xval_t *ki_dlg_var_get_mode(sip_msg_t *msg, str *name, int rmode)
 		sr_kemi_xval_null(&_sr_kemi_dialog_xval, rmode);
 		return &_sr_kemi_dialog_xval;
 	}
-	pval = get_dlg_varref(dlg, name);
-	if(pval == NULL || pval->s == NULL) {
+	if(get_dlg_varval(dlg, name, &_sr_kemi_dialog_xval.v.s) < 0) {
 		sr_kemi_xval_null(&_sr_kemi_dialog_xval, rmode);
 		goto done;
 	}
 
 	_sr_kemi_dialog_xval.vtype = SR_KEMIP_STR;
-	_sr_kemi_dialog_xval.v.s = *pval;
 
 done:
 	dlg_release(dlg);
@@ -2572,7 +2574,12 @@ static int ki_dlg_var_rm(sip_msg_t *msg, str *name)
 	dlg_cell_t *dlg;
 
 	dlg = dlg_get_msg_dialog(msg);
-	set_dlg_variable_unsafe(dlg, name, NULL);
+	if(dlg) {
+		dlg_cell_lock(dlg);
+		set_dlg_variable_unsafe(dlg, name, NULL);
+		dlg_cell_unlock(dlg);
+		dlg_release(dlg);
+	}
 	return 1;
 }
 
