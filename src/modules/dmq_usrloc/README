@@ -52,7 +52,9 @@ Emmanuel Schmidbauer
               3.6. batch_msg_contacts (int)
               3.7. usrloc_domain (string)
               3.8. replicate_socket_info (int)
-              3.9. usrloc_delete (int)
+              3.9. replicate_cflags (int)
+              3.10. usrloc_delete (int)
+              3.11. usrloc_delete_expired (int)
 
    List of Examples
 
@@ -64,7 +66,9 @@ Emmanuel Schmidbauer
    1.6. Set batch_msg_contacts parameter
    1.7. Set usrloc_domain parameter
    1.8. Set replicate_socket_info parameter
-   1.9. Set usrloc_domain parameter
+   1.9. Set replicate_cflags parameter
+   1.10. Set usrloc_delete parameter
+   1.11. Set usrloc_delete_expired parameter
 
 Chapter 1. Admin Guide
 
@@ -85,7 +89,9 @@ Chapter 1. Admin Guide
         3.6. batch_msg_contacts (int)
         3.7. usrloc_domain (string)
         3.8. replicate_socket_info (int)
-        3.9. usrloc_delete (int)
+        3.9. replicate_cflags (int)
+        3.10. usrloc_delete (int)
+        3.11. usrloc_delete_expired (int)
 
 1. Overview
 
@@ -112,7 +118,9 @@ Chapter 1. Admin Guide
    3.6. batch_msg_contacts (int)
    3.7. usrloc_domain (string)
    3.8. replicate_socket_info (int)
-   3.9. usrloc_delete (int)
+   3.9. replicate_cflags (int)
+   3.10. usrloc_delete (int)
+   3.11. usrloc_delete_expired (int)
 
 3.1. enable (int)
 
@@ -226,6 +234,7 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
      * 0 - disabled
      * 1 - enabled, replicate socket by proto:host:port
      * 2 - enabled, replicate socket by socket name
+     * 3 - enabled, use local socket from dmq server_socket modparam
 
    Default value is 0.
 
@@ -234,7 +243,24 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
 modparam("dmq_usrloc", "replicate_socket_info", 1)
 ...
 
-3.9. usrloc_delete (int)
+3.9. replicate_cflags (int)
+
+   The parameter controls whether the cflags replication is active or not.
+   This is important for anycast scenarios. The value can be:
+     * 0 - disabled
+     * 1 - enabled, replicate cflags
+     * > 1 - enabled, set cflags corresponding to this value, on
+       replicated peers
+
+   Default value is 1.
+
+   Example 1.9. Set replicate_cflags parameter
+...
+modparam("dmq_usrloc", "replicate_cflags", 97) # will set cflags corresponding t
+o 1 + 32 + 64
+...
+
+3.10. usrloc_delete (int)
 
    Enable (1) or disable (0) synchronizing usrloc delete actions.
    Disabling delete actions can be useful when user location data is
@@ -242,7 +268,20 @@ modparam("dmq_usrloc", "replicate_socket_info", 1)
 
    Default value is 1.
 
-   Example 1.9. Set usrloc_domain parameter
+   Example 1.10. Set usrloc_delete parameter
 ...
 modparam("dmq_usrloc", "usrloc_delete", 0)
+...
+
+3.11. usrloc_delete_expired (int)
+
+   Enable (1) or disable (0) synchronizing usrloc expire actions using
+   delete actions. In other words, sync delete of (UL_CONTACT_EXPIRE)
+   expired contacts.
+
+   Default value is 0.
+
+   Example 1.11. Set usrloc_delete_expired parameter
+...
+modparam("dmq_usrloc", "usrloc_delete_expired", 1)
 ...

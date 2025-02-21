@@ -46,6 +46,7 @@ Charles Chance
               3.6. num_workers(int)
               3.7. worker_usleep(int)
               3.8. ping_interval(int)
+              3.9. remove_inactive(int)
 
         4. Functions
 
@@ -84,14 +85,15 @@ Charles Chance
    1.7. Set num_workers parameter
    1.8. Set worker_usleep parameter
    1.9. Set ping_interval parameter
-   1.10. dmq_handle_message usage
-   1.11. dmq_process_message usage
-   1.12. dmq_send_message usage
-   1.13. dmq_bcast_message usage
-   1.14. dmq_t_replicate usage
-   1.15. dmq_is_from_node usage
-   1.16. dmq.list_nodes usage
-   1.17. dmq.remove usage
+   1.10. Set remove_inactive parameter
+   1.11. dmq_handle_message usage
+   1.12. dmq_process_message usage
+   1.13. dmq_send_message usage
+   1.14. dmq_bcast_message usage
+   1.15. dmq_t_replicate usage
+   1.16. dmq_is_from_node usage
+   1.17. dmq.list_nodes usage
+   1.18. dmq.remove usage
    2.1. dmq_api_t structure
    2.2. register_dmq_peer usage
    2.3. bcast_message usage
@@ -120,6 +122,7 @@ Chapter 1. Admin Guide
         3.6. num_workers(int)
         3.7. worker_usleep(int)
         3.8. ping_interval(int)
+        3.9. remove_inactive(int)
 
    4. Functions
 
@@ -232,6 +235,7 @@ sip:192.168.40.17:5060;status=active
    3.6. num_workers(int)
    3.7. worker_usleep(int)
    3.8. ping_interval(int)
+   3.9. remove_inactive(int)
 
 3.1. server_address(str)
 
@@ -353,6 +357,21 @@ modparam("dmq", "worker_usleep", 1000)
 modparam("dmq", "ping_interval", 90)
 ...
 
+3.9. remove_inactive(int)
+
+   A value of zero disable removing dmq nodes. Node status will be changed
+   to pending. A non-zero value (default is 1) enable removing nodes. For
+   node that is defined as notification address status will be changed to
+   pending. Otherwise it will be marked as disabled and then will be
+   removed.
+
+   Default value is “1”.
+
+   Example 1.10. Set remove_inactive parameter
+...
+modparam("dmq", "remove_inactive", 0)
+...
+
 4. Functions
 
    4.1. dmq_handle_message([continue])
@@ -375,7 +394,7 @@ modparam("dmq", "ping_interval", 90)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.10. dmq_handle_message usage
+   Example 1.11. dmq_handle_message usage
 ...
     if(is_method("KDMQ")) {
         dmq_handle_message();
@@ -396,7 +415,7 @@ modparam("dmq", "ping_interval", 90)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.11. dmq_process_message usage
+   Example 1.12. dmq_process_message usage
 ...
     if(is_method("KDMQ")) {
         dmq_process_message();
@@ -416,7 +435,7 @@ modparam("dmq", "ping_interval", 90)
 
    This function can be used from any route.
 
-   Example 1.12. dmq_send_message usage
+   Example 1.13. dmq_send_message usage
 ...
         dmq_send_message("channel1", "sip:10.0.0.21:5060", "Message body...", "t
 ext/plain");
@@ -434,7 +453,7 @@ ext/plain");
 
    This function can be used from any route.
 
-   Example 1.13. dmq_bcast_message usage
+   Example 1.14. dmq_bcast_message usage
 ...
     dmq_bcast_message("channel1", "Message body...", "text/plain");
 ...
@@ -456,7 +475,7 @@ ext/plain");
 
    This function can be used from REQUEST_ROUTE only.
 
-   Example 1.14. dmq_t_replicate usage
+   Example 1.15. dmq_t_replicate usage
 ...
     dmq_t_replicate();
 ...
@@ -468,7 +487,7 @@ ext/plain");
 
    This function can be used from REQUEST_ROUTE only.
 
-   Example 1.15. dmq_is_from_node usage
+   Example 1.16. dmq_is_from_node usage
 ...
         # basic example for REGISTER replication
     if(is_method("REGISTER")) {
@@ -491,7 +510,7 @@ ext/plain");
 
    List the DMQ nodes. It has no parameters.
 
-   Example 1.16. dmq.list_nodes usage
+   Example 1.17. dmq.list_nodes usage
 ...
 kamcmd dmq.list_nodes
 ...
@@ -503,7 +522,7 @@ kamcmd dmq.list_nodes
    Parameters:
      * address - the SIP address of the DMQ node to remove.
 
-   Example 1.17. dmq.remove usage
+   Example 1.18. dmq.remove usage
 ...
 kamctl rpc dmq.remove sip:1.2.3.4:5060
 ...
