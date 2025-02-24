@@ -196,7 +196,7 @@ void dlg_tmcb_dummy(struct cell *t, int type, struct tmcb_params *param);
  * \return void
  */
 
-void print_all_dlgs();
+void print_all_dlgs(unsigned int ticks, void *param);
 
 /*!
  * \brief Helper function that prints all the properties of a dialog including all the dlg_out's
