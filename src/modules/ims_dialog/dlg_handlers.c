@@ -2048,7 +2048,7 @@ void internal_print_all_dlg(struct dlg_cell *dlg)
  * \return void
  */
 
-void print_all_dlgs()
+void print_all_dlgs(unsigned int ticks, void *param)
 {
 	//print all dialog information  - this is just for testing and is set to happen every 10 seconds
 
