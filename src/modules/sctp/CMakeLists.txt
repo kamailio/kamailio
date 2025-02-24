@@ -14,11 +14,11 @@ endif()
 
 target_include_directories(${module_name} PRIVATE ${SCTP_INCLUDE_DIR})
 
-find_library(
-  SCTP_LIBRARY
-  NAMES sctp
-  PATHS /usr/lib /usr/local/lib)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  find_library(
+    SCTP_LIBRARY
+    NAMES sctp
+    PATHS /usr/lib /usr/local/lib)
 
-if(UNIX)
   target_link_libraries(${module_name} PRIVATE ${SCTP_LIBRARY})
 endif()
