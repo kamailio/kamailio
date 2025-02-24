@@ -146,7 +146,7 @@ void update_sl_stats(int code)
 
 	my_stats = &(*sl_stats)[process_no];
 
-	if(code >= 700 || code < 200) {
+	if(code >= 700 || code < 100) {
 		my_stats->err[RT_xxx]++;
 	} else if(code >= 600) {
 		my_stats->err[RT_6xx]++;
@@ -201,7 +201,7 @@ void update_sl_stats(int code)
 				my_stats->err[RT_3xx]++;
 				break;
 		}
-	} else { /* 2xx */
+	} else if(code >= 200) {
 		switch(code) {
 			case 200:
 				my_stats->err[RT_200]++;
@@ -213,6 +213,8 @@ void update_sl_stats(int code)
 				my_stats->err[RT_2xx]++;
 				break;
 		}
+	} else { /* 1xx */
+		my_stats->err[RT_1xx]++;
 	}
 }
 
