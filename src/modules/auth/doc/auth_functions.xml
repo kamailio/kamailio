@@ -402,7 +402,7 @@ if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title>auth_get_www_authenticate</title>
+		<title>auth_get_www_authenticate usage</title>
 		<programlisting format="linespecific">
 ...
 if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
@@ -417,13 +417,22 @@ if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
 	<para>
 	  Set hash algorithm used for digest authentication thus overriding
       algorithm parameter. Possible values are the same as those of
-      algorithm parameter.  The parameter may be a pseudo variable.
+      algorithm parameter. The parameter may be a pseudo variable.
 	</para>
 	<example>
-	    <title>auth_algorithm  example</title>
+	    <title>auth_algorithm example</title>
 	    <programlisting>
 ...
-auth_algorithm("$alg");
+if($fU == "alice") {
+    $var(alg) = "SHA-256";
+} else {
+    $var(alg) = "MD5";
+}
+auth_algorithm("$var(alg)");
+if (!auth_check("$fd", "subscriber", "1")) {
+    auth_challenge("$fd", "1");
+    exit;
+}
 ...
 	    </programlisting>
 	</example>
