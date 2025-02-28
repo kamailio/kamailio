@@ -86,7 +86,7 @@ Daniel-Constantin Mierla
    1.23. pv_www_authenticate usage
    1.24. pv_proxy_authenticate usage
    1.25. pv_auth_check usage
-   1.26. auth_get_www_authenticate
+   1.26. auth_get_www_authenticate usage
    1.27. auth_algorithm example
 
 Chapter 1. Admin Guide
@@ -924,7 +924,7 @@ if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.26. auth_get_www_authenticate
+   Example 1.26. auth_get_www_authenticate usage
 ...
 if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
         xlog("www authenticate header is [$var(wauth)]\n");
@@ -939,5 +939,14 @@ if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
 
    Example 1.27. auth_algorithm example
 ...
-auth_algorithm("$alg");
+if($fU == "alice") {
+    $var(alg) = "SHA-256";
+} else {
+    $var(alg) = "MD5";
+}
+auth_algorithm("$var(alg)");
+if (!auth_check("$fd", "subscriber", "1")) {
+    auth_challenge("$fd", "1");
+    exit;
+}
 ...
