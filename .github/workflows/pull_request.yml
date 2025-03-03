@@ -13,7 +13,7 @@ jobs:
       contents: read # to fetch code (actions/checkout)
     steps:
       - uses: actions/checkout@v4
-      - uses: wolletd/clang-format-checker@v1.11
+      - uses: wolletd/clang-format-checker@v1.12
         with:
           target-ref: master
   build:
