@@ -50,6 +50,9 @@ int _sr_python_local_version = 0;
 gen_lock_t *_sr_python_reload_lock = NULL;
 extern str _sr_python_load_file;
 extern int _apy3s_process_rank;
+extern int _ksr_apy3s_threads_mode;
+
+extern __thread PyThreadState *_save;
 
 int apy_reload_script(void);
 
@@ -81,10 +84,10 @@ int apy3s_exec_func(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	}
 
 	/* clear error state */
-	/* clang-format off */
-	Py_BLOCK_THREADS
+	if(_ksr_apy3s_threads_mode == 1) {
+		Py_BLOCK_THREADS;
+	}
 	PyErr_Clear();
-	/* clang-format on */
 
 	if(lock_try(_sr_python_reload_lock) == 0) {
 		if(_sr_python_reload_version
@@ -171,10 +174,10 @@ error:
 	}
 	/* clear error state */
 	PyErr_Clear();
-	/* clang-format off */
-	Py_UNBLOCK_THREADS
+	if(_ksr_apy3s_threads_mode == 1) {
+		Py_UNBLOCK_THREADS;
+	}
 	return rval;
-	/* clang-format on */
 }
 
 
