@@ -28,6 +28,7 @@ Daniel-Constantin Mierla
               3.1. load (string)
               3.2. script_init (string)
               3.3. script_child_init (string)
+              3.4. threads_mode (int)
 
         4. Functions
 
@@ -45,7 +46,8 @@ Daniel-Constantin Mierla
    1.1. Set load parameter
    1.2. Set script_init parameter
    1.3. Set script_child_init parameter
-   1.4. app_python3s_exec usage
+   1.4. Set threads_mode parameter
+   1.5. app_python3s_exec usage
 
 Chapter 1. Admin Guide
 
@@ -62,6 +64,7 @@ Chapter 1. Admin Guide
         3.1. load (string)
         3.2. script_init (string)
         3.3. script_child_init (string)
+        3.4. threads_mode (int)
 
    4. Functions
 
@@ -118,6 +121,7 @@ Chapter 1. Admin Guide
    3.1. load (string)
    3.2. script_init (string)
    3.3. script_child_init (string)
+   3.4. threads_mode (int)
 
 3.1. load (string)
 
@@ -163,6 +167,20 @@ def ksr_script_child_init():
     return 1
 ...
 
+3.4. threads_mode (int)
+
+   Control how locking for Python interpreter threads in done. If set to
+   1, use Py_BLOCK_THREADS/Py_UNBLOCK_THREADS (new mode added for v6.0.x).
+   If set to 0, use PyGILState_Ensure()/PyGILState_Release() (the mode
+   implemented initially).
+
+   Default value is “0”.
+
+   Example 1.4. Set threads_mode parameter
+...
+modparam("app_python3s", "threads_mode", 1)
+...
+
 4. Functions
 
    4.1. app_python3s_exec(method [, param])
@@ -175,7 +193,7 @@ def ksr_script_child_init():
 
    Both parameters can contain pseudo-variables.
 
-   Example 1.4. app_python3s_exec usage
+   Example 1.5. app_python3s_exec usage
 ...
 app_python3s_exec("my_python_function");
 app_python3s_exec("my_python_function", "my_params");
