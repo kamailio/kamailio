@@ -27,6 +27,7 @@ Maxim Sobolev
               3.2. script_name (string)
               3.3. mod_init_function (string)
               3.4. child_init_method (string)
+              3.5. threads_mode (int)
 
         4. Functions
 
@@ -44,7 +45,8 @@ Maxim Sobolev
    1.1. Set load parameter
    1.2. Set mod_init_function parameter
    1.3. Set child_init_method parameter
-   1.4. python_exec usage
+   1.4. Set threads_mode parameter
+   1.5. python_exec usage
 
 Chapter 1. Admin Guide
 
@@ -62,6 +64,7 @@ Chapter 1. Admin Guide
         3.2. script_name (string)
         3.3. mod_init_function (string)
         3.4. child_init_method (string)
+        3.5. threads_mode (int)
 
    4. Functions
 
@@ -124,6 +127,7 @@ Chapter 1. Admin Guide
    3.2. script_name (string)
    3.3. mod_init_function (string)
    3.4. child_init_method (string)
+   3.5. threads_mode (int)
 
 3.1. load (string)
 
@@ -166,6 +170,20 @@ modparam("app_python3", "mod_init_function", "my_mod_init")
 modparam("app_python3", "child_init_method", "my_child_init")
 ...
 
+3.5. threads_mode (int)
+
+   Control how locking for Python interpreter threads in done. If set to
+   1, use Py_BLOCK_THREADS/Py_UNBLOCK_THREADS (new mode added for v6.0.x).
+   If set to 0, use PyGILState_Ensure()/PyGILState_Release() (the mode
+   implemented initially).
+
+   Default value is “0”.
+
+   Example 1.4. Set threads_mode parameter
+...
+modparam("app_python3", "threads_mode", 1)
+...
+
 4. Functions
 
    4.1. python_exec(method [, args])
@@ -178,7 +196,7 @@ modparam("app_python3", "child_init_method", "my_child_init")
 
    Both parameters can contain pseudo-variables.
 
-   Example 1.4. python_exec usage
+   Example 1.5. python_exec usage
 ...
 python_exec("my_python_function");
 python_exec("my_python_function", "my_params");
