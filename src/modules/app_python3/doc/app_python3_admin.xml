@@ -160,6 +160,29 @@ modparam("app_python3", "child_init_method", "my_child_init")
 	    </example>
 	</section>
 
+	<section id="app_python3.p.threads_mode">
+	    <title><varname>threads_mode</varname> (int)</title>
+	    <para>
+			Control how locking for Python interpreter threads in done. If set
+			to 1, use Py_BLOCK_THREADS/Py_UNBLOCK_THREADS (new mode added for
+			v6.0.x). If set to 0, use PyGILState_Ensure()/PyGILState_Release()
+			(the mode implemented initially).
+	    </para>
+	    <para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>threads_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_python3", "threads_mode", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
 	</section>
 
     <section>
@@ -289,4 +312,3 @@ cfgengine "python"
 	</section>
 
 </chapter>
-
