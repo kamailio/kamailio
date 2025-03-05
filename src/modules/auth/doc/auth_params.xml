@@ -705,20 +705,19 @@ modparam("auth", "use_domain", 1)
 		<title><varname>algorithm</varname> (string)</title>
 		<para>
 			Configure hash algorithm used for digest authentication.
-			Possible values are "MD5" or "SHA-256". If left empty MD5 is used.
-			If specified, the specified algorithm is used and is also put in
+			Possible values are "MD5", "SHA-256" or "SHA-512". If left empty MD5 is
+			used. If specified, the specified algorithm is used and is also put in
 			the 'algorithm' field of the challenge header.
 		</para>
 		<para>
-			Warning: SHA-256 hash values take twice the space of MD5 hash values.
-			So a buffer overflow might occur if this option is used in combination
-			with another auth_* module that does not allocate at least 65 bytes to
-			store hash values.
-			SHA-256 can safely be used with the module auth_db as it allocates 256 bytes
-			to store HA1 values.
+			Warning: SHA-256/512 hash values take twice or more the space of MD5 hash
+			values. So a buffer overflow might occur if this option is used in combination
+			with another auth_* module that does not allocate at least enough (65 or 129)
+			bytes to store hash values. SHA-256/512 can safely be used with the module
+			auth_db as it allocates 256 bytes to store HA1 values.
 		</para>
 		<example>
-			<title>use SHA-256 example</title>
+			<title>algorithm example</title>
 			<programlisting>
 ...
 modparam("auth", "algorithm", "SHA-256")
