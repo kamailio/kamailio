@@ -79,8 +79,9 @@
 # DEFAULT_Q="1.0"
 
 
-## Program to calculate a message-digest fingerprint
-# MD5="md5sum"
+## Program to calculate the MD5/SHA256 message-digest fingerprint
+# - md5sum, sha256sum
+# CMDHASH="md5sum"
 
 ## awk tool
 # AWK="awk"
