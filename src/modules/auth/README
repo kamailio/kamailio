@@ -76,7 +76,7 @@ Daniel-Constantin Mierla
    1.13. force_stateless_reply example
    1.14. realm_prefix parameter example
    1.15. force_stateless_reply example
-   1.16. use SHA-256 example
+   1.16. algorithm example
    1.17. add Authentication-Info header example
    1.18. consume_credentials example
    1.19. consume_credentials example
@@ -645,17 +645,18 @@ modparam("auth", "use_domain", 1)
 3.18. algorithm (string)
 
    Configure hash algorithm used for digest authentication. Possible
-   values are "MD5" or "SHA-256". If left empty MD5 is used. If specified,
-   the specified algorithm is used and is also put in the 'algorithm'
-   field of the challenge header.
+   values are "MD5", "SHA-256" or "SHA-512". If left empty MD5 is used. If
+   specified, the specified algorithm is used and is also put in the
+   'algorithm' field of the challenge header.
 
-   Warning: SHA-256 hash values take twice the space of MD5 hash values.
-   So a buffer overflow might occur if this option is used in combination
-   with another auth_* module that does not allocate at least 65 bytes to
-   store hash values. SHA-256 can safely be used with the module auth_db
-   as it allocates 256 bytes to store HA1 values.
+   Warning: SHA-256/512 hash values take twice or more the space of MD5
+   hash values. So a buffer overflow might occur if this option is used in
+   combination with another auth_* module that does not allocate at least
+   enough (65 or 129) bytes to store hash values. SHA-256/512 can safely
+   be used with the module auth_db as it allocates 256 bytes to store HA1
+   values.
 
-   Example 1.16. use SHA-256 example
+   Example 1.16. algorithm example
 ...
 modparam("auth", "algorithm", "SHA-256")
 ...
