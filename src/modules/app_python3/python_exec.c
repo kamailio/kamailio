@@ -50,6 +50,7 @@ sr_apy_env_t *sr_apy_env_get()
 }
 
 extern __thread PyThreadState *_save;
+extern int _ksr_apy3_threads_mode;
 
 #define LOCK_RELEASE \
 	if(locked)       \
@@ -70,9 +71,12 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	PyObject *pmsg;
 	int rval = -1;
 	sip_msg_t *bmsg;
+	PyGILState_STATE gstate;
 	int locked = 0;
 
-	Py_BLOCK_THREADS
+	if(_ksr_apy3_threads_mode == 1) {
+		Py_BLOCK_THREADS;
+	}
 	/* clear error state */
 	PyErr_Clear();
 
@@ -92,6 +96,10 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 
 	bmsg = _sr_apy_env.msg;
 	_sr_apy_env.msg = _msg;
+
+	if(_ksr_apy3_threads_mode != 1) {
+		gstate = PyGILState_Ensure();
+	}
 
 	pFunc = PyObject_GetAttrString(_sr_apy_handler_obj, fname);
 	if(pFunc == NULL || !PyCallable_Check(pFunc)) {
@@ -169,12 +177,15 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 err:
 	/* clear error state */
 	PyErr_Clear();
+	if(_ksr_apy3_threads_mode != 1) {
+		PyGILState_Release(gstate);
+	}
 	LOCK_RELEASE;
-	/* clang-format off */
-	Py_UNBLOCK_THREADS
+	if(_ksr_apy3_threads_mode == 1) {
+		Py_UNBLOCK_THREADS;
+	}
 
 	return rval;
-	/* clang-format on */
 }
 
 /**

@@ -56,6 +56,10 @@ PyObject *format_exc_obj = NULL;
 char *dname = NULL, *bname = NULL;
 
 int _apy_process_rank = 0;
+int _ksr_apy3_threads_mode = 0;
+
+PyThreadState *myThreadState = NULL;
+__thread PyThreadState *_save = NULL;
 
 /* clang-format off */
 /** module parameters */
@@ -64,6 +68,7 @@ static param_export_t params[] = {
 	{"load", PARAM_STR, &_sr_python_load_file},
 	{"mod_init_function", PARAM_STR, &mod_init_fname},
 	{"child_init_method", PARAM_STR, &child_init_mname},
+	{"threads_mode", PARAM_INT, &_ksr_apy3_threads_mode},
 	{0, 0, 0}
 };
 
@@ -177,8 +182,6 @@ static int mod_init(void)
 /**
  *
  */
-__thread PyThreadState *_save;
-
 static int child_init(int rank)
 {
 	int ret = -1;
@@ -188,34 +191,39 @@ static int child_init(int rank)
 		 * so the Python internal state handler
 		 * should be called now.
 		 */
-		/* clang-format off */
 #if PY_VERSION_HEX >= 0x03070000
-		Py_BLOCK_THREADS
+		if(_ksr_apy3_threads_mode == 1) {
+			Py_BLOCK_THREADS;
+		}
 		PyOS_BeforeFork();
-		Py_UNBLOCK_THREADS
+		if(_ksr_apy3_threads_mode == 1) {
+			Py_UNBLOCK_THREADS;
+		}
 #endif
 		return 0;
-		/* clang-format on */
 	}
 	if(rank == PROC_POSTCHILDINIT) {
 		/*
 		 * this is called after forking of all child
 		 * processes
 		 */
-		/* clang-format off */
 #if PY_VERSION_HEX >= 0x03070000
-		Py_BLOCK_THREADS
+		if(_ksr_apy3_threads_mode == 1) {
+			Py_BLOCK_THREADS;
+		}
 		PyOS_AfterFork_Parent();
-		Py_UNBLOCK_THREADS
+		if(_ksr_apy3_threads_mode == 1) {
+			Py_UNBLOCK_THREADS;
+		}
 #endif
 		return 0;
-		/* clang-format on */
 	}
 	_apy_process_rank = rank;
 	/* clang-format off */
-	Py_BLOCK_THREADS
+	if(_ksr_apy3_threads_mode == 1) {
+		Py_BLOCK_THREADS;
+	}
 	if(!_ksr_is_main)
-	/* clang-format on */
 	{
 #if PY_VERSION_HEX >= 0x03070000
 		PyOS_AfterFork_Child();
@@ -230,10 +238,10 @@ static int child_init(int rank)
 	ret = apy_init_script(rank);
 
 finish:
-	/* clang-format off */
-	Py_UNBLOCK_THREADS
+	if(_ksr_apy3_threads_mode == 1) {
+		Py_UNBLOCK_THREADS;
+	}
 	return ret;
-	/* clang-format on */
 }
 
 /**
@@ -257,8 +265,12 @@ static int apy_mod_init(PyObject *pModule)
 	 * pModule: managed by caller, no need to Py_DECREF
 	 */
 	PyObject *pFunc, *pArgs, *pHandler;
+	PyGILState_STATE gstate;
 	int rval = -1;
 
+	if(_ksr_apy3_threads_mode != 1) {
+		gstate = PyGILState_Ensure();
+	}
 	pFunc = PyObject_GetAttrString(pModule, mod_init_fname.s);
 
 	/* pFunc is a new reference */
@@ -332,6 +344,9 @@ static int apy_mod_init(PyObject *pModule)
 	_sr_apy_handler_obj = pHandler;
 	rval = 0;
 err:
+	if(_ksr_apy3_threads_mode != 1) {
+		PyGILState_Release(gstate);
+	}
 	return rval;
 }
 
@@ -344,11 +359,14 @@ static PyObject *_sr_apy_module;
 int apy_reload_script(void)
 {
 	int rval = -1;
+	PyGILState_STATE gstate;
 
-	/* clang-format off */
-	Py_BLOCK_THREADS
+	if(_ksr_apy3_threads_mode != 1) {
+		gstate = PyGILState_Ensure();
+	} else {
+		Py_BLOCK_THREADS;
+	}
 	PyObject *pModule = PyImport_ReloadModule(_sr_apy_module);
-	/* clang-format on */
 	if(!pModule) {
 		if(!PyErr_Occurred())
 			PyErr_Format(PyExc_ImportError, "Reload module '%s'", bname);
@@ -370,10 +388,12 @@ int apy_reload_script(void)
 	}
 	rval = 0;
 err:
-	/* clang-format off */
-	Py_UNBLOCK_THREADS
+	if(_ksr_apy3_threads_mode != 1) {
+		PyGILState_Release(gstate);
+	} else {
+		Py_UNBLOCK_THREADS;
+	}
 	return rval;
-	/* clang-format on */
 }
 
 #define INTERNAL_VERSION "1003\n"
@@ -386,6 +406,7 @@ err:
 static int apy_load_script(void)
 {
 	PyObject *sys_path, *pDir, *pModule;
+	PyGILState_STATE gstate;
 	int rc, rval = -1;
 
 	if(sr_apy_init_ksr() != 0) {
@@ -397,6 +418,11 @@ static int apy_load_script(void)
 #if PY_VERSION_HEX < 0x03070000
 	PyEval_InitThreads();
 #endif
+
+	if(_ksr_apy3_threads_mode != 1) {
+		myThreadState = PyThreadState_Get();
+		gstate = PyGILState_Ensure();
+	}
 
 	// Py3 does not create a package-like hierarchy of modules
 	// make legacy modules importable using Py2 syntax
@@ -464,10 +490,12 @@ static int apy_load_script(void)
 
 	rval = 0;
 err:
-	/* clang-format off */
-	Py_UNBLOCK_THREADS
+	if(_ksr_apy3_threads_mode != 1) {
+		PyGILState_Release(gstate);
+	} else {
+		Py_UNBLOCK_THREADS;
+	}
 	return rval;
-	/* clang-format on */
 }
 
 /*
@@ -483,6 +511,12 @@ static int apy_init_script(int rank)
 #else
 	char *classname;
 #endif
+	PyGILState_STATE gstate;
+
+	if(_ksr_apy3_threads_mode != 1) {
+		gstate = PyGILState_Ensure();
+	}
+
 	// get instance class name
 	classname = get_instance_class_name(_sr_apy_handler_obj);
 	if(classname == NULL) {
@@ -563,6 +597,9 @@ static int apy_init_script(int rank)
 	rval = PyLong_AsLong(pResult);
 	Py_DECREF(pResult);
 err:
+	if(_ksr_apy3_threads_mode != 1) {
+		PyGILState_Release(gstate);
+	}
 	return rval;
 }
 /**
