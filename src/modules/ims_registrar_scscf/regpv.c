@@ -43,6 +43,7 @@ typedef struct _regpv_profile
 	str pname;
 	str domain;
 	str aor;
+	str impi;
 	int flags;
 	unsigned int aorhash;
 	int nrc;
@@ -118,6 +119,11 @@ static void regpv_free_profile(regpv_profile_t *rpp)
 		pkg_free(rpp->aor.s);
 		rpp->aor.s = 0;
 		rpp->aor.len = 0;
+	}
+	if(rpp->impi.s != NULL) {
+		pkg_free(rpp->impi.s);
+		rpp->impi.s = 0;
+		rpp->impi.len = 0;
 	}
 
 	rpp->flags = 0;
@@ -243,6 +249,9 @@ int pv_get_ulc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		case 17: /* count */
 			return pv_get_sintval(msg, param, res, rpp->nrc);
 			break;
+		case 18: /* impi */
+			return pv_get_strval(msg, param, res, &rpp->impi);
+			break;
 	}
 
 	return pv_get_null(msg, param, res);
@@ -321,6 +330,8 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 				rp->attr = 4;
 			else if(strncmp(pa.s, "cseq", 4) == 0)
 				rp->attr = 9;
+			else if(strncmp(pa.s, "impi", 4) == 0)
+				rp->attr = 18;
 			else
 				goto error;
 			break;
@@ -435,10 +446,18 @@ int pv_fetch_contacts(
 	if(res != 0) {
 		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
 		ul.unlock_udomain((udomain_t *)table, &aor);
-		return -1;
+		goto error;
 	}
 
-	ptr = 0; //r->contacts;TODO
+	rpp->impi.s = (char *)pkg_malloc(r->private_identity.len * sizeof(char));
+	if(rpp->impi.s == NULL) {
+		LM_ERR("no mem for impi\n");
+		goto error;
+	}
+	memcpy(rpp->impi.s, r->private_identity.s, r->private_identity.len);
+	rpp->impi.len = r->private_identity.len;
+
+	ptr = r->linked_contacts.head ? r->linked_contacts.head->contact : NULL;
 	ptr0 = NULL;
 	n = 0;
 	while(ptr) {
@@ -453,8 +472,8 @@ int pv_fetch_contacts(
 			goto error;
 		}
 		memcpy(c0, ptr, ilen);
-		//c0->domain = {0,0};//NULL;TODO
-		//c0->aor = {0,0};//NULL;
+		c0->domain = (str){NULL, 0};
+		c0->aor = (str){NULL, 0};
 		c0->next = NULL;
 		c0->prev = NULL;
 
