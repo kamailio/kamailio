@@ -328,7 +328,6 @@ static int w_check_dst(struct sip_msg *msg, char *val)
 			}
 		} else {
 			/* Any match */
-			dst.len = val->len;
 			if(dst.len > list->s.len)
 				dst.len = list->s.len;
 			if(cmpi_str(&list->s, &dst) == 0) {
