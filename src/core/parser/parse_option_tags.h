@@ -24,7 +24,7 @@
 #ifndef OPTION_TAGS_H
 #define OPTION_TAGS_H
 
-#include <strings.h>
+#include "../cross_strings.h"
 #include "hf.h"
 #include "keys.h"
 
