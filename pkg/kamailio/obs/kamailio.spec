@@ -1,5 +1,5 @@
 %define name    kamailio
-%define ver 6.0.0
+%define ver 6.0.1
 %define rel dev1.0%{dist}
 
 %if 0%{?fedora}
