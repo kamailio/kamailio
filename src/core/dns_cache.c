@@ -3921,7 +3921,7 @@ int dns_cache_print_entry(rpc_t *rpc, void *ctx, struct dns_hash_entry *e)
 				}
 				s.s = ((struct naptr_rdata *)(rr->rdata))->repl;
 				s.len = ((struct naptr_rdata *)(rr->rdata))->repl_len;
-				if(rpc->struct_add(sh, "S", "rr_regexp", &s) < 0) {
+				if(rpc->struct_add(sh, "S", "rr_replacement", &s) < 0) {
 					rpc->fault(ctx, 500,
 							"Internal error adding naptre rr_replacement");
 					return -1;
