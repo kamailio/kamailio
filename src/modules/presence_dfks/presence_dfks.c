@@ -46,6 +46,7 @@ MODULE_VERSION
 static int mod_init(void);
 
 /** API structures */
+add_event_t pres_add_event;
 sl_api_t slb;
 presence_api_t pres;
 pua_api_t pua;
