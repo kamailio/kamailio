@@ -32,13 +32,9 @@
 			<para>
 				The following modules must be loaded before this module:
 				<itemizedlist>
-					<listitem>
-						<para>
-							<emphasis>sl</emphasis>.
-							<emphasis>presence</emphasis>.
-							<emphasis>pua</emphasis>.
-						</para>
-					</listitem>
+					<listitem><para><emphasis>sl</emphasis></para></listitem>
+					<listitem><para><emphasis>presence</emphasis></para></listitem>
+					<listitem><para><emphasis>pua</emphasis></para></listitem>
 				</itemizedlist>
 			</para>
 		</section>
