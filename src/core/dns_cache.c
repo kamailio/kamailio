@@ -3898,6 +3898,15 @@ int dns_cache_print_entry(rpc_t *rpc, void *ctx, struct dns_hash_entry *e)
 					rpc->fault(ctx, 500, "Internal error adding naptr order");
 					return -1;
 				}
+				if(rpc->struct_add(sh, "s", "rr_skip_record",
+						   ((struct naptr_rdata *)(rr->rdata))->skip_record
+								   ? "yes"
+								   : "no")
+						< 0) {
+					rpc->fault(ctx, 500,
+							"Internal error adding naptr rr_skip_record");
+					return -1;
+				}
 				s.s = ((struct naptr_rdata *)(rr->rdata))->flags;
 				s.len = ((struct naptr_rdata *)(rr->rdata))->flags_len;
 				if(rpc->struct_add(sh, "S", "rr_flags", &s) < 0) {
