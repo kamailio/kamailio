@@ -67,7 +67,9 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * sl. presence. pua.
+     * sl
+     * presence
+     * pua
 
 2.2. External Libraries or Applications
 
