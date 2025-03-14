@@ -305,10 +305,10 @@ int process_body(str notify_body, udomain_t *domain)
 
 		if(reginfo_use_domain) {
 			aor_key.s = uri;
+			aor_key.len = strlen(uri);
 		} else {
-			aor_key.s = parsed_aor.user.s;
+			aor_key = parsed_aor.user;
 		}
-		aor_key.len = strlen(aor_key.s);
 		/* Now let's lock that domain for this AOR: */
 		ul.lock_udomain(domain, &aor_key);
 		/* and retrieve the user-record for this user: */
