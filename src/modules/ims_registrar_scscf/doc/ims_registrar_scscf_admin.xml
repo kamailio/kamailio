@@ -744,7 +744,7 @@ switch ($retcode) {
       profile)</function></title>
 
       <para>The function fetches the contacts for 'uri' from table 'domain' to
-      pseudo-variable $imssulc(profile) [imssulc = ims scscf ulc].</para>
+      pseudo-variable $ulc(profile) [ulc = ims scscf ulc].</para>
 
       <para>Meaning of the parameters is as follows:</para>
 
@@ -761,7 +761,7 @@ switch ($retcode) {
         </listitem>
 
         <listitem>
-          <para><emphasis>profile</emphasis> - Name of $imssulc
+          <para><emphasis>profile</emphasis> - Name of $ulc
           pseudo-variable profile that will store the fetched contacts. It is
           a static string.</para>
         </listitem>
@@ -793,7 +793,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>profile</emphasis> - Name of $imssulc
+          <para><emphasis>profile</emphasis> - Name of $ulc
           pseudo-variable profile that stores the contacts. It is a static
           string.</para>
         </listitem>
