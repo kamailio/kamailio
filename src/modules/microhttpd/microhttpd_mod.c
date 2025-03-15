@@ -371,6 +371,9 @@ static int ksr_mhttpd_send_reply(
 			_ksr_mhttpd_ctx.connection, (unsigned int)rcode, response);
 	MHD_destroy_response(response);
 
+	LM_DBG("queue response return: %d (%s)\n", ret,
+			(ret == MHD_YES) ? "YES" : "XYZ");
+
 	return (ret == MHD_YES) ? 1 : -1;
 }
 
