@@ -560,7 +560,6 @@ int th_flip_record_route(sip_msg_t *msg, str *uri_prefix, str *ip, int mode)
 	int utype;
 	str pval;
 	int r2;
-	int act;
 
 	if(msg->record_route == NULL) {
 		LM_DBG("no record route header\n");
@@ -568,9 +567,6 @@ int th_flip_record_route(sip_msg_t *msg, str *uri_prefix, str *ip, int mode)
 	}
 	hdr = msg->record_route;
 	i = 0;
-	act = 0;
-	if(mode == 1)
-		act = 2;
 	while(hdr != NULL) {
 		if(parse_rr(hdr) < 0) {
 			LM_ERR("failed to parse RR\n");
@@ -583,19 +579,15 @@ int th_flip_record_route(sip_msg_t *msg, str *uri_prefix, str *ip, int mode)
 			r2 = 0;
 			utype = th_get_uri_type(&rr->nameaddr.uri, &r2, ip, &pval);
 			if(utype == 0 && mode == 1) {
-				if(r2 == 1) {
-					act--;
-					if(act == 0)
-						return 0;
-					utype = 1;
-				} else {
+				if(next_sibling_hdr(hdr) == NULL && rr->next == NULL) {
 					return 0;
 				}
+				utype = 1;
 			}
 			out.s = NULL;
 			switch(utype) {
 				case 1: /* encode */
-					if(act != 0 && mode == 1) {
+					if(mode == 1) {
 						out.s = th_mask_encode(rr->nameaddr.uri.s,
 								rr->nameaddr.uri.len, uri_prefix, &out.len);
 						if(out.s == NULL) {
