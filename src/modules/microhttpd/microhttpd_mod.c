@@ -359,7 +359,7 @@ static int ksr_mhttpd_send_reply(
 	}
 
 	response = MHD_create_response_from_buffer(
-			sbody->len, sbody->s, MHD_RESPMEM_PERSISTENT);
+			sbody->len, sbody->s, MHD_RESPMEM_MUST_COPY);
 	if(response == NULL) {
 		LM_ERR("failed to create the response\n");
 		return -1;
