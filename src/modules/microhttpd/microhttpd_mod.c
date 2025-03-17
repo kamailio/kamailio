@@ -176,6 +176,13 @@ static void mod_destroy(void)
 {
 }
 
+typedef struct ksr_mhd_cstream
+{
+	int ctype;
+	int rcvmode;
+	str data;
+} ksr_mhd_cstream_t;
+
 typedef struct ksr_mhttpd_ctx
 {
 	struct MHD_Connection *connection;
@@ -436,23 +443,68 @@ static int fixup_mhttpd_send_reply(void **param, int param_no)
 }
 
 
+
 static enum MHD_Result ksr_microhttpd_request(void *cls,
 		struct MHD_Connection *connection, const char *url, const char *method,
 		const char *version, const char *upload_data, size_t *upload_data_size,
 		void **ptr)
 {
-	static int _first_callback;
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("microhttpd:request");
 	sip_msg_t *fmsg = NULL;
 	run_act_ctx_t ctx;
 	int rtb;
+	ksr_mhd_cstream_t *cstream = NULL;
 
-	if(&_first_callback != *ptr) {
+	cstream = (ksr_mhd_cstream_t *)*ptr;
+	if(cstream == NULL) {
+		cstream = (ksr_mhd_cstream_t *)malloc(sizeof(ksr_mhd_cstream_t));
+		if(cstream == NULL) {
+			LM_ERR("no more system memroy\n");
+			return MHD_NO;
+		}
+		memset(cstream, 0, sizeof(ksr_mhd_cstream_t));
+		*ptr = cstream;
+	}
+
+	if(cstream->rcvmode == 0) {
+		cstream->rcvmode = 1;
 		/* the first time only the headers are valid,
-		   do not respond in the first round... */
-		*ptr = &_first_callback;
+		 * do not respond in the first round */
 		return MHD_YES;
+	} else {
+		if(*upload_data_size != 0) {
+			char *buf = NULL;
+			int bsize = 0;
+			if(cstream->data.s != NULL) {
+				bsize = *upload_data_size + cstream->data.len + 1;
+			} else {
+				bsize = *upload_data_size + 1;
+			}
+			buf = (char *)malloc(sizeof(char) * bsize);
+			if(buf == NULL) {
+				if(cstream->data.s != NULL) {
+					free(cstream->data.s);
+					free(cstream);
+					*ptr = NULL;
+					return MHD_NO;
+				}
+			}
+			if(cstream->data.s != NULL) {
+				snprintf(buf, bsize, "%s%s", cstream->data.s, upload_data);
+				free(cstream->data.s);
+			} else {
+				snprintf(buf, bsize, "%s", upload_data);
+			}
+			cstream->data.s = buf;
+			cstream->data.len = bsize - 1;
+			*upload_data_size = 0;
+			return MHD_YES;
+		} else {
+			LM_DBG("incoming data: [%.*s]\n",
+					cstream->data.len <= 64 ? cstream->data.len : 64,
+					cstream->data.s);
+		}
 	}
 	*ptr = NULL; /* clear context pointer */
 
@@ -463,13 +515,19 @@ static enum MHD_Result ksr_microhttpd_request(void *cls,
 	_ksr_mhttpd_ctx.url.len = strlen(_ksr_mhttpd_ctx.url.s);
 	_ksr_mhttpd_ctx.httpversion.s = (char *)version;
 	_ksr_mhttpd_ctx.httpversion.len = strlen(_ksr_mhttpd_ctx.httpversion.s);
-	if(*upload_data_size > 0) {
-		_ksr_mhttpd_ctx.data.s = (char *)upload_data;
-		_ksr_mhttpd_ctx.data.len = (int)(*upload_data_size);
+	if(_ksr_mhttpd_ctx.data.s != NULL) {
+		free(_ksr_mhttpd_ctx.data.s);
+	}
+	if(cstream->data.len > 0) {
+		if(_ksr_mhttpd_ctx.data.s != NULL) {
+			free(_ksr_mhttpd_ctx.data.s);
+		}
+		_ksr_mhttpd_ctx.data = cstream->data;
 	} else {
 		_ksr_mhttpd_ctx.data.s = NULL;
 		_ksr_mhttpd_ctx.data.len = 0;
 	}
+	free(cstream);
 	_ksr_mhttpd_ctx.cinfo = MHD_get_connection_info(
 			connection, MHD_CONNECTION_INFO_CLIENT_ADDRESS);
 	_ksr_mhttpd_ctx.srcip.s = NULL;
