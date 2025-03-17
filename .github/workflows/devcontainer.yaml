@@ -33,14 +33,14 @@ jobs:
       - name: Get changed files
         if: ${{ ! inputs.force }}
         id: changed-files
-        uses: tj-actions/changed-files@v45
+        uses: tj-actions/changed-files@v46
         with:
           since_last_remote_commit: true
 
       - name: changes in relevant files
         if: ${{ ! inputs.force }}
         id: changed-files-builder
-        uses: tj-actions/changed-files@v45
+        uses: tj-actions/changed-files@v46
         with:
           files: |
             .devcontainer/**
