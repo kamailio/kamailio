@@ -44,6 +44,36 @@
 			]]></programlisting>
 		</example>
 	</section>
+	<section id="tcpops.f.tcp_con_alive">
+		<title>
+			<function>tcp_con_alive(hostport)</function>
+		</title>
+		<para>
+			Check the connection based on target host:port.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>hostport</emphasis> - target "host:port" address,
+				the port can be omitted (default to 5060) and the parameter can
+				contain variables.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>Return values:</para>
+		<para>1: connection was found</para>
+		<para>-1: connection was not found or an error occurred</para>
+		<example>
+			<title><function>tcp_con_alive</function> usage</title>
+			<programlisting><![CDATA[
+...
+	if(!tcp_con_alive("1.2.3.4:5060")) {
+		xlog("connection not found\n");
+	}
+...
+			]]></programlisting>
+		</example>
+	</section>
 	<section id="tcpops.f.tcp_conid_state">
 		<title>
 			<function>tcp_conid_state(conid)</function>
