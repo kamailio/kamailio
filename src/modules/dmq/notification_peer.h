@@ -55,6 +55,9 @@ dmq_node_t *add_server_and_notify(str_list_t *server_list);
 /* helper functions */
 extern int notification_resp_callback_f(
 		struct sip_msg *msg, int code, dmq_node_t *node, void *param);
+extern int default_resp_callback_f(
+		struct sip_msg *msg, int code, dmq_node_t *node, void *param);
 extern dmq_resp_cback_t dmq_notification_resp_callback;
+extern dmq_resp_cback_t dmq_default_resp_callback;
 
 #endif

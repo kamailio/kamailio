@@ -37,13 +37,13 @@
 
 #define NBODY_LEN 1024
 #define DMQ_NODE_ACTIVE 1 << 1
-#define DMQ_NODE_TIMEOUT 1 << 2
+#define DMQ_NODE_NOT_ACTIVE 1 << 2
 #define DMQ_NODE_DISABLED 1 << 3
-#define DMQ_NODE_PENDING 1 << 4
 
 typedef struct dmq_node
 {
-	int local;	  /* local type set means the dmq dmqnode == self */
+	int fail_count; /* counts how many times node responded with response code different than 200 OK */
+	int local;		/* local type set means the dmq dmqnode == self */
 	str orig_uri; /* original uri string - e.g. sip:127.0.0.1:5060;passive=true */
 	struct sip_uri uri;		   /* parsed uri string */
 	struct ip_addr ip_address; /* resolved IP address */
@@ -76,6 +76,8 @@ int dmq_node_del_by_uri(dmq_node_list_t *list, str *suri);
 int cmp_dmq_node(dmq_node_t *node, dmq_node_t *cmpnode);
 int cmp_dmq_node_ip(dmq_node_t *node, dmq_node_t *cmpnode);
 int update_dmq_node_status(dmq_node_list_t *list, dmq_node_t *node, int status);
+int update_dmq_node_status_on_timeout(
+		dmq_node_list_t *list, dmq_node_t *node, int fail_count_status);
 dmq_node_t *shm_dup_node(dmq_node_t *node);
 void destroy_dmq_node(dmq_node_t *node, int shm);
 void shm_free_node(dmq_node_t *node);
@@ -84,6 +86,8 @@ int set_dmq_node_params(dmq_node_t *node, param_t *params);
 
 str *dmq_get_status_str(int status);
 int build_node_str(dmq_node_t *node, char *buf, int buflen);
+
+int reset_dmq_node_fail_count(dmq_node_list_t *list, dmq_node_t *node);
 
 extern dmq_node_t *dmq_self_node;
 extern dmq_node_t *dmq_notification_node;
