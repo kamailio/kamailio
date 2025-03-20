@@ -37,9 +37,8 @@
 
 #define NBODY_LEN 1024
 #define DMQ_NODE_ACTIVE 1 << 1
-#define DMQ_NODE_TIMEOUT 1 << 2
+#define DMQ_NODE_NOT_ACTIVE 1 << 2
 #define DMQ_NODE_DISABLED 1 << 3
-#define DMQ_NODE_PENDING 1 << 4
 
 typedef struct dmq_node
 {

@@ -35,9 +35,8 @@ dmq_node_t *dmq_notification_node;
 str dmq_node_status_str = str_init("status");
 /* possible values */
 str dmq_node_active_str = str_init("active");
+str dmq_node_not_active_str = str_init("not_active");
 str dmq_node_disabled_str = str_init("disabled");
-str dmq_node_timeout_str = str_init("timeout");
-str dmq_node_pending_str = str_init("pending");
 
 /**
  * @brief get the string status of the node
@@ -48,14 +47,11 @@ str *dmq_get_status_str(int status)
 		case DMQ_NODE_ACTIVE: {
 			return &dmq_node_active_str;
 		}
+		case DMQ_NODE_NOT_ACTIVE: {
+			return &dmq_node_not_active_str;
+		}
 		case DMQ_NODE_DISABLED: {
 			return &dmq_node_disabled_str;
-		}
-		case DMQ_NODE_TIMEOUT: {
-			return &dmq_node_timeout_str;
-		}
-		case DMQ_NODE_PENDING: {
-			return &dmq_node_pending_str;
 		}
 		default: {
 			return 0;
@@ -134,12 +130,10 @@ int set_dmq_node_params(dmq_node_t *node, param_t *params)
 	if(status) {
 		if(STR_EQ(*status, dmq_node_active_str)) {
 			node->status = DMQ_NODE_ACTIVE;
-		} else if(STR_EQ(*status, dmq_node_timeout_str)) {
-			node->status = DMQ_NODE_TIMEOUT;
+		} else if(STR_EQ(*status, dmq_node_not_active_str)) {
+			node->status = DMQ_NODE_NOT_ACTIVE;
 		} else if(STR_EQ(*status, dmq_node_disabled_str)) {
 			node->status = DMQ_NODE_DISABLED;
-		} else if(STR_EQ(*status, dmq_node_pending_str)) {
-			node->status = DMQ_NODE_PENDING;
 		} else {
 			LM_ERR("invalid status parameter: %.*s\n", STR_FMT(status));
 			goto error;
@@ -155,7 +149,7 @@ error:
  */
 int set_default_dmq_node_params(dmq_node_t *node)
 {
-	node->status = DMQ_NODE_PENDING;
+	node->status = DMQ_NODE_NOT_ACTIVE;
 	return 0;
 }
 
