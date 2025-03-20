@@ -35,9 +35,8 @@ dmq_node_t *dmq_notification_node;
 str dmq_node_status_str = str_init("status");
 /* possible values */
 str dmq_node_active_str = str_init("active");
+str dmq_node_not_active_str = str_init("not_active");
 str dmq_node_disabled_str = str_init("disabled");
-str dmq_node_timeout_str = str_init("timeout");
-str dmq_node_pending_str = str_init("pending");
 
 /**
  * @brief get the string status of the node
@@ -48,14 +47,11 @@ str *dmq_get_status_str(int status)
 		case DMQ_NODE_ACTIVE: {
 			return &dmq_node_active_str;
 		}
+		case DMQ_NODE_NOT_ACTIVE: {
+			return &dmq_node_not_active_str;
+		}
 		case DMQ_NODE_DISABLED: {
 			return &dmq_node_disabled_str;
-		}
-		case DMQ_NODE_TIMEOUT: {
-			return &dmq_node_timeout_str;
-		}
-		case DMQ_NODE_PENDING: {
-			return &dmq_node_pending_str;
 		}
 		default: {
 			return 0;
@@ -134,12 +130,10 @@ int set_dmq_node_params(dmq_node_t *node, param_t *params)
 	if(status) {
 		if(STR_EQ(*status, dmq_node_active_str)) {
 			node->status = DMQ_NODE_ACTIVE;
-		} else if(STR_EQ(*status, dmq_node_timeout_str)) {
-			node->status = DMQ_NODE_TIMEOUT;
+		} else if(STR_EQ(*status, dmq_node_not_active_str)) {
+			node->status = DMQ_NODE_NOT_ACTIVE;
 		} else if(STR_EQ(*status, dmq_node_disabled_str)) {
 			node->status = DMQ_NODE_DISABLED;
-		} else if(STR_EQ(*status, dmq_node_pending_str)) {
-			node->status = DMQ_NODE_PENDING;
 		} else {
 			LM_ERR("invalid status parameter: %.*s\n", STR_FMT(status));
 			goto error;
@@ -155,7 +149,7 @@ error:
  */
 int set_default_dmq_node_params(dmq_node_t *node)
 {
-	node->status = DMQ_NODE_PENDING;
+	node->status = DMQ_NODE_ACTIVE;
 	return 0;
 }
 
@@ -463,6 +457,62 @@ int update_dmq_node_status(dmq_node_list_t *list, dmq_node_t *node, int status)
 }
 
 /**
+ * @brief update status of existing dmq node, when 408 timeout received
+ */
+int update_dmq_node_status_on_timeout(
+		dmq_node_list_t *list, dmq_node_t *node, int fail_count_status)
+{
+	dmq_node_t *cur;
+	lock_get(&list->lock);
+	cur = list->nodes;
+	while(cur) {
+		if(cmp_dmq_node(cur, node)) {
+			/* if node has specific status */
+			if(cur->status & fail_count_status) {
+				/* update fail_count*/
+				cur->fail_count++;
+
+				/* update state possibly based on fail_count */
+				/* put the node from not_active to disabled state */
+				if(cur->fail_count > dmq_fail_count_threshold_disabled
+						&& cur->status == DMQ_NODE_NOT_ACTIVE) {
+					LM_WARN("move to disabled: updated fail_count=%d "
+							"fail_threshold_not_active=%d "
+							"fail_threshold_disabled=%d "
+							"host=%.*s port=%.*s\n",
+							cur->fail_count,
+							dmq_fail_count_threshold_not_active,
+							dmq_fail_count_threshold_disabled,
+							node->uri.host.len, node->uri.host.s,
+							node->uri.port.len, node->uri.port.s);
+					cur->status = DMQ_NODE_DISABLED;
+
+					/* put the node from active to not_active state */
+				} else if(cur->fail_count > dmq_fail_count_threshold_not_active
+						  && cur->status == DMQ_NODE_ACTIVE) {
+					LM_WARN("move to not_active: cur->fail_count=%d "
+							"fail_threshold_not_active=%d "
+							"fail_threshold_disabled=%d "
+							"host=%.*s port=%.*s\n",
+							cur->fail_count,
+							dmq_fail_count_threshold_not_active,
+							dmq_fail_count_threshold_disabled,
+							node->uri.host.len, node->uri.host.s,
+							node->uri.port.len, node->uri.port.s);
+					cur->status = DMQ_NODE_NOT_ACTIVE;
+				}
+			}
+			lock_release(&list->lock);
+			return 1;
+		}
+		cur = cur->next;
+	}
+	lock_release(&list->lock);
+	return 0;
+}
+
+
+/**
  * @brief build dmq node string
  */
 int build_node_str(dmq_node_t *node, char *buf, int buflen)
@@ -503,4 +553,28 @@ int build_node_str(dmq_node_t *node, char *buf, int buflen)
 			dmq_get_status_str(node->status)->len);
 	len += dmq_get_status_str(node->status)->len;
 	return len;
+}
+
+/**
+ * @brief reset fail counter
+ */
+int reset_dmq_node_fail_count(dmq_node_list_t *list, dmq_node_t *node)
+{
+	dmq_node_t *cur;
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
+	lock_get(&list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
+	cur = list->nodes;
+	while(cur) {
+		if(cmp_dmq_node(cur, node)) {
+			cur->fail_count = 0;
+			lock_release(&list->lock);
+			LM_DBG("released dmq_node_list->lock\n");
+			return 1;
+		}
+		cur = cur->next;
+	}
+	lock_release(&list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
+	return 0;
 }

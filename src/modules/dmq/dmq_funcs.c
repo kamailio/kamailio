@@ -252,7 +252,11 @@ int dmq_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
 		goto error;
 	}
 	memset(cb_param, 0, sizeof(*cb_param));
-	cb_param->resp_cback = *resp_cback;
+	if(resp_cback == NULL) {
+		cb_param->resp_cback = dmq_default_resp_callback;
+	} else {
+		cb_param->resp_cback = *resp_cback;
+	}
 	cb_param->node = shm_dup_node(node);
 	if(cb_param->node == NULL) {
 		LM_ERR("error building callback parameter\n");

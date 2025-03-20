@@ -32,6 +32,7 @@
 str dmq_notification_content_type = str_init("text/plain");
 dmq_resp_cback_t dmq_notification_resp_callback = {
 		&notification_resp_callback_f, 0};
+dmq_resp_cback_t dmq_default_resp_callback = {&default_resp_callback_f, 0};
 
 int *dmq_init_callback_done = 0;
 
@@ -617,8 +618,13 @@ int notification_resp_callback_f(
 	int nodes_recv;
 	str_list_t *slp;
 
-	LM_DBG("notification_callback_f triggered [%p %d %p]\n", msg, code, param);
+	LM_DBG("triggered [%p %d %p]\n", msg, code, param);
 	if(code == 200) {
+		if(dmq_fail_count_enabled) {
+			/* reset node fail counter */
+			reset_dmq_node_fail_count(dmq_node_list, node);
+		}
+
 		/* be sure that the node that answered is in active state */
 		update_dmq_node_status(dmq_node_list, node, DMQ_NODE_ACTIVE);
 		nodes_recv = extract_node_list(dmq_node_list, msg);
@@ -628,32 +634,80 @@ int notification_resp_callback_f(
 			run_init_callbacks();
 		}
 	} else if(code == 408) {
-		if(!dmq_remove_inactive) {
-			/* put the node in pending state */
-			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_PENDING);
-			return 0;
-		}
-		/* TODO this probably do not work for dmq_multi_notify */
-		slp = dmq_notification_address_list;
-		while(slp != NULL) {
-			if(STR_EQ(node->orig_uri, slp->s)) {
-				LM_ERR("not deleting notification peer [%.*s]\n",
-						STR_FMT(&slp->s));
-				update_dmq_node_status(dmq_node_list, node, DMQ_NODE_PENDING);
-				return 0;
-			}
-			slp = slp->next;
-		}
+		LM_WARN("timeout: previous fail_count=%d fail_threshold_not_active=%d "
+				"fail_threshold_disabled=%d "
+				"host=%.*s port=%.*s\n",
+				node->fail_count, dmq_fail_count_threshold_not_active,
+				dmq_fail_count_threshold_disabled, node->uri.host.len,
+				node->uri.host.s, node->uri.port.len, node->uri.port.s);
+
 		if(node->status == DMQ_NODE_DISABLED) {
 			/* deleting node - the server did not respond */
 			LM_ERR("deleting server node %.*s because of failed request\n",
 					STR_FMT(&node->orig_uri));
 			ret = del_dmq_node(dmq_node_list, node);
 			LM_DBG("del_dmq_node returned %d\n", ret);
+			return 0;
+		}
+
+		if(dmq_fail_count_enabled) {
+			/* alwaws increment fail_count here and possibly update state */
+			update_dmq_node_status_on_timeout(dmq_node_list, node,
+					(DMQ_NODE_ACTIVE | DMQ_NODE_NOT_ACTIVE
+							| DMQ_NODE_DISABLED));
+			return 0;
+		}
+
+		/* TODO this probably do not work for dmq_multi_notify */
+		slp = dmq_notification_address_list;
+		while(slp != NULL) {
+			if(STR_EQ(node->orig_uri, slp->s)) {
+				LM_ERR("not deleting notification peer [%.*s]\n",
+						STR_FMT(&slp->s));
+				update_dmq_node_status(
+						dmq_node_list, node, DMQ_NODE_NOT_ACTIVE);
+				return 0;
+			}
+			slp = slp->next;
+		}
+
+		/* update status only if fail_count mechanism is disabled
+		 * otherwise, let fail_count reach threshold before update status */
+		if(!dmq_remove_inactive) {
+			/* put the node in not_active state */
+			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_NOT_ACTIVE);
 		} else {
 			/* put the node in disabled state and wait for the next ping before deleting it */
 			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_DISABLED);
 		}
 	}
+	return 0;
+}
+
+/**
+ * @brief default response callback
+ */
+int default_resp_callback_f(
+		struct sip_msg *msg, int code, dmq_node_t *node, void *param)
+{
+	LM_DBG("triggered [%p %d %p]\n", msg, code, param);
+
+	/* if node timeout */
+	if(code == 408) {
+		LM_WARN("timeout: previous fail_count=%d fail_threshold_not_active=%d "
+				"fail_threshold_disabled=%d "
+				"host=%.*s port=%.*s\n",
+				node->fail_count, dmq_fail_count_threshold_not_active,
+				dmq_fail_count_threshold_disabled, node->uri.host.len,
+				node->uri.host.s, node->uri.port.len, node->uri.port.s);
+
+		if(dmq_fail_count_enabled) {
+			/* increment fail_count here and possibly update state, if node in active state */
+			/* this will prevent other modules that use DMQ to affect node state past the not_active state */
+			update_dmq_node_status_on_timeout(
+					dmq_node_list, node, DMQ_NODE_ACTIVE);
+		}
+	}
+
 	return 0;
 }
