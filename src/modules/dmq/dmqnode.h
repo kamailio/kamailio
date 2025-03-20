@@ -42,7 +42,8 @@
 
 typedef struct dmq_node
 {
-	int local;	  /* local type set means the dmq dmqnode == self */
+	int fail_count; /* counts how many times node responded with response code different than 200 OK */
+	int local;		/* local type set means the dmq dmqnode == self */
 	str orig_uri; /* original uri string - e.g. sip:127.0.0.1:5060;passive=true */
 	struct sip_uri uri;		   /* parsed uri string */
 	struct ip_addr ip_address; /* resolved IP address */
@@ -83,6 +84,9 @@ int set_dmq_node_params(dmq_node_t *node, param_t *params);
 
 str *dmq_get_status_str(int status);
 int build_node_str(dmq_node_t *node, char *buf, int buflen);
+
+int update_dmq_node_fail_count(dmq_node_list_t *list, dmq_node_t *node);
+int reset_dmq_node_fail_count(dmq_node_list_t *list, dmq_node_t *node);
 
 extern dmq_node_t *dmq_self_node;
 extern dmq_node_t *dmq_notification_node;

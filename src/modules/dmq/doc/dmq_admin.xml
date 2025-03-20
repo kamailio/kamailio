@@ -337,6 +337,44 @@ modparam("dmq", "remove_inactive", 0)
 </programlisting>
 		</example>
 	</section>
+	<section id="dmq.p.fail_count_enabled">
+		<title><varname>fail_count_enabled</varname>(int)</title>
+		<para>
+			Enable per node counting of failed responses.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote> (disabled).</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fail_count_enabled</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "fail_count_enabled", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="dmq.p.fail_count_threshold">
+		<title><varname>fail_count_threshold</varname>(int)</title>
+		<para>
+			DMQ node status change to "not_active" if fail counts are greater than this threshold value.
+
+			Fail counts reset every time a node responds with response code 200 OK, on notification ping.
+			Fail counts increase every time a node responds with response code different than 200 OK,
+			either on notification ping or when other modules use dmq to send message.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.</emphasis> Move node to "not_active" state on first fail.
+		</para>
+		<example>
+		<title>Set <varname>fail_count_threshold</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "fail_count_threshold", 5)
+...
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

@@ -498,3 +498,53 @@ int build_node_str(dmq_node_t *node, char *buf, int buflen)
 	len += dmq_get_status_str(node->status)->len;
 	return len;
 }
+
+/**
+ * @brief update fail counter
+ */
+int update_dmq_node_fail_count(dmq_node_list_t *list, dmq_node_t *node)
+{
+	int fails;
+	dmq_node_t *cur;
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
+	lock_get(&list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
+	cur = list->nodes;
+	while(cur) {
+		if(cmp_dmq_node(cur, node)) {
+			cur->fail_count++;
+			fails = cur->fail_count;
+			lock_release(&list->lock);
+			LM_DBG("released dmq_node_list->lock\n");
+			return fails;
+		}
+		cur = cur->next;
+	}
+	lock_release(&list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
+	return 0;
+}
+
+/**
+ * @brief reset fail counter
+ */
+int reset_dmq_node_fail_count(dmq_node_list_t *list, dmq_node_t *node)
+{
+	dmq_node_t *cur;
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
+	lock_get(&list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
+	cur = list->nodes;
+	while(cur) {
+		if(cmp_dmq_node(cur, node)) {
+			cur->fail_count = 0;
+			lock_release(&list->lock);
+			LM_DBG("released dmq_node_list->lock\n");
+			return 1;
+		}
+		cur = cur->next;
+	}
+	lock_release(&list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
+	return 0;
+}
