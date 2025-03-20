@@ -32,6 +32,7 @@
 str dmq_notification_content_type = str_init("text/plain");
 dmq_resp_cback_t dmq_notification_resp_callback = {
 		&notification_resp_callback_f, 0};
+dmq_resp_cback_t dmq_default_resp_callback = {&default_resp_callback_f, 0};
 
 int *dmq_init_callback_done = 0;
 
@@ -630,7 +631,7 @@ int notification_resp_callback_f(
 	} else if(code == 408) {
 		if(!dmq_remove_inactive) {
 			/* put the node in pending state */
-			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_PENDING);
+			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_NOT_ACTIVE);
 			return 0;
 		}
 		/* TODO this probably do not work for dmq_multi_notify */
@@ -639,7 +640,8 @@ int notification_resp_callback_f(
 			if(STR_EQ(node->orig_uri, slp->s)) {
 				LM_ERR("not deleting notification peer [%.*s]\n",
 						STR_FMT(&slp->s));
-				update_dmq_node_status(dmq_node_list, node, DMQ_NODE_PENDING);
+				update_dmq_node_status(
+						dmq_node_list, node, DMQ_NODE_NOT_ACTIVE);
 				return 0;
 			}
 			slp = slp->next;
@@ -654,6 +656,26 @@ int notification_resp_callback_f(
 			/* put the node in disabled state and wait for the next ping before deleting it */
 			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_DISABLED);
 		}
+	}
+	return 0;
+}
+
+/**
+ * @brief default response callback
+ */
+int default_resp_callback_f(
+		struct sip_msg *msg, int code, dmq_node_t *node, void *param)
+{
+	int ret;
+	int nodes_recv;
+	str_list_t *slp;
+
+	LM_DBG("default_callback_f triggered [%p %d %p]\n", msg, code, param);
+
+	/* detect if node did not repond with 200 OK and move it to inactive state */
+	if(code != 200) {
+		/* put the node in pending state */
+		update_dmq_node_status(dmq_node_list, node, DMQ_NODE_NOT_ACTIVE);
 	}
 	return 0;
 }
