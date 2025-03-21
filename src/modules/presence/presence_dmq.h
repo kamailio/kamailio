@@ -33,7 +33,6 @@
 
 extern dmq_api_t pres_dmqb;
 extern dmq_peer_t *pres_dmq_peer;
-extern dmq_resp_cback_t pres_dmq_resp_callback;
 
 typedef enum
 {
@@ -47,6 +46,4 @@ int pres_dmq_handle_msg(
 		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *node);
 int pres_dmq_replicate_presentity(presentity_t *presentity, str *body,
 		int new_t, str *cur_etag, char *sphere, str *ruid, dmq_node_t *node);
-int pres_dmq_resp_callback_f(
-		struct sip_msg *msg, int code, dmq_node_t *node, void *param);
 #endif

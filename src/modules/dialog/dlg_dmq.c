@@ -33,7 +33,6 @@ static str dmq_500_rpl = str_init("Server Internal Error");
 
 dmq_api_t dlg_dmqb;
 dmq_peer_t *dlg_dmq_peer = NULL;
-dmq_resp_cback_t dlg_dmq_resp_callback = {&dlg_dmq_resp_callback_f, 0};
 
 int dmq_send_all_dlgs(dmq_node_t *dmq_node);
 int dlg_dmq_request_sync();
@@ -82,12 +81,12 @@ int dlg_dmq_send(str *body, dmq_node_t *node)
 	}
 	if(node) {
 		LM_DBG("sending dmq message ...\n");
-		dlg_dmqb.send_message(dlg_dmq_peer, body, node, &dlg_dmq_resp_callback,
-				1, &dlg_dmq_content_type);
+		dlg_dmqb.send_message(
+				dlg_dmq_peer, body, node, NULL, 1, &dlg_dmq_content_type);
 	} else {
 		LM_DBG("sending dmq broadcast...\n");
-		dlg_dmqb.bcast_message(dlg_dmq_peer, body, 0, &dlg_dmq_resp_callback, 1,
-				&dlg_dmq_content_type);
+		dlg_dmqb.bcast_message(
+				dlg_dmq_peer, body, 0, NULL, 1, &dlg_dmq_content_type);
 	}
 	return 0;
 }
@@ -682,16 +681,5 @@ int dmq_send_all_dlgs(dmq_node_t *dmq_node)
 		dlg_unlock(d_table, entry);
 	}
 
-	return 0;
-}
-
-
-/**
-* @brief dmq response callback
-*/
-int dlg_dmq_resp_callback_f(
-		struct sip_msg *msg, int code, dmq_node_t *node, void *param)
-{
-	LM_DBG("dmq response callback triggered [%p %d %p]\n", msg, code, param);
 	return 0;
 }
