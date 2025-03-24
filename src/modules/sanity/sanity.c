@@ -813,7 +813,7 @@ int check_parse_uris(sip_msg_t *msg, int checks)
 			if(!msg->to || !msg->to->body.s) {
 				msg->msg_flags |= FL_MSG_NOREPLY;
 			} else {
-				if(sanity_reply(msg, 400, "Ivalid To Header") < 0) {
+				if(sanity_reply(msg, 400, "Invalid To Header") < 0) {
 					LM_WARN("failed to send 400 via sl reply (missing To)\n");
 				}
 			}
