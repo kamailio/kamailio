@@ -965,6 +965,22 @@ modparam("dispatcher", "ds_default_sockname", "sock1")
 		</example>
 	</section>
 
+	<section id="dispatcher.p.ds_ping_socket">
+		<title><varname>ds_ping_socket</varname> (str)</title>
+		<para>
+			Default socket to be used for sending ping requests
+			when a gateway has no "ping_socket" configured.
+		</para>
+		<example>
+		<title>Set the <quote>ds_ping_socket</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_socket", "udp:192.168.0.125:5060")
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dispatcher.p.ds_timer_mode">
 		<title><varname>ds_timer_mode</varname> (int)</title>
 		<para>
@@ -2479,6 +2495,10 @@ kamcli dispatcher.oclist 1
 							<para>'socket' - used to set the sending socket for the gateway. It is
 								used for sending the SIP traffic as well as OPTIONS
 								keepalives.</para>
+						</listitem>
+						<listitem>
+							<para>'ping_socket' - used to set the sending socket for ping requests.
+								It overwrites the general ds_ping_socket parameter.</para>
 						</listitem>
 						<listitem>
 							<para>'sockname' - used to set by name the sending socket for the
