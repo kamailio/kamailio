@@ -51,7 +51,7 @@ static int mod_init(void);
 static void destroy(void);
 static int child_init(int rank);
 
-static int is_local(struct sip_msg *msg, char *s1, char *s2);
+static int uid_domain_is_local(struct sip_msg *msg, char *s1, char *s2);
 static int lookup_domain(struct sip_msg *msg, char *s1, char *s2);
 static int get_did(str *did, str *domain);
 
@@ -122,8 +122,10 @@ static domain_t dom_buf[2];
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_local", is_local, 1, fixup_var_str_1, fixup_free_fparam_1, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{"lookup_domain", lookup_domain, 2, lookup_domain_fixup, lookup_domain_fixup_free, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"is_local", uid_domain_is_local, 1, fixup_var_str_1, fixup_free_fparam_1,
+		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"lookup_domain", lookup_domain, 2, lookup_domain_fixup,
+		lookup_domain_fixup_free, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"get_did", (cmd_function)get_did, 0, 0, 0, 0},
 	{"bind_domain", (cmd_function)bind_domain, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -384,7 +386,7 @@ static void destroy(void)
 /*
  * Check if domain is local
  */
-static int is_local(struct sip_msg *msg, char *fp, char *s2)
+static int uid_domain_is_local(struct sip_msg *msg, char *fp, char *s2)
 {
 	str domain;
 
