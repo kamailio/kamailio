@@ -346,9 +346,9 @@ typedef struct cell
 	/* sequence number within hash collision slot */
 	unsigned int label;
 	/* different information about the transaction */
-	unsigned short flags;
+	unsigned int flags;
 	/* number of forks */
-	short nr_of_outgoings;
+	int nr_of_outgoings;
 
 	/* free operations counter - debug */
 	int fcount;
