@@ -12,10 +12,24 @@ jobs:
     permissions:
       contents: read # to fetch code (actions/checkout)
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the repository to the runner
+        uses: actions/checkout@v4
       - uses: wolletd/clang-format-checker@v1.12
         with:
           target-ref: master
+  check-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # to fetch code (actions/checkout)
+    steps:
+      - name: Check out the repository to the runner
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Run scripts/check-commit.sh
+        run: ./.github/scripts/check-commit.sh
+        env:
+          ref: ${{ github.event.pull_request.head.sha }}
   build:
     runs-on: ubuntu-latest
     permissions:
@@ -38,7 +52,8 @@ jobs:
           - distribution: bookworm
             compilier: clang
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the repository to the runner
+        uses: actions/checkout@v4
       - uses: ammaraskar/gcc-problem-matcher@0.3.0
       - name: build
         run: |
