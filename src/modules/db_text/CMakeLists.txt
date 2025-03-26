@@ -10,7 +10,8 @@ add_kamdbctl_db_files(${group_name} kamdbctl.dbtext)
 install(
   PROGRAMS ${CMAKE_SOURCE_DIR}/utils/kamctl/dbtextdb/dbtextdb.py
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl/dbtextdb
-  COMPONENT kamailio-core)
+  COMPONENT kamailio-core
+)
 
 include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
 add_db_target("${group_name}" dbtext "${STYLESHEETS}/dbtext.xsl")

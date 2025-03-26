@@ -26,9 +26,11 @@ add_custom_command(
     "${CMAKE_BINARY_DIR}/utils/kamctl/mongodb/kamailio/version-create.mongo"
     "${CMAKE_BINARY_DIR}/utils/kamctl/mongodb/kamailio"
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/utils/kamctl
-  COMMENT "Creating version-create.mongo from JSON files")
+  COMMENT "Creating version-create.mongo from JSON files"
+)
 
 install(
   FILES ${CMAKE_BINARY_DIR}/utils/kamctl/mongodb/kamailio/version-create.mongo
   DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}/mongodb/${MAIN_NAME}
-  COMPONENT ${group_name})
+  COMPONENT ${group_name}
+)

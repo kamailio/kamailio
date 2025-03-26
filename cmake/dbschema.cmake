@@ -18,8 +18,7 @@ else()
     add_custom_target(dbschema_clean COMMENT "Cleaning schemas for all dbs...")
   endif()
 
-  option(XSLT_VALIDATE, "Enable schema validation during XSL transformations"
-         ON)
+  option(XSLT_VALIDATE, "Enable schema validation during XSL transformations" ON)
   option(XSLT_VERBOSE, "Enable verbose output for XSL transformations" OFF)
 
   set(XSLTPROC_FLAGS --xinclude)
@@ -47,16 +46,14 @@ else()
   endforeach()
   # Output the extracted table names
   if(VERBOSE)
-    message(
-      STATUS "Extracted Tables for DB schema generation: ${EXTRACTED_TABLES}")
+    message(STATUS "Extracted Tables for DB schema generation: ${EXTRACTED_TABLES}")
   endif()
 
   # Function to add a target for each database type prefix with dbschema ie
   # db_name = redis -> target = dbschema_redis
   function(add_db_target group_name db_name xsl_file)
     # Change name for the folder
-    if(db_name STREQUAL "pi_framework_table" OR db_name STREQUAL
-                                                "pi_framework_mod")
+    if(db_name STREQUAL "pi_framework_table" OR db_name STREQUAL "pi_framework_mod")
       set(db_name_folder xhttp_pi)
     else()
       set(db_name_folder ${db_name})
@@ -66,7 +63,8 @@ else()
       dbschema_${db_name}
       COMMAND ${CMAKE_COMMAND} -E make_directory "${db_name_folder}"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMENT "Creating schemas for ${db_name}")
+      COMMENT "Creating schemas for ${db_name}"
+    )
 
     # Loop through each table and add a command for xsltproc
     foreach(table ${EXTRACTED_TABLES})
@@ -74,7 +72,8 @@ else()
       if(db_name STREQUAL "db_berkeley"
          OR db_name STREQUAL "db_redis"
          OR db_name STREQUAL "dbtext"
-         OR db_name STREQUAL "mongodb")
+         OR db_name STREQUAL "mongodb"
+      )
         set(prefix '')
         set(folder_suffix "${MAIN_NAME}")
       else()
@@ -86,20 +85,19 @@ else()
         TARGET dbschema_${db_name}
         PRE_BUILD
         COMMAND
-          "XML_CATALOG_FILES=${CATALOG}" ${XSLTPROC_EXECUTABLE}
-          ${XSLTPROC_FLAGS} --stringparam dir
-          ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}/${folder_suffix}
-          --stringparam prefix ${prefix} --stringparam db ${db_name} ${xsl_file}
-          "kamailio-${table}.xml"
+          "XML_CATALOG_FILES=${CATALOG}" ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS} --stringparam dir
+          ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}/${folder_suffix} --stringparam prefix
+          ${prefix} --stringparam db ${db_name} ${xsl_file} "kamailio-${table}.xml"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema"
-        COMMENT "Processing ${table} for ${db_name}")
+        COMMENT "Processing ${table} for ${db_name}"
+      )
     endforeach()
 
     add_custom_target(
       dbschema_${db_name}_clean
-      COMMAND ${CMAKE_COMMAND} -E remove_directory
-              "${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}"
-      COMMENT "Cleaning ${db_name} schema files")
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}"
+      COMMENT "Cleaning ${db_name} schema files"
+    )
 
     add_dependencies(dbschema dbschema_${db_name})
     add_dependencies(dbschema_clean dbschema_${db_name}_clean)
@@ -110,7 +108,8 @@ else()
       DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}
       DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}
       OPTIONAL
-      COMPONENT ${group_name})
+      COMPONENT ${group_name}
+    )
 
   endfunction()
 endif()

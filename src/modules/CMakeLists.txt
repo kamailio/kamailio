@@ -158,10 +158,7 @@ message(STATUS "Modules to be built: ${ADDED_MODULES_LIST}")
 # https://gitlab.kitware.com/cmake/cmake/-/issues/26571
 add_custom_target(modules COMMENT "Building modules")
 if(NOT ADDED_MODULES_LIST)
-  message(
-    WARNING
-      "No modules to build. Did you forget to add a module group or include module?"
-  )
+  message(WARNING "No modules to build. Did you forget to add a module group or include module?")
 else()
   add_dependencies(modules ${ADDED_MODULES_LIST})
 endif()
@@ -176,6 +173,8 @@ add_custom_target(
   COMMENT "Generating Kamailio documentation"
 )
 
+# No component kamailio_docs is defined after component based installation
+# TODO: Fix if possible
 add_custom_target(
   install_kamailio_docs
   COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component kamailio_docs
