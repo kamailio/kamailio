@@ -51,9 +51,8 @@ add_custom_command(
     "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
     -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
     "s#/usr/lib/${CFG_NAME}/modules/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
-    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
-    "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_CURRENT_SOURCE_DIR}/kamcmd.8 >
-    ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8
+    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" <
+    ${CMAKE_CURRENT_SOURCE_DIR}/kamcmd.8 > ${CMAKE_CURRENT_BINARY_DIR}/kamcmd.8
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/kamcmd.8
 )
 
