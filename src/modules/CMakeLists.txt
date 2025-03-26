@@ -173,6 +173,8 @@ add_custom_target(
   COMMENT "Generating Kamailio documentation"
 )
 
+# No component kamailio_docs is defined after component based installation
+# TODO: Fix if possible
 add_custom_target(
   install_kamailio_docs
   COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component kamailio_docs

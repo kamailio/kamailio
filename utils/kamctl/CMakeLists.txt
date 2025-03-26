@@ -9,6 +9,7 @@ set(SHARE_DIR "${CMAKE_INSTALL_FULL_DATADIR}/${MAIN_NAME}")
 
 include(${CMAKE_SOURCE_DIR}/cmake/db_files.cmake)
 
+# --- kamctl  ---
 set(KAMCTL_BASE_FILES kamctl.base kamctl.ctlbase kamctl.rpcfifo kamctl.ser kamctl.sqlbase)
 
 # Install kamctl.base and the rest
@@ -35,11 +36,11 @@ install(
   COMPONENT kamailio-core
 )
 
-# Set up and install kamdbctl stuff
+# --- kamdbctl  ---
+# Setup and install kamdbctl stuff
 set(KAMDBCTL_BASE_FILES kamdbctl.base)
 
 # Install kamdbctl
-
 foreach(file IN LISTS KAMDBCTL_BASE_FILES)
   add_kamdbctl_db_files("kamailio-core" ${file})
 endforeach()
@@ -113,6 +114,7 @@ add_custom_target(
   kamctl_man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8 ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
 )
 
+# In order for these files to be installed, one has to built the kamctl_man target
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8 ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
@@ -121,6 +123,7 @@ install(
 )
 
 # Install targets
+# TODO: FIX IF POSSIBLE after component based-installed components do not exist
 # Custom target for installing the kamailio-cfg component
 add_custom_target(
   install-kamailio-utils-cfg

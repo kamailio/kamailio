@@ -1,4 +1,6 @@
 # Set the installation paths
+message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "CMAKE_LIBRARY_ARCHITECTURE: ${CMAKE_LIBRARY_ARCHITECTURE}")
 message(STATUS "Cross compile: ${CMAKE_CROSSCOMPILING}")
 
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
@@ -108,6 +110,7 @@ endif()
 # -----------------------
 add_executable(kamailio ${CMAKE_CURRENT_SOURCE_DIR}/main.c)
 add_dependencies(kamailio GenerateParser)
+
 # Enable ENABLE_EXPORTS property so modules can link from symbols found in
 # kamailio executable.
 set_target_properties(kamailio PROPERTIES ENABLE_EXPORTS TRUE OUTPUT_NAME ${MAIN_NAME})
@@ -169,9 +172,8 @@ add_custom_command(
     "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
     -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
     "s#/usr/lib/${CFG_NAME}/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
-    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
-    "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8 >
-    ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
+    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" <
+    ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8 > ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
   DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8
 )
 
@@ -182,9 +184,8 @@ add_custom_command(
     "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
     -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
     "s#/usr/lib/${CFG_NAME}/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
-    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
-    "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5 >
-    ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
+    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" <
+    ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5 > ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
   DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5
 )
 
@@ -195,6 +196,7 @@ add_custom_target(
 )
 add_dependencies(man kamctl_man)
 add_dependencies(man kamcmd_man)
+
 # These are the modules man pages if any exist
 add_dependencies(man kamailio_docs_man)
 
