@@ -632,7 +632,7 @@ static void rpc_uac_block_callback(
  *                     an rpc reply (see above). If 2 blocking wait until
  *                     final response for the transaction arrives.
  */
-static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait)
+static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait, int cbflags)
 {
 	/* rpc params */
 	str method, ruri, nexthop, send_socket, headers, body;
@@ -794,6 +794,7 @@ static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait)
 		uac_req.cbp = ruid;
 		uac_req.cb_flags = TMCB_LOCAL_COMPLETED;
 	}
+	uac_req.cb_flags |= cbflags;
 
 	ret = t_uac(&uac_req);
 
@@ -852,7 +853,7 @@ error:
  */
 void rpc_t_uac_start(rpc_t *rpc, void *c)
 {
-	rpc_t_uac(rpc, c, 0);
+	rpc_t_uac(rpc, c, 0, 0);
 }
 
 /** t_uac with reply waiting.
@@ -860,7 +861,7 @@ void rpc_t_uac_start(rpc_t *rpc, void *c)
  */
 void rpc_t_uac_wait(rpc_t *rpc, void *c)
 {
-	rpc_t_uac(rpc, c, 1);
+	rpc_t_uac(rpc, c, 1, 0);
 }
 
 /** t_uac with blocking for reply waiting.
@@ -868,7 +869,31 @@ void rpc_t_uac_wait(rpc_t *rpc, void *c)
  */
 void rpc_t_uac_wait_block(rpc_t *rpc, void *c)
 {
-	rpc_t_uac(rpc, c, 2);
+	rpc_t_uac(rpc, c, 2, 0);
+}
+
+/** t_uac with no reply waiting and no ack.
+ * @see rpc_t_uac.
+ */
+void rpc_t_uac_start_noack(rpc_t *rpc, void *c)
+{
+	rpc_t_uac(rpc, c, 0, TMCB_DONT_ACK);
+}
+
+/** t_uac with reply waiting and no ack.
+ * @see rpc_t_uac.
+ */
+void rpc_t_uac_wait_noack(rpc_t *rpc, void *c)
+{
+	rpc_t_uac(rpc, c, 1, TMCB_DONT_ACK);
+}
+
+/** t_uac with blocking for reply waiting and no ack.
+ * @see rpc_t_uac.
+ */
+void rpc_t_uac_wait_block_noack(rpc_t *rpc, void *c)
+{
+	rpc_t_uac(rpc, c, 2, TMCB_DONT_ACK);
 }
 
 
