@@ -82,6 +82,36 @@
 		</para>
 	</section>
 
+	<section id="tm.rpc.t_uac_start_noack">
+		<title>
+		<function moreinfo="none">tm.t_uac_start_noack</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_start, but do not automatically send ACK for local
+		INVITE requests.
+		</para>
+	</section>
+
+	<section id="tm.rpc.t_uac_wait_block_noack">
+		<title>
+		<function moreinfo="none">tm.t_uac_wait_block_noack</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_wait_block, but do not automatically send ACK for
+		local INVITE requests.
+		</para>
+	</section>
+
+	<section id="tm.rpc.t_uac_wait_noack">
+		<title>
+		<function moreinfo="none">tm.t_uac_wait_noack</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_wait, but do not automatically send ACK for local
+		INVITE requests.
+		</para>
+	</section>
+
 	<section id="tm.rpc.cancel">
 		<title>
 		<function moreinfo="none">tm.cancel</function>
