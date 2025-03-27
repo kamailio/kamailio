@@ -18,12 +18,10 @@ else()
 
   if(libphonenumber_LIBRARY AND libgeocoding_LIBRARY)
     set(libphonenum_LIBRARY ${libphonenumber_LIBRARY} ${libgeocoding_LIBRARY})
-    find_path(libphonenumber_INCLUDE_DIR
-              phonenumbers/geocoding/phonenumber_offline_geocoder.h
-              phonenumbers/phonenumberutil.h)
-    message(
-      STATUS
-        "Found libphonenumber include directory: ${libphonenumber_INCLUDE_DIR}")
+    find_path(libphonenumber_INCLUDE_DIR phonenumbers/geocoding/phonenumber_offline_geocoder.h
+              phonenumbers/phonenumberutil.h
+    )
+    message(STATUS "Found libphonenumber include directory: ${libphonenumber_INCLUDE_DIR}")
     message(STATUS "Found libphonenumber library: ${libphonenum_LIBRARY}")
   else()
     message(FATAL_ERROR "libphonenumber library not found")
@@ -41,8 +39,8 @@ target_compile_options(
           $<$<NOT:$<CONFIG:DEBUG>>:-Wno-deprecated>
           $<$<NOT:$<CONFIG:DEBUG>>:-Wno-unused-function>
           $<$<NOT:$<CONFIG:DEBUG>>:-Wno-sign-compare>
-          $<$<NOT:$<CONFIG:DEBUG>>:-Wno-strict-aliasing>)
+          $<$<NOT:$<CONFIG:DEBUG>>:-Wno-strict-aliasing>
+)
 
-target_include_directories(${module_name}
-                           PRIVATE ${libphonenumber_INCLUDE_DIRS})
+target_include_directories(${module_name} PRIVATE ${libphonenumber_INCLUDE_DIRS})
 target_link_libraries(${module_name} PRIVATE ${libphonenum_LIBRARY})

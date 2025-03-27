@@ -11,5 +11,6 @@ add_library(nghttp2::nghttp2 ALIAS PkgConfig::nghttp2)
 pkg_check_modules(event REQUIRED IMPORTED_TARGET libevent libevent_openssl)
 add_library(event::event ALIAS PkgConfig::event)
 
-target_link_libraries(${module_name} PRIVATE nghttp2::nghttp2 event::event
-                                             OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(
+  ${module_name} PRIVATE nghttp2::nghttp2 event::event OpenSSL::SSL OpenSSL::Crypto
+)

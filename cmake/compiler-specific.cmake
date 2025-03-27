@@ -14,16 +14,16 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
 
     target_compile_options(
-      common_compiler_flags
-      INTERFACE -Wall -funroll-loops -Wcast-align
-                -Werror=implicit-function-declaration -Werror=implicit-int)
+      common_compiler_flags INTERFACE -Wall -funroll-loops -Wcast-align
+                                      -Werror=implicit-function-declaration -Werror=implicit-int
+    )
 
     # If GCC version is greater than 4.2.0, enable the following flags
     if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2.0)
       target_compile_options(
-        common_compiler_flags
-        INTERFACE -m64 -minline-all-stringops -falign-loops -ftree-vectorize
-                  -fno-strict-overflow -mtune=generic)
+        common_compiler_flags INTERFACE -m64 -minline-all-stringops -falign-loops -ftree-vectorize
+                                        -fno-strict-overflow -mtune=generic
+      )
       target_link_options(common_compiler_flags INTERFACE -m64)
     endif()
   elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
@@ -38,16 +38,16 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i486|i586|i686")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
 
     target_compile_options(
-      common_compiler_flags
-      INTERFACE -Wall -funroll-loops -Wcast-align
-                -Werror=implicit-function-declaration -Werror=implicit-int)
+      common_compiler_flags INTERFACE -Wall -funroll-loops -Wcast-align
+                                      -Werror=implicit-function-declaration -Werror=implicit-int
+    )
 
     # If GCC version is greater than 4.2.0, enable the following flags
     if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2.0)
       target_compile_options(
-        common_compiler_flags
-        INTERFACE -m32 -minline-all-stringops -falign-loops -ftree-vectorize
-                  -fno-strict-overflow -mtune=generic)
+        common_compiler_flags INTERFACE -m32 -minline-all-stringops -falign-loops -ftree-vectorize
+                                        -fno-strict-overflow -mtune=generic
+      )
     endif()
   elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
