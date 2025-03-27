@@ -24,5 +24,6 @@ find_package(CURL REQUIRED)
 # maintaned anymore - eprecate? -lnsq -levbuffsock
 
 # TODO: verify if -l is required to avoid linking to itself
-target_link_libraries(${module_name} PRIVATE json-c::json-c CURL::libcurl
-                                             Libev::Libev -lnsq evbuffsock)
+target_link_libraries(
+  ${module_name} PRIVATE json-c::json-c CURL::libcurl Libev::Libev -lnsq evbuffsock
+)

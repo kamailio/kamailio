@@ -30,5 +30,4 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(UUID REQUIRED IMPORTED_TARGET uuid)
 add_library(uuid::uuid ALIAS PkgConfig::UUID)
 
-target_link_libraries(${module_name} PRIVATE json-c::json-c rabbitmq::rabbitmq
-                                             uuid::uuid)
+target_link_libraries(${module_name} PRIVATE json-c::json-c rabbitmq::rabbitmq uuid::uuid)

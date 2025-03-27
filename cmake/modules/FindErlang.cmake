@@ -49,9 +49,7 @@ This will define the following variables:
 #]=======================================================================]
 include(FindPackageHandleStandardArgs)
 
-set(Erlang_BIN_PATH $ENV{ERLANG_HOME}/bin /opt/bin /sw/bin /usr/bin
-                    /usr/local/bin /opt/local/bin
-)
+set(Erlang_BIN_PATH $ENV{ERLANG_HOME}/bin /opt/bin /sw/bin /usr/bin /usr/local/bin /opt/local/bin)
 
 find_program(
   Erlang_RUNTIME
@@ -66,28 +64,23 @@ find_program(
 )
 
 execute_process(
-  COMMAND erl -noshell -eval "io:format(\"~s\", [code:lib_dir()])" -s erlang
-          halt OUTPUT_VARIABLE Erlang_OTP_LIB_DIR
+  COMMAND erl -noshell -eval "io:format(\"~s\", [code:lib_dir()])" -s erlang halt
+  OUTPUT_VARIABLE Erlang_OTP_LIB_DIR
 )
 
 execute_process(
-  COMMAND erl -noshell -eval "io:format(\"~s\", [code:root_dir()])" -s erlang
-          halt OUTPUT_VARIABLE Erlang_OTP_ROOT_DIR
+  COMMAND erl -noshell -eval "io:format(\"~s\", [code:root_dir()])" -s erlang halt
+  OUTPUT_VARIABLE Erlang_OTP_ROOT_DIR
 )
 
 execute_process(
-  COMMAND
-    erl -noshell -eval
-    "io:format(\"~s\",[filename:basename(code:lib_dir('erl_interface'))])" -s
-    erlang halt
-  OUTPUT_VARIABLE Erlang_EI_DIR
+  COMMAND erl -noshell -eval "io:format(\"~s\",[filename:basename(code:lib_dir('erl_interface'))])"
+          -s erlang halt OUTPUT_VARIABLE Erlang_EI_DIR
 )
 
 execute_process(
-  COMMAND
-    erl -noshell -eval
-    "io:format(\"~s\",[filename:basename(code:lib_dir('erts'))])" -s erlang halt
-  OUTPUT_VARIABLE Erlang_ERTS_DIR
+  COMMAND erl -noshell -eval "io:format(\"~s\",[filename:basename(code:lib_dir('erts'))])" -s erlang
+          halt OUTPUT_VARIABLE Erlang_ERTS_DIR
 )
 
 set(Erlang_EI_PATH ${Erlang_OTP_LIB_DIR}/${Erlang_EI_DIR})
@@ -113,39 +106,28 @@ if(Erlang_FOUND)
   if(NOT TARGET Erlang::Erlang)
     add_library(Erlang::Erlang INTERFACE IMPORTED)
     set_target_properties(
-      Erlang::Erlang PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
-                                ${Erlang_OTP_ROOT_DIR}/usr/include
+      Erlang::Erlang PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${Erlang_OTP_ROOT_DIR}/usr/include
     )
   endif()
 
   if(NOT TARGET Erlang::ERTS)
     add_library(Erlang::ERTS STATIC IMPORTED)
     set_target_properties(
-      Erlang::ERTS
-      PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${Erlang_ERTS_INCLUDE_DIRS}
-                 IMPORTED_LOCATION ${Erlang_ERTS_LIBRARY_PATH}/liberts.a
+      Erlang::ERTS PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${Erlang_ERTS_INCLUDE_DIRS}
+                              IMPORTED_LOCATION ${Erlang_ERTS_LIBRARY_PATH}/liberts.a
     )
   endif()
 
   if(NOT TARGET Erlang::EI)
     add_library(erlang_ei STATIC IMPORTED)
-    set_property(
-      TARGET erlang_ei PROPERTY IMPORTED_LOCATION
-                                ${Erlang_EI_LIBRARY_PATH}/libei.a
-    )
+    set_property(TARGET erlang_ei PROPERTY IMPORTED_LOCATION ${Erlang_EI_LIBRARY_PATH}/libei.a)
     add_library(erlang_erl_interface STATIC IMPORTED)
     set_property(
-      TARGET erlang_erl_interface
-      PROPERTY IMPORTED_LOCATION ${Erlang_EI_LIBRARY_PATH}/liberl_interface.a
+      TARGET erlang_erl_interface PROPERTY IMPORTED_LOCATION
+                                           ${Erlang_EI_LIBRARY_PATH}/liberl_interface.a
     )
     add_library(Erlang::EI INTERFACE IMPORTED)
-    set_property(
-      TARGET Erlang::EI PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-                                 ${Erlang_EI_INCLUDE_DIRS}
-    )
-    set_property(
-      TARGET Erlang::EI PROPERTY INTERFACE_LINK_LIBRARIES erlang_ei
-                                 erlang_erl_interface
-    )
+    set_property(TARGET Erlang::EI PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${Erlang_EI_INCLUDE_DIRS})
+    set_property(TARGET Erlang::EI PROPERTY INTERFACE_LINK_LIBRARIES erlang_ei erlang_erl_interface)
   endif()
 endif(Erlang_FOUND)

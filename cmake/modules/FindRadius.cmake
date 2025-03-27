@@ -14,7 +14,8 @@ find_package(PkgConfig)
 set(RADIUSCLIENTS FREERADIUS RADCLI RADIUSCLIENT_NG)
 set(RADIUSCLIENT
     RADCLI
-    CACHE STRING "Radius Client to use")
+    CACHE STRING "Radius Client to use"
+)
 set_property(CACHE RADIUSCLIENT PROPERTY STRINGS ${RADIUSCLIENTS})
 
 # option(FREERADIUS "Use freeradius-client library" OFF)
@@ -37,8 +38,7 @@ if(${RADIUSCLIENT} STREQUAL "FREERADIUS")
   # - freeradius-client library
   set(RADIUSCLIENT_LIB USE_FREERADIUS)
   find_package(LibfreeradiusClient REQUIRED)
-  add_library(RadiusClient::RadiusClient ALIAS
-              LibfreeradiusClient::LIBFREERADIUS)
+  add_library(RadiusClient::RadiusClient ALIAS LibfreeradiusClient::LIBFREERADIUS)
 elseif(${RADIUSCLIENT} STREQUAL "RADCLI")
   # - radcli library
   set(RADIUSCLIENT_LIB USE_RADCLI)
