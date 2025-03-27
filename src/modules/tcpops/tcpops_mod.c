@@ -40,6 +40,7 @@
 #include "../../core/events.h"
 #include "../../core/kemi.h"
 #include "../../core/pass_fd.h"
+#include "../../core/parser/parse_uri.h"
 
 #include "tcpops.h"
 
@@ -556,21 +557,34 @@ static int ki_tcp_get_conid_helper(sip_msg_t *msg, str *saddr, pv_spec_t *pvs)
 
 	init_dest_info(&dst);
 
-	u = &uaddr;
-	u->port_no = 5060;
-	u->host = *saddr;
-	/* detect ipv6 */
-	p = memchr(saddr->s, ']', saddr->len);
-	if(p) {
-		p++;
-		p = memchr(p, ':', saddr->s + saddr->len - p);
+	if((saddr->len > 5)
+			&& (strncmp(saddr->s, "sips:", 5) == 0
+					|| strncmp(saddr->s, "sip:", 4) == 0)) {
+		if(parse_uri(saddr->s, saddr->len, &uaddr) < 0) {
+			LM_ERR("failed to parse uri [%.*s]\n", saddr->len, saddr->s);
+			return -1;
+		}
+		u = &uaddr;
+		if(u->port_no == 0) {
+			u->port_no = 5060;
+		}
 	} else {
-		p = memchr(saddr->s, ':', saddr->len);
-	}
-	if(p) {
-		u->host.len = p - saddr->s;
-		p++;
-		u->port_no = str2s(p, saddr->len - (p - saddr->s), NULL);
+		u = &uaddr;
+		u->port_no = 5060;
+		u->host = *saddr;
+		/* detect ipv6 */
+		p = memchr(saddr->s, ']', saddr->len);
+		if(p) {
+			p++;
+			p = memchr(p, ':', saddr->s + saddr->len - p);
+		} else {
+			p = memchr(saddr->s, ':', saddr->len);
+		}
+		if(p) {
+			u->host.len = p - saddr->s;
+			p++;
+			u->port_no = str2s(p, saddr->len - (p - saddr->s), NULL);
+		}
 	}
 
 	ret = sip_hostport2su(&dst.to, &u->host, u->port_no, &dst.proto);
