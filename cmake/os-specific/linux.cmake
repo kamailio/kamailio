@@ -11,7 +11,8 @@ target_compile_definitions(
             HAVE_ALLOCA_H
             HAVE_TIMEGM
             HAVE_SCHED_SETSCHEDULER
-            HAVE_IP_MREQN)
+            HAVE_IP_MREQN
+)
 
 target_link_libraries(common INTERFACE ${CMAKE_DL_LIBS} resolv)
 target_link_libraries(common_utils INTERFACE resolv)
@@ -23,8 +24,7 @@ endif()
 if(NOT ${USE_FAST_LOCK})
   target_compile_definitions(common INTERFACE USE_PTHREAD_MUTEX)
   target_link_libraries(common INTERFACE pthread)
-  message(
-    STATUS "FAST_LOCK not available on this platform, using: USE_PTHREAD_MUTEX")
+  message(STATUS "FAST_LOCK not available on this platform, using: USE_PTHREAD_MUTEX")
 else()
   # TODO: Check if this can be reached. Right now it is not possible to set
   # LOCK_METHOD, only USE_FAST_LOCK. This branch is reached when USE_FAST_LOCK
@@ -48,8 +48,7 @@ endif()
 
 # TODO introduce check for sigio
 if(NOT NO_SIGIO_RT)
-  target_compile_definitions(common INTERFACE HAVE_SIGIO_RT
-                                              SIGINFO64_WORKAROUND)
+  target_compile_definitions(common INTERFACE HAVE_SIGIO_RT SIGINFO64_WORKAROUND)
 endif()
 
 # TODO introduce check for futex

@@ -58,29 +58,21 @@ endif()
 
 if(EXISTS ${Ldap_INCLUDE_DIRS}/ldap_features.h)
   file(READ ${Ldap_INCLUDE_DIRS}/ldap_features.h LDAP_FEATURES_H_CONTENT)
-  string(REGEX MATCH "#define LDAP_VENDOR_VERSION_MAJOR[ ]+[0-9]+"
-               _LDAP_VERSION_MAJOR_MATCH ${LDAP_FEATURES_H_CONTENT}
+  string(REGEX MATCH "#define LDAP_VENDOR_VERSION_MAJOR[ ]+[0-9]+" _LDAP_VERSION_MAJOR_MATCH
+               ${LDAP_FEATURES_H_CONTENT}
   )
-  string(REGEX MATCH "#define LDAP_VENDOR_VERSION_MINOR[ ]+[0-9]+"
-               _LDAP_VERSION_MINOR_MATCH ${LDAP_FEATURES_H_CONTENT}
+  string(REGEX MATCH "#define LDAP_VENDOR_VERSION_MINOR[ ]+[0-9]+" _LDAP_VERSION_MINOR_MATCH
+               ${LDAP_FEATURES_H_CONTENT}
   )
-  string(REGEX MATCH "#define LDAP_VENDOR_VERSION_PATCH[ ]+[0-9]+"
-               _LDAP_VERSION_PATCH_MATCH ${LDAP_FEATURES_H_CONTENT}
-  )
-
-  string(REGEX REPLACE ".*_MAJOR[ ]+(.*)" "\\1" LDAP_VERSION_MAJOR
-                       ${_LDAP_VERSION_MAJOR_MATCH}
-  )
-  string(REGEX REPLACE ".*_MINOR[ ]+(.*)" "\\1" LDAP_VERSION_MINOR
-                       ${_LDAP_VERSION_MINOR_MATCH}
-  )
-  string(REGEX REPLACE ".*_PATCH[ ]+(.*)" "\\1" LDAP_VERSION_PATCH
-                       ${_LDAP_VERSION_PATCH_MATCH}
+  string(REGEX MATCH "#define LDAP_VENDOR_VERSION_PATCH[ ]+[0-9]+" _LDAP_VERSION_PATCH_MATCH
+               ${LDAP_FEATURES_H_CONTENT}
   )
 
-  set(Ldap_VERSION
-      "${LDAP_VERSION_MAJOR}.${LDAP_VERSION_MINOR}.${LDAP_VERSION_PATCH}"
-  )
+  string(REGEX REPLACE ".*_MAJOR[ ]+(.*)" "\\1" LDAP_VERSION_MAJOR ${_LDAP_VERSION_MAJOR_MATCH})
+  string(REGEX REPLACE ".*_MINOR[ ]+(.*)" "\\1" LDAP_VERSION_MINOR ${_LDAP_VERSION_MINOR_MATCH})
+  string(REGEX REPLACE ".*_PATCH[ ]+(.*)" "\\1" LDAP_VERSION_PATCH ${_LDAP_VERSION_PATCH_MATCH})
+
+  set(Ldap_VERSION "${LDAP_VERSION_MAJOR}.${LDAP_VERSION_MINOR}.${LDAP_VERSION_PATCH}")
 endif()
 
 include(FindPackageHandleStandardArgs)
@@ -94,9 +86,7 @@ find_package_handle_standard_args(
 
 if(Ldap_FOUND AND NOT TARGET Lber::Lber)
   add_library(Lber::Lber UNKNOWN IMPORTED)
-  set_target_properties(
-    Lber::Lber PROPERTIES IMPORTED_LOCATION "${Lber_LIBRARY}"
-  )
+  set_target_properties(Lber::Lber PROPERTIES IMPORTED_LOCATION "${Lber_LIBRARY}")
 endif()
 
 if(Ldap_FOUND AND NOT TARGET Ldap::Ldap)

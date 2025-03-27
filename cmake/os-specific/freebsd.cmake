@@ -9,7 +9,8 @@ target_compile_definitions(
             HAVE_MSGHDR_MSG_CONTROL
             HAVE_CONNECT_ECONNRESET_BUG
             HAVE_TIMEGM
-            HAVE_IP_MREQN)
+            HAVE_IP_MREQN
+)
 
 if(${RAW_SOCKS})
   target_compile_definitions(common INTERFACE USE_RAW_SOCKS)

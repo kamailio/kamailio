@@ -13,5 +13,4 @@ find_package(Ldap REQUIRED)
 # LDAP_DEPRECATED is required for LDAP support else it will throw compile error
 target_compile_definitions(${module_name} PRIVATE LDAP_DEPRECATED)
 target_include_directories(${module_name} PRIVATE ${Ldap_INCLUDE_DIRS})
-target_link_libraries(${module_name} PRIVATE ${LDAP_LIBRARIES}
-                                             libsasl2::libsasl2)
+target_link_libraries(${module_name} PRIVATE ${LDAP_LIBRARIES} libsasl2::libsasl2)
