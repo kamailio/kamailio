@@ -7,8 +7,7 @@ set(LIB_DIR "${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}")
 set(CFG_DIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}")
 set(SHARE_DIR "${CMAKE_INSTALL_FULL_DATADIR}/${MAIN_NAME}")
 
-set(KAMCTL_BASE_FILES kamctl.base kamctl.ctlbase kamctl.rpcfifo kamctl.ser
-                      kamctl.sqlbase)
+set(KAMCTL_BASE_FILES kamctl.base kamctl.ctlbase kamctl.rpcfifo kamctl.ser kamctl.sqlbase)
 
 if("db_berkeley" IN_LIST FINAL_MODULES_LIST)
   set(KAMCTL_DB_FILES ${KAMCTL_DB_FILES} kamctl.db_berkeley)
@@ -39,14 +38,15 @@ foreach(file IN LISTS KAMCTL_BASE_FILES KAMCTL_DB_FILES)
   # Process the file with sed and install it
   add_custom_command(
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${file}"
-    COMMAND
-      sed -e "s#/usr/local/sbin#${BIN_DIR}#g" <
-      ${CMAKE_CURRENT_SOURCE_DIR}/${file} > ${CMAKE_CURRENT_BINARY_DIR}/${file}
-    COMMENT "Processed ${file} with sed")
+    COMMAND sed -e "s#/usr/local/sbin#${BIN_DIR}#g" < ${CMAKE_CURRENT_SOURCE_DIR}/${file} >
+            ${CMAKE_CURRENT_BINARY_DIR}/${file}
+    COMMENT "Processed ${file} with sed"
+  )
   install(
     PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${file}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl
-    COMPONENT kamailio-utils-bin)
+    COMPONENT kamailio-utils-bin
+  )
 endforeach()
 
 # Kamctl target to depend on all kamctl files
@@ -54,17 +54,18 @@ endforeach()
 add_custom_target(
   kamctl ALL
   COMMAND
-    sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e
-    "s#/usr/local/lib/kamailio#${LIB_DIR}#g" -e
-    "s#/usr/local/etc/kamailio#${CFG_DIR}#g" <
-    ${CMAKE_CURRENT_SOURCE_DIR}/kamctl > ${CMAKE_CURRENT_BINARY_DIR}/kamctl
+    sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e "s#/usr/local/lib/kamailio#${LIB_DIR}#g" -e
+    "s#/usr/local/etc/kamailio#${CFG_DIR}#g" < ${CMAKE_CURRENT_SOURCE_DIR}/kamctl >
+    ${CMAKE_CURRENT_BINARY_DIR}/kamctl
   DEPENDS ${KAMCTL_DEPENDENCIES}
-  COMMENT "Build kamctl and its dependencies")
+  COMMENT "Build kamctl and its dependencies"
+)
 
 install(
   PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/kamctl
   DESTINATION ${CMAKE_INSTALL_SBINDIR}
-  COMPONENT kamailio-utils-bin)
+  COMPONENT kamailio-utils-bin
+)
 
 # Setup and install kamdbctl stuff
 set(KAMDBCTL_BASE_FILES kamdbctl.base)
@@ -75,7 +76,8 @@ endif()
 if("db_text" IN_LIST FINAL_MODULES_LIST)
   set(KAMDBCTL_DB_FILES ${KAMDBCTL_DB_FILES} kamdbctl.dbtext)
   install(PROGRAMS dbtextdb/dbtextdb.py
-          DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl/dbtextdb)
+          DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl/dbtextdb
+  )
 endif()
 if("db_mysql" IN_LIST FINAL_MODULES_LIST)
   set(KAMDBCTL_DB_FILES ${KAMDBCTL_DB_FILES} kamdbctl.mysql)
@@ -99,31 +101,33 @@ foreach(file IN LISTS KAMDBCTL_BASE_FILES KAMDBCTL_DB_FILES)
   add_custom_command(
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${file}"
     COMMAND
-      sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e
-      "s#/usr/local/etc/kamailio#${CFG_DIR}#g" -e
-      "s#/usr/local/share/kamailio#${SHARE_DIR}#g" <
-      ${CMAKE_CURRENT_SOURCE_DIR}/${file} > ${CMAKE_CURRENT_BINARY_DIR}/${file}
-    COMMENT "Processed ${file}")
+      sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e "s#/usr/local/etc/kamailio#${CFG_DIR}#g" -e
+      "s#/usr/local/share/kamailio#${SHARE_DIR}#g" < ${CMAKE_CURRENT_SOURCE_DIR}/${file} >
+      ${CMAKE_CURRENT_BINARY_DIR}/${file}
+    COMMENT "Processed ${file}"
+  )
   install(
     PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${file}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl
-    COMPONENT kamailio-utils-bin)
+    COMPONENT kamailio-utils-bin
+  )
 endforeach()
 
 add_custom_target(
   kamdbctl ALL
   COMMAND
-    sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e
-    "s#/usr/local/lib/kamailio#${LIB_DIR}#g" -e
-    "s#/usr/local/etc/kamailio#${CFG_DIR}#g" <
-    ${CMAKE_CURRENT_SOURCE_DIR}/kamdbctl > ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl
+    sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e "s#/usr/local/lib/kamailio#${LIB_DIR}#g" -e
+    "s#/usr/local/etc/kamailio#${CFG_DIR}#g" < ${CMAKE_CURRENT_SOURCE_DIR}/kamdbctl >
+    ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl
   DEPENDS ${KAMDB_DEPENDENCIES}
-  COMMENT "Build kamdbctl and its dependencies")
+  COMMENT "Build kamdbctl and its dependencies"
+)
 
 install(
   PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl
   DESTINATION ${CMAKE_INSTALL_SBINDIR}
-  COMPONENT kamailio-utils-bin)
+  COMPONENT kamailio-utils-bin
+)
 
 # Install the configuration file (kamctlrc) using a CODE block to check
 # existence at install time instead of configure time
@@ -145,7 +149,8 @@ install(
             PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
     endif()
 "
-  COMPONENT kamailio-utils-cfg)
+  COMPONENT kamailio-utils-cfg
+)
 
 # Man pages generation and installation
 add_custom_command(
@@ -154,10 +159,11 @@ add_custom_command(
     sed -e
     "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
     -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
-    "s#/usr/lib/${CFG_NAME}/modules/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g"
-    -e "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" <
+    "s#/usr/lib/${CFG_NAME}/modules/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
+    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" <
     ${CMAKE_CURRENT_SOURCE_DIR}/kamctl.8 > ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/kamctl.8)
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/kamctl.8
+)
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
@@ -165,42 +171,42 @@ add_custom_command(
     sed -e
     "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
     -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
-    "s#/usr/lib/${CFG_NAME}/modules/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g"
-    -e "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" <
-    ${CMAKE_CURRENT_SOURCE_DIR}/kamdbctl.8 >
-    ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/kamdbctl.8)
+    "s#/usr/lib/${CFG_NAME}/modules/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
+    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" <
+    ${CMAKE_CURRENT_SOURCE_DIR}/kamdbctl.8 > ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/kamdbctl.8
+)
 
-add_custom_target(kamctl_man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8
-                                     ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8)
+add_custom_target(
+  kamctl_man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8 ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
+)
 
 install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8
-        ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/kamctl.8 ${CMAKE_CURRENT_BINARY_DIR}/kamdbctl.8
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
   COMPONENT kamailio_man
-  OPTIONAL)
+  OPTIONAL
+)
 
 # Install targets
 # Custom target for installing the kamailio-cfg component
 add_custom_target(
   install-kamailio-utils-cfg
-  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
-          kamailio-utils-cfg
-  COMMENT "Installing kamailio-utils-cfg component")
+  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component kamailio-utils-cfg
+  COMMENT "Installing kamailio-utils-cfg component"
+)
 
 # Custom target for installing the kamailio-utils-bin component
 add_custom_target(
   install-kamailio-utils-bin
-  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
-          kamailio-utils-bin
+  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component kamailio-utils-bin
   COMMENT "Installing kamailio-utils-bin component"
-  DEPENDS kamctl kamdbctl)
+  DEPENDS kamctl kamdbctl
+)
 
 # Custom target for installing the kamailio-utils component
 add_custom_target(install-kamailio-utils COMMENT "Installing utils components")
-add_dependencies(install-kamailio-utils install-kamailio-utils-cfg
-                 install-kamailio-utils-bin)
+add_dependencies(install-kamailio-utils install-kamailio-utils-cfg install-kamailio-utils-bin)
 
 # ----------
 
@@ -216,8 +222,7 @@ find_program(XSLTPROC_EXECUTABLE xsltproc QUIET)
 if(NOT XSLTPROC_EXECUTABLE)
   message(STATUS "xsltproc is not found. Skip dbschema target.")
 else()
-  option(XSLT_VALIDATE, "Enable schema validation during XSL transformations"
-         ON)
+  option(XSLT_VALIDATE, "Enable schema validation during XSL transformations" ON)
   option(XSLT_VERBOSE, "Enable verbose output for XSL transformations" OFF)
 
   set(XSLTPROC_FLAGS --xinclude)
@@ -245,16 +250,14 @@ else()
   endforeach()
   # Output the extracted table names
   if(VERBOSE)
-    message(
-      STATUS "Extracted Tables for DB schema generation: ${EXTRACTED_TABLES}")
+    message(STATUS "Extracted Tables for DB schema generation: ${EXTRACTED_TABLES}")
   endif()
 
   # Function to add a target for each database type prefix with dbschema ie
   # db_name = redis -> target = dbschema_redis
   function(add_db_target db_name xsl_file)
     # Change name for the folder
-    if(db_name STREQUAL "pi_framework_table" OR db_name STREQUAL
-                                                "pi_framework_mod")
+    if(db_name STREQUAL "pi_framework_table" OR db_name STREQUAL "pi_framework_mod")
       set(db_name_folder xhttp_pi)
     else()
       set(db_name_folder ${db_name})
@@ -264,7 +267,8 @@ else()
       dbschema_${db_name}
       COMMAND ${CMAKE_COMMAND} -E make_directory "${db_name_folder}"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMENT "Creating schemas for ${db_name}")
+      COMMENT "Creating schemas for ${db_name}"
+    )
 
     # Loop through each table and add a command for xsltproc
     foreach(table ${EXTRACTED_TABLES})
@@ -272,7 +276,8 @@ else()
       if(db_name STREQUAL "db_berkeley"
          OR db_name STREQUAL "db_redis"
          OR db_name STREQUAL "dbtext"
-         OR db_name STREQUAL "mongodb")
+         OR db_name STREQUAL "mongodb"
+      )
         set(prefix '')
         set(folder_suffix "${MAIN_NAME}")
       else()
@@ -284,26 +289,26 @@ else()
         TARGET dbschema_${db_name}
         PRE_BUILD
         COMMAND
-          XML_CATALOG_FILES=${CATALOG} ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS}
-          --stringparam dir
-          ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}/${folder_suffix}
-          --stringparam prefix ${prefix} --stringparam db ${db_name} ${xsl_file}
-          "kamailio-${table}.xml"
+          XML_CATALOG_FILES=${CATALOG} ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS} --stringparam dir
+          ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}/${folder_suffix} --stringparam prefix
+          ${prefix} --stringparam db ${db_name} ${xsl_file} "kamailio-${table}.xml"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema"
-        COMMENT "Processing ${table} for ${db_name}")
+        COMMENT "Processing ${table} for ${db_name}"
+      )
     endforeach()
 
     # Before installing, ensure the target is built `dbschema_${db_name}`
     install(
       DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}
       DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}
-      OPTIONAL)
+      OPTIONAL
+    )
 
     add_custom_target(
       dbschema_${db_name}_clean
-      COMMAND ${CMAKE_COMMAND} -E remove_directory
-              "${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}"
-      COMMENT "Cleaning ${db_name} schema files")
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}"
+      COMMENT "Cleaning ${db_name} schema files"
+    )
   endfunction()
 
   # Add targets for each database type
@@ -315,17 +320,17 @@ else()
     add_db_target(pi_framework_table "${STYLESHEETS}/pi_framework_table.xsl")
     add_db_target(pi_framework_mod "${STYLESHEETS}/pi_framework_mod.xsl")
     add_custom_target(dbschema_xhttp_pi)
-    add_dependencies(dbschema_xhttp_pi dbschema_pi_framework_table
-                     dbschema_pi_framework_mod)
+    add_dependencies(dbschema_xhttp_pi dbschema_pi_framework_table dbschema_pi_framework_mod)
 
     add_custom_target(dbschema_xhttp_pi_clean)
-    add_dependencies(dbschema_xhttp_pi dbschema_pi_framework_table_clean
-                     dbschema_pi_framework_mod_clean)
+    add_dependencies(
+      dbschema_xhttp_pi dbschema_pi_framework_table_clean dbschema_pi_framework_mod_clean
+    )
 
-    add_dependencies(dbschema dbschema_pi_framework_table
-                     dbschema_pi_framework_mod)
-    add_dependencies(dbschema_clean dbschema_pi_framework_table_clean
-                     dbschema_pi_framework_mod_clean)
+    add_dependencies(dbschema dbschema_pi_framework_table dbschema_pi_framework_mod)
+    add_dependencies(
+      dbschema_clean dbschema_pi_framework_table_clean dbschema_pi_framework_mod_clean
+    )
   endif()
   if("db_mysql" IN_LIST FINAL_MODULES_LIST)
     add_db_target(mysql "${STYLESHEETS}/mysql.xsl")
@@ -373,12 +378,14 @@ else()
         bash ${CMAKE_CURRENT_SOURCE_DIR}/generate_version_create_mongo.sh
         "${CMAKE_CURRENT_BINARY_DIR}/mongodb/kamailio/version-create.mongo"
         "${CMAKE_CURRENT_BINARY_DIR}/mongodb/kamailio"
-      COMMENT "Creating version-create.mongo from JSON files")
+      COMMENT "Creating version-create.mongo from JSON files"
+    )
 
     install(
       FILES ${CMAKE_CURRENT_BINARY_DIR}/mongodb/kamailio/version-create.mongo
       DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}/mongodb/${MAIN_NAME}
-      COMPONENT KMONGODB)
+      COMPONENT KMONGODB
+    )
   endif()
   if("db_redis" IN_LIST FINAL_MODULES_LIST)
     add_db_target(db_redis "${STYLESHEETS}/db_redis.xsl")

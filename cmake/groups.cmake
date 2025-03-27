@@ -60,7 +60,8 @@ set(MOD_LIST_BASIC
     topos_htable
     sipdump
     pv_headers
-    kemix)
+    kemix
+)
 
 # * extra used modules, with no extra dependency
 set(MOD_LIST_EXTRA
@@ -102,7 +103,8 @@ set(MOD_LIST_EXTRA
     xhttp_prom
     dlgs
     sworker
-    influxdbc)
+    influxdbc
+)
 
 # * common modules depending on database
 set(MOD_LIST_DB
@@ -139,11 +141,11 @@ set(MOD_LIST_DB
     uri_db
     userblocklist
     usrloc
-    secfilter)
+    secfilter
+)
 
 # * common modules depending on database, using UID db schema
-set(MOD_LIST_DBUID db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags
-                   uid_uri_db)
+set(MOD_LIST_DBUID db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags uid_uri_db)
 
 # * modules for devel purposes
 set(MOD_LIST_DEVEL misctest)
@@ -233,7 +235,8 @@ set(MOD_LIST_PRESENCE
     pua_xmpp
     rls
     xcap_client
-    xcap_server)
+    xcap_server
+)
 
 # * modules depending on lua library
 set(MOD_LIST_LUA app_lua)
@@ -296,7 +299,8 @@ set(MOD_LIST_IMS
     ims_charging
     ims_ocs
     ims_diameter_server
-    ims_ipsec_pcscf)
+    ims_ipsec_pcscf
+)
 
 # * modules depending on java library
 set(MOD_LIST_JAVA app_java)
@@ -439,7 +443,8 @@ set(MOD_LIST_ALL
     ${MOD_LIST_MICROHTTPD}
     ${MOD_LIST_NGHTTP2}
     ${MOD_LIST_GCRYPT}
-    ${MOD_LIST_RTP_MEDIA_SERVER})
+    ${MOD_LIST_RTP_MEDIA_SERVER}
+)
 
 # sort the list
 list(SORT MOD_LIST_ALL)
@@ -453,15 +458,15 @@ list(SORT MOD_LIST_ALL)
 # compile or link dependencies
 set(MODULE_GROUP_ALL ${MOD_LIST_ALL})
 
-set(MODULE_GROUP_DEFAULT ${MOD_LIST_BASIC} ${MOD_LIST_EXTRA} ${MOD_LIST_DB}
-                         ${MOD_LIST_DBUID} ${MOD_LIST_DEVEL} ${MOD_LIST_JSDT})
+set(MODULE_GROUP_DEFAULT ${MOD_LIST_BASIC} ${MOD_LIST_EXTRA} ${MOD_LIST_DB} ${MOD_LIST_DBUID}
+                         ${MOD_LIST_DEVEL} ${MOD_LIST_JSDT}
+)
 
 # Modules in this group are the default compiled modules due to no
 # internal/external compile or link dependencies
 # module_group_standard=$(mod_list_basic) $(mod_list_extra) \ $(mod_list_devel)
 # $(mod_list_jsdt)
-set(MODULE_GROUP_STANDARD ${MOD_LIST_BASIC} ${MOD_LIST_EXTRA} ${MOD_LIST_DEVEL}
-                          ${MOD_LIST_JSDT})
+set(MODULE_GROUP_STANDARD ${MOD_LIST_BASIC} ${MOD_LIST_EXTRA} ${MOD_LIST_DEVEL} ${MOD_LIST_JSDT})
 
 # Modules in this group are considered a standard part due to widespread usage,
 # but they have dependencies that must be satisfied for compilation (e.g., lcr,
@@ -475,7 +480,8 @@ set(MODULE_GROUP_COMMON
     ${MOD_LIST_RADIUS}
     ${MOD_LIST_XMLDEPS}
     ${MOD_LIST_PRESENCE}
-    ${MOD_LIST_TLSDEPS})
+    ${MOD_LIST_TLSDEPS}
+)
 
 # For db use (db modules, excluding drivers) module_group_db=$(mod_list_db)
 set(MODULE_GROUP_DB ${MOD_LIST_DB})
@@ -513,12 +519,14 @@ set(AVAILABLE_GROUPS ALL DEFAULT STANDARD COMMON)
 
 # --- Groups defined for pacKaging ###
 # Standard modules in main pkg
-set(MODULE_GROUP_KSTANDARD ${MOD_LIST_BASIC} ${MOD_LIST_EXTRA} ${MOD_LIST_DB}
-                           ${MOD_LIST_DBUID} ${MOD_LIST_PCRE} ${MOD_LIST_JSDT})
+set(MODULE_GROUP_KSTANDARD ${MOD_LIST_BASIC} ${MOD_LIST_EXTRA} ${MOD_LIST_DB} ${MOD_LIST_DBUID}
+                           ${MOD_LIST_PCRE} ${MOD_LIST_JSDT}
+)
 
 # Standard modules without any dependencies (such as pcre)
-set(MODULE_GROUP_KMINI ${MOD_LIST_BASIC} ${MOD_LIST_EXTRA} ${MOD_LIST_DB}
-                       ${MOD_LIST_DBUID} ${MOD_LIST_JSDT})
+set(MODULE_GROUP_KMINI ${MOD_LIST_BASIC} ${MOD_LIST_EXTRA} ${MOD_LIST_DB} ${MOD_LIST_DBUID}
+                       ${MOD_LIST_JSDT}
+)
 # pkg pcre module
 set(MODULE_GROUP_KPCRE ${MOD_LIST_PCRE})
 
@@ -775,7 +783,8 @@ list(
   KNGHTTP2
   KGCRYPT
   KSECSIPID
-  KRT_MEDIA_SERVER)
+  KRT_MEDIA_SERVER
+)
 
 # # Option to allow the user to define which group to build
 # set(SELECTED_PACKAGE_GROUP

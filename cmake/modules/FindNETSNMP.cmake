@@ -38,12 +38,8 @@ endif(NETSNMP_LIBS)
 find_program(NETSNMP_CONFIG_BIN net-snmp-config)
 
 if(NETSNMP_CONFIG_BIN)
-  execute_process(
-    COMMAND ${NETSNMP_CONFIG_BIN} --cflags OUTPUT_VARIABLE _NETSNMP_CFLAGS
-  )
-  execute_process(
-    COMMAND ${NETSNMP_CONFIG_BIN} --libs OUTPUT_VARIABLE _NETSNMP_LIBS
-  )
+  execute_process(COMMAND ${NETSNMP_CONFIG_BIN} --cflags OUTPUT_VARIABLE _NETSNMP_CFLAGS)
+  execute_process(COMMAND ${NETSNMP_CONFIG_BIN} --libs OUTPUT_VARIABLE _NETSNMP_LIBS)
   # Strip trailing and leading whitespaces
   string(STRIP "${_NETSNMP_CFLAGS}" _NETSNMP_CFLAGS)
   string(STRIP "${_NETSNMP_LIBS}" _NETSNMP_LIBS)
@@ -60,14 +56,13 @@ if(NETSNMP_CONFIG_BIN)
 
   add_library(NETSNMP::NETSNMP INTERFACE IMPORTED)
   set_target_properties(
-    NETSNMP::NETSNMP PROPERTIES COMPILE_FLAGS "${NETSNMP_CFLAGS}"
-                                INTERFACE_LINK_LIBRARIES "${NETSNMP_LIBS}"
+    NETSNMP::NETSNMP PROPERTIES COMPILE_FLAGS "${NETSNMP_CFLAGS}" INTERFACE_LINK_LIBRARIES
+                                                                  "${NETSNMP_LIBS}"
   )
 
   if(NOT TARGET NETSNMP::NETSNMP)
     message(
-      FATAL_ERROR
-        "Failed to create NETSNMP::NETSNMP target, check the output of net-snmp-config"
+      FATAL_ERROR "Failed to create NETSNMP::NETSNMP target, check the output of net-snmp-config"
     )
   endif()
 else()
