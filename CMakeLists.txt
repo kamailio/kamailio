@@ -7,7 +7,8 @@ project(
   kamailio
   VERSION 6.0.3
   DESCRIPTION "Kamailio SIP Server"
-  HOMEPAGE_URL "https://www.kamailio.org")
+  HOMEPAGE_URL "https://www.kamailio.org"
+)
 
 # Set the version number
 set(EXTRAVERSION "-rc0")
@@ -41,12 +42,14 @@ include(${CMAKE_SOURCE_DIR}/cmake/BuildType.cmake)
 # main binary name
 set(MAIN_NAME
     "kamailio"
-    CACHE STRING "Main binary name")
+    CACHE STRING "Main binary name"
+)
 
 # use kamailio config
 set(CFG_NAME
     "kamailio"
-    CACHE STRING "Config name")
+    CACHE STRING "Config name"
+)
 
 include(GNUInstallDirs)
 include(${CMAKE_SOURCE_DIR}/cmake/defs.cmake)
@@ -71,11 +74,12 @@ include(CPack)
 if(NOT TARGET uninstall)
   configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake-uninstall.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake-uninstall.cmake" IMMEDIATE @ONLY)
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake-uninstall.cmake" IMMEDIATE @ONLY
+  )
 
   add_custom_target(
     uninstall
-    COMMAND ${CMAKE_COMMAND} -P
-            ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake-uninstall.cmake
-    COMMENT "Uninstalling")
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake-uninstall.cmake
+    COMMENT "Uninstalling"
+  )
 endif()

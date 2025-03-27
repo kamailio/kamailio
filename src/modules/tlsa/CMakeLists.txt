@@ -12,8 +12,7 @@ find_package(Threads REQUIRED)
 if(LIBSSL_STATIC)
   target_compile_definitions(${module_name} KSR_LIBSSL_STATIC)
   if(LIBSSL_STATIC_SRCLIB)
-    target_include_directories(${module_name}
-                               PRIVATE ${LIBSSL_STATIC_SRCPATH}/include)
+    target_include_directories(${module_name} PRIVATE ${LIBSSL_STATIC_SRCPATH}/include)
     target_link_directories(${module_name} PRIVATE ${LIBSSL_STATIC_SRCPATH})
   else()
     # Static linking with system libraries Note: This assumes the static
@@ -21,11 +20,11 @@ if(LIBSSL_STATIC)
     set(OPENSSL_USE_STATIC_LIBS TRUE)
     find_package(OpenSSL REQUIRED)
     # TODO: Check if this is needed: -Wl,-Bstatic
-    target_link_libraries(${module_name} PRIVATE OpenSSL::SSL OpenSSL::Crypto
-                                                 ZLIB::ZLIB)
+    target_link_libraries(${module_name} PRIVATE OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB)
   endif()
 else()
   find_package(OpenSSL REQUIRED)
-  target_link_libraries(${module_name} PRIVATE OpenSSL::SSL OpenSSL::Crypto
-                                               ZLIB::ZLIB Threads::Threads)
+  target_link_libraries(
+    ${module_name} PRIVATE OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB Threads::Threads
+  )
 endif()
