@@ -2856,6 +2856,7 @@ fcmd:
 				case MODULE5_T:
 				case MODULE6_T:
 				case MODULEX_T:
+				case ROUTE_T:
 				case SET_FWD_NO_CONNECT_T:
 				case SET_RPL_NO_CONNECT_T:
 				case SET_FWD_CLOSE_T:
