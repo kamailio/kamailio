@@ -32,7 +32,7 @@ makedepends="bison db-dev flex freeradius-client-dev expat-dev
 	net-snmp-dev libuuid libev-dev jansson-dev json-c-dev libevent-dev
 	linux-headers libmemcached-dev rabbitmq-c-dev hiredis-dev
 	ruby-dev libmaxminddb-dev libunistring-dev mongo-c-driver-dev
-    libwebsockets-dev mosquitto-dev librdkafka-dev nghttp2-dev"
+	libwebsockets-dev mosquitto-dev librdkafka-dev nghttp2-dev libjwt-dev"
 
 install="$pkgname.pre-install $pkgname.pre-upgrade"
 
