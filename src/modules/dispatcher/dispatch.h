@@ -137,6 +137,7 @@ extern int ds_probing_mode;
 extern str ds_outbound_proxy;
 extern str ds_default_socket;
 extern str ds_default_sockname;
+extern str ds_ping_socket;
 extern struct socket_info *ds_default_sockinfo;
 
 int ds_init_data(void);
@@ -198,6 +199,7 @@ typedef struct _ds_attrs {
 	str body;
 	str duid;
 	str socket;
+	str ping_socket;
 	str sockname;
 	int maxload;
 	int weight;
