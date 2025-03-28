@@ -27,10 +27,11 @@ install(
             PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
     endif()
 "
-  COMPONENT ${module_name}-cfg)
+  COMPONENT ${module_name}-cfg
+)
 
 add_custom_target(
   ${module_name}-install-cfg
   COMMENT "Installing auth_radius dictionary.${CFG_NAME} configuration file"
-  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
-          ${module_name}-cfg)
+  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component ${module_name}-cfg
+)

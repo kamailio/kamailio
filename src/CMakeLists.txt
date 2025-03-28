@@ -55,8 +55,7 @@ else()
 endif()
 
 configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/core/autover.h.in"
-  "${CMAKE_CURRENT_SOURCE_DIR}/core/autover.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/core/autover.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/core/autover.h"
 )
 
 # -----------------------
@@ -70,8 +69,7 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.20)
   cmake_policy(SET CMP0118 NEW)
 else()
   set_source_files_properties(
-    ${CMAKE_CURRENT_BINARY_DIR}/core/lex.yy.c
-    ${CMAKE_CURRENT_BINARY_DIR}/core/cfg.tab.c
+    ${CMAKE_CURRENT_BINARY_DIR}/core/lex.yy.c ${CMAKE_CURRENT_BINARY_DIR}/core/cfg.tab.c
     ${CMAKE_CURRENT_BINARY_DIR}/core/cfg.tab.h PROPERTIES GENERATED TRUE
   )
 endif()
@@ -82,13 +80,9 @@ add_executable(kamailio ${CMAKE_CURRENT_SOURCE_DIR}/main.c)
 add_dependencies(kamailio GenerateParser)
 # Enable ENABLE_EXPORTS property so modules can link from symbols found in
 # kamailio executable.
-set_target_properties(
-  kamailio PROPERTIES ENABLE_EXPORTS TRUE OUTPUT_NAME ${MAIN_NAME}
-)
+set_target_properties(kamailio PROPERTIES ENABLE_EXPORTS TRUE OUTPUT_NAME ${MAIN_NAME})
 
-target_compile_options(
-  kamailio PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/="
-)
+target_compile_options(kamailio PUBLIC "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/=")
 
 add_subdirectory(core)
 add_subdirectory(lib)
@@ -99,9 +93,8 @@ add_subdirectory(modules)
 # from their own CMakeLists.txt
 # Module subdiretory does not contribute to the Kamailio executable.
 target_sources(
-  kamailio
-  PRIVATE ${kamailio_SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/core/lex.yy.c
-          ${CMAKE_CURRENT_BINARY_DIR}/core/cfg.tab.c
+  kamailio PRIVATE ${kamailio_SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/core/lex.yy.c
+                   ${CMAKE_CURRENT_BINARY_DIR}/core/cfg.tab.c
 )
 target_include_directories(kamailio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)
 
@@ -134,7 +127,8 @@ install(
 install(
   FILES ${CMAKE_SOURCE_DIR}/README ${CMAKE_SOURCE_DIR}/INSTALL
   DESTINATION ${CMAKE_INSTALL_DOCDIR}
-  COMPONENT kamailio-docs)
+  COMPONENT kamailio-docs
+)
 
 # ----------
 # Create and install the man pages for kamailio
@@ -148,7 +142,8 @@ add_custom_command(
     "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
     "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8 >
     ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
-  DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8)
+  DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8
+)
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
@@ -158,12 +153,15 @@ add_custom_command(
     -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
     "s#/usr/lib/${CFG_NAME}/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
     "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
-    "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5
-    > ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
-  DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5)
+    "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5 >
+    ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
+  DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5
+)
 
-add_custom_target(man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
-                              ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5)
+add_custom_target(
+  man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
+              ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
+)
 add_dependencies(man kamctl_man)
 add_dependencies(man kamcmd_man)
 # These are the modules man pages if any exist
@@ -173,13 +171,15 @@ install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
   COMPONENT kamailio_man
-  OPTIONAL)
+  OPTIONAL
+)
 
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man5
   COMPONENT kamailio_man
-  OPTIONAL)
+  OPTIONAL
+)
 # ----------
 
 # Install the configuration file (kamailio.cfg) ${CFG_NAME} using a CODE block
