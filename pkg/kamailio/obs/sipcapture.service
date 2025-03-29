@@ -1,0 +1,26 @@
+[Unit]
+Description=Kamailio SIP router server daemon for sipcapture
+Wants=network-online.target
+After=network-online.target
+After=syslog.target
+After=auditd.service
+After=mysqld.service
+
+[Service]
+Type=simple
+User=kamailio
+Group=kamailio
+WorkingDirectory=/run/sipcapture
+Environment='CFGFILE=/etc/kamailio/kamailio-sipcapture.cfg'
+Environment='SHM_MEMORY=32'
+Environment='PKG_MEMORY=4'
+EnvironmentFile=-/etc/sysconfig/sipcapture
+# PIDFile requires a full absolute path
+PIDFile=/run/sipcapture/sipcapture.pid
+# ExecStart requires a full absolute path
+ExecStart=/usr/sbin/kamailio -DD -P /run/sipcapture/sipcapture.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY
+Restart=on-failure
+
+
+[Install]
+WantedBy=multi-user.target

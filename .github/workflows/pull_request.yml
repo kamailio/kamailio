@@ -1,0 +1,79 @@
+---
+name: checks_pr
+'on':
+  pull_request:
+    branches:
+      - master
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+jobs:
+  check-format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # to fetch code (actions/checkout)
+    steps:
+      - name: Check out the repository to the runner
+        uses: actions/checkout@v4
+      - name: Run clang-format check
+        uses: wolletd/clang-format-checker@v1.12
+        with:
+          target-ref: master
+  check-cmake-format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # to fetch code (actions/checkout)
+    steps:
+      - name: Check out the repository to the runner
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+        with:
+          packages: cmake-format
+      - name: Run scripts/check-cmake-format.sh
+        run: ./.github/scripts/check-cmake-format.sh
+        env:
+          ref: ${{ github.event.pull_request.head.sha }}
+  check-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # to fetch code (actions/checkout)
+    steps:
+      - name: Check out the repository to the runner
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Run scripts/check-commit.sh
+        run: ./.github/scripts/check-commit.sh
+        env:
+          ref: ${{ github.event.pull_request.head.sha }}
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # to fetch code (actions/checkout)
+    container:
+      image: ghcr.io/kamailio/pkg-kamailio-docker:master-${{ matrix.distribution }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      volumes:
+        - ${{ github.workspace }}:/code
+      env:
+        DIST: ${{ matrix.distribution }}
+        CC: ${{ matrix.compilier }}
+    strategy:
+      matrix:
+        include:
+          - distribution: bookworm
+            compilier: gcc
+          - distribution: bookworm
+            compilier: clang
+    steps:
+      - name: Check out the repository to the runner
+        uses: actions/checkout@v4
+      - uses: ammaraskar/gcc-problem-matcher@0.3.0
+      - name: build
+        run: |
+          cd /code
+          ./test/travis/build_travis.sh
+        shell: bash

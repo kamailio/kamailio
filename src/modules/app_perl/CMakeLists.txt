@@ -120,7 +120,6 @@ add_custom_target(
 )
 
 # Install nessecary files
-install(
-  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/perl
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}
-  COMPONENT ${group_name})
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/perl
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}
+)

@@ -26,7 +26,7 @@ install(
             PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
     endif()
 "
-  COMPONENT ${group_name})
+  COMPONENT xhttp_pi-cfg)
 
 add_custom_target(
   xhttp_pi-install-cfg

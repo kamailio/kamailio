@@ -9,5 +9,4 @@ target_link_libraries(kamdb_recover PRIVATE BerkeleyDB::BerkeleyDB)
 install(
   TARGETS kamdb_recover
   DESTINATION ${CMAKE_INSTALL_SBINDIR}
-  OPTIONAL
-  COMPONENT ${group_name})
+  OPTIONAL)

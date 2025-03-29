@@ -127,13 +127,14 @@ target_compile_definitions(
 install(
   TARGETS kamailio
   DESTINATION ${CMAKE_INSTALL_SBINDIR}
-  COMPONENT kamailio-core)
+  COMPONENT kamailio-core
+)
 
 # Install the docs of core
 install(
   FILES ${CMAKE_SOURCE_DIR}/README ${CMAKE_SOURCE_DIR}/INSTALL
   DESTINATION ${CMAKE_INSTALL_DOCDIR}
-  COMPONENT kamailio-core)
+  COMPONENT kamailio-docs)
 
 # ----------
 # Create and install the man pages for kamailio
@@ -171,15 +172,14 @@ add_dependencies(man kamailio_docs_man)
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
-  COMPONENT kamailio-core
+  COMPONENT kamailio_man
   OPTIONAL)
 
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man5
-  COMPONENT kamailio-core
+  COMPONENT kamailio_man
   OPTIONAL)
-
 # ----------
 
 # Install the configuration file (kamailio.cfg) ${CFG_NAME} using a CODE block
@@ -206,4 +206,5 @@ install(
     endif()
 
 "
-  COMPONENT kamailio-core)
+  COMPONENT kamailio-utils-cfg
+)
