@@ -54,6 +54,7 @@ extern stat_var *rcv_reqs_prack;
 extern stat_var *rcv_reqs_update;
 extern stat_var *rcv_reqs_refer;
 extern stat_var *rcv_reqs_publish;
+extern stat_var *rcv_reqs_kdmq;
 
 /*! \brief received replies */
 extern stat_var *rcv_rpls;
