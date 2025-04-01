@@ -70,6 +70,7 @@ stat_var *rcv_reqs_prack;
 stat_var *rcv_reqs_update;
 stat_var *rcv_reqs_refer;
 stat_var *rcv_reqs_publish;
+stat_var *rcv_reqs_kdmq;
 /*! extended received replies */
 stat_var *rcv_rpls_1xx;
 stat_var *rcv_rpls_18x;
@@ -148,7 +149,8 @@ stat_export_t core_stats[] = {{"rcv_requests", 0, &rcv_reqs},
 		{"rcv_requests_update", 0, &rcv_reqs_update},
 		{"rcv_requests_refer", 0, &rcv_reqs_refer},
 		{"rcv_requests_publish", 0, &rcv_reqs_publish},
-		{"rcv_replies", 0, &rcv_rpls}, {"rcv_replies_1xx", 0, &rcv_rpls_1xx},
+		{"rcv_requests_kdmq", 0, &rcv_reqs_kdmq}, {"rcv_replies", 0, &rcv_rpls},
+		{"rcv_replies_1xx", 0, &rcv_rpls_1xx},
 		{"rcv_replies_18x", 0, &rcv_rpls_18x},
 		{"rcv_replies_2xx", 0, &rcv_rpls_2xx},
 		{"rcv_replies_3xx", 0, &rcv_rpls_3xx},
@@ -258,6 +260,9 @@ static int km_cb_req_stats(struct sip_msg *msg, unsigned int flags, void *param)
 			break;
 		case METHOD_PUBLISH:
 			update_stat(rcv_reqs_publish, 1);
+			break;
+		case METHOD_KDMQ:
+			update_stat(rcv_reqs_kdmq, 1);
 			break;
 		case METHOD_OTHER:
 			update_stat(unsupported_methods, 1);
