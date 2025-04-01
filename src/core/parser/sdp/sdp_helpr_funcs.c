@@ -735,7 +735,12 @@ int extract_sess_version(str *oline, str *sess_version)
 		}
 
 		i++;
-	} while(len < oline->len && i < 3);
+	} while((cp < oline->s + oline->len) && i < 3);
+
+	if(cp >= oline->s + oline->len) {
+		LM_ERR("broken o= line - version field not found\n");
+		return -1;
+	}
 
 	len = cp - cp0 - 1;
 	LM_DBG("end %d: >%.*s<\n", len, len, cp0);
