@@ -1284,7 +1284,7 @@ if(is_first_hop("1")) { ... }
 			the sending interface.IP address.
 		</para>
 		<para>
-			Return Codes: 
+			Return Codes:
 		</para>
 			<itemizedlist>
 				<listitem><para>
@@ -1349,6 +1349,28 @@ sip_p_charging_vector("g");
 ...
 if (is_method("REGISTER") and src_ip == 10.0.0.0/8) {
     contact_param_encode("ksu", "sip:1.2.3.4:5060;transport=tcp");
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siputils.f.contact_param_encode_alias">
+		<title>
+		<function moreinfo="none">contact_param_encode_alias(pname, saddr)</function>
+		</title>
+		<para>
+		Similar to contact_param_encode() but it also adds the alias parameter
+		with the encoded source address to the original Contact URI.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>contact_param_encode_alias</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_method("SUBSCRIBE") and src_ip == 10.0.0.0/8) {
+    contact_param_encode_alias("ksu", "sip:1.2.3.4:5060;transport=tcp");
 }
 ...
 </programlisting>
@@ -1561,7 +1583,7 @@ if (sip_parse_headers()) {
 			<section id="siputils.v.pcv_status">
 					<title><varname>$pcv(status)</varname></title>
 					<para>
-						Returns whether the PCV header was successfully parsed, deleted, 
+						Returns whether the PCV header was successfully parsed, deleted,
 						newly generated or other.
 					<itemizedlist>
 						<listitem><para>
