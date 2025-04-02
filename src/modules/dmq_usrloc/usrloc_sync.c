@@ -42,7 +42,6 @@ static struct socket_info *dmq_server_socket_local = 0;
 
 dmq_api_t usrloc_dmqb;
 dmq_peer_t *usrloc_dmq_peer = NULL;
-dmq_resp_cback_t usrloc_dmq_resp_callback = {&usrloc_dmq_resp_callback_f, 0};
 
 int usrloc_dmq_send_all();
 int usrloc_dmq_request_sync();
@@ -335,12 +334,12 @@ int usrloc_dmq_send(str *body, dmq_node_t *node)
 	}
 	if(node) {
 		LM_DBG("sending dmq message ...\n");
-		usrloc_dmqb.send_message(usrloc_dmq_peer, body, node,
-				&usrloc_dmq_resp_callback, 1, &usrloc_dmq_content_type);
+		usrloc_dmqb.send_message(
+				usrloc_dmq_peer, body, node, NULL, 1, &usrloc_dmq_content_type);
 	} else {
 		LM_DBG("sending dmq broadcast...\n");
-		usrloc_dmqb.bcast_message(usrloc_dmq_peer, body, 0,
-				&usrloc_dmq_resp_callback, 1, &usrloc_dmq_content_type);
+		usrloc_dmqb.bcast_message(
+				usrloc_dmq_peer, body, 0, NULL, 1, &usrloc_dmq_content_type);
 	}
 	return 0;
 }
@@ -1014,13 +1013,6 @@ void srjson_to_xavp(srjson_t *json, sr_xavp_t **xavp)
 			LM_ERR("Unknown type [%s]\n", jdoc_xavps->string);
 		}
 	}
-}
-
-int usrloc_dmq_resp_callback_f(
-		struct sip_msg *msg, int code, dmq_node_t *node, void *param)
-{
-	LM_DBG("dmq response callback triggered [%p %d %p]\n", msg, code, param);
-	return 0;
 }
 
 void dmq_ul_cb_contact(ucontact_t *ptr, int type, void *param)
