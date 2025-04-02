@@ -38,6 +38,7 @@ extern int pua_include_entity;
 str str_event_message_summary = str_init("message-summary");
 str str_event_dialog = str_init("dialog");
 str str_event_presence = str_init("presence");
+str str_event_as_feature_event = str_init("as-feature-event");
 
 str str_username_col = str_init("username");
 str str_domain_col = str_init("domain");
@@ -359,6 +360,62 @@ error:
 	return ret;
 }
 
+int pua_json_publish_as_feature_to_presentity(struct json_object *json_obj)
+{
+	int ret = 1;
+	int len;
+	str event = str_init("as-feature-event");
+	str from = {0, 0};
+	str from_user = {0, 0};
+	str from_realm = {0, 0};
+	str callid = {0, 0};
+	str dnd_status = {0, 0};
+	int expires = 0;
+	str as_feature_body = {0, 0};
+
+	char *body = (char *)pkg_malloc(AS_FEATURE_BODY_BUFFER_SIZE);
+
+	if(body == NULL) {
+		LM_ERR("Error allocating buffer for publish\n");
+		ret = -1;
+		goto error;
+	}
+
+	json_api.extract_field(json_obj, AS_FEATURE_JSON_CALLID, &callid);
+
+	json_api.extract_field(json_obj, AS_FEATURE_JSON_FROM, &from);
+	json_api.extract_field(json_obj, AS_FEATURE_JSON_FROM_USER, &from_user);
+	json_api.extract_field(json_obj, AS_FEATURE_JSON_FROM_REALM, &from_realm);
+
+	json_api.extract_field(json_obj, AS_FEATURE_JSON_DND_STATUS, &dnd_status);
+
+	struct json_object *ExpiresObj =
+			json_api.get_object(json_obj, AS_FEATURE_JSON_EXPIRES);
+	if(ExpiresObj != NULL) {
+		expires = json_object_get_int(ExpiresObj);
+	}
+
+	if(!from_user.len || !dnd_status.len) {
+		LM_ERR("missing one of From-User / DND-Status\n");
+		goto error;
+	}
+
+	len = snprintf(body, AS_FEATURE_BODY_BUFFER_SIZE, AS_FEATURE_BODY,
+			from_user.len, from_user.s, dnd_status.len, dnd_status.s);
+
+	as_feature_body.s = body;
+	as_feature_body.len = len;
+
+	pua_json_update_presentity(&event, &from_realm, &from_user, &callid, &from,
+			&as_feature_body, expires, 1, 1);
+
+error:
+
+	if(body)
+		pkg_free(body);
+
+	return ret;
+}
 
 int pua_json_publish(struct sip_msg *msg, char *json)
 {
@@ -391,6 +448,11 @@ int pua_json_publish(struct sip_msg *msg, char *json)
 							 event_package.len)
 							 == 0) {
 			ret = pua_json_publish_presence_to_presentity(json_obj);
+		} else if(event_package.len == str_event_as_feature_event.len
+				  && strncmp(event_package.s, str_event_as_feature_event.s,
+							 event_package.len)
+							 == 0) {
+			ret = pua_json_publish_as_feature_to_presentity(json_obj);
 		}
 	}
 

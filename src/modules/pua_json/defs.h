@@ -68,12 +68,20 @@
 #define MWI_JSON_FROM "From"
 #define MWI_JSON_TO "To"
 
+#define AS_FEATURE_JSON_CALLID "Call-ID"
+#define AS_FEATURE_JSON_FROM "From"
+#define AS_FEATURE_JSON_FROM_USER "From-User"
+#define AS_FEATURE_JSON_FROM_REALM "From-Realm"
+#define AS_FEATURE_JSON_DND_STATUS "DND-Status"
+#define AS_FEATURE_JSON_EXPIRES "Expires"
+
 #define TO_TAG_BUFFER_SIZE 128
 #define FROM_TAG_BUFFER_SIZE 128
 #define SENDER_BUFFER_SIZE 1024
 #define DIALOGINFO_BODY_BUFFER_SIZE 8192
 #define MWI_BODY_BUFFER_SIZE 2048
 #define PRESENCE_BODY_BUFFER_SIZE 4096
+#define AS_FEATURE_BODY_BUFFER_SIZE 4096
 
 #define MWI_BODY_VOICE_MESSAGE                                           \
 	"Messages-Waiting: %.*s\r\nMessage-Account: %.*s\r\nVoice-Message: " \
@@ -138,5 +146,13 @@
 </remote>\
 </dialog>\
 </dialog-info>"
+
+#define AS_FEATURE_BODY \
+	"<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\
+<DoNotDisturbEvent xmlns=\"http://www.ecma-international.org/standards/ecma-323/csta/ed3\">\
+<device>%.*s</device>\
+<doNotDisturbOn>%.*s</doNotDisturbOn>\
+</DoNotDisturbEvent>\
+"
 
 #endif /* _PUA_JSON_DEFS_H_ */
