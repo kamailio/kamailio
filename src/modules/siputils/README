@@ -104,12 +104,13 @@ Eik Rentzow
               4.36. is_first_hop([mode])
               4.37. sip_p_charging_vector(flags)
               4.38. contact_param_encode(pname, saddr)
-              4.39. contact_param_decode(pname)
-              4.40. contact_param_decode_uri(pname)
-              4.41. contact_param_rm(pname)
-              4.42. contact_param_check(pname)
-              4.43. hdr_date_check(tdiff)
-              4.44. sip_parse_headers()
+              4.39. contact_param_encode_alias(pname, saddr)
+              4.40. contact_param_decode(pname)
+              4.41. contact_param_decode_uri(pname)
+              4.42. contact_param_rm(pname)
+              4.43. contact_param_check(pname)
+              4.44. hdr_date_check(tdiff)
+              4.45. sip_parse_headers()
 
         5. Exported pseudo-variables
 
@@ -169,12 +170,13 @@ Eik Rentzow
    1.45. is_first_hop() usage
    1.46. sip_p_charging_vector() usage
    1.47. contact_param_encode usage
-   1.48. contact_param_decode usage
-   1.49. contact_param_decode_ruri usage
-   1.50. contact_param_rm usage
-   1.51. contact_param_check usage
-   1.52. hdr_date_check usage
-   1.53. sip_parse_headers usage
+   1.48. contact_param_encode_alias usage
+   1.49. contact_param_decode usage
+   1.50. contact_param_decode_ruri usage
+   1.51. contact_param_rm usage
+   1.52. contact_param_check usage
+   1.53. hdr_date_check usage
+   1.54. sip_parse_headers usage
 
 Chapter 1. Admin Guide
 
@@ -238,12 +240,13 @@ Chapter 1. Admin Guide
         4.36. is_first_hop([mode])
         4.37. sip_p_charging_vector(flags)
         4.38. contact_param_encode(pname, saddr)
-        4.39. contact_param_decode(pname)
-        4.40. contact_param_decode_uri(pname)
-        4.41. contact_param_rm(pname)
-        4.42. contact_param_check(pname)
-        4.43. hdr_date_check(tdiff)
-        4.44. sip_parse_headers()
+        4.39. contact_param_encode_alias(pname, saddr)
+        4.40. contact_param_decode(pname)
+        4.41. contact_param_decode_uri(pname)
+        4.42. contact_param_rm(pname)
+        4.43. contact_param_check(pname)
+        4.44. hdr_date_check(tdiff)
+        4.45. sip_parse_headers()
 
    5. Exported pseudo-variables
 
@@ -457,12 +460,13 @@ modparam("siputils", "e164_max_len", 20)
    4.36. is_first_hop([mode])
    4.37. sip_p_charging_vector(flags)
    4.38. contact_param_encode(pname, saddr)
-   4.39. contact_param_decode(pname)
-   4.40. contact_param_decode_uri(pname)
-   4.41. contact_param_rm(pname)
-   4.42. contact_param_check(pname)
-   4.43. hdr_date_check(tdiff)
-   4.44. sip_parse_headers()
+   4.39. contact_param_encode_alias(pname, saddr)
+   4.40. contact_param_decode(pname)
+   4.41. contact_param_decode_uri(pname)
+   4.42. contact_param_rm(pname)
+   4.43. contact_param_check(pname)
+   4.44. hdr_date_check(tdiff)
+   4.45. sip_parse_headers()
 
 4.1.  options_reply()
 
@@ -1134,7 +1138,21 @@ if (is_method("REGISTER") and src_ip == 10.0.0.0/8) {
 }
 ...
 
-4.39.  contact_param_decode(pname)
+4.39.  contact_param_encode_alias(pname, saddr)
+
+   Similar to contact_param_encode() but it also adds the alias parameter
+   with the encoded source address to the original Contact URI.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
+
+   Example 1.48. contact_param_encode_alias usage
+...
+if (is_method("SUBSCRIBE") and src_ip == 10.0.0.0/8) {
+    contact_param_encode_alias("ksu", "sip:1.2.3.4:5060;transport=tcp");
+}
+...
+
+4.40.  contact_param_decode(pname)
 
    This function decodes URI inside Contact headers by building a new URI
    from 'pname' parameter, decoding its value from Base64URL.
@@ -1145,14 +1163,14 @@ if (is_method("REGISTER") and src_ip == 10.0.0.0/8) {
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.48. contact_param_decode usage
+   Example 1.49. contact_param_decode usage
 ...
 if (is_method("REGISTER") and src_ip == 1.2.3.4) {
     contact_param_decode("ksu");
 }
 ...
 
-4.40.  contact_param_decode_uri(pname)
+4.41.  contact_param_decode_uri(pname)
 
    This function decodes R-URI (request URI) by building a new R-URI from
    'pname' parameter, decoding its value from Base64URL.
@@ -1163,14 +1181,14 @@ if (is_method("REGISTER") and src_ip == 1.2.3.4) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.49. contact_param_decode_ruri usage
+   Example 1.50. contact_param_decode_ruri usage
 ...
 if (is_method("INVITE") and src_ip == 1.2.3.4) {
     contact_param_decode_ruri("ksu");
 }
 ...
 
-4.41.  contact_param_rm(pname)
+4.42.  contact_param_rm(pname)
 
    This function removes the parameter from the URIs inside the Contact
    headers.
@@ -1180,14 +1198,14 @@ if (is_method("INVITE") and src_ip == 1.2.3.4) {
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.50. contact_param_rm usage
+   Example 1.51. contact_param_rm usage
 ...
 if (is_method("REGISTER") and src_ip == 1.2.3.4) {
     contact_param_rm("myparam");
 }
 ...
 
-4.42.  contact_param_check(pname)
+4.43.  contact_param_check(pname)
 
    This function returns true (1) if the URI inside the Contact header
    contains the parameter with the name 'pname'. Otherwise it returns
@@ -1198,13 +1216,13 @@ if (is_method("REGISTER") and src_ip == 1.2.3.4) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.51. contact_param_check usage
+   Example 1.52. contact_param_check usage
 ...
 if (contact_param_check("myparam")) {
 }
 ...
 
-4.43.  hdr_date_check(tdiff)
+4.44.  hdr_date_check(tdiff)
 
    Returns true if sip message has Date header and its value is lower than
    'NOW() - tdiff'.
@@ -1215,7 +1233,7 @@ if (contact_param_check("myparam")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.52. hdr_date_check usage
+   Example 1.53. hdr_date_check usage
 ...
 if (!hdr_date_check("10")) {
     sl_send_reply("403", "Outdated date");
@@ -1223,13 +1241,13 @@ if (!hdr_date_check("10")) {
 }
 ...
 
-4.44.  sip_parse_headers()
+4.45.  sip_parse_headers()
 
    Return true if parsing (fast mode) all SIP headers is successful.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.53. sip_parse_headers usage
+   Example 1.54. sip_parse_headers usage
 ...
 if (sip_parse_headers()) {
         ...
