@@ -634,12 +634,15 @@ int decode_uri(str uri, char separator, str *result)
 	return 0;
 }
 
-int ki_contact_param_encode(sip_msg_t *msg, str *nparam, str *saddr)
+int ki_contact_param_encode_helper(
+		sip_msg_t *msg, str *nparam, str *saddr, int mode)
 {
 	contact_body_t *cb;
 	contact_t *c;
 	str nuri;
 	char bval[MAX_URI_SIZE];
+	char aval[MAX_URI_SIZE];
+	str vuri;
 	str pval;
 	int q;
 	char *p;
@@ -663,11 +666,22 @@ int ki_contact_param_encode(sip_msg_t *msg, str *nparam, str *saddr)
 	/* we visit each contact */
 	while(c != NULL) {
 		if(c->uri.len > 4) {
-			pval.len =
-					base64url_enc(c->uri.s, c->uri.len, bval, MAX_URI_SIZE - 1);
+			if(mode == 1) {
+				vuri.s = aval;
+				vuri.len = MAX_URI_SIZE - 1;
+				if(uri_add_rcv_alias(msg, &c->uri, &vuri) < 0) {
+					LM_ERR("failed to add alias to contact uri [%.*s]\n",
+							c->uri.len, c->uri.s);
+					return -1;
+				}
+			} else {
+				vuri.s = c->uri.s;
+				vuri.len = c->uri.len;
+			}
+			pval.len = base64url_enc(vuri.s, vuri.len, bval, MAX_URI_SIZE - 1);
 			if(pval.len < 0) {
-				LM_ERR("failed to encode contact uri [%.*s]\n", c->uri.len,
-						c->uri.s);
+				LM_ERR("failed to encode contact uri [%.*s] (%d)\n", c->uri.len,
+						c->uri.s, mode);
 				return -1;
 			}
 			if(pval.len > 1 && bval[pval.len - 1] == '=') {
@@ -715,6 +729,17 @@ int ki_contact_param_encode(sip_msg_t *msg, str *nparam, str *saddr)
 
 	return 1;
 }
+
+int ki_contact_param_encode(sip_msg_t *msg, str *nparam, str *saddr)
+{
+	return ki_contact_param_encode_helper(msg, nparam, saddr, 0);
+}
+
+int ki_contact_param_encode_alias(sip_msg_t *msg, str *nparam, str *saddr)
+{
+	return ki_contact_param_encode_helper(msg, nparam, saddr, 1);
+}
+
 
 int ki_contact_param_decode(sip_msg_t *msg, str *nparam)
 {
