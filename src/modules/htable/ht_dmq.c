@@ -56,7 +56,6 @@ extern int ht_dmq_init_sync;
 
 dmq_api_t ht_dmqb;
 dmq_peer_t *ht_dmq_peer = NULL;
-dmq_resp_cback_t ht_dmq_resp_callback = {&ht_dmq_resp_callback_f, 0};
 
 int ht_dmq_send(str *body, dmq_node_t *node);
 int ht_dmq_send_sync(dmq_node_t *node, str *htname);
@@ -245,12 +244,12 @@ int ht_dmq_send(str *body, dmq_node_t *node)
 	}
 	if(node) {
 		LM_DBG("sending dmq message ...\n");
-		ht_dmqb.send_message(ht_dmq_peer, body, node, &ht_dmq_resp_callback, 1,
-				&ht_dmq_content_type);
+		ht_dmqb.send_message(
+				ht_dmq_peer, body, node, NULL, 1, &ht_dmq_content_type);
 	} else {
 		LM_DBG("sending dmq broadcast...\n");
-		ht_dmqb.bcast_message(ht_dmq_peer, body, 0, &ht_dmq_resp_callback, 1,
-				&ht_dmq_content_type);
+		ht_dmqb.bcast_message(
+				ht_dmq_peer, body, 0, NULL, 1, &ht_dmq_content_type);
 	}
 	return 0;
 }
@@ -642,15 +641,5 @@ int ht_dmq_handle_sync(srjson_doc_t *jdoc)
 
 		cell = cell->next;
 	}
-	return 0;
-}
-
-/**
- * @brief dmq response callback
- */
-int ht_dmq_resp_callback_f(
-		struct sip_msg *msg, int code, dmq_node_t *node, void *param)
-{
-	LM_DBG("dmq response callback triggered [%p %d %p]\n", msg, code, param);
 	return 0;
 }
