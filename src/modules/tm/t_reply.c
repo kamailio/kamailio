@@ -3123,6 +3123,53 @@ void rpc_reply_callid(rpc_t *rpc, void *c)
 	}
 }
 
+/*
+ * Syntax:
+ *
+ * ":tm.retransmit_reply:[response file]\n
+ * trans_id\n
+ * \n"
+ */
+void rpc_retransmit_reply(rpc_t *rpc, void *c)
+{
+	int ret;
+	tm_cell_t *trans;
+	tm_cell_t *orig_t = NULL;
+	int orig_branch;
+	unsigned int hash_index, label;
+	str ti;
+
+	if(rpc->scan(c, "S", &ti) < 1) {
+		rpc->fault(c, 400, "Transaction ID expected");
+		return;
+	}
+
+	if(sscanf(ti.s, "%u:%u", &hash_index, &label) != 2) {
+		ERR("Invalid trans_id (%s)\n", ti.s);
+		rpc->fault(c, 400, "Invalid transaction ID");
+		return;
+	}
+	LM_DBG("hash_index=%u label=%u\n", hash_index, label);
+
+	tm_get_tb(&orig_t, &orig_branch);
+	if(t_lookup_ident(&trans, hash_index, label) < 0) {
+		ERR("Lookup failed\n");
+		rpc->fault(c, 481, "No such transaction");
+		return;
+	}
+
+	/* it is refcounted now */
+	ret = t_retransmit_reply(trans);
+	UNREF(trans);
+	tm_set_tb(orig_t, orig_branch);
+
+	if(ret < 0) {
+		LM_ERR("Reply retransmission failed\n");
+		rpc->fault(c, 500, "Reply retransmission failed");
+		return;
+	}
+}
+
 /**
  * re-entrant locking of reply mutex
  */
