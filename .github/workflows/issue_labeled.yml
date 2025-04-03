@@ -1,0 +1,19 @@
+name: Issue Label helper
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  reply-helper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: mailing list question
+        if: github.event.label.name == 'mailing list question'
+        run: gh issue close $ISSUE --comment "$MSG"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE: ${{ github.event.issue.number }}
+          MSG: |
+            This tracker is for reporting issues in the C code, for questions
+            about kamailio use sr-users@lists.kamailio.org mailing list.
