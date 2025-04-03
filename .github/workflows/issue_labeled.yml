@@ -13,8 +13,14 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
+              issue_number: context.issue.number,
               body: 'This tracker is for reporting issues in the C code, for questions about kamailio use sr-users@lists.kamailio.org mailing list.'
-            })
+            });
+            github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: "close",
+            });
