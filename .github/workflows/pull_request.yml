@@ -34,6 +34,7 @@ jobs:
         run: ./.github/scripts/check-cmake-format.sh
         env:
           ref: ${{ github.event.pull_request.head.sha }}
+          FETCH_DEPTH: 50
   check-commit:
     runs-on: ubuntu-latest
     permissions:
@@ -47,6 +48,7 @@ jobs:
         run: ./.github/scripts/check-commit.sh
         env:
           ref: ${{ github.event.pull_request.head.sha }}
+          FETCH_DEPTH: 50
   build:
     runs-on: ubuntu-latest
     permissions:

@@ -72,6 +72,8 @@ else
 fi
 
 ref=${ref:-HEAD}
+# Ensure that the ref revision has some history
+git fetch -q "--depth=${FETCH_DEPTH:-50}" origin "+${ref}"
 src_sha=$(git rev-parse -q --verify "${ref}") || die "fatal: couldn't find ref ${ref}"
 echo "Checking $(git rev-list --count "${src_sha}" "^${target_sha}") commits since revision ${target_sha}"
 for commit in $(git rev-list --reverse "${src_sha}" "^${target_sha}"); do
