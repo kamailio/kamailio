@@ -23,15 +23,25 @@ jobs:
     permissions:
       contents: read # to fetch code (actions/checkout)
     steps:
+      - name: Check out scripts folder to the runner
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          path: actions
+          sparse-checkout: |
+            .github/scripts/check-cmake-format.sh
+          sparse-checkout-cone-mode: false
       - name: Check out the repository to the runner
         uses: actions/checkout@v4
         with:
+          path: source
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         with:
           packages: cmake-format
       - name: Run scripts/check-cmake-format.sh
-        run: ./.github/scripts/check-cmake-format.sh
+        run: ${{ github.workspace }}/actions/.github/scripts/check-cmake-format.sh
+        working-directory: ${{ github.workspace }}/source
         env:
           ref: ${{ github.event.pull_request.head.sha }}
           FETCH_DEPTH: 50
@@ -40,12 +50,22 @@ jobs:
     permissions:
       contents: read # to fetch code (actions/checkout)
     steps:
+      - name: Check out scripts folder to the runner
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          path: actions
+          sparse-checkout: |
+            .github/scripts/check-commit.sh
+          sparse-checkout-cone-mode: false
       - name: Check out the repository to the runner
         uses: actions/checkout@v4
         with:
+          path: source
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Run scripts/check-commit.sh
-        run: ./.github/scripts/check-commit.sh
+        run: ${{ github.workspace }}/actions/.github/scripts/check-commit.sh
+        working-directory: ${{ github.workspace }}/source
         env:
           ref: ${{ github.event.pull_request.head.sha }}
           FETCH_DEPTH: 50
