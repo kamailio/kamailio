@@ -219,6 +219,31 @@
 			</para></listitem>
 		</itemizedlist>
 	</section>
+
+	<section id="tm.rpc.retransmit_reply">
+		<title>
+		<function moreinfo="none">tm.retransmit_reply</function>
+		</title>
+		<para>
+		Retransmit the reply for an existing SIP transaction.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>trans_id</emphasis> - transaction identifier
+				(has the hash_entry:label format)
+			</para></listitem>
+		</itemizedlist>
+		<example>
+		<title>Using <quote>tm.retransmit_reply</quote></title>
+		<programlisting format="linespecific">
+...
+kamcli rpc tm.retransmit_reply 1234:5678
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="tm.rpc.clean">
 		<title>
 		<function moreinfo="none">tm.clean</function>
