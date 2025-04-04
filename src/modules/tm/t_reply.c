@@ -3127,6 +3127,50 @@ void rpc_reply_callid(rpc_t *rpc, void *c)
  * Syntax:
  *
  * ":tm.retransmit_reply:[response file]\n
+ * callid
+ * cseq
+ * \n"
+ */
+void rpc_retransmit_reply_callid(rpc_t *rpc, void *c)
+{
+	int ret;
+	tm_cell_t *trans;
+	tm_cell_t *orig_t = NULL;
+	int orig_branch;
+	str callid = {0, 0};
+	str cseq = {0, 0};
+
+	if(rpc->scan(c, "S", &callid) < 1) {
+		rpc->fault(c, 400, "Call-ID expected");
+		return;
+	}
+
+	if(rpc->scan(c, "S", &cseq) < 1) {
+		rpc->fault(c, 400, "CSeq expected");
+		return;
+	}
+
+	tm_get_tb(&orig_t, &orig_branch);
+	if(t_lookup_callid(&trans, callid, cseq) < 0) {
+		rpc->fault(c, 404, "Transaction not found");
+		return;
+	}
+	/* it is refcounted now */
+	ret = t_retransmit_reply(trans);
+	UNREF(trans);
+	tm_set_tb(orig_t, orig_branch);
+
+	if(ret < 0) {
+		LM_ERR("Reply retransmission failed\n");
+		rpc->fault(c, 500, "Reply retransmission failed");
+		return;
+	}
+}
+
+/*
+ * Syntax:
+ *
+ * ":tm.retransmit_reply:[response file]\n
  * trans_id\n
  * \n"
  */
