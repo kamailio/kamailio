@@ -114,6 +114,7 @@ static int* ds_ping_reply_codes_cnt;
 
 str ds_default_socket = STR_NULL;
 str ds_default_sockname = STR_NULL;
+str ds_ping_socket = STR_NULL;
 struct socket_info * ds_default_sockinfo = NULL;
 
 int ds_hash_size = 0;
@@ -312,6 +313,7 @@ static param_export_t params[]={
 	{"outbound_proxy",     PARAM_STR, &ds_outbound_proxy},
 	{"ds_default_socket",  PARAM_STR, &ds_default_socket},
 	{"ds_default_sockname",PARAM_STR, &ds_default_sockname},
+	{"ds_ping_socket",     PARAM_STR, &ds_ping_socket},
 	{"ds_timer_mode",      PARAM_INT, &ds_timer_mode},
 	{"event_callback",     PARAM_STR, &ds_event_callback},
 	{"ds_attrs_none",      PARAM_INT, &ds_attrs_none},
@@ -431,6 +433,21 @@ static int mod_init(void)
 			LM_INFO("default dispatcher socket set to <%.*s>\n",
 					ds_default_socket.len, ds_default_socket.s);
 		}
+	}
+
+	if(ds_ping_socket.s && ds_ping_socket.len > 0) {
+		if(parse_phostport(ds_ping_socket.s, &host.s, &host.len, &port, &proto)
+				!= 0) {
+			LM_ERR("bad socket <%.*s>\n", ds_ping_socket.len, ds_ping_socket.s);
+			return -1;
+		}
+		if(grep_sock_info(&host, (unsigned short)port, proto) == 0) {
+			LM_ERR("non-local socket <%.*s>\n", ds_ping_socket.len,
+					ds_ping_socket.s);
+			return -1;
+		}
+		LM_INFO("ping dispatcher socket set to <%.*s>\n", ds_ping_socket.len,
+				ds_ping_socket.s);
 	}
 
 	if(ds_init_data() != 0)
@@ -1982,7 +1999,7 @@ int ds_rpc_print_set(
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
-			if(rpc->struct_add(wh, "SSdddSSSjj", "BODY",
+			if(rpc->struct_add(wh, "SSdddSSSSjj", "BODY",
 					   &(node->dlist[j].attrs.body), "DUID",
 					   (node->dlist[j].attrs.duid.s)
 							   ? &(node->dlist[j].attrs.duid)
@@ -1996,6 +2013,10 @@ int ds_rpc_print_set(
 					   "SOCKNAME",
 					   (node->dlist[j].attrs.sockname.s)
 							   ? &(node->dlist[j].attrs.sockname)
+							   : &data,
+					   "PING_SOCKET",
+					   (node->dlist[j].attrs.ping_socket.s)
+							   ? &(node->dlist[j].attrs.ping_socket)
 							   : &data,
 					   "OBPROXY",
 					   (node->dlist[j].attrs.obproxy.s)
