@@ -613,23 +613,6 @@ static int ki_stirshaken_check_identity(sip_msg_t *msg)
 		goto fail;
 	}
 
-	if(stirshaken_vs_verify_x509_cert_path) {
-
-		LM_DBG("Running X509 certificate path verification\n");
-
-		if(!vs) {
-			LM_ERR("Verification Service not started\n");
-			goto fail;
-		}
-
-		if(STIR_SHAKEN_STATUS_OK
-				!= stir_shaken_verify_cert_path(&ss, cert_out, vs->store)) {
-			LM_ERR("Cert did not pass X509 path validation\n");
-			stirshaken_print_error_details(&ss);
-			goto fail;
-		}
-	}
-
 	if(stirshaken_vs_pptg_pvname.s != 0) {
 		memset(&val, 0, sizeof(pv_value_t));
 		val.flags = PV_VAL_STR;
