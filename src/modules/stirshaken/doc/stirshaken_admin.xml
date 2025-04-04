@@ -528,6 +528,10 @@ request_route {
 ...
 </programlisting>
 		</example>
+	<para>
+		To ensure proper functionality, the Kamailio stirshaken module requires a minimum version of libstirshaken that includes the stir_shaken_verify_cert_path function for performing the x509 certificate path check. This functionality was added to libstirshaken around 2020 (<![CDATA[https://github.com/signalwire/libstirshaken/commit/58e740b897ae40e2bb02ada2231a051a7eb55137]]>). 
+		If you're using an older version of libstirshaken that predates this commit, the stirshaken module may not function correctly.
+	</para>
 	</section>
 
 </chapter>
