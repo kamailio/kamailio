@@ -12,8 +12,8 @@ include(${CMAKE_SOURCE_DIR}/cmake/groups.cmake)
 set(AVAILABLE_GROUP_NAMES ${AVAILABLE_GROUPS})
 set(MODULE_GROUP_NAME
     "DEFAULT"
-    CACHE STRING
-          "Group of modules to build (one or multiple space seperated group)")
+    CACHE STRING "Group of modules to build (one or multiple space seperated group)"
+)
 set_property(CACHE MODULE_GROUP_NAME PROPERTY STRINGS ${AVAILABLE_GROUP_NAMES})
 
 # User may provide multiple groups seperated by space
@@ -27,7 +27,8 @@ foreach(group_name IN LISTS MODULE_GROUP_LIST)
   list(FIND AVAILABLE_GROUP_NAMES "${group_name}" INDEX)
   if(INDEX EQUAL -1)
     message(FATAL_ERROR "Invalid module group specified: ${group_name}.
-        Available groups: ${AVAILABLE_GROUPS}")
+        Available groups: ${AVAILABLE_GROUPS}"
+    )
   else()
     list(APPEND FULL_MODULE_GROUP_NAMES "MODULE_GROUP_${group_name}")
     # get_property(MODULE_GROUP VARIABLE PROPERTY "MODULE_GROUP_${GROUP_NAME}")
@@ -40,11 +41,13 @@ endforeach()
 # Allow users to specify extra modules to build
 set(INCLUDE_MODULES
     ""
-    CACHE STRING "List of extra modules to build (space-separated)")
+    CACHE STRING "List of extra modules to build (space-separated)"
+)
 
 set(EXCLUDE_MODULES
     ""
-    CACHE STRING "List of modules to exclude from building (space-separated)")
+    CACHE STRING "List of modules to exclude from building (space-separated)"
+)
 
 include(${CMAKE_SOURCE_DIR}/cmake/modules-docs.cmake)
 
@@ -54,8 +57,7 @@ function(add_module_group group_modules)
     # Check if the module has already been added
     get_property(ALREADY_ADDED GLOBAL PROPERTY ADDED_MODULES_LIST)
     if("${module_name}" IN_LIST ALREADY_ADDED)
-      message(
-        STATUS "Module ${module_name} has already been added. Skipping...")
+      message(STATUS "Module ${module_name} has already been added. Skipping...")
     elseif("${module_name}" IN_LIST EXCLUDED_MODULES_LIST)
       message(STATUS "Module ${module_name} is excluded. Skipping...")
       list(REMOVE_ITEM ADDED_MODULES_LIST ${module_name})
@@ -80,31 +82,30 @@ function(add_module_group group_modules)
 
         target_link_libraries(${module_name} PRIVATE common_modules)
         target_compile_definitions(
-          ${module_name} PRIVATE MOD_NAMEID=${module_name}
-                                 MOD_NAME=\"${module_name}\")
+          ${module_name} PRIVATE MOD_NAMEID=${module_name} MOD_NAME=\"${module_name}\"
+        )
 
         target_compile_options(
           ${module_name}
-          PRIVATE
-            "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/${module_name}/="
+          PRIVATE "-ffile-prefix-map=${CMAKE_SOURCE_DIR}/src/modules/${module_name}/="
         )
 
         # Set the RPATH of the module to include the installation directory of
         set_target_properties(
-          ${module_name} PROPERTIES INSTALL_RPATH
-                                    "${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}")
+          ${module_name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}"
+        )
 
         # Install the module to the appropriate directory under the installation
         # prefix
         install(
           TARGETS ${module_name}
           DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/modules
-          COMPONENT kamailio_modules)
+          COMPONENT kamailio_modules
+        )
         # Add the module to the list of added modules
         set_property(GLOBAL APPEND PROPERTY ADDED_MODULES_LIST ${module_name})
         docs_add_module(${module_name})
-        set_property(GLOBAL APPEND PROPERTY ALL_MODULE_DOC_TARGETS
-                                            ${module_name}_doc)
+        set_property(GLOBAL APPEND PROPERTY ALL_MODULE_DOC_TARGETS ${module_name}_doc)
       else()
         message(FATAL_ERROR "Module directory ${module_path} does not exist.")
       endif()
@@ -116,23 +117,22 @@ endfunction()
 # dependencies to them.
 add_custom_target(
   kamailio_docs_readme
-  COMMENT
-    "Generating modules readme. Note: This will overwrite REAMDEs found in source tree"
+  COMMENT "Generating modules readme. Note: This will overwrite REAMDEs found in source tree"
 )
 
 add_custom_target(kamailio_docs_man COMMENT "Generating man pages")
 
 # Parse and add extra modules specified by the user
 separate_arguments(INCLUDE_MODULES_LIST UNIX_COMMAND "${INCLUDE_MODULES}")
-message(
-  STATUS
-    "Extra modules (if module already included already from group is ignored):
-    ${INCLUDE_MODULES_LIST}")
+message(STATUS "Extra modules (if module already included already from group is ignored):
+    ${INCLUDE_MODULES_LIST}"
+)
 list(APPEND USER_MODULES_LIST ${INCLUDE_MODULES_LIST})
 
 separate_arguments(EXCLUDED_MODULES_LIST UNIX_COMMAND "${EXCLUDE_MODULES}")
 message(STATUS "Excluded modules (exlcude even if in included modules):
-    ${EXCLUDED_MODULES_LIST}")
+    ${EXCLUDED_MODULES_LIST}"
+)
 
 # Add each group of modules
 foreach(group IN LISTS FULL_MODULE_GROUP_NAMES)
@@ -158,11 +158,12 @@ get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
 add_custom_target(
   kamailio_docs
   DEPENDS ${ALL_MODULE_DOC_TARGETS}
-  COMMENT "Generating Kamailio documentation")
+  COMMENT "Generating Kamailio documentation"
+)
 
 add_custom_target(
   install_kamailio_docs
-  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component
-          kamailio_docs
+  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component kamailio_docs
   DEPENDS kamailio_docs
-  COMMENT "Installing Kamailio documentation")
+  COMMENT "Installing Kamailio documentation"
+)

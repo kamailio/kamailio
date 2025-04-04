@@ -25,7 +25,7 @@ with section("format"): # type: ignore
   disable = False
 
   # How wide to allow formatted cmake files
-  line_width = 80
+  line_width = 100
 
   # How many spaces to tab for indent
   tab_size = 2
@@ -91,7 +91,7 @@ with section("format"): # type: ignore
   command_case = 'canonical'
 
   # Format keywords consistently as 'lower' or 'upper' case
-  keyword_case = 'unchanged'
+  keyword_case = 'upper'
 
   # A list of command names which should always be wrapped
   always_wrap = []

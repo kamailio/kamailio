@@ -53,8 +53,6 @@ endif()
 list(APPEND LIBEV_LIBRARIES "${LIBEV_LIBRARY}")
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(
-  Libev REQUIRED_VARS LIBEV_LIBRARIES LIBEV_INCLUDE_DIR
-)
+find_package_handle_standard_args(Libev REQUIRED_VARS LIBEV_LIBRARIES LIBEV_INCLUDE_DIR)
 
 mark_as_advanced(LIBEV_INCLUDE_DIR LIBEV_LIBRARIES LIBEV_LIBRARY)

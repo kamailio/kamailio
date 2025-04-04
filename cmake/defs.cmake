@@ -43,7 +43,8 @@ message(STATUS "Target Processor Alias: ${TARGET_ARCH}")
 set(flavours kamailio)
 set(FLAVOUR
     "kamailio"
-    CACHE STRING "Flavour of the project")
+    CACHE STRING "Flavour of the project"
+)
 set_property(CACHE FLAVOUR PROPERTY STRINGS ${flavours})
 
 # Verbose option (for debugging purposes) (was quiet in Makefile.defs) Probably
@@ -113,13 +114,10 @@ endif()
 
 set(LIBSSL_SET_MUTEX_SHARED
     ON
-    CACHE BOOL
-          "enable workaround for libssl 1.1+ to set shared mutex attribute")
+    CACHE BOOL "enable workaround for libssl 1.1+ to set shared mutex attribute"
+)
 if(NOT ${LIBSSL_SET_MUTEX_SHARED})
-  message(
-    STATUS
-      "Checking if can enable workaround for libssl 1.1+ to set shared mutex attribute"
-  )
+  message(STATUS "Checking if can enable workaround for libssl 1.1+ to set shared mutex attribute")
 
   # TODO: This can probably be reduced to a just a find_package(OpenSSL) call
   # and then check the version
@@ -131,9 +129,7 @@ if(NOT ${LIBSSL_SET_MUTEX_SHARED})
     if(OPENSSL_FOUND)
       message(STATUS "OpenSSL version: ${OPENSSL_VERSION}")
       if(${OPENSSL_VERSION} VERSION_GREATER_EQUAL "1.1.0")
-        message(
-          STATUS
-            "Enabling workaround for libssl 1.1+ to set shared mutex attribute")
+        message(STATUS "Enabling workaround for libssl 1.1+ to set shared mutex attribute")
         set(LIBSSL_SET_MUTEX_SHARED ON)
       endif()
     endif()
@@ -163,7 +159,8 @@ option(USE_FAST_LOCK "Use fast locking if available" ON)
 # Check the system processor type and set USE_FAST_LOCK accordingly
 if(USE_FAST_LOCK)
   if(CMAKE_SYSTEM_PROCESSOR MATCHES
-     "i386|i486|i586|i686|x86_64|amd64|sparc64|sparc|ppc|ppc64|alpha|mips2|mips64")
+     "i386|i486|i586|i686|x86_64|amd64|sparc64|sparc|ppc|ppc64|alpha|mips2|mips64"
+  )
     set(USE_FAST_LOCK YES)
   elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
     set(USE_FAST_LOCK NO)
@@ -178,9 +175,7 @@ if(USE_FAST_LOCK)
     target_compile_definitions(common INTERFACE MIPS_HAS_LLSC) # likely
     target_compile_definitions(common INTERFACE NOSMP) # very likely
   elseif()
-    message(
-      STATUS
-        "Fast locking not available for this platform, disabling USE_FAST_LOCK")
+    message(STATUS "Fast locking not available for this platform, disabling USE_FAST_LOCK")
     set(USE_FAST_LOCK NO)
   endif()
 endif()
@@ -190,8 +185,7 @@ message(STATUS "Fast lock available: ${USE_FAST_LOCK}")
 if(USE_FAST_LOCK)
   # If fast lock is available, add the definitions for it, else each OS will
   # have its own locking method
-  target_compile_definitions(common INTERFACE FAST_LOCK ADAPTIVE_WAIT
-                                              ADAPTIVE_WAIT_LOOPS=1024)
+  target_compile_definitions(common INTERFACE FAST_LOCK ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024)
 endif()
 
 # set(LOCKING_DEFINITION "${locking_method}")
@@ -342,7 +336,8 @@ target_compile_definitions(
             # TODO: We can use the generator expression to define extra flags
             # instead of checking the options each time
             $<$<BOOL:${USE_SCTP}>:USE_SCTP>
-            $<$<BOOL:${STATISTICS}>:STATISTICS>)
+            $<$<BOOL:${STATISTICS}>:STATISTICS>
+)
 target_link_libraries(common INTERFACE common_compiler_flags)
 
 # ----------------------

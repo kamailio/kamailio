@@ -56,8 +56,7 @@ set(ORACLE_VERSIONS
     11
     10
 )
-set(ORACLE_OCI_NAMES clntsh libclntsh oci
-)# Dirty trick might help on OSX, see issues/89
+set(ORACLE_OCI_NAMES clntsh libclntsh oci) # Dirty trick might help on OSX, see issues/89
 set(ORACLE_OCCI_NAMES libocci occi)
 set(ORACLE_NNZ_NAMES ociw32)
 foreach(loop_var IN LISTS ORACLE_VERSIONS)
@@ -91,9 +90,7 @@ find_library(
   PATHS ${ORACLE_LIB_DIR}
 )
 
-set(ORACLE_LIBRARY ${ORACLE_OCI_LIBRARY} ${ORACLE_OCCI_LIBRARY}
-                   ${ORACLE_NNZ_LIBRARY}
-)
+set(ORACLE_LIBRARY ${ORACLE_OCI_LIBRARY} ${ORACLE_OCCI_LIBRARY} ${ORACLE_NNZ_LIBRARY})
 
 if(NOT WIN32)
   set(ORACLE_LIBRARY ${ORACLE_LIBRARY} ${ORACLE_CLNTSH_LIBRARY})
@@ -104,9 +101,7 @@ set(ORACLE_LIBRARIES ${ORACLE_LIBRARY})
 # Handle the QUIETLY and REQUIRED arguments and set ORACLE_FOUND to TRUE
 # if all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(
-  Oracle DEFAULT_MSG ORACLE_LIBRARY ORACLE_INCLUDE_DIR
-)
+find_package_handle_standard_args(Oracle DEFAULT_MSG ORACLE_LIBRARY ORACLE_INCLUDE_DIR)
 
 if(NOT ORACLE_FOUND)
   message(
