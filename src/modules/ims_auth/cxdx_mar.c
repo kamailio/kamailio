@@ -479,7 +479,7 @@ done:
 		adi_list = 0;
 	}
 
-	LM_DBG("DBG:UAR Async CDP callback: ... Done resuming transaction\n");
+	LM_DBG("DBG:MAR Async CDP callback: ... Done resuming transaction\n");
 	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
 	set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
 	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
@@ -493,7 +493,7 @@ done:
 		//del_nonshm_lump_rpl(&req->reply_lump);
 		tmb.unref_cell(t);
 	}
-	tmb.t_continue(data->tindex, data->tlabel, data->act);
+	tmb.t_continue_skip_timer(data->tindex, data->tlabel, data->act);
 	free_saved_transaction_data(data);
 	return;
 
@@ -504,7 +504,7 @@ error:
 		//del_nonshm_lump_rpl(&t->uas.request->reply_lump);
 		tmb.unref_cell(t);
 	}
-	tmb.t_continue(data->tindex, data->tlabel, data->act);
+	tmb.t_continue_skip_timer(data->tindex, data->tlabel, data->act);
 
 error1:
 	free_saved_transaction_data(data);
