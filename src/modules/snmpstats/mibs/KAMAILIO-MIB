@@ -4,7 +4,7 @@
 -- Date of Creation: Januay 2006
 --
 -- This MIB provides information related to the Kamailio SIP Router.
--- 
+--
 -- Copyright (c) The Internet Society (2006)
 -- Amendments (c) Soma Networks, Inc. (2006)
 -- Kamailio extras (c) Edvina AB, 2013
@@ -16,7 +16,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 
     IMPORTS
         MODULE-IDENTITY,
-        OBJECT-TYPE, 
+        OBJECT-TYPE,
         OBJECT-IDENTITY,
         NOTIFICATION-TYPE,
         Integer32,
@@ -25,7 +25,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         Counter64,
         Gauge32
             FROM SNMPv2-SMI
-            
+
         DateAndTime,
 	TEXTUAL-CONVENTION,
 	DisplayString,
@@ -40,7 +40,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         X731AlarmStatus,
         X731AlarmState
             FROM KAMAILIO-TC
-            
+
         MODULE-COMPLIANCE,
         OBJECT-GROUP,
         NOTIFICATION-GROUP
@@ -52,13 +52,13 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
     kamailioModule MODULE-IDENTITY
         LAST-UPDATED "201301081200Z"
         ORGANIZATION "Kamailio"
-        CONTACT-INFO 
+        CONTACT-INFO
             "https://www.kamailio.org"
         DESCRIPTION
             "Kamailio MIB module.
              This module defines objects which are necessary to monitor an
              instance of Kamailio.
-             
+
              The objects in this MIB are intended to be used in conjunction
              with those rovided in KAMAILIO-SIP-COMMON-MIB and
              KAMAILIO-SIP-SERVER-MIB.  In particular, this MIB defines the X.731
@@ -66,7 +66,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
              Kamailio core itself."
         REVISION   "200605021200Z"
         DESCRIPTION
-            "clarified some of the statistics collected, added the alarm 
+            "clarified some of the statistics collected, added the alarm
             states and notifications."
         REVISION   "200603231200Z"
         DESCRIPTION
@@ -87,9 +87,9 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 --
     kamailioObjects OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Sub-tree for accessible objects in the MIB."
-        ::= { kamailioMIB 1 } 
+        ::= { kamailioMIB 1 }
 
     kamailioMIBEvents OBJECT-IDENTITY
         STATUS current
@@ -99,7 +99,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 
     kamailioConform OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Sub-tree for Conformance specifications."
         ::= { kamailioMIB 3 }
 
@@ -108,56 +108,56 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 --
     kamailioServer  OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Sub-tree for Server state, alarms, and management."
         ::= { kamailioObjects 1 }
 
     kamailioMsgs  OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Sub-tree for tracking of individual SIP messages processed by Kamailio."
         ::= { kamailioObjects 2 }
 
    kamailioDialog  OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Sub-tree for tracking of SIP Dialogs being processed by Kamailio."
     ::= { kamailioObjects 3 }
 
    kamailioNet OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Sub-tree for tracking of Network Transports being enabled in Kamailio."
     ::= { kamailioObjects 4 }
 
--- 
+--
 -- Kamailio Server Objects
 --
     kamailioSrvMemory OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for Core Memory Statistics." 
+        DESCRIPTION
+        "Sub-tree for Core Memory Statistics."
         ::= { kamailioServer 1 }
 
     kamailioSrvConfig OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for Core configuration - compile flags etc." 
+        DESCRIPTION
+        "Sub-tree for Core configuration - compile flags etc."
         ::= { kamailioServer 2 }
 
     kamailioSrvCounters OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for Core Counters/Statistic variables." 
+        DESCRIPTION
+        "Sub-tree for Core Counters/Statistic variables."
         ::= { kamailioServer 3 }
 
     kamailioSrvProcess OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for Core Processes." 
+        DESCRIPTION
+        "Sub-tree for Core Processes."
         ::= { kamailioServer 4 }
 
--- 
+--
 -- Kamailio Server Configuration
 --
 
@@ -165,7 +165,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX DisplayString
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Full version of Kamailio"
         ::= { kamailioSrvConfig 1 }
 
@@ -173,7 +173,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX DisplayString
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Version of Kamailio"
         ::= { kamailioSrvConfig 2 }
 
@@ -181,7 +181,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX DisplayString
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Version of Kamailio"
         ::= { kamailioSrvConfig 3 }
 
@@ -189,7 +189,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      DisplayString
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Architecture Kamailio is compiled for"
         ::= { kamailioSrvConfig 4 }
 
@@ -197,7 +197,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX DisplayString
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Operating System Kamailio is compiled for"
         ::= { kamailioSrvConfig 5 }
 
@@ -205,7 +205,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX DisplayString
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Kamailio Version ID"
         ::= { kamailioSrvConfig 6 }
 
@@ -213,7 +213,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX DisplayString
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Kamailio Build time"
         ::= { kamailioSrvConfig 7 }
 
@@ -221,7 +221,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX DisplayString
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Kamailio Build compiler used"
         ::= { kamailioSrvConfig 8 }
 
@@ -229,19 +229,19 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX DisplayString
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Kamailio Build compile time flags"
         ::= { kamailioSrvConfig 9 }
 
 
--- 
+--
 -- Kamailio Server Memory data
 --
     kamailioSrvMaxMemory OBJECT-TYPE
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Maximum available Shared Memory"
         ::= { kamailioSrvMemory 1 }
 
@@ -249,7 +249,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Available free memory in the Shared Memory pool"
         ::= { kamailioSrvMemory 2 }
 
@@ -257,7 +257,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Maximum amount of memory used in the Shared Memory pool"
         ::= { kamailioSrvMemory 3 }
 
@@ -265,7 +265,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Current amount of memory used in the Shared Memory pool"
         ::= { kamailioSrvMemory 4 }
 
@@ -273,39 +273,39 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Current amount of memory fragments in the Shared Memory pool"
         ::= { kamailioSrvMemory 5 }
 
 
--- 
+--
 -- Kamailio Server Core counters
 --
 
--- 
+--
 -- Kamailio Network Objects
 --
     kamailioNetTcp OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for TCP Network Transport objects (incl TLS conncetions)." 
+        DESCRIPTION
+        "Sub-tree for TCP Network Transport objects (incl TLS conncetions)."
         ::= { kamailioNet 1 }
 
     kamailioNetWebsocket OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for Websocket Network Transport objects ." 
+        DESCRIPTION
+        "Sub-tree for Websocket Network Transport objects ."
         ::= { kamailioNet 2 }
 
     kamailioNetHttp OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for HTTP Server Transport objects ." 
+        DESCRIPTION
+        "Sub-tree for HTTP Server Transport objects ."
         ::= { kamailioNet 3 }
 
     kamailioNetConfig OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Sub-tree for transport properties"
         ::= { kamailioNet 4 }
 
@@ -314,20 +314,20 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 --
     kamailioNetTcpTls OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for TCP/TLS specific objects." 
+        DESCRIPTION
+        "Sub-tree for TCP/TLS specific objects."
         ::= { kamailioNetTcp 1 }
 
     kamailioNetTcpStat OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for TCP/TLS statistics." 
+        DESCRIPTION
+        "Sub-tree for TCP/TLS statistics."
         ::= { kamailioNetTcp 2 }
 
     kamailioNetTcpConfig OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for TCP/TLS configuration data." 
+        DESCRIPTION
+        "Sub-tree for TCP/TLS configuration data."
         ::= { kamailioNetTcp 3 }
 
 --
@@ -337,16 +337,16 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if TCP is enabled in this server."
+        DEFVAL { false }
         ::= { kamailioNetTcpConfig 1 }
 
     kamailioNetTcpMaxConns OBJECT-TYPE
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Maximum number of TCP connections (tcp_max_connections)"
         ::= { kamailioNetTcpConfig 2 }
 
@@ -354,7 +354,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "TCP Connection Timeout (tcp_connect_timeout)"
         ::= { kamailioNetTcpConfig 3 }
 
@@ -362,7 +362,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Time in seconds after a TCP connection will be closed if it is not available for writing in this interval (tcp_send_timeout)"
         ::= { kamailioNetTcpConfig 4 }
 
@@ -370,7 +370,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Lifetime in seconds for TCP sessions (tcp_connection_lifetime)"
         ::= { kamailioNetTcpConfig 5 }
 
@@ -378,7 +378,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Maximum number of tcp connections (tcp_max_connections)"
         ::= { kamailioNetTcpConfig 6 }
 
@@ -386,7 +386,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "True if Kamailio never tries to set up outbound TCP (or TCP/TLS) connections (tcp_no_connect)"
         ::= { kamailioNetTcpConfig 7 }
 
@@ -394,7 +394,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "If enabled FDs used for sending will be cached inside the process calling tcp_send (tcp_fd_cache)"
         ::= { kamailioNetTcpConfig 8 }
 
@@ -402,7 +402,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "True if TCP Async is enabled in this server (tcp_async)"
         ::= { kamailioNetTcpConfig 9 }
 
@@ -410,7 +410,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "??? No description available "
         ::= { kamailioNetTcpConfig 10 }
 
@@ -418,7 +418,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "??? No description available "
         ::= { kamailioNetTcpConfig 10 }
 
@@ -426,7 +426,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Async TCP: Maximum bytes queued for write allowed per connection. (tcp_conn_wq_max)"
         ::= { kamailioNetTcpConfig 11 }
 
@@ -434,7 +434,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Async TCP: Maximum bytes queued for write (tcp__wq_max)"
         ::= { kamailioNetTcpConfig 12 }
 
@@ -442,7 +442,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Async TCP: Maximum bytes queued for write (tcp_wq_blk_size)"
         ::= { kamailioNetTcpConfig 12 }
 
@@ -450,7 +450,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Buffer size used for tcp reads (tcp_rd_buf_size)"
         ::= { kamailioNetTcpConfig 13 }
 
@@ -458,7 +458,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Tcp accepts will be delayed until some data is received (tcp_defer_accept)"
         ::= { kamailioNetTcpConfig 14 }
 
@@ -466,7 +466,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Initial ACK for opened connections will be delayed and sent with the first data segment (tcp_delayed_ack)"
         ::= { kamailioNetTcpConfig 15 }
 
@@ -474,7 +474,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Number of SYN retransmissions before aborting a connect attempt (tcp_syncnt)"
         ::= { kamailioNetTcpConfig 16 }
 
@@ -482,7 +482,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Lifetime of orphaned sockets in FIN_WAIT2 state. Linux only. (tcp_linger2)"
         ::= { kamailioNetTcpConfig 17 }
 
@@ -490,7 +490,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "True if TCP Keepalives are enabled (tcp_keepalive)"
         ::= { kamailioNetTcpConfig 18 }
 
@@ -498,7 +498,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Time before starting to send keepalives, if the connection is idle. Linux only. (tcp_keepidle)"
         ::= { kamailioNetTcpConfig 19 }
 
@@ -506,7 +506,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Time interval between keepalive probes, when the previous probe failed. Linux only. (tcp_keepintvl)"
         ::= { kamailioNetTcpConfig 20 }
 
@@ -514,7 +514,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Number of keepalives sent before dropping the connection. Linux only. (tcp_keepcnt)"
         ::= { kamailioNetTcpConfig 21 }
 
@@ -522,7 +522,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Enable SIP outbound TCP keep-alive using PING-PONG (CRLFCRLF - CRLF). (tcp_crlf_ping)"
         ::= { kamailioNetTcpConfig 22 }
 
@@ -530,7 +530,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Reuse TCP connections based on aliases (tcp_accept_alias)"
         ::= { kamailioNetTcpConfig 23 }
 
@@ -538,7 +538,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "True if Content-Length headers are required (tcp_accept_no_cl)"
         ::= { kamailioNetTcpConfig 24 }
 
@@ -556,7 +556,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Incremented each time a TCP connection is established."
         ::= { kamailioNetTcpStat 1 }
 
@@ -564,7 +564,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Number of failed active TCP connection attempts."
         ::= { kamailioNetTcpStat 2 }
 
@@ -572,7 +572,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Number of reset TCP connections"
         ::= { kamailioNetTcpStat 3 }
 
@@ -580,7 +580,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Number of successful TCP connections"
         ::= { kamailioNetTcpStat 4 }
 
@@ -588,7 +588,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Number of current open TCP connections"
         ::= { kamailioNetTcpStat 5 }
 
@@ -596,7 +596,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Total number of accepted TCP connections (so far)."
         ::= { kamailioNetTcpStat 6 }
 
@@ -604,7 +604,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Total number of successfully active opened TCP connections"
         ::= { kamailioNetTcpStat 7 }
 
@@ -612,7 +612,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Number of rejected incoming TCP connections."
         ::= { kamailioNetTcpStat 8 }
 
@@ -623,108 +623,108 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if UDP is active in this server."
+        DEFVAL { false }
         ::= { kamailioNetConfig 1 }
 
     kamailioNetConfUdpDtlsTransport OBJECT-TYPE
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if UDP/DTLS is active in this server. (Future reservation)"
+        DEFVAL { false }
         ::= { kamailioNetConfig 2 }
 
     kamailioNetConfTcpTransport OBJECT-TYPE
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if TCP is active in this server."
+        DEFVAL { false }
         ::= { kamailioNetConfig 3 }
 
     kamailioNetConfTcpTlsTransport OBJECT-TYPE
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if TCP/TLS is active in this server."
+        DEFVAL { false }
         ::= { kamailioNetConfig 4 }
 
     kamailioNetConfSctpTransport OBJECT-TYPE
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if Sctp is enabled in this server."
+        DEFVAL { false }
         ::= { kamailioNetConfig 5 }
 
     kamailioNetConfSctpTlsTransport OBJECT-TYPE
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if Sctp/TLS is enabled in this server. (Future reservation)"
+        DEFVAL { false }
         ::= { kamailioNetConfig 6 }
 
     kamailioNetConfWsTransport OBJECT-TYPE
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if WS - WebSocket Transport- is enabled in this server."
+        DEFVAL { false }
         ::= { kamailioNetConfig 7 }
 
     kamailioNetConfWsTlsTransport OBJECT-TYPE
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if WSS - WebSocket Transport with TLS- is enabled in this server."
+        DEFVAL { false }
         ::= { kamailioNetConfig 8 }
 
     kamailioNetConfHttpServer OBJECT-TYPE
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if the embedded HTTP server (xhttp module) is loaded in this server."
+        DEFVAL { false }
         ::= { kamailioNetConfig 9 }
 
     kamailioNetConfMsrpRelay OBJECT-TYPE
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if the MSRP Relay server is loaded in this server."
+        DEFVAL { false }
         ::= { kamailioNetConfig 10 }
 
     kamailioNetConfStunServer OBJECT-TYPE
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if the STUN Server server (SIP Outbound) is loaded in this server."
+        DEFVAL { false }
         ::= { kamailioNetConfig 11 }
 
     kamailioNetConfOutbound OBJECT-TYPE
         SYNTAX  TruthValue
         MAX-ACCESS  read-only
         STATUS current
-	DEFVAL { false }
-        DESCRIPTION 
+        DESCRIPTION
         "True if the SIP Outbound module is loaded in this server."
+        DEFVAL { false }
         ::= { kamailioNetConfig 12 }
 
 --
@@ -732,14 +732,14 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 --
     kamailioNetWsStat OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for Websocket statistics." 
+        DESCRIPTION
+        "Sub-tree for Websocket statistics."
         ::= { kamailioNetWebsocket 1 }
 
    kamailioNetWsConfig OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for Websocket configuration objects." 
+        DESCRIPTION
+        "Sub-tree for Websocket configuration objects."
         ::= { kamailioNetWebsocket 2 }
 
 --
@@ -755,7 +755,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Gauge
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Number of currently active websocket connections"
         ::= { kamailioNetWsStat 1 }
 
@@ -763,7 +763,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Gauge
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The maximum number of active websocket connections since process start"
         ::= { kamailioNetWsStat 2 }
 
@@ -771,7 +771,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The number of failed websocket connections since process start"
         ::= { kamailioNetWsStat 3 }
 
@@ -779,7 +779,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The number of locally closed websocket connections"
         ::= { kamailioNetWsStat 4 }
 
@@ -787,7 +787,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The number of closed websocket connections by remote peer"
         ::= { kamailioNetWsStat 5 }
 
@@ -795,7 +795,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The number of received websocket frames"
         ::= { kamailioNetWsStat 6 }
 
@@ -803,7 +803,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The number of transmitted websocket frames"
         ::= { kamailioNetWsStat 7 }
 
@@ -811,7 +811,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The number of transmitted websocket frames"
         ::= { kamailioNetWsStat 8 }
 
@@ -819,7 +819,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The number of transmitted websocket frames"
         ::= { kamailioNetWsStat 9 }
 
@@ -829,12 +829,12 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 --
 
 --
--- Message Statistics 
+-- Message Statistics
 --
     kamailioMsgStats OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for Message Statistics." 
+        DESCRIPTION
+        "Sub-tree for Message Statistics."
         ::= { kamailioMsgs 3 }
 
     kamailioMsgQueueDepth       OBJECT-TYPE
@@ -842,7 +842,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-            "The number of packets (udp or tcp) waiting in the OS network queue, 
+            "The number of packets (udp or tcp) waiting in the OS network queue,
              waiting to be processed."
         ::= { kamailioMsgStats 1 }
 
@@ -851,17 +851,17 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-            "When the kamailioMsgQueueDepth reaches this point, a minor alarm 
+            "When the kamailioMsgQueueDepth reaches this point, a minor alarm
              will be generated. This value reflects the configured value; if it
              is set to -1, then the alarm is never sent."
         ::= { kamailioMsgStats 2 }
-        
+
     kamailioMsgQueueMajorThreshold    OBJECT-TYPE
         SYNTAX      Integer32
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-            "When the kamailioMsgQueueDepth reaches this point, a major alarm 
+            "When the kamailioMsgQueueDepth reaches this point, a major alarm
              will be generated. This value reflects the configured value; if it
              is set to -1, then the alarm is never sent."
         ::= { kamailioMsgStats 3 }
@@ -870,7 +870,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 --
     kamailioMsgAlarms OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Sub-tree for Message Alarms."
         ::= { kamailioMsgs 4 }
 
@@ -881,16 +881,16 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         DESCRIPTION
             "This status variable reports the alarm levels that have been
              generated for the message queue depth.
-               
-             The thresholds are defined in the Kamailio configuration; if they 
-             are not configured, this alarm status will always be clear. 
+
+             The thresholds are defined in the Kamailio configuration; if they
+             are not configured, this alarm status will always be clear.
              Specifically, in this case no bits will be toggled, and therefore
              this scalar will return 00.
-             
+
              This scalar follows the X731AlarmStatus specs, and can take on
              the following values:
-             
-             underRepair(0), critical(1), major(2), minor(3), 
+
+             underRepair(0), critical(1), major(2), minor(3),
              alarmOutstanding(4), unknown(5)"
         ::= { kamailioMsgAlarms 1 }
 
@@ -899,19 +899,19 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-            "This variable indicates whether the minor message queue depth 
+            "This variable indicates whether the minor message queue depth
              threshold has been surpassed.
                 clear(0) the queue depth is below the configured threshold.
                 minor(1) the queue depth has exceeded the configured threshold."
         ::= { kamailioMsgAlarms 2 }
-    
+
     kamailioMsgQueueDepthMajorAlarm  OBJECT-TYPE
         SYNTAX      X731AlarmState
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-            "This variable indicates whether the major message queue depth 
-             threshold has been surpassed.               
+            "This variable indicates whether the major message queue depth
+             threshold has been surpassed.
                 clear(0) the queue depth is below the configured threshold.
                 major(2) the queue depth has exceeded the configured threshold."
         ::= { kamailioMsgAlarms 3 }
@@ -920,7 +920,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 --
 
 --
--- The Dialog Table: 
+-- The Dialog Table:
 --    contains information about currently active calls.
 --
 
@@ -932,7 +932,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
               "This table contains information on all active calls in
                the system."
           ::= { kamailioDialog 1 }
-  
+
     kamailioDialogTableEntry   OBJECT-TYPE
           SYNTAX      KamailioDialogTableEntry
           MAX-ACCESS  not-accessible
@@ -943,7 +943,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
           INDEX { kamailioDialogIndex }
           ::= { kamailioDialogTable 1 }
 
-    KamailioDialogTableEntry ::= 
+    KamailioDialogTableEntry ::=
         SEQUENCE {
             kamailioDialogIndex              Unsigned32,
             kamailioDialogType               INTEGER,
@@ -959,7 +959,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         SYNTAX      Unsigned32
         MAX-ACCESS  not-accessible
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The index of this dialog."
         ::= { kamailioDialogTableEntry 1 }
 
@@ -970,28 +970,28 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         }
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The type of Dialog:
             invite(1)     - the dialog was created with a SIP INVITE.
             subscribe(2)  - the dialog was created with a SIP SUBSCRIBE."
         ::= { kamailioDialogTableEntry 2 }
-                
+
     kamailioDialogToUri OBJECT-TYPE
         SYNTAX      SnmpAdminString
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The URI of the To header."
         ::= { kamailioDialogTableEntry 3 }
-        
+
     kamailioDialogFromUri OBJECT-TYPE
         SYNTAX      SnmpAdminString
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The URI of the From header."
         ::= { kamailioDialogTableEntry 4 }
-        
+
     kamailioDialogState OBJECT-TYPE
         SYNTAX  INTEGER {
             unconfirmed(0),
@@ -1004,49 +1004,49 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         DESCRIPTION
         "The Dialogue state:
             unconfirmed (0)  - we do not yet have a dialog, but a request has
-                               been made and we may create one in the future. 
+                               been made and we may create one in the future.
                                All calls begin in this state.
-            early (1)        - dialog migrates to this state when we receive a 
+            early (1)        - dialog migrates to this state when we receive a
                                101-199 response.
-            confirmed (2)    - dialog migrates from unconfirmed OR early to this 
+            confirmed (2)    - dialog migrates from unconfirmed OR early to this
                                state when we received a 200-299 response.
-            terminated (3)   - dialog migrates from unconfirmed OR early to this 
+            terminated (3)   - dialog migrates from unconfirmed OR early to this
                                state when a final 3xx-4xx-5xx-6xx is message is
                                received.
-              
-          terminated dialogs stay present in the system for only a short period 
+
+          terminated dialogs stay present in the system for only a short period
           of time, and then are cleared by Kamailio."
         ::= { kamailioDialogTableEntry 5 }
-        
+
     kamailioDialogStartTime OBJECT-TYPE
         SYNTAX      DateAndTime
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The time this dialog was started."
         ::= { kamailioDialogTableEntry 6 }
-        
+
     kamailioDialogLastUpdateTime OBJECT-TYPE
         SYNTAX      DateAndTime
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The last time this dialog was updated; ie, when the last SIP
          message for this dialog was seen."
-        ::= { kamailioDialogTableEntry 7 }        
+        ::= { kamailioDialogTableEntry 7 }
 
     kamailioDialogExpiryTime OBJECT-TYPE
         SYNTAX      DateAndTime
         MAX-ACCESS  read-only
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "The time at which this dialog will automatically expire."
-        ::= { kamailioDialogTableEntry 8 }        
+        ::= { kamailioDialogTableEntry 8 }
 
 
     kamailioDialogStats OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Sub-section for Dialog counters and statistics."
         ::= { kamailioDialog 2 }
 
@@ -1055,10 +1055,10 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-            "The current number of dialogs either in EARLY or CONFIRMED 
+            "The current number of dialogs either in EARLY or CONFIRMED
              state."
         ::= { kamailioDialogStats 1 }
-        
+
     kamailioCurNumDialogsInProgress     OBJECT-TYPE
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
@@ -1066,7 +1066,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         DESCRIPTION
             "The current number of CONFIRMED dialogs."
         ::= { kamailioDialogStats 2 }
-        
+
     kamailioCurNumDialogsInSetup     OBJECT-TYPE
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
@@ -1074,13 +1074,13 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         DESCRIPTION
             "The current number of EARLY dialogs."
         ::= { kamailioDialogStats 3 }
-        
+
     kamailioTotalNumFailedDialogSetups     OBJECT-TYPE
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-            "The total number of calls that failed with an error. 
+            "The total number of calls that failed with an error.
              The following codes define a failed call:"
         ::= { kamailioDialogStats 4 }
 
@@ -1089,7 +1089,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-            "The configured minor threshold indicating the kamailio system has 
+            "The configured minor threshold indicating the kamailio system has
              reached a high level of dialogs. -1 indicates the value
              is not configured, and the alarm will never be set."
         ::= { kamailioDialogStats 5 }
@@ -1101,7 +1101,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         DESCRIPTION
             "The configured threshold indicating the kamailio system has reached
              a maximum number of dialogs, and perhaps performance will suffer.
-             -1 indicates the value is not configured, and alarms will never be 
+             -1 indicates the value is not configured, and alarms will never be
              set, and the usage state will never be reported as 'busy'."
         ::= { kamailioDialogStats 6 }
 
@@ -1123,7 +1123,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         DESCRIPTION
         "a sub-tree for Kamailio's dialog tracking states."
         ::= { kamailioDialog 3 }
-    
+
     kamailioDialogUsageState     OBJECT-TYPE
         SYNTAX      X731UsageState
         MAX-ACCESS  read-only
@@ -1133,7 +1133,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
             idle(0)   - no dialogs are currently being tracked.
             active(1) - at least 1 dialog is being tracked.
             busy(2)   - the maximum number of dialogs are being tracked.
-                        
+
          The 'busy' point is based on a configuration variable (the same as
          kamailioDialogMajorLimitThreshold): if this value is -1, then the server
          is never considered 'busy'."
@@ -1144,8 +1144,8 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 --
     kamailioDialogAlarms   OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
-        "Sub-tree for call alarms." 
+        DESCRIPTION
+        "Sub-tree for call alarms."
     ::= { kamailioDialog 4 }
 
     kamailioDialogLimitAlarmStatus  OBJECT-TYPE
@@ -1159,8 +1159,8 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 
             This scalar follows the X731AlarmStatus specs, and can take on
             the following values:
-             
-            underRepair(0), critical(1), major(2), minor(3), 
+
+            underRepair(0), critical(1), major(2), minor(3),
             alarmOutstanding(4), unknown(5)"
         ::= { kamailioDialogAlarms 1 }
 
@@ -1169,14 +1169,14 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-           "The Kamailio system is approaching or has reached its configured 
+           "The Kamailio system is approaching or has reached its configured
             minor dialog limit threshold.
                 clear(0) - the current number of dialogs is below the configured
                            threshold.
                 minor(1) - the current number of dialogs has reached or exceeded
                            the configured threshold.
-                           
-            The threshold is defined in the Kamailio configuration; if it 
+
+            The threshold is defined in the Kamailio configuration; if it
              is not configured, this alarm will not be sent."
         ::= { kamailioDialogAlarms 2 }
 
@@ -1185,18 +1185,18 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-           "The Kamailio system is approaching or has reached its configured 
+           "The Kamailio system is approaching or has reached its configured
             dialog limit.
                 clear(0) - the current number of dialogs is below the configured
                            threshold.
                 major(2) - the current number of dialogs has reached or exceeded
                            the configured threshold.
-            
-            The threshold is defined in the Kamailio configuration; if it 
+
+            The threshold is defined in the Kamailio configuration; if it
              is not configured, this alarm will not be sent."
         ::= { kamailioDialogAlarms 3 }
 
--- 
+--
 -- Notifications
 --
 
@@ -1207,30 +1207,30 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 
     kamailioMIBNotifications  OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "A sub-section for reverse-mapping between SNMPv1 and SNMPv2 events."
-        ::= { kamailioMIBEvents 0 } 
-        
+        ::= { kamailioMIBEvents 0 }
+
     kamailioMsgQueueDepthMinorEvent NOTIFICATION-TYPE
         OBJECTS {
           kamailioMsgQueueDepth, kamailioMsgQueueMinorThreshold
         }
         STATUS  current
         DESCRIPTION
-        "The message queue depth (as reported by kamailioMsgQueueDepth) has 
+        "The message queue depth (as reported by kamailioMsgQueueDepth) has
          exceeded the minor configured threshold kamailioMsgQueueMinorThreshold."
         ::= { kamailioMIBNotifications 1 }
-        
+
     kamailioMsgQueueDepthMajorEvent NOTIFICATION-TYPE
         OBJECTS {
             kamailioMsgQueueDepth, kamailioMsgQueueMajorThreshold
         }
         STATUS  current
         DESCRIPTION
-        "The message queue depth (as reported by kamailioMsgQueueDepth) has 
+        "The message queue depth (as reported by kamailioMsgQueueDepth) has
          exceeded the minor configured threshold kamailioMsgQueueMinorThreshold."
         ::= { kamailioMIBNotifications 2 }
-        
+
     kamailioDialogLimitMinorEvent NOTIFICATION-TYPE
         OBJECTS {
             kamailioCurNumDialogs, kamailioDialogLimitMinorThreshold
@@ -1238,7 +1238,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         STATUS  current
         DESCRIPTION
         "The number of dialogs being tracked in the system (as reported by
-         kamailioCurNumDialogs) has exceeded the minor configured threshold 
+         kamailioCurNumDialogs) has exceeded the minor configured threshold
          kamailioDialogLimitMinorThreshold."
         ::= { kamailioMIBNotifications 3 }
 
@@ -1249,7 +1249,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         STATUS  current
         DESCRIPTION
         "The number of dialogs being tracked in the system (as reported by
-         kamailioCurNumDialogs) has exceeded the major configured threshold 
+         kamailioCurNumDialogs) has exceeded the major configured threshold
          kamailioDialogLimitMajorThreshold."
         ::= { kamailioMIBNotifications 4 }
 
@@ -1276,10 +1276,10 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 
     kamailioGroups  OBJECT-IDENTITY
         STATUS current
-        DESCRIPTION 
+        DESCRIPTION
         "Sub-tree for defining the conformance groups."
         ::= { kamailioConform 2 }
-        
+
     kamailioNotifications OBJECT-IDENTITY
         STATUS current
         DESCRIPTION
@@ -1338,7 +1338,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
             "A collection of objects providing stateful alarm information in
              Kamailio."
         ::= { kamailioGroups 3 }
-    
+
     kamailioMsgQueueEvents   NOTIFICATION-GROUP
         NOTIFICATIONS {
             kamailioMsgQueueDepthMinorEvent,
