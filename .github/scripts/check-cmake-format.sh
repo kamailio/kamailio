@@ -5,6 +5,9 @@ set -eu
 
 res=0
 
+die() { echo "$@" >&2; exit 1; }
+fail() { echo "*** $@ ***" >&2; res=1; }
+
 git_log_format() {
   local pattern="$1"
   local reference="$2"
@@ -17,8 +20,13 @@ check_cmake-format() {
       continue
     fi
     if [[ "${file}" =~ CMakeLists.txt$ ]] || [[ "${file}" =~ \.cmake$ ]] ; then
-      echo "Checking ${file}"
-      cmake-format --check -c cmake/cmake-format.py "${file}" || res=1
+      printf "Checking %s" "${file}"
+      if cmake-format --check --config-files=cmake/cmake-format.py "${file}" ; then
+        printf ". OK\n"
+      else
+        printf ". Fail\n"
+        res=1
+      fi
     fi
   done < <(git diff-tree --no-commit-id --name-only -r "${1}")
 }
@@ -46,6 +54,7 @@ echo "Checking $(git rev-list --count "${src_sha}" "^${target_sha}") commits sin
 for commit in $(git rev-list --reverse "${src_sha}" "^${target_sha}"); do
   commit_msg=$(git_log_format "${COMMIT_MESSAGE_SUBJECT_FORMAT}" "${commit}")
   echo "[${commit}] ${commit_msg}"
+  git checkout --progress --force "${commit}"
   check_cmake-format "${commit}"
   echo "===================== done ========= "
 done
