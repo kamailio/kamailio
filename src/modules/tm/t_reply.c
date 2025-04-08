@@ -550,7 +550,9 @@ static int _reply_light(struct cell *trans, char *buf, unsigned int len,
 	 * the chances for this increase a lot.
 	 */
 	if(unlikely(!trans->uas.response.dst.send_sock)) {
-		LM_ERR("no resolved dst to send reply to\n");
+		LM_ERR("no resolved dst to send reply to [code: %u, t-flags: %x"
+			   " buf: %.*s ...]\n",
+				code, trans->flags, (len > 128) ? 128 : len, buf);
 	} else {
 		if(likely(SEND_PR_BUFFER(rb, buf, len) >= 0)) {
 			if(unlikely(code >= 200 && !is_local(trans)
