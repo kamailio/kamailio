@@ -82,7 +82,10 @@
       <para>The following libraries or applications must be installed before
       running &kamailio; with this module loaded: <itemizedlist>
           <listitem>
-            <para><emphasis>None</emphasis>.</para>
+            <para><emphasis>libxml</emphasis>,</para>
+          </listitem>
+          <listitem>
+            <para><emphasis>openssl</emphasis>.</para>
           </listitem>
         </itemizedlist></para>
     </section>
