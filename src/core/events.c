@@ -209,9 +209,13 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 				return -1;
 			break;
 		case SREV_TCP_CLOSED:
-			if(_sr_events_list.tcp_closed == 0)
-				_sr_events_list.tcp_closed = f;
-			else
+			for(i = 0; i < SREV_CB_LIST_SIZE; i++) {
+				if(_sr_events_list.tcp_closed[i] == 0) {
+					_sr_events_list.tcp_closed[i] = f;
+					break;
+				}
+			}
+			if(i == SREV_CB_LIST_SIZE)
 				return -1;
 			break;
 		case SREV_NET_DATA_RECV:
@@ -372,8 +376,13 @@ int sr_event_exec(int type, sr_event_param_t *evp)
 			} else
 				return 1;
 		case SREV_TCP_CLOSED:
-			if(unlikely(_sr_events_list.tcp_closed != 0)) {
-				ret = _sr_events_list.tcp_closed(evp);
+			if(unlikely(_sr_events_list.tcp_closed[0] != 0)) {
+				ret = 0;
+				for(i = 0;
+						i < SREV_CB_LIST_SIZE && _sr_events_list.tcp_closed[i];
+						i++) {
+					ret |= _sr_events_list.tcp_closed[i](evp);
+				}
 				return ret;
 			} else
 				return 1;
@@ -449,7 +458,7 @@ int sr_event_enabled(int type)
 		case SREV_RCV_NOSIP:
 			return (_sr_events_list.rcv_nosip != 0) ? 1 : 0;
 		case SREV_TCP_CLOSED:
-			return (_sr_events_list.tcp_closed != 0) ? 1 : 0;
+			return (_sr_events_list.tcp_closed[0] != 0) ? 1 : 0;
 		case SREV_NET_DATA_RECV:
 			return (_sr_events_list.net_data_recv != 0) ? 1 : 0;
 		case SREV_NET_DATA_SENT:
