@@ -62,6 +62,8 @@ extern str _tps_xavu_cfg;
 extern str _tps_xavu_field_acontact;
 extern str _tps_xavu_field_bcontact;
 extern str _tps_xavu_field_contact_host;
+extern str _tps_xavu_field_acontact_host;
+extern str _tps_xavu_field_bcontact_host;
 
 extern str _tps_context_param;
 extern str _tps_context_value;
@@ -380,11 +382,11 @@ int tps_storage_fill_contact(
 
 		/* contact_host xavu takes preference, reset vavu */
 		vavu = NULL;
-		if(_tps_xavu_cfg.len > 0 && _tps_xavu_field_contact_host.len > 0) {
-			vavu = xavu_get_child_with_sval(
-					&_tps_xavu_cfg, &_tps_xavu_field_contact_host);
-		}
+		LM_ERR("before xavphost contact mode replacement\n");
+
 		if(vavu != NULL && vavu->val.v.s.len > 0) {
+			LM_ERR(" host used from xavu user contact user: %.*s\n",
+					vavu->val.v.s.len, vavu->val.v.s.s);
 			memcpy(td->cp, vavu->val.v.s.s, vavu->val.v.s.len);
 			td->cp += vavu->val.v.s.len;
 		} else {
@@ -439,11 +441,44 @@ int tps_storage_fill_contact(
 		td->cp++;
 
 		/* contact_host xavu takes preference */
-		if(_tps_xavu_cfg.len > 0 && _tps_xavu_field_contact_host.len > 0) {
-			vavu = xavu_get_child_with_sval(
-					&_tps_xavu_cfg, &_tps_xavu_field_contact_host);
+		if(ctmode == TPS_CONTACT_MODE_XAVPHOST) {
+			/* extract the contact host (a or b) */
+			/* Downstream should be B side, upstream should be A side
+			otherwise the config related params are used in reversed for some reason */
+			if(dir == TPS_DIR_DOWNSTREAM) {
+				LM_ERR("downstream req\n");
+				vavu = xavu_get_child_with_sval(
+						&_tps_xavu_cfg, &_tps_xavu_field_bcontact_host);
+				if(vavu == NULL || vavu->val.v.s.len <= 0) {
+					LM_ERR("could not evaluate b_contact xavu. Make sure it's "
+						   "has a non-empty value or it's set in the related "
+						   "routes.\n");
+					return -1;
+				}
+			} else {
+				LM_ERR("upstream req\n");
+				vavu = xavu_get_child_with_sval(
+						&_tps_xavu_cfg, &_tps_xavu_field_acontact_host);
+				if(vavu == NULL || vavu->val.v.s.len <= 0) {
+					LM_ERR("could not evaluate a_contact xavu. Make sure it's "
+						   "has a non-empty value or it's set in the related "
+						   "routes.\n");
+					return -1;
+				}
+			}
 		}
+
+		if(vavu == NULL || vavu->val.v.s.len <= 0) {
+			LM_ERR("contact mode replacement default\n");
+			if(_tps_xavu_cfg.len > 0 && _tps_xavu_field_contact_host.len > 0) {
+				vavu = xavu_get_child_with_sval(
+						&_tps_xavu_cfg, &_tps_xavu_field_contact_host);
+			}
+		}
+
 		if(vavu != NULL && vavu->val.v.s.len > 0) {
+			LM_ERR(" host used from xavu: %.*s\n", vavu->val.v.s.len,
+					vavu->val.v.s.s);
 			memcpy(td->cp, vavu->val.v.s.s, vavu->val.v.s.len);
 			td->cp += vavu->val.v.s.len;
 		} else {
