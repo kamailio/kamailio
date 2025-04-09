@@ -1149,7 +1149,7 @@ static void dlgs_rpc_briefing(rpc_t *rpc, void *ctx)
 				rpc->fault(ctx, 500, "Internal error creating rpc");
 				return;
 			}
-			if(rpc->struct_add(th, "dSSSuu", "count", ++n, "src", &it->src,
+			if(rpc->struct_add(th, "dSSSu", "count", ++n, "src", &it->src,
 					   "dst", &it->dst, "callid", &it->callid, "state",
 					   it->state)
 					< 0) {
