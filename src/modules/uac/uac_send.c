@@ -807,7 +807,7 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		/* Callback function */
 		uac_r.cb = uac_resend_tm_callback;
 		/* Callback parameter */
-		uac_r.cbp = (void *)tp;
+		uac_r.cbp = (void *)uac_send_info_clone(tp);
 	}
 	ret = _uac_send_tmb.t_request_within(&uac_r);
 
@@ -816,13 +816,18 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 	if(uac_r.cb_flags & TMCB_LOCAL_REQUEST_DROP) {
+		if(uac_r.cbp != NULL)
+			shm_free(uac_r.cbp);
+
 		shm_free(tp);
 		*ps->param = NULL;
 		tp = NULL;
 	}
 
-	if(tp->evroute != 0) {
-		return;
+	if(tp != NULL) {
+		if(tp->evroute != 0) {
+			return;
+		}
 	}
 
 done:
