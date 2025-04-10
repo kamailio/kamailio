@@ -2558,6 +2558,34 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 	</section>
 	</section>
 
+	<section id="dispatcher.weight.info">
+		<title>
+		<function moreinfo="none">Limitation on the weight parameter</function>
+		</title>
+		<para>
+			The weight is implemented as an internal table with 100 entries. Each entry points to one dispatcher target.
+			This means that approaching 100 entries the distribution will become more and more uneven.
+			Weights also need to add up to 100.
+		</para>
+		<para>
+			In order to get around these issues, you can write your own distribution algorithm.
+		</para>
+		<para>
+			Example for dispatching based on rweight. The functions in this example perform dispatching based on random while taking the rweight parameter into account.
+			This should work regardless of the number of destinations. However run-time increases linearly with the number of dispatcher destinations.
+		</para>
+		<para>
+			This works by first adding up the rweights, then selecting a random number between 0 and that sum.
+			It then goes through the targets one at a time, adds up the rweights again.
+			The target where the new sum is above the previously selected random number will be selected.
+		</para>
+<programlisting  format="linespecific">
+
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="weights.cfg" parse="text"/>
+
+</programlisting>
+	</section>
+
         <section id="dispatcher.ex.event_routes">
         <title>Event routes</title>
         <section>
