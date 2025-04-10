@@ -128,7 +128,8 @@ enum _tr_uri_subtype
 	TR_URI_TOSOCKET,
 	TR_URI_SAOR,
 	TR_URI_DURI,
-	TR_URI_SURI
+	TR_URI_SURI,
+	TR_URI_RMPARAM
 };
 enum _tr_param_subtype
 {

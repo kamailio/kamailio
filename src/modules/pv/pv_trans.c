@@ -1764,6 +1764,30 @@ int tr_eval_uri(
 			}
 			val->rs = _tr_empty;
 			break;
+		case TR_URI_RMPARAM:
+			if(tp == NULL) {
+				LM_ERR("param invalid parameters\n");
+				return -1;
+			}
+			if(tp->type == TR_PARAM_STRING) {
+				sv = tp->v.s;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v) != 0
+						|| (!(v.flags & PV_VAL_STR)) || v.rs.len <= 0) {
+					LM_ERR("param cannot get p1\n");
+					return -1;
+				}
+				sv = v.rs;
+			}
+			tr_set_crt_buffer();
+			val->rs.s = _tr_buffer;
+			val->rs.len = TR_BUFFER_SIZE;
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			if(ksr_uri_remove_param(&_tr_uri, &sv, &val->rs) < 0) {
+				val->rs = _tr_empty;
+			}
+			break;
 		case TR_URI_HEADERS:
 			val->rs = (_tr_parsed_uri.headers.s) ? _tr_parsed_uri.headers
 												 : _tr_empty;
@@ -3356,6 +3380,23 @@ char *tr_parse_uri(str *in, trans_t *t)
 		goto done;
 	} else if(name.len == 5 && strncasecmp(name.s, "param", 5) == 0) {
 		t->subtype = TR_URI_PARAM;
+		if(*p != TR_PARAM_MARKER) {
+			LM_ERR("invalid param transformation: %.*s\n", in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p == ' ' || *p == '\t' || *p == '\n'))
+			p++;
+		if(*p != TR_RBRACKET) {
+			LM_ERR("invalid param transformation: %.*s!\n", in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len == 7 && strncasecmp(name.s, "rmparam", 7) == 0) {
+		t->subtype = TR_URI_RMPARAM;
 		if(*p != TR_PARAM_MARKER) {
 			LM_ERR("invalid param transformation: %.*s\n", in->len, in->s);
 			goto error;
