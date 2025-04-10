@@ -617,10 +617,12 @@ reload:
 	for(t = modules; t; t = t->next) {
 		if(t->handle == handle) {
 			if(ldopt == 1) {
-				if(path && path != mod_path) {
-					pkg_free(path);
+				if(path) {
+					LM_DBG("skip loading optional module twice (%s)\n", path);
+					if(path != mod_path) {
+						pkg_free(path);
+					}
 				}
-				LM_DBG("skip loading optional module twice (%s)\n", path);
 				return 0;
 			}
 			LM_WARN("attempting to load the same module twice (%s)\n", path);
