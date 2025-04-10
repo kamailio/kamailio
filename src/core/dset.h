@@ -291,6 +291,7 @@ int uri_restore_rcv_alias(str *uri, str *nuri, str *suri);
 int uri_trim_rcv_alias(str *uri, str *nuri);
 int ksr_uri_alias_encode(str *iuri, str *ualias);
 int ksr_uri_alias_decode(str *ualias, str *ouri);
+int ksr_uri_remove_param(str *ouri, str *pname, str *nuri);
 
 int init_dst_set(void);
 

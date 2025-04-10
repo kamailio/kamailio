@@ -33,6 +33,7 @@
 #include "config.h"
 #include "parser/parser_f.h"
 #include "parser/parse_uri.h"
+#include "parser/parse_param.h"
 #include "parser/msg_parser.h"
 #include "globals.h"
 #include "ut.h"
@@ -1315,6 +1316,85 @@ int ksr_uri_alias_decode(str *ualias, str *ouri)
 
 error:
 	return -1;
+}
+
+/**
+ * remove param from ouri, storing in nuri
+ * - nuri->len has to be set to the size of nuri->s buffer
+ */
+int ksr_uri_remove_param(str *ouri, str *pname, str *nuri)
+{
+	str t;
+	str pstart;
+	sip_uri_t puri;
+	param_hooks_t hooks;
+	param_t *params, *pit;
+
+	if(nuri->len < ouri->len + 1) {
+		LM_ERR("output buffer too small (%d / %d)\n", nuri->len, ouri->len);
+		return -1;
+	}
+	if(parse_uri(ouri->s, ouri->len, &puri) < 0) {
+		LM_ERR("failed to parse uri [%.*s]\n", ouri->len, ouri->s);
+		return -1;
+	}
+	if(puri.sip_params.len > 0) {
+		t = puri.sip_params;
+	} else if(puri.params.len > 0) {
+		t = puri.params;
+	} else {
+		LM_DBG("no uri params [%.*s]\n", ouri->len, ouri->s);
+		memcpy(nuri->s, ouri->s, ouri->len);
+		nuri->len = ouri->len;
+		nuri->s[nuri->len] = 0;
+		return 0;
+	}
+
+	if(parse_params(&t, CLASS_ANY, &hooks, &params) < 0) {
+		LM_ERR("ruri parameter parsing failed\n");
+		return -1;
+	}
+
+	for(pit = params; pit; pit = pit->next) {
+		if((pit->name.len == pname->len)
+				&& (strncasecmp(pit->name.s, pname->s, pname->len) == 0)) {
+			break;
+		}
+	}
+	if(pit == NULL) {
+		LM_DBG("uri param [%.*s] not found\n", pname->len, pname->s);
+		free_params(params);
+		memcpy(nuri->s, ouri->s, ouri->len);
+		nuri->len = ouri->len;
+		nuri->s[nuri->len] = 0;
+		return 0;
+	}
+
+	pstart.s = pit->name.s;
+	while(pstart.s > ouri->s && *pstart.s != ';') {
+		pstart.s--;
+	}
+	memcpy(nuri->s, ouri->s, pstart.s - ouri->s);
+	nuri->len = pstart.s - ouri->s;
+
+	if(pit->body.len > 0) {
+		if(pit->body.s + pit->body.len < ouri->s + ouri->len) {
+			memcpy(nuri->s + nuri->len, pit->body.s + pit->body.len,
+					ouri->s + ouri->len - pit->body.s - pit->body.len);
+			nuri->len += ouri->s + ouri->len - pit->body.s - pit->body.len;
+		}
+	} else {
+		if(pit->name.s + pit->name.len < ouri->s + ouri->len) {
+			memcpy(nuri->s + nuri->len, pit->name.s + pit->name.len,
+					ouri->s + ouri->len - pit->name.s - pit->name.len);
+			nuri->len += ouri->s + ouri->len - pit->name.s - pit->name.len;
+		}
+	}
+	nuri->s[nuri->len] = 0;
+
+	free_params(params);
+
+	return 0;
 }
 
 /* address of record (aor) management */
