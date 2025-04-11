@@ -1142,6 +1142,17 @@ static int sr_kemi_core_is_proto_tcp(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_is_proto_tcpx(sip_msg_t *msg)
+{
+	return (msg->rcv.proto == PROTO_TCP || msg->rcv.proto == PROTO_TLS
+				   || msg->rcv.proto == PROTO_WSS || msg->rcv.proto == PROTO_WS)
+				   ? SR_KEMI_TRUE
+				   : SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_is_proto_tls(sip_msg_t *msg)
 {
 	return (msg->rcv.proto == PROTO_TLS) ? SR_KEMI_TRUE : SR_KEMI_FALSE;
@@ -2099,6 +2110,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("is_TCP"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_proto_tcp,
+			{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_TCPX"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_proto_tcpx,
 			{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
