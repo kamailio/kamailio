@@ -94,15 +94,16 @@ Federico Cabiddu
               3.33. outbound_proxy (str)
               3.34. ds_default_socket (str)
               3.35. ds_default_sockname (str)
-              3.36. ds_timer_mode (int)
-              3.37. event_callback (str)
-              3.38. ds_attrs_none (int)
-              3.39. ds_db_extra_attrs (str)
-              3.40. ds_load_mode (int)
-              3.41. reload_delta (int)
-              3.42. ds_dns_mode (int)
-              3.43. ds_dns_interval (int)
-              3.44. ds_dns_ttl (int)
+              3.36. ds_ping_socket (str)
+              3.37. ds_timer_mode (int)
+              3.38. event_callback (str)
+              3.39. ds_attrs_none (int)
+              3.40. ds_db_extra_attrs (str)
+              3.41. ds_load_mode (int)
+              3.42. reload_delta (int)
+              3.43. ds_dns_mode (int)
+              3.44. ds_dns_interval (int)
+              3.45. ds_dns_ttl (int)
 
         4. Functions
 
@@ -192,32 +193,33 @@ Federico Cabiddu
    1.35. Set the “outbound_proxy” parameter
    1.36. Set the “ds_default_socket” parameter
    1.37. Set the “ds_default_sockname” parameter
-   1.38. Set the “ds_timer_mode” parameter
-   1.39. Set event_callback parameter
-   1.40. Set the “ds_attrs_none” parameter
-   1.41. Set the “ds_db_extra_attrs” parameter
-   1.42. Set the “ds_load_mode” parameter
-   1.43. Set reload_delta parameter
-   1.44. Set the “ds_dns_mode” parameter
-   1.45. Set the “ds_dns_interval” parameter
-   1.46. Set the “ds_dns_ttl” parameter
-   1.47. latency_optimized_dispatching usage
-   1.48. ds_select_dst usage
-   1.49. configuring load balancing with congestion detection
-   1.50. ds_select_domain usage
-   1.51. ds_select usage
-   1.52. ds_select_routes usage
-   1.53. ds_mark_dst usage
-   1.54. ds_list_exists usage
-   1.55. ds_is_from_list usage
-   1.56. ds_is_active usage
-   1.57. ds_load_unset usage
-   1.58. ds_reload usage
-   1.59. ds_dsg_fetch() usage
-   1.60. ds_dsg_fetch_uri() usage
-   1.61. ds_oc_set_attrs() usage
-   1.62. dispatcher list file
-   1.63. Kamailio config script - sample dispatcher usage
+   1.38. Set the “ds_ping_socket” parameter
+   1.39. Set the “ds_timer_mode” parameter
+   1.40. Set event_callback parameter
+   1.41. Set the “ds_attrs_none” parameter
+   1.42. Set the “ds_db_extra_attrs” parameter
+   1.43. Set the “ds_load_mode” parameter
+   1.44. Set reload_delta parameter
+   1.45. Set the “ds_dns_mode” parameter
+   1.46. Set the “ds_dns_interval” parameter
+   1.47. Set the “ds_dns_ttl” parameter
+   1.48. latency_optimized_dispatching usage
+   1.49. ds_select_dst usage
+   1.50. configuring load balancing with congestion detection
+   1.51. ds_select_domain usage
+   1.52. ds_select usage
+   1.53. ds_select_routes usage
+   1.54. ds_mark_dst usage
+   1.55. ds_list_exists usage
+   1.56. ds_is_from_list usage
+   1.57. ds_is_active usage
+   1.58. ds_load_unset usage
+   1.59. ds_reload usage
+   1.60. ds_dsg_fetch() usage
+   1.61. ds_dsg_fetch_uri() usage
+   1.62. ds_oc_set_attrs() usage
+   1.63. dispatcher list file
+   1.64. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -266,15 +268,16 @@ Chapter 1. Admin Guide
         3.33. outbound_proxy (str)
         3.34. ds_default_socket (str)
         3.35. ds_default_sockname (str)
-        3.36. ds_timer_mode (int)
-        3.37. event_callback (str)
-        3.38. ds_attrs_none (int)
-        3.39. ds_db_extra_attrs (str)
-        3.40. ds_load_mode (int)
-        3.41. reload_delta (int)
-        3.42. ds_dns_mode (int)
-        3.43. ds_dns_interval (int)
-        3.44. ds_dns_ttl (int)
+        3.36. ds_ping_socket (str)
+        3.37. ds_timer_mode (int)
+        3.38. event_callback (str)
+        3.39. ds_attrs_none (int)
+        3.40. ds_db_extra_attrs (str)
+        3.41. ds_load_mode (int)
+        3.42. reload_delta (int)
+        3.43. ds_dns_mode (int)
+        3.44. ds_dns_interval (int)
+        3.45. ds_dns_ttl (int)
 
    4. Functions
 
@@ -395,15 +398,16 @@ Chapter 1. Admin Guide
    3.33. outbound_proxy (str)
    3.34. ds_default_socket (str)
    3.35. ds_default_sockname (str)
-   3.36. ds_timer_mode (int)
-   3.37. event_callback (str)
-   3.38. ds_attrs_none (int)
-   3.39. ds_db_extra_attrs (str)
-   3.40. ds_load_mode (int)
-   3.41. reload_delta (int)
-   3.42. ds_dns_mode (int)
-   3.43. ds_dns_interval (int)
-   3.44. ds_dns_ttl (int)
+   3.36. ds_ping_socket (str)
+   3.37. ds_timer_mode (int)
+   3.38. event_callback (str)
+   3.39. ds_attrs_none (int)
+   3.40. ds_db_extra_attrs (str)
+   3.41. ds_load_mode (int)
+   3.42. reload_delta (int)
+   3.43. ds_dns_mode (int)
+   3.44. ds_dns_interval (int)
+   3.45. ds_dns_ttl (int)
 
 3.1. list_file (string)
 
@@ -957,7 +961,17 @@ modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
 modparam("dispatcher", "ds_default_sockname", "sock1")
 ...
 
-3.36. ds_timer_mode (int)
+3.36. ds_ping_socket (str)
+
+   Default socket to be used for sending ping requests when a gateway has
+   no "ping_socket" configured.
+
+   Example 1.38. Set the “ds_ping_socket” parameter
+...
+modparam("dispatcher", "ds_ping_socket", "udp:192.168.0.125:5060")
+...
+
+3.37. ds_timer_mode (int)
 
    Specify the timer process to be used by the module for keepalives and
    active dialogs tracking.
@@ -972,12 +986,12 @@ modparam("dispatcher", "ds_default_sockname", "sock1")
 
    Default value is “0”.
 
-   Example 1.38. Set the “ds_timer_mode” parameter
+   Example 1.39. Set the “ds_timer_mode” parameter
 ...
 modparam("dispatcher", "ds_timer_mode", 1)
 ...
 
-3.37. event_callback (str)
+3.38. event_callback (str)
 
    The name of the function in the kemi configuration file (embedded
    scripting language such as Lua, Python, ...) to be executed instead of
@@ -988,7 +1002,7 @@ modparam("dispatcher", "ds_timer_mode", 1)
 
    Default value is 'empty' (no function is executed for events).
 
-   Example 1.39. Set event_callback parameter
+   Example 1.40. Set event_callback parameter
 ...
 modparam("dispatcher", "event_callback", "ksr_dispatcher_event")
 ...
@@ -999,7 +1013,7 @@ function ksr_dispatcher_event(evname)
 end
 ...
 
-3.38. ds_attrs_none (int)
+3.39. ds_attrs_none (int)
 
    If set to 1, "none=yes" is set in the attrs for those records that have
    no attrs value, to ensure that corresponding XAVP fields for records do
@@ -1007,12 +1021,12 @@ end
 
    Default value is “0”.
 
-   Example 1.40. Set the “ds_attrs_none” parameter
+   Example 1.41. Set the “ds_attrs_none” parameter
 ...
 modparam("dispatcher", "ds_attrs_none", 1)
 ...
 
-3.39. ds_db_extra_attrs (str)
+3.40. ds_db_extra_attrs (str)
 
    Set a list of column names to be loaded from database dispatcher table
    and be concatenated to 'attrs' field. The format is:
@@ -1024,12 +1038,12 @@ modparam("dispatcher", "ds_attrs_none", 1)
 
    Default value is “empty”.
 
-   Example 1.41. Set the “ds_db_extra_attrs” parameter
+   Example 1.42. Set the “ds_db_extra_attrs” parameter
 ...
 modparam("dispatcher", "ds_db_extra_attrs", "socket=socket;pref=prefix")
 ...
 
-3.40. ds_load_mode (int)
+3.41. ds_load_mode (int)
 
    If set to 1, the module throws error when failing to add a destination
    address (e.g., invalid URI). If set to 0, it skips the failing address
@@ -1037,12 +1051,12 @@ modparam("dispatcher", "ds_db_extra_attrs", "socket=socket;pref=prefix")
 
    Default value is “0”.
 
-   Example 1.42. Set the “ds_load_mode” parameter
+   Example 1.43. Set the “ds_load_mode” parameter
 ...
 modparam("dispatcher", "ds_load_mode", 1)
 ...
 
-3.41. reload_delta (int)
+3.42. reload_delta (int)
 
    The number of seconds that have to be waited before executing a new
    reload of dispatcher records. By default there is a rate limiting of
@@ -1054,12 +1068,12 @@ modparam("dispatcher", "ds_load_mode", 1)
 
    Default value is “5”.
 
-   Example 1.43. Set reload_delta parameter
+   Example 1.44. Set reload_delta parameter
 ...
 modparam("dispatcher", "reload_delta", 1)
 ...
 
-3.42. ds_dns_mode (int)
+3.43. ds_dns_mode (int)
 
    Specify the how DNS resolving is done for destination addresses.
 
@@ -1075,24 +1089,24 @@ modparam("dispatcher", "reload_delta", 1)
 
    Default value is “1”.
 
-   Example 1.44. Set the “ds_dns_mode” parameter
+   Example 1.45. Set the “ds_dns_mode” parameter
 ...
 modparam("dispatcher", "ds_dns_mode", 2)
 ...
 
-3.43. ds_dns_interval (int)
+3.44. ds_dns_interval (int)
 
    The interval in seconds to periodically refresh the DNS queries for
    destination addresses if ds_dns_mode has value 4 set.
 
    Default value is “600”.
 
-   Example 1.45. Set the “ds_dns_interval” parameter
+   Example 1.46. Set the “ds_dns_interval” parameter
 ...
 modparam("dispatcher", "ds_interval_mode", 1800)
 ...
 
-3.44. ds_dns_ttl (int)
+3.45. ds_dns_ttl (int)
 
    The interval in seconds to set TTL for DNS results received for queries
    dones inside this module. If 0, this TTL is not set, result and core
@@ -1100,7 +1114,7 @@ modparam("dispatcher", "ds_interval_mode", 1800)
 
    Default value is “0”.
 
-   Example 1.46. Set the “ds_dns_ttl” parameter
+   Example 1.47. Set the “ds_dns_ttl” parameter
 ...
 modparam("dispatcher", "ds_interval_mode", 7200)
 ...
@@ -1219,7 +1233,7 @@ modparam("dispatcher", "ds_interval_mode", 7200)
             - If the attribute 'cc=1' is set, the latency used is
             congestion ms : estimate (current latency ms) - average
             (normal condition latency ms).
-            Example 1.47. latency_optimized_dispatching usage
+            Example 1.48. latency_optimized_dispatching usage
 Using this simple formula :
     ADJUSTED_PRIORITY = PRIORITY - (ESTIMATED_LATENCY_MS/PRIORITY)
 
@@ -1250,7 +1264,7 @@ With congestion control the formula becomes :
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.48. ds_select_dst usage
+   Example 1.49. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -1260,7 +1274,7 @@ ds_select_dst("1", "$var(a)");
 ds_select_dst("1", "4", "3");
 ...
 
-   Example 1.49. configuring load balancing with congestion detection
+   Example 1.50. configuring load balancing with congestion detection
 ...
 # sample of SQL provisioning statements
 INSERT INTO "dispatcher"
@@ -1314,7 +1328,7 @@ DEST: {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.50. ds_select_domain usage
+   Example 1.51. ds_select_domain usage
 ...
 $var(a) = 4;
 if(ds_select_domain("1", "$var(a)")) {
@@ -1338,7 +1352,7 @@ if(ds_select_domain("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.51. ds_select usage
+   Example 1.52. ds_select usage
 ...
 $var(a) = 4;
 if(ds_select("1", "$var(a)")) {
@@ -1381,7 +1395,7 @@ if(ds_select("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.52. ds_select_routes usage
+   Example 1.53. ds_select_routes usage
 ...
 $var(alg) = 4;
 $var(limit) = 8;
@@ -1456,7 +1470,7 @@ failure_route[REROUTE] {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.53. ds_mark_dst usage
+   Example 1.54. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -1478,7 +1492,7 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.54. ds_list_exists usage
+   Example 1.55. ds_list_exists usage
 ...
 if(ds_list_exists("10")) {
     ...
@@ -1530,7 +1544,7 @@ if(ds_list_exists("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.55. ds_is_from_list usage
+   Example 1.56. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1560,7 +1574,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.56. ds_is_active usage
+   Example 1.57. ds_is_active usage
 ...
 if(ds_is_active("10")) {
     ...
@@ -1588,7 +1602,7 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.57. ds_load_unset usage
+   Example 1.58. ds_load_unset usage
 ...
 route {
     ...
@@ -1622,7 +1636,7 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.58. ds_reload usage
+   Example 1.59. ds_reload usage
 ...
     ds_reload();
 ...
@@ -1636,7 +1650,7 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.59. ds_dsg_fetch() usage
+   Example 1.60. ds_dsg_fetch() usage
 ...
     ds_dsg_fetch("1");
     xinfo("set id: 1 - all: $dsg(count); active: $dsg(active)\n");
@@ -1653,7 +1667,7 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.60. ds_dsg_fetch_uri() usage
+   Example 1.61. ds_dsg_fetch_uri() usage
 ...
     ds_dsg_fetch_uri("1", "sip:127.0.0.1:5080");
     xinfo("set id: 1 - all: $dsg(count); active: $dsg(active); $dsg(ocrate)\n");
@@ -1685,7 +1699,7 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.61. ds_oc_set_attrs() usage
+   Example 1.62. ds_oc_set_attrs() usage
 ...
     ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "180000", "1");
 ...
@@ -1961,6 +1975,8 @@ kamcli dispatcher.oclist 1
        ds_select_dst().
      * 'socket' - used to set the sending socket for the gateway. It is
        used for sending the SIP traffic as well as OPTIONS keepalives.
+     * 'ping_socket' - used to set the sending socket for ping requests.
+       It overwrites the general ds_ping_socket parameter.
      * 'sockname' - used to set by name the sending socket for the
        gateway. It is used for sending the SIP traffic as well as OPTIONS
        keepalives and has priority over 'socket' attribute.
@@ -1990,7 +2006,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.62. dispatcher list file
+   Example 1.63. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -2015,7 +2031,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.63. Kamailio config script - sample dispatcher usage
+   Example 1.64. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
