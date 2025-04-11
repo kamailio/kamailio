@@ -682,7 +682,7 @@ switch ($retcode) {
 4.8. reg_fetch_contacts(domain, uri, profile)
 
    The function fetches the contacts for 'uri' from table 'domain' to
-   pseudo-variable $imssulc(profile) [imssulc = ims scscf ulc].
+   pseudo-variable $ulc(profile) [ulc = ims scscf ulc].
 
    Meaning of the parameters is as follows:
      * domain - Name of table that should be used for the lookup of
@@ -690,8 +690,8 @@ switch ($retcode) {
      * uri - The SIP URI address of the user which to fetch the contact
        addresses for. It can contain pseudo-variables that are evaluated
        at runtime.
-     * profile - Name of $imssulc pseudo-variable profile that will store
-       the fetched contacts. It is a static string.
+     * profile - Name of $ulc pseudo-variable profile that will store the
+       fetched contacts. It is a static string.
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
@@ -709,7 +709,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
    data in that profile.
 
    Meaning of the parameters is as follows:
-     * profile - Name of $imssulc pseudo-variable profile that stores the
+     * profile - Name of $ulc pseudo-variable profile that stores the
        contacts. It is a static string.
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
