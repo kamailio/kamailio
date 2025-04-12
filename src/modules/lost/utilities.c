@@ -287,7 +287,6 @@ char *lost_copy_string(str src, int *lgth)
 		if(res == NULL) {
 			PKG_MEM_ERROR;
 		} else {
-			memset(res, 0, src.len);
 			memcpy(res, src.s, src.len);
 			res[src.len] = '\0';
 			*lgth = (int)strlen(res);
@@ -303,21 +302,12 @@ char *lost_copy_string(str src, int *lgth)
  */
 void lost_free_string(str *string)
 {
-	str ptr = STR_NULL;
-
+	string->len = 0;
 	if(string->s == NULL)
 		return;
-
-	ptr = *string;
-
-	if(ptr.s != NULL) {
-		pkg_free(ptr.s);
-
-		LM_DBG("### string object removed\n");
-	}
-
+	pkg_free(string->s);
+	LM_DBG("### string object removed\n");
 	string->s = NULL;
-	string->len = 0;
 
 	return;
 }
