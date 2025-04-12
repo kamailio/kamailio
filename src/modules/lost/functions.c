@@ -173,9 +173,9 @@ err:
 int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 		char *_err, char *_id)
 {
-	pv_spec_t *pspidf;
-	pv_spec_t *psurl;
-	pv_spec_t *pserr;
+	pv_spec_t *pspidf = NULL;
+	pv_spec_t *psurl = NULL;
+	pv_spec_t *pserr = NULL;
 
 	pv_value_t pvpidf;
 	pv_value_t pvurl;
@@ -187,9 +187,10 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	xmlNodePtr root = NULL;
 	xmlNodePtr cur_node = NULL;
 
-	str geo = STR_NULL; /* return value geolocation uri */
-	str res = STR_NULL; /* return value pidf */
-	str err = STR_NULL; /* return value error */
+	str geo = STR_NULL;	 /* return value geolocation uri */
+	str egeo = STR_NULL; /* entire value geolocation uri */
+	str res = STR_NULL;	 /* return value pidf */
+	str err = STR_NULL;	 /* return value error */
 
 	str url = STR_NULL;
 	str did = STR_NULL;
@@ -261,6 +262,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 
 			LM_DBG("parsing From header\n");
 
+			lost_free_string(&idhdr);
 			/* id from From header */
 			idhdr.s = lost_get_from_header(_m, &idhdr.len);
 			if(idhdr.len == 0) {
@@ -282,7 +284,6 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	lost_free_held(&held); /* clean up */
 	if(que.len == 0) {
 		LM_ERR("held request document error\n");
-		que.s = NULL;
 		goto err;
 	}
 
@@ -410,14 +411,16 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 
 					LM_DBG("*** node '%s' found\n", cur_node->name);
 
+					lost_free_string(&egeo);
 					/* get the locationUri element */
-					geo.s = lost_get_content(
-							root, (char *)HELD_TYPE_URI, &geo.len);
-					if(geo.len == 0) {
+					egeo.s = lost_get_content(
+							root, (char *)HELD_TYPE_URI, &egeo.len);
+					if(egeo.len == 0) {
 						LM_WARN("%s element not found\n", HELD_TYPE_URI);
-						geo.s = NULL;
+						lost_free_string(&egeo);
 					} else {
-						geo.s = lost_trim_content(geo.s, &geo.len);
+						geo.len = egeo.len;
+						geo.s = lost_trim_content(egeo.s, &geo.len);
 					}
 				}
 				if(xmlStrcmp(cur_node->name, (const xmlChar *)"presence")
@@ -509,7 +512,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	pvurl.flags = PV_VAL_STR;
 	psurl = (pv_spec_t *)_url;
 	psurl->setf(_m, &psurl->pvp, (int)EQ_T, &pvurl);
-	lost_free_string(&geo); /* clean up */
+	lost_free_string(&egeo); /* clean up */
 
 	/* return error code in case of response error */
 	if(err.len > 0) {
@@ -536,15 +539,9 @@ err:
 		xmlFreeDoc(doc);
 	}
 	/* clean up string */
-	if(res.s != NULL && res.len > 0) {
-		lost_free_string(&res);
-	}
-	if(geo.s != NULL && geo.len > 0) {
-		lost_free_string(&geo);
-	}
-	if(err.s != NULL && err.len > 0) {
-		lost_free_string(&err);
-	}
+	lost_free_string(&res);
+	lost_free_string(&egeo);
+	lost_free_string(&err);
 
 	return LOST_CLIENT_ERROR;
 }
