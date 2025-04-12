@@ -500,9 +500,9 @@ static enum MHD_Result ksr_microhttpd_request(void *cls,
 				if(cstream->data.s != NULL) {
 					free(cstream->data.s);
 					free(cstream);
-					*ptr = NULL;
-					return MHD_NO;
 				}
+				*ptr = NULL;
+				return MHD_NO;
 			}
 			if(cstream->data.s != NULL) {
 				snprintf(buf, bsize, "%s%s", cstream->data.s, upload_data);
