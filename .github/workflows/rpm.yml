@@ -1,0 +1,89 @@
+---
+name: build_rpm
+'on':
+  schedule:
+  - cron: '41 6 * * 0'
+  push:
+    tags:
+    - '[0-9]+.[0-9]+.[0-9]+'
+jobs:
+  # is required nightly build?
+  # More info at https://stackoverflow.com/questions/63014786/how-to-schedule-a-github-actions-nightly-build-but-run-it-only-when-there-where
+  # looking commit_id of the last successful daily build
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: octokit/request-action@v2.x
+        id: check_last_run
+        with:
+          route: GET /repos/{owner}/{repo}/actions/workflows/rpm.yml/runs?per_page=1&status=success
+          owner: ${{ github.repository_owner }}
+          repo: kamailio
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Show last execution info
+        run: |
+          echo "Last daily build: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}"
+
+    outputs:
+      last_sha: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}
+
+  native:
+    needs: [check]
+    if: needs.check.outputs.last_sha != github.sha
+    strategy:
+      matrix:
+        os:
+        - centos-10
+        - rhel-10
+        - centos-9
+        - rhel-9
+        - centos-8
+        - rhel-8
+        runner:
+        - ubuntu-latest
+        - ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: write
+    steps:
+    - name: checkout sources
+      uses: actions/checkout@v4
+
+    - name: print commit info and init hosttype var
+      id: init
+      run: |
+        echo ${{ github.sha }}
+        echo "hosttype=${HOSTTYPE}" >> $GITHUB_OUTPUT
+
+    - name: build rpm files
+      uses: addnab/docker-run-action@v3
+      with:
+        image: safarov/kamailio-builder:${{ matrix.os }}
+        options: -v ${{ github.workspace }}:/usr/src/kamailio
+        run: |
+          cd /usr/src/kamailio
+          make cfg
+          make -C pkg/kamailio src.rpm
+          rpmbuild -ra /usr/src/kamailio/kamailio*.src.rpm
+          cp -R /deps ~/rpmbuild/RPMS
+          mv ~/rpmbuild/SRPMS/* ~/rpmbuild/RPMS
+          mv ~/rpmbuild/RPMS .
+          tar czf kamailio-${{ github.ref_name }}-${{ matrix.os }}-${{ steps.init.outputs.hosttype }}.rpm.tar.gz RPMS
+
+    - name: Push artifacts
+      uses: actions/upload-artifact@v4
+      if: "! startsWith(github.ref, 'refs/tags/')"
+      with:
+        name: kamailio-${{ github.ref_name }}-${{ matrix.os }}-${{ steps.init.outputs.hosttype }}.rpm
+        path: |
+          RPMS/*
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: "startsWith(github.ref, 'refs/tags/')"
+      with:
+       files: |
+         kamailio-${{ github.ref_name }}-${{ matrix.os }}-${{ steps.init.outputs.hosttype }}.rpm.tar.gz
