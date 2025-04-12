@@ -310,7 +310,7 @@ void lost_free_string(str *string)
 
 	ptr = *string;
 
-	if(ptr.s != NULL && ptr.len > 0) {
+	if(ptr.s != NULL) {
 		pkg_free(ptr.s);
 
 		LM_DBG("### string object removed\n");

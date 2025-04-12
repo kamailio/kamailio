@@ -839,10 +839,9 @@ p_lost_info_t lost_get_response_info(
 		} else {
 			tmp.s = lost_get_content(node, name, &tmp.len);
 		}
-		if(tmp.len > 0 && tmp.s != NULL) {
+		if(tmp.s != NULL) {
 			res->text = lost_copy_string(tmp, &len);
-			if(len > 0) {
-
+			if(res->text != NULL) {
 				LM_DBG("###\t\t[%s]\n", res->text);
 			}
 			lost_free_string(&tmp); /* clean up */
