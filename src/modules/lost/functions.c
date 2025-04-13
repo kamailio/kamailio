@@ -784,12 +784,8 @@ err:
 		xmlFreeDoc(doc);
 	}
 	/* clean up string */
-	if(res.s != NULL && res.len > 0) {
-		lost_free_string(&res);
-	}
-	if(err.s != NULL && err.len > 0) {
-		lost_free_string(&err);
-	}
+	lost_free_string(&res);
+	lost_free_string(&err);
 
 	return LOST_CLIENT_ERROR;
 }
@@ -1345,27 +1341,13 @@ err:
 	lost_free_geoheader_list(&geolist);
 	lost_free_loc(&loc);
 	/* clean up string */
-	if(oldurl.s != NULL && oldurl.len > 0) {
-		lost_free_string(&oldurl);
-	}
-	if(ret.s != NULL && ret.len > 0) {
-		lost_free_string(&ret);
-	}
-	if(req.s != NULL && req.len > 0) {
-		lost_free_string(&req);
-	}
-	if(rereq.s != NULL && rereq.len > 0) {
-		lost_free_string(&rereq);
-	}
-	if(name.s != NULL && name.len > 0) {
-		lost_free_string(&name);
-	}
-	if(uri.s != NULL && uri.len > 0) {
-		lost_free_string(&uri);
-	}
-	if(err.s != NULL && err.len > 0) {
-		lost_free_string(&err);
-	}
+	lost_free_string(&oldurl);
+	lost_free_string(&ret);
+	lost_free_string(&req);
+	lost_free_string(&rereq);
+	lost_free_string(&name);
+	lost_free_string(&uri);
+	lost_free_string(&err);
 
 	return LOST_CLIENT_ERROR;
 }
