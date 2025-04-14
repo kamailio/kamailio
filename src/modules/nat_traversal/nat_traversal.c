@@ -1611,6 +1611,10 @@ static void send_keepalive(NAT_Contact *contact)
 	//nat_ip.s = strchr(contact->uri, ':') + 1;
 	nat_ip.s = &contact->uri[4]; // skip over "sip:"
 	ptr = strchr(nat_ip.s, ':');
+	if(ptr == NULL) {
+		LM_ERR("searching port failed\n");
+		return;
+	}
 	nat_ip.len = ptr - nat_ip.s;
 	nat_port = strtol(ptr + 1, NULL, 10);
 	lport = 0;
