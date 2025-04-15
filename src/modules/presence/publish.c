@@ -88,7 +88,7 @@ void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 	db_ops[n_db_cols] = OP_LT;
 	db_vals[n_db_cols].type = DB1_INT;
 	db_vals[n_db_cols].nul = 0;
-	db_vals[n_db_cols].val.int_val = (int)time(NULL);
+	db_vals[n_db_cols].val.int_val = ksr_time_sint(NULL, NULL);
 	n_db_cols++;
 
 	db_keys[n_db_cols] = &str_expires_col;
