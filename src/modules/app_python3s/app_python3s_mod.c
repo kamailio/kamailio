@@ -60,7 +60,7 @@ int _apy3s_process_rank = 0;
 int _ksr_apy3s_threads_mode = 0;
 
 PyThreadState *myThreadState = NULL;
-__thread PyThreadState *_save = NULL;
+PyThreadState *_save = NULL;
 
 static int apy3s_script_init_exec(PyObject *pModule, str *fname, int *vparam);
 
