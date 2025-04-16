@@ -59,7 +59,7 @@ int _apy_process_rank = 0;
 int _ksr_apy3_threads_mode = 0;
 
 PyThreadState *myThreadState = NULL;
-__thread PyThreadState *_save = NULL;
+PyThreadState *_save = NULL;
 
 /* clang-format off */
 /** module parameters */
