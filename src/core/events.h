@@ -70,7 +70,7 @@ typedef struct sr_event_cb
 	sr_event_cb_f tcp_ws_frame_out;
 	sr_event_cb_f stun_in;
 	sr_event_cb_f rcv_nosip;
-	sr_event_cb_f tcp_closed;
+	sr_event_cb_f tcp_closed[SREV_CB_LIST_SIZE];
 	sr_event_cb_f net_data_recv;
 	sr_event_cb_f net_data_sent;
 	sr_event_cb_f sip_reply_out[SREV_CB_LIST_SIZE];
