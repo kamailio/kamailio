@@ -128,10 +128,12 @@ static const char *rpc_reload_doc[2] = {"Reload values from database", NULL};
 static const char *rpc_print_doc[2] = {"Print values from database", NULL};
 static const char *rpc_stats_doc[2] = {"Print statistics of blocked and allowed messages", NULL};
 static const char *rpc_stats_reset_doc[2] = {"Reset statistics", NULL};
-static const char *rpc_add_dst_doc[2] = {
-		"Add new values to destination blacklist", NULL};
+static const char *rpc_add_dst_doc[2] = {"Add new values to destination blacklist", NULL};
+static const char *rpc_del_dst_doc[2] = {"Delete a value from destination blacklist", NULL};
 static const char *rpc_add_bl_doc[2] = {"Add new values to blacklist", NULL};
+static const char *rpc_del_bl_doc[2] = {"Delete a value from blacklist", NULL};
 static const char *rpc_add_wl_doc[2] = {"Add new values to whitelist", NULL};
+static const char *rpc_del_wl_doc[2] = {"Delete a value from whitelist", NULL};
 
 rpc_export_t secfilter_rpc[] = {
 	{"secfilter.reload", secf_rpc_reload, rpc_reload_doc, 0},
@@ -139,7 +141,9 @@ rpc_export_t secfilter_rpc[] = {
 	{"secfilter.stats", secf_rpc_stats, rpc_stats_doc, 0},
 	{"secfilter.stats_reset", secf_rpc_stats_reset, rpc_stats_reset_doc, 0},
 	{"secfilter.add_dst", secf_rpc_add_dst, rpc_add_dst_doc, 0},
+	{"secfilter.del_dst", secf_rpc_del_dst, rpc_del_dst_doc, 0},
 	{"secfilter.add_bl", secf_rpc_add_bl, rpc_add_bl_doc, 0},
+	{"secfilter.del_bl", secf_rpc_del_bl, rpc_del_bl_doc, 0},
 	{"secfilter.add_wl", secf_rpc_add_wl, rpc_add_wl_doc, 0},
 	{0, 0, 0, 0}
 };
