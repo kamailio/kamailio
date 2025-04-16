@@ -52,7 +52,7 @@ extern str _sr_python_load_file;
 extern int _apy3s_process_rank;
 extern int _ksr_apy3s_threads_mode;
 
-extern __thread PyThreadState *_save;
+extern PyThreadState *_save;
 
 int apy_reload_script(void);
 
@@ -69,8 +69,6 @@ sr_apy_env_t *sr_apy_env_get()
 /**
  *
  */
-extern __thread PyThreadState *_save;
-
 int apy3s_exec_func(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 {
 	PyObject *pFunc, *pArgs, *pValue;
