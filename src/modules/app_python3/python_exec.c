@@ -49,7 +49,7 @@ sr_apy_env_t *sr_apy_env_get()
 	return &_sr_apy_env;
 }
 
-extern __thread PyThreadState *_save;
+extern PyThreadState *_save;
 extern int _ksr_apy3_threads_mode;
 
 #define LOCK_RELEASE \
