@@ -5037,7 +5037,7 @@ static int ki_via_param_rm(sip_msg_t *msg, str *name, int idx)
 			}
 		}
 	}
-	return (ret == 0) ? -1 : ret;
+	return -1;
 }
 
 /**
