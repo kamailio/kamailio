@@ -161,6 +161,10 @@ def ksr_script_child_init():
 			(the mode implemented initially).
 	    </para>
 	    <para>
+		If set to 1, Python threading Thread objects created in the KEMI script will be scheduled. Otherwise,
+                additional Python threads will not be scheduled (no release of GIL).
+	    </para>
+	    <para>
 		<emphasis>
 			Default value is <quote>0</quote>.
 		</emphasis>
