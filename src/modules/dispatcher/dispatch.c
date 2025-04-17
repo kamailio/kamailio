@@ -669,8 +669,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 			goto err;
 		}
 		STR_ZTOV(dp->attrs.ping_socket.s[dp->attrs.ping_socket.len], c);
-		dp->sock = grep_sock_info(&host, (unsigned short)port, proto);
-		if(dp->sock == 0) {
+		if(grep_sock_info(&host, (unsigned short)port, proto) == 0) {
 			LM_ERR("non-local socket <%.*s>\n", dp->attrs.ping_socket.len,
 					dp->attrs.ping_socket.s);
 			goto err;
