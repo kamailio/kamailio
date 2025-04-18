@@ -1030,7 +1030,7 @@ int check_freq_interval(tmrec_t *_trp, ac_tm_t *_atp)
 						   ? REC_MATCH
 						   : REC_NOMATCH;
 		case FREQ_MONTHLY:
-			_t0 = (_atp->t.tm_year - _trp->ts.tm_year) * 12 + _atp->t.tm_mon
+			_t0 = 12ULL * (_atp->t.tm_year - _trp->ts.tm_year) + _atp->t.tm_mon
 				  - _trp->ts.tm_mon;
 			return (_t0 % _trp->interval == 0) ? REC_MATCH : REC_NOMATCH;
 		case FREQ_YEARLY:
