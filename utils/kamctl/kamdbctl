@@ -5,7 +5,7 @@
 #===================================================================
 
 ### version for this script
-VERSION='5.9.0'
+VERSION='6.0.0'
 
 PATH=$PATH:/usr/local/sbin/
 
