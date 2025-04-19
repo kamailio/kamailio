@@ -1050,7 +1050,7 @@ static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("cfgutils"), str_init("lock"),
+	{ str_init("cfgutils"), str_init("lock_key2"),
 		SR_KEMIP_INT, cfg_lock_key2,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
@@ -1060,7 +1060,7 @@ static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("cfgutils"), str_init("unlock"),
+	{ str_init("cfgutils"), str_init("unlock_key2"),
 		SR_KEMIP_INT, cfg_unlock_key2,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
@@ -1070,7 +1070,7 @@ static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("cfgutils"), str_init("trylock"),
+	{ str_init("cfgutils"), str_init("trylock_key2"),
 		SR_KEMIP_INT, cfg_trylock_key2,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
