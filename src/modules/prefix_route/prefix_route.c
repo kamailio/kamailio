@@ -262,16 +262,20 @@ static int ki_prefix_route(sip_msg_t *msg, str *ruser)
 	int err;
 	int route;
 
+	LM_DBG("trying to run route block for [%.*s]\n", ruser->len, ruser->s);
 	route = tree_route_get(ruser);
-	if(route <= 0)
+	if(route <= 0) {
+		LM_DBG("route block for [%.*s] not found\n", ruser->len, ruser->s);
 		return -1;
+	}
 
 	/* If match send to route[x] */
 	init_run_actions_ctx(&ra_ctx);
 
 	err = run_actions(&ra_ctx, main_rt.rlist[route], msg);
 	if(err < 0) {
-		LM_ERR("run_actions failed (%d)\n", err);
+		LM_ERR("run actions failed (%d) for [%.*s]\n", err, ruser->len,
+				ruser->s);
 		return -1;
 	}
 
