@@ -42,7 +42,7 @@
 #define membar_depends() \
 	do {                 \
 	} while(0) /* really empty, not even a cc bar. */
-/* lock barrriers: empty, not needed for NOSMP; the lock/unlock should already
+/* lock barriers: empty, not needed for NOSMP; the lock/unlock should already
  * contain gcc barriers*/
 #define membar_enter_lock() \
 	do {                    \

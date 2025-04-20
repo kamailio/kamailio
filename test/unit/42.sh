@@ -31,12 +31,12 @@ CFG=26.cfg
 
 cp $CFG $CFG.bak
 
-# setup config
+# set up config
 echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 echo "modparam(\"carrierroute\", \"match_mode\", 128)" >> $CFG
 
-# setup database
+# set up database
 $MYSQL "insert into carrier_name (id, carrier) values ('1', 'default');"
 $MYSQL "insert into carrier_name (id, carrier) values ('2', 'carrier1');"
 $MYSQL "insert into carrier_name (id, carrier) values ('3', 'carrier2');"
@@ -125,7 +125,7 @@ fi;
 kill_kamailio
 killall -9 sipp
 
-# cleanup database
+# clean up database
 $MYSQL "delete from carrier_name where id = 1;"
 $MYSQL "delete from carrier_name where id = 2;"
 $MYSQL "delete from carrier_name where id = 3;"

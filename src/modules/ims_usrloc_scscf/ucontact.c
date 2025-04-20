@@ -105,7 +105,7 @@ ucontact_t *new_ucontact(
 		goto error;
 	}
 
-	//setup callback list
+	//set up callback list
 	c->cbs = (struct ulcb_head_list *)shm_malloc(sizeof(struct ulcb_head_list));
 	if(c->cbs == 0) {
 		LM_CRIT("no more shared mem\n");

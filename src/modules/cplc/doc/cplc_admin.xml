@@ -733,7 +733,7 @@ if (method=="REGISTER") {
 		<section>
 			<title>Database setup</title>
 			<para>
-			Before running &kamailio; with cplc, you have to setup the database
+			Before running &kamailio; with cplc, you have to set up the database
 			table where the module will store the CPL scripts. For that, if
 			the table was not created by the installation script or you choose
 			to install everything by yourself you can use the cpc-create.sql

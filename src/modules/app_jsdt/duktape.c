@@ -9082,8 +9082,8 @@ DUK_INTERNAL_DECL void duk_hbufobj_assert_valid(duk_hbufobj *h);
  * offset, taking into account h->offset, is within the underlying
  * buffer size.  This is a safety check which is needed to ensure
  * that even a misconfigured duk_hbufobj never causes memory unsafe
- * behavior (e.g. if an underlying dynamic buffer changes after being
- * setup).  Caller must ensure 'buf' != NULL.
+ * behaviour (e.g. if an underlying dynamic buffer changes after being
+ * set up).  Caller must ensure 'buf' != NULL.
  */
 #define DUK_HBUFOBJ_VALID_BYTEOFFSET_INCL(h, off)                     \
 	(DUK_ASSERT_EXPR((h) != NULL), DUK_ASSERT_EXPR((h)->buf != NULL), \
@@ -12472,7 +12472,7 @@ typedef struct
 #define DUK_JS_H_INCLUDED
 
 /* Flags for call handling.  Lowest flags must match bytecode DUK_BC_CALL_FLAG_xxx 1:1. */
-#define DUK_CALL_FLAG_TAILCALL (1U << 0) /* setup for a tail call */
+#define DUK_CALL_FLAG_TAILCALL (1U << 0) /* set up for a tail call */
 #define DUK_CALL_FLAG_CONSTRUCT \
 	(1U << 1) /* constructor call (i.e. called as 'new Foo()') */
 #define DUK_CALL_FLAG_CALLED_AS_EVAL \
@@ -29839,7 +29839,7 @@ static const duk_uint8_t *duk__load_func(
 			duk_get_tval(thr, idx_base)));
 	duk_set_top(thr, idx_base + 1);
 
-	/* Setup function properties. */
+	/* Set up function properties. */
 	tmp32 = DUK_RAW_READINC_U32_BE(p);
 	duk_push_u32(thr, tmp32);
 	duk_xdef_prop_stridx_short(
@@ -82976,7 +82976,7 @@ DUK_LOCAL void duk__duplicate_ram_global_object(duk_hthread *thr)
 
 DUK_INTERNAL void duk_hthread_create_builtin_objects(duk_hthread *thr)
 {
-	/* Setup builtins from ROM objects.  All heaps/threads will share
+	/* Set up builtins from ROM objects.  All heaps/threads will share
 	 * the same readonly objects.
 	 */
 	duk_small_uint_t i;
@@ -86576,7 +86576,7 @@ thread_state_error:
  *    - Tailcalls, where an activation is reused without increasing call
  *      stack (duk_activation) depth.
  *
- *    - Setup for an initial Duktape.Thread.resume().
+ *    - Set up for an initial Duktape.Thread.resume().
  *
  *  The call handler doesn't provide any protection guarantees, protected calls
  *  must be implemented e.g. by wrapping the call in a duk_safe_call().
@@ -86744,7 +86744,7 @@ DUK_LOCAL duk_int_t duk__handle_call_raw(
 	/* [ ... func this arg1 ... argN ] */
 
 	/*
-	 *  Setup a preliminary activation and figure out nargs/nregs and
+	 *  Set up a preliminary activation and figure out nargs/nregs and
 	 *  value stack minimum size.
 	 *
 	 *  Don't touch valstack_bottom or valstack_top yet so that Duktape API
@@ -86816,7 +86816,7 @@ DUK_LOCAL duk_int_t duk__handle_call_raw(
 	/* [ ... func this arg1 ... argN ] */
 
 	/*
-	 *  Setup value stack: clamp to 'nargs', fill up to 'nregs',
+	 *  Set up value stack: clamp to 'nargs', fill up to 'nregs',
 	 *  ensure value stack size matches target requirements, and
 	 *  switch value stack bottom.  Valstack top is kept.
 	 */
@@ -91985,7 +91985,7 @@ DUK_LOCAL void duk__expr_led(
 		 */
 
 			/*
-		 *  Setup call: target and 'this' binding.  Three cases:
+		 *  Set up call: target and 'this' binding.  Three cases:
 		 *
 		 *    1. Identifier base (e.g. "foo()")
 		 *    2. Property base (e.g. "foo.bar()")
@@ -95031,7 +95031,7 @@ DUK_LOCAL void duk__parse_stmts(duk_compiler_ctx *comp_ctx,
 	duk_ivalue res_alloc;
 	duk_ivalue *res = &res_alloc;
 
-	/* Setup state.  Initial ivalue is 'undefined'. */
+	/* Set up state.  Initial ivalue is 'undefined'. */
 
 	duk_require_stack(thr, DUK__PARSE_STATEMENTS_SLOTS);
 
@@ -103805,7 +103805,7 @@ void duk_js_push_closure(duk_hthread *thr, duk_hcompfunc *fun_temp,
 	}
 
 	/*
-	 *  Setup environment record properties based on the template and
+	 *  Set up environment record properties based on the template and
 	 *  its flags.
 	 *
 	 *  If DUK_HOBJECT_HAS_NEWENV(fun_temp) is true, the environment
@@ -109832,7 +109832,7 @@ DUK_LOCAL DUK_NOINLINE void duk__numconv_stringify_raw(duk_hthread *thr,
 	 *  Dragon4 slow path digit generation.
 	 */
 
-	duk__dragon4_prepare(nc_ctx); /* setup many variables in nc_ctx */
+	duk__dragon4_prepare(nc_ctx); /* set up many variables in nc_ctx */
 
 	DUK_DDD(DUK_DDDPRINT("after prepare:"));
 	DUK__BI_PRINT("r", &nc_ctx->r);
@@ -110406,7 +110406,7 @@ DUK_LOCAL DUK_NOINLINE void duk__numconv_parse_raw(
 	 *  An extra digit is generated for rounding.
 	 */
 
-	duk__dragon4_prepare(nc_ctx); /* setup many variables in nc_ctx */
+	duk__dragon4_prepare(nc_ctx); /* set up many variables in nc_ctx */
 
 	DUK_DDD(DUK_DDDPRINT("after prepare:"));
 	DUK__BI_PRINT("r", &nc_ctx->r);

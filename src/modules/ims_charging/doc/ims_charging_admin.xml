@@ -757,7 +757,7 @@ modparam("ims_charging", "service_context_id_release", "262")
       empty, the User-AVP in the Ro-Charging-Request will be based on the
       this parameter rather than on the P-Asserted or From-Header.</para>
       <para>
-      This parameter allows you to setup an AVP with which you can customise
+      This parameter allows you to set up an AVP with which you can customise
       the user to be used in the Diameter-Request.</para>
 
       <para><emphasis> Default value: if not set, P-Asserted-Identity with a

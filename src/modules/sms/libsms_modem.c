@@ -189,7 +189,7 @@ error:
 }
 
 
-/* setup serial port */
+/* set up serial port */
 int setmodemparams(struct modem *mdm)
 {
 	struct termios newtio;

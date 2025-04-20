@@ -30,7 +30,7 @@ tmp_name=""$RANDOM"_kamailiodb_tmp"
 
 cd ../../utils/kamctl/
 
-# setup config file
+# set up config file
 cp $CTLRC $CTLRC.bak
 sed -i "s/# DBENGINE=MYSQL/DBENGINE=PGSQL/g" $CTLRC
 sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" $CTLRC

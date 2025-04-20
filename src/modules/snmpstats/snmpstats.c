@@ -365,7 +365,7 @@ static int mod_child_init(int rank)
 {
 	int pid;
 
-	/* We only want to setup a single process, under the main attendant. */
+	/* We only want to set up a single process, under the main attendant. */
 	if(rank != PROC_MAIN) {
 		return 0;
 	}
@@ -428,7 +428,7 @@ static void sigchld_handler(int signal)
 	} else {
 
 		/* We need this 'else-block' in case another Kamailio process dies
-		 * unexpectantly before the sysUpTime process dies.  If this
+		 * unexpectedly before the sysUpTime process dies.  If this
 		 * doesn't happen, then this code will never be called, because
 		 * the block above re-assigns Kamailio's original SIGCHLD
 		 * handler.  If it does happen, then we make sure to call the

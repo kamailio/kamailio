@@ -400,7 +400,7 @@ static int mod_init(void)
 
 	if(dlgb.register_dlgcb(
 			   0x00, DLGCB_CREATED, contact_dlg_create_handler, 0x00, 0x00)) {
-		LM_ERR("Unable to setup DLGCB_CREATED");
+		LM_ERR("Unable to set up DLGCB_CREATED");
 		return -1;
 	} else {
 		LM_DBG(" DLGCB_CREATED created successfully");

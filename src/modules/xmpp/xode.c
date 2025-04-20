@@ -64,7 +64,7 @@ static xode _xode_appendsibling(
 
 	result = _xode_new(xode_get_pool(lastsibling), name, type);
 	if(result != NULL) {
-		/* Setup sibling pointers */
+		/* Set up sibling pointers */
 		result->prev = lastsibling;
 		lastsibling->next = result;
 	}

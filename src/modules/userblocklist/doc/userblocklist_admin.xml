@@ -519,7 +519,7 @@ if (!check_allowlist("globalblocklist")) {
 		<title>Database setup</title>
 		<para>
 			Before running &kamailio; with the userblocklist module,
-			you have to setup the database table where the module will
+			you have to set up the database table where the module will
 			read the blocklist data. For that, if the table was not created
 			by the installation script or you choose to install everything
 			by yourself you can use the <emphasis>userblocklist-create.sql</emphasis>
@@ -548,7 +548,7 @@ if (!check_allowlist("globalblocklist")) {
 		</programlisting>
 	</example>
 	<para>
-		This table will setup a global blocklist for all numbers, only allowing calls
+		This table will set up a global blocklist for all numbers, only allowing calls
 		starting with <quote>1</quote>. Numbers that starts with <quote>123456</quote>
 		and <quote>123455787</quote> are also blocklisted, because the longest prefix
 		will be matched.
@@ -573,7 +573,7 @@ if (!check_allowlist("globalblocklist")) {
 		</programlisting>
 	</example>
 	<para>
-		This table will setup user specific blocklists for certain usernames. For example
+		This table will set up user specific blocklists for certain usernames. For example
 		for user <quote>49721123456788</quote> the prefix <quote>1234</quote> will be not
 		allowed, but the number <quote>123456788</quote> is allowed. Additionally a domain
 		could be specified that is used for username matching if the <quote>use_domain</quote>

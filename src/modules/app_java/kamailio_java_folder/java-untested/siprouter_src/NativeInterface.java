@@ -14,8 +14,8 @@ public interface NativeInterface
 	public static final int PROC_UNIXSOCK		= -5;			// Unix socket server
 	public static final int PROC_ATTENDANT		= -10;			// main "attendant process
 	public static final int PROC_INIT		= -127;			/* special rank, the context is the main ser process, but this is 
-										    guaranteed to be executed before any rocess is forked, so it 
-										    can be used to setup shared variables that depend on some
+										    guaranteed to be executed before any process is forked, so it 
+										    can be used to set up shared variables that depend on some
 										    after mod_init available information (e.g. total number of processes).
 										    @warning child_init(PROC_MAIN) is again called in the same process (main)
 										    (before tcp), so make sure you don't init things twice, bot in PROC_MAIN and PROC_INT

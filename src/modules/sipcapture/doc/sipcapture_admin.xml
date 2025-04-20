@@ -783,7 +783,7 @@ event_route[sipcapture:request] {
 	<section>
 		<title>Database setup</title>
 		<para>
-		Before running &kamailio; with the sipcapture module, you have to setup the database
+		Before running &kamailio; with the sipcapture module, you have to set up the database
 		tables where the module will store the data. For that, if the table were not
 		created by the installation script or you choose to install everything by
 		yourself you can use the homer_databases.sql, <acronym>SQL</acronym> script

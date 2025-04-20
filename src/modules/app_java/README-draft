@@ -659,8 +659,8 @@ public class Kamailio extends NativeMethods
         5.4.1.8.  static final int PROC_INIT
 
 		  Special rank, the context is the main ser process, but this is
-		  guaranteed to be executed before any rocess is forked, so it
-		  can be used to setup shared variables that depend on some
+		  guaranteed to be executed before any process is forked, so it
+		  can be used to set up shared variables that depend on some
 		  after mod_init available information (e.g. total number of processes).
 		  @warning child_init(PROC_MAIN) is again called in the same process (main)
 		  (before tcp), so make sure you don't init things twice, 

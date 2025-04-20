@@ -50,7 +50,7 @@
 	<section id="prerequisities">
 	    <title>Prerequisites</title>
 	    <simpara>
-		To setup RADIUS support in SIP-router you will need the following:
+		To set up RADIUS support in SIP-router you will need the following:
 	    </simpara>
 	    <itemizedlist>
 		<listitem>

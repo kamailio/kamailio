@@ -47,7 +47,7 @@
           <para>
 			NOTE: At the moment the callcontrol application only supports the old
 			<quote>MI</quote> interface for communication with &kamailio;. This
-			interface is unfortunately not available anymore in &kamailio;. So
+			interface is unfortunately not available any more in &kamailio;. So
 			this application cannot be used right now out of the box together
 			with the call_control module. See the next link for possible
 			solutions:

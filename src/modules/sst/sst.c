@@ -148,7 +148,7 @@ struct module_exports exports = {
  * The initialization function, called when the module is loaded by
  * the script. This function is called only once.
  *
- * Bind to the dialog module and setup the callbacks. Also initialize
+ * Bind to the dialog module and set up the callbacks. Also initialize
  * the shared memory to store our internal information in.
  *
  * @return 0 to continue to load the Kamailio, -1 to stop the loading

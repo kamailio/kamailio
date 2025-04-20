@@ -147,7 +147,7 @@ static pv_spec_t *timeout_avp = 0;
 static unsigned int sst_min_se = 0;
 
 /**
- * Should the SE < sst_min_se be rehected with a 422 reply?
+ * Should the SE < sst_min_se be rejected with a 422 reply?
  */
 static unsigned int sst_reject = 1;
 
@@ -213,12 +213,12 @@ void sst_handler_init(pv_spec_t *timeout_avp_p, unsigned int min_se, int flag,
  * module will call this callback function. We need to track the
  * dialogs lifespan from this point forward until it is terminated
  * with a BYE, CANCEL, etc. In the process, we will see if either or
- * both ends of the conversation supports SIP Session Timers and setup
+ * both ends of the conversation supports SIP Session Timers and set up
  * the dialog timeout to expire at the session timer expire time. Each
  * time the new re-INVITE is seen to update the SST, we will reset the
  * life span of the dialog to match it.
  *
- * This function will setup the other types of dialog callbacks
+ * This function will set up the other types of dialog callbacks
  * required to track the lifespan of the dialog. It will also start
  * the state tracking to figure out if and who supports SST.
  *
@@ -238,7 +238,7 @@ void sst_handler_init(pv_spec_t *timeout_avp_p, unsigned int min_se, int flag,
  * - If the supported=timer is found, the proxy may reject the request
  *   with a 422 if the SE value is smaller than the local policy. The
  *   422 MUST hold the proxies Min-SE value >= 90.
- * - If support=timer is NOT indecated, the proxy can't reject with a
+ * - If support=timer is NOT indicated, the proxy can't reject with a
  *   422 but can include/increase the MIN-SE: to be = to local policy.
  *   and increase the SE to match the new Min-SE value.
  * - the proxy MUST NOT insert/change the Min-SE header if
@@ -258,7 +258,7 @@ void sst_dialog_created_CB(
 
 	memset(&minfo, 0, sizeof(sst_msg_info_t));
 	/*
-	 * Only deal with messages flaged as SST interested.
+	 * Only deal with messages flagged as SST interested.
 	 */
 	if((msg->flags & sst_flag) != sst_flag) {
 		LM_DBG("SST flag was not set for this request\n");
@@ -557,7 +557,7 @@ static void sst_dialog_response_fwded_CB(
 					return;
 				}
 			} else {
-				/* no se header found, we want to resquest it. */
+				/* no se header found, we want to request it. */
 				if(info->requester == SST_PXY || info->supported == SST_UAC) {
 					str sehdr;
 
@@ -586,7 +586,7 @@ static void sst_dialog_response_fwded_CB(
 				}
 			}
 		} /* End of 2XX for an INVITE */
-	}	  /* If the msg is a repsonse and not a request */
+	}	  /* If the msg is a response and not a request */
 }
 
 /**
@@ -915,7 +915,7 @@ static int parse_msg_for_sst_info(struct sip_msg *msg, sst_msg_info_t *minfo)
 	/*
 	 * The parse_supported() will return 0 if found and parsed OK, -1
 	 * if not found or an error parsing the one it did find! So assume
-	 * it is not found if unsuccessfull.
+	 * it is not found if unsuccessful.
 	 */
 	if((rtn = parse_supported(msg)) == 0) {
 		if((((struct option_tag_body *)msg->supported->parsed)->option_tags_all
@@ -941,8 +941,8 @@ static int parse_msg_for_sst_info(struct sip_msg *msg, sst_msg_info_t *minfo)
 /**
  * Add the Min-SE: header and send a reply 422.
  *
- * @param msg The message to opperate on.
- * @param min_se The Min-SE: value to use in the heaader.
+ * @param msg The message to operate on.
+ * @param min_se The Min-SE: value to use in the header.
  *
  * @return 0 on success, -1 on error.
  */
@@ -961,7 +961,7 @@ static int send_reject(struct sip_msg *msg, unsigned int min_se)
 }
 
 /**
- * A helper function to setup all the callbacks from the dialog module
+ * A helper function to set up all the callbacks from the dialog module
  * after we find interest in the dialog.
  *
  * @param did The Dialog ID.

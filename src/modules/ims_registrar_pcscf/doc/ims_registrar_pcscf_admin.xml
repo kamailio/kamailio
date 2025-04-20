@@ -350,7 +350,7 @@ modparam("ims_registrar_pcscf", "delete_delay", 10)
       <para>
         See also the same parameter in the ims_qos module.
       </para>
-      <para><emphasis>Default value is 0 (trust received-from IP and alias in Contact, and, unfortunaly somewhat wrongly
+      <para><emphasis>Default value is 0 (trust received-from IP and alias in Contact, and, unfortunately somewhat wrongly
       top/bottom Via on requests/responses).</emphasis></para>
       <example>
         <title><varname>trust_bottom_via</varname> parameter usage</title>

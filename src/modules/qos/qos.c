@@ -88,7 +88,7 @@ int load_qos(struct qos_binds *qosb)
  * The initialization function, called when the module is loaded by
  * the script. This function is called only once.
  *
- * Bind to the dialog module and setup the callbacks. Also initialize
+ * Bind to the dialog module and set up the callbacks. Also initialize
  * the shared memory to store our internal information in.
  */
 static int mod_init(void)

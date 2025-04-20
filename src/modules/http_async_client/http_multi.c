@@ -414,7 +414,7 @@ int init_http_multi(struct event_base *evbase, struct http_m_global *wg)
 
 	g->timer_event = evtimer_new(g->evbase, timer_cb, g);
 
-	/* setup the generic multi interface options we want */
+	/* set up the generic multi interface options we want */
 	curl_multi_setopt(g->multi, CURLMOPT_SOCKETFUNCTION, sock_cb);
 	curl_multi_setopt(g->multi, CURLMOPT_SOCKETDATA, g);
 	curl_multi_setopt(g->multi, CURLMOPT_TIMERFUNCTION, multi_timer_cb);

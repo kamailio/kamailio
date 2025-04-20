@@ -28,7 +28,7 @@ if ! (check_kamailio); then
 	exit 0
 fi ;
 
-# setup config
+# set up config
 printf "loadmodule \"jsonrpcs.so\"\n" > $CFG
 printf "modparam(\"jsonrpcs\", \"transport\", 2)\n" >> $CFG
 printf "modparam(\"jsonrpcs\", \"fifo_name\", \"$RPCFIFOPATH\")\n" >> $CFG

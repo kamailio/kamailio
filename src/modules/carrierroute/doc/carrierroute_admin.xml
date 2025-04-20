@@ -806,7 +806,7 @@ domain register {
     <section>
       <title>Database setup</title>
       <para>
-        Before running &kamailio; with carrierroute, you have to setup the database
+        Before running &kamailio; with carrierroute, you have to set up the database
         table where the module will store the routing data. For that, if
         the table was not created by the installation script or you choose
         to install everything by yourself you can use the carrierroute-create.sql

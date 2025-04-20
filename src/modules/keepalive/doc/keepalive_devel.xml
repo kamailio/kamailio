@@ -103,7 +103,7 @@
 		</listitem>
 		<listitem>
 			<para>
-				<emphasis>user_attr (void * pointer, optional)</emphasis> - If any callback function is setup, this parameter will be forwarded to it (or both callbacks in both are defined), as last parameter. Use <emphasis>NULL</emphasis> to set no user_attr parameter.
+				<emphasis>user_attr (void * pointer, optional)</emphasis> - If any callback function is set up, this parameter will be forwarded to it (or both callbacks in both are defined), as last parameter. Use <emphasis>NULL</emphasis> to set no user_attr parameter.
 			</para>
 		</listitem>
 		</itemizedlist>

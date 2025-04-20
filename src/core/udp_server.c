@@ -348,7 +348,7 @@ int probe_max_send_buffer(int udp_sock)
 #ifdef USE_MCAST
 
 /*
- * Setup multicast receiver
+ * Set up multicast receiver
  */
 static int setup_mcast_rcvr(
 		int sock, union sockaddr_union *addr, char *interface)

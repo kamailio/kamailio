@@ -80,7 +80,7 @@ fi
 #
 unset USED_DBENGINE
 if [ -z "$DBENGINE" ] ; then
-	merr "database engine not specified, please setup one in the config script"
+	merr "database engine not specified, please set one up in the config script"
 	exit 1
 fi
 

@@ -928,7 +928,7 @@ event_route[siptrace:msg] {
 		<title>Database setup</title>
 		<para>
 		Before running &kamailio; with siptrace and activated trace_to_database
-		parameter, you have to setup the database tables where the module will
+		parameter, you have to set up the database tables where the module will
 		store the data. For that, if the table were not created by the
 		installation script or you choose to install everything by yourself
 		you can use the siptrace-create.sql <acronym>SQL</acronym> script in
