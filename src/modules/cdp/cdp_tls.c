@@ -149,16 +149,20 @@ int load_certificates(SSL_CTX *ctx, str *cert, str *key)
 	}
 	if(pkg_str_dup(&key_fixed, key) < 0) {
 		LM_ERR("Failed to copy key parameter\n");
+		pkg_free(cert_fixed.s);
 		return -1;
 	}
 	if(!SSL_CTX_use_certificate_chain_file(ctx, cert_fixed.s)) {
 		LM_ERR("Unable to load certificate file\n");
 		TLS_LM_ERR("load_cert:", ctx);
+		pkg_free(key_fixed.s);
+		pkg_free(cert_fixed.s);
 		return -1;
 	}
 	if(SSL_CTX_use_PrivateKey_file(ctx, key_fixed.s, SSL_FILETYPE_PEM) <= 0) {
 		LM_ERR("Unable to load private key file\n");
 		TLS_LM_ERR("load_private_key:", ctx);
+		pkg_free(key_fixed.s);
 		return -1;
 	}
 	if(!SSL_CTX_check_private_key(ctx)) {
