@@ -348,7 +348,7 @@ int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark)
 {
 	struct hdr_field *first;
 	struct lump *anchor;
-	str route;
+	str route = STR_NULL;
 
 	parse_headers(msg, HDR_EOH_F, 0);
 	first = msg->headers;
@@ -367,6 +367,7 @@ int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark)
 	anchor = anchor_lump(msg, first->name.s - msg->buf, 0, HDR_ROUTE_T);
 	if(anchor == NULL) {
 		LM_ERR("isc_mark_write_route: anchor_lump failed\n");
+		pkg_free(route.s);
 		return 0;
 	}
 
