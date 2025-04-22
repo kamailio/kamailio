@@ -148,12 +148,12 @@ int th_get_uri_type(str *uri, int *mode, str *ip, str *value)
 		if(ret < 0)
 			return -1;
 		if(ret == 1)  /* not found */
-			return 0; /* skip */
+			return 3; /*encode if it is not the last rr with my IP, else skip*/
 		LM_DBG("VALUE [%.*s]\n", value->len, value->s);
 		if(value->len == 2 && strncasecmp(value->s, "on", 2) == 0)
 			*mode = 1;
 		memset(value, 0, sizeof(str));
-		return 0; /* skip */
+		return 3; /*encode if it is not the last rr with my IP, else skip*/
 	}
 	/* not myself & not mask ip */
 	return 1; /* encode */
@@ -554,7 +554,7 @@ int th_flip_record_route(sip_msg_t *msg, str *uri_prefix, str *ip, int mode)
 {
 	hdr_field_t *hdr;
 	struct lump *l;
-	int i;
+	int i, j, last_myself_rr;
 	rr_t *rr;
 	str out;
 	int utype;
@@ -566,6 +566,28 @@ int th_flip_record_route(sip_msg_t *msg, str *uri_prefix, str *ip, int mode)
 		LM_DBG("no record route header\n");
 		return 0;
 	}
+	hdr = msg->record_route;
+	j = 0;
+	while(hdr != NULL) {
+		if(parse_rr(hdr) < 0) {
+			LM_ERR("failed to parse RR\n");
+			return -1;
+		}
+
+		rr = (rr_t *)hdr->parsed;
+		while(rr) {
+			j++;
+			sip_uri_t puri;
+			if(parse_uri(rr->nameaddr.uri.s, rr->nameaddr.uri.len, &puri) < 0)
+				return -1;
+			if(check_self(&puri.host, puri.port_no, 0) == 1) {
+				last_myself_rr = j;
+			}
+			rr = rr->next;
+		}
+		hdr = next_sibling_hdr(hdr);
+	}
+
 	hdr = msg->record_route;
 	i = 0;
 	act = 0;
@@ -583,14 +605,14 @@ int th_flip_record_route(sip_msg_t *msg, str *uri_prefix, str *ip, int mode)
 			r2 = 0;
 			utype = th_get_uri_type(&rr->nameaddr.uri, &r2, ip, &pval);
 			if(utype == 0 && mode == 1) {
-				if(r2 == 1) {
-					act--;
-					if(act == 0)
-						return 0;
-					utype = 1;
-				} else {
+				return 0;
+			}
+
+			if(utype == 3 && mode == 1) {
+				if(i == last_myself_rr) {
 					return 0;
 				}
+				utype = 1;
 			}
 			out.s = NULL;
 			switch(utype) {
