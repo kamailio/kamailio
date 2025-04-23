@@ -76,6 +76,15 @@ typedef struct tls_hooks
 	/* generic pre-init function (called at kamailio start, before module
 	 * initialization (after modparams) */
 	int (*pre_init)(void);
+	/* match the given connection TLS domain
+	 * with the TLS domain looked up by ip:port
+	 * see: _tcpconn_find */
+	int (*match_domain)(
+			struct tcp_connection *c, struct ip_addr *ip, unsigned short port);
+	/* match connections TLS domain
+	 * see: _tcpconn_add_alias_unsafe */
+	int (*match_connections_domain)(
+			struct tcp_connection *l_c, struct tcp_connection *r_c);
 } tls_hooks_t;
 
 

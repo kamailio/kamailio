@@ -478,6 +478,7 @@ extern char *default_routename;
 %token TCP_REUSE_PORT
 %token TCP_WAIT_DATA
 %token TCP_SCRIPT_MODE
+%token TLS_CONNECTION_MATCH_DOMAIN
 %token DISABLE_TLS
 %token ENABLE_TLS
 %token TLS_THREADS_MODE
@@ -1488,6 +1489,14 @@ assign_stm:
 		#endif
 	}
 	| TCP_SCRIPT_MODE EQUAL error { yyerror("number expected"); }
+	| TLS_CONNECTION_MATCH_DOMAIN EQUAL NUMBER {
+		#ifdef USE_TLS
+			tls_connection_match_domain=$3;
+		#else
+			warn("tls support not compiled in");
+		#endif
+	}
+	| TLS_CONNECTION_MATCH_DOMAIN EQUAL error { yyerror("number expected"); }
 	| DISABLE_TLS EQUAL NUMBER {
 		#ifdef USE_TLS
 			tls_disable=$3;
