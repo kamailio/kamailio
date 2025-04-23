@@ -497,6 +497,10 @@ unsigned short port_no = 0; /* default port*/
 unsigned short tls_port_no = 0; /* default port */
 #endif
 
+#ifdef USE_TLS
+int tls_connection_match_domain = 0;
+#endif
+
 struct host_alias *aliases = 0; /* name aliases list */
 
 /* Parameter to child_init */

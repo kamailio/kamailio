@@ -447,6 +447,7 @@ TCP_CLONE_RCVBUF	"tcp_clone_rcvbuf"
 TCP_REUSE_PORT		"tcp_reuse_port"
 TCP_WAIT_DATA	"tcp_wait_data"
 TCP_SCRIPT_MODE	"tcp_script_mode"
+TLS_CONNECTION_MATCH_DOMAIN "tls_connection_match_domain"
 DISABLE_TLS		"disable_tls"|"tls_disable"
 ENABLE_TLS		"enable_tls"|"tls_enable"
 TLS_THREADS_MODE	"tls_threads_mode"
@@ -971,6 +972,8 @@ IMPORTFILE      "import_file"
 <INITIAL>{TCP_WAIT_DATA}	{ count(); yylval.strval=yytext;
 									return TCP_WAIT_DATA; }
 <INITIAL>{TCP_SCRIPT_MODE}	{ count(); yylval.strval=yytext; return TCP_SCRIPT_MODE; }
+<INITIAL>{TLS_CONNECTION_MATCH_DOMAIN}	{ count(); yylval.strval=yytext;
+									return TLS_CONNECTION_MATCH_DOMAIN; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
 <INITIAL>{ENABLE_TLS}	{ count(); yylval.strval=yytext; return ENABLE_TLS; }
 <INITIAL>{TLS_THREADS_MODE}	{ count(); yylval.strval=yytext; return TLS_THREADS_MODE; }

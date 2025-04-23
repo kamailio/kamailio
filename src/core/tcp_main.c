@@ -1754,6 +1754,12 @@ struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
 					&& (proto == PROTO_NONE || a->parent->rcv.proto == proto)) {
 				LM_DBG("found connection by peer address (id: %d)\n",
 						a->parent->id);
+
+#ifdef USE_TLS
+				if(tls_connection_match_domain
+						&& !tls_hook_call(match_domain, 1, a->parent, ip, port))
+					continue;
+#endif
 				return a->parent;
 			}
 		}
@@ -1873,6 +1879,14 @@ inline static int _tcpconn_add_alias_unsafe(struct tcp_connection *c, int port,
 							|| ip_addr_cmp(&a->parent->rcv.dst_ip, l_ip))) {
 				/* found */
 				if(unlikely(a->parent != c)) {
+#ifdef USE_TLS
+					if(tls_connection_match_domain && c->type == PROTO_TLS
+							&& a->parent->type == PROTO_TLS
+							&& !tls_hook_call(
+									match_connections_domain, 1, c, a->parent))
+						continue;
+#endif
+
 					if(flags & TCP_ALIAS_FORCE_ADD)
 						/* still have to walk the whole list to check if
 						 * the alias was not already added */
