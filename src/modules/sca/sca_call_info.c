@@ -609,6 +609,7 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 	// all headers must be parsed before using lump functions
 	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("Failed to parse_headers\n");
+		pkg_free(replaces_hdr.s);
 		goto done;
 	}
 
