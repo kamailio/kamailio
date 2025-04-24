@@ -62,7 +62,7 @@ else()
     add_custom_target(
       dbschema_${db_name}
       COMMAND ${CMAKE_COMMAND} -E make_directory "${db_name_folder}"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/utils/kamctl
       COMMENT "Creating schemas for ${db_name}"
     )
 
@@ -86,7 +86,7 @@ else()
         PRE_BUILD
         COMMAND
           "XML_CATALOG_FILES=${CATALOG}" ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS} --stringparam dir
-          ${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}/${folder_suffix} --stringparam prefix
+          ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix} --stringparam prefix
           ${prefix} --stringparam db ${db_name} ${xsl_file} "kamailio-${table}.xml"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema"
         COMMENT "Processing ${table} for ${db_name}"
@@ -95,7 +95,8 @@ else()
 
     add_custom_target(
       dbschema_${db_name}_clean
-      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/${db_name_folder}"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory
+              "${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}"
       COMMENT "Cleaning ${db_name} schema files"
     )
 
