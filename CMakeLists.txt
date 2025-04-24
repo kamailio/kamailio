@@ -80,13 +80,10 @@ add_subdirectory(utils/kamcmd)
 # and scirpts are using {CMAKE_BINARY_DIR} from where they where first included.
 include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
 
-# TODO: Packaging stuuf. These should be on different file propably
-set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-set(CPACK_PACKAGE_NAME kamailio)
-set(CPACK_GENERATOR DEB)
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "test")
-
-include(CPack)
+# ----------
+# Packaging
+# ----------
+include(${CMAKE_SOURCE_DIR}/cmake/deb-packaging.cmake)
 
 # Add uninstall target
 if(NOT TARGET uninstall)
@@ -98,6 +95,6 @@ if(NOT TARGET uninstall)
   add_custom_target(
     uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake-uninstall.cmake
-    COMMENT "Uninstalling"
+    COMMENT "Uninstalling ${PROJECT_NAME}-${PROJECT_VERSION} from ${CMAKE_INSTALL_PREFIX}"
   )
 endif()
