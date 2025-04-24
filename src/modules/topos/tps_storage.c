@@ -89,7 +89,8 @@ int tps_db_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 
 static void init_contact_data(
 		tps_data_t *td, str *uuid, str *contact_sv, sip_uri_t *puri, int dir);
-static void append_host_info(tps_data_t *td, sip_uri_t *puri, sr_xavp_t *vavu);
+static void append_host_info(tps_data_t *td, sip_uri_t *puri, sr_xavp_t *vavu,
+		int append_port_proto);
 static void add_uuid_param(tps_data_t *td, str *uuid, int dir);
 static sr_xavp_t *get_xavu_host(int dir);
 static int handle_ruri_user_mode(
@@ -250,7 +251,7 @@ int tps_storage_fill_contact(
 		LM_ERR("failed to parse the uri\n");
 		return -1;
 	}
-	LM_CRIT("contact uri: %.*s\n", sv.len, sv.s);
+
 	contact_len = sv.len;
 	if(_tps_contact_host.len) {
 		contact_len = sv.len - puri.host.len + _tps_contact_host.len;
@@ -291,7 +292,7 @@ int tps_storage_fill_contact(
 			td->cp++;
 		}
 
-		append_host_info(td, &puri, NULL);
+		append_host_info(td, &puri, NULL, 1);
 		add_uuid_param(td, uuid, dir);
 
 	} else {
@@ -315,7 +316,7 @@ int tps_storage_fill_contact(
 			vavu = get_xavu_host(dir);
 		}
 
-		append_host_info(td, &puri, vavu);
+		append_host_info(td, &puri, vavu, 0);
 	}
 
 	/* Finalize the contact header */
@@ -498,7 +499,8 @@ static void init_contact_data(
 
 	Also include port and protocol if present
  */
-static void append_host_info(tps_data_t *td, sip_uri_t *puri, sr_xavp_t *vavu)
+static void append_host_info(
+		tps_data_t *td, sip_uri_t *puri, sr_xavp_t *vavu, int append_port_proto)
 {
 	/* contact_host xavu takes preference */
 	if(vavu == NULL || vavu->val.v.s.len <= 0) {
@@ -522,19 +524,21 @@ static void append_host_info(tps_data_t *td, sip_uri_t *puri, sr_xavp_t *vavu)
 	}
 
 	/*  Add port if present  */
-	if(puri->port.len > 0) {
-		*td->cp = ':';
-		td->cp++;
-		memcpy(td->cp, puri->port.s, puri->port.len);
-		td->cp += puri->port.len;
-	}
+	if(append_port_proto) {
+		if(puri->port.len > 0) {
+			*td->cp = ':';
+			td->cp++;
+			memcpy(td->cp, puri->port.s, puri->port.len);
+			td->cp += puri->port.len;
+		}
 
-	/*  Add transport if present */
-	if(puri->transport_val.len > 0) {
-		memcpy(td->cp, ";transport=", 11);
-		td->cp += 11;
-		memcpy(td->cp, puri->transport_val.s, puri->transport_val.len);
-		td->cp += puri->transport_val.len;
+		/*  Add transport if present */
+		if(puri->transport_val.len > 0) {
+			memcpy(td->cp, ";transport=", 11);
+			td->cp += 11;
+			memcpy(td->cp, puri->transport_val.s, puri->transport_val.len);
+			td->cp += puri->transport_val.len;
+		}
 	}
 }
 
