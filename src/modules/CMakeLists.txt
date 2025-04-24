@@ -17,8 +17,12 @@ set(MODULE_GROUP_NAME
 set_property(CACHE MODULE_GROUP_NAME PROPERTY STRINGS ${AVAILABLE_GROUP_NAMES})
 
 # User may provide multiple groups seperated by space
-separate_arguments(MODULE_GROUP_LIST UNIX_COMMAND "${MODULE_GROUP_NAME}")
-message(STATUS "Building groups: ${MODULE_GROUP_LIST}")
+if(MODULE_GROUP_NAME STREQUAL "ALL_PACKAGED")
+  set(MODULE_GROUP_LIST ${MODULE_GROUP_PACKAGE_GROUPS})
+else()
+  separate_arguments(MODULE_GROUP_LIST UNIX_COMMAND "${MODULE_GROUP_NAME}")
+  message(STATUS "Building groups: ${MODULE_GROUP_LIST}")
+endif()
 
 # Check if elements in MODULE_GROUP_LIST are valid by checking against
 # AVAILABLE_GROUP_NAMES

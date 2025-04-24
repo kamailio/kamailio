@@ -72,13 +72,13 @@ install(
         message(STATUS \"kamctlrc already exists in\${dir}/kamctlrc.
           Installing as kamctlrc.sample\")
         file(INSTALL \"${CMAKE_CURRENT_SOURCE_DIR}/kamctlrc\"
-          DESTINATION \"${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
+          DESTINATION \"$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
           RENAME \"kamctlrc.sample\"
           PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
         )
     else()
         file(INSTALL \"${CMAKE_CURRENT_SOURCE_DIR}/kamctlrc\"
-            DESTINATION \"${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
+            DESTINATION \"$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
             PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
     endif()
 "
