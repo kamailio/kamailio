@@ -57,6 +57,7 @@ typedef struct tls_rd_buf
 typedef struct tls_extra_data
 {
 	tls_domains_cfg_t *cfg; /* Configuration used for this connection */
+	str dom;				/* tls_domain_str() for this connection */
 	SSL *ssl;				/* SSL context used for the connection */
 	BIO *rwbio;				/* bio used for read/write
 							 * (openssl code might add buffering BIOs so
@@ -86,6 +87,12 @@ void tls_h_tcpconn_clean_f(struct tcp_connection *c);
  * shut down the TLS connection
  */
 void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd);
+
+int tls_h_match_domain_f(
+		struct tcp_connection *c, struct ip_addr *ip, unsigned short port);
+
+int tls_h_match_connections_domain_f(
+		struct tcp_connection *l_c, struct tcp_connection *r_c);
 
 int tls_h_encode_f(struct tcp_connection *c, const char **pbuf,
 		unsigned int *plen, const char **rest_buf, unsigned int *rest_len,
