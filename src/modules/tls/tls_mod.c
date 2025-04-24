@@ -352,6 +352,8 @@ static struct tls_hooks tls_h = {
 	tls_h_mod_init_f,
 	tls_h_mod_destroy_f,
 	tls_h_mod_pre_init_f,
+	tls_h_match_domain_f,
+	tls_h_match_connections_domain_f,
 };
 /* clang-format on */
 
