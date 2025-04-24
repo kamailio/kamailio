@@ -227,18 +227,17 @@ install(
         message(STATUS \"${CFG_NAME}.cfg already exists in \"
         \"\${dir}/${CFG_NAME}.cfg. Installing as ${CFG_NAME}.cfg.sample\")
       file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
-        DESTINATION \"${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
+        DESTINATION \"$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
         RENAME \"${CFG_NAME}.cfg.sample\"
         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
       )
     else()
         file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
-          DESTINATION \"${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
+          DESTINATION \"$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
           PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
           RENAME \"${CFG_NAME}.cfg\"
         )
     endif()
-
 "
   COMPONENT kamailio-core
 )
