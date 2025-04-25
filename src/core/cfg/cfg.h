@@ -56,7 +56,7 @@
 typedef int (*cfg_on_change)(void *, str *, str *, void **);
 typedef void (*cfg_on_set_child)(str *, str *);
 
-/*! \brief structrure to be used by the module interface */
+/*! \brief structure to be used by the module interface */
 typedef struct _cfg_def
 {
 	char *name;

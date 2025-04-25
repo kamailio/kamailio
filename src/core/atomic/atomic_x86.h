@@ -374,7 +374,7 @@ inline static long mb_atomic_get_long(volatile long *var)
 #endif /* NOSMP */
 
 
-/* on x86 atomic intructions act also as barriers */
+/* on x86 atomic instructions act also as barriers */
 #define mb_atomic_inc_int(v) atomic_inc_int(v)
 #define mb_atomic_dec_int(v) atomic_dec_int(v)
 #define mb_atomic_or_int(v, m) atomic_or_int(v, m)

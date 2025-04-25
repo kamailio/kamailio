@@ -63,7 +63,7 @@ int cfg_set_script_var(
 /* fix-up the dynamically declared group */
 int cfg_script_fixup(cfg_group_t *group, unsigned char *block);
 
-/* destory a dynamically allocated group definition */
+/* destroy a dynamically allocated group definition */
 void cfg_script_destroy(cfg_group_t *group);
 
 #endif /* _CFG_SCRIPT_H */
