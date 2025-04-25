@@ -13,16 +13,16 @@ public interface NativeInterface
 	public static final int PROC_TCP_MAIN		= -4;			// TCP main process
 	public static final int PROC_UNIXSOCK		= -5;			// Unix socket server
 	public static final int PROC_ATTENDANT		= -10;			// main "attendant process
-	public static final int PROC_INIT		= -127;			/* special rank, the context is the main ser process, but this is 
-										    guaranteed to be executed before any rocess is forked, so it 
-										    can be used to setup shared variables that depend on some
+	public static final int PROC_INIT		= -127;			/* special rank, the context is the main ser process, but this is
+										    guaranteed to be executed before any process is forked, so it
+										    can be used to set up shared variables that depend on some
 										    after mod_init available information (e.g. total number of processes).
 										    @warning child_init(PROC_MAIN) is again called in the same process (main)
 										    (before tcp), so make sure you don't init things twice, bot in PROC_MAIN and PROC_INT
 								*/
 	public static final int PROC_NOCHLDINIT		= -128;			// no child init functions will be called if this rank is used in fork_process()
 	public static final int PROC_SIPINIT		= 1;			// First SIP worker - some modules do special processing in this child, like loading db data
-	public static final int PROC_SIPRPC		= 127;			/* Used to init RPC worker as SIP commands handler. 
+	public static final int PROC_SIPRPC		= 127;			/* Used to init RPC worker as SIP commands handler.
 										    Don't do any special processing in the child init with this rank - just bare child initialization
 										*/
 	public static final int PROC_MIN		= PROC_NOCHLDINIT;	// Minimum process rank
@@ -43,4 +43,3 @@ public interface NativeInterface
 	public static final int DEFAULT_FACILITY	= 0;
     }
 }
-

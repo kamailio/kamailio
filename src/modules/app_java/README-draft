@@ -277,25 +277,25 @@ modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni -Djava.compi
 
    Each function has a required parameter “method_signature”.
    For more info see: http://www.rgagnon.com/javadetails/java-0286.html
-   There are two parts to the signature. The first part is enclosed within the parentheses and represents the method's arguments. 
+   There are two parts to the signature. The first part is enclosed within the parentheses and represents the method's arguments.
    The second portion follows the closing parenthesis and represents the return type. The mapping between the Java type and C type is
-	Type     Chararacter 
-	boolean      Z 
-	byte         B 
-	char         C 
-	double       D 
-	float        F 
-	int          I 
-	long         J 
-	object       L 
-	short        S 
-	void         V 
-	array        [ 
+	Type     Chararacter
+	boolean      Z
+	byte         B
+	char         C
+	double       D
+	float        F
+	int          I
+	long         J
+	object       L
+	short        S
+	void         V
+	array        [
    Note that to specify an object, the "L" is followed by the object's class name and ends with a semi-colon, ';' .
 
    app_java supports the following signatures
       primitives: Z,B,C,D,F,I,J,L,S,V
-      objects: 
+      objects:
 		Ljava/lang/Boolean;
 		Ljava/lang/Byte;
 		Ljava/lang/Character;
@@ -591,7 +591,7 @@ public class Kamailio extends NativeMethods
 
    5.3.14.  int msg_flags;
 
-	    Flags used by core. Allows to set various flags on the message; may be used 
+	    Flags used by core. Allows to set various flags on the message; may be used
 	    for simple inter-module communication or remembering processing state reache.
 
    5.3.15.  static native SipMsg ParseSipMsg();
@@ -659,11 +659,11 @@ public class Kamailio extends NativeMethods
         5.4.1.8.  static final int PROC_INIT
 
 		  Special rank, the context is the main ser process, but this is
-		  guaranteed to be executed before any rocess is forked, so it
-		  can be used to setup shared variables that depend on some
+		  guaranteed to be executed before any process is forked, so it
+		  can be used to set up shared variables that depend on some
 		  after mod_init available information (e.g. total number of processes).
 		  @warning child_init(PROC_MAIN) is again called in the same process (main)
-		  (before tcp), so make sure you don't init things twice, 
+		  (before tcp), so make sure you don't init things twice,
 		  both in PROC_MAIN and PROC_INT
 
         5.4.1.9.  static final int PROC_NOCHLDINIT
@@ -672,13 +672,13 @@ public class Kamailio extends NativeMethods
 
         5.4.1.10. static final int PROC_SIPINIT
 
-		  First SIP worker - some modules do special processing in this child, 
+		  First SIP worker - some modules do special processing in this child,
 		  like loading db data
 
         5.4.1.11. static final int PROC_SIPRPC
 
 		  Used to init RPC worker as SIP commands handler.
-		  Don't do any special processing in the child init with this rank - 
+		  Don't do any special processing in the child init with this rank -
 		  just bare child initialization
 
         5.4.1.12. static final int PROC_MIN
@@ -705,7 +705,7 @@ public class Kamailio extends NativeMethods
 ...
 
 import java.lang.*;
-import java.io.*; 
+import java.io.*;
 
 import org.siprouter.*;
 import org.siprouter.NativeInterface.*;
@@ -820,18 +820,3 @@ public class Kamailio extends NativeMethods
 }
 
 ...
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
