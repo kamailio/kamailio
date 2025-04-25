@@ -333,7 +333,7 @@ error:
 	return -1;
 }
 
-/* destory a dynamically allocated group definition */
+/* destroy a dynamically allocated group definition */
 void cfg_script_destroy(cfg_group_t *group)
 {
 	int i;

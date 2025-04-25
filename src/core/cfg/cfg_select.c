@@ -136,7 +136,7 @@ int cfg_fixup_selects()
 			*(sel->group_p) = (void *)group;
 		}
 	}
-	/* the select list is not needed anymore */
+	/* the select list is not needed any more */
 	cfg_free_selects();
 	return 0;
 }

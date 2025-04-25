@@ -71,7 +71,7 @@ typedef struct _cfg_mapping
 
 	/* additional information about the cfg variable */
 	int pos; /*!< position of the variable within the group starting from 0 */
-	int offset;		   /*!< offest within the memory block */
+	int offset;		   /*!< offset within the memory block */
 	unsigned int flag; /*!< flag indicating the state of the variable */
 } cfg_mapping_t;
 
@@ -87,7 +87,7 @@ enum
 #pragma pack(push, 1)
 typedef struct _cfg_group
 {
-	cfg_mapping_t *mapping; /*!< describes the mapping betweeen
+	cfg_mapping_t *mapping; /*!< describes the mapping between
 					the cfg variable definition and the memory block */
 	char *vars;				/*!< pointer to the memory block where the values
 					are stored -- used only before the config is
@@ -126,7 +126,7 @@ typedef struct _cfg_group_inst
 {
 	unsigned int id; /*!< identifier of the group instance */
 	unsigned int set[CFG_MAX_VAR_NUM / (sizeof(int) * 8)];
-	/*!< Bitmap indicating whether or not a value is explicitely set
+	/*!< Bitmap indicating whether or not a value is explicitly set
 					within this instance. If the value is not set,
 					then the default value is used, and copied into this instance. */
 	unsigned char vars[1]; /*!< block for the values */
@@ -159,7 +159,7 @@ typedef struct _cfg_block
 /*! \brief Linked list of per-child process callbacks.
  * Each child process has a local pointer, and executes the callbacks
  * when the pointer is not pointing to the end of the list.
- * Items from the begginning of the list are deleted when the starter
+ * Items from the beginning of the list are deleted when the starter
  * pointer is moved, and no more child process uses them.
  */
 typedef struct _cfg_child_cb
@@ -211,19 +211,19 @@ extern int cfg_ginst_count;
 #define CFG_GROUP_DATA(block, group) \
 	((unsigned char *)((block)->vars + (group)->var_offset))
 
-/* Test whether a variable is explicitely set in the group instance,
+/* Test whether a variable is explicitly set in the group instance,
  * or it uses the default value */
 #define CFG_VAR_TEST(group_inst, var)        \
 	bit_test((var)->pos % (sizeof(int) * 8), \
 			(group_inst)->set + (var)->pos / (sizeof(int) * 8))
 
-/* Test whether a variable is explicitely set in the group instance,
+/* Test whether a variable is explicitly set in the group instance,
  * or it uses the default value, and set the flag. */
 #define CFG_VAR_TEST_AND_SET(group_inst, var)        \
 	bit_test_and_set((var)->pos % (sizeof(int) * 8), \
 			(group_inst)->set + (var)->pos / (sizeof(int) * 8))
 
-/* Test whether a variable is explicitely set in the group instance,
+/* Test whether a variable is explicitly set in the group instance,
  * or it uses the default value, and reset the flag. */
 #define CFG_VAR_TEST_AND_RESET(group_inst, var)        \
 	bit_test_and_reset((var)->pos % (sizeof(int) * 8), \
@@ -382,7 +382,7 @@ static inline void cfg_update_local(int no_cbs)
 		cfg_child_cb = cfg_child_cb->next;
 		atomic_inc(&cfg_child_cb->refcnt);
 		if(atomic_dec_and_test(&prev_cb->refcnt)) {
-			/* No more pocess refers to this callback.
+			/* No more process refers to this callback.
 			Did this process block the deletion,
 			or is there any other process that has not
 			reached	prev_cb yet? */

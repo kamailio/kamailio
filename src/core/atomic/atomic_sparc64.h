@@ -58,7 +58,7 @@
 /*  memory barriers for lock & unlock where lock & unlock are inline asm
  *  functions that use atomic ops (and both of them use at least a store to
  *  the lock). membar_enter_lock() is at most a StoreStore|StoreLoad barrier
- *   and membar_leave_lock() is at most a LoadStore|StoreStore barries
+ *   and membar_leave_lock() is at most a LoadStore|StoreStore barriers
  *  (if the atomic ops on the specific architecture imply these barriers
  *   => these macros will be empty)
  *   Warning: these barriers don't force LoadLoad ordering between code
