@@ -72,7 +72,7 @@
 	</para>
 	<para>
 	    From the admin's perspective, these are the major functions : t_relay,
-	    t_relay_to_udp and t_relay_to_tcp. All of them setup transaction
+	    t_relay_to_udp and t_relay_to_tcp. All of them set up transaction
 	    state, absorb retransmissions from upstream, generate downstream
 	    retransmissions and correlate replies to requests. t_relay forwards
 	    to current URI (be it original request's URI or a URI changed by
@@ -298,7 +298,7 @@ failure_route["serial"]
 	  </para>
 	  <para>
 		If <function>t_next_contact()</function> returns a positive value then
-		we have more new branches to try and we need to setup the
+		we have more new branches to try and we need to set up the
 		failure_route again and call <function>t_relay()</function>. In our
 		example the request will now be forwarded to branches B and C in
 		parallel, because they were both added to the destination set
