@@ -265,7 +265,7 @@ int new_pcontact(struct udomain *_d, str *_contact, struct pcontact_info *_ci,
 	(*_c)->aorhash =
 			get_aor_hash(_d, &_ci->via_host, _ci->via_port, _ci->via_prot);
 
-	//setup public ids
+	//set up public ids
 	for(i = 0; i < _ci->num_public_ids; i++) {
 		if(i > 0)
 			is_default =
