@@ -33,7 +33,7 @@
  * matching of characters when configured correctly. For normal
  * digit only matching you need to use a branches parameter of
  * 10, when you use 128, the complete standard ascii charset is
- * available for matching. The trie is setup in shared memory.
+ * available for matching. The trie is set up in shared memory.
  * - Module: \ref carrierroute
  * - Module: \ref userblocklist
  * @{
