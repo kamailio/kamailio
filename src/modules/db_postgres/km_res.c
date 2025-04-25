@@ -237,7 +237,7 @@ int db_postgres_convert_rows(const db1_con_t *_h, db1_res_t *_r)
 			/*
 			 * An empty string can be a NULL value, or just an empty string.
 			 * This differs from the mysql behaviour, that further processing
-			 * steps expect. So we need to simulate this here unfortunally.
+			 * steps expect. So we need to simulate this here unfortunately.
 			 */
 			if(PQgetisnull(CON_RESULT(_h), row, col) == 0) {
 				row_buf[col] = s;
