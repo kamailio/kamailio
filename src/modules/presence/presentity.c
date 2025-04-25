@@ -2283,7 +2283,7 @@ int mark_presentity_for_delete(presentity_t *pres, str *ruid)
 	}
 
 	if(pa_db == NULL) {
-		LM_ERR("no database connection setup\n");
+		LM_ERR("no database connection set up\n");
 		goto error;
 	}
 
@@ -2518,7 +2518,7 @@ int delete_offline_presentities(str *pres_uri, pres_ev_t *event)
 	struct sip_uri uri;
 
 	if(pa_db == NULL) {
-		LM_ERR("no database connection setup\n");
+		LM_ERR("no database connection set up\n");
 		goto error;
 	}
 
