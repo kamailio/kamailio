@@ -222,7 +222,7 @@ Chapter 1. User's Guide
    database is not available, the other database would be used. This
    failure is recorded in the master database.
 
-   Connections to the distributed databases are setup prior the actual
+   Connections to the distributed databases are set up prior the actual
    query is executed. The module maintains a cache of the database handles
    to provide better performance. This handles are periodically checked if
    there are still valid and if needed updated from the master database.
@@ -758,7 +758,7 @@ modparam("p_usrloc", "db_mode", 2)
 
 5.1.1. Configuration Table
 
-   Before running Kamailio with p_usrloc, you have to setup the master
+   Before running Kamailio with p_usrloc, you have to set up the master
    database table where the module will find data about the distributed
    databases. For that, if the table was not created by the installation
    script or you choose to install everything by yourself you can use the
@@ -850,7 +850,7 @@ Chapter 2. Developer's Guide
 
 1.  load_ul_db_api(ul_db_api_t * api)
 
-   Import the dbd API, setup the master database connection.
+   Import the dbd API, set up the master database connection.
 
    Meaning of the parameters is as follows:
      * api - Pointer to distributed database API structure

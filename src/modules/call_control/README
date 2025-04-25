@@ -94,7 +94,7 @@ Chapter 1. Admin Guide
        from http://callcontrol.ag-projects.com/
      * NOTE: At the moment the callcontrol application only supports the
        old “MI” interface for communication with Kamailio. This interface
-       is unfortunately not available anymore in Kamailio. So this
+       is unfortunately not available any more in Kamailio. So this
        application cannot be used right now out of the box together with
        the call_control module. See the next link for possible solutions:
        https://lists.kamailio.org/pipermail/sr-users/2019-June/106056.html

@@ -892,7 +892,7 @@ domain register {
 
 7.1. Database setup
 
-   Before running Kamailio with carrierroute, you have to setup the
+   Before running Kamailio with carrierroute, you have to set up the
    database table where the module will store the routing data. For that,
    if the table was not created by the installation script or you choose
    to install everything by yourself you can use the

@@ -207,7 +207,7 @@ Joey Golan
    1.16. Set hash_table_tout parameter
    1.17. Set db_url parameter
    1.18. Set table_name parameter
-   1.19. Setup rtpengine table
+   1.19. Se tup rtpengine table
    1.20. Set setid_col parameter
    1.21. Set url_col parameter
    1.22. Set weight_col parameter
@@ -948,7 +948,7 @@ modparam("rtpengine", "db_url", "mysql://pass@localhost/db")
 modparam("rtpengine", "table_name", "rtpengine_table_name")
 ...
 
-   Example 1.19. Setup rtpengine table
+   Example 1.19. Se tup rtpengine table
 mysql> describe rtpengine;
 +----------+------------------+------+-----+---------------------+-------+
 | Field    | Type             | Null | Key | Default             | Extra |

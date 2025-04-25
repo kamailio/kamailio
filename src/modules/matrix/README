@@ -229,7 +229,7 @@ kamcmd matrix.reload
 
 6.1. Database setup
 
-   Before running Kamailio with matrix, you have to setup the database
+   Before running Kamailio with matrix, you have to set up the database
    table where the module will read the matrix data. For that, if the
    table was not created by the installation script or you choose to
    install everything by yourself you can use the matrix-create.sql SQL

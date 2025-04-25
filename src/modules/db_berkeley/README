@@ -267,7 +267,7 @@ lt none is loaded
    effectively means that later queries must consistently use the username
    (w.o domain) in order to find a result to that particular subscriber
    query. The main point is 'use_domain' can not be changed once the
-   db_berkeley is setup.
+   db_berkeley is set up.
 
 7. Database Schema and Metadata
 
@@ -417,7 +417,7 @@ name(str) email_address(str) datetime_created(datetime) timezone(str) rpid(str)
 12. DB Maintaince Script : kamdbctl
 
    Use the kamdbctl script for maintaining SIP-router Berkeley DB tables.
-   This script assumes you have DBENGINE and DB_PATH setup correctly in
+   This script assumes you have DBENGINE and DB_PATH set up correctly in
    kamctlrc. Note Unsupported commands are- backup, restore, migrate,
    copy, serweb.
 

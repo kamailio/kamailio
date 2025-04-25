@@ -329,8 +329,8 @@ modparam("rr", "enable_socket_mismatch_warning", 0)
 
    When add_username is enabled, a call to record_route will add the
    username of the RequestURI to the Record-Route URI. This parameter
-   allows you to setup an AVP with which you can customise the username to
-   be added in the Record-Route URI.
+   allows you to set up an AVP with which you can customise the username
+   to be added in the Record-Route URI.
 
    Default value: if not set, the std add_username behaviour is used -
    i.e. Request URI username.

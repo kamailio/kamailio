@@ -361,7 +361,7 @@ modparam("ims_registrar_pcscf", "delete_delay", 10)
    See also the same parameter in the ims_qos module.
 
    Default value is 0 (trust received-from IP and alias in Contact, and,
-   unfortunaly somewhat wrongly top/bottom Via on requests/responses).
+   unfortunately somewhat wrongly top/bottom Via on requests/responses).
 
    Example 1.14. trust_bottom_via parameter usage
 ...

@@ -123,7 +123,7 @@ xlog("stored value is $mct(test)"); # will return <null>
    This module is an addition to the existing htable functionality, not a
    replacement. In smaller architectures or installations where only one
    instance needs access to the hash table the htable module is easier to
-   setup, as no dedicated server needs to be provided. But when a
+   set up, as no dedicated server needs to be provided. But when a
    distributed storage facility is necessary, or one want to separate the
    storage from the SIP server, this module could be used.
 

@@ -676,7 +676,7 @@ kamcmd sipcapture.status check
 
 7. Database setup
 
-   Before running Kamailio with the sipcapture module, you have to setup
+   Before running Kamailio with the sipcapture module, you have to set up
    the database tables where the module will store the data. For that, if
    the table were not created by the installation script or you choose to
    install everything by yourself you can use the homer_databases.sql, SQL

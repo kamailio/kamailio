@@ -578,7 +578,7 @@ modparam("ims_qos", "dialog_direction", 1)
    See also the same parameter in the ims_registrar_pcscf module.
 
    Default value is 0 (trust received-from IP and alias in Contact, and,
-   unfortunaly somewhat wrongly top/bottom Via on requests/responses).
+   unfortunately somewhat wrongly top/bottom Via on requests/responses).
 
    Example 1.27. trust_bottom_via parameter usage
 ...

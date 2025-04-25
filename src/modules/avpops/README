@@ -222,7 +222,7 @@ modparam("avpops","db_url","mysql://user:passwd@host/database")
    DB table to be used.
 
    The default value is NULL. But if you specify a db_url, you need also
-   to setup this parameter.
+   to set up this parameter.
 
    Example 1.3. Set avp_table parameter
 ...

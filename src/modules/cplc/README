@@ -595,13 +595,13 @@ kamcmd cpl.get username
 
 6.1. Database setup
 
-   Before running Kamailio with cplc, you have to setup the database table
-   where the module will store the CPL scripts. For that, if the table was
-   not created by the installation script or you choose to install
-   everything by yourself you can use the cpc-create.sql SQL script in the
-   database directories in the kamailio/scripts folder as template.
-   Database and table name can be set with module parameters so they can
-   be changed, but the name of the columns must be as they are in the SQL
-   script. You can also find the complete database documentation on the
-   project webpage,
+   Before running Kamailio with cplc, you have to set up the database
+   table where the module will store the CPL scripts. For that, if the
+   table was not created by the installation script or you choose to
+   install everything by yourself you can use the cpc-create.sql SQL
+   script in the database directories in the kamailio/scripts folder as
+   template. Database and table name can be set with module parameters so
+   they can be changed, but the name of the columns must be as they are in
+   the SQL script. You can also find the complete database documentation
+   on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.

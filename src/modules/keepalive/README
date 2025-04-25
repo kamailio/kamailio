@@ -398,9 +398,9 @@ response_clb, [user_attr]])
        ps is a pack structure with all params passed to callback function.
        Defined in t_hooks.h
      * user_attr (void * pointer, optional) - If any callback function is
-       setup, this parameter will be forwarded to it (or both callbacks in
-       both are defined), as last parameter. Use NULL to set no user_attr
-       parameter.
+       set up, this parameter will be forwarded to it (or both callbacks
+       in both are defined), as last parameter. Use NULL to set no
+       user_attr parameter.
 
    Returned values:
      * 0 if ok

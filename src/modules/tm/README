@@ -500,8 +500,8 @@ Chapter 1. Admin Guide
    latency.
 
    From the admin's perspective, these are the major functions : t_relay,
-   t_relay_to_udp and t_relay_to_tcp. All of them setup transaction state,
-   absorb retransmissions from upstream, generate downstream
+   t_relay_to_udp and t_relay_to_tcp. All of them set up transaction
+   state, absorb retransmissions from upstream, generate downstream
    retransmissions and correlate replies to requests. t_relay forwards to
    current URI (be it original request's URI or a URI changed by some of
    URI-modifying functions, such as sethost). t_relay_to_udp and
@@ -691,7 +691,7 @@ failure_route["serial"]
    branch D upstream.
 
    If t_next_contact() returns a positive value then we have more new
-   branches to try and we need to setup the failure_route again and call
+   branches to try and we need to set up the failure_route again and call
    t_relay(). In our example the request will now be forwarded to branches
    B and C in parallel, because they were both added to the destination
    set by t_next_contacts() at the same time.

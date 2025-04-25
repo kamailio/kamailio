@@ -528,8 +528,8 @@ kamcmd userblocklist.check_userallowlist s:1234 s:49721123456788
 
 6.1. Database setup
 
-   Before running Kamailio with the userblocklist module, you have to
-   setup the database table where the module will read the blocklist data.
+   Before running Kamailio with the userblocklist module, you have to set
+   up the database table where the module will read the blocklist data.
    For that, if the table was not created by the installation script or
    you choose to install everything by yourself you can use the
    userblocklist-create.sql SQL script in the database directories in the
@@ -551,8 +551,8 @@ kamcmd userblocklist.check_userallowlist s:1234 s:49721123456788
 +----+-----------+-----------+
 ...
 
-   This table will setup a global blocklist for all numbers, only allowing
-   calls starting with “1”. Numbers that starts with “123456” and
+   This table will set up a global blocklist for all numbers, only
+   allowing calls starting with “1”. Numbers that starts with “123456” and
    “123455787” are also blocklisted, because the longest prefix will be
    matched.
 
@@ -571,7 +571,7 @@ kamcmd userblocklist.check_userallowlist s:1234 s:49721123456788
 +----+----------------+-------------+-----------+-----------+
 ...
 
-   This table will setup user specific blocklists for certain usernames.
+   This table will set up user specific blocklists for certain usernames.
    For example for user “49721123456788” the prefix “1234” will be not
    allowed, but the number “123456788” is allowed. Additionally a domain
    could be specified that is used for username matching if the
