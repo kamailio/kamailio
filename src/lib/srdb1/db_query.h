@@ -48,7 +48,7 @@
  * \brief Helper function for db queries
  *
  * This method evaluates the actual arguments for the database query and
- * setups the string that is used for the query in the db module.
+ * sets up the string that is used for the query in the db module.
  * Then it submits the query and stores the result if necessary. It uses for
  * its work the implementation in the concrete database module.
  *
@@ -59,7 +59,7 @@
  * \param _c column names that should be returned
  * \param _n number of key/value pairs that are compared, if zero then no comparison is done
  * \param _nc number of columns that should be returned
- * \param _o order by the specificied column, optional
+ * \param _o order by the specified column, optional
  * \param _r the result that is returned, set to NULL if you want to use fetch_result later
  * \param (*val2str) function pointer to the db specific val conversion function
  * \param (*submit_query) function pointer to the db specific query submit function
@@ -77,7 +77,7 @@ int db_do_query(const db1_con_t *_h, const db_key_t *_k, const db_op_t *_op,
  * \brief Helper function for db queries with update lock
  *
  * This method evaluates the actual arguments for the database query and
- * setups the string that is used for the query in the db module.
+ * sets up the string that is used for the query in the db module.
  * Then it submits the query and stores the result if necessary. It uses for
  * its work the implementation in the concrete database module.
  *
@@ -88,7 +88,7 @@ int db_do_query(const db1_con_t *_h, const db_key_t *_k, const db_op_t *_op,
  * \param _c column names that should be returned
  * \param _n number of key/value pairs that are compared, if zero then no comparison is done
  * \param _nc number of columns that should be returned
- * \param _o order by the specificied column, optional
+ * \param _o order by the specified column, optional
  * \param _r the result that is returned, set to NULL if you want to use fetch_result later
  * \param (*val2str) function pointer to the db specific val conversion function
  * \param (*submit_query) function pointer to the db specific query submit function
@@ -106,7 +106,7 @@ int db_do_query_lock(const db1_con_t *_h, const db_key_t *_k,
  * \brief Helper function for raw db queries
  *
  * This method evaluates the actual arguments for the database raw query
- * and setups the string that is used for the query in the db module.
+ * and sets up the string that is used for the query in the db module.
  * Then it submits the query and stores the result if necessary.
  * It uses for its work the implementation in the concrete database module.
  *
@@ -126,7 +126,7 @@ int db_do_raw_query(const db1_con_t *_h, const str *_s, db1_res_t **_r,
  * \brief Helper function for db insert operations
  *
  * This method evaluates the actual arguments for the database operation
- * and setups the string that is used for the insert operation in the db
+ * and sets up the string that is used for the insert operation in the db
  * module. Then it submits the query for the operation. It uses for its work
  * the implementation in the concrete database module.
  *
@@ -148,7 +148,7 @@ int db_do_insert(const db1_con_t *_h, const db_key_t *_k, const db_val_t *_v,
  * \brief Helper function for db delete operations
  *
  * This method evaluates the actual arguments for the database operation
- * and setups the string that is used for the delete operation in the db
+ * and sets up the string that is used for the delete operation in the db
  * module. Then it submits the query for the operation. It uses for its work
  * the implementation in the concrete database module.
  *
@@ -171,7 +171,7 @@ int db_do_delete(const db1_con_t *_h, const db_key_t *_k, const db_op_t *_o,
  * \brief Helper function for db update operations
  *
  * This method evaluates the actual arguments for the database operation
- * and setups the string that is used for the update operation in the db
+ * and sets up the string that is used for the update operation in the db
  * module. Then it submits the query for the operation. It uses for its work
  * the implementation in the concrete database module.
  *
@@ -198,7 +198,7 @@ int db_do_update(const db1_con_t *_h, const db_key_t *_k, const db_op_t *_o,
  * \brief Helper function for db delete operations
  *
  * This helper method evaluates the actual arguments for the database operation
- * and setups the string that is used for the replace operation in the db
+ * and sets up the string that is used for the replace operation in the db
  * module. Then it submits the query for the operation. It uses for its work the
  * implementation in the concrete database module.
  *
@@ -220,7 +220,7 @@ int db_do_replace(const db1_con_t *_h, const db_key_t *_k, const db_val_t *_v,
  * \brief Helper function for db insert delayed operations
  *
  * This method evaluates the actual arguments for the database operation
- * and setups the string that is used for the insert delayed operation in the db
+ * and sets up the string that is used for the insert delayed operation in the db
  * module. Then it submits the query for the operation. It uses for its work
  * the implementation in the concrete database module.
  *
