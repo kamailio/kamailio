@@ -68,7 +68,7 @@ static void qos_dialog_rpc_context_CB(
 
 
 /**
- * A helper function to setup all the callbacks from the dialog module
+ * A helper function to set up all the callbacks from the dialog module
  * after we find interest in the dialog.
  *
  * @param did The Dialog ID.
@@ -99,7 +99,7 @@ static void setup_dialog_callbacks(struct dlg_cell *did, qos_ctx_t *ctx)
  * with a BYE, CANCEL, etc. In the process, we will see if either or
  * both ends of the conversation are trying to re-negotiate the media.
  *
- * This function will setup the other types of dialog callbacks
+ * This function will set up the other types of dialog callbacks
  * required to track the lifespan of the dialog.
  *
  *
