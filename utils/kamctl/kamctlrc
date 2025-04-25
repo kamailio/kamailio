@@ -13,7 +13,7 @@
 ## database type: MYSQL, PGSQL, ORACLE, DB_BERKELEY, DBTEXT, or SQLITE
 ## by default none is loaded
 ##
-## If you want to setup a database with kamdbctl, you must at least specify
+## If you want to set up a database with kamdbctl, you must at least specify
 ## this parameter.
 # DBENGINE=MYSQL
 

@@ -67,7 +67,7 @@ install(
   COMPONENT kamailio-utils-bin
 )
 
-# Setup and install kamdbctl stuff
+# Set up and install kamdbctl stuff
 set(KAMDBCTL_BASE_FILES kamdbctl.base)
 
 if("db_berkeley" IN_LIST FINAL_MODULES_LIST)
