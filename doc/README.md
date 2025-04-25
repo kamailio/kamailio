@@ -2,7 +2,7 @@ Kamailio - Doc Folder
 =====================
 
 The doc/ folder contains various resource used for generating documentation,
-as well as several tutotirals and info files from old times.
+as well as several tutorials and info files from old times.
 
 Most of documentation for Kamailio can be found on the website:
 
