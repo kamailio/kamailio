@@ -745,6 +745,12 @@ ds_dest_t *add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	ds_dest_t *dp0 = NULL;
 	ds_dest_t *dp1 = NULL;
 
+	/* Check if tm binding (by testing tmb.t_gett) is loaded and if not, disable the probing */
+	if(tmb.t_gett == NULL && (flags & DS_PROBING_DST)) {
+		LM_WARN("tm module not loaded, disabling probing\n");
+		flags &= ~DS_PROBING_DST;
+	}
+
 	dp = pack_dest(uri, flags, priority, attrs, dload);
 	if(!dp) {
 		goto error;
