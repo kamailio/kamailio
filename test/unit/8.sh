@@ -25,7 +25,7 @@ tmp_name=""$RANDOM"_kamailiodb_tmp"
 
 cd $CTL_DIR
 
-# setup config file
+# set up config file
 cp $CTLRC $CTLRC.bak
 sed -i'' -e "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" $CTLRC
 sed -i'' -e "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" $CTLRC
@@ -43,7 +43,7 @@ if [ "$ret" -eq 0 ] ; then
 	ret=$?
 fi ;
 
-# cleanup
+# clean up
 mv $CTLRC.bak $CTLRC
 mv $DBCTL.bak $DBCTL
 

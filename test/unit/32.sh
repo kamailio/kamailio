@@ -30,7 +30,7 @@ fi ;
 CFG=11.cfg
 
 DOMAIN="local"
-# setup 250 contacts
+# set up 250 contacts
 NR=25
 
 cp $CFG $CFG.bak

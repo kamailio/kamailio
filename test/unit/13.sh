@@ -31,7 +31,7 @@ fi ;
 
 cp $CFG $CFG.bak
 
-# setup database
+# set up database
 $MYSQL "insert into carrier_name (id, carrier) values ('1', 'carrier1');"
 $MYSQL "insert into carrier_name (id, carrier) values ('2', 'default');"
 $MYSQL "insert into carrier_name (id, carrier) values ('3', 'carrier2');"

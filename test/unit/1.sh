@@ -23,7 +23,7 @@
 
 CFG=1.cfg
 
-# setup config
+# set up config
 printf "debug=2\nrequest_route {\n ; \n}" > $CFG
 
 $BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null

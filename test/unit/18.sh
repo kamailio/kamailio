@@ -30,7 +30,7 @@ fi ;
 # the config file
 CFG=18.cfg
 
-# setup config
+# set up config
 printf "debug=3\nrequest_route {\n ;\n}" > $CFG
 
 # start:
@@ -45,6 +45,6 @@ kill_kamailio
 
 rm $CFG
 rm -f ./pid.out
-rm -f ./pgid.out 
+rm -f ./pgid.out
 
 exit $ret
