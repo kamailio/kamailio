@@ -243,7 +243,7 @@ void delete_call_rec(call_lst *pcall)
 
 {
 	/**********
-* o setup to delete based on call ID
+* o set up to delete based on call ID
 * o delete record
 **********/
 
@@ -311,7 +311,7 @@ void update_call_rec(call_lst *pcall)
 
 {
 	/**********
-* o setup to update based on call ID
+* o set up to update based on call ID
 * o update record
 **********/
 
@@ -351,7 +351,7 @@ void update_debug(mohq_lst *pqueue, int bdebug)
 
 {
 	/**********
-* o setup to update based on queue name
+* o set up to update based on queue name
 * o update record
 **********/
 
