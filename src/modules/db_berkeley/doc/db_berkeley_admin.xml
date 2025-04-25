@@ -282,7 +282,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		'username|NULL' because the default value will be used when that key column is not provided.
 		This effectively means that later queries must consistently use the username (w.o domain)
 		in order to find a result to that particular subscriber query.
-		The main point is 'use_domain' can not be changed once the db_berkeley is setup.
+		The main point is 'use_domain' can not be changed once the db_berkeley is set up.
 		</para>
 
 	</section>
@@ -499,7 +499,7 @@ username(str) domain(str) password(str) ha1(str) ha1b(str) first_name(str) last_
 
 	<para>
 	Use the kamdbctl script for maintaining SIP-router Berkeley DB tables.
-	This script assumes you have DBENGINE and DB_PATH setup correctly in &ctltool;rc.
+	This script assumes you have DBENGINE and DB_PATH set up correctly in &ctltool;rc.
 	Note Unsupported commands are- backup, restore, migrate, copy, serweb.
 	<example>
 	<title>kamdbctl</title>
@@ -586,4 +586,3 @@ usage: ./kambdb_recover -s schemadir [-h home] [-R lastN]
 	</section>
 
 </chapter>
-
