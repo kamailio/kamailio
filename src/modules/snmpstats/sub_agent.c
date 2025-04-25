@@ -142,7 +142,7 @@ void agentx_child(int rank)
 	struct sigaction default_handlers;
 	struct sigaction sigpipe_handler;
 
-	/* Setup a SIGTERM handler */
+	/* Set up a SIGTERM handler */
 	sigfillset(&new_sigterm_handler.sa_mask);
 	new_sigterm_handler.sa_flags = 0;
 	new_sigterm_handler.sa_handler = sigterm_handler;
