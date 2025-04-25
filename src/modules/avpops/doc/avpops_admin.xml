@@ -164,7 +164,7 @@ modparam("avpops","db_url","mysql://user:passwd@host/database")
 			<para>
 				<emphasis>
 					The default value is NULL. But if
-					you specify a db_url, you need also to setup this parameter.
+					you specify a db_url, you need also to set up this parameter.
 				</emphasis>
 			</para>
 			<example>
@@ -1142,4 +1142,3 @@ avp_print();
 	</section>
 
 </chapter>
-
