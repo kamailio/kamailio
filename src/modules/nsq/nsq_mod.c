@@ -183,7 +183,7 @@ void nsq_consumer_worker_proc(char *topic, char *channel, int max_in_flight)
 
 	LM_DBG("NSQ Worker connecting to NSQ Topic [%s] and NSQ Channel [%s]\n",
 			topic, channel);
-	// setup the reader
+	// set up the reader
 	rdr = new_nsq_reader(loop, topic, channel, (void *)ctx, NULL, NULL, NULL,
 			nsq_message_handler);
 	rdr->max_in_flight = max_in_flight;
