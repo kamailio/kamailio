@@ -209,7 +209,7 @@ cr_route("$avp(route_tree)", "$rd", "$rU", "$rU", "call_id");
 		<section>
 			<title>Database setup</title>
 			<para>
-				Before running &kamailio; with matrix, you have to setup the database
+				Before running &kamailio; with matrix, you have to set up the database
 				table where the module will read the matrix data. For that, if
 				the table was not created by the installation script or you choose
 				to install everything by yourself you can use the matrix-create.sql
