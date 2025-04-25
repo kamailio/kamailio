@@ -136,7 +136,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* setup result pvar */
+	/* set up result pvar */
 	if(result_pv_str.s == NULL)
 		result_pv_str.s = JSONRPC_RESULT_STR;
 	result_pv_str.len = strlen(result_pv_str.s);

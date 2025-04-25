@@ -348,7 +348,7 @@ void bev_connect(jsonrpc_server_t *server)
 			fd = socket(AF_INET, SOCK_STREAM, 0);
 			if(fd < 0) {
 				server->keep_alive_socket_fd = -1;
-				ERR("could not setup socket");
+				ERR("could not set up socket");
 			} else {
 				server->keep_alive_socket_fd = fd; // track fd to close later
 			}
