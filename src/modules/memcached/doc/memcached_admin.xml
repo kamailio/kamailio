@@ -74,7 +74,7 @@ xlog("stored value is $mct(test)"); # will return &lt;null&gt;
 	<para>
 		This module is an addition to the existing <emphasis>htable</emphasis> functionality,
 		not a replacement. In smaller architectures or installations where only one instance
-		needs access to the hash table the htable module is easier to setup, as no dedicated
+		needs access to the hash table the htable module is easier to set up, as no dedicated
 		server needs to be provided. But when a distributed storage facility is necessary,
 		or one want to separate the storage from the SIP server, this module could be used.
 	</para>
@@ -318,4 +318,3 @@ modparam("memcached", "stringify", 1)
 	</section>
 	</section>
 </chapter>
-
