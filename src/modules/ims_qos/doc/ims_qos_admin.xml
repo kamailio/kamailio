@@ -586,7 +586,7 @@ modparam("ims_qos", "dialog_direction", 1)
         If set to 1 it will trust the bottom Via as the UE IP/port/transport when doing client identification.
       </para>
       <para>
-        Normally, the UE identification should be done on IPsec SPIs and source IP/port of the packets. 
+        Normally, the UE identification should be done on IPsec SPIs and source IP/port of the packets.
         In some cases the ims_* modules trust the top Via on requests and the bottom Via on responses. In some (better)
         cases this trusts the received-from IP (or the alias in the Contact header).
       </para>
@@ -608,7 +608,7 @@ modparam("ims_qos", "dialog_direction", 1)
       <para>
         See also the same parameter in the ims_registrar_pcscf module.
       </para>
-      <para><emphasis>Default value is 0 (trust received-from IP and alias in Contact, and, unfortunaly somewhat wrongly
+      <para><emphasis>Default value is 0 (trust received-from IP and alias in Contact, and, unfortunately somewhat wrongly
       top/bottom Via on requests/responses).</emphasis></para>
       <example>
         <title><varname>trust_bottom_via</varname> parameter usage</title>
