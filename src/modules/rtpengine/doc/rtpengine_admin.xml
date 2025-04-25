@@ -620,7 +620,7 @@ modparam("rtpengine", "table_name", "rtpengine_table_name")
 		</example>
 
 		<example>
-		<title>Setup <varname>rtpengine</varname> table</title>
+		<title>Se tup <varname>rtpengine</varname> table</title>
 <programlisting format="linespecific">
 mysql> describe rtpengine;
 +----------+------------------+------+-----+---------------------+-------+
