@@ -53,7 +53,7 @@
 	master database.
 	</para>
 
-	<para>Connections to the distributed databases are setup prior the actual query
+	<para>Connections to the distributed databases are set up prior the actual query
 	is executed. The module maintains a cache of the database handles to provide
 	better performance. This handles are periodically checked if there are still valid
 	and if needed updated from the master database. As default only one key is used
@@ -858,7 +858,7 @@ modparam("p_usrloc", "db_mode", 2)
 	<section>
 		<title>Configuration Table</title>
 		<para>
-			Before running &kamailio; with p_usrloc, you have to setup the master database
+			Before running &kamailio; with p_usrloc, you have to set up the master database
 			table where the module will find data about the distributed databases.
 			For that, if the table was not created by the installation script or you choose
 			to install everything by yourself you can use the p_usrloc-create.sql
@@ -932,4 +932,3 @@ modparam("p_usrloc", "db_mode", 2)
 	</section>
 	</section>
 </chapter>
-

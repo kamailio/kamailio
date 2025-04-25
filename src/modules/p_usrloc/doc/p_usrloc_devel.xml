@@ -21,7 +21,7 @@
 			<function moreinfo="none">load_ul_db_api(ul_db_api_t * api)</function>
 			</title>
 			<para>
-			Import the <acronym>dbd</acronym> API, setup the master database connection.
+			Import the <acronym>dbd</acronym> API, set up the master database connection.
 
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
@@ -323,4 +323,3 @@
 			</itemizedlist>
 	</section>
 </chapter>
-
