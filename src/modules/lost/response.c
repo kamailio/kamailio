@@ -731,10 +731,10 @@ p_lost_list_t lost_get_response_list(
 
 						new->next = list;
 						list = new;
-						lost_free_string(&tmp); /* clean up */
 					} else {
 						lost_delete_response_list(&new); /* clean up */
 					}
+					lost_free_string(&tmp); /* clean up */
 				}
 			}
 		} else {
