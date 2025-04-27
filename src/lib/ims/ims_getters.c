@@ -1310,6 +1310,7 @@ int cscf_get_p_charging_vector(
 	p = strtok(header_body.s, " ;:\r\t\n\"=");
 loop:
 	if(p == NULL || p > (header_body.s + header_body.len)) {
+		ims_str_free(header_body, pkg);
 		return 1;
 	}
 
