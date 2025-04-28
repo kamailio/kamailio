@@ -1187,6 +1187,7 @@ int pv_sms_ack(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 }
 
 
+static str _smsops_sms_body = {0, 0};
 /*
  * Creates the body for SMS-DELIVER from the constructed rp data
  */
@@ -1194,70 +1195,79 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	dumpRPData(_smsops_rp_send_data, L_DBG);
 
-	str sms_body = {0, 0};
 	int buffer_size = 1024, lenpos = 0, i = 0, smstext_len_pos = 0;
 	unsigned char udh_len = 0;
 	struct ie_concat_sm_8bit_ref *concat = NULL;
 
 	// We assume a maximum size of 1024 Bytes, to be verified.
-	sms_body.s = (char *)pkg_malloc(buffer_size);
-	if(!sms_body.s) {
+	if(_smsops_sms_body.s == NULL) {
+		_smsops_sms_body.s = (char *)pkg_malloc(buffer_size);
+	}
+	if(!_smsops_sms_body.s) {
 		LM_ERR("Error allocating %i bytes!\n", buffer_size);
 		return -1;
 	}
+	_smsops_sms_body.len = 0;
+	_smsops_sms_body.s[0] = '\0';
 
 	// Encode the data (RP-Data)
-	sms_body.s[sms_body.len++] = _smsops_rp_send_data->msg_type;
-	sms_body.s[sms_body.len++] = _smsops_rp_send_data->reference;
-	lenpos = sms_body.len;
-	sms_body.s[sms_body.len++] = 0x00;
+	_smsops_sms_body.s[_smsops_sms_body.len++] = _smsops_rp_send_data->msg_type;
+	_smsops_sms_body.s[_smsops_sms_body.len++] =
+			_smsops_rp_send_data->reference;
+	lenpos = _smsops_sms_body.len;
+	_smsops_sms_body.s[_smsops_sms_body.len++] = 0x00;
 	if(_smsops_rp_send_data->originator.len > 0) {
-		sms_body.s[sms_body.len++] =
+		_smsops_sms_body.s[_smsops_sms_body.len++] =
 				_smsops_rp_send_data
 						->originator_flags; // Type of number: ISDN/Telephony Numbering (E164), no extension
 		i = EncodePhoneNumber(_smsops_rp_send_data->originator,
-				&sms_body.s[sms_body.len], buffer_size - sms_body.len);
-		sms_body.s[lenpos] = i + 1;
-		sms_body.len += i;
+				&_smsops_sms_body.s[_smsops_sms_body.len],
+				buffer_size - _smsops_sms_body.len);
+		_smsops_sms_body.s[lenpos] = i + 1;
+		_smsops_sms_body.len += i;
 	}
-	lenpos = sms_body.len;
-	sms_body.s[sms_body.len++] = 0x00;
+	lenpos = _smsops_sms_body.len;
+	_smsops_sms_body.s[_smsops_sms_body.len++] = 0x00;
 	if(_smsops_rp_send_data->destination.len > 0) {
-		sms_body.s[sms_body.len++] =
+		_smsops_sms_body.s[_smsops_sms_body.len++] =
 				_smsops_rp_send_data
 						->destination_flags; // Type of number: ISDN/Telephony Numbering (E164), no extension
 		i = EncodePhoneNumber(_smsops_rp_send_data->destination,
-				&sms_body.s[sms_body.len], buffer_size - sms_body.len);
-		sms_body.s[lenpos] = i + 1;
-		sms_body.len += i;
+				&_smsops_sms_body.s[_smsops_sms_body.len],
+				buffer_size - _smsops_sms_body.len);
+		_smsops_sms_body.s[lenpos] = i + 1;
+		_smsops_sms_body.len += i;
 	}
 	// Store the position of the length for later usage:
-	lenpos = sms_body.len;
-	sms_body.s[sms_body.len++] = 0x00;
+	lenpos = _smsops_sms_body.len;
+	_smsops_sms_body.s[_smsops_sms_body.len++] = 0x00;
 
 	///////////////////////////////////////////////////
 	// T-PDU
 	///////////////////////////////////////////////////
-	sms_body.s[sms_body.len++] =
+	_smsops_sms_body.s[_smsops_sms_body.len++] =
 			_smsops_rp_send_data->pdu.msg_type | _smsops_rp_send_data->pdu.flags
 			| 0x4; // We've always got no more messages to send.
 	// Originating Address:
-	sms_body.s[sms_body.len++] =
+	_smsops_sms_body.s[_smsops_sms_body.len++] =
 			_smsops_rp_send_data->pdu.originating_address.len;
-	sms_body.s[sms_body.len++] =
+	_smsops_sms_body.s[_smsops_sms_body.len++] =
 			_smsops_rp_send_data->pdu.originating_address_flags;
-	sms_body.len +=
+	_smsops_sms_body.len +=
 			EncodePhoneNumber(_smsops_rp_send_data->pdu.originating_address,
-					&sms_body.s[sms_body.len], buffer_size - sms_body.len);
+					&_smsops_sms_body.s[_smsops_sms_body.len],
+					buffer_size - _smsops_sms_body.len);
 	// Protocol ID
-	sms_body.s[sms_body.len++] = _smsops_rp_send_data->pdu.pid;
+	_smsops_sms_body.s[_smsops_sms_body.len++] = _smsops_rp_send_data->pdu.pid;
 	// Encoding (0 => default 7 Bit)
-	sms_body.s[sms_body.len++] = _smsops_rp_send_data->pdu.coding;
+	_smsops_sms_body.s[_smsops_sms_body.len++] =
+			_smsops_rp_send_data->pdu.coding;
 	// Service-Center-Timestamp (always 7 octets)
-	EncodeTime(&sms_body.s[sms_body.len]);
-	sms_body.len += 7;
-	smstext_len_pos = sms_body.len;
-	sms_body.s[sms_body.len++] = _smsops_rp_send_data->pdu.payload.sm.len;
+	EncodeTime(&_smsops_sms_body.s[_smsops_sms_body.len]);
+	_smsops_sms_body.len += 7;
+	smstext_len_pos = _smsops_sms_body.len;
+	_smsops_sms_body.s[_smsops_sms_body.len++] =
+			_smsops_rp_send_data->pdu.payload.sm.len;
 
 	// Check for UDH
 	concat = GetConcatShortMsg8bitRefIE(_smsops_rp_send_data);
@@ -1266,14 +1276,15 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		return -1;
 	}
 	if(concat->max_num_sm && concat->seq) {
-		sms_body.s[sms_body.len++] =
+		_smsops_sms_body.s[_smsops_sms_body.len++] =
 				5; // always 5 for TP_UDH_IE_CONCAT_SM_8BIT_REF
-		sms_body.s[sms_body.len++] = TP_UDH_IE_CONCAT_SM_8BIT_REF;
-		sms_body.s[sms_body.len++] =
+		_smsops_sms_body.s[_smsops_sms_body.len++] =
+				TP_UDH_IE_CONCAT_SM_8BIT_REF;
+		_smsops_sms_body.s[_smsops_sms_body.len++] =
 				3; // always 3 for TP_UDH_IE_CONCAT_SM_8BIT_REF
-		sms_body.s[sms_body.len++] = concat->ref;
-		sms_body.s[sms_body.len++] = concat->max_num_sm;
-		sms_body.s[sms_body.len++] = concat->seq;
+		_smsops_sms_body.s[_smsops_sms_body.len++] = concat->ref;
+		_smsops_sms_body.s[_smsops_sms_body.len++] = concat->max_num_sm;
+		_smsops_sms_body.s[_smsops_sms_body.len++] = concat->seq;
 		udh_len = 6;
 	}
 
@@ -1286,30 +1297,33 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		}
 
 		i = ascii_to_gsm(_smsops_rp_send_data->pdu.payload.sm,
-				&sms_body.s[sms_body.len], buffer_size - sms_body.len,
-				&actual_text_size, paddingBits);
-		sms_body.len += i;
-		sms_body.s[smstext_len_pos] = actual_text_size + udh_len;
+				&_smsops_sms_body.s[_smsops_sms_body.len],
+				buffer_size - _smsops_sms_body.len, &actual_text_size,
+				paddingBits);
+		_smsops_sms_body.len += i;
+		_smsops_sms_body.s[smstext_len_pos] = actual_text_size + udh_len;
 	} else {
 		// Coding: ucs2
 		int ucs2len = utf8_to_ucs2(&_smsops_rp_send_data->pdu.payload.sm.s[0],
 				_smsops_rp_send_data->pdu.payload.sm.len,
-				&sms_body.s[sms_body.len], buffer_size - sms_body.len);
+				&_smsops_sms_body.s[_smsops_sms_body.len],
+				buffer_size - _smsops_sms_body.len);
 		if(ucs2len < 0) {
 			// Failed in coding UCS2.
 			LM_ERR("Error encoding SMS in UCS-2 format!\n");
 			return -1;
 		}
 
-		sms_body.len += ucs2len;
+		_smsops_sms_body.len += ucs2len;
 		// Update the sms text len
-		sms_body.s[smstext_len_pos] = (unsigned char)ucs2len + udh_len;
+		_smsops_sms_body.s[smstext_len_pos] = (unsigned char)ucs2len + udh_len;
 	}
 
 	// Update the len of the PDU
-	sms_body.s[lenpos] = (unsigned char)(sms_body.len - lenpos - 1);
+	_smsops_sms_body.s[lenpos] =
+			(unsigned char)(_smsops_sms_body.len - lenpos - 1);
 
-	return pv_get_strval(msg, param, res, &sms_body);
+	return pv_get_strval(msg, param, res, &_smsops_sms_body);
 }
 
 int pv_get_sms(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
