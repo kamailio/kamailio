@@ -24,6 +24,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
+#include <sys/stat.h>
 
 #include "../../core/dprint.h"
 #include "../../core/pvar.h"
@@ -54,6 +56,7 @@ typedef struct _sr_jsdt_env
 static sr_jsdt_env_t _sr_J_env = {0};
 
 str _sr_jsdt_load_file = STR_NULL;
+str _sr_jsdt_load_dir = STR_NULL;
 int _sr_jsdt_mode = 1;
 
 static int *_sr_jsdt_reload_version = NULL;
@@ -400,27 +403,158 @@ const duk_function_list_entry _sr_kemi_x_J_Map[] = {
  */
 static int jsdt_load_file(duk_context *ctx, const char *filename)
 {
-	FILE *f;
-	size_t len;
-#define JSDT_SCRIPT_MAX_SIZE 128 * 1024
-	char buf[JSDT_SCRIPT_MAX_SIZE];
+	FILE *f = NULL;
+	size_t len = 0;
+	struct stat st;
+	char *buf = NULL;
+	int result = -1;
 
-	f = fopen(filename, "rb");
-	if(f) {
-		len = fread((void *)buf, 1, sizeof(buf), f);
-		fclose(f);
-		if(len > 0) {
-			duk_push_lstring(ctx, (const char *)buf, (duk_size_t)len);
+	if(stat(filename, &st) != 0) {
+		LM_ERR("Unable to get file length\n");
+	} else {
+		buf = (char *)malloc(st.st_size);
+
+		if(buf == NULL) {
+			LM_ERR("Unable to allocate buffer memory to load javascript "
+				   "file\n");
 		} else {
-			LM_ERR("empty content\n");
-			return -1;
+			f = fopen(filename, "rb");
+			if(f) {
+				len = fread((void *)buf, 1, st.st_size, f);
+				fclose(f);
+				if(len > 0) {
+					duk_push_lstring(ctx, (const char *)buf, (duk_size_t)len);
+					result = 0;
+				} else {
+					LM_ERR("empty content\n");
+					/* return -1; */
+				}
+			} else {
+				LM_ERR("cannot open file\n");
+				/* return -1; */
+			}
+
+			free(buf);
+		}
+	}
+
+	/* return 0; */
+	return result;
+}
+
+/**
+ * load a JS Directory into context
+ */
+#define JSDT_SCRIPT_MAX_SIZE 256 * 1024
+static int jsdt_load_dir(duk_context *ctx, const char *path)
+{
+	FILE *f = NULL;
+	size_t len = 0;
+	size_t total_len = 0;
+	struct stat st;
+	char *buf = NULL;
+	char *full_buffer = NULL;
+	size_t allocated_len = 0;
+	int result = 0;
+	DIR *directory = NULL;
+	struct dirent *dir_entry = NULL;
+	size_t size_to_allocate = 0;
+	char full_path_to_file[255] = {0};
+	size_t name_len = 0;
+
+	directory = opendir(_sr_jsdt_load_dir.s);
+	if(directory) {
+		while(((dir_entry = readdir(directory)) != NULL) && (result == 0)) {
+			if(strcmp(dir_entry->d_name, ".") == 0
+					|| strcmp(dir_entry->d_name, "..") == 0) {
+				continue; // Skip current and parent directories
+			}
+
+			// Check if the file has a .js extension
+			name_len = strlen(dir_entry->d_name);
+			if(name_len >= 3
+					&& strcmp(dir_entry->d_name + name_len - 3, ".js") == 0) {
+				strcpy(full_path_to_file, _sr_jsdt_load_dir.s);
+				strcat(full_path_to_file, "/");
+				strcat(full_path_to_file, dir_entry->d_name);
+
+				LM_DBG("loading js script file: %s from folder %.*s\n",
+						dir_entry->d_name, _sr_jsdt_load_dir.len,
+						_sr_jsdt_load_dir.s);
+
+				if(stat(full_path_to_file, &st) != 0) {
+					LM_ERR("Unable to get file length\n");
+				} else {
+					size_to_allocate = st.st_size >= JSDT_SCRIPT_MAX_SIZE
+											   ? st.st_size
+											   : JSDT_SCRIPT_MAX_SIZE;
+					buf = NULL;
+
+					if(full_buffer == NULL) {
+						LM_DBG("Allocating buffer space to %ld\n",
+								size_to_allocate);
+						full_buffer = (char *)malloc(size_to_allocate);
+
+						if(full_buffer) {
+							buf = full_buffer;
+							allocated_len = size_to_allocate;
+						}
+					} else {
+						if((allocated_len - total_len) < st.st_size) {
+							LM_DBG("Reallocating buffer space to %ld\n",
+									allocated_len + size_to_allocate);
+
+							full_buffer = (char *)realloc(full_buffer,
+									allocated_len + size_to_allocate);
+
+							if(full_buffer) {
+								buf = &full_buffer[total_len];
+								allocated_len += size_to_allocate;
+							}
+						} else {
+							buf = &full_buffer[total_len];
+						}
+					}
+
+					if(buf == NULL) {
+						LM_ERR("Unable to allocate buffer memory to load "
+							   "javascript file\n");
+						result = -1;
+					} else {
+						f = fopen(full_path_to_file, "rb");
+						if(f) {
+							len = fread((void *)buf, 1, st.st_size, f);
+							fclose(f);
+							if(len > 0) {
+								total_len += len;
+							} else {
+								LM_ERR("empty content\n");
+								result = -1;
+							}
+						} else {
+							LM_ERR("cannot open file\n");
+							result = -1;
+						}
+					}
+				}
+			}
+		}
+		closedir(directory);
+
+		if(full_buffer != NULL) {
+			duk_push_lstring(
+					ctx, (const char *)full_buffer, (duk_size_t)total_len);
+			free(full_buffer);
 		}
 	} else {
-		LM_ERR("cannot open file\n");
-		return -1;
+		LM_ERR("cannot open directory\n");
+		result = -1;
 	}
-	return 0;
+
+	/* return 0; */
+	return result;
 }
+
 /**
  *
  */
@@ -444,10 +578,24 @@ int jsdt_sr_init_mod(void)
  */
 int jsdt_kemi_load_script(void)
 {
-	if(jsdt_load_file(_sr_J_env.JJ, _sr_jsdt_load_file.s) < 0) {
-		LM_ERR("failed to load js script file: %.*s\n", _sr_jsdt_load_file.len,
+	if(_sr_jsdt_load_dir.s != NULL && _sr_jsdt_load_dir.len > 0) {
+		LM_DBG("loading js script directory: %.*s\n", _sr_jsdt_load_dir.len,
+				_sr_jsdt_load_dir.s);
+
+		if(jsdt_load_dir(_sr_J_env.JJ, _sr_jsdt_load_dir.s) < 0) {
+			LM_ERR("failed to load js directory file: %.*s\n",
+					_sr_jsdt_load_dir.len, _sr_jsdt_load_dir.s);
+			return -1;
+		}
+	} else {
+		LM_DBG("loading js script file: %.*s\n", _sr_jsdt_load_file.len,
 				_sr_jsdt_load_file.s);
-		return -1;
+
+		if(jsdt_load_file(_sr_J_env.JJ, _sr_jsdt_load_file.s) < 0) {
+			LM_ERR("failed to load js script file: %.*s\n",
+					_sr_jsdt_load_file.len, _sr_jsdt_load_file.s);
+			return -1;
+		}
 	}
 	if(duk_peval(_sr_J_env.JJ) != 0) {
 		LM_ERR("failed running: %s\n", duk_safe_to_string(_sr_J_env.JJ, -1));
@@ -470,7 +618,8 @@ int jsdt_sr_init_child(int rank)
 		return -1;
 	}
 	jsdt_sr_kemi_register_libs(_sr_J_env.J);
-	if(_sr_jsdt_load_file.s != NULL && _sr_jsdt_load_file.len > 0) {
+	if((_sr_jsdt_load_file.s != NULL && _sr_jsdt_load_file.len > 0)
+			|| (_sr_jsdt_load_dir.s != NULL && _sr_jsdt_load_dir.len > 0)) {
 		_sr_J_env.JJ = duk_create_heap_default();
 		if(_sr_J_env.JJ == NULL) {
 			LM_ERR("cannot create load JS context (load)\n");
@@ -485,8 +634,7 @@ int jsdt_sr_init_child(int rank)
 			duk_module_node_init(_sr_J_env.JJ);
 		}
 		jsdt_sr_kemi_register_libs(_sr_J_env.JJ);
-		LM_DBG("loading js script file: %.*s\n", _sr_jsdt_load_file.len,
-				_sr_jsdt_load_file.s);
+
 		if(jsdt_kemi_load_script() < 0) {
 			return -1;
 		}
@@ -517,7 +665,8 @@ void jsdt_sr_destroy(void)
 int jsdt_kemi_reload_script(void)
 {
 	int v;
-	if(_sr_jsdt_load_file.s == NULL && _sr_jsdt_load_file.len <= 0) {
+	if((_sr_jsdt_load_file.s == NULL && _sr_jsdt_load_file.len <= 0)
+			&& (_sr_jsdt_load_dir.s == NULL && _sr_jsdt_load_dir.len <= 0)) {
 		LM_WARN("script file path not provided\n");
 		return -1;
 	}
@@ -973,7 +1122,8 @@ static void app_jsdt_rpc_reload(rpc_t *rpc, void *ctx)
 	int v;
 	void *vh;
 
-	if(_sr_jsdt_load_file.s == NULL && _sr_jsdt_load_file.len <= 0) {
+	if((_sr_jsdt_load_file.s == NULL && _sr_jsdt_load_file.len <= 0)
+			&& (_sr_jsdt_load_dir.s == NULL && _sr_jsdt_load_dir.len <= 0)) {
 		LM_WARN("script file path not provided\n");
 		rpc->fault(ctx, 500, "No script file");
 		return;

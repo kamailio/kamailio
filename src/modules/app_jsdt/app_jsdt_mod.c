@@ -56,6 +56,7 @@ static int w_app_jsdt_run3(
 static int fixup_jsdt_run(void **param, int param_no);
 
 extern str _sr_jsdt_load_file;
+extern str _sr_jsdt_load_dir;
 extern int _sr_jsdt_mode;
 
 /* clang-format off */
@@ -81,6 +82,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"load", PARAM_STR, &_sr_jsdt_load_file},
 	{"mode", PARAM_INT, &_sr_jsdt_mode},
+	{"loaddir", PARAM_STR, &_sr_jsdt_load_dir},
 	{0, 0, 0}
 };
 
