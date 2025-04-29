@@ -101,10 +101,10 @@ static void cdp_rpc_list_peers(rpc_t *rpc, void *ctx)
 			lock_release(i->lock);
 			return;
 		}
-		if(rpc->struct_add(peerdetail_container, "ssd", "State",
+		if(rpc->struct_add(peerdetail_container, "ssL", "State",
 				   dp_states[(int)i->state], "Disabled",
 				   i->disabled ? "True" : "False", "Last used",
-				   i->last_selected)
+				   TIME_T_CAST(i->last_selected))
 				< 0) {
 			rpc->fault(ctx, 500,
 					"Internal error creating peer detail container struct");
