@@ -365,7 +365,7 @@ if(!cdp_check_peer("hss.mnc001.mcc001.3gppnetwork.org")) {
 		</listitem>
 		</itemizedlist>
 		<example>
-		<title><function>cdp_check_peer</function> usage</title>
+		<title><function>cdp_has_app</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if(!cdp_has_app("10415", "4")) {
@@ -376,7 +376,7 @@ if(!cdp_has_app("10415", "4")) {
 </programlisting>
 		</example>
 		<example>
-		<title><function>cdp_check_peer</function> usage</title>
+		<title><function>cdp_has_app</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if(!cdp_has_app("16777216")) {
@@ -392,7 +392,20 @@ if(!cdp_has_app("16777216")) {
   <section>
     <title>RPC Commands</title>
 
-    <para>exported RPC commands.</para>
+    <section id="cdp.states">
+    <title>States</title>
+      <itemizedlist id="cdp.cdp_states" title="States">
+          <listitem><para>Closed (0) - Not connected</para></listitem>
+          <listitem><para>Wait_Conn_Ack (1) - Connecting - waiting for Ack</para></listitem>
+          <listitem><para>Wait_I_CEA (2) - Connecting - waiting for Capabilities Exchange Answer</para></listitem>
+          <listitem><para>Wait_Conn_Ack_Elect (3) - Connecting - Acknowledged and going for Election</para></listitem>
+          <listitem><para>Wait_Returns (4) - Connecting - done</para></listitem>
+          <listitem><para>R_Open (5) - Connected as receiver</para></listitem>
+          <listitem><para>I_Open (6) - Connected as initiator</para></listitem>
+          <listitem><para>Closing (7) - Closing the connection</para></listitem>
+      </itemizedlist>
+   </section>
+    <para>Exported RPC commands.</para>
 
     <section>
       <title>cdp.disable_peer</title>
@@ -404,6 +417,14 @@ if(!cdp_has_app("16777216")) {
       <title>cdp.enable_peer</title>
 
       <para>enable/re-enable a diameter peer</para>
+    </section>
+
+    <section>
+      <title>cdp.list_peers</title>
+      <para>list all configured diameter peers</para>
+      <para>
+        State details can be found in the list above (<xref linkend="cdp.states" />)
+      </para>
     </section>
   </section>
 
@@ -538,7 +559,5 @@ if(!cdp_has_app("16777216")) {
 </programlisting>
       </example>
     </section>
-
-    <section/>
   </section>
 </chapter>
