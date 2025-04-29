@@ -19,6 +19,32 @@
 	used as an outbound Edge Proxy (see &rfc5626; section 5).</para>
 	<para>The <emphasis>path</emphasis> and <emphasis>rr</emphasis> modules will
 	bind to this module if it is loaded before they are.</para>
+
+	<section>
+		<title>Conditions</title>
+		<para>The module analyzes SIP requests so that users (e.g. path, rr)
+        can determine whether to apply RFC5626 processing.
+        This section applies if outbound processing
+        is not forced by the <code>force_outbound_flag<code> flag.</para>
+    <para><code>REGISTER</code> request &mdash;
+    <itemizedlist>
+      <listitem>
+          <para>single Via: (first hop) and <code>Contact:</code> has <code>;ob</code> parameter
+      </listitem>
+    </itemizedlist>
+    </para>
+    <para>Non-<code>REGISTER</code> requests &mdash;
+    <itemizedlist>
+      <listitem>
+        <para>top Route header is me and has <code>;ob</code> parameter</para>
+      </listitem>
+      <listitem>
+        <para>single Via: and Contact: URI has <code>;ob</code> parameter</para>
+      </listitem>
+    </itemizedlist>
+    </para>
+	</section>
+
 	<section>
 		<title>Edge Proxy Keep-Alives (STUN)</title>
 		<para>Outbound Edge Proxies MUST support STUN NAT keep-alives
