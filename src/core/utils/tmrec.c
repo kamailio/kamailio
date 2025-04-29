@@ -1118,7 +1118,8 @@ int check_byxxx(tmrec_t *_trp, ac_tm_t *_atp)
 	if(_trp->bymonth) {
 		for(i = 0; i < _trp->bymonth->nr; i++) {
 			if(_atp->t.tm_mon
-					== (_trp->bymonth->xxx[i] * _trp->bymonth->req[i] + 12)
+					== ((_trp->bymonth->xxx[i] - 1) * _trp->bymonth->req[i]
+							   + 12)
 							   % 12)
 				break;
 		}
