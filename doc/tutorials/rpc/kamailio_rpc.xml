@@ -16,7 +16,7 @@
         <pubdate role="cvs">$Date$</pubdate>
     </sectioninfo>
     -->
- 
+
     <title>
 	The Kamailio RPC Control Interface
     </title>
@@ -62,7 +62,7 @@
 		 (over HTTP TCP or TLS).
 	</para>
 	<para>
-		 For more information about the existing transport modules, please 
+		 For more information about the existing transport modules, please
 		 refer to their documentation.
 	</para>
 	<para>
@@ -148,7 +148,7 @@ typedef void (*rpc_function_t)(rpc_t* rpc, void* ctx);
 		Each module containing RPC functions has to export all the
 		RPC functions to the &kamailio; core in order to make them visible to the RPC
 		transport modules.
-		The export process involves a <emphasis>rpc_export_t</emphasis> 
+		The export process involves a <emphasis>rpc_export_t</emphasis>
 		structure (either by itself or in an array):
 		<programlisting>
 <emphasis>
@@ -219,11 +219,11 @@ rpc_export_t ul_rpc[] = {
 				contains a new attribute called <varname>rpc_methods</varname>:
 				<programlisting>
 struct module_exports {
-    char* name;                 /* null terminated module name */	
+    char* name;                 /* null terminated module name */
     cmd_export_t* cmds;         /* null terminated array of the exported commands */
     <emphasis>rpc_export_t* rpc_methods;</emphasis>  /* null terminated array of exported rpc methods */
     param_export_t* params;     /* null terminated array of the exported module parameters */
-    
+
     init_function init_f;         /* Initialization function */
     response_function response_f; /* function used for responses */
     destroy_function destroy_f;   /* function called upon shutdown */
@@ -236,19 +236,19 @@ struct module_exports {
 				bumper containing zeroes in all the attributes of the
 				structure. The following program listing shows the exported RPC
 				functions of the modules_s/usrloc module, using the rpc_export_t array
-				<emphasis>ul_rpc</emphasis> defined above, in the 
+				<emphasis>ul_rpc</emphasis> defined above, in the
 				rpc_register_array() example:
 				<example><title>usrloc Module Exports Declaration</title>
 					<programlisting>
 struct module_exports exports = {
     "usrloc",
-    cmds,      /* Exported functions */ 
+    cmds,      /* Exported functions */
     <emphasis>ul_rpc</emphasis>,    /* RPC methods */
-    params,    /* Export parameters */ 
-    mod_init,  /* Module initialization function */ 
-    0,         /* Response function */ 
-    destroy,   /* Destroy function */ 
-    0,         /* OnCancel function */ 
+    params,    /* Export parameters */
+    mod_init,  /* Module initialization function */
+    0,         /* Response function */
+    destroy,   /* Destroy function */
+    0,         /* OnCancel function */
     child_init /* Child initialization function */ };
 
 					</programlisting>
@@ -256,8 +256,9 @@ struct module_exports exports = {
 				<note><para>
 					This mode works only with modules using the SER flavour module
 					interface. It does not work for &kamailio; modules and it
-					will probably not work for future sip-router modules. It is
-					safer and recommended to use instead the
+					will probably not work for future sip-router modules.
+					<emphasis>It is now completely obselete.</emphasis>
+					The correct way is to use instead the
 					<function>rpc_register_array()</function> function.
 				</para></note>
 			</para></listitem>
@@ -353,34 +354,74 @@ add("sd", string_param, int_param);
 			(2 ints and a string) are optional.
 		</para>
 		</formalpara>
-	    <table>
+		<table>
 		<title>Data Type Overview</title>
 		<tgroup cols="3">
-		    <tbody>
+			<tbody>
 			<row rowsep="1">
-			    <entry>Name</entry>
-			    <entry>Formating String Char</entry>
-			    <entry>C-Style Variable</entry>
+				<entry>Name</entry>
+				<entry>Formating String Char</entry>
+				<entry>C-Style Variable</entry>
 			</row>
 			<row>
-			    <entry>Integer</entry>
-			    <entry>d</entry>
-			    <entry>int</entry>
+				<entry>Integer</entry>
+				<entry>d</entry>
+				<entry>int</entry>
 			</row>
 			<row>
-			    <entry>Float</entry>
-			    <entry>f</entry>
-			    <entry>double</entry>
+				<entry>Unsigned Integer</entry>
+				<entry>u</entry>
+				<entry>int</entry>
 			</row>
 			<row>
-			    <entry>String</entry>
-			    <entry>s</entry>
-			    <entry>char*</entry>
+				<entry>Boolean</entry>
+				<entry>b</entry>
+				<entry>int</entry>
 			</row>
 			<row>
-			    <entry>String</entry>
-			    <entry>S</entry>
-			    <entry>str*</entry>
+				<entry>Long</entry>
+				<entry>l</entry>
+				<entry>long</entry>
+			</row>
+			<row>
+				<entry>Unsigned Long</entry>
+				<entry>j</entry>
+				<entry>unsigned long</entry>
+			</row>
+			<row>
+				<entry>Long Long</entry>
+				<entry>L</entry>
+				<entry>long long</entry>
+			</row>
+			<row>
+				<entry>Unsigned Long Long</entry>
+				<entry>J</entry>
+				<entry>unsigned long long</entry>
+			</row>
+			<row>
+				<entry>Float</entry>
+				<entry>f</entry>
+				<entry>double</entry>
+			</row>
+			<row>
+				<entry>String</entry>
+				<entry>s</entry>
+				<entry>char*</entry>
+			</row>
+			<row>
+				<entry>String</entry>
+				<entry>S</entry>
+				<entry>str*</entry>
+			</row>
+			<row>
+				<entry>time</entry>
+				<entry>t</entry>
+				<entry>int</entry>
+			</row>
+			<row>
+				<entry>Struct</entry>
+				<entry>{</entry>
+				<entry>struct rpc_struct_l </entry>
 			</row>
 			<row>
 				<entry>Optional modifier</entry>
@@ -392,9 +433,15 @@ add("sd", string_param, int_param);
 				<entry>.</entry>
 				<entry>requires auto-conversion for the next parameter</entry>
 			</row>
-		    </tbody>
+			</tbody>
 		</tgroup>
-	    </table>
+		</table>
+
+		<note>
+			<para>
+			The <emphasis>time</emphasis> parameter is of type <emphasis>int</emphasis>. Recent OS use 64-bit time_t (typedef long), so if you are using a 64-bit OS, you should use <emphasis>l</emphasis> or <emphasis>LL</emphasis> instead of <emphasis>t</emphasis> when trying to add/read a time_t value to avoid overflowing.
+			</para>
+		</note>
 	</section>
 
 	<section id="rpc.getting_parameters">
@@ -448,7 +495,7 @@ add("sd", string_param, int_param);
 		</para>
 		<para>
 			The '.' modifiers turns on type autoconversion for the next
-			parameter. This means that if the type of the next parameter 
+			parameter. This means that if the type of the next parameter
 			differs from the type specified in the formatting string, the
 			parameter will be automatically converted to the formatting string
 			type (if possible) and if the automatic conversion succeeds, no
@@ -457,13 +504,13 @@ add("sd", string_param, int_param);
 		<para>
 			The function returns the number of parameters read on success
 			(a number greater or equal 0) and - (minus) the number of
-			parameters read on error (for example for an error after 
+			parameters read on error (for example for an error after
 			reading 2 parameters it will return -2).
 			When a failure occurs (incorrect parameter type or no more
 			parameters in the parameter set) the function will
 			return a negative number (- number of parameters read so far)
 			and it will also automatically change the reply that will be
-			sent to the caller to indicate that a failure has occurred on 
+			sent to the caller to indicate that a failure has occurred on
 			the server (unless the "*" is used and the error is lack
 			of more parameters).
 		</para>
@@ -504,7 +551,7 @@ rpc->scan(ctx, "f", &amp;double_val);
 		    <programlisting>
 rpc->scan(ctx, "{", &amp;handle);
 		    </programlisting>
-		    The corresponding variable (named 
+		    The corresponding variable (named
 		    <varname>handle</varname> in the example above) will contain
 		    the index of the structure parameter within the parameter
 		    set, but the index cannot be used to retrieve the contents
@@ -526,7 +573,7 @@ rpc->struct_scan(handle, "sd", "str_attr", &amp;str_val, "int_attr", &amp;int_va
 		    the structure.
 		</para>
 	    </section>
-	
+
 		<section><title>Retrieving Parameters Example</title>
 		<example>
 		<title>Retrieving Parameters</title>
@@ -569,7 +616,7 @@ static void core_prints(rpc_t* rpc, void* c)
 }
 
 /* variable number of parameters and auto conversion:
-   echo back all the parameters, works with any type (everything is 
+   echo back all the parameters, works with any type (everything is
    internally converted to string, notice the '.' modifier) */
 static void core_echo(rpc_t* rpc, void* c)
 {
@@ -703,7 +750,7 @@ static void core_kill(rpc_t* rpc, void *ctx)
 ]]>
 		    </programlisting>
 		</example>
-		
+
 	    </section>
 	    <section>
 		<title>add</title>
@@ -867,8 +914,8 @@ static void rpc_register(rpc_t* rpc, void *ctx)
 		module).
 		</para></listitem>
 		<listitem><para>
-		<emphasis>serweb</emphasis> (php application that can use
-		the <emphasis>XML-RPC</emphasis> interface to call ser 
+		<emphasis>siremis</emphasis> (php application that can use
+		the <emphasis>XML-RPC</emphasis> interface to call &kamailioname;
 		functions).
 		</para></listitem>
 	</itemizedlist>
