@@ -141,6 +141,7 @@ rpc_export_t secfilter_rpc[] = {
 	{"secfilter.add_dst", secf_rpc_add_dst, rpc_add_dst_doc, 0},
 	{"secfilter.add_bl", secf_rpc_add_bl, rpc_add_bl_doc, 0},
 	{"secfilter.add_wl", secf_rpc_add_wl, rpc_add_wl_doc, 0},
+	{"secfilter.del_wl", secf_rpc_del_wl, rpc_del_wl_doc, 0},
 	{0, 0, 0, 0}
 };
 /* clang-format on */
