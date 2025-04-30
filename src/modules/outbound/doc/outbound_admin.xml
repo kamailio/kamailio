@@ -25,11 +25,11 @@
 		<para>The module analyzes SIP requests so that users (e.g. path, rr)
         can determine whether to apply RFC5626 processing.
         This section applies if outbound processing
-        is not forced by the <code>force_outbound_flag<code> flag.</para>
+        is not forced by the <code>force_outbound_flag</code> flag.</para>
     <para><code>REGISTER</code> request &mdash;
     <itemizedlist>
       <listitem>
-          <para>single Via: (first hop) and <code>Contact:</code> has <code>;ob</code> parameter
+          <para>single Via: (first hop) and <code>Contact:</code> has <code>;ob</code> parameter</para>
       </listitem>
     </itemizedlist>
     </para>
