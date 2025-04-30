@@ -718,6 +718,31 @@
        </example>
      </section>
 
+	<section id="secfilter.r.del_dst">
+		<title>
+		<function moreinfo="none">secfilter.del_dst</function>
+		</title>
+
+		<para>Delete value from destination blacklist.</para>
+
+		<para>
+		Parameters:
+		<itemizedlist>
+		<listitem>number (number to remove from the destination blacklist)</listitem>
+		</itemizedlist>
+		</para>
+
+		<example>
+		<title><function>secfilter.del_dst</function> usage</title>
+
+		<programlisting format="linespecific">
+		...
+		&kamcmd; secfilter.del_dst 555123123
+		...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="secfilter.r.add_bl">
        <title>
 		<function moreinfo="none">secfilter.add_bl</function>
@@ -747,6 +772,33 @@
        </example>
      </section>
 
+	<section id="secfilter.r.del_bl">
+		<title>
+		<function moreinfo="none">secfilter.del_bl</function>
+		</title>
+
+		<para>Delete value from blacklist.</para>
+
+		<para>
+		Parameters:
+		<itemizedlist>
+		<listitem>type  (must be: ua, country, domain, user or ip)</listitem>
+		<listitem>value (value to remove from the blacklist)</listitem>
+		</itemizedlist>
+		</para>
+
+		<example>
+		<title><function>secfilter.del_bl</function> usage</title>
+
+		<programlisting format="linespecific">
+		...
+		&kamcmd; secfilter.del_bl ua friendly-scanner
+		&kamcmd; secfilter.del_bl user sipvicious
+		...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="secfilter.r.add_wl">
        <title>
 		<function moreinfo="none">secfilter.add_wl</function>
@@ -775,6 +827,33 @@
 		</programlisting>
        </example>
      </section>
+	</section>
+
+	<section id="secfilter.r.del_wl">
+		<title>
+		<function moreinfo="none">secfilter.del_wl</function>
+		</title>
+
+		<para>Delete value from whitelist.</para>
+
+		<para>
+		Parameters:
+		<itemizedlist>
+		<listitem>type  (must be: ua, country, domain, user or ip)</listitem>
+		<listitem>value (value to remove from the blacklist)</listitem>
+		</itemizedlist>
+		</para>
+
+		<example>
+		<title><function>secfilter.del_wl</function> usage</title>
+
+		<programlisting format="linespecific">
+		...
+		&kamcmd; secfilter.del_wl country es
+		&kamcmd; secfilter.del_wl user trusted_user
+		...
+		</programlisting>
+		</example>
 	</section>
 
  	<section>
