@@ -26,20 +26,20 @@
         can determine whether to apply RFC5626 processing.
         This section applies if outbound processing
         is not forced by the <code>force_outbound_flag</code> flag.</para>
-    <para><code>REGISTER</code> request &mdash;
+    <para><code>REGISTER</code> request:
     <itemizedlist>
       <listitem>
-          <para>single Via: (first hop) and <code>Contact:</code> has <code>;ob</code> parameter</para>
+          <para>single <code>Via:</code> header (first hop) and <code>Contact:</code> header has <code>;reg-id</code> parameter</para>
       </listitem>
     </itemizedlist>
     </para>
-    <para>Non-<code>REGISTER</code> requests &mdash;
+    <para>Non-<code>REGISTER</code> requests:
     <itemizedlist>
       <listitem>
-        <para>top Route header is me and has <code>;ob</code> parameter</para>
+        <para>top Route header URI is myself and has <code>;ob</code> parameter</para>
       </listitem>
       <listitem>
-        <para>single Via: and Contact: URI has <code>;ob</code> parameter</para>
+        <para>single <code>Via:</code> header and <code>Contact:</code> header has <code>;ob</code> parameter</para>
       </listitem>
     </itemizedlist>
     </para>
