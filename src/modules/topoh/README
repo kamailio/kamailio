@@ -45,6 +45,8 @@ Daniel-Constantin Mierla
               4.1. event_route[topoh:msg-outgoing]
               4.2. event_route[topoh:msg-sending]
 
+        5. Pesudo-Variables
+
    List of Examples
 
    1.1. Set mask_key parameter
@@ -95,6 +97,8 @@ Chapter 1. Admin Guide
 
         4.1. event_route[topoh:msg-outgoing]
         4.2. event_route[topoh:msg-sending]
+
+   5. Pesudo-Variables
 
 1. Overview
 
@@ -385,3 +389,7 @@ event_route[topoh:msg-sending] {
   }
 }
 ...
+
+5. Pesudo-Variables
+
+   - $th(ecallid) - return the topoh-encoded Call-Id
