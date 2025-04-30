@@ -435,4 +435,10 @@ event_route[topoh:msg-sending] {
 		</example>
 	</section>
 	</section>
+	<section>
+		<title>Pesudo-Variables</title>
+		<para>
+		<emphasis>- $th(ecallid)</emphasis> - return the topoh-encoded Call-Id
+		</para>
+	</section>
 </chapter>
