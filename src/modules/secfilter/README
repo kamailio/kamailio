@@ -48,17 +48,20 @@ Jose Luis Verdeguer
               5.3. secfilter.stats
               5.4. secfilter.stats_reset
               5.5. secfilter.add_dst
-              5.6. secfilter.add_bl
-              5.7. secfilter.add_wl
+              5.6. secfilter.del_dst
+              5.7. secfilter.add_bl
+              5.8. secfilter.del_bl
+              5.9. secfilter.add_wl
 
-        6. Installation
+        6. secfilter.del_wl
+        7. Installation
 
-              6.1. Database setup
+              7.1. Database setup
 
-        7. Some examples
+        8. Some examples
 
-              7.1. Print data
-              7.2. Statistics
+              8.1. Print data
+              8.2. Statistics
 
    List of Examples
 
@@ -84,11 +87,14 @@ Jose Luis Verdeguer
    1.20. secfilter.stats usage
    1.21. secfilter.stats_reset usage
    1.22. secfilter.add_dst usage
-   1.23. secfilter.add_bl usage
-   1.24. secfilter.add_wl usage
-   1.25. Example database content - secfilter table
-   1.26. kamcmd secfilter.print ua
-   1.27. kamcmd secfilter.stats
+   1.23. secfilter.del_dst usage
+   1.24. secfilter.add_bl usage
+   1.25. secfilter.del_bl usage
+   1.26. secfilter.add_wl usage
+   1.27. secfilter.del_wl usage
+   1.28. Example database content - secfilter table
+   1.29. kamcmd secfilter.print ua
+   1.30. kamcmd secfilter.stats
 
 Chapter 1. Admin Guide
 
@@ -130,17 +136,20 @@ Chapter 1. Admin Guide
         5.3. secfilter.stats
         5.4. secfilter.stats_reset
         5.5. secfilter.add_dst
-        5.6. secfilter.add_bl
-        5.7. secfilter.add_wl
+        5.6. secfilter.del_dst
+        5.7. secfilter.add_bl
+        5.8. secfilter.del_bl
+        5.9. secfilter.add_wl
 
-   6. Installation
+   6. secfilter.del_wl
+   7. Installation
 
-        6.1. Database setup
+        7.1. Database setup
 
-   7. Some examples
+   8. Some examples
 
-        7.1. Print data
-        7.2. Statistics
+        8.1. Print data
+        8.2. Statistics
 
 1. Overview
 
@@ -542,8 +551,10 @@ d in the user-agent header ($ua)");
    5.3. secfilter.stats
    5.4. secfilter.stats_reset
    5.5. secfilter.add_dst
-   5.6. secfilter.add_bl
-   5.7. secfilter.add_wl
+   5.6. secfilter.del_dst
+   5.7. secfilter.add_bl
+   5.8. secfilter.del_bl
+   5.9. secfilter.add_wl
 
 5.1.  secfilter.reload
 
@@ -609,7 +620,19 @@ d in the user-agent header ($ua)");
                 kamcmd secfilter.add_dst 555123123
                 ...
 
-5.6.  secfilter.add_bl
+5.6.  secfilter.del_dst
+
+   Delete value from destination blacklist.
+
+   Parameters:
+     * number (number to remove from the destination blacklist)
+
+   Example 1.23. secfilter.del_dst usage
+                ...
+                kamcmd secfilter.del_dst 555123123
+                ...
+
+5.7.  secfilter.add_bl
 
    Insert values into blacklist.
 
@@ -617,13 +640,27 @@ d in the user-agent header ($ua)");
      * type (must be: ua, country, domain, user or ip)
      * value (value to add to the blacklist)
 
-   Example 1.23. secfilter.add_bl usage
+   Example 1.24. secfilter.add_bl usage
                 ...
                 kamcmd secfilter.add_bl ua friendly-scanner
                 kamcmd secfilter.add_bl user sipvicious
                 ...
 
-5.7.  secfilter.add_wl
+5.8.  secfilter.del_bl
+
+   Delete value from blacklist.
+
+   Parameters:
+     * type (must be: ua, country, domain, user or ip)
+     * value (value to remove from the blacklist)
+
+   Example 1.25. secfilter.del_bl usage
+                ...
+                kamcmd secfilter.del_bl ua friendly-scanner
+                kamcmd secfilter.del_bl user sipvicious
+                ...
+
+5.9.  secfilter.add_wl
 
    Insert values into whitelist.
 
@@ -631,17 +668,31 @@ d in the user-agent header ($ua)");
      * type (must be: ua, country, domain, user or ip)
      * value (value to add to the whitelist)
 
-   Example 1.24. secfilter.add_wl usage
+   Example 1.26. secfilter.add_wl usage
                 ...
                 kamcmd secfilter.add_wl country es
                 kamcmd secfilter.add_wl user trusted_user
                 ...
 
-6. Installation
+6.  secfilter.del_wl
 
-   6.1. Database setup
+   Delete value from whitelist.
 
-6.1. Database setup
+   Parameters:
+     * type (must be: ua, country, domain, user or ip)
+     * value (value to remove from the blacklist)
+
+   Example 1.27. secfilter.del_wl usage
+                ...
+                kamcmd secfilter.del_wl country es
+                kamcmd secfilter.del_wl user trusted_user
+                ...
+
+7. Installation
+
+   7.1. Database setup
+
+7.1. Database setup
 
    Before running Kamailio with the secfilter module, it is necessary to
    set up the database table where the module will read the blacklist data
@@ -654,7 +705,7 @@ d in the user-agent header ($ua)");
    the complete database documentation on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.25. Example database content - secfilter table
+   Example 1.28. Example database content - secfilter table
                 ...
                 +----+-----------+-----------+------------------+
                 | id | action    | type      | data             |
@@ -685,14 +736,14 @@ d in the user-agent header ($ua)");
      * 3 (IP address)
      * 4 (user)
 
-7. Some examples
+8. Some examples
 
-   7.1. Print data
-   7.2. Statistics
+   8.1. Print data
+   8.2. Statistics
 
-7.1. Print data
+8.1. Print data
 
-   Example 1.26. kamcmd secfilter.print ua
+   Example 1.29. kamcmd secfilter.print ua
                 ...
 {
         User-Agent: {
@@ -724,9 +775,9 @@ d in the user-agent header ($ua)");
 }
                 ...
 
-7.2. Statistics
+8.2. Statistics
 
-   Example 1.27. kamcmd secfilter.stats
+   Example 1.30. kamcmd secfilter.stats
                 ...
 {
         Blacklist: {
