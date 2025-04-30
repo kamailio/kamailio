@@ -75,12 +75,13 @@ Chapter 1. Admin Guide
    determine whether to apply RFC5626 processing. This section applies if
    outbound processing is not forced by the force_outbound_flag flag.
 
-   REGISTER request —
-     * single Via: (first hop) and Contact: has ;ob parameter
+   REGISTER request:
+     * single Via: header (first hop) and Contact: header has ;reg-id
+       parameter
 
-   Non-REGISTER requests —
-     * top Route header is me and has ;ob parameter
-     * single Via: and Contact: URI has ;ob parameter
+   Non-REGISTER requests:
+     * top Route header URI is myself and has ;ob parameter
+     * single Via: header and Contact: header has ;ob parameter
 
 1.2. Edge Proxy Keep-Alives (STUN)
 
