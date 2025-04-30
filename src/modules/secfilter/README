@@ -52,16 +52,16 @@ Jose Luis Verdeguer
               5.7. secfilter.add_bl
               5.8. secfilter.del_bl
               5.9. secfilter.add_wl
+              5.10. secfilter.del_wl
 
-        6. secfilter.del_wl
-        7. Installation
+        6. Installation
 
-              7.1. Database setup
+              6.1. Database setup
 
-        8. Some examples
+        7. Some examples
 
-              8.1. Print data
-              8.2. Statistics
+              7.1. Print data
+              7.2. Statistics
 
    List of Examples
 
@@ -140,16 +140,16 @@ Chapter 1. Admin Guide
         5.7. secfilter.add_bl
         5.8. secfilter.del_bl
         5.9. secfilter.add_wl
+        5.10. secfilter.del_wl
 
-   6. secfilter.del_wl
-   7. Installation
+   6. Installation
 
-        7.1. Database setup
+        6.1. Database setup
 
-   8. Some examples
+   7. Some examples
 
-        8.1. Print data
-        8.2. Statistics
+        7.1. Print data
+        7.2. Statistics
 
 1. Overview
 
@@ -555,6 +555,7 @@ d in the user-agent header ($ua)");
    5.7. secfilter.add_bl
    5.8. secfilter.del_bl
    5.9. secfilter.add_wl
+   5.10. secfilter.del_wl
 
 5.1.  secfilter.reload
 
@@ -674,7 +675,7 @@ d in the user-agent header ($ua)");
                 kamcmd secfilter.add_wl user trusted_user
                 ...
 
-6.  secfilter.del_wl
+5.10.  secfilter.del_wl
 
    Delete value from whitelist.
 
@@ -688,11 +689,11 @@ d in the user-agent header ($ua)");
                 kamcmd secfilter.del_wl user trusted_user
                 ...
 
-7. Installation
+6. Installation
 
-   7.1. Database setup
+   6.1. Database setup
 
-7.1. Database setup
+6.1. Database setup
 
    Before running Kamailio with the secfilter module, it is necessary to
    set up the database table where the module will read the blacklist data
@@ -736,12 +737,12 @@ d in the user-agent header ($ua)");
      * 3 (IP address)
      * 4 (user)
 
-8. Some examples
+7. Some examples
 
-   8.1. Print data
-   8.2. Statistics
+   7.1. Print data
+   7.2. Statistics
 
-8.1. Print data
+7.1. Print data
 
    Example 1.29. kamcmd secfilter.print ua
                 ...
@@ -775,7 +776,7 @@ d in the user-agent header ($ua)");
 }
                 ...
 
-8.2. Statistics
+7.2. Statistics
 
    Example 1.30. kamcmd secfilter.stats
                 ...
