@@ -46,6 +46,7 @@
 #include "../../core/fmsg.h"
 #include "../../core/onsend.h"
 #include "../../core/kemi.h"
+#include "../../core/pvapi.h"
 #include "../../core/str_hash.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_uri.h"
@@ -117,7 +118,17 @@ static str _th_eventrt_outgoing_name = str_init("topoh:msg-outgoing");
 static int _th_eventrt_sending = -1;
 static str _th_eventrt_sending_name = str_init("topoh:msg-sending");
 
+static int pv_parse_th_name(pv_spec_t *sp, str *in);
+static int pv_get_th(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+
 /* clang-format off */
+static pv_export_t mod_pvs[] = {
+	{{"th", (sizeof("th") - 1)}, PVT_OTHER, pv_get_th, 0, pv_parse_th_name,
+			0, 0, 0},
+
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
+
 static param_export_t params[] = {
 	{"mask_key", PARAM_STR, &_th_key},
 	{"mask_ip", PARAM_STR, &th_ip},
@@ -148,7 +159,7 @@ struct module_exports exports = {
 	cmds,			 /* exported functions */
 	params,			 /* exported parameters */
 	0,				 /* exported rpc functions */
-	0,				 /* exported pseudo-variables */
+	mod_pvs,		 /* exported pseudo-variables */
 	0,				 /* response handling function */
 	mod_init,		 /* module init function */
 	0,				 /* per-child init function */
@@ -799,6 +810,66 @@ int th_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp, int evtype,
 done:
 	p_onsend = NULL;
 	return 0;
+}
+
+static int pv_parse_th_name(pv_spec_t *sp, str *in)
+{
+	if(sp == NULL || in == NULL || in->len <= 0)
+		return -1;
+
+	switch(in->len) {
+		case 7:
+			if(strncmp(in->s, "ecallid", 7) == 0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else
+				goto error;
+			break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV th key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+static str _th_masked_callid = STR_NULL;
+
+/**
+ *
+ */
+static int pv_get_th(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(msg == NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	if(param == NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	if(msg->callid == NULL
+			&& ((parse_headers(msg, HDR_CALLID_F, 0) == -1)
+					|| (msg->callid == NULL))) {
+		LM_ERR("cannot parse Call-Id header\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* masked call-id */
+			if(th_mask_callid_str(&msg->callid->body, &_th_masked_callid) < 0) {
+				LM_ERR("cannot encode Call-Id\n");
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &_th_masked_callid);
+
+		default:
+			return pv_get_null(msg, param, res);
+	}
 }
 
 /**
