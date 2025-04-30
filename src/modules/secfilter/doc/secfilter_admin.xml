@@ -827,7 +827,6 @@
 		</programlisting>
        </example>
      </section>
-	</section>
 
 	<section id="secfilter.r.del_wl">
 		<title>
@@ -854,6 +853,7 @@
 		...
 		</programlisting>
 		</example>
+	</section>
 	</section>
 
  	<section>
