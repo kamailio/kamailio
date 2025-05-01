@@ -520,7 +520,7 @@ int pvh_clone_branch_xavi(struct sip_msg *msg, str *xname)
 		if(sub->val.type == SR_XTYPE_DATA)
 			continue;
 		if(pvh_xavi_append_value(&sub->name, &sub->val, &br_xavi->val.v.xavp)
-				< 0) {
+				== NULL) {
 			LM_ERR("cannot clone xavi %.*s\n", sub->name.len, sub->name.s);
 			return -1;
 		}
