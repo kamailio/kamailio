@@ -22,10 +22,11 @@
 
 	<section>
 		<title>Conditions</title>
-		<para>The module analyzes SIP requests so that users (e.g. path, rr)
+		<para>The module analyses SIP requests so that other module (e.g. path, rr)
         can determine whether to apply RFC5626 processing.
         This section applies if outbound processing
-        is not forced by the <code>force_outbound_flag</code> flag.</para>
+        is not forced by the <code>force_outbound_flag</code> flag, or disabled with
+                <code>force_no_outbound_flag</code>.</para>
     <para><code>REGISTER</code> request:
     <itemizedlist>
       <listitem>
@@ -33,13 +34,14 @@
       </listitem>
     </itemizedlist>
     </para>
-    <para>Non-<code>REGISTER</code> requests:
+    <para>Non-<code>REGISTER</code> requests if either of the following conditions is true:
     <itemizedlist>
       <listitem>
         <para>top Route header URI is myself and has <code>;ob</code> parameter</para>
       </listitem>
       <listitem>
-        <para>single <code>Via:</code> header and <code>Contact:</code> header has <code>;ob</code> parameter</para>
+          <para><code>Supported: outbound...</code> header, single <code>Via:</code> header,
+          and <code>Contact:</code> header has <code>;ob</code> parameter</para>
       </listitem>
     </itemizedlist>
     </para>
