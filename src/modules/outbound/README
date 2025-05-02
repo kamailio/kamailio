@@ -71,17 +71,19 @@ Chapter 1. Admin Guide
 
 1.1. Conditions
 
-   The module analyzes SIP requests so that users (e.g. path, rr) can
-   determine whether to apply RFC5626 processing. This section applies if
-   outbound processing is not forced by the force_outbound_flag flag.
+   The module analyses SIP requests so that other module (e.g. path, rr)
+   can determine whether to apply RFC5626 processing. This section applies
+   if outbound processing is not forced by the force_outbound_flag flag,
+   or disabled with force_no_outbound_flag.
 
    REGISTER request:
      * single Via: header (first hop) and Contact: header has ;reg-id
        parameter
 
-   Non-REGISTER requests:
+   Non-REGISTER requests if either of the following conditions is true:
      * top Route header URI is myself and has ;ob parameter
-     * single Via: header and Contact: header has ;ob parameter
+     * Supported: outbound... header, single Via: header, and Contact:
+       header has ;ob parameter
 
 1.2. Edge Proxy Keep-Alives (STUN)
 
