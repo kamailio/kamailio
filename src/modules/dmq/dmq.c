@@ -277,7 +277,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	dmq_startup_time = (int)time(NULL);
+	dmq_startup_time = ksr_time_sint(NULL, NULL);
 
 	/**
 	 * add the ping timer
