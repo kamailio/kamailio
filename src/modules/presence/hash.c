@@ -309,7 +309,7 @@ int insert_shtable(shtable_t htable, unsigned int hash_code, subs_t *subs)
 		LM_ERR("copying in share memory a subs_t structure\n");
 		return -1;
 	}
-	new_rec->expires += (int)time(NULL);
+	new_rec->expires += ksr_time_sint(NULL, NULL);
 
 	lock_get(&htable[hash_code].lock);
 	new_rec->next = htable[hash_code].entries->next;
@@ -417,7 +417,7 @@ int update_shtable(
 	}
 
 	if(type & REMOTE_TYPE) {
-		s->expires = subs->expires + (int)time(NULL);
+		s->expires = subs->expires + ksr_time_sint(NULL, NULL);
 		s->remote_cseq = subs->remote_cseq;
 	} else {
 		subs->local_cseq = ++s->local_cseq;
