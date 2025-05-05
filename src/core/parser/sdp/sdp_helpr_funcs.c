@@ -330,8 +330,8 @@ int extract_candidate(str *body, sdp_stream_cell_t *stream)
 
 	fl = space - start;
 
-	start = space + 1;
 	len = len - (space - start + 1);
+	start = space + 1;
 
 	space = memchr(start, 32, len);
 	if(space == NULL) {
