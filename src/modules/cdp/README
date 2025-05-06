@@ -52,13 +52,14 @@ Carsten Bock
 
         6. RPC Commands
 
-              6.1. cdp.disable_peer
-              6.2. cdp.enable_peer
+              6.1. States
+              6.2. cdp.disable_peer
+              6.3. cdp.enable_peer
+              6.4. cdp.list_peers
 
         7. Configuration Examples
 
               7.1. DiameterPeer.xml example
-              7.2.
 
    2. Developer Guide
 
@@ -147,8 +148,8 @@ Carsten Bock
    1.9. Set certificate parameter
    1.10. Set ca_list parameter
    1.11. cdp_check_peer usage
-   1.12. cdp_check_peer usage
-   1.13. cdp_check_peer usage
+   1.12. cdp_has_app usage
+   1.13. cdp_has_app usage
    1.14. DiameterPeer.xml example
 
 Chapter 1. Admin Guide
@@ -182,13 +183,14 @@ Chapter 1. Admin Guide
 
    6. RPC Commands
 
-        6.1. cdp.disable_peer
-        6.2. cdp.enable_peer
+        6.1. States
+        6.2. cdp.disable_peer
+        6.3. cdp.enable_peer
+        6.4. cdp.list_peers
 
    7. Configuration Examples
 
         7.1. DiameterPeer.xml example
-        7.2.
 
 1. Overview
 
@@ -422,7 +424,7 @@ if(!cdp_check_peer("hss.mnc001.mcc001.3gppnetwork.org")) {
      * vendorid - The Vendor ID of the App
        application - The Application ID
 
-   Example 1.12. cdp_check_peer usage
+   Example 1.12. cdp_has_app usage
 ...
 if(!cdp_has_app("10415", "4")) {
         send_reply("503", "Charging Server not ready");
@@ -430,7 +432,7 @@ if(!cdp_has_app("10415", "4")) {
 }
 ...
 
-   Example 1.13. cdp_check_peer usage
+   Example 1.13. cdp_has_app usage
 ...
 if(!cdp_has_app("16777216")) {
         send_reply("503", "Cx/Dx Interface not ready");
@@ -440,23 +442,43 @@ if(!cdp_has_app("16777216")) {
 
 6. RPC Commands
 
-   6.1. cdp.disable_peer
-   6.2. cdp.enable_peer
+   6.1. States
+   6.2. cdp.disable_peer
+   6.3. cdp.enable_peer
+   6.4. cdp.list_peers
 
-   exported RPC commands.
+6.1. States
 
-6.1. cdp.disable_peer
+     * Closed (0) - Not connected
+     * Wait_Conn_Ack (1) - Connecting - waiting for Ack
+     * Wait_I_CEA (2) - Connecting - waiting for Capabilities Exchange
+       Answer
+     * Wait_Conn_Ack_Elect (3) - Connecting - Acknowledged and going for
+       Election
+     * Wait_Returns (4) - Connecting - done
+     * R_Open (5) - Connected as receiver
+     * I_Open (6) - Connected as initiator
+     * Closing (7) - Closing the connection
+
+   Exported RPC commands.
+
+6.2. cdp.disable_peer
 
    instantly disable a particular diameter peer.
 
-6.2. cdp.enable_peer
+6.3. cdp.enable_peer
 
    enable/re-enable a diameter peer
+
+6.4. cdp.list_peers
+
+   list all configured diameter peers
+
+   State details can be found in the list above (Section 6.1, “States”)
 
 7. Configuration Examples
 
    7.1. DiameterPeer.xml example
-   7.2.
 
 7.1. DiameterPeer.xml example
 
