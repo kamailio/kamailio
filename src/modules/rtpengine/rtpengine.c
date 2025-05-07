@@ -4052,7 +4052,8 @@ static void parse_call_stats_1(struct minmax_mos_label_stats *mmls,
 	long long ssrc;
 	char *endp;
 	bencode_item_t *ssrc_list, *ssrc_key, *ssrc_dict, *tags, *tag_key,
-			*tag_dict, *medias, *media, *streams, *stream;
+			*tag_dict, *medias, *media, *streams, *stream, *ingress_ssrcs,
+			*ingress_ssrc;
 	struct minmax_stats_vals min_vals = {.mos = 100}, max_vals = {.mos = -1},
 							 average_vals = {.avg_samples = 0}, vals_decoded;
 
@@ -4107,9 +4108,21 @@ static void parse_call_stats_1(struct minmax_mos_label_stats *mmls,
 					(char *)stream->child->iov[1].iov_base);
 			LM_DBG("rtpengine: XXX stream child val type %i\n",
 					stream->child->sibling->type);
-			if((ssrc = bencode_dictionary_get_integer(stream, "SSRC", -1))
-					== -1)
-				continue;
+			ssrc = bencode_dictionary_get_integer(stream, "SSRC", -1);
+			if(ssrc == -1) {
+				ingress_ssrcs = bencode_dictionary_get_expect(
+						stream, "ingress SSRCs", BENCODE_LIST);
+				if(!ingress_ssrcs || !ingress_ssrcs->child)
+					continue;
+				LM_DBG("rtpengine: XXX got ingress SSRCs\n");
+				ingress_ssrc = ingress_ssrcs->child;
+				if((ssrc = bencode_dictionary_get_integer(
+							ingress_ssrc, "SSRC", -1))
+						== -1) {
+					continue;
+				}
+			}
+
 			/* got a valid SSRC to watch for */
 			ssrcs[num_ssrcs] = ssrc;
 			LM_DBG("rtpengine: found SSRC '%lli' for label '%.*s'\n", ssrc,
