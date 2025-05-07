@@ -496,6 +496,7 @@ static int jsdt_load_dir(duk_context *ctx, const char *path)
 						full_buffer = (char *)malloc(size_to_allocate);
 
 						if(full_buffer) {
+							memset(full_buffer, 0, size_to_allocate);
 							buf = full_buffer;
 							allocated_len = size_to_allocate;
 						}
