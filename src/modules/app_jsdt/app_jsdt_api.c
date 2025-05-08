@@ -459,7 +459,7 @@ static int jsdt_load_dir(duk_context *ctx, const char *path)
 	DIR *directory = NULL;
 	struct dirent *dir_entry = NULL;
 	size_t size_to_allocate = 0;
-	char full_path_to_file[255] = {0};
+	char full_path_to_file[512] = {0};
 	size_t name_len = 0;
 
 	directory = opendir(_sr_jsdt_load_dir.s);
@@ -474,9 +474,8 @@ static int jsdt_load_dir(duk_context *ctx, const char *path)
 			name_len = strlen(dir_entry->d_name);
 			if(name_len >= 3
 					&& strcmp(dir_entry->d_name + name_len - 3, ".js") == 0) {
-				strcpy(full_path_to_file, _sr_jsdt_load_dir.s);
-				strcat(full_path_to_file, "/");
-				strcat(full_path_to_file, dir_entry->d_name);
+				snprintf(full_path_to_file, 512, "%s/%s", _sr_jsdt_load_dir.s,
+						dir_entry->d_name);
 
 				LM_DBG("loading js script file: %s from folder %.*s\n",
 						dir_entry->d_name, _sr_jsdt_load_dir.len,
