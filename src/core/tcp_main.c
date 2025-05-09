@@ -352,6 +352,17 @@ static int init_sock_opt(int s, int af)
 		}
 	}
 #endif
+#ifdef HAVE_TCP_USER_TIMEOUT
+	if((optval = TICKS_TO_S(cfg_get(tcp, tcp_cfg, send_timeout)))) {
+		optval *= 1000;
+		if(setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &optval, sizeof(optval))
+				< 0) {
+			LM_WARN("failed to set TCP_USER_TIMEOUT: %s\n", strerror(errno));
+		} else {
+			LM_DBG("Set TCP_USER_TIMEOUT=%d ms\n", optval);
+		}
+	}
+#endif
 #ifdef HAVE_TCP_QUICKACK
 	if(cfg_get(tcp, tcp_cfg, delayed_ack)) {
 		optval = 0; /* reset quick ack => delayed ack */
