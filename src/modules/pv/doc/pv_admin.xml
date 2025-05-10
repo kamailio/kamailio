@@ -730,6 +730,29 @@ xavp_rm("x");
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.xavp_rm_all">
+			<title>
+				<function moreinfo="none">xavp_rm_all(rname)</function>
+			</title>
+			<para>
+				Remove all the values of $xavp(rname).
+			</para>
+			<para>
+				The parameter has to be the name of XAVP in the root list.
+				It can be static or dynamic string (to include variables).
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_rm_all</function> usage</title>
+				<programlisting format="linespecific">
+...
+xavp_rm_all("x");
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="pv.f.xavi_rm">
 			<title>
 				<function moreinfo="none">xavi_rm(rname)</function>
@@ -750,6 +773,29 @@ xavp_rm("x");
 ...
 xavi_rm("WhatEver");
 # same result as: $xavi(whatever) = $null;
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.xavi_rm_all">
+			<title>
+				<function moreinfo="none">xavi_rm_all(rname)</function>
+			</title>
+			<para>
+				Remove all the values of $xavi(rname).
+			</para>
+			<para>
+				The parameter has to be the name of XAVI in the root list.
+				It can be static or dynamic string (to include variables).
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavi_rm_all</function> usage</title>
+				<programlisting format="linespecific">
+...
+xavi_rm_all("WhatEver");
 ...
 				</programlisting>
 			</example>
