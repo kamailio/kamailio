@@ -2848,6 +2848,9 @@ dlg_set_state("early");
 			<listitem><para>
 				<emphasis>mval</emphasis> - matching value.
 			</para></listitem>
+			<listitem><para>
+				<emphasis>limit</emphasis> (optional) - limit of matched dialogs.
+			</para></listitem>
 		</itemizedlist>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
