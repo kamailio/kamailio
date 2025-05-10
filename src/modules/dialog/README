@@ -2211,6 +2211,7 @@ kamcmd dlg.list_ctx
        greater comparison; 'lt' - match using integer lesser comparison.
        Integer comparison can be used only with 'start_ts' key.
      * mval - matching value.
+     * limit (optional) - limit of matched dialogs.
 
    RPC Command Format:
 ...
