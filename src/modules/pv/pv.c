@@ -398,6 +398,8 @@ static pv_export_t mod_pvs[] = {
 			pv_init_iname, 5},
 	{{"tt", (sizeof("tt") - 1)}, /* */
 			PVT_OTHER, pv_get_to_attr, 0, 0, 0, pv_init_iname, 4},
+	{{"tts", (sizeof("tts") - 1)}, /* */
+			PVT_OTHER, pv_get_totagstate, 0, 0, 0, 0, 0},
 	{{"tu", (sizeof("tu") - 1)}, /* */
 			PVT_TO, pv_get_to_attr, pv_set_to_uri, 0, 0, pv_init_iname, 1},
 	{{"to", (sizeof("to") - 1)}, /* */

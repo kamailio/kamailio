@@ -509,6 +509,27 @@ int pv_get_to_attr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	return pv_get_xto_attr(msg, param, res, get_to(msg), 0);
 }
 
+int pv_get_totagstate(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(msg == NULL)
+		return pv_get_uintval(msg, param, res, 0);
+
+	if(msg->to == NULL && parse_headers(msg, HDR_TO_F, 0) == -1) {
+		LM_ERR("cannot parse To header\n");
+		return pv_get_uintval(msg, param, res, 0);
+	}
+	if(msg->to == NULL || get_to(msg) == NULL) {
+		LM_DBG("no To header\n");
+		return pv_get_uintval(msg, param, res, 0);
+	}
+
+	if(get_to(msg)->tag_value.s != NULL && get_to(msg)->tag_value.len > 0) {
+		return pv_get_uintval(msg, param, res, 1);
+	}
+
+	return pv_get_uintval(msg, param, res, 0);
+}
+
 int pv_get_from_attr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	if(msg == NULL)
