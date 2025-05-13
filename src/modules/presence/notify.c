@@ -297,7 +297,7 @@ int get_wi_subs_db(subs_t *subs, watcher_t *watchers)
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val =
-			(int)time(NULL) + pres_expires_offset;
+			ksr_time_sint(NULL, NULL) + pres_expires_offset;
 	n_query_cols++;
 
 	result_cols[status_col = n_result_cols++] = &str_status_col;
@@ -367,7 +367,7 @@ str *get_wi_notify_body(subs_t *subs, subs_t *watcher_subs)
 	unsigned int hash_code;
 	subs_t *s = NULL;
 	int state = FULL_STATE_FLAG;
-	unsigned int now = (int)time(NULL);
+	unsigned int now = ksr_time_uint(NULL, NULL);
 
 	hash_code = 0;
 	version_str = int2str(subs->version, &len);
@@ -655,7 +655,7 @@ str *ps_db_get_p_notify_body(
 		query_cols[n_query_cols] = &str_expires_col;
 		query_vals[n_query_cols].type = DB1_INT;
 		query_vals[n_query_cols].nul = 0;
-		query_vals[n_query_cols].val.int_val = (int)time(NULL);
+		query_vals[n_query_cols].val.int_val = ksr_time_sint(NULL, NULL);
 		query_ops[n_query_cols] = OP_GT;
 		n_query_cols++;
 	}
@@ -891,7 +891,7 @@ str *ps_cache_get_p_notify_body(
 	ptm.domain = uri.host;
 	ptm.event = event->name;
 	if(pres_startup_mode == 1) {
-		ptm.expires = (int)time(NULL);
+		ptm.expires = ksr_time_sint(NULL, NULL);
 	}
 
 	ptlist = ps_ptable_search(&ptm, 1, pres_retrieve_order);
@@ -1343,10 +1343,11 @@ int get_subs_db(
 		s.event = event;
 		s.local_cseq = row_vals[cseq_col].val.int_val + 1;
 		if(row_vals[expires_col].val.int_val
-				< (int)time(NULL) + pres_expires_offset)
+				< ksr_time_sint(NULL, NULL) + pres_expires_offset)
 			s.expires = 0;
 		else
-			s.expires = row_vals[expires_col].val.int_val - (int)time(NULL);
+			s.expires = row_vals[expires_col].val.int_val
+						- ksr_time_sint(NULL, NULL);
 		s.version = row_vals[version_col].val.int_val + 1;
 		s.flags = row_vals[flags_col].val.int_val;
 		s.user_agent.s = (char *)row_vals[user_agent_col].val.string_val;
@@ -1401,7 +1402,7 @@ subs_t *get_subs_dialog(str *pres_uri, pres_ev_t *event, str *sender)
 
 			printf_subs(s);
 
-			if(s->expires < (int)time(NULL)) {
+			if(s->expires < ksr_time_sint(NULL, NULL)) {
 				LM_DBG("expired subs\n");
 				continue;
 			}
@@ -1420,7 +1421,7 @@ subs_t *get_subs_dialog(str *pres_uri, pres_ev_t *event, str *sender)
 				lock_release(&subs_htable[hash_code].lock);
 				goto error;
 			}
-			s_new->expires -= (int)time(NULL);
+			s_new->expires -= ksr_time_sint(NULL, NULL);
 			s_new->next = s_array;
 			s_array = s_new;
 		}
@@ -2883,7 +2884,7 @@ int process_dialogs(int round, int presence_winfo)
 	int end_transaction = 0;
 	subs_t sub;
 	str ev_sname, winfo = str_init("presence.winfo");
-	int now = (int)time(NULL);
+	int now = ksr_time_sint(NULL, NULL);
 	int updated = 0;
 	int no_active_watchers = 0;
 	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
@@ -3228,7 +3229,7 @@ void ps_active_watchers_db_timer_clean(unsigned int ticks, void *param)
 	db_ops[0] = OP_LT;
 	db_vals[0].type = DB1_INT;
 	db_vals[0].nul = 0;
-	db_vals[0].val.int_val = (int)time(NULL);
+	db_vals[0].val.int_val = ksr_time_sint(NULL, NULL);
 
 	db_keys[1] = &str_expires_col;
 	db_ops[1] = OP_GT;
