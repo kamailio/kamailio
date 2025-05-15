@@ -1415,8 +1415,6 @@ static int get_alt_count(long *res, int local, int type, sip_msg_t *msg)
 	tcpconn_put(c);
 	return 0;
 err:
-	if(names)
-		sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
 	if(!local)
 		X509_free(cert);
 	tcpconn_put(c);
