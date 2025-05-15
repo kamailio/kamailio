@@ -57,7 +57,7 @@ presentity_t *new_presentity(str *domain, str *user, int expires,
 /* update presentity in database */
 int update_presentity(struct sip_msg *msg, presentity_t *p, str *body,
 		int t_new, int *sent_reply, char *sphere, str *etag_override, str *ruid,
-		int replace);
+		int replace, int skip_notify);
 
 /* update presentity in database using API */
 int _api_update_presentity(str *event, str *realm, str *user, str *etag,
