@@ -100,6 +100,7 @@ if(BUILD_DOC AND (NOT DOCBOOK2X_EXECUTABLE))
   set(BUILD_DOC OFF)
 endif()
 
+# This is used to add the documentation target to the default build target
 if(BUILD_DOC)
   set(docs_in_all_target ALL)
 else()
@@ -191,7 +192,7 @@ add_custom_command(
 
 add_custom_target(
   man
-  ${docs_in_all_target}
+  ${docs_in_all_target} # Add this `man` target to the default ALL target
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8 ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
 )
 add_dependencies(man kamctl_man)

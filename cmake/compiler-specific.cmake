@@ -1,7 +1,5 @@
-# Quite analogous to the Makefile.defs file This file is used to define the
-# common flags and options for the project The flags are defined as INTERFACE
-# properties of the common library The flags are then used by the other
-# libraries and executables
+# This file is included from the def.cmake CMakeLists.txt file.
+# It sets up the compiler specific flags.
 
 # Define the common flags and options for GCC
 option(PROFILE "Enable profiling" OFF)
