@@ -15,6 +15,3 @@ target_link_libraries(${module_name} PRIVATE ${MariaDBClient_LIBRARIES})
 include(${CMAKE_SOURCE_DIR}/cmake/db_files.cmake)
 add_kamctl_db_files(${group_name} kamctl.mysql)
 add_kamdbctl_db_files(${group_name} kamdbctl.mysql)
-
-include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
-add_db_target("${group_name}" mysql "${STYLESHEETS}/mysql.xsl")

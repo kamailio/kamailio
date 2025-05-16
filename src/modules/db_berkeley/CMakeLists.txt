@@ -15,6 +15,3 @@ add_dependencies(${module_name} kamdb_recover)
 include(${CMAKE_SOURCE_DIR}/cmake/db_files.cmake)
 add_kamctl_db_files(${group_name} kamctl.db_berkeley)
 add_kamdbctl_db_files(${group_name} kamdbctl.db_berkeley)
-
-include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
-add_db_target("${group_name}" db_berkeley "${STYLESHEETS}/db_berkeley.xsl")
