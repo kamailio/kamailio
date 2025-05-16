@@ -2,8 +2,9 @@
 # dbschema target: Old Makefiles: make dbschema declared in src/ Makefile This
 # was using the makefile found in src/lib/srdb1/schema folder.
 #
-# TODO: Revise where we want the target declared. New CMakelists.txt Declare the
-# target in srdb1 CMakeLists.txt file.
+# TODO: Revise where we want the target declared.
+# CMake includes this file dbschema.cmake in each module that has a schema
+# folder.
 
 find_program(XSLTPROC_EXECUTABLE xsltproc QUIET)
 

@@ -1,8 +1,6 @@
-# Quite analogous to the Makefile.defs file This file is used to define the
-# common flags and options for the project The flags are defined as INTERFACE
-# properties of the common library The flags are then used by the other
-# libraries and executables
-
+# This file is included from the def.cmake CMakeLists.txt file.
+# It sets up the OS-specific flags and includes the appropriate
+# OS-specific CMake file.
 set(OS_SPECIFIC_DIR "${CMAKE_SOURCE_DIR}/cmake/os-specific")
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   include(${OS_SPECIFIC_DIR}/linux.cmake)
