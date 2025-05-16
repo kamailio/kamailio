@@ -2,7 +2,7 @@ file(GLOB MODULE_SOURCES "*.c")
 
 add_library(${module_name} SHARED ${MODULE_SOURCES})
 
-find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
+find_package(OpenSSL REQUIRED)
 find_package(Threads REQUIRED)
 
 # TODO: library libval not foud on recent distributions: whichi library is sres?
