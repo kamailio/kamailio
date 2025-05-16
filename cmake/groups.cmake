@@ -483,37 +483,6 @@ set(MODULE_GROUP_COMMON
     ${MOD_LIST_TLSDEPS}
 )
 
-# For db use (db modules, excluding drivers) module_group_db=$(mod_list_db)
-set(MODULE_GROUP_DB ${MOD_LIST_DB})
-
-# For mysql module_group_mysql_driver=$(mod_list_mysql)
-# module_group_mysql=$(module_group_mysql_driver) $(module_group_db)
-set(MODULE_GROUP_MYSQL_DRIVER ${MOD_LIST_MYSQL})
-set(MODULE_GROUP_MYSQL ${MODULE_GROUP_MYSQL_DRIVER} ${MODULE_GROUP_DB})
-
-# For postgress module_group_postgres_driver=$(mod_list_postgres)
-# module_group_postgres=$(module_group_postgres_driver) $(module_group_db)
-set(MODULE_GROUP_POSTGRES_DRIVER ${MOD_LIST_POSTGRES})
-set(MODULE_GROUP_POSTGRES ${MODULE_GROUP_POSTGRES_DRIVER} ${MODULE_GROUP_DB})
-
-# For sqlite module_group_sqlite_driver=$(mod_list_sqlite)
-# module_group_sqlite=$(module_group_sqlite_driver) $(module_group_db)
-set(MODULE_GROUP_SQLITE_DRIVER ${MOD_LIST_SQLITE})
-set(MODULE_GROUP_SQLITE ${MODULE_GROUP_SQLITE_DRIVER} ${MODULE_GROUP_DB})
-
-# For radius
-set(MODULE_GROUP_RADIUS ${MODULE_LIST_RADIUS})
-
-# For presence kamailio modules
-set(MODULE_GROUP_PRESENCE ${MOD_LIST_PRESENCE})
-
-# For cassandra
-set(MODULE_GROUP_CASSANDRA_DRIVER ${MODULE_LIST_CASSANDRA})
-set(MODULE_GROUP_CASSANDRA ${MODULE_GROUP_CASSANDRA_DRIVER} ${MODULE_GROUP_DB})
-
-# For all modules not compiled by default
-# list(FILTER MOD_LIST_ALL EXCLUDE REGEX "${MODULE_GROUP_DEFAULT}")
-
 # for all protocols (excl. local ones such as unix, tcp, etc.)
 set(AVAILABLE_GROUPS ALL DEFAULT STANDARD COMMON)
 
@@ -718,88 +687,70 @@ set(MODULE_GROUP_KRTP_MEDIA_SERVER ${MOD_LIST_RTP_MEDIA_SERVER})
 # list of static modules
 set(STATIC_MODULES "")
 
-list(
-  APPEND
-  AVAILABLE_GROUPS
-  KSTANDARD
-  KMINI
-  KPCRE
-  KMYSQL
-  KPOSTGRES
-  KCPL
-  KXML
-  KRADIUS
-  KUNIXODBC
-  KPERL
-  KSNMPSTATS
-  KXMPP
-  KBERKELEY
-  KLDAP
-  KUTILS
-  KHTTP_ASYNC
-  KMEMCACHED
-  KTLS_BASIC
-  KTLS
-  KTLS_WOLFSSL
-  KWEBSOCKET
-  KPRESENCE
-  KLUA
-  KPYTHON
-  KPYTHON3
-  KRUBY
-  KGEOIP
-  KGEOIP2
-  KSQLITE
-  KJSON_BASIC
-  KJSON
-  KJANSSON_BASIC
-  KJANSSON
-  KREDIS
-  KIMS
-  KOUTBOUND
-  KJAVA
-  KDNSSEC
-  KSCTP
-  KAUTHEPH
-  KGZCOMPRESS
-  KUUID
-  KEV
-  KJWT
-  KLWSC
-  KSTIRSHAKEN
-  KKAZOO
-  KMONGODB
-  KCNXCC
-  KERLANG
-  KSYSTEMD
-  KNSQ
-  KRABBITMQ
-  KPHONENUM
-  KKAFKA
-  KMQTT
-  KNATS
-  KRUXC
-  KMICROHTTPD
-  KNGHTTP2
-  KGCRYPT
-  KSECSIPID
-  KRT_MEDIA_SERVER
+set(MODULE_GROUP_PACKAGE_GROUPS
+    KPCRE
+    KMYSQL
+    KPOSTGRES
+    KCPL
+    KXML
+    KRADIUS
+    KUNIXODBC
+    KPERL
+    KSNMPSTATS
+    KXMPP
+    KBERKELEY
+    KLDAP
+    KUTILS
+    KHTTP_ASYNC
+    KMEMCACHED
+    KTLS_BASIC
+    KTLS
+    KTLS_WOLFSSL
+    KWEBSOCKET
+    KPRESENCE
+    KLUA
+    KPYTHON
+    KPYTHON3
+    KRUBY
+    KGEOIP
+    KGEOIP2
+    KSQLITE
+    KJSON_BASIC
+    KJSON
+    KJANSSON_BASIC
+    KJANSSON
+    KREDIS
+    KIMS
+    KOUTBOUND
+    KJAVA
+    KDNSSEC
+    KSCTP
+    KAUTHEPH
+    KGZCOMPRESS
+    KUUID
+    KEV
+    KJWT
+    KLWSC
+    KSTIRSHAKEN
+    KKAZOO
+    KMONGODB
+    KCNXCC
+    KERLANG
+    KSYSTEMD
+    KNSQ
+    KRABBITMQ
+    KPHONENUM
+    KKAFKA
+    KMQTT
+    KNATS
+    KRUXC
+    KMICROHTTPD
+    KNGHTTP2
+    KGCRYPT
+    KSECSIPID
+    KRT_MEDIA_SERVER
 )
 
-# # Option to allow the user to define which group to build
-# set(SELECTED_PACKAGE_GROUP
-#     ""
-#     CACHE STRING "Select the package group to build from"
-#     PARENT_SCOPE
-# )
-# set_property(CACHE SELECTED_PACKAGE_GROUP PROPERTY STRINGS ${PACKAGE_GROUPS})
-
-# # Ensure the selected group is valid
-# if(NOT SELECTED_PACKAGE_GROUP IN_LIST PACKAGE_GROUPS)
-#   message(
-#     FATAL_ERROR
-#       "Invalid package group selected: ${SELECTED_PACKAGE_GROUP}. Please choose from: ${PACKAGE_GROUPS}."
-#   )
-# endif()
-
-# message(STATUS "Building package group: ${SELECTED_PACKAGE_GROUP}")
+# Add group names to available group and provide "ALL_PACKAGED" as well
+# for easier packaging using components
+list(APPEND AVAILABLE_GROUPS ALL_PACKAGED ${MODULE_GROUP_PACKAGE_GROUPS})

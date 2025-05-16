@@ -69,10 +69,10 @@ if(NOT PERL_TYPEMAP)
       ERROR_VARIABLE PERL_LIBPATH_ERROR # error of the command if any
       OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE
     )
-    message(WARNING "PERL_LIBPATH: ${PERL_LIBPATH}")
+    message(STATUS "PERL_LIBPATH: ${PERL_LIBPATH}")
   endif()
   set(PERL_TYPEMAP ${PERL_LIBPATH}/ExtUtils/typemap)
-  message(WARNING "PERL_TYPEMAP: ${PERL_TYPEMAP}")
+  message(STATUS "PERL_TYPEMAP: ${PERL_TYPEMAP}")
 endif()
 
 set(PERL_PODFILES ${CMAKE_CURRENT_SOURCE_DIR}/kamailioxs.xs)
@@ -115,6 +115,8 @@ add_custom_command(
 add_custom_target(${module_name}_pod.sgml DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/app_perl_pod.sgml)
 
 # Install nessecary files
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/perl
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}
+install(
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/perl
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}
+  COMPONENT ${group_name}
 )

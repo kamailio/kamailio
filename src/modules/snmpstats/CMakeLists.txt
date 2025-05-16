@@ -10,6 +10,7 @@ target_link_libraries(${module_name} PRIVATE NETSNMP::NETSNMP)
 
 install(
   DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mibs
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/snmp/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/snmp
   OPTIONAL
+  COMPONENT ${group_name}
 )

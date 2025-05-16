@@ -20,14 +20,6 @@ if(NOT ${USE_FAST_LOCK})
   target_compile_definitions(common INTERFACE USE_PTHREAD_MUTEX)
 endif()
 
-if(NOT ${NO_SELECT})
-  target_compile_definitions(common INTERFACE HAVE_SELECT)
-endif()
-
-if(NOT ${NO_KQUEUE})
-  target_compile_definitions(common INTERFACE HAVE_KQUEUE)
-endif()
-
 if(NOT DEFINED RUN_PREFIX)
   set(RUN_PREFIX "/var")
 endif()

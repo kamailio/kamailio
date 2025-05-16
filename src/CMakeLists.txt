@@ -1,4 +1,6 @@
 # Set the installation paths
+message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "CMAKE_LIBRARY_ARCHITECTURE: ${CMAKE_LIBRARY_ARCHITECTURE}")
 message(STATUS "Cross compile: ${CMAKE_CROSSCOMPILING}")
 
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
@@ -59,9 +61,9 @@ configure_file(
 )
 
 # -----------------------
-# Policy to enable the Generated property for files required before 3.20.
-# This policy allow for not checking if these files exist during the
-# configure process since they will be generated when building.
+# Policy to enable the Generated property for files required before 3.20. This
+# policy allow for not checking if these files exist during the configure
+# process since they will be generated when building.
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.20)
   # cmake_policy(VERSION 3.20)
   # https://cmake.org/cmake/help/latest/policy/CMP0118.html#policy:CMP0118
@@ -73,11 +75,43 @@ else()
     ${CMAKE_CURRENT_BINARY_DIR}/core/cfg.tab.h PROPERTIES GENERATED TRUE
   )
 endif()
+
+option(BUILD_DOC "Build documentation" ON)
+# Readme file and man page
+find_program(XSLTPROC_EXECUTABLE xsltproc QUIET)
+find_program(LYNX_EXECUTABLE lynx QUIET)
+find_program(DOCBOOK2X_EXECUTABLE docbook2x-man QUIET)
+
+if(BUILD_DOC AND (NOT XSLTPROC_EXECUTABLE OR NOT LYNX_EXECUTABLE))
+  message(
+    WARNING "BUILD_DOC set to ON but xsltproc or lynx not found and are required for doc generation.
+      Disabling documentation and man page generation.
+      You can safely ignore this warning."
+  )
+  set(BUILD_DOC OFF)
+endif()
+
+if(BUILD_DOC AND (NOT DOCBOOK2X_EXECUTABLE))
+  message(
+    WARNING "BUILD_DOC set to ON but docbook2x-man not found and is required for man generation.
+                 Disabling documentation and man page generation.
+                 You can safely ignore this warning"
+  )
+  set(BUILD_DOC OFF)
+endif()
+
+# This is used to add the documentation target to the default build target
+if(BUILD_DOC)
+  set(docs_in_all_target ALL)
+else()
+  set(docs_in_all_target "")
+endif()
 # -----------------------
 
 # -----------------------
 add_executable(kamailio ${CMAKE_CURRENT_SOURCE_DIR}/main.c)
 add_dependencies(kamailio GenerateParser)
+
 # Enable ENABLE_EXPORTS property so modules can link from symbols found in
 # kamailio executable.
 set_target_properties(kamailio PROPERTIES ENABLE_EXPORTS TRUE OUTPUT_NAME ${MAIN_NAME})
@@ -88,9 +122,8 @@ add_subdirectory(core)
 add_subdirectory(lib)
 add_subdirectory(modules)
 
-# These sources are coming from core subdirectory.
-# Lib subdirecotry add it sources to kamailio target using target_sources
-# from their own CMakeLists.txt
+# These sources are coming from core subdirectory. Lib subdirecotry add it
+# sources to kamailio target using target_sources from their own CMakeLists.txt
 # Module subdiretory does not contribute to the Kamailio executable.
 target_sources(
   kamailio PRIVATE ${kamailio_SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/core/lex.yy.c
@@ -127,7 +160,7 @@ install(
 install(
   FILES ${CMAKE_SOURCE_DIR}/README ${CMAKE_SOURCE_DIR}/INSTALL
   DESTINATION ${CMAKE_INSTALL_DOCDIR}
-  COMPONENT kamailio-docs
+  COMPONENT kamailio-core
 )
 
 # ----------
@@ -139,9 +172,8 @@ add_custom_command(
     "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
     -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
     "s#/usr/lib/${CFG_NAME}/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
-    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
-    "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8 >
-    ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
+    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" <
+    ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8 > ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
   DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.8
 )
 
@@ -152,39 +184,44 @@ add_custom_command(
     "s#/etc/${CFG_NAME}/${CFG_NAME}\.cfg#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/${MAIN_NAME}.cfg#g"
     -e "s#/usr/sbin/#${CMAKE_INSTALL_FULL_SBINDIR}/#g" -e
     "s#/usr/lib/${CFG_NAME}/#${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/#g" -e
-    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" -e
-    "s#${SRC_NAME}#${MAIN_NAME}#g" < ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5 >
-    ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
+    "s#/usr/share/doc/${CFG_NAME}/#${CMAKE_INSTALL_FULL_DOCDIR}/#g" <
+    ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5 > ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
   DEPENDS ${CMAKE_SOURCE_DIR}/doc/man/kamailio.cfg.5
 )
 
 add_custom_target(
-  man DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
-              ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
+  man
+  ${docs_in_all_target} # Add this `man` target to the default ALL target
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8 ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
 )
 add_dependencies(man kamctl_man)
 add_dependencies(man kamcmd_man)
+
 # These are the modules man pages if any exist
 add_dependencies(man kamailio_docs_man)
 
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.8
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man8
-  COMPONENT kamailio_man
+  COMPONENT kamailio-core
   OPTIONAL
 )
 
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.5
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man5
-  COMPONENT kamailio_man
+  COMPONENT kamailio-core
   OPTIONAL
 )
-# ----------
 
+# ----------
+# Db schema files
+include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
+
+# ----------
 # Install the configuration file (kamailio.cfg) ${CFG_NAME} using a CODE block
-# to check  existence at install time instead of configure time
-# If(EXISTS ..) require full path
+# to check  existence at install time instead of configure time If(EXISTS ..)
+# require full path
 install(
   CODE "
     set(dir \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\")
@@ -193,18 +230,17 @@ install(
         message(STATUS \"${CFG_NAME}.cfg already exists in \"
         \"\${dir}/${CFG_NAME}.cfg. Installing as ${CFG_NAME}.cfg.sample\")
       file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
-        DESTINATION \"${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
+        DESTINATION \"$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
         RENAME \"${CFG_NAME}.cfg.sample\"
         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
       )
     else()
         file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
-          DESTINATION \"${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
+          DESTINATION \"$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
           PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
           RENAME \"${CFG_NAME}.cfg\"
         )
     endif()
-
 "
-  COMPONENT kamailio-utils-cfg
+  COMPONENT kamailio-core
 )

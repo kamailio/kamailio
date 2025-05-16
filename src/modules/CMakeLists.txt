@@ -17,8 +17,13 @@ set(MODULE_GROUP_NAME
 set_property(CACHE MODULE_GROUP_NAME PROPERTY STRINGS ${AVAILABLE_GROUP_NAMES})
 
 # User may provide multiple groups seperated by space
-separate_arguments(MODULE_GROUP_LIST UNIX_COMMAND "${MODULE_GROUP_NAME}")
-message(STATUS "Building groups: ${MODULE_GROUP_LIST}")
+if(MODULE_GROUP_NAME STREQUAL "ALL_PACKAGED")
+  # A group defined other groups specifically for packaging
+  set(MODULE_GROUP_LIST ${MODULE_GROUP_PACKAGE_GROUPS})
+else()
+  separate_arguments(MODULE_GROUP_LIST UNIX_COMMAND "${MODULE_GROUP_NAME}")
+  message(STATUS "Building groups: ${MODULE_GROUP_LIST}")
+endif()
 
 # Check if elements in MODULE_GROUP_LIST are valid by checking against
 # AVAILABLE_GROUP_NAMES
@@ -52,7 +57,10 @@ set(EXCLUDE_MODULES
 include(${CMAKE_SOURCE_DIR}/cmake/modules-docs.cmake)
 
 # Function to add modules from a list
-function(add_module_group group_modules)
+function(add_module_group group_name group_modules)
+  # message(STATUS "Adding modules for group: ${group_name}")
+  # message(STATUS "Modules: ${group_modules}")
+
   foreach(module_name IN LISTS group_modules)
     # Check if the module has already been added
     get_property(ALREADY_ADDED GLOBAL PROPERTY ADDED_MODULES_LIST)
@@ -100,12 +108,18 @@ function(add_module_group group_modules)
         install(
           TARGETS ${module_name}
           DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/modules
-          COMPONENT kamailio_modules
+          COMPONENT ${group_name}
         )
         # Add the module to the list of added modules
         set_property(GLOBAL APPEND PROPERTY ADDED_MODULES_LIST ${module_name})
-        docs_add_module(${module_name})
-        set_property(GLOBAL APPEND PROPERTY ALL_MODULE_DOC_TARGETS ${module_name}_doc)
+        if(NOT EXISTS ${CMAKE_SOURCE_DIR}/src/modules/${module_name}/doc/${module_name}.xml)
+          message(WARNING "No documentation found for module ${module_name}.")
+          return()
+        else()
+          docs_add_module(${group_name} ${module_name})
+          set_property(GLOBAL APPEND PROPERTY ALL_MODULE_DOC_TARGETS ${module_name}_doc)
+        endif()
+
       else()
         message(FATAL_ERROR "Module directory ${module_path} does not exist.")
       endif()
@@ -140,27 +154,39 @@ foreach(group IN LISTS FULL_MODULE_GROUP_NAMES)
   if(VERBOSE)
     message(STATUS "Modules in ${group}: ${MODULES_IN_GROUP}")
   endif()
-  add_module_group("${MODULES_IN_GROUP}")
+  # remove module_group_prefix.
+  # TODO: This feels like a hack since user already provided
+  # the group name. Move the check above in these for maybe?
+  string(REPLACE "MODULE_GROUP_" "" group_name "${group}")
+  # message(WARNING "Adding module group: ${group_name}")
+  add_module_group("${group_name}" "${MODULES_IN_GROUP}")
 endforeach()
-add_module_group("${USER_MODULES_LIST}")
+# Empty name to add user specified modules otherwise function will error
+add_module_group(" " "${USER_MODULES_LIST}")
 
 get_property(ADDED_MODULES_LIST GLOBAL PROPERTY ADDED_MODULES_LIST)
 message(STATUS "Modules to be built: ${ADDED_MODULES_LIST}")
 # TODO: Comment is not showing. probably a bug in CMAKE
 # https://gitlab.kitware.com/cmake/cmake/-/issues/26571
 add_custom_target(modules COMMENT "Building modules")
-add_dependencies(modules ${ADDED_MODULES_LIST})
-
+if(NOT ADDED_MODULES_LIST)
+  message(WARNING "No modules to build. Did you forget to add a module group or include module?")
+else()
+  add_dependencies(modules ${ADDED_MODULES_LIST})
+endif()
 get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
 # message(STATUS "ALL_MODULE_DOC_TARGETS: ${ALL_MODULE_DOC_TARGETS}")
 
 # Add a kamailio_docs target that depends on all module documentation targets
 add_custom_target(
   kamailio_docs
+  ${docs_in_all_target}
   DEPENDS ${ALL_MODULE_DOC_TARGETS}
   COMMENT "Generating Kamailio documentation"
 )
 
+# No component kamailio_docs is defined after component based installation
+# TODO: Fix if possible
 add_custom_target(
   install_kamailio_docs
   COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component kamailio_docs

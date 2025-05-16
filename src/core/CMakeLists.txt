@@ -1,5 +1,7 @@
 # This is just for Debugging and print the compile definitions and options
 # for the common target
+message(STATUS "Flags defined for all targets: ${CMAKE_C_FLAGS}")
+
 get_target_property(MY_INTERFACE_DEFINITIONS common INTERFACE_COMPILE_DEFINITIONS)
 message(STATUS "Compile definitions for common: ${MY_INTERFACE_DEFINITIONS}")
 
