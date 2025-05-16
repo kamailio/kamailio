@@ -3,6 +3,9 @@
 # properties of the common library The flags are then used by the other
 # libraries and executables
 
+# Used to check if a symbol exists in a header file
+include(CheckSymbolExists)
+
 add_library(common INTERFACE)
 
 # This interface is populated by common and some extra module specific flags
@@ -61,11 +64,11 @@ option(WITHAS "With Application server support" ON)
 option(RAW_SOCKS "Raw sockets support" ON)
 option(MEMPKG "Package memory or sys " ON)
 
-option(NO_KQUEUE "No kqueue support" OFF)
-option(NO_SELECT "No select support" OFF)
-option(NO_EPOLL "No epoll support" OFF)
-option(NO_SIGIO_RT "No poll support" OFF)
-option(NO_DEV_POLL "No /dev/poll support" OFF)
+option(NO_KQUEUE "Disable kqueue support" OFF)
+option(NO_SELECT "Disable select support" OFF)
+option(NO_EPOLL "Disable epoll support" OFF)
+option(NO_SIGIO_RT "Disable sigio_rt poll support" OFF)
+option(NO_DEVPOLL "Disable /dev/poll support" OFF)
 
 option(USE_TCP "Use TCP" ON)
 option(USE_TLS "Use TLS" ON)
@@ -266,24 +269,41 @@ if(PKG_MALLOC)
   target_compile_definitions(common INTERFACE PKG_MALLOC)
 endif()
 
-if(NO_KQUEUE)
-  target_compile_definitions(common INTERFACE NO_KQUEUE)
+# Feature detection
+if(NOT NO_KQUEUE)
+  check_symbol_exists(kqueue "sys/event.h" HAVE_KQUEUE)
+  if(HAVE_KQUEUE)
+    target_compile_definitions(common INTERFACE $HAVE_KQUEUE)
+  endif()
 endif()
 
-if(NO_SELECT)
-  target_compile_definitions(common INTERFACE NO_SELECT)
+if(NOT NO_SELECT)
+  check_symbol_exists(select "sys/select.h" HAVE_SELECT)
+  if(HAVE_SELECT)
+    target_compile_definitions(common INTERFACE HAVE_SELECT)
+  endif()
 endif()
 
-if(NO_EPOLL)
-  target_compile_definitions(common INTERFACE NO_EPOLL)
+if(NOT NO_EPOLL)
+  check_symbol_exists(epoll_create1 "sys/epoll.h" HAVE_EPOLL)
+  if(HAVE_EPOLL)
+    target_compile_definitions(common INTERFACE HAVE_EPOLL)
+  endif()
 endif()
 
-if(NO_SIGIO_RT)
-  target_compile_definitions(common INTERFACE NO_SIGIO_RT)
+# TODO: Verify what is features we need
+if(NOT NO_SIGIO_RT)
+  check_symbol_exists(sigaction "signal.h" HAVE_SIGIO_RT)
+  if(HAVE_SIGIO_RT)
+    target_compile_definitions(common INTERFACE HAVE_SIGIO_RT SIGINFO64_WORKAROUND)
+  endif()
 endif()
 
-if(NO_DEV_POLL)
-  target_compile_definitions(common INTERFACE NO_DEV_POLL)
+if(NOT NO_DEVPOLL)
+  check_symbol_exists(open "sys/devpoll.h" HAVE_DEVPOLL)
+  if(HAVE_DEVPOLL)
+    target_compile_definitions(common INTERFACE HAVE_DEVPOLL)
+  endif()
 endif()
 
 if(RAW_SOCKS)

@@ -28,15 +28,3 @@ else()
   endif()
 
 endif()
-
-if(NOT NO_SELECT)
-  target_compile_definitions(common INTERFACE HAVE_SELECT)
-endif()
-
-if(NOT NO_EPOLL)
-  target_compile_definitions(common INTERFACE HAVE_EPOLL)
-endif()
-
-if(NOT NO_SIGIO_RT)
-  target_compile_definitions(common INTERFACE HAVE_SIGIO_RT SIGINFO64_WORKAROUND)
-endif()
