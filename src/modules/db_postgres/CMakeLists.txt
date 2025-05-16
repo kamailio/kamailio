@@ -12,5 +12,5 @@ include(${CMAKE_SOURCE_DIR}/cmake/db_files.cmake)
 add_kamctl_db_files(${group_name} kamctl.pgsql)
 add_kamdbctl_db_files(${group_name} kamdbctl.pgsql)
 
-include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
-add_db_target("${group_name}" postgres "${STYLESHEETS}/postgres.xsl")
+# include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
+# add_db_target("${group_name}" postgres "${STYLESHEETS}/postgres.xsl")

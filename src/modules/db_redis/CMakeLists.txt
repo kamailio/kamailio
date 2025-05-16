@@ -10,5 +10,5 @@ add_library(redis::redis ALIAS PkgConfig::redis)
 
 target_link_libraries(${module_name} PRIVATE redis::redis)
 
-include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
-add_db_target("${group_name}" db_redis "${STYLESHEETS}/db_redis.xsl")
+# include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
+# add_db_target("${group_name}" db_redis "${STYLESHEETS}/db_redis.xsl")

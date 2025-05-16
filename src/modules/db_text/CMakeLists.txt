@@ -13,5 +13,5 @@ install(
   COMPONENT kamailio-core
 )
 
-include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
-add_db_target("${group_name}" dbtext "${STYLESHEETS}/dbtext.xsl")
+# include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
+# add_db_target("${group_name}" dbtext "${STYLESHEETS}/dbtext.xsl")
