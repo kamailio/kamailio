@@ -19,8 +19,8 @@ else()
     add_custom_target(dbschema_clean COMMENT "Cleaning schemas for all dbs...")
   endif()
 
-  option(XSLT_VALIDATE, "Enable schema validation during XSL transformations" ON)
-  option(XSLT_VERBOSE, "Enable verbose output for XSL transformations" OFF)
+  option(XSLT_VALIDATE "Enable schema validation during XSL transformations" ON)
+  option(XSLT_VERBOSE "Enable verbose output for XSL transformations" OFF)
 
   set(XSLTPROC_FLAGS --xinclude)
   if(NOT ${XSLT_VALIDATE})
