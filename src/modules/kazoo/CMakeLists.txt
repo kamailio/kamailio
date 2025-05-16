@@ -18,7 +18,8 @@ pkg_check_modules(json-c REQUIRED IMPORTED_TARGET json-c)
 add_library(json-c::json-c ALIAS PkgConfig::json-c)
 # endif()
 
-find_package(rabbitmq-c 0.13)
+# rabbitmq provides cmake support for versions 0.13 and above.
+find_package(rabbitmq-c QUIET)
 if(NOT rabbitmq-c_FOUND)
   message(STATUS "rabbitmq-c not found. looking with pkg-config")
   find_package(PkgConfig REQUIRED)
@@ -26,7 +27,6 @@ if(NOT rabbitmq-c_FOUND)
   add_library(rabbitmq::rabbitmq ALIAS PkgConfig::rabbitmq-c)
 endif()
 
-find_package(PkgConfig REQUIRED)
 pkg_check_modules(UUID REQUIRED IMPORTED_TARGET uuid)
 add_library(uuid::uuid ALIAS PkgConfig::UUID)
 
