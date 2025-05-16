@@ -483,37 +483,6 @@ set(MODULE_GROUP_COMMON
     ${MOD_LIST_TLSDEPS}
 )
 
-# For db use (db modules, excluding drivers) module_group_db=$(mod_list_db)
-set(MODULE_GROUP_DB ${MOD_LIST_DB})
-
-# For mysql module_group_mysql_driver=$(mod_list_mysql)
-# module_group_mysql=$(module_group_mysql_driver) $(module_group_db)
-set(MODULE_GROUP_MYSQL_DRIVER ${MOD_LIST_MYSQL})
-set(MODULE_GROUP_MYSQL ${MODULE_GROUP_MYSQL_DRIVER} ${MODULE_GROUP_DB})
-
-# For postgress module_group_postgres_driver=$(mod_list_postgres)
-# module_group_postgres=$(module_group_postgres_driver) $(module_group_db)
-set(MODULE_GROUP_POSTGRES_DRIVER ${MOD_LIST_POSTGRES})
-set(MODULE_GROUP_POSTGRES ${MODULE_GROUP_POSTGRES_DRIVER} ${MODULE_GROUP_DB})
-
-# For sqlite module_group_sqlite_driver=$(mod_list_sqlite)
-# module_group_sqlite=$(module_group_sqlite_driver) $(module_group_db)
-set(MODULE_GROUP_SQLITE_DRIVER ${MOD_LIST_SQLITE})
-set(MODULE_GROUP_SQLITE ${MODULE_GROUP_SQLITE_DRIVER} ${MODULE_GROUP_DB})
-
-# For radius
-set(MODULE_GROUP_RADIUS ${MODULE_LIST_RADIUS})
-
-# For presence kamailio modules
-set(MODULE_GROUP_PRESENCE ${MOD_LIST_PRESENCE})
-
-# For cassandra
-set(MODULE_GROUP_CASSANDRA_DRIVER ${MODULE_LIST_CASSANDRA})
-set(MODULE_GROUP_CASSANDRA ${MODULE_GROUP_CASSANDRA_DRIVER} ${MODULE_GROUP_DB})
-
-# For all modules not compiled by default
-# list(FILTER MOD_LIST_ALL EXCLUDE REGEX "${MODULE_GROUP_DEFAULT}")
-
 # for all protocols (excl. local ones such as unix, tcp, etc.)
 set(AVAILABLE_GROUPS ALL DEFAULT STANDARD COMMON)
 
