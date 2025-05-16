@@ -2,7 +2,8 @@ file(GLOB MODULE_SOURCES "*.c")
 
 add_library(${module_name} SHARED ${MODULE_SOURCES})
 
-find_package(rabbitmq-c 0.13 QUIET)
+# rabbitmq provides cmake support for versions 0.13 and above.
+find_package(rabbitmq-c QUIET)
 if(NOT rabbitmq-c_FOUND)
   message(STATUS "rabbitmq-c not found. looking with pkg-config")
   find_package(PkgConfig REQUIRED)
