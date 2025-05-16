@@ -18,6 +18,7 @@ set_property(CACHE MODULE_GROUP_NAME PROPERTY STRINGS ${AVAILABLE_GROUP_NAMES})
 
 # User may provide multiple groups seperated by space
 if(MODULE_GROUP_NAME STREQUAL "ALL_PACKAGED")
+  # A group defined other groups specifically for packaging
   set(MODULE_GROUP_LIST ${MODULE_GROUP_PACKAGE_GROUPS})
 else()
   separate_arguments(MODULE_GROUP_LIST UNIX_COMMAND "${MODULE_GROUP_NAME}")
@@ -160,6 +161,7 @@ foreach(group IN LISTS FULL_MODULE_GROUP_NAMES)
   # message(WARNING "Adding module group: ${group_name}")
   add_module_group("${group_name}" "${MODULES_IN_GROUP}")
 endforeach()
+# Empty name to add user specified modules otherwise function will error
 add_module_group(" " "${USER_MODULES_LIST}")
 
 get_property(ADDED_MODULES_LIST GLOBAL PROPERTY ADDED_MODULES_LIST)

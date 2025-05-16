@@ -1,3 +1,7 @@
+# Funtion to add db files to the target kamctl/kamdbctl
+# It takes the group name, the file name and a boolean to determine if it is for kamctl or kamdbctl
+# It processes the file with sed and installs it to the correct location
+# Used by the helper function add_kamctl_db_files and add_kamdbctl_db_files
 function(add_db_files group_name file kamctl)
   # message(WARNING "file name is ${file}")
   # message(WARNING "group name is ${group_name}")
@@ -32,10 +36,16 @@ function(add_db_files group_name file kamctl)
   )
 endfunction()
 
+# Helper functions to add kamctl releated db files
+# Used by utils/kamctl/CMakeLists.txt for the core kamctl files
+# and by modules/db_{module_name}/CMakeLists.txt for the module specific kamctl files
 function(add_kamctl_db_files group_name file)
   add_db_files(${group_name} ${file} 1)
 endfunction()
 
+# Helper functions to add kamdbctl releated db files
+# Used by utils/kamctl/CMakeLists.txt for the core kamctl files
+# and by modules/db_{module_name}/CMakeLists.txt for the module specific kamdbctl files
 function(add_kamdbctl_db_files group_name file)
   add_db_files(${group_name} ${file} 0)
 endfunction()
