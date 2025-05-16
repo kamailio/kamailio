@@ -156,9 +156,10 @@ int ul_ka_urecord(urecord_t *ur)
 				/* set contact as expired in 10s */
 				LM_DBG("set expired contact on keepalive (%u + %u < %u)"
 					   " - aor: %.*s c: %.*s\n",
-						(unsigned int)uc->last_keepalive,
-						(unsigned int)ul_keepalive_timeout, (unsigned int)tnow,
-						ur->aor.len, ur->aor.s, uc->c.len, uc->c.s);
+						ksr_time_uint(&uc->last_keepalive, NULL),
+						(unsigned int)ul_keepalive_timeout,
+						ksr_time_sint(&tnow, NULL), ur->aor.len, ur->aor.s,
+						uc->c.len, uc->c.s);
 				if(uc->expires > tnow + 10) {
 					uc->expires = tnow + 10;
 					continue;
