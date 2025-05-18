@@ -142,6 +142,7 @@ static int ends_with_f(struct sip_msg *msg, char *str1, char *str2);
 static int str_find_f(sip_msg_t *msg, char *str1, char *str2);
 static int str_ifind_f(sip_msg_t *msg, char *str1, char *str2);
 static int str_any_in_f(sip_msg_t *msg, char *str1, char *str2);
+static int str_all_in_f(struct sip_msg *msg, char *str1, char *str2);
 static int remove_hf_re_f(struct sip_msg *msg, char *key, char *foo);
 static int remove_hf_exp_f(sip_msg_t *msg, char *ematch, char *eskip);
 static int is_present_hf_re_f(struct sip_msg *msg, char *key, char *foo);
@@ -290,6 +291,8 @@ static cmd_export_t cmds[] = {
 	{"str_ifind", (cmd_function)str_ifind_f, 2, fixup_spve_spve, 0,
 			ANY_ROUTE},
 	{"str_any_in", (cmd_function)str_any_in_f, 2, fixup_spve_spve, 0,
+			ANY_ROUTE},
+	{"str_all_in", (cmd_function)str_all_in_f, 2, fixup_spve_spve, 0,
 			ANY_ROUTE},
 	{"is_audio_on_hold", (cmd_function)is_audio_on_hold_f, 0, 0, 0,
 			ANY_ROUTE},
@@ -4630,6 +4633,47 @@ static int str_any_in_f(struct sip_msg *msg, char *str1, char *str2)
 	return ki_str_any_in(msg, &s1, &s2);
 }
 
+static int ki_str_all_in(sip_msg_t *msg, str *txt, str *clist)
+{
+	int i, j, f;
+
+	if(txt == NULL || txt->len <= 0 || clist == NULL || clist->len <= 0) {
+		return -1;
+	}
+
+	for(j = 0; j < clist->len; j++) {
+		f = 0;
+		for(i = 0; i < txt->len; i++) {
+			if(txt->s[i] == clist->s[j]) {
+				f = 1;
+				break;
+			}
+		}
+		if(f == 0) {
+			return -1;
+		}
+	}
+
+	return 1;
+}
+
+static int str_all_in_f(struct sip_msg *msg, char *str1, char *str2)
+{
+	str s1;
+	str s2;
+
+	if(fixup_get_svalue(msg, (gparam_p)str1, &s1) != 0) {
+		LM_ERR("cannot get first parameter\n");
+		return -8;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)str2, &s2) != 0) {
+		LM_ERR("cannot get second parameter\n");
+		return -8;
+	}
+
+	return ki_str_all_in(msg, &s1, &s2);
+}
+
 static int ki_is_audio_on_hold(sip_msg_t *msg)
 {
 	int sdp_session_num = 0, sdp_stream_num;
@@ -5509,6 +5553,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("str_any_in"),
 		SR_KEMIP_INT, ki_str_any_in,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("str_all_in"),
+		SR_KEMIP_INT, ki_str_all_in,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
