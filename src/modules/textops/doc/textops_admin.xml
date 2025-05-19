@@ -1955,6 +1955,29 @@ if (str_any_in("$hdr(X-Hdr)", ";',:")) {
 		</example>
 	</section>
 
+	<section id="textops.f.str_all_in">
+		<title>
+		<function moreinfo="none">str_all_in(txt, clist)</function>
+		</title>
+		<para>
+			Return 1 (true) if all character in "clist" are found inside "txt".
+			Both paramters can contain variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>str_all_in</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (str_all_in("$hdr(X-Hdr)", ".;-")) {
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.set_body_multipart">
 		<title>
 		<function moreinfo="none">set_body_multipart([txt, content_type][, boundary])</function>
