@@ -8,7 +8,6 @@ find_package(NETSNMP REQUIRED)
 # TODO: Compiles fine but need to do some more verifcation
 target_link_libraries(${module_name} PRIVATE NETSNMP::NETSNMP)
 
-message(WARNING "group_name is: ${group_name}")
 install(
   DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mibs
   DESTINATION ${CMAKE_INSTALL_DATADIR}/snmp
