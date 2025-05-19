@@ -755,20 +755,26 @@ list(
   KRT_MEDIA_SERVER
 )
 
-# # Option to allow the user to define which group to build
-# set(SELECTED_PACKAGE_GROUP
-#     ""
-#     CACHE STRING "Select the package group to build from"
-#     PARENT_SCOPE
-# )
-# set_property(CACHE SELECTED_PACKAGE_GROUP PROPERTY STRINGS ${PACKAGE_GROUPS})
-
-# # Ensure the selected group is valid
-# if(NOT SELECTED_PACKAGE_GROUP IN_LIST PACKAGE_GROUPS)
-#   message(
-#     FATAL_ERROR
-#       "Invalid package group selected: ${SELECTED_PACKAGE_GROUP}. Please choose from: ${PACKAGE_GROUPS}."
-#   )
-# endif()
-
-# message(STATUS "Building package group: ${SELECTED_PACKAGE_GROUP}")
+# Find the group name for the target by checking if the module is in the
+# list of modules to be built and if so, use the group name of that module
+# group_name can be used afterwards.
+function(find_group_name module)
+  set(group_name
+      ""
+      PARENT_SCOPE
+  )
+  #   message(WARNING "groups to search in" ${MODULE_GROUP_PACKAGE_GROUPS})
+  # Get all variable names in the current CMake context
+  foreach(group IN LISTS MODULE_GROUP_PACKAGE_GROUPS)
+    # message(WARNING "Modules in group ${group}: ${MODULES_IN_GROUP}")
+    # message(WARNING "Checking group ${group} for db ${module}")
+    get_property(MODULES_IN_GROUP VARIABLE PROPERTY "MODULE_GROUP_${group}")
+    if("${module}" IN_LIST MODULES_IN_GROUP)
+      #   message(WARNING "Found group ${group} for db ${module}")
+      set(group_name
+          "${group}"
+          PARENT_SCOPE
+      )
+    endif()
+  endforeach()
+endfunction()

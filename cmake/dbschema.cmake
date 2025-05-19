@@ -6,9 +6,13 @@
 # should be appended to the end of this file. See the the rest of modules.
 find_program(XSLTPROC_EXECUTABLE xsltproc QUIET)
 
+include(${CMAKE_SOURCE_DIR}/cmake/groups.cmake)
+get_property(added_modules GLOBAL PROPERTY ADDED_MODULES_LIST)
+# message(WARNING "Added modules: ${added_modules}")
+
 # Function to add a target for each database type prefix with dbschema ie
 # db_name = redis -> target = dbschema_redis
-function(add_db_target group_name db_name xsl_file)
+function(add_db_target db_name xsl_file)
   if(NOT XSLTPROC_EXECUTABLE)
     return()
   endif()
@@ -18,6 +22,11 @@ function(add_db_target group_name db_name xsl_file)
   else()
     set(db_name_folder ${db_name})
   endif()
+
+  if(NOT (db_name_folder IN_LIST added_modules))
+    return()
+  endif()
+  find_group_name(${db_name_folder})
 
   add_custom_target(
     dbschema_${db_name}
@@ -31,8 +40,8 @@ function(add_db_target group_name db_name xsl_file)
     # Determine the prefix based on db_name
     if(db_name STREQUAL "db_berkeley"
        OR db_name STREQUAL "db_redis"
-       OR db_name STREQUAL "dbtext"
-       OR db_name STREQUAL "mongodb"
+       OR db_name STREQUAL "db_text"
+       OR db_name STREQUAL "db_mongodb"
     )
       set(prefix '')
       set(folder_suffix "${MAIN_NAME}")
@@ -41,6 +50,20 @@ function(add_db_target group_name db_name xsl_file)
       set(folder_suffix '')
     endif()
 
+    # db_name for old makefiles are different.
+    # old -> new (module names)
+    # db_berkeley   -> db_berkeley
+    # mongodb       -> db_mongodb
+    # mysql         -> db_mysql
+    # db_oracle     -> db_oracle
+    # postgres      -> db_postgres
+    # db_redis      -> db_redis
+    # db_sqlite     -> db_sqlite
+    # dbtext        -> db_text
+    # pi_framework  -> xhttp_pi
+    # TODO: Not sure if these are used somewhere else.
+    # For consistency, we are now using the new names.
+    # We should probably change the old names if something breaks.
     add_custom_command(
       TARGET dbschema_${db_name}
       PRE_BUILD
@@ -117,18 +140,18 @@ else()
 endif()
 
 #---- DB berkeley
-add_db_target("${group_name}" db_berkeley "${STYLESHEETS}/db_berkeley.xsl")
+add_db_target(db_berkeley "${STYLESHEETS}/db_berkeley.xsl")
 
-#---- DB monogo
-add_db_target("${group_name}" mongodb "${STYLESHEETS}/mongodb.xsl")
+#---- DB mongo
+add_db_target(db_mongodb "${STYLESHEETS}/mongodb.xsl")
 # Create the version-create.mongo script
 # After processing the JSON files, create the version-create.mongo script
 # Usage of generate_version_create_mongo.sh:
 # 1. The first argument is the path to create the version-create.mongo script
 # 2. The second argument is the path to the directory containing the JSON files
-if(TARGET dbschema_mongodb)
+if(TARGET dbschema_db_mongodb)
   add_custom_command(
-    TARGET dbschema_mongodb
+    TARGET dbschema_db_mongodb
     POST_BUILD
     COMMAND
       bash generate_version_create_mongo.sh
@@ -139,6 +162,7 @@ if(TARGET dbschema_mongodb)
   )
 endif()
 
+find_group_name("db_mongodb")
 install(
   FILES ${CMAKE_BINARY_DIR}/utils/kamctl/mongodb/kamailio/version-create.mongo
   DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}/mongodb/${MAIN_NAME}
@@ -147,26 +171,26 @@ install(
 )
 
 #---- DB mysql
-add_db_target("${group_name}" mysql "${STYLESHEETS}/mysql.xsl")
+add_db_target(db_mysql "${STYLESHEETS}/mysql.xsl")
 
 #---- DB Oracle
-add_db_target("${group_name}" db_oracle "${STYLESHEETS}/oracle.xsl")
+add_db_target(db_oracle "${STYLESHEETS}/oracle.xsl")
 
 #---- DB postgres
-add_db_target("${group_name}" postgres "${STYLESHEETS}/postgres.xsl")
+add_db_target(db_postgres "${STYLESHEETS}/postgres.xsl")
 
 #---- DB redis
-add_db_target("${group_name}" db_redis "${STYLESHEETS}/db_redis.xsl")
+add_db_target(db_redis "${STYLESHEETS}/db_redis.xsl")
 
 #---- DB sqlite
-add_db_target("${group_name}" db_sqlite "${STYLESHEETS}/db_sqlite.xsl")
+add_db_target(db_sqlite "${STYLESHEETS}/db_sqlite.xsl")
 
 #---- DB text
-add_db_target("${group_name}" dbtext "${STYLESHEETS}/dbtext.xsl")
+add_db_target(db_text "${STYLESHEETS}/dbtext.xsl")
 
 #---- DB xhttp_pi
-add_db_target("${group_name}" pi_framework_table "${STYLESHEETS}/pi_framework_table.xsl")
-add_db_target("${group_name}" pi_framework_mod "${STYLESHEETS}/pi_framework_mod.xsl")
+add_db_target(pi_framework_table "${STYLESHEETS}/pi_framework_table.xsl")
+add_db_target(pi_framework_mod "${STYLESHEETS}/pi_framework_mod.xsl")
 
 # Add alias targets that match the dbschema
 if(XSLTPROC_EXECUTABLE)
