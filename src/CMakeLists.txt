@@ -216,10 +216,6 @@ install(
 )
 
 # ----------
-# Db schema files
-include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
-
-# ----------
 # Install the configuration file (kamailio.cfg) ${CFG_NAME} using a CODE block
 # to check  existence at install time instead of configure time
 # If(EXISTS ..) require full path
