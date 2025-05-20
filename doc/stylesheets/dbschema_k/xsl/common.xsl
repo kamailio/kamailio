@@ -43,7 +43,7 @@
 
     <xsl:template name="quotechar">
 	<xsl:choose>
-	    <xsl:when test="$db='mysql'">
+	    <xsl:when test="$db='db_mysql'">
 			<xsl:text>`</xsl:text>
 	    </xsl:when>
 	    <xsl:otherwise>

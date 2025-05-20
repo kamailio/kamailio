@@ -74,6 +74,12 @@ add_subdirectory(src)
 add_subdirectory(utils/kamctl)
 add_subdirectory(utils/kamcmd)
 
+# ----------
+# Db schema files
+# Include it here due to calling a script where we need the base binary dir
+# and scirpts are using {CMAKE_BINARY_DIR} from where they where first included.
+include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
+
 # TODO: Packaging stuuf. These should be on different file propably
 set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(CPACK_PACKAGE_NAME kamailio)

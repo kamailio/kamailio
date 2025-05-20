@@ -26,6 +26,7 @@ function(add_db_target db_name xsl_file)
   if(NOT (db_name_folder IN_LIST added_modules))
     return()
   endif()
+
   find_group_name(${db_name_folder})
 
   add_custom_target(
@@ -35,35 +36,50 @@ function(add_db_target db_name xsl_file)
     COMMENT "Creating schemas for ${db_name}"
   )
 
+  # db_name for old makefiles are different.
+  #     old       ->     new (module names)
+  # db_berkeley   -> db_berkeley
+  # mongodb       -> db_mongodb
+  # mysql         -> db_mysql
+  # db_oracle     -> db_oracle
+  # postgres      -> db_postgres
+  # db_redis      -> db_redis
+  # db_sqlite     -> db_sqlite
+  # dbtext        -> db_text
+  # pi_framework  -> xhttp_pi (this was not provided at all in the old makefiles)
+  # For consistency, we are now using the new names.
+  # For compatibility with tools, we are still using the old names for install folder
+
+  # Determine the prefix/suffix
+  if(db_name STREQUAL "db_berkeley"
+     OR db_name STREQUAL "db_redis"
+     OR db_name STREQUAL "db_text"
+     OR db_name STREQUAL "db_mongodb"
+  )
+    set(prefix '')
+    set(folder_suffix "${MAIN_NAME}")
+  else()
+    set(prefix "${table}-")
+    set(folder_suffix '')
+  endif()
+
+  # install folder based on db_name
+  if(db_name STREQUAL "db_mongodb")
+    set(install_folder "mongodb")
+  elseif(db_name STREQUAL "db_mysql")
+    set(install_folder "mysql")
+  elseif(db_name STREQUAL "db_postgres")
+    set(install_folder "mysql")
+  elseif(db_name STREQUAL "db_text")
+    set(install_folder "dbtext")
+  else()
+    set(install_folder "${db_name}")
+  endif()
+
   # Loop through each table and add a command for xsltproc
   foreach(table ${EXTRACTED_TABLES})
-    # Determine the prefix based on db_name
-    if(db_name STREQUAL "db_berkeley"
-       OR db_name STREQUAL "db_redis"
-       OR db_name STREQUAL "db_text"
-       OR db_name STREQUAL "db_mongodb"
-    )
-      set(prefix '')
-      set(folder_suffix "${MAIN_NAME}")
-    else()
-      set(prefix "${table}-")
-      set(folder_suffix '')
-    endif()
 
-    # db_name for old makefiles are different.
-    # old -> new (module names)
-    # db_berkeley   -> db_berkeley
-    # mongodb       -> db_mongodb
-    # mysql         -> db_mysql
-    # db_oracle     -> db_oracle
-    # postgres      -> db_postgres
-    # db_redis      -> db_redis
-    # db_sqlite     -> db_sqlite
-    # dbtext        -> db_text
-    # pi_framework  -> xhttp_pi
-    # TODO: Not sure if these are used somewhere else.
-    # For consistency, we are now using the new names.
-    # We should probably change the old names if something breaks.
+    # Stringparam db is the db_* module name
     add_custom_command(
       TARGET dbschema_${db_name}
       PRE_BUILD
@@ -75,6 +91,31 @@ function(add_db_target db_name xsl_file)
       COMMENT "Processing ${table} for ${db_name}"
     )
   endforeach()
+
+  # Create version table for db_text and db_berkeley
+  # Use bash script
+  set(POSTPROCESS_SCRIPT "${CMAKE_SOURCE_DIR}/cmake/dbschema-version-postprocess.sh")
+
+  if(db_name STREQUAL "db_text")
+    add_custom_command(
+      TARGET dbschema_${db_name}
+      POST_BUILD
+      COMMAND ${POSTPROCESS_SCRIPT} 1 1
+              # ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix}
+      COMMENT "Creating version table for ${db_name}"
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix}
+    )
+  elseif(db_name STREQUAL "db_berkeley")
+    add_custom_command(
+      TARGET dbschema_${db_name}
+      POST_BUILD
+      COMMAND ${POSTPROCESS_SCRIPT} 2 10
+              # ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix}
+      COMMENT "Creating version table for ${db_name}"
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix}
+    )
+
+  endif()
 
   add_custom_target(
     dbschema_${db_name}_clean
@@ -88,9 +129,12 @@ function(add_db_target db_name xsl_file)
 
   # message(WARNING "group name is ${group_name}")
   # Before installing, ensure the target is built `dbschema_${db_name}`
+  # install as previously done in makefile folder. see naming above
+  # TODO: when tools adopt to new folder structure, remove the install_folder variable
+
   install(
-    DIRECTORY ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}
+    DIRECTORY ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}/${install_folder}
     OPTIONAL
     COMPONENT ${group_name}
   )
@@ -132,6 +176,7 @@ else()
     string(REPLACE "kamailio-" "" TABLE_NAME "${TABLE_NAME}")
     string(REPLACE ".xml" "" TABLE_NAME "${TABLE_NAME}")
     list(APPEND EXTRACTED_TABLES "${TABLE_NAME}")
+    list(SORT EXTRACTED_TABLES)
   endforeach()
   # Output the extracted table names
   if(VERBOSE)
@@ -143,7 +188,7 @@ endif()
 add_db_target(db_berkeley "${STYLESHEETS}/db_berkeley.xsl")
 
 #---- DB mongo
-add_db_target(db_mongodb "${STYLESHEETS}/mongodb.xsl")
+add_db_target(db_mongodb "${STYLESHEETS}/db_mongodb.xsl")
 # Create the version-create.mongo script
 # After processing the JSON files, create the version-create.mongo script
 # Usage of generate_version_create_mongo.sh:
@@ -155,29 +200,29 @@ if(TARGET dbschema_db_mongodb)
     POST_BUILD
     COMMAND
       bash generate_version_create_mongo.sh
-      "${CMAKE_BINARY_DIR}/utils/kamctl/mongodb/kamailio/version-create.mongo"
-      "${CMAKE_BINARY_DIR}/utils/kamctl/mongodb/kamailio"
+      "${CMAKE_BINARY_DIR}/utils/kamctl/db_mongodb/kamailio/version-create.mongo"
+      "${CMAKE_BINARY_DIR}/utils/kamctl/db_mongodb/kamailio"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/utils/kamctl
     COMMENT "Creating version-create.mongo from JSON files"
   )
+
+  find_group_name("db_mongodb")
+  install(
+    FILES ${CMAKE_BINARY_DIR}/utils/kamctl/db_mongodb/kamailio/version-create.mongo
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}/mongodb/${MAIN_NAME}
+    OPTIONAL
+    COMPONENT ${group_name}
+  )
 endif()
 
-find_group_name("db_mongodb")
-install(
-  FILES ${CMAKE_BINARY_DIR}/utils/kamctl/mongodb/kamailio/version-create.mongo
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}/mongodb/${MAIN_NAME}
-  OPTIONAL
-  COMPONENT ${group_name}
-)
-
 #---- DB mysql
-add_db_target(db_mysql "${STYLESHEETS}/mysql.xsl")
+add_db_target(db_mysql "${STYLESHEETS}/db_mysql.xsl")
 
 #---- DB Oracle
-add_db_target(db_oracle "${STYLESHEETS}/oracle.xsl")
+add_db_target(db_oracle "${STYLESHEETS}/db_oracle.xsl")
 
 #---- DB postgres
-add_db_target(db_postgres "${STYLESHEETS}/postgres.xsl")
+add_db_target(db_postgres "${STYLESHEETS}/db_postgres.xsl")
 
 #---- DB redis
 add_db_target(db_redis "${STYLESHEETS}/db_redis.xsl")
@@ -186,14 +231,17 @@ add_db_target(db_redis "${STYLESHEETS}/db_redis.xsl")
 add_db_target(db_sqlite "${STYLESHEETS}/db_sqlite.xsl")
 
 #---- DB text
-add_db_target(db_text "${STYLESHEETS}/dbtext.xsl")
+add_db_target(db_text "${STYLESHEETS}/db_text.xsl")
 
 #---- DB xhttp_pi
 add_db_target(pi_framework_table "${STYLESHEETS}/pi_framework_table.xsl")
 add_db_target(pi_framework_mod "${STYLESHEETS}/pi_framework_mod.xsl")
 
 # Add alias targets that match the dbschema
-if(XSLTPROC_EXECUTABLE)
+if(XSLTPROC_EXECUTABLE
+   AND TARGET dbschema_pi_framework_table
+   AND TARGET dbschema_pi_framework_mod
+)
   add_custom_target(dbschema_xhttp_pi)
   add_dependencies(dbschema_xhttp_pi dbschema_pi_framework_table dbschema_pi_framework_mod)
 
