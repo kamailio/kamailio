@@ -94,18 +94,19 @@ Ovidiu Sas
               4.53. str_find(str1, str2)
               4.54. str_ifind(str1, str2)
               4.55. str_any_in(txt, clist)
-              4.56. set_body_multipart([txt, content_type][, boundary])
-              4.57. append_body_part(txt, content_type[,
+              4.56. str_all_in(txt, clist)
+              4.57. set_body_multipart([txt, content_type][, boundary])
+              4.58. append_body_part(txt, content_type[,
                       content_disposition])
 
-              4.58. append_body_part_hex(txt, content_type[,
+              4.59. append_body_part_hex(txt, content_type[,
                       content_disposition])
 
-              4.59. get_body_part(content_type, opv)
-              4.60. get_body_part_raw(content_type, opv)
-              4.61. remove_body_part(content_type)
-              4.62. regex_substring(itext, regexp, mindex, mcount, dpv)
-              4.63. via_param_rm(name, idx)
+              4.60. get_body_part(content_type, opv)
+              4.61. get_body_part_raw(content_type, opv)
+              4.62. remove_body_part(content_type)
+              4.63. regex_substring(itext, regexp, mindex, mcount, dpv)
+              4.64. via_param_rm(name, idx)
 
    2. Developer Guide
 
@@ -170,15 +171,16 @@ Ovidiu Sas
    1.53. str_find usage
    1.54. str_ifind usage
    1.55. str_any_in usage
-   1.56. set_body_multipart usage
-   1.57. append_body_part usage
-   1.58. append_body_part with headers
-   1.59. append_body_part_hex usage
-   1.60. get_body_part usage
-   1.61. get_body_part_raw usage
-   1.62. remove_body_part usage
-   1.63. _regex_substring usage
-   1.64. via_param_rm usage
+   1.56. str_all_in usage
+   1.57. set_body_multipart usage
+   1.58. append_body_part usage
+   1.59. append_body_part with headers
+   1.60. append_body_part_hex usage
+   1.61. get_body_part usage
+   1.62. get_body_part_raw usage
+   1.63. remove_body_part usage
+   1.64. _regex_substring usage
+   1.65. via_param_rm usage
 
 Chapter 1. Admin Guide
 
@@ -248,16 +250,17 @@ Chapter 1. Admin Guide
         4.53. str_find(str1, str2)
         4.54. str_ifind(str1, str2)
         4.55. str_any_in(txt, clist)
-        4.56. set_body_multipart([txt, content_type][, boundary])
-        4.57. append_body_part(txt, content_type[, content_disposition])
-        4.58. append_body_part_hex(txt, content_type[,
+        4.56. str_all_in(txt, clist)
+        4.57. set_body_multipart([txt, content_type][, boundary])
+        4.58. append_body_part(txt, content_type[, content_disposition])
+        4.59. append_body_part_hex(txt, content_type[,
                 content_disposition])
 
-        4.59. get_body_part(content_type, opv)
-        4.60. get_body_part_raw(content_type, opv)
-        4.61. remove_body_part(content_type)
-        4.62. regex_substring(itext, regexp, mindex, mcount, dpv)
-        4.63. via_param_rm(name, idx)
+        4.60. get_body_part(content_type, opv)
+        4.61. get_body_part_raw(content_type, opv)
+        4.62. remove_body_part(content_type)
+        4.63. regex_substring(itext, regexp, mindex, mcount, dpv)
+        4.64. via_param_rm(name, idx)
 
 1. Overview
 
@@ -355,14 +358,15 @@ From: medabeda
    4.53. str_find(str1, str2)
    4.54. str_ifind(str1, str2)
    4.55. str_any_in(txt, clist)
-   4.56. set_body_multipart([txt, content_type][, boundary])
-   4.57. append_body_part(txt, content_type[, content_disposition])
-   4.58. append_body_part_hex(txt, content_type[, content_disposition])
-   4.59. get_body_part(content_type, opv)
-   4.60. get_body_part_raw(content_type, opv)
-   4.61. remove_body_part(content_type)
-   4.62. regex_substring(itext, regexp, mindex, mcount, dpv)
-   4.63. via_param_rm(name, idx)
+   4.56. str_all_in(txt, clist)
+   4.57. set_body_multipart([txt, content_type][, boundary])
+   4.58. append_body_part(txt, content_type[, content_disposition])
+   4.59. append_body_part_hex(txt, content_type[, content_disposition])
+   4.60. get_body_part(content_type, opv)
+   4.61. get_body_part_raw(content_type, opv)
+   4.62. remove_body_part(content_type)
+   4.63. regex_substring(itext, regexp, mindex, mcount, dpv)
+   4.64. via_param_rm(name, idx)
 
 4.1.  search(re)
 
@@ -1402,7 +1406,21 @@ if (str_any_in("$hdr(X-Hdr)", ";',:")) {
 }
 ...
 
-4.56.  set_body_multipart([txt, content_type][, boundary])
+4.56.  str_all_in(txt, clist)
+
+   Return 1 (true) if all character in "clist" are found inside "txt".
+   Both paramters can contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.56. str_all_in usage
+...
+if (str_all_in("$hdr(X-Hdr)", ".;-")) {
+    # do interesting stuff here
+}
+...
+
+4.57.  set_body_multipart([txt, content_type][, boundary])
 
    Set multipart body to a SIP message. If called with no parameters, will
    convert present body to multipart.
@@ -1423,7 +1441,7 @@ if (str_any_in("$hdr(X-Hdr)", ";',:")) {
    Note: it may be required that msg_apply_changes() from textopsx module
    has to be executed if there are other operations over the new body.
 
-   Example 1.56. set_body_multipart usage
+   Example 1.57. set_body_multipart usage
 ...
 set_body_multipart("test", "text/plain", "delimiter");
 msg_apply_changes();
@@ -1446,7 +1464,7 @@ text
 --delimiter
 ...
 
-4.57.  append_body_part(txt, content_type[, content_disposition])
+4.58.  append_body_part(txt, content_type[, content_disposition])
 
    Append a part on multipart body SIP message. Will use
    "unique-boundary-1" as boundary.
@@ -1467,7 +1485,7 @@ text
    Note: it may be required that msg_apply_changes() from textopsx module
    has to be executed if there are other operations over the new body.
 
-   Example 1.57. append_body_part usage
+   Example 1.58. append_body_part usage
 ...
 $var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c";
 append_body_part("$var(b)", "application/vnd.cirpack.isdn-ext", "signal;handling
@@ -1490,7 +1508,7 @@ Content-Disposition: signal;handling=required
    appended after the value of the content-type parameter, separated by
    `\r\n` (at the very end do not add the '\r\n').
 
-   Example 1.58. append_body_part with headers
+   Example 1.59. append_body_part with headers
 ...
 $var(b) = "7e Od 04 55 75 69 20 4d 61 6b 65 43 61 6c 6c";
 append_body_part("$var(b)", "application/vnd.cirpack.isdn-ext\r\nX-Header: xyz",
@@ -1510,7 +1528,7 @@ Content-Disposition: signal;handling=required
 --unique-boundary-1
 ...
 
-4.58.  append_body_part_hex(txt, content_type[, content_disposition])
+4.59.  append_body_part_hex(txt, content_type[, content_disposition])
 
    Append a part on multipart body SIP message, with the content provided
    in hexa format. Will use "unique-boundary-1" as boundary.
@@ -1534,7 +1552,7 @@ Content-Disposition: signal;handling=required
    Note: it may be required that msg_apply_changes() from textopsx module
    has to be executed if there are other operations over the new body.
 
-   Example 1.59. append_body_part_hex usage
+   Example 1.60. append_body_part_hex usage
 ...
 $var(b) = "6b 61 6d 61 69 6c 69 6f";
 append_body_part_hex("$var(b)", "application/my-custom-ext");
@@ -1554,7 +1572,7 @@ kamailio
    If other headers should be added to a MIME body part, see the docs for
    append_body_part(...) function.
 
-4.59.  get_body_part(content_type, opv)
+4.60.  get_body_part(content_type, opv)
 
    Return the content of a multipart body SIP message, storing it in opv.
 
@@ -1567,12 +1585,12 @@ kamailio
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.60. get_body_part usage
+   Example 1.61. get_body_part usage
 ...
 get_body_part("application/vnd.cirpack.isdn-ext", "$var(pbody)");
 ...
 
-4.60.  get_body_part_raw(content_type, opv)
+4.61.  get_body_part_raw(content_type, opv)
 
    Return the content of a multipart body SIP message, including headers
    and boundary string, storing it in opv.
@@ -1586,12 +1604,12 @@ get_body_part("application/vnd.cirpack.isdn-ext", "$var(pbody)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.61. get_body_part_raw usage
+   Example 1.62. get_body_part_raw usage
 ...
 get_body_part("application/vnd.cirpack.isdn-ext", "$var(hbody)");
 ...
 
-4.61.  remove_body_part(content_type)
+4.62.  remove_body_part(content_type)
 
    Remove a part on a multipart body SIP message.
 
@@ -1609,13 +1627,13 @@ get_body_part("application/vnd.cirpack.isdn-ext", "$var(hbody)");
    Note: it may be required that msg_apply_changes() from textopsx module
    has to be executed if there are other operations over the new body.
 
-   Example 1.62. remove_body_part usage
+   Example 1.63. remove_body_part usage
 ...
 remove_body_part("application/vnd.cirpack.isdn-ext");
 msg_apply_changes();
 ...
 
-4.62.  regex_substring(itext, regexp, mindex, mcount, dpv)
+4.63.  regex_substring(itext, regexp, mindex, mcount, dpv)
 
    Search in text with given regular expression then set dpv
    pseudo-variable with the matched token at provided index.
@@ -1635,7 +1653,7 @@ msg_apply_changes();
    Note that the regular expression extended is used. More info at:
    https://www.regular-expressions.info/posix.html.
 
-   Example 1.63. _regex_substring usage
+   Example 1.64. _regex_substring usage
         ...
         regex_substring("___ abc123def ___ ghi456 ___", "([a-z]*)([0-9]+)([a-z]*
 )",
@@ -1647,7 +1665,7 @@ msg_apply_changes();
         ----
         ...
 
-4.63.  via_param_rm(name, idx)
+4.64.  via_param_rm(name, idx)
 
    Remove parameter matching by name from Via body at the specified index.
    The index starts from 0 (first Via body). Negative index counts from
@@ -1661,7 +1679,7 @@ msg_apply_changes();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.64. via_param_rm usage
+   Example 1.65. via_param_rm usage
 ...
 via_param_rm("p1", "0");
 ...
