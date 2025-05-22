@@ -37,5 +37,9 @@ extern usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
 extern pua_api_t pua;	/*!< Structure containing pointers to PUA functions*/
 
 extern int reginfo_use_domain;
+extern int reginfo_disable_publish;
+
+int w_reginfo_disable_publish(sip_msg_t *, char *, char *);
+int ki_reginfo_disable_publish(sip_msg_t *);
 
 #endif
