@@ -46,6 +46,8 @@ str server_address = {NULL, 0};
 
 int publish_reginfo = 1;
 
+int reginfo_disable_publish = 0; /* Disables publish for current message */
+
 sruid_t _reginfo_sruid;
 
 int reginfo_use_domain = 0;
@@ -65,6 +67,8 @@ static cmd_export_t cmds[] = {
 		fixup_subscribe, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
 	{"reginfo_handle_notify", (cmd_function)reginfo_handle_notify, 1,
 		domain_fixup, 0, REQUEST_ROUTE},
+	{"reginfo_disable_publish", (cmd_function)w_reginfo_disable_publish, 0,
+		0, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
