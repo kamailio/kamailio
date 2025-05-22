@@ -221,8 +221,10 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 	long int td;
 	str number = STR_NULL;
 
-	if((active == NULL) || (*active == 0))
+	if((active == NULL) || (*active == 0)) {
+		LM_ERR("active shm var is NULL or 0\n");
 		return -1;
+	}
 
 	switch(_number->type) {
 		case MP_STR:
@@ -255,10 +257,14 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 	}
 
 	LM_DBG("querying '%.*s'...\n", number.len, number.s);
-	if(server_list == NULL)
+	if(server_list == NULL) {
+		LM_ERR("server_list is NULL\n");
 		return -1;
-	if(server_list->fds == NULL)
+	}
+	if(server_list->fds == NULL) {
+		LM_ERR("server_list fds is NULL\n");
 		return -1;
+	}
 
 	if(gettimeofday(&tstart, NULL) != 0) {
 		LM_ERR("gettimeofday() failed with errno=%d (%s)\n", errno,
@@ -282,7 +288,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 						 + (tnow.tv_sec - tstart.tv_sec) * 1000000)
 				 / 1000;
 			if(td > timeout) {
-				LM_NOTICE("exceeded timeout while flushing recv buffer.\n");
+				LM_ERR("exceeded timeout while flushing recv buffer.\n");
 				return -1;
 			}
 		}
@@ -357,10 +363,10 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 		if(td > timeout) {
 			timeoutlogs++;
 			if(timeoutlogs < 0) {
-				LM_NOTICE("exceeded timeout while waiting for response.\n");
+				LM_ERR("exceeded timeout while waiting for response.\n");
 			} else if(timeoutlogs > 1000) {
-				LM_NOTICE("exceeded timeout %d times while waiting for "
-						  "response.\n",
+				LM_ERR("exceeded timeout %d times while waiting for "
+					   "response.\n",
 						timeoutlogs);
 				timeoutlogs = 0;
 			}
@@ -797,6 +803,32 @@ static void pdb_rpc_status(rpc_t *rpc, void *ctx)
 			(*active) ? "active" : "inactive");
 }
 
+static void pdb_rpc_timeout(rpc_t *rpc, void *ctx)
+{
+	int new_val = -1;
+	int old_val = timeout;
+	void *vh;
+
+	if(rpc->add(ctx, "{", &vh) < 0) {
+		rpc->fault(ctx, 500, "Server error");
+		return;
+	}
+
+	if(rpc->scan(ctx, "*d", &new_val) < 1) {
+		if(rpc->struct_add(vh, "d", "timeout", old_val) < 0) {
+			rpc->fault(ctx, 500, "Internal error reply structure");
+		}
+		return;
+	}
+
+	if(rpc->struct_add(vh, "dd", "old_timeout", old_val, "new_timeout", new_val) < 0) {
+		rpc->fault(ctx, 500, "Internal error reply structure");
+		return;
+	}
+
+	timeout = new_val;
+}
+
 static void pdb_rpc_activate(rpc_t *rpc, void *ctx)
 {
 	if(active == NULL) {
@@ -815,6 +847,8 @@ static void pdb_rpc_deactivate(rpc_t *rpc, void *ctx)
 	*active = 0;
 }
 
+static const char *pdb_rpc_timeout_doc[2] = {"Set the pdb_query timeout.", 0};
+
 static const char *pdb_rpc_status_doc[2] = {"Get the pdb status.", 0};
 
 static const char *pdb_rpc_activate_doc[2] = {"Activate pdb.", 0};
@@ -822,6 +856,7 @@ static const char *pdb_rpc_activate_doc[2] = {"Activate pdb.", 0};
 static const char *pdb_rpc_deactivate_doc[2] = {"Deactivate pdb.", 0};
 
 rpc_export_t pdb_rpc[] = {{"pdb.status", pdb_rpc_status, pdb_rpc_status_doc, 0},
+		{"pdb.timeout", pdb_rpc_timeout, pdb_rpc_timeout_doc, 0},
 		{"pdb.activate", pdb_rpc_activate, pdb_rpc_activate_doc, 0},
 		{"pdb.deactivate", pdb_rpc_deactivate, pdb_rpc_deactivate_doc, 0},
 		{0, 0, 0, 0}};
