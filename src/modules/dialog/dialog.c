@@ -2618,6 +2618,27 @@ static int ki_dlg_var_is_null(sip_msg_t *msg, str *name)
 /**
  *
  */
+static int ki_dlg_req_within4(struct sip_msg *msg, str *side, str *method,
+		str *content_type, str *content)
+{
+	int n = 0;
+	if(side && side->len > 0) {
+		if(side->len == 6 && strncasecmp(side->s, "caller", 6) == 0) {
+			n = 1;
+		} else if(side->len == 6 && strncasecmp(side->s, "callee", 6) == 0) {
+			n = 2;
+		} else {
+			return -1;
+		}
+	}
+
+	return ki_dlg_req_with_headers_and_content(
+			msg, n, method, NULL, content_type, content);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_dialog_exports[] = {
 	{ str_init("dialog"), str_init("dlg_manage"),
@@ -2779,6 +2800,11 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 		SR_KEMIP_INT, ki_dlg_bridge,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_req_within4"),
+		SR_KEMIP_INT, ki_dlg_req_within4,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
