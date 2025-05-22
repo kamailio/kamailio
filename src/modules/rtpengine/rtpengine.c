@@ -362,6 +362,26 @@ static pv_spec_t *dtmf_event_timestamp_pvar = NULL;
 static str dtmf_event_pvar_str = {NULL, 0};
 static pv_spec_t *dtmf_event_pvar = NULL;
 
+static str dtmf_event_source_label_pvar_str = {NULL, 0};
+static pv_spec_t *dtmf_event_source_label_pvar = NULL;
+
+static str dtmf_event_tags_pvar_str = {NULL, 0};
+static pv_spec_t *dtmf_event_tags_pvar = NULL;
+
+static str dtmf_event_type_pvar_str = {NULL, 0};
+static pv_spec_t *dtmf_event_type_pvar = NULL;
+
+static str dtmf_event_source_ip_pvar_str = {NULL, 0};
+static pv_spec_t *dtmf_event_source_ip_pvar = NULL;
+
+static str dtmf_event_duration_pvar_str = {NULL, 0};
+static pv_spec_t *dtmf_event_duration_pvar = NULL;
+
+static str dtmf_event_volume_pvar_str = {NULL, 0};
+static pv_spec_t *dtmf_event_volume_pvar = NULL;
+
+static str rtpe_event_callback = STR_NULL;
+
 #define RTPENGINE_SESS_LIMIT_MSG "Parallel session limit reached"
 #define RTPENGINE_SESS_LIMIT_MSG_LEN (sizeof(RTPENGINE_SESS_LIMIT_MSG) - 1)
 
@@ -531,7 +551,13 @@ static param_export_t params[] = {
 	{"dtmf_event_source_tag", PARAM_STR, &dtmf_event_source_tag_pvar_str},
 	{"dtmf_event_timestamp", PARAM_STR, &dtmf_event_timestamp_pvar_str},
 	{"dtmf_event", PARAM_STR, &dtmf_event_pvar_str},
-
+	{"dtmf_event_source_label", PARAM_STR, &dtmf_event_source_label_pvar_str},
+	{"dtmf_event_tags", PARAM_STR, &dtmf_event_tags_pvar_str},
+	{"dtmf_event_type", PARAM_STR, &dtmf_event_type_pvar_str},
+	{"dtmf_event_source_ip", PARAM_STR, &dtmf_event_source_ip_pvar_str},
+	{"dtmf_event_duration", PARAM_STR, &dtmf_event_duration_pvar_str},
+	{"dtmf_event_volume", PARAM_STR, &dtmf_event_volume_pvar_str},
+	{"event_callback",  PARAM_STR, &rtpe_event_callback},
 	/* MOS stats output */
 	/* global averages */
 	{"mos_min_pv", PARAM_STR, &global_mos_stats.min.mos_param},
@@ -1527,9 +1553,11 @@ static void rtpengine_dtmf_events_loop(void)
 			goto end;
 		}
 
-		if(dtmf_event_rt == -1) {
-			LM_NOTICE("nothing to do - nobody is listening!\n");
-			goto end;
+		if(rtpe_event_callback.s == NULL || rtpe_event_callback.len <= 0) {
+			if(dtmf_event_rt == -1) {
+				LM_NOTICE("nothing to do - nobody is listening!\n");
+				goto end;
+			}
 		}
 
 		p = shm_malloc(ret + 1);
@@ -1560,6 +1588,8 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len)
 	struct sip_msg *fmsg = NULL;
 	struct run_act_ctx ctx;
 	int rtb;
+
+	sr_kemi_eng_t *keng = NULL;
 
 	LM_DBG("executing event_route[rtpengine:dtmf-event] (%d)\n", dtmf_event_rt);
 	LM_DBG("dispatching buffer: %s\n", buffer);
@@ -1648,14 +1678,162 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len)
 						dtmf_event_pvar_str.s);
 				goto error;
 			}
+		} else if(strcmp(it->string, "source_label") == 0) {
+			pv_value_t pv_val;
+			pv_val.rs.s = it->valuestring;
+			pv_val.rs.len = strlen(it->valuestring);
+			pv_val.flags = PV_VAL_STR;
+
+			if(dtmf_event_source_label_pvar->setf(0,
+					   &dtmf_event_source_label_pvar->pvp, (int)EQ_T, &pv_val)
+					< 0) {
+				LM_ERR("error setting pvar <%.*s>\n",
+						dtmf_event_source_label_pvar_str.len,
+						dtmf_event_source_label_pvar_str.s);
+				goto error;
+			}
+		} else if(strcmp(it->string, "tags") == 0) {
+			pv_value_t pv_val;
+			srjson_t *tag;
+			char *tags_str = NULL;
+			int tags_len = 0;
+			int first = 1;
+
+			/* Calculate total length needed for all tags */
+			for(tag = it->child; tag; tag = tag->next) {
+				if(!first) {
+					tags_len += 1; /* For comma */
+				}
+				tags_len += strlen(tag->valuestring);
+				first = 0;
+			}
+
+			if(tags_len > 0) {
+				tags_str = pkg_malloc(tags_len + 1);
+				if(!tags_str) {
+					LM_ERR("no more pkg memory\n");
+					goto error;
+				}
+				tags_str[0] = '\0';
+				first = 1;
+
+				/* Concatenate all tags with commas */
+				for(tag = it->child; tag; tag = tag->next) {
+					if(!first) {
+						strcat(tags_str, ",");
+					}
+					strcat(tags_str, tag->valuestring);
+					first = 0;
+				}
+
+				pv_val.rs.s = tags_str;
+				pv_val.rs.len = tags_len;
+				pv_val.flags = PV_VAL_STR;
+
+				if(dtmf_event_tags_pvar->setf(
+						   0, &dtmf_event_tags_pvar->pvp, (int)EQ_T, &pv_val)
+						< 0) {
+					LM_ERR("error setting pvar <%.*s>\n",
+							dtmf_event_tags_pvar_str.len,
+							dtmf_event_tags_pvar_str.s);
+					pkg_free(tags_str);
+					goto error;
+				}
+				pkg_free(tags_str);
+			}
+		} else if(strcmp(it->string, "type") == 0) {
+			pv_value_t pv_val;
+			int_str val = {0};
+			char intbuf[32];
+			snprintf(intbuf, sizeof(intbuf), "%lld", SRJSON_GET_LLONG(it));
+			memset(&val, 0, sizeof(val));
+
+			pv_val.rs.s = intbuf;
+			pv_val.rs.len = strlen(intbuf);
+			pv_val.flags = PV_VAL_STR;
+
+			if(dtmf_event_type_pvar->setf(
+					   0, &dtmf_event_type_pvar->pvp, (int)EQ_T, &pv_val)
+					< 0) {
+				LM_ERR("error setting pvar <%.*s>\n",
+						dtmf_event_type_pvar_str.len,
+						dtmf_event_type_pvar_str.s);
+				goto error;
+			}
+		} else if(strcmp(it->string, "source_ip") == 0) {
+			pv_value_t pv_val;
+			pv_val.rs.s = it->valuestring;
+			pv_val.rs.len = strlen(it->valuestring);
+			pv_val.flags = PV_VAL_STR;
+
+			if(dtmf_event_source_ip_pvar->setf(
+					   0, &dtmf_event_source_ip_pvar->pvp, (int)EQ_T, &pv_val)
+					< 0) {
+				LM_ERR("error setting pvar <%.*s>\n",
+						dtmf_event_source_ip_pvar_str.len,
+						dtmf_event_source_ip_pvar_str.s);
+				goto error;
+			}
+		} else if(strcmp(it->string, "duration") == 0) {
+			pv_value_t pv_val;
+			int_str val = {0};
+			char intbuf[32];
+			snprintf(intbuf, sizeof(intbuf), "%lld", SRJSON_GET_LLONG(it));
+			memset(&val, 0, sizeof(val));
+
+			pv_val.rs.s = intbuf;
+			pv_val.rs.len = strlen(intbuf);
+			pv_val.flags = PV_VAL_STR;
+
+			if(dtmf_event_duration_pvar->setf(
+					   0, &dtmf_event_duration_pvar->pvp, (int)EQ_T, &pv_val)
+					< 0) {
+				LM_ERR("error setting pvar <%.*s>\n",
+						dtmf_event_duration_pvar_str.len,
+						dtmf_event_duration_pvar_str.s);
+				goto error;
+			}
+		} else if(strcmp(it->string, "volume") == 0) {
+			pv_value_t pv_val;
+			int_str val = {0};
+			char intbuf[32];
+			snprintf(intbuf, sizeof(intbuf), "%lld", SRJSON_GET_LLONG(it));
+			memset(&val, 0, sizeof(val));
+
+			pv_val.rs.s = intbuf;
+			pv_val.rs.len = strlen(intbuf);
+			pv_val.flags = PV_VAL_STR;
+
+			if(dtmf_event_volume_pvar->setf(
+					   0, &dtmf_event_volume_pvar->pvp, (int)EQ_T, &pv_val)
+					< 0) {
+				LM_ERR("error setting pvar <%.*s>\n",
+						dtmf_event_volume_pvar_str.len,
+						dtmf_event_volume_pvar_str.s);
+				goto error;
+			}
 		}
 	}
 
 	fmsg = faked_msg_next();
 	rtb = get_route_type();
+	str evname = str_init("rtpengine:dtmf-event");
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
-	run_top_route(event_rt.rlist[dtmf_event_rt], fmsg, &ctx);
+	if(rtpe_event_callback.s == NULL || rtpe_event_callback.len <= 0) {
+		run_top_route(event_rt.rlist[dtmf_event_rt], fmsg, &ctx);
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng != NULL) {
+			if(sr_kemi_route(
+					   keng, fmsg, REQUEST_ROUTE, &rtpe_event_callback, &evname)
+					< 0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		} else {
+			LM_ERR("no event route or kemi callback found for execution\n");
+		}
+	}
 	set_route_type(rtb);
 	if(ctx.run_flags & DROP_R_F) {
 		LM_ERR("exit due to 'drop' in event route\n");
@@ -2365,67 +2543,147 @@ static int mod_init(void)
 	}
 
 	dtmf_event_rt = route_lookup(&event_rt, "rtpengine:dtmf-event");
-	if(dtmf_event_rt >= 0 && event_rt.rlist[dtmf_event_rt] == 0) {
-		dtmf_event_rt = -1; /* disable */
-	} else {
-		if(dtmf_event_callid_pvar_str.len > 0) {
-			dtmf_event_callid_pvar = pv_cache_get(&dtmf_event_callid_pvar_str);
-			if(dtmf_event_callid_pvar == NULL
-					|| (dtmf_event_callid_pvar->type != PVT_AVP
-							&& dtmf_event_callid_pvar->type != PVT_SCRIPTVAR)) {
-				LM_ERR("dtmf_event_callid_pv: not a valid AVP or VAR "
-					   "definition <%.*s>\n",
-						dtmf_event_callid_pvar_str.len,
-						dtmf_event_callid_pvar_str.s);
-				return -1;
-			}
-		}
 
-		if(dtmf_event_source_tag_pvar_str.len > 0) {
-			dtmf_event_source_tag_pvar =
-					pv_cache_get(&dtmf_event_source_tag_pvar_str);
-			if(dtmf_event_source_tag_pvar == NULL
-					|| (dtmf_event_source_tag_pvar->type != PVT_AVP
-							&& dtmf_event_source_tag_pvar->type
-									   != PVT_SCRIPTVAR)) {
-				LM_ERR("dtmf_event_source_tag_pv: not a valid AVP or VAR "
-					   "definition <%.*s>\n",
-						dtmf_event_source_tag_pvar_str.len,
-						dtmf_event_source_tag_pvar_str.s);
-				return -1;
-			}
+	if(rtpe_event_callback.s == NULL || rtpe_event_callback.len <= 0) {
+		if(dtmf_event_rt >= 0 && event_rt.rlist[dtmf_event_rt] == 0) {
+			dtmf_event_rt = -1; /* disable */
+			return 0;
 		}
+	}
 
-		if(dtmf_event_timestamp_pvar_str.len > 0) {
-			dtmf_event_timestamp_pvar =
-					pv_cache_get(&dtmf_event_timestamp_pvar_str);
-			if(dtmf_event_timestamp_pvar == NULL
-					|| (dtmf_event_timestamp_pvar->type != PVT_AVP
-							&& dtmf_event_timestamp_pvar->type
-									   != PVT_SCRIPTVAR)) {
-				LM_ERR("dtmf_event_timestamp_pv: not a valid AVP or VAR "
-					   "definition <%.*s>\n",
-						dtmf_event_timestamp_pvar_str.len,
-						dtmf_event_timestamp_pvar_str.s);
-				return -1;
-			}
+	if(dtmf_event_callid_pvar_str.len > 0) {
+		dtmf_event_callid_pvar = pv_cache_get(&dtmf_event_callid_pvar_str);
+		if(dtmf_event_callid_pvar == NULL
+				|| (dtmf_event_callid_pvar->type != PVT_AVP
+						&& dtmf_event_callid_pvar->type != PVT_SCRIPTVAR)) {
+			LM_ERR("dtmf_event_callid_pv: not a valid AVP or VAR "
+				   "definition <%.*s>\n",
+					dtmf_event_callid_pvar_str.len,
+					dtmf_event_callid_pvar_str.s);
+			return -1;
 		}
+	}
 
-		if(dtmf_event_pvar_str.len > 0) {
-			dtmf_event_pvar = pv_cache_get(&dtmf_event_pvar_str);
-			if(dtmf_event_pvar == NULL
-					|| (dtmf_event_pvar->type != PVT_AVP
-							&& dtmf_event_pvar->type != PVT_SCRIPTVAR)) {
-				LM_ERR("event_pv: not a valid AVP or VAR definition <%.*s>\n",
-						dtmf_event_pvar_str.len, dtmf_event_pvar_str.s);
-				return -1;
-			}
+	if(dtmf_event_source_tag_pvar_str.len > 0) {
+		dtmf_event_source_tag_pvar =
+				pv_cache_get(&dtmf_event_source_tag_pvar_str);
+		if(dtmf_event_source_tag_pvar == NULL
+				|| (dtmf_event_source_tag_pvar->type != PVT_AVP
+						&& dtmf_event_source_tag_pvar->type != PVT_SCRIPTVAR)) {
+			LM_ERR("dtmf_event_source_tag_pv: not a valid AVP or VAR "
+				   "definition <%.*s>\n",
+					dtmf_event_source_tag_pvar_str.len,
+					dtmf_event_source_tag_pvar_str.s);
+			return -1;
 		}
+	}
 
-		if(rtpengine_dtmf_event_sock.len > 0) {
-			register_procs(1);
-			cfg_register_child(1);
+	if(dtmf_event_timestamp_pvar_str.len > 0) {
+		dtmf_event_timestamp_pvar =
+				pv_cache_get(&dtmf_event_timestamp_pvar_str);
+		if(dtmf_event_timestamp_pvar == NULL
+				|| (dtmf_event_timestamp_pvar->type != PVT_AVP
+						&& dtmf_event_timestamp_pvar->type != PVT_SCRIPTVAR)) {
+			LM_ERR("dtmf_event_timestamp_pv: not a valid AVP or VAR "
+				   "definition <%.*s>\n",
+					dtmf_event_timestamp_pvar_str.len,
+					dtmf_event_timestamp_pvar_str.s);
+			return -1;
 		}
+	}
+
+	if(dtmf_event_pvar_str.len > 0) {
+		dtmf_event_pvar = pv_cache_get(&dtmf_event_pvar_str);
+		if(dtmf_event_pvar == NULL
+				|| (dtmf_event_pvar->type != PVT_AVP
+						&& dtmf_event_pvar->type != PVT_SCRIPTVAR)) {
+			LM_ERR("event_pv: not a valid AVP or VAR definition <%.*s>\n",
+					dtmf_event_pvar_str.len, dtmf_event_pvar_str.s);
+			return -1;
+		}
+	}
+	if(dtmf_event_source_label_pvar_str.len > 0) {
+		dtmf_event_source_label_pvar =
+				pv_cache_get(&dtmf_event_source_label_pvar_str);
+		if(dtmf_event_source_label_pvar == NULL
+				|| (dtmf_event_source_label_pvar->type != PVT_AVP
+						&& dtmf_event_source_label_pvar->type
+								   != PVT_SCRIPTVAR)) {
+			LM_ERR("dtmf_event_source_label_pv: not a valid AVP or VAR "
+				   "definition <%.*s>\n",
+					dtmf_event_source_label_pvar_str.len,
+					dtmf_event_source_label_pvar_str.s);
+			return -1;
+		}
+	}
+
+	if(dtmf_event_tags_pvar_str.len > 0) {
+		dtmf_event_tags_pvar = pv_cache_get(&dtmf_event_tags_pvar_str);
+		if(dtmf_event_tags_pvar == NULL
+				|| (dtmf_event_tags_pvar->type != PVT_AVP
+						&& dtmf_event_tags_pvar->type != PVT_SCRIPTVAR)) {
+			LM_ERR("dtmf_event_tags_pv: not a valid AVP or VAR "
+				   "definition <%.*s>\n",
+					dtmf_event_tags_pvar_str.len, dtmf_event_tags_pvar_str.s);
+			return -1;
+		}
+	}
+
+	if(dtmf_event_type_pvar_str.len > 0) {
+		dtmf_event_type_pvar = pv_cache_get(&dtmf_event_type_pvar_str);
+		if(dtmf_event_type_pvar == NULL
+				|| (dtmf_event_type_pvar->type != PVT_AVP
+						&& dtmf_event_type_pvar->type != PVT_SCRIPTVAR)) {
+			LM_ERR("dtmf_event_type_pv: not a valid AVP or VAR "
+				   "definition <%.*s>\n",
+					dtmf_event_type_pvar_str.len, dtmf_event_type_pvar_str.s);
+			return -1;
+		}
+	}
+
+	if(dtmf_event_source_ip_pvar_str.len > 0) {
+		dtmf_event_source_ip_pvar =
+				pv_cache_get(&dtmf_event_source_ip_pvar_str);
+		if(dtmf_event_source_ip_pvar == NULL
+				|| (dtmf_event_source_ip_pvar->type != PVT_AVP
+						&& dtmf_event_source_ip_pvar->type != PVT_SCRIPTVAR)) {
+			LM_ERR("dtmf_event_source_ip_pv: not a valid AVP or VAR "
+				   "definition <%.*s>\n",
+					dtmf_event_source_ip_pvar_str.len,
+					dtmf_event_source_ip_pvar_str.s);
+			return -1;
+		}
+	}
+
+	if(dtmf_event_duration_pvar_str.len > 0) {
+		dtmf_event_duration_pvar = pv_cache_get(&dtmf_event_duration_pvar_str);
+		if(dtmf_event_duration_pvar == NULL
+				|| (dtmf_event_duration_pvar->type != PVT_AVP
+						&& dtmf_event_duration_pvar->type != PVT_SCRIPTVAR)) {
+			LM_ERR("dtmf_event_duration_pv: not a valid AVP or VAR "
+				   "definition <%.*s>\n",
+					dtmf_event_duration_pvar_str.len,
+					dtmf_event_duration_pvar_str.s);
+			return -1;
+		}
+	}
+
+	if(dtmf_event_volume_pvar_str.len > 0) {
+		dtmf_event_volume_pvar = pv_cache_get(&dtmf_event_volume_pvar_str);
+		if(dtmf_event_volume_pvar == NULL
+				|| (dtmf_event_volume_pvar->type != PVT_AVP
+						&& dtmf_event_volume_pvar->type != PVT_SCRIPTVAR)) {
+			LM_ERR("dtmf_event_volume_pv: not a valid AVP or VAR "
+				   "definition <%.*s>\n",
+					dtmf_event_volume_pvar_str.len,
+					dtmf_event_volume_pvar_str.s);
+			return -1;
+		}
+	}
+
+	if(rtpengine_dtmf_event_sock.len > 0) {
+		register_procs(1);
+		cfg_register_child(1);
 	}
 
 	return 0;
@@ -5729,6 +5987,13 @@ static int ki_unblock_dtmf2(sip_msg_t *msg, str *flags, str *viabranch)
 			msg, rtpengine_simple_wrap, parms, 1, OP_UNBLOCK_DTMF);
 }
 
+static int ki_play_dtmf(sip_msg_t *msg, str *flags)
+{
+	void *parms[2] = {flags, NULL};
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_simple_wrap, parms, 1, OP_PLAY_DTMF);
+}
+
 /* KI - play media */
 static int ki_play_media(sip_msg_t *msg, str *flags)
 {
@@ -5982,6 +6247,11 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
         { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
+	{ str_init("rtpengine"), str_init("play_dtmf"),
+		SR_KEMIP_INT, ki_play_dtmf,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
     { str_init("rtpengine"), str_init("unblock_dtmf0"),
         SR_KEMIP_INT, ki_unblock_dtmf0,
