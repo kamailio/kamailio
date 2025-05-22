@@ -626,9 +626,6 @@ sca_subscription *sca_subscription_create(str *aor, int event, str *subscriber,
 
 	len += sizeof(sca_subscription);
 	len += sizeof(char) * (aor->len + subscriber->len);
-	if(!SCA_STR_EMPTY(rr)) {
-		len += sizeof(char) * rr->len;
-	}
 
 	sub = (sca_subscription *)shm_malloc(len);
 	if(sub == NULL) {
@@ -660,18 +657,20 @@ sca_subscription *sca_subscription_create(str *aor, int event, str *subscriber,
 	SCA_STR_COPY(&sub->target_aor, aor);
 	len += aor->len;
 
+	// we shm_malloc this parts separately in case we need to update in-memory
+	// info for this subscriber. This is likely to happen if the
+	// subscriber goes off-line for some reason.
 	if(!SCA_STR_EMPTY(rr)) {
-		sub->rr.s = (char *)sub + len;
+		sub->rr.s = (char *)shm_malloc(rr->len);
+		if(sub->rr.s == NULL) {
+			SHM_MEM_ERROR;
+			goto error;
+		}
 		SCA_STR_COPY(&sub->rr, rr);
-		len += rr->len;
 	}
 	// dialog.id holds call-id + from-tag + to-tag; dialog.call_id,
 	// dialog.from_tag, and dialog.to_tag point to offsets within
 	// dialog.id.
-	//
-	// we shm_malloc this separately in case we need to update in-memory
-	// dialog saved for this subscriber. This is likely to happen if the
-	// subscriber goes off-line for some reason.
 	len = sizeof(char) * (call_id->len + from_tag->len + to_tag->len);
 	sub->dialog.id.s = (char *)shm_malloc(len);
 	if(sub->dialog.id.s == NULL) {
@@ -702,6 +701,9 @@ sca_subscription *sca_subscription_create(str *aor, int event, str *subscriber,
 
 error:
 	if(sub != NULL) {
+		if(sub->rr.s != NULL) {
+			shm_free(sub->rr.s);
+		}
 		if(sub->dialog.id.s != NULL) {
 			shm_free(sub->dialog.id.s);
 		}
@@ -733,6 +735,10 @@ void sca_subscription_free(void *value)
 
 	LM_DBG("Freeing %s subscription from %.*s\n",
 			sca_event_name_from_type(sub->event), STR_FMT(&sub->subscriber));
+
+	if(!SCA_STR_EMPTY(&sub->rr)) {
+		shm_free(sub->rr.s);
+	}
 
 	if(!SCA_STR_EMPTY(&sub->dialog.id)) {
 		shm_free(sub->dialog.id.s);
