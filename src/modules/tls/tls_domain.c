@@ -667,7 +667,7 @@ static int load_ca_list(tls_domain_t *d)
  */
 static int load_crl(tls_domain_t *d)
 {
-	int i;
+	int i;	
 	int procs_no;
 	X509_STORE *store;
 
@@ -708,6 +708,7 @@ static int load_crl(tls_domain_t *d)
 static int set_cipher_list(tls_domain_t *d)
 {
 	int i;
+	int sslrtn; /* used when setting cipher list */
 	int procs_no;
 	char *cipher_list;
 
@@ -737,7 +738,14 @@ static int set_cipher_list(tls_domain_t *d)
 		return 0;
 	procs_no = get_max_procs();
 	for(i = 0; i < procs_no; i++) {
-		if(SSL_CTX_set_cipher_list(d->ctx[i], cipher_list) == 0) {
+		if(d->method > TLS_USE_TLSv1_3 || d->method > TLS_USE_TLSv1_3_PLUS) {
+			/* TLS 1.3 and above should call this function when setting cipher lists */
+			LM_DBG("using tls method: %d\n", d->method);
+			sslrtn = SSL_CTX_set_ciphersuites(d->ctx[i], cipher_list);
+		} else {
+			sslrtn = SSL_CTX_set_cipher_list(d->ctx[i], cipher_list);
+		}		
+		if(sslrtn == 0) {
 			ERR("%s: Failure to set SSL context cipher list \"%s\"\n",
 					tls_domain_str(d), cipher_list);
 			return -1;
