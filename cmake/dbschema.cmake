@@ -59,6 +59,8 @@ function(add_db_target db_name xsl_file)
     set(install_folder "postgres")
   elseif(db_name STREQUAL "db_text")
     set(install_folder "dbtext")
+  elseif(db_name STREQUAL "pi_framework_table" OR db_name STREQUAL "pi_framework_mod")
+    set(install_folder "xhttp_pi")
   else()
     set(install_folder "${db_name}")
   endif()
@@ -101,7 +103,6 @@ function(add_db_target db_name xsl_file)
       TARGET dbschema_${db_name}
       POST_BUILD
       COMMAND ${POSTPROCESS_SCRIPT} 1 1
-              # ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix}
       COMMENT "Creating version table for ${db_name}"
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix}
     )
@@ -110,7 +111,6 @@ function(add_db_target db_name xsl_file)
       TARGET dbschema_${db_name}
       POST_BUILD
       COMMAND ${POSTPROCESS_SCRIPT} 2 10
-              # ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix}
       COMMENT "Creating version table for ${db_name}"
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix}
     )
@@ -130,7 +130,8 @@ function(add_db_target db_name xsl_file)
   # message(WARNING "group name is ${group_name}")
   # Before installing, ensure the target is built `dbschema_${db_name}`
   # install as previously done in makefile folder. see naming above
-  # TODO: when tools adopt to new folder structure, remove the install_folder variable
+  # TODO: when tools adopt to new folder structure, replace the install_folder variable
+  # with ${db_name_folder}
 
   install(
     DIRECTORY ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/
