@@ -381,12 +381,9 @@ static void __dialog_sendpublish(
 		uri = callee_entity_when_publish_disabled;
 	}
 
-	if(use_pubruri_avps
-			&& (refresh_pubruri_avps_flag > -1
-					|| (request
-							&& (request->flags
-									& (1U << (unsigned int)
-													refresh_pubruri_avps_flag))))) {
+	if(use_pubruri_avps && (refresh_pubruri_avps_flag > -1) && (request != NULL)
+			&& (request->flags
+					& (1U << (unsigned int)refresh_pubruri_avps_flag))) {
 		lock_get(&dlginfo->lock);
 		refresh_pubruri_avps(dlginfo, &uri);
 	}
@@ -584,12 +581,9 @@ static void __dialog_sendpublish(
 			}
 	}
 
-	if(use_pubruri_avps
-			&& (refresh_pubruri_avps_flag > -1
-					|| (request
-							&& (request->flags
-									& (1U << (unsigned int)
-													refresh_pubruri_avps_flag))))) {
+	if(use_pubruri_avps && (refresh_pubruri_avps_flag > -1) && (request != NULL)
+			&& (request->flags
+					& (1U << (unsigned int)refresh_pubruri_avps_flag))) {
 		lock_release(&dlginfo->lock);
 	}
 }
