@@ -1744,6 +1744,7 @@ static int rtpp_test_ping(struct rtpp_node *node)
 	char *cp;
 	int ret;
 
+	LM_DBG("Sending ping to node %.*s\n", node->rn_url.len, node->rn_url.s);
 	if(bencode_buffer_init(&bencbuf)) {
 		return -1;
 	}
@@ -3777,7 +3778,7 @@ static void rtpengine_ping_check_timer(unsigned int ticks, void *param)
 		for(crt_rtpp = rtpp_list->rn_first; crt_rtpp != NULL;
 				crt_rtpp = crt_rtpp->rn_next) {
 
-			if(!crt_rtpp->rn_displayed) {
+			if(!crt_rtpp->rn_displayed || crt_rtpp->rn_disabled) {
 				continue;
 			}
 
