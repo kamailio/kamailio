@@ -746,8 +746,8 @@ Summary:    RADIUS modules for Kamailio
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel}
-Requires:   freeradius-client
-BuildRequires:  freeradius-client-devel
+Requires:   radcli
+BuildRequires:  radcli-devel
 %else
 Requires:   radiusclient-ng
 BuildRequires:  radiusclient-ng-devel
@@ -1072,7 +1072,7 @@ rm -f misc/examples/pkg/sipcapture.cfg
 
 %build
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
-export FREERADIUS=1
+export RADCLI=1
 %endif
 make cfg prefix=/usr \
     basedir=%{buildroot} \
@@ -1084,7 +1084,7 @@ make
 make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     jabber ndb_cassandra osp" \
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
-    FREERADIUS=1 \
+    RADCLI=1 \
 %endif
 %if 0%{?rhel} >= 8
     PYTHON3=python3.12 \
@@ -1192,7 +1192,7 @@ make install
 make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     iptrtpproxy jabber osp" \
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
-    FREERADIUS=1 \
+    RADCLI=1 \
 %endif
 %if 0%{?rhel} >= 8
     PYTHON3=python3.12 \
