@@ -50,26 +50,13 @@ function(add_db_target db_name xsl_file)
   # For consistency, we are now using the new names.
   # For compatibility with tools, we are still using the old names for install folder
 
-  # Determine the prefix/suffix
-  if(db_name STREQUAL "db_berkeley"
-     OR db_name STREQUAL "db_redis"
-     OR db_name STREQUAL "db_text"
-     OR db_name STREQUAL "db_mongodb"
-  )
-    set(prefix '')
-    set(folder_suffix "${MAIN_NAME}")
-  else()
-    set(prefix "${table}-")
-    set(folder_suffix '')
-  endif()
-
   # install folder based on db_name
   if(db_name STREQUAL "db_mongodb")
     set(install_folder "mongodb")
   elseif(db_name STREQUAL "db_mysql")
     set(install_folder "mysql")
   elseif(db_name STREQUAL "db_postgres")
-    set(install_folder "mysql")
+    set(install_folder "postgres")
   elseif(db_name STREQUAL "db_text")
     set(install_folder "dbtext")
   else()
@@ -78,6 +65,19 @@ function(add_db_target db_name xsl_file)
 
   # Loop through each table and add a command for xsltproc
   foreach(table ${EXTRACTED_TABLES})
+
+    # Determine the prefix/suffix
+    if(db_name STREQUAL "db_berkeley"
+       OR db_name STREQUAL "db_redis"
+       OR db_name STREQUAL "db_text"
+       OR db_name STREQUAL "db_mongodb"
+    )
+      set(prefix '')
+      set(folder_suffix "${MAIN_NAME}")
+    else()
+      set(prefix "${table}-")
+      set(folder_suffix '')
+    endif()
 
     # Stringparam db is the db_* module name
     add_custom_command(
