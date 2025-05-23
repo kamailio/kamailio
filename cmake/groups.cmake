@@ -764,6 +764,20 @@ function(find_group_name module)
       ""
       PARENT_SCOPE
   )
+  # This was need due to the dbschema.cmake
+  # If one select one of these option as group
+  # we want the group name to match instead of the actual group it belongs to
+  if(MODULE_GROUP_NAME STREQUAL "ALL"
+     OR MODULE_GROUP_NAME STREQUAL "DEFAULT"
+     OR MODULE_GROUP_NAME STREQUAL "STANDARD"
+     OR MODULE_GROUP_NAME STREQUAL "COMMON"
+  )
+    set(group_name
+        "${MODULE_GROUP_NAME}"
+        PARENT_SCOPE
+    )
+    return()
+  endif()
   #   message(WARNING "groups to search in" ${MODULE_GROUP_PACKAGE_GROUPS})
   # Get all variable names in the current CMake context
   foreach(group IN LISTS MODULE_GROUP_PACKAGE_GROUPS)
@@ -776,6 +790,8 @@ function(find_group_name module)
           "${group}"
           PARENT_SCOPE
       )
+      return()
     endif()
   endforeach()
+  message((STATUS "module ${module} not found in any group"))
 endfunction()
