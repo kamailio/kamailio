@@ -494,7 +494,12 @@ dlg_t *build_dlg_t_early(
 		goto error;
 	}
 
-	if(msg == NULL || msg->first_line.type != SIP_REPLY) {
+	if(msg == NULL) {
+		LM_ERR("no sip message\n");
+		goto error;
+	}
+
+	if(msg->first_line.type != SIP_REPLY) {
 		if(!cell->t) {
 			LM_ERR("no transaction associated\n");
 			goto error;
