@@ -185,9 +185,9 @@ int secf_append_rule(int action, int type, str *value)
 /**
  * @brief Removes entries from a whitelist or blacklist based on action, type, and value.
  *
- * The function validates the action and type, locates the relevant list, and iterates 
- * through its nodes to find and remove all matches for the given value. If matches are found, 
- * the corresponding memory is freed, and the list pointers are updated. Logs are generated 
+ * The function validates the action and type, locates the relevant list, and iterates
+ * through its nodes to find and remove all matches for the given value. If matches are found,
+ * the corresponding memory is freed, and the list pointers are updated. Logs are generated
  * for each removal and at the end of the process to summarize the result.
  * @param action: Specifies the target list (0 = blacklist, 1 = whitelist, 2 = destination blacklist).
  * @param type: Indicates the type of rule to be removed (e.g., domain, IP, user, etc.).
@@ -358,10 +358,8 @@ int secf_load_db(void)
 	lock_release(&(*secf_data)->lock);
 
 clean:
-	if(db_res) {
-		if(db_funcs.free_result(db_handle, db_res) < 0) {
-			LM_DBG("Failed to free the result\n");
-		}
+	if(db_funcs.free_result(db_handle, db_res) < 0) {
+		LM_DBG("Failed to free the result\n");
 	}
 	db_funcs.close(db_handle);
 	return res;
