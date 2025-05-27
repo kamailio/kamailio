@@ -829,7 +829,8 @@ static void pdb_rpc_timeout(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	if(rpc->struct_add(vh, "dd", "old_timeout", old_val, "new_timeout", new_val) < 0) {
+	if(rpc->struct_add(vh, "dd", "old_timeout", old_val, "new_timeout", new_val)
+			< 0) {
 		rpc->fault(ctx, 500, "Internal error reply structure");
 		return;
 	}
