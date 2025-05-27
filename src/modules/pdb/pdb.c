@@ -27,6 +27,8 @@
 
 
 #include "../../core/sr_module.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/cfg/cfg_ctx.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/rpc_lookup.h"
@@ -806,6 +808,36 @@ static void pdb_rpc_status(rpc_t *rpc, void *ctx)
 			(*active) ? "active" : "inactive");
 }
 
+static void pdb_rpc_timeout(rpc_t *rpc, void *ctx)
+{
+	void *vh;
+	int new_val = -1;
+	int old_val = cfg_get(pdb, pdb_cfg, timeout);
+
+	str gname = str_init("pdb");
+	str vname = str_init("timeout");
+
+	if(rpc->add(ctx, "{", &vh) < 0) {
+		rpc->fault(ctx, 500, "Server error");
+		return;
+	}
+
+	if(rpc->scan(ctx, "*d", &new_val) < 1) {
+		if(rpc->struct_add(vh, "d", "timeout", old_val) < 0) {
+			rpc->fault(ctx, 500, "Internal error reply structure");
+		}
+		return;
+	}
+
+	if(rpc->struct_add(vh, "dd", "old_timeout", old_val, "new_timeout", new_val)
+			< 0) {
+		rpc->fault(ctx, 500, "Internal error reply structure");
+		return;
+	}
+
+	cfg_set_now_int(ctx, &gname, NULL, &vname, new_val);
+}
+
 static void pdb_rpc_activate(rpc_t *rpc, void *ctx)
 {
 	if(active == NULL) {
@@ -826,11 +858,14 @@ static void pdb_rpc_deactivate(rpc_t *rpc, void *ctx)
 
 static const char *pdb_rpc_status_doc[2] = {"Get the pdb status.", 0};
 
+static const char *pdb_rpc_timeout_doc[2] = {"Set the pdb_query timeout.", 0};
+
 static const char *pdb_rpc_activate_doc[2] = {"Activate pdb.", 0};
 
 static const char *pdb_rpc_deactivate_doc[2] = {"Deactivate pdb.", 0};
 
 rpc_export_t pdb_rpc[] = {{"pdb.status", pdb_rpc_status, pdb_rpc_status_doc, 0},
+		{"pdb.timeout", pdb_rpc_timeout, pdb_rpc_timeout_doc, 0},
 		{"pdb.activate", pdb_rpc_activate, pdb_rpc_activate_doc, 0},
 		{"pdb.deactivate", pdb_rpc_deactivate, pdb_rpc_deactivate_doc, 0},
 		{0, 0, 0, 0}};
