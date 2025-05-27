@@ -12,6 +12,11 @@ Pawel Kuzak
    1&1 Internet AG
    <pawel.kuzak@1und1.de>
 
+Muhammad Shahzad Shafi
+
+   1&1 Internet AG
+   <muhammad.shafi@1und1.de>
+
    Copyright © 2009 1&1 Internet AG
      __________________________________________________________________
 
@@ -38,8 +43,9 @@ Pawel Kuzak
         5. RPC Commands
 
               5.1. pdb.status
-              5.2. pdb.activate
-              5.3. pdb.deactivate
+              5.2. pdb.timeout
+              5.3. pdb.activate
+              5.4. pdb.deactivate
 
    List of Examples
 
@@ -48,8 +54,9 @@ Pawel Kuzak
    1.3. Set ll_info parameter
    1.4. pdb_query usage
    1.5. pdb.status usage
-   1.6. pdb.activate usage
-   1.7. pdb.deactivate usage
+   1.6. pdb.timeout usage
+   1.7. pdb.activate usage
+   1.8. pdb.deactivate usage
 
 Chapter 1. Admin Guide
 
@@ -74,8 +81,9 @@ Chapter 1. Admin Guide
    5. RPC Commands
 
         5.1. pdb.status
-        5.2. pdb.activate
-        5.3. pdb.deactivate
+        5.2. pdb.timeout
+        5.3. pdb.activate
+        5.4. pdb.deactivate
 
 1. Overview
 
@@ -178,8 +186,9 @@ cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
 5. RPC Commands
 
    5.1. pdb.status
-   5.2. pdb.activate
-   5.3. pdb.deactivate
+   5.2. pdb.timeout
+   5.3. pdb.activate
+   5.4. pdb.deactivate
 
 5.1. pdb.status
 
@@ -191,22 +200,35 @@ cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
 kamcmd pdb.status
 ...
 
-5.2. pdb.activate
+5.2. pdb.timeout
+
+   Prints the current PDB query timeout value. This can also be used to
+   set the PDB query timeout.
+
+   Example 1.6. pdb.timeout usage
+...
+# get the PDB query timeout
+kamcmd pdb.timeout
+# set the PDB query timeout to 10ms
+kamcmd pdb.timeout 10
+...
+
+5.3. pdb.activate
 
    Activates the module. This is the default after loading the module.
 
-   Example 1.6. pdb.activate usage
+   Example 1.7. pdb.activate usage
 ...
 kamcmd pdb.activate
 ...
 
-5.3.  pdb.deactivate
+5.4.  pdb.deactivate
 
    Deactivates the module. No more queries are performed until it is
    activated again. As long as the module is deactivated, the pdb_query
    function will return -1.
 
-   Example 1.7. pdb.deactivate usage
+   Example 1.8. pdb.deactivate usage
 ...
 kamcmd pdb.deactivate
 ...
