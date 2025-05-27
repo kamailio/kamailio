@@ -118,7 +118,7 @@ static void tls_list(rpc_t *rpc, void *c)
 	TCPCONN_LOCK;
 	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
 		for(con = tcpconn_id_hash[i]; con; con = con->id_next) {
-			if(con->rcv.proto != PROTO_TLS)
+			if(con->rcv.proto != PROTO_TLS && con->rcv.proto != PROTO_WSS)
 				continue;
 			tls_d = con->extra_data;
 			rpc->add(c, "{", &handle);
@@ -274,7 +274,7 @@ static void tls_kill(rpc_t *rpc, void *c)
 	TCPCONN_LOCK;
 	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
 		for(con = tcpconn_id_hash[i]; con; con = con->id_next) {
-			if(con->rcv.proto != PROTO_TLS)
+			if(con->rcv.proto != PROTO_TLS && con->rcv.proto != PROTO_WSS)
 				continue;
 			if(con->id == kill_id) {
 				con->state = -2;
