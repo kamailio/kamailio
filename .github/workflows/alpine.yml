@@ -2,17 +2,18 @@
 name: alpine docker image
 on:
   schedule:
-  - cron: '41 3 * * *'
+  - cron: '41 4 * * *'
   push:
     tags:
     - '[0-9]+.[0-9]+.[0-9]+'
+    branches:
+    - master
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 env:
   IMAGE_NAME: kamailio-ci
-  SOURCE_BRANCH: ${{ github.ref_name }}
-  DOCKER_REPO: ghcr.io/kamailio/kamailio-ci
+  BUILDER_IMAGE: ghcr.io/sergey-safarov/kamailio-builder
 
 jobs:
   # is required nightly build?
@@ -30,23 +31,81 @@ jobs:
           repo: kamailio
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Show last execution info
+        id: build_info
         run: |
           echo "Last daily build: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}"
+          if [ ${{ github.ref_name }} == "master" ]; then
+            echo "image_tag=alpine-latest" >> "$GITHUB_OUTPUT"
+            echo "alpine_tag"="alpine:3.21.3" >> "$GITHUB_OUTPUT"
+          else
+            echo "image_tag=alpine-latest" >> "$GITHUB_OUTPUT"
+            echo "alpine_tag"="alpine:3.21.3" >> "$GITHUB_OUTPUT"
+          fi
+
     outputs:
       last_sha: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}
-  x86_64:
+      build_image_tag: ${{ steps.build_info.outputs.image_tag }}
+      alpine_tag: ${{ steps.build_info.outputs.alpine_tag }}
+
+  build:
+    name: Build sources
     needs: [check]
     if: needs.check.outputs.last_sha != github.sha
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+        - x86_64
+        - aarch64
+        - x86
+        - s390x
+        - ppc64le
+        - riscv64
+        - armhf
+        - armv7
+        include:
+        # setting runner
+        - runner: ubuntu-latest
+        - runner: ubuntu-24.04-arm
+          arch: aarch64
+        # setting image platform
+        - platform: linux/amd64
+          arch: x86_64
+        - platform: linux/arm64/v8
+          arch: aarch64
+        - platform: linux/386
+          arch: x86
+        - platform: linux/s390x
+          arch: s390x
+        - platform: linux/ppc64le
+          arch: ppc64le
+        - platform: linux/riscv64
+          arch: riscv64
+        - platform: linux/arm/v6
+          arch: armhf
+        - platform: linux/arm/v7
+          arch: armv7
+        # setting image used during build
+        - build_image_tag: ${{ needs.check.outputs.build_image_tag }}
+    runs-on: ${{ matrix.runner }}
     steps:
     - uses: actions/checkout@v4
 
-    - name: print latest_commit
-      run: echo ${{ github.sha }}
+    - name: print commit info
+      id: init
+      run: |
+        git submodule init
+        git submodule update
+        git log -n 1
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      if: "! contains(fromJson('[\"x86\", \"x86_64\", \"aarch64\"]'), matrix.arch)"
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
@@ -55,12 +114,211 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Compile Kamailio source
+    - name: Build sources
+      uses: addnab/docker-run-action@v3
+      with:
+        image: ${{ env.BUILDER_IMAGE }}:${{ matrix.build_image_tag }}
+        options: --platform ${{ matrix.platform }} -v ${{ github.workspace }}:/usr/src/kamailio -v ${{ runner.temp }}/context:/mnt/context
+        run: |
+          set -eux
+          apkArch="$(apk --print-arch)"
+          cp -R /usr/src/kamailio ~
+          cd ~/kamailio
+          make cfg
+          make -C pkg/kamailio apk
+          abuild -C pkg/kamailio/alpine -r
+          doas mkdir -p /mnt/context/${apkArch}/apk_files
+          doas mv /home/build/packages/kamailio/* /mnt/context/${apkArch}/apk_files/
+          doas cp pkg/docker/alpine/Dockerfile* /mnt/context/
+          doas chown -R --reference=/usr/src/kamailio /mnt/context/${apkArch}/apk_files
+
+    - name: Build minimal tar files
+      uses: addnab/docker-run-action@v3
+      with:
+        image: ${{ env.BUILDER_IMAGE }}:${{ matrix.build_image_tag }}
+        options: --platform ${{ matrix.platform }} -v ${{ runner.temp }}/context:/mnt/context
+        run: |
+          set -eu
+          BUILD_ROOT=/tmp/kamailio
+          FILELIST=/tmp/filelist
+          FILELIST_BINARY=/tmp/filelist_binary
+          TMP_TAR=/tmp/kamailio_min.tar.gz
+          OS_FILELIST=/tmp/os_filelist
+          IMG_TAR=kamailio_img.tar.gz
+          apkArch="$(apk --print-arch)"
+
+          install_apk(){
+              cd /mnt/context/${apkArch}/apk_files
+              ls -1 */kamailio-*.apk |  xargs doas apk --no-cache --allow-untrusted add
+          }
+
+          list_installed_kamailio_packages() {
+              apk info | grep kamailio
+          }
+
+          kamailio_files() {
+              local PACKAGES
+              PACKAGES=$(list_installed_kamailio_packages)
+              PACKAGES="musl ca-certificates $PACKAGES"
+              for pkg in $PACKAGES
+              do
+                  # list package files and filter package name
+                  apk info --contents $pkg 2> /dev/null | sed -e '/\S\+ contains:/d'  -e '/^$/d' -e 's/^/\//'
+              done
+          }
+
+          extra_files() {
+              cat << EOF
+          /etc
+          /etc/ssl
+          /etc/ssl/certs
+          /etc/ssl/certs/*
+          /bin
+          /bin/busybox
+          /usr/bin
+          /usr/bin/awk
+          /usr/bin/gawk
+          /usr/lib
+          /usr/sbin
+          /usr/bin/tcpdump
+          /var
+          /var/run
+          /run
+          /tmp
+          EOF
+              if [ "${apkArch}" != "armhf" ]; then
+              cat << EOF
+          /usr/bin/dumpcap
+          EOF
+              fi
+          }
+
+          sort_filelist() {
+              sort $FILELIST | uniq > $FILELIST.new
+              mv -f $FILELIST.new $FILELIST
+          }
+
+          filter_unnecessary_files() {
+          # excluded following files and directories recursive
+          # /usr/lib/debug/usr/lib/kamailio/
+          # /usr/share/doc/kamailio
+          # /usr/share/man
+          # /usr/share/snmp
+
+              sed -i \
+                  -e '\|^/usr/lib/debug/|d' \
+                  -e '\|^/usr/share/doc/kamailio/|d' \
+                  -e '\|^/usr/share/man/|d' \
+                  -e '\|^/usr/share/snmp/|d' \
+                  $FILELIST
+          }
+
+          ldd_helper() {
+              TESTFILE=$1
+              LD_PRELOAD=/usr/sbin/kamailio ldd $TESTFILE 2> /dev/null > /dev/null || return
+              LD_PRELOAD=/usr/sbin/kamailio ldd $TESTFILE | sed -e 's/^.* => //' -e 's/ (.*)//' -e 's/\s\+//' -e '/^ldd$/d'
+          }
+
+          find_binaries() {
+              rm -f $FILELIST_BINARY
+              set +e
+              for f in $(cat $FILELIST)
+              do
+                  ldd_helper /$f >> $FILELIST_BINARY
+              done
+              set -e
+              sort $FILELIST_BINARY | sort | uniq > $FILELIST_BINARY.new
+              mv -f $FILELIST_BINARY.new $FILELIST_BINARY
+
+              # Resolving symbolic links and removing duplicates
+              cat $FILELIST_BINARY | xargs realpath > $FILELIST_BINARY.new
+              cat $FILELIST_BINARY.new >> $FILELIST_BINARY
+              sort $FILELIST_BINARY | sort | uniq > $FILELIST_BINARY.new
+              mv -f $FILELIST_BINARY.new $FILELIST_BINARY
+          }
+
+          filter_os_files() {
+              local TARLIST=$1
+              set +e
+              for f in $(cat $TARLIST)
+              do
+                  grep -q "$f" $OS_FILELIST
+                  if [ $? -ne 0 ]; then
+                     echo $f
+                  fi
+              done
+              set -e
+          }
+
+          tar_files() {
+              local TARLIST=/tmp/tarlist
+              cat $FILELIST > $TARLIST
+              cat $FILELIST_BINARY >> $TARLIST
+              filter_os_files $TARLIST > $TARLIST.without_os_files
+
+              # awk symbolink link need to point to gawk
+              echo /usr/bin/awk >> $TARLIST.without_os_files
+
+              tar -czf $TMP_TAR --no-recursion $(cat $TARLIST)
+              tar -czf $TMP_TAR.without_os_files --no-recursion -T $TARLIST.without_os_files
+              rm -f $TARLIST $TARLIST.without_os_files
+
+              # copy tar archive wuthout os files to result dir
+              doas cp $TMP_TAR.without_os_files /mnt/context/${apkArch}/kamailio_img-without_os_files.tar.gz
+          }
+
+          make_image_tar() {
+              mkdir -p $BUILD_ROOT
+              cd $BUILD_ROOT
+              tar xzf $TMP_TAR
+              /bin/busybox --install -s bin
+              tar czf /tmp/$IMG_TAR *
+              doas cp /tmp/$IMG_TAR /mnt/context/${apkArch}/
+          }
+
+          install_apk
+          kamailio_files > $FILELIST
+          extra_files >> $FILELIST
+          sort_filelist
+          filter_unnecessary_files
+          find_binaries
+          tar_files
+          make_image_tar
+          doas find /mnt/context -type f -exec chmod 666 -- {} +
+          doas find /mnt/context -type d -exec chmod 777 -- {} +
+          doas chown -R root:root /mnt/context
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: apk-files-and-context-${{ matrix.arch }}
+        path: ${{ runner.temp }}/context
+
+  images:
+    name: Build images
+    needs:
+    - check
+    - build
+    services:
+      repo:
+        image: nginx
+        ports:
+        - 80
+        volumes:
+        - ${{ github.workspace }}/context:/usr/share/nginx/html:ro
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download artifact images
+      uses: actions/download-artifact@v4
+      with:
+        pattern: apk-files-and-context-*
+        path: ${{ runner.temp }}/context
+        merge-multiple: true
+
+    - name: prepare local repo
+      id: init
       run: |
-        git submodule init
-        git submodule update
-        cd pkg/docker/alpine
-        ./hooks/pre_build || true
+        sudo mv -f  ${{ runner.temp }}/context/* ${{ github.workspace }}/context
 
     - name: Docker meta
       id: meta
@@ -113,67 +371,73 @@ jobs:
           suffix=-debug
           latest=false
 
-    - name: temporal workarround for "-alpine" and "-debug" builds
-      run: |
-        sudo chown -R ${USER}:${USER} ${{ github.workspace }}/pkg/docker/alpine
-        cd pkg/docker/alpine
-        mkdir repackage
-        tar xz --directory=repackage -f kamailio_min-without_os_files.tar.gz
-        rm -f kamailio_min-without_os_files.tar.gz
-        tar cz --directory=repackage -f kamailio_min-without_os_files.tar.gz $(ls -A repackage)
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
 
-    - name: Prepare local repo for "-debug" build
-      run: |
-        docker network create kamailio-build
-        docker run \
-               --detach \
-               --network kamailio-build \
-               --name local-repo \
-               --hostname local-repo \
-               --rm=true \
-               --volume=${{ github.workspace }}/pkg/docker/alpine/apk_files:/usr/share/nginx/html:ro \
-               nginx
-        LOCAL_REPO_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' local-repo)
-        sed -i -e "s/local-repo/${LOCAL_REPO_IP}/" pkg/docker/alpine/Dockerfile.debug
-
-    - name: Create custom builder for "-debug" build
-      id: local-repo
+    - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-      with:
-        driver-opts: |
-          network=kamailio-build
 
-    - name: Build and push "-debug" build
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build minimal image
       uses: docker/build-push-action@v6
+      env:
+        DOCKER_BUILD_SUMMARY: false
       with:
-        context: pkg/docker/alpine
-        file: pkg/docker/alpine/Dockerfile.debug
-        builder: ${{ steps.local-repo.outputs.name }}
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.meta-debug.outputs.tags }}
-        labels: ${{ steps.meta-debug.outputs.labels }}
-
-    - name: Cleanup after "-debug" build
-      run: |
-        docker buildx stop ${{ steps.local-repo.outputs.name }}
-        docker buildx rm ${{ steps.local-repo.outputs.name }}
-        docker stop local-repo
-        docker network rm kamailio-build
-
-    - name: Build and push "-alpine" build
-      uses: docker/build-push-action@v6
-      with:
-        context: pkg/docker/alpine
-        file: pkg/docker/alpine/Dockerfile.alpine
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.meta-alpine.outputs.tags }}
-        labels: ${{ steps.meta-alpine.outputs.labels }}
-
-    - name: Build and push
-      uses: docker/build-push-action@v6
-      with:
-        context: pkg/docker/alpine
-        file: pkg/docker/alpine/Dockerfile
-        push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        annotations: ${{ steps.meta.outputs.annotations }}
+        platforms: "linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/riscv64,linux/s390x"
+        push: true
+        file: "context/Dockerfile"
+        context: "context"
+
+    - name: Build .alpine image
+      uses: docker/build-push-action@v6
+      env:
+        DOCKER_BUILD_SUMMARY: false
+      with:
+        tags: ${{ steps.meta-alpine.outputs.tags }}
+        labels: ${{ steps.meta-alpine.outputs.labels }}
+        annotations: ${{ steps.meta.outputs.annotations }}
+        platforms: "linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/riscv64,linux/s390x"
+        push: true
+        file: "context/Dockerfile.alpine"
+        context: "context"
+        build-args: |
+          IMAGE=${{ needs.check.outputs.alpine_tag }}
+
+    - name: Build .debug image
+      uses: docker/build-push-action@v6
+      env:
+        DOCKER_BUILD_SUMMARY: false
+      with:
+        tags: ${{ steps.meta-debug.outputs.tags }}
+        labels: ${{ steps.meta-debug.outputs.labels }}
+        annotations: ${{ steps.meta.outputs.annotations }}
+        platforms: "linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/riscv64,linux/s390x"
+        push: true
+        file: "context/Dockerfile.debug"
+        context: "context"
+        build-args: |
+          IMAGE=${{ needs.check.outputs.alpine_tag }}
+
+  cleanup:
+    name: Cleanup untaged images
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      packages: write
+    needs:
+    - images
+    steps:
+    - name: Cleanup untaged
+      uses: dataaxiom/ghcr-cleanup-action@v1
+      with:
+        owner: ${{ github.repository_owner }}
+        package: ${{ env.IMAGE_NAME }}
