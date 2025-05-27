@@ -272,7 +272,7 @@ static int fill_contact(
 
 				if((srcip = pkg_malloc(50)) == NULL) {
 					LM_ERR("Error allocating memory for source IP address\n");
-					return -1;
+					goto error;
 				}
 
 				memcpy(srcip, alias_s.s, ci->received_host.len);
