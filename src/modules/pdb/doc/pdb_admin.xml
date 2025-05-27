@@ -167,6 +167,24 @@ cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
 				</programlisting>
 	    </example>
 		</section>
+		<section id="pdb.r.timeout">
+	    <title>pdb.timeout</title>
+	    <para>
+				Prints the current PDB query timeout value.
+				This can also be used to set the PDB query timeout.
+	    </para>
+			<example>
+				<title><function>pdb.timeout</function> usage</title>
+				<programlisting format="linespecific">
+...
+# get the PDB query timeout
+&kamcmd; pdb.timeout
+# set the PDB query timeout to 10ms
+&kamcmd; pdb.timeout 10
+...
+				</programlisting>
+	    </example>
+		</section>
 		<section id="pdb.r.activate">
 	    <title>pdb.activate</title>
 	    <para>
