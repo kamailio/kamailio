@@ -45,7 +45,8 @@ int rpc_check_reload(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "ongoing reload");
 		return -1;
 	}
-	*perm_rpc_reload_time = time(NULL);
+	// we are reloading, don't allow new reloads
+	*perm_rpc_reload_time = time(NULL) + 86400;
 	return 0;
 }
 
@@ -61,10 +62,13 @@ void rpc_trusted_reload(rpc_t *rpc, void *c)
 
 	if(reload_trusted_table_cmd() != 1) {
 		rpc->fault(c, 500, "Reload failed.");
-		return;
+		goto done;
 	}
 
 	rpc->rpl_printf(c, "Reload OK");
+done:
+	// reloading is done
+	*perm_rpc_reload_time = time(NULL);
 	return;
 }
 
@@ -101,10 +105,13 @@ void rpc_address_reload(rpc_t *rpc, void *c)
 
 	if(reload_address_table_cmd() != 1) {
 		rpc->fault(c, 500, "Reload failed.");
-		return;
+		goto done;
 	}
 
 	rpc->rpl_printf(c, "Reload OK");
+done:
+	// reloading is done
+	*perm_rpc_reload_time = time(NULL);
 	return;
 }
 
