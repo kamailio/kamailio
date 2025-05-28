@@ -32,6 +32,9 @@
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/mod_fix.h"
+#include "../../core/lvalue.h"
+#include "../../core/kemi.h"
 #include <sys/time.h>
 #include <poll.h>
 #include <stdlib.h>
@@ -82,11 +85,19 @@ struct multiparam_t
 
 
 /* ---- exported commands: */
-static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
-		struct multiparam_t *_dstavp);
+int pdb_query(sip_msg_t *_msg, str *_number, str *_dstvar);
 
 /* ---- fixup functions: */
-static int pdb_query_fixup(void **arg, int arg_no);
+int pdb_query_fixup(void **arg, int arg_no);
+int pdb_query_fixup_free(void **arg, int arg_no);
+
+/* ---- KEMI related functions: */
+int ki_pdb_query(sip_msg_t *_msg, str *number, str *dstvar);
+int ki_pdb_query_helper(sip_msg_t *_msg, str *number, pv_spec_t *dvar);
+
+/* ---- misc. functions: */
+int do_pdb_query(str *number);
+
 
 /* ---- module init functions: */
 static int mod_init(void);
@@ -103,8 +114,8 @@ static int pdb_msg_format_send(struct pdb_msg *msg, uint8_t version,
 		uint16_t payload_len);
 
 static cmd_export_t cmds[] = {
-		{"pdb_query", (cmd_function)pdb_query, 2, pdb_query_fixup, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"pdb_query", (cmd_function)pdb_query, 2, pdb_query_fixup,
+				pdb_query_fixup_free, REQUEST_ROUTE | FAILURE_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 
 
@@ -205,12 +216,82 @@ static int pdb_msg_format_send(struct pdb_msg *msg, uint8_t version,
 #define PDB_BUFTOSHORT(_sv, _b, _n) \
 	memcpy(&(_sv), (char *)(_b) + (_n), sizeof(short int))
 
+/**
+ *
+ */
+int ki_pdb_query(sip_msg_t *_msg, str *number, str *dstvar)
+{
+	pv_spec_t *dst;
+	dst = pv_cache_get(dstvar);
+
+	if(dst == NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dstvar->len, dstvar->s);
+		return -1;
+	}
+
+	if(dst->setf == NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dstvar->len, dstvar->s);
+		return -1;
+	}
+
+	return ki_pdb_query_helper(_msg, number, dst);
+}
+
+
+/**
+ * Queries PDB service for given number and stores result in an AVP.
+ *
+ * @param _msg the current SIP message
+ * @param _number the phone number to query
+ * @param _dstavp the name of the AVP where to store the result
+ *
+ * @return 1 on success, -1 on failure
+ */
+int pdb_query(sip_msg_t *_msg, str *_number, str *_dstvar)
+{
+	str number;
+
+	if(fixup_get_svalue(_msg, (gparam_t *)_number, &number) < 0) {
+		LM_ERR("cannot print the number\n");
+		return -1;
+	}
+
+	return ki_pdb_query_helper(_msg, &number, (pv_spec_t *)_dstvar);
+}
+
+
 /*!
  * \return 1 if query for the number succeeded and the avp with the corresponding carrier id was set,
  * -1 otherwise
  */
-static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
-		struct multiparam_t *_dstavp)
+int ki_pdb_query_helper(sip_msg_t *_msg, str *number, pv_spec_t *dvar)
+{
+	pv_value_t val = {0};
+
+	/* get carrier id */
+	if((val.ri = do_pdb_query(number)) == 0) {
+		LM_ERR("error in do_pdb_query");
+		return -1;
+	} else {
+		/* set var */
+		val.flags = PV_VAL_INT | PV_TYPE_INT;
+		if(dvar->setf(_msg, &dvar->pvp, (int)EQ_T, &val) < 0) {
+			LM_ERR("failed setting dst var\n");
+			return -1;
+		}
+	}
+	return 1;
+}
+
+
+/**
+ * Internal function that actually queries the PDB service
+ *
+ * @param _number the phone number to query
+ *
+ * @return carrier-id on success, 0 on failure
+ */
+int do_pdb_query(str *number)
 {
 	struct pdb_msg msg;
 	struct timeval tstart, tnow;
@@ -219,55 +300,22 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 	short int _idv;
 	char buf[sizeof(struct pdb_msg)];
 	size_t reqlen;
-	int_str avp_val;
-	struct usr_avp *avp;
 	int i, ret, nflush, bytes_received;
 	long int td;
-	str number = STR_NULL;
 
 	if((active == NULL) || (*active == 0))
-		return -1;
+		return 0;
 
-	switch(_number->type) {
-		case MP_STR:
-			number = _number->u.s;
-			break;
-		case MP_AVP:
-			avp = search_first_avp(
-					_number->u.a.flags, _number->u.a.name, &avp_val, 0);
-			if(!avp) {
-				LM_ERR("cannot find AVP '%.*s'\n", _number->u.a.name.s.len,
-						_number->u.a.name.s.s);
-				return -1;
-			}
-			if((avp->flags & AVP_VAL_STR) == 0) {
-				LM_ERR("cannot process integer value in AVP '%.*s'\n",
-						_number->u.a.name.s.len, _number->u.a.name.s.s);
-				return -1;
-			} else
-				number = avp_val.s;
-			break;
-		case MP_PVE:
-			if(pv_printf_s(_msg, _number->u.p, &number) < 0) {
-				LM_ERR("cannot print the number\n");
-				return -1;
-			}
-			break;
-		default:
-			LM_ERR("invalid number type\n");
-			return -1;
-	}
-
-	LM_DBG("querying '%.*s'...\n", number.len, number.s);
+	LM_DBG("querying '%.*s'...\n", number->len, number->s);
 	if(server_list == NULL)
-		return -1;
+		return 0;
 	if(server_list->fds == NULL)
-		return -1;
+		return 0;
 
 	if(gettimeofday(&tstart, NULL) != 0) {
 		LM_ERR("gettimeofday() failed with errno=%d (%s)\n", errno,
 				strerror(errno));
-		return -1;
+		return 0;
 	}
 
 	/* clear recv buffer */
@@ -280,7 +328,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 			if(gettimeofday(&tnow, NULL) != 0) {
 				LM_ERR("gettimeofday() failed with errno=%d (%s)\n", errno,
 						strerror(errno));
-				return -1;
+				return 0;
 			}
 			td = (tnow.tv_usec - tstart.tv_usec
 						 + (tnow.tv_sec - tstart.tv_sec) * 1000000)
@@ -288,8 +336,8 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 			if(td > cfg_get(pdb, pdb_cfg, timeout)) {
 				LM_ERR("exceeded %d ms timeout while flushing recv buffer. "
 					   "queried nr '%.*s'.\n",
-						cfg_get(pdb, pdb_cfg, timeout), number.len, number.s);
-				return -1;
+						cfg_get(pdb, pdb_cfg, timeout), number->len, number->s);
+				return 0;
 			}
 		}
 		LM_DBG("flushed %d packets for '%s:%d'\n", nflush, server->host,
@@ -298,13 +346,13 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 	}
 
 	/* prepare request */
-	reqlen = number.len + 1; /* include null termination */
+	reqlen = number->len + 1; /* include null termination */
 	if(reqlen > PAYLOADSIZE) {
-		LM_ERR("number too long '%.*s'.\n", number.len, number.s);
-		return -1;
+		LM_ERR("number too long '%.*s'.\n", number->len, number->s);
+		return 0;
 	}
-	strncpy(buf, number.s, number.len);
-	buf[number.len] = '\0';
+	strncpy(buf, number->s, number->len);
+	buf[number->len] = '\0';
 
 	switch(PDB_VERSION) {
 		case PDB_VERSION_1:
@@ -355,7 +403,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 		if(gettimeofday(&tnow, NULL) != 0) {
 			LM_ERR("gettimeofday() failed with errno=%d (%s)\n", errno,
 					strerror(errno));
-			return -1;
+			return 0;
 		}
 		td = (tnow.tv_usec - tstart.tv_usec
 					 + (tnow.tv_sec - tstart.tv_sec) * 1000000)
@@ -365,15 +413,15 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 			if(timeoutlogs < 0) {
 				LM_ERR("exceeded %d ms timeout while waiting for response. "
 					   "queried nr '%.*s'.\n",
-						cfg_get(pdb, pdb_cfg, timeout), number.len, number.s);
+						cfg_get(pdb, pdb_cfg, timeout), number->len, number->s);
 			} else if(timeoutlogs > 1000) {
 				LM_ERR("exceeded %d ms timeout %d times while waiting for "
 					   "response. queried nr '%.*s'.\n",
-						cfg_get(pdb, pdb_cfg, timeout), timeoutlogs, number.len,
-						number.s);
+						cfg_get(pdb, pdb_cfg, timeout), timeoutlogs,
+						number->len, number->s);
 				timeoutlogs = 0;
 			}
-			return -1;
+			return 0;
 		}
 
 		ret = poll(server_list->fds, server_list->nserver,
@@ -395,7 +443,8 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 								case PDB_CODE_OK:
 									msg.bdy.payload[sizeof(struct pdb_bdy)
 													- 1] = '\0';
-									if(strcmp(msg.bdy.payload, number.s) == 0) {
+									if(strcmp(msg.bdy.payload, number->s)
+											== 0) {
 										PDB_BUFTOSHORT(_id, msg.bdy.payload,
 												reqlen); /* make gcc happy */
 										carrierid = ntohs(
@@ -405,12 +454,12 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 									break;
 								case PDB_CODE_NOT_FOUND:
 									LM_NOTICE("Number %s pdb_id not found\n",
-											number.s);
+											number->s);
 									carrierid = -1;
 									goto found;
 								case PDB_CODE_NOT_NUMBER:
 									LM_NOTICE("Number %s has letters in it\n",
-											number.s);
+											number->s);
 									carrierid = -2;
 									goto found;
 								default:
@@ -423,7 +472,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
 							break;
 						default:
 							buf[sizeof(struct pdb_msg) - 1] = '\0';
-							if(strncmp(buf, number.s, number.len) == 0) {
+							if(strncmp(buf, number->s, number->len) == 0) {
 								PDB_BUFTOSHORT(
 										_id, buf, reqlen); /* make gcc happy */
 								carrierid = ntohs(
@@ -442,8 +491,8 @@ found:
 	if(timeoutlogs > 0) {
 		LM_ERR("exceeded %d timeout while waiting for response (buffered %d "
 			   "lines). queried nr '%.*s'.\n",
-				cfg_get(pdb, pdb_cfg, timeout), timeoutlogs, number.len,
-				number.s);
+				cfg_get(pdb, pdb_cfg, timeout), timeoutlogs, number->len,
+				number->s);
 		timeoutlogs = -10;
 	}
 	if(gettimeofday(&tnow, NULL) == 0) {
@@ -452,135 +501,59 @@ found:
 						  + (tnow.tv_sec - tstart.tv_sec) * 1000000))
 						/ 1000);
 	}
-	avp_val.n = carrierid;
-	/* set avp ! */
-	if(add_avp(_dstavp->u.a.flags, _dstavp->u.a.name, avp_val) < 0) {
-		LM_ERR("add AVP failed\n");
-		return -1;
-	}
-
-	return 1;
+	return carrierid;
 }
 
 
-/*!
- * fixes the module functions' parameters if it is a phone number.
- * supports string, pseudo-variables and AVPs.
+/**
+ * Fixes the module functions' parameters.
  *
- * @param param the parameter
+ * @param arg the parameter
+ * @param arg_no the number of the parameter
+ *
  * @return 0 on success, -1 on failure
  */
-static int mp_fixup(void **param)
-{
-	pv_spec_t avp_spec;
-	struct multiparam_t *mp;
-	str s;
-
-	mp = (struct multiparam_t *)pkg_malloc(sizeof(struct multiparam_t));
-	if(mp == NULL) {
-		PKG_MEM_ERROR;
-		return -1;
-	}
-	memset(mp, 0, sizeof(struct multiparam_t));
-
-	s.s = (char *)(*param);
-	s.len = strlen(s.s);
-
-	if(s.s[0] != '$') {
-		/* This is string */
-		mp->type = MP_STR;
-		mp->u.s = s;
-	} else {
-		/* This is a pseudo-variable */
-		if(pv_parse_spec(&s, &avp_spec) == 0) {
-			LM_ERR("pv_parse_spec failed for '%s'\n", (char *)(*param));
-			pkg_free(mp);
-			return -1;
-		}
-		if(avp_spec.type == PVT_AVP) {
-			/* This is an AVP - could be an id or name */
-			mp->type = MP_AVP;
-			if(pv_get_avp_name(
-					   0, &(avp_spec.pvp), &(mp->u.a.name), &(mp->u.a.flags))
-					!= 0) {
-				LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
-				pkg_free(mp);
-				return -1;
-			}
-		} else {
-			mp->type = MP_PVE;
-			if(pv_parse_format(&s, &(mp->u.p)) < 0) {
-				LM_ERR("pv_parse_format failed for '%s'\n", (char *)(*param));
-				pkg_free(mp);
-				return -1;
-			}
-		}
-	}
-	*param = (void *)mp;
-
-	return 0;
-}
-
-
-/*!
- * fixes the module functions' parameters in case of AVP names.
- *
- * @param param the parameter
- * @return 0 on success, -1 on failure
- */
-static int avp_name_fixup(void **param)
-{
-	pv_spec_t avp_spec;
-	struct multiparam_t *mp;
-	str s;
-
-	s.s = (char *)(*param);
-	s.len = strlen(s.s);
-	if(s.len <= 0)
-		return -1;
-	if(pv_parse_spec(&s, &avp_spec) == 0 || avp_spec.type != PVT_AVP) {
-		LM_ERR("Malformed or non AVP definition <%s>\n", (char *)(*param));
-		return -1;
-	}
-
-	mp = (struct multiparam_t *)pkg_malloc(sizeof(struct multiparam_t));
-	if(mp == NULL) {
-		PKG_MEM_ERROR;
-		return -1;
-	}
-	memset(mp, 0, sizeof(struct multiparam_t));
-
-	mp->type = MP_AVP;
-	if(pv_get_avp_name(0, &(avp_spec.pvp), &(mp->u.a.name), &(mp->u.a.flags))
-			!= 0) {
-		LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
-		pkg_free(mp);
-		return -1;
-	}
-
-	*param = (void *)mp;
-
-	return 0;
-}
-
-
-static int pdb_query_fixup(void **arg, int arg_no)
+int pdb_query_fixup(void **arg, int arg_no)
 {
 	if(arg_no == 1) {
 		/* phone number */
-		if(mp_fixup(arg) < 0) {
+		if(fixup_spve_null(arg, 1) != 0) {
 			LM_ERR("cannot fixup parameter %d\n", arg_no);
 			return -1;
 		}
 	} else if(arg_no == 2) {
 		/* destination avp name */
-		if(avp_name_fixup(arg) < 0) {
+		if(fixup_pvar_null(arg, 1) != 0) {
 			LM_ERR("cannot fixup parameter %d\n", arg_no);
+			return -1;
+		}
+		if(((pv_spec_t *)(*arg))->setf == NULL) {
+			LM_ERR("dst var is not writeble\n");
 			return -1;
 		}
 	}
 
 	return 0;
+}
+
+
+/**
+ *
+ */
+int pdb_query_fixup_free(void **arg, int arg_no)
+{
+	if(arg_no == 1) {
+		/* phone number */
+		return fixup_free_spve_null(arg, 1);
+	}
+
+	if(arg_no == 2) {
+		/* destination var name */
+		return fixup_free_pvar_null(arg, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", arg_no);
+	return -1;
 }
 
 
@@ -940,4 +913,30 @@ static void mod_destroy(void)
 	destroy_server_list();
 	if(active)
 		shm_free(active);
+}
+
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_pdb_exports[] = {
+    { str_init("pdb"), str_init("pdb_query"),
+        SR_KEMIP_INT, ki_pdb_query,
+        { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
+    { {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_pdb_exports);
+	return 0;
 }
