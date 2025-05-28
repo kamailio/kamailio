@@ -20,6 +20,8 @@
 #define __SRAPI_H__
 
 #include "str.h"
+#include "usr_avp.h"
+#include "xavp.h"
 #include "parser/msg_parser.h"
 
 typedef void (*sr_generate_callid_f)(str *);
@@ -38,5 +40,22 @@ typedef struct sr_cfgenv
 
 void sr_cfgenv_init(void);
 sr_cfgenv_t *sr_cfgenv_get(void);
+
+typedef struct ksr_msg_env
+{
+	int route_type;
+	avp_list_t *avps_user_from;
+	avp_list_t *avps_user_to;
+	avp_list_t *avps_domain_from;
+	avp_list_t *avps_domain_to;
+	avp_list_t *avps_uri_from;
+	avp_list_t *avps_uri_to;
+	sr_xavp_t **xavps;
+	sr_xavp_t **xavus;
+	sr_xavp_t **xavis;
+} ksr_msg_env_t;
+
+void ksr_msg_env_push(ksr_msg_env_t *menv);
+void ksr_msg_env_pop(ksr_msg_env_t *menv);
 
 #endif
