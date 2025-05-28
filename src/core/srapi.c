@@ -19,7 +19,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "dprint.h"
+#include "route.h"
 
 #include "srapi.h"
 
@@ -68,4 +70,35 @@ void sr_cfgenv_init(void)
 sr_cfgenv_t *sr_cfgenv_get(void)
 {
 	return &_sr_cfgenv;
+}
+
+/**
+ *
+ */
+void ksr_msg_env_push(ksr_msg_env_t *menv)
+{
+	menv->route_type = get_route_type();
+
+	/* make available the avp list from transaction */
+	menv->avps_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, NULL);
+	menv->avps_uri_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, NULL);
+	menv->avps_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, NULL);
+	menv->avps_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, NULL);
+	menv->avps_domain_from =
+			set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, NULL);
+	menv->avps_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, NULL);
+	menv->xavps = xavp_set_list(NULL);
+	menv->xavus = xavu_set_list(NULL);
+	menv->xavis = xavi_set_list(NULL);
+
+	return;
+}
+
+/**
+ *
+ */
+void ksr_msg_env_pop(ksr_msg_env_t *menv)
+{
+	set_route_type(menv->route_type);
+	return;
 }
