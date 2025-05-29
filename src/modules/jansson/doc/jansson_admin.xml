@@ -94,7 +94,7 @@ if(!jansson_get("inner.deep.list[3]", "$var(myjson)", "$var(n)")) {
 }
 xlog("L_INFO", "foo is $var(n)");
 ...
-jansson_get("test", "{\"test\":\"abc\",\"idx\":20}", "$var(n)")
+jansson_get("test", "{\"test\":\"abc\",\"idx\":20}", "$var(n)");
 ...
         </programlisting>
         </example>
@@ -313,4 +313,3 @@ xlog("foo.foz is $var(foofoz)");
     </section>
     </section>
 </chapter>
-
