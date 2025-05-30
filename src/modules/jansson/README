@@ -134,7 +134,7 @@ if(!jansson_get("inner.deep.list[3]", "$var(myjson)", "$var(n)")) {
 }
 xlog("L_INFO", "foo is $var(n)");
 ...
-jansson_get("test", "{\"test\":\"abc\",\"idx\":20}", "$var(n)")
+jansson_get("test", "{\"test\":\"abc\",\"idx\":20}", "$var(n)");
 ...
 
 3.2.  jansson_pv_get(key/path, srcvar, dst)
