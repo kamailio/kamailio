@@ -190,6 +190,29 @@ modparam("file_out", "worker_usleep", "1000")
 			</example>
 		</section>
 
+		<section>
+			<title>
+				<varname>timer_interval</varname> (int)</title>
+			<para>
+		The time in seconds which timer will trigger for rotating the files.
+				<emphasis>
+				Make sure that this value is lower than the interval of the files.
+				</emphasis>
+			</para>
+			<para>
+				<emphasis>
+			Default value is <quote>10</quote> (10 s).
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>timer_interval</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("file_out", "timer_interval", "60")
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section>

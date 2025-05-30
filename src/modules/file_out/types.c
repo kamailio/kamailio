@@ -37,36 +37,6 @@ static fo_node_t *fo_new_node(fo_log_message_t data)
 
 int fo_enqueue(fo_queue_t *q, fo_log_message_t data)
 {
-	/*
-	Copy the contents of data.message
-    */
-	str *message_copy = 0;
-	str *prefix_copy = 0;
-	/*
-	 * Allocate memory for the message and prefix
-	 */
-	message_copy = (str *)shm_malloc(sizeof(str));
-	if(message_copy == 0) {
-		SHM_MEM_ERROR;
-		return -1;
-	}
-	if(shm_str_dup(message_copy, data.message) < 0) {
-		LM_ERR("Failed to duplicate message\n");
-		return -1;
-	}
-	data.message = message_copy;
-
-	prefix_copy = (str *)shm_malloc(sizeof(str));
-	if(prefix_copy == 0) {
-		SHM_MEM_ERROR;
-		return -1;
-	}
-	if(shm_str_dup(prefix_copy, data.prefix) < 0) {
-		LM_ERR("Failed to duplicate prefix\n");
-		return -1;
-	}
-	data.prefix = prefix_copy;
-
 	fo_node_t *temp = fo_new_node(data);
 
 	lock_get(&(q->lock));
@@ -151,11 +121,50 @@ void fo_free_queue(fo_queue_t *q)
 	shm_free(q);
 }
 
+int fo_file_properties_init(fo_file_properties_t *fp)
+{
+	if(fp == NULL) {
+		return -1;
+	}
+
+	/* Malloc member for each element required */
+	fp->fo_base_filename.s = (char *)shm_malloc(FO_MAX_PATH_LEN * sizeof(char));
+	if(fp->fo_base_filename.s == NULL) {
+		LM_ERR("Failed to allocate memory for base filename\n");
+		return -1;
+	}
+	fp->fo_extension.s = (char *)shm_malloc(10 * sizeof(char));
+	if(fp->fo_extension.s == NULL) {
+		LM_ERR("Failed to allocate memory for extension\n");
+		return -1;
+	}
+
+	fp->fo_prefix.s = (char *)shm_malloc(4096 * sizeof(char));
+	if(fp->fo_prefix.s == NULL) {
+		LM_ERR("Failed to allocate memory for prefix\n");
+		return -1;
+	}
+	fp->fo_stored_timestamp = time(NULL);
+	fp->fo_interval_seconds = 0;
+
+	fp->fo_prefix_pvs = (pv_elem_t *)shm_malloc(sizeof(pv_elem_t));
+	if(fp->fo_prefix_pvs == NULL) {
+		LM_ERR("Failed to allocate memory for prefix pvs\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+/* freeing the memory allocated for the members base_filename, extension, prefix
+	lead to BUG bad pointer 0x7f6b50d57095 (out of memory block!) called from file_out: types.c: fo_file_properties_destroy(167) - ignoring
+ */
 int fo_file_properties_destroy(fo_file_properties_t *fp)
 {
 	if(fp == NULL) {
 		return 1;
 	}
+
 	if(fp->fo_prefix_pvs != NULL) {
 		if(pv_elem_free_all(fp->fo_prefix_pvs) < 0) {
 			LM_ERR("Failed to free prefix pvs\n");
@@ -168,5 +177,15 @@ int fo_file_properties_destroy(fo_file_properties_t *fp)
 			return -1;
 		}
 	}
+	return 1;
+}
+
+int fo_file_properties_print(const fo_file_properties_t file_prop)
+{
+	LM_DBG("Base filename: %s\n", file_prop.fo_base_filename.s);
+	LM_DBG("Prefix: %s\n", file_prop.fo_prefix.s);
+	LM_DBG("Extension: %s\n", file_prop.fo_extension.s);
+	LM_DBG("Interval: %d\n", file_prop.fo_interval_seconds);
+	LM_DBG("Stored timestamp: %ld\n", file_prop.fo_stored_timestamp);
 	return 1;
 }

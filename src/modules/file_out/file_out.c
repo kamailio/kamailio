@@ -26,6 +26,8 @@
 #include "../../core/mod_fix.h"
 #include "../../core/locking.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/timer.h"
+
 #include "types.h"
 
 #include <stdio.h>
@@ -33,12 +35,13 @@
 #include <math.h>
 #include <errno.h>
 #include <unistd.h> /* usleep() */
-
+#include <fcntl.h>
 
 MODULE_VERSION
 
 
-#define FO_MAX_PATH_LEN 2048
+#define FO_DEFAULT_PATH "/var/log/kamailio/file_out"
+#define FO_DEFAULT_ROTATE_CHECK_INTERVAL 10
 #define FO_DEFAULT_INTERVAL 10 * 60
 #define FO_DEFAULT_EXTENSION ".out"
 #define FO_DEFAULT_PREFIX ""
@@ -54,6 +57,7 @@ static int fo_get_full_path(const int index, char *full_path);
 static int fo_init_file(const int index);
 static int fo_close_file(const int index);
 static int fo_check_interval(int index);
+static int fo_rotate_file(const int index);
 static int fo_fixup_int_pvar(void **param, int param_no);
 static int fo_fixup_str_index(void **param, int param_no);
 static int fo_fixup_free_int_pvar(void **param, int param_no);
@@ -62,18 +66,19 @@ static void fo_log_writer_process(int rank);
 static int fo_add_filename(modparam_t type, void *val);
 static int fo_parse_filename_params(str input);
 
+static void fo_timer_check_interval(unsigned int ticks, void *);
+
 /* Default parameters */
-static int buf_size = 4096;
+int fo_check_time = FO_DEFAULT_ROTATE_CHECK_INTERVAL;
 
-str fo_base_folder = str_init("/var/log/kamailio/file_out");
+str fo_base_folder = str_init(FO_DEFAULT_PATH);
 int fo_worker_usleep = 10000;
-fo_file_properties_t fo_files[FO_MAX_FILES];
-
-char *fo_prefix_buf = NULL;
 
 /* Shared variables */
 fo_queue_t *fo_queue = NULL;
 int *fo_number_of_files = NULL;
+fo_file_properties_t *fo_files;
+gen_lock_t *fo_properties_lock;
 
 time_t fo_current_timestamp = 0;
 
@@ -83,8 +88,9 @@ static cmd_export_t cmds[] = {
 	{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {{"base_folder", PARAM_STR, &fo_base_folder},
-	{"file", PARAM_STR | PARAM_USE_FUNC, &fo_add_filename},
-	{"worker_usleep", PARAM_INT, &fo_worker_usleep}, {0, 0, 0}};
+		{"file", PARAM_STR | PARAM_USE_FUNC, &fo_add_filename},
+		{"worker_usleep", PARAM_INT, &fo_worker_usleep},
+		{"timer_interval", PARAM_INT, &fo_check_time}, {0, 0, 0}};
 
 struct module_exports exports = {
 	"file_out",		 /* module name */
@@ -120,6 +126,17 @@ static int mod_init(void)
 		return -1;
 	}
 
+	fo_properties_lock = lock_alloc();
+	if(fo_properties_lock == NULL) {
+		LM_ERR("cannot allocate the lock\n");
+		return -1;
+	}
+	if(lock_init(fo_properties_lock) == NULL) {
+		LM_ERR("cannot init the lock\n");
+		lock_dealloc(fo_properties_lock);
+		return -1;
+	}
+
 	/* Count the given files */
 	*fo_number_of_files = fo_count_assigned_files();
 
@@ -135,12 +152,6 @@ static int mod_init(void)
 		}
 	}
 
-	fo_prefix_buf = (char *)pkg_malloc((buf_size + 1) * sizeof(char));
-	if(fo_prefix_buf == NULL) {
-		PKG_MEM_ERROR;
-		return -1;
-	}
-
 	/* Initialize per process vars */
 	for(i = 0; i < *fo_number_of_files; i++) {
 		fo_files[i].fo_stored_timestamp = time(NULL);
@@ -149,6 +160,10 @@ static int mod_init(void)
 	/* Register worker process */
 	register_procs(1);
 	cfg_register_child(1);
+
+	/* Register the timer */
+	register_timer(fo_timer_check_interval, 0, fo_check_time);
+
 	LM_DBG("Initialization done\n");
 	return 0;
 }
@@ -206,10 +221,6 @@ static void destroy(void)
 		}
 	}
 
-	if(fo_prefix_buf) {
-		pkg_free(fo_prefix_buf);
-	}
-
 	/* Free allocated mem */
 	if(fo_number_of_files != NULL) {
 		shm_free(fo_number_of_files);
@@ -221,10 +232,32 @@ static void destroy(void)
 	}
 }
 
+static int fo_rotate_file(int index)
+{
+	if(fo_check_interval(index) == 0) {
+		return 0;
+	}
+	lock_get(fo_properties_lock);
+	fo_files[index].fo_stored_timestamp = time(NULL);
+	fo_files[index].fo_requires_rotation = 1;
+	lock_release(fo_properties_lock);
+	return 1;
+}
+
+static void fo_timer_check_interval(unsigned int ticks, void *param)
+{
+	for(int index = 0; index < *fo_number_of_files; index++) {
+		if(fo_rotate_file(index) == 1) {
+			LM_DBG("Next write will rotate the file %d\n", index);
+		}
+	}
+}
+
 static void fo_log_writer_process(int rank)
 {
 	fo_log_message_t log_message;
 	int result = 0;
+	FILE *out = NULL;
 	while(!fo_is_queue_empty(fo_queue)) {
 		result = fo_dequeue(fo_queue, &log_message);
 		if(result < 0) {
@@ -232,7 +265,8 @@ static void fo_log_writer_process(int rank)
 			return;
 		}
 		if(log_message.message != NULL) {
-			FILE *out = fo_get_file_handle(log_message.dest_file);
+			out = fo_get_file_handle(log_message.dest_file);
+
 			if(out == NULL) {
 				LM_ERR("file handle is NULL\n");
 				return;
@@ -364,6 +398,18 @@ static int fo_add_filename(modparam_t type, void *val)
 		*fo_number_of_files = 0;
 	}
 
+	if(fo_files == NULL) {
+		fo_files = (fo_file_properties_t *)shm_malloc(
+				FO_MAX_FILES * sizeof(fo_file_properties_t));
+		if(!fo_files) {
+			SHM_MEM_ERROR;
+			return -1;
+		}
+		for(int i = 0; i < FO_MAX_FILES; i++) {
+			fo_file_properties_init(&fo_files[i]);
+		}
+	}
+
 	if((type & PARAM_STR) == 0) {
 		LM_ERR("bad parameter type %d\n", type);
 		return -1;
@@ -400,6 +446,8 @@ static int fo_parse_filename_params(str in)
 	char *token = NULL;
 	char *saveptr = NULL;
 	char *input = in.s;
+	long val;
+
 	token = strtok_r(input, ";", &saveptr);
 	while(token != NULL) {
 		if(strstr(token, "name=") != NULL) {
@@ -439,8 +487,29 @@ static int fo_parse_filename_params(str in)
 	}
 
 	if(interval != NULL) {
-		LM_DBG("interval = %s\n", interval);
-		fo_files[*fo_number_of_files].fo_interval_seconds = atoi(interval);
+		errno = 0;
+		/* Reuse token to check if there are any leftover characters */
+		val = strtol(interval, &token, 0);
+
+		if(token == interval || *token != '\0'
+				|| ((val == LONG_MIN || val == LONG_MAX) && errno == ERANGE)) {
+			LM_ERR("Could not convert '%s' to long and leftover string is: "
+				   "'%s'\n",
+					interval, token);
+		}
+		if(val < 0) {
+			LM_ERR("interval cannot be negative\n");
+			return -1;
+		} else if(val == 0) {
+			LM_ERR("interval cannot be zero\n");
+			return -1;
+		} else if(val > INT_MAX || val < INT_MIN) {
+			LM_ERR("interval outside of range of int\n");
+			return -1;
+		}
+		LM_DBG("interval = %d\n", (int)val);
+
+		fo_files[*fo_number_of_files].fo_interval_seconds = (int)val;
 	} else {
 		LM_DBG("no interval= provided. Using default %d\n",
 				FO_DEFAULT_INTERVAL);
@@ -470,12 +539,16 @@ static int fo_count_assigned_files()
 static int fo_init_file(const int index)
 {
 	char full_path[FO_MAX_PATH_LEN];
+
 	fo_get_full_path(index, full_path);
 	fo_files[index].fo_file_output = fopen(full_path, "a");
+
+	LM_INFO("Opening file %s\n", full_path);
 	if(fo_files[index].fo_file_output == NULL) {
 		LM_ERR("Couldn't open file %s\n", strerror(errno));
 		return -1;
 	}
+
 	return 1;
 }
 
@@ -485,9 +558,11 @@ static int fo_close_file(const int index)
 	if(fo_files[index].fo_file_output != NULL) {
 		result = fclose(fo_files[index].fo_file_output);
 		if(result != 0) {
-			ERR("Failed to close output file");
+			LM_ERR("Failed to close output file");
 			return -1;
 		}
+		fo_files[index].fo_file_output = NULL;
+		LM_DBG("Closed file %d\n", index);
 	}
 	return 1;
 }
@@ -515,29 +590,20 @@ static int fo_check_interval(int index)
  */
 static FILE *fo_get_file_handle(const int index)
 {
-	int result = 0;
-	if(fo_check_interval(index)) {
-		/* Interval passed. Close all files and open new ones */
-		result = fo_close_file(index);
-		if(result != 1) {
-			LM_ERR("Failed to close output file");
-			return NULL;
-		}
-		fo_files[index].fo_stored_timestamp = fo_current_timestamp;
-
-		LM_DBG("Opening new file due to interval passed\n");
-		/* Initialize and open files  */
-		result = fo_init_file(index);
-		if(result != 1) {
-			LM_ERR("Failed to initialize output file");
-			return NULL;
-		}
-		return fo_files[index].fo_file_output;
-	} else {
-		/* Interval has not passed */
-		/* Assume files are correct */
-		return fo_files[index].fo_file_output;
+	/*
+	Lock the properties lock to prevent race conditions when checking
+	if the file needs rotation. Find out if the file needs rotation is
+	by another timer process that sets the flag. If the flag is set, close
+	the file and reopen it.
+	*/
+	lock_get(fo_properties_lock);
+	if(fo_files[index].fo_requires_rotation == 1) {
+		fo_close_file(index);
+		fo_init_file(index);
+		fo_files[index].fo_requires_rotation = 0;
 	}
+	lock_release(fo_properties_lock);
+	return fo_files[index].fo_file_output;
 }
 
 /**
@@ -550,7 +616,6 @@ static int fo_get_full_path(const int index, char *full_path)
 			fo_base_folder.len, fo_base_folder.s, fp.fo_base_filename.len,
 			fp.fo_base_filename.s, difftime(fp.fo_stored_timestamp, (time_t)0),
 			fp.fo_extension.len, fp.fo_extension.s);
-	LM_INFO("Path to write to: %s\n", full_path);
 	return 1;
 }
 
@@ -579,19 +644,37 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 		return -1;
 	}
 
-	fo_prefix_str.s = fo_prefix_buf;
-	fo_prefix_str.len = buf_size;
-	if(pv_printf(msg, fo_files[file_index].fo_prefix_pvs, fo_prefix_str.s,
-			   &fo_prefix_str.len)
-					== 0
-			&& fo_prefix_str.len > 0) {
+	if(pv_printf_s(msg, fo_files[file_index].fo_prefix_pvs, &fo_prefix_str)
+			== 0) {
 		fo_prefix_val.s = fo_prefix_str.s;
 		fo_prefix_val.len = fo_prefix_str.len;
 	}
 
+	/* Allocate memory */
+	logMessage.prefix = (str *)shm_malloc(sizeof(str));
+	if(logMessage.prefix == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
+	logMessage.message = (str *)shm_malloc(sizeof(str));
+	if(logMessage.message == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
+	/* Copy the value */
+	if(shm_str_dup(logMessage.prefix, &fo_prefix_val) < 0) {
+		LM_ERR("Failed to copy prefix\n");
+		return -1;
+	}
+
+	if(shm_str_dup(logMessage.message, &value) < 0) {
+		LM_ERR("Failed to copy message\n");
+		return -1;
+	}
+
 	/* Add the logging string to the global gueue */
-	logMessage.prefix = &fo_prefix_val;
-	logMessage.message = &value;
 	logMessage.dest_file = file_index;
 	fo_enqueue(fo_queue, logMessage);
 
