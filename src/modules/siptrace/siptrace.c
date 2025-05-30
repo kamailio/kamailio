@@ -41,6 +41,7 @@
 #include "../../core/ip_addr.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
+#include "../../core/receive.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../lib/srdb1/db.h"
@@ -54,6 +55,7 @@
 #include "../../core/str.h"
 #include "../../core/onsend.h"
 #include "../../core/events.h"
+#include "../../core/srapi.h"
 #include "../../core/kemi.h"
 
 #include "siptrace_data.h"
@@ -2220,12 +2222,12 @@ static siptrace_data_t *siptrace_event_data = NULL;
 
 static int siptrace_exec_evcb_msg(siptrace_data_t *sto)
 {
-	int backup_rt;
 	run_act_ctx_t ctx;
 	run_act_ctx_t *bctx;
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("siptrace:msg");
 	sip_msg_t msg;
+	ksr_msg_env_t menv = {0};
 
 	if(_siptrace_evrt_msg_idx < 0 && _siptrace_evcb_msg.len <= 0) {
 		return 0;
@@ -2248,7 +2250,7 @@ static int siptrace_exec_evcb_msg(siptrace_data_t *sto)
 		return -1;
 	}
 
-	backup_rt = get_route_type();
+	ksr_msg_env_push(&menv);
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
 
@@ -2267,8 +2269,9 @@ static int siptrace_exec_evcb_msg(siptrace_data_t *sto)
 	}
 	siptrace_event_data = NULL;
 
+	ksr_msg_env_reset();
 	free_sip_msg(&msg);
-	set_route_type(backup_rt);
+	ksr_msg_env_pop(&menv);
 	if(ctx.run_flags & DROP_R_F) {
 		return DROP_R_F;
 	}
