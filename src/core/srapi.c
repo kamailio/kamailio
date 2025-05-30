@@ -79,7 +79,6 @@ void ksr_msg_env_push(ksr_msg_env_t *menv)
 {
 	menv->route_type = get_route_type();
 
-	/* make available the avp list from transaction */
 	menv->avps_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, NULL);
 	menv->avps_uri_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, NULL);
 	menv->avps_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, NULL);
@@ -100,5 +99,16 @@ void ksr_msg_env_push(ksr_msg_env_t *menv)
 void ksr_msg_env_pop(ksr_msg_env_t *menv)
 {
 	set_route_type(menv->route_type);
+
+	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, menv->avps_uri_from);
+	set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, menv->avps_uri_to);
+	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, menv->avps_user_from);
+	set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, menv->avps_user_to);
+	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, menv->avps_domain_from);
+	set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, menv->avps_domain_to);
+	xavp_set_list(menv->xavps);
+	xavu_set_list(menv->xavus);
+	xavi_set_list(menv->xavis);
+
 	return;
 }
