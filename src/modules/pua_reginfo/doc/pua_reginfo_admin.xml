@@ -238,6 +238,33 @@ reply_route[1] {
 				</programlisting>
 			</example>
 		</section>
+		<section id="pua_reginfo.f.reginfo_disable_publish">
+			<title>
+				<function moreinfo="none">reginfo_disable_publish()</function>
+			</title>
+			<para>
+				This function disables sending the PUBLISH request in the registrar
+				callback invocation, for the current message only.
+			</para>
+
+			<example>
+				<title><function>reginfo_disable_publish</function> usage</title>
+				<programlisting format="linespecific">
+...
+if(is_method("REGISTER")) {
+	if (dmq_is_from_node())
+		# coming from a DMQ node, just save without triggering PUBLISH
+		# which may be replicated differently, like with presence DMQ support
+		reginfo_disable_publish();
+		save("location");
+	} else {
+		# coming from end point - authenticate, save contact, etc...
+	}
+}
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 </chapter>
