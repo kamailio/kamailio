@@ -40,6 +40,8 @@
 #include "../../core/mod_fix.h"
 #include "../../core/fmsg.h"
 #include "../../core/events.h"
+#include "../../core/srapi.h"
+#include "../../core/receive.h"
 #include "../../core/kemi.h"
 
 #include "sipdump_write.h"
@@ -286,14 +288,14 @@ static sipdump_data_t *sipdump_event_data = NULL;
  */
 int sipdump_event_route(sipdump_data_t *sdi)
 {
-	int backup_rt;
 	run_act_ctx_t ctx;
 	run_act_ctx_t *bctx;
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("sipdump:msg");
 	sip_msg_t *fmsg = NULL;
+	ksr_msg_env_t menv = {0};
 
-	backup_rt = get_route_type();
+	ksr_msg_env_push(&menv);
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
 	fmsg = faked_msg_next();
@@ -312,7 +314,8 @@ int sipdump_event_route(sipdump_data_t *sdi)
 		}
 	}
 	sipdump_event_data = NULL;
-	set_route_type(backup_rt);
+	ksr_msg_env_reset();
+	ksr_msg_env_pop(&menv);
 	if(ctx.run_flags & DROP_R_F) {
 		return DROP_R_F;
 	}
