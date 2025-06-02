@@ -117,9 +117,10 @@ struct rtpp_set_head
 
 
 struct rtpp_node *get_rtpp_node(struct rtpp_set *rtpp_list, str *url);
-struct rtpp_set *get_rtpp_set(unsigned int set_id);
+struct rtpp_set *get_rtpp_set(unsigned int set_id, unsigned int create_new);
 int add_rtpengine_socks(struct rtpp_set *rtpp_list, char *rtpengine,
 		unsigned int weight, int disabled, unsigned int ticks, int isDB);
+int get_rtpp_set_id_by_node(struct rtpp_node *node);
 
 int rtpengine_delete_node(struct rtpp_node *rtpp_node);
 int rtpengine_delete_node_set(struct rtpp_set *rtpp_list);
@@ -134,6 +135,7 @@ extern str rtpp_setid_col;
 extern str rtpp_url_col;
 extern str rtpp_weight_col;
 extern str rtpp_disabled_col;
+extern int hash_table_tout;
 
 enum hash_algo_t
 {

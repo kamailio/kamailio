@@ -118,7 +118,7 @@ static int rtpp_load_db(void)
 		weight = VAL_INT(values+2);
 		flags = VAL_INT(values+3);
 		*/
-		if((rtpp_list = get_rtpp_set(setid)) == NULL) {
+		if((rtpp_list = get_rtpp_set(setid, 1)) == NULL) {
 			LM_ERR("error getting rtpp_list for set %d\n", setid);
 			continue;
 		}
