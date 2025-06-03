@@ -288,6 +288,7 @@ void print_internals(void)
 	printf("  Version: %s\n", full_version);
 	printf("  Default config: %s\n", CFG_FILE);
 	printf("  Default paths to modules: %s\n", MODS_DIR);
+	printf("  Default path to runtime dir: %s\n", RUN_DIR);
 	printf("  Compile flags: %s\n", ver_flags);
 	printf("  MAX_RECV_BUFFER_SIZE=%d\n", MAX_RECV_BUFFER_SIZE);
 	printf("  MAX_SEND_BUFFER_SIZE=%d\n", MAX_SEND_BUFFER_SIZE);
