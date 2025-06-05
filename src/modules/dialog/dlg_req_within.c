@@ -425,10 +425,9 @@ static inline int send_bye(
 		goto err;
 	}
 
-	/* safety bump of cseq if prack was involved in call setup */
-	if(cell->iflags & DLG_IFLAG_PRACK) {
-		dialog_info->loc_seq.value += 80;
-	}
+	/* safety bump of cseq for callee side if prack was involved in call setup
+	 * or keepalives were sent to caller side */
+	dialog_info->loc_seq.value += 100;
 
 	LM_DBG("sending BYE to %s\n",
 			(dir == DLG_CALLER_LEG) ? "caller" : "callee");
