@@ -784,10 +784,12 @@ int dlg_send_ka(dlg_cell_t *dlg, int dir)
 
 	/* tm increases cseq value, decrease it no to make it invalid
 	 * - dialog is ended on timeout (408) or C/L does not exist (481) */
-	if(di->loc_seq.value > 1)
+	if(di->loc_seq.value > 1) {
 		di->loc_seq.value -= 2;
-	else
+	} else {
 		di->loc_seq.value = 0;
+	}
+	di->loc_seq.is_set = 1;
 
 	LM_DBG("sending OPTIONS to %s\n",
 			(dir == DLG_CALLER_LEG) ? "caller" : "callee");
