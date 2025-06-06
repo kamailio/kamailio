@@ -517,8 +517,12 @@ static inline int t_uac_prepare(
 	 * we can't call init_new_t() because we don't have a sip msg
 	 * => we'll ignore t_set_fr() or avp timer value and will use directly the
 	 * module params fr_inv_timer and fr_timer -- andrei */
-	new_cell->fr_timeout = cfg_get(tm, tm_cfg, fr_timeout);
-	new_cell->fr_inv_timeout = cfg_get(tm, tm_cfg, fr_inv_timeout);
+	new_cell->fr_timeout = (uac_r->fr_timeout > 0)
+								   ? uac_r->fr_timeout
+								   : cfg_get(tm, tm_cfg, fr_timeout);
+	new_cell->fr_inv_timeout = (uac_r->fr_inv_timeout > 0)
+									   ? uac_r->fr_inv_timeout
+									   : cfg_get(tm, tm_cfg, fr_inv_timeout);
 	new_cell->end_of_life = get_ticks_raw() + lifetime;
 	/* same as above for retransmission intervals */
 	new_cell->rt_t1_timeout_ms = cfg_get(tm, tm_cfg, rt_t1_timeout_ms);

@@ -55,6 +55,8 @@ typedef struct uac_req
 	void *cbp;
 	str *callid;
 	unsigned int cseqno;
+	unsigned int fr_timeout;
+	unsigned int fr_inv_timeout;
 } uac_req_t;
 
 /* macro for setting the values of uac_req_t struct */
