@@ -38,6 +38,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/counters.h"
 #include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/parse_expires.h"
 #include "../../core/parser/parse_rr.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_supported.h"
@@ -324,6 +325,14 @@ static int use_outbound_register(struct sip_msg *msg)
 			LM_ERR("parsing Contact: header body\n");
 			return 0;
 		}
+
+		if(((contact_body_t *)msg->contact->parsed)->star
+				&& ((exp_body_t *)msg->expires->parsed)->val == 0) {
+			LM_DBG("found REGISTER with * in Contact: header body and Expires "
+				   ": 0 - outbound used\n");
+			return 1;
+		}
+
 		contact = ((contact_body_t *)msg->contact->parsed)->contacts;
 		if(!contact) {
 			LM_ERR("empty Contact:\n");
