@@ -52,6 +52,10 @@
 #endif /* DIALOG_CALLBACKS */
 
 
+#define DLG_SEQ_VALINIT 0
+#define DLG_SEQ_VALSET 1
+#define DLG_SEQ_VALNEW 2
+
 /*
  * Dialog sequence
  */

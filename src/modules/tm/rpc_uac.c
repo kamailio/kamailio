@@ -757,7 +757,7 @@ static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait)
 		dlg.loc_seq.value = cseq;
 	else
 		dlg.loc_seq.value = DEFAULT_CSEQ;
-	dlg.loc_seq.is_set = 1;
+	dlg.loc_seq.is_set = DLG_SEQ_VALSET;
 
 	dlg.loc_uri = get_from(&faked_msg)->uri;
 	dlg.rem_uri = get_to(&faked_msg)->uri;
@@ -1052,7 +1052,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 		dlg.loc_seq.value = cseq;
 	else
 		dlg.loc_seq.value = DEFAULT_CSEQ;
-	dlg.loc_seq.is_set = 1;
+	dlg.loc_seq.is_set = DLG_SEQ_VALSET;
 
 	dlg.loc_uri = get_from(&faked_msg)->uri;
 	dlg.rem_uri = get_to(&faked_msg)->uri;

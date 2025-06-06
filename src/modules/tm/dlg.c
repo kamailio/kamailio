@@ -357,7 +357,7 @@ int new_dlg_uac(str *_cid, str *_ltag, unsigned int _lseq, str *_luri,
 	/* Make a copy of local sequence (usually CSeq) */
 	res->loc_seq.value = _lseq;
 	/* And mark it as set */
-	res->loc_seq.is_set = 1;
+	res->loc_seq.is_set = DLG_SEQ_VALSET;
 
 	*_d = res;
 
@@ -979,7 +979,7 @@ static inline int request2dlg(struct sip_msg *_m, dlg_t *_d)
 
 	if(get_cseq_value(_m, &_d->rem_seq.value) < 0)
 		goto err3;
-	_d->rem_seq.is_set = 1;
+	_d->rem_seq.is_set = DLG_SEQ_VALSET;
 
 	if(get_dlg_uri(_m->from, &_d->rem_uri) < 0)
 		goto err3;
@@ -1149,7 +1149,7 @@ int dlg_request_uas(
 
 	/* Neither out of order nor retransmission -> update */
 	_d->rem_seq.value = cseq;
-	_d->rem_seq.is_set = 1;
+	_d->rem_seq.is_set = DLG_SEQ_VALSET;
 
 	/* We will als update remote target URI if the message
 	 * is target refresher
