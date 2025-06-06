@@ -118,6 +118,7 @@ static int *_ds_ping_active = NULL;
 extern int ds_force_dst;
 extern str ds_event_callback;
 extern int ds_ping_latency_stats;
+extern int ds_ping_fr_timeout;
 extern int ds_retain_latency_stats;
 extern float ds_latency_estimator_alpha;
 extern int ds_attrs_none;
@@ -4174,6 +4175,9 @@ void ds_ping_set(ds_set_t *node)
 			} else if(ds_default_socket.s != NULL
 					  && ds_default_socket.len > 0) {
 				uac_r.ssock = &ds_default_socket;
+			}
+			if(ds_ping_fr_timeout > 0) {
+				uac_r.fr_timeout = (unsigned int)ds_ping_fr_timeout;
 			}
 
 			/* Overwrite default ping From URI with attribute */
