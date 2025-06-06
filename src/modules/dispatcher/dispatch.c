@@ -4251,6 +4251,7 @@ void ds_check_timer(unsigned int ticks, void *param)
 	}
 
 	ds_ping_set(_ds_list);
+	reset_avps();
 }
 
 /*! \brief
