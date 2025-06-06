@@ -451,11 +451,11 @@ static inline int t_uac_prepare(
 		/* if err's returned, the message is incorrect */
 		goto error3;
 
-	if(!uac_r->dialog->loc_seq.is_set) {
+	if(uac_r->dialog->loc_seq.is_set == DLG_SEQ_VALINIT) {
 		/* this is the first request in the dialog,
 		set cseq to default value now - Miklos */
 		uac_r->dialog->loc_seq.value = DEFAULT_CSEQ;
-		uac_r->dialog->loc_seq.is_set = 1;
+		uac_r->dialog->loc_seq.is_set = DLG_SEQ_VALSET;
 	}
 
 	/* build cell sets X/AVP lists to new transaction structure
@@ -677,7 +677,9 @@ int prepare_req_within(uac_req_t *uac_r, struct retr_buf **dst_req)
 		goto send;
 	if((uac_r->method->len == 6) && (!memcmp("CANCEL", uac_r->method->s, 6)))
 		goto send;
-	uac_r->dialog->loc_seq.value++; /* Increment CSeq */
+	if(uac_r->dialog->loc_seq.is_set != DLG_SEQ_VALNEW) {
+		uac_r->dialog->loc_seq.value++; /* Increment CSeq */
+	}
 send:
 	ret = t_uac_prepare(uac_r, dst_req, 0);
 
