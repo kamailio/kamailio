@@ -577,6 +577,28 @@ modparam("dispatcher", "ds_ping_interval", 30)
 		</example>
 	</section>
 
+
+	<section id="dispatcher.p.ds_ping_fr_timer">
+		<title><varname>ds_ping_fr_timer</varname> (int)</title>
+		<para>
+		If greater than 0, its value is used to set the "fr_timer" value for
+		the local transactions created to send out the OPTIONS pings.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (not set).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_ping_fr_timer</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_fr_timer", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dispatcher.p.ds_probing_threshold">
 		<title><varname>ds_probing_threshold</varname> (int)</title>
 		<para>
