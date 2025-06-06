@@ -63,8 +63,12 @@ typedef struct _uac_send_info
 	str s_ruri;
 	char b_turi[MAX_URI_SIZE];
 	str s_turi;
+	char b_ttag[128];
+	str s_ttag;
 	char b_furi[MAX_URI_SIZE];
 	str s_furi;
+	char b_ftag[128];
+	str s_ftag;
 	char b_callid[128];
 	str s_callid;
 	char b_hdrs[MAX_UACH_SIZE];
@@ -99,7 +103,9 @@ void uac_send_info_copy(uac_send_info_t *src, uac_send_info_t *dst)
 	dst->s_method.s = dst->b_method;
 	dst->s_ruri.s = dst->b_ruri;
 	dst->s_turi.s = dst->b_turi;
+	dst->s_ttag.s = dst->b_ttag;
 	dst->s_furi.s = dst->b_furi;
+	dst->s_ftag.s = dst->b_ftag;
 	dst->s_hdrs.s = dst->b_hdrs;
 	dst->s_body.s = dst->b_body;
 	dst->s_ouri.s = dst->b_ouri;
@@ -193,6 +199,15 @@ int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_uintval(msg, param, res, _uac_req.fr_timeout);
 		case 20:
 			return pv_get_uintval(msg, param, res, _uac_req.fr_inv_timeout);
+		case 21:
+			if(_uac_req.s_ftag.len <= 0)
+				return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_uac_req.s_ftag);
+		case 22:
+			if(_uac_req.s_ttag.len <= 0)
+				return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_uac_req.s_ttag);
+
 		default:
 			return pv_get_uintval(msg, param, res, _uac_req.flags);
 	}
@@ -217,7 +232,9 @@ int pv_set_uac_req(
 				_uac_req.flags = 0;
 				_uac_req.s_ruri.len = 0;
 				_uac_req.s_furi.len = 0;
+				_uac_req.s_ftag.len = 0;
 				_uac_req.s_turi.len = 0;
+				_uac_req.s_ttag.len = 0;
 				_uac_req.s_ouri.len = 0;
 				_uac_req.s_hdrs.len = 0;
 				_uac_req.s_body.len = 0;
@@ -228,6 +245,8 @@ int pv_set_uac_req(
 				_uac_req.evtype = 0;
 				_uac_req.evcode = 0;
 				_uac_req.cseqno = 0;
+				_uac_req.fr_timeout = 0;
+				_uac_req.fr_inv_timeout = 0;
 				_uac_req.s_evparam.len = 0;
 			}
 			break;
@@ -512,6 +531,40 @@ int pv_set_uac_req(
 			}
 			_uac_req.fr_inv_timeout = tval->ri;
 			break;
+		case 21:
+			if(tval == NULL) {
+				_uac_req.s_ftag.len = 0;
+				return 0;
+			}
+			if(!(tval->flags & PV_VAL_STR)) {
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			if(tval->rs.len >= 128) {
+				LM_ERR("Value size too big\n");
+				return -1;
+			}
+			memcpy(_uac_req.s_ftag.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_ftag.s[tval->rs.len] = '\0';
+			_uac_req.s_ftag.len = tval->rs.len;
+			break;
+		case 22:
+			if(tval == NULL) {
+				_uac_req.s_ttag.len = 0;
+				return 0;
+			}
+			if(!(tval->flags & PV_VAL_STR)) {
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			if(tval->rs.len >= 128) {
+				LM_ERR("Value size too big\n");
+				return -1;
+			}
+			memcpy(_uac_req.s_ttag.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_ttag.s[tval->rs.len] = '\0';
+			_uac_req.s_ttag.len = tval->rs.len;
+			break;
 	}
 	return 0;
 }
@@ -533,8 +586,12 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			else if(strncmp(in->s, "turi", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "ttag", 4) == 0)
+				sp->pvp.pvn.u.isname.name.n = 22;
 			else if(strncmp(in->s, "furi", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 3;
+			else if(strncmp(in->s, "ftag", 4) == 0)
+				sp->pvp.pvn.u.isname.name.n = 21;
 			else if(strncmp(in->s, "hdrs", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else if(strncmp(in->s, "body", 4) == 0)
@@ -612,7 +669,9 @@ void uac_req_init(void)
 	memset(&_uac_req, 0, sizeof(struct _uac_send_info));
 	_uac_req.s_ruri.s = _uac_req.b_ruri;
 	_uac_req.s_furi.s = _uac_req.b_furi;
+	_uac_req.s_ftag.s = _uac_req.b_ftag;
 	_uac_req.s_turi.s = _uac_req.b_turi;
+	_uac_req.s_ttag.s = _uac_req.b_ttag;
 	_uac_req.s_ouri.s = _uac_req.b_ouri;
 	_uac_req.s_hdrs.s = _uac_req.b_hdrs;
 	_uac_req.s_body.s = _uac_req.b_body;
