@@ -2273,6 +2273,8 @@ int mark_presentity_for_delete(presentity_t *pres, str *ruid)
 	str *cur_body = NULL, *new_body = NULL;
 	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
+	LM_DBG("mark_presentity_for_delete called\n");
+
 	if(pres->event->agg_nbody == NULL) {
 		/* Nothing clever to do here... just delete */
 		if(delete_presentity(pres, NULL) < 0) {
@@ -2359,6 +2361,8 @@ int mark_presentity_for_delete(presentity_t *pres, str *ruid)
 		goto done;
 	}
 
+	LM_DBG("Found 1 presentity as expected\n");
+
 	row = RES_ROWS(result);
 	value = ROW_VALUES(row);
 
@@ -2378,7 +2382,25 @@ int mark_presentity_for_delete(presentity_t *pres, str *ruid)
 	update_cols[n_update_cols] = &str_etag_col;
 	update_vals[n_update_cols].type = DB1_STR;
 	update_vals[n_update_cols].nul = 0;
-	update_vals[n_update_cols].val.str_val = str_offline_etag_val;
+	str fb = {0, 0};
+	if(pres->etag.len >= str_offline_etag_val.len
+			&& memcmp(pres->etag.s + pres->etag.len - str_offline_etag_val.len,
+					   str_offline_etag_val.s, str_offline_etag_val.len)
+					   == 0) {
+		// Etag already has the offline suffix, just duplicate it
+		update_vals[n_update_cols].val.str_val = pres->etag;
+		LM_DBG("Etag already has the offline suffix, using it: %.*s\n",
+				pres->etag.len, pres->etag.s);
+	} else {
+		// Suffix not present, let's append it
+		if(str_append(&pres->etag, &str_offline_etag_val, &fb) != 0) {
+			LM_ERR("Can't append offline mark to etag\n");
+			goto error;
+		}
+		update_vals[n_update_cols].val.str_val = fb;
+		LM_DBG("Etag without offline suffix, appending it: %.*s\n", fb.len,
+				fb.s);
+	}
 	n_update_cols++;
 
 	update_cols[n_update_cols] = &str_expires_col;
@@ -2398,9 +2420,13 @@ int mark_presentity_for_delete(presentity_t *pres, str *ruid)
 			   n_query_cols, n_update_cols)
 			< 0) {
 		LM_ERR("unsuccessful sql update operation");
+		if(fb.len && fb.s)
+			pkg_free(fb.s);
 		goto error;
 	}
 
+	if(fb.len && fb.s)
+		pkg_free(fb.s);
 	if(pa_dbf.affected_rows)
 		ret = pa_dbf.affected_rows(pa_db);
 	else
@@ -2510,12 +2536,13 @@ int delete_presentity(presentity_t *pres, str *ruid)
 	}
 }
 
+#define QUERY_LEN 1024
 int delete_offline_presentities(str *pres_uri, pres_ev_t *event)
 {
-	db_key_t query_cols[4];
-	db_val_t query_vals[4];
-	int n_query_cols = 0;
 	struct sip_uri uri;
+	str query_str = STR_NULL;
+	db1_res_t *res = NULL;
+	static char query[QUERY_LEN];
 
 	if(pa_db == NULL) {
 		LM_ERR("no database connection set up\n");
@@ -2526,45 +2553,36 @@ int delete_offline_presentities(str *pres_uri, pres_ev_t *event)
 		LM_ERR("failed to parse presentity uri\n");
 		goto error;
 	}
+	LM_DBG("presentity uri.user:%.*s\n", STR_FMT(&uri.user));
 
-	query_cols[n_query_cols] = &str_username_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = uri.user;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = &str_domain_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = uri.host;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = event->name;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = &str_etag_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = str_offline_etag_val;
-	n_query_cols++;
-
-	if(pa_dbf.use_table(pa_db, &presentity_table) < 0) {
-		LM_ERR("unsuccessful use table sql operation\n");
+	if(!DB_CAPABILITY(pa_dbf, DB_CAP_RAW_QUERY)) {
+		LM_ERR("Database does not support raw queries");
 		goto error;
 	}
 
-	if(pa_dbf.delete(pa_db, query_cols, 0, query_vals, n_query_cols) < 0) {
+	memset(query, 0, QUERY_LEN);
+	query_str.len = snprintf(query, QUERY_LEN,
+			"DELETE FROM %.*s WHERE "
+			"%.*s = '%.*s' AND "
+			"%.*s = '%.*s' AND "
+			"%.*s = '%.*s' AND "
+			"%.*s LIKE '%%%.*s'",
+			STR_FMT(&presentity_table), STR_FMT(&str_username_col),
+			STR_FMT(&uri.user), STR_FMT(&str_domain_col), STR_FMT(&uri.host),
+			STR_FMT(&str_event_col), STR_FMT(&event->name),
+			STR_FMT(&str_etag_col), STR_FMT(&str_offline_etag_val));
+
+	query_str.s = query;
+	LM_DBG("query:%.*s\n", STR_FMT(&query_str));
+
+	if(pa_dbf.raw_query(pa_db, &query_str, &res) < 0 || res == NULL) {
 		LM_ERR("unsuccessful sql delete operation");
-		goto error;
+		return -1;
 	}
+	LM_DBG("raw query executed successfully\n");
 
-	if(pa_dbf.affected_rows)
-		return pa_dbf.affected_rows(pa_db);
-	else
-		return 0;
+	pa_dbf.free_result(pa_db, res);
+	return 0;
 
 error:
 	return -1;
