@@ -131,7 +131,7 @@ struct ng_flags_parse {
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux, *sdes, *t38,
 			*received_from, *codec, *codec_strip, *codec_offer,
 			*codec_transcode, *codec_mask, *codec_set, *codec_except, *codec_accept,
-			*codec_consume;
+			*codec_consume, *from_tags;
 	str call_id, from_tag, to_tag;
 };
 
@@ -239,6 +239,17 @@ static int w_rtpengine_query_v(sip_msg_t *msg, char *pfmt, char *pvar);
 static int fixup_rtpengine_query_v(void **param, int param_no);
 static int fixup_free_rtpengine_query_v(void **param, int param_no);
 
+static int rtpengine_subscribe_request_wrap_f(struct sip_msg *msg, char *str1,
+		char *str2, char *str3, char *str4, char *str5);
+static int fixup_rtpengine_subscribe_request_v(void **param, int param_no);
+static int fixup_free_rtpengine_subscribe_request_v(void **param, int param_no);
+
+static int rtpengine_subscribe_answer_wrap_f(
+		struct sip_msg *msg, char *str1, char *str2);
+static int rtpengine_unsubscribe_wrap_f(
+		struct sip_msg *msg, char *str1, char *str2);
+
+
 static int parse_flags(struct ng_flags_parse *, struct sip_msg *,
 		enum rtpe_operation *, const char *);
 static int parse_viabranch_with_param(struct ng_flags_parse *ng_flags,
@@ -251,18 +262,26 @@ static int parse_from_to_tags(struct ng_flags_parse *ng_flags,
 
 static int bind_rtpengine(rtpengine_api_t *api);
 
+static void rtpengine_copy_streams_to_xavp(
+		str *stream_xavp, bencode_item_t *streams);
+static int rtpengine_subscribe_request_wrap(
+		struct sip_msg *msg, void *d, int more, enum rtpe_operation op);
+static int rtpengine_subscribe_answer_wrap(
+		struct sip_msg *msg, void *d, int more, enum rtpe_operation op);
+static int rtpengine_unsubscribe_wrap(
+		struct sip_msg *msg, void *d, int more, enum rtpe_operation op);
 static int rtpengine_offer_answer(
 		struct sip_msg *msg, void *d, enum rtpe_operation op, int more);
-static int ki_rtpengine_subscribe_request(struct rtpengine_session *sess,
+static int rtpengine_subscribe_request(struct rtpengine_session *sess,
 		str **to_tag, str *flags, unsigned int subscribe_flags, str *ret_body,
 		struct rtpengine_streams *ret_streams);
-static int ki_rtpengine_subscribe_answer(
+static int rtpengine_subscribe_answer(
 		struct rtpengine_session *sess, str *to_tag, str *flags, str *body);
-static int ki_rtpengine_unsubscribe(
+static int rtpengine_unsubscribe(
 		struct rtpengine_session *sess, str *to_tag, str *flags);
-static bencode_item_t *rtpengine_subscribe_wrap(struct rtpengine_session *sess,
-		enum rtpe_operation op, str *to_tag, str *flags,
-		unsigned int subscribe_flags, str *body);
+static bencode_item_t *w_rtpengine_subscribe_wrap(
+		struct rtpengine_session *sess, enum rtpe_operation op, str *to_tag,
+		str *flags, unsigned int subscribe_flags, str *body);
 static int fixup_set_id(void **param, int param_no);
 static int fixup_free_set_id(void **param, int param_no);
 static int set_rtpengine_set_f(struct sip_msg *msg, char *str1, char *str2);
@@ -502,6 +521,18 @@ static cmd_export_t cmds[] = {
 	{"rtpengine_query_v", (cmd_function)w_rtpengine_query_v, 2,
 		fixup_rtpengine_query_v, fixup_free_rtpengine_query_v, ANY_ROUTE},
 	{"bind_rtpengine", (cmd_function)bind_rtpengine, 0, 0, 0, 0},
+	{"rtpengine_subscribe_offer", (cmd_function)rtpengine_subscribe_request_wrap_f, 4,
+	fixup_rtpengine_subscribe_request_v, fixup_free_rtpengine_subscribe_request_v, ANY_ROUTE},
+	{"rtpengine_subscribe_offer", (cmd_function)rtpengine_subscribe_request_wrap_f, 5,
+	fixup_rtpengine_subscribe_request_v, fixup_free_rtpengine_subscribe_request_v, ANY_ROUTE},
+	{"rtpengine_subscribe_answer", (cmd_function)rtpengine_subscribe_answer_wrap_f, 1,
+	fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"rtpengine_subscribe_answer", (cmd_function)rtpengine_subscribe_answer_wrap_f, 2,
+	fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"rtpengine_unsubscribe", (cmd_function)rtpengine_unsubscribe_wrap_f, 1,
+	fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"rtpengine_unsubscribe", (cmd_function)rtpengine_unsubscribe_wrap_f, 2,
+	fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -3279,10 +3310,27 @@ static int parse_from_to_tags(struct ng_flags_parse *ng_flags,
 				bencode_dictionary_add_str(
 						ng_flags->dict, "to-tag", &ng_flags->to_tag);
 		}
-	} else if(op == OP_SUBSCRIBE_REQUEST || op == OP_UNSUBSCRIBE) {
-		bencode_dictionary_add_str(
-				ng_flags->dict, "from-tag", &ng_flags->from_tag);
-		return 0;
+	} else if(op == OP_SUBSCRIBE_REQUEST) {
+		/* SUBSCRIBE can either specify a list of from tags or have the keyword
+		 * all
+		 * */
+		if(ng_flags->from_tags)
+			bencode_dictionary_add(
+					ng_flags->dict, "from-tags", ng_flags->from_tags);
+		/* SUBSCRIBE can specify a to tag, if none specified a to-tag gets auto
+		 * generated
+		 * */
+		if(ng_flags->to && ng_flags->to_tag.s && ng_flags->to_tag.len)
+			bencode_dictionary_add_str(
+					ng_flags->dict, "to-tag", &ng_flags->to_tag);
+	} else if(op == OP_SUBSCRIBE_ANSWER || op == OP_UNSUBSCRIBE) {
+		/* SUBSCRIBE answer and UNSUBSCRIBE should specify the tag matching the
+		 * original subscribe request.  Internal api passes it via extra_dict
+		 * so this can be missing from flags in that case
+		 */
+		if(ng_flags->to && ng_flags->to_tag.s && ng_flags->to_tag.len)
+			bencode_dictionary_add_str(
+					ng_flags->dict, "to-tag", &ng_flags->to_tag);
 	} else if((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
 			  || (msg->first_line.type == SIP_REPLY && op == OP_DELETE)
 			  || (msg->first_line.type == SIP_REPLY && op == OP_ANSWER)
@@ -3415,10 +3463,10 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg,
 				} else if(str_eq(&key, "AVP") && !val.s) {
 					ng_flags->transport |= 0x100;
 					ng_flags->transport &= ~0x002;
-				} else if(str_eq(&key, "TOS") && val.s)
+				} else if(str_eq(&key, "TOS") && val.s) {
 					bencode_dictionary_add_integer(
 							ng_flags->dict, "TOS", atoi(val.s));
-				else
+				} else
 					goto generic;
 				goto next;
 				break;
@@ -3480,7 +3528,17 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg,
 					ng_flags->transport = 0x103;
 				else if(str_eq(&key, "direction"))
 					bencode_list_add_str(ng_flags->direction, &val);
-				else
+				else if(str_eq(&key, "from-tags")) {
+					err = "missing value";
+					if(!val.s)
+						goto error;
+
+					if(!ng_flags->from_tags) {
+						ng_flags->from_tags =
+								bencode_list(ng_flags->dict->buffer);
+					}
+					bencode_list_add_str(ng_flags->from_tags, &val);
+				} else
 					goto generic;
 				goto next;
 				break;
@@ -3565,9 +3623,10 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg,
 		}
 
 	generic:
-		if(!val.s)
+		if(!val.s) {
+			LM_DBG("Setting flag %.*s\n", key.len, key.s);
 			bencode_list_add_str(ng_flags->flags, &key);
-		else
+		} else
 			bencode_dictionary_str_add_str(ng_flags->dict, &key, &val);
 		goto next;
 
@@ -3661,7 +3720,6 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf,
 
 	/* offer/asnwer specific things */
 	if(op == OP_OFFER || op == OP_ANSWER) {
-
 		/* create these bencode items only if parsing is local */
 		if(parse_by_module && flags) {
 			ng_flags.direction = bencode_list(bencbuf);
@@ -3671,28 +3729,27 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf,
 			ng_flags.t38 = bencode_list(bencbuf);
 			ng_flags.codec = bencode_dictionary(bencbuf);
 		}
-
+	}
+	if(op == OP_OFFER || op == OP_ANSWER || op == OP_SUBSCRIBE_ANSWER) {
 		/* get SDP body */
-		{
-			if(read_sdp_pvar != NULL) {
-				if(read_sdp_pvar->getf(msg, &read_sdp_pvar->pvp, &pv_val) < 0) {
-					LM_ERR("error getting pvar value <%.*s>\n",
-							read_sdp_pvar_str.len, read_sdp_pvar_str.s);
-					goto error;
-				} else {
-					body = pv_val.rs;
-				}
-
-			} else if((cont_type = extract_body(msg, &body, cl_field)) == -1) {
-				LM_ERR("can't extract body from the message\n");
+		if(read_sdp_pvar != NULL) {
+			if(read_sdp_pvar->getf(msg, &read_sdp_pvar->pvp, &pv_val) < 0) {
+				LM_ERR("error getting pvar value <%.*s>\n",
+						read_sdp_pvar_str.len, read_sdp_pvar_str.s);
 				goto error;
+			} else {
+				body = pv_val.rs;
 			}
-			if(body_intermediate.s)
-				bencode_dictionary_add_str(
-						ng_flags.dict, "sdp", &body_intermediate);
-			else
-				bencode_dictionary_add_str(ng_flags.dict, "sdp", &body);
+
+		} else if((cont_type = extract_body(msg, &body, cl_field)) == -1) {
+			LM_ERR("can't extract body from the message\n");
+			goto error;
 		}
+		if(body_intermediate.s)
+			bencode_dictionary_add_str(
+					ng_flags.dict, "sdp", &body_intermediate);
+		else
+			bencode_dictionary_add_str(ng_flags.dict, "sdp", &body);
 	}
 
 	/**
@@ -3700,7 +3757,10 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf,
 	 */
 
 	/* affects to-tag parsing */
-	ng_flags.to = (!parse_by_module || op != OP_DELETE) ? 1 : 0;
+	ng_flags.to = (!parse_by_module
+						  || (op != OP_DELETE && op != OP_SUBSCRIBE_REQUEST))
+						  ? 1
+						  : 0;
 
 	/* module specific parsing */
 	if(parse_by_module && flags && parse_flags(&ng_flags, msg, &op, flags->s))
@@ -5264,6 +5324,258 @@ static int rtpengine_answer1_f(struct sip_msg *msg, char *str1, char *str2)
 			msg, rtpengine_answer_wrap, str1, str2, 2, OP_ANSWER);
 }
 
+static int rtpengine_subscribe_request_wrap_f(struct sip_msg *msg, char *str1,
+		char *str2, char *str3, char *str4, char *str5)
+{
+	str flags;
+	str viabranch;
+
+	void *parms[5];
+
+	parms[0] = NULL;
+	parms[1] = NULL;
+	parms[2] = NULL;
+	parms[3] = NULL;
+	parms[4] = NULL;
+
+	flags.s = NULL;
+	if(str1) {
+		if(get_str_fparam(&flags, msg, (fparam_t *)str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+		parms[0] = &flags;
+	}
+
+	if(str2) {
+		// get the SDP AVP
+		parms[1] = str2;
+	}
+	if(str3) {
+		// get the to-tag AVP
+		parms[2] = str3;
+	}
+	if(str4) {
+		// get the stream XAVP
+		parms[3] = str4;
+	}
+	if(str5) {
+		if(get_str_fparam(&viabranch, msg, (fparam_t *)str5)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+		parms[4] = &viabranch;
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_subscribe_request_wrap, parms,
+			1, OP_SUBSCRIBE_REQUEST);
+}
+
+static int ki_subscribe_request(sip_msg_t *msg, str *flags, str *sdp_spv,
+		str *to_tag_spv, str *stream_xavp)
+{
+	void *parms[5] = {flags, sdp_spv, to_tag_spv, stream_xavp, NULL};
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_subscribe_request_wrap, parms,
+			1, OP_SUBSCRIBE_REQUEST);
+}
+
+static int rtpengine_subscribe_request_wrap(
+		struct sip_msg *msg, void *d, int more, enum rtpe_operation op)
+{
+	void **parms;
+	str *flags = NULL;
+	str *sdp_spv = NULL;
+	str *to_tag_spv = NULL;
+	str *stream_xavp = NULL;
+	str *viabranch = NULL;
+	bencode_buffer_t bencbuf;
+	bencode_item_t *dict;
+	str ret_body, to_tag = {"", 0};
+
+	pv_spec_t *pvs = NULL;
+	pv_value_t dst_val;
+	memset(&dst_val, 0, sizeof(pv_value_t));
+	dst_val.flags |= PV_VAL_STR;
+
+	parms = d;
+	flags = parms[0];
+	sdp_spv = parms[1];
+	to_tag_spv = parms[2];
+	stream_xavp = parms[3];
+	viabranch = parms[4];
+
+	dict = rtpp_function_call_ok(
+			&bencbuf, msg, op, flags, viabranch, NULL, NULL, NULL);
+	if(!dict)
+		return -1;
+
+	// Extract SDP body from the RTPEngine response
+	if(!bencode_dictionary_get_str_dup(dict, "sdp", &ret_body)) {
+		LM_ERR("failed to extract sdp body from proxy reply\n");
+		return -1;
+	}
+
+	if(sdp_spv != NULL && sdp_spv->s != NULL && sdp_spv->len > 0) {
+		pvs = pv_cache_get(sdp_spv);
+		dst_val.rs.s = ret_body.s;
+		dst_val.rs.len = ret_body.len;
+		if(pv_set_spec_value(msg, pvs, 0, &dst_val) != 0) {
+			LM_ERR("failed to set sdp AVP\n");
+			return -1;
+		}
+		LM_DBG("Set sdp %.*s AVP to %.*s\n", sdp_spv->len, sdp_spv->s,
+				ret_body.len, ret_body.s);
+	}
+
+	// Extract and allocate a new to-tag from the RTPEngine response
+	if(!bencode_dictionary_get_str(dict, "to-tag", &to_tag)) {
+		LM_ERR("failed to extract to-tag from proxy reply\n");
+		return -1;
+	}
+	if(to_tag_spv != NULL && to_tag_spv->s != NULL && to_tag_spv->len > 0) {
+		pvs = pv_cache_get(to_tag_spv);
+		dst_val.rs.s = to_tag.s;
+		dst_val.rs.len = to_tag.len;
+		if(pv_set_spec_value(msg, pvs, 0, &dst_val) != 0) {
+			LM_ERR("failed to set to_tag AVP\n");
+			return -1;
+		}
+		LM_DBG("Set to_tag %.*s AVP to %.*s\n", to_tag_spv->len, to_tag_spv->s,
+				to_tag.len, to_tag.s);
+	}
+
+	if(stream_xavp != NULL) {
+		rtpengine_copy_streams_to_xavp(
+				stream_xavp, bencode_dictionary_get(dict, "tag-medias"));
+	}
+
+	// Free the bencode buffer
+	bencode_buffer_free(bencode_item_buffer(dict));
+	return 0;
+}
+
+
+static int rtpengine_subscribe_answer_wrap_f(
+		struct sip_msg *msg, char *str1, char *str2)
+{
+	str flags;
+	str viabranch;
+
+	void *parms[2];
+
+	parms[0] = NULL;
+	parms[1] = NULL;
+
+	flags.s = NULL;
+	if(str1) {
+		if(get_str_fparam(&flags, msg, (fparam_t *)str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+		parms[0] = &flags;
+	}
+	if(str2) {
+		if(get_str_fparam(&viabranch, msg, (fparam_t *)str2)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+		parms[1] = &viabranch;
+	}
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_subscribe_answer_wrap, parms,
+			1, OP_SUBSCRIBE_ANSWER);
+}
+
+static int ki_subscribe_answer(sip_msg_t *msg, str *flags)
+{
+	void *parms[2] = {flags, NULL};
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_subscribe_answer_wrap, parms,
+			1, OP_SUBSCRIBE_ANSWER);
+}
+
+static int rtpengine_subscribe_answer_wrap(
+		struct sip_msg *msg, void *d, int more, enum rtpe_operation op)
+{
+	void **parms;
+	str *flags = NULL;
+	str *viabranch = NULL;
+	bencode_buffer_t bencbuf;
+	bencode_item_t *dict;
+
+	parms = d;
+	flags = parms[0];
+	viabranch = parms[1];
+
+	dict = rtpp_function_call_ok(
+			&bencbuf, msg, op, flags, viabranch, NULL, NULL, NULL);
+	if(!dict)
+		return -1;
+	// Free the bencode buffer
+	bencode_buffer_free(bencode_item_buffer(dict));
+	return 0;
+}
+
+static int rtpengine_unsubscribe_wrap_f(
+		struct sip_msg *msg, char *str1, char *str2)
+{
+	str flags;
+	str viabranch;
+
+	void *parms[2];
+
+	parms[0] = NULL;
+	parms[1] = NULL;
+
+	flags.s = NULL;
+	if(str1) {
+		if(get_str_fparam(&flags, msg, (fparam_t *)str1)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+		parms[0] = &flags;
+	}
+	if(str2) {
+		if(get_str_fparam(&viabranch, msg, (fparam_t *)str2)) {
+			LM_ERR("Error getting string parameter\n");
+			return -1;
+		}
+		parms[1] = &viabranch;
+	}
+
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_unsubscribe_wrap, parms, 1, OP_UNSUBSCRIBE);
+}
+
+static int ki_unsubscribe(sip_msg_t *msg, str *flags)
+{
+	void *parms[2] = {flags, NULL};
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_unsubscribe_wrap, parms, 1, OP_UNSUBSCRIBE);
+}
+
+
+static int rtpengine_unsubscribe_wrap(
+		struct sip_msg *msg, void *d, int more, enum rtpe_operation op)
+{
+	void **parms;
+	str *flags = NULL;
+	str *viabranch = NULL;
+	bencode_buffer_t bencbuf;
+	bencode_item_t *dict;
+
+	parms = d;
+	flags = parms[0];
+	viabranch = parms[1];
+
+	dict = rtpp_function_call_ok(
+			&bencbuf, msg, op, flags, viabranch, NULL, NULL, NULL);
+	if(!dict)
+		return -1;
+	// Free the bencode buffer
+	bencode_buffer_free(bencode_item_buffer(dict));
+	return 0;
+}
+
 static int rtpengine_offer_answer(
 		struct sip_msg *msg, void *d, enum rtpe_operation op, int more)
 {
@@ -5773,6 +6085,45 @@ static int fixup_free_rtpengine_query_v(void **param, int param_no)
 
 	if(param_no == 2) {
 		return fixup_free_pvar_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+static int fixup_rtpengine_subscribe_request_v(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_spve_null(param, 1);
+	}
+
+	if(param_no >= 2 && param_no <= 4) {
+		return fixup_str_null(param, 1);
+	}
+
+	if(param_no == 5) {
+		return fixup_spve_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+/**
+ *
+ */
+static int fixup_free_rtpengine_subscribe_request_v(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	}
+
+	if(param_no >= 2 && param_no <= 4) {
+		return fixup_free_str_null(param, 1);
+	}
+
+	if(param_no == 5) {
+		return fixup_free_spve_null(param, 1);
 	}
 
 	LM_ERR("invalid parameter number <%d>\n", param_no);
@@ -6373,6 +6724,22 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
         { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
+	{ str_init("rtpengine"), str_init("rtpengine_subscribe_request"),
+		SR_KEMIP_INT, ki_subscribe_request,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rtpengine"), str_init("rtpengine_subscribe_answer"),
+		SR_KEMIP_INT, ki_subscribe_answer,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rtpengine"), str_init("rtpengine_unsubscribe"),
+		SR_KEMIP_INT, ki_unsubscribe,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
 
     { {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
@@ -6397,9 +6764,9 @@ static int bind_rtpengine(rtpengine_api_t *api)
 	api->rtpengine_answer = ki_rtpengine_answer2;
 	api->rtpengine_offer = ki_rtpengine_offer2;
 	api->rtpengine_delete = ki_rtpengine_delete2;
-	api->rtpengine_subscribe_request = ki_rtpengine_subscribe_request;
-	api->rtpengine_subscribe_answer = ki_rtpengine_subscribe_answer;
-	api->rtpengine_unsubscribe = ki_rtpengine_unsubscribe;
+	api->rtpengine_subscribe_request = rtpengine_subscribe_request;
+	api->rtpengine_subscribe_answer = rtpengine_subscribe_answer;
+	api->rtpengine_unsubscribe = rtpengine_unsubscribe;
 
 	return 0;
 }
@@ -6418,9 +6785,9 @@ static int bind_rtpengine(rtpengine_api_t *api)
  * @param body Optional SDP body for the subscribe answer command (nullable).
  * @return A pointer to a bencode item representing the RTPEngine response, or NULL on failure.
  */
-static bencode_item_t *rtpengine_subscribe_wrap(struct rtpengine_session *sess,
-		enum rtpe_operation op, str *to_tag, str *flags,
-		unsigned int subscribe_flags, str *body)
+static bencode_item_t *w_rtpengine_subscribe_wrap(
+		struct rtpengine_session *sess, enum rtpe_operation op, str *to_tag,
+		str *flags, unsigned int subscribe_flags, str *body)
 {
 	static bencode_buffer_t bencbuf;
 	bencode_item_t *dict, *list = NULL;
@@ -6571,6 +6938,79 @@ static void rtpengine_copy_streams(bencode_item_t *streams,
 	}
 }
 
+static void rtpengine_copy_streams_to_xavp(
+		str *stream_xavp, bencode_item_t *streams)
+{
+	bencode_item_t *item, *medias;
+	str label_str = STR_NULL;
+	str tag = STR_NULL;
+	int label;
+
+	if(!streams) {
+		return;
+	}
+
+	if(stream_xavp->len == 0) {
+		LM_DBG("stream_xavp is not set, nothing to do\n");
+		return;
+	}
+
+	sr_xval_t stream_val;
+	sr_xval_t tag_val;
+	sr_xval_t media_xval;
+	sr_xavp_t *media_xavp = NULL;
+
+	str label_name = str_init("label");
+	str tag_name = str_init("tag");
+
+	// Iterate through each item (each item is related to a participant)
+	for(item = streams->child; item; item = item->sibling) {
+		// Set leg based on participant tag
+		tag.s = bencode_dictionary_get_string(item, "tag", &tag.len);
+		if(!tag.s) {
+			LM_WARN("could not retrieve tag \n");
+			continue;
+		}
+		memset(&tag_val, 0, sizeof(sr_xval_t));
+		tag_val.type = SR_XTYPE_STR;
+		tag_val.v.s = tag;
+
+		// Retrieve media streams
+		medias = bencode_dictionary_get_expect(item, "medias", BENCODE_LIST);
+		if(!medias) {
+			continue;
+		}
+
+		media_xavp = NULL;
+		xavp_add_value(&tag_name, &tag_val, &media_xavp);
+		// Iterate through each media stream
+		for(medias = medias->child; medias; medias = medias->sibling) {
+			label_str.s = bencode_dictionary_get_string(
+					medias, "label", &label_str.len);
+			if(str2sint(&label_str, &label) < 0) {
+				LM_WARN("invalid label %.*s - not integer - skipping\n",
+						label_str.len, label_str.s);
+				continue;
+			}
+			memset(&media_xval, 0, sizeof(sr_xval_t));
+			media_xval.type = SR_XTYPE_LONG;
+			media_xval.v.l = (long)label;
+			if(xavp_add_value(&label_name, &media_xval, &media_xavp) == NULL) {
+				LM_ERR("failed to add label %d to xavp\n", label);
+				continue;
+			}
+		}
+		memset(&stream_val, 0, sizeof(sr_xval_t));
+		stream_val.type = SR_XTYPE_XAVP;
+		stream_val.v.xavp = media_xavp;
+		if(xavp_add_value(stream_xavp, &stream_val, NULL) == NULL) {
+			LM_ERR("failed to add stream xavp for tag %s\n", tag.s);
+			xavp_free(media_xavp);
+			continue;
+		}
+	}
+}
+
 /**
  * @brief Sends a subscribe request command to RTPEngine to request subscription (i.e. receiving a copy of the media).
  *
@@ -6585,7 +7025,7 @@ static void rtpengine_copy_streams(bencode_item_t *streams,
  * @param ret_streams Pointer to a structure to store stream data extracted from RTPEngine's response.
  * @return 1 on success, -1 on failure.
  */
-static int ki_rtpengine_subscribe_request(struct rtpengine_session *sess,
+static int rtpengine_subscribe_request(struct rtpengine_session *sess,
 		str **to_tag, str *flags, unsigned int subscribe_flags, str *ret_body,
 		struct rtpengine_streams *ret_streams)
 {
@@ -6593,7 +7033,7 @@ static int ki_rtpengine_subscribe_request(struct rtpengine_session *sess,
 	bencode_item_t *dict;
 
 	// Wrap the subscribe request command and send to RTPEngine
-	dict = rtpengine_subscribe_wrap(
+	dict = w_rtpengine_subscribe_wrap(
 			sess, OP_SUBSCRIBE_REQUEST, *to_tag, flags, subscribe_flags, NULL);
 	if(!dict) {
 		return -1;
@@ -6630,13 +7070,13 @@ static int ki_rtpengine_subscribe_request(struct rtpengine_session *sess,
  * @param body The SDP body to send as part of the subscribe answer command.
  * @return 1 on success, -1 on failure.
  */
-static int ki_rtpengine_subscribe_answer(
+static int rtpengine_subscribe_answer(
 		struct rtpengine_session *sess, str *to_tag, str *flags, str *body)
 {
 	bencode_item_t *ret;
 
 	// Wrap the subscribe answer command and send to RTPEngine
-	ret = rtpengine_subscribe_wrap(
+	ret = w_rtpengine_subscribe_wrap(
 			sess, OP_SUBSCRIBE_ANSWER, to_tag, flags, 0, body);
 	if(!ret) {
 		return -1;
@@ -6656,13 +7096,13 @@ static int ki_rtpengine_subscribe_answer(
  * @param flags: A space-separated string of feature flags used in rtpengine functions.
  * @return 1 on success, -1 on failure.
  */
-static int ki_rtpengine_unsubscribe(
+static int rtpengine_unsubscribe(
 		struct rtpengine_session *sess, str *to_tag, str *flags)
 {
 	bencode_item_t *ret;
 
 	// Wrap the unsubscribe command and send to RTPEngine
-	ret = rtpengine_subscribe_wrap(
+	ret = w_rtpengine_subscribe_wrap(
 			sess, OP_UNSUBSCRIBE, to_tag, flags, 0, NULL);
 	if(!ret) {
 		return -1;
