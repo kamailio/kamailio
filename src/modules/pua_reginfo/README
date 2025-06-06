@@ -35,6 +35,7 @@ Carsten Bock
 
               4.1. reginfo_handle_notify(uldomain)
               4.2. reginfo_subscribe(uri[, expires])
+              4.3. reginfo_disable_publish()
 
    List of Examples
 
@@ -44,6 +45,7 @@ Carsten Bock
    1.4. Set server_address parameter
    1.5. reginfo_handle_notify usage
    1.6. reginfo_subscribe usage
+   1.7. reginfo_disable_publish usage
 
 Chapter 1. Admin Guide
 
@@ -66,6 +68,7 @@ Chapter 1. Admin Guide
 
         4.1. reginfo_handle_notify(uldomain)
         4.2. reginfo_subscribe(uri[, expires])
+        4.3. reginfo_disable_publish()
 
 1. Overview
 
@@ -164,6 +167,7 @@ modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
 
    4.1. reginfo_handle_notify(uldomain)
    4.2. reginfo_subscribe(uri[, expires])
+   4.3. reginfo_disable_publish()
 
 4.1.  reginfo_handle_notify(uldomain)
 
@@ -210,5 +214,25 @@ route {
 reply_route[1] {
         if (t_check_status("200"))
                 reginfo_subscribe("$ru");
+}
+...
+
+4.3.  reginfo_disable_publish()
+
+   This function disables sending the PUBLISH request in the registrar
+   callback invocation, for the current message only.
+
+   Example 1.7. reginfo_disable_publish usage
+...
+if(is_method("REGISTER")) {
+        if (dmq_is_from_node())
+                # coming from a DMQ node, just save without triggering PUBLISH
+                # which may be replicated differently, like with presence DMQ su
+pport
+                reginfo_disable_publish();
+                save("location");
+        } else {
+                # coming from end point - authenticate, save contact, etc...
+        }
 }
 ...
