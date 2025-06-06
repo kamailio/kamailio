@@ -82,6 +82,8 @@ typedef struct _uac_send_info
 	char b_evparam[MAX_UACD_SIZE];
 	str s_evparam;
 	unsigned int cseqno;
+	unsigned int fr_timeout;
+	unsigned int fr_inv_timeout;
 	unsigned int evroute;
 	unsigned int evcode;
 	unsigned int evtype;
@@ -187,6 +189,10 @@ int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_uintval(msg, param, res, _uac_req.flags);
 		case 18:
 			return pv_get_uintval(msg, param, res, _uac_req.cseqno);
+		case 19:
+			return pv_get_uintval(msg, param, res, _uac_req.fr_timeout);
+		case 20:
+			return pv_get_uintval(msg, param, res, _uac_req.fr_inv_timeout);
 		default:
 			return pv_get_uintval(msg, param, res, _uac_req.flags);
 	}
@@ -484,6 +490,28 @@ int pv_set_uac_req(
 			}
 			_uac_req.cseqno = tval->ri;
 			break;
+		case 19:
+			if(tval == NULL) {
+				_uac_req.fr_timeout = 0;
+				return 0;
+			}
+			if(!(tval->flags & PV_VAL_INT)) {
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			_uac_req.fr_timeout = tval->ri;
+			break;
+		case 20:
+			if(tval == NULL) {
+				_uac_req.fr_inv_timeout = 0;
+				return 0;
+			}
+			if(!(tval->flags & PV_VAL_INT)) {
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			_uac_req.fr_inv_timeout = tval->ri;
+			break;
 	}
 	return 0;
 }
@@ -550,6 +578,16 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 			else
 				goto error;
 			break;
+		case 10:
+			if(strncmp(in->s, "fr_timeout", 10) == 0)
+				sp->pvp.pvn.u.isname.name.n = 19;
+			else
+				goto error;
+		case 14:
+			if(strncmp(in->s, "fr_inv_timeout", 14) == 0)
+				sp->pvp.pvn.u.isname.name.n = 20;
+			else
+				goto error;
 		default:
 			goto error;
 	}
@@ -803,6 +841,8 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	uac_r.ssock = (tp->s_sock.len <= 0) ? NULL : &tp->s_sock;
 	uac_r.dialog = &tmdlg;
 	uac_r.cb_flags = TMCB_LOCAL_COMPLETED | TMCB_DESTROY;
+	uac_r.fr_timeout = tp->fr_timeout;
+	uac_r.fr_inv_timeout = tp->fr_inv_timeout;
 	if(tp->evroute != 0) {
 		/* Callback function */
 		uac_r.cb = uac_resend_tm_callback;
@@ -860,6 +900,9 @@ int uac_req_send(void)
 	} else if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
 		uac_r.ssock = &uac_default_socket;
 	}
+
+	uac_r.fr_timeout = _uac_req.fr_timeout;
+	uac_r.fr_inv_timeout = _uac_req.fr_inv_timeout;
 
 	if((_uac_req.s_auser.len > 0 && _uac_req.s_apasswd.len > 0)
 			|| (_uac_req.evroute > 0)) {
