@@ -3194,8 +3194,291 @@ rtpengine_manage();
 </programlisting>
 		</example>
         </section>
+		<section id="rtpengine.f.rtpengine_subscribe_request">
+			<title>
+				<function moreinfo="none">rtpengine_subscribe_request(flags,sdp_avp,to_tag_avp,stream_xavp[,via-branch])</function>
+			</title>
+			<para>
+				Generates &sdp; body for forking the current &rtp; stream and stores it in the
+				xavp specified <quote>sdp_avp</quote> AVP. The new call leg will be identified
+				by the generated (or specified) to tag that will be put in the
+				<quote>to_tag_avp</quote> AVP.
+				on INVITE for the cases the &sdp; bodies are in INVITE and 200 OK and on 200 OK
+				when &sdp; bodies are in 200 OK and ACK.
+			</para>
+			<para>
+				The function will return true on success and false (-1) on various failures,
+				like using rtpengine_subscribe_request() before an rtpengine session was established.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>flags</emphasis> - flags to turn on some features.
+					</para>
+					<para>The <quote>flags</quote> string is a list of space-separated items. Each item
+						is either an individual token, or a token in <quote>key=value</quote> format. The
+						possible tokens are described below. This offer SDP can be manipulated with the same flags as
+						used in <function>rtpengine_offer</function> additionally, the following extra flags can be used
+					</para>
+					<itemizedlist>
+						<listitem><para>
+							<emphasis>from-tags=...</emphasis> - Specifies which participants in the call should have
+							their media forked. This value can be repeated multiple times to specify multiple
+							participants. To specify all participants, use <quote>all</quote> as an alternative.
+						</para></listitem>
+						<listitem><para>
+							<emphasis>all</emphasis> - forks the media stream for all participants in the call. Use
+							instead of <quote>from-tags=...</quote>
+						</para></listitem>
+						<listitem><para>
+							<emphasis>siprec</emphasis> - indicates that the &sdp; should be in SIPREC format. The flag
+							<quote>all</quote> should also be used in this case.
+						</para></listitem>
+					</itemizedlist>
+					<para>
+						Check also the documentation of RTPEngine, these flags are documented there as well:
+						<ulink url="https://github.com/sipwise/rtpengine">https://github.com/sipwise/rtpengine</ulink>.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>sdp_avp</emphasis> - the name of the AVP where the generated &sdp; will be stored.
+					</para>
+					<para>The <quote>sdp_avp</quote> parameter is mandatory and must be a writable AVP.
+						The AVP will be set to the generated &sdp; body, which can then be used in a subsequent
+						<quote>t_uac_send()</quote> call to send the offer to the new participant.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>to_tag_avp</emphasis> - the name of the AVP where to store the to tag of the new call
+						leg.
+					</para>
+					<para>The <quote>to_tag_avp</quote> parameter is mandatory and must be a writable AVP.
+						The to tag will either be auto generated or taken from the value specified in the
+						<quote>to-tag</quote> flag.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>stream_xavp</emphasis> - XAVP to store the stream information.
+					</para>
+					<para>The <quote>stream_xavp</quote> parameter is mandatory and must be a writable XAVP.
+						The XAVP will be a stack, one for each participant. Each stack element will have
+						a key <quote>tag</quote> to identify the participant, and a key <quote>label</quote> which is
+						an array of labels, (each stream in the &rtp; will have a label attribute in the generated &sdp;).
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>via-branch</emphasis> - provide the via-branch taken from one of SIP message Via headers.
+					</para>
+					<para>The <quote>via-branch</quote> parameter helps to match NG command (offer, answer, delete etc.) to particular monologue.
+						It does the same job as the <quote>via-branch</quote> option flag, but it also enables alternative parsing behavior,
+						when option flags are passed to rtpengine using bencode string format and is then parsed there.
+						The benefit of the second approach is that any new flags supported by rtpengine
+						will automatically be supported without having to worry about support in the control module.
+						Regardless whether the flags parsing is done by the module or daemon,
+						a functional behavior remains the same and has no difference in terms of SDP processing.
+						Possible values are the same as for the <quote>via-branch</quote> option flag.
+						If the newer approach is to be applied, but no <quote>via-branch</quote> is meant to be
+						added for identfication, then <quote>none</quote> can be given instead.
+						This parameter can be applied for the rtpengine versions equal or later than mr12.4.</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>via-branch</emphasis> - provide the via-branch taken from one of SIP message Via headers.
+					</para>
+					<para>The <quote>via-branch</quote> parameter helps to match NG command (offer, answer, delete etc.) to particular monologue.
+						It does the same job as the <quote>via-branch</quote> option flag, but it also enables alternative parsing behavior,
+						when option flags are passed to rtpengine using bencode string format and is then parsed there.
+						The benefit of the second approach is that any new flags supported by rtpengine
+						will automatically be supported without having to worry about support in the control module.
+						Regardless whether the flags parsing is done by the module or daemon,
+						a functional behavior remains the same and has no difference in terms of SDP processing.
+						Possible values are the same as for the <quote>via-branch</quote> option flag.
+						If the newer approach is to be applied, but no <quote>via-branch</quote> is meant to be
+						added for identfication, then <quote>none</quote> can be given instead.
+						This parameter can be applied for the rtpengine versions equal or later than mr12.4.</para>
+				</listitem>
+			</itemizedlist>
+			<para>
+				This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>rtpengine_off</function> usage</title>
+				<programlisting format="linespecific">
+					route {
+					...
+					if (is_method("INVITE")) {
+					if (has_body("application/sdp")) {
+					if (rtpengine_offer())
+					t_on_reply("1");
+					}
+					}
+					...
+					}
 
-	<section id="rtpengine.f.start_recording">
+					onreply_route[1]
+					{
+					...
+					if (has_body("application/sdp")) {
+					rtpengine_answer();
+					rtpengine_subscribe_request("all siprec", "$avp(siprec_offer)",
+					"$avp(siprec_to_tag)", "siprec_streams");
+					xinfo("SIPREC participant $xavp(siprec_streams[0]=>tag) with label $xavp(siprec_streams[0]=>label[0])\n");
+					xinfo("SIPREC participant $xavp(siprec_streams[1]=>tag) with label $xavp(siprec_streams[0]=>label[0])\n");
+					#use the above steam information to build the siprec xml metadata, will just send sdp in this example
+					$dlg_var(orig_to_tag) = $tt;
+					$dlg_var(siprec_contact) = "sip:uac@" + $Ri;
+					$dlg_var(siprec_to_tag) = $avp(siprec_to_tag);
+					t_uac_send("INVITE","sip:siprec@siprec_server.example.com",
+					"siprec_server.example.com", "",
+					"To: &lt;$tu&gt;\r\n" +
+					"From: &lt;$fu&gt;\r\n" +
+					"Contact: &lt;$dlg_var(siprec_contact)&gt;\r\n" +
+					"Content-Type: application/sdp\r\n",
+					$avp(siprec_offer));
+					...
+					}
+
+					event_route [tm:local-request] {
+					if (is_method("INVITE")) {
+					# save information from the original dialog to the new invite transaction
+					$avp(orig_callid) = $dlg(callid);
+					$avp(orig_from_tag) = $dlg(from_tag);
+					$avp(orig_to_tag) = $dlg_var(orig_to_tag);
+					$avp(siprec_to_tag) = $dlg_var(siprec_to_tag);
+					$avp(siprec_contact) = $dlg_var(siprec_contact);
+					t_on_reply("2");
+					}
+					if (is_method("ACK")) {
+					# save the routeset in the original dialog
+					dlg_get($avp(orig_callid), $avp(orig_from_tag), $avp(orig_to_tag));
+					$dlg_var(siprec_cseq) = $cs;
+					$dlg_var(siprec_to_hdr) = $hdr(To);
+					$dlg_var(siprec_from_hdr) = $hdr(From);
+					append_hf("Contact: &lt;$dlg_var(siprec_contact)&gt;\r\n");
+
+					# the same dialog information can be used to send the BYE with t_uac_send
+					}
+					}
+
+					onreply_route[1] {
+					if (has_body("application/sdp")) {
+					rtpengine_subscribe_answer("from-tag=$avp(orig_from_tag) to-tag=$avp(siprec_to_tag) call-id="$avp(orig_callid)");
+					}
+
+					...
+				</programlisting>
+			</example>
+		</section>
+		<section id="rtpengine.f.rtpengine_subscribe_answer">
+			<title>
+				<function moreinfo="none">rtpengine_subscribe_answer([flags][,via-branch])</function>
+			</title>
+			<para>
+				Sends the &sdp; answer from the recording server to the rtpengine
+			</para>
+
+			<para>
+				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+				FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>flags</emphasis>
+						- flags to turn on some features.
+					</para>
+					<para>The <quote>flags</quote> string is a list of space-separated items. Each item
+						is either an individual token, or a token in <quote>key=value</quote> format. The
+						possible tokens are described below. This offer SDP can be manipulated with the same flags as
+						used in <function>rtpengine_offer</function> additionally, the following extra flags can be used
+					</para>
+					<itemizedlist>
+						<listitem><para>
+							<emphasis>to-tag=...</emphasis> - value of the to tag returned by
+							<quote>rtpengine_subscribe_request</quote>
+						</para></listitem>
+						<listitem><para>
+							<emphasis>from-tag=...</emphasis> - value of the from tag of the original call.
+						</para></listitem>
+						<listitem><para>
+							<emphasis>call-id=...</emphasis> - value of the call id of the original call.
+						</para></listitem>
+					</itemizedlist>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>rtpengine_subscribe_answer</function> usage</title>
+				<para>
+					See rtpengine_subscribe_request() function example above for example.
+				</para>
+			</example>
+		</section>
+		<section id="rtpengine.f.rtpengine_unsubscribe">
+			<title>
+				<function moreinfo="none">rtpengine_unsubscribe([flags][,via-branch])</function>
+			</title>
+			<para>
+				Sends the &sdp; answer from the recording server to the rtpengine
+			</para>
+
+			<para>
+				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+				FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>flags</emphasis>
+						- flags to turn on some features.
+					</para>
+					<para>The <quote>flags</quote> string is a list of space-separated items. Each item
+						is either an individual token, or a token in <quote>key=value</quote> format. The
+						possible tokens are described below. This offer SDP can be manipulated with the same flags as
+						used in <function>rtpengine_offer</function> additionally, the following extra flags can be used
+					</para>
+					<itemizedlist>
+						<listitem><para>
+							<emphasis>to-tag=...</emphasis> - value of the to tag returned by
+							<quote>rtpengine_subscribe_request</quote>
+						</para></listitem>
+						<listitem><para>
+							<emphasis>from-tag=...</emphasis> - value of the from tag of the original call.
+						</para></listitem>
+						<listitem><para>
+							<emphasis>call-id=...</emphasis> - value of the call id of the original call.
+						</para></listitem>
+					</itemizedlist>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>rtpengine_subscribe_answer</function> usage</title>
+				<para>
+					<programlisting format="linespecific">
+						event_route [dialog:end] {
+						#call over stop recording
+						rtpengine_unsubscribe("from-tag=$avp(orig_from_tag) to-tag=$avp(siprec_to_tag) call-id="$avp(orig_callid)");
+						$var(new_cseq) = $dlg_var(siprec_cseq) + 1;
+						t_uac_send("BYE", "sip:siprec@siprec_server.example.com",
+						"siprec_server.example.com", "",
+						"To: &lt;$dlg_var(siprec_to_hdr)&gt;\r\n" +
+						"From: &lt;$dlg_var(siprec_from_hdr)&gt;\r\n" +
+						"Call-ID: $avp(siprec_callid)\r\n" +
+						"CSeq: $var(new_cseq) BYE\r\n" +
+						"Contact: $lt;$dlg_var(siprec_contact)&gt;\r\n");
+						}
+						...
+					</programlisting>
+				</para>
+			</example>
+		</section>
+		<section id="rtpengine.f.start_recording">
 		<title>
 		<function moreinfo="none">start_recording([flags])</function>
 		</title>
