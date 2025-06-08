@@ -293,7 +293,7 @@ int sipdump_event_route(sipdump_data_t *sdi)
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("sipdump:msg");
 	sip_msg_t *fmsg = NULL;
-	ksr_msg_env_t menv = {0};
+	ksr_msg_env_links_t menv = {0};
 
 	ksr_msg_env_push(&menv);
 	set_route_type(EVENT_ROUTE);
