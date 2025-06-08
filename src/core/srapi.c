@@ -75,29 +75,60 @@ sr_cfgenv_t *sr_cfgenv_get(void)
 /**
  *
  */
-void ksr_msg_env_push(ksr_msg_env_t *menv)
+#define KSR_MSG_ENV_STACK_SIZE 8
+static ksr_msg_env_data_t _ksr_msg_env_stack[KSR_MSG_ENV_STACK_SIZE];
+static int _ksr_msg_env_stack_idx = 0;
+
+/**
+ *
+ */
+int ksr_msg_env_push(ksr_msg_env_links_t *oenv)
 {
-	menv->route_type = get_route_type();
+	ksr_msg_env_data_t *senv = NULL;
 
-	menv->avps_uri_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, NULL);
-	menv->avps_uri_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, NULL);
-	menv->avps_user_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, NULL);
-	menv->avps_user_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, NULL);
-	menv->avps_domain_from =
-			set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, NULL);
-	menv->avps_domain_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, NULL);
-	menv->xavps = xavp_set_list(NULL);
-	menv->xavus = xavu_set_list(NULL);
-	menv->xavis = xavi_set_list(NULL);
+	if(_ksr_msg_env_stack_idx >= KSR_MSG_ENV_STACK_SIZE) {
+		LM_ERR("msg env stack size exceeded\n");
+		return -1;
+	}
+	senv = &_ksr_msg_env_stack[_ksr_msg_env_stack_idx];
+	memset(&_ksr_msg_env_stack[_ksr_msg_env_stack_idx], 0,
+			sizeof(ksr_msg_env_data_t));
 
-	return;
+	oenv->route_type = get_route_type();
+
+	oenv->avps_uri_from =
+			set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &senv->avps_uri_from);
+	oenv->avps_uri_to =
+			set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &senv->avps_uri_to);
+	oenv->avps_user_from = set_avp_list(
+			AVP_TRACK_FROM | AVP_CLASS_USER, &senv->avps_user_from);
+	oenv->avps_user_to =
+			set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &senv->avps_user_to);
+	oenv->avps_domain_from = set_avp_list(
+			AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &senv->avps_domain_from);
+	oenv->avps_domain_to = set_avp_list(
+			AVP_TRACK_TO | AVP_CLASS_DOMAIN, &senv->avps_domain_to);
+	oenv->xavps = xavp_set_list(&senv->xavps);
+	oenv->xavus = xavu_set_list(&senv->xavus);
+	oenv->xavis = xavi_set_list(&senv->xavis);
+
+	_ksr_msg_env_stack_idx++;
+
+	return 0;
 }
 
 /**
  *
  */
-void ksr_msg_env_pop(ksr_msg_env_t *menv)
+int ksr_msg_env_pop(ksr_msg_env_links_t *menv)
 {
+	if(_ksr_msg_env_stack_idx <= 0) {
+		LM_ERR("invalid msg env stack index\n");
+		return -1;
+	}
+
+	/* current msg x/avp lists are expected to be cleaned up
+	 * - just replace and pop */
 	set_route_type(menv->route_type);
 
 	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, menv->avps_uri_from);
@@ -110,5 +141,7 @@ void ksr_msg_env_pop(ksr_msg_env_t *menv)
 	xavu_set_list(menv->xavus);
 	xavi_set_list(menv->xavis);
 
-	return;
+	_ksr_msg_env_stack_idx--;
+
+	return 0;
 }

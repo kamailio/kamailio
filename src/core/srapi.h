@@ -41,7 +41,21 @@ typedef struct sr_cfgenv
 void sr_cfgenv_init(void);
 sr_cfgenv_t *sr_cfgenv_get(void);
 
-typedef struct ksr_msg_env
+typedef struct ksr_msg_env_data
+{
+	int route_type;
+	avp_list_t avps_user_from;
+	avp_list_t avps_user_to;
+	avp_list_t avps_domain_from;
+	avp_list_t avps_domain_to;
+	avp_list_t avps_uri_from;
+	avp_list_t avps_uri_to;
+	sr_xavp_t *xavps;
+	sr_xavp_t *xavus;
+	sr_xavp_t *xavis;
+} ksr_msg_env_data_t;
+
+typedef struct ksr_msg_env_links
 {
 	int route_type;
 	avp_list_t *avps_user_from;
@@ -53,9 +67,9 @@ typedef struct ksr_msg_env
 	sr_xavp_t **xavps;
 	sr_xavp_t **xavus;
 	sr_xavp_t **xavis;
-} ksr_msg_env_t;
+} ksr_msg_env_links_t;
 
-void ksr_msg_env_push(ksr_msg_env_t *menv);
-void ksr_msg_env_pop(ksr_msg_env_t *menv);
+int ksr_msg_env_links_push(ksr_msg_env_links_t *menv);
+int ksr_msg_env_links_pop(ksr_msg_env_links_t *menv);
 
 #endif
