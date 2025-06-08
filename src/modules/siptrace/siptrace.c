@@ -2227,7 +2227,7 @@ static int siptrace_exec_evcb_msg(siptrace_data_t *sto)
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("siptrace:msg");
 	sip_msg_t msg;
-	ksr_msg_env_t menv = {0};
+	ksr_msg_env_links_t menv = {0};
 
 	if(_siptrace_evrt_msg_idx < 0 && _siptrace_evcb_msg.len <= 0) {
 		return 0;
