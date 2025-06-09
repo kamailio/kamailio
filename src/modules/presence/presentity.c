@@ -57,8 +57,8 @@ xmlNodePtr xmlNodeGetNodeByName(
 static str pu_200_rpl = str_init("OK");
 static str pu_412_rpl = str_init("Conditional request failed");
 
-static str str_offline_etag_val = str_init("*#-OFFLINE-#*");
-
+#define ACTIVE_STATUS 0
+#define OFFLINE_STATUS 1
 #define ETAG_LEN 128
 
 char *generate_ETag(int publ_count)
@@ -804,6 +804,12 @@ static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 		query_vals[n_query_cols].type = DB1_STR;
 		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.str_val = p_ruid;
+		n_query_cols++;
+
+		query_cols[n_query_cols] = &str_status_col;
+		query_vals[n_query_cols].type = DB1_UINT;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.int_val = ACTIVE_STATUS;
 		n_query_cols++;
 
 		if(!replace) {
@@ -2375,10 +2381,10 @@ int mark_presentity_for_delete(presentity_t *pres, str *ruid)
 		goto error;
 	}
 
-	update_cols[n_update_cols] = &str_etag_col;
-	update_vals[n_update_cols].type = DB1_STR;
+	update_cols[n_update_cols] = &str_status_col;
+	update_vals[n_update_cols].type = DB1_UINT;
 	update_vals[n_update_cols].nul = 0;
-	update_vals[n_update_cols].val.str_val = str_offline_etag_val;
+	update_vals[n_update_cols].val.int_val = OFFLINE_STATUS;
 	n_update_cols++;
 
 	update_cols[n_update_cols] = &str_expires_col;
@@ -2545,10 +2551,10 @@ int delete_offline_presentities(str *pres_uri, pres_ev_t *event)
 	query_vals[n_query_cols].val.str_val = event->name;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = &str_etag_col;
-	query_vals[n_query_cols].type = DB1_STR;
+	query_cols[n_query_cols] = &str_status_col;
+	query_vals[n_query_cols].type = DB1_UINT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = str_offline_etag_val;
+	query_vals[n_query_cols].val.int_val = OFFLINE_STATUS;
 	n_query_cols++;
 
 	if(pa_dbf.use_table(pa_db, &presentity_table) < 0) {
