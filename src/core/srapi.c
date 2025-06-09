@@ -82,6 +82,27 @@ static int _ksr_msg_env_stack_idx = 0;
 /**
  *
  */
+int ksr_msg_env_data_destroy(ksr_msg_env_data_t *denv)
+{
+	if(denv == NULL) {
+		return -1;
+	}
+	destroy_avp_list(&denv->avps_uri_from);
+	destroy_avp_list(&denv->avps_uri_to);
+	destroy_avp_list(&denv->avps_user_from);
+	destroy_avp_list(&denv->avps_user_to);
+	destroy_avp_list(&denv->avps_domain_from);
+	destroy_avp_list(&denv->avps_domain_to);
+	xavp_destroy_list(&denv->xavps);
+	xavp_destroy_list(&denv->xavus);
+	xavp_destroy_list(&denv->xavis);
+
+	return 0;
+}
+
+/**
+ *
+ */
 int ksr_msg_env_push(ksr_msg_env_links_t *oenv)
 {
 	ksr_msg_env_data_t *senv = NULL;
@@ -127,8 +148,8 @@ int ksr_msg_env_pop(ksr_msg_env_links_t *menv)
 		return -1;
 	}
 
-	/* current msg x/avp lists are expected to be cleaned up
-	 * - just replace and pop */
+	ksr_msg_env_data_destroy(&_ksr_msg_env_stack[_ksr_msg_env_stack_idx - 1]);
+
 	set_route_type(menv->route_type);
 
 	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, menv->avps_uri_from);

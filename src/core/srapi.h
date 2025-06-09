@@ -71,5 +71,6 @@ typedef struct ksr_msg_env_links
 
 int ksr_msg_env_links_push(ksr_msg_env_links_t *menv);
 int ksr_msg_env_links_pop(ksr_msg_env_links_t *menv);
+int ksr_msg_env_data_destroy(ksr_msg_env_data_t *denv);
 
 #endif
