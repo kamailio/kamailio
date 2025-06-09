@@ -1,8 +1,8 @@
 [Unit]
 Description=Kamailio - the Open Source SIP Server
 Documentation=man:kamailio(8)
-Wants=network-online.target
-After=network-online.target
+Wants=network-online.target nss-lookup.target
+After=network-online.target nss-lookup.target
 
 [Service]
 Type=simple
