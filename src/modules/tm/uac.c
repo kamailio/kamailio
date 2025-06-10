@@ -900,7 +900,7 @@ struct retr_buf *local_ack_rb(sip_msg_t *rpl_2xx, struct cell *trans,
 #ifdef WITH_EVENT_LOCAL_REQUEST
 	dlg = (dlg_t *)shm_malloc(sizeof(dlg_t));
 	if(dlg == 0) {
-		SHM_MEM_ERROR_FMT("required (%u)\n", sizeof(dlg_t));
+		SHM_MEM_ERROR_FMT("required (%lu)\n", sizeof(dlg_t));
 		return NULL;
 	}
 	memset(dlg, 0, sizeof(dlg_t));
