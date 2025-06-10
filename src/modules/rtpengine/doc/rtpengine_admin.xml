@@ -3309,68 +3309,69 @@ rtpengine_manage();
 			<example>
 				<title><function>rtpengine_off</function> usage</title>
 				<programlisting format="linespecific">
-					route {
-					...
-					if (is_method("INVITE")) {
-					if (has_body("application/sdp")) {
-					if (rtpengine_offer())
-					t_on_reply("1");
-					}
-					}
-					...
-					}
+route {
+...
+    if (is_method("INVITE")) {
+        if (has_body("application/sdp")) {
+            if (rtpengine_offer())
+                t_on_reply("1");
+		}
+    }
+...
+}
 
-					onreply_route[1]
-					{
-					...
-					if (has_body("application/sdp")) {
-					rtpengine_answer();
-					rtpengine_subscribe_request("all siprec", "$avp(siprec_offer)",
-					"$avp(siprec_to_tag)", "siprec_streams");
-					xinfo("SIPREC participant $xavp(siprec_streams[0]=>tag) with label $xavp(siprec_streams[0]=>label[0])\n");
-					xinfo("SIPREC participant $xavp(siprec_streams[1]=>tag) with label $xavp(siprec_streams[0]=>label[0])\n");
-					#use the above steam information to build the siprec xml metadata, will just send sdp in this example
-					$dlg_var(orig_to_tag) = $tt;
-					$dlg_var(siprec_contact) = "sip:uac@" + $Ri;
-					$dlg_var(siprec_to_tag) = $avp(siprec_to_tag);
-					t_uac_send("INVITE","sip:siprec@siprec_server.example.com",
-					"siprec_server.example.com", "",
-					"To: &lt;$tu&gt;\r\n" +
-					"From: &lt;$fu&gt;\r\n" +
-					"Contact: &lt;$dlg_var(siprec_contact)&gt;\r\n" +
-					"Content-Type: application/sdp\r\n",
-					$avp(siprec_offer));
-					...
-					}
+onreply_route[1]
+{
+...
+    if (has_body("application/sdp")) {
+        rtpengine_answer();
+        rtpengine_subscribe_request("all siprec", "$avp(siprec_offer)",
+                                    "$avp(siprec_to_tag)", "siprec_streams");
+        xinfo("SIPREC participant $xavp(siprec_streams[0]=>tag) with label $xavp(siprec_streams[0]=>label[0])\n");
+        xinfo("SIPREC participant $xavp(siprec_streams[1]=>tag) with label $xavp(siprec_streams[0]=>label[0])\n");
+        #use the above steam information to build the siprec xml metadata, will just send sdp in this example
+        $dlg_var(orig_to_tag) = $tt;
+        $dlg_var(siprec_contact) = "sip:uac@" + $Ri;
+        $dlg_var(siprec_to_tag) = $avp(siprec_to_tag);
+        t_uac_send("INVITE","sip:siprec@siprec_server.example.com",
+                   "siprec_server.example.com", "",
+                   "To: &lt;$tu&gt;\r\n" +
+                   "From: &lt;$fu&gt;\r\n" +
+                   "Contact: &lt;$dlg_var(siprec_contact)&gt;\r\n" +
+                   "Content-Type: application/sdp\r\n",
+                   $avp(siprec_offer));
+	}
+...
+}
 
-					event_route [tm:local-request] {
-					if (is_method("INVITE")) {
-					# save information from the original dialog to the new invite transaction
-					$avp(orig_callid) = $dlg(callid);
-					$avp(orig_from_tag) = $dlg(from_tag);
-					$avp(orig_to_tag) = $dlg_var(orig_to_tag);
-					$avp(siprec_to_tag) = $dlg_var(siprec_to_tag);
-					$avp(siprec_contact) = $dlg_var(siprec_contact);
-					t_on_reply("2");
-					}
-					if (is_method("ACK")) {
-					# save the routeset in the original dialog
-					dlg_get($avp(orig_callid), $avp(orig_from_tag), $avp(orig_to_tag));
-					$dlg_var(siprec_cseq) = $cs;
-					$dlg_var(siprec_to_hdr) = $hdr(To);
-					$dlg_var(siprec_from_hdr) = $hdr(From);
-					append_hf("Contact: &lt;$dlg_var(siprec_contact)&gt;\r\n");
+event_route [tm:local-request] {
+    if (is_method("INVITE")) {
+        # save information from the original dialog to the new invite transaction
+        $avp(orig_callid) = $dlg(callid);
+        $avp(orig_from_tag) = $dlg(from_tag);
+        $avp(orig_to_tag) = $dlg_var(orig_to_tag);
+        $avp(siprec_to_tag) = $dlg_var(siprec_to_tag);
+        $avp(siprec_contact) = $dlg_var(siprec_contact);
+        t_on_reply("2");
+    }
+    if (is_method("ACK")) {
+        # save the routeset in the original dialog
+        dlg_get($avp(orig_callid), $avp(orig_from_tag), $avp(orig_to_tag));
+        $dlg_var(siprec_cseq) = $cs;
+        $dlg_var(siprec_to_hdr) = $hdr(To);
+        $dlg_var(siprec_from_hdr) = $hdr(From);
+        append_hf("Contact: &lt;$dlg_var(siprec_contact)&gt;\r\n");
 
-					# the same dialog information can be used to send the BYE with t_uac_send
-					}
-					}
+        # the same dialog information can be used to send the BYE with t_uac_send
+    }
+}
 
-					onreply_route[1] {
-					if (has_body("application/sdp")) {
-					rtpengine_subscribe_answer("from-tag=$avp(orig_from_tag) to-tag=$avp(siprec_to_tag) call-id="$avp(orig_callid)");
-					}
-
-					...
+onreply_route[1] {
+    if (has_body("application/sdp")) {
+       rtpengine_subscribe_answer("from-tag=$avp(orig_from_tag) to-tag=$avp(siprec_to_tag) call-id="$avp(orig_callid)");
+    }
+}
+...
 				</programlisting>
 			</example>
 		</section>
@@ -3458,22 +3459,22 @@ rtpengine_manage();
 				</listitem>
 			</itemizedlist>
 			<example>
-				<title><function>rtpengine_subscribe_answer</function> usage</title>
+				<title><function>rtpengine_unsubscribe</function> usage</title>
 				<para>
 					<programlisting format="linespecific">
-						event_route [dialog:end] {
-						#call over stop recording
-						rtpengine_unsubscribe("from-tag=$avp(orig_from_tag) to-tag=$avp(siprec_to_tag) call-id="$avp(orig_callid)");
-						$var(new_cseq) = $dlg_var(siprec_cseq) + 1;
-						t_uac_send("BYE", "sip:siprec@siprec_server.example.com",
-						"siprec_server.example.com", "",
-						"To: &lt;$dlg_var(siprec_to_hdr)&gt;\r\n" +
-						"From: &lt;$dlg_var(siprec_from_hdr)&gt;\r\n" +
-						"Call-ID: $avp(siprec_callid)\r\n" +
-						"CSeq: $var(new_cseq) BYE\r\n" +
-						"Contact: $lt;$dlg_var(siprec_contact)&gt;\r\n");
-						}
-						...
+event_route [dialog:end] {
+    #call over, stop recording
+    rtpengine_unsubscribe("from-tag=$avp(orig_from_tag) to-tag=$avp(siprec_to_tag) call-id="$avp(orig_callid)");
+    $var(new_cseq) = $dlg_var(siprec_cseq) + 1;
+    t_uac_send("BYE", "sip:siprec@siprec_server.example.com",
+               "siprec_server.example.com", "",
+               "To: &lt;$dlg_var(siprec_to_hdr)&gt;\r\n" +
+               "From: &lt;$dlg_var(siprec_from_hdr)&gt;\r\n" +
+               "Call-ID: $avp(siprec_callid)\r\n" +
+               "CSeq: $var(new_cseq) BYE\r\n" +
+               "Contact: $lt;$dlg_var(siprec_contact)&gt;\r\n");
+}
+...
 					</programlisting>
 				</para>
 			</example>
