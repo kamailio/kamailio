@@ -383,13 +383,10 @@ int pvh_remove_all_header(struct sip_msg *msg, int indx)
 		name.len = hf->name.len;
 		name.s = hf->name.s;   
 		if(pvh_remove_header(msg, &name, indx) < 0) {
-			LM_ERR("could not remove %.*s header"
-					"value",
-					name.len, name.s);
+			LM_ERR("could not remove %.*s header", name.len, name.s);
 			return -1;
 		}	
 	}
-
 	return 1;
 }
 
