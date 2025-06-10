@@ -130,11 +130,11 @@ modparam("pdb", "ll_info", 3)
 				Sends the query string to all configured servers and stores the answer in
 				dstavp. If it takes more than the configured timeout, false is returned.
 
-				Pseudo-variables or AVPs can be used for the query string.
+				In addition to a string, any pseudo-variable can be used as query.
 
 				The answer must consist of the null terminated query string followed by
 				a two byte integer value in network byte order. The integer value will
-				be stored in the given AVP.
+				be stored in the given pseudo-variable dstavp.
 	    </para>
 			<example>
 				<title><function>pdb_query</function> usage</title>
