@@ -38,7 +38,7 @@ Muhammad Shahzad Shafi
 
         4. Functions
 
-              4.1. pdb_query (string query, string dstavp)
+              4.1. pdb_query (string query, string dstpv)
 
         5. RPC Commands
 
@@ -76,7 +76,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. pdb_query (string query, string dstavp)
+        4.1. pdb_query (string query, string dstpv)
 
    5. RPC Commands
 
@@ -163,24 +163,24 @@ modparam("pdb", "ll_info", 3)
 
 4. Functions
 
-   4.1. pdb_query (string query, string dstavp)
+   4.1. pdb_query (string query, string dstpv)
 
-4.1.  pdb_query (string query, string dstavp)
+4.1.  pdb_query (string query, string dstpv)
 
    Sends the query string to all configured servers and stores the answer
-   in dstavp. If it takes more than the configured timeout, false is
-   returned. Pseudo-variables or AVPs can be used for the query string.
-   The answer must consist of the null terminated query string followed by
-   a two byte integer value in network byte order. The integer value will
-   be stored in the given AVP.
+   in dstvp. If it takes more than the configured timeout, false is
+   returned. In addition to a string, any pseudo-variable can be used as
+   query. The answer must consist of the null terminated query string
+   followed by a two byte integer value in network byte order. The integer
+   value will be stored in the given pseudo-variable dstvp.
 
    Example 1.4. pdb_query usage
 ...
 # query external service for routing information
-if (!pdb_query("$rU", "$avp(i:82)"))
-  $avp(i:82) = 0; # default routing
+if (!pdb_query("$rU", "$avp(routing)"))
+  $avp(routing) = 0; # default routing
 }
-cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
+cr_route("$avp(routing)", "$rd", "$rU", "$rU", "call_id");
 ...
 
 5. RPC Commands
