@@ -105,7 +105,7 @@ mysql:
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(SCHEME)/mysql" \
 		--stringparam prefix "$$FILE-" \
-		--stringparam db "mysql" \
+		--stringparam db "db_mysql" \
 		$(MYSQL_XSL) kamailio-"$$FILE".xml ; \
 	done
 
@@ -118,7 +118,7 @@ postgres:
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(SCHEME)/postgres" \
 		--stringparam prefix "$$FILE-" \
-		--stringparam db "postgres" \
+		--stringparam db "db_postgres" \
 		$(POSTGRES_XSL) kamailio-"$$FILE".xml ; \
 	done
 
@@ -131,7 +131,7 @@ oracle:
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(SCHEME)/oracle" \
 		--stringparam prefix "$$FILE-" \
-		--stringparam db "oracle" \
+		--stringparam db "db_oracle" \
 		$(ORACLE_XSL) kamailio-"$$FILE".xml ; \
 	done
 
@@ -144,7 +144,7 @@ dbtext:
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(SCHEME)/dbtext/kamailio" \
 		--stringparam prefix "" \
-		--stringparam db "dbtext" \
+		--stringparam db "db_text" \
 		$(DBTEXT_XSL) kamailio-"$$FILE".xml ; \
 	done
 	TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
@@ -208,7 +208,7 @@ mongodb:
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(SCHEME)/mongodb/kamailio" \
 		--stringparam prefix "" \
-		--stringparam db "mongodb" \
+		--stringparam db "db_mongodb" \
 		$(MONGODB_XSL) kamailio-"$$FILE".xml ; \
 	done
 	@# small hack to create the version table entries, this is here easier as with XSL
