@@ -216,7 +216,7 @@ int ki_pdb_query(sip_msg_t *_msg, str *number, str *dstvar)
  *
  * @param _msg the current SIP message
  * @param _number the phone number to query
- * @param _dstavp the name of the AVP where to store the result
+ * @param _dstvar the name of the pv where to store the result
  *
  * @return 1 on success, -1 on failure
  */
@@ -234,7 +234,13 @@ int pdb_query(sip_msg_t *_msg, str *_number, str *_dstvar)
 
 
 /*!
- * \return 1 if query for the number succeeded and the avp with the corresponding carrier id was set,
+ * Helper function for queries
+ *
+ * @param _msg the current SIP message
+ * @param number the phone number to query
+ * @param dstvar the name of the pv where to store the result
+ *
+ * @return 1 if query for the number succeeded and the pv with the corresponding carrier id was set,
  * -1 otherwise
  */
 int ki_pdb_query_helper(sip_msg_t *_msg, str *number, pv_spec_t *dvar)
@@ -495,7 +501,7 @@ int pdb_query_fixup(void **arg, int arg_no)
 			return -1;
 		}
 	} else if(arg_no == 2) {
-		/* destination avp name */
+		/* destination pv name */
 		if(fixup_pvar_null(arg, 1) != 0) {
 			LM_ERR("cannot fixup parameter %d\n", arg_no);
 			return -1;
