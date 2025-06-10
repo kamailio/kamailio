@@ -57,33 +57,6 @@ static uint16_t *global_id = NULL;
 
 ksr_loglevels_t _ksr_loglevels_pdb = KSR_LOGLEVELS_DEFAULTS;
 
-/*!
- * Generic parameter that holds a string, an int or a pseudo-variable
- * @todo replace this with gparam_t
- */
-struct multiparam_t
-{
-	enum
-	{
-		MP_INT,
-		MP_STR,
-		MP_AVP,
-		MP_PVE,
-	} type;
-	union
-	{
-		int n;
-		str s;
-		struct
-		{
-			avp_flags_t flags;
-			avp_name_t name;
-		} a;
-		pv_elem_t *p;
-	} u;
-};
-
-
 /* ---- exported commands: */
 int pdb_query(sip_msg_t *_msg, str *_number, str *_dstvar);
 
