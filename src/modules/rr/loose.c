@@ -854,7 +854,7 @@ static inline void rr_do_force_send_socket(
  * \param preloaded do we have a preloaded route set
  * \return -1 on failure, 1 on success
  */
-static inline int after_loose(struct sip_msg *_m, int preloaded)
+static inline int after_loose(struct sip_msg *_m, int _mode, int preloaded)
 {
 	struct hdr_field *hdr;
 	struct sip_uri puri;
@@ -890,9 +890,11 @@ static inline int after_loose(struct sip_msg *_m, int preloaded)
 		routed_msg_id.msgid = _m->id;
 		routed_msg_id.pid = _m->pid;
 
-		if((use_ob = process_outbound(_m, puri.user)) < 0) {
-			LM_INFO("failed to process outbound flow-token\n");
-			return RR_FLOW_TOKEN_BROKEN;
+		if(!(_mode & RR_LR_MODE_SKIP_OUTBOUND)) {
+			if((use_ob = process_outbound(_m, puri.user)) < 0) {
+				LM_INFO("failed to process outbound flow-token\n");
+				return RR_FLOW_TOKEN_BROKEN;
+			}
 		}
 
 		if(rr_force_send_socket && !use_ob) {
@@ -1050,12 +1052,12 @@ int loose_route_mode(sip_msg_t *_m, int _mode)
 	if(ret < 0) {
 		return -1;
 	} else if(ret == 1) {
-		return after_loose(_m, 1);
+		return after_loose(_m, _mode, 1);
 	} else {
-		if((_mode == 0) && (is_myself(&_m->parsed_uri))) {
+		if((!(_mode & RR_LR_MODE_LOOSE_ONLY)) && (is_myself(&_m->parsed_uri))) {
 			return after_strict(_m);
 		} else {
-			return after_loose(_m, 0);
+			return after_loose(_m, _mode, 0);
 		}
 	}
 }

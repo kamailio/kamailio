@@ -446,11 +446,16 @@ if(!loose_route_preloaded()) {
 	<section id="rr.f.loose_route_mode">
       <title><function moreinfo="none">loose_route_mode(vmode)</function></title>
 
-	  <para>The function is similar to `loose_route()`, but it does only
-	  loose routing processing if vmode==1, skipping the testing of r-uri==myself
-	  for performing strict routing. If vmode==0, it behaves like loose_route().
+      <para>The function is similar to `loose_route()`,
+      but it accepts route mode bitmask as <emphasis>vmode</emphasis> parameter.
       </para>
-      <para>It is a convenient function to use with application servers that
+      <para>
+      If bit one is set, then do only loose routing processing, skipping the testing of r-uri==myself
+	  for performing strict routing. If not, behave like loose_route().
+      If bit two is set, then skip flow tokens processing.
+      </para>
+      <para>
+      First bit is convenient to use with application servers that
       set the Contact URI to SIP server address.
       </para>
       <para>This function can be used from REQUEST_ROUTE.</para>
