@@ -137,8 +137,8 @@ static int *ds_crt_idx = NULL;
 static int *ds_next_idx = NULL;
 
 static ds_set_t *ds_strictest_node = NULL;
-static int ds_strictest_idx;
-static int ds_strictness;
+static int ds_strictest_idx = 0;
+static int ds_strictest_match = 0;
 
 #define _ds_list (ds_lists[*ds_crt_idx])
 #define _ds_list_nr (*ds_list_nr)
@@ -3852,8 +3852,8 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 								| DS_MATCHED_SOCK))
 					return ds_set_vars(_m, node, j, export_set_pv);
 
-				if(ds_strictness < node_strictness) {
-					ds_strictness = node_strictness;
+				if(ds_strictest_match < node_strictness) {
+					ds_strictest_match = node_strictness;
 					ds_strictest_node = node;
 					ds_strictest_idx = j;
 				}
@@ -3948,7 +3948,7 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 
 
 	if(mode & DS_MATCH_MIXSOCKPRPORT) {
-		ds_strictness = 0;
+		ds_strictest_match = 0;
 		ds_strictest_node = NULL;
 	}
 
