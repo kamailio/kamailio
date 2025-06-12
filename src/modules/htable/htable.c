@@ -1406,7 +1406,7 @@ static int ki_ht_setxi(
 		return -1;
 	}
 
-	return 0;
+	return 1;
 }
 
 /**
