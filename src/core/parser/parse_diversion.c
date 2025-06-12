@@ -52,10 +52,10 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 {
 	static to_body_t uri_b[NUM_DIVERSION_BODIES]; /* Temporary storage */
 	int num_uri = 0;
-	int body_len = 0;
 	char *tmp;
 	int i;
 	to_param_t *params;
+	to_param_t *lparam;
 
 	memset(uri_b, 0, NUM_DIVERSION_BODIES * sizeof(to_body_t));
 
@@ -66,17 +66,27 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 	}
 
 	/* id.body should contain all info including uri and params */
-	body_len = uri_b[num_uri].body.len;
-
 	/* Loop over all params */
 	params = uri_b[num_uri].param_lst;
+	lparam = NULL;
 	while(params) {
-		body_len +=
-				params->name.len + params->value.len + 2; // 2 for '=' and ';'
+		lparam = params;
 		params = params->next;
 	}
 
-	uri_b[num_uri].body.len = body_len;
+	if(lparam) {
+		if(lparam->value.len > 0) {
+			uri_b[num_uri].body.len =
+					lparam->value.s + lparam->value.len - uri_b[num_uri].body.s;
+			if(*(lparam->value.s - 1) == '"'
+					|| *(lparam->value.s - 1) == '\'') {
+				uri_b[num_uri].body.len++;
+			}
+		} else {
+			uri_b[num_uri].body.len =
+					lparam->name.s + lparam->name.len - uri_b[num_uri].body.s;
+		}
+	}
 
 	num_uri++;
 	while(*tmp == ',' && (num_uri < NUM_DIVERSION_BODIES)) {
@@ -132,17 +142,25 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 		}
 
 		/* id.body should contain all info including uri and params */
-		body_len = uri_b[num_uri].body.len;
-
 		/* Loop over all params */
 		params = uri_b[num_uri].param_lst;
 		while(params) {
-			body_len += params->name.len + params->value.len
-						+ 2; /*  2 for '=' and ';' */
+			lparam = params;
 			params = params->next;
 		}
-
-		uri_b[num_uri].body.len = body_len;
+		if(lparam) {
+			if(lparam->value.len > 0) {
+				uri_b[num_uri].body.len = lparam->value.s + lparam->value.len
+										  - uri_b[num_uri].body.s;
+				if(*(lparam->value.s - 1) == '"'
+						|| *(lparam->value.s - 1) == '\'') {
+					uri_b[num_uri].body.len++;
+				}
+			} else {
+				uri_b[num_uri].body.len = lparam->name.s + lparam->name.len
+										  - uri_b[num_uri].body.s;
+			}
+		}
 
 		num_uri++;
 	}
