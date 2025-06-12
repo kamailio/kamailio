@@ -3796,30 +3796,31 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 			if(mode & DS_MATCH_MIXSOCKPRPORT) {
 				node_strictness = DS_MATCHED_ADDR;
 				if(node->dlist[j].port) {
-					if(tport != node->dlist[j].port)
-						continue;
-					else
+					if(tport == node->dlist[j].port) {
 						node_strictness |= DS_MATCHED_PORT;
+					}
 				}
 
 				if(node->dlist[j].proto) {
-					if(tproto != node->dlist[j].proto)
-						continue;
-					else
+					if(tproto == node->dlist[j].proto) {
 						node_strictness |= DS_MATCHED_PROTO;
+					}
 				}
 
 				if(node->dlist[j].sock) {
-					if(node->dlist[j].sock != _m->rcv.bind_address)
-						continue;
-					else
+					if(node->dlist[j].sock == _m->rcv.bind_address) {
 						node_strictness |= DS_MATCHED_SOCK;
+					}
 				}
 
 				if(node_strictness
 						== (DS_MATCHED_ADDR | DS_MATCHED_PORT | DS_MATCHED_PROTO
-								| DS_MATCHED_SOCK))
+								| DS_MATCHED_SOCK)) {
+					ds_strictest_match = node_strictness;
+					ds_strictest_node = node;
+					ds_strictest_idx = j;
 					return ds_set_vars(_m, node, j, export_set_pv);
+				}
 
 				if(ds_strictest_match < node_strictness) {
 					ds_strictest_match = node_strictness;
