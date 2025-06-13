@@ -75,7 +75,8 @@ Chapter 1. Admin Guide
    Kamailio configuration file.
 
    It relies on libjwt (at least v1.12.0) library
-   (https://github.com/benmcollins/libjwt).
+   (https://github.com/benmcollins/libjwt), but it is not working with the
+   new libjwt3.
 
 2. Dependencies
 
@@ -91,7 +92,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * libjwt - minimum version 1.12.0.
+     * libjwt - minimum version 1.12.0, but less than libjwt 3.0.
 
 3. Parameters
 
