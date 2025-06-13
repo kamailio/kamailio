@@ -20,7 +20,8 @@
 		in &kamailio; configuration file.
 	</para>
 	<para>
-		It relies on libjwt (at least v1.12.0) library (https://github.com/benmcollins/libjwt).
+		It relies on libjwt (at least v1.12.0) library (https://github.com/benmcollins/libjwt),
+		but it is not working with the new libjwt3.
 	</para>
 	</section>
 
@@ -47,7 +48,8 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>libjwt</emphasis> - minimum version 1.12.0.
+				<emphasis>libjwt</emphasis> - minimum version 1.12.0, but less
+				than libjwt 3.0.
 			</para>
 			</listitem>
 			</itemizedlist>
