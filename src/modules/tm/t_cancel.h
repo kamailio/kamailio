@@ -65,6 +65,8 @@
 									and F_CANCE_B_KILL take precedence */
 #define F_CANCEL_UNREF 16 /* unref the trans after canceling */
 
+#define F_CANCEL_LOCAL 32 /* cancel is locally generated */
+
 
 void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm, branch_bm_t s);
 int cancel_uacs(struct cell *t, struct cancel_info *cancel_data, int flags);
