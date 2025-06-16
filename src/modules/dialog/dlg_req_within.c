@@ -407,7 +407,7 @@ static inline int send_bye(
 				LM_DBG("\"%d %.*s\" sent to caller\n", bye_early_code,
 						bye_early_reason.len, bye_early_reason.s);
 			} else {
-				d_tmb.cancel_all_uacs(cell->t, 0);
+				d_tmb.cancel_all_uacs(cell->t, F_CANCEL_LOCAL);
 				LM_DBG("CANCEL sent to callee(s)\n");
 			}
 			return 0;
