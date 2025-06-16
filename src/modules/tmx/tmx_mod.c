@@ -333,7 +333,7 @@ static int t_cancel_branches_helper(sip_msg_t *msg, int n)
 	LM_DBG("canceling %d/%d\n", n, (int)cancel_data.cancel_bitmap);
 	if(cancel_data.cancel_bitmap == 0)
 		return -1;
-	_tmx_tmb.cancel_uacs(t, &cancel_data, 0);
+	_tmx_tmb.cancel_uacs(t, &cancel_data, F_CANCEL_LOCAL);
 	return 1;
 }
 
@@ -408,7 +408,7 @@ static int ki_t_cancel_callid_reason(
 	cancel_data.reason.cause = rcode;
 	cancel_data.cancel_bitmap = 0;
 	_tmx_tmb.prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
-	_tmx_tmb.cancel_uacs(trans, &cancel_data, 0);
+	_tmx_tmb.cancel_uacs(trans, &cancel_data, F_CANCEL_LOCAL);
 
 	//_tmx_tmb.unref_cell(trans);
 	_tmx_tmb.t_sett(bkt, bkb);
