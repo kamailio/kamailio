@@ -338,44 +338,47 @@ int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,
 
 	LM_DBG("sending cancel...\n");
 
-	rt = -1;
-	if(tm_event_callback.s == NULL || tm_event_callback.len <= 0) {
-		rt = route_lookup(&event_rt, evname.s);
-		if(rt < 0 || event_rt.rlist[rt] == NULL) {
-			LM_DBG("tm:local-request not found\n");
-		}
-	} else {
-		keng = sr_kemi_eng_get();
-		if(keng == NULL) {
-			LM_DBG("event callback (%s) set, but no cfg engine\n",
-					tm_event_callback.s);
-		}
-	}
-
-	// /* Check if msg is null */
-	if(build_sip_msg_from_buf(&msg, crb->buffer, crb->buffer_len, 0) < 0) {
-		LM_ERR("fail to parse msg\n");
-	}
-
-	/* Call event */
-	backup_rt = get_route_type();
-	set_route_type(REQUEST_ROUTE);
-	init_run_actions_ctx(&ctx);
-	if(rt >= 0) {
-		LM_DBG("tm:local-request found [%d]\n", rt);
-		run_top_route(event_rt.rlist[rt], &msg, 0);
-	} else {
-		if(keng != NULL) {
-
-			if(sr_kemi_route(
-					   keng, &msg, EVENT_ROUTE, &tm_event_callback, &evname)
-					< 0) {
-				LM_ERR("error running event route kemi callback\n");
+	if(flags & F_CANCEL_LOCAL) {
+		/* Call event */
+		rt = -1;
+		if(tm_event_callback.s == NULL || tm_event_callback.len <= 0) {
+			rt = route_lookup(&event_rt, evname.s);
+			if(rt < 0 || event_rt.rlist[rt] == NULL) {
+				LM_DBG("tm:local-request not found\n");
+			}
+		} else {
+			keng = sr_kemi_eng_get();
+			if(keng == NULL) {
+				LM_DBG("event callback (%s) set, but no cfg engine\n",
+						tm_event_callback.s);
 			}
 		}
+
+		/* Check if msg is null */
+		if(build_sip_msg_from_buf(&msg, crb->buffer, crb->buffer_len, 0) < 0) {
+			LM_ERR("fail to parse msg\n");
+		}
+
+		/* Call event */
+		backup_rt = get_route_type();
+		set_route_type(REQUEST_ROUTE);
+		init_run_actions_ctx(&ctx);
+		if(rt >= 0) {
+			LM_DBG("tm:local-request found [%d]\n", rt);
+			run_top_route(event_rt.rlist[rt], &msg, 0);
+		} else {
+			if(keng != NULL) {
+
+				if(sr_kemi_route(
+						   keng, &msg, EVENT_ROUTE, &tm_event_callback, &evname)
+						< 0) {
+					LM_ERR("error running event route kemi callback\n");
+				}
+			}
+		}
+		set_route_type(backup_rt);
+		free_sip_msg(&msg);
 	}
-	set_route_type(backup_rt);
-	free_sip_msg(&msg);
 
 	if(SEND_BUFFER(crb) >= 0) {
 		if(unlikely(has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
@@ -429,7 +432,7 @@ void rpc_cancel(rpc_t *rpc, void *c)
 	prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
 	/* tell tm to cancel the call */
 	DBG("Now calling cancel_uacs\n");
-	i = cancel_uacs(trans, &cancel_data, 0); /* don't fake 487s,
+	i = cancel_uacs(trans, &cancel_data, F_CANCEL_LOCAL); /* don't fake 487s,
 										 just wait for timeout */
 
 	/* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
