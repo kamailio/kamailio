@@ -1024,7 +1024,7 @@ static int rms_sip_cancel(struct sip_msg *msg, str *callid_s, str *cseq_s)
 	cancel_data.reason.cause = rcode;
 	cancel_data.cancel_bitmap = 0;
 	tmb.prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
-	tmb.cancel_uacs(trans, &cancel_data, 0);
+	tmb.cancel_uacs(trans, &cancel_data, F_CANCEL_LOCAL);
 
 	tmb.t_sett(bkt, bkb);
 	if(!tmb.t_reply(msg, 202, "cancelling")) {
