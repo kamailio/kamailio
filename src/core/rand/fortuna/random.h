@@ -59,7 +59,10 @@
 
 int sr_get_pseudo_random_bytes(u_int8_t *dst, unsigned count);
 
+/* for adding additional entropy to the pool */
 int sr_add_entropy(const u_int8_t *data, unsigned count);
 
+/* for initialization on startup or fork, will use system randomness */
+int sr_init_cryptorand();
 
 #endif

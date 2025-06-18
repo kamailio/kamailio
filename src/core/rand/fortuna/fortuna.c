@@ -413,9 +413,9 @@ static void extract_data(FState *st, unsigned count, u_int8_t *dst)
 FState main_state;
 int init_done = 0;
 
-void fortuna_add_entropy(const u_int8_t *data, unsigned len)
+void fortuna_add_entropy(const u_int8_t *data, unsigned len, unsigned force_init)
 {
-	if(!init_done) {
+	if(!init_done || force_init) {
 		init_state(&main_state);
 		init_done = 1;
 	}

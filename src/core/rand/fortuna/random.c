@@ -145,12 +145,33 @@ static void system_reseed(void)
 
 	n = acquire_system_randomness(buf);
 	if(n > 0) {
-		fortuna_add_entropy(buf, n);
+		fortuna_add_entropy(buf, n, 0);
 		LM_DBG("cryptographic PRNG reseed done with %u bytes\n", n);
 	}
 
 	seed_time = t;
 	memset(buf, 0, sizeof(buf));
+}
+
+static int system_seed(void)
+{
+	u_int8_t buf[1024];
+	int n;
+
+	memset(buf, 0, sizeof(buf));
+
+	n = acquire_system_randomness(buf);
+	if(n > 0) {
+		fortuna_add_entropy(buf, n, 1);
+		LM_DBG("cryptographic PRNG seed done with %u bytes\n", n);
+	} else {
+		LM_ERR("cryptographic PRNG seed not done, error %u\n", n);
+		return -1;
+	}
+
+	seed_time = time(NULL);
+	memset(buf, 0, sizeof(buf));
+	return 0;
 }
 
 
@@ -168,6 +189,11 @@ int sr_add_entropy(const u_int8_t *data, unsigned count)
 {
 	system_reseed();
 	LM_DBG("additional %u bytes entropy added to cryptographic PRNG\n", count);
-	fortuna_add_entropy(data, count);
+	fortuna_add_entropy(data, count, 0);
 	return 0;
+}
+
+int sr_init_cryptorand()
+{
+	return system_seed();
 }

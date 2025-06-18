@@ -30,4 +30,7 @@ void cryptorand_seed(const unsigned int seed);
 /* generate a 32 bit random number */
 unsigned int cryptorand(void);
 
+/* for initialization on startup or fork, will use system randomness */
+unsigned int cryptorand_init(void);
+
 #endif

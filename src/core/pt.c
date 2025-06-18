@@ -38,7 +38,6 @@
 #include "daemonize.h"
 
 #include <stdio.h>
-#include <time.h> /* time(), used to initialize random numbers */
 
 #define FORK_DONT_WAIT /* child doesn't wait for parent before starting
 						 * => faster startup, but the child should not assume
@@ -246,7 +245,6 @@ int fork_process(int child_id, char *desc, int make_sock)
 {
 	int pid, child_process_no;
 	int ret;
-	unsigned int new_seed;
 #ifdef USE_TCP
 	int sockfd[2];
 #endif
@@ -282,9 +280,7 @@ int fork_process(int child_id, char *desc, int make_sock)
 		lock_release(process_lock);
 		goto error;
 	}
-
 	child_process_no = *process_count;
-	new_seed = cryptorand();
 	pid = fork();
 	if(pid < 0) {
 		lock_release(process_lock);
@@ -299,14 +295,18 @@ int fork_process(int child_id, char *desc, int make_sock)
 #ifdef USE_TCP
 		close_extra_socks(child_id, process_no);
 #endif /* USE_TCP */
-		new_seed += getpid() + time(0);
-		LM_DBG("seeding PRNG with %u\n", new_seed);
-		cryptorand_seed(new_seed);
-		fastrand_seed(cryptorand());
+
+		if (cryptorand_init() != 0) {
+			LM_ERR("Could not initalized cryptographic random number generator\n");
+			return -1;
+		}
 		kam_srand(cryptorand());
+		fastrand_seed(cryptorand());
 		srandom(cryptorand());
-		LM_DBG("test random numbers %u %lu %u %u\n", kam_rand(), random(),
-				fastrand(), cryptorand());
+		LM_DBG("test random number generators - kam_rand: %u, random: %lu, "
+			"fastrand %u, cryptorand %u\n",
+			kam_rand(), random(), fastrand(), cryptorand());
+
 		shm_malloc_on_fork();
 #ifdef PROFILING
 		monstartup((u_long)&_start, (u_long)&etext);
