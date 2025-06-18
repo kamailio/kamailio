@@ -83,6 +83,7 @@
 #include "../../core/char_msg_val.h"
 #include "../../core/utils/srjson.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/rand/fastrand.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/crypto/api.h"
 #include "../../modules/lwsc/api.h"
@@ -307,7 +308,7 @@ static void parse_call_stats(bencode_item_t *, struct sip_msg *);
 static int control_cmd_tos = -1;
 static int rtpengine_allow_op = 0;
 static struct rtpp_node **queried_nodes_ptr = NULL;
-static pid_t mypid;
+
 static unsigned int myseqn = 0;
 static str extra_id_pv_param = {NULL, 0};
 static char *setid_avp_param = NULL;
@@ -2701,6 +2702,8 @@ static int mos_label_stats_parse(struct minmax_mos_label_stats *mmls)
 
 static int child_init(int rank)
 {
+	pid_t mypid = 0;
+
 	if(!rtpp_set_list)
 		return 0;
 
@@ -2711,7 +2714,7 @@ static int child_init(int rank)
 
 	if(rank == PROC_MAIN) {
 		if(rtpengine_dtmf_event_sock.len > 0) {
-			LM_DBG("Register RTPENGINE DTMF WORKER %d\n", mypid);
+			LM_DBG("Register RTPENGINE DTMF WORKER %d\n", getpid());
 			/* fork worker process */
 			mypid = fork_process(PROC_RPC, "RTPENGINE DTMF WORKER", 1);
 			if(mypid < 0) {
@@ -2733,7 +2736,9 @@ static int child_init(int rank)
 			return 0;
 	}
 
-	mypid = getpid();
+	/* random start value for for cookie sequence number */
+	myseqn = fastrand();
+	LM_ERR("myseqn %u\n", myseqn);
 
 	// vector of pointers to queried nodes
 	queried_nodes_ptr = (struct rtpp_node **)pkg_malloc(
@@ -2844,7 +2849,7 @@ static char *gencookie(void)
 {
 	static char cook[34];
 
-	snprintf(cook, 34, "%d_%d_%u ", server_id, (int)mypid, myseqn);
+	snprintf(cook, 34, "%d_%u_%u ", server_id, fastrand(), myseqn);
 	myseqn++;
 	return cook;
 }
