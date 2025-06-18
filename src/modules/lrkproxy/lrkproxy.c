@@ -75,6 +75,7 @@
 #include "../../core/dset.h"
 #include "../../core/route.h"
 #include "../../core/kemi.h"
+#include "../../core/rand/fastrand.h"
 #include "../../modules/tm/tm_load.h"
 #include "lrkproxy.h"
 #include "lrkproxy_hash.h"
@@ -156,7 +157,6 @@ static void mod_destroy(void);
 static int lrkproxy_disable_tout = 60;
 static int lrkproxy_retr = 5;
 static int lrkproxy_tout = 1;
-static pid_t mypid;
 static unsigned int myseqn = 0;
 //static str nolrkproxy_str = str_init("a=nolrkproxy:yes");
 //static str extra_id_pv_param = {NULL, 0};
@@ -666,9 +666,10 @@ static int child_init(int rank)
 		return 0;
 	}
 
-	/* Iterate known LRK proxies - create sockets */
-	mypid = getpid();
+	/* random start value for for cookie sequence number */
+	myseqn = fastrand();
 
+	/* Iterate known RTP proxies - create sockets */
 	lrkp_socks = (int *)pkg_malloc(sizeof(int) * lrkp_no);
 	if(lrkp_socks == NULL) {
 		LM_ERR("no more pkg memory\n");
@@ -789,7 +790,7 @@ static char *gencookie(void)
 {
 	static char cook[34];
 
-	sprintf(cook, "%d_%u ", (int)mypid, myseqn);
+	sprintf(cook, "%d_%u ", fastrand(), myseqn);
 	myseqn++;
 	return cook;
 }
