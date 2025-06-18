@@ -43,7 +43,7 @@ typedef struct _dlgs_stats {
 	unsigned int c_progress;
 	unsigned int c_answered;
 	unsigned int c_confirmed;
-	unsigned int c_terminted;
+	unsigned int c_terminated;
 	unsigned int c_notanswered;
 } dlgs_stats_t;
 
