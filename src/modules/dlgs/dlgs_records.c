@@ -692,7 +692,7 @@ void dlgs_update_stats(dlgs_stats_t *stats, int state, int val)
 			stats->c_confirmed += val;
 			return;
 		case DLGS_STATE_TERMINATED:
-			stats->c_terminted += val;
+			stats->c_terminated += val;
 			return;
 		case DLGS_STATE_NOTANSWERED:
 			stats->c_notanswered += val;
@@ -1046,7 +1046,7 @@ static void dlgs_rpc_stats(rpc_t *rpc, void *ctx)
 				sta.c_progress += _dlgs_htb->slots[i].astats.c_progress;
 				sta.c_answered += _dlgs_htb->slots[i].astats.c_answered;
 				sta.c_confirmed += _dlgs_htb->slots[i].astats.c_confirmed;
-				sta.c_terminted += _dlgs_htb->slots[i].astats.c_terminted;
+				sta.c_terminated += _dlgs_htb->slots[i].astats.c_terminated;
 				sta.c_notanswered += _dlgs_htb->slots[i].astats.c_notanswered;
 			}
 			sti = &sta;
@@ -1058,7 +1058,7 @@ static void dlgs_rpc_stats(rpc_t *rpc, void *ctx)
 		}
 		if(rpc->struct_add(ti, "uuuuuu", "init", sti->c_init, "progress",
 				   sti->c_progress, "answered", sti->c_answered, "confirmed",
-				   sti->c_confirmed, "terminted", sti->c_terminted,
+				   sti->c_confirmed, "terminated", sti->c_terminated,
 				   "notanswered", sti->c_notanswered)
 				< 0) {
 			rpc->fault(ctx, 500, "Internal error creating values");
