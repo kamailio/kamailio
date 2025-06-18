@@ -76,6 +76,7 @@
 #include "../../core/dset.h"
 #include "../../core/route.h"
 #include "../../core/kemi.h"
+#include "../../core/rand/fastrand.h"
 #include "../../modules/tm/tm_load.h"
 #include "rtpproxy.h"
 #include "rtpproxy_funcs.h"
@@ -153,7 +154,6 @@ static int pv_get_rtppstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int rtpproxy_disable_tout = 60;
 static int rtpproxy_retr = 5;
 static int rtpproxy_tout = 1;
-static pid_t mypid;
 static unsigned int myseqn = 0;
 static str nortpproxy_str = str_init("a=nortpproxy:yes");
 static str extra_id_pv_param = {NULL, 0};
@@ -788,9 +788,10 @@ static int child_init(int rank)
 		return 0;
 	}
 
-	/* Iterate known RTP proxies - create sockets */
-	mypid = getpid();
+	/* random start value for for cookie sequence number */
+	myseqn = fastrand();
 
+	/* Iterate known RTP proxies - create sockets */
 	rtpp_socks = (int *)pkg_malloc(sizeof(int) * rtpp_no);
 	if(rtpp_socks == NULL) {
 		LM_ERR("no more pkg memory\n");
@@ -1206,7 +1207,7 @@ static char *gencookie(void)
 {
 	static char cook[34];
 
-	sprintf(cook, "%d_%u ", (int)mypid, myseqn);
+	sprintf(cook, "%u_%u ", fastrand(), myseqn);
 	myseqn++;
 	return cook;
 }
