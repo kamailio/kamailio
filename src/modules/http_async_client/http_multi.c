@@ -184,6 +184,14 @@ int sock_cb(CURL *e, curl_socket_t s, int what, void *cbp, void *sockp)
 		} else {
 			LM_DBG("Changing action from %s to %s\n", whatstr[cell->action],
 					whatstr[what]);
+			if(cell->action == CURL_POLL_IN && what == CURL_POLL_OUT) {
+				if(cell->reply) {
+					if(cell->reply->result)
+						shm_free(cell->reply->result);
+					shm_free(cell->reply);
+					cell->reply = NULL;
+				}
+			}
 			setsock(cell, s, e, what);
 		}
 	}
