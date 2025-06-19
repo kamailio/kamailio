@@ -212,6 +212,51 @@ static int pv_get_defv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	}
 }
 
+static int pv_parse_defs_name(pv_spec_p sp, str *in)
+{
+	if(in == NULL || in->s == NULL || sp == NULL) {
+		LM_ERR("INVALID DEF NAME\n");
+		return -1;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
+	sp->pvp.pvn.u.isname.name.s = *in;
+	return 0;
+}
+
+static int pv_get_defs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	str *val = NULL;
+	str ret = STR_NULL;
+
+	val = pp_define_get(
+			param->pvn.u.isname.name.s.len, param->pvn.u.isname.name.s.s);
+
+	if(!val) {
+		return pv_get_null(msg, param, res);
+	}
+
+	if(val->len < 2) {
+		return pv_get_strval(msg, param, res, val);
+	}
+	if((val->s[0] == '"' && val->s[val->len - 1] == '"')
+			|| (val->s[0] == '\'' && val->s[val->len - 1] == '\'')) {
+		return pv_get_strval(msg, param, res, val);
+	}
+
+	ret.s = pv_get_buffer();
+	ret.len = pv_get_buffer_size();
+	if(ret.len + 3 < val->len) {
+		return pv_get_null(msg, param, res);
+	}
+	ret.s[0] = '"';
+	memcpy(ret.s + 1, val->s, val->len);
+	ret.len = val->len + 2;
+	ret.s[ret.len - 1] = '"';
+	ret.s[ret.len] = '\0';
+	return pv_get_strval(msg, param, res, &ret);
+}
+
 /* clang-format off */
 /**
  *
@@ -230,6 +275,8 @@ static pv_export_t core_pvs[] = {
 	{STR_STATIC_INIT("defn"), PVT_OTHER, pv_get_defn, 0, pv_parse_defn_name,
 			0, 0, 0},
 	{STR_STATIC_INIT("defv"), PVT_OTHER, pv_get_defv, 0, pv_parse_defv_name,
+			0, 0, 0},
+	{STR_STATIC_INIT("defs"), PVT_OTHER, pv_get_defs, 0, pv_parse_defs_name,
 			0, 0, 0},
 
 	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
