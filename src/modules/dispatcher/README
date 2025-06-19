@@ -1235,10 +1235,13 @@ modparam("dispatcher", "ds_interval_mode", 7200)
             congestion ms.
             See also the description of the 'rweight' attribute in the
             'Special Attributes' section.
-          + “12” - dispatch to all destination in setid at once (parallel
+          + “12” - dispatch to all destinations in setid at once (parallel
             forking). Note that the XAVPs are no longer set with the
             values of the destination records, no re-routing making sense
-            in this case.
+            in this case. A side effect is that marking the one
+            destination as inactive is not possible if the transaction
+            fails (which means that all branches failed, or in other
+            words, all the destinations were not answering the call).
           + “13” - latency optimized dispatching
             - The algorithm will load balance using round-robin
             prioritizing the gateways with the highest priority.
