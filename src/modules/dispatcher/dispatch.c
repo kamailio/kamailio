@@ -2992,12 +2992,38 @@ error:
 	return -1;
 }
 
+int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri)
+{
+	ds_rctx_t rctx;
+	int ret;
+
+	memset(&rctx, 0, sizeof(ds_rctx_t));
+	if(msg != NULL) {
+		if(msg != FAKED_REPLY) {
+			if(msg->first_line.type == SIP_REPLY) {
+				rctx.flags |= 1;
+				rctx.code = (int)msg->first_line.u.reply.statuscode;
+				rctx.reason = msg->first_line.u.reply.reason;
+			} else {
+				rctx.code = 820;
+			}
+		} else {
+			rctx.code = 810;
+		}
+	} else {
+		rctx.code = 800;
+	}
+	ret = ds_update_state(msg, group, uri, state, &rctx);
+
+	LM_DBG("state [%d] grp [%d] dst [%.*s]\n", state, group, uri->len, uri->s);
+
+	return (ret == 0) ? 1 : -1;
+}
+
 int ds_mark_dst(struct sip_msg *msg, int state)
 {
 	sr_xavp_t *rxavp = NULL;
 	int group;
-	int ret;
-	ds_rctx_t rctx;
 
 	if(!(ds_flags & DS_FAILOVER_ON)) {
 		LM_WARN("failover support disabled\n");
@@ -3019,28 +3045,7 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 	if(rxavp == NULL)
 		return -1; /* dst addr uri not available */
 
-	memset(&rctx, 0, sizeof(ds_rctx_t));
-	if(msg != NULL) {
-		if(msg != FAKED_REPLY) {
-			if(msg->first_line.type == SIP_REPLY) {
-				rctx.flags |= 1;
-				rctx.code = (int)msg->first_line.u.reply.statuscode;
-				rctx.reason = msg->first_line.u.reply.reason;
-			} else {
-				rctx.code = 820;
-			}
-		} else {
-			rctx.code = 810;
-		}
-	} else {
-		rctx.code = 800;
-	}
-	ret = ds_update_state(msg, group, &rxavp->val.v.s, state, &rctx);
-
-	LM_DBG("state [%d] grp [%d] dst [%.*s]\n", state, group, rxavp->val.v.s.len,
-			rxavp->val.v.s.s);
-
-	return (ret == 0) ? 1 : -1;
+	return ds_mark_addr(msg, state, group, &rxavp->val.v.s);
 }
 
 void latency_stats_init(

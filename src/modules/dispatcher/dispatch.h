@@ -160,6 +160,7 @@ int ds_reinit_state(int group, str *address, int state);
 int ds_reinit_state_all(int group, int state);
 int ds_reinit_duid_state(int group, str *vduid, int state);
 int ds_mark_dst(struct sip_msg *msg, int mode);
+int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri);
 int ds_print_list(FILE *fout);
 int ds_log_sets(void);
 int ds_list_exist(int set);
