@@ -133,66 +133,81 @@ DECLARE_STAT_VARS(prack);
 DECLARE_STAT_VARS(update);
 DECLARE_STAT_VARS(refer);
 
+/* clang-format off */
 /*! exported core statistics */
-stat_export_t core_stats[] = {{"rcv_requests", 0, &rcv_reqs},
-		{"rcv_requests_invite", 0, &rcv_reqs_invite},
-		{"rcv_requests_cancel", 0, &rcv_reqs_cancel},
-		{"rcv_requests_ack", 0, &rcv_reqs_ack},
-		{"rcv_requests_bye", 0, &rcv_reqs_bye},
-		{"rcv_requests_info", 0, &rcv_reqs_info},
-		{"rcv_requests_register", 0, &rcv_reqs_register},
-		{"rcv_requests_subscribe", 0, &rcv_reqs_subscribe},
-		{"rcv_requests_notify", 0, &rcv_reqs_notify},
-		{"rcv_requests_message", 0, &rcv_reqs_message},
-		{"rcv_requests_options", 0, &rcv_reqs_options},
-		{"rcv_requests_prack", 0, &rcv_reqs_prack},
-		{"rcv_requests_update", 0, &rcv_reqs_update},
-		{"rcv_requests_refer", 0, &rcv_reqs_refer},
-		{"rcv_requests_publish", 0, &rcv_reqs_publish},
-		{"rcv_requests_kdmq", 0, &rcv_reqs_kdmq}, {"rcv_replies", 0, &rcv_rpls},
-		{"rcv_replies_1xx", 0, &rcv_rpls_1xx},
-		{"rcv_replies_18x", 0, &rcv_rpls_18x},
-		{"rcv_replies_2xx", 0, &rcv_rpls_2xx},
-		{"rcv_replies_3xx", 0, &rcv_rpls_3xx},
-		{"rcv_replies_4xx", 0, &rcv_rpls_4xx},
-		{"rcv_replies_400", 0, &rcv_rpls_400},
-		{"rcv_replies_401", 0, &rcv_rpls_401},
-		{"rcv_replies_402", 0, &rcv_rpls_402},
-		{"rcv_replies_403", 0, &rcv_rpls_403},
-		{"rcv_replies_404", 0, &rcv_rpls_404},
-		{"rcv_replies_405", 0, &rcv_rpls_405},
-		{"rcv_replies_406", 0, &rcv_rpls_406},
-		{"rcv_replies_407", 0, &rcv_rpls_407},
-		{"rcv_replies_408", 0, &rcv_rpls_408},
-		{"rcv_replies_409", 0, &rcv_rpls_409},
-		{"rcv_replies_410", 0, &rcv_rpls_410},
-		{"rcv_replies_411", 0, &rcv_rpls_411},
-		{"rcv_replies_413", 0, &rcv_rpls_413},
-		{"rcv_replies_414", 0, &rcv_rpls_414},
-		{"rcv_replies_415", 0, &rcv_rpls_415},
-		{"rcv_replies_420", 0, &rcv_rpls_420},
-		{"rcv_replies_480", 0, &rcv_rpls_480},
-		{"rcv_replies_481", 0, &rcv_rpls_481},
-		{"rcv_replies_482", 0, &rcv_rpls_482},
-		{"rcv_replies_483", 0, &rcv_rpls_483},
-		{"rcv_replies_484", 0, &rcv_rpls_484},
-		{"rcv_replies_485", 0, &rcv_rpls_485},
-		{"rcv_replies_486", 0, &rcv_rpls_486},
-		{"rcv_replies_487", 0, &rcv_rpls_487},
-		{"rcv_replies_488", 0, &rcv_rpls_488},
-		{"rcv_replies_489", 0, &rcv_rpls_489},
-		{"rcv_replies_491", 0, &rcv_rpls_491},
-		{"rcv_replies_493", 0, &rcv_rpls_493},
-		{"rcv_replies_5xx", 0, &rcv_rpls_5xx},
-		{"rcv_replies_6xx", 0, &rcv_rpls_6xx}, {"fwd_requests", 0, &fwd_reqs},
-		{"fwd_replies", 0, &fwd_rpls}, {"drop_requests", 0, &drp_reqs},
-		{"drop_replies", 0, &drp_rpls}, {"err_requests", 0, &err_reqs},
-		{"err_replies", 0, &err_rpls}, {"bad_URIs_rcvd", 0, &bad_URIs},
-		{"unsupported_methods", 0, &unsupported_methods},
-		{"bad_msg_hdr", 0, &bad_msg_hdr}, DECLARE_STATS(invite),
-		DECLARE_STATS(cancel), DECLARE_STATS(bye), DECLARE_STATS(reg),
-		DECLARE_STATS(message), DECLARE_STATS(prack), DECLARE_STATS(update),
-		DECLARE_STATS(refer), {0, 0, 0}};
+stat_export_t core_stats[] = {
+	{"rcv_requests", 0, &rcv_reqs},
+	{"rcv_requests_invite", 0, &rcv_reqs_invite},
+	{"rcv_requests_cancel", 0, &rcv_reqs_cancel},
+	{"rcv_requests_ack", 0, &rcv_reqs_ack},
+	{"rcv_requests_bye", 0, &rcv_reqs_bye},
+	{"rcv_requests_info", 0, &rcv_reqs_info},
+	{"rcv_requests_register", 0, &rcv_reqs_register},
+	{"rcv_requests_subscribe", 0, &rcv_reqs_subscribe},
+	{"rcv_requests_notify", 0, &rcv_reqs_notify},
+	{"rcv_requests_message", 0, &rcv_reqs_message},
+	{"rcv_requests_options", 0, &rcv_reqs_options},
+	{"rcv_requests_prack", 0, &rcv_reqs_prack},
+	{"rcv_requests_update", 0, &rcv_reqs_update},
+	{"rcv_requests_refer", 0, &rcv_reqs_refer},
+	{"rcv_requests_publish", 0, &rcv_reqs_publish},
+	{"rcv_requests_kdmq", 0, &rcv_reqs_kdmq},
+	{"rcv_replies", 0, &rcv_rpls},
+	{"rcv_replies_1xx", 0, &rcv_rpls_1xx},
+	{"rcv_replies_18x", 0, &rcv_rpls_18x},
+	{"rcv_replies_2xx", 0, &rcv_rpls_2xx},
+	{"rcv_replies_3xx", 0, &rcv_rpls_3xx},
+	{"rcv_replies_4xx", 0, &rcv_rpls_4xx},
+	{"rcv_replies_400", 0, &rcv_rpls_400},
+	{"rcv_replies_401", 0, &rcv_rpls_401},
+	{"rcv_replies_402", 0, &rcv_rpls_402},
+	{"rcv_replies_403", 0, &rcv_rpls_403},
+	{"rcv_replies_404", 0, &rcv_rpls_404},
+	{"rcv_replies_405", 0, &rcv_rpls_405},
+	{"rcv_replies_406", 0, &rcv_rpls_406},
+	{"rcv_replies_407", 0, &rcv_rpls_407},
+	{"rcv_replies_408", 0, &rcv_rpls_408},
+	{"rcv_replies_409", 0, &rcv_rpls_409},
+	{"rcv_replies_410", 0, &rcv_rpls_410},
+	{"rcv_replies_411", 0, &rcv_rpls_411},
+	{"rcv_replies_413", 0, &rcv_rpls_413},
+	{"rcv_replies_414", 0, &rcv_rpls_414},
+	{"rcv_replies_415", 0, &rcv_rpls_415},
+	{"rcv_replies_420", 0, &rcv_rpls_420},
+	{"rcv_replies_480", 0, &rcv_rpls_480},
+	{"rcv_replies_481", 0, &rcv_rpls_481},
+	{"rcv_replies_482", 0, &rcv_rpls_482},
+	{"rcv_replies_483", 0, &rcv_rpls_483},
+	{"rcv_replies_484", 0, &rcv_rpls_484},
+	{"rcv_replies_485", 0, &rcv_rpls_485},
+	{"rcv_replies_486", 0, &rcv_rpls_486},
+	{"rcv_replies_487", 0, &rcv_rpls_487},
+	{"rcv_replies_488", 0, &rcv_rpls_488},
+	{"rcv_replies_489", 0, &rcv_rpls_489},
+	{"rcv_replies_491", 0, &rcv_rpls_491},
+	{"rcv_replies_493", 0, &rcv_rpls_493},
+	{"rcv_replies_5xx", 0, &rcv_rpls_5xx},
+	{"rcv_replies_6xx", 0, &rcv_rpls_6xx},
+	{"fwd_requests", 0, &fwd_reqs},
+	{"fwd_replies", 0, &fwd_rpls},
+	{"drop_requests", 0, &drp_reqs},
+	{"drop_replies", 0, &drp_rpls},
+	{"err_requests", 0, &err_reqs},
+	{"err_replies", 0, &err_rpls},
+	{"bad_URIs_rcvd", 0, &bad_URIs},
+	{"unsupported_methods", 0, &unsupported_methods},
+	{"bad_msg_hdr", 0, &bad_msg_hdr},
+	DECLARE_STATS(invite),
+	DECLARE_STATS(cancel),
+	DECLARE_STATS(bye),
+	DECLARE_STATS(reg),
+	DECLARE_STATS(message),
+	DECLARE_STATS(prack),
+	DECLARE_STATS(update),
+	DECLARE_STATS(refer),
+	{0, 0, 0}
+};
+/* clang-format on */
 
 unsigned long shm_stats_get_size(void);
 unsigned long shm_stats_get_used(void);
@@ -201,14 +216,17 @@ unsigned long shm_stats_get_mused(void);
 unsigned long shm_stats_get_free(void);
 unsigned long shm_stats_get_frags(void);
 
+/* clang-format off */
 stat_export_t shm_stats[] = {
-		{"total_size", STAT_IS_FUNC, (stat_var **)shm_stats_get_size},
-		{"used_size", STAT_IS_FUNC, (stat_var **)shm_stats_get_used},
-		{"real_used_size", STAT_IS_FUNC, (stat_var **)shm_stats_get_rused},
-		{"max_used_size", STAT_IS_FUNC, (stat_var **)shm_stats_get_mused},
-		{"free_size", STAT_IS_FUNC, (stat_var **)shm_stats_get_free},
-		{"fragments", STAT_IS_FUNC, (stat_var **)shm_stats_get_frags},
-		{0, 0, 0}};
+	{"total_size", STAT_IS_FUNC, (stat_var **)shm_stats_get_size},
+	{"used_size", STAT_IS_FUNC, (stat_var **)shm_stats_get_used},
+	{"real_used_size", STAT_IS_FUNC, (stat_var **)shm_stats_get_rused},
+	{"max_used_size", STAT_IS_FUNC, (stat_var **)shm_stats_get_mused},
+	{"free_size", STAT_IS_FUNC, (stat_var **)shm_stats_get_free},
+	{"fragments", STAT_IS_FUNC, (stat_var **)shm_stats_get_frags},
+	{0, 0, 0}
+};
+/* clang-format on */
 
 int stats_proc_stats_init_rpc(void);
 
@@ -930,21 +948,24 @@ static const char *rpc_stats_reset_statistics_doc[2] = {
 static const char *rpc_stats_clear_statistics_doc[2] = {
 		"clear core and modules stats (verbose operation)", 0};
 
+/* clang-format off */
 /**
  * Stats RPC  commands.
  */
 rpc_export_t kex_stats_rpc[] = {
-		{"stats.get_statistics", rpc_stats_get_statistics,
-				rpc_stats_get_statistics_doc, RET_ARRAY},
-		{"stats.fetch", rpc_stats_fetchs_statistics,
-				rpc_stats_fetchs_statistics_doc, 0},
-		{"stats.fetchn", rpc_stats_fetchn_statistics,
-				rpc_stats_fetchn_statistics_doc, 0},
-		{"stats.reset_statistics", rpc_stats_reset_statistics,
-				rpc_stats_reset_statistics_doc, 0},
-		{"stats.clear_statistics", rpc_stats_clear_statistics,
-				rpc_stats_clear_statistics_doc, 0},
-		{0, 0, 0, 0}};
+	{"stats.get_statistics", rpc_stats_get_statistics,
+			rpc_stats_get_statistics_doc, RET_ARRAY},
+	{"stats.fetch", rpc_stats_fetchs_statistics,
+			rpc_stats_fetchs_statistics_doc, 0},
+	{"stats.fetchn", rpc_stats_fetchn_statistics,
+			rpc_stats_fetchn_statistics_doc, 0},
+	{"stats.reset_statistics", rpc_stats_reset_statistics,
+			rpc_stats_reset_statistics_doc, 0},
+	{"stats.clear_statistics", rpc_stats_clear_statistics,
+			rpc_stats_clear_statistics_doc, 0},
+	{0, 0, 0, 0}
+};
+/* clang-format on */
 
 /**
  * Stats RPC initializer.
