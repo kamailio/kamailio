@@ -1766,4 +1766,24 @@ modparam("tm", "delayed_reply", 0)
 		</example>
 	</section>
 
+	<section id="tm.p.evlreq_mode">
+		<title><varname>evlreq_mode</varname> (int)</title>
+		<para>
+			If bit 1 is set (value 1), the event_route[tm:local-request] is also
+			executed for hop-by-hop CANCEL requests (for received INVITEs,
+			not only for local generated ones).
+		</para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		<example>
+			<title>evlreq_mode example</title>
+			<programlisting>
+...
+modparam("tm", "evlreq_mode", 1)
+....
+			</programlisting>
+		</example>
+	</section>
+
 </section>
