@@ -230,6 +230,7 @@ str _tm_event_callback_lres_sent = {NULL, 0};
 int _tm_reply_408_code = 408;
 str _tm_reply_408_reason = str_init("Request Timeout");
 int _tm_delayed_reply = 1;
+int _tm_evlreq_mode = 0;
 
 #ifdef USE_DNS_FAILOVER
 str failover_reply_codes_str = {NULL, 0};
@@ -530,6 +531,7 @@ static param_export_t params[] = {
 	{"reply_408_code", PARAM_INT, &_tm_reply_408_code},
 	{"reply_408_reason", PARAM_STR, &_tm_reply_408_reason},
 	{"delayed_reply", PARAM_INT, &_tm_delayed_reply},
+	{"evlreq_mode", PARAM_INT, &_tm_evlreq_mode},
 	{0, 0, 0}
 };
 

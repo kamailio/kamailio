@@ -40,6 +40,7 @@
 
 
 extern str tm_event_callback;
+extern int _tm_evlreq_mode;
 
 typedef struct cancel_reason_map
 {
@@ -338,7 +339,7 @@ int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,
 
 	LM_DBG("sending cancel...\n");
 
-	if(flags & F_CANCEL_LOCAL) {
+	if((flags & F_CANCEL_LOCAL) || (_tm_evlreq_mode & TM_EVLREQ_CANCEL_HBH)) {
 		/* Call event */
 		rt = -1;
 		if(tm_event_callback.s == NULL || tm_event_callback.len <= 0) {
