@@ -2449,6 +2449,48 @@ modparam("rtpengine", "enable_dmq", 1)
 	</example>
 </section>
 
+<section id="rtpengine.p.dtmf_event_source_label">
+	<title><varname>dtmf_event_source_label</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
+<section id="rtpengine.p.dtmf_event_tags">
+	<title><varname>dtmf_event_tags</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
+<section id="rtpengine.p.dtmf_event_type">
+	<title><varname>dtmf_event_type</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
+<section id="rtpengine.p.dtmf_event_source_ip">
+	<title><varname>dtmf_event_source_ip</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
+<section id="rtpengine.p.dtmf_event_duration">
+	<title><varname>dtmf_event_duration</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
+<section id="rtpengine.p.dtmf_event_volume">
+	<title><varname>dtmf_event_volume</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
+<section id="rtpengine.p.event_callback">
+	<title><varname>event_callback</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
 	<section>
 	<title>Functions</title>
 	<section id="rtpengine.f.set_rtpengine_set">
