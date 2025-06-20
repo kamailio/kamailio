@@ -154,9 +154,9 @@ Chapter 1. Admin Guide
    blocklisted or not.
 
    An additional functionality that this module provides is the ability to
-   handle global blocklists. This lists are loaded on startup into memory,
-   thus providing a better performance than the userblocklist case. These
-   global blocklists are useful to allow only calls to certain
+   handle global blocklists. These lists are loaded on startup into
+   memory, thus providing a better performance than the userblocklist
+   case. These global blocklists are useful to allow only calls to certain
    international destinations, i.e. block all not allowlisted numbers.
    They could also be used to prevent the blocklisting of important
    numbers, as allowlisting is supported too. This is useful for example

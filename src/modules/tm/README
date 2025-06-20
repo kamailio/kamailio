@@ -757,8 +757,12 @@ failure_route["serial"]
 
 3.1. fr_timer (integer)
 
-   Timer which hits if no final reply for a request or ACK for a negative
-   INVITE reply arrives (in milliseconds).
+   This timer is used for all SIP requests. It hits if no reply for an
+   request INVITE request or other request has been received within (F in
+   milliseconds). If a provisional reply is received for an INVITE (any
+   1xx), then the fr_inv_timer will be used instead. And if no replies (at
+   all) for an INVITE are received before fr_timer hits, the transaction
+   is terminated with a 408 in failure route.
 
    Default value is 30000 ms (30 seconds).
 
