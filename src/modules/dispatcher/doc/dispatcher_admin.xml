@@ -1789,6 +1789,27 @@ failure_route[tryagain] {
 </programlisting>
 		</example>
 	</section>
+	<section id="dispatcher.f.ds_mark_addr">
+		<title>
+		<function moreinfo="none">ds_mark_addr(state, setid, uri)</function>
+		</title>
+		<para>
+			Set the state to the target specified by setid and uri. The parameter
+			state can have same value as for ds_mark_dst(). All parameters can
+			contain variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_mark_addr</function> usage</title>
+		<programlisting format="linespecific">
+...
+    ds_mark_addr("ip", "1", "sip:127.0.0.1:5080"); # set to inactive and probing
+...
+</programlisting>
+		</example>
+	</section>
 	<section  id="dispatcher.f.ds_list_exists">
 		<title>
 		<function moreinfo="none">ds_list_exists(groupid)</function>
