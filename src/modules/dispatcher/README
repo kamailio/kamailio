@@ -117,15 +117,16 @@ Federico Cabiddu
               4.7. ds_set_dst()
               4.8. ds_set_domain()
               4.9. ds_mark_dst([state])
-              4.10. ds_list_exists(groupid)
-              4.11. ds_is_from_list([groupid [, mode [, uri] ] ])
-              4.12. ds_is_active(groupid [, uri])
-              4.13. ds_load_update()
-              4.14. ds_load_unset()
-              4.15. ds_reload()
-              4.16. ds_dsg_fetch(setid)
-              4.17. ds_dsg_fetch_uri(setid, uri)
-              4.18. ds_oc_set_attrs(setid, uri, rval, tval, sval)
+              4.10. ds_mark_addr(state, setid, uri)
+              4.11. ds_list_exists(groupid)
+              4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
+              4.13. ds_is_active(groupid [, uri])
+              4.14. ds_load_update()
+              4.15. ds_load_unset()
+              4.16. ds_reload()
+              4.17. ds_dsg_fetch(setid)
+              4.18. ds_dsg_fetch_uri(setid, uri)
+              4.19. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
         5. RPC Commands
 
@@ -212,16 +213,17 @@ Federico Cabiddu
    1.53. ds_select usage
    1.54. ds_select_routes usage
    1.55. ds_mark_dst usage
-   1.56. ds_list_exists usage
-   1.57. ds_is_from_list usage
-   1.58. ds_is_active usage
-   1.59. ds_load_unset usage
-   1.60. ds_reload usage
-   1.61. ds_dsg_fetch() usage
-   1.62. ds_dsg_fetch_uri() usage
-   1.63. ds_oc_set_attrs() usage
-   1.64. dispatcher list file
-   1.65. Kamailio config script - sample dispatcher usage
+   1.56. ds_mark_addr usage
+   1.57. ds_list_exists usage
+   1.58. ds_is_from_list usage
+   1.59. ds_is_active usage
+   1.60. ds_load_unset usage
+   1.61. ds_reload usage
+   1.62. ds_dsg_fetch() usage
+   1.63. ds_dsg_fetch_uri() usage
+   1.64. ds_oc_set_attrs() usage
+   1.65. dispatcher list file
+   1.66. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -293,15 +295,16 @@ Chapter 1. Admin Guide
         4.7. ds_set_dst()
         4.8. ds_set_domain()
         4.9. ds_mark_dst([state])
-        4.10. ds_list_exists(groupid)
-        4.11. ds_is_from_list([groupid [, mode [, uri] ] ])
-        4.12. ds_is_active(groupid [, uri])
-        4.13. ds_load_update()
-        4.14. ds_load_unset()
-        4.15. ds_reload()
-        4.16. ds_dsg_fetch(setid)
-        4.17. ds_dsg_fetch_uri(setid, uri)
-        4.18. ds_oc_set_attrs(setid, uri, rval, tval, sval)
+        4.10. ds_mark_addr(state, setid, uri)
+        4.11. ds_list_exists(groupid)
+        4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
+        4.13. ds_is_active(groupid [, uri])
+        4.14. ds_load_update()
+        4.15. ds_load_unset()
+        4.16. ds_reload()
+        4.17. ds_dsg_fetch(setid)
+        4.18. ds_dsg_fetch_uri(setid, uri)
+        4.19. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
    5. RPC Commands
 
@@ -1146,15 +1149,16 @@ modparam("dispatcher", "ds_interval_mode", 7200)
    4.7. ds_set_dst()
    4.8. ds_set_domain()
    4.9. ds_mark_dst([state])
-   4.10. ds_list_exists(groupid)
-   4.11. ds_is_from_list([groupid [, mode [, uri] ] ])
-   4.12. ds_is_active(groupid [, uri])
-   4.13. ds_load_update()
-   4.14. ds_load_unset()
-   4.15. ds_reload()
-   4.16. ds_dsg_fetch(setid)
-   4.17. ds_dsg_fetch_uri(setid, uri)
-   4.18. ds_oc_set_attrs(setid, uri, rval, tval, sval)
+   4.10. ds_mark_addr(state, setid, uri)
+   4.11. ds_list_exists(groupid)
+   4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
+   4.13. ds_is_active(groupid [, uri])
+   4.14. ds_load_update()
+   4.15. ds_load_unset()
+   4.16. ds_reload()
+   4.17. ds_dsg_fetch(setid)
+   4.18. ds_dsg_fetch_uri(setid, uri)
+   4.19. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
 4.1.  ds_select_dst(set, alg[, limit])
 
@@ -1499,7 +1503,20 @@ failure_route[tryagain] {
 }
 ...
 
-4.10.  ds_list_exists(groupid)
+4.10.  ds_mark_addr(state, setid, uri)
+
+   Set the state to the target specified by setid and uri. The parameter
+   state can have same value as for ds_mark_dst(). All parameters can
+   contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.56. ds_mark_addr usage
+...
+    ds_mark_addr("ip", "1", "sip:127.0.0.1:5080"); # set to inactive and probing
+...
+
+4.11.  ds_list_exists(groupid)
 
    Function alias: ds_list_exist(groupid)
 
@@ -1511,14 +1528,14 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.56. ds_list_exists usage
+   Example 1.57. ds_list_exists usage
 ...
 if(ds_list_exists("10")) {
     ...
 }
 ...
 
-4.11.  ds_is_from_list([groupid [, mode [, uri] ] ])
+4.12.  ds_is_from_list([groupid [, mode [, uri] ] ])
 
    This function returns true, if there is a match of source address or
    uri with an address in the given group of the dispatcher-list;
@@ -1563,7 +1580,7 @@ if(ds_list_exists("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.57. ds_is_from_list usage
+   Example 1.58. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1579,7 +1596,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 }
 ...
 
-4.12.  ds_is_active(groupid [, uri])
+4.13.  ds_is_active(groupid [, uri])
 
    This function returns true, if there is an active URI in the
    destination group; otherwise false. If the uri parameter is provided,
@@ -1593,7 +1610,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.58. ds_is_active usage
+   Example 1.59. ds_is_active usage
 ...
 if(ds_is_active("10")) {
     ...
@@ -1603,7 +1620,7 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
 }
 ...
 
-4.13.  ds_load_update()
+4.14.  ds_load_update()
 
    Updates the load state:
      * if it is a BYE or CANCEL - remove the load from destination address
@@ -1614,14 +1631,14 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.14.  ds_load_unset()
+4.15.  ds_load_unset()
 
    Remove the call load for the destination that routed the call.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.59. ds_load_unset usage
+   Example 1.60. ds_load_unset usage
 ...
 route {
     ...
@@ -1645,7 +1662,7 @@ onreply_route {
 }
 ...
 
-4.15.  ds_reload()
+4.16.  ds_reload()
 
    Reloads the groups and included destinations.
 
@@ -1655,12 +1672,12 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.60. ds_reload usage
+   Example 1.61. ds_reload usage
 ...
     ds_reload();
 ...
 
-4.16.  ds_dsg_fetch(setid)
+4.17.  ds_dsg_fetch(setid)
 
    Sets the destination group id to setid for fetching $dsg(key)
    attributes.
@@ -1669,13 +1686,13 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.61. ds_dsg_fetch() usage
+   Example 1.62. ds_dsg_fetch() usage
 ...
     ds_dsg_fetch("1");
     xinfo("set id: 1 - all: $dsg(count); active: $dsg(active)\n");
 ...
 
-4.17.  ds_dsg_fetch_uri(setid, uri)
+4.18.  ds_dsg_fetch_uri(setid, uri)
 
    Sets the destination group id to setid for fetching $dsg(key)
    attributes and the overload-control attributes to the corresponding uri
@@ -1686,13 +1703,13 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.62. ds_dsg_fetch_uri() usage
+   Example 1.63. ds_dsg_fetch_uri() usage
 ...
     ds_dsg_fetch_uri("1", "sip:127.0.0.1:5080");
     xinfo("set id: 1 - all: $dsg(count); active: $dsg(active); $dsg(ocrate)\n");
 ...
 
-4.18.  ds_oc_set_attrs(setid, uri, rval, tval, sval)
+4.19.  ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
    Sets the overload control rate, time internval limit and sequence
    number for the destination record (setid, uri) following RFC7339
@@ -1718,7 +1735,7 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.63. ds_oc_set_attrs() usage
+   Example 1.64. ds_oc_set_attrs() usage
 ...
     ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "180000", "1");
 ...
@@ -2025,7 +2042,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.64. dispatcher list file
+   Example 1.65. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -2050,7 +2067,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.65. Kamailio config script - sample dispatcher usage
+   Example 1.66. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
