@@ -6,6 +6,9 @@ name: build_rpm
   push:
     tags:
     - '[0-9]+.[0-9]+.[0-9]+'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
 jobs:
   # is required nightly build?
   # More info at https://stackoverflow.com/questions/63014786/how-to-schedule-a-github-actions-nightly-build-but-run-it-only-when-there-where
@@ -30,7 +33,7 @@ jobs:
     outputs:
       last_sha: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}
 
-  native:
+  build:
     needs: [check]
     if: needs.check.outputs.last_sha != github.sha
     strategy:
@@ -40,11 +43,24 @@ jobs:
         - rhel-10
         - centos-9
         - rhel-9
+        - rocky-9
         - centos-8
         - rhel-8
-        runner:
-        - ubuntu-latest
-        - ubuntu-24.04-arm
+        arch:
+        - x86_64
+        - aarch64
+        include:
+        # setting image platform
+        - platform: linux/amd64
+          arch: x86_64
+        - platform: linux/arm64/v8
+          arch: aarch64
+
+        # setting runner
+        - runner: ubuntu-latest
+        - runner: ubuntu-24.04-arm
+          arch: aarch64
+
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: write
@@ -52,38 +68,78 @@ jobs:
     - name: checkout sources
       uses: actions/checkout@v4
 
-    - name: print commit info and init hosttype var
+    - name: print commit info
       id: init
       run: |
         echo ${{ github.sha }}
-        echo "hosttype=${HOSTTYPE}" >> $GITHUB_OUTPUT
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      if: "! contains(fromJson('[\"x86_64\", \"aarch64\"]'), matrix.arch)"
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: build rpm files
       uses: addnab/docker-run-action@v3
       with:
-        image: safarov/kamailio-builder:${{ matrix.os }}
-        options: -v ${{ github.workspace }}:/usr/src/kamailio
+        image: ghcr.io/sergey-safarov/pkg-kamailio-docker:${{ matrix.os }}
+        options: --platform ${{ matrix.platform }} -v ${{ github.workspace }}:/usr/src/kamailio
         run: |
           cd /usr/src/kamailio
           make cfg
           make -C pkg/kamailio src.rpm
-          rpmbuild -ra /usr/src/kamailio/kamailio*.src.rpm
-          cp -R /deps ~/rpmbuild/RPMS
-          mv ~/rpmbuild/SRPMS/* ~/rpmbuild/RPMS
-          mv ~/rpmbuild/RPMS .
-          tar czf kamailio-${{ github.ref_name }}-${{ matrix.os }}-${{ steps.init.outputs.hosttype }}.rpm.tar.gz RPMS
+          rpmbuild --undefine=__cmake_in_source_build -ra /usr/src/kamailio/kamailio*.src.rpm
+          os_folder=$(echo "${{ matrix.os }}" | sed -e 's|-|/|')
+          ref_folder=$(echo "${{ github.ref_name }}" | sed -E -e 's/([0-9]+.[0-9]+).*/\1/')
+          mkdir -p RPMS/${os_folder}/${ref_folder}/${{ github.ref_name }}/${{ matrix.arch }}
+          cp -R /deps RPMS/${os_folder}/${ref_folder}/${{ github.ref_name }}/${{ matrix.arch }}
+          mv ~/rpmbuild/SRPMS/* RPMS/${os_folder}/${ref_folder}/${{ github.ref_name }}/${{ matrix.arch }}
+          mv ~/rpmbuild/RPMS/*/* RPMS/${os_folder}/${ref_folder}/${{ github.ref_name }}/${{ matrix.arch }}
 
     - name: Push artifacts
       uses: actions/upload-artifact@v4
-      if: "! startsWith(github.ref, 'refs/tags/')"
       with:
-        name: kamailio-${{ github.ref_name }}-${{ matrix.os }}-${{ steps.init.outputs.hosttype }}.rpm
+        name: kamailio-${{ matrix.os }}-${{ github.ref_name }}-${{ matrix.arch }}.rpm
         path: |
           RPMS/*
 
-    - name: Release
+  release:
+    name: Relase rpm files
+    if: github.ref_type == 'tag'
+    strategy:
+      max-parallel: 1
+      matrix:
+        os:
+        - centos-10
+        - rhel-10
+        - centos-9
+        - rhel-9
+        - rocky-9
+        - centos-8
+        - rhel-8
+    runs-on: ubuntu-latest
+    needs:
+    - build
+    steps:
+    - name: Download artifact images
+      uses: actions/download-artifact@v4
+      with:
+        pattern: kamailio-${{ matrix.os }}-${{ github.ref_name }}-*.rpm
+        path: ${{ runner.temp }}/repo
+        merge-multiple: true
+
+    - name: create archive
+      run: |
+        tar czf rpms-${{ matrix.os }}-${{ github.ref_name }}.tar.gz --directory=${{ runner.temp }} repo
+        ls -l rpms-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
+
+    - name: upload artifacts
       uses: softprops/action-gh-release@v2
-      if: "startsWith(github.ref, 'refs/tags/')"
       with:
        files: |
-         kamailio-${{ github.ref_name }}-${{ matrix.os }}-${{ steps.init.outputs.hosttype }}.rpm.tar.gz
+         rpms-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
