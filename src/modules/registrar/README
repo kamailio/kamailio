@@ -1134,6 +1134,7 @@ lookup_branches("location");
      * uri - the URI to be searched in location table.
      * rxname - name of the XAVP to store record attributes. These are:
           + aor - the address of record.
+          + count - the number of contacts.
      * cxname - name of the XAVP to store content attributes, name mapping
        is done from the perspective of using them to send out SIP
        requests. These are:
@@ -1148,9 +1149,9 @@ lookup_branches("location");
 ...
 lookup_xavp("location", "$fu", "rul", "cul");
 xinfo("aor: $xavp(rul=>aor)\n");
-xinfo("number of contacts: $xavp(rul>count)\n");
-xinfo("first contact record - uri: $xavp(cul>uri)\n");
-xinfo("first contact record - socket: $xavp(cul>socket)\n");
+xinfo("number of contacts: $xavp(rul=>count)\n");
+xinfo("first contact record - uri: $xavp(cul=>uri)\n");
+xinfo("first contact record - socket: $xavp(cul=>socket)\n");
 ...
 
 4.6.  registered(domain [, uri [, match_option [, match_action]]])
