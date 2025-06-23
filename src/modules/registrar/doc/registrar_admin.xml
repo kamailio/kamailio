@@ -1496,6 +1496,11 @@ lookup_branches("location");
 				<emphasis>aor</emphasis> - the address of record.
 				</para>
 			</listitem>
+			<listitem>
+				<para>
+				<emphasis>count</emphasis> - the number of contacts.
+				</para>
+			</listitem>
 			</itemizedlist>
 		</listitem>
 		<listitem>
@@ -1533,9 +1538,9 @@ lookup_branches("location");
 ...
 lookup_xavp("location", "$fu", "rul", "cul");
 xinfo("aor: $xavp(rul=&gt;aor)\n");
-xinfo("number of contacts: $xavp(rul&gt;count)\n");
-xinfo("first contact record - uri: $xavp(cul&gt;uri)\n");
-xinfo("first contact record - socket: $xavp(cul&gt;socket)\n");
+xinfo("number of contacts: $xavp(rul=&gt;count)\n");
+xinfo("first contact record - uri: $xavp(cul=&gt;uri)\n");
+xinfo("first contact record - socket: $xavp(cul=&gt;socket)\n");
 ...
 </programlisting>
 		</example>
@@ -2086,4 +2091,3 @@ if(reg_fetch_contacts("location", "$fu", "caller"))
 	</section>
 
 </chapter>
-
