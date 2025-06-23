@@ -699,6 +699,8 @@ int match_subnet_table(struct subnet *table, unsigned int grp, ip_addr_t *addr,
 {
 	unsigned int count, i;
 	avp_value_t val;
+	int best_idx = -1;
+	unsigned int best_mask = 0;
 
 	count = table[PERM_MAX_SUBNETS].grp;
 
@@ -713,16 +715,23 @@ int match_subnet_table(struct subnet *table, unsigned int grp, ip_addr_t *addr,
 		if(((table[i].port == port) || (table[i].port == 0))
 				&& (ip_addr_match_net(addr, &table[i].subnet, table[i].mask)
 						== 0)) {
-			if(tag_avp.n && table[i].tag.s) {
-				val.s = table[i].tag;
-				if(add_avp(tag_avp_type | AVP_VAL_STR, tag_avp, val) != 0) {
-					LM_ERR("setting of tag_avp failed\n");
-					return -1;
-				}
+			if(table[i].mask > best_mask) {
+				best_mask = table[i].mask;
+				best_idx = i;
 			}
-			return 1;
 		}
 		i++;
+	}
+
+	if(best_idx >= 0) {
+		if(tag_avp.n && table[best_idx].tag.s) {
+			val.s = table[best_idx].tag;
+			if(add_avp(tag_avp_type | AVP_VAL_STR, tag_avp, val) != 0) {
+				LM_ERR("setting of tag_avp failed\n");
+				return -1;
+			}
+		}
+		return 1;
 	}
 
 	return -1;
@@ -739,6 +748,8 @@ int find_group_in_subnet_table(
 {
 	unsigned int count, i;
 	avp_value_t val;
+	int best_idx = -1;
+	unsigned int best_mask = 0;
 
 	count = table[PERM_MAX_SUBNETS].grp;
 
@@ -747,16 +758,23 @@ int find_group_in_subnet_table(
 		if(((table[i].port == port) || (table[i].port == 0))
 				&& (ip_addr_match_net(addr, &table[i].subnet, table[i].mask)
 						== 0)) {
-			if(tag_avp.n && table[i].tag.s) {
-				val.s = table[i].tag;
-				if(add_avp(tag_avp_type | AVP_VAL_STR, tag_avp, val) != 0) {
-					LM_ERR("setting of tag_avp failed\n");
-					return -1;
-				}
+			if(table[i].mask > best_mask) {
+				best_mask = table[i].mask;
+				best_idx = i;
 			}
-			return table[i].grp;
 		}
 		i++;
+	}
+
+	if(best_idx >= 0) {
+		if(tag_avp.n && table[best_idx].tag.s) {
+			val.s = table[best_idx].tag;
+			if(add_avp(tag_avp_type | AVP_VAL_STR, tag_avp, val) != 0) {
+				LM_ERR("setting of tag_avp failed\n");
+				return -1;
+			}
+		}
+		return table[best_idx].grp;
 	}
 
 	return -1;
