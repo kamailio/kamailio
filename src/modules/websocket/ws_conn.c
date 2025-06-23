@@ -709,6 +709,7 @@ void ws_timer(unsigned int ticks, void *param)
 					LM_DBG("ws structure without active tcp connection\n");
 					wsc->state = WS_S_REMOVING;
 					wsc->rmticks = get_ticks();
+					wsc->run_event = 1;
 				} else {
 					tcpconn_put(con);
 				}
