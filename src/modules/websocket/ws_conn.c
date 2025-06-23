@@ -328,7 +328,8 @@ static void wsconn_dtor(ws_connection_t *wsc)
 	if(!wsc)
 		return;
 
-	LM_DBG("wsconn_dtor for [%p] refcnt [%d]\n", wsc, atomic_get(&wsc->refcnt));
+	LM_DBG("wsconn id: %d / %u [%p] refcnt [%d]\n", wsc->id, wsc->id_hash, wsc,
+			atomic_get(&wsc->refcnt));
 
 	if(wsc->run_event)
 		wsconn_run_route(wsc);
@@ -337,12 +338,13 @@ static void wsconn_dtor(ws_connection_t *wsc)
 
 	shm_free(wsc);
 
-	LM_DBG("wsconn_dtor for [%p] destroyed\n", wsc);
+	LM_DBG("wsconn id: %d / %u [%p] destroyed\n", wsc->id, wsc->id_hash, wsc);
 }
 
 int wsconn_rm(ws_connection_t *wsc, ws_conn_eventroute_t run_event_route)
 {
-	LM_DBG("wsconn_rm for [%p] refcnt [%d]\n", wsc, atomic_get(&wsc->refcnt));
+	LM_DBG("remove wscon id: %d / %u [%p] refcnt [%d]\n", wsc->id, wsc->id_hash,
+			wsc, atomic_get(&wsc->refcnt));
 
 	if(run_event_route == WSCONN_EVENTROUTE_YES)
 		wsc->run_event = 1;
