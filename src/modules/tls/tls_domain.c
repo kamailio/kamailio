@@ -749,12 +749,12 @@ static int set_cipher_list(tls_domain_t *d)
 				ERR("%s: Failure to set SSL context cipher suites \"%s\"\n",
 						tls_domain_str(d), cipher_list);
 				return -1;
-			} else {
-				if(SSL_CTX_set_cipher_list(d->ctx[i], cipher_list) == 0) {
-					ERR("%s: Failure to set SSL context cipher list \"%s\"\n",
-							tls_domain_str(d), cipher_list);
-					return -1;
-				}
+			}
+		} else {
+			if(SSL_CTX_set_cipher_list(d->ctx[i], cipher_list) == 0) {
+				ERR("%s: Failure to set SSL context cipher list \"%s\"\n",
+						tls_domain_str(d), cipher_list);
+				return -1;
 			}
 		}
 #endif
