@@ -376,7 +376,7 @@ typedef struct tcp_connection
 #define TCPCONN_UNLOCK lock_release(tcpconn_lock);
 
 #define TCP_ALIAS_HASH_SIZE 4096
-#define TCP_ID_HASH_SIZE 1024
+#define TCP_ID_HASH_SIZE 2048
 
 /* hash (dst_ip, dst_port, local_ip, local_port) */
 static inline unsigned tcp_addr_hash(struct ip_addr *ip, unsigned short port,
