@@ -737,11 +737,27 @@ static int set_cipher_list(tls_domain_t *d)
 		return 0;
 	procs_no = get_max_procs();
 	for(i = 0; i < procs_no; i++) {
+#if OPENSSL_VERSION_NUMBER < 0x030000000L
 		if(SSL_CTX_set_cipher_list(d->ctx[i], cipher_list) == 0) {
 			ERR("%s: Failure to set SSL context cipher list \"%s\"\n",
 					tls_domain_str(d), cipher_list);
 			return -1;
 		}
+#else
+		if(d->method == TLS_USE_TLSv1_3 || d->method == TLS_USE_TLSv1_3_PLUS) {
+			if(SSL_CTX_set_ciphersuites(d->ctx[i], cipher_list) == 0) {
+				ERR("%s: Failure to set SSL context cipher suites \"%s\"\n",
+						tls_domain_str(d), cipher_list);
+				return -1;
+			} else {
+				if(SSL_CTX_set_cipher_list(d->ctx[i], cipher_list) == 0) {
+					ERR("%s: Failure to set SSL context cipher list \"%s\"\n",
+							tls_domain_str(d), cipher_list);
+					return -1;
+				}
+			}
+		}
+#endif
 #if !defined(OPENSSL_NO_ECDH) && OPENSSL_VERSION_NUMBER < 0x10100000L
 		setup_ecdh(d->ctx[i]);
 #endif
