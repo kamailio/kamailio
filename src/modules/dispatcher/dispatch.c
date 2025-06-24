@@ -3482,8 +3482,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route, ds_rctx_t *rctx)
 			return;
 		}
 		fmsg = faked_msg_next();
-		fmsg->parsed_orig_ruri_ok = 0;
-		fmsg->new_uri = *uri;
+		rewrite_uri(fmsg, uri);
 	} else {
 		fmsg = msg;
 	}
@@ -3508,6 +3507,9 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route, ds_rctx_t *rctx)
 		}
 		set_route_type(backup_rt);
 		_ds_rctx = NULL;
+	}
+	if(fmsg != msg) {
+		reset_uri(fmsg);
 	}
 }
 
