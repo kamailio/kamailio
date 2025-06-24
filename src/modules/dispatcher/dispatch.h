@@ -250,7 +250,7 @@ typedef struct _ds_dest {
 	struct ip_addr ip_address; 	/*!< IP of the address */
 	unsigned short int port; 	/*!< port of the URI */
 	unsigned short int proto; 	/*!< protocol of the URI */
-	int message_count;
+	int probing_count;
 	struct timeval dnstime;
 	ds_ocdata_t ocdata;	/*!< overload control attributes */
 	struct _ds_dest *next;
