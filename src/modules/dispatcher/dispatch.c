@@ -3023,7 +3023,7 @@ error:
 	return -1;
 }
 
-int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri)
+int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri, int mode)
 {
 	ds_rctx_t rctx;
 	int ret;
@@ -3044,14 +3044,14 @@ int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri)
 	} else {
 		rctx.code = 800;
 	}
-	ret = ds_update_state(msg, group, uri, state, &rctx);
+	ret = ds_update_state(msg, group, uri, state, mode, &rctx);
 
 	LM_DBG("state [%d] grp [%d] dst [%.*s]\n", state, group, uri->len, uri->s);
 
 	return (ret == 0) ? 1 : -1;
 }
 
-int ds_mark_dst(struct sip_msg *msg, int state)
+int ds_mark_dst_mode(struct sip_msg *msg, int state, int mode)
 {
 	sr_xavp_t *rxavp = NULL;
 	int group;
@@ -3076,7 +3076,12 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 	if(rxavp == NULL)
 		return -1; /* dst addr uri not available */
 
-	return ds_mark_addr(msg, state, group, &rxavp->val.v.s);
+	return ds_mark_addr(msg, state, group, &rxavp->val.v.s, mode);
+}
+
+int ds_mark_dst(struct sip_msg *msg, int state)
+{
+	return ds_mark_dst_mode(msg, state, 0);
 }
 
 void latency_stats_init(
@@ -3354,8 +3359,8 @@ int ds_get_state(int group, str *address)
 /**
  * Update destionation's state
  */
-int ds_update_state(
-		sip_msg_t *msg, int group, str *address, int state, ds_rctx_t *rctx)
+int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
+		int mode, ds_rctx_t *rctx)
 {
 	int i = 0;
 	int old_state = 0;
@@ -3407,8 +3412,9 @@ int ds_update_state(
 				LM_DBG("destination did not replied %d times, threshold %d\n",
 						idx->dlist[i].message_count, probing_threshold);
 				/* Destination is not replying.. Increasing failure counter */
-				if(idx->dlist[i].message_count >= probing_threshold) {
-					/* Destination has too much lost messages.. Bringing it to inactive state */
+				if((mode == 1)
+						|| (idx->dlist[i].message_count >= probing_threshold)) {
+					/* Destination has too many lost messages.. Bringing it to inactive state */
 					idx->dlist[i].flags &= ~DS_TRYING_DST;
 					idx->dlist[i].flags |= DS_INACTIVE_DST;
 					idx->dlist[i].message_count = 0;
@@ -3420,7 +3426,9 @@ int ds_update_state(
 						&& (old_state & DS_INACTIVE_DST)) {
 					idx->dlist[i].message_count++;
 					/* Destination was inactive but it is just replying.. Increasing successful counter */
-					if(idx->dlist[i].message_count < inactive_threshold) {
+					if((mode == 0)
+							&& (idx->dlist[i].message_count
+									< inactive_threshold)) {
 						/* Destination has not enough successful replies.. Leaving it into inactive state */
 						idx->dlist[i].flags |= DS_INACTIVE_DST;
 						/* if destination was in probing state, we stay there for now */
@@ -4082,7 +4090,7 @@ static void ds_options_callback(
 
 		/* Check if in the meantime someone disabled the target through RPC */
 		if(!(ds_get_state(group, &uri) & DS_DISABLED_DST)
-				&& ds_update_state(fmsg, group, &uri, state, &rctx) != 0) {
+				&& ds_update_state(fmsg, group, &uri, state, 0, &rctx) != 0) {
 			LM_ERR("Setting the state failed (%.*s, group %d)\n", uri.len,
 					uri.s, group);
 		}
@@ -4092,7 +4100,7 @@ static void ds_options_callback(
 			state |= DS_PROBING_DST;
 		/* Check if in the meantime someone disabled the target through RPC */
 		if(!(ds_get_state(group, &uri) & DS_DISABLED_DST)
-				&& ds_update_state(fmsg, group, &uri, state, &rctx) != 0) {
+				&& ds_update_state(fmsg, group, &uri, state, 0, &rctx) != 0) {
 			LM_ERR("Setting the probing state failed (%.*s, group %d)\n",
 					uri.len, uri.s, group);
 		}
@@ -4226,7 +4234,7 @@ void ds_ping_set(ds_set_t *node)
 				/* check if meantime someone disabled the target via RPC */
 				if(!(node->dlist[j].flags & DS_DISABLED_DST)
 						&& ds_update_state(NULL, node->id, &node->dlist[j].uri,
-								   state, &rctx)
+								   state, 0, &rctx)
 								   != 0) {
 					LM_ERR("Setting the probing state failed (%.*s, group "
 						   "%d)\n",
