@@ -233,6 +233,8 @@ inline static int get_request_uri(struct sip_msg *_m, str *_u)
 
 int rewrite_uri(struct sip_msg *_m, str *_s);
 
+void reset_uri(sip_msg_t *msg);
+
 /*! \brief
  * Set a per-branch flag to 1.
  *

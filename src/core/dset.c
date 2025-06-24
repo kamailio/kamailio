@@ -812,6 +812,22 @@ int rewrite_uri(struct sip_msg *_m, str *_s)
 	return 1;
 }
 
+/*
+ * Reset Request-URI
+ */
+void reset_uri(sip_msg_t *msg)
+{
+	if(msg->new_uri.s == NULL) {
+		return;
+	}
+	pkg_free(msg->new_uri.s);
+	msg->new_uri.len = 0;
+	msg->new_uri.s = 0;
+	msg->parsed_uri_ok = 0;
+	ruri_mark_new();
+	return;
+}
+
 /**
  * return src ip, port and proto as a SIP uri or proxy address
  * - value stored in a static buffer
