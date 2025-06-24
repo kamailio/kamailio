@@ -2054,12 +2054,13 @@ int ds_rpc_print_set(
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
-			if(rpc->struct_add(wh, "SSdddSSSSjj", "BODY",
+			if(rpc->struct_add(wh, "SSddddSSSSjj", "BODY",
 					   &(node->dlist[j].attrs.body), "DUID",
 					   (node->dlist[j].attrs.duid.s)
 							   ? &(node->dlist[j].attrs.duid)
 							   : &data,
-					   "MAXLOAD", node->dlist[j].attrs.maxload, "WEIGHT",
+					   "PROBING_COUNT", node->dlist[j].probing_count, "MAXLOAD",
+					   node->dlist[j].attrs.maxload, "WEIGHT",
 					   node->dlist[j].attrs.weight, "RWEIGHT",
 					   node->dlist[j].attrs.rweight, "SOCKET",
 					   (node->dlist[j].attrs.socket.s)

@@ -3408,26 +3408,26 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
 			}
 
 			if(state & DS_TRYING_DST) {
-				idx->dlist[i].message_count++;
+				idx->dlist[i].probing_count++;
 				LM_DBG("destination did not replied %d times, threshold %d\n",
-						idx->dlist[i].message_count, probing_threshold);
+						idx->dlist[i].probing_count, probing_threshold);
 				/* Destination is not replying.. Increasing failure counter */
 				if((mode == 1)
-						|| (idx->dlist[i].message_count >= probing_threshold)) {
+						|| (idx->dlist[i].probing_count >= probing_threshold)) {
 					/* Destination has too many lost messages.. Bringing it to inactive state */
 					idx->dlist[i].flags &= ~DS_TRYING_DST;
 					idx->dlist[i].flags |= DS_INACTIVE_DST;
-					idx->dlist[i].message_count = 0;
+					idx->dlist[i].probing_count = 0;
 					LM_DBG("deactivate destination, threshold %d reached\n",
 							probing_threshold);
 				}
 			} else {
 				if(!(init_state & DS_TRYING_DST)
 						&& (old_state & DS_INACTIVE_DST)) {
-					idx->dlist[i].message_count++;
+					idx->dlist[i].probing_count++;
 					/* Destination was inactive but it is just replying.. Increasing successful counter */
 					if((mode == 0)
-							&& (idx->dlist[i].message_count
+							&& (idx->dlist[i].probing_count
 									< inactive_threshold)) {
 						/* Destination has not enough successful replies.. Leaving it into inactive state */
 						idx->dlist[i].flags |= DS_INACTIVE_DST;
@@ -3437,16 +3437,16 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
 						}
 						LM_DBG("destination replied successful %d times, "
 							   "threshold %d\n",
-								idx->dlist[i].message_count,
+								idx->dlist[i].probing_count,
 								inactive_threshold);
 					} else {
 						/* Destination has enough replied messages.. Bringing it to active state */
-						idx->dlist[i].message_count = 0;
+						idx->dlist[i].probing_count = 0;
 						LM_DBG("activate destination, threshold %d reached\n",
 								inactive_threshold);
 					}
 				} else {
-					idx->dlist[i].message_count = 0;
+					idx->dlist[i].probing_count = 0;
 				}
 			}
 
@@ -3710,8 +3710,8 @@ void ds_fprint_set(FILE *fout, ds_set_t *node)
 		else if(node->dlist[j].flags & DS_TRYING_DST) {
 			fprintf(fout, "    Trying");
 			/* print the tries for this host. */
-			if(node->dlist[j].message_count > 0) {
-				fprintf(fout, " (Fail %d/%d)", node->dlist[j].message_count,
+			if(node->dlist[j].probing_count > 0) {
+				fprintf(fout, " (Fail %d/%d)", node->dlist[j].probing_count,
 						probing_threshold);
 			} else {
 				fprintf(fout, "           ");
