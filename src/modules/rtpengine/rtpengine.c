@@ -4144,7 +4144,10 @@ static void rtpengine_ping_check_timer(unsigned int ticks, void *param)
 		for(crt_rtpp = rtpp_list->rn_first; crt_rtpp != NULL;
 				crt_rtpp = crt_rtpp->rn_next) {
 
-			if(!crt_rtpp->rn_displayed || crt_rtpp->rn_disabled) {
+			if(!crt_rtpp->rn_displayed
+					|| (crt_rtpp->rn_disabled
+							&& crt_rtpp->rn_recheck_ticks
+									   == RTPENGINE_MAX_RECHECK_TICKS)) {
 				continue;
 			}
 
