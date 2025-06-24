@@ -162,14 +162,15 @@ inline static void dns_destroy_entry_shm_unsafe(struct dns_hash_entry *e)
 
 
 /* dec. the internal refcnt and if 0 deletes the entry */
-void dns_hash_put(struct dns_hash_entry *e)
+void dns_hash_put_entry(
+		struct dns_hash_entry *e, const char *fpath, unsigned int line)
 {
 	if(e != NULL) {
 		if(atomic_dec_and_test(&e->refcnt)) {
 			/* atomic_sub_long(dns_cache_total_used, e->total_size); */
 			dns_destroy_entry(e);
 		} else if(e->next == NULL && e->prev == NULL) {
-			LM_WARN("unlinked item %p\n", e);
+			LM_WARN("unlinked item %p (%s:%u)\n", e, fpath, line);
 		}
 	}
 }
@@ -177,14 +178,15 @@ void dns_hash_put(struct dns_hash_entry *e)
 
 /* same as above but uses dns_destroy_unsafe (assumes shm_lock held -- tm
  *  optimization) */
-void dns_hash_put_shm_unsafe(struct dns_hash_entry *e)
+void dns_hash_put_entry_shm_unsafe(
+		struct dns_hash_entry *e, const char *fpath, unsigned int line)
 {
 	if(e != NULL) {
 		if(atomic_dec_and_test(&e->refcnt)) {
 			/* atomic_sub_long(dns_cache_total_used, e->total_size); */
 			dns_destroy_entry_shm_unsafe(e);
 		} else if(e->next == NULL && e->prev == NULL) {
-			LM_WARN("unlinked item %p\n", e);
+			LM_WARN("unlinked item %p (%s:%u)\n", e, fpath, line);
 		}
 	}
 }

@@ -193,24 +193,31 @@ int init_dns_cache_stats(int iproc_num);
 #endif
 void destroy_dns_cache(void);
 
+void dns_hash_put_entry(
+		struct dns_hash_entry *e, const char *fpath, unsigned int line);
+void dns_hash_put_entry_shm_unsafe(
+		struct dns_hash_entry *e, const char *fpath, unsigned int line);
 
-void dns_hash_put(struct dns_hash_entry *e);
-void dns_hash_put_shm_unsafe(struct dns_hash_entry *e);
+#define dns_hash_put(e) dns_hash_put_entry(e, __FILE__, __LINE__)
+#define dns_hash_put_shm_unsafe(e) \
+	dns_hash_put_entry_shm_unsafe(e, __FILE__, __LINE__)
 
-inline static void dns_srv_handle_put(struct dns_srv_handle *h)
+inline static void dns_srv_handle_put_helper(
+		struct dns_srv_handle *h, const char *fpath, unsigned int line)
 {
 	if(h) {
 		if(h->srv) {
-			dns_hash_put(h->srv);
+			dns_hash_put_entry(h->srv, fpath, line);
 			h->srv = 0;
 		}
 		if(h->a) {
-			dns_hash_put(h->a);
+			dns_hash_put_entry(h->a, fpath, line);
 			h->a = 0;
 		}
 	}
 }
 
+#define dns_srv_handle_put(h) dns_srv_handle_put_helper(h, __FILE__, __LINE__)
 
 /** @brief use it when copying, it manually increases the ref cound */
 inline static void dns_srv_handle_ref(struct dns_srv_handle *h)
