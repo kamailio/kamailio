@@ -930,7 +930,7 @@ static int ki_ds_mark_dst(sip_msg_t *msg)
 	if(ds_probing_mode == DS_PROBE_ALL)
 		state |= DS_PROBING_DST;
 
-	return ds_mark_dst(msg, state);
+	return ds_mark_dst_mode(msg, state, 1);
 }
 
 /**
@@ -958,7 +958,7 @@ static int ki_ds_mark_dst_state(sip_msg_t *msg, str *sval)
 		return -1;
 	}
 
-	return ds_mark_dst(msg, state);
+	return ds_mark_dst_mode(msg, state, 1);
 }
 
 /**
@@ -989,7 +989,7 @@ static int ki_ds_mark_addr(sip_msg_t *msg, str *vstate, int vgroup, str *vuri)
 		return -1;
 	}
 
-	return ds_mark_addr(msg, state, vgroup, vuri);
+	return ds_mark_addr(msg, state, vgroup, vuri, 1);
 }
 
 /**
