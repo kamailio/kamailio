@@ -2918,7 +2918,7 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 #endif /* USE_COMP */
 	int port;
 	int proto;
-	struct ip_addr ip;
+	struct ip_addr ip = {0};
 	union sockaddr_union *from = NULL;
 	union sockaddr_union local_addr;
 	struct tcp_connection *con = NULL;
@@ -3064,8 +3064,8 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 
 		if(con == NULL) {
 			LM_WARN("TCP/TLS connection (id: %d) for WebSocket could not be "
-					"found\n",
-					send_info->id);
+					"found - likely it is gone (dst: [%s]:%d)\n",
+					send_info->id, (port) ? ip_addr2a(&ip) : "", port);
 			pkg_free(line_buf);
 			return 0;
 		}
