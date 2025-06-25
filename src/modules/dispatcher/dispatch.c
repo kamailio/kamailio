@@ -141,6 +141,7 @@ static int ds_strictest_match = 0;
 #define _ds_list (ds_lists[*ds_crt_idx])
 #define _ds_list_nr (*ds_list_nr)
 
+void ds_rctx_set_uri(ds_rctx_t *rctx, str *uri);
 static void ds_run_route(
 		struct sip_msg *msg, str *uri, char *route, ds_rctx_t *rctx);
 
@@ -3014,7 +3015,7 @@ int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri, int mode)
 		rctx.code = 800;
 	}
 	rctx.setid = group;
-	rctx.uri = *uri;
+	ds_rctx_set_uri(&rctx, uri);
 
 	ret = ds_update_state(msg, group, uri, state, mode, &rctx);
 
@@ -3447,6 +3448,28 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
  *
  */
 static ds_rctx_t *_ds_rctx = NULL;
+static char _ds_rctx_buri[MAX_URI_SIZE];
+
+/**
+ *
+ */
+void ds_rctx_set_uri(ds_rctx_t *rctx, str *uri)
+{
+	_ds_rctx_buri[0] = '\0';
+	rctx->uri.s = _ds_rctx_buri;
+	rctx->uri.len = 0;
+	if(uri == NULL || uri->s == NULL || uri->len < 0) {
+		return;
+	}
+	if(uri->len >= MAX_URI_SIZE - 1) {
+		LM_ERR("uri too long: %d\n", uri->len);
+		return;
+	}
+	memcpy(_ds_rctx_buri, uri->s, uri->len);
+	_ds_rctx_buri[uri->len] = '\0';
+	rctx->uri.len = uri->len;
+	return;
+}
 
 /**
  *
@@ -4042,7 +4065,7 @@ static void ds_options_callback(
 		}
 	}
 	rctx.setid = group;
-	rctx.uri = uri;
+	ds_rctx_set_uri(&rctx, &uri);
 
 	/* Check if in the meantime someone disabled probing of the target
 	 * through RPC or reload */
@@ -4198,7 +4221,7 @@ void ds_ping_set(ds_set_t *node)
 				rctx.reason.s = "Sending keepalive failed";
 				rctx.reason.len = 24;
 				rctx.setid = node->id;
-				rctx.uri = node->dlist[j].uri;
+				ds_rctx_set_uri(&rctx, &node->dlist[j].uri);
 				/* check if meantime someone disabled the target via RPC */
 				if(!(node->dlist[j].flags & DS_DISABLED_DST)
 						&& ds_update_state(NULL, node->id, &node->dlist[j].uri,
