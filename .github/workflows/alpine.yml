@@ -426,18 +426,3 @@ jobs:
         context: "context"
         build-args: |
           IMAGE=${{ needs.check.outputs.alpine_tag }}
-
-  cleanup:
-    name: Cleanup untaged images
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    permissions:
-      packages: write
-    needs:
-    - images
-    steps:
-    - name: Cleanup untaged
-      uses: dataaxiom/ghcr-cleanup-action@v1
-      with:
-        owner: ${{ github.repository_owner }}
-        package: ${{ env.IMAGE_NAME }}
