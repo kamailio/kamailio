@@ -246,7 +246,7 @@ gen_lock_t *tls_domains_cfg_lock = NULL;
 int sr_tls_renegotiation = 0;
 int ksr_tls_init_mode = 0;
 int ksr_tls_key_password_mode = 0;
-
+int ksr_tls_enable_shared_ctx = 0;
 /* clang-format off */
 /*
  * Exported functions
@@ -317,6 +317,7 @@ static param_export_t params[] = {
 			(void *)ksr_rand_engine_param},
 	{"init_mode", PARAM_INT, &ksr_tls_init_mode},
 	{"key_password_mode", PARAM_INT, &ksr_tls_key_password_mode},
+	{"enable_shared_ctx", PARAM_INT, &ksr_tls_enable_shared_ctx},
 
 	{0, 0, 0}
 };
