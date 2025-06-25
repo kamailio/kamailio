@@ -90,6 +90,8 @@ typedef struct ds_rctx
 	int flags;
 	int code;
 	str reason;
+	str uri;
+	int setid;
 } ds_rctx_t;
 
 extern str ds_db_url;

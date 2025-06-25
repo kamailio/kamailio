@@ -3044,6 +3044,9 @@ int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri, int mode)
 	} else {
 		rctx.code = 800;
 	}
+	rctx.setid = group;
+	rctx.uri = *uri;
+
 	ret = ds_update_state(msg, group, uri, state, mode, &rctx);
 
 	LM_DBG("state [%d] grp [%d] dst [%.*s]\n", state, group, uri->len, uri->s);
@@ -4069,6 +4072,8 @@ static void ds_options_callback(
 			rctx.reason = ps->rpl->first_line.u.reply.reason;
 		}
 	}
+	rctx.setid = group;
+	rctx.uri = uri;
 
 	/* Check if in the meantime someone disabled probing of the target
 	 * through RPC or reload */
@@ -4231,6 +4236,8 @@ void ds_ping_set(ds_set_t *node)
 				rctx.code = 500;
 				rctx.reason.s = "Sending keepalive failed";
 				rctx.reason.len = 24;
+				rctx.setid = node->id;
+				rctx.uri = node->dlist[j].uri;
 				/* check if meantime someone disabled the target via RPC */
 				if(!(node->dlist[j].flags & DS_DISABLED_DST)
 						&& ds_update_state(NULL, node->id, &node->dlist[j].uri,

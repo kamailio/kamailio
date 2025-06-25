@@ -1392,6 +1392,13 @@ static int pv_get_dsv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_null(msg, param, res);
 		case 2:
 			return pv_get_sintval(msg, param, res, rctx->flags);
+		case 3:
+			if(rctx->uri.s != NULL && rctx->uri.len > 0) {
+				return pv_get_strval(msg, param, res, &rctx->uri);
+			}
+			return pv_get_null(msg, param, res);
+		case 4:
+			return pv_get_sintval(msg, param, res, rctx->setid);
 		default:
 			return pv_get_null(msg, param, res);
 	}
@@ -1406,6 +1413,12 @@ static int pv_parse_dsv(pv_spec_p sp, str *in)
 		return -1;
 
 	switch(in->len) {
+		case 3:
+			if(strncmp(in->s, "uri", 3) == 0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else
+				goto error;
+			break;
 		case 4:
 			if(strncmp(in->s, "code", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 0;
@@ -1415,6 +1428,10 @@ static int pv_parse_dsv(pv_spec_p sp, str *in)
 		case 5:
 			if(strncmp(in->s, "flags", 5) == 0)
 				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "setid", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "group", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 4;
 			else
 				goto error;
 			break;
