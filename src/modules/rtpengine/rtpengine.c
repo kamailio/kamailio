@@ -2513,7 +2513,6 @@ static int child_init(int rank)
 
 	/* random start value for for cookie sequence number */
 	myseqn = fastrand();
-	LM_ERR("myseqn %u\n", myseqn);
 
 	// vector of pointers to queried nodes
 	queried_nodes_ptr = (struct rtpp_node **)pkg_malloc(
