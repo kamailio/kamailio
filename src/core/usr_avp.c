@@ -391,6 +391,10 @@ static inline int match_by_id(avp_t *avp, avp_id_t id)
 static inline int match_by_name(avp_t *avp, avp_id_t id, str *name)
 {
 	str *avp_name;
+	if(!name || !name->s || name->len <= 0) {
+		LM_ERR("Invalid AVP name pointer\n");
+		return 0;
+	}
 	if(id == avp->id && avp->flags & AVP_NAME_STR
 			&& (avp_name = get_avp_name(avp)) != 0 && avp_name->len == name->len
 			&& !strncasecmp(avp_name->s, name->s, name->len)) {
