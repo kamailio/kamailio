@@ -147,7 +147,7 @@ modparam("file_out", "file", "name=accounting;extension=.txt")
 
    Example 1.3. Set worker_usleep parameter
 ...
-modparam("file_out", "worker_usleep", "1000")
+modparam("file_out", "worker_usleep", 1000)
 ...
 
 3.4.  timer_interval (int)
@@ -159,7 +159,7 @@ modparam("file_out", "worker_usleep", "1000")
 
    Example 1.4. Set timer_interval parameter
 ...
-modparam("file_out", "timer_interval", "60")
+modparam("file_out", "timer_interval", 60)
 ...
 
 4. Functions
