@@ -3036,6 +3036,22 @@ rtpengine_delete();
 </programlisting>
 		</example>
 	</section>
+	<section id="rtpengine.f.rtpengine_destroy">
+		<title>
+		<function moreinfo="none">rtpengine_destroy([flags][,via-branch])</function>
+		</title>
+		<para>
+		Same as rtpengine_delete().
+		</para>
+		<example>
+		<title><function>rtpengine_destroy</function> usage</title>
+		<programlisting format="linespecific">
+...
+rtpengine_destroy();
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="rtpengine.f.rtpengine_query">
 		<title>
 		<function moreinfo="none">rtpengine_query([flags][,via-branch])</function>
