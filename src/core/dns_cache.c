@@ -170,7 +170,8 @@ void dns_hash_put_entry(
 			/* atomic_sub_long(dns_cache_total_used, e->total_size); */
 			dns_destroy_entry(e);
 		} else if(e->next == NULL && e->prev == NULL) {
-			LM_WARN("unlinked item %p (%s:%u)\n", e, fpath, line);
+			LM_WARN("unlinked item %p rc %d (%s:%u)\n", e,
+					atomic_get_int(&e->refcnt), fpath, line);
 		}
 	}
 }
