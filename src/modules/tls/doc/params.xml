@@ -1490,4 +1490,20 @@ verify_client = optional_no_ca
 		</programlisting>
 	</example>
 	</section>
+        <section id="tls.p.provider_quirks">
+            <title><varname>provider_quirks</varname> (integer)</title>
+            <para>
+                Sets a flag to configure OpenSSL 3 behaviour. Currently only <varname>1</varname>
+            </para>
+            <itemizedlist>
+                <listitem>
+                    <para><emphasis>0</emphasis> - no flags set (default)</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis>1</emphasis> - create a new `OSSL_LIB_CTX` context in the child process.
+                    Known to be required when using OpenSSL 3 pkcs11-provider.
+                    </para>
+                </listitem>
+            </itemizedlist>
+        </section>
  </section>
