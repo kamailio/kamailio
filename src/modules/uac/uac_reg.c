@@ -439,7 +439,7 @@ int reg_ht_add_byuser(reg_uac_t *reg)
 			(dst)->s[(dst)->len] = '\0';                       \
 			p = p + ((bsize) != 0 ? (bsize) : (dst)->len) + 1; \
 		}                                                      \
-	} while(0);
+	} while(0)
 
 /**
  *
@@ -495,9 +495,9 @@ int reg_ht_add(reg_uac_t *reg)
 	reg_copy_shm(&nr->auth_password, &reg->auth_password, 0);
 	reg_copy_shm(&nr->auth_ha1, &reg->auth_ha1, 0);
 	reg_copy_shm(&nr->socket, &reg->socket, 0);
-	reg_copy_shm(&nr->contact_addr, &reg->contact_addr, 0)
-			reg_copy_shm(&nr->callid, &str_empty,
-					reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0);
+	reg_copy_shm(&nr->contact_addr, &reg->contact_addr, 0);
+	reg_copy_shm(&nr->callid, &str_empty,
+			reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0);
 
 	for(i = 0; i < nr->auth_ha1.len; i++) {
 		/* ha1 to lowercase */
