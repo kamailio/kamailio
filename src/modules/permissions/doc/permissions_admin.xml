@@ -221,6 +221,25 @@
 		(see tag_col module parameter) is added as value to
 		peer_tag AVP if peer_tag_avp module parameter has been defined.
 		</para>
+		<note>
+		<para>
+			Starting with Kamailio version 6.1.x, the <function>allow_address()</function>
+			function and its related functions use the Longest Prefix Match (LPM) method to
+			find matching entries.
+		</para>
+		<para>
+			This means the <function>_group</function> variants will now return the most specific
+			(longest) subnet match, instead of the first match (which was previously the entry with
+			the lowest group ID).
+			This LPM behavior is now consistent across the following functions:
+		</para>
+		<itemizedlist>
+			<listitem><para><function>allow_address()</function></para></listitem>
+			<listitem><para><function>allow_source_address()</function></para></listitem>
+			<listitem><para><function>allow_source_address_group()</function></para></listitem>
+			<listitem><para><function>allow_address_group()</function></para></listitem>
+		</itemizedlist>
+		</note>
 	</section>
 	<section id="sec-trusted-requests">
 		<title>Trusted Requests</title>
@@ -1259,6 +1278,9 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 		matches any port. The <quote>group_id</quote> argument can be an integer
 		string or a pseudo variable.
 		</para>
+		<note>
+		See <link linkend="sec-address-permissions"> Address permissions </link> for more details.
+		</note>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
@@ -1289,6 +1311,9 @@ if (!allow_address("2", "$avp(dst_adr)", "$avp(dst_port)") {
 		Equal to <quote>allow_address(group_id, "$si", "$sp")</quote>. If 'group_id' is
 		missing, the function is equal to allow_address("1", "$si", "$sp").
 		</para>
+		<note>
+		See <link linkend="sec-address-permissions"> Address permissions </link> for more details.
+		</note>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
@@ -1315,6 +1340,10 @@ if (!allow_source_address("1")) {
 		If not returns -1.  Port value 0 in cached address and
 		group table matches any port.
 		</para>
+		<note>
+		See <link linkend="sec-address-permissions"> Address permissions </link>
+		for more details on how searching is implemented.
+		</note>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
@@ -1341,6 +1370,10 @@ if ($var(group) != -1) {
 		If not returns -1.  Port value 0 in cached address and
 		group table matches any port. The parameters can be pseudo-variables.
 		</para>
+		<note>
+		See <link linkend="sec-address-permissions"> Address permissions </link>
+		for more details on how searching is implemented.
+		</note>
 		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
