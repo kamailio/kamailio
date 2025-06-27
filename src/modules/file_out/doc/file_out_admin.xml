@@ -184,7 +184,7 @@ modparam("file_out", "file", "name=accounting;extension=.txt")
 				<title>Set <varname>worker_usleep</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("file_out", "worker_usleep", "1000")
+modparam("file_out", "worker_usleep", 1000)
 ...
 				</programlisting>
 			</example>
@@ -208,7 +208,7 @@ modparam("file_out", "worker_usleep", "1000")
 				<title>Set <varname>timer_interval</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("file_out", "timer_interval", "60")
+modparam("file_out", "timer_interval", 60)
 ...
 				</programlisting>
 			</example>
