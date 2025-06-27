@@ -484,18 +484,24 @@ int init_dns_cache_stats(int iproc_num)
 /* must be called with the DNS_LOCK hold
  * removes an entry from the hash, dec. its refcnt and if not referenced
  * anymore deletes it */
-inline static void _dns_hash_remove(struct dns_hash_entry *e)
+inline static void _dns_hash_remove_entry(
+		struct dns_hash_entry *e, char *fpath, unsigned int line)
 {
 	clist_rm(e, next, prev);
 	e->next = e->prev = 0;
-	debug_lu_lst("_dns_hash_remove: pre rm:", &e->last_used_lst);
+	debug_lu_lst("dns hash remove: pre rm:", &e->last_used_lst);
 	clist_rm(&e->last_used_lst, next, prev);
-	debug_lu_lst("_dns_hash_remove: post rm:", &e->last_used_lst);
+	debug_lu_lst("dns hash remove: post rm:", &e->last_used_lst);
 	e->last_used_lst.next = e->last_used_lst.prev = 0;
 	*dns_cache_mem_used -= e->total_size;
+	if(atomic_get_int(&e->refcnt) > 1) {
+		LM_INFO("item %p with high refcnt %d (%s:%u)\n", e,
+				atomic_get_int(&e->refcnt), fpath, line);
+	}
 	dns_hash_put(e);
 }
 
+#define _dns_hash_remove(e) _dns_hash_remove_entry(e, __FILE__, __LINE__)
 
 /* non locking  version (the dns hash must _be_ locked externally)
  * returns 0 when not found, or the entry on success (an entry with a
