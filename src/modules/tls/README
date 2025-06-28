@@ -72,6 +72,7 @@ Olle E. Johansson
               10.38. engine_config (string)
               10.39. engine_algorithms (string)
               10.40. verify_client (string)
+              10.41. provider_quirks (integer)
 
         11. Functions
 
@@ -209,6 +210,7 @@ Chapter 1. Admin Guide
         10.38. engine_config (string)
         10.39. engine_algorithms (string)
         10.40. verify_client (string)
+        10.41. provider_quirks (integer)
 
    11. Functions
 
@@ -648,6 +650,7 @@ Place holder
    10.38. engine_config (string)
    10.39. engine_algorithms (string)
    10.40. verify_client (string)
+   10.41. provider_quirks (integer)
 
 10.1. tls_method (string)
 
@@ -1637,6 +1640,13 @@ verify_client = on
 method = TLSv1.2
 verify_client = optional_no_ca
 ...
+
+10.41. provider_quirks (integer)
+
+   Sets a flag to configure OpenSSL 3 behaviour. Currently only 1
+     * 0 - no flags set (default)
+     * 1 - create a new `OSSL_LIB_CTX` context in the child process. Known
+       to be required when using OpenSSL 3 pkcs11-provider.
 
 11. Functions
 
