@@ -120,14 +120,24 @@ static atomic_t *dns_servers_up = NULL;
 #endif
 
 
-static const char *dns_str_errors[] = {"no error",
-		"no more records", /* not an error, but and end condition */
-		"unknown error", "internal error", "bad SRV entry",
-		"unresolvable SRV request", "bad A or AAAA entry",
-		"unresolvable A or AAAA request", "invalid ip in A or AAAA record",
-		"blocklisted ip", "name too long ", /* try again with a shorter name */
-		"ip AF mismatch",					/* address family mismatch */
-		"unresolvable NAPTR request", "bug - critical error"};
+/* clang-format off */
+static const char *dns_str_errors[] = {
+	"no error",
+	"no more records", /* not an error, but and end condition */
+	"unknown error",
+	"internal error",
+	"bad SRV entry",
+	"unresolvable SRV request",
+	"bad A or AAAA entry",
+	"unresolvable A or AAAA request",
+	"invalid ip in A or AAAA record",
+	"blocklisted ip",
+	"name too long ", /* try again with a shorter name */
+	"ip AF mismatch", /* address family mismatch */
+	"unresolvable NAPTR request",
+	"bug - critical error"
+};
+/* clang-format on */
 
 
 void dns_set_local_ttl(int ttl)
