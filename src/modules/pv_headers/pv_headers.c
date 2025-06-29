@@ -211,6 +211,12 @@ static int w_pvh_remove_header(
 	return pvh_remove_header(msg, &hname, indx);
 }
 
+static int w_pvh_remove_all_headers(struct sip_msg *msg, char *p1, char *p2)
+{
+	int indx = -1;
+	return pvh_remove_all_headers(msg, indx);
+}
+
 static int w_pvh_header_param_exists(struct sip_msg *msg, char *p1, char *p2)
 {
 	str hname = STR_NULL;
@@ -311,6 +317,8 @@ static cmd_export_t mod_cmds[] = {
 			fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"pvh_remove_header", (cmd_function)w_pvh_remove_header, 2,
 			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"pvh_remove_all_headers", (cmd_function)w_pvh_remove_all_headers, 0,
+			0, 0, ANY_ROUTE},
 	{"pvh_header_param_exists", (cmd_function)w_pvh_header_param_exists, 2,
 			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"pvh_remove_header_param", (cmd_function)w_pvh_remove_header_param, 2,

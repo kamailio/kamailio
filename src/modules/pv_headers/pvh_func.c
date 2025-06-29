@@ -374,6 +374,22 @@ int pvh_remove_header(struct sip_msg *msg, str *hname, int indx)
 	return 1;
 }
 
+int pvh_remove_all_headers(struct sip_msg *msg, int indx)
+{
+	str name = STR_NULL;
+	struct hdr_field *hf = NULL;
+
+	for(hf = msg->headers; hf; hf = hf->next) {
+		name.len = hf->name.len;
+		name.s = hf->name.s;
+		if(pvh_remove_header(msg, &name, indx) < 0) {
+			LM_ERR("could not remove %.*s header", name.len, name.s);
+			return -1;
+		}
+	}
+	return 1;
+}
+
 int pvh_header_param_exists(struct sip_msg *msg, str *hname, str *hvalue)
 {
 	sr_xavp_t *avi = NULL;
