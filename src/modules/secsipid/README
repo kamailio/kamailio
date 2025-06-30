@@ -254,12 +254,12 @@ modparam("secsipid", "libopt", "CacheExpires=0")
 
 4.1.  secsipid_check_identity(keyPath)
 
-   Check the validity of the Identity header using the keys stored in the
-   file specified by "keyPath". If the parameter is empty, the function is
-   downloading the key using the URL from "info" parameter of the Identity
-   header, using the value of "timeout" parameter to limit the download
-   time. The validity of the JWT body in the Identity header is also
-   checked against the "expire" parameter.
+   Check the validity of the Identity header using the public keys stored
+   in the file specified by "keyPath". If the parameter is empty, the
+   function is downloading the public key using the URL from "info"
+   parameter of the Identity header, using the value of "timeout"
+   parameter to limit the download time. The validity of the JWT body in
+   the Identity header is also checked against the "expire" parameter.
 
    The parameters can contain pseudo-variables.
 
@@ -303,12 +303,12 @@ request_route {
 
 4.3.  secsipid_check(sIdentity, keyPath)
 
-   Check the validity of the "sIdentity" parameter using the keys stored
-   in the file specified by "keyPath". If the keyPath parameter is empty,
-   the function is downloading the key using the URL from "info" parameter
-   of the sIdentity, using the value of "timeout" parameter to limit the
-   download time. The validity of the JWT in the sIdentity value is also
-   checked against the "expire" parameter.
+   Check the validity of the "sIdentity" parameter using the public keys
+   stored in the file specified by "keyPath". If the keyPath parameter is
+   empty, the function is downloading the public key using the URL from
+   "info" parameter of the sIdentity, using the value of "timeout"
+   parameter to limit the download time. The validity of the JWT in the
+   sIdentity value is also checked against the "expire" parameter.
 
    The parameters can contain pseudo-variables.
 
@@ -379,10 +379,10 @@ request_route {
 
 4.6.  secsipid_add_identity(origTN, destTN, attest, origID, x5u, keyPath)
 
-   Add Identity header using the key specified by "keyPath" to sign the
-   JWT body. If origID is empty, a UUID string is generated to fill the
-   field. The origTN represents the origination telephone number; destTN
-   represents the destination telephone number; x5u is the HTTP URL
+   Add Identity header using the private key specified by "keyPath" to
+   sign the JWT body. If origID is empty, a UUID string is generated to
+   fill the field. The origTN represents the origination telephone number;
+   destTN represents the destination telephone number; x5u is the HTTP URL
    referencing to the public key that should be used to verify the
    signature; attest represents the attestation level (should be "A", "B"
    or "C").
@@ -403,10 +403,10 @@ request_route {
 
 4.7.  secsipid_build_identity(origTN, destTN, attest, origID, x5u, keyPath)
 
-   Build Identity value using the key specified by "keyPath" to sign the
-   JWT body. If origID is empty, a UUID string is generated to fill the
-   field. The origTN represents the origination telephone number; destTN
-   represents the destination telephone number; x5u is the HTTP URL
+   Build Identity value using the key specified by private "keyPath" to
+   sign the JWT body. If origID is empty, a UUID string is generated to
+   fill the field. The origTN represents the origination telephone number;
+   destTN represents the destination telephone number; x5u is the HTTP URL
    referencing to the public key that should be used to verify the
    signature; attest represents the attestation level (should be "A", "B"
    or "C"). On success, the Indentity value is stored in variable
@@ -454,11 +454,11 @@ request_route {
 
 4.9.  secsipid_sign(sheaders, spaypload, keyPath)
 
-   Build Identity value using the key specified by "keyPath" to sign the
-   JWT body. The sheaders and spayload have to be string representation of
-   JSON headers and payload to be signed. On success, the Indentity value
-   is stored in variable $secsipid(val). It also sets $secsipid(ret) to
-   the return value of the libsecsipid functions.
+   Build Identity value using the private key specified by "keyPath" to
+   sign the JWT body. The sheaders and spayload have to be string
+   representation of JSON headers and payload to be signed. On success,
+   the Indentity value is stored in variable $secsipid(val). It also sets
+   $secsipid(ret) to the return value of the libsecsipid functions.
 
    The parameters can contain pseudo-variables.
 
