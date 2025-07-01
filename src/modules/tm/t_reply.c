@@ -1386,7 +1386,7 @@ static enum rps t_should_relay_response(struct cell *Trans, int new_code,
 	LM_DBG("->>>>>>>>> T_code=%d, new_code=%d\n", Trans->uas.status,new_code);
 	inv_through=new_code>=200 && new_code<300 && is_invite(Trans);
 	/* if final response sent out, allow only INVITE 2xx && REGISTER > 299 */
-	if ( Trans->uas.status >= 200 ) {
+	if(Trans->uas.status >= 200) {
 		if (inv_through) {
 			LM_DBG("200 INV after final sent\n");
 			*should_store = 0;
@@ -1400,7 +1400,7 @@ static enum rps t_should_relay_response(struct cell *Trans, int new_code,
 		 * some of registrars may reply later than others being authenticated.
 		 * This lests late forked transactions being finalised correctly
 		*/
-		if (!(strncmp(Trans->method.s, "REGISTER", 8) == 0 && new_code >= 300)) {
+		if(!(strncmp(Trans->method.s, "REGISTER", 8) == 0 && new_code >= 300)) {
 			/*Except the exceptions above, too late  messages will be discarded */
 			LM_DBG("final reply already sent\n");
 			goto discard;
