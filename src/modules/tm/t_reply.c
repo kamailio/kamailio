@@ -1384,10 +1384,10 @@ static enum rps t_should_relay_response(struct cell *Trans, int new_code,
 	*/
 
 	LM_DBG("->>>>>>>>> T_code=%d, new_code=%d\n", Trans->uas.status,new_code);
-	inv_through=new_code>=200 && new_code<300 && is_invite(Trans);
+	inv_through = new_code>=200 && new_code<300 && is_invite(Trans);
 	/* if final response sent out, allow only INVITE 2xx && REGISTER > 299 */
 	if(Trans->uas.status >= 200) {
-		if (inv_through) {
+		if(inv_through) {
 			LM_DBG("200 INV after final sent\n");
 			*should_store = 0;
 			Trans->uac[branch].last_received = new_code;
