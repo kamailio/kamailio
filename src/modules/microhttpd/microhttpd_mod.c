@@ -535,14 +535,10 @@ static enum MHD_Result ksr_microhttpd_request(void *cls,
 	if(_ksr_mhttpd_ctx.data.s != NULL) {
 		free(_ksr_mhttpd_ctx.data.s);
 	}
+	_ksr_mhttpd_ctx.data.s = NULL;
+	_ksr_mhttpd_ctx.data.len = 0;
 	if(cstream->data.len > 0) {
-		if(_ksr_mhttpd_ctx.data.s != NULL) {
-			free(_ksr_mhttpd_ctx.data.s);
-		}
 		_ksr_mhttpd_ctx.data = cstream->data;
-	} else {
-		_ksr_mhttpd_ctx.data.s = NULL;
-		_ksr_mhttpd_ctx.data.len = 0;
 	}
 	free(cstream);
 	_ksr_mhttpd_ctx.cinfo = MHD_get_connection_info(
