@@ -180,7 +180,7 @@ void dns_hash_put_entry(
 			/* atomic_sub_long(dns_cache_total_used, e->total_size); */
 			dns_destroy_entry(e);
 		} else if(e->next == NULL && e->prev == NULL) {
-			LM_WARN("unlinked item %p rc %d (%s:%u)\n", e,
+			LM_INFO("unlinked item %p rc %d (%s:%u)\n", e,
 					atomic_get_int(&e->refcnt), fpath, line);
 		}
 	}
@@ -505,7 +505,7 @@ inline static void _dns_hash_remove_entry(
 	e->last_used_lst.next = e->last_used_lst.prev = 0;
 	*dns_cache_mem_used -= e->total_size;
 	if(atomic_get_int(&e->refcnt) > 1) {
-		LM_INFO("item %p with high refcnt %d (%s:%u)\n", e,
+		LM_DBG("item %p with high refcnt %d (%s:%u)\n", e,
 				atomic_get_int(&e->refcnt), fpath, line);
 	}
 	dns_hash_put(e);
