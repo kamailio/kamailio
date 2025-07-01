@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -51,7 +53,7 @@ void destroy_list(spi_list_t *lst)
 }
 
 int spi_add(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid,
-		uint16_t sport, uint16_t cport)
+		uint16_t cport, uint16_t sport)
 {
 	if(!list) {
 		return 1;
@@ -135,7 +137,7 @@ int spi_remove(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid)
 			//detach node
 			prev->next = curr->next;
 
-			//is it the last elemet
+			//is it the last element
 			if(t == list->tail) {
 				list->tail = prev;
 			}

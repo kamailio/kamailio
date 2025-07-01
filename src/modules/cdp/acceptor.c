@@ -4,7 +4,7 @@
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
- * Fruanhofer Institute. It was and still is maintained in a separate
+ * Fraunhofer FOKUS Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
@@ -14,7 +14,7 @@
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
  *
- * NB: Alot of this code was originally part of OpenIMSCore,
+ * NB: A lot of this code was originally part of OpenIMSCore,
  * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
  * Thanks for great work! This is an effort to
@@ -24,6 +24,8 @@
  * to manage in the Kamailio/SR environment
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,42 +77,45 @@ void dp_del_pid(pid_t pid);
  */
 void acceptor_process(dp_config *cfg)
 {
-	int i,k;
+	int i, k;
 	unsigned int sock;
 
 	LM_INFO("Acceptor process starting up...\n");
-	listening_socks = pkg_malloc((cfg->acceptors_cnt+1)*sizeof(unsigned int));
-	if (!listening_socks){
-		LOG_NO_MEM("pkg",(cfg->acceptors_cnt+1)*sizeof(unsigned int));
+	listening_socks =
+			pkg_malloc((cfg->acceptors_cnt + 1) * sizeof(unsigned int));
+	if(!listening_socks) {
+		LOG_NO_MEM("pkg", (cfg->acceptors_cnt + 1) * sizeof(unsigned int));
 		goto done;
 	}
-	memset(listening_socks,0,(cfg->acceptors_cnt+1)*sizeof(unsigned int));
-	k=0;
-	for(i=0;i<cfg->acceptors_cnt;i++)
-		if (create_socket(cfg->acceptors[i].proto,cfg->acceptors[i].port,cfg->acceptors[i].bind,&sock)){
-			listening_socks[k++]=sock;
+	memset(listening_socks, 0, (cfg->acceptors_cnt + 1) * sizeof(unsigned int));
+	k = 0;
+	for(i = 0; i < cfg->acceptors_cnt; i++)
+		if(create_socket(cfg->acceptors[i].proto, cfg->acceptors[i].port,
+				   cfg->acceptors[i].bind, &sock)) {
+			listening_socks[k++] = sock;
 		}
 
 
 	LM_INFO("Acceptor opened sockets. Entering accept loop ...\n");
 	accept_loop();
 
-	for(i=0;listening_socks[i];i++)
+	for(i = 0; listening_socks[i]; i++)
 		close(listening_socks[i]);
 
-	if (listening_socks) pkg_free(listening_socks);
+	if(listening_socks)
+		pkg_free(listening_socks);
 #ifdef CDP_FOR_SER
 #else
 #ifdef PKG_MALLOC
-	#ifdef PKG_MALLOC
-		LM_DBG("Acceptor Memory status (pkg):\n");
-		//pkg_status();
-		#ifdef pkg_sums
-			pkg_sums();
-		#endif
-	#endif
+#ifdef PKG_MALLOC
+	LM_DBG("Acceptor Memory status (pkg):\n");
+//pkg_status();
+#ifdef pkg_sums
+	pkg_sums();
 #endif
-		dp_del_pid(getpid());
+#endif
+#endif
+	dp_del_pid(getpid());
 #endif
 done:
 	LM_INFO("Acceptor process finished\n");

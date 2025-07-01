@@ -66,7 +66,7 @@
 		     in this step. -->
 		<xsl:value-of select="concat($fullpath, ' ')"/>
 
-		<!-- Traverse the file being included and search for more depencencies
+		<!-- Traverse the file being included and search for more dependencies
 		     in that file and other files included from there. -->
 		<xsl:apply-templates select="document(@href)" mode="subroot">
 			<!-- Extract the directory name from $fullpath and set it as a new
@@ -106,6 +106,6 @@
 		<xsl:text> </xsl:text>
 	</xsl:template>
 	
-	<!-- Supress all other output -->
+	<!-- Suppress all other output -->
 	<xsl:template match="text()|@*" mode="subroot"/>
 </xsl:stylesheet>

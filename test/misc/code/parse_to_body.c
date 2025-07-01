@@ -89,7 +89,7 @@ int main (int argc, char** argv)
 		printf("usage:    %s  to_body [, to_body...]\n", argv[0]);
 		exit(1);
 	}
-	
+
 	for (r=1; r<argc; r++){
 		/*memset(&to_b, 0, sizeof(to_b));*/
 		if (parse_to(argv[r], argv[r]+strlen(argv[r]), &to_b)==0 ||

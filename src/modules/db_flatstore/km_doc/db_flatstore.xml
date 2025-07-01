@@ -36,7 +36,7 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="db_flatstore_admin.xml"/>
 	<xi:include href="db_flatstore_devel.xml"/>
 </book>

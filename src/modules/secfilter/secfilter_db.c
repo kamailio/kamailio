@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -42,7 +44,9 @@ static int check_version(void)
 		return -1;
 	}
 
-	if (db_check_table_version(&db_funcs, db_handle, &secf_table_name, mod_version) < 0) {
+	if(db_check_table_version(
+			   &db_funcs, db_handle, &secf_table_name, mod_version)
+			< 0) {
 		DB_TABLE_VERSION_ERROR(secf_table_name);
 		db_funcs.close(db_handle);
 		return -1;
@@ -178,6 +182,112 @@ int secf_append_rule(int action, int type, str *value)
 	return 0;
 }
 
+/**
+ * @brief Removes entries from a whitelist or blacklist based on action, type, and value.
+ *
+ * The function validates the action and type, locates the relevant list, and iterates
+ * through its nodes to find and remove all matches for the given value. If matches are found,
+ * the corresponding memory is freed, and the list pointers are updated. Logs are generated
+ * for each removal and at the end of the process to summarize the result.
+ * @param action: Specifies the target list (0 = blacklist, 1 = whitelist, 2 = destination blacklist).
+ * @param type: Indicates the type of rule to be removed (e.g., domain, IP, user, etc.).
+ * @param value: The specific value to be matched and removed from the list.
+ * @returns 0 if one or more entries are successfully removed or -1 if no matches are found or if an invalid action or type is specified.
+**/
+int secf_remove_rule(int action, int type, str *value)
+{
+	secf_info_p ini = NULL;
+	secf_info_p last = NULL;
+	struct str_list **ini_node = NULL;
+	struct str_list **last_node = NULL;
+	struct str_list *current = NULL;
+	struct str_list *previous = NULL;
+	int total = 0;
+
+	if(action < 0 || action > 2) {
+		LM_ERR("Unknown action value %d", action);
+		return -1;
+	}
+
+	if(action == 1) {
+		ini = &(*secf_data)->wl;
+		last = &(*secf_data)->wl_last;
+	} else {
+		ini = &(*secf_data)->bl;
+		last = &(*secf_data)->bl_last;
+	}
+
+	switch(type) {
+		case 0:
+			if(action == 2) {
+				ini_node = &ini->dst;
+				last_node = &last->dst;
+			} else {
+				ini_node = &ini->ua;
+				last_node = &last->ua;
+			}
+			break;
+		case 1:
+			ini_node = &ini->country;
+			last_node = &last->country;
+			break;
+		case 2:
+			ini_node = &ini->domain;
+			last_node = &last->domain;
+			break;
+		case 3:
+			ini_node = &ini->ip;
+			last_node = &last->ip;
+			break;
+		case 4:
+			ini_node = &ini->user;
+			last_node = &last->user;
+			break;
+		default:
+			LM_ERR("Unknown type value %d", type);
+			return -1;
+	}
+
+	current = *ini_node;
+	previous = NULL;
+	// Iterate through the list and remove matching nodes
+	while(current) {
+		if(strncmp(current->s.s, value->s, value->len) == 0) {
+			LM_DBG("Match found: %.*s\n", current->s.len, current->s.s);
+			total++;
+			struct str_list *temp = current;
+			if(previous) {
+				previous->next = current->next;
+				if(!previous->next) {
+					*last_node = previous;
+				}
+			} else {
+				*ini_node = current->next;
+				if(!(*ini_node)) {
+					*last_node = NULL;
+				}
+			}
+			shm_free(temp->s.s);
+			shm_free(temp);
+			LM_DBG("Match removed.\n");
+			if(previous) {
+				current = previous->next;
+			} else {
+				current = *ini_node;
+			}
+			continue;
+		}
+		previous = current;
+		current = current->next;
+	}
+	if(total > 0) {
+		LM_DBG("Total matches removed: %d", total);
+		return 0; // Return the total number of removed items
+	} else {
+		LM_DBG("No matching values found in the list.");
+		return -1; // Return -1 on no matches
+	}
+}
 
 /* Load data from database */
 int secf_load_db(void)
@@ -197,7 +307,7 @@ int secf_load_db(void)
 	}
 
 	/* Choose new hash table and free its old contents */
-	if (*secf_data == secf_data_1) {
+	if(*secf_data == secf_data_1) {
 		*secf_data = secf_data_2;
 	} else {
 		*secf_data = secf_data_1;
@@ -248,10 +358,8 @@ int secf_load_db(void)
 	lock_release(&(*secf_data)->lock);
 
 clean:
-	if(db_res) {
-		if(db_funcs.free_result(db_handle, db_res) < 0) {
-			LM_DBG("Failed to free the result\n");
-		}
+	if(db_funcs.free_result(db_handle, db_res) < 0) {
+		LM_DBG("Failed to free the result\n");
 	}
 	db_funcs.close(db_handle);
 	return res;

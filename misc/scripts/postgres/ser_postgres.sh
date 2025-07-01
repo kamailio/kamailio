@@ -33,7 +33,7 @@ Usage: $COMMAND create  [database]
   for SER and SERWeb. In addition to that two users are created, one with
   read/write permissions and one with read-only permissions.
 
-  Commmand 'drop' deletes database named '${DBNAME}' and associated users.
+  Command 'drop' deletes database named '${DBNAME}' and associated users.
 
   Command 'backup' Dumps the contents of the database in <file>. If no
   database name is provided on the command line then the default '${DBNAME}'
@@ -84,7 +84,7 @@ db_load() #pars: <database name> <filename>
 # Drop SER database
 db_drop()
 {
-    # Drop dabase
+    # Drop database
     # Revoke user permissions
 
     echo "Dropping database $1"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 iptelorg GmbH 
+ * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -40,8 +40,9 @@
 
 
 int tls_loaded(void);
-int tls_has_init_si(void); /*returns true if a handle for tls_init is registered*/
-int tls_init(struct socket_info* si);
+int tls_has_init_si(
+		void); /*returns true if a handle for tls_init is registered*/
+int tls_init(struct socket_info *si);
 int init_tls(void);
 void destroy_tls(void);
 int pre_init_tls(void);

@@ -26,37 +26,17 @@
 #include <stdbool.h>
 #include "../../core/parser/msg_parser.h"
 
-int jsonrpc_request(struct sip_msg* _m,
-		char* _conn,
-		char* _method,
-		char* _params,
-		char* _options);
+int jsonrpc_request(struct sip_msg *_m, char *_conn, char *_method,
+		char *_params, char *_options);
 
-int jsonrpc_notification(struct sip_msg* msg,
-		char* conn,
-		char* method,
-		char* params);
+int jsonrpc_notification(
+		struct sip_msg *msg, char *conn, char *method, char *params);
 
-int mod_jsonrpc_request(
-		struct sip_msg* msg,
-		str conn,
-		str method,
-		str params,
-		str route,
-		bool notify_only,
-		int retry,
-		unsigned int timeout
-	);
+int mod_jsonrpc_request(struct sip_msg *msg, str conn, str method, str params,
+		str route, bool notify_only, int retry, unsigned int timeout);
 
-typedef int (*mod_jsonrpc_request_f)(
-		struct sip_msg* msg,
-		str conn,
-		str method,
-		str params,
-		str route,
-		bool notify_only,
-		unsigned int retry,
-		unsigned int timeout
-	);
+typedef int (*mod_jsonrpc_request_f)(struct sip_msg *msg, str conn, str method,
+		str params, str route, bool notify_only, unsigned int retry,
+		unsigned int timeout);
 
 #endif /* _JSONRPC_FUNCS_H_ */

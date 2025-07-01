@@ -10,8 +10,8 @@
 #define _JANSSON_PATH_H_
 #include <jansson.h>
 
-json_t *json_path_get(const json_t *json, const char *path);
-int json_path_set(json_t *json, const char *path, json_t *value, unsigned int append);
+json_t *json_path_get(const json_t *json, const char *path, const int pmode);
+int json_path_set(json_t *json, const char *path, const int pmode,
+		json_t *value, unsigned int append);
 
 #endif
-

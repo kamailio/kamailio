@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -166,6 +168,7 @@ ADD_LOCAL_RPORT		"add_local_rport"
 FORCE_TCP_ALIAS		"force_tcp_alias"|"add_tcp_alias"
 UDP_MTU		"udp_mtu"
 UDP_MTU_TRY_PROTO	"udp_mtu_try_proto"
+UDP_RECEIVER_MODE "udp_receiver_mode"
 UDP4_RAW		"udp4_raw"
 UDP4_RAW_MTU	"udp4_raw_mtu"
 UDP4_RAW_TTL	"udp4_raw_ttl"
@@ -304,10 +307,12 @@ LOGENGINETYPE	log_engine_type
 LOGENGINEDATA	log_engine_data
 XAVPVIAPARAMS	xavp_via_params
 XAVPVIAFIELDS	xavp_via_fields
+XAVPVIAREPLYPARAMS	xavp_via_reply_params
 LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
 VIRTUAL		virtual
 STRNAME		name|NAME
+AGNAME		agname|AGNAME
 ALIAS		alias
 DOMAIN		domain
 SR_AUTO_ALIASES	auto_aliases
@@ -362,7 +367,13 @@ PORT	port
 STAT	statistics
 STATS_NAMESEP	stats_name_separator
 MAXBUFFER maxbuffer
+MAXSNDBUFFER maxsndbuffer
 SQL_BUFFER_SIZE sql_buffer_size
+MSG_RECV_MAX_SIZE msg_recv_max_size
+TCP_MSG_READ_TIMEOUT tcp_msg_read_timeout
+TCP_MSG_DATA_TIMEOUT tcp_msg_data_timeout
+TCP_ACCEPT_IPLIMIT tcp_accept_iplimit
+TCP_CHECK_TIMER tcp_check_timer
 CHILDREN children
 SOCKET socket
 BIND bind
@@ -372,15 +383,19 @@ ASYNC_WORKERS async_workers
 ASYNC_USLEEP async_usleep
 ASYNC_NONBLOCK async_nonblock
 ASYNC_WORKERS_GROUP async_workers_group
+ASYNC_TKV_GNAME async_tkv_gname
+ASYNC_TKV_EVCB async_tkv_evcb
 CHECK_VIA	check_via
 PHONE2TEL	phone2tel
 MEMLOG		"memlog"|"mem_log"
 MEMDBG		"memdbg"|"mem_dbg"
 MEMSUM		"mem_summary"
 MEMSAFETY	"mem_safety"
+MEMADDSIZE	"mem_add_size"
 MEMJOIN		"mem_join"
 MEMSTATUSMODE		"mem_status_mode"
 CORELOG		"corelog"|"core_log"
+COREPARAM	"coreparam"
 SIP_PARSER_LOG_ONELINE "sip_parser_log_oneline"
 SIP_PARSER_LOG "sip_parser_log"
 SIP_PARSER_MODE "sip_parser_mode"
@@ -432,8 +447,10 @@ TCP_CLONE_RCVBUF	"tcp_clone_rcvbuf"
 TCP_REUSE_PORT		"tcp_reuse_port"
 TCP_WAIT_DATA	"tcp_wait_data"
 TCP_SCRIPT_MODE	"tcp_script_mode"
+TLS_CONNECTION_MATCH_DOMAIN "tls_connection_match_domain"
 DISABLE_TLS		"disable_tls"|"tls_disable"
 ENABLE_TLS		"enable_tls"|"tls_enable"
+TLS_THREADS_MODE	"tls_threads_mode"
 TLSLOG			"tlslog"|"tls_log"
 TLS_PORT_NO		"tls_port_no"
 TLS_METHOD		"tls_method"
@@ -484,6 +501,7 @@ WAIT_WORKER1_TIME     "wait_worker1_time"
 WAIT_WORKER1_USLEEP   "wait_worker1_usleep"
 
 KEMI     "kemi"
+REQUEST_ROUTE_CALLBACK	"request_route_callback"
 ONSEND_ROUTE_CALLBACK	"onsend_route_callback"
 REPLY_ROUTE_CALLBACK	"reply_route_callback"
 EVENT_ROUTE_CALLBACK	"event_route_callback"
@@ -685,6 +703,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{UDP4_RAW}	{ count(); yylval.strval=yytext; return UDP4_RAW; }
 <INITIAL>{UDP4_RAW_MTU}	{ count(); yylval.strval=yytext; return UDP4_RAW_MTU; }
 <INITIAL>{UDP4_RAW_TTL}	{ count(); yylval.strval=yytext; return UDP4_RAW_TTL; }
+<INITIAL>{UDP_RECEIVER_MODE}	{ count(); yylval.strval=yytext; return UDP_RECEIVER_MODE; }
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
 
@@ -753,10 +772,12 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOGENGINEDATA}	{ yylval.strval=yytext; return LOGENGINEDATA; }
 <INITIAL>{XAVPVIAPARAMS}	{ yylval.strval=yytext; return XAVPVIAPARAMS; }
 <INITIAL>{XAVPVIAFIELDS}	{ yylval.strval=yytext; return XAVPVIAFIELDS; }
+<INITIAL>{XAVPVIAREPLYPARAMS}	{ yylval.strval=yytext; return XAVPVIAREPLYPARAMS; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
 <INITIAL>{VIRTUAL}	{ count(); yylval.strval=yytext; return VIRTUAL; }
 <INITIAL>{STRNAME}	{ count(); yylval.strval=yytext; return STRNAME; }
+<INITIAL>{AGNAME}	{ count(); yylval.strval=yytext; return AGNAME; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
 <INITIAL>{DOMAIN}	{ count(); yylval.strval=yytext; return DOMAIN; }
 <INITIAL>{SR_AUTO_ALIASES}	{ count(); yylval.strval=yytext;
@@ -844,7 +865,13 @@ IMPORTFILE      "import_file"
 <INITIAL>{STAT}	{ count(); yylval.strval=yytext; return STAT; }
 <INITIAL>{STATS_NAMESEP}	{ count(); yylval.strval=yytext; return STATS_NAMESEP; }
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
+<INITIAL>{MAXSNDBUFFER}	{ count(); yylval.strval=yytext; return MAXSNDBUFFER; }
 <INITIAL>{SQL_BUFFER_SIZE}	{ count(); yylval.strval=yytext; return SQL_BUFFER_SIZE; }
+<INITIAL>{MSG_RECV_MAX_SIZE}	{ count(); yylval.strval=yytext; return MSG_RECV_MAX_SIZE; }
+<INITIAL>{TCP_MSG_READ_TIMEOUT}	{ count(); yylval.strval=yytext; return TCP_MSG_READ_TIMEOUT; }
+<INITIAL>{TCP_MSG_DATA_TIMEOUT}	{ count(); yylval.strval=yytext; return TCP_MSG_DATA_TIMEOUT; }
+<INITIAL>{TCP_ACCEPT_IPLIMIT}	{ count(); yylval.strval=yytext; return TCP_ACCEPT_IPLIMIT; }
+<INITIAL>{TCP_CHECK_TIMER}	{ count(); yylval.strval=yytext; return TCP_CHECK_TIMER; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{SOCKET}	{ count(); yylval.strval=yytext; return SOCKET; }
 <INITIAL>{BIND}	{ count(); yylval.strval=yytext; return BIND; }
@@ -853,18 +880,22 @@ IMPORTFILE      "import_file"
 <INITIAL>{ASYNC_USLEEP}	{ count(); yylval.strval=yytext; return ASYNC_USLEEP; }
 <INITIAL>{ASYNC_NONBLOCK}	{ count(); yylval.strval=yytext; return ASYNC_NONBLOCK; }
 <INITIAL>{ASYNC_WORKERS_GROUP}	{ count(); yylval.strval=yytext; return ASYNC_WORKERS_GROUP; }
+<INITIAL>{ASYNC_TKV_GNAME}	{ count(); yylval.strval=yytext; return ASYNC_TKV_GNAME; }
+<INITIAL>{ASYNC_TKV_EVCB}	{ count(); yylval.strval=yytext; return ASYNC_TKV_EVCB; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
 <INITIAL>{PHONE2TEL}	{ count(); yylval.strval=yytext; return PHONE2TEL; }
 <INITIAL>{MEMLOG}	{ count(); yylval.strval=yytext; return MEMLOG; }
 <INITIAL>{MEMDBG}	{ count(); yylval.strval=yytext; return MEMDBG; }
 <INITIAL>{MEMSUM}	{ count(); yylval.strval=yytext; return MEMSUM; }
 <INITIAL>{MEMSAFETY}	{ count(); yylval.strval=yytext; return MEMSAFETY; }
+<INITIAL>{MEMADDSIZE}	{ count(); yylval.strval=yytext; return MEMADDSIZE; }
 <INITIAL>{MEMJOIN}	{ count(); yylval.strval=yytext; return MEMJOIN; }
 <INITIAL>{MEMSTATUSMODE}	{ count(); yylval.strval=yytext; return MEMSTATUSMODE; }
 <INITIAL>{SIP_PARSER_LOG_ONELINE}  { count(); yylval.strval=yytext; return SIP_PARSER_LOG_ONELINE; }
 <INITIAL>{SIP_PARSER_LOG}  { count(); yylval.strval=yytext; return SIP_PARSER_LOG; }
 <INITIAL>{SIP_PARSER_MODE}  { count(); yylval.strval=yytext; return SIP_PARSER_MODE; }
 <INITIAL>{CORELOG}	{ count(); yylval.strval=yytext; return CORELOG; }
+<INITIAL>{COREPARAM}	{ count(); yylval.strval=yytext; return COREPARAM; }
 <INITIAL>{SIP_WARNING}	{ count(); yylval.strval=yytext; return SIP_WARNING; }
 <INITIAL>{USER}		{ count(); yylval.strval=yytext; return USER; }
 <INITIAL>{GROUP}	{ count(); yylval.strval=yytext; return GROUP; }
@@ -941,8 +972,11 @@ IMPORTFILE      "import_file"
 <INITIAL>{TCP_WAIT_DATA}	{ count(); yylval.strval=yytext;
 									return TCP_WAIT_DATA; }
 <INITIAL>{TCP_SCRIPT_MODE}	{ count(); yylval.strval=yytext; return TCP_SCRIPT_MODE; }
+<INITIAL>{TLS_CONNECTION_MATCH_DOMAIN}	{ count(); yylval.strval=yytext;
+									return TLS_CONNECTION_MATCH_DOMAIN; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
 <INITIAL>{ENABLE_TLS}	{ count(); yylval.strval=yytext; return ENABLE_TLS; }
+<INITIAL>{TLS_THREADS_MODE}	{ count(); yylval.strval=yytext; return TLS_THREADS_MODE; }
 <INITIAL>{TLSLOG}		{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
 <INITIAL>{TLS_PORT_NO}	{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
 <INITIAL>{TLS_METHOD}	{ count(); yylval.strval=yytext; return TLS_METHOD; }
@@ -1028,6 +1062,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{WAIT_WORKER1_USLEEP}  { count(); yylval.strval=yytext; return WAIT_WORKER1_USLEEP; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{KEMI}  { count(); yylval.strval=yytext; return KEMI;}
+<INITIAL>{REQUEST_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return REQUEST_ROUTE_CALLBACK;}
 <INITIAL>{REPLY_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return REPLY_ROUTE_CALLBACK;}
 <INITIAL>{ONSEND_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return ONSEND_ROUTE_CALLBACK;}
 <INITIAL>{EVENT_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return EVENT_ROUTE_CALLBACK;}

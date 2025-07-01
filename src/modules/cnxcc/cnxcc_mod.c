@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -74,6 +76,7 @@ data_t _data;
 struct dlg_binds _dlgbinds;
 
 static int cnxcc_set_max_credit_fixup(void **param, int param_no);
+static int cnxcc_set_max_credit_fixup_free(void **param, int param_no);
 
 /*
  *  module core functions
@@ -120,6 +123,7 @@ static call_t *__alloc_new_call_by_money(credit_data_t *credit_data,
 		struct sip_msg *msg, double credit, double connect_cost,
 		double cost_per_second, int initial_pulse, int final_pulse);
 static void __notify_call_termination(sip_msg_t *msg);
+static void __free_call_t(call_t *call);
 static void __free_call(call_t *call);
 static void __delete_call(call_t *call, credit_data_t *credit_data);
 static int __has_to_tag(struct sip_msg *msg);
@@ -152,7 +156,7 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[] = {
 	{"cnxcc_set_max_credit", (cmd_function) __set_max_credit, 6,
-		cnxcc_set_max_credit_fixup, NULL, ANY_ROUTE},
+		cnxcc_set_max_credit_fixup, cnxcc_set_max_credit_fixup_free, ANY_ROUTE},
 	{"cnxcc_set_max_time", (cmd_function) __set_max_time, 2,
 		fixup_spve_igp, fixup_free_spve_igp, ANY_ROUTE},
 	{"cnxcc_update_max_time", (cmd_function) __update_max_time, 2,
@@ -167,8 +171,7 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"dlg_flag", INT_PARAM,	&_data.ctrl_flag },
-	{"credit_check_period", INT_PARAM,	&_data.check_period },
+	{"credit_check_period", PARAM_INT,	&_data.check_period },
 	{"redis", PARAM_STR, &_data.redis_cnn_str },
 	{ 0, 0, 0 }
 };
@@ -232,6 +235,23 @@ static int cnxcc_set_max_credit_fixup(void **param, int param_no)
 		case 5:
 		case 6:
 			return fixup_igp_all(param, param_no);
+		default:
+			LM_ERR("unexpected parameter number: %d\n", param_no);
+			return E_CFG;
+	}
+}
+
+static int cnxcc_set_max_credit_fixup_free(void **param, int param_no)
+{
+	switch(param_no) {
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+			return fixup_free_spve_all(param, param_no);
+		case 5:
+		case 6:
+			return fixup_free_igp_all(param, param_no);
 		default:
 			LM_ERR("unexpected parameter number: %d\n", param_no);
 			return E_CFG;
@@ -442,11 +462,6 @@ static void __dialog_created_callback(
 
 	if(msg == NULL) {
 		LM_ERR("Error getting direction of SIP msg\n");
-		return;
-	}
-
-	if(isflagset(msg, _data.ctrl_flag) == -1) {
-		LM_DBG("Flag is not set for this message. Ignoring\n");
 		return;
 	}
 
@@ -903,7 +918,8 @@ static void __free_credit_data(credit_data_t *credit_data, hash_tables_t *hts,
 
 	// Free client_id in list's root
 	shm_free(credit_data->call_list->client_id.s);
-	shm_free(credit_data->call_list);
+	__free_call_t(credit_data->call_list);
+	credit_data->call_list = NULL;
 
 	// Release the lock since we are going to free the entry down below
 	cnxcc_unlock(credit_data->lock);
@@ -981,6 +997,17 @@ void terminate_all_calls(credit_data_t *credit_data)
 	}
 }
 
+static void __free_call_t(call_t *call)
+{
+	str_shm_free_if_not_null(call->sip_data.callid);
+	str_shm_free_if_not_null(call->sip_data.to_uri);
+	str_shm_free_if_not_null(call->sip_data.to_tag);
+	str_shm_free_if_not_null(call->sip_data.from_uri);
+	str_shm_free_if_not_null(call->sip_data.from_tag);
+
+	shm_free(call);
+}
+
 /*
  * WARNING: When calling this function, the proper lock should have been acquired
  */
@@ -1018,13 +1045,7 @@ static void __free_call(call_t *call)
 	shm_free(e->key.s);
 	shm_free(e);
 
-	str_shm_free_if_not_null(call->sip_data.callid);
-	str_shm_free_if_not_null(call->sip_data.to_uri);
-	str_shm_free_if_not_null(call->sip_data.to_tag);
-	str_shm_free_if_not_null(call->sip_data.from_uri);
-	str_shm_free_if_not_null(call->sip_data.from_tag);
-
-	shm_free(call);
+	__free_call_t(call);
 }
 
 /*
@@ -1132,14 +1153,18 @@ static credit_data_t *__get_or_create_credit_data_entry(
 		if(e == NULL)
 			goto no_memory;
 
-		if(shm_str_dup(&e->key, client_id) != 0)
+		if(shm_str_dup(&e->key, client_id) != 0) {
+			shm_free(e);
 			goto no_memory;
+		}
 
 		e->u.p = credit_data = __alloc_new_credit_data(client_id, type);
 		e->flags = 0;
 
-		if(credit_data == NULL)
+		if(credit_data == NULL) {
+			shm_free(e);
 			goto no_memory;
+		}
 
 		cnxcc_lock(ht->lock);
 		str_hash_add(sht, e);
@@ -1168,7 +1193,7 @@ static credit_data_t *__alloc_new_credit_data(
 	credit_data->call_list = shm_malloc(sizeof(call_t));
 	if(credit_data->call_list == NULL)
 		goto no_memory;
-
+	memset(credit_data->call_list, 0, sizeof(data_t));
 	clist_init(credit_data->call_list, next, prev);
 
 	/*
@@ -1201,6 +1226,13 @@ static credit_data_t *__alloc_new_credit_data(
 no_memory:
 	SHM_MEM_ERROR;
 error:
+	if(credit_data) {
+		if(credit_data->call_list) {
+			str_shm_free_if_not_null(credit_data->call_list->client_id);
+			__free_call_t(credit_data->call_list);
+		}
+		shm_free(credit_data);
+	}
 	return NULL;
 }
 
@@ -1269,6 +1301,8 @@ static call_t *__alloc_new_call_by_money(credit_data_t *credit_data,
 
 error:
 	cnxcc_unlock(credit_data->lock);
+	if(call)
+		__free_call_t(call);
 	return NULL;
 }
 
@@ -1330,6 +1364,8 @@ static call_t *__alloc_new_call_by_time(
 
 error:
 	cnxcc_unlock(credit_data->lock);
+	if(call)
+		__free_call_t(call);
 	return NULL;
 }
 
@@ -1392,6 +1428,8 @@ static call_t *alloc_new_call_by_channel(
 
 error:
 	cnxcc_unlock(credit_data->lock);
+	if(call)
+		__free_call_t(call);
 	return NULL;
 }
 
@@ -1449,9 +1487,10 @@ static int __add_call_by_cid(str *cid, call_t *call, credit_type_t type)
 		SHM_MEM_ERROR;
 		return -1;
 	}
-
+	memset(e, 0, sizeof(struct str_hash_entry));
 	if(shm_str_dup(&e->key, cid) != 0) {
 		SHM_MEM_ERROR;
+		shm_free(e);
 		return -1;
 	}
 
@@ -1462,14 +1501,6 @@ static int __add_call_by_cid(str *cid, call_t *call, credit_type_t type)
 	cnxcc_unlock(lock);
 
 	return 0;
-}
-
-static inline void set_ctrl_flag(struct sip_msg *msg)
-{
-	if(_data.ctrl_flag != -1) {
-		LM_DBG("Flag set!\n");
-		setflag(msg, _data.ctrl_flag);
-	}
 }
 
 static inline int get_pv_value(
@@ -1531,8 +1562,8 @@ static int ki_set_max_credit(sip_msg_t *msg, str *sclient, str *scredit,
 	}
 
 	if(try_get_call_entry(&msg->callid->body, &call, &hts) == 0) {
-		LM_ERR("call-id[%.*s] already present\n",
-		msg->callid->body.len, msg->callid->body.s);
+		LM_ERR("call-id[%.*s] already present\n", msg->callid->body.len,
+				msg->callid->body.s);
 		return -4;
 	}
 
@@ -1541,8 +1572,6 @@ static int ki_set_max_credit(sip_msg_t *msg, str *sclient, str *scredit,
 		   "final-pulse [%d], call-id[%.*s]\n",
 			sclient->len, sclient->s, credit, connect_cost, cost_per_second,
 			initp, finishp, msg->callid->body.len, msg->callid->body.s);
-
-	set_ctrl_flag(msg);
 
 	if((credit_data = __get_or_create_credit_data_entry(sclient, CREDIT_MONEY))
 			== NULL) {
@@ -1730,8 +1759,6 @@ static int ki_set_max_channels(sip_msg_t *msg, str *sclient, int max_chan)
 		return -1;
 	}
 
-	set_ctrl_flag(msg);
-
 	if(max_chan <= 0) {
 		LM_ERR("[%.*s] MAX_CHAN cannot be less than or equal to zero: %d\n",
 				msg->callid->body.len, msg->callid->body.s, max_chan);
@@ -1745,8 +1772,8 @@ static int ki_set_max_channels(sip_msg_t *msg, str *sclient, int max_chan)
 	}
 
 	if(try_get_call_entry(&msg->callid->body, &call, &hts) == 0) {
-		LM_ERR("call-id[%.*s] already present\n",
-		msg->callid->body.len, msg->callid->body.s);
+		LM_ERR("call-id[%.*s] already present\n", msg->callid->body.len,
+				msg->callid->body.s);
 		return -4;
 	}
 
@@ -1824,8 +1851,6 @@ static int ki_set_max_time(sip_msg_t *msg, str *sclient, int max_secs)
 		return -1;
 	}
 
-	set_ctrl_flag(msg);
-
 	if(max_secs <= 0) {
 		LM_ERR("[%.*s] MAXSECS cannot be less than or equal to zero: %d\n",
 				msg->callid->body.len, msg->callid->body.s, max_secs);
@@ -1839,8 +1864,8 @@ static int ki_set_max_time(sip_msg_t *msg, str *sclient, int max_secs)
 	}
 
 	if(try_get_call_entry(&msg->callid->body, &call, &hts) == 0) {
-		LM_ERR("call-id[%.*s] already present\n",
-		msg->callid->body.len, msg->callid->body.s);
+		LM_ERR("call-id[%.*s] already present\n", msg->callid->body.len,
+				msg->callid->body.s);
 		return -4;
 	}
 
@@ -1896,8 +1921,6 @@ static int ki_update_max_time(sip_msg_t *msg, str *sclient, int secs)
 	struct str_hash_entry *e = NULL;
 	double update_fraction = secs;
 	call_t *call = NULL, *tmp_call = NULL;
-
-	set_ctrl_flag(msg);
 
 	if(parse_headers(msg, HDR_CALLID_F, 0) != 0) {
 		LM_ERR("Error parsing Call-ID");

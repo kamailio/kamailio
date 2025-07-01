@@ -384,7 +384,7 @@ modparam("dispatcher", "xavp_dst", "_dsdst_")
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>0</quote> (add all fields).
+			Default value is <quote>0</quote> (add grp, uri, sock, attr and optionally dstid fields).
 		</emphasis>
 		</para>
 		<example>
@@ -577,6 +577,28 @@ modparam("dispatcher", "ds_ping_interval", 30)
 		</example>
 	</section>
 
+
+	<section id="dispatcher.p.ds_ping_fr_timer">
+		<title><varname>ds_ping_fr_timer</varname> (int)</title>
+		<para>
+		If greater than 0, its value is used to set the "fr_timer" value for
+		the local transactions created to send out the OPTIONS pings.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (not set).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_ping_fr_timer</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_fr_timer", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dispatcher.p.ds_probing_threshold">
 		<title><varname>ds_probing_threshold</varname> (int)</title>
 		<para>
@@ -667,7 +689,7 @@ modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=3
 			<para>Value 0: If set to 0, only the gateways with state PROBING are tested.
 			After a gateway is probed, the PROBING state is cleared in this mode.
 			This means that no probing will be executed at all only if flag in config file is set to 8/PROBING
-			(please check destination list file syntaxis for more details), it will probe only one time at startup or 
+			(please check destination list file syntaxis for more details), it will probe only one time at startup or
 			after dispatcher reload.</para>
 		</listitem>
 		<listitem>
@@ -756,6 +778,38 @@ modparam("dispatcher", "ds_ping_latency_stats", 1)
 </programlisting>
 		</example>
 	</section>
+
+
+	<section id="dispatcher.p.ds_retain_latency_stats">
+		<title><varname>ds_retain_latency_stats</varname> (int)</title>
+		<para>
+		Retain latency stats for existing destinations when reloading from file or database.
+		</para>
+
+		<itemizedlist>
+		<listitem>
+			<para>If set to 0, stats for all destinations will be reset on reload.</para>
+		</listitem>
+		<listitem>
+			<para>If set to 1, stats for existing destinations will persist across reloads.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_retain_latency_stats</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_retain_latency_stats", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dispatcher.p.ds_latency_estimator_alpha">
 		<title><varname>ds_latency_estimator_alpha</varname> (int)</title>
 		<para>
@@ -771,7 +825,7 @@ modparam("dispatcher", "ds_ping_latency_stats", 1)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set the <quote>ds_hash_size</quote> parameter</title>
+		<title>Set the <quote>ds_latency_estimator_alpha</quote> parameter</title>
 <programlisting format="linespecific">
 ...
 modparam("dispatcher", "ds_latency_estimator_alpha", 900)
@@ -928,6 +982,22 @@ modparam("dispatcher", "ds_default_socket", "udp:192.168.0.125:5060")
  listen=udp:1.2.3.4:5060 name "sock1"
 ...
 modparam("dispatcher", "ds_default_sockname", "sock1")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dispatcher.p.ds_ping_socket">
+		<title><varname>ds_ping_socket</varname> (str)</title>
+		<para>
+			Default socket to be used for sending ping requests
+			when a gateway has no "ping_socket" configured.
+		</para>
+		<example>
+		<title>Set the <quote>ds_ping_socket</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_ping_socket", "udp:192.168.0.125:5060")
 ...
 </programlisting>
 		</example>
@@ -1343,10 +1413,13 @@ modparam("dispatcher", "ds_interval_mode", 7200)
 			</listitem>
 			<listitem>
 				<para>
-				<quote>12</quote> - dispatch to all destination in setid at
+				<quote>12</quote> - dispatch to all destinations in setid at
 				once (parallel forking). Note that the XAVPs are no longer set
 				with the values of the destination records, no re-routing
-				making sense in this case.
+				making sense in this case. A side effect is that marking the
+				one destination as inactive is not possible if the transaction fails
+				(which means that all branches failed, or in other words, all the
+				destinations were not answering the call).
 				</para>
 			</listitem>
 			<listitem>
@@ -1388,6 +1461,13 @@ With congestion control the formula becomes :
 			</listitem>
 			<listitem>
 				<para>
+				<quote>64</quote> - round-robin (next destination) with over
+				load control (destination record is skipped based on over
+				load control rate).
+				</para>
+			</listitem>
+			<listitem>
+				<para>
 				<quote>X</quote> - if the algorithm is not implemented, the
 				first entry in set is chosen.
 				</para>
@@ -1424,10 +1504,10 @@ ds_select_dst("1", "4", "3");
 		<title>configuring load balancing with congestion detection</title>
 		<programlisting format="linespecific">
 ...
-# sample of SQL provisionning statements
-INSERT INTO "dispatcher" 
+# sample of SQL provisioning statements
+INSERT INTO "dispatcher"
 VALUES(1,1,'sip:192.168.0.1:5060',0,12,'rweight=50;weight=50;cc=1;','');
-INSERT INTO "dispatcher" 
+INSERT INTO "dispatcher"
 VALUES(2,1,'sip:192.168.0.2:5060',0,12,'rweight=50;weight=50;cc=1;','');
 ...
 modparam("dispatcher", "ds_ping_interval", 1) # ping gateways once/second
@@ -1444,13 +1524,13 @@ DEST: {
 	PRIORITY: 12
 	ATTRS: {
 		BODY: rweight=50;weight=50;cc=1 # configuration values
-		DUID: 
+		DUID:
 		MAXLOAD: 0
 		WEIGHT: 50
 		RWEIGHT: 50
-		SOCKET: 
-		SOCKNAME: 
-		OBPROXY: 
+		SOCKET:
+		SOCKNAME:
+		OBPROXY:
 	}
 	LATENCY: {
 		AVG: 20.104000
@@ -1709,6 +1789,27 @@ failure_route[tryagain] {
 </programlisting>
 		</example>
 	</section>
+	<section id="dispatcher.f.ds_mark_addr">
+		<title>
+		<function moreinfo="none">ds_mark_addr(state, setid, uri)</function>
+		</title>
+		<para>
+			Set the state to the target specified by setid and uri. The parameter
+			state can have same value as for ds_mark_dst(). All parameters can
+			contain variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_mark_addr</function> usage</title>
+		<programlisting format="linespecific">
+...
+    ds_mark_addr("ip", "1", "sip:127.0.0.1:5080"); # set to inactive and probing
+...
+</programlisting>
+		</example>
+	</section>
 	<section  id="dispatcher.f.ds_list_exists">
 		<title>
 		<function moreinfo="none">ds_list_exists(groupid)</function>
@@ -1771,8 +1872,14 @@ if(ds_list_exists("10")) {
 				active status is ignored.
 				If bit one is set, then port is ignored.
 				If bit two is set, then protocol is ignored.
-				If bit three is set, then state must be active.	The parameter
-				can be an integer or a variable holding an integer value.
+				If bit three is set, then state must be active.
+				If bit four is set, then socket/sockname be matched.
+				If bit five is set, then try to find the most closest target from all
+				dispatcher targets with the mandatory ip and combination of local socket, protocol, port,
+				the weighted search result is combined from bit flags of matched components:
+				ip - 1, port - 2, protocol - 4, local socket - 8,
+				the target with the maximum value of flags combination will be selected.
+				The parameter can be an integer or a variable holding an integer value.
 				It must be provided if the uri parameter is provided.
 			</para>
 		</listitem>
@@ -1938,6 +2045,111 @@ onreply_route {
 		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
+		<example>
+		<title><function>ds_reload</function> usage</title>
+		<programlisting format="linespecific">
+...
+    ds_reload();
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dispatcher.f.ds_dsg_fetch">
+		<title>
+		<function moreinfo="none">ds_dsg_fetch(setid)</function>
+		</title>
+		<para>
+		Sets the destination group id to setid for fetching $dsg(key) attributes.
+		</para>
+		<para>Parameters: <emphasis>setid</emphasis> - integer or variable
+		holding the set id value</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_dsg_fetch()</function> usage</title>
+		<programlisting format="linespecific">
+...
+    ds_dsg_fetch("1");
+    xinfo("set id: 1 - all: $dsg(count); active: $dsg(active)\n");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dispatcher.f.ds_dsg_fetch_uri">
+		<title>
+		<function moreinfo="none">ds_dsg_fetch_uri(setid, uri)</function>
+		</title>
+		<para>
+		Sets the destination group id to setid for fetching $dsg(key) attributes
+		and the overload-control attributes to the corresponding uri record from
+		that group.
+		</para>
+		<para>Parameters: <emphasis>setid</emphasis> - integer or variable
+		holding the set id value; <emphasis>uri</emphasis> - string or variables
+		holding the SIP URI value.</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_dsg_fetch_uri()</function> usage</title>
+		<programlisting format="linespecific">
+...
+    ds_dsg_fetch_uri("1", "sip:127.0.0.1:5080");
+    xinfo("set id: 1 - all: $dsg(count); active: $dsg(active); $dsg(ocrate)\n");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dispatcher.f.ds_oc_set_attrs">
+		<title>
+		<function moreinfo="none">ds_oc_set_attrs(setid, uri, rval, tval, sval)</function>
+		</title>
+		<para>
+		Sets the overload control rate, time internval limit and sequence number
+		for the destination record (setid, uri) following RFC7339 specifications.
+		</para>
+		<para>Description of parameters:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>setid</emphasis> - the set (group) id. The parameter
+				can be an integer or a variable holding an integer value.
+			</para>
+		</listitem>
+        <listitem>
+			<para><emphasis>uri</emphasis> - the URI of the destination.</para>
+		</listitem>
+        <listitem>
+			<para><emphasis>rval</emphasis> - the value of the overload control
+			rate (from 1 to 100) - how many times to skip using this destination
+			in 100 selections.</para>
+		</listitem>
+        <listitem>
+			<para><emphasis>tval</emphasis> - time interval limit to apply the
+			overload control rate (in milliseconds). If the value is 0 or
+			negative, then the default value 500 is used.</para>
+		</listitem>
+        <listitem>
+			<para><emphasis>sval</emphasis> - the sequence number for overload
+			control.</para>
+		</listitem>
+		</itemizedlist>
+		<para>The parameters can include variables.</para>
+		<para>The returns 1 (cfg-true) when the oc attrbutes are udpated for a
+		destination record; -1 (cfg-false) when there is an internal error;
+		-2 (cfg-false) when no destination is updated (e.g., not found or the
+		ocseq condition fails).</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_oc_set_attrs()</function> usage</title>
+		<programlisting format="linespecific">
+...
+    ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "180000", "1");
+...
+</programlisting>
+		</example>
 	</section>
 	</section>
 
@@ -1990,7 +2202,7 @@ onreply_route {
 		</title>
 		<para>
 		Sets the state for a destination by matching on 'duid' attribute. The
-		parameters first two parameter 'state' and 'group' are the same like
+		first two parameters 'state' and 'group' are the same like
 		for RPC command 'dispatcher.set_state'. The third parameter 'duid' is
 		the value to be matched against the 'duid' attribute of dispatcher
 		destinations.
@@ -2215,6 +2427,30 @@ kamctl rpc dispatcher.hash 4 bob server.com
 ...
 </programlisting>
     </section>
+	<section id="dispatcher.r.oclist">
+		<title>
+		<function moreinfo="none">dispatcher.oclist</function>
+		</title>
+		<para>
+		List the overload control attributes for the records in a specific group.
+		</para>
+		<para>
+		Name: <emphasis>dispatcher.oclist</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+		</itemizedlist>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+# prototype: kamcli dispatcher.oclist _group_
+kamcli dispatcher.oclist 1
+...
+</programlisting>
+    </section>
 
    </section>
 
@@ -2251,6 +2487,8 @@ kamctl rpc dispatcher.hash 4 bob server.com
 				useful when the hostname of the destination address is a NAPTR or SRV record only.
 				Such addresses cannot be matched anymore with ds_is_from_list(...).</para>
 				</listitem>
+				<listitem><para>32 (bit at index 5 - 1 &lt;&lt;5) - no ping to destination</para>
+				</listitem>
 			</itemizedlist>
 			</para>
 			</listitem>
@@ -2283,7 +2521,7 @@ kamctl rpc dispatcher.hash 4 bob server.com
 						</listitem>
 						<listitem>
 							<para>'weight' - used for weight based load distribution. It must be set
-								to a positive integer value beteen 1 and 100 (inclusive the limits),
+								to a positive integer value between 1 and 100 (inclusive the limits),
 								otherwise the destination address is ignored (its weight set to 0).
 								The value represents the percent of calls to be sent to that gateways.
 								The sum must not exceed 100, otherwise the destinations whose weight
@@ -2305,6 +2543,10 @@ kamctl rpc dispatcher.hash 4 bob server.com
 								keepalives.</para>
 						</listitem>
 						<listitem>
+							<para>'ping_socket' - used to set the sending socket for ping requests.
+								It overwrites the general ds_ping_socket parameter.</para>
+						</listitem>
+						<listitem>
 							<para>'sockname' - used to set by name the sending socket for the
 								gateway. It is used for sending the SIP traffic as well as OPTIONS
 								keepalives and has priority over 'socket' attribute.</para>
@@ -2319,6 +2561,14 @@ kamctl rpc dispatcher.hash 4 bob server.com
 						</listitem>
 						<listitem>
 							<para>'latency' - latency_stats initialization in ms.</para>
+						</listitem>
+						<listitem>
+							<para>'ocmin' - minimum limit for over load control rate
+							(value between 0 and 100, default 10).</para>
+						</listitem>
+						<listitem>
+							<para>'ocrate' - over load control rate
+							(value between 0 and 100, default 100).</para>
 						</listitem>
 					</itemizedlist>
 		</para>

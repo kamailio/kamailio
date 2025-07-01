@@ -8,6 +8,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -30,7 +32,7 @@ MODULE_VERSION
 
 static int mod_init(void);
 
-SV* vdbmod;
+SV *vdbmod;
 
 static int db_perlvdb_bind_api(db_func_t *dbb);
 
@@ -38,28 +40,27 @@ static int db_perlvdb_bind_api(db_func_t *dbb);
  * Perl virtual database module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_bind_api",    (cmd_function)db_perlvdb_bind_api,    0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"db_bind_api", (cmd_function)db_perlvdb_bind_api, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}};
 
 
 struct module_exports exports = {
-	"db_perlvdb",	/* module name */
-	RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
-	cmds,		/* exported functions */
-	0,			/* exported parameters */
-	0,			/* exported rpc functions */
-	0,			/* exported pseudo-variables */
-	0,			/* response handling function*/
-	mod_init,	/* module initialization function */
-	0,			/* per-child init function */
-	0			/* destroy function */
+		"db_perlvdb",			/* module name */
+		RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
+		cmds,					/* exported functions */
+		0,						/* exported parameters */
+		0,						/* exported rpc functions */
+		0,						/* exported pseudo-variables */
+		0,						/* response handling function*/
+		mod_init,				/* module initialization function */
+		0,						/* per-child init function */
+		0						/* destroy function */
 };
 
 
 static int mod_init(void)
 {
-	if (!module_loaded("app_perl")) {
+	if(!module_loaded("app_perl")) {
 		LM_CRIT("app_perl module not loaded. Exiting.\n");
 		return -1;
 	}
@@ -69,22 +70,22 @@ static int mod_init(void)
 
 static int db_perlvdb_bind_api(db_func_t *dbb)
 {
-	if(dbb==NULL)
+	if(dbb == NULL)
 		return -1;
 
 	memset(dbb, 0, sizeof(db_func_t));
 
-	dbb->use_table        = perlvdb_use_table;
-	dbb->init             = perlvdb_db_init;
-	dbb->close            = perlvdb_db_close;
-	dbb->query            = perlvdb_db_query;
-	dbb->fetch_result     = 0;
-	dbb->raw_query        = 0;
-	dbb->free_result      = perlvdb_db_free_result;
-	dbb->insert           = perlvdb_db_insert;
-	dbb->delete           = perlvdb_db_delete; 
-	dbb->update           = perlvdb_db_update;
-	dbb->replace          = perlvdb_db_replace;
+	dbb->use_table = perlvdb_use_table;
+	dbb->init = perlvdb_db_init;
+	dbb->close = perlvdb_db_close;
+	dbb->query = perlvdb_db_query;
+	dbb->fetch_result = 0;
+	dbb->raw_query = 0;
+	dbb->free_result = perlvdb_db_free_result;
+	dbb->insert = perlvdb_db_insert;
+	dbb->delete = perlvdb_db_delete;
+	dbb->update = perlvdb_db_update;
+	dbb->replace = perlvdb_db_replace;
 
 	return 0;
 }

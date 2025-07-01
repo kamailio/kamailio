@@ -7,6 +7,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -25,12 +27,14 @@
 #ifndef DBSQLITE_H
 #define DBSQLITE_H
 
-typedef struct db_param_list {
-	struct db_param_list* next;
-	struct db_param_list* prev;
+typedef struct db_param_list
+{
+	struct db_param_list *next;
+	struct db_param_list *prev;
 	str database;
 	int readonly;
 	str journal_mode;
+	int busy_timeout;
 } db_param_list_t;
 
 db_param_list_t *db_param_list_search(str db_filename);

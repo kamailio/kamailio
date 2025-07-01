@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -20,15 +22,15 @@
 */
 
 #ifndef _MSGOBJ_STRUCT_H
-#define  _MSGOBJ_STRUCT_H
+#define _MSGOBJ_STRUCT_H
 
 #include "../../core/parser/msg_parser.h"
 
 #include <Python.h>
 
-typedef struct {
-	PyObject_HEAD
-	struct sip_msg *msg;
+typedef struct
+{
+	PyObject_HEAD struct sip_msg *msg;
 } msgobject;
 
 PyObject *msg_call_function(msgobject *, PyObject *);

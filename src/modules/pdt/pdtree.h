@@ -32,9 +32,9 @@ typedef struct _pdt_node
 	struct _pdt_node *child;
 } pdt_node_t;
 
-#define PDT_MAX_DEPTH	32
+#define PDT_MAX_DEPTH 32
 
-#define PDT_NODE_SIZE	pdt_char_list.len
+#define PDT_NODE_SIZE pdt_char_list.len
 
 typedef struct _pdt_tree
 {
@@ -47,21 +47,21 @@ typedef struct _pdt_tree
 
 /* prefix tree operations */
 int add_to_tree(pdt_tree_t *pt, str *code, str *domain);
-int pdt_add_to_tree(pdt_tree_t **dpt, str* sdomain, str *code, str *domain);
+int pdt_add_to_tree(pdt_tree_t **dpt, str *sdomain, str *code, str *domain);
 
-pdt_tree_t* pdt_get_tree(pdt_tree_t *pl, str *sdomain);
+pdt_tree_t *pdt_get_tree(pdt_tree_t *pl, str *sdomain);
 
-str* get_domain(pdt_tree_t *pt, str *code, int *plen);
-str* pdt_get_domain(pdt_tree_t *pt, str* sdomain, str *code, int *plen);
+str *get_domain(pdt_tree_t *pt, str *code, int *plen);
+str *pdt_get_domain(pdt_tree_t *pt, str *sdomain, str *code, int *plen);
 
-pdt_tree_t* pdt_init_tree(str* sdomain);
+pdt_tree_t *pdt_init_tree(str *sdomain);
 void pdt_free_tree(pdt_tree_t *pt);
 int pdt_print_tree(pdt_tree_t *pt);
 
-int pdt_check_pd(pdt_tree_t *pt, str* sdomain, str *sp, str *sd);
+int pdt_check_pd(pdt_tree_t *pt, str *sdomain, str *sp, str *sd);
 
 /* used to get the index for the PDT Tree hash*/
-#define strpos(s,c) (strchr(s,c)-s)
+#define strpos(s, c) (strchr(s, c) - s)
 
 int pdt_init_db(void);
 int pdt_load_db(void);
@@ -70,4 +70,3 @@ str *pdt_get_char_list(void);
 pdt_tree_t **pdt_get_ptree(void);
 
 #endif
-

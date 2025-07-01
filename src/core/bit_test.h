@@ -21,16 +21,16 @@
  *
  * Bit test functions:
  *  - int bit_test(int offset, unsigned int *addr)
- *      Returns the bit found at offset position 
+ *      Returns the bit found at offset position
  *      in a bitstring pointed by addr.
  *
  *  - int bit_test_and_set(int offset, unsigned int *addr)
- *      Returns the bit found at offset position 
+ *      Returns the bit found at offset position
  *      in a bitstring pointed by addr, and sets
  *      the bit at the given offset.
  *
  *  - int bit_test_and_reset(int offset, unsigned int *addr)
- *      Returns the bit found at offset position 
+ *      Returns the bit found at offset position
  *      in a bitstring pointed by addr, and resets
  *      the bit at the given offset.
  *
@@ -42,10 +42,10 @@
 #define _BIT_TEST_H
 
 /* fix __CPU_i386 -> __CPU_x86 */
-#if defined __CPU_i386 && ! defined __CPU_x86
+#if defined __CPU_i386 && !defined __CPU_x86
 #define __CPU_x86
 #endif
- 
+
 #ifdef CC_GCC_LIKE_ASM
 #if defined __CPU_x86 || defined __CPU_x86_64
 #define BIT_TEST_ASM
@@ -62,13 +62,12 @@
  */
 static inline int bit_test(int offset, unsigned int *addr)
 {
-	unsigned char	v;
+	unsigned char v;
 
-	asm volatile(
-		" bt %2, %1 \n\t"
-		" setc %0 \n\t"
-		: "=qm" (v) : "m" (*addr), "r" (offset)
-	);
+	asm volatile(" bt %2, %1 \n\t"
+				 " setc %0 \n\t"
+				 : "=qm"(v)
+				 : "m"(*addr), "r"(offset));
 	return (int)v;
 }
 
@@ -80,13 +79,12 @@ static inline int bit_test(int offset, unsigned int *addr)
  */
 static inline int bit_test_and_set(int offset, unsigned int *addr)
 {
-	unsigned char	v;
+	unsigned char v;
 
-	asm volatile(
-		" bts %2, %1 \n\t"
-		" setc %0 \n\t"
-		: "=qm" (v) : "m" (*addr), "r" (offset)
-	);
+	asm volatile(" bts %2, %1 \n\t"
+				 " setc %0 \n\t"
+				 : "=qm"(v)
+				 : "m"(*addr), "r"(offset));
 	return (int)v;
 }
 
@@ -98,13 +96,12 @@ static inline int bit_test_and_set(int offset, unsigned int *addr)
  */
 static inline int bit_test_and_reset(int offset, unsigned int *addr)
 {
-	unsigned char	v;
+	unsigned char v;
 
-	asm volatile(
-		" btr %2, %1 \n\t"
-		" setc %0 \n\t"
-		: "=qm" (v) : "m" (*addr), "r" (offset)
-	);
+	asm volatile(" btr %2, %1 \n\t"
+				 " setc %0 \n\t"
+				 : "=qm"(v)
+				 : "m"(*addr), "r"(offset));
 	return (int)v;
 }
 
@@ -117,7 +114,7 @@ static inline int bit_test_and_reset(int offset, unsigned int *addr)
  */
 static inline int bit_test(int offset, unsigned int *addr)
 {
-	return ((*(addr + offset/32)) & (1U << (offset % 32))) ? 1 : 0;
+	return ((*(addr + offset / 32)) & (1U << (offset % 32))) ? 1 : 0;
 }
 
 /* Returns the bit found at offset position in the bitstring
@@ -127,10 +124,10 @@ static inline int bit_test(int offset, unsigned int *addr)
  */
 static inline int bit_test_and_set(int offset, unsigned int *addr)
 {
-	unsigned int	*i;
-	int	mask, res;
+	unsigned int *i;
+	int mask, res;
 
-	i = addr + offset/32;
+	i = addr + offset / 32;
 	mask = 1U << (offset % 32);
 	res = ((*i) & mask) ? 1 : 0;
 	(*i) |= mask;
@@ -145,10 +142,10 @@ static inline int bit_test_and_set(int offset, unsigned int *addr)
  */
 static inline int bit_test_and_reset(int offset, unsigned int *addr)
 {
-	unsigned int	*i;
-	int	mask, res;
+	unsigned int *i;
+	int mask, res;
 
-	i = addr + offset/32;
+	i = addr + offset / 32;
 	mask = 1U << (offset % 32);
 	res = ((*i) & mask) ? 1 : 0;
 	(*i) &= ~mask;

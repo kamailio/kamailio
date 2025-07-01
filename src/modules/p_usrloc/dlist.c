@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -28,16 +30,16 @@
 
 
 #include "dlist.h"
-#include <stdlib.h>	       /* abort */
-#include <string.h>            /* strlen, memcmp */
-#include <stdio.h>             /* printf */
+#include <stdlib.h> /* abort */
+#include <string.h> /* strlen, memcmp */
+#include <stdio.h>	/* printf */
 #include "../../core/ut.h"
 #include "../../lib/srdb1/db.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/dprint.h"
 #include "../../core/ip_addr.h"
 #include "../../core/socket_info.h"
-#include "udomain.h"           /* new_udomain, free_udomain */
+#include "udomain.h" /* new_udomain, free_udomain */
 #include "utime.h"
 #include "p_usrloc_mod.h"
 
@@ -46,13 +48,13 @@
 static struct domain_list_item *domain_list;
 
 
-
-static inline struct domain_list_item * find_dlist (str *name) {
+static inline struct domain_list_item *find_dlist(str *name)
+{
 	struct domain_list_item *item;
 
-	for (item = domain_list; item != NULL; item = item->next) {
-		if (item->name.len == name->len
-				&& memcmp (item->name.s, name->s, name->len) == 0) {
+	for(item = domain_list; item != NULL; item = item->next) {
+		if(item->name.len == name->len
+				&& memcmp(item->name.s, name->s, name->len) == 0) {
 			return item;
 		}
 	}
@@ -60,33 +62,32 @@ static inline struct domain_list_item * find_dlist (str *name) {
 }
 
 
-
-
-static inline struct domain_list_item * add_to_dlist (str *name, int type) {
+static inline struct domain_list_item *add_to_dlist(str *name, int type)
+{
 	struct domain_list_item *item;
 	int i;
-	item = (struct domain_list_item *)
-				pkg_malloc (sizeof (struct domain_list_item));
-	if (item == NULL) {
+	item = (struct domain_list_item *)pkg_malloc(
+			sizeof(struct domain_list_item));
+	if(item == NULL) {
 		LM_ERR("Out of pkg memory.\n");
 		return NULL;
 	}
-	item->name.s = (char *) pkg_malloc (name->len + 1);
-	if (item->name.s == NULL) {
+	item->name.s = (char *)pkg_malloc(name->len + 1);
+	if(item->name.s == NULL) {
 		LM_ERR("Out of pkg memory (1).\n");
 		pkg_free(item);
 		return NULL;
 	}
-	memcpy (item->name.s, name->s, name->len);
+	memcpy(item->name.s, name->s, name->len);
 	item->name.s[name->len] = '\0';
 	item->name.len = name->len;
 
-	memset (&item->domain, 0, sizeof (struct udomain));
+	memset(&item->domain, 0, sizeof(struct udomain));
 	item->domain.name = &item->name;
 	item->domain.dbt = type;
 
-	item->domain.table = (hslot_t*)pkg_malloc(sizeof(hslot_t) * ul_hash_size);
-	if (!item->domain.table) {
+	item->domain.table = (hslot_t *)pkg_malloc(sizeof(hslot_t) * ul_hash_size);
+	if(!item->domain.table) {
 		LM_ERR("Out of pkg memory (2)\n");
 		pkg_free(item->name.s);
 		pkg_free(item);
@@ -117,30 +118,31 @@ static inline struct domain_list_item * add_to_dlist (str *name, int type) {
  * \param _d new created domain
  * \return 0 on success, -1 on failure
  */
-int register_udomain(const char *name, udomain_t **domain) {
+int register_udomain(const char *name, udomain_t **domain)
+{
 	struct domain_list_item *item;
 	str name_str;
-	ul_domain_db_t * d;
+	ul_domain_db_t *d;
 
-	name_str.s = (char *) name;
-	name_str.len = strlen (name);
-	item = find_dlist (&name_str);
-	if (item == NULL) {
-		if((d = ul_find_domain(name)) == NULL){
+	name_str.s = (char *)name;
+	name_str.len = strlen(name);
+	item = find_dlist(&name_str);
+	if(item == NULL) {
+		if((d = ul_find_domain(name)) == NULL) {
 			LM_ERR("domain %s not found.\n", name);
 			return -1;
 		}
-		item = add_to_dlist (&name_str, d->dbt);
+		item = add_to_dlist(&name_str, d->dbt);
 	}
-	if (item == NULL) {
+	if(item == NULL) {
 		return -1;
 	}
 	*domain = &item->domain;
-	LM_DBG("found domain %.*s, type: %s\n", (*domain)->name->len, (*domain)->name->s, (((*domain)->dbt) == DB_TYPE_CLUSTER ? "cluster" : "single"));
+	LM_DBG("found domain %.*s, type: %s\n", (*domain)->name->len,
+			(*domain)->name->s,
+			(((*domain)->dbt) == DB_TYPE_CLUSTER ? "cluster" : "single"));
 	return 0;
 }
-
-
 
 
 /*!
@@ -156,7 +158,7 @@ unsigned long get_number_of_users(void)
 
 
 int get_all_ucontacts(void *buf, int len, unsigned int flags,
-                         unsigned int part_idx, unsigned int part_max, int options)
+		unsigned int part_idx, unsigned int part_max, int options)
 {
 	LM_INFO("not available with partitioned interface\n");
 	return -1;
@@ -172,4 +174,41 @@ int synchronize_all_udomains(void)
 	return res;
 }
 
+/*!
+ * \brief Registers a new domain with usrloc
+ *
+ * Find and return a usrloc domain (location table)
+ * \param _n domain name
+ * \param _d usrloc domain
+ * \return 0 on success, -1 on failure
+ */
+int get_udomain(const char *_n, udomain_t **_d)
+{
+	struct domain_list_item *item;
+	str s;
 
+	if(_n == NULL) {
+		LM_ERR("null location table name\n");
+		goto notfound;
+	}
+
+	s.s = (char *)_n;
+	s.len = strlen(_n);
+	if(s.len <= 0) {
+		LM_ERR("empty location table name\n");
+		goto notfound;
+	}
+
+	item = find_dlist(&s);
+	if(item == NULL) {
+		LM_ERR("domain %s not found.\n", _n);
+		goto notfound;
+	}
+
+	*_d = &item->domain;
+	return 0;
+
+notfound:
+	*_d = NULL;
+	return -1;
+}

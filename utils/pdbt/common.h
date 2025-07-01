@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -24,7 +24,7 @@
 
 
 
-#include <stdint.h> 
+#include <stdint.h>
 
 
 
@@ -36,7 +36,7 @@
  -1000..-1 used in dtm to indicate a carrier id and that no more nodes will follow (leaf node compression).
  -1001 used in dtm to mark a pointer to a child node as NULL.
 */
-#define MIN_PDB_CARRIERID 1
+#define MIN_PDB_CARRIERID 0
 #define MAX_PDB_CARRIERID 999
 #define OTHER_CARRIERID 1000
 #define MAX_CARRIERID 1000

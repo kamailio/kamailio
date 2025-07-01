@@ -306,7 +306,7 @@ crypto_hmac_sha256("$var(text)", "my-secret-key", "$var(hmac)");
 </programlisting>
 		</example>
 	</section>
-	
+
 	<section id="async.f.crypto_netio_in">
 	    <title>
 		<function moreinfo="none">crypto_netio_in)</function>

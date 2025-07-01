@@ -52,8 +52,8 @@
 	</para>
 	<para>
 		The selection of the set is done from script prior using
-		rtpengine_delete(), rtpengine_offer() or rtpengine_answer()
-		functions - see the set_rtpengine_set() function.
+		rtpengine_delete(), rtpengine_offer(), rtpengine_answer() or
+		rtpengine_manage() functions - see the set_rtpengine_set() function.
 	</para>
 	<para>
 	        Another way to select the set is to define setid_avp
@@ -81,7 +81,7 @@
 		There is no locking when setting the nodes enabled/disabled (to keep the
 		memory access as fast as possible). Thus, problems related to node state
 		might appear for concurrent processes that might set the nodes
-		enabled/disabled(e.g. by fifo command). These robustness problems are overcome as follows.
+		enabled/disabled (e.g. by fifo command). These robustness problems are overcome as follows.
 	</para>
 
 	<para>
@@ -120,6 +120,8 @@
 				<emphasis>tm module</emphasis> - (optional) if you want to
 				have rtpengine_manage() fully functional
 			</para>
+			</listitem>
+			<listitem>
 			<para>
 				<emphasis>lwsc module</emphasis> - (optional) if you plan to use
 				<quote>wsapi</quote>	parameter
@@ -217,20 +219,20 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>1</quote> (enabled).
+			Default value is <quote>0</quote> (disabled).
 		</emphasis>
 		</para>
 		<para>
 			Can be set at runtime, e.g.:
 			<programlisting>
-			$ &sercmd; cfg.set_now_int rtpengine aggressive_redetection 0
+			$ &sercmd; cfg.set_now_int rtpengine aggressive_redetection 1
 			</programlisting>
 		</para>
 		<example>
 		<title>Set <varname>aggressive_redetection</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("rtpengine", "aggressive_redetection", 0)
+modparam("rtpengine", "aggressive_redetection", 1)
 ...
 </programlisting>
 		</example>
@@ -266,7 +268,7 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
 		Enable this setting to allow finishing the current sessions while denying new sessions for deactivated nodes.
 		</para>
 		<para>Nodes can be <emphasis>manually deactivated </emphasis> via kamctl command i.e. "disabled(permanent)" nodes.
-		Probably the manually deactivated machine is still running(did not crash).
+		Probably the manually deactivated machine is still running (did not crash).
 		</para>
 		<para>
 		This is <emphasis>useful</emphasis> when deactivating a node for maintenance and
@@ -476,6 +478,32 @@ route {
 		</example>
 	</section>
 
+	<section id="rtpengine.p.write_sdp_pv_mode">
+		<title><varname>write_sdp_pv_mode</varname> (int)</title>
+		<para>
+			If this parameter is set to 1, the returned SDP is written to pv
+			and also set to message body.
+		</para>
+		<para>
+			Default value: 0 (write SDP only to pv).
+		</para>
+		<example>
+		<title>Set <varname>write_sdp_pv_mode</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "write_sdp_pv", "$avp(sdp)")
+modparam("rtpengine", "write_sdp_pv_mode", 1)
+...
+route {
+	...
+	rtpengine_manage();
+	xinfo("new sdp: $avp(sdp)\n");
+}
+</programlisting>
+		</example>
+	</section>
+
+
 	<section id="rtpengine.p.rtp_inst_pvar">
 		<title><varname>rtp_inst_pvar</varname> (string)</title>
 		<para>
@@ -534,7 +562,7 @@ modparam("rtpengine", "hash_table_size", 123)
 		</para>
 		<para>
 			NOTE: When configuring this parameter, one should consider maximum call time
-			VS share memory for unfinished calls.
+			VS shared memory for unfinished calls.
 		</para>
 		<example>
 		<title>Set <varname>hash_table_tout</varname> parameter</title>
@@ -592,7 +620,7 @@ modparam("rtpengine", "table_name", "rtpengine_table_name")
 		</example>
 
 		<example>
-		<title>Setup <varname>rtpengine</varname> table</title>
+		<title>Se tup <varname>rtpengine</varname> table</title>
 <programlisting format="linespecific">
 mysql> describe rtpengine;
 +----------+------------------+------+-----+---------------------+-------+
@@ -758,14 +786,14 @@ modparam("rtpengine", "media_duration", "$avp(MEDIA_DURATION)")
 	<section id="rtpengine.p.mos_min_pv">
 		<title><varname>mos_min_pv</varname> (string)</title>
 		<para>
-			The name of a pseudovariable to hold the minimum encountered MOS value for the call.
-			The value typically has a range of 1.0 through 5.0.
+			The name of a pseudovariable to hold the minimum encountered MOS (Mean Opinion
+			Score) value for the call. The value typically has a range of 1.0 through 5.0.
 		</para>
 		<para>
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -887,7 +915,7 @@ modparam("rtpengine", "mos_min_roundtrip_pv", "$avp(mos_min_roundtrip)")
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -1008,7 +1036,7 @@ modparam("rtpengine", "mos_max_roundtrip_pv", "$avp(mos_max_roundtrip)")
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -1129,7 +1157,10 @@ modparam("rtpengine", "mos_average_samples_pv", "$avp(mos_average_samples)")
 			If set, all the statistics pseudovariables with the <quote>_A</quote> suffix will
 			be filled in
 			with statistics only from the call legs that match the label given in this
-			variable.
+			variable. You need to fill this variable before invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote>. Variable value should match the
+			<emphasis>label=</emphasis> flag on <quote>rtpengine_offer</quote>,
+			<quote>rtpengine_answer</quote>, or <quote>rtpengine_manage</quote>.
 		</para>
 		<para>
 			There is no default value.
@@ -1155,7 +1186,7 @@ modparam("rtpengine", "mos_A_label_pv", "$avp(mos_A_label)")
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -1324,7 +1355,7 @@ modparam("rtpengine", "mos_min_roundtrip_leg_A_pv", "$avp(mos_min_roundtrip_leg_
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -1493,7 +1524,7 @@ modparam("rtpengine", "mos_max_roundtrip_leg_A_pv", "$avp(mos_max_roundtrip_leg_
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -1661,7 +1692,10 @@ modparam("rtpengine", "mos_average_samples_A_pv", "$avp(mos_average_samples_A)")
 			If set, all the statistics pseudovariables with the <quote>_B</quote> suffix will
 			be filled in
 			with statistics only from the call legs that match the label given in this
-			variable.
+			variable. You need to fill this variable before invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote>. Variable value should match the
+			<emphasis>label=</emphasis> flag on <quote>rtpengine_offer</quote>,
+			<quote>rtpengine_answer</quote>, or <quote>rtpengine_manage</quote>.
 		</para>
 		<para>
 			There is no default value.
@@ -1687,7 +1721,7 @@ modparam("rtpengine", "mos_B_label_pv", "$avp(mos_B_label)")
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -1857,7 +1891,7 @@ modparam("rtpengine", "mos_min_roundtrip_leg_B_pv", "$avp(mos_min_roundtrip_leg_
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -2026,7 +2060,7 @@ modparam("rtpengine", "mos_max_roundtrip_leg_B_pv", "$avp(mos_max_roundtrip_leg_
 			There is no default value.
 		</para>
 		<para>
-			This value is filled in after invoking<quote>rtpengine_delete</quote>,
+			This value is filled in after invoking <quote>rtpengine_delete</quote>,
 			<quote>rtpengine_query</quote>, or <quote>rtpengine_manage</quote> if the
 			command resulted in a deletion of the call (or call branch).
 		</para>
@@ -2186,6 +2220,78 @@ modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
 		</example>
 	</section>
 
+	<section id="rtpengine.p.dtmf_event_callid">
+		<title><varname>dtmf_event_callid</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to be filled in with the callid of the triggered dtmf event.
+		</para>
+		<para>
+			By default, this parameter is not set.
+		</para>
+		<example>
+		<title>Set <varname>dtmf_event_callid</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "dtmf_event_callid", "$avp(dtmf_event_callid)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.dtmf_event_source_tag">
+		<title><varname>dtmf_event_source_tag</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to be filled in with the source tag that triggered the dtmf event.
+		</para>
+		<para>
+			By default, this parameter is not set.
+		</para>
+		<example>
+		<title>Set <varname>dtmf_event_source_tag</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "dtmf_event_source_tag", "$avp(dtmf_event_source_tag)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.dtmf_event_timestamp">
+		<title><varname>dtmf_event_timestamp</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to be filled in with the timestamp when the dtmf event was triggered.
+		</para>
+		<para>
+			By default, this parameter is not set.
+		</para>
+		<example>
+		<title>Set <varname>dtmf_event_timestamp</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "dtmf_event_timestamp", "$avp(dtmf_event_timestamp)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.dtmf_event">
+		<title><varname>dtmf_event</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to be filled in with the triggered DTMF value.
+		</para>
+		<para>
+			By default, this parameter is not set.
+		</para>
+		<example>
+		<title>Set <varname>dtmf_event</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "dtmf_event", "$avp(dtmf_event)")
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="rtpengine.p.control_cmd_tos">
 		<title><varname>control_cmd_tos</varname> (integer)</title>
 		<para>
@@ -2211,9 +2317,9 @@ modparam("rtpengine", "control_cmd_tos", 144)
 	<section id="rtpengine.p.hash_algo">
 		<title><varname>hash_algo</varname> (integer)</title>
 		<para>
-			Hashing algorithm to be used in node selection algorithm. Now there are 2 possibilities: legacy
-			algorithm - 0(very basic hash over callid), SHA1 - 1(apply sha1 over the callid and calculate hash) or
-			CRC32 - 2(calculate crc32 sum over the callid).
+			Hashing algorithm to be used in node selection algorithm. Now there are 3 possibilities: legacy
+			algorithm - 0 (very basic hash over callid), SHA1 - 1 (apply sha1 over the callid and calculate hash) or
+			CRC32 - 2 (calculate crc32 sum over the callid).
 		</para>
 		<para>
 			Default value is 0, legacy algorithm.
@@ -2251,10 +2357,139 @@ modparam("rtpengine", "wsapi", "lwsc")
 		</example>
 	</section>
 
+	<section id="rtpengine.p.dtmf_events_sock" xreflabel="dtmf_events_sock">
+		<title><varname>dtmf_events_sock</varname> (string)</title>
+		<para>
+		Definition of IPv4/IPv6 UDP socket used to receive dtmf events from RTPEngine.
+		</para>
+		<para>
+		DTMF events coming from RTPEngine will trigger rtpengine:dtmf-event route.
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>NONE</quote> (disabled).
+			</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dtmf_events_sock</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "dtmf_events_sock", "127.0.0.1:2223")
+...
+</programlisting>
+		</example>
+	</section>
 
+	<section id="rtpengine.p.ping_mode">
+		<title><varname>ping_mode</varname> (integer)</title>
+		<para>
+		Specify if the RTPEngine instances have to be pinged at startup to
+		detect if they are active. Set it to 0 to disable pinging and to 1
+		to activate pinging.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ping_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "ping_mode", 0)
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
+<section id="rtpengine.p.ping_interval">
+	<title><varname>ping_interval</varname> (integer)</title>
+	<para>
+		Specify the interval in seconds between pings to all rtpengines registered.
+	</para>
+	<para>
+		<emphasis>
+			Default value is <quote>60</quote>.
+		</emphasis>
+	</para>
+	<example>
+	<title>Set <varname>ping_interval</varname> parameter</title>
+	<programlisting format="linespecific">
+...
+modparam("rtpengine", "ping_interval", 10)
+...
+	</programlisting>
+	</example>
+</section>
+
+<section id="rtpengine.p.enable_dmq">
+	<title><varname>enable_dmq</varname> (integer)</title>
+	<para>
+		If set to 1, will enable DMQ replication of hashtable of (callid, node) pairs.
+	</para>
+	<para>
+	<emphasis>
+		Important: If this parameter is enabled, the DMQ module must be loaded first - otherwise, startup will fail.
+	</emphasis>
+	</para>
+	<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+	</para>
+	<example>
+	<title>Set <varname>enable_dmq</varname> parameter</title>
+	<programlisting format="linespecific">
+...
+modparam("rtpengine", "enable_dmq", 1)
+...
+	</programlisting>
+	</example>
+</section>
+
+<section id="rtpengine.p.dtmf_event_source_label">
+	<title><varname>dtmf_event_source_label</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
+<section id="rtpengine.p.dtmf_event_tags">
+	<title><varname>dtmf_event_tags</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
+<section id="rtpengine.p.dtmf_event_type">
+	<title><varname>dtmf_event_type</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
+<section id="rtpengine.p.dtmf_event_source_ip">
+	<title><varname>dtmf_event_source_ip</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
+<section id="rtpengine.p.dtmf_event_duration">
+	<title><varname>dtmf_event_duration</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
+<section id="rtpengine.p.dtmf_event_volume">
+	<title><varname>dtmf_event_volume</varname> (str)</title>
+	<para>
+	</para>
+</section>
+
+<section id="rtpengine.p.event_callback">
+	<title><varname>event_callback</varname> (str)</title>
+	<para>
+	</para>
+</section>
 
 	<section>
 	<title>Functions</title>
@@ -2279,8 +2514,7 @@ modparam("rtpengine", "wsapi", "lwsc")
 		another time and sends it back to the module to be placed back into the
 		&sip; message. This is useful if you have a set of &rtp; proxies that
 		the caller must use, and another distinct set of &rtp; proxies that the
-		callee must use. This is supported by all rtpengine commands except
-		rtpengine_manage().
+		callee must use.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -2298,7 +2532,7 @@ rtpengine_offer();
 	</section>
 	<section id="rtpengine.f.rtpengine_offer">
 		<title>
-		<function moreinfo="none">rtpengine_offer([flags])</function>
+		<function moreinfo="none">rtpengine_offer([flags][,via-branch])</function>
 		</title>
 		<para>
 		Rewrites &sdp; body to ensure that media is passed through
@@ -2364,7 +2598,8 @@ rtpengine_offer();
 				<emphasis>force-answer</emphasis> - force <quote>answer</quote>, that is,
 				only rewrite &sdp; when corresponding session already exists
 				in the &rtp; proxy. By default is on when the session is to be
-				completed.
+				completed.  This is only necessary when the offer was sent by <function>rtpengine_offer()</function>, and
+				the answer is handled by <function>rtpengine_manage()</function>.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>direction=...</emphasis> - this option specifies a logical network
@@ -2407,7 +2642,7 @@ rtpengine_offer();
 				<listitem><para>
 				<emphasis>force</emphasis> - instructs the &rtp; proxy to ignore marks
 				inserted by another &rtp; proxy in transit to indicate that the
-				session is already goes through another proxy. Allows creating
+				session already goes through another proxy. Allows creating
 				a chain of proxies. Not supported and ignored by Sipwise rtpengine.
 				</para></listitem>
 				<listitem><para>
@@ -2423,7 +2658,7 @@ rtpengine_offer();
 				of ignoring endpoint addresses in the &sdp; body.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>received-from=IP</emphasis> - Configure the SIP-source-address IP 
+				<emphasis>received-from=IP</emphasis> - Configure the SIP-source-address IP
 				explicitly, which will be useful when two kamailio is cascaded where first kamailio
 				is handling NAT and second kamailio RTPEngine.
 				</para></listitem>
@@ -2480,9 +2715,9 @@ rtpengine_offer();
 				transport protocol that should be used towards the recipient of
 				the &sdp;. If none of them are specified, the protocol given in
 				the &sdp; is left untouched. Otherwise, the <quote>SRTP</quote> flag indicates that
-				SRTP should be used, while <quote>RTP</quote> indicates that SRTP should not be used.
-				<quote>AVPF</quote> indicates that the advanced RTCP profile with feedback messages
-				should be used, and <quote>AVP</quote> indicates that the regular RTCP profile
+				SRTP should be used, while <quote>RTP</quote> indicates that both SRTP and AVPF should
+                                not be used. <quote>AVPF</quote> indicates that the advanced RTCP profile with feedback
+				messages should be used, and <quote>AVP</quote> indicates that the regular RTCP profile
 				should be used. See also the next set of flags below.
 				</para></listitem>
 				<listitem><para>
@@ -2586,6 +2821,18 @@ rtpengine_offer();
 				if accepting these parameters is not desired and they should be rejected instead.
 				</para></listitem>
 				<listitem><para>
+				<emphasis>SDES-nonew</emphasis> - don't add any new crypto suites into the offer.
+				This means, offered SDES crypto suites will be accepted, meanwhile no new is going
+				to be generated by RTPEngine. It takes precedence over the `SDES-no` and `SDES-only`
+				flags, if used in combination.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>SDES-pad</emphasis> - RFC 4568 (section 6.1) is somewhat ambiguous regarding
+				the base64 encoding format of `a=crypto` parameters added to an SDP body. The default
+				interpretation is that trailing `=` characters used for padding should be omitted. With
+				this flag set, these padding characters will be left in place.
+				</para></listitem>
+				<listitem><para>
 				<emphasis>unidirectional</emphasis> - allows kernelization of one-way streams
 				in the Sipwise rtpengine proxy. This is especially useful when the first call leg is handled
 				by some rtpengine machine while the second call leg is handled by other rtpengine machine.
@@ -2626,33 +2873,71 @@ rtpengine_offer();
 				</para></listitem>
 
 				<listitem><para>
-				<emphasis>codec-mask=...</emphasis> - Similar to strip except that codecs listed here will still be accepted
+				<emphasis>codec-mask=...</emphasis> - similar to strip except that codecs listed here will still be accepted
 				and used for transcoding on the offering side. Useful only in combination with codec-transcode. <emphasis>all</emphasis> keyword
 				can be used to mask all offered codecs
 				</para></listitem>
+
 				<listitem><para>
-				<emphasis>T.38=decode</emphasis> - If the offered &sdp; contains a media section
+				<emphasis>codec-accept=...</emphasis> - similar to `mask` and `consume` but doesn't remove the codec from the list of
+				offered codecs. This means that a codec listed under `accept` will still be offered
+				to the remote peer, but if the remote peer rejects it, it will still be accepted
+				towards the original offerer and then used for transcoding. It is a more selective
+				version of what the `always transcode` flag does.
+				</para></listitem>
+
+				<listitem><para>
+				<emphasis>codec-consume=...</emphasis> - identical to mask but enables the transcoding engine even if no other transcoding
+				related options are given.
+				</para></listitem>
+
+				<listitem><para>
+				<emphasis>T.38=decode</emphasis> - if the offered &sdp; contains a media section
 				advertising T.38 over UDPTL, translate it to a regular audio media section
 				over RTP. By default, PCMU and PCMA will be used as audio codecs, but that can
-				be overriden using the codec options described above. Other transport protocols
+				be overridden using the codec options described above. Other transport protocols
 				(e.g. SRTP) can also be selected in the same way. If the offered &sdp; does not
 				contain a T.38 section, then this flag has no effect.
 				</para></listitem>
+
 				<listitem><para>
-				<emphasis>T.38=force</emphasis> - Any audio media section (over RTP) in the
+				<emphasis>T.38=force</emphasis> - any audio media section (over RTP) in the
 				offered &sdp; will be translated into a T.38 section over UDPTL.
 				</para></listitem>
+
 				<listitem><para>
-				<emphasis>T.38=stop</emphasis> - Stops a previously established T.38 to audio
+				<emphasis>T.38=stop</emphasis> - stops a previously established T.38 to audio
 				gateway and reverts the session back to media passthrough. This is useful when
 				handling a rejected T.38 offer.
+				</para></listitem>
+
+				<listitem><para>
+				<emphasis>label=...</emphasis> - adds a label to a current stream, that later
+				can be used to get call quality stats, see <quote>mos_A_label_pv</quote>
+				and <quote>mos_B_label_pv</quote> parameters.
 				</para></listitem>
 			</itemizedlist>
 			<para>
 			 Check also the documentation of RTPEngine, these flags are documented there as well:
 			<ulink url="https://github.com/sipwise/rtpengine">https://github.com/sipwise/rtpengine</ulink>.
 			</para>
-		</listitem>
+			</listitem>
+			<listitem>
+			<para>
+			<emphasis>via-branch</emphasis> - provide the via-branch taken from one of SIP message Via headers.
+			</para>
+			<para>The <quote>via-branch</quote> parameter helps to match NG command (offer, answer, delete etc.) to particular monologue.
+			It does the same job as the <quote>via-branch</quote> option flag, but it also enables alternative parsing behavior,
+			when option flags are passed to rtpengine using bencode string format and is then parsed there.
+			The benefit of the second approach is that any new flags supported by rtpengine
+			will automatically be supported without having to worry about support in the control module.
+			Regardless whether the flags parsing is done by the module or daemon,
+			a functional behavior remains the same and has no difference in terms of SDP processing.
+			Possible values are the same as for the <quote>via-branch</quote> option flag.
+			If the newer approach is to be applied, but no <quote>via-branch</quote> is meant to be
+			added for identfication, then <quote>none</quote> can be given instead.
+			This parameter can be applied for the rtpengine versions equal or later than mr12.4.</para>
+			</listitem>
 		</itemizedlist>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -2699,10 +2984,51 @@ if (has_body("application/sdp")) {
 ...
 </programlisting>
                 </example>
+		<example>
+			<title><function>rtpengine_offer</function> usage to force transcoding from opus to PCMU</title>
+		<programlisting format="linespecific">
+route {
+...
+    if (is_method("INVITE")) {
+        if (has_body("application/sdp")) {
+            if (rtpengine_offer("codec-mask=opus codec-accept=opus codec-strip=PCMU codec-transcode=PCMU"))
+                t_on_reply("1");
+        }
+    }
+...
+}
+
+onreply_route[1]
+{
+...
+    if (has_body("application/sdp"))
+        rtpengine_answer("codec-strip=PCMU codec-strip=PCMA");
+...
+}
+...
+</programlisting>
+                </example>
+
+
+		<example>
+		<title><function>rtpengine_offer</function> usage of via-branch parameter</title>
+		<programlisting format="linespecific">
+route {
+...
+    if (is_method("INVITE")) {
+        if (has_body("application/sdp")) {
+            if (rtpengine_offer("replace-origin replace-session-connection strict-source label=callee OSRTP-accept transport-protocol=RTP/AVP address-family=IP4", "auto-next"))
+                t_on_reply("1");
+        }
+    }
+...
+}
+		</programlisting>
+		</example>
 	</section>
 	<section id="rtpengine.f.rtpengine_answer">
 		<title>
-			<function moreinfo="none">rtpengine_answer([flags])</function>
+			<function moreinfo="none">rtpengine_answer([flags][,via-branch])</function>
 		</title>
 		<para>
 		Rewrites &sdp; body to ensure that media is passed through
@@ -2727,7 +3053,7 @@ if (has_body("application/sdp")) {
 	</section>
 	<section id="rtpengine.f.rtpengine_info">
 		<title>
-		<function moreinfo="none">rtpengine_info([flags])</function>
+		<function moreinfo="none">rtpengine_info([flags][,via-branch])</function>
 		</title>
 		<para>
 		Send an updated offer to rtpengine. This is meant to be used when processing
@@ -2755,7 +3081,7 @@ rtpengine_info();
 	</section>
 	<section id="rtpengine.f.rtpengine_delete">
 		<title>
-		<function moreinfo="none">rtpengine_delete([flags])</function>
+		<function moreinfo="none">rtpengine_delete([flags][,via-branch])</function>
 		</title>
 		<para>
 		Tears down the RTP proxy session for the current call.
@@ -2777,9 +3103,25 @@ rtpengine_delete();
 </programlisting>
 		</example>
 	</section>
+	<section id="rtpengine.f.rtpengine_destroy">
+		<title>
+		<function moreinfo="none">rtpengine_destroy([flags][,via-branch])</function>
+		</title>
+		<para>
+		Same as rtpengine_delete().
+		</para>
+		<example>
+		<title><function>rtpengine_destroy</function> usage</title>
+		<programlisting format="linespecific">
+...
+rtpengine_destroy();
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="rtpengine.f.rtpengine_query">
 		<title>
-		<function moreinfo="none">rtpengine_query([flags])</function>
+		<function moreinfo="none">rtpengine_query([flags][,via-branch])</function>
 		</title>
 		<para>
 		Queries the &rtp; proxy about the current status and statistics of a running
@@ -2834,7 +3176,7 @@ if(rtpengine_query_v("j", "$var(rdata)")) {
 
 	<section id="rtpengine.f.rtpengine_manage">
 	<title>
-		<function moreinfo="none">rtpengine_manage([flags])</function>
+		<function moreinfo="none">rtpengine_manage([flags][,via-branch])</function>
 	</title>
 		<para>
 		Manage the RTPEngine session - it combines the functionality of
@@ -2910,8 +3252,292 @@ rtpengine_manage();
 </programlisting>
 		</example>
         </section>
+		<section id="rtpengine.f.rtpengine_subscribe_request">
+			<title>
+				<function moreinfo="none">rtpengine_subscribe_request(flags,sdp_avp,to_tag_avp,stream_xavp[,via-branch])</function>
+			</title>
+			<para>
+				Generates &sdp; body for forking the current &rtp; stream and stores it in the
+				xavp specified <quote>sdp_avp</quote> AVP. The new call leg will be identified
+				by the generated (or specified) to tag that will be put in the
+				<quote>to_tag_avp</quote> AVP.
+				on INVITE for the cases the &sdp; bodies are in INVITE and 200 OK and on 200 OK
+				when &sdp; bodies are in 200 OK and ACK.
+			</para>
+			<para>
+				The function will return true on success and false (-1) on various failures,
+				like using rtpengine_subscribe_request() before an rtpengine session was established.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>flags</emphasis> - flags to turn on some features.
+					</para>
+					<para>The <quote>flags</quote> string is a list of space-separated items. Each item
+						is either an individual token, or a token in <quote>key=value</quote> format. The
+						possible tokens are described below. This offer SDP can be manipulated with the same flags as
+						used in <function>rtpengine_offer</function> additionally, the following extra flags can be used
+					</para>
+					<itemizedlist>
+						<listitem><para>
+							<emphasis>from-tags=...</emphasis> - Specifies which participants in the call should have
+							their media forked. This value can be repeated multiple times to specify multiple
+							participants. To specify all participants, use <quote>all</quote> as an alternative.
+						</para></listitem>
+						<listitem><para>
+							<emphasis>all</emphasis> - forks the media stream for all participants in the call. Use
+							instead of <quote>from-tags=...</quote>
+						</para></listitem>
+						<listitem><para>
+							<emphasis>siprec</emphasis> - indicates that the &sdp; should be in SIPREC format. The flag
+							<quote>all</quote> should also be used in this case.
+						</para></listitem>
+					</itemizedlist>
+					<para>
+						Check also the documentation of RTPEngine, these flags are documented there as well:
+						<ulink url="https://github.com/sipwise/rtpengine">https://github.com/sipwise/rtpengine</ulink>.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>sdp_avp</emphasis> - the name of the AVP where the generated &sdp; will be stored.
+					</para>
+					<para>The <quote>sdp_avp</quote> parameter is mandatory and must be a writable AVP.
+						The AVP will be set to the generated &sdp; body, which can then be used in a subsequent
+						<quote>t_uac_send()</quote> call to send the offer to the new participant.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>to_tag_avp</emphasis> - the name of the AVP where to store the to tag of the new call
+						leg.
+					</para>
+					<para>The <quote>to_tag_avp</quote> parameter is mandatory and must be a writable AVP.
+						The to tag will either be auto generated or taken from the value specified in the
+						<quote>to-tag</quote> flag.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>stream_xavp</emphasis> - XAVP to store the stream information.
+					</para>
+					<para>The <quote>stream_xavp</quote> parameter is mandatory and must be a writable XAVP.
+						The XAVP will be a stack, one for each participant. Each stack element will have
+						a key <quote>tag</quote> to identify the participant, and a key <quote>label</quote> which is
+						an array of labels, (each stream in the &rtp; will have a label attribute in the generated &sdp;).
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>via-branch</emphasis> - provide the via-branch taken from one of SIP message Via headers.
+					</para>
+					<para>The <quote>via-branch</quote> parameter helps to match NG command (offer, answer, delete etc.) to particular monologue.
+						It does the same job as the <quote>via-branch</quote> option flag, but it also enables alternative parsing behavior,
+						when option flags are passed to rtpengine using bencode string format and is then parsed there.
+						The benefit of the second approach is that any new flags supported by rtpengine
+						will automatically be supported without having to worry about support in the control module.
+						Regardless whether the flags parsing is done by the module or daemon,
+						a functional behavior remains the same and has no difference in terms of SDP processing.
+						Possible values are the same as for the <quote>via-branch</quote> option flag.
+						If the newer approach is to be applied, but no <quote>via-branch</quote> is meant to be
+						added for identfication, then <quote>none</quote> can be given instead.
+						This parameter can be applied for the rtpengine versions equal or later than mr12.4.</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>via-branch</emphasis> - provide the via-branch taken from one of SIP message Via headers.
+					</para>
+					<para>The <quote>via-branch</quote> parameter helps to match NG command (offer, answer, delete etc.) to particular monologue.
+						It does the same job as the <quote>via-branch</quote> option flag, but it also enables alternative parsing behavior,
+						when option flags are passed to rtpengine using bencode string format and is then parsed there.
+						The benefit of the second approach is that any new flags supported by rtpengine
+						will automatically be supported without having to worry about support in the control module.
+						Regardless whether the flags parsing is done by the module or daemon,
+						a functional behavior remains the same and has no difference in terms of SDP processing.
+						Possible values are the same as for the <quote>via-branch</quote> option flag.
+						If the newer approach is to be applied, but no <quote>via-branch</quote> is meant to be
+						added for identfication, then <quote>none</quote> can be given instead.
+						This parameter can be applied for the rtpengine versions equal or later than mr12.4.</para>
+				</listitem>
+			</itemizedlist>
+			<para>
+				This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>rtpengine_off</function> usage</title>
+				<programlisting format="linespecific">
+route {
+...
+    if (is_method("INVITE")) {
+        if (has_body("application/sdp")) {
+            if (rtpengine_offer())
+                t_on_reply("1");
+		}
+    }
+...
+}
 
-	<section id="rtpengine.f.start_recording">
+onreply_route[1]
+{
+...
+    if (has_body("application/sdp")) {
+        rtpengine_answer();
+        rtpengine_subscribe_request("all siprec", "$avp(siprec_offer)",
+                                    "$avp(siprec_to_tag)", "siprec_streams");
+        xinfo("SIPREC participant $xavp(siprec_streams[0]=>tag) with label $xavp(siprec_streams[0]=>label[0])\n");
+        xinfo("SIPREC participant $xavp(siprec_streams[1]=>tag) with label $xavp(siprec_streams[0]=>label[0])\n");
+        #use the above steam information to build the siprec xml metadata, will just send sdp in this example
+        $dlg_var(orig_to_tag) = $tt;
+        $dlg_var(siprec_contact) = "sip:uac@" + $Ri;
+        $dlg_var(siprec_to_tag) = $avp(siprec_to_tag);
+        t_uac_send("INVITE","sip:siprec@siprec_server.example.com",
+                   "siprec_server.example.com", "",
+                   "To: &lt;$tu&gt;\r\n" +
+                   "From: &lt;$fu&gt;\r\n" +
+                   "Contact: &lt;$dlg_var(siprec_contact)&gt;\r\n" +
+                   "Content-Type: application/sdp\r\n",
+                   $avp(siprec_offer));
+	}
+...
+}
+
+event_route [tm:local-request] {
+    if (is_method("INVITE")) {
+        # save information from the original dialog to the new invite transaction
+        $avp(orig_callid) = $dlg(callid);
+        $avp(orig_from_tag) = $dlg(from_tag);
+        $avp(orig_to_tag) = $dlg_var(orig_to_tag);
+        $avp(siprec_to_tag) = $dlg_var(siprec_to_tag);
+        $avp(siprec_contact) = $dlg_var(siprec_contact);
+        t_on_reply("2");
+    }
+    if (is_method("ACK")) {
+        # save the routeset in the original dialog
+        dlg_get($avp(orig_callid), $avp(orig_from_tag), $avp(orig_to_tag));
+        $dlg_var(siprec_cseq) = $cs;
+        $dlg_var(siprec_to_hdr) = $hdr(To);
+        $dlg_var(siprec_from_hdr) = $hdr(From);
+        append_hf("Contact: &lt;$dlg_var(siprec_contact)&gt;\r\n");
+
+        # the same dialog information can be used to send the BYE with t_uac_send
+    }
+}
+
+onreply_route[1] {
+    if (has_body("application/sdp")) {
+       rtpengine_subscribe_answer("from-tag=$avp(orig_from_tag) to-tag=$avp(siprec_to_tag) call-id="$avp(orig_callid)");
+    }
+}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="rtpengine.f.rtpengine_subscribe_answer">
+			<title>
+				<function moreinfo="none">rtpengine_subscribe_answer([flags][,via-branch])</function>
+			</title>
+			<para>
+				Sends the &sdp; answer from the recording server to the rtpengine
+			</para>
+
+			<para>
+				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+				FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>flags</emphasis>
+						- flags to turn on some features.
+					</para>
+					<para>The <quote>flags</quote> string is a list of space-separated items. Each item
+						is either an individual token, or a token in <quote>key=value</quote> format. The
+						possible tokens are described below. This offer SDP can be manipulated with the same flags as
+						used in <function>rtpengine_offer</function> additionally, the following extra flags can be used
+					</para>
+					<itemizedlist>
+						<listitem><para>
+							<emphasis>to-tag=...</emphasis> - value of the to tag returned by
+							<quote>rtpengine_subscribe_request</quote>
+						</para></listitem>
+						<listitem><para>
+							<emphasis>from-tag=...</emphasis> - value of the from tag of the original call.
+						</para></listitem>
+						<listitem><para>
+							<emphasis>call-id=...</emphasis> - value of the call id of the original call.
+						</para></listitem>
+					</itemizedlist>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>rtpengine_subscribe_answer</function> usage</title>
+				<para>
+					See rtpengine_subscribe_request() function example above for example.
+				</para>
+			</example>
+		</section>
+		<section id="rtpengine.f.rtpengine_unsubscribe">
+			<title>
+				<function moreinfo="none">rtpengine_unsubscribe([flags][,via-branch])</function>
+			</title>
+			<para>
+				Sends the &sdp; answer from the recording server to the rtpengine
+			</para>
+
+			<para>
+				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+				FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>flags</emphasis>
+						- flags to turn on some features.
+					</para>
+					<para>The <quote>flags</quote> string is a list of space-separated items. Each item
+						is either an individual token, or a token in <quote>key=value</quote> format. The
+						possible tokens are described below. This offer SDP can be manipulated with the same flags as
+						used in <function>rtpengine_offer</function> additionally, the following extra flags can be used
+					</para>
+					<itemizedlist>
+						<listitem><para>
+							<emphasis>to-tag=...</emphasis> - value of the to tag returned by
+							<quote>rtpengine_subscribe_request</quote>
+						</para></listitem>
+						<listitem><para>
+							<emphasis>from-tag=...</emphasis> - value of the from tag of the original call.
+						</para></listitem>
+						<listitem><para>
+							<emphasis>call-id=...</emphasis> - value of the call id of the original call.
+						</para></listitem>
+					</itemizedlist>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>rtpengine_unsubscribe</function> usage</title>
+				<para>
+					<programlisting format="linespecific">
+event_route [dialog:end] {
+    #call over, stop recording
+    rtpengine_unsubscribe("from-tag=$avp(orig_from_tag) to-tag=$avp(siprec_to_tag) call-id="$avp(orig_callid)");
+    $var(new_cseq) = $dlg_var(siprec_cseq) + 1;
+    t_uac_send("BYE", "sip:siprec@siprec_server.example.com",
+               "siprec_server.example.com", "",
+               "To: &lt;$dlg_var(siprec_to_hdr)&gt;\r\n" +
+               "From: &lt;$dlg_var(siprec_from_hdr)&gt;\r\n" +
+               "Call-ID: $avp(siprec_callid)\r\n" +
+               "CSeq: $var(new_cseq) BYE\r\n" +
+               "Contact: $lt;$dlg_var(siprec_contact)&gt;\r\n");
+}
+...
+					</programlisting>
+				</para>
+			</example>
+		</section>
+		<section id="rtpengine.f.start_recording">
 		<title>
 		<function moreinfo="none">start_recording([flags])</function>
 		</title>
@@ -3332,7 +3958,7 @@ $ &kamcmd; rtpengine.reload
 				Displays <emphasis>success</emphasis> or <emphasis>fail</emphasis> when try to enable/disable.
 			</para>
 			<para>
-			NOTE: If a &rtp; proxy is defined multiple times (in the same or diferent sets), all of its instances will be enabled/disabled.
+			NOTE: If a &rtp; proxy is defined multiple times (in the same or different sets), all of its instances will be enabled/disabled.
 			</para>
 			<para>
 			NOTE: If a &rtp; proxy is in the disabled permanent state and one tries to enable it, even if the ping fails,
@@ -3437,4 +4063,26 @@ $ &kamcmd; rtpengine.get_hash_total
 
 	</section>
 
+	<section id="rtpengine.ex.event_routes">
+        <title>Event routes</title>
+        <section>
+			<title>
+			<function moreinfo="none">rtpengine:dtmf-event</function>
+			</title>
+			<para>
+			When defined, the module calls event_route[rtpengine:dtmf-event]
+			when a DTMF is received.
+			</para>
+			<programlisting  format="linespecific">
+...
+event_route[rtpengine:dtmf-event] {
+    xlog("L_INFO", "callid: $avp(dtmf_event_callid)\n");
+	xlog("L_INFO", "source_tag: $avp(dtmf_event_source_tag)\n");
+	xlog("L_INFO", "timestamp: $avp(dtmf_event_timestamp)\n");
+	xlog("L_INFO", "dtmf: $avp(dtmf_event)\n");
+}
+...
+			</programlisting>
+		</section>
+    </section>
 </chapter>

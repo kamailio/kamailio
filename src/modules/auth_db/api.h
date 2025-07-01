@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -15,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -27,16 +29,17 @@
 #include "../../core/sr_module.h"
 #include "../../core/parser/msg_parser.h"
 
-typedef int (*digest_authenticate_f)(struct sip_msg* msg, str *realm,
-				str *table, hdr_types_t hftype, str *method);
+typedef int (*digest_authenticate_f)(struct sip_msg *msg, str *realm,
+		str *table, hdr_types_t hftype, str *method);
 /**
  * @brief AUTH_DB API structure
  */
-typedef struct auth_db_api {
+typedef struct auth_db_api
+{
 	digest_authenticate_f digest_authenticate;
 } auth_db_api_t;
 
-typedef int (*bind_auth_db_f)(auth_db_api_t* api);
+typedef int (*bind_auth_db_f)(auth_db_api_t *api);
 
 /**
  * @brief Load the SL API
@@ -50,8 +53,7 @@ static inline int auth_db_load_api(auth_db_api_t *api)
 		LM_ERR("cannot find bind_auth_db\n");
 		return -1;
 	}
-	if (bindauthdb(api)==-1)
-	{
+	if(bindauthdb(api) == -1) {
 		LM_ERR("cannot bind authdb api\n");
 		return -1;
 	}

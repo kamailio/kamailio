@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -26,7 +28,7 @@
  * \ingroup sst
  * Module: \ref sst
  */
- 
+
 
 #ifndef _SST_HANDLERS_H_
 #define _SST_HANDLERS_H_
@@ -39,19 +41,21 @@
 /*! \brief
  * Fag values used in the sst_info_t See below.
  */
-enum sst_flags {
-	SST_UNDF=0,             /* 0 - --- */
-	SST_UAC=1,              /* 1 - 2^0 */
-	SST_UAS=2,              /* 2 - 2^1 */
-	SST_PXY=4,              /* 4 - 2^2 */
-	SST_NSUP=8              /* 8 - 2^3 */
+enum sst_flags
+{
+	SST_UNDF = 0, /* 0 - --- */
+	SST_UAC = 1,  /* 1 - 2^0 */
+	SST_UAS = 2,  /* 2 - 2^1 */
+	SST_PXY = 4,  /* 4 - 2^2 */
+	SST_NSUP = 8  /* 8 - 2^3 */
 };
 
 /** \brief
  * The local state required to figure out if and who supports SST and
  * if and who will be the refresher.
  */
-typedef struct sst_info_st {
+typedef struct sst_info_st
+{
 	enum sst_flags requester;
 	enum sst_flags supported;
 	unsigned int interval;
@@ -61,8 +65,8 @@ typedef struct sst_info_st {
 /** \brief
  * The static (opening) callback function for all dialog creations
  */
-void sst_dialog_created_CB(struct dlg_cell *did, int type, 
-		struct dlg_cb_params * params);
+void sst_dialog_created_CB(
+		struct dlg_cell *did, int type, struct dlg_cb_params *params);
 
 /** \brief
  * The script function
@@ -74,7 +78,7 @@ int ki_sst_check_min(struct sip_msg *msg, int flag);
 /** \brief
  * The handlers initializer function
  */
-void sst_handler_init(pv_spec_t *timeout_avp, unsigned int minSE, 
-		int flag, unsigned int reject);
+void sst_handler_init(pv_spec_t *timeout_avp, unsigned int minSE, int flag,
+		unsigned int reject);
 
 #endif /* _SST_HANDLERS_H_ */

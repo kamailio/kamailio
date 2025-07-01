@@ -6,7 +6,7 @@
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
- * Fruanhofer Institute. It was and still is maintained in a separate
+ * Fraunhofer FOKUS Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
@@ -16,7 +16,7 @@
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
  *
- * NB: Alot of this code was originally part of OpenIMSCore,
+ * NB: A lot of this code was originally part of OpenIMSCore,
  * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
  * Thanks for great work! This is an effort to
@@ -26,6 +26,8 @@
  * to manage in the Kamailio/SR environment
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,15 +70,15 @@
  * \param _ci contact informations
  * \return new created contact on success, 0 on failure
  */
-ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
-		ucontact_info_t* _ci);
+ucontact_t *new_ucontact(
+		str *_dom, str *_aor, str *_contact, ucontact_info_t *_ci);
 
 
 /*!
  * \brief Free all memory associated with given contact structure
  * \param _c freed contact
  */
-void free_ucontact(ucontact_t* _c);
+void free_ucontact(ucontact_t *_c);
 
 
 /*!
@@ -84,7 +86,7 @@ void free_ucontact(ucontact_t* _c);
  * \param _f output file
  * \param _c printed contact
  */
-void print_ucontact(FILE* _f, ucontact_t* _c);
+void print_ucontact(FILE *_f, ucontact_t *_c);
 
 
 /*!
@@ -93,7 +95,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c);
  * \param _ci contact informations
  * \return 0
  */
-int mem_update_ucontact(ucontact_t* _c, ucontact_info_t *_ci);
+int mem_update_ucontact(ucontact_t *_c, ucontact_info_t *_ci);
 
 
 /* ====== Module interface ====== */
@@ -105,14 +107,15 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t *_ci);
  * \param _ci new contact informations
  * \return 0 on success, -1 on failure
  */
-int update_scontact(struct impurecord* _r, ucontact_t* _c, ucontact_info_t* _ci);
+int update_scontact(
+		struct impurecord *_r, ucontact_t *_c, ucontact_info_t *_ci);
 
 /*!
  * \brief Setting contact expires to now in memory
  * \param _c contact
   * \return 0 on success, -1 on failure
  */
-int mem_expire_ucontact(ucontact_t* _c);
+int mem_expire_ucontact(ucontact_t *_c);
 
 /*!
  * \brief Setting ucontact expires to now
@@ -120,12 +123,14 @@ int mem_expire_ucontact(ucontact_t* _c);
  * \param _c updated contact
  * \return 0 on success, -1 on failure
  */
-int expire_scontact(struct impurecord* _r, ucontact_t* _c);
+int expire_scontact(struct impurecord *_r, ucontact_t *_c);
 
-int remove_dialog_data_from_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id);
+int remove_dialog_data_from_contact(
+		ucontact_t *_c, unsigned int h_entry, unsigned int h_id);
 
-int add_dialog_data_to_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id);
+int add_dialog_data_to_contact(
+		ucontact_t *_c, unsigned int h_entry, unsigned int h_id);
 
-void release_scontact(struct ucontact* _c);
+void release_scontact(struct ucontact *_c);
 
 #endif

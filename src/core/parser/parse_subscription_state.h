@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,14 +31,16 @@
 
 #include "hf.h"
 
-typedef enum {
+typedef enum
+{
 	ss_active,
 	ss_pending,
 	ss_terminated,
 	ss_extension
 } substate_value_t;
 
-typedef struct _subscription_state_t {
+typedef struct _subscription_state_t
+{
 	substate_value_t value;
 	unsigned int expires;
 	int expires_set; /* expires is valid if nonzero here */

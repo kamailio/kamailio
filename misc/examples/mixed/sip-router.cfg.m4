@@ -76,7 +76,7 @@ loadmodule "/usr/local/lib/sip-router/modules/domain.so"
 modparam("usrloc|acc|auth_db|group|msilo", "db_url", "sql://sip-router:heslo@localhost/sip-router")
 
 # -- usrloc params --
-/* 0 -- dont use mysql, 1 -- write_through, 2--write_back */
+/* 0 -- don't use mysql, 1 -- write_through, 2 -- write_back */
 modparam("usrloc", "db_mode", 2)
 modparam("usrloc", "timer_interval", 10)
 
@@ -187,7 +187,7 @@ route {
 
 
         # anti-spam -- if somene claims to belong to our domain in From,
-        # challenge him (skip REGISTERs -- we will chalenge them later)
+        # challenge him (skip REGISTERs -- we will challenge them later)
         if (search("(From|F):.*@SER_HOST_REGEX")) {
                 # invites forwarded to other domains, like FWD may cause subsequent 
                 # request to come from there but have iptel in From -> verify
@@ -297,8 +297,8 @@ route {
                 break;
         };
 
-        # some UACs might be fooled by Contacts our UACs generate to make MSN
-        # happy (web-im, e.g.) -- tell its urneachable
+        # some UACs might be fooled by Contacts our UACs generated to make MSN
+        # happy (web-im, e.g.) -- tell it is unreachable
         if (uri =~ "sip:daemon@") {
                 sl_send_reply("410", "Daemon is gone");
                 break;
@@ -317,7 +317,7 @@ route {
                 break;
         };
 
-	# Remove leading + if it is a number begining with +
+	# Remove leading + if it is a number beginning with +
 	if (uri =~ "^[a-zA-Z]+:\+[0-9]+@") {
 		strip(1);
 		prefix("00");
@@ -372,7 +372,7 @@ route {
 }
 
 #
-# Forcing media relay if necesarry
+# Forcing media relay if necessary
 #
 route[NAT_ROUTE] {
     if (uri=~"[@:](192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)" && !search("^Route:")) {
@@ -384,7 +384,7 @@ route[NAT_ROUTE] {
             	force_rtp_proxy();
 		append_hf("P-RTP-Proxy: YES\r\n");
 	    };
-            append_hf("P-NATed-Calee: Yes\r\n");
+            append_hf("P-NATed-Callee: Yes\r\n");
     };
 
     # nat processing of replies; apply to all transactions (for example,

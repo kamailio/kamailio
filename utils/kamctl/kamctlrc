@@ -13,7 +13,7 @@
 ## database type: MYSQL, PGSQL, ORACLE, DB_BERKELEY, DBTEXT, or SQLITE
 ## by default none is loaded
 ##
-## If you want to setup a database with kamdbctl, you must at least specify
+## If you want to set up a database with kamdbctl, you must at least specify
 ## this parameter.
 # DBENGINE=MYSQL
 
@@ -44,6 +44,14 @@
 ## database access host (from where is kamctl used)
 # DBACCESSHOST=192.168.0.1
 
+## database host for super user (useful for specifying a local socket or virtual hostname)
+# defaults to value of DBHOST when not set
+# DBROOTHOST="localhost"
+
+## database port for super user (on some DB specifying the port will force TCP connections)
+# default value will depend on client DB tool
+# DBROOTPORT=""
+
 ## database super user (for ORACLE this is 'scheme-creator' user)
 # DBROOTUSER="root"
 
@@ -71,8 +79,9 @@
 # DEFAULT_Q="1.0"
 
 
-## Program to calculate a message-digest fingerprint
-# MD5="md5sum"
+## Program to calculate the MD5/SHA256 message-digest fingerprint
+# - md5sum, sha256sum
+# CMDHASH="md5sum"
 
 ## awk tool
 # AWK="awk"
@@ -158,6 +167,10 @@
 ## Kamailio START Options
 ## PID file path - default is: /run/kamailio/kamailio.pid
 # PID_FILE=/run/kamailio/kamailio.pid
+
+## Kamailio Startup Configuration File
+## Default is: kamailio.cfg
+# STARTUP_CONFIG_FILE=kamailio.cfg
 
 ## Extra start options - default is: not set
 ## example: start Kamailio with 64MB shared memory: STARTOPTIONS="-m 64"

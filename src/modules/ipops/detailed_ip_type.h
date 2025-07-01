@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -31,16 +33,18 @@
 #include <stdint.h>
 #include "../../core/str.h"
 
-typedef struct ip4_node {
-    uint32_t value;
-    char *ip_type;
-    uint32_t sub_mask;
+typedef struct ip4_node
+{
+	uint32_t value;
+	char *ip_type;
+	uint32_t sub_mask;
 } ip4_node;
 
-typedef struct ip6_node {
-    uint32_t value[4];
-    char *ip_type;
-    uint32_t sub_mask[4];
+typedef struct ip6_node
+{
+	uint32_t value[4];
+	char *ip_type;
+	uint32_t sub_mask[4];
 } ip6_node;
 
 void ipv6ranges_hton();

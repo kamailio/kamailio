@@ -10,7 +10,7 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-    
+
     <title>&develguide;</title>
     <para>
 	According to the specification a new <quote>Diversion</quote> header field should be inserted

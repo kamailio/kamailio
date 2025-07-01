@@ -17,7 +17,7 @@ as a conffile.
 * Kamailio setup
 ----------------
 
-To setup Kamailio, you need to:
+To set Kamailio up, you need to:
  - configure Kamailio properly to suit your needs
  - edit /etc/default/kamailio, adjust the MEMORY parameter and set
    RUN_KAMAILIO to "yes"

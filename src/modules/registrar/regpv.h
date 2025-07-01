@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -34,27 +36,25 @@
 #include "../../core/kemi.h"
 #include "../../modules/usrloc/usrloc.h"
 
-int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
-int pv_set_ulc(struct sip_msg* msg, pv_param_t *param,
-		int op, pv_value_t *val);
+int pv_get_ulc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_set_ulc(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
 int pv_parse_ulc_name(pv_spec_p sp, str *in);
 
-int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
-		char* profile);
-int ki_reg_fetch_contacts(sip_msg_t* msg, str* dtable, str* uri, str* profile);
-int pv_free_contacts(struct sip_msg* msg, char* profile, char *s2);
-int ki_reg_free_contacts(sip_msg_t* msg, str* profile);
+int pv_fetch_contacts(
+		struct sip_msg *msg, char *table, char *uri, char *profile);
+int ki_reg_fetch_contacts(sip_msg_t *msg, str *dtable, str *uri, str *profile);
+int pv_free_contacts(struct sip_msg *msg, char *profile, char *s2);
+int ki_reg_free_contacts(sip_msg_t *msg, str *profile);
 
 void regpv_free_profiles(void);
 
-void reg_ul_expired_contact(ucontact_t* c, int type, void* param);
+void reg_ul_expired_contact(ucontact_t *c, int type, void *param);
 
-sr_kemi_xval_t* ki_reg_ulc_rget(sip_msg_t* msg, str* rid, str* attr);
-sr_kemi_xval_t* ki_reg_ulc_cget(sip_msg_t* msg, str* rid, str* attr, int idx);
+sr_kemi_xval_t *ki_reg_ulc_rget(sip_msg_t *msg, str *rid, str *attr);
+sr_kemi_xval_t *ki_reg_ulc_cget(sip_msg_t *msg, str *rid, str *attr, int idx);
 
-int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
-		str* rxname, str *cxname);
-int ki_reg_from_user(sip_msg_t* msg, str *utname, str* uri, int vmode);
+int ki_lookup_xavp(
+		sip_msg_t *msg, str *utname, str *uri, str *rxname, str *cxname);
+int ki_reg_from_user(sip_msg_t *msg, str *utname, str *uri, int vmode);
 
 #endif

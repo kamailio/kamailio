@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -48,12 +50,12 @@ int profile_add_events(void)
 	event.content_type.s = "text/xml";
 	event.content_type.len = 8;
 
-	event.default_expires= pres_profile_default_expires;
+	event.default_expires = pres_profile_default_expires;
 	event.type = PUBL_TYPE;
 	event.req_auth = 0;
 	event.evs_publ_handl = 0;
 
-	if (pres_add_event(&event) < 0) {
+	if(pres_add_event(&event) < 0) {
 		LM_ERR("failed to add event \"ua-profile\"\n");
 		return -1;
 	}

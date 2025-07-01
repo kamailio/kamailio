@@ -27,7 +27,8 @@
 
 typedef int (*is_domain_local_t)(str *_domain);
 
-typedef struct domain_api {
+typedef struct domain_api
+{
 	is_domain_local_t is_domain_local;
 } domain_api_t;
 

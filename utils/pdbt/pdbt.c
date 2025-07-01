@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -182,7 +182,7 @@ int import_csv(struct dt_node_t *root, char *filename) {
 		carrier_str=line;
 		prefix=strsep(&carrier_str, ";");
 		if ( carrier_str == NULL ) {
-			LWARNING("line %ld: no delimiter `;' found, ignoring line.\n", n); 
+			LWARNING("line %ld: no delimiter `;' found, ignoring line.\n", n);
 			n++;
 			continue;
 		}
@@ -243,9 +243,9 @@ int dt_write_tree_recursor(const struct dt_node_t *node, const int fd, char* num
 
 	slen = strlen(number);
 	if (slen > 0) {
-		
+
 		bufsize = slen + 1 + 1 + 3 + 1 + 1;		    // line buffer (telephone number + colon + white space + carrier ID + newline + \0)
-		buf = (char *)malloc(bufsize);	    
+		buf = (char *)malloc(bufsize);
 		if (buf == NULL) {
 			LERR("could not allocate line output buffer of size %d\n", bufsize);
 			return -1;
@@ -302,7 +302,7 @@ int dt_write_tree(const struct dt_node_t *root, const char* filename)
 		LERR("cannot create file '%s'\n", filename);
 		return -1;
 	}
-	
+
 	if (dt_write_tree_recursor(root, fd, (char *)&number) < 0) {
 		LERR("writing tree to file '%s' failed\n", filename);
 		return -1;
@@ -416,7 +416,8 @@ int merge_carrier_recursor(struct dt_node_t *node, int keep_carriers_num, carrie
 			sum++;
 			if (lastcarrier==0) node->carrier=0; /* first carrier we encountered. we can remove it since we are not interested in it. */
 			else {
-				node->carrier=OTHER_CARRIERID; /* we already have a carrier we are interested in. this is an exception, set it to a special carrier id. */
+				/* We already have a carrier we are interested in. This is an exception, set it to a special carrier id. */
+				node->carrier = OTHER_CARRIERID;
 			}
 		}
 	}
@@ -483,7 +484,7 @@ int query_udp(char *number, int timeout, struct pollfd *pfds, struct sockaddr_in
 			return -PDB_TIMEOUT;
 		}
 	}
-	
+
 	/* prepare request */
 	reqlen = strlen(number) + 1; /* include null termination */
 	if (reqlen > sizeof(struct pdb_bdy)) {
@@ -627,19 +628,18 @@ int query_server(char *number, char *comment, void *data) {
 
 	carrierid = query_udp(number, sdata->timeout, &(sdata->pfds), &(sdata->dstaddr), sdata->dstaddrlen);
 
-	if (carrierid<=0) {
+	if(carrierid < 0) {
 		LINFO("%s: not_found: comment='%s', result=%d\n", number, comment, carrierid);
 		if (carrierid < 0) {
-			result = carrierid; 
+			result = carrierid;
 		} else {
-			result = PDB_NOT_IN_PDB; 
+			result = PDB_NOT_IN_PDB;
 		}
-	}
-	else {
+	} else {
 		LINFO("%s:%ld:%s\n", number, (long int)carrierid, carrierid2name(carrierid));
 		result = PDB_OK;
 	}
-	return result; 
+	return result;
 }
 
 
@@ -870,18 +870,18 @@ int main(int argc, char *argv[]) {
 					exit_status = PDB_USE_ERROR;
 				}
 				for (n=optind+1; n<argc; n++) {
-					int result; 
-					result = query_server(argv[n], "", &sdata); 
+					int result;
+					result = query_server(argv[n], "", &sdata);
 					if ( result != 0) {
-						exit_status = -result; 
+						exit_status = -result;
 					}
 				}
 			}
 			else {
-				int result; 
+				int result;
 				result = file_query(query_file, query_server, &sdata);
 				if ( result != 0) {
-					exit_status = -result; 
+					exit_status = -result;
 				}
 			}
 		}
@@ -891,7 +891,7 @@ int main(int argc, char *argv[]) {
 				LERR("cannot load '%s'.\n", mmap_file);
 				exit(PDB_USE_ERROR);
 			}
-			
+
 			if (query_file==NULL) {
 				LINFO("\nprocessing command line parameters...\n");
 				for (n=optind+1; n<argc; n++) {
@@ -899,10 +899,10 @@ int main(int argc, char *argv[]) {
 				}
 			}
 			else {
-				int result; 
+				int result;
 				result = file_query(query_file, query_mmap, mroot);
 				if ( result != 0) {
-					exit_status = -result; 
+					exit_status = -result;
 				}
 			}
 		}

@@ -1,10 +1,12 @@
 /*
  * lost module utility functions
  *
- * Copyright (C) 2021 Wolfgang Kampichler
+ * Copyright (C) 2023 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +34,8 @@
 #ifndef LOST_UTILITIES_H
 #define LOST_UTILITIES_H
 
+#include "response.h"
+
 #define LAQUOT '<'
 #define COLON ':'
 
@@ -55,10 +59,18 @@
 	"gm=http://www.opengis.net/gml"
 
 #define LOST_PRO_GEO2D "geodetic-2d"
+#define LOST_PRO_GEO3D "geodetic-3d"
 #define LOST_PRO_CIVIC "civic"
 
+/* shape representation RFC 5491 */
 #define LOST_PNT "Point"
+#define LOST_POL "Polygon"
 #define LOST_CIR "Circle"
+#define LOST_ELL "Ellipse"
+#define LOST_ARC "ArcBand"
+#define LOST_SPH "Sphere"
+#define LOST_OID "Ellipsoid"
+#define LOST_PSM "Prism"
 #define LOST_CIV "civicAddress"
 
 #define HELD_TYPE_ANY "any"
@@ -87,6 +99,7 @@ typedef struct lost_loc
 	char *geodetic;	 /* geodetic location (findServiceRequest) */
 	char *longitude; /* geo longitude */
 	char *latitude;	 /* geo latitude */
+	char *altitude;	 /* geo altitude */
 	char *profile;	 /* location profile (findServiceRequest) */
 	int radius;		 /* geo radius (findServiceRequest) */
 	int recursive;	 /* recursion true|false (findServiceRequest)*/
@@ -132,7 +145,7 @@ int lost_parse_host(const char *, str *, int *);
 int lost_new_geoheader_list(p_lost_geolist_t *, str);
 int lost_get_nameinfo(char *, str *, int);
 
-char *lost_find_service_request(p_lost_loc_t, int *);
+char *lost_find_service_request(p_lost_loc_t, p_lost_list_t, int *);
 char *lost_held_location_request(p_lost_held_t, int *);
 char *lost_held_post_request(int *, long, char *);
 char *lost_get_content(xmlNodePtr, const char *, int *);

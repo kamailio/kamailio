@@ -48,7 +48,7 @@ Daniel-Constantin Mierla
    1.6. sr_msg_pull() usage
    1.7. sr_msg_async_pull() usage
    1.8. sr_msg_rm() usage
-   1.9. sr_msg_checkj() usage
+   1.9. sr_msg_check() usage
 
 Chapter 1. Admin Guide
 
@@ -228,7 +228,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. sr_msg_checkj() usage
+   Example 1.9. sr_msg_check() usage
 ...
 request_route {
     ...

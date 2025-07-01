@@ -2,10 +2,12 @@
  * pv_headers
  *
  * Copyright (C)
- * 2020 Victor Seva <vseva@sipwise.com>
+ * 2020-2023 Victor Seva <vseva@sipwise.com>
  * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +35,7 @@
 
 int pvh_reply_append(sr_xavp_t **start);
 
-int pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
+sr_xavp_t *pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
 		sr_xtype_t type, int idx, int append);
 int pvh_xavi_keys_count(sr_xavp_t **start);
 sr_xavp_t *pvh_xavi_get_child(struct sip_msg *msg, str *xname, str *name);

@@ -81,30 +81,27 @@ int msrp_env_set_dstinfo(msrp_frame_t *mf, str *addr, str *fsock, int flags)
 {
 	struct socket_info *si = NULL;
 	snd_flags_t sflags = {0};
-	
-	if(fsock!=NULL && fsock->len>0)
-	{
+
+	if(fsock != NULL && fsock->len > 0) {
 		si = msrp_get_local_socket(fsock);
-		if(si==NULL)
-		{
+		if(si == NULL) {
 			LM_DBG("local socket not found [%.*s] - trying to continue\n",
 					fsock->len, fsock->s);
 		}
 	}
 	sflags.f = flags;
-	if(si==NULL)
-	{
+	if(si == NULL) {
 		sflags.f &= ~SND_F_FORCE_SOCKET;
 	} else {
 		sflags.f |= SND_F_FORCE_SOCKET;
 	}
 
-	sflags.f |=  _msrp_env.sndflags;
+	sflags.f |= _msrp_env.sndflags;
 	memset(&_msrp_env.dstinfo, 0, sizeof(struct dest_info));
-	if(msrp_uri_to_dstinfo(NULL, &_msrp_env.dstinfo, si, sflags, addr)==NULL)
-	{
-		LM_ERR("failed to set destination address [%.*s]\n",
-				addr->len, addr->s);
+	if(msrp_uri_to_dstinfo(NULL, &_msrp_env.dstinfo, si, sflags, addr)
+			== NULL) {
+		LM_ERR("failed to set destination address [%.*s]\n", addr->len,
+				addr->s);
 		return -1;
 	}
 	_msrp_env.envflags |= MSRP_ENV_DSTINFO;
@@ -117,8 +114,7 @@ int msrp_env_set_dstinfo(msrp_frame_t *mf, str *addr, str *fsock, int flags)
 int msrp_env_set_sndflags(msrp_frame_t *mf, int flags)
 {
 	_msrp_env.sndflags |= (flags & (~SND_F_FORCE_SOCKET));
-	if(_msrp_env.envflags & MSRP_ENV_DSTINFO)
-	{
+	if(_msrp_env.envflags & MSRP_ENV_DSTINFO) {
 		_msrp_env.dstinfo.send_flags.f |= _msrp_env.sndflags;
 	}
 	return 0;
@@ -130,8 +126,7 @@ int msrp_env_set_sndflags(msrp_frame_t *mf, int flags)
 int msrp_env_set_rplflags(msrp_frame_t *mf, int flags)
 {
 	_msrp_env.rplflags |= (flags & (~SND_F_FORCE_SOCKET));
-	if(_msrp_env.envflags & MSRP_ENV_SRCINFO)
-	{
+	if(_msrp_env.envflags & MSRP_ENV_SRCINFO) {
 		_msrp_env.srcinfo.send_flags.f |= _msrp_env.rplflags;
 	}
 	return 0;
@@ -141,9 +136,14 @@ int msrp_env_set_rplflags(msrp_frame_t *mf, int flags)
 /**
  *
  */
-#define MSRP_FAKED_SIPMSG_START "MSRP sip:a@127.0.0.1 SIP/2.0\r\nVia: SIP/2.0/UDP 127.0.0.1:9;branch=z9hG4bKa\r\nFrom: <b@127.0.0.1>;tag=a\r\nTo: <a@127.0.0.1>\r\nCall-ID: a\r\nCSeq: 1 MSRP\r\nContent-Length: 0\r\nMSRP-First-Line: "
+#define MSRP_FAKED_SIPMSG_START                                        \
+	"MSRP sip:a@127.0.0.1 SIP/2.0\r\nVia: SIP/2.0/UDP "                \
+	"127.0.0.1:9;branch=z9hG4bKa\r\nFrom: <b@127.0.0.1>;tag=a\r\nTo: " \
+	"<a@127.0.0.1>\r\nCall-ID: a\r\nCSeq: 1 MSRP\r\nContent-Length: "  \
+	"0\r\nMSRP-First-Line: "
 #define MSRP_FAKED_SIPMSG_EXTRA 11240
-#define MSRP_FAKED_SIPMSG_SIZE (sizeof(MSRP_FAKED_SIPMSG_START)+MSRP_FAKED_SIPMSG_EXTRA)
+#define MSRP_FAKED_SIPMSG_SIZE \
+	(sizeof(MSRP_FAKED_SIPMSG_START) + MSRP_FAKED_SIPMSG_EXTRA)
 static char _msrp_faked_sipmsg_buf[MSRP_FAKED_SIPMSG_SIZE];
 static sip_msg_t _msrp_faked_sipmsg;
 static unsigned int _msrp_faked_sipmsg_no = 0;
@@ -151,12 +151,12 @@ static unsigned int _msrp_faked_sipmsg_no = 0;
 sip_msg_t *msrp_fake_sipmsg(msrp_frame_t *mf)
 {
 	int len;
-	if(msrp_param_sipmsg==0)
+	if(msrp_param_sipmsg == 0)
 		return NULL;
-	if(mf->buf.len >= MSRP_FAKED_SIPMSG_EXTRA-1)
+	if(mf->buf.len >= MSRP_FAKED_SIPMSG_EXTRA - 1)
 		return NULL;
 
-	len = sizeof(MSRP_FAKED_SIPMSG_START)-1;
+	len = sizeof(MSRP_FAKED_SIPMSG_START) - 1;
 	memcpy(_msrp_faked_sipmsg_buf, MSRP_FAKED_SIPMSG_START, len);
 	memcpy(_msrp_faked_sipmsg_buf + len, mf->buf.s,
 			mf->fline.buf.len + mf->hbody.len);
@@ -167,15 +167,15 @@ sip_msg_t *msrp_fake_sipmsg(msrp_frame_t *mf)
 
 	memset(&_msrp_faked_sipmsg, 0, sizeof(sip_msg_t));
 
-	_msrp_faked_sipmsg.buf=_msrp_faked_sipmsg_buf;
-	_msrp_faked_sipmsg.len=len;
+	_msrp_faked_sipmsg.buf = _msrp_faked_sipmsg_buf;
+	_msrp_faked_sipmsg.len = len;
 
-	_msrp_faked_sipmsg.set_global_address=default_global_address;
-	_msrp_faked_sipmsg.set_global_port=default_global_port;
+	_msrp_faked_sipmsg.set_global_address = default_global_address;
+	_msrp_faked_sipmsg.set_global_port = default_global_port;
 
-	if (parse_msg(_msrp_faked_sipmsg.buf, _msrp_faked_sipmsg.len,
-				&_msrp_faked_sipmsg)!=0)
-	{
+	if(parse_msg(_msrp_faked_sipmsg.buf, _msrp_faked_sipmsg.len,
+			   &_msrp_faked_sipmsg)
+			!= 0) {
 		LM_ERR("parse_msg failed\n");
 		return NULL;
 	}

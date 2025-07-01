@@ -46,8 +46,8 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="snmpstats_admin.xml"/>
 	<xi:include href="snmpstats_faq.xml"/>
-	
+
 </book>

@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -311,8 +313,8 @@ void parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b)
 
 parseerror:
 	if(p < end) {
-		LM_ERR("unexpected char [%c/%d] in status %d - pos %d: [%.*s]\n", *p, *p,
-				status, (int)(p - buffer), (int)(p - buffer), buffer);
+		LM_ERR("unexpected char [%c/%d] in status %d - pos %d: [%.*s]\n", *p,
+				*p, status, (int)(p - buffer), (int)(p - buffer), buffer);
 	} else {
 		LM_ERR("unexpected end of buffer - status %d\n", status);
 	}

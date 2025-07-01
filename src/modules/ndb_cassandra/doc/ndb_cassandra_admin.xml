@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -51,7 +51,7 @@
 		      <para>
 			<emphasis>thrift 0.7.0</emphasis> - available at
 			http://thrift.apache.org/
-		      </para>		      
+		      </para>
 		    </listitem>
 		  </itemizedlist>
 		</para>
@@ -148,7 +148,7 @@ modparam("ndb_cassandra", "port", 9160)
     $var(column) = "name";
     $var(val_write) = "TestMyName"; # To be written
     if (cass_insert("$var(keyspace)", "$var(column_family)", "$ru", "$var(column)", "$var(val_write)") > 0) {
-       xlog("L_DBG", "ndb_cassandra. Sucess while inserting to Cassandra. val_write: \"$var(val_write)\"");
+       xlog("L_DBG", "ndb_cassandra. Success while inserting to Cassandra. val_write: \"$var(val_write)\"");
     } else {
        xlog("L_DBG", "ndb_cassandra. Error while inserting to Cassandra");
     }
@@ -160,12 +160,12 @@ modparam("ndb_cassandra", "port", 9160)
     $var(column) = "name";
     $var(val_read) = ""; # To be read
     if (cass_retrieve("$var(keyspace)", "$var(column_family)", "$var(key)", "$var(column)", "$var(val_read)") > 0) {
-       xlog("L_DBG", "ndb_cassandra. Sucess while reading from Cassandra. val_read: \"$var(val_read)\"");
+       xlog("L_DBG", "ndb_cassandra. Success while reading from Cassandra. val_read: \"$var(val_read)\"");
     } else {
        xlog("L_DBG", "ndb_cassandra. Error while reading from Cassandra");
     }
 	      ...
 	    </programlisting>
-	  </example>	 
+	  </example>
 	</section>
 	</chapter>

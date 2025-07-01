@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -28,38 +30,49 @@
 #include "../../core/str.h"
 
 /* Handy macros */
-#define STR2IOVEC(sx, ix)       do {(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;} while(0)
-#define SZ2IOVEC(sx, ix)        do {(ix).iov_base = (sx); (ix).iov_len = strlen(sx);} while(0)
+#define STR2IOVEC(sx, ix)        \
+	do {                         \
+		(ix).iov_base = (sx).s;  \
+		(ix).iov_len = (sx).len; \
+	} while(0)
+#define SZ2IOVEC(sx, ix)           \
+	do {                           \
+		(ix).iov_base = (sx);      \
+		(ix).iov_len = strlen(sx); \
+	} while(0)
 
-struct rtpp_node {
-	unsigned int		idx;			/* overall index */
-	str					rn_url;			/* unparsed, deletable */
-	int					rn_umode;
-	char				*rn_address;	/* substring of rn_url */
-	int					rn_disabled;	/* found unaccessible? */
-	unsigned			rn_weight;		/* for load balancing */
-	unsigned int		rn_recheck_ticks;
-	int                 rn_rep_supported;
-	int                 rn_ptl_supported;
-	struct rtpp_node	*rn_next;
+struct rtpp_node
+{
+	unsigned int idx; /* overall index */
+	str rn_url;		  /* unparsed, deletable */
+	int rn_umode;
+	char *rn_address;	/* substring of rn_url */
+	int rn_disabled;	/* found unaccessible? */
+	unsigned rn_weight; /* for load balancing */
+	unsigned int rn_recheck_ticks;
+	int rn_rep_supported;
+	int rn_ptl_supported;
+	struct rtpp_node *rn_next;
 };
 
 
-struct rtpp_set{
-	unsigned int 		id_set;
-	unsigned			weight_sum;
-	unsigned int		rtpp_node_count;
-	int 				set_disabled;
-	unsigned int		set_recheck_ticks;
-	struct rtpp_node	*rn_first;
-	struct rtpp_node	*rn_last;
-	struct rtpp_set     *rset_next;
+struct rtpp_set
+{
+	unsigned int id_set;
+	unsigned weight_sum;
+	unsigned int rtpp_node_count;
+	int set_disabled;
+	unsigned int set_recheck_ticks;
+	struct rtpp_node *rn_first;
+	struct rtpp_node *rn_last;
+	struct rtpp_set *rset_next;
 };
 
 
-struct rtpp_set_head{
-	struct rtpp_set		*rset_first;
-	struct rtpp_set		*rset_last;
+struct rtpp_set_head
+{
+	struct rtpp_set *rset_first;
+	struct rtpp_set *rset_last;
 };
 
 /* Functions from nathelper */
@@ -70,7 +83,7 @@ struct rtpp_set *get_rtpp_set(str *set_name);
 int insert_rtpp_node(struct rtpp_set *const rtpp_list, const str *const url,
 		const int weight, const int disabled);
 
-int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri);
+int set_rtp_inst_pvar(struct sip_msg *msg, const str *const uri);
 
 int init_rtpproxy_db(void);
 

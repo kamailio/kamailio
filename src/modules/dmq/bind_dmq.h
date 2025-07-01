@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -34,6 +36,7 @@ typedef int (*bcast_message_t)(dmq_peer_t *peer, str *body, dmq_node_t *except,
 typedef int (*send_message_t)(dmq_peer_t *peer, str *body, dmq_node_t *node,
 		dmq_resp_cback_t *resp_cback, int max_forwards, str *content_type);
 typedef dmq_node_t *(*find_dmq_node_uri_t)(str *uri);
+typedef str (*get_dmq_server_socket_t)();
 
 typedef struct dmq_api
 {
@@ -41,6 +44,7 @@ typedef struct dmq_api
 	bcast_message_t bcast_message;
 	send_message_t send_message;
 	find_dmq_node_uri_t find_dmq_node_uri;
+	get_dmq_server_socket_t get_dmq_server_socket;
 } dmq_api_t;
 
 typedef int (*bind_dmq_f)(dmq_api_t *api);

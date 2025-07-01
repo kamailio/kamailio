@@ -12,7 +12,7 @@
 <chapter>
 
   <title>&adminguide;</title>
-  
+
   <section>
 	<title>Overview</title>
 	<para>
@@ -125,7 +125,7 @@ modparam("xhttp_prom", "xhttp_prom_buf_size", 1024)
 		<title>Set <varname>xhttp_prom_timeout</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-# Set timeout to 10 hours		  
+# Set timeout to 10 hours
 modparam("xhttp_prom", "xhttp_prom_timeout", 600)
 ...
 		</programlisting>
@@ -135,7 +135,7 @@ modparam("xhttp_prom", "xhttp_prom_timeout", 600)
 	  <title><varname>xhttp_prom_stats</varname> (str)</title>
 	  <para>
 		Specifies which internal statistics from &kamailio; to show.
-		
+
 		Possible values:
 		<itemizedlist>
 		  <listitem>
@@ -182,6 +182,53 @@ modparam("xhttp_prom", "xhttp_prom_stats", "")
 		</programlisting>
 	  </example>
 	</section>
+
+	<section id="xhttp_prom.p.xhttp_prom_pkg_stats">
+	  <title><varname>xhttp_prom_pkg_stats</varname> (integer)</title>
+	  <para>
+		Enable or disable internal &kamailio; pkg memory statistics.
+	  </para>
+	  <para>
+		<emphasis>If not 0</emphasis>, pkg memory statistics will be displayed.
+	  </para>
+	  <para>
+		<emphasis>
+		  Default value is 0 (no pkg memory statistics).
+		</emphasis>
+	  </para>
+	  <example>
+		<title>Set <varname>xhttp_prom_pkg_stats</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# enable pkg stats
+modparam("xhttp_prom", "xhttp_prom_pkg_stats", 1)
+...
+		</programlisting>
+	  </example>
+	</section>
+	<section id="xhttp_prom.p.xhttp_prom_uptime_stat">
+	  <title><varname>xhttp_prom_uptime_stat</varname> (integer)</title>
+	  <para>
+		Enable or disable &kamailio; uptime statistic.
+	  </para>
+	  <para>
+		<emphasis>If not 0</emphasis>, uptime statistic will be displayed.
+	  </para>
+	  <para>
+		<emphasis>
+		  Default value is 0 (no uptime statistic).
+		</emphasis>
+	  </para>
+	  <example>
+		<title>Set <varname>xhttp_prom_uptime_stat</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# enable uptime statistic
+modparam("xhttp_prom", "xhttp_prom_uptime_stat", 1)
+...
+		</programlisting>
+	  </example>
+	</section>
 	<section id="xhttp_prom.p.xhttp_prom_beginning">
 	  <title><varname>xhttp_prom_beginning</varname> (str)</title>
 	  <para>
@@ -204,6 +251,31 @@ modparam("xhttp_prom", "xhttp_prom_beginning", "my_metric_")
 
 # No string at the beginning.
 modparam("xhttp_prom", "xhttp_prom_beginning", "");
+...
+		</programlisting>
+	  </example>
+	</section>
+	<section id="xhttp_prom.p.xhttp_prom_tags">
+	  <title><varname>xhttp_prom_tags</varname> (str)</title>
+	  <para>
+		Specifies additional tags for the metrics. These can be useful for evaluating
+		  the metrics afterwards.
+	  </para>
+	  <para>
+		It defaults to an empty string which means that no metric tags will be added.
+	  </para>
+	  <para>
+		A comma separated list of key-value pairs connected by equal signs.
+	  </para>
+	  <example>
+		<title>Set <varname>xhttp_prom_tags</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# Add one tag to every metric
+modparam("xhttp_prom", "xhttp_prom_tags", "host_job=foo")
+
+# Add multiple tags to every metric
+modparam("xhttp_prom", "xhttp_prom_tags", "tag_bar=foo,host_job=wurst");
 ...
 		</programlisting>
 	  </example>
@@ -250,7 +322,7 @@ the metric.
 		<title>Set <varname>prom_counter</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-		  
+
 # Create cnt_first counter with no labels.
 modparam("xhttp_prom", "prom_counter", "name=cnt_first;");
 
@@ -385,7 +457,7 @@ the metric.
 		<title>Set <varname>prom_histogram</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-		  
+
 # Create my_histo histogram with no labels and default buckets.
 modparam("xhttp_prom", "prom_histogram", "name=my_histo;");
 
@@ -926,4 +998,4 @@ event_route[xhttp:request] {
 	  </example>
 	</section>
   </section>
-</chapter>	
+</chapter>

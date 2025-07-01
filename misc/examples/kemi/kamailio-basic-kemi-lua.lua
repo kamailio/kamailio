@@ -340,7 +340,7 @@ end
 
 -- RTPProxy control
 function ksr_route_natmanage()
-	if not KSR.rtpproxy then
+	if not KSR.rtpproxy and not KSR.rtpengine then
 		return 1;
 	end
 	if KSR.siputils.is_request()>0 then
@@ -354,7 +354,19 @@ function ksr_route_natmanage()
 		return 1;
 	end
 
-	KSR.rtpproxy.rtpproxy_manage("co");
+	if KSR.kx.ifdef('WITH_RTPENGINE') then
+		if KSR.nathelper.nat_uac_test(8)>0 then
+			KSR.rtpengine.rtpengine_manage("replace-origin replace-session-connection SIP-source-address");
+		else
+			KSR.rtpengine.rtpengine_manage("replace-origin replace-session-connection");
+		end
+	else
+		if KSR.nathelper.nat_uac_test(8)>0 then
+			KSR.rtpproxy.rtpproxy_manage("co");
+		else
+			KSR.rtpproxy.rtpproxy_manage("cor");
+		end
+	end
 
 	if KSR.siputils.is_request()>0 then
 		if KSR.siputils.has_totag()<0 then

@@ -15,7 +15,7 @@
 	<para>
 		Adds the source of the current message to the blocklist for
 		<varname>timeout</varname> seconds. If timeout is missing or 0
-		 it uses the default blocklist timeout 
+		 it uses the default blocklist timeout
 		 (<varname>dst_blocklist_expire</varname>).
 	</para>
 	<example>

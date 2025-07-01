@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2013 mariuszbi@gmail.com
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,10 +17,10 @@
  * \file
  * \brief Kamailio core :: DNS wrapper functions
  * \author mariuszbi@gmail.com
- *      
- * \ingroup core 
- * Module: \ref core                    
- *  
+ *
+ * \ingroup core
+ * Module: \ref core
+ *
  *
  */
 
@@ -32,24 +32,24 @@
 struct hostent;
 
 typedef int (*res_init_t)(void);
-typedef int (*res_search_t)(const char*, int, int, unsigned char*, int);
-typedef struct hostent* (*gethostbyname_t)(const char*);
-typedef struct hostent* (*gethostbyname2_t)(const char*, int);
+typedef int (*res_search_t)(const char *, int, int, unsigned char *, int);
+typedef struct hostent *(*gethostbyname_t)(const char *);
+typedef struct hostent *(*gethostbyname2_t)(const char *, int);
 
-struct dns_func_t {
+struct dns_func_t
+{
 	res_init_t sr_res_init;
 	res_search_t sr_res_search;
 	gethostbyname_t sr_gethostbyname;
 	gethostbyname2_t sr_gethostbyname2;
 };
 
-/* 
+/*
  * initiate structure with system values
  */
 //extern struct dns_func_t dns_func;
 
-extern 
-void load_dnsfunc(struct dns_func_t *d);
+extern void load_dnsfunc(struct dns_func_t *d);
 
 
 #endif

@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -25,10 +27,9 @@
 
 
 int xhttp_rpc_parse_url(str *url, int *mod, int *cmd, str *arg);
-void xhttp_rpc_get_next_arg(rpc_ctx_t* ctx, str *arg);
+void xhttp_rpc_get_next_arg(rpc_ctx_t *ctx, str *arg);
 int xhttp_rpc_build_content(rpc_ctx_t *ctx, str *val, str *id);
 int xhttp_rpc_insert_break(rpc_ctx_t *ctx);
 int xhttp_rpc_build_page(rpc_ctx_t *ctx);
 
 #endif
-

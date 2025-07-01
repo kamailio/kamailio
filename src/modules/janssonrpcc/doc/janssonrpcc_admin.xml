@@ -143,7 +143,7 @@ modparam("janssonrpcc", "result_pv", "$var(result)")
 modparam("janssonrpcc", "server", "conn=tests;srv=_test1._tcp.example.net");
 modparam("janssonrpcc", "server", "conn=tests;srv=_test2._tcp.example.net");
 modparam("janssonrpcc", "server", "conn=local;addr=localhost;port=8080;priority=10;weight=10");
-modparam("janssonrpcc", "server", "conn=user_db;addr=rpc.prod.exmaple.net;port=5060;priority=10;weight=10");
+modparam("janssonrpcc", "server", "conn=user_db;addr=rpc.prod.example.net;port=5060;priority=10;weight=10");
 ...
 				</programlisting>
 			</example>
@@ -262,7 +262,7 @@ janssonrpc_notification("user_db", "update_user", '{"id": 1234, "name": "Daniel"
 						<para>
 							<itemizedlist>
 								<listitem>
-									<emphasis>retry</emphasis> - number of times you retry a failed request. 
+									<emphasis>retry</emphasis> - number of times you retry a failed request.
 									-1 means retry forever. Default is 0.
 									Request will be retried if they either timeout or fail to send.
 									Retries utilize exponential back off between successive retries,

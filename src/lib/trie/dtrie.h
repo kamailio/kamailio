@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -31,7 +33,7 @@
  * matching of characters when configured correctly. For normal
  * digit only matching you need to use a branches parameter of
  * 10, when you use 128, the complete standard ascii charset is
- * available for matching. The trie is setup in shared memory.
+ * available for matching. The trie is set up in shared memory.
  * - Module: \ref carrierroute
  * - Module: \ref userblocklist
  * @{
@@ -42,14 +44,15 @@
 
 
 /*! Trie node */
-struct dtrie_node_t {
+struct dtrie_node_t
+{
 	struct dtrie_node_t **child; /*!< children */
-	void *data; /*!< custom data */
+	void *data;					 /*!< custom data */
 };
 
 
 /*! Function signature for destroying the payload. First parameter is the payload. */
-typedef void(*dt_delete_func_t)(void *);
+typedef void (*dt_delete_func_t)(void *);
 
 
 /*!
@@ -108,8 +111,9 @@ void dtrie_clear(struct dtrie_node_t *root, dt_delete_func_t delete_payload,
  * \param dtrie_size size of the trie
  * \return 0 on success, -1 otherwise.
  */
-int dtrie_insert(struct dtrie_node_t *root, const char *number, const unsigned int numberlen,
-		void *data, const unsigned int dtrie_size);
+int dtrie_insert(struct dtrie_node_t *root, const char *number,
+		const unsigned int numberlen, void *data,
+		const unsigned int dtrie_size);
 
 
 /*!
@@ -118,7 +122,8 @@ int dtrie_insert(struct dtrie_node_t *root, const char *number, const unsigned i
  * \param branches number of branches in the trie
  * \return number of nodes in tree, at least 1
  */
-unsigned int dtrie_size(const struct dtrie_node_t *root, const unsigned int branches);
+unsigned int dtrie_size(
+		const struct dtrie_node_t *root, const unsigned int branches);
 
 
 /*!
@@ -129,7 +134,8 @@ unsigned int dtrie_size(const struct dtrie_node_t *root, const unsigned int bran
  * \param branches number of branches in the trie
  * \return number of nodes in the tree with custom data
  */
-unsigned int dtrie_loaded_nodes(const struct dtrie_node_t *root, const unsigned int branches);
+unsigned int dtrie_loaded_nodes(
+		const struct dtrie_node_t *root, const unsigned int branches);
 
 
 /*!
@@ -141,7 +147,8 @@ unsigned int dtrie_loaded_nodes(const struct dtrie_node_t *root, const unsigned 
  * \param branches number of branches in the trie
  * \return number of leaf nodes
  */
-unsigned int dtrie_leaves(const struct dtrie_node_t *root, const unsigned int branches);
+unsigned int dtrie_leaves(
+		const struct dtrie_node_t *root, const unsigned int branches);
 
 
 /*!
@@ -157,7 +164,8 @@ unsigned int dtrie_leaves(const struct dtrie_node_t *root, const unsigned int br
  * \return the address of the pointer in the tree node if number is found in root, NULL if the number is not found.
  */
 void **dtrie_longest_match(struct dtrie_node_t *root, const char *number,
-		const unsigned int numberlen, int *nmatchptr, const unsigned int branches);
+		const unsigned int numberlen, int *nmatchptr,
+		const unsigned int branches);
 
 
 /*!

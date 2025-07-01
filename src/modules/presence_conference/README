@@ -108,6 +108,9 @@ modparam("presence_conference", "default_expires", 3600)
 
    4.1. conference_reset
 
+   The following MI commands are currently disabled, they need to migrated
+   to the RPC infrastructure.
+
 4.1.  conference_reset
 
    Reset internal data.

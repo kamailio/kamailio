@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -97,7 +99,7 @@
 struct sip_msg *sip_msg_cloner(struct sip_msg *org_msg, int *sip_msg_len);
 
 /**
- * @brief Indicates wheter we have already cloned the msg lumps or not
+ * @brief Indicates whether we have already cloned the msg lumps or not
  */
 extern unsigned char lumps_are_cloned;
 

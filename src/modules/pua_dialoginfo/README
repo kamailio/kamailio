@@ -23,11 +23,17 @@ Frederic Gaisnon
 
    <frederic.gaisnon@gmail.com>
 
+Victor Seva
+
+   <vseva@sipwise.com>
+
    Copyright © 2006 Voice Sistem SRL
 
    Copyright © 2008 Klaus Darilion IPCom
 
    Copyright © 2021 MomentTech
+
+   Copyright © 2024 Sipwise
      __________________________________________________________________
 
    Table of Contents
@@ -44,53 +50,55 @@ Frederic Gaisnon
 
         5. Parameters
 
-              5.1. include_callid (int)
-              5.2. include_tags (int)
-              5.3. include_localremote (int)
-              5.4. override_lifetime (int)
-              5.5. include_req_uri (int)
-              5.6. caller_confirmed (int)
-              5.7. send_publish_flag (int)
-              5.8. disable_caller_publish_flag (int)
-              5.9. disable_callee_publish_flag (int)
-              5.10. use_pubruri_avps (int)
-              5.11. refresh_pubruri_avps_flag (int)
-              5.12. pubruri_caller_avp (str)
-              5.13. pubruri_callee_avp (str)
-              5.14. pubruri_caller_dlg_var (str)
-              5.15. pubruri_callee_dlg_var (str)
-              5.16. callee_trying (int)
-              5.17. caller_entity_when_publish_disabled (int)
-              5.18. callee_entity_when_publish_disabled (int)
-              5.19. publish_dialog_req_within (int)
-              5.20. local_identity_dlg_var (str)
-              5.21. attribute_display (int)
+              5.1. use_uuid (int)
+              5.2. include_callid (int)
+              5.3. include_tags (int)
+              5.4. include_localremote (int)
+              5.5. override_lifetime (int)
+              5.6. include_req_uri (int)
+              5.7. caller_confirmed (int)
+              5.8. send_publish_flag (int)
+              5.9. disable_caller_publish_flag (int)
+              5.10. disable_callee_publish_flag (int)
+              5.11. use_pubruri_avps (int)
+              5.12. refresh_pubruri_avps_flag (int)
+              5.13. pubruri_caller_avp (str)
+              5.14. pubruri_callee_avp (str)
+              5.15. pubruri_caller_dlg_var (str)
+              5.16. pubruri_callee_dlg_var (str)
+              5.17. callee_trying (int)
+              5.18. caller_entity_when_publish_disabled (int)
+              5.19. callee_entity_when_publish_disabled (int)
+              5.20. publish_dialog_req_within (int)
+              5.21. local_identity_dlg_var (str)
+              5.22. attribute_display (int)
 
         6. Functions
 
    List of Examples
 
-   1.1. Set include_callid parameter
-   1.2. Set include_tags parameter
-   1.3. Set include_localremote parameter
-   1.4. Set override_lifetime parameter
-   1.5. Set include_req_uri parameter
-   1.6. Set caller_confirmed parameter
-   1.7. Set send_publish_flag parameter
-   1.8. Set disable_caller_publish_flag parameter
-   1.9. Set disable_callee_publish_flag parameter
-   1.10. Set use_pubruri_avps parameter
-   1.11. Set refresh_pubruri_avps_flag parameter
-   1.12. Set pubruri_caller_avp parameter
-   1.13. Set pubruri_callee_avp parameter
-   1.14. Set pubruri_caller_avp parameter
-   1.15. Set pubruri_callee_dlg_var parameter
-   1.16. Set callee_trying parameter
-   1.17. Set caller_entity_when_publish_disabled parameter
-   1.18. Set callee_entity_when_publish_disabled parameter
-   1.19. Set publish_dialog_req_within parameter
-   1.20. Set local_identity_dlg_var parameter
-   1.21. Set attribute_display parameter
+   1.1. Set use_uuid parameter
+   1.2. Set include_callid parameter
+   1.3. Set include_tags parameter
+   1.4. Set include_localremote parameter
+   1.5. Set override_lifetime parameter
+   1.6. Set include_req_uri parameter
+   1.7. Set caller_confirmed parameter
+   1.8. Set send_publish_flag parameter
+   1.9. Set disable_caller_publish_flag parameter
+   1.10. Set disable_callee_publish_flag parameter
+   1.11. Set use_pubruri_avps parameter
+   1.12. Set refresh_pubruri_avps_flag parameter
+   1.13. Set pubruri_caller_avp parameter
+   1.14. Set pubruri_callee_avp parameter
+   1.15. Set pubruri_caller_avp parameter
+   1.16. Set pubruri_callee_dlg_var parameter
+   1.17. Set callee_trying parameter
+   1.18. Set caller_entity_when_publish_disabled parameter
+   1.19. Set callee_entity_when_publish_disabled parameter
+   1.20. Set publish_dialog_req_within parameter
+   1.21. Set local_identity_dlg_var parameter
+   1.22. Set attribute_display parameter
 
 Chapter 1. Admin Guide
 
@@ -106,27 +114,28 @@ Chapter 1. Admin Guide
 
    5. Parameters
 
-        5.1. include_callid (int)
-        5.2. include_tags (int)
-        5.3. include_localremote (int)
-        5.4. override_lifetime (int)
-        5.5. include_req_uri (int)
-        5.6. caller_confirmed (int)
-        5.7. send_publish_flag (int)
-        5.8. disable_caller_publish_flag (int)
-        5.9. disable_callee_publish_flag (int)
-        5.10. use_pubruri_avps (int)
-        5.11. refresh_pubruri_avps_flag (int)
-        5.12. pubruri_caller_avp (str)
-        5.13. pubruri_callee_avp (str)
-        5.14. pubruri_caller_dlg_var (str)
-        5.15. pubruri_callee_dlg_var (str)
-        5.16. callee_trying (int)
-        5.17. caller_entity_when_publish_disabled (int)
-        5.18. callee_entity_when_publish_disabled (int)
-        5.19. publish_dialog_req_within (int)
-        5.20. local_identity_dlg_var (str)
-        5.21. attribute_display (int)
+        5.1. use_uuid (int)
+        5.2. include_callid (int)
+        5.3. include_tags (int)
+        5.4. include_localremote (int)
+        5.5. override_lifetime (int)
+        5.6. include_req_uri (int)
+        5.7. caller_confirmed (int)
+        5.8. send_publish_flag (int)
+        5.9. disable_caller_publish_flag (int)
+        5.10. disable_callee_publish_flag (int)
+        5.11. use_pubruri_avps (int)
+        5.12. refresh_pubruri_avps_flag (int)
+        5.13. pubruri_caller_avp (str)
+        5.14. pubruri_callee_avp (str)
+        5.15. pubruri_caller_dlg_var (str)
+        5.16. pubruri_callee_dlg_var (str)
+        5.17. callee_trying (int)
+        5.18. caller_entity_when_publish_disabled (int)
+        5.19. callee_entity_when_publish_disabled (int)
+        5.20. publish_dialog_req_within (int)
+        5.21. local_identity_dlg_var (str)
+        5.22. attribute_display (int)
 
    6. Functions
 
@@ -255,8 +264,8 @@ Chapter 1. Admin Guide
    module is loaded, it is automatically active for all calls tracked by
    the dialog module. Thus, make sure that you activate the dialog module
    for a certain call if you want dialog-state to be PUBLISHED. This
-   means, the dlg_flag of the dialog module must be configured and the
-   respective flag must be set during call processing.
+   means, use the dlg_manage() function of the dialog module to have it
+   tracked.
 
 3. Known issues
 
@@ -286,6 +295,7 @@ Chapter 1. Admin Guide
    The following modules must be loaded before this module:
      * dialog.
      * pua.
+     * uuid if use_uuid is enabled.
 
 4.2. External Libraries or Applications
 
@@ -295,53 +305,67 @@ Chapter 1. Admin Guide
 
 5. Parameters
 
-   5.1. include_callid (int)
-   5.2. include_tags (int)
-   5.3. include_localremote (int)
-   5.4. override_lifetime (int)
-   5.5. include_req_uri (int)
-   5.6. caller_confirmed (int)
-   5.7. send_publish_flag (int)
-   5.8. disable_caller_publish_flag (int)
-   5.9. disable_callee_publish_flag (int)
-   5.10. use_pubruri_avps (int)
-   5.11. refresh_pubruri_avps_flag (int)
-   5.12. pubruri_caller_avp (str)
-   5.13. pubruri_callee_avp (str)
-   5.14. pubruri_caller_dlg_var (str)
-   5.15. pubruri_callee_dlg_var (str)
-   5.16. callee_trying (int)
-   5.17. caller_entity_when_publish_disabled (int)
-   5.18. callee_entity_when_publish_disabled (int)
-   5.19. publish_dialog_req_within (int)
-   5.20. local_identity_dlg_var (str)
-   5.21. attribute_display (int)
+   5.1. use_uuid (int)
+   5.2. include_callid (int)
+   5.3. include_tags (int)
+   5.4. include_localremote (int)
+   5.5. override_lifetime (int)
+   5.6. include_req_uri (int)
+   5.7. caller_confirmed (int)
+   5.8. send_publish_flag (int)
+   5.9. disable_caller_publish_flag (int)
+   5.10. disable_callee_publish_flag (int)
+   5.11. use_pubruri_avps (int)
+   5.12. refresh_pubruri_avps_flag (int)
+   5.13. pubruri_caller_avp (str)
+   5.14. pubruri_callee_avp (str)
+   5.15. pubruri_caller_dlg_var (str)
+   5.16. pubruri_callee_dlg_var (str)
+   5.17. callee_trying (int)
+   5.18. caller_entity_when_publish_disabled (int)
+   5.19. callee_entity_when_publish_disabled (int)
+   5.20. publish_dialog_req_within (int)
+   5.21. local_identity_dlg_var (str)
+   5.22. attribute_display (int)
 
-5.1. include_callid (int)
+5.1. use_uuid (int)
+
+   If this parameter is set, the pres_id will be generated using libuuid
+   via uuid module. uuid module has to be loaded before pua_dialoginfo in
+   this case.
+
+   Default value is “0”.
+
+   Example 1.1. Set use_uuid parameter
+...
+modparam("pua_dialoginfo", "use_uuid", 1)
+...
+
+5.2. include_callid (int)
 
    If this parameter is set, the optional call-id will be put into the
    dialog element. This is needed for call-pickup features.
 
    Default value is “1”.
 
-   Example 1.1. Set include_callid parameter
+   Example 1.2. Set include_callid parameter
 ...
 modparam("pua_dialoginfo", "include_callid", 0)
 ...
 
-5.2. include_tags (int)
+5.3. include_tags (int)
 
    If this parameter is set, the local and remote tag will be put into the
    dialog element. This is needed for call-pickup features.
 
    Default value is “1”.
 
-   Example 1.2. Set include_tags parameter
+   Example 1.3. Set include_tags parameter
 ...
 modparam("pua_dialoginfo", "include_tags", 0)
 ...
 
-5.3. include_localremote (int)
+5.4. include_localremote (int)
 
    If this parameter is set, the optional local and remote elements will
    be put into the dialog element. This is needed for call-pickup
@@ -349,12 +373,12 @@ modparam("pua_dialoginfo", "include_tags", 0)
 
    Default value is “1”.
 
-   Example 1.3. Set include_localremote parameter
+   Example 1.4. Set include_localremote parameter
 ...
 modparam("pua_dialoginfo", "include_localremote", 0)
 ...
 
-5.4. override_lifetime (int)
+5.5. override_lifetime (int)
 
    The PUBLISH requests used to send the dialog-info contain an Expires
    header. The value of the expires is usually taken from the lifetime of
@@ -365,24 +389,24 @@ modparam("pua_dialoginfo", "include_localremote", 0)
 
    Default value is “0”.
 
-   Example 1.4. Set override_lifetime parameter
+   Example 1.5. Set override_lifetime parameter
 ...
 modparam("pua_dialoginfo", "override_lifetime", 300)
 ...
 
-5.5. include_req_uri (int)
+5.6. include_req_uri (int)
 
    controls if R-URI is going to be used instead of To header value in the
    PUBLISH as "identity" on "remote" node.
 
    Default value is “0”. Disabled
 
-   Example 1.5. Set include_req_uri parameter
+   Example 1.6. Set include_req_uri parameter
 ...
 modparam("pua_dialoginfo", "include_req_uri", 1)
 ...
 
-5.6. caller_confirmed (int)
+5.7. caller_confirmed (int)
 
    Usually the dialog-info of the caller will be "trying -> early ->
    confirmed" and the dialog-info of the callee will be "early ->
@@ -396,12 +420,12 @@ modparam("pua_dialoginfo", "include_req_uri", 1)
 
    Default value is “0”.
 
-   Example 1.6. Set caller_confirmed parameter
+   Example 1.7. Set caller_confirmed parameter
 ...
 modparam("pua_dialoginfo", "caller_confirmed", 1)
 ...
 
-5.7. send_publish_flag (int)
+5.8. send_publish_flag (int)
 
    This message flag indicates whether to send PUBLISH requests or not. If
    not set, PUBLISH requests are sent out only if their R-URI is local
@@ -409,12 +433,12 @@ modparam("pua_dialoginfo", "caller_confirmed", 1)
 
    Default value is “-1”.
 
-   Example 1.7. Set send_publish_flag parameter
+   Example 1.8. Set send_publish_flag parameter
 ...
 modparam("pua_dialoginfo", "send_publish_flag", 8)
 ...
 
-5.8. disable_caller_publish_flag (int)
+5.9. disable_caller_publish_flag (int)
 
    This message flag indicates whether to send caller (initiator) PUBLISH
    requests or not. If set, PUBLISH requests are not sent for the caller
@@ -422,12 +446,12 @@ modparam("pua_dialoginfo", "send_publish_flag", 8)
 
    Default value is “-1”.
 
-   Example 1.8. Set disable_caller_publish_flag parameter
+   Example 1.9. Set disable_caller_publish_flag parameter
 ...
 modparam("pua_dialoginfo", "disable_caller_publish_flag", 9)
 ...
 
-5.9. disable_callee_publish_flag (int)
+5.10. disable_callee_publish_flag (int)
 
    This message flag indicates whether to send callee (recipient) PUBLISH
    requests or not. If set, PUBLISH requests are not sent for the callee
@@ -435,36 +459,36 @@ modparam("pua_dialoginfo", "disable_caller_publish_flag", 9)
 
    Default value is “-1”.
 
-   Example 1.9. Set disable_callee_publish_flag parameter
+   Example 1.10. Set disable_callee_publish_flag parameter
 ...
 modparam("pua_dialoginfo", "disable_callee_publish_flag", 10)
 ...
 
-5.10. use_pubruri_avps (int)
+5.11. use_pubruri_avps (int)
 
    Get Publish R-Uri from avps (see corresponding avp params), not from
    request to/from uri.
 
    Default value is “0”.
 
-   Example 1.10. Set use_pubruri_avps parameter
+   Example 1.11. Set use_pubruri_avps parameter
 ...
 modparam("pua_dialoginfo", "use_pubruri_avps", 1)
 ...
 
-5.11. refresh_pubruri_avps_flag (int)
+5.12. refresh_pubruri_avps_flag (int)
 
    If use_pubruri_avps is enabled, this message flag indicates whether to
    refresh R-Uri from avps before sending the PUBLISH requests.
 
    Default value is “-1”.
 
-   Example 1.11. Set refresh_pubruri_avps_flag parameter
+   Example 1.12. Set refresh_pubruri_avps_flag parameter
 ...
 modparam("pua_dialoginfo", "refresh_pubruri_avps_flag", 11)
 ...
 
-5.12. pubruri_caller_avp (str)
+5.13. pubruri_caller_avp (str)
 
    If use_pubruri_avps is enabled, PUBLISH-requests reporting
    dialog-information about the caller (entity=caller) are sent using the
@@ -475,12 +499,12 @@ modparam("pua_dialoginfo", "refresh_pubruri_avps_flag", 11)
 
    Default value is “NULL”.
 
-   Example 1.12. Set pubruri_caller_avp parameter
+   Example 1.13. Set pubruri_caller_avp parameter
 ...
 modparam("pua_dialoginfo", "pubruri_caller_avp", "$avp(s:puburis_caller)")
 ...
 
-5.13. pubruri_callee_avp (str)
+5.14. pubruri_callee_avp (str)
 
    If use_pubruri_avps is enabled, PUBLISH-requests reporting
    dialog-information about the callee (entity=callee) are sent using the
@@ -491,12 +515,12 @@ modparam("pua_dialoginfo", "pubruri_caller_avp", "$avp(s:puburis_caller)")
 
    Default value is “NULL”.
 
-   Example 1.13. Set pubruri_callee_avp parameter
+   Example 1.14. Set pubruri_callee_avp parameter
 ...
 modparam("pua_dialoginfo", "pubruri_callee_avp", "$avp(s:puburis_callee)")
 ...
 
-5.14. pubruri_caller_dlg_var (str)
+5.15. pubruri_caller_dlg_var (str)
 
    Must be set to the name of dialog variable where to store the URI for
    caller, used to send the notifications. This is needed to restored the
@@ -505,12 +529,12 @@ modparam("pua_dialoginfo", "pubruri_callee_avp", "$avp(s:puburis_callee)")
 
    Default value is “NULL”.
 
-   Example 1.14. Set pubruri_caller_avp parameter
+   Example 1.15. Set pubruri_caller_avp parameter
 ...
 modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
 ...
 
-5.15. pubruri_callee_dlg_var (str)
+5.16. pubruri_callee_dlg_var (str)
 
    Must be set to the name of dialog variable where to store the URI for
    callee, used to send the notifications. This is needed to restored the
@@ -519,24 +543,24 @@ modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
 
    Default value is “NULL”.
 
-   Example 1.15. Set pubruri_callee_dlg_var parameter
+   Example 1.16. Set pubruri_callee_dlg_var parameter
 ...
 modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
 ...
 
-5.16. callee_trying (int)
+5.17. callee_trying (int)
 
    If this parameter is set, a "Trying" state will be sent for both the
    caller and callee, rather than just the caller.
 
    Default value is “0”.
 
-   Example 1.16. Set callee_trying parameter
+   Example 1.17. Set callee_trying parameter
 ...
 modparam("pua_dialoginfo", "callee_trying", 1)
 ...
 
-5.17. caller_entity_when_publish_disabled (int)
+5.18. caller_entity_when_publish_disabled (int)
 
    Must be a valid sip uri. If this parameter is set, this uri is used as
    caller entity in publish xml body if associated dialog has the flag
@@ -545,13 +569,13 @@ modparam("pua_dialoginfo", "callee_trying", 1)
 
    Default value is “NULL”.
 
-   Example 1.17. Set caller_entity_when_publish_disabled parameter
+   Example 1.18. Set caller_entity_when_publish_disabled parameter
 ...
 modparam("pua_dialoginfo", "caller_entity_when_publish_disabled", "sip:caller@pu
 blish.disabled.com")
 ...
 
-5.18. callee_entity_when_publish_disabled (int)
+5.19. callee_entity_when_publish_disabled (int)
 
    Must be a valid sip uri. If this parameter is set, this uri is used as
    callee entity in publish xml body if associated dialog has the flag
@@ -560,44 +584,44 @@ blish.disabled.com")
 
    Default value is “NULL”.
 
-   Example 1.18. Set callee_entity_when_publish_disabled parameter
+   Example 1.19. Set callee_entity_when_publish_disabled parameter
 ...
 modparam("pua_dialoginfo", "callee_entity_when_publish_disabled", "sip:callee@pu
 blish.disabled.com")
 ...
 
-5.19. publish_dialog_req_within (int)
+5.20. publish_dialog_req_within (int)
 
    If this parameter is set to 1, subsequents requests received in dialog
    generate corresponding publish request.
 
    Default value is “1”.
 
-   Example 1.19. Set publish_dialog_req_within parameter
+   Example 1.20. Set publish_dialog_req_within parameter
 ...
 modparam("pua_dialoginfo", "publish_dialog_req_within", 0)
 ...
 
-5.20. local_identity_dlg_var (str)
+5.21. local_identity_dlg_var (str)
 
    PUBLISH-requests reporting dialog-information will use the value of the
    dialog variable if exists
 
    Default value is “NULL”.
 
-   Example 1.20. Set local_identity_dlg_var parameter
+   Example 1.21. Set local_identity_dlg_var parameter
 ...
 modparam("pua_dialoginfo", "local_identity_dlg_var", "local_identity")
 ...
 
-5.21. attribute_display (int)
+5.22. attribute_display (int)
 
    If set to 1, the display name attribute is added with user part of the
    URI for local and remote targets.
 
    Default value is “0”.
 
-   Example 1.21. Set attribute_display parameter
+   Example 1.22. Set attribute_display parameter
 ...
 modparam("pua_dialoginfo", "attribute_display", 1)
 ...

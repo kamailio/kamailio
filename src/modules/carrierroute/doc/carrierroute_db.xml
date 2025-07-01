@@ -29,7 +29,7 @@ ALL CHANGES DONE HERE WILL BE LOST IF THE FILE IS REGENERATED
       <title>Set <varname>db_url</varname> parameter</title>
       <programlisting format="linespecific">
 ...
-modparam("carrierroute", "db_url", "dbdriver://username:password@dbhost/dbname")
+modparam("carrierroute", "db_url", "&exampledb;")
 ...
 </programlisting>
     </example>
@@ -117,7 +117,7 @@ modparam("carrierroute", "carrierroute_flags_col", "flags")
   </section>
   <section>
     <title><varname>carrierroute_mask_col</varname> (string)</title>
-    <para>This column contains the mask that is applied to the message flags before rule 
+    <para>This column contains the mask that is applied to the message flags before rule
 			  matching.</para>
     <example>
       <title>Set <varname>carrierroute_mask_col</varname> parameter</title>
@@ -136,12 +136,12 @@ modparam("carrierroute", "carrierroute_mask_col", "mask")
 			  traffic shall be routed to gateway A, the other 30 % shall be routed to
 			  gateway B, we define a rule for gateway A with a prob value of 0.7 and a
 			  rule for gateway B with a prob value of 0.3.
-			  
-			  
+
+
 			  If all probabilities for a given prefix, tree and domain don't add to 100%,
 			  the prefix values will be adjusted according the given prob values. E.g. if
 			  three hosts with prob values of 0.5, 0.5 and 0.4 are defined, the resulting
-			  probabilities are 35.714, 35.714 and 28.571%. But its better to choose meaningful
+			  probabilities are 35.714, 35.714 and 28.571%. But it is better to choose meaningful
 			  values in the first place because of clarity.
 			  </para>
     <example>
@@ -276,7 +276,7 @@ modparam("carrierroute", "carrierfailureroute_domain_col", "domain")
     <para>Name of column contains the scan prefixes. Scan prefixes define the matching
 			  portion of a phone number, e.g. we have the scan prefixes 49721 and 49, the called number is
 			  49721913740, it matches 49721, because the longest match is taken. If no prefix matches,
-			  the number is not failure routed. To prevent this, an empty prefix value of 
+			  the number is not failure routed. To prevent this, an empty prefix value of
 			  could be added.</para>
     <example>
       <title>Set <varname>carrierfailureroute_scan_prefix_col</varname> parameter</title>

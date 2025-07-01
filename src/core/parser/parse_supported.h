@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -32,14 +34,17 @@
 #include "../mem/mem.h"
 #include "parse_option_tags.h"
 
-#define get_supported(p_msg) \
-	((p_msg)->supported ? ((struct option_tag_body*)(p_msg)->supported->parsed)->option_tags_all : 0)
+#define get_supported(p_msg)                                                 \
+	((p_msg)->supported                                                      \
+					? ((struct option_tag_body *)(p_msg)->supported->parsed) \
+							  ->option_tags_all                              \
+					: 0)
 
 
 /*!
  * Parse all Supported headers.
  */
-int parse_supported( struct sip_msg *msg);
+int parse_supported(struct sip_msg *msg);
 
 
 void free_supported(struct option_tag_body **sb);

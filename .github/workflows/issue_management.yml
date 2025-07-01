@@ -1,0 +1,25 @@
+name: 'Close stale issues and PRs'
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+permissions:
+  issues: write
+  pull-requests: write
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          stale-issue-message: 'This issue is stale because it has been open 6 weeks with no activity. Remove stale label or comment or this will be closed in 2 weeks.'
+          stale-pr-message: 'This PR is stale because it has been open 6 weeks with no activity. Remove stale label or comment or this will be closed in 2 weeks.'
+          days-before-stale: 42
+          days-before-close: 14
+          close-issue-label: expired
+          close-pr-label: expired
+          exempt-issue-labels: bug
+          remove-stale-when-updated: true
+          operations-per-run: 500
+          ascending: true

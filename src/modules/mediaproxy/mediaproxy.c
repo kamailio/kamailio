@@ -1,8 +1,10 @@
-/* 
+/*
  * Copyright (C) 2004-2008 Dan Pascu
  * Copyright (C) 2009 Juha Heinanen (multipart hack)
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -109,7 +111,12 @@ typedef int Bool;
 typedef Bool (*NatTestFunction)(struct sip_msg *msg);
 
 
-typedef enum { TNone = 0, TSupported, TUnsupported } TransportType;
+typedef enum
+{
+	TNone = 0,
+	TSupported,
+	TUnsupported
+} TransportType;
 
 #define RETRY_INTERVAL 10
 #define BUFFER_SIZE 8192
@@ -118,7 +125,7 @@ typedef struct MediaproxySocket
 {
 	char *name;				// name
 	int sock;				// socket
-	int timeout;			// how many miliseconds to wait for an answer
+	int timeout;			// how many milliseconds to wait for an answer
 	time_t last_failure;	// time of the last failure
 	char data[BUFFER_SIZE]; // buffer for the answer data
 } MediaproxySocket;
@@ -163,8 +170,8 @@ typedef struct SessionInfo
 typedef struct AVP_Param
 {
 	str spec;
-	int_str name;
-	unsigned short type;
+	avp_name_t name;
+	avp_flags_t type;
 } AVP_Param;
 
 typedef struct ice_candidate_data
@@ -193,16 +200,15 @@ static str ice_candidate = str_init("none");
 
 static MediaproxySocket mediaproxy_socket = {
 		"/run/mediaproxy/dispatcher.sock", // name
-		-1,									   // sock
-		500, // timeout in 500 miliseconds if there is no answer
-		0,   // time of the last failure
-		""   // data
+		-1,								   // sock
+		500, // timeout in 500 milliseconds if there is no answer
+		0,	 // time of the last failure
+		""	 // data
 };
 
 
 struct dlg_binds dlg_api;
 Bool have_dlg_api = False;
-static int dialog_flag = -1;
 
 // The AVP where the caller signaling IP is stored (if defined)
 static AVP_Param signaling_ip_avp = {str_init(SIGNALING_IP_AVP_SPEC), {0}, 0};
@@ -213,36 +219,42 @@ static AVP_Param media_relay_avp = {str_init(MEDIA_RELAY_AVP_SPEC), {0}, 0};
 // The AVP where the ICE candidate priority is stored (if defined)
 static AVP_Param ice_candidate_avp = {str_init(ICE_CANDIDATE_AVP_SPEC), {0}, 0};
 
-static cmd_export_t commands[] = {
-		{"engage_media_proxy", (cmd_function)w_EngageMediaProxy, 0, 0, 0,
-				REQUEST_ROUTE | BRANCH_ROUTE},
-		{"use_media_proxy", (cmd_function)w_UseMediaProxy, 0, 0, 0,
-				ANY_ROUTE},
-		{"end_media_session", (cmd_function)w_EndMediaSession, 0, 0, 0,
-				ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cmd_export_t mod_cmds[] = {
+	{"engage_media_proxy", (cmd_function)w_EngageMediaProxy, 0,
+		0, 0, REQUEST_ROUTE | BRANCH_ROUTE},
+	{"use_media_proxy", (cmd_function)w_UseMediaProxy, 0,
+		0, 0, ANY_ROUTE},
+	{"end_media_session", (cmd_function)w_EndMediaSession, 0,
+		0, 0, ANY_ROUTE},
 
-static param_export_t parameters[] = {
-		{"disable", INT_PARAM, &mediaproxy_disabled},
-		{"mediaproxy_socket", PARAM_STRING, &(mediaproxy_socket.name)},
-		{"mediaproxy_timeout", INT_PARAM, &(mediaproxy_socket.timeout)},
-		{"signaling_ip_avp", PARAM_STR, &(signaling_ip_avp.spec)},
-		{"media_relay_avp", PARAM_STR, &(media_relay_avp.spec)},
-		{"ice_candidate", PARAM_STR, &(ice_candidate)},
-		{"ice_candidate_avp", PARAM_STR, &(ice_candidate_avp.spec)}, {0, 0, 0}};
+	{0, 0, 0, 0, 0, 0}
+};
+
+static param_export_t mod_params[] = {
+	{"disable", PARAM_INT, &mediaproxy_disabled},
+	{"mediaproxy_socket", PARAM_STRING, &(mediaproxy_socket.name)},
+	{"mediaproxy_timeout", PARAM_INT, &(mediaproxy_socket.timeout)},
+	{"signaling_ip_avp", PARAM_STR, &(signaling_ip_avp.spec)},
+	{"media_relay_avp", PARAM_STR, &(media_relay_avp.spec)},
+	{"ice_candidate", PARAM_STR, &(ice_candidate)},
+	{"ice_candidate_avp", PARAM_STR, &(ice_candidate_avp.spec)},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-	"mediaproxy",    /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	commands,        /* cmd (cfg function) exports */
-	parameters,      /* param exports */
-	0,               /* RPC method exports */
-	0,               /* pseudo-variables exports */
-	0,               /* response handling function */
-	mod_init,        /* module init function */
-	child_init,      /* per-child init function */
-	0                /* module destroy function */
+	"mediaproxy",	      /* module name */
+	DEFAULT_DLFLAGS,    /* dlopen flags */
+	mod_cmds,           /* exported functions */
+	mod_params,         /* exported parameters */
+	0,                  /* RPC method exports */
+	0,                  /* exported pseudo-variables */
+	0,                  /* response handling function */
+	mod_init,           /* module initialization function */
+	child_init,         /* per-child init function */
+	0                   /* module destroy function */
 };
+/* clang-format on */
 
 
 // String processing functions
@@ -607,7 +619,7 @@ static str get_user_agent(struct sip_msg *msg)
 // Get caller signaling IP
 static str get_signaling_ip(struct sip_msg *msg)
 {
-	int_str value;
+	avp_value_t value;
 
 	if(!search_first_avp(signaling_ip_avp.type | AVP_VAL_STR,
 			   signaling_ip_avp.name, &value, NULL)
@@ -624,7 +636,7 @@ static str get_signaling_ip(struct sip_msg *msg)
 static str get_media_relay(struct sip_msg *msg)
 {
 	static str undefined = str_init("");
-	int_str value;
+	avp_value_t value;
 
 	if(!search_first_avp(media_relay_avp.type | AVP_VAL_STR,
 			   media_relay_avp.name, &value, NULL)
@@ -750,7 +762,7 @@ err:
 }
 
 
-// Get the SDP message from SIP message and check it's Content-Type
+// Get the SDP message from SIP message and check its Content-Type
 // Return values:
 //    1 - success
 //   -1 - error in getting body or invalid content type
@@ -974,7 +986,7 @@ static Bool has_ice_candidate_component(str *block, int id)
 // for the candidate(s) inserted
 static str get_ice_candidate(void)
 {
-	int_str value;
+	avp_value_t value;
 
 	if(!search_first_avp(ice_candidate_avp.type | AVP_VAL_STR,
 			   ice_candidate_avp.name, &value, NULL)
@@ -1584,7 +1596,7 @@ static int use_media_proxy(
 		return status;
 	} else if(status == -2
 			  && !(msg->REPLY_STATUS == 200
-						 && get_method_from_reply(msg) == METHOD_INVITE)) {
+					  && get_method_from_reply(msg) == METHOD_INVITE)) {
 		return -2;
 	}
 	have_sdp = (status == 1);
@@ -1592,7 +1604,7 @@ static int use_media_proxy(
 	if(have_sdp) {
 		if(msg->first_line.type == SIP_REQUEST
 				&& find_line_starting_with(
-						   &sdp, "a=remote-candidates", False)) {
+						&sdp, "a=remote-candidates", False)) {
 			// we don't process requests with a=remote-candidates, this indicates the end of an ICE
 			// negotiation and we must not mangle the SDP.
 			if(ice_data != NULL) {
@@ -1610,7 +1622,7 @@ static int use_media_proxy(
 		if(session.supported_count == 0)
 			return 1; // there are no supported media streams. we have nothing to do.
 
-		len = sprintf(media_str, "%s", "media: ");
+		len = snprintf(media_str, sizeof(media_str), "%s", "media: ");
 		for(i = 0, str_buf.len = sizeof(media_str) - len - 2,
 		str_buf.s = media_str + len;
 				i < session.stream_count; i++) {
@@ -1624,15 +1636,15 @@ static int use_media_proxy(
 						(unsigned long)sizeof(media_str));
 				return -1;
 			}
-			len = sprintf(str_buf.s, "%.*s:%.*s:%.*s:%.*s:%s,", stream.type.len,
-					stream.type.s, stream.ip.len, stream.ip.s, stream.port.len,
-					stream.port.s, stream.direction.len, stream.direction.s,
-					stream.has_ice ? "ice=yes" : "ice=no");
+			len = snprintf(str_buf.s, str_buf.len, "%.*s:%.*s:%.*s:%.*s:%s,",
+					stream.type.len, stream.type.s, stream.ip.len, stream.ip.s,
+					stream.port.len, stream.port.s, stream.direction.len,
+					stream.direction.s, stream.has_ice ? "ice=yes" : "ice=no");
 			str_buf.s += len;
 			str_buf.len -= len;
 		}
 		*(str_buf.s - 1) = 0; // remove the last comma
-		sprintf(str_buf.s - 1, "%s", "\r\n");
+		snprintf(str_buf.s - 1, str_buf.len + 1, "%s", "\r\n");
 	} else {
 		media_str[0] = 0;
 	}
@@ -1645,20 +1657,21 @@ static int use_media_proxy(
 	signaling_ip = get_signaling_ip(msg);
 	media_relay = get_media_relay(msg);
 
-	len = snprintf(request, sizeof(request), "update\r\n"
-											 "type: %s\r\n"
-											 "dialog_id: %s\r\n"
-											 "call_id: %.*s\r\n"
-											 "cseq: %.*s\r\n"
-											 "from_uri: %.*s\r\n"
-											 "to_uri: %.*s\r\n"
-											 "from_tag: %.*s\r\n"
-											 "to_tag: %.*s\r\n"
-											 "user_agent: %.*s\r\n"
-											 "signaling_ip: %.*s\r\n"
-											 "media_relay: %.*s\r\n"
-											 "%s"
-											 "\r\n",
+	len = snprintf(request, sizeof(request),
+			"update\r\n"
+			"type: %s\r\n"
+			"dialog_id: %s\r\n"
+			"call_id: %.*s\r\n"
+			"cseq: %.*s\r\n"
+			"from_uri: %.*s\r\n"
+			"to_uri: %.*s\r\n"
+			"from_tag: %.*s\r\n"
+			"to_tag: %.*s\r\n"
+			"user_agent: %.*s\r\n"
+			"signaling_ip: %.*s\r\n"
+			"media_relay: %.*s\r\n"
+			"%s"
+			"\r\n",
 			type, dialog_id, callid.len, callid.s, cseq.len, cseq.s,
 			from_uri.len, from_uri.s, to_uri.len, to_uri.s, from_tag.len,
 			from_tag.s, to_tag.len, to_tag.s, user_agent.len, user_agent.s,
@@ -1814,7 +1827,7 @@ static int use_media_proxy(
 							   : ice_data->priority;
 			port = strtoint(&tokens[j]);
 			candidate.s = buf;
-			candidate.len = sprintf(candidate.s,
+			candidate.len = snprintf(candidate.s, sizeof(buf),
 					"a=candidate:R%x 1 UDP %u %.*s %i typ relay%.*s",
 					hexip.s_addr, priority, tokens[0].len, tokens[0].s, port,
 					session.separator.len, session.separator.s);
@@ -1828,7 +1841,7 @@ static int use_media_proxy(
 
 			if(stream.has_rtcp_ice) {
 				candidate.s = buf;
-				candidate.len = sprintf(candidate.s,
+				candidate.len = snprintf(candidate.s, sizeof(buf),
 						"a=candidate:R%x 2 UDP %u %.*s %i typ relay%.*s",
 						hexip.s_addr, priority - 1, tokens[0].len, tokens[0].s,
 						port + 1, session.separator.len, session.separator.s);
@@ -1855,11 +1868,12 @@ static int end_media_session(str callid, str from_tag, str to_tag)
 	char request[2048], *result;
 	int len;
 
-	len = snprintf(request, sizeof(request), "remove\r\n"
-											 "call_id: %.*s\r\n"
-											 "from_tag: %.*s\r\n"
-											 "to_tag: %.*s\r\n"
-											 "\r\n",
+	len = snprintf(request, sizeof(request),
+			"remove\r\n"
+			"call_id: %.*s\r\n"
+			"from_tag: %.*s\r\n"
+			"to_tag: %.*s\r\n"
+			"\r\n",
 			callid.len, callid.s, from_tag.len, from_tag.s, to_tag.len,
 			to_tag.s);
 
@@ -1878,7 +1892,11 @@ static int end_media_session(str callid, str from_tag, str to_tag)
 // Dialog callbacks and helpers
 //
 
-typedef enum { MPInactive = 0, MPActive } MediaProxyState;
+typedef enum
+{
+	MPInactive = 0,
+	MPActive
+} MediaProxyState;
 
 
 static INLINE char *get_dialog_id(struct dlg_cell *dlg)
@@ -1986,7 +2004,6 @@ static int EngageMediaProxy(struct sip_msg *msg)
 		return -1;
 	}
 	msg->msg_flags |= FL_USE_MEDIA_PROXY;
-	setflag(msg, dialog_flag); // have the dialog module trace this dialog
 	return 1;
 }
 
@@ -2039,9 +2056,6 @@ static int w_EndMediaSession(struct sip_msg *msg, char *p1, char *p2)
 static int mod_init(void)
 {
 	pv_spec_t avp_spec;
-	int *param;
-	modparam_t type;
-
 	// initialize the signaling_ip_avp structure
 	if(!signaling_ip_avp.spec.s || signaling_ip_avp.spec.len <= 0) {
 		LM_WARN("missing/empty signaling_ip_avp parameter. will use "
@@ -2119,21 +2133,6 @@ static int mod_init(void)
 	// bind to the dialog API
 	if(load_dlg_api(&dlg_api) == 0) {
 		have_dlg_api = True;
-
-		// load dlg_flag and default_timeout parameters from the dialog module
-		param = find_param_export(
-				find_module_by_name("dialog"), "dlg_flag", INT_PARAM, &type);
-		if(!param) {
-			LM_CRIT("cannot find dlg_flag parameter in the dialog module\n");
-			return -1;
-		}
-
-		if(type != INT_PARAM) {
-			LM_CRIT("dlg_flag parameter found but with wrong type: %d\n", type);
-			return -1;
-		}
-
-		dialog_flag = *param;
 
 		// register dialog creation callback
 		if(dlg_api.register_dlgcb(

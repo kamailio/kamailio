@@ -29,7 +29,7 @@ fi ;
 
 CFG=43.cfg
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXX`
-# setup config
+# set up config
 echo "loadmodule \"tm/tm.so\"" > $CFG
 echo "loadmodule \"sl/sl.so\"" >> $CFG
 echo "loadmodule \"mi_fifo/mi_fifo.so\"" >> $CFG
@@ -49,7 +49,7 @@ $CTL fifo forward_list &> /dev/null
 $CTL fifo forward_filter 0=REGISTER:INVITE &> /dev/null
 $CTL fifo forward_list &> /dev/null
 $CTL fifo forward_proxy 0=127.0.0.1:7000 &> /dev/null
-$CTL fifo forward_list > $TMPFILE 
+$CTL fifo forward_list > $TMPFILE
 
 
 

@@ -25,16 +25,23 @@
  * Module: \ref textops
  */
 
-		       
+
 #ifndef _TXT_VAR_H_
 #define _TXT_VAR_H_
 
 #include "../../core/pvar.h"
 
-enum _tr__txt_type { TR_TXT_NONE=0, TR_TXT_RE };
-enum _tr_s_subtype { 
-	TR_TXT_RE_NONE=0, TR_TXT_RE_SUBST };
+enum _tr__txt_type
+{
+	TR_TXT_NONE = 0,
+	TR_TXT_RE
+};
+enum _tr_s_subtype
+{
+	TR_TXT_RE_NONE = 0,
+	TR_TXT_RE_SUBST
+};
 
-char* tr_txt_parse_re(str *in, trans_t *tr);
+char *tr_txt_parse_re(str *in, trans_t *tr);
 
 #endif

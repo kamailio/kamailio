@@ -60,7 +60,7 @@ void sca_appearance_state_to_str(int state, str *state_str)
 {
 	assert(state_str != NULL);
 
-	if(state >= SCA_APPEARANCE_STATE_NAME_COUNT || state < 0) {
+	if(state < 0 || state >= SCA_APPEARANCE_STATE_NAME_COUNT) {
 		state_str->len = SCA_APPEARANCE_STATE_STR_UNKNOWN.len;
 		state_str->s = SCA_APPEARANCE_STATE_STR_UNKNOWN.s;
 
@@ -160,7 +160,7 @@ void sca_appearance_free(sca_appearance *appearance)
  * assumes slot for app_entries is locked.
  *
  * appearance-index values are 1-indexed.
- * return values: 
+ * return values:
  *	 -1:	error
  *	>=1:	index reserved for claimant
  */

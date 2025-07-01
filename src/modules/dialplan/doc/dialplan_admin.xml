@@ -128,7 +128,7 @@
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialplan", "db_url", "mysql://user:passwb@localhost/db")
+modparam("dialplan", "db_url", "mysql://user:passwd@localhost/db")
 ...
 		</programlisting>
 		</example>
@@ -648,7 +648,7 @@ xlog("translated to var $var(y) \n");
 		</title>
 		<para>
 		Reload the translation rules from the database. Note that there is a
-		rate limiting defined by 'reload_delta' paramenter. By default is allowed
+		rate limiting defined by 'reload_delta' parameter. By default is allowed
 		maximum one reload in five seconds.
 		</para>
 		<para>
@@ -687,7 +687,7 @@ xlog("translated to var $var(y) \n");
 			<para>
 			Perform a reload of the translation rules from the database.
 			Note that there is a rate limiting defined by 'reload_delta'
-			paramenter. By default is allowed maximum one reload in five seconds.
+			parameter. By default is allowed maximum one reload in five seconds.
 			</para>
 			<para>
 			Name: <emphasis>dialplan.reload</emphasis>

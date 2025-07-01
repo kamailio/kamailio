@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -27,8 +29,8 @@
 #include "../../core/pvar.h"
 int pv_atom_parse_name(pv_spec_t *sp, str *in);
 
-int pv_atom_set(struct sip_msg*, pv_param_t*, int, pv_value_t*);
-int pv_atom_get(struct sip_msg*, pv_param_t*, pv_value_t*);
+int pv_atom_set(struct sip_msg *, pv_param_t *, int, pv_value_t *);
+int pv_atom_get(struct sip_msg *, pv_param_t *, pv_value_t *);
 
 void free_atom_fmt_buff();
 

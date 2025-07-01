@@ -130,7 +130,7 @@ send_reply_mode("403", "Invalid user - $fU", "3");
 	</title>
 	<para>
 	    Sends back an error reply describing the nature of the last
-	    internal error.  Usually this function should be used after a
+	    internal error. Usually this function should be used after a
 	    script function that returned an error code.
 	</para>
 	<example>
@@ -173,6 +173,29 @@ sl_reply_error();
 ...
 if(status=="408")
     sl_forward_reply("404", "Not found");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sl.f.send_reply_error">
+		<title>
+		<function moreinfo="none">send_reply_error()</function>
+		</title>
+		<para>
+		For the current request, the internal error code reply is sent back
+		stateful or stateless, depending of the <acronym>TM</acronym> module:
+		if a transaction exists for the current request, then the reply is sent
+		statefully, otherwise stateless.
+		</para>
+		<para>
+			It can be used from REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>send_reply_error</function> usage</title>
+		<programlisting format="linespecific">
+...
+send_reply_error();
 ...
 </programlisting>
 		</example>

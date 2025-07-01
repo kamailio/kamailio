@@ -28,7 +28,7 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
 	<xi:include href="app_python_admin.xml"/>
-    
+
 </book>

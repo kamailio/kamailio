@@ -27,9 +27,6 @@ else
 	LIBS+=-L$(LOCALBASE)/lib -lxml2
 endif
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/ims/kamailio_ims
-
 ifneq ($(OS),darwin)
 	LIBS += -lrt
 	LIBS += -lpthread

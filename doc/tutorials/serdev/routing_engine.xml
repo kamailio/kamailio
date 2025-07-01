@@ -259,7 +259,7 @@
 		    route statement.
 		</para>
 		<para>
-		    As we have mentioned already, there can be more that one
+		    As we have mentioned already, there can be more than one
 		    route statement in the config file. One of them is main
 		    (without number), the other are additional. This command
 		    makes it possible to execute an additional route statement.

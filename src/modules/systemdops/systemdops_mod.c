@@ -34,18 +34,20 @@
 
 MODULE_VERSION
 
+/* clang-format off */
 struct module_exports exports = {
-	"systemdops",    /* module name */
+	"systemdops",	 /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	0,               /* cmd (cfg function) exports */
-	0,               /* param exports */
-	0,               /* RPC method exports */
-	0,               /* pseudo-variables exports */
+	0,               /* exported functions */
+	0,               /* exported parameters */
+	0,               /* exported rpc functions */
+	0,               /* exported pseudo-variables */
 	0,               /* response handling function */
 	0,               /* module init function */
 	0,               /* per-child init function */
 	0                /* module destroy function */
 };
+/* clang-format on */
 
 /**
  *
@@ -69,7 +71,7 @@ void ksr_sd_app_shutdown(void)
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
 	sr_corecb_t *cbp = sr_corecb_get();
-	if(cbp==NULL) {
+	if(cbp == NULL) {
 		return -1;
 	}
 	cbp->app_ready = ksr_sd_app_ready;

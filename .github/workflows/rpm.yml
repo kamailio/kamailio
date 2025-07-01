@@ -1,0 +1,145 @@
+---
+name: build_rpm
+'on':
+  schedule:
+  - cron: '41 6 * * 0'
+  push:
+    tags:
+    - '[0-9]+.[0-9]+.[0-9]+'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  # is required nightly build?
+  # More info at https://stackoverflow.com/questions/63014786/how-to-schedule-a-github-actions-nightly-build-but-run-it-only-when-there-where
+  # looking commit_id of the last successful daily build
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: octokit/request-action@v2.x
+        id: check_last_run
+        with:
+          route: GET /repos/{owner}/{repo}/actions/workflows/rpm.yml/runs?per_page=1&status=success
+          owner: ${{ github.repository_owner }}
+          repo: kamailio
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Show last execution info
+        run: |
+          echo "Last daily build: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}"
+
+    outputs:
+      last_sha: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}
+
+  build:
+    needs: [check]
+    if: needs.check.outputs.last_sha != github.sha
+    strategy:
+      matrix:
+        os:
+        - centos-10
+        - rhel-10
+        - centos-9
+        - rhel-9
+        - rocky-9
+        - centos-8
+        - rhel-8
+        arch:
+        - x86_64
+        - aarch64
+        include:
+        # setting image platform
+        - platform: linux/amd64
+          arch: x86_64
+        - platform: linux/arm64/v8
+          arch: aarch64
+
+        # setting runner
+        - runner: ubuntu-latest
+        - runner: ubuntu-24.04-arm
+          arch: aarch64
+
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: write
+    steps:
+    - name: checkout sources
+      uses: actions/checkout@v4
+
+    - name: print commit info
+      id: init
+      run: |
+        echo ${{ github.sha }}
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      if: "! contains(fromJson('[\"x86_64\", \"aarch64\"]'), matrix.arch)"
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: build rpm files
+      uses: addnab/docker-run-action@v3
+      with:
+        image: ghcr.io/sergey-safarov/pkg-kamailio-docker:${{ matrix.os }}
+        options: --platform ${{ matrix.platform }} -v ${{ github.workspace }}:/usr/src/kamailio
+        run: |
+          cd /usr/src/kamailio
+          make cfg
+          make -C pkg/kamailio src.rpm
+          rpmbuild --undefine=__cmake_in_source_build -ra /usr/src/kamailio/kamailio*.src.rpm
+          os_folder=$(echo "${{ matrix.os }}" | sed -e 's|-|/|')
+          ref_folder=$(echo "${{ github.ref_name }}" | sed -E -e 's/([0-9]+.[0-9]+).*/\1/')
+          mkdir -p RPMS/${os_folder}/${ref_folder}/${{ github.ref_name }}/${{ matrix.arch }}
+          cp -R /deps RPMS/${os_folder}/${ref_folder}/${{ github.ref_name }}/${{ matrix.arch }}
+          mv ~/rpmbuild/SRPMS/* RPMS/${os_folder}/${ref_folder}/${{ github.ref_name }}/${{ matrix.arch }}
+          mv ~/rpmbuild/RPMS/*/* RPMS/${os_folder}/${ref_folder}/${{ github.ref_name }}/${{ matrix.arch }}
+
+    - name: Push artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: kamailio-${{ matrix.os }}-${{ github.ref_name }}-${{ matrix.arch }}.rpm
+        path: |
+          RPMS/*
+
+  release:
+    name: Relase rpm files
+    if: github.ref_type == 'tag'
+    strategy:
+      max-parallel: 1
+      matrix:
+        os:
+        - centos-10
+        - rhel-10
+        - centos-9
+        - rhel-9
+        - rocky-9
+        - centos-8
+        - rhel-8
+    runs-on: ubuntu-latest
+    needs:
+    - build
+    steps:
+    - name: Download artifact images
+      uses: actions/download-artifact@v4
+      with:
+        pattern: kamailio-${{ matrix.os }}-${{ github.ref_name }}-*.rpm
+        path: ${{ runner.temp }}/repo
+        merge-multiple: true
+
+    - name: create archive
+      run: |
+        tar czf rpms-${{ matrix.os }}-${{ github.ref_name }}.tar.gz --directory=${{ runner.temp }} repo
+        ls -l rpms-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
+
+    - name: upload artifacts
+      uses: softprops/action-gh-release@v2
+      with:
+       files: |
+         rpms-${{ matrix.os }}-${{ github.ref_name }}.tar.gz

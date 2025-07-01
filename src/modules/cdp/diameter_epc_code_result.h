@@ -4,7 +4,7 @@
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
- * Fruanhofer Institute. It was and still is maintained in a separate
+ * Fraunhofer FOKUS Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
@@ -14,7 +14,7 @@
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
  *
- * NB: Alot of this code was originally part of OpenIMSCore,
+ * NB: A lot of this code was originally part of OpenIMSCore,
  * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
  * Thanks for great work! This is an effort to
@@ -24,6 +24,8 @@
  * to manage in the Kamailio/SR environment
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,30 +47,30 @@
 #define DIAMETER_EPC_CODE_RESULT_H_
 
 /**	EPC Specific Result Codes				*/
-enum{
-/** 1001 to 1999	Informational			*/
-/** 2001 to 2999	Success					*/
-/** 4001 to 4999	Transient Failures		*/
-	RC_EPC_DIAMETER_END_USER_SERVICE_DENIED				= 4010, //TS 32.299
-	RC_EPC_DIAMETER_CREDIT_CONTROL_NOT_APPLICABLE		= 4011, //TS 32.299
-	RC_EPC_DIAMETER_CREDIT_LIMIT_REACHED				= 4012, //TS 32.299
-	RC_EPC_DIAMETER_AUTHENTICATION_DATA_UNAVAILABLE		= 4181,
-/** 5001 to 5999	Permanent Failures		*/
-	RC_EPC_DIAMETER_ERROR_USER_UNKNOWN					= 5001,
-	RC_EPC_DIAMETER_ERROR_IDENTITY_NOT_REGISTERED		= 5003, //TS 29.273
-	RC_EPC_DIAMETER_AUTHORIZATION_REJECTED				= 5003, //TS 32.299
-	RC_EPC_DIAMETER_ERROR_ROAMING_NOT_ALLOWED			= 5004, //TS 29.273
-	RC_EPC_DIAMETER_ERROR_IDENTITY_ALREADY_REGISTERED	= 5005, //TS 29.273
-	RC_EPC_DIAMETER_USER_UNKNOWN						= 5030, //TS 32.299
-	RC_EPC_DIAMETER_RATING_FAILED						= 5031, //TS 32.299
-	RC_EPC_DIAMETER_ERROR_UNKNOWN_EPS_SUBSCRIPTION		= 5420,
-	RC_EPC_DIAMETER_ERROR_RAT_NOT_ALLOWED				= 5421,
-	RC_EPC_DIAMETER_ERROR_EQUIPMENT_UNKNOWN				= 5422,
+enum
+{
+	/** 1001 to 1999	Informational			*/
+	/** 2001 to 2999	Success					*/
+	/** 4001 to 4999	Transient Failures		*/
+	RC_EPC_DIAMETER_END_USER_SERVICE_DENIED = 4010,		  //TS 32.299
+	RC_EPC_DIAMETER_CREDIT_CONTROL_NOT_APPLICABLE = 4011, //TS 32.299
+	RC_EPC_DIAMETER_CREDIT_LIMIT_REACHED = 4012,		  //TS 32.299
+	RC_EPC_DIAMETER_AUTHENTICATION_DATA_UNAVAILABLE = 4181,
+	/** 5001 to 5999	Permanent Failures		*/
+	RC_EPC_DIAMETER_ERROR_USER_UNKNOWN = 5001,
+	RC_EPC_DIAMETER_ERROR_IDENTITY_NOT_REGISTERED = 5003,	  //TS 29.273
+	RC_EPC_DIAMETER_AUTHORIZATION_REJECTED = 5003,			  //TS 32.299
+	RC_EPC_DIAMETER_ERROR_ROAMING_NOT_ALLOWED = 5004,		  //TS 29.273
+	RC_EPC_DIAMETER_ERROR_IDENTITY_ALREADY_REGISTERED = 5005, //TS 29.273
+	RC_EPC_DIAMETER_USER_UNKNOWN = 5030,					  //TS 32.299
+	RC_EPC_DIAMETER_RATING_FAILED = 5031,					  //TS 32.299
+	RC_EPC_DIAMETER_ERROR_UNKNOWN_EPS_SUBSCRIPTION = 5420,
+	RC_EPC_DIAMETER_ERROR_RAT_NOT_ALLOWED = 5421,
+	RC_EPC_DIAMETER_ERROR_EQUIPMENT_UNKNOWN = 5422,
 	RC_EPC_DIAMETER_ERROR_USER_NO_NON_3GPP_SUBSCRIPTION = 5450, //TS 29.273
-	RC_EPC_DIAMETER_ERROR_USER_NO_APN_SUBSCRIPTION		= 5451, //TS 29.273
-	RC_EPC_DIAMETER_ERROR_RAT_TYPE_NOT_ALLOWED			= 5452, //TS 29.273
+	RC_EPC_DIAMETER_ERROR_USER_NO_APN_SUBSCRIPTION = 5451,		//TS 29.273
+	RC_EPC_DIAMETER_ERROR_RAT_TYPE_NOT_ALLOWED = 5452,			//TS 29.273
 };
-
 
 
 #endif /*DIAMETER_EPC_CODE_RESULT_H_*/

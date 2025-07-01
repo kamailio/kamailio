@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="domain.api" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -15,7 +15,7 @@
 	module then you need to include the header file
 	<filename>domain_api.h</filename> and call
 	<function>load_domain_api</function> first.</para>
-	
+
 	<example>
 		<title>Calling <function>load_domain_api</function></title>
 		<programlisting>
@@ -32,7 +32,7 @@ if (load_domain_api(&amp;dom_api) != 0) {
 	<para>After that you can call function
 	<function>is_domain_local</function> whose pointer is stored in the
 	initialized data structure:</para>
-	
+
 	<programlisting>
 str tmp = STR_STATIC_INIT("mydomain.com");
 
@@ -44,4 +44,3 @@ if (dom_api.is_domain_local(&amp;tmp) == 1) {
 	</programlisting>
 </section>
 
-		

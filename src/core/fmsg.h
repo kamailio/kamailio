@@ -25,10 +25,10 @@
 #include "parser/msg_parser.h"
 
 int faked_msg_init(void);
-sip_msg_t* faked_msg_next(void);
-sip_msg_t* faked_msg_get_next(void);
-sip_msg_t* faked_msg_next_clear(void);
-sip_msg_t* faked_msg_get_next_clear(void);
+sip_msg_t *faked_msg_next(void);
+sip_msg_t *faked_msg_get_next(void);
+sip_msg_t *faked_msg_next_clear(void);
+sip_msg_t *faked_msg_get_next_clear(void);
 int faked_msg_get_new(sip_msg_t *fmsg);
 int faked_msg_match(sip_msg_t *tmsg);
 

@@ -158,7 +158,7 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The sipcapture module stores incoming/outgoing SIP messages in
+   The sipcapture module stores incoming/outgoing SIP messages in a
    database.
 
    Kamailio can capture SIP messages in three modes
@@ -218,11 +218,12 @@ Chapter 1. Admin Guide
 
    Database URL.
 
-   Default value is "".
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
 
    Example 1.1. Set db_url parameter
 ...
-modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
+modparam("sipcapture", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio
+")
 ...
 
 3.2. table_name (str)
@@ -538,7 +539,7 @@ modparam("sipcapture", "capture_bad_msgs", 1)
 
 4.1.  sip_capture([table], [cmode])
 
-   Store the current processed HEP/IPIP SIP message in database. It is
+   Store the current processed HEP/IPIP SIP message in a database. It is
    stored in the form prior applying changes made to it.
 
    Meaning of the parameters is as follows:
@@ -563,7 +564,7 @@ sip_capture("", "cmode");
 
 4.2.  report_capture([table], [cid], [data])
 
-   Store the current processed HEP REPORT message in database.
+   Store the current processed HEP REPORT message in a database.
 
    Meaning of the parameters is as follows:
      * table - The table where REPORT message will be stored.
@@ -675,7 +676,7 @@ kamcmd sipcapture.status check
 
 7. Database setup
 
-   Before running Kamailio with the sipcapture module, you have to setup
+   Before running Kamailio with the sipcapture module, you have to set up
    the database tables where the module will store the data. For that, if
    the table were not created by the installation script or you choose to
    install everything by yourself you can use the homer_databases.sql, SQL

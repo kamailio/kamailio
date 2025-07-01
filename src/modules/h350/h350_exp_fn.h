@@ -7,6 +7,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -36,21 +38,19 @@
 
 struct h350_auth_lookup_avp_params
 {
-	pv_spec_t   username_avp_spec;
-	pv_spec_t   password_avp_spec;
+	pv_spec_t username_avp_spec;
+	pv_spec_t password_avp_spec;
 };
 
 int h350_exp_fn_init(void);
 
-int h350_sipuri_lookup(struct sip_msg* _msg, pv_elem_t* _sip_uri);
+int h350_sipuri_lookup(struct sip_msg *_msg, pv_elem_t *_sip_uri);
 
-int h350_auth_lookup(
-	struct sip_msg* _msg, 
-	pv_elem_t* _digest_username, 
-	struct h350_auth_lookup_avp_params* _avp_specs);
+int h350_auth_lookup(struct sip_msg *_msg, pv_elem_t *_digest_username,
+		struct h350_auth_lookup_avp_params *_avp_specs);
 
-int h350_call_preferences(struct sip_msg* _msg, pv_elem_t* _avp_name_prefix);
+int h350_call_preferences(struct sip_msg *_msg, pv_elem_t *_avp_name_prefix);
 
-int h350_service_level(struct sip_msg* _msg, pv_elem_t* _avp_name_prefix);
+int h350_service_level(struct sip_msg *_msg, pv_elem_t *_avp_name_prefix);
 
 #endif /* H350_EXP_FN_H */

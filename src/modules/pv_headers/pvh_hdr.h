@@ -2,10 +2,12 @@
  * pv_headers
  *
  * Copyright (C)
- * 2020 Victor Seva <vseva@sipwise.com>
+ * 2020-2023 Victor Seva <vseva@sipwise.com>
  * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

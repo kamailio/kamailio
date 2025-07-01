@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -30,7 +32,7 @@
 #include "ip_addr.h"
 #include "stun.h"
 
-int stun_process_msg(char* buf, unsigned int len, struct receive_info* ri)
+int stun_process_msg(char *buf, unsigned int len, struct receive_info *ri)
 {
 	int ret;
 	stun_event_info_t sev;
@@ -47,7 +49,7 @@ int stun_process_msg(char* buf, unsigned int len, struct receive_info* ri)
 		ret = sr_event_exec(SREV_STUN_IN, &evp);
 	} else {
 		LM_DBG("no callback registering for handling STUN -"
-				" dropping!\n");
+			   " dropping!\n");
 	}
 	return ret;
 }

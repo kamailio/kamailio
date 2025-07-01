@@ -35,9 +35,9 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="diversion_admin.xml"/>
     <xi:include href="diversion_devel.xml"/>
-    
-    
+
+
 </book>

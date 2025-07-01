@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -43,7 +45,7 @@
 static char *kamailioVersion = "SIP/2.0";
 static unsigned int kamailioEntityType = TC_SIP_ENTITY_ROLE_OTHER;
 
-/* 
+/*
  * Initializes the kamailioSIPCommonObjects MIB elements.  This involves:
  *
  *  - Registering all OID's
@@ -175,10 +177,10 @@ int handle_kamailioSIPProtocolVersion(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-/* 
+/*
  * The scalar represents what sysUpTime was when Kamailio first started.  This
  * data was stored in a file when SNMPStats first started up, as a result of a
- * call to spawn_sysUpTime_child() 
+ * call to spawn_sysUpTime_child()
  */
 int handle_kamailioSIPServiceStartTime(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
@@ -292,9 +294,9 @@ int handle_kamailioSIPSummaryOutResponses(netsnmp_mib_handler *handler,
 	/* We can find the number of outbound responses sent by adding three
 	 * sources
 	 *
-	 *   1) fwd_replies from core_stats 
-	 *   2) local_replies and relayed_replies from the tm module 
-	 *   3) sent_replies from the sl module. 
+	 *   1) fwd_replies from core_stats
+	 *   2) local_replies and relayed_replies from the tm module
+	 *   3) sent_replies from the sl module.
 	 */
 
 	int fwd_replies = get_statistic("fwd_replies");
@@ -317,7 +319,7 @@ int handle_kamailioSIPSummaryTotalTransactions(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info *reqinfo, netsnmp_request_info *requests)
 {
-	/* We can find the total number of transactions by summing 
+	/* We can find the total number of transactions by summing
 	 * UAC_transactions and UAS_transactions.  We don't need to add
 	 * inuse_transactions because this will already be accounted for in the
 	 * two other statistics. */
@@ -398,15 +400,15 @@ int handle_kamailioSIPOtherwiseDiscardedMsgs(netsnmp_mib_handler *handler,
 }
 
 /*
- * Parameter Setting Functions 
+ * Parameter Setting Functions
  */
 
 /* If type==PARAM_STRING and stringParam is valid, this function will overwrite
- * kamailioEntityType with a bit value corresponding to the IETF's RFC  for 
+ * kamailioEntityType with a bit value corresponding to the IETF's RFC  for
  * the SIP MIB.  (Textual Convention SipEntityRole).  Anything else is
  * considered an error.
  *
- * Returns 0 on success, -1 on failure.  
+ * Returns 0 on success, -1 on failure.
  */
 int handleSipEntityType(modparam_t type, void *val)
 {
@@ -430,7 +432,7 @@ int handleSipEntityType(modparam_t type, void *val)
 
 	/* Begin our string comparison.  This isn't the most efficient approach,
 	 * but we don't expect this function to be called anywhere other than at
-	 * startup.  So our inefficiency is outweiged by simplicity 
+	 * startup.  So our inefficiency is outweiged by simplicity
 	 */
 	if(strcasecmp(strEntityType, "other") == 0) {
 		kamailioEntityType |= TC_SIP_ENTITY_ROLE_OTHER;

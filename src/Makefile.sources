@@ -1,6 +1,6 @@
 # Kamailio build system
 #
-# common Makefile variables 
+# common Makefile variables
 # (source files, objs, etc)
 
 
@@ -16,7 +16,9 @@ sources=$(filter-out $(auto_gen), $(wildcard *.c) \
 		$(wildcard core/parser/contact/*.c) $(wildcard core/parser/sdp/*.c) \
 		$(wildcard core/rand/*.c) $(wildcard core/rand/isaac/*.c) ) \
 		$(wildcard core/rand/fortuna/*.c) $(wildcard core/crypto/*.c) \
-		$(wildcard core/cfg/*.c) $(wildcard core/utils/*.c) $(auto_gen)
+		$(wildcard core/cfg/*.c) $(wildcard core/utils/*.c) \
+		$(wildcard lib/srdb1/*.c) $(wildcard lib/srdb2/*.c) \
+		$(wildcard lib/ims/*.c) $(wildcard lib/trie/*.c) $(auto_gen)
 ifeq ($(CORE_TLS), 1)
 	sources+= $(wildcard tls/*.c)
 endif

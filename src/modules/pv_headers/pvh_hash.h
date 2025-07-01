@@ -2,10 +2,12 @@
  * pv_headers
  *
  * Copyright (C)
- * 2020 Victor Seva <vseva@sipwise.com>
+ * 2020-2023 Victor Seva <vseva@sipwise.com>
  * 2018 Kirill Solomko <ksolomko@sipwise.com>
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,9 +30,9 @@
 
 #include "../../core/str_hash.h"
 
-extern struct str_hash_table skip_headers;
-extern struct str_hash_table split_headers;
-extern struct str_hash_table single_headers;
+extern struct str_hash_table skip_hdrs;
+extern struct str_hash_table split_hdrs;
+extern struct str_hash_table single_hdrs;
 
 int pvh_str_hash_init(struct str_hash_table *ht, str *keys, char *desc);
 int pvh_str_hash_add_key(struct str_hash_table *ht, str *key);

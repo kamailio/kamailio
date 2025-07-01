@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -22,13 +24,10 @@
 #define __tsend_h
 
 
-int tsend_stream(int fd, const char* buf, unsigned int len, int timeout);
-int tsend_dgram(int fd, const char* buf, unsigned int len,
-				const struct sockaddr* to, socklen_t tolen, int timeout);
-int tsend_dgram_ev(int fd, const struct iovec* v, int count, int timeout);
-
+int tsend_stream(int fd, const char *buf, unsigned int len, int timeout);
+int tsend_dgram(int fd, const char *buf, unsigned int len,
+		const struct sockaddr *to, socklen_t tolen, int timeout);
+int tsend_dgram_ev(int fd, const struct iovec *v, int count, int timeout);
 
 
 #endif
-
-

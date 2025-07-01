@@ -1,0 +1,71 @@
+{
+  "name": "subscriber_scscf",
+  "version": 6,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "watcher_uri": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "watcher_contact": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "presentity_uri": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "event": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "expires": {
+      "type": "datetime",
+      "default": null,
+      "null": false
+    },
+    "version": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "local_cseq": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "call_id": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "from_tag": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "to_tag": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "record_route": {
+      "type": "text",
+      "default": null,
+      "null": false
+    },
+    "sockinfo_str": {
+      "type": "string",
+      "default": null,
+      "null": false
+    }
+  ]
+}

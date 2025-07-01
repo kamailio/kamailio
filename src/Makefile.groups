@@ -22,13 +22,13 @@ mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp \
 			carrierroute pdb qos sca seas sms sst timer tmrec uac_redirect \
 			xhttp xhttp_rpc xprint jsonrpcs nosip dmq_usrloc statsd rtjson \
-			log_custom keepalive ss7ops app_sqlang acc_diameter evrexec \
-			sipjson lrkproxy xhttp_prom
+			log_custom keepalive ss7ops acc_diameter evrexec file_out \
+			sipjson lrkproxy math posops xhttp_prom dlgs sworker influxdbc
 
 # - common modules depending on database
 mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \
 			  db_cluster dialog dispatcher domain drouting group \
-			  htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
+			  htable topos_htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
 			  pipelimit prefix_route registrar sipcapture siptrace speeddial \
 			  sqlops uac uri_db userblocklist usrloc secfilter
 
@@ -38,7 +38,7 @@ mod_list_dbuid=db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags \
 				 uid_uri_db
 
 # - modules for devel purposes
-mod_list_devel=misctest print print_lib
+mod_list_devel=misctest
 
 # - modules depending on pcre3 library
 mod_list_pcre=dialplan lcr regex
@@ -88,9 +88,6 @@ mod_list_memcached=memcached
 # - modules depending on openssl library
 mod_list_tlsdeps=crypto tls
 
-# - modules depending on openssl (+curl) library
-mod_list_tlsdeps_curl=auth_identity
-
 # - modules depending on static openssl library
 mod_list_tlsa=tlsa
 
@@ -115,14 +112,14 @@ mod_list_autheph=auth_ephemeral
 # - modules related to SIMPLE presence extensions
 mod_list_presence=presence presence_conference presence_dialoginfo \
 					   presence_mwi presence_profile presence_reginfo \
-					   presence_xml \
+					   presence_xml presence_dfks \
 					   pua pua_bla pua_dialoginfo pua_reginfo \
 					   pua_rpc pua_usrloc pua_xmpp \
 					   rls xcap_client xcap_server
 
 
 # - modules depending on lua library
-mod_list_lua=app_lua app_lua_sr
+mod_list_lua=app_lua
 
 # - modules depending on perl library
 mod_list_perldeps=app_perl db_perlvdb
@@ -166,17 +163,11 @@ mod_list_jansson_event=janssonrpcc
 # - modules depending on redis library
 mod_list_redis=db_redis ndb_redis topos_redis
 
-# - modules depending on mono library
-mod_list_mono=app_mono
-
 # - modules related to IMS extensions
-mod_list_ims=cdp cdp_avp ims_dialog ims_auth ims_isc ims_icscf ims_qos \
+mod_list_ims=cdp cdp_avp ims_dialog ims_auth ims_isc ims_icscf ims_qos ims_qos_npn \
 			   ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf \
 			   ims_usrloc_scscf ims_charging ims_ocs ims_diameter_server \
 			   ims_ipsec_pcscf
-
-# - modules depending on osp toolkit library
-mod_list_osp=osp
 
 # - modules depending on java library
 mod_list_java=app_java
@@ -214,7 +205,7 @@ mod_list_erlang=erlang
 # - modules depending on systemd library
 mod_list_systemd=log_systemd systemdops
 
-# - modules depending on libnsq (+libev libevbuffsock liblcurl libjson-c) library
+# - modules depending on libnsq (+libev libevbuffsock libcurl libjson-c) library
 mod_list_nsq=nsq
 
 # - modules depending on librabbitmq library
@@ -235,6 +226,15 @@ mod_list_nats=nats
 # - modules depending on ruxc library
 mod_list_ruxc=ruxc
 
+# - modules depending on microhttpd library
+mod_list_microhttpd=microhttpd
+
+# - modules depending on nghttp2 library
+mod_list_nghttp2=nghttp2
+
+# - modules depending on libgcrypt library
+mod_list_gcrypt=gcrypt
+
 # - modules depending on secsipid library
 mod_list_secsipid=secsipid secsipid_proc
 
@@ -252,7 +252,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_xmpp) \
 			   $(mod_list_berkeley) $(mod_list_utils) \
 			   $(mod_list_memcached) \
-			   $(mod_list_tlsdeps) $(mod_list_tlsdeps_curl) \
+			   $(mod_list_tlsdeps) \
 			   $(mod_list_websocket) \
 			   $(mod_list_snmpstats) $(mod_list_presence) \
 			   $(mod_list_lua) $(mod_list_python) \
@@ -260,9 +260,9 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_geoip) $(mod_list_sqlite) \
 			   $(mod_list_json) $(mod_list_json_event) \
 			   $(mod_list_redis) \
-			   $(mod_list_mono) $(mod_list_ims) \
+			   $(mod_list_ims) \
 			   $(mod_list_cassandra) $(mod_list_oracle) \
-			   $(mod_list_outbound) $(mod_list_osp) \
+			   $(mod_list_outbound) \
 			   $(mod_list_java) $(mod_list_dnssec) \
 			   $(mod_list_sctp) $(mod_list_autheph) \
 			   $(mod_list_gzcompress) $(mod_list_uuid) \
@@ -284,6 +284,9 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_stirshaken) \
 			   $(mod_list_tlsa) \
 			   $(mod_list_tls_wolfssl) \
+			   $(mod_list_microhttpd) \
+			   $(mod_list_nghttp2) \
+			   $(mod_list_gcrypt) \
 			   $(mod_list_rtp_media_server)
 
 
@@ -310,7 +313,7 @@ module_group_standard=$(mod_list_basic) $(mod_list_extra) \
 module_group_common=$(mod_list_db) $(mod_list_dbuid) \
 					$(mod_list_pcre) $(mod_list_radius) \
 					$(mod_list_xmldeps) $(mod_list_presence) \
-					$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl)
+					$(mod_list_tlsdeps)
 
 # For db use (db modules, excluding drivers)
 module_group_db=$(mod_list_db)
@@ -403,11 +406,16 @@ module_group_kmemcached=$(mod_list_memcached)
 # pkg tls module
 module_group_ktls_basic=$(mod_list_tlsdeps)
 
+ifeq ($(KTLS_INCLUDE_TLSA),yes)
 # pkg tls module with curl
-module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl)
+module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsa)
+else
+# pkg tls module with curl
+module_group_ktls=$(mod_list_tlsdeps)
 
 # pkg tlsa module
 module_group_ktlsa=$(mod_list_tlsa)
+endif
 
 # pkg tls_wolfssl module
 module_group_ktls_wolfssl=$(mod_list_tls_wolfssl)
@@ -453,9 +461,6 @@ module_group_kjansson=$(mod_list_jansson) $(mod_list_jansson_event)
 
 # pkg redis module
 module_group_kredis=$(mod_list_redis)
-
-# pkg mono module
-module_group_kmono=$(mod_list_mono)
 
 # pkg IMS modules
 module_group_kims=$(mod_list_ims)
@@ -529,6 +534,15 @@ module_group_knats=$(mod_list_nats)
 # K ruxc modules
 module_group_kruxc=$(mod_list_ruxc)
 
+# K microhttpd module
+module_group_kmicrohttpd=$(mod_list_microhttpd)
+
+# K nghttp2 module
+module_group_knghttp2=$(mod_list_nghttp2)
+
+# K gcrypt module
+module_group_kgcrypt=$(mod_list_gcrypt)
+
 # K secsipid modules
 module_group_ksecsipid=$(mod_list_secsipid)
 
@@ -538,4 +552,3 @@ module_group_krtp_media_server=$(mod_list_rtp_media_server)
 # list of static modules
 #
 static_modules:=
-

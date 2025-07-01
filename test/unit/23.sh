@@ -31,12 +31,12 @@ CFG=13.cfg
 
 cp $CFG $CFG.bak
 
-# setup config
+# set up config
 echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 echo "modparam(\"carrierroute\", \"db_url\", \"postgres://kamailioro:kamailioro@localhost/kamailio\")" >> $CFG
 
-# setup database
+# set up database
 $PSQL "insert into carrier_name (id, carrier) values ('1', 'carrier1');
 insert into carrier_name (id, carrier) values ('2', 'default');
 insert into carrier_name (id, carrier) values ('3', 'premium');
@@ -89,7 +89,7 @@ fi ;
 
 kill_kamailio
 
-# cleanup database
+# clean up database
 $PSQL "delete from carrier_name where id = 1;
 delete from carrier_name where id = 2;
 delete from carrier_name where id = 3;

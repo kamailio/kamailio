@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -210,18 +212,18 @@ void init_kamailioObjects(void)
 }
 
 
-/* 
+/*
  * The following are thresholds used by:
- * 
- * - The alarm monitoring process, to decide when to send out traps.  
- * - All scalars involving alarm status's and thresholds.  
+ *
+ * - The alarm monitoring process, to decide when to send out traps.
+ * - All scalars involving alarm status' and thresholds.
  *
  * By default they are initialized to -1, which disables alarm checks.
  * These are set through the kamailio.cfg file with the following modparams to
  * the snmpstats module:
  *
- *  - dlg_minor_threshold  
- *  - dlg_major_threshold  
+ *  - dlg_minor_threshold
+ *  - dlg_major_threshold
  *
  *  - MsgQueueMinorThreshold
  *  - MsgQueueMajorThreshold
@@ -456,7 +458,7 @@ int handle_kamailioDialogUsageState(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info *reqinfo, netsnmp_request_info *requests)
 {
-	/* Return value follows the X731UsageState Textual Convention 
+	/* Return value follows the X731UsageState Textual Convention
 	 *
 	 * We default to 'unknown' */
 	int usage_state = TC_USAGE_STATE_UNKNOWN;
@@ -561,9 +563,9 @@ static int set_if_valid_threshold(
 		return -1;
 	}
 
-	if(PARAM_TYPE_MASK(type) != INT_PARAM) {
+	if(PARAM_TYPE_MASK(type) != PARAM_INT) {
 		LM_ERR("%s called with type %d instead of %d!\n", varStr, type,
-				INT_PARAM);
+				PARAM_INT);
 		return -1;
 	}
 
@@ -580,7 +582,7 @@ static int set_if_valid_threshold(
 	return 0;
 }
 
-/* 
+/*
  * Parameter Configuration Functions
  */
 

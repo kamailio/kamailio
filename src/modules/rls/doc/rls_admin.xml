@@ -44,7 +44,7 @@
 	<para>
 	The same as presence module, it has a caching mode with periodical update
 	in database for subscribe information. The information retrieved with Notify
-	messages is stored in database only. 
+	messages is stored in database only.
 	</para>
 	</section>
 
@@ -106,7 +106,7 @@
 		The database url.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>&defaultdb;</quote>.	
+		<emphasis>	Default value is <quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -123,7 +123,7 @@ modparam("rls", "db_url", "&exampledb;")
 		<title><varname>rlpres_db_url</varname>(str)</title>
 		<para>
 		The rlpres (rls_presentity table) database url.
-		This parameter only needs to be specified if the rls_watchers table and 
+		This parameter only needs to be specified if the rls_watchers table and
 		rls_presentity tables are in different databases.
 		rls_presentity is used to cache the bodies of back-end NOTIFY requests
 		until an RLS NOTIFY can be sent.  On a multi-server system having a single
@@ -132,7 +132,7 @@ modparam("rls", "db_url", "&exampledb;")
 		to have its own (possibly local) rls_presentity table.
 		</para>
 		<para>
-		<emphasis>	Default value is a mirror of the <quote>db_url</quote> setting.	
+		<emphasis>	Default value is a mirror of the <quote>db_url</quote> setting.
 		</emphasis>
 		</para>
 		<example>
@@ -149,11 +149,11 @@ modparam("rls", "rlpres_db_url", "&exampledb;")
 		<title><varname>xcap_db_url</varname>(str)</title>
 		<para>
 		The xcap database url.
-		This parameter only needs to be specified if the rls db and integrated 
-		xcap server db have different urls. 
+		This parameter only needs to be specified if the rls db and integrated
+		xcap server db have different urls.
 		</para>
 		<para>
-		<emphasis>	Default value is a mirror of the <quote>db_url</quote> setting.	
+		<emphasis>	Default value is a mirror of the <quote>db_url</quote> setting.
 		</emphasis>
 		</para>
 		<example>
@@ -170,12 +170,12 @@ modparam("rls", "xcap_db_url", "&exampledb;")
 		<title><varname>db_mode</varname>(int)</title>
 		<para>
 		The module supports 2 modes of operation, high speed memory
-		based storage (mode 0), and database only (mode 2) where all 
+		based storage (mode 0), and database only (mode 2) where all
 		data is stored in a database, allowing scalability at the
 		expense of speed. Mode 1 is reserved.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>0</quote> 	
+		<emphasis>	Default value is <quote>0</quote>
 		</emphasis>
 		</para>
 		<example>
@@ -212,8 +212,8 @@ modparam("rls", "xcap_table", "xcaps");
 	<section id="rls.p.rlsubs_table">
 		<title><varname>rlsubs_table</varname>(str)</title>
 		<para>
-		The name of the db table where resource lists subscription 
-		information is stored. 
+		The name of the db table where resource lists subscription
+		information is stored.
 		</para>
 		<para>
 		<emphasis>	Default value is <quote>rls_watchers</quote>.
@@ -233,7 +233,7 @@ modparam("rls", "rlsubs_table", "rls_subscriptions")
 		<title><varname>rlpres_table</varname>(str)</title>
 		<para>
 		The name of the db table where notified event specific
-		information is stored. 
+		information is stored.
 		</para>
 		<para>
 		<emphasis>	Default value is <quote>rls_presentity</quote>.
@@ -368,7 +368,7 @@ modparam("rls", "notifier_processes", 2)
 	<section id="rls.p.max_expires">
 		<title><varname>max_expires</varname> (int)</title>
 		<para>
-		The maximum accepted expires for a subscription to a list. 
+		The maximum accepted expires for a subscription to a list.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>7200</quote>.
@@ -389,12 +389,12 @@ modparam("rls", "max_expires", 10800)
 		<para>
 		This parameter only has an effect when the db_mode is DB_ONLY (mode 2).
 		When expired subscribers are checked for deletion from the database,
-		those that have a value in the expires column which is less than 
+		those that have a value in the expires column which is less than
 		current_time - expires_offset are matched. Hence when an offset of zero
 		is used, all those that expire prior the current time will be deleted.
 		If an offset of 't' is used, only those that expired more than t seconds
-		ago are deleted from the database. 
-		Negative offsets are treated as though an offset of zero was specified. 
+		ago are deleted from the database.
+		Negative offsets are treated as though an offset of zero was specified.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>0</quote>.
@@ -409,7 +409,7 @@ modparam("rls", "expires_offset", 0)
 		</programlisting>
 		</example>
 	</section>
- 	
+
 	<section id="rls.p.hash_size">
 		<title><varname>hash_size</varname> (int)</title>
 		<para>
@@ -468,11 +468,11 @@ modparam("rls", "integrated_xcap_server", 1)
 		</programlisting>
 		</example>
 	</section>
-	
+
 	<section id="rls.p.to_presence_code">
 		<title><varname>to_presence_code</varname> (int)</title>
 		<para>
-		The code to be returned by rls_handle_subscribe function 
+		The code to be returned by rls_handle_subscribe function
 		if the processed Subscribe is not a resource list Subscribe.
 		This code can be used in an architecture with presence and rls
 		servers collocated on the same machine, to call handle_subscribe
@@ -553,7 +553,7 @@ modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
 	<section id="rls.p.max_notify_body_length">
 		<title><varname>max_notify_body_length</varname> (int)</title>
 		<para>
-			The maximum size that the body of a NOTIFY message may be. 
+			The maximum size that the body of a NOTIFY message may be.
             If set to 0 (the default), no size limit is applied.
             Note that this refers only to the body, not the complete NOTIFY message.
 		</para>
@@ -665,9 +665,9 @@ modparam("rls", "max_backend_subs", 30)
 		</title>
 		<para>
 		This function detects if a Subscribe message should be
-		handled by RLS. If not it replies with the configured 
+		handled by RLS. If not it replies with the configured
 		to_presence_code. If it is, it extracts the dialog info and sends
-		aggregate Notify requests with information for the list.	
+		aggregate Notify requests with information for the list.
 		</para>
 		<para>
 		By default this function uses the From: URI from the SUBSCRIBE
@@ -686,7 +686,7 @@ For presence and rls on the same machine:
 	modparam("rls", "to_presence_code", 10)
 
 	if(is_method("SUBSCRIBE"))
-	{	
+	{
 		$var(ret_code)= rls_handle_subscribe();
 
 		if($var(ret_code)== 10)

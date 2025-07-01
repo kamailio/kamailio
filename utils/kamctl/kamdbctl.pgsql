@@ -51,12 +51,12 @@ if [ -z "$DBROOTUSER" ]; then
 	fi
 fi
 
-if [ -z "$DBPORT" ] ; then
-	CMD="psql -q -h $DBHOST -U $DBROOTUSER "
-	DUMP_CMD="pg_dump -h $DBHOST -U $DBROOTUSER -c"
+if [ -z "$DBROOTPORT" ] ; then
+	CMD="psql -q -h $DBROOTHOST -U $DBROOTUSER "
+	DUMP_CMD="pg_dump -h $DBROOTHOST -U $DBROOTUSER -c"
 else
-	CMD="psql -q -h $DBHOST -p $DBPORT -U $DBROOTUSER "
-	DUMP_CMD="pg_dump -h $DBHOST -p $DBPORT -U $DBROOTUSER -c"
+	CMD="psql -q -h $DBROOTHOST -p $DBROOTPORT -U $DBROOTUSER "
+	DUMP_CMD="pg_dump -h $DBROOTHOST -p $DBROOTPORT -U $DBROOTUSER -c"
 fi
 
 #################################################################

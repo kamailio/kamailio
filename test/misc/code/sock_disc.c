@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -60,7 +60,7 @@ int udp_send()
 	addr.sin_port=htons(9);
 	addr.sin_addr.s_addr= inet_addr("127.0.0.1");
 
-	for (i=0; i<1024*1024*16; i++) 
+	for (i=0; i<1024*1024*16; i++)
 		sendto(sock, &buffer, 1, 0, (struct sockaddr *) &addr, sizeof(addr));
 
 }

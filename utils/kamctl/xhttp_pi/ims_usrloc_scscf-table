@@ -1,0 +1,61 @@
+	<!-- Declaration of contact table-->
+	<db_table id="contact">
+		<table_name>contact</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>contact</field><type>DB1_STR</type></column>
+		<column><field>params</field><type>DB1_STR</type></column>
+		<column><field>path</field><type>DB1_STR</type></column>
+		<column><field>received</field><type>DB1_STR</type></column>
+		<column><field>user_agent</field><type>DB1_STR</type></column>
+		<column><field>expires</field><type>DB1_DATETIME</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of impu table-->
+	<db_table id="impu">
+		<table_name>impu</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>impu</field><type>DB1_STR</type></column>
+		<column><field>barring</field><type>DB1_INT</type></column>
+		<column><field>reg_state</field><type>DB1_INT</type></column>
+		<column><field>ccf1</field><type>DB1_STR</type></column>
+		<column><field>ccf2</field><type>DB1_STR</type></column>
+		<column><field>ecf1</field><type>DB1_STR</type></column>
+		<column><field>ecf2</field><type>DB1_STR</type></column>
+		<column><field>ims_subscription_data</field><type>DB1_BLOB</type></column>
+	</db_table>
+	<!-- Declaration of impu_contact table-->
+	<db_table id="impu_contact">
+		<table_name>impu_contact</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>impu_id</field><type>DB1_INT</type></column>
+		<column><field>contact_id</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of subscriber_scscf table-->
+	<db_table id="subscriber_scscf">
+		<table_name>subscriber_scscf</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>watcher_uri</field><type>DB1_STR</type></column>
+		<column><field>watcher_contact</field><type>DB1_STR</type></column>
+		<column><field>presentity_uri</field><type>DB1_STR</type></column>
+		<column><field>event</field><type>DB1_INT</type></column>
+		<column><field>expires</field><type>DB1_DATETIME</type></column>
+		<column><field>version</field><type>DB1_INT</type></column>
+		<column><field>local_cseq</field><type>DB1_INT</type></column>
+		<column><field>call_id</field><type>DB1_STR</type></column>
+		<column><field>from_tag</field><type>DB1_STR</type></column>
+		<column><field>to_tag</field><type>DB1_STR</type></column>
+		<column><field>record_route</field><type>DB1_BLOB</type></column>
+		<column><field>sockinfo_str</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of impu_subscriber table-->
+	<db_table id="impu_subscriber">
+		<table_name>impu_subscriber</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>impu_id</field><type>DB1_INT</type></column>
+		<column><field>subscriber_id</field><type>DB1_INT</type></column>
+	</db_table>

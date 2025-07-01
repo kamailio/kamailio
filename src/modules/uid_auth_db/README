@@ -83,8 +83,8 @@ Chapter 1. Admin Guide
 
 2. Dependencies
 
-   The module depends on the following modules (in the other words the
-   listed modules must be loaded before this module):
+   The module depends on the following modules (in other words the listed
+   modules must be loaded before this module):
      * auth.  Generic authentication functions.
      * database.  Any database module (currently mysql, postgres, dbtext)
 
@@ -201,7 +201,7 @@ modparam("auth_db", "plain_password_column", "password")
    As described in the previous section this parameter contains name of
    column holding pre-calculated HA1 string that were calculated including
    the domain in the username. This parameter is used only when
-   calculate_ha1 is set to 0 and user agent send a credentials containing
+   calculate_ha1 is set to 0 and user agent sends credentials containing
    the domain in the username.
 
    Default value of the parameter is ha1b.

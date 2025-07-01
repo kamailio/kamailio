@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the tertc of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -32,13 +34,16 @@
 
 #include <string.h>
 
-#define BODY_FMT "{\"channel\": \"%s\", \"username\": \"%s\", \"text\": \"%s\", \"icon_emoji\": \"%s\" }"
+#define BODY_FMT                                                     \
+	"{\"channel\": \"%s\", \"username\": \"%s\", \"text\": \"%s\", " \
+	"\"icon_emoji\": \"%s\" }"
 #define SLACK_URL_MAX_SIZE 128
 #define SLACK_DEFAULT_CHANNEL "#webtest"
 #define SLACK_DEFAULT_USERNAME "webhookbot"
 #define SLACK_DEFAULT_ICON ":ghost:"
 
-static int _slack_print_log(struct sip_msg* msg, pv_elem_p list, char *buf, int *len)
+static int _slack_print_log(
+		struct sip_msg *msg, pv_elem_p list, char *buf, int *len)
 {
 	return pv_printf(msg, list, buf, len);
 }
@@ -47,13 +52,14 @@ static int _slack_print_log(struct sip_msg* msg, pv_elem_p list, char *buf, int 
 httpc_api_t httpapi;
 
 static void slack_free_str(str *str);
-static int slack_curl_send(struct sip_msg* msg, char* uri, str *post_data );
+static int slack_curl_send(struct sip_msg *msg, char *uri, str *post_data);
 static int _slack_parse_url_param(char *val);
 static int _slack_url_param(modparam_t type, void *val);
 
-static int slack_fixup(void** param, int param_no);
-static int slack_send1(struct sip_msg* msg, char* frm, char* str2);
-static int slack_fixup_helper(void** param, int param_no);
+static int slack_fixup(void **param, int param_no);
+static int slack_fixup_free(void **param, int param_no);
+static int slack_send1(struct sip_msg *msg, char *frm, char *str2);
+static int slack_fixup_helper(void **param, int param_no);
 
 typedef struct _sl_msg
 {

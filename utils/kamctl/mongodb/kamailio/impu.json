@@ -1,0 +1,51 @@
+{
+  "name": "impu",
+  "version": 6,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "impu": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "barring": {
+      "type": "int",
+      "default": 0,
+      "null": true
+    },
+    "reg_state": {
+      "type": "int",
+      "default": 0,
+      "null": true
+    },
+    "ccf1": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "ccf2": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "ecf1": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "ecf2": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "ims_subscription_data": {
+      "type": "text",
+      "default": null,
+      "null": true
+    }
+  ]
+}

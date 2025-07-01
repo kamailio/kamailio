@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="xprint.api" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -69,7 +69,7 @@
 		This function is able to identify regular expression back references,
 		for example \1, \2, \3... When a back reference is found the callback
 		function is called that is supposed to farther parse the back reference
-		and fill in the xl_elog structure. 
+		and fill in the xl_elog structure.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>

@@ -11,6 +11,4 @@ NAME=speeddial.so
 LIBS=
 DEFS+=
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules

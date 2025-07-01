@@ -165,6 +165,41 @@ modparam("corex", "dns_cache", "type=AAAA;name=kamailio.org;addr=2a00:d60:0:400:
 </programlisting>
 	    </example>
 	</section>
+	<section id="corex.p.dns_file">
+	    <title><varname>dns_file</varname> (string)</title>
+	    <para>
+		Path to the file from where to load dns_cache records. It can be set
+		many times to add more than one file.
+	    </para>
+	    <para>
+	    Inside the file, the dns_cache record has to be in a single line, with
+	    the format of the dns_cache module parameter (see above). Empty lines
+	    or lines with whitespaces only are ignored. Comment lines have to start
+	    with '#'. Comments are not accepted after dns_cache records, only on
+	    separate lines.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>dns_file</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# content of /etc/kamailio/kamailio-cache.dns
+
+# IPv4 record
+type=A;name=kamailio.org;addr=193.22.119.66;ttl=3600000;flags=0
+# IPv6 record
+type=AAAA;name=kamailio.org;addr=2a00:d60:0:400::2;ttl=3600000;flags=0
+...
+...
+modparam("corex", "dns_file", "/etc/kamailio/kamailio-cache.dns")
+...
+</programlisting>
+	    </example>
+	</section>
 	<section id="corex.p.evcb_reply_out">
 	    <title><varname>evcb_reply_out</varname> (string)</title>
 	    <para>
@@ -434,13 +469,15 @@ event_route[network:msg] {
 		</title>
 		<para>
 			Set internal SIP message flag. The parameter flagname can be:
-			USE_UAC_FROM, USE_UAC_TO or UAC_AUTH.
+			USE_UAC_FROM, USE_UAC_TO, UAC_AUTH or a number from 0 to 64
+			(the meaning of each value can be found in source code).
 		</para>
 		<para>
 			This functions should not be used in configuration file for
 			(re)setting the internal flags, those are done by various
 			functions internally, however, in very particular cases they
-			might be useful (e.g., changing From/To via textops functions).
+			might be useful (e.g., changing From/To via textops functions,
+			or during testing of C code development).
 		</para>
 		<para>
 			This function can be used from ANY_ROUTE.
@@ -567,7 +604,7 @@ setxflag("$var(flag)");
 		<section id="corex.f.isxflagset">
 		<title><function moreinfo="none">isxflagset(flag)</function></title>
 		<para>
-			Return true of the extended message (transaction) flag is set.
+			Return true if the extended message (transaction) flag is set.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -854,6 +891,42 @@ request_route {
 </programlisting>
 		</example>
 		</section>
+		<section id="corex.f.via_reply_add_xavp_params">
+		<title><function moreinfo="none">via_reply_add_xavp_params(flags)</function></title>
+		<para>
+			Control if fields of the xavp with the name specified by
+			xavp_via_reply_params global parameter are added or not to the top Via
+			of replies.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flags</emphasis>: 1 - add xavp parameters; 0 - do not
+				add xavp parameters.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>via_reply_add_xavp_params</function> usage</title>
+		<programlisting format="linespecific">
+...
+xavp_via_reply_params="xviarpl"
+...
+request_route {
+    ...
+	$xavp(xviarpl=&gt;srvid) = "1";
+	$xavp(xviarpl[0]=&gt;myval) = "xyz";
+    via_reply_add_xavp_params("1");
+    ...
+}
+...
+</programlisting>
+		</example>
+		</section>
 	<section id="corex.f.is_faked_msg">
 		<title>
 			<function moreinfo="none">is_faked_msg()</function>
@@ -903,6 +976,60 @@ event_route[dispatcher:dst-down] {
     if (is_socket_name("socktls")) {
         xinfo("matched local socket name\n");
     }
+...
+</programlisting>
+        </example>
+    </section>
+	<section id="corex.f.forward_uac">
+		<title>
+			<function moreinfo="none">forward_uac()</function>
+		</title>
+        <para>
+			Forward received request with a single Via header, the one added
+			by &kamailio;, the other ones being removed. Useful in cases when
+			its reply should not be sent back (e.g., the reply was already sent
+			out from &kamailio;).
+        </para>
+        <para>
+        This function can be used in REQUEST_ROUTE.
+        </para>
+        <example>
+        <title><function>forward_uac</function> usage</title>
+        <programlisting format="linespecific">
+...
+request_route {
+    ...
+    sl_send_reply("200", "OK");
+    $du = "sip:mirror.com:5080";
+    forward_uac();
+    ...
+}
+...
+</programlisting>
+        </example>
+    </section>
+	<section id="corex.f.forward_uac_uri">
+		<title>
+			<function moreinfo="none">forward_uac_uri(vuri)</function>
+		</title>
+        <para>
+			Similar to forward_uac() with the posibility to provide the target
+			address as a SIP URI via the parameter vuri. The parameter vuri can
+			contain variables.
+        </para>
+        <para>
+        This function can be used in REQUEST_ROUTE.
+        </para>
+        <example>
+        <title><function>forward_uac</function> usage</title>
+        <programlisting format="linespecific">
+...
+request_route {
+    ...
+    sl_send_reply("200", "OK");
+    forward_uac_uri("sip:mirror.com:5080");
+    ...
+}
 ...
 </programlisting>
         </example>
@@ -1070,6 +1197,26 @@ route[reply] {
 		&kamcli; rpc shm.stats
 		</programlisting>
     </section>
+	<section id="corex.rpc.shm.rprint">
+		<title>
+		<function moreinfo="none">corex.shm.rprint</function>
+		</title>
+		<para>
+			Shared memory usage status report printed to file upon filter match
+			with the file of allocation.
+		</para>
+		<para>
+			It takes two parameters: the path to file where to write the report;
+			the string to match the allocation file (the match is done as value
+			included in the path fo the allocation file).
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+			&kamcli; rpc shm.rprint /tmp/kamailioshm.txt dns_cache.c
+		</programlisting>
+    </section>
     </section>
 
     <section>
@@ -1097,7 +1244,7 @@ route[reply] {
         <para>
             Please note this event route is meant to <emphasis>prepare</emphasis>
             the message for on-wire communication, e.g. to do custom encryption or
-            decryption, compression/decompression etc. of the message sent to or 
+            decryption, compression/decompression etc. of the message sent to or
 			received from remote host. Therefore, except text operations,
 			no module functions or pseudo variables are available in this event route.
         </para>
@@ -1115,9 +1262,9 @@ route[reply] {
     <section>
     <title>Examples of Usage</title>
         <para>
-			To use network event_route[network:msg] the remote SIP UA must also implement and 
+			To use network event_route[network:msg] the remote SIP UA must also implement and
 			understand the encoding / decoding done in this event route. It is up to  &kamailio;
-			config script writer to define and implement how encoding and decoding is done. 
+			config script writer to define and implement how encoding and decoding is done.
 			Any language module such as app_perl or app_lua can be called in
 			in event_route[network:msg] to implement desired logic.
         </para>
@@ -1134,7 +1281,7 @@ route[reply] {
 			and sent to SIP application server at remote location unencrypted, where they are
 			processed as normal. One the way back, the messages received from SIP application
 			server at edge proxy can be encrypted before being sent to actual destination.
-			The edge proxy can check whether received message came from end-user or SIP 
+			The edge proxy can check whether received message came from end-user or SIP
 			application server by using simple regular expressions.
         </para>
         <para>
@@ -1235,4 +1382,3 @@ sub do_uncompress() {
         </example>
     </section>
 </chapter>
-

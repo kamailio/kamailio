@@ -1,0 +1,235 @@
+ASYNC Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2024 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. server (int)
+              3.2. port (int)
+              3.3. database (int)
+
+        4. Functions
+
+              4.1. influxdbc_measure(name)
+              4.2. influxdbc_measureend()
+              4.3. influxdbc_sub(name)
+              4.4. influxdbc_subend()
+              4.5. influxdbc_push()
+              4.6. influxdbc_long(name, value)
+
+   List of Examples
+
+   1.1. Set server parameter
+   1.2. Set port parameter
+   1.3. Set database parameter
+   1.4. influxdbc_measure() usage
+   1.5. influxdbc_measureend() usage
+   1.6. influxdbc_sub() usage
+   1.7. influxdbc_subend() usage
+   1.8. influxdbc_push() usage
+   1.9. influxdbc_long() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. server (int)
+        3.2. port (int)
+        3.3. database (int)
+
+   4. Functions
+
+        4.1. influxdbc_measure(name)
+        4.2. influxdbc_measureend()
+        4.3. influxdbc_sub(name)
+        4.4. influxdbc_subend()
+        4.5. influxdbc_push()
+        4.6. influxdbc_long(name, value)
+
+1. Overview
+
+   This module provides a client connector for InfluxDB.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none.
+
+3. Parameters
+
+   3.1. server (int)
+   3.2. port (int)
+   3.3. database (int)
+
+3.1. server (int)
+
+   Address of InfluxDB server.
+
+   Default value is empty.
+
+   Example 1.1. Set server parameter
+...
+modparam("influxdbc", "server", "127.0.0.1")
+...
+
+3.2. port (int)
+
+   Address of InfluxDB server.
+
+   Default value is 8086.
+
+   Example 1.2. Set port parameter
+...
+modparam("influxdbc", "port", 8808)
+...
+
+3.3. database (int)
+
+   Database of InfluxDB server.
+
+   Default value is empty.
+
+   Example 1.3. Set database parameter
+...
+modparam("influxdbc", "database", "stats")
+...
+
+4. Functions
+
+   4.1. influxdbc_measure(name)
+   4.2. influxdbc_measureend()
+   4.3. influxdbc_sub(name)
+   4.4. influxdbc_subend()
+   4.5. influxdbc_push()
+   4.6. influxdbc_long(name, value)
+
+4.1.  influxdbc_measure(name)
+
+   Start a measure group with the given name.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.4. influxdbc_measure() usage
+...
+request_route {
+    ...
+    influxdbc_measure("stats");
+    ...
+}
+...
+
+4.2.  influxdbc_measureend()
+
+   End the current measure group.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.5. influxdbc_measureend() usage
+...
+request_route {
+    ...
+    influxdbc_measureend();
+    ...
+}
+...
+
+4.3.  influxdbc_sub(name)
+
+   Start a measure subgroup with the given name.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.6. influxdbc_sub() usage
+...
+request_route {
+    ...
+    influxdbc_sub("grp1");
+    ...
+}
+...
+
+4.4.  influxdbc_subend()
+
+   End the current measure subgroup.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.7. influxdbc_subend() usage
+...
+request_route {
+    ...
+    influxdbc_subend();
+    ...
+}
+...
+
+4.5.  influxdbc_push()
+
+   Push accumulated values to the server.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.8. influxdbc_push() usage
+...
+request_route {
+    ...
+    influxdbc_push();
+    ...
+}
+...
+
+4.6.  influxdbc_long(name, value)
+
+   Save the pair with provided name and value. Both parameters can have
+   variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.9. influxdbc_long() usage
+...
+request_route {
+    ...
+    influxdbc_long("active", "$shv(active)");
+    ...
+}
+...

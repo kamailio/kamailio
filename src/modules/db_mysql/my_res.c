@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -30,15 +32,15 @@
 #include <mysql.h>
 
 
-void my_res_free(db_res_t* res, struct my_res* payload)
+void my_res_free(db_res_t *res, struct my_res *payload)
 {
-	struct my_cmd* mcmd;
+	struct my_cmd *mcmd;
 
 	mcmd = DB_GET_PAYLOAD(res->cmd);
 
-	if (mcmd->st && mysql_stmt_free_result(mcmd->st)) {
+	if(mcmd->st && mysql_stmt_free_result(mcmd->st)) {
 		ERR("Error while freeing MySQL result: %d, %s\n",
-			mysql_stmt_errno(mcmd->st), mysql_stmt_error(mcmd->st));
+				mysql_stmt_errno(mcmd->st), mysql_stmt_error(mcmd->st));
 	}
 
 	db_drv_free(&payload->gen);
@@ -51,21 +53,22 @@ void my_res_free(db_res_t* res, struct my_res* payload)
  * to my_res_free which releases the mysql result stored in the mysql statement
  * and if there is a cursor open in the statement then it will be closed as well
  */
-int my_res(db_res_t* res)
+int my_res(db_res_t *res)
 {
-	struct my_res* mr;
+	struct my_res *mr;
 
-	mr = (struct my_res*)pkg_malloc(sizeof(struct my_res));
-	if (mr == NULL) {
+	mr = (struct my_res *)pkg_malloc(sizeof(struct my_res));
+	if(mr == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	if (db_drv_init(&mr->gen, my_res_free) < 0) goto error;
+	if(db_drv_init(&mr->gen, my_res_free) < 0)
+		goto error;
 	DB_SET_PAYLOAD(res, mr);
 	return 0;
 
 error:
-	if (mr) {
+	if(mr) {
 		db_drv_free(&mr->gen);
 		pkg_free(mr);
 	}

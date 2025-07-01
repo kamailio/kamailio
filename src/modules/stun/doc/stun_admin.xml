@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>This module provides limited STUN server (RFC 5389) support for

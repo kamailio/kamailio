@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -24,7 +26,6 @@
  */
 
 
-
 #ifndef HSLOT_H
 #define HSLOT_H
 
@@ -38,35 +39,36 @@ struct udomain;
 struct urecord;
 
 
-typedef struct hslot {
-	int n;                  /*!< Number of elements in the collision slot */
-	struct urecord* first;  /*!< First element in the list */
-	struct urecord* last;   /*!< Last element in the list */
-	struct udomain* d;      /*!< Domain we belong to */
-	rec_lock_t rlock;       /*!< Recursive lock for hash entry */
+typedef struct hslot
+{
+	int n;				   /*!< Number of elements in the collision slot */
+	struct urecord *first; /*!< First element in the list */
+	struct urecord *last;  /*!< Last element in the list */
+	struct udomain *d;	   /*!< Domain we belong to */
+	rec_lock_t rlock;	   /*!< Recursive lock for hash entry */
 } hslot_t;
 
 /*! \brief
  * Initialize slot structure
  */
-int init_slot(struct udomain* _d, hslot_t* _s, int n);
+int init_slot(struct udomain *_d, hslot_t *_s, int n);
 
 
 /*! \brief
  * Deinitialize given slot structure
  */
-void deinit_slot(hslot_t* _s);
+void deinit_slot(hslot_t *_s);
 
 
 /*! \brief
  * Add an element to slot linked list
  */
-void slot_add(hslot_t* _s, struct urecord* _r);
+void slot_add(hslot_t *_s, struct urecord *_r);
 
 
 /*! \brief
  * Remove an element from slot linked list
  */
-void slot_rem(hslot_t* _s, struct urecord* _r);
+void slot_rem(hslot_t *_s, struct urecord *_r);
 
 #endif /* HSLOT_H */

@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -40,37 +42,37 @@ typedef struct rd_buf
 } rd_buf_t;
 
 
-#define AAA_ERROR			-1
-#define AAA_CONN_CLOSED		-2
-#define AAA_TIMEOUT			-3
-#define ACC_SUCCESS			0
-#define ACC_FAILURE			1
+#define AAA_ERROR -1
+#define AAA_CONN_CLOSED -2
+#define AAA_TIMEOUT -3
+#define ACC_SUCCESS 0
+#define ACC_FAILURE 1
 
-#define AAA_NO_CONNECTION 	-1
+#define AAA_NO_CONNECTION -1
 
-#define MAX_WAIT_SEC	2
-#define MAX_WAIT_USEC	0
+#define MAX_WAIT_SEC 2
+#define MAX_WAIT_USEC 0
 
-#define MAX_AAA_MSG_SIZE  65536
+#define MAX_AAA_MSG_SIZE 65536
 
-#define CONN_SUCCESS	 1
-#define CONN_ERROR		-1
-#define CONN_CLOSED		-2
+#define CONN_SUCCESS 1
+#define CONN_ERROR -1
+#define CONN_CLOSED -2
 
-#define MAX_TRIES		10
+#define MAX_TRIES 10
 
 extern int sockfd;
 
-int do_read( int socket, rd_buf_t *p);
+int do_read(int socket, rd_buf_t *p);
 void reset_read_buffer(rd_buf_t *rb);
 
 /* it initializes the TCP connection */
-int init_mytcp(char* host, int port);
+int init_mytcp(char *host, int port);
 /* send a message over an already opened TCP connection */
-int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
-					unsigned int waited_id);
+int tcp_send_recv(
+		int sockfd, char *buf, int len, rd_buf_t *rb, unsigned int waited_id);
 void close_tcp_connection(int sfd);
 
-int get_uri(struct sip_msg* m, str** uri);
+int get_uri(struct sip_msg *m, str **uri);
 
 #endif

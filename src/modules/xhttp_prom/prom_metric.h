@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -90,7 +92,8 @@ int prom_gauge_set(str *s_name, double number, str *l1, str *l2, str *l3);
  *
  * @param number value to observe.
  */
-int prom_histogram_observe(str *s_name, double number, str *l1, str *l2, str *l3);
+int prom_histogram_observe(
+		str *s_name, double number, str *l1, str *l2, str *l3);
 
 /**
  * @brief Parse a string and convert to double.

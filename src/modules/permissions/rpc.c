@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -43,25 +45,30 @@ int rpc_check_reload(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "ongoing reload");
 		return -1;
 	}
-	*perm_rpc_reload_time = time(NULL);
+	// we are reloading, don't allow new reloads
+	*perm_rpc_reload_time = time(NULL) + 86400;
 	return 0;
 }
 
 /*! \brief
  * RPC function to reload trusted table
  */
-void rpc_trusted_reload(rpc_t* rpc, void* c) {
+void rpc_trusted_reload(rpc_t *rpc, void *c)
+{
 
 	if(rpc_check_reload(rpc, c) < 0) {
 		return;
 	}
 
-	if (reload_trusted_table_cmd () != 1) {
+	if(reload_trusted_table_cmd() != 1) {
 		rpc->fault(c, 500, "Reload failed.");
-		return;
+		goto done;
 	}
 
 	rpc->rpl_printf(c, "Reload OK");
+done:
+	// reloading is done
+	*perm_rpc_reload_time = time(NULL);
 	return;
 }
 
@@ -69,9 +76,10 @@ void rpc_trusted_reload(rpc_t* rpc, void* c) {
 /*! \brief
  * RPC function to dump trusted table
  */
-void rpc_trusted_dump(rpc_t* rpc, void* c) {
+void rpc_trusted_dump(rpc_t *rpc, void *c)
+{
 
-	if (perm_trust_table==NULL) {
+	if(perm_trust_table == NULL) {
 		rpc->fault(c, 500, "No trusted table");
 		return;
 	}
@@ -88,18 +96,22 @@ void rpc_trusted_dump(rpc_t* rpc, void* c) {
 /*! \brief
  * RPC function to reload address table
  */
-void rpc_address_reload(rpc_t* rpc, void* c) {
+void rpc_address_reload(rpc_t *rpc, void *c)
+{
 
 	if(rpc_check_reload(rpc, c) < 0) {
 		return;
 	}
 
-	if (reload_address_table_cmd () != 1) {
+	if(reload_address_table_cmd() != 1) {
 		rpc->fault(c, 500, "Reload failed.");
-		return;
+		goto done;
 	}
 
 	rpc->rpl_printf(c, "Reload OK");
+done:
+	// reloading is done
+	*perm_rpc_reload_time = time(NULL);
 	return;
 }
 
@@ -107,13 +119,14 @@ void rpc_address_reload(rpc_t* rpc, void* c) {
 /*! \brief
  * RPC function to dump address table
  */
-void rpc_address_dump(rpc_t* rpc, void* c) {
+void rpc_address_dump(rpc_t *rpc, void *c)
+{
 
-	if(perm_addr_table==NULL) {
+	if(perm_addr_table == NULL) {
 		rpc->fault(c, 500, "No address table");
 		return;
 	}
-	if(addr_hash_table_rpc_print(*perm_addr_table, rpc, c) < 0 ) {
+	if(addr_hash_table_rpc_print(*perm_addr_table, rpc, c) < 0) {
 		LM_DBG("failed to print address table dump\n");
 	}
 	return;
@@ -123,8 +136,9 @@ void rpc_address_dump(rpc_t* rpc, void* c) {
 /*! \brief
  * RPC function to dump subnet table
  */
-void rpc_subnet_dump(rpc_t* rpc, void* c) {
-	if(perm_subnet_table==NULL) {
+void rpc_subnet_dump(rpc_t *rpc, void *c)
+{
+	if(perm_subnet_table == NULL) {
 		rpc->fault(c, 500, "No subnet table");
 		return;
 	}
@@ -139,13 +153,14 @@ void rpc_subnet_dump(rpc_t* rpc, void* c) {
 /*! \brief
  * RPC function to dump domain name table
  */
-void rpc_domain_name_dump(rpc_t* rpc, void* c) {
+void rpc_domain_name_dump(rpc_t *rpc, void *c)
+{
 
-	if(perm_domain_table==NULL) {
+	if(perm_domain_table == NULL) {
 		rpc->fault(c, 500, "No domain list table");
 		return;
 	}
-	if ( domain_name_table_rpc_print(*perm_domain_table, rpc, c) < 0 ) {
+	if(domain_name_table_rpc_print(*perm_domain_table, rpc, c) < 0) {
 		LM_DBG("failed to print domain table dump\n");
 	}
 	return;
@@ -157,33 +172,33 @@ void rpc_domain_name_dump(rpc_t* rpc, void* c) {
 /*! \brief
  * RPC function to make allow_uri query.
  */
-void rpc_test_uri(rpc_t* rpc, void* c)
+void rpc_test_uri(rpc_t *rpc, void *c)
 {
 	str basenamep, urip, contactp;
 	char basename[MAX_FILE_LEN + 1];
 	char uri[MAX_URI_SIZE + 1], contact[MAX_URI_SIZE + 1];
 	unsigned int allow_suffix_len;
 
-	if (rpc->scan(c, "S", &basenamep) != 1) {
+	if(rpc->scan(c, "S", &basenamep) != 1) {
 		rpc->fault(c, 500, "Not enough parameters (basename, URI and contact)");
 		return;
 	}
-	if (rpc->scan(c, "S", &urip) != 1) {
+	if(rpc->scan(c, "S", &urip) != 1) {
 		rpc->fault(c, 500, "Not enough parameters (basename, URI and contact)");
 		return;
 	}
-	if (rpc->scan(c, "S", &contactp) != 1) {
+	if(rpc->scan(c, "S", &contactp) != 1) {
 		rpc->fault(c, 500, "Not enough parameters (basename, URI and contact)");
 		return;
 	}
 
 	/* For some reason, rtp->scan doesn't set the length properly */
-	if (contactp.len > MAX_URI_SIZE) {
+	if(contactp.len > MAX_URI_SIZE) {
 		rpc->fault(c, 500, "Contact is too long");
 		return;
 	}
 	allow_suffix_len = strlen(perm_allow_suffix);
-	if (basenamep.len + allow_suffix_len + 1 > MAX_FILE_LEN) {
+	if(basenamep.len + allow_suffix_len + 1 > MAX_FILE_LEN) {
 		rpc->fault(c, 500, "Basename is too long");
 		return;
 	}
@@ -196,7 +211,7 @@ void rpc_test_uri(rpc_t* rpc, void* c)
 	contact[contactp.len] = 0;
 	uri[urip.len] = 0;
 
-	if (allow_test(basename, uri, contact) == 1) {
+	if(allow_test(basename, uri, contact) == 1) {
 		rpc->rpl_printf(c, "Allowed");
 		return;
 	}

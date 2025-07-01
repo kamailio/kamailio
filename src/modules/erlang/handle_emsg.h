@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,6 +31,6 @@
 
 extern int rex_in_progress;
 
-int handle_erlang_msg(cnode_handler_t *handler, erlang_msg * msg);
+int handle_erlang_msg(cnode_handler_t *handler, erlang_msg *msg);
 
 #endif /* HANDLE_EMSG_H_ */

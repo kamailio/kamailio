@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -37,37 +39,40 @@
 #include <mysql.h>
 
 
-struct my_con {
-	struct db_id* id;        /*!< Connection identifier */
-	unsigned int ref;        /*!< Reference count */
-	struct pool_con* next;   /*!< Next connection in the pool */
+struct my_con
+{
+	struct db_id *id;	   /*!< Connection identifier */
+	unsigned int ref;	   /*!< Reference count */
+	struct pool_con *next; /*!< Next connection in the pool */
 
-	MYSQL* con;              /*!< Connection representation */
-	time_t timestamp;        /*!< Timestamp of last query */
-	int transaction;         /*!< Multi-query transaction is currently open */
-	int lockedtables;        /*!< Table locks were aquired */
+	MYSQL *con;		  /*!< Connection representation */
+	time_t timestamp; /*!< Timestamp of last query */
+	int transaction;  /*!< Multi-query transaction is currently open */
+	int lockedtables; /*!< Table locks were aquired */
 };
 
 
 /*
  * Some convenience wrappers
  */
-#define CON_CONNECTION(db_con)  (((struct my_con*)((db_con)->tail))->con)
-#define CON_TIMESTAMP(db_con)   (((struct my_con*)((db_con)->tail))->timestamp)
-#define CON_TRANSACTION(db_con) (((struct my_con*)((db_con)->tail))->transaction)
-#define CON_LOCKEDTABLES(db_con) (((struct my_con*)((db_con)->tail))->lockedtables)
+#define CON_CONNECTION(db_con) (((struct my_con *)((db_con)->tail))->con)
+#define CON_TIMESTAMP(db_con) (((struct my_con *)((db_con)->tail))->timestamp)
+#define CON_TRANSACTION(db_con) \
+	(((struct my_con *)((db_con)->tail))->transaction)
+#define CON_LOCKEDTABLES(db_con) \
+	(((struct my_con *)((db_con)->tail))->lockedtables)
 
 
 /*! \brief
  * Create a new connection structure,
  * open the MySQL connection and set reference count to 1
  */
-struct my_con* db_mysql_new_connection(const struct db_id* id);
+struct my_con *db_mysql_new_connection(const struct db_id *id);
 
 
 /*! \brief
  * Close the connection and release memory
  */
-void db_mysql_free_connection(struct pool_con* con);
+void db_mysql_free_connection(struct pool_con *con);
 
 #endif /* KM_MY_CON_H */

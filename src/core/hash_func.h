@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -25,7 +27,6 @@
 */
 
 
-
 #ifndef _HASH_FUNC_H_
 #define _HASH_FUNC_H_
 
@@ -33,15 +34,15 @@
 #include "hashes.h"
 
 /* always use a power of 2 for hash table size */
-#define T_TABLE_POWER    16
-#define TABLE_ENTRIES    (1 << (T_TABLE_POWER))
+#define T_TABLE_POWER 16
+#define TABLE_ENTRIES (1 << (T_TABLE_POWER))
 
-unsigned int new_hash( str  call_id, str cseq_nr );
+unsigned int new_hash(str call_id, str cseq_nr);
 
 #define new_hash2(call_id, cseq_nr) \
-	(get_hash2_raw(&(call_id), &(cseq_nr)) & (TABLE_ENTRIES-1))
+	(get_hash2_raw(&(call_id), &(cseq_nr)) & (TABLE_ENTRIES - 1))
 
 
-#define hash( cid, cseq) new_hash2( cid, cseq )
+#define hash(cid, cseq) new_hash2(cid, cseq)
 
 #endif

@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -48,9 +50,13 @@ extern str dmq_server_socket;
 extern sip_uri_t dmq_server_uri;
 extern str_list_t *dmq_notification_address_list;
 extern int dmq_multi_notify;
+extern int dmq_remove_inactive;
+extern int dmq_fail_count_enabled;
+extern int dmq_fail_count_threshold_not_active;
+extern int dmq_fail_count_threshold_disabled;
 /* sl and tm */
-extern struct tm_binds tmb;
-extern sl_api_t slb;
+extern struct tm_binds _dmq_tmb;
+extern sl_api_t _dmq_slb;
 
 extern str dmq_200_rpl;
 extern str dmq_400_rpl;

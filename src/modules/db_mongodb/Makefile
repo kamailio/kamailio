@@ -20,6 +20,4 @@ else
 	LIBS= -L$(LOCALBASE)/lib -lmongoc
 endif
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules

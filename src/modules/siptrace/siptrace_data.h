@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -58,11 +60,18 @@ typedef struct _siptrace_data
 #endif
 } siptrace_data_t;
 
-enum UriState { STRACE_UNUSED_URI = 0, STRACE_RAW_URI = 1, STRACE_PARSED_URI = 2};
+enum UriState
+{
+	STRACE_UNUSED_URI = 0,
+	STRACE_RAW_URI = 1,
+	STRACE_PARSED_URI = 2
+};
 
-typedef struct {
+typedef struct
+{
 	str correlation_id;
-	union {
+	union
+	{
 		str dup_uri;
 		dest_info_t dest_info;
 	} u;
@@ -70,7 +79,12 @@ typedef struct {
 } siptrace_info_t;
 
 
-enum siptrace_type_t {SIPTRACE_NONE=0, SIPTRACE_MESSAGE = 'm',
-	SIPTRACE_TRANSACTION = 't', SIPTRACE_DIALOG = 'd'};
+enum siptrace_type_t
+{
+	SIPTRACE_NONE = 0,
+	SIPTRACE_MESSAGE = 'm',
+	SIPTRACE_TRANSACTION = 't',
+	SIPTRACE_DIALOG = 'd'
+};
 
 #endif

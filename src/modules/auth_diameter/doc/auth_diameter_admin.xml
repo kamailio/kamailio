@@ -11,9 +11,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -21,10 +21,10 @@
 	DIAMETER server, namely DIameter Server Client (DISC).
 	</para>
 	<para>
-	NOTE: diameter support was developed for DISC (DIameter Server Client 
-	project at http://developer.berlios.de/projects/disc/). This project 
+	NOTE: diameter support was developed for DISC (DIameter Server Client
+	project at http://developer.berlios.de/projects/disc/). This project
 	seems to be no longer maintained and DIAMETER specifications were updated
-	in the meantime. Thus, the module is obsolete and needs rework to be 
+	in the meantime. Thus, the module is obsolete and needs rework to be
 	usable with opendiameter or other DIAMETER servers.
 	</para>
 	<para>
@@ -182,7 +182,7 @@ modparam("auth_diameter", "use_domain", 1)
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>realm</emphasis> - the realm to be use for
-			authentication and authorization. The string may contain 
+			authentication and authorization. The string may contain
 			pseudo variables.
 			</para>
 		</listitem>
@@ -210,14 +210,14 @@ if(!diameter_www_authorize("siphub.net"))
 		SIP Proxy checks for authorization having a DIAMETER server in backend.
 		If no credentials are provided inside the SIP request then a challenge
 		is sent back to UAC. If the credentials don't match the ones computed by
-		DISC then <quote>403 Forbidden</quote> is sent back.  For more about 
+		DISC then <quote>403 Forbidden</quote> is sent back.  For more about
 		the negative return codes, see the above function.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>realm</emphasis> - the realm to be use for
-			authentication and authorization. The string may contain 
+			authentication and authorization. The string may contain
 			pseudo variables.
 			</para>
 		</listitem>

@@ -2,11 +2,13 @@
  * lost module naptr functions
  *
  * Copyright (C) 2002-2010 Juha Heinanen
- * 
+ *
  * Copyright (C) 2021 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

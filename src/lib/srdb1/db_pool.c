@@ -1,8 +1,10 @@
-/* 
+/*
  * Copyright (C) 2001-2005 iptel.org
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -30,7 +32,7 @@
 
 
 /* The head of the pool */
-static struct pool_con* db_pool = 0;
+static struct pool_con *db_pool = 0;
 
 
 /*
@@ -38,18 +40,18 @@ static struct pool_con* db_pool = 0;
  * the identifier equal to id, NULL is returned
  * when no connection is found
  */
-struct pool_con* pool_get(const struct db_id* id)
+struct pool_con *pool_get(const struct db_id *id)
 {
-	struct pool_con* ptr;
+	struct pool_con *ptr;
 
-	if (!id) {
+	if(!id) {
 		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
 	ptr = db_pool;
-	while (ptr) {
-		if (cmp_db_id(id, ptr->id)) {
+	while(ptr) {
+		if(cmp_db_id(id, ptr->id)) {
 			ptr->ref++;
 			return ptr;
 		}
@@ -63,9 +65,10 @@ struct pool_con* pool_get(const struct db_id* id)
 /*
  * Insert a new connection into the pool
  */
-void pool_insert(struct pool_con* con)
+void pool_insert(struct pool_con *con)
 {
-	if (!con) return;
+	if(!con)
+		return;
 
 	con->next = db_pool;
 	db_pool = con;
@@ -82,14 +85,15 @@ void pool_insert(struct pool_con* con)
  * The function returns -1 if the connection is
  * not in the pool.
  */
-int pool_remove(struct pool_con* con)
+int pool_remove(struct pool_con *con)
 {
-	struct pool_con* ptr;
+	struct pool_con *ptr;
 
-	if (!con) return -2;
+	if(!con)
+		return -2;
 
-	if (con->ref > 1) {
-		     /* There are still other users, just
+	if(con->ref > 1) {
+		/* There are still other users, just
 		      * decrease the reference count and return
 		      */
 		LM_DBG("connection still kept in the pool\n");
@@ -99,19 +103,20 @@ int pool_remove(struct pool_con* con)
 
 	LM_DBG("removing connection from the pool\n");
 
-	if (db_pool == con) {
+	if(db_pool == con) {
 		db_pool = db_pool->next;
 	} else {
 		ptr = db_pool;
 		while(ptr) {
-			if (ptr->next == con) break;
+			if(ptr->next == con)
+				break;
 			ptr = ptr->next;
 		}
-		if (!ptr) {
+		if(!ptr) {
 			LM_ERR("weird, connection not found in the pool\n");
 			return -1;
 		} else {
-			     /* Remove the connection from the pool */
+			/* Remove the connection from the pool */
 			ptr->next = con->next;
 		}
 	}

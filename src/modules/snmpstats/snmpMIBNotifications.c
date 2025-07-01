@@ -1,9 +1,11 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
@@ -24,7 +26,7 @@
  *        : mib2c.notify.conf,v 5.3 2004/04/15 12:29:19 dts12 Exp $
  *
  * This file contains functions for sending all traps supported by the SNMPStats
- * module.  
+ * module.
  */
 
 #include <net-snmp/net-snmp-config.h>
@@ -38,7 +40,7 @@
 
 static oid snmptrap_oid[] = {1, 3, 6, 1, 6, 3, 1, 1, 4, 1, 0};
 
-/* 
+/*
  * Sends off a kamailioMsgQueueDepthMinorEvent trap to the master agent,
  * assigning the following variable bindings:
  *

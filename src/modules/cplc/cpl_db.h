@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -26,8 +28,8 @@
 #include "../../lib/srdb1/db.h"
 
 
-int cpl_db_bind(const str* db_url, const str* db_table);
-int cpl_db_init(const str* db_url, const str* db_table);
+int cpl_db_bind(const str *db_url, const str *db_table);
+int cpl_db_init(const str *db_url, const str *db_table);
 void cpl_db_close(void);
 
 extern str cpl_username_col;
@@ -40,14 +42,14 @@ extern str cpl_bin_col;
  * Returns:  1 - success
  *          -1 - error
  */
-int write_to_db(str *username, str*domain, str *xml, str *bin);
+int write_to_db(str *username, str *domain, str *xml, str *bin);
 
 
 /* fetch from database the binary format of the cpl script for a given user
  * Returns:  1 - success
  *          -1 - error
  */
-int get_user_script(str *username, str*domain, str *script, str *key);
+int get_user_script(str *username, str *domain, str *script, str *key);
 
 
 /* delete from database the entire record for a given user - if a user has no

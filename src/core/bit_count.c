@@ -15,7 +15,7 @@
  *
  */
 /*!
- * \file 
+ * \file
  * \brief Kamailio core ::
  * \ingroup core
  * Module: \ref core

@@ -5,9 +5,9 @@
  * Copyright (C) 2013 Carsten Bock, ng-voice GmbH
  *
  * This file is part of Kamailio, a free SIP server.
- * 
+ *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -58,24 +58,27 @@ int http_client_query(
  * Performs http_client_query and saves possible result
  * (first body line of reply) to pvar.
  */
-int http_client_query_c(
-		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_ctype, char *_hdrs);
+int http_client_query_c(struct sip_msg *_m, char *_url, str *_dst, char *_post,
+		char *_ctype, char *_hdrs);
 
 /*
  * Performs http request and saves possible result
  * (first body line of reply) to pvar.
  */
-int http_client_request(
-		sip_msg_t *_m, char *_url, str *_dst, char *_body, char *_hdrs, char *_met);
+int http_client_request(sip_msg_t *_m, char *_url, str *_dst, char *_body,
+		char *_hdrs, char *_met, unsigned int _httpver);
 
 /*
  * Performs http request and saves possible result
  * (first body line of reply) to pvar.
  */
-int http_client_request_c(
-		sip_msg_t *_m, char *_url, str *_dst, char *_body, char *_ctype, char *_hdrs, char *_met);
+int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
+		char *_ctype, char *_hdrs, char *_met, unsigned int _httpver);
 
 
 char *http_get_content_type(const str *connection);
+
+int http_client_response_headers_get(str *hname, str *hbody);
+void http_client_response_headers_reset(void);
 
 #endif /* CURL_FUNCTIONS_H */

@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -24,22 +26,28 @@
 #include <sys/un.h>
 #include "../../core/ip_addr.h"
 
-enum socket_protos	{	UNKNOWN_SOCK=0, UDP_SOCK, TCP_SOCK, 
-						UNIXS_SOCK, UNIXD_SOCK
+enum socket_protos
+{
+	UNKNOWN_SOCK = 0,
+	UDP_SOCK,
+	TCP_SOCK,
+	UNIXS_SOCK,
+	UNIXD_SOCK
 #ifdef USE_FIFO
-							, FIFO_SOCK
+	,
+	FIFO_SOCK
 #endif
 };
 
-int init_unix_sock(struct sockaddr_un* su, char* name, int type,
-					int perm, int uid, int gid);
-int init_tcpudp_sock(union sockaddr_union* su, char* address, int port,
-					enum socket_protos type);
+int init_unix_sock(struct sockaddr_un *su, char *name, int type, int perm,
+		int uid, int gid);
+int init_tcpudp_sock(union sockaddr_union *su, char *address, int port,
+		enum socket_protos type);
 int init_sock_opt(int s, enum socket_protos type);
 
-inline static char* socket_proto_name(enum socket_protos p)
+inline static char *socket_proto_name(enum socket_protos p)
 {
-	switch(p){
+	switch(p) {
 		case UDP_SOCK:
 			return "udp";
 		case TCP_SOCK:
@@ -52,8 +60,7 @@ inline static char* socket_proto_name(enum socket_protos p)
 		case FIFO_SOCK:
 			return "fifo";
 #endif
-		default:
-			;
+		default:;
 	}
 	return "<unknown>";
 }

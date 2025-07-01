@@ -1,9 +1,11 @@
-/* 
+/*
  * Portions Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2003 August.Net Services, LLC
  * Portions Copyright (C) 2005-2008 iptelorg GmbH
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
@@ -27,7 +29,7 @@
 /*!
  * \file
  * \brief DB_POSTGRES :: * Declaration of pg_cmd data structure
- * 
+ *
  * Declaration of pg_cmd data structure  that contains PostgreSQL specific data
  * stored in db_cmd structures and related functions.
  * \ingroup db_postgres
@@ -60,7 +62,7 @@ struct pg_params
 struct pg_cmd
 {
 	db_drv_t gen; /**< Generic part of the data structure (must be first */
-	char *name;   /**< Name of the prepared query on the server */
+	char *name;	  /**< Name of the prepared query on the server */
 	str sql_cmd;  /**< Database command represented in SQL language */
 
 	struct pg_params params;
@@ -99,7 +101,7 @@ int pg_cmd_exec(db_res_t *res, db_cmd_t *cmd);
  * the first record from a result. The function retrieves the first record
  * from a PGresult structure and converts the fields from PostgreSQL to
  * internal SER representation.
- * 
+ *
  * @param res A result set retrieved from PostgreSQL server.
  * @retval 0 If executed successfully.
  * @retval 1 If the result is empty.
@@ -113,7 +115,7 @@ int pg_cmd_first(db_res_t *res);
  * the first record from a result. The function advances current cursor
  * position in the result, retrieves the next record from a PGresult structure
  * and converts the fields from PostgreSQL to internal SER representation.
- * 
+ *
  * @param res A result set retrieved from PostgreSQL server.
  * @retval 0 If executed successfully.
  * @retval 1 If there are no more records in the result.

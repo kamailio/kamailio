@@ -17,13 +17,13 @@ PI_FRAMEWORK_TABLE_XSL = $(STYLESHEETS)/pi_framework_table.xsl
 PI_FRAMEWORK_MOD_XSL = $(STYLESHEETS)/pi_framework_mod.xsl
 
 # Stylesheet used to generate MySQL database schema
-MYSQL_XSL = $(STYLESHEETS)/mysql.xsl
+MYSQL_XSL = $(STYLESHEETS)/db_mysql.xsl
 
 # Stylesheet used to generate Postgres database schema
-POSTGRES_XSL = $(STYLESHEETS)/postgres.xsl
+POSTGRES_XSL = $(STYLESHEETS)/db_postgres.xsl
 
 # Stylesheet used to generate dbtext database schema
-DBTEXT_XSL = $(STYLESHEETS)/dbtext.xsl
+DBTEXT_XSL = $(STYLESHEETS)/db_text.xsl
 
 # Stylesheet used to generate berkeley database schema
 DB_BERKELEY_XSL = $(STYLESHEETS)/db_berkeley.xsl
@@ -32,10 +32,10 @@ DB_BERKELEY_XSL = $(STYLESHEETS)/db_berkeley.xsl
 DB_SQLITE_XSL = $(STYLESHEETS)/db_sqlite.xsl
 
 # Stylesheet used to generate oracle database schema
-ORACLE_XSL = $(STYLESHEETS)/oracle.xsl
+ORACLE_XSL = $(STYLESHEETS)/db_oracle.xsl
 
 # Stylesheet used to generate mongodb database schema
-MONGODB_XSL = $(STYLESHEETS)/mongodb.xsl
+MONGODB_XSL = $(STYLESHEETS)/db_mongodb.xsl
 
 # Stylesheet used to generate Redis database schema
 DB_REDIS_XSL = $(STYLESHEETS)/db_redis.xsl
@@ -105,7 +105,7 @@ mysql:
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(SCHEME)/mysql" \
 		--stringparam prefix "$$FILE-" \
-		--stringparam db "mysql" \
+		--stringparam db "db_mysql" \
 		$(MYSQL_XSL) kamailio-"$$FILE".xml ; \
 	done
 
@@ -118,7 +118,7 @@ postgres:
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(SCHEME)/postgres" \
 		--stringparam prefix "$$FILE-" \
-		--stringparam db "postgres" \
+		--stringparam db "db_postgres" \
 		$(POSTGRES_XSL) kamailio-"$$FILE".xml ; \
 	done
 
@@ -131,7 +131,7 @@ oracle:
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(SCHEME)/oracle" \
 		--stringparam prefix "$$FILE-" \
-		--stringparam db "oracle" \
+		--stringparam db "db_oracle" \
 		$(ORACLE_XSL) kamailio-"$$FILE".xml ; \
 	done
 
@@ -144,7 +144,7 @@ dbtext:
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(SCHEME)/dbtext/kamailio" \
 		--stringparam prefix "" \
-		--stringparam db "dbtext" \
+		--stringparam db "db_text" \
 		$(DBTEXT_XSL) kamailio-"$$FILE".xml ; \
 	done
 	TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
@@ -208,7 +208,7 @@ mongodb:
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(SCHEME)/mongodb/kamailio" \
 		--stringparam prefix "" \
-		--stringparam db "mongodb" \
+		--stringparam db "db_mongodb" \
 		$(MONGODB_XSL) kamailio-"$$FILE".xml ; \
 	done
 	@# small hack to create the version table entries, this is here easier as with XSL

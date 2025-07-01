@@ -23,7 +23,7 @@
 
 cd $CTL_DIR
 
-# setup config file
+# set up config file
 cp $CTLRC $CTLRC.bak
 cp $CTL $CTL.bak
 sed -i'' -e "s/# DBENGINE=MYSQL/DBENGINE=MYSQL/g" $CTLRC
@@ -43,7 +43,7 @@ if [ "$ret" -eq 0 ] ; then
 	ret=$?
 fi ;
 
-# cleanup
+# clean up
 mv $CTLRC.bak $CTLRC
 mv $CTL.bak $CTL
 

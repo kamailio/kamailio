@@ -8,6 +8,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -44,9 +46,9 @@ extern ldap_api_t ldap_api;
 #define H350_BASE_DN ""
 #define H350_SEARCH_SCOPE "one"
 
-extern char* h350_ldap_session;
-extern char* h350_base_dn;
-extern char* h350_search_scope;
+extern char *h350_ldap_session;
+extern char *h350_base_dn;
+extern char *h350_search_scope;
 extern int h350_search_scope_int;
 
 #endif /* H350_MOD_H */

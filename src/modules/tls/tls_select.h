@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -47,6 +49,6 @@ extern pv_export_t tls_pv[];
 
 void tls_set_pv_con(struct tcp_connection *c);
 
-sr_kemi_xval_t* ki_tls_cget_attr(sip_msg_t* msg, str *aname);
+sr_kemi_xval_t *ki_tls_cget_attr(sip_msg_t *msg, str *aname);
 
 #endif /* _TLS_SELECT_H */

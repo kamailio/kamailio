@@ -230,7 +230,7 @@ modparam("usrloc|acc|auth_db|group|msilo|uri", "db_url",
 	"$SER_SQL_URI")
 
 # -- usrloc params --
-/* 0 -- dont use mysql, 1 -- write_through, 2--write_back */
+/* 0 -- don't use mysql, 1 -- write_through, 2 -- write_back */
 modparam("usrloc", "db_mode",   2)
 modparam("usrloc", "timer_interval", 10)
 
@@ -283,7 +283,7 @@ route{
 	};
 
 
-	# Make sure that requests dont advertise addresses 
+	# Make sure that requests don't advertise addresses
 	# from private IP space (RFC1918) in Contact HF
 	# (note: does not match with folded lines)
 	if (search("^(Contact|m): .*@(192\.168\.|10\.|172\.16)")) {
@@ -294,13 +294,13 @@ route{
 					&& !( src_ip==192.168.0.0/16 ||
 						src_ip==10.0.0.0/8 || src_ip==172.16.0.0/12 )) {
 			log("LOG: Someone trying to register from private IP again\n");
-			sl_send_reply("479", "We dont accept private IP contacts" );
+			sl_send_reply("479", "We don't accept private IP contacts" );
 			break;
 		};
 	};
 
 	# anti-spam -- if somene claims to belong to our domain in From,
-	# challenge him (skip REGISTERs -- we will chalenge them later)
+	# challenge him (skip REGISTERs -- we will challenge them later)
 	if (search("(From|F):.*$SER_DOMAIN_TEST_RE")) {
 		# invites forwarded to other domains, like FWD may cause subsequent 
 		# request to come from there but have iptel in From -> verify
@@ -374,7 +374,7 @@ route{
 	# avoid stealing incoming calls	
 	if (method=="REGISTER") {
 
-		# Make sure that user's dont register infinite loops
+		# Make sure that users don't register infinite loops
 		# (note: does not match with folded lines)
 		if (search("^(Contact|m): .*@$SER_DOMAIN_TEST_RE")) {
 			log(1, "LOG: alert: someone trying to set aor==contact\n");
@@ -407,8 +407,8 @@ route{
 		break;
 	};
 
-	# some UACs might be fooled by Contacts our UACs generate to make MSN 
-	# happy (web-im, e.g.) -- tell its urneachable
+	# some UACs might be fooled by Contacts our UACs generated to make MSN
+	# happy (web-im, e.g.) -- tell it is unreachable
 	if (uri=~"sip:daemon@" ) {
 		sl_send_reply("410", "daemon is gone");
 		break;
@@ -422,7 +422,7 @@ route{
 		};
 	} else {
 		# aliases  (take precedences over PSTN number; provisioning interface
-		# is set up to assinge aliases beginning with 8)
+		# is set up to assign aliases beginning with 8)
 		lookup("aliases");
 	};
 
@@ -471,7 +471,7 @@ route[2] {
 # routing logic for inbound requests aliased outbound; unlike
 # with real outbound requests we do not force authentication
 # as these calls are server by our server and we do not want
-# to disqualify unathenticated request originatiors from other
+# to disqualify unauthenticated request originatiors from other
 # domains
 route[5] {
 	append_hf("P-hint: ALIASED-OUTBOUND\r\n");

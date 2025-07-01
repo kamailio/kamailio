@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -180,8 +180,8 @@ modparam("dmq_usrloc", "batch_usleep", 1000)
 	<section id="usrloc_dmq.p.batch_msg_size">
 		<title><varname>batch_msg_size</varname> (int)</title>
 		<para>
-			The parameter controls the size of the messages during a sync. 
-			This is to make sure the messages are never larger then 65536 (the maximum datagram size).
+			The parameter controls the size of the messages during a sync.
+			This is to make sure the messages are never larger than 65536 (the maximum datagram size).
 		</para>
 		<para>
 			Note that batch_msg_contacts will also be checked.
@@ -263,7 +263,17 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
 			</listitem>
 			<listitem>
 			<para>
-				1 - enabled
+				1 - enabled, replicate socket by proto:host:port
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				2 - enabled, replicate socket by socket name
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				3 - enabled, use local socket from dmq server_socket modparam
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -277,10 +287,48 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
 		<title>Set <varname>replicate_socket_info</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dmq_usrloc", "replicate_socket_info", 0)
+modparam("dmq_usrloc", "replicate_socket_info", 1)
 ...
 </programlisting>
 	</example>
+	</section>
+	<section id="usrloc_dmq.p.replicate_cflags">
+		<title><varname>replicate_cflags</varname> (int)</title>
+		<para>
+			The parameter controls whether the cflags replication is active or not.
+			This is important for anycast scenarios.
+			The value can be:
+			<itemizedlist>
+			<listitem>
+			<para>
+				0 - disabled
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				1 - enabled, replicate cflags
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				> 1 - enabled, set cflags corresponding to this value, on replicated peers
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>replicate_cflags</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "replicate_cflags", 97) # will set cflags corresponding to 1 + 32 + 64
+...
+		</programlisting>
+		</example>
 	</section>
 	<section id="usrloc_dmq.p.usrloc_delete">
 		<title><varname>usrloc_delete</varname> (int)</title>
@@ -293,10 +341,29 @@ modparam("dmq_usrloc", "replicate_socket_info", 0)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>usrloc_domain</varname> parameter</title>
+		<title>Set <varname>usrloc_delete</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("dmq_usrloc", "usrloc_delete", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="usrloc_dmq.p.usrloc_delete_expired">
+		<title><varname>usrloc_delete_expired</varname> (int)</title>
+		<para>
+			Enable (1) or disable (0) synchronizing usrloc expire actions using delete actions. In other words, sync delete of (UL_CONTACT_EXPIRE) expired contacts.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>usrloc_delete_expired</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "usrloc_delete_expired", 1)
 ...
 </programlisting>
 		</example>

@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -31,11 +33,16 @@
 
 #include "../../core/str.h"
 
-#define SRUID_SIZE	64
+#define SRUID_SIZE 64
 
-typedef enum {SRUID_INC=0, SRUID_LFSR=1} sruid_mode_t;
+typedef enum
+{
+	SRUID_INC = 0,
+	SRUID_LFSR = 1
+} sruid_mode_t;
 
-typedef struct sruid {
+typedef struct sruid
+{
 	char buf[SRUID_SIZE];
 	char *out;
 	str uid;
@@ -56,7 +63,8 @@ int sruid_nexthid_safe(sruid_t *sid, str *sval);
 
 typedef int (*sruid_uuid_generate_f)(char *out, int *len);
 
-typedef struct sruid_uuid_api {
+typedef struct sruid_uuid_api
+{
 	sruid_uuid_generate_f fgenerate;
 	sruid_uuid_generate_f fgenerate_time;
 	sruid_uuid_generate_f fgenerate_random;

@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,11 +31,12 @@
 #include "urecord.h"
 
 #define ULKA_NONE 0
-#define ULKA_ALL  1
-#define ULKA_NAT  (1<<1)
-#define ULKA_UDP  (1<<2)
+#define ULKA_ALL 1
+#define ULKA_NAT (1 << 1)
+#define ULKA_UDP (1 << 2)
 
 int ul_ka_urecord(urecord_t *ur);
 int ul_ka_reply_received(sip_msg_t *msg);
+int ul_ka_parse_reply_codes(char *vcodes);
 
 #endif

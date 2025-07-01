@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -45,14 +45,14 @@ int main(char** argv, int argn)
 	int r, len;
 
 	printf("starting\n");
-	
+
 	addr.sin_family=AF_INET;
 	addr.sin_port=htons(PORT);
 	addr.sin_addr.s_addr=INADDR_ANY;
 	to.sin_family=AF_INET;
 	to.sin_port=htons(SEND_PORT);
 	to.sin_addr.s_addr=htonl(SEND_ADDR);
-		
+
 
 	sock=socket(PF_INET, SOCK_DGRAM,0);
 	if (bind(sock, (struct sockaddr*) &addr, sizeof(struct sockaddr_in))==-1){

@@ -29,7 +29,7 @@
 #include "../../modules/tm/tm_load.h"
 #include "../acc/acc_logic.h"
 
-typedef int (*tm_get_trans_f)( struct sip_msg*, struct cell**);
+typedef int (*tm_get_trans_f)(struct sip_msg *, struct cell **);
 
 extern struct tm_binds rd_tmb;
 
@@ -40,8 +40,7 @@ extern acc_api_t _uacred_accb;
 
 extern int flags_hdr_mode;
 
-int get_redirect( struct sip_msg *msg , int maxt, int maxb,
-		str *reason, unsigned int bflags);
+int get_redirect(struct sip_msg *msg, int maxt, int maxb, str *reason,
+		unsigned int bflags);
 
 #endif
-

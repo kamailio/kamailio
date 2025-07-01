@@ -1,12 +1,14 @@
 /*
  * $Id$
  *
- * Functions that process REGISTER message 
+ * Functions that process REGISTER message
  * and store data in usrloc
  *
  * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -40,14 +42,15 @@ int regapi_lookup(struct sip_msg *msg, char *table);
 /**
  * @brief REGISTRAR API structure
  */
-typedef struct registrar_api {
-	regapi_save_f    save;
-	regapi_lookup_f  lookup;
-	regapi_lookup_f  registered;
+typedef struct registrar_api
+{
+	regapi_save_f save;
+	regapi_lookup_f lookup;
+	regapi_lookup_f registered;
 } registrar_api_t;
 
-typedef int (*bind_registrar_f)(registrar_api_t* api);
-int bind_registrar(registrar_api_t* api);
+typedef int (*bind_registrar_f)(registrar_api_t *api);
+int bind_registrar(registrar_api_t *api);
 
 /**
  * @brief Load the REGISTRAR API
@@ -61,8 +64,7 @@ static inline int registrar_load_api(registrar_api_t *api)
 		LM_ERR("cannot find bind_registrar\n");
 		return -1;
 	}
-	if (bindregistrar(api) < 0)
-	{
+	if(bindregistrar(api) < 0) {
 		LM_ERR("cannot bind registrar api\n");
 		return -1;
 	}

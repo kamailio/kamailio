@@ -32,14 +32,14 @@
 #include "janssonrpc_request.h"
 #include "janssonrpc_io.h"
 
-jsonrpc_request_t* request_table[JSONRPC_DEFAULT_HTABLE_SIZE];
+jsonrpc_request_t *request_table[JSONRPC_DEFAULT_HTABLE_SIZE];
 
 static int next_id = 1;
 
-int store_request(jsonrpc_request_t* req);
+int store_request(jsonrpc_request_t *req);
 
 /* for debugging only */
-void print_request(jsonrpc_request_t* req)
+void print_request(jsonrpc_request_t *req)
 {
 	if(!req) {
 		INFO("request is (null)\n");
@@ -76,7 +76,7 @@ void print_request(jsonrpc_request_t* req)
 	INFO("\t-------------------\n");
 }
 
-void free_request(jsonrpc_request_t* req)
+void free_request(jsonrpc_request_t *req)
 {
 	if(!req)
 		return;
@@ -86,30 +86,32 @@ void free_request(jsonrpc_request_t* req)
 	CHECK_AND_FREE_EV(req->retry_ev);
 	CHECK_AND_FREE_EV(req->timeout_ev);
 
-	if(req->payload) json_decref(req->payload);
+	if(req->payload)
+		json_decref(req->payload);
 	pkg_free(req);
 }
 
-jsonrpc_request_t* create_request(jsonrpc_req_cmd_t* cmd)
+jsonrpc_request_t *create_request(jsonrpc_req_cmd_t *cmd)
 {
-	if (cmd == NULL) {
+	if(cmd == NULL) {
 		ERR("cmd is (null). Cannot build request.\n");
 		return NULL;
 	}
 
-	if (cmd->params.s == NULL) {
+	if(cmd->params.s == NULL) {
 		ERR("params is (null). Cannot build request.\n");
 		return NULL;
 	}
 
-	jsonrpc_request_t* req = (jsonrpc_request_t*)pkg_malloc(sizeof(jsonrpc_request_t));
-	if (!req) {
+	jsonrpc_request_t *req =
+			(jsonrpc_request_t *)pkg_malloc(sizeof(jsonrpc_request_t));
+	if(!req) {
 		ERR("Out of memory!");
 		return NULL;
 	}
 	memset(req, 0, sizeof(jsonrpc_request_t));
 
-	if (cmd->notify_only) {
+	if(cmd->notify_only) {
 		req->type = RPC_NOTIFICATION;
 	} else {
 		req->type = RPC_REQUEST;
@@ -126,7 +128,7 @@ jsonrpc_request_t* create_request(jsonrpc_req_cmd_t* cmd)
 	}
 
 	if(req->type == RPC_REQUEST) {
-		if (next_id>JSONRPC_MAX_ID) {
+		if(next_id > JSONRPC_MAX_ID) {
 			next_id = 1;
 		} else {
 			next_id++;
@@ -134,7 +136,7 @@ jsonrpc_request_t* create_request(jsonrpc_req_cmd_t* cmd)
 		req->id = next_id;
 		req->timeout = cmd->timeout;
 
-		json_t* id_js = json_integer(next_id);
+		json_t *id_js = json_integer(next_id);
 		if(id_js) {
 			json_object_set(req->payload, "id", id_js);
 			json_decref(id_js);
@@ -145,11 +147,11 @@ jsonrpc_request_t* create_request(jsonrpc_req_cmd_t* cmd)
 
 		req->retry = cmd->retry;
 		req->timeout = cmd->timeout;
-		if (!store_request(req)) {
+		if(!store_request(req)) {
 			ERR("store_request failed\n");
 			goto fail;
 		}
-	} else if (req->type == RPC_NOTIFICATION) {
+	} else if(req->type == RPC_NOTIFICATION) {
 		req->id = 0;
 		req->retry = 0;
 	} else {
@@ -157,7 +159,7 @@ jsonrpc_request_t* create_request(jsonrpc_req_cmd_t* cmd)
 		goto fail;
 	}
 
-	json_t* version_js = json_string(JSONRPC_VERSION);
+	json_t *version_js = json_string(JSONRPC_VERSION);
 	if(version_js) {
 		json_object_set(req->payload, "jsonrpc", version_js);
 		json_decref(version_js);
@@ -166,7 +168,7 @@ jsonrpc_request_t* create_request(jsonrpc_req_cmd_t* cmd)
 		goto fail;
 	}
 
-	json_t* method_js = json_string(cmd->method.s);
+	json_t *method_js = json_string(cmd->method.s);
 	if(method_js) {
 		json_object_set(req->payload, "method", method_js);
 		json_decref(method_js);
@@ -175,14 +177,14 @@ jsonrpc_request_t* create_request(jsonrpc_req_cmd_t* cmd)
 		goto fail;
 	}
 
-	json_t* params = NULL;
+	json_t *params = NULL;
 	json_error_t error;
 	if(cmd->params.len > 0) {
 		params = json_loads(cmd->params.s, 0, &error);
 		if(!params) {
 			ERR("Failed to parse json: %.*s\n", STR(cmd->params));
-			ERR("PARSE ERROR: %s at %d,%d\n",
-					error.text, error.line, error.column);
+			ERR("PARSE ERROR: %s at %d,%d\n", error.text, error.line,
+					error.column);
 			goto fail;
 		}
 	}
@@ -193,7 +195,8 @@ jsonrpc_request_t* create_request(jsonrpc_req_cmd_t* cmd)
 		goto fail;
 	}
 
-	if(params) json_decref(params);
+	if(params)
+		json_decref(params);
 
 	req->cmd = cmd;
 	return req;
@@ -203,12 +206,12 @@ fail:
 	return NULL;
 }
 
-void retry_cb(int fd, short event, void* arg)
+void retry_cb(int fd, short event, void *arg)
 {
 	if(!arg)
 		return;
 
-	jsonrpc_request_t* req = (jsonrpc_request_t*)arg;
+	jsonrpc_request_t *req = (jsonrpc_request_t *)arg;
 
 	if(!(req->cmd)) {
 		ERR("request has no cmd\n");
@@ -217,7 +220,7 @@ void retry_cb(int fd, short event, void* arg)
 
 	DEBUG("retrying request: id=%d\n", req->id);
 
-	if(jsonrpc_send(req->cmd->conn, req, false)<0) {
+	if(jsonrpc_send(req->cmd->conn, req, false) < 0) {
 		goto error;
 	}
 
@@ -228,7 +231,7 @@ error:
 	fail_request(JRPC_ERR_SEND, req, "Retry failed to send request");
 }
 
-int schedule_retry(jsonrpc_request_t* req)
+int schedule_retry(jsonrpc_request_t *req)
 {
 	struct timeval tv;
 	unsigned int ltime;
@@ -254,14 +257,14 @@ int schedule_retry(jsonrpc_request_t* req)
 		ltime = RETRY_MAX_TIME;
 	}
 
-	jsonrpc_request_t* new_req = create_request(req->cmd);
+	jsonrpc_request_t *new_req = create_request(req->cmd);
 
 	new_req->ntries = req->ntries;
 
 	jsr_ms_to_tv(ltime, tv);
 
-	new_req->retry_ev = evtimer_new(global_ev_base, retry_cb, (void*)new_req);
-	if(evtimer_add(new_req->retry_ev, &tv)<0) {
+	new_req->retry_ev = evtimer_new(global_ev_base, retry_cb, (void *)new_req);
+	if(evtimer_add(new_req->retry_ev, &tv) < 0) {
 		ERR("event_add failed while setting request retry timer (%s).",
 				strerror(errno));
 		goto error;
@@ -275,25 +278,26 @@ error:
 	return -1;
 }
 
-int id_hash(int id) {
+int id_hash(int id)
+{
 	return (id % JSONRPC_DEFAULT_HTABLE_SIZE);
 }
 
-jsonrpc_request_t* pop_request(int id)
+jsonrpc_request_t *pop_request(int id)
 {
 	int key = id_hash(id);
-	jsonrpc_request_t* req = request_table[key];
-	jsonrpc_request_t* prev_req = NULL;
+	jsonrpc_request_t *req = request_table[key];
+	jsonrpc_request_t *prev_req = NULL;
 
-	while (req && req->id != id) {
+	while(req && req->id != id) {
 		prev_req = req;
-		if (!(req = req->next)) {
+		if(!(req = req->next)) {
 			break;
 		};
 	}
 
-	if (req && req->id == id) {
-		if (prev_req != NULL) {
+	if(req && req->id == id) {
+		if(prev_req != NULL) {
 			prev_req->next = req->next;
 		} else {
 			request_table[key] = NULL;
@@ -303,20 +307,20 @@ jsonrpc_request_t* pop_request(int id)
 	return 0;
 }
 
-int store_request(jsonrpc_request_t* req)
+int store_request(jsonrpc_request_t *req)
 {
 	int key = id_hash(req->id);
-	jsonrpc_request_t* existing;
+	jsonrpc_request_t *existing;
 
-	if ((existing = request_table[key])) { /* collision */
-		jsonrpc_request_t* i;
-		for(i=existing; i; i=i->next) {
-			if (i == NULL) {
+	if((existing = request_table[key])) { /* collision */
+		jsonrpc_request_t *i;
+		for(i = existing; i; i = i->next) {
+			if(i == NULL) {
 				i = req;
 				LM_ERR("!!!!!!!");
 				return 1;
 			}
-			if (i->next == NULL) {
+			if(i->next == NULL) {
 				i->next = req;
 				return 1;
 			}
@@ -327,19 +331,17 @@ int store_request(jsonrpc_request_t* req)
 	return 1;
 }
 
-unsigned int requests_using_server(jsonrpc_server_t* server)
+unsigned int requests_using_server(jsonrpc_server_t *server)
 {
 	unsigned int count = 0;
-	jsonrpc_request_t* req = NULL;
+	jsonrpc_request_t *req = NULL;
 	int key = 0;
-	for (key=0; key < JSONRPC_DEFAULT_HTABLE_SIZE; key++) {
-		for (req = request_table[key]; req != NULL; req = req->next) {
-			if(req->server
-					&& req->server == server) {
+	for(key = 0; key < JSONRPC_DEFAULT_HTABLE_SIZE; key++) {
+		for(req = request_table[key]; req != NULL; req = req->next) {
+			if(req->server && req->server == server) {
 				count++;
 			}
 		}
 	}
 	return count;
 }
-

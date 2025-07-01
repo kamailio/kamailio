@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -26,7 +28,6 @@
  */
 
 
-
 #include "hslot.h"
 
 /*!
@@ -35,13 +36,13 @@
  * \param _s hash slot
  * \param n used to get the slot number (modulo number or locks)
  */
-int init_slot(struct udomain* _d, hslot_t* _s, int n)
+int init_slot(struct udomain *_d, hslot_t *_s, int n)
 {
 	_s->n = 0;
 	_s->first = 0;
 	_s->last = 0;
 	_s->d = _d;
-	if(rec_lock_init(&_s->rlock)==NULL) {
+	if(rec_lock_init(&_s->rlock) == NULL) {
 		LM_ERR("failed to initialize the slock (%d)\n", n);
 		return -1;
 	}
@@ -53,9 +54,9 @@ int init_slot(struct udomain* _d, hslot_t* _s, int n)
  * \brief Deinitialize given slot structure
  * \param _s hash slot
  */
-void deinit_slot(hslot_t* _s)
+void deinit_slot(hslot_t *_s)
 {
-	struct urecord* ptr;
+	struct urecord *ptr;
 
 	/* Remove all elements */
 	while(_s->first) {
@@ -67,7 +68,7 @@ void deinit_slot(hslot_t* _s)
 
 	_s->n = 0;
 	_s->last = 0;
-    _s->d = 0;
+	_s->d = 0;
 }
 
 
@@ -76,9 +77,9 @@ void deinit_slot(hslot_t* _s)
  * \param _s hash slot
  * \param _r added record
  */
-void slot_add(hslot_t* _s, struct urecord* _r)
+void slot_add(hslot_t *_s, struct urecord *_r)
 {
-	if (_s->n == 0) {
+	if(_s->n == 0) {
 		_s->first = _s->last = _r;
 	} else {
 		_r->prev = _s->last;
@@ -95,15 +96,15 @@ void slot_add(hslot_t* _s, struct urecord* _r)
  * \param _s hash slot
  * \param _r removed record
  */
-void slot_rem(hslot_t* _s, struct urecord* _r)
+void slot_rem(hslot_t *_s, struct urecord *_r)
 {
-	if (_r->prev) {
+	if(_r->prev) {
 		_r->prev->next = _r->next;
 	} else {
 		_s->first = _r->next;
 	}
 
-	if (_r->next) {
+	if(_r->next) {
 		_r->next->prev = _r->prev;
 	} else {
 		_s->last = _r->prev;

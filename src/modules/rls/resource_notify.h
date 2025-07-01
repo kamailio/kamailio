@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -26,10 +28,10 @@
 
 #include "../../core/parser/msg_parser.h"
 
-int w_rls_handle_notify(struct sip_msg* msg, char* c1, char* c2);
-void timer_send_notify(unsigned int ticks,void *param);
-void rls_presentity_clean(unsigned int ticks,void *param);
+int w_rls_handle_notify(struct sip_msg *msg, char *c1, char *c2);
+void timer_send_notify(unsigned int ticks, void *param);
+void rls_presentity_clean(unsigned int ticks, void *param);
 
-int ki_rls_handle_notify(sip_msg_t* msg);
+int ki_rls_handle_notify(sip_msg_t *msg);
 
 #endif

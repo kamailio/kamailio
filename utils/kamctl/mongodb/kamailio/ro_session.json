@@ -1,0 +1,131 @@
+{
+  "name": "ro_session",
+  "version": 3,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "hash_entry": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "hash_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "session_id": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "dlg_hash_entry": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "dlg_hash_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "direction": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "asserted_identity": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "callee": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "start_time": {
+      "type": "datetime",
+      "default": null,
+      "null": true
+    },
+    "last_event_timestamp": {
+      "type": "datetime",
+      "default": null,
+      "null": true
+    },
+    "reserved_secs": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "valid_for": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "state": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "incoming_trunk_id": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "outgoing_trunk_id": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "rating_group": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "service_identifier": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "auth_app_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "auth_session_type": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "pani": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "mac": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "app_provided_party": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "is_final_allocation": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "origin_host": {
+      "type": "string",
+      "default": null,
+      "null": true
+    }
+  ]
+}

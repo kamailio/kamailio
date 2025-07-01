@@ -10,8 +10,4 @@ auto_gen=
 NAME=db2_ops.so
 LIBS=
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb2/srdb2
 include ../../Makefile.modules
-
-

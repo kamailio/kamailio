@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -33,12 +35,12 @@
 #include "../../core/str.h"
 #include "../../core/parser/parse_uri.h"
 
-#define REG_GRUU_SEP	'-'
+#define REG_GRUU_SEP '-'
 
 /*! \brief
  * Extract Address Of Record
  */
-int extract_aor(str* _uri, str* _a, sip_uri_t *_pu);
+int extract_aor(str *_uri, str *_a, sip_uri_t *_pu);
 
 
 #endif /* COMMON_H */

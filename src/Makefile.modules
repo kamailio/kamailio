@@ -58,7 +58,7 @@ override static_modules_path=
 # INCLUDES += -I$(COREPATH)
 
 # temporary def (visible only in the module, not exported)
-DEFS += -DMOD_NAME='"$(MOD_NAME)"'
+DEFS += -DMOD_NAME='"$(MOD_NAME)"' -DMOD_NAMEID='$(MOD_NAME)'
 
 
 ifneq ($(makefile_defs_included),1)

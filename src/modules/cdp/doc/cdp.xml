@@ -58,9 +58,9 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="cdp_admin.xml"/>
 	<xi:include href="cdp_devel.xml"/>
 	<xi:include href="cdp_faq.xml"/>
-	
+
 </book>

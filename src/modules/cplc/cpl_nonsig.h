@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -15,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -32,7 +34,8 @@
 #include "../../core/str.h"
 #include "cpl_env.h"
 
-struct cpl_cmd {
+struct cpl_cmd
+{
 	unsigned int code;
 	str s1;
 	str s2;
@@ -40,13 +43,13 @@ struct cpl_cmd {
 };
 
 
-#define CPL_LOG_CMD    1
-#define CPL_MAIL_CMD   2
+#define CPL_LOG_CMD 1
+#define CPL_MAIL_CMD 2
 
-#define MAX_LOG_DIR_SIZE    256
+#define MAX_LOG_DIR_SIZE 256
 
 
-void cpl_aux_process( int cmd_out, char *log_dir);
+void cpl_aux_process(int cmd_out, char *log_dir);
 
 
 static inline void write_cpl_cmd(unsigned int code, str *s1, str *s2, str *s3)
@@ -58,10 +61,9 @@ static inline void write_cpl_cmd(unsigned int code, str *s1, str *s2, str *s3)
 	cmd.s2 = *s2;
 	cmd.s3 = *s3;
 
-	if (write( cpl_env.cmd_pipe[1], &cmd, sizeof(struct cpl_cmd) )==-1)
-		LM_ERR("write ret: %s\n",strerror(errno));
+	if(write(cpl_env.cmd_pipe[1], &cmd, sizeof(struct cpl_cmd)) == -1)
+		LM_ERR("write ret: %s\n", strerror(errno));
 }
-
 
 
 #endif

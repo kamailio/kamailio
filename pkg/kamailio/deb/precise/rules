@@ -18,9 +18,16 @@ ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 endif
 
 export JAVA_HOME=/usr/lib/jvm/java-gcj
+export WOLFSSL_INTERNAL=no
+# tlsa
+export KTLS_INCLUDE_TLSA=yes
+export LIBSSL_STATIC_SRCLIB=yes
+export LIBSSL_STATIC_SRCPATH=/usr/$(LIBDIR)
 
 # Modules not in the "main" kamailio package:
 EXCLUDED_MODULES =
+EXCLUDED_MODULES += mono
+EXCLUDED_MODULES += geoip
 
 # Extra modules to skip, because they are not compilable now:
 # - regardless if they go to the main kamailio package or to some module
@@ -44,6 +51,8 @@ EXTRA_EXCLUDED_MODULES += mqtt
 EXTRA_EXCLUDED_MODULES += secsipid
 EXTRA_EXCLUDED_MODULES += lwsc
 EXTRA_EXCLUDED_MODULES += nats
+EXTRA_EXCLUDED_MODULES += tls_wolfssl
+EXTRA_EXCLUDED_MODULES += kafka
 ## --EXCLUDED--
 
 
@@ -69,10 +78,8 @@ PACKAGE_GROUPS += xmpp
 PACKAGE_GROUPS += cpl
 PACKAGE_GROUPS += redis
 PACKAGE_GROUPS += python
-PACKAGE_GROUPS += geoip
 PACKAGE_GROUPS += sqlite
 PACKAGE_GROUPS += json
-PACKAGE_GROUPS += mono
 PACKAGE_GROUPS += ims
 PACKAGE_GROUPS += sctp
 PACKAGE_GROUPS += java
@@ -81,6 +88,7 @@ PACKAGE_GROUPS += outbound
 PACKAGE_GROUPS += websocket
 PACKAGE_GROUPS += autheph
 PACKAGE_GROUPS += erlang
+PACKAGE_GROUPS += microhttpd
 
 # Module groups to be packaged onto kamailio-extra-modules.
 EXTRA_GROUPS += ev
@@ -88,6 +96,10 @@ EXTRA_GROUPS += gzcompress
 EXTRA_GROUPS += jansson
 EXTRA_GROUPS += uuid
 EXTRA_GROUPS += http_async
+
+.PHONY: skip-modules
+skip-modules:
+	@echo "$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)"
 
 D = $(CURDIR)/debian/$(DEB_SOURCE)
 
@@ -129,24 +141,27 @@ test_install_all-stamp: build
 	$(MAKE) install quiet=verbose LIBDIR=$(LIBDIR) group_include="kstandard"
 	touch test_install_all-stamp
 
+# tls_wolfssl => tls-wolfssl
+$(INSTALL_MODULES): module = $(subst _,-,$(subst install_,,$@))
+$(INSTALL_MODULES): grp = $(subst install_,,$@)
 $(INSTALL_MODULES): test_install_all-stamp
 	$(MAKE) install-modules-all \
 	  quiet=verbose \
 	  LIBDIR=$(LIBDIR) \
-	  BASEDIR=$(D)-$(subst install_,,$@)-modules \
-	  cfg_prefix=$(D)-$(subst install_,,$@)-modules \
-	  doc-dir=share/doc/$(DEB_SOURCE)-$(subst install_,,$@)-modules \
-	  group_include="k$(subst install_,,$@)"
+	  BASEDIR=$(D)-$(module)-modules \
+	  cfg_prefix=$(D)-$(module)-modules \
+	  doc-dir=share/doc/$(DEB_SOURCE)-$(module)-modules \
+	  group_include="k$(grp)"
 	# Eliminate duplicate libs.
 	for d in $(DUP_LIBS_DIRS); do \
-	  test "$$d" != "$(D)-$${module}-modules/usr/$(LIBDIR)/kamailio" && \
+	  test "$$d" != "$(D)-$(module)-modules/usr/$(LIBDIR)/kamailio" && \
 	  for r in `find $$d -name 'lib*' | xargs`; do \
-	    echo "removing $(subst install_,,$@) lib `basename $$r` present also in $$d"; \
-	    rm -f $(D)-$(subst install_,,$@)-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"`; \
+	    echo "removing $(module) lib `basename $$r` present also in $$d"; \
+	    rm -f $(D)-$(module)-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"`; \
 	  done ; \
 	done
 	# clean empty dirs
-	find $(D)-$(subst install_,,$@)-modules -depth -empty -type d -exec rmdir {} \;
+	find $(D)-$(module)-modules -depth -empty -type d -exec rmdir {} \;
 
 $(INSTALL_EXTRA): test_install_all-stamp
 	$(MAKE) install-modules-all \

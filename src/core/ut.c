@@ -48,21 +48,22 @@ char ut_buf_int2str[INT2STR_MAX_LEN];
 
 /* converts a username into uid:gid,
  * returns -1 on error & 0 on success */
-int user2uid(int* uid, int* gid, char* user)
+int user2uid(int *uid, int *gid, char *user)
 {
-	char* tmp;
+	char *tmp;
 	struct passwd *pw_entry;
 
-	if (user){
-		*uid=strtol(user, &tmp, 10);
-		if ((tmp==0) ||(*tmp)){
+	if(user) {
+		*uid = strtol(user, &tmp, 10);
+		if((tmp == 0) || (*tmp)) {
 			/* maybe it's a string */
-			pw_entry=getpwnam(user);
-			if (pw_entry==0){
+			pw_entry = getpwnam(user);
+			if(pw_entry == 0) {
 				goto error;
 			}
-			*uid=pw_entry->pw_uid;
-			if (gid) *gid=pw_entry->pw_gid;
+			*uid = pw_entry->pw_uid;
+			if(gid)
+				*gid = pw_entry->pw_gid;
 		}
 		return 0;
 	}
@@ -71,27 +72,26 @@ error:
 }
 
 
-
 /* converts a group name into a gid
  * returns -1 on error, 0 on success */
-int group2gid(int* gid, char* group)
+int group2gid(int *gid, char *group)
 {
-	char* tmp;
-	struct group  *gr_entry;
+	char *tmp;
+	struct group *gr_entry;
 
-	if (group){
-		*gid=strtol(group, &tmp, 10);
-		if ((tmp==0) ||(*tmp)){
+	if(group) {
+		*gid = strtol(group, &tmp, 10);
+		if((tmp == 0) || (*tmp)) {
 			/* maybe it's a string */
-			gr_entry=getgrnam(group);
-			if (gr_entry==0){
+			gr_entry = getgrnam(group);
+			if(gr_entry == 0) {
 				goto error;
 			}
-			*gid=gr_entry->gr_gid;
+			*gid = gr_entry->gr_gid;
 		}
 		return 0;
 	}
- error:
+error:
 	return -1;
 }
 
@@ -101,17 +101,17 @@ int group2gid(int* gid, char* group)
  * Taken from
  * http://lists.samba.org/archive/samba-technical/2002-November/025737.html
  */
-time_t _timegm(struct tm* t)
+time_t _timegm(struct tm *t)
 {
 	time_t tl, tb;
 	struct tm tg;
 
 	t->tm_isdst = 0;
 	tl = mktime(t);
-	if (tl == -1) {
+	if(tl == -1) {
 		t->tm_hour--;
-		tl = mktime (t);
-		if (tl == -1) {
+		tl = mktime(t);
+		if(tl == -1) {
 			return -1; /* can't deal with output from strptime */
 		}
 		tl += 3600;
@@ -120,10 +120,10 @@ time_t _timegm(struct tm* t)
 	gmtime_r(&tl, &tg);
 	tg.tm_isdst = 0;
 	tb = mktime(&tg);
-	if (tb == -1) {
+	if(tb == -1) {
 		tg.tm_hour--;
-		tb = mktime (&tg);
-		if (tb == -1) {
+		tb = mktime(&tg);
+		if(tb == -1) {
 			return -1; /* can't deal with output from gmtime */
 		}
 		tb += 3600;
@@ -180,20 +180,19 @@ int ksr_clock_gettime(struct timespec *ts)
  * Return str as zero terminated string allocated
  * using pkg_malloc
  */
-char* as_asciiz(str* s)
+char *as_asciiz(str *s)
 {
-    char* r;
+	char *r;
 
-    r = (char*)pkg_malloc(s->len + 1);
-    if (!r) {
+	r = (char *)pkg_malloc(s->len + 1);
+	if(!r) {
 		PKG_MEM_ERROR;
 		return 0;
-    }
-    memcpy(r, s->s, s->len);
-    r[s->len] = '\0';
-    return r;
+	}
+	memcpy(r, s->s, s->len);
+	r[s->len] = '\0';
+	return r;
 }
-
 
 
 /* return system version (major.minor.minor2) as
@@ -201,33 +200,35 @@ char* as_asciiz(str* s)
  * (if some of them are missing, they are set to 0)
  * if the parameters are not null they are set to the corresp. part
  */
-unsigned int get_sys_version(int* major, int* minor, int* minor2)
+unsigned int get_sys_version(int *major, int *minor, int *minor2)
 {
 	struct utsname un;
 	int m1;
 	int m2;
 	int m3;
-	char* p;
+	char *p;
 
-	memset (&un, 0, sizeof(un));
-	m1=m2=m3=0;
+	memset(&un, 0, sizeof(un));
+	m1 = m2 = m3 = 0;
 	/* get sys version */
 	uname(&un);
-	m1=strtol(un.release, &p, 10);
-	if (*p=='.'){
+	m1 = strtol(un.release, &p, 10);
+	if(*p == '.') {
 		p++;
-		m2=strtol(p, &p, 10);
-		if (*p=='.'){
+		m2 = strtol(p, &p, 10);
+		if(*p == '.') {
 			p++;
-			m3=strtol(p, &p, 10);
+			m3 = strtol(p, &p, 10);
 		}
 	}
-	if (major) *major=m1;
-	if (minor) *minor=m2;
-	if (minor2) *minor2=m3;
-	return ((m1<<16)|(m2<<8)|(m3));
+	if(major)
+		*major = m1;
+	if(minor)
+		*minor = m2;
+	if(minor2)
+		*minor2 = m3;
+	return ((m1 << 16) | (m2 << 8) | (m3));
 }
-
 
 
 /** transform a relative pathname into an absolute one.
@@ -239,53 +240,54 @@ unsigned int get_sys_version(int* major, int* minor, int* minor2)
  *                be `dirname base`/file.
  * @return  pkg allocated asciiz string or 0 on error.
  */
-char* get_abs_pathname(str* base, str* file)
+char *get_abs_pathname(str *base, str *file)
 {
 	str ser_cfg;
-	char* buf, *dir, *res;
+	char *buf, *dir, *res;
 	int len;
 
-	if (base == NULL) {
+	if(base == NULL) {
 		ser_cfg.s = cfg_file;
 		ser_cfg.len = strlen(cfg_file);
 		base = &ser_cfg;
 	}
 
-	if (!base->s || base->len <= 0 || base->s[0] != '/') {
+	if(!base->s || base->len <= 0 || base->s[0] != '/') {
 		BUG("get_abs_pathname: Base file must be absolute pathname: "
-			"'%.*s'\n", STR_FMT(base));
+			"'%.*s'\n",
+				STR_FMT(base));
 		return NULL;
 	}
 
-	if (!file || !file->s || file->len <= 0) {
+	if(!file || !file->s || file->len <= 0) {
 		BUG("get_abs_pathname: Invalid 'file' parameter\n");
 		return NULL;
 	}
 
-	if (file->s[0] == '/') {
+	if(file->s[0] == '/') {
 		/* This is an absolute pathname, make a zero terminated
 		 * copy and use it as it is */
-		if ((res = pkg_malloc(file->len+1)) == NULL) {
+		if((res = pkg_malloc(file->len + 1)) == NULL) {
 			PKG_MEM_ERROR;
 			return NULL;
 		}
 		memcpy(res, file->s, file->len);
-		res[file->len]=0;
+		res[file->len] = 0;
 	} else {
 		/* This is not an absolute pathname, make it relative
 		 * to the location of the base file
 		 */
 		/* Make a copy, function dirname may modify the string */
-		if ((buf = pkg_malloc(base->len+1)) == NULL) {
+		if((buf = pkg_malloc(base->len + 1)) == NULL) {
 			PKG_MEM_ERROR;
 			return NULL;
 		}
 		memcpy(buf, base->s, base->len);
-		buf[base->len]=0;
+		buf[base->len] = 0;
 		dir = dirname(buf);
 
 		len = strlen(dir);
-		if ((res = pkg_malloc(len + 1 + file->len + 1)) == NULL) {
+		if((res = pkg_malloc(len + 1 + file->len + 1)) == NULL) {
 			PKG_MEM_ERROR;
 			pkg_free(buf);
 			return NULL;
@@ -307,19 +309,19 @@ char* get_abs_pathname(str* base, str* file)
  */
 char *str_search(str *text, str *needle)
 {
-    char *p;
+	char *p;
 
-    if(text==NULL || text->s==NULL || needle==NULL || needle->s==NULL
-			|| text->len<needle->len)
-        return NULL;
+	if(text == NULL || text->s == NULL || needle == NULL || needle->s == NULL
+			|| text->len < needle->len)
+		return NULL;
 
-    for (p = text->s; p <= text->s + text->len - needle->len; p++) {
-        if (*p == *needle->s && memcmp(p, needle->s, needle->len)==0) {
-            return p;
-        }
-    }
+	for(p = text->s; p <= text->s + text->len - needle->len; p++) {
+		if(*p == *needle->s && memcmp(p, needle->s, needle->len) == 0) {
+			return p;
+		}
+	}
 
-    return NULL;
+	return NULL;
 }
 
 /**
@@ -329,8 +331,8 @@ char *str_search(str *text, str *needle)
  */
 char *stre_search_strz(char *vstart, char *vend, char *needlez)
 {
-    str text;
-    str needle;
+	str text;
+	str needle;
 
 	if(vend <= vstart) {
 		return NULL;
@@ -342,7 +344,7 @@ char *stre_search_strz(char *vstart, char *vend, char *needlez)
 	needle.s = needlez;
 	needle.len = strlen(needlez);
 
-    return str_search(&text, &needle);
+	return str_search(&text, &needle);
 }
 
 /**
@@ -352,16 +354,16 @@ char *stre_search_strz(char *vstart, char *vend, char *needlez)
  */
 char *str_casesearch(str *text, str *needle)
 {
-	int i,j;
-	for(i=0;i<=text->len-needle->len;i++) {
-		for(j=0;j<needle->len;j++) {
-			if ( !((text->s[i+j]==needle->s[j]) ||
-					( isalpha((int)text->s[i+j])
-						&& ((text->s[i+j])^(needle->s[j]))==0x20 )) )
+	int i, j;
+	for(i = 0; i <= text->len - needle->len; i++) {
+		for(j = 0; j < needle->len; j++) {
+			if(!((text->s[i + j] == needle->s[j])
+					   || (isalpha((int)text->s[i + j])
+							   && ((text->s[i + j]) ^ (needle->s[j])) == 0x20)))
 				break;
 		}
-		if (j==needle->len)
-			return text->s+i;
+		if(j == needle->len)
+			return text->s + i;
 	}
 	return NULL;
 }
@@ -399,19 +401,19 @@ char *str_casesearch_strz(str *text, char *needlez)
  */
 char *str_rsearch(str *text, str *needle)
 {
-    char *p;
+	char *p;
 
-    if(text==NULL || text->s==NULL || needle==NULL || needle->s==NULL
-			|| text->len<needle->len)
-        return NULL;
+	if(text == NULL || text->s == NULL || needle == NULL || needle->s == NULL
+			|| text->len < needle->len)
+		return NULL;
 
-    for (p = text->s + text->len - needle->len; p >= text->s; p--) {
-        if (*p == *needle->s && memcmp(p, needle->s, needle->len)==0) {
-            return p;
-        }
-    }
+	for(p = text->s + text->len - needle->len; p >= text->s; p--) {
+		if(*p == *needle->s && memcmp(p, needle->s, needle->len) == 0) {
+			return p;
+		}
+	}
 
-    return NULL;
+	return NULL;
 }
 
 /**
@@ -421,16 +423,16 @@ char *str_rsearch(str *text, str *needle)
  */
 char *str_rcasesearch(str *text, str *needle)
 {
-	int i,j;
-	for(i=text->len-needle->len;i>=0;i--) {
-		for(j=0;j<needle->len;j++) {
-			if ( !((text->s[i+j]==needle->s[j]) ||
-					( isalpha((int)text->s[i+j])
-						&& ((text->s[i+j])^(needle->s[j]))==0x20 )) )
+	int i, j;
+	for(i = text->len - needle->len; i >= 0; i--) {
+		for(j = 0; j < needle->len; j++) {
+			if(!((text->s[i + j] == needle->s[j])
+					   || (isalpha((int)text->s[i + j])
+							   && ((text->s[i + j]) ^ (needle->s[j])) == 0x20)))
 				break;
 		}
-		if (j==needle->len)
-			return text->s+i;
+		if(j == needle->len)
+			return text->s + i;
 	}
 	return NULL;
 }
@@ -440,13 +442,13 @@ char *str_rcasesearch(str *text, str *needle)
  * pattern b2 of size len2 in memory block b1 of size len1 or
  * NULL if none is found. Obtained from NetBSD.
  */
-void * ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
+void *ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 {
 	/* Initialize search pointer */
-	char *sp = (char *) b1;
+	char *sp = (char *)b1;
 
 	/* Initialize pattern pointer */
-	char *pp = (char *) b2;
+	char *pp = (char *)b2;
 
 	/* Initialize end of search address space pointer */
 	char *eos = sp + len1 - len2;
@@ -455,9 +457,9 @@ void * ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 	if(!(b1 && b2 && len1 && len2))
 		return NULL;
 
-	while (sp <= eos) {
-		if (*sp == *pp)
-			if (memcmp(sp, pp, len2) == 0)
+	while(sp <= eos) {
+		if(*sp == *pp)
+			if(memcmp(sp, pp, len2) == 0)
 				return sp;
 
 		sp++;
@@ -471,24 +473,24 @@ void * ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
  * pattern b2 of size len2 in memory block b1 of size len1 or
  * NULL if none is found.
  */
-void * ser_memrmem(const void *b1, const void *b2, size_t len1, size_t len2)
+void *ser_memrmem(const void *b1, const void *b2, size_t len1, size_t len2)
 {
 	/* Initialize search pointer */
-	char *sp = (char *) b1 + len1 - len2;
+	char *sp = (char *)b1 + len1 - len2;
 
 	/* Initialize pattern pointer */
-	char *pp = (char *) b2;
+	char *pp = (char *)b2;
 
 	/* Initialize end of search address space pointer */
-	char *eos = (char *) b1;
+	char *eos = (char *)b1;
 
 	/* Sanity check */
 	if(!(b1 && b2 && len1 && len2))
 		return NULL;
 
-	while (sp >= eos) {
-		if (*sp == *pp)
-			if (memcmp(sp, pp, len2) == 0)
+	while(sp >= eos) {
+		if(*sp == *pp)
+			if(memcmp(sp, pp, len2) == 0)
 				return sp;
 
 		sp--;

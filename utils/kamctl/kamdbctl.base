@@ -20,6 +20,9 @@ DBROUSER=${DBROUSER:-kamailioro}
 # password for read-only user
 DBROPW=${DBROPW:-kamailioro}
 
+# address of database server for root connections
+DBROOTHOST=${DBROOTHOST:-$DBHOST}
+
 # user name column
 USERCOL=${USERCOL:-username}
 
@@ -42,7 +45,7 @@ EXTRA_TABLES=${EXTRA_TABLES:-'imc_members imc_rooms cpl sip_trace domainpolicy
 		carrierroute carrier_name domain_name carrierfailureroute userblocklist
 		globalblocklist htable purplemap uacreg pl_pipes mtree mtrees
 		sca_subscriptions mohqcalls mohqueues rtpproxy rtpengine
-		dr_gateways dr_rules dr_gw_lists dr_groups secfilter'}
+		dr_gateways dr_rules dr_gw_lists dr_groups secfilter nds_trusted_domains s_cscf s_cscf_capabilities'}
 PRESENCE_TABLES=${PRESENCE_TABLES:-'presentity active_watchers watchers xcap
 		pua rls_presentity rls_watchers'}
 DBUID_TABLES=${UID_TABLES:-'uid_credentials uid_domain uid_domain_attrs
@@ -77,7 +80,7 @@ PRESENCE_MODULES=${PRESENCE_MODULES:-'presence rls'}
 
 EXTRA_MODULES=${EXTRA_MODULES:-'imc cpl siptrace domainpolicy carrierroute
 		drouting userblocklist htable purple uac pipelimit mtree sca mohqueue
-		rtpproxy rtpengine secfilter'}
+		rtpproxy rtpengine secfilter ims_icscf'}
 
 DBUID_MODULES=${UID_MODULES:-'uid_auth_db uid_avp_db uid_domain uid_gflags
 		uid_uri_db'}
@@ -154,7 +157,7 @@ credentials()
 mdbg() {
 	if [ "0$VERBOSE" -ne 0 ] ; then
 		if [ -t 1 -a -z "$NOHLPRINT" ] ; then
-			echo -e "\033[1m$1\033[0m"
+			printf "\033[1m%s\033[0m\n" "$1"
 		else
 			echo "$1"
 		fi
@@ -163,7 +166,7 @@ mdbg() {
 
 mwarn() {
 	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
-		echo -e '\E[37;32m'"\033[1mWARNING: $1\033[0m"
+		printf "\033[32;1mWARNING: %s\033[0m\n" "$1"
 	else
 		echo "** WARNING: $1"
 	fi
@@ -171,7 +174,7 @@ mwarn() {
 
 minfo() {
 	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
-		echo -e '\E[37;33m'"\033[1mINFO: $1\033[0m"
+		printf "\033[33;1mINFO: %s\033[0m\n" "$1"
 	else
 		echo "** INFO: $1"
 	fi
@@ -179,7 +182,7 @@ minfo() {
 
 mecho() {
 	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
-		echo -e "\033[1m$1\033[0m"
+		printf "\033[1m%s\033[0m\n" "$1"
 	else
 		echo "$1"
 	fi
@@ -187,7 +190,7 @@ mecho() {
 
 merr() {
 	if [ -t 1 -a -z "$NOHLPRINT" ] ; then
-		echo -e '\E[37;31m'"\033[1mERROR: $1\033[0m"
+		printf "\033[31;1mERROR: %s\033[0m\n" "$1"
 	else
 		echo "** ERROR: $1"
 	fi

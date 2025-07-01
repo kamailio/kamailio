@@ -3,8 +3,8 @@ Kamailio git commit rules
 
 1. Changing other people's code:
 --------------------------------
- - send a patch to the code/module mantainer and/or sr-dev 
-   (don't commit changes to code you don't own if you don't have the mantainer's approval)
+ - send a patch to the code/module maintainer and/or sr-dev 
+   (don't commit changes to code you don't own if you don't have the maintainer's approval)
 Exceptions:
  a. compilation (this includes warning) fixes
  b. bug fixes
@@ -25,4 +25,4 @@ Exceptions:
    linux, freebsd, netbsd, openbsd, solaris >= 8; x86, ultrasparc, strongarm;
    gcc 4.x, icc, sun cc >=5.3). It should also compile on gcc 2.95 and 3.x.
  - the code must be tested or the change trivial enough
- - the code should compile without warnings on all the arhitectures (with some exceptions)
+ - the code should compile without warnings on all the architectures (with some exceptions)

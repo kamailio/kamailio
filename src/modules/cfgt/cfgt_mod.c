@@ -1,7 +1,9 @@
 /*
- * Copyright (C) 2015 Victor Seva (sipwise.com)
+ * Copyright (C) 2015-2023 Victor Seva (sipwise.com)
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,10 +40,15 @@ static int child_init(int rank); /*!< Per-child init function */
 extern int bind_cfgt(cfgt_api_t *api);
 
 /*! flag to protect against wrong initialization */
-unsigned int init_flag = 0;
-extern int cfgt_mask;
-extern str cfgt_basedir;
-extern str cfgt_hdr_prefix;
+unsigned _cfgt_init_flag = 0;
+_cfgt_params_t _cfgt_params = {
+		.hdr_prefix = {"NGCP%", 5},
+		.basedir = {"/tmp", 4},
+		.mask = CFGT_DP_ALL,
+		.skip_unknown = 0,
+		.route_log = 0,
+};
+
 /* clang-format off */
 /*! \brief
  * Exported functions
@@ -55,9 +62,11 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"basedir", PARAM_STR, &cfgt_basedir},
-	{"mask", INT_PARAM, &cfgt_mask},
-	{"callid_prefix", PARAM_STR, &cfgt_hdr_prefix},
+	{"basedir", PARAM_STR, &_cfgt_params.basedir},
+	{"mask", PARAM_INT, &_cfgt_params.mask},
+	{"callid_prefix", PARAM_STR, &_cfgt_params.hdr_prefix},
+	{"skip_unknown", PARAM_INT, &_cfgt_params.skip_unknown},
+	{"route_log", PARAM_INT, &_cfgt_params.route_log},
 	{0, 0, 0}
 };
 
@@ -93,7 +102,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	init_flag = 1;
+	_cfgt_init_flag = 1;
 	return 0;
 }
 
@@ -106,4 +115,5 @@ static int child_init(int _rank)
  * Module destroy function
  */
 static void destroy(void)
-{}
+{
+}

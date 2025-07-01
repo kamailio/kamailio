@@ -1,5 +1,5 @@
 
-/* 
+/*
  * Copyright (C) 2013  mariuszbi@gmail.com
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*!
- * \file 
+ * \file
  * \brief Kamailio core :: DNS wrappers
  * \author mariuszbi@gmail.com
  * \ingroup core
@@ -31,22 +31,19 @@
 
 struct hostent;
 
-struct dns_func_t dns_func = {
-	res_init,
-	res_search,
-	gethostbyname,
+struct dns_func_t dns_func = {res_init, res_search, gethostbyname,
 #ifdef HAVE_GETHOSTBYNAME2
-	gethostbyname2
+		gethostbyname2
 #else
-	NULL
+		NULL
 #endif
 };
 
- 
-void load_dnsfunc(struct dns_func_t *d) {
+
+void load_dnsfunc(struct dns_func_t *d)
+{
 	dns_func.sr_res_init = d->sr_res_init;
 	dns_func.sr_res_search = d->sr_res_search;
 	dns_func.sr_gethostbyname = d->sr_gethostbyname;
 	dns_func.sr_gethostbyname2 = d->sr_gethostbyname2;
-} 
-
+}

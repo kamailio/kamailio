@@ -1,8 +1,10 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -29,11 +31,11 @@
 #define DB1_OP_H
 
 /** operator less than */
-#define OP_LT  "<"
+#define OP_LT "<"
 /** operator greater than */
-#define OP_GT  ">"
+#define OP_GT ">"
 /** operator equal */
-#define OP_EQ  "="
+#define OP_EQ "="
 /** operator less than equal */
 #define OP_LEQ "<="
 /** operator greater than equal */
@@ -47,7 +49,7 @@
 /**
  * This type represents an expression operator uses for SQL queries.
  */
-typedef const char* db_op_t;
+typedef const char *db_op_t;
 
 
 #endif /* DB1_OP_H */

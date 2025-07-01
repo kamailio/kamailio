@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -20,7 +22,10 @@
 
 #ifndef __ENCODE_DIGEST_H__
 #define __ENCODE_DIGEST_H__
-int encode_digest(char *hdrstart,int hdrlen,dig_cred_t *digest,unsigned char *where);
-int print_encoded_digest(FILE* fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix);
-int dump_digest_test(char *hdr,int hdrlen,unsigned char* payload,int paylen,FILE* fd,char segregationLevel);
+int encode_digest(
+		char *hdrstart, int hdrlen, dig_cred_t *digest, unsigned char *where);
+int print_encoded_digest(FILE *fd, char *hdr, int hdrlen,
+		unsigned char *payload, int paylen, char *prefix);
+int dump_digest_test(char *hdr, int hdrlen, unsigned char *payload, int paylen,
+		FILE *fd, char segregationLevel);
 #endif

@@ -31,6 +31,7 @@ Christian Schlatter
         4. Parameters
 
               4.1. config_file (string)
+              4.2. connect_mode (int)
 
         5. Functions
 
@@ -82,12 +83,13 @@ Christian Schlatter
    1.6. ldap_client_bind_timeout example
    1.7. Example LDAP Configuration File
    1.8. config_file parameter usage
-   1.9. Example Usage of ldap_url
-   1.10. Example Usage
+   1.9. Set connect_mode parameter
+   1.10. Example Usage of ldap_url
    1.11. Example Usage
    1.12. Example Usage
    1.13. Example Usage
    1.14. Example Usage
+   1.15. Example Usage
    2.1. Example code fragment to load LDAP module API
    2.2. Example LDAP module API function call
 
@@ -114,6 +116,7 @@ Chapter 1. Admin Guide
    4. Parameters
 
         4.1. config_file (string)
+        4.2. connect_mode (int)
 
    5. Functions
 
@@ -418,6 +421,7 @@ ldap_client_bind_timeout = 500
 4. Parameters
 
    4.1. config_file (string)
+   4.2. connect_mode (int)
 
 4.1. config_file (string)
 
@@ -427,6 +431,17 @@ ldap_client_bind_timeout = 500
 
    Example 1.8. config_file parameter usage
 modparam("ldap", "config_file", "/usr/local/etc/kamailio/ldap.ini")
+
+4.2. connect_mode (int)
+
+   Control if the module must stop loading when connecting to server fails
+   during start up. Values: 0 - stop loading; 1 - continue even if
+   connecting to database server fails..
+
+   Default value: 0
+
+   Example 1.9. Set connect_mode parameter
+modparam("ldap", "connect_mode", 1)
 
 5. Functions
 
@@ -458,7 +473,7 @@ modparam("ldap", "config_file", "/usr/local/etc/kamailio/ldap.ini")
           Kamailio pseudo variables and AVPs included in ldap_url do get
           substituted with their value.
 
-          Example 1.9. Example Usage of ldap_url
+          Example 1.10. Example Usage of ldap_url
 
           Search with LDAP session named sipaccounts, base
           ou=sip,dc=example,dc=com, one level deep using search filter
@@ -492,7 +507,7 @@ ldap://ldap_1/dc=example,dc=com?
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, and ONREPLY_ROUTE.
 
-   Example 1.10. Example Usage
+   Example 1.11. Example Usage
 ...
 # ldap search
 if (!ldap_search("ldap://sipaccounts/ou=sip,dc=example,dc=com??one?(cn=$rU)"))
@@ -570,7 +585,7 @@ ldap_result("telephoneNumber/$avp(s:tel_number)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, and ONREPLY_ROUTE.
 
-   Example 1.11. Example Usage
+   Example 1.12. Example Usage
 ...
 
 # ldap_search call
@@ -639,7 +654,7 @@ ldap_result("SIPIdentitySIPURI/$avp(i:10)", "/^[^@]+@(.+)$/\1/");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, and ONREPLY_ROUTE.
 
-   Example 1.12. Example Usage
+   Example 1.13. Example Usage
 ...
 # ldap_search call
 ...
@@ -688,7 +703,7 @@ if (!ldap_result_check("sn/$ru", "/^sip:([^@]).*$/\1/"))
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, and ONREPLY_ROUTE.
 
-   Example 1.13. Example Usage
+   Example 1.14. Example Usage
 ...
 # ldap_search call
 ...
@@ -745,7 +760,7 @@ if (ldap_result_next())
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, and ONREPLY_ROUTE.
 
-   Example 1.14. Example Usage
+   Example 1.15. Example Usage
 ...
 if (!ldap_filter_url_encode("cn=$avp(s:name)", "$avp(s:name_esc)"))
 {

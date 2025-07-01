@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -43,36 +43,36 @@
  * @param dst   - pointer to a sockaddr_union containing the destination.
  * @param proto - protocol used
  */
-#define TCP_EV_CONNECT_RST(err, lip, lport, dst, proto) \
-	LM_ERR("connect %s failed (RST) %s\n", \
-			su2a(dst, sizeof(*(dst))), (err)?strerror(err):"")
+#define TCP_EV_CONNECT_RST(err, lip, lport, dst, proto)               \
+	LM_ERR("connect %s failed (RST) %s\n", su2a(dst, sizeof(*(dst))), \
+			(err) ? strerror(err) : "")
 
 /** a connect failed because the remote host/network is unreachable. */
-#define TCP_EV_CONNECT_UNREACHABLE(err, lip, lport, dst, proto) \
-	LM_ERR("connect %s failed (unreachable) %s\n", \
-			su2a(dst, sizeof(*(dst))), (err)?strerror(err):"")
+#define TCP_EV_CONNECT_UNREACHABLE(err, lip, lport, dst, proto)               \
+	LM_ERR("connect %s failed (unreachable) %s\n", su2a(dst, sizeof(*(dst))), \
+			(err) ? strerror(err) : "")
 
 /** a connect attempt did timeout. */
-#define TCP_EV_CONNECT_TIMEOUT(err, lip, lport, dst, proto) \
-	LM_ERR("connect %s failed (timeout) %s\n", \
-			su2a(dst, sizeof(*(dst))), (err)?strerror(err):"")
+#define TCP_EV_CONNECT_TIMEOUT(err, lip, lport, dst, proto)               \
+	LM_ERR("connect %s failed (timeout) %s\n", su2a(dst, sizeof(*(dst))), \
+			(err) ? strerror(err) : "")
 
 /** a connect attempt failed because the local ports are exhausted. */
 #define TCP_EV_CONNECT_NO_MORE_PORTS(err, lip, lport, dst, proto) \
-	LM_ERR("connect %s failed (no more ports) %s\n", \
-			su2a(dst, sizeof(*(dst))), (err)?strerror(err):"")
+	LM_ERR("connect %s failed (no more ports) %s\n",              \
+			su2a(dst, sizeof(*(dst))), (err) ? strerror(err) : "")
 
 /** a connect attempt failed for some unknown reason.  */
-#define TCP_EV_CONNECT_ERR(err, lip, lport, dst, proto) \
-	LM_ERR("connect %s failed %s\n", \
-			su2a(dst, sizeof(*(dst))), (err)?strerror(err):"")
+#define TCP_EV_CONNECT_ERR(err, lip, lport, dst, proto)         \
+	LM_ERR("connect %s failed %s\n", su2a(dst, sizeof(*(dst))), \
+			(err) ? strerror(err) : "")
 
 
 /** send failed due to timeout.
  * @param err   - if 0 it should be ignored (no corresp. libc error), if non-0
  *                it will contain the errno.
  * @param rcv   - pointer to rcv_info structure
- * 
+ *
  */
 #define TCP_EV_SEND_TIMEOUT(err, rcv)
 
@@ -82,8 +82,6 @@
 
 /** established connection closed for being idle too long. */
 #define TCP_EV_IDLE_CONN_CLOSED(err, rcv)
-
-
 
 
 #endif /*__tcp_ev_h*/

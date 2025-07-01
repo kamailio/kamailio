@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -78,21 +78,21 @@ int load_carrier_names(char *filename) {
 		idstr[2] = p[3];
 		p+=5;
 		len-=5;
-		
+
 		id = strtol(idstr, NULL, 10);
 		if (!IS_VALID_PDB_CARRIERID(id)) {
 			LWARNING("invalid carrier id '%s'\n", idstr);
 			ret=-1;
 			goto nextline;
 		}
-		
+
 		cnames[id]=malloc(len+1);
 		if (cnames[id]==NULL) {
 			LERR("out of memory (needed %ld bytes)\n", (long int)len);
 			ret=-1;
 			exit(-1);
 		}
-		
+
 		strncpy(cnames[id], p, len - 1);
 		cnames[id][len - 1]=0;
 

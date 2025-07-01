@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,9 +31,10 @@
 #include "../../core/kemi.h"
 #include "duktape.h"
 
-#define SR_KEMI_JSDT_EXPORT_SIZE	1536
+#define SR_KEMI_JSDT_EXPORT_SIZE 1536
 
-typedef struct sr_kemi_jsdt_export {
+typedef struct sr_kemi_jsdt_export
+{
 	duk_c_function pfunc;
 	sr_kemi_t *ket;
 } sr_kemi_jsdt_export_t;

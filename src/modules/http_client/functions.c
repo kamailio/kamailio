@@ -6,10 +6,12 @@
  * Based on functions from siputil
  * 	Copyright (C) 2008 Juha Heinanen
  * 	Copyright (C) 2013 Carsten Bock, ng-voice GmbH
- * 
+ *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +23,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -39,6 +41,7 @@
 #include "../../core/pvar.h"
 #include "../../core/route_struct.h"
 #include "../../core/ut.h"
+#include "../../core/trim.h"
 #include "../../core/mem/mem.h"
 #include "../../core/parser/msg_parser.h"
 
@@ -60,6 +63,7 @@ typedef struct
 	char *useragent;
 	char *hdrs;
 	char *netinterface;
+	unsigned int httpversion;
 	unsigned int authmethod;
 	unsigned int http_proxy_port;
 	unsigned int tlsversion;
@@ -73,6 +77,98 @@ typedef struct
 	curl_con_pkg_t *pconn;
 } curl_query_t;
 
+
+/**
+ *
+ */
+typedef struct httpc_hdr
+{
+	str hbuf;
+	str name;
+	str body;
+	struct httpc_hdr *next;
+} httpc_hdr_t;
+
+/**
+ *
+ */
+httpc_hdr_t *_http_client_response_headers = NULL;
+
+/**
+ *
+ */
+httpc_hdr_t *httpc_hdr_block_add(httpc_hdr_t **head, char *s, int len)
+{
+	httpc_hdr_t *nv;
+	nv = pkg_mallocxz(sizeof(httpc_hdr_t) + (len + 1) * sizeof(char));
+	if(!nv) {
+		PKG_MEM_ERROR;
+		return 0;
+	}
+	nv->hbuf.s = (char *)nv + sizeof(httpc_hdr_t);
+	memcpy(nv->hbuf.s, s, len);
+	nv->hbuf.len = len;
+	nv->next = *head;
+	*head = nv;
+
+	return nv;
+}
+
+/**
+ *
+ */
+void http_client_response_headers_reset(void)
+{
+	httpc_hdr_t *it0;
+	httpc_hdr_t *it1;
+	it0 = _http_client_response_headers;
+	while(it0 != NULL) {
+		it1 = it0->next;
+		pkg_free(it0);
+		it0 = it1;
+	}
+	_http_client_response_headers = NULL;
+}
+
+/**
+ *
+ */
+int http_client_response_headers_get(str *hname, str *hbody)
+{
+	httpc_hdr_t *it;
+	char *p;
+
+	if(_http_client_response_headers == NULL) {
+		return -1;
+	}
+	if(hname == NULL || hname->len <= 0 || hbody == NULL) {
+		return -1;
+	}
+	for(it = _http_client_response_headers; it != NULL; it = it->next) {
+		if(it->name.len == 0 && it->hbuf.s[0] != ' ' && it->hbuf.s[0] != '\t'
+				&& it->hbuf.s[0] != '\r' && it->hbuf.s[0] != '\n') {
+			/* parsing */
+			p = strchr(it->hbuf.s, ':');
+			if(p == NULL) {
+				continue;
+			}
+			it->name.s = it->hbuf.s;
+			it->name.len = p - it->name.s;
+			trim(&it->name);
+			p++;
+			it->body.s = p;
+			it->body.len = it->hbuf.s + it->hbuf.len - it->body.s;
+			trim(&it->body);
+		}
+		if(it->name.len == hname->len
+				&& strncasecmp(it->name.s, hname->s, hname->len) == 0) {
+			hbody->s = it->body.s;
+			hbody->len = it->body.len;
+			return 0;
+		}
+	}
+	return -1;
+}
 
 /*
  * curl write function that saves received data as zero terminated
@@ -111,13 +207,26 @@ size_t write_function(void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 }
 
 
+size_t http_client_response_header_cb(
+		char *b, size_t size, size_t nitems, void *userdata)
+{
+	size_t numbytes;
+
+	numbytes = size * nitems;
+	LM_DBG("http response header [%.*s]\n", (int)numbytes, b);
+
+	httpc_hdr_block_add(&_http_client_response_headers, b, (int)numbytes);
+
+	return numbytes;
+	;
+}
+
 /*! Send query to server, optionally post data.
  */
 static int curL_request_url(struct sip_msg *_m, const char *_met,
 		const char *_url, str *_dst, const curl_query_t *const params)
 {
 	CURL *curl = NULL;
-
 	CURLcode res;
 	char *at = NULL;
 	curl_res_stream_t stream;
@@ -154,11 +263,26 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 	LM_DBG("****** ##### CURL URL [%s] \n", _url);
 	res = curl_easy_setopt(curl, CURLOPT_URL, _url);
 
+	if(params->httpversion != 0) {
+		curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, params->httpversion);
+	}
+
 	/* Limit to HTTP and HTTPS protocols */
+#if LIBCURL_VERSION_NUM >= 0x075500
+	/* #if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 85, 0) */
+	res = curl_easy_setopt(curl, CURLOPT_PROTOCOLS_STR, "http,https");
+#else
 	res = curl_easy_setopt(
 			curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+#endif
+
+#if LIBCURL_VERSION_NUM >= 0x075500
+	/* #if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 85, 0) */
+	res = curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS_STR, "http,https");
+#else
 	res = curl_easy_setopt(
 			curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+#endif
 
 	if(_met != NULL) {
 		/* Enforce method (GET, PUT, ...) */
@@ -251,7 +375,19 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 			curl, CURLOPT_SSL_VERIFYHOST, (long)params->verify_host ? 2 : 0);
 
 	res |= curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long)1);
-	res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)params->timeout);
+
+	/* timeout_mode parameter:
+	 * - 0 : timeout is disabled.
+	 * - 1 (default) : timeout value is in seconds.
+	 * - 2 : timeout value is in milliseconds.
+	 */
+	if(timeout_mode == 1) { /* timeout is in seconds (default) */
+		res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)params->timeout);
+	} else if(timeout_mode == 2) { /* timeout is in milliseconds */
+		res |= curl_easy_setopt(
+				curl, CURLOPT_TIMEOUT_MS, (long)params->timeout);
+	}
+
 	res |= curl_easy_setopt(
 			curl, CURLOPT_FOLLOWLOCATION, (long)params->http_follow_redirect);
 	if(params->http_follow_redirect) {
@@ -261,8 +397,14 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 		res |= curl_easy_setopt(curl, CURLOPT_INTERFACE, params->netinterface);
 	}
 
+	if(http_client_response_headers_param != 0) {
+		http_client_response_headers_reset();
+		res |= curl_easy_setopt(
+				curl, CURLOPT_HEADERFUNCTION, http_client_response_header_cb);
+	}
+
 	res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
-	res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)(&stream));
+	res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)(&stream));
 
 	if(params->useragent)
 		res |= curl_easy_setopt(curl, CURLOPT_USERAGENT, params->useragent);
@@ -274,7 +416,6 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 		double totaltime, connecttime;
 
 		res = curl_easy_perform(curl);
-
 		curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &totaltime);
 		curl_easy_getinfo(curl, CURLINFO_APPCONNECT_TIME, &connecttime);
 		LM_DBG("HTTP Call performed in %f s (connect time %f) \n", totaltime,
@@ -384,7 +525,14 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 	if((stat >= 200) && (stat < 500)) {
 		double datasize = 0;
 
+#if LIBCURL_VERSION_NUM >= 0x073700
+		/* #if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 55, 0) */
+		curl_off_t dlsize;
+		curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD_T, &dlsize);
+		download_size = (double)dlsize;
+#else
 		curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
+#endif
 		LM_DBG("  -- curl download size: %u \n", (unsigned int)download_size);
 		datasize = download_size;
 
@@ -642,7 +790,7 @@ int curl_con_query_url(struct sip_msg *_m, const str *connection,
  * Similar to http_client_request but supports setting a content type attribute.
  */
 int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
-		char* _ctype, char *_hdrs, char *_met)
+		char *_ctype, char *_hdrs, char *_met, unsigned int _httpver)
 {
 	int res;
 	curl_query_t query_params;
@@ -651,6 +799,7 @@ int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
 	query_params.username = NULL;
 	query_params.secret = NULL;
 	query_params.authmethod = default_authmethod;
+	query_params.httpversion = _httpver;
 	query_params.contenttype = _ctype;
 	query_params.hdrs = _hdrs;
 	query_params.post = _body;
@@ -698,10 +847,11 @@ int http_client_request_c(sip_msg_t *_m, char *_url, str *_dst, char *_body,
  * to pvar.
  * This is the same http_query as used to be in the utils module.
  */
-int http_client_request(
-		sip_msg_t *_m, char *_url, str *_dst, char *_body, char *_hdrs, char *_met)
+int http_client_request(sip_msg_t *_m, char *_url, str *_dst, char *_body,
+		char *_hdrs, char *_met, unsigned int _httpver)
 {
-	return http_client_request_c(_m, _url, _dst, _body, NULL, _hdrs, _met);
+	return http_client_request_c(
+			_m, _url, _dst, _body, NULL, _hdrs, _met, _httpver);
 }
 
 /*!
@@ -712,7 +862,7 @@ int http_client_request(
 int http_client_query(
 		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_hdrs)
 {
-	return http_client_request(_m, _url, _dst, _post, _hdrs, 0);
+	return http_client_request(_m, _url, _dst, _post, _hdrs, NULL, 0);
 }
 
 /*!
@@ -720,10 +870,10 @@ int http_client_query(
  * to pvar.
  * This is the same http_query as used to be in the utils module.
  */
-int http_client_query_c(
-		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_ctype, char *_hdrs)
+int http_client_query_c(struct sip_msg *_m, char *_url, str *_dst, char *_post,
+		char *_ctype, char *_hdrs)
 {
-	return http_client_request_c(_m, _url, _dst, _post, _ctype, _hdrs, 0);
+	return http_client_request_c(_m, _url, _dst, _post, _ctype, _hdrs, NULL, 0);
 }
 
 char *http_get_content_type(const str *connection)

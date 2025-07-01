@@ -1,7 +1,9 @@
-/* 
+/*
  * Copyright (C) 2006 iptelorg GmbH
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,17 +38,23 @@
 
 #define MAX_NONSIP_HOOKS 1
 
-enum nonsip_msg_returns{ NONSIP_MSG_ERROR=-1, NONSIP_MSG_DROP=0,
-						 NONSIP_MSG_PASS,     NONSIP_MSG_ACCEPT };
+enum nonsip_msg_returns
+{
+	NONSIP_MSG_ERROR = -1,
+	NONSIP_MSG_DROP = 0,
+	NONSIP_MSG_PASS,
+	NONSIP_MSG_ACCEPT
+};
 
-struct nonsip_hook{
-	char* name; /* must be !=0, it has only "debugging" value */
+struct nonsip_hook
+{
+	char *name; /* must be !=0, it has only "debugging" value */
 	/* called each time a sip like request (from the first line point of view)
 	 * with protocol/version !=  SIP/2.0 is received
 	 * return: 0 - drop message immediately, >0 - continue with other hooks,
 	 *        <0 - error (drop message)
 	 */
-	int (*on_nonsip_req)(struct sip_msg* msg);
+	int (*on_nonsip_req)(struct sip_msg *msg);
 	/* called before ser shutdown (last minute cleanups) */
 	void (*destroy)(void);
 };
@@ -55,6 +63,6 @@ struct nonsip_hook{
 int init_nonsip_hooks(void);
 void destroy_nonsip_hooks(void);
 int register_nonsip_msg_hook(struct nonsip_hook *h);
-int nonsip_msg_run_hooks(struct sip_msg* msg);
+int nonsip_msg_run_hooks(struct sip_msg *msg);
 
 #endif

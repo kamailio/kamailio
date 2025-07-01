@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -41,7 +43,6 @@
 #include "../../modules/tm/h_table.h"
 
 
-
 /*!
  * \file
  * \brief Profile related functions for the dialog module
@@ -51,10 +52,11 @@
 
 
 /*! dialog profile hash list */
-typedef struct dlg_profile_hash {
-	str value; /*!< hash value */
+typedef struct dlg_profile_hash
+{
+	str value;			  /*!< hash value */
 	struct dlg_cell *dlg; /*!< dialog cell */
-	char puid[SRUID_SIZE+2];
+	char puid[SRUID_SIZE + 2];
 	int puid_len;
 	time_t expires;
 	int flags;
@@ -66,27 +68,31 @@ typedef struct dlg_profile_hash {
 
 
 /*! list with links to dialog profiles */
-typedef struct dlg_profile_link {
+typedef struct dlg_profile_link
+{
 	struct dlg_profile_hash hash_linker;
-	struct dlg_profile_link  *next;
+	struct dlg_profile_link *next;
 	struct dlg_profile_table *profile;
 } dlg_profile_link_t;
 
 
 /*! dialog profile entry */
-typedef struct dlg_profile_entry {
+typedef struct dlg_profile_entry
+{
 	struct dlg_profile_hash *first;
 	unsigned int content; /*!< content of the entry */
 } dlg_profile_entry_t;
 
-#define FLAG_PROFILE_REMOTE	1
+#define FLAG_PROFILE_REMOTE 1
 
 /*! dialog profile table */
-typedef struct dlg_profile_table {
-	str name; /*!< name of the dialog profile */
+typedef struct dlg_profile_table
+{
+	str name;		   /*!< name of the dialog profile */
 	unsigned int size; /*!< size of the dialog profile */
-	unsigned int has_value; /*!< 0 for profiles without value, otherwise it has a value */
-	int flags; /*!< flags related to the profile */
+	unsigned int
+			has_value; /*!< 0 for profiles without value, otherwise it has a value */
+	int flags;		   /*!< flags related to the profile */
 	gen_lock_t lock; /*! lock for concurrent access */
 	struct dlg_profile_entry *entries;
 	struct dlg_profile_table *next;
@@ -100,7 +106,7 @@ typedef struct dlg_profile_table {
  * \param has_value set to 0 for a profile without value, otherwise it has a value
  * \return 0 on success, -1 on failure
  */
-int add_profile_definitions( char* profiles, unsigned int has_value);
+int add_profile_definitions(char *profiles, unsigned int has_value);
 
 
 /*!
@@ -115,7 +121,7 @@ void destroy_dlg_profiles(void);
  * \param name searched dialog profile
  * \return pointer to the profile on success, NULL otherwise
  */
-struct dlg_profile_table* search_dlg_profile(str *name);
+struct dlg_profile_table *search_dlg_profile(str *name);
 
 
 /*!
@@ -125,7 +131,7 @@ struct dlg_profile_table* search_dlg_profile(str *name);
  * \param param unused
  * \return 1
  */
-int cb_profile_reset( struct sip_msg *msg, unsigned int flags, void *param );
+int cb_profile_reset(struct sip_msg *msg, unsigned int flags, void *param);
 
 
 /*!
@@ -135,7 +141,7 @@ int cb_profile_reset( struct sip_msg *msg, unsigned int flags, void *param );
  * \param param unused
  * \return 1
  */
-int profile_cleanup(sip_msg_t *msg, unsigned int flags, void *param );
+int profile_cleanup(sip_msg_t *msg, unsigned int flags, void *param);
 
 
 /*!
@@ -160,8 +166,7 @@ void set_current_dialog(sip_msg_t *msg, struct dlg_cell *dlg);
  * \param profile dialog profile table
  * \return 0 on success, -1 on failure
  */
-int set_dlg_profile(sip_msg_t *msg, str *value,
-		dlg_profile_table_t *profile);
+int set_dlg_profile(sip_msg_t *msg, str *value, dlg_profile_table_t *profile);
 
 
 /*!
@@ -171,8 +176,7 @@ int set_dlg_profile(sip_msg_t *msg, str *value,
  * \param profile dialog profile table
  * \return 1 on success, -1 on failure
  */
-int unset_dlg_profile(sip_msg_t *msg, str *value,
-		dlg_profile_table_t *profile);
+int unset_dlg_profile(sip_msg_t *msg, str *value, dlg_profile_table_t *profile);
 
 
 /*!
@@ -182,8 +186,7 @@ int unset_dlg_profile(sip_msg_t *msg, str *value,
  * \param value value
  * \return 1 on success, -1 on failure
  */
-int is_dlg_in_profile(sip_msg_t *msg, dlg_profile_table_t *profile,
-		str *value);
+int is_dlg_in_profile(sip_msg_t *msg, dlg_profile_table_t *profile, str *value);
 
 
 /*!
@@ -201,7 +204,7 @@ unsigned int get_profile_size(dlg_profile_table_t *profile, str *value);
  * \param param MI parameter
  * \return MI root output on success, NULL on failure
  */
-struct mi_root * mi_get_profile(struct mi_root *cmd_tree, void *param );
+struct mi_root *mi_get_profile(struct mi_root *cmd_tree, void *param);
 
 
 /*!
@@ -210,7 +213,7 @@ struct mi_root * mi_get_profile(struct mi_root *cmd_tree, void *param );
  * \param param unused
  * \return MI root output on success, NULL on failure
  */
-struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param );
+struct mi_root *mi_profile_list(struct mi_root *cmd_tree, void *param);
 
 /*!
  * \brief return true if the messages belongs to a tracked dialog
@@ -235,8 +238,9 @@ int dlg_set_timeout_by_profile(struct dlg_profile_table *, str *, int);
  * \param profile dialog profile table
  * \return 0 on success, -1 on failure
  */
-int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profile,
-		str *puid, time_t expires, int flags);
+int dlg_add_profile(dlg_cell_t *dlg, str *value,
+		struct dlg_profile_table *profile, str *puid, time_t expires,
+		int flags);
 
 /*!
  * \brief Serialize dialog profiles to json
@@ -256,7 +260,7 @@ void remove_expired_remote_profiles(time_t te);
 /*!
  *
  */
-int dlg_cmd_remote_profile(str *cmd, str *pname, str *value, str *puid,
-		time_t expires, int flags);
+int dlg_cmd_remote_profile(
+		str *cmd, str *pname, str *value, str *puid, time_t expires, int flags);
 
 #endif

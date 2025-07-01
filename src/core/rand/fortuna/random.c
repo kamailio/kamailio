@@ -45,7 +45,7 @@
 #include "fortuna.h"
 
 /* how many bytes to ask from system random provider */
-#define RND_BYTES  32
+#define RND_BYTES 32
 
 /*
  * Try to read from /dev/urandom or /dev/random on these OS'es.
@@ -70,12 +70,10 @@ static int safe_read(int fd, void *buf, size_t count)
 	char *p = buf;
 	int res;
 
-	while (count)
-	{
+	while(count) {
 		res = read(fd, p, count);
-		if (res <= 0)
-		{
-			if (errno == EINTR)
+		if(res <= 0) {
+			if(errno == EINTR)
 				continue;
 			return -10;
 		}
@@ -86,21 +84,20 @@ static int safe_read(int fd, void *buf, size_t count)
 	return done;
 }
 
-static u_int8_t * try_dev_random(u_int8_t *dst)
+static u_int8_t *try_dev_random(u_int8_t *dst)
 {
 	int fd;
 	int res;
 
 	fd = open("/dev/urandom", O_RDONLY, 0);
-	if (fd == -1)
-	{
+	if(fd == -1) {
 		fd = open("/dev/random", O_RDONLY, 0);
-		if (fd == -1)
+		if(fd == -1)
 			return dst;
 	}
 	res = safe_read(fd, dst, RND_BYTES);
 	close(fd);
-	if (res > 0)
+	if(res > 0)
 		dst += res;
 	return dst;
 }
@@ -127,15 +124,13 @@ static void system_reseed(void)
 
 	t = time(NULL);
 
-	if (seed_time == 0)
+	if(seed_time == 0)
 		skip = 0;
-	else if ((t - seed_time) < SYSTEM_RESEED_MIN)
+	else if((t - seed_time) < SYSTEM_RESEED_MIN)
 		skip = 1;
-	else if ((t - seed_time) > SYSTEM_RESEED_MAX)
+	else if((t - seed_time) > SYSTEM_RESEED_MAX)
 		skip = 0;
-	else if (check_time == 0 ||
-			(t - check_time) > SYSTEM_RESEED_CHECK_TIME)
-	{
+	else if(check_time == 0 || (t - check_time) > SYSTEM_RESEED_CHECK_TIME) {
 		check_time = t;
 
 		/* roll dice */
@@ -145,17 +140,38 @@ static void system_reseed(void)
 	/* clear 1 byte */
 	memset(buf, 0, sizeof(buf));
 
-	if (skip)
+	if(skip)
 		return;
 
 	n = acquire_system_randomness(buf);
-	if (n > 0) {
-		fortuna_add_entropy(buf, n);
+	if(n > 0) {
+		fortuna_add_entropy(buf, n, 0);
 		LM_DBG("cryptographic PRNG reseed done with %u bytes\n", n);
 	}
 
 	seed_time = t;
 	memset(buf, 0, sizeof(buf));
+}
+
+static int system_seed(void)
+{
+	u_int8_t buf[1024];
+	int n;
+
+	memset(buf, 0, sizeof(buf));
+
+	n = acquire_system_randomness(buf);
+	if(n > 0) {
+		fortuna_add_entropy(buf, n, 1);
+		LM_DBG("cryptographic PRNG seed done with %u bytes\n", n);
+	} else {
+		LM_ERR("cryptographic PRNG seed not done, error %u\n", n);
+		return -1;
+	}
+
+	seed_time = time(NULL);
+	memset(buf, 0, sizeof(buf));
+	return 0;
 }
 
 
@@ -173,6 +189,11 @@ int sr_add_entropy(const u_int8_t *data, unsigned count)
 {
 	system_reseed();
 	LM_DBG("additional %u bytes entropy added to cryptographic PRNG\n", count);
-	fortuna_add_entropy(data, count);
+	fortuna_add_entropy(data, count, 0);
 	return 0;
+}
+
+int sr_init_cryptorand()
+{
+	return system_seed();
 }

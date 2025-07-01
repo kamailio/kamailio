@@ -12,6 +12,4 @@ endif
 PERL_DEFS:=$(shell perl -MExtUtils::Embed -e ccopts)
 DEFS+=$(PERL_DEFS)
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules

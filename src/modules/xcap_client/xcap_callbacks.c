@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,35 +31,32 @@
 #include "xcap_callbacks.h"
 #include "xcap_client.h"
 
-void run_xcap_update_cb(int type, str xid, char* stream)
+void run_xcap_update_cb(int type, str xid, char *stream)
 {
-	xcap_callback_t* cb;
+	xcap_callback_t *cb;
 
-	for (cb= xcapcb_list; cb; cb=cb->next)
-	{
-		if(cb->types & type)
-		{
+	for(cb = xcapcb_list; cb; cb = cb->next) {
+		if(cb->types & type) {
 			LM_DBG("found callback\n");
 			cb->callback(type, xid, stream);
 		}
 	}
 }
 
-int register_xcapcb( int types, xcap_cb f)
+int register_xcapcb(int types, xcap_cb f)
 {
-	xcap_callback_t* xcb;
+	xcap_callback_t *xcb;
 
-	xcb= (xcap_callback_t*)shm_malloc(sizeof(xcap_callback_t));
-	if(xcb== NULL)
-	{
+	xcb = (xcap_callback_t *)shm_malloc(sizeof(xcap_callback_t));
+	if(xcb == NULL) {
 		ERR_MEM(SHARE_MEM);
 	}
 	memset(xcb, 0, sizeof(xcap_callback_t));
 
-	xcb->callback= f;
-	xcb->types= types;
-	xcb->next= xcapcb_list;
-	xcapcb_list= xcb;
+	xcb->callback = f;
+	xcb->types = types;
+	xcb->next = xcapcb_list;
+	xcapcb_list = xcb;
 	return 0;
 
 error:
@@ -66,13 +65,12 @@ error:
 
 void destroy_xcapcb_list(void)
 {
-	xcap_callback_t* xcb, *prev_xcb;
+	xcap_callback_t *xcb, *prev_xcb;
 
-	xcb= xcapcb_list;
-	while(xcb)
-	{
-		prev_xcb= xcb;
-		xcb= xcb->next;
+	xcb = xcapcb_list;
+	while(xcb) {
+		prev_xcb = xcb;
+		xcb = xcb->next;
 		shm_free(prev_xcb);
 	}
 }

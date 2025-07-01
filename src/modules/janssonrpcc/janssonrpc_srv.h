@@ -26,27 +26,29 @@
 #include "janssonrpc_server.h"
 
 typedef struct jsonrpc_srv jsonrpc_srv_t;
-struct jsonrpc_srv {
+struct jsonrpc_srv
+{
 	str srv;
 	unsigned int ttl;
-	jsonrpc_server_group_t* cgroup;
-	jsonrpc_srv_t* next;
+	jsonrpc_server_group_t *cgroup;
+	jsonrpc_srv_t *next;
 };
 
-typedef struct srv_cb_params {
+typedef struct srv_cb_params
+{
 	int cmd_pipe;
 	unsigned int srv_ttl;
 } srv_cb_params_t;
 
-extern jsonrpc_srv_t* global_srv_list;
+extern jsonrpc_srv_t *global_srv_list;
 
 extern unsigned int jsonrpc_min_srv_ttl;
 extern unsigned int jsonrpc_keep_alive;
 
-jsonrpc_srv_t* create_srv(str srv, str conn, unsigned int ttl);
-void addto_srv_list(jsonrpc_srv_t* srv, jsonrpc_srv_t** list);
-void refresh_srv_cb(unsigned int ticks, void* params);
-void print_srv(jsonrpc_srv_t* list);
+jsonrpc_srv_t *create_srv(str srv, str conn, unsigned int ttl);
+void addto_srv_list(jsonrpc_srv_t *srv, jsonrpc_srv_t **list);
+void refresh_srv_cb(unsigned int ticks, void *params);
+void print_srv(jsonrpc_srv_t *list);
 
 #define JSONRPC_DEFAULT_MIN_SRV_TTL 5
 #define ABSOLUTE_MIN_SRV_TTL 1

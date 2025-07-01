@@ -1,0 +1,10 @@
+METADATA_COLUMNS
+id(int) hash_entry(int) hash_id(int) did(str) callid(str) from_uri(str) from_tag(str) caller_original_cseq(str) req_uri(str) caller_route_set(str) caller_contact(str) caller_sock(str) timeout(int) state(int) start_time(int) sflags(int) toroute_name(str) toroute_index(int)
+METADATA_KEY
+1 2 17
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
+METADATA_DEFAULTS
+NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|0|NIL|NIL|0|NIL|NIL

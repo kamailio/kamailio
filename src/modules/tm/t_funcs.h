@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,11 +15,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
 
 
 #ifndef _T_FUNCS_H
@@ -56,14 +57,14 @@ extern int tm_error; /* delayed tm error */
 extern struct msgid_var user_cell_set_flags;
 extern struct msgid_var user_cell_reset_flags;
 
-extern int fr_inv_timer_avp_type;
-extern int_str fr_inv_timer_avp;
+extern avp_flags_t fr_inv_timer_avp_type;
+extern avp_name_t fr_inv_timer_avp;
 extern str contacts_avp;
 extern str contact_flows_avp;
 
 /* default names for timer's AVPs  */
-#define FR_TIMER_AVP      "callee_fr_timer"
-#define FR_INV_TIMER_AVP  "callee_fr_inv_timer"
+#define FR_TIMER_AVP "callee_fr_timer"
+#define FR_INV_TIMER_AVP "callee_fr_inv_timer"
 
 
 /* send a private buffer: utilize a retransmission structure
@@ -72,55 +73,52 @@ extern str contact_flows_avp;
 */
 
 
-/* send a buffer -- 'PR' means private, i.e., it is assumed noone
+/* send a buffer -- 'PR' means private, i.e., it is assumed no one
    else can affect the buffer during sending time
 */
 #ifdef EXTRA_DEBUG
-int send_pr_buffer( struct retr_buf *rb,
-	void *buf, int len, char* file, const char *function, int line );
-#define SEND_PR_BUFFER(_rb,_bf,_le ) \
-	send_pr_buffer( (_rb), (_bf), (_le), __FILE__,  __FUNCTION__, __LINE__ )
+int send_pr_buffer(struct retr_buf *rb, void *buf, int len, char *file,
+		const char *function, int line);
+#define SEND_PR_BUFFER(_rb, _bf, _le) \
+	send_pr_buffer((_rb), (_bf), (_le), __FILE__, __FUNCTION__, __LINE__)
 #else
-int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
-#define SEND_PR_BUFFER(_rb,_bf,_le ) \
-	send_pr_buffer( (_rb), (_bf), (_le))
+int send_pr_buffer(struct retr_buf *rb, void *buf, int len);
+#define SEND_PR_BUFFER(_rb, _bf, _le) send_pr_buffer((_rb), (_bf), (_le))
 #endif
 
-#define SEND_BUFFER( _rb ) \
-	SEND_PR_BUFFER( (_rb) , (_rb)->buffer , (_rb)->buffer_len )
+#define SEND_BUFFER(_rb) SEND_PR_BUFFER((_rb), (_rb)->buffer, (_rb)->buffer_len)
 
 
+#define UNREF_FREE(_T_cell, _T_unlinked)                 \
+	do {                                                 \
+		if(atomic_dec_and_test(&(_T_cell)->ref_count)) { \
+			unlink_timers((_T_cell));                    \
+			free_cell((_T_cell));                        \
+		} else {                                         \
+			if(_T_unlinked) {                            \
+				if(t_linked_timers(_T_cell)) {           \
+					unlink_timers((_T_cell));            \
+				}                                        \
+				free_cell((_T_cell));                    \
+			} else {                                     \
+				t_stats_delayed_free();                  \
+			}                                            \
+		}                                                \
+	} while(0)
 
-#define UNREF_FREE(_T_cell, _T_unlinked) \
-	do{\
-		if (atomic_dec_and_test(&(_T_cell)->ref_count)){ \
-			unlink_timers((_T_cell)); \
-			free_cell((_T_cell)); \
-		}else{ \
-			if(_T_unlinked){ \
-				if(t_linked_timers(_T_cell)) { \
-					unlink_timers((_T_cell)); \
-				} \
-				free_cell((_T_cell)); \
-			}else{ \
-				t_stats_delayed_free(); \
-			} \
-		} \
-	}while(0)
-
-#define UNREF_NOSTATS(_T_cell) \
-	do{\
-		if (_T_cell && atomic_dec_and_test(&(_T_cell)->ref_count)){ \
-			unlink_timers((_T_cell)); \
-			free_cell((_T_cell)); \
-		}\
-	}while(0)
+#define UNREF_NOSTATS(_T_cell)                                      \
+	do {                                                            \
+		if(_T_cell && atomic_dec_and_test(&(_T_cell)->ref_count)) { \
+			unlink_timers((_T_cell));                               \
+			free_cell((_T_cell));                                   \
+		}                                                           \
+	} while(0)
 
 #define UNREF_UNSAFE(_T_cell) UNREF_NOSTATS(_T_cell)
 /* all the version are safe when using atomic ops */
-#define UNREF(_T_cell) UNREF_UNSAFE(_T_cell); 
+#define UNREF(_T_cell) UNREF_UNSAFE(_T_cell);
 #define REF(_T_cell) (atomic_inc(&(_T_cell)->ref_count))
-#define REF_UNSAFE(_T_cell)  REF(_T_cell)
+#define REF_UNSAFE(_T_cell) REF(_T_cell)
 #define INIT_REF(_T_cell, v) atomic_set(&(_T_cell)->ref_count, v)
 
 /*
@@ -134,32 +132,28 @@ void unref_cell(struct cell *t);
 /*
  * Get the FR_{INV}_TIMER from corresponding AVP
  */
-int fr_avp2timer(unsigned int* timer);
-int fr_inv_avp2timer(unsigned int* timer);
+int fr_avp2timer(unsigned int *timer);
+int fr_inv_avp2timer(unsigned int *timer);
 
 
 #ifdef TIMER_DEBUG
-#define start_retr(rb) \
-	_set_fr_retr((rb), \
-				((rb)->dst.proto==PROTO_UDP) ? RT_T1_TIMEOUT_MS(rb) : \
-												(unsigned)(-1), \
-				__FILE__, __FUNCTION__, __LINE__)
+#define start_retr(rb)                                            \
+	_set_fr_retr((rb),                                            \
+			((rb)->dst.proto == PROTO_UDP) ? RT_T1_TIMEOUT_MS(rb) \
+										   : (unsigned)(-1),      \
+			__FILE__, __FUNCTION__, __LINE__)
 
 #define force_retr(rb) \
 	_set_fr_retr((rb), RT_T1_TIMEOUT_MS(rb), __FILE__, __FUNCTION__, __LINE__)
 
 #else
-#define start_retr(rb) \
-	_set_fr_retr((rb), \
-				((rb)->dst.proto==PROTO_UDP) ? RT_T1_TIMEOUT_MS(rb) : \
-												(unsigned)(-1))
+#define start_retr(rb)                                                       \
+	_set_fr_retr((rb), ((rb)->dst.proto == PROTO_UDP) ? RT_T1_TIMEOUT_MS(rb) \
+													  : (unsigned)(-1))
 
-#define force_retr(rb) \
-	_set_fr_retr((rb), RT_T1_TIMEOUT_MS(rb))
+#define force_retr(rb) _set_fr_retr((rb), RT_T1_TIMEOUT_MS(rb))
 
 #endif
-
-
 
 
 void tm_shutdown(void);
@@ -169,26 +163,25 @@ void tm_shutdown(void);
  *       1 - a new transaction was created
  *      -1 - error, including retransmission
  */
-int  t_add_transaction( struct sip_msg* p_msg  );
+int t_add_transaction(struct sip_msg *p_msg);
 
 
 /* returns 1 if everything was OK or -1 for error */
-int t_release_transaction( struct cell *trans );
+int t_release_transaction(struct cell *trans);
 typedef int (*trelease_t)(struct cell *t);
 
 
-int get_ip_and_port_from_uri( str* uri , unsigned int *param_ip,
-	unsigned int *param_port);
+int get_ip_and_port_from_uri(
+		str *uri, unsigned int *param_ip, unsigned int *param_port);
 
 
-void put_on_wait(  struct cell  *Trans  );
+void put_on_wait(struct cell *Trans);
 int t_on_wait(tm_cell_t *Trans);
 
 
-int t_relay_to( struct sip_msg  *p_msg ,
-	struct proxy_l *proxy, int proto, int replicate ) ;
+int t_relay_to(
+		struct sip_msg *p_msg, struct proxy_l *proxy, int proto, int replicate);
 
-int kill_transaction( struct cell *trans, int error );
-int kill_transaction_unsafe( struct cell *trans, int error );
+int kill_transaction(struct cell *trans, int error);
+int kill_transaction_unsafe(struct cell *trans, int error);
 #endif
-

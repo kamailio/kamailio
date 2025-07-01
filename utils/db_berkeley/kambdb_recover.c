@@ -16,10 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * History:
  * --------
  * 2007-09-19  genesis (wiquan)
@@ -34,79 +34,79 @@ char* db_home = NULL;
 const char *progname;
 
 /**
- * main -- 
+ * main --
  */
 int main(int argc, char* argv[])
 {
 	int ret, ch, i;
-	
+
 	ret = 0;
 	progname = argv[0];
-	
+
 	while ((ch = getopt(argc, argv, "s:h:c:C:r:R:")) != EOF)
-	switch (ch) 
+	switch (ch)
 	{
 		case 's':
 		schema_dir = optarg;
 		load_schema(optarg);
 		break;
-		
+
 		case 'c': /*create <tablename> */
 		ret = create(optarg);
 		break;
-		
+
 		case 'C': /*Create all*/
 		ret = create_all();
 		break;
-		
+
 		case 'r': /*recover <filename> */
 		ret = recover(optarg);
 		break;
-		
+
 		case 'R': /*recover_all <MAXFILES> */
 		ret = sscanf(optarg,"%i", &i);
 		if(ret != 1) return -1;
 		ret = recover_all(i);
 		break;
-		
+
 		case 'h':
 		db_home = optarg;
 		break;
-		
+
 		case '?':
 		default:
 		return(usage());
-		
+
 	}
-	
+
 	argc -= optind;
 	argv += optind;
-	
+
 	/*free mem; close open files.*/
 	cleanup();
-	
+
 	return ret;
 }
 
 
 /**
-* usage -- 
-* 
+* usage --
+*
 */
 int usage(void)
 {
-	fprintf(stderr, "usage: %s %s\n", progname, 
+	fprintf(stderr, "usage: %s %s\n", progname,
 		"-s schemadir [-h home] [-c tablename]");
-	
-	fprintf(stderr, "usage: %s %s\n", progname, 
+
+	fprintf(stderr, "usage: %s %s\n", progname,
 		"-s schemadir [-h home] [-C all]");
-	
-	fprintf(stderr, "usage: %s %s\n", progname, 
+
+	fprintf(stderr, "usage: %s %s\n", progname,
 		"-s schemadir [-h home] [-r journal-file]");
-	
-	fprintf(stderr, "usage: %s %s\n", progname, 
+
+	fprintf(stderr, "usage: %s %s\n", progname,
 		"-s schemadir [-h home] [-R lastN]");
-	
+
 	return (EXIT_FAILURE);
 }
 
@@ -123,16 +123,16 @@ int create(char* tn)
 	tbl_cache_p tbc = NULL;
 	table_p tp = NULL;
 	rc = 0;
-	
+
 	tbc = get_table(tn);
 	if(!tbc)
 	{	fprintf(stderr, "[create] Table %s is not supported.\n",tn);
 		return 1;
 	}
-	
+
 	tp  = tbc->dtp;
 	db = get_db(tp);
-	
+
 	if(db)
 	{
 		printf("Created table %s\n",tn);
@@ -143,7 +143,7 @@ int create(char* tn)
 		fprintf(stderr, "[create] Failed to create table %s\n",tn);
 		rc = 1;
 	}
-	
+
 	return rc;
 }
 
@@ -152,11 +152,11 @@ int create(char* tn)
  * create_all -- creates a new Berkeley DB table for only the core tables
  */
 int create_all(void)
-{	
+{
 	tbl_cache_p _tbc = tables;
 	int rc;
 	rc = 0;
-	
+
 #ifdef EXTRA_DEBUG
 	time_t tim1 = time(NULL);
 	time_t tim2;
@@ -165,11 +165,11 @@ int create_all(void)
 	while(_tbc)
 	{
 		if(_tbc->dtp)
-			if((rc = create(_tbc->dtp->name)) != 0 ) 
+			if((rc = create(_tbc->dtp->name)) != 0 )
 				break;
 		_tbc = _tbc->next;
 	}
-	
+
 #ifdef EXTRA_DEBUG
 	tim2 = time(NULL);
 	int i = tim2 - tim1;
@@ -184,11 +184,11 @@ int create_all(void)
  * file_list --
  * returns a sorted linkedlist of all files in d
  *
- * parmameter d is the directory name
+ * parameter d is the directory name
  * parameter tn is optional,
  * 	if tablename (tn) is specified returns only jnl files for tablename (tn)
  *	else returns a sorted linkedlist of all files in d
- * returns lnode_p 
+ * returns lnode_p
  *	the head linknode points to the latests file.
  */
 lnode_p file_list(char* d, char* tn)
@@ -198,34 +198,34 @@ lnode_p file_list(char* d, char* tn)
 	char *fn;
 	char *list[MAXFILES];
 	char dir[MAX_FILENAME_SIZE];
-	struct dirent *dp; 
+	struct dirent *dp;
 	lnode_p h,n;
-	
+
 	h = n = NULL;
 	i = j = 0;
-	
+
 	if(!d)
 	{
 		fprintf(stderr, "[file_list]: null path to schema files.\n");
 		return NULL;
 	}
-	
+
 	memset(dir, 0, MAX_FILENAME_SIZE);
 	strcpy(dir, d);
 	strcat(dir, "/");
 	//strcat(dir, ".");
 	dirp = opendir(dir);
-	
+
 	while ((dp = readdir(dirp)) != NULL)
 	{  j=0;
 	   if (i> (MAXFILES-1) )
 		   continue;
-	   
+
 	   fn = dp->d_name;
-	   
+
 	   if (fn[0] == '.')
 		   continue;
-	   
+
 	   if(tn)
 	   {
 		   /* only looking for jnl files */
@@ -233,17 +233,17 @@ lnode_p file_list(char* d, char* tn)
 		   if (!strstr(fn, ".jnl"))	continue;
 		   if (strncmp(fn, tn, len))	continue;
 	   }
-	   
+
 	   j = strlen(fn) +1;
 	   list[i] = malloc(sizeof(char) * j);
 	   memset(list[i], 0 , j);
 	   strcat(list[i], fn);
 	   i++;
 	}
-	
+
 	closedir(dirp);
 	qsort(list, i, sizeof(char*), compare);
-	
+
 	for(j=0;j<i;j++)
 	{
 		n = malloc(sizeof(lnode_t));
@@ -270,11 +270,11 @@ int compare (const void *a, const void *b)
 
 /**
 * recover -- given a journal filename, creates a new db w. metadata, and replays
-*	the events in journalized order. 
+*	the events in journalized order.
 *	Results in a new db containing the journaled data.
 *
 *	fn (filename) must be in the form:
-*	location-20070803175446.jnl 
+*	location-20070803175446.jnl
 */
 int recover(char* jfn)
 {
@@ -295,38 +295,38 @@ int recover(char* jfn)
 	table_p tp = NULL;
 	i = 0 ;
 	cs = ci = cd = cu = 0;
-	
+
 	if(!strstr(jfn, ".jnl"))
 	{
 		fprintf(stderr, "[recover]: Does NOT look like a journal file: %s.\n", jfn);
 		return 1;
 	}
-	
+
 	if(!db_home)
 	{
 		fprintf(stderr, "[recover]: null path to db_home.\n");
 		return 1;
 	}
-	
+
 	/*tablename tn*/
 	s = strchr(jfn, '-');
 	len = s - jfn;
 	strncpy(tn, jfn, len);
 	tn[len] = 0;
-	
+
 	/*create abs path to journal file relative to db_home*/
 	memset(fn, 0 , MAX_FILENAME_SIZE);
 	strcat(fn, db_home);
 	strcat(fn, "/");
 	strcat(fn, jfn);
-	
+
 	fp = fopen(fn, "r");
-	if(!fp) 
+	if(!fp)
 	{
 		fprintf(stderr, "[recover]: FAILED to load journal file: %s.\n", jfn);
 		return 2;
 	}
-	
+
 	tbc = get_table(tn);
 	if(!tbc)
 	{
@@ -335,7 +335,7 @@ int recover(char* jfn)
 		fclose(fp);
 		return 2;
 	}
-	
+
 	if(!tbc || !tbc->dtp)
 	{
 		fprintf(stderr, "[recover]: FAILED to get find metadata for : %s.\n", tn);
@@ -344,20 +344,20 @@ int recover(char* jfn)
 	}
 
 	tp  = tbc->dtp;
-	
+
 	while ( fgets(line , MAX_ROW_SIZE, fp) != NULL )
 	{
 		len = strlen(line);
 		if(line[0] == '#' || line[0] == '\n') continue;
-		
+
 		if(len > 0) line[len-1] = 0; /*chomp trailing \n */
-		
+
 		v = strchr(line, '|');
 		len = v - line;
-		
+
 		strncpy(op, line, len);
 		op[len] = 0;
-		
+
 		switch( get_op(op, len) )
 		{
 		case INSERT:
@@ -366,20 +366,20 @@ int recover(char* jfn)
 			insert(tp, v, len);
 			ci++;
 			break;
-			
+
 		case UPDATE:
 			v++;
 			len = strlen(v);
 			update(tp, v, len);
 			cu++;
 			break;
-			
+
 		case DELETE:
 			//v is really the key
 			delete(tp, v, len);
 			cd++;
 			break;
-			
+
 		case UNKNOWN_OP:
 			fprintf(stderr,"[recover]: UnknownOP - Skipping ROW: %s\n",line);
 			cs++;
@@ -387,28 +387,28 @@ int recover(char* jfn)
 		}
 		i++;
 	}
-	
+
 #ifdef EXTRA_DEBUG
 	printf("Processed journal file: %s.\n", jfn);
-	printf("INSERT   %i records.\n",ci);
-	printf("UPDATE   %i records.\n",cu);
-	printf("DELETE   %i records.\n",cd);
-	printf("SKIPed   %i records.\n",cs);
+	printf("INSERT    %i records.\n", ci);
+	printf("UPDATE    %i records.\n", cu);
+	printf("DELETE    %i records.\n", cd);
+	printf("SKIPped   %i records.\n", cs);
 	printf("------------------------\n");
-	printf("Total    %i records.\n",i);
-	
+	printf("Total     %i records.\n", i);
+
 	tim2 = time(NULL);
 	i = tim2 - tim1;
 	printf("took %i sec\n", i);
 #endif
-	
+
 	fclose(fp);
-	
+
 	return 0;
 }
 
 /**
-* recover_all -- Iterates over all core tables in enumerated order for recovery from 
+* recover_all -- Iterates over all core tables in enumerated order for recovery from
 *	journal files (.jnl).
 *	The parm 'lastn' is the number of journal files needed to be recovered.
 *	Hardcoded to only find MAXFILES.
@@ -421,7 +421,7 @@ int recover_all(int lastn)
 {
 	lnode_p n, h;
 	tbl_cache_p _tbc = tables;
-	
+
 	if(MAXFILES < lastn) return 1;
 
 	if(!schema_dir)
@@ -435,15 +435,15 @@ int recover_all(int lastn)
 		fprintf(stderr, "[recover_all]: null path to db_home.\n");
 		return 1;
 	}
-	
+
 	while(_tbc)
-	{	
+	{
 		int j;
-		
+
 		if(_tbc->dtp)
 			h = file_list(db_home, _tbc->dtp->name);
 		n = h;
-		
+
 		/*lastn; move to the oldest of the N*/
 		for(j=1;j<lastn;j++)
 			if(n && (n->next != NULL) )
@@ -454,17 +454,17 @@ int recover_all(int lastn)
 				fprintf(stderr, "[recover_all]: Error while recovering: [%s]\n. Continuing..\n",n->p);
 			n = n->prev;
 		}
-		
+
 		while(h) /*free mem*/
 		{	n = h->next;
 			free(h->p);
 			free(h);
 			h = n;
 		}
-		
+
 		_tbc = _tbc->next;
 	}
-	
+
 	return 0;
 }
 
@@ -472,26 +472,26 @@ int recover_all(int lastn)
 /**
 * extract_key -- uses the internal schema to extract the key from the data
 * 	row that was found in the journal.
-* caller provides inititialize memory for destination key (k).
-* data is provided ; key is filled in 
+* caller provides initialized memory for destination key (k).
+* data is provided ; key is filled in
 */
 int extract_key(table_p tp, char* k, char* d)
 {
 	char *s, *p;
 	char buf[MAX_ROW_SIZE];
 	int n, len;
-	
+
 	if(!tp || !k || !d) return  -1;
 	len=n=0;
 	p = k;
-	
+
 	/*copy data so we can tokenize w.o trampling */
 	len = strlen(d);
 	strncpy(buf, d, len);
 	buf[len] = 0;
-	
-	s = strtok(buf, "|"); 
-	while(s!=NULL && n<MAX_NUM_COLS) 
+
+	s = strtok(buf, "|");
+	while(s!=NULL && n<MAX_NUM_COLS)
 	{
 		len = strlen(s);
 		if( (tp->ncols-1) > n)
@@ -500,42 +500,42 @@ int extract_key(table_p tp, char* k, char* d)
 			{
 				strncpy(p, s, len);
 				p+=len;
-				
+
 				*p = '|';
 				p++;
 			}
 		}
-		
+
 		s=strtok(NULL, "|");
 		n++;
 	}
-	
+
 	*p = 0;
 	return 0;
 }
 
 /**
-* delete -- deletes a row from the db we are trying to rebuild 
+* delete -- deletes a row from the db we are trying to rebuild
 */
 int delete(table_p tp, char* k, int len)
 {
 	DBT key;
 	DB *db;
-	
+
 	if(!tp || !k)	return 1;
 	if((db = get_db(tp)) == NULL)	return 2;
-	
+
 	memset(&key, 0, sizeof(DBT));
 	key.data = k;
 	key.ulen = MAX_ROW_SIZE;
 	key.size = len;
-	
+
 	if ( db->del(db, NULL, &key, 0))
 	{
 		fprintf(stderr, "[delete] FAILED --> [%.*s]  \n", len, k);
 		return 3;
 	}
-	
+
 	return 0;
 }
 
@@ -547,14 +547,14 @@ int delete(table_p tp, char* k, int len)
 int _insert(DB* db, char* k, char* v, int klen, int vlen)
 {
 	DBT key, data;
-	
+
 	if(!db || !k || !v) 	return 1;
-	
+
 	memset(&key,  0, sizeof(DBT));
 	key.data = k;
 	key.ulen = MAX_ROW_SIZE;
 	key.size = klen;
-	
+
 	memset(&data, 0, sizeof(DBT));
 	data.data = v;
 	data.ulen = MAX_ROW_SIZE;
@@ -578,20 +578,20 @@ int insert(table_p tp, char* v, int vlen)
 	char k[MAX_ROW_SIZE];
 	int rc, klen;
 	DB *db;
-	
+
 	if(!tp || !v) 	return 1;
 	if((db = get_db(tp)) == NULL)	return 2;
-	
+
 	memset(k,0,MAX_ROW_SIZE);
 	if( extract_key(tp, k, v) )
 	{
 		fprintf(stderr, "[insert] failed to extract key for row: %.*s",vlen, v);
 		return 2;
 	}
-	
+
 	klen = strlen(k);
 	rc = _insert(db, k, v, klen, vlen);
-	
+
 	return rc;
 }
 
@@ -604,16 +604,16 @@ int insert(table_p tp, char* v, int vlen)
 int update(table_p tp, char* v, int len)
 {
 	char k[MAX_ROW_SIZE];
-	
+
 	if(!tp || !v)	return 1;
-	
+
 	memset(k,0,MAX_ROW_SIZE);
 	if( extract_key(tp, k, v) )
 	{
 		fprintf(stderr, "[update] failed to extract key for row: %.*s",len, v);
 		return 2;
 	}
-	
+
 /*	if( delete(tp, k, strlen(k)) )	return 3;  */
 	if( insert(tp, v, len) )	return 4;
 	return 0;
@@ -629,7 +629,7 @@ int get_op(char* op, int len)
 	if((len==6) && strstr("INSERT",op) )	return INSERT;
 	if((len==6) && strstr("UPDATE",op) )	return UPDATE;
 	if((len==6) && strstr("DELETE",op) )	return DELETE;
-	
+
 	return UNKNOWN_OP;
 }
 
@@ -647,38 +647,38 @@ int load_schema(char* d)
 	table_p tp = NULL;
 	FILE * fp = NULL;
 	lnode_p h,n;
-	
+
 	rc=0;
 	h = n = NULL;
-	
+
 	if(!d)
 	{
 		fprintf(stderr, "[load_schema]: null path to schema files.\n");
 		return 1;
 	}
-	
+
 	tables = (tbl_cache_p)malloc(sizeof(tbl_cache_t));
 	if(!tables)	return 1;
-	
+
 	h = file_list(d, NULL);
-	
+
 	while(h)
 	{
 		n = h->next;
-		
+
 		/*create abs path to journal file (relative to db_home) */
 		memset(fn, 0 , MAX_FILENAME_SIZE);
 		strcat(fn, d);
 		strcat(fn, "/");
 		strcat(fn, h->p);
-		
+
 		fp = fopen(fn, "r");
 		if(!fp)
 		{
 			fprintf(stderr, "[load_schema]: FAILED to load schema file: %s.\n", h->p);
 			break;
 		}
-		
+
 		tn = h->p;
 		tbc = get_table(tn);
 		if(!tbc)
@@ -687,9 +687,9 @@ int load_schema(char* d)
 			fprintf(stderr, "[load_schema]: FAILED to load data for table: %s.\n", tn);
 			goto done;
 		}
-		
+
 		tp = tbc->dtp;
-		
+
 		while ( fgets(line1 , MAX_ROW_SIZE, fp) != NULL )
 		{
 			if ( fgets(line2 , MAX_ROW_SIZE, fp) != NULL )
@@ -702,7 +702,7 @@ int load_schema(char* d)
 						goto done;
 					}
 				}
-				
+
 				if(strstr(line1, METADATA_KEY))
 				{
 					if(0!=load_metadata_key(tp, line2))
@@ -717,20 +717,20 @@ int load_schema(char* d)
 				fprintf(stderr, "[load_schema]: FAILED to read schema value in table: %s.\n", tn);
 				goto done;
 			}
-			
+
 		}
-done:		
+done:
 		fclose(fp);
 		h = n;
 	}
-	
+
 	while(h) /*free mem*/
 	{	n = h->next;
 		free(h->p);
 		free(h);
 		h = n;
 	}
-	
+
 	return rc;
 }
 
@@ -756,25 +756,25 @@ tbl_cache_p get_table(char *_s)
 		}
 		_tbc = _tbc->next;
 	}
-	
+
 	_tbc = (tbl_cache_p)malloc(sizeof(tbl_cache_t));
 	if(!_tbc)
 		return NULL;
-	
+
 	_tp = create_table(_s);
-	
+
 	if(!_tp)
 	{
 		fprintf(stderr, "[get_table]: failed to create table.\n");
 		free(_tbc);
 		return NULL;
 	}
-	
+
 	_tbc->dtp = _tp;
-	
+
 	if(tables)
 		(tables)->prev = _tbc;
-	
+
 	_tbc->next = tables;
 	tables = _tbc;
 
@@ -789,23 +789,23 @@ table_p create_table(char *_s)
 {
 	int i;
 	table_p tp = NULL;
-	
+
 	tp = (table_p)malloc(sizeof(table_t));
 	if(!tp)	return NULL;
-	
+
 	i=strlen(_s)+1;
 	tp->name = (char*)malloc(i*sizeof(char));
 	strncpy(tp->name, _s, i);
-	
+
 	tp->ncols=0;
 	tp->nkeys=0;
 	tp->ro=0;
 	tp->logflags=0;
 	tp->db = NULL;
-	
+
 	for(i=0;i<MAX_NUM_COLS;i++)
 		tp->colp[i] = NULL;
-	
+
 	return tp;
 }
 
@@ -821,34 +821,34 @@ int load_metadata_columns(table_p _tp, char* line)
 	char cn[64], ct[16];
 	column_p col;
 	n = len = 0;
-	
+
 	if(!_tp) return -1;
 	if(_tp->ncols!=0) return 0;
-	
+
 	/* eg: line = "table_name(str) table_version(int)" */
 	s = strtok(line, " \t");
-	while(s!=NULL && n<MAX_NUM_COLS) 
+	while(s!=NULL && n<MAX_NUM_COLS)
 	{
 		/* eg: meta[0]=table_name  meta[1]=str */
 		sscanf(s,"%20[^(](%10[^)])[^\n]", cn, ct);
-		
+
 		/* create column*/
 		col = (column_p) malloc(sizeof(column_t));
 		if(!col)
 		{	fprintf(stderr, "load_metadata_columns: out of memory \n");
 			return -1;
 		}
-		
+
 		/* set name*/
 		len = strlen( cn )+1;
 		col->name = (char*)malloc(len * sizeof(char));
 		strcpy(col->name, cn );
-		
+
 		/* set type*/
 		len = strlen( ct )+1;
 		col->type = (char*)malloc(len * sizeof(char));
 		strcpy(col->type, ct );
-		
+
 		_tp->colp[n] = col;
 		n++;
 		_tp->ncols++;
@@ -868,22 +868,22 @@ int load_metadata_key(table_p _tp, char* line)
 	int ret,n,ci;
 	char *s = NULL;
 	ret = n = ci = 0;
-	
+
 	if(!_tp)return -1;
-	
+
 	s = strtok(line, " \t");
-	while(s!=NULL && n< _tp->ncols) 
+	while(s!=NULL && n< _tp->ncols)
 	{
 		ret = sscanf(s,"%i", &ci);
 		if(ret != 1) return -1;
-		if( _tp->colp[ci] ) 
+		if( _tp->colp[ci] )
 		{	_tp->colp[ci]->kflag = 1;
 			_tp->nkeys++;
 		}
 		n++;
 		s=strtok(NULL, " ");
 	}
-	
+
 	return 0;
 }
 
@@ -900,36 +900,36 @@ DB* get_db(table_p tp)
 	int rc;
 	DB* db;
 	char dfn[MAX_FILENAME_SIZE];
-	
+
 	if( !tp) 	return NULL;
 	if( tp->db) 	return tp->db;
-	
+
 	memset(dfn, 0, MAX_FILENAME_SIZE);
 	if(db_home)
 	{
 		strcpy(dfn, db_home);
 		strcat(dfn, "/");
 	}
-	
+
 	/*creation of DB follows*/
 	strcat(dfn, tp->name);
-	
+
 	if ((rc = db_create(&db, NULL, 0)) != 0)
-	{ 
+	{
 		fprintf(stderr, "[create_table]: error db_create for table: %s.\n",dfn);
 		return NULL;
 	}
-	
+
 	if ((rc = db->open(db, NULL, dfn, NULL, DB_HASH, DB_CREATE, 0664)) != 0)
-	{ 
+	{
 		fprintf(stderr, "[create_table]: error opening %s.\n",dfn);
 		fprintf(stderr, "[create_table]: error msg: %s.\n",db_strerror(rc));
 		return NULL;
 	}
 	tp->db = db;
-	
+
 	import_schema(tp);
-	
+
 	return db;
 }
 
@@ -944,25 +944,25 @@ int import_schema(table_p tp)
 	char fn [MAX_FILENAME_SIZE];
 	FILE * fp = NULL;
 	rc = 0;
-	
+
 	if(!schema_dir)
 	{
 		fprintf(stderr, "[import_schema]: null schema dir.\n");
 		return 1;
 	}
-	
+
 	if(!tp)
 	{
 		fprintf(stderr, "[import_schema]: null table parameter.\n");
 		return 1;
 	}
-	
+
 	/*create abs path to journal file (relative to db_home) */
 	memset(fn, 0 , MAX_FILENAME_SIZE);
 	strcat(fn, schema_dir);
 	strcat(fn, "/");
 	strcat(fn, tp->name);
-	
+
 	fp = fopen(fn, "r");
 	if(!fp)
 	{
@@ -978,7 +978,7 @@ int import_schema(table_p tp)
 			len2 = strlen(line2)-1;
 			line1[len1] = 0;
 			line2[len2] = 0;
-			
+
 			if((rc = _insert(tp->db, line1, line2, len1, len2) )!=0)
 			{
 				fprintf(stderr, "[import_schema]: FAILED to write schema def into table: %s.\n", tp->name);
@@ -990,9 +990,9 @@ int import_schema(table_p tp)
 			fprintf(stderr, "[import_schema]: FAILED to read schema def value in table: %s.\n", tp->name);
 			goto done;
 		}
-		
+
 	}
-done:		
+done:
 	fclose(fp);
 	return rc;
 }
@@ -1018,10 +1018,10 @@ void cleanup(void)
 				free(tp->colp[i]->type);
 				free(tp->colp[i]);
 			}
-			
+
 			if(tp->db)
 				tp->db->close(tp->db, 0);
-			
+
 			free(tp);
 		}
 		free(tables);

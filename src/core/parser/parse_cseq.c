@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -35,8 +37,8 @@
 #include "../mem/mem.h"
 
 /* parse cseq header */
-char *parse_cseq(char *const buf, const char *const end,
-		struct cseq_body *const cb)
+char *parse_cseq(
+		char *const buf, const char *const end, struct cseq_body *const cb)
 {
 	char *t, *m, *m_end;
 

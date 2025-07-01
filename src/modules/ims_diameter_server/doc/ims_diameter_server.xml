@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <book id="print" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -30,8 +30,8 @@
 	    This module implements a generic Diameter Server.
 	</para>
 	<para>
-	    This module translates incoming Diameter Messages 
-            into a JSON structure and will pass this on to the routing engine for 
+	    This module translates incoming Diameter Messages
+            into a JSON structure and will pass this on to the routing engine for
             further operations.
 	</para>
 	<para>
@@ -43,7 +43,7 @@
 	</para>
 	<para>
 	    The JSON contains an array with all AVP's in the Diameter-Message
-		and it's attributes. The format is identical for both requests
+		and its attributes. The format is identical for both requests
 		and replies.
 	</para>
 	<programlisting format="linespecific">
@@ -132,7 +132,7 @@
     <section>
       <title>Kamailio Modules</title>
 
-      <para>The Following mouldes must be loaded before this module:</para>
+      <para>The following modules must be loaded before this module:</para>
 
       <itemizedlist>
         <listitem>

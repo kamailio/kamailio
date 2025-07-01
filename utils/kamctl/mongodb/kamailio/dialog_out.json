@@ -1,0 +1,61 @@
+{
+  "name": "dialog_out",
+  "version": 7,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "hash_entry": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "hash_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "did": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "to_uri": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "to_tag": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "caller_cseq": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "callee_cseq": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "callee_contact": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "callee_route_set": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "callee_sock": {
+      "type": "string",
+      "default": null,
+      "null": false
+    }
+  ]
+}

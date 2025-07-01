@@ -30,9 +30,9 @@
 #include <sched.h>
 #else
 #include <unistd.h>
-	/* fake sched_yield */
+/* fake sched_yield */
 #ifndef sched_yield
-	#define sched_yield()	sleep(0)
+#define sched_yield() sleep(0)
 #endif
 #endif
 

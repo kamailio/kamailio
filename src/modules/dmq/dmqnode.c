@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -15,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -33,9 +35,8 @@ dmq_node_t *dmq_notification_node;
 str dmq_node_status_str = str_init("status");
 /* possible values */
 str dmq_node_active_str = str_init("active");
+str dmq_node_not_active_str = str_init("not_active");
 str dmq_node_disabled_str = str_init("disabled");
-str dmq_node_timeout_str = str_init("timeout");
-str dmq_node_pending_str = str_init("pending");
 
 /**
  * @brief get the string status of the node
@@ -46,14 +47,11 @@ str *dmq_get_status_str(int status)
 		case DMQ_NODE_ACTIVE: {
 			return &dmq_node_active_str;
 		}
+		case DMQ_NODE_NOT_ACTIVE: {
+			return &dmq_node_not_active_str;
+		}
 		case DMQ_NODE_DISABLED: {
 			return &dmq_node_disabled_str;
-		}
-		case DMQ_NODE_TIMEOUT: {
-			return &dmq_node_timeout_str;
-		}
-		case DMQ_NODE_PENDING: {
-			return &dmq_node_pending_str;
 		}
 		default: {
 			return 0;
@@ -69,7 +67,7 @@ dmq_node_list_t *init_dmq_node_list()
 	dmq_node_list_t *node_list;
 	node_list = shm_malloc(sizeof(dmq_node_list_t));
 	if(node_list == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(node_list, 0, sizeof(dmq_node_list_t));
@@ -89,6 +87,18 @@ int cmp_dmq_node(dmq_node_t *node, dmq_node_t *cmpnode)
 	return STR_EQ(node->uri.host, cmpnode->uri.host)
 		   && STR_EQ(node->uri.port, cmpnode->uri.port)
 		   && (node->uri.proto == cmpnode->uri.proto);
+}
+
+/**
+ * @brief compare dmq node ip addresses
+ */
+int cmp_dmq_node_ip(dmq_node_t *node, dmq_node_t *cmpnode)
+{
+	if(!node || !cmpnode) {
+		LM_ERR("cmp_dmq_node_ip - null node received\n");
+		return -1;
+	}
+	return ip_addr_cmp(&node->ip_address, &cmpnode->ip_address);
 }
 
 /**
@@ -120,12 +130,10 @@ int set_dmq_node_params(dmq_node_t *node, param_t *params)
 	if(status) {
 		if(STR_EQ(*status, dmq_node_active_str)) {
 			node->status = DMQ_NODE_ACTIVE;
-		} else if(STR_EQ(*status, dmq_node_timeout_str)) {
-			node->status = DMQ_NODE_TIMEOUT;
+		} else if(STR_EQ(*status, dmq_node_not_active_str)) {
+			node->status = DMQ_NODE_NOT_ACTIVE;
 		} else if(STR_EQ(*status, dmq_node_disabled_str)) {
 			node->status = DMQ_NODE_DISABLED;
-		} else if(STR_EQ(*status, dmq_node_pending_str)) {
-			node->status = DMQ_NODE_PENDING;
 		} else {
 			LM_ERR("invalid status parameter: %.*s\n", STR_FMT(status));
 			goto error;
@@ -141,7 +149,7 @@ error:
  */
 int set_default_dmq_node_params(dmq_node_t *node)
 {
-	node->status = DMQ_NODE_PENDING;
+	node->status = DMQ_NODE_ACTIVE;
 	return 0;
 }
 
@@ -164,7 +172,7 @@ dmq_node_t *build_dmq_node(str *uri, int shm)
 	if(shm) {
 		ret = shm_malloc(sizeof(dmq_node_t));
 		if(ret == NULL) {
-			LM_ERR("no more shm\n");
+			SHM_MEM_ERROR;
 			goto error;
 		}
 		memset(ret, 0, sizeof(dmq_node_t));
@@ -174,7 +182,7 @@ dmq_node_t *build_dmq_node(str *uri, int shm)
 	} else {
 		ret = pkg_malloc(sizeof(dmq_node_t));
 		if(ret == NULL) {
-			LM_ERR("no more pkg\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		memset(ret, 0, sizeof(dmq_node_t));
@@ -272,6 +280,21 @@ dmq_node_t *find_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
 }
 
 /**
+ * @brief find dmq node ip
+ */
+dmq_node_t *find_dmq_node_ip(dmq_node_list_t *list, dmq_node_t *node)
+{
+	dmq_node_t *cur = list->nodes;
+	while(cur) {
+		if(cmp_dmq_node_ip(cur, node)) {
+			return cur;
+		}
+		cur = cur->next;
+	}
+	return NULL;
+}
+
+/**
  * @brief duplicate dmq node
  */
 dmq_node_t *shm_dup_node(dmq_node_t *node)
@@ -288,7 +311,7 @@ dmq_node_t *shm_dup_node(dmq_node_t *node)
 
 	newnode = shm_malloc(sizeof(dmq_node_t));
 	if(newnode == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memcpy(newnode, node, sizeof(dmq_node_t));
@@ -336,22 +359,26 @@ void pkg_free_node(dmq_node_t *node)
 int dmq_node_del_filter(dmq_node_list_t *list, dmq_node_t *node, int filter)
 {
 	dmq_node_t *cur, **prev;
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
 	lock_get(&list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
 	cur = list->nodes;
 	prev = &list->nodes;
 	while(cur) {
 		if(cmp_dmq_node(cur, node)) {
-			if(filter==0 || cur->local==0) {
+			if(filter == 0 || cur->local == 0) {
 				*prev = cur->next;
 				destroy_dmq_node(cur, 1);
 			}
 			lock_release(&list->lock);
+			LM_DBG("released dmq_node_list->lock\n");
 			return 1;
 		}
 		prev = &cur->next;
 		cur = cur->next;
 	}
 	lock_release(&list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	return 0;
 }
 
@@ -360,7 +387,7 @@ int dmq_node_del_filter(dmq_node_list_t *list, dmq_node_t *node, int filter)
  */
 int del_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
 {
-	return  dmq_node_del_filter(list, node, 0);
+	return dmq_node_del_filter(list, node, 0);
 }
 
 /**
@@ -392,11 +419,14 @@ dmq_node_t *add_dmq_node(dmq_node_list_t *list, str *uri)
 		goto error;
 	}
 	LM_DBG("dmq node successfully created\n");
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
 	lock_get(&list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
 	newnode->next = list->nodes;
 	list->nodes = newnode;
 	list->count++;
 	lock_release(&list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	return newnode;
 error:
 	return NULL;
@@ -408,11 +438,70 @@ error:
 int update_dmq_node_status(dmq_node_list_t *list, dmq_node_t *node, int status)
 {
 	dmq_node_t *cur;
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
 	lock_get(&list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
 	cur = list->nodes;
 	while(cur) {
 		if(cmp_dmq_node(cur, node)) {
 			cur->status = status;
+			lock_release(&list->lock);
+			LM_DBG("released dmq_node_list->lock\n");
+			return 1;
+		}
+		cur = cur->next;
+	}
+	lock_release(&list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
+	return 0;
+}
+
+/**
+ * @brief update status of existing dmq node, when 408 timeout received
+ */
+int update_dmq_node_status_on_timeout(
+		dmq_node_list_t *list, dmq_node_t *node, int fail_count_status)
+{
+	dmq_node_t *cur;
+	lock_get(&list->lock);
+	cur = list->nodes;
+	while(cur) {
+		if(cmp_dmq_node(cur, node)) {
+			/* if node has specific status */
+			if(cur->status & fail_count_status) {
+				/* update fail_count*/
+				cur->fail_count++;
+
+				/* update state possibly based on fail_count */
+				/* put the node from not_active to disabled state */
+				if(cur->fail_count > dmq_fail_count_threshold_disabled
+						&& cur->status == DMQ_NODE_NOT_ACTIVE) {
+					LM_WARN("move to disabled: updated fail_count=%d "
+							"fail_threshold_not_active=%d "
+							"fail_threshold_disabled=%d "
+							"host=%.*s port=%.*s\n",
+							cur->fail_count,
+							dmq_fail_count_threshold_not_active,
+							dmq_fail_count_threshold_disabled,
+							node->uri.host.len, node->uri.host.s,
+							node->uri.port.len, node->uri.port.s);
+					cur->status = DMQ_NODE_DISABLED;
+
+					/* put the node from active to not_active state */
+				} else if(cur->fail_count > dmq_fail_count_threshold_not_active
+						  && cur->status == DMQ_NODE_ACTIVE) {
+					LM_WARN("move to not_active: cur->fail_count=%d "
+							"fail_threshold_not_active=%d "
+							"fail_threshold_disabled=%d "
+							"host=%.*s port=%.*s\n",
+							cur->fail_count,
+							dmq_fail_count_threshold_not_active,
+							dmq_fail_count_threshold_disabled,
+							node->uri.host.len, node->uri.host.s,
+							node->uri.port.len, node->uri.port.s);
+					cur->status = DMQ_NODE_NOT_ACTIVE;
+				}
+			}
 			lock_release(&list->lock);
 			return 1;
 		}
@@ -421,6 +510,7 @@ int update_dmq_node_status(dmq_node_list_t *list, dmq_node_t *node, int status)
 	lock_release(&list->lock);
 	return 0;
 }
+
 
 /**
  * @brief build dmq node string
@@ -443,9 +533,9 @@ int build_node_str(dmq_node_t *node, char *buf, int buflen)
 	len += 1;
 	memcpy(buf + len, node->uri.port.s, node->uri.port.len);
 	len += node->uri.port.len;
-	if(node->uri.proto!=PROTO_NONE && node->uri.proto!=PROTO_UDP
-			&& node->uri.proto!=PROTO_OTHER) {
-		if(get_valid_proto_string(node->uri.proto, 1, 0, &sproto)<0) {
+	if(node->uri.proto != PROTO_NONE && node->uri.proto != PROTO_UDP
+			&& node->uri.proto != PROTO_OTHER) {
+		if(get_valid_proto_string(node->uri.proto, 1, 0, &sproto) < 0) {
 			LM_WARN("unknown transport protocol - fall back to udp\n");
 			sproto.s = "udp";
 			sproto.len = 3;
@@ -463,4 +553,28 @@ int build_node_str(dmq_node_t *node, char *buf, int buflen)
 			dmq_get_status_str(node->status)->len);
 	len += dmq_get_status_str(node->status)->len;
 	return len;
+}
+
+/**
+ * @brief reset fail counter
+ */
+int reset_dmq_node_fail_count(dmq_node_list_t *list, dmq_node_t *node)
+{
+	dmq_node_t *cur;
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
+	lock_get(&list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
+	cur = list->nodes;
+	while(cur) {
+		if(cmp_dmq_node(cur, node)) {
+			cur->fail_count = 0;
+			lock_release(&list->lock);
+			LM_DBG("released dmq_node_list->lock\n");
+			return 1;
+		}
+		cur = cur->next;
+	}
+	lock_release(&list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
+	return 0;
 }

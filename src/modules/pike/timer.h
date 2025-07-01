@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -25,23 +27,22 @@
 #define _PIKE_TIMER_H
 
 
-typedef struct pike_list_link {
+typedef struct pike_list_link
+{
 	struct pike_list_link *next;
 	struct pike_list_link *prev;
 } pike_list_link_t;
 
 
-#define has_timer_set(_ll) \
-	((_ll)->prev || (_ll)->next)
+#define has_timer_set(_ll) ((_ll)->prev || (_ll)->next)
 
-#define is_list_empty(_head) \
-	((_head)->next == (_head))
+#define is_list_empty(_head) ((_head)->next == (_head))
 
-#define update_in_timer(_head, _ll) \
-	do { \
-		remove_from_timer(_head, _ll);\
-		append_to_timer(_head, _ll); \
-	}while(0)
+#define update_in_timer(_head, _ll)    \
+	do {                               \
+		remove_from_timer(_head, _ll); \
+		append_to_timer(_head, _ll);   \
+	} while(0)
 
 
 void append_to_timer(pike_list_link_t *head, pike_list_link_t *ll);
@@ -53,4 +54,3 @@ void check_and_split_timer(pike_list_link_t *head, unsigned int time,
 
 
 #endif
-

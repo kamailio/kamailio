@@ -26,7 +26,8 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. load (str)
-              3.2. mode (int)
+              3.2. loaddir (str)
+              3.3. mode (int)
 
         4. Functions
 
@@ -45,11 +46,12 @@ Daniel-Constantin Mierla
    List of Examples
 
    1.1. Set load parameter
-   1.2. Set mode parameter
-   1.3. jsdt_dofile usage
-   1.4. jsdt_dostring usage
-   1.5. jsdt_run usage
-   1.6. jsdt_runstring usage
+   1.2. Set loaddir parameter
+   1.3. Set mode parameter
+   1.4. jsdt_dofile usage
+   1.5. jsdt_dostring usage
+   1.6. jsdt_run usage
+   1.7. jsdt_runstring usage
 
 Chapter 1. Admin Guide
 
@@ -64,7 +66,8 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. load (str)
-        3.2. mode (int)
+        3.2. loaddir (str)
+        3.3. mode (int)
 
    4. Functions
 
@@ -94,13 +97,13 @@ Chapter 1. Admin Guide
 
    The module has two JavaScript contexts:
      * first is used for functions jsdt_dofile() and jsdt_dostring().
-     * second is used for function jsdt_run() and parameter 'load'.
-       Therefore jsdt_run() cannot execute functions from scripts loaded
-       via jsdt_dofile() in config. This is kind of caching mode, avoiding
-       reading file every time, but you must be sure you do not have
-       someting that is executed by default and requires access to SIP
-       message. This environment is also used by KEMI framework for the
-       config SIP routing functions.
+     * second is used for function jsdt_run() and parameter 'load' and
+       'loaddir'. Therefore jsdt_run() cannot execute functions from
+       scripts loaded via jsdt_dofile() in config. This is kind of caching
+       mode, avoiding reading file every time, but you must be sure you do
+       not have something that is executed by default and requires access
+       to SIP message. This environment is also used by KEMI framework for
+       the config SIP routing functions.
 
 2. Dependencies
 
@@ -122,14 +125,15 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. load (str)
-   3.2. mode (int)
+   3.2. loaddir (str)
+   3.3. mode (int)
 
 3.1. load (str)
 
    Set the path to the JavaScript file to be loaded at startup. Then you
    can use jsdt_run(function, params) to execute a function from the
    script at runtime. If you use it for KEMI configuration, then it has to
-   include the requited functions.
+   include the required functions.
 
    Default value is “null”.
 
@@ -138,14 +142,29 @@ Chapter 1. Admin Guide
 modparam("app_jsdt", "load", "/usr/local/etc/kamailio/js/myscript.js")
 ...
 
-3.2. mode (int)
+3.2. loaddir (str)
+
+   Set the path to the folder containing JavaScript files to be loaded at
+   startup. All .js files in the folder will be loaded and combined into a
+   single javascript script. Then you can use jsdt_run(function, params)
+   to execute a function from the script at runtime. If you use it for
+   KEMI configuration, then it has to include the required functions.
+
+   Default value is “null”.
+
+   Example 1.2.  Set loaddir parameter
+...
+modparam("app_jsdt", "loaddir", "/usr/local/etc/kamailio/js")
+...
+
+3.3. mode (int)
 
    Control if the API to load JavaScript module (nodejs interface) is
    initialized or not.
 
    Default value is “1” (initialize).
 
-   Example 1.2. Set mode parameter
+   Example 1.3. Set mode parameter
 ...
 modparam("app_jsdt", "mode", 0)
 ...
@@ -162,7 +181,7 @@ modparam("app_jsdt", "mode", 0)
    Execute the JavaScript script stored in 'path'. The parameter can be a
    string with pseudo-variables evaluated at runtime.
 
-   Example 1.3. jsdt_dofile usage
+   Example 1.4. jsdt_dofile usage
 ...
 jsdt_dofile("/usr/local/etc/kamailio/js/myscript.js");
 ...
@@ -172,7 +191,7 @@ jsdt_dofile("/usr/local/etc/kamailio/js/myscript.js");
    Execute the JavaScript script stored in parameter. The parameter can be
    a string with pseudo-variables.
 
-   Example 1.4. jsdt_dostring usage
+   Example 1.5. jsdt_dostring usage
 ...
 if(!jsdt_dostring('KSR.dbg("test message\n")'))
 {
@@ -187,7 +206,7 @@ if(!jsdt_dostring('KSR.dbg("test message\n")'))
    loaded at startup via parameter 'load'. Parameters can be strings with
    pseudo-variables that are evaluated at runtime.
 
-   Example 1.5. jsdt_run usage
+   Example 1.6. jsdt_run usage
 ...
 if(!jsdt_run("js_append_fu_to_reply"))
 {
@@ -203,7 +222,7 @@ jsdt_run("js_funcx", "$rU", "2");
    string with pseudo-variables. The script is executed in JS context
    specific to loaded JS files at startup.
 
-   Example 1.6. jsdt_runstring usage
+   Example 1.7. jsdt_runstring usage
 ...
 if(!jsdt_runstring('KSR.dbg("Hello World from $fU\n")'))
 {

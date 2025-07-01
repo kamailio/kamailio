@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -63,7 +65,7 @@ extern str opt_accept_enc;
 extern str opt_accept_lang;
 extern str opt_supported;
 
-int ki_opt_reply(struct sip_msg* _msg);
-int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar);
+int ki_opt_reply(struct sip_msg *_msg);
+int opt_reply(struct sip_msg *_msg, char *_foo, char *_bar);
 
 #endif

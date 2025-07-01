@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -296,7 +298,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 	reply_key.s =
 			(char *)pkg_malloc((key.len + str_ws_guid.len) * sizeof(char));
 	if(reply_key.s == NULL) {
-		LM_ERR("allocating pkg memory\n");
+		PKG_MEM_ERROR;
 		ws_send_reply(msg, 500, &str_status_internal_server_error, NULL);
 		goto end;
 	}

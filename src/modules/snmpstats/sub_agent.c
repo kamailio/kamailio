@@ -1,9 +1,11 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
@@ -65,6 +67,7 @@
 
 #include "../../core/dprint.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/daemonize.h"
 
 static int keep_running;
 
@@ -72,18 +75,18 @@ static int keep_running;
 static void sigterm_handler(int signal)
 {
 	/* Just exit.  The master agent will clean everything up for us */
-	exit(0);
+	ksr_exit(0);
 }
 
 /*! This function:
  *
  *   1) Registers itself with the Master Agent
  *   2) Initializes all of the SNMPStats modules scalars and tables, while
- *      simultaneously registering their respective SNMP OID's and handlers 
+ *      simultaneously registering their respective SNMP OID's and handlers
  *      with the master agent.
  *   3) Repeatedly checks for new SNMP messages to process
  *
- * \note This function never returns, so it should always be called from a 
+ * \note This function never returns, so it should always be called from a
  *       sub-process.
  */
 static int initialize_agentx(void)
@@ -125,7 +128,7 @@ static int initialize_agentx(void)
 	LM_DBG("Shutting down Kamailio SNMPD MasterX sub agent.\n");
 	snmp_shutdown(AGENT_PROCESS_NAME);
 	SOCK_CLEANUP;
-	exit(0);
+	ksr_exit(0);
 
 	return 0;
 }
@@ -139,7 +142,7 @@ void agentx_child(int rank)
 	struct sigaction default_handlers;
 	struct sigaction sigpipe_handler;
 
-	/* Setup a SIGTERM handler */
+	/* Set up a SIGTERM handler */
 	sigfillset(&new_sigterm_handler.sa_mask);
 	new_sigterm_handler.sa_flags = 0;
 	new_sigterm_handler.sa_handler = sigterm_handler;

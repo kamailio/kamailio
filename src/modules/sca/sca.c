@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Andrew Mortensen
+ * Copyright (C) 2024 Sipwise GmbH, https://www.sipwise.com
  *
  * This file is part of the sca module for Kamailio, a free SIP server.
  *
@@ -28,9 +29,9 @@
 /*!
  * \defgroup sca :: The Kamailio shared call appearance Module
  *
- * The sca module implements Shared Call Appearances. It handles SUBSCRIBE messages for call-info 
+ * The sca module implements Shared Call Appearances. It handles SUBSCRIBE messages for call-info
  * and line-seize events, and sends call-info NOTIFYs to line subscribers to implement line bridging.
- * The module implements SCA as defined in Broadworks SIP Access Side Extensions Interface 
+ * The module implements SCA as defined in Broadworks SIP Access Side Extensions Interface
  * Specifications, Release 13.0, version 1, sections 2, 3 and 4.
  */
 #include "sca_common.h"
@@ -71,61 +72,17 @@ static int sca_mod_init(void);
 static int sca_child_init(int);
 static void sca_mod_destroy(void);
 static int sca_set_config(sca_mod *);
+static int sca_handle_subscribe_0_f(sip_msg_t *msg);
+static int sca_handle_subscribe_1_f(sip_msg_t *msg, char *);
+static int sca_handle_subscribe_2_f(sip_msg_t *msg, char *, char *);
+static int fixup_hs(void **, int);
+static int fixup_free_hs(void **param, int param_no);
 static int sca_call_info_update_0_f(sip_msg_t *msg, char *, char *);
 static int sca_call_info_update_1_f(sip_msg_t *msg, char *, char *);
 static int sca_call_info_update_2_f(sip_msg_t *msg, char *, char *);
 static int sca_call_info_update_3_f(sip_msg_t *msg, char *, char *, char *);
 int fixup_ciu(void **, int);
 int fixup_free_ciu(void **param, int param_no);
-
-/*
- * EXPORTED COMMANDS
- */
-static cmd_export_t cmds[] = {
-		{"sca_handle_subscribe", (cmd_function)sca_handle_subscribe, 0, NULL, 0,
-				REQUEST_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update_0_f, 0,
-				NULL, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update_1_f, 1,
-				fixup_ciu, fixup_free_ciu,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update_2_f, 2,
-				fixup_ciu, fixup_free_ciu,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update_3_f, 3,
-				fixup_ciu, fixup_free_ciu,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
-
-/*
- * EXPORTED RPC INTERFACE
- */
-static rpc_export_t sca_rpc[] = {
-		{"sca.all_subscriptions", sca_rpc_show_all_subscriptions,
-				sca_rpc_show_all_subscriptions_doc, 0},
-		{"sca.subscription_count", sca_rpc_subscription_count,
-				sca_rpc_subscription_count_doc, 0},
-		{"sca.show_subscription", sca_rpc_show_subscription,
-				sca_rpc_show_subscription_doc, 0},
-		{"sca.subscribers", sca_rpc_show_subscribers,
-				sca_rpc_show_subscribers_doc, 0},
-		{"sca.deactivate_all_subscriptions",
-				sca_rpc_deactivate_all_subscriptions,
-				sca_rpc_deactivate_all_subscriptions_doc, 0},
-		{"sca.deactivate_subscription", sca_rpc_deactivate_subscription,
-				sca_rpc_deactivate_subscription_doc, 0},
-		{"sca.all_appearances", sca_rpc_show_all_appearances,
-				sca_rpc_show_all_appearances_doc, 0},
-		{"sca.show_appearance", sca_rpc_show_appearance,
-				sca_rpc_show_appearance_doc, 0},
-		{"sca.seize_appearance", sca_rpc_seize_appearance,
-				sca_rpc_seize_appearance_doc, 0},
-		{"sca.update_appearance", sca_rpc_update_appearance,
-				sca_rpc_update_appearance_doc, 0},
-		{"sca.release_appearance", sca_rpc_release_appearance,
-				sca_rpc_release_appearance_doc, 0},
-		{NULL, NULL, NULL, 0},
-};
 
 /*
  * EXPORTED PARAMETERS
@@ -141,26 +98,83 @@ int line_seize_max_expires = 15;
 int purge_expired_interval = 120;
 int onhold_bflag = -1;
 str server_address = STR_NULL;
+str contact_fallback = STR_NULL;
+str from_uri_avp_param = STR_NULL;
+str to_uri_avp_param = STR_NULL;
+
+/* clang-format off */
+/*
+ * EXPORTED COMMANDS
+ */
+static cmd_export_t cmds[] = {
+	{"sca_handle_subscribe", (cmd_function)sca_handle_subscribe_0_f, 0,
+			0, 0, REQUEST_ROUTE},
+	{"sca_handle_subscribe", (cmd_function)sca_handle_subscribe_1_f, 1,
+			fixup_hs, fixup_free_hs, REQUEST_ROUTE},
+	{"sca_handle_subscribe", (cmd_function)sca_handle_subscribe_2_f, 2,
+			fixup_hs, fixup_free_hs, REQUEST_ROUTE},
+	{"sca_call_info_update", (cmd_function)sca_call_info_update_0_f, 0,
+			0, 0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"sca_call_info_update", (cmd_function)sca_call_info_update_1_f, 1,
+			fixup_ciu, fixup_free_ciu, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"sca_call_info_update", (cmd_function)sca_call_info_update_2_f, 2,
+			fixup_ciu, fixup_free_ciu, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"sca_call_info_update", (cmd_function)sca_call_info_update_3_f, 3,
+			fixup_ciu, fixup_free_ciu, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
+
+/*
+ * EXPORTED RPC INTERFACE
+ */
+static rpc_export_t sca_rpc[] = {
+	{"sca.all_subscriptions", sca_rpc_show_all_subscriptions,
+			sca_rpc_show_all_subscriptions_doc, 0},
+	{"sca.subscription_count", sca_rpc_subscription_count,
+			sca_rpc_subscription_count_doc, 0},
+	{"sca.show_subscription", sca_rpc_show_subscription,
+			sca_rpc_show_subscription_doc, 0},
+	{"sca.subscribers", sca_rpc_show_subscribers,
+			sca_rpc_show_subscribers_doc, 0},
+	{"sca.deactivate_all_subscriptions",
+			sca_rpc_deactivate_all_subscriptions,
+			sca_rpc_deactivate_all_subscriptions_doc, 0},
+	{"sca.deactivate_subscription", sca_rpc_deactivate_subscription,
+			sca_rpc_deactivate_subscription_doc, 0},
+	{"sca.all_appearances", sca_rpc_show_all_appearances,
+			sca_rpc_show_all_appearances_doc, 0},
+	{"sca.show_appearance", sca_rpc_show_appearance,
+			sca_rpc_show_appearance_doc, 0},
+	{"sca.seize_appearance", sca_rpc_seize_appearance,
+			sca_rpc_seize_appearance_doc, 0},
+	{"sca.update_appearance", sca_rpc_update_appearance,
+			sca_rpc_update_appearance_doc, 0},
+	{"sca.release_appearance", sca_rpc_release_appearance,
+			sca_rpc_release_appearance_doc, 0},
+	{NULL, NULL, NULL, 0},
+};
 
 static param_export_t params[] = {
-		{"outbound_proxy", PARAM_STR, &outbound_proxy},
-		{"db_url", PARAM_STR, &db_url},
-		{"subs_table", PARAM_STR, &db_subs_table},
-		{"state_table", PARAM_STR, &db_state_table},
-		{"db_update_interval", INT_PARAM, &db_update_interval},
-		{"hash_table_size", INT_PARAM, &hash_table_size},
-		{"call_info_max_expires", INT_PARAM, &call_info_max_expires},
-		{"line_seize_max_expires", INT_PARAM, &line_seize_max_expires},
-		{"purge_expired_interval", INT_PARAM, &purge_expired_interval},
-		{"onhold_bflag", INT_PARAM, &onhold_bflag},
-		{"server_address", PARAM_STR, &server_address},
-		{NULL, 0, NULL},
+	{"outbound_proxy", PARAM_STR, &outbound_proxy},
+	{"db_url", PARAM_STR, &db_url},
+	{"subs_table", PARAM_STR, &db_subs_table},
+	{"state_table", PARAM_STR, &db_state_table},
+	{"db_update_interval", PARAM_INT, &db_update_interval},
+	{"hash_table_size", PARAM_INT, &hash_table_size},
+	{"call_info_max_expires", PARAM_INT, &call_info_max_expires},
+	{"line_seize_max_expires", PARAM_INT, &line_seize_max_expires},
+	{"purge_expired_interval", PARAM_INT, &purge_expired_interval},
+	{"onhold_bflag", PARAM_INT, &onhold_bflag},
+	{"contact_fallback", PARAM_STR, &contact_fallback},
+	{"server_address", PARAM_STR, &server_address},
+	{"from_uri_avp", PARAM_STR, &from_uri_avp_param},
+	{"to_uri_avp", PARAM_STR, &to_uri_avp_param},
+	{NULL, 0, NULL},
 };
 
 /*
  * MODULE EXPORTS
  */
-/* clang-format off */
 struct module_exports exports= {
 	"sca",           /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
@@ -246,6 +260,32 @@ done:
 	return (rc);
 }
 
+static int sca_process_avps(
+		str *avp_param, avp_name_t *avp, avp_flags_t *avp_type)
+{
+	pv_spec_t *avp_spec;
+	avp_flags_t avp_flags;
+
+	if(avp_param && avp_param->len > 0) {
+		avp_spec = pv_cache_get(avp_param);
+		if(avp_spec == NULL || avp_spec->type != PVT_AVP) {
+			LM_ERR("malformed or non AVP definition <%.*s>\n",
+					STR_FMT(avp_param));
+			return -1;
+		}
+
+		if(pv_get_avp_name(0, &(avp_spec->pvp), avp, &avp_flags) != 0) {
+			LM_ERR("invalid AVP definition <%.*s>\n", STR_FMT(avp_param));
+			return -1;
+		}
+		*avp_type = avp_flags;
+	} else {
+		avp->s.s = NULL;
+		avp->s.len = 0;
+	}
+	return 0;
+}
+
 static int sca_set_config(sca_mod *scam)
 {
 	scam->cfg = (sca_config *)shm_malloc(sizeof(sca_config));
@@ -260,19 +300,19 @@ static int sca_set_config(sca_mod *scam)
 	}
 
 	if(!db_url.s || db_url.len <= 0) {
-		LM_ERR("sca_set_config: db_url must be set!\n");
+		LM_ERR("db_url must be set!\n");
 		return (-1);
 	}
 	scam->cfg->db_url = &db_url;
 
 	if(!db_subs_table.s || db_subs_table.len <= 0) {
-		LM_ERR("sca_set_config: subs_table must be set!\n");
+		LM_ERR("subs_table must be set!\n");
 		return (-1);
 	}
 	scam->cfg->subs_table = &db_subs_table;
 
 	if(!db_state_table.s || db_state_table.len <= 0) {
-		LM_ERR("sca_set_config: state_table must be set!\n");
+		LM_ERR("state_table must be set!\n");
 		return (-1);
 	}
 	scam->cfg->state_table = &db_state_table;
@@ -288,7 +328,7 @@ static int sca_set_config(sca_mod *scam)
 	scam->cfg->line_seize_max_expires = line_seize_max_expires;
 	scam->cfg->purge_expired_interval = purge_expired_interval;
 	if(onhold_bflag > 31) {
-		LM_ERR("sca_set_config: onhold_bflag value > 31\n");
+		LM_ERR("onhold_bflag value > 31\n");
 		return (-1);
 	}
 	scam->cfg->onhold_bflag = onhold_bflag;
@@ -297,6 +337,23 @@ static int sca_set_config(sca_mod *scam)
 		scam->cfg->server_address = &server_address;
 	}
 
+	if(contact_fallback.s) {
+		scam->cfg->contact_fallback = &contact_fallback;
+	}
+
+	if(from_uri_avp_param.s) {
+		if(sca_process_avps(&from_uri_avp_param, &sca->cfg->from_uri_avp,
+				   &sca->cfg->from_uri_avp_type)
+				< 0)
+			return -1;
+	}
+
+	if(to_uri_avp_param.s) {
+		if(sca_process_avps(&to_uri_avp_param, &sca->cfg->to_uri_avp,
+				   &sca->cfg->to_uri_avp_type)
+				< 0)
+			return -1;
+	}
 	return (0);
 }
 
@@ -426,6 +483,56 @@ void sca_mod_destroy(void)
 	}
 
 	sca_db_disconnect();
+}
+
+static int sca_handle_subscribe_0_f(sip_msg_t *msg)
+{
+	return sca_handle_subscribe(msg, NULL, NULL);
+}
+static int sca_handle_subscribe_1_f(sip_msg_t *msg, char *p1)
+{
+	str uri_to = STR_NULL;
+	if(get_str_fparam(&uri_to, msg, (gparam_p)p1) != 0) {
+		LM_ERR("unable to get value from param pvar_to\n");
+		return -1;
+	}
+	return sca_handle_subscribe(msg, &uri_to, NULL);
+}
+static int sca_handle_subscribe_2_f(sip_msg_t *msg, char *p1, char *p2)
+{
+	str uri_to = STR_NULL;
+	str uri_from = STR_NULL;
+	if(get_str_fparam(&uri_to, msg, (gparam_p)p1) != 0) {
+		LM_ERR("unable to get value from param pvar_to\n");
+		return -1;
+	}
+	if(get_str_fparam(&uri_from, msg, (gparam_p)p2) != 0) {
+		LM_ERR("unable to get value from param pvar_from\n");
+		return -1;
+	}
+	return sca_handle_subscribe(msg, &uri_to, &uri_from);
+}
+
+static int fixup_hs(void **param, int param_no)
+{
+	switch(param_no) {
+		case 1:
+		case 2:
+			return fixup_spve_null(param, 1);
+		default:
+			return E_UNSPEC;
+	}
+}
+
+static int fixup_free_hs(void **param, int param_no)
+{
+	switch(param_no) {
+		case 1:
+		case 2:
+			return fixup_free_spve_null(param, 1);
+		default:
+			return E_UNSPEC;
+	}
 }
 
 static int sca_call_info_update_0_f(sip_msg_t *msg, char *p1, char *p2)

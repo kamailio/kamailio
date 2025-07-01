@@ -39,7 +39,7 @@ static int mod_init(void);
 static int sctp_mod_pre_init(void);
 #endif
 
-
+/* clang-format off */
 static cmd_export_t cmds[] = {
 	{0, 0, 0, 0, 0, 0}
 };
@@ -57,30 +57,29 @@ static param_export_t params[] = {
 	{"sctp_srto_max", PARAM_INT, &sctp_default_cfg.srto_max},
 	{"sctp_srto_min", PARAM_INT, &sctp_default_cfg.srto_min},
 	{"sctp_asocmaxrxt", PARAM_INT, &sctp_default_cfg.asocmaxrxt},
-	{"sctp_init_max_attempts", PARAM_INT,
-			&sctp_default_cfg.init_max_attempts},
+	{"sctp_init_max_attempts", PARAM_INT, &sctp_default_cfg.init_max_attempts},
 	{"sctp_init_max_timeo", PARAM_INT, &sctp_default_cfg.init_max_timeo},
 	{"sctp_hbinterval", PARAM_INT, &sctp_default_cfg.hbinterval},
 	{"sctp_pathmaxrxt", PARAM_INT, &sctp_default_cfg.pathmaxrxt},
 	{"sctp_sack_delay", PARAM_INT, &sctp_default_cfg.sack_delay},
 	{"sctp_sack_freq", PARAM_INT, &sctp_default_cfg.sack_freq},
 	{"sctp_max_burst", PARAM_INT, &sctp_default_cfg.max_burst},
-
 	{0, 0, 0}
 };
 
 struct module_exports exports = {
 	"sctp",          /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* cmd exports */
-	params,          /* param exports */
-	0,               /* exported RPC functions */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
 	0,               /* exported pseudo-variables */
 	0,               /* response handling function */
 	mod_init,        /* module initialization function */
-	0,               /* per child init function */
-	0                /* destroy function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
+/* clang-format on */
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
@@ -115,7 +114,7 @@ static int mod_init(void)
 		return -1;
 	}
 	return 0;
-#else /* USE_SCTP */
+#else  /* USE_SCTP */
 	LOG(L_CRIT, "sctp core support not enabled\n");
 	return -1;
 #endif /* USE_SCTP */

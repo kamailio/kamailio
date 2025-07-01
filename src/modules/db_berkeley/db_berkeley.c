@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -80,9 +82,9 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"auto_reload",        INT_PARAM, &auto_reload },
-	{"log_enable",         INT_PARAM, &log_enable  },
-	{"journal_roll_interval", INT_PARAM, &journal_roll_interval  },
+	{"auto_reload",        PARAM_INT, &auto_reload },
+	{"log_enable",         PARAM_INT, &log_enable  },
+	{"journal_roll_interval", PARAM_INT, &journal_roll_interval  },
 	{0, 0, 0}
 };
 
@@ -215,7 +217,7 @@ void bdb_close(db1_con_t *_h)
 	pkg_free(_h);
 }
 
-/* 
+/*
  * n can be the dbenv path or a table name
 */
 int bdb_reload(char *_n)
@@ -406,7 +408,7 @@ int km_bdb_query(db1_con_t *_con, db_key_t *_k, db_op_t *_op, db_val_t *_v,
 	data.ulen = MAX_ROW_SIZE;
 	data.flags = DB_DBT_USERMEM;
 
-	/* if _c is NULL and _nc is zero, you will get all table 
+	/* if _c is NULL and _nc is zero, you will get all table
 	   columns in the result
 	*/
 	if(_c) {
@@ -538,7 +540,7 @@ int km_bdb_query(db1_con_t *_con, db_key_t *_k, db_op_t *_op, db_val_t *_v,
 	LM_DBG("SELECT  KEY: [%.*s]\n", (int)key.size, (char *)key.data);
 #endif
 
-	/*query Berkely DB*/
+	/*query Berkeley DB*/
 	if((ret = db->get(db, NULL, &key, &data, 0)) == 0) {
 #ifdef BDB_EXTRA_DEBUG
 		LM_DBG("RESULT\nKEY:  [%.*s]\nDATA: [%.*s]\n", (int)key.size,
@@ -718,7 +720,7 @@ int bdb_insert(db1_con_t *_h, db_key_t *_k, db_val_t *_v, int _n)
 		switch(ret) {
 			/*The following are all critical/fatal */
 			case DB_LOCK_DEADLOCK:
-			/* The operation was selected to resolve a deadlock. */
+				/* The operation was selected to resolve a deadlock. */
 
 			case DB_RUNRECOVERY:
 			default:
@@ -855,10 +857,10 @@ error:
 }
 
 /*
-_bdb_delete_cursor -- called from bdb_delete when the query involves operators 
+_bdb_delete_cursor -- called from bdb_delete when the query involves operators
   other than equal '='. Adds support for queries like this:
 	DELETE from SomeTable WHERE _k[0] < _v[0]
-  In this case, the keys _k are not the actually schema keys, so we need to 
+  In this case, the keys _k are not the actually schema keys, so we need to
   iterate via cursor to perform this operation.
 */
 int _bdb_delete_cursor(
@@ -981,8 +983,8 @@ error:
  * _k: key names
  * _op: operators
  * _v: values of the keys that must match
- * _uk: update keys; cols that need to be updated 
- * _uv: update values; col values that need to be commited
+ * _uk: update keys; cols that need to be updated
+ * _uv: update values; col values that need to be committed
  * _un: number of rows to update
  */
 int bdb_update(db1_con_t *_con, db_key_t *_k, db_op_t *_op, db_val_t *_v,
@@ -1065,7 +1067,7 @@ int bdb_update(db1_con_t *_con, db_key_t *_k, db_op_t *_op, db_val_t *_v,
 	key.flags = DB_DBT_USERMEM;
 	key.size = len;
 
-	/*stage 1: QUERY Berkely DB*/
+	/*stage 1: QUERY Berkeley DB*/
 	if((ret = db->get(db, NULL, &key, &qdata, 0)) == 0) {
 
 #ifdef BDB_EXTRA_DEBUG
@@ -1089,7 +1091,7 @@ int bdb_update(db1_con_t *_con, db_key_t *_k, db_op_t *_op, db_val_t *_v,
 	memset(ubuf, 0, MAX_ROW_SIZE);
 
 	/* loop over each column of the qbuf and copy it to our new ubuf unless
-	   its a field that needs to update
+	   it is a field that needs to update
 	*/
 	c = strtok(qbuf, DELIM);
 	t = ubuf;

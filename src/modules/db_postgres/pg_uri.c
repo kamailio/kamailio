@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -6,6 +6,8 @@
  * Portions Copyright (C) 2005-2008 iptelorg GmbH
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
@@ -23,10 +25,10 @@
  */
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * The implementation of parser parsing postgres://.. URIs.
  */
 
@@ -43,7 +45,7 @@
 
 /** compare s1 & s2  with a function f (which should return 0 if ==);
  * s1 & s2 can be null
- * return 0 if match, 1 if not 
+ * return 0 if match, 1 if not
  */
 #define cmpstr(s1, s2, f) \
 	((s1) != (s2)) && ((s1) == 0 || (s2) == 0 || (f)((s1), (s2)) != 0)
@@ -93,7 +95,7 @@ static int dupl_string(char **dst, const char *begin, const char *end)
 }
 
 
-/** Parses postgres URI of form 
+/** Parses postgres URI of form
  * //[username[:password]@]hostname[:port]/database
  *
  * Returns 0 if parsing was successful and -1 otherwise
@@ -105,8 +107,8 @@ static int parse_postgres_uri(struct pg_uri *res, str *uri)
 
 	enum state
 	{
-		ST_SLASH1,	/* First slash */
-		ST_SLASH2,	/* Second slash */
+		ST_SLASH1,	  /* First slash */
+		ST_SLASH2,	  /* Second slash */
 		ST_USER_HOST, /* Username or hostname */
 		ST_PASS_PORT, /* Password or port part */
 		ST_HOST,	  /* Hostname part */
@@ -116,7 +118,7 @@ static int parse_postgres_uri(struct pg_uri *res, str *uri)
 	};
 
 	enum state st;
-	int i, ipv6_flag=0;
+	int i, ipv6_flag = 0;
 	const char *begin;
 	char *prev_token;
 
@@ -226,7 +228,9 @@ static int parse_postgres_uri(struct pg_uri *res, str *uri)
 
 					case ':':
 						st = ST_PORT;
-						if(dupl_string(&res->host, begin, uri->s + i - ipv6_flag) < 0)
+						if(dupl_string(
+								   &res->host, begin, uri->s + i - ipv6_flag)
+								< 0)
 							goto err;
 						begin = uri->s + i + 1;
 						break;
@@ -235,7 +239,9 @@ static int parse_postgres_uri(struct pg_uri *res, str *uri)
 						if(memchr(uri->s + i + 1, '/', uri->len - i - 1)
 								!= NULL)
 							break;
-						if(dupl_string(&res->host, begin, uri->s + i - ipv6_flag) < 0)
+						if(dupl_string(
+								   &res->host, begin, uri->s + i - ipv6_flag)
+								< 0)
 							goto err;
 						if(dupl_string(&res->database, uri->s + i + 1,
 								   uri->s + uri->len)
@@ -277,7 +283,8 @@ static int parse_postgres_uri(struct pg_uri *res, str *uri)
 
 err:
 	if(prev_token) {
-		if(res==NULL || (res->username!=prev_token && res->host!=prev_token))
+		if(res == NULL
+				|| (res->username != prev_token && res->host != prev_token))
 			pkg_free(prev_token);
 	}
 	if(res == NULL)

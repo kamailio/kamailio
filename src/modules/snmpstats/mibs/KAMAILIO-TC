@@ -235,7 +235,7 @@ X731AlarmStatus  ::=  TEXTUAL-CONVENTION
 X731ProceduralStatus ::= TEXTUAL-CONVENTION
 	STATUS current
 	DESCRIPTION
-		"Represents the possible values fo the procedural status.
+		"Represents the possible values for the procedural status.
 
 		A value of initialization required means the resource
 		requires initialization to be invoked by the manager.

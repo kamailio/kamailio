@@ -60,18 +60,9 @@
 			must be added to the Kamailio config file.
 		</para>
 		<para>
-			IMPORTANT: the tls module must be loaded before any other &kamailio; module
-			that uses libssl (OpenSSL library). A safe option is to have the tls module
-			loaded first (be in the first "loadmodule" in &kamailio;.cfg).
-		</para>
-		<para>
-			IMPORTANT: using this module compiled with newer versions of libssl
-			(e.g., v1.1+) may require &kamailio; to be started with
-			<emphasis>--atexit=no</emphasis> command line parameters to avoid
-			calling C atexit callbacks inside the process ending during
-			daemonize procedure as well as during shut down, which can lead
-			to crashes because it destroys and then accesses shared memory. For
-			example, such case has been reported for Ubuntu 20.04 or RedHat 8.
+			Read the "Important Notes" section because it has relevant information
+			about configuring properly the module for various libssl versions,
+			components and operating systems.
 		</para>
 	</section>
 	<section id="tls.quick_start">
@@ -88,7 +79,10 @@
 		</para>
 		<para>
 		When installing tls module of kamailio, a sample 'tls.cfg' file is deployed in the same
-		folder with 'kamailio.cfg', along with freshly generated self signed certificates.
+		folder with 'kamailio.cfg'. For freshly generated self signed certificates make must be called from tls folder
+		<programlisting>
+make install-tls-cert
+		</programlisting>
 		</para>
 		<para>
 		HINT: be sure you have <emphasis>enable_tls=yes</emphasis> to your kamailio.cfg.
@@ -122,7 +116,7 @@ request_route {
 		<para>
 			The TLS module needs some special options enabled when compiling
 			Kamailio. These options are enabled by default, however in case
-			you're using a modified Kamailio version or Makefile, make sure
+			you are using a modified Kamailio version or Makefile, make sure
 			that you enable -DUSE_TLS and -DTLS_HOOKS (or compile with make
 			TLS_HOOKS=1 which will take care of both options).
 		</para>
@@ -131,14 +125,9 @@ request_route {
 			options, run kamailio -V and look for USE_TLS and TLS_HOOKS among the flags.
 		</para>
 		<para>
-			For OpenSSL (libssl) v1.1.x, it is required to preload
-			'openssl_mutex_shared' library shipped by &kamailio;. For more details
-			see 'src/modules/tls/utils/openssl_mutex_shared/README.md'.
-		</para>
-		<para>
 			This module includes several workarounds for various Openssl bugs
 			(like compression and Kerberos using the wrong memory allocations
-			functions, low memory problems a.s.o). On startup it will try to enable 
+			functions, low memory problems a.s.o). On startup it will try to enable
 			the needed workarounds based on the OpenSSL library version. Each time
 			a known problem is detected and a workaround is enabled, a message will
 			be logged. In general it is recommended to compile this module on the
@@ -163,7 +152,7 @@ request_route {
  			(see <varname>tls_disable_compression</varname>).
 		</para>
 		<para>
-			The TLS module includes workarounds for the following known openssl bugs: 
+			The TLS module includes workarounds for the following known openssl bugs:
 			<itemizedlist>
                         <listitem><para>
 			openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if compression is enabled,
@@ -173,13 +162,36 @@ request_route {
 			openssl #1468 (fix zlib compression memory allocation),
                         </para></listitem>
                         <listitem><para>
-			openssl #1467 (kerberos support will be disabled if the openssl version is less than 0.9.8e-beta1) 
+			openssl #1467 (kerberos support will be disabled if the openssl version is less than 0.9.8e-beta1)
                         </para></listitem>
                         <listitem><para>
 			openssl #1491 (stop using tls in low memory situations due to the very high risk of openssl crashing or leaking memory).
                         </para></listitem>
 			</itemizedlist>
 			The bug reports can be viewed at <ulink url="http://rt.openssl.org/">http://rt.openssl.org/</ulink>.
+		</para>
+		<para>
+			Note 1: the tls module must be loaded before any other &kamailio; module
+			that uses libssl (OpenSSL library). A safe option is to have the tls module
+			loaded first (be in the first "loadmodule" in &kamailio;.cfg).
+		</para>
+		<para>
+			Note 2: for libssl v3.x, the core parameter "tls_threads_mode"
+			has to be set, see the Core Cookbook for possible values.
+		</para>
+		<para>
+			Note 3: using this module compiled with newer versions of libssl
+			(e.g., v1.1+) may require &kamailio; to be started with
+			<emphasis>--atexit=no</emphasis> command line parameters to avoid
+			calling C atexit callbacks inside the process ending during
+			daemonize procedure as well as during shut down, which can lead
+			to crashes because it destroys and then accesses shared memory. For
+			example, such case has been reported for Ubuntu 20.04 or RedHat 8.
+		</para>
+		<para>
+			Note 4: with some particular combination of OS, openssl and mysql-client
+			libraries, there were reports of random crashes, in such case try to set
+			the db_mysql module parameter opt_ssl_mode to 1.
 		</para>
 	</section>
 
@@ -228,7 +240,7 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 			allocations start to fail (due to memory shortage), Openssl can crash or cause memory
 			leaks (making the memory shortage even worse). As of this writing all Openssl versions
 			were affected (including 0.9.8e), see Openssl bug #1491. The TLS module has some
-			workarounds for preventing this problem (see <varname>low_mem_treshold1</varname>
+			workarounds for preventing this problem (see <varname>low_mem_threshold1</varname>
 			and <varname>low_mem_threshold2</varname>), however starting Kamailio with enough shared
 			memory is higly recommended. When this is not possible a quick way to significantly
 			reduce Openssl memory usage it to  disable compression (see <varname>tls_disable_compression</varname>).
@@ -283,10 +295,6 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 			script for the contents of various certificate fields), but this is not only slow,
 			but also not exactly standard conforming (the verification should happen during TLS
 			connection establishment and not after).
-		</para>
-		<para>
-			TLS specific config reloading is not safe, so for now better don't use it,
-			especially under heavy traffic.
 		</para>
 		<para>
 			This documentation is incomplete.
@@ -364,4 +372,3 @@ event_route[tls:connection-out] {
 	</section>
 	</chapter>
 </book>
-

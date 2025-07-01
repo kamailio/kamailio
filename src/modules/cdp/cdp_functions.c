@@ -31,39 +31,40 @@ extern peer_list_t *peer_list;
 extern gen_lock_t *peer_list_lock;
 extern char *dp_states[];
 
-int check_peer(str * peer_fqdn) {
-	peer * p;
+int check_peer(str *peer_fqdn)
+{
+	peer *p;
 	p = get_peer_by_fqdn(peer_fqdn);
-	if (p && !p->disabled &&  (p->state == I_Open || p->state == R_Open)) {
+	if(p && !p->disabled && (p->state == I_Open || p->state == R_Open)) {
 		return 1;
 	} else {
 		return -1;
-	}	
+	}
 }
 
-int check_application(int vendorid, int application) 
+int check_application(int vendorid, int application)
 {
 	peer *i, *j;
 	int c;
 
 	lock_get(peer_list_lock);
 	i = peer_list->head;
-	while (i) {
+	while(i) {
 		lock_get(i->lock);
-		if (i && !i->disabled &&  (i->state == I_Open || i->state == R_Open)) {
-			for (c = 0; c < i->applications_cnt; c++) {
-				if (((vendorid <= 0) || (vendorid == i->applications[c].vendor)) && (i->applications[c].id == application)) {
+		if(i && !i->disabled && (i->state == I_Open || i->state == R_Open)) {
+			for(c = 0; c < i->applications_cnt; c++) {
+				if(((vendorid <= 0) || (vendorid == i->applications[c].vendor))
+						&& (i->applications[c].id == application)) {
 					lock_release(i->lock);
 					lock_release(peer_list_lock);
 					return 1;
 				}
 			}
 		}
-		j=i;
+		j = i;
 		i = i->next;
 		lock_release(j->lock);
 	}
 	lock_release(peer_list_lock);
 	return -1;
 }
-

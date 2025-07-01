@@ -25,19 +25,20 @@
 
 #include "str.h"
 
-#define KSR_PPDEF_NORMAL (0)     /* define normal value */
-#define KSR_PPDEF_QUOTED (1<<0)  /* define quoted value */
+#define KSR_PPDEF_NORMAL (0)	  /* define normal value */
+#define KSR_PPDEF_QUOTED (1 << 0) /* define quoted value */
 
-#define KSR_PPDEF_VALREQ (0)     /* define with value required (defenv) */
-#define KSR_PPDEF_VALTRY (1<<0)  /* define only if value exists (trydefenv) */
+#define KSR_PPDEF_VALREQ (0)	  /* define with value required (defenv) */
+#define KSR_PPDEF_VALTRY (1 << 0) /* define only if value exists (trydefenv) */
 
-#define KSR_PPDEF_DEFINE  0
-#define KSR_PPDEF_TRYDEF  1
-#define KSR_PPDEF_REDEF   2
-#define KSR_PPDEF_DEFEXP  3
+#define KSR_PPDEF_DEFINE 0
+#define KSR_PPDEF_TRYDEF 1
+#define KSR_PPDEF_REDEF 2
+#define KSR_PPDEF_DEFEXP 3
 #define KSR_PPDEF_DEFEXPS 4
 
-typedef struct ksr_ppdefine {
+typedef struct ksr_ppdefine
+{
 	str name;
 	str value;
 	int dtype;
@@ -45,19 +46,19 @@ typedef struct ksr_ppdefine {
 
 int pp_def_qvalue(str *defval, str *outval);
 
-str* pp_get_define_name(int idx);
-ksr_ppdefine_t* pp_get_define(int idx);
+str *pp_get_define_name(int idx);
+ksr_ppdefine_t *pp_get_define(int idx);
 int pp_lookup(int len, const char *text);
 
 int pp_subst_add(char *data);
 int pp_substdef_add(char *data, int mode);
 int pp_subst_run(char **data);
 
-int  pp_define(int len, const char *text);
-int  pp_define_set(int len, char *text, int mode);
-int  pp_define_set_type(int type);
-str *pp_define_get(int len, const char * text);
-int  pp_define_env(const char * text, int len, int qmode, int vmode);
+int pp_define(int len, const char *text);
+int pp_define_set(int len, char *text, int mode);
+int pp_define_set_type(int type);
+str *pp_define_get(int len, const char *text);
+int pp_define_env(const char *text, int len, int qmode, int vmode);
 
 void pp_ifdef_level_update(int val);
 int pp_ifdef_level_check(void);

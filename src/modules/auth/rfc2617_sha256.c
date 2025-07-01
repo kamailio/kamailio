@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -37,9 +39,9 @@ inline void cvt_hex_sha256(HASH_SHA256 _b, HASHHEX_SHA256 _h)
 	unsigned short i;
 	unsigned char j;
 
-	for (i = 0; i < HASHLEN_SHA256; i++) {
+	for(i = 0; i < HASHLEN_SHA256; i++) {
 		j = (_b[i] >> 4) & 0xf;
-		if (j <= 9) {
+		if(j <= 9) {
 			_h[i * 2] = (j + '0');
 		} else {
 			_h[i * 2] = (j + 'a' - 10);
@@ -47,7 +49,7 @@ inline void cvt_hex_sha256(HASH_SHA256 _b, HASHHEX_SHA256 _h)
 
 		j = _b[i] & 0xf;
 
-		if (j <= 9) {
+		if(j <= 9) {
 			_h[i * 2 + 1] = (j + '0');
 		} else {
 			_h[i * 2 + 1] = (j + 'a' - 10);
@@ -58,16 +60,16 @@ inline void cvt_hex_sha256(HASH_SHA256 _b, HASHHEX_SHA256 _h)
 }
 
 /* Cast to unsigned values and forward to sr_SHA256_Update */
-static inline void SHA256_Update(SHA256_CTX* context, char *data, int len)
+static inline void SHA256_Update(SHA256_CTX *context, char *data, int len)
 {
-	sr_SHA256_Update(context, (unsigned char*)data, (unsigned int)len);
+	sr_SHA256_Update(context, (unsigned char *)data, (unsigned int)len);
 }
 
 /*
  * calculate H(A1) as per spec
  */
-void calc_HA1_sha256(ha_alg_t _alg, str* _username, str* _realm, str* _password,
-		str* _nonce, str* _cnonce, HASHHEX_SHA256 _sess_key)
+void calc_HA1_sha256(ha_alg_t _alg, str *_username, str *_realm, str *_password,
+		str *_nonce, str *_cnonce, HASHHEX_SHA256 _sess_key)
 {
 	SHA256_CTX Sha256Ctx;
 	HASH_SHA256 HA1;
@@ -80,7 +82,7 @@ void calc_HA1_sha256(ha_alg_t _alg, str* _username, str* _realm, str* _password,
 	SHA256_Update(&Sha256Ctx, _password->s, _password->len);
 	sr_SHA256_Final(HA1, &Sha256Ctx);
 
-	if (_alg == HA_MD5_SESS) {
+	if(_alg == HA_MD5_SESS) {
 		sr_SHA256_Init(&Sha256Ctx);
 		sr_SHA256_Update(&Sha256Ctx, HA1, HASHLEN_SHA256);
 		SHA256_Update(&Sha256Ctx, ":", 1);
@@ -97,14 +99,14 @@ void calc_HA1_sha256(ha_alg_t _alg, str* _username, str* _realm, str* _password,
 /*
  * calculate request-digest/response-digest as per HTTP Digest spec
  */
-void calc_response_sha256(HASHHEX_SHA256 _ha1,      /* H(A1) */
-		str* _nonce,       /* nonce from server */
-		str* _nc,          /* 8 hex digits */
-		str* _cnonce,      /* client nonce */
-		str* _qop,         /* qop-value: "", "auth", "auth-int" */
-		int _auth_int,     /* 1 if auth-int is used */
-		str* _method,      /* method from the request */
-		str* _uri,         /* requested URL */
+void calc_response_sha256(HASHHEX_SHA256 _ha1, /* H(A1) */
+		str *_nonce,						   /* nonce from server */
+		str *_nc,							   /* 8 hex digits */
+		str *_cnonce,						   /* client nonce */
+		str *_qop,				  /* qop-value: "", "auth", "auth-int" */
+		int _auth_int,			  /* 1 if auth-int is used */
+		str *_method,			  /* method from the request */
+		str *_uri,				  /* requested URL */
 		HASHHEX_SHA256 _hentity,  /* H(entity body) if qop="auth-int" */
 		HASHHEX_SHA256 _response) /* request-digest or response-digest */
 {
@@ -115,13 +117,13 @@ void calc_response_sha256(HASHHEX_SHA256 _ha1,      /* H(A1) */
 
 	/* calculate H(A2) */
 	sr_SHA256_Init(&Sha256Ctx);
-	if (_method) {
+	if(_method) {
 		SHA256_Update(&Sha256Ctx, _method->s, _method->len);
 	}
 	SHA256_Update(&Sha256Ctx, ":", 1);
 	SHA256_Update(&Sha256Ctx, _uri->s, _uri->len);
 
-	if (_auth_int) {
+	if(_auth_int) {
 		SHA256_Update(&Sha256Ctx, ":", 1);
 		SHA256_Update(&Sha256Ctx, _hentity, HASHHEXLEN_SHA256);
 	};
@@ -136,7 +138,7 @@ void calc_response_sha256(HASHHEX_SHA256 _ha1,      /* H(A1) */
 	SHA256_Update(&Sha256Ctx, _nonce->s, _nonce->len);
 	SHA256_Update(&Sha256Ctx, ":", 1);
 
-	if (_qop->len) {
+	if(_qop->len) {
 		SHA256_Update(&Sha256Ctx, _nc->s, _nc->len);
 		SHA256_Update(&Sha256Ctx, ":", 1);
 		SHA256_Update(&Sha256Ctx, _cnonce->s, _cnonce->len);
@@ -147,4 +149,121 @@ void calc_response_sha256(HASHHEX_SHA256 _ha1,      /* H(A1) */
 	SHA256_Update(&Sha256Ctx, HA2Hex, HASHHEXLEN_SHA256);
 	sr_SHA256_Final(RespHash, &Sha256Ctx);
 	cvt_hex_sha256(RespHash, _response);
+}
+
+inline void cvt_hex_sha512(HASH_SHA512 _b, HASHHEX_SHA512 _h)
+{
+	unsigned short i;
+	unsigned char j;
+
+	for(i = 0; i < HASHLEN_SHA512; i++) {
+		j = (_b[i] >> 4) & 0xf;
+		if(j <= 9) {
+			_h[i * 2] = (j + '0');
+		} else {
+			_h[i * 2] = (j + 'a' - 10);
+		}
+
+		j = _b[i] & 0xf;
+
+		if(j <= 9) {
+			_h[i * 2 + 1] = (j + '0');
+		} else {
+			_h[i * 2 + 1] = (j + 'a' - 10);
+		}
+	};
+
+	_h[HASHHEXLEN_SHA512] = '\0';
+}
+
+/* Cast to unsigned values and forward to sr_SHA512_Update */
+static inline void SHA512_Update(SHA512_CTX *context, char *data, int len)
+{
+	sr_SHA512_Update(context, (unsigned char *)data, (unsigned int)len);
+}
+
+/*
+ * calculate H(A1) as per spec
+ */
+void calc_HA1_sha512(ha_alg_t _alg, str *_username, str *_realm, str *_password,
+		str *_nonce, str *_cnonce, HASHHEX_SHA512 _sess_key)
+{
+	SHA512_CTX Sha512Ctx;
+	HASH_SHA512 HA1;
+
+	sr_SHA512_Init(&Sha512Ctx);
+	SHA512_Update(&Sha512Ctx, _username->s, _username->len);
+	SHA512_Update(&Sha512Ctx, ":", 1);
+	SHA512_Update(&Sha512Ctx, _realm->s, _realm->len);
+	SHA512_Update(&Sha512Ctx, ":", 1);
+	SHA512_Update(&Sha512Ctx, _password->s, _password->len);
+	sr_SHA512_Final(HA1, &Sha512Ctx);
+
+	if(_alg == HA_MD5_SESS) {
+		sr_SHA512_Init(&Sha512Ctx);
+		sr_SHA512_Update(&Sha512Ctx, HA1, HASHLEN_SHA512);
+		SHA512_Update(&Sha512Ctx, ":", 1);
+		SHA512_Update(&Sha512Ctx, _nonce->s, _nonce->len);
+		SHA512_Update(&Sha512Ctx, ":", 1);
+		SHA512_Update(&Sha512Ctx, _cnonce->s, _cnonce->len);
+		sr_SHA512_Final(HA1, &Sha512Ctx);
+	};
+
+	cvt_hex_sha512(HA1, _sess_key);
+}
+
+
+/*
+ * calculate request-digest/response-digest as per HTTP Digest spec
+ */
+void calc_response_sha512(HASHHEX_SHA512 _ha1, /* H(A1) */
+		str *_nonce,						   /* nonce from server */
+		str *_nc,							   /* 8 hex digits */
+		str *_cnonce,						   /* client nonce */
+		str *_qop,				  /* qop-value: "", "auth", "auth-int" */
+		int _auth_int,			  /* 1 if auth-int is used */
+		str *_method,			  /* method from the request */
+		str *_uri,				  /* requested URL */
+		HASHHEX_SHA512 _hentity,  /* H(entity body) if qop="auth-int" */
+		HASHHEX_SHA512 _response) /* request-digest or response-digest */
+{
+	SHA512_CTX Sha512Ctx;
+	HASH_SHA512 HA2;
+	HASH_SHA512 RespHash;
+	HASHHEX_SHA512 HA2Hex;
+
+	/* calculate H(A2) */
+	sr_SHA512_Init(&Sha512Ctx);
+	if(_method) {
+		SHA512_Update(&Sha512Ctx, _method->s, _method->len);
+	}
+	SHA512_Update(&Sha512Ctx, ":", 1);
+	SHA512_Update(&Sha512Ctx, _uri->s, _uri->len);
+
+	if(_auth_int) {
+		SHA512_Update(&Sha512Ctx, ":", 1);
+		SHA512_Update(&Sha512Ctx, _hentity, HASHHEXLEN_SHA512);
+	};
+
+	sr_SHA512_Final(HA2, &Sha512Ctx);
+	cvt_hex_sha512(HA2, HA2Hex);
+
+	/* calculate response */
+	sr_SHA512_Init(&Sha512Ctx);
+	SHA512_Update(&Sha512Ctx, _ha1, HASHHEXLEN_SHA512);
+	SHA512_Update(&Sha512Ctx, ":", 1);
+	SHA512_Update(&Sha512Ctx, _nonce->s, _nonce->len);
+	SHA512_Update(&Sha512Ctx, ":", 1);
+
+	if(_qop->len) {
+		SHA512_Update(&Sha512Ctx, _nc->s, _nc->len);
+		SHA512_Update(&Sha512Ctx, ":", 1);
+		SHA512_Update(&Sha512Ctx, _cnonce->s, _cnonce->len);
+		SHA512_Update(&Sha512Ctx, ":", 1);
+		SHA512_Update(&Sha512Ctx, _qop->s, _qop->len);
+		SHA512_Update(&Sha512Ctx, ":", 1);
+	};
+	SHA512_Update(&Sha512Ctx, HA2Hex, HASHHEXLEN_SHA512);
+	sr_SHA512_Final(RespHash, &Sha512Ctx);
+	cvt_hex_sha512(RespHash, _response);
 }

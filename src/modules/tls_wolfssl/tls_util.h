@@ -26,62 +26,61 @@
 #ifndef _TLS_UTIL_H
 #define _TLS_UTIL_H
 
-#include <wolfssl/options.h>
-#include <wolfssl/ssl.h>
-
 #include "../../core/dprint.h"
 #include "../../core/str.h"
+#include "tls_cfg.h"
 #include "tls_domain.h"
 
-static inline int tls_err_ret(char *s, SSL* ssl,
-		tls_domains_cfg_t **tls_domains_cfg)
+static inline int tls_err_ret(
+		char *s, WOLFSSL *ssl, tls_domains_cfg_t **tls_domains_cfg)
 {
 	long err;
 	int ret = 0;
 	const char *sn = NULL;
 
-	if ((*tls_domains_cfg)->srv_default->ctx &&
-		(*tls_domains_cfg)->srv_default->ctx[0])
-	{
+	if((*tls_domains_cfg)->srv_default->ctx
+			&& (*tls_domains_cfg)->srv_default->ctx[0]) {
 		if(ssl) {
-			sn = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+			sn = wolfSSL_get_servername(ssl, WOLFSSL_SNI_HOST_NAME);
 		}
 		while((err = ERR_get_error())) {
 			ret = 1;
-			ERR("%s%s (sni: %s)\n", s ? s : "", ERR_error_string(err, 0),
-					(sn) ? sn : "unknown");
+			ERR("%s%s (sni: %s)\n", s ? s : "",
+					wolfSSL_ERR_error_string(err, 0), (sn) ? sn : "unknown");
 		}
 	}
 	return ret;
 }
 
-#define TLS_ERR_RET(r, s) \
-do { \
-	(r) = tls_err_ret((s), NULL, tls_domains_cfg); \
-} while(0)
+#define TLS_ERR_RET(r, s)                              \
+	do {                                               \
+		(r) = tls_err_ret((s), NULL, tls_domains_cfg); \
+	} while(0)
 
 
-#define TLS_ERR(s) \
-do { \
-	tls_err_ret((s), NULL, tls_domains_cfg); \
-} while(0)
+#define TLS_ERR(s)                               \
+	do {                                         \
+		tls_err_ret((s), NULL, tls_domains_cfg); \
+	} while(0)
 
-#define TLS_ERR_SSL(s, ssl) \
-do { \
-	tls_err_ret((s), (ssl), tls_domains_cfg); \
-} while(0)
+#define TLS_ERR_SSL(s, ssl)                       \
+	do {                                          \
+		tls_err_ret((s), (ssl), tls_domains_cfg); \
+	} while(0)
 
 /*
  * Make a shared memory copy of ASCII zero terminated string
  * Return value: -1 on error
  *                0 on success
  */
-int shm_asciiz_dup(char** dest, char* val);
+int shm_asciiz_dup(char **dest, char *val);
 
 
 /*
  * Delete old TLS configuration that is not needed anymore
  */
 void collect_garbage(void);
+
+void tls_dump_verification_failure(long verification_result);
 
 #endif /* _TLS_UTIL_H */

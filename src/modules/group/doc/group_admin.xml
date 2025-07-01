@@ -10,19 +10,19 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 		<title>Overview</title>
 		<para>
-		This module provides functionality for two different methods of group 
+		This module provides functionality for two different methods of group
 		membership checking.
 		</para>
 		<section>
 			<title>Strict membership checking</title>
 			<para>
-			The module uses a database table that contains a list of users and groups 
+			The module uses a database table that contains a list of users and groups
 			they belong to. The module provides the possibility to check if a
 			specific user belongs to a specific group.
 			</para>
@@ -33,14 +33,14 @@
 		<section>
 			<title>Regular Expression based checking</title>
 			<para>
-			Another database table contains list of regular expressions and 
+			Another database table contains list of regular expressions and
 			group IDs. A matching occurs if the user URI match the regular
-			expression. This type of matching may be used to fetch the 
+			expression. This type of matching may be used to fetch the
 			group ID(s) the user belongs to (via RE matching) .
 			</para>
 			<para>
 			Due to performance reasons (regular expression evaluation), DB cache
-			support is available: the table content is loaded into memory at 
+			support is available: the table content is loaded into memory at
 			startup and all regular expressions are compiled.
 			</para>
 		</section>
@@ -64,7 +64,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -86,7 +86,7 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is 
+			Default value is
 			<quote>&defaultrodb;</quote>.
 		</emphasis>
 		</para>
@@ -103,7 +103,7 @@ modparam("group", "db_url", "&exampledb;")
 	<section id="group.p.table">
 		<title><varname>table</varname> (string)</title>
 		<para>
-		Name of the table holding strict definitions of groups and 
+		Name of the table holding strict definitions of groups and
 		their members.
 		</para>
 		<para>
@@ -185,7 +185,7 @@ modparam("group", "group_column", "grp")
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
 		If enabled (set to a non zero value) then the domain will be used also used
-		for strict group matching; otherwise only the username part will be 
+		for strict group matching; otherwise only the username part will be
 		used.
 		</para>
 		<para>
@@ -206,7 +206,7 @@ modparam("group", "use_domain", 1)
 	<section id="group.p.re_table">
 		<title><varname>re_table</varname> (string)</title>
 		<para>
-		Name of the table holding definitions for regular-expression 
+		Name of the table holding definitions for regular-expression
 		based groups. If no table is defined, the regular-expression
 		support is disabled.
 		</para>
@@ -296,18 +296,18 @@ modparam("group", "multiple_gid", 0)
 		<function moreinfo="none">is_user_in(URI, group)</function>
 		</title>
 		<para>
-		This function is to be used for script group membership. The function 
+		This function is to be used for script group membership. The function
 		returns true if username in the given &uri; is a member of the given
 		group and false if not.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>&uri;</emphasis> - &uri; whose username and 
+			<para><emphasis>&uri;</emphasis> - &uri; whose username and
 			optionally domain to be used, this can be one of:
 			<itemizedlist>
 				<listitem>
-				<para>Request-URI - Use Request-URI username and 
+				<para>Request-URI - Use Request-URI username and
 				(optionally) domain.</para>
 				</listitem>
 				<listitem>
@@ -351,8 +351,8 @@ if (is_user_in("Request-URI", "ld")) {
 		<function moreinfo="none">get_user_group(URI, AVP)</function>
 		</title>
 		<para>
-		This function is to be used for regular expression based group 
-		membership. The function returns true if username in the given &uri; 
+		This function is to be used for regular expression based group
+		membership. The function returns true if username in the given &uri;
 		belongs to at least one group; the group ID(s) are returned as AVPs.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -371,7 +371,7 @@ if (is_user_in("Request-URI", "ld")) {
 				<para>From - Use From URI</para>
 				</listitem>
 				<listitem>
-				<para>Credentials - Use digest credentials username 
+				<para>Credentials - Use digest credentials username
 				and realm.</para>
 				</listitem>
 				<listitem>

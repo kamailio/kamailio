@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -24,9 +26,10 @@
 
 #include "../select.h"
 
-struct cfg_read_handle {
-	void	*group;
-	void	*var;
+struct cfg_read_handle
+{
+	void *group;
+	void *var;
 };
 
 /* free the list of not yet fixed selects */
@@ -45,7 +48,8 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg);
  *	fixed-up later.
  * <0 - error
  */
-int read_cfg_var_fixup(char *gname, char *vname, struct cfg_read_handle *read_handle);
+int read_cfg_var_fixup(
+		char *gname, char *vname, struct cfg_read_handle *read_handle);
 
 /* read the value of a variable via a group and variable name previously fixed up
  * Returns the type of the variable

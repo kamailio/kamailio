@@ -1,9 +1,11 @@
 /*
  * PERMISSIONS module
  *
- * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
+ * Copyright (C) 2003 Miklï¿½s Tirpï¿½k (mtirpak@sztaki.hu)
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

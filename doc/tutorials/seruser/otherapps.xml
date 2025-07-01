@@ -32,7 +32,7 @@ usage:
  serctl mail &lt;username&gt; .................... send an email to a user
  serctl alias show [&lt;alias&gt;] ............... show aliases
  serctl alias rm &lt;alias&gt; ................... remove an alias
- serctl alias add &lt;alias&gt; &lt;uri&gt; ............ add an aliases 
+ serctl alias add &lt;alias&gt; &lt;uri&gt; ............ add an alias
 
            * access control lists *
  serctl acl show [&lt;username&gt;] .............. show user membership

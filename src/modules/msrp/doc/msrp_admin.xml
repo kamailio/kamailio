@@ -248,6 +248,44 @@ end
 
 	<section>
 	<title>Functions</title>
+	<section id="msrp.f.msrp_forward">
+	    <title>
+		<function moreinfo="none">msrp_forward([tpath [, fpath]])</function>
+	    </title>
+	    <para>
+			Forward MSRP frame to target destination. If tpath is provided then
+			the original To-Path is replaced by it and the From-Path is replaced
+			by fpath or the original To-Path. If the target destination is not
+			set then tpath will be used to set it.
+
+		</para>
+
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msrp_forward</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[msrp:frame-in] {
+	...
+	msrp_set_dst("msrp://127.0.0.1:8000", "tcp:127.0.0.1:5060");
+	msrp_forward();
+	...
+
+	...
+	msrp_forward("msrp://127.0.0.1:8000/jshA7weztas;tcp");
+	...
+
+	...
+	msrp_forward("msrp://127.0.0.1:8000/jshA7weztas;tcp", "msrp://127.0.0.1:8000/kjhd37s2s20w2a;tcp");
+	...
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
 	<section id="msrp.f.msrp_relay">
 	    <title>
 		<function moreinfo="none">msrp_relay()</function>
@@ -550,7 +588,7 @@ event_route[msrp:frame-in] {
 		</para>
 		<para>
 			To build the SIP request, the module takes the first line and the
-			headers from an MSRP message and appends them to a static buffer. The 
+			headers from an MSRP message and appends them to a static buffer. The
 			next two examples show an MSRP frame and the resulting SIP request.
 		</para>
 		<programlisting format="linespecific">
@@ -607,12 +645,12 @@ Content-Type: text/plain
 			valid SIP request is a perfect trade-off for performance.
 		</para>
 		<para>
-			Besides the option to access parts of MSRP frame via an 
-			internally-built SIP message, the module exports a new pseudo-variable 
+			Besides the option to access parts of MSRP frame via an
+			internally-built SIP message, the module exports a new pseudo-variable
 			class $msrp(key) which returns attributes from the MSRP frame. There is
 			also a new transformation, {msrpuri.key}, to get access to parts
 			of an MSRP URI. See the appropriate Wiki pages on the project's
-			web site for full details about new pseudo-variable and 
+			web site for full details about new pseudo-variable and
 			transformation classes.
 		</para>
 		<para>
@@ -730,7 +768,7 @@ event_route[msrp:frame-in] {
 
 		} else
 			$var(expires) = MSRP_MAX_EXPIRES;
-		
+
 		$var(cnt) = $var(cnt) + 1;
 		pv_printf("$var(sessid)", "s.$(pp).$(var(cnt)).$(RANDOM)");
 		$sht(msrp=>$var(sessid)::srcaddr) = $msrp(srcaddr);

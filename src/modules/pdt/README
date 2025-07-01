@@ -39,6 +39,7 @@ Elena-Ramona Modroiu
               3.7. fetch_rows (integer)
               3.8. char_list (string)
               3.9. check_domain (integer)
+              3.10. mode (integer)
 
         4. Functions
 
@@ -64,8 +65,9 @@ Elena-Ramona Modroiu
    1.8. Set fetch_rows parameter
    1.9. Set char_list parameter
    1.10. Set check_domain parameter
-   1.11. prefix2domain usage
-   1.12. pd_translate usage
+   1.11. Set mode parameter
+   1.12. prefix2domain usage
+   1.13. pd_translate usage
 
 Chapter 1. Admin Guide
 
@@ -88,6 +90,7 @@ Chapter 1. Admin Guide
         3.7. fetch_rows (integer)
         3.8. char_list (string)
         3.9. check_domain (integer)
+        3.10. mode (integer)
 
    4. Functions
 
@@ -172,6 +175,7 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
    3.7. fetch_rows (integer)
    3.8. char_list (string)
    3.9. check_domain (integer)
+   3.10. mode (integer)
 
 3.1. db_url (string)
 
@@ -277,6 +281,18 @@ modparam("pdt", "char_list", "0123456789*+")
 modparam("pdt", "check_domain", 0)
 ...
 
+3.10. mode (integer)
+
+   If set to 1, duplicated prefixes are ingnored and starting continues,
+   if 0, then starting or loading fails.
+
+   Default value is 0.
+
+   Example 1.11. Set mode parameter
+...
+modparam("pdt", "mode", 1)
+...
+
 4. Functions
 
    4.1. prefix2domain(rewrite_mode, multidomain_mode)
@@ -320,7 +336,7 @@ modparam("pdt", "check_domain", 0)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.11. prefix2domain usage
+   Example 1.12. prefix2domain usage
 ...
 prefix2domain("2", "2");
 ...
@@ -367,7 +383,7 @@ prefix2domain();
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE or
    BRANCH_ROUTE.
 
-   Example 1.12. pd_translate usage
+   Example 1.13. pd_translate usage
 ...
 pd_translate("$fd", "2");
 ...

@@ -1,9 +1,11 @@
 /*
  * PERMISSIONS module
  *
- * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
+ * Copyright (C) 2003 Miklï¿½s Tirpï¿½k (mtirpak@sztaki.hu)
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +28,8 @@
 
 #include <regex.h>
 
-#define EXPRESSION_LENGTH 256	/* maximum length of an expression */
-#define LINE_LENGTH 500		/* maximum length of lines in the config file */
+#define EXPRESSION_LENGTH 256 /* maximum length of an expression */
+#define LINE_LENGTH 500		  /* maximum length of lines in the config file */
 
 
 struct rule_struct;
@@ -50,10 +52,11 @@ int search_expression(expression *e, char *value);
  * stores an expression
  * value represents the string, and reg_value is the compiled string to POSIX regular expression
 */
-struct expression_struct  {
-	char	value[EXPRESSION_LENGTH+1];
-	regex_t	*reg_value;
-	struct expression_struct	*next;
+struct expression_struct
+{
+	char value[EXPRESSION_LENGTH + 1];
+	regex_t *reg_value;
+	struct expression_struct *next;
 };
 
 
@@ -66,9 +69,10 @@ struct expression_struct  {
  * right = f, g
  * right_exceptions = h
  */
-struct rule_struct {
+struct rule_struct
+{
 	expression *left, *left_exceptions, *right, *right_exceptions;
-	struct rule_struct	*next;
+	struct rule_struct *next;
 };
 
 

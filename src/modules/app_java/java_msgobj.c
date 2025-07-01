@@ -278,11 +278,11 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
 				APP_NAME);
 		return NULL;
 	}
-	jStrParam = (*env)->NewStringUTF(env,
-			(msg->set_global_address.len <= 0
-					|| msg->set_global_address.s == NULL)
-					? ""
-					: msg->set_global_address.s);
+	jStrParam = (*env)->NewStringUTF(
+			env, (msg->set_global_address.len <= 0
+						 || msg->set_global_address.s == NULL)
+						 ? ""
+						 : msg->set_global_address.s);
 	(*env)->SetObjectField(env, SipMsgInstance, fid, jStrParam);
 	if((*env)->ExceptionCheck(env)) {
 		handle_exception();

@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -34,10 +36,11 @@
 
 
 #define get_content_disposition(_msg_) \
-	((struct disposition*)((_msg_)->content_disposition->parsed))
+	((struct disposition *)((_msg_)->content_disposition->parsed))
 
 
-struct disposition_param {
+struct disposition_param
+{
 	str name;
 	str body;
 	int is_quoted;
@@ -45,7 +48,8 @@ struct disposition_param {
 };
 
 
-struct disposition {
+struct disposition
+{
 	str type;
 	struct disposition_param *params;
 };
@@ -58,20 +62,19 @@ struct disposition {
  *            0 : success
  *            1 : hdr not found
  */
-int parse_content_disposition( struct sip_msg *msg );
+int parse_content_disposition(struct sip_msg *msg);
 
 
 /*! \brief parse a string that supposed to be a disposition and fills up the structure
  * Returns: -1 : error
  *           o : success */
-int parse_disposition( str *s, struct disposition *disp);
+int parse_disposition(str *s, struct disposition *disp);
 
 
 /*! \brief Frees the entire disposition structure (params + itself) */
-void free_disposition( struct disposition **disp);
+void free_disposition(struct disposition **disp);
 
 /*! \brief Prints recursive a disposition structure */
-void print_disposition( struct disposition *disp);
+void print_disposition(struct disposition *disp);
 
 #endif
-

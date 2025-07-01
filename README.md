@@ -2,6 +2,7 @@
 
 [![Build Status](https://github.com/kamailio/kamailio/actions/workflows/main.yml/badge.svg)](https://github.com/kamailio/kamailio/actions)
 [![Code Triage Badge](https://www.codetriage.com/kamailio/kamailio/badges/users.svg)](https://www.codetriage.com/kamailio/kamailio)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 Project Website:
 
@@ -100,13 +101,6 @@ For more information about the mailing lists, please see:
 
   * https://www.kamailio.org/w/mailing-lists/
 
-### IRC Channel
-
-An open IRC discussion channel is managed by the community:
-
-  * irc server: irc.freenode.net
-  * irc channel: #kamailio
-
 ### Matrix Channel
 
 An open Matrix discussion channel is managed by the community:
@@ -120,10 +114,5 @@ News:
 
   * https://www.kamailio.org/w/category/news/
   * Twitter @kamailio
-
-## Travis-CI - Testing Build Environment
-
- * [travis-ci](https://travis-ci.org/kamailio/kamailio/builds/)
- * [docker build](/test/travis/README.md)
 
 **Thank you for flying Kamailio!**

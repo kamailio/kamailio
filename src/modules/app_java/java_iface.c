@@ -149,13 +149,13 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized,
 
 	cslen = strlen(signature) + 2 + 1
 			+ 1; // '(' + 'signature' + ')' + 'return signature' + null terminator
-	cs = (char *)pkg_malloc((cslen+1) * sizeof(char));
+	cs = (char *)pkg_malloc((cslen + 1) * sizeof(char));
 	if(!cs) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 	r = snprintf(cs, cslen, "(%s)%s", signature, retval_sig);
-	if(r<0 || r>cslen) {
+	if(r < 0 || r > cslen) {
 		LM_ERR("building cs value failed\n");
 		pkg_free(cs);
 		return -1;
@@ -185,10 +185,9 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized,
 	_aj_msg = msgp;
 
 	// find a method by signature
-	invk_method = is_static
-						  ? (*_aj_env)->GetStaticMethodID(
-									_aj_env, KamailioClassRef, method_name, cs)
-						  : (*_aj_env)->GetMethodID(
+	invk_method = is_static ? (*_aj_env)->GetStaticMethodID(
+						  _aj_env, KamailioClassRef, method_name, cs)
+							: (*_aj_env)->GetMethodID(
 									_aj_env, KamailioClassRef, method_name, cs);
 	if(!invk_method || (*_aj_env)->ExceptionCheck(_aj_env)) {
 		handle_exception();
@@ -220,10 +219,9 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized,
 	}
 
 	if(param == NULL) {
-		retval = is_static
-						 ? (int)(*_aj_env)->CallStaticIntMethod(
-								   _aj_env, KamailioClassRef, invk_method_ref)
-						 : (int)(*_aj_env)->CallIntMethod(_aj_env,
+		retval = is_static ? (int)(*_aj_env)->CallStaticIntMethod(
+						 _aj_env, KamailioClassRef, invk_method_ref)
+						   : (int)(*_aj_env)->CallIntMethod(_aj_env,
 								   KamailioClassInstanceRef, invk_method_ref);
 	} else {
 		jparam = get_value_by_sig_type(signature, param);
@@ -234,10 +232,9 @@ int java_exec(struct sip_msg *msgp, int is_static, int is_synchronized,
 			return -1;
 		}
 
-		retval = is_static
-						 ? (int)(*_aj_env)->CallStaticIntMethod(_aj_env,
-								   KamailioClassRef, invk_method_ref, *jparam)
-						 : (int)(*_aj_env)->CallIntMethod(_aj_env,
+		retval = is_static ? (int)(*_aj_env)->CallStaticIntMethod(
+						 _aj_env, KamailioClassRef, invk_method_ref, *jparam)
+						   : (int)(*_aj_env)->CallIntMethod(_aj_env,
 								   KamailioClassInstanceRef, invk_method_ref,
 								   *jparam);
 	}

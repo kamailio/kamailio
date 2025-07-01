@@ -7,6 +7,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -36,8 +38,7 @@ int kz_hash_init();
 void kz_hash_destroy();
 
 int kz_cmd_store(kz_amqp_cmd_ptr cmd);
-kz_amqp_cmd_ptr kz_cmd_retrieve(str* message_id);
+kz_amqp_cmd_ptr kz_cmd_retrieve(str *message_id);
 
 
 #endif
-

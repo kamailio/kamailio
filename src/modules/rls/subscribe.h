@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -27,14 +29,14 @@
 #include <libxml/parser.h>
 #include "../../core/parser/msg_parser.h"
 
-int w_rls_handle_subscribe0(sip_msg_t* msg, char *p1, char *p2);
-int w_rls_handle_subscribe1(sip_msg_t* msg, char* watcher_uri, char *p2);
-int rls_handle_subscribe(struct sip_msg* msg, str watcher_user,
-		str watcher_domain);
+int w_rls_handle_subscribe0(sip_msg_t *msg, char *p1, char *p2);
+int w_rls_handle_subscribe1(sip_msg_t *msg, char *watcher_uri, char *p2);
+int rls_handle_subscribe(
+		struct sip_msg *msg, str watcher_user, str watcher_domain);
 int w_rls_update_subs(struct sip_msg *msg, char *puri, char *pevent);
 
-int ki_rls_handle_subscribe(struct sip_msg* msg);
-int ki_rls_handle_subscribe_uri(sip_msg_t* msg, str *wuri);
+int ki_rls_handle_subscribe(struct sip_msg *msg);
+int ki_rls_handle_subscribe_uri(sip_msg_t *msg, str *wuri);
 int ki_rls_update_subs(struct sip_msg *msg, str *uri, str *event);
 
 #endif

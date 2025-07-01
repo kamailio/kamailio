@@ -28,8 +28,8 @@
 
 #include "../../core/parser/msg_parser.h"
 
-typedef int (*item_func_t) (struct sip_msg*, str*, str*, int, int);
-typedef void (*item_free_t) (str*);
+typedef int (*item_func_t)(struct sip_msg *, str *, str *, int, int);
+typedef void (*item_free_t)(str *);
 
 typedef struct _xl_elog
 {
@@ -44,29 +44,30 @@ typedef struct _xl_elog
 
 /* callback function to parse the regular expression
  * back references */
-typedef int (*xl_parse_cb) (str *, int, xl_elog_p);
+typedef int (*xl_parse_cb)(str *, int, xl_elog_p);
 
-typedef int (xl_elog_free_all_f)(xl_elog_p log);
+typedef int(xl_elog_free_all_f)(xl_elog_p log);
 /* int xl_elog_free_all(xl_elog_p log); */
-typedef int (xl_parse_format_f)(char *s, xl_elog_p *el);
+typedef int(xl_parse_format_f)(char *s, xl_elog_p *el);
 //int xl_parse_format(char *s, xl_elog_p *el);
-typedef int (xl_parse_format2_f)(char *s, xl_elog_p *el, xl_parse_cb cb);
-typedef int (xl_print_log_f)(struct sip_msg*, xl_elog_t*, char*, int*);
+typedef int(xl_parse_format2_f)(char *s, xl_elog_p *el, xl_parse_cb cb);
+typedef int(xl_print_log_f)(struct sip_msg *, xl_elog_t *, char *, int *);
 //int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len);
-typedef str* (xl_get_nulstr_f)(void);
+typedef str *(xl_get_nulstr_f)(void);
 
-typedef struct xl_api {
-	xl_print_log_f		*xprint;
-	xl_parse_format_f	*xparse;
-	xl_parse_format_f	*shm_xparse;
-	xl_parse_format2_f	*xparse2;
-	xl_parse_format2_f	*shm_xparse2;
-	xl_elog_free_all_f	*xfree;
-	xl_elog_free_all_f	*shm_xfree;
-	xl_get_nulstr_f		*xnulstr;
+typedef struct xl_api
+{
+	xl_print_log_f *xprint;
+	xl_parse_format_f *xparse;
+	xl_parse_format_f *shm_xparse;
+	xl_parse_format2_f *xparse2;
+	xl_parse_format2_f *shm_xparse2;
+	xl_elog_free_all_f *xfree;
+	xl_elog_free_all_f *shm_xfree;
+	xl_get_nulstr_f *xnulstr;
 } xl_api_t;
 
-typedef int (xl_bind_f)(xl_api_t *xl_api);
+typedef int(xl_bind_f)(xl_api_t *xl_api);
 
 /* bind to the xl_lib api */
 xl_bind_f xl_bind;
@@ -88,4 +89,3 @@ xl_get_nulstr_f xl_get_nulstr;
 int xl_mod_init();
 int xl_child_init(int);
 #endif
-

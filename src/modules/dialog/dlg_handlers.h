@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -40,22 +42,20 @@
 #define MAX_DLG_RR_PARAM_NAME 32
 
 /* values for the sequential match mode */
-#define SEQ_MATCH_STRICT_ID  0
-#define SEQ_MATCH_FALLBACK   1
-#define SEQ_MATCH_NO_ID      2
+#define SEQ_MATCH_STRICT_ID 0
+#define SEQ_MATCH_FALLBACK 1
+#define SEQ_MATCH_NO_ID 2
 
 
 /*!
  * \brief Initialize the dialog handlers
  * \param rr_param_p added record-route parameter
- * \param dlg_flag_p dialog flag
  * \param timeout_avp_p AVP for timeout setting
  * \param default_timeout_p default timeout
  * \param seq_match_mode_p matching mode
  */
-void init_dlg_handlers(char *rr_param, int dlg_flag,
-		pv_spec_t *timeout_avp, int default_timeout,
-		int seq_match_mode, int keep_proxy_rr);
+void init_dlg_handlers(char *rr_param, pv_spec_t *timeout_avp,
+		int default_timeout, int seq_match_mode, int keep_proxy_rr);
 
 
 /*!
@@ -67,7 +67,7 @@ void destroy_dlg_handlers(void);
 /*!
  * \brief Parse SIP message and populate leg informations
  *
- * Parse SIP message and populate leg informations. 
+ * Parse SIP message and populate leg informations.
  * \param dlg the dialog to add cseq, contact & record_route
  * \param msg sip message
  * \param t transaction
@@ -77,8 +77,8 @@ void destroy_dlg_handlers(void);
  * \note for a request: get record route in normal order, for a reply get
  * in reverse order, skipping the ones from the request and the proxies' own
  */
-int populate_leg_info(dlg_cell_t *dlg, sip_msg_t *msg,
-	tm_cell_t *t, unsigned int leg, str *tag);
+int populate_leg_info(dlg_cell_t *dlg, sip_msg_t *msg, tm_cell_t *t,
+		unsigned int leg, str *tag);
 
 
 /*!
@@ -92,7 +92,7 @@ void dlg_onreq(tm_cell_t *t, int type, struct tmcb_params *param);
 
 /*!
  * \brief Function that is registered as RR callback for dialog tracking
- * 
+ *
  * Function that is registered as RR callback for dialog tracking. It
  * sets the appropriate events after the SIP method and run the state
  * machine to update the dialog state. It updates then the saved
@@ -124,7 +124,7 @@ void dlg_ontimeout(dlg_tl_t *tl);
  * \param t transaction
  * \param run_initial_cbs if set zero, initial callbacks are not executed
  * \return 0 on success, -1 on failure
- */ 
+ */
 int dlg_new_dialog(sip_msg_t *req, tm_cell_t *t, const int run_initial_cbs);
 
 
@@ -135,8 +135,7 @@ int dlg_new_dialog(sip_msg_t *req, tm_cell_t *t, const int run_initial_cbs);
  * \param res pseudo-variable result
  * \return 0 on success, -1 on failure
  */
-int pv_get_dlg_lifetime(sip_msg_t *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_dlg_lifetime(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 
 
 /*!
@@ -146,8 +145,7 @@ int pv_get_dlg_lifetime(sip_msg_t *msg, pv_param_t *param,
  * \param res pseudo-variable result
  * \return 0 on success, -1 on failure
  */
-int pv_get_dlg_status(sip_msg_t *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_dlg_status(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 
 
 /*!
@@ -182,5 +180,15 @@ void dlg_iuid_sfree(void *iuid);
  *
  */
 int dlg_manage(sip_msg_t *msg);
+
+/*!
+ *
+ */
+int dlg_set_state(sip_msg_t *msg, int istate);
+
+/*!
+ *
+ */
+int dlg_update_state(sip_msg_t *msg);
 
 #endif

@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -16,15 +18,15 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 /** \addtogroup flatstore
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * Flatstore management interface
  */
 
@@ -40,22 +42,20 @@
  * request, it will be carried out next time SER attempts to write new data
  * into the file.
  */
-static void rotate(rpc_t* rpc, void* c)
+static void rotate(rpc_t *rpc, void *c)
 {
 	*km_flat_rotate = time(0);
 	*flat_rotate = time(0);
 }
 
 
-static const char* flat_rotate_doc[2] = {
-	"Close and reopen flatrotate files during log rotation.",
-	0
-};
+static const char *flat_rotate_doc[2] = {
+		"Close and reopen flatrotate files during log rotation.", 0};
 
 
 rpc_export_t flat_rpc[] = {
-	{"flatstore.rotate", rotate, flat_rotate_doc, 0},
-	{0, 0, 0, 0},
+		{"flatstore.rotate", rotate, flat_rotate_doc, 0},
+		{0, 0, 0, 0},
 };
 
 /** @} */

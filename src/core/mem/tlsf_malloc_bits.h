@@ -29,8 +29,8 @@
 ** Detect whether or not we are building for a 32- or 64-bit (LP/LLP)
 ** architecture. There is no reliable portable method at compile-time.
 */
-#if defined (__alpha__) || defined (__ia64__) || defined (__x86_64__) \
-	|| defined (_WIN64) || defined (__LP64__) || defined (__LLP64__)
+#if defined(__alpha__) || defined(__ia64__) || defined(__x86_64__) \
+		|| defined(_WIN64) || defined(__LP64__) || defined(__LLP64__)
 #define TLSF_64BIT
 #endif
 
@@ -40,8 +40,9 @@
 **
 ** Note: clang is compatible with GCC builtins and will also define those macros
 */
-#if defined (__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4)) \
-	&& defined (__GNUC_PATCHLEVEL__)
+#if defined(__GNUC__)                                               \
+		&& (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4)) \
+		&& defined(__GNUC_PATCHLEVEL__)
 
 tlsf_decl int tlsf_ffs(unsigned int word)
 {
@@ -54,7 +55,7 @@ tlsf_decl int tlsf_fls(unsigned int word)
 	return bit - 1;
 }
 
-#if defined (TLSF_64BIT)
+#if defined(TLSF_64BIT)
 tlsf_decl int tlsf_fls_sizet(size_t size)
 {
 	const int bit = size ? 64 - __builtin_clzl(size) : 0;
@@ -68,12 +69,28 @@ tlsf_decl int tlsf_fls_generic(unsigned int word)
 {
 	int bit = 32;
 
-	if (!word) bit -= 1;
-	if (!(word & 0xffff0000)) { word <<= 16; bit -= 16; }
-	if (!(word & 0xff000000)) { word <<= 8; bit -= 8; }
-	if (!(word & 0xf0000000)) { word <<= 4; bit -= 4; }
-	if (!(word & 0xc0000000)) { word <<= 2; bit -= 2; }
-	if (!(word & 0x80000000)) { word <<= 1; bit -= 1; }
+	if(!word)
+		bit -= 1;
+	if(!(word & 0xffff0000)) {
+		word <<= 16;
+		bit -= 16;
+	}
+	if(!(word & 0xff000000)) {
+		word <<= 8;
+		bit -= 8;
+	}
+	if(!(word & 0xf0000000)) {
+		word <<= 4;
+		bit -= 4;
+	}
+	if(!(word & 0xc0000000)) {
+		word <<= 2;
+		bit -= 2;
+	}
+	if(!(word & 0x80000000)) {
+		word <<= 1;
+		bit -= 1;
+	}
 
 	return bit;
 }
@@ -89,19 +106,15 @@ tlsf_decl int tlsf_fls(unsigned int word)
 	return tlsf_fls_generic(word) - 1;
 }
 
-#if defined (TLSF_64BIT)
+#if defined(TLSF_64BIT)
 tlsf_decl int tlsf_fls_sizet(size_t size)
 {
 	int high = (int)(size >> 32);
 	int bits = 0;
-	if (high)
-	{
+	if(high) {
 		bits = 32 + tlsf_fls(high);
-	}
-	else
-	{
+	} else {
 		bits = tlsf_fls((int)size & 0xffffffff);
-
 	}
 	return bits;
 }
@@ -110,7 +123,7 @@ tlsf_decl int tlsf_fls_sizet(size_t size)
 #endif /* GNUC */
 
 
-#if !defined (TLSF_64BIT)
+#if !defined(TLSF_64BIT)
 #define tlsf_fls_sizet tlsf_fls
 #endif
 

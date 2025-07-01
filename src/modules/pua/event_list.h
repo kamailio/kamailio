@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -15,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -29,32 +31,32 @@
 
 struct publ_info;
 
-typedef int (evs_process_body_t)(struct publ_info* , str** final_body, 
-		 int ver, str** tuple);
+typedef int(evs_process_body_t)(
+		struct publ_info *, str **final_body, int ver, str **tuple);
 
 typedef struct pua_event
 {
-	int ev_flag;                   
+	int ev_flag;
 	str name;
-	str content_type;         /* default content type for that event*/	
-	evs_process_body_t* process_body;
-	struct pua_event* next;
+	str content_type; /* default content type for that event*/
+	evs_process_body_t *process_body;
+	struct pua_event *next;
 
-}pua_event_t;
+} pua_event_t;
 
-extern pua_event_t* pua_evlist;
+extern pua_event_t *pua_evlist;
 
-pua_event_t* init_pua_evlist(void);
+pua_event_t *init_pua_evlist(void);
 
-int add_pua_event(int ev_flag, char* name, char* content_type,
-		evs_process_body_t* process_body);
+int add_pua_event(int ev_flag, char *name, char *content_type,
+		evs_process_body_t *process_body);
 
-typedef int (*add_pua_event_t)(int ev_flag, char* name, char* content_type,
-		evs_process_body_t* process_body);
+typedef int (*add_pua_event_t)(int ev_flag, char *name, char *content_type,
+		evs_process_body_t *process_body);
 
-pua_event_t* contains_pua_event(str* name);
+pua_event_t *contains_pua_event(str *name);
 
-pua_event_t* get_event(int ev_flag);
+pua_event_t *get_event(int ev_flag);
 
 void destroy_pua_evlist(void);
 

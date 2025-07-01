@@ -27,8 +27,9 @@
 #include "ip_addr.h"
 
 /** filter for limiting packets received on raw sockets. */
-struct raw_filter{
-	struct net   dst;
+struct raw_filter
+{
+	struct net dst;
 	unsigned short port1;
 	unsigned short port2;
 	char proto;
@@ -36,17 +37,16 @@ struct raw_filter{
 
 extern int raw_ipip;
 
-int raw_socket(int proto, struct ip_addr* ip, str* iface, int iphdr_incl);
-int raw_udp4_socket(struct ip_addr* ip, str* iface, int iphdr_incl);
-int recvpkt4(int sock, char* buf, int len, union sockaddr_union* from,
-					union sockaddr_union* to);
-int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
-					union sockaddr_union* to, struct raw_filter* rf);
-int raw_udp4_send(int rsock, char* buf, unsigned int len,
-					union sockaddr_union* from,
-					union sockaddr_union* to);
-int raw_iphdr_udp4_send(int rsock, char* buf, unsigned int len,
-						union sockaddr_union* from,
-						union sockaddr_union* to, unsigned short mtu);
+int raw_socket(int proto, struct ip_addr *ip, str *iface, int iphdr_incl);
+int raw_udp4_socket(struct ip_addr *ip, str *iface, int iphdr_incl);
+int recvpkt4(int sock, char *buf, int len, union sockaddr_union *from,
+		union sockaddr_union *to);
+int raw_udp4_recv(int rsock, char **buf, int len, union sockaddr_union *from,
+		union sockaddr_union *to, struct raw_filter *rf);
+int raw_udp4_send(int rsock, char *buf, unsigned int len,
+		union sockaddr_union *from, union sockaddr_union *to);
+int raw_iphdr_udp4_send(int rsock, char *buf, unsigned int len,
+		union sockaddr_union *from, union sockaddr_union *to,
+		unsigned short mtu);
 
 #endif /* _raw_sock_h */

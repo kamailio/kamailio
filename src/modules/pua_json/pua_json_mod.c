@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -80,7 +82,7 @@ static int mod_init(void)
 /**
  *
  */
-static int ki_pua_json_publish(sip_msg_t* msg, str* pjson)
+static int ki_pua_json_publish(sip_msg_t *msg, str *pjson)
 {
 	return pua_json_publish(msg, pjson->s);
 }
@@ -92,7 +94,7 @@ static int w_pua_json_publish(sip_msg_t *msg, char *p1pjson, char *p2)
 {
 	str pjson = STR_NULL;
 
-	if(fixup_get_svalue(msg, (gparam_t*)p1pjson, &pjson)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)p1pjson, &pjson) < 0) {
 		LM_ERR("failed to get p1 value\n");
 		return -1;
 	}

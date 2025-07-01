@@ -24,26 +24,27 @@
 #define _JANSSONRPC_CONNECT_H_
 
 enum
-{ JSONRPC_SERVER_DISCONNECTED = 0
-, JSONRPC_SERVER_CONNECTED
-, JSONRPC_SERVER_CONNECTING
-, JSONRPC_SERVER_FAILURE
-, JSONRPC_SERVER_CLOSING
-, JSONRPC_SERVER_RECONNECTING
+{
+	JSONRPC_SERVER_DISCONNECTED = 0,
+	JSONRPC_SERVER_CONNECTED,
+	JSONRPC_SERVER_CONNECTING,
+	JSONRPC_SERVER_FAILURE,
+	JSONRPC_SERVER_CLOSING,
+	JSONRPC_SERVER_RECONNECTING
 };
 
 /* interval (in seconds) at which failed servers are retried */
-#define JSONRPC_RECONNECT_INTERVAL  3
+#define JSONRPC_RECONNECT_INTERVAL 3
 
-void force_disconnect(jsonrpc_server_t* server);
+void force_disconnect(jsonrpc_server_t *server);
 /* Do not call force_disconnect() from outside the IO process.
  * Server's have a bufferevent that is part of local memory and free'd
  * at disconnect */
 
-void wait_close(jsonrpc_server_t* server);
-void wait_reconnect(jsonrpc_server_t* server);
-void connect_servers(jsonrpc_server_group_t** group);
-void force_reconnect(jsonrpc_server_t* server);
-void bev_connect(jsonrpc_server_t* server);
+void wait_close(jsonrpc_server_t *server);
+void wait_reconnect(jsonrpc_server_t *server);
+void connect_servers(jsonrpc_server_group_t **group);
+void force_reconnect(jsonrpc_server_t *server);
+void bev_connect(jsonrpc_server_t *server);
 
 #endif /* _JSONRPC_CONNECT_H_ */

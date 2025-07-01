@@ -4,7 +4,7 @@
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
- * Fruanhofer Institute. It was and still is maintained in a separate
+ * Fraunhofer FOKUS Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
@@ -14,7 +14,7 @@
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
  *
- * NB: Alot of this code was originally part of OpenIMSCore,
+ * NB: A lot of this code was originally part of OpenIMSCore,
  * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
  * Thanks for great work! This is an effort to
@@ -24,6 +24,8 @@
  * to manage in the Kamailio/SR environment
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,6 +46,7 @@
 #ifndef __RECEIVER_H
 #define __RECEIVER_H
 
+#include <openssl/ssl.h>
 #include "peer.h"
 #include "diameter.h"
 
@@ -53,31 +56,35 @@
 #define DIAMETER_HEADER_LEN 20
 
 
-typedef enum {
-	Receiver_Waiting=0,
-	Receiver_Header=1,
-	Receiver_Rest_of_Message=2
+typedef enum
+{
+	Receiver_Waiting = 0,
+	Receiver_Header = 1,
+	Receiver_Rest_of_Message = 2
 } receiver_state_t;
 
 /** list of receiver attached peers */
-typedef struct _serviced_peer_t {
-	peer *p;									/**< the attached peer */
+typedef struct _serviced_peer_t
+{
+	peer *p; /**< the attached peer */
 
-	int tcp_socket;								/**< socket used for the Diameter communication */
+	int tcp_socket;	  /**< socket used for the Diameter communication */
+	SSL *tls_conn;	  /**< will be set if this is a tls connection */
+	SSL_CTX *tls_ctx; /**< will be set if this is a tls connection */
 
-	str send_pipe_name;							/**< name of the pipe to signal messages to be sent out */
-	int send_pipe_fd;							/**< reader from the pipe to signal messages to be sent out */
-	int send_pipe_fd_out;						/**< keep-alive writer for the pipe to signal messages to be sent out */
+	str send_pipe_name; /**< name of the pipe to signal messages to be sent out */
+	int send_pipe_fd; /**< reader from the pipe to signal messages to be sent out */
+	int send_pipe_fd_out; /**< keep-alive writer for the pipe to signal messages to be sent out */
 
-	receiver_state_t state;						/**< current receiving state */
-	char buf[DIAMETER_HEADER_LEN];				/**< buffer to receive header into */
-	int buf_len;								/**< received bytes in the header */
-	int length;									/**< length of the message as written in the header */
-	char *msg;									/**< dynamic buffer for receiving one message */
-	int msg_len;								/**< received bytes in the dynamic buffer */
+	receiver_state_t state;		   /**< current receiving state */
+	char buf[DIAMETER_HEADER_LEN]; /**< buffer to receive header into */
+	int buf_len;				   /**< received bytes in the header */
+	int length;	 /**< length of the message as written in the header */
+	char *msg;	 /**< dynamic buffer for receiving one message */
+	int msg_len; /**< received bytes in the dynamic buffer */
 
 
-	struct _serviced_peer_t *next;	/**< first peer in the list */
+	struct _serviced_peer_t *next; /**< first peer in the list */
 	struct _serviced_peer_t *prev; /**< last peer in the list */
 } serviced_peer_t;
 
@@ -86,11 +93,10 @@ extern unsigned int debug_heavy;
 int receiver_init(peer *p);
 void receiver_process(peer *p);
 
-int receiver_send_socket(int sock,peer *p);
+int receiver_send_socket(int sock, peer *p);
 
 int peer_connect(peer *p);
-int peer_send(peer *p,int sock,AAAMessage *msg,int locked);
-int peer_send_msg(peer *p,AAAMessage *msg);
+int peer_send(peer *p, int sock, AAAMessage *msg, int locked);
+int peer_send_msg(peer *p, AAAMessage *msg);
 
 #endif
-

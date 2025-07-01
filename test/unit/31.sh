@@ -30,7 +30,7 @@ fi ;
 CFG=11.cfg
 
 DOMAIN="local"
-# setup 500 contacts
+# set up 500 contacts
 NR=500
 
 COUNTER=0

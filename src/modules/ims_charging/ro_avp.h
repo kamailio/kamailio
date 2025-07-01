@@ -11,7 +11,8 @@
 #include "../cdp/cdp_load.h"
 
 int ro_add_destination_realm_avp(AAAMessage *msg, str data);
-int Ro_add_avp(AAAMessage *m, char *d, int len, int avp_code, int flags, int vendorid, int data_do, const char *func);
+int Ro_add_avp(AAAMessage *m, char *d, int len, int avp_code, int flags,
+		int vendorid, int data_do, const char *func);
 
 
 #endif /* RO_AVP_H_ */

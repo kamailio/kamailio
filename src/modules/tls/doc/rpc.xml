@@ -50,6 +50,18 @@
                         </para></listitem>
                 </itemizedlist>
 	</section>
+	<section id="tls.r.tls.kill">
+		<title><function>tls.kill</function></title>
+		<para>
+			Kill a TLS session by id.
+		</para>
+		<para>Parameters: </para>
+                <itemizedlist>
+                        <listitem><para>
+                                None.
+                        </para></listitem>
+                </itemizedlist>
+	</section>
 	<section id="tls.r.tls.reload">
 		<title><function>tls.reload</function></title>
 		<para>
@@ -57,6 +69,10 @@
 			modparam() parameters. Note that existing active TLS connections are not
 			terminated and they continue to use the old certificates. The new configuration
 			will be used for new connections.
+		</para>
+		<para>
+		Reload is generally safe and usable in production environments. If possible should
+		be done in a time where the service has lower usage/connections.
 		</para>
 		<para>
 			This RPC command is exported with "RPC_EXEC_DELTA" flag, therefore its

@@ -72,8 +72,6 @@ LIBS+= $(TLS_EXTRA_LIBS) -lpthread
 # dcm: tls.cfg installed via local 'install-cfg' to update paths
 #MOD_INSTALL_CFGS=tls.cfg
 
-MOD_INSTALL_UTILS=utils/openssl_mutex_shared
-
 include ../../Makefile.modules
 
 install-tls-cert: $(cfg_prefix)/$(cfg_dir)

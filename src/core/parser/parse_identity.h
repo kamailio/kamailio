@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -31,15 +33,16 @@
 #include "../str.h"
 #include "msg_parser.h"
 
-struct identity_body{
-	int error;  		/*!< Error code */
-	int ballocated;  	/*!< Does hash point to an allocated area */
+struct identity_body
+{
+	int error;		/*!< Error code */
+	int ballocated; /*!< Does hash point to an allocated area */
 	str hash;
 };
 
 
 /*! \brief casting macro for accessing IDENTITY body */
-#define get_identity(p_msg) ((struct identity_body*)(p_msg)->identity->parsed)
+#define get_identity(p_msg) ((struct identity_body *)(p_msg)->identity->parsed)
 
 
 /*! \brief

@@ -124,7 +124,7 @@ modparam("rtimer", "default_interval", 300)
 ...
 # time interval set to 10 seconds
 modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
-# time interval set to 100 mili-seconds
+# time interval set to 100 milliseconds
 modparam("rtimer", "timer", "name=ta;interval=100000u;mode=1;")
 ...
 </programlisting>

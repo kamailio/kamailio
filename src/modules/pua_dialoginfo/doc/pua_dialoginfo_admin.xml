@@ -10,13 +10,13 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
-		The pua_dialoginfo retrieves dialog state information from the 
+		The pua_dialoginfo retrieves dialog state information from the
 		dialog module and PUBLISHes the dialog-information using the pua
 		module. Thus, in combination with the presence_xml module this can
 		be used to derive dialog-info from the dialog module and NOTIFY
@@ -24,7 +24,7 @@
 		for example with SNOM and Linksys phones.
 	</para>
 	<para>
-		Note: This implements dialog-info according to RFC 4235 and is not 
+		Note: This implements dialog-info according to RFC 4235 and is not
 		compatible with the BLA feature defined in draft-anil-sipping-bla-03.txt.
 		(Actually the BLA draft is really crap as it changes SIP semantics)
 	</para>
@@ -44,9 +44,9 @@
              version="1"
              state="full"
              entity="sip:alice@example.com">
-    <dialog id="as7d900as8" 
+    <dialog id="as7d900as8"
             call-id="a84b4c76e66710"
-            local-tag="1928301774" 
+            local-tag="1928301774"
             remote-tag="456887766"
             direction="initiator">
         <state>early</state>
@@ -55,7 +55,7 @@
 ]]>
 </programlisting>
 
-		The root element is the "dialog-info". It contains the namespace, the 
+		The root element is the "dialog-info". It contains the namespace, the
 		version (which must be incremented for each new PUBLISH for this certain
 		dialog), the state (this module only supports state=full) and the entity
 		for which we publish the dialog-info.
@@ -64,10 +64,10 @@
 	<para>
 
 		The "dialog" element must contain an id parameter. The id parameter is
-		usually different to the optional call-id parameter (which is the call-id of the 
+		usually different to the optional call-id parameter (which is the call-id of the
 		INVITE request) as an INVITE can create multiple dialogs (forked request). But
-		as the dialog module does not support multiple dialogs created by a single 
-		transaction, the pua_dialoginfo module sets the id parameter to the same 
+		as the dialog module does not support multiple dialogs created by a single
+		transaction, the pua_dialoginfo module sets the id parameter to the same
 		value as the call-id parameter. The "local-tag" indicates the local tag of the
 		entity. The remote-tag indicates the tag of the remote party. The "direction"
 		indicates if the entity was the initiator of the dialog or the recipient (aka
@@ -90,9 +90,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <dialog-info xmlns="urn:ietf:params:xml:ns:dialog-info"
              version="1" state="full">
-    <dialog id="as7d900as8" 
+    <dialog id="as7d900as8"
             call-id="a84b4c76e66710"
-            local-tag="1928301774" 
+            local-tag="1928301774"
             remote-tag="456887766"
             direction="initiator">
         <state>early</state>
@@ -109,10 +109,10 @@
 ]]>
 </programlisting>
 
-        The local and remote elements are needed to implement call pickup. For example if 
+        The local and remote elements are needed to implement call pickup. For example if
 		the above XML document is received by somebody who SUBSCRIBEd the dialog-info of
 		Alice, then it can pick-up the call by sending an INVITE to Bob (actually I am not
-		sure if it should use the URI in the identity element or the URI in the target 
+		sure if it should use the URI in the identity element or the URI in the target
 		parameter) which contains a Replaces header which contains the call-id and the tags.
 		This was tested successfully with Linksys SPA962 phones and with SNOM 320 Firmware 7.3.7
 		(you have to set the function key to "Extension").
@@ -120,7 +120,7 @@
 	</para>
 	<para>
 
-		A dialog-info XML document may contain multiple "dialog" elements, for 
+		A dialog-info XML document may contain multiple "dialog" elements, for
 		example if the entity has multiple ongoing dialogs. For example the
 		following XML document shows a confirmed dialog and an early (probably
 		a second incoming call) dialog.
@@ -155,8 +155,8 @@
 
 	</para>
 	<para>
-		
-		If there are problems with the callbacks from dialog module and you want to 
+
+		If there are problems with the callbacks from dialog module and you want to
 		debug them you define PUA_DIALOGINFO_DEBUG in pua_dialoginfo.c and recompile.
 	</para>
 	</section>
@@ -165,8 +165,8 @@
 	<para>This module is directly coupled with the dialog module. Thus, if the module is
 		loaded, it is automatically active for all calls tracked by the dialog module. Thus,
 		make sure that you activate the dialog module for a certain call if you want dialog-state
-		to be PUBLISHED. This means, the dlg_flag of the dialog module must be configured
-		and the respective flag must be set during call processing.
+		to be PUBLISHED. This means, use the <emphasis>dlg_manage()</emphasis> function of the dialog
+		module to have it tracked.
 	</para>
 	</section>
 	<section>
@@ -177,12 +177,12 @@
 				The module tries to find out if the entity is a local user. Only PUBLISH to
 				local user are sent. Therefore, the module needs to find out if the domain is
 				a local one or not. It uses the same mechanism as the "==myself" mechanism. Thus,
-				all domains have to be declared with the "alias=..." option in &kamailio;.cfg. 
+				all domains have to be declared with the "alias=..." option in &kamailio;.cfg.
 				DB-based multidomain support as offered by "domain" module is not supported yet.
 				Conclusion: The module has the same "domain" problems as the "rr" module.
 			</para></listitem>
 			<listitem><para>
-				The module puts the call-id of the dialog into an XML parameter. Thus, if the 
+				The module puts the call-id of the dialog into an XML parameter. Thus, if the
 				call-id contains quotes, they should be escaped. This is not yet implemented. Thus,
 				if the call-id contains quotes the XML document will be invalid.
 			</para></listitem>
@@ -211,6 +211,11 @@
 				<emphasis>pua</emphasis>.
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>uuid</emphasis> if <varname>use_uuid</varname> is enabled.
+			</para>
+			</listitem>
 			</itemizedlist>
 		</para>
 	</section>
@@ -233,7 +238,26 @@
 	<section>
 		<title>Parameters</title>
 
-		<section>
+	<section id="pua_dialoginfo.p.use_uuid">
+		<title><varname>use_uuid</varname> (int)</title>
+		<para>
+			If this parameter is set, the pres_id will be generated using libuuid via uuid module.
+			uuid module has to be loaded before pua_dialoginfo in this case.
+		</para>
+		<para>
+			<emphasis>Default value is <quote>0</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>use_uuid</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "use_uuid", 1)
+...
+</programlisting>
+		</example>
+		</section>
+
+		<section id="pua_dialoginfo.p.include_callid">
 		<title><varname>include_callid</varname> (int)</title>
 		<para>
 			If this parameter is set, the optional call-id will be put into the
@@ -252,7 +276,7 @@ modparam("pua_dialoginfo", "include_callid", 0)
 		</example>
 		</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.include_tags">
 		<title><varname>include_tags</varname> (int)</title>
 		<para>
 			If this parameter is set, the local and remote tag will be put
@@ -271,11 +295,11 @@ modparam("pua_dialoginfo", "include_tags", 0)
 		</example>
 		</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.include_localremote">
 		<title><varname>include_localremote</varname> (int)</title>
 		<para>
 			If this parameter is set, the optional local and remote elements
-			will be put into the dialog element. This is needed for call-pickup 
+			will be put into the dialog element. This is needed for call-pickup
 			features.
 		</para>
 		<para>
@@ -291,14 +315,14 @@ modparam("pua_dialoginfo", "include_localremote", 0)
 		</example>
 		</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.override_lifetime">
 		<title><varname>override_lifetime</varname> (int)</title>
 		<para>
 			The PUBLISH requests used to send the dialog-info contain an Expires header.
 			The value of the expires is usually taken from the lifetime of the dialog
 			(see README of dialog module). If the override_lifetime is set, the value
 			specified here is used instead of the lifetime of the dialog module.
-			If used, the value should at least be a few seconds more than the 
+			If used, the value should at least be a few seconds more than the
 			fr_inv_timer of the tm module.
 		</para>
 		<para>
@@ -314,7 +338,7 @@ modparam("pua_dialoginfo", "override_lifetime", 300)
 		</example>
 		</section>
 
-	<section>
+	<section id="pua_dialoginfo.p.include_req_uri">
 		<title><varname>include_req_uri</varname> (int)</title>
 		<para>
 			controls if R-URI is going to be used instead of To header value in
@@ -333,11 +357,11 @@ modparam("pua_dialoginfo", "include_req_uri", 1)
 		</example>
 	</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.caller_confirmed">
 		<title><varname>caller_confirmed</varname> (int)</title>
 		<para>
-			Usually the dialog-info of the caller will be 
-			"trying -> early -> confirmed" and the dialog-info of the callee 
+			Usually the dialog-info of the caller will be
+			"trying -> early -> confirmed" and the dialog-info of the callee
 			will be "early -> confirmed". On some phones the function LED
 			will start blinking if the state is early, regardless if is is the
 			caller or the callee (indicated with the "direction" parameter).
@@ -358,8 +382,8 @@ modparam("pua_dialoginfo", "caller_confirmed", 1)
 </programlisting>
 		</example>
 		</section>
-	
-	<section>
+
+	<section id="pua_dialoginfo.p.send_publish_flag">
 		<title><varname>send_publish_flag</varname> (int)</title>
 		<para>
 			This message flag indicates whether to send PUBLISH requests or not.
@@ -378,7 +402,7 @@ modparam("pua_dialoginfo", "send_publish_flag", 8)
 		</example>
 		</section>
 
-	<section>
+	<section id="pua_dialoginfo.p.disable_caller_publish_flag">
 		<title><varname>disable_caller_publish_flag</varname> (int)</title>
 		<para>
 			This message flag indicates whether to send caller (initiator) PUBLISH requests or not.
@@ -397,7 +421,7 @@ modparam("pua_dialoginfo", "disable_caller_publish_flag", 9)
 		</example>
 		</section>
 
-	<section>
+	<section id="pua_dialoginfo.p.disable_callee_publish_flag">
 		<title><varname>disable_callee_publish_flag</varname> (int)</title>
 		<para>
 			This message flag indicates whether to send callee (recipient) PUBLISH requests or not.
@@ -415,11 +439,11 @@ modparam("pua_dialoginfo", "disable_callee_publish_flag", 10)
 </programlisting>
 		</example>
 		</section>
-	
-		<section>
+
+		<section id="pua_dialoginfo.p.use_pubruri_avps">
 		<title><varname>use_pubruri_avps</varname> (int)</title>
 		<para>
-			Get Publish R-Uri from avps (see corresponding avp params), not from request to/from uri. 
+			Get Publish R-Uri from avps (see corresponding avp params), not from request to/from uri.
 		</para>
 		<para>
 			<emphasis>Default value is <quote>0</quote>.</emphasis>
@@ -452,12 +476,12 @@ modparam("pua_dialoginfo", "refresh_pubruri_avps_flag", 11)
 		</example>
 		</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.pubruri_caller_avp">
 		<title><varname>pubruri_caller_avp</varname> (str)</title>
 		<para>
-			If use_pubruri_avps is enabled, PUBLISH-requests reporting dialog-information about the caller (entity=caller) are sent using the value of the specified avp as R-Uri.  
+			If use_pubruri_avps is enabled, PUBLISH-requests reporting dialog-information about the caller (entity=caller) are sent using the value of the specified avp as R-Uri.
 			If multiple AVPs with the same name (but different indexes) are present, for each value a corresponding PUBLISH-request is generated.
-			If no AVP with the specified name exists, no caller-related PUBLISH requests are sent.   
+			If no AVP with the specified name exists, no caller-related PUBLISH requests are sent.
 		</para>
 		<para>
 			<emphasis>Default value is <quote>NULL</quote>.</emphasis>
@@ -471,13 +495,13 @@ modparam("pua_dialoginfo", "pubruri_caller_avp", "$avp(s:puburis_caller)")
 </programlisting>
 		</example>
 		</section>
-		
-		<section>
+
+		<section id="pua_dialoginfo.p.pubruri_callee_avp">
 		<title><varname>pubruri_callee_avp</varname> (str)</title>
 		<para>
-			If use_pubruri_avps is enabled, PUBLISH-requests reporting dialog-information about the callee (entity=callee) are sent using the value of the specified avp as R-Uri.  
+			If use_pubruri_avps is enabled, PUBLISH-requests reporting dialog-information about the callee (entity=callee) are sent using the value of the specified avp as R-Uri.
 			If multiple AVPs with the same name (but different indexes) are present, for each value a corresponding PUBLISH-request is generated.
-			If no AVP with the specified name exists, no callee-related PUBLISH requests are sent.   
+			If no AVP with the specified name exists, no callee-related PUBLISH requests are sent.
 		</para>
 		<para>
 			<emphasis>Default value is <quote>NULL</quote>.</emphasis>
@@ -513,7 +537,7 @@ modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
 </programlisting>
 		</example>
 		</section>
-		
+
 		<section id="pua_dialoginfo.p.pubruri_callee_dlg_var">
 		<title><varname>pubruri_callee_dlg_var</varname> (str)</title>
 		<para>
@@ -536,7 +560,7 @@ modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
 		</example>
 		</section>
 
-		<section>
+		<section id="pua_dialoginfo.p.callee_trying">
 		<title><varname>callee_trying</varname> (int)</title>
 		<para>
 			If this parameter is set, a "Trying" state will be sent for both the
@@ -555,70 +579,70 @@ modparam("pua_dialoginfo", "callee_trying", 1)
 		</example>
 		</section>
 
-                <section>
-                <title><varname>caller_entity_when_publish_disabled</varname> (int)</title>
-                <para>
-                        Must be a valid sip uri.
-                        If this parameter is set, this uri is used as caller entity in
-                        publish xml body if associated dialog has the flag
-                        disable_caller_publish_flag set.
-                        Note only the flag received on dialog creation is used to activate
-                        this feature.
-                </para>
-                <para>
-                        <emphasis>Default value is <quote>NULL</quote>.</emphasis>
-                </para>
-                <example>
-                        <title>Set <varname>caller_entity_when_publish_disabled</varname> parameter</title>
-                        <programlisting format="linespecific">
+		<section id="pua_dialoginfo.p.caller_entity_when_publish_disabled">
+		<title><varname>caller_entity_when_publish_disabled</varname> (int)</title>
+		<para>
+			Must be a valid sip uri.
+			If this parameter is set, this uri is used as caller entity in
+			publish xml body if associated dialog has the flag
+			disable_caller_publish_flag set.
+			Note only the flag received on dialog creation is used to activate
+			this feature.
+		</para>
+		<para>
+			<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>caller_entity_when_publish_disabled</varname> parameter</title>
+			<programlisting format="linespecific">
 ...
 modparam("pua_dialoginfo", "caller_entity_when_publish_disabled", "sip:caller@publish.disabled.com")
 ...
-			</programlisting>
-                </example>
-                </section>
+</programlisting>
+		</example>
+		</section>
 
-                <section>
-                <title><varname>callee_entity_when_publish_disabled</varname> (int)</title>
-                <para>
-                        Must be a valid sip uri.
-                        If this parameter is set, this uri is used as callee entity in
-                        publish xml body if associated dialog has the flag
-                        disable_callee_publish_flag set.
-                        Note only the flag received on dialog creation is used to activate
-                        this feature.
-                </para>
-                <para>
-                        <emphasis>Default value is <quote>NULL</quote>.</emphasis>
-                </para>
-                <example>
-                        <title>Set <varname>callee_entity_when_publish_disabled</varname> parameter</title>
-                        <programlisting format="linespecific">
+		<section id="pua_dialoginfo.p.callee_entity_when_publish_disabled">
+		<title><varname>callee_entity_when_publish_disabled</varname> (int)</title>
+		<para>
+			Must be a valid sip uri.
+			If this parameter is set, this uri is used as callee entity in
+			publish xml body if associated dialog has the flag
+			disable_callee_publish_flag set.
+			Note only the flag received on dialog creation is used to activate
+			this feature.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>callee_entity_when_publish_disabled</varname> parameter</title>
+			<programlisting format="linespecific">
 ...
 modparam("pua_dialoginfo", "callee_entity_when_publish_disabled", "sip:callee@publish.disabled.com")
 ...
-			</programlisting>
-                </example>
-                </section>
+</programlisting>
+		</example>
+		</section>
 
-                <section>
-                <title><varname>publish_dialog_req_within</varname> (int)</title>
-                <para>
-                        If this parameter is set to 1, subsequents requests received in dialog generate
-                        corresponding publish request.
-                </para>
-                <para>
-                        <emphasis>Default value is <quote>1</quote>.</emphasis>
-                </para>
-                <example>
-                        <title>Set <varname>publish_dialog_req_within</varname> parameter</title>
-                        <programlisting format="linespecific">
+		<section id="pua_dialoginfo.p.publish_dialog_req_within">
+		<title><varname>publish_dialog_req_within</varname> (int)</title>
+		<para>
+			If this parameter is set to 1, subsequents requests received in dialog generate
+			corresponding publish request.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>publish_dialog_req_within</varname> parameter</title>
+			<programlisting format="linespecific">
 ...
 modparam("pua_dialoginfo", "publish_dialog_req_within", 0)
 ...
-			</programlisting>
-                </example>
-                </section>
+</programlisting>
+		</example>
+		</section>
 
 		<section id="pua_dialoginfo.p.local_identity_dlg_var">
 		<title><varname>local_identity_dlg_var</varname> (str)</title>
@@ -639,30 +663,29 @@ modparam("pua_dialoginfo", "local_identity_dlg_var", "local_identity")
 		</example>
 		</section>
 
-        <section id="pua_dialoginfo.p.attribute_display">
-            <title><varname>attribute_display</varname> (int)</title>
-            <para>
-            If set to 1, the display name attribute is added with user part of the
-            URI for local and remote targets.
-            </para>
-            <para>
-                <emphasis>Default value is <quote>0</quote>.</emphasis>
-            </para>
-            <example>
-                <title>Set <varname>attribute_display</varname> parameter</title>
-                <programlisting format="linespecific">
+		<section id="pua_dialoginfo.p.attribute_display">
+		<title><varname>attribute_display</varname> (int)</title>
+		<para>
+			If set to 1, the display name attribute is added with user part of the
+			URI for local and remote targets.
+		</para>
+		<para>
+				<emphasis>Default value is <quote>0</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>attribute_display</varname> parameter</title>
+			<programlisting format="linespecific">
 ...
 modparam("pua_dialoginfo", "attribute_display", 1)
 ...
 </programlisting>
-            </example>
-        </section>
+		</example>
+		</section>
 
     </section>
 
 	<section>
 	<title>Functions</title>
-	</section>		
+	</section>
 
 </chapter>
-

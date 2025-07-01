@@ -35,6 +35,7 @@ Henning Westerholt
         4. Functions
 
               4.1. geoip2_match(ipaddr, pvc)
+              4.2. geoip2_distance(ip_addr, latitude, longitude)
 
         5. RPC Commands
 
@@ -47,7 +48,8 @@ Henning Westerholt
    1.1. Set path parameter
    1.2. Set resid parameter
    1.3. geoip2_match usage
-   1.4. geoip2.reload usage
+   1.4. geoip2_distance usage
+   1.5. geoip2.reload usage
 
 Chapter 1. Admin Guide
 
@@ -67,6 +69,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. geoip2_match(ipaddr, pvc)
+        4.2. geoip2_distance(ip_addr, latitude, longitude)
 
    5. RPC Commands
 
@@ -151,6 +154,7 @@ if(geoip2_match("$si", "src")) {
 4. Functions
 
    4.1. geoip2_match(ipaddr, pvc)
+   4.2. geoip2_distance(ip_addr, latitude, longitude)
 
 4.1.  geoip2_match(ipaddr, pvc)
 
@@ -165,6 +169,24 @@ if(geoip2_match("$si", "src"))
     xlog("SIP message from: $gip2(src=>cc)\n");
 ...
 
+4.2.  geoip2_distance(ip_addr, latitude, longitude)
+
+   The function calculates the distance in miles between the
+   geocoordinates of the IP address passed as parameter (the coordinates
+   are calculated inside the function) and the geocoordinates latitude and
+   longitude
+
+   Example 1.4. geoip2_distance usage
+...
+        $var(client_ip) = "109.184.18.64";
+        $var(lat_pos) = "53.200660";
+        $var(lon_pos) = "45.004640";
+        $var(dist) = geoip2_distance($var(client_ip), $var(lat_pos), $var(lon_po
+s));
+
+        xlog("distance is $var(dist)\n");
+...
+
 5. RPC Commands
 
    5.1. geoip2.reload
@@ -174,7 +196,7 @@ if(geoip2_match("$si", "src"))
    Reload the internal GeoIP database. This is necessary after the
    database file has been changed on the disk.
 
-   Example 1.4. geoip2.reload usage
+   Example 1.5. geoip2.reload usage
 ...
 kamcmd geoip2.reload
 ...

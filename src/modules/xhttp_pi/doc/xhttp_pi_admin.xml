@@ -282,7 +282,7 @@ kamdbctl pframework create
 			It specifies the root path for provisioning http requests.
 			The link to the provisioning web interface must be constructed
 			using the following pattern:
-			http://[server_IP]:[tcp_port]/[xhttp_pi_root] 
+			http://[server_IP]:[tcp_port]/[xhttp_pi_root]
 		</para>
 		<para>
 		<emphasis>

@@ -1,9 +1,11 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
@@ -92,7 +94,7 @@ int initInterprocessBuffers(void);
  * The callback type will be passed in 'type', and the contact the callback
  * applies to will be supplied in 'contactInfo.  This information will be copied
  * into the interprocess buffer.  The interprocess buffer will beconsumed at a
- * later time, when consumeInterprocessBuffer() is called.  
+ * later time, when consumeInterprocessBuffer() is called.
  *
  * This callback is thread safe with respect to the consumeInterprocessBuffer()
  * function.  Specifically, the interprocess buffer should not be corrupted by
@@ -113,11 +115,11 @@ void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param);
  * Note: This function is believed to be thread safe.  Specifically, it protects
  *       corruption of the interprocess buffer through the interprocessCBLock.
  *       This ensures no corruption of the buffer by race conditions.  The lock
- *       has been designed to be occupied for as short a period as possible, so 
- *       as to prevent long waits.  Specifically, once we start consumption of 
+ *       has been designed to be occupied for as short a period as possible, so
+ *       as to prevent long waits.  Specifically, once we start consumption of
  *       the list, other processes are free to continue even before we are done.
  *       This is made possible by simply changing the head of the interprocess
- *       buffer, and then releasing the lock.  
+ *       buffer, and then releasing the lock.
  */
 void consumeInterprocessBuffer(void);
 

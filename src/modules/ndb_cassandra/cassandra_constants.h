@@ -8,17 +8,22 @@
 
 #include "cassandra_types.h"
 
-namespace org { namespace apache { namespace cassandra {
+namespace org {
+namespace apache {
+namespace cassandra {
 
-class cassandraConstants {
- public:
-  cassandraConstants();
+class cassandraConstants
+{
+public:
+	cassandraConstants();
 
-  std::string VERSION;
+	std::string VERSION;
 };
 
 extern const cassandraConstants g_cassandra_constants;
 
-}}} // namespace
+} // namespace cassandra
+} // namespace apache
+} // namespace org
 
 #endif

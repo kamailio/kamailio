@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -47,7 +49,7 @@ struct ts_table *t_table = 0;
 void free_ts_urecord(struct ts_urecord *urecord)
 {
 	LM_DBG("destroying urecord %p\n", urecord);
-	ts_transaction_t* ptr;
+	ts_transaction_t *ptr;
 
 	while(urecord->transactions) {
 		ptr = urecord->transactions;
@@ -55,7 +57,8 @@ void free_ts_urecord(struct ts_urecord *urecord)
 		free_ts_transaction(ptr);
 	}
 
-	if (urecord->ruri.s) shm_free(urecord->ruri.s);
+	if(urecord->ruri.s)
+		shm_free(urecord->ruri.s);
 
 	shm_free(urecord);
 
@@ -72,22 +75,22 @@ int init_ts_table(unsigned int size)
 	unsigned int n;
 	unsigned int i;
 
-	t_table = (struct ts_table*)shm_malloc( sizeof(struct ts_table));
-	if (t_table==0) {
+	t_table = (struct ts_table *)shm_malloc(sizeof(struct ts_table));
+	if(t_table == 0) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 
-	memset( t_table, 0, sizeof(struct ts_table) );
+	memset(t_table, 0, sizeof(struct ts_table));
 
 	t_table->size = size;
 
-	n = (size<MAX_TS_LOCKS)?size:MAX_TS_LOCKS;
-	for(  ; n>=MIN_TS_LOCKS ; n-- ) {
+	n = (size < MAX_TS_LOCKS) ? size : MAX_TS_LOCKS;
+	for(; n >= MIN_TS_LOCKS; n--) {
 		t_table->locks = lock_set_alloc(n);
-		if (t_table->locks==0)
+		if(t_table->locks == 0)
 			continue;
-		if (lock_set_init(t_table->locks)==0) {
+		if(lock_set_init(t_table->locks) == 0) {
 			lock_set_dealloc(t_table->locks);
 			t_table->locks = 0;
 			continue;
@@ -96,27 +99,27 @@ int init_ts_table(unsigned int size)
 		break;
 	}
 
-	if (t_table->locks==0) {
+	if(t_table->locks == 0) {
 		LM_ERR("unable to allocted at least %d locks for the hash table\n",
-			MIN_TS_LOCKS);
+				MIN_TS_LOCKS);
 		goto error;
 	}
 
-	t_table->entries = (ts_entry_t*)shm_malloc(sizeof(ts_entry_t) * size);
-	if (!t_table->entries) {
+	t_table->entries = (ts_entry_t *)shm_malloc(sizeof(ts_entry_t) * size);
+	if(!t_table->entries) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
 
-	for( i=0 ; i<size; i++ ) {
-		memset( &(t_table->entries[i]), 0, sizeof(struct ts_entry) );
-		t_table->entries[i].next_id = kam_rand() % (3*size);
+	for(i = 0; i < size; i++) {
+		memset(&(t_table->entries[i]), 0, sizeof(struct ts_entry));
+		t_table->entries[i].next_id = kam_rand() % (3 * size);
 		t_table->entries[i].lock_idx = i % t_table->locks_no;
 	}
 
 	return 0;
 error:
-	shm_free( t_table );
+	shm_free(t_table);
 	t_table = NULL;
 	return -1;
 }
@@ -129,17 +132,17 @@ void destroy_ts_table(void)
 	struct ts_urecord *ts_u, *l_ts_u;
 	unsigned int i;
 
-	if (t_table==0)
+	if(t_table == 0)
 		return;
 
-	if (t_table->locks) {
+	if(t_table->locks) {
 		lock_set_destroy(t_table->locks);
 		lock_set_dealloc(t_table->locks);
 	}
 
-	for( i=0 ; i<t_table->size; i++ ) {
+	for(i = 0; i < t_table->size; i++) {
 		ts_u = t_table->entries[i].first;
-		while (ts_u) {
+		while(ts_u) {
 			l_ts_u = ts_u;
 			ts_u = ts_u->next;
 			free_ts_urecord(l_ts_u);
@@ -152,52 +155,54 @@ void destroy_ts_table(void)
 	return;
 }
 
-void lock_entry(ts_entry_t *entry) {
+void lock_entry(ts_entry_t *entry)
+{
 	ts_lock(t_table, entry);
 }
 
-void unlock_entry(ts_entry_t *entry) {
+void unlock_entry(ts_entry_t *entry)
+{
 	ts_unlock(t_table, entry);
 }
 
-void lock_entry_by_ruri(str* ruri)
+void lock_entry_by_ruri(str *ruri)
 {
 	unsigned int sl;
 
-	sl = core_hash(ruri, 0, 0) & (t_table->size-1);
+	sl = core_hash(ruri, 0, 0) & (t_table->size - 1);
 	ts_lock(t_table, &t_table->entries[sl]);
 }
 
-void unlock_entry_by_ruri(str* ruri)
+void unlock_entry_by_ruri(str *ruri)
 {
 	unsigned int sl;
 
-	sl = core_hash(ruri, 0, 0) & (t_table->size-1);
+	sl = core_hash(ruri, 0, 0) & (t_table->size - 1);
 	ts_unlock(t_table, &t_table->entries[sl]);
 }
 
 /*
  * Obtain a urecord pointer if the urecord exists in the table
  */
-int get_ts_urecord(str* ruri, struct ts_urecord** _r)
+int get_ts_urecord(str *ruri, struct ts_urecord **_r)
 {
 	int sl, i, rurihash;
-	ts_urecord_t* r;
+	ts_urecord_t *r;
 
 	rurihash = core_hash(ruri, 0, 0);
-	sl = rurihash&(t_table->size-1);
+	sl = rurihash & (t_table->size - 1);
 	r = t_table->entries[sl].first;
 
-	for(i = 0; r!=NULL && i < t_table->entries[sl].n; i++) {
-		if((r->rurihash==rurihash) && (r->ruri.len==ruri->len)
-				&& !memcmp(r->ruri.s,ruri->s,ruri->len)){
+	for(i = 0; r != NULL && i < t_table->entries[sl].n; i++) {
+		if((r->rurihash == rurihash) && (r->ruri.len == ruri->len)
+				&& !memcmp(r->ruri.s, ruri->s, ruri->len)) {
 			*_r = r;
 			return 0;
 		}
 		r = r->next;
 	}
 
-	return 1;   /* Nothing found */
+	return 1; /* Nothing found */
 }
 
 /*!
@@ -206,17 +211,17 @@ int get_ts_urecord(str* ruri, struct ts_urecord** _r)
  * \param _r pointer to the new record
  * \return 0 on success, negative on failure
  */
-int new_ts_urecord(str* ruri, ts_urecord_t** _r)
+int new_ts_urecord(str *ruri, ts_urecord_t **_r)
 {
-	*_r = (ts_urecord_t*)shm_malloc(sizeof(ts_urecord_t));
-	if (*_r == 0) {
+	*_r = (ts_urecord_t *)shm_malloc(sizeof(ts_urecord_t));
+	if(*_r == 0) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(*_r, 0, sizeof(ts_urecord_t));
 
-	(*_r)->ruri.s = (char*)shm_malloc(ruri->len);
-	if ((*_r)->ruri.s == 0) {
+	(*_r)->ruri.s = (char *)shm_malloc(ruri->len);
+	if((*_r)->ruri.s == 0) {
 		SHM_MEM_ERROR;
 		shm_free(*_r);
 		*_r = 0;
@@ -234,21 +239,21 @@ int new_ts_urecord(str* ruri, ts_urecord_t** _r)
  * \param _r pointer to the new record
  * \return 0 on success, -1 on failure
  */
-int insert_ts_urecord(str* ruri, ts_urecord_t** _r)
+int insert_ts_urecord(str *ruri, ts_urecord_t **_r)
 {
-	ts_entry_t* entry;
+	ts_entry_t *entry;
 
 	int sl;
 
-	if (new_ts_urecord(ruri, _r) < 0) {
+	if(new_ts_urecord(ruri, _r) < 0) {
 		LM_ERR("creating urecord failed\n");
 		return -1;
 	}
 
-	sl = ((*_r)->rurihash)&(t_table->size-1);
+	sl = ((*_r)->rurihash) & (t_table->size - 1);
 	entry = &t_table->entries[sl];
 
-	if (entry->n == 0) {
+	if(entry->n == 0) {
 		entry->first = entry->last = *_r;
 	} else {
 		(*_r)->prev = entry->last;
@@ -261,7 +266,7 @@ int insert_ts_urecord(str* ruri, ts_urecord_t** _r)
 	update_stat(stored_ruris, 1);
 	update_stat(total_ruris, 1);
 
-	LM_DBG("urecord entry %p",entry);
+	LM_DBG("urecord entry %p", entry);
 	return 0;
 }
 
@@ -270,20 +275,20 @@ int insert_ts_urecord(str* ruri, ts_urecord_t** _r)
  * \param _r urecord
  * \return 0 on success, -1 on failure
  */
-void remove_ts_urecord(ts_urecord_t* _r)
+void remove_ts_urecord(ts_urecord_t *_r)
 {
-	ts_entry_t* entry;
+	ts_entry_t *entry;
 
 	entry = _r->entry;
 
-	if (_r->prev)
+	if(_r->prev)
 		_r->prev->next = _r->next;
-	if (_r->next)
+	if(_r->next)
 		_r->next->prev = _r->prev;
 
-	if (entry->first == _r)
+	if(entry->first == _r)
 		entry->first = _r->next;
-	if (entry->last == _r)
+	if(entry->last == _r)
 		entry->last = _r->prev;
 
 	update_stat(stored_ruris, -1);
@@ -291,7 +296,7 @@ void remove_ts_urecord(ts_urecord_t* _r)
 	entry->n--;
 	free_ts_urecord(_r);
 
-        return;
+	return;
 }
 
 /*!
@@ -301,10 +306,11 @@ void remove_ts_urecord(ts_urecord_t* _r)
  * \param _r urecord
  * \return 0 on success, -1 otherwise
  */
-int insert_ts_transaction(struct cell* t, struct sip_msg* msg, struct ts_urecord* _r)
+int insert_ts_transaction(
+		struct cell *t, struct sip_msg *msg, struct ts_urecord *_r)
 {
 	ts_transaction_t *ptr, *prev;
-	ts_transaction_t* ts;
+	ts_transaction_t *ts;
 
 	unsigned int tindex;
 	unsigned int tlabel;
@@ -316,7 +322,7 @@ int insert_ts_transaction(struct cell* t, struct sip_msg* msg, struct ts_urecord
 	ptr = _r->transactions;
 
 	while(ptr) {
-		if ((ptr->tindex == tindex) && (ptr->tlabel == tlabel)) {
+		if((ptr->tindex == tindex) && (ptr->tlabel == tlabel)) {
 			LM_DBG("transaction already inserted\n");
 			return -1;
 		}
@@ -324,7 +330,7 @@ int insert_ts_transaction(struct cell* t, struct sip_msg* msg, struct ts_urecord
 		ptr = ptr->next;
 	}
 
-	if ( (ts=new_ts_transaction(tindex, tlabel) ) == 0) {
+	if((ts = new_ts_transaction(tindex, tlabel)) == 0) {
 		LM_ERR("failed to create new transaction\n");
 		return -1;
 	}
@@ -332,14 +338,14 @@ int insert_ts_transaction(struct cell* t, struct sip_msg* msg, struct ts_urecord
 	ts->urecord = _r;
 	/* add the new transaction at the end of the list */
 
-	if (prev) {
+	if(prev) {
 		prev->next = ts;
 		ts->prev = prev;
 	} else {
 		_r->transactions = ts;
 	}
 
-	if (ts_set_tm_callbacks(t, msg, ts) < 0) {
+	if(ts_set_tm_callbacks(t, msg, ts) < 0) {
 		LM_ERR("failed to set transaction %d:%d callbacks\n", tindex, tlabel);
 	}
 
@@ -354,14 +360,14 @@ int insert_ts_transaction(struct cell* t, struct sip_msg* msg, struct ts_urecord
  * \param tlabel transaction label in tm table
  * \return created transaction structure on success, NULL otherwise
  */
-ts_transaction_t* new_ts_transaction(int tindex, int tlabel)
+ts_transaction_t *new_ts_transaction(int tindex, int tlabel)
 {
 	ts_transaction_t *ts;
 	int len;
 
 	len = sizeof(ts_transaction_t);
-	ts = (ts_transaction_t*)shm_malloc(len);
-	if (ts==0) {
+	ts = (ts_transaction_t *)shm_malloc(len);
+	if(ts == 0) {
 		SHM_MEM_ERROR_FMT("len %d\n", len);
 		return 0;
 	}
@@ -377,17 +383,17 @@ ts_transaction_t* new_ts_transaction(int tindex, int tlabel)
  * \param ts transaction to be cloned
  * \return cloned transaction structure on success, NULL otherwise
  */
-ts_transaction_t* clone_ts_transaction(ts_transaction_t* ts)
+ts_transaction_t *clone_ts_transaction(ts_transaction_t *ts)
 {
 	ts_transaction_t *ts_clone;
 	int len;
 
-	if (ts == NULL)
+	if(ts == NULL)
 		return NULL;
 
 	len = sizeof(ts_transaction_t);
-	ts_clone = (ts_transaction_t*)shm_malloc(len);
-	if (ts_clone==NULL) {
+	ts_clone = (ts_transaction_t *)shm_malloc(len);
+	if(ts_clone == NULL) {
 		SHM_MEM_ERROR_FMT("len %d\n", len);
 		return NULL;
 	}
@@ -400,19 +406,19 @@ ts_transaction_t* clone_ts_transaction(ts_transaction_t* ts)
  * \brief remove a transaction from the urecord transactions list
  * \param ts_t unlinked transaction
  */
-void remove_ts_transaction(ts_transaction_t* ts_t)
+void remove_ts_transaction(ts_transaction_t *ts_t)
 {
-	if (ts_t->next)
+	if(ts_t->next)
 		ts_t->next->prev = ts_t->prev;
-	if (ts_t->prev)
+	if(ts_t->prev)
 		ts_t->prev->next = ts_t->next;
 
-	if (ts_t->urecord->transactions == ts_t)
+	if(ts_t->urecord->transactions == ts_t)
 		ts_t->urecord->transactions = ts_t->next;
 
 	update_stat(stored_transactions, -1);
 
-	free_ts_transaction((void*)ts_t);
+	free_ts_transaction((void *)ts_t);
 
 	return;
 }
@@ -424,6 +430,6 @@ void remove_ts_transaction(ts_transaction_t* ts_t)
  */
 void free_ts_transaction(void *ts_t)
 {
-	shm_free((struct ts_transaction*)ts_t);
+	shm_free((struct ts_transaction *)ts_t);
 	ts_t = 0;
 }

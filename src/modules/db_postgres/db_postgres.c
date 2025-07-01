@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -47,22 +49,21 @@
  */
 
 static cmd_export_t cmds[] = {
-	{"db_bind_api", (cmd_function)db_postgres_bind_api, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"db_bind_api", (cmd_function)db_postgres_bind_api, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}};
 
 
 struct module_exports kam_exports = {
-	"db_postgres",			/* module name*/
-	DEFAULT_DLFLAGS,		/* dlopen flags */
-	cmds,					/* exported functions */
-	0,						/* exported parameters */
-	0,						/* exported rpc functions */
-	0,						/* exported pseudo-variables */
-	0,						/* response function*/
-	km_postgres_mod_init,	/* module init function */
-	0,						/* per-child init function */
-	0						/* module destroy function */
+		"db_postgres",		  /* module name*/
+		DEFAULT_DLFLAGS,	  /* dlopen flags */
+		cmds,				  /* exported functions */
+		0,					  /* exported parameters */
+		0,					  /* exported rpc functions */
+		0,					  /* exported pseudo-variables */
+		0,					  /* response function*/
+		km_postgres_mod_init, /* module init function */
+		0,					  /* per-child init function */
+		0					  /* module destroy function */
 };
 
 
@@ -96,8 +97,8 @@ int db_postgres_bind_api(db_func_t *dbb)
 	dbb->end_transaction = db_postgres_end_transaction;
 	dbb->abort_transaction = db_postgres_abort_transaction;
 	dbb->query_lock = db_postgres_query_lock;
-	dbb->raw_query_async  = db_postgres_raw_query_async;
-	dbb->insert_async     = db_postgres_insert_async;
+	dbb->raw_query_async = db_postgres_raw_query_async;
+	dbb->insert_async = db_postgres_insert_async;
 
 	return 0;
 }

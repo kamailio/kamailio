@@ -1,9 +1,11 @@
-/* 
+/*
  * Domain table related functions
  *
  * Copyright (C) 2002-2012 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -173,7 +175,7 @@ int ki_is_domain_local(struct sip_msg *_msg, str *sdomain)
 	struct attr_list *attrs;
 	str did;
 
-	if(sdomain==NULL || sdomain->s==NULL) {
+	if(sdomain == NULL || sdomain->s == NULL) {
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
@@ -205,9 +207,10 @@ int ki_lookup_domain_prefix(struct sip_msg *_msg, str *_sdomain, str *_sprefix)
 	str did;
 	unsigned short flags;
 
-	if(_sdomain==NULL || _sdomain->s==NULL) {
+	if(_sdomain == NULL || _sdomain->s == NULL) {
 		LM_ERR("invalid domain parameter\n");
-		return -1;	}
+		return -1;
+	}
 
 	if(hash_table_lookup(_sdomain, &did, &attrs) != 1) {
 		return -1;
@@ -296,7 +299,7 @@ int w_lookup_domain(struct sip_msg *_msg, char *_sp, char *_prefix)
 		}
 	}
 
-	return ki_lookup_domain_prefix(_msg, &sdomain, (_prefix)?&sprefix:NULL);
+	return ki_lookup_domain_prefix(_msg, &sdomain, (_prefix) ? &sprefix : NULL);
 }
 
 /*
@@ -394,7 +397,7 @@ int reload_tables(void)
 
 		if((VAL_NULL(ROW_VALUES(row) + 2) == 1)
 				|| ((VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT)
-						   && (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_BIGINT))) {
+						&& (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_BIGINT))) {
 			LM_ERR("type at row <%u> is null or not int\n", i);
 			goto err;
 		}

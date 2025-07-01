@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -40,9 +42,9 @@
  *
  * @return 0 on success, -1 on failure
  */
-int cr_route_fixup(void ** param, int param_no);
+int cr_route_fixup(void **param, int param_no);
 
-int cr_route_fixup_free(void ** param, int param_no);
+int cr_route_fixup_free(void **param, int param_no);
 
 
 /**
@@ -53,9 +55,9 @@ int cr_route_fixup_free(void ** param, int param_no);
  *
  * @return 0 on success, -1 on failure
  */
-int cr_load_user_carrier_fixup(void ** param, int param_no);
+int cr_load_user_carrier_fixup(void **param, int param_no);
 
-int cr_load_user_carrier_fixup_free(void ** param, int param_no);
+int cr_load_user_carrier_fixup_free(void **param, int param_no);
 
 /**
  * Fixes the module functions' parameters, i.e. it maps
@@ -67,8 +69,8 @@ int cr_load_user_carrier_fixup_free(void ** param, int param_no);
  *
  * @return 0 on success, -1 on failure
  */
-int cr_load_next_domain_fixup(void ** param, int param_no);
+int cr_load_next_domain_fixup(void **param, int param_no);
 
-int cr_load_next_domain_fixup_free(void ** param, int param_no);
+int cr_load_next_domain_fixup_free(void **param, int param_no);
 
 #endif

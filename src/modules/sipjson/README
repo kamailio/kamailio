@@ -80,7 +80,7 @@ Chapter 1. Admin Guide
 
 3.1.  sj_serialize(opt, ovar)
 
-   Do the serialization of SIP messagge attributes into a JSON document.
+   Do the serialization of SIP message attributes into a JSON document.
 
    When there is a match, it uses the corresponding pseudo-variable name
    for JSON attribute (e.g., 'ru' is the R-URI attribute name).

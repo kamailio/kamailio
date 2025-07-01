@@ -63,9 +63,9 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="usrloc_admin.xml"/>
 	<xi:include href="usrloc_devel.xml"/>
-	
-	
+
+
 </book>

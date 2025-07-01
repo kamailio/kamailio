@@ -172,7 +172,7 @@ if (!maxfwd_process("10") && $retcode==-1) {
    parameter value. It considers also the value of the new inserted header
    (if locally added). The parameter can be a variable.
 
-   Retuning codes:
+   Return codes:
      * 1 (true) - header was found or set and its value is strictly less
        than “max_value”.
      * -1 (false) - the header was found or set and its value is greater

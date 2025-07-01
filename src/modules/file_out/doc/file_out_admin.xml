@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+		<title>Overview</title>
+		<para>
+		This is a small module to support fast streaming output to files
+		and process this changes depending on an interval. It implements only one
+		function that streams a chunk of text to the current output file handle.
+		</para>
+		<para>
+		The module can be used to write logs for up to 10 different log files.
+		Each log file can be configured to have a different name and extension.
+		The processed string can contain pseudo-variables. The module will replace
+		the pseudo-variables with the actual values. The module will also rotate
+		the log files at a specified interval. The interval is specified in seconds.
+		</para>
+		<para>
+		Known limitations on the rotation interval are:
+		<itemizedlist>
+					<listitem>
+						<para>
+		If there is no messages coming, the rotation will not be done until the next message arrives.
+						</para>
+					</listitem>
+				</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+		The following modules must be loaded before this module:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>none</emphasis>.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>none</emphasis>.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+
+	<section>
+		<title>Parameters</title>
+		<section>
+			<title>
+				<varname>base_folder</varname> (string)</title>
+			<para>
+		Absolute path to the folder where log files should be saved.
+			</para>
+			<para>
+				<emphasis>
+		    Default value is <quote>/var/log/kamailio/file_out</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>base_folder</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("file_out", "base_folder", "/tmp/file_out") # trailing slash will be added.
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section>
+			<title>
+				<varname>file</varname> (string)</title>
+			<para>
+		The definition of a file and its properties. The value of the parameter may have the following format:
+			</para>
+		<itemizedlist>
+			<listitem>
+				<para>
+		"name=accounting;extension=.out;interval=20;prefix=accounting:"
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			<emphasis>
+	The parameter can be set multiple times to define more files in same configuration file.
+			</emphasis>
+		</para>
+
+		<itemizedlist>
+			<listitem>
+				<para>
+		name (Required) - the name of the file
+				</para>
+				<para>
+					<emphasis>
+					No default value. This parameter is required.
+					</emphasis>
+			</para>
+			</listitem>
+
+			<listitem>
+				<para>
+		extension (Optional) - the extension of the file
+				</para>
+				<para>
+					<emphasis>
+		    Default value is <quote>.out</quote>.
+					</emphasis>
+			</para>
+			</listitem>
+
+			<listitem>
+				<para>
+		interval (Optional) - the interval in seconds of the file rotation
+				</para>
+				<para>
+					<emphasis>
+		    Default value is <quote>600</quote> (10min).
+					</emphasis>
+			</para>
+			</listitem>
+
+			<listitem>
+				<para>
+		prefix (Optional) - the prefix for log messages
+				</para>
+				<para>
+					<emphasis>
+		    Default value is <quote>""</quote> (empty string).
+					</emphasis>
+			</para>
+			</listitem>
+		</itemizedlist>
+
+			<example>
+				<title>Set <varname>file</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("file_out", "file", "name=missed_calls;interval=30;extension=.json")
+modparam("file_out", "file", "name=accounting;extension=.txt")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section>
+			<title>
+				<varname>worker_usleep</varname> (int)</title>
+			<para>
+		The time in microseconds which worker will sleep for until next iteration.
+			</para>
+			<para>
+				<emphasis>
+		    Default value is <quote>10000</quote> (10 ms).
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>worker_usleep</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("file_out", "worker_usleep", 1000)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section>
+			<title>
+				<varname>timer_interval</varname> (int)</title>
+			<para>
+		The time in seconds which timer will trigger for rotating the files.
+				<emphasis>
+				Make sure that this value is lower than the interval of the files.
+				</emphasis>
+			</para>
+			<para>
+				<emphasis>
+			Default value is <quote>10</quote> (10 s).
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>timer_interval</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("file_out", "timer_interval", 60)
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section>
+		<title>Functions</title>
+		<section>
+			<title>
+				<function moreinfo="none">file_out(filename, string)</function>
+			</title>
+			<para>
+		This function is used to write a string to a file. The file is
+		determined by the filename parameter. The string parameter is the
+		string to be written to the file. Filename is the name of the file defined in the configuration file as name=filename.
+
+			</para>
+			<example>
+				<title>
+					<function>file_out</function> usage</title>
+				<programlisting format="linespecific">
+...
+modparam("file_out", "file", "name=accounting;interval=200")
+modparam("file_out", "file", "name=missed_calls;extension=.json;interval=300")
+
+request_route {
+	file_out("accounting", "Writing to accounting.out file $rm from $fu");
+	file_out("missed_calls", "Writing to missed_calls.out file $rm from $fu");
+}
+...
+				</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+	<section>
+		<title>Exported pseudo-variables</title>
+		<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>none</emphasis>.
+				</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+
+</chapter>

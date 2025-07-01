@@ -20,7 +20,7 @@
 
     <!-- Try the system wide catalogs as the last step before reverting to
          using the value of system identifiers and URI references from the
-         documents being processed (they usualy contain HTTP URIs). -->
+         documents being processed (they usually contain HTTP URIs). -->
     <delegatePublic publicIdStartString="" catalog="file:///etc/xml/catalog"/>
     <delegateURI    uriStartString=""      catalog="file:///etc/xml/catalog"/>
 

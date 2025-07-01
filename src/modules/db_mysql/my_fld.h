@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -20,7 +22,7 @@
  */
 
 #ifndef _MY_FLD_H
-#define _MY_FLD_H  1
+#define _MY_FLD_H 1
 
 /** @addtogroup mysql
  *  @{
@@ -31,15 +33,16 @@
 #include <mysql.h>
 
 /* MariaDB exports MYSQL_VERSION_ID as well, but changed numbering */
-#if MYSQL_VERSION_ID > 80000 && ! defined MARIADB_BASE_VERSION
+#if MYSQL_VERSION_ID > 80000 && !defined MARIADB_BASE_VERSION
 #include <stdbool.h>
 #endif
 
-struct my_fld {
+struct my_fld
+{
 	db_drv_t gen;
 
-	char* name;
-#if MYSQL_VERSION_ID > 80000 && ! defined MARIADB_BASE_VERSION
+	char *name;
+#if MYSQL_VERSION_ID > 80000 && !defined MARIADB_BASE_VERSION
 	bool is_null;
 #else
 	my_bool is_null;
@@ -49,7 +52,7 @@ struct my_fld {
 	str buf;
 };
 
-int my_fld(db_fld_t* fld, char* table);
+int my_fld(db_fld_t *fld, char *table);
 
 /** @} */
 

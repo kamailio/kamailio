@@ -48,6 +48,13 @@
 			<email>eschmidbauer@voipxswitch.com</email>
 		</address>
 		</editor>
+		<editor>
+		<firstname>Donat</firstname>
+		<surname>Zenichev</surname>
+		<address>
+			<email>dzenichev@sipwise.com</email>
+		</address>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2003</year>
@@ -59,8 +66,8 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="permissions_admin.xml"/>
-	
-	
+
+
 </book>

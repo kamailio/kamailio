@@ -26,18 +26,18 @@
  *
 \verbatim
  *   - likely(expr)         - branch predicition optimization - is more likely
- *                          that expr value will be 1 so optimize for this 
+ *                          that expr value will be 1 so optimize for this
  *                          case.
  *                          Example: if (likely(p!=NULL)) {... }
- *   - unlikely(expr)       - branch prediction optimization - is unlikely that 
+ *   - unlikely(expr)       - branch prediction optimization - is unlikely that
  *                          expr will be true, so optimize for this case
  *   - prefetch(addr)        - will prefetch addr. for reading
  *   - prefetch_w(addr)      - will prefetch addr. for writing
  *   - prefetch_loc_r(addr, loc) - prefetch for reading, data at addr has
  *                                no temporal locality (loc==0), a short
- *                                degree of temporal locality (loc==1), 
+ *                                degree of temporal locality (loc==1),
  *                                moderate (loc==2) or high (loc==3).
- *                                prefetch(addr) is equiv. to 
+ *                                prefetch(addr) is equiv. to
  *                                prefetch_loc_r(addr, 3).
  *  prefetch_loc_w(addr, loc) - like above but for writing.
 \endverbatim
@@ -49,8 +49,8 @@
 /* likely/unlikely */
 #if __GNUC__ >= 3
 
-#define likely(expr)              __builtin_expect(!!(expr), 1)
-#define unlikely(expr)            __builtin_expect(!!(expr), 0)
+#define likely(expr) __builtin_expect(!!(expr), 1)
+#define unlikely(expr) __builtin_expect(!!(expr), 0)
 
 #else /* __GNUC__ */
 
@@ -61,12 +61,11 @@
 #endif /* __GNUC__ */
 
 
-
 /* prefetch* */
-#if ( __GNUC__ > 3 ) || ( __GNUC__ == 3 && __GNUC_MINOR__ >= 1 )
+#if(__GNUC__ > 3) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)
 
-#define prefetch(addr)            __builtin_prefetch((addr))
-#define prefetch_w(addr)          __builtin_prefetch((addr), 1)
+#define prefetch(addr) __builtin_prefetch((addr))
+#define prefetch_w(addr) __builtin_prefetch((addr), 1)
 #define prefetch_loc_r(addr, loc) __builtin_prefetch((addr), 0, (loc))
 #define prefetch_loc_w(addr, loc) __builtin_prefetch((addr), 1, (loc))
 

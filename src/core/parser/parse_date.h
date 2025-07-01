@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -25,23 +27,23 @@
  */
 
 
-
 #ifndef PARSE_DATE
 #define PARSE_DATE
 
 #include <time.h>
 #include "msg_parser.h"
 
-#define RFC1123DATELENGTH	29
+#define RFC1123DATELENGTH 29
 
-struct date_body{
-	int error;  /* Error code */
+struct date_body
+{
+	int error; /* Error code */
 	struct tm date;
 };
 
 
 /* casting macro for accessing DATE body */
-#define get_date(p_msg) ((struct date_body*)(p_msg)->date->parsed)
+#define get_date(p_msg) ((struct date_body *)(p_msg)->date->parsed)
 
 
 /*

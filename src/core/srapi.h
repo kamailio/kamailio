@@ -20,22 +20,57 @@
 #define __SRAPI_H__
 
 #include "str.h"
+#include "usr_avp.h"
+#include "xavp.h"
 #include "parser/msg_parser.h"
 
-typedef void (*sr_generate_callid_f)(str*);
+typedef void (*sr_generate_callid_f)(str *);
 
 int sr_register_callid_func(sr_generate_callid_f f);
 
 sr_generate_callid_f sr_get_callid_func(void);
 
-typedef int (*sr_cseq_update_f)(sip_msg_t*);
-typedef struct sr_cfgenv {
+typedef int (*sr_cseq_update_f)(sip_msg_t *);
+typedef struct sr_cfgenv
+{
 	sr_cseq_update_f cb_cseq_update;
 	str uac_cseq_auth;
 	str uac_cseq_refresh;
 } sr_cfgenv_t;
 
 void sr_cfgenv_init(void);
-sr_cfgenv_t* sr_cfgenv_get(void);
+sr_cfgenv_t *sr_cfgenv_get(void);
+
+typedef struct ksr_msg_env_data
+{
+	int route_type;
+	avp_list_t avps_user_from;
+	avp_list_t avps_user_to;
+	avp_list_t avps_domain_from;
+	avp_list_t avps_domain_to;
+	avp_list_t avps_uri_from;
+	avp_list_t avps_uri_to;
+	sr_xavp_t *xavps;
+	sr_xavp_t *xavus;
+	sr_xavp_t *xavis;
+} ksr_msg_env_data_t;
+
+typedef struct ksr_msg_env_links
+{
+	int route_type;
+	avp_list_t *avps_user_from;
+	avp_list_t *avps_user_to;
+	avp_list_t *avps_domain_from;
+	avp_list_t *avps_domain_to;
+	avp_list_t *avps_uri_from;
+	avp_list_t *avps_uri_to;
+	sr_xavp_t **xavps;
+	sr_xavp_t **xavus;
+	sr_xavp_t **xavis;
+} ksr_msg_env_links_t;
+
+int ksr_msg_env_push(ksr_msg_env_links_t *menv);
+int ksr_msg_env_pop(ksr_msg_env_links_t *menv);
+int ksr_msg_env_data_destroy(ksr_msg_env_data_t *denv);
 
 #endif

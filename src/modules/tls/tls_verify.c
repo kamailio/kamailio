@@ -33,19 +33,20 @@
 /* This callback is called during each verification process,
    at each step during the chain of certificates (this function
    is not the certificate_verification one!). */
-int verify_callback(int pre_verify_ok, X509_STORE_CTX *ctx) {
+int verify_callback(int pre_verify_ok, X509_STORE_CTX *ctx)
+{
 	char buf[256];
 	X509 *err_cert;
 	int err, depth;
 
 	depth = X509_STORE_CTX_get_error_depth(ctx);
-	LM_DBG("tls init - depth = %d\n",depth);
-	if ( depth > VERIFY_DEPTH_S ) {
+	LM_DBG("tls init - depth = %d\n", depth);
+	if(depth > VERIFY_DEPTH_S) {
 		LM_NOTICE("tls init - cert chain too long ( depth > VERIFY_DEPTH_S)\n");
-		pre_verify_ok=0;
+		pre_verify_ok = 0;
 	}
 
-	if( pre_verify_ok ) {
+	if(pre_verify_ok) {
 		LM_NOTICE("tls init - preverify is good: verify return: %d\n",
 				pre_verify_ok);
 		return pre_verify_ok;
@@ -53,21 +54,20 @@ int verify_callback(int pre_verify_ok, X509_STORE_CTX *ctx) {
 
 	err_cert = X509_STORE_CTX_get_current_cert(ctx);
 	err = X509_STORE_CTX_get_error(ctx);
-	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,sizeof buf);
+	X509_NAME_oneline(X509_get_subject_name(err_cert), buf, sizeof buf);
 
 	LM_NOTICE("tls init - subject = %s\n", buf);
 	LM_NOTICE("tls init - verify error - num=%d:%s\n", err,
 			X509_verify_cert_error_string(err));
-	LM_NOTICE("tls init - error code is %d (depth: %d)\n",
-			err, depth);
+	LM_NOTICE("tls init - error code is %d (depth: %d)\n", err, depth);
 
-	switch (err) {
+	switch(err) {
 		case X509_V_OK:
 			LM_NOTICE("tls init - all ok\n");
 			break;
 		case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-			X509_NAME_oneline(X509_get_issuer_name(err_cert),buf,sizeof buf);
-			LM_NOTICE("tls init - issuer= %s\n",buf);
+			X509_NAME_oneline(X509_get_issuer_name(err_cert), buf, sizeof buf);
+			LM_NOTICE("tls init - issuer= %s\n", buf);
 			break;
 
 		case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
@@ -119,17 +119,19 @@ int verify_callback(int pre_verify_ok, X509_STORE_CTX *ctx) {
 
 		default:
 			LM_NOTICE("tls init - something wrong with the"
-					" cert ... error code is %d (check x509_vfy.h)\n",
+					  " cert ... error code is %d (check x509_vfy.h)\n",
 					err);
 			break;
 	}
 
 	LM_NOTICE("tls init - verify return: %d\n", pre_verify_ok);
-	return(pre_verify_ok);
+	return (pre_verify_ok);
 }
 
 
-int verify_callback_unconditional_success(int pre_verify_ok, X509_STORE_CTX *ctx) {
+int verify_callback_unconditional_success(
+		int pre_verify_ok, X509_STORE_CTX *ctx)
+{
 	LM_NOTICE("Post-verification callback: unconditional success\n");
 	return 1;
 }

@@ -52,18 +52,18 @@ extern int append_fromtag;
  * \param rrb record-route API export binding
  * \return 1
  */
-int load_rr( struct rr_binds *rrb )
+int load_rr(struct rr_binds *rrb)
 {
 	rrb->record_route_preset = record_route_preset;
 	rrb->record_route_advertised_address = record_route_advertised_address;
-	rrb->record_route      = record_route;
-	rrb->loose_route       = loose_route;
-	rrb->add_rr_param      = add_rr_param;
+	rrb->record_route = record_route;
+	rrb->loose_route = loose_route;
+	rrb->add_rr_param = add_rr_param;
 	rrb->check_route_param = check_route_param;
-	rrb->is_direction      = is_direction;
-	rrb->get_route_param   = get_route_param;
-	rrb->register_rrcb     = register_rrcb;
-	rrb->append_fromtag    = append_fromtag;
+	rrb->is_direction = is_direction;
+	rrb->get_route_param = get_route_param;
+	rrb->register_rrcb = register_rrcb;
+	rrb->append_fromtag = append_fromtag;
 
 	return 1;
 }

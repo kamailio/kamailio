@@ -50,6 +50,33 @@ if(msg_apply_changes())
 		</example>
 	</section>
 
+	<section id="textopsx.f.msg_changed_route">
+		<title>
+		<function moreinfo="none">msg_changed_route(rname)</function>
+		</title>
+		<para>
+			Execute a route block specified by rname, using a new SIP message
+			structure build using the current SIP message with applied changes.
+			The current SIP message does not get the changes applied.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msg_changed_route()</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_hf("My-Header: yes\r\n");
+msg_changed_route("UPDATEDMSG");
+...
+route[UPDATEDMSG] {
+   xinfo("My-Header-Value: $hdr(My-Header)\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textopsx.f.msg_set_buffer">
 		<title>
 			<function moreinfo="none">msg_set_buffer(data)</function>
@@ -83,7 +110,7 @@ msg_set_buffer("INVITE sip:...");
 	    <function>change_reply_status(code, reason)</function>
 	</title>
 	<para>
-		Intercept a SIP reply (in an onreply_route) and change its status code 
+		Intercept a SIP reply (in an onreply_route) and change its status code
 		and reason phrase prior to forwarding it.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
@@ -234,7 +261,7 @@ if(fnmatch("$rU", "123*"))
 	    <listitem>
 		<para><emphasis>hf</emphasis> - Header field to be appended. Format: HFNAME [ [IDX] ].
 		If index is not specified new header is inserted at the end of message. The index 1
-		correxponds to the first header.
+		corresponds to the first header.
 		</para>
 	    </listitem>
 	    <listitem>
@@ -268,7 +295,7 @@ append_hf_value("foo[-1]", "$var(Bar)") # try add value to the last header, if n
 	    <listitem>
 		<para><emphasis>hf</emphasis> - Header field to be appended. Format: HFNAME [ [IDX] ].
 		If index is not specified new header is inserted at the top of message. The index 1
-		correxponds to the first header.
+		corresponds to the first header.
 		</para>
 	    </listitem>
 	    <listitem>
@@ -300,7 +327,7 @@ insert_hf_value("foo[1]", "gogo") # try add to the first header
 	    <listitem>
 		<para><emphasis>hf_par</emphasis> - Header field/param to be removed. Format: HFNAME [ [IDX] ] [. PARAM ]
 		If asterisk is specified as index then all values are affected. The index 1
-		correxponds to the first header.
+		corresponds to the first header.
 		</para>
 	    </listitem>
 	</itemizedlist>
@@ -331,7 +358,7 @@ remove_hf_value("foo[*].bar") # for each foo delete bar parameters
 	    <listitem>
 		<para><emphasis>hf_par</emphasis> - Header/param to be removed. Format: HFNAME [ [IDX] ] [. PARAM ]
 		If asterisk is specified as index then all values are affected. The index 1
-		correxponds to the first header.
+		corresponds to the first header.
 		</para>
 	    </listitem>
 	</itemizedlist>
@@ -362,7 +389,7 @@ remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
 			<para><emphasis>hf_para</emphasis> - Header field value / param to be appended.
 				Format: HFNAME [ [IDX] ] [. PARAM]
 		If asterisk is specified as index then all values are affected. The index 1
-		correxponds to the first header.
+		corresponds to the first header.
 		</para>
 	    </listitem>
 	    <listitem>
@@ -399,7 +426,7 @@ assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
 	    <listitem>
 		<para><emphasis>hf_para</emphasis> - Header field value / param to be appended. Format: HFNAME [ [IDX] ] [. PARAM]
 		If asterisk is specified as index then all values are affected. The index 1
-		correxponds to the first header.
+		corresponds to the first header.
 		</para>
 	    </listitem>
 	    <listitem>

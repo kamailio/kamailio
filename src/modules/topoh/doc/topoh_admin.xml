@@ -92,7 +92,9 @@ modparam("topoh", "mask_key", "some secret here")
 		SIP URIs. Can be any IP address, even a private-space or non-existing
 		IP address (e.g., 192.168.1.1, 127.0.0.2), including the SIP server
 		address, but must not be an address potentially used by clients.
-		It is not used at all for SIP routing.
+		If set to empty string, the advertised IP of the incoming or outgoing
+		socket is used when specified, otherwise the IP of the socket is used.
+		Note that the value is actually not used at all for SIP routing.
 		</para>
 		<para>
 		<emphasis>
@@ -433,5 +435,10 @@ event_route[topoh:msg-sending] {
 		</example>
 	</section>
 	</section>
+	<section>
+		<title>Pesudo-Variables</title>
+		<para>
+		<emphasis>- $th(ecallid)</emphasis> - return the topoh-encoded Call-Id
+		</para>
+	</section>
 </chapter>
-

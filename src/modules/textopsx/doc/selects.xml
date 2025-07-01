@@ -8,31 +8,36 @@
     <section id="textopsx.sel.hf_value">
 	<title>@hf_value</title>
 	<para>
-		Get value of required header-value or param. Note that functions called 'value2'
-		works with Authorization-like headers where comma is not treated as value delimiter. Formats:
-		@hf_value.HFNAME[IDX]    # idx value, negative value counts from bottom
-		@hf_value.HFNAME.PARAM_NAME
-		@hf_value.HFNAME[IDX].PARAM_NAME
-		@hf_value.HFNAME.p.PARAM_NAME  # or .param., useful if required called "uri", "p", "param"
-		@hf_value.HFNAME[IDX].p.PARAM_NAME # dtto
-		@hf_value.HFNAME[IDX].uri # (&lt; &amp; &gt; excluded)
-		@hf_value.HFNAME[*]     # return comma delimited list of all values (combines headers)
-		@hf_value.HFNAME        # the same as above [*] but may be parsed by cfg.y
-		@hf_value.HFNAME[*].uri # return comma delimited list of uris (&lt; &amp; &gt; excluded)
-		@hf_value.HFNAME.uri    # the same as above [*] but may be parsed by cfg.y
-		@hf_value.HFNAME[IDX].name  # returns name part, quotes excluded
-		@hf_value.HFNAME.name   # returns name part of the first value
+		Get value of required header-value or param. Note that selects called 'hf_value2'
+		work with Authorization-like headers where comma is not treated as value delimiter.
+	</para>
+	<para>
+	Formats:
+	<itemizedlist>
+		<listitem>@hf_value.HFNAME[IDX]    # idx value, negative value counts from bottom</listitem>
+		<listitem>@hf_value.HFNAME.PARAM_NAME</listitem>
+		<listitem>@hf_value.HFNAME[IDX].PARAM_NAME</listitem>
+		<listitem>@hf_value.HFNAME.p.PARAM_NAME  # or .param., useful if required called "uri", "p", "param"</listitem>
+		<listitem>@hf_value.HFNAME[IDX].p.PARAM_NAME # dtto</listitem>
+		<listitem>@hf_value.HFNAME[IDX].uri # (&lt; &amp; &gt; excluded)</listitem>
+		<listitem>@hf_value.HFNAME[*]     # return comma delimited list of all values (combines headers)</listitem>
+		<listitem>@hf_value.HFNAME        # the same as above [*] but may be parsed by cfg.y</listitem>
+		<listitem>@hf_value.HFNAME[*].uri # return comma delimited list of uris (&lt; &amp; &gt; excluded)</listitem>
+		<listitem>@hf_value.HFNAME.uri    # the same as above [*] but may be parsed by cfg.y</listitem>
+		<listitem>@hf_value.HFNAME[IDX].name  # returns name part, quotes excluded</listitem>
+		<listitem>@hf_value.HFNAME.name   # returns name part of the first value</listitem>
 
-		@hf_value2.HFNAME        # returns value of first header
-		@hf_value2.HFNAME[IDX]   # returns value of idx's header
-		@hf_value2.HFNAME.PARAM_NAME
-		@hf_value2.HFNAME[IDX].PARAM_NAME
+		<listitem>@hf_value2.HFNAME        # returns value of first header</listitem>
+		<listitem>@hf_value2.HFNAME[IDX]   # returns value of idx's header</listitem>
+		<listitem>@hf_value2.HFNAME.PARAM_NAME</listitem>
+		<listitem>@hf_value2.HFNAME[IDX].PARAM_NAME</listitem>
 
-		@hf_value.HFNAME[IDX].uri  # return URI, quotes excluded
-		@hf_value.HFNAME.p.uri  # returns param named uri, not URI itself
-		@hf_value.HFNAME.p.name # returns param named name, not name itself
-		@hf_value.HFNAME[IDX].uri.name #  any sel_any_uri nested features may be used
-		@hf_value.HFNAME[IDX].nameaddr.name # select_any_nameaddr
+		<listitem>@hf_value.HFNAME[IDX].uri  # return URI, quotes excluded</listitem>
+		<listitem>@hf_value.HFNAME.p.uri  # returns param named uri, not URI itself</listitem>
+		<listitem>@hf_value.HFNAME.p.name # returns param named name, not name itself</listitem>
+		<listitem>@hf_value.HFNAME[IDX].uri.name #  any sel_any_uri nested features may be used</listitem>
+		<listitem>@hf_value.HFNAME[IDX].nameaddr.name # select_any_nameaddr</listitem>
+	</itemizedlist>
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
@@ -68,7 +73,9 @@ $prt = @hf_value2.authorization.integrity_protected;
     <section id="textopsx.sel.hf_value2">
 	<title>@hf_value2</title>
 	<para>
-		TBA.
+		Similar to selects called 'hf_value', but work with Authorization-like
+		headers where comma is treated as attribute delimiter instead of header
+		value delimiter.
 	</para>
     </section>
     <section id="textopsx.sel.hf_value_exists">

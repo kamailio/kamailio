@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -83,11 +85,11 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"radius_config",    PARAM_STRING, &radius_config	},
-	{"service_type",     INT_PARAM, &service_type	},
-	{"use_ruri_flag",    INT_PARAM, &use_ruri_flag	},
+	{"service_type",     PARAM_INT, &service_type	},
+	{"use_ruri_flag",    PARAM_INT, &use_ruri_flag	},
 	{"auth_extra",       PARAM_STRING, &auth_extra_str	},
-	{"radius_avps_mode",	 INT_PARAM, &ar_radius_avps_mode	},
-	{"append_realm_to_username", INT_PARAM, &append_realm_to_username  },
+	{"radius_avps_mode",	 PARAM_INT, &ar_radius_avps_mode	},
+	{"append_realm_to_username", PARAM_INT, &append_realm_to_username  },
 	{0, 0, 0}
 };
 
@@ -120,7 +122,8 @@ static int mod_init(void)
 	int n;
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
-		LM_ERR("failed to open configuration file \n");
+		LM_ERR("failed to open configuration file: %s\n",
+				(radius_config)?radius_config:"none");
 		return -1;
 	}
 

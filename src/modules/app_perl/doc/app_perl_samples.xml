@@ -13,7 +13,7 @@
 	<chapterinfo>
 	</chapterinfo>
 	<title>Perl samples</title>
-	
+
 	<section>
 		<title>Sample directory</title>
 		<para>
@@ -141,7 +141,7 @@
 				<title>phonenumbers.pl</title>
 				<para>
 				The Kamailio::Utils::PhoneNumbers package provides two methods for the transformation of local to
-				canonical telephone numbers, and vice versa. This script demonstrates it's use.
+				canonical telephone numbers, and vice versa. This script demonstrates its use.
 				</para>
 			</section>
 			<section>
@@ -164,7 +164,7 @@
 ...
 if (perl_exec_msg("ldap_alias")) {
 	route[1];
-}	
+}
 ...
 </programlisting>
 		</para>

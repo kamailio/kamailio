@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -34,15 +36,15 @@
 #include "../../core/str.h"
 #include <libxml/parser.h>
 
-xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,
-															const char *ns);
+xmlNodePtr xmlNodeGetNodeByName(
+		xmlNodePtr node, const char *name, const char *ns);
 xmlNodePtr xmlDocGetNodeByName(xmlDocPtr doc, const char *name, const char *ns);
 xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name);
 
-char *xmlNodeGetNodeContentByName(xmlNodePtr root, const char *name,
-		const char *ns);
+char *xmlNodeGetNodeContentByName(
+		xmlNodePtr root, const char *name, const char *ns);
 char *xmlNodeGetAttrContentByName(xmlNodePtr node, const char *name);
 
-time_t xml_parse_dateTime(char* xml_time_str);
+time_t xml_parse_dateTime(char *xml_time_str);
 
 #endif

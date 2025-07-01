@@ -307,11 +307,17 @@ modparam("mediaproxy", "ice_candidate_avp", "$avp(ice_candidate)")
 
    This function can be used from REQUEST_ROUTE.
 
+Note
+
+   The dlg_manage() function must be called in the configuration file
+   before using this function.
+
    Example 1.8. Using the engage_media_proxy function
 ...
 if (method==INVITE && !has_totag()) {
     # We can also use a specific media relay if we need to
     #$avp(media_relay) = "1.2.3.4";
+    dlg_manage()
     engage_media_proxy();
 }
 ...

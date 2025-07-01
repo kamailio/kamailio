@@ -11,9 +11,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    
+
     <title>&adminguide;</title>
-    
+
     <section>
 	<title>Overview</title>
 	<para>
@@ -56,7 +56,7 @@
     </section>
     <section>
 	<title>Parameters</title>
-	<section>
+	<section id="presence_conference.p.use_partial_states">
 	    <title><varname>use_partial_states</varname> (int)</title>
 	    <para>
 		Control usage of partial state notifications.
@@ -76,19 +76,19 @@ modparam("presence_conference", "use_partial_states", 0)
 	    </example>
 	</section>
 
-<section id="presence_conference.p.default_expires">
-               <title><varname>default_expires</varname> (int)</title>
-               <para>
-               The default expires value used when missing from SUBSCRIBE
-               message (in seconds).
-               </para>
-               <para>
-               <emphasis>Default value is <quote>3600</quote>.
-               </emphasis>
-               </para>
-               <example>
-               <title>Set <varname>default_expires</varname> parameter</title>
-               <programlisting format="linespecific">
+	<section id="presence_conference.p.default_expires">
+		<title><varname>default_expires</varname> (int)</title>
+		<para>
+		The default expires value used when missing from SUBSCRIBE
+		message (in seconds).
+		</para>
+		<para>
+		<emphasis>Default value is <quote>3600</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>default_expires</varname> parameter</title>
+		<programlisting format="linespecific">
 ...
 modparam("presence_conference", "default_expires", 3600)
 ...
@@ -97,10 +97,10 @@ modparam("presence_conference", "default_expires", 3600)
 </section>
 
 	</section>
-	
+
 	<section>
 		<title>MI Commands</title>
-
+	The following MI commands are currently disabled, they need to migrated to the RPC infrastructure.
 	<section>
 		<title>
 		<function moreinfo="none">conference_reset</function>
@@ -113,7 +113,7 @@ modparam("presence_conference", "default_expires", 3600)
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
-			<listitem><para>none</para></listitem>	  
+			<listitem><para>none</para></listitem>
 		</itemizedlist>
 		<para>
 		MI FIFO Command Format:
@@ -127,4 +127,3 @@ modparam("presence_conference", "default_expires", 3600)
     </section>
 
 </chapter>
-

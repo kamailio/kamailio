@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -32,10 +34,10 @@
 #define _PUA_UL_
 #include "../pua/pua_bind.h"
 
-void ul_publish(ucontact_t* c, int type, void* param);
-int w_pua_set_publish(sip_msg_t*, char*, char*);
-int ki_pua_set_publish(sip_msg_t*);
-int pua_unset_publish(struct sip_msg* msg, unsigned int flags, void* param);
+void ul_publish(ucontact_t *c, int type, void *param);
+int w_pua_set_publish(sip_msg_t *, char *, char *);
+int ki_pua_set_publish(sip_msg_t *);
+int pua_unset_publish(struct sip_msg *msg, unsigned int flags, void *param);
 
 extern str pres_prefix;
 extern int pua_ul_bflag;

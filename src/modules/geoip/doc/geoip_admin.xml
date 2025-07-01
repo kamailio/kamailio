@@ -11,30 +11,30 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    
+
     <title>&adminguide;</title>
-    
+
     <section>
 	<title>Overview</title>
 	<para>
-		This module allows real-time queries against the Max Mind GeoIP 
+		This module allows real-time queries against the Max Mind GeoIP
 		database to be performed from the config script. It uses the old
 		version of API, still very common on OS distributions. For using
 		the new version of GeoIP API, see geoip2 module.
 	</para>
 	<para>
-		The Max Mind GeoIP database is a map of IP network address assignments 
+		The Max Mind GeoIP database is a map of IP network address assignments
 		to geographical locales that can be useful -- though approximate --
 		in identifying the physical location with which an IP host address
 		is associated on a relatively granular level.
 	</para>
 	<para>
-		This database itself can be obtained on a free or commercial basis 
+		This database itself can be obtained on a free or commercial basis
 		from <ulink url="http://www.maxmind.com/app/ip-location">
-		http://www.maxmind.com/app/ip-location</ulink>. The 
+		http://www.maxmind.com/app/ip-location</ulink>. The
 		library that interfaces with the Max Mind API, as well as scripts to
-		automate downloading of the on-disk version of the open-source 
-		database is also packaged by the Debian Linux distribution and 
+		automate downloading of the on-disk version of the open-source
+		database is also packaged by the Debian Linux distribution and
 		its derivatives as <emphasis>libgeoip</emphasis>, and probably by
 		other distributions as well.
 	</para>
@@ -111,7 +111,7 @@ modparam("geoip", "path", "/usr/local/share/GeoLiteCity.dat")
 	</section>
 
 	</section>
-	
+
     <section>
 	<title>Functions</title>
  	<section>
@@ -132,15 +132,15 @@ if(geoip_match("$si", "src"))
 </programlisting>
 	    </example>
 	</section>
-	
+
     </section>
-	
+
 	<section>
 		<title>Exported pseudo-variables</title>
 		<itemizedlist>
 			<listitem><para>
-				<emphasis>$gip(pvc=&gt;key)</emphasis> - <emphasis>pvc</emphasis> is an 
-				identifier for this query result;  it is designated by the second 
+				<emphasis>$gip(pvc=&gt;key)</emphasis> - <emphasis>pvc</emphasis> is an
+				identifier for this query result;  it is designated by the second
 				parameter of geoip_match(). The <emphasis>key</emphasis> can be one of
 				the following:
 				</para>

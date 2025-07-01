@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -32,18 +34,18 @@
 #include <string.h> /* memset */
 
 #ifdef USE_SIGACTION
-void (*set_sig_h(int sig, void (*handler) (int) ))(int)
+void (*set_sig_h(int sig, void (*handler)(int)))(int)
 {
 	struct sigaction act;
 	struct sigaction old;
 
 	memset(&act, 0, sizeof(act));
-	act.sa_handler=handler;
+	act.sa_handler = handler;
 	/*
 	sigemptyset(&act.sa_mask);
 	act.sa_flags=0;
 	*/
 	/* sa_sigaction not set, we use sa_handler instead */
-	return (sigaction (sig, &act, &old)==-1)?SIG_ERR:old.sa_handler;
+	return (sigaction(sig, &act, &old) == -1) ? SIG_ERR : old.sa_handler;
 }
 #endif

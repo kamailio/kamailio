@@ -10,37 +10,37 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section id="exec.overview">
 	<title>Overview</title>
 	<para>
-		The exec module allows external commands to be executed from a &kamailio; 
-		script. The commands may be any valid shell commands--the command string is 
-		passed to the shell using <quote>popen</quote> command. &kamailio; passes 
+		The exec module allows external commands to be executed from a &kamailio;
+		script. The commands may be any valid shell commands--the command string is
+		passed to the shell using <quote>popen</quote> command. &kamailio; passes
 		additional information about the request in environment variables:
 	</para>
 	<itemizedlist>
 		<listitem>
 		<para>
-			SIP_HF_&lt;hf_name&gt; contains value of each header field in 
-			request. If a header field occurred multiple times, values are 
-			concatenated and comma-separated. &lt;hf_name&gt; is in capital 
-			letters. Ff a header-field name occurred in compact form, 
+			SIP_HF_&lt;hf_name&gt; contains value of each header field in
+			request. If a header field occurred multiple times, values are
+			concatenated and comma-separated. &lt;hf_name&gt; is in capital
+			letters. Ff a header-field name occurred in compact form,
 			&lt;hf_name&gt; is canonical.
 		</para>
 		</listitem>
 		<listitem>
 		<para>
-			SIP_TID is transaction identifier. All request retransmissions or 
-			CANCELs/ACKs associated with a previous INVITE result in the same 
+			SIP_TID is transaction identifier. All request retransmissions or
+			CANCELs/ACKs associated with a previous INVITE result in the same
 			value.
 		</para>
 		</listitem>
 		<listitem>
 		<para>
-			SIP_DID is dialog identifier, which is the same as to-tag. 
+			SIP_DID is dialog identifier, which is the same as to-tag.
 			Initially, it is empty.
 		</para>
 		</listitem>
@@ -56,7 +56,7 @@
 		</listitem>
 		<listitem>
 		<para>
-			SIP_RURI is <emphasis>current</emphasis> request &uri; (if 
+			SIP_RURI is <emphasis>current</emphasis> request &uri; (if
 			unchanged, equal to original).
 		</para>
 		</listitem>
@@ -78,9 +78,9 @@
 		throwing errors.
 	</para>
 	<para>
-		WARNING: if the exec functions are passed variables that might include 
-		malicious input, then remote attackers may abuse the exec functions to 
-		execute arbitrary code. Specifically, this may result in OS command injection. 
+		WARNING: if the exec functions are passed variables that might include
+		malicious input, then remote attackers may abuse the exec functions to
+		execute arbitrary code. Specifically, this may result in OS command injection.
 		In such cases, input validation is required to prevent the vulnerability.
 		The following is an example of how input validation and exec module
 		functions may be used together to prevent exploitation:
@@ -153,7 +153,7 @@ modparam("exec", "setvars", 1)
 			<varname>time_to_kill</varname> (integer)
 		</title>
 		<para>
-		Specifies the longest time a program is allowed to execute. If the 
+		Specifies the longest time a program is allowed to execute. If the
 		time is exceeded, the program is killed.
 		</para>
 		<para>
@@ -178,8 +178,8 @@ modparam("exec", "time_to_kill", 20)
 		<function moreinfo="none">exec_dset(command)</function>
 		</title>
 		<para>
-		Executes an external command. Current &uri; is passed to the command 
-		as parameter. Output of the command is considered &uri; set 
+		Executes an external command. Current &uri; is passed to the command
+		as parameter. Output of the command is considered &uri; set
 		(separated by lines).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -213,8 +213,8 @@ exec_dset("echo TEST > /tmp/$(rU).txt");
 		<function moreinfo="none">exec_msg(command)</function>
 		</title>
 		<para>
-		Executes an external command. The whole message is passed to it in 
-		input, no command-line parameters are added, output of the command is 
+		Executes an external command. The whole message is passed to it in
+		input, no command-line parameters are added, output of the command is
 		not processed.
 		</para>
 		<para>
@@ -264,7 +264,7 @@ exec_msg("echo TEST > /tmp/$(rU).txt");
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>avplist</emphasis> - comma separated list with AVP 
+			<para><emphasis>avplist</emphasis> - comma separated list with AVP
 			names to store the result in;
 			</para>
 		</listitem>

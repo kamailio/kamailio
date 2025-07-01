@@ -4,7 +4,7 @@
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
- * Fruanhofer Institute. It was and still is maintained in a separate
+ * Fraunhofer FOKUS Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
@@ -14,7 +14,7 @@
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
  *
- * NB: Alot of this code was originally part of OpenIMSCore,
+ * NB: A lot of this code was originally part of OpenIMSCore,
  * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
  * Thanks for great work! This is an effort to
@@ -24,6 +24,8 @@
  * to manage in the Kamailio/SR environment
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,46 +54,50 @@
 typedef int (*worker_init_function)(int rank);
 
 /** task element */
-typedef struct _task_t {
-	peer *p;			/**< peer that the message was received from */
-	AAAMessage *msg;	/**< diameter message received */
+typedef struct _task_t
+{
+	peer *p;		 /**< peer that the message was received from */
+	AAAMessage *msg; /**< diameter message received */
 } task_t;
 
 /** task queue */
-typedef struct {
-	gen_lock_t *lock;	/**< lock for task queue operations */
-	int start;			/**< start position in the queue array (index of oldest task) */
-	int end;			/**< end position in the queue array (index of the youngest task) */
-	int max;			/**< size of the queue array */
-	task_t *queue;		/**< array holding the tasks */
-	gen_sem_t *empty;	/**< id of semaphore for signaling an empty queue */
-	gen_sem_t *full;	/**< id of semaphore for signaling a full queue */
+typedef struct
+{
+	gen_lock_t *lock; /**< lock for task queue operations */
+	int start; /**< start position in the queue array (index of oldest task) */
+	int end; /**< end position in the queue array (index of the youngest task) */
+	int max;		  /**< size of the queue array */
+	task_t *queue;	  /**< array holding the tasks */
+	gen_sem_t *empty; /**< id of semaphore for signaling an empty queue */
+	gen_sem_t *full;  /**< id of semaphore for signaling a full queue */
 } task_queue_t;
 
 /** callback function to be called on message processing */
-typedef int (*cdp_cb_f)(peer *p,AAAMessage *msg,void* ptr);
+typedef int (*cdp_cb_f)(peer *p, AAAMessage *msg, void *ptr);
 
 /** callback element for message processing */
-typedef struct _cdp_cb_t{
-	cdp_cb_f cb;				/**< callback function to be called on event */
-	void **ptr;					/**< generic pointer to be passed to the callback */
-	struct _cdp_cb_t *next; 	/**< next callback in the list */
-	struct _cdp_cb_t *prev;		/**< previous callback in the list */
+typedef struct _cdp_cb_t
+{
+	cdp_cb_f cb;			/**< callback function to be called on event */
+	void **ptr;				/**< generic pointer to be passed to the callback */
+	struct _cdp_cb_t *next; /**< next callback in the list */
+	struct _cdp_cb_t *prev; /**< previous callback in the list */
 } cdp_cb_t;
 
 /** list of callback elements for message processing */
-typedef struct {
-	cdp_cb_t *head;	/**< first element in the list */
+typedef struct
+{
+	cdp_cb_t *head; /**< first element in the list */
 	cdp_cb_t *tail; /**< last element in the list */
 } cdp_cb_list_t;
 
 void worker_init();
 void worker_destroy();
 
-int cb_add(cdp_cb_f cb,void *ptr);
+int cb_add(cdp_cb_f cb, void *ptr);
 void cb_remove(cdp_cb_t *cb);
 
-int put_task(peer *p,AAAMessage *msg);
+int put_task(peer *p, AAAMessage *msg);
 task_t take_task();
 
 
@@ -100,6 +106,4 @@ void worker_poison_queue();
 void worker_process(int id);
 
 
-
 #endif
-

@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -14,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -48,12 +50,14 @@
 #include "db_cap.h"
 #include "db_con.h"
 #include "db_row.h"
+#include "db_id.h"
+#include "db_pool.h"
 #include "db_pooling.h"
 #include "db_locking.h"
 
 /**
  * \brief Specify table name that will be used for subsequent operations.
- * 
+ *
  * The function db_use_table takes a table name and stores it db1_con_t structure.
  * All subsequent operations (insert, delete, update, query) are performed on
  * that table.
@@ -61,7 +65,7 @@
  * \param _t table name
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_use_table_f)(db1_con_t* _h, const str * _t);
+typedef int (*db_use_table_f)(db1_con_t *_h, const str *_t);
 
 /**
  * \brief Initialize database connection and obtain the connection handle.
@@ -69,11 +73,11 @@ typedef int (*db_use_table_f)(db1_con_t* _h, const str * _t);
  * This function initializes the database API and opens a new database
  * connection. This function must be called after bind_dbmod but before any
  * other database API function is called.
- * 
+ *
  * The function takes one parameter, the parameter must contain the database
- * connection URL. The URL is of the form 
+ * connection URL. The URL is of the form
  * mysql://username:password\@host:port/database where:
- * 
+ *
  * username: Username to use when logging into database (optional).
  * password: password if it was set (optional)
  * host:     Hosname or IP address of the host where database server lives (mandatory)
@@ -85,7 +89,7 @@ typedef int (*db_use_table_f)(db1_con_t* _h, const str * _t);
  * \return returns a pointer to the db1_con_t representing the connection if it was
  * successful, otherwise 0 is returned
  */
-typedef db1_con_t* (*db_init_f) (const str* _sqlurl);
+typedef db1_con_t *(*db_init_f)(const str *_sqlurl);
 
 /**
  * \brief Initialize database connection and obtain the connection handle.
@@ -93,11 +97,11 @@ typedef db1_con_t* (*db_init_f) (const str* _sqlurl);
  * This function initializes the database API and opens a new database
  * connection. This function must be called after bind_dbmod but before any
  * other database API function is called.
- * 
+ *
  * The function takes one parameter, the parameter must contain the database
- * connection URL. The URL is of the form 
+ * connection URL. The URL is of the form
  * mysql://username:password\@host:port/database where:
- * 
+ *
  * username: Username to use when logging into database (optional).
  * password: password if it was set (optional)
  * host:     Hosname or IP address of the host where database server lives (mandatory)
@@ -110,16 +114,16 @@ typedef db1_con_t* (*db_init_f) (const str* _sqlurl);
  * \return returns a pointer to the db1_con_t representing the connection if it was
  * successful, otherwise 0 is returned
  */
-typedef db1_con_t* (*db_init2_f) (const str* _sqlurl, db_pooling_t _pooling);
+typedef db1_con_t *(*db_init2_f)(const str *_sqlurl, db_pooling_t _pooling);
 
 /**
  * \brief Close a database connection and free all memory used.
  *
- * The function closes previously open connection and frees all previously 
+ * The function closes previously open connection and frees all previously
  * allocated memory. The function db_close must be the very last function called.
  * \param _h db1_con_t structure representing the database connection
  */
-typedef void (*db_close_f) (db1_con_t* _h); 
+typedef void (*db_close_f)(db1_con_t *_h);
 
 
 /**
@@ -151,9 +155,9 @@ typedef void (*db_close_f) (db1_con_t* _h);
  * \param _r address of variable where pointer to the result will be stored
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_query_f) (const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
-				const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-				const db_key_t _o, db1_res_t** _r);
+typedef int (*db_query_f)(const db1_con_t *_h, const db_key_t *_k,
+		const db_op_t *_op, const db_val_t *_v, const db_key_t *_c,
+		const int _n, const int _nc, const db_key_t _o, db1_res_t **_r);
 
 /**
  * \brief Gets a partial result set, fetch rows from a result
@@ -170,7 +174,8 @@ typedef int (*db_query_f) (const db1_con_t* _h, const db_key_t* _k, const db_op_
  * \param _n the number of rows that should be fetched
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_fetch_result_f) (const db1_con_t* _h, db1_res_t** _r, const int _n);
+typedef int (*db_fetch_result_f)(
+		const db1_con_t *_h, db1_res_t **_r, const int _n);
 
 
 /**
@@ -188,7 +193,8 @@ typedef int (*db_fetch_result_f) (const db1_con_t* _h, db1_res_t** _r, const int
  * \param _r structure for the result
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_raw_query_f) (const db1_con_t* _h, const str* _s, db1_res_t** _r);
+typedef int (*db_raw_query_f)(
+		const db1_con_t *_h, const str *_s, db1_res_t **_r);
 
 
 /**
@@ -205,7 +211,7 @@ typedef int (*db_raw_query_f) (const db1_con_t* _h, const str* _s, db1_res_t** _
  * \param _s the SQL query
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_raw_query_async_f) (const db1_con_t* _h, const str* _s);
+typedef int (*db_raw_query_async_f)(const db1_con_t *_h, const str *_s);
 
 
 /**
@@ -218,22 +224,22 @@ typedef int (*db_raw_query_async_f) (const db1_con_t* _h, const str* _s);
  * \param _r pointer to db1_res_t structure to destroy
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_free_result_f) (db1_con_t* _h, db1_res_t* _r);
+typedef int (*db_free_result_f)(db1_con_t *_h, db1_res_t *_r);
 
 
 /**
  * \brief Insert a row into the specified table.
- * 
+ *
  * This function implements INSERT SQL directive, you can insert one or more
  * rows in a table using this function.
  * \param _h database connection handle
- * \param _k array of keys (column names) 
+ * \param _k array of keys (column names)
  * \param _v array of values for keys specified in _k parameter
  * \param _n number of keys-value pairs int _k and _v parameters
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_insert_f) (const db1_con_t* _h, const db_key_t* _k,
-				const db_val_t* _v, const int _n);
+typedef int (*db_insert_f)(const db1_con_t *_h, const db_key_t *_k,
+		const db_val_t *_v, const int _n);
 
 
 /**
@@ -244,7 +250,7 @@ typedef int (*db_insert_f) (const db1_con_t* _h, const db_key_t* _k,
  * If _k is NULL and _v is NULL and _n is zero, all rows are deleted, the
  * resulting table will be empty.
  * If _o is NULL, the equal operator "=" will be used for the comparison.
- * 
+ *
  * \param _h database connection handle
  * \param _k array of keys (column names) that will be matched
  * \param _o array of operators to be used with key-value pairs
@@ -252,8 +258,8 @@ typedef int (*db_insert_f) (const db1_con_t* _h, const db_key_t* _k,
  * \param _n number of keys-value parameters in _k and _v parameters
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_delete_f) (const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
-				const db_val_t* _v, const int _n);
+typedef int (*db_delete_f)(const db1_con_t *_h, const db_key_t *_k,
+		const db_op_t *_o, const db_val_t *_v, const int _n);
 
 
 /**
@@ -271,9 +277,9 @@ typedef int (*db_delete_f) (const db1_con_t* _h, const db_key_t* _k, const db_op
  * \param _un number of key-value pairs in _uk and _uv parameters
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_update_f) (const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
-				const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv,
-				const int _n, const int _un);
+typedef int (*db_update_f)(const db1_con_t *_h, const db_key_t *_k,
+		const db_op_t *_o, const db_val_t *_v, const db_key_t *_uk,
+		const db_val_t *_uv, const int _n, const int _un);
 
 
 /**
@@ -293,27 +299,27 @@ typedef int (*db_update_f) (const db1_con_t* _h, const db_key_t* _k, const db_op
  * implementation using synchronized update/affected rows/insert mechanism)
  * \return returns 0 if everything is OK, otherwise returns value < 0
 */
-typedef int (*db_replace_f) (const db1_con_t* handle, const db_key_t* keys,
-			const db_val_t* vals, const int n, const int _un, const int _m);
+typedef int (*db_replace_f)(const db1_con_t *handle, const db_key_t *keys,
+		const db_val_t *vals, const int n, const int _un, const int _m);
 
 
 /**
  * \brief Retrieve the last inserted ID in a table.
  *
  * The function returns the value generated for an AUTO_INCREMENT column by the
- * previous INSERT or UPDATE  statement. Use this function after you have 
+ * previous INSERT or UPDATE  statement. Use this function after you have
  * performed an INSERT statement into a table that contains an AUTO_INCREMENT
  * field.
  * \param _h structure representing database connection
  * \return returns the ID as integer or returns 0 if the previous statement
  * does not use an AUTO_INCREMENT value.
  */
-typedef int (*db_last_inserted_id_f) (const db1_con_t* _h);
+typedef int (*db_last_inserted_id_f)(const db1_con_t *_h);
 
 
 /**
  * \brief Insert a row into specified table, update on duplicate key.
- * 
+ *
  * The function implements the INSERT ON DUPLICATE KEY UPDATE SQL directive.
  * It is possible to insert a row and update if one already exists.
  * The old row will not deleted before the insertion of the new data.
@@ -323,8 +329,8 @@ typedef int (*db_last_inserted_id_f) (const db1_con_t* _h);
  * \param _n number of key=value pairs
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_insert_update_f) (const db1_con_t* _h, const db_key_t* _k,
-				const db_val_t* _v, const int _n);
+typedef int (*db_insert_update_f)(const db1_con_t *_h, const db_key_t *_k,
+		const db_val_t *_v, const int _n);
 
 
 /**
@@ -338,8 +344,8 @@ typedef int (*db_insert_update_f) (const db1_con_t* _h, const db_key_t* _k,
  * \param _n number of keys-value pairs int _k and _v parameters
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_insert_delayed_f) (const db1_con_t* _h, const db_key_t* _k,
-				const db_val_t* _v, const int _n);
+typedef int (*db_insert_delayed_f)(const db1_con_t *_h, const db_key_t *_k,
+		const db_val_t *_v, const int _n);
 
 /**
  * \brief Insert a row into the specified table via async framework.
@@ -352,9 +358,8 @@ typedef int (*db_insert_delayed_f) (const db1_con_t* _h, const db_key_t* _k,
  * \param _n number of keys-value pairs int _k and _v parameters
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_insert_async_f) (const db1_con_t* _h, const db_key_t* _k,
-				const db_val_t* _v, const int _n);
-
+typedef int (*db_insert_async_f)(const db1_con_t *_h, const db_key_t *_k,
+		const db_val_t *_v, const int _n);
 
 
 /**
@@ -365,23 +370,23 @@ typedef int (*db_insert_async_f) (const db1_con_t* _h, const db_key_t* _k,
  * \param _h structure representing database connection
  * \return returns the number of rows as integer or returns -1 on error
  */
-typedef int (*db_affected_rows_f) (const db1_con_t* _h);
+typedef int (*db_affected_rows_f)(const db1_con_t *_h);
 
 /**
- * \brief Start a single transaction that will consist of one or more queries. 
+ * \brief Start a single transaction that will consist of one or more queries.
  *
  * \param _h structure representing database connection
  * \return 0 if everything is OK, otherwise returns < 0
  */
-typedef int (*db_start_transaction_f) (db1_con_t* _h, db_locking_t _l);
+typedef int (*db_start_transaction_f)(db1_con_t *_h, db_locking_t _l);
 
 /**
- * \brief End a transaction. 
+ * \brief End a transaction.
  *
  * \param _h structure representing database connection
  * \return 0 if everything is OK, otherwise returns < 0
  */
-typedef int (*db_end_transaction_f) (db1_con_t* _h);
+typedef int (*db_end_transaction_f)(db1_con_t *_h);
 
 /**
  * \brief Abort a transaction.
@@ -391,40 +396,44 @@ typedef int (*db_end_transaction_f) (db1_con_t* _h);
  * \param _h structure representing database connection
  * \return 1 if there was something to rollbak, 0 if not, negative on failure
  */
-typedef int (*db_abort_transaction_f) (db1_con_t* _h);
+typedef int (*db_abort_transaction_f)(db1_con_t *_h);
 
 /**
  * \brief Database module callbacks
- * 
+ *
  * This structure holds function pointer to all database functions. Before this
  * structure can be used it must be initialized with bind_dbmod.
  * \see bind_dbmod
  */
-typedef struct db_func {
-	unsigned int      cap;           /* Capability vector of the database transport */
-	db_use_table_f    use_table;     /* Specify table name */
-	db_init_f         init;          /* Initialize database connection */
-	db_init2_f        init2;         /* Initialize database connection */
-	db_close_f        close;         /* Close database connection */
-	db_query_f        query;         /* query a table */
-	db_fetch_result_f fetch_result;  /* fetch result */
-	db_raw_query_f    raw_query;     /* Raw query - SQL */
-	db_free_result_f  free_result;   /* Free a query result */
-	db_insert_f       insert;        /* Insert into table */
-	db_delete_f       delete;        /* Delete from table */ 
-	db_update_f       update;        /* Update table */
-	db_replace_f      replace;       /* Replace row in a table */
-	db_last_inserted_id_f  last_inserted_id;  /* Retrieve the last inserted ID
+typedef struct db_func
+{
+	unsigned int cap;		  /* Capability vector of the database transport */
+	db_use_table_f use_table; /* Specify table name */
+	db_init_f init;			  /* Initialize database connection */
+	db_init2_f init2;		  /* Initialize database connection */
+	db_close_f close;		  /* Close database connection */
+	db_query_f query;		  /* query a table */
+	db_fetch_result_f fetch_result;			/* fetch result */
+	db_raw_query_f raw_query;				/* Raw query - SQL */
+	db_free_result_f free_result;			/* Free a query result */
+	db_insert_f insert;						/* Insert into table */
+	db_delete_f delete;						/* Delete from table */
+	db_update_f update;						/* Update table */
+	db_replace_f replace;					/* Replace row in a table */
+	db_last_inserted_id_f last_inserted_id; /* Retrieve the last inserted ID
 	                                            in a table */
-	db_insert_update_f insert_update; /* Insert into table, update on duplicate key */ 
-	db_insert_delayed_f insert_delayed;           /* Insert delayed into table */
-	db_insert_async_f insert_async;               /* Insert async into table */
-	db_affected_rows_f affected_rows; /* Number of affected rows for last query */
-	db_start_transaction_f start_transaction; /* Start a single transaction consisting of multiple queries */
-	db_end_transaction_f end_transaction; /* End a transaction */
+	db_insert_update_f
+			insert_update; /* Insert into table, update on duplicate key */
+	db_insert_delayed_f insert_delayed; /* Insert delayed into table */
+	db_insert_async_f insert_async;		/* Insert async into table */
+	db_affected_rows_f
+			affected_rows; /* Number of affected rows for last query */
+	db_start_transaction_f
+			start_transaction; /* Start a single transaction consisting of multiple queries */
+	db_end_transaction_f end_transaction;	  /* End a transaction */
 	db_abort_transaction_f abort_transaction; /* Abort a transaction */
-	db_query_f        query_lock;    /* query a table and lock rows for update */
-	db_raw_query_async_f    raw_query_async;      /* Raw query - SQL */
+	db_query_f query_lock; /* query a table and lock rows for update */
+	db_raw_query_async_f raw_query_async; /* Raw query - SQL */
 } db_func_t;
 
 
@@ -432,7 +441,7 @@ typedef struct db_func {
  * \brief Bind database module functions
  *
  * This function is special, it's only purpose is to call find_export function in
- * the core and find the addresses of all other database related functions. The 
+ * the core and find the addresses of all other database related functions. The
  * db_func_t callback given as parameter is updated with the found addresses.
  *
  * This function must be called before any other database API call!
@@ -446,7 +455,7 @@ typedef struct db_func {
  * \param dbf database module callbacks
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-int db_bind_mod(const str* mod, db_func_t* dbf);
+int db_bind_mod(const str *mod, db_func_t *dbf);
 
 
 /**
@@ -459,7 +468,7 @@ int db_bind_mod(const str* mod, db_func_t* dbf);
  * \return returns a pointer to the db1_con_t representing the connection if it was
    successful, otherwise 0 is returned.
  */
-db1_con_t* db_do_init(const str* url, void* (*new_connection)());
+db1_con_t *db_do_init(const str *url, void *(*new_connection)(struct db_id *));
 
 
 /**
@@ -473,18 +482,19 @@ db1_con_t* db_do_init(const str* url, void* (*new_connection)());
  * \return returns a pointer to the db1_con_t representing the connection if it was
    successful, otherwise 0 is returned.
  */
-db1_con_t* db_do_init2(const str* url, void* (*new_connection)(), db_pooling_t pooling);
+db1_con_t *db_do_init2(const str *url, void *(*new_connection)(struct db_id *),
+		db_pooling_t pooling);
 
 
 /**
  * \brief Helper for db_close function.
  *
- * This helper method does some work for the closing of a database 
+ * This helper method does some work for the closing of a database
  * connection. No function should be called after this
  * \param _h database connection handle
  * \param (*free_connection) Pointer to the db specific free_connection method
  */
-void db_do_close(db1_con_t* _h, void (*free_connection)());
+void db_do_close(db1_con_t *_h, void (*free_connection)(struct pool_con *));
 
 
 /**
@@ -498,7 +508,7 @@ void db_do_close(db1_con_t* _h, void (*free_connection)());
  * \param table checked table
  * \return the version number if present, 0 if no version data available, < 0 on error
  */
-int db_table_version(const db_func_t* dbf, db1_con_t* con, const str* table);
+int db_table_version(const db_func_t *dbf, db1_con_t *con, const str *table);
 
 /**
  * \brief Check the table version
@@ -510,7 +520,8 @@ int db_table_version(const db_func_t* dbf, db1_con_t* con, const str* table);
  * \param version checked version
  * \return 0 means ok, -1 means an error occurred
  */
-int db_check_table_version(db_func_t* dbf, db1_con_t* dbh, const str* table, const unsigned int version);
+int db_check_table_version(db_func_t *dbf, db1_con_t *dbh, const str *table,
+		const unsigned int version);
 
 /**
  * \brief Stores the name of a table.
@@ -521,7 +532,7 @@ int db_check_table_version(db_func_t* dbf, db1_con_t* dbh, const str* table, con
  * \param _t stored name
  * \return 0 if everything is ok, otherwise returns value < 0
  */
-int db_use_table(db1_con_t* _h, const str* _t);
+int db_use_table(db1_con_t *_h, const str *_t);
 
 /**
  * \brief Bind the DB API exported by a module.
@@ -548,8 +559,9 @@ typedef int (*db_bind_api_f)(db_func_t *dbb);
  * \param res database result, unchanged on failure and if no data could be found
  * \return 0 if the query was run successful, -1 otherwise
  */
-int db_load_bulk_data(db_func_t* binding, db1_con_t* handle, str* name, db_key_t* cols,
-		      unsigned int count, unsigned int strict, db1_res_t* res);
+int db_load_bulk_data(db_func_t *binding, db1_con_t *handle, str *name,
+		db_key_t *cols, unsigned int count, unsigned int strict,
+		db1_res_t *res);
 
 /**
  * \brief DB API init function.
@@ -564,32 +576,32 @@ int db_api_init(void);
  * \brief wrapper around db query to handle fetch capability
  * \return -1 error; 0 ok with no fetch capability; 1 ok with fetch capability
  */
-int db_fetch_query(db_func_t *dbf, int frows,
-		db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
-		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-		const db_key_t _o, db1_res_t** _r);
+int db_fetch_query(db_func_t *dbf, int frows, db1_con_t *_h, const db_key_t *_k,
+		const db_op_t *_op, const db_val_t *_v, const db_key_t *_c,
+		const int _n, const int _nc, const db_key_t _o, db1_res_t **_r);
 
 /**
  * \brief wrapper around db query_lock to handle fetch capability
  * \return -1 error; 0 ok with no fetch capability; 1 ok with fetch capability
  */
-int db_fetch_query_lock(db_func_t *dbf, int frows,
-		db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
-		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-		const db_key_t _o, db1_res_t** _r);
+int db_fetch_query_lock(db_func_t *dbf, int frows, db1_con_t *_h,
+		const db_key_t *_k, const db_op_t *_op, const db_val_t *_v,
+		const db_key_t *_c, const int _n, const int _nc, const db_key_t _o,
+		db1_res_t **_r);
 
 /**
  * \brief wrapper around db fetch to handle fetch capability
  * \return -1 error; 0 ok with no fetch capability; 1 ok with fetch capability
  */
-int db_fetch_next(db_func_t *dbf, int frows, db1_con_t* _h,
-		db1_res_t** _r);
+int db_fetch_next(db_func_t *dbf, int frows, db1_con_t *_h, db1_res_t **_r);
 
 /**
  * \brief Error logging helper for database version check error.
  * \param table database table name string
  */
-#define DB_TABLE_VERSION_ERROR(table) LM_ERR("Error during version check for db table:" \
-			" %.*s, check database structure.\n", table.len, table.s)
+#define DB_TABLE_VERSION_ERROR(table)                 \
+	LM_ERR("Error during version check for db table:" \
+		   " %.*s, check database structure.\n",      \
+			table.len, table.s)
 
 #endif /* DB1_H */

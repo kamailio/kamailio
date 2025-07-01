@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
@@ -64,10 +64,10 @@ int main (int argc, char** argv)
 	regmatch_t pmatch;
 	int match;
 	int eflags;
-	
+
 	int verbose;
 	char *fname;
-	
+
 	/* init */
 	verbose=0;
 	fname=0;
@@ -121,7 +121,7 @@ int main (int argc, char** argv)
 	if (optind < argc){
 		re_str=argv[optind];
 	}
-	
+
 	/* check if all the required params are present */
 	if (re_str==0){
 		fprintf(stderr, "ERROR: no regular expression specified\n");
@@ -132,7 +132,7 @@ int main (int argc, char** argv)
 			goto error;
 		}
 	}
-		
+
 	if ((fname!=0 ) &&(strcmp(fname, "-")!=0)){
 		/* open packet file */
 		fd=open(fname, O_RDONLY);
@@ -151,7 +151,7 @@ int main (int argc, char** argv)
 	buf[n]=0; /* null terminate it */
 	if (verbose) printf("read %d bytes from file %s\n", n, fname);
 	if (fd!=0) close(fd); /* we don't want to close stdin */
-	
+
 	while (regexec(&re, buf, 1, &pmatch, eflags)==0){
 		eflags|=REG_NOTBOL;
 		match++;
@@ -171,7 +171,7 @@ int main (int argc, char** argv)
 	if (verbose) printf("\n%d matches\n", match);
 	if (match) exit(0);
 	else exit(1);
-	
+
 error:
 	exit(-1);
 }

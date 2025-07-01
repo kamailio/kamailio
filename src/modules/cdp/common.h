@@ -12,8 +12,8 @@
 #include "diameter_api.h"
 
 
-int get_result_code(AAAMessage* msg);
-int get_accounting_record_type(AAAMessage* msg);
+int get_result_code(AAAMessage *msg);
+int get_accounting_record_type(AAAMessage *msg);
 
 
 #endif /* COMMON_H_ */

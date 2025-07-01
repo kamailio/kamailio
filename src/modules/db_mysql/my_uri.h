@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -27,18 +29,18 @@
 #include "../../lib/srdb2/db_uri.h"
 #include "../../lib/srdb2/db_drv.h"
 
-struct my_uri {
+struct my_uri
+{
 	db_drv_t drv;
-	char* username;
-	char* password;
-	char* host;
+	char *username;
+	char *password;
+	char *host;
 	unsigned short port;
-	char* database;
+	char *database;
 };
 
 
-int my_uri(db_uri_t* uri);
+int my_uri(db_uri_t *uri);
 
 
 #endif /* _MY_URI_H */
-

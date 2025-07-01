@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The module reads content of files at startup and can evaluate the variables
+		inside during runtime.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="pvtpl.p.tpl">
+		<title><varname>tpl</varname> (str)</title>
+		<para>
+		The definition of a template file:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+		"name=_string_;fpath=_number_;bsize=_number_"
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			The parameter can be set multiple times to get more templates in
+			same configuration file.
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>name</emphasis> - name of the template.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>fpath</emphasis> - path to the template file.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>bsize</emphasis> - buffer size to evaluate the template
+			(default: 1024).
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tpl</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pvtpl", "tpl", "name=tpl1;fpath=/etc/kamailio/tpl1.pvtpl;bsize=512;")
+modparam("pvtpl", "tpl", "name=tpl2;fpath=/etc/kamailio/tpl2.pvtpl;bsize=256;")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="pvtpl.f.pvtpl_render">
+	    <title>
+		<function moreinfo="none">pvtpl_render(tplname, res)</function>
+	    </title>
+	    <para>
+		Render the template 'tplname' using config variables, setting the result
+		in the variable specified by 'res'.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>pvtpl_render</function> usage</title>
+		<programlisting format="linespecific">
+...
+pvtpl_render("t1", "$var(out)");
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+	<section>
+	<title>Template File</title>
+		<para>
+		The template file can contain text and config variables that are evaluate
+		when running pvtpl_render() functions.
+		</para>
+		<para>
+		The templates files are loaded at startup and prepared for runtime. It is
+		no option to reload the template files.
+		</para>
+		<example>
+		<title>Template file</title>
+		<programlisting format="linespecific">
+...
+{
+  "from": "$fu",
+  "to": "$tu",
+  "x" : $var(x)
+}
+...
+</programlisting>
+	    </example>
+
+	</section>
+</chapter>

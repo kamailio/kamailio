@@ -56,13 +56,17 @@ Chapter 1. Admin Guide
 #...
 loadmodule "sl.so"
 loadmodule "tls_wolfssl.so"
-#... refer to Quick Start oftls module
+#... refer to Quick Start of tls module
 #... for further configuration
 
 3. Important Notes
 
    The wolfSSL TLS module is intended to be compiled with a recent version
    of wolfSSL (5.2.0+).
+
+   Default compilations of the library will not work with Kamailio's own
+   memory allocation. See https://github.com/wolfSSL/wolfssl/issues/5264
+   for more details.
 
 4. Compiling the wolfSSL TLS Module
 

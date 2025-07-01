@@ -28,12 +28,13 @@
 #include "../../core/str.h"
 #include "../../core/locking.h"
 
-#define SIPDUMP_MODE_WTEXT (1<<0)
-#define SIPDUMP_MODE_EVROUTE (1<<1)
-#define SIPDUMP_MODE_WPCAP (1<<2)
-#define SIPDUMP_MODE_WPCAPEX (1<<3)
+#define SIPDUMP_MODE_WTEXT (1 << 0)
+#define SIPDUMP_MODE_EVROUTE (1 << 1)
+#define SIPDUMP_MODE_WPCAP (1 << 2)
+#define SIPDUMP_MODE_WPCAPEX (1 << 3)
 
-typedef struct sipdump_data {
+typedef struct sipdump_data
+{
 	int pid;
 	int procno;
 	struct timeval tv;
@@ -48,7 +49,8 @@ typedef struct sipdump_data {
 	struct sipdump_data *next;
 } sipdump_data_t;
 
-typedef struct sipdump_list {
+typedef struct sipdump_list
+{
 	int count;
 	int enable;
 	gen_lock_t lock;

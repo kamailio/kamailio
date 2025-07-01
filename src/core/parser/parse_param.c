@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -79,8 +81,8 @@ static inline void parse_event_dialog_class(param_hooks_t *h, param_t *p)
 		case 'i':
 		case 'I':
 			if((p->name.len == 27)
-					&& (!strncasecmp(p->name.s + 1,
-							"nclude-session-description", 26))) {
+					&& (!strncasecmp(
+							p->name.s + 1, "nclude-session-description", 26))) {
 				p->type = P_ISD;
 				h->event_dialog.include_session_description = p;
 			}
@@ -154,7 +156,7 @@ static inline void parse_contact_class(param_hooks_t *_h, param_t *_p)
 				_p->type = P_RECEIVED;
 				_h->contact.received = _p;
 			} else if((_p->name.len == 6)
-						&& (!strncasecmp(_p->name.s + 1, "eg-id", 5))) {
+					  && (!strncasecmp(_p->name.s + 1, "eg-id", 5))) {
 				_p->type = P_REG_ID;
 				_h->contact.reg_id = _p;
 			}
@@ -175,8 +177,8 @@ static inline void parse_contact_class(param_hooks_t *_h, param_t *_p)
 			break;
 		case 'f':
 		case 'F':
-			if ((_p->name.len == 5) &&
-				(!strncasecmp(_p->name.s + 1, "lags", 4))) {
+			if((_p->name.len == 5)
+					&& (!strncasecmp(_p->name.s + 1, "lags", 4))) {
 				_p->type = P_FLAGS;
 				_h->contact.flags = _p;
 			}
@@ -249,7 +251,7 @@ static inline void parse_uri_class(param_hooks_t *_h, param_t *_p)
 				_p->type = P_DSTIP;
 				_h->uri.dstip = _p;
 			} else if((_p->name.len == 7)
-						&& (!strncasecmp(_p->name.s + 1, "stport", 6))) {
+					  && (!strncasecmp(_p->name.s + 1, "stport", 6))) {
 				_p->type = P_DSTPORT;
 				_h->uri.dstport = _p;
 			}
@@ -508,9 +510,9 @@ static inline int parse_param2(
 		t->len = t->name.len;
 	}
 
-	if(_s->s[0] == ',')
+	if(separator != ',' && _s->s[0] == ',')
 		goto ok; /* To be able to parse header parameters */
-	if(_s->s[0] == '>')
+	if(separator != '>' && _s->s[0] == '>')
 		goto ok; /* To be able to parse URI parameters */
 
 	if(_s->s[0] != separator) {
@@ -584,7 +586,7 @@ int parse_params2(
 		memset(_h, 0, sizeof(param_hooks_t));
 	*_p = 0;
 
-	if(!_s->s || _s->len<=0) { /* no parameters at all -- we're done */
+	if(!_s->s || _s->len <= 0) { /* no parameters at all -- we're done */
 		LM_DBG("empty uri params, skipping\n");
 		return 0;
 	}
@@ -779,7 +781,7 @@ static inline int do_duplicate_params(param_t **_n, param_t *_p, int _shm)
 			t = (param_t *)pkg_malloc(sizeof(param_t));
 		}
 		if(!t) {
-			if (_shm) {
+			if(_shm) {
 				SHM_MEM_ERROR;
 			} else {
 				PKG_MEM_ERROR;

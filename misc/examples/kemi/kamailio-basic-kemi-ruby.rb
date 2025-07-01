@@ -176,7 +176,7 @@ def ksr_route_withindlg()
   exit
 end
 
-# IP authorization and user authenticaton
+# IP authorization and user authentication
 def ksr_route_auth()
 	if !KSR.is_REGISTER() then
     # source IP allowed
@@ -225,7 +225,7 @@ def ksr_route_natmanage()
       end
     end
   end
-  #KSR.info("Natmange - returning if NAT flags set")
+  #KSR.info("Natmanage - returning if NAT flags set")
   return if !KSR.isflagset($FLT_NATS) and !KSR.isbflagset($FLB_NATB)
   #KSR.info("Natmanage - RTPPROXY from here on")
   KSR::RTPPROXY::RTPPROXY_manage("co");

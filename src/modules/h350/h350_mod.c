@@ -1,12 +1,14 @@
-/* 
+/*
  * Kamailio H.350 Module
  *
  * Copyright (C) 2007 University of North Carolina
  *
  * Original author: Christian Schlatter, cs@unc.edu
- * 
+ *
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -41,24 +43,28 @@ static int child_init(int rank);
 /*
  * fixup functions
  */
-static int one_str_pv_elem_fixup(void** param, int param_no);
-static int h350_auth_lookup_fixup(void** param, int param_no);
+static int one_str_pv_elem_fixup(void **param, int param_no);
+static int one_str_pv_elem_fixup_free(void **param, int param_no);
+static int h350_auth_lookup_fixup(void **param, int param_no);
 
 /*
  * exported functions
  */
 
-static int w_h350_sipuri_lookup(struct sip_msg* msg, char* sip_uri, char* s2);
-static int w_h350_auth_lookup(struct sip_msg* msg, char* digest_username, char* avp_specs);
-static int w_h350_call_preferences(struct sip_msg* msg, char* avp_name_prefix, char* s2);
-static int w_h350_service_level(struct sip_msg* msg, char* avp_name_prefix, char* s2);
+static int w_h350_sipuri_lookup(struct sip_msg *msg, char *sip_uri, char *s2);
+static int w_h350_auth_lookup(
+		struct sip_msg *msg, char *digest_username, char *avp_specs);
+static int w_h350_call_preferences(
+		struct sip_msg *msg, char *avp_name_prefix, char *s2);
+static int w_h350_service_level(
+		struct sip_msg *msg, char *avp_name_prefix, char *s2);
 
 /*
  * Module parameter variables
  */
-char* h350_ldap_session = H350_LDAP_SESSION;
-char* h350_base_dn = H350_BASE_DN;
-char* h350_search_scope = H350_SEARCH_SCOPE;
+char *h350_ldap_session = H350_LDAP_SESSION;
+char *h350_base_dn = H350_BASE_DN;
+char *h350_search_scope = H350_SEARCH_SCOPE;
 int h350_search_scope_int = -1;
 
 
@@ -67,34 +73,29 @@ int h350_search_scope_int = -1;
  */
 ldap_api_t ldap_api;
 
+/* clang-format off */
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"h350_sipuri_lookup",           (cmd_function)w_h350_sipuri_lookup,     1,
-	 one_str_pv_elem_fixup, 0,
-	 REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
-	{"h350_auth_lookup",             (cmd_function)w_h350_auth_lookup,       2,
-	 h350_auth_lookup_fixup, 0,
-	 REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
-	{"h350_result_call_preferences", (cmd_function)w_h350_call_preferences,  1,
-	 one_str_pv_elem_fixup, 0,
-	 REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
-	{"h350_result_service_level",    (cmd_function)w_h350_service_level,     1,
-	 one_str_pv_elem_fixup, 0,
-	 REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
+	{"h350_sipuri_lookup", (cmd_function)w_h350_sipuri_lookup, 1, one_str_pv_elem_fixup, one_str_pv_elem_fixup_free,
+		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE | LOCAL_ROUTE},
+	{"h350_auth_lookup", (cmd_function)w_h350_auth_lookup, 2, h350_auth_lookup_fixup, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE | LOCAL_ROUTE},
+	{"h350_result_call_preferences", (cmd_function)w_h350_call_preferences, 1, one_str_pv_elem_fixup, one_str_pv_elem_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE | LOCAL_ROUTE},
+	{"h350_result_service_level", (cmd_function)w_h350_service_level, 1, one_str_pv_elem_fixup, one_str_pv_elem_fixup,
+		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE | LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
-
 
 /*
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"ldap_session",     PARAM_STRING, &h350_ldap_session},
-	{"base_dn",          PARAM_STRING, &h350_base_dn},
-	{"search_scope",     PARAM_STRING, &h350_search_scope},
-	{0, 0, 0}
+	{"ldap_session", PARAM_STRING, &h350_ldap_session},
+	{"base_dn", PARAM_STRING, &h350_base_dn},
+	{"search_scope", PARAM_STRING, &h350_search_scope}, {0, 0, 0}
 };
 
 
@@ -102,17 +103,18 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"h350",          /* module name */
+	"h350",			 /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* cmd (cfg function) exports */
-	params,          /* Exported parameters */
-	0,               /* RPC method exports */
-	0,               /* exported pseudo-variables */
-	0,               /* response function */
-	mod_init,        /* module initialization function */
-	child_init,      /* child initialization function */
-	0                /* destroy function */
+	cmds,			 /* cmd (cfg function) exports */
+	params,			 /* Exported parameters */
+	0,				 /* RPC method exports */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* child initialization function */
+	0				 /* destroy function */
 };
+/* clang-format on */
 
 static int child_init(int rank)
 {
@@ -199,6 +201,22 @@ static int one_str_pv_elem_fixup(void **param, int param_no)
 			}
 		}
 		*param = (void *)model;
+	}
+
+	return 0;
+}
+
+static int one_str_pv_elem_fixup_free(void **param, int param_no)
+{
+	str s;
+
+	if(param_no == 1) {
+		s.s = (char *)*param;
+		if(s.s == 0 || s.s[0] == 0) {
+			return 0;
+		} else {
+			pv_elem_free_all(*param);
+		}
 	}
 
 	return 0;

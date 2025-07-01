@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -30,11 +32,11 @@
 
 #include "sr_module.h"
 
-int set_mod_param(char* _mod, char* _name, modparam_t _type, void* _val);
+int set_mod_param(char *_mod, char *_name, modparam_t _type, void *_val);
 
-int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val);
-int modparamx_set(char* regex, char* name, modparam_t type, void* val);
+int set_mod_param_regex(char *regex, char *name, modparam_t type, void *val);
+int modparamx_set(char *regex, char *name, modparam_t type, void *val);
 
-int set_mod_param_serialized(char* mval);
+int set_mod_param_serialized(char *mval);
 
 #endif

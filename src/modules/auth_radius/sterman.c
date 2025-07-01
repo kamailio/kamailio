@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -94,7 +96,7 @@ static inline int extract_avp(
 			name->s.s = vp->strvalue;
 			value->n = strtol(++p, &r, 10);
 		} else if(p && r && p != r && !q) {
-			/* int name and int vale */
+			/* int name and int value */
 			name->n = strtol(++p, &q, 10);
 			value->n = strtol(++r, &q, 10);
 		} else if((!p || p > q) && q) {
@@ -150,7 +152,7 @@ static int generate_avps(VALUE_PAIR *received)
 		vp = rc_avpair_get(vp, attrs[A_SIP_AVP].v, 0);
 	for(; vp; vp = ((ar_radius_avps_mode) ? vp->next
 										  : rc_avpair_get(vp->next,
-													attrs[A_SIP_AVP].v, 0))) {
+												  attrs[A_SIP_AVP].v, 0))) {
 		flags = 0;
 		if(!extract_avp(vp, &flags, &name, &val)) {
 			LM_ERR("error while extracting AVP '%.*s'\n", (int)strlen(vp->name),
@@ -302,7 +304,7 @@ int radius_authorize_sterman(
 		goto err;
 	}
 
-	/* 
+	/*
 	 * Add the additional authentication fields according to the QOP.
 	 */
 	if(_cred->qop.qop_parsed == QOP_AUTH) {

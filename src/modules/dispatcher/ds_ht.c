@@ -19,7 +19,9 @@
  */
 
 #include <stddef.h>
+#include <stdint.h>
 #include <regex.h>
+#include <inttypes.h>
 
 #include "../../core/mem/shm_mem.h"
 #include "../../core/mem/mem.h"
@@ -43,7 +45,7 @@ ds_cell_t *ds_cell_new(str *cid, str *duid, int dset, unsigned int cellid)
 
 	cell = (ds_cell_t *)shm_malloc(msize);
 	if(cell == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 
@@ -78,7 +80,7 @@ ds_ht_t *ds_ht_init(unsigned int htsize, int expire, int initexpire)
 
 	dsht = (ds_ht_t *)shm_malloc(sizeof(ds_ht_t));
 	if(dsht == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(dsht, 0, sizeof(ds_ht_t));
@@ -88,7 +90,7 @@ ds_ht_t *ds_ht_init(unsigned int htsize, int expire, int initexpire)
 
 	dsht->entries = (ds_entry_t *)shm_malloc(dsht->htsize * sizeof(ds_entry_t));
 	if(dsht->entries == NULL) {
-		LM_ERR("no more shm.\n");
+		SHM_MEM_ERROR;
 		shm_free(dsht);
 		dsht = NULL;
 		return NULL;
@@ -333,8 +335,8 @@ int ds_ht_dbg(ds_ht_t *dsht)
 		while(it) {
 			LM_ERR("\tcell: %.*s\n", it->callid.len, it->callid.s);
 			LM_ERR("\tduid: %.*s\n", it->duid.len, it->duid.s);
-			LM_ERR("\thid: %u expire: %u initexpire: %u\n", it->cellid,
-					(unsigned int)it->expire, (unsigned int)it->initexpire);
+			LM_ERR("\thid: %u expire: %" PRIu64 " initexpire: %" PRIu64 "\n",
+					it->cellid, (uint64_t)it->expire, (uint64_t)it->initexpire);
 			LM_ERR("\tdset:%d\n", it->dset);
 			it = it->next;
 		}

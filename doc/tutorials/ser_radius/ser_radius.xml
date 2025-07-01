@@ -46,11 +46,11 @@
 	    too. Any volunteers willing to describe setup of other RADIUS
 	    servers are encouraged to contact the author.
 	</simpara>
-	
+
 	<section id="prerequisities">
 	    <title>Prerequisites</title>
 	    <simpara>
-		To setup RADIUS support in SIP-router you will need the following:
+		To set up RADIUS support in SIP-router you will need the following:
 	    </simpara>
 	    <itemizedlist>
 		<listitem>
@@ -208,7 +208,7 @@ $INCLUDE /usr/local/etc/radiuclient/dictionary.ser
 	    </screen>
 	</section>
     </section>
-    
+
     <section id="freeradius">
 	<title>FreeRADIUS Server</title>
 	<simpara>
@@ -234,7 +234,7 @@ root@localhost"/usr/local/src/freeradius-0.9.1# make install
 	    accounting, and group membership checking will be described in
 	    separate sections.
 	</simpara>
-	
+
 	<section id="common_configuration">
 	    <title>Common configuration</title>
 	    <section>
@@ -274,7 +274,7 @@ client proxy.foo.bar {
 		    </simpara>
 		</note>
 	    </section>
-	    
+
 	    <section id="dictionary_server">
 		<title>File <filename>dictionary</filename></title>
 		<simpara>
@@ -297,7 +297,7 @@ $INCLUDE /usr/local/etc/radiusclient/dictionary.ser
 		    understand each other.
 		</simpara>
 	    </section>
-	    
+
 	    <section id="radiusd.conf">
 		<title>File <filename>radiusd.conf</filename></title>
 		<simpara>
@@ -318,7 +318,7 @@ $INCLUDE /usr/local/etc/radiusclient/dictionary.ser
 		    </simpara>
 		</note>
 	    </section>
-	    
+
 	    <section id="users">
 		<title>File <filename>users</filename></title>
 		<simpara>
@@ -330,7 +330,7 @@ $INCLUDE /usr/local/etc/radiusclient/dictionary.ser
 test Auth-Type := Digest, User-Password == "test"
      Reply-Message = "Hello, test with digest"
 		</programlisting>
-		
+
 		<simpara>
 		    The username and password is for testing only, you can
 		    safely remove the entry once your RADIUS server works and
@@ -338,7 +338,7 @@ test Auth-Type := Digest, User-Password == "test"
 		</simpara>
 	    </section>
 	</section>
-	
+
 	<section id="test">
 	    <title>Test The Server</title>
 	    <note>
@@ -361,9 +361,9 @@ root@/usr/local/src# radiusd -X
 		into the file:
 	    </simpara>
 	    <programlisting>
-User-Name = "test", Digest-Response = "631d6d73147add2f9e437f59bbc3aeb7", 
-Digest-Realm = "testrealm", Digest-Nonce = "1234abcd" , 
-Digest-Method = "INVITE", Digest-URI = "sip:5555551212@example.com", 
+User-Name = "test", Digest-Response = "631d6d73147add2f9e437f59bbc3aeb7",
+Digest-Realm = "testrealm", Digest-Nonce = "1234abcd" ,
+Digest-Method = "INVITE", Digest-URI = "sip:5555551212@example.com",
 Digest-Algorithm = "MD5", Digest-User-Name = "test"
 	    </programlisting>
 	    <simpara>
@@ -394,7 +394,7 @@ Received response ID 224, code 2, length = 45
         Reply-Message = "Hello, test with digest"
 	    </screen>
 	</section>
-	
+
 	<section id="auth_configuration">
 	    <title>Authentication Configuration</title>
 	    <simpara>
@@ -417,8 +417,8 @@ joe@sip-router.org Auth-Type := Digest, User-Password == "heslo"
 		don't need it.
 	    </simpara>
 	</section>
-	
-	<section id="accounting_configuration_server"> 
+
+	<section id="accounting_configuration_server">
 	    <title>Accounting Configuration</title>
 	    <simpara>
 		By default the FreeRADIUS server will log all accounting requests
@@ -472,7 +472,7 @@ Tue Jun 24 00:20:56 2003
 		</programlisting>
 	    </example>
 	</section>
-	
+
 	<section id="group_checking">
 	    <title>Group Checking Configuration</title>
 	    <simpara>
@@ -486,7 +486,7 @@ joe@sip-router.org Sip-Group == "pstn", Auth-Type := Accept
 	    </programlisting>
 	</section>
     </section>
-    
+
     <section id="ser_config">
 	<title>SIP-router Configuration</title>
 	<simpara>
@@ -559,7 +559,7 @@ root@localhost:/usr/local/src/sip_router# make install
 	    </simpara>
 	</section>
     </section>
-	
+
     <section id="faq">
 	<title>Frequently Asked Questions</title>
 	<qandaset>
@@ -618,6 +618,5 @@ libradiusclient.so.0: cannot open shared object file: No such file or directory
 	    </qandaentry>
 	</qandaset>
     </section>
-    
-</section>
 
+</section>

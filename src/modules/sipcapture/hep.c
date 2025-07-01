@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -20,6 +22,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
+
+#include <arpa/inet.h>
 
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
@@ -83,8 +87,9 @@ int hep_msg_received(sr_event_param_t *evp)
 		return hepv3_received(buf, *len, ri);
 	} else {
 
-		LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: not supported version "
-				   "or bad length: v:[%d] l:[%d]\n",
+		LOG(L_ERR,
+				"ERROR: sipcapture:hep_msg_received: not supported version "
+				"or bad length: v:[%d] l:[%d]\n",
 				heph->hp_v, heph->hp_l);
 		return -1;
 	}
@@ -112,8 +117,9 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri)
 	hl = hep_offset = sizeof(struct hep_hdr);
 	end = buf + len;
 	if(unlikely(len < hep_offset)) {
-		LOG(L_ERR, "ERROR: sipcapture:hep_msg_received len less than offset "
-				   "[%i] vs [%i]\n",
+		LOG(L_ERR,
+				"ERROR: sipcapture:hep_msg_received len less than offset "
+				"[%i] vs [%i]\n",
 				len, hep_offset);
 		return -1;
 	}
@@ -129,8 +135,9 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri)
 			hl += sizeof(struct hep_ip6hdr);
 			break;
 		default:
-			LOG(L_ERR, "ERROR: sipcapture:hep_msg_received:  unsupported "
-					   "family [%d]\n",
+			LOG(L_ERR,
+					"ERROR: sipcapture:hep_msg_received:  unsupported "
+					"family [%d]\n",
 					heph->hp_f);
 			return -1;
 	}
@@ -181,7 +188,7 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri)
 		return -1;
 	}
 
-	/* timming */
+	/* timing */
 	if(heph->hp_v == 2) {
 		hep_offset += sizeof(struct hep_timehdr);
 		heptime_tmp = (struct hep_timehdr *)hep_payload;
@@ -217,10 +224,10 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri)
 	ri->dst_port = ntohs(heph->hp_dport);
 
 	/* cut off the offset */
-	/* 
+	/*
 	 *  len -= offset;
          *  p = buf + offset;
-	 *  memmove(buf, p, BUF_SIZE+1); 
+	 *  memmove(buf, p, BUF_SIZE+1);
 	*/
 
 	hep_payload = buf + hep_offset;
@@ -261,11 +268,13 @@ int parsing_hepv3_message(char *buf, unsigned int len)
 	int totelem = 0;
 	int chunk_vendor = 0, chunk_type = 0, chunk_length = 0;
 	int total_length = 0;
+	static char ipbuf1[IP_ADDR_MAX_STR_SIZE];
+	static char portbuf1[INT2STR_MAX_LEN];
 
 
 	hg = (struct hep_generic_recv *)pkg_malloc(sizeof(struct hep_generic_recv));
 	if(hg == NULL) {
-		LM_ERR("no more pkg memory left for hg\n");
+		PKG_MEM_ERROR_FMT("for hg\n");
 		return -1;
 	}
 
@@ -462,7 +471,7 @@ int parsing_hepv3_message(char *buf, unsigned int len)
 	/* a little bit memory */
 	si = (struct socket_info *)pkg_malloc(sizeof(struct socket_info));
 	if(si == 0) {
-		LOG(L_ERR, "ERROR: new_sock_info: memory allocation error\n");
+		PKG_MEM_ERROR_FMT("for socket_info\n");
 		goto error;
 	}
 
@@ -481,13 +490,14 @@ int parsing_hepv3_message(char *buf, unsigned int len)
 	si->flags = 0;
 	si->addr_info_lst = 0;
 
-	si->address_str.s = ip_addr2a(&si->address);
+	si->address_str.len =
+			ip_addr2sbuf(&si->address, ipbuf1, sizeof(ipbuf1) - 1);
+	ipbuf1[si->address_str.len] = 0;
+	si->address_str.s = ipbuf1;
 
-	si->address_str.len = strlen(si->address_str.s);
-
-	si->port_no_str.s = int2str(si->port_no, &tmp_len);
+	si->port_no_str.s =
+			int2strbuf(si->port_no, portbuf1, INT2STR_MAX_LEN, &tmp_len);
 	si->port_no_str.len = tmp_len;
-	si->address_str.len = strlen(si->address_str.s);
 
 	si->name.len = si->address_str.len;
 	si->name.s = si->address_str.s;
@@ -548,7 +558,7 @@ int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 
 	hg = (struct hep_generic_recv *)pkg_malloc(sizeof(struct hep_generic_recv));
 	if(hg == NULL) {
-		LM_ERR("no more pkg memory left for hg\n");
+		PKG_MEM_ERROR_FMT("for hg\n");
 		return -1;
 	}
 
@@ -739,11 +749,10 @@ int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 	else if(hg->ip_proto->data == IPPROTO_UDP)
 		msg->rcv.proto = PROTO_UDP;
 
-	if(payload != NULL)
-	{
+	if(payload != NULL) {
 		ret = len - payload_len;
 		msg->buf = payload;
-                msg->len = payload_len;
+		msg->len = payload_len;
 	}
 
 
@@ -787,8 +796,9 @@ int hepv2_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 	hl = hep_offset = sizeof(struct hep_hdr);
 	end = buf + len;
 	if(unlikely(len < hep_offset)) {
-		LOG(L_ERR, "ERROR: sipcapture:hep_msg_received len less than offset "
-				   "[%i] vs [%i]\n",
+		LOG(L_ERR,
+				"ERROR: sipcapture:hep_msg_received len less than offset "
+				"[%i] vs [%i]\n",
 				len, hep_offset);
 		return -1;
 	}
@@ -804,8 +814,9 @@ int hepv2_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 			hl += sizeof(struct hep_ip6hdr);
 			break;
 		default:
-			LOG(L_ERR, "ERROR: sipcapture:hep_msg_received:  unsupported "
-					   "family [%d]\n",
+			LOG(L_ERR,
+					"ERROR: sipcapture:hep_msg_received:  unsupported "
+					"family [%d]\n",
 					heph->hp_f);
 			return -1;
 	}
@@ -856,7 +867,7 @@ int hepv2_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 		return -1;
 	}
 
-	/* timming */
+	/* timing */
 	if(heph->hp_v == 2) {
 		hep_offset += sizeof(struct hep_timehdr);
 		heptime_tmp = (struct hep_timehdr *)hep_payload;
@@ -919,7 +930,7 @@ int hepv3_get_chunk(struct sip_msg *msg, char *buf, unsigned int len,
 
 	hg = (struct hep_generic_recv *)pkg_malloc(sizeof(struct hep_generic_recv));
 	if(hg == NULL) {
-		LM_ERR("no more pkg memory left for hg\n");
+		PKG_MEM_ERROR_FMT("for hg\n");
 		return -1;
 	}
 

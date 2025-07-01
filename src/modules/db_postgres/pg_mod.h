@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -6,6 +6,8 @@
  * Portions Copyright (C) 2005-2008 iptelorg GmbH
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
@@ -26,11 +28,11 @@
 #define _PG_MOD_H
 
 /** @defgroup postgres PostgreSQL Database Driver
- * @ingroup DB_API 
+ * @ingroup DB_API
  */
 /** @{ */
 
-/** \file 
+/** \file
  * Postgres module interface.
  */
 
@@ -38,10 +40,11 @@ extern int pg_retries;
 extern int pg_timeout;
 extern int pg_keepalive;
 
-typedef struct pg_con_param_s {
-	char* name;
-	char* value;
-	struct pg_con_param_s* next;
+typedef struct pg_con_param_s
+{
+	char *name;
+	char *value;
+	struct pg_con_param_s *next;
 } pg_con_param_t;
 
 /** @} */

@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -23,15 +25,16 @@
 #ifndef _CPL_SUB_LIST_H
 #define _CPL_SUB_LIST_H
 
-struct node {
-	char         *offset;
-	char         *name;
-	struct node  *next;
+struct node
+{
+	char *offset;
+	char *name;
+	struct node *next;
 };
 
 
-struct node*  append_to_list(struct node *head, char *offdet, char *name);
-char*         search_the_list(struct node *head, char *name);
-void          delete_list(struct node *head );
+struct node *append_to_list(struct node *head, char *offdet, char *name);
+char *search_the_list(struct node *head, char *name);
+void delete_list(struct node *head);
 
 #endif

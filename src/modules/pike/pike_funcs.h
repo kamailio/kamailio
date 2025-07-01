@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -27,12 +29,12 @@
 
 
 void pike_counter_init(void);
-int  pike_check_req(sip_msg_t *msg);
-int  pike_check_ip(sip_msg_t *msg, str *strip);
-int  w_pike_check_req(sip_msg_t *msg, char *foo, char *bar);
-int  w_pike_check_ip(sip_msg_t *msg, char *pip, char *bar);
-void clean_routine(unsigned int, void*);
-void swap_routine(unsigned int, void*);
+int pike_check_req(sip_msg_t *msg);
+int pike_check_ip(sip_msg_t *msg, str *strip);
+int w_pike_check_req(sip_msg_t *msg, char *foo, char *bar);
+int w_pike_check_ip(sip_msg_t *msg, char *pip, char *bar);
+void clean_routine(unsigned int, void *);
+void swap_routine(unsigned int, void *);
 
 
 #endif

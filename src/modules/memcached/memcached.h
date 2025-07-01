@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,7 +31,7 @@
 #define MEMCACHED_H
 
 /*! server string */
-extern char* mcd_srv_str;
+extern char *mcd_srv_str;
 /*! cache expire time in seconds */
 extern unsigned int mcd_expire;
 /*! cache storage mode, set or add */
@@ -41,7 +43,7 @@ extern unsigned int mcd_memory;
 /*! stringify all values retrieved from memcached */
 extern unsigned int mcd_stringify;
 /*! memcached handle */
-extern struct memcached_st* memcached_h;
+extern struct memcached_st *memcached_h;
 /*! memcached server list */
 extern struct memcached_server_st *servers;
 

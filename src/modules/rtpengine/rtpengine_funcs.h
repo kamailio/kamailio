@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -27,8 +29,7 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/contact/contact.h"
 
-int extract_body(struct sip_msg * , str *);
-int check_content_type(struct sip_msg * );
+int extract_body(struct sip_msg *, str *, str *);
 int get_callid(struct sip_msg *, str *);
 int get_to_tag(struct sip_msg *, str *);
 int get_from_tag(struct sip_msg *, str *);

@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -28,7 +30,7 @@
  */
 
 /*! \file
- * Berkeley DB : 
+ * Berkeley DB :
  * Declaration of bdb_cmd data structure that contains BDB specific data
  * stored in db_cmd structures and related functions.
  *
@@ -52,7 +54,7 @@
  */
 typedef struct _bdb_cmd
 {
-	db_drv_t gen;	/**< Generic part of the data structure (must be first */
+	db_drv_t gen;	 /**< Generic part of the data structure (must be first */
 	bdb_con_t *bcon; /**< DB connection handle */
 	DB *dbp;		 /**< DB structure handle */
 	DBC *dbcp;		 /**< DB cursor handle */

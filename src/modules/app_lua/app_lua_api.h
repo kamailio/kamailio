@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -63,15 +65,13 @@ int sr_lua_reload_module(unsigned int reload);
 int app_lua_dostring(struct sip_msg *msg, char *script);
 int app_lua_dofile(struct sip_msg *msg, char *script);
 int app_lua_runstring(struct sip_msg *msg, char *script);
-int app_lua_run(sip_msg_t *msg, char *func, char *p1, char *p2,
-		char *p3);
-int app_lua_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
-		char *p3, int emode);
+int app_lua_run(sip_msg_t *msg, char *func, char *p1, char *p2, char *p3);
+int app_lua_run_ex(
+		sip_msg_t *msg, char *func, char *p1, char *p2, char *p3, int emode);
 
-int sr_kemi_lua_exec_func(lua_State* L, int eidx);
+int sr_kemi_lua_exec_func(lua_State *L, int eidx);
 
 int app_lua_init_rpc(void);
-int bind_app_lua(app_lua_api_t* api);
+int bind_app_lua(app_lua_api_t *api);
 
 #endif
-

@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -176,8 +178,8 @@ int extract_body(struct sip_msg *msg, str *body)
 
 	/*
 	 * Better use the content-len value - no need of any explicit
-	 * parcing as get_body() parsed all headers and Conten-Length
-	 * body header is automaticaly parsed when found.
+	 * parsing as get_body() parsed all headers and Content-Length
+	 * body header is automatically parsed when found.
 	 */
 	if(msg->content_length == 0) {
 		LM_ERR("failed to get the content length in message\n");

@@ -19,9 +19,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * 
+ *
  */
-/*! \file 
+/*! \file
  * \brief Kamailio XMPP :: API
  *  \ingroup xmpp
  */
@@ -41,8 +41,8 @@ xmpp_cb_list_t *_xmpp_cb_list = 0;
 
 int init_xmpp_cb_list(void)
 {
-	_xmpp_cb_list = (xmpp_cb_list_t*)shm_malloc(sizeof(xmpp_cb_list_t));
-	if (_xmpp_cb_list==0) {
+	_xmpp_cb_list = (xmpp_cb_list_t *)shm_malloc(sizeof(xmpp_cb_list_t));
+	if(_xmpp_cb_list == 0) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
@@ -55,10 +55,10 @@ void destroy_xmpp_cb_list(void)
 {
 	xmpp_callback_t *it, *it1;
 
-	if (_xmpp_cb_list==0)
+	if(_xmpp_cb_list == 0)
 		return;
 
-	for(it=_xmpp_cb_list->first; it; ) {
+	for(it = _xmpp_cb_list->first; it;) {
 		it1 = it;
 		it = it->next;
 		shm_free(it1);
@@ -69,28 +69,25 @@ void destroy_xmpp_cb_list(void)
 }
 
 
-
 /*! \brief register a callback function 'f' for 'types' mask of events;
 */
-int register_xmpp_cb( int types, xmpp_cb_f f, void *param )
+int register_xmpp_cb(int types, xmpp_cb_f f, void *param)
 {
 	xmpp_callback_t *it;
 
-	if(_xmpp_cb_list==0)
-	{
+	if(_xmpp_cb_list == 0) {
 		LM_CRIT("null callback list\n");
 		return E_BUG;
 	}
 
 	/* check null functions */
-	if (f==0) {
+	if(f == 0) {
 		LM_CRIT("null callback function\n");
 		return E_BUG;
 	}
 
 	/* build callback structure */
-	if (!(it=(xmpp_callback_t*)shm_malloc(sizeof(xmpp_callback_t))))
-	{
+	if(!(it = (xmpp_callback_t *)shm_malloc(sizeof(xmpp_callback_t)))) {
 		SHM_MEM_ERROR;
 		return E_OUT_OF_MEM;
 	}
@@ -108,18 +105,17 @@ int register_xmpp_cb( int types, xmpp_cb_f f, void *param )
 }
 
 
-int bind_xmpp(xmpp_api_t* api)
+int bind_xmpp(xmpp_api_t *api)
 {
-	if (api==NULL)
-	{
+	if(api == NULL) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 	api->register_callback = register_xmpp_cb;
-	api->xpacket    = xmpp_send_xpacket;
-	api->xmessage   = xmpp_send_xmessage;
+	api->xpacket = xmpp_send_xpacket;
+	api->xmessage = xmpp_send_xmessage;
 	api->xsubscribe = xmpp_send_xsubscribe;
-	api->xnotify    = xmpp_send_xnotify;
+	api->xnotify = xmpp_send_xnotify;
 	api->decode_uri_sip_xmpp = decode_uri_sip_xmpp;
 	api->encode_uri_sip_xmpp = encode_uri_sip_xmpp;
 	api->decode_uri_xmpp_sip = decode_uri_xmpp_sip;
@@ -127,4 +123,3 @@ int bind_xmpp(xmpp_api_t* api)
 
 	return 0;
 }
-

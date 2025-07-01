@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -33,13 +35,12 @@
  */
 int w_issflagset(struct sip_msg *msg, char *flag, str *s2)
 {
-	int fval=0;
-	if(fixup_get_ivalue(msg, (gparam_p)flag, &fval)!=0)
-	{
+	int fval = 0;
+	if(fixup_get_ivalue(msg, (gparam_p)flag, &fval) != 0) {
 		LM_ERR("no flag value\n");
 		return -1;
 	}
-	if(fval<0 || fval>31)
+	if(fval < 0 || fval > 31)
 		return -1;
 	return issflagset((flag_t)fval);
 }
@@ -49,13 +50,12 @@ int w_issflagset(struct sip_msg *msg, char *flag, str *s2)
  */
 int w_resetsflag(struct sip_msg *msg, char *flag, str *s2)
 {
-	int fval=0;
-	if(fixup_get_ivalue(msg, (gparam_p)flag, &fval)!=0)
-	{
+	int fval = 0;
+	if(fixup_get_ivalue(msg, (gparam_p)flag, &fval) != 0) {
 		LM_ERR("no flag value\n");
 		return -1;
 	}
-	if(fval<0 || fval>31)
+	if(fval < 0 || fval > 31)
 		return -1;
 	return resetsflag((flag_t)fval);
 }
@@ -65,13 +65,12 @@ int w_resetsflag(struct sip_msg *msg, char *flag, str *s2)
  */
 int w_setsflag(struct sip_msg *msg, char *flag, char *s2)
 {
-	int fval=0;
-	if(fixup_get_ivalue(msg, (gparam_p)flag, &fval)!=0)
-	{
+	int fval = 0;
+	if(fixup_get_ivalue(msg, (gparam_p)flag, &fval) != 0) {
 		LM_ERR("no flag value\n");
 		return -1;
 	}
-	if(fval<0 || fval>31)
+	if(fval < 0 || fval > 31)
 		return -1;
 	return setsflag((flag_t)fval);
 }
@@ -81,23 +80,20 @@ int w_setsflag(struct sip_msg *msg, char *flag, char *s2)
  */
 int w_isbflagset(struct sip_msg *msg, char *flag, str *idx)
 {
-	int fval=0;
-	int ival=0;
-	if(fixup_get_ivalue(msg, (gparam_p)flag, &fval)!=0)
-	{
+	int fval = 0;
+	int ival = 0;
+	if(fixup_get_ivalue(msg, (gparam_p)flag, &fval) != 0) {
 		LM_ERR("no flag value\n");
 		return -1;
 	}
-	if(fval<0 || fval>31)
+	if(fval < 0 || fval > 31)
 		return -1;
-	if(idx!=0)
-	{
-		if(fixup_get_ivalue(msg, (gparam_p)idx, &ival)!=0)
-		{
+	if(idx != 0) {
+		if(fixup_get_ivalue(msg, (gparam_p)idx, &ival) != 0) {
 			LM_ERR("no idx value\n");
 			return -1;
 		}
-		if(ival<0)
+		if(ival < 0)
 			return -1;
 	}
 	return isbflagset(ival, (flag_t)fval);
@@ -108,27 +104,23 @@ int w_isbflagset(struct sip_msg *msg, char *flag, str *idx)
  */
 int w_resetbflag(struct sip_msg *msg, char *flag, str *idx)
 {
-		int fval=0;
-	int ival=0;
-	if(fixup_get_ivalue(msg, (gparam_p)flag, &fval)!=0)
-	{
+	int fval = 0;
+	int ival = 0;
+	if(fixup_get_ivalue(msg, (gparam_p)flag, &fval) != 0) {
 		LM_ERR("no flag value\n");
 		return -1;
 	}
-	if(fval<0 || fval>31)
+	if(fval < 0 || fval > 31)
 		return -1;
-	if(idx!=0)
-	{
-		if(fixup_get_ivalue(msg, (gparam_p)idx, &ival)!=0)
-		{
+	if(idx != 0) {
+		if(fixup_get_ivalue(msg, (gparam_p)idx, &ival) != 0) {
 			LM_ERR("no idx value\n");
 			return -1;
 		}
-		if(ival<0)
+		if(ival < 0)
 			return -1;
 	}
 	return resetbflag(ival, (flag_t)fval);
-
 }
 
 /**
@@ -136,23 +128,20 @@ int w_resetbflag(struct sip_msg *msg, char *flag, str *idx)
  */
 int w_setbflag(struct sip_msg *msg, char *flag, char *idx)
 {
-	int fval=0;
-	int ival=0;
-	if(fixup_get_ivalue(msg, (gparam_p)flag, &fval)!=0)
-	{
+	int fval = 0;
+	int ival = 0;
+	if(fixup_get_ivalue(msg, (gparam_p)flag, &fval) != 0) {
 		LM_ERR("no flag value\n");
 		return -1;
 	}
-	if(fval<0 || fval>31)
+	if(fval < 0 || fval > 31)
 		return -1;
-	if(idx!=0)
-	{
-		if(fixup_get_ivalue(msg, (gparam_p)idx, &ival)!=0)
-		{
+	if(idx != 0) {
+		if(fixup_get_ivalue(msg, (gparam_p)idx, &ival) != 0) {
 			LM_ERR("no idx value\n");
 			return -1;
 		}
-		if(ival<0)
+		if(ival < 0)
 			return -1;
 	}
 	return setbflag(ival, (flag_t)fval);

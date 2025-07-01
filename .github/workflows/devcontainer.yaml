@@ -1,0 +1,63 @@
+
+---
+name: build devcontainer image
+'on':
+  push:
+    branches:
+      - master
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      force:
+        required: true
+        type: boolean
+        default: false
+
+env:
+  DIST: bookworm
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: print latest_commit
+        run: echo ${{ github.sha }}
+
+      - name: Get changed files
+        if: ${{ ! inputs.force }}
+        id: changed-files
+        uses: tj-actions/changed-files@v46
+        with:
+          since_last_remote_commit: true
+
+      - name: changes in relevant files
+        if: ${{ ! inputs.force }}
+        id: changed-files-builder
+        uses: tj-actions/changed-files@v46
+        with:
+          files: |
+            .devcontainer/**
+            pkg/kamailio/deb/${{ env.DIST }}/**
+
+      - name: Login to GitHub Container Registry
+        if: steps.changed-files-builder.outputs.any_changed == 'true' || inputs.force
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pre-build dev container image
+        if: steps.changed-files-builder.outputs.any_changed == 'true' || inputs.force
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: ghcr.io/${{ github.repository_owner }}/kamailio-${{ github.ref_name }}-devcontainer
+          cacheFrom: ghcr.io/${{ github.repository_owner }}/kamailio-${{ github.ref_name }}-devcontainer
+          push: always

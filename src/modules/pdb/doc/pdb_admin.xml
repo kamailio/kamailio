@@ -37,7 +37,7 @@
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
-			The module depends on the following modules (in the other words
+			The module depends on the following modules (in other words
 			the listed modules must be loaded before this module):
 			</para>
 			<itemizedlist>
@@ -98,32 +98,53 @@ modparam("pdb", "server", "localhost:10001,host.name:10001,192.168.1.7:10002")
 		    </programlisting>
 	    </example>
     </section>
+   <section>
+	    <title><varname>ll_info</varname> (int)</title>
+	    <para>
+			Local log level (per module) for specific INFO messages. It has to
+			be a valid log level value (see xlog() function from xlog module for
+			more details).
+	    </para>
+	    <para>
+		    <emphasis>
+			    Default value is <quote>2</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+		    <title>Set <varname>ll_info</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("pdb", "ll_info", 3)
+...
+		    </programlisting>
+	    </example>
+    </section>
 	</section>
 	<section>
 		<title>Functions</title>
 		<section>
 	    <title>
-				<function moreinfo="none">pdb_query (string query, string dstavp)</function>
+				<function moreinfo="none">pdb_query (string query, string dstpv)</function>
 	    </title>
 	    <para>
 				Sends the query string to all configured servers and stores the answer in
-				dstavp. If it takes more than the configured timeout, false is returned.
+				dstvp. If it takes more than the configured timeout, false is returned.
 
-				Pseudo-variables or AVPs can be used for the query string.
+				In addition to a string, any pseudo-variable can be used as query.
 
 				The answer must consist of the null terminated query string followed by
 				a two byte integer value in network byte order. The integer value will
-				be stored in the given AVP.
+				be stored in the given pseudo-variable dstvp.
 	    </para>
 			<example>
 				<title><function>pdb_query</function> usage</title>
 				<programlisting format="linespecific">
 ...
 # query external service for routing information
-if (!pdb_query("$rU", "$avp(i:82)"))
-  $avp(i:82) = 0; # default routing
+if (!pdb_query("$rU", "$avp(routing)"))
+  $avp(routing) = 0; # default routing
 }
-cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
+cr_route("$avp(routing)", "$rd", "$rU", "$rU", "call_id");
 ...
 				</programlisting>
 			</example>
@@ -142,6 +163,24 @@ cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
 				<programlisting format="linespecific">
 ...
 &kamcmd; pdb.status
+...
+				</programlisting>
+	    </example>
+		</section>
+		<section id="pdb.r.timeout">
+	    <title>pdb.timeout</title>
+	    <para>
+				Prints the current PDB query timeout value.
+				This can also be used to set the PDB query timeout.
+	    </para>
+			<example>
+				<title><function>pdb.timeout</function> usage</title>
+				<programlisting format="linespecific">
+...
+# get the PDB query timeout
+&kamcmd; pdb.timeout
+# set the PDB query timeout to 10ms
+&kamcmd; pdb.timeout 10
 ...
 				</programlisting>
 	    </example>

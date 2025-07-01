@@ -13,9 +13,18 @@ Julien Chavanton
    flowroute.com
    <jchavanton@gmail.com>
 
+Edited by
+
+Andreas Granig
+
+   sipfront.com
+   <agranig@sipfront.com>
+
    Copyright © 2011 Timo Teräs
 
    Copyright © 2017
+
+   Copyright © 2024
      __________________________________________________________________
 
    Table of Contents
@@ -32,6 +41,7 @@ Julien Chavanton
 
               3.1. db_set_readonly (string)
               3.2. db_set_journal_mode (string)
+              3.3. db_set_busy_timeout (int)
 
         4. Functions
         5. Usage
@@ -40,9 +50,10 @@ Julien Chavanton
 
    1.1. Set db_set_readonly parameter
    1.2. Set db_set_journal_mode parameter
-   1.3. loading the module usage
-   1.4. db_url module parameter usage
-   1.5. DBURL define usage
+   1.3. Set db_set_busy_timeout parameter
+   1.4. loading the module usage
+   1.5. db_url module parameter usage
+   1.6. DBURL define usage
 
 Chapter 1. Admin Guide
 
@@ -58,6 +69,7 @@ Chapter 1. Admin Guide
 
         3.1. db_set_readonly (string)
         3.2. db_set_journal_mode (string)
+        3.3. db_set_busy_timeout (int)
 
    4. Functions
    5. Usage
@@ -89,6 +101,7 @@ Chapter 1. Admin Guide
 
    3.1. db_set_readonly (string)
    3.2. db_set_journal_mode (string)
+   3.3. db_set_busy_timeout (int)
 
 3.1. db_set_readonly (string)
 
@@ -103,9 +116,10 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set db_set_readonly parameter
 ...
-modparam("db_sqlite","db_set_readonly","/var/mydb.sqlite")
-modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using
- the sqlops module
+# Don't use trailing slashes for db_sqlite params
+modparam("db_sqlite","db_set_readonly","var/mydb.sqlite")
+modparam("sqlops","sqlcon","lrn=>sqlite:///var/mydb.sqlite") # Example if using
+the sqlops module
 ...
 
 3.2. db_set_journal_mode (string)
@@ -113,8 +127,12 @@ modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using
    This will set the db connection journal mode, for the given connection.
    The value is the full path to the sqlite file used for example in any
    db_url or sqlops/sqlcon Other journal mode are : DELETE | TRUNCATE |
-   PERSIST | MEMORY | WAL | OFF This parameter may be set multiple times
-   to set many DB connections to readonly in the same configuration file.
+   PERSIST | MEMORY | WAL | OFF When setting this option, you must also
+   set db_set_busy_timeout, because all kamailio sub-processes will set
+   this option individually and simultaneously, causing "database locked"
+   errors on startup if no busy timeout is set. This parameter may be set
+   multiple times to set many DB connections to readonly in the same
+   configuration file.
 
    By default all the db connections are using sqlite default journaling
    mode.
@@ -122,12 +140,44 @@ modparam("sqlops","sqlcon","lrn=>sqlite:////var/mydb.sqlite") # Example if using
    Example 1.2. Set db_set_journal_mode parameter
 ...
 # In this example we are using Write-Ahead Logging in order to update the databa
-se from another process(external to Kamailio) without facing any locking.
+se
+# from another process(external to Kamailio) without facing any locking.
 
-#!subst "!DB_FILE!/var/mydb.sqlite!"
+# Don't use trailing slashes for db_sqlite params
+#!subst "!DB_FILE!var/mydb.sqlite!"
 modparam("db_sqlite","db_set_readonly","DB_FILE")   # We are also opening the da
 tabase in readonly
 modparam("db_sqlite","db_set_journal_mode","DB_FILE=WAL;")
+modparam("db_sqlite","db_set_busy_timeout","DB_FILE=300;") # wait 300ms max for
+locks to release
+modparam("sqlops","sqlcon","lrn=>sqlite:///DB_FILE")
+...
+
+3.3. db_set_busy_timeout (int)
+
+   This will set the db connection busy timeout to let it wait for the
+   given milliseconds for database locks to be released by other processes
+   before giving up. Use this with the WAL journaling mode if you run into
+   "database locked" errors. The value is the full path to the sqlite file
+   used for example in any db_url or sqlops/sqlcon This parameter may be
+   set multiple times to set the busy-timeout for different DB connections
+   in the same configuration file.
+
+   By default all the db connections are NOT using any busy timeout,
+   causing them to immediately give up and return a "databased locked"
+   error if another process is locking it at the same time.
+
+   Example 1.3. Set db_set_busy_timeout parameter
+...
+# In this example we are using Write-Ahead Logging in combination with a busy-ti
+meout to prevent
+"database locked" errors. Note that you have to leave out the leading slash in t
+he DB file!
+
+#!subst "!DB_FILE!var/mydb.sqlite!"
+modparam("db_sqlite","db_set_journal_mode","DB_FILE=WAL;")
+modparam("db_sqlite","db_set_busy_timeout","DB_FILE=300;") # wait 300ms max for
+locks to release
 modparam("sqlops","sqlcon","lrn=>sqlite:///DB_FILE")
 ...
 
@@ -140,7 +190,7 @@ modparam("sqlops","sqlcon","lrn=>sqlite:///DB_FILE")
    To use the module, first you have to load it in the Kamailio
    configuration file.
 
-   Example 1.3. loading the module usage
+   Example 1.4. loading the module usage
 ...
 loadmodule "db_sqlite.so"
 ...
@@ -149,14 +199,14 @@ loadmodule "db_sqlite.so"
    the SQLite database to driver part 'sqlite://', followed by the path to
    database file. For example:
 
-   Example 1.4. db_url module parameter usage
+   Example 1.5. db_url module parameter usage
 ...
 modparam("auth_db", "db_url", "sqlite:///etc/kamailio/kamailio.db")
 ...
 
    In the default config file, defined token DBURL can be updated like:
 
-   Example 1.5. DBURL define usage
+   Example 1.6. DBURL define usage
 ...
 #!define DBURL "sqlite:///etc/kamailio/kamailio.db"
 ...

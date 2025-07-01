@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -33,6 +35,11 @@
 #include "../../core/str.h"
 extern str i_user;
 #endif
+
+/*! bit to force loose mode in loose_route_mode() */
+#define RR_LR_MODE_LOOSE_ONLY 1
+/*! bit to skip outbound processing in after_loose() */
+#define RR_LR_MODE_SKIP_OUTBOUND 2
 
 /*! should request's from-tag is appended to record-route */
 extern int append_fromtag;

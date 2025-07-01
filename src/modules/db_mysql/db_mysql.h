@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -27,8 +29,9 @@
 
 /* counter struct
 */
-struct mysql_counters_h {
-    counter_handle_t driver_err;
+struct mysql_counters_h
+{
+	counter_handle_t driver_err;
 };
 /* defined in km_dbase.c */
 extern struct mysql_counters_h mysql_cnts_h;

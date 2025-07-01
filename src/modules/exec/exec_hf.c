@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -79,8 +81,8 @@ static int insert_hf(struct hf_wrapper **list, struct hdr_field *hf)
 			if(hf->type == HDR_OTHER_T
 					&& (hf->name.len != i->u.hf->name.len
 							|| strncasecmp(i->u.hf->name.s, hf->name.s,
-										hf->name.len)
-										!= 0))
+									   hf->name.len)
+									   != 0))
 				continue;
 			/* yes, we found a hf of same type */
 			w->next_same = i->next_same;
@@ -472,7 +474,7 @@ static int append_fixed_vars(struct sip_msg *msg, struct hf_wrapper **list)
 	}
 	/* request URI */
 	uri = msg->new_uri.s && msg->new_uri.len ? &msg->new_uri
-											: &msg->first_line.u.request.uri;
+											 : &msg->first_line.u.request.uri;
 	if(!append_var(EV_RURI, uri->s, uri->len, list)) {
 		LM_ERR("append_var URI failed\n");
 		return 0;
@@ -488,19 +490,20 @@ static int append_fixed_vars(struct sip_msg *msg, struct hf_wrapper **list)
 	}
 	/* original URI */
 	if(!append_var(EV_ORURI, msg->first_line.u.request.uri.s,
-			msg->first_line.u.request.uri.len, list)) {
+			   msg->first_line.u.request.uri.len, list)) {
 		LM_ERR("append_var O-URI failed\n");
 		goto error;
 	}
 	/* userpart of request URI */
 	if(parse_uri(msg->first_line.u.request.uri.s,
-			msg->first_line.u.request.uri.len, &oparsed_uri) < 0) {
+			   msg->first_line.u.request.uri.len, &oparsed_uri)
+			< 0) {
 		LM_WARN("orig URI not parsed (%.*s)\n",
 				msg->first_line.u.request.uri.len,
-				ZSW( msg->first_line.u.request.uri.s));
+				ZSW(msg->first_line.u.request.uri.s));
 	} else {
 		if(!append_var(
-				EV_OUSER, oparsed_uri.user.s, oparsed_uri.user.len, list)) {
+				   EV_OUSER, oparsed_uri.user.s, oparsed_uri.user.len, list)) {
 			LM_ERR("append_var OUSER failed\n");
 			goto error;
 		}

@@ -303,6 +303,27 @@ modparam("pdt", "check_domain", 0)
 	    </example>
 	</section>
 
+	<section>
+	    <title><varname>mode</varname> (integer)</title>
+	    <para>
+			If set to 1, duplicated prefixes are ingnored and starting continues,
+			if 0, then starting or loading fails.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "mode", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
     </section>
 
     <section>

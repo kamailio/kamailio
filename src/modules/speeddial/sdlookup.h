@@ -26,7 +26,7 @@
 
 #include "../../core/parser/msg_parser.h"
 
-int w_sd_lookup(struct sip_msg* _msg, char* _table, char* _owner);
-int sd_lookup_owner(struct sip_msg* _msg, str* _stable, str* _sowner);
+int w_sd_lookup(struct sip_msg *_msg, char *_table, char *_owner);
+int sd_lookup_owner(struct sip_msg *_msg, str *_stable, str *_sowner);
 
 #endif /* _SDLOOKUP_H_ */

@@ -4,7 +4,7 @@
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
- * Fruanhofer Institute. It was and still is maintained in a separate
+ * Fraunhofer FOKUS Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
@@ -14,7 +14,7 @@
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
  *
- * NB: Alot of this code was originally part of OpenIMSCore,
+ * NB: A lot of this code was originally part of OpenIMSCore,
  * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
  * Thanks for great work! This is an effort to
@@ -24,6 +24,8 @@
  * to manage in the Kamailio/SR environment
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,30 +52,35 @@
 /**
  * Request types for handler switching.
  */
-enum handler_types {
-	REQUEST_HANDLER=0, 	/**< the message received is a request */
-	RESPONSE_HANDLER=1  /**< the message received is a response */
+enum handler_types
+{
+	REQUEST_HANDLER = 0, /**< the message received is a request */
+	RESPONSE_HANDLER = 1 /**< the message received is a response */
 };
 
 /**
  * Diameter message received handler list element.
  */
-typedef struct handler_t{
-	enum handler_types type;					/**< type of the handler */
-	union {
-		AAARequestHandler_f *requestHandler;	/**< request callback function */
-		AAAResponseHandler_f *responseHandler;  /**< response callback function */
-	} handler;									/**< union for handler callback function */
-	void *param;								/**< transparent parameter to pass to callback */
-	struct handler_t *next;				/**< next handler in the list */
-	struct handler_t *prev;				/**< prev handler in the list */
+typedef struct handler_t
+{
+	enum handler_types type; /**< type of the handler */
+	union
+	{
+		AAARequestHandler_f *requestHandler; /**< request callback function */
+		AAAResponseHandler_f
+				*responseHandler; /**< response callback function */
+	} handler;					  /**< union for handler callback function */
+	void *param;			/**< transparent parameter to pass to callback */
+	struct handler_t *next; /**< next handler in the list */
+	struct handler_t *prev; /**< prev handler in the list */
 } handler;
 
-typedef struct handler_list_t{
-	handler *head;				/**< first handler in the list */
-	handler *tail;				/**< last handler in the list */
+typedef struct handler_list_t
+{
+	handler *head; /**< first handler in the list */
+	handler *tail; /**< last handler in the list */
 } handler_list;
 
-int api_callback(peer *p,AAAMessage *msg,void* ptr);
+int api_callback(peer *p, AAAMessage *msg, void *ptr);
 
 #endif /*API_PROCESS_H_*/

@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,9 +31,9 @@
 #ifndef _CONF_NBODY_H_
 #define _CONF_NBODY_H_
 
-str* conf_agg_nbody(str* pres_user, str* pres_domain, str** body_array,
-		int n, int off_index);
-str* conf_body_setversion(subs_t *subs, str* body);
-void free_xml_body(char* body);
+str *conf_agg_nbody(str *pres_user, str *pres_domain, str **body_array, int n,
+		int off_index);
+str *conf_body_setversion(subs_t *subs, str *body);
+void free_xml_body(char *body);
 
 #endif

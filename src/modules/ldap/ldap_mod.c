@@ -8,6 +8,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -59,6 +61,8 @@ static int child_init(int rank);
 static int ldap_result_fixup(void **param, int param_no);
 static int ldap_filter_url_encode_fixup(void **param, int param_no);
 static int ldap_result_check_fixup(void **param, int param_no);
+static int ldap_fixup_free(void **param, int param_no);
+static int ldap_filter_url_encode_fixup_free(void **param, int param_no);
 
 /*
 * exported functions
@@ -80,6 +84,7 @@ static int w_ldap_result_check_2(
 * Default module parameter values
 */
 #define DEF_LDAP_CONFIG "/usr/local/etc/kamailio/ldap.cfg"
+static int ldap_connect_mode = 0;
 
 /*
 * Module parameter variables
@@ -93,25 +98,25 @@ static dictionary *config_vals = NULL;
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"ldap_search",            (cmd_function)w_ldap_search,            1,
-		fixup_spve_null, 0,
+		fixup_spve_null, fixup_free_spve_null,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_result",            (cmd_function)w_ldap_result1,           1,
-		ldap_result_fixup, 0,
+		ldap_result_fixup, ldap_fixup_free,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_result",            (cmd_function)w_ldap_result2,           2,
-		ldap_result_fixup, 0,
+		ldap_result_fixup, ldap_fixup_free,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_result_next",       (cmd_function)w_ldap_result_next,       0,
 		0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_result_check",      (cmd_function)w_ldap_result_check_1,    1,
-		ldap_result_check_fixup, 0,
+		ldap_result_check_fixup, ldap_fixup_free,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_result_check",      (cmd_function)w_ldap_result_check_2,    2,
-		ldap_result_check_fixup, 0,
+		ldap_result_check_fixup, ldap_fixup_free,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"ldap_filter_url_encode", (cmd_function)w_ldap_filter_url_encode, 2,
-		ldap_filter_url_encode_fixup, 0,
+		ldap_filter_url_encode_fixup, ldap_filter_url_encode_fixup_free,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{"load_ldap",              (cmd_function)load_ldap,  0,
 		0, 0, 0},
@@ -125,6 +130,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 
 	{"config_file",          PARAM_STR, &ldap_config},
+	{"connect_mode",    PARAM_INT, &ldap_connect_mode},
 	{0, 0, 0}
 };
 
@@ -168,9 +174,15 @@ static int child_init(int rank)
 		}
 
 		if(oldap_connect(ld_name) != 0) {
-			LM_ERR("[%s]: failed to connect to LDAP host(s)\n", ld_name);
-			ldap_disconnect(ld_name);
-			return -1;
+			if(ldap_connect_mode == 1) {
+				LM_INFO("[%s]: Failed to connect to LDAP host(s) but start "
+						"without connection enabled - proceed",
+						ld_name);
+			} else {
+				LM_ERR("[%s]: failed to connect to LDAP host(s)\n", ld_name);
+				ldap_disconnect(ld_name);
+				return -1;
+			}
 		}
 	}
 
@@ -247,7 +259,7 @@ static int w_ldap_search(struct sip_msg *msg, char *ldap_url, char *param)
 {
 	str ldap_url_val = STR_NULL;
 
-	if(fixup_get_svalue(msg, (gparam_t*)ldap_url, &ldap_url_val)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)ldap_url, &ldap_url_val) < 0) {
 		LM_ERR("failed to get ldap url parameter\n");
 		return -1;
 	}
@@ -328,7 +340,7 @@ static int ldap_result_fixup(void **param, int param_no)
 		lp = (struct ldap_result_params *)pkg_malloc(
 				sizeof(struct ldap_result_params));
 		if(lp == NULL) {
-			LM_ERR("no memory\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		memset(lp, 0, sizeof(struct ldap_result_params));
@@ -366,6 +378,14 @@ static int ldap_result_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int ldap_fixup_free(void **param, int param_no)
+{
+	if(param_no == 1) {
+		pkg_free(*param);
+	}
+	return 0;
+}
+
 static int ldap_result_check_fixup(void **param, int param_no)
 {
 	struct ldap_result_check_params *lp;
@@ -388,7 +408,7 @@ static int ldap_result_check_fixup(void **param, int param_no)
 		lp = (struct ldap_result_check_params *)pkg_malloc(
 				sizeof(struct ldap_result_check_params));
 		if(lp == NULL) {
-			LM_ERR("no memory\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		memset(lp, 0, sizeof(struct ldap_result_check_params));
@@ -444,7 +464,7 @@ static int ldap_filter_url_encode_fixup(void **param, int param_no)
 	} else if(param_no == 2) {
 		spec_p = (pv_spec_t *)pkg_malloc(sizeof(pv_spec_t));
 		if(spec_p == NULL) {
-			LM_ERR("no memory\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		s.s = (char *)*param;
@@ -467,6 +487,14 @@ static int ldap_filter_url_encode_fixup(void **param, int param_no)
 	return 0;
 }
 
+static int ldap_filter_url_encode_fixup_free(void **param, int param_no)
+{
+	if(param_no == 2) {
+		pkg_free(*param);
+	}
+	return 0;
+}
+
 /**
  *
  */
@@ -483,8 +511,8 @@ static int ki_ldap_result_str(sip_msg_t *msg, str *attrname, str *avpname)
 	int_str dst_avp_name;
 
 	dst_avp_name.s = *avpname;
-	return ldap_result_toavp(msg, attrname, NULL, &dst_avp_name,
-			AVP_NAME_STR, 0 /*str result*/);
+	return ldap_result_toavp(
+			msg, attrname, NULL, &dst_avp_name, AVP_NAME_STR, 0 /*str result*/);
 }
 
 /**

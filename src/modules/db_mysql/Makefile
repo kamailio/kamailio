@@ -37,8 +37,6 @@ else
 		-lmysqlclient -lz
 endif
 
-SERLIBPATH=../../lib
-SER_LIBS=$(SERLIBPATH)/srdb2/srdb2 $(SERLIBPATH)/srdb1/srdb1
 ifneq (,$(filter sip-router ser, $(INSTALL_FLAVOUR)))
 MOD_INSTALL_SHARE= ../../scripts/mysql/my_create.sql \
 				   ../../scripts/mysql/my_data.sql   \

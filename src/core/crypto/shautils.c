@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -39,9 +41,9 @@ void compute_md5(char *dst, char *src, int src_len)
 {
 	MD5_CTX context;
 	unsigned char digest[16];
-	MD5Init (&context);
-  	MD5Update (&context, src, src_len);
-	U_MD5Final (digest, &context);
+	MD5Init(&context);
+	MD5Update(&context, src, src_len);
+	U_MD5Final(digest, &context);
 	string2hex(digest, 16, dst);
 }
 

@@ -14,24 +14,24 @@
         <title>Overview</title>
 
         <para>
-			The &kamailio; H350 module enables a &kamailio; SIP proxy server to access SIP account data stored in an LDAP <xref linkend="RFC4510"/> directory containing H.350 <xref linkend="H350"/> <emphasis>commObjects</emphasis>. ITU-T Recommendation H.350 standardizes LDAP object classes to store Real-Time Communication (RTC) account data. In particular, <emphasis>H.350.4</emphasis> <xref linkend="H350-4"/> defines an object class called <emphasis>sipIdentity</emphasis> that includes attribute specifications for SIP account data like SIP URI, SIP digest username/password, or service level. This allows to store SIP account data in a vendor neutral way and lets different entities, like SIP proxies, provisioning, or billing applications, access the data in a standardized format.  
+			The &kamailio; H350 module enables a &kamailio; SIP proxy server to access SIP account data stored in an LDAP <xref linkend="RFC4510"/> directory containing H.350 <xref linkend="H350"/> <emphasis>commObjects</emphasis>. ITU-T Recommendation H.350 standardizes LDAP object classes to store Real-Time Communication (RTC) account data. In particular, <emphasis>H.350.4</emphasis> <xref linkend="H350-4"/> defines an object class called <emphasis>sipIdentity</emphasis> that includes attribute specifications for SIP account data like SIP URI, SIP digest username/password, or service level. This allows to store SIP account data in a vendor neutral way and lets different entities, like SIP proxies, provisioning, or billing applications, access the data in a standardized format.
         </para>
-        
+
         <para>
-			The <emphasis>ViDe H.350 Cookbook</emphasis> <xref linkend="vide-H350-cookbook"/>  is a good reference for deploying an H.350 directory. Besides general information on H.350, LDAP, and related standards, this document explains how to set up an H.350/LDAP directory and discusses different deployment scenarios.    
+			The <emphasis>ViDe H.350 Cookbook</emphasis> <xref linkend="vide-H350-cookbook"/>  is a good reference for deploying an H.350 directory. Besides general information on H.350, LDAP, and related standards, this document explains how to set up an H.350/LDAP directory and discusses different deployment scenarios.
         </para>
-        
+
         <para>
-            The H350 module uses the &kamailio; LDAP module to import H.350 attribute values into the &kamailio; routing script variable space. The module exports functions to parse and store the H.350 attribute values from the &kamailio; routing script. It allows a script writer to implement H.350 based SIP digest authentication, call forwarding, SIP URI alias to AOR rewriting, and service level parsing. 
+            The H350 module uses the &kamailio; LDAP module to import H.350 attribute values into the &kamailio; routing script variable space. The module exports functions to parse and store the H.350 attribute values from the &kamailio; routing script. It allows a script writer to implement H.350 based SIP digest authentication, call forwarding, SIP URI alias to AOR rewriting, and service level parsing.
         </para>
 
     <section>
         <title>Example H.350 commObject LDAP Entry</title>
-        
+
         <para>
             The following example shows a typical H.350 commObject LDAP entry storing SIP account data.
         </para>
-        
+
         <example>
             <title>Example H.350 commObject storing SIP account data</title>
 
@@ -39,23 +39,23 @@
 Attribute Name                Attribute Value(s)
 --------------                -----------------
 
-# LDAP URI identifying the owner of this commObject, typically 
+# LDAP URI identifying the owner of this commObject, typically
 # points to an entry in the enterprise directory
-commOwner	ldap://dir.example.com/dc=example,dc=com??one?(uid=bob)	
+commOwner	ldap://dir.example.com/dc=example,dc=com??one?(uid=bob)
 
-# Unique identifier for this commObject, used for referencing 
-# this object e.g. from the enterprise directory 
-commUniqueId                  298217asdjgj213	
+# Unique identifier for this commObject, used for referencing
+# this object e.g. from the enterprise directory
+commUniqueId                  298217asdjgj213
 
 # Determines if this commObject should be listed on white pages
 commPrivate                   false
 
-# Valid SIP URIs for this account (can be used to store alias SIP URIs 
+# Valid SIP URIs for this account (can be used to store alias SIP URIs
 # like DIDs as well)
-SIPIdentitySIPURI             sip:bob@example.com                 
+SIPIdentitySIPURI             sip:bob@example.com
                               sip:bob@alias.example.com
                               sip:+1919123456@alias.example.com
-# SIP digest username	
+# SIP digest username
 SIPIdentityUserName           bob
 
 # SIP digest password
@@ -67,15 +67,15 @@ SIPIdentityProxyAddress       sip.example.com
 # SIP registrar address
 SIPIdentityRegistrarAddress   sip.example.com
 
-# Call preferences: Forward to voicemail on no response 
+# Call preferences: Forward to voicemail on no response
 # after 20 seconds and on busy
 callPreferenceURI             sip:bob@voicemail.example.com n:20000
                               sip:bob@voicemail.example.com b
-	
+
 # Account service level(s)
 SIPIdentityServiceLevel	      long_distance
                               conferencing
-                              
+
 # H.350 object classes
 objectClass                   top
                               commObject
@@ -139,7 +139,7 @@ modparam("h350", "ldap_session", "h350");
             </programlisting>
         </example>
     </section>
-    
+
     <section>
         <title>base_dn (string)</title>
 
@@ -159,7 +159,7 @@ modparam("h350", "base_dn", "ou=h350,dc=example,dc=com");
             </programlisting>
         </example>
     </section>
-    
+
     <section>
         <title>search_scope (string)</title>
 
@@ -186,15 +186,15 @@ modparam("h350", "search_scope", "sub");
 
     <section>
         <title>h350_sipuri_lookup(sip_uri)</title>
-        
+
         <para>
             This function performs an LDAP search query for an H.350 commObject with a SIPIdentitySIPURI of <varname>sip_uri</varname>. The <varname>sip_uri</varname> parameter first gets escaped according the rules for LDAP filter strings. The result of the LDAP search is stored internally and can be accessed either by one of the <emphasis>h350_result*</emphasis> or one of the <emphasis>ldap_result*</emphasis> functions from the &kamailio; LDAP module.
         </para>
-        
+
         <para>
             The function returns <varname>-1</varname> (FALSE) for internal errors, and <varname>-2</varname> (FALSE) if no H.350 commObject was found with a matching <varname>sip_uri</varname>. <varname>n</varname> &gt; 0 (TRUE) is returned if <varname>n</varname> H.350 commObjects were found.
         </para>
-        
+
         <para>
             This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE and BRANCH_ROUTE.
         </para>
@@ -243,7 +243,7 @@ modparam("h350", "search_scope", "sub");
                     </itemizedlist>
                 </listitem>
             </varlistentry>
-            
+
             <varlistentry>
                 <term><constant>-2</constant> (FALSE):</term>
 
@@ -263,7 +263,7 @@ modparam("h350", "search_scope", "sub");
         This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE, and ONREPLY_ROUTE.
         </para>
 
-	
+
         <example>
             <title>Example Usage</title>
 
@@ -277,7 +277,7 @@ if (!h350_sipuri_lookup("sip:$rU@$rd"))
     switch ($retcode)
     {
     case -2:
-        xlog("L_INFO", 
+        xlog("L_INFO",
              "h350 callee lookup: no entry found in H.350 directory");
         exit;
     case -1:
@@ -290,22 +290,22 @@ if (!h350_sipuri_lookup("sip:$rU@$rd"))
             </programlisting>
         </example>
     </section>
-    
+
     <section>
         <title>h350_auth_lookup(auth_username, "username_avp_spec/pwd_avp_spec")</title>
-        
+
         <para>
             This function performs an LDAP search query for SIP digest authentication credentials in an H.350 directory. The H.350 directory is searched for a commObject with SIPIdentityUserName of <varname>auth_username</varname>. If such a commObject is found, the SIP digest authentication username and password are stored in AVPs <varname>username_avp_spec</varname> and <varname>pwd_avp_spec</varname>, respectively. <emphasis>pv_*_authorize</emphasis> functions from AUTH module can then be used to perform SIP digest authentication.
         </para>
-        
+
         <para>
             The function returns <constant>1</constant> (TRUE) if an H.350 commObject was found, <constant>-1</constant> (FALSE) in case of an internal error, and <constant>-2</constant> (FALSE) if no matching commObject was found.
         </para>
-        
+
         <para>
             This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE and BRANCH_ROUTE.
         </para>
-        
+
         <variablelist>
             <title>Function Parameters:</title>
 
@@ -318,7 +318,7 @@ if (!h350_sipuri_lookup("sip:$rU@$rd"))
                     </para>
                 </listitem>
             </varlistentry>
-            
+
             <varlistentry>
                 <term>username_avp_spec</term>
 
@@ -328,7 +328,7 @@ if (!h350_sipuri_lookup("sip:$rU@$rd"))
                     </para>
                 </listitem>
             </varlistentry>
-            
+
             <varlistentry>
                 <term>pwd_avp_spec</term>
 
@@ -370,7 +370,7 @@ if (!h350_sipuri_lookup("sip:$rU@$rd"))
                     </itemizedlist>
                 </listitem>
             </varlistentry>
-            
+
             <varlistentry>
                 <term><constant>-2</constant> (FALSE):</term>
 
@@ -408,11 +408,11 @@ modparam("h350", "search_scope", "one")
 route[1]
 {
     #
-    # H.350 based SIP digest authentication 
+    # H.350 based SIP digest authentication
     #
-     
+
     # challenge all requests not including an Auth header
-    if (!(is_present_hf("Authorization") || 
+    if (!(is_present_hf("Authorization") ||
           is_present_hf("Proxy-Authorization")))
     {
         if (is_method("REGISTER"))
@@ -425,7 +425,7 @@ route[1]
     }
 
     # get digest password from H.350 using auth username ($au)
-    if (!h350_auth_lookup("$au", 
+    if (!h350_auth_lookup("$au",
                           "$avp(s:auth_user)/$avp(s:auth_pwd)"))
     {
         switch ($retcode)
@@ -447,7 +447,7 @@ route[1]
             if ($retcode == -5)
             {
                 sl_send_reply("500", "Internal server error");
-                exit;    
+                exit;
             }
             else {
                 www_challenge("example.com", "0");
@@ -456,7 +456,7 @@ route[1]
         }
 
         consume_credentials();
-        xlog("L_INFO", 
+        xlog("L_INFO",
              "REGISTER request successfully authenticated");
         return(1);
     }
@@ -467,7 +467,7 @@ route[1]
         if ($retcode == -5)
         {
             sl_send_reply("500", "Internal server error");
-            exit;    
+            exit;
         }
         else {
             proxy_challenge("example.com", "0");
@@ -482,24 +482,24 @@ route[1]
             </programlisting>
         </example>
     </section>
-    
+
     <section>
         <title>h350_result_call_preferences(avp_name_prefix)</title>
-        
+
         <para>
 			This function parses the callPreferenceURI attribute of an H.350 commObject, which must have been fetched through <emphasis>h350_*_lookup</emphasis> or <emphasis>ldap_search</emphasis>. callPreferenceURI is a multi-valued attribute that stores call preference rules like e.g. forward-on-busy or forward-unconditionally. <emphasis>Directory services architecture for call forwarding and preferences</emphasis> <xref linkend="H350-6"/> defines a format for simple call forwarding rules:
         </para>
-        
+
         <blockquote>
             <para>
                 <literal>target_uri type[:argument]</literal>
             </para>
         </blockquote>
-        
+
         <para>
             In a SIP environment, <literal>target_uri</literal> is typically the call forwarding rule's target SIP URI, although it could be any type of URI, e.g. an HTTP pointer to a CPL script. Four different values are specified for <literal>type</literal>: <literal>b</literal> for "forward on busy", <literal>n</literal> for "forward on no answer", <literal>u</literal> for "forward unconditionally", and <literal>f</literal> for "forward on destination not found". The optional <literal>argument</literal> is a string indicating the time in milliseconds after which the call forwarding should occur.
         </para>
-        
+
         <example>
             <title>Example H.350 callPreferenceURI simple call forwarding rules</title>
             <programlisting>
@@ -522,17 +522,17 @@ callPreferenceURI: sip:bob@example.com f
 callPreferenceURI: sip:alice@example.com f
             </programlisting>
         </example>
-        
+
         <para>
             <emphasis>h350_result_call_preferences</emphasis> stores these call forwarding rules as AVPs according to the following rules:
         </para>
-        
+
         <blockquote>
             <programlisting>
 #
 # AVP storing a forwarding rule's target URI
 #
-            
+
 AVP name  = avp_name_prefix + '_' + type
 AVP value = target_uri
 
@@ -544,27 +544,27 @@ AVP name  = avp_name_prefix + '_' + type + '_t'
 AVP value = argument / 1000
             </programlisting>
         </blockquote>
-        
+
         <para>
             Example 1 from above would result in two AVPs: <literal>$avp("s:prefix_n") = "sip:voicemail@example.com"</literal> and <literal>$avp("s:prefix_n_t") = 15</literal>.
         </para>
-        
+
         <para>
             Example 2: <literal>$avp("s:prefix_u") = "sip:alice@example.com"</literal>.
         </para>
-        
+
         <para>
             Example 3: <literal>$avp("s:prefix_f[1]") = "sip:bob@example.com"</literal> and <literal>$avp("s:prefix_f[2]]") = "sip:alice@example.com"</literal>.
         </para>
-        
+
         <para>
             These AVPs can then be used to implement the desired behavior in the &kamailio; routing script.
         </para>
-        
+
         <para>
             This function returns the number of successfully parsed simple call forwarding rules (TRUE), in case the H.350 callPreferenceURI attribute contained one or multiple values matching the simple call forwarding rule syntax described above. It returns <constant>-1</constant> (FALSE) for internal errors, and <constant>-2</constant> (FALSE) if none of the rules matched or if no callPreferenceURI attribute was found.
         </para>
-        
+
         <para>
             This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE and BRANCH_ROUTE.
         </para>
@@ -613,7 +613,7 @@ AVP value = argument / 1000
                     </itemizedlist>
                 </listitem>
             </varlistentry>
-            
+
             <varlistentry>
                 <term><constant>-2</constant> (FALSE):</term>
 
@@ -666,7 +666,7 @@ if (!h350_result_call_preferences("callee_pref_") &amp;&amp; ($retcode == -1))
 
 if (is_avp_set("$avp(s:callee_pref_u)"))
 {
-    # replace R-URI with CFU URI, g will fetch all CFU URIs 
+    # replace R-URI with CFU URI, g will fetch all CFU URIs
     # --> request can fork
     if (avp_pushto("$ru", "$avp(s:callee_pref_u)/g"))
     {
@@ -683,18 +683,18 @@ if (is_avp_set("$avp(s:callee_pref_u)"))
             </programlisting>
         </example>
     </section>
-    
+
     <section>
         <title>h350_result_service_level(avp_name_prefix)</title>
-        
+
         <para>
-			<emphasis>Directory services architecture for SIP</emphasis> <xref linkend="H350-4"/> defines a multi-valued LDAP attribute named SIPIdentityServiceLevel, which can be used to store SIP account service level values in an LDAP directory. This function parses the SIPIdentityServiceLevel attribute and stores all service level values as AVPs for later retrieval in the &kamailio; routing script. The function accesses the H.350 commObject fetched by a call to <emphasis>h350_*_lookup</emphasis> or <emphasis>ldap_search</emphasis>. 
+			<emphasis>Directory services architecture for SIP</emphasis> <xref linkend="H350-4"/> defines a multi-valued LDAP attribute named SIPIdentityServiceLevel, which can be used to store SIP account service level values in an LDAP directory. This function parses the SIPIdentityServiceLevel attribute and stores all service level values as AVPs for later retrieval in the &kamailio; routing script. The function accesses the H.350 commObject fetched by a call to <emphasis>h350_*_lookup</emphasis> or <emphasis>ldap_search</emphasis>.
         </para>
-        
+
         <para>
-            The resulting AVPs have a name of the form <literal>avp_name_prefix + SIPIdentityServiceLevel attribute value</literal>, and an integer value of <constant>1</constant>. 
+            The resulting AVPs have a name of the form <literal>avp_name_prefix + SIPIdentityServiceLevel attribute value</literal>, and an integer value of <constant>1</constant>.
         </para>
-        
+
         <example>
             <title>Example SIPIdentityServiceLevel values and resulting AVPs</title>
             <programlisting>
@@ -702,7 +702,7 @@ SIPIdentityServiceLevel: longdistance
 SIPIdentityServiceLevel: international
 SIPIdentityServiceLevel: 900
 
-after calling h350_result_service_level("sl_"), the following AVPs 
+after calling h350_result_service_level("sl_"), the following AVPs
 will be available in the routing script:
 
 $avp("s:sl_longdistance") = 1
@@ -710,11 +710,11 @@ $avp("s:sl_international") = 1
 $avp("s:sl_900") = 1
             </programlisting>
         </example>
-        
+
         <para>
             This function returns the number of added AVPs (TRUE), <constant>-1</constant> (FALSE)for internal errors, and <constant>-2</constant> (FALSE)if no SIPIdentityServiceLevel attribute was found.
         </para>
-        
+
         <para>
             The function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE and BRANCH_ROUTE.
         </para>
@@ -763,7 +763,7 @@ $avp("s:sl_900") = 1
                     </itemizedlist>
                 </listitem>
             </varlistentry>
-            
+
             <varlistentry>
                 <term><constant>-2</constant> (FALSE):</term>
 
@@ -811,9 +811,9 @@ if (!h350_result_service_level("caller_sl_") &amp;&amp; ($retcode == -1))
 if (is_avp_set("$avp(s:caller_sl_international)"))
 {
     t_relay();
-} 
+}
 else {
-    sl_send_reply("403", "Forbidden");    
+    sl_send_reply("403", "Forbidden");
 }
 exit;
             </programlisting>

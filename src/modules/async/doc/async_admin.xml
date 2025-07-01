@@ -132,6 +132,27 @@ modparam("async", "return", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="async.p.mode">
+		<title><varname>mode</varname> (int)</title>
+		<para>
+			Control if the module should bind (0) to tm or not (1). It may not
+			be needed to use tm functions (e.g., when needing async_tkv_emit()
+			only).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (bind to tm module).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async", "mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -190,7 +211,7 @@ route[RESUME] {
 		request with the route[routename]. In case of internal errors, the
 		function returns false, otherwise the function exits the execution of
 		the script at that moment (return 0 behaviour).
-		This function works only if the ms_timer parameter has a value greater then 0.
+		This function works only if the ms_timer parameter has a value greater than 0.
 		</para>
 		<para>
 		The routename parameter can be a static string or a dynamic string
@@ -234,13 +255,19 @@ route[RESUME] {
 		</title>
 		<para>
 		Simulate a sleep of 'seconds' and then continue the processing of SIP
-		request with the next action. In case of internal errors, the function
-		returns false.
+		request with the next action. Note that the processing continues till
+		the last action in the current route block. Consider using async_route()
+		instead if you want to control better what is executed after the wait
+		time. Beacuse the execution is resumed in another process, do not use
+		private memory variables before and after the async sleep.
 		</para>
 		<para>
 		The sleep parameter represent the number of seconds to suspend the
 		processing of SIP request. Maximum value is 100. The parameter can be
 		a static integer or a variable holding an integer.
+		</para>
+		<para>
+		In case of internal errors, the function returns false.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -262,15 +289,13 @@ exit;
 		<function moreinfo="none">async_ms_sleep(milliseconds)</function>
 		</title>
 		<para>
-		Simulate a sleep of 'milliseconds' and then continue the processing of SIP
-		request with the next action. In case of internal errors, the function
-		returns false.
-		This function works only if the ms_timer parameter has a value greater then 0.
+		Similar to async_sleep(), but with a 'milliseconds' parameter. This
+		function works only if the ms_timer parameter has a value greater than 0.
 		</para>
 		<para>
 		The sleep parameter represent the number of milliseconds to suspend the
-		processing of SIP request. Maximum value is 30000 (30 sec). The parameter can be
-		a static integer or a variable holding an integer.
+		processing of SIP request. Maximum value is 30000 (30 sec). The parameter
+		can be a static integer or a variable holding an integer.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -457,6 +482,35 @@ request_route {
 route[RESUME] {
    xinfo("$async(data)\n");
    exit;
+}
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="async.f.async_tkv_emit">
+		<title>
+			<function moreinfo="none">async_tkv_emit(type, key, value)</function>
+		</title>
+		<para>
+		Emit a type-key-value event.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>async_tkv_emit</function> usage</title>
+		<programlisting format="linespecific">
+...
+async_workers_group="name=tkv;workers=1;nonblock=0;usleep=0"
+...
+request_route {
+    ...
+    async_tkv_emit("8000", "call", "caller='$fU';callee='$tU'");
+    ...
+}
+event_route[core:tkv] {
+    xinfo("$atkv(type) / $atkv(key) / $atkv(val)\n");
+    exit;
 }
 ...
 </programlisting>

@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -6,6 +6,8 @@
  * Portions Copyright (C) 2005-2008 iptelorg GmbH
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
@@ -23,7 +25,7 @@
  */
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
 /** \file
@@ -40,9 +42,22 @@
 
 /** An array of supported PostgreSQL field types. */
 static char *pg_type_id_name[] = {
-		"bool", "bytea", "char", "int8", "int2", "int4", "text", "float4",
-		"float8", "inet", "bpchar", "varchar", "timestamp", "timestamptz",
-		"bit", "varbit",
+		"bool",
+		"bytea",
+		"char",
+		"int8",
+		"int2",
+		"int4",
+		"text",
+		"float4",
+		"float8",
+		"inet",
+		"bpchar",
+		"varchar",
+		"timestamp",
+		"timestamptz",
+		"bit",
+		"varbit",
 };
 
 

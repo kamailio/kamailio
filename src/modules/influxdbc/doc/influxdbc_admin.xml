@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a client connector for InfluxDB.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="influxdbc.p.server">
+		<title><varname>server</varname> (int)</title>
+		<para>
+			Address of InfluxDB server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is empty.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>server</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("influxdbc", "server", "127.0.0.1")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="influxdbc.p.port">
+		<title><varname>port</varname> (int)</title>
+		<para>
+			Address of InfluxDB server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 8086.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>port</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("influxdbc", "port", 8808)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="influxdbc.p.database">
+		<title><varname>database</varname> (int)</title>
+		<para>
+			Database of InfluxDB server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is empty.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>database</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("influxdbc", "database", "stats")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="influxdb.f.influxdbc_measure">
+		<title>
+		<function moreinfo="none">influxdbc_measure(name)</function>
+		</title>
+		<para>
+		Start a measure group with the given name.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>influxdbc_measure()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    influxdbc_measure("stats");
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="influxdb.f.influxdbc_measureend">
+		<title>
+		<function moreinfo="none">influxdbc_measureend()</function>
+		</title>
+		<para>
+		End the current measure group.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>influxdbc_measureend()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    influxdbc_measureend();
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="influxdb.f.influxdbc_sub">
+		<title>
+		<function moreinfo="none">influxdbc_sub(name)</function>
+		</title>
+		<para>
+		Start a measure subgroup with the given name.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>influxdbc_sub()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    influxdbc_sub("grp1");
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="influxdb.f.influxdbc_subend">
+		<title>
+		<function moreinfo="none">influxdbc_subend()</function>
+		</title>
+		<para>
+		End the current measure subgroup.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>influxdbc_subend()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    influxdbc_subend();
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="influxdb.f.influxdbc_push">
+		<title>
+		<function moreinfo="none">influxdbc_push()</function>
+		</title>
+		<para>
+		Push accumulated values to the server.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>influxdbc_push()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    influxdbc_push();
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="influxdb.f.influxdbc_lomg">
+		<title>
+		<function moreinfo="none">influxdbc_long(name, value)</function>
+		</title>
+		<para>
+			Save the pair with provided name and value. Both parameters can
+			have variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>influxdbc_long()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    influxdbc_long("active", "$shv(active)");
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>

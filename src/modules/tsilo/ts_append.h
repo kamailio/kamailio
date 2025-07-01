@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -22,7 +24,9 @@
 #ifndef _TS_APPEND_H
 #define _TS_APPEND_H
 
-int ts_append(struct sip_msg* msg, str *ruri, str *contact, char *table);
-int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *uri, str *contact);
+int ts_append(struct sip_msg *msg, str *ruri, str *contact, char *table);
+int ts_append_to(struct sip_msg *msg, int tindex, int tlabel, char *table,
+		str *uri, str *contact);
+int ts_append_branches(sip_msg_t *msg, str *ruri);
 
 #endif

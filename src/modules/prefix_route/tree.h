@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -31,17 +33,17 @@ struct tree_item;
 
 struct tree_item *tree_item_alloc(void);
 void tree_item_free(struct tree_item *item);
-int  tree_item_add(struct tree_item *root, const char *prefix,
-		   const char *route, int route_ix);
-int  tree_item_get(const struct tree_item *root, const str *user);
+int tree_item_add(struct tree_item *root, const char *prefix, const char *route,
+		int route_ix);
+int tree_item_get(const struct tree_item *root, const str *user);
 void tree_item_print(const struct tree_item *item, FILE *f, int level);
 
 
 struct tree;
 
-int  tree_init(void);
+int tree_init(void);
 void tree_close(void);
-int  tree_swap(struct tree_item *root);
-int  tree_route_get(const str *user);
+int tree_swap(struct tree_item *root);
+int tree_route_get(const str *user);
 void tree_print(FILE *f);
 #endif

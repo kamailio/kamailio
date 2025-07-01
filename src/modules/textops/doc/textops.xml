@@ -46,9 +46,9 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="textops_admin.xml"/>
 	<xi:include href="textops_devel.xml"/>
-	
-	
+
+
 </book>

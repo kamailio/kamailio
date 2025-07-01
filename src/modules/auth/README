@@ -57,6 +57,7 @@ Daniel-Constantin Mierla
               4.7. pv_proxy_authenticate(realm, passwd, flags)
               4.8. pv_auth_check(realm, passwd, flags, checks)
               4.9. auth_get_www_authenticate(realm, flags, pvdest)
+              4.10. auth_algorithm(algorithm)
 
    List of Examples
 
@@ -75,7 +76,7 @@ Daniel-Constantin Mierla
    1.13. force_stateless_reply example
    1.14. realm_prefix parameter example
    1.15. force_stateless_reply example
-   1.16. use SHA-256 example
+   1.16. algorithm example
    1.17. add Authentication-Info header example
    1.18. consume_credentials example
    1.19. consume_credentials example
@@ -85,7 +86,8 @@ Daniel-Constantin Mierla
    1.23. pv_www_authenticate usage
    1.24. pv_proxy_authenticate usage
    1.25. pv_auth_check usage
-   1.26. auth_get_www_authenticate
+   1.26. auth_get_www_authenticate usage
+   1.27. auth_algorithm example
 
 Chapter 1. Admin Guide
 
@@ -126,6 +128,7 @@ Chapter 1. Admin Guide
         4.7. pv_proxy_authenticate(realm, passwd, flags)
         4.8. pv_auth_check(realm, passwd, flags, checks)
         4.9. auth_get_www_authenticate(realm, flags, pvdest)
+        4.10. auth_algorithm(algorithm)
 
 1. Overview
 
@@ -180,7 +183,7 @@ Chapter 1. Admin Guide
 
    These three module parameters control which optional integrity checks
    will be performed on the SIP message carrying digest response during
-   SIP MD5 digest authentication. auth_check_register controls integrity
+   SIP MD5 digest authentication. auth_checks_register controls integrity
    checks to be performed on REGISTER messages, auth_checks_no_dlg
    controls which optional integrity checks will be performed on SIP
    requests that have no To header field or no To tag (in other words the
@@ -287,7 +290,7 @@ modparam("auth", "qop", "auth")   # set qop=auth
 
    If enabled the received nc value is remembered and checked against the
    older value (for a successful authentication the received nc must be
-   greater then the previously received one, see rfc2617 for more
+   greater than the previously received one, see rfc2617 for more
    details). This will provide protection against replay attacks while
    still allowing credentials caching at the UA side.
 
@@ -297,7 +300,7 @@ modparam("auth", "qop", "auth")   # set qop=auth
 
    If a response doesn't include qop or nc (for example obsolete UAs that
    don't support them) the response will be checked according to the other
-   enabled nonce checks, in this order: one_time_nonce and auth_check_*.
+   enabled nonce checks, in this order: one_time_nonce and auth_checks_*.
    If a response includes nc only the normal nonce_expire checks and the
    nonce_count checks will be performed, all the other checks will be
    ignored.
@@ -306,13 +309,13 @@ modparam("auth", "qop", "auth")   # set qop=auth
    maximum number of tracked nonces is set using the nc_array_size or
    nc_array_order parameters. If this number is exceeded, older entries
    will be overwritten. As long as the maximum rate of challengeable
-   messages per average response time is lower then nc_array_size, the
+   messages per average response time is lower than nc_array_size, the
    nonce_count checks should work flawlessly. For optimum performance
    (maximum reuse of cache credentials) nc_array_size divided by
-   nid_pool_no should be lower then the message rate multiplied by the
+   nid_pool_no should be lower than the message rate multiplied by the
    desired nonce_expire.
 
-   The maximum accepted nc value is 255. If nc becomes greater then this,
+   The maximum accepted nc value is 255. If nc becomes greater than this,
    the nonce will be considered stale and the UA will be re-challenged.
 
    Note: nonce_count should be enabled only in stateful mode (a
@@ -409,7 +412,7 @@ route{
    nonces. The maximum number of tracked nonces is set using the
    otn_in_flight_no or otn_in_flight_order parameters. If this number is
    exceeded, older entries will be overwritten. As long as the maximum
-   rate of challengeable messages per average response time is lower then
+   rate of challengeable messages per average response time is lower than
    otn_in_flight_no, the one_time_nonce checks should work flawlessly.
 
    The default value is 0 (off).
@@ -551,11 +554,11 @@ modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 
    If you use multiple servers in your installation, and would like to
    authenticate on the second server against the nonce generated at the
-   first one its necessary to explicitly set the secret to the same value
-   on all servers. However, as the use of a shared (and fixed) secret as
-   nonce is insecure, it is much better is to stay with the default. Any
-   clients should send the authenticated request to the server that issued
-   the challenge.
+   first one, it is necessary to explicitly set the secret to the same
+   value on all servers. However, as the use of a shared (and fixed)
+   secret as nonce is insecure, it is much better is to stay with the
+   default. Any clients should send the authenticated request to the
+   server that issued the challenge.
 
    Default value is randomly generated string.
 
@@ -589,7 +592,7 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
    In some cases, like shortly after a system time backward adjustment or
    when the current proxy is part of a cluster which is not
    time-synchronized, it's possible to receive a nonce with creation time
-   in the future. In this case if the difference is greater then
+   in the future. In this case if the difference is greater than
    nonce_auth_max_drift seconds, consider the nonce stale and re-challenge
    (otherwise after a dramatic time change backwards, it might happen that
    some previously generated nonces will be valid for too much time).
@@ -642,17 +645,18 @@ modparam("auth", "use_domain", 1)
 3.18. algorithm (string)
 
    Configure hash algorithm used for digest authentication. Possible
-   values are "MD5" or "SHA-256". If left empty MD5 is used. If specified,
-   the specified algorithm is used and is also put in the 'algorithm'
-   field of the challenge header.
+   values are "MD5", "SHA-256" or "SHA-512". If left empty MD5 is used. If
+   specified, the specified algorithm is used and is also put in the
+   'algorithm' field of the challenge header.
 
-   Warning: SHA-256 hash values take twice the space of MD5 hash values.
-   So a buffer overflow might occur if this option is used in combination
-   with another auth_* module that does not allocate at least 65 bytes to
-   store hash values. SHA-256 can safely be used with the module auth_db
-   as it allocates 256 bytes to store HA1 values.
+   Warning: SHA-256/512 hash values take twice or more the space of MD5
+   hash values. So a buffer overflow might occur if this option is used in
+   combination with another auth_* module that does not allocate at least
+   enough (65 or 129) bytes to store hash values. SHA-256/512 can safely
+   be used with the module auth_db as it allocates 256 bytes to store HA1
+   values.
 
-   Example 1.16. use SHA-256 example
+   Example 1.16. algorithm example
 ...
 modparam("auth", "algorithm", "SHA-256")
 ...
@@ -686,6 +690,7 @@ modparam("auth", "add_authinfo_hdr", yes)
    4.7. pv_proxy_authenticate(realm, passwd, flags)
    4.8. pv_auth_check(realm, passwd, flags, checks)
    4.9. auth_get_www_authenticate(realm, flags, pvdest)
+   4.10. auth_algorithm(algorithm)
 
 4.1. consume_credentials()
 
@@ -706,7 +711,7 @@ if (www_authenticate("realm", "subscriber")) {
 
 4.2. has_credentials(realm)
 
-   This function returns true of the request has Authorization or
+   This function returns true if the request has Authorization or
    Proxy-Authorization header with provided realm. The parameter can be
    string with pseudo-variables.
 
@@ -920,9 +925,29 @@ if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.26. auth_get_www_authenticate
+   Example 1.26. auth_get_www_authenticate usage
 ...
 if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
         xlog("www authenticate header is [$var(wauth)]\n");
+}
+...
+
+4.10. auth_algorithm(algorithm)
+
+   Set hash algorithm used for digest authentication thus overriding
+   algorithm parameter. Possible values are the same as those of algorithm
+   parameter. The parameter may be a pseudo variable.
+
+   Example 1.27. auth_algorithm example
+...
+if($fU == "alice") {
+    $var(alg) = "SHA-256";
+} else {
+    $var(alg) = "MD5";
+}
+auth_algorithm("$var(alg)");
+if (!auth_check("$fd", "subscriber", "1")) {
+    auth_challenge("$fd", "1");
+    exit;
 }
 ...

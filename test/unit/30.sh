@@ -31,7 +31,7 @@ CFG=30.cfg
 
 cp $CFG $CFG.bak
 
-# setup config
+# set up config
 echo "modparam(\"carrierroute\", \"config_file\", \"carrierroute-2.cfg\")" >> $CFG
 
 

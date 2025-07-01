@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -24,19 +26,18 @@
 
 #include "sms_funcs.h"
 
-#define MAX_MEM  0
+#define MAX_MEM 0
 #define USED_MEM 1
 
 
-int putsms( struct sms_msg *sms_messg, struct modem *mdm);
+int putsms(struct sms_msg *sms_messg, struct modem *mdm);
 
-int getsms( struct incame_sms *sms, struct modem *mdm, int sim);
+int getsms(struct incame_sms *sms, struct modem *mdm, int sim);
 
-int check_memory( struct modem *mdm, int flag);
+int check_memory(struct modem *mdm, int flag);
 
-void swapchars(char* string, int len);
+void swapchars(char *string, int len);
 
 int cds2sms(struct incame_sms *sms, struct modem *mdm, char *s, int s_len);
 
 #endif
-

@@ -205,7 +205,10 @@ if(phonenum_match_cn("1-484-555-8888", "US", "src")) {
 					valid result; 0 otherwise
 				</para></listitem>
 				<listitem><para>
-					<emphasis>normalized</emphasis> - normalized phone number
+					<emphasis>normalized</emphasis> - normalized (E164) phone number
+				</para></listitem>
+				<listitem><para>
+					<emphasis>natnum</emphasis> - nationally formatted phone number
 				</para></listitem>
 				<listitem><para>
 					<emphasis>cctel</emphasis> - country code for phone number

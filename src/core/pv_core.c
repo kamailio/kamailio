@@ -28,6 +28,7 @@
 
 #include "pv_core.h"
 #include "pvar.h"
+#include "pvapi.h"
 #include "ppcfg.h"
 #include "str.h"
 #include "mem/pkg.h"
@@ -37,10 +38,8 @@
  * about the script context */
 extern int _last_returned_code;
 
-static int pv_get_retcode(struct sip_msg* msg, pv_param_t* p, pv_value_t* res)
+static int pv_get_retcode(struct sip_msg *msg, pv_param_t *p, pv_value_t *res)
 {
-	/* FIXME: as soon as PVs support script context, use it instead of the
-	 * return in global variable hack */
 	return pv_get_sintval(msg, p, res, _last_returned_code);
 }
 
@@ -49,12 +48,12 @@ static int pv_parse_env_name(pv_spec_p sp, str *in)
 {
 	char *csname;
 
-	if(in->s==NULL || in->len<=0)
+	if(in->s == NULL || in->len <= 0)
 		return -1;
 
 	csname = pkg_malloc(in->len + 1);
 
-	if (csname == NULL) {
+	if(csname == NULL) {
 		LM_ERR("no more pkg memory");
 		return -1;
 	}
@@ -62,7 +61,7 @@ static int pv_parse_env_name(pv_spec_p sp, str *in)
 	memcpy(csname, in->s, in->len);
 	csname[in->len] = '\0';
 
-	sp->pvp.pvn.u.dname = (void*)csname;
+	sp->pvp.pvn.u.dname = (void *)csname;
 	sp->pvp.pvn.type = PV_NAME_OTHER;
 	return 0;
 }
@@ -70,12 +69,12 @@ static int pv_parse_env_name(pv_spec_p sp, str *in)
 static int pv_get_env(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	char *val;
-	char *csname = (char *) param->pvn.u.dname;
+	char *csname = (char *)param->pvn.u.dname;
 
-	if (csname) {
+	if(csname) {
 		val = getenv(csname);
 
-		if (val) {
+		if(val) {
 			return pv_get_strzval(msg, param, res, val);
 		}
 	}
@@ -86,12 +85,12 @@ static int pv_parse_envn_name(pv_spec_p sp, str *in)
 {
 	char *csname;
 
-	if(in->s==NULL || in->len<=0)
+	if(in->s == NULL || in->len <= 0)
 		return -1;
 
 	csname = pkg_malloc(in->len + 1);
 
-	if (csname == NULL) {
+	if(csname == NULL) {
 		LM_ERR("no more pkg memory");
 		return -1;
 	}
@@ -99,7 +98,7 @@ static int pv_parse_envn_name(pv_spec_p sp, str *in)
 	memcpy(csname, in->s, in->len);
 	csname[in->len] = '\0';
 
-	sp->pvp.pvn.u.dname = (void*)csname;
+	sp->pvp.pvn.u.dname = (void *)csname;
 	sp->pvp.pvn.type = PV_NAME_OTHER;
 	return 0;
 }
@@ -108,11 +107,11 @@ static int pv_get_envn(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	str val;
 	int r = 0;
-	char *csname = (char *) param->pvn.u.dname;
+	char *csname = (char *)param->pvn.u.dname;
 
-	if (csname) {
+	if(csname) {
 		val.s = getenv(csname);
-		if (val.s) {
+		if(val.s) {
 			val.len = strlen(val.s);
 			str2sint(&val, &r);
 			return pv_get_intstrval(msg, param, res, r, &val);
@@ -123,7 +122,7 @@ static int pv_get_envn(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 static int pv_parse_def_name(pv_spec_p sp, str *in)
 {
-	if (in == NULL || in->s == NULL || sp == NULL) {
+	if(in == NULL || in->s == NULL || sp == NULL) {
 		LM_ERR("INVALID DEF NAME\n");
 		return -1;
 	}
@@ -131,14 +130,14 @@ static int pv_parse_def_name(pv_spec_p sp, str *in)
 	sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
 	sp->pvp.pvn.u.isname.name.s = *in;
 	return 0;
-
 }
 
 static int pv_get_def(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
-	str *val = pp_define_get(param->pvn.u.isname.name.s.len, param->pvn.u.isname.name.s.s);
+	str *val = pp_define_get(
+			param->pvn.u.isname.name.s.len, param->pvn.u.isname.name.s.s);
 
-	if (val) {
+	if(val) {
 		return pv_get_strval(msg, param, res, val);
 	}
 	return pv_get_null(msg, param, res);
@@ -146,7 +145,7 @@ static int pv_get_def(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 static int pv_parse_defn_name(pv_spec_p sp, str *in)
 {
-	if (in == NULL || in->s == NULL || sp == NULL) {
+	if(in == NULL || in->s == NULL || sp == NULL) {
 		LM_ERR("INVALID DEF NAME\n");
 		return -1;
 	}
@@ -154,16 +153,15 @@ static int pv_parse_defn_name(pv_spec_p sp, str *in)
 	sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
 	sp->pvp.pvn.u.isname.name.s = *in;
 	return 0;
-
 }
 
 static int pv_get_defn(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	int n = 0;
-	str *val = pp_define_get(param->pvn.u.isname.name.s.len,
-			param->pvn.u.isname.name.s.s);
+	str *val = pp_define_get(
+			param->pvn.u.isname.name.s.len, param->pvn.u.isname.name.s.s);
 
-	if (val) {
+	if(val) {
 		str2sint(val, &n);
 		return pv_get_intstrval(msg, param, res, n, val);
 	} else {
@@ -171,25 +169,119 @@ static int pv_get_defn(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	}
 }
 
+static int pv_parse_defv_name(pv_spec_p sp, str *in)
+{
+	if(in == NULL || in->s == NULL || sp == NULL) {
+		LM_ERR("INVALID DEF NAME\n");
+		return -1;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
+	sp->pvp.pvn.u.isname.name.s = *in;
+	return 0;
+}
+
+static int pv_get_defv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	str *val = NULL;
+	str ret = STR_NULL;
+
+	val = pp_define_get(
+			param->pvn.u.isname.name.s.len, param->pvn.u.isname.name.s.s);
+
+	if(!val) {
+		return pv_get_null(msg, param, res);
+	}
+
+	if(val->len < 2) {
+		return pv_get_strval(msg, param, res, val);
+	}
+	if((val->s[0] == '"' && val->s[val->len - 1] == '"')
+			|| (val->s[0] == '\'' && val->s[val->len - 1] == '\'')) {
+		ret.s = pv_get_buffer();
+		ret.len = pv_get_buffer_size();
+		if(ret.len < val->len) {
+			return pv_get_null(msg, param, res);
+		}
+		memcpy(ret.s, val->s + 1, val->len - 2);
+		ret.len = val->len - 2;
+		ret.s[ret.len] = '\0';
+		return pv_get_strval(msg, param, res, &ret);
+	} else {
+		return pv_get_strval(msg, param, res, val);
+	}
+}
+
+static int pv_parse_defs_name(pv_spec_p sp, str *in)
+{
+	if(in == NULL || in->s == NULL || sp == NULL) {
+		LM_ERR("INVALID DEF NAME\n");
+		return -1;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
+	sp->pvp.pvn.u.isname.name.s = *in;
+	return 0;
+}
+
+static int pv_get_defs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	str *val = NULL;
+	str ret = STR_NULL;
+
+	val = pp_define_get(
+			param->pvn.u.isname.name.s.len, param->pvn.u.isname.name.s.s);
+
+	if(!val) {
+		return pv_get_null(msg, param, res);
+	}
+
+	if(val->len < 2) {
+		return pv_get_strval(msg, param, res, val);
+	}
+	if((val->s[0] == '"' && val->s[val->len - 1] == '"')
+			|| (val->s[0] == '\'' && val->s[val->len - 1] == '\'')) {
+		return pv_get_strval(msg, param, res, val);
+	}
+
+	ret.s = pv_get_buffer();
+	ret.len = pv_get_buffer_size();
+	if(ret.len + 3 < val->len) {
+		return pv_get_null(msg, param, res);
+	}
+	ret.s[0] = '"';
+	memcpy(ret.s + 1, val->s, val->len);
+	ret.len = val->len + 2;
+	ret.s[ret.len - 1] = '"';
+	ret.s[ret.len] = '\0';
+	return pv_get_strval(msg, param, res, &ret);
+}
+
+/* clang-format off */
 /**
  *
  */
 static pv_export_t core_pvs[] = {
 	/* return code, various synonims */
-	{ STR_STATIC_INIT("?"), PVT_OTHER, pv_get_retcode, 0, 0, 0, 0, 0 },
-	{ STR_STATIC_INIT("rc"), PVT_OTHER, pv_get_retcode, 0, 0, 0, 0, 0 },
-	{ STR_STATIC_INIT("retcode"), PVT_OTHER, pv_get_retcode, 0, 0, 0, 0, 0 },
-	{ STR_STATIC_INIT("env"), PVT_OTHER, pv_get_env, 0,
-		pv_parse_env_name, 0, 0, 0 },
-	{ STR_STATIC_INIT("envn"), PVT_OTHER, pv_get_envn, 0,
-		pv_parse_envn_name, 0, 0, 0 },
-	{ STR_STATIC_INIT("def"), PVT_OTHER, pv_get_def, 0,
-		pv_parse_def_name, 0, 0, 0 },
-	{ STR_STATIC_INIT("defn"), PVT_OTHER, pv_get_defn, 0,
-		pv_parse_defn_name, 0, 0, 0 },
+	{STR_STATIC_INIT("?"), PVT_OTHER, pv_get_retcode, 0, 0, 0, 0, 0},
+	{STR_STATIC_INIT("rc"), PVT_OTHER, pv_get_retcode, 0, 0, 0, 0, 0},
+	{STR_STATIC_INIT("retcode"), PVT_OTHER, pv_get_retcode, 0, 0, 0, 0, 0},
+	{STR_STATIC_INIT("env"), PVT_OTHER, pv_get_env, 0, pv_parse_env_name, 0,
+			0, 0},
+	{STR_STATIC_INIT("envn"), PVT_OTHER, pv_get_envn, 0, pv_parse_envn_name,
+			0, 0, 0},
+	{STR_STATIC_INIT("def"), PVT_OTHER, pv_get_def, 0, pv_parse_def_name, 0,
+			0, 0},
+	{STR_STATIC_INIT("defn"), PVT_OTHER, pv_get_defn, 0, pv_parse_defn_name,
+			0, 0, 0},
+	{STR_STATIC_INIT("defv"), PVT_OTHER, pv_get_defv, 0, pv_parse_defv_name,
+			0, 0, 0},
+	{STR_STATIC_INIT("defs"), PVT_OTHER, pv_get_defs, 0, pv_parse_defs_name,
+			0, 0, 0},
 
-	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
+/* clang-format on */
 
 /**
  * register built-in core pvars.
@@ -206,15 +298,15 @@ int pv_register_core_vars(void)
  */
 int pv_eval_str(sip_msg_t *msg, str *dst, str *src)
 {
-	pv_elem_t *xmodel=NULL;
+	pv_elem_t *xmodel = NULL;
 	str sval = STR_NULL;
 
-	if(pv_parse_format(src, &xmodel)<0) {
+	if(pv_parse_format(src, &xmodel) < 0) {
 		LM_ERR("error in parsing src parameter\n");
 		return -1;
 	}
 
-	if(pv_printf_s(msg, xmodel, &sval)!=0) {
+	if(pv_printf_s(msg, xmodel, &sval) != 0) {
 		LM_ERR("cannot eval parsed parameter\n");
 		pv_elem_free_all(xmodel);
 		goto error;

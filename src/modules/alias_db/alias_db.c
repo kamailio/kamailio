@@ -101,9 +101,9 @@ static param_export_t params[] = {
 	{"domain_column",       PARAM_STR, &domain_column },
 	{"alias_user_column",   PARAM_STR, &alias_user_column   },
 	{"alias_domain_column", PARAM_STR, &alias_domain_column },
-	{"use_domain",          INT_PARAM, &alias_db_use_domain },
+	{"use_domain",          PARAM_INT, &alias_db_use_domain },
 	{"domain_prefix",       PARAM_STR, &domain_prefix },
-	{"append_branches",     INT_PARAM, &ald_append_branches   },
+	{"append_branches",     PARAM_INT, &ald_append_branches   },
 	{0, 0, 0}
 };
 

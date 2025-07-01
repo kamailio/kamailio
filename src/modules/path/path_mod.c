@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -40,7 +42,6 @@
  * - No developer API
  * - No MI functions
  */
-
 
 
 #include <stdio.h>
@@ -84,38 +85,37 @@ struct rr_binds path_rrb;
  */
 ob_api_t path_obb;
 
+/* clang-format off */
 /*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{ "add_path",          (cmd_function)add_path,              0,
-			0,              0,  REQUEST_ROUTE },
-	{ "add_path",          (cmd_function)add_path_usr,          1,
-			fixup_spve_null, 0, REQUEST_ROUTE },
-	{ "add_path",          (cmd_function)add_path_usr,          2,
-			fixup_spve_spve, 0, REQUEST_ROUTE },
-	{ "add_path_received", (cmd_function)add_path_received,     0,
-			0,              0, REQUEST_ROUTE },
-	{ "add_path_received", (cmd_function)add_path_received_usr, 1,
-			fixup_spve_null, 0, REQUEST_ROUTE },
-	{ "add_path_received", (cmd_function)add_path_received_usr, 2,
-			fixup_spve_spve, 0, REQUEST_ROUTE },
-	{ 0, 0, 0, 0, 0, 0 }
+	{"add_path", (cmd_function)add_path, 0,
+		0, 0, REQUEST_ROUTE},
+	{"add_path", (cmd_function)add_path_usr, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
+	{"add_path", (cmd_function)add_path_usr, 2,
+		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
+	{"add_path_received", (cmd_function)add_path_received, 0,
+		0, 0, REQUEST_ROUTE},
+	{"add_path_received", (cmd_function)add_path_received_usr, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
+	{"add_path_received", (cmd_function)add_path_received_usr, 2,
+		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
-
 
 /*! \brief
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"use_received",    INT_PARAM, &path_use_received },
-	{"received_format", INT_PARAM, &path_received_format },
-	{"enable_r2",       INT_PARAM, &path_enable_r2 },
-	{"sockname_mode",   INT_PARAM, &path_sockname_mode },
-	{"received_name",   PARAM_STR, &path_received_name },
-	{ 0, 0, 0 }
+	{"use_received", PARAM_INT, &path_use_received},
+	{"received_format", PARAM_INT, &path_received_format},
+	{"enable_r2", PARAM_INT, &path_enable_r2},
+	{"sockname_mode", PARAM_INT, &path_sockname_mode},
+	{"received_name", PARAM_STR, &path_received_name},
+	{0, 0, 0}
 };
-
 
 /*! \brief
  * Module interface
@@ -123,31 +123,31 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"path",          /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* Exported functions */
-	params,          /* Exported parameters */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
 	0,               /* RPC method exports */
 	0,               /* exported pseudo-variables */
-	0,               /* response function */
+	0,               /* response handling function */
 	mod_init,        /* module initialization function */
-	0,               /* child initialization function */
-	0                /* destroy function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
-
+/* clang-format on */
 
 static int mod_init(void)
 {
-	if (path_use_received) {
-		if (load_rr_api(&path_rrb) != 0) {
+	if(path_use_received) {
+		if(load_rr_api(&path_rrb) != 0) {
 			LM_ERR("failed to load rr-API\n");
 			return -1;
 		}
-		if (path_rrb.register_rrcb(path_rr_callback, 0) != 0) {
+		if(path_rrb.register_rrcb(path_rr_callback, 0) != 0) {
 			LM_ERR("failed to register rr callback\n");
 			return -1;
 		}
 	}
 
-	if (ob_load_api(&path_obb) == 0)
+	if(ob_load_api(&path_obb) == 0)
 		LM_DBG("Bound path module to outbound module\n");
 	else {
 		LM_INFO("outbound module not available\n");

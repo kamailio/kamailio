@@ -19,7 +19,7 @@
 	    <function moreinfo="none">event_route[tm:branch-failure:id]</function>
 	</title>
 	<para>
-		Named branch failure routes can be defined to run when when a failure
+		Named branch failure routes can be defined to run when a failure
 		response is received. This allows handling failures on individual
 		branches, for example, retrying an alternative outbound flow.
 	</para>

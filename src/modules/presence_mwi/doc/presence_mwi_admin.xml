@@ -10,13 +10,13 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 
 	<title>&adminguide;</title>
-	
+
 	<section>
 	  <title>Overview</title>
-	    <para> 
+	    <para>
 	      The module does specific handling for notify-subscribe
 	      message-summary (message waiting indication) events
 	      as specified in RFC 3842.
@@ -65,7 +65,7 @@
 		</para>
 	  </section>
 	</section>
-	
+
 	<section>
 	  <title>Parameters</title>
 		  <section id="presence_mwi.p.default_expires">

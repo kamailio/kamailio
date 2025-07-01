@@ -38,7 +38,8 @@
 
 #include <ldap.h>
 
-enum auth_type {
+enum auth_type
+{
 	LDAP_AUTHMECH_NONE = 0,
 	LDAP_AUTHMECH_SIMPLE,
 	LDAP_AUTHMECH_DIGESTMD5,
@@ -49,22 +50,22 @@ enum auth_type {
 #define LDAP_MECHANISM_STR_EXTERNAL "external"
 
 
-
 /** LDAP driver specific payload to attach to db_uri structures.
  * This is the LDAP specific structure that will be attached
  * to generic db_uri structures in the database API in SER. The
  * structure contains parsed elements of the ldap: URI.
  */
-struct ld_uri {
+struct ld_uri
+{
 	db_drv_t drv;
-	char* username;
-	char* password;
-	char* uri;             /**< The whole URI, including scheme */
+	char *username;
+	char *password;
+	char *uri; /**< The whole URI, including scheme */
 	int authmech;
-	int tls;  /**<  TLS encryption enabled */
-	char* ca_list;  /**< Path of the file that contains certificates of the CAs */
-	char* req_cert;  /**< LDAP level of certificate request behaviour */
-	LDAPURLDesc* ldap_url; /**< URI parsed by the ldap client library */
+	int tls;	   /**<  TLS encryption enabled */
+	char *ca_list; /**< Path of the file that contains certificates of the CAs */
+	char *req_cert;		   /**< LDAP level of certificate request behaviour */
+	LDAPURLDesc *ldap_url; /**< URI parsed by the ldap client library */
 };
 
 
@@ -75,7 +76,7 @@ struct ld_uri {
  * @retval 0 on success
  * @retval A negative number on error.
  */
-int ld_uri(db_uri_t* uri);
+int ld_uri(db_uri_t *uri);
 
 
 /** @} */

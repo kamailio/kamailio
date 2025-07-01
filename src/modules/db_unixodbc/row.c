@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -33,24 +35,25 @@
 /*
  * Convert a row from result into db API representation
  */
-int db_unixodbc_convert_row(const db1_con_t* _h, const db1_res_t* _res, db_row_t* _r,
-		const unsigned long* lengths)
+int db_unixodbc_convert_row(const db1_con_t *_h, const db1_res_t *_res,
+		db_row_t *_r, const unsigned long *lengths)
 {
 	int i;
 
-	if ((!_h) || (!_res) || (!_r)) {
+	if((!_h) || (!_res) || (!_r)) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (db_allocate_row(_res, _r) != 0) {
+	if(db_allocate_row(_res, _r) != 0) {
 		LM_ERR("could not allocate row");
 		return -2;
 	}
 
 	for(i = 0; i < RES_COL_N(_res); i++) {
-		if (db_unixodbc_str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
-			((CON_ROW(_h))[i]), lengths[i], 1) < 0) {
+		if(db_unixodbc_str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
+				   ((CON_ROW(_h))[i]), lengths[i], 1)
+				< 0) {
 			LM_ERR("failed to convert value\n");
 			LM_DBG("free row at %p\n", _r);
 			db_free_row(_r);

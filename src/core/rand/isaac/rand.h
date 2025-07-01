@@ -16,20 +16,20 @@ MODIFIED:
 
 #ifndef RAND
 #define RAND
-#define RANDSIZL   (8)  /* I recommend 8 for crypto, 4 for simulations */
-#define RANDSIZ    (1<<RANDSIZL)
+#define RANDSIZL (8) /* I recommend 8 for crypto, 4 for simulations */
+#define RANDSIZ (1 << RANDSIZL)
 
 /* context of random number generator */
 struct randctx
 {
-  ub4 randcnt;
-  ub4 randrsl[RANDSIZ];
-  ub4 randmem[RANDSIZ];
-  ub4 randa;
-  ub4 randb;
-  ub4 randc;
+	ub4 randcnt;
+	ub4 randrsl[RANDSIZ];
+	ub4 randmem[RANDSIZ];
+	ub4 randa;
+	ub4 randb;
+	ub4 randc;
 };
-typedef  struct randctx  randctx;
+typedef struct randctx randctx;
 
 /*
 ------------------------------------------------------------------------------
@@ -46,11 +46,9 @@ void isaac(randctx *r);
  Call rand(/o_ randctx *r _o/) to retrieve a single 32-bit random value
 ------------------------------------------------------------------------------
 */
-#define rand(r) \
-   (!(r)->randcnt-- ? \
-     (isaac(r), (r)->randcnt=RANDSIZ-1, (r)->randrsl[(r)->randcnt]) : \
-     (r)->randrsl[(r)->randcnt])
+#define rand(r)                                                                \
+	(!(r)->randcnt-- ? (                                                       \
+			 isaac(r), (r)->randcnt = RANDSIZ - 1, (r)->randrsl[(r)->randcnt]) \
+					 : (r)->randrsl[(r)->randcnt])
 
-#endif  /* RAND */
-
-
+#endif /* RAND */

@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -109,7 +111,7 @@ int trace_send_hep3_duplicate(str *body, str *from, str *to,
 	len += sizeof(struct hep_chunk_uint16); // destination port
 	len += sizeof(struct hep_chunk_uint32); // timestamp
 	len += sizeof(struct hep_chunk_uint32); // timestamp us
-	len += sizeof(struct hep_chunk_uint8);  // proto_type (SIP)
+	len += sizeof(struct hep_chunk_uint8);	// proto_type (SIP)
 	len += sizeof(struct hep_chunk_uint32); // capture ID
 	len += sizeof(struct hep_chunk);		// payload
 
@@ -165,7 +167,8 @@ int trace_send_hep3_duplicate(str *body, str *from, str *to,
 		}
 	}
 	if(hep_auth_key_str.s && hep_auth_key_str.len > 0) {
-		HEP3_PACK_CHUNK_DATA(0, 0x000e, hep_auth_key_str.s, hep_auth_key_str.len);
+		HEP3_PACK_CHUNK_DATA(
+				0, 0x000e, hep_auth_key_str.s, hep_auth_key_str.len);
 	}
 	HEP3_PACK_CHUNK_DATA(0, 0x000f, body->s, body->len);
 	HEP3_PACK_FINALIZE(buffer, &len);
@@ -201,8 +204,7 @@ int trace_send_hep3_duplicate(str *body, str *from, str *to,
 			si = trace_send_sock_info;
 		} else {
 			si = grep_sock_info(&trace_send_sock_uri->host,
-					trace_send_sock_uri->port_no,
-					trace_send_sock_uri->proto);
+					trace_send_sock_uri->port_no, trace_send_sock_uri->proto);
 		}
 	}
 	if(trace_send_sock_name_str.s || trace_send_sock_str.s) {
@@ -332,8 +334,7 @@ int trace_send_hep2_duplicate(
 			si = trace_send_sock_info;
 		} else {
 			si = grep_sock_info(&trace_send_sock_uri->host,
-					trace_send_sock_uri->port_no,
-					trace_send_sock_uri->proto);
+					trace_send_sock_uri->port_no, trace_send_sock_uri->proto);
 		}
 	}
 	if(trace_send_sock_name_str.s || trace_send_sock_str.s) {
@@ -529,7 +530,7 @@ int pipport2su(char *pipport, union sockaddr_union *tmp_su, unsigned int *proto)
 		*p = '\0';
 	}
 
-	/* now IPv6 address has no brakets. It should be fixed! */
+	/* now IPv6 address has no brackets. It should be fixed! */
 	if(host_s[0] == '[') {
 		len = strlen(host_s + 1) - 1;
 		if(host_s[len + 1] != ']') {
@@ -567,8 +568,9 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 	struct socket_info *si;
 
 	if(!correlationid) {
-		if(msg->callid == NULL && ((parse_headers(msg, HDR_CALLID_F, 0) == -1)
-										  || (msg->callid == NULL))) {
+		if(msg->callid == NULL
+				&& ((parse_headers(msg, HDR_CALLID_F, 0) == -1)
+						|| (msg->callid == NULL))) {
 			LM_ERR("cannot parse Call-Id header\n");
 			return -1;
 		}
@@ -630,8 +632,7 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 			si = trace_send_sock_info;
 		} else {
 			si = grep_sock_info(&trace_send_sock_uri->host,
-					trace_send_sock_uri->port_no,
-					trace_send_sock_uri->proto);
+					trace_send_sock_uri->port_no, trace_send_sock_uri->proto);
 		}
 	}
 	if(trace_send_sock_name_str.s || trace_send_sock_str.s) {
@@ -678,7 +679,8 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 	HEP3_PACK_CHUNK_UINT32(0, 0x000c, hep_capture_id);
 	HEP3_PACK_CHUNK_DATA(0, 0x0011, correlationid->s, correlationid->len);
 	if(hep_auth_key_str.s && hep_auth_key_str.len > 0) {
-		HEP3_PACK_CHUNK_DATA(0, 0x000e, hep_auth_key_str.s, hep_auth_key_str.len);
+		HEP3_PACK_CHUNK_DATA(
+				0, 0x000e, hep_auth_key_str.s, hep_auth_key_str.len);
 	}
 	HEP3_PACK_CHUNK_DATA(0, 0x000f, message->s, message->len);
 	HEP3_PACK_FINALIZE(buf, &len);

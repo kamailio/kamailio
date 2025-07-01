@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -23,28 +25,26 @@
 
 #include "../../core/ut.h"
 
-#define SIP_PREFIX        "sip:"
-#define SIP_PREFIX_LEN    sizeof(SIP_PREFIX)-1
+#define SIP_PREFIX "sip:"
+#define SIP_PREFIX_LEN sizeof(SIP_PREFIX) - 1
 
-str* normalize_sip_uri(const str *uri)
+str *normalize_sip_uri(const str *uri)
 {
 	static str normalized_uri;
 	static str null_str = {NULL, 0};
 	static char buf[MAX_URI_SIZE];
 
 	normalized_uri.s = buf;
-	if (un_escape((str *)uri, &normalized_uri) < 0)
-	{
+	if(un_escape((str *)uri, &normalized_uri) < 0) {
 		LM_ERR("un-escaping URI\n");
 		return &null_str;
 	}
 
 	normalized_uri.s[normalized_uri.len] = '\0';
-	if (strncasecmp(normalized_uri.s, SIP_PREFIX, SIP_PREFIX_LEN) != 0
-			&& strchr(normalized_uri.s, '@') != NULL)
-	{
-		memmove(normalized_uri.s+SIP_PREFIX_LEN, normalized_uri.s,
-				normalized_uri.len+1);
+	if(strncasecmp(normalized_uri.s, SIP_PREFIX, SIP_PREFIX_LEN) != 0
+			&& strchr(normalized_uri.s, '@') != NULL) {
+		memmove(normalized_uri.s + SIP_PREFIX_LEN, normalized_uri.s,
+				normalized_uri.len + 1);
 		memcpy(normalized_uri.s, SIP_PREFIX, SIP_PREFIX_LEN);
 		normalized_uri.len += SIP_PREFIX_LEN;
 	}

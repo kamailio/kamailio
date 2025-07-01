@@ -29,20 +29,20 @@
 * definitions
 **********/
 
-#define URI_LEN     100
-#define USLEEP_LEN  10
-#define MOHDIRLEN   100
-#define MOHFILELEN  100
+#define URI_LEN 100
+#define USLEEP_LEN 10
+#define MOHDIRLEN 100
+#define MOHFILELEN 100
 
 /**********
 * structures
 **********/
 
 typedef struct
-  {
-  int ntype;
-  char *pencode;
-  } rtpmap;
+{
+	int ntype;
+	char *pencode;
+} rtpmap;
 
 /* mohq_flags values */
 #define MOHQF_ACT 0x01
@@ -50,81 +50,81 @@ typedef struct
 #define MOHQF_DBG 0x04
 
 typedef struct
-  {
-  char mohq_name [26];
-  char mohq_uri [URI_LEN + 1];
-  char mohq_mohdir [MOHDIRLEN + 1];
-  char mohq_mohfile [MOHFILELEN + 1];
-  int mohq_flags;
-  int mohq_id;
-  } mohq_lst;
+{
+	char mohq_name[26];
+	char mohq_uri[URI_LEN + 1];
+	char mohq_mohdir[MOHDIRLEN + 1];
+	char mohq_mohfile[MOHFILELEN + 1];
+	int mohq_flags;
+	int mohq_id;
+} mohq_lst;
 
 /* call_state values */
-#define CLSTA_ENTER     100
-#define CLSTA_TRYING    101
+#define CLSTA_ENTER 100
+#define CLSTA_TRYING 101
 #define CLSTA_PRACKSTRT 102
 #define CLSTA_PRACKRPLY 103
-#define CLSTA_INVITED   104
-#define CLSTA_CANCEL    105
-#define CLSTA_INQUEUE   200
-#define CLSTA_REFER     301
-#define CLSTA_RFRWAIT   302
-#define CLSTA_BYEOK     304
-#define CLSTA_BYE       305
+#define CLSTA_INVITED 104
+#define CLSTA_CANCEL 105
+#define CLSTA_INQUEUE 200
+#define CLSTA_REFER 301
+#define CLSTA_RFRWAIT 302
+#define CLSTA_BYEOK 304
+#define CLSTA_BYE 305
 
 typedef struct
-  {
-  char call_buffer [1024];
-  size_t call_buflen;
-  char *call_id;
-  char *call_from;
-  char call_referto [URI_LEN + 1];
-  char *call_contact;
-  char *call_tag;
-  char *call_via;
-  char *call_route;
-  char call_addr [IP_ADDR_MAX_STR_SIZE + 4];
-  int call_state;
-  int call_cseq;
-  int call_aport;
-  mohq_lst *pmohq;
-  time_t call_time;
-  time_t refer_time;
-  unsigned int call_hash;
-  unsigned int call_label;
-  sip_msg_t *call_pmsg;
-  } call_lst;
+{
+	char call_buffer[1024];
+	size_t call_buflen;
+	char *call_id;
+	char *call_from;
+	char call_referto[URI_LEN + 1];
+	char *call_contact;
+	char *call_tag;
+	char *call_via;
+	char *call_route;
+	char call_addr[IP_ADDR_MAX_STR_SIZE + 4];
+	int call_state;
+	int call_cseq;
+	int call_aport;
+	mohq_lst *pmohq;
+	time_t call_time;
+	time_t refer_time;
+	unsigned int call_hash;
+	unsigned int call_label;
+	sip_msg_t *call_pmsg;
+} call_lst;
 
 typedef struct
-  {
-  char *mohdir;
-  str db_url;
-  str db_ctable;
-  str db_qtable;
-  } mod_cfg;
+{
+	char *mohdir;
+	str db_url;
+	str db_ctable;
+	str db_qtable;
+} mod_cfg;
 
 typedef struct
-  {
-  mod_cfg pcfg [1];
-  time_t mohq_update;
-  int mohq_cnt;
-  mohq_lst *pmohq_lst;
-  mohq_lock pmohq_lock [1];
-  int call_cnt;
-  call_lst *pcall_lst;
-  mohq_lock pcall_lock [1];
-  db_func_t pdb [1];
-  tm_api_t ptm [1];
-  sl_api_t psl [1];
-  rr_api_t prr [1];
-  cmd_function fn_rtp_answer;
-  cmd_function fn_rtp_destroy;
-  cmd_function fn_rtp_offer;
-  cmd_function fn_rtp_stream_c;
-  cmd_function fn_rtp_stream_s;
-  cmd_function fn_rtp_stop_c;
-  cmd_function fn_rtp_stop_s;
-  } mod_data;
+{
+	mod_cfg pcfg[1];
+	time_t mohq_update;
+	int mohq_cnt;
+	mohq_lst *pmohq_lst;
+	mohq_lock pmohq_lock[1];
+	int call_cnt;
+	call_lst *pcall_lst;
+	mohq_lock pcall_lock[1];
+	db_func_t pdb[1];
+	tm_api_t ptm[1];
+	sl_api_t psl[1];
+	rr_api_t prr[1];
+	cmd_function fn_rtp_answer;
+	cmd_function fn_rtp_destroy;
+	cmd_function fn_rtp_offer;
+	cmd_function fn_rtp_stream_c;
+	cmd_function fn_rtp_stream_s;
+	cmd_function fn_rtp_stop_c;
+	cmd_function fn_rtp_stop_s;
+} mod_data;
 
 /**********
 * global varb declarations
@@ -132,6 +132,6 @@ typedef struct
 
 extern mod_data *pmod_data;
 extern pv_spec_t *prtp_pv;
-extern rtpmap prtpmap [];
+extern rtpmap prtpmap[];
 
 #endif /* MOHQ_H */

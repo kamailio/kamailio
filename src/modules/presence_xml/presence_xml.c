@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -72,6 +74,7 @@ static void free_xs_list(xcap_serv_t *xs_list, int mem_type);
 static int xcap_doc_updated(int doc_type, str xid, char *doc);
 
 static int fixup_presxml_check(void **param, int param_no);
+static int fixup_free_presxml_check(void **param, int param_no);
 static int w_presxml_check_basic(
 		sip_msg_t *msg, char *presentity_uri, char *status);
 static int w_presxml_check_activities(
@@ -114,9 +117,9 @@ xcapGetNewDoc_t xcap_GetNewDoc;
 /* clang-format off */
 static cmd_export_t cmds[]={
 	{ "pres_check_basic",		(cmd_function)w_presxml_check_basic, 2,
-		fixup_presxml_check, 0, ANY_ROUTE},
+		fixup_presxml_check, fixup_free_presxml_check, ANY_ROUTE},
 	{ "pres_check_activities",	(cmd_function)w_presxml_check_activities, 2,
-		fixup_presxml_check, 0, ANY_ROUTE},
+		fixup_presxml_check, fixup_free_presxml_check, ANY_ROUTE},
 	{ "bind_presence_xml",		(cmd_function)bind_presence_xml, 1,
 		0, 0, 0},
 	{ 0, 0, 0, 0, 0, 0}
@@ -127,20 +130,20 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{ "db_url",		PARAM_STR, &pxml_db_url},
 	{ "xcap_table",		PARAM_STR, &pxml_xcap_table},
-	{ "force_active",	INT_PARAM, &pxml_force_active },
-	{ "integrated_xcap_server", INT_PARAM, &pxml_integrated_xcap_server},
-	{ "xcap_server",     	PARAM_STRING|USE_FUNC_PARAM,(void*)pxml_add_xcap_server},
-	{ "disable_presence",	INT_PARAM, &pxml_disable_presence },
-	{ "disable_winfo",		INT_PARAM, &pxml_disable_winfo },
-	{ "disable_bla",		INT_PARAM, &pxml_disable_bla },
-	{ "disable_xcapdiff",	INT_PARAM, &pxml_disable_xcapdiff },
-	{ "passive_mode",		INT_PARAM, &pxml_passive_mode },
+	{ "force_active",	PARAM_INT, &pxml_force_active },
+	{ "integrated_xcap_server", PARAM_INT, &pxml_integrated_xcap_server},
+	{ "xcap_server",     	PARAM_STRING|PARAM_USE_FUNC,(void*)pxml_add_xcap_server},
+	{ "disable_presence",	PARAM_INT, &pxml_disable_presence },
+	{ "disable_winfo",		PARAM_INT, &pxml_disable_winfo },
+	{ "disable_bla",		PARAM_INT, &pxml_disable_bla },
+	{ "disable_xcapdiff",	PARAM_INT, &pxml_disable_xcapdiff },
+	{ "passive_mode",		PARAM_INT, &pxml_passive_mode },
 	{ "xcapauth_userdel_reason", PARAM_STR, &xcapauth_userdel_reason},
-	{ "force_dummy_presence",       INT_PARAM, &pxml_force_dummy_presence },
-	{ "force_presence_single_body", INT_PARAM, &pxml_force_single_body },
+	{ "force_dummy_presence",       PARAM_INT, &pxml_force_dummy_presence },
+	{ "force_presence_single_body", PARAM_INT, &pxml_force_single_body },
 	{ "presence_single_body_priorities",  PARAM_STR, &pxml_single_body_priorities },
 	{ "presence_single_body_lookup_element", PARAM_STR, &pxml_single_body_lookup_element },
-	{ "default_expires", INT_PARAM, &pxml_default_expires },
+	{ "default_expires", PARAM_INT, &pxml_default_expires },
 	{ 0, 0, 0}
 };
 /* clang-format on */
@@ -170,8 +173,8 @@ static int mod_init(void)
 		return 0;
 	}
 
-	LM_DBG("db_url=%s (len=%d addr=%p)\n", ZSW(pxml_db_url.s),
-			pxml_db_url.len, pxml_db_url.s);
+	LM_DBG("db_url=%s (len=%d addr=%p)\n", ZSW(pxml_db_url.s), pxml_db_url.len,
+			pxml_db_url.s);
 
 	/* bind the SL API */
 	if(sl_load_api(&slb) != 0) {
@@ -185,7 +188,7 @@ static int mod_init(void)
 	}
 
 	if(psapi.add_event == NULL || psapi.update_watchers_status == NULL) {
-		LM_ERR("requited presence api not available\n");
+		LM_ERR("required presence api not available\n");
 		return -1;
 	}
 	if(xml_add_events() < 0) {
@@ -461,6 +464,16 @@ static int fixup_presxml_check(void **param, int param_no)
 		return fixup_spve_null(param, 1);
 	} else if(param_no == 2) {
 		return fixup_spve_null(param, 1);
+	}
+	return 0;
+}
+
+static int fixup_free_presxml_check(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
 	}
 	return 0;
 }

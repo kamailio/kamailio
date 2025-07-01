@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,6 +31,7 @@
 #include "t_funcs.h"
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
+#include "../../core/kemi.h"
 #include "t_reply.h"
 #include "t_cancel.h"
 #include "t_msgbuilder.h"
@@ -36,28 +39,30 @@
 #include "t_hooks.h"
 
 
-typedef struct cancel_reason_map {
+extern str tm_event_callback;
+extern int _tm_evlreq_mode;
+
+typedef struct cancel_reason_map
+{
 	int code;
 	str text;
 } cancel_reason_map_t;
 
 static cancel_reason_map_t _cancel_reason_map[] = {
-	{ 200, str_init("Call completed elsewhere") },
-	{ 0, {0, 0} }
-};
+		{200, str_init("Call completed elsewhere")}, {0, {0, 0}}};
 
 /**
  *
  */
-void cancel_reason_text(struct cancel_info* cancel_data)
+void cancel_reason_text(struct cancel_info *cancel_data)
 {
 	int i;
 
-	if(cancel_data->reason.cause<=0
-			|| cancel_data->reason.u.text.s!=NULL) return;
+	if(cancel_data->reason.cause <= 0 || cancel_data->reason.u.text.s != NULL)
+		return;
 
-	for(i=0; _cancel_reason_map[i].text.s!=0; i++) {
-		if(_cancel_reason_map[i].code==cancel_data->reason.cause) {
+	for(i = 0; _cancel_reason_map[i].text.s != 0; i++) {
+		if(_cancel_reason_map[i].code == cancel_data->reason.cause) {
 			cancel_data->reason.u.text = _cancel_reason_map[i].text;
 			return;
 		}
@@ -81,23 +86,22 @@ void cancel_reason_text(struct cancel_info* cancel_data)
 *    !=0).
 *  @param skip - branch bitmap of branches that should not be canceled
 */
-void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm,
-						branch_bm_t skip_branches)
+void prepare_to_cancel(
+		struct cell *t, branch_bm_t *cancel_bm, branch_bm_t skip_branches)
 {
 	int i;
 	int branches_no;
 	branch_bm_t mask;
 
-	*cancel_bm=0;
-	branches_no=t->nr_of_outgoings;
-	mask=~skip_branches;
+	*cancel_bm = 0;
+	branches_no = t->nr_of_outgoings;
+	mask = ~skip_branches;
 	membar_depends();
-	for( i=0 ; i<branches_no ; i++ ) {
-		*cancel_bm |= ((mask & (1<<i)) &&  prepare_cancel_branch(t, i, 1))<<i;
+	for(i = 0; i < branches_no; i++) {
+		*cancel_bm |= ((mask & (1 << i)) && prepare_cancel_branch(t, i, 1))
+					  << i;
 	}
 }
-
-
 
 
 /* cancel branches scheduled for deletion
@@ -109,27 +113,26 @@ void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm,
  * returns: bitmap with the still active branches (on fr timer)
  * WARNING: always fill cancel_data->cancel_bitmap using prepare_to_cancel(),
  *          supplying values in any other way is a bug*/
-int cancel_uacs( struct cell *t, struct cancel_info* cancel_data, int flags)
+int cancel_uacs(struct cell *t, struct cancel_info *cancel_data, int flags)
 {
 	int i;
 	int ret;
 	int r;
 
-	ret=0;
+	ret = 0;
 
 	cancel_reason_text(cancel_data);
 
 	/* cancel pending client transactions, if any */
-	for( i=0 ; i<t->nr_of_outgoings ; i++ )
-		if (cancel_data->cancel_bitmap & (1<<i)){
-			r=cancel_branch(
-				t,
-				i,
-				&cancel_data->reason,
-				flags | ((t->uac[i].request.buffer==NULL)?
-					F_CANCEL_B_FAKE_REPLY:0) /* blind UAC? */
+	for(i = 0; i < t->nr_of_outgoings; i++)
+		if(cancel_data->cancel_bitmap & (1 << i)) {
+			r = cancel_branch(t, i, NULL, &cancel_data->reason,
+					flags
+							| ((t->uac[i].request.buffer == NULL)
+											? F_CANCEL_B_FAKE_REPLY
+											: 0) /* blind UAC? */
 			);
-			ret|=(r!=0)<<i;
+			ret |= (r != 0) << i;
 		}
 	return ret;
 }
@@ -137,7 +140,7 @@ int cancel_uacs( struct cell *t, struct cancel_info* cancel_data, int flags)
 int cancel_all_uacs(struct cell *trans, int how)
 {
 	struct cancel_info cancel_data;
-	int i,j;
+	int i, j;
 
 #ifdef EXTRA_DEBUG
 	assert(trans);
@@ -146,18 +149,18 @@ int cancel_all_uacs(struct cell *trans, int how)
 
 	init_cancel_info(&cancel_data);
 	prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
-	 /* tell tm to cancel the call */
-	i=cancel_uacs(trans, &cancel_data, how);
+	/* tell tm to cancel the call */
+	i = cancel_uacs(trans, &cancel_data, how);
 
-	if (how & F_CANCEL_UNREF)
+	if(how & F_CANCEL_UNREF)
 		UNREF(trans);
 
 	/* count the still active branches */
-	if (! how) {
-		j=0;
-		while(i){
+	if(!how) {
+		j = 0;
+		while(i) {
 			j++;
-			i&=i-1;
+			i &= i - 1;
 		}
 		return j;
 	}
@@ -172,6 +175,7 @@ int cancel_all_uacs(struct cell *trans, int how)
  *
  * params:  t - transaction
  *          branch - branch number to be canceled
+ *          cancel_msg - incoming cancel message
  *          reason - cancel reason structure
  *          flags - howto cancel:
  *                   F_CANCEL_B_KILL - will completely stop the
@@ -203,49 +207,53 @@ int cancel_all_uacs(struct cell *trans, int how)
  *          - checking for buffer==0 under REPLY_LOCK is no enough, an
  *           atomic_cmpxhcg or atomic_get_and_set _must_ be used.
  */
-int cancel_branch( struct cell *t, int branch,
-					struct cancel_reason* reason,
-					int flags )
+int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,
+		struct cancel_reason *reason, int flags)
 {
 	char *cancel;
 	unsigned int len;
 	struct retr_buf *crb, *irb;
 	int ret;
 	struct cancel_info tmp_cd;
-	void* pcbuf;
+	void *pcbuf;
 	int reply_status;
+	int rt, backup_rt;
+	struct run_act_ctx ctx;
+	sip_msg_t msg;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("tm:local-request");
 
-	crb=&t->uac[branch].local_cancel;
-	irb=&t->uac[branch].request;
-	irb->flags|=F_RB_CANCELED;
-	ret=1;
+	crb = &t->uac[branch].local_cancel;
+	irb = &t->uac[branch].request;
+	irb->flags |= F_RB_CANCELED;
+	ret = 1;
 	init_cancel_info(&tmp_cd);
 
-#	ifdef EXTRA_DEBUG
-	if (crb->buffer!=BUSY_BUFFER) {
+#ifdef EXTRA_DEBUG
+	if(crb->buffer != BUSY_BUFFER) {
 		LM_CRIT("attempt to rewrite cancel buffer: %p\n", crb->buffer);
 		abort();
 	}
-#	endif
+#endif
 
-	if (flags & F_CANCEL_B_KILL){
-		stop_rb_timers( irb );
-		ret=0;
-		if ((t->uac[branch].last_received < 100) &&
-				!(flags & F_CANCEL_B_FORCE_C)) {
+	if(flags & F_CANCEL_B_KILL) {
+		stop_rb_timers(irb);
+		ret = 0;
+		if((t->uac[branch].last_received < 100)
+				&& !(flags & F_CANCEL_B_FORCE_C)) {
 			LM_DBG("no response ever received: giving up on cancel\n");
 			/* remove BUSY_BUFFER -- mark cancel buffer as not used */
-			pcbuf=&crb->buffer; /* workaround for type punning warnings */
+			pcbuf = &crb->buffer; /* workaround for type punning warnings */
 			atomic_set_long(pcbuf, 0);
 			/* try to relay auto-generated 487 canceling response only when
 			 * another one is not under relaying on the branch and there is
 			 * no forced response per transaction from script */
 			if((flags & F_CANCEL_B_FAKE_REPLY)
-					&& !(irb->flags&F_RB_RELAYREPLY)
-					&& !(t->flags&T_ADMIN_REPLY)) {
+					&& !(irb->flags & F_RB_RELAYREPLY)
+					&& !(t->flags & T_ADMIN_REPLY)) {
 				LOCK_REPLIES(t);
-				reply_status = relay_reply(t, FAKED_REPLY, branch, 487,
-						&tmp_cd, 1);
+				reply_status =
+						relay_reply(t, FAKED_REPLY, branch, 487, &tmp_cd, 1);
 				if(reply_status == RPS_ERROR || reply_status == RPS_TGONE) {
 					return -1;
 				}
@@ -253,21 +261,21 @@ int cancel_branch( struct cell *t, int branch,
 			/* do nothing, hope that the caller will clean up */
 			return ret;
 		}
-	}else{
-		if (t->uac[branch].last_received < 100){
-			if (!(flags & F_CANCEL_B_FORCE_C)) {
+	} else {
+		if(t->uac[branch].last_received < 100) {
+			if(!(flags & F_CANCEL_B_FORCE_C)) {
 				/* no response received => don't send a cancel on this branch,
 				 *  just drop it */
-				if (!(flags & F_CANCEL_B_FORCE_RETR))
+				if(!(flags & F_CANCEL_B_FORCE_RETR))
 					stop_rb_retr(irb); /* stop retransmissions */
 				/* remove BUSY_BUFFER -- mark cancel buffer as not used */
-				pcbuf=&crb->buffer; /* workaround for type punning warnings */
+				pcbuf = &crb->buffer; /* workaround for type punning warnings */
 				atomic_set_long(pcbuf, 0);
-				if (flags & F_CANCEL_B_FAKE_REPLY){
-					stop_rb_timers( irb ); /* stop even the fr timer */
+				if(flags & F_CANCEL_B_FAKE_REPLY) {
+					stop_rb_timers(irb); /* stop even the fr timer */
 					LOCK_REPLIES(t);
-					reply_status = relay_reply(t, FAKED_REPLY, branch, 487,
-							&tmp_cd, 1);
+					reply_status = relay_reply(
+							t, FAKED_REPLY, branch, 487, &tmp_cd, 1);
 					if(reply_status == RPS_ERROR || reply_status == RPS_TGONE) {
 						return -1;
 					}
@@ -280,27 +288,29 @@ int cancel_branch( struct cell *t, int branch,
 		stop_rb_retr(irb); /* stop retransmissions */
 	}
 
-	if (cfg_get(tm, tm_cfg, reparse_invite) ||
-			(t->uas.request && t->uas.request->msg_flags&(FL_USE_UAC_FROM|FL_USE_UAC_TO))) {
+	if(cfg_get(tm, tm_cfg, reparse_invite)
+			|| (t->uas.request
+					&& t->uas.request->msg_flags
+							   & (FL_USE_UAC_FROM | FL_USE_UAC_TO))) {
 		/* build the CANCEL from the INVITE which was sent out */
 		cancel = build_local_reparse(t, branch, &len, CANCEL, CANCEL_LEN,
-									 (t->uas.request && t->uas.request->msg_flags&FL_USE_UAC_TO)?0:&t->to
-									 , reason
-									 );
+				(t->uas.request && t->uas.request->msg_flags & FL_USE_UAC_TO)
+						? 0
+						: &t->to_hdr,
+				cancel_msg, reason);
 	} else {
 		/* build the CANCEL from the received INVITE */
-		cancel = build_local(t, branch, &len, CANCEL, CANCEL_LEN, &t->to
-								, reason
-								);
+		cancel = build_local(t, branch, &len, CANCEL, CANCEL_LEN, &t->to_hdr,
+				cancel_msg, reason);
 	}
-	if (!cancel || len<=0) {
+	if(!cancel || len <= 0) {
 		LM_ERR("attempt to build a CANCEL failed\n");
 		if(cancel) {
 			shm_free(cancel);
 			cancel = NULL;
 		}
 		/* remove BUSY_BUFFER -- mark cancel buffer as not used */
-		pcbuf=&crb->buffer; /* workaround for type punning warnings */
+		pcbuf = &crb->buffer; /* workaround for type punning warnings */
 		atomic_set_long(pcbuf, 0);
 		return -1;
 	}
@@ -312,10 +322,12 @@ int cancel_branch( struct cell *t, int branch,
 	crb->rbtype = TYPE_LOCAL_CANCEL;
 	/* be extra carefully and check for bugs (the below if could be replaced
 	 *  by an atomic_set((void*)&crb->buffer, cancel) */
-	if (unlikely(atomic_cmpxchg_long((void*)&crb->buffer, (long)BUSY_BUFFER,
-							(long)cancel)!= (long)BUSY_BUFFER)){
+	if(unlikely(atomic_cmpxchg_long(
+						(void *)&crb->buffer, (long)BUSY_BUFFER, (long)cancel)
+				!= (long)BUSY_BUFFER)) {
 		LM_BUG("local_cancel buffer=%p != BUSY_BUFFER"
-				" (trying to continue)\n", crb->buffer);
+			   " (trying to continue)\n",
+				crb->buffer);
 		shm_free(cancel);
 		return -1;
 	}
@@ -326,14 +338,59 @@ int cancel_branch( struct cell *t, int branch,
 	crb->buffer_len = len;
 
 	LM_DBG("sending cancel...\n");
-	if (SEND_BUFFER( crb )>=0){
-		if (unlikely (has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
-			run_trans_callbacks_with_buf(TMCB_REQUEST_OUT, crb, t->uas.request, 0, TMCB_LOCAL_F);
-		if (unlikely (has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
-			run_trans_callbacks_with_buf(TMCB_REQUEST_SENT, crb, t->uas.request, 0, TMCB_LOCAL_F);
+
+	if((flags & F_CANCEL_LOCAL) || (_tm_evlreq_mode & TM_EVLREQ_CANCEL_HBH)) {
+		/* Call event */
+		rt = -1;
+		if(tm_event_callback.s == NULL || tm_event_callback.len <= 0) {
+			rt = route_lookup(&event_rt, evname.s);
+			if(rt < 0 || event_rt.rlist[rt] == NULL) {
+				LM_DBG("tm:local-request not found\n");
+			}
+		} else {
+			keng = sr_kemi_eng_get();
+			if(keng == NULL) {
+				LM_DBG("event callback (%s) set, but no cfg engine\n",
+						tm_event_callback.s);
+			}
+		}
+
+		/* Check if msg is null */
+		if(build_sip_msg_from_buf(&msg, crb->buffer, crb->buffer_len, 0) < 0) {
+			LM_ERR("fail to parse msg\n");
+		}
+
+		/* Call event */
+		backup_rt = get_route_type();
+		set_route_type(REQUEST_ROUTE);
+		init_run_actions_ctx(&ctx);
+		if(rt >= 0) {
+			LM_DBG("tm:local-request found [%d]\n", rt);
+			run_top_route(event_rt.rlist[rt], &msg, 0);
+		} else {
+			if(keng != NULL) {
+
+				if(sr_kemi_route(
+						   keng, &msg, EVENT_ROUTE, &tm_event_callback, &evname)
+						< 0) {
+					LM_ERR("error running event route kemi callback\n");
+				}
+			}
+		}
+		set_route_type(backup_rt);
+		free_sip_msg(&msg);
+	}
+
+	if(SEND_BUFFER(crb) >= 0) {
+		if(unlikely(has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
+			run_trans_callbacks_with_buf(
+					TMCB_REQUEST_OUT, crb, t->uas.request, 0, TMCB_LOCAL_F);
+		if(unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
+			run_trans_callbacks_with_buf(
+					TMCB_REQUEST_SENT, crb, t->uas.request, 0, TMCB_LOCAL_F);
 	}
 	/*sets and starts the FINAL RESPONSE timer */
-	if (start_retr( crb )!=0)
+	if(start_retr(crb) != 0)
 		LM_CRIT("failed to start retransmission for %p\n", crb);
 	return ret;
 }
@@ -346,86 +403,87 @@ int cancel_branch( struct cell *t, int branch,
  * callid\n
  * cseq\n
  */
-void rpc_cancel(rpc_t* rpc, void* c)
+void rpc_cancel(rpc_t *rpc, void *c)
 {
 	struct cell *trans;
 	static char cseq[128], callid[128];
 	struct cancel_info cancel_data;
-	int i,j;
-
-	str cseq_s;   /* cseq */
+	int i, j;
+	str cseq_s;	  /* cseq */
 	str callid_s; /* callid */
+	tm_cell_t *orig_t = NULL;
+	int orig_branch;
 
-	cseq_s.s=cseq;
-	callid_s.s=callid;
+	cseq_s.s = cseq;
+	callid_s.s = callid;
 	init_cancel_info(&cancel_data);
 
-	if (rpc->scan(c, "SS", &callid_s, &cseq_s) < 2) {
+	if(rpc->scan(c, "SS", &callid_s, &cseq_s) < 2) {
 		rpc->fault(c, 400, "Callid and CSeq expected as parameters");
 		return;
 	}
 
-	if( t_lookup_callid(&trans, callid_s, cseq_s) < 0 ) {
+	tm_get_tb(&orig_t, &orig_branch);
+	if(t_lookup_callid(&trans, callid_s, cseq_s) < 0) {
 		LM_DBG("Lookup failed\n");
 		rpc->fault(c, 400, "Transaction not found");
 		return;
 	}
 	/*  find the branches that need cancel-ing */
 	prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
-	 /* tell tm to cancel the call */
+	/* tell tm to cancel the call */
 	DBG("Now calling cancel_uacs\n");
-	i=cancel_uacs(trans, &cancel_data, 0); /* don't fake 487s,
+	i = cancel_uacs(trans, &cancel_data, F_CANCEL_LOCAL); /* don't fake 487s,
 										 just wait for timeout */
 
 	/* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
 	UNREF(trans);
-	j=0;
-	while(i){
+	tm_set_tb(orig_t, orig_branch);
+	j = 0;
+	while(i) {
 		j++;
-		i&=i-1;
+		i &= i - 1;
 	}
 	rpc->add(c, "ds", j, "branches remaining (waiting for timeout)");
 }
 
 
-
 /* returns <0 on error */
-int cancel_b_flags_get(unsigned int* f, int m)
+int cancel_b_flags_get(unsigned int *f, int m)
 {
 	int ret;
 
-	ret=0;
-	switch(m){
+	ret = 0;
+	switch(m) {
 		case 1:
-			*f=F_CANCEL_B_FORCE_RETR;
+			*f = F_CANCEL_B_FORCE_RETR;
 			break;
 		case 0:
-			*f=F_CANCEL_B_FAKE_REPLY;
+			*f = F_CANCEL_B_FAKE_REPLY;
 			break;
 		case 2:
-			*f=F_CANCEL_B_FORCE_C;
+			*f = F_CANCEL_B_FORCE_C;
 			break;
 		default:
-			*f=F_CANCEL_B_FAKE_REPLY;
-			ret=-1;
+			*f = F_CANCEL_B_FAKE_REPLY;
+			ret = -1;
 	}
 	return ret;
 }
 
 
-
 /* fixup function for the default cancel branch method/flags
  * (called by the configuration framework) */
-int cancel_b_flags_fixup(void* handle, str* gname, str* name, void** val)
+int cancel_b_flags_fixup(void *handle, str *gname, str *name, void **val)
 {
-	unsigned int m,f;
+	unsigned int m, f;
 	int ret;
 
-	m=(unsigned int)(long)(*val);
-	ret=cancel_b_flags_get(&f, m);
-	if (ret<0)
+	m = (unsigned int)(long)(*val);
+	ret = cancel_b_flags_get(&f, m);
+	if(ret < 0)
 		LM_ERR("invalid value for %.*s; %d\n", name->len, name->s, m);
-	*val=(void*)(long)f;
+	*val = (void *)(long)f;
 	return ret;
 }
 
@@ -435,49 +493,49 @@ int cancel_b_flags_fixup(void* handle, str* gname, str* name, void** val)
  * transaction. The cancel parameter should NOT have any via (CANCEL is
  * hop by hop). returns 0 if error return >0 if OK (returns the LABEL of
  * the cancel).*/
-unsigned int t_uac_cancel( str *headers, str *body,
+unsigned int t_uac_cancel(str *headers, str *body,
 		unsigned int cancelled_hashIdx, unsigned int cancelled_label,
-		transaction_cb cb, void* cbp)
+		transaction_cb cb, void *cbp)
 {
-	struct cell *t_invite,*cancel_cell;
-	struct retr_buf *cancel,*invite;
-	unsigned int len,ret;
+	struct cell *t_invite, *cancel_cell;
+	struct retr_buf *cancel, *invite;
+	unsigned int len, ret;
 	char *buf;
 
-	ret=0;
-	if(t_lookup_ident(&t_invite,cancelled_hashIdx,cancelled_label)<0){
+	ret = 0;
+	if(t_lookup_ident(&t_invite, cancelled_hashIdx, cancelled_label) < 0) {
 		LM_ERR("failed to t_lookup_ident hash_idx=%d,"
-				"label=%d\n", cancelled_hashIdx,cancelled_label);
+			   "label=%d\n",
+				cancelled_hashIdx, cancelled_label);
 		return 0;
 	}
 	/* <sanity_checks> */
-	if(! is_local(t_invite))
-	{
+	if(!is_local(t_invite)) {
 		LM_ERR("tried to cancel a non-local transaction\n");
 		goto error3;
 	}
-	if(t_invite->uac[0].last_received < 100)
-	{
+	if(t_invite->uac[0].last_received < 100) {
 		LM_WARN("trying to cancel a transaction not in "
-					"Proceeding state !\n");
+				"Proceeding state !\n");
 		goto error3;
 	}
-	if(t_invite->uac[0].last_received > 200)
-	{
+	if(t_invite->uac[0].last_received > 200) {
 		LM_WARN("trying to cancel a completed transaction !\n");
 		goto error3;
 	}
 	/* </sanity_checks*/
 	/* <build_cell> */
-	if(!(cancel_cell = build_cell(0))){
-		ret=0;
+	if(!(cancel_cell = build_cell(0))) {
+		ret = 0;
 		LM_ERR("no more shm memory!\n");
 		goto error3;
 	}
 	reset_avps();
-	if(cb && insert_tmcb(&(cancel_cell->tmcb_hl),
-			TMCB_RESPONSE_IN|TMCB_LOCAL_COMPLETED,cb,cbp,0)!=1){
-		ret=0;
+	if(cb
+			&& insert_tmcb(&(cancel_cell->tmcb_hl),
+					   TMCB_RESPONSE_IN | TMCB_LOCAL_COMPLETED, cb, cbp, 0)
+					   != 1) {
+		ret = 0;
 		LM_ERR("short of tmcb shmem !\n");
 		goto error2;
 	}
@@ -485,49 +543,49 @@ unsigned int t_uac_cancel( str *headers, str *body,
 
 	/* <insert_into_hashtable> */
 	cancel_cell->flags |= T_IS_LOCAL_FLAG;
-	cancel_cell->hash_index=t_invite->hash_index;
+	cancel_cell->hash_index = t_invite->hash_index;
 
 	LOCK_HASH(cancel_cell->hash_index);
-	insert_into_hash_table_unsafe(cancel_cell,cancel_cell->hash_index);
-	ret=cancel_cell->label;
-	cancel_cell->label=t_invite->label;
+	insert_into_hash_table_unsafe(cancel_cell, cancel_cell->hash_index);
+	ret = cancel_cell->label;
+	cancel_cell->label = t_invite->label;
 	UNLOCK_HASH(cancel_cell->hash_index);
 	/* </insert_into_hashtable> */
 
 	/* <prepare_cancel> */
 
-	cancel=&cancel_cell->uac[0].request;
-	invite=&t_invite->uac[0].request;
+	cancel = &cancel_cell->uac[0].request;
+	invite = &t_invite->uac[0].request;
 
-	cancel->dst.to              = invite->dst.to;
-	cancel->dst.send_sock       = invite->dst.send_sock;
-	cancel->dst.proto           = invite->dst.proto;
+	cancel->dst.to = invite->dst.to;
+	cancel->dst.send_sock = invite->dst.send_sock;
+	cancel->dst.proto = invite->dst.proto;
 	//cancel->dst.proto_reserved1 = invite->dst.proto_reserved1;
 
 	buf = build_uac_cancel(headers, body, t_invite, 0, &len, &(cancel->dst));
-	if(!buf || len<=0) {
+	if(!buf || len <= 0) {
 		if(buf) {
 			shm_free(buf);
 			buf = NULL;
 		}
-		ret=0;
+		ret = 0;
 		LM_ERR("attempt to build a CANCEL failed\n");
 		goto error1;
 	}
-	cancel->buffer=buf;
-	cancel->buffer_len=len;
+	cancel->buffer = buf;
+	cancel->buffer_len = len;
 	cancel_cell->method.s = buf;
 	cancel_cell->method.len = 6 /*c-a-n-c-e-l*/;
 	/* </prepare_cancel> */
 
 	/* <strart_sending> */
 	cancel_cell->nr_of_outgoings++;
-	if (SEND_BUFFER(cancel)==-1) {
-		ret=0;
+	if(SEND_BUFFER(cancel) == -1) {
+		ret = 0;
 		LM_ERR("send failed\n");
 		goto error1;
 	}
-	if(start_retr(cancel)!=0) {
+	if(start_retr(cancel) != 0) {
 		LM_CRIT("failed to start retransmission for cancel %p\n", cancel);
 	}
 	/* </start_sending> */

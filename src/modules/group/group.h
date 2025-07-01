@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -52,8 +54,8 @@ typedef struct _group_check
  * \param domain stored domain
  * \return 0 on success, -1 on failure
  */
-int get_username_domain(struct sip_msg *msg, group_check_p gcp,
-	str *username, str *domain);
+int get_username_domain(
+		struct sip_msg *msg, group_check_p gcp, str *username, str *domain);
 
 
 /*!
@@ -61,9 +63,9 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
  * \param _msg SIP message
  * \param _hf Header field
  * \param _grp checked table
- * \return 1 on success, negative on failure 
+ * \return 1 on success, negative on failure
  */
-int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp);
+int is_user_in(struct sip_msg *_msg, char *_hf, char *_grp);
 
 
 /*!
@@ -71,7 +73,7 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp);
  * \param db_url database URL
  * \return 0 on success, -1 on failure
  */
-int group_db_init(const str* db_url);
+int group_db_init(const str *db_url);
 
 
 /*!
@@ -79,7 +81,7 @@ int group_db_init(const str* db_url);
  * \param db_url database URL
  * \return 0 on success, -1 on failure
  */
-int group_db_bind(const str* db_url);
+int group_db_bind(const str *db_url);
 
 
 /*!

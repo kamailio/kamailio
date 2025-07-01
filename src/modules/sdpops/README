@@ -46,10 +46,17 @@ Daniel-Constantin Mierla
               4.18. sdp_with_ice()
               4.19. sdp_get_line_startswith(avpvar, string)
               4.20. sdp_get_address_family()
+              4.21. sdp_iterator_start(iname)
+              4.22. sdp_iterator_end(iname)
+              4.23. sdp_iterator_next(iname)
+              4.24. sdp_iterator_rm(iname)
+              4.25. sdp_iterator_append(iname, text)
+              4.26. sdp_iterator_insert(iname, text)
 
         5. Exported Variables
 
               5.1. $sdp( )
+              5.2. $sdpitval( )
 
    List of Examples
 
@@ -73,6 +80,12 @@ Daniel-Constantin Mierla
    1.18. sdp_with_ice usage
    1.19. sdp_get_line_startswith usage
    1.20. sdp_get_address_familyusage
+   1.21. sdp_iterator_start usage
+   1.22. sdp_iterator_end usage
+   1.23. sdp_iterator_next usage
+   1.24. sdp_iterator_rm usage
+   1.25. sdp_iterator_append usage
+   1.26. sdp_iterator_insert usage
 
 Chapter 1. Admin Guide
 
@@ -107,10 +120,17 @@ Chapter 1. Admin Guide
         4.18. sdp_with_ice()
         4.19. sdp_get_line_startswith(avpvar, string)
         4.20. sdp_get_address_family()
+        4.21. sdp_iterator_start(iname)
+        4.22. sdp_iterator_end(iname)
+        4.23. sdp_iterator_next(iname)
+        4.24. sdp_iterator_rm(iname)
+        4.25. sdp_iterator_append(iname, text)
+        4.26. sdp_iterator_insert(iname, text)
 
    5. Exported Variables
 
         5.1. $sdp( )
+        5.2. $sdpitval( )
 
 1. Overview
 
@@ -164,6 +184,12 @@ Chapter 1. Admin Guide
    4.18. sdp_with_ice()
    4.19. sdp_get_line_startswith(avpvar, string)
    4.20. sdp_get_address_family()
+   4.21. sdp_iterator_start(iname)
+   4.22. sdp_iterator_end(iname)
+   4.23. sdp_iterator_next(iname)
+   4.24. sdp_iterator_rm(iname)
+   4.25. sdp_iterator_append(iname, text)
+   4.26. sdp_iterator_insert(iname, text)
 
 4.1.  sdp_remove_codecs_by_id(list [, mtype])
 
@@ -271,7 +297,7 @@ sdp_keep_codecs_by_name("PCMU,PCMA,GSM");
 
 4.6.  sdp_with_media(type)
 
-   Return true of the SDP has 'media=type ...' line. Useful to check the
+   Return true if the SDP has 'media=type ...' line. Useful to check the
    content of the RTP sessions, such as 'audio' or 'video'. The parameter
    can be static string or variable holding the media type.
 
@@ -288,7 +314,7 @@ if(sdp_with_media("video"))
 
 4.7.  sdp_with_active_media(type)
 
-   Return true of the SDP has 'media=type ...' line and the media is
+   Return true if the SDP has 'media=type ...' line and the media is
    active. Useful to check the content of the RTP sessions, such as
    'audio' or 'video'. Active media means the port is non-zero and the
    direction is not "inactive" The parameter can be static string or
@@ -340,7 +366,7 @@ sdp_remove_media("video");
 
 4.9.  sdp_with_transport(type)
 
-   Return true of the SDP has 'media=media port type ...' line. Useful to
+   Return true if the SDP has 'media=media port type ...' line. Useful to
    check the transport of the RTP sessions, such as 'RTP/AVP', 'RTP/SAVP',
    'RTP/SAVPF' or 'UDP/TLS/RTP/SAVPF'. The parameter can be static string
    or variable holding the transport type. The function does an exact
@@ -507,8 +533,8 @@ if(sdp_get_line_startswith("$avp(mline)", "m=")) {
 
 4.20.  sdp_get_address_family()
 
-   it helps to get IP address family at c line from sdp body. it returns
-   -1 on error , 4 for IP4 and 6 for IP6
+   It helps to get IP address family at c line from sdp body. It returns
+   -1 on error, 4 for IP4 and 6 for IP6
 
    Example 1.20. sdp_get_address_familyusage
 ...
@@ -518,9 +544,121 @@ if(is_method("INVITE") && has_body("application/sdp")){
 }
 ...
 
+4.21.  sdp_iterator_start(iname)
+
+   Start an iterator for lines in the body of the current SIP message. The
+   parameter iname is used to identify the iterator. There can be up to 4
+   iterators at the same time, with different name.
+
+   The parameter can be a dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.21. sdp_iterator_start usage
+...
+sdp_iterator_start("s1");
+...
+
+4.22.  sdp_iterator_end(iname)
+
+   Close the iterator identified by iname parameter. The iname value must
+   be the same used for sdp_iterator_start().
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.22. sdp_iterator_end usage
+...
+sdp_iterator_end("s1");
+...
+
+4.23.  sdp_iterator_next(iname)
+
+   Move the iterator to the next line in the body. It must be called also
+   after sdp_iterator_start() to get the first header.
+
+   The return code is false when there is no other header in the list.
+
+   The SDP line is accessible via variable $sdpitval(iname) - it contains
+   also the EOL chars.
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.23. sdp_iterator_next usage
+...
+    sdp_iterator_start("s1");
+    while(sdp_iterator_next("s1")) {
+        xlog("body line: $sdpitval(s1)");
+    }
+    sdp_iterator_end("s1");
+...
+
+4.24.  sdp_iterator_rm(iname)
+
+   Remove the body line at the current iterator position.
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.24. sdp_iterator_rm usage
+...
+    sdp_iterator_start("s1");
+    while(sdp_iterator_next("s1")) {
+        if($sdpitval(s1)=~"abc") {
+            sdp_iterator_rm("s1");
+        }
+    }
+    sdp_iterator_end("s1");
+...
+
+4.25.  sdp_iterator_append(iname, text)
+
+   Add text after the line at the current iterator possition.
+
+   The parameters can be dynamic strings with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.25. sdp_iterator_append usage
+...
+    sdp_iterator_start("s1");
+    while(sdp_iterator_next("s1")) {
+        if($sdpitval(s1)=~"^a=info:xyz") {
+            sdp_iterator_append("s1", "a=info:abc\r\n");
+            break;
+        }
+    }
+    sdp_iterator_end("s1");
+...
+
+4.26.  sdp_iterator_insert(iname, text)
+
+   Add text before the line at the current iterator possition.
+
+   The parameters can be dynamic strings with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.26. sdp_iterator_insert usage
+...
+    sdp_iterator_start("s1");
+    while(sdp_iterator_next("s1")) {
+        if($sdpitval(s1)=~"^a=info:xyz") {
+            sdp_iterator_insert("s1", "a=info:abc\r\n");
+            break;
+        }
+    }
+    sdp_iterator_end("s1");
+...
+
 5. Exported Variables
 
    5.1. $sdp( )
+   5.2. $sdpitval( )
 
 5.1. $sdp( )
 
@@ -529,6 +667,13 @@ if(is_method("INVITE") && has_body("application/sdp")){
      * $sdp(sess_version) - sess-version -attribute from SDP o= -line.
        When set to special value -1, current value is incremented. (read +
        write)
+     * $sdp(c:ip) - connection IP (read only) - taken from first media
+       strea if specified, otherwise from first session.
 
    Exported pseudo-variables are also documented at
    https://www.kamailio.org/wikidocs/
+
+5.2. $sdpitval( )
+
+   Return the value of to SDP line iterator with the given name:
+   $sdpitval(name).

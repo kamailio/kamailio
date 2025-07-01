@@ -43,8 +43,11 @@
 #include "dlg_handlers.h"
 #include "dlg_transfer.h"
 
-#define DLG_HOLD_SDP "v=0\r\no=kamailio-bridge 0 0 IN IP4 0.0.0.0\r\ns=kamailio\r\nc=IN IP4 0.0.0.0\r\nt=0 0\r\nm=audio 9 RTP/AVP 8 0\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:0 PCMU/8000\r\n"
-#define DLG_HOLD_SDP_LEN	(sizeof(DLG_HOLD_SDP)-1)
+#define DLG_HOLD_SDP                                                         \
+	"v=0\r\no=kamailio-bridge 0 0 IN IP4 0.0.0.0\r\ns=kamailio\r\nc=IN IP4 " \
+	"0.0.0.0\r\nt=0 0\r\nm=audio 9 RTP/AVP 8 0\r\na=rtpmap:8 "               \
+	"PCMA/8000\r\na=rtpmap:0 PCMU/8000\r\n"
+#define DLG_HOLD_SDP_LEN (sizeof(DLG_HOLD_SDP) - 1)
 
 /*
 #define DLG_HOLD_CT_HDR "Contact: <sip:kamailio.org:5060>\r\nContent-Type: application/sdp\r\n"
@@ -60,21 +63,20 @@ static str dlg_bridge_ref_hdrs = {0};
 
 int dlg_bridge_init_hdrs(void)
 {
-	if(dlg_bridge_hdrs_buf!=NULL)
+	if(dlg_bridge_hdrs_buf != NULL)
 		return 0;
-	dlg_bridge_hdrs_buf = (char*)pkg_malloc((dlg_bridge_contact.len + 46)
-													* sizeof(char));
-	if(dlg_bridge_hdrs_buf==NULL) {
+	dlg_bridge_hdrs_buf =
+			(char *)pkg_malloc((dlg_bridge_contact.len + 46) * sizeof(char));
+	if(dlg_bridge_hdrs_buf == NULL) {
 		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
-	memcpy(dlg_bridge_hdrs_buf,
-			"Contact: <", 10);
-	memcpy(dlg_bridge_hdrs_buf + 10,
-			dlg_bridge_contact.s, dlg_bridge_contact.len);
+	memcpy(dlg_bridge_hdrs_buf, "Contact: <", 10);
+	memcpy(dlg_bridge_hdrs_buf + 10, dlg_bridge_contact.s,
+			dlg_bridge_contact.len);
 	memcpy(dlg_bridge_hdrs_buf + 10 + dlg_bridge_contact.len,
 			">\r\nContent-Type: application/sdp\r\n", 34);
-	dlg_bridge_hdrs_buf[dlg_bridge_contact.len+44] = '\0';
+	dlg_bridge_hdrs_buf[dlg_bridge_contact.len + 44] = '\0';
 	dlg_bridge_inv_hdrs.s = dlg_bridge_hdrs_buf;
 	dlg_bridge_inv_hdrs.len = dlg_bridge_contact.len + 44;
 	dlg_bridge_ref_hdrs.s = dlg_bridge_hdrs_buf;
@@ -84,7 +86,7 @@ int dlg_bridge_init_hdrs(void)
 
 void dlg_bridge_destroy_hdrs(void)
 {
-	if(dlg_bridge_hdrs_buf!=NULL)
+	if(dlg_bridge_hdrs_buf != NULL)
 		pkg_free(dlg_bridge_hdrs_buf);
 }
 
@@ -92,26 +94,25 @@ void dlg_transfer_ctx_free(dlg_transfer_ctx_t *dtc)
 {
 	struct dlg_cell *dlg;
 
-	if(dtc==NULL)
+	if(dtc == NULL)
 		return;
-	if(dtc->from.s!=NULL)
+	if(dtc->from.s != NULL)
 		shm_free(dtc->from.s);
-	if(dtc->to.s!=NULL)
+	if(dtc->to.s != NULL)
 		shm_free(dtc->to.s);
 
 	dlg = dtc->dlg;
-	if(dlg!=NULL)
-	{
-		if (dlg->tag[DLG_CALLER_LEG].s)
+	if(dlg != NULL) {
+		if(dlg->tag[DLG_CALLER_LEG].s)
 			shm_free(dlg->tag[DLG_CALLER_LEG].s);
 
-		if (dlg->tag[DLG_CALLEE_LEG].s)
+		if(dlg->tag[DLG_CALLEE_LEG].s)
 			shm_free(dlg->tag[DLG_CALLEE_LEG].s);
 
-		if (dlg->cseq[DLG_CALLER_LEG].s)
+		if(dlg->cseq[DLG_CALLER_LEG].s)
 			shm_free(dlg->cseq[DLG_CALLER_LEG].s);
 
-		if (dlg->cseq[DLG_CALLEE_LEG].s)
+		if(dlg->cseq[DLG_CALLEE_LEG].s)
 			shm_free(dlg->cseq[DLG_CALLEE_LEG].s);
 
 		shm_free(dlg);
@@ -123,25 +124,24 @@ void dlg_transfer_ctx_free(dlg_transfer_ctx_t *dtc)
 void dlg_refer_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 {
 	dlg_transfer_ctx_t *dtc = NULL;
-	dlg_t* dialog_info = NULL;
+	dlg_t *dialog_info = NULL;
 	str met = {"BYE", 3};
 	int result;
 	struct dlg_cell *dlg;
 	uac_req_t uac_r;
 
-	if(ps->param==NULL || *ps->param==0)
-	{
+	if(ps->param == NULL || *ps->param == 0) {
 		LM_DBG("message id not received\n");
 		return;
 	}
-	dtc = *((dlg_transfer_ctx_t**)ps->param);
-	if(dtc==NULL)
+	dtc = *((dlg_transfer_ctx_t **)ps->param);
+	if(dtc == NULL)
 		return;
 	LM_DBG("REFER completed with status %d\n", ps->code);
 
 	/* we send the BYE anyhow */
 	dlg = dtc->dlg;
-	if ((dialog_info = build_dlg_t(dlg, DLG_CALLEE_LEG)) == 0){
+	if((dialog_info = build_dlg_t(dlg, DLG_CALLEE_LEG)) == 0) {
 		LM_ERR("failed to create dlg_t\n");
 		goto error;
 	}
@@ -169,13 +169,12 @@ error:
 	if(dialog_info)
 		free_tm_dlg(dialog_info);
 	return;
-
 }
 
 static int dlg_refer_callee(dlg_transfer_ctx_t *dtc)
 {
 	/*verify direction*/
-	dlg_t* dialog_info = NULL;
+	dlg_t *dialog_info = NULL;
 	str met = {"REFER", 5};
 	int result;
 	str hdrs;
@@ -184,30 +183,32 @@ static int dlg_refer_callee(dlg_transfer_ctx_t *dtc)
 
 	dlg = dtc->dlg;
 
-	if ((dialog_info = build_dlg_t(dlg, DLG_CALLEE_LEG)) == 0){
+	if((dialog_info = build_dlg_t(dlg, DLG_CALLEE_LEG)) == 0) {
 		LM_ERR("failed to create dlg_t\n");
 		goto error;
 	}
 
-	hdrs.len = 23 + 2*CRLF_LEN + dlg_bridge_controller.len
-		+ dtc->to.len + dlg_bridge_ref_hdrs.len;
+	hdrs.len = 23 + 2 * CRLF_LEN + dlg_bridge_controller.len + dtc->to.len
+			   + dlg_bridge_ref_hdrs.len;
 	LM_DBG("sending REFER [%d] <%.*s>\n", hdrs.len, dtc->to.len, dtc->to.s);
-	hdrs.s = (char*)pkg_malloc(hdrs.len*sizeof(char));
+	hdrs.s = (char *)pkg_malloc(hdrs.len * sizeof(char));
 	if(hdrs.s == NULL)
 		goto error;
 	memcpy(hdrs.s, "Referred-By: ", 13);
-	memcpy(hdrs.s+13, dlg_bridge_controller.s, dlg_bridge_controller.len);
-	memcpy(hdrs.s+13+dlg_bridge_controller.len, CRLF, CRLF_LEN);
-	memcpy(hdrs.s+13+dlg_bridge_controller.len+CRLF_LEN, "Refer-To: ", 10);
-	memcpy(hdrs.s+23+dlg_bridge_controller.len+CRLF_LEN, dtc->to.s,
+	memcpy(hdrs.s + 13, dlg_bridge_controller.s, dlg_bridge_controller.len);
+	memcpy(hdrs.s + 13 + dlg_bridge_controller.len, CRLF, CRLF_LEN);
+	memcpy(hdrs.s + 13 + dlg_bridge_controller.len + CRLF_LEN,
+			"Refer-To: ", 10);
+	memcpy(hdrs.s + 23 + dlg_bridge_controller.len + CRLF_LEN, dtc->to.s,
 			dtc->to.len);
-	memcpy(hdrs.s+23+dlg_bridge_controller.len+CRLF_LEN+dtc->to.len,
+	memcpy(hdrs.s + 23 + dlg_bridge_controller.len + CRLF_LEN + dtc->to.len,
 			CRLF, CRLF_LEN);
-	memcpy(hdrs.s+23+dlg_bridge_controller.len+CRLF_LEN+dtc->to.len+CRLF_LEN,
+	memcpy(hdrs.s + 23 + dlg_bridge_controller.len + CRLF_LEN + dtc->to.len
+					+ CRLF_LEN,
 			dlg_bridge_ref_hdrs.s, dlg_bridge_ref_hdrs.len);
 
 	set_uac_req(&uac_r, &met, &hdrs, NULL, dialog_info, TMCB_LOCAL_COMPLETED,
-				dlg_refer_tm_callback, (void*)dtc);
+			dlg_refer_tm_callback, (void *)dtc);
 	result = d_tmb.t_request_within(&uac_r);
 
 	pkg_free(hdrs.s);
@@ -238,16 +239,15 @@ void dlg_bridge_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	str cseq;
 	str empty = {"", 0};
 
-	if(ps->param==NULL || *ps->param==0)
-	{
+	if(ps->param == NULL || *ps->param == 0) {
 		LM_DBG("message id not received\n");
 		return;
 	}
-	dtc = *((dlg_transfer_ctx_t**)ps->param);
-	if(dtc==NULL)
+	dtc = *((dlg_transfer_ctx_t **)ps->param);
+	if(dtc == NULL)
 		return;
 	LM_DBG("completed with status %d\n", ps->code);
-	if(ps->code>=300)
+	if(ps->code >= 300)
 		goto error;
 
 	/* 2xx - build dialog/send refer */
@@ -256,26 +256,24 @@ void dlg_bridge_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		LM_ERR("failed to parse the reply headers\n");
 		goto error;
 	}
-	if((msg->cseq==NULL || parse_headers(msg,HDR_CSEQ_F,0)<0)
-			|| msg->cseq==NULL || msg->cseq->parsed==NULL)
-	{
-			LM_ERR("bad sip message or missing CSeq hdr :-/\n");
-			goto error;
+	if((msg->cseq == NULL || parse_headers(msg, HDR_CSEQ_F, 0) < 0)
+			|| msg->cseq == NULL || msg->cseq->parsed == NULL) {
+		LM_ERR("bad sip message or missing CSeq hdr :-/\n");
+		goto error;
 	}
 	cseq = (get_cseq(msg))->number;
 
-	if((msg->to==NULL && parse_headers(msg, HDR_TO_F,0)<0) || msg->to==NULL)
-	{
+	if((msg->to == NULL && parse_headers(msg, HDR_TO_F, 0) < 0)
+			|| msg->to == NULL) {
 		LM_ERR("bad request or missing TO hdr\n");
 		goto error;
 	}
-	if(parse_from_header(msg))
-	{
+	if(parse_from_header(msg)) {
 		LM_ERR("bad request or missing FROM hdr\n");
 		goto error;
 	}
-	if((msg->callid==NULL && parse_headers(msg,HDR_CALLID_F,0)<0)
-			|| msg->callid==NULL){
+	if((msg->callid == NULL && parse_headers(msg, HDR_CALLID_F, 0) < 0)
+			|| msg->callid == NULL) {
 		LM_ERR("bad request or missing CALLID hdr\n");
 		goto error;
 	}
@@ -283,36 +281,36 @@ void dlg_bridge_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	trim(&s);
 
 	/* some sanity checks */
-	if (s.len==0 || get_from(msg)->tag_value.len==0) {
-		LM_ERR("invalid request -> callid (%d) or from TAG (%d) empty\n",
-			s.len, get_from(msg)->tag_value.len);
+	if(s.len == 0 || get_from(msg)->tag_value.len == 0) {
+		LM_ERR("invalid request -> callid (%d) or from TAG (%d) empty\n", s.len,
+				get_from(msg)->tag_value.len);
 		goto error;
 	}
 
 	dlg = build_new_dlg(&s /*callid*/, &(get_from(msg)->uri) /*from uri*/,
-		&(get_to(msg)->uri) /*to uri*/,
-		&(get_from(msg)->tag_value)/*from_tag*/,
-		&(get_to(msg)->uri) /*use to as r-uri*/ );
-	if (dlg==0) {
+			&(get_to(msg)->uri) /*to uri*/,
+			&(get_from(msg)->tag_value) /*from_tag*/,
+			&(get_to(msg)->uri) /*use to as r-uri*/);
+	if(dlg == 0) {
 		LM_ERR("failed to create new dialog\n");
 		goto error;
 	}
 	dtc->dlg = dlg;
-	if (dlg_set_leg_info(dlg, &(get_from(msg)->tag_value),
-				&empty, &dlg_bridge_controller, &cseq, DLG_CALLER_LEG)!=0) {
+	if(dlg_set_leg_info(dlg, &(get_from(msg)->tag_value), &empty,
+			   &dlg_bridge_controller, &cseq, DLG_CALLER_LEG)
+			!= 0) {
 		LM_ERR("dlg_set_leg_info failed\n");
 		goto error;
 	}
 
-	if (populate_leg_info(dlg, msg, t, DLG_CALLEE_LEG,
-			&(get_to(msg)->tag_value)) !=0)
-	{
+	if(populate_leg_info(dlg, msg, t, DLG_CALLEE_LEG, &(get_to(msg)->tag_value))
+			!= 0) {
 		LM_ERR("could not add further info to the dialog\n");
 		shm_free(dlg);
 		goto error;
 	}
 
-	if(dlg_refer_callee(dtc)!=0)
+	if(dlg_refer_callee(dtc) != 0)
 		goto error;
 	return;
 
@@ -330,23 +328,20 @@ int dlg_bridge(str *from, str *to, str *op, str *bd)
 	str s_body;
 	uac_req_t uac_r;
 
-	dtc = (dlg_transfer_ctx_t*)shm_malloc(sizeof(dlg_transfer_ctx_t));
-	if(dtc==NULL)
-	{
+	dtc = (dlg_transfer_ctx_t *)shm_malloc(sizeof(dlg_transfer_ctx_t));
+	if(dtc == NULL) {
 		LM_ERR("no shm\n");
 		return -1;
 	}
 	memset(dtc, 0, sizeof(dlg_transfer_ctx_t));
-	dtc->from.s = (char*)shm_malloc((from->len+1)*sizeof(char));
-	if(dtc->from.s==NULL)
-	{
+	dtc->from.s = (char *)shm_malloc((from->len + 1) * sizeof(char));
+	if(dtc->from.s == NULL) {
 		LM_ERR("no shm\n");
 		shm_free(dtc);
 		return -1;
 	}
-	dtc->to.s = (char*)shm_malloc((to->len+1)*sizeof(char));
-	if(dtc->to.s==NULL)
-	{
+	dtc->to.s = (char *)shm_malloc((to->len + 1) * sizeof(char));
+	if(dtc->to.s == NULL) {
 		LM_ERR("no shm\n");
 		shm_free(dtc->from.s);
 		shm_free(dtc);
@@ -359,13 +354,13 @@ int dlg_bridge(str *from, str *to, str *op, str *bd)
 	dtc->to.len = to->len;
 	dtc->to.s[dtc->to.len] = '\0';
 
-	LM_DBG("bridge <%.*s> to <%.*s>\n", dtc->from.len, dtc->from.s,
-			dtc->to.len, dtc->to.s);
-	if(bd!=NULL && bd->s!=NULL) {
+	LM_DBG("bridge <%.*s> to <%.*s>\n", dtc->from.len, dtc->from.s, dtc->to.len,
+			dtc->to.s);
+	if(bd != NULL && bd->s != NULL) {
 		s_body.s = bd->s;
 		s_body.len = bd->len;
 	} else {
-		s_body.s   = DLG_HOLD_SDP;
+		s_body.s = DLG_HOLD_SDP;
 		s_body.len = DLG_HOLD_SDP_LEN;
 	}
 
@@ -375,16 +370,15 @@ int dlg_bridge(str *from, str *to, str *op, str *bd)
 	uac_r.body = &s_body;
 	uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
 	uac_r.cb = dlg_bridge_tm_callback;
-	uac_r.cbp = (void*)(long)dtc;
-	ret = d_tmb.t_request(&uac_r, /* UAC Req */
-						  &dtc->from, /* Request-URI (To) */
-						  &dtc->from, /* To */
-						  &dlg_bridge_controller, /* From */
-						  (op != NULL && op->len>0)?op:NULL /* Outbound-URI */
-		);
+	uac_r.cbp = (void *)(long)dtc;
+	ret = d_tmb.t_request(&uac_r,					/* UAC Req */
+			&dtc->from,								/* Request-URI (To) */
+			&dtc->from,								/* To */
+			&dlg_bridge_controller,					/* From */
+			(op != NULL && op->len > 0) ? op : NULL /* Outbound-URI */
+	);
 
-	if(ret<0)
-	{
+	if(ret < 0) {
 		dlg_transfer_ctx_free(dtc);
 		return -1;
 	}
@@ -398,29 +392,25 @@ int dlg_transfer(struct dlg_cell *dlg, str *to, int side)
 	str from;
 	str empty = {"", 0};
 
-	dtc = (dlg_transfer_ctx_t*)shm_malloc(sizeof(dlg_transfer_ctx_t));
-	if(dtc==NULL)
-	{
+	dtc = (dlg_transfer_ctx_t *)shm_malloc(sizeof(dlg_transfer_ctx_t));
+	if(dtc == NULL) {
 		LM_ERR("no shm\n");
 		return -1;
 	}
-	if(side==DLG_CALLEE_LEG)
-	{
+	if(side == DLG_CALLEE_LEG) {
 		from = dlg->from_uri;
 	} else {
 		from = dlg->to_uri;
 	}
 	memset(dtc, 0, sizeof(dlg_transfer_ctx_t));
-	dtc->from.s = (char*)shm_malloc((from.len+1)*sizeof(char));
-	if(dtc->from.s==NULL)
-	{
+	dtc->from.s = (char *)shm_malloc((from.len + 1) * sizeof(char));
+	if(dtc->from.s == NULL) {
 		LM_ERR("no shm\n");
 		shm_free(dtc);
 		return -1;
 	}
-	dtc->to.s = (char*)shm_malloc((to->len+1)*sizeof(char));
-	if(dtc->to.s==NULL)
-	{
+	dtc->to.s = (char *)shm_malloc((to->len + 1) * sizeof(char));
+	if(dtc->to.s == NULL) {
 		LM_ERR("no shm\n");
 		shm_free(dtc->from.s);
 		shm_free(dtc);
@@ -432,38 +422,38 @@ int dlg_transfer(struct dlg_cell *dlg, str *to, int side)
 	memcpy(dtc->to.s, to->s, to->len);
 	dtc->to.len = to->len;
 	dtc->to.s[dtc->to.len] = '\0';
-	
-	if(side==DLG_CALLER_LEG)
-		ndlg = build_new_dlg(&dlg->callid /*callid*/,
-				&dlg->to_uri /*from uri*/, &dlg->from_uri /*to uri*/,
-				&dlg->tag[side]/*from_tag*/, &dlg->req_uri /*req uri */ );
+
+	if(side == DLG_CALLER_LEG)
+		ndlg = build_new_dlg(&dlg->callid /*callid*/, &dlg->to_uri /*from uri*/,
+				&dlg->from_uri /*to uri*/, &dlg->tag[side] /*from_tag*/,
+				&dlg->req_uri /*req uri */);
 	else
 		ndlg = build_new_dlg(&dlg->callid /*callid*/,
 				&dlg->from_uri /*from uri*/, &dlg->to_uri /*to uri*/,
-				&dlg->tag[side]/*from_tag*/, &dlg->req_uri /*req uri */ );
-	if (ndlg==0) {
+				&dlg->tag[side] /*from_tag*/, &dlg->req_uri /*req uri */);
+	if(ndlg == 0) {
 		LM_ERR("failed to create new dialog\n");
 		goto error;
 	}
 	dtc->dlg = ndlg;
-	if (dlg_set_leg_info(ndlg, &dlg->tag[side], &empty,
-			&dlg->contact[side], &dlg->cseq[side], DLG_CALLER_LEG)!=0)
-	{
+	if(dlg_set_leg_info(ndlg, &dlg->tag[side], &empty, &dlg->contact[side],
+			   &dlg->cseq[side], DLG_CALLER_LEG)
+			!= 0) {
 		LM_ERR("dlg_set_leg_info failed for caller\n");
 		goto error;
 	}
-	if(side==DLG_CALLEE_LEG)
+	if(side == DLG_CALLEE_LEG)
 		side = DLG_CALLER_LEG;
 	else
 		side = DLG_CALLEE_LEG;
-	if (dlg_set_leg_info(ndlg, &dlg->tag[side], &dlg->route_set[side],
-			&dlg->contact[side], &dlg->cseq[side], DLG_CALLEE_LEG)!=0)
-	{
+	if(dlg_set_leg_info(ndlg, &dlg->tag[side], &dlg->route_set[side],
+			   &dlg->contact[side], &dlg->cseq[side], DLG_CALLEE_LEG)
+			!= 0) {
 		LM_ERR("dlg_set_leg_info failed for caller\n");
 		goto error;
 	}
 
-	if(dlg_refer_callee(dtc)!=0)
+	if(dlg_refer_callee(dtc) != 0)
 		goto error;
 	return 0;
 
@@ -471,4 +461,3 @@ error:
 	dlg_transfer_ctx_free(dtc);
 	return -1;
 }
-

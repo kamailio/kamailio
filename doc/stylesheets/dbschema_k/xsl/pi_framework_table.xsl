@@ -65,7 +65,7 @@
 			<xsl:call-template name="get-type"/>
 		</xsl:variable>
 		<xsl:choose>
-			<xsl:when test="type[@db='mysql']">
+			<xsl:when test="type[@db='db_mysql']">
 			<xsl:value-of select="normalize-space(type[@db='mysql'])"/>
 			</xsl:when>
 			<xsl:when test="$type='char'">

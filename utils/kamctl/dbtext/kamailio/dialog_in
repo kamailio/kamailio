@@ -1,0 +1,1 @@
+id(int,auto) hash_entry(int) hash_id(int) did(string) callid(string) from_uri(string) from_tag(string) caller_original_cseq(string) req_uri(string) caller_route_set(string,null) caller_contact(string) caller_sock(string) timeout(int) state(int) start_time(int) sflags(int) toroute_name(string,null) toroute_index(int)

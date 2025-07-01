@@ -4,7 +4,7 @@
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
- * Fruanhofer Institute. It was and still is maintained in a separate
+ * Fraunhofer FOKUS Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
@@ -14,7 +14,7 @@
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
  *
- * NB: Alot of this code was originally part of OpenIMSCore,
+ * NB: A lot of this code was originally part of OpenIMSCore,
  * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
  * Thanks for great work! This is an effort to
@@ -24,6 +24,8 @@
  * to manage in the Kamailio/SR environment
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,8 +49,8 @@
 // Diameter Application Identifier used in the EPC
 
 //this applications are specific to the PCC
-#define EPC_Rx 	16777236
-#define EPC_Gx 	16777238
+#define EPC_Rx 16777236
+#define EPC_Gx 16777238
 #define EPC_STa 16777250
 #define EPC_S6a 16777251
 #define EPC_S6d 16777251
@@ -56,10 +58,10 @@
 #define EPC_SWm 16777264
 #define EPC_SWx 16777265
 #define EPC_Gxx 16777266
-#define EPC_S9 	16777267
-#define EPC_S6b	16777272
-#define EPC_Sp	16777280 //not in current standards
-#define EPC_PCRF_MC	16777281	//not in current standards
+#define EPC_S9 16777267
+#define EPC_S6b 16777272
+#define EPC_Sp 16777280		 //not in current standards
+#define EPC_PCRF_MC 16777281 //not in current standards
 
 
 #endif /*DIAMETER_EPC_CODE_APP_H_*/

@@ -1,9 +1,11 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by

@@ -30,6 +30,6 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
 	<xi:include href="db_mysql_admin.xml"/>
 </book>

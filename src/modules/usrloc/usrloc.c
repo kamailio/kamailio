@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -40,45 +42,45 @@
  * \param api usrloc API
  * \return 0 on success, -1 on failure
  */
-int bind_usrloc(usrloc_api_t* api)
+int bind_usrloc(usrloc_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	if (ul_init_flag==0) {
+	if(ul_init_flag == 0) {
 		LM_ERR("configuration error - trying to bind to usrloc module"
-				" before being initialized\n");
+			   " before being initialized\n");
 		return -1;
 	}
 
-	api->register_udomain   = register_udomain;
-	api->get_udomain        = get_udomain;
-	api->get_all_ucontacts  = get_all_ucontacts;
-	api->insert_urecord     = insert_urecord;
-	api->delete_urecord     = delete_urecord;
-	api->delete_urecord_by_ruid     = delete_urecord_by_ruid;
-	api->get_urecord        = get_urecord;
-	api->lock_udomain       = lock_udomain;
-	api->unlock_udomain     = unlock_udomain;
-	api->release_urecord    = release_urecord;
-	api->insert_ucontact    = insert_ucontact;
-	api->delete_ucontact    = delete_ucontact;
-	api->get_ucontact       = get_ucontact;
-	api->update_ucontact    = update_ucontact;
-	api->register_ulcb      = register_ulcb;
-	api->get_aorhash        = ul_get_aorhash;
+	api->register_udomain = register_udomain;
+	api->get_udomain = get_udomain;
+	api->get_all_ucontacts = get_all_ucontacts;
+	api->insert_urecord = insert_urecord;
+	api->delete_urecord = delete_urecord;
+	api->delete_urecord_by_ruid = delete_urecord_by_ruid;
+	api->get_urecord = get_urecord;
+	api->lock_udomain = lock_udomain;
+	api->unlock_udomain = unlock_udomain;
+	api->release_urecord = release_urecord;
+	api->insert_ucontact = insert_ucontact;
+	api->delete_ucontact = delete_ucontact;
+	api->get_ucontact = get_ucontact;
+	api->update_ucontact = update_ucontact;
+	api->register_ulcb = register_ulcb;
+	api->get_aorhash = ul_get_aorhash;
 
-	api->get_urecord_by_ruid      = get_urecord_by_ruid;
+	api->get_urecord_by_ruid = get_urecord_by_ruid;
 	api->get_ucontact_by_instance = get_ucontact_by_instance;
 
-	api->set_keepalive_timeout    = ul_set_keepalive_timeout;
-	api->refresh_keepalive        = ul_refresh_keepalive;
-	api->set_max_partition        = ul_set_max_partition;
+	api->set_keepalive_timeout = ul_set_keepalive_timeout;
+	api->refresh_keepalive = ul_refresh_keepalive;
+	api->set_max_partition = ul_set_max_partition;
 
 	api->use_domain = ul_use_domain;
-	api->db_mode    = ul_db_mode;
-	api->nat_flag   = ul_nat_bflag;
+	api->db_mode = ul_db_mode;
+	api->nat_flag = ul_nat_bflag;
 
 	return 0;
 }

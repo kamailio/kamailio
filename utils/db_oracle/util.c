@@ -29,7 +29,7 @@ void __attribute__((noreturn)) oraxit(sword status, const con_t* con)
 	case OCI_ERROR:
 		ecd = 0;
 		if(OCIErrorGet(con->errhp, 1, NULL, &ecd, (OraText*)buf,
-			sizeof(buf), OCI_HTYPE_ERROR) != OCI_SUCCESS) 
+			sizeof(buf), OCI_HTYPE_ERROR) != OCI_SUCCESS)
 		{
 			snprintf(buf, sizeof(buf), "unknown ORAERR %u", ecd);
 		}

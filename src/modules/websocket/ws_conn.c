@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -26,6 +28,7 @@
 
 #include "../../core/locking.h"
 #include "../../core/str.h"
+#include "../../core/ut.h"
 #include "../../core/tcp_conn.h"
 #include "../../core/fmsg.h"
 #include "../../core/counters.h"
@@ -68,7 +71,7 @@ stat_var *ws_msrp_max_concurrent_connections;
 char *wsconn_state_str[] = {
 		"CONNECTING", /* WS_S_CONNECTING */
 		"OPEN",		  /* WS_S_OPEN */
-		"CLOSING",	/* WS_S_CLOSING */
+		"CLOSING",	  /* WS_S_CLOSING */
 		"CLOSED"	  /* WS_S_CLOSED */
 };
 
@@ -100,16 +103,16 @@ int wsconn_init(void)
 	wsconn_id_hash = (ws_connection_t **)shm_malloc(
 			TCP_ID_HASH_SIZE * sizeof(ws_connection_t *));
 	if(wsconn_id_hash == NULL) {
-		LM_ERR("allocating WebSocket hash-table\n");
+		SHM_MEM_ERROR_FMT("for WebSocket hash-table\n");
 		goto error;
 	}
 	memset((void *)wsconn_id_hash, 0,
 			TCP_ID_HASH_SIZE * sizeof(ws_connection_t *));
 
-	wsconn_used_list = (ws_connection_list_t *)shm_malloc(
-			sizeof(ws_connection_list_t));
+	wsconn_used_list =
+			(ws_connection_list_t *)shm_malloc(sizeof(ws_connection_list_t));
 	if(wsconn_used_list == NULL) {
-		LM_ERR("allocating WebSocket used list\n");
+		SHM_MEM_ERROR_FMT("for WebSocket used list\n");
 		goto error;
 	}
 	memset((void *)wsconn_used_list, 0, sizeof(ws_connection_list_t));
@@ -197,7 +200,7 @@ int wsconn_add(struct receive_info *rcv, unsigned int sub_protocol)
 	/* Allocate and fill in new WebSocket connection */
 	wsc = shm_malloc(sizeof(ws_connection_t) + BUF_SIZE + 1);
 	if(wsc == NULL) {
-		LM_ERR("allocating shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(wsc, 0, sizeof(ws_connection_t) + BUF_SIZE + 1);
@@ -210,15 +213,14 @@ int wsconn_add(struct receive_info *rcv, unsigned int sub_protocol)
 	wsc->frag_buf.s = ((char *)wsc) + sizeof(ws_connection_t);
 	atomic_set(&wsc->refcnt, 0);
 
-	LM_DBG("new wsc => [%p], ref => [%d]\n", wsc,
-			atomic_get(&wsc->refcnt));
+	LM_DBG("new wsc => [%p], ref => [%d]\n", wsc, atomic_get(&wsc->refcnt));
 
 	WSCONN_LOCK;
 	/* Add to WebSocket connection table */
 	wsconn_listadd(wsconn_id_hash[wsc->id_hash], wsc, id_next, id_prev);
 
 	/* Add to the end of the WebSocket used list */
-	wsc->last_used = (int)time(NULL);
+	wsc->last_used = ksr_time_sint(NULL, NULL);
 	if(wsconn_used_list->head == NULL)
 		wsconn_used_list->head = wsconn_used_list->tail = wsc;
 	else {
@@ -309,8 +311,10 @@ static void wsconn_run_route(ws_connection_t *wsc)
 	init_run_actions_ctx(&ctx);
 	if(rt < 0) {
 		/* kemi script event route callback */
-		if(keng && sr_kemi_route(keng,fmsg, EVENT_ROUTE, &ws_event_callback,
-					&evrtname) < 0) {
+		if(keng
+				&& sr_kemi_route(keng, fmsg, EVENT_ROUTE, &ws_event_callback,
+						   &evrtname)
+						   < 0) {
 			LM_ERR("error running event route kemi callback\n");
 		}
 	} else {
@@ -325,7 +329,8 @@ static void wsconn_dtor(ws_connection_t *wsc)
 	if(!wsc)
 		return;
 
-	LM_DBG("wsconn_dtor for [%p] refcnt [%d]\n", wsc, atomic_get(&wsc->refcnt));
+	LM_DBG("wsconn id: %d / %u [%p] refcnt [%d]\n", wsc->id, wsc->id_hash, wsc,
+			atomic_get(&wsc->refcnt));
 
 	if(wsc->run_event)
 		wsconn_run_route(wsc);
@@ -334,12 +339,13 @@ static void wsconn_dtor(ws_connection_t *wsc)
 
 	shm_free(wsc);
 
-	LM_DBG("wsconn_dtor for [%p] destroyed\n", wsc);
+	LM_DBG("wsconn id: %d / %u [%p] destroyed\n", wsc->id, wsc->id_hash, wsc);
 }
 
 int wsconn_rm(ws_connection_t *wsc, ws_conn_eventroute_t run_event_route)
 {
-	LM_DBG("wsconn_rm for [%p] refcnt [%d]\n", wsc, atomic_get(&wsc->refcnt));
+	LM_DBG("remove wscon id: %d / %u [%p] refcnt [%d]\n", wsc->id, wsc->id_hash,
+			wsc, atomic_get(&wsc->refcnt));
 
 	if(run_event_route == WSCONN_EVENTROUTE_YES)
 		wsc->run_event = 1;
@@ -355,7 +361,7 @@ int wsconn_update(ws_connection_t *wsc)
 	}
 
 	WSCONN_LOCK;
-	wsc->last_used = (int)time(NULL);
+	wsc->last_used = ksr_time_sint(NULL, NULL);
 	if(wsconn_used_list->tail == wsc)
 		/* Already at the end of the list */
 		goto end;
@@ -487,8 +493,7 @@ int wsconn_put_id(int id)
 	WSCONN_LOCK;
 	for(wsc = wsconn_id_hash[id_hash]; wsc; wsc = wsc->id_next) {
 		if(wsc->id == id) {
-			LM_DBG("wsc [%p] refcnt [%d]\n", wsc,
-					atomic_get(&wsc->refcnt));
+			LM_DBG("wsc [%p] refcnt [%d]\n", wsc, atomic_get(&wsc->refcnt));
 			wsconn_put_mode(wsc, 0);
 
 			WSCONN_UNLOCK;
@@ -530,9 +535,10 @@ ws_connection_t **wsconn_get_list(void)
 	/* allocate a NULL terminated list of wsconn pointers */
 	list_size = (list_len + 1) * sizeof(ws_connection_t *);
 	list = pkg_malloc(list_size);
-	if(!list)
+	if(!list) {
+		PKG_MEM_ERROR;
 		goto end;
-
+	}
 	memset(list, 0, list_size);
 
 	/* copy */
@@ -618,9 +624,10 @@ ws_connection_id_t *wsconn_get_list_ids(int idx)
 	/* allocate a NULL terminated list of wsconn pointers */
 	list_size = (list_len + 1) * sizeof(ws_connection_id_t);
 	list = pkg_malloc(list_size);
-	if(!list)
+	if(!list) {
+		PKG_MEM_ERROR;
 		goto end;
-
+	}
 	memset(list, 0, list_size);
 
 	/* copy */
@@ -665,7 +672,7 @@ int wsconn_put_list_ids(ws_connection_id_t *list_head)
 		return -1;
 
 	list = list_head;
-	for(i=0; list[i].id!=-1; i++) {
+	for(i = 0; list[i].id != -1; i++) {
 		wsconn_put_id(list[i].id);
 	}
 
@@ -702,6 +709,7 @@ void ws_timer(unsigned int ticks, void *param)
 					LM_DBG("ws structure without active tcp connection\n");
 					wsc->state = WS_S_REMOVING;
 					wsc->rmticks = get_ticks();
+					wsc->run_event = 1;
 				} else {
 					tcpconn_put(con);
 				}
@@ -711,7 +719,7 @@ void ws_timer(unsigned int ticks, void *param)
 	}
 	WSCONN_UNLOCK;
 
-	for(wsc = rmlist.head; wsc; ) {
+	for(wsc = rmlist.head; wsc;) {
 		next = wsc->id_next;
 		wsconn_dtor(wsc);
 		wsc = next;
@@ -738,7 +746,7 @@ static int ws_rpc_add_node(
 
 		pong = wsc->awaiting_pong ? "awaiting Pong, " : "";
 
-		interval = (int)time(NULL) - wsc->last_used;
+		interval = ksr_time_sint(NULL, NULL) - wsc->last_used;
 		if(wsc->sub_protocol == SUB_PROTOCOL_SIP)
 			sub_protocol = "sip";
 		else if(wsc->sub_protocol == SUB_PROTOCOL_MSRP)
@@ -746,9 +754,10 @@ static int ws_rpc_add_node(
 		else
 			sub_protocol = "**UNKNOWN**";
 
-		if(snprintf(rplbuf, 512, "%d: %s:%s:%hu -> %s:%s:%hu (state: %s"
-								 ", %s last used %ds ago"
-								 ", sub-protocol: %s)",
+		if(snprintf(rplbuf, 512,
+				   "%d: %s:%s:%hu -> %s:%s:%hu (state: %s"
+				   ", %s last used %ds ago"
+				   ", sub-protocol: %s)",
 				   wsc->id, src_proto, strlen(src_ip) ? src_ip : "*",
 				   con->rcv.src_port, dst_proto, strlen(dst_ip) ? dst_ip : "*",
 				   con->rcv.dst_port, wsconn_state_str[wsc->state], pong,

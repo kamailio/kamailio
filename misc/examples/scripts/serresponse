@@ -6,8 +6,8 @@
 #
 # This script uses sipsak (http://sipsak.berlios.de) to test if a
 # SIP server is still responding to requests and will send messages
-# to the developers. It is configured for the iptel.org enviroment.
-# PLEASE adapt it to your local enviroment.
+# to the developers. It is configured for the iptel.org environment.
+# PLEASE adapt it to your local environment.
 #
 
 NOTIFY=sr@iptel.org
@@ -38,7 +38,7 @@ if [ -e $LOCKF ] ; then
 	if [ ! -e $LOCKF ] ; then
 		echo "This is a reminder !!!" > $TMP
 		echo "The lockfile $LOCKF" >> $TMP
-		echo "was just removed because ist was older then $LOCK_TIMEOUT minutes." >> $TMP
+		echo "was just removed because it was older than $LOCK_TIMEOUT minutes." >> $TMP
 		echo "But if you receive this mail the cause of this error still exists or respawned." >> $TMP
 		SERR_SUBJECT="serresponse reminder"
 	fi
@@ -124,7 +124,7 @@ if [ ! -e $LOCKF ] ; then
 			done
 		else
 			echo "unconfigured serresponse executed on ${HOSTN}." > $TMP
-			echo "Warning: This script if configured for the iptel.org enviroment."
+			echo "Warning: This script is configured for the iptel.org environment."
 			echo "         Please configure it to your local settings first."
 			echo
 			echo "If you do not press CTRL-C within 2 seconds an informational message"

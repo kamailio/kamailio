@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -73,8 +75,8 @@ str domain_table = str_init(DOMAIN_TABLE); /* Name of domain table */
 str domain_attrs_table = str_init(DOMAIN_ATTRS_TABLE);
 str did_col = str_init(DID_COL);	   /* Name of domain id column */
 str domain_col = str_init(DOMAIN_COL); /* Name of domain column */
-str name_col = str_init(NAME_COL);	 /* Name of attribute name column */
-str type_col = str_init(TYPE_COL);	 /* Name of attribute type column */
+str name_col = str_init(NAME_COL);	   /* Name of attribute name column */
+str type_col = str_init(TYPE_COL);	   /* Name of attribute type column */
 str value_col = str_init(VALUE_COL);   /* Name of attribute value column */
 int domain_reg_myself = 0;
 
@@ -123,7 +125,7 @@ static param_export_t params[] = {
 	{"name_col",       PARAM_STR, &name_col  },
 	{"type_col",       PARAM_STR, &type_col  },
 	{"value_col",      PARAM_STR, &value_col  },
-	{"register_myself",INT_PARAM, &domain_reg_myself},
+	{"register_myself",PARAM_INT, &domain_reg_myself},
 	{0, 0, 0}
 };
 /* clang-format on */
@@ -340,9 +342,7 @@ static void domain_rpc_dump(rpc_t *rpc, void *ctx)
 
 rpc_export_t domain_rpc_list[] = {
 		{"domain.reload", domain_rpc_reload, domain_rpc_reload_doc, 0},
-		{"domain.dump", domain_rpc_dump, domain_rpc_dump_doc, 0},
-		{0, 0, 0, 0}
-};
+		{"domain.dump", domain_rpc_dump, domain_rpc_dump_doc, 0}, {0, 0, 0, 0}};
 
 static int domain_init_rpc(void)
 {

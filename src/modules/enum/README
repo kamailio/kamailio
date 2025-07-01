@@ -308,7 +308,7 @@ enum_pv_query("$avp(i:100)","e164.arpa.","+sip+voice:sip");
 4.3.  i_enum_query(["suffix" [,"service"]])
 
    The function performs an enum query and rewrites the Request-URI with
-   the result of the query. This the Infrastructure-ENUM version of
+   the result of the query. This is the Infrastructure-ENUM version of
    enum_query(). The only difference to enum_query() is in the calculation
    of the FQDN where NAPTR records are looked for.
 

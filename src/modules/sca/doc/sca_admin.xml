@@ -305,19 +305,83 @@ modparam("sca", "server_address", "sip:10.10.10.10:5060")
 </programlisting>
 		</example>
 	</section>
+
+	<section id="sca.p.contact_fallback">
+		<title><varname>contact_fallback</varname> (string)</title>
+		<para>
+		contact used if defined when no contact is found in processed message.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "" (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>contact_fallback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sca", "contact_fallback", "sip:127.0.0.1:5085;transport=udp")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sca.p.from_uri_avp">
+		<title><varname>from_uri_avp</varname> (string)</title>
+		<para>
+		avp that will store the From URI used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "" (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>from_uri_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sca", "from_uri_avp", "$avp(sca_from)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="sca.p.to_uri_avp">
+		<title><varname>to_uri_avp</varname> (string)</title>
+		<para>
+		avp that will store the To URI used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "" (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>to_uri_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sca", "to_uri_avp", "$avp(sca_to)")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
 	<title>Functions</title>
 	<section id="sca.f.sca_handle_subscribe">
 		<title>
-		<function moreinfo="none">sca_handle_subscribe()</function>
+		<function moreinfo="none">sca_handle_subscribe([to_uri, [from_uri]])</function>
 		</title>
 		<para>
 		The function handling call-info and line-seize SUBSCRIBE
 		requests. It stores or updates the subscriptions in shared
 		memory, and sends NOTIFYs to the subscriber and other
 		members of the group as needed.
+		</para>
+		<para>
+		If to_uri or from_uri are defined, those values will be used instead of the SIP header.
+		Both parameters can be a string or a pseudo variable holding a string value.
 		</para>
 		<para>
 		For example, a line-seize SUBSCRIBE will cause the module to
@@ -352,7 +416,11 @@ modparam("sca", "server_address", "sip:10.10.10.10:5060")
 ...
 if ( is_method( "SUBSCRIBE" )) {
 	if ( $hdr(Event) == "call-info" || $hdr(Event) == "line-seize" ) {
-	sca_handle_subscribe();
+		if($var(fix_uri) != 0) {
+			sca_handle_subscribe($var(to_uri), $avp(from_uri));
+		} else {
+			sca_handle_subscribe();
+		}
 	exit;
 	}
 }

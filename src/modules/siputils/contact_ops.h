@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -73,8 +75,10 @@ int encode_uri(str uri, char *encoding_prefix, char *public_ip, char separator,
 int decode_uri(str uri, char separator, str *result);
 
 int ki_contact_param_encode(sip_msg_t *msg, str *nparam, str *saddr);
+int ki_contact_param_encode_alias(sip_msg_t *msg, str *nparam, str *saddr);
 int ki_contact_param_decode(sip_msg_t *msg, str *nparam);
 int ki_contact_param_decode_ruri(sip_msg_t *msg, str *nparam);
 int ki_contact_param_rm(sip_msg_t *msg, str *nparam);
+int ki_contact_param_check(sip_msg_t *msg, str *nparam);
 
 #endif

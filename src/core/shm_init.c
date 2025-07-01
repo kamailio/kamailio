@@ -45,7 +45,6 @@ int shm_initialized()
 }
 
 
-
 /** init shm mem.
  * @return 0 on success, < 0 on error
  * it _must_ be called:
@@ -63,15 +62,15 @@ int shm_initialized()
 int init_shm()
 {
 	/* set uid if user is set */
-	if (user && uid == 0){
-		if (user2uid(&uid, &gid, user)<0){
+	if(user && uid == 0) {
+		if(user2uid(&uid, &gid, user) < 0) {
 			fprintf(stderr, "bad user name/uid number: -u %s\n", user);
 			goto error;
 		}
 	}
-	if (shm_init_manager(shm_mname)<0)
+	if(shm_init_manager(shm_mname) < 0)
 		goto error;
-	shm_init=1;
+	shm_init = 1;
 	return 0;
 error:
 	return -1;

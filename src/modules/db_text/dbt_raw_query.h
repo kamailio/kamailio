@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -28,13 +30,11 @@
 #include "../../core/str.h"
 
 
-
-int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r);
-int dbt_raw_query_update(db1_con_t* _h, str* _s, db1_res_t** _r);
-int dbt_raw_query_delete(db1_con_t* _h, str* _s, db1_res_t** _r);
-int dbt_raw_query_insert(db1_con_t* _h, str* _s, db1_res_t** _r);
-int dbt_raw_query_replace(db1_con_t* _h, str* _s, db1_res_t** _r);
+int dbt_raw_query_select(db1_con_t *_h, str *_s, db1_res_t **_r);
+int dbt_raw_query_update(db1_con_t *_h, str *_s, db1_res_t **_r);
+int dbt_raw_query_delete(db1_con_t *_h, str *_s, db1_res_t **_r);
+int dbt_raw_query_insert(db1_con_t *_h, str *_s, db1_res_t **_r);
+int dbt_raw_query_replace(db1_con_t *_h, str *_s, db1_res_t **_r);
 
 
 #endif
-

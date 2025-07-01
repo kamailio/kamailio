@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -95,9 +97,9 @@ xmlNodePtr xmlNodeGetNodeByName(
 		if(xmlStrcasecmp(cur->name, (unsigned char *)name) == 0) {
 			if(!ns
 					|| (cur->ns
-							   && xmlStrcasecmp(
-										  cur->ns->prefix, (unsigned char *)ns)
-										  == 0))
+							&& xmlStrcasecmp(
+									   cur->ns->prefix, (unsigned char *)ns)
+									   == 0))
 				return cur;
 		}
 		match = xmlNodeGetNodeByName(cur->children, name, ns);
@@ -181,7 +183,7 @@ time_t xml_parse_dateTime(char *xml_time_str)
 
 	p++;
 
-	if(sscanf(p, "%c%c:%c%c", &h1, &h2, &m1, &m2) < 0) {
+	if(sscanf(p, "%c%c:%c%c", &h1, &h2, &m1, &m2) < 4) {
 		printf("error: failed to parse time\n");
 		return 0;
 	}

@@ -11,7 +11,7 @@
 <!-- sipt Module User's Guide -->
 
 <chapter>
-    
+
     <title>&adminguide;</title>
 
     <section>
@@ -19,13 +19,13 @@
 	<para>Module for updating ISUP encapsulated in SIP (SIP-T/SIP-I)</para>
 	<para>
 	The sipt module can be used to update various ss7 headers contained inside
-	a message. 
+	a message.
 	</para>
 	</section>
 	<section>
 	<title>Dependencies</title>
 	<para>
-	    The module depends on the following modules (in the other words the
+	    The module depends on the following modules (in other words the
 		listed modules must be loaded before this module):
 	    <itemizedlist>
 		<listitem>
@@ -50,7 +50,7 @@
 			<title><function moreinfo="none">sipt_destination(destination, hops, nai)</function> usage</title>
 			<programlisting format="linespecific">
 ...
-# update the destination number to our current request uri, 
+# update the destination number to our current request uri,
 # setting nature of address to international
 $rU = "19495551234";
 sipt_destination($rU, 31, 4);
@@ -61,8 +61,8 @@ sipt_destination($rU, 31, 4);
 	<section id="sipt.f.sipt_set_bci_1">
 		<title><function moreinfo="none">sipt_set_bci_1(charge_indicator, called_status, called_category, e2e_indicator)</function></title>
 		<para>
-			updates the first byte of the backward call indicator in the ACM or COT in the body if setting the 
-			Charge Indicator to <quote>charge_indicator</quote>, the Called party's status indicator in <quote>called_status</quote>, 
+			updates the first byte of the backward call indicator in the ACM or COT in the body if setting the
+			Charge Indicator to <quote>charge_indicator</quote>, the Called party's status indicator in <quote>called_status</quote>,
 			the Called party's category indicator in <quote>called_category</quote> and the End to End Method Indicator
 			with the value of the value of <quote>e2e_indicator</quote>.
 		</para>
@@ -80,7 +80,7 @@ sipt_set_bci_1("2", "1", "1", "0");
 		<title><function moreinfo="none">sipt_set_calling(origin, nai, presentation, screening)</function></title>
 		<para>
 			updates the IAM in the body if it exists, setting (or adding) the calling party number to <quote>origin</quote>
-			with the nature address specified in <quote>nai</quote> and setting the presentation and screening values to 
+			with the nature address specified in <quote>nai</quote> and setting the presentation and screening values to
 			 <quote>presentation</quote> and <quote>screening</quote>.
 		</para>
 		<example>
@@ -104,7 +104,7 @@ sipt_set_calling($fU, 4, 0, 3);
 			<programlisting format="linespecific">
 ...
 # update the forwarding number to the value in the from header
-sipt_forwarfing($avp(s:forwarding_number), 3);
+sipt_forwarding($avp(s:forwarding_number), 3);
 ...
 </programlisting>
 		</example>
@@ -152,7 +152,7 @@ if(sipt_has_isup_body())
 			<title><function moreinfo="none">sipt_presentation pseudo-variable</function> usage</title>
 			<programlisting format="linespecific">
 ...
-# add privacy header if restriction is requested 
+# add privacy header if restriction is requested
 if($sipt(calling_party_number.presentation) == 1)
 {
 	append_hf("Privacy: id\r\n");
@@ -186,7 +186,7 @@ if($sipt(calling_party_number.presentation) == 1)
 			<programlisting format="linespecific">
 ...
 
-# remove P-Asserted-Identity header if the screening isn't verified 
+# remove P-Asserted-Identity header if the screening isn't verified
 # or network provided
 $avp(s:screening) = $sipt(calling_party_number.screening);
 if($avp(s:screening) != 1 &amp;&amp; $avp(s:screening) != 3)
@@ -346,8 +346,8 @@ if($sipt(called_party_number.nai) == 3)
 	<section id="sipt.v.sipt_backward_call_indicator_charge_indicator">
 		<title><varname>$sipt(backward_call_indicator.charge_indicator)</varname></title>
 		<para>
-			Returns the value of the charge indication 
-			of the backward call indicator header in 
+			Returns the value of the charge indication
+			of the backward call indicator header in
 			the ACM or COT message.
 			Returns -1 if there is a parsing error.
 		</para>
@@ -387,7 +387,7 @@ if($sipt(called_party_number.nai) == 3)
         	<section id="sipt.v.sipt_redirection_number">
 		<title><varname>$sipt(redirection_number) / $sipt_redirection_number</varname></title>
 		<para>
-			Returns number to which redirection will trigered
+			Returns number to which redirection will triggered
 			Returns -1 if there is a parsing error.
 		</para>
 		<example>
@@ -462,7 +462,7 @@ $avp(s:redir_num) = $sipt(redirection_number);
 			Returns original called number from ISUP or -1 if no original called number found.
 		</para>
 	</section>
-	
+
 	<section id="sipt.v.sipt_generic_number_nai">
 		<title><varname>$sipt(generic_number.nai)</varname></title>
 		<para>

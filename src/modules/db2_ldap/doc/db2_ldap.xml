@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <book id="ldap" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -33,7 +33,7 @@
 		to LDAP search in sub-tree defined by root, object class, attributes and
 		pass it to the <emphasis>OpenLDAP</emphasis> which communicates with the LDAP server.
 		</para>
-		
+
 		<para>
 		This procedure is sometimes tricky because the LDAP does not support
 		all database features or supports them in different manner. Here we
@@ -44,12 +44,12 @@
 		in case the more fields contain multi-value.
 		</para>
 
-		<para>		
+		<para>
 		The LDAP supports natively "AND", "OR", "NOT" logical operators and "equal", "non-equal",
 		"less-or-equal" and "greater-or-equal" comparison operators. Therefore
 		"less" and "greater" operators are mapped as "less/greater-or-equal-AND-not-equal".
 		It's important realize it when the attribute which will be used for
-		filtering may contain multi-value. 
+		filtering may contain multi-value.
 		The LDAP server evaluates comparison operator on multi-value so that
 		the result for record is true if the condition is satisfied for any single
 		value. The single values not satisfying condition are not truncated. It implies two cases
@@ -65,10 +65,10 @@
 		<para>
 		The syntax of <emphasis>client_side_filtering</emphasis> value is comma delimited
 		of field names which won't be used for server-side filter if such a field appears in a match
-		condition. Instead records will 
+		condition. Instead records will
 		be filtered out in module. It implies such fields MUST exist in result field list.
 		</para>
-		
+
 		<para>
 		The necessary condition of successful filtering of particular
 		attribute at the LDAP server is correct attribute definition.
@@ -77,11 +77,11 @@
 		If required matching rule is missing the LDAP server silently returns
 		empty result set. In case of double filtering both at the LDAP server and the LDAP
 		module, e.g. multi-value and equal comparison, check the LDAP server matching
-		rule satisfies your needs or use <emphasis>client_side_filtering</emphasis> feature. 
+		rule satisfies your needs or use <emphasis>client_side_filtering</emphasis> feature.
 		</para>
 
 		<para>
-		The LDAP server may be identified either 
+		The LDAP server may be identified either
 		complete specification of host, user, password in URI or
 		is specification reference to <varname>connection</varname> section
 		of <varname>config</varname> file. Note in the second case there is only
@@ -135,7 +135,7 @@
 
 	<section id="ldap.dep">
 		<title>Dependencies</title>
-				   
+
 		<para>
 		none
 		</para>
@@ -157,7 +157,7 @@
 			The configuration file maps database table names used in SER to LDAP directory
 			sub-trees to be searched. In addition to that the configuration file also allows to
 			configure the LDAP search filter and maps database field names to
-			LDAP attribute names and vice versa. 
+			LDAP attribute names and vice versa.
 			</para>
 			<example>
 				<title>Example <varname>config</varname></title>
@@ -208,15 +208,15 @@ require_certificate=demand
 #
 [table:credentials]
 
-# In our LDAP directory we store SIP digest credentials under 
-# "Digest Credentials" organization unit so this is where searches for digest 
+# In our LDAP directory we store SIP digest credentials under
+# "Digest Credentials" organization unit so this is where searches for digest
 # credentials should start.
 base = "ou=Digest Credentials,dc=iptel,dc=org"
 
 # We search the whole subtree.
 scope = subtree
 
-# For digest credentials we are only interested in objects with objectClass 
+# For digest credentials we are only interested in objects with objectClass
 # 'digestAuthCredentials', objects of all other types are ignored.
 filter = "(objectClass=digestAuthCredentials)"
 
@@ -275,10 +275,10 @@ field_map = did : serDID
 field_map = name : serAttrName
 field_map = type : (Integer) serAttrType
 field_map = value : serAttrValue
-field_map = flags : (BitString) serFlags			
+field_map = flags : (BitString) serFlags
 				</programlisting>
 			</example>
-			
+
 		</section>
 
 		<section id="reconnect_attempt">

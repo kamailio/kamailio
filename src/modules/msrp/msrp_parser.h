@@ -26,25 +26,26 @@
 #include "../../core/str.h"
 #include "../../core/tcp_conn.h"
 
-#define MSRP_REQUEST	1
-#define MSRP_REPLY		2
+#define MSRP_REQUEST 1
+#define MSRP_REPLY 2
 
 #define MSRP_PORT 2855
 
-#define MSRP_MAX_HDRS_SIZE	4096
-#define MSRP_MAX_BODY_SIZE	10240
+#define MSRP_MAX_HDRS_SIZE 4096
+#define MSRP_MAX_BODY_SIZE 10240
 #define MSRP_MAX_FRAME_SIZE (MSRP_MAX_HDRS_SIZE + 2 + MSRP_MAX_BODY_SIZE)
 
-#define MSRP_REQ_OTHER		0
-#define MSRP_REQ_SEND		1
-#define MSRP_REQ_AUTH		2
-#define MSRP_REQ_REPORT		3
+#define MSRP_REQ_OTHER 0
+#define MSRP_REQ_SEND 1
+#define MSRP_REQ_AUTH 2
+#define MSRP_REQ_REPORT 3
 
-#define MSRP_REQ_RPLSTART	10000
+#define MSRP_REQ_RPLSTART 10000
 
-#define MSRP_RPL_CODE(n)	((n) - MSRP_REQ_RPLSTART)
+#define MSRP_RPL_CODE(n) ((n)-MSRP_REQ_RPLSTART)
 
-typedef struct msrp_fline {
+typedef struct msrp_fline
+{
 	str buf;
 	int msgtypeid;
 	str protocol;
@@ -54,13 +55,14 @@ typedef struct msrp_fline {
 	str rtext;
 } msrp_fline_t;
 
-#define MSRP_SCHEME_MSRP	1
-#define MSRP_SCHEME_MSRPS	2
+#define MSRP_SCHEME_MSRP 1
+#define MSRP_SCHEME_MSRPS 2
 
-#define MSRP_PROTO_TCP	1
-#define MSRP_PROTO_WS	2
+#define MSRP_PROTO_TCP 1
+#define MSRP_PROTO_WS 2
 
-typedef struct msrp_uri {
+typedef struct msrp_uri
+{
 	str buf;
 	str scheme;
 	int scheme_no;
@@ -77,29 +79,31 @@ typedef struct msrp_uri {
 
 int msrp_parse_uri(char *start, int len, msrp_uri_t *uri);
 
-#define MSRP_HDR_OTHER			0
-#define MSRP_HDR_FROM_PATH		1
-#define MSRP_HDR_TO_PATH		2
-#define MSRP_HDR_USE_PATH		3
-#define MSRP_HDR_MESSAGE_ID		4
-#define MSRP_HDR_BYTE_RANGE		5
-#define MSRP_HDR_STATUS			6
-#define MSRP_HDR_SUCCESS_REPORT	7
-#define MSRP_HDR_CONTENT_TYPE	8
-#define MSRP_HDR_AUTH			9
-#define MSRP_HDR_WWWAUTH		10
-#define MSRP_HDR_AUTHINFO		11
-#define MSRP_HDR_EXPIRES		12
+#define MSRP_HDR_OTHER 0
+#define MSRP_HDR_FROM_PATH 1
+#define MSRP_HDR_TO_PATH 2
+#define MSRP_HDR_USE_PATH 3
+#define MSRP_HDR_MESSAGE_ID 4
+#define MSRP_HDR_BYTE_RANGE 5
+#define MSRP_HDR_STATUS 6
+#define MSRP_HDR_SUCCESS_REPORT 7
+#define MSRP_HDR_CONTENT_TYPE 8
+#define MSRP_HDR_AUTH 9
+#define MSRP_HDR_WWWAUTH 10
+#define MSRP_HDR_AUTHINFO 11
+#define MSRP_HDR_EXPIRES 12
 
-#define MSRP_DATA_SET	1
+#define MSRP_DATA_SET 1
 
-typedef struct msrp_data {
-	void (*free_fn)(void*);
+typedef struct msrp_data
+{
+	void (*free_fn)(void *);
 	int flags;
 	void *data;
 } msrp_data_t;
 
-typedef struct msrp_hdr {
+typedef struct msrp_hdr
+{
 	str buf;
 	int htype;
 	str name;
@@ -108,12 +112,13 @@ typedef struct msrp_hdr {
 	struct msrp_hdr *next;
 } msrp_hdr_t;
 
-typedef struct msrp_frame {
-	str buf;             /* the whole message */
-	msrp_fline_t fline;  /* first line parsed */
-	str hbody;           /* all headers as a buf */
-	str mbody;           /* the message body */
-	str endline;         /* end line of the */
+typedef struct msrp_frame
+{
+	str buf;			 /* the whole message */
+	msrp_fline_t fline;	 /* first line parsed */
+	str hbody;			 /* all headers as a buf */
+	str mbody;			 /* the message body */
+	str endline;		 /* end line of the */
 	msrp_hdr_t *headers; /* list of parsed headers */
 	tcp_event_info_t *tcpinfo;
 } msrp_frame_t;
@@ -132,7 +137,8 @@ msrp_hdr_t *msrp_get_hdr_by_id(msrp_frame_t *mf, int hdrid);
 
 msrp_frame_t *msrp_get_current_frame(void);
 
-typedef struct str_array {
+typedef struct str_array
+{
 	unsigned int size;
 	str *list;
 } str_array_t;

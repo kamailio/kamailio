@@ -28,14 +28,14 @@
 
 #ifdef TLS_HOOKS
 
-struct tls_hooks tls_hook= {0};
+struct tls_hooks tls_hook = {0};
 
-static int tls_hooks_loaded=0;
+static int tls_hooks_loaded = 0;
 
-int register_tls_hooks(struct tls_hooks* h)
+int register_tls_hooks(struct tls_hooks *h)
 {
-	if (!tls_disable) {
-		tls_hook=*h;
+	if(!tls_disable) {
+		tls_hook = *h;
 		tls_hooks_loaded++;
 		return 0;
 	}
@@ -43,35 +43,35 @@ int register_tls_hooks(struct tls_hooks* h)
 }
 
 
-int tls_init(struct socket_info* si)
+int tls_init(struct socket_info *si)
 {
-	if (tls_hook.init_si)
+	if(tls_hook.init_si)
 		return tls_hook.init_si(si);
 	return -1;
 }
 
 int tls_has_init_si()
 {
-	return (tls_hook.init_si!=0);
+	return (tls_hook.init_si != 0);
 }
 
 int init_tls()
 {
-	if (tls_hook.init)
+	if(tls_hook.init)
 		return tls_hook.init();
 	return 0;
 }
 
 int pre_init_tls()
 {
-	if (tls_hook.pre_init)
+	if(tls_hook.pre_init)
 		return tls_hook.pre_init();
 	return 0;
 }
 
 void destroy_tls()
 {
-	if (tls_hook.destroy)
+	if(tls_hook.destroy)
 		tls_hook.destroy();
 }
 

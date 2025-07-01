@@ -7,6 +7,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -101,6 +103,8 @@ str ds_ping_method = str_init("OPTIONS");
 str ds_ping_from   = str_init("sip:dispatcher@localhost");
 static int ds_ping_interval = 0;
 int ds_ping_latency_stats = 0;
+int ds_ping_fr_timeout = 0;
+int ds_retain_latency_stats = 0;
 int ds_latency_estimator_alpha_i = 900;
 float ds_latency_estimator_alpha = 0.9f;
 int ds_probing_mode = DS_PROBE_NONE;
@@ -111,6 +115,7 @@ static int* ds_ping_reply_codes_cnt;
 
 str ds_default_socket = STR_NULL;
 str ds_default_sockname = STR_NULL;
+str ds_ping_socket = STR_NULL;
 struct socket_info * ds_default_sockinfo = NULL;
 
 int ds_hash_size = 0;
@@ -171,6 +176,8 @@ static int w_ds_set_dst(struct sip_msg*, char*, char*);
 static int w_ds_set_domain(struct sip_msg*, char*, char*);
 static int w_ds_mark_dst0(struct sip_msg*, char*, char*);
 static int w_ds_mark_dst1(struct sip_msg*, char*, char*);
+static int w_ds_mark_addr(struct sip_msg *msg, char *state, char *group,
+		char *uri);
 static int w_ds_load_unset(struct sip_msg*, char*, char*);
 static int w_ds_load_update(struct sip_msg*, char*, char*);
 
@@ -183,9 +190,12 @@ static int w_ds_reload(struct sip_msg* msg, char*, char*);
 
 static int w_ds_is_active(sip_msg_t *msg, char *pset, char *p2);
 static int w_ds_is_active_uri(sip_msg_t *msg, char *pset, char *puri);
+static int w_ds_dsg_fetch(sip_msg_t *msg, char *pset, char *p2);
+static int w_ds_dsg_fetch_uri(sip_msg_t *msg, char *pset, char *puri);
+static int w_ds_oc_set_attrs(sip_msg_t*, char*, char*, char*, char*, char*);
 
 static int fixup_ds_is_from_list(void** param, int param_no);
-static int fixup_ds_list_exist(void** param,int param_no);
+static int fixup_free_ds_is_from_list(void** param, int param_no);
 
 static void destroy(void);
 
@@ -193,31 +203,37 @@ static int ds_warn_fixup(void** param, int param_no);
 
 static int pv_get_dsv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_dsv(pv_spec_p sp, str *in);
+static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+static int pv_parse_dsg(pv_spec_p sp, str *in);
+static void ds_dsg_fetch(int dg);
+static void ds_dsg_fetch_uri(int dg, str *uri);
 
 static pv_export_t mod_pvs[] = {
 	{ {"dsv", (sizeof("dsv")-1)}, PVT_OTHER, pv_get_dsv, 0,
 		pv_parse_dsv, 0, 0, 0 },
+	{ {"dsg", (sizeof("dsg")-1)}, PVT_OTHER, pv_get_dsg, 0,
+		pv_parse_dsg, 0, 0, 0 },
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 static cmd_export_t cmds[]={
 	{"ds_select",    (cmd_function)w_ds_select,            2,
-		fixup_igp_igp, 0, ANY_ROUTE},
+		fixup_igp_igp, fixup_free_igp_igp, ANY_ROUTE},
 	{"ds_select",    (cmd_function)w_ds_select_limit,      3,
-		fixup_igp_all, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_igp_all, fixup_free_igp_all, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_dst",    (cmd_function)w_ds_select_dst,    2,
-		fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_igp_igp, fixup_free_igp_igp, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_dst",    (cmd_function)w_ds_select_dst_limit,    3,
-		fixup_igp_all, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_igp_all, fixup_free_igp_all, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_domain", (cmd_function)w_ds_select_domain, 2,
-		fixup_igp_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_igp_igp, fixup_free_igp_igp, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_domain", (cmd_function)w_ds_select_domain_limit, 3,
-		fixup_igp_all, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_igp_all, fixup_free_igp_all, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_routes", (cmd_function)w_ds_select_routes, 2,
-		fixup_spve_spve, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_routes", (cmd_function)w_ds_select_routes_limit, 3,
-		fixup_spve_spve_igp, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+		fixup_spve_spve_igp, fixup_free_spve_spve_igp, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_dst",      (cmd_function)w_ds_next_dst,      0,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_next_domain",   (cmd_function)w_ds_next_domain,   0,
@@ -230,18 +246,20 @@ static cmd_export_t cmds[]={
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
 	{"ds_mark_dst",      (cmd_function)w_ds_mark_dst1,     1,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
+	{"ds_mark_addr",     (cmd_function)w_ds_mark_addr,     3,
+		fixup_sis, fixup_free_sis, ANY_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list0, 0,
 		0, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list1, 1,
-		fixup_igp_null, 0, ANY_ROUTE},
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list2, 2,
-		fixup_ds_is_from_list, 0, ANY_ROUTE},
+		fixup_ds_is_from_list, fixup_free_ds_is_from_list, ANY_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list3, 3,
-		fixup_ds_is_from_list, 0, ANY_ROUTE},
+		fixup_ds_is_from_list, fixup_free_ds_is_from_list, ANY_ROUTE},
 	{"ds_list_exist",  (cmd_function)w_ds_list_exist, 1,
-		fixup_ds_list_exist, 0, ANY_ROUTE},
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"ds_list_exists",  (cmd_function)w_ds_list_exist, 1,
-		fixup_ds_list_exist, 0, ANY_ROUTE},
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"ds_load_unset",    (cmd_function)w_ds_load_unset,   0,
 		0, 0, ANY_ROUTE},
 	{"ds_load_update",   (cmd_function)w_ds_load_update,  0,
@@ -254,6 +272,12 @@ static cmd_export_t cmds[]={
 		0, 0, 0},
 	{"ds_reload", (cmd_function)w_ds_reload, 0,
 		0, 0, ANY_ROUTE},
+	{"ds_oc_set_attrs",  (cmd_function)w_ds_oc_set_attrs, 5,
+		fixup_isiii, fixup_free_isiii, ANY_ROUTE},
+	{"ds_dsg_fetch",  (cmd_function)w_ds_dsg_fetch, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"ds_dsg_fetch_uri",  (cmd_function)w_ds_dsg_fetch_uri, 2,
+		fixup_igp_spve, fixup_free_igp_spve, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -267,9 +291,9 @@ static param_export_t params[]={
 	{"flags_col",       PARAM_STR, &ds_dest_flags_col},
 	{"priority_col",    PARAM_STR, &ds_dest_priority_col},
 	{"attrs_col",       PARAM_STR, &ds_dest_attrs_col},
-	{"force_dst",       INT_PARAM, &ds_force_dst},
-	{"flags",           INT_PARAM, &ds_flags},
-	{"use_default",     INT_PARAM, &ds_use_default},
+	{"force_dst",       PARAM_INT, &ds_force_dst},
+	{"flags",           PARAM_INT, &ds_flags},
+	{"use_default",     PARAM_INT, &ds_use_default},
 	{"xavp_dst",        PARAM_STR, &ds_xavp_dst},
 	{"xavp_dst_mode",   PARAM_INT, &ds_xavp_dst_mode},
 	{"xavp_ctx",        PARAM_STR, &ds_xavp_ctx},
@@ -277,22 +301,25 @@ static param_export_t params[]={
 	{"hash_pvar",       PARAM_STR, &hash_pvar_param},
 	{"setid_pvname",    PARAM_STR, &ds_setid_pvname},
 	{"attrs_pvname",    PARAM_STR, &ds_attrs_pvname},
-	{"ds_probing_threshold", INT_PARAM, &probing_threshold},
-	{"ds_inactive_threshold", INT_PARAM, &inactive_threshold},
+	{"ds_probing_threshold", PARAM_INT, &probing_threshold},
+	{"ds_inactive_threshold", PARAM_INT, &inactive_threshold},
 	{"ds_ping_method",     PARAM_STR, &ds_ping_method},
 	{"ds_ping_from",       PARAM_STR, &ds_ping_from},
-	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
-	{"ds_ping_latency_stats", INT_PARAM, &ds_ping_latency_stats},
-	{"ds_latency_estimator_alpha", INT_PARAM, &ds_latency_estimator_alpha_i},
+	{"ds_ping_interval",   PARAM_INT, &ds_ping_interval},
+	{"ds_ping_fr_timeout", PARAM_INT, &ds_ping_fr_timeout},
+	{"ds_ping_latency_stats", PARAM_INT, &ds_ping_latency_stats},
+	{"ds_retain_latency_stats", PARAM_INT, &ds_retain_latency_stats},
+	{"ds_latency_estimator_alpha", PARAM_INT, &ds_latency_estimator_alpha_i},
 	{"ds_ping_reply_codes", PARAM_STR, &ds_ping_reply_codes_str},
-	{"ds_probing_mode",    INT_PARAM, &ds_probing_mode},
-	{"ds_hash_size",       INT_PARAM, &ds_hash_size},
-	{"ds_hash_expire",     INT_PARAM, &ds_hash_expire},
-	{"ds_hash_initexpire", INT_PARAM, &ds_hash_initexpire},
-	{"ds_hash_check_interval", INT_PARAM, &ds_hash_check_interval},
+	{"ds_probing_mode",    PARAM_INT, &ds_probing_mode},
+	{"ds_hash_size",       PARAM_INT, &ds_hash_size},
+	{"ds_hash_expire",     PARAM_INT, &ds_hash_expire},
+	{"ds_hash_initexpire", PARAM_INT, &ds_hash_initexpire},
+	{"ds_hash_check_interval", PARAM_INT, &ds_hash_check_interval},
 	{"outbound_proxy",     PARAM_STR, &ds_outbound_proxy},
 	{"ds_default_socket",  PARAM_STR, &ds_default_socket},
 	{"ds_default_sockname",PARAM_STR, &ds_default_sockname},
+	{"ds_ping_socket",     PARAM_STR, &ds_ping_socket},
 	{"ds_timer_mode",      PARAM_INT, &ds_timer_mode},
 	{"event_callback",     PARAM_STR, &ds_event_callback},
 	{"ds_attrs_none",      PARAM_INT, &ds_attrs_none},
@@ -332,7 +359,7 @@ static int mod_init(void)
 	param_t *pit = NULL;
 
 	if(ds_dns_mode & DS_DNS_MODE_TIMER) {
-		if(ds_dns_interval<=0) {
+		if(ds_dns_interval <= 0) {
 			LM_WARN("dns interval parameter not set - using 600\n");
 			ds_dns_interval = 600;
 		}
@@ -340,7 +367,7 @@ static int mod_init(void)
 			return -1;
 		}
 	}
-	if(ds_dns_ttl<0) {
+	if(ds_dns_ttl < 0) {
 		ds_dns_ttl = 0;
 	}
 	if(ds_ping_active_init() < 0) {
@@ -360,8 +387,17 @@ static int mod_init(void)
 
 	/* Initialize the counter */
 	ds_ping_reply_codes = (int **)shm_malloc(sizeof(unsigned int *));
+	if(!(ds_ping_reply_codes)) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
 	*ds_ping_reply_codes = 0;
 	ds_ping_reply_codes_cnt = (int *)shm_malloc(sizeof(int));
+	if(!(ds_ping_reply_codes_cnt)) {
+		shm_free(ds_ping_reply_codes);
+		SHM_MEM_ERROR;
+		return -1;
+	}
 	*ds_ping_reply_codes_cnt = 0;
 	if(ds_ping_reply_codes_str.s) {
 		cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str) =
@@ -387,7 +423,7 @@ static int mod_init(void)
 	} else {
 		if(ds_default_socket.s && ds_default_socket.len > 0) {
 			if(parse_phostport(
-					ds_default_socket.s, &host.s, &host.len, &port, &proto)
+					   ds_default_socket.s, &host.s, &host.len, &port, &proto)
 					!= 0) {
 				LM_ERR("bad socket <%.*s>\n", ds_default_socket.len,
 						ds_default_socket.s);
@@ -405,21 +441,37 @@ static int mod_init(void)
 		}
 	}
 
+	if(ds_ping_socket.s && ds_ping_socket.len > 0) {
+		if(parse_phostport(ds_ping_socket.s, &host.s, &host.len, &port, &proto)
+				!= 0) {
+			LM_ERR("bad socket <%.*s>\n", ds_ping_socket.len, ds_ping_socket.s);
+			return -1;
+		}
+		if(grep_sock_info(&host, (unsigned short)port, proto) == 0) {
+			LM_ERR("non-local socket <%.*s>\n", ds_ping_socket.len,
+					ds_ping_socket.s);
+			return -1;
+		}
+		LM_INFO("ping dispatcher socket set to <%.*s>\n", ds_ping_socket.len,
+				ds_ping_socket.s);
+	}
+
 	if(ds_init_data() != 0)
 		return -1;
 
 	if(ds_db_url.s) {
-		if(ds_db_extra_attrs.s!=NULL && ds_db_extra_attrs.len>2) {
-			if(ds_db_extra_attrs.s[ds_db_extra_attrs.len-1]==';') {
+		if(ds_db_extra_attrs.s != NULL && ds_db_extra_attrs.len > 2) {
+			if(ds_db_extra_attrs.s[ds_db_extra_attrs.len - 1] == ';') {
 				ds_db_extra_attrs.len--;
 			}
-			if (parse_params(&ds_db_extra_attrs, CLASS_ANY, &phooks,
-						&ds_db_extra_attrs_list)<0) {
+			if(parse_params(&ds_db_extra_attrs, CLASS_ANY, &phooks,
+					   &ds_db_extra_attrs_list)
+					< 0) {
 				LM_ERR("failed to parse extra attrs parameter\n");
 				return -1;
 			}
-			for(pit = ds_db_extra_attrs_list; pit!=NULL; pit=pit->next) {
-				if(pit->body.s==NULL || pit->body.len<=0) {
+			for(pit = ds_db_extra_attrs_list; pit != NULL; pit = pit->next) {
+				if(pit->body.s == NULL || pit->body.len <= 0) {
 					LM_ERR("invalid db extra attrs parameter\n");
 					return -1;
 				}
@@ -466,15 +518,14 @@ static int mod_init(void)
 
 	if(ds_hash_size > 0) {
 		if(ds_hash_load_init(
-					1 << ds_hash_size, ds_hash_expire, ds_hash_initexpire)
+				   1 << ds_hash_size, ds_hash_expire, ds_hash_initexpire)
 				< 0)
 			return -1;
 		if(ds_timer_mode == 1) {
 			if(sr_wtimer_add(ds_ht_timer, NULL, ds_hash_check_interval) < 0)
 				return -1;
 		} else {
-			if(register_timer(ds_ht_timer, NULL, ds_hash_check_interval)
-					< 0)
+			if(register_timer(ds_ht_timer, NULL, ds_hash_check_interval) < 0)
 				return -1;
 		}
 	}
@@ -499,15 +550,19 @@ static int mod_init(void)
 				return -1;
 		}
 	}
-	if (ds_latency_estimator_alpha_i > 0 && ds_latency_estimator_alpha_i < 1000) {
-		ds_latency_estimator_alpha = ds_latency_estimator_alpha_i/1000.0f;
+	if(ds_latency_estimator_alpha_i > 0
+			&& ds_latency_estimator_alpha_i < 1000) {
+		ds_latency_estimator_alpha = ds_latency_estimator_alpha_i / 1000.0f;
 	} else {
 		LM_ERR("invalid ds_latency_estimator_alpha must be between 0 and 1000,"
-				" using default[%.3f]\n", ds_latency_estimator_alpha);
+			   " using default[%.3f]\n",
+				ds_latency_estimator_alpha);
 	}
 
 	ds_rpc_reload_time = shm_malloc(sizeof(time_t));
 	if(ds_rpc_reload_time == NULL) {
+		shm_free(ds_ping_reply_codes);
+		shm_free(ds_ping_reply_codes_cnt);
 		SHM_MEM_ERROR;
 		return -1;
 	}
@@ -537,7 +592,7 @@ static void destroy(void)
 		shm_free(ds_ping_reply_codes);
 	if(ds_ping_reply_codes_cnt)
 		shm_free(ds_ping_reply_codes_cnt);
-	if(ds_rpc_reload_time!=NULL) {
+	if(ds_rpc_reload_time != NULL) {
 		shm_free(ds_rpc_reload_time);
 		ds_rpc_reload_time = 0;
 	}
@@ -638,7 +693,7 @@ static int w_ds_select_addr(
 static int w_ds_select(struct sip_msg *msg, char *set, char *alg)
 {
 	return w_ds_select_addr(msg, set, alg, 0 /* limit number of dst*/,
-					DS_SETOP_XAVP /*set no dst/uri*/);
+			DS_SETOP_XAVP /*set no dst/uri*/);
 }
 
 /**
@@ -657,7 +712,7 @@ static int w_ds_select_limit(
 static int w_ds_select_dst(struct sip_msg *msg, char *set, char *alg)
 {
 	return w_ds_select_addr(msg, set, alg, 0 /* limit number of dst*/,
-				DS_SETOP_DSTURI /*set dst uri*/);
+			DS_SETOP_DSTURI /*set dst uri*/);
 }
 
 /**
@@ -692,8 +747,8 @@ static int w_ds_select_domain_limit(
 /**
  *
  */
-static int ki_ds_select_routes_limit(sip_msg_t *msg, str *srules, str *smode,
-		int rlimit)
+static int ki_ds_select_routes_limit(
+		sip_msg_t *msg, str *srules, str *smode, int rlimit)
 {
 	int i;
 	int vret;
@@ -710,91 +765,93 @@ static int ki_ds_select_routes_limit(sip_msg_t *msg, str *srules, str *smode,
 	vret = -1;
 	gret = -1;
 	i = 0;
-	while(i<srules->len) {
+	while(i < srules->len) {
 		vstate.setid = 0;
-		for(; i<srules->len; i++) {
-			if(srules->s[i]<'0' || srules->s[i]>'9') {
-				if(srules->s[i]=='=') {
+		for(; i < srules->len; i++) {
+			if(srules->s[i] < '0' || srules->s[i] > '9') {
+				if(srules->s[i] == '=') {
 					i++;
 					break;
 				} else {
-					LM_ERR("invalid character in [%.*s] at [%d]\n",
-							srules->len, srules->s, i);
+					LM_ERR("invalid character in [%.*s] at [%d]\n", srules->len,
+							srules->s, i);
 					return -1;
 				}
 			}
 			vstate.setid = (vstate.setid * 10) + (srules->s[i] - '0');
 		}
 		vstate.alg = 0;
-		for(; i<srules->len; i++) {
-			if(srules->s[i]<'0' || srules->s[i]>'9') {
-				if(srules->s[i]==';') {
+		for(; i < srules->len; i++) {
+			if(srules->s[i] < '0' || srules->s[i] > '9') {
+				if(srules->s[i] == ';') {
 					i++;
 					break;
 				} else {
-					LM_ERR("invalid character in [%.*s] at [%d]\n",
-							srules->len, srules->s, i);
+					LM_ERR("invalid character in [%.*s] at [%d]\n", srules->len,
+							srules->s, i);
 					return -1;
 				}
 			}
 			vstate.alg = (vstate.alg * 10) + (srules->s[i] - '0');
 		}
 		LM_DBG("routing with setid=%d alg=%d cnt=%d limit=0x%x (%u)\n",
-			vstate.setid, vstate.alg, vstate.cnt, vstate.limit, vstate.limit);
+				vstate.setid, vstate.alg, vstate.cnt, vstate.limit,
+				vstate.limit);
 
 		vstate.umode = DS_SETOP_XAVP;
 		/* if no r-uri/d-uri was set already, keep using the update mode
 		 * specified by the param, then just add to xavps list */
-		if(vstate.emode==0) {
+		if(vstate.emode == 0) {
 			switch(smode->s[0]) {
 				case '0':
 				case 'd':
 				case 'D':
 					vstate.umode = DS_SETOP_DSTURI;
-				break;
+					break;
 				case '1':
 				case 'r':
 				case 'R':
 					vstate.umode = DS_SETOP_RURI;
-				break;
+					break;
 				case '2':
 				case 'x':
 				case 'X':
-				break;
+					break;
 				default:
-					LM_ERR("invalid routing mode parameter: %.*s\n",
-							smode->len, smode->s);
+					LM_ERR("invalid routing mode parameter: %.*s\n", smode->len,
+							smode->s);
 					return -1;
 			}
 		}
 		vret = ds_manage_routes(msg, &vstate);
-		if(vret<0) {
+		if(vret < 0) {
 			LM_DBG("failed to select target destinations from %d=%d [%.*s]\n",
 					vstate.setid, vstate.alg, srules->len, srules->s);
 			/* continue to try other target groups */
 		} else {
-			if(vret>0) {
+			if(vret > 0) {
 				gret = vret;
 			}
 		}
 	}
 
-	if(gret<0) {
+	if(gret < 0) {
 		/* no selection of a target address */
 		LM_DBG("failed to select any target destinations from [%.*s]\n",
-					srules->len, srules->s);
+				srules->len, srules->s);
 		/* return last failure code when trying to select target addresses */
 		return vret;
 	}
 
 	/* add cnt value to xavp */
-	if(((ds_xavp_ctx_mode & DS_XAVP_CTX_SKIP_CNT)==0)
+	if(((ds_xavp_ctx_mode & DS_XAVP_CTX_SKIP_CNT) == 0)
 			&& (ds_xavp_ctx.len >= 0)) {
 		/* add to xavp the number of selected dst records */
 		memset(&nxval, 0, sizeof(sr_xval_t));
 		nxval.type = SR_XTYPE_LONG;
 		nxval.v.l = vstate.cnt;
-		if(xavp_add_xavp_value(&ds_xavp_ctx, &ds_xavp_ctx_cnt, &nxval, NULL)==NULL) {
+		if(xavp_add_xavp_value(&ds_xavp_ctx, &ds_xavp_ctx_cnt, &nxval, NULL)
+				== NULL) {
 			LM_ERR("failed to add cnt value to xavp\n");
 			return -1;
 		}
@@ -823,23 +880,23 @@ static int w_ds_select_routes(sip_msg_t *msg, char *lrules, char *umode)
 /**
  *
  */
-static int w_ds_select_routes_limit(sip_msg_t *msg, char *lrules, char *umode,
-		char *rlimit)
+static int w_ds_select_routes_limit(
+		sip_msg_t *msg, char *lrules, char *umode, char *rlimit)
 {
 	str vrules;
 	str vmode;
 	int vlimit;
 
-	if(fixup_get_svalue(msg, (gparam_t*)lrules, &vrules)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)lrules, &vrules) < 0) {
 		LM_ERR("failed to get routing rules parameter\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)umode, &vmode)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)umode, &vmode) < 0) {
 		LM_ERR("failed to get update mode parameter\n");
 		return -1;
 	}
-	if(rlimit!=NULL) {
-		if(fixup_get_ivalue(msg, (gparam_t*)rlimit, &vlimit)<0) {
+	if(rlimit != NULL) {
+		if(fixup_get_ivalue(msg, (gparam_t *)rlimit, &vlimit) < 0) {
 			LM_ERR("failed to get limit parameter\n");
 			return -1;
 		}
@@ -892,7 +949,7 @@ static int ki_ds_mark_dst(sip_msg_t *msg)
 	if(ds_probing_mode == DS_PROBE_ALL)
 		state |= DS_PROBING_DST;
 
-	return ds_mark_dst(msg, state);
+	return ds_mark_dst_mode(msg, state, 1);
 }
 
 /**
@@ -920,7 +977,7 @@ static int ki_ds_mark_dst_state(sip_msg_t *msg, str *sval)
 		return -1;
 	}
 
-	return ds_mark_dst(msg, state);
+	return ds_mark_dst_mode(msg, state, 1);
 }
 
 /**
@@ -934,6 +991,50 @@ static int w_ds_mark_dst1(struct sip_msg *msg, char *str1, char *str2)
 	sval.len = strlen(str1);
 
 	return ki_ds_mark_dst_state(msg, &sval);
+}
+
+/**
+ *
+ */
+static int ki_ds_mark_addr(sip_msg_t *msg, str *vstate, int vgroup, str *vuri)
+{
+	int state;
+
+
+	state = ds_parse_flags(vstate->s, vstate->len);
+
+	if(state < 0) {
+		LM_WARN("Failed to parse state flags: %.*s", vstate->len, vstate->s);
+		return -1;
+	}
+
+	return ds_mark_addr(msg, state, vgroup, vuri, 1);
+}
+
+/**
+ *
+ */
+static int w_ds_mark_addr(
+		struct sip_msg *msg, char *state, char *group, char *uri)
+{
+	str vstate;
+	int vgroup;
+	str vuri;
+
+	if(fixup_get_svalue(msg, (gparam_t *)state, &vstate) < 0) {
+		LM_ERR("failed to get state parameter\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t *)group, &vgroup) < 0) {
+		LM_ERR("failed to get group id parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)uri, &vuri) < 0) {
+		LM_ERR("failed to get uri parameter\n");
+		return -1;
+	}
+
+	return ki_ds_mark_addr(msg, &vstate, vgroup, &vuri);
 }
 
 /**
@@ -961,7 +1062,7 @@ static int w_ds_load_update(struct sip_msg *msg, char *str1, char *str2)
  */
 static int ds_warn_fixup(void **param, int param_no)
 {
-	if(ds_xavp_dst.len<=0 || ds_xavp_ctx.len<=0) {
+	if(ds_xavp_dst.len <= 0 || ds_xavp_ctx.len <= 0) {
 		LM_ERR("failover functions used, but required XAVP parameters"
 			   " are NULL -- feature disabled\n");
 	}
@@ -970,11 +1071,12 @@ static int ds_warn_fixup(void **param, int param_no)
 
 static int ds_reload(sip_msg_t *msg)
 {
-	if(ds_rpc_reload_time==NULL) {
+	if(ds_rpc_reload_time == NULL) {
 		LM_ERR("not ready for reload\n");
 		return -1;
 	}
-	if(*ds_rpc_reload_time!=0 && *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+	if(*ds_rpc_reload_time != 0
+			&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
 		LM_ERR("ongoing reload\n");
 		return -1;
 	}
@@ -1066,7 +1168,8 @@ static int w_ds_is_from_list3(
 	return ds_is_addr_from_list(msg, vset, &suri, vmode);
 }
 
-static int ki_ds_is_from_list_uri(sip_msg_t *msg, int vset, int vmode, str *vuri)
+static int ki_ds_is_from_list_uri(
+		sip_msg_t *msg, int vset, int vmode, str *vuri)
 {
 	return ds_is_addr_from_list(msg, vset, vuri, vmode);
 }
@@ -1077,6 +1180,15 @@ static int fixup_ds_is_from_list(void **param, int param_no)
 		return fixup_igp_null(param, 1);
 	if(param_no == 3)
 		return fixup_spve_null(param, 1);
+	return 0;
+}
+
+static int fixup_free_ds_is_from_list(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2)
+		return fixup_free_igp_null(param, 1);
+	if(param_no == 3)
+		return fixup_free_spve_null(param, 1);
 	return 0;
 }
 
@@ -1095,11 +1207,6 @@ static int w_ds_list_exist(struct sip_msg *msg, char *param, char *p2)
 static int ki_ds_list_exists(struct sip_msg *msg, int set)
 {
 	return ds_list_exist(set);
-}
-
-static int fixup_ds_list_exist(void **param, int param_no)
-{
-	return fixup_igp_null(param, param_no);
 }
 
 static int ki_ds_is_active(sip_msg_t *msg, int set)
@@ -1187,7 +1294,7 @@ static int ds_parse_reply_codes()
 		ds_ping_reply_codes_new = (int *)shm_malloc(list_size * sizeof(int));
 		if(ds_ping_reply_codes_new == NULL) {
 			free_params(params_list);
-			LM_ERR("no more memory\n");
+			SHM_MEM_ERROR;
 			return -1;
 		}
 
@@ -1229,7 +1336,7 @@ static int ds_parse_reply_codes()
 	/* Print the list as INFO: */
 	for(i = 0; i < *ds_ping_reply_codes_cnt; i++) {
 		LM_DBG("accepting reply %s %d (%d/%d) as valid\n",
-				((*ds_ping_reply_codes)[i]/10)?"code":"class",
+				((*ds_ping_reply_codes)[i] / 10) ? "code" : "class",
 				(*ds_ping_reply_codes)[i], (i + 1), *ds_ping_reply_codes_cnt);
 	}
 	return 0;
@@ -1268,24 +1375,30 @@ static int pv_get_dsv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	ds_rctx_t *rctx;
 
-	if(param==NULL) {
+	if(param == NULL) {
 		return -1;
 	}
 	rctx = ds_get_rctx();
-	if(rctx==NULL) {
+	if(rctx == NULL) {
 		return pv_get_null(msg, param, res);
 	}
-	switch(param->pvn.u.isname.name.n)
-	{
+	switch(param->pvn.u.isname.name.n) {
 		case 0:
 			return pv_get_sintval(msg, param, res, rctx->code);
 		case 1:
-			if(rctx->reason.s!=NULL && rctx->reason.len>0) {
+			if(rctx->reason.s != NULL && rctx->reason.len > 0) {
 				return pv_get_strval(msg, param, res, &rctx->reason);
 			}
 			return pv_get_null(msg, param, res);
 		case 2:
 			return pv_get_sintval(msg, param, res, rctx->flags);
+		case 3:
+			if(rctx->uri.s != NULL && rctx->uri.len > 0) {
+				return pv_get_strval(msg, param, res, &rctx->uri);
+			}
+			return pv_get_null(msg, param, res);
+		case 4:
+			return pv_get_sintval(msg, param, res, rctx->setid);
 		default:
 			return pv_get_null(msg, param, res);
 	}
@@ -1296,26 +1409,281 @@ static int pv_get_dsv(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
  */
 static int pv_parse_dsv(pv_spec_p sp, str *in)
 {
-	if(sp==NULL || in==NULL || in->len<=0)
+	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
 
-	switch(in->len)
-	{
+	switch(in->len) {
+		case 3:
+			if(strncmp(in->s, "uri", 3) == 0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else
+				goto error;
+			break;
 		case 4:
-			if(strncmp(in->s, "code", 4)==0)
+			if(strncmp(in->s, "code", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 0;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		case 5:
-			if(strncmp(in->s, "flags", 5)==0)
+			if(strncmp(in->s, "flags", 5) == 0)
 				sp->pvp.pvn.u.isname.name.n = 2;
-			else goto error;
-		break;
+			else if(strncmp(in->s, "setid", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "group", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else
+				goto error;
+			break;
 		case 6:
-			if(strncmp(in->s, "reason", 6)==0)
+			if(strncmp(in->s, "reason", 6) == 0)
 				sp->pvp.pvn.u.isname.name.n = 1;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+static int _pv_dsg_fetch_dg = 1;
+static str _pv_dsg_fetch_uri = STR_NULL;
+
+/**
+ *
+ */
+static void ds_dsg_fetch(int dg)
+{
+	_pv_dsg_fetch_dg = dg;
+	if(_pv_dsg_fetch_uri.s != NULL) {
+		pkg_free(_pv_dsg_fetch_uri.s);
+	}
+	_pv_dsg_fetch_uri.s = NULL;
+	_pv_dsg_fetch_uri.len = 0;
+}
+
+/**
+ *
+ */
+static void ds_dsg_fetch_uri(int dg, str *uri)
+{
+	_pv_dsg_fetch_dg = dg;
+	if(_pv_dsg_fetch_uri.s != NULL) {
+		pkg_free(_pv_dsg_fetch_uri.s);
+	}
+	pkg_str_dup(&_pv_dsg_fetch_uri, uri);
+}
+
+/**
+ *
+ */
+static int w_ds_dsg_fetch(sip_msg_t *msg, char *pset, char *p2)
+{
+	int set;
+
+	if(fixup_get_ivalue(msg, (gparam_p)pset, &set) != 0) {
+		LM_ERR("cannot get set id param value\n");
+		return -1;
+	}
+	ds_dsg_fetch(set);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_ds_dsg_fetch_uri(sip_msg_t *msg, char *pset, char *puri)
+{
+	int set;
+	str suri = STR_NULL;
+
+	if(fixup_get_ivalue(msg, (gparam_p)pset, &set) != 0) {
+		LM_ERR("cannot get set id param value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)puri, &suri) != 0) {
+		LM_ERR("cannot get uri param value\n");
+		return -1;
+	}
+
+	ds_dsg_fetch_uri(set, &suri);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_ds_oc_set_attrs(sip_msg_t *msg, char *pset, char *puri,
+		char *prval, char *ptval, char *psval)
+{
+	int iset;
+	str suri;
+	int irval;
+	int itval;
+	int isval;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)pset, &iset) != 0) {
+		LM_ERR("cannot get set id param value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)puri, &suri) != 0) {
+		LM_ERR("cannot get uri value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t *)prval, &irval) != 0) {
+		LM_ERR("cannot get rate param value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t *)ptval, &itval) != 0) {
+		LM_ERR("cannot get time interval param value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t *)psval, &isval) != 0) {
+		LM_ERR("cannot get seq param value\n");
+		return -1;
+	}
+
+	return ds_oc_set_attrs(msg, iset, &suri, irval, itval, isval);
+}
+
+/**
+ *
+ */
+static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	ds_set_t *dsg;
+	int count = 0;
+	int active = 0;
+	int inactive = 0;
+	int j = 0;
+	ds_ocdata_t ocdata;
+
+	if(param == NULL) {
+		return -1;
+	}
+	dsg = ds_list_lookup(_pv_dsg_fetch_dg);
+
+	if(dsg == NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	memset(&ocdata, 0, sizeof(ds_ocdata_t));
+
+	lock_get(&dsg->lock);
+	count = dsg->nr;
+	for(j = 0; j < dsg->nr; j++) {
+		if(ds_skip_dst(dsg->dlist[j].flags)) {
+			inactive++;
+		} else {
+			active++;
+		}
+		if(_pv_dsg_fetch_uri.s != NULL && _pv_dsg_fetch_uri.len > 0) {
+			if((_pv_dsg_fetch_uri.len == dsg->dlist[j].uri.len)
+					&& (strncmp(dsg->dlist[j].uri.s, _pv_dsg_fetch_uri.s,
+								_pv_dsg_fetch_uri.len)
+							== 0)) {
+				memcpy(&ocdata, &dsg->dlist[j].ocdata, sizeof(ds_ocdata_t));
+			}
+		}
+	}
+	lock_release(&dsg->lock);
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* count */
+			return pv_get_sintval(msg, param, res, count);
+		case 1: /* active */
+			return pv_get_sintval(msg, param, res, active);
+		case 2: /* inactive */
+			return pv_get_sintval(msg, param, res, inactive);
+		case 3: /* pactive */
+			return pv_get_sintval(
+					msg, param, res, (int)((active * 100) / count));
+		case 4: /* pinactive */
+			return pv_get_sintval(
+					msg, param, res, (int)((inactive * 100) / count));
+		case 5: /* octime_sec */
+			return pv_get_uintval(
+					msg, param, res, (unsigned long)ocdata.octime.tv_sec);
+		case 6: /* octime_usec */
+			return pv_get_uintval(
+					msg, param, res, (unsigned long)ocdata.octime.tv_usec);
+		case 7: /* ocseq */
+			return pv_get_sintval(msg, param, res, ocdata.ocseq);
+		case 8: /* ocrate */
+			return pv_get_sintval(msg, param, res, ocdata.ocrate);
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
+/**
+ *
+ */
+static int pv_parse_dsg(pv_spec_p sp, str *in)
+{
+	if(sp == NULL || in == NULL || in->len <= 0)
+		return -1;
+
+	switch(in->len) {
+		case 5:
+			if(strncmp(in->s, "count", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "ocseq", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 7;
+			else
+				goto error;
+			break;
+		case 6:
+			if(strncmp(in->s, "active", 6) == 0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "ocrate", 6) == 0)
+				sp->pvp.pvn.u.isname.name.n = 8;
+			else
+				goto error;
+			break;
+		case 7:
+			if(strncmp(in->s, "pactive", 7) == 0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else
+				goto error;
+			break;
+		case 8:
+			if(strncmp(in->s, "inactive", 8) == 0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else
+				goto error;
+			break;
+		case 9:
+			if(strncmp(in->s, "pinactive", 9) == 0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else
+				goto error;
+			break;
+		case 10:
+			if(strncmp(in->s, "octime_sec", 10) == 0)
+				sp->pvp.pvn.u.isname.name.n = 5;
+			else
+				goto error;
+			break;
+		case 11:
+			if(strncmp(in->s, "octime_usec", 11) == 0)
+				sp->pvp.pvn.u.isname.name.n = 6;
+			else
+				goto error;
+			break;
 		default:
 			goto error;
 	}
@@ -1353,8 +1721,8 @@ static int ki_ds_select_limit(sip_msg_t *msg, int set, int alg, int limit)
  */
 static int ki_ds_select_dst(sip_msg_t *msg, int set, int alg)
 {
-	return ds_select_dst_limit(msg, set, alg, 0xffff /* limit number of dst*/,
-			0 /*set dst uri*/);
+	return ds_select_dst_limit(
+			msg, set, alg, 0xffff /* limit number of dst*/, 0 /*set dst uri*/);
 }
 
 /**
@@ -1362,8 +1730,8 @@ static int ki_ds_select_dst(sip_msg_t *msg, int set, int alg)
  */
 static int ki_ds_select_dst_limit(sip_msg_t *msg, int set, int alg, int limit)
 {
-	return ds_select_dst_limit(msg, set, alg, limit /* limit number of dst*/,
-			0 /*set dst uri*/);
+	return ds_select_dst_limit(
+			msg, set, alg, limit /* limit number of dst*/, 0 /*set dst uri*/);
 }
 
 /**
@@ -1378,10 +1746,11 @@ static int ki_ds_select_domain(sip_msg_t *msg, int set, int alg)
 /**
  *
  */
-static int ki_ds_select_domain_limit(sip_msg_t *msg, int set, int alg, int limit)
+static int ki_ds_select_domain_limit(
+		sip_msg_t *msg, int set, int alg, int limit)
 {
-	return ds_select_dst_limit(msg, set, alg, limit /* limit number of dst*/,
-			1 /*set host port*/);
+	return ds_select_dst_limit(
+			msg, set, alg, limit /* limit number of dst*/, 1 /*set host port*/);
 }
 
 /**
@@ -1491,6 +1860,11 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("dispatcher"), str_init("ds_mark_addr"),
+		SR_KEMIP_INT, ki_ds_mark_addr,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("dispatcher"), str_init("ds_is_from_lists"),
 		SR_KEMIP_INT, ki_ds_is_from_lists,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -1566,12 +1940,13 @@ static const char *dispatcher_rpc_reload_doc[2] = {
 static void dispatcher_rpc_reload(rpc_t *rpc, void *ctx)
 {
 
-	if(ds_rpc_reload_time==NULL) {
+	if(ds_rpc_reload_time == NULL) {
 		LM_ERR("not ready for reload\n");
 		rpc->fault(ctx, 500, "Not ready for reload");
 		return;
 	}
-	if(*ds_rpc_reload_time!=0 && *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+	if(*ds_rpc_reload_time != 0
+			&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
 		LM_ERR("ongoing reload\n");
 		rpc->fault(ctx, 500, "Ongoing reload");
 		return;
@@ -1599,14 +1974,14 @@ static const char *dispatcher_rpc_list_doc[2] = {
 
 
 #define DS_RPC_PRINT_NORMAL 1
-#define DS_RPC_PRINT_SHORT  2
-#define DS_RPC_PRINT_FULL   3
+#define DS_RPC_PRINT_SHORT 2
+#define DS_RPC_PRINT_FULL 3
 
 /**
  *
  */
-int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle,
-		int mode)
+int ds_rpc_print_set(
+		ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle, int mode)
 {
 	int i = 0, rc = 0;
 	void *rh;
@@ -1656,11 +2031,13 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle,
 
 		if(node->dlist[j].flags & DS_PROBING_DST)
 			c[1] = 'P';
+		else if(node->dlist[j].flags & DS_NOPING_DST)
+			c[1] = 'N';
 		else
 			c[1] = 'X';
 
-		if(rpc->struct_add(vh, "Ssd", "URI", &node->dlist[j].uri, "FLAGS",
-				   c, "PRIORITY", node->dlist[j].priority)
+		if(rpc->struct_add(vh, "Ssd", "URI", &node->dlist[j].uri, "FLAGS", c,
+				   "PRIORITY", node->dlist[j].priority)
 				< 0) {
 			rpc->fault(ctx, 500, "Internal error creating dest struct");
 			return -1;
@@ -1668,61 +2045,85 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle,
 
 		if(mode == DS_RPC_PRINT_FULL) {
 			ipbuf[0] = '\0';
-			ip_addr2sbufz(&node->dlist[j].ip_address, ipbuf, IP_ADDR_MAX_STRZ_SIZE);
-			if(rpc->struct_add(vh, "Ssddjj", "HOST", &node->dlist[j].host,
-						"IPADDR", ipbuf, "PORT", (int)node->dlist[j].port,
-						"PROTOID", (int)node->dlist[j].proto,
-						"DNSTIME_SEC", (unsigned long)node->dlist[j].dnstime.tv_sec,
-						"DNSTIME_USEC", (unsigned long)node->dlist[j].dnstime.tv_usec) < 0) {
+			ip_addr2sbufz(
+					&node->dlist[j].ip_address, ipbuf, IP_ADDR_MAX_STRZ_SIZE);
+			if(rpc->struct_add(vh, "Ssddjjujjjj", "HOST", &node->dlist[j].host,
+					   "IPADDR", ipbuf, "PORT", (int)node->dlist[j].port,
+					   "PROTOID", (int)node->dlist[j].proto, "DNSTIME_SEC",
+					   (unsigned long)node->dlist[j].dnstime.tv_sec,
+					   "DNSTIME_USEC",
+					   (unsigned long)node->dlist[j].dnstime.tv_usec, "OCRATE",
+					   node->dlist[j].ocdata.ocrate, "OCIDX",
+					   (unsigned long)node->dlist[j].ocdata.ocidx, "OCSEQ",
+					   (unsigned long)node->dlist[j].ocdata.ocseq, "OCTIME_SEC",
+					   (unsigned long)node->dlist[j].ocdata.octime.tv_sec,
+					   "OCTIME_USEC",
+					   (unsigned long)node->dlist[j].ocdata.octime.tv_usec)
+					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
 		}
 
-		if(mode != DS_RPC_PRINT_SHORT && node->dlist[j].attrs.body.s!=NULL) {
+		if((mode != DS_RPC_PRINT_SHORT && node->dlist[j].attrs.body.s != NULL)
+				|| (mode == DS_RPC_PRINT_FULL)) {
 			if(rpc->struct_add(vh, "{", "ATTRS", &wh) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
-			if(rpc->struct_add(wh, "SSdddSSS",
-						"BODY", &(node->dlist[j].attrs.body),
-						"DUID", (node->dlist[j].attrs.duid.s)
-									? &(node->dlist[j].attrs.duid) : &data,
-						"MAXLOAD", node->dlist[j].attrs.maxload,
-						"WEIGHT", node->dlist[j].attrs.weight,
-						"RWEIGHT", node->dlist[j].attrs.rweight,
-						"SOCKET", (node->dlist[j].attrs.socket.s)
-									? &(node->dlist[j].attrs.socket) : &data,
-						"SOCKNAME", (node->dlist[j].attrs.sockname.s)
-									? &(node->dlist[j].attrs.sockname) : &data,
-						"OBPROXY", (node->dlist[j].attrs.obproxy.s)
-									? &(node->dlist[j].attrs.obproxy) : &data)
+			if(rpc->struct_add(wh, "SSddddSSSSjj", "BODY",
+					   &(node->dlist[j].attrs.body), "DUID",
+					   (node->dlist[j].attrs.duid.s)
+							   ? &(node->dlist[j].attrs.duid)
+							   : &data,
+					   "PROBING_COUNT", node->dlist[j].probing_count, "MAXLOAD",
+					   node->dlist[j].attrs.maxload, "WEIGHT",
+					   node->dlist[j].attrs.weight, "RWEIGHT",
+					   node->dlist[j].attrs.rweight, "SOCKET",
+					   (node->dlist[j].attrs.socket.s)
+							   ? &(node->dlist[j].attrs.socket)
+							   : &data,
+					   "SOCKNAME",
+					   (node->dlist[j].attrs.sockname.s)
+							   ? &(node->dlist[j].attrs.sockname)
+							   : &data,
+					   "PING_SOCKET",
+					   (node->dlist[j].attrs.ping_socket.s)
+							   ? &(node->dlist[j].attrs.ping_socket)
+							   : &data,
+					   "OBPROXY",
+					   (node->dlist[j].attrs.obproxy.s)
+							   ? &(node->dlist[j].attrs.obproxy)
+							   : &data,
+					   "OCMIN", node->dlist[j].ocdata.ocmin, "OCMAX",
+					   node->dlist[j].ocdata.ocmax)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating attrs struct");
 				return -1;
 			}
 		}
-		if (ds_ping_latency_stats) {
+		if(ds_ping_latency_stats) {
 			if(rpc->struct_add(vh, "{", "LATENCY", &lh) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest");
 				return -1;
 			}
-			if (rpc->struct_add(lh, "fffdd", "AVG", node->dlist[j].latency_stats.average,
-					  "STD", node->dlist[j].latency_stats.stdev,
-					  "EST", node->dlist[j].latency_stats.estimate,
-					  "MAX", node->dlist[j].latency_stats.max,
-					  "TIMEOUT", node->dlist[j].latency_stats.timeout)
+			if(rpc->struct_add(lh, "fffdd", "AVG",
+					   node->dlist[j].latency_stats.average, "STD",
+					   node->dlist[j].latency_stats.stdev, "EST",
+					   node->dlist[j].latency_stats.estimate, "MAX",
+					   node->dlist[j].latency_stats.max, "TIMEOUT",
+					   node->dlist[j].latency_stats.timeout)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
 		}
-		if (ds_hash_size>0) {
+		if(ds_hash_size > 0) {
 			if(rpc->struct_add(vh, "{", "RUNTIME", &dh) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating runtime struct");
 				return -1;
 			}
-			if (rpc->struct_add(dh, "d", "DLGLOAD", node->dlist[j].dload) < 0) {
+			if(rpc->struct_add(dh, "d", "DLGLOAD", node->dlist[j].dload) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating runtime attrs");
 				return -1;
 			}
@@ -1742,18 +2143,20 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 	int n;
 	str smode;
 	int vmode = DS_RPC_PRINT_NORMAL;
+	ds_set_t *dslist = NULL;
+	int dslistnr = 0;
 
 	n = rpc->scan(ctx, "*S", &smode);
 	if(n == 1) {
-		if(smode.len==5 && strncasecmp(smode.s, "short", 5)==0) {
+		if(smode.len == 5 && strncasecmp(smode.s, "short", 5) == 0) {
 			vmode = DS_RPC_PRINT_SHORT;
-		} else if(smode.len==4 && strncasecmp(smode.s, "full", 4)==0) {
+		} else if(smode.len == 4 && strncasecmp(smode.s, "full", 4) == 0) {
 			vmode = DS_RPC_PRINT_FULL;
 		}
 	}
 
-	ds_set_t *dslist = ds_get_list();
-	int dslistnr = ds_get_list_nr();
+	dslist = ds_get_list();
+	dslistnr = ds_get_list_nr();
 
 	if(dslist == NULL || dslistnr <= 0) {
 		LM_DBG("no destination sets\n");
@@ -1824,7 +2227,7 @@ static void dispatcher_rpc_set_state_helper(rpc_t *rpc, void *ctx, int mattr)
 	if(dest.len == 3 && strncmp(dest.s, "all", 3) == 0) {
 		ds_reinit_state_all(group, stval);
 	} else {
-		if (mattr==1) {
+		if(mattr == 1) {
 			if(ds_reinit_duid_state(group, &dest, stval) < 0) {
 				rpc->fault(ctx, 500, "State Update Failed");
 				return;
@@ -1918,12 +2321,13 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 	str dest;
 	str attrs = STR_NULL;
 
-	if(ds_rpc_reload_time==NULL) {
+	if(ds_rpc_reload_time == NULL) {
 		LM_ERR("Not ready for rebuilding destinations list\n");
 		rpc->fault(ctx, 500, "Not ready for reload");
 		return;
 	}
-	if(*ds_rpc_reload_time!=0 && *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+	if(*ds_rpc_reload_time != 0
+			&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
 		LM_ERR("ongoing reload\n");
 		rpc->fault(ctx, 500, "Ongoing reload");
 		return;
@@ -1933,11 +2337,12 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 	flags = 0;
 	priority = 0;
 
-	nparams = rpc->scan(ctx, "dS*ddS", &group, &dest, &flags, &priority, &attrs);
+	nparams =
+			rpc->scan(ctx, "dS*ddS", &group, &dest, &flags, &priority, &attrs);
 	if(nparams < 2) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
-	} else if (nparams <= 4) {
+	} else if(nparams <= 4) {
 		attrs.s = 0;
 		attrs.len = 0;
 	}
@@ -1962,12 +2367,13 @@ static void dispatcher_rpc_remove(rpc_t *rpc, void *ctx)
 	int group;
 	str dest;
 
-	if(ds_rpc_reload_time==NULL) {
+	if(ds_rpc_reload_time == NULL) {
 		LM_ERR("Not ready for rebuilding destinations list\n");
 		rpc->fault(ctx, 500, "Not ready for reload");
 		return;
 	}
-	if(*ds_rpc_reload_time!=0 && *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+	if(*ds_rpc_reload_time != 0
+			&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
 		LM_ERR("ongoing reload\n");
 		rpc->fault(ctx, 500, "Ongoing reload");
 		return;
@@ -2008,7 +2414,7 @@ static void dispatcher_rpc_hash(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
 	}
-	if(n==2) {
+	if(n == 2) {
 		val2.s = NULL;
 		val2.s = 0;
 	}
@@ -2020,14 +2426,64 @@ static void dispatcher_rpc_hash(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
-	if(rpc->struct_add(th, "uu", "hashid", hashid,
-				"slot", (nslots>0)?(hashid%nslots):0)
+	if(rpc->struct_add(th, "uu", "hashid", hashid, "slot",
+			   (nslots > 0) ? (hashid % nslots) : 0)
 			< 0) {
 		rpc->fault(ctx, 500, "Internal error reply structure");
 		return;
 	}
 
 	return;
+}
+
+static const char *dispatcher_rpc_oclist_doc[2] = {
+		"List overload control details for a group", 0};
+
+/*
+ * RPC command to set the state of a destination address
+ */
+static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
+{
+	int group = 0;
+	int i = 0;
+	ds_set_t *node = NULL;
+	void *th = NULL;
+
+	if(rpc->scan(ctx, "d", &group) != 1) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	/* get the index of the set */
+	node = ds_list_lookup(group);
+	if(node == NULL) {
+		LM_ERR("destination set [%d] not found\n", group);
+		rpc->fault(ctx, 404, "Destination Group Not Found");
+		return;
+	}
+
+	for(i = 0; i < node->nr; i++) {
+		/* add entry node */
+		if(rpc->add(ctx, "{", &th) < 0) {
+			rpc->fault(ctx, 500, "Internal error root reply");
+			return;
+		}
+		if(rpc->struct_add(th, "dSdduuujjuu", "group", group, "uri",
+				   &node->dlist[i].uri, "flags", node->dlist[i].flags,
+				   "priority", node->dlist[i].priority, "ocrate",
+				   node->dlist[i].ocdata.ocrate, "ocidx",
+				   node->dlist[i].ocdata.ocidx, "ocseq",
+				   node->dlist[i].ocdata.ocseq, "octime_sec",
+				   (unsigned long)node->dlist[i].ocdata.octime.tv_sec,
+				   "octime_usec",
+				   (unsigned long)node->dlist[i].ocdata.octime.tv_usec, "ocmin",
+				   node->dlist[i].ocdata.ocmin, "ocmax",
+				   node->dlist[i].ocdata.ocmax)
+				< 0) {
+			rpc->fault(ctx, 500, "Internal error main structure");
+			return;
+		}
+	}
 }
 
 /* clang-format off */
@@ -2048,6 +2504,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_remove_doc, 0},
 	{"dispatcher.hash",   dispatcher_rpc_hash,
 		dispatcher_rpc_hash_doc, 0},
+	{"dispatcher.oclist", dispatcher_rpc_oclist,
+		dispatcher_rpc_oclist_doc, RPC_RET_ARRAY},
 	{0, 0, 0, 0}
 };
 /* clang-format on */

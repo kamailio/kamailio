@@ -42,8 +42,8 @@ static unsigned int calc_hash(str *key)
 	p = key->s;
 	len = key->len;
 
-	for (i = 0; i < len; i++) {
-		h = ( h << 5 ) - h + *(p + i);
+	for(i = 0; i < len; i++) {
+		h = (h << 5) - h + *(p + i);
 	}
 
 	return h % HASH_SIZE;
@@ -53,17 +53,17 @@ static unsigned int calc_hash(str *key)
 /*
  * Create new hash_entry structure from given key and domain
  */
-static struct hash_entry* new_hash_entry(str* key, domain_t* domain)
+static struct hash_entry *new_hash_entry(str *key, domain_t *domain)
 {
-	struct hash_entry* e;
+	struct hash_entry *e;
 
-	if (!key || !domain) {
+	if(!key || !domain) {
 		ERR("Invalid parameter value\n");
 		return 0;
 	}
 
-	e = (struct hash_entry*)shm_malloc(sizeof(struct hash_entry));
-	if (!e) {
+	e = (struct hash_entry *)shm_malloc(sizeof(struct hash_entry));
+	if(!e) {
 		SHM_MEM_ERROR;
 		return 0;
 	}
@@ -77,21 +77,23 @@ static struct hash_entry* new_hash_entry(str* key, domain_t* domain)
 /*
  * Release all memory allocated for given hash_entry structure
  */
-static void free_hash_entry(struct hash_entry* e)
+static void free_hash_entry(struct hash_entry *e)
 {
-	if (e) shm_free(e);
+	if(e)
+		shm_free(e);
 }
 
 
 /*
  * Free memory allocated for entire hash table
  */
-void free_table(struct hash_entry** table)
+void free_table(struct hash_entry **table)
 {
-	struct hash_entry* e;
+	struct hash_entry *e;
 	int i;
 
-	if (!table) return;
+	if(!table)
+		return;
 
 	for(i = 0; i < HASH_SIZE; i++) {
 		while(table[i]) {
@@ -106,13 +108,13 @@ void free_table(struct hash_entry** table)
 /*
  * Generate hash table, use domain names as hash keys
  */
-int gen_domain_table(struct hash_entry** table, domain_t* list)
+int gen_domain_table(struct hash_entry **table, domain_t *list)
 {
-	struct hash_entry* e;
+	struct hash_entry *e;
 	unsigned int slot;
 	int i;
 
-	if (!table) {
+	if(!table) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
@@ -120,7 +122,8 @@ int gen_domain_table(struct hash_entry** table, domain_t* list)
 	while(list) {
 		for(i = 0; i < list->n; i++) {
 			e = new_hash_entry(&list->domain[i], list);
-			if (!e) goto error;
+			if(!e)
+				goto error;
 			slot = calc_hash(&list->domain[i]);
 			e->next = table[slot];
 			table[slot] = e;
@@ -130,7 +133,7 @@ int gen_domain_table(struct hash_entry** table, domain_t* list)
 	}
 	return 0;
 
- error:
+error:
 	free_table(table);
 	return -1;
 }
@@ -139,26 +142,27 @@ int gen_domain_table(struct hash_entry** table, domain_t* list)
 /*
  * Generate hash table, use did as hash key
  */
-int gen_did_table(struct hash_entry** table, domain_t* list)
+int gen_did_table(struct hash_entry **table, domain_t *list)
 {
 	unsigned int slot;
-	struct hash_entry* e;
+	struct hash_entry *e;
 
-	if (!table) {
+	if(!table) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
 	while(list) {
 		e = new_hash_entry(&list->did, list);
-		if (!e) goto error;
+		if(!e)
+			goto error;
 		slot = calc_hash(&list->did);
 		e->next = table[slot];
 		table[slot] = e;
 		list = list->next;
 	}
 	return 0;
- error:
+error:
 	free_table(table);
 	return -1;
 }
@@ -167,17 +171,19 @@ int gen_did_table(struct hash_entry** table, domain_t* list)
 /*
  * Lookup key in the table
  */
-int hash_lookup(domain_t** d, struct hash_entry** table, str* key)
+int hash_lookup(domain_t **d, struct hash_entry **table, str *key)
 {
-	struct hash_entry* np;
+	struct hash_entry *np;
 
-	for (np = table[calc_hash(key)]; np != NULL; np = np->next) {
-		if ((np->key.len == key->len) &&
-			(strncmp(np->key.s, key->s, key->len) == 0)) {
-			if (d) *d = np->domain;
+	for(np = table[calc_hash(key)]; np != NULL; np = np->next) {
+		if((np->key.len == key->len)
+				&& (strncmp(np->key.s, key->s, key->len) == 0)) {
+			if(d)
+				*d = np->domain;
 			return 1;
 		}
 	}
-	if (d) *d = 0;
+	if(d)
+		*d = 0;
 	return -1;
 }

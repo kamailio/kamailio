@@ -8,6 +8,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -31,7 +33,7 @@
 
 /* lock_ops.h defines union semun, perl does not need to redefine it */
 #ifdef USE_SYSV_SEM
-# define HAS_UNION_SEMUN
+#define HAS_UNION_SEMUN
 #endif
 
 #include <EXTERN.h>
@@ -44,7 +46,7 @@ extern PerlInterpreter *my_perl;
 
 extern sl_api_t slb;
 
-#define PERLCLASS_MESSAGE	"Kamailio::Message"
-#define PERLCLASS_URI		"Kamailio::URI"
+#define PERLCLASS_MESSAGE "Kamailio::Message"
+#define PERLCLASS_URI "Kamailio::URI"
 
 #endif /* PERL_MOD_H */

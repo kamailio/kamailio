@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,9 +31,10 @@
 #include <Python.h>
 #include "../../core/kemi.h"
 
-#define SR_APY_KEMI_EXPORT_SIZE	1024
+#define SR_APY_KEMI_EXPORT_SIZE 1024
 
-typedef struct sr_apy_kemi_export {
+typedef struct sr_apy_kemi_export
+{
 	PyCFunction pfunc;
 	sr_kemi_t *ket;
 } sr_apy_kemi_export_t;

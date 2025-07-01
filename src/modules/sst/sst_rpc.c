@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -38,13 +40,13 @@
 /*! \brief
  * The dialog rpc helper function.
  */
-void sst_dialog_rpc_context_CB(struct dlg_cell* did, int type,
-		struct dlg_cb_params * params)
+void sst_dialog_rpc_context_CB(
+		struct dlg_cell *did, int type, struct dlg_cb_params *params)
 {
-	rpc_cb_ctx_t *rpc_cb = (rpc_cb_ctx_t*)(params->dlg_data);
+	rpc_cb_ctx_t *rpc_cb = (rpc_cb_ctx_t *)(params->dlg_data);
 	rpc_t *rpc = rpc_cb->rpc;
 	void *c = rpc_cb->c;
-	sst_info_t* sst_info = (sst_info_t*)*(params->param);
+	sst_info_t *sst_info = (sst_info_t *)*(params->param);
 
 	rpc->rpl_printf(c, "sst_requester_flags: %d", sst_info->requester);
 	rpc->rpl_printf(c, "sst_supported_flags: %d", sst_info->supported);

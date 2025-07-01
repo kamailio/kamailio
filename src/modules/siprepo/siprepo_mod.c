@@ -49,14 +49,17 @@ static int child_init(int);
 static void mod_destroy(void);
 
 static int w_sr_msg_push(sip_msg_t *msg, char *pmsgid, char *prmode);
-static int w_sr_msg_pull(sip_msg_t *msg, char *pcallid, char *pmsgid, char *prname,
-		char *prmode);
+static int w_sr_msg_pull(sip_msg_t *msg, char *pcallid, char *pmsgid,
+		char *prname, char *prmode);
 static int w_sr_msg_async_pull(sip_msg_t *msg, char *pcallid, char *pmsgid,
 		char *pgname, char *prname, char *prmode);
 static int w_sr_msg_rm(sip_msg_t *msg, char *pcallid, char *pmsgid);
 static int w_sr_msg_check(sip_msg_t *msg, char *p1, char *p2);
 
 static void siprepo_timer_exec(unsigned int ticks, int worker, void *param);
+
+static int fixup_sr_msg_async_pull(void **param, int param_no);
+static int fixup_free_sr_msg_async_pull(void **param, int param_no);
 
 /* clang-format off */
 typedef struct sworker_task_param {
@@ -69,10 +72,10 @@ typedef struct sworker_task_param {
 static cmd_export_t cmds[]={
 	{"sr_msg_push", (cmd_function)w_sr_msg_push, 2, fixup_spve_igp,
 		fixup_free_spve_null, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
-	{"sr_msg_pull", (cmd_function)w_sr_msg_pull, 3, fixup_spve_all,
-		fixup_free_spve_all, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
-	{"sr_msg_async_pull", (cmd_function)w_sr_msg_async_pull, 5, fixup_spve_all,
-		fixup_free_spve_all, ANY_ROUTE},
+	{"sr_msg_pull", (cmd_function)w_sr_msg_pull, 4, fixup_sssi,
+		fixup_free_sssi, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
+	{"sr_msg_async_pull", (cmd_function)w_sr_msg_async_pull, 5, fixup_sr_msg_async_pull,
+		fixup_free_sr_msg_async_pull, ANY_ROUTE},
 	{"sr_msg_rm", (cmd_function)w_sr_msg_rm, 2, fixup_spve_spve,
 		fixup_free_spve_spve, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
 	{"sr_msg_check", (cmd_function)w_sr_msg_check, 0, 0,
@@ -108,7 +111,7 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	if(siprepo_table_init()<0) {
+	if(siprepo_table_init() < 0) {
 		LM_ERR("failed to initialize hash table\n");
 		return -1;
 	}
@@ -124,14 +127,15 @@ static int child_init(int rank)
 	int i;
 	char si_desc[MAX_PT_DESC];
 
-	if(rank!=PROC_MAIN) {
+	if(rank != PROC_MAIN) {
 		return 0;
 	}
-	for(i=0; i<_siprepo_timer_procs; i++) {
+	for(i = 0; i < _siprepo_timer_procs; i++) {
 		snprintf(si_desc, MAX_PT_DESC, "SIPREPO child=%d", i);
 		if(fork_basic_timer_w(PROC_TIMER, si_desc, 1 /*socks flag*/,
-						siprepo_timer_exec, i, NULL, _siprepo_timer_interval
-						/*sec*/)<0) {
+				   siprepo_timer_exec, i, NULL, _siprepo_timer_interval
+				   /*sec*/)
+				< 0) {
 			LM_ERR("failed to start timer routine as process\n");
 			return -1; /* error */
 		}
@@ -155,7 +159,7 @@ static int ki_sr_msg_push(sip_msg_t *msg, str *msgid, int rmode)
 
 	ret = siprepo_msg_set(msg, msgid, rmode);
 
-	if(ret<0) {
+	if(ret < 0) {
 		return ret;
 	}
 	return 1;
@@ -184,14 +188,14 @@ static int w_sr_msg_push(sip_msg_t *msg, char *pmsgid, char *prmode)
 /**
  *
  */
-static int ki_sr_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname,
-		int rmode)
+static int ki_sr_msg_pull(
+		sip_msg_t *msg, str *callid, str *msgid, str *rname, int rmode)
 {
 	int ret;
 
 	ret = siprepo_msg_pull(callid, msgid, rname, rmode);
 
-	if(ret<0) {
+	if(ret < 0) {
 		return ret;
 	}
 	return 1;
@@ -200,8 +204,8 @@ static int ki_sr_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname,
 /**
  *
  */
-static int w_sr_msg_pull(sip_msg_t *msg, char *pcallid, char *pmsgid, char *prname,
-		char *prmode)
+static int w_sr_msg_pull(
+		sip_msg_t *msg, char *pcallid, char *pmsgid, char *prname, char *prmode)
 {
 	str callid = STR_NULL;
 	str msgid = STR_NULL;
@@ -238,7 +242,7 @@ static int ki_sr_msg_async_pull(sip_msg_t *msg, str *callid, str *msgid,
 
 	ret = siprepo_msg_async_pull(callid, msgid, gname, rname, rmode);
 
-	if(ret<0) {
+	if(ret < 0) {
 		return ret;
 	}
 	return 1;
@@ -281,6 +285,24 @@ static int w_sr_msg_async_pull(sip_msg_t *msg, char *pcallid, char *pmsgid,
 }
 
 
+static int fixup_sr_msg_async_pull(void **param, int param_no)
+{
+	if(param_no >= 1 && param_no <= 4)
+		return fixup_spve_null(param, 1);
+	if(param_no == 5)
+		return fixup_igp_null(param, 1);
+	return 0;
+}
+
+static int fixup_free_sr_msg_async_pull(void **param, int param_no)
+{
+	if(param_no >= 1 && param_no <= 4)
+		return fixup_free_spve_null(param, 1);
+	if(param_no == 5)
+		return fixup_free_igp_null(param, 1);
+	return 0;
+}
+
 /**
  *
  */
@@ -290,7 +312,7 @@ static int ki_sr_msg_rm(sip_msg_t *msg, str *callid, str *msgid)
 
 	ret = siprepo_msg_rm(callid, msgid);
 
-	if(ret<0) {
+	if(ret < 0) {
 		return ret;
 	}
 	return 1;
@@ -325,8 +347,8 @@ static int ki_sr_msg_check(sip_msg_t *msg)
 
 	ret = siprepo_msg_check(msg);
 
-	if(ret<=0) {
-		return (ret-1);
+	if(ret <= 0) {
+		return (ret - 1);
 	}
 	return ret;
 }

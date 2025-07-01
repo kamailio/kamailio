@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -28,7 +30,7 @@
  */
 
 /*! \file
- * Berkeley DB : 
+ * Berkeley DB :
  * Implementation of bdb_fld data structure representing BDB fields and
  * related functions.
  *
@@ -54,7 +56,7 @@ typedef struct _bdb_fld
 /** Creates a new BDB specific payload.
  * This function creates a new BDB specific payload structure and
  * attaches the structure to the generic db_fld structure.
- * @param fld A generic db_fld structure to be exended.
+ * @param fld A generic db_fld structure to be extended.
  * @param table Name of the table on the server.
  * @retval 0 on success.
  * @retval A negative number on error.

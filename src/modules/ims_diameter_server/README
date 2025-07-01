@@ -79,7 +79,7 @@ Chapter 1. Admin Guide
    Additionally, it allows you to send Diameter-Requests to another peer.
 
    The JSON contains an array with all AVP's in the Diameter-Message and
-   it's attributes. The format is identical for both requests and replies.
+   its attributes. The format is identical for both requests and replies.
 [
    {
       "avpCode":277,
@@ -148,7 +148,7 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   The Following mouldes must be loaded before this module:
+   The following modules must be loaded before this module:
      * CDP - C Diameter Peer
      * CDP_AVP - CDP AVP Applications
 

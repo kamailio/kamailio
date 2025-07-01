@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -327,9 +329,9 @@ pres_ev_t *search_event(event_t *event)
 	while(pres_ev) {
 		if((pres_ev->evp->type == event->type && event->type != EVENT_OTHER)
 				|| (pres_ev->evp->name.len == event->name.len
-						   && strncasecmp(pres_ev->evp->name.s, event->name.s,
-									  pres_ev->evp->name.len)
-									  == 0)) {
+						&& strncasecmp(pres_ev->evp->name.s, event->name.s,
+								   pres_ev->evp->name.len)
+								   == 0)) {
 			if(event->params.list == NULL
 					&& pres_ev->evp->params.list == NULL) {
 				return pres_ev;
@@ -372,7 +374,7 @@ int search_event_params(event_t *ev, event_t *searched_ev)
 				if(p->body.s != 0 && ps->body.s != 0
 						&& p->body.len == ps->body.len
 						&& (strncmp(p->body.s, ps->body.s, ps->body.len)
-								   == 0)) {
+								== 0)) {
 					found = 1;
 					break;
 				}

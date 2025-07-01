@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -57,11 +57,11 @@ int main (int argc, char** argv)
 	int errors;
 	int r;
 	char *tmp;
-	
+
 	int count;
 	int verbose;
 	char *address;
-	
+
 	/* init */
 	count=0;
 	verbose=0;
@@ -110,7 +110,7 @@ int main (int argc, char** argv)
 					abort();
 		}
 	}
-	
+
 	/* check if all the required params are present */
 	if (address==0){
 		fprintf(stderr, "Missing -a address\n");
@@ -123,7 +123,7 @@ int main (int argc, char** argv)
 		fprintf(stderr, "Invalid count (-c %d)\n", count);
 		exit(-1);
 	}
-	
+
 
 
 	/* flood loop */
@@ -133,7 +133,7 @@ int main (int argc, char** argv)
 		he=gethostbyname(address);
 		if (he==0){
 			errors++;
-			if (verbose>1) 
+			if (verbose>1)
 				putchar('?');
 		}else ok++;
 	}

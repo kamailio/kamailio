@@ -4,7 +4,13 @@ Andrew Mortensen
 
    University of Pennsylvania
 
+Victor Seva
+
+   Sipwise GmbH
+
    Copyright © 2012 Andrew Mortensen, admorten@isc.upenn.edu
+
+   Copyright © 2024 Sipwise GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -27,10 +33,13 @@ Andrew Mortensen
               3.7. db_update_interval (integer)
               3.8. onhold_bflag (integer)
               3.9. server_address (string)
+              3.10. contact_fallback (string)
+              3.11. from_uri_avp (string)
+              3.12. to_uri_avp (string)
 
         4. Functions
 
-              4.1. sca_handle_subscribe()
+              4.1. sca_handle_subscribe([to_uri, [from_uri]])
               4.2. sca_call_info_update([mask, to, from])
 
         5. Exported RPC Commands
@@ -54,9 +63,12 @@ Andrew Mortensen
    1.7. Set db_update_interval:
    1.8. Set onhold_bflag parameter
    1.9. Set server_address parameter
-   1.10. sca_handle_subscribe usage:
-   1.11. sca_call_info_update usage:
-   1.12. kamailio.cfg
+   1.10. Set contact_fallback parameter
+   1.11. Set from_uri_avp parameter
+   1.12. Set to_uri_avp parameter
+   1.13. sca_handle_subscribe usage:
+   1.14. sca_call_info_update usage:
+   1.15. kamailio.cfg
 
 Chapter 1. Admin Guide
 
@@ -78,10 +90,13 @@ Chapter 1. Admin Guide
         3.7. db_update_interval (integer)
         3.8. onhold_bflag (integer)
         3.9. server_address (string)
+        3.10. contact_fallback (string)
+        3.11. from_uri_avp (string)
+        3.12. to_uri_avp (string)
 
    4. Functions
 
-        4.1. sca_handle_subscribe()
+        4.1. sca_handle_subscribe([to_uri, [from_uri]])
         4.2. sca_call_info_update([mask, to, from])
 
    5. Exported RPC Commands
@@ -164,6 +179,9 @@ Chapter 1. Admin Guide
    3.7. db_update_interval (integer)
    3.8. onhold_bflag (integer)
    3.9. server_address (string)
+   3.10. contact_fallback (string)
+   3.11. from_uri_avp (string)
+   3.12. to_uri_avp (string)
 
 3.1. hash_table_size (integer)
 
@@ -284,16 +302,53 @@ modparam("sca", "onhold_bflag", 15)
 modparam("sca", "server_address", "sip:10.10.10.10:5060")
 ...
 
+3.10. contact_fallback (string)
+
+   contact used if defined when no contact is found in processed message.
+
+   Default value is "" (disabled).
+
+   Example 1.10. Set contact_fallback parameter
+...
+modparam("sca", "contact_fallback", "sip:127.0.0.1:5085;transport=udp")
+...
+
+3.11. from_uri_avp (string)
+
+   avp that will store the From URI used.
+
+   Default value is "" (disabled).
+
+   Example 1.11. Set from_uri_avp parameter
+...
+modparam("sca", "from_uri_avp", "$avp(sca_from)")
+...
+
+3.12. to_uri_avp (string)
+
+   avp that will store the To URI used.
+
+   Default value is "" (disabled).
+
+   Example 1.12. Set to_uri_avp parameter
+...
+modparam("sca", "to_uri_avp", "$avp(sca_to)")
+...
+
 4. Functions
 
-   4.1. sca_handle_subscribe()
+   4.1. sca_handle_subscribe([to_uri, [from_uri]])
    4.2. sca_call_info_update([mask, to, from])
 
-4.1.  sca_handle_subscribe()
+4.1.  sca_handle_subscribe([to_uri, [from_uri]])
 
    The function handling call-info and line-seize SUBSCRIBE requests. It
    stores or updates the subscriptions in shared memory, and sends NOTIFYs
    to the subscriber and other members of the group as needed.
+
+   If to_uri or from_uri are defined, those values will be used instead of
+   the SIP header. Both parameters can be a string or a pseudo variable
+   holding a string value.
 
    For example, a line-seize SUBSCRIBE will cause the module to reserve an
    appearance index for the subscriber; send a line-seize NOTIFY to the
@@ -307,11 +362,15 @@ modparam("sca", "server_address", "sip:10.10.10.10:5060")
      * 1 - successful
      * -1 - failed, error logged
 
-   Example 1.10. sca_handle_subscribe usage:
+   Example 1.13. sca_handle_subscribe usage:
 ...
 if ( is_method( "SUBSCRIBE" )) {
         if ( $hdr(Event) == "call-info" || $hdr(Event) == "line-seize" ) {
-        sca_handle_subscribe();
+                if($var(fix_uri) != 0) {
+                        sca_handle_subscribe($var(to_uri), $avp(from_uri));
+                } else {
+                        sca_handle_subscribe();
+                }
         exit;
         }
 }
@@ -351,7 +410,7 @@ if ( is_method( "SUBSCRIBE" )) {
      * 1 - successful
      * -1 - failed, error logged
 
-   Example 1.11. sca_call_info_update usage:
+   Example 1.14. sca_call_info_update usage:
 ...
 route
 {
@@ -472,7 +531,7 @@ p:215@10.0.1.2
    The following is a basic kamailio.cfg providing Shared Call Appearances
    to local subscribers. It has been tested with Polycom handsets.
 
-   Example 1.12. kamailio.cfg
+   Example 1.15. kamailio.cfg
 ##
 #!KAMAILIO
 #

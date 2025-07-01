@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -77,44 +79,40 @@ struct val uri_vals[UV_STATIC_MAX];
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"radius_load_caller_avps", (cmd_function)radius_load_caller_avps, 1,
-		fixup_spve_null, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"radius_load_callee_avps", (cmd_function)radius_load_callee_avps, 1,
-		fixup_spve_null, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"radius_is_user_in", (cmd_function)radius_is_user_in, 2,
-		fixup_spve_spve, 0,
+		fixup_spve_spve, fixup_free_spve_spve,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
-	{"radius_does_uri_exist", (cmd_function)radius_does_uri_exist_0,
-		0, 0, 0, REQUEST_ROUTE|LOCAL_ROUTE},
-	{"radius_does_uri_exist", (cmd_function)radius_does_uri_exist_1,
-		1, fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|LOCAL_ROUTE},
-	{"radius_does_uri_user_exist",
-		(cmd_function)radius_does_uri_user_exist_0,
-		0, 0, 0, REQUEST_ROUTE|LOCAL_ROUTE},
-	{"radius_does_uri_user_exist",
-		(cmd_function)radius_does_uri_user_exist_1,
-		1, fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"radius_does_uri_exist", (cmd_function)radius_does_uri_exist_0, 0,
+		0, 0, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"radius_does_uri_exist", (cmd_function)radius_does_uri_exist_1, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"radius_does_uri_user_exist", (cmd_function)radius_does_uri_user_exist_0, 0,
+		0, 0, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"radius_does_uri_user_exist", (cmd_function)radius_does_uri_user_exist_1, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
-
 
 /*
  * Exported parameters
  */
 static param_export_t params[] = {
 	{"radius_config",       PARAM_STRING, &radius_config      },
-	{"caller_service_type", INT_PARAM, &caller_service_type},
-	{"callee_service_type", INT_PARAM, &callee_service_type},
-	{"group_service_type",  INT_PARAM, &group_service_type },
-	{"uri_service_type",    INT_PARAM, &uri_service_type   },
+	{"caller_service_type", PARAM_INT, &caller_service_type},
+	{"callee_service_type", PARAM_INT, &callee_service_type},
+	{"group_service_type",  PARAM_INT, &group_service_type },
+	{"uri_service_type",    PARAM_INT, &uri_service_type   },
 	{"caller_extra",        PARAM_STRING, &caller_extra_str   },
 	{"callee_extra",        PARAM_STRING, &callee_extra_str   },
 	{"group_extra",         PARAM_STRING, &group_extra_str    },
 	{"uri_extra",           PARAM_STRING, &uri_extra_str      },
-	{"use_sip_uri_host",    INT_PARAM, &use_sip_uri_host   },
-	{"common_response",     INT_PARAM, &common_response    },
+	{"use_sip_uri_host",    PARAM_INT, &use_sip_uri_host   },
+	{"common_response",     PARAM_INT, &common_response    },
 	{0, 0, 0}
 };
-
 
 struct module_exports exports = {
 	"misc_radius",   /* module name */

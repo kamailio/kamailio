@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -26,16 +28,17 @@
 
 #include "../../core/parser/msg_parser.h"
 
-typedef int (*sanity_check_f)(struct sip_msg* msg, int msg_checks,
-		int uri_checks);
-typedef int (*sanity_check_defaults_f)(struct sip_msg* msg);
+typedef int (*sanity_check_f)(
+		struct sip_msg *msg, int msg_checks, int uri_checks);
+typedef int (*sanity_check_defaults_f)(struct sip_msg *msg);
 
-typedef struct sanity_api {
+typedef struct sanity_api
+{
 	sanity_check_f check;
 	sanity_check_defaults_f check_defaults;
 } sanity_api_t;
 
-typedef int (*bind_sanity_f)(sanity_api_t* api);
+typedef int (*bind_sanity_f)(sanity_api_t *api);
 
 /**
  * @brief Load the Sanity API
@@ -49,8 +52,7 @@ static inline int sanity_load_api(sanity_api_t *api)
 		LM_ERR("cannot find bind_sanity\n");
 		return -1;
 	}
-	if(bindsanity(api)<0)
-	{
+	if(bindsanity(api) < 0) {
 		LM_ERR("cannot bind sanity api\n");
 		return -1;
 	}

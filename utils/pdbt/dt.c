@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -267,21 +267,21 @@ int dt_optimize_leaf(struct dt_node_t *root, carrier_t lastcarrier)
 	if (node->carrier>0) currentcarrier=node->carrier;  /* new common carrier id starts at this node */
 	else currentcarrier=lastcarrier;		    /* carry over common carrier id */
 
-	/* 
-	 Nodes with children sharing the same carrier may be generalized into a common node (prefix). 
+	/*
+	 Nodes with children sharing the same carrier may be generalized into a common node (prefix).
 	 Note that the code in the following if-statement is the reason why dt_optimize() calls this function
 	 multiple times.
 	 */
 	if ((allcce=dt_allcce(node))) {
 		/*
 		 generalization requires having an intermediary parent node or a common carrier id between
-		 all children and the current node 
+		 all children and the current node
 		 */
 		if ((node->carrier == 0) || (node->carrier < 0 && allcce == currentcarrier)) {
 			currentcarrier=allcce;
 			node->carrier=currentcarrier;
 			for(i=0; i<10; i++) {
-				/* 
+				/*
 				 Negative carrier ids mark children eligible for generalization into a parent
 				 node. Carrier id 0 cannot be used because it could ambiguously refer to an
 				 intermediary parent node, thereby rendering differentiation of such nodes and
@@ -341,7 +341,7 @@ void dt_optimize(struct dt_node_t *root)
 {
 	int size;
 	int oldsize = 0;
-	
+
 	size=dt_size(root);
 
 	/*

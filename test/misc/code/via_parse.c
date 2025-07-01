@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -25,7 +25,7 @@
 /* parsing:           compact form:
  */
 
-/* 
+/*
  * still TODO/test:
  *  - parse next via
  *  - return a list of header structs
@@ -74,9 +74,9 @@ enum{	L_VALUE=200,   F_VALUE, P_VALUE, P_STRING,
 #define LOG(lev, fmt, args...) fprintf(stderr, fmt, ## args)
 
 
-/* entry state must be F_PARAM, or saved_state=F_PARAM and 
+/* entry state must be F_PARAM, or saved_state=F_PARAM and
  * state=F_{LF,CR,CRLF}!
- * output state = L_PARAM or F_PARAM or END_OF_HEADER 
+ * output state = L_PARAM or F_PARAM or END_OF_HEADER
  * (and saved_state= last state); everything else => error */
 __inline char* parse_via_param(char* p, int* pstate, int* psaved_state)
 {
@@ -86,12 +86,12 @@ __inline char* parse_via_param(char* p, int* pstate, int* psaved_state)
 	int param_type;
 	char* param_name;
 	char* param_value;
-	
+
 	state=*pstate;
 	saved_state=*psaved_state;
 	param_name=param_value=0;
 	param_type=0;
-	
+
 	for (tmp=p;*tmp;tmp++){
 		switch(*tmp){
 			case ' ':
@@ -253,7 +253,7 @@ __inline char* parse_via_param(char* p, int* pstate, int* psaved_state)
 						goto endofparam;
 				}
 				break;
-				
+
 				/* param names */
 			case 'h':
 			case 'H':
@@ -558,7 +558,7 @@ find_value:
 				switch(state){
 					case L_VALUE:
 					case F_VALUE: /*eat space*/
-						break; 
+						break;
 					case P_VALUE:
 						*tmp=0;
 						state=L_PARAM;
@@ -583,7 +583,7 @@ find_value:
 					case P_STRING:
 						saved_state=state;
 						state=F_LF;
-						break; 
+						break;
 					case P_VALUE:
 						*tmp=0;
 						saved_state=L_PARAM;
@@ -609,7 +609,7 @@ find_value:
 					case P_STRING:
 						saved_state=state;
 						state=F_CR;
-						break; 
+						break;
 					case P_VALUE:
 						*tmp=0;
 						saved_state=L_PARAM;
@@ -664,7 +664,7 @@ find_value:
 						goto error;
 				}
 				break;
-			
+
 			case '"':
 				switch(state){
 					case F_VALUE:
@@ -760,7 +760,7 @@ int main(int argc, char** argv)
 			fprintf(stderr, " no parameters\n");
 			exit(-1);
 	}
-	
+
 	/* parse start of via ( SIP/2.0/UDP    )*/
 	state=F_SIP;
 	for(tmp=argv[1];*tmp;tmp++){
@@ -871,7 +871,7 @@ int main(int argc, char** argv)
 						goto error;
 				}
 				break;
-			
+
 			case '/':
 				switch(state){
 					case FIN_SIP:
@@ -1007,7 +1007,7 @@ int main(int argc, char** argv)
 						goto error;
 				}
 				break;
-			
+
 			default:
 				switch(state){
 					case F_PROTO:
@@ -1070,7 +1070,7 @@ main_via:
 						break;
 					case P_IP6HOST:
 						*tmp=0; /*mark end of host*/
-						state=L_PORT; 
+						state=L_PORT;
 						break;
 					case F_CRLF:
 					case F_LF:
@@ -1170,7 +1170,7 @@ main_via:
 						goto  error;
 				}
 			break;
-			
+
 			case ':':
 				switch(state){
 					case F_HOST:
@@ -1269,7 +1269,7 @@ main_via:
 						break;
 					case P_COMMENT: /*everything is allowed in a comment*/
 						break;
-					
+
 					default:
 						LOG(L_CRIT,"BUG: parse_via"
 							" on <%c> state %d\n",
@@ -1304,7 +1304,7 @@ main_via:
 						goto error;
 					case F_VIA:
 						/* do  nothing,  eat ","*/
-						break;	
+						break;
 					case F_CRLF:
 					case F_LF:
 					case F_CR:
@@ -1460,7 +1460,7 @@ main_via:
 						goto  error;
 				}
 				break;
-						
+
 			default:
 				switch(state){
 					case F_HOST:
@@ -1535,14 +1535,14 @@ main_via:
 							*tmp, state);
 						goto error;
 				}
-				
-					
-		}			
+
+
+		}
 	}
 
 	printf("end of packet reached, state=%d\n", state);
 	goto endofpacket; /*end of packet, probably should be goto error*/
-	
+
 endofheader:
 	state=saved_state;
 	printf("end of header reached, state=%d\n", state);
@@ -1564,7 +1564,7 @@ endofpacket:
 					" state %d\n", state);
 			goto error;
 	}
-		
+
 nextvia:
 	if (proto) printf("<SIP/2.0/%s>\n", proto);
 	if (host) printf("host= <%s>\n", host);
@@ -1573,7 +1573,7 @@ nextvia:
 	if (comment) printf("comment= <%s>\n", comment);
 	if(next_via) printf("next_via= <%s>\n", next_via);
 	printf("rest=<%s>\n", tmp);
-	
+
 	exit(0);
 
 error:

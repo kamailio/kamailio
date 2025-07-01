@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -27,14 +29,12 @@
 
 int sr_apy_init_ksr(void);
 void sr_apy_destroy_ksr(void);
-int sr_kemi_config_engine_python(sip_msg_t *msg, int rtype, str *rname,
-		str *rparam);
+int sr_kemi_config_engine_python(
+		sip_msg_t *msg, int rtype, str *rname, str *rparam);
 
 PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx);
 
 int apy_sr_init_mod(void);
 int app_python_init_rpc(void);
-int apy_load_script(void);
-int apy_init_script(int rank);
 
 #endif

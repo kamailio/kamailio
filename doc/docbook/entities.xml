@@ -19,9 +19,9 @@
 
 <!ENTITY kamailiohome "https://www.kamailio.org/">
 <!ENTITY kamailiobugs "https://github.com/kamailio/kamailio/issues">
-<!ENTITY kamailiohelp "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users">
-<!ENTITY kamailiousers "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users">
-<!ENTITY kamailiodev "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev">
+<!ENTITY kamailiohelp "https://lists.kamailio.org/mailman3/postorius/lists/sr-users.lists.kamailio.org/">
+<!ENTITY kamailiousers "https://lists.kamailio.org/mailman3/postorius/lists/sr-users.lists.kamailio.org/">
+<!ENTITY kamailiodev "https://lists.kamailio.org/mailman3/postorius/lists/sr-dev.lists.kamailio.org/">
 <!ENTITY kamailiodbdocs "https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html">
 
 <!ENTITY kamailiohomelink "<ulink url='&kamailiohome;'>&kamailiohome;</ulink>">
@@ -54,8 +54,8 @@
 
 <!ENTITY serhome "https://www.kamailio.org">
 <!ENTITY serbugs "https://github.com/kamailio/kamailio/issues">
-<!ENTITY serusers "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users">
-<!ENTITY serdev "https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev">
+<!ENTITY serusers "https://lists.kamailio.org/mailman3/postorius/lists/sr-users.lists.kamailio.org/">
+<!ENTITY serdev "https://lists.kamailio.org/mailman3/postorius/lists/sr-dev.lists.kamailio.org/">
 
 <!ENTITY serhomelink "<ulink url='&serhome;'>&serhome;</ulink>">
 <!ENTITY serbugslink "<ulink url='&serbugs;'>&serbugs;</ulink>">

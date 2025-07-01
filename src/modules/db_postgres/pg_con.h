@@ -1,4 +1,4 @@
-/* 
+/*
  * PostgreSQL Database Driver for Kamailio
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
@@ -6,6 +6,8 @@
  * Portions Copyright (C) 2005-2008 iptelorg GmbH
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
@@ -26,10 +28,10 @@
 #define _PG_CON_H
 
 /** \addtogroup postgres
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * Implementation of PostgreSQL connection related data structures and functions.
  */
 
@@ -42,7 +44,7 @@
 #include <time.h>
 #include <libpq-fe.h>
 
-/** 
+/**
  * Per-connection flags for PostgreSQL connections.
  */
 enum pg_con_flags
@@ -63,7 +65,7 @@ typedef struct pg_con
 {
 	db_pool_entry_t gen; /**< Generic part of the structure */
 	PGconn *con;		 /**< Postgres connection handle */
-	unsigned int flags;  /**< Flags (currently only binary data format) */
+	unsigned int flags;	 /**< Flags (currently only binary data format) */
 	pg_type_t *oid; /**< Data types and their Oids obtained from the server */
 } pg_con_t;
 
@@ -79,7 +81,7 @@ typedef struct pg_con
 int pg_con(db_con_t *con);
 
 
-/** Establish a new connection to server.  
+/** Establish a new connection to server.
  * This function is called when a Kamailio module calls db_connect to establish a
  * new connection to the database server. After the connection is established
  * the function sends an SQL query to the server to determine the format of

@@ -139,8 +139,8 @@ Chapter 1. Admin Guide
 
 2. Dependencies
 
-   The module depends on the following modules (in the other words the
-   listed modules must be loaded before this module):
+   The module depends on the following modules (in other words the listed
+   modules must be loaded before this module):
      * none
 
 3. Functions
@@ -208,7 +208,7 @@ sipt_set_calling($fU, 4, 0, 3);
    Example 1.4. sipt_set_calling(origin, nai) usage
 ...
 # update the forwarding number to the value in the from header
-sipt_forwarfing($avp(s:forwarding_number), 3);
+sipt_forwarding($avp(s:forwarding_number), 3);
 ...
 
 3.5. sipt_has_isup_body()
@@ -430,7 +430,7 @@ if($sipt(called_party_number.nai) == 3)
 
 4.12. $sipt(redirection_number) / $sipt_redirection_number
 
-   Returns number to which redirection will trigered Returns -1 if there
+   Returns number to which redirection will triggered Returns -1 if there
    is a parsing error.
 
    Example 1.12. sipt_redirection_number usage

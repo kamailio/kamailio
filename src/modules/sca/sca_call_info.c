@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Andrew Mortensen
+ * Copyright (C) 2024 Sipwise GmbH, https://www.sipwise.com
  *
  * This file is part of the sca module for Kamailio, a free SIP server.
  *
@@ -112,6 +113,7 @@ static int sca_call_info_header_append_appearances(
 	str state_str;
 	int slot_idx;
 	int len = -1;
+	int l1 = -1;
 	int usedlen = -1;
 
 	slot_idx =
@@ -153,9 +155,14 @@ static int sca_call_info_header_append_appearances(
 		sca_appearance_state_to_str(app->state, &state_str);
 
 		// state_str.s is a nul-terminated string literal
-		len += snprintf(hdrbuf + len, maxlen - len,
+		l1 = snprintf(hdrbuf + len, maxlen - len,
 				">;appearance-index=%d;appearance-state=%s", app->index,
 				state_str.s);
+		if(l1 < 0 || l1 >= maxlen - len) {
+			LM_ERR("failed to print the header\n");
+			return -1;
+		}
+		len += l1;
 
 		if(!SCA_STR_EMPTY(&app->uri)) {
 			hdrbuf[len] = ';';
@@ -602,12 +609,14 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 	// all headers must be parsed before using lump functions
 	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("Failed to parse_headers\n");
+		pkg_free(replaces_hdr.s);
 		goto done;
 	}
 
 	anchor = anchor_lump(msg, msg->eoh - msg->buf, 0, HDR_OTHER_T);
 	if(anchor == NULL) {
 		LM_ERR("Failed to anchor lump\n");
+		pkg_free(replaces_hdr.s);
 		goto done;
 	}
 
@@ -631,7 +640,6 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 	// we restore the original owner and dialog.
 	if(sca_appearance_update_owner_unsafe(app, contact_uri) < 0) {
 		LM_ERR("sca_call_info_seize_held_call: failed to update owner\n");
-		pkg_free(replaces_hdr.s);
 		goto done;
 	}
 
@@ -842,44 +850,46 @@ static int sca_call_info_is_line_seize_reinvite(sip_msg_t *msg,
  */
 static void sca_call_info_local_error_reply_handler(sip_msg_t *msg, int status)
 {
-	struct to_body *from;
-	struct to_body *to;
+	sca_to_body_t from, to;
 	sca_appearance *app;
 	str aor = STR_NULL;
 	str contact_uri = STR_NULL;
 	int rc;
 
+	memset(&from, 0, sizeof(from));
+	memset(&to, 0, sizeof(to));
+
 	if(sca_get_msg_from_header(msg, &from) < 0) {
 		LM_ERR("sca_call_info_sl_reply_cb: failed to get From header from "
 			   "request before stateless reply with %d\n",
 				status);
-		return;
+		goto done;
 	}
-	if(sca_uri_extract_aor(&from->uri, &aor) < 0) {
+	if(sca_uri_extract_aor(&from.hdr->uri, &aor) < 0) {
 		LM_ERR("sca_call_info_sl_reply_cb: failed to extract AoR "
 			   "from URI %.*s\n",
-				STR_FMT(&from->uri));
-		return;
+				STR_FMT(&from.hdr->uri));
+		goto done;
 	}
 
 	if(!sca_uri_is_shared_appearance(sca, &aor)) {
 		// LM_DBG("sca_call_info_sl_reply_cb: ignoring non-shared appearance "
 		//		"%.*s\n", STR_FMT(&aor));
-		return;
+		goto done;
 	}
 
 	if(sca_get_msg_contact_uri(msg, &contact_uri) < 0) {
 		LM_ERR("sca_call_info_sl_reply_cb: failed to get Contact from "
 			   "request before stateless reply with %d\n",
 				status);
-		return;
+		goto done;
 	}
 
 	if(sca_get_msg_to_header(msg, &to) < 0) {
 		LM_ERR("sca_call_info_sl_reply_cb: failed to get To header from "
 			   "request before stateless reply with %d\n",
 				status);
-		return;
+		goto done;
 	}
 
 	// two typical cases to handle. in the first case, we haven't dropped
@@ -901,7 +911,7 @@ static void sca_call_info_local_error_reply_handler(sip_msg_t *msg, int status)
 	} else if(rc == 0) {
 		// no line-seize subscription found
 		app = sca_appearance_unlink_by_tags(sca, &aor, &msg->callid->body,
-				&from->tag_value, &to->tag_value);
+				&from.hdr->tag_value, &to.hdr->tag_value);
 		if(app) {
 			sca_appearance_free(app);
 			if(sca_notify_call_info_subscribers(sca, &aor) < 0) {
@@ -910,6 +920,14 @@ static void sca_call_info_local_error_reply_handler(sip_msg_t *msg, int status)
 						STR_FMT(&aor));
 			}
 		}
+	}
+
+done:
+	if(from.flags & SCA_UTIL_FLAG_TO_BODY_ALLOC) {
+		free_to(from.hdr);
+	}
+	if(to.flags & SCA_UTIL_FLAG_TO_BODY_ALLOC) {
+		free_to(to.hdr);
 	}
 }
 
@@ -1351,35 +1369,37 @@ static int sca_call_info_invite_reply_error_handler(sip_msg_t *msg,
 void sca_call_info_ack_from_handler(sip_msg_t *msg, str *from_aor, str *to_aor)
 {
 	sca_appearance *app;
-	struct to_body *from;
-	struct to_body *to;
+	sca_to_body_t from, to;
 	int slot_idx = -1;
 	int state = SCA_APPEARANCE_STATE_IDLE;
 
+	memset(&from, 0, sizeof(from));
+	memset(&to, 0, sizeof(to));
+
 	if(sca_get_msg_from_header(msg, &from) < 0) {
 		LM_ERR("sca_call_info_ack_cb: failed to get From-header\n");
-		return;
+		goto done;
 	}
 	if(sca_get_msg_to_header(msg, &to) < 0) {
 		LM_ERR("sca_call_info_ack_cb: failed to get To-header\n");
-		return;
+		goto done;
 	}
 
 	if(sca_uri_lock_if_shared_appearance(sca, from_aor, &slot_idx)) {
 		app = sca_appearance_for_tags_unsafe(sca, from_aor, &msg->callid->body,
-				&from->tag_value, NULL, slot_idx);
+				&from.hdr->tag_value, NULL, slot_idx);
 		if(app == NULL) {
 			LM_ERR("sca_call_info_ack_cb: No appearance for %.*s matching "
 				   "call-id <%.*s> and from-tag <%.*s>\n",
 					STR_FMT(from_aor), STR_FMT(&msg->callid->body),
-					STR_FMT(&from->tag_value));
+					STR_FMT(&from.hdr->tag_value));
 			goto done;
 		}
 
 		// Polycom's music-on-hold implementation uses an INVITE with
 		// an empty body to get the remote party's SDP info, then INVITEs
 		// a pre-defined URI on a media server, using the remote party's
-		// SDP as the INVITE body. the media server streams hold music to
+		// SDP as the INVITE body. The media server streams hold music to
 		// the remote party.
 		//
 		// because the INVITE that triggers the hold  in this case doesn't
@@ -1406,16 +1426,24 @@ done:
 			}
 		}
 	}
+	if(from.flags & SCA_UTIL_FLAG_TO_BODY_ALLOC) {
+		free_to(from.hdr);
+	}
+	if(to.flags & SCA_UTIL_FLAG_TO_BODY_ALLOC) {
+		free_to(to.hdr);
+	}
 }
 
 /* XXX needs extract routines */
 void sca_call_info_ack_cb(struct cell *t, int type, struct tmcb_params *params)
 {
-	struct to_body *to;
+	sca_to_body_t to;
 	sca_appearance *app = NULL;
 	str from_aor = STR_NULL;
 	str to_aor = STR_NULL;
 	int slot_idx = -1;
+
+	memset(&to, 0, sizeof(to));
 
 	if(!(type & TMCB_E2EACK_IN)) {
 		return;
@@ -1429,9 +1457,9 @@ void sca_call_info_ack_cb(struct cell *t, int type, struct tmcb_params *params)
 		LM_ERR("sca_call_info_ack_cb: failed to get To-header\n");
 		goto done;
 	}
-	if(sca_uri_extract_aor(&to->uri, &to_aor) < 0) {
+	if(sca_uri_extract_aor(&to.hdr->uri, &to_aor) < 0) {
 		LM_ERR("sca_call_info_ack_cb: failed to extract To AoR from %.*s\n",
-				STR_FMT(&to->uri));
+				STR_FMT(&to.hdr->uri));
 		goto done;
 	}
 
@@ -1445,7 +1473,7 @@ void sca_call_info_ack_cb(struct cell *t, int type, struct tmcb_params *params)
 
 	// on ACK, ensure SCA callee state is promoted to ACTIVE.
 	app = sca_appearance_for_tags_unsafe(sca, &to_aor,
-			&params->req->callid->body, &to->tag_value, NULL, slot_idx);
+			&params->req->callid->body, &to.hdr->tag_value, NULL, slot_idx);
 	if(app && app->state == SCA_APPEARANCE_STATE_ACTIVE_PENDING) {
 		LM_DBG("promoting %.*s appearance-index %d to active\n",
 				STR_FMT(&to_aor), app->index);
@@ -1466,6 +1494,9 @@ void sca_call_info_ack_cb(struct cell *t, int type, struct tmcb_params *params)
 done:
 	if(from_aor.s != NULL) {
 		pkg_free(from_aor.s);
+	}
+	if(to.flags & SCA_UTIL_FLAG_TO_BODY_ALLOC) {
+		free_to(to.hdr);
 	}
 }
 
@@ -1736,10 +1767,12 @@ void sca_call_info_sl_reply_cb(void *cb_arg)
 {
 	sl_cbp_t *slcbp = (sl_cbp_t *)cb_arg;
 	sip_msg_t *msg;
-	struct to_body *from;
-	struct to_body *to;
+	sca_to_body_t from, to;
 	str aor = STR_NULL;
 	str contact_uri = STR_NULL;
+
+	memset(&from, 0, sizeof(from));
+	memset(&to, 0, sizeof(to));
 
 	if(slcbp == NULL) {
 		return;
@@ -1768,31 +1801,31 @@ void sca_call_info_sl_reply_cb(void *cb_arg)
 				slcbp->code, STR_FMT(slcbp->reason));
 		return;
 	}
-	if(sca_uri_extract_aor(&from->uri, &aor) < 0) {
+	if(sca_uri_extract_aor(&from.hdr->uri, &aor) < 0) {
 		LM_ERR("sca_call_info_sl_reply_cb: failed to extract AoR "
 			   "from URI %.*s\n",
-				STR_FMT(&from->uri));
-		return;
+				STR_FMT(&from.hdr->uri));
+		goto done;
 	}
 
 	if(!sca_uri_is_shared_appearance(sca, &aor)) {
 		// LM_DBG("sca_call_info_sl_reply_cb: ignoring non-shared appearance "
 		//		"%.*s", STR_FMT(&aor));
-		return;
+		goto done;
 	}
 
 	if(sca_get_msg_contact_uri(msg, &contact_uri) < 0) {
 		LM_ERR("sca_call_info_sl_reply_cb: failed to get Contact from "
 			   "request before stateless reply with %d %.*s\n",
 				slcbp->code, STR_FMT(slcbp->reason));
-		return;
+		goto done;
 	}
 
 	if(sca_get_msg_to_header(msg, &to) < 0) {
 		LM_ERR("sca_call_info_sl_reply_cb: failed to get To header from "
 			   "request before stateless reply with %d %.*s\n",
 				slcbp->code, STR_FMT(slcbp->reason));
-		return;
+		goto done;
 	}
 
 	if(sca_subscription_terminate(sca, &aor, SCA_EVENT_TYPE_LINE_SEIZE,
@@ -1802,7 +1835,15 @@ void sca_call_info_sl_reply_cb(void *cb_arg)
 		LM_ERR("sca_call_info_sl_reply_cb: failed to terminate "
 			   "line-seize subscription for %.*s\n",
 				STR_FMT(&contact_uri));
-		return;
+		goto done;
+	}
+
+done:
+	if(from.flags & SCA_UTIL_FLAG_TO_BODY_ALLOC) {
+		free_to(from.hdr);
+	}
+	if(to.flags & SCA_UTIL_FLAG_TO_BODY_ALLOC) {
+		free_to(to.hdr);
 	}
 }
 
@@ -1844,20 +1885,21 @@ int sca_call_info_update(
 {
 	sca_call_info call_info;
 	hdr_field_t *call_info_hdr;
-	struct to_body *from;
-	struct to_body *to;
+	sca_to_body_t from, to;
 	sip_uri_t c_uri;
 	str from_aor = STR_NULL;
 	str to_aor = STR_NULL;
 	str contact_uri = STR_NULL;
 	int aor_flags = SCA_CALL_INFO_UPDATE_FLAG_DEFAULT;
-	int to_body_flags = SCA_CALL_INFO_UPDATE_FLAG_DEFAULT;
 	int n_dispatch;
 	int i;
 	int method;
 	int rc = -1;
+	int_str val;
 
 	method = sca_get_msg_method(msg);
+	memset(&from, 0, sizeof(from));
+	memset(&to, 0, sizeof(to));
 
 	n_dispatch = sizeof(call_info_dispatch) / sizeof(call_info_dispatch[0]);
 	for(i = 0; i < n_dispatch; i++) {
@@ -1900,10 +1942,14 @@ int sca_call_info_update(
 		}
 	}
 
+	delete_avp(
+			sca->cfg->from_uri_avp_type | AVP_VAL_STR, sca->cfg->from_uri_avp);
+	delete_avp(sca->cfg->to_uri_avp_type | AVP_VAL_STR, sca->cfg->to_uri_avp);
+
 	memset(&call_info, 0, sizeof(sca_call_info));
 	call_info_hdr = get_hdr(msg, HDR_CALLINFO_T);
 	if(!SCA_HEADER_EMPTY(call_info_hdr)) {
-		// this needs to accomodate comma-separated appearance info
+		// this needs to accommodate comma-separated appearance info
 		if(sca_call_info_body_parse(&call_info_hdr->body, &call_info) < 0) {
 			LM_ERR("Bad Call-Info header body: %.*s\n",
 					STR_FMT(&call_info_hdr->body));
@@ -1912,34 +1958,24 @@ int sca_call_info_update(
 	}
 
 	if(uri_from != NULL) {
-		if(sca_build_to_body_from_uri(msg, &from, uri_from) < 0) {
-			LM_ERR("Bad From uri from param\n");
-			return (-1);
-		}
+		val.s.s = uri_from->s;
+		val.s.len = uri_from->len;
+		add_avp(sca->cfg->from_uri_avp_type | AVP_VAL_STR,
+				sca->cfg->from_uri_avp, val);
 		LM_DBG("from[%.*s] param\n", STR_FMT(uri_from));
-		to_body_flags |= SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC;
-		if(sca_uri_extract_aor(&from->uri, &from_aor) < 0) {
-			LM_ERR("Failed to extract AoR from From URI %.*s\n",
-					STR_FMT(&from->uri));
-			goto done;
-		}
-	} else if(sca_get_msg_from_header(msg, &from) < 0) {
-		LM_ERR("Bad From header\n");
+	}
+	if(sca_get_msg_from_header(msg, &from) < 0) {
+		LM_ERR("Bad From header");
 		return (-1);
 	}
 	if(uri_to != NULL) {
-		if(sca_build_to_body_from_uri(msg, &to, uri_to) < 0) {
-			LM_ERR("Bad From uri to param\n");
-			goto done;
-		}
+		val.s.s = uri_to->s;
+		val.s.len = uri_to->len;
+		add_avp(sca->cfg->to_uri_avp_type | AVP_VAL_STR, sca->cfg->to_uri_avp,
+				val);
 		LM_DBG("to[%.*s] param\n", STR_FMT(uri_to));
-		to_body_flags |= SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC;
-		if(sca_uri_extract_aor(&to->uri, &to_aor) < 0) {
-			LM_ERR("Failed to extract AoR from To URI %.*s\n",
-					STR_FMT(&to->uri));
-			goto done;
-		}
-	} else if(sca_get_msg_to_header(msg, &to) < 0) {
+	}
+	if(sca_get_msg_to_header(msg, &to) < 0) {
 		LM_ERR("Bad To header\n");
 		goto done;
 	}
@@ -1953,7 +1989,7 @@ int sca_call_info_update(
 			rc = -1;
 			goto done;
 		}
-	} else if(rc < 0) {
+	} else if(rc < 0 && !sca->cfg->contact_fallback) {
 		LM_ERR("Bad Contact\n");
 		goto done;
 	}
@@ -1967,32 +2003,47 @@ int sca_call_info_update(
 				goto done;
 			}
 			aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC;
-		}
-		if(uri_to == NULL) {
-			if(sca_uri_extract_aor(&to->uri, &to_aor) < 0) {
-				LM_ERR("Failed to extract AoR from To URI %.*s\n",
-						STR_FMT(&to->uri));
+		} else {
+			if(sca_uri_extract_aor(&from.hdr->uri, &from_aor) < 0) {
+				LM_ERR("Failed to extract AoR from From URI %.*s\n",
+						STR_FMT(&from.hdr->uri));
 				goto done;
 			}
+		}
+		if(sca_uri_extract_aor(&to.hdr->uri, &to_aor) < 0) {
+			LM_ERR("Failed to extract AoR from To URI %.*s",
+					STR_FMT(&to.hdr->uri));
+			goto done;
 		}
 	} else {
-		if(uri_from == NULL) {
-			if(sca_uri_extract_aor(&from->uri, &from_aor) < 0) {
-				LM_ERR("Failed to extract AoR from From URI %.*s\n",
-						STR_FMT(&from->uri));
-				goto done;
-			}
+		if(sca_uri_extract_aor(&from.hdr->uri, &from_aor) < 0) {
+			LM_ERR("Failed to extract AoR from From URI %.*s",
+					STR_FMT(&from.hdr->uri));
+			goto done;
 		}
 		if(uri_to == NULL) {
 			if(sca_create_canonical_aor(msg, &to_aor) < 0) {
 				goto done;
 			}
 			aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC;
+		} else {
+			if(sca_uri_extract_aor(&to.hdr->uri, &to_aor) < 0) {
+				LM_ERR("Failed to extract AoR from To URI %.*s",
+						STR_FMT(&to.hdr->uri));
+				goto done;
+			}
 		}
 	}
 
 	LM_DBG("to_aor[%.*s] from_aor[%.*s]\n", STR_FMT(&to_aor),
 			STR_FMT(&from_aor));
+
+	if(contact_uri.s == NULL && sca->cfg->contact_fallback) {
+		contact_uri.s = sca->cfg->contact_fallback->s;
+		contact_uri.len = sca->cfg->contact_fallback->len;
+		LM_DBG("No Contact header, using default owner[%.*s]\n",
+				STR_FMT(&contact_uri));
+	}
 
 	// early check to see if we're dealing with any SCA endpoints
 	if(sca_uri_is_shared_appearance(sca, &from_aor)) {
@@ -2037,11 +2088,11 @@ int sca_call_info_update(
 
 	LM_DBG("Calling Dispatch Id: %d handler with From-AOR: %.*s To-AOR: %.*s "
 		   "From-URI: <%.*s> To-URI: <%.*s> Contact-URI: <%.*s>\n",
-			i, STR_FMT(&from_aor), STR_FMT(&to_aor), STR_FMT(&from->uri),
-			STR_FMT(&to->uri), STR_FMT(&contact_uri));
+			i, STR_FMT(&from_aor), STR_FMT(&to_aor), STR_FMT(&from.hdr->uri),
+			STR_FMT(&to.hdr->uri), STR_FMT(&contact_uri));
 
-	rc = call_info_dispatch[i].handler(
-			msg, &call_info, from, to, &from_aor, &to_aor, &contact_uri);
+	rc = call_info_dispatch[i].handler(msg, &call_info, from.hdr, to.hdr,
+			&from_aor, &to_aor, &contact_uri);
 	if(rc < 0) {
 		LM_ERR("Failed to update Call-Info state for %.*s\n",
 				STR_FMT(&contact_uri));
@@ -2058,16 +2109,11 @@ done:
 			pkg_free(to_aor.s);
 		}
 	}
-	if((to_body_flags & SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC)) {
-		if(from != NULL) {
-			free_to(from);
-		}
+	if(from.flags & SCA_UTIL_FLAG_TO_BODY_ALLOC) {
+		free_to(from.hdr);
 	}
-	if((to_body_flags & SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC)) {
-		if(to != NULL) {
-			free_to(to);
-		}
+	if(to.flags & SCA_UTIL_FLAG_TO_BODY_ALLOC) {
+		free_to(to.hdr);
 	}
-
 	return (rc);
 }

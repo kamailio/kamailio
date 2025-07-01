@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -35,11 +37,11 @@
  * Retrieve result set
  */
 //int dbt_get_result(db1_res_t** _r, dbt_result_p _dres);
-int dbt_get_result(db1_res_t** _r, dbt_table_p _dres);
-int dbt_init_result(db1_res_t** _r, dbt_table_p _dres);
-int dbt_get_next_result(db1_res_t** _r, int offset, int rows);
+int dbt_get_result(db1_res_t **_r, dbt_table_p _dres);
+int dbt_init_result(db1_res_t **_r, dbt_table_p _dres);
+int dbt_get_next_result(db1_res_t **_r, int offset, int rows);
 
 
-int dbt_use_table(db1_con_t* _h, const str* _t);
+int dbt_use_table(db1_con_t *_h, const str *_t);
 
 #endif

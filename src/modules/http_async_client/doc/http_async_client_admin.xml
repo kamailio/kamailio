@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -48,8 +48,12 @@
 			<itemizedlist>
 			<listitem>
             <para>
-				<emphasis>libcurl</emphasis>
-				<emphasis>libev</emphasis>
+				<emphasis>libcurl</emphasis> - https://curl.se/libcurl/
+			</para>
+			</listitem>
+			<listitem>
+            <para>
+				<emphasis>libevent</emphasis> - https://libevent.org/
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -233,10 +237,10 @@ modparam("http_async_client", "curl_follow_redirect", 1)
 				</para></listitem>
 			</itemizedlist>
 			<para>
-				<emphasis>Note:</emphasis> 
-				if this module is used in conjunction with another module using libcurl (http_client, utils, xcap, xcap_client), 
+				<emphasis>Note:</emphasis>
+				if this module is used in conjunction with another module using libcurl (http_client, utils, xcap, xcap_client),
 				it must be loaded as first one for this parameter to have effect, otherwise curl will likely use the system memory allocator by default.
-				On the other hand if the module is loaded before any other module using libcurl, all the modules will use the memory manager specified 
+				On the other hand if the module is loaded before any other module using libcurl, all the modules will use the memory manager specified
 				by this parameter.
 			</para>
 		</para>
@@ -388,9 +392,9 @@ modparam("http_async_client", "tcp_ka_interval", 120)
             Sends HTTP(S) request asynchronously to the URL given in <quote>url</quote> parameter, which is a string that may contain pseudo variables.
         </para>
         <para>
-			Parameter <quote>route_name</quote> defines the route to be executed upon reception of HTTP reply, on error or on timeout. 
+			Parameter <quote>route_name</quote> defines the route to be executed upon reception of HTTP reply, on error or on timeout.
 			If a transaction exists before calling <emphasis>http_async_query()</emphasis>, it will be paused and resumed in this route, while the routing script execution will be stopped.
-			If executed in a transactionless context, or if <emphasis>$http_req(suspend)</emphasis> is used not to suspend the transaction, the routing script execution will 
+			If executed in a transactionless context, or if <emphasis>$http_req(suspend)</emphasis> is used not to suspend the transaction, the routing script execution will
 			continue and the query result will be available in <quote>route_name</quote>.
         </para>
         <para>
@@ -431,12 +435,12 @@ route[HTTP_REPLY] {
 </section>
 <section>
 	<title>Pseudo Variables</title>
-	<para>The <literal>$http_req_id</literal> read-only variable can be used in REQUEST_ROUTE to retrive the unique identifier for a query after sending it or in the HTTP callback route to retrive the id of the query the reply belongs to. Useful mainly in non-transactional context.</para>
+	<para>The <literal>$http_req_id</literal> read-only variable can be used in REQUEST_ROUTE to retrieve the unique identifier for a query after sending it or in the HTTP callback route to retrieve the id of the query the reply belongs to. Useful mainly in non-transactional context.</para>
 	<example>
 		<title><literal>$http_req_id</literal> variable usage</title>
 		<programlisting format="linespecific">
 ...
-$http_req(suspend) = 0;  
+$http_req(suspend) = 0;
 
 http_async_query("https://example.com/test.php", "HTTP_REPLY");
 
@@ -459,7 +463,7 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
 		<listitem><para><emphasis>tls_client_cert</emphasis>: sets the client certificate to use</para></listitem>
 		<listitem><para><emphasis>tls_client_key</emphasis>: sets the client certificate key to use</para></listitem>
 		<listitem><para><emphasis>tls_ca_path</emphasis>: sets the CA certificate path to use</para></listitem>
-		<listitem><para><emphasis>authmethod</emphasis>: 
+		<listitem><para><emphasis>authmethod</emphasis>:
 			Sets the preferred authentication mode for HTTP/HTTPS requests. The value is a bitmap
                         and multiple methods can be used. Note that in this case, the CURL library will make an
                         extra request to discover server-supported authentication methods. You may want to use
@@ -474,7 +478,7 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
                                 <listitem><para>16 - HTTP Digest with IE flavour</para></listitem>
                                 </itemizedlist>
                         Default value is 3 - BASIC and Digest authentication.
-                        </para>	
+                        </para>
 		</para></listitem>
 		<listitem><para><emphasis>username</emphasis>: sets the username to use for authenticated requests</para></listitem>
 		<listitem><para><emphasis>password</emphasis>: sets the password to use for authenticated requests</para></listitem>
@@ -514,16 +518,16 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 			<emphasis>$http_rr</emphasis>: http reason phrase
 		</para></listitem>
 		<listitem><para>
-			<emphasis>$http_hdr(Name)</emphasis>: value of the <emphasis>Name</emphasis> header (the <emphasis>$(http_hdr(Name)[N])</emphasis> syntax can also be used, check the SIP $hdr() PV documentation for details) 
+			<emphasis>$http_hdr(Name)</emphasis>: value of the <emphasis>Name</emphasis> header (the <emphasis>$(http_hdr(Name)[N])</emphasis> syntax can also be used, check the SIP $hdr() PV documentation for details)
 		</para></listitem>
 		<listitem><para>
-			<emphasis>$http_mb</emphasis> and <emphasis>$http_ml</emphasis>: HTTP response buffer (including headers) and length 
+			<emphasis>$http_mb</emphasis> and <emphasis>$http_ml</emphasis>: HTTP response buffer (including headers) and length
 		</para></listitem>
 		<listitem><para>
 			<emphasis>$http_rb</emphasis> and <emphasis>$http_bs</emphasis>: HTTP response body and body length
 		</para></listitem>
 		<listitem><para>
-			<emphasis>$http_time</emphasis>: provides access to broken-down transfer time in microseconds calculated by cURL (https://curl.se/libcurl/c/curl_easy_getinfo.html). 
+			<emphasis>$http_time</emphasis>: provides access to broken-down transfer time in microseconds calculated by cURL (https://curl.se/libcurl/c/curl_easy_getinfo.html).
 				<para>
 					<emphasis>'name'</emphasis> can be:
 					<itemizedlist>
@@ -535,7 +539,7 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 						<listitem><para>starttransfer - time from start until just when the first byte is received</para></listitem>
 						<listitem><para>redirect - time taken for all redirect steps before the final transfer.</para></listitem>
 					</itemizedlist>
-				</para>	
+				</para>
 		</para></listitem>
 	</itemizedlist>
 </section>

@@ -27,23 +27,22 @@ fi
 # config vars
 #################################################################
 
-# full privileges MySQL user
-if [ -z "$DBROOTUSER" ]; then
-	DBROOTUSER="root"
-fi
-
 # Set DBROOTPW in kamctlrc or via next line to set the database
 # root password if you want to run this script without any user prompt.
 # This is unsafe, but useful e.g. for automatic testing.
 #DBROOTPW=""
 
-
-if [ -z "$DBPORT" ] ; then
-	CMD="mysql -h $DBHOST -u$DBROOTUSER "
-	DUMP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c -t "
-else
-	CMD="mysql -h $DBHOST -P $DBPORT -u$DBROOTUSER "
-	DUMP_CMD="mysqldump -h $DBHOST -P $DBPORT -u$DBROOTUSER -c -t "
+# build the client base commands one param at a time
+# let the client choose defaults where not specified
+CMD="mysql -h $DBROOTHOST"
+DUMP_CMD="mysqldump -c -t -h $DBROOTHOST"
+if [ -n "$DBROOTPORT" ] ; then
+	CMD="$CMD -P $DBROOTPORT"
+	DUMP_CMD="$DUMP_CMD -P $DBROOTPORT"
+fi
+if [ -n "$DBROOTUSER" ]; then
+  	CMD="$CMD -u $DBROOTUSER"
+  	DUMP_CMD="mysqldump -u $DBROOTUSER"
 fi
 
 #################################################################

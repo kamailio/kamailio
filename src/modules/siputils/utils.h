@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -32,7 +34,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/parser/msg_parser.h" /* struct sip_msg */
 
 /*  replace a part of a sip message identified by (start address,length) with a new part
 	@param msg a pointer to a sip message
@@ -43,14 +45,14 @@
 	@return 0 in case of success, negative on error
 */
 
-int patch (struct sip_msg *msg, char *oldstr, unsigned int oldlen,
-		char *newstr, unsigned int newlen);
+int patch(struct sip_msg *msg, char *oldstr, unsigned int oldlen, char *newstr,
+		unsigned int newlen);
 /*
 	modify the Content-Length header of a sip message
 	@param msg a pointer to a sip message
 	@param newValue the new value of Content-Length
 	@return 0 in case of success, negative on error
 */
-int patch_content_length (struct sip_msg *msg, unsigned int newValue);
+int patch_content_length(struct sip_msg *msg, unsigned int newValue);
 
 #endif

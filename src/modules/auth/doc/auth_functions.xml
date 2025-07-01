@@ -40,7 +40,7 @@ if (www_authenticate("realm", "subscriber")) {
     <section id="auth.f.has_credentials">
 	<title><function>has_credentials(realm)</function></title>
 	<para>
-		This function returns true of the request has Authorization or
+		This function returns true if the request has Authorization or
 		Proxy-Authorization header with provided realm. The parameter
 		can be string with pseudo-variables.
 	</para>
@@ -402,7 +402,7 @@ if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title>auth_get_www_authenticate</title>
+		<title>auth_get_www_authenticate usage</title>
 		<programlisting format="linespecific">
 ...
 if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
@@ -412,5 +412,30 @@ if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
 </programlisting>
 		</example>
 	</section>
+    <section id="auth.f.auth_algorithm">
+	<title><function>auth_algorithm(algorithm)</function></title>
+	<para>
+	  Set hash algorithm used for digest authentication thus overriding
+      algorithm parameter. Possible values are the same as those of
+      algorithm parameter. The parameter may be a pseudo variable.
+	</para>
+	<example>
+	    <title>auth_algorithm example</title>
+	    <programlisting>
+...
+if($fU == "alice") {
+    $var(alg) = "SHA-256";
+} else {
+    $var(alg) = "MD5";
+}
+auth_algorithm("$var(alg)");
+if (!auth_check("$fd", "subscriber", "1")) {
+    auth_challenge("$fd", "1");
+    exit;
+}
+...
+	    </programlisting>
+	</example>
+    </section>
 
 </section>

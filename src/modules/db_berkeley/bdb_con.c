@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -42,7 +44,7 @@
 #include "bdb_lib.h"
 
 /** Free all memory allocated for a bdb_con structure.
- * This function function frees all memory that is in use by
+ * This function frees all memory that is in use by
  * a bdb_con structure.
  * @param con A generic db_con connection structure.
  * @param payload BDB specific payload to be freed.

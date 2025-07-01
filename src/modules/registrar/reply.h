@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -36,18 +38,18 @@
 /*! \brief
  * Send a reply
  */
-int reg_send_reply(struct sip_msg* _m);
+int reg_send_reply(struct sip_msg *_m);
 
 /*! \brief
  * Prepare a reply
  */
-int reg_prepare_reply(struct sip_msg* _m);
+int reg_prepare_reply(struct sip_msg *_m);
 
 
 /*! \brief
  * Build Contact HF for reply
  */
-int build_contact(sip_msg_t *msg, ucontact_t* c, str* host);
+int build_contact(sip_msg_t *msg, ucontact_t *c, str *host);
 
 
 /*! \brief

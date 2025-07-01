@@ -307,7 +307,7 @@ tree root /                \ - 142
    necessary to block an IP.
 
    The maximum number of hits to turn an address red are (n is the
-   address's number of bytes):
+   address' number of bytes):
 
    1 (first byte) + x (second byte) + (x / 2) * (n - 2) (for the rest of
    the bytes) + (n - 1) (to turn the node to red).

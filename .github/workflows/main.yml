@@ -4,17 +4,18 @@ name: build
   push:
     branches:
       - master
-      - '5.6'
-      - '5.5'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-permissions:
-  contents: read # to fetch code (actions/checkout)
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # to fetch code (actions/checkout)
     container:
-      image: kamailio/pkg-kamailio-docker:${{ github.ref_name }}-${{ matrix.distribution }}
+      image: ghcr.io/kamailio/pkg-kamailio-docker:${{ github.ref_name }}-${{ matrix.distribution }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
       volumes:
         - ${{ github.workspace }}:/code
       env:
@@ -23,17 +24,17 @@ jobs:
     strategy:
       matrix:
         include:
-          - distribution: bullseye
+          - distribution: bookworm
             compilier: gcc
-          - distribution: bullseye
+          - distribution: bookworm
             compilier: clang
           - distribution: sid
             compilier: gcc
           - distribution: sid
             compilier: clang
     steps:
-      - uses: actions/checkout@v2
-      - uses: ammaraskar/gcc-problem-matcher@0.1
+      - uses: actions/checkout@v4
+      - uses: ammaraskar/gcc-problem-matcher@0.3.0
       - name: build
         run: |
           cd /code

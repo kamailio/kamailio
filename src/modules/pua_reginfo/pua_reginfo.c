@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -44,6 +46,8 @@ str server_address = {NULL, 0};
 
 int publish_reginfo = 1;
 
+int reginfo_disable_publish = 0; /* Disables publish for current message */
+
 sruid_t _reginfo_sruid;
 
 int reginfo_use_domain = 0;
@@ -54,14 +58,17 @@ static int domain_fixup(void **param, int param_no);
 /** module functions */
 static int mod_init(void);
 
+/* clang-format off */
 /* Commands */
 static cmd_export_t cmds[] = {
 	{"reginfo_subscribe", (cmd_function)reginfo_subscribe, 1,
-			fixup_subscribe, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+		fixup_subscribe, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
 	{"reginfo_subscribe", (cmd_function)reginfo_subscribe2, 2,
-			fixup_subscribe, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+		fixup_subscribe, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
 	{"reginfo_handle_notify", (cmd_function)reginfo_handle_notify, 1,
-			domain_fixup, 0, REQUEST_ROUTE},
+		domain_fixup, 0, REQUEST_ROUTE},
+	{"reginfo_disable_publish", (cmd_function)w_reginfo_disable_publish, 0,
+		0, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -69,22 +76,23 @@ static param_export_t params[] = {
 	{"default_domain", PARAM_STR, &default_domain},
 	{"outbound_proxy", PARAM_STR, &outbound_proxy},
 	{"server_address", PARAM_STR, &server_address},
-	{"publish_reginfo", INT_PARAM, &publish_reginfo},
+	{"publish_reginfo", PARAM_INT, &publish_reginfo},
 	{0, 0, 0}
 };
 
 struct module_exports exports = {
 	"pua_reginfo",	 /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,			 /* exported functions */
-	params,			 /* exported parameters */
-	0,				 /* RPC method exports */
-	0,				 /* exported pseudo-variables */
-	0,				 /* response handling function */
-	mod_init,		 /* module initialization function */
-	0,				 /* per-child init function */
-	0				 /* module destroy function */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* RPC method exports */
+	0,               /* exported pseudo-variables */
+	0,               /* response handling function */
+	mod_init,        /* module initialization function */
+	0,               /* per-child init function */
+	0                /* module destroy function */
 };
+/* clang-format on */
 
 /**
  * init module function

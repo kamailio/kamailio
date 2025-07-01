@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include "isaac/rand.h"
 
-#define FASTRAND_MAX  ((unsigned int)(-1))
+#define FASTRAND_MAX ((unsigned int)(-1))
 
 static randctx is_ctx;
 
@@ -36,8 +36,8 @@ void fastrand_seed(unsigned int seed)
 	int i;
 
 	srandom(seed);
-	for (i=0; i<RANDSIZ; i++)
-		is_ctx.randrsl[i]=random();
+	for(i = 0; i < RANDSIZ; i++)
+		is_ctx.randrsl[i] = random();
 	randinit(&is_ctx, 1);
 }
 
@@ -50,5 +50,5 @@ unsigned int fastrand()
 /* generate a random number between 0 and max ( 0 <=r<=max) */
 unsigned int fastrand_max(unsigned int max)
 {
-	return fastrand()%(max+1);
+	return fastrand() % (max + 1);
 }

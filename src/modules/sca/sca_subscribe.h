@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Andrew Mortensen
+ * Copyright (C) 2024 Sipwise GmbH, https://www.sipwise.com
  *
  * This file is part of the sca module for Kamailio, a free SIP server.
  *
@@ -79,7 +80,7 @@ extern const str SCA_METHOD_SUBSCRIBE;
 	sca_subscription_reply(                           \
 			(mod), (scode), (smsg), SCA_EVENT_TYPE_CALL_INFO, -1, (sreply))
 
-int sca_handle_subscribe(sip_msg_t *, char *, char *);
+int sca_handle_subscribe(sip_msg_t *, str *, str *);
 int sca_subscription_reply(sca_mod *, int, char *, int, int, sip_msg_t *);
 
 int sca_subscription_from_db_result(db1_res_t *, sca_subscription *);
@@ -94,5 +95,6 @@ int sca_subscription_delete_subscriber_for_event(
 		sca_mod *, str *, str *, str *);
 int sca_subscription_terminate(sca_mod *, str *, int, str *, int, int);
 int ki_sca_handle_subscribe(sip_msg_t *msg);
+int ki_sca_handle_subscribe_uris(sip_msg_t *msg, str *, str *);
 
 #endif // SCA_SUBSCRIBE_H

@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module implements an embedded HTTP server using libmicrohttpd.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libmicrohttpd</emphasis> - libmicrohttpd library
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="microhttpd.p.listen_addr">
+		<title><varname>listen_addr</varname> (int)</title>
+		<para>
+			IPv4 address to listen for HTTP connection. If not set, then it
+			listens on all local addresses (port has to be specified by
+			listen_port parameter).
+		</para>
+		<para>
+		<emphasis>
+			Default value is "" (empty - not set).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>listen_addr</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("microhttpd", "listen_addr", "127.0.0.1")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="microhttpd.p.listen_port">
+		<title><varname>listen_port</varname> (int)</title>
+		<para>
+			Port to listen for HTTP connection.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 8280.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>listen_port</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("microhttpd", "listen_port", 8284)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="microhttpd.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[microhttpd:request] block.
+		</para>
+		<para>
+			The function has one string parameter with the value "microhttpd:request".
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("microhttpd", "event_callback", "ksr_microhttpd_event")
+...
+-- event callback function implemented in Lua
+function ksr_microhttpd_event(evname)
+	KSR.info("===== microhttpd module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="microhttpd.f.mhttpd_reply">
+	    <title>
+		<function moreinfo="none">mhttpd_reply(code, reason, ctype, body)</function>
+	    </title>
+	    <para>
+		Send back a reply with content-type and body.
+	    </para>
+		<example>
+		<title><function>mhttpd_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[microhttpd:request] {
+    mhttpd_reply("200", "OK", "text/html",
+        "&lt;html&gt;&lt;body&gt;OK&lt;/body&gt;&lt;/html&gt;");
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+   <section>
+    <title>Event Routes</title>
+    <section id="microhttpd.evr.request">
+        <title>
+        <function moreinfo="none">microhttpd:request</function>
+        </title>
+        <para>
+			The event route is executed when a new HTTP request is received.
+        </para>
+        <para>
+			Inside it, the $mhttpd(...) group of variables is available, giving
+			access to several attributes of the HTTP request, such as method,
+			URL, data (body) or headers.
+        </para>
+        <programlisting  format="linespecific">
+...
+...
+loadmodule "microhttpd.so
+...
+event_route[microhttpd:request] {
+    xinfo("request: $mhttpd(method) - url: $mhttpd(url) - data: [$mhttpd(data)]\n");
+    mhttpd_reply("200", "OK", "text/html",
+        "&lt;html&gt;&lt;body&gt;OK&lt;/body&gt;&lt;/html&gt;");
+}
+...
+        </programlisting>
+	</section>
+	</section>
+
+</chapter>
+

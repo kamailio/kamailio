@@ -1,0 +1,46 @@
+{
+  "name": "contact",
+  "version": 6,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "contact": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "params": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "path": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "received": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "user_agent": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "expires": {
+      "type": "datetime",
+      "default": null,
+      "null": true
+    },
+    "callid": {
+      "type": "string",
+      "default": null,
+      "null": true
+    }
+  ]
+}

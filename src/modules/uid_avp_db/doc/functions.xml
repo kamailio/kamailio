@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="avp_db.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
-	<!-- following is not needed in every section - it is needless here? 
+	<!-- following is not needed in every section - it is needless here?
     <sectioninfo>
     </sectioninfo>-->
 
@@ -66,14 +66,14 @@
 			<term>track</term>
 			<listitem><para>
 			<variablelist>
-			
+
 			<varlistentry>
 				<term>$fu</term>
 				<listitem><para>Load user attributes into from track. In this case
 				the second parameter is UID used to search attributes.
 				</para></listitem>
 			</varlistentry>
-			
+
 			<varlistentry>
 				<term>$tu</term>
 				<listitem><para>Load user attributes into to track. In this case
@@ -113,7 +113,7 @@
 
 	<section><title>load_extra_attrs (group_id, id)</title>
 	<para>
-		Loads 'extra attributes' stored by previous call to save_extra_attrs. 
+		Loads 'extra attributes' stored by previous call to save_extra_attrs.
 		<variablelist>
 			<varlistentry>
 				<term>group_id</term>
@@ -129,10 +129,10 @@
 		</variablelist>
 	</para>
 	</section>
-	
+
 	<section><title>save_extra_attrs (group_id, id)</title>
 	<para>
-		Saves 'extra attributes' flagged by group flag under given id. 
+		Saves 'extra attributes' flagged by group flag under given id.
 		<variablelist>
 			<varlistentry>
 				<term>group_id</term>

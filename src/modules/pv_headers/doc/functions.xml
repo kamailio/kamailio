@@ -151,7 +151,7 @@
 			If there are multiple headers, only the one containing the parameter will be modified.
 		</para>
 		<para>
-			The parameter can be located in any position (begining, middle or end) of the list of parameters.
+			The parameter can be located in any position (beginning, middle or end) of the list of parameters.
 		</para>
 		<para>
 			If the parameter is the only one present, the header will be removed.

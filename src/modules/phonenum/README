@@ -191,7 +191,8 @@ if(phonenum_match_cn("1-484-555-8888", "US", "src")) {
           + number - phone number that is matched
           + valid - 1 if the matched number has a valid result; 0
             otherwise
-          + normalized - normalized phone number
+          + normalized - normalized (E164) phone number
+          + natnum - nationally formatted phone number
           + cctel - country code for phone number
           + ccname - country code name
           + ltype - local network type

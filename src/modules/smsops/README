@@ -33,6 +33,8 @@ Carsten Bock
               4.1. isRPDATA()
               4.2. smsdump()
 
+        5. Variables
+
    List of Examples
 
    1.1. isRPDATA() usage
@@ -56,6 +58,8 @@ Chapter 1. Admin Guide
 
         4.1. isRPDATA()
         4.2. smsdump()
+
+   5. Variables
 
 1. Overview
 
@@ -90,7 +94,7 @@ Chapter 1. Admin Guide
 
 4.1. isRPDATA()
 
-   Returns true, if the message contains RP-Data in it's body.
+   Returns true, if the message contains RP-Data in its body.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -115,3 +119,12 @@ if (isRPDATA())
 ...
 smsdump();
 ...
+
+5. Variables
+
+   Several variables are exported by the module to access the attributes
+   of the SMS.
+     * $smsack
+       $smsbody
+       $rpdata(key)
+       $tpdu(key)

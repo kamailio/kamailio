@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -32,10 +34,12 @@
 #include "../../core/fmsg.h"
 #include "nsq.h"
 
-int nsq_pv_get_event_payload(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int nsq_pv_get_event_payload(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 int nsq_consumer_fire_event(char *routename);
 int nsq_consumer_event(char *payload, char *channel, char *topic);
 
-void nsq_message_handler(struct NSQReader *rdr, struct NSQDConnection *conn, struct NSQMessage *msg, void *ctx);
+void nsq_message_handler(struct NSQReader *rdr, struct NSQDConnection *conn,
+		struct NSQMessage *msg, void *ctx);
 
 #endif /* __NSQ_READER_H_ */

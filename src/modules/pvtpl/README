@@ -1,0 +1,138 @@
+PVTPL Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2024 http://www.asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. tpl (str)
+
+        4. Functions
+
+              4.1. pvtpl_render(tplname, res)
+
+        5. Template File
+
+   List of Examples
+
+   1.1. Set tpl parameter
+   1.2. pvtpl_render usage
+   1.3. Template file
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. tpl (str)
+
+   4. Functions
+
+        4.1. pvtpl_render(tplname, res)
+
+   5. Template File
+
+1. Overview
+
+   The module reads content of files at startup and can evaluate the
+   variables inside during runtime.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. tpl (str)
+
+3.1. tpl (str)
+
+   The definition of a template file:
+     * "name=_string_;fpath=_number_;bsize=_number_"
+
+   The parameter can be set multiple times to get more templates in same
+   configuration file.
+     * name - name of the template.
+     * fpath - path to the template file.
+     * bsize - buffer size to evaluate the template (default: 1024).
+
+   Default value is NULL.
+
+   Example 1.1. Set tpl parameter
+...
+modparam("pvtpl", "tpl", "name=tpl1;fpath=/etc/kamailio/tpl1.pvtpl;bsize=512;")
+modparam("pvtpl", "tpl", "name=tpl2;fpath=/etc/kamailio/tpl2.pvtpl;bsize=256;")
+...
+
+4. Functions
+
+   4.1. pvtpl_render(tplname, res)
+
+4.1.  pvtpl_render(tplname, res)
+
+   Render the template 'tplname' using config variables, setting the
+   result in the variable specified by 'res'.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.2. pvtpl_render usage
+...
+pvtpl_render("t1", "$var(out)");
+...
+
+5. Template File
+
+   The template file can contain text and config variables that are
+   evaluate when running pvtpl_render() functions.
+
+   The templates files are loaded at startup and prepared for runtime. It
+   is no option to reload the template files.
+
+   Example 1.3. Template file
+...
+{
+  "from": "$fu",
+  "to": "$tu",
+  "x" : $var(x)
+}
+...

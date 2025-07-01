@@ -4,7 +4,7 @@
 #include "../cdp/cdp_load.h"
 #include "../cdp_avp/cdp_avp_mod.h"
 
-int AAASendCCR(AAASession * session);
+int AAASendCCR(AAASession *session);
 
 void RoChargingResponseHandler(AAAMessage *response, void *param);
 

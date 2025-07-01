@@ -29,14 +29,16 @@
 #ifndef _MOD_XMPP_H
 #define _MOD_XMPP_H
 
-enum xmpp_pipe_cmd_type {
-	XMPP_PIPE_SEND_PACKET     = 1,
-	XMPP_PIPE_SEND_MESSAGE    = 2,
+enum xmpp_pipe_cmd_type
+{
+	XMPP_PIPE_SEND_PACKET = 1,
+	XMPP_PIPE_SEND_MESSAGE = 2,
 	XMPP_PIPE_SEND_PSUBSCRIBE = 4,
-	XMPP_PIPE_SEND_PNOTIFY    = 8
+	XMPP_PIPE_SEND_PNOTIFY = 8
 };
 
-struct xmpp_pipe_cmd {
+struct xmpp_pipe_cmd
+{
 	enum xmpp_pipe_cmd_type type;
 	char *from, *to, *body, *id;
 };
@@ -58,7 +60,7 @@ extern void xmpp_free_pipe_cmd(struct xmpp_pipe_cmd *cmd);
 char *extract_domain(char *jid);
 char *random_secret(void);
 char *db_key(char *secret, char *domain, char *id);
- 
+
 
 /* xmpp_server.c */
 int xmpp_server_child_process(int data_pipe);

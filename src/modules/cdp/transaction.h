@@ -4,7 +4,7 @@
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
- * Fruanhofer Institute. It was and still is maintained in a separate
+ * Fraunhofer FOKUS Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
@@ -14,7 +14,7 @@
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
  *
- * NB: Alot of this code was originally part of OpenIMSCore,
+ * NB: A lot of this code was originally part of OpenIMSCore,
  * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
  * Thanks for great work! This is an effort to
@@ -24,6 +24,8 @@
  * to manage in the Kamailio/SR environment
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,46 +52,53 @@
 #include "diameter_api.h"
 
 /** Diameter Transaction representation */
-typedef struct _cdp_trans_t{
-	struct timeval started;			/**< Time the transaction was created - used to measure response times */
-	AAAMsgIdentifier endtoendid;	/**< End-to-end id of the messages */
-	AAAMsgIdentifier hopbyhopid;	/**< Hop-by-hop id of the messages */
-	AAATransactionCallback_f *cb;	/**< transactional callback function */
-	void **ptr;						/**< generic pointer to pass to the callback */
-	AAAMessage *ans;				/**< answer for the transaction */
-	time_t expires;					/**< time of expiration, when a time-out event will happen */
-	int auto_drop;					/**< if to drop automatically the transaction on event or to let the app do it later */
-	struct _cdp_trans_t *next;		/**< the next transaction in the transaction list */
-	struct _cdp_trans_t *prev;		/**< the previous transaction in the transaction list */
+typedef struct _cdp_trans_t
+{
+	struct timeval
+			started; /**< Time the transaction was created - used to measure response times */
+	AAAMsgIdentifier endtoendid;  /**< End-to-end id of the messages */
+	AAAMsgIdentifier hopbyhopid;  /**< Hop-by-hop id of the messages */
+	AAATransactionCallback_f *cb; /**< transactional callback function */
+	void **ptr;		 /**< generic pointer to pass to the callback */
+	AAAMessage *ans; /**< answer for the transaction */
+	time_t expires; /**< time of expiration, when a time-out event will happen */
+	int auto_drop; /**< if to drop automatically the transaction on event or to let the app do it later */
+	struct _cdp_trans_t
+			*next; /**< the next transaction in the transaction list */
+	struct _cdp_trans_t
+			*prev; /**< the previous transaction in the transaction list */
 } cdp_trans_t;
 
 /** Diameter Transaction list */
-typedef struct {
-	gen_lock_t *lock;				/**< lock for list operations */
-	cdp_trans_t *head,*tail;		/**< first, last transactions in the list */
+typedef struct
+{
+	gen_lock_t *lock;		  /**< lock for list operations */
+	cdp_trans_t *head, *tail; /**< first, last transactions in the list */
 } cdp_trans_list_t;
 
 int cdp_trans_init();
 int cdp_trans_destroy();
 
-cdp_trans_t* cdp_add_trans(AAAMessage *msg,AAATransactionCallback_f *cb, void *ptr,int timeout,int auto_drop);
+cdp_trans_t *cdp_add_trans(AAAMessage *msg, AAATransactionCallback_f *cb,
+		void *ptr, int timeout, int auto_drop);
 void del_trans(AAAMessage *msg);
-cdp_trans_t* cdp_take_trans(AAAMessage *msg);
+cdp_trans_t *cdp_take_trans(AAAMessage *msg);
 void cdp_free_trans(cdp_trans_t *x);
 
-int cdp_trans_timer(time_t now, void* ptr);
+int cdp_trans_timer(time_t now, void *ptr);
 
 /*            API Exported    */
 
 /** Timeout for Diameter transactions (this is quite big,
  * but increase in case that you have a slow peer) */
 
-AAATransaction *AAACreateTransaction(AAAApplicationId app_id,AAACommandCode cmd_code);
-typedef AAATransaction * (*AAACreateTransaction_f)(AAAApplicationId app_id,AAACommandCode cmd_code);
+AAATransaction *AAACreateTransaction(
+		AAAApplicationId app_id, AAACommandCode cmd_code);
+typedef AAATransaction *(*AAACreateTransaction_f)(
+		AAAApplicationId app_id, AAACommandCode cmd_code);
 
 int AAADropTransaction(AAATransaction *trans);
 typedef int (*AAADropTransaction_f)(AAATransaction *trans);
-
 
 
 #endif /*TRANSACTION_H_*/

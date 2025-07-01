@@ -67,7 +67,7 @@
 		</editor>
 	</authorgroup>
 	<copyright>
-		<year>2003-2008</year>
+		<year>2003-2023</year>
 		<holder>Sippy Software, Inc.</holder>
 	</copyright>
 	<copyright>
@@ -84,8 +84,8 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="rtpproxy_admin.xml"/>
 	<xi:include href="rtpproxy_faq.xml"/>
-	
+
 </book>

@@ -31,7 +31,8 @@
 extern int net_listen(char *server, int port);
 extern int net_connect(char *server, int port);
 extern int net_send(int fd, const char *buf, int len);
-extern int net_printf(int fd, char *format, ...) __attribute__ ((format (printf, 2, 3)));
+extern int net_printf(int fd, char *format, ...)
+		__attribute__((format(printf, 2, 3)));
 extern char *net_read_chunk(int fd, int size);
 extern char *net_read_static(int fd);
 

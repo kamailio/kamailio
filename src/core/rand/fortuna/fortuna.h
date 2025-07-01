@@ -34,7 +34,9 @@
 
 #include <sys/types.h>
 
+/* get len number of random bytes */
 void fortuna_get_bytes(unsigned len, u_int8_t *dst);
-void fortuna_add_entropy(const u_int8_t *data, unsigned len);
+/* add additional entropy to the pool, set force_init to 1 for a fresh initialization */
+void fortuna_add_entropy(const u_int8_t *data, unsigned len, unsigned force_init);
 
 #endif

@@ -33,7 +33,7 @@
 	</copyright>
    </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="rabbitmq_admin.xml"/>
 
 </book>

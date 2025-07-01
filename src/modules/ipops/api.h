@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -34,19 +36,20 @@ int ipopsapi_compare_ips(const str *const ip1, const str *const ip2);
 typedef int (*ip_is_in_subnet_f)(const str *const, const str *const);
 int ipopsapi_ip_is_in_subnet(const str *const ip1, const str *const ip2);
 
-typedef int (*is_ip_f)(const str * const ip);
-int ipopsapi_is_ip(const str * const ip);
+typedef int (*is_ip_f)(const str *const ip);
+int ipopsapi_is_ip(const str *const ip);
 /**
  * @brief IPOPS API structure
  */
-typedef struct ipops_api {
-	compare_ips_f       compare_ips;
-	ip_is_in_subnet_f   ip_is_in_subnet;
-	is_ip_f   is_ip;
+typedef struct ipops_api
+{
+	compare_ips_f compare_ips;
+	ip_is_in_subnet_f ip_is_in_subnet;
+	is_ip_f is_ip;
 } ipops_api_t;
 
-typedef int (*bind_ipops_f)(ipops_api_t* api);
-int bind_ipops(ipops_api_t* api);
+typedef int (*bind_ipops_f)(ipops_api_t *api);
+int bind_ipops(ipops_api_t *api);
 
 /**
  * @brief Load the IPOPS API
@@ -60,8 +63,7 @@ static inline int ipops_load_api(ipops_api_t *api)
 		LM_ERR("cannot find bind_ipops\n");
 		return -1;
 	}
-	if (bindipops(api) < 0)
-	{
+	if(bindipops(api) < 0) {
 		LM_ERR("cannot bind ipops api\n");
 		return -1;
 	}

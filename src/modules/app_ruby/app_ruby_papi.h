@@ -26,16 +26,17 @@
 
 #include "../../core/kemi.h"
 
-typedef struct app_ruby_papi {
+typedef struct app_ruby_papi
+{
 	int (*AppRubyInitChild)(void);
 	void (*AppRubyModDestroy)(void);
 	int (*AppRubyRunEx)(sip_msg_t *msg, char *func, char *p1, char *p2,
-		char *p3, int emode);
-	int (*AppRubyOptSetS)(char* optName, str* optVal);
-	int (*AppRubyOptSetN)(char* optName, int optVal);
-	int (*AppRubyOptSetP)(char* optName, void* optVal);
+			char *p3, int emode);
+	int (*AppRubyOptSetS)(char *optName, str *optVal);
+	int (*AppRubyOptSetN)(char *optName, int optVal);
+	int (*AppRubyOptSetP)(char *optName, void *optVal);
 	int (*AppRubyGetExportSize)(void);
-	sr_kemi_t* (*AppRubyGetExport)(int idx);
+	sr_kemi_t *(*AppRubyGetExport)(int idx);
 	int (*AppRubyInitialized)(void);
 	int (*AppRubyLocalVersion)(void);
 } app_ruby_papi_t;

@@ -7,6 +7,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -33,8 +35,10 @@
 #include "../../core/ut.h"
 #include "../../core/mem/mem.h"
 
-#define H350_SIPURI_LOOKUP_LDAP_FILTER "(&(objectClass=SIPIdentity)(SIPIdentitySIPURI=%s))"
-#define H350_AUTH_FILTER_PATTERN "(&(objectClass=SIPIdentity)(SIPIdentityUserName=%s))"
+#define H350_SIPURI_LOOKUP_LDAP_FILTER \
+	"(&(objectClass=SIPIdentity)(SIPIdentitySIPURI=%s))"
+#define H350_AUTH_FILTER_PATTERN \
+	"(&(objectClass=SIPIdentity)(SIPIdentityUserName=%s))"
 
 static str h350_call_pref_name = str_init("callPreferenceURI");
 static str h350_sip_pwd_name = str_init("SIPIdentityPassword");
@@ -46,7 +50,7 @@ static str h350_service_level_name = str_init("SIPIdentityServiceLevel");
 #define AVP_NAME_STR_BUF_LEN 1024
 #define DIGEST_USERNAME_BUF_SIZE 2048
 
-static regex_t* call_pref_preg;
+static regex_t *call_pref_preg;
 
 int h350_sipuri_lookup(struct sip_msg *_msg, pv_elem_t *_sip_uri)
 {
@@ -98,8 +102,9 @@ int h350_auth_lookup(struct sip_msg *_msg, pv_elem_t *_digest_username,
 			username_avp_name_buf[AVP_NAME_STR_BUF_LEN],
 			password_avp_name_buf[AVP_NAME_STR_BUF_LEN];
 	struct berval **attr_vals = NULL;
-	int_str username_avp_name, password_avp_name, avp_val;
-	unsigned short username_avp_type, password_avp_type;
+	avp_name_t username_avp_name, password_avp_name;
+	avp_value_t avp_val;
+	avp_flags_t username_avp_type, password_avp_type;
 	int rc, ld_result_count;
 
 	/*
@@ -154,7 +159,7 @@ int h350_auth_lookup(struct sip_msg *_msg, pv_elem_t *_digest_username,
 	}
 
 
-	/* 
+	/*
 	 * search for sip digest username in H.350, store digest password
 	 */
 

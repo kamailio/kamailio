@@ -1240,7 +1240,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 5.3. lcr.dump_rules
 
    Causes lcr module to dump the contents of its in-memory lcr_rule and
-   lcr_rule_target tables. Rules can be filetered by lcr_id or lcr_id and
+   lcr_rule_target tables. Rules can be filtered by lcr_id or lcr_id and
    prefix. The filters are passed as optional parameters.
 
    Parameters:

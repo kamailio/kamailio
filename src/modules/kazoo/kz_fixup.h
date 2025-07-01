@@ -7,6 +7,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,21 +31,20 @@
 #ifndef KZ_FIXUP_H_
 #define KZ_FIXUP_H_
 
-int fixup_kz_amqp(void** param, int param_no);
-int fixup_kz_amqp_free(void** param, int param_no);
+int fixup_kz_amqp(void **param, int param_no);
+int fixup_kz_amqp_free(void **param, int param_no);
 
-int fixup_kz_async_amqp(void** param, int param_no);
-int fixup_kz_async_amqp_free(void** param, int param_no);
+int fixup_kz_async_amqp(void **param, int param_no);
+int fixup_kz_async_amqp_free(void **param, int param_no);
 
-int fixup_kz_amqp4(void** param, int param_no);
-int fixup_kz_amqp4_free(void** param, int param_no);
+int fixup_kz_amqp4(void **param, int param_no);
+int fixup_kz_amqp4_free(void **param, int param_no);
 
-int fixup_kz_json(void** param, int param_no);
-int fixup_kz_json_free(void** param, int param_no);
+int fixup_kz_json(void **param, int param_no);
+int fixup_kz_json_free(void **param, int param_no);
 
-int fixup_kz_amqp_encode(void** param, int param_no);
-int fixup_kz_amqp_encode_free(void** param, int param_no);
-
+int fixup_kz_amqp_encode(void **param, int param_no);
+int fixup_kz_amqp_encode_free(void **param, int param_no);
 
 
 #endif /* KZ_FIXUP_H_ */

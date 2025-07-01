@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -47,11 +49,12 @@
 #include "uac.h" /* free_local_ack */
 
 
-#define T_UAC_PTR(T) ((tm_ua_client_t*)((char*)T + sizeof(tm_cell_t) \
-								+ MD5_LEN - sizeof(((tm_cell_t*)0)->md5)))
+#define T_UAC_PTR(T)                                            \
+	((tm_ua_client_t *)((char *)T + sizeof(tm_cell_t) + MD5_LEN \
+						- sizeof(((tm_cell_t *)0)->md5)))
 
 
-static enum kill_reason kr;
+static enum kill_reason _tm_kr;
 
 /* pointer to the big table where all the transaction data lives */
 struct s_table *_tm_table;
@@ -63,18 +66,18 @@ struct s_table *tm_get_table(void)
 
 void reset_kr(void)
 {
-	kr = 0;
+	_tm_kr = 0;
 }
 
 void set_kr(enum kill_reason _kr)
 {
-	kr |= _kr;
+	_tm_kr |= _kr;
 }
 
 
 enum kill_reason get_kr()
 {
-	return kr;
+	return _tm_kr;
 }
 
 
@@ -131,7 +134,7 @@ void free_cell_helper(
 
 	LM_DBG("freeing transaction %p from %s:%u\n", dead_cell, fname, fline);
 
-	if(dead_cell==NULL) {
+	if(dead_cell == NULL) {
 		return;
 	}
 
@@ -153,10 +156,10 @@ void free_cell_helper(
 	release_cell_lock(dead_cell); /* does nothing */
 
 	dead_cell->fcount++;
-	if(dead_cell->fcount!=1) {
+	if(dead_cell->fcount != 1) {
 		LM_WARN("unexpected fcount value: %d\n", dead_cell->fcount);
 	}
-	if(dead_cell->uac==NULL || dead_cell->uac!=T_UAC_PTR(dead_cell)) {
+	if(dead_cell->uac == NULL || dead_cell->uac != T_UAC_PTR(dead_cell)) {
 		LM_WARN("unexpected tm cell content: %p\n", dead_cell);
 		return;
 	}
@@ -204,8 +207,9 @@ void free_cell_helper(
 #ifdef USE_DNS_FAILOVER
 		if(dead_cell->uac[i].dns_h.a) {
 			LM_DBG("branch %d -> dns_h.srv (%.*s) ref=%d,"
-				" dns_h.a (%.*s) ref=%d\n",
-					i, dead_cell->uac[i].dns_h.srv
+				   " dns_h.a (%.*s) ref=%d\n",
+					i,
+					dead_cell->uac[i].dns_h.srv
 							? dead_cell->uac[i].dns_h.srv->name_len
 							: 0,
 					dead_cell->uac[i].dns_h.srv
@@ -327,7 +331,7 @@ struct cell *build_cell(struct sip_msg *p_msg)
 
 	/* allocs a new cell, add space for:
 	 * md5 (MD5_LEN - sizeof(struct cell.md5))
-	 * uac (sr_dst_max_banches * sizeof(struct ua_client) ) */
+	 * uac (sr_dst_max_branches * sizeof(struct ua_client) ) */
 	cell_size = sizeof(struct cell) + MD5_LEN - sizeof(((struct cell *)0)->md5)
 				+ (sr_dst_max_branches * sizeof(struct ua_client));
 
@@ -514,7 +518,7 @@ error0:
  * backup xdata from/to msg context to local var and use T lists
  * - mode = 0 - from msg context to _txdata and use T lists
  * - mode = 1 - restore to msg context from _txdata
- * the function can be also used to restore the core context from transacation data
+ * the function can be also used to restore the core context from transaction data
  */
 void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
 {
@@ -599,21 +603,18 @@ void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 void tm_log_transaction(tm_cell_t *tcell, int llev, char *ltext)
 {
 	LOG(llev, "%s [start] transaction %p\n", ltext, tcell);
-	LOG(llev, "%s - tindex=%u tlabel=%u method='%.*s' from='%.*s'"
-			" to='%.*s' callid='%.*s' cseq='%.*s' uas_request=%s"
+	LOG(llev,
+			"%s - tindex=%u tlabel=%u method='%.*s' from_hdr='%.*s'"
+			" to_hdr='%.*s' callid_hdr='%.*s' cseq_hdr='%.*s' uas_request=%s"
 			" tflags=%u outgoings=%u ref_count=%u lifetime=%u\n",
 			ltext, (unsigned)tcell->hash_index, (unsigned)tcell->label,
-			tcell->method.len, tcell->method.s,
-			tcell->from.len, tcell->from.s,
-			tcell->to.len, tcell->to.s,
-			tcell->callid.len, tcell->callid.s,
-			tcell->cseq_n.len, tcell->cseq_n.s,
-			(tcell->uas.request)?"yes":"no",
-			(unsigned)tcell->flags,
-			(unsigned)tcell->nr_of_outgoings,
+			tcell->method.len, tcell->method.s, tcell->from_hdr.len,
+			tcell->from_hdr.s, tcell->to_hdr.len, tcell->to_hdr.s,
+			tcell->callid_hdr.len, tcell->callid_hdr.s, tcell->cseq_hdr_n.len,
+			tcell->cseq_hdr_n.s, (tcell->uas.request) ? "yes" : "no",
+			(unsigned)tcell->flags, (unsigned)tcell->nr_of_outgoings,
 			(unsigned)atomic_get(&tcell->ref_count),
-			(unsigned)TICKS_TO_S(tcell->end_of_life)
-		);
+			(unsigned)TICKS_TO_S(tcell->end_of_life));
 
 	LOG(llev, "%s [end] transaction %p\n", ltext, tcell);
 }
@@ -628,7 +629,7 @@ void tm_clean_lifetime(void)
 
 	texp = get_ticks_raw() - S_TO_TICKS(TM_LIFETIME_LIMIT);
 
-	for (r=0; r<TABLE_ENTRIES; r++) {
+	for(r = 0; r < TABLE_ENTRIES; r++) {
 		/* faster first try without lock */
 		if(clist_empty(&_tm_table->entries[r], next_c)) {
 			continue;

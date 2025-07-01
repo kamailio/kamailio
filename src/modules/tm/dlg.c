@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -44,7 +46,7 @@
 #include "callid.h"
 #include "uac.h"
 
-#define NORMAL_ORDER 0  /* Create route set in normal order - UAS */
+#define NORMAL_ORDER 0	/* Create route set in normal order - UAS */
 #define REVERSE_ORDER 1 /* Create route set in reverse order - UAC */
 
 
@@ -333,28 +335,37 @@ int new_dlg_uac(str *_cid, str *_ltag, unsigned int _lseq, str *_luri,
 	memset(res, 0, sizeof(dlg_t));
 
 	/* Make a copy of Call-ID */
-	if(str_duplicate(&res->id.call_id, _cid) < 0)
+	if(str_duplicate(&res->id.call_id, _cid) < 0) {
+		free_dlg(res);
 		return -3;
+	}
 	/* Make a copy of local tag (usually From tag) */
-	if(str_duplicate(&res->id.loc_tag, _ltag) < 0)
+	if(str_duplicate(&res->id.loc_tag, _ltag) < 0) {
+		free_dlg(res);
 		return -4;
+	}
 	/* Make a copy of local URI (usually From) */
-	if(str_duplicate(&res->loc_uri, _luri) < 0)
+	if(str_duplicate(&res->loc_uri, _luri) < 0) {
+		free_dlg(res);
 		return -5;
+	}
 	/* Make a copy of remote URI (usually To) */
-	if(str_duplicate(&res->rem_uri, _ruri) < 0)
+	if(str_duplicate(&res->rem_uri, _ruri) < 0) {
+		free_dlg(res);
 		return -6;
+	}
 	/* Make a copy of local sequence (usually CSeq) */
 	res->loc_seq.value = _lseq;
 	/* And mark it as set */
-	res->loc_seq.is_set = 1;
+	res->loc_seq.is_set = DLG_SEQ_VALSET;
 
 	*_d = res;
 
 	if(calculate_hooks(*_d) < 0) {
 		LM_ERR("error while calculating hooks\n");
-		/* FIXME: free everything here */
-		shm_free(res);
+		/* free everything here */
+		free_dlg(res);
+		*_d = NULL;
 		return -2;
 	}
 #ifdef DIALOG_CALLBACKS
@@ -368,7 +379,7 @@ int new_dlg_uac(str *_cid, str *_ltag, unsigned int _lseq, str *_luri,
  * @brief Store display names into a dialog
  * @param _d - dialog structure
  * @param _ldname - local party display name
- * @param _rdname - remote party dispaly name
+ * @param _rdname - remote party display name
  * @return 0 on success; negative on error
  */
 
@@ -666,7 +677,7 @@ static inline int dlg_new_resp_uac(dlg_t *_d, struct sip_msg *_m)
 	code = _m->first_line.u.reply.statuscode;
 
 	if(code < 200) {
-		/* A provisional response, do nothing, we could
+		/* 100-199: a provisional response, do nothing, we could
 		 * update remote tag and route set but we will do that
 		 * for a positive final response anyway and I don't want
 		 * bet on presence of these fields in provisional responses
@@ -674,8 +685,8 @@ static inline int dlg_new_resp_uac(dlg_t *_d, struct sip_msg *_m)
 		 * Send a request to jan@iptel.org if you need to update
 		 * the structures here
 		 */
-	} else if((code >= 200) && (code < 299)) {
-		/* A final response, update the structures and transit
+	} else if(code < 299) {
+		/* 200-299: a final response, update the structures and transit
 		 * into DLG_CONFIRMED
 		 */
 		if(response2dlg(_m, _d) < 0)
@@ -687,7 +698,7 @@ static inline int dlg_new_resp_uac(dlg_t *_d, struct sip_msg *_m)
 			return -2;
 		}
 	} else {
-		/* A negative final response, mark the dialog as destroyed
+		/* 300-699: a negative final response, mark the dialog as destroyed
 		 * Again, I do not update the structures here because it
 		 * makes no sense to me, a dialog shouldn't be used after
 		 * it is destroyed
@@ -712,8 +723,9 @@ static inline int dlg_early_resp_uac(dlg_t *_d, struct sip_msg *_m)
 
 	if(code < 200) {
 		/* We are in early state already, do nothing */
-	} else if((code >= 200) && (code <= 299)) {
-		/* Warning - we can handle here response for non-initial request (for
+	} else if(code <= 299) {
+		/* (200-299)
+		 * Warning - we can handle here response for non-initial request (for
 		 * example UPDATE within early INVITE/BYE dialog) and move into
 		 * confirmed state may be error! But this depends on dialog type... */
 
@@ -967,7 +979,7 @@ static inline int request2dlg(struct sip_msg *_m, dlg_t *_d)
 
 	if(get_cseq_value(_m, &_d->rem_seq.value) < 0)
 		goto err3;
-	_d->rem_seq.is_set = 1;
+	_d->rem_seq.is_set = DLG_SEQ_VALSET;
 
 	if(get_dlg_uri(_m->from, &_d->rem_uri) < 0)
 		goto err3;
@@ -1137,7 +1149,7 @@ int dlg_request_uas(
 
 	/* Neither out of order nor retransmission -> update */
 	_d->rem_seq.value = cseq;
-	_d->rem_seq.is_set = 1;
+	_d->rem_seq.is_set = DLG_SEQ_VALSET;
 
 	/* We will als update remote target URI if the message
 	 * is target refresher

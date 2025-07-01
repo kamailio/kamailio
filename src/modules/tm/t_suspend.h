@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -22,22 +24,22 @@
 #ifndef _T_SUSPEND_H
 #define _T_SUSPEND_H
 
-int t_suspend(struct sip_msg *msg,
-		unsigned int *hash_index, unsigned int *label);
-typedef int (*t_suspend_f)(struct sip_msg *msg,
-		unsigned int *hash_index, unsigned int *label);
+int t_suspend(
+		struct sip_msg *msg, unsigned int *hash_index, unsigned int *label);
+typedef int (*t_suspend_f)(
+		struct sip_msg *msg, unsigned int *hash_index, unsigned int *label);
 
-int t_continue(unsigned int hash_index, unsigned int label,
-		struct action *route);
-int t_continue_skip_timer(unsigned int hash_index, unsigned int label,
-		struct action *route);
-typedef int (*t_continue_f)(unsigned int hash_index, unsigned int label,
-		struct action *route);
+int t_continue(
+		unsigned int hash_index, unsigned int label, struct action *route);
+int t_continue_skip_timer(
+		unsigned int hash_index, unsigned int label, struct action *route);
+typedef int (*t_continue_f)(
+		unsigned int hash_index, unsigned int label, struct action *route);
 
-int t_continue_cb(unsigned int hash_index, unsigned int label,
-		str *cbname, str *cbparam);
-typedef int (*t_continue_cb_f)(unsigned int hash_index, unsigned int label,
-		str *cbname, str *cbparam);
+int t_continue_cb(
+		unsigned int hash_index, unsigned int label, str *cbname, str *cbparam);
+typedef int (*t_continue_cb_f)(
+		unsigned int hash_index, unsigned int label, str *cbname, str *cbparam);
 
 int t_cancel_suspend(unsigned int hash_index, unsigned int label);
 typedef int (*t_cancel_suspend_f)(unsigned int hash_index, unsigned int label);

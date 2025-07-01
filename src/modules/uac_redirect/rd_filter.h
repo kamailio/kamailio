@@ -26,21 +26,21 @@
 #include <sys/types.h> /* for regex */
 #include <regex.h>
 
-#define ACCEPT_FILTER   0
-#define DENY_FILTER     1
+#define ACCEPT_FILTER 0
+#define DENY_FILTER 1
 #define NR_FILTER_TYPES 2
 
-#define ACCEPT_RULE    11
-#define DENY_RULE      12
+#define ACCEPT_RULE 11
+#define DENY_RULE 12
 
-#define RESET_ADDED    (1<<0)
-#define RESET_DEFAULT  (1<<1)
+#define RESET_ADDED (1 << 0)
+#define RESET_DEFAULT (1 << 1)
 
 void init_filters(void);
-void set_default_rule( int type );
+void set_default_rule(int type);
 void reset_filters(void);
-void add_default_filter( int type, regex_t *filter);
-int add_filter( int type, regex_t *filter, int flags);
+void add_default_filter(int type, regex_t *filter);
+int add_filter(int type, regex_t *filter, int flags);
 int run_filters(char *s);
 
 #endif

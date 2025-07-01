@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -37,13 +39,14 @@
 /*
  * Used when converting the query to a result
  */
-int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
-		const unsigned int _cpy);
+int db_unixodbc_str2val(const db_type_t _t, db_val_t *_v, const char *_s,
+		const int _l, const unsigned int _cpy);
 
 /*
  * Used when converting result from a query
  */
-int db_unixodbc_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len);
+int db_unixodbc_val2str(
+		const db1_con_t *_c, const db_val_t *_v, char *_s, int *_len);
 
 
 #endif /* VAL_H */

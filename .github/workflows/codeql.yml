@@ -1,17 +1,36 @@
 name: "CodeQL"
 
 on:
-  push:
-    branches: [ "master", "3.1", "3.2", "3.3", "4.0", "4.1", "4.2", "4.3", "4.4", "5.0", "5.1", "5.2", "5.3", "5.4", "5.5", "5.6" ]
-  pull_request:
-    branches: [ "master" ]
   schedule:
-    - cron: "35 19 * * 3"
-
+    - cron: "30 0 * * *"
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 jobs:
-  analyze:
-    name: Analyze
+  # is required nightly build?
+  # More info at https://stackoverflow.com/questions/63014786/how-to-schedule-a-github-actions-nightly-build-but-run-it-only-when-there-where
+  check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: octokit/request-action@v2.x
+        id: check_last_run
+        with:
+          route: GET /repos/{owner}/{repo}/actions/workflows/codeql.yml/runs?per_page=1&status=success
+          owner: ${{ github.repository_owner }}
+          repo: kamailio
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Show last execution info
+        run: |
+          echo "Last daily build: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}"
+    outputs:
+      last_sha: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}
+  analyze:
+    needs: [check]
+    if: needs.check.outputs.last_sha != github.sha
+    name: Analyze
+    runs-on: [self-hosted, linux, x64, codeql]
     permissions:
       actions: read
       contents: read
@@ -22,17 +41,19 @@ jobs:
       matrix:
         language: [ javascript, cpp, python ]
 
+    container:
+      image: ghcr.io/kamailio/pkg-kamailio-docker:${{ github.ref_name }}-bookworm
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      volumes:
+        - ${{ github.workspace }}:/code
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Install Packages (cpp)
-        if: ${{ matrix.language == 'cpp' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes bison default-libmysqlclient-dev flex libcurl4-openssl-dev libjansson-dev libhiredis-dev libevent-dev liblua5.1-0-dev libpcre3-dev libncurses5-dev libpq-dev libreadline-dev libssl-dev libunistring-dev libxml2-dev pkg-config python3 python3-dev uuid-dev zlib1g-dev
 
       - name: Configure (cpp)
         if: ${{ matrix.language == 'cpp' }}
@@ -43,20 +64,20 @@ jobs:
         run: export PKG_CONFIG_PATH=$RUNNER_TEMP/usr/lib/pkgconfig:$PKG_CONFIG_PATH && echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@v3
         if: ${{ matrix.language == 'javascript' || matrix.language == 'python' }}
 
       - name: Build cpp
         if: ${{ matrix.language == 'cpp' }}
-        run: make all
+        run: make -j$(nproc) all
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"

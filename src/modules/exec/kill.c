@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -26,7 +28,7 @@
  * Module: \ref exec
  *
  * in this file, we implement the ability to send a kill signal to
- * a child after some time; its a quick ugly hack, for example kill
+ * a child after some time; it is a quick ugly hack, for example kill
  * is sent without any knowledge whether the kid is still alive
  *
  * also, it was never compiled without FAST_LOCK -- nothing will

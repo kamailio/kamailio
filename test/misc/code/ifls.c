@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
  /*
@@ -73,7 +73,7 @@ void print_sockaddr(struct sockaddr* sa)
 {
 	unsigned char* buf;
 	int r;
-	
+
 	switch(sa->sa_family){
 	case AF_INET:
 		buf=(char*)&(((struct sockaddr_in*)sa)->sin_addr).s_addr;
@@ -81,14 +81,14 @@ void print_sockaddr(struct sockaddr* sa)
 		break;
 	case AF_INET6:
 		buf=(((struct sockaddr_in6*)sa)->sin6_addr).s6_addr;
-		for(r=0; r<16; r++) 
+		for(r=0; r<16; r++)
 			printf("%02x%s", buf[r], ((r%2)&&(r!=15))?":":"" );
 		printf("\n");
 		break;
 	default:
 		printf("unknown af %d\n", sa->sa_family);
 #ifdef __FreeBSD__
-		for (r=0; r<sa->sa_len; r++) 
+		for (r=0; r<sa->sa_len; r++)
 			printf("%02x ", ((unsigned char*)sa)[r]);
 		printf("\n");
 #endif
@@ -101,18 +101,18 @@ int ls_ifflags(char* name, int family , int options)
 {
 	struct ifreq ifr;
 	int s;
-	
+
 	memset(&ifr, 0, sizeof(ifr)); /* init to 0 (check if filled)*/
 	s=socket(family, SOCK_DGRAM, 0);
 	strncpy(ifr.ifr_name, name, IFNAMSIZ);
-#if 0	
+#if 0
 	if (ioctl(s, SIOCGIFADDR, &ifr)==-1){
 		if(errno==EBADF) return 0; /* invalid descriptor => no address*/
-		fprintf(stderr, "ls_if: ioctl for %s failed: %s\n", name, 
+		fprintf(stderr, "ls_if: ioctl for %s failed: %s\n", name,
 					strerror(errno));
 		goto error;
 	};
-	
+
 	printf("%s:\n", ifr.ifr_name);
 	printf("        dbg: family=%d", ifr.ifr_addr.sa_family);
 #ifdef __FreeBSD__
@@ -124,7 +124,7 @@ int ls_ifflags(char* name, int family , int options)
 		printf("ls_if: OS BUG: SIOCGIFADDR doesn't work!\n");
 		goto error;
 	}
-	
+
 	printf("        ");
 	print_sockaddr(&ifr.ifr_addr);
 
@@ -170,7 +170,7 @@ int ls_ifflags(char* name, int family , int options)
 			}
 		}
 	};
-		
+
 	close(s);
 	return 0;
 error:
@@ -188,7 +188,7 @@ int ls_ifs(char* name, int family, int options)
 	int size;
 	int lastlen;
 	int s;
-	
+
 	/* ipv4 or ipv6 only*/
 	s=socket(family, SOCK_DGRAM, 0);
 	lastlen=0;
@@ -210,7 +210,7 @@ int ls_ifs(char* name, int family, int options)
 		/* try a bigger array*/
 		free(ifc.ifc_req);
 	}
-	
+
 	last=(char*)ifc.ifc_req+ifc.ifc_len;
 	for(ifr=ifc.ifc_req; (char*)ifr<last;
 			ifr=(struct ifreq*)((char*)ifr+sizeof(ifr->ifr_name)+
@@ -266,8 +266,8 @@ int main(int argc, char**argv)
 	int ipv6, ipv4;
 	int r;
 	char c;
-	
-	
+
+
 	options=0;
 	ipv6=ipv4=1;
 	name=0;
@@ -324,7 +324,7 @@ int main(int argc, char**argv)
 		no=argc-optind;
 		name=&argv[optind];
 	}
-	
+
 	if (no==0){
 		/* list all interfaces */
 		if (ipv4) ls_ifs(0, AF_INET, options);
@@ -335,8 +335,8 @@ int main(int argc, char**argv)
 			if (ipv6) ls_ifs(name[r], AF_INET6, options);
 		}
 	};
-	
-	
+
+
 	exit(0);
 error:
 	exit(-1);

@@ -7,6 +7,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -33,32 +35,32 @@
 
 int conference_add_events(void)
 {
-    pres_ev_t event;
+	pres_ev_t event;
 
-    /* constructing "conference" event and add it to the list of events packages supported */
-    memset(&event, 0, sizeof(pres_ev_t));
-    event.name.s = "conference";
-    event.name.len = 10;
+	/* constructing "conference" event and add it to the list of events packages supported */
+	memset(&event, 0, sizeof(pres_ev_t));
+	event.name.s = "conference";
+	event.name.len = 10;
 
-    event.content_type.s = "application/conference-info+xml";
-    event.content_type.len = 31;
+	event.content_type.s = "application/conference-info+xml";
+	event.content_type.len = 31;
 
-    event.default_expires = pres_conf_default_expires;
-    event.type = PUBL_TYPE;
-    event.req_auth = 0;
-    event.evs_publ_handl = 0;
+	event.default_expires = pres_conf_default_expires;
+	event.type = PUBL_TYPE;
+	event.req_auth = 0;
+	event.evs_publ_handl = 0;
 
-    /* aggregate XML body and free() function */
-    event.agg_nbody = conf_agg_nbody;
-    event.free_body = free_xml_body;
+	/* aggregate XML body and free() function */
+	event.agg_nbody = conf_agg_nbody;
+	event.free_body = free_xml_body;
 
-    /* modify XML body for each watcher to set the correct "version" */
-    event.aux_body_processing = conf_body_setversion;
+	/* modify XML body for each watcher to set the correct "version" */
+	event.aux_body_processing = conf_body_setversion;
 
-    if (pres_add_event(&event) < 0) {
+	if(pres_add_event(&event) < 0) {
 		LM_ERR("failed to add event \"conference\"\n");
 		return -1;
-    }
+	}
 
-    return 0;
+	return 0;
 }

@@ -78,8 +78,8 @@ Chapter 1. Admin Guide
    'modules/app_python/python_examples/'.
 
    As python2 is deprecated in Debian and other distributions, please use
-   the “app_python3” module instead. This module will be removed future
-   releases.
+   the “app_python3” module instead. This module will be removed in a
+   future release.
 
 2. Dependencies
 

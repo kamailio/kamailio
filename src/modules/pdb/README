@@ -12,6 +12,11 @@ Pawel Kuzak
    1&1 Internet AG
    <pawel.kuzak@1und1.de>
 
+Muhammad Shahzad Shafi
+
+   1&1 Internet AG
+   <muhammad.shafi@1und1.de>
+
    Copyright © 2009 1&1 Internet AG
      __________________________________________________________________
 
@@ -29,25 +34,29 @@ Pawel Kuzak
 
               3.1. timeout (integer)
               3.2. server (string)
+              3.3. ll_info (int)
 
         4. Functions
 
-              4.1. pdb_query (string query, string dstavp)
+              4.1. pdb_query (string query, string dstpv)
 
         5. RPC Commands
 
               5.1. pdb.status
-              5.2. pdb.activate
-              5.3. pdb.deactivate
+              5.2. pdb.timeout
+              5.3. pdb.activate
+              5.4. pdb.deactivate
 
    List of Examples
 
    1.1. Set timeout parameter
    1.2. Set server parameter
-   1.3. pdb_query usage
-   1.4. pdb.status usage
-   1.5. pdb.activate usage
-   1.6. pdb.deactivate usage
+   1.3. Set ll_info parameter
+   1.4. pdb_query usage
+   1.5. pdb.status usage
+   1.6. pdb.timeout usage
+   1.7. pdb.activate usage
+   1.8. pdb.deactivate usage
 
 Chapter 1. Admin Guide
 
@@ -63,16 +72,18 @@ Chapter 1. Admin Guide
 
         3.1. timeout (integer)
         3.2. server (string)
+        3.3. ll_info (int)
 
    4. Functions
 
-        4.1. pdb_query (string query, string dstavp)
+        4.1. pdb_query (string query, string dstpv)
 
    5. RPC Commands
 
         5.1. pdb.status
-        5.2. pdb.activate
-        5.3. pdb.deactivate
+        5.2. pdb.timeout
+        5.3. pdb.activate
+        5.4. pdb.deactivate
 
 1. Overview
 
@@ -99,8 +110,8 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   The module depends on the following modules (in the other words the
-   listed modules must be loaded before this module):
+   The module depends on the following modules (in other words the listed
+   modules must be loaded before this module):
      * none
 
 2.2. External Libraries or Applications
@@ -113,6 +124,7 @@ Chapter 1. Admin Guide
 
    3.1. timeout (integer)
    3.2. server (string)
+   3.3. ll_info (int)
 
 3.1. timeout (integer)
 
@@ -136,60 +148,87 @@ modparam("pdb", "timeout", 10)
 modparam("pdb", "server", "localhost:10001,host.name:10001,192.168.1.7:10002")
 ...
 
+3.3. ll_info (int)
+
+   Local log level (per module) for specific INFO messages. It has to be a
+   valid log level value (see xlog() function from xlog module for more
+   details).
+
+   Default value is “2”.
+
+   Example 1.3. Set ll_info parameter
+...
+modparam("pdb", "ll_info", 3)
+...
+
 4. Functions
 
-   4.1. pdb_query (string query, string dstavp)
+   4.1. pdb_query (string query, string dstpv)
 
-4.1.  pdb_query (string query, string dstavp)
+4.1.  pdb_query (string query, string dstpv)
 
    Sends the query string to all configured servers and stores the answer
-   in dstavp. If it takes more than the configured timeout, false is
-   returned. Pseudo-variables or AVPs can be used for the query string.
-   The answer must consist of the null terminated query string followed by
-   a two byte integer value in network byte order. The integer value will
-   be stored in the given AVP.
+   in dstvp. If it takes more than the configured timeout, false is
+   returned. In addition to a string, any pseudo-variable can be used as
+   query. The answer must consist of the null terminated query string
+   followed by a two byte integer value in network byte order. The integer
+   value will be stored in the given pseudo-variable dstvp.
 
-   Example 1.3. pdb_query usage
+   Example 1.4. pdb_query usage
 ...
 # query external service for routing information
-if (!pdb_query("$rU", "$avp(i:82)"))
-  $avp(i:82) = 0; # default routing
+if (!pdb_query("$rU", "$avp(routing)"))
+  $avp(routing) = 0; # default routing
 }
-cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
+cr_route("$avp(routing)", "$rd", "$rU", "$rU", "call_id");
 ...
 
 5. RPC Commands
 
    5.1. pdb.status
-   5.2. pdb.activate
-   5.3. pdb.deactivate
+   5.2. pdb.timeout
+   5.3. pdb.activate
+   5.4. pdb.deactivate
 
 5.1. pdb.status
 
    Prints the status of the module. This can either be "active" or
    "deactivated".
 
-   Example 1.4. pdb.status usage
+   Example 1.5. pdb.status usage
 ...
 kamcmd pdb.status
 ...
 
-5.2. pdb.activate
+5.2. pdb.timeout
+
+   Prints the current PDB query timeout value. This can also be used to
+   set the PDB query timeout.
+
+   Example 1.6. pdb.timeout usage
+...
+# get the PDB query timeout
+kamcmd pdb.timeout
+# set the PDB query timeout to 10ms
+kamcmd pdb.timeout 10
+...
+
+5.3. pdb.activate
 
    Activates the module. This is the default after loading the module.
 
-   Example 1.5. pdb.activate usage
+   Example 1.7. pdb.activate usage
 ...
 kamcmd pdb.activate
 ...
 
-5.3.  pdb.deactivate
+5.4.  pdb.deactivate
 
    Deactivates the module. No more queries are performed until it is
    activated again. As long as the module is deactivated, the pdb_query
    function will return -1.
 
-   Example 1.6. pdb.deactivate usage
+   Example 1.8. pdb.deactivate usage
 ...
 kamcmd pdb.deactivate
 ...

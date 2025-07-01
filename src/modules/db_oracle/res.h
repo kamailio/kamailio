@@ -7,6 +7,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -29,13 +31,13 @@
 #include "../../lib/srdb1/db_con.h"
 
 
-#define STATIC_BUF_LEN	65536
+#define STATIC_BUF_LEN 65536
 extern char st_buf[STATIC_BUF_LEN];
 
 
 /*
  * Read database answer and fill the structure
  */
-int db_oracle_store_result(const db1_con_t* _h, db1_res_t** _r);
+int db_oracle_store_result(const db1_con_t *_h, db1_res_t **_r);
 
 #endif /* RES_H */

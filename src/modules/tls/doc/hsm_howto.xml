@@ -14,7 +14,7 @@
 
 	<title>HSM Howto</title>
 		<para>
-			This documents OpenSSL engine support for private keys in HSM. 
+			This documents OpenSSL engine support for private keys in HSM.
 		</para>
 		<para>
 		        Assumptions: an OpenSSL engine configured with private key. We still require the certificate file

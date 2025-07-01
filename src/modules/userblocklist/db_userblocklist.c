@@ -22,7 +22,7 @@
 /* TODO assign read-write or read-only URI, introduce a parameter in XML */
 
 //extern str userblocklist_db_url;
-db1_con_t * userblocklist_dbh = NULL;
+db1_con_t *userblocklist_dbh = NULL;
 db_func_t userblocklist_dbf;
 
 str userblocklist_table = str_init("userblocklist");
@@ -52,8 +52,9 @@ const unsigned int globalblocklist_version = 1;
 /*
  * Closes the DB connection.
  */
-void userblocklist_db_close(void) {
-	if (userblocklist_dbh) {
+void userblocklist_db_close(void)
+{
+	if(userblocklist_dbh) {
 		userblocklist_dbf.close(userblocklist_dbh);
 		userblocklist_dbh = NULL;
 	}
@@ -66,27 +67,31 @@ void userblocklist_db_close(void) {
  *
  * \return 0 means ok, -1 means an error occurred.
  */
-int userblocklist_db_init(void) {
-	if (!userblocklist_db_url.s || !userblocklist_db_url.len) {
+int userblocklist_db_init(void)
+{
+	if(!userblocklist_db_url.s || !userblocklist_db_url.len) {
 		LM_ERR("you have to set the db_url module parameter.\n");
 		return -1;
 	}
-	if (db_bind_mod(&userblocklist_db_url, &userblocklist_dbf) < 0) {
+	if(db_bind_mod(&userblocklist_db_url, &userblocklist_dbf) < 0) {
 		LM_ERR("can't bind database module.\n");
 		return -1;
 	}
-	if ((userblocklist_dbh = userblocklist_dbf.init(&userblocklist_db_url)) == NULL) {
+	if((userblocklist_dbh = userblocklist_dbf.init(&userblocklist_db_url))
+			== NULL) {
 		LM_ERR("can't connect to database.\n");
 		return -1;
 	}
-	if (db_check_table_version(&userblocklist_dbf, userblocklist_dbh,
-			&userblocklist_table, userblocklist_version) < 0) {
+	if(db_check_table_version(&userblocklist_dbf, userblocklist_dbh,
+			   &userblocklist_table, userblocklist_version)
+			< 0) {
 		DB_TABLE_VERSION_ERROR(userblocklist_table);
 		userblocklist_db_close();
 		return -1;
 	}
-	if (db_check_table_version(&userblocklist_dbf, userblocklist_dbh,
-			&globalblocklist_table, globalblocklist_version) < 0) {
+	if(db_check_table_version(&userblocklist_dbf, userblocklist_dbh,
+			   &globalblocklist_table, globalblocklist_version)
+			< 0) {
 		DB_TABLE_VERSION_ERROR(globalblocklist_table);
 		userblocklist_db_close();
 		return -1;
@@ -102,14 +107,15 @@ int userblocklist_db_init(void) {
  *
  * \return 0 means ok, -1 means an error occurred.
  */
-int userblocklist_db_open(void) {
-	if (userblocklist_dbh) {
+int userblocklist_db_open(void)
+{
+	if(userblocklist_dbh) {
 		userblocklist_dbf.close(userblocklist_dbh);
 	}
-	if ((userblocklist_dbh = userblocklist_dbf.init(&userblocklist_db_url)) == NULL) {
+	if((userblocklist_dbh = userblocklist_dbf.init(&userblocklist_db_url))
+			== NULL) {
 		LM_ERR("can't connect to database.\n");
 		return -1;
 	}
 	return 0;
 }
-

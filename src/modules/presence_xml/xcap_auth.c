@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -300,7 +302,7 @@ xmlNodePtr get_rule_node(subs_t *subs, xmlDocPtr xcap_tree)
 					LM_DBG("<many domain= %s>\n", domain);
 					if((strlen(domain) != subs->from_domain.len
 							   && strncmp(domain, subs->from_domain.s,
-										  subs->from_domain.len))) {
+									   subs->from_domain.len))) {
 						xmlFree(domain);
 						continue;
 					}
@@ -336,7 +338,7 @@ xmlNodePtr get_rule_node(subs_t *subs, xmlDocPtr xcap_tree)
 							if(strlen(domain) == subs->from_domain.len
 									&& (strncmp(domain, subs->from_domain.s,
 												subs->from_domain.len)
-											   == 0)) {
+											== 0)) {
 								LM_DBG("except domain match\n");
 								xmlFree(domain);
 								apply_rule = 0;

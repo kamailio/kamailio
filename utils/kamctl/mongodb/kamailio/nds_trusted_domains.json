@@ -1,0 +1,16 @@
+{
+  "name": "nds_trusted_domains",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "trusted_domain": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

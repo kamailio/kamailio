@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -27,7 +29,8 @@ typedef struct rms_dialog_info rms_dialog_info_t;
 // struct call_leg_media;
 // typedef struct call_leg_media call_leg_media_t;
 
-typedef enum rms_action_type {
+typedef enum rms_action_type
+{
 	RMS_NONE,
 	RMS_START,
 	RMS_STOP,
@@ -77,7 +80,8 @@ typedef struct ms_res
 	RtpProfile *rtp_profile;
 } ms_res_t;
 
-typedef enum rms_dialog_state {
+typedef enum rms_dialog_state
+{
 	RMS_ST_DEFAULT,
 	RMS_ST_CONNECTING,
 	RMS_ST_CONNECTED,

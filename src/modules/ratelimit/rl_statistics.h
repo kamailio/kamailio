@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -50,9 +52,8 @@
 stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int in_codes);
 
 #else
-	#define get_stat_var_from_num_code( _n_code, _in_code) NULL
+#define get_stat_var_from_num_code(_n_code, _in_code) NULL
 #endif
-
 
 
 /*!
@@ -93,7 +94,8 @@ int get_socket_list_from_proto(int **ipList, int protocol);
  *
  * For documentation see \ref get_socket_list_from_proto()
  */
-int get_socket_list_from_proto_and_family(int **ipList, int protocol, int family);
+int get_socket_list_from_proto_and_family(
+		int **ipList, int protocol, int family);
 
 
 /*!

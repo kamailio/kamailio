@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -36,10 +38,11 @@
 /*!
  * List of all domains registered with usrloc
  */
-struct domain_list_item {
+struct domain_list_item
+{
 	str name;
 	udomain_t domain;
-	struct domain_list_item*next;
+	struct domain_list_item *next;
 };
 
 
@@ -72,7 +75,7 @@ unsigned long get_number_of_users(void);
  * \param _d new created domain
  * \return 0 on success, -1 on failure
  */
-int register_udomain(const char* _n, udomain_t** _d);
+int register_udomain(const char *_n, udomain_t **_d);
 
 /*!
  * \brief Get all contacts from the usrloc, in partitions if wanted
@@ -106,8 +109,8 @@ int register_udomain(const char* _n, udomain_t** _d);
  * \param part_max maximal part
  * \return 0 on success, positive if buffer size was not sufficient, negative on failure
  */
-int get_all_ucontacts(void *, int, unsigned int,
-           unsigned int part_idx, unsigned int part_max, int options);
+int get_all_ucontacts(void *, int, unsigned int, unsigned int part_idx,
+		unsigned int part_max, int options);
 
 /*!
  * \brief Find a particular domain, small wrapper around find_dlist
@@ -115,7 +118,15 @@ int get_all_ucontacts(void *, int, unsigned int,
  * \param _p pointer to domain if found
  * \return 1 if domain was found, 0 otherwise
  */
-int find_domain(str* _d, udomain_t** _p);
+int find_domain(str *_d, udomain_t **_p);
 
+/*!
+ * \brief Find and return usrloc domain
+ *
+ * \param _n domain name
+ * \param _d usrloc domain (location table)
+ * \return 0 on success, -1 on failure
+ */
+int get_udomain(const char *_n, udomain_t **_d);
 
 #endif

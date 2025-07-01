@@ -45,7 +45,7 @@
     <section>
       <title>External Libraries or Applications</title>
 
-      <para>This modules requires the Kamailio internal IMS library.</para>
+      <para>This module requires the Kamailio internal IMS library.</para>
     </section>
   </section>
 
@@ -112,6 +112,106 @@ modparam("ims_icscf","scscf_entry_expiry", 300)
     </section>
 
     <section>
+      <title><varname>db_url</varname> (string)</title>
+
+      <para>
+        &url; of the database to be used.
+      </para>
+
+      <para>
+          If the db_url string is empty, the default database URL
+          will be used.
+      </para>
+
+      <para>
+        <emphasis>
+            Default value is <quote>&defaultrodb;</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+        <title>Set <varname>db_url</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "db_url", "&exampledb;")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>
+        <varname>db_nds_table</varname> (string)</title>
+
+      <para>
+        NDS (Network Domain Security) table name in database to be used.
+      </para>
+
+      <para>
+        <emphasis>
+            Default value is <quote>nds_trusted_domains</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+        <title>Set <varname>db_nds_table</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "db_nds_table", "nds_trusted_domains")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>
+        <varname>db_scscf_table</varname> (string)</title>
+
+      <para>
+        S-CSCF table name in database to be used.
+      </para>
+
+      <para>
+        <emphasis>
+            Default value is <quote>s_cscf</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+        <title>Set <varname>db_scscf_table</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "db_scscf_table", "s_cscf")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>
+        <varname>db_capabilities_table</varname> (string)</title>
+
+      <para>
+        S-CSCF capabilities table name in database to be used.
+      </para>
+
+      <para>
+        <emphasis>
+            Default value is <quote>s_cscf_capabilities</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+        <title>Set <varname>db_capabilities_table</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf", "db_capabilities_table", "s_cscf_capabilities")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
       <title><varname>cxdx_forced_peer</varname> (string)</title>
 
       <para>FQDN of Diameter Peer (HSS) to use for communication (UAR, LIR).
@@ -135,7 +235,7 @@ modparam("ims_icscf", "cxdx_forced_peer", "hss.ims.smilecoms.com")
     <section>
       <title><varname>cxdx_dest_realm</varname> (string)</title>
 
-      <para>Destination realm to be used in Diameter messags to HSS</para>
+      <para>Destination realm to be used in Diameter messages to HSS</para>
 
       <para><emphasis> Default value is "ims.smilecoms.com".</emphasis></para>
 
@@ -149,7 +249,7 @@ modparam("ims_icscf", "cxdx_dest_realm", "ims.smilecoms.com")
     </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>use_preferred_scscf_uri</varname> (int)</title>
 
@@ -169,7 +269,7 @@ modparam("ims_icscf", "use_preferred_scscf_uri", 1)
     </programlisting>
       </example>
     </section>
-    
+
     <section>
       <title><varname>preferred_scscf_uri</varname> (string)</title>
 
@@ -188,8 +288,8 @@ modparam("ims_icscf", "preferred_scscf_uri", "sip:scscf.ims.smilecoms.com:6060")
     </programlisting>
       </example>
     </section>
-    
-    
+
+
   </section>
 
   <section>
@@ -302,8 +402,8 @@ route[REG_UAR_REPLY]
                     } else {#select failed
                             I_scscf_drop();
                             t_reply("500", "Server error on SCSCF Select (UAR)");
-                    }       
-                    break;          
+                    }
+                    break;
             case -1: #failure
                     xlog("L_ERR", "UAR failure - error response sent from module\n");
                     break;
@@ -317,7 +417,7 @@ route[REG_UAR_REPLY]
                     break;
     }
 }
-...          
+...
         </programlisting>
       </example>
     </section>
@@ -371,7 +471,7 @@ route[SESSION_LIR_REPLY]
     }
     break;
 }
-...          
+...
         </programlisting>
       </example>
     </section>

@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -36,6 +38,6 @@ int ts_set_tm_callbacks(struct cell *t, sip_msg_t *req, ts_transaction_t *ts);
 /*
  *
  */
-void ts_onreply(struct cell* t, int type, struct tmcb_params *param);
+void ts_onreply(struct cell *t, int type, struct tmcb_params *param);
 
 #endif

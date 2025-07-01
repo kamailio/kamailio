@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -33,7 +35,8 @@
 #include "../../core/rpc.h"
 #include "../../core/timer.h"
 
-typedef enum {
+typedef enum
+{
 	WS_S_CONNECTING = 0, /* Never used - included for completeness */
 	WS_S_OPEN,
 	WS_S_CLOSING,
@@ -77,7 +80,8 @@ typedef struct
 	ws_connection_t *tail;
 } ws_connection_list_t;
 
-typedef enum {
+typedef enum
+{
 	WSCONN_EVENTROUTE_NO = 0,
 	WSCONN_EVENTROUTE_YES
 } ws_conn_eventroute_t;

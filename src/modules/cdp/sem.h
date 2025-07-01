@@ -4,7 +4,7 @@
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
- * Fruanhofer Institute. It was and still is maintained in a separate
+ * Fraunhofer FOKUS Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
@@ -14,7 +14,7 @@
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
  *
- * NB: Alot of this code was originally part of OpenIMSCore,
+ * NB: A lot of this code was originally part of OpenIMSCore,
  * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
  * Thanks for great work! This is an effort to
@@ -24,6 +24,8 @@
  * to manage in the Kamailio/SR environment
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,32 +60,32 @@ typedef sem_t gen_sem_t;
  * @param value - 0 if it should be pre-locked, 1 if not, or how many locks until block
  * @return
  */
-#define sem_new(sem_ptr,value)\
-	do {\
-		sem_ptr=shm_malloc(sizeof(gen_sem_t));\
-		if (!sem_ptr){\
-			LM_ERR("Error allocating %lx bytes of shm!\n",sizeof(gen_sem_t));\
-			goto out_of_memory;\
-		}	\
-		if (sem_init(sem_ptr, 1, value)<0) {\
-			LM_ERR("Error > %s\n",strerror(errno));\
-			goto out_of_memory;\
-		}\
+#define sem_new(sem_ptr, value)                                                \
+	do {                                                                       \
+		sem_ptr = shm_malloc(sizeof(gen_sem_t));                               \
+		if(!sem_ptr) {                                                         \
+			LM_ERR("Error allocating %lx bytes of shm!\n", sizeof(gen_sem_t)); \
+			goto out_of_memory;                                                \
+		}                                                                      \
+		if(sem_init(sem_ptr, 1, value) < 0) {                                  \
+			LM_ERR("Error > %s\n", strerror(errno));                           \
+			goto out_of_memory;                                                \
+		}                                                                      \
 	} while(0)
 
-#define sem_free(sem)\
-	do {\
-		if (sem) {\
-			sem_destroy(sem);\
-			shm_free(sem);\
-			sem=0;\
-		}\
+#define sem_free(sem)         \
+	do {                      \
+		if(sem) {             \
+			sem_destroy(sem); \
+			shm_free(sem);    \
+			sem = 0;          \
+		}                     \
 	} while(0)
 
 
 #define sem_get(sem) sem_wait(sem)
 #define sem_tryget(sem) sem_trywait(sem)
-#define sem_timedget(sem,abs_timeout) sem_trywait(sem,abs_timeout)
+#define sem_timedget(sem, abs_timeout) sem_trywait(sem, abs_timeout)
 
 #define sem_release(sem) sem_post(sem)
 

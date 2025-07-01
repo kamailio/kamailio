@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -30,21 +32,22 @@
 #include "../str.h"
 #include "hf.h"
 
-typedef struct etag {
-	str text;       /* Original string representation */
+typedef struct etag
+{
+	str text; /* Original string representation */
 } etag_t;
 
 
 /*! \brief
  * Parse Sipifmatch HF body
  */
-int parse_sipifmatch(struct hdr_field* _h);
+int parse_sipifmatch(struct hdr_field *_h);
 
 
 /*! \brief
  * Release memory
  */
-void free_sipifmatch(str** _e);
+void free_sipifmatch(str **_e);
 
 
 #endif /* PARSE_SIPIFMATCH_H */

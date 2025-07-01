@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -24,23 +26,24 @@
  * \ingroup parser
  */
 
- 
+
 #ifndef PARSE_ALLOW_H
 #define PARSE_ALLOW_H
- 
+
 #include "hf.h"
 #include "msg_parser.h"
 
- 
+
 /*! \brief
- * casting macro for accessing Allow body 
+ * casting macro for accessing Allow body
  */
-#define get_allow_methods(p_msg)							\
-	(((struct allow_body*)(p_msg)->allow->parsed)->allow_all)
+#define get_allow_methods(p_msg) \
+	(((struct allow_body *)(p_msg)->allow->parsed)->allow_all)
 
 
-struct allow_body {
-	unsigned int allow;     /*!< allow mask for the current hdr */
+struct allow_body
+{
+	unsigned int allow;		/*!< allow mask for the current hdr */
 	unsigned int allow_all; /*!< allow mask for the all allow hdr - it's
 							 * set only for the first hdr in sibling
 							 * list*/
@@ -59,7 +62,7 @@ int parse_allow(struct sip_msg *msg);
  * \param _hf message header field
  * \return 0 on success, -1 on failure.
  */
-int parse_allow_header(struct hdr_field* _hf);
+int parse_allow_header(struct hdr_field *_hf);
 
 
 /*! \brief
@@ -67,8 +70,7 @@ int parse_allow_header(struct hdr_field* _hf);
  */
 void free_allow_body(struct allow_body **ab);
 
-void free_allow_header(struct hdr_field* hf);
-
+void free_allow_header(struct hdr_field *hf);
 
 
 #endif /* PARSE_ALLOW_H */

@@ -20,8 +20,8 @@
         <affiliation>
           <orgname>VozTelecom Sistemas</orgname>
           <orgdiv><ulink url="http://www.wesip.eu">www.wesip.eu</ulink></orgdiv>
-          <address>Ronda Can Fatjo, 9, 1p Parc Tecnologic del Valles Cerdanyola, 08520 (SPAIN) 
-	  Phone:+34 933968800 
+          <address>Ronda Can Fatjo, 9, 1p Parc Tecnologic del Valles Cerdanyola, 08520 (SPAIN)
+	  Phone:+34 933968800
 	  www.voztele.com
 	  <email>elias.baixas@voztele.com</email>
 	  </address>
@@ -41,5 +41,5 @@
   <!-- External Entity Refs -->
   <xi:include href="seas_admin.xml"/>
   <xi:include href="seas_devel.xml"/>
-  
+
 </book>

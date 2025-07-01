@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -44,7 +46,7 @@
 unsigned int global_UserLookupCounter;
 
 
-/* Initializes the kamailioSIPServerObjects module.  This involves: 
+/* Initializes the kamailioSIPServerObjects module.  This involves:
  *
  *  - Registering all OID's
  *  - Setting up handlers for all OID's
@@ -320,7 +322,7 @@ int handle_kamailioSIPRegUserLookupCounter(netsnmp_mib_handler *handler,
 
 	/* If we have had so many requests that we've hit our maximum index,
 	 * then we reset our counter back to 1.  For this not to cause problems,
-	 * it will be required that old rows belonging to the table 
+	 * it will be required that old rows belonging to the table
 	 * kamailioSIPRegUserLookupTable are eventually deleted. */
 	if(global_UserLookupCounter > MAX_USER_LOOKUP_COUNTER) {
 		global_UserLookupCounter = 1;

@@ -5,7 +5,7 @@
 #===================================================================
 
 ### version for this script
-VERSION='5.6.0'
+VERSION='6.0.0'
 
 PATH=$PATH:/usr/local/sbin/
 
@@ -35,13 +35,13 @@ if [ -n "$KAMCTLFULLPATH" ] ; then
 fi
 
 # check for rc file at standard locations
-if [ -f /etc/kamailio/kamctlrc ]; then
+if [ -f /etc/kamailio/kamctlrc -a -r /etc/kamailio/kamctlrc ]; then
 	. /etc/kamailio/kamctlrc
 fi
-if [ -f /usr/local/etc/kamailio/kamctlrc ]; then
+if [ -f /usr/local/etc/kamailio/kamctlrc -a -r /usr/local/etc/kamailio/kamctlrc ]; then
 	. /usr/local/etc/kamailio/kamctlrc
 fi
-if [ -f ~/.kamctlrc ]; then
+if [ -f ~/.kamctlrc -a -r ~/.kamctlrc ]; then
 	. ~/.kamctlrc
 fi
 
@@ -70,7 +70,7 @@ fi
 if [ -f "$MYLIBDIR/kamdbctl.base" ]; then
 	. "$MYLIBDIR/kamdbctl.base"
 else
-	echo -e "Cannot load core functions '$MYLIBDIR/kamdbctl.base' - exiting ...\n"
+	printf "Cannot load core functions '%s' - exiting ...\n\n" "$MYLIBDIR/kamdbctl.base"
 	exit -1
 fi
 
@@ -80,7 +80,7 @@ fi
 #
 unset USED_DBENGINE
 if [ -z "$DBENGINE" ] ; then
-	merr "database engine not specified, please setup one in the config script"
+	merr "database engine not specified, please set one up in the config script"
 	exit 1
 fi
 
@@ -377,7 +377,7 @@ case $1 in
 		# create new database structures
 
 		# confirm dropping of database
-		echo -e "This will drop your current database.\nIt is recommended to first backup your database.\n"
+		printf "This will drop your current database.\nIt is recommended to first backup your database.\n\n"
 		get_answer ask "Continue with drop? (y/n): "
 		if [ "$ANSWER" != "y" ]; then
 			exit 1
@@ -396,7 +396,7 @@ case $1 in
 		# create new database structures
 
 		# confirm dropping of database
-		echo -e "This will drop your current database and create a new one.\nIt is recommended to first backup your database.\n"
+		printf "This will drop your current database and create a new one.\nIt is recommended to first backup your database.\n\n"
 		get_answer ask "Continue with reinit? (y/n): "
 		if [ "$ANSWER" != "y" ]; then
 			exit 1

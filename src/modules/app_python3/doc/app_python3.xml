@@ -32,7 +32,7 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
 	<xi:include href="app_python3_admin.xml"/>
-    
+
 </book>

@@ -28,6 +28,8 @@ Victor Seva
               3.1. basedir (string)
               3.2. mask (int)
               3.3. callid_prefix (string)
+              3.4. skip_unknown (int)
+              3.5. route_log (int)
 
         4. RPC Commands
 
@@ -43,6 +45,8 @@ Victor Seva
    1.1. Set cfgtrace parameter
    1.2. Set mask parameter
    1.3. Set callid_prefix parameter
+   1.4. Set skip_unknown parameter
+   1.5. Set route_log parameter
 
 Chapter 1. Admin Guide
 
@@ -59,6 +63,8 @@ Chapter 1. Admin Guide
         3.1. basedir (string)
         3.2. mask (int)
         3.3. callid_prefix (string)
+        3.4. skip_unknown (int)
+        3.5. route_log (int)
 
    4. RPC Commands
 
@@ -99,6 +105,8 @@ Chapter 1. Admin Guide
    3.1. basedir (string)
    3.2. mask (int)
    3.3. callid_prefix (string)
+   3.4. skip_unknown (int)
+   3.5. route_log (int)
 
 3.1. basedir (string)
 
@@ -143,6 +151,30 @@ modparam("cfgt", "mask", 12)
 ...
 # using '%' as delimiter
 modparam("cfgt", "callid_prefix", "TEST-ID%")
+...
+
+3.4. skip_unknown (int)
+
+   If enabled, value different from 0, cfgt will not generate the report
+   of any message that doesn't match the callid_prefix.
+
+   Default value is “0”, false.
+
+   Example 1.4. Set skip_unknown parameter
+...
+modparam("cfgt", "skip_unknown", "1")
+...
+
+3.5. route_log (int)
+
+   If enabled, value different from 0, cfgt will log (WARN) the execution
+   time of routes.
+
+   Default value is “0”, false.
+
+   Example 1.5. Set route_log parameter
+...
+modparam("cfgt", "route_log", "1")
 ...
 
 4. RPC Commands

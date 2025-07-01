@@ -28,6 +28,11 @@
 			<surname>Modroiu</surname>
 				<email>ramona@rosdev.ro</email>
 		</editor>
+		<editor>
+			<firstname>Tyler</firstname>
+			<surname>Moore</surname>
+			<email>tmoore@dopensource.com</email>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2009-2010</year>
@@ -37,10 +42,14 @@
 		<year>2005</year>
 		<holder>Voice Sistem</holder>
 	</copyright>
+	<copyright>
+		<year>2024</year>
+		<holder>Tyler Moore, dOpenSource</holder>
+	</copyright>
 	</bookinfo>
 	<toc></toc>
 
 	<xi:include href="uac_admin.xml"/>
-	
+
 
 </book>

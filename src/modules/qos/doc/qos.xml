@@ -35,9 +35,9 @@
 	</copyright>
 	</bookinfo>
 	<toc></toc>
-	
+
 	<xi:include href="qos_admin.xml"/>
 	<xi:include href="qos_devel.xml"/>
-	
-	
+
+
 </book>

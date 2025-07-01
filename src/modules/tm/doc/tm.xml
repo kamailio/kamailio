@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	[ <!ENTITY % local.common.attrib
 	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
@@ -72,7 +72,7 @@
 	</para>
 	<para>
 	    From the admin's perspective, these are the major functions : t_relay,
-	    t_relay_to_udp and t_relay_to_tcp. All of them setup transaction
+	    t_relay_to_udp and t_relay_to_tcp. All of them set up transaction
 	    state, absorb retransmissions from upstream, generate downstream
 	    retransmissions and correlate replies to requests. t_relay forwards
 	    to current URI (be it original request's URI or a URI changed by
@@ -248,7 +248,7 @@ request_route {
 	  </para>
 	  <para>
 		Function <function>t_next_contacts()</function> takes the AVP created
-		by the previous function and extract the branches with highest q
+		by the previous function and extracts the branches with highest q
 		values from it. In our example it is branch D. That branch is then put
 		back into the destination set and when the script finally
 		reaches <function>t_relay()</function>, the destination set only
@@ -298,10 +298,10 @@ failure_route["serial"]
 	  </para>
 	  <para>
 		If <function>t_next_contact()</function> returns a positive value then
-		we have more new branches to try and we need to setup the
+		we have more new branches to try and we need to set up the
 		failure_route again and call <function>t_relay()</function>. In our
 		example the request will now be forwarded to branches B and C in
-		paralell, because they were both added to the destination set
+		parallel, because they were both added to the destination set
 		by <function>t_next_contacts()</function> at the same time.
 	  </para>
 	  <para>

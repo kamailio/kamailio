@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -44,6 +46,6 @@
  * \param _r database result row
  * \return 0 on success, -1 on failure
  */
-int db_mysql_convert_row(const db1_con_t* _h, db1_res_t* _res, db_row_t* _r);
+int db_mysql_convert_row(const db1_con_t *_h, db1_res_t *_res, db_row_t *_r);
 
 #endif

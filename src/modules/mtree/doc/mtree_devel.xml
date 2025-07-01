@@ -10,7 +10,7 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-	
+
 	<title>&develguide;</title>
 	<section>
 	<title>Available Functions</title>
@@ -20,7 +20,7 @@
 			</function>
 		</title>
 		<para>
-		The function imports all API functions that are exported by the 
+		The function imports all API functions that are exported by the
 		mtree module (see sections below).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>

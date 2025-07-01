@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -33,13 +35,19 @@ typedef struct _nats_pub_delivery
 {
 	char *subject;
 	char *payload;
+	char *reply;
 } nats_pub_delivery, *nats_pub_delivery_ptr;
 
-nats_pub_delivery_ptr _nats_pub_delivery_new(str subject, str payload);
+nats_pub_delivery_ptr _nats_pub_delivery_new(
+		str subject, str payload, str reply);
 void nats_pub_free_delivery_ptr(nats_pub_delivery_ptr ptr);
 int w_nats_publish_f(sip_msg_t *msg, char *subj, char *payload);
-int w_nats_publish(sip_msg_t *msg, str subj_s, str payload_s);
+int w_nats_publish_reply_f(
+		sip_msg_t *msg, char *subj, char *payload, char *reply);
+int w_nats_publish(sip_msg_t *msg, str subj_s, str payload_s, str reply_s);
 int fixup_publish_get_value(void **param, int param_no);
 int fixup_publish_get_value_free(void **param, int param_no);
+int fixup_publish_reply_get_value(void **param, int param_no);
+int fixup_publish_reply_get_value_free(void **param, int param_no);
 
 #endif

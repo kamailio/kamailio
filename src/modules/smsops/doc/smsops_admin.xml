@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -60,7 +60,7 @@
 		<section id="smsops.f.isRPDATA">
 		<title><function moreinfo="none">isRPDATA()</function></title>
 		<para>
-			Returns true, if the message contains RP-Data in it's body.
+			Returns true, if the message contains RP-Data in its body.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -94,6 +94,20 @@ smsdump();
 		</example>
 		</section>
 	</section><!-- end of functions -->
+
+	<section>
+	<title>Variables</title>
+	<para>Several variables are exported by the module to access the
+	attributes of the SMS.</para>
+	<itemizedlist>
+	<listitem>
+		<para><emphasis>$smsack</emphasis></para>
+		<para><emphasis>$smsbody</emphasis></para>
+		<para><emphasis>$rpdata(key)</emphasis></para>
+		<para><emphasis>$tpdu(key)</emphasis></para>
+	</listitem>
+	</itemizedlist>
+	</section>
 
 </chapter>
 

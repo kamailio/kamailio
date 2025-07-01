@@ -329,8 +329,8 @@ modparam("rr", "enable_socket_mismatch_warning", 0)
 
    When add_username is enabled, a call to record_route will add the
    username of the RequestURI to the Record-Route URI. This parameter
-   allows you to setup an AVP with which you can customise the username to
-   be added in the Record-Route URI.
+   allows you to set up an AVP with which you can customise the username
+   to be added in the Record-Route URI.
 
    Default value: if not set, the std add_username behaviour is used -
    i.e. Request URI username.
@@ -466,13 +466,16 @@ if(!loose_route_preloaded()) {
 
 5.3. loose_route_mode(vmode)
 
-   The function is similar to `loose_route()`, but it does only loose
-   routing processing if vmode==1, skipping the testing of r-uri==myself
-   for performing strict routing. If vmode==0, it behaves like
-   loose_route().
+   The function is similar to `loose_route()`, but it accepts route mode
+   bitmask as vmode parameter.
 
-   It is a convenient function to use with application servers that set
-   the Contact URI to SIP server address.
+   If bit one is set, then do only loose routing processing, skipping the
+   testing of r-uri==myself for performing strict routing. If not, behave
+   like loose_route(). If bit two is set, then skip flow tokens
+   processing.
+
+   First bit is convenient to use with application servers that set the
+   Contact URI to SIP server address.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -765,7 +768,7 @@ record_route_advertised_address("1.2.3.4:5090");
 
 1.3.  add_rr_param(msg, param)
 
-   Adds a parameter to the requests's Record-Route URI (param must be in
+   Adds a parameter to the requests' Record-Route URI (param must be in
    “;name=value” format).
 
    The function returns 0 on success. Otherwise, -1 is returned.

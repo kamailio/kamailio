@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,12 +17,12 @@
 /**
  * @file
  * @brief Native (asm) atomic operations and memory barriers
- * 
+ *
  * Native (assembler) atomic operations and memory barriers.
  * \warning atomic ops do not include memory barriers, see atomic_ops.h for
  * more info. Expects atomic_t to be defined (#include "atomic_common.h")
  *
- * Config defines:   
+ * Config defines:
  * - CC_GCC_LIKE_ASM  - the compiler support gcc style inline asm
  * - NOSMP - the code will be a little faster, but not SMP safe
  * - __CPU_i386, __CPU_x86_64, X86_OOSTORE - see atomic_x86.h
@@ -44,8 +44,8 @@
 
 #include "atomic_x86.h"
 
-#elif defined __CPU_mips2 || defined __CPU_mips64 || \
-	  ( defined __CPU_mips && defined MIPS_HAS_LLSC )
+#elif defined __CPU_mips2 || defined __CPU_mips64 \
+		|| (defined __CPU_mips && defined MIPS_HAS_LLSC)
 
 #include "atomic_mips2.h"
 

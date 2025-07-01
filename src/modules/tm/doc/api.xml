@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="tm.api" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -96,7 +96,7 @@ end of body
 	    </listitem>
 	    <listitem>
 		<para>
-		    CANCEL_TAG similarly enables strict matching of CANCELs 
+		    CANCEL_TAG similarly enables strict matching of CANCELs
 		    including to-tags--act of mercy to UACs, who screw up
 		    the to-tags (however, it still depends on how forgiving
 		    the downstream UAS is). Like with ACK_TAG, all this
@@ -129,7 +129,7 @@ end of body
 		</listitem>
 	    </itemizedlist>
 	</section>
-	
+
 	<section id="load_tm">
 	    <title>
 		<function>load_tm(*import_structure)</function>
@@ -233,7 +233,7 @@ end of body
 	    </itemizedlist>
 	    <para>Return value: 0 - success, &lt;0 - error.</para>
 	</section>
-    
+
 	<section id="t_cancel_suspend">
 	    <title>
 	    	<function>int t_cancel_suspend(unsigned int hash_index, unsigned int label)</function>

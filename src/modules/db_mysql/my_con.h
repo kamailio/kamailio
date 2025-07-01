@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -20,7 +22,7 @@
  */
 
 #ifndef _MY_CON_H
-#define _MY_CON_H  1
+#define _MY_CON_H 1
 
 #include "../../lib/srdb2/db_pool.h"
 #include "../../lib/srdb2/db_con.h"
@@ -29,15 +31,17 @@
 #include <time.h>
 #include <mysql.h>
 
-enum my_con_flags {
+enum my_con_flags
+{
 	MY_CONNECTED = 1
 };
 
-typedef struct my_con {
+typedef struct my_con
+{
 	/* Generic part of the structure */
 	db_pool_entry_t gen;
 
-	MYSQL* con;
+	MYSQL *con;
 	unsigned int flags;
 
 	/* We keep the number of connection resets in this variable, this
@@ -54,9 +58,9 @@ typedef struct my_con {
  * Create a new connection structure,
  * open the MySQL connection and set reference count to 1
  */
-int my_con(db_con_t* con);
+int my_con(db_con_t *con);
 
-int my_con_connect(db_con_t* con);
-void my_con_disconnect(db_con_t* con);
+int my_con_connect(db_con_t *con);
+void my_con_disconnect(db_con_t *con);
 
 #endif /* _MY_CON_H */

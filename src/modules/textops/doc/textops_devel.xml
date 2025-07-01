@@ -10,7 +10,7 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-	
+
 	<title>&develguide;</title>
 		<section>
 		<title>Functions</title>
@@ -24,8 +24,8 @@
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
 			<listitem>
-				<para><emphasis>import_structure</emphasis> - Pointer to 
-				the import structure - see <quote>struct textops_binds</quote> in 
+				<para><emphasis>import_structure</emphasis> - Pointer to
+				the import structure - see <quote>struct textops_binds</quote> in
 				modules/textops/api.h
 				</para>
 			</listitem>

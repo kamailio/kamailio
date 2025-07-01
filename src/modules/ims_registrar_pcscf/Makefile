@@ -32,6 +32,4 @@ ifneq ($(OS),darwin)
 	LIBS += -lpthread
 endif
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/ims/kamailio_ims
 include ../../Makefile.modules

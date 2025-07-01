@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -55,7 +57,7 @@ static int w_xhttp_send_reply(
 static int mod_init(void);
 
 static int fixup_xhttp_reply(void **param, int param_no);
-
+static int fixup_free_xhttp_reply(void **param, int param_no);
 static int pv_get_huri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 static int xhttp_route_no = DEFAULT_RT;
@@ -65,7 +67,7 @@ static char *xhttp_url_skip = NULL;
 static regex_t xhttp_url_skip_regexp;
 
 /** SL API structure */
-sl_api_t slb;
+static sl_api_t _xhttp_slb;
 
 static str xhttp_event_callback = STR_NULL;
 
@@ -94,7 +96,7 @@ static param_export_t params[] = {
 
 static cmd_export_t cmds[] = {
 	{"xhttp_reply",    (cmd_function)w_xhttp_send_reply,
-		4, fixup_xhttp_reply,  0, REQUEST_ROUTE},
+		4, fixup_xhttp_reply, fixup_free_xhttp_reply, REQUEST_ROUTE},
 	{"bind_xhttp",     (cmd_function)bind_xhttp,
 		0, 0, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0}
@@ -143,13 +145,13 @@ static int mod_init(void)
 		xhttp_route_no = route_no;
 	}
 
-	if(cfg_get(tcp, tcp_cfg, accept_no_cl)==0) {
+	if(cfg_get(tcp, tcp_cfg, accept_no_cl) == 0) {
 		LM_WARN("tcp_accept_no_cl not set - usually required"
 				" to handle HTTP requests with no Content-Length\n");
 	}
 
 	/* bind the SL API */
-	if(sl_load_api(&slb) != 0) {
+	if(sl_load_api(&_xhttp_slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
@@ -333,7 +335,7 @@ static int xhttp_handler(sip_msg_t *msg)
 	ret = NONSIP_MSG_DROP;
 
 	if(!IS_HTTP(msg)) {
-		/* oly http msg type */
+		/* only http msg type */
 		return NONSIP_MSG_PASS;
 	}
 
@@ -424,7 +426,7 @@ static int xhttp_send_reply(
 		LM_DBG("response with body: %.*s\n", body->len, body->s);
 	}
 	LM_DBG("sending out response: %d %.*s\n", code, reason->len, reason->s);
-	if(slb.sreply(msg, code, reason) < 0) {
+	if(_xhttp_slb.sreply(msg, code, reason) < 0) {
 		LM_ERR("Error while sending reply\n");
 		return -1;
 	}
@@ -509,6 +511,23 @@ static int fixup_xhttp_reply(void **param, int param_no)
 /**
  *
  */
+static int fixup_free_xhttp_reply(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_igp_null(param, 1);
+	} else if(param_no == 2) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 3) {
+		return fixup_free_spve_null(param, 1);
+	} else if(param_no == 4) {
+		return fixup_free_spve_null(param, 1);
+	}
+	return 0;
+}
+
+/**
+ *
+ */
 int bind_xhttp(xhttp_api_t *api)
 {
 	if(!api) {
@@ -527,11 +546,11 @@ static sr_kemi_xval_t _sr_kemi_xhttp_xval = {0};
 /**
  *
  */
-static sr_kemi_xval_t* ki_xhttp_get_hu(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_xhttp_get_hu(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_xhttp_xval, 0, sizeof(sr_kemi_xval_t));
 
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_xhttp_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_xhttp_xval;
 	}

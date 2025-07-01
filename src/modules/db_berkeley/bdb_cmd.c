@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -63,7 +65,7 @@ static void bdb_cmd_free(db_cmd_t *cmd, bdb_cmd_t *payload)
 
 /** Prepare a query
  * @param cmd DB command structure
- * @param bcmd berkey DB command structure
+ * @param bcmd berkeley DB command structure
  * @return 0 on success, -1 on error
  */
 int bdb_prepare_query(db_cmd_t *cmd, bdb_cmd_t *bcmd)
@@ -197,7 +199,7 @@ error:
 /**
  * Execute a query
  * @param cmd DB command structure
- * @param bcmd Berkely DB command structure
+ * @param bcmd Berkeley DB command structure
  * @return 0 on success, -1 on error
  */
 int bdb_query(db_cmd_t *cmd, bdb_cmd_t *bcmd)

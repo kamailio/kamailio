@@ -500,7 +500,7 @@ class DBTextTest(unittest.TestCase):
     db_conn.CleanUp()
 
     query = ('delete from unsorted_table where id = 5;')
-    result = db_conn.Execute(query, writethru)
+    db_conn.Execute(query, writethru)
     self.assertEqual(db_conn.data, [{'id': 1, 'user': 'fred', 'domain':
                                      'test.com', 'number': 2125551234},
                                     {'id': 4, 'user': 'alex', 'domain':
@@ -514,7 +514,7 @@ class DBTextTest(unittest.TestCase):
     # test insert with auto increment
     query = ("insert into unsorted_table set user='jake', domain='test.com',"
              'number = 2125551456;')
-    result = db_conn.Execute(query, writethru)
+    db_conn.Execute(query, writethru)
     self.assertEqual(db_conn.data, [{'id': 1, 'user': 'fred', 'domain':
                                      'test.com', 'number': 2125551234},
                                     {'id': 4, 'user': 'alex', 'domain':
@@ -531,7 +531,7 @@ class DBTextTest(unittest.TestCase):
 
     # test insert with null value
     query = ("insert into test set col1='asdf';")
-    result = db_conn.Execute(query, writethru)
+    db_conn.Execute(query, writethru)
     self.assertEqual(db_conn.data, [{'col2': 'item2', 'id': 1, 'col1':
                                      'item1\\:'},
                                     {'col2': '', 'id': 2, 'col1':
@@ -543,7 +543,7 @@ class DBTextTest(unittest.TestCase):
 
     # test insert with null value alternate syntax
     query = ("insert test ( col1) values ('asdf');")
-    result = db_conn.Execute(query, writethru)
+    db_conn.Execute(query, writethru)
     self.assertEqual(db_conn.data, [{'col2': 'item2', 'id': 1, 'col1':
                                      'item1\\:'},
                                     {'col2': '', 'id': 2, 'col1':
@@ -555,7 +555,7 @@ class DBTextTest(unittest.TestCase):
 
     # test insert with colon inside value
     query = ("insert into test set col1='as:df';")
-    result = db_conn.Execute(query, writethru)
+    db_conn.Execute(query, writethru)
     self.assertEqual(db_conn.data, [{'col2': 'item2', 'id': 1, 'col1':
                                      'item1\\:'},
                                     {'col2': '', 'id': 2, 'col1':
@@ -567,7 +567,7 @@ class DBTextTest(unittest.TestCase):
 
     # test insert with escaped colon inside value
     query = ("insert into test set col1='as\:df';")
-    result = db_conn.Execute(query, writethru)
+    db_conn.Execute(query, writethru)
     self.assertEqual(db_conn.data, [{'col2': 'item2', 'id': 1, 'col1':
                                      'item1\\:'},
                                     {'col2': '', 'id': 2, 'col1':
@@ -589,7 +589,7 @@ class DBTextTest(unittest.TestCase):
 
     # test update with null value
     query = ("update test set col2='' where id = 3;")
-    result = db_conn.Execute(query, writethru)
+    db_conn.Execute(query, writethru)
     self.assertEqual(db_conn.data, [{'col2': 'item2', 'id': 1, 'col1':
                                      'item1\\:'},
                                     {'col2': '', 'id': 2, 'col1':

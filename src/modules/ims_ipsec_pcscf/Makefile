@@ -28,6 +28,4 @@ ifneq ($(OS),darwin)
 endif
 endif
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/ims/kamailio_ims
 include ../../Makefile.modules

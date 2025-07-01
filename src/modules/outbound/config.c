@@ -1,6 +1,8 @@
 /*
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -32,15 +34,13 @@
 #include "config.h"
 
 struct cfg_group_outbound default_outbound_cfg = {
-		0,	/* Read only variable to mark if outbound is enabled */
+		0, /* Read only variable to mark if outbound is enabled */
 };
 
 void *outbound_cfg = &default_outbound_cfg;
 
 cfg_def_t outbound_cfg_def[] = {
-	{ "outbound_enabled", CFG_VAR_INT | CFG_ATOMIC | CFG_READONLY,
-	  0, 0, 0, 0,
-	  "If set to one (true) Outbound is enabled." },
+		{"outbound_enabled", CFG_VAR_INT | CFG_ATOMIC | CFG_READONLY, 0, 0, 0,
+				0, "If set to one (true) Outbound is enabled."},
 
-	{0, 0, 0, 0, 0, 0}
-};
+		{0, 0, 0, 0, 0, 0}};

@@ -93,7 +93,7 @@ static void get_columns(const con_t* con, res_t* _r, dmap_t* _d)
 
 		{
 			text *name;
-			status = OCIAttrGet(param, OCI_DTYPE_PARAM, 
+			status = OCIAttrGet(param, OCI_DTYPE_PARAM,
 					(dvoid**)(dvoid*)&name, &len,
 					OCI_ATTR_NAME, con->errhp);
 			if (status != OCI_SUCCESS) goto ora_err;
@@ -227,7 +227,7 @@ static void convert_row(const res_t* _res, Str*** _r, const dmap_t* _d)
 
 			*v = (Str*)&_null;
 			if (t != DB_STR) continue;
-#endif			
+#endif
 			*v = (Str*)&_empty;
 			continue;
 		}

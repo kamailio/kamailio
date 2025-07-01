@@ -8,6 +8,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -59,7 +61,7 @@ int ldap_search_impl(struct sip_msg *_msg, str *ldap_url)
 	/*
 	* do variable substitution for _ldap_url (pv_printf_s)
 	*/
-	if(ldap_url == NULL || ldap_url->s==NULL || ldap_url->len<=0) {
+	if(ldap_url == NULL || ldap_url->s == NULL || ldap_url->len <= 0) {
 		LM_ERR("empty ldap_url\n");
 		return -2;
 	}
@@ -126,7 +128,8 @@ int ldap_result_toavp(sip_msg_t *_msg, str *attrname, struct subst_expr *_se,
 		} else {
 			/* save ldap value as string */
 			dst_avp_val.s = avp_val_str;
-			rc = add_avp(dst_avp_type | AVP_VAL_STR, *dst_avp_name, dst_avp_val);
+			rc = add_avp(
+					dst_avp_type | AVP_VAL_STR, *dst_avp_name, dst_avp_val);
 		}
 
 		if(subst_result != NULL) {
@@ -156,8 +159,8 @@ int ldap_result_toavp(sip_msg_t *_msg, str *attrname, struct subst_expr *_se,
 int ldap_write_result(struct sip_msg *_msg, struct ldap_result_params *_lrp,
 		struct subst_expr *_se)
 {
-	int_str dst_avp_name;
-	unsigned short dst_avp_type;
+	avp_name_t dst_avp_name;
+	avp_flags_t dst_avp_type;
 
 	/*
 	* get dst AVP name (dst_avp_name)
@@ -178,8 +181,8 @@ int ldap_write_result(struct sip_msg *_msg, struct ldap_result_params *_lrp,
 		dst_avp_name.s.s = str_buf;
 	}
 
-	return ldap_result_toavp(_msg, &_lrp->ldap_attr_name, _se,
-			&dst_avp_name, dst_avp_type, _lrp->dst_avp_val_type);
+	return ldap_result_toavp(_msg, &_lrp->ldap_attr_name, _se, &dst_avp_name,
+			dst_avp_type, _lrp->dst_avp_val_type);
 }
 
 int ldap_result_next(void)
@@ -207,7 +210,7 @@ int ldap_result_check(struct sip_msg *_msg,
 	struct berval **attr_vals;
 
 	/*
-	* do variable substitution for check_str 
+	* do variable substitution for check_str
 	*/
 
 	if(_lrp->check_str_elem_p) {
@@ -269,8 +272,8 @@ int ldap_filter_url_encode(struct sip_msg *_msg, pv_elem_t *_filter_component,
 		pv_spec_t *_dst_avp_spec)
 {
 	str filter_component_str, esc_str;
-	int_str dst_avp_name;
-	unsigned short dst_avp_type;
+	avp_name_t dst_avp_name;
+	avp_flags_t dst_avp_type;
 
 	/*
 	* variable substitution for _filter_component

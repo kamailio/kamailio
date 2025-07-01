@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -25,17 +25,13 @@
 #include <string.h>
 
 
-
-
 struct dtm_node_t *mroot;
-
-
 
 
 int init_backend(char *filename)
 {
-	mroot=dtm_load(filename);
-	if (mroot == NULL) {
+	mroot = dtm_load(filename);
+	if(mroot == NULL) {
 		LERR("cannot load '%s'.\n", filename);
 		return -1;
 	}
@@ -43,16 +39,15 @@ int init_backend(char *filename)
 }
 
 
-
-
 carrier_t lookup_number(char *number)
 {
 	carrier_t carrierid;
-	int nmatch=dtm_longest_match(mroot, number, strlen(number), &carrierid);
-	if (nmatch<=0) {
-		/* nothing found - return id 0 */
-		carrierid=0;
+	int nmatch = dtm_longest_match(mroot, number, strlen(number), &carrierid);
+	if(nmatch <= 0) {
+		/* nothing found - return id -1 */
+		carrierid = -1;
 	}
-	LINFO("request='%s', nmatch=%ld, carrier=%ld\n", number, (long int)nmatch, (long int)carrierid);
+	LINFO("request='%s', nmatch=%ld, carrier=%ld\n", number, (long int)nmatch,
+			(long int)carrierid);
 	return carrierid;
 }

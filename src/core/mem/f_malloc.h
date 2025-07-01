@@ -40,36 +40,39 @@
  */
 #define F_MALLOC_HASH_BITMAP
 
-#ifdef DBG_F_MALLOC
-#if defined(__CPU_sparc64) || defined(__CPU_sparc)
-/* tricky, on sun in 32 bits mode long long must be 64 bits aligned
- * but long can be 32 bits aligned => malloc should return long long
- * aligned memory */
-	#define ROUNDTO		sizeof(long long)
+/**
+ * ROUNDTO: size to round to, must be = 2^n
+ * - on sun in 32 bits mode long long must be 64 bits aligned but long
+ * can be 32 bits aligned => malloc should return multiple of long long
+ * aligned memory
+ * - malloc() on gnu/linux: multiple of 8 or 16 on 64-bit systems
+ * - for simplicity settle for 16 by default
+ * - sizeof(fm_frag) must be multiple of ROUNDTO!
+ */
+#ifndef KSR_MEMORY_ALIGN
+#define ROUNDTO 16UL
 #else
-	#define ROUNDTO		sizeof(void*) /* size we round to, must be = 2^n, and
-							* sizeof(fm_frag) must be multiple of ROUNDTO !*/
+#define ROUNDTO KSR_MEMORY_ALIGN
 #endif
-#else /* DBG_F_MALLOC */
-	#define ROUNDTO 8UL
-#endif
-#define MIN_FRAG_SIZE	ROUNDTO
 
 
+#define MIN_FRAG_SIZE ROUNDTO
 
-#define F_MALLOC_OPTIMIZE_FACTOR 14UL /* used below */
+
+#define F_MALLOC_OPTIMIZE_FACTOR 15UL /* used below */
 /** Size to optimize for, (most allocs <= this size), must be 2^k */
-#define F_MALLOC_OPTIMIZE  (1UL<<F_MALLOC_OPTIMIZE_FACTOR)
+#define F_MALLOC_OPTIMIZE (1UL << F_MALLOC_OPTIMIZE_FACTOR)
 
 
-#define F_HASH_SIZE (F_MALLOC_OPTIMIZE/ROUNDTO + \
-		(sizeof(long)*8-F_MALLOC_OPTIMIZE_FACTOR)+1)
+#define F_HASH_SIZE              \
+	(F_MALLOC_OPTIMIZE / ROUNDTO \
+			+ (sizeof(long) * 8 - F_MALLOC_OPTIMIZE_FACTOR) + 1)
 
 #ifdef F_MALLOC_HASH_BITMAP
 typedef unsigned long fm_hash_bitmap_t;
-#define FM_HASH_BMP_BITS  (sizeof(fm_hash_bitmap_t)*8)
-#define FM_HASH_BMP_SIZE  \
-	((F_HASH_SIZE+FM_HASH_BMP_BITS-1)/FM_HASH_BMP_BITS)
+#define FM_HASH_BMP_BITS (sizeof(fm_hash_bitmap_t) * 8)
+#define FM_HASH_BMP_SIZE \
+	((F_HASH_SIZE + FM_HASH_BMP_BITS - 1) / FM_HASH_BMP_BITS)
 #endif
 
 /**
@@ -78,22 +81,25 @@ typedef unsigned long fm_hash_bitmap_t;
  * ROUNDTO from bucket to bucket
  * - +1 .... end -  size = 2^k, big buckets
  */
-struct fm_frag{
-	unsigned long size;         /* size of fragment */
-	struct fm_frag* next_free;  /* next free frag in slot */
-	struct fm_frag* prev_free;  /* prev free frag in slot - for faster join/defrag */
-	unsigned int is_free;       /* used to detect if fragment is free (when not 0) */
+struct fm_frag
+{
+	unsigned long size;	   /* size of fragment */
+	unsigned long is_free; /* used to detect if fragment is free (when not 0) */
+	struct fm_frag *next_free; /* next free frag in slot */
+	struct fm_frag *prev_free; /* prev free frag in slot - faster join/defrag */
 #ifdef DBG_F_MALLOC
-	const char* file;
-	const char* func;
-	const char* mname;
+	const char *file;
+	const char *func;
+	const char *mname;
 	unsigned long line;
 #endif
-	unsigned int check;
+	unsigned long reserved1;
+	unsigned long check;
 };
 
-struct fm_frag_lnk{
-	struct fm_frag* first;
+struct fm_frag_lnk
+{
+	struct fm_frag *first;
 	unsigned long no;
 };
 
@@ -101,16 +107,18 @@ struct fm_frag_lnk{
  * \brief Block of memory for F_MALLOC memory manager
  * \see mem_info
  */
-struct fm_block{
-	int type;
-	unsigned long size; /** total size */
-	unsigned long used; /** allocated size*/
+struct fm_block
+{
+	long type;
+	unsigned long size;		 /** total size */
+	unsigned long used;		 /** allocated size*/
 	unsigned long real_used; /** used + malloc overhead */
 	unsigned long max_real_used;
 	unsigned long ffrags;
+	unsigned long reserved1;
 
-	struct fm_frag* first_frag;
-	struct fm_frag* last_frag;
+	struct fm_frag *first_frag;
+	struct fm_frag *last_frag;
 #ifdef F_MALLOC_HASH_BITMAP
 	fm_hash_bitmap_t free_bitmap[FM_HASH_BMP_SIZE];
 #endif
@@ -124,7 +132,7 @@ struct fm_block{
  * \param size Size of allocation
  * \return return the fm_block
  */
-struct fm_block* fm_malloc_init(char* address, unsigned long size, int type);
+struct fm_block *fm_malloc_init(char *address, unsigned long size, int type);
 
 
 /**
@@ -134,11 +142,10 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type);
  * \return address of allocated memory
  */
 #ifdef DBG_F_MALLOC
-void* fm_malloc(void* qmp, size_t size,
-					const char* file, const char* func, unsigned int line,
-					const char* mname);
+void *fm_malloc(void *qmp, size_t size, const char *file, const char *func,
+		unsigned int line, const char *mname);
 #else
-void* fm_malloc(void* qmp, size_t size);
+void *fm_malloc(void *qmp, size_t size);
 #endif
 
 
@@ -149,11 +156,10 @@ void* fm_malloc(void* qmp, size_t size);
  * \return address of allocated memory
  */
 #ifdef DBG_F_MALLOC
-void* fm_mallocxz(void* qmp, size_t size,
-					const char* file, const char* func, unsigned int line,
-					const char* mname);
+void *fm_mallocxz(void *qmp, size_t size, const char *file, const char *func,
+		unsigned int line, const char *mname);
 #else
-void* fm_mallocxz(void* qmp, size_t size);
+void *fm_mallocxz(void *qmp, size_t size);
 #endif
 
 
@@ -165,10 +171,10 @@ void* fm_mallocxz(void* qmp, size_t size);
  * \param p freed memory
  */
 #ifdef DBG_F_MALLOC
-void fm_free(void* qmp, void* p, const char* file, const char* func,
-				unsigned int line, const char* mname);
+void fm_free(void *qmp, void *p, const char *file, const char *func,
+		unsigned int line, const char *mname);
 #else
-void  fm_free(void* qmp, void* p);
+void fm_free(void *qmp, void *p);
 #endif
 
 
@@ -182,10 +188,10 @@ void  fm_free(void* qmp, void* p);
  * \return reallocated memory block
  */
 #ifdef DBG_F_MALLOC
-void* fm_realloc(void* qmp, void* p, size_t size,
-					const char* file, const char* func, unsigned int line, const char *mname);
+void *fm_realloc(void *qmp, void *p, size_t size, const char *file,
+		const char *func, unsigned int line, const char *mname);
 #else
-void*  fm_realloc(void* qmp, void* p, size_t size);
+void *fm_realloc(void *qmp, void *p, size_t size);
 #endif
 
 
@@ -199,10 +205,10 @@ void*  fm_realloc(void* qmp, void* p, size_t size);
  * \return reallocated memory block
  */
 #ifdef DBG_F_MALLOC
-void* fm_realloc(void* qmp, void* p, size_t size,
-					const char* file, const char* func, unsigned int line, const char *mname);
+void *fm_realloc(void *qmp, void *p, size_t size, const char *file,
+		const char *func, unsigned int line, const char *mname);
 #else
-void*  fm_realloc(void* qmp, void* p, size_t size);
+void *fm_realloc(void *qmp, void *p, size_t size);
 #endif
 
 
@@ -210,7 +216,7 @@ void*  fm_realloc(void* qmp, void* p, size_t size);
  * \brief Report internal memory manager status
  * \param qm memory block
  */
-void fm_status(void* qmp);
+void fm_status(void *qmp);
 
 
 /**
@@ -221,7 +227,7 @@ void fm_status(void* qmp);
  * \param qm memory block
  * \param info memory information
  */
-void fm_info(void* qmp, struct mem_info* info);
+void fm_info(void *qmp, struct mem_info *info);
 
 
 /**
@@ -230,15 +236,15 @@ void fm_info(void* qmp, struct mem_info* info);
  * \return Returns how much free memory is available, on error (not compiled
  * with bookkeeping code) returns (unsigned long)(-1)
  */
-unsigned long fm_available(void* qmp);
+unsigned long fm_available(void *qmp);
 
 
 /**
  * \brief Debugging helper, summary and logs all allocated memory blocks
  * \param qm memory block
  */
-void fm_sums(void* qmp);
-void fm_mod_get_stats(void* qm, void **fm_root);
+void fm_sums(void *qmp);
+void fm_mod_get_stats(void *qm, void **fm_root);
 void fm_mod_free_stats(void *root);
 
 #endif

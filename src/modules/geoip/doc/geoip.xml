@@ -36,7 +36,7 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
 	<xi:include href="geoip_admin.xml"/>
-    
+
 </book>

@@ -170,7 +170,7 @@ route [gauge_method]{
 3.4.  statsd_start(key)
 
    statsd_start set an avp with the key name, and when statsd_stop(key) is
-   used, the module will send statsd the difference in milliseconds. this
+   used, the module will send statsd the difference in milliseconds. This
    is useful to know the time of a SQL query, or how much time your
    replies take.
 

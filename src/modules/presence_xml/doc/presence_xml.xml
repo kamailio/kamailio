@@ -35,11 +35,11 @@
 	</copyright>
   </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="presence_xml_admin.xml"/>
     <xi:include href="presence_xml_devel.xml"/>
-    
-    
+
+
 </book>
 
 

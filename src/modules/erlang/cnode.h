@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -45,7 +47,7 @@ typedef struct cnode_handler_s
 	int (*handle_f)(handler_common_t *phandler_t);
 	int (*wait_tmo_f)(handler_common_t *phandler_t);
 	int (*destroy_f)(handler_common_t *phandler_t);
-	int sockfd; /* connection socket to remote erlang node */
+	int sockfd;	 /* connection socket to remote erlang node */
 	ei_cnode ec; /* erlang C node (actually it's kamailio node) */
 
 	/*
@@ -83,7 +85,7 @@ typedef struct csockfd_handler_s
 	int (*handle_f)(handler_common_t *phandler_t);
 	int (*wait_tmo_f)(handler_common_t *phandler_t);
 	int (*destroy_f)(handler_common_t *phandler_t);
-	int sockfd; /* its csockfd */
+	int sockfd;	 /* its csockfd */
 	ei_cnode ec; /* erlang C node (actually it's kamailio node) */
 } csockfd_handler_t;
 
@@ -99,10 +101,12 @@ int handle_cnode(handler_common_t *phandler_t);
 int wait_cnode_tmo(handler_common_t *phandler_t);
 int destroy_cnode(handler_common_t *phandler_t);
 
-int cnode_connect_to(cnode_handler_t *phandler, ei_cnode *ec, const str *nodename );
+int cnode_connect_to(
+		cnode_handler_t *phandler, ei_cnode *ec, const str *nodename);
 int enode_connect();
 
-enum erl_handle_type {
+enum erl_handle_type
+{
 	ERL_EPMD_H = 1,
 	ERL_CNODE_H,
 	ERL_WORKER_H,

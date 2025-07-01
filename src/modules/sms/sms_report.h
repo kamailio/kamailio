@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -24,19 +26,19 @@
 #include "../../core/str.h"
 #include "sms_funcs.h"
 
-#define NR_CELLS  256
+#define NR_CELLS 256
 
 
-int    init_report_queue(void);
-void   destroy_report_queue(void);
-void   add_sms_into_report_queue(int id, struct sms_msg *sms, char *, int );
-int    relay_report_to_queue(int id, char *phone, int status, int *old_status);
-void   check_timeout_in_report_queue(void);
-str*   get_error_str(int status);
-void   remove_sms_from_report_queue(int id);
-str*   get_text_from_report_queue(int id);
-struct sms_msg* get_sms_from_report_queue(int id);
-void   set_gettime_function(void);
+int init_report_queue(void);
+void destroy_report_queue(void);
+void add_sms_into_report_queue(int id, struct sms_msg *sms, char *, int);
+int relay_report_to_queue(int id, char *phone, int status, int *old_status);
+void check_timeout_in_report_queue(void);
+str *get_error_str(int status);
+void remove_sms_from_report_queue(int id);
+str *get_text_from_report_queue(int id);
+struct sms_msg *get_sms_from_report_queue(int id);
+void set_gettime_function(void);
 
 
 #endif

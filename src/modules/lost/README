@@ -29,10 +29,11 @@ Wolfgang Kampichler
               3.3. location_type (string)
               3.4. post_request (int)
               3.5. location_profile (int)
-              3.6. geoheader_type (int)
-              3.7. geoheader_order (int)
-              3.8. recursion (int)
-              3.9. verbose (int)
+              3.6. location_3d (int)
+              3.7. geoheader_type (int)
+              3.8. geoheader_order (int)
+              3.9. recursion (int)
+              3.10. verbose (int)
 
         4. Functions
 
@@ -52,13 +53,14 @@ Wolfgang Kampichler
    1.3. Set location_type parameter
    1.4. Set post_request parameter
    1.5. Set location_profile parameter
-   1.6. Set geoheader_type parameter
-   1.7. Set geoheader_order parameter
-   1.8. Set recursion parameter
-   1.9. Set verbose parameter
-   1.10. lost_held_query() usage
-   1.11. lost_held_dereference() usage
-   1.12. lost() usage
+   1.6. Set location_3d parameter
+   1.7. Set geoheader_type parameter
+   1.8. Set geoheader_order parameter
+   1.9. Set recursion parameter
+   1.10. Set verbose parameter
+   1.11. lost_held_query() usage
+   1.12. lost_held_dereference() usage
+   1.13. lost() usage
 
 Chapter 1. Admin Guide
 
@@ -77,10 +79,11 @@ Chapter 1. Admin Guide
         3.3. location_type (string)
         3.4. post_request (int)
         3.5. location_profile (int)
-        3.6. geoheader_type (int)
-        3.7. geoheader_order (int)
-        3.8. recursion (int)
-        3.9. verbose (int)
+        3.6. location_3d (int)
+        3.7. geoheader_type (int)
+        3.8. geoheader_order (int)
+        3.9. recursion (int)
+        3.10. verbose (int)
 
    4. Functions
 
@@ -93,14 +96,14 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   SIP requests may be forwarded based on a location provided with the
+   SIP requests may be forwarded based on a location provided by the
    request or retrieved from a specific location server using an identity
    (HELD). This module implements the basic functionality to get or parse
    location information (civic and geodetic) and to query a mapping
-   service (LOST) in order to get next hop based on location and service
-   urn either specified or provided with the request.
+   service (LOST) to get the next hop based on location and service urn
+   either specified or provided with the request.
 
-   This module implements protocol functions that use the http_client api
+   This module implements protocol functions that use the http_client API
    to fetch data from external LOST and HELD servers. The module is using
    the http_client concept of "connections" to define properties of HTTP
    sessions. A connection has one or multiple servers and a set of
@@ -126,13 +129,14 @@ Chapter 1. Admin Guide
    request as defined in RFC5222 (https://tools.ietf.org/html/rfc5255) to
    query routing information for a given (geodetic or civic) location and
    a service URN. Both, PIDF-LO and service URN may be provided as
-   function parameter, or are taken from the request message if
+   function parameters, or are taken from the request message if
    applicable. The findServiceResponse is parsed and represented as
-   display name and SIP URI typically used as next hop in a Route header.
+   display name and SIP URI typically used as the next hop in a Route
+   header.
 
-   The http_client module use the CURL library setting up connections. The
-   CURL library by default use the system configured DNS resolver, not the
-   Kamailio resolver.
+   The http_client module uses the CURL library to set up connections. The
+   CURL library by default uses the system-configured DNS resolver, not
+   the Kamailio resolver.
 
    The module is limited to using HTTP and HTTPS protocols.
 
@@ -144,9 +148,9 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * HTTP_CLIENT - the http_client module should be loaded first in
-       order to initialize connections properly.
-     * TLS - if you use TLS connections (https) the tls module should be
+     * HTTP_CLIENT - the http_client module should be loaded first to
+       initialize connections properly.
+     * TLS - if you use TLS connections (https) the TLS module should be
        loaded first in order to initialize OpenSSL properly.
 
 2.2. External Libraries or Applications
@@ -163,13 +167,14 @@ Chapter 1. Admin Guide
    3.3. location_type (string)
    3.4. post_request (int)
    3.5. location_profile (int)
-   3.6. geoheader_type (int)
-   3.7. geoheader_order (int)
-   3.8. recursion (int)
-   3.9. verbose (int)
+   3.6. location_3d (int)
+   3.7. geoheader_type (int)
+   3.8. geoheader_order (int)
+   3.9. recursion (int)
+   3.10. verbose (int)
 
    Besides parameters listed, this module uses http_client therefore
-   according parameters may apply.
+   appropriate module parameters may apply.
 
 3.1. exact_type (int)
 
@@ -186,10 +191,10 @@ Chapter 1. Admin Guide
 
 3.2. response_time (int)
 
-   A time value indicating to the location server how long the client is
+   A time value informs the location server how long the client is
    prepared to wait for a response.
 
-   The value is expressed as integer, either -1 'emergencyDispatch', 0
+   The value is expressed as an integer, either -1 'emergencyDispatch', 0
    'emergencyRouting', a non-negative integer (>0) in units of
    milliseconds. Note: The time value is indicative only.
 
@@ -250,7 +255,26 @@ Chapter 1. Admin Guide
     modparam("lost", "location_profile, 2)
     ...
 
-3.6. geoheader_type (int)
+3.6. location_3d (int)
+
+   A Presence Information Data Format Location Object (PIDF-LO) may
+   contain one of the shape types as listed in RFC5491
+   (https://tools.ietf.org/html/rfc5491). A LoST findService request
+   currently contains only a profile for two-dimensional geodetic location
+   information, which is the default setting for this parameter. The
+   parameter can be set to 1 if a LoST server supports 3d, otherwise a 3d
+   location is reduced to 2d by the module.
+     * 0 - two-dimensional (2d) shape representations only
+     * 1 - three-dimensional (3d) volume representations allowed
+
+   Default: 0 (2d representations).
+
+   Example 1.6. Set location_3d parameter
+    ...
+    modparam("lost", "location_3d, 1)
+    ...
+
+3.7. geoheader_type (int)
 
    A Geolocation header may include a list of locationValues pointing to
    either a Presence Information Data Format Location Object (PIDF-LO) in
@@ -265,40 +289,40 @@ Chapter 1. Admin Guide
 
    Default: 0 (any)
 
-   Example 1.6. Set geoheader_type parameter
+   Example 1.7. Set geoheader_type parameter
     ...
     modparam("lost", "geoheader_type", 1)
     ...
 
-3.7. geoheader_order (int)
+3.8. geoheader_order (int)
 
    A Geolocation header may include a list of locationValues. This
-   parameter sets the order of the URI used to retrieve location
+   parameter sets the order of the URI used to retrieve the location
    information, either the first element of a certain type or the last.
    Values are 0 (first) or 1 (last).
 
    Default: 0 (first)
 
-   Example 1.7. Set geoheader_order parameter
+   Example 1.8. Set geoheader_order parameter
     ...
     modparam("lost", "geoheader_order", 0)
     ...
 
-3.8. recursion (int)
+3.9. recursion (int)
 
    A Geolocation header may include a list of locationValues. This
-   parameter sets the order of the URI used to retrieve location
+   parameter sets the order of the URI used to retrieve the location
    information, either the first element of a certain type or the last.
    Values are 0 (first) or 1 (last).
 
    Default: 1 (allowed)
 
-   Example 1.8. Set recursion parameter
+   Example 1.9. Set recursion parameter
     ...
     modparam("lost", "recursion", 0)
     ...
 
-3.9. verbose (int)
+3.10. verbose (int)
 
    Detailed output of LoST findService, redirect or error response as
    shown below. Values are 0 (disabled) or 1 (enabled).
@@ -314,7 +338,7 @@ Chapter 1. Admin Guide
 
    Default: 0
 
-   Example 1.9. Set verbose parameter
+   Example 1.10. Set verbose parameter
     ...
     modparam("lost", "verbose", 1)
     ...
@@ -340,14 +364,14 @@ Chapter 1. Admin Guide
        include "locationURI" in the location_type parameter.
      * error - any error code returned in the HELD response
 
-   The return value is 200 on success, 400 if an internal error occured,
+   The return value is 200 on success, 400 if an internal error occurred,
    or 500 if an error code is returned in the HELD locationRequest
    response.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.10. lost_held_query() usage
+   Example 1.11. lost_held_query() usage
 ...
 modparam("http_client", "httpcon", "heldsrv=>http://service.org/api/held");
 ...
@@ -366,7 +390,7 @@ r(pidf)\n");
 4.2.  lost_held_dereference(url, rtime, rtype, pidf-lo, error)
 
    Sends a HELD POST locationRequest to a given URL. Attributes are
-   responseTime and resposeType. The locationType property "exact" is set
+   responseTime and responseType. The locationType property "exact" is set
    to "false".
      * url - a URL received via Geolocation header to dereference location
      * rtime - the response time as defined in Section 3.2, “response_time
@@ -377,7 +401,7 @@ r(pidf)\n");
      * error - any error code returned in the HELD response
 
    The return value is 200..203 on success, 400 if an internal error
-   occured, or 500 if an error code is returned in the HELD response.
+   occurred, or 500 if an error code is returned in the HELD response.
    Success codes in detail are as follows:
      * 200 - received 200 OK, but neither location-info nor locationURI
        element found
@@ -389,7 +413,7 @@ r(pidf)\n");
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.11. lost_held_dereference() usage
+   Example 1.12. lost_held_dereference() usage
 ...
 # HELD location dereference
 if ($hdr(Geolocation)=~"^<http.*$") {
@@ -406,7 +430,7 @@ atch", "civic geodetic", "$var(pidf)", "$var(err)");
    Sends a LOST findService request to a given connection. PIDF-LO and URN
    are either specified, or, if omitted, parsed from the message body
    (PIDF-LO) and request line (URN). Either "pidf-lo" or "urn" can be set
-   to an empty string in order to be ignored.
+   to an empty string to be ignored.
      * con - the name of an existing HTTP connection defined by a httpcon
        modparam
      * pidf-lo - the PIDF-LO used to create the LOST findService request
@@ -415,13 +439,13 @@ atch", "civic geodetic", "$var(pidf)", "$var(err)");
      * name - the display name returned in the LOST findServiceResponse
      * error - any error code returned in the LOST findServiceResponse
 
-   The return value is 200 on success, 400 if an internal error occured,
+   The return value is 200 on success, 400 if an internal error occurred,
    or 500 if an error code is returned in the LOST findServiceResponse.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.12. lost() usage
+   Example 1.13. lost() usage
 ...
 modparam("http_client", "httpcon", "heldsrv=>http://service.org/api/held");
 modparam("http_client", "httpcon", "lostsrv=>http://service.org/api/lost");
@@ -464,9 +488,9 @@ var(name)\n");
 6. Remarks
 
    Note: libcurl leak in CentOS 6 - this module uses libcurl library (via
-   http_client) and in case if you are using CentOS 6, be aware that
-   standard libcurl-7.19.7-52 has a memory leak. To fix this memory,
-   install libcurl from city-fan repository. More details at:
+   http_client) and in case you are using CentOS 6, be aware that standard
+   libcurl-7.19.7-52 has a memory leak. To fix this memory, install
+   libcurl from city-fan repository. More details at:
    https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in
    -centos6.
 
@@ -484,4 +508,4 @@ var(name)\n");
    https://gridgears.at/.
 
    Note: in case modparam "geoheader_type" is set to 2 (http), the module
-   may use 3 (https) as fallback and vice versa.
+   may use 3 (https) as a fallback and vice versa.

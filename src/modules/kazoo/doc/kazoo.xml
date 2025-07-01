@@ -30,9 +30,9 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="kazoo_admin.xml"/>
     <!-- <xi:include href="db_text_devel.xml"/> -->
-    
+
 
 </book>

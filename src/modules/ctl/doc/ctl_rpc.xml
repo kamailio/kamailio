@@ -24,7 +24,7 @@
 		<programlisting>
  $ &sercmd; -f"[%v] %v:%v %v\n" ctl.listen
 [binrpc] unix_stream:/run/&kamailiobinary;/&kamailiobinary;_ctl
- 
+
 # note: the above command is equivalent with &sercmd; listen
 		</programlisting>
 	</example>

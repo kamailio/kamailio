@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -50,7 +52,7 @@ typedef struct epmd_handler_s
 	int (*handle_f)(handler_common_t *handler);
 	int (*wait_tmo_f)(handler_common_t *handler);
 	int (*destroy_f)(handler_common_t *handler);
-	int sockfd; /* socket to epmd */
+	int sockfd;	 /* socket to epmd */
 	ei_cnode ec; /* erlang C node (actually it's me) */
 
 } epmd_handler_t;

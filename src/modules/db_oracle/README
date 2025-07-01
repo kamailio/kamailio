@@ -103,8 +103,8 @@ Chapter 1. User's Guide
 
    Default value is 3.0 (3 second).
 
-   If value of timeout parameter set to 0, module use synchronous mode
-   (without timeout).
+   If the value of timeout parameter is set to 0, the module uses
+   synchronous mode (without timeout).
 
    Example 1.1. Set timeout parameter
 ...

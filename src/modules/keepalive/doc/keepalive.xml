@@ -23,27 +23,27 @@
 		<surname>CANER</surname>
 		<email>caner_yaso@hotmail.com</email>
 	    </author>
-		
+
 		<editor>
 		<firstname>Guillaume</firstname>
 		<surname>Bour</surname>
 		<email>guillaume@bour.cc</email>
 	    </editor>
-		
+
 		<editor>
 		<firstname>Yasin</firstname>
 		<surname>CANER</surname>
 		<email>caner_yaso@hotmail.com</email>
 	    </editor>
 	</authorgroup>
-	
+
 	<copyright>
 	    <year>2017</year>
 	    <holder>Guillaume Bour</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="keepalive_admin.xml"/>
     <xi:include href="keepalive_devel.xml"/>
 

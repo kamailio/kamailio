@@ -18,7 +18,7 @@ more information see <xref linkend="pres.known_problems"/>.
 </section>
 
 <section id="pres.dependencies"><title>Dependencies</title>
-<para>Presence module dependecies may be found in sections <link
+<para>Presence module dependencies may be found in sections <link
 linkend="pa.dependencies">PA module dependencies</link> and <link
 linkend="rls.dependencies">RLS module dependencies</link>. These modules depend
 on common libraries which have their own dependencies as mentioned below.

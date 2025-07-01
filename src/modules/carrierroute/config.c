@@ -1,6 +1,8 @@
 /*
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -18,7 +20,7 @@
  */
 
 /*!
- * \file 
+ * \file
  * \brief Siputils :: Configuration
  * \ingroup Siputils
  */
@@ -29,21 +31,23 @@
 
 #include "config.h"
 
-struct cfg_group_carrierroute	default_carrierroute_cfg = {
-		0, 	/* use_domain */
-		1, 	/* fallback_default */
-		2000	/* fetch_rows*/ 
-	};
-
-void	*carrierroute_cfg = &default_carrierroute_cfg;
-
-cfg_def_t	carrierroute_cfg_def[] = {
-	{"use_domain",		CFG_VAR_INT ,	0, 1, 0, 0,
-		"When using tree lookup per user, this parameter specifies whether to use the domain part for user matching or not." },
-	{"fallback_default",	CFG_VAR_INT ,	0, 1, 0, 0,
-		"If the user has a non-existing tree set and fallback_default is set to 1, the default tree is used. Else error is returned" },
-	{"fetch_rows",	CFG_VAR_INT ,	0, 0, 0, 0,
-		"The number of the rows to be fetched at once from database when loading the routing data."},
-	{0, 0, 0, 0, 0, 0}
+struct cfg_group_carrierroute default_carrierroute_cfg = {
+		0,	 /* use_domain */
+		1,	 /* fallback_default */
+		2000 /* fetch_rows*/
 };
 
+void *carrierroute_cfg = &default_carrierroute_cfg;
+
+cfg_def_t carrierroute_cfg_def[] = {
+		{"use_domain", CFG_VAR_INT, 0, 1, 0, 0,
+				"When using tree lookup per user, this parameter specifies "
+				"whether to use the domain part for user matching or not."},
+		{"fallback_default", CFG_VAR_INT, 0, 1, 0, 0,
+				"If the user has a non-existing tree set and fallback_default "
+				"is set to 1, the default tree is used. Else error is "
+				"returned"},
+		{"fetch_rows", CFG_VAR_INT, 0, 0, 0, 0,
+				"The number of the rows to be fetched at once from database "
+				"when loading the routing data."},
+		{0, 0, 0, 0, 0, 0}};

@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -52,7 +54,7 @@
 
 /*** DB relatede stuff ***/
 /* parameters  */
-static str db_url           = str_init(DEFAULT_RODB_URL);
+static str db_url = str_init(DEFAULT_RODB_URL);
 static str drg_table = str_init("dr_groups");
 static str drd_table = str_init("dr_gateways");
 static str drr_table = str_init("dr_rules");
@@ -85,16 +87,16 @@ static rt_data_t **rdata = 0;
 /* AVP used to store serial RURIs */
 static struct _ruri_avp
 {
-	unsigned short type; /* AVP ID */
-	int_str name;		 /* AVP name*/
+	avp_flags_t type; /* AVP ID */
+	avp_name_t name;  /* AVP name*/
 } ruri_avp = {0, {.n = (int)0xad346b2f}};
 static str ruri_avp_spec = {0, 0};
 
 /* AVP used to store serial ATTRs */
 static struct _attrs_avp
 {
-	unsigned short type; /* AVP ID */
-	int_str name;		 /* AVP name*/
+	avp_flags_t type; /* AVP ID */
+	avp_name_t name;  /* AVP name*/
 } attrs_avp = {0, {.n = (int)0xad346b30}};
 static str attrs_avp_spec = {0, 0};
 
@@ -159,16 +161,16 @@ static param_export_t params[] = {
 	{"drr_table", PARAM_STR, &drr_table},
 	{"drg_table", PARAM_STR, &drg_table},
 	{"drl_table", PARAM_STR, &drl_table},
-	{"use_domain", INT_PARAM, &use_domain},
+	{"use_domain", PARAM_INT, &use_domain},
 	{"drg_user_col", PARAM_STR, &drg_user_col},
 	{"drg_domain_col", PARAM_STR, &drg_domain_col},
 	{"drg_grpid_col", PARAM_STR, &drg_grpid_col},
 	{"ruri_avp", PARAM_STR, &ruri_avp_spec},
 	{"attrs_avp", PARAM_STR, &attrs_avp_spec},
-	{"sort_order", INT_PARAM, &sort_order},
-	{"fetch_rows", INT_PARAM, &dr_fetch_rows},
-	{"force_dns", INT_PARAM, &dr_force_dns},
-	{"enable_keepalive", INT_PARAM, &dr_enable_keepalive},
+	{"sort_order", PARAM_INT, &sort_order},
+	{"fetch_rows", PARAM_INT, &dr_fetch_rows},
+	{"force_dns", PARAM_INT, &dr_force_dns},
+	{"enable_keepalive", PARAM_INT, &dr_enable_keepalive},
 	{0, 0, 0}
 };
 
@@ -346,7 +348,7 @@ static int dr_init(void)
 	/* data pointer in shm */
 	rdata = (rt_data_t **)shm_malloc(sizeof(rt_data_t *));
 	if(rdata == 0) {
-		LM_CRIT("failed to get shm mem for data ptr\n");
+		SHM_MEM_CRITICAL_FMT("for data ptr\n");
 		goto error;
 	}
 	*rdata = 0;
@@ -363,7 +365,11 @@ static int dr_init(void)
 	data_refcnt = (int *)shm_malloc(sizeof(int));
 	reload_flag = (int *)shm_malloc(sizeof(int));
 	if(!data_refcnt || !reload_flag) {
-		LM_ERR("no more shared memory\n");
+		SHM_MEM_ERROR;
+		if(data_refcnt)
+			shm_free(data_refcnt);
+		if(reload_flag)
+			shm_free(reload_flag);
 		goto error;
 	}
 	*data_refcnt = 0;
@@ -642,7 +648,8 @@ static int ki_do_routing_furi(sip_msg_t *msg)
 	grp_id = get_group_id(&uri);
 	if(grp_id < 0) {
 		LM_ERR("failed to get group id\n");
-		return -1;;
+		return -1;
+		;
 	}
 
 	return do_routing(msg, grp_id);
@@ -656,7 +663,7 @@ static int do_routing_0(struct sip_msg *msg, char *str1, char *str2)
 static int do_routing_1(struct sip_msg *msg, char *str1, char *str2)
 {
 	int grp_id;
-	if(fixup_get_ivalue(msg, (gparam_t*)str1, &grp_id)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)str1, &grp_id) < 0) {
 		LM_ERR("failed to get group id parameter\n");
 		return -1;
 	}
@@ -667,7 +674,7 @@ static int do_routing_1(struct sip_msg *msg, char *str1, char *str2)
 static int ki_next_routing(sip_msg_t *msg)
 {
 	struct usr_avp *avp;
-	int_str val;
+	avp_value_t val;
 
 	/* search for the first RURI AVP containing a string */
 	do {
@@ -726,7 +733,7 @@ static int do_routing(struct sip_msg *msg, int grp_id)
 	int i, j, l, t;
 	struct sip_uri uri;
 	str *ruri;
-	int_str val;
+	avp_value_t val;
 #define DR_MAX_GWLIST 32
 	static int active_gwlist[DR_MAX_GWLIST];
 	static int local_gwlist[DR_MAX_GWLIST];
@@ -737,7 +744,7 @@ static int do_routing(struct sip_msg *msg, int grp_id)
 	ret = -1;
 
 	if((*rdata) == 0 || (*rdata)->pgw_l == 0) {
-		LM_DBG("empty ruting table\n");
+		LM_DBG("empty routing table\n");
 		goto error1;
 	}
 
@@ -754,7 +761,7 @@ static int do_routing(struct sip_msg *msg, int grp_id)
 /* ref the data for reading */
 again:
 	lock_get(ref_lock);
-	/* if reload must be done, do un ugly busy waiting 
+	/* if reload must be done, do un ugly busy waiting
 	 * until reload is finished */
 	if(*reload_flag) {
 		lock_release(ref_lock);
@@ -988,7 +995,6 @@ error1:
 }
 
 
-
 static int strip_username(struct sip_msg *msg, int strip)
 {
 	struct action act;
@@ -1052,7 +1058,7 @@ static int is_from_gw_1(struct sip_msg *msg, char *str1, char *str2)
 {
 	int type;
 
-	if(fixup_get_ivalue(msg, (gparam_t*)str1, &type)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)str1, &type) < 0) {
 		LM_ERR("failed to get parameter value\n");
 		return -1;
 	}
@@ -1086,11 +1092,11 @@ static int is_from_gw_2(struct sip_msg *msg, char *str1, char *str2)
 	int type;
 	int flags;
 
-	if(fixup_get_ivalue(msg, (gparam_t*)str1, &type)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)str1, &type) < 0) {
 		LM_ERR("failed to get type parameter value\n");
 		return -1;
 	}
-	if(fixup_get_ivalue(msg, (gparam_t*)str2, &flags)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)str2, &flags) < 0) {
 		LM_ERR("failed to get flags parameter value\n");
 		return -1;
 	}
@@ -1130,7 +1136,7 @@ static int ki_goes_to_gw_type(struct sip_msg *msg, int type)
 static int goes_to_gw_1(struct sip_msg *msg, char *_type, char *_f2)
 {
 	int type;
-	if(fixup_get_ivalue(msg, (gparam_t*)_type, &type)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)_type, &type) < 0) {
 		LM_ERR("failed to get parameter value\n");
 		return -1;
 	}

@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -50,6 +52,18 @@ Call-ID: 9ad9f89f-164d-bb86-1072-52e7e9eb5025.
 </reginfo> */
 
 static int _pua_reginfo_self_op = 0;
+
+#define BUF_LEN 256
+int ki_reginfo_disable_publish(sip_msg_t *msg)
+{
+	reginfo_disable_publish = 1;
+	return 1;
+}
+
+int w_reginfo_disable_publish(struct sip_msg *msg, char *s1, char *s2)
+{
+	return ki_reginfo_disable_publish(msg);
+}
 
 void pua_reginfo_update_self_op(int v)
 {
@@ -261,6 +275,15 @@ void reginfo_usrloc_cb(ucontact_t *c, int type, void *param)
 	if(_pua_reginfo_self_op == 1) {
 		LM_DBG("operation triggered by own action for aor: %.*s (%d)\n",
 				c->aor->len, c->aor->s, type);
+		return;
+	}
+
+	if(reginfo_disable_publish == 1) {
+		LM_DBG("Not publishing due to reginfo_disable_publish for aor: %.*s "
+			   "(%d)\n",
+				c->aor->len, c->aor->s, type);
+
+		reginfo_disable_publish = 0;
 		return;
 	}
 

@@ -54,15 +54,15 @@ static FILE *_sipdump_pcap_file = NULL;
  */
 int sipdump_list_init(int en)
 {
-	if(_sipdump_list!=NULL)
+	if(_sipdump_list != NULL)
 		return 0;
-	_sipdump_list = (sipdump_list_t*)shm_malloc(sizeof(sipdump_list_t));
-	if(_sipdump_list==NULL) {
+	_sipdump_list = (sipdump_list_t *)shm_malloc(sizeof(sipdump_list_t));
+	if(_sipdump_list == NULL) {
 		LM_ERR("not enough shared memory\n");
 		return -1;
 	}
 	memset(_sipdump_list, 0, sizeof(sipdump_list_t));
-	if(lock_init(&_sipdump_list->lock)==NULL) {
+	if(lock_init(&_sipdump_list->lock) == NULL) {
 		shm_free(_sipdump_list);
 		LM_ERR("failed to init lock\n");
 		return -1;
@@ -76,9 +76,9 @@ int sipdump_list_init(int en)
  */
 int sipdump_enabled(void)
 {
-	if(_sipdump_list==NULL)
+	if(_sipdump_list == NULL)
 		return 0;
-	if(_sipdump_list->enable==0)
+	if(_sipdump_list->enable == 0)
 		return 0;
 	return 1;
 }
@@ -89,13 +89,13 @@ int sipdump_list_destroy(void)
 {
 	sipdump_data_t *sdd = NULL;
 	sipdump_data_t *sdd0 = NULL;
-	if(_sipdump_list==NULL)
+	if(_sipdump_list == NULL)
 		return 0;
 
-	sdd=_sipdump_list->first;
-	while(sdd!=NULL) {
+	sdd = _sipdump_list->first;
+	while(sdd != NULL) {
 		sdd0 = sdd;
-		sdd=sdd->next;
+		sdd = sdd->next;
 		shm_free(sdd0);
 	}
 	return 0;
@@ -127,10 +127,12 @@ int sipdump_data_clone(sipdump_data_t *isd, sipdump_data_t **osd)
 
 	*osd = NULL;
 
-	dsize = sizeof(sipdump_data_t) + (isd->data.len + 1 + isd->tag.len + 1
-				+ isd->src_ip.len + 1 + isd->dst_ip.len + 1)*sizeof(char);
-	sdd = (sipdump_data_t*)shm_malloc(dsize);
-	if(sdd==NULL) {
+	dsize = sizeof(sipdump_data_t)
+			+ (isd->data.len + 1 + isd->tag.len + 1 + isd->src_ip.len + 1
+					  + isd->dst_ip.len + 1)
+					  * sizeof(char);
+	sdd = (sipdump_data_t *)shm_malloc(dsize);
+	if(sdd == NULL) {
 		LM_ERR("no more shared memory\n");
 		return -1;
 	}
@@ -139,7 +141,7 @@ int sipdump_data_clone(sipdump_data_t *isd, sipdump_data_t **osd)
 	memcpy(sdd, isd, sizeof(sipdump_data_t));
 	sdd->next = NULL;
 
-	sdd->data.s = (char*)sdd + sizeof(sipdump_data_t);
+	sdd->data.s = (char *)sdd + sizeof(sipdump_data_t);
 	sdd->data.len = isd->data.len;
 	memcpy(sdd->data.s, isd->data.s, isd->data.len);
 	sdd->data.s[sdd->data.len] = '\0';
@@ -177,19 +179,19 @@ static int sipdump_write_meta(char *fpath)
 	char t_buf[26] = {0};
 
 	len = strlen(fpath);
-	if(len>=SIPDUMP_FPATH_SIZE-1) {
+	if(len >= SIPDUMP_FPATH_SIZE - 1) {
 		LM_ERR("file path too long\n");
 		return -1;
 	}
 	strcpy(mpath, fpath);
-	mpath[len-4] = 'm';
-	mpath[len-3] = 'e';
-	mpath[len-2] = 't';
-	mpath[len-1] = 'a';
+	mpath[len - 4] = 'm';
+	mpath[len - 3] = 'e';
+	mpath[len - 2] = 't';
+	mpath[len - 1] = 'a';
 
 	LM_DBG("writing meta to file: %s (%d)\n", mpath, len);
-	mfile = fopen( mpath , "w" );
-	if(mfile==NULL) {
+	mfile = fopen(mpath, "w");
+	if(mfile == NULL) {
 		LM_ERR("failed to open meta file %s (%d)\n", mpath, len);
 		return -1;
 	}
@@ -199,14 +201,9 @@ static int sipdump_write_meta(char *fpath)
 			"version: %s %s\n"
 			"start: %s"
 			"nrprocs: %d\n",
-			ver_name, ver_version,
-			asctime_r(&ti, t_buf),
-			*process_count
-		);
-	for (i=0; i<*process_count; i++) {
-		fprintf(mfile,
-			"process: %d %d %s\n",
-			i, pt[i].pid, pt[i].desc);
+			ver_name, ver_version, asctime_r(&ti, t_buf), *process_count);
+	for(i = 0; i < *process_count; i++) {
+		fprintf(mfile, "process: %d %d %s\n", i, pt[i].pid, pt[i].desc);
 	}
 
 	fclose(mfile);
@@ -224,15 +221,13 @@ static int sipdump_rotate_file(void)
 
 	tv = time(NULL);
 
-	if(_sipdump_text_file!=NULL
-			&& sipdump_last_rotate>0
-			&& sipdump_last_rotate+sipdump_rotate>tv) {
+	if(_sipdump_text_file != NULL && sipdump_last_rotate > 0
+			&& sipdump_last_rotate + sipdump_rotate > tv) {
 		/* not yet the time for rotation */
 		return 0;
 	}
-	if(_sipdump_pcap_file!=NULL
-			&& sipdump_last_rotate>0
-			&& sipdump_last_rotate+sipdump_rotate>tv) {
+	if(_sipdump_pcap_file != NULL && sipdump_last_rotate > 0
+			&& sipdump_last_rotate + sipdump_rotate > tv) {
 		/* not yet the time for rotation */
 		return 0;
 	}
@@ -246,27 +241,25 @@ static int sipdump_rotate_file(void)
 
 	localtime_r(&tv, &ti);
 	if(sipdump_mode & SIPDUMP_MODE_WTEXT) {
-		n = snprintf(_sipdump_fpath+_sipdump_fpath_prefix.len,
-				SIPDUMP_FPATH_SIZE-_sipdump_fpath_prefix.len,
-				"%d-%02d-%02d--%02d-%02d-%02d.data",
-				1900+ti.tm_year, ti.tm_mon+1, ti.tm_mday,
-				ti.tm_hour, ti.tm_min, ti.tm_sec);
+		n = snprintf(_sipdump_fpath + _sipdump_fpath_prefix.len,
+				SIPDUMP_FPATH_SIZE - _sipdump_fpath_prefix.len,
+				"%d-%02d-%02d--%02d-%02d-%02d.data", 1900 + ti.tm_year,
+				ti.tm_mon + 1, ti.tm_mday, ti.tm_hour, ti.tm_min, ti.tm_sec);
 		LM_DBG("writing to text file: %s (%d)\n", _sipdump_fpath, n);
-		_sipdump_text_file = fopen( _sipdump_fpath, "w" );
-		if(_sipdump_text_file==NULL) {
+		_sipdump_text_file = fopen(_sipdump_fpath, "w");
+		if(_sipdump_text_file == NULL) {
 			LM_ERR("failed to open file %s\n", _sipdump_fpath);
 			return -1;
 		}
 	}
 	if(sipdump_mode & SIPDUMP_MODE_WPCAP) {
-		n = snprintf(_sipdump_fpath+_sipdump_fpath_prefix.len,
-				SIPDUMP_FPATH_SIZE-_sipdump_fpath_prefix.len,
-				"%d-%02d-%02d--%02d-%02d-%02d.pcap",
-				1900+ti.tm_year, ti.tm_mon+1, ti.tm_mday,
-				ti.tm_hour, ti.tm_min, ti.tm_sec);
+		n = snprintf(_sipdump_fpath + _sipdump_fpath_prefix.len,
+				SIPDUMP_FPATH_SIZE - _sipdump_fpath_prefix.len,
+				"%d-%02d-%02d--%02d-%02d-%02d.pcap", 1900 + ti.tm_year,
+				ti.tm_mon + 1, ti.tm_mday, ti.tm_hour, ti.tm_min, ti.tm_sec);
 		LM_DBG("writing to pcap file: %s (%d)\n", _sipdump_fpath, n);
-		_sipdump_pcap_file = fopen( _sipdump_fpath, "w" );
-		if(_sipdump_pcap_file==NULL) {
+		_sipdump_pcap_file = fopen(_sipdump_fpath, "w");
+		if(_sipdump_pcap_file == NULL) {
 			LM_ERR("failed to open file %s\n", _sipdump_fpath);
 			return -1;
 		}
@@ -284,12 +277,11 @@ static int sipdump_rotate_file(void)
  */
 int sipdump_file_init(str *folder, str *fprefix)
 {
-	_sipdump_fpath_prefix.len = snprintf(_sipdump_fpath, SIPDUMP_FPATH_SIZE-64,
-			"%.*s/%.*s",
-			folder->len, folder->s,
-			fprefix->len, fprefix->s);
-	if(_sipdump_fpath_prefix.len<0
-			|| _sipdump_fpath_prefix.len>=SIPDUMP_FPATH_SIZE-64) {
+	_sipdump_fpath_prefix.len =
+			snprintf(_sipdump_fpath, SIPDUMP_FPATH_SIZE - 64, "%.*s/%.*s",
+					folder->len, folder->s, fprefix->len, fprefix->s);
+	if(_sipdump_fpath_prefix.len < 0
+			|| _sipdump_fpath_prefix.len >= SIPDUMP_FPATH_SIZE - 64) {
 		LM_ERR("sipdump file path failed or is too long\n");
 		return -1;
 	}
@@ -310,7 +302,7 @@ int sipdump_data_print(sipdump_data_t *sd, str *obuf)
 	str sproto = str_init("none");
 	str saf = str_init("ipv4");
 
-	if(sd->afid==AF_INET6) {
+	if(sd->afid == AF_INET6) {
 		saf.s = "ipv6";
 	}
 
@@ -318,30 +310,25 @@ int sipdump_data_print(sipdump_data_t *sd, str *obuf)
 
 	localtime_r(&sd->tv.tv_sec, &ti);
 	obuf->len = snprintf(_sipdump_wbuf, SIPDUMP_WBUF_SIZE,
-		"====================\n"
-		"tag: %.*s\n"
-		"pid: %d\n"
-		"process: %d\n"
-		"time: %lu.%06lu\n"
-		"date: %s"
-		"proto: %.*s %.*s\n"
-		"srcip: %.*s\n"
-		"srcport: %d\n"
-		"dstip: %.*s\n"
-		"dstport: %d\n"
-		"~~~~~~~~~~~~~~~~~~~~\n"
-		"%.*s"
-		"||||||||||||||||||||\n",
-		sd->tag.len, sd->tag.s,
-		sd->pid,
-		sd->procno,
-		(unsigned long)sd->tv.tv_sec, (unsigned long)sd->tv.tv_usec,
-		asctime_r(&ti, t_buf),
-		sproto.len, sproto.s, saf.len, saf.s,
-		sd->src_ip.len, sd->src_ip.s, sd->src_port,
-		sd->dst_ip.len, sd->dst_ip.s, sd->dst_port,
-		sd->data.len, sd->data.s
-	);
+			"====================\n"
+			"tag: %.*s\n"
+			"pid: %d\n"
+			"process: %d\n"
+			"time: %lu.%06lu\n"
+			"date: %s"
+			"proto: %.*s %.*s\n"
+			"srcip: %.*s\n"
+			"srcport: %d\n"
+			"dstip: %.*s\n"
+			"dstport: %d\n"
+			"~~~~~~~~~~~~~~~~~~~~\n"
+			"%.*s"
+			"||||||||||||||||||||\n",
+			sd->tag.len, sd->tag.s, sd->pid, sd->procno,
+			(unsigned long)sd->tv.tv_sec, (unsigned long)sd->tv.tv_usec,
+			asctime_r(&ti, t_buf), sproto.len, sproto.s, saf.len, saf.s,
+			sd->src_ip.len, sd->src_ip.s, sd->src_port, sd->dst_ip.len,
+			sd->dst_ip.s, sd->dst_port, sd->data.len, sd->data.s);
 	obuf->s = _sipdump_wbuf;
 
 	return 0;
@@ -356,38 +343,39 @@ void sipdump_timer_exec(unsigned int ticks, void *param)
 	str odata = str_init("");
 	int cnt = 0;
 
-	if(_sipdump_list==NULL || _sipdump_list->first==NULL)
+	if(_sipdump_list == NULL || _sipdump_list->first == NULL)
 		return;
 
-	if(sipdump_rotate_file()<0) {
+	if(sipdump_rotate_file() < 0) {
 		LM_ERR("sipdump rotate file failed\n");
 		return;
 	}
 
 	while(1) {
 		lock_get(&_sipdump_list->lock);
-		if(_sipdump_list->first==NULL) {
+		if(_sipdump_list->first == NULL) {
 			lock_release(&_sipdump_list->lock);
-			if(_sipdump_text_file) fflush(_sipdump_text_file);
+			if(_sipdump_text_file)
+				fflush(_sipdump_text_file);
 			return;
 		}
 		sdd = _sipdump_list->first;
 		_sipdump_list->first = sdd->next;
-		if(sdd->next==NULL) {
+		if(sdd->next == NULL) {
 			_sipdump_list->last = NULL;
 		}
 		_sipdump_list->count--;
 		lock_release(&_sipdump_list->lock);
 		cnt++;
-		if(cnt>2000) {
-			if(sipdump_rotate_file()<0) {
+		if(cnt > 2000) {
+			if(sipdump_rotate_file() < 0) {
 				LM_ERR("sipdump rotate file failed\n");
 				return;
 			}
-			cnt=0;
+			cnt = 0;
 		}
 		if(sipdump_mode & SIPDUMP_MODE_WTEXT) {
-			if(_sipdump_text_file==NULL) {
+			if(_sipdump_text_file == NULL) {
 				LM_ERR("sipdump text file is not open\n");
 				return;
 			}
@@ -398,7 +386,7 @@ void sipdump_timer_exec(unsigned int ticks, void *param)
 			fflush(_sipdump_text_file);
 		}
 		if(sipdump_mode & SIPDUMP_MODE_WPCAP) {
-			if(_sipdump_pcap_file==NULL) {
+			if(_sipdump_pcap_file == NULL) {
 				LM_ERR("sipdump pcap file is not open\n");
 				return;
 			}
@@ -409,7 +397,7 @@ void sipdump_timer_exec(unsigned int ticks, void *param)
 }
 
 static const char *sipdump_rpc_enable_doc[2] = {
-	"Command to control sipdump enable value", 0};
+		"Command to control sipdump enable value", 0};
 
 
 /*
@@ -434,7 +422,7 @@ static void sipdump_rpc_enable(rpc_t *rpc, void *ctx)
 
 	if(_sipdump_list) {
 		oval = _sipdump_list->enable;
-		if(enval==0 || enval==1) {
+		if(enval == 0 || enval == 1) {
 			_sipdump_list->enable = enval;
 			nval = enval;
 		} else {

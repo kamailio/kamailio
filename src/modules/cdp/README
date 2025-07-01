@@ -39,6 +39,11 @@ Carsten Bock
               4.3. workerq_latency_threshold (int)
               4.4. workerq_length_threshold_percentage (int)
               4.5. debug_heavy (int)
+              4.6. enable_tls (int)
+              4.7. tls_method (string)
+              4.8. private_key (string)
+              4.9. certificate (string)
+              4.10. ca_list (string)
 
         5. Functions
 
@@ -47,13 +52,14 @@ Carsten Bock
 
         6. RPC Commands
 
-              6.1. cdp.disable_peer
-              6.2. cdp.enable_peer
+              6.1. States
+              6.2. cdp.disable_peer
+              6.3. cdp.enable_peer
+              6.4. cdp.list_peers
 
         7. Configuration Examples
 
               7.1. DiameterPeer.xml example
-              7.2.
 
    2. Developer Guide
 
@@ -136,10 +142,15 @@ Carsten Bock
    1.3. Set workerq_latency_threshold parameter
    1.4. Set workerq_length_threshold_percentage parameter
    1.5. Set debug_heavy parameter
-   1.6. cdp_check_peer usage
-   1.7. cdp_check_peer usage
-   1.8. cdp_check_peer usage
-   1.9. DiameterPeer.xml example
+   1.6. Set enable_tls parameter
+   1.7. Set tls_method parameter
+   1.8. Set private_key parameter
+   1.9. Set certificate parameter
+   1.10. Set ca_list parameter
+   1.11. cdp_check_peer usage
+   1.12. cdp_has_app usage
+   1.13. cdp_has_app usage
+   1.14. DiameterPeer.xml example
 
 Chapter 1. Admin Guide
 
@@ -159,6 +170,11 @@ Chapter 1. Admin Guide
         4.3. workerq_latency_threshold (int)
         4.4. workerq_length_threshold_percentage (int)
         4.5. debug_heavy (int)
+        4.6. enable_tls (int)
+        4.7. tls_method (string)
+        4.8. private_key (string)
+        4.9. certificate (string)
+        4.10. ca_list (string)
 
    5. Functions
 
@@ -167,13 +183,14 @@ Chapter 1. Admin Guide
 
    6. RPC Commands
 
-        6.1. cdp.disable_peer
-        6.2. cdp.enable_peer
+        6.1. States
+        6.2. cdp.disable_peer
+        6.3. cdp.enable_peer
+        6.4. cdp.list_peers
 
    7. Configuration Examples
 
         7.1. DiameterPeer.xml example
-        7.2.
 
 1. Overview
 
@@ -223,7 +240,8 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * None.
+     * libxml,
+     * openssl.
 
 4. Parameters
 
@@ -232,6 +250,11 @@ Chapter 1. Admin Guide
    4.3. workerq_latency_threshold (int)
    4.4. workerq_length_threshold_percentage (int)
    4.5. debug_heavy (int)
+   4.6. enable_tls (int)
+   4.7. tls_method (string)
+   4.8. private_key (string)
+   4.9. certificate (string)
+   4.10. ca_list (string)
 
 4.1. config_file (string)
 
@@ -294,6 +317,83 @@ modparam("cdp", "workerq_length_threshold_percentage", 25)
 modparam("cdp", "debug_heavy", 1)
 ...
 
+4.6. enable_tls (int)
+
+   Flag to enable TLS for communication with all the peers.
+
+   Default value is “0”.
+
+   Example 1.6. Set enable_tls parameter
+...
+modparam("cdp", "enable_tls", 1)
+...
+
+4.7. tls_method (string)
+
+   Sets the TLS protocol method. Possible values are:
+     * TLSv1.3+ - TLSv1.3 or newer connections are accepted (available
+       starting with openssl/libssl v1.1.1)
+     * TLSv1.3 - only TLSv1.3 connections are accepted (available starting
+       with openssl/libssl v1.1.1)
+     * TLSv1.2+ - TLSv1.2 or newer (TLSv1.3, ...) connections are accepted
+       (available starting with openssl/libssl v1.1.1)
+     * TLSv1.2 - only TLSv1.2 connections are accepted (available starting
+       with openssl/libssl v1.0.1e)
+     * TLSv1.1+ - TLSv1.1 or newer (TLSv1.2, ...) connections are accepted
+       (available starting with openssl/libssl v1.0.1)
+     * TLSv1.1 - only TLSv1.1 connections are accepted (available starting
+       with openssl/libssl v1.0.1)
+     * TLSv1+ - TLSv1.0 or newer (TLSv1.1, TLSv1.2, ...) connections are
+       accepted.
+     * TLSv1 - only TLSv1 (TLSv1.0) connections are accepted. This is the
+       default value.
+
+   Default value is “TLSv1.2”.
+
+   Example 1.7. Set tls_method parameter
+...
+modparam("tls", "tls_method", "TLSv1")
+...
+
+4.8. private_key (string)
+
+   Sets the private key file name.
+
+   Example 1.8. Set private_key parameter
+...
+modparam("cdp", "private_key", "/usr/local/etc/kamailio/my_pkey.pem")
+...
+
+4.9. certificate (string)
+
+   Sets the certificate file name. Must be in PEM format.
+
+   Example 1.9. Set certificate parameter
+...
+modparam("cdp", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
+...
+
+4.10. ca_list (string)
+
+   Sets the CA list file name. This file contains a list of all the
+   trusted CAs certificates used when connecting to other SIP
+   implementations. If a signature in a certificate chain belongs to one
+   of the listed CAs, the verification of that certificate will succeed.
+   If not set, the PCRF sent certificate is not checked.
+
+   The parameter must contain an absolute path. Only PEM files are
+   accepted.
+
+   By default this parameter is not set.
+
+   An easy way to create the CA list is to append each trusted trusted CA
+   certificate in the PEM format to one file.
+
+   Example 1.10. Set ca_list parameter
+...
+modparam("cdp", "ca_list", "/usr/local/etc/kamailio/ca_list.pem")
+...
+
 5. Functions
 
    5.1. cdp_check_peer(fqdn)
@@ -307,7 +407,7 @@ modparam("cdp", "debug_heavy", 1)
      * fqdn - the Fully qualified domain name of the peer, that should be
        checked. The parameter may contain pseudovariables.
 
-   Example 1.6. cdp_check_peer usage
+   Example 1.11. cdp_check_peer usage
 ...
 if(!cdp_check_peer("hss.mnc001.mcc001.3gppnetwork.org")) {
         send_reply("503", "HSS not ready");
@@ -324,7 +424,7 @@ if(!cdp_check_peer("hss.mnc001.mcc001.3gppnetwork.org")) {
      * vendorid - The Vendor ID of the App
        application - The Application ID
 
-   Example 1.7. cdp_check_peer usage
+   Example 1.12. cdp_has_app usage
 ...
 if(!cdp_has_app("10415", "4")) {
         send_reply("503", "Charging Server not ready");
@@ -332,7 +432,7 @@ if(!cdp_has_app("10415", "4")) {
 }
 ...
 
-   Example 1.8. cdp_check_peer usage
+   Example 1.13. cdp_has_app usage
 ...
 if(!cdp_has_app("16777216")) {
         send_reply("503", "Cx/Dx Interface not ready");
@@ -342,30 +442,50 @@ if(!cdp_has_app("16777216")) {
 
 6. RPC Commands
 
-   6.1. cdp.disable_peer
-   6.2. cdp.enable_peer
+   6.1. States
+   6.2. cdp.disable_peer
+   6.3. cdp.enable_peer
+   6.4. cdp.list_peers
 
-   exported RPC commands.
+6.1. States
 
-6.1. cdp.disable_peer
+     * Closed (0) - Not connected
+     * Wait_Conn_Ack (1) - Connecting - waiting for Ack
+     * Wait_I_CEA (2) - Connecting - waiting for Capabilities Exchange
+       Answer
+     * Wait_Conn_Ack_Elect (3) - Connecting - Acknowledged and going for
+       Election
+     * Wait_Returns (4) - Connecting - done
+     * R_Open (5) - Connected as receiver
+     * I_Open (6) - Connected as initiator
+     * Closing (7) - Closing the connection
+
+   Exported RPC commands.
+
+6.2. cdp.disable_peer
 
    instantly disable a particular diameter peer.
 
-6.2. cdp.enable_peer
+6.3. cdp.enable_peer
 
-   enabe/re-enable a diameter peer
+   enable/re-enable a diameter peer
+
+6.4. cdp.list_peers
+
+   list all configured diameter peers
+
+   State details can be found in the list above (Section 6.1, “States”)
 
 7. Configuration Examples
 
    7.1. DiameterPeer.xml example
-   7.2.
 
 7.1. DiameterPeer.xml example
 
    This is an example CDP configuration file. The location of this file is
    configured as a CDP parameter (config_file) - See section 4.1 Above
 
-   Example 1.9. DiameterPeer.xml example
+   Example 1.14. DiameterPeer.xml example
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
@@ -858,7 +978,7 @@ AAA_AVPCode avpCode, AAAVendorId vendorId, AAASearchType searchType)
 
    Meaning of the parameters is as follows:
      * AAAMessage *msg - the message to search in
-     * AAA_AVP *startAvp - at which AVP to start the search. usefull for
+     * AAA_AVP *startAvp - at which AVP to start the search. Useful for
        looking for more of the same name
      * AAA_AVPCode avpCode - AVP code to match
      * AAAVendorId vendorId - AVP vendor ID to match
@@ -949,9 +1069,11 @@ Chapter 3. Frequently Asked Questions
    First at all check if your question was already answered on one of our
    mailing lists:
      * User Mailing List -
-       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-users
+       https://lists.kamailio.org/mailman3/postorius/lists/sr-users.lists.
+       kamailio.org/
      * Developer Mailing List -
-       https://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev
+       https://lists.kamailio.org/mailman3/postorius/lists/sr-dev.lists.ka
+       mailio.org/
 
    E-mails regarding any stable Kamailio release should be sent to
    <sr-users@lists.kamailio.org> and e-mails regarding development

@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -22,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdint.h>
 
 #include "../../core/mem/shm_mem.h"
 #include "dr_time.h"
@@ -72,8 +75,10 @@ dr_ac_tm_p dr_ac_tm_new(void)
 {
 	dr_ac_tm_p _atp = NULL;
 	_atp = (dr_ac_tm_p)shm_malloc(sizeof(dr_ac_tm_t));
-	if(!_atp)
+	if(!_atp) {
+		SHM_MEM_ERROR;
 		return NULL;
+	}
 	memset(_atp, 0, sizeof(dr_ac_tm_t));
 
 	return _atp;
@@ -83,14 +88,14 @@ int dr_ac_tm_fill(dr_ac_tm_p _atp, struct tm *_tm)
 {
 	if(!_atp || !_tm)
 		return -1;
-	_atp->t.tm_sec = _tm->tm_sec;	 /* seconds */
-	_atp->t.tm_min = _tm->tm_min;	 /* minutes */
-	_atp->t.tm_hour = _tm->tm_hour;   /* hours */
-	_atp->t.tm_mday = _tm->tm_mday;   /* day of the month */
-	_atp->t.tm_mon = _tm->tm_mon;	 /* month */
-	_atp->t.tm_year = _tm->tm_year;   /* year */
-	_atp->t.tm_wday = _tm->tm_wday;   /* day of the week */
-	_atp->t.tm_yday = _tm->tm_yday;   /* day in the year */
+	_atp->t.tm_sec = _tm->tm_sec;	  /* seconds */
+	_atp->t.tm_min = _tm->tm_min;	  /* minutes */
+	_atp->t.tm_hour = _tm->tm_hour;	  /* hours */
+	_atp->t.tm_mday = _tm->tm_mday;	  /* day of the month */
+	_atp->t.tm_mon = _tm->tm_mon;	  /* month */
+	_atp->t.tm_year = _tm->tm_year;	  /* year */
+	_atp->t.tm_wday = _tm->tm_wday;	  /* day of the week */
+	_atp->t.tm_yday = _tm->tm_yday;	  /* day in the year */
 	_atp->t.tm_isdst = _tm->tm_isdst; /* daylight saving time */
 
 	_atp->mweek = dr_ac_get_mweek(_tm);
@@ -186,10 +191,12 @@ dr_ac_maxval_p dr_ac_get_maxval(dr_ac_tm_p _atp, int mode)
 
 	if(!_atp)
 		return NULL;
-	if(mode==1) {
+	if(mode == 1) {
 		_amp = (dr_ac_maxval_p)shm_malloc(sizeof(dr_ac_maxval_t));
-		if(!_amp)
+		if(!_amp) {
+			SHM_MEM_ERROR;
 			return NULL;
+		}
 	} else {
 		_amp = &_amv;
 	}
@@ -249,8 +256,8 @@ dr_ac_maxval_p dr_ac_get_maxval(dr_ac_tm_p _atp, int mode)
 				  + 1;
 #endif
 
-	if(mode==1) {
-		if(_atp->mv!=NULL) {
+	if(mode == 1) {
+		if(_atp->mv != NULL) {
 			shm_free(_atp->mv);
 		}
 
@@ -268,8 +275,10 @@ dr_tr_byxxx_p dr_tr_byxxx_new(void)
 {
 	dr_tr_byxxx_p _bxp = NULL;
 	_bxp = (dr_tr_byxxx_p)shm_malloc(sizeof(dr_tr_byxxx_t));
-	if(!_bxp)
+	if(!_bxp) {
+		SHM_MEM_ERROR;
 		return NULL;
+	}
 	memset(_bxp, 0, sizeof(dr_tr_byxxx_t));
 	return _bxp;
 }
@@ -280,10 +289,13 @@ int dr_tr_byxxx_init(dr_tr_byxxx_p _bxp, int _nr)
 		return -1;
 	_bxp->nr = _nr;
 	_bxp->xxx = (int *)shm_malloc(_nr * sizeof(int));
-	if(!_bxp->xxx)
+	if(!_bxp->xxx) {
+		SHM_MEM_ERROR;
 		return -1;
+	}
 	_bxp->req = (int *)shm_malloc(_nr * sizeof(int));
 	if(!_bxp->req) {
+		SHM_MEM_ERROR;
 		shm_free(_bxp->xxx);
 		return -1;
 	}
@@ -311,8 +323,10 @@ dr_tmrec_p dr_tmrec_new(void)
 {
 	dr_tmrec_p _trp = NULL;
 	_trp = (dr_tmrec_p)shm_malloc(sizeof(dr_tmrec_t));
-	if(!_trp)
+	if(!_trp) {
+		SHM_MEM_ERROR;
 		return NULL;
+	}
 	memset(_trp, 0, sizeof(dr_tmrec_t));
 	localtime_r(&_trp->dtstart, &(_trp->ts));
 	return _trp;
@@ -911,7 +925,7 @@ int dr_check_tmrec(dr_tmrec_p _trp, dr_ac_tm_p _atp, dr_tr_res_p _tsw)
 
 int dr_check_freq_interval(dr_tmrec_p _trp, dr_ac_tm_p _atp)
 {
-	int _t0, _t1;
+	uint64_t _t0, _t1;
 	struct tm _tm;
 	if(!_trp || !_atp)
 		return REC_ERR;
@@ -929,12 +943,12 @@ int dr_check_freq_interval(dr_tmrec_p _trp, dr_ac_tm_p _atp)
 			_tm.tm_year = _trp->ts.tm_year;
 			_tm.tm_mon = _trp->ts.tm_mon;
 			_tm.tm_mday = _trp->ts.tm_mday;
-			_t0 = (int)mktime(&_tm);
+			_t0 = (uint64_t)mktime(&_tm);
 			memset(&_tm, 0, sizeof(struct tm));
 			_tm.tm_year = _atp->t.tm_year;
 			_tm.tm_mon = _atp->t.tm_mon;
 			_tm.tm_mday = _atp->t.tm_mday;
-			_t1 = (int)mktime(&_tm);
+			_t1 = (uint64_t)mktime(&_tm);
 			if(_trp->freq == FREQ_DAILY)
 				return (((_t1 - _t0) / (24 * 3600)) % _trp->interval == 0)
 							   ? REC_MATCH
@@ -950,7 +964,7 @@ int dr_check_freq_interval(dr_tmrec_p _trp, dr_ac_tm_p _atp)
 						   ? REC_MATCH
 						   : REC_NOMATCH;
 		case FREQ_MONTHLY:
-			_t0 = (_atp->t.tm_year - _trp->ts.tm_year) * 12 + _atp->t.tm_mon
+			_t0 = 12ULL * (_atp->t.tm_year - _trp->ts.tm_year) + _atp->t.tm_mon
 				  - _trp->ts.tm_mon;
 			return (_t0 % _trp->interval == 0) ? REC_MATCH : REC_NOMATCH;
 		case FREQ_YEARLY:

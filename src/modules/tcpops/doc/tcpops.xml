@@ -45,7 +45,7 @@
     <section id="tcpops.overview">
 	<title>Overview</title>
 	<para>
-	    This modules allows Kamailio to control the TCP connection options (such as the keepalive
+	    This module allows Kamailio to control the TCP connection options (such as the keepalive
 	    mechanism), on demand, and on a per-socket basis.
 	</para>
 	<para>
@@ -54,7 +54,7 @@
 	(Linux, FreeBSD, DragonFly BSD, NetBSD).
 	</para>
     </section>
-    
+
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
     <xi:include href="eventroutes.xml"/>

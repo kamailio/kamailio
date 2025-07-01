@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -53,6 +55,8 @@ httpc_api_t httpapi;
 int lost_geoloc_type = 0;
 /* lost: Geolocation header value order: first (0) or last (1) (default: 0) */
 int lost_geoloc_order = 0;
+/* lost: Geolocation header 3d representation: yes (1) or no (0) (default: 0) */
+int lost_geoloc_3d = 0;
 /* lost: Recursion allowed: yes (1) or no (0) (default: 1 = allowed) */
 int lost_recursion = 1;
 /* lost geo profile: first (0), last (1), geo (2) or civic (3) (default: 0) */
@@ -98,49 +102,54 @@ static int w_lost_query(
 static int w_lost_query_all(struct sip_msg *_m, char *_con, char *_pidf,
 		char *_urn, char *_uri, char *_name, char *_err);
 
+/* clang-format off */
 /* Exported functions */
 static cmd_export_t cmds[] = {
-		{"lost_held_query", (cmd_function)w_lost_held_query, 4,
-				fixup_lost_held_query, fixup_free_lost_held_query,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"lost_held_query", (cmd_function)w_lost_held_query_id, 5,
-				fixup_lost_held_query_id, fixup_free_lost_held_query_id,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"lost_held_dereference", (cmd_function)w_lost_held_deref, 5,
-				fixup_lost_held_deref, fixup_free_lost_held_deref,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"lost_query", (cmd_function)w_lost_query, 4, fixup_lost_query,
-				fixup_free_lost_query,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{"lost_query", (cmd_function)w_lost_query_all, 6, fixup_lost_query_all,
-				fixup_free_lost_query_all,
-				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+	{"lost_held_query", (cmd_function)w_lost_held_query, 4,
+			fixup_lost_held_query, fixup_free_lost_held_query,
+			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"lost_held_query", (cmd_function)w_lost_held_query_id, 5,
+			fixup_lost_held_query_id, fixup_free_lost_held_query_id,
+			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"lost_held_dereference", (cmd_function)w_lost_held_deref, 5,
+			fixup_lost_held_deref, fixup_free_lost_held_deref,
+			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"lost_query", (cmd_function)w_lost_query, 4, fixup_lost_query,
+			fixup_free_lost_query,
+			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"lost_query", (cmd_function)w_lost_query_all, 6, fixup_lost_query_all,
+			fixup_free_lost_query_all,
+			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /* Exported parameters */
 static param_export_t params[] = {{"exact_type", PARAM_INT, &held_exact_type},
-		{"response_time", PARAM_INT, &held_resp_time},
-		{"post_request", PARAM_INT, &held_post_req},
-		{"location_type", PARAM_STR, &held_loc_type},
-		{"recursion", PARAM_INT, &lost_recursion},
-		{"location_profile", PARAM_INT, &lost_profile},
-		{"verbose", PARAM_INT, &lost_verbose},
-		{"geoheader_type", PARAM_INT, &lost_geoloc_type},
-		{"geoheader_order", PARAM_INT, &lost_geoloc_order}, {0, 0, 0}};
+	{"response_time", PARAM_INT, &held_resp_time},
+	{"post_request", PARAM_INT, &held_post_req},
+	{"location_type", PARAM_STR, &held_loc_type},
+	{"recursion", PARAM_INT, &lost_recursion},
+	{"location_profile", PARAM_INT, &lost_profile},
+	{"location_3d", PARAM_INT, &lost_geoloc_3d},
+	{"verbose", PARAM_INT, &lost_verbose},
+	{"geoheader_type", PARAM_INT, &lost_geoloc_type},
+	{"geoheader_order", PARAM_INT, &lost_geoloc_order}, {0, 0, 0}
+};
 
 /* Module interface */
 struct module_exports exports = {
-		"lost",			 /* module name*/
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* exported functions */
-		params,			 /* exported parameters */
-		0,				 /* RPC method exports */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per-child init function */
-		destroy			 /* module destroy function */
+	"lost",			 /* module name*/
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* RPC method exports */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* per-child init function */
+	destroy			 /* module destroy function */
 };
+/* clang-format on */
 
 /* Module initialization function */
 static int mod_init(void)
@@ -212,7 +221,7 @@ static int fixup_lost_held_query(void **param, int param_no)
 static int fixup_free_lost_held_query(void **param, int param_no)
 {
 	if(param_no == 1) {
-		return fixup_spve_null(param, 1);	
+		return fixup_spve_null(param, 1);
 	}
 	if((param_no == 2) || (param_no == 3) || (param_no == 4)) {
 		return fixup_free_pvar_null(param, 1);

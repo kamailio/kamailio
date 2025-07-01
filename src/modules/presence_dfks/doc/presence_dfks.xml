@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+		<bookinfo>
+			<title>presence_dfks Module</title>
+			<productname class="trade">&kamailioname;</productname>
+			<authorgroup>
+				<author>
+					<firstname>Maja</firstname>
+					<surname>Stanislawska</surname>
+					<email>maja.stanislawska@yahoo.com</email>
+				</author>
+				<author>
+					<firstname>Victor</firstname>
+					<surname>Seva</surname>
+					<email>vseva@sipwise.com</email>
+					<affiliation><orgname>Sipwise GmbH</orgname></affiliation>
+				</author>
+				<editor>
+					<firstname>Victor</firstname>
+					<surname>Seva</surname>
+					<email>vseva@sipwise.com</email>
+					<affiliation><orgname>Sipwise GmbH</orgname></affiliation>
+				</editor>
+			</authorgroup>
+			<copyright>
+				<year>2014</year>
+				<holder>Maja Stanislawska</holder>
+			</copyright>
+			<copyright>
+				<year>2024</year>
+				<holder>Victor Seva</holder>
+			</copyright>
+		</bookinfo>
+		<toc></toc>
+
+	<xi:include href="presence_dfks_admin.xml"/>
+
+</book>

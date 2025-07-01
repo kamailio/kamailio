@@ -82,6 +82,36 @@
 		</para>
 	</section>
 
+	<section id="tm.rpc.t_uac_start_noack">
+		<title>
+		<function moreinfo="none">tm.t_uac_start_noack</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_start, but do not automatically send ACK for local
+		INVITE requests.
+		</para>
+	</section>
+
+	<section id="tm.rpc.t_uac_wait_block_noack">
+		<title>
+		<function moreinfo="none">tm.t_uac_wait_block_noack</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_wait_block, but do not automatically send ACK for
+		local INVITE requests.
+		</para>
+	</section>
+
+	<section id="tm.rpc.t_uac_wait_noack">
+		<title>
+		<function moreinfo="none">tm.t_uac_wait_noack</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_wait, but do not automatically send ACK for local
+		INVITE requests.
+		</para>
+	</section>
+
 	<section id="tm.rpc.cancel">
 		<title>
 		<function moreinfo="none">tm.cancel</function>
@@ -189,6 +219,57 @@
 			</para></listitem>
 		</itemizedlist>
 	</section>
+
+	<section id="tm.rpc.retransmit_reply">
+		<title>
+		<function moreinfo="none">tm.retransmit_reply</function>
+		</title>
+		<para>
+		Retransmit the reply for an existing SIP transaction.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>trans_id</emphasis> - transaction identifier
+				(has the hash_entry:label format)
+			</para></listitem>
+		</itemizedlist>
+		<example>
+		<title>Using <quote>tm.retransmit_reply</quote></title>
+		<programlisting format="linespecific">
+...
+kamcli rpc tm.retransmit_reply 1234:5678
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tm.rpc.retransmit_reply_callid">
+		<title>
+		<function moreinfo="none">tm.retransmit_reply_callid</function>
+		</title>
+		<para>
+		Retransmit the reply for an existing SIP transaction.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>callid</emphasis> - SIP Call-ID header
+			</para></listitem>
+			<listitem><para>
+				<emphasis>cseq</emphasis> - SIP CSeq header
+			</para></listitem>
+		</itemizedlist>
+		<example>
+		<title>Using <quote>tm.retransmit_reply_callid</quote></title>
+		<programlisting format="linespecific">
+...
+kamcli rpc tm.retransmit_reply_callid "abc-xyz" "10 INVITE"
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="tm.rpc.clean">
 		<title>
 		<function moreinfo="none">tm.clean</function>

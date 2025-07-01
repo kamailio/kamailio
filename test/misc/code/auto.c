@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -72,9 +72,9 @@ int main(int argc, char** argv)
 			fprintf(stderr, " no parameters\n");
 			exit(-1);
 	}
-	
+
 	for (i=0;i<10000000;i++){
-		
+
 	for(t=argv[1];*t;t++){
 		switch(*t){
 			case 'V':
@@ -415,7 +415,7 @@ int main(int argc, char** argv)
 								break;
 							case UNKNOWN_HEADER:
 							default:
-								/*printf("found unknown header, state=%d\n", 
+								/*printf("found unknown header, state=%d\n",
 											state);*/
 								err=1;
 								state=INITIAL;

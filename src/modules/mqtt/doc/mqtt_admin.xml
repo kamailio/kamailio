@@ -111,7 +111,7 @@ modparam("mqtt", "keepalive", 5)
 		<title><varname>id</varname> (str)</title>
 		<para>
 		String to use as the mqtt client id.
-		If NULL, a random client id will be generated. 
+		If NULL, a random client id will be generated.
 		</para>
 		<para>
 		<emphasis>
@@ -134,7 +134,7 @@ modparam("mqtt", "id", "kamailio123")
 		</para>
 		<para>
 		<emphasis>
-			Default value is NULL (no authentication). 
+			Default value is NULL (no authentication).
 			Must be used together with <varname>password</varname>.
 		</emphasis>
 		</para>
@@ -154,7 +154,7 @@ modparam("mqtt", "username", "kamailio-user")
 		</para>
 		<para>
 		<emphasis>
-			Default value is NULL (no authentication). 
+			Default value is NULL (no authentication).
 			Must be used together with <varname>username</varname>.
 		</emphasis>
 		</para>
@@ -246,11 +246,11 @@ end
 	<section id="mqtt.p.ca_file">
 		<title><varname>ca_file</varname> (str)</title>
 		<para>
-		Path to a file containing the PEM encoded trusted CA certificate files.  
+		Path to a file containing the PEM encoded trusted CA certificate files.
 		</para>
 		<para>
 		<emphasis>
-			Default value is NULL. 
+			Default value is NULL.
 			Set either this parameter or <varname>ca_path</varname> if you want to connect via TLS.
 		</emphasis>
 		</para>
@@ -266,13 +266,13 @@ modparam("mqtt", "ca_file", "/etc/ssl/certs/myca.pem")
 	<section id="mqtt.p.ca_path">
 		<title><varname>ca_path</varname> (str)</title>
 		<para>
-		Used to define a directory that contains PEM encoded CA certificates 
+		Used to define a directory that contains PEM encoded CA certificates
 		that are trusted. For <varname>ca_path</varname>  to work correctly, the certificates files must have ".pem" as the
 		file ending and you must run "openssl rehash /your/ca_path" each time you add/remove a certificate.
 		</para>
 		<para>
 		<emphasis>
-			Default value is NULL. 
+			Default value is NULL.
 			Set either this parameter or <varname>ca_file</varname> if you want to connect via TLS.
 			<varname>ca_file</varname> and <varname>ca_path</varname> are mutual exclusive.
 		</emphasis>
@@ -289,9 +289,9 @@ modparam("mqtt", "ca_path", "/etc/ssl/certs")
 	<section id="mqtt.p.tls_method">
 		<title><varname>tls_method</varname> (str)</title>
 		<para>
-		The version of the SSL/TLS protocol to use as a string.  
-		If NULL, the default value is used. 
-		The default value and the available values depend on the version of openssl that libmosquitto was compiled against.  
+		The version of the SSL/TLS protocol to use as a string.
+		If NULL, the default value is used.
+		The default value and the available values depend on the version of openssl that libmosquitto was compiled against.
 		</para>
 		<para>
 		Possible values:
@@ -304,7 +304,7 @@ modparam("mqtt", "ca_path", "/etc/ssl/certs")
 			</listitem>
 			<listitem>
 				<para>
-				For openssl &gt;= 1.0.1, the available options are tlsv1.2, tlsv1.1 and tlsv1, with tlv1.2 as the default.  
+				For openssl &gt;= 1.0.1, the available options are tlsv1.2, tlsv1.1 and tlsv1, with tlv1.2 as the default.
 				</para>
 			</listitem>
 			<listitem>
@@ -316,7 +316,7 @@ modparam("mqtt", "ca_path", "/etc/ssl/certs")
 
 		<para>
 		<emphasis>
-			Default value is NULL. 
+			Default value is NULL.
 		</emphasis>
 		</para>
 		<example>
@@ -352,11 +352,11 @@ modparam("mqtt", "tls_alpn", "mqtt")
 	<section id="mqtt.p.certificate">
 		<title><varname>certificate</varname> (str)</title>
 		<para>
-		Path to a file containing the PEM encoded certificate file for a TLS client connection.  
+		Path to a file containing the PEM encoded certificate file for a TLS client connection.
 		</para>
 		<para>
 		<emphasis>
-			Default value is NULL. 
+			Default value is NULL.
 			If NULL, <varname>private_key</varname> must also be NULL and no client certificate will be used.
 		</emphasis>
 		</para>
@@ -376,7 +376,7 @@ modparam("mqtt", "certificate", "/etc/ssl/certs/myclient.pem")
 		</para>
 		<para>
 		<emphasis>
-			Default value is NULL. 
+			Default value is NULL.
 			If NULL, <varname>certificate</varname> must also be NULL and no client certificate will be used.
 		</emphasis>
 		</para>
@@ -394,11 +394,11 @@ modparam("mqtt", "private_key", "/etc/ssl/private/myclient.key")
 		<para>
 		A string describing the ciphers available for use. See the <ulink url="https://www.openssl.org/docs/manmaster/man1/ciphers.html">
 		cipher(1)</ulink> OpenSSL man page.
-		If NULL, the libssl default ciphers will be used.		
+		If NULL, the libssl default ciphers will be used.
 		</para>
 		<para>
 		<emphasis>
-			Default value is NULL. 
+			Default value is NULL.
 		</emphasis>
 		</para>
 		<example>
@@ -413,20 +413,20 @@ modparam("mqtt", "cipher_list", "HIGH")
 	<section id="mqtt.p.verify_certificate">
 		<title><varname>verify_certificate</varname> (str)</title>
 		<para>
-		Configure verification of the server certificate.  
-		If value is set to 0, it is impossible to guarantee that the host you are connecting to is not 
-		impersonating your server.  
+		Configure verification of the server certificate.
+		If value is set to 0, it is impossible to guarantee that the host you are connecting to is not
+		impersonating your server.
 		</para>
 		<para>
-		This can be useful in initial server testing, but makes it possible for a 
-		malicious third party to impersonate your server through DNS spoofing, for example. 
+		This can be useful in initial server testing, but makes it possible for a
+		malicious third party to impersonate your server through DNS spoofing, for example.
 		</para>
 		<para>
-		Do not disable verification in a real system as it makes the connection encryption pointless.	
+		Do not disable verification in a real system as it makes the connection encryption pointless.
 		</para>
 		<para>
 		<emphasis>
-			Default value is 1. 
+			Default value is 1.
 		</emphasis>
 		</para>
 		<example>
@@ -451,7 +451,7 @@ modparam("mqtt", "verify_certificate", "0")
 		</para>
 		<para>
 		The function is passing the task to mqtt dispatcher process, therefore
-		the SIP worker process is not blocked. 
+		the SIP worker process is not blocked.
 		</para>
 		<para>
 		Incoming messages for this topic are then handled by the same process

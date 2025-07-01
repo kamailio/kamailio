@@ -6,7 +6,4 @@ auto_gen=
 NAME=mtree.so
 LIBS=
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
-
 include ../../Makefile.modules

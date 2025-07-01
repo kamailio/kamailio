@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -31,6 +33,7 @@
 /**
  * The static (opening) callback function for all dialog creations
  */
-void qos_dialog_created_CB(struct dlg_cell *did, int type, struct dlg_cb_params * params);
+void qos_dialog_created_CB(
+		struct dlg_cell *did, int type, struct dlg_cb_params *params);
 
 #endif /* _QOS_HANDLERS_H_ */

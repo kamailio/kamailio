@@ -1,7 +1,9 @@
 /*
- * Copyright (C) 2015 Victor Seva (sipwise.com)
+ * Copyright (C) 2015-2023 Victor Seva (sipwise.com)
  *
  * This file is part of Kamailio, a free SIP server.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +36,7 @@ int bind_cfgt(cfgt_api_t *api)
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	if(init_flag == 0) {
+	if(_cfgt_init_flag == 0) {
 		LM_ERR("configuration error - trying to bind to cfgt module"
 			   " before being initialized\n");
 		return -1;

@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -26,10 +28,10 @@
 
 
 int kz_initialize_pua();
-int kz_pua_publish(struct sip_msg* msg, char *json);
-int kz_pua_publish_mwi(struct sip_msg* msg, char *json);
-int kz_pua_publish_presence(struct sip_msg* msg, char *json);
-int kz_pua_publish_dialoginfo(struct sip_msg* msg, char *json);
+int kz_pua_publish(struct sip_msg *msg, char *json);
+int kz_pua_publish_mwi(struct sip_msg *msg, char *json);
+int kz_pua_publish_presence(struct sip_msg *msg, char *json);
+int kz_pua_publish_dialoginfo(struct sip_msg *msg, char *json);
 
 
 #endif

@@ -88,7 +88,7 @@ int main (int argc, char** argv)
 		printf("usage:    %s  uri [, uri...]\n", argv[0]);
 		exit(1);
 	}
-	
+
 	for (r=1; r<argc; r++){
 		if (parse_uri(argv[r], strlen(argv[r]), &uri)<0){
 			printf("error: parsing %s\n", argv[r]);

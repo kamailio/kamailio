@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="mangler.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -14,7 +14,7 @@
 	</title>
 	<para>
 	    Changes IP addresses inside SDP document in lines describing
-	    connections like c=IN IP4 . Currently this function only changes 
+	    connections like c=IN IP4 . Currently this function only changes
 	    IP4 addresses since IP6 probably will not need to traverse NAT :)
 	</para>
 	<para>
@@ -48,7 +48,7 @@ sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
 	    </programlisting>
 	    </example>
     </section>
-    
+
     <section id="mangler.f.sdp_mangle_port">
 	<title>
 	    <function>sdp_mangle_port(offset)</function>
@@ -79,7 +79,7 @@ sdp_mangle_port("-12000");
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="mangler.f.encode_contact">
 	<title>
 	    <function>encode_contact(encoding_prefix)</function>
@@ -108,12 +108,12 @@ sdp_mangle_port("-12000");
 	    <title><function>encode_contact</function> usage</title>
 	    <programlisting>
 ...
-if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38"); 
+if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 ...
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="mangler.f.decode_contact">
 	<title>
 	    <function>decode_contact()</function>
@@ -128,13 +128,13 @@ if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 	    <emphasis>
 	    sip:username:password@ip:port;parameters
 	    </emphasis>
-	    and will set destination URI to 
+	    and will set destination URI to
 	    <emphasis>
 	    sip:src_ip:src_port;transport=src_proto
 	    </emphasis>
 		(so that the next forward() or
-		t_relay() will send the message back to src_ip:src_port using 
-		src_proto). It uses the default set parameter for contact encoding 
+		t_relay() will send the message back to src_ip:src_port using
+		src_proto). It uses the default set parameter for contact encoding
 		separator.
 	</para>
 	<para>
@@ -149,7 +149,7 @@ if (uri =~ "^enc*") { decode_contact(); }
 	    </programlisting>
 	</example>
     </section>
-    
+
     <section id="mangler.f.decode_contact_header">
 	<title>
 	    <function>decode_contact_header()</function>

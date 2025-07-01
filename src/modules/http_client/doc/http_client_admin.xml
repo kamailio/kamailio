@@ -23,7 +23,7 @@
 	servers and a set of settings that apply to the specific connection.
 	</para>
 	<para>
-	The http_client module has multiple settings, some of them applies to
+	The http_client module has multiple settings, some of them apply to
 	a defined connection. You can set timeouts, max data sizes for download
 	and much more either using modparam settings or parameters to the
 	connection definition.
@@ -46,7 +46,7 @@
 	this module.
 	</para>
 	<para>
-	The http_client module use the CURL library setting up connections.
+	The http_client module uses the CURL library setting up connections.
 	The CURL library by default use the system configured DNS resolvers,
 	not the Kamailio resolver.
 	</para>
@@ -88,6 +88,13 @@
 
 	<section>
 		<title>Parameters</title>
+		<para>
+		The parameters are loaded in order. That can lead to unexpected behavior:
+		If httpcon is set at first, the default values for all other parameters are used,
+		and not the values that might be set after httpcon.
+		For example, if setting verify_peer=0 or verify_host=0 after httpcon,
+		the certificates are checked and self-signed certificates are rejected nevertheless.
+		</para>
 		<section id="http_client.p.httpredirect">
 			<title><varname>httpredirect</varname> (int)</title>
 			<para>
@@ -182,13 +189,12 @@ modparam("http_client", "maxdatasize", 2000)
 		<section id="http_client.p.connection_timeout">
 			<title><varname>connection_timeout</varname> (int)</title>
 			<para>
-			Defines in seconds how long &kamailio; waits for response
-			from servers.
+			Defines how long &kamailio; waits for response from servers.
+			Value is expressed in seconds or milliseconds, depending on parameter timeout_mode.
 			</para>
 			<para>
 			<emphasis>
-				Default value is zero, i.e.,
-				the timeout function is disabled.
+				Default value is 4 seconds.
 			</emphasis>
 			</para>
 			<example>
@@ -198,6 +204,34 @@ modparam("http_client", "maxdatasize", 2000)
 modparam("http_client", "connection_timeout", 2)
 ...
 				</programlisting>
+			</example>
+		</section>
+		<section id="http_client.p.timeout_mode">
+			<title><varname>timeout_mode</varname> (int)</title>
+			<para>
+			Defines if timeouts are enabled, and in which unit timeout values are expressed.
+			</para>
+			<para>
+			Valid values are:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para>0 - Timeouts are disabled.</para>
+			</listitem>
+			<listitem>
+				<para>1 - Timeout values are in seconds (default).</para>
+			</listitem>
+			<listitem>
+				<para>2 - Timeout values are in milliseconds.</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title>Set <varname>timeout_mode</varname> parameter</title>
+					<programlisting format="linespecific">
+...
+modparam("http_client", "timeout_mode", 1)
+...
+					</programlisting>
 			</example>
 		</section>
 		<section id="http_client.p.client_cert">
@@ -679,6 +713,26 @@ modparam("http_client", "netinterface", "eth0")
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.p.response_headers">
+			<title><varname>response_headers</varname> (int)</title>
+			<para>
+			Set to 1 in order to store HTTP response headers. A header value
+			can be retrieved with $httprhdr(name).
+			</para>
+			<para>
+			<emphasis>
+				Default value is 0.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>response_headers</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "response_headers", 1)
+...
+				</programlisting>
+			</example>
+		</section>
 
 	</section>
 
@@ -731,7 +785,7 @@ modparam("http_client", "netinterface", "eth0")
 				<title><function>http_connect()</function> usage</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
+modparam("http_client", "httpcon", "apiserver=>https://kamailio.org/api/");
 ...
 # POST Request
 $var(res) = http_connect("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
@@ -792,7 +846,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
 				<title><function>http_connect_raw()</function> usage</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
+modparam("http_client", "httpcon", "apiserver=>https://kamailio.org/api/");
 ...
 # POST Request
 $var(res) = http_connect_raw("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
@@ -863,7 +917,7 @@ http_get_redirect("apiserver", "$var(targeturl)");
 			the first line or the entire reply body (if any) is
 			stored in <quote>result</quote> parameter,
 			which must be a	writable pseudo	variable. See the query_result
-			parameter for controling what value to be stored in the result
+			parameter for controlling what value to be stored in the result
 			variable.
 			</para>
 			<para>
@@ -930,9 +984,96 @@ switch ($rc) {
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.f.http_client_request">
+			<title>
+				<function moreinfo="none">http_client_request(met, url, body, hdrs, respv)</function>
+			</title>
+			<para>
+				Perform a HTTP request to "url", storing the response body
+				in the "respv" variable. The method of the request is set by "met".
+				The "body" and "hdrs" can be empty strings to skip setting them.
+				The first four parameters can contain variables that are evaluated
+				at runtime. The "respv" has to be the name of a writable variable.
+			</para>
+			<example>
+				<title><function>http_client_request()</function> usage</title>
+				<programlisting format="linespecific">
+...
+http_client_request("GET", "http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="http_client.f.http_client_request_v2pk">
+			<title>
+				<function moreinfo="none">http_client_request_v2pk(met, url, body, hdrs, respv)</function>
+			</title>
+			<para>
+				Similar to http_client_request(), but using HTTP/2 prior-knowledge
+				that the server does not need HTTP/1.1-Upgrade (direct HTTP/2 by
+				seting libcurl option CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE).
+			</para>
+			<example>
+				<title><function>http_client_request_v2pk()</function> usage</title>
+				<programlisting format="linespecific">
+...
+http_client_request_v2pk("GET", "http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="http_client.f.http_client_response_headers_set">
+			<title>
+				<function moreinfo="none">http_client_response_headers_set(mode)</function>
+			</title>
+			<para>
+				Set if the HTTP response header should be stored (when mode is 1)
+				or not (when mode is 0). If mode is 0, then it also clears previously
+				stored response headers.
+			</para>
+			<example>
+				<title><function>http_client_response_headers_set()</function> usage</title>
+				<programlisting format="linespecific">
+...
+http_client_response_headers_set("1");
+http_client_request_v2pk("GET", "http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "", "X-Token: abc", "$var(result)");
+xinfo("response header: $httprhdr(X-Header)\n");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="http_client.f.http_client_response_headers_clear">
+			<title>
+				<function moreinfo="none">http_client_response_headers_clear()</function>
+			</title>
+			<para>
+				Clear stored response headers, if not explicitely done, it happens
+				when the next HTTP request is performed.
+			</para>
+			<example>
+				<title><function>http_client_response_headers_clear()</function> usage</title>
+				<programlisting format="linespecific">
+...
+http_client_request_v2pk("GET", "http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "", "X-Token: abc", "$var(result)");
+xinfo("response header: $httprhdr(X-Header)\n");
+http_client_response_headers_clear();
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 	<section>
-	<title>Pseudovariables</title>
+	<title>Pseudo-Variables</title>
 		<section >
 			<title>
 				<function moreinfo="none">$curlerror(error)</function>
@@ -943,6 +1084,15 @@ switch ($rc) {
 			The $curlerror pv returns a text string representing the error.
 			For more information on cURL error codes, please visit
 			http://curl.haxx.se/libcurl/c/libcurl-errors.html
+			</para>
+		</section>
+		<section >
+			<title>
+				<function moreinfo="none">$httprhdr(name)</function>
+			</title>
+			<para>
+			Return response header value. It requires response_headers parameter
+			to be set to 1.
 			</para>
 		</section>
 	</section>

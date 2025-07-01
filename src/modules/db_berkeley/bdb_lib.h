@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,10 +18,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 /*! \file
@@ -86,7 +88,7 @@ typedef struct
 		long long ll_val;		 /**< long long value            */
 		double double_val;		 /**< double value               */
 		time_t time_val;		 /**< unix time_t value          */
-		const char *string_val;  /**< zero terminated string     */
+		const char *string_val;	 /**< zero terminated string     */
 		str str_val;			 /**< str type string value      */
 		str blob_val;			 /**< binary object data         */
 		unsigned int bitmap_val; /**< Bitmap data type           */
@@ -119,8 +121,8 @@ typedef struct _bdb_table
 	int nkeys;
 	int ro;		  /*db readonly flag*/
 	int logflags; /*flags indication what-where to journal log */
-	FILE *fp;	 /*jlog file pointer */
-	time_t t;	 /*jlog creation time */
+	FILE *fp;	  /*jlog file pointer */
+	time_t t;	  /*jlog creation time */
 	ino_t ino;
 } bdb_table_t, *bdb_table_p;
 

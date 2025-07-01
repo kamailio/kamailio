@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -24,7 +26,7 @@
 
 static inline void free_option_tag(struct option_tag_body **otb)
 {
-	if (otb && *otb) {
+	if(otb && *otb) {
 		pkg_free(*otb);
 		*otb = 0;
 	}
@@ -33,6 +35,6 @@ static inline void free_option_tag(struct option_tag_body **otb)
 void hf_free_option_tag(void *parsed)
 {
 	struct option_tag_body *otb;
-	otb = (struct option_tag_body *) parsed;
+	otb = (struct option_tag_body *)parsed;
 	free_option_tag(&otb);
 }

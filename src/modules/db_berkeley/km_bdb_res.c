@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,14 +18,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 /*! \file
- * Berkeley DB : 
+ * Berkeley DB :
  *
  * \ingroup database
  */
@@ -381,7 +383,7 @@ int *bdb_get_colmap(table_p _dtp, db_key_t *_k, int _n)
 		for(j = 0; j < _dtp->ncols; j++) {
 			if(_k[i]->len == _dtp->colp[j]->name.len
 					&& !strncasecmp(_k[i]->s, _dtp->colp[j]->name.s,
-							   _dtp->colp[j]->name.len)) {
+							_dtp->colp[j]->name.len)) {
 				_lref[i] = j;
 				break;
 			}
@@ -502,20 +504,20 @@ int bdb_cmp_val(db_val_t *_vp, db_val_t *_v)
 
 	switch(VAL_TYPE(_v)) {
 		case DB1_INT:
-			return (_vp->val.int_val < _v->val.int_val)
-						   ? -1
-						   : (_vp->val.int_val > _v->val.int_val) ? 1 : 0;
+			return (_vp->val.int_val < _v->val.int_val)	  ? -1
+				   : (_vp->val.int_val > _v->val.int_val) ? 1
+														  : 0;
 		case DB1_BIGINT:
 			LM_ERR("BIGINT not supported");
 			return -1;
 		case DB1_DOUBLE:
-			return (_vp->val.double_val < _v->val.double_val)
-						   ? -1
-						   : (_vp->val.double_val > _v->val.double_val) ? 1 : 0;
+			return (_vp->val.double_val < _v->val.double_val)	? -1
+				   : (_vp->val.double_val > _v->val.double_val) ? 1
+																: 0;
 		case DB1_DATETIME:
-			return (_vp->val.int_val < _v->val.time_val)
-						   ? -1
-						   : (_vp->val.int_val > _v->val.time_val) ? 1 : 0;
+			return (_vp->val.int_val < _v->val.time_val)   ? -1
+				   : (_vp->val.int_val > _v->val.time_val) ? 1
+														   : 0;
 		case DB1_STRING:
 			_l = strlen(_v->val.string_val);
 			_l = (_l > _vp->val.str_val.len) ? _vp->val.str_val.len : _l;
@@ -550,9 +552,9 @@ int bdb_cmp_val(db_val_t *_vp, db_val_t *_v)
 				return -1;
 			return 1;
 		case DB1_BITMAP:
-			return (_vp->val.int_val < _v->val.bitmap_val)
-						   ? -1
-						   : (_vp->val.int_val > _v->val.bitmap_val) ? 1 : 0;
+			return (_vp->val.int_val < _v->val.bitmap_val)	 ? -1
+				   : (_vp->val.int_val > _v->val.bitmap_val) ? 1
+															 : 0;
 		default:
 			break;
 	}

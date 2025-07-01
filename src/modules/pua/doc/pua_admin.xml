@@ -82,12 +82,12 @@
 	<section>
 		<title><varname>hash_size</varname> (int)</title>
 		<para>
-		The size of the hash table used for storing SUBSCRIBE and 
-		PUBLISH information. 
+		The size of the hash table used for storing SUBSCRIBE and
+		PUBLISH information.
         	This parameter will be used as the power of 2 when computing table size.
         	</para>
 		<para>
-		<emphasis>Default value is <quote>9</quote>.	
+		<emphasis>Default value is <quote>9</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -175,8 +175,8 @@ modparam("pua", "default_expires", 3600)
 		<title><varname>update_period</varname> (int)</title>
 		<para>
 		The interval at which the information in database and hash table
-		should be updated. In the case of the hash table updating means 
-		deleting expired messages. 
+		should be updated. In the case of the hash table updating means
+		deleting expired messages.
 		Setting a value less than or equal to zero, disables updates.
 		</para>
 		<para>
@@ -216,13 +216,13 @@ modparam("pua", "outbound_proxy", "sip:outbound.example.com")
 		<title><varname>dlginfo_increase_version</varname> (int)</title>
 		<para>
 		When sending PUBLISH messages for Event: dialog, the body contains an
-		XML document according to RFC 4235. This XML document contains a 
+		XML document according to RFC 4235. This XML document contains a
 		version attribute to easily detect changes in the dialog state.
 		By setting this parameter, the pua module parses the XML document and
 		sets the version attribute to the proper value. If the receiver of
 		the PUBLISH does not care about the version parameter (e.g. like
-		&kamailio; presence_dialoginfo module) it makes no sense to waste 
-		CPU resources for parsing the XML body and the parameter should be 
+		&kamailio; presence_dialoginfo module) it makes no sense to waste
+		CPU resources for parsing the XML body and the parameter should be
 		set to 0.
 		</para>
 		<para>
@@ -242,13 +242,13 @@ modparam("pua", "dlginfo_increase_version", 1)
 		<title><varname>reginfo_increase_version</varname> (int)</title>
 		<para>
 		When sending PUBLISH messages for Event: reg, the body contains an
-		XML document according to RFC 4235(?). This XML document contains a 
+		XML document according to RFC 4235(?). This XML document contains a
 		version attribute to easily detect changes in the registration state.
 		By setting this parameter, the pua module parses the XML document and
 		sets the version attribute to the proper value. If the receiver of
 		the PUBLISH does not care about the version parameter (e.g. like
-		&kamailio; presence_reginfo module) it makes no sense to waste 
-		CPU resources for parsing the XML body and the parameter should be 
+		&kamailio; presence_reginfo module) it makes no sense to waste
+		CPU resources for parsing the XML body and the parameter should be
 		set to 0.
 		</para>
 		<para>
@@ -268,7 +268,7 @@ modparam("pua", "reginfo_increase_version", 1)
 		<title><varname>db_mode</varname> (int)</title>
 		<para>
 		The module supports 2 modes of operation, high speed memory
-		based storage (mode 0), and database only (mode 2) where all 
+		based storage (mode 0), and database only (mode 2) where all
 		data is stored in a database, allowing scalability at the expense of speed.
 		Mode 1 is reserved.
 		</para>
@@ -306,7 +306,7 @@ modparam("pua", "db_table_lock_write", 0)
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section>
 		<title><varname>check_remote_contact</varname> (int)</title>
 		<para>
@@ -355,7 +355,7 @@ modparam("pua", "fetch_rows", 1000)
 
 	<section>
 	<title>Functions</title>
-		
+
 	<section>
 		<title>
 		<function moreinfo="none">pua_update_contact()</function>
@@ -364,7 +364,7 @@ modparam("pua", "fetch_rows", 1000)
 		The remote target can be updated by the Contact of a subsequent in
 		dialog request. In the PUA watcher case (sending a SUBSCRIBE messages),
 		this means that the remote target for the following Subscribe messages
-		can be updated at any time by the contact of a Notify message. 
+		can be updated at any time by the contact of a Notify message.
 		If this function is called on request route on receiving a Notify
 		message, it will try to update the stored remote target.
 		</para>
@@ -386,7 +386,7 @@ modparam("pua", "fetch_rows", 1000)
 			</listitem>
 		</itemizedlist>
 		</para>
-	
+
 		<example>
 		<title><function>pua_update_contact</function> usage</title>
 		<programlisting format="linespecific">
@@ -428,8 +428,8 @@ if(method=="NOTIFY")
 <section>
 	<title>Installation</title>
 	<para>
-	The module requires one table in the &kamailio; database: pua. The SQL 
-	syntax to create it can be found in presence_xml-create.sql     
+	The module requires one table in the &kamailio; database: pua. The SQL
+	syntax to create it can be found in presence_xml-create.sql
 	script in the database directories in the kamailio/scripts folder.
 	You can also find the complete database documentation on the
 	project webpage, &kamailiodbdocslink;.

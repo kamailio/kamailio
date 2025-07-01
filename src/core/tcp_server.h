@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -27,13 +29,13 @@
 
 /* "public" functions*/
 
-int tcp_send(struct dest_info* dst, union sockaddr_union* from,
-				const char* buf, unsigned len);
+int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
+		unsigned len);
 
 int tcpconn_add_alias(int id, int port, int proto);
 
 
-int wss_send(dest_info_t* dst, const char* buf, unsigned len);
+int wss_send(dest_info_t *dst, const char *buf, unsigned len);
 
 
 #endif

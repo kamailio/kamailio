@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -24,38 +26,39 @@
 #include "../../core/str.h"
 #include "../../core/sr_module.h"
 
-typedef int (*SHA1_hash_f)(str*, str*);
+typedef int (*SHA1_hash_f)(str *, str *);
 
-typedef struct crypto_binds {
+typedef struct crypto_binds
+{
 	SHA1_hash_f SHA1;
 } crypto_api_t;
 
 
-typedef  int (*load_crypto_f)( struct crypto_binds* );
+typedef int (*load_crypto_f)(struct crypto_binds *);
 
 /*!
 * \brief API bind function exported by the module - it will load the other functions
  * \param rrb record-route API export binding
  * \return 1
  */
-int load_crypto( struct crypto_binds *cb );
+int load_crypto(struct crypto_binds *cb);
 
 /*!
  * \brief Function to be called directly from other modules to load the CRYPTO API
  * \param cb crypto API export binding
  * \return 0 on success, -1 if the API loader could not imported
  */
-inline static int load_crypto_api( struct crypto_binds *cb )
+inline static int load_crypto_api(struct crypto_binds *cb)
 {
 	load_crypto_f load_crypto_v;
 
 	/* import the crypto auto-loading function */
-	if ( !(load_crypto_v=(load_crypto_f)find_export("load_crypto", 0, 0))) {
+	if(!(load_crypto_v = (load_crypto_f)find_export("load_crypto", 0, 0))) {
 		LM_ERR("failed to import load_crypto\n");
 		return -1;
 	}
 	/* let the auto-loading function load all crypto stuff */
-	load_crypto_v( cb );
+	load_crypto_v(cb);
 
 	return 0;
 }

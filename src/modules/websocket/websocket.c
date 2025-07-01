@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -101,20 +103,20 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	/* ws_frame.c */
-	{ "keepalive_mechanism",	INT_PARAM, &ws_keepalive_mechanism },
-	{ "keepalive_timeout",		INT_PARAM, &ws_keepalive_timeout },
+	{ "keepalive_mechanism",	PARAM_INT, &ws_keepalive_mechanism },
+	{ "keepalive_timeout",		PARAM_INT, &ws_keepalive_timeout },
 	{ "ping_application_data",	PARAM_STR, &ws_ping_application_data },
 
 	/* ws_handshake.c */
-	{ "sub_protocols",		INT_PARAM, &ws_sub_protocols },
-	{ "cors_mode",			INT_PARAM, &ws_cors_mode },
+	{ "sub_protocols",		PARAM_INT, &ws_sub_protocols },
+	{ "cors_mode",			PARAM_INT, &ws_cors_mode },
 
 	/* ws_mod.c */
-	{ "keepalive_interval",		INT_PARAM, &ws_keepalive_interval },
-	{ "keepalive_processes",	INT_PARAM, &ws_keepalive_processes },
+	{ "keepalive_interval",		PARAM_INT, &ws_keepalive_interval },
+	{ "keepalive_processes",	PARAM_INT, &ws_keepalive_processes },
 
-	{ "timer_interval",		INT_PARAM, &ws_timer_interval },
-	{ "rm_delay_interval",	INT_PARAM, &ws_rm_delay_interval },
+	{ "timer_interval",		PARAM_INT, &ws_timer_interval },
+	{ "rm_delay_interval",	PARAM_INT, &ws_rm_delay_interval },
 
 	{ "verbose_list",		PARAM_INT, &ws_verbose_list },
 	{ "event_callback",		PARAM_STR, &ws_event_callback},
@@ -194,7 +196,7 @@ static int mod_init(void)
 		goto error;
 	}
 
-	if(register_module_stats(exports.name, stats) != 0) {
+	if(register_module_stats("websocket", stats) != 0) {
 		LM_ERR("registering core statistics\n");
 		goto error;
 	}
@@ -301,20 +303,19 @@ static int child_init(int rank)
 		if(ws_keepalive_mechanism != KEEPALIVE_MECHANISM_NONE) {
 			for(i = 0; i < ws_keepalive_processes; i++) {
 				if(fork_sync_timer(PROC_TIMER, "WEBSOCKET KEEPALIVE", 1,
-						   ws_keepalive, (void*)(long)i, ws_keepalive_interval)
+						   ws_keepalive, (void *)(long)i, ws_keepalive_interval)
 						< 0) {
 					LM_ERR("starting keepalive process\n");
 					return -1;
 				}
 			}
 		}
-		if(fork_sync_timer(PROC_TIMER, "WEBSOCKET TIMER", 1,
-			   ws_timer, NULL, ws_timer_interval)
-					< 0) {
-				LM_ERR("starting timer process\n");
-				return -1;
+		if(fork_sync_timer(PROC_TIMER, "WEBSOCKET TIMER", 1, ws_timer, NULL,
+				   ws_timer_interval)
+				< 0) {
+			LM_ERR("starting timer process\n");
+			return -1;
 		}
-
 	}
 
 	return 0;

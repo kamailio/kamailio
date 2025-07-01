@@ -25,9 +25,9 @@
 #include "domain.h"
 
 
-int bind_domain(domain_api_t* api)
+int bind_domain(domain_api_t *api)
 {
-	if (api == NULL) {
+	if(api == NULL) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}

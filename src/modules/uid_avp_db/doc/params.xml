@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="avp_db.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
-	<!-- following is not needed in every section - it is needless here? 
+	<!-- following is not needed in every section - it is needless here?
     </sectioninfo>-->
 
     <title>Parameters</title>
@@ -71,7 +71,7 @@
     </section>
 
     <section>
-	<title><varname>name</varname> (string)</title>
+	<title><varname>name_column</varname> (string)</title>
 	<para>
 	    The name of the column containing attribute names.
 	</para>
@@ -79,7 +79,7 @@
 	    Default value is "name".
 	</para>
     </section>
-    
+
     <section>
 	<title><varname>value_column</varname> (string)</title>
 	<para>
@@ -89,7 +89,7 @@
 	    Default value is "value".
 	</para>
     </section>
-    
+
 	<section>
 	<title><varname>type_column</varname> (string)</title>
 	<para>
@@ -109,7 +109,7 @@
 	    Default value is "flags".
 	</para>
     </section>
-    
+
 	<section>
 	<title><varname>scheme_column</varname> (string)</title>
 	<para>
@@ -130,7 +130,7 @@
 		The group definition contains one or more assignments in the form
 		key=value. Possible keys are:
 		<variablelist>
-		
+
 		<varlistentry>
 			<term>id</term>
 			<listitem><para>Attribute group identifier. Must be set.
@@ -159,7 +159,7 @@
 			value is <quote>name</quote>.</para></listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>value_column</term>			
+			<term>value_column</term>
 			<listitem><para>Column name used for storing attribute
 			value. Default value is <quote>value</quote>.</para></listitem>
 		</varlistentry>
@@ -169,7 +169,7 @@
 			value is <quote>type</quote>.</para></listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>flags_column</term>			
+			<term>flags_column</term>
 			<listitem><para>Column name used for storing attribute
 			flags. Default value is <quote>flags</quote>.</para></listitem>
 		</varlistentry>
@@ -181,15 +181,15 @@
 	<para><example><title>attribute group definition</title>
 	<programlisting>modparam("avp_db", "attr_group", "id=dlg,flag=dialog_flag,table=dlg_attrs,key_column=dlg_id");</programlisting>
 	<para>Table used for these attributes:
-	<programlisting>mysql> describe dlg_attrs;  
+	<programlisting>mysql> describe dlg_attrs;
 +--------+------------------+------+-----+---------+-------+
 | Field  | Type             | Null | Key | Default | Extra |
 +--------+------------------+------+-----+---------+-------+
-| dlg_id | varchar(256)     | NO   | MUL |         |       | 
-| name   | varchar(32)      | NO   |     |         |       | 
-| value  | varchar(255)     | YES  |     | NULL    |       | 
-| type   | int(11)          | NO   |     | 0       |       | 
-| flags  | int(10) unsigned | NO   |     | 0       |       | 
+| dlg_id | varchar(256)     | NO   | MUL |         |       |
+| name   | varchar(32)      | NO   |     |         |       |
+| value  | varchar(255)     | YES  |     | NULL    |       |
+| type   | int(11)          | NO   |     | 0       |       |
+| flags  | int(10) unsigned | NO   |     | 0       |       |
 +--------+------------------+------+-----+---------+-------+
 5 rows in set (0.00 sec)
 	</programlisting>
@@ -214,7 +214,7 @@ route {
 		Determines the action when any of the 'extra attributes' lock is detected when
 		routing script execution was finished.
 
-		When the value of this parameter is zero (default) BUG level message is logged, 
+		When the value of this parameter is zero (default) BUG level message is logged,
 		but the lock is kept, so another process trying to obtain the lock might get stuck.
 
 		If the value is nonzero, DEBUG level message is sent to the log and all the locks are released.

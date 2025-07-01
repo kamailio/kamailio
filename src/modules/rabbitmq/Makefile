@@ -10,6 +10,10 @@ RMQ_BUILDER=$(shell \
 	if pkg-config --exists librabbitmq && pkg-config --exists uuid; then \
 		echo 'pkg-config librabbitmq uuid'; \
 	fi)
+
+	ifeq ($(shell pkg-config --atleast-version=0.13.0 librabbitmq; echo $$?),0)
+		DEFS += -DRABBITMQ_DEPRECATION
+	endif
 endif
 
 ifneq ($(RMQ_BUILDER),)

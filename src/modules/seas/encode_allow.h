@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -21,6 +23,7 @@
 
 #ifndef __ENCODE_ALLOW_H__
 #define __ENCODE_ALLOW_H__
-int encode_allow(char *hdrstart,int hdrlen,unsigned int *bodi,char *where);
-int print_encoded_allow(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix);
+int encode_allow(char *hdrstart, int hdrlen, unsigned int *bodi, char *where);
+int print_encoded_allow(FILE *fd, char *hdr, int hdrlen, unsigned char *payload,
+		int paylen, char *prefix);
 #endif

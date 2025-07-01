@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -207,7 +209,7 @@ int add_sa(struct mnl_socket *nl_sock, const struct ip_addr *src_addr_param,
 		string_to_key(l_auth_algo->alg_key, ik1);
 		pkg_free(ik1.s);
 	} else {
-		LM_DBG("Creating security associations: UNKNOW Auth Algorithm\n");
+		LM_DBG("Creating security associations: UNKNOWN Auth Algorithm\n");
 		return -1;
 	}
 
@@ -239,7 +241,7 @@ int add_sa(struct mnl_socket *nl_sock, const struct ip_addr *src_addr_param,
 		strcpy(l_enc_algo->alg_name, "cipher_null");
 		l_enc_algo->alg_key_len = 0;
 	} else {
-		LM_DBG("Creating security associations: UNKNOW Enc Algorithm\n");
+		LM_DBG("Creating security associations: UNKNOWN Enc Algorithm\n");
 		return -1;
 	}
 

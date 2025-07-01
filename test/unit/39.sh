@@ -31,7 +31,7 @@ fi ;
 CFG=11.cfg
 
 DOMAIN="local"
-# setup 250 contacts
+# set up 250 contacts
 NR=25
 
 cp $CFG $CFG.bak
@@ -40,7 +40,7 @@ printf "loadmodule \"db_unixodbc/db_unixodbc.so\"" >> $CFG
 printf "modparam(\"usrloc\", \"db_url\", \"unixodbc://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 printf "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
 
-# isql unfortunally only allow one statement per line
+# isql unfortunately only allow one statement per line
 COUNTER=0
 CNT=0
 while [  $COUNTER -lt $NR ]; do

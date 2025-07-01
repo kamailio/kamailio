@@ -59,7 +59,7 @@
 		<title>global.reload</title>
 	    <para>
 		<emphasis>global.reload</emphasis> - Reload values from global_attrs
-		DB table. This function does not have any parameters. There is no return 
+		DB table. This function does not have any parameters. There is no return
 		value on success.
 	    </para>
 	</section>

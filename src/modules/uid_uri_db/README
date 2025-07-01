@@ -17,7 +17,7 @@ Jan Janak
 
               3.1. db_url (string)
               3.2. uri_table (string)
-              3.3. uri_user_column (string)
+              3.3. username_column (string)
               3.4. uri_domain_column (string)
               3.5. uri_uriuser_column (string)
               3.6. subscriber_table (string)
@@ -34,7 +34,7 @@ Jan Janak
 
    1.1. Set db_url parameter
    1.2. Set uri_table parameter
-   1.3. Set uri_user_column parameter
+   1.3. Set username_column parameter
    1.4. Set uri_domain_column parameter
    1.5. Set uri_uriuser_column parameter
    1.6. Set subscriber_table parameter
@@ -54,7 +54,7 @@ Chapter 1. Admin Guide
 
         3.1. db_url (string)
         3.2. uri_table (string)
-        3.3. uri_user_column (string)
+        3.3. username_column (string)
         3.4. uri_domain_column (string)
         3.5. uri_uriuser_column (string)
         3.6. subscriber_table (string)
@@ -80,7 +80,7 @@ Chapter 1. Admin Guide
 
    3.1. db_url (string)
    3.2. uri_table (string)
-   3.3. uri_user_column (string)
+   3.3. username_column (string)
    3.4. uri_domain_column (string)
    3.5. uri_uriuser_column (string)
    3.6. subscriber_table (string)
@@ -109,15 +109,15 @@ modparam("module", "db_url", "mysql://username:password@localhost/ser")
 modparam("module", "uri_table", "uri")
 ...
 
-3.3. uri_user_column (string)
+3.3. username_column (string)
 
    Column holding usernames in the URI table.
 
    Default value is "username".
 
-   Example 1.3. Set uri_user_column parameter
+   Example 1.3. Set username_column parameter
 ...
-modparam("module", "uri_user_column", "username")
+modparam("module", "username_column", "username")
 ...
 
 3.4. uri_domain_column (string)

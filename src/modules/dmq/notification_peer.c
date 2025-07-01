@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -15,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -28,7 +30,9 @@
 #define MAXDMQHOSTS 30
 
 str dmq_notification_content_type = str_init("text/plain");
-dmq_resp_cback_t dmq_notification_resp_callback = {&notification_resp_callback_f, 0};
+dmq_resp_cback_t dmq_notification_resp_callback = {
+		&notification_resp_callback_f, 0};
+dmq_resp_cback_t dmq_default_resp_callback = {&default_resp_callback_f, 0};
 
 int *dmq_init_callback_done = 0;
 
@@ -296,9 +300,9 @@ dmq_node_t *add_server_and_notify(str_list_t *server_list)
 	**********/
 
 	if(!dmq_multi_notify) {
-		while (server_list != NULL) {
-			LM_DBG("adding notification node %.*s\n",
-				server_list->s.len, server_list->s.s);
+		while(server_list != NULL) {
+			LM_DBG("adding notification node %.*s\n", server_list->s.len,
+					server_list->s.s);
 			pfirst = add_dmq_node(dmq_node_list, &server_list->s);
 			server_list = server_list->next;
 		}
@@ -323,7 +327,8 @@ dmq_node_t *add_server_and_notify(str_list_t *server_list)
 		for(index = 0; index < host_cnt; index++) {
 			pstr->s = puri_list[index];
 			pstr->len = strlen(puri_list[index]);
-			if(!find_dmq_node_uri(dmq_node_list, pstr)) { // check for duplicates
+			if(!find_dmq_node_uri(
+					   dmq_node_list, pstr)) { // check for duplicates
 				pnode = add_dmq_node(dmq_node_list, pstr);
 				if(pnode && !pfirst) {
 					pfirst = pnode;
@@ -356,7 +361,7 @@ dmq_node_t *add_server_and_notify(str_list_t *server_list)
  * 	From: ...
  * 	Max-Forwards: ...
  * 	Content-Length: 22
- * 	
+ *
  * 	sip:host1:port1;param1=value1
  * 	sip:host2:port2;param2=value2
  * 	...
@@ -370,8 +375,9 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg)
 	dmq_node_t *ret, *find;
 	char *tmp, *end, *match;
 
-	if(!msg->content_length && (parse_headers(msg, HDR_CONTENTLENGTH_F, 0) < 0
-									   || !msg->content_length)) {
+	if(!msg->content_length
+			&& (parse_headers(msg, HDR_CONTENTLENGTH_F, 0) < 0
+					|| !msg->content_length)) {
 		LM_ERR("no content length header found\n");
 		return -1;
 	}
@@ -386,7 +392,9 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg)
 	end = body.s + body.len;
 
 	/* acquire big list lock */
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
 	lock_get(&update_list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
 	while(tmp < end) {
 		match = q_memchr(tmp, '\n', end - tmp);
 		if(match) {
@@ -402,9 +410,17 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg)
 		/* trim the \r, \n and \0's */
 		trim_r(tmp_uri);
 		find = build_dmq_node(&tmp_uri, 0);
-		if(find == NULL)
-			return -1;
+		if(find == NULL) {
+			LM_ERR("error building dmq node\n");
+			goto error;
+		}
 		ret = find_dmq_node(update_list, find);
+
+		if(!ret) {
+			LM_INFO("dmq node not found by name,try again with IP address\n");
+			ret = find_dmq_node_ip(update_list, find);
+		}
+
 		if(!ret) {
 			LM_DBG("found new node %.*s\n", STR_FMT(&tmp_uri));
 			cur = build_dmq_node(&tmp_uri, 1);
@@ -416,8 +432,9 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg)
 			update_list->nodes = cur;
 			update_list->count++;
 			total_nodes++;
-		} else if(!ret->local && find->uri.params.s && 
-					ret->status != find->status && ret->status != DMQ_NODE_DISABLED) {
+		} else if(!ret->local && find->uri.params.s
+				  && ret->status != find->status
+				  && ret->status != DMQ_NODE_DISABLED) {
 			/* don't update the node if it is in ending state */
 			LM_DBG("updating status on %.*s from %d to %d\n", STR_FMT(&tmp_uri),
 					ret->status, find->status);
@@ -429,9 +446,11 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg)
 
 	/* release big list lock */
 	lock_release(&update_list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	return total_nodes;
 error:
 	lock_release(&update_list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	return -1;
 }
 
@@ -508,7 +527,7 @@ error:
 }
 
 /**
- * builds the body of a notification message from the list of servers 
+ * builds the body of a notification message from the list of servers
  * the result will look something like:
  * sip:host1:port1;param1=value1\r\n
  * sip:host2:port2;param2=value2\r\n
@@ -524,7 +543,7 @@ str *build_notification_body()
 	str *body;
 	body = pkg_malloc(sizeof(str));
 	if(body == NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(body, 0, sizeof(str));
@@ -532,18 +551,21 @@ str *build_notification_body()
 	body->len = NBODY_LEN;
 	body->s = pkg_malloc(body->len);
 	if(body->s == NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		pkg_free(body);
 		return NULL;
 	}
 	/* we add each server to the body - each on a different line */
+	LM_DBG("trying to acquire dmq_node_list->lock\n");
 	lock_get(&dmq_node_list->lock);
+	LM_DBG("acquired dmq_node_list->lock\n");
 	cur_node = dmq_node_list->nodes;
 	while(cur_node) {
-		if (cur_node->local || cur_node->status == DMQ_NODE_ACTIVE) {
+		if(cur_node->local || cur_node->status == DMQ_NODE_ACTIVE) {
 			LM_DBG("body_len = %d - clen = %d\n", body->len, clen);
 			/* body->len - clen - 2 bytes left to write - including the \r\n */
-			slen = build_node_str(cur_node, body->s + clen, body->len - clen - 2);
+			slen = build_node_str(
+					cur_node, body->s + clen, body->len - clen - 2);
 			if(slen < 0) {
 				LM_ERR("cannot build_node_string\n");
 				goto error;
@@ -555,10 +577,12 @@ str *build_notification_body()
 		cur_node = cur_node->next;
 	}
 	lock_release(&dmq_node_list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	body->len = clen;
 	return body;
 error:
 	lock_release(&dmq_node_list->lock);
+	LM_DBG("released dmq_node_list->lock\n");
 	pkg_free(body->s);
 	pkg_free(body);
 	return NULL;
@@ -594,8 +618,13 @@ int notification_resp_callback_f(
 	int nodes_recv;
 	str_list_t *slp;
 
-	LM_DBG("notification_callback_f triggered [%p %d %p]\n", msg, code, param);
+	LM_DBG("triggered [%p %d %p]\n", msg, code, param);
 	if(code == 200) {
+		if(dmq_fail_count_enabled) {
+			/* reset node fail counter */
+			reset_dmq_node_fail_count(dmq_node_list, node);
+		}
+
 		/* be sure that the node that answered is in active state */
 		update_dmq_node_status(dmq_node_list, node, DMQ_NODE_ACTIVE);
 		nodes_recv = extract_node_list(dmq_node_list, msg);
@@ -605,27 +634,80 @@ int notification_resp_callback_f(
 			run_init_callbacks();
 		}
 	} else if(code == 408) {
+		LM_WARN("timeout: previous fail_count=%d fail_threshold_not_active=%d "
+				"fail_threshold_disabled=%d "
+				"host=%.*s port=%.*s\n",
+				node->fail_count, dmq_fail_count_threshold_not_active,
+				dmq_fail_count_threshold_disabled, node->uri.host.len,
+				node->uri.host.s, node->uri.port.len, node->uri.port.s);
+
+		if(node->status == DMQ_NODE_DISABLED) {
+			/* deleting node - the server did not respond */
+			LM_ERR("deleting server node %.*s because of failed request\n",
+					STR_FMT(&node->orig_uri));
+			ret = del_dmq_node(dmq_node_list, node);
+			LM_DBG("del_dmq_node returned %d\n", ret);
+			return 0;
+		}
+
+		if(dmq_fail_count_enabled) {
+			/* alwaws increment fail_count here and possibly update state */
+			update_dmq_node_status_on_timeout(dmq_node_list, node,
+					(DMQ_NODE_ACTIVE | DMQ_NODE_NOT_ACTIVE
+							| DMQ_NODE_DISABLED));
+			return 0;
+		}
+
 		/* TODO this probably do not work for dmq_multi_notify */
 		slp = dmq_notification_address_list;
-		while (slp != NULL) {
+		while(slp != NULL) {
 			if(STR_EQ(node->orig_uri, slp->s)) {
 				LM_ERR("not deleting notification peer [%.*s]\n",
-					STR_FMT(&slp->s));
-				update_dmq_node_status(dmq_node_list, node, DMQ_NODE_PENDING);
+						STR_FMT(&slp->s));
+				update_dmq_node_status(
+						dmq_node_list, node, DMQ_NODE_NOT_ACTIVE);
 				return 0;
 			}
 			slp = slp->next;
 		}
-		if (node->status == DMQ_NODE_DISABLED) {
-			/* deleting node - the server did not respond */
-			LM_ERR("deleting server node %.*s because of failed request\n",
-				STR_FMT(&node->orig_uri));
-			ret = del_dmq_node(dmq_node_list, node);
-			LM_DBG("del_dmq_node returned %d\n", ret);
+
+		/* update status only if fail_count mechanism is disabled
+		 * otherwise, let fail_count reach threshold before update status */
+		if(!dmq_remove_inactive) {
+			/* put the node in not_active state */
+			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_NOT_ACTIVE);
 		} else {
 			/* put the node in disabled state and wait for the next ping before deleting it */
 			update_dmq_node_status(dmq_node_list, node, DMQ_NODE_DISABLED);
 		}
 	}
+	return 0;
+}
+
+/**
+ * @brief default response callback
+ */
+int default_resp_callback_f(
+		struct sip_msg *msg, int code, dmq_node_t *node, void *param)
+{
+	LM_DBG("triggered [%p %d %p]\n", msg, code, param);
+
+	/* if node timeout */
+	if(code == 408) {
+		LM_WARN("timeout: previous fail_count=%d fail_threshold_not_active=%d "
+				"fail_threshold_disabled=%d "
+				"host=%.*s port=%.*s\n",
+				node->fail_count, dmq_fail_count_threshold_not_active,
+				dmq_fail_count_threshold_disabled, node->uri.host.len,
+				node->uri.host.s, node->uri.port.len, node->uri.port.s);
+
+		if(dmq_fail_count_enabled) {
+			/* increment fail_count here and possibly update state, if node in active state */
+			/* this will prevent other modules that use DMQ to affect node state past the not_active state */
+			update_dmq_node_status_on_timeout(
+					dmq_node_list, node, DMQ_NODE_ACTIVE);
+		}
+	}
+
 	return 0;
 }

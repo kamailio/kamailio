@@ -43,21 +43,39 @@ extern pv_spec_t jsonrpc_result_pv;
 
 /* DEFAULTS */
 /* time (in ms) after which the error route is called */
-#define JSONRPC_DEFAULT_TIMEOUT     500
+#define JSONRPC_DEFAULT_TIMEOUT 500
 #define JSONRPC_RESULT_STR "$var(jsrpc_result)"
-#define JSONRPC_DEFAULT_RETRY       0
+#define JSONRPC_DEFAULT_RETRY 0
 
 /* helpful macros */
-#define CHECK_MALLOC_VOID(p)  if(!(p)) {ERR("Out of memory!\n"); return;}
-#define CHECK_MALLOC(p)  if(!(p)) {ERR("Out of memory!\n"); return JSONRPC_ERROR_NO_MEMORY;}
-#define CHECK_MALLOC_NULL(p)  if(!(p)) {ERR("Out of memory!\n"); return NULL;}
-#define CHECK_MALLOC_GOTO(p,loc)  if(!(p)) {ERR("Out of memory!\n"); goto loc;}
-#define CHECK_AND_FREE(p) if((p)!=NULL) shm_free(p)
-#define CHECK_AND_FREE_EV(p) \
-	if((p) && event_initialized((p))) {\
-		event_del(p); \
-		event_free(p); \
-		p = NULL; \
+#define CHECK_MALLOC_VOID(p)     \
+	if(!(p)) {                   \
+		ERR("Out of memory!\n"); \
+		return;                  \
+	}
+#define CHECK_MALLOC(p)                 \
+	if(!(p)) {                          \
+		ERR("Out of memory!\n");        \
+		return JSONRPC_ERROR_NO_MEMORY; \
+	}
+#define CHECK_MALLOC_NULL(p)     \
+	if(!(p)) {                   \
+		ERR("Out of memory!\n"); \
+		return NULL;             \
+	}
+#define CHECK_MALLOC_GOTO(p, loc) \
+	if(!(p)) {                    \
+		ERR("Out of memory!\n");  \
+		goto loc;                 \
+	}
+#define CHECK_AND_FREE(p) \
+	if((p) != NULL)       \
+	shm_free(p)
+#define CHECK_AND_FREE_EV(p)            \
+	if((p) && event_initialized((p))) { \
+		event_del(p);                   \
+		event_free(p);                  \
+		p = NULL;                       \
 	}
 
 #define STR(ss) (ss).len, (ss).s
@@ -70,32 +88,33 @@ extern pv_spec_t jsonrpc_result_pv;
  * */
 
 
-#define PIT_MATCHES(param) \
-	(pit->name.len == sizeof((param))-1 && \
-		strncmp(pit->name.s, (param), sizeof((param))-1)==0)
+#define PIT_MATCHES(param)                \
+	(pit->name.len == sizeof((param)) - 1 \
+			&& strncmp(pit->name.s, (param), sizeof((param)) - 1) == 0)
 
 #include <jansson.h>
 #include <event.h>
 
 typedef void (*libev_cb_f)(int sock, short flags, void *arg);
 
-typedef struct retry_range {
+typedef struct retry_range
+{
 	int start;
 	int end;
-	struct retry_range* next;
+	struct retry_range *next;
 } retry_range_t;
 
 /* globals */
 extern int cmd_pipe;
 extern str result_pv_str;
-extern retry_range_t* global_retry_ranges;
+extern retry_range_t *global_retry_ranges;
 extern const str null_str;
 
-#define jsr_ms_to_tv(ms, tv) \
-	do { \
+#define jsr_ms_to_tv(ms, tv)                    \
+	do {                                        \
 		memset(&tv, 0, sizeof(struct timeval)); \
-		tv.tv_sec = ms/1000; \
-		tv.tv_usec = ((ms % 1000) * 1000); \
+		tv.tv_sec = ms / 1000;                  \
+		tv.tv_usec = ((ms % 1000) * 1000);      \
 	} while(0)
 
 #endif /* _JSONRPC_H_ */

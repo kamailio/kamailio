@@ -744,7 +744,7 @@ switch ($retcode) {
       profile)</function></title>
 
       <para>The function fetches the contacts for 'uri' from table 'domain' to
-      pseudo-variable $imssulc(profile) [imssulc = ims scscf ulc].</para>
+      pseudo-variable $ulc(profile) [ulc = ims scscf ulc].</para>
 
       <para>Meaning of the parameters is as follows:</para>
 
@@ -761,7 +761,7 @@ switch ($retcode) {
         </listitem>
 
         <listitem>
-          <para><emphasis>profile</emphasis> - Name of $imssulc
+          <para><emphasis>profile</emphasis> - Name of $ulc
           pseudo-variable profile that will store the fetched contacts. It is
           a static string.</para>
         </listitem>
@@ -793,7 +793,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>profile</emphasis> - Name of $imssulc
+          <para><emphasis>profile</emphasis> - Name of $ulc
           pseudo-variable profile that stores the contacts. It is a static
           string.</para>
         </listitem>
@@ -821,7 +821,7 @@ reg_free_contacts("callee");
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>The user agent to it's own state</emphasis></para>
+          <para><emphasis>The user agent to its own state</emphasis></para>
         </listitem>
 
         <listitem>
@@ -896,7 +896,7 @@ if (can_subscribe_to_reg("location")){
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>The user agent to it's own state</emphasis></para>
+          <para><emphasis>The user agent to its own state</emphasis></para>
         </listitem>
 
         <listitem>
@@ -924,7 +924,7 @@ if (can_subscribe_to_reg("location")){
 
         <programlisting format="linespecific">...
 if (can_publish_reg("location")){
-    $var(ret)= publish_reg("location"); 
+    $var(ret)= publish_reg("location");
 }
 ...
 </programlisting>
@@ -953,7 +953,7 @@ if (can_publish_reg("location")){
 
         <programlisting format="linespecific">...
 if (can_publish_reg("location")){
-    $var(ret)= publish_reg("location"); 
+    $var(ret)= publish_reg("location");
 }
 ...
 </programlisting>

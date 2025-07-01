@@ -40,31 +40,29 @@ int corex_append_branch(sip_msg_t *msg, str *uri, str *qv)
 	qvalue_t q = Q_UNSPECIFIED;
 	flag_t branch_flags = 0;
 
-	if(qv!=NULL && qv->len>0 && str2q(&q, qv->s, qv->len)<0)
-	{
+	if(qv != NULL && qv->len > 0 && str2q(&q, qv->s, qv->len) < 0) {
 		LM_ERR("cannot parse the Q parameter\n");
 		return -1;
 	}
 
 	getbflagsval(0, &branch_flags);
-	ret = append_branch(msg, (uri && uri->len>0)?uri:0, &msg->dst_uri,
-			    &msg->path_vec, q, branch_flags,
-			    msg->force_send_socket, 0, 0, 0, 0);
+	ret = append_branch(msg, (uri && uri->len > 0) ? uri : 0, &msg->dst_uri,
+			&msg->path_vec, q, branch_flags, msg->force_send_socket, 0, 0, 0,
+			0);
 
 
-	if(uri==NULL ||  uri->len<=0)
-	{
+	if(uri == NULL || uri->len <= 0) {
 		/* reset all branch attributes if r-uri was shifted to branch */
 		reset_force_socket(msg);
 		setbflagsval(0, 0);
-		if(msg->dst_uri.s!=0)
+		if(msg->dst_uri.s != 0)
 			pkg_free(msg->dst_uri.s);
 		msg->dst_uri.s = 0;
 		msg->dst_uri.len = 0;
 
 		/* if this is a cloned message, don't free the path vector as it was copied into shm memory and will be freed as contiguous block*/
-		if (!shm_address_in(msg->path_vec.s)) {
-			if (msg->path_vec.s)
+		if(!shm_address_in(msg->path_vec.s)) {
+			if(msg->path_vec.s)
 				pkg_free(msg->path_vec.s);
 			msg->path_vec.s = 0;
 			msg->path_vec.len = 0;
@@ -83,34 +81,34 @@ int w_corex_append_branch(sip_msg_t *msg, gparam_t *pu, gparam_t *pq)
 {
 	str uri = {0};
 	str qv = {0};
-	if (pu!=NULL) {
-		if(fixup_get_svalue(msg, pu, &uri)!=0)
-		{
+	if(pu != NULL) {
+		if(fixup_get_svalue(msg, pu, &uri) != 0) {
 			LM_ERR("cannot get the URI parameter\n");
 			return -1;
 		}
 	}
-	if (pq!=NULL) {
-		if(fixup_get_svalue(msg, pq, &qv)!=0)
-		{
+	if(pq != NULL) {
+		if(fixup_get_svalue(msg, pq, &qv) != 0) {
 			LM_ERR("cannot get the Q parameter\n");
 			return -1;
 		}
 	}
-	return corex_append_branch(msg, (pu!=NULL)?&uri:NULL, (pq!=NULL)?&qv:NULL);
+	return corex_append_branch(
+			msg, (pu != NULL) ? &uri : NULL, (pq != NULL) ? &qv : NULL);
 }
 
-typedef struct corex_alias {
+typedef struct corex_alias
+{
 	str alias;
 	unsigned short port;
 	unsigned short proto;
 	int flags;
-	struct corex_alias* next;
+	struct corex_alias *next;
 } corex_alias_t;
 
 static corex_alias_t *_corex_alias_list = NULL;
 
-int corex_add_alias_subdomains(char* aliasval)
+int corex_add_alias_subdomains(char *aliasval)
 {
 	char *p = NULL;
 	corex_alias_t ta;
@@ -120,43 +118,44 @@ int corex_add_alias_subdomains(char* aliasval)
 	memset(&ta, 0, sizeof(corex_alias_t));
 
 	p = strchr(aliasval, ':');
-	if(p==NULL) {
+	if(p == NULL) {
 		/* only hostname */
 		ta.alias.s = aliasval;
 		ta.alias.len = strlen(aliasval);
 		goto done;
 	}
-	if((p-aliasval)==3 || (p-aliasval)==4) {
+	if((p - aliasval) == 3 || (p - aliasval) == 4) {
 		/* check if it is protocol */
-		if((p-aliasval)==3 && strncasecmp(aliasval, "udp", 3)==0) {
+		if((p - aliasval) == 3 && strncasecmp(aliasval, "udp", 3) == 0) {
 			ta.proto = PROTO_UDP;
-		} else if((p-aliasval)==3 && strncasecmp(aliasval, "tcp", 3)==0) {
+		} else if((p - aliasval) == 3 && strncasecmp(aliasval, "tcp", 3) == 0) {
 			ta.proto = PROTO_TCP;
-		} else if((p-aliasval)==3 && strncasecmp(aliasval, "tls", 3)==0) {
+		} else if((p - aliasval) == 3 && strncasecmp(aliasval, "tls", 3) == 0) {
 			ta.proto = PROTO_TLS;
-		} else if((p-aliasval)==4 && strncasecmp(aliasval, "sctp", 4)==0) {
+		} else if((p - aliasval) == 4
+				  && strncasecmp(aliasval, "sctp", 4) == 0) {
 			ta.proto = PROTO_SCTP;
 		} else {
 			/* invalid protocol */
-			LM_ERR("invalid protocol %.*s", (int) (p-aliasval), aliasval);
+			LM_ERR("invalid protocol %.*s", (int)(p - aliasval), aliasval);
 			goto error;
 		}
 		/* hostname */
 		p++;
-		ta.alias.s = aliasval + (p-aliasval);
+		ta.alias.s = aliasval + (p - aliasval);
 
-		if(p>=aliasval+strlen(aliasval)) {
+		if(p >= aliasval + strlen(aliasval)) {
 			goto error;
 		}
 		/* port */
 		p = strchr(ta.alias.s, ':');
-		if(p==NULL) {
+		if(p == NULL) {
 			ta.alias.len = strlen(ta.alias.s);
 			goto done;
 		}
 		ta.alias.len = p - ta.alias.s;
 		p++;
-                ta.port = str2s(p, strlen(p), NULL);
+		ta.port = str2s(p, strlen(p), NULL);
 
 	} else {
 		/* hostname */
@@ -164,18 +163,18 @@ int corex_add_alias_subdomains(char* aliasval)
 		ta.alias.len = p - ta.alias.s;
 		/* port */
 		p++;
-		if(p>=aliasval+strlen(aliasval)) {
+		if(p >= aliasval + strlen(aliasval)) {
 			goto error;
 		}
 		ta.port = str2s(p, strlen(p), NULL);
 	}
 
 done:
-	if(ta.alias.len==0)
+	if(ta.alias.len == 0)
 		goto error;
 
-	na = (corex_alias_t*)pkg_malloc(sizeof(corex_alias_t));
-	if(na==NULL) {
+	na = (corex_alias_t *)pkg_malloc(sizeof(corex_alias_t));
+	if(na == NULL) {
 		LM_ERR("no memory for adding alias subdomains: %s\n", aliasval);
 		return -1;
 	}
@@ -183,8 +182,8 @@ done:
 	na->next = _corex_alias_list;
 	_corex_alias_list = na;
 
-	LM_DBG("alias: %d:%.*s:%d from value: %s added\n", ta.proto,
-		ta.alias.len, ta.alias.s, ta.port, aliasval);
+	LM_DBG("alias: %d:%.*s:%d from value: %s added\n", ta.proto, ta.alias.len,
+			ta.alias.s, ta.port, aliasval);
 	return 0;
 
 error:
@@ -193,33 +192,34 @@ error:
 }
 
 
-int corex_check_self(str* host, unsigned short port, unsigned short proto)
+int corex_check_self(str *host, unsigned short port, unsigned short proto)
 {
 	corex_alias_t *ta;
 
-	LM_DBG("check self for: %d:%.*s:%d\n", (int) proto, host->len,
-			host->s, (int)port);
-	for(ta=_corex_alias_list; ta; ta=ta->next) {
-		if(host->len<ta->alias.len)
+	LM_DBG("check self for: %d:%.*s:%d\n", (int)proto, host->len, host->s,
+			(int)port);
+	for(ta = _corex_alias_list; ta; ta = ta->next) {
+		if(host->len < ta->alias.len)
 			continue;
-		if(ta->port!=0 && port!=0 && ta->port!=port)
+		if(ta->port != 0 && port != 0 && ta->port != port)
 			continue;
-		if(ta->proto!=0 && proto!=0 && ta->proto!=proto)
+		if(ta->proto != 0 && proto != 0 && ta->proto != proto)
 			continue;
-		if(host->len==ta->alias.len
-				&& strncasecmp(host->s, ta->alias.s, host->len)==0) {
+		if(host->len == ta->alias.len
+				&& strncasecmp(host->s, ta->alias.s, host->len) == 0) {
 			/* match domain */
 			LM_DBG("check self domain match: %d:%.*s:%d\n", (int)ta->proto,
-				ta->alias.len, ta->alias.s, (int)ta->port);
+					ta->alias.len, ta->alias.s, (int)ta->port);
 			return 1;
 		}
 		if(strncasecmp(ta->alias.s, host->s + host->len - ta->alias.len,
-					ta->alias.len)==0) {
-			if(host->s[host->len - ta->alias.len - 1]=='.') {
+				   ta->alias.len)
+				== 0) {
+			if(host->s[host->len - ta->alias.len - 1] == '.') {
 				/* match sub-domain */
 				LM_DBG("check self sub-domain match: %d:%.*s:%d\n",
-					(int)ta->proto, ta->alias.len, ta->alias.s,
-					(int)ta->port);
+						(int)ta->proto, ta->alias.len, ta->alias.s,
+						(int)ta->port);
 				return 1;
 			}
 		}
@@ -230,11 +230,11 @@ int corex_check_self(str* host, unsigned short port, unsigned short proto)
 
 int corex_register_check_self(void)
 {
-	if(_corex_alias_list==NULL)
+	if(_corex_alias_list == NULL)
 		return 0;
-	if (register_check_self_func(corex_check_self) <0 ) {
-	    LM_ERR("failed to register check self function\n");
-	    return -1;
+	if(register_check_self_func(corex_check_self) < 0) {
+		LM_ERR("failed to register check self function\n");
+		return -1;
 	}
 	return 0;
 }
@@ -247,10 +247,8 @@ int corex_send(sip_msg_t *msg, gparam_t *pu, enum sip_protos proto)
 	struct dest_info dst;
 	char *p;
 
-	if (pu)
-	{
-		if (fixup_get_svalue(msg, pu, &dest))
-		{
+	if(pu) {
+		if(fixup_get_svalue(msg, pu, &dest)) {
 			LM_ERR("cannot get the destination parameter\n");
 			return -1;
 		}
@@ -258,21 +256,19 @@ int corex_send(sip_msg_t *msg, gparam_t *pu, enum sip_protos proto)
 
 	init_dest_info(&dst);
 
-	if (dest.len <= 0)
-	{
+	if(dest.len <= 0) {
 		/*get next hop uri uri*/
-		if (msg->dst_uri.len) {
-			ret = parse_uri(msg->dst_uri.s, msg->dst_uri.len,
-							&next_hop);
+		if(msg->dst_uri.len) {
+			ret = parse_uri(msg->dst_uri.s, msg->dst_uri.len, &next_hop);
 			u = &next_hop;
 		} else {
 			ret = parse_sip_msg_uri(msg);
 			u = &msg->parsed_uri;
 		}
 
-		if (ret<0) {
+		if(ret < 0) {
 			LM_ERR("send() - bad_uri dropping packet\n");
-			ret=E_BUG;
+			ret = E_BUG;
 			goto error;
 		}
 	} else {
@@ -281,48 +277,45 @@ int corex_send(sip_msg_t *msg, gparam_t *pu, enum sip_protos proto)
 		u->host = dest;
 		/* detect ipv6 */
 		p = memchr(dest.s, ']', dest.len);
-		if (p) {
+		if(p) {
 			p++;
 			p = memchr(p, ':', dest.s + dest.len - p);
 		} else {
 			p = memchr(dest.s, ':', dest.len);
 		}
-		if (p)
-		{
+		if(p) {
 			u->host.len = p - dest.s;
 			p++;
 			u->port_no = str2s(p, dest.len - (p - dest.s), NULL);
 		}
 	}
 
-	ret = sip_hostport2su(&dst.to, &u->host, u->port_no,
-				&dst.proto);
-	if(ret!=0) {
-		LM_ERR("failed to resolve [%.*s]\n", u->host.len,
-			ZSW(u->host.s));
-		ret=E_BUG;
+	ret = sip_hostport2su(&dst.to, &u->host, u->port_no, &dst.proto);
+	if(ret != 0) {
+		LM_ERR("failed to resolve [%.*s]\n", u->host.len, ZSW(u->host.s));
+		ret = E_BUG;
 		goto error;
 	}
 
 	dst.proto = proto;
-	if (proto == PROTO_UDP)
-	{
-		dst.send_sock=get_send_socket(msg, &dst.to, PROTO_UDP);
-		if (dst.send_sock!=0){
-			ret=udp_send(&dst, msg->buf, msg->len);
-		}else{
-			ret=-1;
+	if(proto == PROTO_UDP) {
+		dst.send_sock = get_send_socket(msg, &dst.to, PROTO_UDP);
+		if(dst.send_sock != 0) {
+			ret = udp_send(&dst, msg->buf, msg->len);
+		} else {
+			ret = -1;
 		}
 	}
 #ifdef USE_TCP
-	else{
+	else {
 		/*tcp*/
-		dst.id=0;
-		ret=tcp_send(&dst, 0, msg->buf, msg->len);
+		dst.id = 0;
+		ret = tcp_send(&dst, 0, msg->buf, msg->len);
 	}
 #endif
 
-	if (ret>=0) ret=1;
+	if(ret >= 0)
+		ret = 1;
 
 
 error:
@@ -342,7 +335,7 @@ int corex_send_data(str *puri, str *psock, str *pdata)
 	int sport, sproto;
 	str shost;
 
-	if(parse_uri(puri->s, puri->len, &next_hop)<0) {
+	if(parse_uri(puri->s, puri->len, &next_hop) < 0) {
 		LM_ERR("bad dst sip uri <%.*s>\n", puri->len, puri->s);
 		return -1;
 	}
@@ -350,84 +343,87 @@ int corex_send_data(str *puri, str *psock, str *pdata)
 	init_dest_info(&dst);
 	LM_DBG("sending data to sip uri <%.*s>\n", puri->len, puri->s);
 	proto = next_hop.proto;
-	if(sip_hostport2su(&dst.to, &next_hop.host, next_hop.port_no,
-				&proto)!=0) {
+	if(sip_hostport2su(&dst.to, &next_hop.host, next_hop.port_no, &proto)
+			!= 0) {
 		LM_ERR("failed to resolve [%.*s]\n", next_hop.host.len,
-			ZSW(next_hop.host.s));
+				ZSW(next_hop.host.s));
 		return -1;
 	}
 
-	if(psock && psock->s && psock->len>0) {
-		if (parse_phostport(psock->s, &shost.s, &shost.len, &sport, &sproto) < 0) {
+	if(psock && psock->s && psock->len > 0) {
+		if(parse_phostport(psock->s, &shost.s, &shost.len, &sport, &sproto)
+				< 0) {
 			LM_ERR("invalid socket specification\n");
 			return -1;
 		}
-		si = grep_sock_info(&shost, (unsigned short)sport, (unsigned short)sproto);
-		if (si==NULL) {
+		si = grep_sock_info(
+				&shost, (unsigned short)sport, (unsigned short)sproto);
+		if(si == NULL) {
 			LM_WARN("local socket not found: %.*s\n", psock->len, psock->s);
 		}
 	}
 
 	dst.proto = proto;
-	if(dst.proto==PROTO_NONE) dst.proto = PROTO_UDP;
+	if(dst.proto == PROTO_NONE)
+		dst.proto = PROTO_UDP;
 
-	if (dst.proto == PROTO_UDP)
-	{
-		if(si!=NULL) {
-			dst.send_sock=si;
+	if(dst.proto == PROTO_UDP) {
+		if(si != NULL) {
+			dst.send_sock = si;
 		} else {
-			dst.send_sock=get_send_socket(0, &dst.to, PROTO_UDP);
+			dst.send_sock = get_send_socket(0, &dst.to, PROTO_UDP);
 		}
-		if (dst.send_sock!=0) {
-			ret=udp_send(&dst, pdata->s, pdata->len);
+		if(dst.send_sock != 0) {
+			ret = udp_send(&dst, pdata->s, pdata->len);
 		} else {
 			LM_ERR("no socket for dst sip uri <%.*s>\n", puri->len, puri->s);
-			ret=-1;
+			ret = -1;
 		}
 	}
 #ifdef USE_TCP
 	else if(dst.proto == PROTO_TCP) {
-		if(si!=NULL) {
-			dst.send_sock=si;
+		if(si != NULL) {
+			dst.send_sock = si;
 		}
 		/*tcp*/
-		dst.id=0;
-		ret=tcp_send(&dst, 0, pdata->s, pdata->len);
+		dst.id = 0;
+		ret = tcp_send(&dst, 0, pdata->s, pdata->len);
 	}
 #endif
 #ifdef USE_TLS
 	else if(dst.proto == PROTO_TLS) {
-		if(si!=NULL) {
-			dst.send_sock=si;
+		if(si != NULL) {
+			dst.send_sock = si;
 		}
 		/*tls*/
-		dst.id=0;
-		ret=tcp_send(&dst, 0, pdata->s, pdata->len);
+		dst.id = 0;
+		ret = tcp_send(&dst, 0, pdata->s, pdata->len);
 	}
 #endif
 #ifdef USE_SCTP
 	else if(dst.proto == PROTO_SCTP) {
 		/*sctp*/
-		if(si!=NULL) {
-			dst.send_sock=si;
+		if(si != NULL) {
+			dst.send_sock = si;
 		} else {
-			dst.send_sock=get_send_socket(0, &dst.to, PROTO_SCTP);
+			dst.send_sock = get_send_socket(0, &dst.to, PROTO_SCTP);
 		}
-		if (dst.send_sock!=0) {
-			ret=sctp_core_msg_send(&dst, pdata->s, pdata->len);
+		if(dst.send_sock != 0) {
+			ret = sctp_core_msg_send(&dst, pdata->s, pdata->len);
 		} else {
 			LM_ERR("no socket for dst sip uri <%.*s>\n", puri->len, puri->s);
-			ret=-1;
+			ret = -1;
 		}
 	}
 #endif
 	else {
-		LM_ERR("unknown proto [%d] for dst sip uri <%.*s>\n",
-				dst.proto, puri->len, puri->s);
-		ret=-1;
+		LM_ERR("unknown proto [%d] for dst sip uri <%.*s>\n", dst.proto,
+				puri->len, puri->s);
+		ret = -1;
 	}
 
-	if (ret>=0) ret=1;
+	if(ret >= 0)
+		ret = 1;
 
 	return ret;
 }

@@ -11,6 +11,10 @@ ifeq ($(BUILDER),)
 	JSONC=$(shell ls $(SYSBASE)/include/lib/libjson*.so $(LOCALBASE)/lib/libjson*.so 2>/dev/null | grep json-c)
 else
 	JSONC=$(shell pkg-config --libs json-c 2>/dev/null | grep json-c)
+
+	ifeq ($(shell pkg-config --atleast-version=0.13.0 librabbitmq; echo $$?),0)
+		DEFS += -DRABBITMQ_DEPRECATION
+	endif
 endif
 
 ifneq ($(JSONC),)
@@ -31,8 +35,5 @@ else
 	DEFS += $(shell $(BUILDER) --cflags libevent)
 	LIBS += $(shell $(BUILDER) --libs libevent)
 endif
-
-SERLIBPATH=../../lib
-SER_LIBS=$(SERLIBPATH)/srdb1/srdb1
 
 include ../../Makefile.modules

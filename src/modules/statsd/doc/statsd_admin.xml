@@ -154,15 +154,15 @@ route [gauge_method]{
                 <function moreinfo="none">statsd_start(key)</function>
             </title>
             <para>
-		statsd_start set an avp with the key name, and when 
-		statsd_stop(key) is used, the module will send statsd the difference in 
-		milliseconds. this is useful to know the time of a SQL query, or how much time your replies take.
+		statsd_start set an avp with the key name, and when
+		statsd_stop(key) is used, the module will send statsd the difference in
+		milliseconds. This is useful to know the time of a SQL query, or how much time your replies take.
             </para>
             <para>
                 This function can be used in all routes.
             </para>
             <para>
-                The statsd server collects all timers under the stats.timers prefix 
+                The statsd server collects all timers under the stats.timers prefix
 		and will calculate the lower bound, mean, 90th percentile, upper bound, and count of each
 		timer for each period (by the time it can be seen in graphite, that's usually per minute).
             </para>

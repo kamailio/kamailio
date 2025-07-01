@@ -39,15 +39,24 @@
 		<surname>Sas</surname>
 		<email>osas@voipembedded.com</email>
 	    </editor>
+		<editor>
+			<firstname>Tyler</firstname>
+			<surname>Moore</surname>
+			<email>tmoore@dopensource.com</email>
+		</editor>
 	</authorgroup>
 	<copyright>
 	    <year>2008-2011</year>
 	    <holder>http://www.asipto.com</holder>
 	</copyright>
+	<copyright>
+		<year>2023</year>
+		<holder>Tyler Moore (devopsec), dOpenSource</holder>
+	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="htable_admin.xml"/>
-    
-    
+
+
 </book>

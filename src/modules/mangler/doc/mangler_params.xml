@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="mangler.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -13,7 +13,7 @@
 	<para>
 	    First char of this parameter is used as a separator for
 	    encoding/decoding Contact headers.
-	    If you set this parameter to "-", 
+	    If you set this parameter to "-",
 	    then an encoded URI will look like "sip:user-password-ip-port-protocol@PublicIP"
 	</para>
 	<warning>
@@ -36,5 +36,5 @@ modparam("mangler", "contact_flds_separator", "-")
 	    </programlisting>
 	</example>
     </section>
-    
+
 </section>

@@ -55,10 +55,10 @@
 	</copyright>
   </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="presence_admin.xml"/>
     <xi:include href="presence_devel.xml"/>
-    
+
 </book>
 
 

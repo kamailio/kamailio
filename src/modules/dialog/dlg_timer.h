@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -36,17 +38,17 @@
 /*! dialog timeout list */
 typedef struct dlg_tl
 {
-	struct dlg_tl     *next;
-	struct dlg_tl     *prev;
-	volatile unsigned int  timeout; /*!< timeout in seconds */
+	struct dlg_tl *next;
+	struct dlg_tl *prev;
+	volatile unsigned int timeout; /*!< timeout in seconds */
 } dlg_tl_t;
 
 
 /*! dialog timer */
 typedef struct dlg_timer
 {
-	struct dlg_tl   first; /*!< dialog timeout list */
-	gen_lock_t      *lock; /*!< lock for the list */
+	struct dlg_tl first; /*!< dialog timeout list */
+	gen_lock_t *lock;	 /*!< lock for the list */
 } dlg_timer_t;
 
 
@@ -104,6 +106,6 @@ int update_dlg_timer(struct dlg_tl *tl, int timeout);
  * \param ticks time for expiration checks
  * \param attr unused
  */
-void dlg_timer_routine(unsigned int ticks , void * attr);
+void dlg_timer_routine(unsigned int ticks, void *attr);
 
 #endif

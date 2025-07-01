@@ -35,7 +35,7 @@ cat 2.cfg >> $CFG
 printf "modparam(\"$DB_ALL_MOD\", \"db_url\", \"berkeley://`pwd`/$CTL_DIR/$tmp_name\")" >> $CFG
 printf "\nrequest_route {\n ;\n}" >> $CFG
 
-# setup config file
+# set up config file
 cp $CTLRC $CTLRC.bak
 
 sed -i'' -e "s/# DBENGINE=MYSQL/DBENGINE=DB_BERKELEY/g" $CTLRC

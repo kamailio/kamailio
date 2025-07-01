@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -57,9 +59,9 @@
 #define PS_PCACHE_RECORD 2
 
 /** TM bind */
-extern struct tm_binds tmb;
+extern struct tm_binds _pres_tmb;
 
-extern sl_api_t slb;
+extern sl_api_t _pres_slb;
 
 /* DB module bind */
 extern db_func_t pa_dbf;
@@ -73,7 +75,7 @@ extern str watchers_table;
 
 extern int pres_counter;
 extern int pres_pid;
-extern int pres_startup_time;
+extern unsigned int pres_startup_time;
 extern int pres_expires_offset;
 extern int pres_cseq_offset;
 extern str pres_server_address;

@@ -65,7 +65,7 @@ libraries. Their interface is described in standalone documents.
 <section><title>Persistence</title>
 <para>Modules can store their status (working data) into database. This data is
 automatically reloaded on startup, so it is possible to restart SIP-router and
-clients don't note it. Established SIP dialogs are stored in a database too.</para>
+clients don't notice it. Established SIP dialogs are stored in a database too.</para>
 <para>Details about database storage are described for each module separately in
 module documentation.
 
@@ -85,7 +85,7 @@ rules may be found in <xref linkend="pres_draft_common_auth"/> and
 <para>Only XCAP storage of authorization rules is supported at this moment. It is 
 <emphasis>not fully implemented</emphasis> now - only basic rule conditions, no sphere 
 and time conditions. Transformations defined in <xref linkend="pres_draft_auth"/> are 
-ignored.  Maybe, that in the
+ignored.  Maybe, in the
 future it will be possible to use other variants like webdav or storing
 authorization rules in SIP-router's own database.</para>
 

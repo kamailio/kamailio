@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -93,7 +93,7 @@
 			Specifies the root path for RPC http requests.
 			The link to the RPC web interface must be constructed
 			using the following pattern:
-			http://[server_IP]:[tcp_port]/[xhttp_rpc_root] 
+			http://[server_IP]:[tcp_port]/[xhttp_rpc_root]
 		</para>
 		<para>
 		<emphasis>

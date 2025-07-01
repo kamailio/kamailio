@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -34,24 +36,23 @@
 #include "../../core/str.h"
 
 
-#define MAX_LOG_NR    64
+#define MAX_LOG_NR 64
 
-#define MSG_ERR     "Error: "
-#define MSG_ERR_LEN (sizeof(MSG_ERR)-1)
-#define MSG_WARN    "Warning: "
-#define MSG_WARN_LEN (sizeof(MSG_WARN)-1)
-#define MSG_NOTE     "Notice: "
-#define MSG_NOTE_LEN (sizeof(MSG_NOTE)-1)
+#define MSG_ERR "Error: "
+#define MSG_ERR_LEN (sizeof(MSG_ERR) - 1)
+#define MSG_WARN "Warning: "
+#define MSG_WARN_LEN (sizeof(MSG_WARN) - 1)
+#define MSG_NOTE "Notice: "
+#define MSG_NOTE_LEN (sizeof(MSG_NOTE) - 1)
 
-#define LF       "\n"
-#define LF_LEN   (1)
+#define LF "\n"
+#define LF_LEN (1)
 
 
 void reset_logs(void);
 
-void append_log( int nr, ...);
+void append_log(int nr, ...);
 
-void compile_logs( str *log);
+void compile_logs(str *log);
 
 #endif
-

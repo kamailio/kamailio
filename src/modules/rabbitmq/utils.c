@@ -44,8 +44,14 @@
 #include <ctype.h>
 
 #include <stdint.h>
+
+#if RABBITMQ_DEPRECATION
+#include <rabbitmq-c/amqp.h>
+#include <rabbitmq-c/framing.h>
+#else
 #include <amqp.h>
 #include <amqp_framing.h>
+#endif
 
 #include "utils.h"
 
@@ -175,7 +181,8 @@ void amqp_dump(void const *buffer, size_t len)
 			if(rows_eq(oldchs, chs)) {
 				if(!showed_dots) {
 					showed_dots = 1;
-					printf("					.. .. .. .. .. .. .. .. : .. .. "
+					printf("					.. .. .. .. .. .. .. .. : .. "
+						   ".. "
 						   ".. .. .. .. .. ..\n");
 				}
 			} else {

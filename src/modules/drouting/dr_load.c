@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -87,7 +89,7 @@ static struct dr_gwl_tmp *dr_gw_lists = NULL;
 #define check_val(_val, _type, _not_null, _is_empty_str) \
 	do {                                                 \
 		if((_val)->type != _type) {                      \
-			LM_ERR("bad column type\n");                  \
+			LM_ERR("bad column type\n");                 \
 			goto error;                                  \
 		}                                                \
 		if(_not_null && (_val)->nul) {                   \
@@ -138,7 +140,7 @@ static int add_tmp_gw_list(unsigned int id, char *list)
 	list_len = strlen(list) + 1;
 	tmp = (struct dr_gwl_tmp *)pkg_malloc(sizeof(struct dr_gwl_tmp) + list_len);
 	if(tmp == NULL) {
-		LM_ERR("no more pkg mem\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	tmp->id = id;
@@ -183,7 +185,7 @@ static inline dr_tmrec_t *parse_time_def(char *time_str)
 
 	time_rec = (dr_tmrec_t *)shm_malloc(sizeof(dr_tmrec_t));
 	if(time_rec == 0) {
-		LM_ERR("no more pkg mem\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(time_rec, 0, sizeof(dr_tmrec_t));
@@ -359,7 +361,7 @@ rt_data_t *dr_load_routing_info(db_func_t *dr_dbf, db1_con_t *db_hdl,
 			check_val(ROW_VALUES(row) + 5, DB1_STRING, 0, 0);
 			str_vals[2] = (char *)VAL_STRING(ROW_VALUES(row) + 5);
 
-			/* add the destinaton definition in */
+			/* add the destination definition in */
 			if(add_dst(rdata, int_vals[0], str_vals[0], int_vals[1],
 					   str_vals[1], int_vals[2], str_vals[2])
 					< 0) {

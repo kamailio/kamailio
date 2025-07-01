@@ -24,7 +24,7 @@
     <para>
       The <command>auth_db</command> module needs the
       <serdoc:module>auth</serdoc:module> module and a database module such
-      as the <serdoc:module>mysql</serdoc:module> module. 
+      as the <serdoc:module>mysql</serdoc:module> module.
     </para>
   </refsect1>
 
@@ -66,7 +66,7 @@
         the <serdoc:module>textops</serdoc:module> module.
       </para>
       <para>
-        The reason for the failure can be determined from the interger
+        The reason for the failure can be determined from the integer
         return value stored in the <varname>$?</varname> attribute.
         A value of <literal>-3</literal> indicates that it was impossible
         to retrieve credentials from the request. A 400 (Bad Request)
@@ -318,7 +318,7 @@
         domain ID stored in the database should be considered when
         loading credentials from the database. If it is changed to
         <literal>yes</literal>, only those rows are loaded where the
-        domain ID in the column specified by the 
+        domain ID in the column specified by the
         <serdoc:modparam module="auth_db">did_column</serdoc:modparam>
         parameter matches that determined from the domain in the
         To header field.
@@ -378,7 +378,7 @@
         parameter is set to <literal>yes</literal>. In this case, the
         domain ID is taken from the <varname>$t.did</varname> attribute
         if the method of the request is <varname>REGISTER</varname> or
-        <varname>$f.did</varname> otherwise. 
+        <varname>$f.did</varname> otherwise.
       </para>
       <para>
         If <serdoc:modparam module="auth_db">use_did</serdoc:modparam>

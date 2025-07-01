@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="domain.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<sectioninfo>
 	</sectioninfo>
-	
+
 	<title>Parameters</title>
-	
+
 	<section id="domain.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
@@ -23,14 +23,14 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 			</programlisting>
 		</example>
 	</section>
-	
+
 	<section id="db_mode">
 		<title><varname>db_mode</varname> (integer)</title>
 		<para>
 			Database mode. Value 0 means non-caching, 1
-		means caching is enabled. It 
+		means caching is enabled. It
 			is highly recommended to enable caching if you
-		want to use 
+		want to use
 			domain-level attributes.
 		</para>
 		<para>
@@ -43,7 +43,7 @@ modparam("domain", "db_mode", 0)   # Do	not use caching
 			</programlisting>
 		</example>
 	</section>
-	
+
 	<section id="domain_table">
 		<title><varname>domain_table</varname> (string)</title>
 		<para>
@@ -81,7 +81,7 @@ modparam("domain", "did_col", "did")
 			</programlisting>
 		</example>
 	</section>
-	
+
 	<section id="domain.domain_col">
 		<title><varname>domain_col</varname> (string)</title>
 		<para>

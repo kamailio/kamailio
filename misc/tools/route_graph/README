@@ -1,0 +1,16 @@
+This Python script, route_graph.py, serves as a utility tool for visualizing Kamailio SIP server configuration files. 
+It generates a graphical representation of the routing logic defined in the configuration. 
+
+Usage:
+1. Clone the GitHub repository:
+    git clone https://github.com/kamailio/kamailio.git
+2. Navigate to the tool's directory:
+    cd kamailio/misc/tools/route_graph/
+3. Run the script on your Kamailio configuration file:
+    python3 route_graph.py /path/to/kamailio.cfg
+
+For a more detailed walkthrough, please refer to this article: 
+Visualizing Kamailio Configuration File Using Route Graph Tool.
+https://voipnuggets.com/2023/06/13/visualizing-kamailio-configuration-file-using-route_graph-tool/
+
+[ README written by Akash Gupta ]

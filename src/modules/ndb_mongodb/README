@@ -159,7 +159,7 @@ modparam("ndb_mongodb", "server", "name=mgs2;uri='mongodb://127.0.0.2/kamailio'"
    Meaning of the parameters:
      * srvname - MongoDB server name as given via 'server' parameter.
      * dbname - MongoDB database name.
-     * cname - MongodDB collection (table) name.
+     * cname - MongoDB collection (table) name.
      * command - valid MongoDB command given as JSON string.
      * replyid - the name of the container to store the response.
 

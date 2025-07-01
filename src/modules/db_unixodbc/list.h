@@ -6,6 +6,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -32,9 +34,9 @@
 
 typedef struct list
 {
-	struct list* next;
-	char** data;
-	unsigned long* lengths;
+	struct list *next;
+	char **data;
+	unsigned long *lengths;
 	int rownum;
 } list;
 
@@ -47,13 +49,13 @@ typedef struct list
  * \param value inserted value
  * \return 0 on success, -1 on failure
  */
-int db_unixodbc_list_insert(list** start, list** link, int n, strn* value);
+int db_unixodbc_list_insert(list **start, list **link, int n, strn *value);
 
 
 /*!
  * \brief Destroy a list
  * \param start list element(s)
  */
-void db_unixodbc_list_destroy(list* start);
+void db_unixodbc_list_destroy(list *start);
 
 #endif

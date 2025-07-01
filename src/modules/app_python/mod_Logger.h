@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef	__API__MOD_LOGGER_H__
-#define	__API__MOD_LOGGER_H__
+#ifndef __API__MOD_LOGGER_H__
+#define __API__MOD_LOGGER_H__
 
 #include <Python.h>
 #include <libgen.h>

@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -22,7 +24,7 @@
 #include "api.h"
 #include "crypto_uuid.h"
 
-int load_crypto( struct crypto_binds *cb )
+int load_crypto(struct crypto_binds *cb)
 {
 	cb->SHA1 = crypto_generate_SHA1;
 

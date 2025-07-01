@@ -4,6 +4,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -28,31 +30,35 @@
 #include <string.h>
 
 
-static void my_fld_free(db_fld_t* fld, struct my_fld* payload)
+static void my_fld_free(db_fld_t *fld, struct my_fld *payload)
 {
 	db_drv_free(&payload->gen);
-	if (payload->buf.s) pkg_free(payload->buf.s);
-	if (payload->name) pkg_free(payload->name);
+	if(payload->buf.s)
+		pkg_free(payload->buf.s);
+	if(payload->name)
+		pkg_free(payload->name);
 	pkg_free(payload);
 }
 
 
-int my_fld(db_fld_t* fld, char* table)
+int my_fld(db_fld_t *fld, char *table)
 {
-	struct my_fld* res;
+	struct my_fld *res;
 
-	res = (struct my_fld*)pkg_malloc(sizeof(struct my_fld));
-	if (res == NULL) {
+	res = (struct my_fld *)pkg_malloc(sizeof(struct my_fld));
+	if(res == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(res, '\0', sizeof(struct my_fld));
-	if (db_drv_init(&res->gen, my_fld_free) < 0) goto error;
+	if(db_drv_init(&res->gen, my_fld_free) < 0)
+		goto error;
 
 	DB_SET_PAYLOAD(fld, res);
 	return 0;
 
 error:
-	if (res) pkg_free(res);
+	if(res)
+		pkg_free(res);
 	return -1;
 }

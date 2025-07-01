@@ -26,10 +26,11 @@
 #include "../../core/parser/msg_parser.h"
 #include "msrp_parser.h"
 
-#define MSRP_ENV_SRCINFO	(1<<0)
-#define MSRP_ENV_DSTINFO	(1<<1)
+#define MSRP_ENV_SRCINFO (1 << 0)
+#define MSRP_ENV_DSTINFO (1 << 1)
 
-typedef struct msrp_env {
+typedef struct msrp_env
+{
 	msrp_frame_t *msrp;
 	struct dest_info srcinfo;
 	struct dest_info dstinfo;

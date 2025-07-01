@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -15,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -29,7 +31,7 @@
 
 #ifndef DOMAINPOLICY_H
 #define DOMAINPOLICY_H
-		
+
 
 #include "../../core/parser/msg_parser.h"
 
@@ -46,7 +48,7 @@
  * and discards the SIP request
  */
 #define DP_DDDS_RET_DNSERROR -2
-#define DP_DDDS_RET_NEGATIVE -1  
+#define DP_DDDS_RET_NEGATIVE -1
 #define DP_DDDS_RET_POSITIVE 1
 #define DP_DDDS_RET_NOTFOUND 2
 
@@ -58,7 +60,7 @@
  * \param _s2 unused
  * \return negative on failure, positive on success
  */
-int dp_can_connect(struct sip_msg* _msg, char* _s1, char* _s2);
+int dp_can_connect(struct sip_msg *_msg, char *_s1, char *_s2);
 
 
 /*!
@@ -71,9 +73,9 @@ int dp_can_connect(struct sip_msg* _msg, char* _s1, char* _s2);
  * \param _msg SIP message
  * \param _s1 unused
  * \param _s2 unused
- * \return negative on failure, positive on succes
+ * \return negative on failure, positive on success
  */
-int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2);
+int dp_apply_policy(struct sip_msg *_msg, char *_s1, char *_s2);
 
 
 /*!
@@ -81,7 +83,7 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2);
  * \param db_url database url
  * \return -1 on failure, 0 on success
  */
-int domainpolicy_db_bind(const str* db_url);
+int domainpolicy_db_bind(const str *db_url);
 
 
 /*!
@@ -89,7 +91,7 @@ int domainpolicy_db_bind(const str* db_url);
  * \param db_url database url
  * \return -1 on failure, 0 on success
  */
-int domainpolicy_db_init(const str* db_url);
+int domainpolicy_db_init(const str *db_url);
 
 /*!
  * \brief Close the database connection
@@ -102,7 +104,7 @@ void domainpolicy_db_close(void);
  * \param db_url database URL
  * \return -1 on failure, 0 on success
  */
-int domainpolicy_db_ver(const str* db_url);
+int domainpolicy_db_ver(const str *db_url);
 
 
 #endif

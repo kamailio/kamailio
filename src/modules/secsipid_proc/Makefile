@@ -18,8 +18,8 @@ endif
 endif
 
 ifeq ($(BUILDER),)
-	DEFS+= -I.
-	LIBS = -L. -lsecsipid -lpthread
+	DEFS +=-I$(LOCALBASE)/include -I$(SYSBASE)/include
+	LIBS +=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lsecsipid -lpthread
 else
 	DEFS+= $(shell pkg-config --cflags secsipid-1)
 	LIBS = $(shell pkg-config --libs secsipid-1) -lpthread

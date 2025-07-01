@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -94,11 +96,11 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"radius_config",        PARAM_STRING, &radius_config     },
-	{"radius_flag",          INT_PARAM, &radius_flag          },
-	{"radius_missed_flag",   INT_PARAM, &radius_missed_flag   },
-	{"service_type",         INT_PARAM, &service_type         },
+	{"radius_flag",          PARAM_INT, &radius_flag          },
+	{"radius_missed_flag",   PARAM_INT, &radius_missed_flag   },
+	{"service_type",         PARAM_INT, &service_type         },
 	{"radius_extra",         PARAM_STRING, &rad_extra_str     },
-	{"rad_time_mode",          INT_PARAM, &rad_time_mode      },
+	{"rad_time_mode",          PARAM_INT, &rad_time_mode      },
 	{0,0,0}
 };
 
@@ -364,7 +366,7 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 		snprintf(smicrosec, 18, "%17.6f", tsecmicro);
 		ADD_RAD_AVPAIR(RA_TIME_STAMP, &smicrosec, -1);
 	} else {
-		av_type = (uint32_t)inf->env->ts;
+		av_type = (uint32_t)(uint64_t)inf->env->ts;
 		ADD_RAD_AVPAIR(RA_TIME_STAMP, &av_type, -1);
 	}
 

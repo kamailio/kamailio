@@ -7,6 +7,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -17,15 +19,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
  * \file
  * \brief SIP registrar module - SIP message related functions
- * \ingroup registrar   
- */  
+ * \ingroup registrar
+ */
 
 
 #ifndef SIP_MSG_H
@@ -40,7 +42,7 @@
  * Parse the whole message and bodies of all header fields
  * that will be needed by registrar
  */
-int parse_message_for_register(struct sip_msg* _m);
+int parse_message_for_register(struct sip_msg *_m);
 
 
 /*! \brief
@@ -48,7 +50,7 @@ int parse_message_for_register(struct sip_msg* _m);
  * The whole message must be parsed before calling the function
  * _s indicates whether the contact was star
  */
-int check_contacts(struct sip_msg* _m, int* _s);
+int check_contacts(struct sip_msg *_m, int *_s);
 
 
 /*! \brief
@@ -68,10 +70,10 @@ int check_contacts(struct sip_msg* _m, int* _s);
  * 1) If q parameter exist, use it
  * 2) If the parameter doesn't exist, use default value
  */
-int calc_contact_q(param_t* _q, qvalue_t* _r);
+int calc_contact_q(param_t *_q, qvalue_t *_r);
 
-contact_t* get_first_contact(struct sip_msg* _m);
-contact_t* get_next_contact(contact_t* _c);
+contact_t *get_first_contact(struct sip_msg *_m);
+contact_t *get_next_contact(contact_t *_c);
 
 
 #endif /* SIP_MSG_H */

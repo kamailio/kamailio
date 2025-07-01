@@ -5,6 +5,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -51,7 +53,7 @@ int set_reply_body(struct sip_msg *msg, str *body, str *content_type)
 	buf = pkg_malloc(sizeof(char) * (len));
 
 	if(buf == 0) {
-		LM_ERR("out of pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(buf, "Content-Type: ", sizeof("Content-Type: ") - 1);
@@ -94,7 +96,7 @@ int ki_dmq_handle_message_rc(sip_msg_t *msg, int returnval)
 	if(!peer) {
 		LM_DBG("no peer found for %.*s\n", msg->parsed_uri.user.len,
 				msg->parsed_uri.user.s);
-		if(slb.freply(msg, 404, &dmq_404_rpl) < 0) {
+		if(_dmq_slb.freply(msg, 404, &dmq_404_rpl) < 0) {
 			LM_ERR("sending reply\n");
 			goto error;
 		}
@@ -121,9 +123,11 @@ int w_dmq_handle_message(struct sip_msg *msg, char *str1, char *str2)
 {
 	int i = 0;
 	if(str1) {
-		if(get_int_fparam(&i, msg, (fparam_t*)str1)<0) return -1;
+		if(get_int_fparam(&i, msg, (fparam_t *)str1) < 0)
+			return -1;
 	}
-	if(i>1) i = 1;
+	if(i > 1)
+		i = 1;
 	return ki_dmq_handle_message_rc(msg, i);
 }
 
@@ -156,7 +160,7 @@ int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval)
 	if(!peer) {
 		LM_DBG("no peer found for %.*s\n", msg->parsed_uri.user.len,
 				msg->parsed_uri.user.s);
-		if(slb.freply(msg, 404, &dmq_404_rpl) < 0) {
+		if(_dmq_slb.freply(msg, 404, &dmq_404_rpl) < 0) {
 			LM_ERR("sending reply\n");
 			goto error;
 		}
@@ -186,10 +190,9 @@ int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval)
 		}
 	}
 	/* send the reply */
-	if(peer_response.resp_code>0 && peer_response.reason.s!=NULL
-			&& peer_response.reason.len>0) {
-		if(slb.freply(msg, peer_response.resp_code,
-				   &peer_response.reason)
+	if(peer_response.resp_code > 0 && peer_response.reason.s != NULL
+			&& peer_response.reason.len > 0) {
+		if(_dmq_slb.freply(msg, peer_response.resp_code, &peer_response.reason)
 				< 0) {
 			LM_ERR("error sending reply\n");
 		} else {
@@ -214,9 +217,11 @@ int w_dmq_process_message(struct sip_msg *msg, char *str1, char *str2)
 {
 	int i = 0;
 	if(str1) {
-		if(get_int_fparam(&i, msg, (fparam_t*)str1)<0) return -1;
+		if(get_int_fparam(&i, msg, (fparam_t *)str1) < 0)
+			return -1;
 	}
-	if(i>1) i = 1;
+	if(i > 1)
+		i = 1;
 	return ki_dmq_process_message_rc(msg, i);
 }
 

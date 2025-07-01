@@ -133,7 +133,7 @@
 						# single lrkproxy
 						modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.108:8080")
 
-						# multiple lrkproxies for LB in diffenrent machine
+						# multiple lrkproxies for LB in different machine
 						modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.108:8080")
 						modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.109:8080")
 
@@ -243,7 +243,7 @@
 				</para>
 				<para>
 					NOTE: When configuring this parameter, one should consider maximum call
-					time VS share memory for unfinished calls.
+					time VS shared memory for unfinished calls.
 				</para>
 				<para>
 					<emphasis>
@@ -286,7 +286,7 @@
 				<title><varname>custom_sdp_ip_avp</varname> (string)</title>
 				<para>
 					This option useful for solving STUN and help UDP packets make it across NAT devices safe and sound.
-					In this way, it should be set by clients's ip public manually.
+					In this way, it should be set by clients' IP public manually.
 				</para>
 				<para>
 					<emphasis>

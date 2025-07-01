@@ -3,6 +3,8 @@
  *
  * This file is part of Kamailio, a free SIP server.
  *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -32,18 +34,19 @@
 #include "parse_addr_spec.h"
 
 /* casting macro for accessing To body */
-#define get_to(p_msg)      ((struct to_body*)(p_msg)->to->parsed)
+#define get_to(p_msg) ((struct to_body *)(p_msg)->to->parsed)
 
 #define GET_TO_PURI(p_msg) \
-	(&((struct to_body*)(p_msg)->to->parsed)->parsed_uri)
+	(&((struct to_body *)(p_msg)->to->parsed)->parsed_uri)
 
 /*! \brief
  * To header field parser
  */
-char* parse_to(char* const buffer, const char* const end, struct to_body* const to_b);
+char *parse_to(
+		char *const buffer, const char *const end, struct to_body *const to_b);
 
-int parse_to_header(struct sip_msg* const msg);
+int parse_to_header(struct sip_msg *const msg);
 
-sip_uri_t *parse_to_uri(struct sip_msg* const msg);
+sip_uri_t *parse_to_uri(struct sip_msg *const msg);
 
 #endif

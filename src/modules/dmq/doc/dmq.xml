@@ -57,10 +57,10 @@
         </copyright>
   </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="dmq_admin.xml"/>
     <xi:include href="dmq_devel.xml"/>
-    
+
 </book>
 
 
