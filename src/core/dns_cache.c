@@ -508,7 +508,8 @@ inline static void _dns_hash_remove_entry(
 		LM_DBG("item %p with high refcnt %d (%s:%u)\n", e,
 				atomic_get_int(&e->refcnt), fpath, line);
 	}
-	dns_hash_put(e);
+	/* item unlinked - destroy it */
+	dns_destroy_entry(e);
 }
 
 #define _dns_hash_remove(e) _dns_hash_remove_entry(e, __FILE__, __LINE__)
