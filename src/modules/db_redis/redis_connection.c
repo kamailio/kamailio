@@ -37,6 +37,8 @@ static unsigned int MAX_URL_LENGTH = 1023;
 #endif
 
 extern int db_redis_verbosity;
+extern int mapping_struct_type;
+extern str db_redis_hash_expires_str;
 #ifdef WITH_SSL
 extern int db_redis_opt_tls;
 extern char *db_redis_ca_path;
@@ -118,6 +120,13 @@ static redis_key_t *db_redis_shift_query(km_redis_con_t *con)
 	}
 
 	return query;
+}
+
+inline int redis_supports_expires(int major, int minor, int patch)
+{
+	if(!(major > 7 || (major == 7 && minor >= 4)))
+		return 0;
+	return 1;
 }
 
 int db_redis_connect(km_redis_con_t *con)
@@ -290,7 +299,11 @@ int db_redis_connect(km_redis_con_t *con)
 	LM_DBG("connection opened to %.*s\n", con->id->url.len, con->id->url.s);
 
 #ifndef WITH_HIREDIS_CLUSTER
-	reply = redisCommand(con->con, "SCRIPT LOAD %s", SREM_KEY_LUA);
+	if(mapping_struct_type == MS_HASH) {
+		reply = redisCommand(con->con, "SCRIPT LOAD %s", HDEL_KEY_LUA);
+	} else {
+		reply = redisCommand(con->con, "SCRIPT LOAD %s", SREM_KEY_LUA);
+	}
 	if(!reply) {
 		LM_ERR("failed to load LUA script to server %.*s: %s\n",
 				con->id->url.len, con->id->url.s, con->con->errstr);
@@ -315,6 +328,40 @@ int db_redis_connect(km_redis_con_t *con)
 	strcpy(con->srem_key_lua, reply->str);
 	freeReplyObject(reply);
 	reply = NULL;
+
+	if(db_redis_hash_expires_str.len) {
+		char *version_str = NULL;
+		int major = 0, minor = 0, patch = 0;
+
+		reply = redisCommand(con->con, "INFO server");
+		if(!reply) {
+			LM_ERR("failed to get INFO from Redis server\n");
+			goto err;
+		}
+
+		version_str = strstr(reply->str, "redis_version:");
+		if(!version_str) {
+			LM_ERR("Redis version not found in INFO reply\n");
+			goto err;
+		}
+
+		version_str += strlen("redis_version:"); // Skip past the field name
+		if(sscanf(version_str, "%d.%d.%d", &major, &minor, &patch) < 3) {
+			LM_ERR("Error parsing the version string: %s\n", version_str);
+			goto err;
+		}
+
+		if(!redis_supports_expires(major, minor, patch)) {
+			LM_ERR("HEXPIRE (used by redis_expire parameter) is not "
+				   "implemented in Redis version %d.%d.%d\n.",
+					major, minor, patch);
+			goto err;
+		}
+
+		LM_DBG("Redis server version is: %d.%d.%d\n", major, minor, patch);
+		freeReplyObject(reply);
+		reply = NULL;
+	}
 #endif
 	LM_DBG("connection opened to %.*s\n", con->id->url.len, con->id->url.s);
 
