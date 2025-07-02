@@ -243,6 +243,52 @@ modparam("db_redis", "opt_tls", 1)
 			</example>
 		</section>
 
+		<section id="db_redis.p.use_redis_hashes">
+			<title><varname>use_redis_hashes</varname> (int)</title>
+			<para>
+				Controls whether to use Redis hashes for storing the records in the database.
+				If 0, sets are used (which is the default).
+			</para>
+			<para>
+				Motivation of hashes is the implementation of HEXPIRE command in Redis,
+				available since Redis v 7.4.0 onwards, which allows expiring individual
+				keys inside. Hashes do bring the disadvantage of storing DUMMY values, 
+				since only the keys are useful for us.
+			</para>
+			<para>
+				Default value: 0.
+			</para>
+			<example>
+				<title>Enabling redis hashes</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "use_redis_hashes", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_redis.p.expires">
+			<title><varname>expires</varname> (int)</title>
+			<para>
+				Set an expiration time in seconds for the records in the database.								
+				This is useful for the usrloc module for example, for automatic contact expiry.
+				A value of 0 is interpreted as no expiration. This is only supported with
+				use_redis_hashes!
+			</para>
+			<para>
+				Default value: 0.
+			</para>
+			<example>
+				<title>Setting expires</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "expires", 3600)
+...
+				</programlisting>
+			</example>
+		</section>
+
 		<section id="db_redis.p.db_pass">
 			<title><varname>db_pass</varname> (string)</title>
 			<para>
