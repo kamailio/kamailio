@@ -51,5 +51,10 @@
 
 extern str redis_keys;
 extern str redis_schema_path;
+typedef enum
+{
+	MS_SET = 0,
+	MS_HASH = 1
+} mapping_struct_type_t;
 
 #endif /* _DB_REDIS_MOD_H */

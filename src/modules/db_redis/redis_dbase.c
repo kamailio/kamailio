@@ -33,6 +33,9 @@
 
 #define TIMESTAMP_STR_LENGTH 19
 
+extern int mapping_struct_type;
+extern str db_redis_hash_expires_str;
+
 static void db_redis_dump_reply(redisReply *reply)
 {
 	int i;
@@ -52,9 +55,6 @@ static void db_redis_dump_reply(redisReply *reply)
 		LM_DBG("not printing invalid reply type\n");
 	}
 }
-
-// TODO: utilize auto-expiry? on insert/update, also update expire value
-// of mappings
 
 /*
  * Initialize database module
@@ -722,11 +722,12 @@ static int db_redis_build_query_keys(km_redis_con_t *con, const str *table_name,
 			}
 			if(key_found) {
 				redis_key_t *query_v = NULL;
-				char *prefix = "SMEMBERS";
+				char *prefix =
+						(mapping_struct_type == MS_HASH) ? "HKEYS" : "SMEMBERS";
 
 				if(db_redis_key_add_string(&query_v, prefix, strlen(prefix))
 						!= 0) {
-					LM_ERR("Failed to add smembers command to query\n");
+					LM_ERR("Failed to add smembers/hkeys command to query\n");
 					db_redis_key_free(&query_v);
 					goto err;
 				}
@@ -1262,10 +1263,18 @@ static int db_redis_scan_query_keys(km_redis_con_t *con, const str *table_name,
 				set_key->key.s);
 
 		redis_key_t *query_v = NULL;
-		if(db_redis_key_add_string(&query_v, "SMEMBERS", 8) != 0) {
-			LM_ERR("Failed to add smembers command to query\n");
-			db_redis_key_free(&query_v);
-			goto out;
+		if(mapping_struct_type == MS_HASH) {
+			if(db_redis_key_add_string(&query_v, "HKEYS", 5) != 0) {
+				LM_ERR("Failed to add hkeys command to query\n");
+				db_redis_key_free(&query_v);
+				goto out;
+			}
+		} else {
+			if(db_redis_key_add_string(&query_v, "SMEMBERS", 8) != 0) {
+				LM_ERR("Failed to add smembers command to query\n");
+				db_redis_key_free(&query_v);
+				goto out;
+			}
 		}
 		if(db_redis_key_add_str(&query_v, &set_key->key) != 0) {
 			LM_ERR("Failed to add key name to smembers query\n");
@@ -2020,9 +2029,16 @@ static int db_redis_perform_delete(const db1_con_t *_h, km_redis_con_t *con,
 				type_key = type_key->next, set_key = set_key->next) {
 
 #ifdef WITH_HIREDIS_CLUSTER
-			if(db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
-				LM_ERR("Failed to add srem command to post-delete query\n");
-				goto error;
+			if(mapping_struct_type == MS_HASH) {
+				if(db_redis_key_add_string(&query_v, "HDEL", 4) != 0) {
+					LM_ERR("Failed to add hdel command to post-delete query\n");
+					goto error;
+				}
+			} else {
+				if(db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
+					LM_ERR("Failed to add srem command to post-delete query\n");
+					goto error;
+				}
 			}
 			if(db_redis_key_add_str(&query_v, &type_key->key) != 0) {
 				LM_ERR("Failed to add key to delete query\n");
@@ -2037,9 +2053,17 @@ static int db_redis_perform_delete(const db1_con_t *_h, km_redis_con_t *con,
 			db_redis_check_reply(con, reply, error);
 			db_redis_free_reply(&reply);
 
-			if(db_redis_key_add_string(&query_v, "SCARD", 5) != 0) {
-				LM_ERR("Failed to add scard command to post-delete query\n");
-				goto error;
+			if(mapping_struct_type == MS_HASH) {
+				if(db_redis_key_add_string(&query_v, "HLEN", 4) != 0) {
+					LM_ERR("Failed to add hlen command to post-delete query\n");
+					goto error;
+				}
+			} else {
+				if(db_redis_key_add_string(&query_v, "SCARD", 5) != 0) {
+					LM_ERR("Failed to add scard command to post-delete "
+						   "query\n");
+					goto error;
+				}
 			}
 			if(db_redis_key_add_str(&query_v, &type_key->key) != 0) {
 				LM_ERR("Failed to add key to delete query\n");
@@ -2054,9 +2078,16 @@ static int db_redis_perform_delete(const db1_con_t *_h, km_redis_con_t *con,
 			if(scard != 0)
 				continue;
 
-			if(db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
-				LM_ERR("Failed to add srem command to post-delete query\n");
-				goto error;
+			if(mapping_struct_type == MS_HASH) {
+				if(db_redis_key_add_string(&query_v, "HDEL", 4) != 0) {
+					LM_ERR("Failed to add srem command to post-delete query\n");
+					goto error;
+				}
+			} else {
+				if(db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
+					LM_ERR("Failed to add srem command to post-delete query\n");
+					goto error;
+				}
 			}
 			if(db_redis_key_add_str(&query_v, &set_key->key) != 0) {
 				LM_ERR("Failed to add key to delete query\n");
@@ -2248,15 +2279,15 @@ static int db_redis_perform_update(const db1_con_t *_h, km_redis_con_t *con,
 	/*
     key_value = (str*)pkg_malloc(_nu * sizeof(str));
     if (!key_value) {
-        LM_ERR("Failed to allocate memory for key buffer\n");
-        goto error;
+	LM_ERR("Failed to allocate memory for key buffer\n");
+	goto error;
     }
     memset(key_value, 0, _nu * sizeof(str));
 
     col_value = (str*)pkg_malloc(_nu * sizeof(str));
     if (!col_value) {
-        LM_ERR("Failed to allocate memory for column buffer\n");
-        goto error;
+	LM_ERR("Failed to allocate memory for column buffer\n");
+	goto error;
     }
     memset(col_value, 0, _nu * sizeof(str));
     */
@@ -2440,9 +2471,18 @@ static int db_redis_perform_update(const db1_con_t *_h, km_redis_con_t *con,
 
 				// add to new set key and delete from old
 
-				if(db_redis_key_add_string(&query_v, "SADD", 4) != 0) {
-					LM_ERR("Failed to set sadd command to post-update query\n");
-					goto error;
+				if(mapping_struct_type == MS_HASH) {
+					if(db_redis_key_add_string(&query_v, "HSET", 4) != 0) {
+						LM_ERR("Failed to set hset command to post-update "
+							   "query\n");
+						goto error;
+					}
+				} else {
+					if(db_redis_key_add_string(&query_v, "SADD", 4) != 0) {
+						LM_ERR("Failed to set sadd command to post-update "
+							   "query\n");
+						goto error;
+					}
 				}
 				if(db_redis_key_add_str(&query_v, &new_type_key->key) != 0) {
 					LM_ERR("Failed to add map key to post-update query\n");
@@ -2452,6 +2492,13 @@ static int db_redis_perform_update(const db1_con_t *_h, km_redis_con_t *con,
 					LM_ERR("Failed to set entry key to post-update query\n");
 					goto error;
 				}
+				if(mapping_struct_type == MS_HASH) {
+					if(db_redis_key_add_string(&query_v, "DUMMY", 5) != 0) {
+						LM_ERR("Failed to set entry key to post-update "
+							   "query\n");
+						goto error;
+					}
+				}
 
 				update_queries++;
 				if(db_redis_append_command_argv(con, query_v, 1) != REDIS_OK) {
@@ -2461,9 +2508,60 @@ static int db_redis_perform_update(const db1_con_t *_h, km_redis_con_t *con,
 
 				db_redis_key_free(&query_v);
 
-				if(db_redis_key_add_string(&query_v, "SADD", 4) != 0) {
-					LM_ERR("Failed to set sadd command to post-update query\n");
-					goto error;
+				if(db_redis_hash_expires_str.len) {
+					if(db_redis_key_add_string(&query_v, "HEXPIRE", 7) != 0) {
+						LM_ERR("Failed to add hexpire command to query\n");
+						goto error;
+					}
+					if(db_redis_key_add_str(&query_v, &new_type_key->key)
+							!= 0) {
+						LM_ERR("Failed to add map key to post-update query\n");
+						goto error;
+					}
+
+					if(db_redis_key_add_str(
+							   &query_v, &db_redis_hash_expires_str)
+							!= 0) {
+						LM_ERR("Failed to add expiry time to post-update "
+							   "query\n");
+						goto error;
+					}
+					if(db_redis_key_add_string(&query_v, "FIELDS", 6) != 0) {
+						LM_ERR("Failed to add fields suffix to query\n");
+						goto error;
+					}
+					if(db_redis_key_add_string(&query_v, "1", 1) != 0) {
+						LM_ERR("Failed to add fields suffix to query\n");
+						goto error;
+					}
+					if(db_redis_key_add_str(&query_v, &key->key) != 0) {
+						LM_ERR("Failed to set entry key to post-update "
+							   "query\n");
+						goto error;
+					}
+
+					update_queries++;
+					if(db_redis_append_command_argv(con, query_v, 1)
+							!= REDIS_OK) {
+						LM_ERR("Failed to append redis command\n");
+						goto error;
+					}
+
+					db_redis_key_free(&query_v);
+				}
+
+				if(mapping_struct_type == MS_HASH) {
+					if(db_redis_key_add_string(&query_v, "HSET", 4) != 0) {
+						LM_ERR("Failed to set hset command to post-update "
+							   "query\n");
+						goto error;
+					}
+				} else {
+					if(db_redis_key_add_string(&query_v, "SADD", 4) != 0) {
+						LM_ERR("Failed to set sadd command to post-update "
+							   "query\n");
+						goto error;
+					}
 				}
 				if(db_redis_key_add_str(&query_v, &set_key->key) != 0) {
 					LM_ERR("Failed to add map key to post-update query\n");
@@ -2473,6 +2571,13 @@ static int db_redis_perform_update(const db1_con_t *_h, km_redis_con_t *con,
 					LM_ERR("Failed to set entry key to post-update query\n");
 					goto error;
 				}
+				if(mapping_struct_type == MS_HASH) {
+					if(db_redis_key_add_string(&query_v, "DUMMY", 5) != 0) {
+						LM_ERR("Failed to set entry key to post-update "
+							   "query\n");
+						goto error;
+					}
+				}
 
 				update_queries++;
 				if(db_redis_append_command_argv(con, query_v, 1) != REDIS_OK) {
@@ -2482,10 +2587,60 @@ static int db_redis_perform_update(const db1_con_t *_h, km_redis_con_t *con,
 
 				db_redis_key_free(&query_v);
 
+				if(db_redis_hash_expires_str.len) {
+					if(db_redis_key_add_string(&query_v, "HEXPIRE", 7) != 0) {
+						LM_ERR("Failed to add hexpire command to query\n");
+						goto error;
+					}
+					if(db_redis_key_add_str(&query_v, &set_key->key) != 0) {
+						LM_ERR("Failed to add map key to post-update query\n");
+						goto error;
+					}
+					if(db_redis_key_add_str(
+							   &query_v, &db_redis_hash_expires_str)
+							!= 0) {
+						LM_ERR("Failed to add expiry time to post-update "
+							   "query\n");
+						goto error;
+					}
+					if(db_redis_key_add_string(&query_v, "FIELDS", 6) != 0) {
+						LM_ERR("Failed to add fields suffix to query\n");
+						goto error;
+					}
+					if(db_redis_key_add_string(&query_v, "1", 1) != 0) {
+						LM_ERR("Failed to add fields suffix to query\n");
+						goto error;
+					}
+					if(db_redis_key_add_str(&query_v, &new_type_key->key)
+							!= 0) {
+						LM_ERR("Failed to set entry key to post-update "
+							   "query\n");
+						goto error;
+					}
+
+					update_queries++;
+					if(db_redis_append_command_argv(con, query_v, 1)
+							!= REDIS_OK) {
+						LM_ERR("Failed to append redis command\n");
+						goto error;
+					}
+
+					db_redis_key_free(&query_v);
+				}
+
 #ifdef WITH_HIREDIS_CLUSTER
-				if(db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
-					LM_ERR("Failed to add srem command to post-delete query\n");
-					goto error;
+				if(mapping_struct_type == MS_HASH) {
+					if(db_redis_key_add_string(&query_v, "HDEL", 4) != 0) {
+						LM_ERR("Failed to add hdel command to post-delete "
+							   "query\n");
+						goto error;
+					}
+				} else {
+					if(db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
+						LM_ERR("Failed to add srem command to post-delete "
+							   "query\n");
+						goto error;
+					}
 				}
 				if(db_redis_key_add_str(&query_v, &type_key->key) != 0) {
 					LM_ERR("Failed to add key to delete query\n");
@@ -2500,10 +2655,18 @@ static int db_redis_perform_update(const db1_con_t *_h, km_redis_con_t *con,
 				db_redis_check_reply(con, reply, error);
 				db_redis_free_reply(&reply);
 
-				if(db_redis_key_add_string(&query_v, "SCARD", 5) != 0) {
-					LM_ERR("Failed to add scard command to post-delete "
-						   "query\n");
-					goto error;
+				if(mapping_struct_type == MS_HASH) {
+					if(db_redis_key_add_string(&query_v, "HLEN", 4) != 0) {
+						LM_ERR("Failed to add hlen command to post-delete "
+							   "query\n");
+						goto error;
+					}
+				} else {
+					if(db_redis_key_add_string(&query_v, "SCARD", 5) != 0) {
+						LM_ERR("Failed to add scard command to post-delete "
+							   "query\n");
+						goto error;
+					}
 				}
 				if(db_redis_key_add_str(&query_v, &type_key->key) != 0) {
 					LM_ERR("Failed to add key to delete query\n");
@@ -2518,9 +2681,18 @@ static int db_redis_perform_update(const db1_con_t *_h, km_redis_con_t *con,
 				if(scard != 0)
 					continue;
 
-				if(db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
-					LM_ERR("Failed to add srem command to post-delete query\n");
-					goto error;
+				if(mapping_struct_type == MS_HASH) {
+					if(db_redis_key_add_string(&query_v, "HDEL", 4) != 0) {
+						LM_ERR("Failed to add hdel command to post-delete "
+							   "query\n");
+						goto error;
+					}
+				} else {
+					if(db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
+						LM_ERR("Failed to add srem command to post-delete "
+							   "query\n");
+						goto error;
+					}
 				}
 				if(db_redis_key_add_str(&query_v, &set_key->key) != 0) {
 					LM_ERR("Failed to add key to delete query\n");
@@ -2540,12 +2712,22 @@ static int db_redis_perform_update(const db1_con_t *_h, km_redis_con_t *con,
 							   "query\n");
 						goto error;
 					}
-					if(db_redis_key_add_string(
-							   &query_v, SREM_KEY_LUA, strlen(SREM_KEY_LUA))
-							!= 0) {
-						LM_ERR("Failed to add srem command to post-delete "
-							   "query\n");
-						goto error;
+					if(mapping_struct_type == MS_HASH) {
+						if(db_redis_key_add_string(
+								   &query_v, HDEL_KEY_LUA, strlen(HDEL_KEY_LUA))
+								!= 0) {
+							LM_ERR("Failed to add hdel command to post-delete "
+								   "query\n");
+							goto error;
+						}
+					} else {
+						if(db_redis_key_add_string(
+								   &query_v, SREM_KEY_LUA, strlen(SREM_KEY_LUA))
+								!= 0) {
+							LM_ERR("Failed to add srem command to post-delete "
+								   "query\n");
+							goto error;
+						}
 					}
 					if(db_redis_key_add_string(&query_v, "3", 1) != 0) {
 						LM_ERR("Failed to add srem command to post-delete "
@@ -2876,6 +3058,26 @@ int db_redis_insert(const db1_con_t *_h, const db_key_t *_k, const db_val_t *_v,
 	db_redis_check_reply(con, reply, error);
 	db_redis_free_reply(&reply);
 
+	if(db_redis_hash_expires_str.len) {
+		if(db_redis_key_add_string(&query_v, "EXPIRE", 6) != 0) {
+			LM_ERR("Failed to add expire command to query\n");
+			goto error;
+		}
+		if(db_redis_key_add_str(&query_v, &key->key) != 0) {
+			LM_ERR("Failed to add key to insert query\n");
+			goto error;
+		}
+		if(db_redis_key_add_str(&query_v, &db_redis_hash_expires_str) != 0) {
+			LM_ERR("Failed to add expiry time to post-update query\n");
+			goto error;
+		}
+
+		reply = db_redis_command_argv(con, query_v);
+		db_redis_key_free(&query_v);
+		db_redis_check_reply(con, reply, error);
+		db_redis_free_reply(&reply);
+	}
+
 	for(k = type_keys, set_key = set_keys; k;
 			k = k->next, set_key = set_key->next) {
 		str *type_key = &k->key;
@@ -2883,9 +3085,16 @@ int db_redis_insert(const db1_con_t *_h, const db_key_t *_k, const db_val_t *_v,
 		LM_DBG("inserting entry key '%.*s' to type map '%.*s'\n", key->key.len,
 				key->key.s, type_key->len, type_key->s);
 
-		if(db_redis_key_add_string(&query_v, "SADD", 4) != 0) {
-			LM_ERR("Failed to set sadd command to post-insert query\n");
-			goto error;
+		if(mapping_struct_type == MS_HASH) {
+			if(db_redis_key_add_string(&query_v, "HSET", 4) != 0) {
+				LM_ERR("Failed to set hset command to post-insert query\n");
+				goto error;
+			}
+		} else {
+			if(db_redis_key_add_string(&query_v, "SADD", 4) != 0) {
+				LM_ERR("Failed to set sadd command to post-insert query\n");
+				goto error;
+			}
 		}
 		if(db_redis_key_add_str(&query_v, type_key) != 0) {
 			LM_ERR("Failed to add map key to post-insert query\n");
@@ -2895,15 +3104,60 @@ int db_redis_insert(const db1_con_t *_h, const db_key_t *_k, const db_val_t *_v,
 			LM_ERR("Failed to set entry key to post-insert query\n");
 			goto error;
 		}
+		if(mapping_struct_type == MS_HASH) {
+			if(db_redis_key_add_string(&query_v, "DUMMY", 5) != 0) {
+				LM_ERR("Failed to set entry key to post-insert query\n");
+				goto error;
+			}
+		}
 
 		reply = db_redis_command_argv(con, query_v);
 		db_redis_key_free(&query_v);
 		db_redis_check_reply(con, reply, error);
 		db_redis_free_reply(&reply);
 
-		if(db_redis_key_add_string(&query_v, "SADD", 4) != 0) {
-			LM_ERR("Failed to set sadd command to post-insert query\n");
-			goto error;
+		if(db_redis_hash_expires_str.len) {
+			if(db_redis_key_add_string(&query_v, "HEXPIRE", 7) != 0) {
+				LM_ERR("Failed to add hexpire command to query\n");
+				goto error;
+			}
+			if(db_redis_key_add_str(&query_v, type_key) != 0) {
+				LM_ERR("Failed to add map key to post-update query\n");
+				goto error;
+			}
+			if(db_redis_key_add_str(&query_v, &db_redis_hash_expires_str)
+					!= 0) {
+				LM_ERR("Failed to add expiry time to post-update query\n");
+				goto error;
+			}
+			if(db_redis_key_add_string(&query_v, "FIELDS", 6) != 0) {
+				LM_ERR("Failed to add fields suffix to query\n");
+				goto error;
+			}
+			if(db_redis_key_add_string(&query_v, "1", 1) != 0) {
+				LM_ERR("Failed to add fields suffix to query\n");
+				goto error;
+			}
+			if(db_redis_key_add_str(&query_v, &key->key) != 0) {
+				LM_ERR("Failed to set entry key to post-update query\n");
+				goto error;
+			}
+			reply = db_redis_command_argv(con, query_v);
+			db_redis_key_free(&query_v);
+			db_redis_check_reply(con, reply, error);
+			db_redis_free_reply(&reply);
+		}
+
+		if(mapping_struct_type == MS_HASH) {
+			if(db_redis_key_add_string(&query_v, "HSET", 4) != 0) {
+				LM_ERR("Failed to set hset command to post-insert query\n");
+				goto error;
+			}
+		} else {
+			if(db_redis_key_add_string(&query_v, "SADD", 4) != 0) {
+				LM_ERR("Failed to set sadd command to post-insert query\n");
+				goto error;
+			}
 		}
 		if(db_redis_key_add_str(&query_v, &set_key->key) != 0) {
 			LM_ERR("Failed to add map key to post-insert query\n");
@@ -2913,11 +3167,49 @@ int db_redis_insert(const db1_con_t *_h, const db_key_t *_k, const db_val_t *_v,
 			LM_ERR("Failed to set entry key to post-insert query\n");
 			goto error;
 		}
+		if(mapping_struct_type == MS_HASH) {
+			if(db_redis_key_add_string(&query_v, "DUMMY", 5) != 0) {
+				LM_ERR("Failed to set entry key to post-insert query\n");
+				goto error;
+			}
+		}
 
 		reply = db_redis_command_argv(con, query_v);
 		db_redis_key_free(&query_v);
 		db_redis_check_reply(con, reply, error);
 		db_redis_free_reply(&reply);
+
+		if(db_redis_hash_expires_str.len) {
+			if(db_redis_key_add_string(&query_v, "HEXPIRE", 7) != 0) {
+				LM_ERR("Failed to add hexpire command to query\n");
+				goto error;
+			}
+			if(db_redis_key_add_str(&query_v, &set_key->key) != 0) {
+				LM_ERR("Failed to add map key to post-update query\n");
+				goto error;
+			}
+			if(db_redis_key_add_str(&query_v, &db_redis_hash_expires_str)
+					!= 0) {
+				LM_ERR("Failed to add expiry time to post-update query\n");
+				goto error;
+			}
+			if(db_redis_key_add_string(&query_v, "FIELDS", 6) != 0) {
+				LM_ERR("Failed to add fields suffix to query\n");
+				goto error;
+			}
+			if(db_redis_key_add_string(&query_v, "1", 1) != 0) {
+				LM_ERR("Failed to add fields suffix to query\n");
+				goto error;
+			}
+			if(db_redis_key_add_str(&query_v, type_key) != 0) {
+				LM_ERR("Failed to set entry key to post-update query\n");
+				goto error;
+			}
+			reply = db_redis_command_argv(con, query_v);
+			db_redis_key_free(&query_v);
+			db_redis_check_reply(con, reply, error);
+			db_redis_free_reply(&reply);
+		}
 	}
 
 	db_redis_key_free(&key);

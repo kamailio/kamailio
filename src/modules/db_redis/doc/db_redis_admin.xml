@@ -48,11 +48,11 @@ username/string,domain/string,contact/string,received/string,path/string,expires
 		<para>
 			For instance, usrloc relies on a key of "username@domain", but in order to store
 			multiple contacts per AoR, it cannot be constrained to uniqueness. To
-			work around this, db_redis supports mapping sets in such a way as to, in the case of
-			the usrloc module, have a set with a key of "username@domain" and its entries being
-			unique keys per contact based on the ruid of a contact. Thus, one contact in usrloc
-			consists of a unique key "location:entry::example-ruid-1" being a hash with the columns like
-			username, domain, contact, path etc. In addition, this unique key is stored
+			work around this, db_redis supports mapping structures (either sets or hashes).
+			If sets are chosen, in the case of the usrloc module for example, one would have a set with a key
+			of "username@domain" and its entries being unique keys per contact based on the ruid of a contact.
+			Thus, one contact in usrloc consists of a unique key "location:entry::example-ruid-1" being a hash
+			with the columns like username, domain, contact, path etc. In addition, this unique key is stored
 			in a set "location:usrdom::exampleuser:exampledomain.org". When usrloc does
 			a lookup based on "username@domain", db_redis figures out via the keys/values
 			the query constructed by usrloc to look for the final entry key in the
@@ -100,6 +100,29 @@ location=entry:ruid&amp;usrdom:username,domain&amp;timer:partition,keepalive;acc
 		<para>
 			For readability purposes, definitions of keys per table can span multiple Kamailio
 			config lines by providing multiple "keys" modparams.
+		</para>
+		<para>
+			When the mapping structure is selected to be hash, one contact in usrloc
+			consists of the same unique key "location:entry::example-ruid-1" as before, but now this unique
+			key is also a key in the hash "location:usrdom::exampleuser:exampledomain.org".
+			The value associated with this key is whatever module param hash_value is set to.
+			When usrloc does a lookup based on "username@domain", db_redis goes through
+			the keys in the hash "location:usrdom::exampleuser:exampledomain.org" to retrieve the associated
+			contact keys. All the other mapping structures that used to be sets are now hashes as well
+			(index::timer, location:timer). This possibility of using hashes has only been tested for usrloc and
+			was introduced because from Redis v 7.4.0 onwards the HEXPIRE command is available, which allows
+			expiring individual keys inside a hash. This makes the process of expiring contacts something that Redis
+			itself can handle, without the need for Kamailio to do it.
+		</para>
+		<para>
+			Example of structures inside Redis for the usrloc module, with mapping structure type 1 (hashes):
+			<programlisting format="linespecific">
+			HASH "location:entry::example-ruid-1" -> contact info
+			HASH "location:usrdom::exampleuser:exampledomain" -> contains (key:"location:entry::example-ruid-1" , value:"hash_value")
+			HASH "location::index::usrdom" -> contains (key:"location:usrdom::exampleuser:exampledomain", value:"hash_value")
+			HASH "location:timer::YYYY-MM-DD mm:ss:mm" -> contains (key:"location:entry::example-ruid-1", value:"hash_value")
+			HASH "location::index::timer" -> contains (key:"location:timer::YYYY-MM-DD mm:ss:mm", value:"hash_value")
+			</programlisting>
 		</para>
 	</section>
 
@@ -238,6 +261,71 @@ modparam("db_redis", "verbosity", 0)
 				<programlisting format="linespecific">
 ...
 modparam("db_redis", "opt_tls", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_redis.p.mapping_struct_type">
+			<title><varname>mapping_struct_type</varname> (int)</title>
+			<para>
+				Controls the type of mapping structures to be used. Beforehand, only sets were used.
+				For the rationale behind mapping structures, see the discussion about mapping structures in the overview section.
+				Currently supported values: 0 - sets (default), 1 - hashes.
+			</para>
+			<para>
+				Motivation of hashes is the implementation of HEXPIRE command in Redis,
+				available since Redis v 7.4.0 onwards, which allows expiring individual
+				keys inside hashes.
+			</para>
+			<para>
+				Default value: 0.
+			</para>
+			<example>
+				<title>Enabling redis hashes</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "mapping_struct_type", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_redis.p.hash_value">
+			<title><varname>hash_value</varname> (string)</title>
+			<para>
+				Only has sense if mapping_struct_type is set to hash (1).
+				Defines the value to be used for the hash entries in the hashes that now replace mapping sets.
+			</para>
+			<para>
+				Default value: DUMMY.
+			</para>
+			<example>
+				<title>Setting hash_value</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "hash_value", "DUMMY")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_redis.p.hash_expires">
+			<title><varname>hash_expires</varname> (int)</title>
+			<para>
+				Set an expiration time in seconds for the keys in the hash data structures in the database.
+				This is useful for the usrloc module for example, for automatic contact expiry.
+				A value of 0 is interpreted as no expiration. This is only supported with
+				mapping_struct_type set to hash (1).
+			</para>
+			<para>
+				Default value: 0.
+			</para>
+			<example>
+				<title>Setting hash expires</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "hash_expires", 3600)
 ...
 				</programlisting>
 			</example>

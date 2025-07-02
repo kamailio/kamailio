@@ -42,6 +42,12 @@ MODULE_VERSION
 str redis_keys = str_init("");
 str redis_schema_path = str_init(SHARE_DIR "db_redis/kamailio");
 int db_redis_verbosity = 1;
+int mapping_struct_type = 0;
+str db_redis_hash_value = str_init("DUMMY");
+
+int db_redis_hash_expires = 0;
+str db_redis_hash_expires_str = str_init("");
+char db_redis_hash_expires_buf[20] = {0};
 
 static int db_redis_bind_api(db_func_t *dbb);
 static int mod_init(void);
@@ -60,6 +66,9 @@ static param_export_t params[] = {
 		{"keys", PARAM_STRING | PARAM_USE_FUNC, (void *)keys_param},
 		{"schema_path", PARAM_STR, &redis_schema_path},
 		{"verbosity", PARAM_INT, &db_redis_verbosity},
+		{"mapping_struct_type", PARAM_INT, &mapping_struct_type},
+		{"hash_value", PARAM_STRING, &db_redis_hash_value},
+		{"hash_expires", PARAM_INT, &db_redis_hash_expires},
 #ifdef WITH_SSL
 		{"opt_tls", PARAM_INT, &db_redis_opt_tls},
 		{"ca_path", PARAM_STRING, &db_redis_ca_path},
@@ -120,6 +129,18 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 static int mod_init(void)
 {
 	LM_DBG("module initializing\n");
+
+	if(db_redis_hash_expires && (mapping_struct_type != MS_HASH)) {
+		LM_ERR("expires parameter is only supported with mapping_struct_type "
+			   "set to 1 (hash)\n");
+		return -1;
+	}
+
+	if(db_redis_hash_expires) {
+		db_redis_hash_expires_str.s = db_redis_hash_expires_buf;
+		db_redis_hash_expires_str.len = snprintf(
+				db_redis_hash_expires_str.s, 20, "%d", db_redis_hash_expires);
+	}
 	return 0;
 }
 
