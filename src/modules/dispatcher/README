@@ -1277,6 +1277,9 @@ With congestion control the formula becomes :
           + “64” - round-robin (next destination) with over load control
             (destination record is skipped based on over load control
             rate).
+          + “14” - round-robin (4) if all the destinations in the group
+            have the same priority and the priority is greater than 0,
+            otherise serial dispatching (8).
           + “X” - if the algorithm is not implemented, the first entry in
             set is chosen.
      * limit - the maximum number of items to be stored in XAVP list for
