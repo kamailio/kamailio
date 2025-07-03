@@ -1468,6 +1468,13 @@ With congestion control the formula becomes :
 			</listitem>
 			<listitem>
 				<para>
+				<quote>14</quote> - round-robin (4) if all the destinations
+				in the group have the same priority and the priority is greater
+				than 0, otherise serial dispatching (8).
+				</para>
+			</listitem>
+			<listitem>
+				<para>
 				<quote>X</quote> - if the algorithm is not implemented, the
 				first entry in set is chosen.
 				</para>
