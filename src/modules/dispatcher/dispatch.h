@@ -270,6 +270,7 @@ typedef struct _ds_set {
 	unsigned int rwlist[100];
 	struct _ds_set *next[2];
 	int longer;
+	int rrserial;		/*!< round-robin or serial flag */
 	gen_lock_t lock;
 } ds_set_t;
 

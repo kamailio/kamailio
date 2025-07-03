@@ -82,6 +82,7 @@
 #define DS_ALG_RELWEIGHT 11
 #define DS_ALG_PARALLEL 12
 #define DS_ALG_LATENCY 13
+#define DS_ALG_RRSERIAL 14
 #define DS_ALG_OVERLOAD 64 /* 2^6 - can be also used as a flag */
 
 #define DS_HN_SIZE 256
@@ -778,7 +779,13 @@ ds_dest_t *add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 
 	if(sp->dlist == NULL) {
 		sp->dlist = dp;
+		if(priority > 0) {
+			sp->rrserial = priority;
+		}
 	} else {
+		if(sp->rrserial > 0 && sp->rrserial != priority) {
+			sp->rrserial = 0;
+		}
 		dp1 = NULL;
 		dp0 = sp->dlist;
 		/* highest priority last -> reindex will copy backwards */
@@ -2563,6 +2570,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 	ds_set_t *idx = NULL;
 	int ulast = 0;
 	int vlast = 0;
+	int valg = 0;
 	int xavp_filled = 0;
 
 	if(msg == NULL) {
@@ -2589,10 +2597,20 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		return -1;
 	}
 
+	if(rstate->alg == DS_ALG_RRSERIAL) {
+		/* decide on round-robin or serial dispatching */
+		if(idx->rrserial != 0) {
+			valg = DS_ALG_ROUNDROBIN;
+		} else {
+			valg = DS_ALG_SERIAL;
+		}
+	} else {
+		valg = rstate->alg;
+	}
 	LM_DBG("set [%d]\n", rstate->setid);
 
 	hash = 0;
-	switch(rstate->alg) {
+	switch(valg) {
 		case DS_ALG_HASHCALLID: /* 0 - hash call-id */
 			if(ds_hash_callid(msg, &hash) != 0) {
 				LM_ERR("can't get callid hash\n");
@@ -2707,6 +2725,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 				return -1;
 			xavp_filled = 1;
 			break;
+		/* case DS_ALG_RRSERIAL: // 14 - round-robin or serial decided above */
 		case DS_ALG_OVERLOAD: /* 64 - round robin with overload control */
 			lock_get(&idx->lock);
 			hash = idx->last;
