@@ -42,6 +42,11 @@ MODULE_VERSION
 str redis_keys = str_init("");
 str redis_schema_path = str_init(SHARE_DIR "db_redis/kamailio");
 int db_redis_verbosity = 1;
+int db_redis_use_hashes = 0;
+int db_redis_expires = 0;
+
+str expires = str_init("");
+char expires_buf[20] = {0};
 
 static int db_redis_bind_api(db_func_t *dbb);
 static int mod_init(void);
@@ -60,6 +65,8 @@ static param_export_t params[] = {
 		{"keys", PARAM_STRING | PARAM_USE_FUNC, (void *)keys_param},
 		{"schema_path", PARAM_STR, &redis_schema_path},
 		{"verbosity", PARAM_INT, &db_redis_verbosity},
+		{"use_redis_hashes", PARAM_INT, &db_redis_use_hashes},
+		{"expires", PARAM_INT, &db_redis_expires},
 #ifdef WITH_SSL
 		{"opt_tls", PARAM_INT, &db_redis_opt_tls},
 		{"ca_path", PARAM_STRING, &db_redis_ca_path},
@@ -120,6 +127,17 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 static int mod_init(void)
 {
 	LM_DBG("module initializing\n");
+
+	if(db_redis_expires && !db_redis_use_hashes) {
+		LM_ERR("expires parameter is only supported with use_redis_hashes "
+			   "set to 1\n");
+		return -1;
+	}
+
+	if(db_redis_expires) {
+		expires.s = expires_buf;
+		expires.len = snprintf(expires.s, 20, "%d", db_redis_expires);
+	}
 	return 0;
 }
 
