@@ -810,15 +810,22 @@ void restore_uris_reply(struct cell *t, int type, struct tmcb_params *p)
 	struct sip_msg *req;
 	struct sip_msg *rpl;
 	int_str avp_value;
+	unsigned int direction = 0;
 
 	if(!t || !t->uas.request || !p->rpl)
 		return;
 
+	if(*p->param) {
+		direction = (unsigned int)(unsigned long)*p->param;
+	}
+
 	req = t->uas.request;
 	rpl = p->rpl;
 
-	if(req->msg_flags & FL_USE_UAC_FROM) {
-
+	if(((req->msg_flags & FL_USE_UAC_FROM)
+			   && (!direction || direction == DLG_DIR_DOWNSTREAM))
+			|| ((req->msg_flags & FL_USE_UAC_TO)
+					&& direction == DLG_DIR_UPSTREAM)) {
 		/* parse FROM in reply */
 		if(parse_from_header(rpl) < 0) {
 			LM_ERR("failed to find/parse FROM hdr\n");
@@ -835,8 +842,11 @@ void restore_uris_reply(struct cell *t, int type, struct tmcb_params *p)
 			LM_ERR("failed to restore FROM\n");
 		}
 	}
-	if(req->msg_flags & FL_USE_UAC_TO) {
 
+	if(((req->msg_flags & FL_USE_UAC_TO)
+			   && (!direction || direction == DLG_DIR_DOWNSTREAM))
+			|| ((req->msg_flags & FL_USE_UAC_FROM)
+					&& direction == DLG_DIR_UPSTREAM)) {
 		/* parse TO in reply */
 		if(rpl->to == 0
 				&& (parse_headers(rpl, HDR_TO_F, 0) != 0 || rpl->to == 0)) {
@@ -997,8 +1007,9 @@ static void replace_callback(
 	/* register tm callback to change replies,
 	 * but only if not registered earlier */
 	if(!(msg->msg_flags & (FL_USE_UAC_FROM | FL_USE_UAC_TO))
-			&& uac_tmb.register_tmcb(
-					   msg, 0, TMCB_RESPONSE_IN, restore_uris_reply, 0, 0)
+			&& uac_tmb.register_tmcb(msg, 0, TMCB_RESPONSE_IN,
+					   restore_uris_reply,
+					   (void *)(unsigned long)_params->direction, 0)
 					   != 1) {
 		LM_ERR("failed to install TM callback\n");
 		return;
