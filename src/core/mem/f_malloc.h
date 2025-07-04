@@ -28,6 +28,8 @@
 #if !defined(f_malloc_h)
 #define f_malloc_h
 
+#include <stddef.h>
+
 #include "meminfo.h"
 
 #ifdef DBG_SR_MEMORY

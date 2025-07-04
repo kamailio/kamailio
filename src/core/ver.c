@@ -19,6 +19,7 @@
  * @ingroup: core
  */
 
+#include "mem/memcore.h"
 #include "ver_defs.h"
 #include "autover.h" /* REPO_VER, REPO_STATE */
 

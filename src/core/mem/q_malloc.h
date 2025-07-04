@@ -27,6 +27,8 @@
 #if !defined(q_malloc_h)
 #define q_malloc_h
 
+#include <stddef.h>
+
 #include "meminfo.h"
 
 #ifdef DBG_SR_MEMORY
