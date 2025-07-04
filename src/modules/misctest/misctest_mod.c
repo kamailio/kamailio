@@ -67,10 +67,8 @@ static str misctest_message_file = STR_NULL;
 
 /* clang-format off */
 static cmd_export_t cmds[]={
-	{"mt_mem_alloc", mt_mem_alloc_f, 1, fixup_var_int_1, 0,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
-	{"mt_mem_free", mt_mem_free_f, 1, fixup_var_int_1, 0,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+	{"mt_mem_alloc", mt_mem_alloc_f, 1, fixup_var_int_1, 0, ANY_ROUTE},
+	{"mt_mem_free", mt_mem_free_f, 1, fixup_var_int_1, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 /* clang-format on */
