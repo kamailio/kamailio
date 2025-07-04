@@ -2639,6 +2639,70 @@ int tr_eval_val(
 }
 
 
+/*!
+ * \brief Evaluate num transformations
+ * \param msg SIP message
+ * \param tp transformation
+ * \param subtype transformation type
+ * \param val pseudo-variable
+ * \return 0 on success, -1 on error
+ */
+int tr_eval_num(
+		struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val)
+{
+	if(val == NULL)
+		return -1;
+
+	switch(subtype) {
+		case TR_NUM_FDIGIT:
+			tr_set_crt_buffer();
+			val->rs.s = _tr_buffer;
+			if(!(val->flags & PV_VAL_INT)) {
+				val->ri = 0;
+				val->rs.s[0] = '0';
+				val->rs.s[1] = '\0';
+				val->rs.len = 1;
+				val->flags = PV_TYPE_INT | PV_VAL_INT | PV_VAL_STR;
+				return 0;
+			}
+			if(val->ri < 0) {
+				val->ri = -val->ri;
+			}
+			while(val->ri >= 10) {
+				val->ri /= 10;
+			}
+			val->rs.s[0] = '0' + val->ri;
+			val->rs.s[1] = '\0';
+			val->rs.len = 1;
+			val->flags = PV_TYPE_INT | PV_VAL_INT | PV_VAL_STR;
+			break;
+		case TR_NUM_LDIGIT:
+			tr_set_crt_buffer();
+			val->rs.s = _tr_buffer;
+			if(!(val->flags & PV_VAL_INT)) {
+				val->ri = 0;
+				val->rs.s[0] = '0';
+				val->rs.s[1] = '\0';
+				val->rs.len = 1;
+				val->flags = PV_TYPE_INT | PV_VAL_INT | PV_VAL_STR;
+				return 0;
+			}
+			val->ri = val->ri % 10;
+			val->rs.s[0] = '0' + val->ri;
+			val->rs.s[1] = '\0';
+			val->rs.len = 1;
+			val->flags = PV_TYPE_INT | PV_VAL_INT | PV_VAL_STR;
+			break;
+
+		default:
+			LM_ERR("unknown subtype %d\n", subtype);
+			return -1;
+	}
+
+	return 0;
+}
+
+
 #define _tr_parse_nparam(_p, _p0, _tp, _spec, _n, _sign, _in, _s)              \
 	while(is_in_str(_p, _in) && (*_p == ' ' || *_p == '\t' || *_p == '\n'))    \
 		_p++;                                                                  \
@@ -3869,6 +3933,54 @@ char *tr_parse_val(str *in, trans_t *t)
 		goto done;
 	} else if(name.len == 6 && strncasecmp(name.s, "jsonqe", 6) == 0) {
 		t->subtype = TR_VAL_JSONQE;
+		goto done;
+	}
+
+
+	LM_ERR("unknown transformation: %.*s/%.*s/%d!\n", in->len, in->s, name.len,
+			name.s, name.len);
+error:
+	return NULL;
+
+done:
+	t->name = name;
+	return p;
+}
+
+/*!
+ * \brief Helper function to parse num transformation
+ * \param in parsed string
+ * \param t transformation
+ * \return pointer to the end of the transformation in the string - '}', null on error
+ */
+char *tr_parse_num(str *in, trans_t *t)
+{
+	char *p;
+	str name;
+
+	if(in == NULL || t == NULL)
+		return NULL;
+
+	p = in->s;
+	name.s = in->s;
+	t->type = TR_NUM;
+	t->trf = tr_eval_num;
+
+	/* find next token */
+	while(is_in_str(p, in) && *p != TR_PARAM_MARKER && *p != TR_RBRACKET)
+		p++;
+	if(*p == '\0') {
+		LM_ERR("invalid transformation: %.*s\n", in->len, in->s);
+		goto error;
+	}
+	name.len = p - name.s;
+	trim(&name);
+
+	if(name.len == 6 && strncasecmp(name.s, "fdigit", 6) == 0) {
+		t->subtype = TR_NUM_FDIGIT;
+		goto done;
+	} else if(name.len == 6 && strncasecmp(name.s, "ldigit", 6) == 0) {
+		t->subtype = TR_NUM_LDIGIT;
 		goto done;
 	}
 
