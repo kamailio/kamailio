@@ -24,18 +24,21 @@
 
 #ifdef F_MALLOC
 /* fast malloc - implemented in f_malloc.c */
+#include "f_malloc.h"
 int fm_malloc_init_pkg_manager(void);
 int fm_malloc_init_shm_manager(void);
 #endif
 
 #ifdef Q_MALLOC
 /* quick malloc - implemented in q_malloc.c */
+#include "q_malloc.h"
 int qm_malloc_init_pkg_manager(void);
 int qm_malloc_init_shm_manager(void);
 #endif
 
 #ifdef TLSF_MALLOC
 /* two levels segregated fit - implemented in tlsf_malloc.c */
+#include "tlsf_malloc.h"
 int tlsf_malloc_init_pkg_manager(void);
 int tlsf_malloc_init_shm_manager(void);
 #endif
