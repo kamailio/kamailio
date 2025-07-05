@@ -97,6 +97,7 @@
 
 #include "tcp_info.h"
 #include "tcp_options.h"
+#include "tcp_mtops.h"
 #include "ut.h"
 #include "events.h"
 #include "cfg/cfg_struct.h"
@@ -170,6 +171,7 @@ int tcp_main_max_fd_no = 0;
 int tcp_max_connections = DEFAULT_TCP_MAX_CONNECTIONS;
 int tls_max_connections = DEFAULT_TLS_MAX_CONNECTIONS;
 int tcp_accept_unique = 0;
+int ksr_tcp_main_threads = 0;
 
 int tcp_connection_match = TCPCONN_MATCH_DEFAULT;
 
@@ -5000,6 +5002,16 @@ void tcp_main_loop()
 	if(cfg_get(tcp, tcp_cfg, fd_cache))
 		tcp_fd_cache_init();
 #endif /* TCP_FD_CACHE */
+
+	if(ksr_tcp_main_threads != 0) {
+		if(ksr_tcpx_proc_list_prepare() < 0) {
+			LM_ERR("failed to prepare multi-thread processing list\n");
+			goto error;
+		}
+		LM_INFO("tcp main processing threads prepared\n");
+	} else {
+		LM_INFO("tcp main processing threads not enabled\n");
+	}
 
 	/* add all the sockets we listen on for connections */
 	for(si = tcp_listen; si; si = si->next) {
