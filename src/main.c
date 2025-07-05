@@ -105,6 +105,7 @@
 #include "core/poll_types.h"
 #include "core/tcp_init.h"
 #include "core/tcp_options.h"
+#include "core/tcp_mtops.h"
 #ifdef CORE_TLS
 #include "core/tls/tls_init.h"
 #define tls_has_init_si() 1
@@ -2717,8 +2718,9 @@ int main(int argc, char **argv)
 		goto error;
 	}
 	/* we need to do it early, as other user should get proper random numbers */
-	if (cryptorand_init() != 0) {
-		fprintf(stderr, "ERROR: could not initalize secure random number generator\n");
+	if(cryptorand_init() != 0) {
+		fprintf(stderr,
+				"ERROR: could not initalize secure random number generator\n");
 		goto error;
 	}
 	fastrand_seed(cryptorand());
@@ -3310,8 +3312,8 @@ int main(int argc, char **argv)
 	}
 
 	LM_DBG("test random number generators - kam_rand: %u, random: %lu, "
-		"fastrand %u, cryptorand %u\n",
-		kam_rand(), random(), fastrand(), cryptorand());
+		   "fastrand %u, cryptorand %u\n",
+			kam_rand(), random(), fastrand(), cryptorand());
 
 	if(mlock_pages)
 		mem_lock_pages();
@@ -3386,6 +3388,16 @@ int main(int argc, char **argv)
 		goto error;
 	}
 #endif
+
+	if(ksr_tcp_main_threads != 0) {
+		if(ksr_tcpx_proc_list_init() < 0) {
+			LM_ERR("failed to initialize multi-thread processing list\n");
+			goto error;
+		}
+		LM_INFO("tcp main processing threads initialized\n");
+	} else {
+		LM_INFO("tcp main processing threads not enabled\n");
+	}
 
 	/* fix routing lists */
 	if((r = fix_rls()) != 0) {
