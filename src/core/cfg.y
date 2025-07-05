@@ -434,6 +434,7 @@ extern char *default_routename;
 %token TCP_MSG_READ_TIMEOUT
 %token TCP_MSG_DATA_TIMEOUT
 %token TCP_ACCEPT_IPLIMIT
+%token TCP_MAIN_THREADS
 %token TCP_CHECK_TIMER
 %token USER
 %token GROUP
@@ -1070,6 +1071,8 @@ assign_stm:
 	| TCP_MSG_DATA_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| TCP_ACCEPT_IPLIMIT EQUAL NUMBER { ksr_tcp_accept_iplimit=$3; }
 	| TCP_ACCEPT_IPLIMIT EQUAL error { yyerror("number expected"); }
+	| TCP_MAIN_THREADS EQUAL NUMBER { ksr_tcp_main_threads=$3; }
+	| TCP_MAIN_THREADS EQUAL error { yyerror("number expected"); }
 	| TCP_CHECK_TIMER EQUAL NUMBER { ksr_tcp_check_timer=$3; }
 	| TCP_CHECK_TIMER EQUAL error { yyerror("number expected"); }
 	| CHILDREN EQUAL NUMBER { children_no=$3; }
