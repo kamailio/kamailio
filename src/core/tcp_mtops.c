@@ -162,6 +162,10 @@ int ksr_tcpx_proc_list_init(void)
 {
 	int i;
 
+	if(_ksr_tcpx_proc_list != NULL) {
+		return 0;
+	}
+
 	_ksr_tcpx_proc_list_size = get_max_procs();
 
 	if(_ksr_tcpx_proc_list_size <= 0) {
@@ -196,7 +200,7 @@ int ksr_tcpx_proc_list_init(void)
 
 error:
 	shm_free(_ksr_tcpx_proc_list);
-	_ksr_tcpx_proc_list = 0;
+	_ksr_tcpx_proc_list = NULL;
 	_ksr_tcpx_proc_list_size = 0;
 	return -1;
 }
@@ -230,7 +234,7 @@ error:
  */
 unsigned char *ksr_tcpx_thread_wrbuf(int pidx)
 {
-	if(_ksr_tcpx_proc_list != NULL)
+	if(_ksr_tcpx_proc_list == NULL)
 		return NULL;
 	if(pidx >= _ksr_tcpx_proc_list_size)
 		return NULL;
