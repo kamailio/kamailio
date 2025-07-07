@@ -35,6 +35,7 @@
 #include "../../core/pt.h"
 #include "../../core/timer.h"
 #include "../../core/globals.h"
+#include "../../core/tcp_conn.h"
 #include "../../core/tcp_int_send.h"
 #include "../../core/tcp_read.h"
 #include "../../core/tcp_mtops.h"
@@ -1315,8 +1316,8 @@ redo_read:
 		if(likely(!(*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)))) {
 			/* don't read more than the free bytes in the tcp req buffer */
 			read_size = MIN_unsigned(rd.size, bytes_free);
-			bytes_read =
-					tcp_read_data(c->fd, c, (char *)rd.buf, read_size, flags);
+			bytes_read = tcp_read_data(
+					_tconfd(c), c, (char *)rd.buf, read_size, flags);
 			TLS_RD_TRACE("(%p, %p) tcp_read_data(..., %d, *%d) => %d bytes\n",
 					c, flags, read_size, *flags, bytes_read);
 			/* try SSL_read even on 0 bytes read, it might have
@@ -1475,8 +1476,8 @@ continue_ssl_read:
 		TLS_RD_TRACE(
 				"(%p, %p) tcpconn_send_unsafe %d bytes\n", c, flags, wr.used);
 		/* something was written and it's not ssl EOF*/
-		if(unlikely(tcpconn_send_unsafe(
-							c->fd, c, (char *)wr.buf, wr.used, c->send_flags)
+		if(unlikely(tcpconn_send_unsafe(_tconfd(c), c, (char *)wr.buf, wr.used,
+							c->send_flags)
 					< 0)) {
 			tls_set_mbufs(c, 0, 0);
 			lock_release(&c->write_lock);
@@ -1496,7 +1497,7 @@ continue_ssl_read:
 			break;
 		case SSL_ERROR_ZERO_RETURN:
 			/* SSL EOF */
-			TLS_RD_TRACE("(%p, %p) SSL EOF (fd=%d)\n", c, flags, c->fd);
+			TLS_RD_TRACE("(%p, %p) SSL EOF (fd=%d)\n", c, flags, _tconfd(c));
 			goto ssl_eof;
 		case SSL_ERROR_WANT_READ:
 			TLS_RD_TRACE("(%p, %p) SSL_ERROR_WANT_READ *flags=%d\n", c, flags,
