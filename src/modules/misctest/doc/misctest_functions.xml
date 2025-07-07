@@ -47,4 +47,26 @@ mem_free();
 		</example>
 	</section>
 
+	<section id="misctest.mt_tcp_thread_exec">
+		<title><function>mt_tcp_thread_exec(text)</function></title>
+		<para>
+			Print the text via the tcp main process threads.
+		</para>
+		<note>
+			<para>
+				This is a debugging function for simulating execution on
+				tcp main process threads. It should not
+				be used in production setups
+			</para>
+		</note>
+		<example>
+			<title><function>mt_tcp_thread_exec</function> usage</title>
+			<programlisting>
+...
+mt_tcp_thread_exec("request $rm uri $ru");
+...
+			</programlisting>
+		</example>
+	</section>
+
 </section>

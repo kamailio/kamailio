@@ -7,6 +7,6 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=misctest.so
-LIBS=
+LIBS= -lpthread
 
 include ../../Makefile.modules
