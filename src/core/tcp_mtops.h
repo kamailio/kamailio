@@ -23,6 +23,9 @@
 #ifndef _TCP_MTOPS_
 #define _TCP_MTOPS_
 
+#define TLS_RD_MBUF_SZ 65536
+#define TLS_WR_MBUF_SZ 65536
+
 typedef void (*tcpx_cbe_f)(void *p, int pidx);
 
 typedef struct tcpx_task
@@ -42,5 +45,7 @@ int ksr_tcpx_proc_list_prepare(void);
 int ksr_tcpx_task_send(tcpx_task_t *task, int pidx);
 int ksr_tcpx_task_result_recv(tcpx_task_result_t **rtask, int pidx);
 int ksr_tcpx_thread_eresult(tcpx_task_result_t *rtask, int pidx);
+
+unsigned char *ksr_tcpx_thread_wrbuf(int pidx);
 
 #endif

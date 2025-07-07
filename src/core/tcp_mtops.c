@@ -53,6 +53,7 @@ typedef struct ksr_tcpx_proc
 	int sndsock[2];	  /* send to thread */
 	int rcvsock[2];	  /* receive from thread */
 	pthread_t ethread;
+	unsigned char wrbuf[TLS_WR_MBUF_SZ]; /* per process write buffer */
 } ksr_tcpx_proc_t;
 
 /**
@@ -222,6 +223,19 @@ error:
 	_ksr_tcpx_proc_list = 0;
 	_ksr_tcpx_proc_list_size = 0;
 	return -1;
+}
+
+/**
+ *
+ */
+unsigned char *ksr_tcpx_thread_wrbuf(int pidx)
+{
+	if(_ksr_tcpx_proc_list != NULL)
+		return NULL;
+	if(pidx >= _ksr_tcpx_proc_list_size)
+		return NULL;
+
+	return _ksr_tcpx_proc_list[pidx].wrbuf;
 }
 
 /**
