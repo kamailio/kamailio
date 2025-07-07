@@ -1097,6 +1097,9 @@ ssl_eof:
 	return *plen;
 }
 
+/**
+ *
+ */
 typedef struct tls_encode_params
 {
 	struct tcp_connection *c;
@@ -1244,7 +1247,7 @@ int tls_h_encode_f(struct tcp_connection *c, const char **pbuf,
  *         tcp connection flags and might set c->state and r->error on
  *         EOF or error).
  */
-int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
+int tls_h_read_mp_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 {
 	struct tcp_req *r;
 	int bytes_free, bytes_read, read_size, ssl_error, ssl_read;
@@ -1705,6 +1708,104 @@ bug:
 	return -1;
 }
 
+/**
+ *
+ */
+typedef struct tls_read_params
+{
+	struct tcp_connection *c;
+	rd_conn_flags_t flags;
+} tls_read_params_t;
+
+/**
+ *
+ */
+static void tls_h_read_mt_thread_cb(void *p, int pidx)
+{
+	tls_read_params_t *eparams = NULL;
+	tcpx_task_result_t *rtask = NULL;
+
+	eparams = (tls_read_params_t *)p;
+
+	rtask = (tcpx_task_result_t *)shm_mallocxz(sizeof(tcpx_task_result_t));
+	if(rtask == NULL) {
+		SHM_MEM_ERROR;
+		ksr_tcpx_thread_eresult(rtask, pidx);
+		return;
+	}
+	rtask->code = tls_h_read_mp_f(eparams->c, &eparams->flags);
+	rtask->data = eparams;
+	ksr_tcpx_thread_eresult(rtask, pidx);
+
+	return;
+}
+
+/**
+ * execute on tcp main process multi-thread mode
+ * - for parameters see tls_h_read_mp_f(...)
+ */
+int tls_h_read_mt_f(struct tcp_connection *c, rd_conn_flags_t *flags)
+{
+	int dsize = 0;
+	tcpx_task_t *ptask = NULL;
+	tcpx_task_result_t *rtask = NULL;
+	tls_read_params_t *eparams = NULL;
+	int ret = 0;
+
+	LM_INFO("preparing for tcp main process threads\n");
+
+	dsize = sizeof(tcpx_task_t) + sizeof(tls_read_params_t);
+
+	ptask = (tcpx_task_t *)shm_mallocxz(dsize);
+	if(ptask == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	ptask->exec = tls_h_read_mt_thread_cb;
+	ptask->param = (void *)((char *)ptask + sizeof(tcpx_task_t));
+	eparams = (tls_read_params_t *)((char *)ptask + sizeof(tcpx_task_t));
+
+	eparams->c = c;
+	if(flags != NULL) {
+		memcpy(&eparams->flags, flags, sizeof(rd_conn_flags_t));
+	}
+
+	if(ksr_tcpx_task_send(ptask, process_no) < 0) {
+		LM_ERR("failed to send the task\n");
+		shm_free(ptask);
+		return -1;
+	}
+
+	ksr_tcpx_task_result_recv(&rtask, process_no);
+
+	if(rtask == NULL) {
+		LM_ERR("failed to get the result\n");
+		shm_free(ptask);
+		return -1;
+	}
+	ret = rtask->code;
+
+	if(flags != NULL) {
+		memcpy(flags, &eparams->flags, sizeof(rd_conn_flags_t));
+	}
+
+	shm_free(ptask);
+	shm_free(rtask);
+	return ret;
+}
+
+/**
+ * tls read core callback
+ * - for parameters see tls_h_read_mp_f(...)
+ */
+int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
+{
+	if(ksr_tcp_main_threads == 0) {
+		return tls_h_read_mp_f(c, flags);
+	} else {
+		return tls_h_read_mt_f(c, flags);
+	}
+}
 
 static int _tls_evrt_connection_out = -1; /* default disabled */
 str sr_tls_event_callback = STR_NULL;
