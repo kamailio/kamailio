@@ -23,8 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <pthread.h>
+
 #include "../../core/sr_module.h"
 #include "../../core/mem/mem.h"
+#include "../../core/mem/shm.h"
 #include "../../core/str.h"
 #include "../../core/dprint.h"
 #include "../../core/locking.h"
@@ -34,6 +37,7 @@
 #include "../../core/rand/fastrand.h"
 #include "../../core/timer.h"
 #include "../../core/mod_fix.h"
+#include "../../core/tcp_mtops.h"
 
 #include "../../core/parser/sdp/sdp.h"
 #include "../../core/parser/parse_uri.c"
@@ -53,6 +57,7 @@ MODULE_VERSION
 
 static int mt_mem_alloc_f(struct sip_msg *, char *, char *);
 static int mt_mem_free_f(struct sip_msg *, char *, char *);
+static int mt_tcp_thread_exec_f(sip_msg_t *, char *, char *);
 static int mod_init(void);
 static void mod_destroy(void);
 
@@ -69,6 +74,7 @@ static str misctest_message_file = STR_NULL;
 static cmd_export_t cmds[]={
 	{"mt_mem_alloc", mt_mem_alloc_f, 1, fixup_var_int_1, 0, ANY_ROUTE},
 	{"mt_mem_free", mt_mem_free_f, 1, fixup_var_int_1, 0, ANY_ROUTE},
+	{"mt_tcp_thread_exec", mt_tcp_thread_exec_f, 1, fixup_spve_null, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 /* clang-format on */
@@ -137,6 +143,69 @@ struct module_exports exports = {
 };
 /* clang-format on */
 
+
+static void mt_tcp_thread_exec_cb(void *p, int pidx)
+{
+	str *ps = NULL;
+	tcpx_task_result_t *rtask = NULL;
+
+	ps = (str *)p;
+
+	LM_INFO("process no: %d - pidx: %d - tid: %lu - data: %.*s\n", process_no,
+			pidx, (unsigned long)pthread_self(), ps->len, ps->s);
+	rtask = (tcpx_task_result_t *)shm_mallocxz(sizeof(tcpx_task_result_t));
+	if(rtask == NULL) {
+		SHM_MEM_ERROR;
+		ksr_tcpx_thread_eresult(rtask, pidx);
+		return;
+	}
+	rtask->code = 1;
+	ksr_tcpx_thread_eresult(rtask, pidx);
+	return;
+}
+
+static int mt_tcp_thread_exec_f(sip_msg_t *msg, char *ptext, char *p2)
+{
+	str text = STR_NULL;
+	int dsize = 0;
+	tcpx_task_t *ptask = NULL;
+	tcpx_task_result_t *rtask = NULL;
+	str *ps = NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)ptext, &text) < 0) {
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+
+	dsize = sizeof(tcpx_task_t) + sizeof(str) + text.len + 1;
+	ptask = (tcpx_task_t *)shm_mallocxz(dsize);
+	if(ptask == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	ptask->exec = mt_tcp_thread_exec_cb;
+	ps = (str *)((char *)ptask + sizeof(tcpx_task_t));
+	ps->s = (char *)ps + sizeof(str);
+	memcpy(ps->s, text.s, text.len);
+	ps->len = text.len;
+	ptask->param = ps;
+
+	LM_INFO("process no: %d - data: %.*s\n", process_no, text.len, text.s);
+
+	ksr_tcpx_task_send(ptask, process_no);
+
+	ksr_tcpx_task_result_recv(&rtask, process_no);
+
+	if(rtask == NULL) {
+		LM_ERR("failed to get the result\n");
+		return -1;
+	}
+
+	LM_INFO("received result code: %d\n", rtask->code);
+	shm_free(rtask);
+
+	return 1;
+}
 
 #define MC_F_CHECK_CONTENTS 1
 
