@@ -69,10 +69,6 @@ int tls_run_event_routes(struct tcp_connection *c);
 			&& (shm_available_safe()           \
 					< cfg_get(tls, tls_cfg, low_mem_threshold2)))
 
-#define TLS_RD_MBUF_SZ 65536
-#define TLS_WR_MBUF_SZ 65536
-
-
 /* debugging */
 #ifdef NO_TLS_RD_DEBUG
 #undef TLS_RD_DEBUG
@@ -837,40 +833,18 @@ typedef int (*tcp_low_level_send_t)(int fd, struct tcp_connection *c, char *buf,
 		unsigned len, snd_flags_t send_flags, long *resp, int locked);
 
 
-/** tls encrypt before sending function.
- * It is a callback that will be called by the tcp code, before a send
- * on TLS would be attempted. It should replace the input buffer with a
- * new static buffer containing the TLS processed data.
- * If the input buffer could not be fully encoded (e.g. run out of space
- * in the internal static buffer), it should set rest_buf and rest_len to
- * the remaining part, so that it could be called again once the output has
- * been used (sent). The send_flags used are also passed and they can be
- * changed (e.g. to disallow a close() after a partial encode).
- * WARNING: it must always be called with c->write_lock held!
- * @param c - tcp connection
- * @param pbuf - pointer to buffer (value/result, on success it will be
- *               replaced with a static buffer).
- * @param plen - pointer to buffer size (value/result, on success it will be
- *               replaced with the size of the replacement buffer.
- * @param rest_buf - (result) should be filled with a pointer to the
- *                remaining unencoded part of the original buffer if any,
- *                0 otherwise.
- * @param rest_len - (result) should be filled with the length of the
- *                 remaining unencoded part of the original buffer (0 if
- *                 the original buffer was fully encoded).
- * @param send_flags - pointer to the send_flags that will be used for sending
- *                     the message.
- * @return *plen on success (>=0), < 0 on error.
+/**
+ * tls encrypt helper before sending function.
+ * - parameters same as tls_h_encode_mp_f() with extr wr_buf which is a static
+ *   or global buffer to write to (its size TLS_WR_MBUF_SZ)
  */
-unsigned char *_ksr_tls_wr_buf = NULL;
-int tls_h_encode_mp_f(struct tcp_connection *c, const char **pbuf,
+int tls_h_encode_helper_f(struct tcp_connection *c, const char **pbuf,
 		unsigned int *plen, const char **rest_buf, unsigned int *rest_len,
-		snd_flags_t *send_flags)
+		snd_flags_t *send_flags, unsigned char *wr_buf)
 {
 	int n, offs;
 	SSL *ssl = NULL;
 	struct tls_extra_data *tls_c;
-	unsigned char *wr_buf = NULL;
 	struct tls_mbuf rd, wr;
 	int ssl_error;
 	char *err_src;
@@ -879,15 +853,6 @@ int tls_h_encode_mp_f(struct tcp_connection *c, const char **pbuf,
 	unsigned int len;
 	int x;
 
-	if(_ksr_tls_wr_buf == NULL) {
-		_ksr_tls_wr_buf = (unsigned char *)shm_malloc(
-				TLS_WR_MBUF_SZ * sizeof(unsigned char));
-		if(_ksr_tls_wr_buf == NULL) {
-			SHM_MEM_ERROR;
-			return -1;
-		}
-	}
-	wr_buf = _ksr_tls_wr_buf;
 	buf = *pbuf;
 	len = *plen;
 	*rest_buf = 0;
@@ -1097,6 +1062,42 @@ ssl_eof:
 	return *plen;
 }
 
+/** tls encrypt before sending function.
+ * It is a callback that will be called by the tcp code, before a send
+ * on TLS would be attempted. It should replace the input buffer with a
+ * new static buffer containing the TLS processed data.
+ * If the input buffer could not be fully encoded (e.g. run out of space
+ * in the internal static buffer), it should set rest_buf and rest_len to
+ * the remaining part, so that it could be called again once the output has
+ * been used (sent). The send_flags used are also passed and they can be
+ * changed (e.g. to disallow a close() after a partial encode).
+ * WARNING: it must always be called with c->write_lock held!
+ * @param c - tcp connection
+ * @param pbuf - pointer to buffer (value/result, on success it will be
+ *               replaced with a static buffer).
+ * @param plen - pointer to buffer size (value/result, on success it will be
+ *               replaced with the size of the replacement buffer.
+ * @param rest_buf - (result) should be filled with a pointer to the
+ *                remaining unencoded part of the original buffer if any,
+ *                0 otherwise.
+ * @param rest_len - (result) should be filled with the length of the
+ *                 remaining unencoded part of the original buffer (0 if
+ *                 the original buffer was fully encoded).
+ * @param send_flags - pointer to the send_flags that will be used for sending
+ *                     the message.
+ * @return *plen on success (>=0), < 0 on error.
+ */
+unsigned char *_ksr_tls_wr_buf = NULL;
+int tls_h_encode_mp_f(struct tcp_connection *c, const char **pbuf,
+		unsigned int *plen, const char **rest_buf, unsigned int *rest_len,
+		snd_flags_t *send_flags)
+{
+	static unsigned char wr_buf[TLS_WR_MBUF_SZ];
+
+	return tls_h_encode_helper_f(
+			c, pbuf, plen, rest_buf, rest_len, send_flags, wr_buf);
+}
+
 /**
  *
  */
@@ -1108,6 +1109,7 @@ typedef struct tls_encode_params
 	char *rest_buf;
 	unsigned int rest_len;
 	snd_flags_t send_flags;
+	int pidx;
 } tls_encode_params_t;
 
 /**
@@ -1117,6 +1119,7 @@ static void tls_h_encode_mt_thread_cb(void *p, int pidx)
 {
 	tls_encode_params_t *eparams = NULL;
 	tcpx_task_result_t *rtask = NULL;
+	unsigned char *wr_buf = NULL;
 
 	eparams = (tls_encode_params_t *)p;
 
@@ -1126,9 +1129,11 @@ static void tls_h_encode_mt_thread_cb(void *p, int pidx)
 		ksr_tcpx_thread_eresult(rtask, pidx);
 		return;
 	}
-	rtask->code = tls_h_encode_mp_f(eparams->c, (const char **)&eparams->pbuf,
-			&eparams->plen, (const char **)&eparams->rest_buf,
-			&eparams->rest_len, &eparams->send_flags);
+	wr_buf = ksr_tcpx_thread_wrbuf(eparams->pidx);
+	rtask->code =
+			tls_h_encode_helper_f(eparams->c, (const char **)&eparams->pbuf,
+					&eparams->plen, (const char **)&eparams->rest_buf,
+					&eparams->rest_len, &eparams->send_flags, wr_buf);
 	rtask->data = eparams;
 	ksr_tcpx_thread_eresult(rtask, pidx);
 
@@ -1136,7 +1141,7 @@ static void tls_h_encode_mt_thread_cb(void *p, int pidx)
 }
 
 /**
- * execute on tcp main process multi-thread mode
+ * to execute task on tcp main process multi-thread mode
  * - for parameters see tls_h_encode_mp_f(...)
  */
 int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
@@ -1150,7 +1155,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 	char *ps = NULL;
 	int ret = 0;
 
-	LM_INFO("preparing for tcp main process threads\n");
+	LM_DBG("preparing task for tcp main process threads\n");
 
 	dsize = sizeof(tcpx_task_t) + sizeof(tls_encode_params_t)
 			+ (*plen) * sizeof(char) + 1;
@@ -1174,6 +1179,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 	if(send_flags != NULL) {
 		memcpy(&eparams->send_flags, send_flags, sizeof(snd_flags_t));
 	}
+	eparams->pidx = process_no;
 
 	if(ksr_tcpx_task_send(ptask, process_no) < 0) {
 		LM_ERR("failed to send the task\n");
@@ -1715,6 +1721,7 @@ typedef struct tls_read_params
 {
 	struct tcp_connection *c;
 	rd_conn_flags_t flags;
+	int pidx;
 } tls_read_params_t;
 
 /**
@@ -1741,7 +1748,7 @@ static void tls_h_read_mt_thread_cb(void *p, int pidx)
 }
 
 /**
- * execute on tcp main process multi-thread mode
+ * to execute on tcp main process multi-thread mode
  * - for parameters see tls_h_read_mp_f(...)
  */
 int tls_h_read_mt_f(struct tcp_connection *c, rd_conn_flags_t *flags)
@@ -1752,7 +1759,7 @@ int tls_h_read_mt_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 	tls_read_params_t *eparams = NULL;
 	int ret = 0;
 
-	LM_INFO("preparing for tcp main process threads\n");
+	LM_DBG("preparing task for tcp main process threads\n");
 
 	dsize = sizeof(tcpx_task_t) + sizeof(tls_read_params_t);
 
@@ -1769,6 +1776,7 @@ int tls_h_read_mt_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 	if(flags != NULL) {
 		memcpy(&eparams->flags, flags, sizeof(rd_conn_flags_t));
 	}
+	eparams->pidx = process_no;
 
 	if(ksr_tcpx_task_send(ptask, process_no) < 0) {
 		LM_ERR("failed to send the task\n");
