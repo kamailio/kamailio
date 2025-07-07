@@ -438,4 +438,6 @@ typedef struct ws_event_info
 
 tcp_connection_t *ksr_tcpcon_evcb_get(void);
 
+int is_tcp_main(void);
+
 #endif

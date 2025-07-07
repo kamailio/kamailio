@@ -163,8 +163,7 @@ struct fd_cache_entry
 static struct fd_cache_entry fd_cache[TCP_FD_CACHE_SIZE];
 #endif /* TCP_FD_CACHE */
 
-static int is_tcp_main = 0;
-
+static int _is_tcp_main = 0;
 
 enum poll_types tcp_poll_method = 0; /* by default choose the best method */
 int tcp_main_max_fd_no = 0;
@@ -215,6 +214,14 @@ static ticks_t tcpconn_main_timeout(ticks_t, struct timer_ln *, void *);
 inline static int _tcpconn_add_alias_unsafe(struct tcp_connection *c, int port,
 		struct ip_addr *l_ip, int l_port, int flags);
 
+
+/**
+ *
+ */
+int is_tcp_main(void)
+{
+	return _is_tcp_main;
+}
 
 /* sets source address used when opening new sockets and no source is specified
  *  (by default the address is choosen by the kernel)
@@ -4930,7 +4937,7 @@ static inline void tcpconn_destroy_all(void)
 		c = tcpconn_id_hash[h];
 		while(c) {
 			next = c->id_next;
-			if(is_tcp_main) {
+			if(_is_tcp_main) {
 				/* we cannot close or remove the fd if we are not in the
 					 * tcp main proc.*/
 				if((c->flags & F_CONN_MAIN_TIMER)) {
@@ -4975,7 +4982,7 @@ void tcp_main_loop()
 	struct socket_info *si;
 	int r;
 
-	is_tcp_main = 1; /* mark this process as tcp main */
+	_is_tcp_main = 1; /* mark this process as tcp main */
 
 	tcp_main_max_fd_no = get_max_open_fds();
 	/* init send fd queues (here because we want mem. alloc only in the tcp
