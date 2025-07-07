@@ -95,7 +95,6 @@ static void *ksr_tcpx_thread_etask(void *param)
 		} else {
 			LM_DBG("task with no callback function - ignoring\n");
 		}
-		shm_free(ptask);
 	}
 
 	return NULL;
