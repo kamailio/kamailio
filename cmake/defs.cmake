@@ -3,6 +3,8 @@
 # properties of the common library The flags are then used by the other
 # libraries and executables
 
+include(CMakeDependentOption) # cmake_dependent_option
+
 add_library(common INTERFACE)
 
 # This interface is populated by common and some extra module specific flags
@@ -50,7 +52,6 @@ option(KMSTATS "Kamailio statistics" ON)
 option(FMSTATS "Fast memory statistics" ON)
 option(WITHAS "With Application server support" ON)
 option(RAW_SOCKS "Raw sockets support" ON)
-option(MEMPKG "Package memory or sys " ON)
 
 option(NO_KQUEUE "No kqueue support" OFF)
 option(NO_SELECT "No select support" OFF)
@@ -70,13 +71,21 @@ option(USE_MCAST "Use Multicast" ON)
 option(DNS_IP_HACK "Use DNS IP hack" ON)
 option(SHM_MMAP "Use mmap for shared memory" ON)
 
-option(PKG_MALLOC "Use package memory" ON)
+# memory managers and related debug mode
+option(PKG_MALLOC "Use custom package memory manager (OFF will use system manager)" ON)
+# Requires MEMPKG to be ON
+option(MEMDBG "Use memory debugging system" ON)
+cmake_dependent_option(MEMDBGSYS "Debug system memory manager" OFF "NOT PKG_MALLOC" OFF)
+
 option(MEM_JOIN_FREE "Use mem_join_free" ON)
 option(F_MALLOC "Use f_malloc" ON)
 option(Q_MALLOC "Use q_malloc" ON)
+# The following symbol is defined also when DBG_SR_MEMORY is defined
+# in the respective q_malloc.h
+# Same goes for fmalloc and tlsf malloc
+# cmake_dependent_option(DBG_QM_MALLOC "Enable debugging info for q_malloc" OFF "Q_MALLOC" OFF)
 option(TLSF_MALLOC "Use tlsf_malloc" ON)
 option(MALLOC_STATS "Use malloc stats" ON)
-option(DBG_SR_MEMORY "Use memory debugging system" ON)
 
 option(USE_DNS_FAILOVER "Use DNS failover" ON)
 option(USE_DST_BLOCKLIST "Use destination blacklist" ON)
@@ -220,6 +229,11 @@ endif()
 if(Q_MALLOC)
   target_compile_definitions(common INTERFACE Q_MALLOC)
 endif()
+# See note above on defintion of option
+# Same goes for fmalloc and tlsf malloc
+# if(DBG_QM_MALLOC)
+#   target_compile_definitions(common INTERFACE DBG_QM_MALLOC)
+# endif()
 
 if(TLSF_MALLOC)
   target_compile_definitions(common INTERFACE TLSF_MALLOC)
@@ -229,8 +243,11 @@ if(MALLOC_STATS)
   target_compile_definitions(common INTERFACE MALLOC_STATS)
 endif()
 
-if(DBG_SR_MEMORY)
+if(MEMDBG)
   target_compile_definitions(common INTERFACE DBG_SR_MEMORY)
+  if(MEMDBGSYS)
+    target_compile_definitions(common INTERFACE DBG_SYS_MEMORY)
+  endif()
 endif()
 
 if(USE_DNS_FAILOVER)
@@ -314,6 +331,20 @@ if(NOT DEFINED RUN_DIR)
   set(RUN_DIR "run/${MAIN_NAME}")
 endif()
 string(TOLOWER ${OS} OS_LOWER)
+
+# This is a convenience mechanism to provide undeclared options.
+# If you find an undecleared option in the code, please declare it
+# as an option os cache variable and try to use that instead of this.
+set(EXTRA_DEFS
+    ""
+    CACHE STRING "Extra preprocessor definitions (semicolon-separated string, e.g. FOO;BAR=1)"
+)
+if(EXTRA_DEFS)
+  foreach(def ${EXTRA_DEFS})
+    target_compile_definitions(common INTERFACE ${def})
+  endforeach()
+endif()
+
 target_compile_definitions(
   common
   INTERFACE NAME="${MAIN_NAME}"
