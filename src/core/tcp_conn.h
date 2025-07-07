@@ -440,4 +440,6 @@ tcp_connection_t *ksr_tcpcon_evcb_get(void);
 
 int is_tcp_main(void);
 
+#define _tconfd(c) (is_tcp_main() ? (c)->s : (c)->fd)
+
 #endif
