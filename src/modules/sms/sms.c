@@ -607,6 +607,7 @@ int sms_child_init(int rank)
 			goto error;
 		}
 		if(!foo) {
+			_ksr_is_main = 0;
 			/* initialize the config framework */
 			if(cfg_child_init())
 				goto error;
