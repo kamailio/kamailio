@@ -881,6 +881,39 @@ set_body("test", "text/plain");
 		</example>
 	</section>
 
+	<section id="textops.f.set_body_hex">
+		<title>
+		<function moreinfo="none">set_body_hex(htxt, content_type)</function>
+		</title>
+		<para>
+		Set body to a SIP message with the hexa-decoded value of htxt.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>htxt</emphasis> - hexa-encoded value for the body,
+			can include pseudo-variables. White spaces and tabs are ignored.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>content_type</emphasis> - value of Content-Type header,
+				can include pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_body_hex</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_body_hex("b0 8e 4a f2", "binary/data");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.set_reply_body">
 		<title>
 		<function moreinfo="none">set_reply_body(txt, content_type)</function>
