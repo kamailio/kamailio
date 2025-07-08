@@ -685,8 +685,8 @@ void tls_h_tcpconn_clean_f(struct tcp_connection *c)
 	/*
 	* runs within global tcp lock
 	*/
-	if(!is_tcp_main()) {
-		LM_WARN("not in tcp main process\n");
+	if(!is_tcp_main() && !_ksr_is_main) {
+		LM_WARN("not in superviser or tcp main process\n");
 	}
 	if((c->type != PROTO_TLS) && (c->type != PROTO_WSS)) {
 		BUG("Bad connection structure\n");
@@ -723,8 +723,8 @@ void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd)
 	 * tcpconn_put_destroy()+tcpconn_close_main_fd() the connection might
 	 * still be in a writer, so in this case locking is needed.
 	 */
-	if(!is_tcp_main()) {
-		LM_WARN("not in tcp main process\n");
+	if(!is_tcp_main() && !_ksr_is_main) {
+		LM_WARN("not in superviser or tcp main process\n");
 	}
 	DBG("Closing SSL connection %p\n", c->extra_data);
 	if(unlikely(cfg_get(tls, tls_cfg, send_close_notify) && c->extra_data)) {
