@@ -2506,7 +2506,6 @@ static int ki_set_body(sip_msg_t *msg, str *nb, str *nc)
 		return -1;
 	}
 
-	body.len = 0;
 	body.s = get_body(msg);
 	if(body.s == 0) {
 		LM_ERR("malformed sip message\n");
@@ -2516,17 +2515,12 @@ static int ki_set_body(sip_msg_t *msg, str *nb, str *nc)
 	del_nonshm_lump(&(msg->body_lumps));
 	msg->body_lumps = NULL;
 
-	if(msg->content_length) {
-		body.len = get_content_length(msg);
-		if(body.len > 0) {
-			if(body.s + body.len > msg->buf + msg->len) {
-				LM_ERR("invalid content length: %d\n", body.len);
-				return -1;
-			}
-			if(del_lump(msg, body.s - msg->buf, body.len, 0) == 0) {
-				LM_ERR("cannot delete existing body");
-				return -1;
-			}
+	/* remove existing body */
+	body.len = msg->buf + msg->len - body.s;
+	if(body.len > 0) {
+		if(del_lump(msg, body.s - msg->buf, body.len, 0) == 0) {
+			LM_ERR("cannot remove body\n");
+			return -1;
 		}
 	}
 
