@@ -115,6 +115,7 @@ static int append_urihf(struct sip_msg *msg, char *str1, char *str2);
 static int append_time_f(struct sip_msg *msg, char *, char *);
 static int append_time_request_f(struct sip_msg *msg, char *, char *);
 static int set_body_f(struct sip_msg *msg, char *, char *);
+static int set_body_hex_f(struct sip_msg *msg, char *, char *);
 static int set_rpl_body_f(struct sip_msg *msg, char *, char *);
 static int set_multibody_0(struct sip_msg *msg, char *, char *, char *);
 static int set_multibody_1(struct sip_msg *msg, char *, char *, char *);
@@ -265,6 +266,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 	{"set_body", (cmd_function)set_body_f, 2, fixup_spve_spve, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
+	{"set_body_hex", (cmd_function)set_body_hex_f, 2, fixup_spve_spve, 0,
+			ANY_ROUTE},
 	{"set_reply_body", (cmd_function)set_rpl_body_f, 2, fixup_spve_spve, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 	{"is_method", (cmd_function)is_method_f, 1, fixup_method, 0, ANY_ROUTE},
@@ -2633,6 +2636,101 @@ static int set_body_f(struct sip_msg *msg, char *p1, char *p2)
 	}
 
 	return ki_set_body(msg, &nb, &nc);
+}
+
+int ki_set_body_hex_f(sip_msg_t *msg, str *htxt, str *ct)
+{
+	str sraw;
+	int i;
+	int ret;
+	char v;
+
+	if(htxt == NULL || htxt->s == NULL || htxt->len == 0) {
+		LM_ERR("invalid body parameter\n");
+		return -1;
+	}
+
+	sraw.len = htxt->len / 2 + 2;
+	sraw.s = pkg_malloc(sraw.len * sizeof(char));
+	if(sraw.s == NULL) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+	memset(sraw.s, 0, sraw.len * sizeof(char));
+
+	sraw.len = 0;
+	for(i = 0; i < htxt->len; i++) {
+		if(htxt->s[i] == ' ' || htxt->s[i] == '\t') {
+			continue;
+		}
+		if(i + 1 == htxt->len) {
+			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len,
+					htxt->s, htxt->len, i);
+			pkg_free(sraw.s);
+			return -1;
+		}
+		v = 0;
+		if(htxt->s[i] >= '0' && htxt->s[i] <= '9') {
+			v = (htxt->s[i] - '0') << 4;
+		} else if(htxt->s[i] >= 'A' && htxt->s[i] <= 'F') {
+			v = (htxt->s[i] - 'A' + 10) << 4;
+		} else if(htxt->s[i] >= 'a' && htxt->s[i] <= 'f') {
+			v = (htxt->s[i] - 'a' + 10) << 4;
+		} else {
+			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len,
+					htxt->s, htxt->len, i);
+			pkg_free(sraw.s);
+			return -1;
+		}
+		i++;
+		if(htxt->s[i] >= '0' && htxt->s[i] <= '9') {
+			v += (htxt->s[i] - '0');
+		} else if(htxt->s[i] >= 'A' && htxt->s[i] <= 'F') {
+			v += (htxt->s[i] - 'A' + 10);
+		} else if(htxt->s[i] >= 'a' && htxt->s[i] <= 'f') {
+			v += (htxt->s[i] - 'a' + 10);
+		} else {
+			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len,
+					htxt->s, htxt->len, i);
+			pkg_free(sraw.s);
+			return -1;
+		}
+		sraw.s[sraw.len++] = v;
+	}
+	if(sraw.len == 0) {
+		/* only white spaces */
+		LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len, htxt->s,
+				htxt->len, i);
+		pkg_free(sraw.s);
+		return -1;
+	}
+	ret = ki_set_body(msg, &sraw, ct);
+	pkg_free(sraw.s);
+
+	return ret;
+}
+
+static int set_body_hex_f(struct sip_msg *msg, char *p1, char *p2)
+{
+	str nb = {0, 0};
+	str nc = {0, 0};
+
+	if(p1 == 0 || p2 == 0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)p1, &nb) != 0) {
+		LM_ERR("unable to get p1\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)p2, &nc) != 0) {
+		LM_ERR("unable to get p2\n");
+		return -1;
+	}
+
+	return ki_set_body_hex_f(msg, &nb, &nc);
 }
 
 static int ki_set_rpl_body(sip_msg_t *msg, str *nb, str *nc)
