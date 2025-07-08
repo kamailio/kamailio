@@ -2634,68 +2634,14 @@ static int set_body_f(struct sip_msg *msg, char *p1, char *p2)
 
 int ki_set_body_hex(sip_msg_t *msg, str *htxt, str *ct)
 {
-	str sraw;
-	int i;
+	str sraw = STR_NULL;
 	int ret;
-	char v;
 
 	if(htxt == NULL || htxt->s == NULL || htxt->len == 0) {
 		LM_ERR("invalid body parameter\n");
 		return -1;
 	}
-
-	sraw.len = htxt->len / 2 + 2;
-	sraw.s = pkg_malloc(sraw.len * sizeof(char));
-	if(sraw.s == NULL) {
-		LM_ERR("no more pkg memory\n");
-		return -1;
-	}
-	memset(sraw.s, 0, sraw.len * sizeof(char));
-
-	sraw.len = 0;
-	for(i = 0; i < htxt->len; i++) {
-		if(htxt->s[i] == ' ' || htxt->s[i] == '\t') {
-			continue;
-		}
-		if(i + 1 == htxt->len) {
-			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len,
-					htxt->s, htxt->len, i);
-			pkg_free(sraw.s);
-			return -1;
-		}
-		v = 0;
-		if(htxt->s[i] >= '0' && htxt->s[i] <= '9') {
-			v = (htxt->s[i] - '0') << 4;
-		} else if(htxt->s[i] >= 'A' && htxt->s[i] <= 'F') {
-			v = (htxt->s[i] - 'A' + 10) << 4;
-		} else if(htxt->s[i] >= 'a' && htxt->s[i] <= 'f') {
-			v = (htxt->s[i] - 'a' + 10) << 4;
-		} else {
-			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len,
-					htxt->s, htxt->len, i);
-			pkg_free(sraw.s);
-			return -1;
-		}
-		i++;
-		if(htxt->s[i] >= '0' && htxt->s[i] <= '9') {
-			v += (htxt->s[i] - '0');
-		} else if(htxt->s[i] >= 'A' && htxt->s[i] <= 'F') {
-			v += (htxt->s[i] - 'A' + 10);
-		} else if(htxt->s[i] >= 'a' && htxt->s[i] <= 'f') {
-			v += (htxt->s[i] - 'a' + 10);
-		} else {
-			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len,
-					htxt->s, htxt->len, i);
-			pkg_free(sraw.s);
-			return -1;
-		}
-		sraw.s[sraw.len++] = v;
-	}
-	if(sraw.len == 0) {
-		/* only white spaces */
-		LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len, htxt->s,
-				htxt->len, i);
-		pkg_free(sraw.s);
+	if(ksr_hex_decode_ws(htxt, &sraw) < 0) {
 		return -1;
 	}
 	ret = ki_set_body(msg, &sraw, ct);
@@ -3255,72 +3201,19 @@ int ki_append_multibody(sip_msg_t *msg, str *txt, str *ct)
 
 int ki_append_multibody_hex_cd(sip_msg_t *msg, str *htxt, str *ct, str *cd)
 {
-	str sraw;
-	int i;
+	str sraw = STR_NULL;
 	int ret;
-	char v;
 
 	if(htxt == NULL || htxt->s == NULL || htxt->len == 0) {
 		LM_ERR("invalid body parameter\n");
 		return -1;
 	}
-
-	sraw.len = htxt->len / 2 + 2;
-	sraw.s = pkg_malloc(sraw.len * sizeof(char));
-	if(sraw.s == NULL) {
-		LM_ERR("no more pkg memory\n");
-		return -1;
-	}
-	memset(sraw.s, 0, sraw.len * sizeof(char));
-
-	sraw.len = 0;
-	for(i = 0; i < htxt->len; i++) {
-		if(htxt->s[i] == ' ' || htxt->s[i] == '\t') {
-			continue;
-		}
-		if(i + 1 == htxt->len) {
-			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len,
-					htxt->s, htxt->len, i);
-			pkg_free(sraw.s);
-			return -1;
-		}
-		v = 0;
-		if(htxt->s[i] >= '0' && htxt->s[i] <= '9') {
-			v = (htxt->s[i] - '0') << 4;
-		} else if(htxt->s[i] >= 'A' && htxt->s[i] <= 'F') {
-			v = (htxt->s[i] - 'A' + 10) << 4;
-		} else if(htxt->s[i] >= 'a' && htxt->s[i] <= 'f') {
-			v = (htxt->s[i] - 'a' + 10) << 4;
-		} else {
-			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len,
-					htxt->s, htxt->len, i);
-			pkg_free(sraw.s);
-			return -1;
-		}
-		i++;
-		if(htxt->s[i] >= '0' && htxt->s[i] <= '9') {
-			v += (htxt->s[i] - '0');
-		} else if(htxt->s[i] >= 'A' && htxt->s[i] <= 'F') {
-			v += (htxt->s[i] - 'A' + 10);
-		} else if(htxt->s[i] >= 'a' && htxt->s[i] <= 'f') {
-			v += (htxt->s[i] - 'a' + 10);
-		} else {
-			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len,
-					htxt->s, htxt->len, i);
-			pkg_free(sraw.s);
-			return -1;
-		}
-		sraw.s[sraw.len++] = v;
-	}
-	if(sraw.len == 0) {
-		/* only white spaces */
-		LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", htxt->len, htxt->s,
-				htxt->len, i);
-		pkg_free(sraw.s);
+	if(ksr_hex_decode_ws(htxt, &sraw) < 0) {
 		return -1;
 	}
 	ret = ki_append_multibody_cd(msg, &sraw, ct, cd);
 	pkg_free(sraw.s);
+
 	return ret;
 }
 
