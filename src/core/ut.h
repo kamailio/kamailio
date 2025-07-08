@@ -1294,4 +1294,6 @@ void *ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2);
  */
 void *ser_memrmem(const void *b1, const void *b2, size_t len1, size_t len2);
 
+int ksr_hex_decode_ws(str *shex, str *sraw);
+
 #endif

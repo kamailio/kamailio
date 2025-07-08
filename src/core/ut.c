@@ -498,3 +498,79 @@ void *ser_memrmem(const void *b1, const void *b2, size_t len1, size_t len2)
 
 	return NULL;
 }
+
+/**
+ * decode hexa value in shex, storing in sraw
+ * - on success sraw->s is pkg-allocated and has to be pkg-freed
+ * - return 0 on success, -1 on failure
+ */
+int ksr_hex_decode_ws(str *shex, str *sraw)
+{
+	int i;
+	char v;
+
+	if(shex == NULL || shex->s == NULL || shex->len == 0) {
+		LM_ERR("invalid body parameter\n");
+		return -1;
+	}
+
+	sraw->len = shex->len / 2 + 2;
+	sraw->s = pkg_malloc(sraw->len * sizeof(char));
+	if(sraw->s == NULL) {
+		LM_ERR("no more pkg memory\n");
+		sraw->len = 0;
+		return -1;
+	}
+	memset(sraw->s, 0, sraw->len * sizeof(char));
+
+	sraw->len = 0;
+	for(i = 0; i < shex->len; i++) {
+		if(shex->s[i] == ' ' || shex->s[i] == '\t') {
+			continue;
+		}
+		if(i + 1 == shex->len) {
+			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", shex->len,
+					shex->s, shex->len, i);
+			goto error;
+		}
+		v = 0;
+		if(shex->s[i] >= '0' && shex->s[i] <= '9') {
+			v = (shex->s[i] - '0') << 4;
+		} else if(shex->s[i] >= 'A' && shex->s[i] <= 'F') {
+			v = (shex->s[i] - 'A' + 10) << 4;
+		} else if(shex->s[i] >= 'a' && shex->s[i] <= 'f') {
+			v = (shex->s[i] - 'a' + 10) << 4;
+		} else {
+			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", shex->len,
+					shex->s, shex->len, i);
+			goto error;
+		}
+		i++;
+		if(shex->s[i] >= '0' && shex->s[i] <= '9') {
+			v += (shex->s[i] - '0');
+		} else if(shex->s[i] >= 'A' && shex->s[i] <= 'F') {
+			v += (shex->s[i] - 'A' + 10);
+		} else if(shex->s[i] >= 'a' && shex->s[i] <= 'f') {
+			v += (shex->s[i] - 'a' + 10);
+		} else {
+			LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", shex->len,
+					shex->s, shex->len, i);
+			goto error;
+		}
+		sraw->s[sraw->len++] = v;
+	}
+	if(sraw->len == 0) {
+		/* only white spaces */
+		LM_ERR("invalid input hex data [%.*s] (%d/%d)\n", shex->len, shex->s,
+				shex->len, i);
+		goto error;
+	}
+
+	return 0;
+
+error:
+	pkg_free(sraw->s);
+	sraw->s = NULL;
+	sraw->len = 0;
+	return -1;
+}
