@@ -2638,7 +2638,7 @@ static int set_body_f(struct sip_msg *msg, char *p1, char *p2)
 	return ki_set_body(msg, &nb, &nc);
 }
 
-int ki_set_body_hex_f(sip_msg_t *msg, str *htxt, str *ct)
+int ki_set_body_hex(sip_msg_t *msg, str *htxt, str *ct)
 {
 	str sraw;
 	int i;
@@ -2730,7 +2730,7 @@ static int set_body_hex_f(struct sip_msg *msg, char *p1, char *p2)
 		return -1;
 	}
 
-	return ki_set_body_hex_f(msg, &nb, &nc);
+	return ki_set_body_hex(msg, &nb, &nc);
 }
 
 static int ki_set_rpl_body(sip_msg_t *msg, str *nb, str *nc)
@@ -5576,6 +5576,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("set_body"),
 		SR_KEMIP_INT, ki_set_body,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("set_body_hex"),
+		SR_KEMIP_INT, ki_set_body_hex,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
