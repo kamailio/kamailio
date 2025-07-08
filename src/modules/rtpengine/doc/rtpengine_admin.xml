@@ -3252,9 +3252,9 @@ rtpengine_manage();
 </programlisting>
 		</example>
         </section>
-		<section id="rtpengine.f.rtpengine_subscribe_offer">
+		<section id="rtpengine.f.rtpengine_subscribe_request">
 			<title>
-				<function moreinfo="none">rtpengine_subscribe_offer(flags,sdp_avp,to_tag_avp,stream_xavp[,via-branch])</function>
+				<function moreinfo="none">rtpengine_subscribe_request(flags,sdp_avp,to_tag_avp,stream_xavp[,via-branch])</function>
 			</title>
 			<para>
 				Generates &sdp; body for forking the current &rtp; stream and stores it in the
@@ -3266,7 +3266,7 @@ rtpengine_manage();
 			</para>
 			<para>
 				The function will return true on success and false (-1) on various failures,
-				like using rtpengine_subscribe_offer() before an rtpengine session was established.
+				like using rtpengine_subscribe_request() before an rtpengine session was established.
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
@@ -3365,7 +3365,7 @@ rtpengine_manage();
 				This function can be used from ANY_ROUTE.
 			</para>
 			<example>
-				<title><function>rtpengine_subscribe_offer</function> usage</title>
+				<title><function>rtpengine_off</function> usage</title>
 				<programlisting format="linespecific">
 route {
 ...
@@ -3383,7 +3383,7 @@ onreply_route[1]
 ...
     if (has_body("application/sdp")) {
         rtpengine_answer();
-        rtpengine_subscribe_offer("all siprec", "$avp(siprec_offer)",
+        rtpengine_subscribe_request("all siprec", "$avp(siprec_offer)",
                                     "$avp(siprec_to_tag)", "siprec_streams");
         xinfo("SIPREC participant $xavp(siprec_streams[0]=>tag) with label $xavp(siprec_streams[0]=>label[0])\n");
         xinfo("SIPREC participant $xavp(siprec_streams[1]=>tag) with label $xavp(siprec_streams[0]=>label[0])\n");
@@ -3460,7 +3460,7 @@ onreply_route[1] {
 					<itemizedlist>
 						<listitem><para>
 							<emphasis>to-tag=...</emphasis> - value of the to tag returned by
-							<quote>rtpengine_subscribe_offer</quote>
+							<quote>rtpengine_subscribe_request</quote>
 						</para></listitem>
 						<listitem><para>
 							<emphasis>from-tag=...</emphasis> - value of the from tag of the original call.
@@ -3474,7 +3474,7 @@ onreply_route[1] {
 			<example>
 				<title><function>rtpengine_subscribe_answer</function> usage</title>
 				<para>
-					See rtpengine_subscribe_offer() function example above for example.
+					See rtpengine_subscribe_request() function example above for example.
 				</para>
 			</example>
 		</section>
@@ -3505,7 +3505,7 @@ onreply_route[1] {
 					<itemizedlist>
 						<listitem><para>
 							<emphasis>to-tag=...</emphasis> - value of the to tag returned by
-							<quote>rtpengine_subscribe_offer</quote>
+							<quote>rtpengine_subscribe_request</quote>
 						</para></listitem>
 						<listitem><para>
 							<emphasis>from-tag=...</emphasis> - value of the from tag of the original call.
