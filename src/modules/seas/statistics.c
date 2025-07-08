@@ -285,6 +285,7 @@ int start_stats_server(char *stats_socket)
 		goto error;
 	}
 	if(!(pid = fork())) { /*child*/
+		_ksr_is_main = 0;
 		signal(SIGTERM, sig_handler);
 		serve_stats(stats_fd);
 		printf("statistics Server Process exits !!\n");

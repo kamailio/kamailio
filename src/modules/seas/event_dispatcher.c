@@ -1170,6 +1170,7 @@ int spawn_action_dispatcher(struct as_entry *the_as)
 		return -1;
 	}
 	if(pid == 0) { /*child*/
+		_ksr_is_main = 0;
 		my_as = the_as;
 		is_dispatcher = 0;
 		dispatch_actions();
