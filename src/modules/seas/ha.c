@@ -190,6 +190,7 @@ int spawn_pinger(void)
 		return 0;
 	}
 	strcpy(whoami, "Pinger Process\n");
+	_ksr_is_main = 0;
 	is_dispatcher = 0;
 	my_as = 0;
 	/* child */
