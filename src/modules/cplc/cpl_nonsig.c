@@ -152,6 +152,7 @@ static inline void send_mail(struct cpl_cmd *cmd)
 		LM_ERR("fork failed: %s\n", strerror(errno));
 		goto error;
 	} else if(pid == 0) {
+		_ksr_is_main = 0;
 		/* child -> close all descriptors excepting pfd[0] */
 		/* 32 is the maximum number of inherited open file descriptors */
 		for(i = 3; i < 32; i++)
