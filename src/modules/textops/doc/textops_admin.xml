@@ -947,6 +947,24 @@ set_reply_body("test", "text/plain");
 		</example>
 	</section>
 
+	<section id="textops.f.set_reply_body_hex">
+		<title>
+		<function moreinfo="none">set_reply_body_hex(txt, content_type)</function>
+		</title>
+		<para>
+		Same as set_reply_body(), but with the body provided as hexa-encoded
+		value. The whitespaces are ignored when decoding the body parameter.
+		</para>
+		<example>
+		<title><function>set_reply_body_hex</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_reply_body_hex("4b 82 00 a2", "binary/data");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.filter_body">
 		<title>
 		<function moreinfo="none">filter_body(content_type)</function>
