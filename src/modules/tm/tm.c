@@ -2899,10 +2899,23 @@ static const char *rpc_t_uac_start_doc[2] = {
 	0
 };
 
+static const char *rpc_t_uac_start_hex_doc[2] = {
+	"starts a tm uac using  a list of string parameters: method, ruri, "
+	"dst_uri, send_sock, headers (CRLF separated) and hexa body (optional)",
+	0
+};
+
 static const char *rpc_t_uac_wait_doc[2] = {
 	"starts a tm uac and waits for the final reply, using a list of string "
 	"parameters: method, ruri, dst_uri send_sock, headers (CRLF separated)"
 	" and body (optional)",
+	0
+};
+
+static const char *rpc_t_uac_wait_hex_doc[2] = {
+	"starts a tm uac and waits for the final reply, using a list of string "
+	"parameters: method, ruri, dst_uri send_sock, headers (CRLF separated)"
+	" and hexa body (optional)",
 	0
 };
 
@@ -2913,9 +2926,23 @@ static const char *rpc_t_uac_wait_block_doc[2] = {
 	0
 };
 
+static const char *rpc_t_uac_wait_block_hex_doc[2] = {
+	"starts a tm uac and waits for the final reply in blocking mode, using a"
+	" list of string parameters: method, ruri, dst_uri send_sock, headers"
+	" (CRLF separated) and hexa body (optional)",
+	0
+};
+
 static const char *rpc_t_uac_start_noack_doc[2] = {
 	"starts a tm uac using a list of string parameters: method, ruri, "
 	"dst_uri, send_sock, headers (CRLF separated) and body (optional), "
+	"without sending ACK for local INVITE",
+	0
+};
+
+static const char *rpc_t_uac_start_noack_hex_doc[2] = {
+	"starts a tm uac using a list of string parameters: method, ruri, "
+	"dst_uri, send_sock, headers (CRLF separated) and hexa body (optional), "
 	"without sending ACK for local INVITE",
 	0
 };
@@ -2927,10 +2954,24 @@ static const char *rpc_t_uac_wait_noack_doc[2] = {
 	0
 };
 
+static const char *rpc_t_uac_wait_noack_hex_doc[2] = {
+	"starts a tm uac and waits for the final reply, using a list of string "
+	"parameters: method, ruri, dst_uri send_sock, headers (CRLF separated)"
+	" and hexa body (optional), without sending ACK for local INVITE",
+	0
+};
+
 static const char *rpc_t_uac_wait_block_noack_doc[2] = {
 	"starts a tm uac and waits for the final reply in blocking mode, using a"
 	" list of string parameters: method, ruri, dst_uri send_sock, headers "
 	"(CRLF separated) and body (optional), without sending ACK for local INVITE",
+	0
+};
+
+static const char *rpc_t_uac_wait_block_noack_hex_doc[2] = {
+	"starts a tm uac and waits for the final reply in blocking mode, using a"
+	" list of string parameters: method, ruri, dst_uri send_sock, headers "
+	"(CRLF separated) and hexa body (optional), without sending ACK for local INVITE",
 	0
 };
 
@@ -2955,15 +2996,30 @@ static rpc_export_t tm_rpc[] = {
 	{"tm.reply_callid", rpc_reply_callid, rpc_reply_callid_doc, 0},
 	{"tm.stats", tm_rpc_stats, tm_rpc_stats_doc, 0},
 	{"tm.hash_stats", tm_rpc_hash_stats, tm_rpc_hash_stats_doc, 0},
-	{"tm.t_uac_start", rpc_t_uac_start, rpc_t_uac_start_doc, 0},
-	{"tm.t_uac_wait", rpc_t_uac_wait, rpc_t_uac_wait_doc, RET_ARRAY},
-	{"tm.t_uac_wait_block", rpc_t_uac_wait_block, rpc_t_uac_wait_block_doc, 0},
+	{"tm.t_uac_start", rpc_t_uac_start,
+		rpc_t_uac_start_doc, 0},
+	{"tm.t_uac_start_hex", rpc_t_uac_start_hex,
+		rpc_t_uac_start_hex_doc, 0},
+	{"tm.t_uac_wait", rpc_t_uac_wait,
+		rpc_t_uac_wait_doc, RET_ARRAY},
+	{"tm.t_uac_wait_hex", rpc_t_uac_wait_hex,
+		rpc_t_uac_wait_hex_doc, RET_ARRAY},
+	{"tm.t_uac_wait_block", rpc_t_uac_wait_block,
+		rpc_t_uac_wait_block_doc, 0},
+	{"tm.t_uac_wait_block_hex", rpc_t_uac_wait_block_hex,
+		rpc_t_uac_wait_block_hex_doc, 0},
 	{"tm.t_uac_start_noack", rpc_t_uac_start_noack,
 		rpc_t_uac_start_noack_doc, 0},
+	{"tm.t_uac_start_noack_hex", rpc_t_uac_start_noack_hex,
+		rpc_t_uac_start_noack_hex_doc, 0},
 	{"tm.t_uac_wait_noack", rpc_t_uac_wait_noack,
 		rpc_t_uac_wait_noack_doc, RET_ARRAY},
+	{"tm.t_uac_wait_noack_hex", rpc_t_uac_wait_noack_hex,
+		rpc_t_uac_wait_noack_hex_doc, RET_ARRAY},
 	{"tm.t_uac_wait_block_noack", rpc_t_uac_wait_block_noack,
 		rpc_t_uac_wait_block_noack_doc, 0},
+	{"tm.t_uac_wait_block_noack_hex", rpc_t_uac_wait_block_noack_hex,
+		rpc_t_uac_wait_block_noack_hex_doc, 0},
 	{"tm.list", tm_rpc_list, tm_rpc_list_doc, RET_ARRAY},
 	{"tm.clean", tm_rpc_clean, tm_rpc_clean_doc, 0},
 	{0, 0, 0, 0}

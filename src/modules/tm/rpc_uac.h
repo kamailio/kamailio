@@ -25,12 +25,18 @@ int tm_rpc_response_list_init(void);
 int tm_rpc_response_list_destroy(void);
 
 void rpc_t_uac_start(rpc_t *rpc, void *c);
+void rpc_t_uac_start_hex(rpc_t *rpc, void *c);
 void rpc_t_uac_wait(rpc_t *rpc, void *c);
+void rpc_t_uac_wait_hex(rpc_t *rpc, void *c);
 void rpc_t_uac_wait_block(rpc_t *rpc, void *c);
+void rpc_t_uac_wait_block_hex(rpc_t *rpc, void *c);
 
 void rpc_t_uac_start_noack(rpc_t *rpc, void *c);
+void rpc_t_uac_start_noack_hex(rpc_t *rpc, void *c);
 void rpc_t_uac_wait_noack(rpc_t *rpc, void *c);
+void rpc_t_uac_wait_noack_hex(rpc_t *rpc, void *c);
 void rpc_t_uac_wait_block_noack(rpc_t *rpc, void *c);
+void rpc_t_uac_wait_block_noack_hex(rpc_t *rpc, void *c);
 
 int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 		str *headers, str *body);

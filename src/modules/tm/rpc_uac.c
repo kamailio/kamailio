@@ -631,11 +631,16 @@ static void rpc_uac_block_callback(
  *                     for the transaction arrives, if 0 immediately send
  *                     an rpc reply (see above). If 2 blocking wait until
  *                     final response for the transaction arrives.
+ * @param cbflags - uac req callback flags
+ * @param rpflags - rpc parameters flags
  */
-static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait, int cbflags)
+static void rpc_t_uac(
+		rpc_t *rpc, void *c, int reply_wait, int cbflags, int rpflags)
 {
 	/* rpc params */
-	str method, ruri, nexthop, send_socket, headers, body;
+	str method, ruri, nexthop, send_socket, headers;
+	str body = STR_NULL;
+	str sraw = STR_NULL;
 	/* other internal vars.*/
 	str hfb, callid;
 	struct sip_uri p_uri, pnexthop;
@@ -654,8 +659,6 @@ static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait, int cbflags)
 	int rcount = 0;
 	void *th = NULL;
 
-	body.s = 0;
-	body.len = 0;
 	dctx = 0;
 	if(reply_wait == 1
 			&& (rpc->capabilities == 0
@@ -680,6 +683,13 @@ static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait, int cbflags)
 		rpc->fault(c, 400, "Invalid request uri \"%s\"", ruri.s);
 		return;
 	}
+	if(body.len > 0 && (rpflags & 1)) {
+		if(ksr_hex_decode_ws(&body, &sraw) < 0) {
+			rpc->fault(c, 400, "Invalid hexa body");
+			return;
+		}
+		body = sraw;
+	}
 	/* old fifo & unixsock backwards compatibility for nexthop: '.' is still
 	   allowed */
 	if(nexthop.len == 1 && nexthop.s[0] == '.') {
@@ -689,6 +699,9 @@ static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait, int cbflags)
 	} else if(nexthop.len == 0) {
 		nexthop.s = 0;
 	} else if(parse_uri(nexthop.s, nexthop.len, &pnexthop) < 0) {
+		if(sraw.s != NULL) {
+			pkg_free(sraw.s);
+		}
 		rpc->fault(c, 400, "Invalid next-hop uri \"%s\"", nexthop.s);
 		return;
 	}
@@ -707,10 +720,16 @@ static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait, int cbflags)
 					  ||
 					  /* check also if it's not a MH addr. */
 					  saddr.len == 0 || saddr.s[0] == '(')) {
+		if(sraw.s != NULL) {
+			pkg_free(sraw.s);
+		}
 		rpc->fault(c, 400, "Invalid send socket \"%s\"", send_socket.s);
 		return;
 	} else if(saddr.len
 			  && (ssock = grep_sock_info(&saddr, sport, sproto)) == 0) {
+		if(sraw.s != NULL) {
+			pkg_free(sraw.s);
+		}
 		rpc->fault(c, 400, "No local socket for \"%s\"", send_socket.s);
 		return;
 	}
@@ -719,6 +738,9 @@ static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait, int cbflags)
 	faked_msg.len = headers.len;
 	faked_msg.buf = faked_msg.unparsed = headers.s;
 	if(parse_headers(&faked_msg, HDR_EOH_F, 0) == -1) {
+		if(sraw.s != NULL) {
+			pkg_free(sraw.s);
+		}
 		rpc->fault(c, 400, "Invalid headers");
 		return;
 	}
@@ -832,6 +854,9 @@ static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait, int cbflags)
 						   &ritem->rtext)
 						< 0) {
 					rpc->fault(c, 500, "Fields error");
+					if(sraw.s != NULL) {
+						pkg_free(sraw.s);
+					}
 					return;
 				}
 			}
@@ -845,6 +870,9 @@ error01:
 error:
 	if(faked_msg.headers)
 		free_hdr_field_lst(faked_msg.headers);
+	if(sraw.s != NULL) {
+		pkg_free(sraw.s);
+	}
 }
 
 
@@ -853,7 +881,15 @@ error:
  */
 void rpc_t_uac_start(rpc_t *rpc, void *c)
 {
-	rpc_t_uac(rpc, c, 0, 0);
+	rpc_t_uac(rpc, c, 0, 0, 0);
+}
+
+/** t_uac with no reply waiting and hex body.
+ * @see rpc_t_uac.
+ */
+void rpc_t_uac_start_hex(rpc_t *rpc, void *c)
+{
+	rpc_t_uac(rpc, c, 0, 0, 1);
 }
 
 /** t_uac with reply waiting.
@@ -861,7 +897,15 @@ void rpc_t_uac_start(rpc_t *rpc, void *c)
  */
 void rpc_t_uac_wait(rpc_t *rpc, void *c)
 {
-	rpc_t_uac(rpc, c, 1, 0);
+	rpc_t_uac(rpc, c, 1, 0, 0);
+}
+
+/** t_uac with reply waiting and hex body.
+ * @see rpc_t_uac.
+ */
+void rpc_t_uac_wait_hex(rpc_t *rpc, void *c)
+{
+	rpc_t_uac(rpc, c, 1, 0, 1);
 }
 
 /** t_uac with blocking for reply waiting.
@@ -869,7 +913,15 @@ void rpc_t_uac_wait(rpc_t *rpc, void *c)
  */
 void rpc_t_uac_wait_block(rpc_t *rpc, void *c)
 {
-	rpc_t_uac(rpc, c, 2, 0);
+	rpc_t_uac(rpc, c, 2, 0, 0);
+}
+
+/** t_uac with blocking for reply waiting and hex body.
+ * @see rpc_t_uac.
+ */
+void rpc_t_uac_wait_block_hex(rpc_t *rpc, void *c)
+{
+	rpc_t_uac(rpc, c, 2, 0, 1);
 }
 
 /** t_uac with no reply waiting and no ack.
@@ -877,7 +929,15 @@ void rpc_t_uac_wait_block(rpc_t *rpc, void *c)
  */
 void rpc_t_uac_start_noack(rpc_t *rpc, void *c)
 {
-	rpc_t_uac(rpc, c, 0, TMCB_DONT_ACK);
+	rpc_t_uac(rpc, c, 0, TMCB_DONT_ACK, 0);
+}
+
+/** t_uac with no reply waiting, no ack and hex body.
+ * @see rpc_t_uac.
+ */
+void rpc_t_uac_start_noack_hex(rpc_t *rpc, void *c)
+{
+	rpc_t_uac(rpc, c, 0, TMCB_DONT_ACK, 1);
 }
 
 /** t_uac with reply waiting and no ack.
@@ -885,7 +945,15 @@ void rpc_t_uac_start_noack(rpc_t *rpc, void *c)
  */
 void rpc_t_uac_wait_noack(rpc_t *rpc, void *c)
 {
-	rpc_t_uac(rpc, c, 1, TMCB_DONT_ACK);
+	rpc_t_uac(rpc, c, 1, TMCB_DONT_ACK, 0);
+}
+
+/** t_uac with reply waiting, no ack and hex body.
+ * @see rpc_t_uac.
+ */
+void rpc_t_uac_wait_noack_hex(rpc_t *rpc, void *c)
+{
+	rpc_t_uac(rpc, c, 1, TMCB_DONT_ACK, 1);
 }
 
 /** t_uac with blocking for reply waiting and no ack.
@@ -893,7 +961,15 @@ void rpc_t_uac_wait_noack(rpc_t *rpc, void *c)
  */
 void rpc_t_uac_wait_block_noack(rpc_t *rpc, void *c)
 {
-	rpc_t_uac(rpc, c, 2, TMCB_DONT_ACK);
+	rpc_t_uac(rpc, c, 2, TMCB_DONT_ACK, 0);
+}
+
+/** t_uac with blocking for reply waiting, no ack and hex body.
+ * @see rpc_t_uac.
+ */
+void rpc_t_uac_wait_block_noack_hex(rpc_t *rpc, void *c)
+{
+	rpc_t_uac(rpc, c, 2, TMCB_DONT_ACK, 1);
 }
 
 
