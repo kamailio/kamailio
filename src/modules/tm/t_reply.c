@@ -1382,9 +1382,10 @@ static enum rps t_should_relay_response(struct cell *Trans, int new_code,
 	 * not relayed because it's not an INVITE transaction;
 	 * >= 300 are not relayed because 200 was already sent out
 	*/
-	LM_DBG("->>>>>>>>> T_code=%d, new_code=%d\n", Trans->uas.status, new_code);
+
+	LM_DBG("->>>>>>>>> T_code=%d, new_code=%d\n",Trans->uas.status,new_code);
 	inv_through = new_code >= 200 && new_code < 300 && is_invite(Trans);
-	/* if final response sent out, allow only INVITE 2xx  */
+	/* if final response sent out, allow only INVITE 2xx && REGISTER > 299 */
 	if(Trans->uas.status >= 200) {
 		if(inv_through) {
 			LM_DBG("200 INV after final sent\n");
@@ -1392,11 +1393,18 @@ static enum rps t_should_relay_response(struct cell *Trans, int new_code,
 			Trans->uac[branch].last_received = new_code;
 			*should_relay = branch;
 			return RPS_PUSHED_AFTER_COMPLETION;
-		} else {
+		} 		
+		/* Do not discard negative replies for REGSITER messages 
+		 * after 200 for the initial trasaction already been sent.
+		 * In case of forking REGISGER requests to multiple Registrars
+		 * some of registrars may reply later than others being authenticated.
+		 * This lests late forked transactions being finalised correctly
+		*/
+		if(!(strncmp(Trans->method.s, "REGISTER", 8) == 0 && new_code >= 300)) {
+			/*Except the exceptions above, too late  messages will be discarded */
 			LM_DBG("final reply already sent\n");
+			goto discard;
 		}
-		/* except the exception above, too late  messages will be discarded */
-		goto discard;
 	}
 
 	/* if final response received at this branch, allow only INVITE 2xx */
