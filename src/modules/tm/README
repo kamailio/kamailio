@@ -155,19 +155,25 @@ Daniel-Constantin Mierla
 
               5.1. tm.list
               5.2. tm.t_uac_start
-              5.3. tm.t_uac_wait
-              5.4. tm.t_uac_wait_block
-              5.5. tm.t_uac_start_noack
-              5.6. tm.t_uac_wait_block_noack
-              5.7. tm.t_uac_wait_noack
-              5.8. tm.cancel
-              5.9. tm.hash_stats
-              5.10. tm.reply
-              5.11. tm.reply_callid
-              5.12. tm.retransmit_reply
-              5.13. tm.retransmit_reply_callid
-              5.14. tm.clean
-              5.15. tm.stats
+              5.3. tm.t_uac_start_hex
+              5.4. tm.t_uac_wait
+              5.5. tm.t_uac_wait_hex
+              5.6. tm.t_uac_wait_block
+              5.7. tm.t_uac_wait_block_hex
+              5.8. tm.t_uac_start_noack
+              5.9. tm.t_uac_start_noack_hex
+              5.10. tm.t_uac_wait_noack
+              5.11. tm.t_uac_wait_noack_hex
+              5.12. tm.t_uac_wait_block_noack
+              5.13. tm.t_uac_wait_block_noack_hex
+              5.14. tm.cancel
+              5.15. tm.hash_stats
+              5.16. tm.reply
+              5.17. tm.reply_callid
+              5.18. tm.retransmit_reply
+              5.19. tm.retransmit_reply_callid
+              5.20. tm.clean
+              5.21. tm.stats
 
         6. Event Routes
 
@@ -447,19 +453,25 @@ Chapter 1. Admin Guide
 
         5.1. tm.list
         5.2. tm.t_uac_start
-        5.3. tm.t_uac_wait
-        5.4. tm.t_uac_wait_block
-        5.5. tm.t_uac_start_noack
-        5.6. tm.t_uac_wait_block_noack
-        5.7. tm.t_uac_wait_noack
-        5.8. tm.cancel
-        5.9. tm.hash_stats
-        5.10. tm.reply
-        5.11. tm.reply_callid
-        5.12. tm.retransmit_reply
-        5.13. tm.retransmit_reply_callid
-        5.14. tm.clean
-        5.15. tm.stats
+        5.3. tm.t_uac_start_hex
+        5.4. tm.t_uac_wait
+        5.5. tm.t_uac_wait_hex
+        5.6. tm.t_uac_wait_block
+        5.7. tm.t_uac_wait_block_hex
+        5.8. tm.t_uac_start_noack
+        5.9. tm.t_uac_start_noack_hex
+        5.10. tm.t_uac_wait_noack
+        5.11. tm.t_uac_wait_noack_hex
+        5.12. tm.t_uac_wait_block_noack
+        5.13. tm.t_uac_wait_block_noack_hex
+        5.14. tm.cancel
+        5.15. tm.hash_stats
+        5.16. tm.reply
+        5.17. tm.reply_callid
+        5.18. tm.retransmit_reply
+        5.19. tm.retransmit_reply_callid
+        5.20. tm.clean
+        5.21. tm.stats
 
    6. Event Routes
 
@@ -3211,19 +3223,25 @@ reply_route {
 
    5.1. tm.list
    5.2. tm.t_uac_start
-   5.3. tm.t_uac_wait
-   5.4. tm.t_uac_wait_block
-   5.5. tm.t_uac_start_noack
-   5.6. tm.t_uac_wait_block_noack
-   5.7. tm.t_uac_wait_noack
-   5.8. tm.cancel
-   5.9. tm.hash_stats
-   5.10. tm.reply
-   5.11. tm.reply_callid
-   5.12. tm.retransmit_reply
-   5.13. tm.retransmit_reply_callid
-   5.14. tm.clean
-   5.15. tm.stats
+   5.3. tm.t_uac_start_hex
+   5.4. tm.t_uac_wait
+   5.5. tm.t_uac_wait_hex
+   5.6. tm.t_uac_wait_block
+   5.7. tm.t_uac_wait_block_hex
+   5.8. tm.t_uac_start_noack
+   5.9. tm.t_uac_start_noack_hex
+   5.10. tm.t_uac_wait_noack
+   5.11. tm.t_uac_wait_noack_hex
+   5.12. tm.t_uac_wait_block_noack
+   5.13. tm.t_uac_wait_block_noack_hex
+   5.14. tm.cancel
+   5.15. tm.hash_stats
+   5.16. tm.reply
+   5.17. tm.reply_callid
+   5.18. tm.retransmit_reply
+   5.19. tm.retransmit_reply_callid
+   5.20. tm.clean
+   5.21. tm.stats
 
 5.1.  tm.list
 
@@ -3247,34 +3265,64 @@ reply_route {
      * body - (optional, may not be present) request body (if present,
        requires the “Content-Type” and “Content-length” headers)
 
-5.3.  tm.t_uac_wait
+5.3.  tm.t_uac_start_hex
+
+   Similar to tm.t_uac_start, but with hexa-encoded body. The whitespaces
+   are ignored when decoding the body.
+
+5.4.  tm.t_uac_wait
 
    Similar to tm.t_uac_start, but waits asynchronously for the SIP
    response and tries to provide its details via RPC response.
 
-5.4.  tm.t_uac_wait_block
+5.5.  tm.t_uac_wait_hex
+
+   Similar to tm.t_uac_wait, but with hexa-encoded body. The whitespaces
+   are ignored when decoding the body.
+
+5.6.  tm.t_uac_wait_block
 
    Similar to tm.t_uac_start, but blocks waiting for the SIP response and
    returns the SIP reply code and reason text via RPC response. It waits
    up to 80 seconds, if no reply is received, it returns a RPC fault 500
    code. While waiting, the RPC process cannot handle other RPC commands.
 
-5.5.  tm.t_uac_start_noack
+5.7.  tm.t_uac_wait_block_hex
+
+   Similar to tm.t_uac_wait_block, but with hexa-encoded body. The
+   whitespaces are ignored when decoding the body.
+
+5.8.  tm.t_uac_start_noack
 
    Similar to tm.t_uac_start, but do not automatically send ACK for local
    INVITE requests.
 
-5.6.  tm.t_uac_wait_block_noack
+5.9.  tm.t_uac_start_noack_hex
 
-   Similar to tm.t_uac_wait_block, but do not automatically send ACK for
-   local INVITE requests.
+   Similar to tm.t_uac_start_noack, but with hexa-encoded body. The
+   whitespaces are ignored when decoding the body.
 
-5.7.  tm.t_uac_wait_noack
+5.10.  tm.t_uac_wait_noack
 
    Similar to tm.t_uac_wait, but do not automatically send ACK for local
    INVITE requests.
 
-5.8.  tm.cancel
+5.11.  tm.t_uac_wait_noack_hex
+
+   Similar to tm.t_uac_wait_noack, but with hexa-encoded body. The
+   whitespaces are ignored when decoding the body.
+
+5.12.  tm.t_uac_wait_block_noack
+
+   Similar to tm.t_uac_wait_block, but do not automatically send ACK for
+   local INVITE requests.
+
+5.13.  tm.t_uac_wait_block_noack_hex
+
+   Similar to tm.t_uac_wait_block_noack, but with hexa-encoded body. The
+   whitespaces are ignored when decoding the body.
+
+5.14.  tm.cancel
 
    Generates and sends a CANCEL for an existing local SIP request.
 
@@ -3282,14 +3330,14 @@ reply_route {
      * callid - callid of the INVITE request to be cancelled.
      * cseq - cseq of the INVITE request to be cancelled.
 
-5.9.  tm.hash_stats
+5.15.  tm.hash_stats
 
    Gets information about the load of TM internal hash table.
 
    Parameters:
      * none
 
-5.10.  tm.reply
+5.16.  tm.reply
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -3303,7 +3351,7 @@ reply_route {
      * body - (optional, may not be present) reply body (if present,
        requires the “Content-Type” and “Content-length” headers)
 
-5.11.  tm.reply_callid
+5.17.  tm.reply_callid
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -3318,7 +3366,7 @@ reply_route {
      * body - (optional, may not be present) reply body (if present,
        requires the “Content-Type” and “Content-length” headers)
 
-5.12.  tm.retransmit_reply
+5.18.  tm.retransmit_reply
 
    Retransmit the reply for an existing SIP transaction.
 
@@ -3330,7 +3378,7 @@ reply_route {
 kamcli rpc tm.retransmit_reply 1234:5678
 ...
 
-5.13.  tm.retransmit_reply_callid
+5.19.  tm.retransmit_reply_callid
 
    Retransmit the reply for an existing SIP transaction.
 
@@ -3343,14 +3391,14 @@ kamcli rpc tm.retransmit_reply 1234:5678
 kamcli rpc tm.retransmit_reply_callid "abc-xyz" "10 INVITE"
 ...
 
-5.14.  tm.clean
+5.20.  tm.clean
 
    Trigger a hard clean of expired transactions.
 
    Parameters:
      * none
 
-5.15.  tm.stats
+5.21.  tm.stats
 
    Gets information about current and past TM transaction handling.
 
