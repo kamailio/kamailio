@@ -60,6 +60,16 @@
 		</itemizedlist>
 	</section>
 
+	<section id="tm.rpc.t_uac_start_hex">
+		<title>
+		<function moreinfo="none">tm.t_uac_start_hex</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_start, but with hexa-encoded body. The whitespaces
+		are ignored when decoding the body.
+		</para>
+	</section>
+
 	<section id="tm.rpc.t_uac_wait">
 		<title>
 		<function moreinfo="none">tm.t_uac_wait</function>
@@ -67,6 +77,16 @@
 		<para>
 		Similar to tm.t_uac_start, but waits asynchronously for the SIP response
 		and tries to provide its details via RPC response.
+		</para>
+	</section>
+
+	<section id="tm.rpc.t_uac_wait_hex">
+		<title>
+		<function moreinfo="none">tm.t_uac_wait_hex</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_wait, but with hexa-encoded body. The whitespaces
+		are ignored when decoding the body.
 		</para>
 	</section>
 
@@ -82,6 +102,16 @@
 		</para>
 	</section>
 
+	<section id="tm.rpc.t_uac_wait_block_hex">
+		<title>
+		<function moreinfo="none">tm.t_uac_wait_block_hex</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_wait_block, but with hexa-encoded body. The whitespaces
+		are ignored when decoding the body.
+		</para>
+	</section>
+
 	<section id="tm.rpc.t_uac_start_noack">
 		<title>
 		<function moreinfo="none">tm.t_uac_start_noack</function>
@@ -89,6 +119,37 @@
 		<para>
 		Similar to tm.t_uac_start, but do not automatically send ACK for local
 		INVITE requests.
+		</para>
+	</section>
+
+	<section id="tm.rpc.t_uac_start_noack_hex">
+		<title>
+		<function moreinfo="none">tm.t_uac_start_noack_hex</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_start_noack, but with hexa-encoded body. The whitespaces
+		are ignored when decoding the body.
+		</para>
+	</section>
+
+
+	<section id="tm.rpc.t_uac_wait_noack">
+		<title>
+		<function moreinfo="none">tm.t_uac_wait_noack</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_wait, but do not automatically send ACK for local
+		INVITE requests.
+		</para>
+	</section>
+
+	<section id="tm.rpc.t_uac_wait_noack_hex">
+		<title>
+		<function moreinfo="none">tm.t_uac_wait_noack_hex</function>
+		</title>
+		<para>
+		Similar to tm.t_uac_wait_noack, but with hexa-encoded body. The whitespaces
+		are ignored when decoding the body.
 		</para>
 	</section>
 
@@ -102,13 +163,13 @@
 		</para>
 	</section>
 
-	<section id="tm.rpc.t_uac_wait_noack">
+	<section id="tm.rpc.t_uac_wait_block_noack_hex">
 		<title>
-		<function moreinfo="none">tm.t_uac_wait_noack</function>
+		<function moreinfo="none">tm.t_uac_wait_block_noack_hex</function>
 		</title>
 		<para>
-		Similar to tm.t_uac_wait, but do not automatically send ACK for local
-		INVITE requests.
+		Similar to tm.t_uac_wait_block_noack, but with hexa-encoded body.
+		The whitespaces are ignored when decoding the body.
 		</para>
 	</section>
 
