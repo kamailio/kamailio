@@ -164,8 +164,8 @@ Joey Golan
               14.8. rtpengine_query_v(fmt, var)
               14.9. rtpengine_manage([flags][,via-branch])
               14.10.
-                      rtpengine_subscribe_offer(flags,sdp_avp,to_tag_avp,str
-                      eam_xavp[,via-branch])
+                      rtpengine_subscribe_request(flags,sdp_avp,to_tag_avp,s
+                      tream_xavp[,via-branch])
 
               14.11. rtpengine_subscribe_answer([flags][,via-branch])
               14.12. rtpengine_unsubscribe([flags][,via-branch])
@@ -304,7 +304,7 @@ Joey Golan
    1.98. rtpengine_query usage
    1.99. rtpengine_query_v usage
    1.100. rtpengine_manage usage
-   1.101. rtpengine_subscribe_offer usage
+   1.101. rtpengine_subscribe_request usage
    1.102. rtpengine_subscribe_answer usage
    1.103. rtpengine_unsubscribe usage
    1.104. start_recording usage
@@ -448,8 +448,8 @@ Chapter 1. Admin Guide
         14.8. rtpengine_query_v(fmt, var)
         14.9. rtpengine_manage([flags][,via-branch])
         14.10.
-                rtpengine_subscribe_offer(flags,sdp_avp,to_tag_avp,stream_xa
-                vp[,via-branch])
+                rtpengine_subscribe_request(flags,sdp_avp,to_tag_avp,stream_
+                xavp[,via-branch])
 
         14.11. rtpengine_subscribe_answer([flags][,via-branch])
         14.12. rtpengine_unsubscribe([flags][,via-branch])
@@ -2250,8 +2250,8 @@ modparam("rtpengine", "enable_dmq", 1)
    14.8. rtpengine_query_v(fmt, var)
    14.9. rtpengine_manage([flags][,via-branch])
    14.10.
-          rtpengine_subscribe_offer(flags,sdp_avp,to_tag_avp,stream_xavp[,v
-          ia-branch])
+          rtpengine_subscribe_request(flags,sdp_avp,to_tag_avp,stream_xavp[
+          ,via-branch])
 
    14.11. rtpengine_subscribe_answer([flags][,via-branch])
    14.12. rtpengine_unsubscribe([flags][,via-branch])
@@ -2803,7 +2803,8 @@ rtpengine_manage();
 ...
 
 14.10.
-rtpengine_subscribe_offer(flags,sdp_avp,to_tag_avp,stream_xavp[,via-branch])
+rtpengine_subscribe_request(flags,sdp_avp,to_tag_avp,stream_xavp[,via-branch]
+)
 
    Generates SDP body for forking the current RTP stream and stores it in
    the xavp specified “sdp_avp” AVP. The new call leg will be identified
@@ -2812,7 +2813,7 @@ rtpengine_subscribe_offer(flags,sdp_avp,to_tag_avp,stream_xavp[,via-branch])
    and 200 OK and on 200 OK when SDP bodies are in 200 OK and ACK.
 
    The function will return true on success and false (-1) on various
-   failures, like using rtpengine_subscribe_offer() before an rtpengine
+   failures, like using rtpengine_subscribe_request() before an rtpengine
    session was established.
 
    Meaning of the parameters is as follows:
@@ -2884,7 +2885,7 @@ rtpengine_subscribe_offer(flags,sdp_avp,to_tag_avp,stream_xavp[,via-branch])
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.101. rtpengine_subscribe_offer usage
+   Example 1.101. rtpengine_subscribe_request usage
 route {
 ...
     if (is_method("INVITE")) {
@@ -2901,7 +2902,7 @@ onreply_route[1]
 ...
     if (has_body("application/sdp")) {
         rtpengine_answer();
-        rtpengine_subscribe_offer("all siprec", "$avp(siprec_offer)",
+        rtpengine_subscribe_request("all siprec", "$avp(siprec_offer)",
                                     "$avp(siprec_to_tag)", "siprec_streams");
         xinfo("SIPREC participant $xavp(siprec_streams[0]=>tag) with label $xavp
 (siprec_streams[0]=>label[0])\n");
@@ -2970,13 +2971,13 @@ ec_to_tag) call-id="$avp(orig_callid)");
        manipulated with the same flags as used in rtpengine_offer
        additionally, the following extra flags can be used
           + to-tag=... - value of the to tag returned by
-            “rtpengine_subscribe_offer”
+            “rtpengine_subscribe_request”
           + from-tag=... - value of the from tag of the original call.
           + call-id=... - value of the call id of the original call.
 
    Example 1.102. rtpengine_subscribe_answer usage
 
-   See rtpengine_subscribe_offer() function example above for example.
+   See rtpengine_subscribe_request() function example above for example.
 
 14.12.  rtpengine_unsubscribe([flags][,via-branch])
 
@@ -2993,7 +2994,7 @@ ec_to_tag) call-id="$avp(orig_callid)");
        manipulated with the same flags as used in rtpengine_offer
        additionally, the following extra flags can be used
           + to-tag=... - value of the to tag returned by
-            “rtpengine_subscribe_offer”
+            “rtpengine_subscribe_request”
           + from-tag=... - value of the from tag of the original call.
           + call-id=... - value of the call id of the original call.
 
