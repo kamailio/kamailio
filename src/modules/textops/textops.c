@@ -117,6 +117,7 @@ static int append_time_request_f(struct sip_msg *msg, char *, char *);
 static int set_body_f(struct sip_msg *msg, char *, char *);
 static int set_body_hex_f(struct sip_msg *msg, char *, char *);
 static int set_rpl_body_f(struct sip_msg *msg, char *, char *);
+static int set_rpl_body_hex_f(struct sip_msg *msg, char *, char *);
 static int set_multibody_0(struct sip_msg *msg, char *, char *, char *);
 static int set_multibody_1(struct sip_msg *msg, char *, char *, char *);
 static int set_multibody_2(struct sip_msg *msg, char *, char *, char *);
@@ -270,6 +271,8 @@ static cmd_export_t cmds[] = {
 			ANY_ROUTE},
 	{"set_reply_body", (cmd_function)set_rpl_body_f, 2, fixup_spve_spve, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"set_reply_body_hex", (cmd_function)set_rpl_body_hex_f, 2, fixup_spve_spve,
+			0, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 	{"is_method", (cmd_function)is_method_f, 1, fixup_method, 0, ANY_ROUTE},
 	{"has_body", (cmd_function)has_body_f, 0, 0, 0, ANY_ROUTE},
 	{"has_body", (cmd_function)has_body_f, 1, fixup_body_type, 0,
@@ -2737,6 +2740,44 @@ static int set_rpl_body_f(struct sip_msg *msg, char *p1, char *p2)
 	}
 
 	return ki_set_rpl_body(msg, &nb, &nc);
+}
+
+static int ki_set_rpl_body_hex(sip_msg_t *msg, str *htxt, str *ct)
+{
+	str sraw = STR_NULL;
+
+	if(htxt == NULL || htxt->s == NULL || htxt->len == 0) {
+		LM_ERR("invalid body parameter\n");
+		return -1;
+	}
+	if(ksr_hex_decode_ws(htxt, &sraw) < 0) {
+		return -1;
+	}
+
+	return ki_set_rpl_body(msg, &sraw, ct);
+}
+
+static int set_rpl_body_hex_f(struct sip_msg *msg, char *p1, char *p2)
+{
+	str nb = {0, 0};
+	str nc = {0, 0};
+
+	if(p1 == 0 || p2 == 0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)p1, &nb) != 0) {
+		LM_ERR("unable to get p1\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)p2, &nc) != 0) {
+		LM_ERR("unable to get p2\n");
+		return -1;
+	}
+
+	return ki_set_rpl_body_hex(msg, &nb, &nc);
 }
 
 static str *generate_boundary(str *txt, str *content_type,
@@ -5473,6 +5514,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	},
 	{ str_init("textops"), str_init("set_reply_body"),
 		SR_KEMIP_INT, ki_set_rpl_body,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("set_reply_body_hex"),
+		SR_KEMIP_INT, ki_set_rpl_body_hex,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
