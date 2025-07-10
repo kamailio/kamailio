@@ -173,6 +173,46 @@
 		</para>
 	</section>
 
+	<section id="tm.rpc.t_uac_attrs">
+		<title>
+		<function moreinfo="none">tm.t_uac_attrs</function>
+		</title>
+		<para>
+		Combine the tm.t_uac_* variants, by providing the first parameter with
+		attributes, then the other parameters are like for tm.t_uac_start.
+		</para>
+		<para>
+		The attributes are in the format "name1=value1;...;nameX=valueX". The
+		name of the attribute can be:
+		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>reply</emphasis> - control how the reply is waited. If
+				not provided, acts like tm.t_uac_start. The values can be:
+				"wait" - act like tm.t_uac_wait; "block" - act like
+				tm.t_uac_wait_block.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>cbflags</emphasis> - the transaction callback flags. The
+				values can be: "noack" - to not automatically send ACK for local
+				INVITE requests
+			</para></listitem>
+			<listitem><para>
+				<emphasis>rpflags</emphasis> - RPC parameters flags. The values
+				can be: 1 - the body is hexa-encoded value.
+			</para></listitem>
+		</itemizedlist>
+		<example>
+		<title>Using <quote>tm.t_uac_attrs</quote></title>
+		<programlisting format="linespecific">
+...
+kamcli rpc tm.t_uac_attrs 'reply=wait;cbflags=noack;rpflags=1' 'INVITE' ...
+...
+</programlisting>
+		</example>
+	</section>
+
+
 	<section id="tm.rpc.cancel">
 		<title>
 		<function moreinfo="none">tm.cancel</function>
