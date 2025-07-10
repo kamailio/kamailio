@@ -1004,6 +1004,68 @@ void rpc_t_uac_wait_block_noack_hex(rpc_t *rpc, void *c)
 	rpc_t_uac(rpc, c, 2, TMCB_DONT_ACK, 1);
 }
 
+/** t_uac with attributes.
+ * @see rpc_t_uac.
+ */
+void rpc_t_uac_attrs(rpc_t *rpc, void *c)
+{
+	tm_rpc_uac_attrs_t tattrs;
+	str sattrs = STR_NULL;
+	param_t *params_list = NULL;
+	param_hooks_t phooks;
+	param_t *pit = NULL;
+	int ival = 0;
+	int ret;
+
+	memset(&tattrs, 0, sizeof(tm_rpc_uac_attrs_t));
+
+	ret = rpc->scan(c, "SSSSSS*S", &sattrs, &tattrs.method, &tattrs.ruri,
+			&tattrs.nexthop, &tattrs.send_socket, &tattrs.headers,
+			&tattrs.body);
+	if(ret < 6 && !(-ret == 6)) {
+		rpc->fault(c, 400, "too few parameters (%d/5)", ret ? ret : -ret);
+		return;
+	}
+	if(sattrs.len > 0) {
+		if(sattrs.s[sattrs.len - 1] == ';') {
+			sattrs.len--;
+		}
+		if(parse_params(&sattrs, CLASS_ANY, &phooks, &params_list) < 0) {
+			return;
+		}
+		for(pit = params_list; pit; pit = pit->next) {
+			if(pit->name.len == 5
+					&& strncasecmp(pit->name.s, "reply", 5) == 0) {
+				if(pit->body.len == 4
+						&& strncasecmp(pit->name.s, "wait", 4) == 0) {
+					tattrs.reply_wait = 1;
+				} else if(pit->body.len == 5
+						  && strncasecmp(pit->name.s, "block", 5) == 0) {
+					tattrs.reply_wait = 2;
+				} else {
+					LM_ERR("unknown reply attribute value\n");
+				}
+			} else if(pit->name.len == 7
+					  && strncasecmp(pit->name.s, "cbflags", 7) == 0) {
+				if(pit->body.len == 5
+						&& strncasecmp(pit->name.s, "noack", 5) == 0) {
+					tattrs.cbflags |= TMCB_DONT_ACK;
+				} else {
+					LM_ERR("unknown cbflags attribute value\n");
+				}
+			} else if(pit->name.len == 7
+					  && strncasecmp(pit->name.s, "rpflags", 7) == 0) {
+				str2sint(&pit->body, &ival);
+				tattrs.rpflags |= ival;
+			} else {
+				LM_ERR("unknown attribute provided\n");
+			}
+		}
+	}
+
+	rpc_t_uac_attrs_helper(rpc, c, &tattrs);
+}
+
 static int t_uac_check_msg(struct sip_msg *msg, str *method, str *body,
 		str *fromtag, int *cseq_is, int *cseq, str *callid)
 {
