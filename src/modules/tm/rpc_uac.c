@@ -547,7 +547,6 @@ static void rpc_print_uris(rpc_t *rpc, void *c, struct sip_msg *reply)
 	return;
 }
 
-
 /* t_uac callback */
 static void rpc_uac_callback(struct cell *t, int type, struct tmcb_params *ps)
 {
@@ -609,39 +608,32 @@ static void rpc_uac_block_callback(
 }
 
 
-/** rpc t_uac version-
- * It expects the following list of strings as parameters:
- *  method
- *  request_uri
- *  dst_uri (next hop) -- can be empty (either "" or ".", which is still
- *                        supported for backwards compatibility with fifo)
- *  send_socket (socket from which the message will be sent)
- *  headers (message headers separated by CRLF, at least From and To
- *           must be present)
- *  body (optional, might be null or completely missing)
- *
- * If all the parameters are ok it will call t_uac() using them.
- * Note: this version will  wait for the transaction final reply
- * only if reply_wait is set to 1. Otherwise the rpc reply will be sent
- * immediately and it will be success if the parameters were ok and t_uac did
- * not report any error.
+/**
+ * structure for rpc t_uac
+ */
+typedef struct tm_rpc_uac_attrs
+{
+	str method;
+	str ruri;
+	str nexthop;
+	str send_socket;
+	str headers;
+	str body;
+	int reply_wait;
+	int cbflags;
+	int rpflags;
+} tm_rpc_uac_attrs_t;
+
+/** rpc t_uac with attributes
+ * See rpc_t_uac for the fields inside attrs structure
  * @param rpc - rpc handle
  * @param  c - rpc current context
- * @param reply_wait - if 1 do not generate a rpc reply until final response
- *                     for the transaction arrives, if 0 immediately send
- *                     an rpc reply (see above). If 2 blocking wait until
- *                     final response for the transaction arrives.
- * @param cbflags - uac req callback flags
- * @param rpflags - rpc parameters flags
+ * @param tattrs - attributes structure
  */
-static void rpc_t_uac(
-		rpc_t *rpc, void *c, int reply_wait, int cbflags, int rpflags)
+static void rpc_t_uac_attrs_helper(
+		rpc_t *rpc, void *c, tm_rpc_uac_attrs_t *tattrs)
 {
-	/* rpc params */
-	str method, ruri, nexthop, send_socket, headers;
-	str body = STR_NULL;
 	str sraw = STR_NULL;
-	/* other internal vars.*/
 	str hfb, callid;
 	struct sip_uri p_uri, pnexthop;
 	struct sip_msg faked_msg;
@@ -660,7 +652,7 @@ static void rpc_t_uac(
 	void *th = NULL;
 
 	dctx = 0;
-	if(reply_wait == 1
+	if(tattrs->reply_wait == 1
 			&& (rpc->capabilities == 0
 					|| !(rpc->capabilities(c) & RPC_DELAYED_REPLY))) {
 		rpc->fault(c, 600,
@@ -668,41 +660,36 @@ static void rpc_t_uac(
 				" by this rpc transport");
 		return;
 	}
-	ret = rpc->scan(c, "SSSSS*S", &method, &ruri, &nexthop, &send_socket,
-			&headers, &body);
-	if(ret < 5 && !(-ret == 5)) {
-		rpc->fault(c, 400, "too few parameters (%d/5)", ret ? ret : -ret);
-		return;
-	}
 	/* check and parse parameters */
-	if(method.len == 0) {
+	if(tattrs->method.len == 0) {
 		rpc->fault(c, 400, "Empty method");
 		return;
 	}
-	if(parse_uri(ruri.s, ruri.len, &p_uri) < 0) {
-		rpc->fault(c, 400, "Invalid request uri \"%s\"", ruri.s);
+	if(parse_uri(tattrs->ruri.s, tattrs->ruri.len, &p_uri) < 0) {
+		rpc->fault(c, 400, "Invalid request uri \"%s\"", tattrs->ruri.s);
 		return;
 	}
-	if(body.len > 0 && (rpflags & 1)) {
-		if(ksr_hex_decode_ws(&body, &sraw) < 0) {
+	if(tattrs->body.len > 0 && (tattrs->rpflags & 1)) {
+		if(ksr_hex_decode_ws(&tattrs->body, &sraw) < 0) {
 			rpc->fault(c, 400, "Invalid hexa body");
 			return;
 		}
-		body = sraw;
+		tattrs->body = sraw;
 	}
 	/* old fifo & unixsock backwards compatibility for nexthop: '.' is still
 	   allowed */
-	if(nexthop.len == 1 && nexthop.s[0] == '.') {
+	if(tattrs->nexthop.len == 1 && tattrs->nexthop.s[0] == '.') {
 		/* empty nextop */
-		nexthop.len = 0;
-		nexthop.s = 0;
-	} else if(nexthop.len == 0) {
-		nexthop.s = 0;
-	} else if(parse_uri(nexthop.s, nexthop.len, &pnexthop) < 0) {
+		tattrs->nexthop.len = 0;
+		tattrs->nexthop.s = 0;
+	} else if(tattrs->nexthop.len == 0) {
+		tattrs->nexthop.s = 0;
+	} else if(parse_uri(tattrs->nexthop.s, tattrs->nexthop.len, &pnexthop)
+			  < 0) {
 		if(sraw.s != NULL) {
 			pkg_free(sraw.s);
 		}
-		rpc->fault(c, 400, "Invalid next-hop uri \"%s\"", nexthop.s);
+		rpc->fault(c, 400, "Invalid next-hop uri \"%s\"", tattrs->nexthop.s);
 		return;
 	}
 	/* kamailio backwards compatibility for send_socket: '.' is still
@@ -710,12 +697,12 @@ static void rpc_t_uac(
 	ssock = 0;
 	saddr.s = 0;
 	saddr.len = 0;
-	if(send_socket.len == 1 && send_socket.s[0] == '.') {
+	if(tattrs->send_socket.len == 1 && tattrs->send_socket.s[0] == '.') {
 		/* empty send socket */
-		send_socket.len = 0;
-	} else if(send_socket.len
-			  && (parse_phostport(
-						  send_socket.s, &saddr.s, &saddr.len, &sport, &sproto)
+		tattrs->send_socket.len = 0;
+	} else if(tattrs->send_socket.len
+			  && (parse_phostport(tattrs->send_socket.s, &saddr.s, &saddr.len,
+						  &sport, &sproto)
 							  != 0
 					  ||
 					  /* check also if it's not a MH addr. */
@@ -723,20 +710,20 @@ static void rpc_t_uac(
 		if(sraw.s != NULL) {
 			pkg_free(sraw.s);
 		}
-		rpc->fault(c, 400, "Invalid send socket \"%s\"", send_socket.s);
+		rpc->fault(c, 400, "Invalid send socket \"%s\"", tattrs->send_socket.s);
 		return;
 	} else if(saddr.len
 			  && (ssock = grep_sock_info(&saddr, sport, sproto)) == 0) {
 		if(sraw.s != NULL) {
 			pkg_free(sraw.s);
 		}
-		rpc->fault(c, 400, "No local socket for \"%s\"", send_socket.s);
+		rpc->fault(c, 400, "No local socket for \"%s\"", tattrs->send_socket.s);
 		return;
 	}
 	/* check headers using the SIP parser to look in the header list */
 	memset(&faked_msg, 0, sizeof(struct sip_msg));
-	faked_msg.len = headers.len;
-	faked_msg.buf = faked_msg.unparsed = headers.s;
+	faked_msg.len = tattrs->headers.len;
+	faked_msg.buf = faked_msg.unparsed = tattrs->headers.s;
 	if(parse_headers(&faked_msg, HDR_EOH_F, 0) == -1) {
 		if(sraw.s != NULL) {
 			pkg_free(sraw.s);
@@ -745,12 +732,12 @@ static void rpc_t_uac(
 		return;
 	}
 	/* at this moment all the parameters are parsed => more sanity checks */
-	if(rpc_uac_check_msg(rpc, c, &faked_msg, &method, &body, &fromtag, &cseq_is,
-			   &cseq, &callid)
+	if(rpc_uac_check_msg(rpc, c, &faked_msg, &tattrs->method, &tattrs->body,
+			   &fromtag, &cseq_is, &cseq, &callid)
 			< 0)
 		goto error;
-	if(get_hfblock(nexthop.len ? &nexthop : &ruri, faked_msg.headers,
-			   PROTO_NONE, ssock, &hfb)
+	if(get_hfblock(tattrs->nexthop.len ? &tattrs->nexthop : &tattrs->ruri,
+			   faked_msg.headers, PROTO_NONE, ssock, &hfb)
 			< 0) {
 		rpc->fault(c, 500, "Failed to build headers block");
 		goto error;
@@ -771,7 +758,7 @@ static void rpc_t_uac(
 	if(fromtag.s && fromtag.len) {
 		dlg.id.loc_tag = fromtag;
 	} else {
-		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id, &ruri);
+		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id, &tattrs->ruri);
 	}
 
 	/* Fill in CSeq */
@@ -786,17 +773,17 @@ static void rpc_t_uac(
 	if(get_to(&faked_msg)->tag_value.len > 0) {
 		dlg.id.rem_tag = get_to(&faked_msg)->tag_value;
 	}
-	dlg.rem_target = ruri;
-	dlg.dst_uri = nexthop;
+	dlg.rem_target = tattrs->ruri;
+	dlg.dst_uri = tattrs->nexthop;
 	dlg.send_sock = ssock;
 
 	memset(&uac_req, 0, sizeof(uac_req));
-	uac_req.method = &method;
+	uac_req.method = &tattrs->method;
 	if(hfb.s != NULL && hfb.len > 0)
 		uac_req.headers = &hfb;
-	uac_req.body = body.len ? &body : 0;
+	uac_req.body = tattrs->body.len ? &tattrs->body : 0;
 	uac_req.dialog = &dlg;
-	if(reply_wait == 1) {
+	if(tattrs->reply_wait == 1) {
 		dctx = rpc->delayed_ctx_new(c);
 		if(dctx == 0) {
 			rpc->fault(c, 500, "internal error: failed to create context");
@@ -809,14 +796,14 @@ static void rpc_t_uac(
 		   want to still send a reply */
 		rpc = &dctx->rpc;
 		c = dctx->reply_ctx;
-	} else if(reply_wait == 2) {
+	} else if(tattrs->reply_wait == 2) {
 		sruid_next(&_tm_rpc_sruid);
 		uac_req.cb = rpc_uac_block_callback;
 		ruid = shm_str_dup_block(&_tm_rpc_sruid.uid);
 		uac_req.cbp = ruid;
 		uac_req.cb_flags = TMCB_LOCAL_COMPLETED;
 	}
-	uac_req.cb_flags |= cbflags;
+	uac_req.cb_flags |= tattrs->cbflags;
 
 	ret = t_uac(&uac_req);
 
@@ -837,7 +824,7 @@ static void rpc_t_uac(
 		goto error01;
 	}
 
-	if(reply_wait == 2) {
+	if(tattrs->reply_wait == 2) {
 		while(ritem == NULL && rcount < 800) {
 			sleep_us(100000);
 			rcount++;
@@ -875,6 +862,51 @@ error:
 	}
 }
 
+/** rpc t_uac version-
+ * It expects the following list of strings as parameters:
+ *  method
+ *  request_uri
+ *  dst_uri (next hop) -- can be empty (either "" or ".", which is still
+ *                        supported for backwards compatibility with fifo)
+ *  send_socket (socket from which the message will be sent)
+ *  headers (message headers separated by CRLF, at least From and To
+ *           must be present)
+ *  body (optional, might be null or completely missing)
+ *
+ * If all the parameters are ok it will call t_uac() using them.
+ * Note: this version will  wait for the transaction final reply
+ * only if reply_wait is set to 1. Otherwise the rpc reply will be sent
+ * immediately and it will be success if the parameters were ok and t_uac did
+ * not report any error.
+ * @param rpc - rpc handle
+ * @param  c - rpc current context
+ * @param reply_wait - if 1 do not generate a rpc reply until final response
+ *                     for the transaction arrives, if 0 immediately send
+ *                     an rpc reply (see above). If 2 blocking wait until
+ *                     final response for the transaction arrives.
+ * @param cbflags - uac req callback flags
+ * @param rpflags - rpc parameters flags
+ */
+static void rpc_t_uac(
+		rpc_t *rpc, void *c, int reply_wait, int cbflags, int rpflags)
+{
+	tm_rpc_uac_attrs_t tattrs;
+	int ret;
+
+	memset(&tattrs, 0, sizeof(tm_rpc_uac_attrs_t));
+
+	ret = rpc->scan(c, "SSSSS*S", &tattrs.method, &tattrs.ruri, &tattrs.nexthop,
+			&tattrs.send_socket, &tattrs.headers, &tattrs.body);
+	if(ret < 5 && !(-ret == 5)) {
+		rpc->fault(c, 400, "too few parameters (%d/5)", ret ? ret : -ret);
+		return;
+	}
+	tattrs.reply_wait = reply_wait;
+	tattrs.cbflags = cbflags;
+	tattrs.rpflags = rpflags;
+
+	rpc_t_uac_attrs_helper(rpc, c, &tattrs);
+}
 
 /** t_uac with no reply waiting.
  * @see rpc_t_uac.
@@ -971,7 +1003,6 @@ void rpc_t_uac_wait_block_noack_hex(rpc_t *rpc, void *c)
 {
 	rpc_t_uac(rpc, c, 2, TMCB_DONT_ACK, 1);
 }
-
 
 static int t_uac_check_msg(struct sip_msg *msg, str *method, str *body,
 		str *fromtag, int *cseq_is, int *cseq, str *callid)
