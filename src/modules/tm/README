@@ -166,14 +166,15 @@ Daniel-Constantin Mierla
               5.11. tm.t_uac_wait_noack_hex
               5.12. tm.t_uac_wait_block_noack
               5.13. tm.t_uac_wait_block_noack_hex
-              5.14. tm.cancel
-              5.15. tm.hash_stats
-              5.16. tm.reply
-              5.17. tm.reply_callid
-              5.18. tm.retransmit_reply
-              5.19. tm.retransmit_reply_callid
-              5.20. tm.clean
-              5.21. tm.stats
+              5.14. tm.t_uac_attrs
+              5.15. tm.cancel
+              5.16. tm.hash_stats
+              5.17. tm.reply
+              5.18. tm.reply_callid
+              5.19. tm.retransmit_reply
+              5.20. tm.retransmit_reply_callid
+              5.21. tm.clean
+              5.22. tm.stats
 
         6. Event Routes
 
@@ -313,11 +314,12 @@ Daniel-Constantin Mierla
    1.110. t_clean usage
    1.111. t_exists usage
    1.112. t_cell_append_branches usage
-   1.113. Using “tm.retransmit_reply”
-   1.114. Using “tm.retransmit_reply_callid”
-   1.115. event_route[tm:branch-failure:id] usage
-   1.116. event_route[tm:local-request] usage
-   1.117. event_route[tm:local-response] usage
+   1.113. Using “tm.t_uac_attrs”
+   1.114. Using “tm.retransmit_reply”
+   1.115. Using “tm.retransmit_reply_callid”
+   1.116. event_route[tm:branch-failure:id] usage
+   1.117. event_route[tm:local-request] usage
+   1.118. event_route[tm:local-response] usage
 
 Chapter 1. Admin Guide
 
@@ -464,14 +466,15 @@ Chapter 1. Admin Guide
         5.11. tm.t_uac_wait_noack_hex
         5.12. tm.t_uac_wait_block_noack
         5.13. tm.t_uac_wait_block_noack_hex
-        5.14. tm.cancel
-        5.15. tm.hash_stats
-        5.16. tm.reply
-        5.17. tm.reply_callid
-        5.18. tm.retransmit_reply
-        5.19. tm.retransmit_reply_callid
-        5.20. tm.clean
-        5.21. tm.stats
+        5.14. tm.t_uac_attrs
+        5.15. tm.cancel
+        5.16. tm.hash_stats
+        5.17. tm.reply
+        5.18. tm.reply_callid
+        5.19. tm.retransmit_reply
+        5.20. tm.retransmit_reply_callid
+        5.21. tm.clean
+        5.22. tm.stats
 
    6. Event Routes
 
@@ -3234,14 +3237,15 @@ reply_route {
    5.11. tm.t_uac_wait_noack_hex
    5.12. tm.t_uac_wait_block_noack
    5.13. tm.t_uac_wait_block_noack_hex
-   5.14. tm.cancel
-   5.15. tm.hash_stats
-   5.16. tm.reply
-   5.17. tm.reply_callid
-   5.18. tm.retransmit_reply
-   5.19. tm.retransmit_reply_callid
-   5.20. tm.clean
-   5.21. tm.stats
+   5.14. tm.t_uac_attrs
+   5.15. tm.cancel
+   5.16. tm.hash_stats
+   5.17. tm.reply
+   5.18. tm.reply_callid
+   5.19. tm.retransmit_reply
+   5.20. tm.retransmit_reply_callid
+   5.21. tm.clean
+   5.22. tm.stats
 
 5.1.  tm.list
 
@@ -3322,7 +3326,27 @@ reply_route {
    Similar to tm.t_uac_wait_block_noack, but with hexa-encoded body. The
    whitespaces are ignored when decoding the body.
 
-5.14.  tm.cancel
+5.14.  tm.t_uac_attrs
+
+   Combine the tm.t_uac_* variants, by providing the first parameter with
+   attributes, then the other parameters are like for tm.t_uac_start.
+
+   The attributes are in the format "name1=value1;...;nameX=valueX". The
+   name of the attribute can be:
+     * reply - control how the reply is waited. If not provided, acts like
+       tm.t_uac_start. The values can be: "wait" - act like tm.t_uac_wait;
+       "block" - act like tm.t_uac_wait_block.
+     * cbflags - the transaction callback flags. The values can be:
+       "noack" - to not automatically send ACK for local INVITE requests
+     * rpflags - RPC parameters flags. The values can be: 1 - the body is
+       hexa-encoded value.
+
+   Example 1.113. Using “tm.t_uac_attrs”
+...
+kamcli rpc tm.t_uac_attrs 'reply=wait;cbflags=noack;rpflags=1' 'INVITE' ...
+...
+
+5.15.  tm.cancel
 
    Generates and sends a CANCEL for an existing local SIP request.
 
@@ -3330,14 +3354,14 @@ reply_route {
      * callid - callid of the INVITE request to be cancelled.
      * cseq - cseq of the INVITE request to be cancelled.
 
-5.15.  tm.hash_stats
+5.16.  tm.hash_stats
 
    Gets information about the load of TM internal hash table.
 
    Parameters:
      * none
 
-5.16.  tm.reply
+5.17.  tm.reply
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -3351,7 +3375,7 @@ reply_route {
      * body - (optional, may not be present) reply body (if present,
        requires the “Content-Type” and “Content-length” headers)
 
-5.17.  tm.reply_callid
+5.18.  tm.reply_callid
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -3366,19 +3390,19 @@ reply_route {
      * body - (optional, may not be present) reply body (if present,
        requires the “Content-Type” and “Content-length” headers)
 
-5.18.  tm.retransmit_reply
+5.19.  tm.retransmit_reply
 
    Retransmit the reply for an existing SIP transaction.
 
    Parameters:
      * trans_id - transaction identifier (has the hash_entry:label format)
 
-   Example 1.113. Using “tm.retransmit_reply”
+   Example 1.114. Using “tm.retransmit_reply”
 ...
 kamcli rpc tm.retransmit_reply 1234:5678
 ...
 
-5.19.  tm.retransmit_reply_callid
+5.20.  tm.retransmit_reply_callid
 
    Retransmit the reply for an existing SIP transaction.
 
@@ -3386,19 +3410,19 @@ kamcli rpc tm.retransmit_reply 1234:5678
      * callid - SIP Call-ID header
      * cseq - SIP CSeq header
 
-   Example 1.114. Using “tm.retransmit_reply_callid”
+   Example 1.115. Using “tm.retransmit_reply_callid”
 ...
 kamcli rpc tm.retransmit_reply_callid "abc-xyz" "10 INVITE"
 ...
 
-5.20.  tm.clean
+5.21.  tm.clean
 
    Trigger a hard clean of expired transactions.
 
    Parameters:
      * none
 
-5.21.  tm.stats
+5.22.  tm.stats
 
    Gets information about current and past TM transaction handling.
 
@@ -3421,7 +3445,7 @@ kamcli rpc tm.retransmit_reply_callid "abc-xyz" "10 INVITE"
    enabled with the t_on_branch_failure function. This event_route uses
    the BRANCH_FAILURE_ROUTE route type.
 
-   Example 1.115. event_route[tm:branch-failure:id] usage
+   Example 1.116. event_route[tm:branch-failure:id] usage
 ...
 request_route {
     ...
@@ -3447,7 +3471,7 @@ event_route[tm:branch-failure:myroute] {
    The request can still be updated, i.e., changes are possible to R-URI
    ($ru), destination URI ($du) or the send socket ($fs).
 
-   Example 1.116. event_route[tm:local-request] usage
+   Example 1.117. event_route[tm:local-request] usage
 ...
 event_route [tm:local-request] {
     xlog("L_INFO", "Routing locally generated $rm to $ru\n");
@@ -3460,7 +3484,7 @@ event_route [tm:local-request] {
    Executed after the tm module sent a local generated, transaction
    stateful response.
 
-   Example 1.117. event_route[tm:local-response] usage
+   Example 1.118. event_route[tm:local-response] usage
 ...
 event_route[tm:local-response] {
     xlog("tm:local-response replied locally\n");
