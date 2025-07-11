@@ -247,7 +247,7 @@ unsigned char *ksr_tcpx_thread_wrbuf(int pidx)
  */
 int ksr_tcpx_proc_list_rank(int rank)
 {
-	if(_ksr_tcpx_proc_list != NULL)
+	if(_ksr_tcpx_proc_list == NULL)
 		return -1;
 	if(process_no >= _ksr_tcpx_proc_list_size)
 		return -1;
@@ -263,11 +263,11 @@ int ksr_tcpx_proc_list_rank(int rank)
  */
 int ksr_tcpx_proc_list_destroy(void)
 {
-	if(_ksr_tcpx_proc_list != NULL)
+	if(_ksr_tcpx_proc_list == NULL)
 		return -1;
 
 	shm_free(_ksr_tcpx_proc_list);
-	_ksr_tcpx_proc_list = 0;
+	_ksr_tcpx_proc_list = NULL;
 	_ksr_tcpx_proc_list_size = 0;
 	return 0;
 }
