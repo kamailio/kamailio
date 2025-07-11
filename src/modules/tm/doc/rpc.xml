@@ -188,9 +188,9 @@
 		<itemizedlist>
 			<listitem><para>
 				<emphasis>mode</emphasis> - control how the command is done. If
-				not provided, acts like tm.t_uac_start. The values can be:
-				"wait" - act like tm.t_uac_wait; "block" - act like
-				tm.t_uac_wait_block.
+				not provided or the value is "start", acts like tm.t_uac_start.
+				The other values can be: "wait" - act like tm.t_uac_wait;
+				"block" - act like tm.t_uac_wait_block.
 			</para></listitem>
 			<listitem><para>
 				<emphasis>cbflags</emphasis> - the transaction callback flags. The
