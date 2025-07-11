@@ -187,7 +187,7 @@
 		</para>
 		<itemizedlist>
 			<listitem><para>
-				<emphasis>reply</emphasis> - control how the reply is waited. If
+				<emphasis>mode</emphasis> - control how the command is done. If
 				not provided, acts like tm.t_uac_start. The values can be:
 				"wait" - act like tm.t_uac_wait; "block" - act like
 				tm.t_uac_wait_block.
