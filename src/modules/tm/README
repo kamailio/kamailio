@@ -3333,9 +3333,10 @@ reply_route {
 
    The attributes are in the format "name1=value1;...;nameX=valueX". The
    name of the attribute can be:
-     * reply - control how the reply is waited. If not provided, acts like
-       tm.t_uac_start. The values can be: "wait" - act like tm.t_uac_wait;
-       "block" - act like tm.t_uac_wait_block.
+     * mode - control how the command is done. If not provided or the
+       value is "start", acts like tm.t_uac_start. The other values can
+       be: "wait" - act like tm.t_uac_wait; "block" - act like
+       tm.t_uac_wait_block.
      * cbflags - the transaction callback flags. The values can be:
        "noack" - to not automatically send ACK for local INVITE requests
      * rpflags - RPC parameters flags. The values can be: 1 - the body is
