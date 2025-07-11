@@ -1039,6 +1039,9 @@ void rpc_t_uac_attrs(rpc_t *rpc, void *c)
 						&& strncasecmp(pit->name.s, "wait", 4) == 0) {
 					tattrs.reply_wait = 1;
 				} else if(pit->body.len == 5
+						  && strncasecmp(pit->name.s, "start", 5) == 0) {
+					tattrs.reply_wait = 0;
+				} else if(pit->body.len == 5
 						  && strncasecmp(pit->name.s, "block", 5) == 0) {
 					tattrs.reply_wait = 2;
 				} else {
