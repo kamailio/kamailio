@@ -1034,8 +1034,7 @@ void rpc_t_uac_attrs(rpc_t *rpc, void *c)
 			return;
 		}
 		for(pit = params_list; pit; pit = pit->next) {
-			if(pit->name.len == 5
-					&& strncasecmp(pit->name.s, "reply", 5) == 0) {
+			if(pit->name.len == 4 && strncasecmp(pit->name.s, "mode", 4) == 0) {
 				if(pit->body.len == 4
 						&& strncasecmp(pit->name.s, "wait", 4) == 0) {
 					tattrs.reply_wait = 1;
