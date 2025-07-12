@@ -640,11 +640,13 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 19;
 			else
 				goto error;
+			break;
 		case 14:
 			if(strncmp(in->s, "fr_inv_timeout", 14) == 0)
 				sp->pvp.pvn.u.isname.name.n = 20;
 			else
 				goto error;
+			break;
 		default:
 			goto error;
 	}
