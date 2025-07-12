@@ -3516,7 +3516,10 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route, ds_rctx_t *rctx)
 			return;
 		}
 		fmsg = faked_msg_next();
-		rewrite_uri(fmsg, uri);
+		if(rewrite_uri(fmsg, uri) < 0) {
+			LM_ERR("failed to set r-uri\n");
+			return;
+		}
 	} else {
 		fmsg = msg;
 	}
