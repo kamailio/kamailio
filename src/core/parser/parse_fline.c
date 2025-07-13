@@ -130,7 +130,7 @@ char *parse_first_line(char *buffer, unsigned int len, struct msg_start *fl)
 	 * H-file (this is the value which you will take later in
 	 * processing and define XXX_LEN as length of method name;
 	 * then just call IFISMETHOD( XXX, 'X' ) ... 'X' is the first
-	 * latter; everything must be capitals
+	 * letter; everything must be capitals
 	*/
 			else
 	{
