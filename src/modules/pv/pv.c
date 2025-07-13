@@ -177,7 +177,7 @@ static pv_export_t mod_pvs[] = {
 			PVT_OTHER, pv_get_diversion, 0, 0, 0, pv_init_iname, 1},
 	{{"dir", (sizeof("dir") - 1)}, /* */
 			PVT_OTHER, pv_get_diversion, 0, 0, 0, pv_init_iname, 2},
-	{{"dip", (sizeof("dis") - 1)}, /* */
+	{{"dip", (sizeof("dip") - 1)}, /* */
 			PVT_OTHER, pv_get_diversion, 0, 0, 0, pv_init_iname, 3},
 	{{"dic", (sizeof("dic") - 1)}, /* */
 			PVT_OTHER, pv_get_diversion, 0, 0, 0, pv_init_iname, 4},
