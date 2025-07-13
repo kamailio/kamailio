@@ -53,7 +53,7 @@
 #ifdef USE_SLOW_TIMER
 #include <sys/types.h>
 
-typedef unsigned int slow_idx_t; /* type fot the slow index */
+typedef unsigned int slow_idx_t; /* type for the slow index */
 extern pid_t slow_timer_pid;
 #endif
 
