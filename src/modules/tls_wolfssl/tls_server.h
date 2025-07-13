@@ -52,7 +52,7 @@ typedef struct tls_rd_buf
 /* tls conn flags */
 #define F_TLS_CON_WR_WANTS_RD 1	  /* write wants read */
 #define F_TLS_CON_HANDSHAKED 2	  /* connection is handshaked */
-#define F_TLS_CON_RENEGOTIATION 4 /* renegotiation by clinet */
+#define F_TLS_CON_RENEGOTIATION 4 /* renegotiation by client */
 
 typedef struct tls_extra_data
 {
