@@ -43,7 +43,7 @@
 #define S_TO_TICKS(s) ((s)*TIMER_TICKS_HZ)
 
 
-/** @brief how many s pe per t ticks, integer value */
+/** @brief how many seconds per ticks, integer value */
 #define TICKS_TO_S(t) ((t) / TIMER_TICKS_HZ)
 
 /** @brief how many ms per t ticks, integer value */
