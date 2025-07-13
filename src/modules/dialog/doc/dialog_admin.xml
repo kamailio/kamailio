@@ -252,8 +252,8 @@ modparam("dialog", "rr_param", "xyz")
 	<section id="dialog.p.flag">
 		<title><varname>dlg_flag</varname> (integer)</title>
 		<para>
-		Note: This flag has beed deprecated and not used anyymore.
-		it is not needed to set this parameter and its corresponding flag
+		Note: This flag has beed deprecated and not used anymore.
+		It is not needed to set this parameter and its corresponding flag
 		for initial request in case the <quote>dlg_manage()</quote> function
 		is used.
 		In other words, use <quote>dlg_manage()</quote>.
