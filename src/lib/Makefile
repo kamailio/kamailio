@@ -9,7 +9,7 @@
 
 #SUBDIRS=binrpc cds xcap presence shm_regex
 
-SUBDIRS=$(filter-out CVS doc $(lib_exclude), $(strip \
+SUBDIRS=$(filter-out doc $(lib_exclude), $(strip \
 			$(patsubst %/Makefile,%,$(wildcard */Makefile))))
 
 .PHONY: subdirs $(SUBDIRS) 

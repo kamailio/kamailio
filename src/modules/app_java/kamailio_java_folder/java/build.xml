@@ -12,8 +12,6 @@
 	<jar destfile="kamailio.jar">
     	    <fileset dir="build" includes="**">
         	<include name="**/*.class"/>
-                <exclude name="**/CVS"/>
-                <exclude name="**/.svn"/>
                 <exclude name="**/.git"/>
             </fileset>
         </jar>
