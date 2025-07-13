@@ -787,7 +787,10 @@ static void pdb_rpc_timeout(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	cfg_set_now_int(ctx, &gname, NULL, &vname, new_val);
+	if(cfg_set_now_int(ctx, &gname, NULL, &vname, new_val)) {
+		rpc->fault(ctx, 500, "Failed to set the new value");
+		return;
+	}
 }
 
 static void pdb_rpc_activate(rpc_t *rpc, void *ctx)
