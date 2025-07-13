@@ -434,7 +434,7 @@ Compile:
   * make
      or gmake on non-Linux systems
   * make modules
-     or make modules exclude_modules="CVS print" etc.
+     or make modules exclude_modules="acc_json print" etc.
 
 Other Make Targets:
 -------------------
