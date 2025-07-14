@@ -348,6 +348,21 @@ Chapter 1. Admin Guide
    module parameter) is added as value to peer_tag AVP if peer_tag_avp
    module parameter has been defined.
 
+Note
+
+   Starting with Kamailio version 6.1.x, the allow_address() function and
+   its related functions use the Longest Prefix Match (LPM) method to find
+   matching entries.
+
+   This means the _group variants will now return the most specific
+   (longest) subnet match, instead of the first match (which was
+   previously the entry with the lowest group ID). This LPM behavior is
+   now consistent across the following functions:
+     * allow_address()
+     * allow_source_address()
+     * allow_source_address_group()
+     * allow_address_group()
+
 1.5. Trusted Requests
 
    The module can be used to determine if an incoming request can be
@@ -1013,6 +1028,10 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
    any port. The “group_id” argument can be an integer string or a pseudo
    variable.
 
+Note
+
+   See Address permissions for more details.
+
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1.35. allow_address() usage
@@ -1035,6 +1054,10 @@ if (!allow_address("2", "$avp(dst_adr)", "$avp(dst_port)") {
    Equal to “allow_address(group_id, "$si", "$sp")”. If 'group_id' is
    missing, the function is equal to allow_address("1", "$si", "$sp").
 
+Note
+
+   See Address permissions for more details.
+
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1.36. allow_source_address(group_id) usage
@@ -1051,6 +1074,11 @@ if (!allow_source_address("1")) {
    Checks if source address/port is found in cached address or subnet
    table in any group. If yes, returns that group. If not returns -1. Port
    value 0 in cached address and group table matches any port.
+
+Note
+
+   See Address permissions for more details on how searching is
+   implemented.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -1069,6 +1097,11 @@ if ($var(group) != -1) {
    any group. If yes, returns that group. If not returns -1. Port value 0
    in cached address and group table matches any port. The parameters can
    be pseudo-variables.
+
+Note
+
+   See Address permissions for more details on how searching is
+   implemented.
 
    This function can be used from ANY_ROUTE.
 
