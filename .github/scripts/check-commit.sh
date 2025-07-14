@@ -47,6 +47,18 @@ check_subject() {
     return
   fi
 
+  # file (e.g., ChangeLog, etc/kamailio.cfg)
+  if [ -f "${prefix}" ] ; then
+    echo "[${commit}] prefix is a file in the repo, OK[${prefix}]"
+    return
+  fi
+
+  # shortcut to src/ file (e.g., src/Makefile.defs)
+  if [ -f "src/${prefix}" ] ; then
+    echo "[${commit}] prefix is a file in the src repo, OK[${prefix}]"
+    return
+  fi
+
   # github configs
   if [[ "${prefix}" =~ ^github$ ]] ; then
     echo "[${commit}] prefix is github config, OK[${prefix}]"
