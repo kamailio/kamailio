@@ -622,6 +622,8 @@ typedef struct tm_rpc_uac_attrs
 	int reply_wait;
 	int cbflags;
 	int rpflags;
+	unsigned int fr_timeout;
+	unsigned int fr_inv_timeout;
 } tm_rpc_uac_attrs_t;
 
 /** rpc t_uac with attributes
@@ -804,6 +806,8 @@ static void rpc_t_uac_attrs_helper(
 		uac_req.cb_flags = TMCB_LOCAL_COMPLETED;
 	}
 	uac_req.cb_flags |= tattrs->cbflags;
+	uac_req.fr_timeout = tattrs->fr_timeout;
+	uac_req.fr_inv_timeout = tattrs->fr_inv_timeout;
 
 	ret = t_uac(&uac_req);
 
@@ -1059,6 +1063,12 @@ void rpc_t_uac_attrs(rpc_t *rpc, void *c)
 					  && strncasecmp(pit->name.s, "rpflags", 7) == 0) {
 				str2sint(&pit->body, &ival);
 				tattrs.rpflags |= ival;
+			} else if(pit->name.len == 10
+					  && strncasecmp(pit->name.s, "fr_timeout", 10) == 0) {
+				str2int(&pit->body, &tattrs.fr_timeout);
+			} else if(pit->name.len == 14
+					  && strncasecmp(pit->name.s, "fr_inv_timeout", 14) == 0) {
+				str2int(&pit->body, &tattrs.fr_inv_timeout);
 			} else {
 				LM_ERR("unknown attribute provided\n");
 			}
