@@ -3341,6 +3341,9 @@ reply_route {
        "noack" - to not automatically send ACK for local INVITE requests
      * rpflags - RPC parameters flags. The values can be: 1 - the body is
        hexa-encoded value.
+     * fr_timeout - the fr_timeout value for the local transaction.
+     * fr_inv_timeout - the fr_inv_timeout value for the local
+       transaction.
 
    Example 1.113. Using “tm.t_uac_attrs”
 ...
