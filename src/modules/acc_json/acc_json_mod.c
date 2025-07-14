@@ -99,6 +99,7 @@ str cdr_q_name = {0, 0};
 static char *cdr_log_facility_str = 0;
 static char *cdr_json_pre_encoded_prefix_str = 0;
 str cdr_json_pre_encoded_prefix = {0, 0};
+str acc_json_cdr_skip = {NULL, 0};
 
 static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 
@@ -118,6 +119,7 @@ static param_export_t params[] = {{"acc_flag", PARAM_INT, &acc_flag},
 		{"cdr_pre_encoded_prefix", PARAM_STRING,
 				&cdr_json_pre_encoded_prefix_str},
 		{"cdr_enable", PARAM_INT, &cdr_enable},
+		{"cdr_skip", PARAM_STR, &acc_json_cdr_skip},
 		{"cdr_expired_dlg_enable", PARAM_INT, &cdr_expired_dlg_enable},
 		{"cdr_log_level", PARAM_INT, &cdr_log_level},
 		{"cdr_log_facility", PARAM_STRING, &cdr_log_facility_str},
@@ -452,7 +454,19 @@ int cdr_json_write(struct dlg_cell *dlg, struct sip_msg *req, cdr_info_t *inf)
 	int extra_cnt = 0;
 	int core_cnt = 0;
 
-	json_t *object = json_object();
+	json_t *object = NULL;
+
+	/* Skip cdr if cdr_skip dlg_var exists */
+	if(acc_json_cdr_skip.len > 0) {
+		str nocdr_val = {0};
+		dlgb.get_dlg_varval(dlg, &acc_json_cdr_skip, &nocdr_val);
+		if(nocdr_val.s) {
+			LM_DBG("cdr_skip dlg_var set, skip cdr!");
+			return 0;
+		}
+	}
+
+	object = json_object();
 
 	/* get default values */
 	core_cnt = accb.get_core_cdr_attrs(dlg, inf->varr, inf->iarr, inf->tarr);

@@ -348,6 +348,24 @@ modparam("acc_json", "cdr_enable", 1)
 		</example>
 	</section>
 
+	<section id="acc_json.p.cdr_skip">
+		<title><varname>cdr_skip</varname> (string)</title>
+		<para>
+		Skip cdr generation for dialogs with this dlg_var set.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>cdr_skip example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "cdr_skip", "nocdr")
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="acc.p.cdr_extra">
 		<title><varname>cdr_extra</varname> (str)</title>
 		<para>
