@@ -201,6 +201,14 @@
 				<emphasis>rpflags</emphasis> - RPC parameters flags. The values
 				can be: 1 - the body is hexa-encoded value.
 			</para></listitem>
+			<listitem><para>
+				<emphasis>fr_timeout</emphasis> - the fr_timeout value for the
+				local transaction.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>fr_inv_timeout</emphasis> - the fr_inv_timeout value
+				for the local transaction.
+			</para></listitem>
 		</itemizedlist>
 		<example>
 		<title>Using <quote>tm.t_uac_attrs</quote></title>
