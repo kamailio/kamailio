@@ -224,14 +224,16 @@
 		<note>
 		<para>
 			Starting with Kamailio version 6.1.x, the <function>allow_address()</function>
-			function and its related functions use the Longest Prefix Match (LPM) method to
-			find matching entries.
+			its related functions can do First Prefix Match (FPM) or the
+			Longest Prefix Match (LPM) methods to find the subnet matching record,
+			which can set the tag variable. The matching method is controled by
+			the parameter subnet_match_mode.
 		</para>
 		<para>
-			This means the <function>_group</function> variants will now return the most specific
-			(longest) subnet match, instead of the first match (which was previously the entry with
-			the lowest group ID).
-			This LPM behavior is now consistent across the following functions:
+			Th LPM means the <function>_group</function> variants will now return
+			the most specific (longest) subnet match, instead of the first match
+			(which was previously the entry with the lowest group ID).
+			The FPM/LPM behavior is now consistent across the following functions:
 		</para>
 		<itemizedlist>
 			<listitem><para><function>allow_address()</function></para></listitem>
@@ -841,6 +843,28 @@ modparam("permissions", "peer_tag_mode", 1)
 		<programlisting format="linespecific">
 ...
 modparam("permissions", "max_subnets", 1024)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id ="permissions.p.subnet_match_mode">
+		<title><varname>subnet_match_mode</varname> (int)</title>
+		<para>
+			Control how subnet addresses are matched: 0 - return on the first
+			prefix match; 1 - return on the longest prefix match. It impacts
+			functions like allow_source_address(), allow_address(),
+			allow_source_address_group() or allow_address_group().
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>subnet_match_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "subnet_match_mode", 1)
 ...
 </programlisting>
 		</example>
