@@ -63,12 +63,49 @@
 		<title><varname>server</varname> (str)</title>
 		<para>
 			Specify the details to connect to REDIS server. It takes a list of attribute=value
-			separated by semicolon, the attributes can be name, unix, addr, port, db, pass and tls. Name
-			is a generic identifier to be used with module functions. unix is the path to the unix
-			domain socket provided by redis server. addr and port are the IP address and the port to
-			connect to REDIS server. pass is the server password. tls is to enable TLS connectivity.
-            unix and (addr, port) are mutually exclusive.  If both appear in same server settings unix
-            domain socket is configured.  db is the DB number to use (defaults to 0 if not specified).
+			separated by semicolon, the attributes can be:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			name - is a generic identifier to be used with module functions.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			unix - is the path to the unix domain socket to connect to REDIS server.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			addr - is the IP address to connect to REDIS server.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			port - is the port to connect to REDIS server.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			db - is the DB number to use (defaults to 0 if not specified).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			pass - is the server password.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			tls - is to enable TLS connectivity.
+			</para>
+		</listitem>
+		</itemizedlist>
+
+		<para>
+			Thr unix and (addr, port) are mutually exclusive, if both appear in
+			same server settings unix domain socket is configured.
 		</para>
 		<para>
 			You can set this parameter many times, in case you want to connect to
@@ -76,8 +113,9 @@
 			server name when querying the REDIS instance.
 		</para>
 		<para>
-			If tls is enabled, the module will validate the REDIS server certificate against the
-			ca_path. There is currently no way to connect with a specified client certificate, the
+			If tls is enabled, the module will validate the REDIS server certificate
+			against the ca_path. There is currently no way to connect with
+			a specified client certificate, the
 			<ulink url="https://redis.io/docs/management/security/encryption/#client-certificate-authentication">corresponding configuration</ulink>
 			to check client certificates in the REDIS server must therefore be turned off.
 		</para>
@@ -98,11 +136,12 @@ modparam("ndb_redis", "server", "name=srvY;addr=127.0.0.3;port=6379;db=5;pass=my
 modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
 
 # sentinel (for a redis slave)
-modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;sentinel_master=0;sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
+modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;sentinel_master=0;"
+    "sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
 
 # sentinel (for a redis master)
-modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;sentinel_master=1;sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
-
+modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;sentinel_master=1;"
+    "sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
 ...
 </programlisting>
 		</example>
@@ -567,4 +606,3 @@ free reply data:
 	</section>
 	</section>
 </chapter>
-
