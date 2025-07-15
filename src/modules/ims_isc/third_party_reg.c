@@ -483,7 +483,7 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires)
 	LM_DBG("BODY TYPE(3rd PARTY REGISTER):<%d>\n", r->body.content_type);
 	if(r->body.content_type != CT_NONE) {
 		if(r->body.content_type == CT_SERVICE_INFO) {
-			LM_ERR("BODY (3rd PARTY REGISTER) \"SI\": <%.*s>\n",
+			LM_DBG("BODY (3rd PARTY REGISTER) \"SI\": <%.*s>\n",
 					r->body.content.len, r->body.content.s);
 			b.len = body_s.len + r->body.content.len + body_e.len;
 			b.s = pkg_malloc(b.len);
@@ -501,7 +501,7 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires)
 			STR_APPEND(h, ct_service_info);
 			STR_APPEND(h, content_type_e);
 		} else if(r->body.content_type == CT_REGISTER_REQ) {
-			LM_ERR("BODY (3rd PARTY REGISTER) \"REQ\": <%.*s>\n",
+			LM_DBG("BODY (3rd PARTY REGISTER) \"REQ\": <%.*s>\n",
 					r->body.content.len, r->body.content.s);
 			b.len = r->body.content.len;
 			b.s = pkg_malloc(b.len);
@@ -517,7 +517,7 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires)
 			STR_APPEND(h, ct_register_req);
 			STR_APPEND(h, content_type_e);
 		} else if(r->body.content_type == CT_REGISTER_RESP) {
-			LM_ERR("BODY (3rd PARTY REGISTER) \"RESP\": <%.*s>\n",
+			LM_DBG("BODY (3rd PARTY REGISTER) \"RESP\": <%.*s>\n",
 					r->body.content.len, r->body.content.s);
 			b.len = r->body.content.len;
 			b.s = pkg_malloc(b.len);
