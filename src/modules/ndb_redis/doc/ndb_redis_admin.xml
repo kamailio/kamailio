@@ -101,6 +101,16 @@
 			tls - is to enable TLS connectivity.
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+			connect_timeout - is to set connect timeout to REDIS server.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			command_timeout - is to set command timeout to REDIS server.
+			</para>
+		</listitem>
 		</itemizedlist>
 
 		<para>
