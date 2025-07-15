@@ -154,15 +154,20 @@ Chapter 1. Admin Guide
 3.1. server (str)
 
    Specify the details to connect to REDIS server. It takes a list of
-   attribute=value separated by semicolon, the attributes can be name,
-   unix, addr, port, db, pass and tls. Name is a generic identifier to be
-   used with module functions. unix is the path to the unix domain socket
-   provided by redis server. addr and port are the IP address and the port
-   to connect to REDIS server. pass is the server password. tls is to
-   enable TLS connectivity. unix and (addr, port) are mutually exclusive.
-   If both appear in same server settings unix domain socket is
-   configured. db is the DB number to use (defaults to 0 if not
-   specified).
+   attribute=value separated by semicolon, the attributes can be:
+     * name - is a generic identifier to be used with module functions.
+     * unix - is the path to the unix domain socket to connect to REDIS
+       server.
+     * addr - is the IP address to connect to REDIS server.
+     * port - is the port to connect to REDIS server.
+     * db - is the DB number to use (defaults to 0 if not specified).
+     * pass - is the server password.
+     * tls - is to enable TLS connectivity.
+     * connect_timeout - is to set connect timeout to REDIS server.
+     * command_timeout - is to set command timeout to REDIS server.
+
+   Thr unix and (addr, port) are mutually exclusive, if both appear in
+   same server settings unix domain socket is configured.
 
    You can set this parameter many times, in case you want to connect to
    many REDIS servers, just give different attributes and use the specific
@@ -189,12 +194,13 @@ modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
 
 # sentinel (for a redis slave)
 modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;sentinel_ma
-ster=0;sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
+ster=0;"
+    "sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
 
 # sentinel (for a redis master)
 modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;sentinel_ma
-ster=1;sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
-
+ster=1;"
+    "sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
 ...
 
 3.2. init_without_redis (integer)
