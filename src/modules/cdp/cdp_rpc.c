@@ -99,6 +99,7 @@ static void cdp_rpc_list_peers(rpc_t *rpc, void *ctx)
 			rpc->fault(
 					ctx, 500, "Internal error creating peers container struct");
 			lock_release(i->lock);
+			lock_release(peer_list_lock);
 			return;
 		}
 		if(rpc->struct_add(peerdetail_container, "ssL", "State",
@@ -109,6 +110,7 @@ static void cdp_rpc_list_peers(rpc_t *rpc, void *ctx)
 			rpc->fault(ctx, 500,
 					"Internal error creating peer detail container struct");
 			lock_release(i->lock);
+			lock_release(peer_list_lock);
 			return;
 		}
 		if(rpc->struct_add(peerdetail_container, "{", "Applications",
@@ -118,6 +120,7 @@ static void cdp_rpc_list_peers(rpc_t *rpc, void *ctx)
 					"Internal error creating peer application container "
 					"struct");
 			lock_release(i->lock);
+			lock_release(peer_list_lock);
 			return;
 		}
 
@@ -130,6 +133,7 @@ static void cdp_rpc_list_peers(rpc_t *rpc, void *ctx)
 				rpc->fault(ctx, 500,
 						"Internal error creating appid/vendorid information");
 				lock_release(i->lock);
+				lock_release(peer_list_lock);
 				return;
 			}
 		}
