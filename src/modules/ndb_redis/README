@@ -184,23 +184,21 @@ Chapter 1. Admin Guide
    Example 1.1. Set server parameter
 ...
 modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379;db=1")
-modparam("ndb_redis", "server", "name=srvX;addr=127.0.0.2;port=6379;db=4;pass=my
-password")
-modparam("ndb_redis", "server", "name=srvY;addr=127.0.0.3;port=6379;db=5;pass=my
-password;tls=1")
+modparam("ndb_redis", "server", "name=srvX;addr=127.0.0.2;port=6379;db=4;"
+    "pass=mypassword")
+modparam("ndb_redis", "server", "name=srvY;addr=127.0.0.3;port=6379;db=5;"
+    "pass=mypassword;tls=1")
 
 # Unix domain socket
 modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
 
 # sentinel (for a redis slave)
-modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;sentinel_ma
-ster=0;"
-    "sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
+modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;"
+    "sentinel_master=0;sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
 
 # sentinel (for a redis master)
-modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;sentinel_ma
-ster=1;"
-    "sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
+modparam("ndb_redis", "server", "name=srvZ;sentinel_group=group_name;"
+    "sentinel_master=1;sentinel=1.2.3.4:26379;sentinel=1.2.3.5:26379")
 ...
 
 3.2. init_without_redis (integer)
