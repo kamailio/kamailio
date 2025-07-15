@@ -97,6 +97,7 @@ time_t *perm_rpc_reload_time = NULL;
 int _perm_max_subnets = 512;
 
 int _perm_load_backends = 0xFFFF;
+int _perm_subnet_match_mode = 0;
 
 /*
  * Convert the name of the files into table index
@@ -198,6 +199,7 @@ static param_export_t params[] = {
 	{"mask_col", PARAM_STR, &perm_mask_col},
 	{"port_col", PARAM_STR, &perm_port_col},
 	{"max_subnets", PARAM_INT, &_perm_max_subnets},
+	{"subnet_match_mode", PARAM_INT, &_perm_subnet_match_mode},
 	{"load_backends", PARAM_INT, &_perm_load_backends},
 	{"reload_delta", PARAM_INT, &perm_reload_delta},
 	{"trusted_cleanup_interval", PARAM_INT, &perm_trusted_table_interval},

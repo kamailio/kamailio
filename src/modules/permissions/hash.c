@@ -47,6 +47,7 @@ extern int perm_peer_tag_mode;
 
 
 extern int _perm_max_subnets;
+extern int _perm_subnet_match_mode;
 
 #define PERM_MAX_SUBNETS _perm_max_subnets
 
@@ -719,6 +720,10 @@ int match_subnet_table(struct subnet *table, unsigned int grp, ip_addr_t *addr,
 				best_mask = table[i].mask;
 				best_idx = i;
 			}
+			if(_perm_subnet_match_mode == 0) {
+				/* use the first match */
+				break;
+			}
 		}
 		i++;
 	}
@@ -761,6 +766,10 @@ int find_group_in_subnet_table(
 			if(table[i].mask > best_mask) {
 				best_mask = table[i].mask;
 				best_idx = i;
+			}
+			if(_perm_subnet_match_mode == 0) {
+				/* use the first match */
+				break;
 			}
 		}
 		i++;
