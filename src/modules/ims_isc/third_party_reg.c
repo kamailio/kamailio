@@ -166,7 +166,7 @@ int build_p_associated_uri(ims_subscription *s)
 		if(!p_associated_uri.buf) {
 			p_associated_uri.data_len = 0;
 			p_associated_uri.buf_len = 0;
-			LM_ERR("no pkg memory left\n");
+			PKG_MEM_ERROR;
 			return -1;
 		} else {
 			p_associated_uri.buf_len = p_associated_uri.data_len;
@@ -382,8 +382,7 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires)
 	str b = {0, 0};
 	uac_req_t req;
 
-	LM_DBG("r_send_third_party_reg: REGISTER to <%.*s>\n", r->req_uri.len,
-			r->req_uri.s);
+	LM_DBG("REGISTER to <%.*s>\n", r->req_uri.len, r->req_uri.s);
 
 	h.len = event_hdr.len + max_fwds_hdr.len;
 	h.len += expires_s.len + 12 + expires_e.len;
@@ -430,7 +429,7 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires)
 
 	h.s = pkg_malloc(h.len);
 	if(!h.s) {
-		LM_ERR("r_send_third_party_reg: Error allocating %d bytes\n", h.len);
+		PKG_MEM_ERROR;
 		h.len = 0;
 		return 0;
 	}
@@ -488,8 +487,7 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires)
 			b.len = body_s.len + r->body.content.len + body_e.len;
 			b.s = pkg_malloc(b.len);
 			if(!b.s) {
-				LM_ERR("r_send_third_party_reg: Error allocating %d bytes\n",
-						b.len);
+				PKG_MEM_ERROR;
 				b.len = 0;
 				goto error;
 			}
@@ -506,8 +504,7 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires)
 			b.len = r->body.content.len;
 			b.s = pkg_malloc(b.len);
 			if(!b.s) {
-				LM_ERR("r_send_third_party_reg: Error allocating %d bytes\n",
-						b.len);
+				PKG_MEM_ERROR;
 				b.len = 0;
 				goto error;
 			}
@@ -522,8 +519,7 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires)
 			b.len = r->body.content.len;
 			b.s = pkg_malloc(b.len);
 			if(!b.s) {
-				LM_ERR("r_send_third_party_reg: Error allocating %d bytes\n",
-						b.len);
+				PKG_MEM_ERROR;
 				b.len = 0;
 				goto error;
 			}
@@ -539,7 +535,7 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires)
 			TMCB_RESPONSE_IN | TMCB_ON_FAILURE | TMCB_LOCAL_COMPLETED,
 			r_third_party_reg_response, &(r->req_uri));
 	if(isc_tmb.t_request(&req, &(r->req_uri), &(r->to), &(r->from), 0) < 0) {
-		LM_ERR("r_send_third_party_reg: Error sending in transaction\n");
+		LM_ERR("Error sending in transaction\n");
 		goto error;
 	}
 	if(h.s)
@@ -566,9 +562,9 @@ error:
 void r_third_party_reg_response(
 		struct cell *t, int type, struct tmcb_params *ps)
 {
-	LM_DBG("r_third_party_reg_response: code %d\n", ps->code);
+	LM_DBG("code %d\n", ps->code);
 	if(!ps->rpl) {
-		LM_ERR("r_third_party_reg_response: No reply\n");
+		LM_ERR("No reply\n");
 		return;
 	}
 
@@ -579,6 +575,6 @@ void r_third_party_reg_response(
 			return;
 	} else if(ps->code == 404) {
 	} else {
-		LM_DBG("r_third_party_reg_response: code %d\n", ps->code);
+		LM_DBG("code %d\n", ps->code);
 	}
 }
