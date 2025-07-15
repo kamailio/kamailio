@@ -81,6 +81,8 @@ typedef struct redisc_server
 {
 	str *sname;
 	unsigned int hname;
+	int connect_timeout;
+	int command_timeout;
 	param_t *attrs;
 	char *spec;
 	redisContext *ctxRedis;

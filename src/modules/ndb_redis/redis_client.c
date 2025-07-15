@@ -92,14 +92,8 @@ int redisc_init(void)
 	int i, row;
 	redisc_server_t *rsrv = NULL;
 	param_t *pit = NULL;
-	struct timeval tv_conn;
-	struct timeval tv_cmd;
-
-	tv_conn.tv_sec = (int)redis_connect_timeout_param / 1000;
-	tv_conn.tv_usec = (int)(redis_connect_timeout_param % 1000) * 1000;
-
-	tv_cmd.tv_sec = (int)redis_cmd_timeout_param / 1000;
-	tv_cmd.tv_usec = (int)(redis_cmd_timeout_param % 1000) * 1000;
+	struct timeval tv_conn = {0};
+	struct timeval tv_cmd = {0};
 
 	if(_redisc_srv_list == NULL) {
 		LM_ERR("no redis servers defined\n");
@@ -118,6 +112,21 @@ int redisc_init(void)
 		memset(addr, 0, sizeof(addr));
 		memset(pass, 0, sizeof(pass));
 		memset(unix_sock_path, 0, sizeof(unix_sock_path));
+
+		if(rsrv->connect_timeout > 0) {
+			tv_conn.tv_sec = (long)(rsrv->connect_timeout / 1000);
+			tv_conn.tv_usec = (int)(rsrv->connect_timeout % 1000) * 1000;
+		} else {
+			tv_conn.tv_sec = (long)(redis_connect_timeout_param / 1000);
+			tv_conn.tv_usec = (int)(redis_connect_timeout_param % 1000) * 1000;
+		}
+		if(rsrv->command_timeout > 0) {
+			tv_cmd.tv_sec = (long)(rsrv->command_timeout / 1000);
+			tv_cmd.tv_usec = (int)(rsrv->command_timeout % 1000) * 1000;
+		} else {
+			tv_cmd.tv_sec = (long)(redis_cmd_timeout_param / 1000);
+			tv_cmd.tv_usec = (int)(redis_cmd_timeout_param % 1000) * 1000;
+		}
 
 		for(pit = rsrv->attrs; pit; pit = pit->next) {
 			if(pit->name.len == 4 && strncmp(pit->name.s, "unix", 4) == 0) {
@@ -408,7 +417,12 @@ int redisc_add_server(char *spec)
 		if(pit->name.len == 4 && strncmp(pit->name.s, "name", 4) == 0) {
 			rsrv->sname = &pit->body;
 			rsrv->hname = get_hash1_raw(rsrv->sname->s, rsrv->sname->len);
-			break;
+		} else if(pit->name.len == 15
+				  && strncmp(pit->name.s, "connect_timeout", 15) == 0) {
+			str2sint(&pit->body, &rsrv->connect_timeout);
+		} else if(pit->name.len == 15
+				  && strncmp(pit->name.s, "command_timeout", 15) == 0) {
+			str2sint(&pit->body, &rsrv->command_timeout);
 		}
 	}
 	if(rsrv->sname == NULL) {
@@ -470,11 +484,20 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 	struct timeval tv_conn;
 	struct timeval tv_cmd;
 
-	tv_conn.tv_sec = (int)redis_connect_timeout_param / 1000;
-	tv_conn.tv_usec = (int)(redis_connect_timeout_param % 1000) * 1000;
-
-	tv_cmd.tv_sec = (int)redis_cmd_timeout_param / 1000;
-	tv_cmd.tv_usec = (int)(redis_cmd_timeout_param % 1000) * 1000;
+	if(rsrv->connect_timeout > 0) {
+		tv_conn.tv_sec = (long)(rsrv->connect_timeout / 1000);
+		tv_conn.tv_usec = (int)(rsrv->connect_timeout % 1000) * 1000;
+	} else {
+		tv_conn.tv_sec = (long)(redis_connect_timeout_param / 1000);
+		tv_conn.tv_usec = (int)(redis_connect_timeout_param % 1000) * 1000;
+	}
+	if(rsrv->command_timeout > 0) {
+		tv_cmd.tv_sec = (long)(rsrv->command_timeout / 1000);
+		tv_cmd.tv_usec = (int)(rsrv->command_timeout % 1000) * 1000;
+	} else {
+		tv_cmd.tv_sec = (long)(redis_cmd_timeout_param / 1000);
+		tv_cmd.tv_usec = (int)(redis_cmd_timeout_param % 1000) * 1000;
+	}
 
 	memset(addr, 0, sizeof(addr));
 	port = 6379;
