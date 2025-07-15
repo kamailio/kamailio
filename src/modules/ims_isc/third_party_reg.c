@@ -182,30 +182,29 @@ int build_p_associated_uri(ims_subscription *s)
 	for(i = 0; i < s->service_profiles_cnt; i++)
 		for(j = 0; j < s->service_profiles[i].public_identities_cnt; j++) {
 			id = &(s->service_profiles[i].public_identities[j]);
-			if(!id->barring
-					&& !(strncmp(id->public_identity.s, "tel", 3) == 0)) {
-				if(cnt == 0 && cnttel == 0) {
-					*p++ = '<';
-				} else if(cnttel != 0 && cnt == 0) {
-					memcpy(p, ", <", 3);
-					p += 3;
+			if(!id->barring) {
+				if(strncmp(id->public_identity.s, "tel", 3) == 0) {
+					if(cnttel != 0 || cnt != 0) {
+						memcpy(p, ">, <", 4);
+						p += 4;
+					}
+					memcpy(p, id->public_identity.s, id->public_identity.len);
+					p += id->public_identity.len;
+					cnttel++;
 				} else {
-					memcpy(p, ">, <", 4);
-					p += 4;
+					if(cnt == 0 && cnttel == 0) {
+						*p++ = '<';
+					} else if(cnttel != 0 && cnt == 0) {
+						memcpy(p, ", <", 3);
+						p += 3;
+					} else {
+						memcpy(p, ">, <", 4);
+						p += 4;
+					}
+					memcpy(p, id->public_identity.s, id->public_identity.len);
+					p += id->public_identity.len;
+					cnt++;
 				}
-				memcpy(p, id->public_identity.s, id->public_identity.len);
-				p += id->public_identity.len;
-				cnt++;
-			} else if(!id->barring
-					  && strncmp(id->public_identity.s, "tel", 3) == 0) {
-
-				if(cnttel != 0 || cnt != 0) {
-					memcpy(p, ", ", 2);
-					p += 2;
-				}
-				memcpy(p, id->public_identity.s, id->public_identity.len);
-				p += id->public_identity.len;
-				cnttel++;
 			}
 		}
 	if(cnt)
