@@ -40,7 +40,7 @@ Andrei Pelinescu-Onciul
               4.7. mt.mem_test_destroy id
               4.8. mt.mem_test_destroy_all id
               4.9. mt.mem_test_list [id] [unit]
-              4.10. mt.lock_test
+              4.10. mt.lock_test [executions]
 
    List of Examples
 
@@ -97,7 +97,7 @@ Chapter 1. Admin Guide
         4.7. mt.mem_test_destroy id
         4.8. mt.mem_test_destroy_all id
         4.9. mt.mem_test_list [id] [unit]
-        4.10. mt.lock_test
+        4.10. mt.lock_test [executions]
 
 1. Overview
 
@@ -256,7 +256,7 @@ mt_lock_test(100000000);
    4.7. mt.mem_test_destroy id
    4.8. mt.mem_test_destroy_all id
    4.9. mt.mem_test_list [id] [unit]
-   4.10. mt.lock_test
+   4.10. mt.lock_test [executions]
 
 4.1.  mt.mem_alloc size [unit]
 
@@ -267,7 +267,7 @@ mt_lock_test(100000000);
      * m - MB
      * g - GB
 
-   Example 1.11. mt.mem_alloc usage
+   Example 1.11.  mt.mem_alloc usage
  $ kamcmd mt.mem_alloc 10 k
 
 4.2.  mt.mem_free [size] [unit]
@@ -283,7 +283,7 @@ mt_lock_test(100000000);
      * m - MB
      * g - GB
 
-   Example 1.12. mt.mem_free usage
+   Example 1.12.  mt.mem_free usage
  $ kamcmd mt.mem_free 1 m
 
 4.3.  mt.mem_used [unit]
@@ -297,17 +297,17 @@ mt_lock_test(100000000);
      * m - MB
      * g - GB
 
-   Example 1.13. mt.mem_used usage
+   Example 1.13.  mt.mem_used usage
  $ kamcmd mt.mem_used
 9221460
 
-4.4. mt.mem_rnd_alloc min max total [unit]
+4.4.  mt.mem_rnd_alloc min max total [unit]
 
    Allocates total_size memory, in pieces of random size between min ..
    max (inclusive). unit is optional and represents the unit for all the
    given sizes (see above).
 
-   Example 1.14. mt.mem_rnd_alloc usage
+   Example 1.14.  mt.mem_rnd_alloc usage
  $ kamcmd mt.mem_rnd_alloc 1 64 10240 k
 
 4.5.  mt.mem_test_start min max total min_int max_int total_time [unit]
@@ -324,7 +324,7 @@ mt_lock_test(100000000);
 
    Returns the test id.
 
-   Example 1.15. mt.mem_test_start usage
+   Example 1.15.  mt.mem_test_start usage
  $ kamcmd mt.mem_test_start 15 64 25000 128 1500 3600000 k
 1
 
@@ -332,7 +332,7 @@ mt_lock_test(100000000);
 
    Stops the test identified by id.
 
-   Example 1.16. mt.mem_test_stop usage
+   Example 1.16.  mt.mem_test_stop usage
  $ kamcmd mt.mem_test_stop 1
 
 4.7.  mt.mem_test_destroy id
@@ -340,14 +340,14 @@ mt_lock_test(100000000);
    Destroys the test identified by id (besides stopping it, it also frees
    all the data, including the statistics).
 
-   Example 1.17. mt.mem_test_destroy usage
+   Example 1.17.  mt.mem_test_destroy usage
  $ kamcmd mt.mem_test_destroy 1
 
 4.8.  mt.mem_test_destroy_all id
 
    Destroys all the running or stopped tests.
 
-   Example 1.18. mt.mem_test_destroy_all usage
+   Example 1.18.  mt.mem_test_destroy_all usage
  $ kamcmd mt.mem_test_destroy_all
 
 4.9.  mt.mem_test_list [id] [unit]
@@ -358,7 +358,7 @@ mt_lock_test(100000000);
    unit is optional. The default is is bytes (for all the possible units
    see above).
 
-   Example 1.19. mt.mem_test_list usage
+   Example 1.19.  mt.mem_test_list usage
  $ kamcmd mt.mem_test_list
 {
         ID           : 2
@@ -385,21 +385,19 @@ mt_lock_test(100000000);
         total        : 29696000
 }
 
-4.10. mt.lock_test
+4.10. mt.lock_test [executions]
 
-   The <em>mt.lock_test</em> RPC command performs a lock/unlock stress
-   test using a global lock. It is primarily intended for debugging and
-   performance testing of the locking subsystem.
+   The mt.lock_test RPC command performs a lock/unlock stress test using a
+   global lock. It is primarily intended for debugging and performance
+   testing of the locking subsystem.
 
-   <em>Usage:</em>
+   Usage:
         kamcmd mt.lock_test [executions]
 
-     * <em>executions</em> (optional, integer): Number of times to lock
-       and unlock. Default is 1,000,000,000 if not specified.
+     * executions (integer): Number of times to lock and unlock.
 
-   If the argument is provided, it must be a positive integer. If more
-   than one argument is given, or if the argument is not a positive
-   integer, the command will return an error.
+   If the argument is provided, it must be a positive integer. If if the
+   argument is not a positive integer, the command will return an error.
 
    Example:
         kamcmd mt.lock_test 10000
