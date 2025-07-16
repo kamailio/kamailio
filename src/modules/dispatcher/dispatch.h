@@ -84,6 +84,9 @@
 #define DS_DNS_MODE_TIMER  (1<<2)
 #define DS_DNS_MODE_QSRV   (1<<3)
 
+#define DS_STATE_MODE_SET  1
+#define DS_STATE_MODE_FUNC (1<<1)
+
 /* clang-format on */
 typedef struct ds_rctx
 {

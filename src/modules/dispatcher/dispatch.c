@@ -127,6 +127,7 @@ extern param_t *ds_db_extra_attrs_list;
 extern int ds_load_mode;
 extern uint32_t ds_dns_mode;
 extern int ds_dns_ttl;
+extern int ds_event_callback_mode;
 
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
@@ -3104,7 +3105,7 @@ int ds_mark_dst_mode(struct sip_msg *msg, int state, int mode)
 
 int ds_mark_dst(struct sip_msg *msg, int state)
 {
-	return ds_mark_dst_mode(msg, state, 0);
+	return ds_mark_dst_mode(msg, state, DS_STATE_MODE_SET | DS_STATE_MODE_FUNC);
 }
 
 void latency_stats_init(
@@ -3435,7 +3436,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
 				LM_DBG("destination did not replied %d times, threshold %d\n",
 						idx->dlist[i].probing_count, probing_threshold);
 				/* Destination is not replying.. Increasing failure counter */
-				if((mode == 1)
+				if((mode & DS_STATE_MODE_SET)
 						|| (idx->dlist[i].probing_count >= probing_threshold)) {
 					/* Destination has too many lost messages.. Bringing it to inactive state */
 					idx->dlist[i].flags &= ~DS_TRYING_DST;
@@ -3449,7 +3450,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
 						&& (old_state & DS_INACTIVE_DST)) {
 					idx->dlist[i].probing_count++;
 					/* Destination was inactive but it is just replying.. Increasing successful counter */
-					if((mode == 0)
+					if(((mode & DS_STATE_MODE_SET) == 0)
 							&& (idx->dlist[i].probing_count
 									< inactive_threshold)) {
 						/* Destination has not enough successful replies.. Leaving it into inactive state */
@@ -3473,12 +3474,16 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
 				}
 			}
 
-			if(!ds_skip_dst(old_state) && ds_skip_dst(idx->dlist[i].flags)) {
-				ds_run_route(msg, address, "dispatcher:dst-down", rctx);
+			if((ds_event_callback_mode == 0)
+					|| ((mode & DS_STATE_MODE_FUNC) == 0)) {
+				if(!ds_skip_dst(old_state)
+						&& ds_skip_dst(idx->dlist[i].flags)) {
+					ds_run_route(msg, address, "dispatcher:dst-down", rctx);
 
-			} else {
-				if(ds_skip_dst(old_state) && !ds_skip_dst(idx->dlist[i].flags))
+				} else if(ds_skip_dst(old_state)
+						  && !ds_skip_dst(idx->dlist[i].flags)) {
 					ds_run_route(msg, address, "dispatcher:dst-up", rctx);
+				}
 			}
 			if(idx->dlist[i].attrs.rweight > 0)
 				ds_reinit_rweight_on_state_change(
