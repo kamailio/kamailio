@@ -1073,6 +1073,40 @@ end
 		</example>
 	</section>
 
+	<section id="dispatcher.p.event_callback_mode">
+		<title><varname>event_callback_mode</varname> (int)</title>
+		<para>
+			Controls when the event_route or the KEMI event callback function
+			are executed. If set to 0, they are executed when the destination
+			state changes based on OPTIONS keepalives or the use of config
+			functions to set the state (e.g., ds_mark_dst(...)). If set to 1,
+			they are executed only on state change due to OPTIONS keepalives.
+		</para>
+		<para>
+			Note that event routes are not executed on RPC commands setting
+			the destination state.
+		</para>
+		<para>
+		<emphasis>
+			Default value is '0'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dispatcher", "event_callback_mode", 1)
+...
+-- event callback function implemented in Lua
+function ksr_dispatcher_event(evname)
+	KSR.info("===== dispatcher module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dispatcher.p.ds_attrs_none">
 		<title><varname>ds_attrs_none</varname> (int)</title>
 		<para>
@@ -2634,39 +2668,45 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
         <section id="dispatcher.ex.event_routes">
         <title>Event routes</title>
         <section>
-                <title>
-                <function moreinfo="none">dispatcher:dst-down</function>
-                </title>
-                <para>
+            <title>
+            <function moreinfo="none">dispatcher:dst-down</function>
+            </title>
+            <para>
 			When defined, the module calls event_route[dispatcher:ds-down]
 			when a destination goes down (becomes probing). A typical use
 			case is to update NMC equipment as to the status of a destination.
-                </para>
+            </para>
+            <para>
+            Its execution is controlled by event_callback_mode parameter.
+            </para>
         <programlisting  format="linespecific">
 ...
 event_route[dispatcher:dst-down] {
     xlog("L_ERR", "Destination down: $rm $ru ($du)\n");
 }
 ...
-                </programlisting>
+</programlisting>
 	</section>
         <section>
-                <title>
-                <function moreinfo="none">dispatcher:dst-up</function>
-                </title>
-                <para>
+            <title>
+            <function moreinfo="none">dispatcher:dst-up</function>
+            </title>
+            <para>
 			When defined, the module calls event_route[dispatcher:ds-up]
 			when a destination that was previously down (probing) comes up.
 			A typical use case is to update NMC equipment as to the status
 			of a destination.
-                </para>
+            </para>
+            <para>
+            Its execution is controlled by event_callback_mode parameter.
+            </para>
         <programlisting  format="linespecific">
 ...
 event_route[dispatcher:dst-up] {
     xlog("L_ERR", "Destination up: $rm $ru\n");
 }
 ...
-                </programlisting>
+</programlisting>
     </section>
     </section>
 
