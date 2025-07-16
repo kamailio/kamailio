@@ -69,4 +69,27 @@ mt_tcp_thread_exec("request $rm uri $ru");
 		</example>
 	</section>
 
+	<section id="misctest.mt_lock_test">
+		<title>
+			<function>mt_lock_test(count)</function>
+		</title>
+		<para>
+			Lock and unlock the global lock count times.
+		</para>
+		<note>
+			<para>
+				This is a debugging function for simulating locking and unlocking of global lock.
+				It should not be used in production setups
+			</para>
+		</note>
+		<example>
+			<title>
+				<function>mt_lock_test</function> usage</title>
+			<programlisting>
+...
+mt_lock_test(100000000);
+...
+			</programlisting>
+		</example>
+	</section>
 </section>

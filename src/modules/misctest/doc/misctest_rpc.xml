@@ -220,4 +220,32 @@
 		</example>
 	</section>
 
+	<section id="mt.lock_test">
+		<title>mt.lock_test</title>
+		<para>
+    The <em>mt.lock_test</em> RPC command performs a lock/unlock stress test using a global lock. It is primarily intended for debugging and performance testing of the locking subsystem.
+		</para>
+		<para>
+			<em>Usage:</em>
+			<programlisting>
+        kamcmd mt.lock_test [executions]
+			</programlisting>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<em>executions</em> (optional, integer): Number of times to lock and unlock. Default is 1,000,000,000 if not specified.</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+    If the argument is provided, it must be a positive integer. If more than one argument is given, or if the argument is not a positive integer, the command will return an error.
+		</para>
+		<para>
+    Example:
+			<programlisting>
+        kamcmd mt.lock_test 10000
+			</programlisting>
+    This will perform 10,000 lock/unlock operations.
+		</para>
+	</section>
 </section>
