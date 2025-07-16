@@ -1355,7 +1355,13 @@ static const char *rpc_mt_lock_test_doc[2] = {
 
 static void rpc_mt_lock_test(rpc_t *rpc, void *c)
 {
-	lock_test(1000000000);
+	int executions = 0;
+	int n_args = rpc->scan(c, "d", &executions);
+	if(n_args == 1 && executions < 1) {
+		rpc->fault(c, 400, "Argument must be a positive integer");
+		return;
+	}
+	lock_test(executions);
 	return;
 }
 
