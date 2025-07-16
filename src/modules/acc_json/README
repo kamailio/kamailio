@@ -42,13 +42,14 @@ Julien Chavanton
               3.9. acc_log_facility (integer)
               3.10. acc_log_level (integer)
               3.11. cdr_enable (int)
-              3.12. cdr_extra (str)
-              3.13. cdr_pre_encoded_prefix (string)
-              3.14. cdr_expired_dlg_enable (str)
-              3.15. cdr_output_mqueue (integer)
-              3.16. cdr_output_syslog (integer)
-              3.17. cdr_log_facility (integer)
-              3.18. cdr_log_level (integer)
+              3.12. cdr_skip (string)
+              3.13. cdr_extra (str)
+              3.14. cdr_pre_encoded_prefix (string)
+              3.15. cdr_expired_dlg_enable (str)
+              3.16. cdr_output_mqueue (integer)
+              3.17. cdr_output_syslog (integer)
+              3.18. cdr_log_facility (integer)
+              3.19. cdr_log_level (integer)
 
    List of Examples
 
@@ -63,12 +64,13 @@ Julien Chavanton
    1.9. acc_log_facility example
    1.10. acc_log_level example
    1.11. cdr_enable example
-   1.12. cdr_extra example
-   1.13. cdr_pre_encoded_prefix example
-   1.14. cdr_expired_dlg_enable example
-   1.15. cdr_output_mqueue usage example
-   1.16. cdr_log_facility example
-   1.17. cdr_log_level example
+   1.12. cdr_skip example
+   1.13. cdr_extra example
+   1.14. cdr_pre_encoded_prefix example
+   1.15. cdr_expired_dlg_enable example
+   1.16. cdr_output_mqueue usage example
+   1.17. cdr_log_facility example
+   1.18. cdr_log_level example
 
 Chapter 1. Admin Guide
 
@@ -93,13 +95,14 @@ Chapter 1. Admin Guide
         3.9. acc_log_facility (integer)
         3.10. acc_log_level (integer)
         3.11. cdr_enable (int)
-        3.12. cdr_extra (str)
-        3.13. cdr_pre_encoded_prefix (string)
-        3.14. cdr_expired_dlg_enable (str)
-        3.15. cdr_output_mqueue (integer)
-        3.16. cdr_output_syslog (integer)
-        3.17. cdr_log_facility (integer)
-        3.18. cdr_log_level (integer)
+        3.12. cdr_skip (string)
+        3.13. cdr_extra (str)
+        3.14. cdr_pre_encoded_prefix (string)
+        3.15. cdr_expired_dlg_enable (str)
+        3.16. cdr_output_mqueue (integer)
+        3.17. cdr_output_syslog (integer)
+        3.18. cdr_log_facility (integer)
+        3.19. cdr_log_level (integer)
 
 1. Overview
 
@@ -143,13 +146,14 @@ Chapter 1. Admin Guide
    3.9. acc_log_facility (integer)
    3.10. acc_log_level (integer)
    3.11. cdr_enable (int)
-   3.12. cdr_extra (str)
-   3.13. cdr_pre_encoded_prefix (string)
-   3.14. cdr_expired_dlg_enable (str)
-   3.15. cdr_output_mqueue (integer)
-   3.16. cdr_output_syslog (integer)
-   3.17. cdr_log_facility (integer)
-   3.18. cdr_log_level (integer)
+   3.12. cdr_skip (string)
+   3.13. cdr_extra (str)
+   3.14. cdr_pre_encoded_prefix (string)
+   3.15. cdr_expired_dlg_enable (str)
+   3.16. cdr_output_mqueue (integer)
+   3.17. cdr_output_syslog (integer)
+   3.18. cdr_log_facility (integer)
+   3.19. cdr_log_level (integer)
 
 3.1. acc_flag (integer)
 
@@ -339,25 +343,36 @@ modparam("acc_json", "acc_log_level", 2) # Set acc_log_level to 2 (L_INFO)
 modparam("acc_json", "cdr_enable", 1)
 ...
 
-3.12. cdr_extra (str)
+3.12. cdr_skip (string)
+
+   Skip cdr generation for dialogs with this dlg_var set.
+
+   Default value is NULL.
+
+   Example 1.12. cdr_skip example
+...
+modparam("acc_json", "cdr_skip", "nocdr")
+...
+
+3.13. cdr_extra (str)
 
    Set of pseudo-variables defining custom CDR fields.
 
    Default value is NULL.
 
-   Example 1.12. cdr_extra example
+   Example 1.13. cdr_extra example
 ...
 modparam("acc_json", "cdr_extra", "ci=$dlg_var(call_id);ft=$dlg_var(from_tag)")
 ...
 
-3.13. cdr_pre_encoded_prefix (string)
+3.14. cdr_pre_encoded_prefix (string)
 
    Prefix to identify values that will be considered to be already json
    encoded.
 
    Default value is NULL.
 
-   Example 1.13. cdr_pre_encoded_prefix example
+   Example 1.14. cdr_pre_encoded_prefix example
 ...
 modparam("acc_json", "cdr_extra", "json_data=$avp(json_data);")
 modparam("acc_json", "cdr_pre_encoded_prefix", "json_")
@@ -365,18 +380,18 @@ modparam("acc_json", "cdr_pre_encoded_prefix", "json_")
 $avp(json_data) = '{"b":2, "c":3}';
 ...
 
-3.14. cdr_expired_dlg_enable (str)
+3.15. cdr_expired_dlg_enable (str)
 
    Should CDR-based logging be enabled in case of expired dialogs?
 
    0 - off (default). 1 - on.
 
-   Example 1.14. cdr_expired_dlg_enable example
+   Example 1.15. cdr_expired_dlg_enable example
 ...
 modparam("acc_json", "cdr_expired_dlg_enable", 1)
 ...
 
-3.15. cdr_output_mqueue (integer)
+3.16. cdr_output_mqueue (integer)
 
    Requires the mqueue module. The acc module will queue json cdr events
    in the specified mqueue. Using a rtimer module exec you can access the
@@ -386,7 +401,7 @@ modparam("acc_json", "cdr_expired_dlg_enable", 1)
 
    Default value is not-set mqueue will not be required.
 
-   Example 1.15. cdr_output_mqueue usage example
+   Example 1.16. cdr_output_mqueue usage example
 ...
 # example using json_mqueue/http_client to publish to NSQD
 modparam("mqueue", "mqueue", "name=cdr_events;size=100000")
@@ -423,11 +438,11 @@ ts), "$var(nsq_res)");
 }
 ...
 
-3.16. cdr_output_syslog (integer)
+3.17. cdr_output_syslog (integer)
 
    The acc module will log json cdr events to syslog.
 
-3.17. cdr_log_facility (integer)
+3.18. cdr_log_facility (integer)
 
    Log facility to which accounting messages are issued to syslog. This
    allows to easily separate the accounting specific logging from the
@@ -435,7 +450,7 @@ ts), "$var(nsq_res)");
 
    Default value is LOG_DAEMON.
 
-   Example 1.16. cdr_log_facility example
+   Example 1.17. cdr_log_facility example
 ...
 modparam("acc_json", "cdr_log_facility", "LOG_LOCAL0")
 
@@ -447,13 +462,13 @@ modparam("acc_json", "cdr_log_facility", "LOG_LOCAL0")
 # local0.*                      /var/log/json_cdr.log
 ...
 
-3.18. cdr_log_level (integer)
+3.19. cdr_log_level (integer)
 
    Log level at which accounting messages are issued to syslog.
 
    Default value is 1 (L_NOTICE).
 
-   Example 1.17. cdr_log_level example
+   Example 1.18. cdr_log_level example
 ...
 modparam("acc_json", "cdr_log_level", 2) # Set cdr_log_level to 2 (L_INFO)
 ...
