@@ -139,10 +139,6 @@ static int mod_init(void)
 	}
 
 	if(_crypto_register_callid != 0) {
-		if(crypto_init_callid() < 0) {
-			LM_ERR("failed to init callid callback\n");
-			return -1;
-		}
 		if(crypto_register_callid_func() < 0) {
 			LM_ERR("unable to register callid callback\n");
 			return -1;
@@ -166,11 +162,6 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	if(_crypto_register_callid != 0 && crypto_child_init_callid(rank) < 0) {
-		LM_ERR("failed to register callid callback\n");
-		return -1;
-	}
-
 	return 0;
 }
 

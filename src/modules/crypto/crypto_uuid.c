@@ -82,11 +82,20 @@ static inline int crypto_bytes2hex(
 
 /**
  * \brief Initialize the Call-ID generator
+ * - process initialization, permute seed with pid
  * \return 0 on success, -1 on error
  */
-int crypto_init_callid(void)
+static int _crypto_init_callid_done = 0;
+static int crypto_init_callid(void)
 {
 	static char crypto_callid_seed_str[2 * SEED_LEN] = {0};
+	unsigned int pid = my_pid();
+
+	if(_crypto_init_callid_done == pid) {
+		return 0;
+	}
+	_crypto_init_callid_done = pid;
+
 	if(!(RAND_bytes(crypto_callid_seed, sizeof(crypto_callid_seed)))) {
 		LOG(L_ERR, "ERROR: Unable to get random bytes for Call-ID seed\n");
 		return -1;
@@ -95,29 +104,13 @@ int crypto_init_callid(void)
 			crypto_callid_seed, sizeof(crypto_callid_seed));
 	DBG("Call-ID initialization: '0x%.*s'\n", 2 * SEED_LEN,
 			crypto_callid_seed_str);
-	return 0;
-}
-
-
-/**
- * \brief Child initialization, permute seed with pid
- * \param rank not used
- * \return 0 on success, -1 on error
- */
-int crypto_child_init_callid(int rank)
-{
-	static char crypto_callid_seed_str[2 * SEED_LEN] = {0};
-	unsigned int pid = my_pid();
-	if(SEED_LEN < 2) {
-		LOG(L_CRIT, "BUG: Call-ID seed is too short\n");
-		return -1;
-	}
 	crypto_callid_seed[0] ^= (pid >> 0) % 0xff;
 	crypto_callid_seed[1] ^= (pid >> 8) % 0xff;
 	crypto_bytes2hex(crypto_callid_seed_str, sizeof(crypto_callid_seed_str),
 			crypto_callid_seed, sizeof(crypto_callid_seed));
-	DBG("Call-ID initialization: '0x%.*s'\n", 2 * SEED_LEN,
+	DBG("Call-ID process initialization: '0x%.*s'\n", 2 * SEED_LEN,
 			crypto_callid_seed_str);
+
 	return 0;
 }
 
@@ -187,6 +180,13 @@ void crypto_generate_callid(str *callid)
 	static unsigned char crypto_buf[SHA_DIGEST_LENGTH] = {0};
 	static char crypto_sbuf[UUID_LEN] = {0};
 	crypto_inc_counter(crypto_callid_counter, CTR_LEN);
+
+	if(crypto_init_callid() < 0) {
+		LM_ERR("cannot initialize the seed\n");
+		callid->s = NULL;
+		callid->len = 0;
+		return;
+	}
 
 #if OPENSSL_VERSION_NUMBER > 0x030000000L
 	if((crypto_ctx = EVP_MD_CTX_new()) == NULL) {

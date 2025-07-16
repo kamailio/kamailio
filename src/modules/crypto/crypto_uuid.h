@@ -36,21 +36,6 @@
 
 
 /**
- * \brief Initialize the Call-ID generator
- * \return 0 on success, -1 on error
- */
-int crypto_init_callid(void);
-
-
-/**
- * \brief Child initialization
- * \param rank not used
- * \return 0 on success, -1 on error
- */
-int crypto_child_init_callid(int rank);
-
-
-/**
  * \brief TM API export
  */
 typedef void (*generate_callid_f)(str *);
