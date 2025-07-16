@@ -58,6 +58,7 @@ MODULE_VERSION
 static int mt_mem_alloc_f(struct sip_msg *, char *, char *);
 static int mt_mem_free_f(struct sip_msg *, char *, char *);
 static int mt_tcp_thread_exec_f(sip_msg_t *, char *, char *);
+static int mt_lock_test_f(struct sip_msg *, char *, char *);
 static int mod_init(void);
 static void mod_destroy(void);
 
@@ -75,6 +76,7 @@ static cmd_export_t cmds[]={
 	{"mt_mem_alloc", mt_mem_alloc_f, 1, fixup_var_int_1, 0, ANY_ROUTE},
 	{"mt_mem_free", mt_mem_free_f, 1, fixup_var_int_1, 0, ANY_ROUTE},
 	{"mt_tcp_thread_exec", mt_tcp_thread_exec_f, 1, fixup_spve_null, 0, ANY_ROUTE},
+	{"mt_lock_test", mt_lock_test_f, 1, fixup_var_int_1, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 /* clang-format on */
@@ -965,6 +967,25 @@ static int mem_test_destroy(int id)
 	return -(tst == 0);
 }
 
+
+static int lock_test(int executions)
+{
+	gen_lock_t *my_lock = NULL;
+	my_lock = lock_alloc();
+
+	if(my_lock == NULL) {
+		LM_ERR("Error creating lock\n");
+		return -1;
+	}
+	LM_INFO("Start lock test, %d executions\n", executions);
+	for(int i = 0; i < executions; i++) {
+		lock_get(my_lock);
+		lock_release(my_lock);
+	}
+	LM_INFO("Finished lock test\n");
+	return 0;
+}
+
 /* script functions: */
 
 
@@ -988,6 +1009,16 @@ static int mt_mem_free_f(struct sip_msg *msg, char *sz, char *foo)
 		return -1;
 	freed = mem_unleak(size);
 	return (freed == 0) ? 1 : freed;
+}
+
+
+static int mt_lock_test_f(struct sip_msg *msg, char *sz, char *foo)
+{
+	int size;
+
+	if(sz == 0 || get_int_fparam(&size, msg, (fparam_t *)sz) < 0)
+		return -1;
+	return lock_test(size) >= 0 ? 1 : -1;
 }
 
 
@@ -1319,6 +1350,16 @@ static void rpc_mt_test_list(rpc_t *rpc, void *c)
 }
 
 
+static const char *rpc_mt_lock_test_doc[2] = {
+		"Test a number of locking operations", 0};
+
+static void rpc_mt_lock_test(rpc_t *rpc, void *c)
+{
+	lock_test(1000000000);
+	return;
+}
+
+
 /* clang-format off */
 static rpc_export_t mt_rpc[] = {
 	{"mt.mem_alloc", rpc_mt_alloc, rpc_mt_alloc_doc, 0},
@@ -1332,6 +1373,7 @@ static rpc_export_t mt_rpc[] = {
 	{"mt.mem_test_destroy_all", rpc_mt_test_destroy_all,
 								rpc_mt_test_destroy_all_doc, 0},
 	{"mt.mem_test_list", rpc_mt_test_list, rpc_mt_test_list_doc, 0},
+	{"mt.lock_test", rpc_mt_lock_test, rpc_mt_lock_test_doc, 0},
 	{0, 0, 0, 0}
 };
 /* clang-format on */
