@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module FAQ -->
+
+<chapter>
+	<title>&faqguide;</title>
+	<qandaset defaultlabel="number">
+	
+	<qandaentry>
+		<question>
+		<para>How do I migrate from the traditional auth module to auth_web3?</para>
+		</question>
+		<answer>
+		<para>
+			The auth_web3 module is designed as a drop-in replacement for the traditional auth module.
+			Simply replace <command>loadmodule "auth.so"</command> with <command>loadmodule "auth_web3.so"</command>
+			and replace all <command>modparam("auth", ...)</command> with <command>modparam("auth_web3", ...)</command>
+			and add the required blockchain parameters (or leave the default values):
+		</para>
+		<programlisting>
+modparam("auth_web3", "web3_rpc_url", "https://testnet.sapphire.oasis.dev")
+modparam("auth_web3", "web3_contract_address", "0xYourContractAddress")
+		</programlisting>
+		<para>
+			Your existing authentication function calls remain the same - only the backend changes.
+			Note that the password parameter should be removed from authentication functions since blockchain
+			authentication doesn't use passwords. For example, change:
+		</para>
+		<programlisting>
+# Old auth module usage
+pv_www_authenticate("$fd", "password", "0")
+
+# New auth_web3 module usage  
+pv_www_authenticate("$fd", "0")
+		</programlisting>
+		<para>
+			This applies to <command>pv_www_authenticate</command>, <command>pv_proxy_authenticate</command>,
+			and <command>pv_auth_check</command> functions.
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>Can I use both traditional auth and auth_web3 simultaneously?</para>
+		</question>
+		<answer>
+		<para>
+			No, you should not load both <emphasis>auth</emphasis> and <emphasis>auth_web3</emphasis>
+			modules simultaneously as they use the same function names. The auth_web3 module is designed
+			as a complete replacement for the traditional auth module while maintaining the same API.
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>What happens if the blockchain is unavailable?</para>
+		</question>
+		<answer>
+		<para>
+			If the blockchain RPC endpoint is unavailable, authentication will fail with return code -2.
+			The module includes timeout protection via the <parameter>web3_timeout</parameter> parameter.
+			For production deployments, consider implementing fallback mechanisms or using multiple
+			blockchain RPC endpoints for redundancy.
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>How does performance compare to traditional authentication?</para>
+		</question>
+		<answer>
+		<para>
+			Blockchain authentication adds latency due to network calls to the blockchain RPC endpoint.
+			Typical authentication times are 100-500ms compared to database lookups which are usually
+			under 10ms. Consider using faster blockchain networks or implementing caching mechanisms
+			for repeated authentications.
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>What blockchain networks are supported?</para>
+		</question>
+		<answer>
+		<para>
+			The auth_web3 module is designed specifically for the Oasis Sapphire blockchain network,
+			which supports confidential secret upload functionality required for secure authentication.
+			This includes:
+		</para>
+		<itemizedlist>
+			<listitem><para>Oasis Sapphire testnet</para></listitem>
+			<listitem><para>Oasis Sapphire mainnet</para></listitem>
+		</itemizedlist>
+		<para>
+			Other blockchain networks are not supported as they lack the confidential secret upload
+			capabilities required for secure authentication in this module.
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>Are there any known limitations with blockchain authentication?</para>
+		</question>
+		<answer>
+		<para>
+			The main limitation is dependency on external blockchain network availability and response times.
+			Authentication will fail if the blockchain RPC endpoint is unreachable or if the smart contract
+			is not properly deployed.
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>Where can I find more about &kamailio;?</para>
+		</question>
+		<answer>
+		<para>
+			Take a look at &kamailiohomelink;.
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>Where can I post a question about this module?</para>
+		</question>
+		<answer>
+		<para>
+			First check if your question was already answered on one of our mailing lists:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>User Mailing List - &kamailiouserslink;</para>
+			</listitem>
+			<listitem>
+			<para>Developer Mailing List - &kamailiodevlink;</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			E-mails regarding any stable &kamailio; release should be sent to
+			&kamailiousersmail; and e-mails regarding development versions
+			should be sent to &kamailiodevmail;.
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>How can I report a bug?</para>
+		</question>
+		<answer>
+		<para>
+			Please follow the guidelines provided at:
+			&kamailiobugslink;.
+		</para>
+		</answer>
+	</qandaentry>
+
+	</qandaset>
+</chapter> 
