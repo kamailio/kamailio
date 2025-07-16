@@ -184,7 +184,7 @@ set(MOD_LIST_XMPP xmpp)
 set(MOD_LIST_BERKELEY db_berkeley)
 
 # * modules depending on curl library
-set(MOD_LIST_UTILS utils http_client lost slack)
+set(MOD_LIST_UTILS utils http_client lost slack web3_auth)
 
 # * modules depending on curl and libevent2 library
 set(MOD_LIST_HTTP_ASYNC http_async_client)
