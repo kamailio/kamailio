@@ -147,6 +147,7 @@ str ds_attrs_pvname   = STR_NULL;
 pv_spec_t ds_attrs_pv;
 
 str ds_event_callback = STR_NULL;
+int ds_event_callback_mode = 0;
 str ds_db_extra_attrs = STR_NULL;
 param_t *ds_db_extra_attrs_list = NULL;
 
@@ -318,6 +319,7 @@ static param_export_t params[]={
 	{"ds_default_sockname",PARAM_STR, &ds_default_sockname},
 	{"ds_timer_mode",      PARAM_INT, &ds_timer_mode},
 	{"event_callback",     PARAM_STR, &ds_event_callback},
+	{"event_callback_mode", PARAM_INT, &ds_event_callback_mode},
 	{"ds_attrs_none",      PARAM_INT, &ds_attrs_none},
 	{"ds_db_extra_attrs",  PARAM_STR, &ds_db_extra_attrs},
 	{"ds_load_mode",       PARAM_INT, &ds_load_mode},
@@ -930,7 +932,7 @@ static int ki_ds_mark_dst(sip_msg_t *msg)
 	if(ds_probing_mode == DS_PROBE_ALL)
 		state |= DS_PROBING_DST;
 
-	return ds_mark_dst_mode(msg, state, 1);
+	return ds_mark_dst_mode(msg, state, DS_STATE_MODE_SET | DS_STATE_MODE_FUNC);
 }
 
 /**
@@ -958,7 +960,7 @@ static int ki_ds_mark_dst_state(sip_msg_t *msg, str *sval)
 		return -1;
 	}
 
-	return ds_mark_dst_mode(msg, state, 1);
+	return ds_mark_dst_mode(msg, state, DS_STATE_MODE_SET | DS_STATE_MODE_FUNC);
 }
 
 /**
@@ -989,7 +991,8 @@ static int ki_ds_mark_addr(sip_msg_t *msg, str *vstate, int vgroup, str *vuri)
 		return -1;
 	}
 
-	return ds_mark_addr(msg, state, vgroup, vuri, 1);
+	return ds_mark_addr(
+			msg, state, vgroup, vuri, DS_STATE_MODE_SET | DS_STATE_MODE_FUNC);
 }
 
 /**
