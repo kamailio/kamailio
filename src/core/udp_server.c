@@ -685,7 +685,8 @@ int udp_rcv_loop()
 		}
 		if(ksr_msg_recv_max_size <= len) {
 			LOG(cfg_get(core, core_cfg, corelog),
-					"read message too large: %d\n", len);
+					"read message too large: %d (cfg msg recv max size: %d)\n",
+					len, ksr_msg_recv_max_size);
 			continue;
 		}
 		if(fromaddrlen != (unsigned int)sockaddru_len(bind_address->su)) {
