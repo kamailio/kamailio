@@ -118,4 +118,29 @@ mt_lock_threads("4");
 			</programlisting>
 		</example>
 	</section>
+	<section id="misctest.mt_unlock_threads">
+		<title>
+			<function>mt_unlock_threads(nrops)</function>
+		</title>
+		<para>
+			Unlock the internal global lock used by mt_lock_threads(). It is
+			done nrops-times.
+		</para>
+		<note>
+			<para>
+				This is a debugging function to do locking and unlocking
+				of an internal global lock from threads. It should not be used
+				in production setups.
+			</para>
+		</note>
+		<example>
+			<title>
+				<function>mt_lock_threads</function> usage</title>
+			<programlisting>
+...
+mt_unlock_threads("4");
+...
+			</programlisting>
+		</example>
+	</section>
 </section>
