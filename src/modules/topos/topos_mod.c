@@ -524,6 +524,9 @@ int tps_msg_received(sr_event_param_t *evp)
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
+	if(evp->rcv) {
+		msg.rcv = *(receive_info_t *)evp->rcv;
+	}
 
 	ret = 0;
 	if(tps_prepare_msg(&msg) != 0) {
@@ -601,6 +604,9 @@ int tps_msg_sent(sr_event_param_t *evp)
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
+	if(evp->rcv) {
+		msg.rcv = *(receive_info_t *)evp->rcv;
+	}
 
 	if(tps_prepare_msg(&msg) != 0) {
 		goto done;
