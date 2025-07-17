@@ -92,4 +92,30 @@ mt_lock_test(100000000);
 			</programlisting>
 		</example>
 	</section>
+
+	<section id="misctest.mt_lock_threads">
+		<title>
+			<function>mt_lock_threads(nrthreads)</function>
+		</title>
+		<para>
+			Creates a set of threads that try to use the internal lock (see
+			also lock_threads_mode parameter).
+		</para>
+		<note>
+			<para>
+				This is a debugging function to do locking and unlocking
+				of an internal global lock from threads. It should not be used
+				in production setups.
+			</para>
+		</note>
+		<example>
+			<title>
+				<function>mt_lock_threads</function> usage</title>
+			<programlisting>
+...
+mt_lock_threads("4");
+...
+			</programlisting>
+		</example>
+	</section>
 </section>

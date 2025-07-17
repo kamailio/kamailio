@@ -129,4 +129,24 @@ modparam("misctest", "message_file", "/tmp/sip-data.txt")
 		</example>
 	</section>
 
+	<section id="misctest.p.lock_threads_mode">
+		<title><varname>lock_threads_mode</varname> (int)</title>
+		<para>
+			Initialize (1) or not (0) the internal lock for pthreads testing.
+		</para>
+		<para>
+			Default: 0 (no initialization).
+		</para>
+		<example>
+			<title>
+				Set <varname>lock_threads_mode</varname> in the config file
+			</title>
+			<programlisting>
+...
+modparam("misctest", "lock_threads_mode", 1)
+...
+			</programlisting>
+		</example>
+	</section>
+
 </section>
