@@ -104,6 +104,7 @@ int ul_ka_urecord(urecord_t *ur)
 	str sproto = STR_NULL;
 	sip_uri_t duri;
 	char dproto;
+	int vproto;
 	struct hostent *he;
 	socket_info_t *ssock;
 	dest_info_t idst;
@@ -224,18 +225,20 @@ int ul_ka_urecord(urecord_t *ur)
 				via_ipv6 = 1;
 			}
 			vaddr = ssock->useinfo.name;
+			vproto = ssock->useinfo.proto;
 		} else {
 			if(ssock->address.af == AF_INET6) {
 				via_ipv6 = 1;
 			}
 			vaddr = ssock->address_str;
+			vproto = ssock->proto;
 		}
 		if(ssock->useinfo.port_no > 0) {
 			vport = ssock->useinfo.port_no_str;
 		} else {
 			vport = ssock->port_no_str;
 		}
-		get_valid_proto_string(dproto, 1, 1, &sproto);
+		get_valid_proto_string(vproto, 1, 1, &sproto);
 
 		bcnt++;
 		gettimeofday(&tv, NULL);
