@@ -60,6 +60,7 @@ static int mt_mem_free_f(struct sip_msg *, char *, char *);
 static int mt_tcp_thread_exec_f(sip_msg_t *, char *, char *);
 static int mt_lock_test_f(struct sip_msg *, char *, char *);
 static int mt_lock_threads_f(sip_msg_t *, char *, char *);
+static int mt_unlock_threads_f(sip_msg_t *, char *, char *);
 static int mod_init(void);
 static void mod_destroy(void);
 
@@ -82,6 +83,8 @@ static cmd_export_t cmds[]={
 	{"mt_tcp_thread_exec", mt_tcp_thread_exec_f, 1, fixup_spve_null, 0, ANY_ROUTE},
 	{"mt_lock_test", mt_lock_test_f, 1, fixup_var_int_1, 0, ANY_ROUTE},
 	{"mt_lock_threads", mt_lock_threads_f, 1, fixup_igp_null,
+		fixup_free_igp_null, ANY_ROUTE},
+	{"mt_unlock_threads", mt_unlock_threads_f, 1, fixup_igp_null,
 		fixup_free_igp_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -1072,6 +1075,31 @@ static int mt_lock_threads_f(sip_msg_t *msg, char *pn, char *p2)
 			LM_ERR("failed to start all worker threads\n");
 			goto error;
 		}
+	}
+
+	return 1;
+
+error:
+	return -1;
+}
+
+static int mt_unlock_threads_f(sip_msg_t *msg, char *pn, char *p2)
+{
+	int i;
+	int n;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)pn, &n) < 0) {
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+
+	if(_misctest_lock_threads == NULL) {
+		LM_ERR("the lock is not initialized\n");
+		goto error;
+	}
+
+	for(i = 0; i < n; i++) {
+		lock_release(_misctest_lock_threads);
 	}
 
 	return 1;
