@@ -59,6 +59,7 @@ static int mt_mem_alloc_f(struct sip_msg *, char *, char *);
 static int mt_mem_free_f(struct sip_msg *, char *, char *);
 static int mt_tcp_thread_exec_f(sip_msg_t *, char *, char *);
 static int mt_lock_test_f(struct sip_msg *, char *, char *);
+static int mt_lock_threads_f(sip_msg_t *, char *, char *);
 static int mod_init(void);
 static void mod_destroy(void);
 
@@ -71,12 +72,17 @@ static int misctest_message = 0;
 static str misctest_message_data = STR_NULL;
 static str misctest_message_file = STR_NULL;
 
+static int misctest_lock_threads_mode = 0;
+gen_lock_t *_misctest_lock_threads = NULL;
+
 /* clang-format off */
 static cmd_export_t cmds[]={
 	{"mt_mem_alloc", mt_mem_alloc_f, 1, fixup_var_int_1, 0, ANY_ROUTE},
 	{"mt_mem_free", mt_mem_free_f, 1, fixup_var_int_1, 0, ANY_ROUTE},
 	{"mt_tcp_thread_exec", mt_tcp_thread_exec_f, 1, fixup_spve_null, 0, ANY_ROUTE},
 	{"mt_lock_test", mt_lock_test_f, 1, fixup_var_int_1, 0, ANY_ROUTE},
+	{"mt_lock_threads", mt_lock_threads_f, 1, fixup_igp_null,
+		fixup_free_igp_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 /* clang-format on */
@@ -125,6 +131,7 @@ static param_export_t params[]={
 	{"message_data", PARAM_STR, &misctest_message_data},
 	{"message_file", PARAM_STR, &misctest_message_file},
 	{"mem_check_content", PARAM_INT, &default_mt_cfg.mem_check_content},
+	{"lock_threads_mode", PARAM_INT, &misctest_lock_threads_mode},
 	{0,0,0}
 };
 /* clang-format on */
@@ -283,6 +290,15 @@ static int mod_init(void)
 			goto error;
 		}
 		return -1;
+	}
+
+	if(misctest_lock_threads_mode != 0) {
+		_misctest_lock_threads = lock_alloc();
+		if(_misctest_lock_threads == NULL) {
+			LM_ERR("failed to alloc lock\n");
+			goto error;
+		}
+		lock_init(_misctest_lock_threads);
 	}
 
 	return 0;
@@ -1021,6 +1037,48 @@ static int mt_lock_test_f(struct sip_msg *msg, char *sz, char *foo)
 	return lock_test(size) >= 0 ? 1 : -1;
 }
 
+static void *mt_lock_threads_exec(void *param)
+{
+	int pidx = 0;
+
+	pidx = (int)(long)param;
+
+	while(1) {
+		LM_INFO("==== before acquiring the lock (idx: %d)\n", pidx);
+		lock_get(_misctest_lock_threads);
+		LM_INFO("==== after acquiring the lock (idx: %d)\n", pidx);
+	}
+	return NULL;
+}
+
+static int mt_lock_threads_f(sip_msg_t *msg, char *pn, char *p2)
+{
+	int i;
+	int n;
+	pthread_t tid;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)pn, &n) < 0) {
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+
+	if(_misctest_lock_threads == NULL) {
+		LM_ERR("the lock is not initialized\n");
+		goto error;
+	}
+
+	for(i = 0; i < n; i++) {
+		if(pthread_create(&tid, NULL, mt_lock_threads_exec, (void *)(long)i)) {
+			LM_ERR("failed to start all worker threads\n");
+			goto error;
+		}
+	}
+
+	return 1;
+
+error:
+	return -1;
+}
 
 /* RPC exports: */
 
