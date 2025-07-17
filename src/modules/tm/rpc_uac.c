@@ -1054,7 +1054,7 @@ void rpc_t_uac_attrs(rpc_t *rpc, void *c)
 			} else if(pit->name.len == 7
 					  && strncasecmp(pit->name.s, "cbflags", 7) == 0) {
 				if(pit->body.len == 5
-						&& strncasecmp(pit->name.s, "noack", 5) == 0) {
+						&& strncasecmp(pit->body.s, "noack", 5) == 0) {
 					tattrs.cbflags |= TMCB_DONT_ACK;
 				} else {
 					LM_ERR("unknown cbflags attribute value\n");
