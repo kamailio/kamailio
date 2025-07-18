@@ -1739,6 +1739,30 @@ t_relay_to("0x01");
 	</example>
     </section>
 
+	<section id="tm.f.t_relay_to_proxy">
+	<title>
+	    <function>t_relay_to_proxy(proxy)</function>
+	</title>
+	<para>
+		Alternative function to relay the SIP request to a specific address,
+		with the parameter supporting variables inside it.
+	</para>
+	<para>
+		The format of the parameter is: "proto:host:port" - any of proto or port
+		can be omitted, along with the semicolon after or before.
+	</para>
+	<para>
+		The function can be used in REQUEST_ROUTE and FAILURE_ROUTE.
+	</para>
+	<example>
+	    <title><function>t_relay_to_proxy</function> usage</title>
+	    <programlisting>
+...
+t_relay_to_proxy("udp:$var(addr):5060");
+...
+	    </programlisting>
+	</example>
+    </section>
 
 	<section id="tm.f.t_set_no_e2e_cancel_reason">
 	<title>
