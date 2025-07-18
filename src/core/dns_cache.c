@@ -72,6 +72,7 @@
 #define DNS_SRV_ZERO_W_CHANCE \
 	1000 /* one in a 1000*weight_sum chance for
 										selecting a 0-weight record */
+#define DNS_CACHE_RMDELAY 300
 
 int dns_cache_init = 1; /* if 0, the DNS cache is not initialized at startup */
 static gen_lock_t *dns_hash_lock = 0;
@@ -561,7 +562,20 @@ again:
 				/* automatically remove expired elements */
 				((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
 				&& ((s_ticks_t)(now - e->expire) >= 0)) {
-			_dns_hash_remove(e);
+			if(atomic_get(&e->refcnt) > 1) {
+				if((s_ticks_t)(now - e->expire - S_TO_TICKS(DNS_CACHE_RMDELAY))
+						>= 0) {
+					LM_DBG("delayed removal: %p (%d)\n", e,
+							(int)atomic_get(&e->refcnt));
+					_dns_hash_remove(e);
+				} else {
+					LM_DBG("delaying removal: %p (%d)\n", e,
+							(int)atomic_get(&e->refcnt));
+				}
+			} else {
+				LM_DBG("immediate removal: %p\n", e);
+				_dns_hash_remove(e);
+			}
 		} else if((e->type == type) && (e->name_len == name->len)
 				  && (strncasecmp(e->name, name->s, e->name_len) == 0)) {
 			e->last_used = now;
@@ -632,8 +646,22 @@ inline static int dns_cache_clean(unsigned int no, int expired_only)
 												->last_used_lst);
 		if(((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
 				&& (!expired_only || ((s_ticks_t)(now - e->expire) >= 0))) {
-			_dns_hash_remove(e);
-			deleted++;
+			if(atomic_get(&e->refcnt) > 1) {
+				if((s_ticks_t)(now - e->expire - S_TO_TICKS(DNS_CACHE_RMDELAY))
+						>= 0) {
+					LM_DBG("delayed removal: %p (%d)\n", e,
+							(int)atomic_get(&e->refcnt));
+					_dns_hash_remove(e);
+					deleted++;
+				} else {
+					LM_DBG("delaying removal: %p (%d)\n", e,
+							(int)atomic_get(&e->refcnt));
+				}
+			} else {
+				LM_DBG("immediate removal: %p\n", e);
+				_dns_hash_remove(e);
+				deleted++;
+			}
 		}
 		n++;
 		if(n >= no)
@@ -669,8 +697,22 @@ inline static int dns_cache_free_mem(unsigned int target, int expired_only)
 												->last_used_lst);
 		if(((e->ent_flags & DNS_FLAG_PERMANENT) == 0)
 				&& (!expired_only || ((s_ticks_t)(now - e->expire) >= 0))) {
-			_dns_hash_remove(e);
-			deleted++;
+			if(atomic_get(&e->refcnt) > 1) {
+				if((s_ticks_t)(now - e->expire - S_TO_TICKS(DNS_CACHE_RMDELAY))
+						>= 0) {
+					LM_DBG("delayed removal: %p (%d)\n", e,
+							(int)atomic_get(&e->refcnt));
+					_dns_hash_remove(e);
+					deleted++;
+				} else {
+					LM_DBG("delaying removal: %p (%d)\n", e,
+							(int)atomic_get(&e->refcnt));
+				}
+			} else {
+				LM_DBG("immediate removal: %p\n", e);
+				_dns_hash_remove(e);
+				deleted++;
+			}
 		}
 	}
 	UNLOCK_DNS_HASH();
