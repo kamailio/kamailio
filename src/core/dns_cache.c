@@ -1928,11 +1928,13 @@ inline static struct dns_hash_entry *dns_cache_do_request(str *name, int type)
 					}
 				}
 				if(add_record) {
-					dns_cache_add_unsafe(r); /* refcnt++ inside */
-					if(atomic_get(&r->refcnt) == 0) {
-						/* if cache adding failed and nobody else is interested
-						 * destroy this entry */
-						dns_destroy_entry(r);
+					if(dns_cache_add_unsafe(r) < 0) {
+						/* refcnt++ inside */
+						if(atomic_get(&r->refcnt) <= 0) {
+							/* if cache adding failed and nobody else is interested
+							 * destroy this entry */
+							dns_destroy_entry(r);
+						}
 					}
 					if(old) {
 						_dns_hash_remove(old);
@@ -2034,11 +2036,13 @@ inline static struct dns_hash_entry *dns_cache_do_request(str *name, int type)
 				}
 			}
 			if(add_record) {
-				dns_cache_add_unsafe(r); /* refcnt++ inside */
-				if(atomic_get(&r->refcnt) == 0) {
-					/* if cache adding failed and nobody else is interested
-					 * destroy this entry */
-					dns_destroy_entry(r);
+				if(dns_cache_add_unsafe(r) < 0) {
+					/* refcnt++ inside */
+					if(atomic_get(&r->refcnt) <= 0) {
+						/* if cache adding failed and nobody else is interested
+						 * destroy this entry */
+						dns_destroy_entry(r);
+					}
 				}
 				if(old) {
 					_dns_hash_remove(old);
