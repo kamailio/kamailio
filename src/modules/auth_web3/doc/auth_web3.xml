@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+	 %docentities;
+	]
+>
+
+<book id="auth_web3" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>The Web3 Auth Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Jonathan</firstname>
+		<surname>Kandel</surname>
+		<affiliation><orgname>Cellact B.V.</orgname></affiliation>
+		<email>jonathan@cellact.com</email>
+	    </author>
+	</authorgroup>
+
+	<copyright>
+	    <year>2025</year>
+	    <holder>Cellact B.V.</holder>
+	</copyright>
+
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="auth_web3.overview">
+	<title>Overview</title>
+	<para>
+	    The Web3 Auth module is a blockchain-powered authentication module for Kamailio
+	    that provides digest authentication using smart contracts on the Oasis Sapphire
+	    blockchain. This module extends the standard auth module functionality by
+	    replacing the traditional password-based authentication with blockchain-based
+	    verification.
+	</para>
+	<para>
+	    The module maintains full compatibility with standard <emphasis>SIP</emphasis> digest authentication
+	    while using blockchain smart contracts to verify user credentials. It supports
+	    all standard auth functions including <emphasis>WWW-Authenticate</emphasis>, <emphasis>Proxy-Authenticate</emphasis>,
+	    and various authentication challenges.
+	</para>
+	<para>
+	    Key features:
+	    <itemizedlist>
+		<listitem>
+		    <para>Blockchain-based authentication via smart contracts</para>
+		</listitem>
+		<listitem>
+		    <para>Full <emphasis>RFC2617</emphasis> digest authentication compliance</para>
+		</listitem>
+		<listitem>
+		    <para>Support for <emphasis>MD5</emphasis> and <emphasis>SHA-256</emphasis> algorithms</para>
+		</listitem>
+		<listitem>
+		    <para>Advanced nonce management and replay protection</para>
+		</listitem>
+		<listitem>
+		    <para>Drop-in replacement for traditional auth module</para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+
+    <section id="auth_web3.dep">
+	<title>Dependencies</title>
+	<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>sl</emphasis> - stateless reply.
+			</para>
+			</listitem>
+			</itemizedlist>
+	</para>
+	<para>
+		External dependencies:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libcurl</emphasis> - HTTP client library for blockchain RPC calls.
+			</para>
+			</listitem>
+			</itemizedlist>
+	</para>
+    </section>
+
+	<section id="auth_web3.config">
+        <title>Configuration Examples</title>
+        
+        <section id="auth_web3.config.basic">
+            <title>Basic Configuration</title>
+            <para>
+                <programlisting>
+# Load Web3 auth module
+loadmodule "auth_web3.so"
+
+# Configure Web3 parameters
+modparam("auth_web3", "web3_rpc_url", "https://sapphire.oasis.io") # testnet is the default
+modparam("auth_web3", "web3_contract_address", "0xYourContractAddress")
+modparam("auth_web3", "web3_debug_mode", 1)
+modparam("auth_web3", "web3_timeout", 10)
+
+# Traditional auth parameters (still supported)
+modparam("auth_web3", "secret", "your_secret_key_here")
+modparam("auth_web3", "nonce_expire", 300)
+modparam("auth_web3", "algorithm", "SHA-256")
+modparam("auth_web3", "qop", "auth")
+                </programlisting>
+            </para>
+        </section>
+
+        <section id="auth_web3.config.usage">
+            <title>Usage in Request Routing</title>
+            <para>
+                <programlisting>
+# Web3 Authentication Route
+route[auth_web3] {
+    # Check if request has credentials
+    if (!has_credentials("$fd")) {
+        # No credentials - send challenge
+        www_challenge("$fd", "0");
+        exit;
+    }
+
+    # Authenticate using Web3 (same function name as before!)
+    # But now it calls blockchain instead of checking password
+    if (!pv_www_authenticate("$fd", "0")) {
+        switch ($retcode) {
+            case -1:
+                xlog("L_INFO", "Web3 Auth: No credentials provided\n");
+                www_challenge("$fd", "0");
+                break;
+            case -2:
+                xlog("L_INFO", "Web3 Auth: Invalid credentials\n");
+                www_challenge("$fd", "16"); # stale=true
+                break;
+            case -3:
+                xlog("L_INFO", "Web3 Auth: Stale nonce\n");
+                www_challenge("$fd", "16"); # stale=true
+                break;
+            default:
+                xlog("L_ERR", "Web3 Auth: Authentication error\n");
+                sl_send_reply("500", "Server Internal Error");
+        }
+        exit;
+    }
+
+    # Authentication successful!
+    xlog("L_INFO", "Web3 Auth: User $fU authenticated via blockchain\n");
+    
+    # For REGISTER, save location
+    if (is_method("REGISTER")) {
+        save("location");
+    }
+}
+                </programlisting>
+            </para>
+        </section>
+    </section>
+    
+    <xi:include href="auth_web3_params.xml"/>
+    <xi:include href="auth_web3_functions.xml"/>
+    <xi:include href="auth_web3_faq.xml"/>
+
+    </chapter>
+</book>
