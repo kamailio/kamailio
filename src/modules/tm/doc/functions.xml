@@ -1741,15 +1741,16 @@ t_relay_to("0x01");
 
 	<section id="tm.f.t_relay_to_proxy">
 	<title>
-	    <function>t_relay_to_proxy(proxy)</function>
+	    <function>t_relay_to_proxy(proxy [, flags])</function>
 	</title>
 	<para>
 		Alternative function to relay the SIP request to a specific address,
 		with the parameter supporting variables inside it.
 	</para>
 	<para>
-		The format of the parameter is: "proto:host:port" - any of proto or port
-		can be omitted, along with the semicolon after or before.
+		The format of the proxy parameter is: "proto:host:port" - any of proto
+		or port can be omitted, along with the semicolon after or before. The
+		flags parameter is optional, with possible values like for t_relay_to().
 	</para>
 	<para>
 		The function can be used in REQUEST_ROUTE and FAILURE_ROUTE.
