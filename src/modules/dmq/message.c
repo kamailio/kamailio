@@ -146,6 +146,11 @@ int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval)
 	dmq_node_t *dmq_node = NULL;
 	int ret;
 
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
+		LM_ERR("failed to parse sip message headers\n");
+		goto error;
+	}
+
 	if((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s)) {
 		LM_ERR("error parsing msg uri\n");
 		goto error;
