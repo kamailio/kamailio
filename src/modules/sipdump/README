@@ -28,11 +28,12 @@ Daniel-Constantin Mierla
               3.1. enable (int)
               3.2. mode (int)
               3.3. wait (int)
-              3.4. rotate (int)
-              3.5. folder (str)
-              3.6. fprefix (str)
-              3.7. fage (int)
-              3.8. event_callback (str)
+              3.4. wait_mode (int)
+              3.5. rotate (int)
+              3.6. folder (str)
+              3.7. fprefix (str)
+              3.8. fage (int)
+              3.9. event_callback (str)
 
         4. Functions
 
@@ -53,13 +54,14 @@ Daniel-Constantin Mierla
    1.1. Set enable parameter
    1.2. Set mode parameter
    1.3. Set wait parameter
-   1.4. Set rotate parameter
-   1.5. Set folder parameter
-   1.6. Set fprefix parameter
-   1.7. Set fage parameter
-   1.8. Set event_callback parameter
-   1.9. sipdump_send usage
-   1.10. sipdump.enable usage
+   1.4. Set wait_mode parameter
+   1.5. Set rotate parameter
+   1.6. Set folder parameter
+   1.7. Set fprefix parameter
+   1.8. Set fage parameter
+   1.9. Set event_callback parameter
+   1.10. sipdump_send usage
+   1.11. sipdump.enable usage
 
 Chapter 1. Admin Guide
 
@@ -76,11 +78,12 @@ Chapter 1. Admin Guide
         3.1. enable (int)
         3.2. mode (int)
         3.3. wait (int)
-        3.4. rotate (int)
-        3.5. folder (str)
-        3.6. fprefix (str)
-        3.7. fage (int)
-        3.8. event_callback (str)
+        3.4. wait_mode (int)
+        3.5. rotate (int)
+        3.6. folder (str)
+        3.7. fprefix (str)
+        3.8. fage (int)
+        3.9. event_callback (str)
 
    4. Functions
 
@@ -138,11 +141,12 @@ Chapter 1. Admin Guide
    3.1. enable (int)
    3.2. mode (int)
    3.3. wait (int)
-   3.4. rotate (int)
-   3.5. folder (str)
-   3.6. fprefix (str)
-   3.7. fage (int)
-   3.8. event_callback (str)
+   3.4. wait_mode (int)
+   3.5. rotate (int)
+   3.6. folder (str)
+   3.7. fprefix (str)
+   3.8. fage (int)
+   3.9. event_callback (str)
 
 3.1. enable (int)
 
@@ -175,7 +179,8 @@ modparam("sipdump", "mode", 3)
 
 3.3. wait (int)
 
-   Wait time (microseconds) when no SIP traffic is received.
+   Wait time (microseconds) when no SIP traffic is received (for wait_time
+   = 0).
 
    Default value is 100.
 
@@ -184,29 +189,44 @@ modparam("sipdump", "mode", 3)
 modparam("sipdump", "wait", 2000)
 ...
 
-3.4. rotate (int)
+3.4. wait_mode (int)
+
+   If set to 1, the module uses a pthread mutex and contion to signal when
+   SIP messages are available to the writer process. It should use less
+   CPU when idle (on no SIP traffic) than the default pooling on timer,
+   but be sure that the OS supports process-shared pthread mutexes and
+   conditions (latest Linux distros have support for them).
+
+   Default value is 0.
+
+   Example 1.4. Set wait_mode parameter
+...
+modparam("sipdump", "wait_mode", 1)
+...
+
+3.5. rotate (int)
 
    Time interval in seconds to rotate files.
 
    Default value is 7200 (2 hours).
 
-   Example 1.4. Set rotate parameter
+   Example 1.5. Set rotate parameter
 ...
 modparam("sipdump", "rotate", 3600)
 ...
 
-3.5. folder (str)
+3.6. folder (str)
 
    Path to the folder where to save the files.
 
    Default value is "/tmp".
 
-   Example 1.5. Set folder parameter
+   Example 1.6. Set folder parameter
 ...
 modparam("sipdump", "folder", "/run/kamailio")
 ...
 
-3.6. fprefix (str)
+3.7. fprefix (str)
 
    File name prefix. The date is appended to this prefix in the format
    yyyy-mm-dd--hh-mm-ss. The extension of the text file is ".data", of the
@@ -214,31 +234,31 @@ modparam("sipdump", "folder", "/run/kamailio")
 
    Default value is "kamailio-sipdump-".
 
-   Example 1.6. Set fprefix parameter
+   Example 1.7. Set fprefix parameter
 ...
 modparam("sipdump", "fprefix", "ksipdump-")
 ...
 
-3.7. fage (int)
+3.8. fage (int)
 
    Age of created files (in seconds) to be removed if they become older.
    Cleanup is done on a timer routine running every 600 seconds.
 
    Default value is 0 (no cleanup of created files).
 
-   Example 1.7. Set fage parameter
+   Example 1.8. Set fage parameter
 ...
 # cleanup files older than two days
 modparam("sipdump", "fage", 172800)
 ...
 
-3.8. event_callback (str)
+3.9. event_callback (str)
 
    Name of the KEMI function to be executed instead of the event route.
 
    Default value is not set.
 
-   Example 1.8. Set event_callback parameter
+   Example 1.9. Set event_callback parameter
 ...
 modparam("sipdump", "event_callback", "ksr_sipdump_event")
 ...
@@ -263,7 +283,7 @@ end
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. sipdump_send usage
+   Example 1.10. sipdump_send usage
 ...
 sipdump_send("cfg");
 ...
@@ -281,7 +301,7 @@ sipdump_send("cfg");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.10. sipdump.enable usage
+   Example 1.11. sipdump.enable usage
 ...
 kamcmd sipdump.enable
 kamcmd sipdump.enable 1

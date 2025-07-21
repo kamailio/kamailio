@@ -139,7 +139,7 @@ Daniel-Constantin Mierla
               4.47. t_set_disable_internal_reply(0|1)
               4.48. t_replicate([params])
               4.49. t_relay_to(proxy, flags)
-              4.50. t_relay_to_proxy(proxy)
+              4.50. t_relay_to_proxy(proxy [, flags])
               4.51. t_set_no_e2e_cancel_reason(0|1)
               4.52. t_is_set(target)
               4.53. t_use_uac_headers()
@@ -443,7 +443,7 @@ Chapter 1. Admin Guide
         4.47. t_set_disable_internal_reply(0|1)
         4.48. t_replicate([params])
         4.49. t_relay_to(proxy, flags)
-        4.50. t_relay_to_proxy(proxy)
+        4.50. t_relay_to_proxy(proxy [, flags])
         4.51. t_set_no_e2e_cancel_reason(0|1)
         4.52. t_is_set(target)
         4.53. t_use_uac_headers()
@@ -1992,7 +1992,7 @@ modparam("tm", "evlreq_mode", 1)
    4.47. t_set_disable_internal_reply(0|1)
    4.48. t_replicate([params])
    4.49. t_relay_to(proxy, flags)
-   4.50. t_relay_to_proxy(proxy)
+   4.50. t_relay_to_proxy(proxy [, flags])
    4.51. t_set_no_e2e_cancel_reason(0|1)
    4.52. t_is_set(target)
    4.53. t_use_uac_headers()
@@ -3079,13 +3079,15 @@ t_relay_to("tls:1.2.3.4");
 t_relay_to("0x01");
 ...
 
-4.50.  t_relay_to_proxy(proxy)
+4.50.  t_relay_to_proxy(proxy [, flags])
 
    Alternative function to relay the SIP request to a specific address,
    with the parameter supporting variables inside it.
 
-   The format of the parameter is: "proto:host:port" - any of proto or
-   port can be omitted, along with the semicolon after or before.
+   The format of the proxy parameter is: "proto:host:port" - any of proto
+   or port can be omitted, along with the semicolon after or before. The
+   flags parameter is optional, with possible values like for
+   t_relay_to().
 
    The function can be used in REQUEST_ROUTE and FAILURE_ROUTE.
 
