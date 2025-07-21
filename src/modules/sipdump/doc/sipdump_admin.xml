@@ -123,7 +123,8 @@ modparam("sipdump", "mode", 3)
 	<section id="sipdump.p.wait">
 		<title><varname>wait</varname> (int)</title>
 		<para>
-			Wait time (microseconds) when no SIP traffic is received.
+			Wait time (microseconds) when no SIP traffic is received
+			(for wait_time = 0).
 		</para>
 		<para>
 		<emphasis>
@@ -135,6 +136,29 @@ modparam("sipdump", "mode", 3)
 		<programlisting format="linespecific">
 ...
 modparam("sipdump", "wait", 2000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipdump.p.wait_mode">
+		<title><varname>wait_mode</varname> (int)</title>
+		<para>
+			If set to 1, the module uses a pthread mutex and contion to signal
+			when SIP messages are available to the writer process. It should
+			use less CPU when idle (on no SIP traffic) than the default pooling
+			on timer, but be sure that the OS supports process-shared pthread
+			mutexes and conditions (latest Linux distros have support for them).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>wait_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipdump", "wait_mode", 1)
 ...
 </programlisting>
 		</example>
@@ -360,4 +384,3 @@ route[TCLEAN] {
 	</section>
 
 </chapter>
-
