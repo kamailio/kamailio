@@ -871,6 +871,7 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 	dlg_cell_t *dlg;
 	dlg_iuid_t *iuid;
 	str val, callid, ftag, ttag;
+	str *tag = NULL;
 	int h_entry, h_id, new_state, old_state, unref, event, timeout;
 	unsigned int dir;
 	int ret = 0;
@@ -1143,7 +1144,12 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 					|| new_state == DLG_STATE_EARLY)) {
 
 		if(event != DLG_EVENT_REQACK) {
-			if(update_cseqs(dlg, req, dir, &ttag) != 0) {
+			if(dir == DLG_DIR_UPSTREAM) {
+				tag = &ftag;
+			} else {
+				tag = &ttag;
+			}
+			if(update_cseqs(dlg, req, dir, tag) != 0) {
 				LM_ERR("cseqs update failed\n");
 			} else {
 				dlg->dflags |= DLG_FLAG_CHANGED;
