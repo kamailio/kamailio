@@ -200,8 +200,8 @@ int build_p_associated_uri(ims_subscription *s)
 					  && strncmp(id->public_identity.s, "tel", 3) == 0) {
 
 				if(cnttel != 0 || cnt != 0) {
-					memcpy(p, ", ", 2);
-					p += 2;
+					memcpy(p, ">, <", 4);
+					p += 4;
 				}
 				memcpy(p, id->public_identity.s, id->public_identity.len);
 				p += id->public_identity.len;
