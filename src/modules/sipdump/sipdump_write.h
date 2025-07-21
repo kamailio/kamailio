@@ -66,6 +66,8 @@ int sipdump_list_add(sipdump_data_t *sdd);
 
 void sipdump_timer_exec(unsigned int ticks, void *param);
 
+void sipdump_process_exec(void);
+
 int sipdump_file_init(str *folder, str *fprefix);
 
 void sipdump_init_pcap(FILE *fs);
@@ -79,5 +81,13 @@ int sipdump_data_clone(sipdump_data_t *isd, sipdump_data_t **osd);
 int sipdump_enabled(void);
 
 int sipdump_rpc_init(void);
+
+int ksr_sdsem_init(void);
+
+void ksr_sdsem_signal(void);
+
+void ksr_sdsem_wait(void);
+
+void ksr_sdsem_destroy(void);
 
 #endif

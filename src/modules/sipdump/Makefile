@@ -4,6 +4,6 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=sipdump.so
-LIBS=
+LIBS= -lpthread
 
 include ../../Makefile.modules

@@ -43,6 +43,7 @@
 #include "../../core/srapi.h"
 #include "../../core/receive.h"
 #include "../../core/kemi.h"
+#include "../../core/cfg/cfg_struct.h"
 
 #include "sipdump_write.h"
 
@@ -51,6 +52,7 @@ MODULE_VERSION
 static int sipdump_enable = 0;
 int sipdump_rotate = 7200;
 static int sipdump_wait = 100;
+static int sipdump_wait_mode = 0;
 static str sipdump_folder = str_init("/tmp");
 static str sipdump_fprefix = str_init("kamailio-sipdump-");
 int sipdump_mode = SIPDUMP_MODE_WTEXT;
@@ -83,6 +85,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"enable",         PARAM_INT,   &sipdump_enable},
 	{"wait",           PARAM_INT,   &sipdump_wait},
+	{"wait_mode",      PARAM_INT,   &sipdump_wait_mode},
 	{"rotate",         PARAM_INT,   &sipdump_rotate},
 	{"folder",         PARAM_STR,   &sipdump_folder},
 	{"fprefix",        PARAM_STR,   &sipdump_fprefix},
@@ -156,7 +159,15 @@ static int mod_init(void)
 	}
 
 	if(sipdump_mode & (SIPDUMP_MODE_WTEXT | SIPDUMP_MODE_WPCAP)) {
-		register_basic_timers(1);
+		if(sipdump_wait_mode != 0) {
+			if(ksr_sdsem_init() < 0) {
+				LM_ERR("cannot initialize sem structure\n");
+				return -1;
+			}
+			register_procs(1);
+		} else {
+			register_basic_timers(1);
+		}
 	}
 
 	if(sipdump_fage > 0) {
@@ -176,6 +187,7 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
+	int pid;
 
 	if(rank != PROC_MAIN)
 		return 0;
@@ -184,11 +196,27 @@ static int child_init(int rank)
 		return 0;
 	}
 
-	if(fork_basic_utimer(PROC_TIMER, "SIPDUMP WRITE TIMER", 1 /*socks flag*/,
-			   sipdump_timer_exec, NULL, sipdump_wait /*usec*/)
-			< 0) {
-		LM_ERR("failed to register timer routine as process\n");
-		return -1; /* error */
+	if(sipdump_wait_mode != 0) {
+		pid = fork_process(PROC_RPC, "SIPDUMP WRITE PROCESS", 1);
+		if(pid < 0) {
+			return -1; /* error */
+		}
+		if(pid == 0) {
+			/* child */
+			/* initialize the config framework */
+			if(cfg_child_init()) {
+				return -1;
+			}
+			sipdump_process_exec();
+		}
+	} else {
+		if(fork_basic_utimer(PROC_TIMER, "SIPDUMP WRITE TIMER",
+				   1 /*socks flag*/, sipdump_timer_exec, NULL,
+				   sipdump_wait /*usec*/)
+				< 0) {
+			LM_ERR("failed to register timer routine as process\n");
+			return -1; /* error */
+		}
 	}
 
 	return 0;
