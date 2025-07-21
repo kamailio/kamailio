@@ -38,15 +38,6 @@ message(STATUS "Target Processor Alias: ${TARGET_ARCH}")
 # supported_archs) message(FATAL_ERROR "Target architecture not supported")
 # endif()
 
-# Flavor of the project flavour: sip-router, ser or kamailio This is used to
-# define the MAIN_NAME flag TODO: Kamailio only
-set(flavours kamailio)
-set(FLAVOUR
-    "kamailio"
-    CACHE STRING "Flavour of the project"
-)
-set_property(CACHE FLAVOUR PROPERTY STRINGS ${flavours})
-
 # Verbose option (for debugging purposes) (was quiet in Makefile.defs) Probably
 # not needed in CMake and can be removed Use the -DCMAKE_VERBOSE_MAKEFILE=ON
 # option to enable verbose mode
@@ -93,17 +84,25 @@ option(HAVE_RESOLV_RES "Have resolv_res" ON)
 
 option(KSR_PTHREAD_MUTEX_SHARED "Use shared mutex for TLS" ON)
 option(STATISTICS "Statistics" ON)
-# if(${MEMPKG}) target_compile_definitions(common INTERFACE PKG_MALLOC) else()
-# if(${MEMDBGSYS}) target_compile_definitions(common INTERFACE DDBG_SYS_MEMORY)
-# endif() endif()
+
+# if(${MEMPKG})
+#   target_compile_definitions(common INTERFACE PKG_MALLOC)
+# else()
+#   if(${MEMDBGSYS})
+#     target_compile_definitions(common INTERFACE DDBG_SYS_MEMORY)
+#   endif()
+# endif()
 
 # -----------------------
 # TLS support
 # -----------------------
 option(TLS_HOOKS "TLS hooks support" ON)
 option(CORE_TLS "CORE_TLS" OFF)
-# set(CORE_TLS "" CACHE STRING "CORE_TLS") set(TLS_HOOKS ON CACHE BOOL "TLS
-# hooks support")
+# set(CORE_TLS "" CACHE STRING "CORE_TLS")
+# set(TLS_HOOKS
+#     ON
+#     CACHE BOOL "TLS hooks support"
+# )
 
 if(${CORE_TLS})
   set(RELEASE "${RELEASE}-tls")
