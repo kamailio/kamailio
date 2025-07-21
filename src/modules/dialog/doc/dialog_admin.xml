@@ -249,22 +249,6 @@ modparam("dialog", "rr_param", "xyz")
 		</example>
 	</section>
 
-	<section id="dialog.p.flag">
-		<title><varname>dlg_flag</varname> (integer)</title>
-		<para>
-		Note: This flag has beed deprecated and not used anymore.
-		It is not needed to set this parameter and its corresponding flag
-		for initial request in case the <quote>dlg_manage()</quote> function
-		is used.
-		In other words, use <quote>dlg_manage()</quote>.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>none</quote>.
-		</emphasis>
-		</para>
-	</section>
-
 	<section id="dialog.p.timeout_avp">
 		<title><varname>timeout_avp</varname> (string)</title>
 		<para>
@@ -2098,9 +2082,7 @@ dlg_refer("caller", "sip:announcement@kamailio.org");
 		<function moreinfo="none">dlg_manage()</function>
 		</title>
 		<para>
-		Process current SIP request with dialog module. It is an alternative to
-		setting dialog flag for initial INVITE and Route-parameter-callback
-		execution for within-dialog requests.
+		Process current SIP request with dialog module.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
