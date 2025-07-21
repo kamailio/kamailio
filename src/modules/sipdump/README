@@ -193,7 +193,7 @@ modparam("sipdump", "wait", 2000)
 
    If set to 1, the module uses a pthread mutex and contion to signal when
    SIP messages are available to the writer process. It should use less
-   CPU when idle (on no SIP traffic) than the default pooling on timer,
+   CPU when idle (on no SIP traffic) than the default polling on timer,
    but be sure that the OS supports process-shared pthread mutexes and
    conditions (latest Linux distros have support for them).
 
