@@ -12,16 +12,21 @@ include(${CMAKE_SOURCE_DIR}/cmake/groups.cmake)
 set(AVAILABLE_GROUP_NAMES ${AVAILABLE_GROUPS})
 set(MODULE_GROUP_NAME
     "DEFAULT"
-    CACHE STRING "Group of modules to build (one or multiple space seperated group)"
+    CACHE STRING "Groups of modules to build (one or multiple space seperated group)"
 )
-set_property(CACHE MODULE_GROUP_NAME PROPERTY STRINGS ${AVAILABLE_GROUP_NAMES})
 
 # User may provide multiple groups seperated by space
-if(MODULE_GROUP_NAME STREQUAL "ALL_PACKAGED")
-  set(MODULE_GROUP_LIST ${MODULE_GROUP_PACKAGE_GROUPS})
-else()
-  separate_arguments(MODULE_GROUP_LIST UNIX_COMMAND "${MODULE_GROUP_NAME}")
-  message(STATUS "Building groups: ${MODULE_GROUP_LIST}")
+separate_arguments(MODULE_GROUP_LIST UNIX_COMMAND "${MODULE_GROUP_NAME}")
+
+# Deduplicate the list
+list(REMOVE_DUPLICATES MODULE_GROUP_LIST)
+list(FIND MODULE_GROUP_LIST "ALL_PACKAGED" INDEX)
+
+if(INDEX GREATER -1)
+  # Remove it from the lists
+  list(REMOVE_AT MODULE_GROUP_LIST ${INDEX})
+  list(APPEND MODULE_GROUP_LIST ${MODULE_GROUP_PACKAGE_GROUPS})
+  message(STATUS "Building all packaged modules along with other provided groups.")
 endif()
 
 # Check if elements in MODULE_GROUP_LIST are valid by checking against
@@ -40,6 +45,7 @@ foreach(group_name IN LISTS MODULE_GROUP_LIST)
     # message(STATUS "Modules: ${MODULE_GROUP}")
   endif()
 endforeach()
+message(STATUS "Building groups: ${MODULE_GROUP_LIST}")
 # message(STATUS "Expanded module groups: ${FULL_MODULE_GROUP_NAMES}")
 
 # Allow users to specify extra modules to build
