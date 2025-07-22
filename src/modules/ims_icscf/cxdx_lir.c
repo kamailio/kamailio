@@ -265,6 +265,7 @@ int cxdx_send_lir(struct sip_msg *msg, str public_identity,
 
 	AAAMessage *lir = 0;
 	AAASession *session = 0;
+	int ret = -1;
 
 
 	session = cdpb.AAACreateSession(0);
@@ -287,12 +288,16 @@ int cxdx_send_lir(struct sip_msg *msg, str public_identity,
 		goto error1;
 
 	if(cxdx_forced_peer.len)
-		cdpb.AAASendMessageToPeer(lir, &cxdx_forced_peer,
+		ret = cdpb.AAASendMessageToPeer(lir, &cxdx_forced_peer,
 				(void *)async_cdp_lir_callback, (void *)transaction_data);
 	else
-		cdpb.AAASendMessage(
+		ret = cdpb.AAASendMessage(
 				lir, (void *)async_cdp_lir_callback, (void *)transaction_data);
 
+	if(ret != 1) {
+		LM_DBG("Error sending async diameter (%d)\n", ret);
+		return -1;
+	}
 	LM_DBG("Successfully sent async diameter\n");
 
 	return 0;
