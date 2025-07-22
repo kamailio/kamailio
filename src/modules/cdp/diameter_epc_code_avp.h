@@ -112,6 +112,8 @@ enum
 	AVP_EPC_Service_URN = 525,
 	AVP_EPC_Acceptable_Service_Info = 526,
 	AVP_EPC_Service_Info_Status = 527,
+	AVP_EPC_Min_Requested_Bandwidth_DL = 534,
+	AVP_EPC_Min_Requested_Bandwidth_UL = 535,
 	/** 600 to 699 reserved for TS29.229											*/
 	/** 700 to 799 reserved for TS29.329											*/
 
