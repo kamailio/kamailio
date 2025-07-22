@@ -385,7 +385,9 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number,
 	AAA_AVP *codec_data1, *codec_data2;
 	AAA_AVP *media_sub_component[PCC_Media_Sub_Components];
 	AAA_AVP *flow_status;
-	AAA_AVP *dl_bw, *ul_bw, *rs_bw, *rr_bw;
+	AAA_AVP *dl_max_bw, *ul_max_bw;
+	AAA_AVP *dl_min_bw, *ul_min_bw;
+	AAA_AVP *rs_bw, *rr_bw;
 
 	int media_sub_component_number = 0;
 	unsigned int bandwidth = 0;
@@ -471,10 +473,15 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number,
 
 		// Add AVP
 		set_4bytes(x, bandwidth);
-		ul_bw = cdpb.AAACreateAVP(AVP_EPC_Max_Requested_Bandwidth_UL,
+		ul_max_bw = cdpb.AAACreateAVP(AVP_EPC_Max_Requested_Bandwidth_UL,
 				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
 				IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
-		cdpb.AAAAddAVPToList(&list, ul_bw);
+		cdpb.AAAAddAVPToList(&list, ul_max_bw);
+
+		ul_min_bw = cdpb.AAACreateAVP(AVP_EPC_Min_Requested_Bandwidth_UL,
+				AAA_AVP_FLAG_VENDOR_SPECIFIC, IMS_vendor_id_3GPP, x, 4,
+				AVP_DUPLICATE_DATA);
+		cdpb.AAAAddAVPToList(&list, ul_min_bw);
 
 		// Get bandwidth from SDP:
 		bandwidth = sdp_b_value(rpl_raw_payload, "AS");
@@ -490,10 +497,15 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number,
 
 		// Add AVP
 		set_4bytes(x, bandwidth);
-		dl_bw = cdpb.AAACreateAVP(AVP_EPC_Max_Requested_Bandwidth_DL,
+		dl_max_bw = cdpb.AAACreateAVP(AVP_EPC_Max_Requested_Bandwidth_DL,
 				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
 				IMS_vendor_id_3GPP, x, 4, AVP_DUPLICATE_DATA);
-		cdpb.AAAAddAVPToList(&list, dl_bw);
+		cdpb.AAAAddAVPToList(&list, dl_max_bw);
+
+		dl_min_bw = cdpb.AAACreateAVP(AVP_EPC_Min_Requested_Bandwidth_DL,
+				AAA_AVP_FLAG_VENDOR_SPECIFIC, IMS_vendor_id_3GPP, x, 4,
+				AVP_DUPLICATE_DATA);
+		cdpb.AAAAddAVPToList(&list, dl_min_bw);
 
 		// Get A=RS-bandwidth from SDP-Reply:
 		bandwidth = sdp_b_value(rpl_raw_payload, "RS");
