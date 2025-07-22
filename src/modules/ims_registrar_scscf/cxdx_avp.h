@@ -48,7 +48,8 @@
 #ifndef IS_CSCF_CXDX_AVP_H
 #define IS_CSCF_CXDX_AVP_H
 
-extern struct cdp_binds cdpb; /**< Structure with pointers to cdp funcs 		*/
+extern struct cdp_binds
+		cdpb; /**< Structure with pointers to cdp funcs 		*/
 extern struct tm_binds tmb;
 
 struct AAAMessage;

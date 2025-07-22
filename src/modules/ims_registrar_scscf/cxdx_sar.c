@@ -317,8 +317,7 @@ error:
 	if(data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
 		reg_send_reply_transactional(req, data->contact_header, t);
 
-error_no_send
-	: //if we don't have the transaction then we can't send a transaction response
+error_no_send: //if we don't have the transaction then we can't send a transaction response
 	update_stat(rejected_registrations, 1);
 	//free memory
 	if(saa)

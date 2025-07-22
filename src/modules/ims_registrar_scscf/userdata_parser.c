@@ -914,8 +914,8 @@ static int parse_service_profile(
 				case 'P':
 				case 'p':
 					returncode = parse_public_identity(doc, child,
-							&(sp->public_identities
-											[sp->public_identities_cnt]));
+							&(sp->public_identities[sp
+											->public_identities_cnt]));
 					if(returncode)
 						sp->public_identities_cnt++;
 					break;
@@ -1171,8 +1171,8 @@ void print_user_data(ims_subscription *s)
 									.filter_criteria[j]
 									.profile_part_indicator
 							? *(s->service_profiles[i]
-											.filter_criteria[j]
-											.profile_part_indicator)
+											  .filter_criteria[j]
+											  .profile_part_indicator)
 							: -1);
 			if(s->service_profiles[i].filter_criteria[j].trigger_point) {
 				LM_DBG("\t\t\tTrigger Point: CNF [%c] %s\n",
@@ -1187,8 +1187,8 @@ void print_user_data(ims_subscription *s)
 								? "(_|_)&(_|_)"
 								: "(_&_)|(_&_)");
 				for(k = 0; k < s->service_profiles[i]
-									   .filter_criteria[j]
-									   .trigger_point->spt_cnt;
+								   .filter_criteria[j]
+								   .trigger_point->spt_cnt;
 						k++) {
 					LM_DBG("\t\t\t\tSPT: Grp[%d] NOT[%c] RegType[%d]\n",
 							s->service_profiles[i]
