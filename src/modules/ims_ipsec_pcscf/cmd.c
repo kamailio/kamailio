@@ -344,10 +344,9 @@ static int fill_contact(
 		}
 		free_sip_msg(&tmsg);
 
-		vb = cscf_get_ue_via(m);
-		if(!vb) {
+		if((vb = cscf_get_ue_via(m)) == NULL) {
 			LM_ERR("Reply No via body headers\n");
-			return -1;
+			goto error;
 		}
 
 		// populate CI with bare minimum
@@ -357,8 +356,8 @@ static int fill_contact(
 		ci->searchflag = SEARCH_RECEIVED;
 
 		if((srcip = pkg_malloc(50)) == NULL) {
-			LM_ERR("Error allocating memory for source IP address\n");
-			return -1;
+			PKG_MEM_ERROR;
+			goto error;
 		}
 
 		ci->received_host.len =
