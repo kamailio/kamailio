@@ -174,14 +174,14 @@ if(USE_FAST_LOCK)
     set(USE_FAST_LOCK NO)
     target_compile_definitions(common INTERFACE MIPS_HAS_LLSC) # likely
     target_compile_definitions(common INTERFACE NOSMP) # very likely
-  elseif()
+  else()
     message(STATUS "Fast locking not available for this platform, disabling USE_FAST_LOCK")
     set(USE_FAST_LOCK NO)
   endif()
 endif()
 
 # Add definitions if USE_FAST_LOCK is YES
-message(STATUS "Fast lock available: ${USE_FAST_LOCK}")
+message(STATUS "Fast lock available: USE_FAST_LOCK=${USE_FAST_LOCK}")
 if(USE_FAST_LOCK)
   # If fast lock is available, add the definitions for it, else each OS will
   # have its own locking method
