@@ -33,6 +33,7 @@
 #include "../../core/pt.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/cfg/cfg_struct.h"
 
 #include "sipdump_write.h"
 
@@ -497,6 +498,7 @@ void sipdump_timer_exec(unsigned int ticks, void *param)
 		LM_ERR("sipdump rotate file failed\n");
 		return;
 	}
+	cfg_update();
 	sipdump_write_exec();
 }
 
@@ -519,6 +521,7 @@ void sipdump_process_exec(void)
 			}
 			cnt = 0;
 		}
+		cfg_update();
 		sipdump_write_exec();
 	}
 }
