@@ -3565,7 +3565,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route, ds_rctx_t *rctx)
 		}
 	}
 
-	if(msg == NULL) {
+	if(msg == NULL || msg == FAKED_REPLY) {
 		if(faked_msg_init() < 0) {
 			LM_ERR("faked_msg_init() failed\n");
 			return;
