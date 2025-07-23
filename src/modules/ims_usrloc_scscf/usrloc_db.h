@@ -37,7 +37,7 @@ extern db_func_t ul_dbf;
 #define IMPU_CONTACT_TABLE "impu_contact"
 
 /*subscriber table*/
-#define SUBSCRIBER_TABLE "subscriber"
+#define SUBSCRIBER_TABLE "subscriber_scscf"
 #define SUB_EVENT_COL "event"
 #define SUB_EXPIRES_COL "expires"
 #define SUB_VERSION_COL "version"
