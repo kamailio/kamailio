@@ -203,12 +203,12 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 #define TEL_SCH 0x3a6c6574
 #define URN_SCH 0x3a6e7275
 
-#define case_port(ch, var)           \
-	case ch:                         \
-		(var) = (var)*10 + ch - '0'; \
-		if((var) > MAX_PORT_VAL) {   \
-			goto error_bad_port;     \
-		}                            \
+#define case_port(ch, var)             \
+	case ch:                           \
+		(var) = (var) * 10 + ch - '0'; \
+		if((var) > MAX_PORT_VAL) {     \
+			goto error_bad_port;       \
+		}                              \
 		break
 
 #define still_at_user                                      \
@@ -261,8 +261,12 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 		state = URI_HEADERS;       \
 		s = p + 1;                 \
 		break;                     \
-	case '&':                      \
 	case '@':                      \
+		if(scheme != URN_SCH) {    \
+			goto error_bad_char;   \
+		}                          \
+		break;                     \
+	case '&':                      \
 		goto error_bad_char
 
 
