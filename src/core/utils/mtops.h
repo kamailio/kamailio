@@ -37,6 +37,8 @@ typedef struct ksr_sigsem
 
 ksr_sigsem_t *ksr_sigsem_alloc(void);
 
+ksr_sigsem_t *ksr_sigsem_xalloc(void);
+
 int ksr_sigsem_init(ksr_sigsem_t *sgs);
 
 void ksr_sigsem_signal(ksr_sigsem_t *sgs);
@@ -46,5 +48,7 @@ void ksr_sigsem_wait(ksr_sigsem_t *sgs);
 void ksr_sigsem_destroy(ksr_sigsem_t *sgs);
 
 void ksr_sigsem_free(ksr_sigsem_t *sgs);
+
+void ksr_sigsem_xfree(ksr_sigsem_t *sgs);
 
 #endif
