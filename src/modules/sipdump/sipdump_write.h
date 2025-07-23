@@ -84,10 +84,6 @@ int sipdump_rpc_init(void);
 
 int ksr_sdsem_init(void);
 
-void ksr_sdsem_signal(void);
-
-void ksr_sdsem_wait(void);
-
 void ksr_sdsem_destroy(void);
 
 #endif

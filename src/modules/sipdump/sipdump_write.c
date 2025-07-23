@@ -34,6 +34,7 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/utils/mtops.h"
 
 #include "sipdump_write.h"
 
@@ -54,92 +55,32 @@ static FILE *_sipdump_pcap_file = NULL;
 /**
  *
  */
-typedef struct ksr_sdsem
-{
-	pthread_mutex_t mtx;
-	pthread_cond_t cnd;
-	volatile unsigned int val;
-} ksr_sdsem_t;
-
-/**
- *
- */
-static ksr_sdsem_t *_ksr_sdsem = NULL;
+static ksr_sigsem_t *_ksr_sdsem = NULL;
 
 int ksr_sdsem_init(void)
 {
-	pthread_mutexattr_t mutexattr;
-	pthread_condattr_t condattr;
-
 	if(_ksr_sdsem != NULL) {
 		return 0;
 	}
-	_ksr_sdsem = (ksr_sdsem_t *)shm_mallocxz(sizeof(ksr_sdsem_t));
+	_ksr_sdsem = ksr_sigsem_xalloc();
+
 	if(_ksr_sdsem == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
-
-	if(pthread_mutexattr_init(&mutexattr) != 0) {
-		LM_ERR("pthread_mutexattr_init failed\n");
-		return -1;
-	}
-	if(pthread_mutexattr_setpshared(&mutexattr, PTHREAD_PROCESS_SHARED) != 0) {
-		LM_ERR("pthread_mutexattr_setpshared failed\n");
-		return -1;
-	}
-	if(pthread_mutex_init(&_ksr_sdsem->mtx, &mutexattr) != 0) {
-		LM_ERR("pthread_mutex_init failed\n");
-		return -1;
-	}
-
-	if(pthread_condattr_init(&condattr) != 0) {
-		LM_ERR("pthread_condattr_init failed\n");
-		return -1;
-	}
-	if(pthread_condattr_setpshared(&condattr, PTHREAD_PROCESS_SHARED) != 0) {
-		LM_ERR("pthread_condattr_setpshared failed\n");
-		return -1;
-	}
-	if(pthread_cond_init(&_ksr_sdsem->cnd, &condattr) != 0) {
-		LM_ERR("pthread_cond_init failed\n");
-		return -1;
-	}
-
 	return 0;
 }
 
-/**
- *
- */
-void ksr_sdsem_signal(void)
-{
-	pthread_mutex_lock(&_ksr_sdsem->mtx);
-	_ksr_sdsem->val = 1;
-	pthread_mutex_unlock(&_ksr_sdsem->mtx);
-	pthread_cond_signal(&_ksr_sdsem->cnd);
-}
-
-/**
- *
- */
-void ksr_sdsem_wait(void)
-{
-	pthread_mutex_lock(&_ksr_sdsem->mtx);
-	while(_ksr_sdsem->val == 0) {
-		pthread_cond_wait(&_ksr_sdsem->cnd, &_ksr_sdsem->mtx);
-	}
-	_ksr_sdsem->val = 0;
-	pthread_mutex_unlock(&_ksr_sdsem->mtx);
-}
 
 /**
  *
  */
 void ksr_sdsem_destroy(void)
 {
-	pthread_cond_destroy(&_ksr_sdsem->cnd);
-	pthread_mutex_destroy(&_ksr_sdsem->mtx);
+	if(_ksr_sdsem == NULL) {
+		return;
+	}
+	ksr_sigsem_xfree(_ksr_sdsem);
 	_ksr_sdsem = NULL;
 }
 
@@ -209,7 +150,7 @@ int sipdump_list_add(sipdump_data_t *sdd)
 	_sipdump_list->last = sdd;
 	lock_release(&_sipdump_list->lock);
 	if(_ksr_sdsem != NULL) {
-		ksr_sdsem_signal();
+		ksr_sigsem_signal(_ksr_sdsem);
 	}
 	return 0;
 }
@@ -513,7 +454,7 @@ void sipdump_process_exec(void)
 		LM_ERR("sipdump rotate file failed\n");
 	}
 	while(1) {
-		ksr_sdsem_wait();
+		ksr_sigsem_wait(_ksr_sdsem);
 		cnt++;
 		if(cnt > 2000) {
 			if(sipdump_rotate_file() < 0) {
