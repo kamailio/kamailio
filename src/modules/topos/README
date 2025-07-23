@@ -573,13 +573,11 @@ request_route {
 
    It is executed before doing topology stripping processing for an
    outgoing SIP message. If 'drop' is executed inside the event route,
-   then the module skips doing the topology hiding.
+   then the module skips doing the out part of topology hiding.
 
-   Inside the event route the variables $sndto(ip), $sndto(port) and
-   $sndto(proto) point to the destination. The SIP message is not the one
-   to be sent out, but an internally generated one at startup, to avoid
-   reparsing the outgoing SIP message for the cases when topology hiding
-   is not wanted.
+   Only fake msg is available in this event route. Inside the event route
+   the variables $sndto(ip), $sndto(port) and $sndto(proto) point to the
+   destination.
 
    Example 1.24. Usage of event_route[topos:msg-outgoing]
 ...
@@ -594,11 +592,12 @@ event_route[topos:msg-outgoing] {
 
    It is executed before doing topology stripping processing for a SIP
    message to be sent out, being executed after
-   event_route[topos:msg-outgoing].
+   event_route[topos:msg-outgoing]. If 'drop' is executed inside the event
+   route, then the module skips doing the out part of topology hiding.
 
+   A copy of the SIP msg to be sent out is available in this event route.
    Inside the event route the variables $sndto(ip), $sndto(port) and
-   $sndto(proto) point to the destination. The SIP message is the one to
-   be sent out.
+   $sndto(proto) point to the destination.
 
    Example 1.25. Usage of event_route[topos:msg-sending]
 ...
@@ -612,13 +611,11 @@ event_route[topos:msg-sending] {
 5.3. event_route[topos:msg-incoming]
 
    It is executed before doing topology stripping processing for an
-   incoming SIP message. If 'drop' is executed inside the event route,
-   then the module skips doing the topology hiding.
+   incoming SIP message. If 'drop' is executed inside this event route,
+   then the module skips doing the in part of topology hiding.
 
-   Inside the event route the variables $si, $sp and $proto point to the
-   source address. The SIP message is not the one to be sent out, but an
-   internally generated one at startup, to avoid reparsing the outgoing
-   SIP message for the cases when topology hiding is not wanted.
+   Only fake msg is available in this event route. $si, $sp and $proto
+   will have default fake values.
 
    Example 1.26. Usage of event_route[topos:msg-incoming]
 ...
@@ -633,15 +630,25 @@ event_route[topos:msg-incoming] {
 
    It is executed before doing topology stripping processing for a SIP
    message that was received, being executed after
-   event_route[topos:msg-incoing].
+   event_route[topos:msg-incoing]. If 'drop' is executed inside this event
+   route, then the module skips doing the in part of topology hiding.
 
-   Inside the event route the variables $si, $sp and $proto point to the
-   source address. The SIP message is the one to be sent out.
+   A copy of the received SIP msg is available in this event route. $si,
+   $sp and $proto will have correct, expected values. Also src_port and
+   dst_port can be used here.
 
    Example 1.27. Usage of event_route[topos:msg-receiving]
 ...
 event_route[topos:msg-receiving] {
   if(is_request() and $fU=="alice") {
+    drop;
+  }
+
+  if($sp==5555 || $si=="1.2.3.4") {
+    drop;
+  }
+
+  if(src_port==1234 || dst_port==5678) {
     drop;
   }
 }
