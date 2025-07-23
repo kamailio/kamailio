@@ -3488,7 +3488,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route, ds_rctx_t *rctx)
 {
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
-	sip_msg_t *fmsg;
+	sip_msg_t *fmsg = NULL;
 	sr_kemi_eng_t *keng = NULL;
 	str evname;
 
@@ -3515,18 +3515,14 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route, ds_rctx_t *rctx)
 		}
 	}
 
-	if(msg == NULL || msg == FAKED_REPLY) {
-		if(faked_msg_init() < 0) {
-			LM_ERR("faked_msg_init() failed\n");
-			return;
-		}
-		fmsg = faked_msg_next();
-		if(rewrite_uri(fmsg, uri) < 0) {
-			LM_ERR("failed to set r-uri\n");
-			return;
-		}
-	} else {
-		fmsg = msg;
+	if(faked_msg_init() < 0) {
+		LM_ERR("faked_msg_init() failed\n");
+		return;
+	}
+	fmsg = faked_msg_next();
+	if(rewrite_uri(fmsg, uri) < 0) {
+		LM_ERR("failed to set r-uri\n");
+		return;
 	}
 
 	if(rt >= 0 || ds_event_callback.len > 0) {
@@ -3550,9 +3546,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route, ds_rctx_t *rctx)
 		set_route_type(backup_rt);
 		_ds_rctx = NULL;
 	}
-	if(fmsg != msg) {
-		reset_uri(fmsg);
-	}
+	reset_uri(fmsg);
 }
 
 
