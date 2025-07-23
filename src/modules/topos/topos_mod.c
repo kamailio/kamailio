@@ -687,12 +687,13 @@ int tps_get_branch_expire(void)
 static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
 		int evtype, int evidx, str *evname)
 {
-	struct sip_msg *fmsg;
+	sip_msg_t *fmsg = NULL;
 	struct run_act_ctx ctx;
 	int rtb;
 	sr_kemi_eng_t *keng = NULL;
 	onsend_info_t onsnd_info = {0};
-	onsend_info_t *p_onsend_bak;
+	onsend_info_t *p_onsend_bak = 0;
+	receive_info_t fmsg_rcv_bak = {0};
 
 	if(!(_tps_eventrt_mode & evtype)) {
 		return 0;
@@ -717,7 +718,6 @@ static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
 
 	LM_DBG("executing event_route[topos:%.*s] (%d)\n", evname->len, evname->s,
 			evidx);
-	fmsg = faked_msg_next();
 
 	if(evp->dst) {
 		onsnd_info.to = &evp->dst->to;
@@ -728,6 +728,11 @@ static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
 		onsnd_info.len = msg->len;
 		onsnd_info.msg = msg;
 	} else {
+		fmsg = faked_msg_next();
+		fmsg_rcv_bak = fmsg->rcv;
+		if(evp->rcv != NULL) {
+			fmsg->rcv = *evp->rcv;
+		}
 		onsnd_info.buf = fmsg->buf;
 		onsnd_info.len = fmsg->len;
 		onsnd_info.msg = fmsg;
@@ -746,10 +751,17 @@ static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
 					< 0) {
 				LM_ERR("error running event route kemi callback\n");
 				p_onsend = p_onsend_bak;
+				if(fmsg != NULL && evp->rcv != NULL) {
+					fmsg->rcv = fmsg_rcv_bak;
+				}
 				return -1;
 			}
 		}
 	}
+	if(fmsg != NULL && evp->rcv != NULL) {
+		fmsg->rcv = fmsg_rcv_bak;
+	}
+
 	set_route_type(rtb);
 	if(ctx.run_flags & DROP_R_F) {
 		LM_DBG("exit due to 'drop' in event route\n");
