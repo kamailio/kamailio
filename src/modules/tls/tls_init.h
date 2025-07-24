@@ -96,4 +96,6 @@ int tls_check_sockets(tls_domains_cfg_t *cfg);
 int ksr_tls_lock_init(void);
 void ksr_tls_lock_destroy(void);
 
+void set_keylog_callback(const SSL *ssl);
+
 #endif /* _TLS_INIT_H */
