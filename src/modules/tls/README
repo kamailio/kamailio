@@ -75,6 +75,7 @@ Olle E. Johansson
               10.41. provider_quirks (integer)
               10.42. keylog_mode (int)
               10.43. keylog_file (str)
+              10.44. keylog_peer (str)
 
         11. Functions
 
@@ -155,9 +156,10 @@ Olle E. Johansson
    1.51. Set verify_client tls.cfg parameter
    1.52. Set keylog_mode parameter
    1.53. Set keylog_file parameter
-   1.54. is_peer_verified usage
-   1.55. tls_set_connect_server_id usage
-   1.56. Use of event_route[tls:connection-out]
+   1.54. Set keylog_peer parameter
+   1.55. is_peer_verified usage
+   1.56. tls_set_connect_server_id usage
+   1.57. Use of event_route[tls:connection-out]
 
 Chapter 1. Admin Guide
 
@@ -217,6 +219,7 @@ Chapter 1. Admin Guide
         10.41. provider_quirks (integer)
         10.42. keylog_mode (int)
         10.43. keylog_file (str)
+        10.44. keylog_peer (str)
 
    11. Functions
 
@@ -659,6 +662,7 @@ Place holder
    10.41. provider_quirks (integer)
    10.42. keylog_mode (int)
    10.43. keylog_file (str)
+   10.44. keylog_peer (str)
 
 10.1. tls_method (string)
 
@@ -1666,6 +1670,7 @@ verify_client = optional_no_ca
      * 2 (bit 2) - keys logging active
      * 4 (bit 3) - write keys to NOTICE log
      * 8 (bit 4) - write keys to file
+     * 16 (bit 5) - send keys to udp peer
 
    The default value: 0.
 
@@ -1687,6 +1692,19 @@ modparam("tls", "keylog_mode", 15)
 modparam("tls", "keylog_file", "/tmp/kamailio-tls-keylog.txt")
 ...
 
+10.44. keylog_peer (str)
+
+   Address of the peer where to send the keys log. It has to be in the
+   format "proto:ip:port". Only "udp" protocol (proto) is supported. The
+   value 16 (bit 5) has to be set to keylog_mode parameter.
+
+   The default value: NULL.
+
+   Example 1.54. Set keylog_peer parameter
+...
+modparam("tls", "keylog_peer", "udp:127.0.0.1:8020")
+...
+
 11. Functions
 
    11.1. is_peer_verified()
@@ -1700,7 +1718,7 @@ modparam("tls", "keylog_file", "/tmp/kamailio-tls-keylog.txt")
 
    It can be used only in a request route.
 
-   Example 1.54. is_peer_verified usage
+   Example 1.55. is_peer_verified usage
 ...
         if (proto==TLS && !is_peer_verified()) {
                 sl_send_reply("400", "No certificate or verification failed");
@@ -1719,7 +1737,7 @@ modparam("tls", "keylog_file", "/tmp/kamailio-tls-keylog.txt")
 
    It can be used only in ANY_ROUTE.
 
-   Example 1.55. tls_set_connect_server_id usage
+   Example 1.56. tls_set_connect_server_id usage
 ...
     tls_set_connect_server_id("clientone");
 ...
@@ -1811,7 +1829,7 @@ modparam("tls", "keylog_file", "/tmp/kamailio-tls-keylog.txt")
    If drop() is executed in the event route, then the data is no longer
    sent over the connection.
 
-   Example 1.56. Use of event_route[tls:connection-out]
+   Example 1.57. Use of event_route[tls:connection-out]
 ...
 event_route[tls:connection-out] {
   if($sndto(ip)=="1.2.3.4") {
