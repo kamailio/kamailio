@@ -73,6 +73,8 @@ Olle E. Johansson
               10.39. engine_algorithms (string)
               10.40. verify_client (string)
               10.41. provider_quirks (integer)
+              10.42. keylog_mode (int)
+              10.43. keylog_file (str)
 
         11. Functions
 
@@ -151,9 +153,11 @@ Olle E. Johansson
    1.49. Set rand_engine parameter
    1.50. Set verify_client modparam parameter
    1.51. Set verify_client tls.cfg parameter
-   1.52. is_peer_verified usage
-   1.53. tls_set_connect_server_id usage
-   1.54. Use of event_route[tls:connection-out]
+   1.52. Set keylog_mode parameter
+   1.53. Set keylog_file parameter
+   1.54. is_peer_verified usage
+   1.55. tls_set_connect_server_id usage
+   1.56. Use of event_route[tls:connection-out]
 
 Chapter 1. Admin Guide
 
@@ -211,6 +215,8 @@ Chapter 1. Admin Guide
         10.39. engine_algorithms (string)
         10.40. verify_client (string)
         10.41. provider_quirks (integer)
+        10.42. keylog_mode (int)
+        10.43. keylog_file (str)
 
    11. Functions
 
@@ -651,6 +657,8 @@ Place holder
    10.39. engine_algorithms (string)
    10.40. verify_client (string)
    10.41. provider_quirks (integer)
+   10.42. keylog_mode (int)
+   10.43. keylog_file (str)
 
 10.1. tls_method (string)
 
@@ -1648,6 +1656,36 @@ verify_client = optional_no_ca
      * 1 - create a new `OSSL_LIB_CTX` context in the child process. Known
        to be required when using OpenSSL 3 pkcs11-provider.
 
+10.42. keylog_mode (int)
+
+   Control the TLS key logging functionality, available for libssl version
+   greater than 1.1.0. Its value is composed from bitwise values (can be
+   made as sum of them):
+     * 0 - keys logging inactive
+     * 1 (bit 1) - keys logging active
+     * 2 (bit 2) - write keys to NOTICE log
+     * 4 (bit 3) - write keys to file
+
+   The default value: 0.
+
+   Example 1.52. Set keylog_mode parameter
+...
+modparam("tls", "keylog_mode", 7)
+...
+
+10.43. keylog_file (str)
+
+   Path to the file where to write the TLS keys. The values are appended
+   to the content of the file. The value 4 (bit 3) has to be set to
+   keylog_mode parameter.
+
+   The default value: NULL.
+
+   Example 1.53. Set keylog_file parameter
+...
+modparam("tls", "keylog_file", "/tmp/kamailio-tls-keylog.txt")
+...
+
 11. Functions
 
    11.1. is_peer_verified()
@@ -1661,7 +1699,7 @@ verify_client = optional_no_ca
 
    It can be used only in a request route.
 
-   Example 1.52. is_peer_verified usage
+   Example 1.54. is_peer_verified usage
 ...
         if (proto==TLS && !is_peer_verified()) {
                 sl_send_reply("400", "No certificate or verification failed");
@@ -1680,7 +1718,7 @@ verify_client = optional_no_ca
 
    It can be used only in ANY_ROUTE.
 
-   Example 1.53. tls_set_connect_server_id usage
+   Example 1.55. tls_set_connect_server_id usage
 ...
     tls_set_connect_server_id("clientone");
 ...
@@ -1772,7 +1810,7 @@ verify_client = optional_no_ca
    If drop() is executed in the event route, then the data is no longer
    sent over the connection.
 
-   Example 1.54. Use of event_route[tls:connection-out]
+   Example 1.56. Use of event_route[tls:connection-out]
 ...
 event_route[tls:connection-out] {
   if($sndto(ip)=="1.2.3.4") {
