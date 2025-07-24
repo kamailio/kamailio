@@ -1529,6 +1529,9 @@ verify_client = optional_no_ca
 		<listitem>
 			<para><emphasis>8 (bit 4)</emphasis> - write keys to file</para>
 		</listitem>
+		<listitem>
+			<para><emphasis>16 (bit 5)</emphasis> - send keys to udp peer</para>
+		</listitem>
 	</itemizedlist>
 	<para>
 		The default value: 0.
@@ -1561,4 +1564,24 @@ modparam("tls", "keylog_file", "/tmp/kamailio-tls-keylog.txt")
 	</programlisting>
 	</example>
 	</section>
+	<section id="tls.p.keylog_peer">
+	<title><varname>keylog_peer</varname> (str)</title>
+	<para>
+		Address of the peer where to send the keys log. It has to be in the
+		format "proto:ip:port". Only "udp" protocol (proto) is supported.
+		The value 16 (bit 5) has to be set to keylog_mode parameter.
+	</para>
+	<para>
+		The default value: NULL.
+	</para>
+	<example>
+		<title>Set <varname>keylog_peer</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "keylog_peer", "udp:127.0.0.1:8020")
+...
+	</programlisting>
+	</example>
+	</section>
+
  </section>
