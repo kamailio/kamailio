@@ -66,6 +66,7 @@ extern EVP_PKEY *tls_engine_private_key(const char *key_id);
 #include "tls_verify.h"
 
 extern int ksr_tls_key_password_mode;
+extern int ksr_tls_keylog_mode;
 
 /*
  * ECDHE is enabled only on OpenSSL 1.0.0e and later.
@@ -1088,6 +1089,13 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 }
 #endif
 
+static void ksr_tls_keylog_callback(const SSL *ssl, const char *line)
+{
+	if(ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_MLOG) {
+		LM_NOTICE("tlskeylog: %s\n", line);
+	}
+	ksr_tls_keylog_file_write(ssl, line);
+}
 
 /**
  * @brief Initialize all domain attributes from default domains if necessary
@@ -1152,6 +1160,9 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 					tls_domain_str(d), i, e, ERR_error_string(e, NULL),
 					ERR_reason_error_string(e));
 			return -1;
+		}
+		if(ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_ACTIVE) {
+			SSL_CTX_set_keylog_callback(d->ctx[i], ksr_tls_keylog_callback);
 		}
 		if(d->method > TLS_USE_TLSvRANGE) {
 			if(sr_tls_methods[d->method - 1].TLSMethodMin) {

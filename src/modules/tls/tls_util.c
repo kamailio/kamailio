@@ -28,6 +28,7 @@
 #define _GNU_SOURCE 1 /* Needed for strndup */
 
 #include <string.h>
+#include <stdio.h>
 #include <libgen.h>
 #include "../../core/mem/shm_mem.h"
 #include "../../core/globals.h"
@@ -35,6 +36,11 @@
 #include "tls_mod.h"
 #include "tls_util.h"
 
+
+extern int ksr_tls_keylog_mode;
+extern str ksr_tls_keylog_file;
+
+static gen_lock_t *ksr_tls_keylog_file_lock = NULL;
 
 /*
  * Make a shared memory copy of ASCII zero terminated string
@@ -111,4 +117,54 @@ void tls_openssl_clear_errors(void)
 		ERR_error_string(i, err);
 		INFO("clearing leftover error before SSL_* calls: %s\n", err);
 	}
+}
+
+/**
+ *
+ */
+int ksr_tls_keylog_file_init(void)
+{
+	if(!((ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_ACTIVE)
+			   && (ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_FILE))) {
+		return 0;
+	}
+	if(ksr_tls_keylog_file.s == NULL || ksr_tls_keylog_file.len <= 0) {
+		return -1;
+	}
+	if(ksr_tls_keylog_file_lock != NULL) {
+		return 0;
+	}
+	ksr_tls_keylog_file_lock = lock_alloc();
+	if(ksr_tls_keylog_file_lock == NULL) {
+		return -2;
+	}
+	if(lock_init(ksr_tls_keylog_file_lock) == NULL) {
+		return -3;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int ksr_tls_keylog_file_write(const SSL *ssl, const char *line)
+{
+	FILE *lf = NULL;
+	int ret = 0;
+
+	if(ksr_tls_keylog_file_lock == NULL) {
+		return 0;
+	}
+
+	lock_get(ksr_tls_keylog_file_lock);
+	lf = fopen(ksr_tls_keylog_file.s, "a");
+	if(lf) {
+		fprintf(lf, "%s\n", line);
+		fclose(lf);
+	} else {
+		LM_ERR("failed to open keylog file: %s\n", ksr_tls_keylog_file.s);
+		ret = -1;
+	}
+	lock_release(ksr_tls_keylog_file_lock);
+	return ret;
 }
