@@ -248,6 +248,7 @@ int ksr_tls_init_mode = 0;
 int ksr_tls_key_password_mode = 0;
 int ksr_tls_keylog_mode = 0;
 str ksr_tls_keylog_file = STR_NULL;
+str ksr_tls_keylog_peer = STR_NULL;
 
 /* clang-format off */
 /*
@@ -321,6 +322,7 @@ static param_export_t params[] = {
 	{"key_password_mode", PARAM_INT, &ksr_tls_key_password_mode},
 	{"keylog_mode", PARAM_INT, &ksr_tls_keylog_mode},
 	{"keylog_file", PARAM_STR, &ksr_tls_keylog_file},
+	{"keylog_peer", PARAM_STR, &ksr_tls_keylog_peer},
 
 	{0, 0, 0}
 };
@@ -567,6 +569,11 @@ static int mod_init(void)
 		LM_ERR("failed to init keylog file\n");
 		goto error;
 	}
+	if(ksr_tls_keylog_peer_init() < 0) {
+		LM_ERR("failed to init keylog peer\n");
+		goto error;
+	}
+
 	return 0;
 error:
 	tls_h_mod_destroy_f();
