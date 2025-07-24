@@ -1506,4 +1506,56 @@ verify_client = optional_no_ca
                 </listitem>
             </itemizedlist>
         </section>
+	<section id="tls.p.keylog_mode">
+	<title><varname>keylog_mode</varname> (int)</title>
+	<para>
+		Control the TLS key logging functionality, available for libssl version
+		greater than 1.1.0. Its value is composed from bitwise values (can be
+		made as sum of them):
+	</para>
+	<itemizedlist>
+		<listitem>
+			<para><emphasis>0</emphasis> - keys logging inactive</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>1 (bit 1)</emphasis> - keys logging active</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>2 (bit 2)</emphasis> - write keys to NOTICE log</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>4 (bit 3)</emphasis> - write keys to file</para>
+		</listitem>
+	</itemizedlist>
+	<para>
+		The default value: 0.
+	</para>
+	<example>
+		<title>Set <varname>keylog_mode</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "keylog_mode", 7)
+...
+	</programlisting>
+	</example>
+	</section>
+	<section id="tls.p.keylog_file">
+	<title><varname>keylog_file</varname> (str)</title>
+	<para>
+		Path to the file where to write the TLS keys. The values are appended
+		to the content of the file. The value 4 (bit 3) has to be set to
+		keylog_mode parameter.
+	</para>
+	<para>
+		The default value: NULL.
+	</para>
+	<example>
+		<title>Set <varname>keylog_file</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "keylog_file", "/tmp/kamailio-tls-keylog.txt")
+...
+	</programlisting>
+	</example>
+	</section>
  </section>
