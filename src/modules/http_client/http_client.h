@@ -150,6 +150,14 @@ typedef struct _curl_con_pkg
 	struct _curl_con_pkg *next; /*!< next connection */
 } curl_con_pkg_t;
 
+typedef struct ssl_shared_data
+{
+	int db_id;
+	int connection_id;
+	CURL *curl;
+	char *session_key;
+} ssl_shared_data_t;
+
 /*! Returns true if CURL supports TLS */
 extern int curl_support_tls();
 

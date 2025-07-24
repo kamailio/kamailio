@@ -36,6 +36,7 @@
  * Module: \ref http_client
  */
 
+#include <openssl/ssl.h>
 
 #include "../../core/mod_fix.h"
 #include "../../core/pvar.h"
@@ -44,6 +45,7 @@
 #include "../../core/trim.h"
 #include "../../core/mem/mem.h"
 #include "../../core/parser/msg_parser.h"
+#include "../tls_tracker/api.h"
 
 #include "http_client.h"
 #include "curlcon.h"
@@ -77,6 +79,110 @@ typedef struct
 	curl_con_pkg_t *pconn;
 } curl_query_t;
 
+extern tls_tracker_ops_api_t hc_tls_tracker_ops;
+extern int tls_tracker_loaded;
+
+void ssl_info_callback(const SSL *s, int where, int ret)
+{
+	SSL_CTX *ssl_ctx = SSL_get_SSL_CTX(s);
+	ssl_shared_data_t *data =
+			(ssl_shared_data_t *)SSL_CTX_get_app_data(ssl_ctx);
+	if(!data) {
+		LM_ERR("No app data attached to SSL context\n");
+		return;
+	}
+
+	if(where & SSL_CB_HANDSHAKE_DONE) {
+		char *remote_ip = NULL;
+		char *local_ip = NULL;
+		long remote_port = 0;
+		long local_port = 0;
+
+		CURLcode res =
+				curl_easy_getinfo(data->curl, CURLINFO_PRIMARY_IP, &remote_ip);
+		if(CURLE_OK == res) {
+			LM_INFO("curl remote ip_address='%s'\n", remote_ip);
+		} else {
+			LM_ERR("Error remote IP address obtaining\n");
+		}
+
+		res = curl_easy_getinfo(
+				data->curl, CURLINFO_PRIMARY_PORT, &remote_port);
+		if(CURLE_OK == res) {
+			LM_INFO("Connected to remote port: %ld\n", remote_port);
+		} else {
+			LM_ERR("Error remote port obtaining\n");
+		}
+
+		res = curl_easy_getinfo(data->curl, CURLINFO_LOCAL_IP, &local_ip);
+		if(CURLE_OK == res) {
+			LM_INFO("curl local ip_address='%s'\n", local_ip);
+		} else {
+			LM_ERR("Error local IP address obtaining\n");
+		}
+
+		res = curl_easy_getinfo(data->curl, CURLINFO_LOCAL_PORT, &local_port);
+		if(CURLE_OK == res) {
+			LM_INFO("Connected to local port: %ld\n", local_port);
+		} else {
+			LM_ERR("Error local port obtaining\n");
+		}
+
+		str remote_ip_str = {remote_ip, strlen(remote_ip)};
+		str local_ip_str = {local_ip, strlen(local_ip)};
+
+		int db_conn_id =
+				hc_tls_tracker_ops.add_new_connection(data->connection_id,
+						&remote_ip_str, &local_ip_str, remote_port, local_port);
+		if(db_conn_id < 0) {
+			LM_ERR("Error adding new connection into the DB\n");
+		} else {
+			data->db_id = db_conn_id;
+			hc_tls_tracker_ops.add_session_key(db_conn_id, data->session_key);
+		}
+		pkg_free(data->session_key);
+		data->session_key = NULL;
+	}
+}
+
+void keylog_callback(const SSL *ssl, const char *line)
+{
+	SSL_CTX *ssl_ctx = SSL_get_SSL_CTX(ssl);
+	ssl_shared_data_t *data =
+			(ssl_shared_data_t *)SSL_CTX_get_app_data(ssl_ctx);
+	if(data) {
+		LM_DBG("Called HTTPS keylog_callback for tcp connection_id=%d\n",
+				data->connection_id);
+		int session_key_len =
+				(data->session_key ? strlen(data->session_key) : 0)
+				+ strlen(line) + 2;
+		char *session_key = pkg_mallocxz(session_key_len);
+		if(NULL == session_key) {
+			PKG_MEM_ERROR;
+			return;
+		}
+		if(data->session_key) {
+			snprintf(session_key, session_key_len, "%s\n%s", data->session_key,
+					line);
+			pkg_free(data->session_key);
+		} else {
+			snprintf(session_key, session_key_len, "%s", line);
+		}
+		data->session_key = session_key;
+	} else {
+		LM_ERR("no data attached to SSL descriptor\n");
+	}
+}
+
+static CURLcode sslctx_function(CURL *curl, void *sslctx, void *parm)
+{
+	if(parm) {
+		SSL_CTX_set_app_data((SSL_CTX *)sslctx, parm);
+	}
+	SSL_CTX_set_keylog_callback((SSL_CTX *)sslctx, keylog_callback);
+	SSL_CTX_set_info_callback((SSL_CTX *)sslctx, ssl_info_callback);
+	return CURLE_OK;
+}
 
 /**
  *
@@ -234,6 +340,7 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 	str rval = STR_NULL;
 	double download_size = 0;
 	struct curl_slist *headerlist = NULL;
+	ssl_shared_data_t *ssl_data = NULL;
 
 	memset(&stream, 0, sizeof(curl_res_stream_t));
 	stream.max_size = (size_t)params->maxdatasize;
@@ -409,6 +516,24 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 	if(params->useragent)
 		res |= curl_easy_setopt(curl, CURLOPT_USERAGENT, params->useragent);
 
+	if(tls_tracker_loaded && _url && strlen(_url) > 5
+			&& !strncmp(_url, "https", 5)) {
+		do {
+			ssl_data = (ssl_shared_data_t *)pkg_mallocxz(
+					sizeof(ssl_shared_data_t));
+			if(ssl_data == NULL) {
+				PKG_MEM_ERROR;
+				break;
+			}
+			ssl_data->connection_id = params->pconn->conid;
+			ssl_data->curl = curl;
+
+			res |= curl_easy_setopt(
+					curl, CURLOPT_SSL_CTX_FUNCTION, *sslctx_function);
+			res |= curl_easy_setopt(curl, CURLOPT_SSL_CTX_DATA, ssl_data);
+		} while(0);
+	}
+
 	if(res != CURLE_OK) {
 		/* PANIC */
 		LM_ERR("Could not set CURL options. Library error \n");
@@ -482,6 +607,12 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 		}
 		if(stream.buf) {
 			pkg_free(stream.buf);
+		}
+		if(ssl_data) {
+			if(ssl_data->db_id > 0) {
+				hc_tls_tracker_ops.handle_tcp_connection_ended(ssl_data->db_id);
+			}
+			pkg_free(ssl_data);
 		}
 		counter_inc(connfail);
 		if(params->failovercon != NULL) {
@@ -586,6 +717,13 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 			if(params->failovercon != NULL) {
 				LM_ERR("FAILURE: Trying failover to curl con (%s)\n",
 						params->failovercon);
+				if(ssl_data) {
+					if(ssl_data->db_id > 0) {
+						hc_tls_tracker_ops.handle_tcp_connection_ended(
+								ssl_data->db_id);
+					}
+					pkg_free(ssl_data);
+				}
 				return (1000 + stat);
 			}
 		}
@@ -599,6 +737,13 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 	}
 	if(stream.buf != NULL) {
 		pkg_free(stream.buf);
+	}
+
+	if(ssl_data) {
+		if(ssl_data->db_id > 0) {
+			hc_tls_tracker_ops.handle_tcp_connection_ended(ssl_data->db_id);
+		}
+		pkg_free(ssl_data);
 	}
 	return stat;
 }
