@@ -1515,16 +1515,19 @@ verify_client = optional_no_ca
 	</para>
 	<itemizedlist>
 		<listitem>
-			<para><emphasis>0</emphasis> - keys logging inactive</para>
+			<para><emphasis>0</emphasis> - keys logging not enabled</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>1 (bit 1)</emphasis> - keys logging active</para>
+			<para><emphasis>1 (bit 1)</emphasis> - initialise keys logging</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>2 (bit 2)</emphasis> - write keys to NOTICE log</para>
+			<para><emphasis>2 (bit 2)</emphasis> - keys logging active</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>4 (bit 3)</emphasis> - write keys to file</para>
+			<para><emphasis>4 (bit 3)</emphasis> - write keys to NOTICE log</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>8 (bit 4)</emphasis> - write keys to file</para>
 		</listitem>
 	</itemizedlist>
 	<para>
@@ -1534,7 +1537,7 @@ verify_client = optional_no_ca
 		<title>Set <varname>keylog_mode</varname> parameter</title>
 		<programlisting>
 ...
-modparam("tls", "keylog_mode", 7)
+modparam("tls", "keylog_mode", 15)
 ...
 	</programlisting>
 	</example>
@@ -1543,7 +1546,7 @@ modparam("tls", "keylog_mode", 7)
 	<title><varname>keylog_file</varname> (str)</title>
 	<para>
 		Path to the file where to write the TLS keys. The values are appended
-		to the content of the file. The value 4 (bit 3) has to be set to
+		to the content of the file. The value 8 (bit 4) has to be set to
 		keylog_mode parameter.
 	</para>
 	<para>
