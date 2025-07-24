@@ -124,7 +124,7 @@ void tls_openssl_clear_errors(void)
  */
 int ksr_tls_keylog_file_init(void)
 {
-	if(!((ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_ACTIVE)
+	if(!((ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_INIT)
 			   && (ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_FILE))) {
 		return 0;
 	}

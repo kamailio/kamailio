@@ -32,9 +32,10 @@
 #include "../../core/str.h"
 #include "tls_domain.h"
 
-#define KSR_TLS_KEYLOG_MODE_ACTIVE (1)
-#define KSR_TLS_KEYLOG_MODE_MLOG (1 << 1)
-#define KSR_TLS_KEYLOG_MODE_FILE (1 << 2)
+#define KSR_TLS_KEYLOG_MODE_INIT (1)
+#define KSR_TLS_KEYLOG_MODE_ACTIVE (1 << 1)
+#define KSR_TLS_KEYLOG_MODE_MLOG (1 << 2)
+#define KSR_TLS_KEYLOG_MODE_FILE (1 << 3)
 
 static inline int tls_err_ret(
 		char *s, SSL *ssl, tls_domains_cfg_t **tls_domains_cfg)

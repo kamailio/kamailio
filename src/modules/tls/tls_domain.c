@@ -1091,6 +1091,9 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 
 static void ksr_tls_keylog_callback(const SSL *ssl, const char *line)
 {
+	if(!(ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_ACTIVE)) {
+		return;
+	}
 	if(ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_MLOG) {
 		LM_NOTICE("tlskeylog: %s\n", line);
 	}
@@ -1161,7 +1164,7 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 					ERR_reason_error_string(e));
 			return -1;
 		}
-		if(ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_ACTIVE) {
+		if(ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_INIT) {
 			SSL_CTX_set_keylog_callback(d->ctx[i], ksr_tls_keylog_callback);
 		}
 		if(d->method > TLS_USE_TLSvRANGE) {
