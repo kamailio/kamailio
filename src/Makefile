@@ -260,7 +260,8 @@ $(NAME): $(extra_objs) # static_modules
 core/lex.yy.c: core/cfg.lex core/cfg.tab.h $(ALLDEP)
 	$(LEX) -o core/lex.yy.c $<
 
-core/cfg.tab.c core/cfg.tab.h: core/cfg.y  $(ALLDEP)
+core/cfg.tab.c: core/cfg.tab.h
+core/cfg.tab.h: core/cfg.y  $(ALLDEP)
 	$(YACC) $(YACC_FLAGS) $<
 
 nullstring=
