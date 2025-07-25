@@ -1671,6 +1671,14 @@ verify_client = optional_no_ca
      * 4 (bit 3) - write keys to NOTICE log
      * 8 (bit 4) - write keys to file
      * 16 (bit 5) - send keys to udp peer
+     * 1024 (bit 11) - enable filtering of keys logging. When set,
+       filtering is done on: "CLIENT_RANDOM",
+       "CLIENT_HANDSHAKE_TRAFFIC_SECRET",
+       "SERVER_HANDSHAKE_TRAFFIC_SECRET", "EXPORTER_SECRET",
+       "CLIENT_TRAFFIC_SECRET_0", "SERVER_TRAFFIC_SECRET_0"
+
+   Bit position is the index starting from 1 (practically a non-zero value
+   is (2 power (bitpos - 1)) ).
 
    The default value: 0.
 
