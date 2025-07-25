@@ -198,17 +198,21 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 	str comp_val; /* not returned for now */
 #endif
 
+/* derived from the ASCII values of the protocol scheme strings
+ ("sip:", "sips", "tel:", "urn:") interpreted as 4-byte
+ little-endian integers.
+ */
 #define SIP_SCH 0x3a706973
 #define SIPS_SCH 0x73706973
 #define TEL_SCH 0x3a6c6574
 #define URN_SCH 0x3a6e7275
 
-#define case_port(ch, var)           \
-	case ch:                         \
-		(var) = (var)*10 + ch - '0'; \
-		if((var) > MAX_PORT_VAL) {   \
-			goto error_bad_port;     \
-		}                            \
+#define case_port(ch, var)             \
+	case ch:                           \
+		(var) = (var) * 10 + ch - '0'; \
+		if((var) > MAX_PORT_VAL) {     \
+			goto error_bad_port;       \
+		}                              \
 		break
 
 #define still_at_user                                      \
@@ -261,8 +265,12 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 		state = URI_HEADERS;       \
 		s = p + 1;                 \
 		break;                     \
-	case '&':                      \
 	case '@':                      \
+		if(scheme != URN_SCH) {    \
+			goto error_bad_char;   \
+		}                          \
+		break;                     \
+	case '&':                      \
 		goto error_bad_char
 
 
@@ -463,6 +471,8 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 		goto error_too_short;
 	scheme = ((uint32_t)buf[0]) + (((uint32_t)buf[1]) << 8)
 			 + (((uint32_t)buf[2]) << 16) + (((uint32_t)buf[3]) << 24);
+	/* make it case insensitive by converting to lowercase
+	OR with difference between 'A' and 'a' is 32 (0x20) */
 	scheme |= 0x20202020;
 	if(scheme == SIP_SCH) {
 		uri->type = SIP_URI_T;
