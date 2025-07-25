@@ -59,7 +59,7 @@
 #include <stddef.h> /* for offsetof */
 
 
-struct sr_module *modules = 0;
+static struct sr_module *_ksr_modules_list = NULL;
 static str_list_t *_ksr_loadmod_strlist = NULL;
 
 
@@ -336,8 +336,8 @@ static int register_module(module_exports_t *e, char *path, void *handle)
 	}
 
 	/* link module in the list */
-	mod->next = modules;
-	modules = mod;
+	mod->next = _ksr_modules_list;
+	_ksr_modules_list = mod;
 	return 0;
 error:
 	if(mod)
@@ -614,7 +614,7 @@ reload:
 		goto error;
 	}
 
-	for(t = modules; t; t = t->next) {
+	for(t = _ksr_modules_list; t; t = t->next) {
 		if(t->handle == handle) {
 			if(ldopt == 1) {
 				if(path) {
@@ -763,7 +763,7 @@ ksr_cmd_export_t *find_mod_export_record(
 	struct sr_module *t;
 	ksr_cmd_export_t *cmd;
 
-	for(t = modules; t; t = t->next) {
+	for(t = _ksr_modules_list; t; t = t->next) {
 		if(mod != 0 && (strcmp(t->exports.name, mod) != 0))
 			continue;
 		if(t->exports.cmds)
@@ -832,7 +832,7 @@ struct sr_module *find_module_by_name(char *mod)
 {
 	struct sr_module *t;
 
-	for(t = modules; t; t = t->next) {
+	for(t = _ksr_modules_list; t; t = t->next) {
 		if(strcmp(mod, t->exports.name) == 0) {
 			return t;
 		}
@@ -843,7 +843,7 @@ struct sr_module *find_module_by_name(char *mod)
 
 sr_module_t *get_loaded_modules(void)
 {
-	return modules;
+	return _ksr_modules_list;
 }
 
 /*!
@@ -888,7 +888,7 @@ void destroy_modules()
 	LM_DBG("starting modules destroy phase\n");
 
 	/* call first destroy function from each module */
-	t = modules;
+	t = _ksr_modules_list;
 	while(t) {
 		foo = t->next;
 		if(t->exports.destroy_mod_f) {
@@ -897,13 +897,13 @@ void destroy_modules()
 		t = foo;
 	}
 	/* free module exports structures */
-	t = modules;
+	t = _ksr_modules_list;
 	while(t) {
 		foo = t->next;
 		pkg_free(t);
 		t = foo;
 	}
-	modules = 0;
+	_ksr_modules_list = 0;
 	if(mod_response_cbks) {
 		pkg_free(mod_response_cbks);
 		mod_response_cbks = 0;
@@ -1010,7 +1010,7 @@ int init_child(int rank)
 		}
 	}
 
-	ret = init_mod_child(modules, rank);
+	ret = init_mod_child(_ksr_modules_list, rank);
 	if(rank != PROC_INIT && rank != PROC_POSTCHILDINIT) {
 		pt[process_no].status = 1;
 	}
@@ -1078,11 +1078,11 @@ int init_modules(void)
 	if(async_task_init() < 0)
 		return -1;
 
-	i = init_mod(modules);
+	i = init_mod(_ksr_modules_list);
 	if(i != 0)
 		return i;
 
-	for(t = modules; t; t = t->next)
+	for(t = _ksr_modules_list; t; t = t->next)
 		if(t->exports.response_f)
 			mod_response_cbk_no++;
 	mod_response_cbks =
@@ -1091,7 +1091,8 @@ int init_modules(void)
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	for(t = modules, i = 0; t && (i < mod_response_cbk_no); t = t->next)
+	for(t = _ksr_modules_list, i = 0; t && (i < mod_response_cbk_no);
+			t = t->next)
 		if(t->exports.response_f) {
 			mod_response_cbks[i] = t->exports.response_f;
 			i++;

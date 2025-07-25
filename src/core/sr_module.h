@@ -345,7 +345,6 @@ typedef struct sr_module
 } sr_module_t;
 
 
-extern sr_module_t *modules;				 /**< global module list*/
 extern response_function *mod_response_cbks; /**< response callback array */
 extern int mod_response_cbk_no; /**< size of response callbacks array */
 
