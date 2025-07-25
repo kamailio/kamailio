@@ -37,6 +37,7 @@
 #define KSR_TLS_KEYLOG_MODE_MLOG (1 << 2)
 #define KSR_TLS_KEYLOG_MODE_FILE (1 << 3)
 #define KSR_TLS_KEYLOG_MODE_PEER (1 << 4)
+#define KSR_TLS_KEYLOG_MODE_VFILTER (1 << 10)
 
 static inline int tls_err_ret(
 		char *s, SSL *ssl, tls_domains_cfg_t **tls_domains_cfg)
@@ -94,5 +95,6 @@ int ksr_tls_keylog_file_init(void);
 int ksr_tls_keylog_file_write(const SSL *ssl, const char *line);
 int ksr_tls_keylog_peer_init(void);
 int ksr_tls_keylog_peer_send(const SSL *ssl, const char *line);
+int ksr_tls_keylog_vfilter_match(const char *line);
 
 #endif /* _TLS_UTIL_H */

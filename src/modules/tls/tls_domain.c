@@ -1094,6 +1094,11 @@ static void ksr_tls_keylog_callback(const SSL *ssl, const char *line)
 	if(!(ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_ACTIVE)) {
 		return;
 	}
+	if(ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_VFILTER) {
+		if(ksr_tls_keylog_vfilter_match(line) == 0) {
+			return;
+		}
+	}
 	if(ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_MLOG) {
 		LM_NOTICE("tlskeylog: %s\n", line);
 	}

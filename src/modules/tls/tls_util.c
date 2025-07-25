@@ -155,6 +155,36 @@ int ksr_tls_keylog_file_init(void)
 /**
  *
  */
+/* clang-format off */
+static const char *ksr_tls_keylog_vfilters[] = {
+	"CLIENT_RANDOM ",
+	"CLIENT_HANDSHAKE_TRAFFIC_SECRET ",
+	"SERVER_HANDSHAKE_TRAFFIC_SECRET ",
+	"EXPORTER_SECRET ",
+	"CLIENT_TRAFFIC_SECRET_0 ",
+	"SERVER_TRAFFIC_SECRET_0 ",
+	NULL
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int ksr_tls_keylog_vfilter_match(const char *line)
+{
+	int i;
+
+	for(i = 0; ksr_tls_keylog_vfilters[i] != NULL; i++) {
+		if(strcasecmp(ksr_tls_keylog_vfilters[i], line) == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/**
+ *
+ */
 int ksr_tls_keylog_file_write(const SSL *ssl, const char *line)
 {
 	FILE *lf = NULL;
