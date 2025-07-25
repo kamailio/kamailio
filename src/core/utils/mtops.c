@@ -150,7 +150,7 @@ void ksr_sigsem_free(ksr_sigsem_t *sgs)
 /**
  *
  */
-void ksr_sigsem_sfree(ksr_sigsem_t *sgs)
+void ksr_sigsem_xfree(ksr_sigsem_t *sgs)
 {
 	pthread_cond_destroy(&sgs->cnd);
 	pthread_mutex_destroy(&sgs->mtx);
