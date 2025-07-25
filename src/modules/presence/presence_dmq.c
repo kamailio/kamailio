@@ -35,6 +35,7 @@ dmq_api_t pres_dmqb;
 dmq_peer_t *pres_dmq_peer = NULL;
 
 int pres_dmq_send_all_presentities(dmq_node_t *dmq_node);
+int pres_dmq_send_all_subscriptions(dmq_node_t *dmq_node);
 int pres_dmq_request_sync();
 
 /**
@@ -222,6 +223,113 @@ presentity_t *pres_parse_json_presentity(srjson_t *in)
 }
 
 /**
+ * @brief extract subscription from json object
+*/
+subs_t *pres_parse_json_subscription(srjson_t *in)
+{
+	subs_t subscription;
+	str s_event_str = STR_NULL;
+	srjson_t *s_it;
+
+	memset(&subscription, 0, sizeof(subs_t));
+	LM_DBG("extracting subscription\n");
+
+	for(s_it = in->child; s_it; s_it = s_it->next) {
+		if(strcmp(s_it->string, "pres_uri") == 0) {
+			subscription.pres_uri.s = s_it->valuestring;
+			subscription.pres_uri.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "contact") == 0) {
+			subscription.contact.s = s_it->valuestring;
+			subscription.contact.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "local_contact") == 0) {
+			subscription.local_contact.s = s_it->valuestring;
+			subscription.local_contact.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "watcher_domain") == 0) {
+			subscription.watcher_domain.s = s_it->valuestring;
+			subscription.watcher_domain.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "watcher_user") == 0) {
+			subscription.watcher_user.s = s_it->valuestring;
+			subscription.watcher_user.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "from_domain") == 0) {
+			subscription.from_domain.s = s_it->valuestring;
+			subscription.from_domain.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "from_user") == 0) {
+			subscription.from_user.s = s_it->valuestring;
+			subscription.from_user.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "to_domain") == 0) {
+			subscription.to_domain.s = s_it->valuestring;
+			subscription.to_domain.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "to_user") == 0) {
+			subscription.to_user.s = s_it->valuestring;
+			subscription.to_user.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "from_tag") == 0) {
+			subscription.from_tag.s = s_it->valuestring;
+			subscription.from_tag.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "to_tag") == 0) {
+			subscription.to_tag.s = s_it->valuestring;
+			subscription.to_tag.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "user_agent") == 0) {
+			subscription.user_agent.s = s_it->valuestring;
+			subscription.user_agent.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "callid") == 0) {
+			subscription.callid.s = s_it->valuestring;
+			subscription.callid.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "reason") == 0) {
+			subscription.reason.s = s_it->valuestring;
+			subscription.reason.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "socket_info") == 0) {
+			subscription.sockinfo_str.s = s_it->valuestring;
+			subscription.sockinfo_str.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "record_route") == 0) {
+			subscription.record_route.s = s_it->valuestring;
+			subscription.record_route.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "event_id") == 0) {
+			subscription.event_id.s = s_it->valuestring;
+			subscription.event_id.len = strlen(s_it->valuestring);
+		} else if(strcmp(s_it->string, "local_cseq") == 0) {
+			subscription.local_cseq = SRJSON_GET_INT(s_it);
+		} else if(strcmp(s_it->string, "remote_cseq") == 0) {
+			subscription.remote_cseq = SRJSON_GET_INT(s_it);
+		} else if(strcmp(s_it->string, "expires") == 0) {
+			subscription.expires = SRJSON_GET_INT(s_it);
+		} else if(strcmp(s_it->string, "flags") == 0) {
+			subscription.flags = SRJSON_GET_INT(s_it);
+		} else if(strcmp(s_it->string, "status") == 0) {
+			subscription.status = SRJSON_GET_INT(s_it);
+		} else if(strcmp(s_it->string, "version") == 0) {
+			subscription.version = SRJSON_GET_INT(s_it);
+		} else if(strcmp(s_it->string, "updated") == 0) {
+			subscription.updated = SRJSON_GET_INT(s_it);
+		} else if(strcmp(s_it->string, "updated_winfo") == 0) {
+			subscription.updated_winfo = SRJSON_GET_INT(s_it);
+		} else if(strcmp(s_it->string, "event") == 0) {
+			s_event_str.s = s_it->valuestring;
+			s_event_str.len = strlen(s_it->valuestring);
+			subscription.event = contains_event(&s_event_str, 0);
+			if(!subscription.event) {
+				LM_ERR("unsupported event %s\n", s_it->valuestring);
+				return NULL;
+			}
+		} else {
+			LM_ERR("unrecognized field in json object\n");
+			return NULL;
+		}
+	}
+
+	if((pres_server_address.s) && (pres_server_address.len != 0)) {
+		subscription.local_contact.s = pres_server_address.s;
+		subscription.local_contact.len = pres_server_address.len;
+	}
+
+	if((pres_default_socket.s) && (pres_default_socket.len != 0)) {
+		subscription.sockinfo_str.s = pres_default_socket.s;
+		subscription.sockinfo_str.len = pres_default_socket.len;
+	}
+
+	return mem_copy_subs(&subscription, PKG_MEM_TYPE);
+}
+
+/**
 * @brief presence dmq callback
 */
 int pres_dmq_handle_msg(
@@ -234,6 +342,7 @@ int pres_dmq_handle_msg(
 	srjson_doc_t jdoc;
 	srjson_t *it = NULL;
 	presentity_t *presentity = NULL;
+	subs_t *subscription = NULL;
 
 	pres_dmq_action_t action = PRES_DMQ_NONE;
 
@@ -289,6 +398,12 @@ int pres_dmq_handle_msg(
 				LM_ERR("failed to construct presentity from json\n");
 				goto invalid;
 			}
+		} else if(strcmp(it->string, "subscription") == 0) {
+			subscription = pres_parse_json_subscription(it);
+			if(!subscription) {
+				LM_ERR("failed to construct subscription from json\n");
+				goto invalid;
+			}
 		} else if(strcmp(it->string, "t_new") == 0) {
 			t_new = SRJSON_GET_INT(it);
 		} else if(strcmp(it->string, "cur_etag") == 0) {
@@ -315,12 +430,31 @@ int pres_dmq_handle_msg(
 		case PRES_DMQ_UPDATE_PRESENTITY:
 			if(presentity == NULL
 					|| update_presentity(NULL, presentity, &p_body, t_new,
-							   &sent_reply, sphere, &cur_etag, &ruid, 0)
+							   &sent_reply, sphere, &cur_etag, &ruid,
+							   presentity->event->evp->type == EVENT_DIALOG ? 0
+																			: 1,
+							   pres_skip_notify_dmq)
 							   < 0) {
 				goto error;
 			}
 			break;
-		case PRES_DMQ_SYNC:
+		case PRES_DMQ_SYNC_PRESENTITY:
+			*pres_dmq_recv = 0;
+			if(pres_dmq_send_all_presentities(node) < 0) {
+				goto error;
+			}
+			break;
+		case PRES_DMQ_UPDATE_SUBSCRIPTION:
+			if(subscription == NULL || replace_subscription(subscription) < 0) {
+				goto error;
+			}
+			break;
+		case PRES_DMQ_SYNC_SUBSCRIPTION:
+			*pres_dmq_recv = 0;
+			if(pres_dmq_send_all_subscriptions(node) < 0) {
+				goto error;
+			}
+			break;
 		case PRES_DMQ_NONE:
 			break;
 	}
@@ -343,12 +477,14 @@ cleanup:
 	srjson_DestroyDoc(&jdoc);
 	if(presentity)
 		pkg_free(presentity);
+	if(subscription)
+		pkg_free(subscription);
 
 	return 0;
 }
 
 
-int pres_dmq_request_sync()
+int pres_dmq_request_method_sync(int action)
 {
 	srjson_doc_t jdoc;
 
@@ -362,7 +498,7 @@ int pres_dmq_request_sync()
 		goto error;
 	}
 
-	srjson_AddNumberToObject(&jdoc, jdoc.root, "action", PRES_DMQ_SYNC);
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "action", action);
 	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
 	if(jdoc.buf.s == NULL) {
 		LM_ERR("unable to serialize data\n");
@@ -389,17 +525,30 @@ error:
 }
 
 
+int pres_dmq_request_sync()
+{
+	if(pres_enable_pres_dmq > 0 && pres_enable_pres_sync_dmq > 0) {
+		if(pres_dmq_request_method_sync(PRES_DMQ_SYNC_PRESENTITY) != 0) {
+			LM_ERR("cannot send presence sync request\n");
+			return -1;
+		}
+	}
+	if(pres_enable_subs_dmq > 0 && pres_enable_subs_sync_dmq > 0) {
+		if(pres_dmq_request_method_sync(PRES_DMQ_SYNC_SUBSCRIPTION) != 0) {
+			LM_ERR("cannot send subscription sync request\n");
+			return -1;
+		}
+	}
+	return 0;
+}
+
+
 int pres_dmq_replicate_presentity(presentity_t *presentity, str *body,
 		int t_new, str *cur_etag, char *sphere, str *ruid, dmq_node_t *node)
 {
 
 	srjson_doc_t jdoc;
 	srjson_t *p_json;
-
-	LM_DBG("replicating presentity record - old etag %.*s, new etag %.*s, ruid "
-		   "%.*s\n",
-			presentity->etag.len, presentity->etag.s, cur_etag->len,
-			cur_etag->s, ruid->len, ruid->s);
 
 	if(!pres_dmq_proc_init && pres_dmq_init_proc() < 0) {
 		return -1;
@@ -408,6 +557,11 @@ int pres_dmq_replicate_presentity(presentity_t *presentity, str *body,
 	if(*pres_dmq_recv) {
 		return 0;
 	}
+
+	LM_DBG("replicating presentity record - old etag %.*s, new etag %.*s, ruid "
+		   "%.*s\n",
+			presentity->etag.len, presentity->etag.s, cur_etag->len,
+			cur_etag->s, ruid->len, ruid->s);
 
 	srjson_InitDoc(&jdoc, NULL);
 
@@ -483,9 +637,209 @@ error:
 }
 
 
-int pres_dmq_send_all_presentities(dmq_node_t *dmq_node)
+int pres_dmq_replicate_subscription(subs_t *subscription, dmq_node_t *node)
 {
-	// TODO: implement send all presentities
+
+	srjson_doc_t jdoc;
+	srjson_t *s_json;
+	LM_DBG("replicating subscription record - pres_uri %.*s, watcher_user "
+		   "%.*s, watcher_domain %.*s\n",
+			subscription->pres_uri.len, subscription->pres_uri.s,
+			subscription->watcher_user.len, subscription->watcher_user.s,
+			subscription->watcher_domain.len, subscription->watcher_domain.s);
+
+	if(!pres_dmq_proc_init && pres_dmq_init_proc() < 0) {
+		return -1;
+	}
+
+	if(*pres_dmq_recv) {
+		return 0;
+	}
+
+	srjson_InitDoc(&jdoc, NULL);
+
+	jdoc.root = srjson_CreateObject(&jdoc);
+	if(jdoc.root == NULL) {
+		LM_ERR("cannot create json root\n");
+		goto error;
+	}
+
+	// action
+	srjson_AddNumberToObject(
+			&jdoc, jdoc.root, "action", PRES_DMQ_UPDATE_SUBSCRIPTION);
+	// subscription
+	s_json = srjson_CreateObject(&jdoc);
+	srjson_AddStrToObject(&jdoc, s_json, "pres_uri", subscription->pres_uri.s,
+			subscription->pres_uri.len);
+	srjson_AddStrToObject(&jdoc, s_json, "contact", subscription->contact.s,
+			subscription->contact.len);
+	srjson_AddStrToObject(&jdoc, s_json, "local_contact",
+			subscription->local_contact.s, subscription->local_contact.len);
+	srjson_AddStrToObject(&jdoc, s_json, "watcher_domain",
+			subscription->watcher_domain.s, subscription->watcher_domain.len);
+	srjson_AddStrToObject(&jdoc, s_json, "watcher_user",
+			subscription->watcher_user.s, subscription->watcher_user.len);
+	srjson_AddStrToObject(&jdoc, s_json, "from_domain",
+			subscription->from_domain.s, subscription->from_domain.len);
+	srjson_AddStrToObject(&jdoc, s_json, "from_user", subscription->from_user.s,
+			subscription->from_user.len);
+	srjson_AddStrToObject(&jdoc, s_json, "to_domain", subscription->to_domain.s,
+			subscription->to_domain.len);
+	srjson_AddStrToObject(&jdoc, s_json, "to_user", subscription->to_user.s,
+			subscription->to_user.len);
+	srjson_AddStrToObject(&jdoc, s_json, "from_tag", subscription->from_tag.s,
+			subscription->from_tag.len);
+	srjson_AddStrToObject(&jdoc, s_json, "to_tag", subscription->to_tag.s,
+			subscription->to_tag.len);
+	srjson_AddStrToObject(&jdoc, s_json, "user_agent",
+			subscription->user_agent.s, subscription->user_agent.len);
+	srjson_AddStrToObject(&jdoc, s_json, "callid", subscription->callid.s,
+			subscription->callid.len);
+	srjson_AddStrToObject(&jdoc, s_json, "reason", subscription->reason.s,
+			subscription->reason.len);
+	srjson_AddStrToObject(&jdoc, s_json, "socket_info",
+			subscription->sockinfo_str.s, subscription->sockinfo_str.len);
+	srjson_AddStrToObject(&jdoc, s_json, "record_route",
+			subscription->record_route.s, subscription->record_route.len);
+	srjson_AddStrToObject(&jdoc, s_json, "event_id", subscription->event_id.s,
+			subscription->event_id.len);
+	if(subscription->event)
+		srjson_AddStrToObject(&jdoc, s_json, "event",
+				subscription->event->name.s, subscription->event->name.len);
+	srjson_AddNumberToObject(
+			&jdoc, s_json, "local_cseq", subscription->local_cseq);
+	srjson_AddNumberToObject(
+			&jdoc, s_json, "remote_cseq", subscription->remote_cseq);
+	if(subscription->expires != 0
+			&& subscription->expires < ksr_time_sint(NULL, NULL)) {
+		srjson_AddNumberToObject(&jdoc, s_json, "expires",
+				subscription->expires + ksr_time_sint(NULL, NULL));
+	} else {
+		srjson_AddNumberToObject(
+				&jdoc, s_json, "expires", subscription->expires);
+	}
+	srjson_AddNumberToObject(&jdoc, s_json, "flags", subscription->flags);
+	srjson_AddNumberToObject(&jdoc, s_json, "status", subscription->status);
+	srjson_AddNumberToObject(&jdoc, s_json, "version", subscription->version);
+	srjson_AddNumberToObject(&jdoc, s_json, "updated", subscription->updated);
+	srjson_AddNumberToObject(
+			&jdoc, s_json, "updated_winfo", subscription->updated_winfo);
+
+	srjson_AddItemToObject(&jdoc, jdoc.root, "subscription", s_json);
+
+	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
+	if(jdoc.buf.s == NULL) {
+		LM_ERR("unable to serialize data\n");
+		goto error;
+	}
+	jdoc.buf.len = strlen(jdoc.buf.s);
+	LM_DBG("sending serialized data %.*s\n", jdoc.buf.len, jdoc.buf.s);
+	if(pres_dmq_send(&jdoc.buf, node) != 0) {
+		goto error;
+	}
+
+	jdoc.free_fn(jdoc.buf.s);
+	jdoc.buf.s = NULL;
+	srjson_DestroyDoc(&jdoc);
+	return 0;
+
+error:
+	LM_ERR("subscription replication failed\n");
+	if(jdoc.buf.s != NULL) {
+		jdoc.free_fn(jdoc.buf.s);
+		jdoc.buf.s = NULL;
+	}
+	srjson_DestroyDoc(&jdoc);
+	return -1;
+}
+
+
+int pres_dmq_cache_send_all_presentities(dmq_node_t *dmq_node)
+{
+	int i;
+	ps_ptable_t *ps_ptable = NULL;
+	ps_presentity_t *ptn = NULL;
+	presentity_t *presentity = NULL;
+	str pempty = str_init("");
+	pres_ev_t *ev;
+
+	LM_DBG("send_all_presentities from cache started\n");
+
+	ps_ptable = ps_ptable_get();
+	if(ps_ptable == NULL) {
+		LM_ERR("can't find presence table\n");
+		return -1;
+	}
+
+	for(i = 0; i < ps_ptable->ssize; i++) {
+		lock_get(&ps_ptable->slots[i].lock);
+		ptn = ps_ptable->slots[i].plist;
+		while(ptn != NULL) {
+			ev = contains_event(&ptn->event, NULL);
+			presentity = new_presentity(&ptn->domain, &ptn->user,
+					ptn->expires - ptn->received_time, ev, &ptn->etag,
+					(ptn->sender.s) ? &ptn->sender : NULL);
+			if(presentity != NULL) {
+				presentity->priority = ptn->priority;
+				presentity->received_time = ptn->received_time;
+				pres_dmq_replicate_presentity(presentity,
+						(ptn->body.s) ? &ptn->body : &pempty, 1, &pempty, NULL,
+						(ptn->ruid.s) ? &ptn->ruid : &pempty, dmq_node);
+				pkg_free(presentity);
+			}
+			ptn = ptn->next;
+		}
+		lock_release(&ps_ptable->slots[i].lock);
+	}
 
 	return 0;
+}
+
+
+int pres_dmq_send_all_presentities(dmq_node_t *dmq_node)
+{
+	if(publ_cache_mode == PS_PCACHE_RECORD) {
+		return pres_dmq_cache_send_all_presentities(dmq_node);
+	} else {
+		// not implemented for db mode
+		return 0;
+	}
+}
+
+
+int pres_dmq_cache_send_all_subscriptions(dmq_node_t *dmq_node)
+{
+	int i;
+	subs_t *s = NULL;
+
+	LM_DBG("send_all_subscriptions from cache started\n");
+
+	for(i = 0; i < shtable_size; i++) {
+		lock_get(&subs_htable[i].lock);
+
+		s = subs_htable[i].entries->next;
+
+		while(s) {
+			LM_DBG("send_all_subscriptions found subs to pres_uri %.*s with "
+				   "callid %.*s\n",
+					s->pres_uri.len, s->pres_uri.s, s->callid.len, s->callid.s);
+			pres_dmq_replicate_subscription(s, dmq_node);
+			s = s->next;
+		}
+
+		lock_release(&subs_htable[i].lock);
+	}
+
+	return 0;
+}
+
+
+int pres_dmq_send_all_subscriptions(dmq_node_t *dmq_node)
+{
+	if(pres_subs_dbmode != DB_ONLY) {
+		return pres_dmq_cache_send_all_subscriptions(dmq_node);
+	} else {
+		// not implemented for db mode
+		return 0;
+	}
 }

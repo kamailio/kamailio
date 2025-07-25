@@ -893,7 +893,7 @@ modparam("presence", "sip_uri_match", 1)
 <section id="presence.p.enable_dmq">
 	<title><varname>enable_dmq</varname> (integer)</title>
 	<para>
-		If set to 1, will enable DMQ replication of presentities between nodes. Use this instead of a shared DB
+		If set to 1, will enable DMQ replication of presence data between nodes. Use this instead of a shared DB
 		to share state across a cluster and update local watchers in realtime (subs_db_mode &lt; 3) or on next
 		notifier run (subs_db_mode = 3).
 	</para>
@@ -912,6 +912,146 @@ modparam("presence", "sip_uri_match", 1)
 		<programlisting format="linespecific">
 ...
 modparam("presence", "enable_dmq", 1)
+...
+</programlisting>
+	</example>
+</section>
+
+<section id="presence.p.enable_pres_dmq">
+	<title><varname>enable_pres_dmq</varname> (integer)</title>
+	<para>
+		If set to 1, will enable DMQ replication of presentities.
+	</para>
+	<para>
+		<emphasis>
+			Make sure that enable_dmq is set to 1.
+		</emphasis>
+	</para>
+	<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+	</para>
+	<example>
+		<title>Set <varname>enable_pres_dmq</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "enable_pres_dmq", 1)
+...
+</programlisting>
+	</example>
+</section>
+
+<section id="presence.p.enable_pres_sync_dmq">
+	<title><varname>enable_pres_sync_dmq</varname> (integer)</title>
+	<para>
+		If set to 1, will enable initial synchronization of presentities state.
+	</para>
+	<para>
+		<emphasis>
+			Make sure that enable_dmq and enable_pres_dmq are set to 1.
+		</emphasis>
+	</para>
+	<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+	</para>
+	<example>
+		<title>Set <varname>enable_pres_sync_dmq</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "enable_pres_sync_dmq", 1)
+...
+</programlisting>
+	</example>
+</section>
+
+<section id="presence.p.enable_subs_dmq">
+	<title><varname>enable_subs_dmq</varname> (integer)</title>
+	<para>
+		If set to 1, will enable DMQ replication of subscriptions.
+	</para>
+	<para>
+		<emphasis>
+			Make sure that enable_dmq is set to 1.
+		</emphasis>
+	</para>
+	<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+	</para>
+	<example>
+		<title>Set <varname>enable_subs_dmq</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "enable_subs_dmq", 1)
+...
+</programlisting>
+	</example>
+</section>
+
+<section id="presence.p.enable_subs_sync_dmq">
+	<title><varname>enable_subs_sync_dmq</varname> (integer)</title>
+	<para>
+		If set to 1, will enable initial synchronization of subscriptions state.
+	</para>
+	<para>
+		<emphasis>
+			Make sure that enable_dmq and enable_subs_dmq are set to 1.
+		</emphasis>
+	</para>
+	<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+	</para>
+	<example>
+		<title>Set <varname>enable_subs_sync_dmq</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "enable_subs_sync_dmq", 1)
+...
+</programlisting>
+	</example>
+</section>
+
+<section id="presence.p.skip_notify_dmq">
+	<title><varname>skip_notify_dmq</varname> (integer)</title>
+	<para>
+		Skip sending Notify messages if presentity was received by DMQ.
+	</para>
+	<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+	</para>
+	<example>
+		<title>Set <varname>skip_notify_dmq</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "skip_notify_dmq", 1)
+...
+</programlisting>
+	</example>
+</section>
+
+<section id="presence.p.default_socket">
+	<title><varname>default_socket</varname> (str)</title>
+	<para>
+		Default socket name to rewrite socket info in subcription that was received by DMQ.
+	</para>
+	<para>
+		<emphasis>
+			By default is not defined. Socket info will be original value from DMQ message.
+		</emphasis>
+	</para>
+	<example>
+		<title>Set <varname>default_socket</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "default_socket", "udp:192.168.0.125:5060")
 ...
 </programlisting>
 	</example>

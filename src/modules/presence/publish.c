@@ -550,7 +550,7 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 
 	/* query the database and update or insert */
 	if(update_presentity(msg, presentity, &body, etag_gen, &sent_reply, sphere,
-			   NULL, NULL, 0)
+			   NULL, NULL, 0, 0)
 			< 0) {
 		LM_ERR("when updating presentity\n");
 		goto error;
@@ -693,7 +693,7 @@ int update_hard_presentity(
 	}
 
 	if(update_presentity(
-			   NULL, pres, pidf_doc, new_t, NULL, sphere, NULL, NULL, 0)
+			   NULL, pres, pidf_doc, new_t, NULL, sphere, NULL, NULL, 0, 0)
 			< 0) {
 		LM_ERR("updating presentity\n");
 		goto done;

@@ -171,6 +171,12 @@ str pres_xavp_cfg = {0};
 int pres_retrieve_order = 0;
 str pres_retrieve_order_by = str_init("priority");
 int pres_enable_dmq = 0;
+int pres_enable_pres_dmq = 1;
+int pres_enable_pres_sync_dmq = 1;
+int pres_enable_subs_dmq = 0;
+int pres_enable_subs_sync_dmq = 1;
+int pres_skip_notify_dmq = 0;
+str pres_default_socket = {0, 0};
 int pres_delete_same_subs = 0;
 int pres_subs_respond_200 = 1;
 
@@ -247,6 +253,12 @@ static param_export_t params[]={
 	{ "sip_uri_match",          PARAM_INT, &pres_uri_match},
 	{ "cseq_offset",            PARAM_INT, &pres_cseq_offset},
 	{ "enable_dmq",             PARAM_INT, &pres_enable_dmq},
+	{ "enable_pres_dmq",        PARAM_INT, &pres_enable_pres_dmq},
+	{ "enable_pres_sync_dmq",   PARAM_INT, &pres_enable_pres_sync_dmq},
+	{ "enable_subs_dmq",        PARAM_INT, &pres_enable_subs_dmq},
+	{ "enable_subs_sync_dmq",   PARAM_INT, &pres_enable_subs_sync_dmq},
+	{ "skip_notify_dmq",        PARAM_INT, &pres_skip_notify_dmq},
+	{ "default_socket",         PARAM_STR, &pres_default_socket},
 	{ "pres_subs_mode",         PARAM_INT, &_pres_subs_mode},
 	{ "delete_same_subs",       PARAM_INT, &pres_delete_same_subs},
 	{ "timer_mode",             PARAM_INT, &pres_timer_mode},
@@ -343,6 +355,12 @@ static int mod_init(void)
 
 	if(pres_server_address.s == NULL || pres_server_address.len == 0) {
 		LM_DBG("server_address parameter not set in configuration file\n");
+	}
+
+	if(pres_default_socket.s != NULL && pres_default_socket.len != 0
+			&& lookup_local_socket(&pres_default_socket) == NULL) {
+		LM_ERR("default_socket is not a socket the proxy is listening on\n");
+		return -1;
 	}
 
 	/* bind the SL API */
@@ -1440,6 +1458,7 @@ static int update_pw_dialogs(
 			if(subs->status == TERMINATED_STATUS) {
 				ps->next = s->next;
 				shm_free(s->contact.s);
+				shm_free(s->record_route.s);
 				shm_free(s);
 				LM_DBG(" deleted terminated dialog from hash table\n");
 			} else

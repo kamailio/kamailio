@@ -492,10 +492,6 @@ int ps_cache_delete_presentity_if_dialog_id_exists(
 				if(delete_presentity(&old_presentity, NULL) < 0) {
 					LM_ERR("failed to delete presentity\n");
 				}
-				ps_presentity_list_free(ptlist, 1);
-				free(db_dialog_id);
-				db_dialog_id = NULL;
-				return 1;
 			}
 			free(db_dialog_id);
 			db_dialog_id = NULL;
@@ -662,7 +658,7 @@ int ps_match_dialog_state(presentity_t *presentity, char *vstate)
 
 static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 		str *body, int new_t, int *sent_reply, char *sphere, str *etag_override,
-		str *ruid, int replace)
+		str *ruid, int replace, int skip_notify)
 {
 	db_key_t query_cols[14], rquery_cols[2], update_keys[9], result_cols[7];
 	db_op_t query_ops[14], rquery_ops[2];
@@ -1064,27 +1060,29 @@ static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 			}
 			if(sent_reply)
 				*sent_reply = 1;
-
-			if(pres_notifier_processes > 0) {
-				if((num_watchers = publ_notify_notifier(
-							pres_uri, presentity->event))
-						< 0) {
-					LM_ERR("updating watcher records\n");
-					goto error;
-				}
-
-				if(num_watchers > 0) {
-					if(mark_presentity_for_delete(presentity, &p_ruid) < 0) {
-						LM_ERR("Marking presentities\n");
+			if(!skip_notify) {
+				if(pres_notifier_processes > 0) {
+					if((num_watchers = publ_notify_notifier(
+								pres_uri, presentity->event))
+							< 0) {
+						LM_ERR("updating watcher records\n");
 						goto error;
 					}
-				}
-			} else {
-				if(publ_notify(presentity, pres_uri, body, &presentity->etag,
-						   rules_doc)
-						< 0) {
-					LM_ERR("while sending notify\n");
-					goto error;
+
+					if(num_watchers > 0) {
+						if(mark_presentity_for_delete(presentity, &p_ruid)
+								< 0) {
+							LM_ERR("Marking presentities\n");
+							goto error;
+						}
+					}
+				} else {
+					if(publ_notify(presentity, pres_uri, body,
+							   &presentity->etag, rules_doc)
+							< 0) {
+						LM_ERR("while sending notify\n");
+						goto error;
+					}
 				}
 			}
 
@@ -1240,7 +1238,8 @@ static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 		/* if there is no support for affected_rows and no previous query has been done,
 		 * or dmq replication is enabled and we don't already know the ruid, do query */
 		if((!pa_dbf.affected_rows && !db_record_exists)
-				|| (pres_enable_dmq > 0 && !p_ruid.s)) {
+				|| (pres_enable_dmq > 0 && pres_enable_pres_dmq > 0
+						&& !p_ruid.s)) {
 			if(pa_dbf.query(pa_db, ruid ? rquery_cols : query_cols,
 					   ruid ? rquery_ops : query_ops,
 					   ruid ? rquery_vals : query_vals, result_cols,
@@ -1322,21 +1321,23 @@ static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 send_notify:
 
 	/* send notify with presence information */
-	if(pres_notifier_processes > 0) {
-		if(publ_notify_notifier(pres_uri, presentity->event) < 0) {
-			LM_ERR("updating watcher records\n");
-			goto error;
-		}
-	} else {
-		if(publ_notify(presentity, pres_uri, body, NULL, rules_doc) < 0) {
-			LM_ERR("while sending notify\n");
-			goto error;
+	if(!skip_notify) {
+		if(pres_notifier_processes > 0) {
+			if(publ_notify_notifier(pres_uri, presentity->event) < 0) {
+				LM_ERR("updating watcher records\n");
+				goto error;
+			}
+		} else {
+			if(publ_notify(presentity, pres_uri, body, NULL, rules_doc) < 0) {
+				LM_ERR("while sending notify\n");
+				goto error;
+			}
 		}
 	}
 
 done:
 
-	if(pres_enable_dmq > 0 && p_ruid.s != NULL) {
+	if(pres_enable_dmq > 0 && pres_enable_pres_dmq > 0 && p_ruid.s != NULL) {
 		pres_dmq_replicate_presentity(
 				presentity, body, new_t, &cur_etag, sphere, &p_ruid, NULL);
 	}
@@ -1415,7 +1416,7 @@ error:
 
 static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 		str *body, int new_t, int *sent_reply, char *sphere, str *etag_override,
-		str *ruid, int replace)
+		str *ruid, int replace, int skip_notify)
 {
 	char *dot = NULL;
 	str etag = STR_NULL;
@@ -1500,7 +1501,7 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 		}
 		if(!replace) {
 			/* A real PUBLISH */
-			ptc.expires = presentity->expires + (int)time(NULL);
+			ptc.expires = presentity->expires + presentity->received_time;
 			if(presentity->event->evp->type == EVENT_DIALOG) {
 				check_if_dialog(*body, &is_dialog, &dialog_id);
 				if(dialog_id) {
@@ -1525,7 +1526,7 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 			/* A hard-state PUBLISH */
 			ptc.expires = -1;
 			if(presentity->expires != -1) {
-				ptc.expires = presentity->expires + (int)time(NULL);
+				ptc.expires = presentity->expires + presentity->received_time;
 			}
 			/* update/replace in memory */
 			if(ps_ptable_replace(&ptm, &ptc) < 0) {
@@ -1653,9 +1654,10 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 				*sent_reply = 1;
 			}
 
-			if(publ_notify(
-					   presentity, pres_uri, body, &presentity->etag, rules_doc)
-					< 0) {
+			if(!skip_notify
+					&& (publ_notify(presentity, pres_uri, body,
+								&presentity->etag, rules_doc)
+							< 0)) {
 				LM_ERR("while sending notify\n");
 				goto error;
 			}
@@ -1752,7 +1754,7 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 			}
 		}
 
-		ptc.expires = presentity->expires + (int)time(NULL);
+		ptc.expires = presentity->expires + presentity->received_time;
 		ptc.received_time = presentity->received_time;
 		ptc.priority = presentity->priority;
 		if(body && body->s && body->len > 0) {
@@ -1764,7 +1766,9 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 
 		/* if there is no support for affected_rows and no previous query has been done,
 		 * or dmq replication is enabled and we don't already know the ruid, do query */
-		if((!cache_record_exists) || (pres_enable_dmq > 0 && !p_ruid.s)) {
+		if((!cache_record_exists)
+				|| (pres_enable_dmq > 0 && pres_enable_pres_dmq > 0
+						&& !p_ruid.s)) {
 			ptx = ps_ptable_get_item(
 					&ptm.user, &ptm.domain, &ptm.event, &ptm.etag);
 			if(ptx == NULL) {
@@ -1814,14 +1818,15 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 send_notify:
 
 	/* send notify with presence information */
-	if(publ_notify(presentity, pres_uri, body, NULL, rules_doc) < 0) {
+	if(!skip_notify
+			&& (publ_notify(presentity, pres_uri, body, NULL, rules_doc) < 0)) {
 		LM_ERR("while sending notify\n");
 		goto error;
 	}
 
 done:
 
-	if(pres_enable_dmq > 0 && p_ruid.s != NULL) {
+	if(pres_enable_dmq > 0 && pres_enable_pres_dmq > 0 && p_ruid.s != NULL) {
 		pres_dmq_replicate_presentity(
 				presentity, body, new_t, &crt_etag, sphere, &p_ruid, NULL);
 	}
@@ -1897,14 +1902,14 @@ error:
  */
 int update_presentity(sip_msg_t *msg, presentity_t *presentity, str *body,
 		int new_t, int *sent_reply, char *sphere, str *etag_override, str *ruid,
-		int replace)
+		int replace, int skip_notify)
 {
 	if(publ_cache_mode == PS_PCACHE_RECORD) {
 		return ps_cache_update_presentity(msg, presentity, body, new_t,
-				sent_reply, sphere, etag_override, ruid, replace);
+				sent_reply, sphere, etag_override, ruid, replace, skip_notify);
 	} else {
 		return ps_db_update_presentity(msg, presentity, body, new_t, sent_reply,
-				sphere, etag_override, ruid, replace);
+				sphere, etag_override, ruid, replace, skip_notify);
 	}
 }
 
@@ -2592,7 +2597,7 @@ int _api_update_presentity(str *event, str *realm, str *user, str *etag,
 	}
 	if(pres) {
 		ret = update_presentity(
-				NULL, pres, body, new_t, NULL, sphere, NULL, NULL, replace);
+				NULL, pres, body, new_t, NULL, sphere, NULL, NULL, replace, 0);
 		pkg_free(pres);
 	}
 

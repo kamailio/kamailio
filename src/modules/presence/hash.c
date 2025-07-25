@@ -252,33 +252,51 @@ subs_t *mem_copy_subs_noc(subs_t *s)
 	return dest;
 
 error:
-	if(dest)
+	if(dest) {
+		if(dest->contact.s)
+			shm_free(dest->contact.s);
+		if(dest->record_route.s)
+			shm_free(dest->record_route.s);
 		shm_free(dest);
+	}
 	return NULL;
 }
 
-int insert_shtable(shtable_t htable, unsigned int hash_code, subs_t *subs)
+int insert_and_replace_shtable(
+		shtable_t htable, unsigned int hash_code, subs_t *subs, int replace)
 {
 	subs_t *new_rec = NULL;
 
-	if(pres_delete_same_subs) {
-		subs_t *rec = NULL, *prev_rec = NULL;
+	subs_t *rec = NULL, *prev_rec = NULL;
 
-		lock_get(&htable[hash_code].lock);
+	new_rec = mem_copy_subs_noc(subs);
+	if(new_rec == NULL) {
+		LM_ERR("copying in share memory a subs_t structure\n");
+		return -1;
+	}
+	if(subs->expires != 0 && subs->expires < ksr_time_sint(NULL, NULL))
+		new_rec->expires += ksr_time_sint(NULL, NULL);
+
+	lock_get(&htable[hash_code].lock);
+	if(replace || pres_delete_same_subs) {
 		/* search if there is another record with the same pres_uri & callid */
 		rec = htable[hash_code].entries->next;
 		while(rec) {
-			if(subs->pres_uri.len == rec->pres_uri.len
-					&& subs->callid.len == rec->callid.len
-					&& memcmp(subs->pres_uri.s, rec->pres_uri.s,
-							   subs->pres_uri.len)
+			if(new_rec->pres_uri.len == rec->pres_uri.len
+					&& new_rec->callid.len == rec->callid.len
+					&& memcmp(new_rec->pres_uri.s, rec->pres_uri.s,
+							   new_rec->pres_uri.len)
 							   == 0
-					&& memcmp(subs->callid.s, rec->callid.s, subs->callid.len)
+					&& memcmp(new_rec->callid.s, rec->callid.s,
+							   new_rec->callid.len)
 							   == 0) {
-				LM_NOTICE("Found another record with the same pres_uri[%.*s] "
-						  "and callid[%.*s]\n",
-						subs->pres_uri.len, subs->pres_uri.s, subs->callid.len,
-						subs->callid.s);
+				LM_DBG("Found another record with the same pres_uri[%.*s], "
+					   "callid[%.*s],"
+					   " from_tag[%.*s] and to_tag[%.*s]\n",
+						new_rec->pres_uri.len, new_rec->pres_uri.s,
+						new_rec->callid.len, new_rec->callid.s,
+						new_rec->from_tag.len, new_rec->from_tag.s,
+						new_rec->to_tag.len, new_rec->to_tag.s);
 				/* delete this record */
 
 				if(prev_rec) {
@@ -294,29 +312,39 @@ int insert_shtable(shtable_t htable, unsigned int hash_code, subs_t *subs)
 				if(rec->contact.s != NULL) {
 					shm_free(rec->contact.s);
 				}
+				if(rec->record_route.s != NULL) {
+					shm_free(rec->record_route.s);
+				}
 
 				shm_free(rec);
-				break;
+
+				if(prev_rec) {
+					rec = prev_rec->next;
+				} else {
+					rec = htable[hash_code].entries->next;
+				}
+			} else {
+				prev_rec = rec;
+				rec = rec->next;
 			}
-			prev_rec = rec;
-			rec = rec->next;
 		}
-		lock_release(&htable[hash_code].lock);
 	}
 
-	new_rec = mem_copy_subs_noc(subs);
-	if(new_rec == NULL) {
-		LM_ERR("copying in share memory a subs_t structure\n");
-		return -1;
-	}
-	new_rec->expires += ksr_time_sint(NULL, NULL);
-
-	lock_get(&htable[hash_code].lock);
 	new_rec->next = htable[hash_code].entries->next;
 	htable[hash_code].entries->next = new_rec;
 	lock_release(&htable[hash_code].lock);
 
 	return 0;
+}
+
+int insert_shtable(shtable_t htable, unsigned int hash_code, subs_t *subs)
+{
+	return insert_and_replace_shtable(htable, hash_code, subs, 0);
+}
+
+int replace_shtable(shtable_t htable, unsigned int hash_code, subs_t *subs)
+{
+	return insert_and_replace_shtable(htable, hash_code, subs, 1);
 }
 
 int delete_shtable(shtable_t htable, unsigned int hash_code, subs_t *subs)
@@ -355,15 +383,15 @@ int delete_shtable(shtable_t htable, unsigned int hash_code, subs_t *subs)
 		if(found == 0) {
 			found = s->local_cseq + 1;
 			ps->next = s->next;
-			if(s->contact.s != NULL) {
-				shm_free(s->contact.s);
-				s->contact.s = NULL;
-			}
-			if(s->record_route.s != NULL) {
-				shm_free(s->record_route.s);
-				s->record_route.s = NULL;
-			}
 			if(s) {
+				if(s->contact.s != NULL) {
+					shm_free(s->contact.s);
+					s->contact.s = NULL;
+				}
+				if(s->record_route.s != NULL) {
+					shm_free(s->record_route.s);
+					s->record_route.s = NULL;
+				}
 				shm_free(s);
 				s = NULL;
 			}
@@ -522,7 +550,6 @@ void destroy_phtable(void)
 	shm_free(pres_htable);
 }
 /* entry must be locked before calling this function */
-
 pres_entry_t *search_phtable(str *pres_uri, int event, unsigned int hash_code)
 {
 	pres_entry_t *p;
@@ -1061,13 +1088,9 @@ int ps_ptable_replace(ps_presentity_t *ptm, ps_presentity_t *pt)
 			} else {
 				_ps_ptable->slots[idx].plist = ptn->next;
 			}
-			break;
+			ps_presentity_free(ptn, 0);
 		}
 		ptn = ptn->next;
-	}
-
-	if(ptn != NULL) {
-		ps_presentity_free(ptn, 0);
 	}
 
 	ptn = ps_presentity_new(&ptv, 0);
