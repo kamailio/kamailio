@@ -38,6 +38,7 @@
 #include "subscribe.h"
 #include "utils_func.h"
 #include "notify.h"
+#include "presence_dmq.h"
 #include "../pua/hash.h"
 #include "../../core/mod_fix.h"
 #include "../../core/dset.h"
@@ -68,6 +69,10 @@ static int send_2XX_reply(sip_msg_t *msg, int reply_code, unsigned int lexpire,
 	str tmp;
 	char *t = NULL;
 
+	if(msg == NULL) {
+		LM_ERR("msg does not exist\n");
+		return 0;
+	}
 	tmp.s = int2str((unsigned long)lexpire, &tmp.len);
 	hdr_append.len =
 			9 + tmp.len + CRLF_LEN + 10 + local_contact->len + 16 + CRLF_LEN;
@@ -546,6 +551,10 @@ int update_subscription_notifier(
 		}
 	}
 
+	if(pres_enable_dmq > 0 && pres_enable_subs_dmq > 0) {
+		pres_dmq_replicate_subscription(subs, NULL);
+	}
+
 	reply_code = subs->event->type & PUBL_TYPE ? get_ok_reply_code() : 200;
 	if(send_2XX_reply(msg, reply_code, subs->expires, &subs->local_contact)
 			< 0) {
@@ -610,6 +619,10 @@ int update_subscription(
 			if(notify(subs, NULL, NULL, 0, 0) < 0) {
 				LM_ERR("Could not send notify\n");
 				goto error;
+			}
+
+			if(pres_enable_dmq > 0 && pres_enable_subs_dmq > 0) {
+				pres_dmq_replicate_subscription(subs, NULL);
 			}
 			return 1;
 		}
@@ -707,6 +720,46 @@ int update_subscription(
 			goto error;
 		}
 	}
+	if(pres_enable_dmq > 0 && pres_enable_subs_dmq > 0) {
+		pres_dmq_replicate_subscription(subs, NULL);
+	}
+
+	return 0;
+
+error:
+
+	LM_ERR("occurred\n");
+	return -1;
+}
+
+int replace_subscription(subs_t *subs)
+{
+	unsigned int hash_code;
+
+	LM_DBG("replace subscription\n");
+	printf_subs(subs);
+
+	if(subs->expires == 0) {
+		LM_DBG("expires =0 -> deleting record\n");
+		delete_subs(&subs->pres_uri, &subs->event->name, &subs->to_tag,
+				&subs->from_tag, &subs->callid);
+		return 1;
+	} else {
+		/* if subscriptions are stored in memory, replace them */
+		if(pres_subs_dbmode != DB_ONLY) {
+			hash_code = core_case_hash(
+					&subs->pres_uri, &subs->event->name, shtable_size);
+			if(replace_shtable(subs_htable, hash_code, subs) < 0) {
+				LM_ERR("failed to replace subscription in memory\n");
+				goto error;
+			}
+		}
+		/* for modes that update the subscription synchronously in database, */
+		if(pres_subs_dbmode == DB_ONLY || pres_subs_dbmode == WRITE_THROUGH) {
+			LM_WARN("replace subscription in database is not supported\n");
+		}
+	}
+
 	return 0;
 
 error:
@@ -2119,6 +2172,8 @@ void update_db_subs_timer_dbnone(int no_lock)
 
 				if(del_s->contact.s)
 					shm_free(del_s->contact.s);
+				if(del_s->record_route.s)
+					shm_free(del_s->record_route.s);
 				shm_free(del_s);
 				continue;
 			}
