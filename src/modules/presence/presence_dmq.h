@@ -25,6 +25,7 @@
 #define _PRESENCE_DMQ_H_
 
 #include "presentity.h"
+#include "subscribe.h"
 #include "../dmq/bind_dmq.h"
 #include "../../core/utils/srjson.h"
 #include "../../core/strutils.h"
@@ -38,7 +39,9 @@ typedef enum
 {
 	PRES_DMQ_NONE,
 	PRES_DMQ_UPDATE_PRESENTITY,
-	PRES_DMQ_SYNC,
+	PRES_DMQ_SYNC_PRESENTITY,
+	PRES_DMQ_UPDATE_SUBSCRIPTION,
+	PRES_DMQ_SYNC_SUBSCRIPTION,
 } pres_dmq_action_t;
 
 int pres_dmq_initialize();
@@ -46,4 +49,5 @@ int pres_dmq_handle_msg(
 		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *node);
 int pres_dmq_replicate_presentity(presentity_t *presentity, str *body,
 		int new_t, str *cur_etag, char *sphere, str *ruid, dmq_node_t *node);
+int pres_dmq_replicate_subscription(subs_t *subscription, dmq_node_t *node);
 #endif

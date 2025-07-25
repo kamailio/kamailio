@@ -48,6 +48,7 @@
 #include "presence.h"
 #include "notify.h"
 #include "utils_func.h"
+#include "presence_dmq.h"
 #include "../../core/receive.h"
 
 #define ALLOC_SIZE 3000
@@ -1852,6 +1853,10 @@ int notify(subs_t *subs, subs_t *watcher_subs, str *n_body, int force_null_body,
 		}
 		pkg_free(aux_body);
 	}
+	if(pres_enable_dmq > 0 && pres_enable_subs_dmq > 0) {
+		pres_dmq_replicate_subscription(subs, NULL);
+	}
+
 	return 0;
 }
 
@@ -1997,6 +2002,10 @@ void p_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 			|| pres_get_delete_sub()) {
 		delete_subs(&subs->pres_uri, &subs->event->name, &subs->to_tag,
 				&subs->from_tag, &subs->callid);
+		if(pres_enable_dmq > 0 && pres_enable_subs_dmq > 0) {
+			subs->expires = 0;
+			pres_dmq_replicate_subscription(subs, NULL);
+		}
 	}
 
 	shm_free(subs);
