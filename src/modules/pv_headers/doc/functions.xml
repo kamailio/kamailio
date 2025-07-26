@@ -128,6 +128,18 @@
 		pvh_collect_headers()</link> or with <quote>auto_msg</quote> parameter enabled.
 		</para>
 	</section>
+	<section id="pv_headers.f.pvh_remove_all_headers">
+		<title>
+		<function moreinfo="none">pvh_remove_all_headers()</function>
+		</title>
+		<para>
+		Removes all sip message headers. 
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE but only after <link linked="pv_headers.f.pvh_collect_headers">
+		pvh_collect_headers()</link> or with <quote>auto_msg</quote> parameter enabled.
+		</para>
+	</section>
 	<section id="pv_headers.f.pvh_header_param_exists">
 		<title>
 			<function moreinfo="none">pvh_value_exists(hname, hparameter)</function>
