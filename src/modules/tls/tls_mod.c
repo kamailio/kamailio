@@ -246,7 +246,7 @@ gen_lock_t *tls_domains_cfg_lock = NULL;
 int sr_tls_renegotiation = 0;
 int ksr_tls_init_mode = 0;
 int ksr_tls_key_password_mode = 0;
-int ksr_tls_keylog_mode = 0;
+int *ksr_tls_keylog_mode = NULL;
 str ksr_tls_keylog_file = STR_NULL;
 str ksr_tls_keylog_peer = STR_NULL;
 
@@ -320,7 +320,7 @@ static param_export_t params[] = {
 			(void *)ksr_rand_engine_param},
 	{"init_mode", PARAM_INT, &ksr_tls_init_mode},
 	{"key_password_mode", PARAM_INT, &ksr_tls_key_password_mode},
-	{"keylog_mode", PARAM_INT, &ksr_tls_keylog_mode},
+	{"keylog_mode", PARAM_INT | PARAM_USE_SHM, &ksr_tls_keylog_mode},
 	{"keylog_file", PARAM_STR, &ksr_tls_keylog_file},
 	{"keylog_peer", PARAM_STR, &ksr_tls_keylog_peer},
 

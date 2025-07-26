@@ -43,7 +43,7 @@
 #include "tls_util.h"
 
 
-extern int ksr_tls_keylog_mode;
+extern int *ksr_tls_keylog_mode;
 extern str ksr_tls_keylog_file;
 extern str ksr_tls_keylog_peer;
 
@@ -132,8 +132,11 @@ void tls_openssl_clear_errors(void)
  */
 int ksr_tls_keylog_file_init(void)
 {
-	if(!((ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_INIT)
-			   && (ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_FILE))) {
+	if(ksr_tls_keylog_mode == NULL) {
+		return 0;
+	}
+	if(!((*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_INIT)
+			   && (*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_FILE))) {
 		return 0;
 	}
 	if(ksr_tls_keylog_file.s == NULL || ksr_tls_keylog_file.len <= 0) {
@@ -217,8 +220,11 @@ int ksr_tls_keylog_peer_init(void)
 	str host;
 	int port;
 
-	if(!((ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_INIT)
-			   && (ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_PEER))) {
+	if(ksr_tls_keylog_mode == NULL) {
+		return 0;
+	}
+	if(!((*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_INIT)
+			   && (*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_PEER))) {
 		return 0;
 	}
 	if(ksr_tls_keylog_peer.s == NULL || ksr_tls_keylog_peer.len <= 0) {
@@ -250,8 +256,11 @@ int ksr_tls_keylog_peer_init(void)
  */
 int ksr_tls_keylog_peer_send(const SSL *ssl, const char *line)
 {
-	if(!((ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_INIT)
-			   && (ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_PEER))) {
+	if(ksr_tls_keylog_mode == NULL) {
+		return 0;
+	}
+	if(!((*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_INIT)
+			   && (*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_PEER))) {
 		return 0;
 	}
 
