@@ -35,6 +35,7 @@
 #include "pvar.h"
 #include "str_list.h"
 #include "mem/mem.h"
+#include "mem/shm.h"
 #include <sys/types.h>
 #include <regex.h>
 #include <string.h>
@@ -52,6 +53,13 @@ static char *get_mod_param_type_str(int ptype)
 			return "func-str";
 		} else {
 			return "func-unknown";
+		}
+	}
+	if(ptype & PARAM_USE_SHM) {
+		if(ptype & PARAM_INT) {
+			return "shm-int";
+		} else {
+			return "shm-unknown";
 		}
 	}
 	if(ptype & PARAM_STRING) {
@@ -143,6 +151,25 @@ int set_mod_param_regex(char *regex, char *name, modparam_t type, void *val)
 						regfree(&preg);
 						pkg_free(reg);
 						return -4;
+					}
+				} else if(param_type & PARAM_USE_SHM) {
+					if(!shm_initialized()) {
+						LM_ERR("shared memory initialized\n");
+						regfree(&preg);
+						pkg_free(reg);
+						return -1;
+					}
+					switch(PARAM_TYPE_MASK(param_type)) {
+						case PARAM_INT:
+							*((int **)ptr) = shm_malloc(sizeof(int));
+							if(!*((int **)ptr)) {
+								SHM_MEM_ERROR;
+								regfree(&preg);
+								pkg_free(reg);
+								return -1;
+							}
+							*(*((int **)ptr)) = (int)(long)val2;
+							break;
 					}
 				} else {
 					switch(PARAM_TYPE_MASK(param_type)) {
