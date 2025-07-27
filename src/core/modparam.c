@@ -34,6 +34,7 @@
 #include "fmsg.h"
 #include "pvar.h"
 #include "str_list.h"
+#include "shm_init.h"
 #include "mem/mem.h"
 #include "mem/shm.h"
 #include <sys/types.h>
