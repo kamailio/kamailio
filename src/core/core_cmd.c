@@ -1169,12 +1169,55 @@ static void rpc_modparam_getn(rpc_t *rpc, void *c)
 	return;
 }
 
+static const char *rpc_modparam_setn_doc[] = {
+		"Set the value of an integer parameter kept in shared memory.", 0};
+
+static void rpc_modparam_setn(rpc_t *rpc, void *c)
+{
+	char *mname;
+	char *pname;
+	int oval;
+	int nval;
+	sr_module_t *mod = NULL;
+	void *pp = NULL;
+	modparam_t param_type = 0;
+	void *h = NULL;
+
+	if(rpc->scan(c, "ssd", &mname, &pname, &nval) < 3) {
+		rpc->fault(c, 400, "Module, Parameter And Value Expected");
+		return;
+	}
+
+	mod = find_module_by_name(mname);
+	if(mod == NULL) {
+		rpc->fault(c, 404, "Module Not Found");
+		return;
+	}
+	pp = find_param_export(mod, pname, PARAM_INT, &param_type);
+	if(pp == NULL) {
+		rpc->fault(c, 404, "Parameter Not Found");
+		return;
+	}
+	if(!(param_type & PARAM_USE_SHM)) {
+		rpc->fault(c, 488, "Not Acceptable Here");
+		return;
+	}
+	oval = *(*((int **)pp));
+	*(*((int **)pp)) = nval;
+
+	rpc->add(c, "{", &h);
+	rpc->struct_add(h, "sssdd", "module", mname, "param", pname, "shm", "yes",
+			"ovalue", oval, "value", nval);
+	return;
+}
+
 /*
  * RPC Methods exported by core for modparam operations
  */
 /* clang-format off */
 static rpc_export_t core_modparam_rpc_methods[] = {
 	{"modparam.getn", rpc_modparam_getn, rpc_modparam_getn_doc, 0},
+	{"modparam.setn", rpc_modparam_setn, rpc_modparam_setn_doc, 0},
 
 	{0, 0, 0, 0}
 };
