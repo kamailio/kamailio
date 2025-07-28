@@ -686,21 +686,9 @@ static inline int unregister_contact(contact_t *chi, contact_state_t state)
 	str callid = {0, 0};
 	str path = {0, 0};
 
-
-	//    if (_impu_rec) {
-	//        LM_DBG("already have impurecord....\n");
-	//        impu_rec = _impu_rec;
-	//    } else {
-	//        if (ul.get_impurecord(_d, public_identity, &impu_rec) != 0) {
-	//            LM_ERR("Error, no public identity exists for <%.*s>\n", public_identity->len, public_identity->s);
-	//            goto error;
-	//        }
-	//    }
-
 	if(ul.get_ucontact(&chi->uri, &callid, &path, 0 /*cseq*/, &ucontact) != 0) {
 		LM_DBG("Can't unregister contact that does not exist <%.*s>\n",
 				chi->uri.len, chi->uri.s);
-		//        ul.unlock_udomain(_d, public_identity);
 		goto error;
 	}
 
@@ -711,38 +699,10 @@ static inline int unregister_contact(contact_t *chi, contact_state_t state)
 		return 0;
 	}
 
-	//Richard added this  - fix to remove subscribes that have presentity and watcher uri same as a contact aor that is being removed
-	//When UEs explicitly dereg - they don't unsubscribe, so we remove subscriptions for them
-	//only do this if ue_unsubscribe_on_dereg is set to 0
-	//    if (!ue_unsubscribe_on_dereg) {
-	//        s = impu_rec->shead;
-	//        LM_DBG("Checking if there is a subscription to this IMPU that has same watcher contact as this contact");
-	//        while (s) {
-	//
-	//            LM_DBG("Subscription for this impurecord: watcher uri [%.*s] presentity uri [%.*s] watcher contact [%.*s] ", s->watcher_uri.len, s->watcher_uri.s,
-	//                    s->presentity_uri.len, s->presentity_uri.s, s->watcher_contact.len, s->watcher_contact.s);
-	//            LM_DBG("Contact to be removed [%.*s] ", ucontact->c.len, ucontact->c.s);
-	//            if (contact_port_ip_match(&s->watcher_contact, &ucontact->c)) {
-	//                //if ((s->watcher_contact.len == ucontact->c.len) && (strncasecmp(s->watcher_contact.s, ucontact->c.s, ucontact->c.len) == 0)) {
-	//                LM_DBG("This contact has a subscription to its own status - so going to delete the subscription");
-	//                ul.external_delete_subscriber(s, _d, 0 /*domain is locked*/);
-	//            }
-	//            s = s->next;
-	//        }
-	//    }
-
-	//    if (ul.delete_ucontact(impu_rec, ucontact) != 0) {
 	ul.lock_contact_slot_i(ucontact->sl);
 	ucontact->state = state;
-	//    notify_subscribers(impu_rec);
-	//    ucontact->state = CONTACT_DELETED;
-	//    if (ul.unlink_contact_from_impu(impu_rec, ucontact, 1, 1/*explicit dereg of contact*/) != 0) {
-	//        LM_ERR("Failed to delete ucontact <%.*s>\n", chi->uri.len, chi->uri.s);
-	//    }
 	ul.unlock_contact_slot_i(ucontact->sl);
 	ul.release_ucontact(ucontact);
-	//    LM_DBG("Contact unlinked successfully <%.*s>\n", chi->uri.len, chi->uri.s);
-	//    ul.unlock_udomain(_d, public_identity);
 	return 0;
 
 error:
@@ -1185,10 +1145,6 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 							j++) {
 						pi = &(subscription->service_profiles[i]
 										.public_identities[j]);
-						//                        if (memcmp(public_identity->s, pi->public_identity.s, public_identity->len) == 0) { //we don't need to update the explicit IMPU
-						//                            LM_DBG("Ignoring explicit identity <%.*s>, already de-reg/updated\n", public_identity->len, public_identity->s);
-						//                            continue;
-						//                        }
 						ul.lock_udomain(_d, &pi->public_identity);
 						if(ul.get_impurecord(
 								   _d, &pi->public_identity, &tmp_impu_rec)
@@ -1200,24 +1156,6 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 						}
 						LM_DBG("Implicit deregistration of IMPU <%.*s>\n",
 								pi->public_identity.len, pi->public_identity.s);
-						//TODO_LATEST: need to add back the following functionality
-						//                        if (!ue_unsubscribe_on_dereg) {
-						//                            subscriber = tmp_impu_rec->shead;
-						//                            LM_DBG("Checking if there is a subscription to this IMPU that has same watcher contact as this contact");
-						//                            while (s) {
-						//
-						//                                LM_DBG("Subscription for this impurecord: watcher uri [%.*s] presentity uri [%.*s] watcher contact [%.*s] ", subscriber->watcher_uri.len, subscriber->watcher_uri.s,
-						//                                        subscriber->presentity_uri.len, subscriber->presentity_uri.s, subscriber->watcher_contact.len, subscriber->watcher_contact.s);
-						//                                LM_DBG("Contact to be removed [%.*s] ", ucontact->c.len, ucontact->c.s);
-						//                                if (contact_port_ip_match(&subscriber->watcher_contact, &ucontact->c)) {
-						//                                    //if ((s->watcher_contact.len == ucontact->c.len) && (strncasecmp(s->watcher_contact.s, ucontact->c.s, ucontact->c.len) == 0)) {
-						//                                    LM_DBG("This contact has a subscription to its own status - so going to delete the subscription");
-						//                                    ul.external_delete_subscriber(subscriber, _d, 0 /*domain is locked*/);
-						//                                }
-						//                                s = s->next;
-						//                            }
-						//                        }
-
 						for(h = msg->contact; h; h = h->next) {
 							if(h->type == HDR_CONTACT_T && h->parsed) {
 								for(chi = ((contact_body_t *)h->parsed)
