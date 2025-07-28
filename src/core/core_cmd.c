@@ -47,6 +47,7 @@
 #include "tcp_options.h"
 #include "cfg_core.h"
 #include "ppcfg.h"
+#include "sr_module.h"
 
 #ifdef USE_DNS_CACHE
 void dns_cache_debug(rpc_t *rpc, void *ctx);
@@ -1132,6 +1133,53 @@ static rpc_export_t core_rpc_methods[] = {
 };
 /* clang-format on */
 
+static const char *rpc_modparam_getn_doc[] = {
+		"Get the value of an integer parameter.", /* Documentation string */
+		0										  /* Method signature(s) */
+};
+
+static void rpc_modparam_getn(rpc_t *rpc, void *c)
+{
+	char *mname;
+	char *pname;
+	sr_module_t *mod = NULL;
+	void *pp = NULL;
+	modparam_t param_type = 0;
+	void *h = NULL;
+
+	if(rpc->scan(c, "ss", &mname, &pname) < 2) {
+		rpc->fault(c, 400, "Module And Parameter Names Expected");
+		return;
+	}
+
+	mod = find_module_by_name(mname);
+	if(mod == NULL) {
+		rpc->fault(c, 404, "Module Not Found");
+		return;
+	}
+	pp = find_param_export(mod, pname, PARAM_INT, &param_type);
+	if(pp == NULL) {
+		rpc->fault(c, 404, "Parameter Not Found");
+		return;
+	}
+	rpc->add(c, "{", &h);
+	rpc->struct_add(h, "sssd", "module", mname, "param", pname, "shm",
+			(param_type & PARAM_USE_SHM) ? "yes" : "no", "value",
+			(param_type & PARAM_USE_SHM) ? *(*((int **)pp)) : *((int *)pp));
+	return;
+}
+
+/*
+ * RPC Methods exported by core for modparam operations
+ */
+/* clang-format off */
+static rpc_export_t core_modparam_rpc_methods[] = {
+	{"modparam.getn", rpc_modparam_getn, rpc_modparam_getn_doc, 0},
+
+	{0, 0, 0, 0}
+};
+/* clang-format on */
+
 
 int register_core_rpcs(void)
 {
@@ -1145,6 +1193,17 @@ int register_core_rpcs(void)
 		ERR("%d duplicate RPCs name detected while registering core RPCs\n", i);
 		goto error;
 	}
+	i = rpc_register_array(core_modparam_rpc_methods);
+	if(i < 0) {
+		BUG("failed to register core modparam RPCs\n");
+		goto error;
+	} else if(i > 0) {
+		ERR("%d duplicate RPCs name detected while registering core modparam"
+			" RPCs\n",
+				i);
+		goto error;
+	}
+
 	return 0;
 error:
 	return -1;
