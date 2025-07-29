@@ -100,6 +100,7 @@ static int goto_on_reply = 0;
 /* where to go on receipt of reply without transaction context */
 int goto_on_sl_reply = 0;
 extern str on_sl_reply_name;
+extern str tm_event_callback;
 extern int _tm_evlreq_mode;
 
 extern str _tm_event_callback_lres_sent;
@@ -2379,6 +2380,9 @@ int reply_received(struct sip_msg *p_msg)
 	struct run_act_ctx *bctx;
 	sr_kemi_eng_t *keng = NULL;
 	int ret;
+	int rt, backup_rt;
+	struct sip_msg ack_msg;
+	str evname_lr = str_init("tm:local-request");
 	str evname = str_init("on_sl_reply");
 
 	/* make sure we know the associated transaction ... */
@@ -2463,20 +2467,53 @@ int reply_received(struct sip_msg *p_msg)
 						}
 /* trigger tm:local-request event route for negative reply ACK --- */
 #ifdef WITH_EVENT_LOCAL_REQUEST
-						if(goto_on_local_req >= 0
-								&& (_tm_evlreq_mode & TM_EVLREQ_ACK_HBH)) {
-							struct sip_msg ack_msg;
-							memset(&ack_msg, 0, sizeof(struct sip_msg));
-							if(build_sip_msg_from_buf(
-									   &ack_msg, ack, ack_len, inc_msg_no())
-									== 0) {
-								run_top_route(event_rt.rlist[goto_on_local_req],
-										&ack_msg, 0);
-								free_sip_msg(&ack_msg);
+						if(_tm_evlreq_mode & TM_EVLREQ_ACK_HBH) {
+							rt = -1;
+							if(tm_event_callback.s == NULL
+									|| tm_event_callback.len <= 0) {
+								rt = route_lookup(&event_rt, evname_lr.s);
+								if(rt < 0 || event_rt.rlist[rt] == NULL) {
+									LM_DBG("tm:local-request not found\n");
+								}
 							} else {
+								keng = sr_kemi_eng_get();
+								if(keng == NULL) {
+									LM_DBG("event callback (%s) set, but no "
+										   "cfg "
+										   "engine\n",
+											tm_event_callback.s);
+								}
+							}
+
+							memset(&ack_msg, 0, sizeof(struct sip_msg));
+
+							if(build_sip_msg_from_buf(&ack_msg, ack, ack_len, 0)
+									< 0) {
 								LM_ERR("failed to build sip msg structure for "
 									   "negative reply ACK event route\n");
 							}
+
+							/* Call event */
+							backup_rt = get_route_type();
+							set_route_type(REQUEST_ROUTE);
+							init_run_actions_ctx(&ctx);
+
+							if(rt >= 0) {
+								LM_DBG("tm:local-request found [%d]\n", rt);
+								run_top_route(event_rt.rlist[rt], &ack_msg, 0);
+							} else {
+								if(keng != NULL) {
+									if(sr_kemi_route(keng, &ack_msg,
+											   EVENT_ROUTE, &tm_event_callback,
+											   &evname_lr)
+											< 0) {
+										LM_ERR("error running event route kemi "
+											   "callback\n");
+									}
+								}
+							}
+							set_route_type(backup_rt);
+							free_sip_msg(&ack_msg);
 						}
 #endif /* WITH_EVENT_LOCAL_REQUEST */
 
