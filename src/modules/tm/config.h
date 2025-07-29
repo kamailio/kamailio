@@ -88,8 +88,14 @@
 #define CANCEL_DONE "ok -- no more pending branches"
 #define CANCELED "Request canceled"
 
-/* execute event_route[tm:local-request] for hop-by-hop CANCEL */
-#define TM_EVLREQ_CANCEL_HBH 1
+/* execute event_route[tm:local-request] for hop-by-hop messages
+1 = execute for Cancel
+2 = execute for ACK
+3 = execute for both
+*/
+#define TM_EVLREQ_CANCEL_HBH (1 << 0)
+#define TM_EVLREQ_ACK_HBH (1 << 1)
+#define TM_EVLREQ_BOTH_HBH (TM_EVLREQ_CANCEL_HBH | TM_EVLREQ_ACK_HBH) // 3
 
 /* to-tag separator for stateful processing */
 #define TM_TAG_SEPARATOR '-'
