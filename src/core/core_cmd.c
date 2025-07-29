@@ -1162,6 +1162,10 @@ static void rpc_modparam_getn(rpc_t *rpc, void *c)
 		rpc->fault(c, 404, "Parameter Not Found");
 		return;
 	}
+	if(param_type & PARAM_USE_FUNC) {
+		rpc->fault(c, 488, "Not Acceptable Here - Use Func Param");
+		return;
+	}
 	rpc->add(c, "{", &h);
 	rpc->struct_add(h, "sssd", "module", mname, "param", pname, "shm",
 			(param_type & PARAM_USE_SHM) ? "yes" : "no", "value",
@@ -1199,7 +1203,7 @@ static void rpc_modparam_setn(rpc_t *rpc, void *c)
 		return;
 	}
 	if(!(param_type & PARAM_USE_SHM)) {
-		rpc->fault(c, 488, "Not Acceptable Here");
+		rpc->fault(c, 488, "Not Acceptable Here - Not A Shm Param");
 		return;
 	}
 	oval = *(*((int **)pp));
@@ -1211,6 +1215,123 @@ static void rpc_modparam_setn(rpc_t *rpc, void *c)
 	return;
 }
 
+static const char *rpc_modparam_list_doc[] = {"List the modules parameters", 0};
+
+static int rpc_modparam_list_module(rpc_t *rpc, void *c, sr_module_t *mod)
+{
+	param_export_t *param;
+	void *pp = NULL;
+	void *h = NULL;
+
+	for(param = mod->exports.params; param && param->name; param++) {
+		/* add entry node */
+		if(rpc->add(c, "{", &h) < 0) {
+			rpc->fault(c, 500, "Internal error root reply");
+			return -1;
+		}
+		if(rpc->struct_add(h, "ssu", "module", mod->exports.name, "param",
+				   param->name, "typeval", param->type)
+				< 0) {
+			rpc->fault(c, 500, "Internal error building structure");
+			return -1;
+		}
+		pp = param->param_pointer;
+		if(param->type & PARAM_STRING) {
+			if(rpc->struct_add(h, "s", "type", "string") < 0) {
+				rpc->fault(c, 500, "Internal error building structure");
+				return -1;
+			}
+			if(param->type & PARAM_USE_FUNC) {
+				if(rpc->struct_add(h, "sss", "use_func", "yes", "use_shm", "no",
+						   "value", "[unknown]")
+						< 0) {
+					rpc->fault(c, 500, "Internal error building structure");
+					return -1;
+				}
+			} else {
+				if(rpc->struct_add(h, "sss", "use_func", "no", "use_shm", "no",
+						   "value", *((char **)pp))
+						< 0) {
+					rpc->fault(c, 500, "Internal error building structure");
+					return -1;
+				}
+			}
+		} else if(param->type & PARAM_STR) {
+			if(rpc->struct_add(h, "s", "type", "str") < 0) {
+				rpc->fault(c, 500, "Internal error building structure");
+				return -1;
+			}
+			if(param->type & PARAM_USE_FUNC) {
+				if(rpc->struct_add(h, "sss", "use_func", "yes", "use_shm", "no",
+						   "value", "[unknown]")
+						< 0) {
+					rpc->fault(c, 500, "Internal error building structure");
+					return -1;
+				}
+			} else {
+				if(rpc->struct_add(h, "ssS", "use_func", "no", "use_shm", "no",
+						   "value", (str *)pp)
+						< 0) {
+					rpc->fault(c, 500, "Internal error building structure");
+					return -1;
+				}
+			}
+		} else if(param->type & PARAM_INT) {
+			if(rpc->struct_add(h, "s", "type", "int") < 0) {
+				rpc->fault(c, 500, "Internal error building structure");
+				return -1;
+			}
+			if(param->type & PARAM_USE_FUNC) {
+				if(rpc->struct_add(h, "ssd", "use_func", "yes", "use_shm", "no",
+						   "value", 0)
+						< 0) {
+					rpc->fault(c, 500, "Internal error building structure");
+					return -1;
+				}
+			} else if(param->type & PARAM_USE_SHM) {
+				if(rpc->struct_add(h, "ssd", "use_func", "no", "use_shm", "yes",
+						   "value", *(*((int **)pp)))
+						< 0) {
+					rpc->fault(c, 500, "Internal error building structure");
+					return -1;
+				}
+			} else {
+				if(rpc->struct_add(h, "ssd", "use_func", "no", "use_shm", "no",
+						   "value", *((int *)pp))
+						< 0) {
+					rpc->fault(c, 500, "Internal error building structure");
+					return -1;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+static void rpc_modparam_list(rpc_t *rpc, void *c)
+{
+	char *mname = NULL;
+	sr_module_t *mod = NULL;
+
+	if(rpc->scan(c, "*s", &mname) < 1) {
+		mname = NULL;
+	}
+	if(mname != NULL) {
+		mod = find_module_by_name(mname);
+		if(mod == NULL) {
+			rpc->fault(c, 404, "Module Not Found");
+			return;
+		}
+		rpc_modparam_list_module(rpc, c, mod);
+		return;
+	}
+	mod = get_loaded_modules();
+	while(mod != NULL) {
+		rpc_modparam_list_module(rpc, c, mod);
+		mod = mod->next;
+	}
+}
+
 /*
  * RPC Methods exported by core for modparam operations
  */
@@ -1218,6 +1339,7 @@ static void rpc_modparam_setn(rpc_t *rpc, void *c)
 static rpc_export_t core_modparam_rpc_methods[] = {
 	{"modparam.getn", rpc_modparam_getn, rpc_modparam_getn_doc, 0},
 	{"modparam.setn", rpc_modparam_setn, rpc_modparam_setn_doc, 0},
+	{"modparam.list", rpc_modparam_list, rpc_modparam_list_doc, RPC_RET_ARRAY},
 
 	{0, 0, 0, 0}
 };
