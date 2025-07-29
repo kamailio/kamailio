@@ -100,6 +100,7 @@ static int goto_on_reply = 0;
 /* where to go on receipt of reply without transaction context */
 int goto_on_sl_reply = 0;
 extern str on_sl_reply_name;
+extern int _tm_evlreq_mode;
 
 extern str _tm_event_callback_lres_sent;
 
@@ -2460,6 +2461,26 @@ int reply_received(struct sip_msg *p_msg)
 							run_trans_callbacks_off_params(
 									TMCB_REQUEST_SENT, t, &onsend_params);
 						}
+/* trigger tm:local-request event route for negative reply ACK --- */
+#ifdef WITH_EVENT_LOCAL_REQUEST
+						if(goto_on_local_req >= 0
+								&& (_tm_evlreq_mode & TM_EVLREQ_ACK_HBH)) {
+							struct sip_msg ack_msg;
+							memset(&ack_msg, 0, sizeof(struct sip_msg));
+							if(build_sip_msg_from_buf(
+									   &ack_msg, ack, ack_len, inc_msg_no())
+									== 0) {
+								run_top_route(event_rt.rlist[goto_on_local_req],
+										&ack_msg, 0);
+								free_sip_msg(&ack_msg);
+							} else {
+								LM_ERR("failed to build sip msg structure for "
+									   "negative reply ACK event route\n");
+							}
+						}
+#endif /* WITH_EVENT_LOCAL_REQUEST */
+
+						/* trigger tm:local-request event route for negative reply ACK --- */
 					}
 					shm_free(ack);
 				}
@@ -2773,7 +2794,7 @@ int reply_received(struct sip_msg *p_msg)
 #endif
 		restart_rb_fr(&uac->request, t->fr_inv_timeout);
 		uac->request.flags |= F_RB_FR_INV; /* mark fr_inv */
-	}									   /* provisional replies */
+	} /* provisional replies */
 
 done:
 	if(unlikely(replies_locked)) {
