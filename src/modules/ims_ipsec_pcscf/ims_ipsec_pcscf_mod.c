@@ -24,6 +24,7 @@
  *
  */
 
+#include "../../core/atomic_ops.h"
 #include "../../core/sr_module.h"
 #include "../../core/mod_fix.h"
 #include "../../modules/tm/tm_load.h"
@@ -75,6 +76,7 @@ static int unregister_fixup_free(void **param, int param_no);
 extern int bind_ipsec_pcscf(usrloc_api_t *api);
 
 unsigned int ipsec_init_flag = 0;
+atomic_t *ipsec_reconfig_flag = NULL;
 
 /* clang-format off */
 
@@ -407,6 +409,11 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if((ipsec_reconfig_flag = shm_malloc(sizeof(atomic_t))) == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	atomic_set(ipsec_reconfig_flag, 0);
 	ipsec_init_flag = 1;
 
 	return 0;
@@ -420,6 +427,10 @@ static void mod_destroy(void)
 
 	if(destroy_spi_gen() != 0) {
 		LM_ERR("Error destroying spi generator\n");
+	}
+
+	if(ipsec_reconfig_flag) {
+		shm_free(ipsec_reconfig_flag);
 	}
 }
 

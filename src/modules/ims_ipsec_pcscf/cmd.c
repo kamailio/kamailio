@@ -69,6 +69,7 @@ extern ip_addr_t ipsec_listen_ip_addr6;
 
 extern int spi_id_start;
 
+extern atomic_t *ipsec_reconfig_flag;
 extern unsigned int ipsec_init_flag;
 
 // check http://www.asipto.com/pub/kamailio-devel-guide/#c16return_values
@@ -1375,15 +1376,25 @@ cleanup:
 
 int ipsec_reconfig()
 {
+	int ret;
+
 	if(ul.get_number_of_contacts() != 0) {
 		return 0;
 	}
+
+	if(atomic_get(ipsec_reconfig_flag) != 0) {
+		LM_DBG("reconfig already called\n");
+		return 0;
+	}
+	atomic_set(ipsec_reconfig_flag, 1);
 
 	if(clean_spi_list() != 0) {
 		return 1;
 	}
 
-	return ipsec_cleanall();
+	ret = ipsec_cleanall();
+	atomic_set(ipsec_reconfig_flag, 0);
+	return ret;
 }
 
 int ipsec_cleanall()
