@@ -778,6 +778,12 @@ static int mod_init(void)
 		tm_exec_time_check = (unsigned long)tm_exec_time_check_param * 1000;
 	}
 
+	/* Check if evlreq_mode is set to correct range	*/
+	if(_tm_evlreq_mode < 0 || _tm_evlreq_mode > TM_EVLREQ_BOTH_HBH) {
+		LM_ERR("evlreq_mode tm modparam must be in [0,%d]", TM_EVLREQ_BOTH_HBH);
+		return -1;
+	};
+
 	/* checking if we have sufficient bitmap capacity for given
 	 * maximum number of  branches */
 	if(sr_dst_max_branches + 1 > 31) {
