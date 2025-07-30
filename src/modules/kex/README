@@ -78,19 +78,20 @@ Ovidiu Sas
               4.22. core.modules
               4.23. modparam.getn
               4.24. modparam.setn
-              4.25. pkg.stats
-              4.26. pkg.info
-              4.27. stats.get_statistics
-              4.28. stats.fetch
-              4.29. stats.fetchn
-              4.30. stats.reset_statistics
-              4.31. stats.clear_statistics
-              4.32. system.listMethods
-              4.33. system.methodHelp
-              4.34. system.methodSignature
-              4.35. mod.mem_stats
-              4.36. mod.stats
-              4.37. mod.mem_statsx
+              4.25. modparam.list
+              4.26. pkg.stats
+              4.27. pkg.info
+              4.28. stats.get_statistics
+              4.29. stats.fetch
+              4.30. stats.fetchn
+              4.31. stats.reset_statistics
+              4.32. stats.clear_statistics
+              4.33. system.listMethods
+              4.34. system.methodHelp
+              4.35. system.methodSignature
+              4.36. mod.mem_stats
+              4.37. mod.stats
+              4.38. mod.mem_statsx
 
    List of Examples
 
@@ -163,19 +164,20 @@ Chapter 1. Admin Guide
         4.22. core.modules
         4.23. modparam.getn
         4.24. modparam.setn
-        4.25. pkg.stats
-        4.26. pkg.info
-        4.27. stats.get_statistics
-        4.28. stats.fetch
-        4.29. stats.fetchn
-        4.30. stats.reset_statistics
-        4.31. stats.clear_statistics
-        4.32. system.listMethods
-        4.33. system.methodHelp
-        4.34. system.methodSignature
-        4.35. mod.mem_stats
-        4.36. mod.stats
-        4.37. mod.mem_statsx
+        4.25. modparam.list
+        4.26. pkg.stats
+        4.27. pkg.info
+        4.28. stats.get_statistics
+        4.29. stats.fetch
+        4.30. stats.fetchn
+        4.31. stats.reset_statistics
+        4.32. stats.clear_statistics
+        4.33. system.listMethods
+        4.34. system.methodHelp
+        4.35. system.methodSignature
+        4.36. mod.mem_stats
+        4.37. mod.stats
+        4.38. mod.mem_statsx
 
 1. Overview
 
@@ -493,19 +495,20 @@ resetdebug();
    4.22. core.modules
    4.23. modparam.getn
    4.24. modparam.setn
-   4.25. pkg.stats
-   4.26. pkg.info
-   4.27. stats.get_statistics
-   4.28. stats.fetch
-   4.29. stats.fetchn
-   4.30. stats.reset_statistics
-   4.31. stats.clear_statistics
-   4.32. system.listMethods
-   4.33. system.methodHelp
-   4.34. system.methodSignature
-   4.35. mod.mem_stats
-   4.36. mod.stats
-   4.37. mod.mem_statsx
+   4.25. modparam.list
+   4.26. pkg.stats
+   4.27. pkg.info
+   4.28. stats.get_statistics
+   4.29. stats.fetch
+   4.30. stats.fetchn
+   4.31. stats.reset_statistics
+   4.32. stats.clear_statistics
+   4.33. system.listMethods
+   4.34. system.methodHelp
+   4.35. system.methodSignature
+   4.36. mod.mem_stats
+   4.37. mod.stats
+   4.38. mod.mem_statsx
 
 4.1.  core.aliases_list
 
@@ -689,7 +692,21 @@ kamcli rpc modparam.getn tls keylog_mode
 kamcli rpc modparam.setn tls keylog_mode 15
 ...
 
-4.25.  pkg.stats
+4.25.  modparam.list
+
+   List the parameters of the loaded modules.
+
+   Name: modparam.list
+
+   Parameters: module_name (optional).
+
+   RPC Command Format:
+...
+kamcli rpc modparam.list
+kamcli rpc modparam.list tls
+...
+
+4.26.  pkg.stats
 
    Print private memory (pkg) usage statistics per process. It can take
    optionally a filter to print statistics only for a specific process or
@@ -707,14 +724,14 @@ kamcli rpc modparam.setn tls keylog_mode 15
                 kamcmd pkg.stats rank 1
                 kamcmd pkg.stats index 10
 
-4.26.  pkg.info
+4.27.  pkg.info
 
    Get pkg manager details.
 
    Example:
                 kamcli rpc pkg.info
 
-4.27.  stats.get_statistics
+4.28.  stats.get_statistics
 
    Print the list of available internal statistics.
 
@@ -734,7 +751,7 @@ kamcli rpc modparam.setn tls keylog_mode 15
                 kamcmd stats.get_statistics unsupported_methods
                 kamcmd stats.get_statistics shmem: fwd_requests fwd_replies
 
-4.28.  stats.fetch
+4.29.  stats.fetch
 
    Print the list of available internal statistics with a more json
    friendly output. Each printed statistic is a field in the output
@@ -754,7 +771,7 @@ kamcli rpc modparam.setn tls keylog_mode 15
                 kamcmd stats.fetch shmem.free_size
                 kamcmd stats.fetch shmem: fwd_requests fwd_replies
 
-4.29.  stats.fetchn
+4.30.  stats.fetchn
 
    Print the list of available internal statistics with a more json
    friendly output. Each printed statistic is a field in the output
@@ -774,7 +791,7 @@ kamcli rpc modparam.setn tls keylog_mode 15
                 kamcmd stats.fetchn shmem.free_size
                 kamcmd stats.fetchn shmem: fwd_requests fwd_replies
 
-4.30.  stats.reset_statistics
+4.31.  stats.reset_statistics
 
    Reset internal statistics.
 
@@ -786,7 +803,7 @@ kamcli rpc modparam.setn tls keylog_mode 15
                 kamcmd stats.reset_statistics unsupported_methods
                 kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
 
-4.31.  stats.clear_statistics
+4.32.  stats.clear_statistics
 
    Return statistics and reset their value in one command.
 
@@ -798,7 +815,7 @@ kamcli rpc modparam.setn tls keylog_mode 15
                 kamcmd stats.reset_statistics unsupported_methods
                 kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
 
-4.32.  system.listMethods
+4.33.  system.listMethods
 
    Print list of available RPC commands.
 
@@ -811,15 +828,15 @@ kamcli rpc modparam.setn tls keylog_mode 15
 kamcmd system.listMethods
 ...
 
-4.33.  system.methodHelp
+4.34.  system.methodHelp
 
    Print the help string for given method.
 
-4.34.  system.methodSignature
+4.35.  system.methodSignature
 
    Returns signature of given method.
 
-4.35.  mod.mem_stats
+4.36.  mod.mem_stats
 
    Print private(pkg) or shared(shm) memory currently allocated a given
    module or by all modules.
@@ -864,12 +881,12 @@ loc
     Total: 864
 }
 
-4.36.  mod.stats
+4.37.  mod.stats
 
    Same as RPC command "mod.mem_stats", this is an alias command to
    preserve backward compatibility.
 
-4.37.  mod.mem_statsx
+4.38.  mod.mem_statsx
 
    Similar to RPC command "mod.mem_stats", but the output has an extended
    format, printing info that includes the allocated size and the count of
