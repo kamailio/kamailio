@@ -1173,6 +1173,50 @@ static void rpc_modparam_getn(rpc_t *rpc, void *c)
 	return;
 }
 
+static const char *rpc_modparam_gets_doc[] = {
+		"Get the value of a string parameter.", /* Documentation string */
+		0										/* Method signature(s) */
+};
+
+static void rpc_modparam_gets(rpc_t *rpc, void *c)
+{
+	char *mname;
+	char *pname;
+	sr_module_t *mod = NULL;
+	void *pp = NULL;
+	modparam_t param_type = 0;
+	void *h = NULL;
+
+	if(rpc->scan(c, "ss", &mname, &pname) < 2) {
+		rpc->fault(c, 400, "Module And Parameter Names Expected");
+		return;
+	}
+
+	mod = find_module_by_name(mname);
+	if(mod == NULL) {
+		rpc->fault(c, 404, "Module Not Found");
+		return;
+	}
+	pp = find_param_export(mod, pname, PARAM_STRING | PARAM_STR, &param_type);
+	if(pp == NULL) {
+		rpc->fault(c, 404, "Parameter Not Found");
+		return;
+	}
+	if(param_type & PARAM_USE_FUNC) {
+		rpc->fault(c, 488, "Not Acceptable Here - Use Func Param");
+		return;
+	}
+	rpc->add(c, "{", &h);
+	if(param_type & PARAM_STR) {
+		rpc->struct_add(h, "sssS", "module", mname, "param", pname, "shm", "no",
+				"value", (str *)pp);
+	} else {
+		rpc->struct_add(h, "ssss", "module", mname, "param", pname, "shm", "no",
+				"value", *((char **)pp));
+	}
+	return;
+}
+
 static const char *rpc_modparam_setn_doc[] = {
 		"Set the value of an integer parameter kept in shared memory.", 0};
 
@@ -1338,6 +1382,7 @@ static void rpc_modparam_list(rpc_t *rpc, void *c)
 /* clang-format off */
 static rpc_export_t core_modparam_rpc_methods[] = {
 	{"modparam.getn", rpc_modparam_getn, rpc_modparam_getn_doc, 0},
+	{"modparam.gets", rpc_modparam_gets, rpc_modparam_gets_doc, 0},
 	{"modparam.setn", rpc_modparam_setn, rpc_modparam_setn_doc, 0},
 	{"modparam.list", rpc_modparam_list, rpc_modparam_list_doc, RPC_RET_ARRAY},
 
