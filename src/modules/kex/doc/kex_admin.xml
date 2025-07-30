@@ -775,6 +775,27 @@ kamcli rpc modparam.setn tls keylog_mode 15
 ...
 		</programlisting>
     </section>
+	<section id="kex.r.modparam.list">
+		<title>
+		<function moreinfo="none">modparam.list</function>
+		</title>
+		<para>
+		List the parameters of the loaded modules.
+		</para>
+		<para>
+		Name: <emphasis>modparam.list</emphasis>
+		</para>
+		<para>Parameters: <emphasis>module_name</emphasis> (optional).</para>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+kamcli rpc modparam.list
+kamcli rpc modparam.list tls
+...
+		</programlisting>
+    </section>
 
 	<section id="kex.r.pkg.stats">
 		<title>
