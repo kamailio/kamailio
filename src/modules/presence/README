@@ -65,10 +65,16 @@ Juha Heinanen
               3.32. retrieve_order_by (str)
               3.33. sip_uri_match (int)
               3.34. enable_dmq (integer)
-              3.35. pres_subs_mode (integer)
-              3.36. delete_same_subs (integer)
-              3.37. timer_mode (integer)
-              3.38. subs_respond_200 (integer)
+              3.35. enable_pres_dmq (integer)
+              3.36. enable_pres_sync_dmq (integer)
+              3.37. enable_subs_dmq (integer)
+              3.38. enable_subs_sync_dmq (integer)
+              3.39. skip_notify_dmq (integer)
+              3.40. default_socket (str)
+              3.41. pres_subs_mode (integer)
+              3.42. delete_same_subs (integer)
+              3.43. timer_mode (integer)
+              3.44. subs_respond_200 (integer)
 
         4. Functions
 
@@ -158,19 +164,25 @@ Juha Heinanen
    1.32. Set retrieve_order_by parameter
    1.33. Set sip_uri_match parameter
    1.34. Set enable_dmq parameter
-   1.35. Set pres_subs_mode parameter
-   1.36. Set delete_same_subs parameter
-   1.37. Set timer_mode parameter
-   1.38. Set subs_respond_200 parameter
-   1.39. handle_publish usage
-   1.40. handle_subscribe usage
-   1.41. pres_auth_status usage
-   1.42. pres_has_subscribers usage
-   1.43. pres_refresh_watchers usage
-   1.44. pres_update_watchers usage
-   1.45. $subs(name) usage
-   1.46. $notify_reply(name) usage
-   1.47. $notify_reply(name) usage
+   1.35. Set enable_pres_dmq parameter
+   1.36. Set enable_pres_sync_dmq parameter
+   1.37. Set enable_subs_dmq parameter
+   1.38. Set enable_subs_sync_dmq parameter
+   1.39. Set skip_notify_dmq parameter
+   1.40. Set default_socket parameter
+   1.41. Set pres_subs_mode parameter
+   1.42. Set delete_same_subs parameter
+   1.43. Set timer_mode parameter
+   1.44. Set subs_respond_200 parameter
+   1.45. handle_publish usage
+   1.46. handle_subscribe usage
+   1.47. pres_auth_status usage
+   1.48. pres_has_subscribers usage
+   1.49. pres_refresh_watchers usage
+   1.50. pres_update_watchers usage
+   1.51. $subs(name) usage
+   1.52. $notify_reply(name) usage
+   1.53. $notify_reply(name) usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -219,10 +231,16 @@ Chapter 1. Admin Guide
         3.32. retrieve_order_by (str)
         3.33. sip_uri_match (int)
         3.34. enable_dmq (integer)
-        3.35. pres_subs_mode (integer)
-        3.36. delete_same_subs (integer)
-        3.37. timer_mode (integer)
-        3.38. subs_respond_200 (integer)
+        3.35. enable_pres_dmq (integer)
+        3.36. enable_pres_sync_dmq (integer)
+        3.37. enable_subs_dmq (integer)
+        3.38. enable_subs_sync_dmq (integer)
+        3.39. skip_notify_dmq (integer)
+        3.40. default_socket (str)
+        3.41. pres_subs_mode (integer)
+        3.42. delete_same_subs (integer)
+        3.43. timer_mode (integer)
+        3.44. subs_respond_200 (integer)
 
    4. Functions
 
@@ -334,10 +352,16 @@ Chapter 1. Admin Guide
    3.32. retrieve_order_by (str)
    3.33. sip_uri_match (int)
    3.34. enable_dmq (integer)
-   3.35. pres_subs_mode (integer)
-   3.36. delete_same_subs (integer)
-   3.37. timer_mode (integer)
-   3.38. subs_respond_200 (integer)
+   3.35. enable_pres_dmq (integer)
+   3.36. enable_pres_sync_dmq (integer)
+   3.37. enable_subs_dmq (integer)
+   3.38. enable_subs_sync_dmq (integer)
+   3.39. skip_notify_dmq (integer)
+   3.40. default_socket (str)
+   3.41. pres_subs_mode (integer)
+   3.42. delete_same_subs (integer)
+   3.43. timer_mode (integer)
+   3.44. subs_respond_200 (integer)
 
 3.1. db_url(str)
 
@@ -852,9 +876,9 @@ modparam("presence", "sip_uri_match", 1)
 
 3.34. enable_dmq (integer)
 
-   If set to 1, will enable DMQ replication of presentities between nodes.
-   Use this instead of a shared DB to share state across a cluster and
-   update local watchers in realtime (subs_db_mode < 3) or on next
+   If set to 1, will enable DMQ replication of presence data between
+   nodes. Use this instead of a shared DB to share state across a cluster
+   and update local watchers in realtime (subs_db_mode < 3) or on next
    notifier run (subs_db_mode = 3).
 
    If this parameter is enabled, the DMQ module must be loaded first -
@@ -867,7 +891,84 @@ modparam("presence", "sip_uri_match", 1)
 modparam("presence", "enable_dmq", 1)
 ...
 
-3.35. pres_subs_mode (integer)
+3.35. enable_pres_dmq (integer)
+
+   If set to 1, will enable DMQ replication of presentities.
+
+   Make sure that enable_dmq is set to 1.
+
+   Default value is 1.
+
+   Example 1.35. Set enable_pres_dmq parameter
+...
+modparam("presence", "enable_pres_dmq", 1)
+...
+
+3.36. enable_pres_sync_dmq (integer)
+
+   If set to 1, will enable initial synchronization of presentities state.
+
+   Make sure that enable_dmq and enable_pres_dmq are set to 1.
+
+   Default value is 1.
+
+   Example 1.36. Set enable_pres_sync_dmq parameter
+...
+modparam("presence", "enable_pres_sync_dmq", 1)
+...
+
+3.37. enable_subs_dmq (integer)
+
+   If set to 1, will enable DMQ replication of subscriptions.
+
+   Make sure that enable_dmq is set to 1.
+
+   Default value is 0.
+
+   Example 1.37. Set enable_subs_dmq parameter
+...
+modparam("presence", "enable_subs_dmq", 1)
+...
+
+3.38. enable_subs_sync_dmq (integer)
+
+   If set to 1, will enable initial synchronization of subscriptions
+   state.
+
+   Make sure that enable_dmq and enable_subs_dmq are set to 1.
+
+   Default value is 1.
+
+   Example 1.38. Set enable_subs_sync_dmq parameter
+...
+modparam("presence", "enable_subs_sync_dmq", 1)
+...
+
+3.39. skip_notify_dmq (integer)
+
+   Skip sending Notify messages if presentity was received by DMQ.
+
+   Default value is 0.
+
+   Example 1.39. Set skip_notify_dmq parameter
+...
+modparam("presence", "skip_notify_dmq", 1)
+...
+
+3.40. default_socket (str)
+
+   Default socket name to rewrite socket info in subcription that was
+   received by DMQ.
+
+   By default is not defined. Socket info will be original value from DMQ
+   message.
+
+   Example 1.40. Set default_socket parameter
+...
+modparam("presence", "default_socket", "udp:192.168.0.125:5060")
+...
+
+3.41. pres_subs_mode (integer)
 
    Allow disabling cloning subscription structure for pv $subs(...),
    saving the pkg memory and copy operations for all its fields. If 1 the
@@ -875,35 +976,35 @@ modparam("presence", "enable_dmq", 1)
 
    Default value is 1.
 
-   Example 1.35. Set pres_subs_mode parameter
+   Example 1.41. Set pres_subs_mode parameter
 ...
 modparam("presence", "pres_subs_mode", 0)
 ...
 
-3.36. delete_same_subs (integer)
+3.42. delete_same_subs (integer)
 
    Enable deleting of subscriptions with the same presence uri and callid.
 
    Default value is 0 (disabled behavior).
 
-   Example 1.36. Set delete_same_subs parameter
+   Example 1.42. Set delete_same_subs parameter
 ...
 modparam("presence", "delete_same_subs", 1)
 ...
 
-3.37. timer_mode (integer)
+3.43. timer_mode (integer)
 
    Specify what timer process to be used. If set to 0, the core main timer
    is used. If set to 1, the core secondary timer is used.
 
    Default value is 1.
 
-   Example 1.37. Set timer_mode parameter
+   Example 1.43. Set timer_mode parameter
 ...
 modparam("presence", "timer_mode", 0)
 ...
 
-3.38. subs_respond_200 (integer)
+3.44. subs_respond_200 (integer)
 
    Specify the response code for accepted SUBSCRIBE requests. If set to 0,
    "202 Accepted" will be returned (default behaviour till version 5.5).
@@ -912,7 +1013,7 @@ modparam("presence", "timer_mode", 0)
 
    Default value is 1.
 
-   Example 1.38. Set subs_respond_200 parameter
+   Example 1.44. Set subs_respond_200 parameter
 ...
 modparam("presence", "subs_respond_200", 0)
 ...
@@ -946,7 +1047,7 @@ modparam("presence", "subs_respond_200", 0)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.39. handle_publish usage
+   Example 1.45. handle_publish usage
 ...
         if(is_method("PUBLISH"))
         {
@@ -977,7 +1078,7 @@ modparam("presence", "subs_respond_200", 0)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.40. handle_subscribe usage
+   Example 1.46. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
@@ -996,7 +1097,7 @@ if(method=="SUBSCRIBE")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.41. pres_auth_status usage
+   Example 1.47. pres_auth_status usage
 ...
 if (method=="MESSAGE") {
     pres_auth_status("$fu", $ru");
@@ -1014,7 +1115,7 @@ if (method=="MESSAGE") {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.42. pres_has_subscribers usage
+   Example 1.48. pres_has_subscribers usage
 ...
 if(pres_has_subscribers($var(uri), "message-summary"))
     # do something...;
@@ -1044,7 +1145,7 @@ if(pres_has_subscribers($var(uri), "message-summary"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.43. pres_refresh_watchers usage
+   Example 1.49. pres_refresh_watchers usage
 ...
 pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 ...
@@ -1062,7 +1163,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.44. pres_update_watchers usage
+   Example 1.50. pres_update_watchers usage
 ...
 pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
@@ -1243,7 +1344,7 @@ kamctl rpc presence.watcher_list basic sip:alice@sipserver.com
      * flags
      * user_agent
 
-   Example 1.45. $subs(name) usage
+   Example 1.51. $subs(name) usage
 ...
 if(handle_subscription())
 {
@@ -1259,7 +1360,7 @@ if(handle_subscription())
 
    The “attr” can be any pseudo var that accesses attributes of msg
 
-   Example 1.46. $notify_reply(name) usage
+   Example 1.52. $notify_reply(name) usage
 ...
 event_route[presence:notify-reply]
 {
@@ -1275,7 +1376,7 @@ event_route[presence:notify-reply]
 
    Fired after notify reply is received or timeout.
 
-   Example 1.47. $notify_reply(name) usage
+   Example 1.53. $notify_reply(name) usage
 ...
 event_route[presence:notify-reply]
 {

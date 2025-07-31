@@ -358,9 +358,10 @@ modparam("topos", "contact_host", "proxy.domain.com")
    Control the mode where the key to lookup the message data from the
    database or redis server is stored. The default is to use the Contact
    user (0), alternatively a Contact URI parameter can be used (1) with
-   values from the SIP message, or from AVP variables (2). This can be
-   useful for interoperating which gateways that need a certain user part
-   in the Contact URI.
+   values from the SIP message, or from AVP variables (2). Contact mode
+   (3) is similar to mode 2, but for the case when we want to alter the
+   domain part. This can be useful for interoperating which gateways that
+   need a certain user part in the Contact URI.
 
    In mode (1) the a-side contact user is taken from the request URI and
    the b-side contact user from the Contact header of the processed
@@ -369,6 +370,11 @@ modparam("topos", "contact_host", "proxy.domain.com")
    If you use the mode (2), you need to configure the xavu_field_a_contact
    and xavu_field_b_contact parameter. Furthermore you need to assign
    values to them during the processing of the initial SIP request.
+
+   If you use the mode (3), you need to configure the
+   xavu_field_a_contact_host and xavu_field_b_contact_host parameter.
+   Furthermore you need to assign values to them during the processing of
+   the initial SIP request.
 
    The name of the Contact URI parameter can be customized with the
    cparam_name parameter.
