@@ -332,22 +332,37 @@ static int fill_contact(
 			LM_ERR("buffer parsing failed!");
 			goto error;
 		}
-		cb = cscf_parse_contacts(&tmsg);
-		if(!cb || (!cb->contacts)) {
-			LM_ERR("Reply No contact headers\n");
-			free_sip_msg(&tmsg);
-			goto error;
-		}
-		if(pkg_str_dup(&aor, &cb->contacts->uri) < 0) {
-			LM_ERR("failed to duplicate aor\n");
-			free_sip_msg(&tmsg);
-			goto error;
-		}
-		free_sip_msg(&tmsg);
-
 		if((vb = cscf_get_ue_via(m)) == NULL) {
 			LM_ERR("Reply No via body headers\n");
+			free_sip_msg(&tmsg);
 			goto error;
+		}
+		cb = cscf_parse_contacts(&tmsg);
+		free_sip_msg(&tmsg);
+		if(!cb || (!cb->contacts)) {
+			LM_DBG("Reply No contact headers, building AOR from Via\n");
+			// Handle the messages without contacts (e.g.BYE)
+			// Build AOR as "sip:<via_host>:<via_port>"
+			char aor_buf[256];
+			int aor_len = snprintf(aor_buf, sizeof(aor_buf), "sip:%.*s:%d",
+					vb->host.len, vb->host.s, vb->port);
+			if(aor_len <= 0 || aor_len >= (int)sizeof(aor_buf)) {
+				LM_ERR("Failed to build AOR from Via\n");
+				goto error;
+			}
+			if((aor.s = pkg_malloc(aor_len)) == NULL) {
+				PKG_MEM_ERROR;
+				goto error;
+			}
+			memcpy(aor.s, aor_buf, aor_len);
+			aor.len = aor_len;
+			LM_DBG("set AOR [%.*s], VIA [%d://%.*s:%d]\n", STR_FMT(&aor),
+					vb->proto, STR_FMT(&vb->host), vb->port);
+		} else {
+			if(pkg_str_dup(&aor, &cb->contacts->uri) < 0) {
+				LM_ERR("failed to duplicate aor\n");
+				goto error;
+			}
 		}
 
 		// populate CI with bare minimum
