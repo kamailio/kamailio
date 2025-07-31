@@ -393,12 +393,18 @@ int pres_dmq_handle_msg(
 		if(strcmp(it->string, "action") == 0) {
 			action = SRJSON_GET_INT(it);
 		} else if(strcmp(it->string, "presentity") == 0) {
+			if(presentity != NULL) {
+				goto invalid;
+			}
 			presentity = pres_parse_json_presentity(it);
 			if(!presentity) {
 				LM_ERR("failed to construct presentity from json\n");
 				goto invalid;
 			}
 		} else if(strcmp(it->string, "subscription") == 0) {
+			if(subscription != NULL) {
+				goto invalid;
+			}
 			subscription = pres_parse_json_subscription(it);
 			if(!subscription) {
 				LM_ERR("failed to construct subscription from json\n");
