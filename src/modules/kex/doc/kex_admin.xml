@@ -753,6 +753,27 @@ kamcli rpc modparam.getn tls keylog_mode
 ...
 		</programlisting>
     </section>
+	<section id="kex.r.modparam.gets">
+		<title>
+		<function moreinfo="none">modparam.gets</function>
+		</title>
+		<para>
+		Get the value of a module parameter with string value.
+		</para>
+		<para>
+		Name: <emphasis>modparam.gets</emphasis>
+		</para>
+		<para>Parameters: <emphasis>module_name</emphasis> and
+		<emphasis>parameter_name</emphasis>.</para>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+kamcli rpc modparam.gets tls config
+...
+		</programlisting>
+    </section>
 	<section id="kex.r.modparam.setn">
 		<title>
 		<function moreinfo="none">modparam.setn</function>
