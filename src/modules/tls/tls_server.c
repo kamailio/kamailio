@@ -127,6 +127,7 @@ int tls_run_event_routes(struct tcp_connection *c);
 #endif /* TLS_RD_DEBUG */
 
 extern str sr_tls_xavp_cfg;
+extern int tls_tracker_loaded;
 
 static str _ksr_tls_connect_server_id = STR_NULL;
 
@@ -292,6 +293,9 @@ static int tls_complete_init(struct tcp_connection *c)
 	data->dom.s = (char *)data + sizeof(struct tls_extra_data);
 	data->dom.len = dom_str_size - 1;
 	memcpy(data->dom.s, dom_str, dom_str_size);
+	data->db_session_id = -1;
+	data->tcp_conn = c;
+	data->session_key = NULL;
 
 	if(unlikely(data->ssl == 0 || data->rwbio == 0)) {
 		TLS_ERR_SSL("Failed to create SSL or BIO structure:", data->ssl);
@@ -329,6 +333,9 @@ static int tls_complete_init(struct tcp_connection *c)
 
 	/* link the extra data struct inside ssl connection*/
 	SSL_set_app_data(data->ssl, data);
+	if(tls_tracker_loaded) {
+		set_keylog_callback(data->ssl);
+	}
 	return 0;
 
 error:
@@ -463,6 +470,12 @@ int tls_accept(struct tcp_connection *c, int *error)
 		goto err;
 	}
 
+	tls_c->tcp_conn = c;
+	tls_c->session_key = NULL;
+	SSL_set_app_data(ssl, tls_c);
+	if(tls_tracker_loaded) {
+		set_keylog_callback(ssl);
+	}
 	tls_openssl_clear_errors();
 	ret = SSL_accept(ssl);
 	if(unlikely(ret == 1)) {
