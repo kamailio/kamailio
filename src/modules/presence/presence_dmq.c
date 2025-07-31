@@ -613,7 +613,7 @@ int pres_dmq_replicate_presentity(presentity_t *presentity, str *body,
 		srjson_AddStrToObject(&jdoc, jdoc.root, "ruid", ruid->s, ruid->len);
 	}
 	// body
-	if(body) {
+	if(body && body->s) {
 		srjson_AddStrToObject(&jdoc, jdoc.root, "body", body->s, body->len);
 	}
 
