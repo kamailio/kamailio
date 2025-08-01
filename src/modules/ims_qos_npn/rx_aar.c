@@ -441,8 +441,8 @@ void async_aar_reg_callback(
 		ci.reg_state = PCONTACT_REG_PENDING_AAR;
 		ci.num_service_routes = 0;
 		ci.num_public_ids = 0;
-		LM_DBG("impu: [%.*s] updating status to PCONTACT_REG_PENDING\n",
-				pcontact->aor.len, pcontact->aor.s);
+		LM_DBG("impu: [%.*s] updating status to %s\n", pcontact->aor.len,
+				pcontact->aor.s, reg_state_to_string(ci.reg_state));
 		ul.update_pcontact(domain_t, &ci, pcontact);
 		//register for callbacks on contact
 		ul.register_ulcb(pcontact, PCSCF_CONTACT_DELETE | PCSCF_CONTACT_EXPIRE,
