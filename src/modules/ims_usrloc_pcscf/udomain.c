@@ -596,8 +596,8 @@ int get_pcontact_from_cache(udomain_t *_d, pcontact_info_t *contact_info,
 				if(ip_addr_cmp(&c_ip_addr, &ci_ip_addr)
 						&& ((c->received_port == contact_info->received_port)
 								|| (c->contact_port
-										== contact_info
-												   ->received_port))) { /*volte comes from a different port.... typically uses 4060*/
+										== contact_info->received_port))) {
+					/*volte comes from a different port.... typically uses 4060*/
 					check2_passed = 1;
 				}
 			}
@@ -696,13 +696,15 @@ int get_pcontact_from_cache(udomain_t *_d, pcontact_info_t *contact_info,
 				//finally check state being searched for
 				if((contact_info->reg_state != PCONTACT_ANY)
 						&& ((contact_info->reg_state & c->reg_state) == 0)) {
-					LM_DBG("can't find contact for requested reg state [%d] - "
-						   "(have [%d])\n",
-							contact_info->reg_state, c->reg_state);
+					LM_DBG("can't find contact for requested reg state [%s] - "
+						   "(have [%s])\n",
+							reg_state_to_string(contact_info->reg_state),
+							reg_state_to_string(c->reg_state));
 					c = reverse_search ? c->prev : c->next;
 					continue;
 				}
-				LM_DBG("contact found in memory\n");
+				LM_DBG("contact found in memory, reg_state[%s]\n",
+						reg_state_to_string(c->reg_state));
 				*_c = c;
 				return 0;
 			}
@@ -831,10 +833,10 @@ int unreg_pending_contacts_cb(udomain_t *_d, pcontact_t *_c, int type)
 	contact_info.reg_state = PCONTACT_ANY;
 
 	LM_DBG("Searching for contact in P-CSCF usrloc based on VIA "
-		   "[%d://%.*s:%d], reg state 0x%02X\n",
+		   "[%d://%.*s:%d], reg state %s\n",
 			contact_info.via_prot, contact_info.via_host.len,
 			contact_info.via_host.s, contact_info.via_port,
-			contact_info.reg_state);
+			reg_state_to_string(contact_info.reg_state));
 
 	aorhash = get_aor_hash(_d, &contact_info.via_host, contact_info.via_port,
 			contact_info.via_prot);
@@ -875,9 +877,10 @@ int unreg_pending_contacts_cb(udomain_t *_d, pcontact_t *_c, int type)
 				// finally check state being searched for
 				if((contact_info.reg_state != PCONTACT_ANY)
 						&& ((contact_info.reg_state & c->reg_state) == 0)) {
-					LM_DBG("can't find contact for requested reg state [%d] - "
-						   "(have [%d])\n",
-							contact_info.reg_state, c->reg_state);
+					LM_DBG("can't find contact for requested reg state [%s] - "
+						   "(have [%s])\n",
+							reg_state_to_string(contact_info.reg_state),
+							reg_state_to_string(c->reg_state));
 					c = c->next;
 					continue;
 				}
