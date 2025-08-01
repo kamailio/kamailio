@@ -942,9 +942,9 @@ int pcscf_unregister(
 		ul.lock_udomain(_d, &pcontact->via_host, pcontact->via_port,
 				pcontact->via_proto);
 
-		LM_DBG("Updating contact [%.*s]: setting state to "
-			   "PCONTACT_DEREG_PENDING_PUBLISH\n",
-				pcontact->aor.len, pcontact->aor.s);
+		LM_DBG("Updating contact [%.*s]: setting state to %s\n",
+				pcontact->aor.len, pcontact->aor.s,
+				reg_state_to_string(pcontact->reg_state));
 
 		ci.reg_state = PCONTACT_DEREG_PENDING_PUBLISH;
 		ci.num_service_routes = 0;
