@@ -61,6 +61,9 @@ int sruid_nextx_safe(sruid_t *sid, str *x);
 int sruid_nexthid(sruid_t *sid, str *sval);
 int sruid_nexthid_safe(sruid_t *sid, str *sval);
 
+int sruid_nextunid(sruid_t *sid, unsigned int nid);
+int sruid_nextunid_safe(sruid_t *sid, unsigned int nid);
+
 typedef int (*sruid_uuid_generate_f)(char *out, int *len);
 
 typedef struct sruid_uuid_api
