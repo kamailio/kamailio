@@ -35,6 +35,7 @@
 #include "../../core/pvar.h"
 #include "../../core/xavp.h"
 #include "../../core/parser/msg_parser.h"
+#include "../../core/utils/sruid.h"
 #include "../../modules/tm/tm_load.h"
 
 
@@ -259,6 +260,8 @@ typedef struct _ds_dest {
 	int probing_count;
 	struct timeval dnstime;
 	ds_ocdata_t ocdata;	/*!< overload control attributes */
+	char buid[SRUID_SIZE]; /*!< buffer for internal uid */
+	str suid; /*!< str shortcut for internal uid */
 	struct _ds_dest *next;
 } ds_dest_t;
 
