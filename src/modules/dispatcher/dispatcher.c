@@ -175,8 +175,6 @@ static int w_ds_set_dst(struct sip_msg*, char*, char*);
 static int w_ds_set_domain(struct sip_msg*, char*, char*);
 static int w_ds_mark_dst0(struct sip_msg*, char*, char*);
 static int w_ds_mark_dst1(struct sip_msg*, char*, char*);
-static int w_ds_mark_addr(struct sip_msg *msg, char *state, char *group,
-		char *uri);
 static int w_ds_load_unset(struct sip_msg*, char*, char*);
 static int w_ds_load_update(struct sip_msg*, char*, char*);
 
@@ -245,8 +243,6 @@ static cmd_export_t cmds[]={
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
 	{"ds_mark_dst",      (cmd_function)w_ds_mark_dst1,     1,
 		ds_warn_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
-	{"ds_mark_addr",     (cmd_function)w_ds_mark_addr,     3,
-		fixup_sis, fixup_free_sis, ANY_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list0, 0,
 		0, 0, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{"ds_is_from_list",  (cmd_function)w_ds_is_from_list1, 1,
@@ -319,7 +315,6 @@ static param_export_t params[]={
 	{"ds_default_sockname",PARAM_STR, &ds_default_sockname},
 	{"ds_timer_mode",      PARAM_INT, &ds_timer_mode},
 	{"event_callback",     PARAM_STR, &ds_event_callback},
-	{"event_callback_mode", PARAM_INT, &ds_event_callback_mode},
 	{"ds_attrs_none",      PARAM_INT, &ds_attrs_none},
 	{"ds_db_extra_attrs",  PARAM_STR, &ds_db_extra_attrs},
 	{"ds_load_mode",       PARAM_INT, &ds_load_mode},
@@ -974,51 +969,6 @@ static int w_ds_mark_dst1(struct sip_msg *msg, char *str1, char *str2)
 	sval.len = strlen(str1);
 
 	return ki_ds_mark_dst_state(msg, &sval);
-}
-
-/**
- *
- */
-static int ki_ds_mark_addr(sip_msg_t *msg, str *vstate, int vgroup, str *vuri)
-{
-	int state;
-
-
-	state = ds_parse_flags(vstate->s, vstate->len);
-
-	if(state < 0) {
-		LM_WARN("Failed to parse state flags: %.*s", vstate->len, vstate->s);
-		return -1;
-	}
-
-	return ds_mark_addr(
-			msg, state, vgroup, vuri, DS_STATE_MODE_SET | DS_STATE_MODE_FUNC);
-}
-
-/**
- *
- */
-static int w_ds_mark_addr(
-		struct sip_msg *msg, char *state, char *group, char *uri)
-{
-	str vstate;
-	int vgroup;
-	str vuri;
-
-	if(fixup_get_svalue(msg, (gparam_t *)state, &vstate) < 0) {
-		LM_ERR("failed to get state parameter\n");
-		return -1;
-	}
-	if(fixup_get_ivalue(msg, (gparam_t *)group, &vgroup) < 0) {
-		LM_ERR("failed to get group id parameter\n");
-		return -1;
-	}
-	if(fixup_get_svalue(msg, (gparam_t *)uri, &vuri) < 0) {
-		LM_ERR("failed to get uri parameter\n");
-		return -1;
-	}
-
-	return ki_ds_mark_addr(msg, &vstate, vgroup, &vuri);
 }
 
 /**
@@ -1842,11 +1792,6 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 	{ str_init("dispatcher"), str_init("ds_mark_dst_state"),
 		SR_KEMIP_INT, ki_ds_mark_dst_state,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
-	{ str_init("dispatcher"), str_init("ds_mark_addr"),
-		SR_KEMIP_INT, ki_ds_mark_addr,
-		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dispatcher"), str_init("ds_is_from_lists"),
