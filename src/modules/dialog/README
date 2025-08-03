@@ -669,7 +669,7 @@ modparam("dialog", "rr_param", "xyz")
 
 6.4. dlg_flag (integer)
 
-   Note: This flag has beed deprecated and not used anyymore. it is not
+   Note: This flag has beed deprecated and not used anymore. It is not
    needed to set this parameter and its corresponding flag for initial
    request in case the “dlg_manage()” function is used. In other words,
    use “dlg_manage()”.
