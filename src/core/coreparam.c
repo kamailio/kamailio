@@ -24,6 +24,8 @@
 #include "rand/ksrxrand.h"
 #include "coreparam.h"
 
+int ksr_coreparam_store_nval(str *pname, ksr_cpval_t *pval, void *eparam);
+
 /* clang-format off */
 static ksr_cpexport_t _ksr_cpexports[] = {
 	{ str_init("random_engine"), KSR_CPTYPE_STR,
@@ -79,4 +81,13 @@ int ksr_coreparam_set_xval(char *name, ksr_cpval_t *xval)
 	}
 	LM_ERR("core parameter [%.*s] not found\n", sname.len, sname.s);
 	return -1;
+}
+
+/**
+ *
+ */
+int ksr_coreparam_store_nval(str *pname, ksr_cpval_t *pval, void *eparam)
+{
+	*(long *)eparam = pval->v.nval;
+	return 0;
 }
