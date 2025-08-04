@@ -989,6 +989,7 @@ static int mem_test_destroy(int id)
 
 static int lock_test(int executions)
 {
+	int i = 0;
 	gen_lock_t *my_lock = NULL;
 	my_lock = lock_alloc();
 
@@ -997,7 +998,7 @@ static int lock_test(int executions)
 		return -1;
 	}
 	LM_INFO("Start lock test, %d executions\n", executions);
-	for(int i = 0; i < executions; i++) {
+	for(i = 0; i < executions; i++) {
 		lock_get(my_lock);
 		lock_release(my_lock);
 	}
