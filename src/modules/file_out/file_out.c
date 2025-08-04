@@ -246,7 +246,8 @@ static int fo_rotate_file(int index)
 
 static void fo_timer_check_interval(unsigned int ticks, void *param)
 {
-	for(int index = 0; index < *fo_number_of_files; index++) {
+	int index = 0;
+	for(index = 0; index < *fo_number_of_files; index++) {
 		if(fo_rotate_file(index) == 1) {
 			LM_DBG("Next write will rotate the file %d\n", index);
 		}
