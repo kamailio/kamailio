@@ -54,6 +54,7 @@ typedef struct uac_req
 	transaction_cb *cb;
 	void *cbp;
 	str *callid;
+	str *fromtag;
 	unsigned int cseqno;
 	unsigned int fr_timeout;
 	unsigned int fr_inv_timeout;
