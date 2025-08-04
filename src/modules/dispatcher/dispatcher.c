@@ -375,6 +375,9 @@ static int mod_init(void)
 	if(ds_ping_active_init() < 0) {
 		return -1;
 	}
+	if(ds_sruid_init() < 0) {
+		return -1;
+	}
 
 	if(ds_init_rpc() < 0) {
 		LM_ERR("failed to register RPC commands\n");
@@ -2039,8 +2042,9 @@ int ds_rpc_print_set(
 		else
 			c[1] = 'X';
 
-		if(rpc->struct_add(vh, "Ssd", "URI", &node->dlist[j].uri, "FLAGS", c,
-				   "PRIORITY", node->dlist[j].priority)
+		if(rpc->struct_add(vh, "SsdS", "URI", &node->dlist[j].uri, "FLAGS", c,
+				   "PRIORITY", node->dlist[j].priority, "IUID",
+				   &node->dlist[j].suid)
 				< 0) {
 			rpc->fault(ctx, 500, "Internal error creating dest struct");
 			return -1;

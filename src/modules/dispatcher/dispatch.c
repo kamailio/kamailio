@@ -142,6 +142,8 @@ static ds_set_t *ds_strictest_node = NULL;
 static int ds_strictest_idx = 0;
 static int ds_strictest_match = 0;
 
+static sruid_t _ds_sruid = {0};
+
 #define _ds_list (ds_lists[*ds_crt_idx])
 #define _ds_list_nr (*ds_list_nr)
 
@@ -153,6 +155,18 @@ void shuffle_uint100array(unsigned int *arr);
 void shuffle_char100array(char *arr);
 int ds_reinit_rweight_on_state_change(
 		int old_state, int new_state, ds_set_t *dset);
+
+
+/**
+ *
+ */
+int ds_sruid_init(void)
+{
+	if(sruid_init(&_ds_sruid, '-', "dspt", SRUID_INC) < 0) {
+		return -1;
+	}
+	return 0;
+}
 
 /**
  *
@@ -759,6 +773,10 @@ ds_dest_t *add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	if(!dp) {
 		goto error;
 	}
+	sruid_nextunid_safe(&_ds_sruid, id);
+	memcpy(dp->buid, _ds_sruid.uid.s, _ds_sruid.uid.len);
+	dp->suid.s = dp->buid;
+	dp->suid.len = _ds_sruid.uid.len;
 
 	if(latency_stats != NULL) {
 		dp->latency_stats.stdev = latency_stats->stdev;
@@ -1025,7 +1043,7 @@ int reindex_dests(ds_set_t *node)
 			dp0[j].next = NULL;
 		else
 			dp0[j].next = &dp0[j + 1];
-
+		dp0[j].suid.s = dp0[j].buid;
 
 		dp = node->dlist;
 		node->dlist = dp->next;
@@ -2928,6 +2946,9 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 				node->dlist[i].uri.len, node->dlist[i].uri.s);
 	} else {
 		memcpy(&ndst->ocdata, &node->dlist[i].ocdata, sizeof(ds_ocdata_t));
+		memcpy(ndst->buid, node->dlist[i].suid.s, node->dlist[i].suid.len);
+		ndst->suid.s = ndst->buid;
+		ndst->suid.len = node->dlist[i].suid.len;
 	}
 	return;
 }

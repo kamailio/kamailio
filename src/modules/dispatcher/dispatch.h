@@ -312,6 +312,8 @@ int ds_ping_active_init(void);
 int ds_ping_active_get(void);
 int ds_ping_active_set(int v);
 
+int ds_sruid_init(void);
+
 /* Create if not exist and return ds_set_t by id */
 ds_set_t *ds_avl_insert(ds_set_t **root, int id, int *setn);
 ds_set_t *ds_avl_find(ds_set_t *node, int id);
