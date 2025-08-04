@@ -380,6 +380,7 @@ static int fo_fixup_free_int_pvar(void **param, int param_no)
 
 static int fo_add_filename(modparam_t type, void *val)
 {
+	int i = 0;
 	if(val == NULL) {
 		LM_ERR("modparam value is null\n");
 		return -1;
@@ -406,7 +407,7 @@ static int fo_add_filename(modparam_t type, void *val)
 			SHM_MEM_ERROR;
 			return -1;
 		}
-		for(int i = 0; i < FO_MAX_FILES; i++) {
+		for(i = 0; i < FO_MAX_FILES; i++) {
 			fo_file_properties_init(&fo_files[i]);
 		}
 	}
