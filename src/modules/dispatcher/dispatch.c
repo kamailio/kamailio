@@ -4208,6 +4208,23 @@ static inline int ds_ping_result_helper(ds_set_t *node, int j)
 /**
  *
  */
+char *ds_rand_str4(void)
+{
+	int i;
+	static char obuf[6];
+	const char ibuf[] = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+	for(i = 0; i < 4; i++) {
+		obuf[i] = ibuf[ksr_xrand() % 36];
+	}
+	obuf[4] = '\0';
+
+	return obuf;
+}
+
+/**
+ *
+ */
 void ds_ping_set(ds_set_t *node)
 {
 	uac_req_t uac_r;
@@ -4216,6 +4233,8 @@ void ds_ping_set(ds_set_t *node)
 	str obproxy;
 	int state;
 	ds_rctx_t rctx;
+	char ftbuf[64];
+	str ftag;
 
 	if(!node)
 		return;
@@ -4284,6 +4303,16 @@ void ds_ping_set(ds_set_t *node)
 				obproxy = ds_outbound_proxy;
 				LM_DBG("Default outbound proxy: %.*s\n", ds_outbound_proxy.len,
 						ds_outbound_proxy.s);
+			}
+			ftag.len = snprintf(ftbuf, 64, "%.*s-%s", node->dlist[j].suid.len,
+					node->dlist[j].suid.s, ds_rand_str4());
+			if(ftag.len <= 0) {
+				LM_ERR("failed to generate the from-tag - set #%d URI %.*s\n",
+						node->id, node->dlist[j].uri.len, node->dlist[j].uri.s);
+				continue;
+			} else {
+				ftag.s = ftbuf;
+				uac_r.fromtag = &ftag;
 			}
 
 			gettimeofday(&node->dlist[j].latency_stats.start, NULL);
