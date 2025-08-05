@@ -58,6 +58,8 @@
 #define TIMER_MAX_DRIFT (TIMER_TICKS_HZ / 10U)	 /* if drift > 0.1s adjust */
 
 
+extern long ksr_timer_sanity_check;
+
 static ticks_t *ticks = 0;
 static ticks_t last_ticks;	   /* last time we adjusted the time */
 static ticks_t last_adj_check; /* last time we ran adjust_ticks */
@@ -892,7 +894,8 @@ inline static void timer_list_expire(ticks_t t, struct timer_head *h
 
 	// check if timer circular double linked list has broken links
 	// try to recover if so, otherwise abort execution
-	if(!timer_list_sanity_check(h)) {
+	LM_DBG("ksr_timer_sanity_check = %ld\n", ksr_timer_sanity_check);
+	if(ksr_timer_sanity_check != 0 && !timer_list_sanity_check(h)) {
 		abort();
 	}
 
