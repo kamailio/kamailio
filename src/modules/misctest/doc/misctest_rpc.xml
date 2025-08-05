@@ -284,7 +284,9 @@
 	</section>
 
 	<section id="mt.lock_test">
-		<title>mt.lock_test [executions]</title>
+		<title>
+			<function>mt.lock_test [executions]</function>
+		</title>
 		<para>
     The <emphasis>mt.lock_test</emphasis> RPC command performs a lock/unlock stress test using a global lock. It is primarily intended for debugging and performance testing of the locking subsystem.
 		</para>
