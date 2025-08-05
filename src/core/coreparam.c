@@ -25,12 +25,14 @@
 #include "coreparam.h"
 
 int ksr_coreparam_store_nval(str *pname, ksr_cpval_t *pval, void *eparam);
+long ksr_timer_sanity_check = 0;
 
 /* clang-format off */
 static ksr_cpexport_t _ksr_cpexports[] = {
 	{ str_init("random_engine"), KSR_CPTYPE_STR,
 		ksr_xrand_cp, NULL },
-
+	{ str_init("timer_sanity_check"), KSR_CPTYPE_NUM,
+		ksr_coreparam_store_nval, &ksr_timer_sanity_check },
 	{ {0, 0}, 0, NULL, NULL }
 };
 /* clang-format on */
