@@ -385,6 +385,12 @@ inline static void final_response_handler(
 		return;
 	};
 
+	/* FR if no transaction.... */
+	if(t->uac == NULL) {
+		LM_WARN("transaction %p no uac (flags %x)\n", t, t->flags);
+		return;
+	}
+
 	/* lock reply processing to determine how to proceed reliably */
 	LOCK_REPLIES(t);
 	/* now it can be only a request retransmission buffer;
