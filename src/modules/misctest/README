@@ -438,7 +438,7 @@ mt_unlock_threads("4");
         total        : 29696000
 }
 
-4.10. mt.lock_test [executions]
+4.10.  mt.lock_test [executions]
 
    The mt.lock_test RPC command performs a lock/unlock stress test using a
    global lock. It is primarily intended for debugging and performance
