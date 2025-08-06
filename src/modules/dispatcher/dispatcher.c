@@ -2240,7 +2240,7 @@ static void dispatcher_rpc_set_state_helper(rpc_t *rpc, void *ctx, int mattr)
 				return;
 			}
 		} else {
-			if(ds_reinit_state(group, &dest, stval) < 0) {
+			if(ds_reinit_state(group, &dest, NULL, stval) < 0) {
 				rpc->fault(ctx, 500, "State Update Failed");
 				return;
 			}

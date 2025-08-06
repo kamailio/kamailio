@@ -160,9 +160,9 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_update_dst(struct sip_msg *msg, int upos, int mode);
 int ds_add_dst(int group, str *address, int flags, int priority, str *attrs);
 int ds_remove_dst(int group, str *address);
-int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
-		int mode, ds_rctx_t *rctx);
-int ds_reinit_state(int group, str *address, int state);
+int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
+		int state, int mode, ds_rctx_t *rctx);
+int ds_reinit_state(int group, str *address, str *iuid, int state);
 int ds_reinit_state_all(int group, int state);
 int ds_reinit_duid_state(int group, str *vduid, int state);
 int ds_mark_dst(struct sip_msg *msg, int state);

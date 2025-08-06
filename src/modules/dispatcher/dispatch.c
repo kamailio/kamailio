@@ -3089,7 +3089,7 @@ int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri, int mode)
 	rctx.setid = group;
 	ds_rctx_set_uri(&rctx, uri);
 
-	ret = ds_update_state(msg, group, uri, state, mode, &rctx);
+	ret = ds_update_state(msg, group, uri, NULL, state, mode, &rctx);
 
 	LM_DBG("state [%d] grp [%d] dst [%.*s]\n", state, group, uri->len, uri->s);
 
@@ -3371,12 +3371,14 @@ int ds_update_latency(int group, str *address, int code)
 
 
 /**
- * Get state for given destination
+ * Get state for given destination or iuid
  */
-int ds_get_state(int group, str *address)
+int ds_get_state(int group, str *address, str *iuid)
 {
 	int i = 0;
 	ds_set_t *idx = NULL;
+	str *fmatch;
+	str *vmatch;
 
 	if(_ds_list == NULL || _ds_list_nr <= 0) {
 		LM_ERR("the list is null\n");
@@ -3390,9 +3392,15 @@ int ds_get_state(int group, str *address)
 	}
 
 	while(i < idx->nr) {
-		if(idx->dlist[i].uri.len == address->len
-				&& strncasecmp(idx->dlist[i].uri.s, address->s, address->len)
-						   == 0) {
+		if(iuid != NULL && iuid->s != NULL && iuid->len > 0) {
+			fmatch = &idx->dlist[i].suid;
+			vmatch = iuid;
+		} else {
+			fmatch = &idx->dlist[i].uri;
+			vmatch = address;
+		}
+		if(fmatch->len == vmatch->len
+				&& strncasecmp(fmatch->s, vmatch->s, vmatch->len) == 0) {
 			/* destination address found */
 			return idx->dlist[i].flags;
 		}
@@ -3404,13 +3412,15 @@ int ds_get_state(int group, str *address)
 /**
  * Update destionation's state
  */
-int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
-		int mode, ds_rctx_t *rctx)
+int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
+		int state, int mode, ds_rctx_t *rctx)
 {
 	int i = 0;
 	int old_state = 0;
 	int init_state = 0;
 	ds_set_t *idx = NULL;
+	str *fmatch;
+	str *vmatch;
 
 	if(_ds_list == NULL || _ds_list_nr <= 0) {
 		LM_ERR("the list is null\n");
@@ -3426,9 +3436,15 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
 			address->s, group, state);
 
 	while(i < idx->nr) {
-		if(idx->dlist[i].uri.len == address->len
-				&& strncasecmp(idx->dlist[i].uri.s, address->s, address->len)
-						   == 0) {
+		if(iuid != NULL && iuid->s != NULL && iuid->len > 0) {
+			fmatch = &idx->dlist[i].suid;
+			vmatch = iuid;
+		} else {
+			fmatch = &idx->dlist[i].uri;
+			vmatch = address;
+		}
+		if(fmatch->len == vmatch->len
+				&& strncasecmp(fmatch->s, vmatch->s, vmatch->len) == 0) {
 			/* destination address found */
 			old_state = idx->dlist[i].flags;
 
@@ -3643,10 +3659,12 @@ int ds_reinit_rweight_on_state_change(
 /**
  *
  */
-int ds_reinit_state(int group, str *address, int state)
+int ds_reinit_state(int group, str *address, str *iuid, int state)
 {
 	int i = 0;
 	ds_set_t *idx = NULL;
+	str *fmatch;
+	str *vmatch;
 
 	if(_ds_list == NULL || _ds_list_nr <= 0) {
 		LM_ERR("the list is null\n");
@@ -3660,9 +3678,15 @@ int ds_reinit_state(int group, str *address, int state)
 	}
 
 	for(i = 0; i < idx->nr; i++) {
-		if(idx->dlist[i].uri.len == address->len
-				&& strncasecmp(idx->dlist[i].uri.s, address->s, address->len)
-						   == 0) {
+		if(iuid != NULL && iuid->s != NULL && iuid->len > 0) {
+			fmatch = &idx->dlist[i].suid;
+			vmatch = iuid;
+		} else {
+			fmatch = &idx->dlist[i].uri;
+			vmatch = address;
+		}
+		if(fmatch->len == vmatch->len
+				&& strncasecmp(fmatch->s, vmatch->s, vmatch->len) == 0) {
 			int old_state = idx->dlist[i].flags;
 			/* reset the bits used for states */
 			idx->dlist[i].flags &= ~(DS_STATES_ALL);
@@ -4103,6 +4127,7 @@ static void ds_options_callback(
 	sip_msg_t *fmsg;
 	int state;
 	ds_rctx_t rctx;
+	str iuid = STR_NULL;
 
 	/* The param contains the group, in which the failed host
 	 * can be found.*/
@@ -4143,7 +4168,7 @@ static void ds_options_callback(
 	/* Check if in the meantime someone disabled probing of the target
 	 * through RPC or reload */
 	if(ds_probing_mode == DS_PROBE_ONLYFLAGGED
-			&& !(ds_get_state(group, &uri) & DS_PROBING_DST)) {
+			&& !(ds_get_state(group, &uri, &iuid) & DS_PROBING_DST)) {
 		return;
 	}
 
@@ -4155,12 +4180,13 @@ static void ds_options_callback(
 		state = 0;
 		if(ds_probing_mode == DS_PROBE_ALL
 				|| ((ds_probing_mode == DS_PROBE_ONLYFLAGGED)
-						&& (ds_get_state(group, &uri) & DS_PROBING_DST)))
+						&& (ds_get_state(group, &uri, &iuid) & DS_PROBING_DST)))
 			state |= DS_PROBING_DST;
 
 		/* Check if in the meantime someone disabled the target through RPC */
-		if(!(ds_get_state(group, &uri) & DS_DISABLED_DST)
-				&& ds_update_state(fmsg, group, &uri, state, 0, &rctx) != 0) {
+		if(!(ds_get_state(group, &uri, &iuid) & DS_DISABLED_DST)
+				&& ds_update_state(fmsg, group, &uri, &iuid, state, 0, &rctx)
+						   != 0) {
 			LM_ERR("Setting the state failed (%.*s, group %d)\n", uri.len,
 					uri.s, group);
 		}
@@ -4169,8 +4195,9 @@ static void ds_options_callback(
 		if(ds_probing_mode != DS_PROBE_NONE)
 			state |= DS_PROBING_DST;
 		/* Check if in the meantime someone disabled the target through RPC */
-		if(!(ds_get_state(group, &uri) & DS_DISABLED_DST)
-				&& ds_update_state(fmsg, group, &uri, state, 0, &rctx) != 0) {
+		if(!(ds_get_state(group, &uri, &iuid) & DS_DISABLED_DST)
+				&& ds_update_state(fmsg, group, &uri, &iuid, state, 0, &rctx)
+						   != 0) {
 			LM_ERR("Setting the probing state failed (%.*s, group %d)\n",
 					uri.len, uri.s, group);
 		}
@@ -4335,7 +4362,7 @@ void ds_ping_set(ds_set_t *node)
 				/* check if meantime someone disabled the target via RPC */
 				if(!(node->dlist[j].flags & DS_DISABLED_DST)
 						&& ds_update_state(NULL, node->id, &node->dlist[j].uri,
-								   state, 0, &rctx)
+								   &node->dlist[j].suid, state, 0, &rctx)
 								   != 0) {
 					LM_ERR("Setting the probing state failed (%.*s, group "
 						   "%d)\n",
