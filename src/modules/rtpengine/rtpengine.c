@@ -2851,9 +2851,10 @@ static void mod_destroy(void)
 
 static char *gencookie(void)
 {
-	static char cook[34];
+	static char cook[35]; // 11 + 1 + 10 + 1 + 10 + 1 + 1
 
-	snprintf(cook, 34, "%d_%u_%u ", server_id, fastrand(), myseqn);
+	snprintf(cook, 35, "%" PRId32 "_%" PRIu32 "_%" PRIu32 " ",
+			(int32_t) server_id, (uint32_t) fastrand(), (uint32_t) myseqn);
 	myseqn++;
 	return cook;
 }
