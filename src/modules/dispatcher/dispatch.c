@@ -4114,6 +4114,47 @@ int ds_is_active_uri(sip_msg_t *msg, int group, str *uri)
 	return -1;
 }
 
+/*!
+ *
+ */
+int ds_extract_fromhdr_iuid(str *from, str *iuid)
+{
+	char *p = NULL;
+	str stag = str_init(";tag=");
+
+	if(from == NULL || from->s == NULL) {
+		return -1;
+	}
+
+	p = str_search(from, &stag);
+	if(p == NULL) {
+		return -1;
+	}
+	p += 5;
+	iuid->s = p;
+	iuid->len = 0;
+	while(p < from->s + from->len) {
+		if(*p == ';' || *p == ' ' || *p == '\r' || *p == '\n' || *p == '\t') {
+			break;
+		}
+		iuid->len++;
+		p++;
+	}
+	if(iuid->len < 10) {
+		iuid->s = NULL;
+		iuid->len = 0;
+		return -1;
+	}
+	if(iuid->s[iuid->len - 5] != '-') {
+		iuid->s = NULL;
+		iuid->len = 0;
+		return -1;
+	}
+	iuid->len -= 5;
+
+	return 0;
+}
+
 /*! \brief
  * Callback-Function for the OPTIONS-Request
  * This Function is called, as soon as the Transaction is finished
@@ -4164,6 +4205,9 @@ static void ds_options_callback(
 	}
 	rctx.setid = group;
 	ds_rctx_set_uri(&rctx, &uri);
+
+	ds_extract_fromhdr_iuid(&t->from_hdr, &iuid);
+	LM_INFO("=== iuid: %.*s\n", iuid.len, iuid.s);
 
 	/* Check if in the meantime someone disabled probing of the target
 	 * through RPC or reload */
