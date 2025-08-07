@@ -47,6 +47,24 @@ void compute_md5(char *dst, char *src, int src_len)
 	string2hex(digest, 16, dst);
 }
 
+/*! \brief Compute SHA1 checksum raw */
+void compute_sha1_raw(unsigned char *dst, u_int8_t *src, int src_len)
+{
+	SHA1_CTX ctx1;
+	sr_SHA1_Init(&ctx1);
+	sr_SHA1_Update(&ctx1, src, src_len);
+	sr_SHA1_Final(dst, &ctx1);
+}
+
+/*! \brief Compute SHA1 checksum hex */
+void compute_sha1(char *dst, u_int8_t *src, int src_len)
+{
+	SHA1_CTX ctx1;
+	sr_SHA1_Init(&ctx1);
+	sr_SHA1_Update(&ctx1, src, src_len);
+	sr_SHA1_End(&ctx1, dst);
+}
+
 /*! \brief Compute SHA256 checksum */
 void compute_sha256(char *dst, u_int8_t *src, int src_len)
 {

@@ -35,6 +35,10 @@
 
 void compute_md5(char *dst, char *src, int src_len);
 
+void compute_sha1_raw(unsigned char *dst, u_int8_t *src, int src_len);
+
+void compute_sha1(char *dst, u_int8_t *src, int src_len);
+
 void compute_sha256(char *dst, u_int8_t *src, int src_len);
 
 void compute_sha384(char *dst, u_int8_t *src, int src_len);
