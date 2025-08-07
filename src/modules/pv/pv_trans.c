@@ -881,6 +881,69 @@ int tr_eval_string(
 			tr_string_clone_result;
 			break;
 
+		case TR_S_SELECTWS:
+			if(tp == NULL) {
+				LM_ERR("select invalid parameter (cfg line: %d)\n",
+						get_cfg_crt_line());
+				return -1;
+			}
+			if(!(val->flags & PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(tp->type == TR_PARAM_NUMBER) {
+				i = tp->v.n;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v) != 0
+						|| (!(v.flags & PV_VAL_INT))) {
+					LM_ERR("select cannot get p1 (cfg line: %d)\n",
+							get_cfg_crt_line());
+					return -1;
+				}
+				i = v.ri;
+			}
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			if(i < 0) {
+				s = val->rs.s + val->rs.len - 1;
+				p = s;
+				i = -i;
+				i--;
+				while(p >= val->rs.s) {
+					if(*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') {
+						if(i == 0)
+							break;
+						s = p - 1;
+						i--;
+					}
+					p--;
+				}
+				if(i == 0) {
+					val->rs.s = p + 1;
+					val->rs.len = s - p;
+				} else {
+					val->rs = _tr_empty;
+				}
+			} else {
+				s = val->rs.s;
+				p = s;
+				while(p < val->rs.s + val->rs.len) {
+					if(*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') {
+						if(i == 0)
+							break;
+						s = p + 1;
+						i--;
+					}
+					p++;
+				}
+				if(i == 0) {
+					val->rs.s = s;
+					val->rs.len = p - s;
+				} else {
+					val->rs = _tr_empty;
+				}
+			}
+			tr_string_clone_result;
+			break;
+
 		case TR_S_TOLOWER:
 			if(!(val->flags & PV_VAL_STR)) {
 				val->rs.s = int2str(val->ri, &val->rs.len);
@@ -3080,6 +3143,23 @@ char *tr_parse_string(str *in, trans_t *t)
 		if(*p != TR_RBRACKET) {
 			LM_ERR("invalid select transformation: %.*s (c:%c/%d - p:%d)!!\n",
 					in->len, in->s, *p, *p, (int)(p - in->s));
+			goto error;
+		}
+		goto done;
+	} else if(name.len == 8 && strncasecmp(name.s, "selectsw", 8) == 0) {
+		t->subtype = TR_S_SELECTWS;
+		if(*p != TR_PARAM_MARKER) {
+			LM_ERR("invalid selectsw transformation: %.*s!\n", in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_nparam(p, p0, tp, spec, n, sign, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p == ' ' || *p == '\t' || *p == '\n'))
+			p++;
+		if(*p != TR_RBRACKET) {
+			LM_ERR("invalid selectsw transformation: %.*s!!\n", in->len, in->s);
 			goto error;
 		}
 		goto done;
