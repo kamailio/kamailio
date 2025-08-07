@@ -245,6 +245,33 @@ error:
 	return NULL;
 }
 
+int reginfo_get_expires(urecord_t *record)
+{
+	// Loop through all record contacts and set the publish Expire value
+	// to the max expire of the contacts
+	ucontact_t *ptr;
+	time_t cur_time = time(0);
+	int expires = -1;
+	int tmp_expires;
+
+	ptr = record->contacts;
+	while(ptr) {
+		if(VALID_CONTACT(ptr, cur_time)) {
+			tmp_expires = (int)(ptr->expires - cur_time);
+			if(tmp_expires > expires) {
+				expires = tmp_expires;
+			}
+		}
+		ptr = ptr->next;
+	}
+	if(expires < 0) {
+		/* if we cannot calc expire from reg contacts, just use this default */
+		expires = 3600;
+	}
+
+	return expires;
+}
+
 void reginfo_usrloc_cb(ucontact_t *c, int type, void *param)
 {
 	str *body = NULL;
@@ -350,7 +377,7 @@ void reginfo_usrloc_cb(ucontact_t *c, int type, void *param)
 	publ.id.s = id_buf;
 	publ.id.len = id_buf_len;
 	publ.content_type = content_type;
-	publ.expires = 3600;
+	publ.expires = reginfo_get_expires(record);
 
 	/* make UPDATE_TYPE, as if this "publish dialog" is not found
 	   by pua it will fallback to INSERT_TYPE anyway */
