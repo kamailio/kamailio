@@ -821,6 +821,9 @@ int tr_eval_string(
 						c = '\t';
 						break;
 					case 's':
+						c = 1;
+						break;
+					case 'w':
 						c = ' ';
 						break;
 					default:
