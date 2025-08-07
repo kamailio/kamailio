@@ -322,7 +322,11 @@ static int print_value(rpc_ctx_t *ctx, char fmt, va_list *ap, str *id)
 			break;
 		case 'S':
 			sp = va_arg(*ap, str *);
-			body = *sp;
+			if(sp) {
+				body = *sp;
+			} else {
+				body = (str)str_init("&lt;null&gt;");
+			}
 			break;
 		default:
 			body.len = 0;
