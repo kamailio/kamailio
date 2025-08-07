@@ -70,9 +70,11 @@ typedef unsigned long long u_int64_t;	/* 8-bytes (64-bits) */
 
 	typedef struct _SHA1_CTX
 	{
-		uint32_t state[5];
-		uint32_t count[2];
-		uint8_t buffer[SHA1_BLOCK_LENGTH];
+		unsigned char data[SHA1_BLOCK_LENGTH];
+		unsigned int datalen;
+		unsigned long long bitlen;
+		unsigned int state[5];
+		unsigned int k[4];
 	} SHA1_CTX;
 
 	typedef struct _SHA256_CTX
@@ -99,7 +101,7 @@ typedef unsigned long long u_int64_t;	/* 8-bytes (64-bits) */
 
 	void sr_SHA1_Init(SHA1_CTX *);
 	void sr_SHA1_Update(SHA1_CTX *, const uint8_t *, size_t);
-	void sr_SHA1_Final(sha2_byte[SHA1_DIGEST_LENGTH], SHA1_CTX *);
+	void sr_SHA1_Final(unsigned char hash[SHA1_DIGEST_LENGTH], SHA1_CTX *ctx);
 	char *sr_SHA1_End(SHA1_CTX *, char[SHA1_DIGEST_STRING_LENGTH]);
 	char *sr_SHA1_Data(
 			const uint8_t *, size_t, char[SHA1_DIGEST_STRING_LENGTH]);
