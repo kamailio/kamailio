@@ -87,14 +87,12 @@ option(Q_MALLOC "Use q_malloc" ON)
 # Same goes for fmalloc and tlsf malloc
 # cmake_dependent_option(DBG_QM_MALLOC "Enable debugging info for q_malloc" OFF "Q_MALLOC" OFF)
 option(TLSF_MALLOC "Use tlsf_malloc" ON)
-option(MALLOC_STATS "Use malloc stats" ON)
 
 option(USE_DNS_FAILOVER "Use DNS failover" ON)
 option(USE_DST_BLOCKLIST "Use destination blacklist" ON)
 option(HAVE_RESOLV_RES "Have resolv_res" ON)
 
 option(KSR_PTHREAD_MUTEX_SHARED "Use shared mutex for TLS" ON)
-option(STATISTICS "Statistics" ON)
 
 # if(${MEMPKG})
 #   target_compile_definitions(common INTERFACE PKG_MALLOC)
@@ -241,10 +239,6 @@ if(TLSF_MALLOC)
   target_compile_definitions(common INTERFACE TLSF_MALLOC)
 endif()
 
-if(MALLOC_STATS)
-  target_compile_definitions(common INTERFACE MALLOC_STATS)
-endif()
-
 if(MEMDBG)
   target_compile_definitions(common INTERFACE DBG_SR_MEMORY)
   if(MEMDBGSYS)
@@ -313,11 +307,11 @@ if(KSR_PTHREAD_MUTEX_SHARED)
 endif()
 
 if(FMSTATS)
-  target_compile_definitions(common INTERFACE FMSTATS)
+  target_compile_definitions(common INTERFACE MALLOC_STATS)
 endif()
 
 if(KMSTATS)
-  target_compile_definitions(common INTERFACE KMSTATS)
+  target_compile_definitions(common INTERFACE USE_CORE_STATS STATISTICS)
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/compiler-specific.cmake)
@@ -369,7 +363,6 @@ target_compile_definitions(
             # TODO: We can use the generator expression to define extra flags
             # instead of checking the options each time
             $<$<BOOL:${USE_SCTP}>:USE_SCTP>
-            $<$<BOOL:${STATISTICS}>:STATISTICS>
 )
 target_link_libraries(common INTERFACE common_compiler_flags)
 
