@@ -298,10 +298,6 @@ if(NO_DEV_POLL)
   target_compile_definitions(common INTERFACE NO_DEV_POLL)
 endif()
 
-if(RAW_SOCKS)
-  target_compile_definitions(common INTERFACE RAW_SOCKS)
-endif()
-
 if(KSR_PTHREAD_MUTEX_SHARED)
   target_compile_definitions(common INTERFACE KSR_PTHREAD_MUTEX_SHARED)
 endif()
