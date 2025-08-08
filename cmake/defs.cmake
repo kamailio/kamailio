@@ -246,6 +246,10 @@ if(MEMDBG)
   endif()
 endif()
 
+if(MEM_JOIN_FREE)
+  target_compile_definitions(common INTERFACE MEM_JOIN_FREE)
+endif()
+
 if(USE_DNS_FAILOVER)
   target_compile_definitions(common INTERFACE USE_DNS_FAILOVER)
 endif()
