@@ -66,6 +66,9 @@ typedef struct tls_extra_data
 	struct tls_rd_buf *enc_rd_buf;
 	unsigned int flags;
 	enum tls_conn_states state;
+	int db_session_id;
+	tcp_connection_t *tcp_conn;
+	char *session_key;
 } tls_extra_data_t;
 
 

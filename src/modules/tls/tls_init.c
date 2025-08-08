@@ -55,6 +55,7 @@
 #include "../../core/pt.h"
 #include "../../core/cfg/cfg.h"
 #include "../../core/cfg/cfg_ctx.h"
+#include "../../modules/tls_tracker/api.h"
 #include "tls_verify.h"
 #include "tls_domain.h"
 #include "tls_util.h"
@@ -63,6 +64,7 @@
 #include "tls_locking.h"
 #include "tls_ct_wrq.h"
 #include "tls_cfg.h"
+#include "tls_server.h"
 
 /* will be set to 1 when the TLS env is initialized to make destroy safe */
 static int tls_mod_preinitialized = 0;
@@ -660,6 +662,89 @@ end:
 	return 0;
 }
 
+extern tls_tracker_ops_api_t t_tls_tracker_ops;
+
+void ssl_info_callback(const SSL *s, int where, int ret)
+{
+	tls_extra_data_t *data = (tls_extra_data_t *)SSL_get_app_data(s);
+	if(!data) {
+		LM_ERR("No app data attached to SSL context\n");
+		return;
+	}
+
+	if(where & SSL_CB_HANDSHAKE_DONE) {
+		char *temp = NULL;
+		char *remote_ip = NULL;
+		char *local_ip = NULL;
+		long remote_port = 0;
+		long local_port = 0;
+
+		temp = ip_addr2strz(&data->tcp_conn->rcv.dst_ip);
+		local_ip = pkg_mallocxz(strlen(temp) + 1);
+		strncpy(local_ip, temp, strlen(temp));
+
+		temp = ip_addr2strz(&data->tcp_conn->rcv.src_ip);
+		remote_ip = pkg_mallocxz(strlen(temp) + 1);
+		strncpy(remote_ip, temp, strlen(temp));
+
+		local_port = data->tcp_conn->rcv.dst_port;
+		remote_port = data->tcp_conn->rcv.src_port;
+
+		str remote_ip_str = {remote_ip, strlen(remote_ip)};
+		str local_ip_str = {local_ip, strlen(local_ip)};
+
+		if(data->db_session_id < 0) {
+			int db_conn_id = t_tls_tracker_ops.add_new_connection(
+					data->tcp_conn->id, &remote_ip_str, &local_ip_str,
+					remote_port, local_port);
+			if(db_conn_id < 0) {
+				LM_ERR("Error local port obtaining\n");
+			} else {
+				data->db_session_id = db_conn_id;
+				t_tls_tracker_ops.add_session_key(
+						db_conn_id, data->session_key);
+			}
+		}
+
+		pkg_free(local_ip);
+		pkg_free(remote_ip);
+		pkg_free(data->session_key);
+		data->session_key = NULL;
+	}
+}
+
+void keylog_callback(const SSL *ssl, const char *line)
+{
+	tls_extra_data_t *data = (tls_extra_data_t *)SSL_get_app_data(ssl);
+	if(data) {
+		LM_DBG("Called TLS keylog_callback for tcp connection_id=%d\n",
+				data->tcp_conn->id);
+		int session_key_len =
+				(data->session_key ? strlen(data->session_key) : 0)
+				+ strlen(line) + 2;
+		char *session_key = pkg_mallocxz(session_key_len);
+		if(NULL == session_key) {
+			PKG_MEM_ERROR;
+			return;
+		}
+		if(data->session_key) {
+			snprintf(session_key, session_key_len, "%s\n%s", data->session_key,
+					line);
+			pkg_free(data->session_key);
+		} else {
+			snprintf(session_key, session_key_len, "%s", line);
+		}
+		data->session_key = session_key;
+	} else {
+		LM_ERR("no data attached to SSL descriptor\n");
+	}
+}
+
+void set_keylog_callback(const SSL *ssl)
+{
+	SSL_CTX_set_keylog_callback(SSL_get_SSL_CTX(ssl), keylog_callback);
+	SSL_CTX_set_info_callback(SSL_get_SSL_CTX(ssl), ssl_info_callback);
+}
 
 /**
  * tls pre-init function
