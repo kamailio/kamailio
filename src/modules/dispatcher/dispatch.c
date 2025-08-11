@@ -3144,8 +3144,8 @@ static inline void latency_stats_update(
 		latency_stats->estimate = latency_stats->average;
 	} else {
 		latency_stats->estimate =
-				latency_stats->estimate * ds_latency_estimator_alpha
-				+ latency * (1 - ds_latency_estimator_alpha);
+				latency * ds_latency_estimator_alpha
+				+ latency_stats->estimate * (1 - ds_latency_estimator_alpha);
 	}
 }
 
