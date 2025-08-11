@@ -823,7 +823,8 @@ ds_dest_t *add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 		}
 	}
 
-	LM_DBG("dest [%d/%d] <%.*s>\n", sp->id, sp->nr, dp->uri.len, dp->uri.s);
+	LM_DBG("dest [%d/%d] <%.*s> (%d %d)\n", sp->id, sp->nr, dp->uri.len,
+			dp->uri.s, dp->flags, dp->priority);
 
 	return dp;
 error:
