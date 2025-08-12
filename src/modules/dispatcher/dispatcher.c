@@ -389,7 +389,20 @@ static int mod_init(void)
 		LM_ERR("Fail to declare the configuration\n");
 		return -1;
 	}
-
+	/* if the ping-keepalive-timer is enabled the tm-api needs to be loaded */
+	if(ds_ping_interval > 0) {
+		if(load_tm_api(&tmb) == -1) {
+			LM_ERR("could not load the TM-functions - disable DS ping\n");
+			return -1;
+		}
+		if(ds_timer_mode == 1) {
+			if(sr_wtimer_add(ds_check_timer, NULL, ds_ping_interval) < 0)
+				return -1;
+		} else {
+			if(register_timer(ds_check_timer, NULL, ds_ping_interval) < 0)
+				return -1;
+		}
+	}
 	/* Initialize the counter */
 	ds_ping_reply_codes = (int **)shm_malloc(sizeof(unsigned int *));
 	if(!(ds_ping_reply_codes)) {
@@ -535,26 +548,6 @@ static int mod_init(void)
 		}
 	}
 
-	/* Only, if the Probing-Timer is enabled the TM-API needs to be loaded: */
-	if(ds_ping_interval > 0) {
-		/*****************************************************
-		 * TM-Bindings
-		 *****************************************************/
-		if(load_tm_api(&tmb) == -1) {
-			LM_ERR("could not load the TM-functions - disable DS ping\n");
-			return -1;
-		}
-		/*****************************************************
-		 * Register the PING-Timer
-		 *****************************************************/
-		if(ds_timer_mode == 1) {
-			if(sr_wtimer_add(ds_check_timer, NULL, ds_ping_interval) < 0)
-				return -1;
-		} else {
-			if(register_timer(ds_check_timer, NULL, ds_ping_interval) < 0)
-				return -1;
-		}
-	}
 	if(ds_latency_estimator_alpha_i > 0
 			&& ds_latency_estimator_alpha_i < 1000) {
 		ds_latency_estimator_alpha = ds_latency_estimator_alpha_i / 1000.0f;
