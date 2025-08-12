@@ -33,7 +33,7 @@ jobs:
           - distribution: sid
             compilier: clang
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ammaraskar/gcc-problem-matcher@0.3.0
       - name: build
         run: |
