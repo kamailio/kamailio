@@ -307,7 +307,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Download artifact images
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         pattern: apk-files-and-context-*
         path: ${{ runner.temp }}/context
