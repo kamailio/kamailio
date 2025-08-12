@@ -39,27 +39,65 @@ jobs:
     strategy:
       matrix:
         os:
+        - alma-10
         - centos-10
         - rhel-10
+        - rocky-10
+        - alma-9
         - centos-9
         - rhel-9
         - rocky-9
+        - alma-8
         - centos-8
         - rhel-8
+        - rocky-8
         arch:
         - x86_64
         - aarch64
+        - ppc64le
+        - s390x
         include:
         # setting image platform
         - platform: linux/amd64
           arch: x86_64
         - platform: linux/arm64/v8
           arch: aarch64
+        - platform: linux/ppc64le
+          arch: ppc64le
+        - platform: linux/s390x
+          arch: s390x
 
         # setting runner
         - runner: ubuntu-latest
         - runner: ubuntu-24.04-arm
           arch: aarch64
+
+        exclude:
+        # We does build for ppc64le because RedHat does not have CodeReady repo for ppc64le.
+        # more info at https://access.redhat.com/solutions/5500841
+        - os: rhel-10
+          arch: ppc64le
+        - os: rhel-9
+          arch: ppc64le
+        - os: rhel-8
+          arch: ppc64le
+        # also Codeready repo does not exist for rhel-9 and 10, s390x arch
+        - os: rhel-10
+          arch: s390x
+        - os: rhel-9
+          arch: s390x
+        # s390x arch does not exist for rhel 8, centos 8, rocky 8. For alma-8 cannot be compiled libphonenumber
+        - os: alma-8
+          arch: s390x
+        - os: centos-8
+          arch: s390x
+        - os: rhel-8
+          arch: s390x
+        - os: rocky-8
+          arch: s390x
+        # ppc64le arch does not exist for rocky 8
+        - os: rocky-8
+          arch: ppc64le
 
     runs-on: ${{ matrix.runner }}
     permissions:
@@ -115,13 +153,18 @@ jobs:
       max-parallel: 1
       matrix:
         os:
+        - alma-10
         - centos-10
         - rhel-10
+        - rocky-10
+        - alma-9
         - centos-9
         - rhel-9
         - rocky-9
+        - alma-8
         - centos-8
         - rhel-8
+        - rocky-8
     runs-on: ubuntu-latest
     needs:
     - build
