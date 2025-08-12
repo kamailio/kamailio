@@ -89,7 +89,7 @@ jobs:
         - build_image_tag: ${{ needs.check.outputs.build_image_tag }}
     runs-on: ${{ matrix.runner }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: print commit info
       id: init
