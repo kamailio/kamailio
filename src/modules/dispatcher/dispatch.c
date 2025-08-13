@@ -1127,17 +1127,34 @@ int ds_load_list(char *lfile)
 		while(*p && (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n'))
 			p++;
 
-		/* get flags */
 		flags = 0;
 		priority = 0;
 		attrs.s = 0;
 		attrs.len = 0;
+
+		/* get flags */
 		if(*p == '\0' || *p == '#')
 			goto add_destination; /* no flags given */
 
-		while(*p >= '0' && *p <= '9') {
-			flags = flags * 10 + (*p - '0');
-			p++;
+		if(*p == '0' && *(p + 1) == 'x') {
+			p += 2;
+			while((*p >= '0' && *p <= '9') || (*p >= 'a' && *p <= 'f')
+					|| (*p >= 'A' && *p <= 'F')) {
+				uint8_t bv = *p;
+				if(bv >= '0' && bv <= '9')
+					bv = bv - '0';
+				else if(bv >= 'a' && bv <= 'f')
+					bv = bv - 'a' + 10;
+				else if(bv >= 'A' && bv <= 'F')
+					bv = bv - 'A' + 10;
+				flags = (flags << 4) | (bv & 0xF);
+				p++;
+			}
+		} else {
+			while(*p >= '0' && *p <= '9') {
+				flags = flags * 10 + (*p - '0');
+				p++;
+			}
 		}
 
 		/* eat all white spaces */
