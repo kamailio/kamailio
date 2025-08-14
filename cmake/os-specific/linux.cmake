@@ -52,4 +52,13 @@ if(NOT NO_SIGIO_RT)
                                               SIGINFO64_WORKAROUND)
 endif()
 
-# TODO introduce check for futex
+# TODO This is placed here to match the Makefiles where both
+# FAST_LOCK and USE_FUTEX are defined unconditionally.
+# This also had the side effect that futex also uses the definitions
+# defined for FAST_LOCK like ADAPTIVE_WAIT[_LOOPS].
+# https://github.com/kamailio/kamailio/pull/4363 aims to fix this
+# and we should decide whether to also apply the definitions for USE_FUTEX case.
+find_path(FUTEX_HEADER_DIR linux/futex.h)
+if(FUTEX_HEADER_DIR)
+  target_compile_definitions(common INTERFACE USE_FUTEX)
+endif()
