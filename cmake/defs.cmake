@@ -87,14 +87,12 @@ option(Q_MALLOC "Use q_malloc" ON)
 # Same goes for fmalloc and tlsf malloc
 # cmake_dependent_option(DBG_QM_MALLOC "Enable debugging info for q_malloc" OFF "Q_MALLOC" OFF)
 option(TLSF_MALLOC "Use tlsf_malloc" ON)
-option(MALLOC_STATS "Use malloc stats" ON)
 
 option(USE_DNS_FAILOVER "Use DNS failover" ON)
 option(USE_DST_BLOCKLIST "Use destination blacklist" ON)
 option(HAVE_RESOLV_RES "Have resolv_res" ON)
 
 option(KSR_PTHREAD_MUTEX_SHARED "Use shared mutex for TLS" ON)
-option(STATISTICS "Statistics" ON)
 
 # if(${MEMPKG})
 #   target_compile_definitions(common INTERFACE PKG_MALLOC)
@@ -149,58 +147,10 @@ if(NOT ${LIBSSL_SET_MUTEX_SHARED})
 endif()
 
 # -----------------------
-# Locking mechanism macro
+# Locking mechanism
 # -----------------------
 
-option(USE_FAST_LOCK "Use fast locking if available" ON)
-
-# TODO: Discuss if we need to expose this to the user to choose between
-# different locking methods
-
-# set(locking_methods FAST_LOCK USE_FUTEX USE_PTHREAD_MUTEX USE_POSIX_SEM
-#                     USE_SYSV_SEM)
-# set(LOCK_METHOD
-#     ""
-#     CACHE STRING "Locking method to use. Fast-lock if available is default")
-# # List of locking methods in option
-# set_property(CACHE LOCK_METHOD PROPERTY STRINGS ${locking_methods})
-# mark_as_advanced(LOCK_METHOD)
-
-# Fast-lock not available for all platforms like mips
-# Check the system processor type and set USE_FAST_LOCK accordingly
-if(USE_FAST_LOCK)
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES
-     "i386|i486|i586|i686|x86_64|amd64|sparc64|sparc|ppc$|ppc64$|alpha|mips2|mips64"
-  )
-    set(USE_FAST_LOCK YES)
-  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-    set(USE_FAST_LOCK NO)
-  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm6|arm7")
-    set(USE_FAST_LOCK YES)
-  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64")
-    set(USE_FAST_LOCK YES)
-    target_compile_definitions(common INTERFACE NOSMP) # memory barriers not
-                                                       # implemented for arm
-  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips")
-    set(USE_FAST_LOCK NO)
-    target_compile_definitions(common INTERFACE MIPS_HAS_LLSC) # likely
-    target_compile_definitions(common INTERFACE NOSMP) # very likely
-  else()
-    message(STATUS "Fast locking not available for this platform, disabling USE_FAST_LOCK")
-    set(USE_FAST_LOCK NO)
-  endif()
-endif()
-
-# Add definitions if USE_FAST_LOCK is YES
-message(STATUS "Fast lock available: USE_FAST_LOCK=${USE_FAST_LOCK}")
-if(USE_FAST_LOCK)
-  # If fast lock is available, add the definitions for it, else each OS will
-  # have its own locking method
-  target_compile_definitions(common INTERFACE FAST_LOCK ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024)
-endif()
-
-# set(LOCKING_DEFINITION "${locking_method}")
-# message(STATUS "Locking method: ${LOCK_METHOD}")
+include(${CMAKE_SOURCE_DIR}/cmake/lock_methods.cmake)
 
 # -----------------------
 # Setting all the flags from options
@@ -241,15 +191,15 @@ if(TLSF_MALLOC)
   target_compile_definitions(common INTERFACE TLSF_MALLOC)
 endif()
 
-if(MALLOC_STATS)
-  target_compile_definitions(common INTERFACE MALLOC_STATS)
-endif()
-
 if(MEMDBG)
   target_compile_definitions(common INTERFACE DBG_SR_MEMORY)
   if(MEMDBGSYS)
     target_compile_definitions(common INTERFACE DBG_SYS_MEMORY)
   endif()
+endif()
+
+if(MEM_JOIN_FREE)
+  target_compile_definitions(common INTERFACE MEM_JOIN_FREE)
 endif()
 
 if(USE_DNS_FAILOVER)
@@ -304,20 +254,16 @@ if(NO_DEV_POLL)
   target_compile_definitions(common INTERFACE NO_DEV_POLL)
 endif()
 
-if(RAW_SOCKS)
-  target_compile_definitions(common INTERFACE RAW_SOCKS)
-endif()
-
 if(KSR_PTHREAD_MUTEX_SHARED)
   target_compile_definitions(common INTERFACE KSR_PTHREAD_MUTEX_SHARED)
 endif()
 
 if(FMSTATS)
-  target_compile_definitions(common INTERFACE FMSTATS)
+  target_compile_definitions(common INTERFACE MALLOC_STATS)
 endif()
 
 if(KMSTATS)
-  target_compile_definitions(common INTERFACE KMSTATS)
+  target_compile_definitions(common INTERFACE USE_CORE_STATS STATISTICS)
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/compiler-specific.cmake)
@@ -369,7 +315,6 @@ target_compile_definitions(
             # TODO: We can use the generator expression to define extra flags
             # instead of checking the options each time
             $<$<BOOL:${USE_SCTP}>:USE_SCTP>
-            $<$<BOOL:${STATISTICS}>:STATISTICS>
 )
 target_link_libraries(common INTERFACE common_compiler_flags)
 
