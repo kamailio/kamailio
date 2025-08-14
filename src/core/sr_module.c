@@ -1241,13 +1241,22 @@ int fix_param(int type, void **param)
 		case FPARAM_INT:
 			s.s = (char *)*param;
 			s.len = strlen(s.s);
-			err = str2sint(&s, &num);
-			if(err == 0) {
-				p->v.i = (int)num;
+			if(s.len > 2 && s.s[0] == '0' && s.s[1] == 'x') {
+				if(hexstr2int(s.s, s.len, (unsigned int *)&num) < 0) {
+					/* not a hex number */
+					pkg_free(p);
+					return 1;
+				}
+				p->v.i = num;
 			} else {
-				/* Not a number */
-				pkg_free(p);
-				return 1;
+				err = str2sint(&s, &num);
+				if(err == 0) {
+					p->v.i = (int)num;
+				} else {
+					/* not a number */
+					pkg_free(p);
+					return 1;
+				}
 			}
 			p->fixed = (void *)(long)num;
 			break;

@@ -174,11 +174,18 @@ int fixup_uint_uint(void **param, int param_no)
 
 	s.s = *param;
 	s.len = strlen(s.s);
-	if(likely(str2int(&s, &num) == 0)) {
+	if(s.len > 2 && s.s[0] == '0' && s.s[1] == 'x') {
+		if(hexstr2int(s.s, s.len, &num) < 0) {
+			/* not a hex number */
+			return E_UNSPEC;
+		}
 		*param = (void *)(long)num;
-	} else
+	} else if(likely(str2int(&s, &num) == 0)) {
+		*param = (void *)(long)num;
+	} else {
 		/* not a number */
 		return E_UNSPEC;
+	}
 	return 0;
 }
 
