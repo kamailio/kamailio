@@ -205,15 +205,15 @@ PayloadType *rms_sdp_check_payload_type(PayloadType *pt, rms_sdp_info_t *sdp)
 	pt->channels = 1;
 	pt->mime_type = NULL;
 	if(pt->type > 127) {
-		return NULL;
+		return pt;
 	} else if(pt->type >= 96) {
 		char *rtpmap = rms_sdp_get_rtpmap(sdp->recv_body, pt->type);
 		if(!rtpmap)
-			return NULL;
+			return pt;
 		char *s_mime_type = strtok(rtpmap, "/");
 		if(!s_mime_type) {
 			shm_free(rtpmap);
-			return NULL;
+			return pt;
 		}
 		if(strcasecmp(s_mime_type, "opus") == 0) {
 			int payload_type = pt->type;
