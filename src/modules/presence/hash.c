@@ -1058,6 +1058,7 @@ int ps_ptable_replace(ps_presentity_t *ptm, ps_presentity_t *pt)
 	ps_presentity_t ptc;
 	ps_presentity_t ptv;
 	ps_presentity_t *ptn = NULL;
+	ps_presentity_t *ptnx = NULL;
 	uint32_t idx = 0;
 
 	/* copy struct to fill in missing fields */
@@ -1088,9 +1089,12 @@ int ps_ptable_replace(ps_presentity_t *ptm, ps_presentity_t *pt)
 			} else {
 				_ps_ptable->slots[idx].plist = ptn->next;
 			}
+			ptnx = ptn->next;
 			ps_presentity_free(ptn, 0);
+			ptn = ptnx;
+		} else {
+			ptn = ptn->next;
 		}
-		ptn = ptn->next;
 	}
 
 	ptn = ps_presentity_new(&ptv, 0);
