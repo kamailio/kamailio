@@ -205,6 +205,13 @@ int pv_parse_mhttpd_name(pv_spec_p sp, str *in)
 {
 	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
+
+	if(in->len > 2 && in->s[1] == ':' && (in->s[0] == 'h' || in->s[0] == 'H')) {
+		sp->pvp.pvn.type = PV_NAME_INTSTR;
+		sp->pvp.pvn.u.isname.type = PVT_HDR;
+		sp->pvp.pvn.u.isname.name.s = *in;
+		return 0;
+	}
 	switch(in->len) {
 		case 3:
 			if(strncasecmp(in->s, "url", 3) == 0) {
@@ -244,13 +251,6 @@ int pv_parse_mhttpd_name(pv_spec_p sp, str *in)
 			}
 			break;
 		default:
-			if(in->len > 2 && in->s[1] == ':'
-					&& (in->s[0] == 'h' || in->s[0] == 'H')) {
-				sp->pvp.pvn.type = PV_NAME_INTSTR;
-				sp->pvp.pvn.u.isname.type = PVT_HDR;
-				sp->pvp.pvn.u.isname.name.s = *in;
-				return 0;
-			}
 			goto error;
 	}
 	sp->pvp.pvn.type = PV_NAME_INTSTR;
