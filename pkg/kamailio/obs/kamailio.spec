@@ -1258,9 +1258,7 @@ xmpp \
 
 %install
 %{cmake_install}
-%{cmake_install} --component tls-cfg
 rm -f %{buildroot}%{_sysconfdir}/kamailio/tls.cfg.sample
-%{cmake_install} --component xhttp_pi-cfg
 rm -f %{buildroot}%{_sysconfdir}/kamailio/pi_framework.xml.sample
 
 install -d %{buildroot}%{_sharedstatedir}/kamailio
