@@ -270,6 +270,7 @@ int pv_get_mhttpd(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	struct sockaddr *srcaddr = NULL;
 	const char *hdrval = NULL;
+	char hname[256];
 
 	if(param == NULL) {
 		return -1;
@@ -278,8 +279,16 @@ int pv_get_mhttpd(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		return pv_get_null(msg, param, res);
 	}
 	if(param->pvn.u.isname.type == PVT_HDR) {
-		hdrval = MHD_lookup_connection_value(_ksr_mhttpd_ctx.connection,
-				MHD_HEADER_KIND, param->pvn.u.isname.name.s.s + 2);
+		if(param->pvn.u.isname.name.s.len >= 256) {
+			LM_ERR("header name too long: %d\n",
+					param->pvn.u.isname.name.s.len);
+			return pv_get_null(msg, param, res);
+		}
+		memcpy(hname, param->pvn.u.isname.name.s.s + 2,
+				param->pvn.u.isname.name.s.len - 2);
+		hname[param->pvn.u.isname.name.s.len - 2] = '\0';
+		hdrval = MHD_lookup_connection_value(
+				_ksr_mhttpd_ctx.connection, MHD_HEADER_KIND, hname);
 		if(hdrval == NULL) {
 			return pv_get_null(msg, param, res);
 		}
