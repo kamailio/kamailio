@@ -36,7 +36,7 @@ jobs:
         with:
           path: source
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.1
+      - uses: awalsh128/cache-apt-pkgs-action@v1.5.3
         with:
           packages: cmake-format
       - name: Run scripts/check-cmake-format.sh
