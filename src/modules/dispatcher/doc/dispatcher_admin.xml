@@ -2510,8 +2510,9 @@ kamcli dispatcher.oclist 1
 		<itemizedlist>
 			<listitem>
 			<para>flags - control the mode of using the destination address and
-			sending keepalives. It is a bitwise value that can be built using
-			the following flags:
+			sending keepalives. The value is a decimal number (inside the text
+			file it can be also provided as hexadecimal number). It is a bitwise
+			value that can be built using the following flags:
 			<itemizedlist>
 				<listitem><para>1 (bit at index 0 - 1 &lt;&lt;0) - inactive destination</para>
 				</listitem>
@@ -2626,11 +2627,12 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 </programlisting>
 
 		<para>
-		Full line example:
+		Full line examples:
 		</para>
 		<programlisting format="linespecific">
 ...
-1 sip:127.0.0.1:5080 0 0 duid=abc;socket=udp:192.168.0.125:5060;my=xyz;ping_from=sip:myproxy.com
+1 sip:127.0.0.1:5080 0 0 duid=abc;socket=udp:127.0.0.1:5060;my=xyz;ping_from=sip:myproxy.com
+1 sip:127.0.0.1:5090 0x8 0 socket=udp:127.0.0.1:5060;prefix=49
 ...
 </programlisting>
 
