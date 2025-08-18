@@ -159,6 +159,7 @@ message(STATUS "Excluded modules (exlcude even if in included modules):
 foreach(group IN LISTS FULL_MODULE_GROUP_NAMES)
   get_property(MODULES_IN_GROUP VARIABLE PROPERTY "${group}")
   if(VERBOSE)
+    list(SORT MODULES_IN_GROUP)
     message(STATUS "Modules in ${group}: ${MODULES_IN_GROUP}")
   endif()
   # remove module_group_prefix.
@@ -174,6 +175,7 @@ endforeach()
 add_module_group("user_specified_list" "${USER_MODULES_LIST}")
 
 get_property(ADDED_MODULES_LIST GLOBAL PROPERTY ADDED_MODULES_LIST)
+list(SORT ADDED_MODULES_LIST)
 message(STATUS "Modules to be built: ${ADDED_MODULES_LIST}")
 # TODO: Comment is not showing. probably a bug in CMAKE
 # https://gitlab.kitware.com/cmake/cmake/-/issues/26571
@@ -183,6 +185,22 @@ if(NOT ADDED_MODULES_LIST)
 else()
   add_dependencies(modules ${ADDED_MODULES_LIST})
 endif()
+
+add_custom_target(
+  print-modules
+  COMMAND ${CMAKE_COMMAND} -E echo
+          "----------------------------------------------------------------"
+  COMMAND ${CMAKE_COMMAND} -E echo "Module Selection Summary:"
+  COMMAND ${CMAKE_COMMAND} -E echo
+          "----------------------------------------------------------------"
+  COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --green
+          "The following modules were chosen to be included:${INCLUDE_MODULES_LIST}"
+  COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --red
+          "The following modules will be excluded: ${EXCLUDED_MODULES_LIST}"
+  COMMAND ${CMAKE_COMMAND} -E echo "The following modules will be built: ${ADDED_MODULES_LIST}"
+  VERBATIM
+)
+
 get_property(ALL_MODULE_DOC_TARGETS GLOBAL PROPERTY ALL_MODULE_DOC_TARGETS)
 # message(STATUS "ALL_MODULE_DOC_TARGETS: ${ALL_MODULE_DOC_TARGETS}")
 
